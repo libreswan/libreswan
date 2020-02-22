@@ -58,8 +58,6 @@
 #include "timer.h"
 #include "kernel.h"
 #include "kernel_xfrm.h"
-#include "kernel_nokernel.h"
-#include "kernel_bsdkame.h"
 #include "packet.h"
 #include "x509.h"
 #include "pluto_x509.h"
@@ -81,9 +79,6 @@
 #include "lswfips.h" /* for libreswan_fipsmode() */
 # include "kernel_xfrm_interface.h"
 #include "iface.h"
-
-/* which kernel interface to use */
-enum kernel_interface kern_interface = USE_NETKEY;
 
 bool can_do_IPcomp = TRUE;  /* can system actually perform IPCOMP? */
 
@@ -860,7 +855,7 @@ static enum routability could_route(struct connection *c)
 	}
 
 	/* if routing would affect IKE messages, reject */
-	if (kern_interface != NO_KERNEL &&
+	if (kernel_ops->type != NO_KERNEL &&
 	    c->spd.this.host_port != pluto_nat_port &&
 	    c->spd.this.host_port != pluto_port &&
 	    addrinsubnet(&c->spd.that.host_addr, &c->spd.that.client)) {
@@ -1357,7 +1352,7 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 	DBG(DBG_KERNEL,
 		DBG_log("%s specific host-to-host bare shunt",
 			repl ? "replacing" : "removing"));
-	if (kern_interface == USE_NETKEY && strstr(why, "IGNORE_ON_XFRM:") != NULL) {
+	if (kernel_ops->type == USE_NETKEY && strstr(why, "IGNORE_ON_XFRM:") != NULL) {
 		dbg("skipping raw_eroute because IGNORE_ON_XFRM");
 		struct bare_shunt **bs_pp = bare_shunt_ptr(
 			&this_client,
@@ -1862,7 +1857,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				DBG_log("recorded ref=%u as refhim",
 					said_next->ref));
 			new_refhim = said_next->ref;
-			if (kern_interface != USE_NETKEY &&
+			if (kernel_ops->type != USE_NETKEY &&
 				new_refhim == IPSEC_SAREF_NULL)
 				new_refhim = IPSEC_SAREF_NA;
 		}
@@ -1930,7 +1925,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 */
 		if (new_refhim == IPSEC_SAREF_NULL && !inbound) {
 			new_refhim = said_next->ref;
-			if (kern_interface != USE_NETKEY && new_refhim == IPSEC_SAREF_NULL)
+			if (kernel_ops->type != USE_NETKEY && new_refhim == IPSEC_SAREF_NULL)
 				new_refhim = IPSEC_SAREF_NA;
 		}
 		if (!incoming_ref_set && inbound) {
@@ -2165,7 +2160,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 */
 		if (new_refhim == IPSEC_SAREF_NULL && !inbound) {
 			new_refhim = said_next->ref;
-			if (kern_interface != USE_NETKEY && new_refhim == IPSEC_SAREF_NULL)
+			if (kernel_ops->type != USE_NETKEY && new_refhim == IPSEC_SAREF_NULL)
 				new_refhim = IPSEC_SAREF_NA;
 		}
 		if (!incoming_ref_set && inbound) {
@@ -2249,7 +2244,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 */
 		if (new_refhim == IPSEC_SAREF_NULL && !inbound) {
 			new_refhim = said_next->ref;
-			if (kern_interface != USE_NETKEY && new_refhim == IPSEC_SAREF_NULL)
+			if (kernel_ops->type != USE_NETKEY && new_refhim == IPSEC_SAREF_NULL)
 				new_refhim = IPSEC_SAREF_NA;
 		}
 		if (!incoming_ref_set && inbound) {
@@ -2544,7 +2539,15 @@ static void kernel_process_queue_cb(void)
 /* keep track of kernel version  */
 static char kversion[256];
 
-const struct kernel_ops *kernel_ops = NULL;
+const struct kernel_ops *kernel_ops =
+#ifdef NETKEY_SUPPORT
+	&netkey_kernel_ops
+#endif
+#ifdef BSD_KAME
+	&bsdkame_kernel_ops
+#endif
+	;
+
 deltatime_t bare_shunt_interval = DELTATIME_INIT(SHUNT_SCAN_INTERVAL);
 
 static void kernel_scan_shunts(void)
@@ -2556,45 +2559,41 @@ void init_kernel(void)
 {
 	struct utsname un;
 
-#if defined(NETKEY_SUPPORT)
-	struct stat buf;
-#endif
-
 	/* get kernel version */
 	uname(&un);
 	jam_str(kversion, sizeof(kversion), un.release);
 
-	switch (kern_interface) {
+	switch (kernel_ops->type) {
 #if defined(NETKEY_SUPPORT)
 	case USE_NETKEY:
+	{
+		struct stat buf;
 		if (stat("/proc/sys/net/core/xfrm_acq_expires", &buf) != 0) {
 			libreswan_log("No XFRM kernel support detected, missing /proc/sys/net/core/xfrm_acq_expires");
 			exit_pluto(PLUTO_EXIT_KERNEL_FAIL);
 		}
 		libreswan_log("Using Linux XFRM/NETKEY IPsec kernel support code on %s",
-			kversion);
-		kernel_ops = &netkey_kernel_ops;
+			      kversion);
 		break;
+	}
 #endif
 
 #if defined(BSD_KAME)
 	case USE_BSDKAME:
 		libreswan_log("Using BSD/KAME IPsec interface code on %s",
 			kversion);
-		kernel_ops = &bsdkame_kernel_ops;
 		break;
 #endif
 
 	case NO_KERNEL:
 		libreswan_log("Using 'no_kernel' interface code on %s",
-			kversion);
-		kernel_ops = &nokernel_kernel_ops;
+			      kversion);
 		break;
 
 	default:
 		libreswan_log("FATAL: kernel interface '%s' not available",
 			enum_name(&kern_interface_names,
-				kern_interface));
+				kernel_ops->type));
 		exit_pluto(PLUTO_EXIT_KERNEL_FAIL);
 	}
 
@@ -3216,7 +3215,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 
 bool migrate_ipsec_sa(struct state *st)
 {
-	switch (kern_interface) {
+	switch (kernel_ops->type) {
 	case USE_NETKEY:
 		/* support ah? if(!st->st_esp.present && !st->st_ah.present)) */
 		if (!st->st_esp.present) {
@@ -3262,7 +3261,7 @@ void delete_ipsec_sa(struct state *st)
 				st->st_state->name);
 	}
 
-	switch (kern_interface) {
+	switch (kernel_ops->type) {
 	case USE_NETKEY:
 		{
 			/*
@@ -3346,7 +3345,7 @@ void delete_ipsec_sa(struct state *st)
 		DBG(DBG_CONTROL,
 			DBG_log("Unknown kernel stack in delete_ipsec_sa"));
 		break;
-	} /* switch kern_interface */
+	} /* switch kernel_ops->type */
 }
 
 bool was_eroute_idle(struct state *st, deltatime_t since_when)

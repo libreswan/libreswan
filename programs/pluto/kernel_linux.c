@@ -50,7 +50,6 @@
 #include "timer.h"
 #include "kernel.h"
 #include "kernel_xfrm.h"
-#include "kernel_nokernel.h"
 #include "packet.h"
 #include "x509.h"
 #include "log.h"

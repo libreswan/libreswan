@@ -131,7 +131,7 @@ bool orient(struct connection *c)
 				/* check if this interface matches this end */
 				if (sameaddr(&sr->this.host_addr,
 					     &p->local_endpoint) &&
-				    (kern_interface != NO_KERNEL ||
+				    (kernel_ops->type != NO_KERNEL ||
 				     sr->this.host_port ==
 				     pluto_port)) {
 					if (oriented(*c)) {
@@ -158,7 +158,7 @@ bool orient(struct connection *c)
 				/* done with this interface if it doesn't match that end */
 				if (!(sameaddr(&sr->that.host_addr,
 					       &p->local_endpoint) &&
-				      (kern_interface != NO_KERNEL ||
+				      (kernel_ops->type != NO_KERNEL ||
 				       sr->that.host_port ==
 				       pluto_port)))
 					break;

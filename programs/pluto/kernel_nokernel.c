@@ -19,7 +19,6 @@
  */
 
 #include "kernel.h"
-#include "kernel_nokernel.h"
 
 static void init_nokernel(void)
 {

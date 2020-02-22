@@ -640,54 +640,42 @@ void ikev1_natd_init(struct state *st, struct msg_digest *md)
 
 int nat_traversal_espinudp_socket(int sk, const char *fam)
 {
-#if defined(NETKEY_SUPPORT) || defined(BSD_KAME)
-	if (kern_interface == USE_NETKEY || kern_interface == USE_BSDKAME) {
-		DBG(DBG_NATT, DBG_log("NAT-Traversal: Trying sockopt style NAT-T"));
+	dbg("NAT-Traversal: Trying sockopt style NAT-T");
 
-		/*
-		 * The SOL (aka socket level) is really the the
-		 * protocol number which, for UDP, is always 17.
-		 * Linux provides a SOL_* macro, the others don't.
-		 */
+	/*
+	 * The SOL (aka socket level) is really the the protocol
+	 * number which, for UDP, is always 17.  Linux provides a
+	 * SOL_* macro, the others don't.
+	 */
 #if defined(SOL_UDP)
-		const int sol_udp = SOL_UDP;
+	const int sol_udp = SOL_UDP;
 #elif defined(IPPROTO_UDP)
-		const int sol_udp = IPPROTO_UDP;
+	const int sol_udp = IPPROTO_UDP;
 #endif
 
-		/*
-		 * Was UDP_ESPINUDP (aka 100).  Linux/NetBSD have the
-		 * value 100, FreeBSD has the value 1.
-		 */
-		const int sol_name = UDP_ENCAP;
+	/*
+	 * Was UDP_ESPINUDP (aka 100).  Linux/NetBSD have the value
+	 * 100, FreeBSD has the value 1.
+	 */
+	const int sol_name = UDP_ENCAP;
 
-		/*
-		 * Was ESPINUDP_WITH_NON_ESP (aka 2) defined in
-		 * "libreswan.h" which smells like something intended
-		 * for the old KLIPS module. <netinet/udp.h> defines the
-		 * below across linux and *BSD.
-		 */
-		const int sol_value = UDP_ENCAP_ESPINUDP;
+	/*
+	 * Was ESPINUDP_WITH_NON_ESP (aka 2) defined in "libreswan.h"
+	 * which smells like something intended for the old KLIPS
+	 * module. <netinet/udp.h> defines the below across linux and
+	 * *BSD.
+	 */
+	const int sol_value = UDP_ENCAP_ESPINUDP;
 
-		int r = setsockopt(sk, sol_udp, sol_name, &sol_value, sizeof(sol_value));
-		if (r == -1) {
-			DBG(DBG_NATT,
-				DBG_log("NAT-Traversal: ESPINUDP(%d) setup failed for sockopt style NAT-T family %s (errno=%d)",
-					sol_value, fam, errno));
-		} else {
-			DBG(DBG_NATT,
-				DBG_log("NAT-Traversal: ESPINUDP(%d) setup succeeded for sockopt style NAT-T family %s",
-					sol_value, fam));
-			return r;
-		}
+	int r = setsockopt(sk, sol_udp, sol_name, &sol_value, sizeof(sol_value));
+	if (r == -1) {
+		dbg("NAT-Traversal: ESPINUDP(%d) setup failed for sockopt style NAT-T family %s (errno=%d)",
+		    sol_value, fam, errno);
 	} else {
-		DBG(DBG_NATT,
-			DBG_log("NAT-Traversal: ESPINUDP() support for sockopt style NAT-T family not available for this kernel"));
+		dbg("NAT-Traversal: ESPINUDP(%d) setup succeeded for sockopt style NAT-T family %s",
+		    sol_value, fam);
+		return r;
 	}
-#else
-	DBG(DBG_NATT,
-		DBG_log("NAT-Traversal: ESPINUDP() support for sockopt style NAT-T family not compiled in"));
-#endif
 
 	/* all methods failed to detect NAT-T support */
 	loglog(RC_LOG_SERIOUS,

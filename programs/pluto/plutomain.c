@@ -932,15 +932,23 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'F':	/* --use-bsdkame */
-			kern_interface = USE_BSDKAME;
+#ifdef BSDKAME_SUPPORT
+			kernel_ops = &bsdkame_kernel_ops;
+#else
+			libreswan_log("--use-bsdkame not supported");
+#endif
 			continue;
 
 		case 'K':	/* --use-netkey */
-			kern_interface = USE_NETKEY;
+#ifdef NETKEY_SUPPORT
+			kernel_ops = &netkey_kernel_ops;
+#else
+			libreswan_log("--use-netkey not supported");
+#endif
 			continue;
 
 		case 'n':	/* --use-nostack */
-			kern_interface = NO_KERNEL;
+			kernel_ops = &nokernel_kernel_ops;
 			continue;
 
 		case 'D':	/* --force-busy */
@@ -1389,24 +1397,29 @@ int main(int argc, char **argv)
 			cur_debugging = cfg->setup.options[KBF_PLUTODEBUG];
 
 			char *protostack = cfg->setup.strings[KSF_PROTOSTACK];
+			passert(kernel_ops != NULL);
 
 			if (protostack == NULL || *protostack == '\0') {
-				kern_interface = USE_NETKEY;
+				dbg("sticking with hardwired protstack=%s", kernel_ops->kern_name);
 			} else if (streq(protostack, "none")) {
-				kern_interface = NO_KERNEL;
+				kernel_ops = &nokernel_kernel_ops;
 			} else if (streq(protostack, "auto")) {
-				libreswan_log(
-					"The option protostack=auto is obsoleted, falling back to protostack=netkey\n");
-				kern_interface = USE_NETKEY;
+				libreswan_log("the option protostack=auto is obsoleted, falling back to protostack=%s",
+					      kernel_ops->kern_name);
+#ifdef NETKEY_SUPPORT
 			} else if (streq(protostack, "netkey") ||
 				streq(protostack, "native")) {
-				kern_interface = USE_NETKEY;
+				kernel_ops = &netkey_kernel_ops;
+#endif
+#ifdef BSD_KAME
 			} else if (streq(protostack, "bsd") ||
 				streq(protostack, "kame") ||
 				streq(protostack, "bsdkame")) {
-				kern_interface = USE_BSDKAME;
-			} else if (streq(protostack, "win2k")) {
-				kern_interface = USE_WIN2K;
+				kernel_ops = &bsdkame_kernel_ops;
+#endif
+			} else {
+				libreswan_log("protostack=%s ignored, using default protostack=%s",
+					      protostack, kernel_ops->kern_name);
 			}
 
 			confread_free(cfg);

@@ -179,9 +179,6 @@ struct raw_iface {
 	struct raw_iface *next;
 };
 
-/* which kernel interface to use */
-extern enum kernel_interface kern_interface;
-
 LIST_HEAD(iface_list, iface_dev);
 extern struct iface_list interface_dev;
 
@@ -275,6 +272,14 @@ extern int useful_mastno;
 #endif
 
 extern const struct kernel_ops *kernel_ops;
+extern const struct kernel_ops nokernel_kernel_ops;
+#ifdef NETKEY_SUPPORT
+extern const struct kernel_ops netkey_kernel_ops;
+#endif
+#ifdef BSD_KAME
+extern const struct kernel_ops bsdkame_kernel_ops;
+#endif
+
 extern struct raw_iface *find_raw_ifaces4(void);
 extern struct raw_iface *find_raw_ifaces6(void);
 

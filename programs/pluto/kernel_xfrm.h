@@ -15,7 +15,6 @@
  */
 
 #if defined(linux) && defined(NETKEY_SUPPORT)
-extern const struct kernel_ops netkey_kernel_ops;
 /*
  * The socket buffer is used to queue netlink messages between sender and
  * receiver. The size of these buffers specifies the maximum size you will be

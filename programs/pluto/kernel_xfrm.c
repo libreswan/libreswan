@@ -2395,7 +2395,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 
 		for (vfp = rifaces; vfp != NULL; vfp = vfp->next) {
 			if (vfp == ifp) {
-				after = TRUE;
+				after = true;
 			} else if (sameaddr(&ifp->addr, &vfp->addr)) {
 				/*
 				 * Different entries with matching IP
@@ -2422,7 +2422,8 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 					 * the same IP address "after" allows
 					 * us to avoid double reporting.
 					 */
-					if (kern_interface == USE_NETKEY) {
+					/* XXX: isn't this always true? */
+					if (kernel_ops->type == USE_NETKEY) {
 						if (after) {
 							bad = TRUE;
 							break;
@@ -2445,7 +2446,8 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 		if (bad)
 			continue;
 
-		if (kern_interface == USE_NETKEY) {
+		/* XXX: isn't this always true? */
+		if (kernel_ops->type == USE_NETKEY) {
 			v = ifp;
 		}
 
