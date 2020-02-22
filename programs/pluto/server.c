@@ -103,9 +103,6 @@ char *pluto_vendorid;
 
 static pid_t addconn_child_pid = 0;
 
-/* list of interface devices */
-struct iface_list interface_dev;
-
 /* pluto's main Libevent event_base */
 static struct event_base *pluto_eb =  NULL;
 
@@ -130,8 +127,6 @@ struct sockaddr_un ctl_addr = {
 err_t init_ctl_socket(void)
 {
 	err_t failed = NULL;
-
-	LIST_INIT(&interface_dev);
 
 	delete_ctl_socket();    /* preventative medicine */
 	ctl_fd = safe_socket(AF_UNIX, SOCK_STREAM, 0);

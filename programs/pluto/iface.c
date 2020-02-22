@@ -39,7 +39,25 @@
 
 struct iface_port  *interfaces = NULL;  /* public interfaces */
 
-/* Initialize the interface sockets. */
+/*
+ * The interfaces - eth0 ...
+ */
+
+static LIST_HEAD(iface_list, iface_dev) interface_dev =
+         LIST_HEAD_INITIALIZER(interface_dev);
+
+struct iface_dev *create_iface_dev(const struct raw_iface *ifp)
+{
+	struct iface_dev *id = alloc_thing(struct iface_dev,
+					   "struct iface_dev");
+	init_ref(id);
+	LIST_INSERT_HEAD(&interface_dev, id,
+			 id_entry);
+	id->id_rname = clone_str(ifp->name,
+				 "real device name");
+	id->id_nic_offload = kernel_ops->detect_offload(ifp);
+	return id;
+}
 
 static void mark_ifaces_dead(void)
 {
@@ -49,15 +67,18 @@ static void mark_ifaces_dead(void)
 		p->change = IFN_DELETE;
 }
 
-static void free_dead_iface_dev(struct iface_dev *id)
+static void free_iface_dev(struct iface_dev **id,
+			   where_t where UNUSED)
 {
-	if (--id->id_count == 0) {
-		pfree(id->id_rname);
+	pfree((*id)->id_rname);
+	LIST_REMOVE((*id), id_entry);
+	pfree((*id));
+	*id = NULL;
+}
 
-		LIST_REMOVE(id, id_entry);
-
-		pfree(id);
-	}
+static void release_iface_dev(struct iface_dev **id)
+{
+	delete_ref(id, free_iface_dev);
 }
 
 static void free_dead_ifaces(void)
@@ -88,7 +109,7 @@ static void free_dead_ifaces(void)
 				*pp = p->next; /* advance *pp */
 				delete_pluto_event(&p->pev);
 				close(p->fd);
-				free_dead_iface_dev(p->ip_dev);
+				release_iface_dev(&p->ip_dev);
 				pfree(p);
 			} else {
 				pp = &p->next; /* advance pp */

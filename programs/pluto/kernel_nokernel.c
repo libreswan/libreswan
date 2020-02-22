@@ -19,6 +19,7 @@
  */
 
 #include "kernel.h"
+#include "log.h"
 
 static void init_nokernel(void)
 {
@@ -104,6 +105,13 @@ static void nokernel_scan_shunts(void)
 
 static void nokernel_shutdown(void)
 {
+	dbg("%s: nothing to do", __func__);
+}
+
+static bool nokernel_detect_offload(const struct raw_iface *ifp UNUSED)
+{
+	dbg("%s: nothing to do", __func__);
+	return false;
 }
 
 const struct kernel_ops nokernel_kernel_ops = {
@@ -132,4 +140,5 @@ const struct kernel_ops nokernel_kernel_ops = {
 	.kern_name = "nokernel",
 	.overlap_supported = FALSE,
 	.sha2_truncbug_support = FALSE,
+	.detect_offload = nokernel_detect_offload,
 };

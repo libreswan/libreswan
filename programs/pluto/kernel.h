@@ -179,9 +179,6 @@ struct raw_iface {
 	struct raw_iface *next;
 };
 
-LIST_HEAD(iface_list, iface_dev);
-extern struct iface_list interface_dev;
-
 extern char *pluto_listen;	/* from --listen flag */
 
 
@@ -260,6 +257,7 @@ struct kernel_ops {
 	bool (*migrate_sa)(struct state *st);
 	bool (*v6holes)();
 	bool (*poke_ipsec_policy_hole)(const struct raw_iface *ifp, int fd);
+	bool (*detect_offload)(const struct raw_iface *ifp);
 };
 
 #ifndef IPSECDEVPREFIX

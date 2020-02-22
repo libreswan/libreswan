@@ -51,6 +51,8 @@
 #include "nat_traversal.h"
 #include "kernel_alg.h"
 #include "kernel_sadb.h"
+#include "iface.h"
+#include "iface_udp.h"
 
 int pfkeyfd = NULL_FD;
 unsigned int pfkey_seq = 1;
@@ -128,29 +130,19 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 
 			for (;; ) {
 				struct iface_port *q = *p;
-				struct iface_dev *id = NULL;
 
 				/* search is over if at end of list */
 				if (q == NULL) {
 					/* matches nothing -- create a new entry */
-					int fd = create_socket(ifp, ifp->name,
-							       pluto_port);
+					int fd = create_udp_socket(ifp, ifp->name,
+								   pluto_port);
 					if (fd < 0)
 						break;
 
 					q = alloc_thing(struct iface_port,
 							"struct iface_port");
-					id = alloc_thing(struct iface_dev,
-							 "struct iface_dev");
-
-					LIST_INSERT_HEAD(&interface_dev, id,
-							 id_entry);
-
+					struct iface_dev *id = create_iface_dev(ifp);
 					q->ip_dev = id;
-					id->id_rname = clone_str(ifp->name,
-								 "real device name");
-					id->id_count++;
-
 					q->local_endpoint = endpoint(&ifp->addr, pluto_port);
 					q->fd = fd;
 					q->next = interfaces;
@@ -174,9 +166,9 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 					    &&
 					    addrtypeof(&ifp->addr) == AF_INET)
 					{
-						fd = create_socket(ifp,
-								   id->id_rname,
-								   pluto_nat_port);
+						fd = create_udp_socket(ifp,
+								       id->id_rname,
+								       pluto_nat_port);
 						if (fd < 0)
 							break;
 						nat_traversal_espinudp_socket(
@@ -184,20 +176,17 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 						q = alloc_thing(
 							struct iface_port,
 							"struct iface_port");
-						q->ip_dev = id;
-						id->id_count++;
-
-						q->local_endpoint = endpoint(&ifp->addr, pluto_nat_port);
+						q->ip_dev = add_ref(id);
+							q->local_endpoint = endpoint(&ifp->addr, pluto_nat_port);
 						q->fd = fd;
 						q->next = interfaces;
 						q->change = IFN_ADD;
 						q->ike_float = TRUE;
 						interfaces = q;
 						endpoint_buf b;
-						libreswan_log(
-							"adding interface %s/%s %s",
-							q->ip_dev->id_vname, q->ip_dev->id_rname,
-							str_endpoint(&q->local_endpoint, &b));
+						libreswan_log("adding interface %s %s",
+							      q->ip_dev->id_rname,
+							      str_endpoint(&q->local_endpoint, &b));
 					}
 					break;
 				}
@@ -1027,6 +1016,12 @@ static void bsdkame_shutdown(void)
 	dbg("%s: nothing to do", __func__);
 }
 
+static bool bsdkame_detect_offload(const struct raw_iface *ifp UNUSED)
+{
+	dbg("%s: nothing to do", __func__);
+	return false;
+}
+
 const struct kernel_ops bsdkame_kernel_ops = {
 	type: USE_BSDKAME,
 	kern_name: "bsdkame",
@@ -1056,4 +1051,5 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	.overlap_supported = FALSE,
 	.sha2_truncbug_support = FALSE,
 	.v6holes = NULL,
+	.detect_offload = bsdkame_detect_offload,
 };

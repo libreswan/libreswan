@@ -1164,8 +1164,9 @@ static void netlink_find_offload_feature(const char *ifname)
 	}
 }
 
-static bool netlink_detect_offload(const char *ifname)
+static bool netlink_detect_offload(const struct raw_iface *ifp)
 {
+	const char *ifname = ifp->name;
 	/*
 	 * Kernel requires a real interface in order to query the kernel-wide
 	 * capability, so we do it here on first invocation.
@@ -2484,7 +2485,6 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 
 		for (;;) {
 			struct iface_port *q = *p;
-			struct iface_dev *id = NULL;
 
 			/* search is over if at end of list */
 			if (q == NULL) {
@@ -2497,18 +2497,9 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 
 				q = alloc_thing(struct iface_port,
 						"struct iface_port");
-				id = alloc_thing(struct iface_dev,
-						"struct iface_dev");
-
-				LIST_INSERT_HEAD(&interface_dev, id,
-						id_entry);
+				struct iface_dev *id = create_iface_dev(ifp);
 
 				q->ip_dev = id;
-				id->id_rname = clone_str(ifp->name,
-							"real device name");
-				id->id_count++;
-				id->id_nic_offload = netlink_detect_offload(ifp->name);
-
 				q->fd = fd;
 				q->next = interfaces;
 				q->change = IFN_ADD;
@@ -2540,9 +2531,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 					q = alloc_thing(
 						struct iface_port,
 						"struct iface_port");
-					q->ip_dev = id;
-					id->id_count++;
-
+					q->ip_dev = add_ref(id);
 					q->local_endpoint = endpoint(&ifp->addr, pluto_nat_port);
 					q->fd = fd;
 					q->next = interfaces;
@@ -2945,4 +2934,5 @@ const struct kernel_ops netkey_kernel_ops = {
 	.sha2_truncbug_support = TRUE,
 	.v6holes = netlink_v6holes,
 	.poke_ipsec_policy_hole = netlink_poke_ipsec_policy_hole,
+	.detect_offload = netlink_detect_offload,
 };

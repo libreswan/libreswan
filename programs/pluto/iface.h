@@ -22,8 +22,10 @@
 #include <sys/queue.h>
 
 #include "ip_endpoint.h"
+#include "refcnt.h"
 
 struct fd;
+struct raw_iface;
 
 /* interface: a terminal point for IKE traffic, IPsec transport mode
  * and IPsec tunnels.
@@ -40,10 +42,12 @@ struct fd;
 
 struct iface_dev {
 	LIST_ENTRY(iface_dev) id_entry;
-	int id_count;
+	refcnt_t refcnt;
 	char *id_rname; /* real device name */
 	bool id_nic_offload;
 };
+
+struct iface_dev *create_iface_dev(const struct raw_iface *ifp);
 
 struct iface_port {
 	struct iface_dev   *ip_dev;
