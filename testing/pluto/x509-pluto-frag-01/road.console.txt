@@ -14,7 +14,7 @@ road #
  echo done
 done
 road #
- ipsec auto --up x509
+ ipsec auto --up x509 #retransmits
 002 "x509" #1: initiating Main Mode
 1v1 "x509" #1: STATE_MAIN_I1: sent MI1, expecting MR1
 1v1 "x509" #1: STATE_MAIN_I2: sent MI2, expecting MR2

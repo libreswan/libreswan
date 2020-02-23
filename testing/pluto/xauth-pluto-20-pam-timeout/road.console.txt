@@ -17,7 +17,7 @@ done
 road #
  # next one will fail because server will timeout for this user
 road #
- ipsec whack --xauthname 'gooduser90' --xauthpass 'use1pass' --name xauth-road-eastnet --initiate
+ ipsec whack --xauthname 'gooduser90' --xauthpass 'use1pass' --name xauth-road-eastnet --initiate #retransmits
 002 "xauth-road-eastnet" #1: initiating Main Mode
 1v1 "xauth-road-eastnet" #1: STATE_MAIN_I1: sent MI1, expecting MR1
 1v1 "xauth-road-eastnet" #1: STATE_MAIN_I2: sent MI2, expecting MR2

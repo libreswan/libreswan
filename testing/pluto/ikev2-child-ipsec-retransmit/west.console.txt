@@ -33,7 +33,7 @@ west #
 west #
  iptables -I INPUT -p udp --dport 500 -j DROP
 west #
- ipsec auto --up westnet-eastnet-ikev2b
+ ipsec auto --up westnet-eastnet-ikev2b #retransmits
 1v2 "westnet-eastnet-ikev2b" #3: STATE_V2_CREATE_I: sent IPsec Child req wait response
 010 "westnet-eastnet-ikev2b" #3: STATE_V2_CREATE_I: retransmission; will wait 0.5 seconds for response
 010 "westnet-eastnet-ikev2b" #3: STATE_V2_CREATE_I: retransmission; will wait 1 seconds for response
