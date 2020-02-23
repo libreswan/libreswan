@@ -21,7 +21,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up  westnet-eastnet-aes256
+ ipsec auto --up westnet-eastnet-aes256
 000 initiating all conns with alias='westnet-eastnet-aes256'
 021 no connection named "westnet-eastnet-aes256"
 west #

@@ -1,4 +1,4 @@
-ipsec auto --up  westnet-eastnet-ipv4-psk-ikev2
+ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 ping -n -c 2 -I 192.0.2.1 192.1.2.23
 ipsec whack --trafficstatus
 # change ip, emulating sudden switching network

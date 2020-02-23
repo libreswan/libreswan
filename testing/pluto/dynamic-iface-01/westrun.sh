@@ -1,4 +1,4 @@
-ipsec auto --up  west-east
+ipsec auto --up west-east
 ip addr add 192.1.2.66/24 dev eth1
 arping -c 1 -U -I eth1 192.1.2.66
 ipsec auto --ready

@@ -31,7 +31,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up  westnet-eastnet-ikev2
+ ipsec auto --up westnet-eastnet-ikev2
 1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 IKE SA
 002 "westnet-eastnet-ikev2" #1: IMPAIR: adding bogus bit to critical octet
 002 "westnet-eastnet-ikev2" #1: IMPAIR: adding bogus bit to critical octet

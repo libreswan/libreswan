@@ -31,7 +31,7 @@ initdone
 west #
  # --up will fail because of right=%any
 west #
- ipsec auto --up  westnet-eastnet-ipv4-psk-ikev2
+ ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 029 "westnet-eastnet-ipv4-psk-ikev2": cannot initiate connection without knowing peer IP address (kind=CK_TEMPLATE)
 036 failed to initiate westnet-eastnet-ipv4-psk-ikev2
 west #

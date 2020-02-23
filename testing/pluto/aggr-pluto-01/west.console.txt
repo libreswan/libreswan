@@ -47,7 +47,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up  westnet-eastnet-aggr
+ ipsec auto --up westnet-eastnet-aggr
 002 "westnet-eastnet-aggr" #1: initiating Aggressive Mode
 1v1 "westnet-eastnet-aggr" #1: STATE_AGGR_I1: sent AI1, expecting AR1
 002 "westnet-eastnet-aggr" #1: Peer ID is ID_FQDN: '@east'

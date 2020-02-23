@@ -45,7 +45,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up  westnet-eastnet-aggr
+ ipsec auto --up westnet-eastnet-aggr
 003 "westnet-eastnet-aggr" #1: multiple DH groups in aggressive mode can cause interop failure
 003 "westnet-eastnet-aggr" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
 002 "westnet-eastnet-aggr" #1: initiating Aggressive Mode

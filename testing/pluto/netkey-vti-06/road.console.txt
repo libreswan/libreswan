@@ -13,7 +13,7 @@ initdone
 road #
  ip addr add 192.0.3.254/24 dev eth0
 road #
- ipsec auto --up  road-east-vti
+ ipsec auto --up road-east-vti
 002 "road-east-vti" #1: initiating Main Mode
 1v1 "road-east-vti" #1: STATE_MAIN_I1: sent MI1, expecting MR1
 1v1 "road-east-vti" #1: STATE_MAIN_I2: sent MI2, expecting MR2

@@ -143,7 +143,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up  westnet-eastnet
+ ipsec auto --up westnet-eastnet
 002 "westnet-eastnet" #1: initiating Main Mode
 1v1 "westnet-eastnet" #1: STATE_MAIN_I1: sent MI1, expecting MR1
 1v1 "westnet-eastnet" #1: STATE_MAIN_I2: sent MI2, expecting MR2

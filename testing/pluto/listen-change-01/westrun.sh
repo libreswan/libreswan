@@ -1,4 +1,4 @@
-ipsec auto --up  west-east
+ipsec auto --up west-east
 # suppress martian logging before we create havoc
 echo 0 > /proc/sys/net/ipv4/conf/default/log_martians
 echo 0 > /proc/sys/net/ipv4/conf/all/log_martians

@@ -1,5 +1,5 @@
-ipsec auto --up  westnet-eastnet-vti-01
-ipsec auto --up  westnet-eastnet-vti-02
+ipsec auto --up westnet-eastnet-vti-01
+ipsec auto --up westnet-eastnet-vti-02
 # our two ranges should orute into the vti device
 ip route list
 ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254

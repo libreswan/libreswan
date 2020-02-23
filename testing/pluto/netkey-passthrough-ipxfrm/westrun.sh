@@ -1,4 +1,4 @@
-ipsec auto --up  west-east
+ipsec auto --up west-east
 # encrypted
 ping -n -c 4 -I 192.1.2.45 192.1.2.23
 # plaintext
