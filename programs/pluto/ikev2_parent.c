@@ -3411,6 +3411,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 {
 	struct child_sa *child = pexpect_child_sa(md->st);
 	struct state *st = &child->sa;
+	struct connection *c = st->st_connection;
 
 	RETURN_STF_FAILURE_STATUS(ikev2_process_cp_respnse(md));
 	if (!v2_process_ts_response(child, md)) {
@@ -3433,7 +3434,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 
 	/* check for Child SA related NOTIFY payloads */
 	if (md->v2N.use_transport_mode) {
-		if (st->st_connection->policy & POLICY_TUNNEL) {
+		if (c->policy & POLICY_TUNNEL) {
 			/* This means we did not send v2N_USE_TRANSPORT, however responder is sending it in now, seems incorrect */
 			dbg("Initiator policy is tunnel, responder sends v2N_USE_TRANSPORT_MODE notification in inR2, ignoring it");
 		} else {
@@ -3453,7 +3454,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 		struct ikev2_notify_ipcomp_data n_ipcomp;
 
 		dbg("received v2N_IPCOMP_SUPPORTED of length %zd", len);
-		if ((st->st_connection->policy & POLICY_COMPRESS) == LEMPTY) {
+		if ((c->policy & POLICY_COMPRESS) == LEMPTY) {
 			loglog(RC_LOG_SERIOUS, "Unexpected IPCOMP request as our connection policy did not indicate support for it");
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
@@ -3487,9 +3488,9 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 #ifdef USE_XFRM_INTERFACE
 	/* before calling do_command() */
 	if (st->st_state->kind != STATE_V2_REKEY_CHILD_I)
-		if (st->st_connection->xfrmi != NULL &&
-				st->st_connection->xfrmi->if_id != yn_no)
-			if (add_xfrmi(st->st_connection))
+		if (c->xfrmi != NULL &&
+				c->xfrmi->if_id != yn_no)
+			if (add_xfrmi(c))
 				return STF_FATAL;
 #endif
 	/* now install child SAs */
