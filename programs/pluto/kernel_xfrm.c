@@ -2489,24 +2489,20 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 			/* search is over if at end of list */
 			if (q == NULL) {
 				/* matches nothing -- create a new entry */
+				/*
+				 * Since udp_iface_port() takes its
+				 * own reference to *IFD, the
+				 * reference in IFD needs to be
+				 * released.
+				 */
 				struct iface_dev *id = create_iface_dev(ifp);
-				int fd = create_udp_socket(id, pluto_port);
-				if (fd < 0) {
+
+				q = udp_iface_port(id, pluto_port,
+						   false/*ike_float*/);
+				if (q == NULL) {
 					release_iface_dev(&id);
 					break;
 				}
-
-				q = alloc_thing(struct iface_port,
-						"struct iface_port");
-
-				q->ip_dev = id;
-				q->fd = fd;
-				q->next = interfaces;
-				q->change = IFN_ADD;
-				q->local_endpoint = endpoint(&ifp->addr, pluto_port);
-				q->ike_float = FALSE;
-
-				interfaces = q;
 
 				endpoint_buf b;
 				libreswan_log(
@@ -2514,6 +2510,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 					q->ip_dev->id_rname,
 					"esp-hw-offload not supported by kernel",
 					str_endpoint(&q->local_endpoint, &b));
+
 				/*
 				 * right now, we do not support NAT-T
 				 * on IPv6, because  the kernel did
@@ -2521,22 +2518,14 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 				 * it one tried to turn it on.
 				 */
 				if (addrtypeof(&ifp->addr) == AF_INET) {
-					fd = create_udp_socket(id,
-							       pluto_nat_port);
-					if (fd < 0)
+					q = udp_iface_port(id, pluto_nat_port,
+							   true/*ike_float*/);
+					if (q == NULL) {
+						release_iface_dev(&id);
 						break;
+					}
 					nat_traversal_espinudp_socket(
-						fd, "IPv4");
-					q = alloc_thing(
-						struct iface_port,
-						"struct iface_port");
-					q->ip_dev = add_ref(id);
-					q->local_endpoint = endpoint(&ifp->addr, pluto_nat_port);
-					q->fd = fd;
-					q->next = interfaces;
-					q->change = IFN_ADD;
-					q->ike_float = TRUE;
-					interfaces = q;
+						q->fd, "IPv4");
 					endpoint_buf b;
 					libreswan_log(
 						"adding interface %s %s",
@@ -2544,6 +2533,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 						str_endpoint(&q->local_endpoint, &b));
 				}
 
+				release_iface_dev(&id);
 				break;
 			}
 

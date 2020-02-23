@@ -32,8 +32,10 @@
 struct iface_dev;
 struct iface_port;
 struct packet;
+struct iface_dev;
 
-int create_udp_socket(const struct iface_dev *ifd, int port);
+struct iface_port *udp_iface_port(struct iface_dev *id, int port,
+				  bool ike_float);
 
 bool read_udp_packet(const struct iface_port *ifp, struct packet *packet);
 

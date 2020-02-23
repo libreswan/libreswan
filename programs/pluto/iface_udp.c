@@ -48,7 +48,7 @@
 #include "log.h"
 #include "ip_info.h"
 
-int create_udp_socket(const struct iface_dev *ifd, int port)
+static int create_udp_socket(const struct iface_dev *ifd, int port)
 {
 	const struct ip_info *type = address_type(&ifd->id_address);
 	int fd = socket(type->af, SOCK_DGRAM, IPPROTO_UDP);
@@ -178,6 +178,32 @@ int create_udp_socket(const struct iface_dev *ifd, int port)
 	}
 
 	return fd;
+}
+
+struct iface_port *udp_iface_port(struct iface_dev *ifd, int port,
+				  bool ike_float)
+{
+	int fd = create_udp_socket(ifd, port);
+	if (fd < 0)
+		return NULL;
+
+	struct iface_port *q = alloc_thing(struct iface_port,
+					   "struct iface_port");
+
+	q->ip_dev = add_ref(ifd);
+	q->fd = fd;
+	q->change = IFN_ADD;
+	q->local_endpoint = endpoint(&ifd->id_address, port);
+	q->ike_float = ike_float;
+
+	q->next = interfaces;
+	interfaces = q;
+
+	endpoint_buf b;
+	dbg("adding interface %s %s",
+	    q->ip_dev->id_rname,
+	    str_endpoint(&q->local_endpoint, &b));
+	return q;
 }
 
 /* Process any message on the MSG_ERRQUEUE
