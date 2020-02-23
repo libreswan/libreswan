@@ -29,11 +29,11 @@
 
 #include <stdbool.h>
 
-struct raw_iface;
+struct iface_dev;
 struct iface_port;
 struct packet;
 
-int create_udp_socket(const struct raw_iface *ifp, const char *v_name, int port);
+int create_udp_socket(const struct iface_dev *ifd, int port);
 
 bool read_udp_packet(const struct iface_port *ifp, struct packet *packet);
 

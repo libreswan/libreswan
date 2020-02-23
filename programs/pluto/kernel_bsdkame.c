@@ -134,14 +134,15 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 				/* search is over if at end of list */
 				if (q == NULL) {
 					/* matches nothing -- create a new entry */
-					int fd = create_udp_socket(ifp, ifp->name,
-								   pluto_port);
-					if (fd < 0)
+					struct iface_dev *id = create_iface_dev(ifp);
+					int fd = create_udp_socket(id, pluto_port);
+					if (fd < 0) {
+						release_iface_dev(&id);
 						break;
+					}
 
 					q = alloc_thing(struct iface_port,
 							"struct iface_port");
-					struct iface_dev *id = create_iface_dev(ifp);
 					q->ip_dev = id;
 					q->local_endpoint = endpoint(&ifp->addr, pluto_port);
 					q->fd = fd;
@@ -166,9 +167,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 					    &&
 					    addrtypeof(&ifp->addr) == AF_INET)
 					{
-						fd = create_udp_socket(ifp,
-								       id->id_rname,
-								       pluto_nat_port);
+						fd = create_udp_socket(id, pluto_nat_port);
 						if (fd < 0)
 							break;
 						nat_traversal_espinudp_socket(

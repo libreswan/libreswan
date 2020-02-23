@@ -31,6 +31,7 @@
 
 struct sa_marks;
 struct spd_route;
+struct iface_dev;
 
 extern bool can_do_IPcomp;  /* can system actually perform IPCOMP? */
 
@@ -256,7 +257,7 @@ struct kernel_ops {
 	err_t (*migrate_sa_check)(void);
 	bool (*migrate_sa)(struct state *st);
 	bool (*v6holes)();
-	bool (*poke_ipsec_policy_hole)(const struct raw_iface *ifp, int fd);
+	bool (*poke_ipsec_policy_hole)(const struct iface_dev *ifd, int fd);
 	bool (*detect_offload)(const struct raw_iface *ifp);
 };
 

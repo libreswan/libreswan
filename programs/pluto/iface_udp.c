@@ -46,10 +46,12 @@
 #include "demux.h"
 #include "state_db.h"		/* for state_by_ike_spis() */
 #include "log.h"
+#include "ip_info.h"
 
-int create_udp_socket(const struct raw_iface *ifp, const char *v_name, int port)
+int create_udp_socket(const struct iface_dev *ifd, int port)
 {
-	int fd = socket(addrtypeof(&ifp->addr), SOCK_DGRAM, IPPROTO_UDP);
+	const struct ip_info *type = address_type(&ifd->id_address);
+	int fd = socket(type->af, SOCK_DGRAM, IPPROTO_UDP);
 	int fcntl_flags;
 	static const int on = TRUE;     /* by-reference parameter; constant, we hope */
 
@@ -130,7 +132,7 @@ int create_udp_socket(const struct raw_iface *ifp, const char *v_name, int port)
 	 * See draft-ietf-ipngwg-rfc2292bis-01.txt 11.1
 	 */
 #ifdef IPV6_USE_MIN_MTU /* YUCK: not always defined */
-	if (addrtypeof(&ifp->addr) == AF_INET6 &&
+	if (type == &ipv6_info &&
 	    setsockopt(fd, SOL_SOCKET, IPV6_USE_MIN_MTU,
 		       (const void *)&on, sizeof(on)) < 0) {
 		LOG_ERRNO(errno, "setsockopt IPV6_USE_MIN_MTU in process_raw_ifaces()");
@@ -146,7 +148,7 @@ int create_udp_socket(const struct raw_iface *ifp, const char *v_name, int port)
 	 * 4500 IPv6 port 500
 	 */
 	if (kernel_ops->poke_ipsec_policy_hole != NULL &&
-	    !kernel_ops->poke_ipsec_policy_hole(ifp, fd)) {
+	    !kernel_ops->poke_ipsec_policy_hole(ifd, fd)) {
 		close(fd);
 		return -1;
 	}
@@ -156,14 +158,13 @@ int create_udp_socket(const struct raw_iface *ifp, const char *v_name, int port)
 	 * Old code seemed to assume that it should be reset to pluto_port.
 	 * But only on successful bind.  Seems wrong or unnecessary.
 	 */
-	ip_endpoint if_endpoint = endpoint(&ifp->addr, port);
+	ip_endpoint if_endpoint = endpoint(&ifd->id_address, port);
 	ip_sockaddr if_sa;
 	size_t if_sa_size = endpoint_to_sockaddr(&if_endpoint, &if_sa);
 	if (bind(fd, &if_sa.sa, if_sa_size) < 0) {
 		endpoint_buf b;
-		LOG_ERRNO(errno, "bind() for %s/%s %s in process_raw_ifaces()",
-			  ifp->name, v_name,
-			  str_endpoint(&if_endpoint, &b));
+		LOG_ERRNO(errno, "bind() for %s %s in process_raw_ifaces()",
+			  ifd->id_rname, str_endpoint(&if_endpoint, &b));
 		close(fd);
 		return -1;
 	}

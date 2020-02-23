@@ -2489,15 +2489,15 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 			/* search is over if at end of list */
 			if (q == NULL) {
 				/* matches nothing -- create a new entry */
-				int fd = create_udp_socket(ifp, v->name,
-							   pluto_port);
-
-				if (fd < 0)
+				struct iface_dev *id = create_iface_dev(ifp);
+				int fd = create_udp_socket(id, pluto_port);
+				if (fd < 0) {
+					release_iface_dev(&id);
 					break;
+				}
 
 				q = alloc_thing(struct iface_port,
 						"struct iface_port");
-				struct iface_dev *id = create_iface_dev(ifp);
 
 				q->ip_dev = id;
 				q->fd = fd;
@@ -2521,8 +2521,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 				 * it one tried to turn it on.
 				 */
 				if (addrtypeof(&ifp->addr) == AF_INET) {
-					fd = create_udp_socket(ifp,
-							       v->name,
+					fd = create_udp_socket(id,
 							       pluto_nat_port);
 					if (fd < 0)
 						break;
@@ -2864,18 +2863,19 @@ static err_t netlink_migrate_sa_check(void)
 	}
 }
 
-static bool netlink_poke_ipsec_policy_hole(const struct raw_iface *ifp, int fd)
+static bool netlink_poke_ipsec_policy_hole(const struct iface_dev *ifd, int fd)
 {
+	const struct ip_info *type = address_type(&ifd->id_address);
 	struct xfrm_userpolicy_info policy = {
 		.action = XFRM_POLICY_ALLOW,
 		.sel = {
-			.family = addrtypeof(&ifp->addr)
+			.family = type->af,
 		}
 	};
 
 	int opt, sol;
 
-	if (addrtypeof(&ifp->addr) == AF_INET6) {
+	if (type == &ipv6_info) {
 		sol = IPPROTO_IPV6;
 		opt = IPV6_XFRM_POLICY;
 	} else {

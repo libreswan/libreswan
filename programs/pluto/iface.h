@@ -45,9 +45,11 @@ struct iface_dev {
 	refcnt_t refcnt;
 	char *id_rname; /* real device name */
 	bool id_nic_offload;
+	ip_address id_address;
 };
 
 struct iface_dev *create_iface_dev(const struct raw_iface *ifp);
+void release_iface_dev(struct iface_dev **id);
 
 struct iface_port {
 	struct iface_dev   *ip_dev;

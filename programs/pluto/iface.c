@@ -56,6 +56,7 @@ struct iface_dev *create_iface_dev(const struct raw_iface *ifp)
 	id->id_rname = clone_str(ifp->name,
 				 "real device name");
 	id->id_nic_offload = kernel_ops->detect_offload(ifp);
+	id->id_address = ifp->addr;
 	return id;
 }
 
@@ -76,7 +77,7 @@ static void free_iface_dev(struct iface_dev **id,
 	*id = NULL;
 }
 
-static void release_iface_dev(struct iface_dev **id)
+void release_iface_dev(struct iface_dev **id)
 {
 	delete_ref(id, free_iface_dev);
 }
