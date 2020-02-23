@@ -192,7 +192,6 @@ struct iface_port *udp_iface_port(struct iface_dev *ifd, int port,
 
 	q->ip_dev = add_ref(ifd);
 	q->fd = fd;
-	q->change = IFN_ADD;
 	q->local_endpoint = endpoint(&ifd->id_address, port);
 	q->ike_float = ike_float;
 

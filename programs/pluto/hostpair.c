@@ -310,7 +310,7 @@ void release_dead_interfaces(void)
 			struct connection **pp, *p;
 
 			for (pp = &hp->connections; (p = *pp) != NULL; ) {
-				if (p->interface->change == IFN_DELETE) {
+				if (p->interface->ip_dev->ifd_change == IFD_DELETE) {
 					/* this connection's interface is going away */
 					enum connection_kind k = p->kind;
 
@@ -486,7 +486,7 @@ void check_orientations(void)
 		struct iface_port *i;
 
 		for (i = interfaces; i != NULL; i = i->next) {
-			if (i->change != IFN_ADD) {
+			if (i->ip_dev->ifd_change != IFD_ADD) {
 				continue;
 			}
 			for (unsigned u = 0; u < host_pairs.nr_slots; u++) {

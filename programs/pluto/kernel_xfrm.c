@@ -2542,7 +2542,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 			    /* XXX: should this be endpoint_eq(, ifp->addr, pluto_port)? */
 			    sameaddr(&q->local_endpoint, &ifp->addr)) {
 				/* matches -- rejuvinate old entry */
-				q->change = IFN_KEEP;
+				q->ip_dev->ifd_change = IFD_KEEP;
 
 				/*
 				 * look for other interfaces to keep
@@ -2551,7 +2551,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 				for (q = q->next; q; q = q->next) {
 					if (streq(q->ip_dev->id_rname, ifp->name) &&
 						sameaddr(&q->local_endpoint, &ifp->addr))
-						q->change = IFN_KEEP;
+						q->ip_dev->ifd_change = IFD_KEEP;
 				}
 
 				break;

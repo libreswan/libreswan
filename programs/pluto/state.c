@@ -1394,7 +1394,7 @@ void delete_states_dead_interfaces(void)
 	dbg("FOR_EACH_STATE_... in %s", __func__);
 	FOR_EACH_STATE_NEW2OLD(this) {
 		if (this->st_interface &&
-		    this->st_interface->change == IFN_DELETE) {
+		    this->st_interface->ip_dev->ifd_change == IFD_DELETE) {
 			char *id_vname = NULL;
 			struct connection *c = this->st_connection;
 			if (c->xfrmi != NULL && c->xfrmi->name != NULL)

@@ -46,6 +46,7 @@ struct iface_dev {
 	char *id_rname; /* real device name */
 	bool id_nic_offload;
 	ip_address id_address;
+	enum { IFD_ADD, IFD_KEEP, IFD_DELETE } ifd_change;
 };
 
 struct iface_dev *create_iface_dev(const struct raw_iface *ifp);
@@ -57,7 +58,6 @@ struct iface_port {
 	int fd;                 /* file descriptor of socket for IKE UDP messages */
 	struct iface_port *next;
 	bool ike_float;
-	enum { IFN_ADD, IFN_KEEP, IFN_DELETE } change;
 	struct pluto_event *pev;
 };
 

@@ -62,10 +62,10 @@ struct iface_dev *create_iface_dev(const struct raw_iface *ifp)
 
 static void mark_ifaces_dead(void)
 {
-	struct iface_port *p;
-
-	for (p = interfaces; p != NULL; p = p->next)
-		p->change = IFN_DELETE;
+	struct iface_dev *ifd;
+	LIST_FOREACH(ifd, &interface_dev, id_entry) {
+		ifd->ifd_change = IFD_DELETE;
+	}
 }
 
 static void free_iface_dev(struct iface_dev **id,
@@ -85,17 +85,22 @@ void release_iface_dev(struct iface_dev **id)
 static void free_dead_ifaces(void)
 {
 	struct iface_port *p;
-	bool some_dead = FALSE,
-	     some_new = FALSE;
+	bool some_dead = false;
+	bool some_new = false;
 
+	/*
+	 * XXX: this iterates over the interface, and not the
+	 * interface_devs, so that it can log what will be shutdown
+	 * before shutting it down.
+	 */
 	for (p = interfaces; p != NULL; p = p->next) {
-		if (p->change == IFN_DELETE) {
+		if (p->ip_dev->ifd_change == IFD_DELETE) {
 			endpoint_buf b;
 			libreswan_log("shutting down interface %s %s",
 				      p->ip_dev->id_rname,
 				      str_endpoint(&p->local_endpoint, &b));
 			some_dead = TRUE;
-		} else if (p->change == IFN_ADD) {
+		} else if (p->ip_dev->ifd_change == IFD_ADD) {
 			some_new = TRUE;
 		}
 	}
@@ -106,7 +111,7 @@ static void free_dead_ifaces(void)
 		release_dead_interfaces();
 		delete_states_dead_interfaces();
 		for (pp = &interfaces; (p = *pp) != NULL; ) {
-			if (p->change == IFN_DELETE) {
+			if (p->ip_dev->ifd_change == IFD_DELETE) {
 				*pp = p->next; /* advance *pp */
 				delete_pluto_event(&p->pev);
 				close(p->fd);

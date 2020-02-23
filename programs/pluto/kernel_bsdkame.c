@@ -142,7 +142,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 					 */
 					struct iface_dev *id = create_iface_dev(ifp);
 
-					q = udp_iface_port(ifd, pluto_port,
+					q = udp_iface_port(id, pluto_port,
 							   false/*ike_float*/);
 					if (q == NULL) {
 						release_iface_dev(&id);
@@ -163,7 +163,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 					    &&
 					    addrtypeof(&ifp->addr) == AF_INET)
 					{
-						q = udp_iface_port(ifd, pluto_nat_port,
+						q = udp_iface_port(id, pluto_nat_port,
 								   true/*ike_float*/);
 						if (q == NULL) {
 							break;
@@ -183,7 +183,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 				if (streq(q->ip_dev->id_rname, ifp->name) &&
 				    sameaddr(&q->local_endpoint, &ifp->addr)) {
 					/* matches -- rejuvinate old entry */
-					q->change = IFN_KEEP;
+					q->ip_dev->ifd_change = IFD_KEEP;
 
 					/* look for other interfaces to keep (due to NAT-T) */
 					for (q = q->next; q; q = q->next) {
@@ -191,7 +191,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 							  ifp->name) &&
 						    sameaddr(&q->local_endpoint,
 							     &ifp->addr))
-							q->change = IFN_KEEP;
+							q->ip_dev->ifd_change = IFD_KEEP;
 					}
 
 					break;
