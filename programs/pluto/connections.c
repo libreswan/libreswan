@@ -1586,11 +1586,6 @@ static bool extract_connection(const struct fd *whackfd,
 		c->vti_shared = wm->vti_shared;
 #ifdef USE_XFRM_INTERFACE
 		if (wm->xfrm_if_id != yn_no) {
-			if (c->ike_version == IKEv1) {
-				loglog(RC_FATAL, "Failed to add connection \"%s\" : ipsec-interface MUST have ikev2",
-						wm->name);
-				return false;
-			}
 			err_t err = xfrm_iface_supported();
 			if (err == NULL) {
 				if (setup_xfrm_interface(c, wm->xfrm_if_id))
