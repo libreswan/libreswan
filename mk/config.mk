@@ -110,7 +110,7 @@ endif
 # where the appropriate manpage tree is located
 FINALMANDIR ?= $(PREFIX)/share/man
 ifdef INC_MANDIR
-FINALMANDIR = $(PREFIX}/${INC_MANDIR}
+FINALMANDIR = $(PREFIX}/$(INC_MANDIR)
 $(warning Warning: Overriding FINALMANDIR with deprecated INC_MANDIR variable)
 endif
 # the full pathname
