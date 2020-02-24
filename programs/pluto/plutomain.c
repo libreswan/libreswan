@@ -1918,7 +1918,8 @@ void exit_pluto(enum pluto_exit_code status)
 	lsw_conf_free_oco();	/* free global_oco containing path names */
 
 	free_ifaces();	/* free interface list from memory */
-	kernel_ops->shutdown();
+	if (kernel_ops->shutdown != NULL)
+		kernel_ops->shutdown();
 	lsw_nss_shutdown();
 	delete_lock();	/* delete any lock files */
 	free_virtual_ip();	/* virtual_private= */
