@@ -217,7 +217,7 @@ static void handle_udp_packet_cb(evutil_socket_t unused_fd UNUSED,
 				 void *arg)
 {
 	const struct iface_port *ifp = arg;
-	handle_packet_cb(ifp, read_udp_packet);
+	handle_packet_cb(ifp);
 }
 
 void find_ifaces(bool rm_dead)

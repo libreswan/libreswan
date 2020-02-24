@@ -77,17 +77,16 @@
  * buffer and then copy it to a new, properly sized buffer.
  */
 
-static struct msg_digest *read_message(const struct iface_port *ifp,
-				       read_packet_fn *read_packet)
+static struct msg_digest *read_message(const struct iface_port *ifp)
 {
 	/* ??? this buffer seems *way* too big */
 	uint8_t bigbuffer[MAX_INPUT_UDP_SIZE];
-	struct packet packet = {
+	struct iface_packet packet = {
 		.ptr = bigbuffer,
 		.len = sizeof(bigbuffer),
 	};
 
-	if (!read_packet(ifp, &packet)) {
+	if (!ifp->io->read_packet(ifp, &packet)) {
 		/* already logged */
 		return NULL;
 	}
@@ -289,11 +288,10 @@ static void process_md(struct msg_digest **mdp)
 
 static bool impair_incoming(struct msg_digest *md);
 
-void handle_packet_cb(const struct iface_port *ifp,
-		      read_packet_fn *read_packet)
+void handle_packet_cb(const struct iface_port *ifp)
 {
 	threadtime_t md_start = threadtime_start();
-	struct msg_digest *md = read_message(ifp, read_packet);
+	struct msg_digest *md = read_message(ifp);
 	if (md != NULL) {
 		md->md_inception = md_start;
 		if (!impair_incoming(md)) {

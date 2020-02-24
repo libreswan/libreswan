@@ -230,6 +230,16 @@ static bool nat_traversal_espinudp(int sk, struct iface_dev *ifd)
 	return true;
 }
 
+static bool read_udp_packet(const struct iface_port *ifp, struct iface_packet *packet);
+static ssize_t write_udp_packet(const struct iface_port *ifp, const void *ptr, size_t len,
+				const ip_endpoint *remote_endpoint);
+
+static const struct iface_io udp_iface_io = {
+	.protocol = &ip_protocol_udp,
+	.read_packet = read_udp_packet,
+	.write_packet = write_udp_packet,
+};
+
 struct iface_port *udp_iface_port(struct iface_dev *ifd, int port,
 				  bool ike_float)
 {
@@ -247,6 +257,7 @@ struct iface_port *udp_iface_port(struct iface_dev *ifd, int port,
 	q->fd = fd;
 	q->local_endpoint = endpoint(&ifd->id_address, port);
 	q->ike_float = ike_float;
+	q->io = &udp_iface_io;
 
 	q->next = interfaces;
 	interfaces = q;
@@ -699,15 +710,15 @@ static bool check_incoming_msg_errqueue(const struct iface_port *ifp UNUSED,
 #endif	/* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 }
 
-void check_outgoing_msg_errqueue(const struct iface_port *ifp UNUSED,
-				 const char *before UNUSED)
+static void check_outgoing_msg_errqueue(const struct iface_port *ifp UNUSED,
+					const char *before UNUSED)
 {
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
 	(void) check_msg_errqueue(ifp, POLLOUT, before);
 #endif	/* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 }
 
-bool read_udp_packet(const struct iface_port *ifp, struct packet *packet)
+static bool read_udp_packet(const struct iface_port *ifp, struct iface_packet *packet)
 {
 	/*
 	 * Even though select(2) says that there is a message, it
@@ -830,3 +841,14 @@ bool read_udp_packet(const struct iface_port *ifp, struct packet *packet)
 
 	return true;
 }
+
+static ssize_t write_udp_packet(const struct iface_port *ifp,
+				const void *ptr, size_t len,
+				const ip_endpoint *remote_endpoint)
+{
+	check_outgoing_msg_errqueue(ifp, "sending a packet");
+
+	ip_sockaddr remote_sa;
+	size_t remote_sa_size = endpoint_to_sockaddr(remote_endpoint, &remote_sa);
+	return sendto(ifp->fd, ptr, len, 0, &remote_sa.sa, remote_sa_size);
+};

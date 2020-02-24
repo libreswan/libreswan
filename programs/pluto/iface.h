@@ -27,8 +27,23 @@
 
 struct fd;
 struct raw_iface;
+struct iface_port;
 
-/* interface: a terminal point for IKE traffic, IPsec transport mode
+struct iface_packet {
+	ssize_t len;
+	ip_endpoint sender;
+	uint8_t *ptr;
+};
+
+struct iface_io {
+	const struct ip_protocol *protocol;
+	bool (*read_packet)(const struct iface_port *ifp, struct iface_packet *);
+	ssize_t (*write_packet)(const struct iface_port *ifp,
+				const void *ptr, size_t len,
+				const ip_endpoint *remote_endpoint);
+};
+
+/* interface: a te*rminal point for IKE traffic, IPsec transport mode
  * and IPsec tunnels.
  * Essentially:
  * - an IP device (eg. eth1), and
@@ -55,6 +70,7 @@ void add_or_keep_iface_dev(struct raw_iface *ifp);
 
 struct iface_port {
 	struct iface_dev   *ip_dev;
+	const struct iface_io *io;
 	ip_endpoint local_endpoint;	/* interface IP address:port */
 	int fd;                 /* file descriptor of socket for IKE UDP messages */
 	struct iface_port *next;

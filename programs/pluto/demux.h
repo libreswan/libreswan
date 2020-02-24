@@ -32,14 +32,7 @@
 struct state;   /* forward declaration of tag */
 struct iface_port;
 
-struct packet {
-	ssize_t len;
-	ip_endpoint sender;
-	uint8_t *ptr;
-};
-
-typedef bool (read_packet_fn)(const struct iface_port *ifp, struct packet *);
-void handle_packet_cb(const struct iface_port *ifp, read_packet_fn *read_packet);
+void handle_packet_cb(const struct iface_port *ifp);
 
 /* State transition function infrastructure
  *

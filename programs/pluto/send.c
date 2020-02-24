@@ -152,11 +152,7 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 		DBG_dump(NULL, ptr, len);
 	}
 
-	check_outgoing_msg_errqueue(interface, "sending a packet");
-
-	ip_sockaddr remote_sa;
-	size_t remote_sa_size = endpoint_to_sockaddr(&remote_endpoint, &remote_sa);
-	wlen = sendto(interface->fd, ptr, len, 0, &remote_sa.sa, remote_sa_size);
+	wlen = interface->io->write_packet(interface, ptr, len, &remote_endpoint);
 
 	if (wlen != (ssize_t)len) {
 		if (!just_a_keepalive) {
