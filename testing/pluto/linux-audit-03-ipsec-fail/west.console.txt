@@ -25,7 +25,7 @@ west #
 west #
  # See description of limitations of this test
 west #
- ipsec auto --up ikev1-ipsec-fail
+ ipsec auto --up ikev1-ipsec-fail #retransmits
 002 "ikev1-ipsec-fail" #1: initiating Main Mode
 1v1 "ikev1-ipsec-fail" #1: STATE_MAIN_I1: sent MI1, expecting MR1
 1v1 "ikev1-ipsec-fail" #1: STATE_MAIN_I2: sent MI2, expecting MR2
@@ -45,7 +45,7 @@ west #
 002 "ikev1-ipsec-fail" #3: deleting state (STATE_QUICK_I1) and NOT sending notification
 002 "ikev1-ipsec-fail" #1: deleting state (STATE_MAIN_I4) and sending notification
 west #
- ipsec auto --up ikev1-aggr-ipsec-fail
+ ipsec auto --up ikev1-aggr-ipsec-fail #retransmits
 002 "ikev1-aggr-ipsec-fail" #4: initiating Aggressive Mode
 1v1 "ikev1-aggr-ipsec-fail" #4: STATE_AGGR_I1: sent AI1, expecting AR1
 002 "ikev1-aggr-ipsec-fail" #4: Peer ID is ID_FQDN: '@east-v1'

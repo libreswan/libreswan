@@ -4,5 +4,5 @@ ipsec auto --up westnet-eastnet-ikev2a
 # we expect east to re-answer our retransmits
 # drop silently to avoid race conditions of kernel log
 iptables -I INPUT -p udp --dport 500 -j DROP
-ipsec auto --up westnet-eastnet-ikev2b
+ipsec auto --up westnet-eastnet-ikev2b #retransmits
 echo done
