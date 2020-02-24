@@ -101,6 +101,7 @@ void linux_audit_init(int do_audit)
 			loglog(RC_LOG_SERIOUS,
 				"Warning: kernel has no audit support");
 			close(audit_fd);
+			log_to_audit = FALSE;
 			return;
 		} else {
 			loglog(RC_LOG_SERIOUS,
@@ -124,7 +125,7 @@ static void linux_audit(const int type, const char *message, const char *laddr, 
 	audit_fd = audit_open();
 	if (audit_fd < 0) {
 		loglog(RC_LOG_SERIOUS,
-		       "FATAL (SOON): audit_open() failed : %s",
+		       "FATAL: audit_open() failed : %s",
 		       strerror(errno));
 		exit_pluto(PLUTO_EXIT_AUDIT_FAIL);
 	}
