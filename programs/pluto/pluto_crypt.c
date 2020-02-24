@@ -140,7 +140,7 @@ static const struct list_info backlog_info = {
 static pthread_mutex_t backlog_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t backlog_cond = PTHREAD_COND_INITIALIZER;
 
-struct list_head backlog;
+struct list_head backlog = INIT_LIST_HEAD(&backlog, &backlog_info);
 static int backlog_queue_len = 0;
 
 /*
@@ -736,7 +736,6 @@ void start_crypto_helpers(int nhelpers)
 	pc_workers = NULL;
 	nr_helpers_started = 0;
 
-	init_list(&backlog_info, &backlog);
 	init_crypto_helper_delay();
 
 	/* find out how many CPUs there are, if nhelpers is -1 */

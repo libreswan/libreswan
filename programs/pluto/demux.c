@@ -366,17 +366,16 @@ static void jam_replay_entry(struct lswlog *buf, const void *data)
 	jam(buf, "replay packet %lu", r == NULL ? 0L : r->nr);
 }
 
-static struct list_head replay_packets;
-
 static const struct list_info replay_info = {
 	.name = "replay list",
 	.jam = jam_replay_entry,
 };
 
+static struct list_head replay_packets = INIT_LIST_HEAD(&replay_packets, &replay_info);
+
 static void save_md_for_replay(bool already_impaired, struct msg_digest *md)
 {
 	if (!already_impaired) {
-		init_list(&replay_info, &replay_packets);
 		struct replay_entry *e = alloc_thing(struct replay_entry, "replay");
 		e->md = clone_raw_md(md, "copy of real message");
 		e->nr = ++replay_count; /* yes; pre-increment */

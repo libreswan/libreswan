@@ -25,7 +25,8 @@ const hash_t zero_hash = { 0 };
 void init_hash_table(struct hash_table *table)
 {
 	for (unsigned i = 0; i < table->nr_slots; i++) {
-		init_list(&table->info, &table->slots[i]);
+		struct list_head *slot = &table->slots[i];
+		*slot = (struct list_head) INIT_LIST_HEAD(slot, &table->info);
 	}
 }
 

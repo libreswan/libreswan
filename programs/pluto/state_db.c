@@ -63,7 +63,7 @@ static const struct list_info serialno_list_info = {
 	.jam = jam_state,
 };
 
-struct list_head serialno_list_head;
+struct list_head serialno_list_head = INIT_LIST_HEAD(&serialno_list_head, &serialno_list_info);
 
 /*
  * A table hashed by serialno.
@@ -470,7 +470,6 @@ void del_state_from_db(struct state *st)
 
 void init_state_db(void)
 {
-	init_list(&serialno_list_info, &serialno_list_head);
 	for (unsigned h = 0; h < elemsof(state_hashes); h++) {
 		init_hash_table(&state_hashes[h]);
 	}

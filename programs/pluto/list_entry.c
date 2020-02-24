@@ -77,25 +77,6 @@ static void log_entry(const char *op, struct list_entry *entry)
 	}
 }
 
-void init_list(const struct list_info *info,
-	       struct list_head *list)
-{
-	if (list->head.info == NULL) {
-		list->head.info = info;
-		passert_info(info, list->head.newer == NULL);
-		passert_info(info, list->head.older == NULL);
-		list->head.older = &list->head;
-		list->head.newer = &list->head;
-		list->head.data = NULL;	/* sign of being head */
-	} else {
-		/* already initialized */
-		/* ??? does this ever happen? */
-		passert_info(info, list->head.newer != NULL);
-		passert_info(info, list->head.info == info);
-		passert_info(info, list->head.data == NULL);
-	}
-}
-
 struct list_entry list_entry(const struct list_info *info,
 			     void *data)
 {
