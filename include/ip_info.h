@@ -13,7 +13,7 @@ struct ip_info {
 	 * ip_address
 	 */
 	unsigned ip_version; /* 4 or 6 */
-	const char *ip_name;
+	const char *ip_name; /* "IPv4" or "IPv6" */
 	size_t ip_size; /* 4 or 16 */
 	/* 0.0.0.0 or :: */
 	const ip_address any_address;
