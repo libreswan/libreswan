@@ -5,6 +5,7 @@ v3.31 (unreleased)
 * KLIPS: Support for KLIPS completely removed [Paul]
 * pluto: Support for deprecated algos removed: serpent, twofish, cast [Paul]
 * pluto: Increase maximum number of IKE fragments accepted to 32 [Paul]
+* pluto: disable log_to_audit if kernel does not support audit [Paul]
 * show: Fixup for python3 version of ipaddress module [Paul]
 * IKEv2: Decode notify payloads into the message digest [Andrew]
 * building: Remove support for SINGLE_CONF_DIR, EMIT_ISAKMP_SPI, USE_KEYRR [Paul]
