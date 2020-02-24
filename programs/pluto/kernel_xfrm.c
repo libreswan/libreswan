@@ -2506,9 +2506,8 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 
 				endpoint_buf b;
 				libreswan_log(
-					"adding interface %s (%s) %s",
+					"adding interface %s %s",
 					q->ip_dev->id_rname,
-					"esp-hw-offload not supported by kernel",
 					str_endpoint(&q->local_endpoint, &b));
 
 				/*
