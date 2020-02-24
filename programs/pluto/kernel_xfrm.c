@@ -2897,7 +2897,11 @@ const struct kernel_ops netkey_kernel_ops = {
 	.replay_window = IPSEC_SA_DEFAULT_REPLAY_WINDOW,
 
 	.init = init_netlink,
+#ifdef USE_XFRM_INTERFACE
 	.shutdown = free_xfrmi_ipsec1,
+#else
+	.shutdown = NULL,
+#endif
 	.process_msg = netlink_process_msg,
 	.raw_eroute = netlink_raw_eroute,
 	.add_sa = netlink_add_sa,
