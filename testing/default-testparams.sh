@@ -50,6 +50,7 @@ REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-ip-xfrm-policy.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-swan-prep.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-certutil.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-cp.sed"
+REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-tcpdump.sed"
 
 # this is last
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-prompt-double.sed"
