@@ -781,6 +781,7 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 		DBG(DBG_NATT,
 			DBG_log("not behind NAT: no NAT-T KEEP-ALIVE required for conn %s",
 				c->name));
+		return;
 	}
 
 	if (!c->nat_keepalive) {
