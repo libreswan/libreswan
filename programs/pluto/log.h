@@ -162,6 +162,9 @@ struct logger {
 		.object_whackfd = (STATE)->st_whack_sock,	\
 	}
 
+struct logger *clone_logger(struct logger log);
+void free_logger(struct logger **logp);
+
 void log_message(lset_t rc_flags,
 		 const struct logger *log,
 		 const char *format, ...) PRINTF_LIKE(3);

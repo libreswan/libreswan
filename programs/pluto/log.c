@@ -817,6 +817,47 @@ void log_message(lset_t rc_flags, const struct logger *log,
 	va_end(ap);
 }
 
+struct logger *clone_logger(const struct logger stack_logger)
+{
+	/*
+	 * Convert the dynamicically generated OBJECT prefix into an
+	 * unchanging string.  This way the prefix can be safely
+	 * accessed on a helper thread.
+	 */
+	char prefix[LOG_WIDTH];
+	jambuf_t prefix_buf = ARRAY_AS_JAMBUF(prefix);
+	stack_logger.jam_prefix(&prefix_buf, stack_logger.object);
+	/* construct the clone */
+	struct logger heap = {
+		/* XXX: fight const stupidity */
+		.global_whackfd = dup_any((struct fd*) stack_logger.global_whackfd),
+		.object_whackfd = dup_any((struct fd*) stack_logger.object_whackfd),
+		.where = stack_logger.where,
+		.jam_prefix = jam_string_prefix,
+		.object = clone_str(prefix, "heap logger prefix"),
+	};
+	/* and clone it */
+	return clone_thing(heap, "heap logger");
+}
+
+void free_logger(struct logger **logp)
+{
+	struct fd *const_stupidity;
+	/* global_whackfd */
+	const_stupidity = (struct fd*) (*logp)->global_whackfd;
+	(*logp)->global_whackfd = NULL;
+	close_any(&const_stupidity);
+	/* object_whackfd */
+	const_stupidity = (struct fd*) (*logp)->object_whackfd;
+	(*logp)->object_whackfd = NULL;
+	close_any(&const_stupidity);
+	/* this object - a string - really is on the heap */
+	pfree((void*) (*logp)->object);
+	/* done */
+	pfree(*logp);
+	*logp = NULL;
+}
+
 void log_pending(lset_t rc_flags, const struct pending *pending,
 		 const char *format, ...)
 {
