@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>		/* MSG_ERRQUEUE if defined */
 #include <netinet/in.h>		/* IP_RECVERR if defined */
+#include <netinet/udp.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -47,6 +48,7 @@
 #include "state_db.h"		/* for state_by_ike_spis() */
 #include "log.h"
 #include "ip_info.h"
+#include "nat_traversal.h"	/* for nat_traversal_enabled which seems like a broken idea */
 
 static int create_udp_socket(const struct iface_dev *ifd, int port)
 {
@@ -180,12 +182,63 @@ static int create_udp_socket(const struct iface_dev *ifd, int port)
 	return fd;
 }
 
+static bool nat_traversal_espinudp(int sk, struct iface_dev *ifd)
+{
+	const char *fam = address_type(&ifd->id_address)->ip_name;
+	dbg("NAT-Traversal: Trying sockopt style NAT-T");
+
+	/*
+	 * The SOL (aka socket level) is really the the protocol
+	 * number which, for UDP, is always 17.  Linux provides a
+	 * SOL_* macro, the others don't.
+	 */
+#if defined(SOL_UDP)
+	const int sol_udp = SOL_UDP;
+#elif defined(IPPROTO_UDP)
+	const int sol_udp = IPPROTO_UDP;
+#endif
+
+	/*
+	 * Was UDP_ESPINUDP (aka 100).  Linux/NetBSD have the value
+	 * 100, FreeBSD has the value 1.
+	 */
+	const int sol_name = UDP_ENCAP;
+
+	/*
+	 * Was ESPINUDP_WITH_NON_ESP (aka 2) defined in "libreswan.h"
+	 * which smells like something intended for the old KLIPS
+	 * module. <netinet/udp.h> defines the below across linux and
+	 * *BSD.
+	 */
+	const int sol_value = UDP_ENCAP_ESPINUDP;
+
+	int r = setsockopt(sk, sol_udp, sol_name, &sol_value, sizeof(sol_value));
+	if (r == -1) {
+		dbg("NAT-Traversal: ESPINUDP(%d) setup failed for sockopt style NAT-T family %s (errno=%d)",
+		    sol_value, fam, errno);
+		/* all methods failed to detect NAT-T support */
+		loglog(RC_LOG_SERIOUS,
+		       "NAT-Traversal: ESPINUDP for this kernel not supported or not found for family %s",
+		       fam);
+		libreswan_log("NAT-Traversal is turned OFF due to lack of KERNEL support");
+		nat_traversal_enabled = false;
+		return false;
+	}
+
+	dbg("NAT-Traversal: ESPINUDP(%d) setup succeeded for sockopt style NAT-T family %s",
+	    sol_value, fam);
+	return true;
+}
+
 struct iface_port *udp_iface_port(struct iface_dev *ifd, int port,
 				  bool ike_float)
 {
 	int fd = create_udp_socket(ifd, port);
 	if (fd < 0)
 		return NULL;
+	if (ike_float && !nat_traversal_espinudp(fd, ifd)) {
+		dbg("nat-traversal failed");
+	}
 
 	struct iface_port *q = alloc_thing(struct iface_port,
 					   "struct iface_port");

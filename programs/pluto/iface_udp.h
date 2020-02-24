@@ -41,4 +41,5 @@ bool read_udp_packet(const struct iface_port *ifp, struct packet *packet);
 
 void check_outgoing_msg_errqueue(const struct iface_port *ifp UNUSED,
 				 const char *before UNUSED);
+
 #endif

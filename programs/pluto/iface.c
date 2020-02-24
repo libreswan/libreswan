@@ -36,6 +36,7 @@
 #include "kernel.h"
 #include "demux.h"
 #include "iface_udp.h"
+#include "ip_info.h"
 
 struct iface_port  *interfaces = NULL;  /* public interfaces */
 
@@ -43,38 +44,65 @@ struct iface_port  *interfaces = NULL;  /* public interfaces */
  * The interfaces - eth0 ...
  */
 
-static LIST_HEAD(iface_list, iface_dev) interface_dev =
-         LIST_HEAD_INITIALIZER(interface_dev);
-
-struct iface_dev *create_iface_dev(const struct raw_iface *ifp)
+static void jam_iface_dev(jambuf_t *buf, const void *data)
 {
-	struct iface_dev *id = alloc_thing(struct iface_dev,
-					   "struct iface_dev");
-	init_ref(id);
-	LIST_INSERT_HEAD(&interface_dev, id,
-			 id_entry);
-	id->id_rname = clone_str(ifp->name,
+	const struct iface_dev *ifd = data;
+	jam_string(buf, ifd->id_rname);
+}
+
+static const struct list_info iface_dev_info = {
+	.name = "interface_dev",
+	.jam = jam_iface_dev,
+};
+
+static struct list_head interface_dev = INIT_LIST_HEAD(&interface_dev, &iface_dev_info);
+
+static void add_iface_dev(const struct raw_iface *ifp)
+{
+	struct iface_dev *ifd = alloc_thing(struct iface_dev,
+					    "struct iface_dev");
+	init_ref(ifd);
+	ifd->ifd_entry = list_entry(&iface_dev_info, ifd);
+	insert_list_entry(&interface_dev, &ifd->ifd_entry);
+	ifd->id_rname = clone_str(ifp->name,
 				 "real device name");
-	id->id_nic_offload = kernel_ops->detect_offload(ifp);
-	id->id_address = ifp->addr;
-	return id;
+	ifd->id_nic_offload = kernel_ops->detect_offload(ifp);
+	ifd->id_address = ifp->addr;
+	dbg("iface: marking %s add", ifd->id_rname);
+	ifd->ifd_change = IFD_ADD;
 }
 
 static void mark_ifaces_dead(void)
 {
 	struct iface_dev *ifd;
-	LIST_FOREACH(ifd, &interface_dev, id_entry) {
+	FOR_EACH_LIST_ENTRY_OLD2NEW(&interface_dev, ifd) {
+		dbg("iface: marking %s dead", ifd->id_rname);
 		ifd->ifd_change = IFD_DELETE;
 	}
 }
 
-static void free_iface_dev(struct iface_dev **id,
+void add_or_keep_iface_dev(struct raw_iface *ifp)
+{
+	/* find the iface */
+	struct iface_dev *ifd;
+	FOR_EACH_LIST_ENTRY_OLD2NEW(&interface_dev, ifd) {
+		if (streq(ifd->id_rname, ifp->name) &&
+		    sameaddr(&ifd->id_address, &ifp->addr)) {
+			dbg("iface: marking %s keep", ifd->id_rname);
+			ifd->ifd_change = IFD_KEEP;
+			return;
+		}
+	}
+	add_iface_dev(ifp);
+}
+
+static void free_iface_dev(struct iface_dev **ifd,
 			   where_t where UNUSED)
 {
-	pfree((*id)->id_rname);
-	LIST_REMOVE((*id), id_entry);
-	pfree((*id));
-	*id = NULL;
+	remove_list_entry(&(*ifd)->ifd_entry);
+	pfree((*ifd)->id_rname);
+	pfree((*ifd));
+	*ifd = NULL;
 }
 
 void release_iface_dev(struct iface_dev **id)
@@ -137,6 +165,53 @@ void free_ifaces(void)
 	free_dead_ifaces();
 }
 
+/*
+ * Open new interfaces.
+ */
+static void add_new_ifaces(void)
+{
+	struct iface_dev *ifd;
+	FOR_EACH_LIST_ENTRY_OLD2NEW(&interface_dev, ifd) {
+		if (ifd->ifd_change != IFD_ADD)
+			continue;
+
+		struct iface_port *q = udp_iface_port(ifd, pluto_port,
+						      false/*ike_float*/);
+		if (q == NULL) {
+			ifd->ifd_change = IFD_DELETE;
+			continue;
+		}
+
+		endpoint_buf b;
+		libreswan_log("adding interface %s %s",
+			      q->ip_dev->id_rname,
+			      str_endpoint(&q->local_endpoint, &b));
+
+		/*
+		 * From linux's xfrm: right now, we do not support
+		 * NAT-T on IPv6, because the kernel did not support
+		 * it, and gave an error it one tried to turn it on.
+		 *
+		 * From bsd's kame: right now, we do not support NAT-T
+		 * on IPv6, because the kernel did not support it, and
+		 * gave an error it one tried to turn it on.
+		 *
+		 * Who should we believe?
+		 */
+		if (address_type(&ifd->id_address) == &ipv4_info) {
+			q = udp_iface_port(ifd, pluto_nat_port,
+					   true/*ike_float*/);
+			if (q == NULL) {
+				continue;
+			}
+			endpoint_buf b;
+			libreswan_log("adding interface %s %s",
+				      q->ip_dev->id_rname,
+				      str_endpoint(&q->local_endpoint, &b));
+		}
+	}
+}
+
 static void handle_udp_packet_cb(evutil_socket_t unused_fd UNUSED,
 				 const short unused_event UNUSED,
 				 void *arg)
@@ -147,13 +222,14 @@ static void handle_udp_packet_cb(evutil_socket_t unused_fd UNUSED,
 
 void find_ifaces(bool rm_dead)
 {
-	if (rm_dead)
-		mark_ifaces_dead();
-
-	if (kernel_ops->process_raw_ifaces != NULL) {
-		kernel_ops->process_raw_ifaces(find_raw_ifaces4());
-		kernel_ops->process_raw_ifaces(find_raw_ifaces6());
-	}
+	/*
+	 * Sweep the interfaces, after this each is either KEEP, DEAD,
+	 * or ADD.
+	 */
+	mark_ifaces_dead();
+	kernel_ops->process_raw_ifaces(find_raw_ifaces4());
+	kernel_ops->process_raw_ifaces(find_raw_ifaces6());
+	add_new_ifaces();
 
 	if (rm_dead)
 		free_dead_ifaces(); /* ditch remaining old entries */

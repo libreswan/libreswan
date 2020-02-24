@@ -74,8 +74,6 @@
 void init_nat_traversal(deltatime_t keep_alive_period);
 
 extern bool nat_traversal_enabled;
-extern bool nat_traversal_support_non_ike;
-extern bool nat_traversal_support_port_floating;
 
 /**
  * NAT-D
@@ -108,8 +106,6 @@ void nat_traversal_new_ka_event(void);
 void nat_traversal_ka_event(void);
 
 extern void ikev1_natd_init(struct state *st, struct msg_digest *md);
-
-extern int nat_traversal_espinudp_socket(int sk, const char *fam);
 
 /**
  * Vendor ID
