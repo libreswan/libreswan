@@ -816,9 +816,9 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 				}
 				if (logger != NO_STREAM) {
 					endpoint_buf epb;
-					log_message(logger,
-						    null_fd/*whack*/,
-						    sender/*could be null*/, NULL/*md*/,
+					struct logger log = (sender != NULL ? STATE_LOGGER(sender) :
+							     GLOBAL_LOGGER(null_fd));
+					log_message(logger, &log,
 						    "ERROR: asynchronous network error report on %s (%s)%s, complainant %s: %s [errno %" PRIu32 ", origin %s]",
 						    ifp->ip_dev->id_rname,
 						    str_endpoint(&ifp->local_endpoint, &epb),

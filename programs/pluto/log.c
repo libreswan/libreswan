@@ -788,12 +788,7 @@ void log_jambuf(lset_t rc_flags, const struct fd *object_fd, jambuf_t *buf)
 			 object_fd, buf);
 }
 
-static void broadcast(lset_t rc_flags,
-		      const struct fd *global_whackfd,
-		      const struct fd *object_whackfd,
-		      const struct state *st,
-		      const struct connection *c,
-		      const struct msg_digest *md,
+static void broadcast(lset_t rc_flags, const struct logger *log,
 		      const char *message, va_list ap)
 {
 	LSWBUF(buf) {
@@ -807,23 +802,18 @@ static void broadcast(lset_t rc_flags,
 		 * Can a shorter prefix be used?
 		 */
 		/* jam_debug_prefix(buf, st, c, from) */
-		jam_log_prefix(buf, st, c, md != NULL ? &md->sender : NULL);
+		log->jam_prefix(buf, log->object);
 		jam_va_list(buf, message, ap);
-		broadcast_jambuf(rc_flags, global_whackfd, object_whackfd, buf);
+		broadcast_jambuf(rc_flags, log->global_whackfd, log->object_whackfd, buf);
 	}
 }
 
-void log_message(lset_t rc_flags,
-		 const struct fd *global_whackfd,
-		 const struct state *st,
-		 const struct msg_digest *md,
+void log_message(lset_t rc_flags, const struct logger *log,
 		 const char *format, ...)
 {
 	va_list ap;
 	va_start(ap, format);
-	const struct fd *object_whackfd = (st != NULL ? st->st_whack_sock : null_fd);
-	broadcast(rc_flags, global_whackfd, object_whackfd,
-		  st, NULL/*connection*/, md, format, ap);
+	broadcast(rc_flags, log, format, ap);
 	va_end(ap);
 }
 
@@ -832,11 +822,8 @@ void log_pending(lset_t rc_flags, const struct pending *pending,
 {
 	va_list ap;
 	va_start(ap, format);
-	broadcast(rc_flags,
-		  in_main_thread() ? whack_log_fd/*GLOBAL*/ : null_fd,
-		  pending->whack_sock,
-		  NULL/*ST*/, pending->connection, NULL/*MD*/,
-		  format, ap);
+	struct logger log = PENDING_LOGGER(pending);
+	broadcast(rc_flags, &log, format, ap);
 	va_end(ap);
 }
 
@@ -845,11 +832,8 @@ void log_state(lset_t rc_flags, const struct state *st,
 {
 	va_list ap;
 	va_start(ap, format);
-	broadcast(rc_flags,
-		  in_main_thread() ? whack_log_fd/*GLOBAL*/ : null_fd,
-		  st->st_whack_sock,
-		  st/*ST*/, NULL/*connection**/, NULL/*MD*/,
-		  format, ap);
+	struct logger log = STATE_LOGGER(st);
+	broadcast(rc_flags, &log, format, ap);
 	va_end(ap);
 }
 
@@ -859,10 +843,8 @@ void log_connection(lset_t rc_flags, struct fd *global_whackfd,
 {
 	va_list ap;
 	va_start(ap, format);
-	broadcast(rc_flags, global_whackfd,
-		  null_fd, /* no object FD */
-		  NULL/*state*/, c/*connection**/, NULL/*MD*/,
-		  format, ap);
+	struct logger log = CONNECTION_LOGGER(c, global_whackfd);
+	broadcast(rc_flags, &log, format, ap);
 	va_end(ap);
 }
 
@@ -871,10 +853,37 @@ void log_md(lset_t rc_flags, const struct msg_digest *md,
 {
 	va_list ap;
 	va_start(ap, format);
-	broadcast(rc_flags,
-		  in_main_thread() ? whack_log_fd/*GLOBAL*/ : null_fd,
-		  null_fd/* no object FD */,
-		  NULL/*state*/, NULL/*connection**/, md/*MD*/,
-		  format, ap);
+	struct logger log = MESSAGE_LOGGER(md);
+	broadcast(rc_flags, &log, format, ap);
 	va_end(ap);
+}
+
+void jam_global_prefix(jambuf_t *unused_buf UNUSED,
+		       const void *unused_object UNUSED)
+{
+	/* jam(buf, "") - nothing to add */
+}
+
+void jam_message_prefix(jambuf_t *buf, const void *object)
+{
+	const struct msg_digest *message = object;
+	jam_log_prefix(buf, NULL/*state*/, NULL/*connection*/, &message->sender);
+}
+
+void jam_connection_prefix(jambuf_t *buf, const void *object)
+{
+	const struct connection *connection = object;
+	jam_log_prefix(buf, NULL/*state*/, connection, NULL/*message*/);
+}
+
+void jam_state_prefix(jambuf_t *buf, const void *object)
+{
+	const struct state *state = object;
+	jam_log_prefix(buf, state, NULL/*connection*/, NULL/*message*/);
+}
+
+void jam_string_prefix(jambuf_t *buf, const void *object)
+{
+	const char *string = object;
+	jam_string(buf, string);
 }

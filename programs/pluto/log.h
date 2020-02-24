@@ -109,11 +109,62 @@ extern void log_pop_from(ip_address old_from, where_t where);
  * prefix, and logs to ST's whackfd when possible.
  */
 
+typedef void jam_prefix_fn(jambuf_t *buf, const void *object);
+
+jam_prefix_fn jam_global_prefix;
+jam_prefix_fn jam_message_prefix;
+jam_prefix_fn jam_connection_prefix;
+jam_prefix_fn jam_state_prefix;
+jam_prefix_fn jam_string_prefix;
+
+struct logger {
+	const struct fd *global_whackfd;
+	const struct fd *object_whackfd;
+	const void *object;
+	jam_prefix_fn *jam_prefix;
+	where_t where;
+};
+
+#define GLOBAL_LOGGER(WHACKFD) (struct logger)			\
+	{							\
+		.where = HERE,					\
+		.global_whackfd = WHACKFD,			\
+		.jam_prefix = jam_global_prefix,		\
+	}
+#define MESSAGE_LOGGER(MD) (struct logger)			\
+	{							\
+		.where = HERE,					\
+		.global_whackfd = null_fd,			\
+		.jam_prefix = jam_message_prefix,		\
+		.object = MD,					\
+	}
+#define CONNECTION_LOGGER(CONNECTION, WHACKFD) (struct logger)	\
+	{							\
+		.where = HERE,					\
+		.global_whackfd = WHACKFD,			\
+		.jam_prefix = jam_connection_prefix,		\
+		.object = CONNECTION,				\
+	}
+#define PENDING_LOGGER(PENDING) (struct logger)			\
+	{							\
+		.where = HERE,					\
+		.global_whackfd = whack_log_fd,			\
+		.jam_prefix = jam_connection_prefix,		\
+		.object = (PENDING)->connection,		\
+		.object_whackfd = (PENDING)->whack_sock,	\
+	}
+#define STATE_LOGGER(STATE) (struct logger)			\
+	{							\
+		.where = HERE,					\
+		.global_whackfd = whack_log_fd,			\
+		.jam_prefix = jam_state_prefix,			\
+		.object = STATE,				\
+		.object_whackfd = (STATE)->st_whack_sock,	\
+	}
+
 void log_message(lset_t rc_flags,
-		 const struct fd *global_whackfd,
-		 const struct state *st,
-		 const struct msg_digest *md,
-		 const char *format, ...) PRINTF_LIKE(5);
+		 const struct logger *log,
+		 const char *format, ...) PRINTF_LIKE(3);
 
 void log_pending(lset_t rc_flags,
 		 const struct pending *pending,
@@ -131,16 +182,18 @@ void log_state(lset_t rc_flags,
  */
 
 #define plog_global(MESSAGE, ...)					\
-	log_message(LOG_STREAM,						\
-		    NULL/*global_whackfd*/,				\
-		    NULL/*STATE*/, NULL/*MD*/,				\
-		    MESSAGE,##__VA_ARGS__)
+	{								\
+		struct logger log_ = GLOBAL_LOGGER(null_fd);		\
+		log_message(LOG_STREAM, &log_,				\
+			    MESSAGE,##__VA_ARGS__);			\
+	}
 
 #define loglog_global(RC, WHACKFD, MESSAGE, ...)			\
-	log_message(RC,							\
-		    WHACKFD,						\
-		    NULL/*STATE*/, NULL/*MD*/,				\
-		    MESSAGE,##__VA_ARGS__)
+	{								\
+		struct logger log_ = GLOBAL_LOGGER(WHACKFD);		\
+		log_message(RC,	&log_,					\
+			    MESSAGE,##__VA_ARGS__);			\
+	}
 
 /*
  * XXX: log_md() should never be called directly - *log_md() is only

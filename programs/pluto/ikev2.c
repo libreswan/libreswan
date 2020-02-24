@@ -655,7 +655,7 @@ void init_ikev2(void)
 /*
  * split an incoming message into payloads
  */
-static struct payload_summary ikev2_decode_payloads(struct state *st,
+static struct payload_summary ikev2_decode_payloads(struct logger *log,
 						    struct msg_digest *md,
 						    pb_stream *in_pbs,
 						    enum next_payload_types_ikev2 np)
@@ -691,7 +691,7 @@ static struct payload_summary ikev2_decode_payloads(struct state *st,
 		    enum_show(&ikev2_payload_names, np));
 
 		if (md->digest_roof >= elemsof(md->digest)) {
-			log_message(RC_LOG_SERIOUS, null_fd/*whack*/, st, md,
+			log_message(RC_LOG_SERIOUS, log,
 				    "more than %zu payloads in message; ignored",
 				    elemsof(md->digest));
 			summary.n = v2N_INVALID_SYNTAX;
@@ -718,7 +718,7 @@ static struct payload_summary ikev2_decode_payloads(struct state *st,
 			 * it does not, we should just ignore it.
 			 */
 			if (!in_struct(&pd->payload, &ikev2_generic_desc, in_pbs, &pd->pbs)) {
-				log_message(RC_LOG_SERIOUS, null_fd/*whack*/, st, md,
+				log_message(RC_LOG_SERIOUS, log,
 					    "malformed payload in packet");
 				summary.n = v2N_INVALID_SYNTAX;
 				break;
@@ -740,7 +740,7 @@ static struct payload_summary ikev2_decode_payloads(struct state *st,
 				default:
 					bad_case(v2_msg_role(md));
 				}
-				log_message(RC_LOG_SERIOUS, null_fd/*whack*/, st, md,
+				log_message(RC_LOG_SERIOUS, log,
 					    "message %s contained an unknown critical payload type (%s)",
 					    role, enum_show(&ikev2_payload_names, np));
 				summary.n = v2N_UNSUPPORTED_CRITICAL_PAYLOAD;
@@ -749,7 +749,7 @@ static struct payload_summary ikev2_decode_payloads(struct state *st,
 				break;
 			}
 			struct esb_buf eb;
-			log_message(RC_COMMENT, NULL/*whackfd*/, st, md,
+			log_message(RC_COMMENT, log,
 				    "non-critical payload ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
 				    enum_showb(&ikev2_payload_names, np, &eb));
 			np = pd->payload.generic.isag_np;
@@ -770,7 +770,7 @@ static struct payload_summary ikev2_decode_payloads(struct state *st,
 		 */
 		pd->payload_type = np;
 		if (!in_struct(&pd->payload, sd, in_pbs, &pd->pbs)) {
-			log_message(RC_LOG_SERIOUS,  null_fd, st, md,
+			log_message(RC_LOG_SERIOUS,  log,
 				    "malformed payload in packet");
 			summary.n = v2N_INVALID_SYNTAX;
 			break;
@@ -1559,7 +1559,8 @@ void ikev2_process_packet(struct msg_digest **mdp)
 				 * v2N_UNSUPPORTED_CRITICAL_PAYLOAD.
 				 */
 				pexpect(!md->message_payloads.parsed);
-				md->message_payloads = ikev2_decode_payloads(NULL, md,
+				struct logger log = MESSAGE_LOGGER(md);
+				md->message_payloads = ikev2_decode_payloads(&log, md,
 									     &md->message_pbs,
 									     md->hdr.isa_np);
 				if (md->message_payloads.n != v2N_NOTHING_WRONG) {
@@ -1840,8 +1841,9 @@ static void ike_process_packet(struct msg_digest **mdp, struct ike_sa *ike)
 		dbg("unpacking clear payload");
 		pexpect(v2_msg_role(md) == MESSAGE_RESPONSE ||
 			md->hdr.isa_xchg != ISAKMP_v2_IKE_SA_INIT);
+		struct logger log = STATE_LOGGER(st);
 		md->message_payloads =
-			ikev2_decode_payloads(st, md, &md->message_pbs,
+			ikev2_decode_payloads(&log, md, &md->message_pbs,
 					      md->hdr.isa_np);
 		if (md->message_payloads.n != v2N_NOTHING_WRONG) {
 			/*
@@ -2073,7 +2075,8 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * our problems.
 			 */
 			struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
-			md->encrypted_payloads = ikev2_decode_payloads(st, md, &sk->pbs,
+			struct logger log = STATE_LOGGER(st);
+			md->encrypted_payloads = ikev2_decode_payloads(&log, md, &sk->pbs,
 								       sk->payload.generic.isag_np);
 			if (md->encrypted_payloads.n != v2N_NOTHING_WRONG) {
 				switch (v2_msg_role(md)) {
