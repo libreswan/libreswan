@@ -103,11 +103,6 @@ static void nokernel_scan_shunts(void)
 {
 }
 
-static void nokernel_shutdown(void)
-{
-	dbg("%s: nothing to do", __func__);
-}
-
 static bool nokernel_detect_offload(const struct raw_iface *ifp UNUSED)
 {
 	dbg("%s: nothing to do", __func__);
@@ -120,7 +115,7 @@ const struct kernel_ops nokernel_kernel_ops = {
 	.route_fdp = NULL,
 
 	.init = init_nokernel,
-	.shutdown = nokernel_shutdown,
+	.shutdown = NULL,
 	.pfkey_register = nokernel_register,
 	.pfkey_register_response = nokernel_register_response,
 	.process_queue = nokernel_dequeue,
