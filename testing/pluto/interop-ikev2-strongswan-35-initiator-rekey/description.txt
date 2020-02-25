@@ -1,0 +1,6 @@
+Interop with strongswan, original IKE initiator, west, rekeying IPsec SA.
+
+West, libreswan, is the original IKE initiator.
+West, strongswan, is the original IKE responder. West will rekey the IKE SA using
+CREATE_CHILD_SA exchange  RFC 7296 #1.3.2
+The libreswan, east, is the original initiator and the responder to Child rekey.
