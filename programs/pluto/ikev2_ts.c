@@ -269,16 +269,17 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 		const struct ip_info *ipv;
 		switch (ts1.isat1_type) {
 		case IKEv2_TS_IPV4_ADDR_RANGE:
+			ts->ts_type = IKEv2_TS_IPV4_ADDR_RANGE;
 			ipv = &ipv4_info;
 			break;
 		case IKEv2_TS_IPV6_ADDR_RANGE:
+			ts->ts_type = IKEv2_TS_IPV6_ADDR_RANGE;
 			ipv = &ipv6_info;
 			break;
 		default:
 			return false;
 		}
 
-		ts->ts_type = IKEv2_TS_IPV6_ADDR_RANGE;
 		if (!pbs_in_address(&ts->net.start, ipv, &addr, "TS low")) {
 			return false;
 		}
