@@ -26,13 +26,13 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>		/* MSG_ERRQUEUE if defined */
-#include <netinet/in.h>		/* IP_RECVERR if defined */
 #include <netinet/udp.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 
-#if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
+#ifdef MSG_ERRQUEUE
+# include <netinet/in.h> 	/* for IP_RECVERR */
 # include <linux/errqueue.h>
 # include <poll.h>
 #endif
@@ -117,13 +117,14 @@ static int create_udp_socket(const struct iface_dev *ifd, int port)
 	}
 
 	/* To improve error reporting.  See ip(7). */
-#if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
+#ifdef MSG_ERRQUEUE
 	if (pluto_sock_errqueue) {
 		if (setsockopt(fd, SOL_IP, IP_RECVERR, (const void *)&on, sizeof(on)) < 0) {
 			LOG_ERRNO(errno, "setsockopt IP_RECVERR in create_socket()");
 			close(fd);
 			return -1;
 		}
+		dbg("MSG_ERRQUEUE enabled on fd %d", fd);
 	}
 #endif
 
@@ -230,9 +231,147 @@ static bool nat_traversal_espinudp(int sk, struct iface_dev *ifd)
 	return true;
 }
 
-static bool read_udp_packet(const struct iface_port *ifp, struct iface_packet *packet);
-static ssize_t write_udp_packet(const struct iface_port *ifp, const void *ptr, size_t len,
-				const ip_endpoint *remote_endpoint);
+#ifdef MSG_ERRQUEUE
+static bool check_msg_errqueue(const struct iface_port *ifp, short interest, const char *func);
+#endif
+
+static bool read_udp_packet(const struct iface_port *ifp, struct iface_packet *packet)
+{
+#ifdef MSG_ERRQUEUE
+	/*
+	 * Even though select(2) says that there is a message, it
+	 * might only be a MSG_ERRQUEUE message.  At least sometimes
+	 * that leads to a hanging recvfrom.  To avoid what appears to
+	 * be a kernel bug, check_msg_errqueue uses poll(2) and tells
+	 * us if there is anything for us to read.
+	 *
+	 * This is early enough that teardown isn't required:
+	 * just return on failure.
+	 */
+	threadtime_t errqueue_start = threadtime_start();
+	bool errqueue_ok = check_msg_errqueue(ifp, POLLIN, __func__);
+	threadtime_stop(&errqueue_start, SOS_NOBODY,
+			"%s() calling check_incoming_msg_errqueue()", __func__);
+	if (!errqueue_ok) {
+		return false; /* no normal message to read */
+	}
+#endif
+
+	ip_sockaddr from;
+	zero(&from);
+	socklen_t from_len = sizeof(from);
+	packet->len = recvfrom(ifp->fd, packet->ptr, packet->len, /*flags*/ 0,
+			       &from.sa, &from_len);
+	int packet_errno = errno; /* save!!! */
+
+	/*
+	 * Try to decode the from address.
+	 *
+	 * If that fails report some sense of error and then always
+	 * give up.
+	 */
+	const char *from_ugh = sockaddr_to_endpoint(&from, from_len, &packet->sender);
+	if (from_ugh != NULL) {
+		if (packet->len >= 0) {
+			/* technically it worked, but returned value was useless */
+			plog_global("recvfrom on %s returned malformed source sockaddr: %s",
+				    ifp->ip_dev->id_rname, from_ugh);
+		} else if (from_len == sizeof(from) &&
+			   all_zero((const void *)&from, sizeof(from)) &&
+			   packet_errno == ECONNREFUSED) {
+			/*
+			 * Tone down scary message for vague event: We
+			 * get "connection refused" in response to
+			 * some datagram we sent, but we cannot tell
+			 * which one.
+			 */
+			plog_global("recvfrom on %s failed; some IKE message we sent has been rejected with ECONNREFUSED (kernel supplied no details)",
+				    ifp->ip_dev->id_rname);
+		} else {
+			/* if from==0, this prints "unspecified", not "undisclosed", oops */
+			plog_global("recvfrom on %s failed; Pluto cannot decode source sockaddr in rejection: %s "PRI_ERRNO,
+				    ifp->ip_dev->id_rname, from_ugh,
+				    pri_errno(packet_errno));
+		}
+		return false;
+	}
+
+	/*
+	 * Managed to decode the from address; fudge up an MD so that
+	 * it be used as log context prefix.
+	 */
+
+	struct msg_digest stack_md = {
+		.iface = ifp,
+		.sender = packet->sender,
+	};
+
+	if (packet->len < 0) {
+		plog_md(&stack_md, "recvfrom on %s failed "PRI_ERRNO,
+			ifp->ip_dev->id_rname, pri_errno(packet_errno));
+		return false;
+	}
+
+	if (ifp->ike_float) {
+		uint32_t non_esp;
+
+		if (packet->len < (int)sizeof(uint32_t)) {
+			plog_md(&stack_md, "too small packet (%zd)",
+				packet->len);
+			return NULL;
+		}
+		memcpy(&non_esp, packet->ptr, sizeof(uint32_t));
+		if (non_esp != 0) {
+			plog_md(&stack_md, "has no Non-ESP marker");
+			return NULL;
+		}
+		packet->ptr += sizeof(uint32_t);
+		packet->len -= sizeof(uint32_t);
+	}
+
+	/* We think that in 2013 Feb, Apple iOS Racoon
+	 * sometimes generates an extra useless buggy confusing
+	 * Non ESP Marker
+	 */
+	{
+		static const uint8_t non_ESP_marker[NON_ESP_MARKER_SIZE] =
+			{ 0x00, };
+		if (ifp->ike_float &&
+		    packet->len >= NON_ESP_MARKER_SIZE &&
+		    memeq(packet->ptr, non_ESP_marker,
+			   NON_ESP_MARKER_SIZE)) {
+			plog_md(&stack_md, "mangled with potential spurious non-esp marker");
+			return false;
+		}
+	}
+
+	if (packet->len == 1 && packet->ptr[0] == 0xff) {
+		/**
+		 * NAT-T Keep-alive packets should be discared by kernel ESPinUDP
+		 * layer. But bogus keep-alive packets (sent with a non-esp marker)
+		 * can reach this point. Complain and discard them.
+		 * Possibly too if the NAT mapping vanished on the initiator NAT gw ?
+		 */
+		endpoint_buf eb;
+		dbg("NAT-T keep-alive (bogus ?) should not reach this point. Ignored. Sender: %s",
+		    str_endpoint(&packet->sender, &eb)); /* sensitive? */
+		return false;
+	}
+
+	return true;
+}
+
+static ssize_t write_udp_packet(const struct iface_port *ifp,
+				const void *ptr, size_t len,
+				const ip_endpoint *remote_endpoint)
+{
+#ifdef MSG_ERRQUEUE
+	check_msg_errqueue(ifp, POLLOUT, __func__);
+#endif
+	ip_sockaddr remote_sa;
+	size_t remote_sa_size = endpoint_to_sockaddr(remote_endpoint, &remote_sa);
+	return sendto(ifp->fd, ptr, len, 0, &remote_sa.sa, remote_sa_size);
+};
 
 static const struct iface_io udp_iface_io = {
 	.protocol = &ip_protocol_udp,
@@ -268,6 +407,8 @@ struct iface_port *udp_iface_port(struct iface_dev *ifd, int port,
 	    str_endpoint(&q->local_endpoint, &b));
 	return q;
 }
+
+#ifdef MSG_ERRQUEUE
 
 /* Process any message on the MSG_ERRQUEUE
  *
@@ -314,7 +455,6 @@ struct iface_port *udp_iface_port(struct iface_dev *ifd, int port,
  *   POLLOUT; this should be benign for POLLIN).
  */
 
-#if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
 static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 					size_t sizeof_buffer)
 {
@@ -698,157 +838,5 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 	}
 	return (pfd.revents & interest) != 0;
 }
-#endif /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 
-static bool check_incoming_msg_errqueue(const struct iface_port *ifp UNUSED,
-					const char *before UNUSED)
-{
-#if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
-	return check_msg_errqueue(ifp, POLLIN, before);
-#else
-	return true;
-#endif	/* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
-}
-
-static void check_outgoing_msg_errqueue(const struct iface_port *ifp UNUSED,
-					const char *before UNUSED)
-{
-#if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
-	(void) check_msg_errqueue(ifp, POLLOUT, before);
-#endif	/* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
-}
-
-static bool read_udp_packet(const struct iface_port *ifp, struct iface_packet *packet)
-{
-	/*
-	 * Even though select(2) says that there is a message, it
-	 * might only be a MSG_ERRQUEUE message.  At least sometimes
-	 * that leads to a hanging recvfrom.  To avoid what appears to
-	 * be a kernel bug, check_msg_errqueue uses poll(2) and tells
-	 * us if there is anything for us to read.
-	 *
-	 * This is early enough that teardown isn't required:
-	 * just return on failure.
-	 */
-	threadtime_t errqueue_start = threadtime_start();
-	bool errqueue_ok = check_incoming_msg_errqueue(ifp, "read_packet");
-	threadtime_stop(&errqueue_start, SOS_NOBODY,
-			"%s() calling check_incoming_msg_errqueue()", __func__);
-	if (!errqueue_ok) {
-		return false; /* no normal message to read */
-	}
-
-	ip_sockaddr from;
-	zero(&from);
-	socklen_t from_len = sizeof(from);
-	packet->len = recvfrom(ifp->fd, packet->ptr, packet->len, /*flags*/ 0,
-			       &from.sa, &from_len);
-	int packet_errno = errno; /* save!!! */
-
-	/*
-	 * Try to decode the from address.
-	 *
-	 * If that fails report some sense of error and then always
-	 * give up.
-	 */
-	const char *from_ugh = sockaddr_to_endpoint(&from, from_len, &packet->sender);
-	if (from_ugh != NULL) {
-		if (packet->len >= 0) {
-			/* technically it worked, but returned value was useless */
-			plog_global("recvfrom on %s returned malformed source sockaddr: %s",
-				    ifp->ip_dev->id_rname, from_ugh);
-		} else if (from_len == sizeof(from) &&
-			   all_zero((const void *)&from, sizeof(from)) &&
-			   packet_errno == ECONNREFUSED) {
-			/*
-			 * Tone down scary message for vague event: We
-			 * get "connection refused" in response to
-			 * some datagram we sent, but we cannot tell
-			 * which one.
-			 */
-			plog_global("recvfrom on %s failed; some IKE message we sent has been rejected with ECONNREFUSED (kernel supplied no details)",
-				    ifp->ip_dev->id_rname);
-		} else {
-			/* if from==0, this prints "unspecified", not "undisclosed", oops */
-			plog_global("recvfrom on %s failed; Pluto cannot decode source sockaddr in rejection: %s "PRI_ERRNO,
-				    ifp->ip_dev->id_rname, from_ugh,
-				    pri_errno(packet_errno));
-		}
-		return false;
-	}
-
-	/*
-	 * Managed to decode the from address; fudge up an MD so that
-	 * it be used as log context prefix.
-	 */
-
-	struct msg_digest stack_md = {
-		.iface = ifp,
-		.sender = packet->sender,
-	};
-
-	if (packet->len < 0) {
-		plog_md(&stack_md, "recvfrom on %s failed "PRI_ERRNO,
-			ifp->ip_dev->id_rname, pri_errno(packet_errno));
-		return false;
-	}
-
-	if (ifp->ike_float) {
-		uint32_t non_esp;
-
-		if (packet->len < (int)sizeof(uint32_t)) {
-			plog_md(&stack_md, "too small packet (%zd)",
-				packet->len);
-			return NULL;
-		}
-		memcpy(&non_esp, packet->ptr, sizeof(uint32_t));
-		if (non_esp != 0) {
-			plog_md(&stack_md, "has no Non-ESP marker");
-			return NULL;
-		}
-		packet->ptr += sizeof(uint32_t);
-		packet->len -= sizeof(uint32_t);
-	}
-
-	/* We think that in 2013 Feb, Apple iOS Racoon
-	 * sometimes generates an extra useless buggy confusing
-	 * Non ESP Marker
-	 */
-	{
-		static const uint8_t non_ESP_marker[NON_ESP_MARKER_SIZE] =
-			{ 0x00, };
-		if (ifp->ike_float &&
-		    packet->len >= NON_ESP_MARKER_SIZE &&
-		    memeq(packet->ptr, non_ESP_marker,
-			   NON_ESP_MARKER_SIZE)) {
-			plog_md(&stack_md, "mangled with potential spurious non-esp marker");
-			return false;
-		}
-	}
-
-	if (packet->len == 1 && packet->ptr[0] == 0xff) {
-		/**
-		 * NAT-T Keep-alive packets should be discared by kernel ESPinUDP
-		 * layer. But bogus keep-alive packets (sent with a non-esp marker)
-		 * can reach this point. Complain and discard them.
-		 * Possibly too if the NAT mapping vanished on the initiator NAT gw ?
-		 */
-		endpoint_buf eb;
-		dbg("NAT-T keep-alive (bogus ?) should not reach this point. Ignored. Sender: %s",
-		    str_endpoint(&packet->sender, &eb)); /* sensitive? */
-		return false;
-	}
-
-	return true;
-}
-
-static ssize_t write_udp_packet(const struct iface_port *ifp,
-				const void *ptr, size_t len,
-				const ip_endpoint *remote_endpoint)
-{
-	check_outgoing_msg_errqueue(ifp, "sending a packet");
-
-	ip_sockaddr remote_sa;
-	size_t remote_sa_size = endpoint_to_sockaddr(remote_endpoint, &remote_sa);
-	return sendto(ifp->fd, ptr, len, 0, &remote_sa.sa, remote_sa_size);
-};
+#endif /* MSG_ERRQUEUE */
