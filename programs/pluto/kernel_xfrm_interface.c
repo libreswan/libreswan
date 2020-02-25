@@ -433,30 +433,30 @@ static int process_nlmsgs(char *msgbuf,  ssize_t len, struct ifinfo_response *if
 	for (; NLMSG_OK(nlmsg, (size_t)len); nlmsg = NLMSG_NEXT(nlmsg, len)) {
 		switch (nlmsg->nlmsg_type) {
 		case NLMSG_DONE:
-			dbg("NLMSG_DONE: RTM_NEWLINK messages %d ignored %d. Bytes %d\n", i, ignored, red_msg_size);
+			dbg("NLMSG_DONE: RTM_NEWLINK messages %d ignored %d. Bytes %d", i, ignored, red_msg_size);
 			return -1;
 
 		case NLMSG_ERROR:
-			dbg("ERROR: NLMSG_ERROR netlink %d ignored %d. Bytes %d\n",
+			dbg("ERROR: NLMSG_ERROR netlink %d ignored %d. Bytes %d",
 				i, ignored, red_msg_size);
 			return -1;
 
 		case RTM_NEWLINK:
 			i++;
 			red_msg_size += nlmsg->nlmsg_len;
-			dbg("RTM_NEWLINK: netlink %d ignored %d. Bytes %d\n", i, ignored, red_msg_size);
+			dbg("RTM_NEWLINK: netlink %d ignored %d. Bytes %d", i, ignored, red_msg_size);
 			if (parse_nl_newlink_msg(nlmsg, ifi_rsp) == 0 && ifi_rsp->result)
 				return 0;
 			break;
 
 		case 0:
-			dbg("INFO: NOOP? message type %d length %d\n", nlmsg->nlmsg_type,
+			dbg("INFO: NOOP? message type %d length %d", nlmsg->nlmsg_type,
 				nlmsg->nlmsg_len);
 			ignored++;
 			break;
 
 		default:
-			printf("INFO: ignored message type %d length %d\n", nlmsg->nlmsg_type,
+			printf("INFO: ignored message type %d length %d", nlmsg->nlmsg_type,
 			nlmsg->nlmsg_len);
 			ignored++;
 			break;
