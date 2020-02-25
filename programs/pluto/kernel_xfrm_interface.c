@@ -745,10 +745,10 @@ static void free_xfrmi(struct pluto_xfrmi *xfrmi)
 }
 
 /* at start call this to see if there are any stale interface lying around. */
-bool stale_xfrmi_interfaces(void)
+void stale_xfrmi_interfaces(void)
 {
 	if (stale_checked)
-		return false; /* possibly from second whack listen */
+		return; /* possibly from second whack listen */
 
 	stale_checked = true; /* do not re-enter */
 
@@ -765,16 +765,15 @@ bool stale_xfrmi_interfaces(void)
 	if (if_id != 0) {
 		loglog(RC_LOG_SERIOUS, "found an unexpected interface %s if_id=%u From previous pluto run?",
 				if_name, if_id);
-		return true; /* ERROR */
+		return; /* ERROR */
 	} else {
 		if (errno == ENXIO || errno == ENODEV) {
 			dbg("no stale xfrmi interface '%s' found", if_name);
 		} else {
 			LOG_ERRNO(errno, "failed stale_xfrmi_interfaces() call if_nametoindex('%s')",if_name);
-			return true;
+			return;
 		}
 	}
-	return false;
 }
 
 void free_xfrmi_ipsec1(void)
