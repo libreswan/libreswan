@@ -419,7 +419,7 @@ static int parse_nl_newlink_msg(struct nlmsghdr *nlmsg, struct ifinfo_response *
 	return parse_link_info_xfrm(linkinfo_attr, if_name, ifi_rsp);
 }
 
-static int process_nlmsgs(char *msgbuf,  ssize_t len, struct ifinfo_response *ifi_rsp)
+static void process_nlmsgs(char *msgbuf,  ssize_t len, struct ifinfo_response *ifi_rsp)
 {
 	int i = 0;
 	int ignored = 0;
@@ -430,19 +430,19 @@ static int process_nlmsgs(char *msgbuf,  ssize_t len, struct ifinfo_response *if
 		switch (nlmsg->nlmsg_type) {
 		case NLMSG_DONE:
 			dbg("NLMSG_DONE: RTM_NEWLINK messages %d ignored %d. Bytes %d", i, ignored, red_msg_size);
-			return -1;
+			return;
 
 		case NLMSG_ERROR:
 			dbg("ERROR: NLMSG_ERROR netlink %d ignored %d. Bytes %d",
 				i, ignored, red_msg_size);
-			return -1;
+			return;
 
 		case RTM_NEWLINK:
 			i++;
 			red_msg_size += nlmsg->nlmsg_len;
 			dbg("RTM_NEWLINK: netlink %d ignored %d. Bytes %d", i, ignored, red_msg_size);
 			if (parse_nl_newlink_msg(nlmsg, ifi_rsp) == 0 && ifi_rsp->result)
-				return 0;
+				return;
 			break;
 
 		case 0:
@@ -459,7 +459,7 @@ static int process_nlmsgs(char *msgbuf,  ssize_t len, struct ifinfo_response *if
 		}
 	}
 
-	return -1;
+	return;
 }
 
 static bool find_xfrmi_interface(char *if_name, uint32_t xfrm_if_id)
