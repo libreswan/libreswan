@@ -118,8 +118,8 @@ static void free_dead_ifaces(void)
 
 	/*
 	 * XXX: this iterates over the interface, and not the
-	 * interface_devs, so that it can log what will be shutdown
-	 * before shutting it down.
+	 * interface_devs, so that it can list all IFACE_PORTs being
+	 * shutdown before shutting them down.  Is this useful?
 	 */
 	for (p = interfaces; p != NULL; p = p->next) {
 		if (p->ip_dev->ifd_change == IFD_DELETE) {
@@ -134,11 +134,13 @@ static void free_dead_ifaces(void)
 	}
 
 	if (some_dead) {
-		struct iface_port **pp;
-
+		/*
+		 * Delete any iface_port's pointing at the dead
+		 * iface_dev.
+		 */
 		release_dead_interfaces();
 		delete_states_dead_interfaces();
-		for (pp = &interfaces; (p = *pp) != NULL; ) {
+		for (struct iface_port **pp = &interfaces; (p = *pp) != NULL; ) {
 			if (p->ip_dev->ifd_change == IFD_DELETE) {
 				*pp = p->next; /* advance *pp */
 				delete_pluto_event(&p->pev);
@@ -147,6 +149,17 @@ static void free_dead_ifaces(void)
 				pfree(p);
 			} else {
 				pp = &p->next; /* advance pp */
+			}
+		}
+
+		/*
+		 * Finally, release the iface_dev, from its linked
+		 * list of iface devs.
+		 */
+		struct iface_dev *ifd;
+		FOR_EACH_LIST_ENTRY_OLD2NEW(&interface_dev, ifd) {
+			if (ifd->ifd_change == IFD_DELETE) {
+				release_iface_dev(&ifd);
 			}
 		}
 	}
