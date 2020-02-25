@@ -46,6 +46,10 @@
 #include "ikev1_message.h"
 #include "pending.h"
 
+#ifdef USE_XFRM_INTERFACE
+# include "kernel_xfrm_interface.h"
+#endif
+
 /* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii
  *           --> HDR, SA, KE, Nr, IDir, HASH_R/SIG_R
  */
@@ -837,6 +841,11 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 	DBG(DBG_CONTROL, DBG_log("phase 1 complete"));
 
 	ISAKMP_SA_established(st);
+#ifdef USE_XFRM_INTERFACE
+	if (c->xfrmi != NULL && c->xfrmi->if_id != yn_no)
+		if (add_xfrmi(c))
+			return STF_FATAL;
+#endif
 
 	linux_audit_conn(st, LAK_PARENT_START);
 	return STF_OK;
@@ -958,6 +967,11 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	DBG(DBG_CONTROL, DBG_log("phase 1 complete"));
 
 	ISAKMP_SA_established(st);
+#ifdef USE_XFRM_INTERFACE
+	if (c->xfrmi != NULL && c->xfrmi->if_id != yn_no)
+		if (add_xfrmi(c))
+			return STF_FATAL;
+#endif
 
 	linux_audit_conn(st, LAK_PARENT_START);
 	return STF_OK;

@@ -84,6 +84,10 @@
 
 #include <blapit.h>
 
+#ifdef USE_XFRM_INTERFACE
+# include "kernel_xfrm_interface.h"
+#endif
+
 const struct dh_desc *ikev1_quick_pfs(const struct child_proposals proposals)
 {
 	if (proposals.p == NULL) {
@@ -1406,6 +1410,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 						   struct pluto_crypto_req *r)
 {
 	struct state *st = md->st;
+	struct connection *c = st->st_connection;
 	struct payload_digest *const id_pd = md->chain[ISAKMP_NEXT_ID];
 	struct payload_digest *const sapd = md->chain[ISAKMP_NEXT_SA];
 
@@ -1561,6 +1566,11 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 	 * We do this before any state updating so that
 	 * failure won't look like success.
 	 */
+#ifdef USE_XFRM_INTERFACE
+	if (c->xfrmi != NULL && c->xfrmi->if_id != yn_no)
+		if (add_xfrmi(c))
+			return STF_FATAL;
+#endif
 	if (!install_inbound_ipsec_sa(st))
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 
@@ -1786,6 +1796,11 @@ stf_status quick_inR1_outI2_tail(struct msg_digest *md,
 	 * We do this before any state updating so that
 	 * failure won't look like success.
 	 */
+#ifdef USE_XFRM_INTERFACE
+	if (c->xfrmi != NULL && c->xfrmi->if_id != yn_no)
+		if (add_xfrmi(c))
+			return STF_FATAL;
+#endif
 	if (!install_ipsec_sa(st, TRUE))
 		return STF_INTERNAL_ERROR;
 
@@ -1819,6 +1834,12 @@ stf_status quick_inI2(struct state *st, struct msg_digest *md UNUSED)
 	 * We do this before any state updating so that
 	 * failure won't look like success.
 	 */
+#ifdef USE_XFRM_INTERFACE
+	struct connection *c = st->st_connection;
+	if (c->xfrmi != NULL && c->xfrmi->if_id != yn_no)
+		if (add_xfrmi(c))
+			return STF_FATAL;
+#endif
 	if (!install_ipsec_sa(st, FALSE))
 		return STF_INTERNAL_ERROR;
 

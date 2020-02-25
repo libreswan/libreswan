@@ -91,6 +91,10 @@
 #include "ikev1_send.h"
 #include "nss_cert_verify.h"
 
+#ifdef USE_XFRM_INTERFACE
+# include "kernel_xfrm_interface.h"
+#endif
+
 /*
  * Initiate an Oakley Main Mode exchange.
  * --> HDR;SA
@@ -1575,7 +1579,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 		if (r != STF_OK)
 			return r;
 	}
-	const struct connection *c = st->st_connection;
+	struct connection *c = st->st_connection;
 
 	/* send certificate if we have one and auth is RSA */
 	cert_t mycert = c->spd.this.cert;
@@ -1765,6 +1769,11 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	}
 
 	ISAKMP_SA_established(st);
+#ifdef USE_XFRM_INTERFACE
+	if (c->xfrmi != NULL && c->xfrmi->if_id != yn_no)
+		if (add_xfrmi(c))
+			return STF_FATAL;
+#endif
 	linux_audit_conn(st, LAK_PARENT_START);
 	return STF_OK;
 }
@@ -1787,6 +1796,7 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 		if (r != STF_OK)
 			return r;
 	}
+	struct connection *c = st->st_connection;
 
 	/* Done input */
 
@@ -1794,15 +1804,15 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 	 * It seems as per Cisco implementation, XAUTH and MODECFG
 	 * are not supposed to be performed again during rekey
 	 */
-	if (st->st_connection->remotepeertype == CISCO &&
-		st->st_connection->newest_isakmp_sa != SOS_NOBODY &&
-		st->st_connection->spd.this.xauth_client) {
+	if (c->remotepeertype == CISCO &&
+		c->newest_isakmp_sa != SOS_NOBODY &&
+		c->spd.this.xauth_client) {
 		DBG(DBG_CONTROL,
 			DBG_log("Skipping XAUTH for rekey for Cisco Peer compatibility."));
 		st->hidden_variables.st_xauth_client_done = TRUE;
 		st->st_oakley.doing_xauth = FALSE;
 
-		if (st->st_connection->spd.this.modecfg_client) {
+		if (c->spd.this.modecfg_client) {
 			DBG(DBG_CONTROL,
 				DBG_log("Skipping ModeCFG for rekey for Cisco Peer compatibility."));
 			st->hidden_variables.st_modecfg_vars_set = TRUE;
@@ -1811,6 +1821,11 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 	}
 
 	ISAKMP_SA_established(st);
+#ifdef USE_XFRM_INTERFACE
+	if (c->xfrmi != NULL && c->xfrmi->if_id != yn_no)
+		if (add_xfrmi(c))
+			return STF_FATAL;
+#endif
 	linux_audit_conn(st, LAK_PARENT_START);
 
 	passert((st->st_policy & POLICY_PFS) == 0 ||
