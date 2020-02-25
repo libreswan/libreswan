@@ -89,7 +89,7 @@ static int create_udp_socket(const struct iface_dev *ifd, int port)
 	static const int so_prio = 6; /* rumored maximum priority, might be 7 on linux? */
 	if (setsockopt(fd, SOL_SOCKET, SO_PRIORITY,
 			(const void *)&so_prio, sizeof(so_prio)) < 0) {
-		LOG_ERRNO(errno, "setsockopt(SO_PRIORITY) in find_raw_ifaces4()");
+		LOG_ERRNO(errno, "setsockopt(SO_PRIORITY) in create_udp_socket()");
 		/* non-fatal */
 	}
 #endif
@@ -108,11 +108,11 @@ static int create_udp_socket(const struct iface_dev *ifd, int port)
 #endif
 		if (setsockopt(fd, SOL_SOCKET, so_rcv,
 			(const void *)&pluto_sock_bufsize, sizeof(pluto_sock_bufsize)) < 0) {
-				LOG_ERRNO(errno, "setsockopt(SO_RCVBUFFORCE) in find_raw_ifaces4()");
+				LOG_ERRNO(errno, "setsockopt(SO_RCVBUFFORCE) in create_udp_socket()");
 		}
 		if (setsockopt(fd, SOL_SOCKET, so_snd,
 			(const void *)&pluto_sock_bufsize, sizeof(pluto_sock_bufsize)) < 0) {
-				LOG_ERRNO(errno, "setsockopt(SO_SNDBUFFORCE) in find_raw_ifaces4()");
+				LOG_ERRNO(errno, "setsockopt(SO_SNDBUFFORCE) in create_udp_socket()");
 		}
 	}
 
@@ -137,7 +137,7 @@ static int create_udp_socket(const struct iface_dev *ifd, int port)
 	if (type == &ipv6_info &&
 	    setsockopt(fd, SOL_SOCKET, IPV6_USE_MIN_MTU,
 		       (const void *)&on, sizeof(on)) < 0) {
-		LOG_ERRNO(errno, "setsockopt IPV6_USE_MIN_MTU in process_raw_ifaces()");
+		LOG_ERRNO(errno, "setsockopt IPV6_USE_MIN_MTU in create_udp_socket()");
 		close(fd);
 		return -1;
 	}
