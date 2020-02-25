@@ -1410,7 +1410,6 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 						   struct pluto_crypto_req *r)
 {
 	struct state *st = md->st;
-	struct connection *c = st->st_connection;
 	struct payload_digest *const id_pd = md->chain[ISAKMP_NEXT_ID];
 	struct payload_digest *const sapd = md->chain[ISAKMP_NEXT_SA];
 
@@ -1567,6 +1566,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 	 * failure won't look like success.
 	 */
 #ifdef USE_XFRM_INTERFACE
+	struct connection *c = st->st_connection;
 	if (c->xfrmi != NULL && c->xfrmi->if_id != yn_no)
 		if (add_xfrmi(c))
 			return STF_FATAL;
