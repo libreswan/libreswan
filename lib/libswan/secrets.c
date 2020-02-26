@@ -1544,49 +1544,10 @@ struct pubkey *allocate_ECDSA_public_key_nss(CERTCertificate *cert)
 }
 
 static err_t add_ckaid_to_rsa_privkey(struct RSA_private_key *rsak,
-				      CERTCertificate *cert)
+				      SECKEYPublicKey *pubk,
+				      SECItem *certCKAID)
 {
-	SECKEYPublicKey *pubk = CERT_ExtractPublicKey(cert);
-
-	if (pubk == NULL) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s: should not happen: cert public key not found [%d]",
-		       __func__, PR_GetError());
-		return "NSS: cert public key not found";
-	}
-
-	/* only a check */
-	SECKEYPrivateKey *privk = PK11_FindKeyByAnyCert(cert,
-				lsw_return_nss_password_file_info());
-	SECKEY_DestroyPrivateKey(privk);
-
-	if (privk == NULL)
-		return "NSS: cert private key not found";
-
-	SECItem *certCKAID = PK11_GetLowLevelKeyIDForCert(NULL, cert,
-					lsw_return_nss_password_file_info());
 	err_t ugh;
-
-	if (certCKAID == NULL) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s: no key ID - slot or DB error [%d]",
-		       __func__, PR_GetError());
-		ugh = "NSS: key ID not found";
-		goto out;
-	}
-
-	/*
-	 * Getting a SECItem ptr from PK11_GetLowLevelKeyID doesn't mean
-	 * that the private key exists. The data may be empty if there's no
-	 * private key.
-	 *
-	 * Update: I don't think this is true anymore, hence the search for the private
-	 * key above
-	 */
-	if (certCKAID->data == NULL || certCKAID->len < 1) {
-		ugh = "NSS: no CKAID data";
-		goto out;
-	}
 
 	rsak->pub.e = clone_bytes_as_chunk(pubk->u.rsa.publicExponent.data,
 					   pubk->u.rsa.publicExponent.len, "e");
@@ -1602,62 +1563,15 @@ static err_t add_ckaid_to_rsa_privkey(struct RSA_private_key *rsak,
 			rsak->pub.keyid, &rsak->pub.k);
 
 out:
-	if (certCKAID != NULL) {
-		SECITEM_FreeItem(certCKAID, PR_TRUE);
-	}
-	if (pubk != NULL) {
-		SECKEY_DestroyPublicKey(pubk);
-	}
 	return ugh;
 }
 
 
 static err_t add_ckaid_to_ecdsa_privkey(struct ECDSA_private_key *ecdsak,
-				      CERTCertificate *cert)
+					SECKEYPublicKey *pubk,
+					SECItem *certCKAID)
 {
 	err_t ugh;
-
-	SECKEYPublicKey *pubk = CERT_ExtractPublicKey(cert);
-
-	if (pubk == NULL) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s: should not happen: cert public key not found [%d]",
-		       __func__, PR_GetError());
-		return "NSS: cert public key not found";
-	}
-
-	/* only a check */
-	SECKEYPrivateKey *privk = PK11_FindKeyByAnyCert(cert,
-				lsw_return_nss_password_file_info());
-
-	if (privk == NULL) {
-		SECKEY_DestroyPublicKey(pubk);
-		return "NSS: cert private key not found";
-	}
-	SECKEY_DestroyPrivateKey(privk);
-
-	SECItem *certCKAID = PK11_GetLowLevelKeyIDForCert(NULL, cert,
-					lsw_return_nss_password_file_info());
-	if (certCKAID == NULL) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s: no key ID - slot or DB error [%d]",
-		       __func__, PR_GetError());
-		ugh = "NSS: key ID not found";
-		goto out;
-	}
-
-	/*
-	 * Getting a SECItem ptr from PK11_GetLowLevelKeyID doesn't mean
-	 * that the private key exists. The data may be empty if there's no
-	 * private key.
-	 *
-	 * Update: I don't think this is true anymore, hence the search for the private
-	 * key above
-	 */
-	if (certCKAID->data == NULL || certCKAID->len < 1) {
-		ugh = "NSS: no CKAID data";
-		goto out;
-	}
 
 	ecdsak->pub.pub = clone_bytes_as_chunk(pubk->u.ec.publicValue.data,
 					       pubk->u.ec.publicValue.len, "pub");
@@ -1677,12 +1591,6 @@ static err_t add_ckaid_to_ecdsa_privkey(struct ECDSA_private_key *ecdsak,
 	/*size */
 	ecdsak->pub.k = pubk->u.ec.size;
 out:
-	if (certCKAID != NULL) {
-		SECITEM_FreeItem(certCKAID, PR_TRUE);
-	}
-	if (pubk != NULL) {
-		SECKEY_DestroyPublicKey(pubk);
-	}
 	return ugh;
 }
 
@@ -1731,6 +1639,49 @@ static const struct ECDSA_private_key *get_nss_cert_privkey_ECDSA(struct secret 
 	return priv;
 }
 
+static err_t add_pubkey_ckaid_secret(struct secret **secrets, const struct pubkey_type *type,
+				     SECKEYPublicKey *pubk, SECItem *cert_ckaid)
+{
+	struct secret *s = alloc_thing(struct secret, "pubkey secret");
+	s->pks.kind = type->private_key_kind;
+	s->pks.line = 0;
+
+	err_t err;
+	switch (type->private_key_kind) {
+	case PKK_RSA:
+		err = add_ckaid_to_rsa_privkey(&s->pks.u.RSA_private_key,
+					       pubk, cert_ckaid);
+		break;
+	case PKK_ECDSA:
+		err = add_ckaid_to_ecdsa_privkey(&s->pks.u.ECDSA_private_key,
+						 pubk, cert_ckaid);
+		break;
+	default:
+		bad_case(type->private_key_kind);
+	}
+
+	if (err == NULL) {
+		switch (type->private_key_kind) {
+		case PKK_RSA:
+			err = RSA_public_key_sanity(&s->pks.u.RSA_private_key);
+			break;
+		case PKK_ECDSA:
+			/* ??? we should check the sanity of ecdsak */
+			break;
+		default:
+			bad_case(type->private_key_kind);
+		}
+	}
+
+	if (err != NULL) {
+		pfree(s);
+	} else {
+		add_secret(secrets, s, "lsw_add_rsa_secret");
+	}
+
+	return err;
+}
+
 static err_t add_pubkey_secret(struct secret **secrets, CERTCertificate *cert,
 			       SECKEYPublicKey *pubk)
 {
@@ -1775,40 +1726,38 @@ static err_t add_pubkey_secret(struct secret **secrets, CERTCertificate *cert,
 
 	dbg("adding %s secret for certificate: %s", type->name, cert->nickname);
 
-	struct secret *s = alloc_thing(struct secret, "pubkey secret");
-	s->pks.kind = type->private_key_kind;
-	s->pks.line = 0;
-
-	err_t err;
-	switch (type->private_key_kind) {
-	case PKK_RSA:
-		err = add_ckaid_to_rsa_privkey(&s->pks.u.RSA_private_key, cert);
-		break;
-	case PKK_ECDSA:
-		err = add_ckaid_to_ecdsa_privkey(&s->pks.u.ECDSA_private_key, cert);
-		break;
-	default:
-		bad_case(type->private_key_kind);
-	}
-
-	if (err != NULL) {
-		switch (type->private_key_kind) {
-		case PKK_RSA:
-			err = RSA_public_key_sanity(&s->pks.u.RSA_private_key);
-			break;
-		case PKK_ECDSA:
-			/* ??? we should check the sanity of ecdsak */
-			break;
-		default:
-			bad_case(type->private_key_kind);
+	/* only a check */
+	{
+		SECKEYPrivateKey *privk =
+			PK11_FindKeyByAnyCert(cert,
+					      lsw_return_nss_password_file_info());
+		if (privk == NULL) {
+			return "NSS: cert private key not found";
 		}
+		SECKEY_DestroyPrivateKey(privk);
 	}
 
-	if (err != NULL) {
-		pfree(s);
-	} else {
-		add_secret(secrets, s, "lsw_add_rsa_secret");
+	/*
+	 * Getting a SECItem ptr from PK11_GetLowLevelKeyID doesn't
+	 * mean that the private key exists. The data may be empty if
+	 * there's no private key.
+	 *
+	 * Update: I don't think this is true anymore, hence the
+	 * search for the private key above
+	 */
+	SECItem *cert_ckaid =
+		PK11_GetLowLevelKeyIDForCert(NULL, cert,
+					     lsw_return_nss_password_file_info()); /* MUST FREE */
+	if (cert_ckaid == NULL) {
+		return "NSS: key ID not found";
 	}
+	if (cert_ckaid->data == NULL || cert_ckaid->len < 1) {
+		SECITEM_FreeItem(cert_ckaid, PR_TRUE);
+		return "NSS: no CKAID data";
+	}
+
+	err_t err = add_pubkey_ckaid_secret(secrets, type, pubk, cert_ckaid);
+	SECITEM_FreeItem(cert_ckaid, PR_TRUE);
 	return err;
 }
 
