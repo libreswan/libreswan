@@ -709,18 +709,18 @@ static bool decode_certs(struct state *st, struct payload_digest *cert_payloads)
 		.crl_strict = crl_strict,
 	};
 
-	bool crl_needed = false;
-	bool bad = false;
 	struct root_certs *root_certs = root_certs_addref(HERE); /* must-release */
-	struct certs *certs = find_and_verify_certs(st, cert_payloads,
-						    &rev_opts, &crl_needed, &bad,
-						    root_certs);
+	struct logger log = STATE_LOGGER(st);
+	struct verified_certs certs = find_and_verify_certs(st->st_serialno, &log,
+							    st->st_ike_version,
+							    cert_payloads, &rev_opts,
+							    root_certs, &c->spd.that.id);
 	root_certs_delref(&root_certs, HERE);
 
 	/* either something went wrong, or there were no certs */
-	if (certs == NULL) {
+	if (certs.cert_chain == NULL) {
 #if defined(LIBCURL) || defined(LIBLDAP)
-		if (crl_needed && deltasecs(crl_check_interval) > 0) {
+		if (certs.crl_update_needed && deltasecs(crl_check_interval) > 0) {
 			/*
 			 * When a strict crl check fails, the certs
 			 * are deleted and CRL_NEEDED is set.
@@ -736,30 +736,27 @@ static bool decode_certs(struct state *st, struct payload_digest *cert_payloads)
 			}
 		}
 #endif
-		if (bad) {
+		if (certs.harmless) {
+			/* For instance, no CA, unknown certs, ... */
+			return true;
+		} else {
 			libreswan_log("X509: Certificate rejected for this connection");
 			/* For instance, revoked */
 			return false;
-		} else {
-			/* For instance, no CA, unknown certs, ... */
-			return true;
 		}
 	}
 
-	CERTCertificate *end_cert = certs != NULL ? certs->cert : NULL;
-	if (!pexpect(!CERT_IsCACert(end_cert, NULL))) {
-		/* utter screwup */
-		release_certs(&certs);
-		return LSW_CERT_BAD;
-	}
+	passert(certs.cert_chain->cert != NULL);
+	CERTCertificate *end_cert = certs.cert_chain->cert;
 	libreswan_log("certificate verified OK: %s", end_cert->subjectName);
 
-	statetime_t start_add = statetime_start(st);
-	add_pubkey_from_nss_cert(&st->st_remote_certs.pubkey_db,
-				 &c->spd.that.id, end_cert);
-	statetime_stop(&start_add, "%s() calling add_pubkey_from_nss_cert()", __func__);
+	pexpect(st->st_remote_certs.pubkey_db);
+	st->st_remote_certs.pubkey_db = certs.pubkey_db;
+	certs.pubkey_db = NULL;
 
-	st->st_remote_certs.verified = certs;
+	pexpect(st->st_remote_certs.verified == NULL);
+	st->st_remote_certs.verified = certs.cert_chain;
+	certs.cert_chain = NULL;
 
 	statetime_stop(&start, "%s()", __func__);
 	return true;
@@ -910,7 +907,14 @@ lsw_cert_ret v1_process_certs(struct msg_digest *md)
 		return LSW_CERT_NONE;
 	}
 
-	release_certs(&st->st_remote_certs.verified);
+	if (st->st_remote_certs.verified != NULL) {
+		dbg("hacking around a redundant call to v1_process_certs() - releasing verified");
+		release_certs(&st->st_remote_certs.verified);
+	}
+	if (st->st_remote_certs.pubkey_db != NULL) {
+		dbg("hacking around a redundant call to v1_process_certs() - releasing pubkey_db");
+		free_public_keys(&st->st_remote_certs.pubkey_db);
+	}
 	if (!decode_certs(st, cert_payloads)) {
 		return LSW_CERT_BAD;
 	}

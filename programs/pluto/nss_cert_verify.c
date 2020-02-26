@@ -45,6 +45,7 @@
 #include "pluto_timing.h"
 #include "root_certs.h"
 #include "ip_info.h"
+#include "log.h"
 
 /*
  * set up the slot/handle/trust things that NSS needs
@@ -505,29 +506,34 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
  * ee_out is the resulting end cert
  */
 
-struct certs* find_and_verify_certs(struct state *st,
-				    struct payload_digest *cert_payloads,
-				    const struct rev_opts *rev_opts,
-				    bool *crl_needed, bool *bad,
-				    const struct root_certs *root_certs)
+struct verified_certs find_and_verify_certs(so_serial_t serialno,
+					    struct logger *logger,
+					    enum ike_version ike_version,
+					    struct payload_digest *cert_payloads,
+					    const struct rev_opts *rev_opts,
+					    struct root_certs *root_certs,
+					    const struct id *keyid)
 {
-	*crl_needed = false;
-	*bad = false;
+	struct verified_certs result = {
+		.cert_chain = NULL,
+		.crl_update_needed = false,
+		.harmless = true,
+	};
 
 	if (!pexpect(cert_payloads != NULL)) {
 		/* logged by pexpect() */
-		return NULL;
+		return result;
 	}
 
 	PK11SlotInfo *slot = NULL;
 	if (!prepare_nss_import(&slot)) {
 		/* logged by above */
-		return NULL;
+		return result;
 	}
 
 	if (root_certs_empty(root_certs)) {
-		libreswan_log("No Certificate Authority in NSS Certificate DB! Certificate payloads discarded.");
-		return NULL;
+		log_message(RC_LOG, logger, "No Certificate Authority in NSS Certificate DB! Certificate payloads discarded.");
+		return result;
 	}
 
 	/*
@@ -550,42 +556,65 @@ struct certs* find_and_verify_certs(struct state *st,
 	 * This routine populates certs[] with the imported
 	 * certificates.  For details read CERT_ImportCerts().
 	 */
-	statetime_t decode_time = statetime_start(st);
-	struct certs *certs = decode_cert_payloads(handle, st->st_ike_version,
-						   cert_payloads);
-	statetime_stop(&decode_time, "%s() calling decode_cert_payloads()", __func__);
-	if (certs == NULL) {
-		return NULL;
+	threadtime_t decode_time = threadtime_start();
+	result.cert_chain = decode_cert_payloads(handle, ike_version,
+						 cert_payloads);
+	threadtime_stop(&decode_time, serialno, "%s() calling decode_cert_payloads()", __func__);
+	if (result.cert_chain == NULL) {
+		return result;
 	}
-	CERTCertificate *end_cert = make_end_cert_first(&certs);
+
+	CERTCertificate *end_cert = make_end_cert_first(&result.cert_chain);
 	if (end_cert == NULL) {
 		libreswan_log("X509: no EE-cert in chain!");
-		release_certs(&certs);
-		return NULL;
+		release_certs(&result.cert_chain);
+		return result;
+	}
+	if (CERT_IsCACert(end_cert, NULL)) {
+		/* utter screwup */
+		/* XXX: log_pexpect()? */
+		log_message(RC_LOG, logger, "INTERNAL ERROR: end cert is a root certificate!");
+		release_certs(&result.cert_chain);
+		result.harmless = false;
+		return result;
 	}
 
-	statetime_t crl_time = statetime_start(st);
-	*crl_needed = crl_update_check(handle, certs);
-	statetime_stop(&crl_time, "%s() calling crl_update_check()", __func__);
-	if (*crl_needed) {
+	threadtime_t crl_time = threadtime_start();
+	bool crl_update_needed = crl_update_check(handle, result.cert_chain);
+	threadtime_stop(&crl_time, serialno,
+			"%s() calling crl_update_check()", __func__);
+	if (crl_update_needed) {
 		if (rev_opts->crl_strict) {
-			*bad = true;
-			libreswan_log("missing or expired CRL in strict mode, failing pending update");
-			release_certs(&certs);
-			return NULL;
+			log_message(RC_LOG, logger,
+				    "missing or expired CRL in strict mode, failing pending update and forcing CRL update");
+			release_certs(&result.cert_chain);
+			result.crl_update_needed = true;
+			result.harmless = false;
+			return result;
 		}
-		DBG(DBG_X509, DBG_log("missing or expired CRL"));
+		dbg("missing or expired CRL");
 	}
 
-	statetime_t verify_time = statetime_start(st);
+	threadtime_t verify_time = threadtime_start();
 	bool end_ok = verify_end_cert(root_certs, rev_opts, end_cert);
-	*bad = !end_ok;
-	statetime_stop(&verify_time, "%s() calling verify_end_cert()", __func__);
+	threadtime_stop(&verify_time, serialno,
+			"%s() calling verify_end_cert()", __func__);
 	if (!end_ok) {
-		release_certs(&certs);
-		return NULL;
+		/*
+		 * XXX: preserve verify_end_cert()'s behaviour? only
+		 * send this to the file
+		 */
+		log_message(RC_LOG|LOG_STREAM, logger, "NSS: end certificate invalid");
+		release_certs(&result.cert_chain);
+		result.harmless = false;
+		return result;
 	}
-	return certs;
+
+	threadtime_t start_add = threadtime_start();
+	add_pubkey_from_nss_cert(&result.pubkey_db, keyid, end_cert);
+	threadtime_stop(&start_add, serialno, "%s() calling add_pubkey_from_nss_cert()", __func__);
+
+	return result;
 }
 
 bool cert_VerifySubjectAltName(const CERTCertificate *cert,

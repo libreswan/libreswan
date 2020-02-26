@@ -25,6 +25,7 @@
 struct certs;
 struct payload_digest;
 struct root_certs;
+struct logger;
 
 /*
  * Try to find and verify the end cert.  Sets CRL_NEEDED and BAD (for
@@ -40,11 +41,20 @@ struct rev_opts {
 	bool crl_strict;
 };
 
-extern struct certs *find_and_verify_certs(struct state *st,
-					   struct payload_digest *cert_payloads,
-					   const struct rev_opts *rev_opts,
-					   bool *crl_needed, bool *bad,
-					   const struct root_certs *root_certs);
+struct verified_certs {
+	struct certs *cert_chain;
+	struct pubkey_list *pubkey_db;
+	bool crl_update_needed;
+	bool harmless;
+};
+
+struct verified_certs find_and_verify_certs(so_serial_t serialno,
+					    struct logger *log,
+					    enum ike_version ike_version,
+					    struct payload_digest *cert_payloads,
+					    const struct rev_opts *rev_opts,
+					    struct root_certs *root_cert,
+					    const struct id *keyid);
 
 extern bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 				      const struct id *id);
