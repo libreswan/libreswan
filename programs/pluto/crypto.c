@@ -44,7 +44,9 @@
  *      - this connection (result from ike= string)
  *      - newest SA
  */
-void ike_alg_show_connection(const struct connection *c, const char *instance)
+void ike_alg_show_connection(const struct fd *whackfd,
+			     const struct connection *c,
+			     const char *instance)
 {
 	if (c->ike_proposals.p != NULL
 	    && !default_proposals(c->ike_proposals.p)) {
@@ -76,33 +78,33 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 		 * AES_CBC_256+AES_CBC_128-... (which we hope is not
 		 * impossible to parse)?
 		 */
-		LSWLOG_WHACK(RC_COMMENT, buf) {
-			lswlogf(buf, "\"%s\"%s:   IKE algorithms: ",
-				c->name, instance);
-			fmt_proposals(buf, c->ike_proposals.p);
+		WHACK_LOG(RC_COMMENT, whackfd, buf) {
+			jam(buf, "\"%s\"%s:   IKE algorithms: ",
+			    c->name, instance);
+			jam_proposals(buf, c->ike_proposals.p);
 		}
 	}
 
 	const struct state *st = state_with_serialno(c->newest_isakmp_sa);
 
 	if (st != NULL) {
-		LSWLOG_WHACK(RC_COMMENT, buf) {
-			lswlogf(buf,
-				"\"%s\"%s:   %s algorithm newest: ",
-				c->name, instance,
-				enum_name(&ike_version_names, st->st_ike_version));
+		WHACK_LOG(RC_COMMENT, whackfd, buf) {
+			jam(buf,
+			    "\"%s\"%s:   %s algorithm newest: ",
+			    c->name, instance,
+			    enum_name(&ike_version_names, st->st_ike_version));
 			const struct trans_attrs *ta = &st->st_oakley;
 			const char *sep = "";
 			if (ta->ta_encrypt != NULL) {
-				lswlogs(buf, sep); sep = "-";
-				lswlogs(buf, ta->ta_encrypt->common.fqn);
+				jam_string(buf, sep); sep = "-";
+				jam_string(buf, ta->ta_encrypt->common.fqn);
 				if (ta->enckeylen != 0) {
 					lswlogf(buf, "_%d", ta->enckeylen);
 				}
 			}
 			if (ta->ta_prf != NULL) {
-				lswlogs(buf, sep); sep = "-";
-				lswlogs(buf, ta->ta_prf->common.fqn);
+				jam_string(buf, sep); sep = "-";
+				jam_string(buf, ta->ta_prf->common.fqn);
 			}
 			/* XXX: should just print everything */
 			if (ta->ta_integ != NULL) {
@@ -111,13 +113,13 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 				     ta->ta_integ != &ike_alg_integ_none) ||
 				    (!encrypt_desc_is_aead(ta->ta_encrypt) &&
 				     ta->ta_integ->prf != ta->ta_prf)) {
-					lswlogs(buf, sep); sep = "-";
-					lswlogs(buf, ta->ta_integ->common.fqn);
+					jam_string(buf, sep); sep = "-";
+					jam_string(buf, ta->ta_integ->common.fqn);
 				}
 			}
 			if (ta->ta_dh != NULL) {
-				lswlogs(buf, sep); sep = "-";
-				lswlogs(buf, ta->ta_dh->common.fqn);
+				jam_string(buf, sep); sep = "-";
+				jam_string(buf, ta->ta_dh->common.fqn);
 			}
 		}
 	}

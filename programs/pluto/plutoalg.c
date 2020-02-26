@@ -285,7 +285,7 @@ void kernel_alg_show_connection(const struct fd *whackfd,
 	 */
 	if (c->child_proposals.p != NULL &&
 	    !default_proposals(c->child_proposals.p)) {
-		LSWLOG_WHACK(RC_COMMENT, buf) {
+		WHACK_LOG(RC_COMMENT, whackfd, buf) {
 			/*
 			 * If DH (PFS) was specified in the esp= or
 			 * ah= line then the below will display it
@@ -303,9 +303,9 @@ void kernel_alg_show_connection(const struct fd *whackfd,
 			 * The real PFS is displayed in the 'algorithm
 			 * newest' line further down.
 			 */
-			lswlogf(buf, "\"%s\"%s:   %s algorithms: ",
-				c->name, instance, satype);
-			fmt_proposals(buf, c->child_proposals.p);
+			jam(buf, "\"%s\"%s:   %s algorithms: ",
+			    c->name, instance, satype);
+			jam_proposals(buf, c->child_proposals.p);
 		}
 	}
 

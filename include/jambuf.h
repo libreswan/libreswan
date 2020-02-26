@@ -147,16 +147,6 @@ size_t jam_string(jambuf_t *buf, const char *string);
 size_t jam_jambuf(jambuf_t *buf, jambuf_t *in);
 
 /*
- * Utilities.
- */
-
-/* _(in FUNC() at FILE:LINE) */
-size_t jam_source_line(jambuf_t *buf, const char *func,
-			  const char *file, unsigned long line);
-/* _Errno E: <strerror(E)> */
-size_t jam_errno(jambuf_t *buf, int e);
-
-/*
  * Jam a string of bytes formatted in some way.
  */
 

@@ -775,19 +775,19 @@ void timer_list(const struct fd *whackfd)
 		whack_comment(whackfd, "event %s is %s", ev->ev_name, buf);
 	}
 
-	list_state_events(nw);
+	list_state_events(whackfd, nw);
 }
 
-void show_debug_status(void)
+void show_debug_status(const struct fd *whackfd)
 {
-	LSWLOG_WHACK(RC_COMMENT, buf) {
-		lswlogs(buf, "debug:");
+	WHACK_LOG(RC_COMMENT, whackfd, buf) {
+		jam(buf, "debug:");
 		if (cur_debugging & DBG_MASK) {
-			lswlogs(buf, " ");
-			lswlog_enum_lset_short(buf, &debug_names,
-					       "+", cur_debugging & DBG_MASK);
+			jam(buf, " ");
+			jam_enum_lset_short(buf, &debug_names,
+					    "+", cur_debugging & DBG_MASK);
 		}
-		lswlog_impairments(buf, " impair: "/*prefix*/, "+");
+		jam_impairments(buf, " impair: "/*prefix*/, "+");
 	}
 }
 

@@ -85,8 +85,9 @@ void free_preshared_secrets(void)
 
 static int print_secrets(struct secret *secret,
 			 struct private_key_stuff *pks UNUSED,
-			 void *uservoid UNUSED)
+			 void *uservoid)
 {
+	struct fd *whackfd = uservoid;
 	struct id_list *ids;
 
 	const char *kind;
@@ -109,7 +110,7 @@ static int print_secrets(struct secret *secret,
 
 	ids = lsw_get_idlist(secret);
 
-	LSWLOG_WHACK(RC_COMMENT, buf) {
+	WHACK_LOG(RC_COMMENT, whackfd, buf) {
 		jam(buf, "    %d: %s ", pks->line, kind);
 		if (ids == NULL) {
 			jam(buf, "%%any");
@@ -129,14 +130,14 @@ static int print_secrets(struct secret *secret,
 	return 1;
 }
 
-void list_psks(const struct fd *whackfd)
+void list_psks(struct fd *whackfd)
 {
 	const struct lsw_conf_options *oco = lsw_init_options();
 	whack_comment(whackfd, " ");
 	whack_comment(whackfd, "List of Pre-shared secrets (from %s)",
 		  oco->secretsfile);
 	whack_comment(whackfd, " ");
-	lsw_foreach_secret(pluto_secrets, print_secrets, NULL);
+	lsw_foreach_secret(pluto_secrets, print_secrets, whackfd);
 }
 
 enum PrivateKeyKind nss_cert_key_kind(CERTCertificate *cert)
@@ -1048,7 +1049,7 @@ err_t add_ipseckey(const struct id *id,
 /*
  *  list all public keys in the chained list
  */
-void list_public_keys(const struct fd *whackfd, bool utc, bool check_pub_keys)
+void list_public_keys(struct fd *whackfd, bool utc, bool check_pub_keys)
 {
 	struct pubkey_list *p = pluto_pubkeys;
 
@@ -1071,27 +1072,27 @@ void list_public_keys(const struct fd *whackfd, bool utc, bool check_pub_keys)
 
 			if (!check_pub_keys ||
 			    !startswith(check_expiry_msg, "ok")) {
-				LSWLOG_WHACK(RC_COMMENT, buf) {
-					lswlog_realtime(buf, key->installed_time, utc);
-					lswlogs(buf, ", ");
+				WHACK_LOG(RC_COMMENT, whackfd, buf) {
+					jam_realtime(buf, key->installed_time, utc);
+					jam(buf, ", ");
 					switch (key->type->alg) {
 					case PUBKEY_ALG_RSA:
-						lswlogf(buf, "%4d RSA Key %s",
-							8 * key->u.rsa.k,
-							key->u.rsa.keyid);
+						jam(buf, "%4d RSA Key %s",
+						    8 * key->u.rsa.k,
+						    key->u.rsa.keyid);
 						break;
 					case PUBKEY_ALG_ECDSA:
-						lswlogf(buf, "%4d ECDSA Key %s",
-							8 * key->u.ecdsa.k,
-							key->u.ecdsa.keyid);
+						jam(buf, "%4d ECDSA Key %s",
+						    8 * key->u.ecdsa.k,
+						    key->u.ecdsa.keyid);
 						break;
 					default:
 						bad_case(key->type->alg);
 					}
-					lswlogf(buf, " (%s private key), until ",
-						(has_private_rawkey(key) ? "has" : "no"));
-					lswlog_realtime(buf, key->until_time, utc);
-					lswlogf(buf, " %s", check_expiry_msg);
+					jam(buf, " (%s private key), until ",
+					    (has_private_rawkey(key) ? "has" : "no"));
+					jam_realtime(buf, key->until_time, utc);
+					jam(buf, " %s", check_expiry_msg);
 				}
 
 				/* XXX could be ikev2_idtype_names */

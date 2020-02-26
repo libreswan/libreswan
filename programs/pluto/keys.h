@@ -57,9 +57,9 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 							   const struct pubkey_type *type);
 
 extern bool has_private_key(cert_t cert);
-extern void list_public_keys(const struct fd *whackfd, bool utc,
+extern void list_public_keys(struct fd *whackfd, bool utc,
 			     bool check_pub_keys);
-extern void list_psks(const struct fd *whackfd);
+extern void list_psks(struct fd *whackfd);
 
 extern const chunk_t *get_psk(const struct connection *c);
 extern chunk_t *get_ppk(const struct connection *c, chunk_t **ppk_id);

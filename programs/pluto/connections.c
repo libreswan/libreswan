@@ -3933,7 +3933,7 @@ void show_one_connection(const struct fd *whackfd,
 		);
 
 	if (!lmod_empty(c->extra_debugging)) {
-		LSWLOG_WHACK(RC_COMMENT, buf) {
+		WHACK_LOG(RC_COMMENT, whackfd, buf) {
 			jam(buf, "\"%s\"%s:   debug: ",
 			    c->name, instance);
 			jam_lmod(buf, &debug_names, "+", c->extra_debugging);
@@ -3941,7 +3941,7 @@ void show_one_connection(const struct fd *whackfd,
 	}
 
 	if (!lmod_empty(c->extra_impairing)) {
-		LSWLOG_WHACK(RC_COMMENT, buf) {
+		WHACK_LOG(RC_COMMENT, whackfd, buf) {
 			jam(buf, "\"%s\"%s:   impair: ",
 			    c->name, instance);
 			jam_lmod(buf, &impair_names, "+", c->extra_impairing);
@@ -3963,7 +3963,7 @@ void show_one_connection(const struct fd *whackfd,
 			c->connalias);
 	}
 
-	ike_alg_show_connection(c, instance);
+	ike_alg_show_connection(whackfd, c, instance);
 	kernel_alg_show_connection(whackfd, c, instance);
 }
 

@@ -1399,9 +1399,7 @@ int main(int argc, char **argv)
 			char *protostack = cfg->setup.strings[KSF_PROTOSTACK];
 			passert(kernel_ops != NULL);
 
-			if (protostack == NULL || *protostack == '\0') {
-				dbg("sticking with hardwired protstack=%s", kernel_ops->kern_name);
-			} else if (streq(protostack, "none")) {
+			if (streq(protostack, "none")) {
 				kernel_ops = &nokernel_kernel_ops;
 			} else if (streq(protostack, "auto")) {
 				libreswan_log("the option protostack=auto is obsoleted, falling back to protostack=%s",
