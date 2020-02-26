@@ -1686,33 +1686,6 @@ out:
 	return ugh;
 }
 
-static err_t lsw_extract_nss_cert_privkey_RSA(struct RSA_private_key *rsak,
-					  CERTCertificate *cert)
-{
-	dbg("extracting the RSA private key for %s", cert->nickname);
-
-	err_t ugh = add_ckaid_to_rsa_privkey(rsak, cert);
-
-	if (ugh == NULL) {
-		ugh = RSA_public_key_sanity(rsak);
-	}
-	return ugh;
-}
-
-static err_t lsw_extract_nss_cert_privkey_ECDSA(struct ECDSA_private_key *ecdsak,
-						CERTCertificate *cert)
-{
-	DBG(DBG_CRYPT,
-		DBG_log("extracting the ECDSA private key for %s", cert->nickname));
-
-	err_t ugh = add_ckaid_to_ecdsa_privkey(ecdsak, cert);
-
-	if (ugh == NULL) {
-		/* ??? we should check the sanity of ecdsak */
-	}
-	return ugh;
-}
-
 static const struct RSA_private_key *get_nss_cert_privkey_RSA(struct secret *secrets,
 							  CERTCertificate *cert)
 {
@@ -1809,15 +1782,26 @@ static err_t add_pubkey_secret(struct secret **secrets, CERTCertificate *cert,
 	err_t err;
 	switch (type->private_key_kind) {
 	case PKK_RSA:
-		err = lsw_extract_nss_cert_privkey_RSA(&s->pks.u.RSA_private_key,
-						       cert);
+		err = add_ckaid_to_rsa_privkey(&s->pks.u.RSA_private_key, cert);
 		break;
 	case PKK_ECDSA:
-		err = lsw_extract_nss_cert_privkey_ECDSA(&s->pks.u.ECDSA_private_key,
-							 cert);
+		err = add_ckaid_to_ecdsa_privkey(&s->pks.u.ECDSA_private_key, cert);
 		break;
 	default:
 		bad_case(type->private_key_kind);
+	}
+
+	if (err != NULL) {
+		switch (type->private_key_kind) {
+		case PKK_RSA:
+			err = RSA_public_key_sanity(&s->pks.u.RSA_private_key);
+			break;
+		case PKK_ECDSA:
+			/* ??? we should check the sanity of ecdsak */
+			break;
+		default:
+			bad_case(type->private_key_kind);
+		}
 	}
 
 	if (err != NULL) {
