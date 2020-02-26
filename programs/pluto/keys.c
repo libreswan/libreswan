@@ -1122,22 +1122,7 @@ void list_public_keys(struct fd *whackfd, bool utc, bool check_pub_keys)
 err_t load_nss_cert_secret(CERTCertificate *cert)
 {
 	threadtime_t start = threadtime_start();
-	err_t err;
-	if (cert == NULL) {
-		err = "NSS cert not found";
-	} else {
-		switch (nss_cert_key_kind(cert)) {
-		case PKK_RSA:
-			err = lsw_add_rsa_secret(&pluto_secrets, cert);
-			break;
-		case PKK_ECDSA:
-			err = lsw_add_ecdsa_secret(&pluto_secrets, cert);
-			break;
-		default:
-			err = "NSS cert not supported";
-			break;
-		}
-	}
+	err_t err = lsw_add_secret(&pluto_secrets, cert);
 	threadtime_stop(&start, SOS_NOBODY, "%s() loading private key %s", __func__,
 			cert->nickname);
 	return err;

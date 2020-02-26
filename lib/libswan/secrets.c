@@ -1758,7 +1758,7 @@ static const struct ECDSA_private_key *get_nss_cert_privkey_ECDSA(struct secret 
 	return priv;
 }
 
-err_t lsw_add_rsa_secret(struct secret **secrets, CERTCertificate *cert)
+static err_t lsw_add_rsa_secret(struct secret **secrets, CERTCertificate *cert)
 {
 	if (get_nss_cert_privkey_RSA(*secrets, cert) != NULL) {
 		dbg("secrets entry for certificate already exists: %s", cert->nickname);
@@ -1780,7 +1780,7 @@ err_t lsw_add_rsa_secret(struct secret **secrets, CERTCertificate *cert)
 	return ugh;
 }
 
-err_t lsw_add_ecdsa_secret(struct secret **secrets, CERTCertificate *cert)
+static err_t lsw_add_ecdsa_secret(struct secret **secrets, CERTCertificate *cert)
 {
 	if (get_nss_cert_privkey_ECDSA(*secrets, cert) != NULL) {
 		DBG(DBG_CONTROL, DBG_log("secrets entry for %s already exists",
@@ -1801,4 +1801,53 @@ err_t lsw_add_ecdsa_secret(struct secret **secrets, CERTCertificate *cert)
 	}
 
 	return ugh;
+}
+
+static err_t add_pubkey_secret(struct secret **secrets, CERTCertificate *cert,
+			       SECKEYPublicKey *pubk)
+{
+	/* XXX: see also nss_cert_key_kind(cert) */
+	KeyType key_type = SECKEY_GetPublicKeyType(pubk); /* must destory */
+	const struct pubkey_type *type;
+	switch (key_type) {
+	case rsaKey:
+		type = &pubkey_type_rsa;
+		break;
+	case ecKey:
+		type = &pubkey_type_ecdsa;
+		break;
+	default:
+		type = NULL;
+		break;
+	}
+	if (type == NULL) {
+		SECKEY_DestroyPublicKey(pubk);
+		return "NSS cert not supported";
+	}
+
+	switch (type->private_key_kind) {
+	case PKK_RSA:
+		return lsw_add_rsa_secret(secrets, cert);
+	case PKK_ECDSA:
+		return lsw_add_ecdsa_secret(secrets, cert);
+	default:
+		bad_case(type->private_key_kind);
+	}
+}
+
+err_t lsw_add_secret(struct secret **secrets, CERTCertificate *cert)
+{
+	if (cert == NULL) {
+		return "NSS cert not found";
+	}
+
+	SECKEYPublicKey *pubk = SECKEY_ExtractPublicKey(&cert->subjectPublicKeyInfo);
+	if (pubk == NULL) {
+		/* dbg(... nss error) */
+		return "NSS: could not determine certificate kind; SECKEY_ExtractPublicKey() failed";
+	}
+
+	err_t err = add_pubkey_secret(secrets, cert, pubk);
+	SECKEY_DestroyPublicKey(pubk);
+	return err;
 }

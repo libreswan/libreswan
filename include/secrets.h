@@ -244,8 +244,8 @@ extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 
 extern struct secret *lsw_get_ppk_by_id(struct secret *secrets, chunk_t ppk_id);
 
-extern err_t lsw_add_rsa_secret(struct secret **secrets, CERTCertificate *cert);
-extern err_t lsw_add_ecdsa_secret(struct secret **secrets, CERTCertificate *cert);
+extern err_t lsw_add_secret(struct secret **secrets, CERTCertificate *cert);
+
 extern struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert);
 extern struct pubkey *allocate_ECDSA_public_key_nss(CERTCertificate *cert);
 
