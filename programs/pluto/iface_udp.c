@@ -248,12 +248,14 @@ static bool read_udp_packet(const struct iface_port *ifp, struct iface_packet *p
 	 * This is early enough that teardown isn't required:
 	 * just return on failure.
 	 */
-	threadtime_t errqueue_start = threadtime_start();
-	bool errqueue_ok = check_msg_errqueue(ifp, POLLIN, __func__);
-	threadtime_stop(&errqueue_start, SOS_NOBODY,
-			"%s() calling check_incoming_msg_errqueue()", __func__);
-	if (!errqueue_ok) {
-		return false; /* no normal message to read */
+	if (pluto_sock_errqueue) {
+		threadtime_t errqueue_start = threadtime_start();
+		bool errqueue_ok = check_msg_errqueue(ifp, POLLIN, __func__);
+		threadtime_stop(&errqueue_start, SOS_NOBODY,
+				"%s() calling check_incoming_msg_errqueue()", __func__);
+		if (!errqueue_ok) {
+			return false; /* no normal message to read */
+		}
 	}
 #endif
 
@@ -366,8 +368,11 @@ static ssize_t write_udp_packet(const struct iface_port *ifp,
 				const ip_endpoint *remote_endpoint)
 {
 #ifdef MSG_ERRQUEUE
-	check_msg_errqueue(ifp, POLLOUT, __func__);
+	if (pluto_sock_errqueue) {
+		check_msg_errqueue(ifp, POLLOUT, __func__);
+	}
 #endif
+
 	ip_sockaddr remote_sa;
 	size_t remote_sa_size = endpoint_to_sockaddr(remote_endpoint, &remote_sa);
 	return sendto(ifp->fd, ptr, len, 0, &remote_sa.sa, remote_sa_size);
