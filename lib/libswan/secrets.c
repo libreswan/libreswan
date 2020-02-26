@@ -1758,51 +1758,6 @@ static const struct ECDSA_private_key *get_nss_cert_privkey_ECDSA(struct secret 
 	return priv;
 }
 
-static err_t lsw_add_rsa_secret(struct secret **secrets, CERTCertificate *cert)
-{
-	if (get_nss_cert_privkey_RSA(*secrets, cert) != NULL) {
-		dbg("secrets entry for certificate already exists: %s", cert->nickname);
-		return NULL;
-	}
-	dbg("adding RSA secret for certificate: %s", cert->nickname);
-
-	struct secret *s = alloc_thing(struct secret, "RSA secret");
-	s->pks.kind = PKK_RSA;
-	s->pks.line = 0;
-
-	err_t ugh = lsw_extract_nss_cert_privkey_RSA(&s->pks.u.RSA_private_key,
-						     cert);
-	if (ugh != NULL) {
-		pfree(s);
-	} else {
-		add_secret(secrets, s, "lsw_add_rsa_secret");
-	}
-	return ugh;
-}
-
-static err_t lsw_add_ecdsa_secret(struct secret **secrets, CERTCertificate *cert)
-{
-	if (get_nss_cert_privkey_ECDSA(*secrets, cert) != NULL) {
-		DBG(DBG_CONTROL, DBG_log("secrets entry for %s already exists",
-					 cert->nickname));
-		return NULL;
-	}
-
-	struct secret *s = alloc_thing(struct secret, "ECDSA secret");
-	s->pks.kind = PKK_ECDSA;
-	s->pks.line = 0;
-
-	err_t ugh = lsw_extract_nss_cert_privkey_ECDSA(&s->pks.u.ECDSA_private_key,
-						cert);
-	if (ugh != NULL) {
-		pfree(s);
-	} else {
-		add_secret(secrets, s, "lsw_add_ecdsa_secret");
-	}
-
-	return ugh;
-}
-
 static err_t add_pubkey_secret(struct secret **secrets, CERTCertificate *cert,
 			       SECKEYPublicKey *pubk)
 {
@@ -1821,18 +1776,56 @@ static err_t add_pubkey_secret(struct secret **secrets, CERTCertificate *cert,
 		break;
 	}
 	if (type == NULL) {
-		SECKEY_DestroyPublicKey(pubk);
 		return "NSS cert not supported";
 	}
 
+	/*
+	 * XXX: the ECDSA variant looks broken; OTOH, it should be
+	 * possible to merge both and perhaps use CKAID?
+	 */
 	switch (type->private_key_kind) {
 	case PKK_RSA:
-		return lsw_add_rsa_secret(secrets, cert);
+		if (get_nss_cert_privkey_RSA(*secrets, cert) != NULL) {
+			dbg("secrets entry for certificate already exists: %s", cert->nickname);
+			return NULL;
+		}
+		break;
 	case PKK_ECDSA:
-		return lsw_add_ecdsa_secret(secrets, cert);
+		if (get_nss_cert_privkey_ECDSA(*secrets, cert) != NULL) {
+			dbg("secrets entry for %s already exists", cert->nickname);
+			return NULL;
+		}
+		break;
 	default:
 		bad_case(type->private_key_kind);
 	}
+
+	dbg("adding %s secret for certificate: %s", type->name, cert->nickname);
+
+	struct secret *s = alloc_thing(struct secret, "pubkey secret");
+	s->pks.kind = type->private_key_kind;
+	s->pks.line = 0;
+
+	err_t err;
+	switch (type->private_key_kind) {
+	case PKK_RSA:
+		err = lsw_extract_nss_cert_privkey_RSA(&s->pks.u.RSA_private_key,
+						       cert);
+		break;
+	case PKK_ECDSA:
+		err = lsw_extract_nss_cert_privkey_ECDSA(&s->pks.u.ECDSA_private_key,
+							 cert);
+		break;
+	default:
+		bad_case(type->private_key_kind);
+	}
+
+	if (err != NULL) {
+		pfree(s);
+	} else {
+		add_secret(secrets, s, "lsw_add_rsa_secret");
+	}
+	return err;
 }
 
 err_t lsw_add_secret(struct secret **secrets, CERTCertificate *cert)
