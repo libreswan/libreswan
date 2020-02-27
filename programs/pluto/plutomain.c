@@ -1399,25 +1399,27 @@ int main(int argc, char **argv)
 			char *protostack = cfg->setup.strings[KSF_PROTOSTACK];
 			passert(kernel_ops != NULL);
 
-			if (streq(protostack, "none")) {
-				kernel_ops = &nokernel_kernel_ops;
-			} else if (streq(protostack, "auto")) {
-				libreswan_log("the option protostack=auto is obsoleted, falling back to protostack=%s",
-					      kernel_ops->kern_name);
+			if (!(protostack == NULL || *protostack == '\0')) {
+				if (streq(protostack, "none")) {
+					kernel_ops = &nokernel_kernel_ops;
+				} else if (streq(protostack, "auto")) {
+					libreswan_log("the option protostack=auto is obsoleted, falling back to protostack=%s",
+						kernel_ops->kern_name);
 #ifdef NETKEY_SUPPORT
-			} else if (streq(protostack, "netkey") ||
-				streq(protostack, "native")) {
-				kernel_ops = &netkey_kernel_ops;
+				} else if (streq(protostack, "netkey") ||
+					streq(protostack, "native")) {
+						kernel_ops = &netkey_kernel_ops;
 #endif
 #ifdef BSD_KAME
-			} else if (streq(protostack, "bsd") ||
-				streq(protostack, "kame") ||
-				streq(protostack, "bsdkame")) {
-				kernel_ops = &bsdkame_kernel_ops;
+				} else if (streq(protostack, "bsd") ||
+					streq(protostack, "kame") ||
+					streq(protostack, "bsdkame")) {
+						kernel_ops = &bsdkame_kernel_ops;
 #endif
-			} else {
-				libreswan_log("protostack=%s ignored, using default protostack=%s",
-					      protostack, kernel_ops->kern_name);
+				} else {
+					libreswan_log("protostack=%s ignored, using default protostack=%s",
+						protostack, kernel_ops->kern_name);
+				}
 			}
 
 			confread_free(cfg);
