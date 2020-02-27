@@ -218,21 +218,21 @@ static void form_keyid_from_nss(SECItem e, SECItem n, char *keyid,
 	*keysize = n.len;
 }
 
-static void free_RSA_public_content(struct RSA_public_key *rsa)
+static err_t RSA_unpack_pubkey_content(union pubkey_content *u, chunk_t pubkey)
+{
+	return unpack_RSA_public_key(&u->rsa, &pubkey);
+}
+
+static void RSA_free_public_content(struct RSA_public_key *rsa)
 {
 	freeanychunk(rsa->n);
 	freeanychunk(rsa->e);
 	freeanyckaid(&rsa->ckaid);
 }
 
-static void free_RSA_pubkey_content(union pubkey_content *u)
+static void RSA_free_pubkey_content(union pubkey_content *u)
 {
-	free_RSA_public_content(&u->rsa);
-}
-
-static err_t unpack_RSA_pubkey_content(union pubkey_content *u, chunk_t pubkey)
-{
-	return unpack_RSA_public_key(&u->rsa, &pubkey);
+	RSA_free_public_content(&u->rsa);
 }
 
 static void RSA_unpack_secret_content(struct private_key_stuff *pks,
@@ -249,35 +249,36 @@ static void RSA_unpack_secret_content(struct private_key_stuff *pks,
 			rsak->pub.keyid, &rsak->pub.k);
 }
 
-static void RSA_free_secret_content(struct private_key_stuff *pks UNUSED)
+static void RSA_free_secret_content(struct private_key_stuff *pks)
 {
-	dbg("leaking RSA content");
+	struct RSA_private_key *rsak = &pks->u.RSA_private_key;
+	RSA_free_public_content(&rsak->pub);
 }
 
 const struct pubkey_type pubkey_type_rsa = {
 	.alg = PUBKEY_ALG_RSA,
 	.name = "RSA",
 	.private_key_kind = PKK_RSA,
-	.free_pubkey_content = free_RSA_pubkey_content,
-	.unpack_pubkey_content = unpack_RSA_pubkey_content,
+	.free_pubkey_content = RSA_free_pubkey_content,
+	.unpack_pubkey_content = RSA_unpack_pubkey_content,
 	.unpack_secret_content = RSA_unpack_secret_content,
 	.free_secret_content = RSA_free_secret_content,
 };
 
-static void free_ECDSA_public_content(struct ECDSA_public_key *ecdsa)
+static err_t ECDSA_unpack_pubkey_content(union pubkey_content *u, chunk_t pubkey)
+{
+	return unpack_ECDSA_public_key(&u->ecdsa, &pubkey);
+}
+
+static void ECDSA_free_public_content(struct ECDSA_public_key *ecdsa)
 {
 	freeanychunk(ecdsa->pub);
 	/* ??? what about ecdsa->pub.{ecParams,version,ckaid}? */
 }
 
-static void free_ECDSA_pubkey_content(union pubkey_content *u)
+static void ECDSA_free_pubkey_content(union pubkey_content *u)
 {
-	free_ECDSA_public_content(&u->ecdsa);
-}
-
-static err_t unpack_ECDSA_pubkey_content(union pubkey_content *u, chunk_t pubkey)
-{
-	return unpack_ECDSA_public_key(&u->ecdsa, &pubkey);
+	ECDSA_free_public_content(&u->ecdsa);
 }
 
 static void ECDSA_unpack_secret_content(struct private_key_stuff *pks,
@@ -301,15 +302,18 @@ static void ECDSA_unpack_secret_content(struct private_key_stuff *pks,
 
 static void ECDSA_free_secret_content(struct private_key_stuff *pks UNUSED)
 {
-	dbg("leaking ECDSA content");
+	struct ECDSA_private_key *ecdsak = &pks->u.ECDSA_private_key;
+	dbg("leaking ECDSA content?");
+	/* ??? what about freeing the rest of the key? */
+	ECDSA_free_public_content(&ecdsak->pub);
 }
 
 const struct pubkey_type pubkey_type_ecdsa = {
 	.alg = PUBKEY_ALG_ECDSA,
 	.name = "ECDSA",
 	.private_key_kind = PKK_ECDSA,
-	.free_pubkey_content = free_ECDSA_pubkey_content,
-	.unpack_pubkey_content = unpack_ECDSA_pubkey_content,
+	.unpack_pubkey_content = ECDSA_unpack_pubkey_content,
+	.free_pubkey_content = ECDSA_free_pubkey_content,
 	.unpack_secret_content = ECDSA_unpack_secret_content,
 	.free_secret_content = ECDSA_free_secret_content,
 };
@@ -1028,6 +1032,7 @@ static void process_secret(struct secret **psecrets,
 		 * A braced list of keyword and value pairs.
 		 */
 		s->pks.kind = PKK_RSA;
+		s->pks.pubkey_type = &pubkey_type_rsa;
 		if (!shift()) {
 			ugh = "ERROR: bad RSA key syntax";
 		} else if (tokeq("{")) {
@@ -1305,14 +1310,9 @@ void lsw_free_preshared_secrets(struct secret **psecrets)
 				pfree(s->pks.u.preshared_secret.ptr);
 				break;
 			case PKK_RSA:
-				/* Note: pub is all there is */
-				free_RSA_public_content(
-					&s->pks.u.RSA_private_key.pub);
-				break;
 			case PKK_ECDSA:
-				/* ??? what about freeing the rest of the key? */
-				free_ECDSA_public_content(
-					&s->pks.u.ECDSA_private_key.pub);
+				/* Note: pub is all there is */
+				s->pks.pubkey_type->free_secret_content(&s->pks);
 				break;
 			default:
 				bad_case(s->pks.kind);
@@ -1634,6 +1634,7 @@ static err_t add_pubkey_ckaid_secret(struct secret **secrets, const struct pubke
 				     SECKEYPublicKey *pubk, SECItem *cert_ckaid)
 {
 	struct secret *s = alloc_thing(struct secret, "pubkey secret");
+	s->pks.pubkey_type = type;
 	s->pks.kind = type->private_key_kind;
 	s->pks.line = 0;
 

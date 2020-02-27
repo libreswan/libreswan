@@ -130,6 +130,8 @@ struct private_key_stuff {
 
 	chunk_t ppk;
 	chunk_t ppk_id;
+	/* for PKI */
+	const struct pubkey_type *pubkey_type;
 };
 
 extern struct private_key_stuff *lsw_get_pks(struct secret *s);
