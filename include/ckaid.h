@@ -1,7 +1,7 @@
 /*
  * NSS boilerplate stuff, for libreswan.
  *
- * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016,2020 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2018 Sahana Prasad <sahana.prasad07@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -19,7 +19,9 @@
 #define CKAID_H
 
 #include <stdbool.h>		/* for bool */
+#include <stdint.h>		/* for uint8_t */
 #include <secitem.h>		/* for SECItem */
+#include <stddef.h>		/* for size_t */
 
 #include "err.h"
 #include "chunk.h"
@@ -27,20 +29,22 @@
 /*
  * For rationale behind *_t? Blame chunk_t.
  *
- * XXX: Can ckaid be changed to bytes[]+length?  The length is
- * determined by the hash algorithm(s) used to generate the ckaid?
+ * Field names are so that it is chunk_t like.
+ *
+ * Assume SHA1 is being used for the CKAID
  */
 typedef struct {
-	SECItem *nss;
+	size_t len;
+	uint8_t ptr[BYTES_FOR_BITS(160)];
 } ckaid_t;
 
-bool ckaid_starts_with(ckaid_t ckaid, const char *start);
-char *ckaid_as_string(ckaid_t ckaid);
+bool ckaid_starts_with(const ckaid_t *ckaid, const char *start);
+char *ckaid_as_string(const ckaid_t *ckaid);
 err_t form_ckaid_rsa(chunk_t modulus, ckaid_t *ckaid);
 err_t form_ckaid_ecdsa(chunk_t pub_value, ckaid_t *ckaid);
-ckaid_t clone_nss_ckaid(const SECItem *const nss_ckaid);
 bool ckaid_eq_nss(const ckaid_t *l, const SECItem *r);
-void freeanyckaid(ckaid_t *ckaid);
-void DBG_log_ckaid(const char *prefix, ckaid_t ckaid);
+
+ckaid_t ckaid_from_secitem(const SECItem *const nss_ckaid);
+SECItem same_ckaid_as_secitem(const ckaid_t *ciaid);
 
 #endif

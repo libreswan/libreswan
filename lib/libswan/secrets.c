@@ -211,7 +211,6 @@ static void RSA_free_public_content(struct RSA_public_key *rsa)
 {
 	freeanychunk(rsa->n);
 	freeanychunk(rsa->e);
-	freeanyckaid(&rsa->ckaid);
 }
 
 static void RSA_free_pubkey_content(union pubkey_content *u)
@@ -228,7 +227,7 @@ static void RSA_unpack_secret_content(struct private_key_stuff *pks,
 					   pubk->u.rsa.publicExponent.len, "e");
 	rsak->pub.n = clone_bytes_as_chunk(pubk->u.rsa.modulus.data,
 					   pubk->u.rsa.modulus.len, "n");
-	rsak->pub.ckaid = clone_nss_ckaid(cert_ckaid);
+	rsak->pub.ckaid = ckaid_from_secitem(cert_ckaid);
 	form_keyid_from_nss(pubk->u.rsa.publicExponent, pubk->u.rsa.modulus,
 			rsak->pub.keyid, &rsak->pub.k);
 }
@@ -292,7 +291,7 @@ static void ECDSA_unpack_secret_content(struct private_key_stuff *pks,
 	struct ECDSA_private_key *ecdsak = &pks->u.ECDSA_private_key;
 	ecdsak->pub.pub = clone_bytes_as_chunk(pubk->u.ec.publicValue.data,
 					       pubk->u.ec.publicValue.len, "pub");
-	ecdsak->pub.ckaid = clone_nss_ckaid(cert_ckaid);
+	ecdsak->pub.ckaid = ckaid_from_secitem(cert_ckaid);
 	/* keyid */
 	char keyid[KEYID_BUF];
 	memset(keyid, 0, KEYID_BUF);
@@ -451,8 +450,9 @@ struct secret *lsw_find_secret_by_public_key(struct secret *secrets,
 {
 	dbg("searching for secret matching public key %s:%s",
 	    public_key->type->name, pubkey_keyid(public_key));
+	SECItem nss_ckaid = same_ckaid_as_secitem(pubkey_ckaid(public_key));
 	return find_pubkey_secret_by_ckaid(secrets, public_key->type,
-					   pubkey_ckaid(public_key)->nss);
+					   &nss_ckaid);
 }
 
 struct secret *lsw_find_secret_by_id(struct secret *secrets,
@@ -1007,11 +1007,12 @@ static err_t lsw_process_rsa_secret(struct private_key_stuff *pks)
 		return "NSS: has no internal slot ....";
 	}
 
-	SECKEYPrivateKey *private_key = PK11_FindKeyByKeyID(slot, rsak->pub.ckaid.nss,
+	SECItem nss_ckaid = same_ckaid_as_secitem(&rsak->pub.ckaid);
+	SECKEYPrivateKey *private_key = PK11_FindKeyByKeyID(slot, &nss_ckaid,
 							    lsw_return_nss_password_file_info());
 	if (private_key == NULL) {
 		dbg("NSS: can't find the private key using the NSS CKAID");
-		CERTCertificate *cert = get_cert_by_ckaid_t_from_nss(rsak->pub.ckaid);
+		CERTCertificate *cert = get_cert_by_ckaid_t_from_nss(&rsak->pub.ckaid);
 		if (cert == NULL) {
 			return "can't find the private key matching the NSS CKAID";
 		}
@@ -1544,7 +1545,7 @@ struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert)
 				      cert->nickname);
 			return NULL;
 		}
-		ckaid = clone_nss_ckaid(nss_ckaid);
+		ckaid = ckaid_from_secitem(nss_ckaid);
 		SECITEM_FreeItem(nss_ckaid, PR_TRUE);
 	}
 	/* free: ckaid */
@@ -1557,7 +1558,6 @@ struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert)
 			/* someone deleted CERT from the NSS DB */
 			libreswan_log("NSS: could not extract public key from RSA certificate '%s'",
 				      cert->nickname);
-			freeanyckaid(&ckaid);
 			return NULL;
 		}
 		e = clone_secitem_as_chunk(nsspk->u.rsa.publicExponent, "RSA e");
@@ -1599,7 +1599,6 @@ struct pubkey *allocate_ECDSA_public_key_nss(CERTCertificate *cert)
 			/* someone deleted CERT from the NSS DB */
 			libreswan_log("NSS: could not extract public key from ECDSA certificate '%s'",
 				      cert->nickname);
-			freeanyckaid(&ckaid);
 			return NULL;
 		}
 

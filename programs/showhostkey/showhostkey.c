@@ -138,7 +138,7 @@ static void print(struct private_key_stuff *pks,
 		if (id) {
 			printf(" id: %s", idb);
 		}
-		char *ckaid = ckaid_as_string(pks->u.RSA_private_key.pub.ckaid);
+		char *ckaid = ckaid_as_string(&pks->u.RSA_private_key.pub.ckaid);
 		printf(" ckaid: %s\n", ckaid);
 		pfree(ckaid);
 		break;
@@ -222,7 +222,7 @@ static int pick_by_ckaid(struct secret *secret UNUSED,
 			 void *uservoid)
 {
 	char *start = (char *)uservoid;
-	if (pks->kind == PKK_RSA && ckaid_starts_with(pks->u.RSA_private_key.pub.ckaid, start)) {
+	if (pks->kind == PKK_RSA && ckaid_starts_with(&pks->u.RSA_private_key.pub.ckaid, start)) {
 		/* stop */
 		return 0;
 	} else {

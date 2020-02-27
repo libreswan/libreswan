@@ -31,15 +31,15 @@
 /*
  * Return true IFF CKAID starts with all of START (which is in HEX).
  */
-bool ckaid_starts_with(ckaid_t ckaid, const char *start)
+bool ckaid_starts_with(const ckaid_t *ckaid, const char *start)
 {
-	if (strlen(start) > ckaid.nss->len * 2) {
+	if (strlen(start) > ckaid->len * 2) {
 		return false;
 	}
 
 	for (int i = 0; start[i] != '\0'; i++) {
 		const char *p = start + i;
-		unsigned byte = ckaid.nss->data[i / 2];
+		unsigned byte = ckaid->ptr[i / 2];
 		/* high or low */
 		unsigned nibble = (i & 1) ? (byte & 0xf) : (byte >> 4);
 		char n[2] = { *p, };
@@ -57,25 +57,36 @@ bool ckaid_starts_with(ckaid_t ckaid, const char *start)
 
 bool ckaid_eq_nss(const ckaid_t *l, const SECItem *r)
 {
-	return (l->nss->len == r->len &&
-		memeq(l->nss->data, r->data, r->len));
+	return (l->len == r->len &&
+		memeq(l->ptr, r->data, r->len));
 }
 
-char *ckaid_as_string(ckaid_t ckaid)
+char *ckaid_as_string(const ckaid_t *ckaid)
 {
-	size_t string_len = ckaid.nss->len * 2 + 1;
+	size_t string_len = ckaid->len * 2 + 1;
 	char *string = alloc_bytes(string_len, "ckaid-string");
-	datatot(ckaid.nss->data, ckaid.nss->len, 16, string, string_len);
+	datatot(ckaid->ptr, ckaid->len, 16, string, string_len);
 	return string;
 }
 
-ckaid_t clone_nss_ckaid(const SECItem *const nss_ckaid)
+ckaid_t ckaid_from_secitem(const SECItem *const nss_ckaid)
 {
 	ckaid_t ckaid = {
-		.nss = SECITEM_DupItem(nss_ckaid),
+		.len = nss_ckaid->len,
 	};
-	passert(ckaid.nss != NULL);
+	passert(ckaid.len <= sizeof(ckaid.ptr/*an-array*/));
+	memmove(ckaid.ptr, nss_ckaid->data, ckaid.len);
 	return ckaid;
+}
+
+SECItem same_ckaid_as_secitem(const ckaid_t *ckaid)
+{
+	SECItem nss_ckaid = {
+		.data = (void*)ckaid->ptr, /* NSS doesn't do const */
+		.len = ckaid->len,
+		.type = siBuffer,
+	};
+	return nss_ckaid;
 }
 
 err_t form_ckaid_rsa(chunk_t modulus, ckaid_t *ckaid)
@@ -91,7 +102,7 @@ err_t form_ckaid_rsa(chunk_t modulus, ckaid_t *ckaid)
 	}
 	DBG(DBG_CONTROLMORE, DBG_dump("computed rsa CKAID",
 				      nss_ckaid->data, nss_ckaid->len));
-	*ckaid = clone_nss_ckaid(nss_ckaid);
+	*ckaid = ckaid_from_secitem(nss_ckaid);
 	SECITEM_FreeItem(nss_ckaid, PR_TRUE);
 	return NULL;
 }
@@ -109,20 +120,7 @@ err_t form_ckaid_ecdsa(chunk_t pub_value, ckaid_t *ckaid)
 	}
 	DBG(DBG_CONTROLMORE, DBG_dump("computed ecdsa CKAID",
 					nss_ckaid->data, nss_ckaid->len));
-	*ckaid = clone_nss_ckaid(nss_ckaid);
+	*ckaid = ckaid_from_secitem(nss_ckaid);
 	SECITEM_FreeItem(nss_ckaid, PR_TRUE);
 	return NULL;
-}
-
-void freeanyckaid(ckaid_t *ckaid)
-{
-	if (ckaid != NULL && ckaid->nss) {
-		SECITEM_FreeItem(ckaid->nss, PR_TRUE);
-		ckaid->nss = NULL;
-	}
-}
-
-void DBG_log_ckaid(const char *prefix, ckaid_t ckaid)
-{
-	DBG_dump(prefix, ckaid.nss->data, ckaid.nss->len);
 }

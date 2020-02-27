@@ -208,7 +208,7 @@ err_t unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
 		DBG_log("keyid: *%s", rsa->keyid);
 		DBG_dump_hunk("  n", rsa->n);
 		DBG_dump_hunk("  e", rsa->e);
-		DBG_log_ckaid("  CKAID", rsa->ckaid);
+		DBG_dump_hunk("  CKAID", rsa->ckaid);
 	}
 
 	return NULL;
@@ -239,7 +239,7 @@ err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa, const chunk_t *pub
 		DBG_log("keyid: *%s", ecdsa->keyid);
 		DBG_log("  key size: *%s", ecdsa->keyid);
 		DBG_dump_hunk("  pub", ecdsa->pub);
-		DBG_log_ckaid("  CKAID", ecdsa->ckaid);
+		DBG_dump_hunk("  CKAID", ecdsa->ckaid);
 	}
 
        return NULL;

@@ -54,11 +54,11 @@ static SECStatus ckaid_match(CERTCertificate *cert, SECItem *ignore1 UNUSED, voi
 	return SECSuccess;
 }
 
-CERTCertificate *get_cert_by_ckaid_t_from_nss(ckaid_t ckaid)
+CERTCertificate *get_cert_by_ckaid_t_from_nss(const ckaid_t *ckaid)
 {
 	struct ckaid_match_arg ckaid_match_arg = {
 		.cert = NULL,
-		.ckaid = *ckaid.nss,
+		.ckaid = same_ckaid_as_secitem(ckaid),
 	};
 	PK11_TraverseSlotCerts(ckaid_match, &ckaid_match_arg,
 			       lsw_return_nss_password_file_info());
@@ -72,8 +72,9 @@ CERTCertificate *get_cert_by_ckaid_from_nss(const char *ckaid)
 	}
 	/* convert hex string ckaid to binary bin */
 	size_t binlen = (strlen(ckaid) + 1) / 2;
-	char *bin = alloc_bytes(binlen, "ckaid");
-	const char *ugh = ttodata(ckaid, 0, 16, bin, binlen, &binlen);
+	uint8_t *bin = alloc_bytes(binlen, "ckaid");
+	/* binlen will be "fixed"; ttodata doesn't take void* */
+	const char *ugh = ttodata(ckaid, 0, 16, (void*)bin, binlen, &binlen);
 	if (ugh != NULL) {
 		pfree(bin);
 		/* should have been rejected by whack? */
@@ -81,15 +82,17 @@ CERTCertificate *get_cert_by_ckaid_from_nss(const char *ckaid)
 		return NULL;
 	}
 
-	SECItem ckaid_nss = {
-		.type = siBuffer,
-		.data = (void*) bin,
-		.len = binlen,
+	/* copy blob into ckaid */
+	struct ckaid_match_arg ckaid_match_arg = {
+		.cert = NULL,
+		.ckaid = {
+			.data = bin,
+			.len = binlen,
+			.type = siBuffer,
+		},
 	};
-	ckaid_t ckaid_buf = {
-		.nss = &ckaid_nss,
-	};
-	CERTCertificate *cert = get_cert_by_ckaid_t_from_nss(ckaid_buf);
+	PK11_TraverseSlotCerts(ckaid_match, &ckaid_match_arg,
+			       lsw_return_nss_password_file_info());
 	pfree(bin);
-	return cert;
+	return ckaid_match_arg.cert;
 }

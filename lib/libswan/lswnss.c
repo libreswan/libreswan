@@ -194,7 +194,7 @@ struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval func,
 				// fprintf(stderr, "ckaid not found\n");
 				continue;
 			}
-			pks.u.RSA_private_key.pub.ckaid = clone_nss_ckaid(nss_ckaid);
+			pks.u.RSA_private_key.pub.ckaid = ckaid_from_secitem(nss_ckaid);
 			SECITEM_FreeItem(nss_ckaid, PR_TRUE);
 		}
 
@@ -230,7 +230,6 @@ struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval func,
 			break;
 		}
 
-		freeanyckaid(&pks.u.RSA_private_key.pub.ckaid);
 		freeanychunk(pks.u.RSA_private_key.pub.e);
 		freeanychunk(pks.u.RSA_private_key.pub.n);
 
