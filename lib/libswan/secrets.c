@@ -113,23 +113,6 @@ static const struct fld RSA_private_field[] = {
 static void lsw_process_secrets_file(struct secret **psecrets,
 				const char *file_pat);
 
-static err_t RSA_public_key_sanity(const struct RSA_private_key *k)
-{
-	/*
-	 * PKCS#1 1.5 section 6 requires modulus to have at least 12 octets.
-	 *
-	 * We actually require more (for security).
-	 */
-	if (k->pub.k < RSA_MIN_OCTETS)
-		return RSA_MIN_OCTETS_UGH;
-
-	/* we picked a max modulus size to simplify buffer allocation */
-	if (k->pub.k > RSA_MAX_OCTETS)
-		return RSA_MAX_OCTETS_UGH;
-
-	return NULL;
-}
-
 struct secret {
 	struct secret  *next;
 	struct id_list *ids;
@@ -255,6 +238,24 @@ static void RSA_free_secret_content(struct private_key_stuff *pks)
 	RSA_free_public_content(&rsak->pub);
 }
 
+static err_t RSA_secret_sane(struct private_key_stuff *pks)
+{
+	const struct RSA_private_key *k = &pks->u.RSA_private_key;
+	/*
+	 * PKCS#1 1.5 section 6 requires modulus to have at least 12 octets.
+	 *
+	 * We actually require more (for security).
+	 */
+	if (k->pub.k < RSA_MIN_OCTETS)
+		return RSA_MIN_OCTETS_UGH;
+
+	/* we picked a max modulus size to simplify buffer allocation */
+	if (k->pub.k > RSA_MAX_OCTETS)
+		return RSA_MAX_OCTETS_UGH;
+
+	return NULL;
+}
+
 const struct pubkey_type pubkey_type_rsa = {
 	.alg = PUBKEY_ALG_RSA,
 	.name = "RSA",
@@ -263,6 +264,7 @@ const struct pubkey_type pubkey_type_rsa = {
 	.unpack_pubkey_content = RSA_unpack_pubkey_content,
 	.unpack_secret_content = RSA_unpack_secret_content,
 	.free_secret_content = RSA_free_secret_content,
+	.secret_sane = RSA_secret_sane,
 };
 
 static err_t ECDSA_unpack_pubkey_content(union pubkey_content *u, chunk_t pubkey)
@@ -300,12 +302,18 @@ static void ECDSA_unpack_secret_content(struct private_key_stuff *pks,
 	ecdsak->pub.k = pubk->u.ec.size;
 }
 
-static void ECDSA_free_secret_content(struct private_key_stuff *pks UNUSED)
+static void ECDSA_free_secret_content(struct private_key_stuff *pks)
 {
 	struct ECDSA_private_key *ecdsak = &pks->u.ECDSA_private_key;
 	dbg("leaking ECDSA content?");
 	/* ??? what about freeing the rest of the key? */
 	ECDSA_free_public_content(&ecdsak->pub);
+}
+
+static err_t ECDSA_secret_sane(struct private_key_stuff *pks_unused UNUSED)
+{
+	dbg("ECDSA is assumed to be sane");
+	return NULL;
 }
 
 const struct pubkey_type pubkey_type_ecdsa = {
@@ -316,6 +324,7 @@ const struct pubkey_type pubkey_type_ecdsa = {
 	.free_pubkey_content = ECDSA_free_pubkey_content,
 	.unpack_secret_content = ECDSA_unpack_secret_content,
 	.free_secret_content = ECDSA_free_secret_content,
+	.secret_sane = ECDSA_secret_sane,
 };
 
 const struct pubkey_type *pubkey_alg_type(enum pubkey_alg alg)
@@ -878,9 +887,14 @@ struct secret *lsw_get_ppk_by_id(struct secret *s, chunk_t ppk_id)
  * A braced list of keyword and value pairs.
  * At the moment, each field is required, in order.
  * The fields come from BIND 8.2's representation
+ *
+ * Danger! When an error is returned, the contents of *PKS are a mess
+ * - the caller gets to free this up (which is still easier than try
+ * to do it here).
  */
-static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
+static err_t lsw_process_rsa_secret(struct private_key_stuff *pks)
 {
+	struct RSA_private_key *rsak = &pks->u.RSA_private_key;
 	passert(tokeq("{"));
 	while (1) {
 		if (!shift()) {
@@ -973,7 +987,7 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 		return err;
 	}
 
-	return RSA_public_key_sanity(rsak);
+	return pks->pubkey_type->secret_sane(pks);
 }
 
 static pthread_mutex_t certs_and_keys_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -1049,7 +1063,7 @@ static void process_secret(struct secret **psecrets,
 			ugh = "ERROR: bad RSA key syntax";
 		} else if (tokeq("{")) {
 			/* raw RSA key in NSS */
-			ugh = lsw_process_rsa_secret(&s->pks.u.RSA_private_key);
+			ugh = lsw_process_rsa_secret(&s->pks);
 		} else {
 			/* RSA key in certificate in NSS */
 			ugh = "WARNING: The :RSA secrets entries for X.509 certificates are no longer needed";
@@ -1058,6 +1072,9 @@ static void process_secret(struct secret **psecrets,
 			libreswan_log("loaded private key for keyid: %s:%s",
 				enum_name(&pkk_names, s->pks.kind),
 				s->pks.u.RSA_private_key.pub.keyid);
+		} else {
+			dbg("cleaning up mess left in raw rsa key");
+			s->pks.pubkey_type->free_secret_content(&s->pks);
 		}
 	} else if (tokeqword("ppks")) {
 		s->pks.kind = PKK_PPK;
@@ -1622,26 +1639,15 @@ static err_t add_pubkey_ckaid_secret(struct secret **secrets, const struct pubke
 
 	type->unpack_secret_content(&s->pks, pubk, cert_ckaid);
 
-	err_t err;
-	switch (type->private_key_kind) {
-	case PKK_RSA:
-		err = RSA_public_key_sanity(&s->pks.u.RSA_private_key);
-		break;
-	case PKK_ECDSA:
-		/* ??? we should check the sanity of ecdsak */
-		break;
-	default:
-		bad_case(type->private_key_kind);
-	}
-
+	err_t err = type->secret_sane(&s->pks);
 	if (err != NULL) {
 		type->free_secret_content(&s->pks);
 		pfree(s);
-	} else {
-		add_secret(secrets, s, "lsw_add_rsa_secret");
+		return err;
 	}
 
-	return err;
+	add_secret(secrets, s, "lsw_add_rsa_secret");
+	return NULL;
 }
 
 static err_t add_pubkey_secret(struct secret **secrets, CERTCertificate *cert,

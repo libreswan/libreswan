@@ -164,6 +164,7 @@ struct pubkey_type {
 				      SECKEYPublicKey *pubk,
 				      SECItem *cert_ckaid);
 	void (*free_secret_content)(struct private_key_stuff *pks);
+	err_t (*secret_sane)(struct private_key_stuff *pks);
 };
 
 extern const struct pubkey_type pubkey_type_rsa;
