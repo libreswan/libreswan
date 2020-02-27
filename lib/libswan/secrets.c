@@ -235,12 +235,33 @@ static err_t unpack_RSA_pubkey_content(union pubkey_content *u, chunk_t pubkey)
 	return unpack_RSA_public_key(&u->rsa, &pubkey);
 }
 
+static void RSA_unpack_secret_content(struct private_key_stuff *pks,
+				      SECKEYPublicKey *pubk,
+				      SECItem *cert_ckaid)
+{
+	struct RSA_private_key *rsak = &pks->u.RSA_private_key;
+	rsak->pub.e = clone_bytes_as_chunk(pubk->u.rsa.publicExponent.data,
+					   pubk->u.rsa.publicExponent.len, "e");
+	rsak->pub.n = clone_bytes_as_chunk(pubk->u.rsa.modulus.data,
+					   pubk->u.rsa.modulus.len, "n");
+	rsak->pub.ckaid = clone_nss_ckaid(cert_ckaid);
+	form_keyid_from_nss(pubk->u.rsa.publicExponent, pubk->u.rsa.modulus,
+			rsak->pub.keyid, &rsak->pub.k);
+}
+
+static void RSA_free_secret_content(struct private_key_stuff *pks UNUSED)
+{
+	dbg("leaking RSA content");
+}
+
 const struct pubkey_type pubkey_type_rsa = {
 	.alg = PUBKEY_ALG_RSA,
 	.name = "RSA",
 	.private_key_kind = PKK_RSA,
 	.free_pubkey_content = free_RSA_pubkey_content,
 	.unpack_pubkey_content = unpack_RSA_pubkey_content,
+	.unpack_secret_content = RSA_unpack_secret_content,
+	.free_secret_content = RSA_free_secret_content,
 };
 
 static void free_ECDSA_public_content(struct ECDSA_public_key *ecdsa)
@@ -259,13 +280,38 @@ static err_t unpack_ECDSA_pubkey_content(union pubkey_content *u, chunk_t pubkey
 	return unpack_ECDSA_public_key(&u->ecdsa, &pubkey);
 }
 
+static void ECDSA_unpack_secret_content(struct private_key_stuff *pks,
+					SECKEYPublicKey *pubk,
+					SECItem *cert_ckaid)
+{
+	struct ECDSA_private_key *ecdsak = &pks->u.ECDSA_private_key;
+	ecdsak->pub.pub = clone_bytes_as_chunk(pubk->u.ec.publicValue.data,
+					       pubk->u.ec.publicValue.len, "pub");
+	ecdsak->pub.ckaid = clone_nss_ckaid(cert_ckaid);
+	/* keyid */
+	char keyid[KEYID_BUF];
+	memset(keyid, 0, KEYID_BUF);
+	memcpy(keyid, pubk->u.ec.publicValue.data, KEYID_BUF-1);
+	memset(ecdsak->pub.keyid, 0, KEYID_BUF);
+	keyblobtoid((const unsigned char *)keyid, KEYID_BUF,
+		    ecdsak->pub.keyid, KEYID_BUF);
+	/*size */
+	ecdsak->pub.k = pubk->u.ec.size;
+}
+
+static void ECDSA_free_secret_content(struct private_key_stuff *pks UNUSED)
+{
+	dbg("leaking ECDSA content");
+}
+
 const struct pubkey_type pubkey_type_ecdsa = {
 	.alg = PUBKEY_ALG_ECDSA,
 	.name = "ECDSA",
 	.private_key_kind = PKK_ECDSA,
 	.free_pubkey_content = free_ECDSA_pubkey_content,
 	.unpack_pubkey_content = unpack_ECDSA_pubkey_content,
-
+	.unpack_secret_content = ECDSA_unpack_secret_content,
+	.free_secret_content = ECDSA_free_secret_content,
 };
 
 const struct pubkey_type *pubkey_alg_type(enum pubkey_alg alg)
@@ -1539,40 +1585,6 @@ struct pubkey *allocate_ECDSA_public_key_nss(CERTCertificate *cert)
 	return pk;
 }
 
-static err_t add_ckaid_to_rsa_privkey(struct RSA_private_key *rsak,
-				      SECKEYPublicKey *pubk,
-				      SECItem *cert_ckaid)
-{
-	rsak->pub.e = clone_bytes_as_chunk(pubk->u.rsa.publicExponent.data,
-					   pubk->u.rsa.publicExponent.len, "e");
-	rsak->pub.n = clone_bytes_as_chunk(pubk->u.rsa.modulus.data,
-					   pubk->u.rsa.modulus.len, "n");
-	rsak->pub.ckaid = clone_nss_ckaid(cert_ckaid);
-	form_keyid_from_nss(pubk->u.rsa.publicExponent, pubk->u.rsa.modulus,
-			rsak->pub.keyid, &rsak->pub.k);
-	return NULL;
-}
-
-
-static err_t add_ckaid_to_ecdsa_privkey(struct ECDSA_private_key *ecdsak,
-					SECKEYPublicKey *pubk,
-					SECItem *cert_ckaid)
-{
-	ecdsak->pub.pub = clone_bytes_as_chunk(pubk->u.ec.publicValue.data,
-					       pubk->u.ec.publicValue.len, "pub");
-	ecdsak->pub.ckaid = clone_nss_ckaid(cert_ckaid);
-	/* keyid */
-	char keyid[KEYID_BUF];
-	memset(keyid, 0, KEYID_BUF);
-	memcpy(keyid, pubk->u.ec.publicValue.data, KEYID_BUF-1);
-	memset(ecdsak->pub.keyid, 0, KEYID_BUF);
-	keyblobtoid((const unsigned char *)keyid, KEYID_BUF,
-		    ecdsak->pub.keyid, KEYID_BUF);
-	/*size */
-	ecdsak->pub.k = pubk->u.ec.size;
-	return NULL;
-}
-
 static const struct RSA_private_key *get_nss_cert_privkey_RSA(struct secret *secrets,
 							  CERTCertificate *cert)
 {
@@ -1625,34 +1637,22 @@ static err_t add_pubkey_ckaid_secret(struct secret **secrets, const struct pubke
 	s->pks.kind = type->private_key_kind;
 	s->pks.line = 0;
 
+	type->unpack_secret_content(&s->pks, pubk, cert_ckaid);
+
 	err_t err;
 	switch (type->private_key_kind) {
 	case PKK_RSA:
-		err = add_ckaid_to_rsa_privkey(&s->pks.u.RSA_private_key,
-					       pubk, cert_ckaid);
+		err = RSA_public_key_sanity(&s->pks.u.RSA_private_key);
 		break;
 	case PKK_ECDSA:
-		err = add_ckaid_to_ecdsa_privkey(&s->pks.u.ECDSA_private_key,
-						 pubk, cert_ckaid);
+		/* ??? we should check the sanity of ecdsak */
 		break;
 	default:
 		bad_case(type->private_key_kind);
 	}
 
-	if (err == NULL) {
-		switch (type->private_key_kind) {
-		case PKK_RSA:
-			err = RSA_public_key_sanity(&s->pks.u.RSA_private_key);
-			break;
-		case PKK_ECDSA:
-			/* ??? we should check the sanity of ecdsak */
-			break;
-		default:
-			bad_case(type->private_key_kind);
-		}
-	}
-
 	if (err != NULL) {
+		type->free_secret_content(&s->pks);
 		pfree(s);
 	} else {
 		add_secret(secrets, s, "lsw_add_rsa_secret");
