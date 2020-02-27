@@ -1432,12 +1432,8 @@ struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert)
 				      cert->nickname);
 			return NULL;
 		}
-		err_t err = form_ckaid_nss(nss_ckaid, &ckaid);
+		ckaid = clone_nss_ckaid(nss_ckaid);
 		SECITEM_FreeItem(nss_ckaid, PR_TRUE);
-		if (err) {
-			/* XXX: What to do with the error?  */
-			return NULL;
-		}
 	}
 	/* free: ckaid */
 
@@ -1545,41 +1541,26 @@ struct pubkey *allocate_ECDSA_public_key_nss(CERTCertificate *cert)
 
 static err_t add_ckaid_to_rsa_privkey(struct RSA_private_key *rsak,
 				      SECKEYPublicKey *pubk,
-				      SECItem *certCKAID)
+				      SECItem *cert_ckaid)
 {
-	err_t ugh;
-
 	rsak->pub.e = clone_bytes_as_chunk(pubk->u.rsa.publicExponent.data,
 					   pubk->u.rsa.publicExponent.len, "e");
 	rsak->pub.n = clone_bytes_as_chunk(pubk->u.rsa.modulus.data,
 					   pubk->u.rsa.modulus.len, "n");
-	ugh = form_ckaid_nss(certCKAID, &rsak->pub.ckaid);
-	if (ugh != NULL) {
-		/* let caller clean up mess */
-		goto out;
-	}
-
+	rsak->pub.ckaid = clone_nss_ckaid(cert_ckaid);
 	form_keyid_from_nss(pubk->u.rsa.publicExponent, pubk->u.rsa.modulus,
 			rsak->pub.keyid, &rsak->pub.k);
-
-out:
-	return ugh;
+	return NULL;
 }
 
 
 static err_t add_ckaid_to_ecdsa_privkey(struct ECDSA_private_key *ecdsak,
 					SECKEYPublicKey *pubk,
-					SECItem *certCKAID)
+					SECItem *cert_ckaid)
 {
-	err_t ugh;
-
 	ecdsak->pub.pub = clone_bytes_as_chunk(pubk->u.ec.publicValue.data,
 					       pubk->u.ec.publicValue.len, "pub");
-	ugh = form_ckaid_nss(certCKAID, &ecdsak->pub.ckaid);
-	if (ugh != NULL) {
-		/* let caller clean up mess */
-		goto out;
-	}
+	ecdsak->pub.ckaid = clone_nss_ckaid(cert_ckaid);
 	/* keyid */
 	char keyid[KEYID_BUF];
 	memset(keyid, 0, KEYID_BUF);
@@ -1587,11 +1568,9 @@ static err_t add_ckaid_to_ecdsa_privkey(struct ECDSA_private_key *ecdsak,
 	memset(ecdsak->pub.keyid, 0, KEYID_BUF);
 	keyblobtoid((const unsigned char *)keyid, KEYID_BUF,
 		    ecdsak->pub.keyid, KEYID_BUF);
-
 	/*size */
 	ecdsak->pub.k = pubk->u.ec.size;
-out:
-	return ugh;
+	return NULL;
 }
 
 static const struct RSA_private_key *get_nss_cert_privkey_RSA(struct secret *secrets,

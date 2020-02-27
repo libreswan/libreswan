@@ -63,14 +63,13 @@ char *ckaid_as_string(ckaid_t ckaid)
 	return string;
 }
 
-err_t form_ckaid_nss(const SECItem *const nss_ckaid, ckaid_t *ckaid)
+ckaid_t clone_nss_ckaid(const SECItem *const nss_ckaid)
 {
-	SECItem *dup = SECITEM_DupItem(nss_ckaid);
-	if (dup == NULL) {
-		return "problem saving CKAID";
-	}
-	ckaid->nss = dup;
-	return NULL;
+	ckaid_t ckaid = {
+		.nss = SECITEM_DupItem(nss_ckaid),
+	};
+	passert(ckaid.nss != NULL);
+	return ckaid;
 }
 
 err_t form_ckaid_rsa(chunk_t modulus, ckaid_t *ckaid)
@@ -86,9 +85,9 @@ err_t form_ckaid_rsa(chunk_t modulus, ckaid_t *ckaid)
 	}
 	DBG(DBG_CONTROLMORE, DBG_dump("computed rsa CKAID",
 				      nss_ckaid->data, nss_ckaid->len));
-	err_t err = form_ckaid_nss(nss_ckaid, ckaid);
+	*ckaid = clone_nss_ckaid(nss_ckaid);
 	SECITEM_FreeItem(nss_ckaid, PR_TRUE);
-	return err;
+	return NULL;
 }
 
 err_t form_ckaid_ecdsa(chunk_t pub_value, ckaid_t *ckaid)
@@ -104,9 +103,9 @@ err_t form_ckaid_ecdsa(chunk_t pub_value, ckaid_t *ckaid)
 	}
 	DBG(DBG_CONTROLMORE, DBG_dump("computed ecdsa CKAID",
 					nss_ckaid->data, nss_ckaid->len));
-	err_t err = form_ckaid_nss(nss_ckaid, ckaid);
+	*ckaid = clone_nss_ckaid(nss_ckaid);
 	SECITEM_FreeItem(nss_ckaid, PR_TRUE);
-	return err;
+	return NULL;
 }
 
 void freeanyckaid(ckaid_t *ckaid)
