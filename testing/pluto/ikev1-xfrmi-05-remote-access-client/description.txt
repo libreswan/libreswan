@@ -1,0 +1,2 @@
+ipsec-interface test based on xauth-pluto-08.
+Both east and road use ipsec interfaces
