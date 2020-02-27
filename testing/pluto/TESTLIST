@@ -445,6 +445,8 @@ kvmplutotest	ikev1-xfrmi-02				wip
 kvmplutotest	ikev1-xfrmi-02-aggr			wip
 kvmplutotest	ikev1-xfrmi-04				good
 kvmplutotest	ikev1-xfrmi-04-aggr			good
+kvmplutotest	ikev1-xfrmi-05-remote-access-client	good
+
 
 kvmplutotest	netkey-decap-dscp-01			good
 kvmplutotest	netkey-nopmtudisc-01			good
