@@ -103,7 +103,7 @@ static const struct keyword_enum_values kw_ynf_list = VALUES_INITIALIZER(kw_ynf_
 #ifdef USE_XFRM_INTERFACE
 /* Values for no/yes, used by ipsec-interface */
 static const struct keyword_enum_value kw_yn_values[] = {
-	{ "yes",	yn_yes  },
+	{ "yes",	yn_yes },
 	{ "no",		yn_no },
 };
 static const struct keyword_enum_values kw_yn_list = VALUES_INITIALIZER(kw_yn_values);
@@ -863,7 +863,14 @@ unsigned int parser_loose_enum(struct keyword *k, const char *s)
 
 	/* if we found something */
 	if (kevcount != 0) {
-		assert(kev->value != 0);
+		/*
+		 * Unfortunately, "ipsec-interface" takes numbers and a string,
+		 * so the number 0 is valid and we need to skip the assert
+		 */
+		if (!streq(kd->keyname,"ipsec-interface")) {
+			assert(kev->value != 0);
+		}
+
 		valresult = kev->value;
 		k->string = NULL;
 		return valresult;
