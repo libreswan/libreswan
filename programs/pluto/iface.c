@@ -240,8 +240,10 @@ void find_ifaces(bool rm_dead)
 	 * or ADD.
 	 */
 	mark_ifaces_dead();
-	kernel_ops->process_raw_ifaces(find_raw_ifaces4());
-	kernel_ops->process_raw_ifaces(find_raw_ifaces6());
+	if (kernel_ops->process_raw_ifaces != NULL) {
+		kernel_ops->process_raw_ifaces(find_raw_ifaces4());
+		kernel_ops->process_raw_ifaces(find_raw_ifaces6());
+	}
 	add_new_ifaces();
 
 	if (rm_dead)

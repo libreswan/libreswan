@@ -215,20 +215,22 @@ void kernel_alg_show_status(const struct fd *whackfd)
 	for (const struct encrypt_desc **alg_p = next_kernel_encrypt_desc(NULL);
 	     alg_p != NULL; alg_p = next_kernel_encrypt_desc(alg_p)) {
 		const struct encrypt_desc *alg = *alg_p;
-		whack_comment(whackfd,
-			  "algorithm ESP encrypt: name=%s, keysizemin=%d, keysizemax=%d",
-			  alg->common.fqn,
-			  encrypt_min_key_bit_length(alg),
-			  encrypt_max_key_bit_length(alg));
+		if (alg != NULL) /* nostack gives us no algos */
+			whack_comment(whackfd,
+				"algorithm ESP encrypt: name=%s, keysizemin=%d, keysizemax=%d",
+				alg->common.fqn,
+				encrypt_min_key_bit_length(alg),
+				encrypt_max_key_bit_length(alg));
 	}
 
 	for (const struct integ_desc **alg_p = next_kernel_integ_desc(NULL);
 	     alg_p != NULL; alg_p = next_kernel_integ_desc(alg_p)) {
 		const struct integ_desc *alg = *alg_p;
-		whack_comment(whackfd,
-			  "algorithm AH/ESP auth: name=%s, key-length=%zu",
-			  alg->common.fqn,
-			  alg->integ_keymat_size * BITS_PER_BYTE);
+		if (alg != NULL) /* nostack doesn't give us algos */
+			whack_comment(whackfd,
+				"algorithm AH/ESP auth: name=%s, key-length=%zu",
+				alg->common.fqn,
+				alg->integ_keymat_size * BITS_PER_BYTE);
 	}
 
 	whack_comment(whackfd, " "); /* spacer */

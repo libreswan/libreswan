@@ -2618,8 +2618,9 @@ void init_kernel(void)
 
 	DBG(DBG_KERNEL, DBG_log("setup kernel fd callback"));
 
-	/* Note: kernel_ops is const but pluto_event_add cannot know that */
-	add_fd_read_event_handler(*kernel_ops->async_fdp, kernel_process_msg_cb,
+	if (kernel_ops->async_fdp != NULL)
+		/* Note: kernel_ops is const but pluto_event_add cannot know that */
+		add_fd_read_event_handler(*kernel_ops->async_fdp, kernel_process_msg_cb,
 				  (void *)kernel_ops, "KERNEL_XRM_FD");
 
 	if (kernel_ops->route_fdp != NULL && *kernel_ops->route_fdp  > NULL_FD) {
