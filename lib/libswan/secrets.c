@@ -360,6 +360,18 @@ const ckaid_t *pubkey_ckaid(const struct pubkey *pk)
 	}
 }
 
+static const ckaid_t *privkey_ckaid(struct private_key_stuff *pks)
+{
+	switch (pks->pubkey_type->alg) {
+	case PUBKEY_ALG_RSA:
+		return &pks->u.RSA_private_key.pub.ckaid;
+	case PUBKEY_ALG_ECDSA:
+		return &pks->u.ECDSA_private_key.pub.ckaid;
+	default:
+		bad_case(pks->pubkey_type->alg);
+	}
+}
+
 unsigned pubkey_size(const struct pubkey *pk)
 {
 	switch (pk->type->alg) {
@@ -1585,49 +1597,19 @@ struct pubkey *allocate_ECDSA_public_key_nss(CERTCertificate *cert)
 	return pk;
 }
 
-static const struct RSA_private_key *get_nss_cert_privkey_RSA(struct secret *secrets,
-							  CERTCertificate *cert)
+static struct secret *find_pubkey_secret_by_ckaid(struct secret *secrets,
+						  const struct pubkey_type *type,
+						  SECItem *cert_ckaid)
 {
-	struct pubkey *pub = allocate_RSA_public_key_nss(cert);
-	if (pub == NULL) {
-		return NULL;
-	}
-
-	const struct RSA_private_key *priv = NULL;
-
 	for (struct secret *s = secrets; s != NULL; s = s->next) {
-		if (s->pks.kind == PKK_RSA &&
-			same_RSA_public_key(&s->pks.u.RSA_private_key.pub,
-					    &pub->u.rsa)) {
-			priv = &s->pks.u.RSA_private_key;
-			break;
+		if (s->pks.pubkey_type == type) {
+			const ckaid_t *s_ckaid = privkey_ckaid(&s->pks);
+			if (ckaid_eq_nss(s_ckaid, cert_ckaid)) {
+				return s;
+			}
 		}
 	}
-	free_public_key(pub);
-	return priv;
-}
-
-static const struct ECDSA_private_key *get_nss_cert_privkey_ECDSA(struct secret *secrets,
-								CERTCertificate *cert)
-{
-	struct pubkey *pub = allocate_ECDSA_public_key_nss(cert);
-
-	if (pub == NULL) {
-		return NULL;
-	}
-
-	const struct ECDSA_private_key *priv = NULL;
-
-	for (struct secret *s = secrets; s != NULL; s = s->next) {
-		if (s->pks.kind == PKK_ECDSA)   {
-			/* same_RSA_public_key(&s->pks.u.RSA_private_key.pub,
-						&pub->u.rsa)) {*/
-			priv = &s->pks.u.ECDSA_private_key;
-			break;
-		}
-	}
-	free_public_key(pub);
-	return priv;
+	return NULL;
 }
 
 static err_t add_pubkey_ckaid_secret(struct secret **secrets, const struct pubkey_type *type,
@@ -1684,24 +1666,27 @@ static err_t add_pubkey_secret(struct secret **secrets, CERTCertificate *cert,
 	}
 
 	/*
-	 * XXX: the ECDSA variant looks broken; OTOH, it should be
-	 * possible to merge both and perhaps use CKAID?
+	 * Getting a SECItem ptr from PK11_GetLowLevelKeyID doesn't
+	 * mean that the private key exists. The data may be empty if
+	 * there's no private key.
 	 */
-	switch (type->private_key_kind) {
-	case PKK_RSA:
-		if (get_nss_cert_privkey_RSA(*secrets, cert) != NULL) {
-			dbg("secrets entry for certificate already exists: %s", cert->nickname);
-			return NULL;
-		}
-		break;
-	case PKK_ECDSA:
-		if (get_nss_cert_privkey_ECDSA(*secrets, cert) != NULL) {
-			dbg("secrets entry for %s already exists", cert->nickname);
-			return NULL;
-		}
-		break;
-	default:
-		bad_case(type->private_key_kind);
+	SECItem *cert_ckaid =
+		PK11_GetLowLevelKeyIDForCert(NULL, cert,
+					     lsw_return_nss_password_file_info()); /* MUST FREE */
+
+	if (cert_ckaid == NULL) {
+		return "NSS: key ID not found";
+	}
+
+	if (cert_ckaid->data == NULL || cert_ckaid->len < 1) {
+		SECITEM_FreeItem(cert_ckaid, PR_TRUE);
+		return "NSS: no CKAID data";
+	}
+
+	if (find_pubkey_secret_by_ckaid(*secrets, type, cert_ckaid) != NULL) {
+		SECITEM_FreeItem(cert_ckaid, PR_TRUE);
+		dbg("secrets entry for certificate already exists: %s", cert->nickname);
+		return NULL;
 	}
 
 	dbg("adding %s secret for certificate: %s", type->name, cert->nickname);
@@ -1712,28 +1697,10 @@ static err_t add_pubkey_secret(struct secret **secrets, CERTCertificate *cert,
 			PK11_FindKeyByAnyCert(cert,
 					      lsw_return_nss_password_file_info());
 		if (privk == NULL) {
+			SECITEM_FreeItem(cert_ckaid, PR_TRUE);
 			return "NSS: cert private key not found";
 		}
 		SECKEY_DestroyPrivateKey(privk);
-	}
-
-	/*
-	 * Getting a SECItem ptr from PK11_GetLowLevelKeyID doesn't
-	 * mean that the private key exists. The data may be empty if
-	 * there's no private key.
-	 *
-	 * Update: I don't think this is true anymore, hence the
-	 * search for the private key above
-	 */
-	SECItem *cert_ckaid =
-		PK11_GetLowLevelKeyIDForCert(NULL, cert,
-					     lsw_return_nss_password_file_info()); /* MUST FREE */
-	if (cert_ckaid == NULL) {
-		return "NSS: key ID not found";
-	}
-	if (cert_ckaid->data == NULL || cert_ckaid->len < 1) {
-		SECITEM_FreeItem(cert_ckaid, PR_TRUE);
-		return "NSS: no CKAID data";
 	}
 
 	err_t err = add_pubkey_ckaid_secret(secrets, type, pubk, cert_ckaid);

@@ -55,6 +55,12 @@ bool ckaid_starts_with(ckaid_t ckaid, const char *start)
 	return true;
 }
 
+bool ckaid_eq_nss(const ckaid_t *l, const SECItem *r)
+{
+	return (l->nss->len == r->len &&
+		memeq(l->nss->data, r->data, r->len));
+}
+
 char *ckaid_as_string(ckaid_t ckaid)
 {
 	size_t string_len = ckaid.nss->len * 2 + 1;
