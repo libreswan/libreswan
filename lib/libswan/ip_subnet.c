@@ -71,9 +71,10 @@ ip_subnet subnet_from_endpoint(const ip_endpoint *endpoint)
 
 ip_address subnet_prefix(const ip_subnet *src)
 {
-	return subnet_blit(src,
-			   /*routing-prefix*/&keep_bits,
-			   /*host-id*/&clear_bits);
+	return address_blit(endpoint_address(&src->addr),
+			    /*routing-prefix*/&keep_bits,
+			    /*host-id*/&clear_bits,
+			    src->maskbits);
 }
 
 const struct ip_info *subnet_type(const ip_subnet *src)
@@ -152,80 +153,6 @@ bool subnet_contains_no_addresses(const ip_subnet *s)
 }
 
 /*
- * mashup() notes:
- * - mashup operates on network-order IP addresses
- */
-
-struct ip_blit {
-	uint8_t and;
-	uint8_t or;
-};
-
-const struct ip_blit clear_bits = { .and = 0x00, .or = 0x00, };
-const struct ip_blit set_bits = { .and = 0x00/*don't care*/, .or = 0xff, };
-const struct ip_blit keep_bits = { .and = 0xff, .or = 0x00, };
-
-ip_address subnet_blit(const ip_subnet *src,
-			  const struct ip_blit *routing_prefix,
-			  const struct ip_blit *host_id)
-{
-	/* strip port; copy type */
-	ip_address mask = endpoint_address(&src->addr);
-	chunk_t raw = address_as_chunk(&mask);
-
-	if (!pexpect((size_t)src->maskbits <= raw.len * 8)) {
-		return address_invalid;	/* "can't happen" */
-	}
-
-	uint8_t *p = raw.ptr; /* cast void* */
-
-	/*
-	 * Split the byte array into:
-	 *
-	 *    leading | xbyte:xbit | trailing
-	 *
-	 * where LEADING only contains ROUTING_PREFIX bits, TRAILING
-	 * only contains HOST_ID bits, and XBYTE is the cross over and
-	 * contains the first HOST_ID bit at big (aka PPC) endian
-	 * position XBIT.
-	 */
-	size_t xbyte = src->maskbits / BITS_PER_BYTE;
-	unsigned xbit = src->maskbits % BITS_PER_BYTE;
-
-	/* leading bytes only contain the ROUTING_PREFIX */
-	for (unsigned b = 0; b < xbyte; b++) {
-		p[b] &= routing_prefix->and;
-		p[b] |= routing_prefix->or;
-	}
-
-	/*
-	 * Handle the cross over byte:
-	 *
-	 *    & {ROUTING_PREFIX,HOST_ID}->and | {ROUTING_PREFIX,HOST_ID}->or
-	 *
-	 * the hmask's shift is a little counter intuitive - it clears
-	 * the first (most significant) XBITs.
-	 *
-	 * tricky logic:
-	 * - if xbyte == raw.len we must not access p[xbyte]
-	 */
-	if (xbyte < raw.len) {
-		uint8_t hmask = 0xFF >> xbit; /* clear MSBs */
-		uint8_t pmask = ~hmask; /* set MSBs */
-		p[xbyte] &= (routing_prefix->and & pmask) | (host_id->and & hmask);
-		p[xbyte] |= (routing_prefix->or & pmask) | (host_id->or & hmask);
-	}
-
-	/* trailing bytes only contain the HOST_ID */
-	for (unsigned b = xbyte + 1; b < raw.len; b++) {
-		p[b] &= host_id->and;
-		p[b] |= host_id->or;
-	}
-
-	return mask;
-}
-
-/*
  * subnet mask - get the mask of a subnet, as an address
  *
  * For instance 1.2.3.4/24 -> 255.255.255.0.
@@ -233,7 +160,10 @@ ip_address subnet_blit(const ip_subnet *src,
 
 ip_address subnet_mask(const ip_subnet *src)
 {
-	return subnet_blit(src, /*prefix*/ &set_bits, /*host*/ &clear_bits);
+	return address_blit(endpoint_address(&src->addr),
+			    /*network-prefix*/ &set_bits,
+			    /*host-id*/ &clear_bits,
+			    src->maskbits);
 }
 
 void jam_subnet(jambuf_t *buf, const ip_subnet *subnet)

@@ -172,6 +172,19 @@ chunk_t address_as_chunk(ip_address *address);
 uint32_t ntohl_address(const ip_address *address);
 
 /*
+ * Modify an address routing-prefix:host-id.
+ */
+
+extern const struct ip_blit set_bits;
+extern const struct ip_blit clear_bits;
+extern const struct ip_blit keep_bits;
+
+ip_address address_blit(const ip_address in,
+			const struct ip_blit *routing_prefix,
+			const struct ip_blit *host_id,
+			unsigned nr_mask_bits);
+
+/*
  * Old style.
  */
 

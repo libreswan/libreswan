@@ -227,8 +227,13 @@ const char *str_range(const ip_range *range, range_buf *out)
 ip_range range_from_subnet(const ip_subnet *subnet)
 {
 	ip_range r = {
-		.start = subnet_blit(subnet, &keep_bits, &clear_bits),
-		.end = subnet_blit(subnet, &keep_bits, &set_bits),
+		/* SHHHHH */
+		.start = address_blit(endpoint_address(&subnet->addr),
+				      &keep_bits, &clear_bits,
+				      subnet->maskbits),
+		.end = address_blit(endpoint_address(&subnet->addr),
+				    &keep_bits, &set_bits,
+				    subnet->maskbits),
 	};
 	return r;
 }

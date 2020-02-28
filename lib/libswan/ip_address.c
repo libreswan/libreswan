@@ -362,3 +362,77 @@ bool address_is_loopback(const ip_address *address)
 		return hunk_eq(addr, loopback);
 	}
 }
+
+/*
+ * mashup() notes:
+ * - mashup operates on network-order IP addresses
+ */
+
+struct ip_blit {
+	uint8_t and;
+	uint8_t or;
+};
+
+const struct ip_blit clear_bits = { .and = 0x00, .or = 0x00, };
+const struct ip_blit set_bits = { .and = 0x00/*don't care*/, .or = 0xff, };
+const struct ip_blit keep_bits = { .and = 0xff, .or = 0x00, };
+
+ip_address address_blit(ip_address address,
+			const struct ip_blit *routing_prefix,
+			const struct ip_blit *host_id,
+			unsigned nr_mask_bits)
+{
+	/* strip port; copy type */
+	chunk_t raw = address_as_chunk(&address);
+
+	if (!pexpect(nr_mask_bits <= raw.len * 8)) {
+		return address_invalid;	/* "can't happen" */
+	}
+
+	uint8_t *p = raw.ptr; /* cast void* */
+
+	/*
+	 * Split the byte array into:
+	 *
+	 *    leading | xbyte:xbit | trailing
+	 *
+	 * where LEADING only contains ROUTING_PREFIX bits, TRAILING
+	 * only contains HOST_ID bits, and XBYTE is the cross over and
+	 * contains the first HOST_ID bit at big (aka PPC) endian
+	 * position XBIT.
+	 */
+	size_t xbyte = nr_mask_bits / BITS_PER_BYTE;
+	unsigned xbit = nr_mask_bits % BITS_PER_BYTE;
+
+	/* leading bytes only contain the ROUTING_PREFIX */
+	for (unsigned b = 0; b < xbyte; b++) {
+		p[b] &= routing_prefix->and;
+		p[b] |= routing_prefix->or;
+	}
+
+	/*
+	 * Handle the cross over byte:
+	 *
+	 *    & {ROUTING_PREFIX,HOST_ID}->and | {ROUTING_PREFIX,HOST_ID}->or
+	 *
+	 * the hmask's shift is a little counter intuitive - it clears
+	 * the first (most significant) XBITs.
+	 *
+	 * tricky logic:
+	 * - if xbyte == raw.len we must not access p[xbyte]
+	 */
+	if (xbyte < raw.len) {
+		uint8_t hmask = 0xFF >> xbit; /* clear MSBs */
+		uint8_t pmask = ~hmask; /* set MSBs */
+		p[xbyte] &= (routing_prefix->and & pmask) | (host_id->and & hmask);
+		p[xbyte] |= (routing_prefix->or & pmask) | (host_id->or & hmask);
+	}
+
+	/* trailing bytes only contain the HOST_ID */
+	for (unsigned b = xbyte + 1; b < raw.len; b++) {
+		p[b] &= host_id->and;
+		p[b] |= host_id->or;
+	}
+
+	return address;
+}
