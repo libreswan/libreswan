@@ -37,11 +37,13 @@
  * non-zero when the NETWORK_PREFIX/MASK is for a single address.
  */
 
-#ifdef SUBNET_TYPE
+/*
+ * Define SUBNET_TYPE to enable traditional subnets; expect everything
+ * to break.
+ */
+
 #include "ip_address.h"
-#else
 #include "ip_endpoint.h"
-#endif
 
 #include "where.h"		/* used by endtosubnet() */
 
@@ -49,11 +51,9 @@ struct lswlog;
 
 typedef struct {
 #ifdef SUBNET_TYPE
-	/*
-	 * XXX: Data structure sufficient for IKEv2
-	 */
-	ip_address lo_address, hi_address;
-	uint16_t lo_hport, hi_hport;
+	/* proper subnet, not libreswan mashup */
+	ip_address addr;
+	int maskbits;
 #else
 	/* (routing)prefix|host(id):port */
 	ip_endpoint addr;

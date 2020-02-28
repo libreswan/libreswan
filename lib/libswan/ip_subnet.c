@@ -35,19 +35,6 @@ static ip_subnet subnet3(const ip_address *address, int maskbits, int port)
 	return s;
 }
 
-#ifdef SUBNET_TYPE
-static ip_subnet subnet4(const ip_address *lo_address, const ip_address *hi_address,
-			 int lo_hport, int hi_hport)
-{
-	ip_subnet s = {
-		.lo_address = *lo_address,
-		.hi_address = *hi_address,
-		.lo_port = lo_port,
-		.hi_port = hi_port,
-	};
-}
-#endif
-
 ip_subnet subnet_from_address(const ip_address *address)
 {
 	const struct ip_info *afi = address_type(address);
@@ -82,46 +69,28 @@ const struct ip_info *subnet_type(const ip_subnet *src)
 	return endpoint_type(&src->addr);
 }
 
+#ifndef SUBNET_TYPE
 int subnet_hport(const ip_subnet *s)
 {
-#ifdef SUBNET_TYPE
-	const struct ip_info *afi = subnet_type(s);
-	if (afi == NULL) {
-		/* not asserting, who knows what nonsense a user can generate */
-		libreswan_log("%s has unspecified type", __func__);
-		return -1;
-	}
-	return s->hport;
-#else
 	return endpoint_hport(&s->addr);
-#endif
 }
+#endif
 
+#ifndef SUBNET_TYPE
 int subnet_nport(const ip_subnet *s)
 {
-#ifdef SUBNET_TYPE
-	const struct ip_info *afi = subnet_type(s);
-	if (afi == NULL) {
-		/* not asserting, who knows what nonsense a user can generate */
-		libreswan_log("%s has unspecified type", __func__);
-		return -1;
-	}
-	return htons(s->hport);
-#else
 	return endpoint_nport(&s->addr);
-#endif
 }
+#endif
 
+#ifndef SUBNET_TYPE
 ip_subnet set_subnet_hport(const ip_subnet *subnet, int hport)
 {
 	ip_subnet s = *subnet;
-#ifdef SUBNET_TYPE
-	s.port = hport;
-#else
 	s.addr = set_endpoint_hport(&subnet->addr, hport);
-#endif
 	return s;
 }
+#endif
 
 bool subnet_is_specified(const ip_subnet *s)
 {
