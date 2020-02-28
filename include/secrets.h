@@ -130,6 +130,8 @@ struct private_key_stuff {
 
 	chunk_t ppk;
 	chunk_t ppk_id;
+	/* for PKI */
+	const struct pubkey_type *pubkey_type;
 };
 
 extern struct private_key_stuff *lsw_get_pks(struct secret *s);
@@ -158,6 +160,11 @@ struct pubkey_type {
 	enum PrivateKeyKind private_key_kind;
 	void (*free_pubkey_content)(union pubkey_content *pkc);
 	err_t (*unpack_pubkey_content)(union pubkey_content *pkc, chunk_t key);
+	void (*unpack_secret_content)(struct private_key_stuff *pks,
+				      SECKEYPublicKey *pubk,
+				      SECItem *cert_ckaid);
+	void (*free_secret_content)(struct private_key_stuff *pks);
+	err_t (*secret_sane)(struct private_key_stuff *pks);
 };
 
 extern const struct pubkey_type pubkey_type_rsa;
@@ -244,8 +251,8 @@ extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 
 extern struct secret *lsw_get_ppk_by_id(struct secret *secrets, chunk_t ppk_id);
 
-extern err_t lsw_add_rsa_secret(struct secret **secrets, CERTCertificate *cert);
-extern err_t lsw_add_ecdsa_secret(struct secret **secrets, CERTCertificate *cert);
+extern err_t lsw_add_secret(struct secret **secrets, CERTCertificate *cert);
+
 extern struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert);
 extern struct pubkey *allocate_ECDSA_public_key_nss(CERTCertificate *cert);
 
