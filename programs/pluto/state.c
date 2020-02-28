@@ -937,12 +937,11 @@ void delete_state(struct state *st)
 	 * it when debugging - values range from very approximate to
 	 * (in the case of IKEv1) simply wrong.
 	 */
-	if (DBGP(DBG_CPU_USAGE|DBG_BASE) &&
-	    st->st_ike_version == IKEv2 &&
-	    st->st_timing.approx_seconds > 0) {
-		DBG_log("#%lu "PRI_CPU_USAGE" in total",
+	if (DBGP(DBG_CPU_USAGE) || DBGP(DBG_BASE)) {
+		DBG_log("#%lu main thread "PRI_CPU_USAGE" helper thread "PRI_CPU_USAGE" in total",
 			st->st_serialno,
-			pri_cpu_usage(st->st_timing.approx_seconds));
+			pri_cpu_usage(st->st_timing.main_usage),
+			pri_cpu_usage(st->st_timing.helper_usage));
 	}
 
 	so_serial_t old_serialno = push_cur_state(st);

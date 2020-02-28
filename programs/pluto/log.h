@@ -123,6 +123,8 @@ struct logger {
 	const void *object;
 	jam_prefix_fn *jam_prefix;
 	where_t where;
+	/* used by timing to nest its logging output */
+	int timing_level;
 };
 
 #define GLOBAL_LOGGER(WHACKFD) (struct logger)			\
@@ -160,6 +162,7 @@ struct logger {
 		.jam_prefix = jam_state_prefix,			\
 		.object = STATE,				\
 		.object_whackfd = (STATE)->st_whack_sock,	\
+		.timing_level = (STATE)->st_timing.level,	\
 	}
 
 struct logger *clone_logger(struct logger log);

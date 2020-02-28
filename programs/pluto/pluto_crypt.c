@@ -102,7 +102,7 @@ struct pluto_crypto_req_cont {
 	const char *pcrc_name;
 	pcr_req_id pcrc_id;
 	int pcrc_helpernum;
-	double pcrc_threadtime_used;
+	struct cpu_usage pcrc_time_used;
 
 	/* where to send messages */
 	struct logger *logger;
@@ -306,8 +306,7 @@ static int crypto_helper_delay;
 
 static void pluto_do_crypto_op(struct pluto_crypto_req_cont *cn, int helpernum)
 {
-	realtime_t tv0 = realnow();
-	threadtime_t start = threadtime_start();
+	logtime_t start = logtime_start(cn->logger);
 	struct pluto_crypto_req *r = &cn->pcrc_pcr;
 
 	dbg("crypto helper %d doing %s (%s); request ID %u",
@@ -321,20 +320,10 @@ static void pluto_do_crypto_op(struct pluto_crypto_req_cont *cn, int helpernum)
 
 	cn->pcrc_handler->compute_fn(cn->logger, cn->pcrc_task, helpernum);
 
-	LSWDBGP(DBG_CONTROL, buf) {
-		realtime_t tv1 = realnow();
-		deltatime_t tv_diff = realtimediff(tv1, tv0);
-		lswlogf(buf, "crypto helper %d finished %s (%s); request ID %u time elapsed ",
-			helpernum, enum_show(&pluto_cryptoop_names, r->pcr_type),
-			cn->pcrc_name, cn->pcrc_id);
-		lswlog_deltatime(buf, tv_diff);
-		lswlogs(buf, " seconds");
-	}
-
-	cn->pcrc_threadtime_used =
-		threadtime_stop(&start, cn->pcrc_serialno,
-				"crypto helper computing work-order %u: %s (%s)",
-				cn->pcrc_id, cn->pcrc_name, cn->pcrc_handler->name);
+	cn->pcrc_time_used =
+		logtime_stop(&start,
+			     "crypto helper computing work-order %u: %s (%s)",
+			     cn->pcrc_id, cn->pcrc_name, cn->pcrc_handler->name);
 }
 
 static void pcr_compute(struct logger *logger_unused UNUSED,
@@ -663,7 +652,8 @@ static stf_status handle_helper_answer(struct state *st,
 		st->st_offloaded_task = NULL;
 		st->st_v1_offloaded_task_in_background = false;
 		/* bill the thread time */
-		st->st_timing.approx_seconds += cn->pcrc_threadtime_used;
+		cpu_usage_add(st->st_timing.helper_usage, cn->pcrc_time_used);
+		dbg("wall clock time not billed");
 		/* run the callback */
 		status = h->completed_cb(st, mdp, &cn->pcrc_task);
 		pexpect(cn->pcrc_task == NULL); /* did your job */

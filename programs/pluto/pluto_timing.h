@@ -29,8 +29,24 @@ struct logger;
  * Try to format all cpu usage messaages the same.  All delta-times
  * use double and are in seconds.
  */
-#define PRI_CPU_USAGE "spent %.3g milliseconds"
-#define pri_cpu_usage(S) (S * 1000)
+struct cpu_timing {
+	struct timespec thread_clock;
+	struct timespec wall_clock;
+};
+
+struct cpu_usage {
+	double thread_seconds;
+	double wall_seconds;
+};
+
+#define PRI_CPU_USAGE "spent %.3g (%.3g) milliseconds"
+#define pri_cpu_usage(C) ((C).thread_seconds * 1000), ((C).wall_seconds * 1000)
+
+#define cpu_usage_add(TOTAL, USAGE)					\
+	{								\
+		(TOTAL).thread_seconds += (USAGE).thread_seconds;	\
+		(TOTAL).wall_seconds += (USAGE).wall_seconds;		\
+	}
 
 /*
  * For when on a helper thread (or anything that doesn't have a
@@ -41,17 +57,22 @@ struct logger;
  * seconds_used = threadtime_stop(&start, serialno, "do something");
  */
 
-typedef struct { struct timespec tt; } threadtime_t;
+typedef struct cpu_timing threadtime_t;
 threadtime_t threadtime_start(void);
-double threadtime_stop(const threadtime_t *start, long serialno, const char *fmt, ...) PRINTF_LIKE(3);
+void threadtime_stop(const threadtime_t *start, long serialno, const char *fmt, ...) PRINTF_LIKE(3);
+
+/*
+ * For helper threads that have some context.
+ */
 
 typedef struct {
-	struct timespec lt;
+	struct cpu_timing time;
 	struct logger *logger;
+	int level;
 } logtime_t;
 
 logtime_t logtime_start(struct logger *logger);
-double logtime_stop(const logtime_t *start, const char *fmt, ...) PRINTF_LIKE(2);
+struct cpu_usage logtime_stop(const logtime_t *start, const char *fmt, ...) PRINTF_LIKE(2);
 
 /*
  * For state timing:
@@ -84,15 +105,16 @@ double logtime_stop(const logtime_t *start, const char *fmt, ...) PRINTF_LIKE(2)
  *   statetime_start(new) gets things kind of in sync.  Ewww!
  */
 
-struct timing {
-	double approx_seconds;
+struct state_timing {
+	struct cpu_usage helper_usage;
+	struct cpu_usage main_usage;
 	int level;
 	/*
-	 * Track last time something was logged and level.  Used when
-	 * checking for unaccounted time.
+	 * Track last time something was logged and its level.  Used
+	 * when checking for unaccounted time.
 	 */
 	struct {
-		struct timespec time;
+		struct cpu_timing time;
 		int level;
 	} last_log;
 };
@@ -100,7 +122,7 @@ struct timing {
 typedef struct {
 	so_serial_t so;
 	int level;
-	struct timespec start;
+	struct cpu_timing time;
 } statetime_t;
 
 statetime_t statetime_backdate(struct state *st, const threadtime_t *inception);

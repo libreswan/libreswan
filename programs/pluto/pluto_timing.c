@@ -22,15 +22,26 @@
 #define INDENT " "
 #define MISSING_FUDGE 0.001
 
-static const clockid_t clock_id = CLOCK_THREAD_CPUTIME_ID;
-
-static struct timespec now(void)
+static struct timespec thread_clock(void)
 {
+	static const clockid_t clock_id = CLOCK_THREAD_CPUTIME_ID;
 	struct timespec now;
 	int e = clock_gettime(clock_id, &now);
 	if (e != 0) {
-		libreswan_exit_log_errno(e, "clock_gettime(%d,...) in mononow() failed in %s()",
+		libreswan_exit_log_errno(e, "clock_gettime(%d,... failed in %s()",
 					 clock_id, __func__);
+	}
+	return now;
+}
+
+static struct timespec wall_clock(void)
+{
+	struct timespec now;
+	/* assume never suspended; CLOCK_BOOTTIME is linux specific */
+	int e = clock_gettime(CLOCK_MONOTONIC, &now);
+	if (e != 0) {
+		libreswan_exit_log_errno(e, "clock_gettime(CLOCK_MONOTONIC,...) failed in %s()",
+					 __func__);
 	}
 	return now;
 }
@@ -45,58 +56,73 @@ static double seconds_sub(struct timespec stop, const struct timespec start)
 	return seconds;
 }
 
+static struct cpu_usage threadtime_sub(threadtime_t l, threadtime_t r)
+{
+	struct cpu_usage s = {
+		.thread_seconds = seconds_sub(l.thread_clock, r.thread_clock),
+		.wall_seconds = seconds_sub(l.wall_clock, r.wall_clock),
+	};
+	return s;
+}
+
 threadtime_t threadtime_start(void)
 {
-	threadtime_t start = { .tt = now(), };
+	threadtime_t start = {
+		.thread_clock = thread_clock(),
+		.wall_clock = wall_clock(),
+	};
 	return start;
 }
 
-double threadtime_stop(const threadtime_t *start, long serialno, const char *fmt, ...)
+void threadtime_stop(const threadtime_t *start, long serialno, const char *fmt, ...)
 {
-	double seconds = seconds_sub(now(), start->tt);
 	if (DBGP(DBG_CPU_USAGE)) {
+		struct cpu_usage usage = threadtime_sub(threadtime_start(), *start);
 		LSWLOG_DEBUG(buf) {
 			if (serialno > 0) {
 				/* on thread so in background */
 				lswlogf(buf, "(#%lu) ", serialno);
 			}
 			lswlogf(buf, PRI_CPU_USAGE" in ",
-				pri_cpu_usage(seconds));
+				pri_cpu_usage(usage));
 			va_list ap;
 			va_start(ap, fmt);
 			lswlogvf(buf, fmt, ap);
 			va_end(ap);
 		}
 	}
-	return seconds;
 }
 
 logtime_t logtime_start(struct logger *logger)
 {
 	logtime_t start = {
-		.lt = now(),
+		.time = threadtime_start(),
 		.logger = logger,
+		.level = logger->timing_level++,
 	};
 	return start;
 }
 
-double logtime_stop(const logtime_t *start, const char *fmt, ...)
+struct cpu_usage logtime_stop(const logtime_t *start, const char *fmt, ...)
 {
-	double seconds = seconds_sub(now(), start->lt);
+	struct cpu_usage usage = threadtime_sub(threadtime_start(), start->time);
 	if (DBGP(DBG_CPU_USAGE)) {
 		LSWLOG_DEBUG(buf) {
-			jam(buf, "(");
+			/* update is indented by 2 indents */
+			for (int i = 0; i < start->level; i++) {
+				lswlogs(buf, INDENT INDENT);
+			}
 			start->logger->jam_prefix(buf, start->logger->object);
-			jam(buf, ") ");
 			jam(buf, PRI_CPU_USAGE" in ",
-			    pri_cpu_usage(seconds));
+			    pri_cpu_usage(usage));
 			va_list ap;
 			va_start(ap, fmt);
 			lswlogvf(buf, fmt, ap);
 			va_end(ap);
 		}
 	}
-	return seconds;
+	start->logger->timing_level = start->level;
+	return usage;
 }
 
 static const statetime_t disabled_statetime = {
@@ -104,14 +130,15 @@ static const statetime_t disabled_statetime = {
 	.level = -1,
 };
 
-static void DBG_missing(const statetime_t *start, struct timespec now, struct timespec last_log)
+static void DBG_missing(const statetime_t *start, threadtime_t now,
+			threadtime_t last_log)
 {
 	/*
 	 * If there a large blob of time unaccounted for since LAST,
 	 * log it as a separate line item.
 	 */
-	double missing = seconds_sub(now, last_log);
-	if (missing > MISSING_FUDGE) {
+	struct cpu_usage missing = threadtime_sub(now, last_log);
+	if (missing.thread_seconds > MISSING_FUDGE) {
 		LSWLOG_DEBUG(buf) {
 			for (int i = 0; i < start->level; i++) {
 				lswlogs(buf, INDENT INDENT);
@@ -122,14 +149,15 @@ static void DBG_missing(const statetime_t *start, struct timespec now, struct ti
 	}
 }
 
-static statetime_t start_statetime(struct state *st, struct timespec now)
+static statetime_t start_statetime(struct state *st,
+				   threadtime_t inception)
 {
 	statetime_t start = {
 		.so = st->st_serialno,
 		.level = st->st_timing.level++,
-		.start = now,
+		.time = inception,
 	};
-	st->st_timing.last_log.time = start.start;
+	st->st_timing.last_log.time = start.time;
 	st->st_timing.last_log.level = start.level;
 	return start;
 }
@@ -152,15 +180,15 @@ statetime_t statetime_start(struct state *st)
 		return disabled_statetime;
 	}
 	/* save last_log before start_statetime() updates it */
-	struct timespec last_log = st->st_timing.last_log.time;
-	statetime_t start = start_statetime(st, now());
+	threadtime_t last_log = st->st_timing.last_log.time;
+	statetime_t start = start_statetime(st, threadtime_start());
 	if (DBGP(DBG_CPU_USAGE) && start.level > 0) {
 		/*
 		 * If there a large blob of time unaccounted for since
 		 * the last and nested start() or stop() call, log it
 		 * as a separate line item.
 		 */
-		DBG_missing(&start, start.start, last_log);
+		DBG_missing(&start, start.time, last_log);
 	}
 	return start;
 }
@@ -181,12 +209,14 @@ statetime_t statetime_backdate(struct state *st, const threadtime_t *inception)
 		dbg("in %s() with non-zero timing level", __func__);
 		st->st_timing.level = 0;
 	}
-	statetime_t start = start_statetime(st, inception->tt);
+	statetime_t start = start_statetime(st, *inception);
 	/*
-	 * If there's a large blob of time before this call, log it.
+	 * If there's a large blob of time between this call and
+	 * inception, log it.  Remember, start.time will be set to
+	 * inception time so isn't useful.
 	 */
 	if (DBGP(DBG_CPU_USAGE)) {
-		DBG_missing(&start, now(), inception->tt);
+		DBG_missing(&start, threadtime_start(), *inception);
 	}
 	return start;
 }
@@ -209,7 +239,7 @@ void statetime_stop(const statetime_t *start, const char *fmt, ...)
 		return;
 	}
 
-	struct timespec stop_time = now();
+	threadtime_t stop_time = threadtime_start();
 
 	/*
 	 * If there a large blob of time unaccounted for since the
@@ -217,32 +247,21 @@ void statetime_stop(const statetime_t *start, const char *fmt, ...)
 	 */
 	if (DBGP(DBG_CPU_USAGE) &&
 	    st->st_timing.last_log.level > start->level) {
-		double missing = seconds_sub(stop_time, st->st_timing.last_log.time);
-		if (missing > MISSING_FUDGE) {
-			LSWLOG_DEBUG(buf) {
-				/* missing is indented by 2 more */
-				for (int i = 0; i < start->level; i++) {
-					lswlogs(buf, INDENT INDENT);
-				}
-				lswlogs(buf, INDENT INDENT);
-				lswlogf(buf, "#%lu "PRI_CPU_USAGE"",
-					st->st_serialno,
-					pri_cpu_usage(missing));
-			}
-		}
+		DBG_missing(start, stop_time, st->st_timing.last_log.time);
 	}
 
 	/* time since start */
-	double seconds = seconds_sub(stop_time, start->start);
+	struct cpu_usage usage = threadtime_sub(stop_time, start->time);
 	if (DBGP(DBG_CPU_USAGE)) {
 		LSWLOG_DEBUG(buf) {
 			/* update is indented by 2 indents */
 			for (int i = 0; i < start->level; i++) {
 				lswlogs(buf, INDENT INDENT);
 			}
-			lswlogf(buf, "#%lu "PRI_CPU_USAGE" in ",
+			lswlogf(buf, "#%lu "PRI_CPU_USAGE"",
 				st->st_serialno,
-				pri_cpu_usage(seconds));
+				pri_cpu_usage(usage));
+			jam(buf, " in ");
 			va_list ap;
 			va_start(ap, fmt);
 			lswlogvf(buf, fmt, ap);
@@ -256,6 +275,6 @@ void statetime_stop(const statetime_t *start, const char *fmt, ...)
 	st->st_timing.last_log.level = start->level;
 	if (start->level == 0) {
 		/* bill total time */
-		st->st_timing.approx_seconds += seconds;
+		cpu_usage_add(st->st_timing.main_usage, usage);
 	}
 }
