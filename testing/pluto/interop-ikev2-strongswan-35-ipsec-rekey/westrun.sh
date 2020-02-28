@@ -2,14 +2,16 @@
 strongswan up westnet-eastnet-ikev2
 strongswan status
 ping -n -c 4 -I 192.0.1.254 192.0.2.254
-echo "sleep 25 seconds. to rekey of child sa"
-sleep 25
+swanctl --rekey --child  westnet-eastnet-ikev2
+sleep 15
 ping -n -c 4 -I 192.0.1.254 192.0.2.254
-sleep 10
+# should be rekeyed and old one deleted
+# noitce westnet-eastnet-ikev2{2} is the newest one
 strongswan status
-echo "sleep another 25 seconds. second rekey of child sa"
-sleep 25
+swanctl --rekey --child  westnet-eastnet-ikev2
+sleep 15
 ping -n -c 4 -I 192.0.1.254 192.0.2.254
-sleep 10
+# second rekey and old one deleted
+# noitce westnet-eastnet-ikev2{3} is the newest one
 strongswan status
 echo done

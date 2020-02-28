@@ -4,4 +4,4 @@ West is Strongswan the initiator and east, Libreswan is the responder.
 west rekey the Child SA using CREATE_CHILD_SA exchange.
 The libreswan is the responder for RFC 7296 #1.3.3.
 
-Strongswan IPsec/Child SA rekey is triggered on byte count; ~7 pings.
+Strongswan IPsec/Child SA rekey is triggered swanctl --rekey command

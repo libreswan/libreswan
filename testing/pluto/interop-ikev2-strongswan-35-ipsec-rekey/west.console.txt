@@ -51,38 +51,10 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
- echo "sleep 25 seconds. to rekey of child sa"
-sleep 25 seconds. to rekey of child sa
+ swanctl --rekey --child  westnet-eastnet-ikev2
+rekey completed successfully
 west #
- sleep 25
-west #
- ping -n -c 4 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
-west #
- sleep 10
-west #
- strongswan status
-Shunted Connections:
-Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
-Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
-Security Associations (1 up, 0 connecting):
-westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
-westnet-eastnet-ikev2{4}:  DELETED, TUNNEL, reqid 1
-westnet-eastnet-ikev2{4}:   192.0.1.0/24 === 192.0.2.0/24
-westnet-eastnet-ikev2{5}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
-westnet-eastnet-ikev2{5}:   192.0.1.0/24 === 192.0.2.0/24
-west #
- echo "sleep another 25 seconds. second rekey of child sa"
-sleep another 25 seconds. second rekey of child sa
-west #
- sleep 25
+ sleep 15
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -94,7 +66,9 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
- sleep 10
+ # should be rekeyed and old one deleted
+west #
+ # noitce westnet-eastnet-ikev2{2} is the newest one
 west #
  strongswan status
 Shunted Connections:
@@ -102,8 +76,36 @@ Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
 Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
 Security Associations (1 up, 0 connecting):
 westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
-westnet-eastnet-ikev2{8}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
-westnet-eastnet-ikev2{8}:   192.0.1.0/24 === 192.0.2.0/24
+westnet-eastnet-ikev2{2}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
+westnet-eastnet-ikev2{2}:   192.0.1.0/24 === 192.0.2.0/24
+west #
+ swanctl --rekey --child  westnet-eastnet-ikev2
+rekey completed successfully
+west #
+ sleep 15
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ # second rekey and old one deleted
+west #
+ # noitce westnet-eastnet-ikev2{3} is the newest one
+west #
+ strongswan status
+Shunted Connections:
+Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
+Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
+Security Associations (1 up, 0 connecting):
+westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
+westnet-eastnet-ikev2{3}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
+westnet-eastnet-ikev2{3}:   192.0.1.0/24 === 192.0.2.0/24
 west #
  echo done
 done
@@ -116,10 +118,8 @@ Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
 Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
 Security Associations (1 up, 0 connecting):
 westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
-westnet-eastnet-ikev2{8}:  DELETED, TUNNEL, reqid 1
-westnet-eastnet-ikev2{8}:   192.0.1.0/24 === 192.0.2.0/24
-westnet-eastnet-ikev2{9}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
-westnet-eastnet-ikev2{9}:   192.0.1.0/24 === 192.0.2.0/24
+westnet-eastnet-ikev2{3}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
+westnet-eastnet-ikev2{3}:   192.0.1.0/24 === 192.0.2.0/24
 west #
  ../bin/check-for-core.sh
 west #
