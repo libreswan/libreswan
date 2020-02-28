@@ -574,22 +574,34 @@ struct score {
 	int protocol;
 };
 
-static struct score score_end(const struct end *end,
+static struct score score_end(const int conn_af, const struct end *end,
 			      const struct traffic_selectors *tss,
 			      enum fit fit,
 			      const char *what, unsigned index)
 {
 	const struct traffic_selector *ts = &tss->ts[index];
+	const char *strtype = ts->ts_type == IKEv2_TS_IPV4_ADDR_RANGE ? "IPv4" :
+		    	ts->ts_type == IKEv2_TS_IPV6_ADDR_RANGE ? "IPv6" : "[Unsupported TSTYPE]";
 	DBG(DBG_CONTROLMORE,
 	    range_buf ts_net;
-	    DBG_log("    %s[%u] .net=%s .iporotoid=%d .{start,end}port=%d..%d",
-		    what, index,
+	    DBG_log("    %s: %s[%u] .net=%s .iporotoid=%d .{start,end}port=%d..%d",
+		    strtype, what, index,
 		    str_range(&ts->net, &ts_net),
 		    ts->ipprotoid,
 		    ts->startport,
 		    ts->endport));
 
 	struct score score = { .ok = false, };
+
+	if (conn_af == AF_INET && ts->ts_type != IKEv2_TS_IPV4_ADDR_RANGE) {
+		DBG_log("PAUL: TS TYPE does not match connection IPv4 family");
+		return score;
+	}
+	if (conn_af == AF_INET6 && ts->ts_type != IKEv2_TS_IPV6_ADDR_RANGE) {
+		DBG_log("PAUL: TS TYPE does not match connection IPv6 family");
+		return score;
+	}
+
 	score.address = score_address_range(end, tss, fit, what, index);
 	if (score.address <= 0) {
 		return score;
@@ -645,12 +657,16 @@ static struct best_score score_ends(enum fit fit,
 
 	struct best_score best_score = NO_SCORE;
 
+	int conn_af = addrtypeof(&d->spd.this.client.addr);
+	libreswan_log("PAUL: connection address family is %s",
+		conn_af == AF_INET ? "IPv4" : "IPv6");
+
 	/* compare tsi/r array to this/that, evaluating how well it fits */
 	for (unsigned tsi_n = 0; tsi_n < tsi->nr; tsi_n++) {
 		const struct traffic_selector *tni = &tsi->ts[tsi_n];
 
 		/* choice hardwired! */
-		struct score score_i = score_end(ends->i, tsi, fit, "TSi", tsi_n);
+		struct score score_i = score_end(conn_af, ends->i, tsi, fit, "TSi", tsi_n);
 		if (!score_i.ok) {
 			continue;
 		}
@@ -658,7 +674,7 @@ static struct best_score score_ends(enum fit fit,
 		for (unsigned tsr_n = 0; tsr_n < tsr->nr; tsr_n++) {
 			const struct traffic_selector *tnr = &tsr->ts[tsr_n];
 
-			struct score score_r = score_end(ends->r, tsr, fit, "TSr", tsr_n);
+			struct score score_r = score_end(conn_af, ends->r, tsr, fit, "TSr", tsr_n);
 			if (!score_r.ok) {
 				continue;
 			}
