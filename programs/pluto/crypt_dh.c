@@ -178,7 +178,9 @@ struct crypto_task {
 	dh_cb *cb;
 };
 
-static void compute_dh(struct crypto_task *task, int thread UNUSED)
+static void compute_dh(struct logger *logger_unused UNUSED,
+		       struct crypto_task *task,
+		       int thread_unused UNUSED)
 {
 	task->shared_secret = calc_dh_shared(task->local_secret,
 					     task->remote_ke);

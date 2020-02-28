@@ -104,6 +104,9 @@ struct pluto_crypto_req_cont {
 	int pcrc_helpernum;
 	double pcrc_threadtime_used;
 
+	/* where to send messages */
+	struct logger *logger;
+
 	/* old way */
 	struct pluto_crypto_req pcrc_pcr;
 	crypto_req_cont_func *pcrc_func;	/* function to continue with */
@@ -316,7 +319,7 @@ static void pluto_do_crypto_op(struct pluto_crypto_req_cont *cn, int helpernum)
 		sleep(crypto_helper_delay);
 	}
 
-	cn->pcrc_handler->compute_fn(cn->pcrc_task, helpernum);
+	cn->pcrc_handler->compute_fn(cn->logger, cn->pcrc_task, helpernum);
 
 	LSWDBGP(DBG_CONTROL, buf) {
 		realtime_t tv1 = realnow();
@@ -334,7 +337,9 @@ static void pluto_do_crypto_op(struct pluto_crypto_req_cont *cn, int helpernum)
 				cn->pcrc_id, cn->pcrc_name, cn->pcrc_handler->name);
 }
 
-static void pcr_compute(struct crypto_task *task, int unused_helpernum UNUSED)
+static void pcr_compute(struct logger *logger_unused UNUSED,
+			struct crypto_task *task,
+			int unused_helpernum UNUSED)
 {
 	struct pluto_crypto_req_cont *cn = task->cn;
 	struct pluto_crypto_req *r = &cn->pcrc_pcr;
@@ -543,6 +548,7 @@ static void submit_crypto_request(struct pluto_crypto_req_cont *cn,
 	pexpect(st->st_offloaded_task == NULL);
 	st->st_offloaded_task = cn;
 	st->st_v1_offloaded_task_in_background = false;
+	cn->logger = clone_logger(STATE_LOGGER(st));
 
 	/*
 	 * do it all ourselves?
@@ -602,6 +608,7 @@ void delete_cryptographic_continuation(struct state *st)
 			cn->pcrc_handler->cancelled_cb(&cn->pcrc_task);
 			pexpect(cn->pcrc_task == NULL); /* did their job */
 			/* free the heap space */
+			free_logger(&cn->logger);
 			pfree(cn);
 		}
 	}
@@ -662,6 +669,7 @@ static stf_status handle_helper_answer(struct state *st,
 	}
 	pexpect(cn->pcrc_task == NULL); /* cross check - re-check */
 	/* now free up the continuation */
+	free_logger(&cn->logger);
 	pfree(cn);
 	return status;
 }
