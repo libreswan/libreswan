@@ -55,7 +55,7 @@ west #
 west #
  # does not work on 3.29 for now leave it timer based rekey
 west #
- # ipsec whack --rekey-ipsec --name westnet-eastnet
+ ipsec whack --rekey-ipsec --name westnet-eastnet
 west #
  sleep 25
 west #
@@ -70,10 +70,10 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec trafficstatus
-006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=672, outBytes=672, id='@east'
+006 #3: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=252, outBytes=336, id='@east'
 west #
  ipsec status | grep westnet-eastnet
-000 "westnet-eastnet": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; erouted; eroute owner: #2
+000 "westnet-eastnet": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; erouted; eroute owner: #3
 000 "westnet-eastnet":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet":   our auth:secret, their auth:secret
@@ -88,14 +88,14 @@ west #
 000 "westnet-eastnet":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet":   newest ISAKMP SA: #1; newest IPsec SA: #2;
+000 "westnet-eastnet":   newest ISAKMP SA: #1; newest IPsec SA: #3;
 000 "westnet-eastnet":   IKE algorithms: AES_CBC_256-HMAC_SHA2_512-MODP2048
 000 "westnet-eastnet":   IKEv2 algorithm newest: AES_CBC_256-HMAC_SHA2_512-MODP2048
 000 "westnet-eastnet":   ESP algorithms: AES_CBC_256-HMAC_SHA2_512_256-MODP2048
 000 "westnet-eastnet":   ESP algorithm newest: AES_CBC_256-HMAC_SHA2_512_256; pfsgroup=MODP2048
 000 #1: "westnet-eastnet":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
-000 #2: "westnet-eastnet":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #2: "westnet-eastnet" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 ref=0 refhim=0 Traffic: ESPin=672B ESPout=672B! ESPmax=0B 
+000 #3: "westnet-eastnet":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #3: "westnet-eastnet" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 ref=0 refhim=0 Traffic: ESPin=252B ESPout=336B! ESPmax=0B 
 west #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 west #
