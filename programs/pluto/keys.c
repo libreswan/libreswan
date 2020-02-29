@@ -88,7 +88,6 @@ static int print_secrets(struct secret *secret,
 			 void *uservoid)
 {
 	struct fd *whackfd = uservoid;
-	struct id_list *ids;
 
 	const char *kind;
 	switch (pks->kind) {
@@ -108,10 +107,12 @@ static int print_secrets(struct secret *secret,
 		return 1;
 	}
 
-	ids = lsw_get_idlist(secret);
+	struct id_list *ids = lsw_get_idlist(secret);
 
+	int indent;
 	WHACK_LOG(RC_COMMENT, whackfd, buf) {
-		jam(buf, "    %d: %s ", pks->line, kind);
+		indent = jam(buf, "%5d:", pks->line);
+		jam(buf, " %s ", kind);
 		if (ids == NULL) {
 			jam(buf, "%%any");
 		} else {
@@ -123,6 +124,14 @@ static int print_secrets(struct secret *secret,
 					jam(buf, " more");
 				}
 			}
+		}
+	}
+
+	const ckaid_t *ckaid = secret_ckaid(secret); /* may be NULL */
+	if (ckaid != NULL) {
+		WHACK_LOG(RC_COMMENT, whackfd, buf) {
+			jam(buf, "%*s ckaid: ", indent, "");
+			jam_ckaid(buf, ckaid);
 		}
 	}
 
