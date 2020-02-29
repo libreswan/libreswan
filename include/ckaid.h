@@ -25,6 +25,7 @@
 
 #include "err.h"
 #include "chunk.h"
+#include "jambuf.h"
 
 /*
  * For rationale behind *_t? Blame chunk_t.
@@ -33,13 +34,22 @@
  *
  * Assume SHA1 is being used for the CKAID
  */
+#define CKAID_SIZE BYTES_FOR_BITS(160)
+
 typedef struct {
 	size_t len;
-	uint8_t ptr[BYTES_FOR_BITS(160)];
+	uint8_t ptr[CKAID_SIZE];
 } ckaid_t;
 
 bool ckaid_starts_with(const ckaid_t *ckaid, const char *start);
-char *ckaid_as_string(const ckaid_t *ckaid);
+
+ /* raw bytes in lower-case hex */
+typedef struct {
+	char buf[CKAID_SIZE * 2 + 1/*nul*/ + 1/*canary*/];
+} ckaid_buf;
+const char *str_ckaid(const ckaid_t *ckaid, ckaid_buf *buf);
+size_t jam_ckaid(jambuf_t *buf, const ckaid_t *ckaid);
+
 err_t form_ckaid_rsa(chunk_t modulus, ckaid_t *ckaid);
 err_t form_ckaid_ecdsa(chunk_t pub_value, ckaid_t *ckaid);
 bool ckaid_eq_nss(const ckaid_t *l, const SECItem *r);

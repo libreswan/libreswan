@@ -199,6 +199,9 @@ const char *pubkey_keyid(const struct pubkey *pk);
 const ckaid_t *pubkey_ckaid(const struct pubkey *pk);
 unsigned pubkey_size(const struct pubkey *pk);
 
+const ckaid_t *secret_ckaid(const struct secret *);
+const char *secret_keyid(const struct secret *);
+
 struct pubkey_list {
 	struct pubkey *key;
 	struct pubkey_list *next;

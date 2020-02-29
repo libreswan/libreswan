@@ -371,15 +371,36 @@ const ckaid_t *pubkey_ckaid(const struct pubkey *pk)
 	}
 }
 
-static const ckaid_t *privkey_ckaid(const struct private_key_stuff *pks)
+const ckaid_t *secret_ckaid(const struct secret *secret)
 {
-	switch (pks->pubkey_type->alg) {
-	case PUBKEY_ALG_RSA:
-		return &pks->u.RSA_private_key.pub.ckaid;
-	case PUBKEY_ALG_ECDSA:
-		return &pks->u.ECDSA_private_key.pub.ckaid;
-	default:
-		bad_case(pks->pubkey_type->alg);
+	if (secret->pks.pubkey_type != NULL) {
+		switch (secret->pks.pubkey_type->alg) {
+		case PUBKEY_ALG_RSA:
+			return &secret->pks.u.RSA_private_key.pub.ckaid;
+		case PUBKEY_ALG_ECDSA:
+			return &secret->pks.u.ECDSA_private_key.pub.ckaid;
+		default:
+			bad_case(secret->pks.pubkey_type->alg);
+		}
+	} else {
+		return NULL;
+	}
+}
+
+const char *secret_keyid(const struct secret *secret)
+{
+
+	if (secret->pks.pubkey_type != NULL) {
+		switch (secret->pks.pubkey_type->alg) {
+		case PUBKEY_ALG_RSA:
+			return secret->pks.u.RSA_private_key.pub.keyid;
+		case PUBKEY_ALG_ECDSA:
+			return secret->pks.u.ECDSA_private_key.pub.keyid;
+		default:
+			bad_case(secret->pks.pubkey_type->alg);
+		}
+	} else {
+		return NULL;
 	}
 }
 
@@ -435,7 +456,7 @@ static struct secret *find_pubkey_secret_by_ckaid(struct secret *secrets,
 		     pks->kind == PKK_ECDSA ? pks->u.ECDSA_private_key.pub.keyid :
 		     "N/A"));
 		if (s->pks.pubkey_type == type) {
-			const ckaid_t *s_ckaid = privkey_ckaid(pks);
+			const ckaid_t *s_ckaid = secret_ckaid(s);
 			if (ckaid_eq_nss(s_ckaid, pubkey_ckaid)) {
 				dbg("matched");
 				return s;

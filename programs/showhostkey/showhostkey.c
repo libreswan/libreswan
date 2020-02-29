@@ -138,9 +138,9 @@ static void print(struct private_key_stuff *pks,
 		if (id) {
 			printf(" id: %s", idb);
 		}
-		char *ckaid = ckaid_as_string(&pks->u.RSA_private_key.pub.ckaid);
-		printf(" ckaid: %s\n", ckaid);
-		pfree(ckaid);
+		ckaid_buf cb;
+		ckaid_t *ckaid = &pks->u.RSA_private_key.pub.ckaid;
+		printf(" ckaid: %s\n", str_ckaid(ckaid, &cb));
 		break;
 	}
 
