@@ -40,10 +40,6 @@ bool lsw_nss_setup(const char *config_dir, unsigned flags,
 		   PK11PasswordFunc get_nss_password, lsw_nss_buf_t err);
 void lsw_nss_shutdown(void);
 
-struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval func,
-							    void *uservoid,
-							    lsw_nss_buf_t err);
-
 /*
  * Just in case, at some point passing a parameter becomes somehow
  * useful.
