@@ -34,6 +34,7 @@ west #
 000 List of Pre-shared secrets (from /etc/ipsec.secrets)
 000  
 000     0: RSA (none) (none)
+000        ckaid: <<CKAID#1>>
 000  
 000 List of X.509 End Certificates:
 000  
@@ -165,6 +166,7 @@ west #
 000 List of Pre-shared secrets (from /etc/ipsec.secrets)
 000  
 000     0: RSA (none) (none)
+000        ckaid: <<CKAID#1>>
 000  
 000 List of X.509 End Certificates:
 000  
