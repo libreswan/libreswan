@@ -81,21 +81,8 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 	unsigned int sz = k->pub.k;
 
 	/* XXX: table lookup? */
-	const struct hash_desc *hasher;
-	switch (hash_algo) {
-	case IKEv2_AUTH_HASH_SHA1:
-		hasher = &ike_alg_hash_sha1;
-		break;
-	case IKEv2_AUTH_HASH_SHA2_256:
-		hasher = &ike_alg_hash_sha2_256;
-		break;
-	case IKEv2_AUTH_HASH_SHA2_384:
-		hasher = &ike_alg_hash_sha2_384;
-		break;
-	case IKEv2_AUTH_HASH_SHA2_512:
-		hasher = &ike_alg_hash_sha2_512;
-		break;
-	default:
+	const struct hash_desc *hasher = v2_auth_hash_desc(hash_algo);
+	if (hasher == NULL) {
 		libreswan_log("unknown or unsupported hash algorithm");
 		return false;
 	}

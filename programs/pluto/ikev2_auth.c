@@ -138,3 +138,29 @@ enum ikev2_auth_method v2_auth_method(struct ike_sa *ike, enum keyword_authby au
 	}
 	return auth_method;
 }
+
+const struct hash_desc *v2_auth_hash_desc(enum notify_payload_hash_algorithms hash_algo)
+{
+       const struct hash_desc *hd;
+       switch (hash_algo) {
+#ifdef USE_SHA1
+       case IKEv2_AUTH_HASH_SHA1:
+               hd = &ike_alg_hash_sha1;
+               break;
+#endif
+#ifdef USE_SHA2
+       case IKEv2_AUTH_HASH_SHA2_256:
+               hd = &ike_alg_hash_sha2_256;
+               break;
+       case IKEv2_AUTH_HASH_SHA2_384:
+               hd = &ike_alg_hash_sha2_384;
+               break;
+       case IKEv2_AUTH_HASH_SHA2_512:
+               hd = &ike_alg_hash_sha2_512;
+               break;
+#endif
+       default:
+               return NULL;
+       }
+return hd;
+}
