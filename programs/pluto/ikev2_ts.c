@@ -141,11 +141,9 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 		switch (ts->ts_type) {
 		case IKEv2_TS_IPV4_ADDR_RANGE:
 			its1.isat1_type = IKEv2_TS_IPV4_ADDR_RANGE;
-			its1.isat1_sellen = 2 * 4 + 8; /* See RFC 5669 SEction 13.3.1, 8 octet header plus 2 ip addresses */
 			break;
 		case IKEv2_TS_IPV6_ADDR_RANGE:
 			its1.isat1_type = IKEv2_TS_IPV6_ADDR_RANGE;
-			its1.isat1_sellen = 2 * 16 + 8; /* See RFC 5669 SEction 13.3.1, 8 octet header plus 2 ip addresses */
 			break;
 		case IKEv2_TS_FC_ADDR_RANGE:
 			DBG_log("IKEv2 Traffic Selector IKEv2_TS_FC_ADDR_RANGE not yet supported");
