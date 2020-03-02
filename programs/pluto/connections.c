@@ -1750,7 +1750,10 @@ static bool extract_connection(const struct fd *whackfd,
 		 * negotiationshunt) on the 2nd keyingtry, and try to re-install another
 		 * negotation or failure shunt
 		 */
-		c->sa_keying_tries = 1;
+		if (c->sa_keying_tries != 1) {
+			c->sa_keying_tries = 1;
+			libreswan_log("the connection is Opportunistic, but did not use keyingtries=1. The specified value was replaced");
+		}
 	}
 
 	if (c->policy & POLICY_GROUP) {
