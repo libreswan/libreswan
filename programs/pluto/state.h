@@ -198,6 +198,8 @@ struct v2_id_payload {
 	chunk_t data;
 	/* MAC of part of header + data */
 	struct crypt_mac mac;
+	/* Same for non-ppk */
+	struct crypt_mac mac_no_ppk_auth;
 };
 
 /*

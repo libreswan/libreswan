@@ -2158,6 +2158,32 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	pst->st_firstpacket_him = clone_out_pbs_as_chunk(&md->message_pbs,
 							 "saved first received packet");
 
+	/*
+	 * Construct the IDi payload and store it in state so that it
+	 * can be emitted later.  Then use that to construct the
+	 * "MACedIDFor[I]".
+	 *
+	 * Code assumes that struct ikev2_id's "IDType|RESERVED" is
+	 * laid out the same as the packet.
+	 */
+
+	{
+		shunk_t data;
+		ike->sa.st_v2_id_payload.header = build_v2_id_payload(&pc->spd.this, &data);
+		ike->sa.st_v2_id_payload.data = clone_hunk(data, "my IDi");
+	}
+
+	ike->sa.st_v2_id_payload.mac = v2_hash_id_payload("IDi", ike,
+							  "st_skey_pi_nss",
+							  ike->sa.st_skey_pi_nss);
+	if (pst->st_seen_ppk && !LIN(POLICY_PPK_INSIST, pc->policy)) {
+		/* ID payload that we've build is the same */
+		ike->sa.st_v2_id_payload.mac_no_ppk_auth =
+			v2_hash_id_payload("IDi (no-PPK)", ike,
+					   "sk_pi_no_pkk",
+					   ike->sa.st_sk_pi_no_ppk);
+	}
+
 	/* beginning of data going out */
 
 	/* make sure HDR is at start of a clean buffer */
@@ -2200,41 +2226,15 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	/* send out the IDi payload */
 
-	struct crypt_mac idhash;
-	struct crypt_mac idhash_npa = { .len = 0, };
-
 	{
-		shunk_t id_b;
-		struct ikev2_id i_id = build_v2_id_payload(&pc->spd.this, &id_b);
-
-		uint8_t *id_start = sk.pbs.cur;
 		pb_stream i_id_pbs;
-		if (!out_struct(&i_id,
+		if (!out_struct(&ike->sa.st_v2_id_payload.header,
 				&ikev2_id_i_desc,
 				&sk.pbs,
 				&i_id_pbs) ||
-		    !pbs_out_hunk(id_b, &i_id_pbs, "my identity"))
+		    !pbs_out_hunk(ike->sa.st_v2_id_payload.data, &i_id_pbs, "my identity"))
 			return STF_INTERNAL_ERROR;
-
 		close_output_pbs(&i_id_pbs);
-
-		/*
-		 * XXX: if i_id_pbs included the header (i_id) then
-		 * the structure, after closing, could be passed into
-		 * v2_id_hash.
-		 */
-		/* calculate hash of IDi for AUTH below */
-		const size_t id_len = sk.pbs.cur - id_start;
-		idhash = v2_id_hash(ike, "IDi verify hash",
-				    "IDi", shunk2(id_start, id_len),
-				    "skey_pi", ike->sa.st_skey_pi_nss);
-
-		if (pst->st_seen_ppk && !LIN(POLICY_PPK_INSIST, pc->policy)) {
-			/* ID payload that we've build is the same */
-			idhash_npa = v2_id_hash(ike, "IDi verify hash (no-PPK)",
-						"IDi", shunk2(id_start, id_len),
-						"sk_pi_no_pkk", ike->sa.st_sk_pi_no_ppk);
-		}
 	}
 
 	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK)) {
@@ -2299,7 +2299,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	/* send out the AUTH payload */
 	chunk_t null_auth;	/* we must free this */
 
-	stf_status authstat = emit_v2AUTH(ike, &idhash, &sk.pbs, &null_auth);
+	stf_status authstat = emit_v2AUTH(ike, &ike->sa.st_v2_id_payload.mac, &sk.pbs, &null_auth);
 	if (authstat != STF_OK) {
 		freeanychunk(null_auth);
 		passert(IS_CHILD_SA(cst));
@@ -2418,7 +2418,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		close_output_pbs(&ppks);
 
 		if (!LIN(POLICY_PPK_INSIST, cc->policy)) {
-			stf_status s = ikev2_calc_no_ppk_auth(pst, &idhash_npa,
+			stf_status s = ikev2_calc_no_ppk_auth(pst, &ike->sa.st_v2_id_payload.mac_no_ppk_auth,
 							      &pst->st_no_ppk_auth);
 			if (s != STF_OK) {
 				freeanychunk(null_auth);
