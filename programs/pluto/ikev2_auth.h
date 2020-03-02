@@ -31,5 +31,6 @@ struct crypt_mac v2_calculate_sighash(const struct state *st,
 				      const struct hash_desc *hasher);
 
 enum keyword_authby v2_auth_by(struct ike_sa *ike);
+enum ikev2_auth_method v2_auth_method(struct ike_sa *ike, enum keyword_authby authby);
 
 #endif

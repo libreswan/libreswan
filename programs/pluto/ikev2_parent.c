@@ -1866,45 +1866,10 @@ static stf_status emit_v2AUTH(struct ike_sa *ike,
 		.isaa_critical = build_ikev2_critical(false),
 	};
 
-	switch (authby) {
-	case AUTH_RSASIG:
-	{
-		bool allow_legacy = LIN(POLICY_RSASIG_v1_5, c->policy);
-
-		if (!ike->sa.st_seen_hashnotify) {
-				if (allow_legacy) {
-					a.isaa_auth_method = IKEv2_AUTH_RSA;
-				} else {
-					loglog(RC_LOG_SERIOUS, "legacy RSA-SHA1 is not allowed but peer supports nothing else");
-					return STF_FATAL;
-				}
-		} else {
-			if (c->sighash_policy != LEMPTY) {
-				a.isaa_auth_method = IKEv2_AUTH_DIGSIG;
-			} else {
-				if (allow_legacy) {
-					a.isaa_auth_method = IKEv2_AUTH_RSA;
-				} else {
-					loglog(RC_LOG_SERIOUS, "Local policy does not allow legacy RSA-SHA1 but connection allows no other hash policy");
-					return STF_FATAL;
-				}
-			}
-
-		}
-		break;
-	}
-	case AUTH_ECDSA:
-		a.isaa_auth_method = IKEv2_AUTH_DIGSIG;
-		break;
-	case AUTH_PSK:
-		a.isaa_auth_method = IKEv2_AUTH_PSK;
-		break;
-	case AUTH_NULL:
-		a.isaa_auth_method = IKEv2_AUTH_NULL;
-		break;
-	case AUTH_NEVER:
-	default:
-		bad_case(authby);
+	a.isaa_auth_method = v2_auth_method(ike, authby);
+	if (a.isaa_auth_method == IKEv2_AUTH_RESERVED) {
+		/* already logged */
+		return STF_FATAL;
 	}
 
 	pb_stream a_pbs;

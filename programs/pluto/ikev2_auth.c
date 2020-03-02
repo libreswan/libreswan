@@ -91,3 +91,50 @@ enum keyword_authby v2_auth_by(struct ike_sa *ike)
 	}
 	return authby;
 }
+
+enum ikev2_auth_method v2_auth_method(struct ike_sa *ike, enum keyword_authby authby)
+{
+	struct connection *c = ike->sa.st_connection;
+	enum ikev2_auth_method auth_method;
+	switch (authby) {
+	case AUTH_RSASIG:
+	{
+		bool allow_legacy = LIN(POLICY_RSASIG_v1_5, c->policy);
+
+		if (!ike->sa.st_seen_hashnotify) {
+			if (allow_legacy) {
+				auth_method = IKEv2_AUTH_RSA;
+			} else {
+				loglog(RC_LOG_SERIOUS, "legacy RSA-SHA1 is not allowed but peer supports nothing else");
+				auth_method = IKEv2_AUTH_RESERVED;
+			}
+		} else {
+			if (c->sighash_policy != LEMPTY) {
+				auth_method = IKEv2_AUTH_DIGSIG;
+			} else {
+				if (allow_legacy) {
+					auth_method = IKEv2_AUTH_RSA;
+				} else {
+					loglog(RC_LOG_SERIOUS, "Local policy does not allow legacy RSA-SHA1 but connection allows no other hash policy");
+					auth_method = IKEv2_AUTH_RESERVED;
+
+				}
+			}
+		}
+		break;
+	}
+	case AUTH_ECDSA:
+		auth_method = IKEv2_AUTH_DIGSIG;
+		break;
+	case AUTH_PSK:
+		auth_method = IKEv2_AUTH_PSK;
+		break;
+	case AUTH_NULL:
+		auth_method = IKEv2_AUTH_NULL;
+		break;
+	case AUTH_NEVER:
+	default:
+		bad_case(authby);
+	}
+	return auth_method;
+}
