@@ -1404,7 +1404,7 @@ struct_desc ikev2_ts_r_desc = {
 static field_desc ikev2ts1_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "TS type", &ikev2_ts_type_names },
 	{ ft_nat,  8 / BITS_PER_BYTE, "IP Protocol ID", NULL },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
+	{ ft_len, 16 / BITS_PER_BYTE, "length of entire TS structure", NULL },
 	{ ft_nat, 16 / BITS_PER_BYTE, "start port", NULL },
 	{ ft_nat, 16 / BITS_PER_BYTE, "end port", NULL },
 	{ ft_end,  0, NULL, NULL }
