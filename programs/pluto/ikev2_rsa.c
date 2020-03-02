@@ -52,7 +52,7 @@
 #include "secrets.h"
 #include "crypt_hash.h"
 #include "ietf_constants.h"
-#include "ikev2_sighash.h"
+#include "ikev2_auth.h"
 
 static const uint8_t rsa_sha1_der_header[] = {
 	0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e,

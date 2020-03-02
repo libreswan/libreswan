@@ -54,7 +54,7 @@
 #include "ietf_constants.h"
 #include "asn1.h"
 #include "lswnss.h"
-#include "ikev2_sighash.h"
+#include "ikev2_auth.h"
 
 bool ikev2_calculate_ecdsa_hash(struct state *st,
 				enum original_role role,

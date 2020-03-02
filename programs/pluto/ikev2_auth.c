@@ -26,7 +26,7 @@
 #include "crypt_hash.h"
 
 #include "defs.h"
-#include "ikev2_sighash.h"
+#include "ikev2_auth.h"
 #include "state.h"
 #include "log.h"
 
