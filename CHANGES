@@ -1,6 +1,16 @@
 
 See also https://libreswan.org/
 
+v3.31 (unreleased)
+* IKEv2: Set keyingtries to 1 for Opportunistic Encryption connections [Paul]
+* IKEv2: Fix ikev2 rekey failures due to bad Traffic Selector proposa [Antony]
+* IKEv1: Support for XFRMi interfaces [Paul]
+* pluto: Disable log_to_audit if kernel does not support audit [Paul]
+* addconn: Do not assert on ipsec-interface=no [Paul]
+* nat_traversal: Fix not to send nat-t keepalives when there is no nat [Tuomo]
+* KLIPS: Fix _updown.klips (regression introduced in 3.30) [Wolfgang]
+* pluto: Increase max IKEv2 fragments to 32 to support Windows [John Mah]
+
 v3.30 (February 2020)
 * WARNING: This is the last release that supports the KLIPS stack,
            use the new ipsec-interface= virtual interfaces instead.
