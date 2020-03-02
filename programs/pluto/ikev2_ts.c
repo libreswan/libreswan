@@ -152,6 +152,7 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 		default:
 			DBG_log("IKEv2 Traffic Selector type '%d' not supported",
 				ts->ts_type);
+			return STF_INTERNAL_ERROR;	/* ??? should be bad_case()? */
 		}
 
 		if (!out_struct(&its1, &ikev2_ts1_desc, &ts_pbs, &ts_pbs2))
