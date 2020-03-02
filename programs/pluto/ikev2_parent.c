@@ -92,6 +92,7 @@
 #include "crypt_symkey.h" /* for release_symkey */
 #include "ip_info.h"
 #include "iface.h"
+#include "ikev2_auth.h"
 
 struct mobike {
 	ip_endpoint remote;
@@ -1857,30 +1858,9 @@ static stf_status emit_v2AUTH(struct ike_sa *ike,
 				   ike->sa.st_sa_role == SA_RESPONDER ? ORIGINAL_RESPONDER :
 				   pexpect(0));
 	const struct connection *c = ike->sa.st_connection;
-	enum keyword_authby authby = c->spd.this.authby;
 	if (null_auth != NULL)
 		*null_auth = EMPTY_CHUNK;
-	if (ike->sa.st_peer_wants_null) {
-		/* we allow authby=null and IDr payload told us to use it */
-		authby = AUTH_NULL;
-	} else if (authby == AUTH_UNSET) {
-		/*
-		 * Asymmetric policy unset.
-		 * Pick up from symmetric policy, in order of preference!
-		 */
-		if ((c->policy & POLICY_ECDSA) && (c->sighash_policy != LEMPTY)) {
-			authby = AUTH_ECDSA;
-		} else if (c->policy & POLICY_RSASIG) {
-			authby = AUTH_RSASIG;
-		} else if (c->policy & POLICY_PSK) {
-			authby = AUTH_PSK;
-		} else if (c->policy & POLICY_AUTH_NULL) {
-			authby = AUTH_NULL;
-		} else {
-			/* leave authby == AUTH_UNSET */
-			/* ??? we will surely crash with bad_case */
-		}
-	}
+	enum keyword_authby authby = v2_auth_by(ike);
 
 	struct ikev2_auth a = {
 		.isaa_critical = build_ikev2_critical(false),

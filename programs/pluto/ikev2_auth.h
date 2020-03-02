@@ -22,11 +22,14 @@
 
 struct crypt_mac;
 struct state;
+struct ike_sa;
 
 struct crypt_mac v2_calculate_sighash(const struct state *st,
 				      enum original_role role,
 				      const struct crypt_mac *idhash,
 				      const chunk_t firstpacket,
 				      const struct hash_desc *hasher);
+
+enum keyword_authby v2_auth_by(struct ike_sa *ike);
 
 #endif

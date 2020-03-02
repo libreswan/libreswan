@@ -29,6 +29,7 @@
 #include "ikev2_auth.h"
 #include "state.h"
 #include "log.h"
+#include "connections.h"
 
 struct crypt_mac v2_calculate_sighash(const struct state *st,
 				      enum original_role role,
@@ -61,4 +62,32 @@ struct crypt_mac v2_calculate_sighash(const struct state *st,
 	passert(idhash->len == st->st_oakley.ta_prf->prf_output_size);
 	crypt_hash_digest_hunk(ctx, "IDHASH", *idhash);
 	return crypt_hash_final_mac(&ctx);
+}
+
+enum keyword_authby v2_auth_by(struct ike_sa *ike)
+{
+	const struct connection *c = ike->sa.st_connection;
+	enum keyword_authby authby = c->spd.this.authby;
+	if (ike->sa.st_peer_wants_null) {
+		/* we allow authby=null and IDr payload told us to use it */
+		authby = AUTH_NULL;
+	} else if (authby == AUTH_UNSET) {
+		/*
+		 * Asymmetric policy unset.
+		 * Pick up from symmetric policy, in order of preference!
+		 */
+		if ((c->policy & POLICY_ECDSA) && (c->sighash_policy != LEMPTY)) {
+			authby = AUTH_ECDSA;
+		} else if (c->policy & POLICY_RSASIG) {
+			authby = AUTH_RSASIG;
+		} else if (c->policy & POLICY_PSK) {
+			authby = AUTH_PSK;
+		} else if (c->policy & POLICY_AUTH_NULL) {
+			authby = AUTH_NULL;
+		} else {
+			/* leave authby == AUTH_UNSET */
+			/* ??? we will surely crash with bad_case */
+		}
+	}
+	return authby;
 }
