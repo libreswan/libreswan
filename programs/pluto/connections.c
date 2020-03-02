@@ -1743,6 +1743,14 @@ static bool extract_connection(const struct fd *whackfd,
 	if (c->policy & POLICY_OPPORTUNISTIC) {
 		c->spd.that.has_client = TRUE;
 		c->spd.that.client.maskbits = 0; /* ??? shouldn't this be 32 for v4? */
+		/*
+		 * We cannot have unlimited keyingtries for Opportunistic, or else
+		 * we gain infinite partial IKE SA's. But also, more than one makes
+		 * no sense, since it will be installing a failureshunt (not
+		 * negotiationshunt) on the 2nd keyingtry, and try to re-install another
+		 * negotation or failure shunt
+		 */
+		c->sa_keying_tries = 1;
 	}
 
 	if (c->policy & POLICY_GROUP) {

@@ -5,8 +5,10 @@
 negotiate a connection, or a replacement for one, before giving up
 (default
 <emphasis remap='B'>%forever</emphasis>).
-The value <emphasis remap='B'>%forever</emphasis>
-means &ldquo;never give up&rdquo; (obsolete: this can be written <literal>0</literal>).
+The value <emphasis remap='B'>%forever</emphasis> or <literal>0</literal> means to keep trying
+forever. For Opportunistic Encryption connections, the keyingtries is always set to 1, as the
+expiring failureshunt triggers new keyingtries, but only when there is traffic. This prevents
+accumulating an infinite amount of attempts to peers that do not support Opportunistic Encryption.
 Relevant only locally, other end need not agree on it.</para>
   </listitem>
   </varlistentry>
