@@ -950,7 +950,7 @@ struct ikev2_auth {
 	uint8_t isaa_np;		/* Next payload */
 	uint8_t isaa_critical;
 	uint16_t isaa_length;		/* Payload length */
-	uint8_t isaa_type;		/* auth type */
+	uint8_t isaa_auth_method;
 	uint8_t isaa_res1;
 	uint16_t isaa_res2;
 };

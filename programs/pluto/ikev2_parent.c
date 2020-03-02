@@ -1893,17 +1893,17 @@ static stf_status emit_v2AUTH(struct ike_sa *ike,
 
 		if (!ike->sa.st_seen_hashnotify) {
 				if (allow_legacy) {
-					a.isaa_type = IKEv2_AUTH_RSA;
+					a.isaa_auth_method = IKEv2_AUTH_RSA;
 				} else {
 					loglog(RC_LOG_SERIOUS, "legacy RSA-SHA1 is not allowed but peer supports nothing else");
 					return STF_FATAL;
 				}
 		} else {
 			if (c->sighash_policy != LEMPTY) {
-				a.isaa_type = IKEv2_AUTH_DIGSIG;
+				a.isaa_auth_method = IKEv2_AUTH_DIGSIG;
 			} else {
 				if (allow_legacy) {
-					a.isaa_type = IKEv2_AUTH_RSA;
+					a.isaa_auth_method = IKEv2_AUTH_RSA;
 				} else {
 					loglog(RC_LOG_SERIOUS, "Local policy does not allow legacy RSA-SHA1 but connection allows no other hash policy");
 					return STF_FATAL;
@@ -1914,13 +1914,13 @@ static stf_status emit_v2AUTH(struct ike_sa *ike,
 		break;
 	}
 	case AUTH_ECDSA:
-		a.isaa_type = IKEv2_AUTH_DIGSIG;
+		a.isaa_auth_method = IKEv2_AUTH_DIGSIG;
 		break;
 	case AUTH_PSK:
-		a.isaa_type = IKEv2_AUTH_PSK;
+		a.isaa_auth_method = IKEv2_AUTH_PSK;
 		break;
 	case AUTH_NULL:
-		a.isaa_type = IKEv2_AUTH_NULL;
+		a.isaa_auth_method = IKEv2_AUTH_NULL;
 		break;
 	case AUTH_NEVER:
 	default:
@@ -1934,7 +1934,7 @@ static stf_status emit_v2AUTH(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	switch (a.isaa_type) {
+	switch (a.isaa_auth_method) {
 	case IKEv2_AUTH_RSA:
 		if (!ikev2_calculate_rsa_hash(&ike->sa, role, idhash_out, &a_pbs,
 					      NULL /* we don't keep no_ppk_auth */,
@@ -2008,7 +2008,7 @@ static stf_status emit_v2AUTH(struct ike_sa *ike,
 	}
 
 	default:
-		bad_case(a.isaa_type);
+		bad_case(a.isaa_auth_method);
 	}
 
 	/* We sent normal IKEv2_AUTH_RSA but if the policy also allows
@@ -2780,7 +2780,7 @@ static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 	}
 
-	atype = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_type;
+	atype = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
 	if (IS_LIBUNBOUND && id_ipseckey_allowed(st, atype)) {
 		ret = idi_ipseckey_fetch(md);
 		if (ret != STF_OK) {
@@ -2920,7 +2920,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		size_t len = pbs_left(&pbs);
 		init_pbs(&pbs_no_ppk_auth, st->st_no_ppk_auth.ptr, len, "pb_stream for verifying NO_PPK_AUTH");
 
-		if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_type,
+		if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 				   st, ORIGINAL_RESPONDER, &idhash_in,
 				   &pbs_no_ppk_auth,
 				   st->st_connection->spd.that.authby, "no-PPK-auth"))
@@ -2964,7 +2964,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 			DBG(DBG_CONTROL, DBG_log("NULL_AUTH verified"));
 		} else {
 			DBGF(DBG_CONTROL, "verifying AUTH payload");
-			if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_type,
+			if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 					   st, ORIGINAL_RESPONDER, &idhash_in,
 					   &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
 					   st->st_connection->spd.that.authby, "I2 Auth Payload")) {
@@ -3661,7 +3661,7 @@ stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct 
 	/* process AUTH payload */
 
 	DBGF(DBG_CONTROL, "verifying AUTH payload");
-	if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_type,
+	if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 			   pst, ORIGINAL_INITIATOR, &idhash_in,
 			   &md->chain[ISAKMP_NEXT_v2AUTH]->pbs, that_authby, "R2 Auth Payload"))
 	{
