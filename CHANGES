@@ -4,6 +4,7 @@ See also https://libreswan.org/
 v3.31 (unreleased)
 * IKEv2: Set keyingtries to 1 for Opportunistic Encryption connections [Paul]
 * IKEv2: Fix ikev2 rekey failures due to bad Traffic Selector proposa [Antony]
+* IKEv2: Verify (not ignore) expected TSi/TSr payloads for IPsec rekeys [Paul]
 * IKEv1: Support for XFRMi interfaces [Paul]
 * pluto: Disable log_to_audit if kernel does not support audit [Paul]
 * addconn: Do not assert on ipsec-interface=no [Paul]
