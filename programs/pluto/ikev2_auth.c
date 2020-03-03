@@ -164,3 +164,23 @@ const struct hash_desc *v2_auth_hash_desc(enum notify_payload_hash_algorithms ha
        }
 return hd;
 }
+
+const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike)
+{
+	const struct hash_desc *hash_algo;
+	/* RFC 8420 IDENTITY algo not supported yet */
+	if (ike->sa.st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_512) {
+		hash_algo = &ike_alg_hash_sha2_512;
+		dbg("emit hash algo NEGOTIATE_AUTH_HASH_SHA2_512");
+	} else if (ike->sa.st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_384) {
+		hash_algo = &ike_alg_hash_sha2_384;
+		dbg("emit hash algo NEGOTIATE_AUTH_HASH_SHA2_384");
+	} else if (ike->sa.st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_256) {
+		hash_algo = &ike_alg_hash_sha2_256;
+		dbg("emit hash algo NEGOTIATE_AUTH_HASH_SHA2_256");
+	} else {
+		hash_algo = NULL;
+		dbg("DigSig: no compatible DigSig hash algo");
+	}
+	return hash_algo;
+}

@@ -1903,24 +1903,13 @@ static stf_status emit_v2AUTH(struct ike_sa *ike,
 
 	case IKEv2_AUTH_DIGSIG:
 	{
-		enum notify_payload_hash_algorithms hash_algo;
-
-		/* RFC 8420 IDENTITY algo not supported yet */
-		if (ike->sa.st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_512) {
-			hash_algo = IKEv2_AUTH_HASH_SHA2_512;
-			dbg("emit hash algo NEGOTIATE_AUTH_HASH_SHA2_512");
-		} else if (ike->sa.st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_384) {
-			hash_algo = IKEv2_AUTH_HASH_SHA2_384;
-			dbg("emit hash algo NEGOTIATE_AUTH_HASH_SHA2_384");
-		} else if (ike->sa.st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_256) {
-			hash_algo = IKEv2_AUTH_HASH_SHA2_256;
-			dbg("emit hash algo NEGOTIATE_AUTH_HASH_SHA2_256");
-		} else {
+		const struct hash_desc *hash_algo = v2_auth_negotiated_signature_hash(ike);
+		if (hash_algo == NULL) {
 			loglog(RC_LOG_SERIOUS, "DigSig: no compatible DigSig hash algo");
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 
-		if (!ikev2_send_asn1_hash_blob(hash_algo, &a_pbs, authby))
+		if (!ikev2_send_asn1_hash_blob(hash_algo->common.ikev2_alg_id, &a_pbs, authby))
 			return STF_INTERNAL_ERROR;
 
 		switch (authby) {
@@ -1928,7 +1917,7 @@ static stf_status emit_v2AUTH(struct ike_sa *ike,
 		{
 			if (!ikev2_calculate_ecdsa_hash(&ike->sa, role, idhash_out, &a_pbs,
 							NULL /* don't grab value */,
-							hash_algo))
+							hash_algo->common.ikev2_alg_id))
 			{
 				loglog(RC_LOG_SERIOUS, "DigSig: failed to find our ECDSA key");
 				return STF_FATAL;
@@ -1939,7 +1928,7 @@ static stf_status emit_v2AUTH(struct ike_sa *ike,
 		{
 			if (!ikev2_calculate_rsa_hash(&ike->sa, role, idhash_out, &a_pbs,
 						      NULL /* we don't keep no_ppk_auth */,
-						      hash_algo))
+						      hash_algo->common.ikev2_alg_id))
 			{
 				loglog(RC_LOG_SERIOUS, "DigSig: failed to find our RSA key");
 				return STF_FATAL;
