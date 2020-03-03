@@ -48,7 +48,7 @@ BuildRequires: bison
 BuildRequires: curl-devel
 BuildRequires: fipscheck-devel
 BuildRequires: flex
-BuildRequires: gcc
+BuildRequires: gcc make
 BuildRequires: hostname
 BuildRequires: ldns-devel
 BuildRequires: libcap-ng-devel

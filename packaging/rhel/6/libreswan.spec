@@ -45,6 +45,7 @@ Source10: https://download.libreswan.org/cavs/ikev1_dsa.fax.bz2
 Source11: https://download.libreswan.org/cavs/ikev1_psk.fax.bz2
 Source12: https://download.libreswan.org/cavs/ikev2.fax.bz2
 %endif
+BuildRequires: gcc make
 BuildRequires: audit-libs-devel
 BuildRequires: bison
 BuildRequires: curl-devel
