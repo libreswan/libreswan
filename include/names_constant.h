@@ -69,7 +69,6 @@ extern enum_names isakmp_transformid_names;
 extern enum_names ah_transformid_names;
 extern enum_names esp_transformid_names;
 extern enum_names ipcomp_transformid_names;
-extern enum_names notify_hash_algo_names;
 extern enum_names ike_idtype_names_extended0;
 extern enum_names ike_idtype_names_extended;
 extern enum_names ike_idtype_names;
@@ -83,6 +82,8 @@ extern enum_names ikev1_notify_names;
 /* IKEv2 */
 extern enum_names ikev2_auth_names;
 extern enum_names ikev2_sec_proto_id_names;
+extern enum_names notify_hash_algo_names; /* XXX: should be below, see rfc wording */
+#define ikev2_hash_algorithm_names notify_hash_algo_names
 extern enum_names ikev2_trans_type_names;
 extern enum_names ikev2_trans_type_encr_names;
 extern enum_names ikev2_trans_type_prf_names;

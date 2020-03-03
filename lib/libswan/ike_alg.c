@@ -448,6 +448,7 @@ const struct ike_alg_type ike_alg_hash = {
 	.algorithms = &hash_algorithms,
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &oakley_hash_names,
+		[IKEv2_ALG_ID] = &ikev2_hash_algorithm_names,
 	},
 	.desc_check = hash_desc_check,
 	.desc_is_ike = hash_desc_is_ike,

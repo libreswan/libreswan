@@ -49,9 +49,9 @@ Encryption algorithms:
 Hash algorithms:
   MD5                     IKEv1: IKE         IKEv2:                 
   SHA1                    IKEv1: IKE         IKEv2:             FIPS  sha
-  SHA2_256                IKEv1: IKE         IKEv2:             FIPS  sha2, sha256
-  SHA2_384                IKEv1: IKE         IKEv2:             FIPS  sha384
-  SHA2_512                IKEv1: IKE         IKEv2:             FIPS  sha512
+  SHA2_256                IKEv1: IKE         IKEv2: IKE         FIPS  sha2, sha256
+  SHA2_384                IKEv1: IKE         IKEv2: IKE         FIPS  sha384
+  SHA2_512                IKEv1: IKE         IKEv2: IKE         FIPS  sha512
 PRF algorithms:
   HMAC_MD5                IKEv1: IKE         IKEv2: IKE               md5
   HMAC_SHA1               IKEv1: IKE         IKEv2: IKE         FIPS  sha, sha1

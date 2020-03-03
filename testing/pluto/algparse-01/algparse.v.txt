@@ -16,9 +16,9 @@ algparse:   CHACHA20_POLY1305       IKEv1:             IKEv2: IKE ESP           
 algparse: Hash algorithms:
 algparse:   MD5                     IKEv1: IKE         IKEv2:                 
 algparse:   SHA1                    IKEv1: IKE         IKEv2:             FIPS  sha
-algparse:   SHA2_256                IKEv1: IKE         IKEv2:             FIPS  sha2, sha256
-algparse:   SHA2_384                IKEv1: IKE         IKEv2:             FIPS  sha384
-algparse:   SHA2_512                IKEv1: IKE         IKEv2:             FIPS  sha512
+algparse:   SHA2_256                IKEv1: IKE         IKEv2: IKE         FIPS  sha2, sha256
+algparse:   SHA2_384                IKEv1: IKE         IKEv2: IKE         FIPS  sha384
+algparse:   SHA2_512                IKEv1: IKE         IKEv2: IKE         FIPS  sha512
 algparse: PRF algorithms:
 algparse:   HMAC_MD5                IKEv1: IKE         IKEv2: IKE               md5
 algparse:   HMAC_SHA1               IKEv1: IKE         IKEv2: IKE         FIPS  sha, sha1
