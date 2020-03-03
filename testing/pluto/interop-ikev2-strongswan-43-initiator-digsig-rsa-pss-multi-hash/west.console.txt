@@ -61,11 +61,11 @@ received end entity cert "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Depa
   using trusted ca certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
 checking certificate status of "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
   requesting ocsp status from 'http://nic.testing.libreswan.org:2560' ...
-libcurl request failed [7]: Failed to connect to nic.testing.libreswan.org port 2560: No route to host
+libcurl request failed [7]: Failed to connect to nic.testing.libreswan.org XXX
 ocsp request to http://nic.testing.libreswan.org:2560 failed
 ocsp check failed, fallback to crl
   fetching crl from 'http://nic.testing.libreswan.org/revoked.crl' ...
-libcurl request failed [7]: Failed to connect to nic.testing.libreswan.org port 80: No route to host
+libcurl request failed [7]: Failed to connect to nic.testing.libreswan.org XXX
 crl fetching failed
 certificate status is not available
   reached self-signed root ca with a path length of 0
