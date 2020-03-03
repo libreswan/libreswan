@@ -64,7 +64,7 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 			      const struct crypt_mac *idhash,
 			      pb_stream *a_pbs,
 			      chunk_t *no_ppk_auth, /* optional output */
-			      enum notify_payload_hash_algorithms hash_algo)
+			      const struct hash_desc *hash_algo)
 {
 	const struct pubkey_type *type = &pubkey_type_rsa;
 	statetime_t start = statetime_start(st);
@@ -80,15 +80,9 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 	const struct RSA_private_key *k = &pks->u.RSA_private_key;
 	unsigned int sz = k->pub.k;
 
-	/* XXX: table lookup? */
-	const struct hash_desc *hasher = v2_auth_hash_desc(hash_algo);
-	if (hasher == NULL) {
-		libreswan_log("unknown or unsupported hash algorithm");
-		return false;
-	}
 	struct crypt_mac hash = v2_calculate_sighash(st, role, idhash,
 						     st->st_firstpacket_me,
-						     hasher);
+						     hash_algo);
 
 	/*
 	 * Allocate large enough space for any digest.  Bound could be
@@ -98,7 +92,7 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 	unsigned char signed_octets[sizeof(rsa_sha1_der_header) + sizeof(hash.ptr/*array*/)];
 	size_t signed_len;
 
-	switch (hash_algo) {
+	switch (hash_algo->common.ikev2_alg_id) {
 	case IKEv2_AUTH_HASH_SHA1:
 		/* old style RSA with SHA1 */
 		memcpy(signed_octets, &rsa_sha1_der_header, sizeof(rsa_sha1_der_header));
@@ -113,7 +107,7 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 		signed_len = hash.len;
 		break;
 	default:
-		bad_case(hash_algo);
+		bad_case(hash_algo->common.ikev2_alg_id);
 	}
 
 	passert(RSA_MIN_OCTETS <= sz && 4 + signed_len < sz &&
@@ -151,7 +145,7 @@ static try_signature_fn try_RSA_signature_v2; /* type assertion */
 static err_t try_RSA_signature_v2(const struct crypt_mac *hash,
 				  const pb_stream *sig_pbs, struct pubkey *kr,
 				  struct state *st,
-				  enum notify_payload_hash_algorithms hash_algo)
+				  const struct hash_desc *hash_algo)
 {
 	const u_char *sig_val = sig_pbs->cur;
 	size_t sig_len = pbs_left(sig_pbs);
@@ -178,34 +172,20 @@ stf_status ikev2_verify_rsa_hash(struct state *st,
 				 enum original_role role,
 				 const struct crypt_mac *idhash,
 				 pb_stream *sig_pbs,
-				 enum notify_payload_hash_algorithms hash_algo)
+				 const struct hash_desc *hash_algo)
 {
 	statetime_t start = statetime_start(st);
 	enum original_role invertrole = (role == ORIGINAL_INITIATOR ? ORIGINAL_RESPONDER : ORIGINAL_INITIATOR);
 
 	/* XXX: table lookup? */
-	const struct hash_desc *hasher;
-	switch (hash_algo) {
-	case IKEv2_AUTH_HASH_SHA1:
-		hasher = &ike_alg_hash_sha1;
-		break;
-	case IKEv2_AUTH_HASH_SHA2_256:
-		hasher = &ike_alg_hash_sha2_256;
-		break;
-	case IKEv2_AUTH_HASH_SHA2_384:
-		hasher = &ike_alg_hash_sha2_384;
-		break;
-	case IKEv2_AUTH_HASH_SHA2_512:
-		hasher = &ike_alg_hash_sha2_512;
-		break;
-	default:
+	if (hash_algo->common.ikev2_alg_id < 0) {
 		libreswan_log("unknown or unsupported hash algorithm");
 		return STF_INTERNAL_ERROR;
 	}
 
 	struct crypt_mac hash = v2_calculate_sighash(st, invertrole, idhash,
 						     st->st_firstpacket_him,
-						     hasher);
+						     hash_algo);
 	stf_status retstat = check_signature_gen(st, &hash, sig_pbs, hash_algo,
 						 &pubkey_type_rsa, try_RSA_signature_v2);
 	statetime_stop(&start, "%s()", __func__);

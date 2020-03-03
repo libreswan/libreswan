@@ -38,11 +38,12 @@ struct pubkey_type;
 struct crypt_mac;
 struct packet_byte_stream;
 struct private_key_stuff;
+struct hash_desc;
 
 extern int sign_hash_RSA(const struct private_key_stuff *pks,
 			 const u_char *hash_val, size_t hash_len,
 			 u_char *sig_val, size_t sig_len,
-			 enum notify_payload_hash_algorithms hash_algo);
+			 const struct hash_desc *hash_algo);
 
 extern int sign_hash_ECDSA(const struct private_key_stuff *pks,
 			   const u_char *hash_val, size_t hash_len,
@@ -51,7 +52,7 @@ extern int sign_hash_ECDSA(const struct private_key_stuff *pks,
 extern err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 				      const struct crypt_mac *hash,
 				      const u_char *sig_val, size_t sig_len,
-				      enum notify_payload_hash_algorithms hash_algo);
+				      const struct hash_desc *hash_algo);
 
 
 const struct private_key_stuff *get_connection_private_key(const struct connection *c,
@@ -81,11 +82,11 @@ typedef err_t (try_signature_fn) (const struct crypt_mac *hash,
 				  const struct packet_byte_stream *sig_pbs,
 				  struct pubkey *kr,
 				  struct state *st,
-				  enum notify_payload_hash_algorithms hash_algo);
+				  const struct hash_desc *hash_algo);
 extern stf_status check_signature_gen(struct state *st,
 				      const struct crypt_mac *hash,
 				      const struct packet_byte_stream *sig_pbs,
-				      enum notify_payload_hash_algorithms hash_algo,
+				      const struct hash_desc *hash_algo,
 				      const struct pubkey_type *type,
 				      try_signature_fn *try_signature);
 

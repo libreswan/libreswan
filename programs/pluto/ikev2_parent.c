@@ -156,74 +156,56 @@ static bool negotiate_hash_algo_from_notification(struct payload_digest *p, stru
 	return true;
 }
 
-static const struct asn1_hash_blob *blob_for_hash_algo(enum notify_payload_hash_algorithms hash_algo,
-			enum keyword_authby authby)
+static shunk_t blob_for_hash_algo(const struct hash_desc *hash_algo,
+					 enum keyword_authby authby)
 {
 	switch(authby) {
 	case AUTH_RSASIG:
-		switch (hash_algo) {
-		case IKEv2_AUTH_HASH_SHA2_256:
-			return  &asn1_rsa_pss_sha2_256;
-		case IKEv2_AUTH_HASH_SHA2_384:
-			return &asn1_rsa_pss_sha2_384;
-		case IKEv2_AUTH_HASH_SHA2_512:
-			return &asn1_rsa_pss_sha2_512;
-		default:
-			return NULL;
-		}
-		break;
+		return hash_algo->hash_asn1_blob_rsa;
 	case AUTH_ECDSA:
-		switch (hash_algo) {
-		case IKEv2_AUTH_HASH_SHA2_256:
-			return  &asn1_ecdsa_sha2_256;
-		case IKEv2_AUTH_HASH_SHA2_384:
-			return &asn1_ecdsa_sha2_384;
-		case IKEv2_AUTH_HASH_SHA2_512:
-			return &asn1_ecdsa_sha2_512;
-		default:
-			return NULL;
-		}
-		break;
+		return hash_algo->hash_asn1_blob_ecdsa;
 	default:
 		libreswan_log("Unknown or unsupported authby method for DigSig");
-		return NULL;
+		return null_shunk;
 	}
 }
 
-static bool ikev2_send_asn1_hash_blob(enum notify_payload_hash_algorithms hash_algo,
-		pb_stream *a_pbs, enum keyword_authby authby)
+static bool ikev2_send_asn1_hash_blob(const struct hash_desc *hash_algo,
+				      pb_stream *a_pbs, enum keyword_authby authby)
 {
-	const struct asn1_hash_blob *b = blob_for_hash_algo(hash_algo, authby);
-
-	passert(b != NULL);
-
-	if (!out_raw(b->blob, b->blob_sz, a_pbs,
-	    "OID of ASN.1 Algorithm Identifier")) {
-		loglog(RC_LOG_SERIOUS, "DigSig: failed to emit OID of ASN.1 Algorithm Identifier");
-		return FALSE;
+	shunk_t b = blob_for_hash_algo(hash_algo, authby);
+	if (!pexpect(b.len > 0)) {
+		/* already logged */
+		return false;
 	}
 
-	return TRUE;
+	if (!pbs_out_hunk(b, a_pbs,
+			  "OID of ASN.1 Algorithm Identifier")) {
+		loglog(RC_LOG_SERIOUS, "DigSig: failed to emit OID of ASN.1 Algorithm Identifier");
+		return false;
+	}
+
+	return true;
 }
 
 /* check for ASN.1 blob; if found, consume it */
-static bool ikev2_try_asn1_hash_blob(enum notify_payload_hash_algorithms hash_algo, pb_stream *a_pbs,
-	enum keyword_authby authby)
+static bool ikev2_try_asn1_hash_blob(const struct hash_desc *hash_algo,
+				     pb_stream *a_pbs,
+				     enum keyword_authby authby)
 {
-	const struct asn1_hash_blob *b = blob_for_hash_algo(hash_algo, authby);
+	shunk_t b = blob_for_hash_algo(hash_algo, authby);
 
 	uint8_t in_blob[ASN1_LEN_ALGO_IDENTIFIER +
 		PMAX(ASN1_SHA1_ECDSA_SIZE,
 			PMAX(ASN1_SHA2_RSA_PSS_SIZE, ASN1_SHA2_ECDSA_SIZE))];
-	DBGF(DBG_CONTROLMORE, "looking for ASN.1 blob for method %s for hash_algo %s",
-		enum_name(&ikev2_asym_auth_name, authby),
-		enum_short_name(&notify_hash_algo_names, hash_algo));
+	dbg("looking for ASN.1 blob for method %s for hash_algo %s",
+	    enum_name(&ikev2_asym_auth_name, authby), hash_algo->common.fqn);
 	return
-		pexpect(b != NULL) &&	/* we know this hash */
-		pbs_left(a_pbs) >= b->blob_sz && /* the stream has enough octets */
-		memeq(a_pbs->cur, b->blob, b->blob_sz) && /* they are the right octets */
-		pexpect(b->blob_sz <= sizeof(in_blob)) && /* enough space in in_blob[] */
-		pexpect(in_raw(in_blob, b->blob_sz, a_pbs, "ASN.1 blob for hash algo")); /* can eat octets */
+		pexpect(b.ptr != NULL) &&	/* we know this hash */
+		pbs_left(a_pbs) >= b.len && /* the stream has enough octets */
+		memeq(a_pbs->cur, b.ptr, b.len) && /* they are the right octets */
+		pexpect(b.len <= sizeof(in_blob)) && /* enough space in in_blob[] */
+		pexpect(in_raw(in_blob, b.len, a_pbs, "ASN.1 blob for hash algo")); /* can eat octets */
 }
 
 void ikev2_ike_sa_established(struct ike_sa *ike,
@@ -335,7 +317,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 				role,
 				idhash_in,
 				pbs,
-				IKEv2_AUTH_HASH_SHA1);
+				&ike_alg_hash_sha1);
 
 		if (authstat != STF_OK) {
 			libreswan_log("RSA authentication of %s failed", context);
@@ -395,13 +377,13 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 
 		struct hash_alts {
 			lset_t neg;
-			enum notify_payload_hash_algorithms algo;
+			const struct hash_desc *algo;
 		};
 
 		static const struct hash_alts ha[] = {
-			{ NEGOTIATE_AUTH_HASH_SHA2_512, IKEv2_AUTH_HASH_SHA2_512 },
-			{ NEGOTIATE_AUTH_HASH_SHA2_384, IKEv2_AUTH_HASH_SHA2_384 },
-			{ NEGOTIATE_AUTH_HASH_SHA2_256, IKEv2_AUTH_HASH_SHA2_256 },
+			{ NEGOTIATE_AUTH_HASH_SHA2_512, &ike_alg_hash_sha2_512 },
+			{ NEGOTIATE_AUTH_HASH_SHA2_384, &ike_alg_hash_sha2_384 },
+			{ NEGOTIATE_AUTH_HASH_SHA2_256, &ike_alg_hash_sha2_256 },
 			// { NEGOTIATE_AUTH_HASH_IDENTITY, IKEv2_AUTH_HASH_IDENTITY },
 		};
 
@@ -426,7 +408,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 				break;
 
 			dbg("st_hash_negotiated policy does not match hash algorithm %s",
-			    enum_short_name(&notify_hash_algo_names, hap->algo));
+			    hap->algo->common.fqn);
 		}
 
 		/* try to match the hash */
@@ -1884,7 +1866,7 @@ static stf_status emit_v2AUTH(struct ike_sa *ike,
 	case IKEv2_AUTH_RSA:
 		if (!ikev2_calculate_rsa_hash(&ike->sa, role, idhash_out, &a_pbs,
 					      NULL /* we don't keep no_ppk_auth */,
-					      IKEv2_AUTH_HASH_SHA1))
+					      &ike_alg_hash_sha1))
 		{
 			loglog(RC_LOG_SERIOUS, "Failed to find our RSA key");
 			return STF_FATAL;
@@ -1909,7 +1891,7 @@ static stf_status emit_v2AUTH(struct ike_sa *ike,
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 
-		if (!ikev2_send_asn1_hash_blob(hash_algo->common.ikev2_alg_id, &a_pbs, authby))
+		if (!ikev2_send_asn1_hash_blob(hash_algo, &a_pbs, authby))
 			return STF_INTERNAL_ERROR;
 
 		switch (authby) {
@@ -1917,7 +1899,7 @@ static stf_status emit_v2AUTH(struct ike_sa *ike,
 		{
 			if (!ikev2_calculate_ecdsa_hash(&ike->sa, role, idhash_out, &a_pbs,
 							NULL /* don't grab value */,
-							hash_algo->common.ikev2_alg_id))
+							hash_algo))
 			{
 				loglog(RC_LOG_SERIOUS, "DigSig: failed to find our ECDSA key");
 				return STF_FATAL;
@@ -1928,7 +1910,7 @@ static stf_status emit_v2AUTH(struct ike_sa *ike,
 		{
 			if (!ikev2_calculate_rsa_hash(&ike->sa, role, idhash_out, &a_pbs,
 						      NULL /* we don't keep no_ppk_auth */,
-						      hash_algo->common.ikev2_alg_id))
+						      hash_algo))
 			{
 				loglog(RC_LOG_SERIOUS, "DigSig: failed to find our RSA key");
 				return STF_FATAL;

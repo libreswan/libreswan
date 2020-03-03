@@ -350,7 +350,7 @@ size_t v1_sign_hash_RSA(const struct connection *c,
 static err_t try_RSA_signature_v1(const struct crypt_mac *hash,
 				const pb_stream *sig_pbs, struct pubkey *kr,
 				struct state *st,
-				enum notify_payload_hash_algorithms hash_algo UNUSED /* for ikev2 only */)
+				const struct hash_desc *hash_algo_unused UNUSED /* for ikev2 only */)
 {
 	const u_char *sig_val = sig_pbs->cur;
 	size_t sig_len = pbs_left(sig_pbs);

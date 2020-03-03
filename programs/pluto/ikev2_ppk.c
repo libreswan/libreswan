@@ -35,6 +35,7 @@
 #include "ikev2_ppk.h"
 #include "ike_alg_hash.h"
 #include "crypt_mac.h"
+#include "ikev2_auth.h"
 
 /*
  * used by initiator, to properly construct struct
@@ -118,33 +119,33 @@ stf_status ikev2_calc_no_ppk_auth(struct state *st,
 	switch (authby) {
 	case AUTH_RSASIG:
 	{
-		const struct asn1_hash_blob *h = NULL;
-
-		if (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_512) {
-			h = &asn1_rsa_pss_sha2_512;
-		} else if (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_384) {
-			h = &asn1_rsa_pss_sha2_384;
-		} else if (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_256) {
-			h = &asn1_rsa_pss_sha2_256;
-		} else if (c->sighash_policy == LEMPTY) {
-			/* RSA with SHA1 without Digsig: no oid blob appended */
-			if (!ikev2_calculate_rsa_hash(st, st->st_original_role,
-						      id_hash, NULL, no_ppk_auth,
-						      IKEv2_AUTH_HASH_SHA1))
-			{
+		const struct hash_desc *hash_algo = v2_auth_negotiated_signature_hash(ike_sa(st));
+		if (hash_algo == NULL) {
+			if (c->sighash_policy == LEMPTY) {
+				/* RSA with SHA1 without Digsig: no oid blob appended */
+				if (!ikev2_calculate_rsa_hash(st, st->st_original_role,
+							      id_hash, NULL, no_ppk_auth,
+							      &ike_alg_hash_sha1)) {
+					return STF_FAIL;
+				}
+				return STF_OK;
+			} else {
+				loglog(RC_LOG_SERIOUS, "No compatible hash algo");
 				return STF_FAIL;
 			}
-			return STF_OK;
-		} else {
-			loglog(RC_LOG_SERIOUS, "No compatible hash algo");
+		}
+
+		shunk_t h = hash_algo->hash_asn1_blob_rsa;
+		if (h.len == 0) {
+			LOG_PEXPECT("negotiated hash algorithm %s has no RSA ASN1 blob",
+				    hash_algo->common.fqn);
 			return STF_FAIL;
 		}
 
-		chunk_t hashval;
-
+		chunk_t hashval = NULL_HUNK;
 		if (!ikev2_calculate_rsa_hash(st, st->st_original_role,
 					      id_hash, NULL, &hashval,
-					      h->hash_algo)) {
+					      hash_algo)) {
 			return STF_FAIL;
 		}
 
@@ -154,16 +155,15 @@ stf_status ikev2_calc_no_ppk_auth(struct state *st,
 			 * - ASN.1 algo blob
 			 * - hashval
 			 */
-			int len = h->blob_sz + hashval.len;
-			u_char *blobs = alloc_bytes(len,
+			int len = h.len + hashval.len;
+			uint8_t *blobs = alloc_bytes(len,
 				"bytes for blobs for AUTH_DIGSIG NO_PPK_AUTH");
 
-			memcpy(&blobs[0], h->blob, h->blob_sz);
-			memcpy(&blobs[h->blob_sz], hashval.ptr, hashval.len);
-			freeanychunk(hashval);
-
+			memcpy(&blobs[0], h.ptr, h.len);
+			memcpy(&blobs[h.len], hashval.ptr, hashval.len);
 			setchunk(*no_ppk_auth, blobs, len);
 		}
+		freeanychunk(hashval);
 		return STF_OK;
 	}
 	case AUTH_PSK:

@@ -61,7 +61,7 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 				const struct crypt_mac *idhash,
 				pb_stream *a_pbs,
 				chunk_t *no_ppk_auth /* optional output */,
-				enum notify_payload_hash_algorithms hash_algo)
+				const struct hash_desc *hash_algo)
 {
 	const struct pubkey_type *type = &pubkey_type_ecdsa;
 	const struct connection *c = st->st_connection;
@@ -73,17 +73,11 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 	}
 
 	DBGF(DBG_CRYPT, "ikev2_calculate_ecdsa_hash get_ECDSA_private_key");
-	/* XXX: use struct hash_desc and a lookup? */
-	const struct hash_desc *hasher = v2_auth_hash_desc(hash_algo);
-	if (hasher == NULL) {
-		libreswan_log("Unknown or unsupported hash algorithm %d for ECDSA operation", hash_algo);
-		return false;
-	}
 
 	/* hash the packet et.al. */
 	struct crypt_mac hash = v2_calculate_sighash(st, role, idhash,
 						     st->st_firstpacket_me,
-						     hasher);
+						     hash_algo);
 	if (DBGP(DBG_CRYPT)) {
 		DBG_dump_hunk("ECDSA hash", hash);
 	}
@@ -148,7 +142,7 @@ static try_signature_fn try_ECDSA_signature_v2; /* type assert */
 static err_t try_ECDSA_signature_v2(const struct crypt_mac *hash,
 				    const pb_stream *sig_pbs, struct pubkey *kr,
 				    struct state *st,
-				    enum notify_payload_hash_algorithms hash_algo UNUSED)
+				    const struct hash_desc *hash_algo_unused UNUSED)
 {
 	PRArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 	if (arena == NULL) {
@@ -270,30 +264,16 @@ stf_status ikev2_verify_ecdsa_hash(struct state *st,
 				   enum original_role role,
 				   const struct crypt_mac *idhash,
 				   pb_stream *sig_pbs,
-				   enum notify_payload_hash_algorithms hash_algo)
+				   const struct hash_desc *hash_algo)
 {
-	const struct hash_desc *hasher;
-	switch (hash_algo) {
-	/* We don't support ecdsa-sha1 */
-#ifdef USE_SHA2
-	case IKEv2_AUTH_HASH_SHA2_256:
-		hasher = &ike_alg_hash_sha2_256;
-		break;
-	case IKEv2_AUTH_HASH_SHA2_384:
-		hasher = &ike_alg_hash_sha2_384;
-		break;
-	case IKEv2_AUTH_HASH_SHA2_512:
-		hasher = &ike_alg_hash_sha2_512;
-		break;
-#endif
-	default:
+	if (hash_algo->common.ikev2_alg_id < 0) {
 		return STF_FATAL;
 	}
 
 	enum original_role invertrole = (role == ORIGINAL_INITIATOR ? ORIGINAL_RESPONDER : ORIGINAL_INITIATOR);
 	struct crypt_mac calc_hash = v2_calculate_sighash(st, invertrole, idhash,
 							  st->st_firstpacket_him,
-							  hasher);
+							  hash_algo);
 	return check_signature_gen(st, &calc_hash, sig_pbs, hash_algo,
 				   &pubkey_type_ecdsa, try_ECDSA_signature_v2);
 }

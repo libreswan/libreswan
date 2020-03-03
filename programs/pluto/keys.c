@@ -186,7 +186,7 @@ enum PrivateKeyKind nss_cert_key_kind(CERTCertificate *cert)
 int sign_hash_RSA(const struct private_key_stuff *pks,
 		  const u_char *hash_val, size_t hash_len,
 		  u_char *sig_val, size_t sig_len,
-		  enum notify_payload_hash_algorithms hash_algo)
+		  const struct hash_desc *hash_algo)
 {
 	dbg("RSA_sign_hash: Started using NSS");
 	if (!pexpect(pks->private_key != NULL)) {
@@ -220,8 +220,8 @@ int sign_hash_RSA(const struct private_key_stuff *pks,
 		.data = sig_val,
 	};
 
-	if (hash_algo == 0 /* ikev1*/ ||
-	    hash_algo == IKEv2_AUTH_HASH_SHA1 /* old style rsa with SHA1*/) {
+	if (hash_algo == NULL /* ikev1*/ ||
+	    hash_algo == &ike_alg_hash_sha1 /* old style rsa with SHA1*/) {
 		SECStatus s = PK11_Sign(pks->private_key, &signature, &data);
 		if (s != SECSuccess) {
 			loglog(RC_LOG_SERIOUS,
@@ -232,7 +232,7 @@ int sign_hash_RSA(const struct private_key_stuff *pks,
 	} else { /* Digital signature scheme with rsa-pss*/
 		CK_RSA_PKCS_PSS_PARAMS mech;
 
-		switch (hash_algo) {
+		switch (hash_algo->common.ikev2_alg_id) {
 		case IKEv2_AUTH_HASH_SHA2_256:
 			mech = rsa_pss_sha2_256;
 			break;
@@ -243,7 +243,7 @@ int sign_hash_RSA(const struct private_key_stuff *pks,
 			mech = rsa_pss_sha2_512;
 			break;
 		default:
-			bad_case(hash_algo);
+			bad_case(hash_algo->common.ikev2_alg_id);
 		}
 		SECItem mechItem = { siBuffer, (unsigned char *)&mech, sizeof(mech) };
 		SECStatus s = PK11_SignWithMechanism(pks->private_key, CKM_RSA_PKCS_PSS,
@@ -306,7 +306,7 @@ int sign_hash_ECDSA(const struct private_key_stuff *pks,
 err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 			       const struct crypt_mac *expected_hash,
 			       const uint8_t *sig_val, size_t sig_len,
-			       enum notify_payload_hash_algorithms hash_algo)
+			       const struct hash_desc *hash_algo)
 {
 	SECStatus retVal;
 	if (DBGP(DBG_BASE)) {
@@ -380,8 +380,8 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 		.len  = (unsigned int)sig_len,
 	};
 
-	if (hash_algo == 0 /* ikev1*/ ||
-	    hash_algo == IKEv2_AUTH_HASH_SHA1 /* old style rsa with SHA1*/) {
+	if (hash_algo == NULL /* ikev1*/ ||
+	    hash_algo == &ike_alg_hash_sha1 /* old style rsa with SHA1*/) {
 		SECItem decrypted_signature = {
 			.type = siBuffer,
 		};
@@ -417,7 +417,7 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 	} else {
 		/* Digital signature scheme with RSA-PSS */
 		CK_RSA_PKCS_PSS_PARAMS mech;
-		switch (hash_algo) {
+		switch (hash_algo->common.ikev2_alg_id) {
 		case IKEv2_AUTH_HASH_SHA2_256:
 			mech = rsa_pss_sha2_256;
 			break;
@@ -428,7 +428,7 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 			mech = rsa_pss_sha2_512;
 			break;
 		default:
-			bad_case(hash_algo);
+			bad_case(hash_algo->common.ikev2_alg_id);
 		}
 		const SECItem hash_mech_item = {
 			.type = siBuffer,
@@ -475,13 +475,8 @@ struct tac_state {
 	struct state *st;
 	const struct crypt_mac *hash;
 	const pb_stream *sig_pbs;
-	enum notify_payload_hash_algorithms hash_algo;
-
-	err_t (*try_signature)(const struct crypt_mac *hash,
-			       const pb_stream *sig_pbs,
-			       struct pubkey *kr,
-			       struct state *st,
-			       enum notify_payload_hash_algorithms hash_algo);
+	const struct hash_desc *hash_algo;
+	try_signature_fn *try_signature;
 
 	/* state carried between calls */
 	err_t best_ugh; /* most successful failure */
@@ -587,7 +582,7 @@ static bool try_all_keys(const char *pubkey_description,
 stf_status check_signature_gen(struct state *st,
 			       const struct crypt_mac *hash,
 			       const pb_stream *sig_pbs,
-			       enum notify_payload_hash_algorithms hash_algo,
+			       const struct hash_desc *hash_algo,
 			       const struct pubkey_type *type,
 			       try_signature_fn *try_signature)
 {
@@ -622,8 +617,7 @@ stf_status check_signature_gen(struct state *st,
 			 c, now, &s)) {
 		loglog(RC_LOG_SERIOUS, "Authenticated using %s with %s",
 			type->name,
-			(c->ike_version == IKEv1) ? "SHA-1" :
-				enum_short_name(&notify_hash_algo_names, hash_algo));
+			(c->ike_version == IKEv1) ? "SHA-1" : hash_algo->common.fqn);
 		return STF_OK;
 	}
 
