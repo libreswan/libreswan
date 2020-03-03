@@ -623,7 +623,7 @@ stf_status check_signature_gen(struct state *st,
 		loglog(RC_LOG_SERIOUS, "Authenticated using %s with %s",
 			type->name,
 			(c->ike_version == IKEv1) ? "SHA-1" :
-				enum_name(&notify_hash_algo_names, hash_algo));
+				enum_short_name(&notify_hash_algo_names, hash_algo));
 		return STF_OK;
 	}
 
