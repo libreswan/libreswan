@@ -31,3 +31,4 @@ s/established with SPIs .* and /established with SPIs SPISPI_i SPISPI_o and /
 s/received AUTH_LIFETIME of [0-9]*s, scheduling reauthentication in [0-9]*s/received AUTH_LIFETIME of XXXXs, scheduling reauthentication in XXXXs/
 s/server requested EAP_MD5 authentication.*$/server requested EAP_MD5 authentication XXX/g
 s/server requested EAP_TLS authentication.*$/server requested EAP_TLS authentication (id 0xXX)/g
+s/Failed to connect to nic.testing.libreswan.org port 80:.*$/Failed to connect to nic.testing.libreswan.org port 80: XXX/g
