@@ -54,6 +54,26 @@ enum fit {
 	END_WIDER_THAN_TS,
 };
 
+
+static bool ts_in_tslist(struct traffic_selectors *haystack,
+			struct traffic_selector *needle)
+{
+	for (unsigned int i = 0; i < haystack->nr; i++) {
+		struct traffic_selector hay = haystack->ts[i];
+
+		if (needle->ts_type == hay.ts_type &&
+			needle->ipprotoid == hay.ipprotoid &&
+			needle->startport == hay.startport &&
+			needle->endport == hay.endport &&
+			sameaddr(&needle->net.start, &hay.net.start) &&
+			sameaddr(&needle->net.end, &hay.net.end))
+                        {
+				return TRUE;
+                        }
+	}
+	return FALSE;
+}
+
 static const char *fit_string(enum fit fit)
 {
 	switch (fit) {
@@ -1150,4 +1170,41 @@ bool v2_process_ts_response(struct child_sa *child,
 			       &c->spd.that.client));
 
 	return true;
+}
+
+/*
+ * RFC 7296 https://tools.ietf.org/html/rfc7296#section-2.8
+ * "when rekeying, the new Child SA SHOULD NOT have different Traffic
+ *  Selectors and algorithms than the old one."
+ *
+ * We already matched the right connection by the SPI of v2N_REKEY_SA
+ */
+stf_status child_rekey_ts_verify(struct msg_digest *md)
+{
+	struct state *st = md->st;
+	passert(st->st_state->kind == STATE_V2_REKEY_CHILD_R || st->st_state->kind == STATE_V2_REKEY_CHILD_I);
+
+	struct traffic_selectors their_tsis = { .nr = 0, };
+	struct traffic_selectors their_tsrs = { .nr = 0, };
+	enum message_role md_role = v2_msg_role(md);
+
+	/* should really return stf_status, not bool */
+	if (!v2_parse_tss(md, &their_tsis, &their_tsrs)) {
+		loglog(RC_LOG_SERIOUS, "Received malformed TSi/TSr payload(s)");
+		return STF_FAIL + v2N_INVALID_SYNTAX;
+	}
+
+	struct traffic_selector ts_this = ikev2_end_to_ts(&st->st_connection->spd.this);
+	struct traffic_selector ts_that = ikev2_end_to_ts(&st->st_connection->spd.that);
+
+	if (!ts_in_tslist(&their_tsis, (md_role == MESSAGE_REQUEST) ? &ts_that : &ts_this)) {
+		loglog(RC_LOG_SERIOUS, "Received TSi payload does not contain existing IPsec SA traffic Selectors");
+		return STF_FAIL + v2N_TS_UNACCEPTABLE;
+	}
+
+	if (!ts_in_tslist(&their_tsrs, (md_role == MESSAGE_REQUEST) ? &ts_this : &ts_that)) {
+		loglog(RC_LOG_SERIOUS, "Received TSr payload(s) does not contain existing IPsec SA Traffic Selectors");
+		return STF_FAIL + v2N_TS_UNACCEPTABLE;
+	}
+	return STF_OK;
 }
