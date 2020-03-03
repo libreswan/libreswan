@@ -364,7 +364,7 @@ void send_v2N_spi_response_from_state(struct ike_sa *ike,
 
 	pb_stream n_pbs;
 	if (!emit_v2Nsa_pl(ntype, protoid, spi, &sk.pbs, &n_pbs) ||
-	    (ndata != NULL && !out_chunk(*ndata, &n_pbs, "Notify data"))) {
+	    (ndata != NULL && !pbs_out_hunk(*ndata, &n_pbs, "Notify data"))) {
 		return;
 	}
 	close_output_pbs(&n_pbs);

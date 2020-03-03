@@ -96,7 +96,7 @@ static bool v2_out_attr_variable(enum ikev2_trans_attr_type type,
 	if (!pexpect(out_struct(&attr, &ikev2_trans_attr_desc, pbs, NULL))) {
 		return false;
 	}
-	if (!pexpect(out_chunk(chunk, pbs, "attribute value"))) {
+	if (!pexpect(pbs_out_hunk(chunk, pbs, "attribute value"))) {
 		return false;
 	}
 	return true;
@@ -1422,7 +1422,7 @@ static bool emit_proposal(pb_stream *sa_pbs,
 	if (local_spi != NULL) {
 		pexpect(local_spi->len > 0);
 		pexpect(local_spi->len == proto_spi_size(proposal->protoid));
-		if (!out_chunk(*local_spi, &proposal_pbs, "our spi"))
+		if (!pbs_out_hunk(*local_spi, &proposal_pbs, "our spi"))
 			return FALSE;
 	}
 

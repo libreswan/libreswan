@@ -262,9 +262,14 @@ extern bool ikev1_out_generic_raw(uint8_t np, struct_desc *sd,
 	ikev1_out_generic_raw((np), (sd), (outs), (ch).ptr, (ch).len, (name))
 extern bool out_zero(size_t len, pb_stream *outs, const char *name) MUST_USE_RESULT;
 extern bool out_repeated_byte(uint8_t, size_t len, pb_stream *outs, const char *name) MUST_USE_RESULT;
+
 extern bool out_raw(const void *bytes, size_t len, pb_stream *outs,
 		    const char *name) MUST_USE_RESULT;
-#define out_chunk(ch, outs, name) out_raw((ch).ptr, (ch).len, (outs), (name))
+#define pbs_out_hunk(HUNK, OUTS, NAME)					\
+	({								\
+		typeof(HUNK) hunk_ = HUNK; /* evaluate once */		\
+		out_raw(hunk_.ptr, hunk_.len, (OUTS), (NAME));		\
+	})
 
 extern void close_output_pbs(pb_stream *pbs);
 

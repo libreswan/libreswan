@@ -55,7 +55,7 @@ bool emit_unified_ppk_id(struct ppk_id_payload *payl, pb_stream *pbs)
 {
 	u_char type = PPK_ID_FIXED;
 	return out_raw(&type, sizeof(type), pbs, "PPK_ID_FIXED") &&
-		out_chunk(payl->ppk_id, pbs, "PPK_ID");
+		pbs_out_hunk(payl->ppk_id, pbs, "PPK_ID");
 }
 
 /*

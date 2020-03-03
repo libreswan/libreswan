@@ -194,7 +194,7 @@ bool ikev2_emit_psk_auth(enum keyword_authby authby,
 	DBG(DBG_CRYPT,
 	    DBG_dump_hunk("PSK auth octets", signed_octets));
 
-	bool ok = out_chunk(signed_octets, a_pbs, "PSK auth");
+	bool ok = pbs_out_hunk(signed_octets, a_pbs, "PSK auth");
 	return ok;
 }
 

@@ -884,8 +884,8 @@ static stf_status v2_record_outbound_fragment(struct ike_sa *ike,
 
 	/* output the fragment */
 
-	if (!out_chunk(*fragment, &skf.pbs,
-		       "cleartext fragment"))
+	if (!pbs_out_hunk(*fragment, &skf.pbs,
+			  "cleartext fragment"))
 		return STF_INTERNAL_ERROR;
 
 	if (!close_v2SK_payload(&skf)) {

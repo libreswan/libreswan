@@ -418,7 +418,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->spd.this, &id_b);
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&rbody, &r_id_pbs) ||
-		    !out_chunk(id_b, &r_id_pbs, "my identity")) {
+		    !pbs_out_hunk(id_b, &r_id_pbs, "my identity")) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
@@ -438,7 +438,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 				&isakmp_ipsec_certificate_desc,
 				&rbody,
 				&cert_pbs) ||
-		    !out_chunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
+		    !pbs_out_hunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
 								&cert_pbs, "CERT")) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
@@ -724,7 +724,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 				&isakmp_ipsec_certificate_desc,
 				&rbody,
 				&cert_pbs) ||
-		    !out_chunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
+		    !pbs_out_hunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
 								&cert_pbs, "CERT")) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
@@ -760,7 +760,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 		pb_stream r_id_pbs;
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&id_pbs, &r_id_pbs) ||
-		    !out_chunk(id_b, &r_id_pbs, "my identity")) {
+		    !pbs_out_hunk(id_b, &r_id_pbs, "my identity")) {
 			return STF_INTERNAL_ERROR;
 		}
 		close_output_pbs(&r_id_pbs);
@@ -883,7 +883,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&pbs, &id_pbs) ||
-		    !out_chunk(id_b, &id_pbs, "my identity"))
+		    !pbs_out_hunk(id_b, &id_pbs, "my identity"))
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&id_pbs);
@@ -1153,7 +1153,7 @@ static stf_status aggr_outI1_tail(struct state *st,
 		pb_stream id_pbs;
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&rbody, &id_pbs) ||
-		    !out_chunk(id_b, &id_pbs, "my identity"))
+		    !pbs_out_hunk(id_b, &id_pbs, "my identity"))
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&id_pbs);

@@ -131,7 +131,7 @@ bool emit_redirect_notification_decoded_dest(
 		emit_v2Npl(ntype, pbs, &gwid_pbs) &&
 		out_struct(&gwi, &ikev2_redirect_desc, &gwid_pbs, NULL) &&
 		out_raw(id.ptr, id.len , &gwid_pbs, "redirect ID") &&
-		(nonce == NULL || out_chunk(*nonce, &gwid_pbs, "redirect ID len")) &&
+		(nonce == NULL || pbs_out_hunk(*nonce, &gwid_pbs, "redirect ID len")) &&
 		(close_output_pbs(&gwid_pbs), true);
 }
 
