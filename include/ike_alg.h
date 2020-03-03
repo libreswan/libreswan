@@ -477,6 +477,14 @@ struct hash_desc {
 		CK_MECHANISM_TYPE derivation_mechanism;
 	} nss;
 
+	/*
+	 * ASN.1 blobs specific to a particular hash algorithm are
+	 * sent in the Auth payload as part of Digital signature
+	 * authentication as per RFC7427
+	 */
+	shunk_t hash_asn1_blob_rsa;
+	shunk_t hash_asn1_blob_ecdsa;
+
 	const struct hash_ops *hash_ops;
 };
 

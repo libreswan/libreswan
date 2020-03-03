@@ -33,6 +33,8 @@
 #include "ike_alg_prf_ikev2_ops.h"
 #include "sadb.h"
 
+static const uint8_t asn1_blob_ecdsa_sha1[] = { LEN_ECDSA_SHA1_BLOB, ECDSA_SHA1_BLOB };
+
 const struct hash_desc ike_alg_hash_sha1 = {
 	.common = {
 		.name = "sha",
@@ -53,6 +55,8 @@ const struct hash_desc ike_alg_hash_sha1 = {
 	.hash_digest_size = SHA1_DIGEST_SIZE,
 	.hash_block_size = 64,	/* B from RFC 2104 */
 	.hash_ops = &ike_alg_hash_nss_ops,
+
+	.hash_asn1_blob_ecdsa = THING_AS_HUNK(asn1_blob_ecdsa_sha1),
 };
 
 const struct prf_desc ike_alg_prf_sha1 = {
@@ -110,9 +114,6 @@ const struct integ_desc ike_alg_integ_sha1 = {
 	.integ_ike_audit_name = "sha1",
 	.integ_kernel_audit_name = "HMAC_SHA1",
 };
-
-static const uint8_t asn1_blob_ecdsa_sha1[ASN1_LEN_ALGO_IDENTIFIER + ASN1_SHA1_ECDSA_SIZE] =
-	{ LEN_ECDSA_SHA1_BLOB, ECDSA_SHA1_BLOB };
 
 const struct asn1_hash_blob asn1_ecdsa_sha1 = {
 	.hash_algo = IKEv2_AUTH_HASH_SHA1,

@@ -57,6 +57,9 @@ chunk_t chunk(void *ptr, size_t len);
  */
 #define THING_AS_CHUNK(THING) chunk(&(THING), sizeof(THING))
 
+#define THING_AS_HUNK(THING) { .ptr = &(THING), .len = sizeof(THING), }
+#define NULL_HUNK { .ptr = NULL, .len = 0, }
+
 chunk_t alloc_chunk(size_t count, const char *name);
 
 /* result is always a WRITEABLE chunk; NULL->NULL */
