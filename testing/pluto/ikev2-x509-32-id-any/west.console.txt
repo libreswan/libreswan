@@ -40,7 +40,7 @@ west #
 003 "ikev2-westnet-eastnet-x509-cr" #2: certificate contains no subjectAltName extension to match ID_IPV4_ADDR '192.1.2.23'
 002 "ikev2-westnet-eastnet-x509-cr" #2: Peer CERT payload SubjectAltName does not match peer ID for this connection
 002 "ikev2-westnet-eastnet-x509-cr" #2: X509: connection allows unmatched IKE ID and certificate SAN
-003 "ikev2-westnet-eastnet-x509-cr" #2: Authenticated using RSA with IKEv2_AUTH_HASH_SHA2_512
+003 "ikev2-westnet-eastnet-x509-cr" #2: Authenticated using RSA with SHA2_512
 002 "ikev2-westnet-eastnet-x509-cr" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ikev2-westnet-eastnet-x509-cr" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
