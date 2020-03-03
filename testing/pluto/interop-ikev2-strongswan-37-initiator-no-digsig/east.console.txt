@@ -59,7 +59,7 @@ west                                                         P,,
 west-ec                                                      P,,  
 east #
  if [ -f /var/run/pluto/pluto.pid ]; then grep "Authenticated using RSA" /tmp/pluto.log ; fi
-"westnet-eastnet-ikev2" #2: Authenticated using RSA with IKEv2_AUTH_HASH_SHA1
+"westnet-eastnet-ikev2" #2: Authenticated using RSA with SHA1
 east #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 east #

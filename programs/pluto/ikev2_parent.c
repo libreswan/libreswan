@@ -217,7 +217,7 @@ static bool ikev2_try_asn1_hash_blob(enum notify_payload_hash_algorithms hash_al
 			PMAX(ASN1_SHA2_RSA_PSS_SIZE, ASN1_SHA2_ECDSA_SIZE))];
 	DBGF(DBG_CONTROLMORE, "looking for ASN.1 blob for method %s for hash_algo %s",
 		enum_name(&ikev2_asym_auth_name, authby),
-		enum_name(&notify_hash_algo_names, hash_algo));
+		enum_short_name(&notify_hash_algo_names, hash_algo));
 	return
 		pexpect(b != NULL) &&	/* we know this hash */
 		pbs_left(a_pbs) >= b->blob_sz && /* the stream has enough octets */
@@ -404,7 +404,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 			{ NEGOTIATE_AUTH_HASH_SHA2_256, IKEv2_AUTH_HASH_SHA2_256 },
 			// { NEGOTIATE_AUTH_HASH_IDENTITY, IKEv2_AUTH_HASH_IDENTITY },
 		};
-			
+
 		const struct hash_alts *hap;
 
 		for (hap = ha; ; hap++) {
@@ -425,7 +425,8 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 			if ((hn & hap->neg) && ikev2_try_asn1_hash_blob(hap->algo, pbs, that_authby))
 				break;
 
-		dbg("st_hash_negotiated policy does not match hash algorithm %s", enum_name(&notify_hash_algo_names, hap->algo));
+			dbg("st_hash_negotiated policy does not match hash algorithm %s",
+			    enum_short_name(&notify_hash_algo_names, hap->algo));
 		}
 
 		/* try to match the hash */

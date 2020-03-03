@@ -174,7 +174,7 @@ road #
 | hash algorithm identifier IKEv2_AUTH_HASH_SHA2_512: 00 04
 |    auth method: IKEv2_AUTH_NULL (0xd)
 |    auth method: IKEv2_AUTH_DIGSIG (0xe)
-"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: Authenticated using RSA with IKEv2_AUTH_HASH_SHA2_512
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: Authenticated using RSA with SHA2_512
 road #
  ../bin/check-for-core.sh
 road #
