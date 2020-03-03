@@ -5,7 +5,7 @@ if test $# -lt 2 -o $# -gt 3; then
 
 Usage:
 
-    $0 <repodir> <summarydir>
+    $0 <repodir> <summarydir> [ <hash> ]
 
 Track <repodir>'s current branch and test each "interesting" commit.
 Publish results under <summarydir>.
@@ -41,6 +41,13 @@ kvm_setup=kvm-purge
 # idle).
 
 oldest_commit=$(cd ${repodir} && git show --no-patch --format=%H HEAD)
+
+# If a commit was specified explicitly, start with that.
+
+if test $# -gt 0 ; then
+    # could be a tag; convert after updating repo
+    first_test_commit=$1; shift
+fi
 
 json_status="${webdir}/json-status.sh --json ${summarydir}/status.json"
 status=${json_status}
@@ -111,11 +118,14 @@ while true ; do
 
     # Select the next commit to test
     #
-    # Will search [HEAD..oldest_commit] for something interesting and
+    # Search [HEAD..oldest_commit] for something interesting and
     # untested.
 
     ${status} "looking for work"
-    if ! commit=$(${webdir}/gime-work.sh ${summarydir} ${repodir} ${oldest_commit}) ; then \
+    if test "${first_test_commit}" != "" ; then
+	# convert the potential tag to a hash
+	commit=$(cd ${repodir} && git rev-parse ${first_test_commit})
+    elif ! commit=$(${webdir}/gime-work.sh ${summarydir} ${repodir} ${oldest_commit}) ; then \
 	# Seemlingly nothing to do; github gets updated up every 15
 	# minutes so sleep for less than that
 	seconds=$(expr 10 \* 60)
