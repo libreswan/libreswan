@@ -4443,6 +4443,9 @@ static void ikev2_child_ike_inR_continue(struct state *st,
 
 /*
  * initiator received a create Child SA Response (RFC 7296 1.3.1, 1.3.2)
+ *
+ * Note: "when rekeying, the new Child SA SHOULD NOT have different Traffic
+ *        Selectors and algorithms than the old one."
  */
 
 static dh_cb ikev2_child_inR_continue;
@@ -4956,6 +4959,18 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 		ret = ikev2_child_sa_respond(ike, child,
 					     request_md, &sk.pbs,
 					     ISAKMP_v2_CREATE_CHILD_SA);
+	}
+
+	/*
+	 * RFC 7296 https://tools.ietf.org/html/rfc7296#section-2.8
+	 * "when rekeying, the new Child SA SHOULD NOT have different Traffic
+	 *  Selectors and algorithms than the old one."
+	 */
+	if (st->st_state->kind == STATE_V2_REKEY_CHILD_R ||
+	    st->st_state->kind == STATE_V2_REKEY_CHILD_I) {
+		ret = child_rekey_ts_verify(request_md);
+		if (ret != STF_OK)
+			return ret;
 	}
 
 	/* note: pst: parent; md->st: child */

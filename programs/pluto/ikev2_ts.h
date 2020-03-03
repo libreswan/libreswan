@@ -49,4 +49,6 @@ stf_status v2_emit_ts_payloads(const struct child_sa *cst,
 			       pb_stream *outpbs,
 			       const struct connection *c);
 
+stf_status child_rekey_ts_verify(struct msg_digest *md);
+
 #endif
