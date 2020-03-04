@@ -10,5 +10,5 @@ ping -n -c 2 -I 192.1.3.209 192.1.2.23
 ipsec whack --trafficstatus
 grep "negotiated connection" /tmp/pluto.log
 # you should see both RSA and NULL
-grep IKEv2_AUTH_ /tmp/pluto.log
+grep -e IKEv2_AUTH_ -e ': Authenticated using ' /tmp/pluto.log
 echo done

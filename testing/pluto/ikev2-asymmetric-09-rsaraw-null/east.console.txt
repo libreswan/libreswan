@@ -30,7 +30,7 @@ east #
  echo "initdone"
 initdone
 east #
- grep IKEv2_AUTH_ OUTPUT/*pluto.log
+ grep -e IKEv2_AUTH_ -e ': Authenticated using ' OUTPUT/*pluto.log
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
 OUTPUT/east.pluto.log:"westnet-eastnet-ikev2" #1: Authenticated using RSA with SHA1
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
@@ -42,6 +42,7 @@ OUTPUT/west.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_
 OUTPUT/west.pluto.log:| hash algorithm identifier IKEv2_AUTH_HASH_SHA2_512: 00 04
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
+OUTPUT/west.pluto.log:"westnet-eastnet-ikev2" #2: Authenticated using authby=null
 east #
  ../../pluto/bin/ipsec-look.sh
 east NOW

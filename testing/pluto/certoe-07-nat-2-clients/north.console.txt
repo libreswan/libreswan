@@ -242,7 +242,7 @@ west-ec                                                      P,,
 north #
  # you should see both RSA and NULL
 north #
- grep IKEv2_AUTH_ /tmp/pluto.log
+ grep -e IKEv2_AUTH_ -e ': Authenticated using ' /tmp/pluto.log
 | emitting 2 raw bytes of hash algorithm identifier IKEv2_AUTH_HASH_SHA2_256 into IKEv2 Notify Payload
 | hash algorithm identifier IKEv2_AUTH_HASH_SHA2_256: 00 02
 | emitting 2 raw bytes of hash algorithm identifier IKEv2_AUTH_HASH_SHA2_384 into IKEv2 Notify Payload

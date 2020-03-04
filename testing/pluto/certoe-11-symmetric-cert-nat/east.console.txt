@@ -31,7 +31,7 @@ east #
  grep "negotiated connection" /tmp/pluto.log
 "clear-or-private#192.1.2.254/32"[1] ...192.1.2.254===10.0.10.1/32 #2: negotiated connection [192.1.2.23-192.1.2.23:0-65535 0] -> [10.0.10.1-10.0.10.1:0-65535 0]
 east #
- grep IKEv2_AUTH_ OUTPUT/*pluto.log
+ grep -e IKEv2_AUTH_ -e ': Authenticated using ' OUTPUT/*pluto.log
 OUTPUT/east.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_AUTH_HASH_SHA2_256 into IKEv2 Notify Payload
 OUTPUT/east.pluto.log:| hash algorithm identifier IKEv2_AUTH_HASH_SHA2_256: 00 02
 OUTPUT/east.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_AUTH_HASH_SHA2_384 into IKEv2 Notify Payload
