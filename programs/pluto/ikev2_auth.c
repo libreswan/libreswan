@@ -158,3 +158,35 @@ const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike)
 	}
 	return hash_algo;
 }
+
+shunk_t authby_asn1_hash_blob(const struct hash_desc *hash_algo,
+			      enum keyword_authby authby)
+{
+	switch(authby) {
+	case AUTH_RSASIG:
+		return hash_algo->hash_asn1_blob_rsa;
+	case AUTH_ECDSA:
+		return hash_algo->hash_asn1_blob_ecdsa;
+	default:
+		libreswan_log("Unknown or unsupported authby method for DigSig");
+		return null_shunk;
+	}
+}
+
+bool emit_v2_asn1_hash_blob(const struct hash_desc *hash_algo,
+			    pb_stream *a_pbs, enum keyword_authby authby)
+{
+	shunk_t b = authby_asn1_hash_blob(hash_algo, authby);
+	if (!pexpect(b.len > 0)) {
+		/* already logged */
+		return false;
+	}
+
+	if (!pbs_out_hunk(b, a_pbs,
+			  "OID of ASN.1 Algorithm Identifier")) {
+		loglog(RC_LOG_SERIOUS, "DigSig: failed to emit OID of ASN.1 Algorithm Identifier");
+		return false;
+	}
+
+	return true;
+}

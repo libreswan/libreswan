@@ -156,44 +156,12 @@ static bool negotiate_hash_algo_from_notification(struct payload_digest *p, stru
 	return true;
 }
 
-static shunk_t blob_for_hash_algo(const struct hash_desc *hash_algo,
-					 enum keyword_authby authby)
-{
-	switch(authby) {
-	case AUTH_RSASIG:
-		return hash_algo->hash_asn1_blob_rsa;
-	case AUTH_ECDSA:
-		return hash_algo->hash_asn1_blob_ecdsa;
-	default:
-		libreswan_log("Unknown or unsupported authby method for DigSig");
-		return null_shunk;
-	}
-}
-
-static bool ikev2_send_asn1_hash_blob(const struct hash_desc *hash_algo,
-				      pb_stream *a_pbs, enum keyword_authby authby)
-{
-	shunk_t b = blob_for_hash_algo(hash_algo, authby);
-	if (!pexpect(b.len > 0)) {
-		/* already logged */
-		return false;
-	}
-
-	if (!pbs_out_hunk(b, a_pbs,
-			  "OID of ASN.1 Algorithm Identifier")) {
-		loglog(RC_LOG_SERIOUS, "DigSig: failed to emit OID of ASN.1 Algorithm Identifier");
-		return false;
-	}
-
-	return true;
-}
-
 /* check for ASN.1 blob; if found, consume it */
 static bool ikev2_try_asn1_hash_blob(const struct hash_desc *hash_algo,
 				     pb_stream *a_pbs,
 				     enum keyword_authby authby)
 {
-	shunk_t b = blob_for_hash_algo(hash_algo, authby);
+	shunk_t b = authby_asn1_hash_blob(hash_algo, authby);
 
 	uint8_t in_blob[ASN1_LEN_ALGO_IDENTIFIER +
 		PMAX(ASN1_SHA1_ECDSA_SIZE,
@@ -1891,7 +1859,7 @@ static stf_status emit_v2AUTH(struct ike_sa *ike,
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 
-		if (!ikev2_send_asn1_hash_blob(hash_algo, &a_pbs, authby))
+		if (!emit_v2_asn1_hash_blob(hash_algo, &a_pbs, authby))
 			return STF_INTERNAL_ERROR;
 
 		switch (authby) {

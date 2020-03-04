@@ -19,6 +19,7 @@
 #include <stdbool.h>
 
 #include "chunk.h"
+#include "packet.h"		/* for pbs_out */
 
 struct crypt_mac;
 struct state;
@@ -33,5 +34,10 @@ struct crypt_mac v2_calculate_sighash(const struct state *st,
 enum keyword_authby v2_auth_by(struct ike_sa *ike);
 enum ikev2_auth_method v2_auth_method(struct ike_sa *ike, enum keyword_authby authby);
 const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike);
+
+shunk_t authby_asn1_hash_blob(const struct hash_desc *hash_algo,
+			      enum keyword_authby authby);
+bool emit_v2_asn1_hash_blob(const struct hash_desc *hash_algo,
+			    pb_stream *a_pbs, enum keyword_authby authby);
 
 #endif
