@@ -2943,9 +2943,21 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		enum keyword_authby authby = v2_auth_by(ike);
 		switch (authby) {
 		case AUTH_RSASIG:
+		{
+			const struct hash_desc *hash_algo = &ike_alg_hash_sha1;
+			struct crypt_mac hash_to_sign = v2_calculate_sighash(&ike->sa, ORIGINAL_RESPONDER,
+									     &ike->sa.st_v2_id_payload.mac,
+									     ike->sa.st_firstpacket_me,
+									     hash_algo);
+			return submit_v2_auth_signature(ike, &hash_to_sign, hash_algo, authby,
+							ikev2_parent_inI2outR2_auth_signature_continue);
+		}
 		case AUTH_ECDSA:
 		{
 			const struct hash_desc *hash_algo = v2_auth_negotiated_signature_hash(ike);
+			if (hash_algo == NULL) {
+				return STF_FATAL;
+			}
 			struct crypt_mac hash_to_sign = v2_calculate_sighash(&ike->sa, ORIGINAL_RESPONDER,
 									     &ike->sa.st_v2_id_payload.mac,
 									     ike->sa.st_firstpacket_me,
