@@ -489,16 +489,6 @@ struct hash_desc {
 };
 
 /*
- * ASN.1 blobs specific to a particular hash algorithm are sent in the
- * Auth payload as part of Digital signature authentication as per RFC7427
- */
-struct asn1_hash_blob {
-	enum notify_payload_hash_algorithms hash_algo;
-	const uint8_t *blob;
-	size_t blob_sz;
-};
-
-/*
  * Pseudo Random Function:
  *
  *     PRF(<key>, <data>) -> digest

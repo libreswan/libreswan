@@ -114,9 +114,3 @@ const struct integ_desc ike_alg_integ_sha1 = {
 	.integ_ike_audit_name = "sha1",
 	.integ_kernel_audit_name = "HMAC_SHA1",
 };
-
-const struct asn1_hash_blob asn1_ecdsa_sha1 = {
-	.hash_algo = IKEv2_AUTH_HASH_SHA1,
-	.blob = asn1_blob_ecdsa_sha1,
-	.blob_sz = sizeof(asn1_blob_ecdsa_sha1)
-};
