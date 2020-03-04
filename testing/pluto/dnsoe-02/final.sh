@@ -2,7 +2,7 @@
 ipsec whack --trafficstatus
 grep "negotiated connection" /tmp/pluto.log
 # you should one RSA and one NULL, asymetric OE
-grep IKEv2_AUTH_ /tmp/pluto.log
+grep -e IKEv2_AUTH_ -e ': Authenticated using ' /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
