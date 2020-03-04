@@ -50,10 +50,10 @@ FIPS Encryption algorithms:
   AES_CBC                 IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  aes
   NULL_AUTH_AES_GMAC      IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  aes_gmac
 FIPS Hash algorithms:
-  SHA1                    IKEv1: IKE         IKEv2:             FIPS  sha
-  SHA2_256                IKEv1: IKE         IKEv2:             FIPS  sha2, sha256
-  SHA2_384                IKEv1: IKE         IKEv2:             FIPS  sha384
-  SHA2_512                IKEv1: IKE         IKEv2:             FIPS  sha512
+  SHA1                    IKEv1: IKE         IKEv2: IKE         FIPS  sha
+  SHA2_256                IKEv1: IKE         IKEv2: IKE         FIPS  sha2, sha256
+  SHA2_384                IKEv1: IKE         IKEv2: IKE         FIPS  sha384
+  SHA2_512                IKEv1: IKE         IKEv2: IKE         FIPS  sha512
 FIPS PRF algorithms:
   HMAC_SHA1               IKEv1: IKE         IKEv2: IKE         FIPS  sha, sha1
   HMAC_SHA2_256           IKEv1: IKE         IKEv2: IKE         FIPS  sha2, sha256, sha2_256
