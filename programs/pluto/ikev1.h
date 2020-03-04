@@ -85,9 +85,8 @@ extern void send_v1_delete(struct state *st);
 extern bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 			   bool aggrmode);
 
-extern size_t v1_sign_hash_RSA(const struct connection *c,
-			       uint8_t *sig_val, size_t sig_size,
-			       const struct crypt_mac *hash);
+struct hash_signature v1_sign_hash_RSA(const struct connection *c,
+				       const struct crypt_mac *hash);
 
 struct crypt_mac main_mode_hash(struct state *st, enum sa_role role,
 				const pb_stream *idpl);  /* ID payload, as PBS; cur must be at end */

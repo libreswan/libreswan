@@ -183,31 +183,15 @@ enum PrivateKeyKind nss_cert_key_kind(CERTCertificate *cert)
 }
 
 /* returns the length of the result on success; 0 on failure */
-int sign_hash_RSA(const struct private_key_stuff *pks,
-		  const u_char *hash_val, size_t hash_len,
-		  u_char *sig_val, size_t sig_len,
-		  const struct hash_desc *hash_algo)
+struct hash_signature sign_hash_RSA(const struct private_key_stuff *pks,
+				    const u_char *hash_val, size_t hash_len,
+				    const struct hash_desc *hash_algo)
 {
 	dbg("RSA_sign_hash: Started using NSS");
 	if (!pexpect(pks->private_key != NULL)) {
 		dbg("no private key!");
-		return 0;
+		return (struct hash_signature) { .len = 0, };
 	}
-
-	/*
-	 * SIG_LEN contains "adjusted" length of modulus n in octets:
-	 * [RSA_MIN_OCTETS, RSA_MAX_OCTETS].
-	 *
-	 * According to form_keyid() this is the modulus length less
-	 * any leading byte added by DER encoding.
-	 *
-	 * The adjusted length is used in sign_hash() as the signature
-	 * length - wouldn't PK11_SignatureLen be better?
-	 *
-	 * Let's find out.
-	 */
-
-	pexpect((int)sig_len == PK11_SignatureLen(pks->private_key));
 
 	SECItem data = {
 		.type = siBuffer,
@@ -215,9 +199,12 @@ int sign_hash_RSA(const struct private_key_stuff *pks,
 		.data = DISCARD_CONST(u_char *, hash_val),
 	};
 
+	struct hash_signature sig = { .len = PK11_SignatureLen(pks->private_key), };
+	passert(sig.len <= sizeof(sig.ptr/*array*/));
 	SECItem signature = {
-		.len = sig_len,
-		.data = sig_val,
+		.type = siBuffer,
+		.len = sig.len,
+		.data = sig.ptr,
 	};
 
 	if (hash_algo == NULL /* ikev1*/ ||
@@ -227,7 +214,7 @@ int sign_hash_RSA(const struct private_key_stuff *pks,
 			loglog(RC_LOG_SERIOUS,
 			       "RSA_sign_hash: sign function failed (%d)",
 			       PR_GetError());
-			return 0;
+			return (struct hash_signature) { .len = 0, };
 		}
 	} else { /* Digital signature scheme with rsa-pss*/
 		CK_RSA_PKCS_PSS_PARAMS mech;
@@ -253,22 +240,21 @@ int sign_hash_RSA(const struct private_key_stuff *pks,
 			loglog(RC_LOG_SERIOUS,
 			       "RSA_sign_hash: sign function failed (%d)",
 			       PR_GetError());
-			return 0;
+			return (struct hash_signature) { .len = 0, };
 		}
 	}
 
 	dbg("RSA_sign_hash: Ended using NSS");
-	return signature.len;
+	return sig;
 }
 
-int sign_hash_ECDSA(const struct private_key_stuff *pks,
-		    const u_char *hash_val, size_t hash_len,
-		    u_char *sig_val, size_t sig_len)
+struct hash_signature sign_hash_ECDSA(const struct private_key_stuff *pks,
+				      const u_char *hash_val, size_t hash_len)
 {
 
 	if (!pexpect(pks->private_key != NULL)) {
 		dbg("no private key!");
-		return 0;
+		return (struct hash_signature) { .len = 0, };
 	}
 
 	DBG(DBG_CRYPT, DBG_log("ECDSA_sign_hash: Started using NSS"));
@@ -281,13 +267,14 @@ int sign_hash_ECDSA(const struct private_key_stuff *pks,
 	};
 
 	/* point signature at the SIG_VAL buffer */
+	struct hash_signature sig = { .len = PK11_SignatureLen(pks->private_key), };
+	passert(sig.len <= sizeof(sig.ptr/*array*/));
 	SECItem signature = {
 		.type = siBuffer,
-		.len = PK11_SignatureLen(pks->private_key),
-		.data = sig_val,
+		.len = sig.len,
+		.data = sig.ptr,
 	};
-	DBGF(DBG_CRYPT, "ECDSA signature.len %d", signature.len);
-	passert(signature.len <= sig_len);
+	dbg("ECDSA signature.len %d", signature.len);
 
 	SECStatus s = PK11_Sign(pks->private_key, &signature, &hash);
 	DBG(DBG_CRYPT, DBG_dump("sig_from_nss", signature.data, signature.len));
@@ -296,11 +283,11 @@ int sign_hash_ECDSA(const struct private_key_stuff *pks,
 			lswlogf(buf, "NSS: signing hash using PK11_Sign() failed:");
 			lswlog_nss_error(buf);
 		}
-		return 0;
+		return (struct hash_signature) { .len = 0, };
 	}
 
 	DBG(DBG_CRYPT, DBG_log("ECDSA_sign_hash: Ended using NSS"));
-	return signature.len;
+	return sig;
 }
 
 err_t RSA_signature_verify_nss(const struct RSA_public_key *k,

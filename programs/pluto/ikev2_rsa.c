@@ -118,20 +118,21 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 
 	{
 		/* now generate signature blob */
-		u_char sig_val[RSA_MAX_OCTETS];
 		statetime_t sign_time = statetime_start(st);
-		int shr = sign_hash_RSA(pks, signed_octets, signed_len,
-					sig_val, sz, hash_algo);
+		struct hash_signature sig;
+		passert(sizeof(sig.ptr/*array*/) >= RSA_MAX_OCTETS);
+		sig = sign_hash_RSA(pks, signed_octets, signed_len,
+				    hash_algo);
 		statetime_stop(&sign_time, "%s() calling sign_hash_RSA()", __func__);
-		if (shr == 0)
-			return FALSE;
+		if (sig.len == 0)
+			return false;
 
-		passert(shr == (int)sz);
+		passert(sig.len == sz);
 		if (no_ppk_auth != NULL) {
-			*no_ppk_auth = clone_bytes_as_chunk(sig_val, sz, "NO_PPK_AUTH chunk");
+			*no_ppk_auth = clone_hunk(sig, "NO_PPK_AUTH chunk");
 			DBG(DBG_PRIVATE, DBG_dump_hunk("NO_PPK_AUTH payload", *no_ppk_auth));
 		} else {
-			if (!out_raw(sig_val, sz, a_pbs, "rsa signature"))
+			if (!pbs_out_hunk(sig, a_pbs, "rsa signature"))
 				return FALSE;
 		}
 	}

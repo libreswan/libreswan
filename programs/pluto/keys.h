@@ -40,14 +40,23 @@ struct packet_byte_stream;
 struct private_key_stuff;
 struct hash_desc;
 
-extern int sign_hash_RSA(const struct private_key_stuff *pks,
-			 const u_char *hash_val, size_t hash_len,
-			 u_char *sig_val, size_t sig_len,
-			 const struct hash_desc *hash_algo);
+struct hash_signature {
+	size_t len;
+	/*
+	 * XXX: See https://tools.ietf.org/html/rfc4754#section-7 for
+	 * where 1056 is coming from.
+	 * It is the largest of the signature lengths amongst
+	 * ECDSA 256, 384, and 521.
+	 */
+	uint8_t ptr[PMAX(RSA_MAX_OCTETS, BYTES_FOR_BITS(1056))];
+};
 
-extern int sign_hash_ECDSA(const struct private_key_stuff *pks,
-			   const u_char *hash_val, size_t hash_len,
-			   u_char *sig_val, size_t sig_len);
+struct hash_signature sign_hash_RSA(const struct private_key_stuff *pks,
+				    const u_char *hash_val, size_t hash_len,
+				    const struct hash_desc *hash_algo);
+
+struct hash_signature sign_hash_ECDSA(const struct private_key_stuff *pks,
+				      const u_char *hash_val, size_t hash_len);
 
 extern err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 				      const struct crypt_mac *hash,

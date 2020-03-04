@@ -298,25 +298,25 @@ struct crypt_mac main_mode_hash(struct state *st,
  * Returns 0 on failure.
  */
 
-size_t v1_sign_hash_RSA(const struct connection *c,
-			uint8_t *sig_val, size_t sig_size,
-			const struct crypt_mac *hash)
+struct hash_signature v1_sign_hash_RSA(const struct connection *c,
+				       const struct crypt_mac *hash)
 {
 	const struct private_key_stuff *pks = get_connection_private_key(c, &pubkey_type_rsa);
 	if (pks == NULL) {
-		return 0; /* failure: no key to use */
+		return (struct hash_signature) { .len = 0, }; /* failure: no key to use */
 	}
 
 	/* XXX: merge sign_hash_{RSA,ECDSA}()? */
 	const struct RSA_private_key *k = &pks->u.RSA_private_key;
 
 	size_t sz = k->pub.k;
+	struct hash_signature sig;
 	passert(RSA_MIN_OCTETS <= sz &&
 		4 + hash->len < sz &&
-		sz <= sig_size);
-	int shr = sign_hash_RSA(pks, hash->ptr, hash->len, sig_val, sz, 0 /* for ikev2 only */);
-	passert(shr == 0 || (int)sz == shr);
-	return shr;
+		sz <= sizeof(sig.ptr/*array*/));
+	sig = sign_hash_RSA(pks, hash->ptr, hash->len, 0 /* for ikev2 only */);
+	passert(sig.len == 0 || sz == sig.len);
+	return sig;
 }
 
 /*
@@ -1361,9 +1361,10 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 				return STF_INTERNAL_ERROR;
 		} else {
 			/* SIG_I out */
-			uint8_t sig_val[RSA_MAX_OCTETS];
-			size_t sig_len = v1_sign_hash_RSA(c, sig_val, sizeof(sig_val), &hash);
-			if (sig_len == 0) {
+			struct hash_signature sig;
+			passert(sizeof(sig.ptr/*array*/) >= RSA_MAX_OCTETS);
+			sig = v1_sign_hash_RSA(c, &hash);
+			if (sig.len == 0) {
 				loglog(RC_LOG_SERIOUS,
 					"unable to locate my private key for RSA Signature");
 				return STF_FAIL + AUTHENTICATION_FAILED;
@@ -1373,8 +1374,8 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 						ISAKMP_NEXT_NONE,
 						&isakmp_signature_desc,
 						rbody,
-						sig_val,
-						sig_len,
+						sig.ptr,
+						sig.len,
 						"SIG_I"))
 				return STF_INTERNAL_ERROR;
 		}
@@ -1720,16 +1721,17 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 				return STF_INTERNAL_ERROR;
 		} else {
 			/* SIG_R out */
-			uint8_t sig_val[RSA_MAX_OCTETS];
-			size_t sig_len = v1_sign_hash_RSA(c, sig_val, sizeof(sig_val), &hash);
-			if (sig_len == 0) {
+			struct hash_signature sig;
+			passert(sizeof(sig.ptr/*array*/) >= RSA_MAX_OCTETS);
+			sig = v1_sign_hash_RSA(c, &hash);
+			if (sig.len == 0) {
 				loglog(RC_LOG_SERIOUS,
 					"unable to locate my private key for RSA Signature");
 				return STF_FAIL + AUTHENTICATION_FAILED;
 			}
 
 			if (!ikev1_out_generic_raw(np, &isakmp_signature_desc,
-						&rbody, sig_val, sig_len,
+						&rbody, sig.ptr, sig.len,
 						"SIG_R"))
 				return STF_INTERNAL_ERROR;
 		}

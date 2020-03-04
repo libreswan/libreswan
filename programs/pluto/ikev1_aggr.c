@@ -46,6 +46,7 @@
 #include "ikev1_message.h"
 #include "pending.h"
 #include "iface.h"
+#include "keys.h"
 
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"
@@ -476,9 +477,8 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 				return STF_INTERNAL_ERROR;
 		} else {
 			/* SIG_R out */
-			uint8_t sig_val[RSA_MAX_OCTETS];
-			size_t sig_len = v1_sign_hash_RSA(c, sig_val, sizeof(sig_val), &hash);
-			if (sig_len == 0) {
+			struct hash_signature sig = v1_sign_hash_RSA(c, &hash);
+			if (sig.len == 0) {
 				loglog(RC_LOG_SERIOUS,
 				       "unable to locate my private key for RSA Signature");
 				return STF_FAIL + AUTHENTICATION_FAILED;
@@ -486,7 +486,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 
 			if (!ikev1_out_generic_raw(ISAKMP_NEXT_VID,
 					     &isakmp_signature_desc,
-					     &rbody, sig_val, sig_len,
+					     &rbody, sig.ptr, sig.len,
 					     "SIG_R"))
 				return STF_INTERNAL_ERROR;
 		}
@@ -776,10 +776,8 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 				return STF_INTERNAL_ERROR;
 		} else {
 			/* SIG_I out */
-			uint8_t sig_val[RSA_MAX_OCTETS];
-			size_t sig_len = v1_sign_hash_RSA(st->st_connection,
-							  sig_val, sizeof(sig_val), &hash);
-			if (sig_len == 0) {
+			struct hash_signature sig = v1_sign_hash_RSA(st->st_connection, &hash);
+			if (sig.len == 0) {
 				loglog(RC_LOG_SERIOUS,
 				       "unable to locate my private key for RSA Signature");
 				return STF_FAIL + AUTHENTICATION_FAILED;
@@ -787,7 +785,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 
 			if (!ikev1_out_generic_raw(ISAKMP_NEXT_NONE,
 					     &isakmp_signature_desc,
-					     &rbody, sig_val, sig_len,
+					     &rbody, sig.ptr, sig.len,
 					     "SIG_I"))
 				return STF_INTERNAL_ERROR;
 		}

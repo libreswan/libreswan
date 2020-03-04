@@ -84,25 +84,25 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 
 	/*
 	 * Sign the hash.
-	 *
-	 * XXX: See https://tools.ietf.org/html/rfc4754#section-7 for
-	 * where 1056 is coming from.
-	 * It is the largest of the signature lengths amongst
-	 * ECDSA 256, 384, and 521.
+-	 *
+-	 * XXX: See https://tools.ietf.org/html/rfc4754#section-7 for
+-	 * where 1056 is coming from.
+-	 * It is the largest of the signature lengths amongst
+-	 * ECDSA 256, 384, and 521.
 	 */
-	uint8_t sig_val[BYTES_FOR_BITS(1056)];
 	statetime_t sign_time = statetime_start(st);
-	size_t shr = sign_hash_ECDSA(pks, hash.ptr, hash.len,
-				     sig_val, sizeof(sig_val));
+	struct hash_signature sig;
+	passert(sizeof(sig.ptr/*array*/) >= BYTES_FOR_BITS(1056));
+	sig = sign_hash_ECDSA(pks, hash.ptr, hash.len);
 	statetime_stop(&sign_time, "%s() calling sign_hash_ECDSA()", __func__);
 
-	if (shr == 0) {
-		DBGF(DBG_CRYPT, "sign_hash_ECDSA failed");
+	if (sig.len == 0) {
+		dbg("sign_hash_ECDSA failed");
 		return false;
 	}
 
 	if (no_ppk_auth != NULL) {
-		*no_ppk_auth = clone_bytes_as_chunk(sig_val, shr, "NO_PPK_AUTH chunk");
+		*no_ppk_auth = clone_hunk(sig, "NO_PPK_AUTH chunk");
 		DBG(DBG_PRIVATE, DBG_dump_hunk("NO_PPK_AUTH payload", *no_ppk_auth));
 		return true;
 	}
@@ -110,8 +110,8 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 	SECItem der_signature;
 	SECItem raw_signature = {
 		.type = siBuffer,
-		.data = sig_val,
-		.len = shr,
+		.data = sig.ptr,
+		.len = sig.len,
 	};
 	if (DSAU_EncodeDerSigWithLen(&der_signature, &raw_signature,
 				     raw_signature.len) != SECSuccess) {
