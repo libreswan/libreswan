@@ -54,7 +54,7 @@ Depends:
  ${misc:Depends},
  ${shlibs:Depends},
 Recommends:
- python,
+ python3,
 Provides:
  ike-server,
 Conflicts:
