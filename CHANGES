@@ -1,11 +1,9 @@
 
 See also https://libreswan.org/
 
-v3.31 (unreleased)
+v3.32 (unreleased)
 * KLIPS: Support for KLIPS completely removed [Paul]
 * pluto: Support for deprecated algos removed: serpent, twofish, cast [Paul]
-* pluto: Increase maximum number of IKE fragments accepted to 32 [Paul]
-* pluto: disable log_to_audit if kernel does not support audit [Paul]
 * show: Fixup for python3 version of ipaddress module [Paul]
 * IKEv2: Decode notify payloads into the message digest [Andrew]
 * building: Remove support for SINGLE_CONF_DIR, EMIT_ISAKMP_SPI, USE_KEYRR [Paul]
@@ -13,6 +11,17 @@ v3.31 (unreleased)
 * building: Merge userland.mk into config.mk to simplify makefiles [Tuomo]
 * building: Deprecate INC_ variables [Tuomo]
 * building: Remove all support for SERPENT, TWOFISH, CAST and RIPEMD [Paul]
+
+v3.31 (March 3, 2020)
+* IKEv2: Opportunistic conns specifying keyingtries=0 are changed to 1 [Paul]
+* IKEv2: Fix ikev2 rekey failures due to bad Traffic Selector proposa [Antony]
+* IKEv2: Verify (not ignore) expected TSi/TSr payloads for IPsec rekeys [Paul]
+* IKEv1: Support for XFRMi interfaces [Paul]
+* pluto: Disable log_to_audit if kernel does not support audit [Paul]
+* addconn: Do not assert on ipsec-interface=no [Paul]
+* nat_traversal: Fix not to send nat-t keepalives when there is no nat [Tuomo]
+* KLIPS: Fix _updown.klips (regression introduced in 3.30) [Wolfgang]
+* pluto: Increase max IKEv2 fragments to 32 to support Windows [John Mah]
 
 v3.30 (February 13, 2020)
 * WARNING: This is the last release that supports the KLIPS stack,
