@@ -23,6 +23,7 @@
 #include "lswcdefs.h"		/* for PRINTF_LIKE() */
 
 struct state;
+struct logger;
 
 /*
  * Try to format all cpu usage messaages the same.  All delta-times
@@ -43,6 +44,14 @@ struct state;
 typedef struct { struct timespec tt; } threadtime_t;
 threadtime_t threadtime_start(void);
 double threadtime_stop(const threadtime_t *start, long serialno, const char *fmt, ...) PRINTF_LIKE(3);
+
+typedef struct {
+	struct timespec lt;
+	struct logger *logger;
+} logtime_t;
+
+logtime_t logtime_start(struct logger *logger);
+double logtime_stop(const logtime_t *start, const char *fmt, ...) PRINTF_LIKE(2);
 
 /*
  * For state timing:

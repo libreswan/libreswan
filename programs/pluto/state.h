@@ -54,6 +54,7 @@
 #include "pluto_timing.h"	/* for statetime_t */
 #include "ikev2_msgid.h"
 #include "ip_endpoint.h"
+#include "crypt_mac.h"
 
 struct ikev2_ipseckey_dns; /* forward declaration of tag */
 
@@ -194,6 +195,7 @@ struct v2_ike_tfrag {
 
 struct v2_id_payload {
 	struct ikev2_id header;
+	struct crypt_mac hash; /* MACedIDforR */
 	chunk_t data;
 	/* MAC of part of header + data */
 	struct crypt_mac mac;
