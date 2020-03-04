@@ -69,7 +69,7 @@ Description: Internet Key Exchange daemon
  IKEv2, X.509 Digital Certificates, NAT Traversal, and many others.
  .
  Libreswan has been forked from Openswan 2.6.38, which was forked from
- FreeS/WAN 1.99.
+ FreeS/WAN 2.04.
  .
  The Libreswan IKE daemon is named pluto. It was inherited from the FreeS/WAN
  project, but provides improved X.509 certificate support and other features.
