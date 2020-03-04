@@ -17,7 +17,7 @@
 #include "defs.h"
 #include "state.h"
 #include "pluto_timing.h"
-#include "lswlog.h"
+#include "log.h"
 
 #define INDENT " "
 #define MISSING_FUDGE 0.001
@@ -62,6 +62,34 @@ double threadtime_stop(const threadtime_t *start, long serialno, const char *fmt
 			}
 			lswlogf(buf, PRI_CPU_USAGE" in ",
 				pri_cpu_usage(seconds));
+			va_list ap;
+			va_start(ap, fmt);
+			lswlogvf(buf, fmt, ap);
+			va_end(ap);
+		}
+	}
+	return seconds;
+}
+
+logtime_t logtime_start(struct logger *logger)
+{
+	logtime_t start = {
+		.lt = now(),
+		.logger = logger,
+	};
+	return start;
+}
+
+double logtime_stop(const logtime_t *start, const char *fmt, ...)
+{
+	double seconds = seconds_sub(now(), start->lt);
+	if (DBGP(DBG_CPU_USAGE)) {
+		LSWLOG_DEBUG(buf) {
+			jam(buf, "(");
+			start->logger->jam_prefix(buf, start->logger->object);
+			jam(buf, ") ");
+			jam(buf, PRI_CPU_USAGE" in ",
+			    pri_cpu_usage(seconds));
 			va_list ap;
 			va_start(ap, fmt);
 			lswlogvf(buf, fmt, ap);
