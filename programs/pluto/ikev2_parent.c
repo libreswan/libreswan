@@ -2941,8 +2941,9 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 	{
 		enum keyword_authby authby = v2_auth_by(ike);
-		switch (authby) {
-		case AUTH_RSASIG:
+		enum ikev2_auth_method auth_method = v2_auth_method(ike, authby);
+		switch (auth_method) {
+		case IKEv2_AUTH_RSA:
 		{
 			const struct hash_desc *hash_algo = &ike_alg_hash_sha1;
 			struct crypt_mac hash_to_sign = v2_calculate_sighash(&ike->sa, ORIGINAL_RESPONDER,
@@ -2952,7 +2953,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			return submit_v2_auth_signature(ike, &hash_to_sign, hash_algo, authby,
 							ikev2_parent_inI2outR2_auth_signature_continue);
 		}
-		case AUTH_ECDSA:
+		case IKEv2_AUTH_DIGSIG:
 		{
 			const struct hash_desc *hash_algo = v2_auth_negotiated_signature_hash(ike);
 			if (hash_algo == NULL) {
@@ -2965,13 +2966,12 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			return submit_v2_auth_signature(ike, &hash_to_sign, hash_algo, authby,
 							ikev2_parent_inI2outR2_auth_signature_continue);
 		}
-		case AUTH_PSK:
-		case AUTH_NULL:
+		case IKEv2_AUTH_PSK:
+		case IKEv2_AUTH_NULL:
 		{
 			struct hash_signature sig = { .len = 0, };
 			return ikev2_parent_inI2outR2_auth_signature_continue(ike, md, &sig);
 		}
-		case AUTH_NEVER:
 		default:
 			bad_case(authby);
 		}
