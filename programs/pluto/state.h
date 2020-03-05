@@ -195,7 +195,6 @@ struct v2_ike_tfrag {
 
 struct v2_id_payload {
 	struct ikev2_id header;
-	struct crypt_mac hash; /* MACedIDforR */
 	chunk_t data;
 	/* MAC of part of header + data */
 	struct crypt_mac mac;
