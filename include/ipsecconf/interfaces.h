@@ -19,7 +19,8 @@
 
 #include "ip_address.h"
 
-bool starter_iface_find(const char *iface, int af, ip_address *dst, ip_address *nh);
+bool starter_iface_find(const char *iface, const struct ip_info *family,
+			ip_address *dst, ip_address *nh);
 
 #endif /* _STARTER_INTERFACES_H_ */
 
