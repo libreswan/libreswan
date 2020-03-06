@@ -131,7 +131,7 @@ bool emit_redirect_notification_decoded_dest(
 		emit_v2Npl(ntype, pbs, &gwid_pbs) &&
 		out_struct(&gwi, &ikev2_redirect_desc, &gwid_pbs, NULL) &&
 		out_raw(id.ptr, id.len , &gwid_pbs, "redirect ID") &&
-		(nonce == NULL || pbs_out_hunk(*nonce, &gwid_pbs, "redirect ID len")) &&
+		(nonce == NULL || pbs_out_hunk(*nonce, &gwid_pbs, "nonce in redirect notify")) &&
 		(close_output_pbs(&gwid_pbs), true);
 }
 
@@ -288,14 +288,7 @@ static void del_spi_trick(struct state *st)
 void initiate_redirect(struct state *st)
 {
 	ipstr_buf b;
-	struct state *right_state;
-
-	/* XXX: just use ike_sa(st) */
-	if (IS_IKE_SA(st))
-		right_state = st;
-	else
-		right_state = state_with_serialno(st->st_clonedfrom);
-
+	struct state *right_state = &ike_sa(st)->sa;
 	struct connection *c = right_state->st_connection;
 	ip_address redirect_ip = c->temp_vars.redirect_ip;
 
