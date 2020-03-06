@@ -750,7 +750,7 @@ static bool decode_certs(struct state *st, struct payload_digest *cert_payloads)
 	CERTCertificate *end_cert = certs.cert_chain->cert;
 	libreswan_log("certificate verified OK: %s", end_cert->subjectName);
 
-	pexpect(st->st_remote_certs.pubkey_db);
+	pexpect(st->st_remote_certs.pubkey_db == NULL);
 	st->st_remote_certs.pubkey_db = certs.pubkey_db;
 	certs.pubkey_db = NULL;
 
