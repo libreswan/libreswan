@@ -490,6 +490,7 @@ static bool find_xfrmi_interface(char *if_name, uint32_t xfrm_if_id)
 			IFINFO_REPLY_BUFFER_SIZE, 0, getpid());
 	if (len < 0) {
 		loglog(RC_LOG_SERIOUS, "ERROR find_any_xfrmi_interface() received %d", nl_fd);
+		close(nl_fd);
 		return true;
 	}
 
