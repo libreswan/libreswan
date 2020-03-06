@@ -228,9 +228,9 @@ bool ikev2_verify_psk_auth(enum keyword_authby authby,
 	passert(authby == AUTH_PSK || authby == AUTH_NULL);
 
 	if (sig.len != hash_len) {
-		libreswan_log(
-			"hash length in I2 packet (%zu) does not equal hash length (%zu) of negotiated PRF (%s)",
-			sig.len, hash_len, st->st_oakley.ta_prf->common.name);
+		log_state(RC_LOG, st,
+			  "hash length in I2 packet (%zu) does not equal hash length (%zu) of negotiated PRF (%s)",
+			  sig.len, hash_len, st->st_oakley.ta_prf->common.name);
 		return false;
 	}
 
@@ -245,11 +245,12 @@ bool ikev2_verify_psk_auth(enum keyword_authby authby,
 	    DBG_dump_hunk("Calculated PSK auth octets", calc_hash));
 	bool ok = hunk_eq(sig, calc_hash);
 	if (ok) {
-		loglog(RC_LOG_SERIOUS, "Authenticated using authby=%s",
-			authby == AUTH_NULL ? "null" : "secret");
+		log_state(RC_LOG_SERIOUS, st, "authenticated using authby=%s",
+			  authby == AUTH_NULL ? "null" : "secret");
 		return true;
 	} else {
-		loglog(RC_LOG_SERIOUS, "AUTH mismatch: Received AUTH != computed AUTH");
+		log_state(RC_LOG_SERIOUS, st,
+			  "AUTH mismatch: Received AUTH != computed AUTH");
 		return false;
 	}
 }

@@ -110,7 +110,8 @@ static bool cert_issuer_has_current_crl(CERTCertDBHandle *handle,
 	return current;
 }
 
-static void log_bad_cert(const char *prefix, const char *usage, CERTVerifyLogNode *head)
+static void log_bad_cert(struct logger *logger, const char *prefix,
+			 const char *usage, CERTVerifyLogNode *head)
 {
 	/*
 	 * Usually there is only one error in the list, but sometimes
@@ -129,11 +130,12 @@ static void log_bad_cert(const char *prefix, const char *usage, CERTVerifyLogNod
 
 		last_sn = node->cert->subjectName;
 		last_error = node->error;
-		loglog(RC_LOG_SERIOUS, "Certificate %s failed %s verification",
-		       node->cert->subjectName, usage);
+		log_message(RC_LOG_SERIOUS, logger,
+			    "certificate %s failed %s verification",
+			    node->cert->subjectName, usage);
 		/* ??? we ignore node->depth and node->arg */
-		loglog(RC_LOG_SERIOUS, "%s: %s", prefix,
-		       nss_err_str(node->error));
+		log_message(RC_LOG_SERIOUS, logger, "NSS %s: %s", prefix,
+			    nss_err_str(node->error));
 		/*
 		 * XXX: this redundant log message is to keep tests happy -
 		 * the above ERROR: line will have already explained the the
@@ -143,7 +145,7 @@ static void log_bad_cert(const char *prefix, const char *usage, CERTVerifyLogNod
 		 * above with "NSS ERROR: ".
 		 */
 		if (node->error == SEC_ERROR_REVOKED_CERTIFICATE) {
-			loglog(RC_LOG_SERIOUS, "certificate revoked!");
+			log_message(RC_LOG_SERIOUS, logger, "certificate revoked!");
 		}
 	}
 }
@@ -204,7 +206,8 @@ static void set_rev_params(CERTRevocationFlags *rev,
 #define RETRYABLE_TYPE(err) ((err) == SEC_ERROR_INADEQUATE_CERT_TYPE || \
 			      (err) == SEC_ERROR_INADEQUATE_KEY_USAGE)
 
-static bool verify_end_cert(const struct root_certs *root_certs,
+static bool verify_end_cert(struct logger *logger,
+			    const struct root_certs *root_certs,
 			    const struct rev_opts *rev_opts,
 			    CERTCertificate *end_cert)
 {
@@ -313,13 +316,13 @@ static bool verify_end_cert(const struct root_certs *root_certs,
 		if (p == &usages[elemsof(usages) - 1] ||
 		    !RETRYABLE_TYPE(vfy_log.head->error)) {
 			/* we are a conclusive failure */
-			log_bad_cert("ERROR", p->usageName, vfy_log.head);
+			log_bad_cert(logger, "ERROR", p->usageName, vfy_log.head);
 			break;
 		}
 
 		/* this usage failed: prepare to repeat for the next one */
 
-		log_bad_cert("warning", p->usageName,  vfy_log.head);
+		log_bad_cert(logger, "warning", p->usageName,  vfy_log.head);
 
 		PORT_FreeArena(vfy_log.arena, PR_FALSE);
 	}
@@ -532,7 +535,7 @@ struct verified_certs find_and_verify_certs(so_serial_t serialno,
 	}
 
 	if (root_certs_empty(root_certs)) {
-		log_message(RC_LOG, logger, "No Certificate Authority in NSS Certificate DB! Certificate payloads discarded.");
+		log_message(RC_LOG, logger, "no Certificate Authority in NSS Certificate DB! certificate payloads discarded");
 		return result;
 	}
 
@@ -566,7 +569,7 @@ struct verified_certs find_and_verify_certs(so_serial_t serialno,
 
 	CERTCertificate *end_cert = make_end_cert_first(&result.cert_chain);
 	if (end_cert == NULL) {
-		libreswan_log("X509: no EE-cert in chain!");
+		log_message(RC_LOG, logger, "X509: no EE-cert in chain!");
 		release_certs(&result.cert_chain);
 		return result;
 	}
@@ -596,7 +599,7 @@ struct verified_certs find_and_verify_certs(so_serial_t serialno,
 	}
 
 	threadtime_t verify_time = threadtime_start();
-	bool end_ok = verify_end_cert(root_certs, rev_opts, end_cert);
+	bool end_ok = verify_end_cert(logger, root_certs, rev_opts, end_cert);
 	threadtime_stop(&verify_time, serialno,
 			"%s() calling verify_end_cert()", __func__);
 	if (!end_ok) {
