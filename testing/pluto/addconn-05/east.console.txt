@@ -30,4 +30,5 @@ conn: "east" ike=<unset>
 002 added connection description "east"
 east #
  ../bin/check-for-core.sh
-
+east #
+ 
