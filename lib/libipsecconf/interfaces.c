@@ -36,16 +36,18 @@
 #include "ipsecconf/exec.h"
 #include "ipsecconf/starterlog.h"
 #include "lswlog.h"	/* for pexpect() */
+#include "ip_info.h"
 
-bool starter_iface_find(const char *iface, int af, ip_address *dst, ip_address *nh)
+bool starter_iface_find(const char *iface, const struct ip_info *family,
+			ip_address *dst, ip_address *nh)
 {
-	/* XXX: danger REQ is recycled by ioctl() callss */
+	/* XXX: danger REQ is recycled by ioctl() calls */
 	struct ifreq req;
 
 	if (iface == NULL)
 		return false;	/* ??? can this ever happen? */
 
-	int sock = safe_socket(af, SOCK_DGRAM, 0);
+	int sock = safe_socket(family->af, SOCK_DGRAM, 0);
 	if (sock < 0)
 		return false;
 
@@ -66,12 +68,10 @@ bool starter_iface_find(const char *iface, int af, ip_address *dst, ip_address *
 	/* get NH */
 	if ((req.ifr_flags & IFF_POINTOPOINT) != 0x0 && nh != NULL &&
 	    (ioctl(sock, SIOCGIFDSTADDR, &req) == 0)) {
-		const ip_sockaddr *sa = (const ip_sockaddr *)&req.ifr_addr;
-		passert(&sa->sa == &req.ifr_addr);
-		if (sa->sa.sa_family == af) {
-			/* XXX: sizeof right? */
+		if (req.ifr_addr.sa_family == family->af) {
+			const ip_sockaddr sa = { .sa = req.ifr_addr, };
 			ip_endpoint nhe;
-			happy(sockaddr_to_endpoint(sa, sizeof(*sa), &nhe));
+			happy(sockaddr_to_endpoint(&sa, family->sockaddr_size, &nhe));
 			pexpect(endpoint_hport(&nhe) == 0);
 			*nh = endpoint_address(&nhe);
 		}
@@ -79,12 +79,10 @@ bool starter_iface_find(const char *iface, int af, ip_address *dst, ip_address *
 
 	/* get DST */
 	if (dst != NULL && ioctl(sock, SIOCGIFADDR, &req) == 0) {
-		const ip_sockaddr *sa = (const ip_sockaddr *)&req.ifr_addr;
-		passert(&sa->sa == &req.ifr_addr);
-		if (sa->sa.sa_family == af) {
-			/* XXX: sizeof right? */
+		if (req.ifr_addr.sa_family == family->af) {
+			const ip_sockaddr sa = { .sa = req.ifr_addr, };
 			ip_endpoint dste;
-			happy(sockaddr_to_endpoint(sa, sizeof(*sa), &dste));
+			happy(sockaddr_to_endpoint(&sa, family->sockaddr_size, &dste));
 			pexpect(endpoint_hport(&dste) == 0);
 			*dst = endpoint_address(&dste);
 		}

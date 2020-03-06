@@ -433,7 +433,6 @@ static bool validate_end(struct starter_conn *conn_st,
 			starter_errors_t *perrl)
 {
 	err_t er = NULL;
-	int hostfam = conn_st->options[KNCF_HOSTADDRFAMILY];
 	bool err = FALSE;
 
 	/*
@@ -442,17 +441,15 @@ static bool validate_end(struct starter_conn *conn_st,
 	 * a config setup option, or via gai.conf / RFC3484
 	 * For now, %defaultroute and %any means IPv4 only
 	 */
-	if (hostfam == AF_UNSPEC) {
+	const struct ip_info *hostfam = aftoinfo(conn_st->options[KNCF_HOSTADDRFAMILY]);
+	if (hostfam == NULL) {
 		const char *ips = end->strings[KNCF_IP];
-
-		hostfam = AF_INET;
-
+		hostfam = &ipv4_info;
 		if (ips != NULL &&
 		    (strchr(ips, ':') != NULL ||
 		     streq(ips, "%defaultroute6") ||
-		     streq(ips, "%any6")))
-		{
-			hostfam = AF_INET6;
+		     streq(ips, "%any6"))) {
+			hostfam = &ipv6_info;
 		}
 	}
 
@@ -462,12 +459,12 @@ static bool validate_end(struct starter_conn *conn_st,
 		conn_st->state = STATE_INCOMPLETE;
 
 	end->addrtype = end->options[KNCF_IP];
-	end->addr_family = hostfam;
+	end->addr_family = hostfam->af;
 
 	/* validate the KSCF_IP/KNCF_IP */
 	switch (end->addrtype) {
 	case KH_ANY:
-		end->addr = address_any(aftoinfo(hostfam));
+		end->addr = address_any(hostfam);
 		break;
 
 	case KH_IFACE:
@@ -490,12 +487,13 @@ static bool validate_end(struct starter_conn *conn_st,
 			break;
 		}
 
-		er = ttoaddr_num(end->strings[KNCF_IP], 0, hostfam, &end->addr);
+		er = numeric_to_address(shunk1(end->strings[KNCF_IP]), hostfam, &end->addr);
 		if (er != NULL) {
 			/* not an IP address, so set the type to the string */
 			end->addrtype = KH_IPHOSTNAME;
 		} else {
-			hostfam = end->addr_family = addrtypeof(&end->addr);
+			hostfam = address_type(&end->addr);
+			end->addr_family = hostfam->af;
 		}
 
 		if (end->id == NULL) {
@@ -524,7 +522,7 @@ static bool validate_end(struct starter_conn *conn_st,
 		break;
 
 	case KH_DEFAULTROUTE:
-		end->addr_family = hostfam;
+		end->addr_family = hostfam->af;
 
 		starter_log(LOG_LEVEL_DEBUG,
 			    "starter: %s is KH_DEFAULTROUTE", leftright);
@@ -597,7 +595,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			end->nexttype = KH_IPADDR;
 		}
 	} else {
-		end->nexthop = address_any(aftoinfo(hostfam));
+		end->nexthop = address_any(hostfam);
 
 		if (end->addrtype == KH_DEFAULTROUTE) {
 			end->nexttype = KH_DEFAULTROUTE;
