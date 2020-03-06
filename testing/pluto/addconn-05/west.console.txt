@@ -3,8 +3,6 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- #ipsec pluto
-west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec addconn --verbose west
@@ -31,7 +29,8 @@ conn: "west" esp=<unset>
 conn: "west" ike=<unset>
 002 added connection description "west"
 west #
- ../bin/check-for-core.sh
+ echo "initdone"
+initdone
 west #
  ipsec auto --up west
 1v2 "west" #1: initiating IKEv2 IKE SA
@@ -42,4 +41,10 @@ west #
 002 "west" #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 004 "west" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
- 
+ echo done
+done
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

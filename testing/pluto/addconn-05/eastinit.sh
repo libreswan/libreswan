@@ -2,4 +2,4 @@
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec addconn --verbose east
-../bin/check-for-core.sh
+echo "initdone"

@@ -29,6 +29,10 @@ conn: "east" esp=<unset>
 conn: "east" ike=<unset>
 002 added connection description "east"
 east #
+ echo "initdone"
+initdone
+east #
  ../bin/check-for-core.sh
 east #
- 
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
