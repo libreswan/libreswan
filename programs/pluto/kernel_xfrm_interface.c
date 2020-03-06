@@ -138,7 +138,7 @@ static bool nl_query_small_resp(struct nlmsghdr *req, int protocol, struct nlm_r
 			} else {
 				LOG_ERRNO(errno, " in nl_query_small_resp() reading");
 				close(nl_fd);
-				break;
+				return true;
 			}
 		}
 	}
