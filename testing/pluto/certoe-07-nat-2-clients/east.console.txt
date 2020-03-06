@@ -136,7 +136,7 @@ west-ec                                                      P,,
 east #
  # you should see both RSA and NULL
 east #
- grep -e IKEv2_AUTH_ -e ': Authenticated using ' /tmp/pluto.log
+ grep -e IKEv2_AUTH_ -e ': authenticated using ' /tmp/pluto.log
 | emitting 2 raw bytes of hash algorithm identifier IKEv2_AUTH_HASH_SHA2_256 into IKEv2 Notify Payload
 | hash algorithm identifier IKEv2_AUTH_HASH_SHA2_256: 00 02
 | emitting 2 raw bytes of hash algorithm identifier IKEv2_AUTH_HASH_SHA2_384 into IKEv2 Notify Payload
@@ -144,7 +144,7 @@ east #
 | emitting 2 raw bytes of hash algorithm identifier IKEv2_AUTH_HASH_SHA2_512 into IKEv2 Notify Payload
 | hash algorithm identifier IKEv2_AUTH_HASH_SHA2_512: 00 04
 |    auth method: IKEv2_AUTH_NULL (0xd)
-"clear-or-private#192.1.2.0/24"[1] ...192.1.2.254 #1: Authenticated using authby=null
+"clear-or-private#192.1.2.0/24"[1] ...192.1.2.254 #1: authenticated using authby=null
 |    auth method: IKEv2_AUTH_DIGSIG (0xe)
 | emitting 2 raw bytes of hash algorithm identifier IKEv2_AUTH_HASH_SHA2_256 into IKEv2 Notify Payload
 | hash algorithm identifier IKEv2_AUTH_HASH_SHA2_256: 00 02
@@ -153,7 +153,7 @@ east #
 | emitting 2 raw bytes of hash algorithm identifier IKEv2_AUTH_HASH_SHA2_512 into IKEv2 Notify Payload
 | hash algorithm identifier IKEv2_AUTH_HASH_SHA2_512: 00 04
 |    auth method: IKEv2_AUTH_NULL (0xd)
-"clear-or-private#192.1.2.0/24"[2] ...192.1.2.254 #3: Authenticated using authby=null
+"clear-or-private#192.1.2.0/24"[2] ...192.1.2.254 #3: authenticated using authby=null
 |    auth method: IKEv2_AUTH_DIGSIG (0xe)
 east #
  ../bin/check-for-core.sh

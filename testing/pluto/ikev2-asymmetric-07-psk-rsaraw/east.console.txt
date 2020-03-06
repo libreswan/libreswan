@@ -35,13 +35,13 @@ east #
  echo "initdone"
 initdone
 east #
- grep -e IKEv2_AUTH_ -e ': Authenticated using ' OUTPUT/*pluto.log
+ grep -e IKEv2_AUTH_ -e ': authenticated using ' OUTPUT/*pluto.log
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_SHARED (0x2)
-OUTPUT/east.pluto.log:"westnet-eastnet-ikev2" #1: Authenticated using authby=secret
+OUTPUT/east.pluto.log:"westnet-eastnet-ikev2" #1: authenticated using authby=secret
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_SHARED (0x2)
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
-OUTPUT/west.pluto.log:"westnet-eastnet-ikev2" #2: Authenticated using RSA with SHA1
+OUTPUT/west.pluto.log:"westnet-eastnet-ikev2" #1: authenticated using RSA with SHA1
 east #
  ../bin/check-for-core.sh
 east #

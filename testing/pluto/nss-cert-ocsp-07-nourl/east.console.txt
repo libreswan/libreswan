@@ -32,7 +32,7 @@ east #
 east #
  hostname |grep east && grep ERROR /tmp/pluto.log
 east
-"nss-cert-ocsp" #1: ERROR: Peer's Certificate has been revoked.
+"nss-cert-ocsp" #1: NSS ERROR: Peer's Certificate has been revoked.
 east #
  # should not show a hit
 east #

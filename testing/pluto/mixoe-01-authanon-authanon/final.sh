@@ -1,5 +1,5 @@
 # Authentication should be RSA
-hostname | grep nic > /dev/null || grep Authenticated /tmp/pluto.log
+hostname | grep nic > /dev/null || grep authenticated /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

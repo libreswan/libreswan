@@ -20,7 +20,7 @@ west #
 1v2 "aes128" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "aes128" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 002 "aes128" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "aes128" #2: Authenticated using authby=secret
+003 "aes128" #1: authenticated using authby=secret
 002 "aes128" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "aes128" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -77,7 +77,7 @@ west #
 1v2 "aes128" #7: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "aes128" #8: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 002 "aes128" #8: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "aes128" #8: Authenticated using authby=secret
+003 "aes128" #7: authenticated using authby=secret
 002 "aes128" #8: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "aes128" #8: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -100,7 +100,7 @@ west #
 002 "aes128" #9: IMPAIR: duplicating key-length attribute
 1v2 "aes128" #10: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 002 "aes128" #10: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "aes128" #10: Authenticated using authby=secret
+003 "aes128" #9: authenticated using authby=secret
 002 "aes128" #10: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "aes128" #10: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -192,7 +192,7 @@ west #
 1v2 "3des" #19: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "3des" #20: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 002 "3des" #20: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "3des" #20: Authenticated using authby=secret
+003 "3des" #19: authenticated using authby=secret
 002 "3des" #20: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "3des" #20: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -217,7 +217,7 @@ west #
 1v2 "3des" #21: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "3des" #22: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 002 "3des" #22: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "3des" #22: Authenticated using authby=secret
+003 "3des" #21: authenticated using authby=secret
 002 "3des" #22: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "3des" #22: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
