@@ -1,0 +1,33 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec addconn --verbose east
+opening file: /etc/ipsec.conf
+debugging mode enabled
+end of file /etc/ipsec.conf
+Loading default conn
+starter: left is KH_NOTSET
+Loading conn west
+Loading conn east
+loading named conns: east
+seeking_src = 0, seeking_gateway = 0, has_peer = 1
+seeking_src = 0, seeking_gateway = 0, has_peer = 1
+conn: "east" modecfgdns=<unset>
+conn: "east" modecfgdomains=<unset>
+conn: "east" modecfgbanner=<unset>
+conn: "east" mark=<unset>
+conn: "east" mark-in=<unset>
+conn: "east" mark-out=<unset>
+conn: "east" vti_iface=<unset>
+conn: "east" redirect-to=<unset>
+conn: "east" accept-redirect-to=<unset>
+conn: "east" esp=<unset>
+conn: "east" ike=<unset>
+002 added connection description "east"
+east #
+ ../bin/check-for-core.sh
+

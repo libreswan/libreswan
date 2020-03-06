@@ -1,0 +1,3 @@
+test addconn with left=%eth1 Bugtracker #350
+
+The connection on west should initiate and establish
