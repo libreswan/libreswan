@@ -20,7 +20,7 @@
 
 #include "packet.h"
 
-extern enum allow_global_redirect global_redirect;
+extern enum yna_options global_redirect;
 extern char *global_redirect_to;
 
 /*

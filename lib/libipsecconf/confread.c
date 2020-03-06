@@ -105,6 +105,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 	SOPT(KBF_SECCOMP, SECCOMP_DISABLED); /* will be enabled in the future */
 
+	SOPT(KBF_GLOBAL_REDIRECT, yna_no);
 # undef SOPT
 
 	cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE] = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "dnssec rootkey file");

@@ -104,6 +104,7 @@ static void help(void)
 		"	[--rekeymargin <seconds>] [--rekeyfuzz <percentage>] \\\n"
 		"	[--retransmit-timeout <seconds>] \\\n"
 		"	[--retransmit-interval <msecs>] \\\n"
+		"	[--global-redirect] [--global-redirect-to] \\\n"
 		"	[--send-redirect] [--redirect-to] \\\n"
 		"	[--accept-redirect] [--accept-redirect-to] \\\n"
 		"	[--keyingtries <count>] \\\n"
@@ -303,6 +304,9 @@ enum option_enums {
 	OPT_IKE_MSGERR,
 	OPT_REKEY_IKE,
 	OPT_REKEY_IPSEC,
+
+	OPT_GLOBAL_REDIRECT,
+	OPT_GLOBAL_REDIRECT_TO,
 
 	OPT_ACTIVE_REDIRECT,
 	OPT_ACTIVE_REDIRECT_PEER,
@@ -547,6 +551,9 @@ static const struct option long_opts[] = {
 	{ "unlisten", no_argument, NULL, OPT_UNLISTEN + OO },
 	{ "ike-socket-bufsize", required_argument, NULL, OPT_IKEBUF + OO + NUMERIC_ARG},
 	{ "ike-socket-errqueue-toggle", no_argument, NULL, OPT_IKE_MSGERR + OO },
+
+	{ "global-redirect", required_argument, NULL, OPT_GLOBAL_REDIRECT + OO },
+	{ "global-redirect-to", required_argument, NULL, OPT_GLOBAL_REDIRECT_TO + OO },
 
 	{ "redirect", no_argument, NULL, OPT_ACTIVE_REDIRECT + OO },
 	{ "peer-ip", required_argument, NULL, OPT_ACTIVE_REDIRECT_PEER + OO },
@@ -1274,6 +1281,21 @@ int main(int argc, char **argv)
 		/* --deleteuser --name <xauthusername> */
 		case OPT_DELETEUSER:
 			msg.whack_deleteuser = TRUE;
+			continue;
+
+		case OPT_GLOBAL_REDIRECT:	/* --global-redirect */
+			if (streq(optarg, "no"))
+				msg.global_redirect = yna_no;
+			else if (streq(optarg, "yes"))
+				msg.global_redirect = yna_yes;
+			else if (streq(optarg, "auto"))
+				msg.global_redirect = yna_auto;
+			else
+				diag("--global-redirect options are 'no', 'yes' or 'auto'");
+			continue;
+
+		case OPT_GLOBAL_REDIRECT_TO:	/* --redirect-to */
+			msg.global_redirect_to = strdup(optarg);
 			continue;
 
 		case OPT_ACTIVE_REDIRECT:	/* --redirect */
@@ -2408,6 +2430,7 @@ int main(int argc, char **argv)
 	if (!(msg.whack_connection || msg.whack_key ||
 	      msg.whack_delete ||msg.whack_deleteid || msg.whack_deletestate ||
 	      msg.whack_deleteuser || msg.active_redirect ||
+	      msg.global_redirect || msg.global_redirect_to ||
 	      msg.whack_initiate || msg.whack_oppo_initiate ||
 	      msg.whack_terminate ||
 	      msg.whack_route || msg.whack_unroute || msg.whack_listen ||

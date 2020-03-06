@@ -1085,8 +1085,8 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	 }
 
 	if (st->st_seen_redirect_sup &&
-	    (global_redirect == GLOBAL_REDIRECT_YES ||
-	     (global_redirect == GLOBAL_REDIRECT_AUTO && require_ddos_cookies())))
+	    (global_redirect == yna_yes ||
+	     (global_redirect == yna_auto && require_ddos_cookies())))
 	{
 		if (global_redirect_to == NULL) {
 			loglog(RC_LOG_SERIOUS, "global-redirect-to is not specified; can't redirect requests");

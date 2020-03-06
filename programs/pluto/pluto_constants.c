@@ -299,20 +299,6 @@ enum_names ikev2_asym_auth_name = {
 	NULL
 };
 
-static const char *const allow_global_redirect_name[] = {
-	"no",
-	"yes",
-	"auto",
-};
-
-enum_names allow_global_redirect_names = {
-	GLOBAL_REDIRECT_NO,
-	GLOBAL_REDIRECT_AUTO,
-	ARRAY_REF(allow_global_redirect_name),
-	NULL,
-	NULL
-};
-
 static const char *const policy_shunt_names[4] = {
 	"TRAP",
 	"PASS",

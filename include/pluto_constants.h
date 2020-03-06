@@ -113,12 +113,6 @@ enum keyword_xauthby {
 	XAUTHBY_ALWAYSOK = 2,
 };
 
-enum allow_global_redirect {
-	GLOBAL_REDIRECT_NO,
-	GLOBAL_REDIRECT_YES,
-	GLOBAL_REDIRECT_AUTO,
-};
-
 enum keyword_xauthfail {
 	XAUTHFAIL_HARD = 0,
 	XAUTHFAIL_SOFT = 1,

@@ -341,6 +341,8 @@ struct whack_message {
 	bool vti_shared; /* use remote %any and skip cleanup on down? */
 
 	/* for RFC 5685 - IKEv2 Redirect mechanism */
+	enum yna_options global_redirect;
+	char *global_redirect_to;
 	char *redirect_to;
 	char *accept_redirect_to;
 

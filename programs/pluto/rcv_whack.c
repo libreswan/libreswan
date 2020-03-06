@@ -84,6 +84,21 @@
 
 #include "pluto_stats.h"
 
+/*
+ * Helper function for config file mapper: set string option value.
+ * Values passed in are expected to have been allocated using our
+ * own functions.
+ */
+static void set_cfg_string(char **target, char *value)
+{
+    /* Do nothing if value is unset. */
+    if (value == NULL || *value == '\0')
+        return;
+
+    /* Don't free previous target, it might be statically set. */
+    *target = clone_str(value, "(ignore) set_cfg_string item");
+}
+
 static int whack_route_connection(struct connection *c,
 				  void *arg)
 {
@@ -358,6 +373,20 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 
 	if (m->whack_connection) {
 		add_connection(whackfd, m);
+	}
+
+	if (m->global_redirect) {
+		global_redirect = m->global_redirect;
+		libreswan_log("Set global-redirect to %s",
+			((global_redirect == yna_auto) ? "auto" :
+				(global_redirect == yna_yes) ? "yes" : "no"));
+	}
+
+	if (m->global_redirect_to) {
+		/* XXX: thread-safe? */
+		pfreeany(global_redirect_to);
+		set_cfg_string(&global_redirect_to, m->global_redirect_to);
+		libreswan_log("Set global-redirect-to %s", global_redirect_to);
 	}
 
 	if (m->active_redirect) {

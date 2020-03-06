@@ -36,7 +36,7 @@
 #include "ikev2_redirect.h"
 #include "initiate.h"
 
-enum allow_global_redirect global_redirect;
+enum yna_options global_redirect;
 char *global_redirect_to;
 
 /*

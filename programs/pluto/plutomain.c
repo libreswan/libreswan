@@ -1186,11 +1186,11 @@ int main(int argc, char **argv)
 		case 'Q':	/* --global-redirect */
 		{
 			if (streq(optarg, "yes")) {
-				global_redirect = GLOBAL_REDIRECT_YES;
+				global_redirect = yna_yes;
 			} else if (streq(optarg, "no")) {
-				global_redirect = GLOBAL_REDIRECT_NO;
+				global_redirect = yna_no;
 			} else if (streq(optarg, "auto")) {
-				global_redirect = GLOBAL_REDIRECT_AUTO;
+				global_redirect = yna_auto;
 			} else {
 				libreswan_log(
 					"invalid option argument for global-redirect (allowed arguments: yes, no, auto)");
@@ -1272,19 +1272,6 @@ int main(int argc, char **argv)
 				       cfg->setup.strings[KSF_OCSP_URI]);
 			set_cfg_string(&ocsp_trust_name,
 				       cfg->setup.strings[KSF_OCSP_TRUSTNAME]);
-
-			char *tmp_global_redirect = cfg->setup.strings[KSF_GLOBAL_REDIRECT];
-			if (tmp_global_redirect == NULL || streq(tmp_global_redirect, "no")) {
-				/* NULL means it is not specified so default is no */
-				global_redirect = GLOBAL_REDIRECT_NO;
-			} else if (streq(tmp_global_redirect, "yes")) {
-				global_redirect = GLOBAL_REDIRECT_YES;
-			} else if (streq(tmp_global_redirect, "auto")) {
-				global_redirect = GLOBAL_REDIRECT_AUTO;
-			} else {
-				global_redirect = GLOBAL_REDIRECT_NO;
-				libreswan_log("unknown argument for global-redirect option");
-			}
 
 			crl_check_interval = deltatime(
 				cfg->setup.options[KBF_CRL_CHECKINTERVAL]);
@@ -1389,6 +1376,7 @@ int main(int argc, char **argv)
 			set_cfg_string(&virtual_private,
 				cfg->setup.strings[KSF_VIRTUALPRIVATE]);
 
+			global_redirect = cfg->setup.options[KBF_GLOBAL_REDIRECT];
 			set_cfg_string(&global_redirect_to,
 				cfg->setup.strings[KSF_GLOBAL_REDIRECT_TO]);
 
@@ -2022,7 +2010,8 @@ void show_setup_plutomain(const struct fd *whackfd)
 
 	whack_comment(whackfd,
 		"global-redirect=%s, global-redirect-to=%s",
-		enum_name(&allow_global_redirect_names, global_redirect),
+		((global_redirect == yna_auto) ? "auto" :
+			(global_redirect == yna_yes) ? "yes" : "no"),
 		global_redirect_to != NULL ? global_redirect_to : "<unset>"
 		);
 

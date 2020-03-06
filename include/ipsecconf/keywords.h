@@ -57,7 +57,6 @@ enum keyword_string_config_field {
 	KSF_PLUTO_DNSSEC_ROOTKEY_FILE,
 	KSF_PLUTO_DNSSEC_ANCHORS,
 	KSF_PROTOSTACK,
-	KSF_GLOBAL_REDIRECT,
 	KSF_GLOBAL_REDIRECT_TO,
 	KSF_LISTEN,
 	KSF_OCSP_URI,
@@ -107,6 +106,7 @@ enum keyword_numeric_config_field {
 	KBF_NFLOG_ALL,		/* Enable global nflog device */
 	KBF_DDOS_MODE,		/* set DDOS mode */
 	KBF_SECCOMP,		/* set SECCOMP mode */
+	KBF_GLOBAL_REDIRECT,
 	KBF_ROOF
 };
 

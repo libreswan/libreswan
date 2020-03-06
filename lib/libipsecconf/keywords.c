@@ -387,7 +387,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "perpeerlogdir",  kv_config,  kt_dirname,  KSF_PERPEERDIR, NULL, NULL, },
   { "uniqueids",  kv_config,  kt_bool,  KBF_UNIQUEIDS, NULL, NULL, },
   { "shuntlifetime",  kv_config,  kt_time,  KBF_SHUNTLIFETIME, NULL, NULL, },
-  { "global-redirect", kv_config, kt_string, KSF_GLOBAL_REDIRECT, NULL, NULL },
+  { "global-redirect", kv_config, kt_enum, KBF_GLOBAL_REDIRECT, &kw_yna_list, NULL },
   { "global-redirect-to", kv_config, kt_string, KSF_GLOBAL_REDIRECT_TO, NULL, NULL, },
 
   { "crl-strict",  kv_config,  kt_bool,  KBF_CRL_STRICT, NULL, NULL, },
