@@ -2983,7 +2983,10 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			return ikev2_parent_inI2outR2_auth_signature_continue(ike, md, &sig);
 		}
 		default:
-			bad_case(authby);
+			log_state(RC_LOG, st,
+				  "authentication method %s not supported",
+				  enum_name(&ikev2_auth_names, auth_method));
+			return STF_FATAL;
 		}
 	}
 }
