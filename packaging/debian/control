@@ -77,7 +77,7 @@ Description: Internet Key Exchange daemon
 Package: libreswan-dbg
 Architecture: any
 Section: debug
-Priority: extra
+Priority: optional
 Depends: libreswan (= ${binary:Version}), ${misc:Depends}
 Description: Internet Key Exchange daemon - debugging symbols
  Libreswan is an IPsec based VPN solution for the Linux kernel. Both
