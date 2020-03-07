@@ -66,8 +66,8 @@ done
 road #
  # Authentication should be AUTHNULL
 road #
- hostname | grep nic > /dev/null || grep Authenticated /tmp/pluto.log
-"private-or-clear#192.1.2.23/32"[1] ...192.1.2.23 #2: Authenticated using authby=null
+ hostname | grep nic > /dev/null || grep authenticated /tmp/pluto.log
+"private-or-clear#192.1.2.23/32"[1] ...192.1.2.23 #1: authenticated using authby=null
 road #
  ../bin/check-for-core.sh
 road #

@@ -602,9 +602,10 @@ stf_status check_signature_gen(struct state *st,
 	    try_all_keys("preloaded keys",
 			 &pluto_pubkeys,
 			 c, now, &s)) {
-		loglog(RC_LOG_SERIOUS, "Authenticated using %s with %s",
-			type->name,
-			(c->ike_version == IKEv1) ? "SHA-1" : hash_algo->common.fqn);
+		log_state(RC_LOG_SERIOUS, st,
+			  "authenticated using %s with %s",
+			  type->name,
+			  (c->ike_version == IKEv1) ? "SHA-1" : hash_algo->common.fqn);
 		return STF_OK;
 	}
 
@@ -622,27 +623,27 @@ stf_status check_signature_gen(struct state *st,
 	passert(id_str.buf[0] != '\0');
 
 	if (s.best_ugh == NULL) {
-		loglog(RC_LOG_SERIOUS,
-		       "no %s public key known for '%s'",
-		       type->name, id_str.buf);
+		log_state(RC_LOG_SERIOUS, st,
+			  "no %s public key known for '%s'",
+			  type->name, id_str.buf);
 		/* ??? is this the best code there is? */
 		return STF_FAIL + INVALID_KEY_INFORMATION;
 	}
 
 	if (s.best_ugh[0] == '9') {
-		loglog(RC_LOG_SERIOUS, "%s", s.best_ugh + 1);
+		log_state(RC_LOG_SERIOUS, st, "%s", s.best_ugh + 1);
 		/* XXX Could send notification back */
 		return STF_FAIL + INVALID_HASH_INFORMATION;
 	}
 
 	if (s.tried_cnt == 1) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s Signature check (on %s) failed (wrong key?); tried%s",
-		       type->name, id_str.buf, s.tried);
+		log_state(RC_LOG_SERIOUS, st,
+			  "%s Signature check (on %s) failed (wrong key?); tried%s",
+			  type->name, id_str.buf, s.tried);
 	} else {
-		loglog(RC_LOG_SERIOUS,
-		       "%s Signature check (on %s) failed: tried%s keys but none worked.",
-		       type->name, id_str.buf, s.tried);
+		log_state(RC_LOG_SERIOUS, st,
+			  "%s Signature check (on %s) failed: tried%s keys but none worked.",
+			  type->name, id_str.buf, s.tried);
 	}
 	dbg("all %d %s public keys for %s failed: best decrypted SIG payload into a malformed ECB (%s)",
 	    s.tried_cnt, type->name, id_str.buf, s.best_ugh+1/*skip '9'*/);

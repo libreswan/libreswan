@@ -2,7 +2,7 @@
 hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 grep "negotiated connection" /tmp/pluto.log
 # you should see both RSA and NULL
-grep -e IKEv2_AUTH_ -e ': Authenticated using ' OUTPUT/*pluto.log 
+grep -e IKEv2_AUTH_ -e ': authenticated using ' OUTPUT/*pluto.log 
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

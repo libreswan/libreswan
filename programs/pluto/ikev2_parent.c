@@ -275,10 +275,11 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 	case IKEv2_AUTH_RSA:
 	{
 		if (that_authby != AUTH_RSASIG) {
-			libreswan_log("Peer attempted RSA authentication but we want %s in %s",
-				enum_name(&ikev2_asym_auth_name, that_authby),
-				context);
-			return FALSE;
+			log_state(RC_LOG, st,
+				  "peer attempted RSA authentication but we want %s in %s",
+				  enum_name(&ikev2_asym_auth_name, that_authby),
+				  context);
+			return false;
 		}
 
 		stf_status authstat = ikev2_verify_rsa_hash(
@@ -289,24 +290,27 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 				&ike_alg_hash_sha1);
 
 		if (authstat != STF_OK) {
-			libreswan_log("RSA authentication of %s failed", context);
-			return FALSE;
+			log_state(RC_LOG, st,
+				  "RSA authentication of %s failed", context);
+			return false;
 		}
-		return TRUE;
+		return true;
 	}
 
 	case IKEv2_AUTH_PSK:
 	{
 		if (that_authby != AUTH_PSK) {
-			libreswan_log("Peer attempted PSK authentication but we want %s in %s",
-				enum_name(&ikev2_asym_auth_name, that_authby),
-				context);
+			log_state(RC_LOG, st,
+				  "peer attempted PSK authentication but we want %s in %s",
+				  enum_name(&ikev2_asym_auth_name, that_authby),
+				  context);
 			return FALSE;
 		}
 
 		if (!ikev2_verify_psk_auth(AUTH_PSK, st, idhash_in, pbs)) {
-			libreswan_log("PSK Authentication failed: AUTH mismatch in %s!",
-				context);
+			log_state(RC_LOG, st,
+				  "PSK Authentication failed: AUTH mismatch in %s!",
+				  context);
 			return FALSE;
 		}
 		return TRUE;
@@ -316,15 +320,17 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 	{
 		if (!(that_authby == AUTH_NULL ||
 		      (that_authby == AUTH_RSASIG && LIN(POLICY_AUTH_NULL, st->st_connection->policy)))) {
-			libreswan_log("Peer attempted NULL authentication but we want %s in %s",
-				enum_name(&ikev2_asym_auth_name, that_authby),
-				context);
+			log_state(RC_LOG, st,
+				  "peer attempted NULL authentication but we want %s in %s",
+				  enum_name(&ikev2_asym_auth_name, that_authby),
+				  context);
 			return FALSE;
 		}
 
 		if (!ikev2_verify_psk_auth(AUTH_NULL, st, idhash_in, pbs)) {
-			libreswan_log("NULL Authentication failed: AUTH mismatch in %s! (implementation bug?)",
-				context);
+			log_state(RC_LOG, st,
+				  "NULL authentication failed: AUTH mismatch in %s! (implementation bug?)",
+				  context);
 			return FALSE;
 		}
 		st->st_ikev2_anon = TRUE;
@@ -334,9 +340,10 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 	case IKEv2_AUTH_DIGSIG:
 	{
 		if (that_authby != AUTH_ECDSA && that_authby != AUTH_RSASIG) {
-			libreswan_log("Peer attempted Authentication through Digital Signature but we want %s in %s",
-				enum_name(&ikev2_asym_auth_name, that_authby),
-				context);
+			log_state(RC_LOG, st,
+				  "peer attempted Authentication through Digital Signature but we want %s in %s",
+				  enum_name(&ikev2_asym_auth_name, that_authby),
+				  context);
 			return FALSE;
 		}
 
@@ -360,8 +367,9 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 
 		for (hap = ha; ; hap++) {
 			if (hap == &ha[elemsof(ha)]) {
-				libreswan_log("No acceptable ECDSA/RSA-PSS ASN.1 signature hash proposal included for %s in %s",
-					enum_name(&ikev2_asym_auth_name, that_authby), context);
+				log_state(RC_LOG, st,
+					  "no acceptable ECDSA/RSA-PSS ASN.1 signature hash proposal included for %s in %s",
+					  enum_name(&ikev2_asym_auth_name, that_authby), context);
 				DBG(DBG_BASE, {
 					size_t dl = min(pbs_left(pbs),
 						(size_t) (ASN1_LEN_ALGO_IDENTIFIER +
@@ -397,18 +405,20 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 		}
 
 		if (authstat != STF_OK) {
-			libreswan_log("Digital Signature authentication using %s failed in %s",
-				enum_name(&ikev2_asym_auth_name, that_authby),
-				context);
+			log_state(RC_LOG, st,
+				  "Digital Signature authentication using %s failed in %s",
+				  enum_name(&ikev2_asym_auth_name, that_authby),
+				  context);
 			return FALSE;
 		}
 		return TRUE;
 	}
 
 	default:
-		libreswan_log("authentication method: %s not supported in %s",
-				enum_name(&ikev2_auth_names, recv_auth),
-				context);
+		log_state(RC_LOG, st,
+			  "authentication method: %s not supported in %s",
+			  enum_name(&ikev2_auth_names, recv_auth),
+			  context);
 		return FALSE;
 	}
 }

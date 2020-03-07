@@ -32,8 +32,8 @@ initdone
 east #
  # Authentication should be AUTH_NULL
 east #
- hostname | grep nic > /dev/null || grep Authenticated /tmp/pluto.log
-"private-or-clear#192.1.3.0/24"[1] ...192.1.3.209 #1: Authenticated using authby=null
+ hostname | grep nic > /dev/null || grep authenticated /tmp/pluto.log
+"private-or-clear#192.1.3.0/24"[1] ...192.1.3.209 #1: authenticated using authby=null
 east #
  ../bin/check-for-core.sh
 east #

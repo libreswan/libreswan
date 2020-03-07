@@ -740,7 +740,8 @@ static bool decode_certs(struct state *st, struct payload_digest *cert_payloads)
 			/* For instance, no CA, unknown certs, ... */
 			return true;
 		} else {
-			libreswan_log("X509: Certificate rejected for this connection");
+			log_state(RC_LOG, st,
+				    "X509: certificate rejected for this connection");
 			/* For instance, revoked */
 			return false;
 		}
@@ -748,7 +749,8 @@ static bool decode_certs(struct state *st, struct payload_digest *cert_payloads)
 
 	passert(certs.cert_chain->cert != NULL);
 	CERTCertificate *end_cert = certs.cert_chain->cert;
-	libreswan_log("certificate verified OK: %s", end_cert->subjectName);
+	log_state(RC_LOG, st,
+		  "certificate verified OK: %s", end_cert->subjectName);
 
 	pexpect(st->st_remote_certs.pubkey_db == NULL);
 	st->st_remote_certs.pubkey_db = certs.pubkey_db;
