@@ -2966,11 +2966,14 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		case IKEv2_AUTH_RSA:
 		{
 			const struct hash_desc *hash_algo = &ike_alg_hash_sha1;
-			struct crypt_mac hash_to_sign = v2_calculate_sighash(&ike->sa, ORIGINAL_RESPONDER,
-									     &ike->sa.st_v2_id_payload.mac,
-									     ike->sa.st_firstpacket_me,
-									     hash_algo);
-			return submit_v2_auth_signature(ike, &hash_to_sign, hash_algo, authby,
+			struct crypt_mac hash_to_sign =
+				v2_calculate_sighash(&ike->sa, ORIGINAL_RESPONDER,
+						     &ike->sa.st_v2_id_payload.mac,
+						     ike->sa.st_firstpacket_me,
+						     hash_algo);
+			return submit_v2_auth_signature(ike, st,
+							&hash_to_sign, hash_algo,
+							authby,
 							ikev2_parent_inI2outR2_auth_signature_continue);
 		}
 		case IKEv2_AUTH_DIGSIG:
@@ -2983,7 +2986,8 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 									     &ike->sa.st_v2_id_payload.mac,
 									     ike->sa.st_firstpacket_me,
 									     hash_algo);
-			return submit_v2_auth_signature(ike, &hash_to_sign, hash_algo, authby,
+			return submit_v2_auth_signature(ike, st,
+							&hash_to_sign, hash_algo, authby,
 							ikev2_parent_inI2outR2_auth_signature_continue);
 		}
 		case IKEv2_AUTH_PSK:
@@ -3546,19 +3550,6 @@ stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct 
 	}
 	st->st_seen_no_tfc = md->v2N.esp_tfc_padding_not_supported; /* Technically, this should be only on the child state */
 
-#ifdef NOT_YET
-	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
-	if (cert_payloads != NULL) {
-		submit_cert_decode(ike, st, md, cert_payloads,
-				   v2_inR2_post_cert_decode,
-				   "initiator decoding certificates");
-		return STF_SUSPEND;
-	} else {
-		dbg("no certs to decode");
-		ike->sa.st_remote_certs.processed = true;
-		ike->sa.st_remote_certs.harmless = true;
-	}
-#else
 	/*
 	 * On the initiator, we can STF_FATAL on IKE SA errors, because no
 	 * packet needs to be sent anymore. And we cannot recover. Unlike
@@ -3571,20 +3562,18 @@ stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct 
 	 * Note: once AUTH succeeds, we can still return STF_FAIL's because
 	 * those apply to the Child SA and should not tear down the IKE SA.
 	 */
-	if (!v2_decode_certs(ike, md)) {
-		pexpect(ike->sa.st_sa_role == SA_INITIATOR);
-		pexpect(ike->sa.st_remote_certs.processed);
-		pexpect(ike->sa.st_remote_certs.verified == NULL);
-		/*
-		 * One of the certs was bad; no point switching
-		 * initiator.
-		 */
-		libreswan_log("X509: CERT payload bogus or revoked");
-		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
-		return STF_FATAL;
+	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
+	if (cert_payloads != NULL) {
+		submit_cert_decode(ike, st, md, cert_payloads,
+				   v2_inR2_post_cert_decode,
+				   "initiator decoding certificates");
+		return STF_SUSPEND;
+	} else {
+		dbg("no certs to decode");
+		ike->sa.st_remote_certs.processed = true;
+		ike->sa.st_remote_certs.harmless = true;
+		return v2_inR2_post_cert_decode(st, md);
 	}
-#endif
-	return v2_inR2_post_cert_decode(st, md);
 }
 
 static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *md)
@@ -3593,7 +3582,6 @@ static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *
 	struct ike_sa *ike = ike_sa(st);
 	struct state *pst = &ike->sa;
 
-	/* XXX this call might change connection in md->st! */
 	if (!ikev2_decode_peer_id(md)) {
 		event_force(EVENT_SA_EXPIRE, st);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);

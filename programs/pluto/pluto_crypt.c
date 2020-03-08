@@ -528,6 +528,7 @@ static void inline_worker(struct state *unused_st UNUSED,
  */
 
 static void submit_crypto_request(struct pluto_crypto_req_cont *cn,
+				  struct logger logger,
 				  struct state *st,
 				  struct crypto_task *task,
 				  const struct crypto_handler *handler)
@@ -548,7 +549,7 @@ static void submit_crypto_request(struct pluto_crypto_req_cont *cn,
 	pexpect(st->st_offloaded_task == NULL);
 	st->st_offloaded_task = cn;
 	st->st_v1_offloaded_task_in_background = false;
-	cn->logger = clone_logger(STATE_LOGGER(st));
+	cn->logger = clone_logger(logger);
 
 	/*
 	 * do it all ourselves?
@@ -845,15 +846,17 @@ void send_crypto_helper_request(struct state *st,
 	passert(cn->pcrc_pcr.pcr_type != pcr_crypto);
 	struct crypto_task *task = alloc_thing(struct crypto_task, "pcr_task");
 	task->cn = cn;
-	submit_crypto_request(cn, st, task, &pcr_handler);
+	submit_crypto_request(cn, STATE_LOGGER(st), st,
+			      task, &pcr_handler);
 }
 
-void submit_crypto(struct state *st,
+void submit_crypto(struct logger logger,
+		   struct state *st,
 		   struct crypto_task *task,
 		   const struct crypto_handler *handler,
 		   const char *name)
 {
 	struct pluto_crypto_req_cont *cn = new_pcrc(NULL, name);
 	pcr_init(&cn->pcrc_pcr, pcr_crypto);
-	submit_crypto_request(cn, st, task, handler);
+	submit_crypto_request(cn, logger, st, task, handler);
 }

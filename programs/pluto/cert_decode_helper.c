@@ -42,6 +42,7 @@
 #include "root_certs.h"
 #include "x509.h"
 #include "crl_queue.h"
+#include "log.h"
 
 /*
  * Just decode a cert payload.
@@ -91,7 +92,7 @@ void submit_cert_decode(struct ike_sa *ike, struct state *state_to_resume,
 			.crl_strict = crl_strict,
 		},
 	};
-	submit_crypto(state_to_resume,
+	submit_crypto(STATE_LOGGER(&ike->sa), state_to_resume,
 		      clone_thing(task, "decode certificate payload task"),
 		      &cert_decode_handler, why);
 }
@@ -181,13 +182,14 @@ static stf_status cert_decode_completed(struct state *st,
 		if (ike->sa.st_remote_certs.verified != NULL) {
 			CERTCertificate *end_cert = ike->sa.st_remote_certs.verified->cert;
 			passert(end_cert != NULL);
-			libreswan_log("certificate verified OK: %s", end_cert->subjectName);
+			log_state(RC_LOG, &ike->sa,
+				  "certificate verified OK: %s", end_cert->subjectName);
 		}
 	} else {
 		pexpect(ike->sa.st_remote_certs.verified == NULL);
 		pexpect(ike->sa.st_remote_certs.pubkey_db == NULL);
-		libreswan_log("X509: Certificate rejected for this connection");
-		libreswan_log("X509: CERT payload bogus or revoked");
+		log_state(RC_LOG, &ike->sa, "X509: Certificate rejected for this connection");
+		log_state(RC_LOG, &ike->sa, "X509: CERT payload bogus or revoked");
 		if (ike->sa.st_sa_role == SA_INITIATOR) {
 			/*
 			 * One of the certs was bad; no point switching
