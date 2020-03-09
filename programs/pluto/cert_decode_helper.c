@@ -64,7 +64,6 @@ struct crypto_task {
 	struct msg_digest *md; /* counted reference */
 	struct payload_digest *cert_payloads; /* ref into md */
 	cert_decode_cb *cb;
-	so_serial_t serialno;
 	struct id id;
 	struct rev_opts rev_opts;
 	enum ike_version ike_version;
@@ -82,7 +81,6 @@ void submit_cert_decode(struct ike_sa *ike, struct state *state_to_resume,
 		.md = md_addref(md, HERE),
 		.cert_payloads = cert_payloads,
 		.cb = cb,
-		.serialno = ike->sa.st_serialno,
 		.ike_version = ike->sa.st_ike_version,
 		.id = ike->sa.st_connection->spd.that.id, /* XXX: safe? */
 		.rev_opts = {
@@ -101,7 +99,7 @@ static void cert_decode_computer(struct logger *logger,
 				 struct crypto_task *task,
 				 int my_thread UNUSED)
 {
-	task->verified = find_and_verify_certs( task->serialno, logger, task->ike_version,
+	task->verified = find_and_verify_certs(logger, task->ike_version,
 					       task->cert_payloads, &task->rev_opts,
 					       task->root_certs, &task->id);
 }

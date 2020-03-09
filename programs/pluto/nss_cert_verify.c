@@ -509,8 +509,7 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
  * ee_out is the resulting end cert
  */
 
-struct verified_certs find_and_verify_certs(so_serial_t serialno,
-					    struct logger *logger,
+struct verified_certs find_and_verify_certs(struct logger *logger,
 					    enum ike_version ike_version,
 					    struct payload_digest *cert_payloads,
 					    const struct rev_opts *rev_opts,
@@ -559,10 +558,10 @@ struct verified_certs find_and_verify_certs(so_serial_t serialno,
 	 * This routine populates certs[] with the imported
 	 * certificates.  For details read CERT_ImportCerts().
 	 */
-	threadtime_t decode_time = threadtime_start();
+	logtime_t decode_time = logtime_start(logger);
 	result.cert_chain = decode_cert_payloads(handle, ike_version,
 						 cert_payloads);
-	threadtime_stop(&decode_time, serialno, "%s() calling decode_cert_payloads()", __func__);
+	logtime_stop(&decode_time, "%s() calling decode_cert_payloads()", __func__);
 	if (result.cert_chain == NULL) {
 		return result;
 	}
@@ -582,10 +581,9 @@ struct verified_certs find_and_verify_certs(so_serial_t serialno,
 		return result;
 	}
 
-	threadtime_t crl_time = threadtime_start();
+	logtime_t crl_time = logtime_start(logger);
 	bool crl_update_needed = crl_update_check(handle, result.cert_chain);
-	threadtime_stop(&crl_time, serialno,
-			"%s() calling crl_update_check()", __func__);
+	logtime_stop(&crl_time, "%s() calling crl_update_check()", __func__);
 	if (crl_update_needed) {
 		if (rev_opts->crl_strict) {
 			log_message(RC_LOG, logger,
@@ -598,10 +596,9 @@ struct verified_certs find_and_verify_certs(so_serial_t serialno,
 		dbg("missing or expired CRL");
 	}
 
-	threadtime_t verify_time = threadtime_start();
+	logtime_t verify_time = logtime_start(logger);
 	bool end_ok = verify_end_cert(logger, root_certs, rev_opts, end_cert);
-	threadtime_stop(&verify_time, serialno,
-			"%s() calling verify_end_cert()", __func__);
+	logtime_stop(&verify_time, "%s() calling verify_end_cert()", __func__);
 	if (!end_ok) {
 		/*
 		 * XXX: preserve verify_end_cert()'s behaviour? only
@@ -613,9 +610,9 @@ struct verified_certs find_and_verify_certs(so_serial_t serialno,
 		return result;
 	}
 
-	threadtime_t start_add = threadtime_start();
+	logtime_t start_add = logtime_start(logger);
 	add_pubkey_from_nss_cert(&result.pubkey_db, keyid, end_cert);
-	threadtime_stop(&start_add, serialno, "%s() calling add_pubkey_from_nss_cert()", __func__);
+	logtime_stop(&start_add, "%s() calling add_pubkey_from_nss_cert()", __func__);
 
 	return result;
 }

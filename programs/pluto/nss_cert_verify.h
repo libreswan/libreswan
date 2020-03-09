@@ -48,8 +48,7 @@ struct verified_certs {
 	bool harmless;
 };
 
-struct verified_certs find_and_verify_certs(so_serial_t serialno,
-					    struct logger *log,
+struct verified_certs find_and_verify_certs(struct logger *log,
 					    enum ike_version ike_version,
 					    struct payload_digest *cert_payloads,
 					    const struct rev_opts *rev_opts,
