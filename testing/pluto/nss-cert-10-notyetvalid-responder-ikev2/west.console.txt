@@ -24,8 +24,7 @@ west #
 1v2 "nss-cert" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "nss-cert" #1: certificate E=user-notyetvalid@testing.libreswan.org,CN=notyetvalid.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA failed IPsec verification
 003 "nss-cert" #1: NSS ERROR: Peer's Certificate has expired.
-002 "nss-cert" #1: X509: certificate rejected for this connection
-002 "nss-cert" #2: X509: CERT payload bogus or revoked
+002 "nss-cert" #1: X509: certificate payload rejected for this connection
 036 "nss-cert" #2: encountered fatal error in state STATE_PARENT_I2
 west #
  echo done
@@ -33,8 +32,8 @@ done
 west #
  # only expected to show failure on west
 west #
- grep "certificate rejected" /tmp/pluto.log
-"nss-cert" #1: X509: certificate rejected for this connection
+ grep "certificate payload rejected" /tmp/pluto.log
+"nss-cert" #1: X509: certificate payload rejected for this connection
 west #
  ../bin/check-for-core.sh
 west #
