@@ -1790,21 +1790,23 @@ enum ipsec_comp_algo {
 };
 
 /*
- * RFC 7427 Signature Authentication in the Internet Key Exchange Version 2 (IKEv2)
- * Section 7: IANA Considerations
+ * Internet Key Exchange Version 2 (IKEv2) Parameters: IKEv2 Hash Algorithms
  * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#hash-algorithms
+ *
+ * Currently it is only used by RFC 7427 Signature Authentication in
+ * the Internet Key Exchange Version 2.
  */
 
-enum notify_payload_hash_algorithms {
-	IKEv2_AUTH_HASH_RESERVED = 0,
-	IKEv2_AUTH_HASH_SHA1     = 1,
-	IKEv2_AUTH_HASH_SHA2_256 = 2,
-	IKEv2_AUTH_HASH_SHA2_384 = 3,
-	IKEv2_AUTH_HASH_SHA2_512 = 4,
-	IKEv2_AUTH_HASH_IDENTITY = 5, /* RFC 4307-bis */
+enum ikev2_hash_algorithm {
+	IKEv2_HASH_ALGORITHM_RESERVED = 0,
+	IKEv2_HASH_ALGORITHM_SHA1     = 1,
+	IKEv2_HASH_ALGORITHM_SHA2_256 = 2,
+	IKEv2_HASH_ALGORITHM_SHA2_384 = 3,
+	IKEv2_HASH_ALGORITHM_SHA2_512 = 4,
+	IKEv2_HASH_ALGORITHM_IDENTITY = 5, /* RFC 4307-bis */
 	/* 6-1023 Unassigned */
 	/* 1024-65535 Reserved for private use */
-	IKEv2_AUTH_HASH_ROOF
+	IKEv2_HASH_ALGORITHM_ROOF
 };
 
 /*

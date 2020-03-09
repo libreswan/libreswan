@@ -93,15 +93,15 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 	size_t signed_len;
 
 	switch (hash_algo->common.ikev2_alg_id) {
-	case IKEv2_AUTH_HASH_SHA1:
+	case IKEv2_HASH_ALGORITHM_SHA1:
 		/* old style RSA with SHA1 */
 		memcpy(signed_octets, &rsa_sha1_der_header, sizeof(rsa_sha1_der_header));
 		memcpy(signed_octets + sizeof(rsa_sha1_der_header), hash.ptr, hash.len);
 		signed_len = sizeof(rsa_sha1_der_header) + hash.len;
 		break;
-	case IKEv2_AUTH_HASH_SHA2_256:
-	case IKEv2_AUTH_HASH_SHA2_384:
-	case IKEv2_AUTH_HASH_SHA2_512:
+	case IKEv2_HASH_ALGORITHM_SHA2_256:
+	case IKEv2_HASH_ALGORITHM_SHA2_384:
+	case IKEv2_HASH_ALGORITHM_SHA2_512:
 		passert(hash.len <= sizeof(signed_octets));
 		memcpy(signed_octets, hash.ptr, hash.len);
 		signed_len = hash.len;
@@ -159,7 +159,8 @@ static err_t try_RSA_signature_v2(const struct crypt_mac *hash,
 	if (sig_len != k->k)
 		return "1" "SIG length does not match public key length";
 
-	err_t ugh = RSA_signature_verify_nss(k, hash, sig_val, sig_len, hash_algo);
+	err_t ugh = RSA_signature_verify_nss(k, hash, sig_val, sig_len,
+					     hash_algo);
 	if (ugh != NULL)
 		return ugh;
 

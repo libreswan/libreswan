@@ -234,9 +234,9 @@ bool emit_v2N_signature_hash_algorithms(lset_t sighash_policy,
 			return false;					\
 		}							\
 	}
-	H(POL_SIGHASH_SHA2_256, IKEv2_AUTH_HASH_SHA2_256);
-	H(POL_SIGHASH_SHA2_384, IKEv2_AUTH_HASH_SHA2_384);
-	H(POL_SIGHASH_SHA2_512, IKEv2_AUTH_HASH_SHA2_512);
+	H(POL_SIGHASH_SHA2_256, IKEv2_HASH_ALGORITHM_SHA2_256);
+	H(POL_SIGHASH_SHA2_384, IKEv2_HASH_ALGORITHM_SHA2_384);
+	H(POL_SIGHASH_SHA2_512, IKEv2_HASH_ALGORITHM_SHA2_512);
 #undef H
 
 	close_output_pbs(&n_pbs);

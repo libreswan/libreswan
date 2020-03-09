@@ -44,7 +44,7 @@ const struct hash_desc ike_alg_hash_sha1 = {
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_SHA1,
 			[IKEv1_ESP_ID] = -1,
-			[IKEv2_ALG_ID] = IKEv2_AUTH_HASH_SHA1,
+			[IKEv2_ALG_ID] = IKEv2_HASH_ALGORITHM_SHA1,
 		},
 		.fips = true,
 	},

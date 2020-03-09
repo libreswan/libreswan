@@ -217,7 +217,7 @@ struct hash_signature v2_auth_signature(struct logger *logger,
 	size_t hash_len;
 
 	switch (hash_algo->common.ikev2_alg_id) {
-	case IKEv2_AUTH_HASH_SHA1:
+	case IKEv2_HASH_ALGORITHM_SHA1:
 		/* old style RSA with SHA1 */
 		memcpy(hash_octets, &rsa_sha1_der_header, sizeof(rsa_sha1_der_header));
 		memcpy(hash_octets + sizeof(rsa_sha1_der_header),
@@ -225,9 +225,9 @@ struct hash_signature v2_auth_signature(struct logger *logger,
 		hash_len = sizeof(rsa_sha1_der_header) + hash_to_sign->len;
 		break;
 
-	case IKEv2_AUTH_HASH_SHA2_256:
-	case IKEv2_AUTH_HASH_SHA2_384:
-	case IKEv2_AUTH_HASH_SHA2_512:
+	case IKEv2_HASH_ALGORITHM_SHA2_256:
+	case IKEv2_HASH_ALGORITHM_SHA2_384:
+	case IKEv2_HASH_ALGORITHM_SHA2_512:
 		hash_len = hash_to_sign->len;
 		passert(hash_len <= sizeof(hash_octets));
 		memcpy(hash_octets, hash_to_sign->ptr, hash_to_sign->len);

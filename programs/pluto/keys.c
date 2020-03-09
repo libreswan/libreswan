@@ -220,13 +220,13 @@ struct hash_signature sign_hash_RSA(const struct private_key_stuff *pks,
 		CK_RSA_PKCS_PSS_PARAMS mech;
 
 		switch (hash_algo->common.ikev2_alg_id) {
-		case IKEv2_AUTH_HASH_SHA2_256:
+		case IKEv2_HASH_ALGORITHM_SHA2_256:
 			mech = rsa_pss_sha2_256;
 			break;
-		case IKEv2_AUTH_HASH_SHA2_384:
+		case IKEv2_HASH_ALGORITHM_SHA2_384:
 			mech = rsa_pss_sha2_384;
 			break;
-		case IKEv2_AUTH_HASH_SHA2_512:
+		case IKEv2_HASH_ALGORITHM_SHA2_512:
 			mech = rsa_pss_sha2_512;
 			break;
 		default:
@@ -405,13 +405,13 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 		/* Digital signature scheme with RSA-PSS */
 		CK_RSA_PKCS_PSS_PARAMS mech;
 		switch (hash_algo->common.ikev2_alg_id) {
-		case IKEv2_AUTH_HASH_SHA2_256:
+		case IKEv2_HASH_ALGORITHM_SHA2_256:
 			mech = rsa_pss_sha2_256;
 			break;
-		case IKEv2_AUTH_HASH_SHA2_384:
+		case IKEv2_HASH_ALGORITHM_SHA2_384:
 			mech = rsa_pss_sha2_384;
 			break;
-		case IKEv2_AUTH_HASH_SHA2_512:
+		case IKEv2_HASH_ALGORITHM_SHA2_512:
 			mech = rsa_pss_sha2_512;
 			break;
 		default:

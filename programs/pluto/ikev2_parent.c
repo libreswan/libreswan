@@ -126,30 +126,30 @@ static bool negotiate_hash_algo_from_notification(struct payload_digest *p, stru
 
 		switch (h_value)  {
 		/* We no longer support SHA1 (as per RFC 8247) */
-		case IKEv2_AUTH_HASH_SHA2_256:
+		case IKEv2_HASH_ALGORITHM_SHA2_256:
 			if (sighash_policy & POL_SIGHASH_SHA2_256) {
 				st->st_hash_negotiated |= NEGOTIATE_AUTH_HASH_SHA2_256;
-				dbg("received AUTH_HASH_SHA2_256 which is allowed by local policy");
+				dbg("received HASH_ALGORITHM_SHA2_256 which is allowed by local policy");
 			}
 			break;
-		case IKEv2_AUTH_HASH_SHA2_384:
+		case IKEv2_HASH_ALGORITHM_SHA2_384:
 			if (sighash_policy & POL_SIGHASH_SHA2_384) {
 				st->st_hash_negotiated |= NEGOTIATE_AUTH_HASH_SHA2_384;
-				dbg("received AUTH_HASH_SHA2_384 which is allowed by local policy");
+				dbg("received HASH_ALGORITHM_SHA2_384 which is allowed by local policy");
 			}
 			break;
-		case IKEv2_AUTH_HASH_SHA2_512:
+		case IKEv2_HASH_ALGORITHM_SHA2_512:
 			if (sighash_policy & POL_SIGHASH_SHA2_512) {
 				st->st_hash_negotiated |= NEGOTIATE_AUTH_HASH_SHA2_512;
-				dbg("received AUTH_HASH_SHA2_512 which is allowed by local policy");
+				dbg("received HASH_ALGORITHM_SHA2_512 which is allowed by local policy");
 			}
 			break;
-		case IKEv2_AUTH_HASH_SHA1:
-			dbg("received and ignored IKEv2_AUTH_HASH_SHA1 - it is no longer allowed as per RFC 8247");
+		case IKEv2_HASH_ALGORITHM_SHA1:
+			dbg("received and ignored IKEv2_HASH_ALGORITHM_SHA1 - it is no longer allowed as per RFC 8247");
 			break;
-		case IKEv2_AUTH_HASH_IDENTITY:
-			//st->st_hash_negotiated |= NEGOTIATE_AUTH_HASH_IDENTITY;
-			dbg("received unsupported AUTH_HASH_IDENTITY - ignored");
+		case IKEv2_HASH_ALGORITHM_IDENTITY:
+			/* st->st_hash_negotiated |= NEGOTIATE_HASH_ALGORITHM_IDENTITY; */
+			dbg("received unsupported HASH_ALGORITHM_IDENTITY - ignored");
 			break;
 		default:
 			libreswan_log("Received and ignored unknown hash algorithm %d", h_value);
@@ -361,7 +361,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 			{ NEGOTIATE_AUTH_HASH_SHA2_512, &ike_alg_hash_sha2_512 },
 			{ NEGOTIATE_AUTH_HASH_SHA2_384, &ike_alg_hash_sha2_384 },
 			{ NEGOTIATE_AUTH_HASH_SHA2_256, &ike_alg_hash_sha2_256 },
-			// { NEGOTIATE_AUTH_HASH_IDENTITY, IKEv2_AUTH_HASH_IDENTITY },
+			/* { NEGOTIATE_AUTH_HASH_IDENTITY, IKEv2_HASH_ALGORITHM_IDENTITY }, */
 		};
 
 		const struct hash_alts *hap;
@@ -378,7 +378,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 							PMAX(ASN1_SHA2_RSA_PSS_SIZE,
 								ASN1_SHA2_ECDSA_SIZE))));
 					DBG_dump("offered blob", pbs->cur, dl);
-				});
+					})
 				return FALSE;	/* none recognized */
 			}
 
@@ -394,11 +394,13 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 
 		switch (that_authby) {
 		case AUTH_RSASIG:
-			authstat = ikev2_verify_rsa_hash(st, role, idhash_in, pbs, hap->algo);
+			authstat = ikev2_verify_rsa_hash(st, role, idhash_in, pbs,
+							 hap->algo);
 			break;
 
 		case AUTH_ECDSA:
-			authstat = ikev2_verify_ecdsa_hash(st, role, idhash_in, pbs, hap->algo);
+			authstat = ikev2_verify_ecdsa_hash(st, role, idhash_in, pbs,
+							 hap->algo);
 			break;
 
 		default:

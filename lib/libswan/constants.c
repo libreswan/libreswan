@@ -712,21 +712,21 @@ enum_names ipcomp_transformid_names = {
  * IANA IKEv2 Hash Algorithms
  * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#hash-algorithms
  */
-static const char *const notify_hash_algo_name[] = {
-        "IKEv2_AUTH_HASH_RESERVED",
-        "IKEv2_AUTH_HASH_SHA1",
-        "IKEv2_AUTH_HASH_SHA2_256",
-        "IKEv2_AUTH_HASH_SHA2_384",
-        "IKEv2_AUTH_HASH_SHA2_512",
-        "IKEv2_AUTH_HASH_IDENTITY"
+static const char *const ikev2_hash_algorithm_name[] = {
+        "IKEv2_HASH_ALGORITHM_RESERVED",
+        "IKEv2_HASH_ALGORITHM_SHA1",
+        "IKEv2_HASH_ALGORITHM_SHA2_256",
+        "IKEv2_HASH_ALGORITHM_SHA2_384",
+        "IKEv2_HASH_ALGORITHM_SHA2_512",
+        "IKEv2_HASH_ALGORITHM_IDENTITY"
 	/* 6-1023 Unassigned */
 };
 
-enum_names notify_hash_algo_names = {
-	IKEv2_AUTH_HASH_RESERVED,
-	IKEv2_AUTH_HASH_IDENTITY,
-	ARRAY_REF(notify_hash_algo_name),
-	"IKEv2_AUTH_HASH_", /* prefix */
+enum_names ikev2_hash_algorithm_names = {
+	IKEv2_HASH_ALGORITHM_RESERVED,
+	IKEv2_HASH_ALGORITHM_IDENTITY,
+	ARRAY_REF(ikev2_hash_algorithm_name),
+	"IKEv2_HASH_ALGORITHM_", /* prefix */
 	NULL
 };
 
