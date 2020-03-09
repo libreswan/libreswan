@@ -1,4 +1,4 @@
-grep -e IKEv2_AUTH_ -e ': authenticated using ' OUTPUT/*pluto.log
+grep -e 'auth method: ' -e 'hash algorithm identifier' -e ': authenticated using ' OUTPUT/*pluto.log
 ../../pluto/bin/ipsec-look.sh
 : ==== cut ====
 ipsec auto --status

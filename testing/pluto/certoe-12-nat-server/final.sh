@@ -2,7 +2,7 @@
 hostname | grep nic > /dev/null || ipsec trafficstatus
 ../../pluto/bin/ipsec-look.sh
 # you should see both RSA and NULL
-grep -e IKEv2_AUTH_ -e ': authenticated using ' /tmp/pluto.log 
+grep -e 'auth method: ' -e 'hash algorithm identifier' -e ': authenticated using ' /tmp/pluto.log 
 : ==== cut ====
 ipsec auto --status
 ipsec stop

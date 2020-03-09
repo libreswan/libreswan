@@ -74,7 +74,7 @@ west #
  echo done
 done
 west #
- grep -e IKEv2_AUTH_ -e ': authenticated using ' OUTPUT/*pluto.log
+ grep -e 'auth method: ' -e 'hash algorithm identifier' -e ': authenticated using ' OUTPUT/*pluto.log
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
 OUTPUT/east.pluto.log:"westnet-eastnet-ikev2" #1: authenticated using RSA with SHA1
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_SHARED (0x2)

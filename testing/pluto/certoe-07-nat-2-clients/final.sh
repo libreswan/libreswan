@@ -5,7 +5,7 @@ hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 ../../pluto/bin/ipsec-look.sh | sed "s/\(.\)port [0-9][0-9][0-9][0-9] /\1port XXXX /g"
 # you should see both RSA and NULL
-grep -e IKEv2_AUTH_ -e ': authenticated using ' /tmp/pluto.log 
+grep -e 'auth method: ' -e 'hash algorithm identifier' -e ': authenticated using ' /tmp/pluto.log 
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
