@@ -14,7 +14,6 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  */
-#include <pkcs11t.h>
 
 #ifdef USE_SHA1
 extern const struct hash_desc ike_alg_hash_sha1;
@@ -29,7 +28,3 @@ extern const struct hash_desc ike_alg_hash_sha2_512;
 #ifdef USE_MD5
 extern const struct hash_desc ike_alg_hash_md5;
 #endif
-
-extern const CK_RSA_PKCS_PSS_PARAMS rsa_pss_sha2_256;
-extern const CK_RSA_PKCS_PSS_PARAMS rsa_pss_sha2_384;
-extern const CK_RSA_PKCS_PSS_PARAMS rsa_pss_sha2_512;

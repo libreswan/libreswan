@@ -36,6 +36,12 @@
 static const uint8_t asn1_blob_rsa_sha2_256[] =	{ LEN_RSA_PSS_SHA2_BLOB, RSA_PSS_SHA256_BLOB };
 static const uint8_t asn1_blob_ecdsa_sha2_256[] = { LEN_ECDSA_SHA2_BLOB, ECDSA_SHA256_BLOB };
 
+const CK_RSA_PKCS_PSS_PARAMS rsa_pss_sha2_256 = {
+	.hashAlg = CKM_SHA256,
+	.mgf = CKG_MGF1_SHA256,
+	.sLen = SHA2_256_DIGEST_SIZE,
+};
+
 const struct hash_desc ike_alg_hash_sha2_256 = {
 	.common = {
 		.name = "sha2_256",
@@ -52,6 +58,7 @@ const struct hash_desc ike_alg_hash_sha2_256 = {
 	.nss = {
 		.oid_tag = SEC_OID_SHA256,
 		.derivation_mechanism = CKM_SHA256_KEY_DERIVATION,
+		.rsa_pkcs_pss_params = &rsa_pss_sha2_256,
 	},
 	.hash_digest_size = SHA2_256_DIGEST_SIZE,
 	.hash_block_size = 64,	/* from RFC 4868 */
@@ -145,16 +152,16 @@ const struct integ_desc ike_alg_integ_hmac_sha2_256_truncbug = {
 	.integ_kernel_audit_name = "HMAC_SHA2_256_TRUNCBUG",
 };
 
-const CK_RSA_PKCS_PSS_PARAMS rsa_pss_sha2_256 = {
-	.hashAlg = CKM_SHA256,
-	.mgf = CKG_MGF1_SHA256,
-	.sLen = SHA2_256_DIGEST_SIZE,
-};
-
 /* SHA-2 384 */
 
 static const uint8_t asn1_blob_rsa_sha2_384[] =	{ LEN_RSA_PSS_SHA2_BLOB, RSA_PSS_SHA384_BLOB };
 static const uint8_t asn1_blob_ecdsa_sha2_384[] = { LEN_ECDSA_SHA2_BLOB, ECDSA_SHA384_BLOB };
+
+const CK_RSA_PKCS_PSS_PARAMS rsa_pss_sha2_384 = {
+	.hashAlg = CKM_SHA384,
+	.mgf = CKG_MGF1_SHA384,
+	.sLen = SHA2_384_DIGEST_SIZE,
+};
 
 const struct hash_desc ike_alg_hash_sha2_384 = {
 	.common = {
@@ -172,6 +179,7 @@ const struct hash_desc ike_alg_hash_sha2_384 = {
 	.nss = {
 		.oid_tag = SEC_OID_SHA384,
 		.derivation_mechanism = CKM_SHA384_KEY_DERIVATION,
+		.rsa_pkcs_pss_params = &rsa_pss_sha2_384,
 	},
 	.hash_digest_size = SHA2_384_DIGEST_SIZE,
 	.hash_block_size = 128,	/* from RFC 4868 */
@@ -240,16 +248,16 @@ const struct integ_desc ike_alg_integ_sha2_384 = {
 	.integ_kernel_audit_name = "HMAC_SHA2_384",
 };
 
-const CK_RSA_PKCS_PSS_PARAMS rsa_pss_sha2_384 = {
-	.hashAlg = CKM_SHA384,
-	.mgf = CKG_MGF1_SHA384,
-	.sLen = SHA2_384_DIGEST_SIZE,
-};
-
 /* SHA-2 512 */
 
 static const uint8_t asn1_blob_rsa_sha2_512[] = { LEN_RSA_PSS_SHA2_BLOB, RSA_PSS_SHA512_BLOB };
 static const uint8_t asn1_blob_ecdsa_sha2_512[] = { LEN_ECDSA_SHA2_BLOB, ECDSA_SHA512_BLOB };
+
+const CK_RSA_PKCS_PSS_PARAMS rsa_pss_sha2_512 = {
+	.hashAlg = CKM_SHA512,
+	.mgf = CKG_MGF1_SHA512,
+	.sLen = SHA2_512_DIGEST_SIZE,
+};
 
 const struct hash_desc ike_alg_hash_sha2_512 = {
 	.common = {
@@ -267,6 +275,7 @@ const struct hash_desc ike_alg_hash_sha2_512 = {
 	.nss = {
 		.oid_tag = SEC_OID_SHA512,
 		.derivation_mechanism = CKM_SHA512_KEY_DERIVATION,
+		.rsa_pkcs_pss_params = &rsa_pss_sha2_512,
 	},
 	.hash_digest_size = SHA2_512_DIGEST_SIZE,
 	.hash_block_size = 128,	/* from RFC 4868 */
@@ -333,10 +342,4 @@ const struct integ_desc ike_alg_integ_sha2_512 = {
 	.integ_tcpdump_name = "sha512",
 	.integ_ike_audit_name = "sha512",
 	.integ_kernel_audit_name = "HMAC_SHA2_512",
-};
-
-const CK_RSA_PKCS_PSS_PARAMS rsa_pss_sha2_512 = {
-	.hashAlg = CKM_SHA512,
-	.mgf = CKG_MGF1_SHA512,
-	.sLen = SHA2_512_DIGEST_SIZE,
 };

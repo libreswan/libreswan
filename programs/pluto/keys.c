@@ -217,25 +217,21 @@ struct hash_signature sign_hash_RSA(const struct private_key_stuff *pks,
 			return (struct hash_signature) { .len = 0, };
 		}
 	} else { /* Digital signature scheme with rsa-pss*/
-		CK_RSA_PKCS_PSS_PARAMS mech;
-
-		switch (hash_algo->common.ikev2_alg_id) {
-		case IKEv2_HASH_ALGORITHM_SHA2_256:
-			mech = rsa_pss_sha2_256;
-			break;
-		case IKEv2_HASH_ALGORITHM_SHA2_384:
-			mech = rsa_pss_sha2_384;
-			break;
-		case IKEv2_HASH_ALGORITHM_SHA2_512:
-			mech = rsa_pss_sha2_512;
-			break;
-		default:
-			bad_case(hash_algo->common.ikev2_alg_id);
+		const CK_RSA_PKCS_PSS_PARAMS *mech = hash_algo->nss.rsa_pkcs_pss_params;
+		if (mech == NULL) {
+			loglog(RC_LOG_SERIOUS,
+			       "digital signature scheme not supported for hash algorithm %s",
+			       hash_algo->common.fqn);
+			return (struct hash_signature) { .len = 0, };
 		}
-		SECItem mechItem = { siBuffer, (unsigned char *)&mech, sizeof(mech) };
-		SECStatus s = PK11_SignWithMechanism(pks->private_key, CKM_RSA_PKCS_PSS,
-						     &mechItem, &signature, &data);
 
+		SECItem mech_item = {
+			.type = siBuffer,
+			.data = (void*)mech, /* strip const */
+			.len = sizeof(*mech),
+		};
+		SECStatus s = PK11_SignWithMechanism(pks->private_key, CKM_RSA_PKCS_PSS,
+						     &mech_item, &signature, &data);
 		if (s != SECSuccess) {
 			loglog(RC_LOG_SERIOUS,
 			       "RSA_sign_hash: sign function failed (%d)",
@@ -403,24 +399,16 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 		}
 	} else {
 		/* Digital signature scheme with RSA-PSS */
-		CK_RSA_PKCS_PSS_PARAMS mech;
-		switch (hash_algo->common.ikev2_alg_id) {
-		case IKEv2_HASH_ALGORITHM_SHA2_256:
-			mech = rsa_pss_sha2_256;
-			break;
-		case IKEv2_HASH_ALGORITHM_SHA2_384:
-			mech = rsa_pss_sha2_384;
-			break;
-		case IKEv2_HASH_ALGORITHM_SHA2_512:
-			mech = rsa_pss_sha2_512;
-			break;
-		default:
-			bad_case(hash_algo->common.ikev2_alg_id);
+		const CK_RSA_PKCS_PSS_PARAMS *mech = hash_algo->nss.rsa_pkcs_pss_params;
+		if (mech == NULL) {
+			dbg("NSS RSA verify: hash algorithm not supported");
+			SECKEY_DestroyPublicKey(publicKey);
+			return "13""hash algorithm not supported";
 		}
 		const SECItem hash_mech_item = {
 			.type = siBuffer,
-			.data = (unsigned char *)&mech,
-			.len = sizeof(mech),
+			.data = (void*)mech, /* strip const */
+			.len = sizeof(*mech),
 		};
 
 		struct crypt_mac hash_data = *expected_hash; /* cast away const */

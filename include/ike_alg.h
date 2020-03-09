@@ -459,22 +459,29 @@ struct hash_desc {
 	const size_t hash_block_size;
 	/*
 	 * For NSS.
-	 *
-	 * This is all somewhat redundant.  Unfortunately there isn't
-	 * a way to map between them.
 	 */
 	struct {
 		/*
 		 * The NSS_OID_TAG identifies the the PK11 digest
 		 * (hash) context that should created when using
 		 * PL11_Digest*().
+		 *
+		 * This is all somewhat redundant.  Unfortunately
+		 * there isn't a way to map between them.
 		 */
 		SECOidTag oid_tag;
 		/*
 		 * The DERIVE_MECHANISM specifies the derivation
 		 * (algorithm) to use when using PK11_Derive().
+		 *
+		 * This is all somewhat redundant.  Unfortunately
+		 * there isn't a way to map between them.
 		 */
 		CK_MECHANISM_TYPE derivation_mechanism;
+		/*
+		 * For digital sign schema
+		 */
+		const CK_RSA_PKCS_PSS_PARAMS *rsa_pkcs_pss_params;
 	} nss;
 
 	/*
