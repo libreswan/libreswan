@@ -2045,6 +2045,32 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		}
 	}
 
+	/*
+	 * Construct the IDi payload and store it in state so that it
+	 * can be emitted later.  Then use that to construct the
+	 * "MACedIDFor[I]".
+	 *
+	 * Code assumes that struct ikev2_id's "IDType|RESERVED" is
+	 * laid out the same as the packet.
+	 */
+
+	{
+		shunk_t data;
+		ike->sa.st_v2_id_payload.header = build_v2_id_payload(&pc->spd.this, &data);
+		ike->sa.st_v2_id_payload.data = clone_hunk(data, "my IDi");
+	}
+
+	ike->sa.st_v2_id_payload.mac = v2_hash_id_payload("IDi", ike,
+							  "st_skey_pi_nss",
+							  ike->sa.st_skey_pi_nss);
+	if (pst->st_seen_ppk && !LIN(POLICY_PPK_INSIST, pc->policy)) {
+		/* ID payload that we've build is the same */
+		ike->sa.st_v2_id_payload.mac_no_ppk_auth =
+			v2_hash_id_payload("IDi (no-PPK)", ike,
+					   "sk_pi_no_pkk",
+					   ike->sa.st_sk_pi_no_ppk);
+	}
+
 	ikev2_log_parentSA(pst);
 
 	/*
@@ -2136,32 +2162,6 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	/* record first packet for later checking of signature */
 	pst->st_firstpacket_him = clone_out_pbs_as_chunk(&md->message_pbs,
 							 "saved first received packet");
-
-	/*
-	 * Construct the IDi payload and store it in state so that it
-	 * can be emitted later.  Then use that to construct the
-	 * "MACedIDFor[I]".
-	 *
-	 * Code assumes that struct ikev2_id's "IDType|RESERVED" is
-	 * laid out the same as the packet.
-	 */
-
-	{
-		shunk_t data;
-		ike->sa.st_v2_id_payload.header = build_v2_id_payload(&pc->spd.this, &data);
-		ike->sa.st_v2_id_payload.data = clone_hunk(data, "my IDi");
-	}
-
-	ike->sa.st_v2_id_payload.mac = v2_hash_id_payload("IDi", ike,
-							  "st_skey_pi_nss",
-							  ike->sa.st_skey_pi_nss);
-	if (pst->st_seen_ppk && !LIN(POLICY_PPK_INSIST, pc->policy)) {
-		/* ID payload that we've build is the same */
-		ike->sa.st_v2_id_payload.mac_no_ppk_auth =
-			v2_hash_id_payload("IDi (no-PPK)", ike,
-					   "sk_pi_no_pkk",
-					   ike->sa.st_sk_pi_no_ppk);
-	}
 
 	/* beginning of data going out */
 

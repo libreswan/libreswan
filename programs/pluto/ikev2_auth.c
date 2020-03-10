@@ -238,8 +238,8 @@ struct hash_signature v2_auth_signature(struct logger *logger,
 		bad_case(auth_method);
 	}
 
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump("v2rsa octets", hash_octets, hash_len);
+	if (DBGP(DBG_BASE)) {
+		DBG_dump("hash to sign", hash_octets, hash_len);
 	}
 
 	logtime_t sign_time = logtime_start(logger);
