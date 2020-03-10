@@ -37,7 +37,22 @@
 
 struct finite_state v2_states[] = {
 
+	/*
+	 * This macro sets story to the old style: "KIND: STORY".
+	 */
 #define S(KIND, STORY, CAT) [KIND - STATE_IKEv2_FLOOR] = {	\
+		.kind = KIND,					\
+		.name = #KIND,					\
+		.short_name = #KIND + 6/*STATE_*/,		\
+		.story = #KIND ": " STORY,			\
+		.category = CAT,				\
+	}
+
+	/*
+	 * This macro sets story to the new style "STORY" (i.e., state
+	 * name is omitted).
+	 */
+#define T(KIND, STORY, CAT) [KIND - STATE_IKEv2_FLOOR] = {	\
 		.kind = KIND,					\
 		.name = #KIND,					\
 		.short_name = #KIND + 6/*STATE_*/,		\
