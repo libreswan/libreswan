@@ -1813,103 +1813,6 @@ stf_status ikev2_send_cp(struct state *st, enum next_payload_types_ikev2 np,
 	return STF_OK;
 }
 
-static stf_status emit_v2AUTH(struct ike_sa *ike,
-			      const struct crypt_mac *idhash_out,
-			      pb_stream *outpbs)
-{
-	/* XXX: this is dead; just use SA_ROLE */
-	enum original_role role = (ike->sa.st_sa_role == SA_INITIATOR ? ORIGINAL_INITIATOR :
-				   ike->sa.st_sa_role == SA_RESPONDER ? ORIGINAL_RESPONDER :
-				   pexpect(0));
-	enum keyword_authby authby = v2_auth_by(ike);
-
-	struct ikev2_auth a = {
-		.isaa_critical = build_ikev2_critical(false),
-	};
-
-	a.isaa_auth_method = v2_auth_method(ike, authby);
-	if (a.isaa_auth_method == IKEv2_AUTH_RESERVED) {
-		/* already logged */
-		return STF_FATAL;
-	}
-
-	pb_stream a_pbs;
-
-	if (!out_struct(&a, &ikev2_auth_desc, outpbs, &a_pbs)) {
-		/* loglog(RC_LOG_SERIOUS, "Failed to emit IKE_AUTH payload"); */
-		return STF_INTERNAL_ERROR;
-	}
-
-	switch (a.isaa_auth_method) {
-	case IKEv2_AUTH_RSA:
-		if (!ikev2_calculate_rsa_hash(&ike->sa, role, idhash_out, &a_pbs,
-					      NULL /* we don't keep no_ppk_auth */,
-					      &ike_alg_hash_sha1))
-		{
-			loglog(RC_LOG_SERIOUS, "Failed to find our RSA key");
-			return STF_FATAL;
-		}
-		break;
-
-	case IKEv2_AUTH_PSK:
-	case IKEv2_AUTH_NULL:
-		/* emit */
-		if (!ikev2_emit_psk_auth(authby, &ike->sa, idhash_out, &a_pbs))
-		{
-			loglog(RC_LOG_SERIOUS, "Failed to find our PreShared Key");
-			return STF_FATAL;
-		}
-		break;
-
-	case IKEv2_AUTH_DIGSIG:
-	{
-		const struct hash_desc *hash_algo = v2_auth_negotiated_signature_hash(ike);
-		if (hash_algo == NULL) {
-			loglog(RC_LOG_SERIOUS, "DigSig: no compatible DigSig hash algo");
-			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-		}
-
-		if (!emit_v2_asn1_hash_blob(hash_algo, &a_pbs, authby))
-			return STF_INTERNAL_ERROR;
-
-		switch (authby) {
-		case AUTH_ECDSA:
-		{
-			if (!ikev2_calculate_ecdsa_hash(&ike->sa, role, idhash_out, &a_pbs,
-							NULL /* don't grab value */,
-							hash_algo))
-			{
-				loglog(RC_LOG_SERIOUS, "DigSig: failed to find our ECDSA key");
-				return STF_FATAL;
-			}
-			break;
-		}
-		case AUTH_RSASIG:
-		{
-			if (!ikev2_calculate_rsa_hash(&ike->sa, role, idhash_out, &a_pbs,
-						      NULL /* we don't keep no_ppk_auth */,
-						      hash_algo))
-			{
-				loglog(RC_LOG_SERIOUS, "DigSig: failed to find our RSA key");
-				return STF_FATAL;
-			}
-			break;
-		}
-		default:
-			libreswan_log("unknown remote authentication type for DigSig");
-			return STF_FAIL;
-		}
-		break;
-	}
-
-	default:
-		bad_case(a.isaa_auth_method);
-	}
-
-	close_output_pbs(&a_pbs);
-	return STF_OK;
-}
-
 static bool need_configuration_payload(const struct connection *const pc,
 			    const lset_t st_nat_traversal)
 {
@@ -1951,6 +1854,10 @@ static struct crypt_mac v2_id_hash(struct ike_sa *ike, const char *why,
 	crypt_prf_update_bytes(id_ctx, id_name, id_start, id_size);
 	return crypt_prf_final_mac(&id_ctx, NULL/*no-truncation*/);
 }
+
+static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *ike,
+								 struct msg_digest *md,
+								 const struct hash_signature *sig);
 
 static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_digest *md,
 					      struct pluto_crypto_req *r)
@@ -2070,6 +1977,59 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 					   "sk_pi_no_pkk",
 					   ike->sa.st_sk_pi_no_ppk);
 	}
+
+	{
+		enum keyword_authby authby = v2_auth_by(ike);
+		enum ikev2_auth_method auth_method = v2_auth_method(ike, authby);
+		switch (auth_method) {
+		case IKEv2_AUTH_RSA:
+		{
+			const struct hash_desc *hash_algo = &ike_alg_hash_sha1;
+			struct crypt_mac hash_to_sign =
+				v2_calculate_sighash(&ike->sa, ORIGINAL_INITIATOR,
+						     &ike->sa.st_v2_id_payload.mac,
+						     ike->sa.st_firstpacket_me,
+						     hash_algo);
+			return submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
+							authby, auth_method,
+							ikev2_parent_inR1outI2_auth_signature_continue);
+		}
+		case IKEv2_AUTH_DIGSIG:
+		{
+			const struct hash_desc *hash_algo = v2_auth_negotiated_signature_hash(ike);
+			if (hash_algo == NULL) {
+				return STF_FATAL;
+			}
+			struct crypt_mac hash_to_sign = v2_calculate_sighash(&ike->sa, ORIGINAL_INITIATOR,
+									     &ike->sa.st_v2_id_payload.mac,
+									     ike->sa.st_firstpacket_me,
+									     hash_algo);
+			return submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
+							authby, auth_method,
+							ikev2_parent_inR1outI2_auth_signature_continue);
+		}
+		case IKEv2_AUTH_PSK:
+		case IKEv2_AUTH_NULL:
+		{
+			struct hash_signature sig = { .len = 0, };
+			return ikev2_parent_inR1outI2_auth_signature_continue(ike, md, &sig);
+		}
+		default:
+			log_state(RC_LOG, &ike->sa,
+				  "authentication method %s not supported",
+				  enum_name(&ikev2_auth_names, auth_method));
+			return STF_FATAL;
+		}
+	}
+}
+
+static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *ike,
+								 struct msg_digest *md,
+								 const struct hash_signature *auth_sig)
+{
+	struct state *pst = &ike->sa;
+	struct connection *const pc = pst->st_connection;	/* parent connection */
+	struct ppk_id_payload ppk_id_p;
 
 	ikev2_log_parentSA(pst);
 
@@ -2277,14 +2237,13 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	/* send out the AUTH payload */
 
-	stf_status authstat = emit_v2AUTH(ike, &ike->sa.st_v2_id_payload.mac, &sk.pbs);
-	if (authstat != STF_OK) {
+	if (!emit_v2_auth(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, &sk.pbs)) {
 		passert(IS_CHILD_SA(cst));
 		dbg("switching MD.ST from CHILD #%lu to IKE #%lu; ulgh",
 		    md->st->st_serialno, ike->sa.st_serialno);
 		md->st = &ike->sa;
 		discard_state(&cst);
-		return authstat;
+		return STF_INTERNAL_ERROR;
 	}
 
 	if (need_configuration_payload(pc, pst->hidden_variables.st_nat_traversal)) {
