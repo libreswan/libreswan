@@ -93,7 +93,7 @@
 #include "ip_info.h"
 #include "iface.h"
 #include "ikev2_auth.h"
-#include "keys.h"
+#include "secrets.h"
 #include "cert_decode_helper.h"
 
 struct mobike {

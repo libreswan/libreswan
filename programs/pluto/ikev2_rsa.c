@@ -121,8 +121,8 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 		statetime_t sign_time = statetime_start(st);
 		struct hash_signature sig;
 		passert(sizeof(sig.ptr/*array*/) >= RSA_MAX_OCTETS);
-		sig = sign_hash_RSA(pks, signed_octets, signed_len,
-				    hash_algo);
+		sig = pubkey_type_rsa.sign_hash(pks, signed_octets, signed_len,
+						hash_algo);
 		statetime_stop(&sign_time, "%s() calling sign_hash_RSA()", __func__);
 		if (sig.len == 0)
 			return false;

@@ -35,7 +35,6 @@ struct crypto_task {
 	/* in */
 	const struct crypt_mac hash_to_sign;
 	const struct hash_desc *hash_algo;
-	enum keyword_authby authby;
 	enum ikev2_auth_method auth_method;
 	v2_auth_signature_cb *cb;
 	const struct private_key_stuff *pks;
@@ -65,7 +64,6 @@ stf_status submit_v2_auth_signature(struct ike_sa *ike,
 	struct crypto_task task = {
 		.cb = cb,
 		.hash_algo = hash_algo,
-		.authby = authby,
 		.auth_method = auth_method,
 		.hash_to_sign = *hash_to_sign,
 	};
@@ -99,7 +97,6 @@ static void v2_auth_signature_computer(struct logger *logger, struct crypto_task
 				       int unused_my_thread UNUSED)
 {
 	task->signature = v2_auth_signature(logger, &task->hash_to_sign, task->hash_algo,
-					    task->authby,
 					    task->auth_method,
 					    task->pks);
 }

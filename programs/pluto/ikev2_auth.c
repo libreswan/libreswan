@@ -203,7 +203,6 @@ bool emit_v2_asn1_hash_blob(const struct hash_desc *hash_algo,
 struct hash_signature v2_auth_signature(struct logger *logger,
 					const struct crypt_mac *hash_to_sign,
 					const struct hash_desc *hash_algo,
-					enum keyword_authby authby,
 					enum ikev2_auth_method auth_method,
 					const struct private_key_stuff *pks)
 {
@@ -214,7 +213,7 @@ struct hash_signature v2_auth_signature(struct logger *logger,
 	 * Bound could be tightened because the signature octets are
 	 * only concatenated to a SHA1 hash.
 	 */
-	unsigned char hash_octets[sizeof(rsa_sha1_der_header) + sizeof(hash_to_sign->ptr/*an array*/)];
+	uint8_t hash_octets[sizeof(rsa_sha1_der_header) + sizeof(hash_to_sign->ptr/*an array*/)];
 	size_t hash_len;
 
 	switch (auth_method) {
@@ -243,39 +242,13 @@ struct hash_signature v2_auth_signature(struct logger *logger,
 		DBG_dump("v2rsa octets", hash_octets, hash_len);
 	}
 
-	struct hash_signature sig = { .len = 0, };
-	switch (authby) {
-	case AUTH_RSASIG:
-	{
-		/* XXX: merge ikev2_calculate_{rsa,ecdsa}_hash()? */
-		const struct RSA_private_key *k = &pks->u.RSA_private_key;
-		unsigned int sz = k->pub.k;
-		passert(RSA_MIN_OCTETS <= sz && 4 + hash_len < sz &&
-			sz <= RSA_MAX_OCTETS);
-		logtime_t sign_time = logtime_start(logger);
-		passert(sizeof(sig.ptr/*array*/) >= RSA_MAX_OCTETS);
-		sig = sign_hash_RSA(pks, hash_octets, hash_len, hash_algo);
-		logtime_stop(&sign_time, "%s() calling sign_hash_RSA()", __func__);
-		break;
-	}
-	case AUTH_ECDSA:
-	{
-		/*
-		 * XXX: See https://tools.ietf.org/html/rfc4754#section-7 for
-		 * where 1056 is coming from.
-		 * It is the largest of the signature lengths amongst
-		 * ECDSA 256, 384, and 521.
-		 */
-		logtime_t sign_time = logtime_start(logger);
-		passert(sizeof(sig.ptr/*array*/) >= BYTES_FOR_BITS(1056));
-		sig = sign_hash_ECDSA(pks, hash_to_sign->ptr, hash_to_sign->len);
-		logtime_stop(&sign_time, "%s() calling sign_hash_ECDSA()", __func__);
-		break;
-	}
-	default:
-		bad_case(authby);
-	}
-	passert(sig.len <= sizeof(sig.ptr));
+	logtime_t sign_time = logtime_start(logger);
+	struct hash_signature sig = pks->pubkey_type->sign_hash(pks,
+								hash_octets,
+								hash_len,
+								hash_algo);
+	logtime_stop(&sign_time, "%s() calling sign_hash()", __func__);
+	passert(sig.len <= sizeof(sig.ptr/*array*/));
 	logtime_stop(&start, "%s()", __func__);
 	return sig;
 }

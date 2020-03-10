@@ -84,16 +84,16 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 
 	/*
 	 * Sign the hash.
--	 *
--	 * XXX: See https://tools.ietf.org/html/rfc4754#section-7 for
--	 * where 1056 is coming from.
--	 * It is the largest of the signature lengths amongst
--	 * ECDSA 256, 384, and 521.
+	 *
+	 * XXX: See https://tools.ietf.org/html/rfc4754#section-7 for
+	 * where 1056 is coming from.
+	 * It is the largest of the signature lengths amongst
+	 * ECDSA 256, 384, and 521.
 	 */
 	statetime_t sign_time = statetime_start(st);
 	struct hash_signature sig;
 	passert(sizeof(sig.ptr/*array*/) >= BYTES_FOR_BITS(1056));
-	sig = sign_hash_ECDSA(pks, hash.ptr, hash.len);
+	sig = pubkey_type_ecdsa.sign_hash(pks, hash.ptr, hash.len, hash_algo);
 	statetime_stop(&sign_time, "%s() calling sign_hash_ECDSA()", __func__);
 
 	if (sig.len == 0) {

@@ -314,7 +314,7 @@ struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 	passert(RSA_MIN_OCTETS <= sz &&
 		4 + hash->len < sz &&
 		sz <= sizeof(sig.ptr/*array*/));
-	sig = sign_hash_RSA(pks, hash->ptr, hash->len, 0 /* for ikev2 only */);
+	sig = pubkey_type_rsa.sign_hash(pks, hash->ptr, hash->len, 0 /* for ikev2 only */);
 	passert(sig.len == 0 || sz == sig.len);
 	return sig;
 }

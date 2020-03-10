@@ -48,7 +48,6 @@ bool emit_v2_asn1_hash_blob(const struct hash_desc *hash_algo,
 struct hash_signature v2_auth_signature(struct logger *logger,
 					const struct crypt_mac *sighash,
 					const struct hash_desc *hash_algo,
-					enum keyword_authby authby,
 					enum ikev2_auth_method auth_method,
 					const struct private_key_stuff *pks);
 

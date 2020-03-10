@@ -37,6 +37,7 @@ struct secret;	/* opaque definition, private to secrets.c */
 struct pubkey;		/* forward */
 union pubkey_content;	/* forward */
 struct pubkey_type;	/* forward */
+struct hash_desc;
 
 struct RSA_public_key {
 	char keyid[KEYID_BUF];	/* see ipsec_keyblobtoid(3) */
@@ -150,6 +151,17 @@ typedef int (*secret_eval)(struct secret *secret,
 extern struct secret *lsw_foreach_secret(struct secret *secrets,
 					 secret_eval func, void *uservoid);
 
+struct hash_signature {
+	size_t len;
+	/*
+	 * XXX: See https://tools.ietf.org/html/rfc4754#section-7 for
+	 * where 1056 is coming from.
+	 * It is the largest of the signature lengths amongst
+	 * ECDSA 256, 384, and 521.
+	 */
+	uint8_t ptr[PMAX(RSA_MAX_OCTETS, BYTES_FOR_BITS(1056))];
+};
+
 union pubkey_content {
 	struct RSA_public_key rsa;
 	struct ECDSA_public_key ecdsa;
@@ -166,6 +178,9 @@ struct pubkey_type {
 				      SECItem *cert_ckaid);
 	void (*free_secret_content)(struct private_key_stuff *pks);
 	err_t (*secret_sane)(struct private_key_stuff *pks);
+	struct hash_signature (*sign_hash)(const struct private_key_stuff *pks,
+					   const uint8_t *hash_octets, size_t hash_len,
+					   const struct hash_desc *hash_algo);
 };
 
 extern const struct pubkey_type pubkey_type_rsa;

@@ -62,6 +62,8 @@
 #include "lswnss.h"
 #include "ip_info.h"
 #include "nss_cert_load.h"
+#include "ike_alg.h"
+#include "ike_alg_hash.h"
 
 /* this does not belong here, but leave it here for now */
 const struct id empty_id;	/* ID_NONE */
@@ -257,6 +259,68 @@ static err_t RSA_secret_sane(struct private_key_stuff *pks)
 	return NULL;
 }
 
+/* returns the length of the result on success; 0 on failure */
+static struct hash_signature RSA_sign_hash(const struct private_key_stuff *pks,
+					   const uint8_t *hash_val, size_t hash_len,
+					   const struct hash_desc *hash_algo)
+{
+	dbg("RSA_sign_hash: Started using NSS");
+	if (!pexpect(pks->private_key != NULL)) {
+		dbg("no private key!");
+		return (struct hash_signature) { .len = 0, };
+	}
+
+	SECItem data = {
+		.type = siBuffer,
+		.len = hash_len,
+		.data = DISCARD_CONST(u_char *, hash_val),
+	};
+
+	struct hash_signature sig = { .len = PK11_SignatureLen(pks->private_key), };
+	passert(sig.len <= sizeof(sig.ptr/*array*/));
+	SECItem signature = {
+		.type = siBuffer,
+		.len = sig.len,
+		.data = sig.ptr,
+	};
+
+	if (hash_algo == NULL /* ikev1*/ ||
+	    hash_algo == &ike_alg_hash_sha1 /* old style rsa with SHA1*/) {
+		SECStatus s = PK11_Sign(pks->private_key, &signature, &data);
+		if (s != SECSuccess) {
+			loglog(RC_LOG_SERIOUS,
+			       "RSA_sign_hash: sign function failed (%d)",
+			       PR_GetError());
+			return (struct hash_signature) { .len = 0, };
+		}
+	} else { /* Digital signature scheme with rsa-pss*/
+		const CK_RSA_PKCS_PSS_PARAMS *mech = hash_algo->nss.rsa_pkcs_pss_params;
+		if (mech == NULL) {
+			loglog(RC_LOG_SERIOUS,
+			       "digital signature scheme not supported for hash algorithm %s",
+			       hash_algo->common.fqn);
+			return (struct hash_signature) { .len = 0, };
+		}
+
+		SECItem mech_item = {
+			.type = siBuffer,
+			.data = (void*)mech, /* strip const */
+			.len = sizeof(*mech),
+		};
+		SECStatus s = PK11_SignWithMechanism(pks->private_key, CKM_RSA_PKCS_PSS,
+						     &mech_item, &signature, &data);
+		if (s != SECSuccess) {
+			loglog(RC_LOG_SERIOUS,
+			       "RSA_sign_hash: sign function failed (%d)",
+			       PR_GetError());
+			return (struct hash_signature) { .len = 0, };
+		}
+	}
+
+	dbg("RSA_sign_hash: Ended using NSS");
+	return sig;
+}
+
 const struct pubkey_type pubkey_type_rsa = {
 	.alg = PUBKEY_ALG_RSA,
 	.name = "RSA",
@@ -266,6 +330,7 @@ const struct pubkey_type pubkey_type_rsa = {
 	.unpack_secret_content = RSA_unpack_secret_content,
 	.free_secret_content = RSA_free_secret_content,
 	.secret_sane = RSA_secret_sane,
+	.sign_hash = RSA_sign_hash,
 };
 
 static err_t ECDSA_unpack_pubkey_content(union pubkey_content *u, chunk_t pubkey)
@@ -318,6 +383,49 @@ static err_t ECDSA_secret_sane(struct private_key_stuff *pks_unused UNUSED)
 	return NULL;
 }
 
+static struct hash_signature ECDSA_sign_hash(const struct private_key_stuff *pks,
+					     const uint8_t *hash_val, size_t hash_len,
+					     const struct hash_desc *hash_algo_unused UNUSED)
+{
+
+	if (!pexpect(pks->private_key != NULL)) {
+		dbg("no private key!");
+		return (struct hash_signature) { .len = 0, };
+	}
+
+	DBG(DBG_CRYPT, DBG_log("ECDSA_sign_hash: Started using NSS"));
+
+	/* point hash at HASH_VAL */
+	SECItem hash = {
+		.type = siBuffer,
+		.len = hash_len,
+		.data = DISCARD_CONST(uint8_t *, hash_val),
+	};
+
+	/* point signature at the SIG_VAL buffer */
+	struct hash_signature sig = { .len = PK11_SignatureLen(pks->private_key), };
+	passert(sig.len <= sizeof(sig.ptr/*array*/));
+	SECItem signature = {
+		.type = siBuffer,
+		.len = sig.len,
+		.data = sig.ptr,
+	};
+	dbg("ECDSA signature.len %d", signature.len);
+
+	SECStatus s = PK11_Sign(pks->private_key, &signature, &hash);
+	DBG(DBG_CRYPT, DBG_dump("sig_from_nss", signature.data, signature.len));
+	if (s != SECSuccess) {
+		LSWDBGP(DBG_CRYPT, buf) {
+			lswlogf(buf, "NSS: signing hash using PK11_Sign() failed:");
+			lswlog_nss_error(buf);
+		}
+		return (struct hash_signature) { .len = 0, };
+	}
+
+	DBG(DBG_CRYPT, DBG_log("ECDSA_sign_hash: Ended using NSS"));
+	return sig;
+}
+
 const struct pubkey_type pubkey_type_ecdsa = {
 	.alg = PUBKEY_ALG_ECDSA,
 	.name = "ECDSA",
@@ -327,6 +435,7 @@ const struct pubkey_type pubkey_type_ecdsa = {
 	.unpack_secret_content = ECDSA_unpack_secret_content,
 	.free_secret_content = ECDSA_free_secret_content,
 	.secret_sane = ECDSA_secret_sane,
+	.sign_hash = ECDSA_sign_hash,
 };
 
 const struct pubkey_type *pubkey_alg_type(enum pubkey_alg alg)

@@ -46,7 +46,7 @@
 #include "ikev1_message.h"
 #include "pending.h"
 #include "iface.h"
-#include "keys.h"
+#include "secrets.h"
 
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"
