@@ -283,7 +283,7 @@ const char *const sighash_policy_bit_names[] = {
 	NULL	/* end for bitnamesof() */
 };
 
-static const char *const ikev2_asym_auth_names[] = {
+static const char *const keyword_authby_name[] = {
 	"unset",
 	"never",
 	"secret",
@@ -292,9 +292,9 @@ static const char *const ikev2_asym_auth_names[] = {
 	"null",
 };
 
-enum_names ikev2_asym_auth_name = {
+enum_names keyword_authby_names = {
 	AUTH_UNSET, AUTH_NULL,
-	ARRAY_REF(ikev2_asym_auth_names),
+	ARRAY_REF(keyword_authby_name),
 	NULL, /* prefix */
 	NULL
 };

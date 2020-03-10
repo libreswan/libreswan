@@ -1271,8 +1271,8 @@ static bool extract_connection(const struct fd *whackfd,
 					loglog(RC_FATAL,
 						"Failed to add connection \"%s\": leftauth=%s and rightauth=%s must not conflict with authby=%s",
 							wm->name,
-							enum_name(&ikev2_asym_auth_name, wm->left.authby),
-							enum_name(&ikev2_asym_auth_name, wm->right.authby),
+							enum_name(&keyword_authby_names, wm->left.authby),
+							enum_name(&keyword_authby_names, wm->right.authby),
 							prettypolicy(wm->policy & POLICY_ID_AUTH_MASK));
 					return false;
 				}
@@ -1282,8 +1282,8 @@ static bool extract_connection(const struct fd *whackfd,
 					loglog(RC_FATAL,
 						"Failed to add connection \"%s\": cannot mix PSK and NULL authentication (leftauth=%s and rightauth=%s)",
 							wm->name,
-							enum_name(&ikev2_asym_auth_name, wm->left.authby),
-							enum_name(&ikev2_asym_auth_name, wm->right.authby));
+							enum_name(&keyword_authby_names, wm->left.authby),
+							enum_name(&keyword_authby_names, wm->right.authby));
 					return false;
 				}
 			}
@@ -2854,7 +2854,7 @@ struct connection *refine_host_connection(const struct state *st,
 
 			/* ??? why not dies?  How could this happen? */
 			loglog(RC_LOG_SERIOUS, "refine_host_connection: unexpected auth policy (%s): only handling PSK, NULL or RSA",
-				enum_name(&ikev2_asym_auth_name, this_authby));
+				enum_name(&keyword_authby_names, this_authby));
 			return c;
 		}
 	}
@@ -3731,8 +3731,8 @@ static void show_one_sr(const struct fd *whackfd,
 	whack_comment(whackfd,
 		"\"%s\"%s:   our auth:%s, their auth:%s",
 		c->name, instance,
-		enum_show_shortb(&ikev2_asym_auth_name, sr->this.authby, &auth1),
-		enum_show_shortb(&ikev2_asym_auth_name, sr->that.authby, &auth2));
+		enum_show_shortb(&keyword_authby_names, sr->this.authby, &auth1),
+		enum_show_shortb(&keyword_authby_names, sr->that.authby, &auth2));
 
 	whack_comment(whackfd,
 		"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg policy:%s, dns:%s, domains:%s%s, cat:%s;",

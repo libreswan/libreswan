@@ -97,7 +97,6 @@ enum keyword_remotepeertype {
 	CISCO = 1,
 };
 
-/* keep in sync with ikev2_asym_auth_names */
 enum keyword_authby {
 	AUTH_UNSET	= 0,
 	AUTH_NEVER	= 1,

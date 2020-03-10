@@ -169,7 +169,7 @@ static bool ikev2_try_asn1_hash_blob(const struct hash_desc *hash_algo,
 		PMAX(ASN1_SHA1_ECDSA_SIZE,
 			PMAX(ASN1_SHA2_RSA_PSS_SIZE, ASN1_SHA2_ECDSA_SIZE))];
 	dbg("looking for ASN.1 blob for method %s for hash_algo %s",
-	    enum_name(&ikev2_asym_auth_name, authby), hash_algo->common.fqn);
+	    enum_name(&keyword_authby_names, authby), hash_algo->common.fqn);
 	return
 		pexpect(b.ptr != NULL) &&	/* we know this hash */
 		pbs_left(a_pbs) >= b.len && /* the stream has enough octets */
@@ -278,7 +278,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 		if (that_authby != AUTH_RSASIG) {
 			log_state(RC_LOG, st,
 				  "peer attempted RSA authentication but we want %s in %s",
-				  enum_name(&ikev2_asym_auth_name, that_authby),
+				  enum_name(&keyword_authby_names, that_authby),
 				  context);
 			return false;
 		}
@@ -303,7 +303,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 		if (that_authby != AUTH_PSK) {
 			log_state(RC_LOG, st,
 				  "peer attempted PSK authentication but we want %s in %s",
-				  enum_name(&ikev2_asym_auth_name, that_authby),
+				  enum_name(&keyword_authby_names, that_authby),
 				  context);
 			return FALSE;
 		}
@@ -323,7 +323,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 		      (that_authby == AUTH_RSASIG && LIN(POLICY_AUTH_NULL, st->st_connection->policy)))) {
 			log_state(RC_LOG, st,
 				  "peer attempted NULL authentication but we want %s in %s",
-				  enum_name(&ikev2_asym_auth_name, that_authby),
+				  enum_name(&keyword_authby_names, that_authby),
 				  context);
 			return FALSE;
 		}
@@ -343,7 +343,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 		if (that_authby != AUTH_ECDSA && that_authby != AUTH_RSASIG) {
 			log_state(RC_LOG, st,
 				  "peer attempted Authentication through Digital Signature but we want %s in %s",
-				  enum_name(&ikev2_asym_auth_name, that_authby),
+				  enum_name(&keyword_authby_names, that_authby),
 				  context);
 			return FALSE;
 		}
@@ -370,7 +370,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 			if (hap == &ha[elemsof(ha)]) {
 				log_state(RC_LOG, st,
 					  "no acceptable ECDSA/RSA-PSS ASN.1 signature hash proposal included for %s in %s",
-					  enum_name(&ikev2_asym_auth_name, that_authby), context);
+					  enum_name(&keyword_authby_names, that_authby), context);
 				DBG(DBG_BASE, {
 					size_t dl = min(pbs_left(pbs),
 						(size_t) (ASN1_LEN_ALGO_IDENTIFIER +
@@ -410,7 +410,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 		if (authstat != STF_OK) {
 			log_state(RC_LOG, st,
 				  "Digital Signature authentication using %s failed in %s",
-				  enum_name(&ikev2_asym_auth_name, that_authby),
+				  enum_name(&keyword_authby_names, that_authby),
 				  context);
 			return FALSE;
 		}

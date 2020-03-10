@@ -68,7 +68,7 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 	DBG(DBG_CONTROL, DBG_log("ikev2_calculate_psk_sighash() called from %s to %s PSK with authby=%s",
 		st->st_state->name,
 		verify ? "verify" : "create",
-		enum_name(&ikev2_asym_auth_name, authby)));
+		enum_name(&keyword_authby_names, authby)));
 
 	/* pick nullauth_pss, nonce, and nonce_name suitable for (state, verify) */
 
