@@ -80,22 +80,22 @@ enum keyword_authby v2_auth_by(struct ike_sa *ike)
 	enum keyword_authby authby = c->spd.this.authby;
 	if (ike->sa.st_peer_wants_null) {
 		/* we allow authby=null and IDr payload told us to use it */
-		authby = AUTH_NULL;
-	} else if (authby == AUTH_UNSET) {
+		authby = AUTHBY_NULL;
+	} else if (authby == AUTHBY_UNSET) {
 		/*
 		 * Asymmetric policy unset.
 		 * Pick up from symmetric policy, in order of preference!
 		 */
 		if ((c->policy & POLICY_ECDSA) && (c->sighash_policy != LEMPTY)) {
-			authby = AUTH_ECDSA;
+			authby = AUTHBY_ECDSA;
 		} else if (c->policy & POLICY_RSASIG) {
-			authby = AUTH_RSASIG;
+			authby = AUTHBY_RSASIG;
 		} else if (c->policy & POLICY_PSK) {
-			authby = AUTH_PSK;
+			authby = AUTHBY_PSK;
 		} else if (c->policy & POLICY_AUTH_NULL) {
-			authby = AUTH_NULL;
+			authby = AUTHBY_NULL;
 		} else {
-			/* leave authby == AUTH_UNSET */
+			/* leave authby == AUTHBY_UNSET */
 			/* ??? we will surely crash with bad_case */
 		}
 	}
@@ -107,7 +107,7 @@ enum ikev2_auth_method v2_auth_method(struct ike_sa *ike, enum keyword_authby au
 	struct connection *c = ike->sa.st_connection;
 	enum ikev2_auth_method auth_method;
 	switch (authby) {
-	case AUTH_RSASIG:
+	case AUTHBY_RSASIG:
 	{
 		bool allow_legacy = LIN(POLICY_RSASIG_v1_5, c->policy);
 
@@ -133,16 +133,16 @@ enum ikev2_auth_method v2_auth_method(struct ike_sa *ike, enum keyword_authby au
 		}
 		break;
 	}
-	case AUTH_ECDSA:
+	case AUTHBY_ECDSA:
 		auth_method = IKEv2_AUTH_DIGSIG;
 		break;
-	case AUTH_PSK:
+	case AUTHBY_PSK:
 		auth_method = IKEv2_AUTH_PSK;
 		break;
-	case AUTH_NULL:
+	case AUTHBY_NULL:
 		auth_method = IKEv2_AUTH_NULL;
 		break;
-	case AUTH_NEVER:
+	case AUTHBY_NEVER:
 	default:
 		bad_case(authby);
 	}
@@ -173,9 +173,9 @@ shunk_t authby_asn1_hash_blob(const struct hash_desc *hash_algo,
 			      enum keyword_authby authby)
 {
 	switch(authby) {
-	case AUTH_RSASIG:
+	case AUTHBY_RSASIG:
 		return hash_algo->hash_asn1_blob_rsa;
-	case AUTH_ECDSA:
+	case AUTHBY_ECDSA:
 		return hash_algo->hash_asn1_blob_ecdsa;
 	default:
 		libreswan_log("Unknown or unsupported authby method for DigSig");

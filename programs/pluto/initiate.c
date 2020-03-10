@@ -96,19 +96,19 @@ static void swap_ends(struct connection *c)
 	{
 		c->policy &= ~POLICY_ID_AUTH_MASK;
 		switch (sr->this.authby) {
-		case AUTH_PSK:
+		case AUTHBY_PSK:
 			c->policy |= POLICY_PSK;
 			break;
-		case AUTH_RSASIG:
+		case AUTHBY_RSASIG:
 			c->policy |= POLICY_RSASIG;
 			break;
-		case AUTH_ECDSA:
+		case AUTHBY_ECDSA:
 			c->policy |= POLICY_ECDSA;
 			break;
-		case AUTH_NULL:
+		case AUTHBY_NULL:
 			c->policy |= POLICY_AUTH_NULL;
 			break;
-		case AUTH_NEVER:
+		case AUTHBY_NEVER:
 			/* nothing to add */
 			break;
 		default:

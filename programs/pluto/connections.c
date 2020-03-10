@@ -1216,21 +1216,21 @@ static bool extract_connection(const struct fd *whackfd,
 		if (wm->esp != NULL) {
 			loglog(RC_INFORMATIONAL, "Ignored esp= option for type=passthrough connection");
 		}
-		if (wm->left.authby != AUTH_UNSET || wm->right.authby != AUTH_UNSET) {
+		if (wm->left.authby != AUTHBY_UNSET || wm->right.authby != AUTHBY_UNSET) {
 			loglog(RC_FATAL, "Failed to add connection \"%s\": leftauth= / rightauth= options are invalid for type=passthrough connection",
 				wm->name);
 			return false;
 		}
 	} else {
 		/* reject all bad combinations of authby with leftauth=/rightauth= */
-		if (wm->left.authby != AUTH_UNSET || wm->right.authby != AUTH_UNSET) {
+		if (wm->left.authby != AUTHBY_UNSET || wm->right.authby != AUTHBY_UNSET) {
 			if (c->ike_version == IKEv1) {
 				loglog(RC_FATAL,
 					"Failed to add connection \"%s\": leftauth= and rightauth= require ikev2",
 						wm->name);
 				return false;
 			}
-			if (wm->left.authby == AUTH_UNSET || wm->right.authby == AUTH_UNSET) {
+			if (wm->left.authby == AUTHBY_UNSET || wm->right.authby == AUTHBY_UNSET) {
 				loglog(RC_FATAL,
 					"Failed to add connection \"%s\": leftauth= and rightauth= must both be set or both be unset",
 						wm->name);
@@ -1242,26 +1242,26 @@ static bool extract_connection(const struct fd *whackfd,
 				lset_t auth_pol = (wm->policy & POLICY_ID_AUTH_MASK);
 
 				switch (wm->left.authby) {
-				case AUTH_PSK:
+				case AUTHBY_PSK:
 					if (auth_pol != POLICY_PSK && auth_pol != LEMPTY) {
 						loglog(RC_FATAL, "leftauthby=secret but authby= is not secret");
 						conflict = TRUE;
 					}
 					break;
-				case AUTH_NULL:
+				case AUTHBY_NULL:
 					if (auth_pol != POLICY_AUTH_NULL && auth_pol != LEMPTY) {
 						loglog(RC_FATAL, "leftauthby=null but authby= is not null");
 						conflict = TRUE;
 					}
 					break;
-				case AUTH_NEVER:
+				case AUTHBY_NEVER:
 					if ((wm->policy & POLICY_ID_AUTH_MASK) != LEMPTY) {
 						loglog(RC_FATAL, "leftauthby=never but authby= is not never - double huh?");
 						conflict = TRUE;
 					}
 					break;
-				case AUTH_RSASIG:
-				case AUTH_ECDSA:
+				case AUTHBY_RSASIG:
+				case AUTHBY_ECDSA:
 					/* will be fixed later below */
 					break;
 				default:
@@ -1277,8 +1277,8 @@ static bool extract_connection(const struct fd *whackfd,
 					return false;
 				}
 			} else {
-				if ((wm->left.authby == AUTH_PSK && wm->right.authby == AUTH_NULL) ||
-				    (wm->left.authby == AUTH_NULL && wm->right.authby == AUTH_PSK)) {
+				if ((wm->left.authby == AUTHBY_PSK && wm->right.authby == AUTHBY_NULL) ||
+				    (wm->left.authby == AUTHBY_NULL && wm->right.authby == AUTHBY_PSK)) {
 					loglog(RC_FATAL,
 						"Failed to add connection \"%s\": cannot mix PSK and NULL authentication (leftauth=%s and rightauth=%s)",
 							wm->name,
@@ -1322,9 +1322,9 @@ static bool extract_connection(const struct fd *whackfd,
 		c->policy = c->policy & ~POLICY_ID_AUTH_MASK;
 	/* remove default pubkey policy if left/rightauth is specified */
 	if (wm->left.authby == wm->right.authby) {
-		if (wm->left.authby == AUTH_RSASIG)
+		if (wm->left.authby == AUTHBY_RSASIG)
 			c->policy = (c->policy & ~(POLICY_ECDSA));
-		if (wm->left.authby == AUTH_ECDSA)
+		if (wm->left.authby == AUTHBY_ECDSA)
 			c->policy = (c->policy & ~(POLICY_RSASIG | POLICY_RSASIG_v1_5));
 	}
 	/* ignore supplied sighash and ECDSA (from defaults) for IKEv1 */
@@ -1358,8 +1358,8 @@ static bool extract_connection(const struct fd *whackfd,
 		NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "");
 
 	if (NEVER_NEGOTIATE(wm->policy)) {
-		/* set default to AUTH_NEVER if unset and we do not expect to do IKE */
-		if (wm->left.authby == AUTH_UNSET && wm->right.authby == AUTH_UNSET) {
+		/* set default to AUTHBY_NEVER if unset and we do not expect to do IKE */
+		if (wm->left.authby == AUTHBY_UNSET && wm->right.authby == AUTHBY_UNSET) {
 			if ((c->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
 				/* authby= was also not specified - fill in default */
 				c->policy |= POLICY_AUTH_NEVER;
@@ -1369,7 +1369,7 @@ static bool extract_connection(const struct fd *whackfd,
 		}
 	} else {
 		/* set default to RSASIG if unset and we expect to do IKE */
-		if (wm->left.authby == AUTH_UNSET && wm->right.authby == AUTH_UNSET) {
+		if (wm->left.authby == AUTHBY_UNSET && wm->right.authby == AUTHBY_UNSET) {
 			 if ((c->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
 				/* authby= was also not specified - fill in default */
 				c->policy |= POLICY_DEFAULT;
@@ -1379,12 +1379,12 @@ static bool extract_connection(const struct fd *whackfd,
 		}
 
 		/* fixup symmetric policy flags based on asymmetric ones */
-		if ((wm->left.authby == AUTH_NULL && wm->right.authby == AUTH_RSASIG) ||
-		    (wm->left.authby == AUTH_RSASIG && wm->right.authby == AUTH_NULL)) {
+		if ((wm->left.authby == AUTHBY_NULL && wm->right.authby == AUTHBY_RSASIG) ||
+		    (wm->left.authby == AUTHBY_RSASIG && wm->right.authby == AUTHBY_NULL)) {
 			c->policy |= POLICY_RSASIG;
 		}
-		if ((wm->left.authby == AUTH_NULL && wm->right.authby == AUTH_ECDSA) ||
-		    (wm->left.authby == AUTH_ECDSA && wm->right.authby == AUTH_NULL)) {
+		if ((wm->left.authby == AUTHBY_NULL && wm->right.authby == AUTHBY_ECDSA) ||
+		    (wm->left.authby == AUTHBY_ECDSA && wm->right.authby == AUTHBY_NULL)) {
 			c->policy |= POLICY_ECDSA;
 		}
 
@@ -1670,30 +1670,30 @@ static bool extract_connection(const struct fd *whackfd,
 	/*
 	 * If both left/rightauth is unset, fill it in with (prefered) symmetric policy
 	 */
-	if (wm->left.authby == AUTH_UNSET && wm->right.authby == AUTH_UNSET) {
+	if (wm->left.authby == AUTHBY_UNSET && wm->right.authby == AUTHBY_UNSET) {
 		if (c->policy & POLICY_RSASIG)
-			c->spd.this.authby = c->spd.that.authby = AUTH_RSASIG;
+			c->spd.this.authby = c->spd.that.authby = AUTHBY_RSASIG;
 		else if (c->policy & POLICY_ECDSA)
-			c->spd.this.authby = c->spd.that.authby = AUTH_ECDSA;
+			c->spd.this.authby = c->spd.that.authby = AUTHBY_ECDSA;
 		else if (c->policy & POLICY_PSK)
-			c->spd.this.authby = c->spd.that.authby = AUTH_PSK;
+			c->spd.this.authby = c->spd.that.authby = AUTHBY_PSK;
 		else if (c->policy & POLICY_AUTH_NULL)
-			c->spd.this.authby = c->spd.that.authby = AUTH_NULL;
+			c->spd.this.authby = c->spd.that.authby = AUTHBY_NULL;
 	}
 
 	/* if left/rightauth are set, but symmetric policy is not, fill it in */
 	if (wm->left.authby == wm->right.authby) {
 		switch (wm->left.authby) {
-		case AUTH_RSASIG:
+		case AUTHBY_RSASIG:
 			c->policy |= POLICY_RSASIG;
 			break;
-		case AUTH_ECDSA:
+		case AUTHBY_ECDSA:
 			c->policy |= POLICY_ECDSA;
 			break;
-		case AUTH_PSK:
+		case AUTHBY_PSK:
 			c->policy |= POLICY_PSK;
 			break;
-		case AUTH_NULL:
+		case AUTHBY_NULL:
 			c->policy |= POLICY_AUTH_NULL;
 			break;
 		default:
@@ -2722,12 +2722,12 @@ struct connection *refine_host_connection(const struct state *st,
 	const generalName_t *requested_ca = st->st_requested_ca;
 	/* Ensure the caller and we know the IKE version we are looking for */
 	bool ikev1 = auth_policy != LEMPTY;
-	bool ikev2 = this_authby != AUTH_UNSET;
+	bool ikev2 = this_authby != AUTHBY_UNSET;
 
 	*fromcert = FALSE;
 
 	passert(ikev1 != ikev2 && ikev2 == (st->st_ike_version == IKEv2));
-	passert(this_authby != AUTH_NEVER);
+	passert(this_authby != AUTHBY_NEVER);
 
 	/*
 	 * Translate the IKEv1 policy onto an IKEv2 policy.
@@ -2738,10 +2738,10 @@ struct connection *refine_host_connection(const struct state *st,
 	if (ikev1) {
 		/* ??? are these cases mutually exclusive? */
 		if (LIN(POLICY_RSASIG, auth_policy))
-			this_authby = AUTH_RSASIG;
+			this_authby = AUTHBY_RSASIG;
 		if (LIN(POLICY_PSK, auth_policy))
-			this_authby = AUTH_PSK;
-		passert(this_authby != AUTH_UNSET);
+			this_authby = AUTHBY_PSK;
+		passert(this_authby != AUTHBY_UNSET);
 	}
 	/* from here on, auth_policy must only be used to check POLICY_AGGRESSIVE */
 
@@ -2801,7 +2801,7 @@ struct connection *refine_host_connection(const struct state *st,
 	if (initiator)
 	{
 		switch (this_authby) {
-		case AUTH_PSK:
+		case AUTHBY_PSK:
 			psk = get_psk(c);
 			/*
 			 * It should be virtually impossible to fail to find
@@ -2813,11 +2813,11 @@ struct connection *refine_host_connection(const struct state *st,
 				return c; /* cannot determine PSK, so not switching */
 			}
 			break;
-		case AUTH_NULL:
+		case AUTHBY_NULL:
 			/* we know our AUTH_NULL key :) */
 			break;
 
-		case AUTH_RSASIG:
+		case AUTHBY_RSASIG:
 		{
 			/*
 			 * At this point, we've committed to our
@@ -2833,7 +2833,7 @@ struct connection *refine_host_connection(const struct state *st,
 			break;
 		}
 #if 0
-		case AUTH_ECDSA:
+		case AUTHBY_ECDSA:
 		{
 			/*
 			 * At this point, we've committed to our
@@ -3035,7 +3035,7 @@ struct connection *refine_host_connection(const struct state *st,
 					d->name,
 					fmt_conn_instance(d, b2)); } );
 
-			if (this_authby == AUTH_PSK) {
+			if (this_authby == AUTHBY_PSK) {
 				/* secret must match the one we already used */
 				const chunk_t *dpsk = get_psk(d);
 
@@ -3057,7 +3057,7 @@ struct connection *refine_host_connection(const struct state *st,
 				}
 			}
 
-			if (this_authby == AUTH_RSASIG) {
+			if (this_authby == AUTHBY_RSASIG) {
 				/*
 				 * We must at least be able to find our private key.
 				 * If we initiated, it must match the one we used in

@@ -328,11 +328,11 @@ static bool can_reuse_lease(const struct connection *c)
 	 * Cannot share with PSK - it either uses GroupID or
 	 * a non-unique ID_IP* due to clients using pre-NAT IP address
 	 */
-	if (((c->policy & POLICY_PSK) != LEMPTY) || c->spd.that.authby == AUTH_PSK)
+	if (((c->policy & POLICY_PSK) != LEMPTY) || c->spd.that.authby == AUTHBY_PSK)
 		return false;
 
 	/* Cannot share with NULL authentication */
-	if (((c->policy & POLICY_AUTH_NULL) != LEMPTY) || c->spd.that.authby == AUTH_NULL)
+	if (((c->policy & POLICY_AUTH_NULL) != LEMPTY) || c->spd.that.authby == AUTHBY_NULL)
 		return false;
 
 	/* Cannot share NULL/NONE ID. Also cannot share ID_IP* due to NAT and dynamic IP */

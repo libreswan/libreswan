@@ -117,7 +117,7 @@ stf_status ikev2_calc_no_ppk_auth(struct state *st,
 	freeanychunk(*no_ppk_auth);	/* in case it was occupied */
 
 	switch (authby) {
-	case AUTH_RSASIG:
+	case AUTHBY_RSASIG:
 	{
 		const struct hash_desc *hash_algo = v2_auth_negotiated_signature_hash(ike_sa(st));
 		if (hash_algo == NULL) {
@@ -166,9 +166,9 @@ stf_status ikev2_calc_no_ppk_auth(struct state *st,
 		freeanychunk(hashval);
 		return STF_OK;
 	}
-	case AUTH_PSK:
+	case AUTHBY_PSK:
 		/* store in no_ppk_auth */
-		if (!ikev2_create_psk_auth(AUTH_PSK, st, id_hash, no_ppk_auth)) {
+		if (!ikev2_create_psk_auth(AUTHBY_PSK, st, id_hash, no_ppk_auth)) {
 			return STF_INTERNAL_ERROR;
 		}
 		return STF_OK;

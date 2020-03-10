@@ -275,7 +275,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 	switch (recv_auth) {
 	case IKEv2_AUTH_RSA:
 	{
-		if (that_authby != AUTH_RSASIG) {
+		if (that_authby != AUTHBY_RSASIG) {
 			log_state(RC_LOG, st,
 				  "peer attempted RSA authentication but we want %s in %s",
 				  enum_name(&keyword_authby_names, that_authby),
@@ -300,7 +300,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_PSK:
 	{
-		if (that_authby != AUTH_PSK) {
+		if (that_authby != AUTHBY_PSK) {
 			log_state(RC_LOG, st,
 				  "peer attempted PSK authentication but we want %s in %s",
 				  enum_name(&keyword_authby_names, that_authby),
@@ -308,7 +308,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 			return FALSE;
 		}
 
-		if (!ikev2_verify_psk_auth(AUTH_PSK, st, idhash_in, pbs)) {
+		if (!ikev2_verify_psk_auth(AUTHBY_PSK, st, idhash_in, pbs)) {
 			log_state(RC_LOG, st,
 				  "PSK Authentication failed: AUTH mismatch in %s!",
 				  context);
@@ -319,8 +319,8 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_NULL:
 	{
-		if (!(that_authby == AUTH_NULL ||
-		      (that_authby == AUTH_RSASIG && LIN(POLICY_AUTH_NULL, st->st_connection->policy)))) {
+		if (!(that_authby == AUTHBY_NULL ||
+		      (that_authby == AUTHBY_RSASIG && LIN(POLICY_AUTH_NULL, st->st_connection->policy)))) {
 			log_state(RC_LOG, st,
 				  "peer attempted NULL authentication but we want %s in %s",
 				  enum_name(&keyword_authby_names, that_authby),
@@ -328,7 +328,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 			return FALSE;
 		}
 
-		if (!ikev2_verify_psk_auth(AUTH_NULL, st, idhash_in, pbs)) {
+		if (!ikev2_verify_psk_auth(AUTHBY_NULL, st, idhash_in, pbs)) {
 			log_state(RC_LOG, st,
 				  "NULL authentication failed: AUTH mismatch in %s! (implementation bug?)",
 				  context);
@@ -340,7 +340,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_DIGSIG:
 	{
-		if (that_authby != AUTH_ECDSA && that_authby != AUTH_RSASIG) {
+		if (that_authby != AUTHBY_ECDSA && that_authby != AUTHBY_RSASIG) {
 			log_state(RC_LOG, st,
 				  "peer attempted Authentication through Digital Signature but we want %s in %s",
 				  enum_name(&keyword_authby_names, that_authby),
@@ -393,12 +393,12 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 		stf_status authstat;
 
 		switch (that_authby) {
-		case AUTH_RSASIG:
+		case AUTHBY_RSASIG:
 			authstat = ikev2_verify_rsa_hash(st, role, idhash_in, pbs,
 							 hap->algo);
 			break;
 
-		case AUTH_ECDSA:
+		case AUTHBY_ECDSA:
 			authstat = ikev2_verify_ecdsa_hash(st, role, idhash_in, pbs,
 							 hap->algo);
 			break;
@@ -435,7 +435,7 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 	if (!c->spd.that.key_from_DNS_on_demand)
 		return FALSE;
 
-	if (c->spd.that.authby == AUTH_RSASIG &&
+	if (c->spd.that.authby == AUTHBY_RSASIG &&
 	    (id.kind == ID_FQDN || id_is_ipaddr(&id)))
 {
 		switch (atype) {
@@ -2390,10 +2390,10 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	 * chunk. This is only done on the initiator in IKE_AUTH, and
 	 * not repeated in rekeys.
 	 */
-	if (v2_auth_by(ike) == AUTH_RSASIG && pc->policy & POLICY_AUTH_NULL) {
+	if (v2_auth_by(ike) == AUTHBY_RSASIG && pc->policy & POLICY_AUTH_NULL) {
 		/* store in null_auth */
 		chunk_t null_auth = NULL_HUNK;
-		if (!ikev2_create_psk_auth(AUTH_NULL, &ike->sa,
+		if (!ikev2_create_psk_auth(AUTHBY_NULL, &ike->sa,
 					   &ike->sa.st_v2_id_payload.mac,
 					   &null_auth)) {
 			loglog(RC_LOG_SERIOUS, "Failed to calculate additional NULL_AUTH");
@@ -2807,7 +2807,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 
 	enum keyword_authby that_authby = st->st_connection->spd.that.authby;
 
-	passert(that_authby != AUTH_NEVER && that_authby != AUTH_UNSET);
+	passert(that_authby != AUTHBY_NEVER && that_authby != AUTHBY_UNSET);
 
 	if (!st->st_ppk_used && st->st_no_ppk_auth.ptr != NULL) {
 		/*
@@ -2852,7 +2852,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 			init_pbs(&pbs_null_auth, null_auth.ptr, len, "pb_stream for verifying NULL_AUTH");
 			if (!v2_check_auth(IKEv2_AUTH_NULL, st,
 					   ORIGINAL_RESPONDER, &idhash_in,
-					   &pbs_null_auth, AUTH_NULL, "NULL_auth from Notify Payload"))
+					   &pbs_null_auth, AUTHBY_NULL, "NULL_auth from Notify Payload"))
 			{
 				struct ike_sa *ike = ike_sa(st);
 				send_v2N_response_from_state(ike, md,
@@ -3566,7 +3566,7 @@ static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *
 	struct connection *c = st->st_connection;
 	enum keyword_authby that_authby = c->spd.that.authby;
 
-	passert(that_authby != AUTH_NEVER && that_authby != AUTH_UNSET);
+	passert(that_authby != AUTHBY_NEVER && that_authby != AUTHBY_UNSET);
 
 	if (md->v2N.ppk_identity != NULL) {
 		if (!LIN(POLICY_PPK_ALLOW, c->policy)) {

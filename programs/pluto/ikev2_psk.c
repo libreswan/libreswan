@@ -63,7 +63,7 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 						    const chunk_t firstpacket)
 {
 	const struct connection *c = st->st_connection;
-	passert(authby == AUTH_PSK || authby == AUTH_NULL);
+	passert(authby == AUTHBY_PSK || authby == AUTHBY_NULL);
 
 	DBG(DBG_CONTROL, DBG_log("ikev2_calculate_psk_sighash() called from %s to %s PSK with authby=%s",
 		st->st_state->name,
@@ -118,7 +118,7 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 
 	const chunk_t *pss;
 
-	if (authby != AUTH_NULL) {
+	if (authby != AUTHBY_NULL) {
 		pss = get_psk(c);
 		if (pss == NULL) {
 			loglog(RC_LOG_SERIOUS,"No matching PSK found for connection: %s",
@@ -210,7 +210,7 @@ bool ikev2_create_psk_auth(enum keyword_authby authby,
 		return false;
 	}
 
-	const char *chunk_n = (authby == AUTH_PSK) ? "NO_PPK_AUTH chunk" : "NULL_AUTH chunk";
+	const char *chunk_n = (authby == AUTHBY_PSK) ? "NO_PPK_AUTH chunk" : "NULL_AUTH chunk";
 	*additional_auth = clone_hunk(signed_octets, chunk_n);
 	DBG(DBG_CRYPT, DBG_dump_hunk(chunk_n, *additional_auth));
 
@@ -225,7 +225,7 @@ bool ikev2_verify_psk_auth(enum keyword_authby authby,
 	size_t hash_len = st->st_oakley.ta_prf->prf_output_size;
 	shunk_t sig = pbs_in_left_as_shunk(sig_pbs);
 
-	passert(authby == AUTH_PSK || authby == AUTH_NULL);
+	passert(authby == AUTHBY_PSK || authby == AUTHBY_NULL);
 
 	if (sig.len != hash_len) {
 		log_state(RC_LOG, st,
@@ -246,7 +246,7 @@ bool ikev2_verify_psk_auth(enum keyword_authby authby,
 	bool ok = hunk_eq(sig, calc_hash);
 	if (ok) {
 		log_state(RC_LOG_SERIOUS, st, "authenticated using authby=%s",
-			  authby == AUTH_NULL ? "null" : "secret");
+			  enum_name(&keyword_authby_names, authby));
 		return true;
 	} else {
 		log_state(RC_LOG_SERIOUS, st,

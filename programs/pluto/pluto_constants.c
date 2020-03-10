@@ -293,7 +293,7 @@ static const char *const keyword_authby_name[] = {
 };
 
 enum_names keyword_authby_names = {
-	AUTH_UNSET, AUTH_NULL,
+	AUTHBY_UNSET, AUTHBY_NULL,
 	ARRAY_REF(keyword_authby_name),
 	NULL, /* prefix */
 	NULL

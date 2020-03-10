@@ -3217,7 +3217,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 				NULL, /* IKEv1 does not support 'you Tarzan, me Jane' */
 				FALSE,	/* we are responder */
 				auth_policy,
-				AUTH_UNSET,	/* ikev2 only */
+				AUTHBY_UNSET,	/* ikev2 only */
 				&fromcert);
 
 		if (r == NULL) {

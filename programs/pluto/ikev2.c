@@ -2436,25 +2436,25 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 		/* why should refine_host_connection() update this? We pulled it from their packet */
 		bool fromcert = peer_id.kind == ID_DER_ASN1_DN;
 		uint16_t auth = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
-		enum keyword_authby authby = AUTH_NEVER;
+		enum keyword_authby authby = AUTHBY_NEVER;
 
 		switch (auth) {
 		case IKEv2_AUTH_RSA:
-			authby = AUTH_RSASIG;
+			authby = AUTHBY_RSASIG;
 			break;
 		case IKEv2_AUTH_PSK:
-			authby = AUTH_PSK;
+			authby = AUTHBY_PSK;
 			break;
 		case IKEv2_AUTH_NULL:
-			authby = AUTH_NULL;
+			authby = AUTHBY_NULL;
 			break;
 		case IKEv2_AUTH_DIGSIG:
 			if (c->policy & POLICY_RSASIG) {
-				authby = AUTH_RSASIG;
+				authby = AUTHBY_RSASIG;
 				break;
 			}
 			if (c->policy & POLICY_ECDSA) {
-				authby = AUTH_ECDSA;
+				authby = AUTHBY_ECDSA;
 				break;
 			}
 			/* FALL THROUGH */
@@ -2463,11 +2463,11 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 			DBG(DBG_CONTROL, DBG_log("ikev2 skipping refine_host_connection due to unknown policy"));
 		}
 
-		if (authby != AUTH_NEVER) {
+		if (authby != AUTHBY_NEVER) {
 			struct connection *r = NULL;
 			id_buf peer_str;
 
-			if (authby != AUTH_NULL) {
+			if (authby != AUTHBY_NULL) {
 				r = refine_host_connection(
 					md->st, &peer_id, tip, FALSE /*initiator*/,
 					LEMPTY /* auth_policy */, authby, &fromcert);

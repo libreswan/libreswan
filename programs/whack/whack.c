@@ -1609,11 +1609,11 @@ int main(int argc, char **argv)
 		 */
 		case END_AUTHBY:
 			if (streq(optarg, "psk"))
-				msg.right.authby = AUTH_PSK;
+				msg.right.authby = AUTHBY_PSK;
 			else if (streq(optarg, "null"))
-				msg.right.authby = AUTH_NULL;
+				msg.right.authby = AUTHBY_NULL;
 			else if (streq(optarg, "rsasig"))
-				msg.right.authby = AUTH_RSASIG;
+				msg.right.authby = AUTHBY_RSASIG;
 			else diag("authby option is not one of psk, rsasig or null");
 			continue;
 
@@ -2364,7 +2364,7 @@ int main(int argc, char **argv)
 		} else {
 			/* not just a shunt: a real ipsec connection */
 			if ((msg.policy & POLICY_ID_AUTH_MASK) == LEMPTY &&
-				msg.left.authby == AUTH_NEVER && msg.right.authby == AUTH_NEVER)
+				msg.left.authby == AUTHBY_NEVER && msg.right.authby == AUTHBY_NEVER)
 				diag("must specify connection authentication, eg --rsasig, --psk or --auth-null for non-shunt connection");
 
 			/*

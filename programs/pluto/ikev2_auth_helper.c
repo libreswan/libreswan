@@ -69,14 +69,14 @@ stf_status submit_v2_auth_signature(struct ike_sa *ike,
 
 	const struct connection *c = ike->sa.st_connection;
 	switch (authby) {
-	case AUTH_RSASIG:
+	case AUTHBY_RSASIG:
 		task.pks = get_connection_private_key(c, &pubkey_type_rsa);
 		if (task.pks == NULL)
 			/* failure: no key to use */
 			return STF_FAIL;
 		break;
 
-	case AUTH_ECDSA:
+	case AUTHBY_ECDSA:
 		task.pks = get_connection_private_key(c, &pubkey_type_ecdsa);
 		if (task.pks == NULL)
 			/* failure: no key to use */

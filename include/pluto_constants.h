@@ -98,12 +98,12 @@ enum keyword_remotepeertype {
 };
 
 enum keyword_authby {
-	AUTH_UNSET	= 0,
-	AUTH_NEVER	= 1,
-	AUTH_PSK	= 2,
-	AUTH_RSASIG	= 3,
-	AUTH_ECDSA      = 4,
-	AUTH_NULL	= 5,
+	AUTHBY_UNSET = 0,
+	AUTHBY_NEVER,
+	AUTHBY_PSK,
+	AUTHBY_RSASIG,
+	AUTHBY_ECDSA,
+	AUTHBY_NULL,
 };
 
 enum keyword_xauthby {

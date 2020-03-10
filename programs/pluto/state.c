@@ -3141,7 +3141,7 @@ void append_st_cfg_domain(struct state *st, char *domain)
 void ISAKMP_SA_established(const struct state *pst)
 {
 	struct connection *c = pst->st_connection;
-	bool authnull = (LIN(POLICY_AUTH_NULL, c->policy) || c->spd.that.authby == AUTH_NULL);
+	bool authnull = (LIN(POLICY_AUTH_NULL, c->policy) || c->spd.that.authby == AUTHBY_NULL);
 
 	if (c->spd.this.xauth_server && LIN(POLICY_PSK, c->policy)) {
 		/*
@@ -3167,7 +3167,7 @@ void ISAKMP_SA_established(const struct state *pst)
 			    same_id(&c->spd.this.id, &d->spd.this.id) &&
 			    same_id(&c->spd.that.id, &d->spd.that.id))
 			{
-				bool old_is_nullauth = (LIN(POLICY_AUTH_NULL, d->policy) || d->spd.that.authby == AUTH_NULL);
+				bool old_is_nullauth = (LIN(POLICY_AUTH_NULL, d->policy) || d->spd.that.authby == AUTHBY_NULL);
 				bool same_remote_ip = sameaddr(&c->spd.that.host_addr, &d->spd.that.host_addr);
 
 				if (same_remote_ip && (!old_is_nullauth && authnull)) {
