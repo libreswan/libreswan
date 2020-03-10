@@ -6,6 +6,7 @@ v3.32 (unreleased)
 * pluto: Support for deprecated algos removed: serpent, twofish, cast [Paul]
 * show: Fixup for python3 version of ipaddress module [Paul]
 * IKEv2: Decode notify payloads into the message digest [Andrew]
+* pluto: Fix using syntax left=%eth1 - broken in 3.27 [Antony]
 * building: Remove support for SINGLE_CONF_DIR, EMIT_ISAKMP_SPI, USE_KEYRR [Paul]
             and TEST_INDECENT_PROPOSAL
 * building: Merge userland.mk into config.mk to simplify makefiles [Tuomo]
