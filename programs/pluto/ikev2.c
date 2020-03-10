@@ -2801,7 +2801,8 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		}
 	} else {
 		LSWLOG_RC(w, buf) {
-			lswlogf(buf, "%s", st->st_state->story);
+			lswlogf(buf, "%s: %s", st->st_state->name,
+				st->st_state->story);
 			/* document SA details for admin's pleasure */
 			if (log_details != NULL) {
 				log_details(buf, st);
