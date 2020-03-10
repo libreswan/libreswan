@@ -204,6 +204,7 @@ struct hash_signature v2_auth_signature(struct logger *logger,
 					const struct crypt_mac *hash_to_sign,
 					const struct hash_desc *hash_algo,
 					enum keyword_authby authby,
+					enum ikev2_auth_method auth_method,
 					const struct private_key_stuff *pks)
 {
 	logtime_t start = logtime_start(logger);
@@ -216,29 +217,31 @@ struct hash_signature v2_auth_signature(struct logger *logger,
 	unsigned char hash_octets[sizeof(rsa_sha1_der_header) + sizeof(hash_to_sign->ptr/*an array*/)];
 	size_t hash_len;
 
-	switch (hash_algo->common.ikev2_alg_id) {
-	case IKEv2_HASH_ALGORITHM_SHA1:
+	switch (auth_method) {
+
+	case IKEv2_AUTH_RSA:
 		/* old style RSA with SHA1 */
-		memcpy(hash_octets, &rsa_sha1_der_header, sizeof(rsa_sha1_der_header));
+		passert(hash_algo == &ike_alg_hash_sha1);
+		memcpy(hash_octets, &rsa_sha1_der_header,
+		       sizeof(rsa_sha1_der_header));
 		memcpy(hash_octets + sizeof(rsa_sha1_der_header),
 		       hash_to_sign->ptr, hash_to_sign->len);
 		hash_len = sizeof(rsa_sha1_der_header) + hash_to_sign->len;
 		break;
 
-	case IKEv2_HASH_ALGORITHM_SHA2_256:
-	case IKEv2_HASH_ALGORITHM_SHA2_384:
-	case IKEv2_HASH_ALGORITHM_SHA2_512:
+	case IKEv2_AUTH_DIGSIG:
 		hash_len = hash_to_sign->len;
 		passert(hash_len <= sizeof(hash_octets));
 		memcpy(hash_octets, hash_to_sign->ptr, hash_to_sign->len);
 		break;
 
 	default:
-		bad_case(hash_algo->common.ikev2_alg_id);
+		bad_case(auth_method);
 	}
 
-	DBG(DBG_CRYPT,
-	    DBG_dump("v2rsa octets", hash_octets, hash_len));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump("v2rsa octets", hash_octets, hash_len);
+	}
 
 	struct hash_signature sig = { .len = 0, };
 	switch (authby) {
