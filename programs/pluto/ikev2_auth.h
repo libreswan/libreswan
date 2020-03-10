@@ -61,7 +61,6 @@ typedef stf_status (v2_auth_signature_cb)(struct ike_sa *ike,
 					  const struct hash_signature *sighash_sig);
 
 stf_status submit_v2_auth_signature(struct ike_sa *ike,
-				    struct state *state_to_resume,
 				    const struct crypt_mac *sighash,
 				    const struct hash_desc *hash_algo,
 				    enum keyword_authby authby,

@@ -2957,8 +2957,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 						     &ike->sa.st_v2_id_payload.mac,
 						     ike->sa.st_firstpacket_me,
 						     hash_algo);
-			return submit_v2_auth_signature(ike, st,
-							&hash_to_sign, hash_algo,
+			return submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
 							authby, auth_method,
 							ikev2_parent_inI2outR2_auth_signature_continue);
 		}
@@ -2972,8 +2971,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 									     &ike->sa.st_v2_id_payload.mac,
 									     ike->sa.st_firstpacket_me,
 									     hash_algo);
-			return submit_v2_auth_signature(ike, st,
-							&hash_to_sign, hash_algo,
+			return submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
 							authby, auth_method,
 							ikev2_parent_inI2outR2_auth_signature_continue);
 		}

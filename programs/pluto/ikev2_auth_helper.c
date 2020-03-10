@@ -54,7 +54,6 @@ struct crypto_handler v2_auth_signature_handler = {
 };
 
 stf_status submit_v2_auth_signature(struct ike_sa *ike,
-				    struct state *resume_state,
 				    const struct crypt_mac *hash_to_sign,
 				    const struct hash_desc *hash_algo,
 				    enum keyword_authby authby,
@@ -86,7 +85,8 @@ stf_status submit_v2_auth_signature(struct ike_sa *ike,
 	default:
 		bad_case(authby);
 	}
-	submit_crypto(STATE_LOGGER(&ike->sa), resume_state,
+	submit_crypto(STATE_LOGGER(&ike->sa),
+		      &ike->sa /*state to resume*/,
 		      clone_thing(task, "signature task"),
 		      &v2_auth_signature_handler,
 		      "computing responder signature");
