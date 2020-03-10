@@ -32,7 +32,6 @@
 #include "ike_alg.h"
 #include "crypt_prf.h"
 #include "crypt_symkey.h"
-#include "crypto.h"
 #include "ike_alg_prf_mac_ops.h"
 
 size_t crypt_prf_fips_key_size_min(const struct prf_desc *prf)

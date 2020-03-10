@@ -137,9 +137,6 @@ OBJS += lswlog_pexpect.o
 OBJS += lswlog_passert.o
 
 # Crypto code:
-#
-# XXX: More is coming as it gets cleaned up and made more library
-# like.
 
 OBJS += ike_alg.o
 OBJS += ike_alg_test.o
@@ -188,6 +185,9 @@ OBJS += ike_alg_sha2.o
 endif
 
 OBJS += crypt_mac.o
+OBJS += crypt_hash.o
+OBJS += crypt_prf.o
+OBJS += crypt_symkey.o
 
 ifeq ($(USE_NSS_AVA_COPY),true)
 OBJS += nss_copies.o

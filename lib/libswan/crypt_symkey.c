@@ -19,7 +19,6 @@
 #include "lswlog.h"
 #include "ike_alg.h"
 #include "crypt_symkey.h"
-#include "crypto.h"
 #include "lswfips.h"
 #include "lswnss.h"
 
