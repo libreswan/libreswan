@@ -22,9 +22,6 @@ OBJS += $(PROGRAM).o
 # XXX: For the moment build things by pulling in chunks of pluto.
 # What, if anything, should be moved to libswan or another library?
 #
-PLUTOOBJS += crypt_symkey.o
-PLUTOOBJS += crypt_hash.o
-PLUTOOBJS += crypt_prf.o
 PLUTOOBJS += test_buffer.o
 PLUTOOBJS += cbc_test_vectors.o
 PLUTOOBJS += ctr_test_vectors.o
@@ -33,10 +30,6 @@ PLUTOOBJS += prf_test_vectors.o
 # Need absolute path as 'make' (check dependencies) and 'ld' (do link)
 # are run from different directories.
 OBJS += $(addprefix $(abs_top_builddir)/programs/pluto/, $(PLUTOOBJS))
-# $(PROGRAM): pluto-base
-# .PHONY: pluto-base
-# pluto-base:
-#	$(MAKE) -C $(top_srcdir)/programs/pluto base
 
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
