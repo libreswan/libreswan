@@ -1815,16 +1815,12 @@ stf_status ikev2_send_cp(struct state *st, enum next_payload_types_ikev2 np,
 
 static stf_status emit_v2AUTH(struct ike_sa *ike,
 			      const struct crypt_mac *idhash_out,
-			      pb_stream *outpbs,
-			      chunk_t *null_auth /* optional out */)
+			      pb_stream *outpbs)
 {
 	/* XXX: this is dead; just use SA_ROLE */
 	enum original_role role = (ike->sa.st_sa_role == SA_INITIATOR ? ORIGINAL_INITIATOR :
 				   ike->sa.st_sa_role == SA_RESPONDER ? ORIGINAL_RESPONDER :
 				   pexpect(0));
-	const struct connection *c = ike->sa.st_connection;
-	if (null_auth != NULL)
-		*null_auth = EMPTY_CHUNK;
 	enum keyword_authby authby = v2_auth_by(ike);
 
 	struct ikev2_auth a = {
@@ -1908,23 +1904,6 @@ static stf_status emit_v2AUTH(struct ike_sa *ike,
 
 	default:
 		bad_case(a.isaa_auth_method);
-	}
-
-	/* We sent normal IKEv2_AUTH_RSA but if the policy also allows
-	 * AUTH_NULL, we will send a Notify with NULL_AUTH in separate
-	 * chunk. This is only done on the initiator in IKE_AUTH, and
-	 * not repeated in rekeys.
-	 */
-	if (null_auth != NULL &&
-	    authby == AUTH_RSASIG &&
-	    c->policy & POLICY_AUTH_NULL) {
-		/* store in null_auth */
-		if (!ikev2_create_psk_auth(AUTH_NULL, &ike->sa, idhash_out,
-			null_auth))
-		{
-			loglog(RC_LOG_SERIOUS, "Failed to calculate additional NULL_AUTH");
-			return STF_FATAL;
-		}
 	}
 
 	close_output_pbs(&a_pbs);
@@ -2297,11 +2276,9 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	}
 
 	/* send out the AUTH payload */
-	chunk_t null_auth;	/* we must free this */
 
-	stf_status authstat = emit_v2AUTH(ike, &ike->sa.st_v2_id_payload.mac, &sk.pbs, &null_auth);
+	stf_status authstat = emit_v2AUTH(ike, &ike->sa.st_v2_id_payload.mac, &sk.pbs);
 	if (authstat != STF_OK) {
-		freeanychunk(null_auth);
 		passert(IS_CHILD_SA(cst));
 		dbg("switching MD.ST from CHILD #%lu to IKE #%lu; ulgh",
 		    md->st->st_serialno, ike->sa.st_serialno);
@@ -2314,7 +2291,6 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		stf_status cpstat = ikev2_send_cp(pst, ISAKMP_NEXT_v2SA,
 						  &sk.pbs);
 		if (cpstat != STF_OK) {
-			freeanychunk(null_auth);
 			return cpstat;
 		}
 	}
@@ -2368,7 +2344,6 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		get_v2_ike_auth_child_proposals(cc, "IKE SA initiator emitting ESP/AH proposals");
 	if (!ikev2_emit_sa_proposals(&sk.pbs, child_proposals,
 				     &local_spi)) {
-		freeanychunk(null_auth);
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -2381,7 +2356,6 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		DBG(DBG_CONTROL, DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE"));
 		/* In v2, for parent, protoid must be 0 and SPI must be empty */
 		if (!emit_v2N(v2N_USE_TRANSPORT_MODE, &sk.pbs)) {
-			freeanychunk(null_auth);
 			return STF_INTERNAL_ERROR;
 		}
 	} else {
@@ -2389,13 +2363,11 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	}
 
 	if (!emit_v2N_compression(cst, true, &sk.pbs)) {
-		freeanychunk(null_auth);
 		return STF_INTERNAL_ERROR;
 	}
 
 	if (cc->send_no_esp_tfc) {
 		if (!emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &sk.pbs)) {
-			freeanychunk(null_auth);
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -2403,7 +2375,6 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	if (LIN(POLICY_MOBIKE, cc->policy)) {
 		cst->st_sent_mobike = pst->st_sent_mobike = TRUE;
 		if (!emit_v2N(v2N_MOBIKE_SUPPORTED, &sk.pbs)) {
-			freeanychunk(null_auth);
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -2412,7 +2383,6 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 		if (!emit_v2Npl(v2N_PPK_IDENTITY, &sk.pbs, &ppks) ||
 		    !emit_unified_ppk_id(&ppk_id_p, &ppks)) {
-			freeanychunk(null_auth);
 			return STF_INTERNAL_ERROR;
 		}
 		close_output_pbs(&ppks);
@@ -2421,19 +2391,33 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			stf_status s = ikev2_calc_no_ppk_auth(pst, &ike->sa.st_v2_id_payload.mac_no_ppk_auth,
 							      &pst->st_no_ppk_auth);
 			if (s != STF_OK) {
-				freeanychunk(null_auth);
 				return s;
 			}
 
 			if (!emit_v2N_hunk(v2N_NO_PPK_AUTH,
 					   pst->st_no_ppk_auth, &sk.pbs)) {
-				freeanychunk(null_auth);
 				return STF_INTERNAL_ERROR;
 			}
 		}
 	}
 
-	if (null_auth.ptr != NULL) {
+	/*
+	 * The initiator:
+	 *
+	 * We sent normal IKEv2_AUTH_RSA but if the policy also allows
+	 * AUTH_NULL, we will send a Notify with NULL_AUTH in separate
+	 * chunk. This is only done on the initiator in IKE_AUTH, and
+	 * not repeated in rekeys.
+	 */
+	if (v2_auth_by(ike) == AUTH_RSASIG && pc->policy & POLICY_AUTH_NULL) {
+		/* store in null_auth */
+		chunk_t null_auth = NULL_HUNK;
+		if (!ikev2_create_psk_auth(AUTH_NULL, &ike->sa,
+					   &ike->sa.st_v2_id_payload.mac,
+					   &null_auth)) {
+			loglog(RC_LOG_SERIOUS, "Failed to calculate additional NULL_AUTH");
+			return STF_FATAL;
+		}
 		if (!emit_v2N_hunk(v2N_NULL_AUTH, null_auth, &sk.pbs)) {
 			freeanychunk(null_auth);
 			return STF_INTERNAL_ERROR;
