@@ -389,12 +389,8 @@ static void peerlog_raw(const char *prefix, char *message)
 	}
 }
 
-static void jambuf_to_whack(struct lswlog *buf, const struct fd *whackfd, enum rc_type rc)
+void jambuf_to_whack(struct lswlog *buf, const struct fd *whackfd, enum rc_type rc)
 {
-	if (!fd_p(whackfd)) {
-		return;
-	}
-
 	/*
 	 * XXX: use iovec as it's easier than trying to deal with
 	 * truncation while still ensuring that the message is
@@ -484,6 +480,10 @@ static void whack_raw(jambuf_t *buf, enum rc_type rc)
 	const struct fd *whackfd = (fd_p(whack_log_fd) ? whack_log_fd :
 		    cur_state != NULL ? cur_state->st_whack_sock :
 		    null_fd);
+	if (!fd_p(whackfd)) {
+		return;
+	}
+
 	jambuf_to_whack(buf, whackfd, rc);
 }
 

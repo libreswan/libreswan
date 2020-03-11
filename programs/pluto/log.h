@@ -295,11 +295,12 @@ extern void exit_log(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
 void whack_log(enum rc_type rc, const struct fd *whackfd, const char *message, ...) PRINTF_LIKE(3);
 void whack_print(const struct fd *whackfd, const char *message, ...) PRINTF_LIKE(2);
 void whack_comment(const struct fd *whackfd, const char *message, ...) PRINTF_LIKE(2);
+void jambuf_to_whack(jambuf_t *buf, const struct fd *whackfd, enum rc_type rc);
 
 #define WHACK_LOG(RC, WHACKFD, BUF)					\
 	LSWLOG_(true, BUF,						\
-		lswlog_log_prefix(BUF),					\
-		log_jambuf(RC|WHACK_STREAM, WHACKFD, BUF))
+		/*NO-PREFIX*/,						\
+		jambuf_to_whack(BUF, WHACKFD, RC))
 
 extern void show_status(const struct fd *whackfd);
 extern void show_setup_plutomain(const struct fd *whackfd);
