@@ -845,6 +845,7 @@ kvmplutotest	interop-ikev2-strongswan-25-ke-mismatch-initiator	good
 kvmplutotest	interop-ikev2-strongswan-26-ke-mismatch-responder	good
 kvmplutotest	interop-ikev2-strongswan-31-asymmetric-responder	good
 kvmplutotest	interop-ikev2-strongswan-32-ip-lease			good
+kvmplutotest	interop-ikev2-xfrmi-strongswan-01			good
 
 # Selinux / secure labeling tests (require netkey and selinux)
 kvmplutotest    labeled-ipsec-01		wip
