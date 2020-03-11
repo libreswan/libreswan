@@ -876,11 +876,9 @@ bool match_certs_id(const struct certs *certs,
  *
  */
 
-lsw_cert_ret v1_process_certs(struct msg_digest *md)
+bool v1_decode_certs(struct msg_digest *md)
 {
 	struct state *st = md->st;
-	struct ike_sa *ike = ike_sa(st);
-	struct connection *c = st->st_connection;
 	passert(st->st_ike_version == IKEv1);
 
 	/*
@@ -901,12 +899,12 @@ lsw_cert_ret v1_process_certs(struct msg_digest *md)
 	/* if we already verified ID, no need to do it again */
 	if (st->st_peer_alt_id) {
 		dbg("Peer ID was already confirmed");
-		return LSW_CERT_ID_OK;
+		return true;
 	}
 
 	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_CERT];
 	if (cert_payloads == NULL) {
-		return LSW_CERT_NONE;
+		return true;
 	}
 
 	if (st->st_remote_certs.verified != NULL) {
@@ -918,13 +916,32 @@ lsw_cert_ret v1_process_certs(struct msg_digest *md)
 		free_public_keys(&st->st_remote_certs.pubkey_db);
 	}
 	if (!decode_certs(st, cert_payloads)) {
-		return LSW_CERT_BAD;
+		return false;
+	}
+	return true;
+}
+
+bool v1_verify_certs(struct msg_digest *md)
+{
+	struct state *st = md->st;
+	struct ike_sa *ike = ike_sa(st);
+	struct connection *c = st->st_connection;
+	passert(st->st_ike_version == IKEv1);
+
+	/* if we already verified ID, no need to do it again */
+	if (st->st_peer_alt_id) {
+		dbg("Peer ID was already confirmed");
+		return true;
+	}
+
+	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_CERT];
+	if (cert_payloads == NULL) {
+		return true;
 	}
 
 	struct certs *certs = ike->sa.st_remote_certs.verified;
-
 	if (certs == NULL) {
-		return LSW_CERT_NONE;
+		return true;
 	}
 
 	if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
@@ -932,7 +949,7 @@ lsw_cert_ret v1_process_certs(struct msg_digest *md)
 	} else {
 		if (!match_certs_id(certs, &c->spd.that.id /*ID_FROMCERT => updated*/)) {
 			libreswan_log("Peer CERT payload SubjectAltName does not match peer ID for this connection");
-			return LSW_CERT_MISMATCHED_ID;
+			return false;
 		}
 		dbg("SAN ID matched, updating that.cert");
 	}
@@ -944,7 +961,7 @@ lsw_cert_ret v1_process_certs(struct msg_digest *md)
 	}
 	c->spd.that.cert.u.nss_cert = CERT_DupCertificate(certs->cert);
 	c->spd.that.cert.ty = CERT_X509_SIGNATURE;
-	return LSW_CERT_ID_OK;
+	return true;
 }
 
 /*

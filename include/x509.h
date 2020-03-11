@@ -37,13 +37,6 @@
 struct pubkey_list;
 struct fd;
 
-typedef enum {
-	LSW_CERT_NONE = 0,
-	LSW_CERT_BAD = 1,
-	LSW_CERT_MISMATCHED_ID = 2,
-	LSW_CERT_ID_OK = 3
-} lsw_cert_ret;
-
 /*
  * NSS can actually support a much larger path length
  */

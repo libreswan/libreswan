@@ -36,7 +36,8 @@ struct msg_digest;
 struct certs;
 struct ike_sa;
 
-extern lsw_cert_ret v1_process_certs(struct msg_digest *md);
+bool v1_decode_certs(struct msg_digest *md);
+bool v1_verify_certs(struct msg_digest *md);
 
 bool match_certs_id(const struct certs *certs, struct id *peer_id /*ID_FROMCERT => updated*/);
 

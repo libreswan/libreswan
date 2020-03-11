@@ -3147,26 +3147,16 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	}
 
 	/* check for certificates */
-	lsw_cert_ret ret = v1_process_certs(md);
-	switch (ret) {
-	case LSW_CERT_NONE:
-		DBG(DBG_X509, DBG_log("X509: no CERT payloads to process"));
-		break;
-	case LSW_CERT_BAD:
+	if (!v1_decode_certs(md)) {
 		libreswan_log("X509: CERT payload bogus or revoked");
-		return FALSE;
-	case LSW_CERT_MISMATCHED_ID:
+		return false;
+	}
+	if (!v1_verify_certs(md)) {
 		libreswan_log("X509: CERT payload does not match connection ID");
 		if (initiator || aggrmode) {
 			/* cannot switch connection so fail */
-			return FALSE;
+			return false;
 		}
-		break;
-	case LSW_CERT_ID_OK:
-		DBG(DBG_X509, DBG_log("X509: CERT and ID matches current connection"));
-		break;
-	default:
-		bad_case(ret);
 	}
 
 	/* check for certificate requests */

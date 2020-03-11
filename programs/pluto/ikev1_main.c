@@ -1465,7 +1465,6 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 {
 	struct state *st = md->st;
 	stf_status r = STF_OK;
-	lsw_cert_ret ret = LSW_CERT_NONE;
 
 	/*
 	 * ID Payload in.
@@ -1481,10 +1480,12 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 	 * process any CERT payloads if aggrmode
 	 */
 	if (!st->st_peer_alt_id) {
-		ret = v1_process_certs(md);
-
-		if (ret != LSW_CERT_NONE && ret != LSW_CERT_ID_OK)
+		if (!v1_decode_certs(md)) {
 			return STF_FAIL + INVALID_ID_INFORMATION;
+		}
+		if (!v1_verify_certs(md)) {
+			return STF_FAIL + INVALID_ID_INFORMATION;
+		}
 	}
 
 	/*
