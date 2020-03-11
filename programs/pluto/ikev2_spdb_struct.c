@@ -394,15 +394,12 @@ static void plog_connection_proposals(const char *prefix, struct connection *c, 
 {
 	int propnum;
 	const struct ikev2_proposal *proposal;
+	struct logger logger = CONNECTION_LOGGER(c, null_fd/*no whack*/);
 	FOR_EACH_V2_PROPOSAL(propnum, proposal, proposals) {
-		char message[LOG_WIDTH];
-		jambuf_t buf = ARRAY_AS_JAMBUF(message);
-		jam_log_prefix(&buf, NULL/*state*/, c, NULL/*from*/);
-		{
-			jam_string(&buf, prefix);
-			jam_v2_proposal(&buf, propnum, proposal);
+		LOG_MESSAGE(RC_LOG|LOG_STREAM, &logger, buf) {
+			jam_string(buf, prefix);
+			jam_v2_proposal(buf, propnum, proposal);
 		}
-		log_jambuf(LOG_STREAM, null_fd, &buf);
 	}
 }
 

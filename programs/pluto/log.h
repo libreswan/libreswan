@@ -172,6 +172,13 @@ void log_message(lset_t rc_flags,
 		 const struct logger *log,
 		 const char *format, ...) PRINTF_LIKE(3);
 
+void jambuf_to_log(jambuf_t *buf, const struct logger *logger, lset_t rc_flags);
+
+#define LOG_MESSAGE(RC_FLAGS, LOGGER, BUF)				\
+	LSWLOG_(true, BUF,						\
+		(LOGGER)->jam_prefix(BUF, (LOGGER)->object),		\
+		jambuf_to_log(BUF, (LOGGER), RC_FLAGS))
+
 void log_pending(lset_t rc_flags,
 		 const struct pending *pending,
 		 const char *format, ...) PRINTF_LIKE(3);

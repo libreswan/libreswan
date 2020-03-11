@@ -746,8 +746,7 @@ static void log_whacks(enum rc_type rc, const struct fd *global_whackfd,
 	}
 }
 
-static void broadcast_jambuf(lset_t rc_flags, const struct fd *global_whackfd,
-			     const struct fd *object_whackfd, jambuf_t *buf)
+void jambuf_to_log(jambuf_t *buf, const struct logger *logger, lset_t rc_flags)
 {
 	enum rc_type rc = rc_flags & RC_MASK;
 	enum stream only = rc_flags & ~RC_MASK;
@@ -757,17 +756,17 @@ static void broadcast_jambuf(lset_t rc_flags, const struct fd *global_whackfd,
 		break;
 	case ALL_STREAMS:
 		log_raw(LOG_WARNING, "", buf);
-		log_whacks(rc, global_whackfd, object_whackfd, buf);
+		log_whacks(rc, logger->global_whackfd, logger->object_whackfd, buf);
 		break;
 	case LOG_STREAM:
 		log_raw(LOG_WARNING, "", buf);
 		break;
 	case WHACK_STREAM:
-		log_whacks(rc, global_whackfd, object_whackfd, buf);
+		log_whacks(rc, logger->global_whackfd, logger->object_whackfd, buf);
 		break;
 	case ERROR_STREAM:
 		log_raw(LOG_ERR, "", buf);
-		log_whacks(rc, global_whackfd, object_whackfd, buf);
+		log_whacks(rc, logger->global_whackfd, logger->object_whackfd, buf);
 		break;
 	case NO_STREAM:
 		/*
@@ -781,11 +780,13 @@ static void broadcast_jambuf(lset_t rc_flags, const struct fd *global_whackfd,
 	}
 }
 
-void log_jambuf(lset_t rc_flags, const struct fd *object_fd, jambuf_t *buf)
+void log_jambuf(lset_t rc_flags, const struct fd *object_whackfd, jambuf_t *buf)
 {
-	broadcast_jambuf(rc_flags,
-			 in_main_thread() ? whack_log_fd/*GLOBAL*/ : null_fd,
-			 object_fd, buf);
+	struct logger logger = {
+		.global_whackfd = in_main_thread() ? whack_log_fd/*GLOBAL*/ : null_fd,
+		.object_whackfd = object_whackfd,
+	};
+	jambuf_to_log(buf, &logger, rc_flags);
 }
 
 static void broadcast(lset_t rc_flags, const struct logger *log,
@@ -804,7 +805,7 @@ static void broadcast(lset_t rc_flags, const struct logger *log,
 		/* jam_debug_prefix(buf, st, c, from) */
 		log->jam_prefix(buf, log->object);
 		jam_va_list(buf, message, ap);
-		broadcast_jambuf(rc_flags, log->global_whackfd, log->object_whackfd, buf);
+		jambuf_to_log(buf, log, rc_flags);
 	}
 }
 
