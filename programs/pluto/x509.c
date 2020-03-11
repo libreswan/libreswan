@@ -676,94 +676,6 @@ bool find_fetch_dn(SECItem *dn, struct connection *c,
 #endif
 
 /*
- * Decode any certs into *certs, return true.
- *
- * Only when something nasty happens, namely a bad cert, will false be
- * return.
- */
-static bool decode_certs(struct state *st, struct payload_digest *cert_payloads)
-{
-	if (!pexpect(st->st_remote_certs.verified == NULL)) {
-		/*
-		 * Since the MITM has already failed their first
-		 * attempt at proving their credentials, there's no
-		 * point in giving them a second chance.
-		 *
-		 * Happens because code rejecting the first
-		 * authentication attempt leaves the state as-is
-		 * instead of zombifying (where the notification is
-		 * recorded and then sent, and then the state
-		 * transitions to zombie where it can linger while
-		 * dealing with duplicate packets) or deleting it.
-		 */
-		return false;
-	}
-
-	statetime_t start = statetime_start(st);
-	struct connection *c = st->st_connection;
-
-	const struct rev_opts rev_opts = {
-		.ocsp = ocsp_enable,
-		.ocsp_strict = ocsp_strict,
-		.ocsp_post = ocsp_post,
-		.crl_strict = crl_strict,
-	};
-
-	struct root_certs *root_certs = root_certs_addref(HERE); /* must-release */
-	struct logger log = STATE_LOGGER(st);
-	struct verified_certs certs = find_and_verify_certs(&log, st->st_ike_version,
-							    cert_payloads, &rev_opts,
-							    root_certs, &c->spd.that.id);
-	root_certs_delref(&root_certs, HERE);
-
-	/* either something went wrong, or there were no certs */
-	if (certs.cert_chain == NULL) {
-#if defined(LIBCURL) || defined(LIBLDAP)
-		if (certs.crl_update_needed && deltasecs(crl_check_interval) > 0) {
-			/*
-			 * When a strict crl check fails, the certs
-			 * are deleted and CRL_NEEDED is set.
-			 *
-			 * When a non-strict crl check fails, it is
-			 * left to the crl fetch job to do a refresh.
-			 *
-			 * Trigger a refresh.
-			 */
-			SECItem fdn = { siBuffer, NULL, 0 };
-			if (find_fetch_dn(&fdn, c, NULL)) {
-				add_crl_fetch_requests(crl_fetch_request(&fdn, NULL, NULL));
-			}
-		}
-#endif
-		if (certs.harmless) {
-			/* For instance, no CA, unknown certs, ... */
-			return true;
-		} else {
-			log_state(RC_LOG, st,
-				    "X509: certificate rejected for this connection");
-			/* For instance, revoked */
-			return false;
-		}
-	}
-
-	passert(certs.cert_chain->cert != NULL);
-	CERTCertificate *end_cert = certs.cert_chain->cert;
-	log_state(RC_LOG, st,
-		  "certificate verified OK: %s", end_cert->subjectName);
-
-	pexpect(st->st_remote_certs.pubkey_db == NULL);
-	st->st_remote_certs.pubkey_db = certs.pubkey_db;
-	certs.pubkey_db = NULL;
-
-	pexpect(st->st_remote_certs.verified == NULL);
-	st->st_remote_certs.verified = certs.cert_chain;
-	certs.cert_chain = NULL;
-
-	statetime_stop(&start, "%s()", __func__);
-	return true;
-}
-
-/*
  * If peer_id->kind is ID_FROMCERT, there is a guaranteed match,
  * and it will be updated to an id of kind ID_DER_ASN1_DN
  * with the name taken from the cert's derSubject.
@@ -874,6 +786,10 @@ bool match_certs_id(const struct certs *certs,
  *  which violates the requirement specified in ISAKMP that this payload
  *  contain a single certificate.
  *
+ * Decode any certs into *certs, return true.
+ *
+ * Only when something nasty happens, namely a bad cert, will false be
+ * return.
  */
 
 bool v1_decode_certs(struct msg_digest *md)
@@ -915,9 +831,84 @@ bool v1_decode_certs(struct msg_digest *md)
 		dbg("hacking around a redundant call to v1_process_certs() - releasing pubkey_db");
 		free_public_keys(&st->st_remote_certs.pubkey_db);
 	}
-	if (!decode_certs(st, cert_payloads)) {
+
+	if (!pexpect(st->st_remote_certs.verified == NULL)) {
+		/*
+		 * Since the MITM has already failed their first
+		 * attempt at proving their credentials, there's no
+		 * point in giving them a second chance.
+		 *
+		 * Happens because code rejecting the first
+		 * authentication attempt leaves the state as-is
+		 * instead of zombifying (where the notification is
+		 * recorded and then sent, and then the state
+		 * transitions to zombie where it can linger while
+		 * dealing with duplicate packets) or deleting it.
+		 */
 		return false;
 	}
+
+	statetime_t start = statetime_start(st);
+	struct connection *c = st->st_connection;
+
+	const struct rev_opts rev_opts = {
+		.ocsp = ocsp_enable,
+		.ocsp_strict = ocsp_strict,
+		.ocsp_post = ocsp_post,
+		.crl_strict = crl_strict,
+	};
+
+	struct root_certs *root_certs = root_certs_addref(HERE); /* must-release */
+	struct logger log = STATE_LOGGER(st);
+	struct verified_certs certs = find_and_verify_certs(&log, st->st_ike_version,
+							    cert_payloads, &rev_opts,
+							    root_certs, &c->spd.that.id);
+	root_certs_delref(&root_certs, HERE);
+
+	/* either something went wrong, or there were no certs */
+	if (certs.cert_chain == NULL) {
+#if defined(LIBCURL) || defined(LIBLDAP)
+		if (certs.crl_update_needed && deltasecs(crl_check_interval) > 0) {
+			/*
+			 * When a strict crl check fails, the certs
+			 * are deleted and CRL_NEEDED is set.
+			 *
+			 * When a non-strict crl check fails, it is
+			 * left to the crl fetch job to do a refresh.
+			 *
+			 * Trigger a refresh.
+			 */
+			SECItem fdn = { siBuffer, NULL, 0 };
+			if (find_fetch_dn(&fdn, c, NULL)) {
+				add_crl_fetch_requests(crl_fetch_request(&fdn, NULL, NULL));
+			}
+		}
+#endif
+		if (certs.harmless) {
+			/* For instance, no CA, unknown certs, ... */
+			return true;
+		} else {
+			log_state(RC_LOG, st,
+				    "X509: certificate rejected for this connection");
+			/* For instance, revoked */
+			return false;
+		}
+	}
+
+	passert(certs.cert_chain->cert != NULL);
+	CERTCertificate *end_cert = certs.cert_chain->cert;
+	log_state(RC_LOG, st,
+		  "certificate verified OK: %s", end_cert->subjectName);
+
+	pexpect(st->st_remote_certs.pubkey_db == NULL);
+	st->st_remote_certs.pubkey_db = certs.pubkey_db;
+	certs.pubkey_db = NULL;
+
+	pexpect(st->st_remote_certs.verified == NULL);
+	st->st_remote_certs.verified = certs.cert_chain;
+	certs.cert_chain = NULL;
+
+	statetime_stop(&start, "%s()", __func__);
 	return true;
 }
 
