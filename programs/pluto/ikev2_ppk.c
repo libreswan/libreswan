@@ -107,11 +107,11 @@ bool extract_ppk_id(pb_stream *pbs, struct ppk_id_payload *payl)
 	return TRUE;
 }
 
-stf_status ikev2_calc_no_ppk_auth(struct state *st,
+stf_status ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 				  const struct crypt_mac *id_hash,
 				  chunk_t *no_ppk_auth /* output */)
 {
-	struct connection *c = st->st_connection;
+	struct connection *c = ike->sa.st_connection;
 	enum keyword_authby authby = c->spd.this.authby;
 
 	freeanychunk(*no_ppk_auth);	/* in case it was occupied */
@@ -119,11 +119,11 @@ stf_status ikev2_calc_no_ppk_auth(struct state *st,
 	switch (authby) {
 	case AUTHBY_RSASIG:
 	{
-		const struct hash_desc *hash_algo = v2_auth_negotiated_signature_hash(ike_sa(st));
+		const struct hash_desc *hash_algo = v2_auth_negotiated_signature_hash(ike);
 		if (hash_algo == NULL) {
 			if (c->sighash_policy == LEMPTY) {
 				/* RSA with SHA1 without Digsig: no oid blob appended */
-				if (!ikev2_calculate_rsa_hash(st, st->st_original_role,
+				if (!ikev2_calculate_rsa_hash(ike, ike->sa.st_original_role,
 							      id_hash, NULL, no_ppk_auth,
 							      &ike_alg_hash_sha1)) {
 					return STF_FAIL;
@@ -143,13 +143,13 @@ stf_status ikev2_calc_no_ppk_auth(struct state *st,
 		}
 
 		chunk_t hashval = NULL_HUNK;
-		if (!ikev2_calculate_rsa_hash(st, st->st_original_role,
+		if (!ikev2_calculate_rsa_hash(ike, ike->sa.st_original_role,
 					      id_hash, NULL, &hashval,
 					      hash_algo)) {
 			return STF_FAIL;
 		}
 
-		if (st->st_seen_hashnotify) {
+		if (ike->sa.st_seen_hashnotify) {
 			/*
 			 * combine blobs to create no_ppk_auth:
 			 * - ASN.1 algo blob
@@ -168,7 +168,7 @@ stf_status ikev2_calc_no_ppk_auth(struct state *st,
 	}
 	case AUTHBY_PSK:
 		/* store in no_ppk_auth */
-		if (!ikev2_create_psk_auth(AUTHBY_PSK, st, id_hash, no_ppk_auth)) {
+		if (!ikev2_create_psk_auth(AUTHBY_PSK, ike, id_hash, no_ppk_auth)) {
 			return STF_INTERNAL_ERROR;
 		}
 		return STF_OK;

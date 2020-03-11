@@ -41,7 +41,7 @@ static const uint8_t rsa_sha1_der_header[] = {
 	0x03, 0x02, 0x1a, 0x05, 0x00, 0x04, 0x14
 };
 
-struct crypt_mac v2_calculate_sighash(const struct state *st,
+struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 				      enum original_role role,
 				      const struct crypt_mac *idhash,
 				      const chunk_t firstpacket,
@@ -52,10 +52,10 @@ struct crypt_mac v2_calculate_sighash(const struct state *st,
 
 	if (role == ORIGINAL_INITIATOR) {
 		/* on initiator, we need to hash responders nonce */
-		nonce = &st->st_nr;
+		nonce = &ike->sa.st_nr;
 		nonce_name = "inputs to hash2 (responder nonce)";
 	} else {
-		nonce = &st->st_ni;
+		nonce = &ike->sa.st_ni;
 		nonce_name = "inputs to hash2 (initiator nonce)";
 	}
 
@@ -69,7 +69,7 @@ struct crypt_mac v2_calculate_sighash(const struct state *st,
 	crypt_hash_digest_hunk(ctx, "first packet", firstpacket);
 	crypt_hash_digest_hunk(ctx, "nonce", *nonce);
 	/* we took the PRF(SK_d,ID[ir]'), so length is prf hash length */
-	passert(idhash->len == st->st_oakley.ta_prf->prf_output_size);
+	passert(idhash->len == ike->sa.st_oakley.ta_prf->prf_output_size);
 	crypt_hash_digest_hunk(ctx, "IDHASH", *idhash);
 	return crypt_hash_final_mac(&ctx);
 }
@@ -290,7 +290,7 @@ bool emit_v2_auth(struct ike_sa *ike,
 	case IKEv2_AUTH_PSK:
 	case IKEv2_AUTH_NULL:
 		/* emit */
-		if (!ikev2_emit_psk_auth(authby, &ike->sa, id_payload_mac, &a_pbs)) {
+		if (!ikev2_emit_psk_auth(authby, ike, id_payload_mac, &a_pbs)) {
 			loglog(RC_LOG_SERIOUS, "Failed to find our PreShared Key");
 			return false;
 		}

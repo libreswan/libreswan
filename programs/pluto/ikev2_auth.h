@@ -30,7 +30,7 @@ struct hash_desc;
 struct logger;
 struct private_key_stuff;
 
-struct crypt_mac v2_calculate_sighash(const struct state *st,
+struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 				      enum original_role role,
 				      const struct crypt_mac *idhash,
 				      const chunk_t firstpacket,

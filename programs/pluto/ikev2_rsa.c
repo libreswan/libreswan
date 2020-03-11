@@ -59,7 +59,7 @@ static const uint8_t rsa_sha1_der_header[] = {
 	0x03, 0x02, 0x1a, 0x05, 0x00, 0x04, 0x14
 };
 
-bool ikev2_calculate_rsa_hash(struct state *st,
+bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
 			      enum original_role role,
 			      const struct crypt_mac *idhash,
 			      pb_stream *a_pbs,
@@ -67,8 +67,8 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 			      const struct hash_desc *hash_algo)
 {
 	const struct pubkey_type *type = &pubkey_type_rsa;
-	statetime_t start = statetime_start(st);
-	const struct connection *c = st->st_connection;
+	statetime_t start = statetime_start(&ike->sa);
+	const struct connection *c = ike->sa.st_connection;
 
 	const struct private_key_stuff *pks = get_connection_private_key(c, type);
 	if (pks == NULL) {
@@ -80,8 +80,8 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 	const struct RSA_private_key *k = &pks->u.RSA_private_key;
 	unsigned int sz = k->pub.k;
 
-	struct crypt_mac hash = v2_calculate_sighash(st, role, idhash,
-						     st->st_firstpacket_me,
+	struct crypt_mac hash = v2_calculate_sighash(ike, role, idhash,
+						     ike->sa.st_firstpacket_me,
 						     hash_algo);
 
 	/*
@@ -118,7 +118,7 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 
 	{
 		/* now generate signature blob */
-		statetime_t sign_time = statetime_start(st);
+		statetime_t sign_time = statetime_start(&ike->sa);
 		struct hash_signature sig;
 		passert(sizeof(sig.ptr/*array*/) >= RSA_MAX_OCTETS);
 		sig = pubkey_type_rsa.sign_hash(pks, signed_octets, signed_len,
@@ -170,13 +170,13 @@ static err_t try_RSA_signature_v2(const struct crypt_mac *hash,
 	return NULL;
 }
 
-stf_status ikev2_verify_rsa_hash(struct state *st,
+stf_status ikev2_verify_rsa_hash(struct ike_sa *ike,
 				 enum original_role role,
 				 const struct crypt_mac *idhash,
 				 pb_stream *sig_pbs,
 				 const struct hash_desc *hash_algo)
 {
-	statetime_t start = statetime_start(st);
+	statetime_t start = statetime_start(&ike->sa);
 	enum original_role invertrole = (role == ORIGINAL_INITIATOR ? ORIGINAL_RESPONDER : ORIGINAL_INITIATOR);
 
 	/* XXX: table lookup? */
@@ -185,10 +185,10 @@ stf_status ikev2_verify_rsa_hash(struct state *st,
 		return STF_INTERNAL_ERROR;
 	}
 
-	struct crypt_mac hash = v2_calculate_sighash(st, invertrole, idhash,
-						     st->st_firstpacket_him,
+	struct crypt_mac hash = v2_calculate_sighash(ike, invertrole, idhash,
+						     ike->sa.st_firstpacket_him,
 						     hash_algo);
-	stf_status retstat = check_signature_gen(st, &hash, sig_pbs, hash_algo,
+	stf_status retstat = check_signature_gen(&ike->sa, &hash, sig_pbs, hash_algo,
 						 &pubkey_type_rsa, try_RSA_signature_v2);
 	statetime_stop(&start, "%s()", __func__);
 	return retstat;

@@ -56,7 +56,7 @@
 #include "lswnss.h"
 #include "ikev2_auth.h"
 
-bool ikev2_calculate_ecdsa_hash(struct state *st,
+bool ikev2_calculate_ecdsa_hash(struct ike_sa *ike,
 				enum original_role role,
 				const struct crypt_mac *idhash,
 				pb_stream *a_pbs,
@@ -64,7 +64,7 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 				const struct hash_desc *hash_algo)
 {
 	const struct pubkey_type *type = &pubkey_type_ecdsa;
-	const struct connection *c = st->st_connection;
+	const struct connection *c = ike->sa.st_connection;
 
 	const struct private_key_stuff *pks = get_connection_private_key(c, type);
 	if (pks == NULL) {
@@ -75,8 +75,8 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 	DBGF(DBG_CRYPT, "ikev2_calculate_ecdsa_hash get_ECDSA_private_key");
 
 	/* hash the packet et.al. */
-	struct crypt_mac hash = v2_calculate_sighash(st, role, idhash,
-						     st->st_firstpacket_me,
+	struct crypt_mac hash = v2_calculate_sighash(ike, role, idhash,
+						     ike->sa.st_firstpacket_me,
 						     hash_algo);
 	if (DBGP(DBG_CRYPT)) {
 		DBG_dump_hunk("ECDSA hash", hash);
@@ -90,7 +90,7 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 	 * It is the largest of the signature lengths amongst
 	 * ECDSA 256, 384, and 521.
 	 */
-	statetime_t sign_time = statetime_start(st);
+	statetime_t sign_time = statetime_start(&ike->sa);
 	struct hash_signature sig;
 	passert(sizeof(sig.ptr/*array*/) >= BYTES_FOR_BITS(1056));
 	sig = pubkey_type_ecdsa.sign_hash(pks, hash.ptr, hash.len, hash_algo);
@@ -260,7 +260,7 @@ static err_t try_ECDSA_signature_v2(const struct crypt_mac *hash,
 	return NULL;
 }
 
-stf_status ikev2_verify_ecdsa_hash(struct state *st,
+stf_status ikev2_verify_ecdsa_hash(struct ike_sa *ike,
 				   enum original_role role,
 				   const struct crypt_mac *idhash,
 				   pb_stream *sig_pbs,
@@ -271,9 +271,9 @@ stf_status ikev2_verify_ecdsa_hash(struct state *st,
 	}
 
 	enum original_role invertrole = (role == ORIGINAL_INITIATOR ? ORIGINAL_RESPONDER : ORIGINAL_INITIATOR);
-	struct crypt_mac calc_hash = v2_calculate_sighash(st, invertrole, idhash,
-							  st->st_firstpacket_him,
+	struct crypt_mac calc_hash = v2_calculate_sighash(ike, invertrole, idhash,
+							  ike->sa.st_firstpacket_him,
 							  hash_algo);
-	return check_signature_gen(st, &calc_hash, sig_pbs, hash_algo,
+	return check_signature_gen(&ike->sa, &calc_hash, sig_pbs, hash_algo,
 				   &pubkey_type_ecdsa, try_ECDSA_signature_v2);
 }

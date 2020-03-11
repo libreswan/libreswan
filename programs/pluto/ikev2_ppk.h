@@ -28,7 +28,7 @@ extern bool create_ppk_id_payload(chunk_t *ppk_id, struct ppk_id_payload *payl);
 extern bool emit_unified_ppk_id(struct ppk_id_payload *payl, pb_stream *pbs);
 extern bool extract_ppk_id(pb_stream *pbs, struct ppk_id_payload *payl);
 
-extern stf_status ikev2_calc_no_ppk_auth(struct state *st,
+extern stf_status ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 					 const struct crypt_mac *id_hash,
 					 chunk_t *no_ppk_auth /* output */);
 
