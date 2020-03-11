@@ -2774,15 +2774,26 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	}
 
 	void (*log_details)(struct lswlog *buf, struct state *st);
+	struct state *log_state;
 	if (IS_CHILD_SA_ESTABLISHED(st)) {
 		log_ipsec_sa_established("negotiated connection", st);
 		log_details = lswlog_child_sa_established;
+		log_state = st;
 		/* log our success and trigger detach */
 		w = RC_SUCCESS;
-	} else if (st->st_state->kind == STATE_PARENT_I2 || st->st_state->kind == STATE_PARENT_R1) {
+	} else if (st->st_state->kind == STATE_PARENT_I2) {
+		/*
+		 * Hack around md->st being forced to the CHILD_SA.
+		 */
+		pexpect(st != &ike->sa);
 		log_details = lswlog_ike_sa_established;
+		log_state = &ike->sa;
+	} else if (st->st_state->kind == STATE_PARENT_R1) {
+		log_details = lswlog_ike_sa_established;
+		log_state = st;
 	} else {
 		log_details = NULL;
+		log_state = st;
 	}
 
 	/*
@@ -2800,9 +2811,10 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 			}
 		}
 	} else {
-		LSWLOG_RC(w, buf) {
-			lswlogf(buf, "%s: %s", st->st_state->name,
-				st->st_state->story);
+		struct logger logger = STATE_LOGGER(log_state);
+		LOG_MESSAGE(w, &logger, buf) {
+			jam(buf, "%s: %s", st->st_state->name,
+			    st->st_state->story);
 			/* document SA details for admin's pleasure */
 			if (log_details != NULL) {
 				log_details(buf, st);
