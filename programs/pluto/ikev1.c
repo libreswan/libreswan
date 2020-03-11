@@ -3147,10 +3147,6 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	}
 
 	/* check for certificates */
-	if (!v1_decode_certs(md)) {
-		libreswan_log("X509: CERT payload bogus or revoked");
-		return false;
-	}
 	if (!v1_verify_certs(md)) {
 		libreswan_log("X509: CERT payload does not match connection ID");
 		if (initiator || aggrmode) {

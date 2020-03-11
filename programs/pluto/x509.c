@@ -785,13 +785,14 @@ bool match_certs_id(const struct certs *certs,
  *  entire certificate hierarchies inside a single CERT PKCS #7 payload,
  *  which violates the requirement specified in ISAKMP that this payload
  *  contain a single certificate.
- *
- * Decode any certs into *certs, return true.
- *
- * Only when something nasty happens, namely a bad cert, will false be
- * return.
  */
 
+/*
+ * Decode the certs.  If something nasty happens, such as an expired
+ * cert, return false.
+ *
+ * Only log failures, success is left to v2_verify_certs().
+ */
 bool v1_decode_certs(struct msg_digest *md)
 {
 	struct state *st = md->st;
@@ -895,11 +896,6 @@ bool v1_decode_certs(struct msg_digest *md)
 		}
 	}
 
-	passert(certs.cert_chain->cert != NULL);
-	CERTCertificate *end_cert = certs.cert_chain->cert;
-	log_state(RC_LOG, st,
-		  "certificate verified OK: %s", end_cert->subjectName);
-
 	pexpect(st->st_remote_certs.pubkey_db == NULL);
 	st->st_remote_certs.pubkey_db = certs.pubkey_db;
 	certs.pubkey_db = NULL;
@@ -934,6 +930,11 @@ bool v1_verify_certs(struct msg_digest *md)
 	if (certs == NULL) {
 		return true;
 	}
+
+	/* end cert is at the front */
+	CERTCertificate *end_cert = certs->cert;
+	log_state(RC_LOG, st,
+		  "certificate verified OK: %s", end_cert->subjectName);
 
 	if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
 		dbg("SAN ID matching skipped due to policy (require-id-on-certificate=no)");
