@@ -194,8 +194,16 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 
 	if (c->spd.that.has_lease &&
 	    md->chain[ISAKMP_NEXT_v2CP] != NULL &&
-	    cst->st_state->kind != STATE_V2_REKEY_IKE_R) {
-		ikev2_send_cp(&ike->sa, ISAKMP_NEXT_v2SA, outpbs);
+	    child->sa.st_state->kind != STATE_V2_REKEY_IKE_R) {
+		/*
+		 * XXX: should this be passed the CHILD SA's
+		 * .st_connection?  Here things are negotiating a new
+		 * CHILD?
+		 */
+		if (!emit_v2_child_configuration_payload(ike->sa.st_connection,
+							 child, outpbs)) {
+			return STF_INTERNAL_ERROR;
+		}
 	} else if (md->chain[ISAKMP_NEXT_v2CP] != NULL) {
 		DBG(DBG_CONTROL, DBG_log("#%lu %s ignoring unexpected v2CP payload",
 					 cst->st_serialno,

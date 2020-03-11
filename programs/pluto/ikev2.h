@@ -218,8 +218,9 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 
 void v2_schedule_replace_event(struct state *st);
 
-stf_status ikev2_send_cp(struct state *st, enum next_payload_types_ikev2 np,
-		pb_stream *outpbs);
+bool emit_v2_child_configuration_payload(struct connection *c,
+					 struct child_sa *child,
+					 pb_stream *outpbs);
 
 bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st);
 

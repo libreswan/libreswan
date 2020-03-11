@@ -1735,23 +1735,26 @@ static stf_status ikev2_ship_cp_attr_str(uint16_t type, char *str,
 	return STF_OK;
 }
 
-stf_status ikev2_send_cp(struct state *st, enum next_payload_types_ikev2 np,
-				  pb_stream *outpbs)
+/*
+ * CHILD is asking for configuration; hence log against child.
+ */
+
+bool emit_v2_child_configuration_payload(struct connection *c,
+					 struct child_sa *child,
+					 pb_stream *outpbs)
 {
 	pb_stream cp_pbs;
-	struct connection *c = st->st_connection;
 	bool cfg_reply = c->spd.that.has_lease;
 	struct ikev2_cp cp = {
-		.isacp_np = np,
 		.isacp_critical = ISAKMP_PAYLOAD_NONCRITICAL,
 		.isacp_type = cfg_reply ? IKEv2_CP_CFG_REPLY : IKEv2_CP_CFG_REQUEST,
 	};
 
-	DBG(DBG_CONTROLMORE, DBG_log("Send Configuration Payload %s ",
-				cfg_reply ? "reply" : "request"));
+	dbg("Send Configuration Payload %s ",
+	    cfg_reply ? "reply" : "request");
 
 	if (!out_struct(&cp, &ikev2_cp_desc, outpbs, &cp_pbs))
-		return STF_INTERNAL_ERROR;
+		return false;
 
 	if (cfg_reply) {
 		ikev2_ship_cp_attr_ip(subnet_type(&c->spd.that.client) == &ipv4_info ?
@@ -1767,21 +1770,23 @@ stf_status ikev2_send_cp(struct state *st, enum next_payload_types_ikev2 np,
 					ip_address ip;
 					err_t e  = ttoaddr_num(ipstr, 0, AF_INET, &ip);
 					if (e != NULL) {
-						loglog(RC_LOG_SERIOUS, "Ignored bogus DNS IP address '%s'", ipstr);
+						log_state(RC_LOG_SERIOUS, &child->sa,
+							  "Ignored bogus DNS IP address '%s'", ipstr);
 					} else {
 						if (ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_DNS, &ip,
 							"IP4_DNS", &cp_pbs) != STF_OK)
-								return STF_INTERNAL_ERROR;
+								return false;
 					}
 				} else if (strchr(ipstr, ':') != NULL) {
 					ip_address ip;
 					err_t e  = ttoaddr_num(ipstr, 0, AF_INET6, &ip);
 					if (e != NULL) {
-						loglog(RC_LOG_SERIOUS, "Ignored bogus DNS IP address '%s'", ipstr);
+						log_state(RC_LOG_SERIOUS, &child->sa,
+							  "Ignored bogus DNS IP address '%s'", ipstr);
 					} else {
 						if (ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_DNS, &ip,
 							"IP6_DNS", &cp_pbs) != STF_OK)
-								return STF_INTERNAL_ERROR;
+								return false;
 					}
 				} else {
 					loglog(RC_LOG_SERIOUS, "Ignored bogus DNS IP address '%s'", ipstr);
@@ -1797,7 +1802,7 @@ stf_status ikev2_send_cp(struct state *st, enum next_payload_types_ikev2 np,
 			while (domain != NULL) {
 				if (ikev2_ship_cp_attr_str(IKEv2_INTERNAL_DNS_DOMAIN, domain,
 					"IKEv2_INTERNAL_DNS_DOMAIN", &cp_pbs) != STF_OK)
-						return STF_INTERNAL_ERROR;
+						return false;
 				domain = strtok(NULL, ", ");
 			}
 		}
@@ -1810,7 +1815,7 @@ stf_status ikev2_send_cp(struct state *st, enum next_payload_types_ikev2 np,
 	}
 
 	close_output_pbs(&cp_pbs);
-	return STF_OK;
+	return true;
 }
 
 static bool need_configuration_payload(const struct connection *const pc,
@@ -2246,10 +2251,14 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	}
 
 	if (need_configuration_payload(pc, pst->hidden_variables.st_nat_traversal)) {
-		stf_status cpstat = ikev2_send_cp(pst, ISAKMP_NEXT_v2SA,
-						  &sk.pbs);
-		if (cpstat != STF_OK) {
-			return cpstat;
+		/*
+		 * XXX: should this be passed the CHILD SA's
+		 * .st_connection?  Here CHILD and IKE SAs share a
+		 * connection?
+		 */
+		if (!emit_v2_child_configuration_payload(ike->sa.st_connection,
+							 child, &sk.pbs)) {
+			return STF_INTERNAL_ERROR;
 		}
 	}
 
@@ -2399,7 +2408,15 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 
 	/* send CP payloads */
 	if (pc->modecfg_domains != NULL || pc->modecfg_dns != NULL) {
-		ikev2_send_cp(pst, ISAKMP_NEXT_v2NONE, &sk.pbs);
+		/*
+		 * XXX: should this be passed the CHILD SA's
+		 * .st_connection?  Here IKE and CHILD SAs share a
+		 * connection?
+		 */
+		if (!emit_v2_child_configuration_payload(ike->sa.st_connection,
+							 child, &sk.pbs)) {
+			return STF_INTERNAL_ERROR;
+		}
 	}
 
 	if (!close_v2SK_payload(&sk)) {
