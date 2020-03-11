@@ -1863,7 +1863,6 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 					      struct pluto_crypto_req *r)
 {
 	struct connection *const pc = pst->st_connection;	/* parent connection */
-	struct ppk_id_payload ppk_id_p;
 	struct ike_sa *ike = pexpect_ike_sa(pst);
 
 	if (!finish_dh_v2(pst, r, FALSE)) {
@@ -1912,42 +1911,43 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	}
 
 	/*
-	 * If we and responder are willing to use a PPK,
-	 * we need to generate NO_PPK_AUTH as well as PPK-based AUTH payload
+	 * If we and responder are willing to use a PPK, we need to
+	 * generate NO_PPK_AUTH as well as PPK-based AUTH payload.
+	 *
+	 * Stash the no-ppk keys in st_skey_*_no_ppk, and then
+	 * scramble the st_skey_* keys with PPK.
 	 */
-	if (LIN(POLICY_PPK_ALLOW, pc->policy) && pst->st_seen_ppk) {
+	if (LIN(POLICY_PPK_ALLOW, pc->policy) && ike->sa.st_seen_ppk) {
 		chunk_t *ppk_id;
-		chunk_t *ppk = get_ppk(pst->st_connection, &ppk_id);
+		chunk_t *ppk = get_ppk(ike->sa.st_connection, &ppk_id);
 
 		if (ppk != NULL) {
 			DBG(DBG_CONTROL, DBG_log("found PPK and PPK_ID for our connection"));
 
-			pexpect(pst->st_sk_d_no_ppk == NULL);
-			pst->st_sk_d_no_ppk = reference_symkey(__func__, "sk_d_no_ppk", pst->st_skey_d_nss);
+			pexpect(ike->sa.st_sk_d_no_ppk == NULL);
+			ike->sa.st_sk_d_no_ppk = reference_symkey(__func__, "sk_d_no_ppk", ike->sa.st_skey_d_nss);
 
-			pexpect(pst->st_sk_pi_no_ppk == NULL);
-			pst->st_sk_pi_no_ppk = reference_symkey(__func__, "sk_pi_no_ppk", pst->st_skey_pi_nss);
+			pexpect(ike->sa.st_sk_pi_no_ppk == NULL);
+			ike->sa.st_sk_pi_no_ppk = reference_symkey(__func__, "sk_pi_no_ppk", ike->sa.st_skey_pi_nss);
 
-			pexpect(pst->st_sk_pr_no_ppk == NULL);
-			pst->st_sk_pr_no_ppk = reference_symkey(__func__, "sk_pr_no_ppk", pst->st_skey_pr_nss);
+			pexpect(ike->sa.st_sk_pr_no_ppk == NULL);
+			ike->sa.st_sk_pr_no_ppk = reference_symkey(__func__, "sk_pr_no_ppk", ike->sa.st_skey_pr_nss);
 
-			create_ppk_id_payload(ppk_id, &ppk_id_p);
-			DBG(DBG_CONTROL, DBG_log("ppk type: %d", (int) ppk_id_p.type));
-			DBG(DBG_CONTROL, DBG_dump_hunk("ppk_id from payload:", ppk_id_p.ppk_id));
-
-			ppk_recalculate(ppk, pst->st_oakley.ta_prf,
-						&pst->st_skey_d_nss,
-						&pst->st_skey_pi_nss,
-						&pst->st_skey_pr_nss);
+			ppk_recalculate(ppk, ike->sa.st_oakley.ta_prf,
+						&ike->sa.st_skey_d_nss,
+						&ike->sa.st_skey_pi_nss,
+						&ike->sa.st_skey_pr_nss);
 			libreswan_log("PPK AUTH calculated as initiator");
 		} else {
 			if (pc->policy & POLICY_PPK_INSIST) {
-				loglog(RC_LOG_SERIOUS, "connection requires PPK, but we didn't find one");
+				log_state(RC_LOG_SERIOUS, &ike->sa,
+					  "connection requires PPK, but we didn't find one");
 				return STF_FATAL;
 			} else {
-				libreswan_log("failed to find PPK and PPK_ID, continuing without PPK");
+				log_state(RC_LOG, &ike->sa,
+					  "failed to find PPK and PPK_ID, continuing without PPK");
 				/* we should omit sending any PPK Identity, so we pretend we didn't see USE_PPK */
-				pst->st_seen_ppk = FALSE;
+				ike->sa.st_seen_ppk = FALSE;
 			}
 		}
 	}
@@ -2029,7 +2029,6 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 {
 	struct state *pst = &ike->sa;
 	struct connection *const pc = pst->st_connection;	/* parent connection */
-	struct ppk_id_payload ppk_id_p;
 
 	ikev2_log_parentSA(pst);
 
@@ -2337,7 +2336,21 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 			return STF_INTERNAL_ERROR;
 		}
 	}
+
+	/*
+	 * If we and responder are willing to use a PPK, we need to
+	 * generate NO_PPK_AUTH as well as PPK-based AUTH payload
+	 */
 	if (pst->st_seen_ppk) {
+		chunk_t *ppk_id;
+		get_ppk(ike->sa.st_connection, &ppk_id);
+		struct ppk_id_payload ppk_id_p = { .type = 0, };
+		create_ppk_id_payload(ppk_id, &ppk_id_p);
+		if (DBGP(DBG_BASE)) {
+			DBG_log("ppk type: %d", (int) ppk_id_p.type);
+			DBG_dump_hunk("ppk_id from payload:", ppk_id_p.ppk_id);
+		}
+
 		pb_stream ppks;
 
 		if (!emit_v2Npl(v2N_PPK_IDENTITY, &sk.pbs, &ppks) ||
