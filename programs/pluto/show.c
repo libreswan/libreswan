@@ -89,7 +89,11 @@ void show_status(const struct fd *whackfd)
 	ike_alg_show_status(whackfd);
 	db_ops_show_status(whackfd);
 	show_connections_status(whackfd);
-	show_states_status(whackfd, FALSE);
+	whack_comment(whackfd, " ");     /* spacer */
+	show_brief_status(whackfd);
+	whack_comment(whackfd, " ");     /* spacer */
+	show_states(whackfd);
+	whack_comment(whackfd, " ");     /* spacer */
 #if defined(NETKEY_SUPPORT)
 	show_shunt_status(whackfd);
 #endif

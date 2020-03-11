@@ -545,7 +545,10 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 		show_fips_status(whackfd);
 
 	if (m->whack_brief_status)
-		show_states_status(whackfd, TRUE);
+		show_brief_status(whackfd);
+
+	if (m->whack_show_states)
+		show_states(whackfd);
 
 #ifdef HAVE_SECCOMP
 	if (m->whack_seccomp_crashtest) {

@@ -2467,9 +2467,8 @@ void show_traffic_status(const struct fd *whackfd, const char *name)
 	}
 }
 
-void show_states_status(const struct fd *whackfd, bool brief)
+void show_brief_status(const struct fd *whackfd)
 {
-	whack_comment(whackfd, " ");             /* spacer */
 	whack_comment(whackfd, "State Information: DDoS cookies %s, %s new IKE connections",
 		  require_ddos_cookies() ? "REQUIRED" : "not required",
 		  drop_new_exchanges() ? "NOT ACCEPTING" : "Accepting");
@@ -2484,11 +2483,10 @@ void show_states_status(const struct fd *whackfd, bool brief)
 		  cat_count[CAT_ESTABLISHED_CHILD_SA],
 		  cat_count_child_sa[CAT_AUTHENTICATED],
 		  cat_count_child_sa[CAT_ANONYMOUS]);
-	whack_comment(whackfd, " ");             /* spacer */
+}
 
-	if (brief)
-		return;
-
+void show_states(const struct fd *whackfd)
+{
 	struct state **array = sort_states(state_compare_connection,
 					   __func__);
 
@@ -2512,8 +2510,6 @@ void show_states_status(const struct fd *whackfd, bool brief)
 				show_pending_phase2(whackfd, st->st_connection,
 						    pexpect_ike_sa(st));
 		}
-
-		whack_comment(whackfd, " "); /* spacer */
 		pfree(array);
 	}
 }

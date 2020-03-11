@@ -858,7 +858,8 @@ extern void initialize_new_state(struct state *st,
 				 int try);
 
 extern void show_traffic_status(const struct fd *whackfd, const char *name);
-extern void show_states_status(const struct fd *whackfd, bool brief);
+extern void show_brief_status(const struct fd *whackfd);
+extern void show_states(const struct fd *whackfd);
 
 void v2_migrate_children(struct ike_sa *from, struct child_sa *to);
 
