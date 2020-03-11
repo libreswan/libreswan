@@ -244,15 +244,6 @@ struct ikev2_proposals {
 	 * is ignored).
 	 */
 	struct ikev2_proposal *proposal;
-	/*
-	 * Was this object, and the PROPOSAL array, allocated from the
-	 * heap (rather than being static).  If so, it will all need
-	 * to be freeed.
-	 *
-	 * An alternative would be to use the array-at-end hack but
-	 * that makes initializing more messy.
-	 */
-	bool on_heap;
 };
 
 /*
@@ -1648,10 +1639,8 @@ void free_ikev2_proposals(struct ikev2_proposals **proposals)
 	if (proposals == NULL || *proposals == NULL) {
 		return;
 	}
-	if ((*proposals)->on_heap) {
-		pfree((*proposals)->proposal);
-		pfree((*proposals));
-	}
+	pfree((*proposals)->proposal);
+	pfree((*proposals));
 	*proposals = NULL;
 }
 
@@ -1912,7 +1901,6 @@ struct ikev2_proposals *get_v2_ike_proposals(struct connection *c, const char *w
 	int v2_proposals_roof = nr_proposals(proposals) + 1;
 	v2_proposals->proposal = alloc_things(struct ikev2_proposal,
 					      v2_proposals_roof, "propsal");
-	v2_proposals->on_heap = TRUE;
 	v2_proposals->roof = 1;
 
 	FOR_EACH_PROPOSAL(proposals, ike_info) {
@@ -2002,7 +1990,6 @@ static struct ikev2_proposals *get_v2_child_proposals(struct ikev2_proposals **c
 	}
 	v2_proposals->proposal = alloc_things(struct ikev2_proposal, v2_proposals_roof,
 					      "ESP/AH proposal");
-	v2_proposals->on_heap = TRUE;
 	v2_proposals->roof = 1;
 
 	enum ikev2_sec_proto_id protoid;
