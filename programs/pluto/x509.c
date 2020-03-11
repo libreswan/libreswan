@@ -764,31 +764,6 @@ static bool decode_certs(struct state *st, struct payload_digest *cert_payloads)
 }
 
 /*
- * Just decode an IKEv2 cert payload.
- */
-bool v2_decode_certs(struct ike_sa *ike, struct msg_digest *md)
-{
-	passert(ike->sa.st_ike_version == IKEv2);
-	if (ike->sa.st_remote_certs.processed) {
-		dbg("already processed remote certs");
-		return ike->sa.st_remote_certs.harmless;
-	}
-	/* Process the known certificates */
-	ike->sa.st_remote_certs.processed = true;
-	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
-	bool harmless;
-	if (cert_payloads == NULL) {
-		harmless = true;
-	} else if (decode_certs(&ike->sa, cert_payloads)) {
-		harmless = true;
-	} else {
-		harmless = false;
-	}
-	ike->sa.st_remote_certs.harmless = harmless;
-	return harmless;
-}
-
-/*
  * If peer_id->kind is ID_FROMCERT, there is a guaranteed match,
  * and it will be updated to an id of kind ID_DER_ASN1_DN
  * with the name taken from the cert's derSubject.
