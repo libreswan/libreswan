@@ -47,8 +47,7 @@ extern void ikev2_decode_cr(struct msg_digest *md);
 extern generalName_t *collect_rw_ca_candidates(struct msg_digest *md);
 
 extern bool ikev1_build_and_ship_CR(enum ike_cert_type type,
-				    chunk_t ca, pb_stream *outs,
-				    enum next_payload_types_ikev1 np);
+				    chunk_t ca, pb_stream *outs);
 
 extern bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 				    chunk_t ca, pb_stream *outs);
@@ -59,8 +58,7 @@ extern void load_authcerts(const char *type, const char *path,
 extern bool match_requested_ca(const generalName_t *requested_ca,
 			       chunk_t our_ca, int *our_pathlen);
 
-extern bool ikev1_ship_CERT(uint8_t type, chunk_t cert, pb_stream *outs,
-							 uint8_t np);
+extern bool ikev1_ship_CERT(uint8_t type, chunk_t cert, pb_stream *outs);
 extern int get_auth_chain(chunk_t *out_chain, int chain_max,
 					      CERTCertificate *end_cert,
 					      bool full_chain);

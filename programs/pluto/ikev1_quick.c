@@ -146,7 +146,6 @@ static notification_t accept_PFS_KE(struct msg_digest *md, chunk_t *dest,
  */
 
 static bool emit_subnet_id(const ip_subnet *net,
-			   uint8_t np,
 			   uint8_t protoid,
 			   uint16_t port,
 			   pb_stream *outs)
@@ -156,7 +155,6 @@ static bool emit_subnet_id(const ip_subnet *net,
 	pb_stream id_pbs;
 
 	struct isakmp_ipsec_id id = {
-		.isaiid_np = np,
 		.isaiid_idtype = usehost ? ai->id_addr : ai->id_subnet,
 		.isaiid_protoid = protoid,
 		.isaiid_port = port,
@@ -763,7 +761,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 
 		if (!ikev1_out_sa(&rbody,
 				  &ipsec_sadb[pm >> POLICY_IPSEC_SHIFT],
-				  st, FALSE, FALSE, ISAKMP_NEXT_NONCE)) {
+				  st, FALSE, FALSE)) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
@@ -789,11 +787,9 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 	if (has_client) {
 		/* IDci (we are initiator), then IDcr (peer is responder) */
 		if (!emit_subnet_id(&c->spd.this.client,
-				    ISAKMP_NEXT_ID,
 				    st->st_myuserprotoid,
 				    st->st_myuserport, &rbody) ||
 		    !emit_subnet_id(&c->spd.that.client,
-				    ISAKMP_NEXT_NONE,
 				    st->st_peeruserprotoid,
 				    st->st_peeruserport, &rbody)) {
 			reset_cur_state();
@@ -805,8 +801,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 	    !(st->st_policy & POLICY_TUNNEL) &&
 	    LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
 		/** Send NAT-OA if our address is NATed */
-		if (!nat_traversal_add_natoa(ISAKMP_NEXT_NONE, &rbody, st,
-					     TRUE /* initiator */)) {
+		if (!nat_traversal_add_natoa(&rbody, st, true /* initiator */)) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
@@ -1348,11 +1343,10 @@ static void quick_inI1_outR1_continue2(struct state *st,
  * for adjacent packets is handled correctly.
  */
 static bool echo_id(pb_stream *outs,
-	const struct payload_digest *const id_pd,
-	enum next_payload_types_ikev1 np)
+		    const struct payload_digest *const id_pd)
 {
 	struct isakmp_ipsec_id id = id_pd->payload.ipsec_id;
-	id.isaiid_np = np;
+	id.isaiid_np = 0;
 	/* We leave .isaiid_length: It will be updated to the same value */
 
 	uint8_t *hs = outs->cur;
@@ -1388,7 +1382,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 
 	/* HDR* out */
 	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(md, TRUE, 0,
+	ikev1_init_out_pbs_echo_hdr(md, TRUE,
 				    &reply_stream, reply_buffer, sizeof(reply_buffer),
 				    &rbody);
 
@@ -1496,8 +1490,8 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 	/* [ IDci, IDcr ] out */
 	if (id_pd != NULL) {
 		passert(id_pd->next->next == NULL);	/* exactly two */
-		if (!echo_id(&rbody, id_pd, ISAKMP_NEXT_ID) ||
-		    !echo_id(&rbody, id_pd->next, ISAKMP_NEXT_NONE))
+		if (!echo_id(&rbody, id_pd) ||
+		    !echo_id(&rbody, id_pd->next))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1595,7 +1589,7 @@ stf_status quick_inR1_outI2_tail(struct msg_digest *md,
 	struct connection *c = st->st_connection;
 
 	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(md, TRUE, 0,
+	ikev1_init_out_pbs_echo_hdr(md, TRUE,
 				    &reply_stream, reply_buffer, sizeof(reply_buffer),
 				    &rbody);
 

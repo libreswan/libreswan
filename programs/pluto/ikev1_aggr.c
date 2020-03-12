@@ -453,9 +453,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 	/* CERTREQ out */
 	if (send_cr) {
 		libreswan_log("I am sending a certificate request");
-		if (!ikev1_build_and_ship_CR(mycert.ty,
-				       c->spd.that.ca,
-				       &rbody, ISAKMP_NEXT_SIG))
+		if (!ikev1_build_and_ship_CR(mycert.ty, c->spd.that.ca, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1116,7 +1114,7 @@ static stf_status aggr_outI1_tail(struct state *st,
 
 		if (!ikev1_out_sa(&rbody,
 				  IKEv1_oakley_am_sadb(st->st_policy, c),
-				  st, TRUE, TRUE, ISAKMP_NEXT_KE)) {
+				  st, TRUE, TRUE)) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
@@ -1152,9 +1150,7 @@ static stf_status aggr_outI1_tail(struct state *st,
 	/* CERTREQ out */
 	if (send_cr) {
 		libreswan_log("I am sending a certificate request");
-		if (!ikev1_build_and_ship_CR(mycert.ty,
-				       c->spd.that.ca,
-				       &rbody, ISAKMP_NEXT_VID))
+		if (!ikev1_build_and_ship_CR(mycert.ty, c->spd.that.ca, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 

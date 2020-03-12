@@ -1141,7 +1141,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 /*
  * create output HDR as replica of input HDR - IKEv1 only; return the body
  */
-void ikev1_init_out_pbs_echo_hdr(struct msg_digest *md, bool enc, uint8_t np,
+void ikev1_init_out_pbs_echo_hdr(struct msg_digest *md, bool enc,
 				 pb_stream *output_stream, uint8_t *output_buffer,
 				 size_t sizeof_output_buffer,
 				 pb_stream *rbody)
@@ -1161,7 +1161,7 @@ void ikev1_init_out_pbs_echo_hdr(struct msg_digest *md, bool enc, uint8_t np,
 	}
 
 	/* there is only one IKEv1 version, and no new one will ever come - no need to set version */
-	hdr.isa_np = np;
+	hdr.isa_np = 0;
 	/* surely must have room and be well-formed */
 	passert(out_struct(&hdr, &isakmp_hdr_desc, output_stream, rbody));
 }
@@ -3290,21 +3290,14 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 }
 
 bool ikev1_ship_chain(chunk_t *chain, int n, pb_stream *outs,
-					     uint8_t type,
-					     uint8_t setnp)
+		      uint8_t type)
 {
-	int i;
-	uint8_t np;
-
-	for (i = 0; i < n; i++) {
-		/* set np for last cert, or another */
-		np = i == n - 1 ? setnp : ISAKMP_NEXT_CERT;
-
-		if (!ikev1_ship_CERT(type, chain[i], outs, np))
-			return FALSE;
+	for (int i = 0; i < n; i++) {
+		if (!ikev1_ship_CERT(type, chain[i], outs))
+			return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 void doi_log_cert_thinking(uint16_t auth,

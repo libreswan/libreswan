@@ -1116,11 +1116,10 @@ static chunk_t ikev2_hash_nss_cert_key(CERTCertificate *cert)
 	return result;
 }
 
-bool ikev1_ship_CERT(uint8_t type, chunk_t cert, pb_stream *outs, uint8_t np)
+bool ikev1_ship_CERT(uint8_t type, chunk_t cert, pb_stream *outs)
 {
 	pb_stream cert_pbs;
 	struct isakmp_cert cert_hd = {
-		.isacert_np = np,
 		.isacert_type = type,
 		.isacert_reserved = 0,
 		.isacert_length = 0, /* XXX unused on sending ? */
@@ -1136,13 +1135,10 @@ bool ikev1_ship_CERT(uint8_t type, chunk_t cert, pb_stream *outs, uint8_t np)
 }
 
 bool ikev1_build_and_ship_CR(enum ike_cert_type type,
-			     chunk_t ca,
-			     pb_stream *outs,
-			     enum next_payload_types_ikev1 np)
+			     chunk_t ca, pb_stream *outs)
 {
 	pb_stream cr_pbs;
 	struct isakmp_cr cr_hd = {
-		.isacr_np = np,
 		.isacr_type = type,
 	};
 

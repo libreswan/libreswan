@@ -541,17 +541,14 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 	}
 }
 
-static bool emit_one_natoa(
-	uint8_t np,
-	pb_stream *outs,
-	struct_desc *pd,
-	const ip_address *ip,
-	const char *nm)
+static bool emit_one_natoa(pb_stream *outs,
+			   struct_desc *pd,
+			   const ip_address *ip,
+			   const char *nm)
 {
 	pb_stream pbs;
 
 	struct isakmp_nat_oa natoa = {
-		.isanoa_np = np,
 		.isanoa_idtype = addrtypeof(ip) == AF_INET ?
 			ID_IPV4_ADDR : ID_IPV6_ADDR,
 	};
@@ -565,8 +562,8 @@ static bool emit_one_natoa(
 	return TRUE;
 }
 
-bool nat_traversal_add_natoa(uint8_t np, pb_stream *outs,
-			struct state *st, bool initiator)
+bool nat_traversal_add_natoa(pb_stream *outs, struct state *st,
+			     bool initiator)
 {
 	const ip_address *ipinit, *ipresp;
 
@@ -583,8 +580,8 @@ bool nat_traversal_add_natoa(uint8_t np, pb_stream *outs,
 		&isakmp_nat_oa_drafts : &isakmp_nat_oa;
 
 	return
-		emit_one_natoa(pd->pt, outs, pd, ipinit, "NAT-OAi") &&
-		emit_one_natoa(np, outs, pd, ipresp, "NAT-OAr");
+		emit_one_natoa(outs, pd, ipinit, "NAT-OAi") &&
+		emit_one_natoa(outs, pd, ipresp, "NAT-OAr");
 }
 
 static void nat_traversal_show_result(lset_t nt, uint16_t sport)

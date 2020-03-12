@@ -16,7 +16,7 @@ extern void init_ikev1(void);
 
 const struct dh_desc *ikev1_quick_pfs(const struct child_proposals proposals);
 
-void ikev1_init_out_pbs_echo_hdr(struct msg_digest *md, bool enc, uint8_t np,
+void ikev1_init_out_pbs_echo_hdr(struct msg_digest *md, bool enc,
 				 pb_stream *output_stream, uint8_t *output_buffer,
 				 size_t sizeof_output_buffer,
 				 pb_stream *rbody);
@@ -95,8 +95,7 @@ extern stf_status oakley_id_and_auth(struct msg_digest *md,
 				     bool aggrmode);                     /* aggressive mode? */
 
 extern bool ikev1_ship_chain(chunk_t *chain, int n, pb_stream *outs,
-					     uint8_t type,
-					     uint8_t setnp);
+			     uint8_t type);
 
 void doi_log_cert_thinking(uint16_t auth,
 			   enum ike_cert_type certtype,
@@ -110,8 +109,7 @@ extern bool ikev1_out_sa(pb_stream *outs,
 		const struct db_sa *sadb,
 		struct state *st,
 		bool oakley_mode,
-		bool aggressive_mode,
-		enum next_payload_types_ikev1 np);
+		bool aggressive_mode);
 #endif
 
 bool ikev1_encrypt_message(pb_stream *pbs, struct state *st);

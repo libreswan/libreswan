@@ -1439,7 +1439,7 @@ stf_status xauth_inR1(struct state *st, struct msg_digest *md UNUSED)
 stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 {
 	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(md, TRUE, ISAKMP_NEXT_HASH,
+	ikev1_init_out_pbs_echo_hdr(md, TRUE,
 				    &reply_stream, reply_buffer, sizeof(reply_buffer),
 				    &rbody);
 
@@ -1638,7 +1638,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 {
 	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(md, TRUE, ISAKMP_NEXT_HASH,
+	ikev1_init_out_pbs_echo_hdr(md, TRUE,
 				    &reply_stream, reply_buffer, sizeof(reply_buffer),
 				    &rbody);
 
@@ -2130,7 +2130,7 @@ static stf_status xauth_client_resp(struct state *st,
 stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 {
 	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(md, TRUE, ISAKMP_NEXT_HASH,
+	ikev1_init_out_pbs_echo_hdr(md, TRUE,
 				    &reply_stream, reply_buffer, sizeof(reply_buffer),
 				    &rbody);
 
@@ -2389,7 +2389,7 @@ static stf_status xauth_client_ackstatus(struct state *st,
 stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 {
 	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(md, TRUE, ISAKMP_NEXT_HASH,
+	ikev1_init_out_pbs_echo_hdr(md, TRUE,
 				    &reply_stream, reply_buffer, sizeof(reply_buffer),
 				    &rbody);
 

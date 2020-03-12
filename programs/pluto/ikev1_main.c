@@ -169,7 +169,7 @@ void main_outI1(struct fd *whack_sock,
 		u_char *sa_start = rbody.cur;
 
 		if (!ikev1_out_sa(&rbody, IKEv1_oakley_sadb(policy, c),
-				  st, TRUE, FALSE, ISAKMP_NEXT_VID)) {
+				  st, TRUE, FALSE)) {
 			libreswan_log("outsa fail");
 			reset_cur_state();
 			return;
@@ -865,7 +865,7 @@ static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
 	 * depends on the type of Auth (eventually).
 	 */
 	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(md, FALSE, 0/*auto-set NP*/,
+	ikev1_init_out_pbs_echo_hdr(md, FALSE,
 				    &reply_stream, reply_buffer, sizeof(reply_buffer),
 				    &rbody);
 
@@ -1028,7 +1028,7 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 
 	/* HDR out */
 	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(md, FALSE, 0/*auto-set NP*/,
+	ikev1_init_out_pbs_echo_hdr(md, FALSE,
 				    &reply_stream, reply_buffer, sizeof(reply_buffer),
 				    &rbody);
 
@@ -1062,8 +1062,8 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 	if (send_cr) {
 		if (st->st_connection->kind == CK_PERMANENT) {
 			if (!ikev1_build_and_ship_CR(CERT_X509_SIGNATURE,
-						st->st_connection->spd.that.ca,
-						&rbody, ISAKMP_NEXT_NONE))
+						     st->st_connection->spd.that.ca,
+						     &rbody))
 				return STF_INTERNAL_ERROR;
 		} else {
 			generalName_t *ca = collect_rw_ca_candidates(md);
@@ -1072,14 +1072,9 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 				generalName_t *gn;
 
 				for (gn = ca; gn != NULL; gn = gn->next) {
-					if (!ikev1_build_and_ship_CR(
-						CERT_X509_SIGNATURE,
-						gn->name,
-						&rbody,
-						gn->next ==NULL ?
-							ISAKMP_NEXT_NONE :
-							ISAKMP_NEXT_CR))
-					{
+					if (!ikev1_build_and_ship_CR(CERT_X509_SIGNATURE,
+								     gn->name,
+								     &rbody)) {
 						free_generalNames(ca, FALSE);
 						return STF_INTERNAL_ERROR;
 					}
@@ -1087,9 +1082,8 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 				free_generalNames(ca, FALSE);
 			} else {
 				if (!ikev1_build_and_ship_CR(CERT_X509_SIGNATURE,
-							EMPTY_CHUNK,
-							&rbody,
-							ISAKMP_NEXT_NONE))
+							     EMPTY_CHUNK,
+							     &rbody))
 					return STF_INTERNAL_ERROR;
 			}
 		}
@@ -1269,8 +1263,6 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 	/* CERT out */
 	if (send_cert && IMPAIR(SEND_PKCS7_THINGIE)) {
 		libreswan_log("IMPAIR: sending cert as pkcs7 blob");
-		enum next_payload_types_ikev1 np =
-			send_cr ? ISAKMP_NEXT_CR : ISAKMP_NEXT_SIG;
 		SECItem *pkcs7 = nss_pkcs7_blob(mycert.u.nss_cert, send_authcerts);
 		if (!pexpect(pkcs7 != NULL)) {
 			free_auth_chain(auth_chain, chain_len);
@@ -1278,23 +1270,17 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 		}
 		if (!ikev1_ship_CERT(CERT_PKCS7_WRAPPED_X509,
 				     same_secitem_as_chunk(*pkcs7),
-				     rbody, np)) {
+				     rbody)) {
 			SECITEM_FreeItem(pkcs7, PR_TRUE);
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
 	} else if (send_cert) {
-		enum next_payload_types_ikev1 nnp =
-			send_cr ? ISAKMP_NEXT_CR : ISAKMP_NEXT_SIG;
-
-		enum next_payload_types_ikev1 np =
-			send_authcerts ? ISAKMP_NEXT_CERT : nnp;
-
 		libreswan_log("I am sending my cert");
 
 		if (!ikev1_ship_CERT(mycert.ty,
 				   get_dercert_from_nss_cert(mycert.u.nss_cert),
-				   rbody, np)) {
+				   rbody)) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
@@ -1305,8 +1291,7 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 			if (!ikev1_ship_chain(auth_chain,
 					      chain_len,
 					      rbody,
-					      mycert.ty,
-					      nnp)) {
+					      mycert.ty)) {
 				free_auth_chain(auth_chain, chain_len);
 				return STF_INTERNAL_ERROR;
 			}
@@ -1322,7 +1307,7 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 		libreswan_log("I am sending a certificate request");
 		if (!ikev1_build_and_ship_CR(mycert.ty,
 					     c->spd.that.ca,
-					     rbody, ISAKMP_NEXT_SIG))
+					     rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1404,7 +1389,7 @@ static void main_inR2_outI3_continue(struct state *st,
 	passert(*mdp != NULL);	/* ??? how would this fail? */
 
 	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(*mdp, TRUE, ISAKMP_NEXT_ID,
+	ikev1_init_out_pbs_echo_hdr(*mdp, TRUE,
 				    &reply_stream, reply_buffer, sizeof(reply_buffer),
 				    &rbody);
 	stf_status e = main_inR2_outI3_continue_tail(*mdp, &rbody, r);
@@ -1610,7 +1595,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	 * be first payload.
 	 */
 	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(md, TRUE, ISAKMP_NEXT_ID,
+	ikev1_init_out_pbs_echo_hdr(md, TRUE,
 				    &reply_stream, reply_buffer, sizeof(reply_buffer),
 				    &rbody);
 
@@ -1647,19 +1632,16 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 		}
 		if (!ikev1_ship_CERT(CERT_PKCS7_WRAPPED_X509,
 				     same_secitem_as_chunk(*pkcs7),
-				     &rbody, ISAKMP_NEXT_SIG)) {
+				     &rbody)) {
 			SECITEM_FreeItem(pkcs7, PR_TRUE);
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
 	} else if (send_cert) {
-		enum next_payload_types_ikev1 npp = send_authcerts ?
-			ISAKMP_NEXT_CERT : ISAKMP_NEXT_SIG;
-
 		libreswan_log("I am sending my cert");
 		if (!ikev1_ship_CERT(mycert.ty,
-				   get_dercert_from_nss_cert(mycert.u.nss_cert),
-				   &rbody, npp)) {
+				     get_dercert_from_nss_cert(mycert.u.nss_cert),
+				     &rbody)) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
@@ -1667,9 +1649,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 		if (send_authcerts) {
 			libreswan_log("I am sending a CA cert chain");
 			if (!ikev1_ship_chain(auth_chain, chain_len,
-							  &rbody,
-							  mycert.ty,
-							  ISAKMP_NEXT_SIG)) {
+					      &rbody, mycert.ty)) {
 				free_auth_chain(auth_chain, chain_len);
 				return STF_INTERNAL_ERROR;
 			}

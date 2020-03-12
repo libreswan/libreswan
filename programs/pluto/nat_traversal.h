@@ -90,7 +90,7 @@ struct hidden_variables;	/* forward */
 
 void nat_traversal_natoa_lookup(struct msg_digest *md,
 				struct hidden_variables *hv);
-bool nat_traversal_add_natoa(uint8_t np, pb_stream *outs,
+bool nat_traversal_add_natoa(pb_stream *outs,
 			     struct state *st, bool initiator);
 /*
  * move initiator endpoints (src, dst) to NAT ports.
@@ -110,7 +110,6 @@ extern void ikev1_natd_init(struct state *st, struct msg_digest *md);
 /**
  * Vendor ID
  */
-bool nat_traversal_add_vid(uint8_t np, pb_stream *outs);
 bool nat_traversal_insert_vid(pb_stream *outs, const struct connection *c);
 void set_nat_traversal(struct state *st, const struct msg_digest *md);
 

@@ -137,11 +137,10 @@ extern struct db_sa ipsec_sadb[1 << 3];
 #define AD_PC(x) .props = (x), .prop_cnt = elemsof(x)
 
 extern bool ikev1_out_sa(pb_stream *outs,
-		   const struct db_sa *sadb,
-		   struct state *st,
-		   bool oakley_mode,
-		   bool aggressive_mode,
-		   enum next_payload_types_ikev1 np);
+			 const struct db_sa *sadb,
+			 struct state *st,
+			 bool oakley_mode,
+			 bool aggressive_mode);
 
 extern lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */);
 

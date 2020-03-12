@@ -376,11 +376,10 @@ static bool ikev1_verify_ah(const struct connection *c,
  *
  */
 bool ikev1_out_sa(pb_stream *outs,
-	    const struct db_sa *sadb,
-	    struct state *st,
-	    bool oakley_mode,
-	    bool aggressive_mode,
-	    enum next_payload_types_ikev1 np)
+		  const struct db_sa *sadb,
+		  struct state *st,
+		  bool oakley_mode,
+		  bool aggressive_mode)
 {
 	struct db_sa *revised_sadb;
 
@@ -459,7 +458,6 @@ bool ikev1_out_sa(pb_stream *outs,
 	pb_stream sa_pbs;
 	{
 		struct isakmp_sa sa = {
-			.isasa_np = np,
 			.isasa_doi = ISAKMP_DOI_IPSEC /* all we know */
 		};
 		if (!out_struct(&sa, &isakmp_sa_desc, outs, &sa_pbs))
@@ -2208,7 +2206,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to emit */
 			  struct isakmp_transform r_trans,      /* winning transformation within it */
-			  uint8_t np,                          /* Next Payload for proposal */
 			  pb_stream *r_sa_pbs,                  /* SA PBS into which to emit */
 			  struct ipsec_proto_info *pi,          /* info about this protocol instance */
 			  struct_desc *trans_desc,              /* descriptor for this transformation */
@@ -2220,7 +2217,7 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 	pb_stream r_trans_pbs;
 
 	/* Proposal */
-	r_proposal.isap_np = np;
+	r_proposal.isap_np = 0;
 	r_proposal.isap_notrans = 1;
 	passert(out_struct(&r_proposal, &isakmp_proposal_desc, r_sa_pbs,
 			   &r_proposal_pbs));
@@ -2784,7 +2781,6 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			if (ah_seen) {
 				echo_proposal(ah_proposal,
 					      ah_trans,
-					      esp_seen || ipcomp_seen ? ISAKMP_NEXT_P : ISAKMP_NEXT_NONE,
 					      r_sa_pbs,
 					      &st->st_ah,
 					      &isakmp_ah_transform_desc,
@@ -2798,7 +2794,6 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			if (esp_seen) {
 				echo_proposal(esp_proposal,
 					      esp_trans,
-					      ipcomp_seen ? ISAKMP_NEXT_P : ISAKMP_NEXT_NONE,
 					      r_sa_pbs,
 					      &st->st_esp,
 					      &isakmp_esp_transform_desc,
@@ -2812,7 +2807,6 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			if (ipcomp_seen) {
 				echo_proposal(ipcomp_proposal,
 					      ipcomp_trans,
-					      ISAKMP_NEXT_NONE,
 					      r_sa_pbs,
 					      &st->st_ipcomp,
 					      &isakmp_ipcomp_transform_desc,
