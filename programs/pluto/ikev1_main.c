@@ -1430,18 +1430,17 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 	 * Note: ikev1_decode_peer_id may switch the connection being used!
 	 * But only if we are a Main Mode Responder.
 	 */
-	if (!st->st_peer_alt_id  && !ikev1_decode_peer_id(md, initiator, aggrmode)) {
-		DBG(DBG_CONTROLMORE, DBG_log("Peer ID failed to decode"));
-		return STF_FAIL + INVALID_ID_INFORMATION;
+	if (!st->st_peer_alt_id) {
+		if (!ikev1_decode_peer_id(md, initiator, aggrmode)) {
+			DBG(DBG_CONTROLMORE, DBG_log("Peer ID failed to decode"));
+			return STF_FAIL + INVALID_ID_INFORMATION;
+		}
 	}
 
 	/*
 	 * process any CERT payloads if aggrmode
 	 */
 	if (!st->st_peer_alt_id) {
-		if (!v1_decode_certs(md)) {
-			return STF_FAIL + INVALID_ID_INFORMATION;
-		}
 		if (!v1_verify_certs(md)) {
 			return STF_FAIL + INVALID_ID_INFORMATION;
 		}
@@ -1530,6 +1529,11 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	/* handle case where NSS balked at generating DH */
 	if (st->st_shared_nss == NULL)
 		return STF_FAIL + INVALID_KEY_INFORMATION;
+
+	if (!v1_decode_certs(md)) {
+		libreswan_log("X509: CERT payload bogus or revoked");
+		return STF_FAIL + INVALID_ID_INFORMATION;
+	}
 
 	/*
 	 * ID and HASH_I or SIG_I in
@@ -1741,6 +1745,11 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 
 stf_status main_inR3(struct state *st, struct msg_digest *md)
 {
+	if (!v1_decode_certs(md)) {
+		libreswan_log("X509: CERT payload bogus or revoked");
+		return STF_FAIL + INVALID_ID_INFORMATION;
+	}
+
 	/*
 	 * ID and HASH_R or SIG_R in
 	 * Note: oakley_id_and_auth will not switch the connection being used

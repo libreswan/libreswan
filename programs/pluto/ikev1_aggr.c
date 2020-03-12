@@ -198,6 +198,11 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 		policy & POLICY_RSASIG ? OAKLEY_RSA_SIG :
 		0;	/* we don't really know */
 
+	if (!v1_decode_certs(md)) {
+		libreswan_log("X509: CERT payload bogus or revoked");
+		return false;
+	}
+
 	/*
 	 * note: ikev1_decode_peer_id may change which connection is referenced by md->st->st_connection.
 	 * But not in this case because we are Aggressive Mode
@@ -530,6 +535,11 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 
 	st->st_policy |= POLICY_AGGRESSIVE;	/* ??? surely this should be done elsewhere */
 
+	if (!v1_decode_certs(md)) {
+		libreswan_log("X509: CERT payload bogus or revoked");
+		return false;
+	}
+
 	/*
 	 * note: ikev1_decode_peer_id may change which connection is referenced by md->st->st_connection.
 	 * But not in this case because we are Aggressive Mode
@@ -610,6 +620,10 @@ static void aggr_inR1_outI2_crypto_continue(struct state *st,
 
 static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 {
+	if (!v1_decode_certs(md)) {
+		libreswan_log("X509: CERT payload bogus or revoked");
+		return STF_FAIL + INVALID_ID_INFORMATION;
+	}
 	/* HASH_R or SIG_R in */
 	{
 		/*
@@ -893,6 +907,11 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	 */
 	struct payload_digest *save_id = md->chain[ISAKMP_NEXT_ID];
 	md->chain[ISAKMP_NEXT_ID] = &id_pd;
+
+	if (!v1_decode_certs(md)) {
+		libreswan_log("X509: CERT payload bogus or revoked");
+		return STF_FAIL + INVALID_ID_INFORMATION;
+	}
 
 	/* HASH_I or SIG_I in */
 	{
