@@ -1147,7 +1147,7 @@ unsigned shunt_count(void)
 void show_shunt_status(struct show *s)
 {
 	show_comment(s, "Bare Shunt list:");
-	s->spacer = true;
+	show_comment(s, " ");
 	for (const struct bare_shunt *bs = bare_shunts; bs != NULL; bs = bs->next) {
 		/* Print interesting fields.  Ignore count and last_active. */
 		subnet_buf ourst;
@@ -1164,7 +1164,8 @@ void show_shunt_status(struct show *s)
 			     str_said(&(bs)->said, &sat),
 			     prio, bs->why);
 	}
-	s->spacer = true;
+	/* need a spacer if any shunts were listed */
+	s->spacer = (bare_shunts != NULL);
 }
 
 /* Setup an IPsec route entry.

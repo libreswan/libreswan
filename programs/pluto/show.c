@@ -118,7 +118,7 @@ void show_status(const struct fd *whackfd)
 #if defined(NETKEY_SUPPORT)
 	show_shunt_status(&s);
 #endif
-	whack_comment(whackfd, " "); /* trailing blank line */
+	show_spacer(&s); /* if needed, force a trailing blank line */
 }
 
 /*
