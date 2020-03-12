@@ -77,6 +77,7 @@
 #include "pluto_sd.h"
 #include "initiate.h"
 #include "iface.h"
+#include "show.h"
 
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"
@@ -526,6 +527,11 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 		terminate_connection(m->name, TRUE);
 	}
 
+	struct show s = {
+		.whackfd = whackfd,
+		.spacer = false,
+	};
+
 	if (m->whack_status)
 		show_status(whackfd);
 
@@ -538,8 +544,9 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 	if (m->whack_traffic_status)
 		show_traffic_status(whackfd, m->name);
 
-	if (m->whack_shunt_status)
-		show_shunt_status(whackfd);
+	if (m->whack_shunt_status) {
+		show_shunt_status(&s);
+	}
 
 	if (m->whack_fips_status)
 		show_fips_status(whackfd);
@@ -548,7 +555,7 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 		show_brief_status(whackfd);
 
 	if (m->whack_show_states)
-		show_states(whackfd);
+		show_states(&s);
 
 #ifdef HAVE_SECCOMP
 	if (m->whack_seccomp_crashtest) {

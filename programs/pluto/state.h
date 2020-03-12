@@ -55,6 +55,7 @@
 #include "ikev2_msgid.h"
 #include "ip_endpoint.h"
 #include "crypt_mac.h"
+#include "show.h"
 
 struct ikev2_ipseckey_dns; /* forward declaration of tag */
 
@@ -859,7 +860,7 @@ extern void initialize_new_state(struct state *st,
 
 extern void show_traffic_status(const struct fd *whackfd, const char *name);
 extern void show_brief_status(const struct fd *whackfd);
-extern void show_states(const struct fd *whackfd);
+extern void show_states(struct show *s);
 
 void v2_migrate_children(struct ike_sa *from, struct child_sa *to);
 

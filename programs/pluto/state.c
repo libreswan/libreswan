@@ -2379,6 +2379,11 @@ static int state_compare_connection(const void *a, const void *b)
 
 /*
  * NULL terminated array of state pointers.
+ *
+ * Returns NULL (rather than an array containing one NULL) when there
+ * are no states.
+ *
+ * Caller is responsible for freeing the structure.
  */
 static struct state **sort_states(int (*sort_fn)(const void *, const void *),
 				  const char *func)
@@ -2485,7 +2490,7 @@ void show_brief_status(const struct fd *whackfd)
 		  cat_count_child_sa[CAT_ANONYMOUS]);
 }
 
-void show_states(const struct fd *whackfd)
+void show_states(struct show *s)
 {
 	struct state **array = sort_states(state_compare_connection,
 					   __func__);
@@ -2501,16 +2506,17 @@ void show_states(const struct fd *whackfd)
 			char state_buf2[LOG_WIDTH];
 			fmt_state(st, n, state_buf, sizeof(state_buf),
 				  state_buf2, sizeof(state_buf2));
-			whack_comment(whackfd, "%s", state_buf);
+			show_comment(s, "%s", state_buf);
 			if (state_buf2[0] != '\0')
-				whack_comment(whackfd, "%s", state_buf2);
+				show_comment(s, "%s", state_buf2);
 
 			/* show any associated pending Phase 2s */
 			if (IS_IKE_SA(st))
-				show_pending_phase2(whackfd, st->st_connection,
+				show_pending_phase2(s->whackfd, st->st_connection,
 						    pexpect_ike_sa(st));
 		}
 		pfree(array);
+		s->spacer = true;
 	}
 }
 

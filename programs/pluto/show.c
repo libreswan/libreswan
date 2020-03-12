@@ -23,7 +23,6 @@
  *
  */
 
-
 #include "sysdep.h"
 #include "constants.h"
 #include "lswconf.h"
@@ -43,6 +42,26 @@
 #include "db_ops.h"
 #include "kernel_xfrm_interface.h"
 #include "iface.h"
+#include "show.h"
+
+void show_spacer(struct show *s)
+{
+	if (s->spacer) {
+		whack_comment(s->whackfd, " ");
+		s->spacer = false;
+	}
+}
+
+void show_comment(struct show *s, const char *message, ...)
+{
+	show_spacer(s);
+	WHACK_LOG(RC_COMMENT, s->whackfd, buf) {
+		va_list args;
+		va_start(args, message);
+		jam_va_list(buf, message, args);
+		va_end(args);
+	}
+}
 
 static void show_system_security(const struct fd *whackfd)
 {
@@ -91,12 +110,15 @@ void show_status(const struct fd *whackfd)
 	show_connections_status(whackfd);
 	whack_comment(whackfd, " ");     /* spacer */
 	show_brief_status(whackfd);
-	whack_comment(whackfd, " ");     /* spacer */
-	show_states(whackfd);
-	whack_comment(whackfd, " ");     /* spacer */
+	struct show s = {
+		.whackfd = whackfd,
+		.spacer = true,
+	};
+	show_states(&s);
 #if defined(NETKEY_SUPPORT)
-	show_shunt_status(whackfd);
+	show_shunt_status(&s);
 #endif
+	whack_comment(whackfd, " "); /* trailing blank line */
 }
 
 /*

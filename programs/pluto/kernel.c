@@ -79,6 +79,7 @@
 #include "lswfips.h" /* for libreswan_fipsmode() */
 # include "kernel_xfrm_interface.h"
 #include "iface.h"
+#include "show.h"
 
 bool can_do_IPcomp = TRUE;  /* can system actually perform IPCOMP? */
 
@@ -1143,10 +1144,10 @@ unsigned shunt_count(void)
 	return i;
 }
 
-void show_shunt_status(const struct fd *whackfd)
+void show_shunt_status(struct show *s)
 {
-	whack_comment(whackfd, "Bare Shunt list:"); /* spacer */
-	whack_comment(whackfd, " "); /* spacer */
+	show_comment(s, "Bare Shunt list:");
+	s->spacer = true;
 	for (const struct bare_shunt *bs = bare_shunts; bs != NULL; bs = bs->next) {
 		/* Print interesting fields.  Ignore count and last_active. */
 		subnet_buf ourst;
@@ -1156,13 +1157,14 @@ void show_shunt_status(const struct fd *whackfd)
 		char prio[POLICY_PRIO_BUF];
 		fmt_policy_prio(bs->policy_prio, prio);
 
-		whack_comment(whackfd, "%s -%d-> %s => %s %s    %s",
-			  str_subnet_port(&(bs)->ours, &ourst),
-			  bs->transport_proto,
-			  str_subnet_port(&(bs)->his, &hist),
-			  str_said(&(bs)->said, &sat),
-			  prio, bs->why);
+		show_comment(s, "%s -%d-> %s => %s %s    %s",
+			     str_subnet_port(&(bs)->ours, &ourst),
+			     bs->transport_proto,
+			     str_subnet_port(&(bs)->his, &hist),
+			     str_said(&(bs)->said, &sat),
+			     prio, bs->why);
 	}
+	s->spacer = true;
 }
 
 /* Setup an IPsec route entry.

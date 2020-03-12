@@ -32,6 +32,7 @@
 struct sa_marks;
 struct spd_route;
 struct iface_dev;
+struct show;
 
 extern bool can_do_IPcomp;  /* can system actually perform IPCOMP? */
 
@@ -349,7 +350,7 @@ struct bare_shunt {
 	struct bare_shunt *next;
 };
 
-extern void show_shunt_status(const struct fd *whackfd);
+extern void show_shunt_status(struct show *);
 extern unsigned shunt_count(void);
 
 struct bare_shunt **bare_shunt_ptr(const ip_subnet *ours,
