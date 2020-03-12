@@ -2571,24 +2571,24 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 	return FALSE;
 }
 
-bool ikev1_out_generic(uint8_t np, struct_desc *sd,
-		 pb_stream *outs, pb_stream *obj_pbs)
+bool ikev1_out_generic(struct_desc *sd,
+		       pb_stream *outs, pb_stream *obj_pbs)
 {
 	passert(sd->fields == isag_fields);
 	passert(sd->pt != ISAKMP_NEXT_NONE);
 	struct isakmp_generic gen = {
-		.isag_np = np,
+		.isag_np = 0,
 	};
 	return out_struct(&gen, sd, outs, obj_pbs);
 }
 
-bool ikev1_out_generic_raw(uint8_t np, struct_desc *sd,
+bool ikev1_out_generic_raw(struct_desc *sd,
 		     pb_stream *outs, const void *bytes, size_t len,
 		     const char *name)
 {
 	pb_stream pbs;
 
-	if (!ikev1_out_generic(np, sd, outs, &pbs) ||
+	if (!ikev1_out_generic(sd, outs, &pbs) ||
 	    !out_raw(bytes, len, &pbs, name))
 		return FALSE;
 

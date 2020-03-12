@@ -170,18 +170,17 @@ void unpack_nonce(chunk_t *n, const struct pluto_crypto_req *r)
 	*n = kn->n;
 }
 
-bool ikev1_justship_nonce(chunk_t *n, pb_stream *outs, uint8_t np,
-		    const char *name)
+bool ikev1_justship_nonce(chunk_t *n, pb_stream *outs,
+			  const char *name)
 {
-	return ikev1_out_generic_chunk(np, &isakmp_nonce_desc, outs, *n, name);
+	return ikev1_out_generic_chunk(&isakmp_nonce_desc, outs, *n, name);
 }
 
 bool ikev1_ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
-		pb_stream *outs, uint8_t np,
-		const char *name)
+		      pb_stream *outs, const char *name)
 {
 	unpack_nonce(n, r);
-	return ikev1_justship_nonce(n, outs, np, name);
+	return ikev1_justship_nonce(n, outs, name);
 }
 
 static initiator_function *pick_initiator(struct connection *c,

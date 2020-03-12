@@ -78,8 +78,8 @@ extern bool nat_traversal_enabled;
 /**
  * NAT-D
  */
-extern bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
-				   const struct msg_digest *md);
+extern bool ikev1_nat_traversal_add_natd(pb_stream *outs,
+					 const struct msg_digest *md);
 extern void ikev2_natd_lookup(struct msg_digest *md,
 			      const ike_spi_t *ike_responder_spi);
 
@@ -111,7 +111,7 @@ extern void ikev1_natd_init(struct state *st, struct msg_digest *md);
  * Vendor ID
  */
 bool nat_traversal_add_vid(uint8_t np, pb_stream *outs);
-bool nat_traversal_insert_vid(uint8_t np, pb_stream *outs, const struct connection *c);
+bool nat_traversal_insert_vid(pb_stream *outs, const struct connection *c);
 void set_nat_traversal(struct state *st, const struct msg_digest *md);
 
 void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st);

@@ -770,20 +770,8 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 	}
 
 	{
-		/*
-		 * ??? this np calculation says the test for KE is
-		 *	(st->st_policy & POLICY_PFS)
-		 * yet the KE code says the test is
-		 *	st->st_pfs_group != NULL
-		 */
-		int np = (st->st_policy & POLICY_PFS) ?
-				ISAKMP_NEXT_KE :
-			has_client ?
-				ISAKMP_NEXT_ID :
-				ISAKMP_NEXT_NONE;
-
 		/* Ni out */
-		if (!ikev1_ship_nonce(&st->st_ni, r, &rbody, np, "Ni")) {
+		if (!ikev1_ship_nonce(&st->st_ni, r, &rbody, "Ni")) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
@@ -791,9 +779,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 
 	/* [ KE ] out (for PFS) */
 	if (st->st_pfs_group != NULL) {
-		if (!ikev1_ship_KE(st, r, &st->st_gi,
-			     &rbody,
-			     has_client ? ISAKMP_NEXT_ID : ISAKMP_NEXT_NONE)) {
+		if (!ikev1_ship_KE(st, r, &st->st_gi, &rbody)) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
@@ -1458,23 +1444,11 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 	/**** finish reply packet: Nr [, KE ] [, IDci, IDcr ] ****/
 
 	{
-		int np;
 #ifdef IMPAIR_UNALIGNED_R1_MSG
 		const char *padstr = getenv("PLUTO_UNALIGNED_R1_MSG");
-
-		if (padstr != NULL)
-			np = ISAKMP_NEXT_VID;
-		else
 #endif
-		if (st->st_pfs_group != NULL)
-			np = ISAKMP_NEXT_KE;
-		else if (id_pd != NULL)
-			np = ISAKMP_NEXT_ID;
-		else
-			np = ISAKMP_NEXT_NONE;
-
 		/* Nr out */
-		if (!ikev1_justship_nonce(&st->st_nr, &rbody, np, "Nr"))
+		if (!ikev1_justship_nonce(&st->st_nr, &rbody, "Nr"))
 			return STF_INTERNAL_ERROR;
 
 #ifdef IMPAIR_UNALIGNED_R1_MSG
@@ -1513,10 +1487,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 
 	/* [ KE ] out (for PFS) */
 	if (st->st_pfs_group != NULL && r != NULL) {
-		if (!ikev1_justship_KE(&st->st_gr,
-				 &rbody,
-				 id_pd != NULL ?
-					ISAKMP_NEXT_ID : ISAKMP_NEXT_NONE))
+		if (!ikev1_justship_KE(&st->st_gr, &rbody))
 			return STF_INTERNAL_ERROR;
 
 		finish_dh_secret(st, r);

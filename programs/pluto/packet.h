@@ -253,13 +253,13 @@ extern bool out_struct(const void *struct_ptr, struct_desc *sd,
 extern pb_stream open_output_struct_pbs(pb_stream *outs, const void *struct_ptr,
 				 struct_desc *sd) MUST_USE_RESULT;
 
-extern bool ikev1_out_generic(uint8_t np, struct_desc *sd,
-			pb_stream *outs, pb_stream *obj_pbs) MUST_USE_RESULT;
-extern bool ikev1_out_generic_raw(uint8_t np, struct_desc *sd,
-			    pb_stream *outs, const void *bytes, size_t len,
-			    const char *name) MUST_USE_RESULT;
-#define ikev1_out_generic_chunk(np, sd, outs, ch, name) \
-	ikev1_out_generic_raw((np), (sd), (outs), (ch).ptr, (ch).len, (name))
+extern bool ikev1_out_generic(struct_desc *sd,
+			      pb_stream *outs, pb_stream *obj_pbs) MUST_USE_RESULT;
+extern bool ikev1_out_generic_raw(struct_desc *sd,
+				  pb_stream *outs, const void *bytes, size_t len,
+				  const char *name) MUST_USE_RESULT;
+#define ikev1_out_generic_chunk(sd, outs, ch, name) \
+	ikev1_out_generic_raw((sd), (outs), (ch).ptr, (ch).len, (name))
 extern bool out_zero(size_t len, pb_stream *outs, const char *name) MUST_USE_RESULT;
 extern bool out_repeated_byte(uint8_t, size_t len, pb_stream *outs, const char *name) MUST_USE_RESULT;
 

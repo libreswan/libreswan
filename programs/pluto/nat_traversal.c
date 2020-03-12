@@ -206,7 +206,7 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
  *
  * Used when we're Initiator
  */
-bool nat_traversal_insert_vid(uint8_t np, pb_stream *outs, const struct connection *c)
+bool nat_traversal_insert_vid(pb_stream *outs, const struct connection *c)
 {
 	DBG(DBG_NATT, DBG_log("nat add vid"));
 
@@ -223,19 +223,19 @@ bool nat_traversal_insert_vid(uint8_t np, pb_stream *outs, const struct connecti
 	switch (c->ikev1_natt) {
 	case NATT_RFC:
 		DBG(DBG_NATT, DBG_log("skipping VID_NATT drafts"));
-		return out_vid(np, outs, VID_NATT_RFC);
+		return out_vid(outs, VID_NATT_RFC);
 
 	case NATT_BOTH:
 		DBG(DBG_NATT, DBG_log("sending draft and RFC NATT VIDs"));
-		if (!out_vid(ISAKMP_NEXT_VID, outs, VID_NATT_RFC))
+		if (!out_vid(outs, VID_NATT_RFC))
 			return FALSE;
 		/* FALL THROUGH */
 	case NATT_DRAFTS:
 		DBG(DBG_NATT, DBG_log("skipping VID_NATT_RFC"));
 		return
-			out_vid(ISAKMP_NEXT_VID, outs, VID_NATT_IETF_03) &&
-			out_vid(ISAKMP_NEXT_VID, outs, VID_NATT_IETF_02_N) &&
-			out_vid(np, outs, VID_NATT_IETF_02);
+			out_vid(outs, VID_NATT_IETF_03) &&
+			out_vid(outs, VID_NATT_IETF_02_N) &&
+			out_vid(outs, VID_NATT_IETF_02);
 
 	case NATT_NONE:
 		/* This should never be reached, but makes compiler happy */
@@ -409,8 +409,8 @@ static void ikev1_natd_lookup(struct msg_digest *md)
 	natd_lookup_common(st, &md->sender, found_local, found_remote);
 }
 
-bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
-			const struct msg_digest *md)
+bool ikev1_nat_traversal_add_natd(pb_stream *outs,
+				  const struct msg_digest *md)
 {
 	const struct state *st = md->st;
 	/*
@@ -440,7 +440,6 @@ bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
 
 	struct_desc *pd = LDISJOINT(st->hidden_variables.st_nat_traversal, NAT_T_WITH_RFC_VALUES) ?
 		&isakmp_nat_d_drafts : &isakmp_nat_d;
-	unsigned int nat_np = pd->pt;
 
 	/* first: emit payload with hash of sender IP & port */
 
@@ -450,7 +449,7 @@ bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
 
 	hash = natd_hash(st->st_oakley.ta_prf->hasher,
 			 &ike_spis, &remote_endpoint);
-	if (!ikev1_out_generic_raw(nat_np, pd, outs, hash.ptr, hash.len,
+	if (!ikev1_out_generic_raw(pd, outs, hash.ptr, hash.len,
 				   "NAT-D"))
 		return FALSE;
 
@@ -460,7 +459,7 @@ bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
 							      local_port);
 	hash = natd_hash(st->st_oakley.ta_prf->hasher,
 			 &ike_spis, &local_endpoint);
-	return ikev1_out_generic_raw(np, pd, outs, hash.ptr, hash.len,
+	return ikev1_out_generic_raw(pd, outs, hash.ptr, hash.len,
 				     "NAT-D");
 }
 

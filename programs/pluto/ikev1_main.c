@@ -190,7 +190,7 @@ void main_outI1(struct fd *whack_sock,
 	}
 
 	/* as Initiator, spray NAT VIDs */
-	if (!nat_traversal_insert_vid(ISAKMP_NEXT_NONE, &rbody, c)) {
+	if (!nat_traversal_insert_vid(&rbody, c)) {
 		reset_cur_state();
 		return;
 	}
@@ -732,8 +732,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 
 	/* as Responder, send best NAT VID we received */
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
-		if (!out_vid(ISAKMP_NEXT_NONE, &rbody,
-			     md->quirks.qnat_traversal_vid))
+		if (!out_vid(&rbody, md->quirks.qnat_traversal_vid))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -811,19 +810,18 @@ stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
  * package up the calculate KE value, and emit it as a KE payload.
  * used by IKEv1: main, aggressive, and quick (in PFS mode).
  */
-bool ikev1_justship_KE(chunk_t *g,
-		pb_stream *outs, uint8_t np)
+bool ikev1_justship_KE(chunk_t *g, pb_stream *outs)
 {
 	switch (impair_ke_payload) {
 	case SEND_NORMAL:
-		return ikev1_out_generic_chunk(np, &isakmp_keyex_desc, outs, *g,
-				"keyex value");
+		return ikev1_out_generic_chunk(&isakmp_keyex_desc, outs, *g,
+					       "keyex value");
 	case SEND_OMIT:
 		libreswan_log("IMPAIR: sending no KE (g^x) payload");
 		return true;
 	case SEND_EMPTY:
 		libreswan_log("IMPAIR: sending empty KE (g^x)");
-		return ikev1_out_generic_chunk(0, &isakmp_keyex_desc, outs,
+		return ikev1_out_generic_chunk(&isakmp_keyex_desc, outs,
 					       EMPTY_CHUNK, "empty KE");
 	case SEND_ROOF:
 	default:
@@ -833,20 +831,18 @@ bool ikev1_justship_KE(chunk_t *g,
 		libreswan_log("IMPAIR: sending bogus KE (g^x) == %u value to break DH calculations",
 			      byte);
 		/* Only used to test sending/receiving bogus g^x */
-		return ikev1_out_generic(np, &isakmp_keyex_desc, outs, &z) &&
+		return ikev1_out_generic(&isakmp_keyex_desc, outs, &z) &&
 			out_repeated_byte(byte, g->len, &z, "fake g^x") &&
 			(close_output_pbs(&z), TRUE);
 	}
 	}
 }
 
-bool ikev1_ship_KE(struct state *st,
-	struct pluto_crypto_req *r,
-	chunk_t *g,
-	pb_stream *outs, uint8_t np)
+bool ikev1_ship_KE(struct state *st, struct pluto_crypto_req *r,
+		   chunk_t *g, pb_stream *outs)
 {
 	unpack_KE_from_helper(st, r, g);
-	return ikev1_justship_KE(g, outs, np);
+	return ikev1_justship_KE(g, outs);
 }
 
 /*
@@ -874,15 +870,11 @@ static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
 				    &rbody);
 
 	/* KE out */
-	if (!ikev1_ship_KE(st, r, &st->st_gi,
-			&rbody, ISAKMP_NEXT_NONCE))
+	if (!ikev1_ship_KE(st, r, &st->st_gi, &rbody))
 		return STF_INTERNAL_ERROR;
 
 	/* Ni out */
-	if (!ikev1_ship_nonce(&st->st_ni, r, &rbody,
-			(IMPAIR(BUST_MI2)) ?
-				ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE,
-			"Ni"))
+	if (!ikev1_ship_nonce(&st->st_ni, r, &rbody, "Ni"))
 		return STF_INTERNAL_ERROR;
 
 	if (IMPAIR(BUST_MI2)) {
@@ -896,7 +888,7 @@ static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
 		 * This next payload value will get rewritten
 		 * if ikev1_nat_traversal_add_natd is called.
 		 */
-		if (!ikev1_out_generic(ISAKMP_NEXT_NONE, &isakmp_vendor_id_desc,
+		if (!ikev1_out_generic(&isakmp_vendor_id_desc,
 					&rbody,
 					&vid_pbs))
 			return STF_INTERNAL_ERROR;
@@ -912,7 +904,7 @@ static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
 		DBG(DBG_NATT,
 			DBG_log("NAT-T found (implies NAT_T_WITH_NATD)"));
 		/* send two ISAKMP_NEXT_NATD_RFC* hash payloads to support NAT */
-		if (!ikev1_nat_traversal_add_natd(ISAKMP_NEXT_NONE, &rbody, md))
+		if (!ikev1_nat_traversal_add_natd(&rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1041,22 +1033,11 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 				    &rbody);
 
 	/* KE out */
-	passert(ikev1_ship_KE(st, r, &st->st_gr,
-			      &rbody, ISAKMP_NEXT_NONCE));
+	passert(ikev1_ship_KE(st, r, &st->st_gr, &rbody));
 
 	{
 		/* Nr out */
-		int next_payload;
-		next_payload = ISAKMP_NEXT_NONE;
-
-		if (IMPAIR(BUST_MR2))
-			next_payload = ISAKMP_NEXT_VID;
-		if (send_cr)
-			next_payload = ISAKMP_NEXT_CR;
-		if (!ikev1_ship_nonce(&st->st_nr, r,
-					&rbody,
-					next_payload,
-					"Nr"))
+		if (!ikev1_ship_nonce(&st->st_nr, r, &rbody, "Nr"))
 			return STF_INTERNAL_ERROR;
 
 		if (IMPAIR(BUST_MR2)) {
@@ -1066,10 +1047,8 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 			 */
 			pb_stream vid_pbs;
 
-			if (!ikev1_out_generic((send_cr) ? ISAKMP_NEXT_CR :
-					ISAKMP_NEXT_NONE,
-					&isakmp_vendor_id_desc, &rbody,
-					&vid_pbs))
+			if (!ikev1_out_generic(&isakmp_vendor_id_desc, &rbody,
+					       &vid_pbs))
 				return STF_INTERNAL_ERROR;
 
 			if (!out_zero(1500 /*MTU?*/, &vid_pbs, "Filler VID"))
@@ -1118,7 +1097,7 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 		/* send two ISAKMP_NEXT_NATD_RFC* hash payloads to support NAT */
-		if (!ikev1_nat_traversal_add_natd(ISAKMP_NEXT_NONE, &rbody, md))
+		if (!ikev1_nat_traversal_add_natd(&rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1353,11 +1332,9 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
 			/* HASH_I out */
-			if (!ikev1_out_generic_raw(initial_contact ? ISAKMP_NEXT_N :
-						ISAKMP_NEXT_NONE,
-						&isakmp_hash_desc,
-						rbody,
-						hash.ptr, hash.len, "HASH_I"))
+			if (!ikev1_out_generic_raw(&isakmp_hash_desc,
+						   rbody,
+						   hash.ptr, hash.len, "HASH_I"))
 				return STF_INTERNAL_ERROR;
 		} else {
 			/* SIG_I out */
@@ -1370,13 +1347,10 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 				return STF_FAIL + AUTHENTICATION_FAILED;
 			}
 
-			if (!ikev1_out_generic_raw(initial_contact ? ISAKMP_NEXT_N :
-						ISAKMP_NEXT_NONE,
-						&isakmp_signature_desc,
-						rbody,
-						sig.ptr,
-						sig.len,
-						"SIG_I"))
+			if (!ikev1_out_generic_raw(&isakmp_signature_desc,
+						   rbody,
+						   sig.ptr, sig.len,
+						   "SIG_I"))
 				return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1710,15 +1684,12 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 
 	/* HASH_R or SIG_R out */
 	{
-		enum next_payload_types_ikev1 np = (c->policy & POLICY_IKEV2_ALLOW) ?
-			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-
 		struct crypt_mac hash = main_mode_hash(st, SA_RESPONDER, &r_id_pbs);
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
 			/* HASH_R out */
-			if (!ikev1_out_generic_raw(np, &isakmp_hash_desc, &rbody,
-						hash.ptr, hash.len, "HASH_R"))
+			if (!ikev1_out_generic_raw(&isakmp_hash_desc, &rbody,
+						   hash.ptr, hash.len, "HASH_R"))
 				return STF_INTERNAL_ERROR;
 		} else {
 			/* SIG_R out */
@@ -1731,9 +1702,9 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 				return STF_FAIL + AUTHENTICATION_FAILED;
 			}
 
-			if (!ikev1_out_generic_raw(np, &isakmp_signature_desc,
-						&rbody, sig.ptr, sig.len,
-						"SIG_R"))
+			if (!ikev1_out_generic_raw(&isakmp_signature_desc,
+						   &rbody, sig.ptr, sig.len,
+						   "SIG_R"))
 				return STF_INTERNAL_ERROR;
 		}
 	}

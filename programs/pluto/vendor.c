@@ -914,7 +914,7 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
  * @param vid Int of VendorID to be sent (see vendor.h for the list)
  * @return bool True if successful
  */
-bool out_vid(uint8_t np, pb_stream *outs, unsigned int vid)
+bool out_vid(pb_stream *outs, unsigned int vid)
 {
 	struct vid_struct *pvid;
 
@@ -925,7 +925,7 @@ bool out_vid(uint8_t np, pb_stream *outs, unsigned int vid)
 	DBG(DBG_EMITTING,
 	    DBG_log("out_vid(): sending [%s]", pvid->descr));
 
-	return ikev1_out_generic_raw(np, &isakmp_vendor_id_desc, outs,
+	return ikev1_out_generic_raw(&isakmp_vendor_id_desc, outs,
 			       pvid->vid, pvid->vid_len, "V_ID");
 }
 
@@ -950,7 +950,7 @@ bool out_vid_set(pb_stream *outs, const struct connection *c)
 {
 	/* cusomizeable Vendor ID */
 	if (c->send_vendorid) {
-		if (!ikev1_out_generic_raw(ISAKMP_NEXT_VID, &isakmp_vendor_id_desc, outs,
+		if (!ikev1_out_generic_raw(&isakmp_vendor_id_desc, outs,
 					pluto_vendorid, strlen(pluto_vendorid), "Pluto Vendor ID")) {
 			return FALSE;
 		}
@@ -958,7 +958,7 @@ bool out_vid_set(pb_stream *outs, const struct connection *c)
 
 #define MAYBE_VID(q, vid) {  \
 	if (q) {  \
-		if (!out_vid(ISAKMP_NEXT_VID, outs, vid)) {  \
+		if (!out_vid(outs, vid)) {  \
 			return FALSE;  \
 		}  \
 	}  \
@@ -979,7 +979,7 @@ bool out_vid_set(pb_stream *outs, const struct connection *c)
 	 * we count on backpatching to fix our np.
 	 */
 
-	if (!out_vid(ISAKMP_NEXT_NONE, outs, VID_MISC_DPD)) {
+	if (!out_vid(outs, VID_MISC_DPD)) {
 		return FALSE;
 	}
 

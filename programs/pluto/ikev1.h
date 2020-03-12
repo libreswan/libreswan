@@ -34,26 +34,21 @@ extern void process_v1_packet(struct msg_digest **mdp);
 /* continue with encrypted packet */
 extern void process_packet_tail(struct msg_digest **mdp);
 
-extern bool ikev1_justship_nonce(chunk_t *n,
-			   pb_stream *outs, uint8_t np,
-			   const char *name);
+extern bool ikev1_justship_nonce(chunk_t *n, pb_stream *outs,
+				 const char *name);
 
 /* calls previous two routines */
 extern bool ikev1_ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
-		       pb_stream *outs, uint8_t np,
-		       const char *name);
+			     pb_stream *outs, const char *name);
 
 extern notification_t accept_v1_nonce(struct msg_digest *md, chunk_t *dest,
 				      const char *name);
 
-extern bool ikev1_justship_KE(chunk_t *g,
-			pb_stream *outs, uint8_t np);
+extern bool ikev1_justship_KE(chunk_t *g, pb_stream *outs);
 
 /* just calls previous two routines now */
-extern bool ikev1_ship_KE(struct state *st,
-		    struct pluto_crypto_req *r,
-		    chunk_t *g,
-		    pb_stream *outs, uint8_t np);
+extern bool ikev1_ship_KE(struct state *st, struct pluto_crypto_req *r,
+			  chunk_t *g, pb_stream *outs);
 
 /* **MAIN MODE FUNCTIONS** in ikev1_main.c */
 

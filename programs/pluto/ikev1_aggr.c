@@ -398,14 +398,13 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 	/************** build rest of output: KE, Nr, IDir, HASH_R/SIG_R ********/
 
 	/* KE */
-	if (!ikev1_justship_KE(&st->st_gr, &rbody, ISAKMP_NEXT_NONCE)) {
+	if (!ikev1_justship_KE(&st->st_gr, &rbody)) {
 		free_auth_chain(auth_chain, chain_len);
 		return STF_INTERNAL_ERROR;
 	}
 
 	/* Nr */
-	if (!ikev1_justship_nonce(&st->st_nr, &rbody, ISAKMP_NEXT_ID,
-				  "Nr")) {
+	if (!ikev1_justship_nonce(&st->st_nr, &rbody, "Nr")) {
 		free_auth_chain(auth_chain, chain_len);
 		return STF_INTERNAL_ERROR;
 	}
@@ -468,8 +467,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
 			/* HASH_R out */
-			if (!ikev1_out_generic_raw(ISAKMP_NEXT_VID,
-					     &isakmp_hash_desc,
+			if (!ikev1_out_generic_raw(&isakmp_hash_desc,
 					     &rbody,
 					     hash.ptr,
 					     hash.len,
@@ -484,8 +482,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 				return STF_FAIL + AUTHENTICATION_FAILED;
 			}
 
-			if (!ikev1_out_generic_raw(ISAKMP_NEXT_VID,
-					     &isakmp_signature_desc,
+			if (!ikev1_out_generic_raw(&isakmp_signature_desc,
 					     &rbody, sig.ptr, sig.len,
 					     "SIG_R"))
 				return STF_INTERNAL_ERROR;
@@ -498,13 +495,11 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 		/* as Responder, send best NAT VID we received */
-		if (!out_vid(ISAKMP_NEXT_NONE,
-			     &rbody,
-			     md->quirks.qnat_traversal_vid))
+		if (!out_vid(&rbody, md->quirks.qnat_traversal_vid))
 			return STF_INTERNAL_ERROR;
 
 		/* send two ISAKMP_NEXT_NATD_RFC* hash payloads to support NAT */
-		if (!ikev1_nat_traversal_add_natd(ISAKMP_NEXT_NONE, &rbody, md))
+		if (!ikev1_nat_traversal_add_natd(&rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -741,7 +736,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 	/* ??? why does this come before AUTH payload? */
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 		/* send two ISAKMP_NEXT_NATD_RFC* hash payloads to support NAT */
-		if (!ikev1_nat_traversal_add_natd(auth_payload, &rbody, md)) {
+		if (!ikev1_nat_traversal_add_natd(&rbody, md)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -770,8 +765,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
 			/* HASH_I out */
-			if (!ikev1_out_generic_raw(ISAKMP_NEXT_NONE,
-					     &isakmp_hash_desc, &rbody,
+			if (!ikev1_out_generic_raw(&isakmp_hash_desc, &rbody,
 					     hash.ptr, hash.len, "HASH_I"))
 				return STF_INTERNAL_ERROR;
 		} else {
@@ -783,8 +777,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 				return STF_FAIL + AUTHENTICATION_FAILED;
 			}
 
-			if (!ikev1_out_generic_raw(ISAKMP_NEXT_NONE,
-					     &isakmp_signature_desc,
+			if (!ikev1_out_generic_raw(&isakmp_signature_desc,
 					     &rbody, sig.ptr, sig.len,
 					     "SIG_I"))
 				return STF_INTERNAL_ERROR;
@@ -1135,12 +1128,11 @@ static stf_status aggr_outI1_tail(struct state *st,
 	}
 
 	/* KE out */
-	if (!ikev1_ship_KE(st, r, &st->st_gi,
-		     &rbody, ISAKMP_NEXT_NONCE))
+	if (!ikev1_ship_KE(st, r, &st->st_gi, &rbody))
 		return STF_INTERNAL_ERROR;
 
 	/* Ni out */
-	if (!ikev1_ship_nonce(&st->st_ni, r, &rbody, ISAKMP_NEXT_ID, "Ni"))
+	if (!ikev1_ship_nonce(&st->st_ni, r, &rbody, "Ni"))
 		return STF_INTERNAL_ERROR;
 
 	/* IDii out */
@@ -1171,7 +1163,7 @@ static stf_status aggr_outI1_tail(struct state *st,
 		return STF_INTERNAL_ERROR;
 
 	/* as Initiator, spray NAT VIDs */
-	if (!nat_traversal_insert_vid(ISAKMP_NEXT_NONE, &rbody, c))
+	if (!nat_traversal_insert_vid(&rbody, c))
 		return STF_INTERNAL_ERROR;
 
 	/* finish message */

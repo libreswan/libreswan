@@ -38,7 +38,7 @@ bool emit_v1_HASH(enum v1_hash_type hash_type, const char *what,
 		return true;
 	}
 	pb_stream hash_pbs;
-	if (!ikev1_out_generic(0, &isakmp_hash_desc, rbody, &hash_pbs)) {
+	if (!ikev1_out_generic(&isakmp_hash_desc, rbody, &hash_pbs)) {
 		return false;
 	}
 	if (fixup->impair == SEND_EMPTY) {
