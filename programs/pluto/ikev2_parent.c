@@ -730,7 +730,6 @@ static stf_status ikev2_parent_outI1_common(struct state *st)
 	{
 		pb_stream pb;
 		struct ikev2_generic in = {
-			.isag_np = ISAKMP_NEXT_v2N,
 			.isag_critical = build_ikev2_critical(false),
 		};
 
@@ -1069,7 +1068,6 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	{
 		pb_stream pb;
 		struct ikev2_generic in = {
-			.isag_np = ISAKMP_NEXT_v2N,
 			.isag_critical = build_ikev2_critical(false),
 		};
 

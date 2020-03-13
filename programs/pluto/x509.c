@@ -1166,7 +1166,6 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 
 	pb_stream cr_pbs;
 	struct ikev2_certreq cr_hd = {
-		.isacertreq_np = ISAKMP_NEXT_v2NONE,
 		.isacertreq_critical =  ISAKMP_PAYLOAD_NONCRITICAL,
 		.isacertreq_enc = type,
 	};
@@ -1351,7 +1350,6 @@ stf_status ikev2_send_cert(const struct state *st, pb_stream *outpbs)
 			return STF_INTERNAL_ERROR;
 		}
 		struct ikev2_cert pkcs7_hdr = {
-			.isac_np = ISAKMP_NEXT_v2NONE,
 			.isac_critical = build_ikev2_critical(false),
 			.isac_enc = CERT_PKCS7_WRAPPED_X509,
 		};
@@ -1396,7 +1394,6 @@ stf_status ikev2_send_cert(const struct state *st, pb_stream *outpbs)
 #endif
 
 	const struct ikev2_cert certhdr = {
-		.isac_np = ISAKMP_NEXT_v2NONE,
 		.isac_critical = build_ikev2_critical(false),
 		.isac_enc = mycert.ty,
 	};

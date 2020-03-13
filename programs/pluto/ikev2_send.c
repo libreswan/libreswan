@@ -74,7 +74,6 @@ bool emit_v2UNKNOWN(const char *victim, pb_stream *outs)
 	libreswan_log("IMPAIR: adding an unknown payload of type %d to %s",
 		      ikev2_unknown_payload_desc.pt, victim);
 	struct ikev2_generic gen = {
-		.isag_np = ISAKMP_NEXT_v2NONE,
 		.isag_critical = build_ikev2_critical(IMPAIR(UNKNOWN_PAYLOAD_CRITICAL)),
 	};
 	pb_stream pbs = open_output_struct_pbs(outs, &gen, &ikev2_unknown_payload_desc);
@@ -520,23 +519,18 @@ void record_v2_delete(struct state *const st)
 	{
 		pb_stream del_pbs;
 		struct ikev2_delete v2del_tmp;
-		/*
-		 * uint16_t i, j=0;
-		 * u_char *spi;
-		 * char spi_buf[1024];
-		 */
-
-		zero(&v2del_tmp);	/* OK: no pointer fields */
-		v2del_tmp.isad_np = ISAKMP_NEXT_v2NONE;
-
 		if (IS_CHILD_SA(st)) {
-			v2del_tmp.isad_protoid = PROTO_IPSEC_ESP;
-			v2del_tmp.isad_spisize = sizeof(ipsec_spi_t);
-			v2del_tmp.isad_nrspi = 1;
+			v2del_tmp = (struct ikev2_delete) {
+				.isad_protoid = PROTO_IPSEC_ESP,
+				.isad_spisize = sizeof(ipsec_spi_t),
+				.isad_nrspi = 1,
+			};
 		} else {
-			v2del_tmp.isad_protoid = PROTO_ISAKMP;
-			v2del_tmp.isad_spisize = 0;
-			v2del_tmp.isad_nrspi = 0;
+			v2del_tmp = (struct ikev2_delete) {
+				.isad_protoid = PROTO_ISAKMP,
+				.isad_spisize = 0,
+				.isad_nrspi = 0,
+			};
 		}
 
 		/* Emit delete payload header out */

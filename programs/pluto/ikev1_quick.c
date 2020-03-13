@@ -1399,7 +1399,6 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 	{
 		struct isakmp_sa sa = {
 			.isasa_doi = ISAKMP_DOI_IPSEC,
-			.isasa_np = ISAKMP_NEXT_NONCE,
 		};
 		if (!out_struct(&sa, &isakmp_sa_desc, &rbody, &r_sa_pbs))
 			return STF_INTERNAL_ERROR;

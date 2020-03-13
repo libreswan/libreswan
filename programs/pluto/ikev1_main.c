@@ -147,7 +147,6 @@ void main_outI1(struct fd *whack_sock,
 		struct isakmp_hdr hdr = {
 			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
 				ISAKMP_MINOR_VERSION,
-			.isa_np = ISAKMP_NEXT_SA,
 			.isa_xchg = ISAKMP_XCHG_IDPROT,
 		};
 		hdr.isa_ike_initiator_spi = st->st_ike_spis.initiator;
@@ -700,7 +699,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 
 		hdr.isa_flags = 0; /* clear all flags */
 		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
-		hdr.isa_np = ISAKMP_NEXT_SA;
+		hdr.isa_np = ISAKMP_NEXT_NONE; /* clear NP */
 
 		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
@@ -714,7 +713,6 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 	/* start of SA out */
 	{
 		struct isakmp_sa r_sa = {
-			.isasa_np = ISAKMP_NEXT_VID,
 			.isasa_doi = ISAKMP_DOI_IPSEC,
 		};
 		if (!out_struct(&r_sa, &isakmp_sa_desc, &rbody, &r_sa_pbs))
@@ -1344,7 +1342,6 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 	if (initial_contact) {
 		pb_stream notify_pbs;
 		struct isakmp_notification isan = {
-			.isan_np = ISAKMP_NEXT_NONE,
 			.isan_doi = ISAKMP_DOI_IPSEC,
 			.isan_protoid = PROTO_ISAKMP,
 			.isan_spisize = COOKIE_SIZE * 2,
@@ -1845,7 +1842,6 @@ stf_status send_isakmp_notification(struct state *st,
 	{
 		pb_stream notify_pbs;
 		struct isakmp_notification isan = {
-			.isan_np = ISAKMP_NEXT_NONE,
 			.isan_doi = ISAKMP_DOI_IPSEC,
 			.isan_protoid = PROTO_ISAKMP,
 			.isan_spisize = COOKIE_SIZE * 2,
@@ -2024,7 +2020,6 @@ static void send_notification(struct state *sndst /*possibly fake*/,
 		pb_stream not_pbs;
 		struct isakmp_notification isan = {
 			.isan_doi = ISAKMP_DOI_IPSEC,
-			.isan_np = ISAKMP_NEXT_NONE,
 			.isan_type = type,
 			.isan_spisize = 0,
 			.isan_protoid = protoid,
@@ -2221,7 +2216,6 @@ void send_v1_delete(struct state *st)
 		pb_stream del_pbs;
 		struct isakmp_delete isad = {
 			.isad_doi = ISAKMP_DOI_IPSEC,
-			.isad_np = ISAKMP_NEXT_NONE,
 			.isad_spisize = 2 * COOKIE_SIZE,
 			.isad_protoid = PROTO_ISAKMP,
 			.isad_nospi = 1,
@@ -2240,15 +2234,10 @@ void send_v1_delete(struct state *st)
 			ns--;
 			struct isakmp_delete isad = {
 				.isad_doi = ISAKMP_DOI_IPSEC,
-				.isad_np = ns == said ?
-					ISAKMP_NEXT_NONE : ISAKMP_NEXT_D,
 				.isad_spisize = sizeof(ipsec_spi_t),
 				.isad_protoid = ns->proto->ikev1,
 				.isad_nospi = 1,
 			};
-
-			if (DBGP(IMPAIR_IKEv1_DEL_WITH_NOTIFY))
-				isad.isad_np = ISAKMP_NEXT_N; /* Notify */
 
 			passert(out_struct(&isad, &isakmp_delete_desc,
 					   &r_hdr_pbs, &del_pbs));
@@ -2261,7 +2250,6 @@ void send_v1_delete(struct state *st)
 
 				libreswan_log("IMPAIR: adding bogus Notify payload after IKE Delete payload");
 				struct isakmp_notification isan = {
-					.isan_np = ISAKMP_NEXT_NONE,
 					.isan_doi = ISAKMP_DOI_IPSEC,
 					.isan_protoid = PROTO_ISAKMP,
 					.isan_spisize = COOKIE_SIZE * 2,

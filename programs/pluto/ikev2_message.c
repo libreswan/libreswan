@@ -106,7 +106,6 @@ pb_stream open_v2_message(pb_stream *reply,
 		.isa_version = build_ikev2_version(),
 		.isa_xchg = exchange_type,
 		.isa_length = 0, /* filled in when PBS is closed */
-		.isa_np = ISAKMP_NEXT_v2NONE, /* filled in when next payload is added */
 	};
 
 	/*
@@ -205,7 +204,6 @@ pb_stream open_v2_message(pb_stream *reply,
 		libreswan_log("IMPAIR: Instead of replying with IKE_AUTH, forging an INFORMATIONAL reply");
 		if ((hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) && exchange_type == ISAKMP_v2_IKE_AUTH) {
 			hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
-			hdr.isa_np = ISAKMP_NEXT_v2SK;
 		}
 	}
 
@@ -859,10 +857,15 @@ static stf_status v2_record_outbound_fragment(struct ike_sa *ike,
 		}
 	};
 
-	/* emit SKF header, save location */
+	/*
+	 * emit SKF header, save location.
+	 *
+	 * In the first fragment, .NP is set to the SK payload's next
+	 * payload type.
+	 */
 
 	const struct ikev2_skf e = {
-		.isaskf_np = skf_np,
+		.isaskf_np = skf_np, /* needed */
 		.isaskf_critical = build_ikev2_critical(false),
 		.isaskf_number = number,
 		.isaskf_total = total,
@@ -970,7 +973,7 @@ static stf_status v2_record_outbound_fragments(struct state *st,
 			return STF_INTERNAL_ERROR;
 		}
 	}
-	hdr.isa_np = ISAKMP_NEXT_v2NONE;
+	hdr.isa_np = ISAKMP_NEXT_v2NONE; /* clear NP */
 
 	/*
 	 * Extract the SK's next payload field from the original

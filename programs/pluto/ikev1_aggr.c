@@ -358,7 +358,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 
 		hdr.isa_flags = 0; /* clear reserved fields */
 		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
-		hdr.isa_np = ISAKMP_NEXT_SA;
+		hdr.isa_np = ISAKMP_NEXT_NONE; /* clear NP */
 
 		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
@@ -375,7 +375,6 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 	{
 		struct isakmp_sa r_sa = {
 			.isasa_doi = ISAKMP_DOI_IPSEC,
-			.isasa_np = ISAKMP_NEXT_KE,
 		};
 
 		pb_stream r_sa_pbs;
@@ -435,7 +434,6 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 	if (send_cert) {
 		pb_stream cert_pbs;
 		struct isakmp_cert cert_hd = {
-			.isacert_np = send_cr ? ISAKMP_NEXT_CR : auth_payload,
 			.isacert_type = mycert.ty
 		};
 		libreswan_log("I am sending my certificate");
@@ -700,7 +698,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 
 		hdr.isa_flags = 0; /* clear reserved fields */
 		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
-		hdr.isa_np = ISAKMP_NEXT_NONE,	/* rewritten */
+		hdr.isa_np = ISAKMP_NEXT_NONE,	/* clear NP */
 		hdr.isa_flags |= ISAKMP_FLAGS_v1_ENCRYPTION;
 
 		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
@@ -719,7 +717,6 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 		pb_stream cert_pbs;
 
 		struct isakmp_cert cert_hd = {
-			.isacert_np = ISAKMP_NEXT_NONE, /* rewritten by NAT-D payloads */
 			.isacert_type = mycert.ty,
 			.isacert_reserved = 0,
 			.isacert_length = 0 /* XXX unused on sending ? */
@@ -1114,7 +1111,6 @@ static stf_status aggr_outI1_tail(struct state *st,
 		struct isakmp_hdr hdr = {
 			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
 				  ISAKMP_MINOR_VERSION,
-			.isa_np = ISAKMP_NEXT_SA,
 			.isa_xchg = ISAKMP_XCHG_AGGR,
 		};
 		hdr.isa_ike_initiator_spi = st->st_ike_spis.initiator;
