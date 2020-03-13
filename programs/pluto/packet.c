@@ -2250,9 +2250,9 @@ static void start_next_payload_chain(pb_stream *message,
 	uint8_t n = *inp;
 	if (n != ISAKMP_NEXT_NONE) {
 		struct esb_buf npb;
-		dbg("next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
-		     sd->name, fp->name, n,
-		     enum_showb(fp->desc, n, &npb));
+		LOG_PEXPECT("next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
+			    sd->name, fp->name, n,
+			    enum_showb(fp->desc, n, &npb));
 		n = ISAKMP_NEXT_NONE;
 	}
 	*cur = n;
@@ -2299,22 +2299,28 @@ static void update_next_payload_chain(pb_stream *outs,
 
 	/*
 	 * Initialize this payload's next payload chain
-	 *
-	 * v2SKF is a hack - the fragmentation code gets to dictate
-	 * the value, not this code.  Since SKF there should be
-	 * nothing after an SFK payload this works.
 	 */
 	uint8_t n = *inp;
 	if (sd->pt == ISAKMP_NEXT_v2SKF) {
+		/*
+		 * For v2SKF (IKEv2 secured fragments) assume the
+		 * header next payload type is correct.  The
+		 * fragmenting code sets it to the payload type of the
+		 * unfragmented SK message's first payload.  Something
+		 * this code isn't going to know.
+		 *
+		 * This works because v2SKF messages never have more
+		 * than one payload.
+		 */
 		struct esb_buf npb;
 		dbg("next payload chain: using supplied v2SKF '%s'.'%s' value %d:%s",
 		     sd->name, fp->name, n,
 		     enum_showb(fp->desc, n, &npb));
 	} else if (n != ISAKMP_NEXT_NONE) {
 		struct esb_buf npb;
-		dbg("next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
-		     sd->name, fp->name, n,
-		     enum_showb(fp->desc, n, &npb));
+		LOG_PEXPECT("next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
+			    sd->name, fp->name, n,
+			    enum_showb(fp->desc, n, &npb));
 		n = ISAKMP_NEXT_NONE;
 	}
 	*cur = n;
