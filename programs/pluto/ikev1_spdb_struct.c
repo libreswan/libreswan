@@ -530,7 +530,7 @@ bool ikev1_out_sa(pb_stream *outs,
 							p->protoid == PROTO_IPCOMP ?
 							  IPCOMP_CPI_SIZE :
 							  IPSEC_DOI_SPI_SIZE,
-					.isap_np = valid_prop_cnt > 0 ?
+					.isap_pnp = valid_prop_cnt > 0 ?
 						ISAKMP_NEXT_P : ISAKMP_NEXT_NONE,
 					.isap_notrans = p->trans_cnt
 				};
@@ -655,7 +655,7 @@ bool ikev1_out_sa(pb_stream *outs,
 
 				{
 					const struct isakmp_transform trans = {
-						.isat_np = (tn == p->trans_cnt - 1) ?
+						.isat_tnp = (tn == p->trans_cnt - 1) ?
 							ISAKMP_NEXT_NONE :
 							ISAKMP_NEXT_T,
 						.isat_transnum = tn,
@@ -1127,10 +1127,10 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 		return PAYLOAD_MALFORMED;	/* reject whole SA */
 	}
 
-	if (proposal.isap_np != ISAKMP_NEXT_NONE) {
+	if (proposal.isap_pnp != ISAKMP_NEXT_NONE) {
 		loglog(RC_LOG_SERIOUS,
 		       "Proposal Payload must be alone in Oakley SA; found %s following Proposal",
-		       enum_show(&ikev1_payload_names, proposal.isap_np));
+		       enum_show(&ikev1_payload_names, proposal.isap_pnp));
 		return PAYLOAD_MALFORMED;	/* reject whole SA */
 	}
 
@@ -1609,25 +1609,25 @@ rsasig_common:
 				    trans.isat_transnum));
 
 			if (r_sa_pbs != NULL) {
-				struct isakmp_proposal r_proposal = proposal;
-				pb_stream r_proposal_pbs;
-				struct isakmp_transform r_trans = trans;
-				pb_stream r_trans_pbs;
 
 				/* Situation */
 				passert(out_struct(&ipsecdoisit, &ipsec_sit_desc,
 						   r_sa_pbs, NULL));
 
 				/* Proposal */
+				struct isakmp_proposal r_proposal = proposal;
 				r_proposal.isap_spisize = 0;
 				r_proposal.isap_notrans = 1;
+				pb_stream r_proposal_pbs;
 				passert(out_struct(&r_proposal,
 						   &isakmp_proposal_desc,
 						   r_sa_pbs,
 						   &r_proposal_pbs));
 
 				/* Transform */
-				r_trans.isat_np = ISAKMP_NEXT_NONE;
+				struct isakmp_transform r_trans = trans;
+				r_trans.isat_tnp = ISAKMP_NEXT_NONE;
+				pb_stream r_trans_pbs;
 				passert(out_struct(&r_trans,
 						   &isakmp_isakmp_transform_desc,
 						   &r_proposal_pbs,
@@ -1654,7 +1654,7 @@ rsasig_common:
 
 		no_trans_left--;
 
-		if (trans.isat_np == ISAKMP_NEXT_NONE) {
+		if (trans.isat_tnp == ISAKMP_NEXT_NONE) {
 			if (no_trans_left != 0) {
 				loglog(RC_LOG_SERIOUS,
 				       "number of Transform Payloads disagrees with Oakley Proposal Payload");
@@ -1662,10 +1662,10 @@ rsasig_common:
 			}
 			break;
 		}
-		if (trans.isat_np != ISAKMP_NEXT_T) {
+		if (trans.isat_tnp != ISAKMP_NEXT_T) {
 			loglog(RC_LOG_SERIOUS,
 			       "unexpected %s payload in Oakley Proposal",
-			       enum_show(&ikev1_payload_names, proposal.isap_np));
+			       enum_show(&ikev1_payload_names, proposal.isap_pnp));
 			return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 		}
 	}
@@ -1822,7 +1822,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		return FALSE;
 	}
 
-	switch (trans->isat_np) {
+	switch (trans->isat_tnp) {
 	case ISAKMP_NEXT_T:
 		if (is_last) {
 			loglog(RC_LOG_SERIOUS,
@@ -1840,7 +1840,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	default:
 		loglog(RC_LOG_SERIOUS,
 		       "expecting Transform Payload, but found %s in Proposal",
-		       enum_show(&ikev1_payload_names, trans->isat_np));
+		       enum_show(&ikev1_payload_names, trans->isat_tnp));
 		return FALSE;
 	}
 
@@ -2217,7 +2217,7 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 	pb_stream r_trans_pbs;
 
 	/* Proposal */
-	r_proposal.isap_np = 0;
+	r_proposal.isap_pnp = 0;
 	r_proposal.isap_notrans = 1;
 	passert(out_struct(&r_proposal, &isakmp_proposal_desc, r_sa_pbs,
 			   &r_proposal_pbs));
@@ -2246,7 +2246,7 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 	}
 
 	/* Transform */
-	r_trans.isat_np = ISAKMP_NEXT_NONE;
+	r_trans.isat_tnp = ISAKMP_NEXT_NONE;
 	passert(out_struct(&r_trans, trans_desc, &r_proposal_pbs, &r_trans_pbs));
 
 	/* Transform Attributes: pure echo */
@@ -2497,14 +2497,14 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			}
 
 			/* refill next_proposal */
-			if (next_proposal.isap_np == ISAKMP_NEXT_NONE) {
+			if (next_proposal.isap_pnp == ISAKMP_NEXT_NONE) {
 				next_full = FALSE;
 				break;
-			} else if (next_proposal.isap_np != ISAKMP_NEXT_P) {
+			} else if (next_proposal.isap_pnp != ISAKMP_NEXT_P) {
 				loglog(RC_LOG_SERIOUS,
 				       "unexpected in Proposal: %s",
 				       enum_show(&ikev1_payload_names,
-						 next_proposal.isap_np));
+						 next_proposal.isap_pnp));
 				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 

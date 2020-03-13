@@ -413,7 +413,11 @@ extern struct_desc ipsec_sit_desc;
 /* ISAKMP Proposal Payload
  * layout from RFC 2408 "ISAKMP" section 3.5
  * A variable length SPI follows.
- * Previous next payload: ISAKMP_NEXT_P
+ *
+ * XXX: Don't be confused by the field "Next Payload" in the below -
+ * it has nothing to do with the next payload chain.  It's values are
+ * either 0 (last) or ISAKMP_NEXT_P.
+ *
  *                      1                   2                   3
  *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -425,7 +429,7 @@ extern struct_desc ipsec_sit_desc;
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 struct isakmp_proposal {
-	uint8_t isap_np;
+	uint8_t isap_pnp;
 	uint8_t isap_reserved;
 	uint16_t isap_length;
 	uint8_t isap_proposal;
@@ -439,7 +443,11 @@ extern struct_desc isakmp_proposal_desc;
 /* ISAKMP Transform Payload
  * layout from RFC 2408 "ISAKMP" section 3.6
  * Variable length SA Attributes follow.
- * Previous next payload: ISAKMP_NEXT_T
+ *
+ * XXX: Don't be confused by the field "Next Payload" in the below -
+ * it has nothing to do with the next payload chain.  It's values are
+ * either 0 (last) or ISAKMP_NEXT_T.
+ *
  *                      1                   2                   3
  *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -453,7 +461,7 @@ extern struct_desc isakmp_proposal_desc;
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 struct isakmp_transform {
-	uint8_t isat_np;
+	uint8_t isat_tnp;
 	uint8_t isat_reserved;
 	uint16_t isat_length;
 	uint8_t isat_transnum;		/* Number of the transform */
