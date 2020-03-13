@@ -2189,14 +2189,21 @@ static void update_last_substructure(pb_stream *outs,
 	 * last.  Check/set its last substructure field to its type.
 	 */
 	if (outs->last_substructure.loc != NULL) {
-		struct esb_buf ssb;
-		dbg("last substructure: checking '%s'.'%s'.'%s' is %s (0x%x)",
-		     outs->desc->name,
-		     outs->last_substructure.sd->name,
-		     outs->last_substructure.fp->name,
-		     enum_showb(outs->last_substructure.fp->desc,
-				outs->desc->nsst, &ssb),
-		     outs->desc->nsst);
+		struct esb_buf locb;
+		struct esb_buf nsstb;
+		dbg("last substructure: checking '%s'.'%s'.'%s' containing %s (0x%x) is %s (0x%x)",
+		    /* '%s'.'%s'.'%s' */
+		    outs->desc->name,
+		    outs->last_substructure.sd->name,
+		    outs->last_substructure.fp->name,
+		    /* containing ... */
+		    enum_showb(outs->last_substructure.fp->desc,
+			       outs->last_substructure.loc[0], &locb),
+		    outs->last_substructure.loc[0],
+		    /* is ... */
+		    enum_showb(outs->last_substructure.fp->desc,
+			       outs->desc->nsst, &nsstb),
+		    outs->desc->nsst);
 		pexpect(outs->last_substructure.loc[0] == outs->desc->nsst);
 	}
 	/*
