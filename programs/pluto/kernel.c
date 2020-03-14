@@ -3114,12 +3114,8 @@ bool route_and_eroute(struct connection *c,
 
 bool install_ipsec_sa(struct state *st, bool inbound_also)
 {
-	statetime_t start = statetime_start(&ike_sa(st)->sa); /* bill parent */
-	DBG(DBG_CONTROL, DBG_log("install_ipsec_sa() for #%lu: %s",
-					st->st_serialno,
-					inbound_also ?
-					"inbound and outbound" :
-					"outbound only"));
+	dbg("install_ipsec_sa() for #%lu: %s", st->st_serialno,
+	    inbound_also ? "inbound and outbound" : "outbound only"));
 
 	enum routability rb = could_route(st->st_connection);
 
@@ -3130,7 +3126,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 		break;
 
 	default:
-		return FALSE;
+		return false;
 	}
 
 	/* (attempt to) actually set up the SA group */
@@ -3141,9 +3137,8 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 			return FALSE;
 		}
 
-		DBG(DBG_KERNEL,
-			DBG_log("set up outgoing SA, ref=%u/%u", st->st_ref,
-				st->st_refhim));
+		dbg("set up outgoing SA, ref=%u/%u", st->st_ref,
+		    st->st_refhim);
 		st->st_outbound_done = TRUE;
 	}
 
@@ -3152,9 +3147,8 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 		if (!setup_half_ipsec_sa(st, TRUE))
 			return FALSE;
 
-		DBG(DBG_KERNEL,
-			DBG_log("set up incoming SA, ref=%u/%u", st->st_ref,
-				st->st_refhim));
+		dbg("set up incoming SA, ref=%u/%u", st->st_ref,
+		    st->st_refhim);
 
 		/*
 		 * We successfully installed an IPsec SA, meaning it is safe
@@ -3175,10 +3169,8 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 
 	/* for (sr = &st->st_connection->spd; sr != NULL; sr = sr->next) */
 	for (; sr != NULL; sr = sr->spd_next) {
-		DBG(DBG_CONTROL, DBG_log("sr for #%lu: %s",
-						st->st_serialno,
-						enum_name(&routing_story,
-							sr->routing)));
+		dbg("sr for #%lu: %s", st->st_serialno,
+		    enum_name(&routing_story, sr->routing)));
 
 		/*
 		 * if the eroute owner is not us, then make it us.
@@ -3196,7 +3188,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 				 * XXX go and unroute any SRs that were
 				 * successfully routed already.
 				 */
-				return FALSE;
+				return false;
 			}
 		}
 	}
@@ -3213,8 +3205,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 
 	if (inbound_also)
 		linux_audit_conn(st, LAK_CHILD_START);
-	statetime_stop(&start, "%s()", __func__);
-	return TRUE;
+	return true;
 }
 
 bool migrate_ipsec_sa(struct state *st)
