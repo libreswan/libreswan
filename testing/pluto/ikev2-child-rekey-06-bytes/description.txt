@@ -1,0 +1,1 @@
+Test west rekey based on salifebytes.

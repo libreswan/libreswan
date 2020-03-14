@@ -1,0 +1,21 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add east
+002 "east": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec whack --trafficstatus
+006 #4: "east", type=ESP, add_time=1234567890, inBytes=588, outBytes=588, id='@west'
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+east #
+ 
