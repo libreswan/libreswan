@@ -2545,10 +2545,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	pexpect(!state_is_busy(st));
 
 	if (result > STF_OK) {
-		pexpect(st != NULL);
-		if (st != NULL) {
-			linux_audit_conn(md->st, IS_IKE_SA_ESTABLISHED(md->st) ? LAK_CHILD_FAIL : LAK_PARENT_FAIL);
-		}
+		linux_audit_conn(md->st, IS_IKE_SA_ESTABLISHED(md->st) ? LAK_CHILD_FAIL : LAK_PARENT_FAIL);
 	}
 
 	switch (result) {
