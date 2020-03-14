@@ -3115,7 +3115,7 @@ bool route_and_eroute(struct connection *c,
 bool install_ipsec_sa(struct state *st, bool inbound_also)
 {
 	dbg("install_ipsec_sa() for #%lu: %s", st->st_serialno,
-	    inbound_also ? "inbound and outbound" : "outbound only"));
+	    inbound_also ? "inbound and outbound" : "outbound only");
 
 	enum routability rb = could_route(st->st_connection);
 
@@ -3170,7 +3170,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 	/* for (sr = &st->st_connection->spd; sr != NULL; sr = sr->next) */
 	for (; sr != NULL; sr = sr->spd_next) {
 		dbg("sr for #%lu: %s", st->st_serialno,
-		    enum_name(&routing_story, sr->routing)));
+		    enum_name(&routing_story, sr->routing));
 
 		/*
 		 * if the eroute owner is not us, then make it us.
