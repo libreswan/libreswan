@@ -685,7 +685,7 @@
     remap="B">whack</emphasis>.</para>
 
     <refsect2 id="ikes_job">
-      <title>IKE's Job</title>
+      <title>IKE&apos;s Job</title>
 
       <para>A <emphasis remap="I">Security Association</emphasis> (<emphasis
       remap="I">SA</emphasis>) is an agreement between two network nodes on
@@ -734,7 +734,7 @@
 
       <para>In summary, an IKE instance is prepared to automate the management
       of Security Associations in an IPsec environment, but a number of issues
-      are considered policy and are left in the system administrator's
+      are considered policy and are left in the system administrator&apos;s
       hands.</para>
     </refsect2>
 
@@ -835,7 +835,7 @@
 
       <para>The most basic network topology that <emphasis
       remap="B">pluto</emphasis> supports has two security gateways
-      negotiating on behalf of client subnets. The diagram of RGB's testbed is
+      negotiating on behalf of client subnets. The diagram of RGB&apos;s testbed is
       a good example (see <emphasis
       remap="I">klips/doc/rgb_setup.txt</emphasis>).</para>
 
@@ -959,8 +959,8 @@
       operations. This behavior can be fine tuned using the
       <option>--nhelpers</option>. Pluto will start <emphasis
       remap="I">(n-1)</emphasis> of them, where <emphasis
-      remap="I">n</emphasis> is the number of CPU's you have (including
-      hypherthreaded CPU's). A value of <emphasis remap="I">0</emphasis>
+      remap="I">n</emphasis> is the number of CPU&apos;s you have (including
+      hypherthreaded CPU&apos;s). A value of <emphasis remap="I">0</emphasis>
       forces pluto to do all operations in the main process. A value of
       <emphasis remap="I">-1</emphasis> tells pluto to perform the above
       calculation. Any other value forces the number to that amount.</para>
@@ -985,7 +985,7 @@
       remap="B">pluto</emphasis> will run. <emphasis
       remap="B">pluto</emphasis> writes its PID into this file so that scripts
       can find it. This lock will not function properly if it is on an NFS
-      volume (but sharing locks on multiple machines doesn't make sense
+      volume (but sharing locks on multiple machines doesn&apos;t make sense
       anyway).</para>
 
       <para><emphasis remap="B">pluto</emphasis> then forks and the parent
@@ -1019,7 +1019,7 @@
     </refsect2>
 
     <refsect2 id="plutos_internal_state">
-      <title>Pluto's Internal State</title>
+      <title>Pluto&apos;s Internal State</title>
 
       <para>To understand how to use <emphasis remap="B">pluto</emphasis>, it
       is helpful to understand a little about its internal state. Furthermore,
@@ -1088,10 +1088,10 @@
 
       <para>Each connection may be routed, and must be while it has an IPsec
       SA. The connection specifies the characteristics of the route: the
-      interface on this machine, the "gateway" (the nexthop), and the peer's
+      interface on this machine, the "gateway" (the nexthop), and the peer&apos;s
       client subnet. Two connections may not be simultaneously routed if they
-      are for the same peer's client subnet but use different interfaces or
-      gateways (<emphasis remap="B">pluto</emphasis>'s logic does not reflect
+      are for the same peer&apos;s client subnet but use different interfaces or
+      gateways (<emphasis remap="B">pluto</emphasis>&apos;s logic does not reflect
       any advanced routing capabilities).</para>
 
       <para>On KLIPS, each eroute is associated with the state object for an
@@ -1115,7 +1115,7 @@
       later; they cannot be used to initiate).</para>
 
       <para>When <emphasis remap="B">pluto</emphasis> needs to install an
-      eroute for an IPsec SA (for a state object), first the state object's
+      eroute for an IPsec SA (for a state object), first the state object&apos;s
       connection must be routed (if this cannot be done, the eroute and SA
       will not be installed). If a conflicting eroute is already in place for
       another connection, the eroute and SA will not be installed (but note
@@ -1155,7 +1155,7 @@
       connection. The terminate form tells <emphasis
       remap="B">pluto</emphasis> to remove all SAs corresponding to a
       connection, including those being negotiated. The status form displays
-      the <emphasis remap="B">pluto</emphasis>'s internal state. The debug
+      the <emphasis remap="B">pluto</emphasis>&apos;s internal state. The debug
       form tells <emphasis remap="B">pluto</emphasis> to change the selection
       of debugging output "on the fly". The shutdown form tells <emphasis
       remap="B">pluto</emphasis> to shut down, deleting all SAs.</para>
@@ -1341,7 +1341,7 @@
           name</emphasis></term>
 
           <listitem>
-            <para>the X.509 Certificate Authority's Distinguished Name (DN)
+            <para>the X.509 Certificate Authority&apos;s Distinguished Name (DN)
             used as trust anchor for this connection. This is the CA
             certificate that signed the host certificate, as well as the
             certificate of the incoming client.</para>
@@ -1417,14 +1417,14 @@
           remap="I">ip-address</emphasis></term>
 
           <listitem>
-            <para>where to route packets for the peer's client (presumably for
+            <para>where to route packets for the peer&apos;s client (presumably for
             the peer too, but it will not be used for this). When <emphasis
             remap="B">pluto</emphasis> installs an IPsec SA, it issues a route
             command. It uses the nexthop as the gateway. The default is the
-            peer's IP address (this can be explicitly written as <emphasis
+            peer&apos;s IP address (this can be explicitly written as <emphasis
             remap="B">%direct</emphasis>; the obsolete notation
             <literal>0.0.0.0</literal> is accepted). This option is necessary
-            if <emphasis remap="B">pluto</emphasis>'s host's interface used
+            if <emphasis remap="B">pluto</emphasis>&apos;s host&apos;s interface used
             for sending packets to the peer is neither point-to-point nor
             directly connected to the peer.</para>
           </listitem>
@@ -1553,7 +1553,7 @@
           <term><option>--modecfgdns</option></term>
 
           <listitem>
-            <para>A comma separated list of DNS server IP's to pass along to connecting clients</para>
+            <para>A comma separated list of DNS server IP&apos;s to pass along to connecting clients</para>
           </listitem>
         </varlistentry>
 
@@ -1570,7 +1570,7 @@
 
           <listitem>
             <para>specifies that when an RSA public key is needed to
-            authenticate this host, and it isn't already known, fetch it from
+            authenticate this host, and it isn&apos;t already known, fetch it from
             DNS.</para>
           </listitem>
         </varlistentry>
@@ -2037,7 +2037,7 @@
           remap="I">seconds</emphasis></term>
 
           <listitem>
-            <para>how long before an SA's expiration should <emphasis
+            <para>how long before an SA&apos;s expiration should <emphasis
             remap="B">pluto</emphasis> try to negotiate a replacement SA. This
             will only happen if <emphasis remap="B">pluto</emphasis> was the
             initiator. The default is 540 (nine minutes).</para>
@@ -2135,10 +2135,10 @@
       tells <emphasis remap="B">pluto</emphasis> to set up routing for a
       connection. Although like a traditional route, it uses an ipsec device
       as a virtual interface. Once routing is set up, no packets will be sent
-      "in the clear" to the peer's client specified in the connection. A TRAP
+      "in the clear" to the peer&apos;s client specified in the connection. A TRAP
       shunt eroute will be installed; if outbound traffic is caught, Pluto
       will initiate the connection. An explicit <emphasis
-      remap="B">whack</emphasis> route is not always needed: if it hasn't been
+      remap="B">whack</emphasis> route is not always needed: if it hasn&apos;t been
       done when an IPsec SA is being installed, one will be automatically
       attempted.</para>
 
@@ -2364,7 +2364,7 @@
       start listening for IKE requests on its public interfaces. To avoid race
       conditions, it is normal to load the appropriate connections into
       <emphasis remap="B">pluto</emphasis> before allowing it to listen. If
-      <emphasis remap="B">pluto</emphasis> isn't listening, it is pointless to
+      <emphasis remap="B">pluto</emphasis> isn&apos;t listening, it is pointless to
       initiate negotiations, so it will refuse requests to do so. Whenever the
       listen form is used, <emphasis remap="B">pluto</emphasis> looks for
       public interfaces and will notice when new ones have been added and when
@@ -2445,7 +2445,7 @@
       </variablelist>
 
       <para>The trafficstatus form will display the xauth username, add_time and the total in and
-      out bytes of the IPsec SA's.</para>
+      out bytes of the IPsec SA&apos;s.</para>
 
       <variablelist remap="TP">
         <varlistentry>
@@ -2526,10 +2526,10 @@
 
       <para>&nbsp;&nbsp;&nbsp;ipsec whack --listen</para>
 
-      <para>If we don't immediately wish to bring up a secure connection
+      <para>If we don&apos;t immediately wish to bring up a secure connection
       between the two clients, we might wish to prevent insecure traffic. The
       routing form asks <emphasis remap="B">pluto</emphasis> to cause the
-      packets sent from our client to the peer's client to be routed through
+      packets sent from our client to the peer&apos;s client to be routed through
       the ipsec0 device; if there is no SA, they will be discarded:</para>
 
       <para>&nbsp;&nbsp;&nbsp;ipsec whack --route conn_name</para>
@@ -2608,7 +2608,7 @@
             subnet (even if <emphasis remap="B">prepare-host</emphasis> or
             <emphasis remap="B">prepare-client</emphasis> was run). The
             command should install a suitable route. Routing decisions are
-            based only on the destination (peer's client) subnet address,
+            based only on the destination (peer&apos;s client) subnet address,
             unlike eroutes which discriminate based on source too.</para>
           </listitem>
         </varlistentry>
@@ -2720,7 +2720,7 @@
 
           <listitem>
             <para>is the IP address / count of our client subnet. If the
-            client is just the host, this will be the host's own IP address /
+            client is just the host, this will be the host&apos;s own IP address /
             max (where max is 32 for IPv4 and 128 for IPv6).</para>
           </listitem>
         </varlistentry>
@@ -2730,7 +2730,7 @@
 
           <listitem>
             <para>is the IP address of our client net. If the client is just
-            the host, this will be the host's own IP address.</para>
+            the host, this will be the host&apos;s own IP address.</para>
           </listitem>
         </varlistentry>
 
@@ -2755,8 +2755,8 @@
           <term><emphasis remap="B">PLUTO_PEER_CLIENT</emphasis></term>
 
           <listitem>
-            <para>is the IP address / count of the peer's client subnet. If
-            the client is just the peer, this will be the peer's own IP
+            <para>is the IP address / count of the peer&apos;s client subnet. If
+            the client is just the peer, this will be the peer&apos;s own IP
             address / max (where max is 32 for IPv4 and 128 for IPv6).</para>
           </listitem>
         </varlistentry>
@@ -2765,8 +2765,8 @@
           <term><emphasis remap="B">PLUTO_PEER_CLIENT_NET</emphasis></term>
 
           <listitem>
-            <para>is the IP address of the peer's client net. If the client is
-            just the peer, this will be the peer's own IP address.</para>
+            <para>is the IP address of the peer&apos;s client net. If the client is
+            just the peer, this will be the peer&apos;s own IP address.</para>
           </listitem>
         </varlistentry>
 
@@ -2774,7 +2774,7 @@
           <term><emphasis remap="B">PLUTO_PEER_CLIENT_MASK</emphasis></term>
 
           <listitem>
-            <para>is the mask for the peer's client net. If the client is just
+            <para>is the mask for the peer&apos;s client net. If the client is just
             the peer, this will be 255.255.255.255.</para>
           </listitem>
         </varlistentry>
@@ -2824,7 +2824,7 @@
           <term><emphasis remap="B">PLUTO_PEER_ID</emphasis></term>
 
           <listitem>
-            <para>Dlists our peer's id.</para>
+            <para>Dlists our peer&apos;s id.</para>
           </listitem>
         </varlistentry>
 
@@ -2832,7 +2832,7 @@
           <term><emphasis remap="B">PLUTO_PEER_CA</emphasis></term>
 
           <listitem>
-            <para>lists the peer's CA.</para>
+            <para>lists the peer&apos;s CA.</para>
           </listitem>
         </varlistentry>
       </variablelist>
@@ -2858,13 +2858,13 @@
       remap="B">pluto</emphasis> has only a bit of lifetime left, <emphasis
       remap="B">pluto</emphasis> will initiate the creation of a new SA. This
       applies to ISAKMP and IPsec SAs. The rekeying will be initiated when the
-      SA's remaining lifetime is less than the rekeymargin plus a random
+      SA&apos;s remaining lifetime is less than the rekeymargin plus a random
       percentage, between 0 and rekeyfuzz, of the rekeymargin.</para>
 
       <para>Similarly, when an SA that was initiated by the peer has only a
       bit of lifetime left, <emphasis remap="B">pluto</emphasis> will try to
       initiate the creation of a replacement. To give preference to the
-      initiator, this rekeying will only be initiated when the SA's remaining
+      initiator, this rekeying will only be initiated when the SA&apos;s remaining
       lifetime is half of rekeymargin. If rekeying is done by the responder,
       the roles will be reversed: the responder for the old SA will be the
       initiator for the replacement. The former initiator might also initiate
@@ -2925,7 +2925,7 @@
       protocol.</para>
 
       <para>Only the initiator may be mobile: the initiator may have an IP
-      number unknown to the responder. When the responder doesn't recognize
+      number unknown to the responder. When the responder doesn&apos;t recognize
       the IP address on the first Main Mode packet, it looks for a connection
       with itself as one end and <emphasis remap="B">%any</emphasis> as the
       other. If it cannot find one, it refuses to negotiate. If it does find
@@ -2950,7 +2950,7 @@
       the payload and would use the same keys as so far used for
       authentication. If it finds one, it will switch to using this better
       connection (or a temporary one derived from this, if it has <emphasis
-      remap="B">%any</emphasis> for the peer's IP address). It may even turn
+      remap="B">%any</emphasis> for the peer&apos;s IP address). It may even turn
       out that no connection matches the newly discovered identity, including
       the current connection; if so, <emphasis remap="B">pluto</emphasis>
       terminates negotiation.</para>
@@ -2960,13 +2960,13 @@
       be selected by the responder without knowing this payload. This limits
       there to being at most one preshared secret for all Road Warrior systems
       connecting to a host. RSA Signature authentication does not require
-      that the responder knows how to select the initiator's public key until
-      after the initiator's Identity Payload is decoded (using the responder's
+      that the responder knows how to select the initiator&apos;s public key until
+      after the initiator&apos;s Identity Payload is decoded (using the responder&apos;s
       private key, so that must be preselected).</para>
 
       <para>When <emphasis remap="B">pluto</emphasis> is responding to a Quick
       Mode negotiation via one of these temporary connection descriptions, it
-      may well find that the subnets specified by the initiator don't match
+      may well find that the subnets specified by the initiator don&apos;t match
       those in the temporary connection description. If so, it will look for a
       connection with matching subnets, its own host address, a peer address
       of <emphasis remap="B">%any</emphasis> and matching identities. If it
@@ -2976,7 +2976,7 @@
 
       <para>Be sure to specify an appropriate nexthop for the responder to
       send a message to the initiator: <emphasis remap="B">pluto</emphasis>
-      has no way of guessing it (if forwarding isn't required, use an explicit
+      has no way of guessing it (if forwarding isn&apos;t required, use an explicit
       <emphasis remap="B">%direct</emphasis> as the nexthop and the IP address
       of the initiator will be filled in; the obsolete notation
       <literal>0.0.0.0</literal> is still accepted).</para>
@@ -2984,15 +2984,15 @@
       <para><emphasis remap="B">pluto</emphasis> has no special provision for
       the initiator side. The current (possibly dynamic) IP address and
       nexthop must be used in defining connections. These must be properly
-      configured each time the initiator's IP address changes. <emphasis
+      configured each time the initiator&apos;s IP address changes. <emphasis
       remap="B">pluto</emphasis> has no mechanism to do this
       automatically.</para>
 
       <para>Although we call this Road Warrior Support, it could also be used
       to support encrypted connections with anonymous initiators. The
-      responder's organization could announce the preshared secret that would
+      responder&apos;s organization could announce the preshared secret that would
       be used with unrecognized initiators and let anyone connect. Of course
-      the initiator's identity would not be authenticated.</para>
+      the initiator&apos;s identity would not be authenticated.</para>
 
       <para>If any Road Warrior connections are supported, <emphasis
       remap="B">pluto</emphasis> cannot reject an exchange initiated by an
@@ -3028,7 +3028,7 @@
             <para>specifies that the named real public network interface
             should be considered. The interface name specified should not be
             <command>ipsec</command><emphasis remap="I">N</emphasis>. If the
-            option doesn't appear, all interfaces are considered. To specify
+            option doesn&apos;t appear, all interfaces are considered. To specify
             several interfaces, use the option once for each. One use of this
             option is to specify which interface should be used when two or
             more share the same IP address.</para>
@@ -3312,9 +3312,9 @@
     </refsect2>
 
     <refsect2 id="plutos_behaviour_when_things_go_wrong">
-      <title>Pluto's Behaviour When Things Go Wrong</title>
+      <title>Pluto&apos;s Behaviour When Things Go Wrong</title>
 
-      <para>When <emphasis remap="B">pluto</emphasis> doesn't understand or
+      <para>When <emphasis remap="B">pluto</emphasis> doesn&apos;t understand or
       accept a message, it just ignores the message. It is not yet capable of
       communicating the problem to the other IKE daemon (in the future it
       might use Notifications to accomplish this in many cases). It does log a
@@ -3330,11 +3330,11 @@
 
       <para>Combine these three rules, and you can explain many apparently
       mysterious behaviours. In a <emphasis remap="B">pluto</emphasis> log,
-      retrying isn't usually the interesting event. The critical thing is
+      retrying isn&apos;t usually the interesting event. The critical thing is
       either earlier (<emphasis remap="B">pluto</emphasis> got a message that
-      it didn't like and so ignored, so it was still awaiting an acceptable
+      it didn&apos;t like and so ignored, so it was still awaiting an acceptable
       message and got impatient) or on the other system (<emphasis
-      remap="B">pluto</emphasis> didn't send a reply because it wasn't happy
+      remap="B">pluto</emphasis> didn&apos;t send a reply because it wasn&apos;t happy
       with the previous message).</para>
     </refsect2>
 
@@ -3369,7 +3369,7 @@
 
       <para>No Informational Exchanges are supported. These are optional and
       since their delivery is not assured, they must not matter. It is the
-      case that some IKE implementations won't interoperate without
+      case that some IKE implementations won&apos;t interoperate without
       Informational Exchanges, but we feel they are broken.</para>
 
       <para>No Informational Payloads are supported. These are optional, but
@@ -3486,8 +3486,8 @@
     <title>SIGNALS</title>
 
     <para><emphasis remap="B">Pluto</emphasis> responds to
-    <constant>SIGHUP</constant> by issuing a suggestion that ``<emphasis
-    remap="B">whack</emphasis> --listen'' might have been intended.</para>
+    <constant>SIGHUP</constant> by issuing a suggestion that &apos;&apos;<emphasis
+    remap="B">whack</emphasis> --listen&apos;&apos; might have been intended.</para>
 
     <para><emphasis remap="B">Pluto</emphasis> exits when it receives
     <constant>SIGTERM</constant>.</para>
