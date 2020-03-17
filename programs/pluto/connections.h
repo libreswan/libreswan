@@ -155,6 +155,7 @@ extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 #include "ip_endpoint.h"
 #include "ip_selector.h"
 #include "ip_protoport.h"
+#include "whack.h"
 
 struct virtual_t;	/* opaque type */
 
@@ -598,5 +599,10 @@ extern void liveness_action(struct connection *c, enum ike_version ike_version);
 extern uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt);
 
 so_serial_t get_newer_sa_from_connection(struct state *st);
+
+extern bool load_end_cert_and_preload_secret(struct fd *whackfd,
+					     const char *which, const char *pubkey,
+					     enum whack_pubkey_type pubkey_type,
+					     struct end *dst_end);
 
 #endif

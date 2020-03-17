@@ -31,6 +31,7 @@ usage="Usage:
 	${me} [--showonly] [--utc] --{listcacerts|listgroups}
 	${me} [--showonly] [--utc] --{listcrls|listall}
 	${me} [--showonly] [--utc] --purgeocsp
+	${me} [--showonly] --rotatecert connectionname
 
 	other options: [--config ipsecconfigfile] [--verbose] [--ctlsocket <file>]"
 
@@ -80,7 +81,7 @@ do
 	    verbose=" --verbose "
 	    ;;
 	--up|--down|--add|--delete|--replace|--route|--unroute|\
-	--start|--ondemand)
+	--start|--ondemand|--rotatecert)
 	    if [ " ${op}" != " " ]; then
 		echo "${usage}" >&2
 		exit 2
@@ -119,7 +120,7 @@ done
 names=
 case "${op}$#:$1:$2" in
     2:*:up|2:*:down|2:*:add|2:*:delete|2:*:replace|2:*:start|\
-    2:*:route|2:*:unroute)
+    2:*:route|2:*:unroute|2:*:rotatecert)
 	echo "${me}: warning: obsolete command syntax used" >&2
 	names="$1"
 	op="--$2"
@@ -239,6 +240,10 @@ case "${op}" in
     --replace)
 	${showonly} ipsec whack --ctlsocket "${CTLSOCKET}" --name ${names} --delete
 	${showonly} ipsec addconn --ctlsocket "${CTLSOCKET}" ${verbose} ${config} ${names}
+	exit
+	;;
+    --rotatecert)
+	${showonly} ipsec whack --ctlsocket "${CTLSOCKET}" --name ${names} --rotatecert
 	exit
 	;;
 esac

@@ -188,6 +188,8 @@ static void whack_impair_action(enum impair_action action, unsigned event,
 	}
 }
 
+#include "cert_rotation.h"
+
 static int whack_route_connection(struct connection *c,
 				  struct fd *whackfd,
 				  void *unused_arg UNUSED)
@@ -712,6 +714,9 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 		libreswan_log("shutting down");
 		return true; /* shutting down */
 	}
+
+	if (m->whack_rotate_cert)
+		rotate_cert(whackfd, m);
 
 	return false; /* don't shut down */
 }

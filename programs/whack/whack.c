@@ -205,6 +205,8 @@ static void help(void)
 #endif
 		"shutdown: whack --shutdown\n"
 		"\n"
+		"rotatecert: whack --rotatecert --name <connection_name>\n"
+		"\n"
 		"Libreswan %s\n",
 		ipsec_version_code());
 }
@@ -505,6 +507,11 @@ enum option_enums {
 
 /* === end of correspondence with POLICY_* === */
 
+/* cert rotation options */
+#   define CROPT_FIRST CR_ROTATECERT
+	CR_ROTATECERT,
+#   define CROPT_LAST CR_ROTATECERT
+
 #   define DBGOPT_FIRST DBGOPT_NONE
 	DBGOPT_NONE,
 	DBGOPT_ALL,
@@ -644,6 +651,10 @@ static const struct option long_opts[] = {
 	/* options for a connection description */
 
 	{ "to", no_argument, NULL, CD_TO + OO },
+
+	/* option for cert rotation */
+
+	{ "rotatecert", no_argument, NULL, CR_ROTATECERT + OO },
 
 #define PS(o, p)	{ o, no_argument, NULL, CDP_SINGLETON + POLICY_##p##_IX + OO }
 	PS("psk", PSK),
@@ -927,6 +938,7 @@ int main(int argc, char **argv)
 	assert(END_LAST - END_FIRST < LELEM_ROOF);
 	assert(CD_LAST - CD_FIRST < LELEM_ROOF);
 	assert(ALGO_LAST - ALGO_FIRST < LELEM_ROOF);
+	assert(CROPT_LAST - CROPT_FIRST < LELEM_ROOF);
 
 	zero(&msg);	/* ??? pointer fields might not be NULLed */
 
@@ -2337,6 +2349,10 @@ int main(int argc, char **argv)
 			continue;
 		}
 
+		case CR_ROTATECERT:	/* --rotatecert */
+			msg.whack_rotate_cert = TRUE;
+			continue;
+
 		default:
 			bad_case(c);
 		}
@@ -2505,7 +2521,7 @@ int main(int argc, char **argv)
 	      msg.whack_addresspool_status ||
 	      msg.whack_fips_status || msg.whack_brief_status || msg.whack_clear_stats || msg.whack_options ||
 	      msg.whack_shutdown || msg.whack_purgeocsp || msg.whack_seccomp_crashtest || msg.whack_show_states ||
-	      msg.whack_rekey_ike || msg.whack_rekey_ipsec))
+	      msg.whack_rekey_ike || msg.whack_rekey_ipsec || msg.whack_rotate_cert))
 		diag("no action specified; try --help for hints");
 
 	/* do the logic for --redirect command */

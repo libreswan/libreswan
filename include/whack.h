@@ -333,6 +333,9 @@ struct whack_message {
 	/* for WHACK_REREAD */
 	u_char whack_reread;
 
+	/* for WHACK_ROTATE_CERT */
+	bool whack_rotate_cert;
+
 	/* for connalias string */
 	char *connalias;
 
