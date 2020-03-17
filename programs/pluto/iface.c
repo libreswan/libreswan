@@ -270,7 +270,7 @@ void find_ifaces(bool rm_dead)
 
 		for (ifp = interfaces; ifp != NULL; ifp = ifp->next) {
 			delete_pluto_event(&ifp->pev);
-			switch (ifp->protocol->protoid) {
+			switch (ifp->protocol->ipproto) {
 			case IPPROTO_UDP:
 				ifp->pev = add_fd_read_event_handler(ifp->fd,
 								     handle_udp_packet_cb,
@@ -286,7 +286,7 @@ void find_ifaces(bool rm_dead)
 				}
 				break;
 			default:
-				bad_case(ifp->protocol->protoid);
+				bad_case(ifp->protocol->ipproto);
 			}
 			endpoint_buf b;
 			dbg("setup callback for interface %s %s fd %d on %s",

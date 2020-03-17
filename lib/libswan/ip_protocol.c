@@ -29,61 +29,67 @@ const struct ip_protocol ip_protocol_unspec = {
 #endif
 
 const struct ip_protocol ip_protocol_icmp = {
-	.prefix = "icmp",
 	.description = "Internet Control Message",
-	.protoid = 1,
+	.prefix = "icmp",
+	.name = "ICMP",
+	.ipproto = IPPROTO_ICMP,
 };
 
 const struct ip_protocol ip_protocol_ipip = {
 	.description = "IPv4 encapsulation",
 	.prefix = "tun",
-	.protoid = 4,
 	.name = "IPIP",
+	.ipproto = IPPROTO_IPIP,
 };
 
 const struct ip_protocol ip_protocol_tcp = {
 	.description = "Transmission Control",
 	.prefix = "tcp",
-	.protoid = 6,
 	.name = "TCP",
+	.ipproto = IPPROTO_TCP,
 };
 
 const struct ip_protocol ip_protocol_udp = {
 	.description = "User Datagram",
 	.prefix = "udp",
-	.protoid = 17,
 	.name = "UDP",
+	.ipproto = IPPROTO_UDP,
 };
 
 const struct ip_protocol ip_protocol_esp = {
 	.description = "Encapsulated Security Payload",
 	.prefix = "esp",
-	.ikev1 = PROTO_IPSEC_ESP,
-	.protoid = 50,
 	.name = "ESP",
+	.ipproto = IPPROTO_ESP,
+	.ikev1 = PROTO_IPSEC_ESP,
 };
 
 const struct ip_protocol ip_protocol_ah = {
 	.description = "Authentication Header",
 	.prefix = "ah",
-	.ikev1 = PROTO_IPSEC_AH,
-	.protoid = 51,
 	.name = "AH",
+	.ipproto = IPPROTO_AH,
+	.ikev1 = PROTO_IPSEC_AH,
 };
 
 const struct ip_protocol ip_protocol_comp = {
 	.description = "IP Payload Compression Protocol",
 	.prefix = "comp",
-	.ikev1 = PROTO_IPCOMP,
-	.protoid = 108,
 	.name = "COMP",
+#ifdef IPPROTO_IPCOMP
+	.ipproto = IPPROTO_IPCOMP,
+#endif
+#ifdef IPPROTO_COMP
+	.ipproto = IPPROTO_COMP,
+#endif
+	.ikev1 = PROTO_IPCOMP,
 };
 
 const struct ip_protocol ip_protocol_int = {
 	.description = "any host internal protocol",
 	.prefix = "int",
-	.protoid = 61,
 	.name = "INT",
+	.ipproto = 61,
 };
 
 static const struct ip_protocol *ip_protocols[] = {
@@ -108,11 +114,11 @@ const struct ip_protocol *protocol_by_prefix(const char *prefix)
 	return NULL;
 }
 
-const struct ip_protocol *protocol_by_protoid(unsigned protoid)
+const struct ip_protocol *protocol_by_ipproto(unsigned ipproto)
 {
 	for (unsigned u = 0; u < elemsof(ip_protocols); u++) {
 		const struct ip_protocol *p = ip_protocols[u];
-		if (p->protoid == protoid) {
+		if (p->ipproto == ipproto) {
 			return p;
 		}
 	}

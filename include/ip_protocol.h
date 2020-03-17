@@ -24,7 +24,7 @@
  * See:
  * https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
  *
- * Also see socket(IPPROTO_RAW).
+ * Also see ip(7) and socket(IF_INET, SOCK_RAW, protocol).
  */
 
 struct ip_protocol {
@@ -32,13 +32,12 @@ struct ip_protocol {
 	const char *prefix;
 	const char *name;
 	unsigned ikev1;
-#if 0
-	/* IKEv2 Security Protocol Identifiers */
-	/* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-18 */
-	unsigned ikev2;
-#endif
-	/* https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml */
-	unsigned protoid;
+	/*
+	 * https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
+	 *
+	 * IPPROTO_*
+	 */
+	unsigned ipproto;
 };
 
 extern const struct ip_protocol ip_protocol_icmp;	/* Internet Control Message */
@@ -70,6 +69,6 @@ enum eroute_type {
 #endif
 
 const struct ip_protocol *protocol_by_prefix(const char  *prefix);
-const struct ip_protocol *protocol_by_protoid(unsigned protoid);
+const struct ip_protocol *protocol_by_ipproto(unsigned protoid);
 
 #endif

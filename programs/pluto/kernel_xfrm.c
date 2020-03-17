@@ -868,7 +868,7 @@ static void  set_migration_attr(const struct kernel_sa *sa,
 	ip2xfrm(sa->src.new_address, &m->new_saddr);
 	ip2xfrm(sa->dst.new_address, &m->new_daddr);
 
-	m->proto = sa->proto->protoid;
+	m->proto = sa->proto->ipproto;
 	m->mode = XFRM_MODE_TUNNEL;  /* AA_201705 hard coded how to figure this out */
 	m->reqid = sa->reqid;
 	m->old_family = m->new_family = address_type(sa->src.address)->af;
@@ -1628,7 +1628,7 @@ static bool netlink_del_sa(const struct kernel_sa *sa)
 
 	req.id.spi = sa->spi;
 	req.id.family = addrtypeof(sa->src.address);
-	req.id.proto = sa->proto->protoid;
+	req.id.proto = sa->proto->ipproto;
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
@@ -2084,7 +2084,7 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 	ip2xfrm(dst, &req.spi.info.id.daddr);
 	req.spi.info.mode = tunnel_mode;
 	req.spi.info.reqid = reqid;
-	req.spi.info.id.proto = proto->protoid;
+	req.spi.info.id.proto = proto->ipproto;
 	req.spi.info.family = addrtypeof(src);
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.spi)));
@@ -2534,7 +2534,7 @@ static bool netlink_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 
 	req.id.spi = sa->spi;
 	req.id.family = addrtypeof(sa->src.address);
-	req.id.proto = sa->proto->protoid;
+	req.id.proto = sa->proto->ipproto;
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
