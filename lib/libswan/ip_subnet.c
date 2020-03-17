@@ -147,20 +147,3 @@ const char *str_subnet(const ip_subnet *subnet, subnet_buf *out)
 	jam_subnet(&buf, subnet);
 	return out->buf;
 }
-
-void jam_subnet_port(jambuf_t *buf, const ip_subnet *subnet)
-{
-	jam_address(buf, &subnet->addr); /* sensitive? */
-	jam(buf, "/%u", subnet->maskbits);
-	int port = subnet_hport(subnet);
-	if (port >= 0) {
-		jam(buf, ":%d", port);
-	}
-}
-
-const char *str_subnet_port(const ip_subnet *subnet, subnet_buf *out)
-{
-	jambuf_t buf = ARRAY_AS_JAMBUF(out->buf);
-	jam_subnet_port(&buf, subnet);
-	return out->buf;
-}

@@ -99,6 +99,7 @@ OBJS += ip_protocol.o
 OBJS += ip_range.o
 OBJS += ip_said.o
 OBJS += ip_subnet.o
+OBJS += ip_selector.o
 
 OBJS += lmod.o
 OBJS += lset.o

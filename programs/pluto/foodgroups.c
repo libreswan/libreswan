@@ -24,7 +24,6 @@
 #include <stdlib.h>
 #include <limits.h> /* PATH_MAX */
 
-
 #include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
@@ -39,6 +38,7 @@
 #include "log.h"
 #include "whack.h"
 #include "ip_info.h"
+#include "ip_selector.h"
 
 #include <errno.h>
 
@@ -317,11 +317,11 @@ void load_groups(struct fd *whackfd)
 	/* dump new_targets */
 	if (DBG_BASE) {
 		for (struct fg_targets *t = new_targets; t != NULL; t = t->next) {
-			subnet_buf asource;
-			subnet_buf atarget;
+			selector_buf asource;
+			selector_buf atarget;
 			DBG_log("%s->%s %d sport %d dport %d %s",
-				str_subnet_port(&t->group->connection->spd.this.client, &asource),
-				str_subnet_port(&t->subnet, &atarget),
+				str_selector(&t->group->connection->spd.this.client, &asource),
+				str_selector(&t->subnet, &atarget),
 				t->proto, t->sport, t->dport,
 				t->group->connection->name);
 		}

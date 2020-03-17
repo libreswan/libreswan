@@ -162,6 +162,7 @@
 #include "ikev1_states.h"
 #include "initiate.h"
 #include "iface.h"
+#include "ip_selector.h"
 
 #ifdef HAVE_NM
 #include "kernel.h"
@@ -1014,7 +1015,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 					     tmp_spd != NULL; tmp_spd = tmp_spd->spd_next) {
 						address_buf b;
 						endpoint_buf e;
-						subnet_buf s;
+
 						DBG_log("spd route number: %d",
 							count_spd++);
 
@@ -1033,8 +1034,9 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 							str_address(&tmp_spd->that.host_nexthop, &b));
 						DBG_log("that srcip: %s",
 							str_address(&tmp_spd->that.host_srcip, &b));
+						selector_buf sb;
 						DBG_log("that client: %s",
-							str_subnet_port(&tmp_spd->that.client, &s));
+							str_selector(&tmp_spd->that.client, &sb));
 						DBG_log("that has_client: %d",
 							tmp_spd->that.has_client);
 						DBG_log("that has_client_wildcard: %d",

@@ -88,6 +88,7 @@
 #include "ikev2_ipseckey.h"
 #include "ip_address.h"
 #include "ip_info.h"
+#include "ip_selector.h"
 
 bool uniqueIDs = FALSE;
 
@@ -2040,11 +2041,11 @@ void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 		}
 	}
 	if (DBGP(DBG_BASE)) {
-		subnet_buf ourst;
-		subnet_buf hist;
+		selector_buf ourst;
+		selector_buf hist;
 		DBG_log("unknown tunnel eroute %s -> %s found in scan",
-			str_subnet_port(ours, &ourst),
-			str_subnet_port(his, &hist));
+			str_selector(ours, &ourst),
+			str_selector(his, &hist));
 	}
 }
 

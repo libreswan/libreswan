@@ -94,6 +94,7 @@
 #include "ip_info.h"
 # include "kernel_xfrm_interface.h"
 #include "iface.h"
+#include "ip_selector.h"
 
 /* required for Linux 2.6.26 kernel and later */
 #ifndef XFRM_STATE_AF_UNSPEC
@@ -2238,11 +2239,11 @@ static bool netlink_shunt_eroute(const struct connection *c,
 	spi = shunt_policy_spi(c, rt_kind == RT_ROUTED_PROSPECTIVE);
 
 	if (DBGP(DBG_BASE)) {
-		subnet_buf this_buf, that_buf;
+		selector_buf this_buf, that_buf;
 		DBG_log("netlink_shunt_eroute for proto %d, and source %s dest %s",
 			sr->this.protocol,
-			str_subnet_port(&sr->this.client, &this_buf),
-			str_subnet_port(&sr->that.client, &that_buf));
+			str_selector(&sr->this.client, &this_buf),
+			str_selector(&sr->that.client, &that_buf));
 	}
 
 	if (spi == 0) {

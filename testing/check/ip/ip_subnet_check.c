@@ -20,6 +20,7 @@
 #include "constants.h"		/* for streq() */
 #include "ipcheck.h"
 #include "ip_subnet.h"
+#include "ip_selector.h"	/* should be in ip_selector_check.c */
 
 static void check_str_subnet(void)
 {
@@ -171,8 +172,8 @@ static void check_str_subnet_port(void)
 
 		CHECK_TYPE(PRINT_IN, subnet_type(&s));
 
-		subnet_buf buf;
-		const char *out = str_subnet_port(&s, &buf);
+		selector_buf buf;
+		const char *out = str_selector(&s, &buf);
 		if (!streq(t->out, out)) {
 			FAIL_IN("str_subnet_port() returned '%s', expected '%s'",
 				out, t->out);

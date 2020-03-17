@@ -77,13 +77,11 @@ ip_subnet subnet_from_endpoint(const ip_endpoint *endpoint);
  */
 
 typedef struct {
-	char buf[sizeof(address_buf) + 4/*/NNN*/ + 6/*:65535*/];
+	char buf[sizeof(address_buf) + 4/*"/NNN"*/];
 } subnet_buf;
 extern const char *str_subnet(const ip_subnet *subnet, subnet_buf *out);
-extern const char *str_subnet_port(const ip_subnet *subnet, subnet_buf *out);
 
 extern void jam_subnet(struct lswlog *buf, const ip_subnet *subnet);
-extern void jam_subnet_port(struct lswlog *buf, const ip_subnet *subnet);
 
 /*
  * Extract details

@@ -86,6 +86,7 @@
 #include "lswfips.h" /* for libreswan_fipsmode() */
 # include "kernel_xfrm_interface.h"
 #include "iface.h"
+#include "ip_selector.h"
 #include "show.h"
 
 bool can_do_IPcomp = TRUE;  /* can system actually perform IPCOMP? */
@@ -122,17 +123,17 @@ static void DBG_bare_shunt(const char *op, const struct bare_shunt *bs)
 	/* same as log_bare_shunt but goes to debug log */
 	if (DBGP(DBG_BASE)) {
 		said_buf sat;
-		subnet_buf ourst;
-		subnet_buf hist;
+		selector_buf ourst;
+		selector_buf hist;
 
 		char prio[POLICY_PRIO_BUF];
 		fmt_policy_prio(bs->policy_prio, prio);
 
 		DBG_log("%s bare shunt %p %s --%d--> %s => %s %s    %s",
 			op, (const void *)bs,
-			str_subnet_port(&bs->ours, &ourst),
+			str_selector(&bs->ours, &ourst),
 			bs->transport_proto,
-			str_subnet_port(&bs->his, &hist),
+			str_selector(&bs->his, &hist),
 			str_said(&bs->said, &sat),
 			prio, bs->why);
 	}
@@ -141,17 +142,17 @@ static void DBG_bare_shunt(const char *op, const struct bare_shunt *bs)
 static void log_bare_shunt(const char *op, const struct bare_shunt *bs)
 {
 	said_buf sat;
-	subnet_buf ourst;
-	subnet_buf hist;
+	selector_buf ourst;
+	selector_buf hist;
 
 	char prio[POLICY_PRIO_BUF];
 	fmt_policy_prio(bs->policy_prio, prio);
 
 	libreswan_log("%s bare shunt %p %s --%d--> %s => %s %s    %s",
 		      op, (const void *)bs,
-		      str_subnet_port(&bs->ours, &ourst),
+		      str_selector(&bs->ours, &ourst),
 		      bs->transport_proto,
-		      str_subnet_port(&bs->his, &hist),
+		      str_selector(&bs->his, &hist),
 		      str_said(&bs->said, &sat),
 		      prio, bs->why);
 }
@@ -1006,12 +1007,12 @@ static bool shunt_eroute(const struct connection *c,
 			const char *opname)
 {
 	if (DBGP(DBG_BASE)) {
-		subnet_buf thisb, thatb;
+		selector_buf thisb, thatb;
 		DBG_log("shunt_eroute() called for connection '%s' to '%s' for rt_kind '%s' using protoports %s --%d->- %s",
 			c->name, opname, enum_name(&routing_story, rt_kind),
-			str_subnet_port(&sr->this.client, &thisb),
+			str_selector(&sr->this.client, &thisb),
 			sr->this.protocol,
-			str_subnet_port(&sr->that.client, &thatb));
+			str_selector(&sr->that.client, &thatb));
 	}
 
 	if (kernel_ops->shunt_eroute != NULL) {
@@ -1157,17 +1158,17 @@ void show_shunt_status(struct show *s)
 	show_comment(s, " ");
 	for (const struct bare_shunt *bs = bare_shunts; bs != NULL; bs = bs->next) {
 		/* Print interesting fields.  Ignore count and last_active. */
-		subnet_buf ourst;
-		subnet_buf hist;
+		selector_buf ourst;
+		selector_buf hist;
 		said_buf sat;
 
 		char prio[POLICY_PRIO_BUF];
 		fmt_policy_prio(bs->policy_prio, prio);
 
 		show_comment(s, "%s -%d-> %s => %s %s    %s",
-			     str_subnet_port(&(bs)->ours, &ourst),
+			     str_selector(&(bs)->ours, &ourst),
 			     bs->transport_proto,
-			     str_subnet_port(&(bs)->his, &hist),
+			     str_selector(&(bs)->his, &hist),
 			     str_said(&(bs)->said, &sat),
 			     prio, bs->why);
 	}
@@ -1225,13 +1226,13 @@ bool raw_eroute(const ip_address *this_host,
 	}
 
 	if (DBGP(DBG_BASE)) {
-		subnet_buf mybuf;
-		subnet_buf peerbuf;
+		selector_buf mybuf;
+		selector_buf peerbuf;
 		DBG_log("%s eroute %s --%d-> %s => %s using reqid %d (raw_eroute)",
 			opname,
-			str_subnet_port(this_client, &mybuf),
+			str_selector(this_client, &mybuf),
 			transport_proto,
-			str_subnet_port(that_client, &peerbuf),
+			str_selector(that_client, &peerbuf),
 			text_said,
 			proto_info->reqid);
 

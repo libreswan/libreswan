@@ -92,6 +92,7 @@
 #include "state_db.h"
 # include "kernel_xfrm_interface.h"
 #include "iface.h"
+#include "ip_selector.h"
 
 struct connection *connections = NULL;
 
@@ -2236,12 +2237,12 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 
 				if (DBGP(DBG_BASE)) {
 					connection_buf cib;
-					subnet_buf c_ocb;
-					subnet_buf c_pcb;
+					selector_buf c_ocb;
+					selector_buf c_pcb;
 					DBG_log("find_connection: conn "PRI_CONNECTION" has compatible peers: %s -> %s [pri: %" PRIu32 "]",
 						pri_connection(c, &cib),
-						str_subnet_port(&c->spd.this.client, &c_ocb),
-						str_subnet_port(&c->spd.that.client, &c_pcb),
+						str_selector(&c->spd.this.client, &c_ocb),
+						str_selector(&c->spd.that.client, &c_pcb),
 						prio);
 
 					if (best == NULL) {
@@ -3309,28 +3310,28 @@ static struct connection *fc_try(const struct connection *c,
 
 		for (sr = &d->spd; best != d && sr != NULL; sr = sr->spd_next) {
 			if (DBGP(DBG_BASE)) {
-				subnet_buf s1, d1;
-				subnet_buf s3, d3;
+				selector_buf s1, d1;
+				selector_buf s3, d3;
 				DBG_log("  fc_try trying %s:%s:%d/%d -> %s:%d/%d%s vs %s:%s:%d/%d -> %s:%d/%d%s",
-					c->name, str_subnet_port(our_net, &s1),
+					c->name, str_selector(our_net, &s1),
 					c->spd.this.protocol, c->spd.this.port,
-					str_subnet_port(peer_net, &d1),
+					str_selector(peer_net, &d1),
 					c->spd.that.protocol, c->spd.that.port,
 					is_virtual_connection(c) ?
 					"(virt)" : "", d->name,
-					str_subnet_port(&sr->this.client, &s3),
+					str_selector(&sr->this.client, &s3),
 					sr->this.protocol, sr->this.port,
-					str_subnet_port(&sr->that.client, &d3),
+					str_selector(&sr->that.client, &d3),
 					sr->that.protocol, sr->that.port,
 					is_virtual_sr(sr) ? "(virt)" : "");
 			}
 
 			if (!samesubnet(&sr->this.client, our_net)) {
 				if (DBGP(DBG_BASE)) {
-					subnet_buf s1, s3;
+					selector_buf s1, s3;
 					DBG_log("   our client (%s) not in our_net (%s)",
-						str_subnet_port(&sr->this.client, &s3),
-						str_subnet_port(our_net, &s1));
+						str_selector(&sr->this.client, &s3),
+						str_selector(our_net, &s1));
 				}
 
 				continue;
@@ -3344,10 +3345,10 @@ static struct connection *fc_try(const struct connection *c,
 				if (!samesubnet(&sr->that.client, peer_net) &&
 				    !is_virtual_sr(sr)) {
 					if (DBGP(DBG_BASE)) {
-						subnet_buf d1, d3;
+						selector_buf d1, d3;
 						DBG_log("   their client (%s) not in same peer_net (%s)",
-							str_subnet_port(&sr->that.client, &d3),
-							str_subnet_port(peer_net, &d1));
+							str_selector(&sr->that.client, &d3),
+							str_selector(peer_net, &d1));
 					}
 					continue;
 				}
@@ -3460,15 +3461,15 @@ static struct connection *fc_try_oppo(const struct connection *c,
 
 		for (sr = &d->spd; sr != NULL; sr = sr->spd_next) {
 			if (DBGP(DBG_BASE)) {
-				subnet_buf s1;
-				subnet_buf d1;
-				subnet_buf s3;
-				subnet_buf d3;
+				selector_buf s1;
+				selector_buf d1;
+				selector_buf s3;
+				selector_buf d3;
 				DBG_log("  fc_try_oppo trying %s:%s -> %s vs %s:%s -> %s",
-					c->name, str_subnet_port(our_net, &s1),
-					str_subnet_port(peer_net, &d1),
-					d->name, str_subnet_port(&sr->this.client, &s3),
-					str_subnet_port(&sr->that.client, &d3));
+					c->name, str_selector(our_net, &s1),
+					str_selector(peer_net, &d1),
+					d->name, str_selector(&sr->this.client, &s3),
+					str_selector(&sr->that.client, &d3));
 			}
 
 			if (!subnetinsubnet(our_net, &sr->this.client) ||
@@ -3527,13 +3528,13 @@ struct connection *find_client_connection(struct connection *const c,
 	}
 
 	if (DBGP(DBG_BASE)) {
-		subnet_buf s1;
-		subnet_buf d1;
+		selector_buf s1;
+		selector_buf d1;
 		DBG_log("find_client_connection starting with %s",
 			c->name);
 		DBG_log("  looking for %s:%d/%d -> %s:%d/%d",
-			str_subnet_port(our_net, &s1), our_protocol, our_port,
-			str_subnet_port(peer_net, &d1), peer_protocol, peer_port);
+			str_selector(our_net, &s1), our_protocol, our_port,
+			str_selector(peer_net, &d1), peer_protocol, peer_port);
 	}
 
 	/*
@@ -3551,11 +3552,11 @@ struct connection *find_client_connection(struct connection *const c,
 			srnum++;
 
 			if (DBGP(DBG_BASE)) {
-				subnet_buf s2;
-				subnet_buf d2;
+				selector_buf s2;
+				selector_buf d2;
 				DBG_log("  concrete checking against sr#%d %s -> %s", srnum,
-					str_subnet_port(&sr->this.client, &s2),
-					str_subnet_port(&sr->that.client, &d2));
+					str_selector(&sr->this.client, &s2),
+					str_selector(&sr->that.client, &d2));
 			}
 
 			if (samesubnet(&sr->this.client, our_net) &&
@@ -3600,11 +3601,11 @@ struct connection *find_client_connection(struct connection *const c,
 				sra != NULL; sra = sra->spd_next) {
 			hp = find_host_pair(&sra->this.host_addr, NULL);
 			if (DBGP(DBG_BASE)) {
-				subnet_buf s2;
-				subnet_buf d2;
+				selector_buf s2;
+				selector_buf d2;
 				DBG_log("  checking hostpair %s -> %s is %s",
-					str_subnet_port(&sra->this.client, &s2),
-					str_subnet_port(&sra->that.client, &d2),
+					str_selector(&sra->this.client, &s2),
+					str_selector(&sra->that.client, &d2),
 					(hp ? "found" : "not found"));
 			}
 		}

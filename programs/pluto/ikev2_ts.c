@@ -32,6 +32,7 @@
 #include "virtual.h"
 #include "hostpair.h"
 #include "ip_info.h"
+#include "ip_selector.h"
 
 /*
  * While the RFC seems to suggest that the traffic selectors come in
@@ -652,13 +653,13 @@ static struct best_score score_ends(enum fit fit,
 				    const struct traffic_selectors *tsr)
 {
 	if (DBGP(DBG_BASE)) {
-		subnet_buf ei3;
-		subnet_buf er3;
+		selector_buf ei3;
+		selector_buf er3;
 		connection_buf cib;
 		DBG_log("evaluating our conn="PRI_CONNECTION" I=%s:%d/%d R=%s:%d/%d%s to their:",
 			pri_connection(d, &cib),
-			str_subnet_port(&ends->i->client, &ei3), ends->i->protocol, ends->i->port,
-			str_subnet_port(&ends->r->client, &er3), ends->r->protocol, ends->r->port,
+			str_selector(&ends->i->client, &ei3), ends->i->protocol, ends->i->port,
+			str_selector(&ends->r->client, &er3), ends->r->protocol, ends->r->port,
 			is_virtual_connection(d) ? " (virt)" : "");
 	}
 
@@ -789,11 +790,11 @@ bool v2_process_ts_request(struct child_sa *child,
 				    &sra->that.host_addr);
 
 		if (DBGP(DBG_BASE)) {
-			subnet_buf s2;
-			subnet_buf d2;
+			selector_buf s2;
+			selector_buf d2;
 			DBG_log("  checking hostpair %s -> %s is %s",
-				str_subnet_port(&sra->this.client, &s2),
-				str_subnet_port(&sra->that.client, &d2),
+				str_selector(&sra->this.client, &s2),
+				str_selector(&sra->that.client, &d2),
 				hp == NULL ? "not found" : "found");
 		}
 
