@@ -54,13 +54,13 @@ static int create_udp_socket(const struct iface_dev *ifd, int port)
 {
 	const struct ip_info *type = address_type(&ifd->id_address);
 	int fd = socket(type->af, SOCK_DGRAM, IPPROTO_UDP);
-	int fcntl_flags;
-	static const int on = TRUE;     /* by-reference parameter; constant, we hope */
-
 	if (fd < 0) {
-		LOG_ERRNO(errno, "socket() in create_socket()");
+		LOG_ERRNO(errno, "socket() in %s()", __func__);
 		return -1;
 	}
+
+	int fcntl_flags;
+	static const int on = TRUE;     /* by-reference parameter; constant, we hope */
 
 	/* Set socket Nonblocking */
 	if ((fcntl_flags = fcntl(fd, F_GETFL)) >= 0) {
@@ -235,7 +235,8 @@ static bool nat_traversal_espinudp(int sk, struct iface_dev *ifd)
 static bool check_msg_errqueue(const struct iface_port *ifp, short interest, const char *func);
 #endif
 
-static bool read_udp_packet(const struct iface_port *ifp, struct iface_packet *packet)
+static bool read_udp_packet(const struct iface_port *ifp,
+			    struct iface_packet *packet)
 {
 #ifdef MSG_ERRQUEUE
 	/*
@@ -402,6 +403,7 @@ struct iface_port *udp_iface_port(struct iface_dev *ifd, int port,
 	q->local_endpoint = endpoint(&ifd->id_address, port);
 	q->ike_float = ike_float;
 	q->io = &udp_iface_io;
+	q->protocol = &ip_protocol_udp;
 
 	q->next = interfaces;
 	interfaces = q;

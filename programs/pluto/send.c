@@ -39,6 +39,7 @@
 #include "demux.h"
 #include "pluto_stats.h"
 #include "ip_endpoint.h"
+#include "ip_protocol.h"
 #include "iface_udp.h"
 #include "iface.h"
 
@@ -140,14 +141,14 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 	}
 
 	if (DBGP(DBG_BASE)) {
-		endpoint_buf b;
-		endpoint_buf ib;
-		DBG_log("sending %zu bytes for %s through %s from %s to %s (using #%lu)",
-			len,
-			where,
+		endpoint_buf lb;
+		endpoint_buf rb;
+		DBG_log("sending %zu bytes for %s through %s from %s to %s using %s (for #%lu)",
+			len, where,
 			interface->ip_dev->id_rname,
-			str_endpoint(&interface->local_endpoint, &ib),
-			str_endpoint(&remote_endpoint, &b),
+			str_endpoint(&interface->local_endpoint, &lb),
+			str_endpoint(&remote_endpoint, &rb),
+			interface->protocol->name,
 			serialno);
 		DBG_dump(NULL, ptr, len);
 	}
@@ -156,10 +157,13 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 
 	if (wlen != (ssize_t)len) {
 		if (!just_a_keepalive) {
-			endpoint_buf b;
-			LOG_ERRNO(errno, "sendto on %s to %s failed in %s",
+			endpoint_buf lb;
+			endpoint_buf rb;
+			LOG_ERRNO(errno, "send on %s from %s to %s using %s failed in %s",
 				  interface->ip_dev->id_rname,
-				  str_sensitive_endpoint(&remote_endpoint, &b),
+				  str_endpoint(&interface->local_endpoint, &lb),
+				  str_sensitive_endpoint(&remote_endpoint, &rb),
+				  interface->protocol->name,
 				  where);
 		}
 		return FALSE;

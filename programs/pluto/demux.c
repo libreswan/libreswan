@@ -9,6 +9,7 @@
  * Copyright (C) 2013,2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2015 Antony Antony <antony@phenome.org>
  * Copyright (C) 2017-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -65,6 +66,7 @@
 #include "ip_sockaddr.h"
 #include "ip_address.h"
 #include "ip_endpoint.h"
+#include "ip_protocol.h"
 #include "ip_info.h"
 #include "pluto_stats.h"
 #include "ikev2_send.h"
@@ -103,13 +105,14 @@ static struct msg_digest *read_message(const struct iface_port *ifp)
 			     "message buffer in read_packet()"),
 		 packet.len, "packet");
 
-	endpoint_buf eb;
-	endpoint_buf b2;
-	dbg("*received %d bytes from %s on %s (%s)",
+	endpoint_buf sb;
+	endpoint_buf lb;
+	dbg("*received %d bytes from %s on %s %s using %s",
 	    (int) pbs_room(&md->packet_pbs),
-	    str_endpoint(&md->sender, &eb),
+	    str_endpoint(&md->sender, &sb),
 	    ifp->ip_dev->id_rname,
-	    str_endpoint(&ifp->local_endpoint, &b2));
+	    str_endpoint(&ifp->local_endpoint, &lb),
+	    ifp->protocol->name);
 
 	if (DBGP(DBG_RAW)) {
 		DBG_dump(NULL, md->packet_pbs.start, pbs_room(&md->packet_pbs));

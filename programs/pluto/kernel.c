@@ -13,6 +13,7 @@
  * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
  * Copyright (C) 2016-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -35,6 +36,12 @@
 #include <fcntl.h>
 #include <sys/utsname.h>
 #include <sys/ioctl.h>
+
+/* TCP: build barf */
+#include <linux/udp.h>			/* for TCP_ENCAP_ESPINTCP and UDP_ENCAP_ESPINUDP */
+#ifndef TCP_ENCAP_ESPINTCP
+#define TCP_ENCAP_ESPINTCP 7
+#endif
 
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -1950,12 +1957,14 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			peer_keymat;
 		const struct trans_attrs *ta = &st->st_esp.attrs.transattrs;
 
-		uint8_t encap_type = 0;
+		unsigned encap_type = 0;
 		uint16_t encap_sport = 0, encap_dport = 0;
 		ip_address natt_oa;
 
-		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
-			encap_type = ESPINUDP_WITH_NON_ESP;
+		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED ||
+		    st->st_interface->protocol == &ip_protocol_tcp) {
+			encap_type = (st->st_interface->protocol == &ip_protocol_tcp ? TCP_ENCAP_ESPINTCP
+				      : ESPINUDP_WITH_NON_ESP);
 			if (inbound) {
 				encap_sport = endpoint_hport(&st->st_remote_endpoint);
 				encap_dport = endpoint_hport(&st->st_interface->local_endpoint);
@@ -1964,6 +1973,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				encap_dport = endpoint_hport(&st->st_remote_endpoint);
 			}
 			natt_oa = st->hidden_variables.st_nat_oa;
+			dbg("natt/tcp sa type=%u sport=%d dport=%d",
+			    encap_type, encap_sport, encap_dport);
 		}
 
 		DBG(DBG_CONTROL,

@@ -12,6 +12,7 @@
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
  * Copyright (C) 2016-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -51,6 +52,7 @@
 #include <event2/event.h>
 #include <event2/event_struct.h>
 #include <event2/thread.h>
+#include <event2/listener.h>
 
 #include "sysdep.h"
 #include "socketwrapper.h"
@@ -75,7 +77,9 @@
 #include "ikev1.h"		/* for complete_v1_state_transition() */
 #include "ikev2.h"		/* for complete_v2_state_transition() */
 #include "state_db.h"
+#include "iface.h"
 #include "iface_udp.h"
+#include "iface_tcp.h"
 
 #ifdef USE_XFRM_INTERFACE
 #include "kernel_xfrm_interface.h"
@@ -746,6 +750,19 @@ struct pluto_event *add_fd_read_event_handler(evutil_socket_t fd,
 	passert(e->ev != NULL);
 	passert(event_add(e->ev, NULL) >= 0);
 	return e; /* compatible with pluto_event_new for the time being */
+}
+
+/*
+ * XXX: Some of the callers save the struct pluto_event reference but
+ * some do not.
+ */
+struct evconnlistener *add_fd_accept_event_handler(struct iface_port *ifp,
+						   evconnlistener_cb cb)
+{
+	passert(in_main_thread());
+	return evconnlistener_new(pluto_eb, cb,
+				  ifp, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_CLOSE_ON_EXEC,
+				  -1, ifp->fd);
 }
 
 /*

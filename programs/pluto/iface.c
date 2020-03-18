@@ -11,6 +11,7 @@
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
  * Copyright (C) 2016-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -37,6 +38,7 @@
 #include "demux.h"
 #include "iface_udp.h"
 #include "ip_info.h"
+#include "iface_tcp.h"
 
 struct iface_port  *interfaces = NULL;  /* public interfaces */
 
@@ -188,17 +190,19 @@ static void add_new_ifaces(void)
 		if (ifd->ifd_change != IFD_ADD)
 			continue;
 
-		struct iface_port *q = udp_iface_port(ifd, pluto_port,
-						      false/*ike_float*/);
-		if (q == NULL) {
-			ifd->ifd_change = IFD_DELETE;
-			continue;
-		}
+		{
+			struct iface_port *q = udp_iface_port(ifd, pluto_port,
+							      false/*ike_float*/);
+			if (q == NULL) {
+				ifd->ifd_change = IFD_DELETE;
+				continue;
+			}
 
-		endpoint_buf b;
-		libreswan_log("adding interface %s %s",
-			      q->ip_dev->id_rname,
-			      str_endpoint(&q->local_endpoint, &b));
+			endpoint_buf b;
+			libreswan_log("adding interface %s %s",
+				      q->ip_dev->id_rname,
+				      str_endpoint(&q->local_endpoint, &b));
+		}
 
 		/*
 		 * From linux's xfrm: right now, we do not support
@@ -212,15 +216,24 @@ static void add_new_ifaces(void)
 		 * Who should we believe?
 		 */
 		if (address_type(&ifd->id_address) == &ipv4_info) {
-			q = udp_iface_port(ifd, pluto_nat_port,
-					   true/*ike_float*/);
-			if (q == NULL) {
-				continue;
+			struct iface_port *q = udp_iface_port(ifd, pluto_nat_port,
+							      true/*ike_float*/);
+			if (q != NULL) {
+				endpoint_buf b;
+				libreswan_log("adding interface %s %s",
+					      q->ip_dev->id_rname,
+					      str_endpoint(&q->local_endpoint, &b));
 			}
-			endpoint_buf b;
-			libreswan_log("adding interface %s %s",
-				      q->ip_dev->id_rname,
-				      str_endpoint(&q->local_endpoint, &b));
+		}
+
+		if (pluto_tcpport != 0) {
+			struct iface_port *q = tcp_iface_port(ifd, pluto_tcpport);
+			if (q != NULL) {
+				endpoint_buf b;
+				libreswan_log("adding TCP interface %s %s",
+					      q->ip_dev->id_rname,
+					      str_endpoint(&q->local_endpoint, &b));
+			}
 		}
 	}
 }
@@ -257,14 +270,29 @@ void find_ifaces(bool rm_dead)
 
 		for (ifp = interfaces; ifp != NULL; ifp = ifp->next) {
 			delete_pluto_event(&ifp->pev);
-			ifp->pev = add_fd_read_event_handler(ifp->fd,
-							     handle_udp_packet_cb,
-							     ifp, "ethX");
+			switch (ifp->protocol->protoid) {
+			case IPPROTO_UDP:
+				ifp->pev = add_fd_read_event_handler(ifp->fd,
+								     handle_udp_packet_cb,
+								     ifp, "ethX");
+				break;
+			case IPPROTO_TCP:
+				if (ifp->tcp_listener == NULL) {
+					ifp->tcp_listener = add_fd_accept_event_handler(ifp, accept_ike_in_tcp_cb);
+					if (ifp->tcp_listener == NULL) {
+						libreswan_log("TCP: failed to create IKE-in-TCP listener");
+						continue;
+					}
+				}
+				break;
+			default:
+				bad_case(ifp->protocol->protoid);
+			}
 			endpoint_buf b;
-			dbg("setup callback for interface %s %s fd %d",
+			dbg("setup callback for interface %s %s fd %d on %s",
 			    ifp->ip_dev->id_rname,
 			    str_endpoint(&ifp->local_endpoint, &b),
-			    ifp->fd);
+			    ifp->fd, ifp->protocol->name);
 		}
 	}
 }

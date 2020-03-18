@@ -14,6 +14,7 @@
  * Copyright (C) 2013-2019 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017-2018 Vukasin Karadzic <vukasin.karadzic@gmail.com>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -134,6 +135,9 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 	DOPT(KNCF_IKEV1_NATT, NATT_BOTH);
 	DOPT(KNCF_ENCAPS, yna_auto);
+
+	DOPT(KNCF_TCPONLY, FALSE);
+	DOPT(KNCF_REMOTE_TCPPORT, 0);
 
 	/* Network Manager support */
 #ifdef HAVE_NM

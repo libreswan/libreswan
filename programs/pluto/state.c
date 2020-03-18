@@ -18,6 +18,7 @@
  * Copyright (C) 2015-2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -40,7 +41,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
-
+#include <event2/bufferevent.h>		/* TCP: for bufferevent_free()? */
 
 #include "sysdep.h"
 #include "constants.h"
@@ -96,6 +97,7 @@ bool uniqueIDs = FALSE;
 
 uint16_t pluto_port = IKE_UDP_PORT;	/* Pluto's port */
 uint16_t pluto_nat_port = NAT_IKE_UDP_PORT;	/* Pluto's NAT-T port */
+u_int16_t pluto_tcpport = 0; /* Pluto's TCP port */
 
 /*
  * default global NFLOG group - 0 means no logging
@@ -1186,6 +1188,15 @@ void delete_state(struct state *st)
 	change_state(st, STATE_UNDEFINED);
 
 	release_any_whack(st, HERE, "deleting state");
+
+	if (st->st_interface->protocol == &ip_protocol_tcp && IS_IKE_SA(st)) {
+		dbg("TCP: freeing interface; release instead?");
+		struct pluto_event *pev = st->st_interface->pev;
+		delete_pluto_event(&pev);
+		close(st->st_interface->fd);
+		/* TCP: delref st->st_interface->ip_dev */
+		pfree((void*)/*TCP: hack*/st->st_interface);
+	}
 
 	/* from here on we are just freeing RAM */
 

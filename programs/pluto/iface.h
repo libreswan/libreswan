@@ -4,6 +4,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2019 Andrew Cagney
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -74,8 +75,14 @@ struct iface_port {
 	ip_endpoint local_endpoint;	/* interface IP address:port */
 	int fd;                 /* file descriptor of socket for IKE UDP messages */
 	struct iface_port *next;
+	const struct ip_protocol *protocol;
+	/* udp only */
 	bool ike_float;
 	struct pluto_event *pev;
+	/* tcp only */
+	struct evconnlistener *tcp_listener;
+	bool tcp_espintcp_enabled;
+	ip_endpoint tcp_remote_endpoint;
 };
 
 extern struct iface_port *interfaces;   /* public interfaces */

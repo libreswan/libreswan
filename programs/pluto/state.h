@@ -15,6 +15,7 @@
  * Copyright (C) 2015-2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  * Copyright (C) 2015-2019 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -794,6 +795,7 @@ extern uint16_t pluto_port;		/* Pluto's port */
 extern uint16_t pluto_nat_port;	/* Pluto's NATT floating port */
 extern uint16_t pluto_nflog_group;	/* NFLOG group - 0 means no logging  */
 extern uint16_t pluto_xfrmlifetime;	/* only used to display in status */
+extern u_int16_t pluto_tcpport;
 
 extern bool states_use_connection(const struct connection *c);
 

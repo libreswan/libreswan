@@ -15,6 +15,7 @@
  * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017-2018 Sahana Prasad <sahana.prasad07@gmail.com>
  * Copyright (C) 2017-2018 Vukasin Karadzic <vukasin.karadzic@gmail.com>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -522,6 +523,20 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 	st->st_original_role = ORIGINAL_INITIATOR;
 	passert(st->st_sa_role == SA_INITIATOR);
 	st->st_try = try;
+
+	if ((try > 1 && c->remote_tcpport) || (c->tcponly && c->remote_tcpport)) {
+		/* TCP: this deserves a log?  */
+		/* TCP: does this belong in retransmit.[hc]?  */
+		dbg("TCP: forcing #%lu remote endpoint port to %d",
+		    st->st_serialno, c->remote_tcpport);
+		update_endpoint_hport(&st->st_remote_endpoint, c->remote_tcpport);
+		stf_status ret = create_tcp_interface(st);
+		if (ret != STF_OK) {
+			/* TCP: already logged? */
+			delete_state(st);
+			return;
+		}
+	}
 
 	if (HAS_IPSEC_POLICY(policy)) {
 		st->sec_ctx = NULL;
@@ -2359,7 +2374,6 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 		}
 
 		pb_stream ppks;
-
 		if (!emit_v2Npl(v2N_PPK_IDENTITY, &sk.pbs, &ppks) ||
 		    !emit_unified_ppk_id(&ppk_id_p, &ppks)) {
 			return STF_INTERNAL_ERROR;

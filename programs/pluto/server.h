@@ -4,6 +4,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2019 Andrew Cagney
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,8 +20,10 @@
 #ifndef _SERVER_H
 #define _SERVER_H
 
-#include <event2/event.h>	/* from libevent devel */
+#include <event2/event.h>		/* from libevent devel */
 #include <event2/event_struct.h>
+#include <event2/listener.h>
+
 #include "timer.h"
 #include "err.h"
 #include "ip_address.h"
@@ -28,6 +31,8 @@
 
 struct state;
 struct msg_digest;
+struct bufferevent;
+struct iface_port;
 
 extern char *pluto_vendorid;
 
@@ -40,6 +45,8 @@ extern struct sockaddr_un info_addr;    /* address of control (info) socket */
 extern err_t init_ctl_socket(void);
 extern void delete_ctl_socket(void);
 
+extern stf_status create_tcp_interface(struct state *st); /* TCP: terrible name? */
+
 extern bool listening;  /* should we pay attention to IKE messages? */
 extern enum ddos_mode pluto_ddos_mode; /* auto-detect or manual? */
 extern enum seccomp_mode pluto_seccomp_mode;
@@ -48,6 +55,7 @@ extern unsigned int pluto_ddos_threshold; /* Max incoming IKE before activating 
 extern deltatime_t pluto_shunt_lifetime; /* lifetime before we cleanup bare shunts (for OE) */
 extern unsigned int pluto_sock_bufsize; /* pluto IKE socket buffer */
 extern bool pluto_sock_errqueue; /* Enable MSG_ERRQUEUE on IKE socket */
+
 extern enum pluto_ddos_mode ddos_mode;
 extern bool pluto_drop_oppo_null;
 
@@ -60,6 +68,8 @@ void fire_timer_photon_torpedo(struct event **evp, event_callback_fn cb, void *a
 extern struct pluto_event *add_fd_read_event_handler(evutil_socket_t fd,
 						     event_callback_fn cb, void *arg,
 						     const char *name);
+struct evconnlistener *add_fd_accept_event_handler(struct iface_port *ifp,
+						   evconnlistener_cb cb);
 extern void delete_pluto_event(struct pluto_event **evp);
 extern void link_pluto_event_list(struct pluto_event *e);
 bool ev_before(struct pluto_event *pev, deltatime_t delay);

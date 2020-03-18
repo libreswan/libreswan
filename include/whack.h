@@ -7,6 +7,7 @@
  * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
  * Copyright (C) 2013,2016 Antony Antony <antony@phenome.org>
  * Copyright (C) 2016,2018 Andrew Cagney
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -192,6 +193,12 @@ struct whack_message {
 
 	/* Force the use of NAT-T on a connection */
 	enum yna_options encaps;
+
+	/* Remote TCP port to use, 0 indicates no TCP */
+	int remote_tcpport;
+
+	/* use TCP from the start */
+	bool tcponly;
 
 	/* Option to allow per-conn setting of sending of NAT-T keepalives - default is enabled  */
 	bool nat_keepalive;

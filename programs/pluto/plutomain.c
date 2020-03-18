@@ -16,6 +16,7 @@
  * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2016-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -544,6 +545,7 @@ static const struct option long_opts[] = {
 	{ "curl-timeout\0<secs>", required_argument, NULL, 'I' }, /* _ */
 	{ "listen\0<ifaddr>", required_argument, NULL, 'L' },
 	{ "ikeport\0<port-number>", required_argument, NULL, 'p' },
+	{ "tcpport\0<port-number>", required_argument, NULL, 'm' },
 	{ "ike-socket-bufsize\0<buf-size>", required_argument, NULL, 'W' },
 	{ "ike-socket-no-errqueue\0", no_argument, NULL, '1' },
 	{ "nflog-all\0<group-number>", required_argument, NULL, 'G' },
@@ -1113,6 +1115,17 @@ int main(int argc, char **argv)
 			pluto_nat_port = u;
 			continue;
 
+		case 'm':	/* --tcpport <portnumber> */
+			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
+			if (ugh != NULL)
+				break;
+			if (u == 0) {
+				ugh = "must not be 0";
+				break;
+			}
+			pluto_tcpport = u;
+			continue;
+
 		case 'b':	/* --rundir <path> */
 			/*
 			 * ??? work to be done here:
@@ -1308,6 +1321,10 @@ int main(int argc, char **argv)
 			/* --ike-socket-bufsize */
 			pluto_sock_bufsize = cfg->setup.options[KBF_IKEBUF];
 			pluto_sock_errqueue = cfg->setup.options[KBF_IKE_ERRQUEUE];
+
+			/* --tcpport */
+			pluto_tcpport = cfg->setup.options[KBF_TCPPORT];
+
 
 			/* --nflog-all */
 			/* only causes nflog nmber to show in ipsec status */

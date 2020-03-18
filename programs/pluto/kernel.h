@@ -7,6 +7,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -261,6 +262,8 @@ struct kernel_ops {
 	bool (*poke_ipsec_policy_hole)(const struct iface_dev *ifd, int fd);
 	bool (*detect_offload)(const struct raw_iface *ifp);
 };
+
+extern int create_socket(const struct raw_iface *ifp, const char *v_name, int port, int proto);
 
 #ifndef IPSECDEVPREFIX
 # define IPSECDEVPREFIX "ipsec"

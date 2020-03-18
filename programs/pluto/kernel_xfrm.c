@@ -23,6 +23,7 @@
  * Copyright (C) 2016-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2019 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -38,12 +39,20 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
+
 #include <sys/socket.h>
+
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <stdint.h>
 #include <linux/ethtool.h>
 #include <linux/sockios.h>
+
+#include <linux/udp.h>			/* for TCP_ENCAP_ESPINTCP and UDP_ENCAP_ESPINUDP */
+#ifndef TCP_ENCAP_ESPINTCP
+#define TCP_ENCAP_ESPINTCP 7
+#endif
+
 #include <unistd.h>
 #include <sys/stat.h>
 
@@ -870,8 +879,10 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 {
 	const struct connection *const c = st->st_connection;
 
-	const uint8_t encap_type = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ?
-		ESPINUDP_WITH_NON_ESP : 0;
+	const int encap_type =
+		(st->st_interface->protocol == &ip_protocol_tcp) ? TCP_ENCAP_ESPINTCP :
+		(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ? ESPINUDP_WITH_NON_ESP : 0;
+	dbg("TCP: encap type %d", encap_type);
 
 	const struct ip_protocol *proto;
 	struct ipsec_proto_info *proto_info;
@@ -1032,6 +1043,8 @@ static bool migrate_xfrm_sa(const struct kernel_sa *sa)
 	}
 
 	if (sa->encap_type != 0) {
+		dbg("adding xfrm_encap_templ when migrating sa type=%d sport=%d dport=%d",
+		    sa->encap_type, sa->src.encap_port, sa->dst.encap_port);
 		attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 		struct xfrm_encap_tmpl natt;
 
@@ -1506,6 +1519,8 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	}
 
 	if (sa->encap_type != 0) {
+		dbg("adding xfrm-encap-tmpl when adding sa type=%d sport=%d dport=%d",
+		    sa->encap_type, sa->src.encap_port, sa->dst.encap_port);
 		struct xfrm_encap_tmpl natt;
 
 		natt.encap_type = sa->encap_type;

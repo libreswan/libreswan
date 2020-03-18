@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef SERVER_UDP_H
-#define SERVER_UDP_H
+#ifndef IFACE_UDP_H
+#define IFACE_UDP_H
 
 #include <stdbool.h>
 

@@ -14,6 +14,7 @@
  * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -43,6 +44,7 @@
 #include "send.h"	/* record_outbound_ike_message() */
 #include "ip_info.h"
 #include "iface.h"
+#include "ip_protocol.h"
 
 /*
  * Determine the IKE version we will use for the IKE packet
@@ -1034,7 +1036,8 @@ stf_status record_outbound_v2SK_msg(struct state *msg_sa,
 
 	stf_status ret;
 	/* IPv4 and IPv6 have different fragment sizes */
-	if (len >= endpoint_type(&sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size) {
+	if (sk->ike->sa.st_interface->protocol == &ip_protocol_udp &&
+	    len >= endpoint_type(&sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size) {
 		ret = v2_record_outbound_fragments(msg_sa, msg, sk, what);
 	} else {
 		ret = encrypt_v2SK_payload(sk);

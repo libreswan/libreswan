@@ -11,6 +11,7 @@
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -584,6 +585,13 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		} else {
 			msg.sa_reqid = conn->options[KNCF_REQID];
 		}
+	}
+
+	if (conn->options_set[KNCF_REMOTE_TCPPORT]){
+		msg.remote_tcpport = conn->options[KNCF_REMOTE_TCPPORT];
+	}
+	if (conn->options_set[KNCF_TCPONLY]){
+		msg.tcponly = conn->options[KNCF_TCPONLY];
 	}
 
 	/* default to HOLD */
