@@ -1,6 +1,6 @@
-libreswan (3.31-1) UNRELEASED; urgency=low
+libreswan (3.32-1); urgency=low
 
-  * Release 3.31-1
+  * Release 3.32-1
 
- -- Unknown User <unknown@libreswan.org>  Tue,  3 Mar 2020 01:00:00 +0200
+ -- Unknown User <unknown@libreswan.org>  Mon, 30 Mar 2020 01:00:00 +0200
 

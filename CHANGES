@@ -1,6 +1,9 @@
 
 See also https://libreswan.org/
 
+v3.32 (March 30, 2020)
+* SECURITY: Fixes CVE-2020-1763 https://libreswan.org/security/CVE-2020-1763
+
 v3.31 (March 3, 2020)
 * IKEv2: Opportunistic conns specifying keyingtries=0 are changed to 1 [Paul]
 * IKEv2: Fix ikev2 rekey failures due to bad Traffic Selector proposa [Antony]
