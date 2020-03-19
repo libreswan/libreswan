@@ -1,0 +1,30 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec _stackmanager start
+east #
+ # Start only one, so it is easier to spot a crash
+east #
+ ipsec pluto --config /etc/ipsec.conf
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add test
+002 added connection description "test"
+east #
+ echo "initdone"
+initdone
+east #
+ # if east was already down, we crashed it
+east #
+ hostname |grep east > /dev/null && ipsec whack --shutdown
+east #
+ hostname |grep east > /dev/null && grep "packet from" /tmp/pluto.log
+Mar 19 14:40:24.642847: packet from 192.1.2.45:45175: message ignored because it contains a payload type (ISAKMP_NEXT_SA) unexpected by state STATE_INFO
+Mar 19 14:40:24.643011: packet from 192.1.2.45:45175: sending notification INVALID_PAYLOAD_TYPE to 192.1.2.45:45175
+Mar 19 14:40:24.718334: packet from 192.1.2.45:33344: message ignored because it contains a payload type (ISAKMP_NEXT_SIG) unexpected by state STATE_MAIN_R0
+Mar 19 14:40:24.718496: packet from 192.1.2.45:33344: sending notification INVALID_PAYLOAD_TYPE to 192.1.2.45:33344
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
