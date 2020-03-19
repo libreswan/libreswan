@@ -75,6 +75,7 @@ kvmplutotest	linux-audit-03-ipsec-fail	good
 
 kvmplutotest	ikev1-01-fuzzer	good
 kvmplutotest	ikev1-02-fuzzer	good
+kvmplutotest	ikev1-03-fuzzer	good
 
 kvmplutotest	basic-pluto-01-wrongkey		wip
 kvmplutotest	basic-pluto-01-nokey		good
