@@ -2228,7 +2228,7 @@ void fmt_state(struct state *st, const monotime_t now,
 
 		if (st->st_ah.present) {
 			add_said(&c->spd.that.host_addr, st->st_ah.attrs.spi,
-				 SA_AH);
+				 &ip_protocol_ah);
 			if (get_sa_info(st, FALSE, NULL)) {
 				mbcp = readable_humber(st->st_ah.peer_bytes,
 						       mbcp,
@@ -2237,7 +2237,7 @@ void fmt_state(struct state *st, const monotime_t now,
 						       " AHout=");
 			}
 			add_said(&c->spd.this.host_addr, st->st_ah.our_spi,
-				 SA_AH);
+				 &ip_protocol_ah);
 			if (get_sa_info(st, TRUE, NULL)) {
 				mbcp = readable_humber(st->st_ah.our_bytes,
 						       mbcp,
@@ -2254,7 +2254,7 @@ void fmt_state(struct state *st, const monotime_t now,
 		}
 		if (st->st_esp.present) {
 			add_said(&c->spd.that.host_addr, st->st_esp.attrs.spi,
-				 SA_ESP);
+				 &ip_protocol_esp);
 			if (get_sa_info(st, TRUE, NULL)) {
 				mbcp = readable_humber(st->st_esp.our_bytes,
 						       mbcp,
@@ -2263,7 +2263,7 @@ void fmt_state(struct state *st, const monotime_t now,
 						       " ESPin=");
 			}
 			add_said(&c->spd.this.host_addr, st->st_esp.our_spi,
-				 SA_ESP);
+				 &ip_protocol_esp);
 			if (get_sa_info(st, FALSE, NULL)) {
 				mbcp = readable_humber(st->st_esp.peer_bytes,
 						       mbcp,
@@ -2281,7 +2281,7 @@ void fmt_state(struct state *st, const monotime_t now,
 		}
 		if (st->st_ipcomp.present) {
 			add_said(&c->spd.that.host_addr,
-				 st->st_ipcomp.attrs.spi, SA_COMP);
+				 st->st_ipcomp.attrs.spi, &ip_protocol_comp);
 			if (get_sa_info(st, FALSE, NULL)) {
 				mbcp = readable_humber(
 						st->st_ipcomp.peer_bytes,
@@ -2291,7 +2291,7 @@ void fmt_state(struct state *st, const monotime_t now,
 						" IPCOMPout=");
 			}
 			add_said(&c->spd.this.host_addr, st->st_ipcomp.our_spi,
-				 SA_COMP);
+				 &ip_protocol_comp);
 			if (get_sa_info(st, TRUE, NULL)) {
 				mbcp = readable_humber(
 						st->st_ipcomp.our_bytes,
@@ -2317,9 +2317,9 @@ void fmt_state(struct state *st, const monotime_t now,
 			st->st_ipcomp.attrs.mode ==
 			ENCAPSULATION_MODE_TUNNEL) {
 			add_said(&c->spd.that.host_addr, st->st_tunnel_out_spi,
-				SA_IPIP);
+				 &ip_protocol_ipip);
 			add_said(&c->spd.this.host_addr, st->st_tunnel_in_spi,
-				SA_IPIP);
+				 &ip_protocol_ipip);
 		}
 #endif
 

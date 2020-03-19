@@ -47,15 +47,7 @@ extern const struct ip_protocol ip_protocol_udp;	/* any host internal protocol *
 extern const struct ip_protocol ip_protocol_esp;	/* Encapsulated Security Payload */
 extern const struct ip_protocol ip_protocol_ah;		/* Authentication Header */
 extern const struct ip_protocol ip_protocol_comp;	/* IP Payload Compression Protocol */
-extern const struct ip_protocol ip_protocol_int;	/* any host internal protocol */
-
-#if 0
-#               define  SA_ESP  50      /* IPPROTO_ESP */
-#               define  SA_AH   51      /* IPPROTO_AH */
-#               define  SA_IPIP 4       /* IPPROTO_IPIP */
-#               define  SA_COMP 108     /* IPPROTO_COMP */
-#               define  SA_INT  61      /* IANA reserved for internal use */
-#endif
+extern const struct ip_protocol ip_protocol_internal;	/* any host internal protocol */
 
 #if 0
 enum eroute_type {

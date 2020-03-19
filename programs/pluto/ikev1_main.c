@@ -2168,11 +2168,11 @@ void send_v1_delete(struct state *st)
 		}
 
 		if (st->st_ah.present) {
-			*ns = said3(&st->st_connection->spd.this.host_addr, st->st_ah.our_spi, SA_AH);
+			*ns = said3(&st->st_connection->spd.this.host_addr, st->st_ah.our_spi, &ip_protocol_ah);
 			ns++;
 		}
 		if (st->st_esp.present) {
-			*ns = said3(&st->st_connection->spd.this.host_addr, st->st_esp.our_spi, SA_ESP);
+			*ns = said3(&st->st_connection->spd.this.host_addr, st->st_esp.our_spi, &ip_protocol_esp);
 			ns++;
 		}
 

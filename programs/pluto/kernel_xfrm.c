@@ -583,7 +583,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	 */
 	ip_subnet local_client;
 
-	if (esatype == ET_ESP || esatype == ET_IPCOMP || sa_proto == SA_ESP) {
+	if (esatype == ET_ESP || esatype == ET_IPCOMP || sa_proto == &ip_protocol_esp) {
 		/*
 		 * Variable "that" should be remote, but here it's not.
 		 * We must check "dir" to find out remote address.
@@ -888,10 +888,10 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 	struct ipsec_proto_info *proto_info;
 
 	if (st->st_esp.present) {
-		proto = SA_ESP;
+		proto = &ip_protocol_esp;
 		proto_info = &st->st_esp;
 	} else if (st->st_ah.present) {
-		proto = SA_AH;
+		proto = &ip_protocol_ah;
 		proto_info = &st->st_ah;
 	} else {
 		return FALSE;
@@ -2140,7 +2140,7 @@ static bool netlink_sag_eroute(const struct state *st, const struct spd_route *s
 
 	if (st->st_ah.present) {
 		inner_spi = st->st_ah.attrs.spi;
-		inner_proto = SA_AH;
+		inner_proto = &ip_protocol_ah;
 		inner_esatype = ET_AH;
 
 		i--;
@@ -2153,7 +2153,7 @@ static bool netlink_sag_eroute(const struct state *st, const struct spd_route *s
 
 	if (st->st_esp.present) {
 		inner_spi = st->st_esp.attrs.spi;
-		inner_proto = SA_ESP;
+		inner_proto = &ip_protocol_esp;
 		inner_esatype = ET_ESP;
 
 		i--;
@@ -2166,7 +2166,7 @@ static bool netlink_sag_eroute(const struct state *st, const struct spd_route *s
 
 	if (st->st_ipcomp.present) {
 		inner_spi = st->st_ipcomp.attrs.spi;
-		inner_proto = SA_COMP;
+		inner_proto = &ip_protocol_comp;
 		inner_esatype = ET_IPCOMP;
 
 		i--;
@@ -2186,7 +2186,7 @@ static bool netlink_sag_eroute(const struct state *st, const struct spd_route *s
 		int j;
 
 		inner_spi = st->st_tunnel_out_spi;
-		inner_proto = SA_IPIP;
+		inner_proto = &ip_protocol_ipip;
 		inner_esatype = ET_IPIP;
 
 		proto_info[i].mode = ENCAPSULATION_MODE_TUNNEL;
@@ -2231,7 +2231,7 @@ static bool netlink_shunt_eroute(const struct connection *c,
 	/*
 	 * We are constructing a special SAID for the eroute.
 	 * The destination doesn't seem to matter, but the family does.
-	 * The protocol is SA_INT -- mark this as shunt.
+	 * The protocol is &ip_protocol_internal -- mark this as shunt.
 	 * The satype has no meaning, but is required for PF_KEY header!
 	 * The SPI signifies the kind of shunt.
 	 */
@@ -2322,12 +2322,12 @@ static bool netlink_shunt_eroute(const struct connection *c,
 	 * XXX: the two calls below to netlink_raw_eroute() (not
 	 * raw_eroute()) seems to be the only place where SA_PROTO and
 	 * ESATYPE disagree - when ENCAPSULATION_MODE_TRANSPORT
-	 * SA_PROTO==SA_ESP and ESATYPE==ET_INT!?!  Looking in the
+	 * SA_PROTO==&ip_protocol_esp and ESATYPE==ET_INT!?!  Looking in the
 	 * function there's a weird test involving both SA_PROTO and
 	 * ESATYPE.
 	 */
 	const struct ip_protocol *sa_proto = c->ipsec_mode == ENCAPSULATION_MODE_TRANSPORT ?
-		SA_ESP : SA_INT;
+		&ip_protocol_esp : &ip_protocol_internal;
 
 	if (!netlink_raw_eroute(&sr->this.host_addr, &sr->this.client,
 				&sr->that.host_addr, &sr->that.client,

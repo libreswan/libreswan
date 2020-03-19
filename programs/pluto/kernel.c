@@ -183,7 +183,7 @@ void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
 	bs->transport_proto = transport_proto;
 	bs->policy_prio = BOTTOM_PRIO;
 
-	bs->said = said3(&subnet_type(ours)->any_address, htonl(shunt_spi), SA_INT);
+	bs->said = said3(&subnet_type(ours)->any_address, htonl(shunt_spi), &ip_protocol_internal);
 	bs->count = 0;
 	bs->last_activity = mononow();
 
@@ -243,13 +243,13 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 
 static reqid_t get_proto_reqid(reqid_t base, const struct ip_protocol *proto)
 {
-	if (proto == SA_COMP)
+	if (proto == &ip_protocol_comp)
 		return reqid_ipcomp(base);
 
-	if (proto == SA_ESP)
+	if (proto == &ip_protocol_esp)
 		return reqid_esp(base);
 
-	if (proto == SA_AH)
+	if (proto == &ip_protocol_ah)
 		return reqid_ah(base);
 
 	PASSERT_FAIL("bad protocol %s", proto->name);
@@ -281,7 +281,7 @@ ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
 			const struct spd_route *sr,
 			bool tunnel)
 {
-	passert(proto == SA_AH || proto == SA_ESP);
+	passert(proto == &ip_protocol_ah || proto == &ip_protocol_esp);
 
 	if (kernel_ops->get_spi != NULL) {
 		char text_said[SATOT_BUF];
@@ -322,11 +322,11 @@ ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel)
 {
 	if (kernel_ops->get_spi != NULL) {
 		char text_said[SATOT_BUF];
-		set_text_said(text_said, &sr->this.host_addr, 0, SA_COMP);
+		set_text_said(text_said, &sr->this.host_addr, 0, &ip_protocol_comp);
 		return kernel_ops->get_spi(&sr->that.host_addr,
-					&sr->this.host_addr, SA_COMP,
+					&sr->this.host_addr, &ip_protocol_comp,
 					tunnel,
-					get_proto_reqid(sr->reqid, SA_COMP),
+					get_proto_reqid(sr->reqid, &ip_protocol_comp),
 					IPCOMP_FIRST_NEGOTIATED,
 					IPCOMP_LAST_NEGOTIATED,
 					text_said);
@@ -1268,7 +1268,7 @@ bool has_bare_hold(const ip_address *src, const ip_address *dst,
 		bare_shunt_ptr(&this_client, &that_client, transport_proto);
 
 	return bspp != NULL &&
-		(*bspp)->said.proto == SA_INT && (*bspp)->said.spi == htonl(
+		(*bspp)->said.proto == &ip_protocol_internal && (*bspp)->said.spi == htonl(
 			SPI_HOLD);
 }
 
@@ -1378,7 +1378,7 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 			&null_host, &that_client,
 			htonl(cur_shunt_spi),
 			htonl(new_shunt_spi),
-			SA_INT, transport_proto,
+			&ip_protocol_internal, transport_proto,
 			ET_INT, null_proto_info,
 			deltatime(SHUNT_PATIENCE),
 			0, /* we don't know connection for priority yet */
@@ -1419,7 +1419,7 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 
 			bs->why = why;
 			bs->policy_prio = policy_prio;
-			bs->said = said3(&null_host, htonl(new_shunt_spi), SA_INT);
+			bs->said = said3(&null_host, htonl(new_shunt_spi), &ip_protocol_internal);
 			bs->count = 0;
 			bs->last_activity = mononow();
 			DBG_bare_shunt("change", bs);
@@ -1479,7 +1479,7 @@ bool eroute_connection(const struct spd_route *sr,
 	snprintf(buf2, sizeof(buf2),
 		"eroute_connection %s", opname);
 
-	if (sa_proto == SA_INT)
+	if (sa_proto == &ip_protocol_internal)
 		peer = address_any(address_type(&peer));
 
 	if (sr->this.has_cat) {
@@ -1598,7 +1598,7 @@ bool assign_holdpass(const struct connection *c,
 			if (eroute_connection(sr,
 						htonl(SPI_HOLD), /* kernel induced */
 						htonl(negotiation_shunt),
-						SA_INT, ET_INT,
+						&ip_protocol_internal, ET_INT,
 						null_proto_info,
 						calculate_sa_prio(c, FALSE),
 						NULL, 0 /* xfrm_if_id */,
@@ -1787,12 +1787,12 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		inner_spi = SPI_PASS;
 		if (mode == ENCAPSULATION_MODE_TUNNEL) {
 			/* If we are tunnelling, set up IP in IP pseudo SA */
-			proto = SA_IPIP;
+			proto = &ip_protocol_ipip;
 			esatype = ET_IPIP;
 		} else {
 			/* For transport mode set ESP */
 			/* ??? why are we sure that this isn't AH? */
-			proto = SA_ESP;
+			proto = &ip_protocol_esp;
 			esatype = ET_ESP;
 		}
 	} else if (mode == ENCAPSULATION_MODE_TUNNEL) {
@@ -1824,7 +1824,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		}
 
 		set_text_said(text_ipip,
-			&c->spd.that.host_addr, ipip_spi, SA_IPIP);
+			&c->spd.that.host_addr, ipip_spi, &ip_protocol_ipip);
 
 		*said_next = said_boilerplate;
 		said_next->spi = ipip_spi;
@@ -1878,7 +1878,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next++;
 
 		inner_spi = ipip_spi;
-		proto = SA_IPIP;
+		proto = &ip_protocol_ipip;
 		esatype = ET_IPIP;
 	}
 
@@ -1901,7 +1901,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			goto fail;
 		}
 
-		set_text_said(text_ipcomp, &dst.addr, ipcomp_spi, SA_COMP);
+		set_text_said(text_ipcomp, &dst.addr, ipcomp_spi, &ip_protocol_comp);
 
 		*said_next = said_boilerplate;
 		said_next->spi = ipcomp_spi;
@@ -2044,7 +2044,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		passert(st->st_esp.keymat_len == encrypt_keymat_size + integ_keymat_size);
 
-		set_text_said(text_esp, &dst.addr, esp_spi, SA_ESP);
+		set_text_said(text_esp, &dst.addr, esp_spi, &ip_protocol_esp);
 
 		*said_next = said_boilerplate;
 		said_next->spi = esp_spi;
@@ -2205,7 +2205,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		passert(st->st_ah.keymat_len == keymat_size);
 
-		set_text_said(text_ah, &dst.addr, ah_spi, SA_AH);
+		set_text_said(text_ah, &dst.addr, ah_spi, &ip_protocol_ah);
 
 		*said_next = said_boilerplate;
 		said_next->spi = ah_spi;
@@ -2453,7 +2453,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 				&c->spd.this.client,
 				SPI_PASS, SPI_PASS,
 				c->ipsec_mode == ENCAPSULATION_MODE_TRANSPORT ?
-					SA_ESP : NULL,
+					&ip_protocol_esp : NULL,
 				c->spd.this.protocol,
 				c->ipsec_mode == ENCAPSULATION_MODE_TRANSPORT ?
 					ET_ESP : ET_UNSPEC,
@@ -2473,28 +2473,28 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 	if (kernel_ops->grp_sa == NULL) {
 		if (st->st_ah.present) {
 			protos[i].info = &st->st_ah;
-			protos[i].proto = SA_AH;
+			protos[i].proto = &ip_protocol_ah;
 			i++;
 		}
 
 		if (st->st_esp.present) {
 			protos[i].info = &st->st_esp;
-			protos[i].proto = SA_ESP;
+			protos[i].proto = &ip_protocol_esp;
 			i++;
 		}
 
 		if (st->st_ipcomp.present) {
 			protos[i].info = &st->st_ipcomp;
-			protos[i].proto = SA_COMP;
+			protos[i].proto = &ip_protocol_comp;
 			i++;
 		}
 	} else if (st->st_ah.present) {
 		protos[i].info = &st->st_ah;
-		protos[i].proto = SA_AH;
+		protos[i].proto = &ip_protocol_ah;
 		i++;
 	} else if (st->st_esp.present) {
 		protos[i].info = &st->st_esp;
-		protos[i].proto = SA_ESP;
+		protos[i].proto = &ip_protocol_esp;
 		i++;
 	} else {
 		return TRUE;
@@ -3054,7 +3054,7 @@ bool route_and_eroute(struct connection *c,
 						&bs->his,
 						bs->said.spi,         /* unused? network order */
 						bs->said.spi,         /* network order */
-						SA_INT,               /* proto */
+						&ip_protocol_internal,               /* proto */
 						sr->this.protocol,    /* transport_proto */
 						ET_INT,
 						null_proto_info,
@@ -3380,10 +3380,10 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 	struct ipsec_proto_info *p2;
 
 	if (st->st_esp.present) {
-		proto = SA_ESP;
+		proto = &ip_protocol_esp;
 		p2 = &st->st_esp;
 	} else if (st->st_ah.present) {
-		proto = SA_AH;
+		proto = &ip_protocol_ah;
 		p2 = &st->st_ah;
 	} else {
 		return FALSE;
@@ -3536,7 +3536,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 		bs->policy_prio = BOTTOM_PRIO;
 
 		bs->said = said3(&subnet_type(&sr->this.client)->any_address,
-				 htonl(negotiation_shunt), SA_INT);
+				 htonl(negotiation_shunt), &ip_protocol_internal);
 
 		bs->count = 0;
 		bs->last_activity = mononow();

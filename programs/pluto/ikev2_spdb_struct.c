@@ -2117,10 +2117,10 @@ ipsec_spi_t ikev2_child_sa_spi(const struct spd_route *spd_route, lset_t policy)
 	const struct ip_protocol *ipprotoid;
 	switch (policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
 	case POLICY_ENCRYPT:
-		ipprotoid = SA_ESP;
+		ipprotoid = &ip_protocol_esp;
 		break;
 	case POLICY_AUTHENTICATE:
-		ipprotoid = SA_AH;
+		ipprotoid = &ip_protocol_ah;
 		break;
 	default:
 		bad_case(policy);

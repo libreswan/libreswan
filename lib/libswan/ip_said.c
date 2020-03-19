@@ -47,7 +47,7 @@ void jam_said(jambuf_t *buf, const ip_said *sa)
 		jam_string(buf, (said_type(sa) == &ipv4_info ?
 				 PASSTHROUGH4NAME :
 				 PASSTHROUGH6NAME));
-	} else if (sa->proto == SA_INT) {
+	} else if (sa->proto == &ip_protocol_internal) {
 		switch (ntohl(sa->spi)) {
 		case SPI_PASS:
 			jam_string(buf, "%pass");

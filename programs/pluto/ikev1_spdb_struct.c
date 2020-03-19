@@ -580,7 +580,7 @@ bool ikev1_out_sa(pb_stream *outs,
 					attr_val_descs = ipsec_attr_val_descs;
 					spi_ptr = &st->st_ah.our_spi;
 					spi_generated = &ah_spi_generated;
-					proto = SA_AH;
+					proto = &ip_protocol_ah;
 					break;
 
 				case PROTO_IPSEC_ESP:
@@ -592,7 +592,7 @@ bool ikev1_out_sa(pb_stream *outs,
 					attr_val_descs = ipsec_attr_val_descs;
 					spi_ptr = &st->st_esp.our_spi;
 					spi_generated = &esp_spi_generated;
-					proto = SA_ESP;
+					proto = &ip_protocol_esp;
 					break;
 
 				case PROTO_IPCOMP:
@@ -2238,7 +2238,7 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 	} else {
 		pi->our_spi = get_ipsec_spi(pi->attrs.spi,
 					    r_proposal.isap_protoid == PROTO_IPSEC_AH ?
-						SA_AH : SA_ESP,
+						&ip_protocol_ah : &ip_protocol_esp,
 					    sr,
 					    tunnel_mode);
 		/* XXX should check for errors */

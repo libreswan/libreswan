@@ -85,7 +85,7 @@ const struct ip_protocol ip_protocol_comp = {
 	.ikev1 = PROTO_IPCOMP,
 };
 
-const struct ip_protocol ip_protocol_int = {
+const struct ip_protocol ip_protocol_internal = {
 	.description = "any host internal protocol",
 	.prefix = "int",
 	.name = "INT",
@@ -100,7 +100,7 @@ static const struct ip_protocol *ip_protocols[] = {
 	&ip_protocol_esp,
 	&ip_protocol_ah,
 	&ip_protocol_comp,
-	&ip_protocol_int,
+	&ip_protocol_internal,
 };
 
 const struct ip_protocol *protocol_by_prefix(const char *prefix)

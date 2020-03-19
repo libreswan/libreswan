@@ -744,11 +744,11 @@ static bool bsdkame_sag_eroute(const struct state *st,
 
 	proto = 0;
 	if (st->st_ah.present)
-		proto = SA_AH;
+		proto = &ip_protocol_ah;
 	else if (st->st_esp.present)
-		proto = SA_ESP;
+		proto = &ip_protocol_esp;
 	else if (st->st_ipcomp.present)
-		proto = SA_COMP;
+		proto = &ip_protocol_comp;
 
 	if (!sr->this.has_port_wildcard) {
 		passert(subnet_hport(&sr->this.client) == sr->this.port);

@@ -63,12 +63,6 @@ typedef struct {
 	 * Don't confuse this with the IP version of the above
 	 * address.
 	 */
-#define SA_ICMP &ip_protocol_unspec
-#define SA_IPIP &ip_protocol_ipip
-#define SA_ESP &ip_protocol_esp
-#define SA_AH &ip_protocol_ah
-#define SA_COMP &ip_protocol_comp
-#define SA_INT &ip_protocol_int
 	const struct ip_protocol *proto;
 
 } ip_said;
