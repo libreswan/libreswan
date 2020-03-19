@@ -2181,7 +2181,7 @@ void process_packet_tail(struct msg_digest **mdp)
 						"%smessage ignored because it contains a payload type (%s) unexpected by state %s",
 						excuse,
 						enum_show(&ikev1_payload_names, np),
-						st->st_state->name);
+						finite_states[smc->state]->name);
 					if (!md->encrypted) {
 						SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
 					}
