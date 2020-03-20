@@ -1,4 +1,4 @@
-/* udp packet processing, for libreswan
+/* tcp packet processing, for libreswan
  *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2002, 2013,2016 D. Hugh Redelmeier <hugh@mimosa.com>
@@ -30,7 +30,11 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <netinet/tcp.h>	/* for TCP_ULP */
+
+#include <netinet/tcp.h>	/* for TCP_ULP (hopefully) */
+#ifndef TCP_ULP
+#define TCP_ULP 31
+#endif
 
 #include "ip_address.h"
 
