@@ -20,6 +20,8 @@
 #include <stddef.h>	/* size_t */
 #include <stdint.h>	/* uint8_t */
 
+#include "hunk.h"
+
 /*
  * Think of shunk_t and shunk_t as opposite solutions to the same
  * problem - carving up streams of octets:
@@ -111,30 +113,8 @@ shunk_t shunk_span(shunk_t *input, const char *accept);
  * EMPTY (pointing somewhere but no bytes) are considered different.
  */
 
-/* XXX: move to constants.h? */
-bool bytes_eq(const void *l_ptr, size_t l_len,
-	      const void *r_ptr, size_t r_len);
-
-#define hunk_eq(L,R)							\
-	({								\
-		typeof(L) l_ = L; /* evaluate once */			\
-		typeof(R) r_ = R; /* evaluate once */			\
-		bytes_eq(l_.ptr, l_.len, r_.ptr, r_.len);		\
-	})
-
-#define hunk_streq(HUNK, STRING) hunk_eq(HUNK, shunk1(STRING))
-#define hunk_memeq(HUNK, MEM, SIZE) hunk_eq(HUNK, shunk2(MEM, SIZE))
-
-#define hunk_thingeq(SHUNK, THING) hunk_memeq(SHUNK, &(THING), sizeof(THING))
-
-bool shunk_caseeq(shunk_t lhs, shunk_t rhs);
-bool shunk_strcaseeq(shunk_t shunk, const char *string);
-
 bool shunk_caseeat(shunk_t *lhs, shunk_t rhs);
 bool shunk_strcaseeat(shunk_t *lhs, const char *string);
-
-bool shunk_isdigit(shunk_t s, size_t offset);
-bool shunk_ischar(shunk_t s, size_t offset, const char *chars);
 
 /*
  * Number conversion.  like strtoul() et.al.

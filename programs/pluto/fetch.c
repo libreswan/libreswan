@@ -654,7 +654,7 @@ static void add_distribution_points(const generalName_t *newPoints,
 				break;
 			}
 			if (gn->kind == newPoints->kind &&
-			    chunk_eq(gn->name, newPoints->name)) {
+			    hunk_eq(gn->name, newPoints->name)) {
 				/* newPoint already present */
 				break;
 			}

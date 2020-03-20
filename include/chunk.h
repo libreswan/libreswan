@@ -25,6 +25,7 @@
 #include <stddef.h>	/* size_t */
 #include <stdint.h>	/* uint8_t */
 
+#include "hunk.h"
 #include "lswalloc.h"	/* for freeanychunk() refering to pfree() which can go away */
 
 /*
@@ -58,9 +59,6 @@ chunk_t chunk2(void *ptr, size_t len);
  */
 #define THING_AS_CHUNK(THING) chunk2(&(THING), sizeof(THING))
 
-#define THING_AS_HUNK(THING) { .ptr = &(THING), .len = sizeof(THING), }
-#define NULL_HUNK { .ptr = NULL, .len = 0, }
-
 chunk_t alloc_chunk(size_t count, const char *name);
 
 /* result is always a WRITEABLE chunk; NULL->NULL */
@@ -87,15 +85,6 @@ void free_chunk_content(chunk_t *chunk); /* blats *CHUNK */
 /*
  * misc ops.
  */
-
-bool chunk_eq(chunk_t a, chunk_t b);
-
-#define memcpy_hunk(DST, HUNK, SIZE)					\
-	({								\
-		typeof(HUNK) hunk_ = HUNK; /* evaluate once */		\
-		passert(hunk_.len == SIZE);				\
-		memcpy(DST, hunk_.ptr, SIZE);				\
-	})
 
 extern const chunk_t empty_chunk;
 #define EMPTY_CHUNK ((const chunk_t) { .ptr = NULL, .len = 0 })

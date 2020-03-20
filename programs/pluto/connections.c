@@ -2764,7 +2764,7 @@ struct connection *refine_host_connection(const struct state *st,
 	pexpect(st->st_remote_certs.processed);
 	chunk_t peer_ca = get_peer_ca(&st->st_remote_certs.pubkey_db, peer_id);
 
-	if (chunk_eq(peer_ca, empty_chunk)) {
+	if (hunk_isempty(peer_ca)) {
 		peer_ca = get_peer_ca(&pluto_pubkeys, peer_id);
 	}
 

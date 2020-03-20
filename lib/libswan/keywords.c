@@ -21,7 +21,7 @@ const struct keyword *keyword_by_name(const struct keywords *keywords,
 {
 	for (unsigned ki = 0; ki < keywords->nr_values; ki++) {
 		const struct keyword *kv = &keywords->values[ki];
-		if (kv->name != NULL && shunk_strcaseeq(name, kv->name)) {
+		if (kv->name != NULL && hunk_strcaseeq(name, kv->name)) {
 			return kv;
 		}
 	}
@@ -33,7 +33,7 @@ const struct keyword *keyword_by_sname(const struct keywords *keywords,
 {
 	for (unsigned ki = 0; ki < keywords->nr_values; ki++) {
 		const struct keyword *kv = &keywords->values[ki];
-		if (kv->sname != NULL && shunk_strcaseeq(name, kv->sname)) {
+		if (kv->sname != NULL && hunk_strcaseeq(name, kv->sname)) {
 			return kv;
 		}
 	}

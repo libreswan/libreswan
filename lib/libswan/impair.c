@@ -320,7 +320,7 @@ bool parse_impair(const char *optarg,
 					pri_shunk(what));
 			}
 			return false;
-		} else if (shunk_strcaseeq(nowhat, impairments[ci].what)) {
+		} else if (hunk_strcaseeq(nowhat, impairments[ci].what)) {
 			break;
 		}
 		ci++;
@@ -328,7 +328,7 @@ bool parse_impair(const char *optarg,
 	const struct impairment *cr = &impairments[ci];
 
 	/* --{,no-}impair WHAT:help always works */
-	if (shunk_strcaseeq(how, "help")) {
+	if (hunk_strcaseeq(how, "help")) {
 		help("", cr);
 		return false;
 	}
@@ -337,7 +337,7 @@ bool parse_impair(const char *optarg,
 	 * Ensure that --no-impair WHAT, --impair no-WHAT, --impair
 	 * WHAT:no, all always work.
 	 */
-	if (no || shunk_strcaseeq(how, "no")) {
+	if (no || hunk_strcaseeq(how, "no")) {
 		/* reject --no-impair WHAT:no and --impair no-WHAT:no */
 		if (no && how.len > 0) {
 			LSWLOG_ERROR(buf) {
@@ -401,9 +401,9 @@ bool parse_impair(const char *optarg,
 		 * also here so that the two if() clauses look
 		 * consistent.
 		 */
-		if (shunk_strcaseeq(how, "false") ||
-		    shunk_strcaseeq(how, "off") ||
-		    shunk_strcaseeq(how, "no")) {
+		if (hunk_strcaseeq(how, "false") ||
+		    hunk_strcaseeq(how, "off") ||
+		    hunk_strcaseeq(how, "no")) {
 			/* --impair WHAT:nope */
 			*whack_impair = (struct whack_impair) {
 				.what = ci,
@@ -411,9 +411,9 @@ bool parse_impair(const char *optarg,
 			};
 			return true;
 		} else if (how.len == 0 ||
-			   shunk_strcaseeq(how, "true") ||
-			   shunk_strcaseeq(how, "on") ||
-			   shunk_strcaseeq(how, "yes")) {
+			   hunk_strcaseeq(how, "true") ||
+			   hunk_strcaseeq(how, "on") ||
+			   hunk_strcaseeq(how, "yes")) {
 			/* --impair WHAT:yes */
 			*whack_impair = (struct whack_impair) {
 				.what = ci,

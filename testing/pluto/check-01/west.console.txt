@@ -27,7 +27,7 @@ west #
 west #
  ipsec timecheck > /dev/null || echo failed
 west #
- ipsec shunkcheck > /dev/null || echo failed
+ ipsec hunkcheck > /dev/null || echo failed
 west #
  ipsec dncheck > /dev/null || echo failed
 west #

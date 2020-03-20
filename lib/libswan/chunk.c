@@ -84,11 +84,6 @@ chunk_t clone_bytes_as_chunk(const void *bytes, size_t sizeof_bytes, const char 
 	return chunk2(clone_bytes(bytes, sizeof_bytes, name), sizeof_bytes);
 }
 
-bool chunk_eq(chunk_t a, chunk_t b)
-{
-	return a.len == b.len && memeq(a.ptr, b.ptr, b.len);
-}
-
 /*
  * Given a HEX encoded string (there is no leading 0x prefix, but
  * there may be embedded spaces), decode it into a freshly allocated

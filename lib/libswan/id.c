@@ -361,7 +361,7 @@ bool same_id(const struct id *a, const struct id *b)
 		return same_dn(a->name, b->name);
 
 	case ID_KEY_ID:
-		return chunk_eq(a->name, b->name);
+		return hunk_eq(a->name, b->name);
 
 	default:
 		bad_case(a->kind);

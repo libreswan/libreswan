@@ -217,7 +217,7 @@ static bool parse_encrypt(struct proposal_parser *parser,
 		next(&lookahead);
 		if (lookahead.delim == '-' &&
 		    lookahead.alg.len > 0 &&
-		    shunk_isdigit(lookahead.alg, 0)) {
+		    hunk_char_isdigit(lookahead.alg, 0)) {
 			shunk_t eklen = lookahead.alg;
 			/* assume <ealg>-<eklen> */
 			int enckeylen = parse_eklen(parser, eklen);
@@ -262,7 +262,7 @@ static bool parse_encrypt(struct proposal_parser *parser,
 	{
 		shunk_t ealg = token->alg;
 		size_t end = ealg.len;
-		while (end > 0 && shunk_isdigit(ealg, end-1)) {
+		while (end > 0 && hunk_char_isdigit(ealg, end-1)) {
 			end--;
 		}
 		if (end == ealg.len) {
@@ -285,7 +285,7 @@ static bool parse_encrypt(struct proposal_parser *parser,
 		 * trailing '_'
 		 */
 		ealg = shunk_slice(ealg, 0, end);
-		if (shunk_ischar(ealg, ealg.len-1, "_")) {
+		if (hunk_char_ischar(ealg, ealg.len-1, "_")) {
 			ealg = shunk_slice(ealg, 0, ealg.len-1);
 		}
 		/* try again */

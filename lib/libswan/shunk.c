@@ -119,36 +119,6 @@ shunk_t shunk_span(shunk_t *input, const char *accept)
 	return token;
 }
 
-bool shunk_caseeq(shunk_t lhs, shunk_t rhs)
-{
-	/* NULL and EMPTY("") are not the same */
-	if (lhs.ptr == NULL || rhs.ptr == NULL) {
-		return lhs.ptr == rhs.ptr;
-	}
-	if (lhs.len != rhs.len) {
-		return false;
-	}
-	return strncasecmp(lhs.ptr, rhs.ptr, lhs.len) == 0;
-}
-
-bool shunk_strcaseeq(shunk_t shunk, const char *str)
-{
-	return shunk_caseeq(shunk, shunk1(str));
-}
-
-bool bytes_eq(const void *l_ptr, size_t l_len,
-	      const void *r_ptr, size_t r_len)
-{
-	/* NULL and EMPTY("") are not the same */
-	if (l_ptr == NULL || r_ptr == NULL) {
-		return l_ptr == r_ptr;
-	}
-	if (l_len != r_len) {
-		return false;
-	}
-	return memcmp(l_ptr, r_ptr, r_len) == 0;
-}
-
 bool shunk_caseeat(shunk_t *shunk, shunk_t dinner)
 {
 	if (shunk->ptr == NULL || dinner.ptr == NULL) {
@@ -177,13 +147,17 @@ bool shunk_strcaseeat(shunk_t *shunk, const char *dinner)
  */
 bool shunk_tou(shunk_t shunk, unsigned *dest, int base)
 {
+	if (shunk.len == 0) {
+		return false;
+	}
 	/* copy SHUNK into a NUL terminated STRING */
-	char string[64] = ""; /* NUL fill */
+	char string[64] = "";
 	if (shunk.len + 1 >= sizeof(string)) {
 		/* no-space for trailing NUL */
 		return false;
 	}
 	strncpy(string, shunk.ptr, shunk.len);
+	string[shunk.len] = '\0'; /* NUL terminate */
 	/* convert the string, expect entire shunk to be consumed */
 	char *end = NULL;
 	unsigned long ul = strtoul(string, &end, base);
@@ -195,20 +169,4 @@ bool shunk_tou(shunk_t shunk, unsigned *dest, int base)
 	}
 	*dest = (unsigned)ul;
 	return true;
-}
-
-bool shunk_isdigit(shunk_t s, size_t i)
-{
-	pexpect(s.len > 0);
-	pexpect(i < s.len);
-	const char *c = s.ptr;
-	return isdigit(c[i]);
-}
-
-bool shunk_ischar(shunk_t s, size_t i, const char *chars)
-{
-	pexpect(s.len > 0);
-	pexpect(i < s.len);
-	const char *c = s.ptr;
-	return strchr(chars, c[i]) != NULL;
 }

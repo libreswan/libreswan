@@ -278,7 +278,7 @@ static bool parse_encrypt(struct proposal_parser *parser,
 {
 	shunk_t ealg = (*tokens)[0].alg;
 	shunk_t eklen = (*tokens)[1].alg;
-	if (eklen.len > 0 && shunk_isdigit(eklen, 0)) {
+	if (eklen.len > 0 && hunk_char_isdigit(eklen, 0)) {
 		/* assume <ealg>-<eklen> */
 		int enckeylen = parse_eklen(parser, eklen);
 		if (enckeylen <= 0) {
@@ -311,7 +311,7 @@ static bool parse_encrypt(struct proposal_parser *parser,
 		 * backwards skipping any digits.
 		 */
 		size_t end = ealg.len;
-		while (end > 0 && shunk_isdigit(ealg, end-1)) {
+		while (end > 0 && hunk_char_isdigit(ealg, end-1)) {
 			end--;
 		}
 		if (end == ealg.len) {
@@ -336,7 +336,7 @@ static bool parse_encrypt(struct proposal_parser *parser,
 		 * trailing '_'
 		 */
 		ealg = shunk_slice(ealg, 0, end);
-		if (shunk_ischar(ealg, ealg.len-1, "_")) {
+		if (hunk_char_ischar(ealg, ealg.len-1, "_")) {
 			ealg = shunk_slice(ealg, 0, end-1);
 		}
 		/* try again */

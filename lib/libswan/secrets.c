@@ -712,8 +712,8 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 						same = TRUE;
 						break;
 					case PKK_PSK:
-						same = chunk_eq(s->pks.u.preshared_secret,
-								best->pks.u.preshared_secret);
+						same = hunk_eq(s->pks.u.preshared_secret,
+							       best->pks.u.preshared_secret);
 						break;
 					case PKK_RSA:
 						/*
@@ -740,8 +740,8 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 						 */
 						break;
 					case PKK_PPK:
-						same = chunk_eq(s->pks.ppk,
-							best->pks.ppk);
+						same = hunk_eq(s->pks.ppk,
+							       best->pks.ppk);
 						break;
 					default:
 						bad_case(kind);
@@ -990,7 +990,7 @@ struct secret *lsw_get_ppk_by_id(struct secret *s, chunk_t ppk_id)
 {
 	while (s != NULL) {
 		struct private_key_stuff pks = s->pks;
-		if (pks.kind == PKK_PPK && chunk_eq(pks.ppk_id, ppk_id))
+		if (pks.kind == PKK_PPK && hunk_eq(pks.ppk_id, ppk_id))
 			return s;
 		s = s->next;
 	}
@@ -1601,7 +1601,7 @@ bool same_RSA_public_key(const struct RSA_public_key *a,
 	 * difference.
 	 */
 	DBG(DBG_CRYPT,
-	    if (a->k != b->k && chunk_eq(a->e, b->e)) {
+	    if (a->k != b->k && hunk_eq(a->e, b->e)) {
 		    DBG_log("XXX: different modulus k (%u vs %u) modulus (%zu vs %zu) caused a mismatch",
 			    a->k, b->k, a->n.len, b->n.len);
 	    });
@@ -1611,17 +1611,17 @@ bool same_RSA_public_key(const struct RSA_public_key *a,
 		);
 	DBG(DBG_CRYPT,
 	    DBG_log("n did %smatch",
-		    chunk_eq(a->n, b->n) ? "" : "NOT ");
+		    hunk_eq(a->n, b->n) ? "" : "NOT ");
 		);
 	DBG(DBG_CRYPT,
 		DBG_log("e did %smatch",
-			chunk_eq(a->e, b->e) ? "" : "NOT ");
+			hunk_eq(a->e, b->e) ? "" : "NOT ");
 		);
 
 	return a == b ||
 		(a->k == b->k &&
-		 chunk_eq(a->n, b->n) &&
-		 chunk_eq(a->e, b->e));
+		 hunk_eq(a->n, b->n) &&
+		 hunk_eq(a->e, b->e));
 }
 
 void install_public_key(struct pubkey *pk, struct pubkey_list **head)

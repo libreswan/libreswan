@@ -68,6 +68,7 @@ static void hunk_eq_check(void)
 	static const struct test {
 		const char *l;
 		const char *r;
+		bool empty;
 		bool eq;
 		bool caseeq;
 		bool thingeq;
@@ -76,22 +77,22 @@ static void hunk_eq_check(void)
 		 * Like strings, NULL and EMPTY ("") shunks are
 		 * considered different.
 		 */
-		{ NULL, NULL, true, true, false, },
-		{ NULL, "", false, false, false, },
-		{ "", NULL, false, false, false, },
-		{ "", "", true, true, false, },
+		{ NULL, NULL, .empty = false, .eq = true, .caseeq = true, .thingeq = false, },
+		{ NULL, "", .empty = false, .eq = false, .caseeq = false, .thingeq = false, },
+		{ "", NULL, .empty = true, .eq = false, .caseeq = false, .thingeq = false, },
+		{ "", "", .empty = true, .eq = true, .caseeq = true, .thingeq = false, },
 
-		{ "", "a", false, false, false, },
-		{ "a", "", false, false, false, },
+		{ "", "a", .empty = true, .eq = false, .caseeq = false, .thingeq = false, },
+		{ "a", "", .empty = false, .eq = false, .caseeq = false, .thingeq = false, },
 
-		{ "a", "a", true, true, false, },
-		{ "a", "A", false, true, false, },
-		{ "A", "a", false, true, false, },
-		{ "a", "b", false, false, false, },
+		{ "a", "a", .empty = false, .eq = true, .caseeq = true, .thingeq = false, },
+		{ "a", "A", .empty = false, .eq = false, .caseeq = true, .thingeq = false, },
+		{ "A", "a", .empty = false, .eq = false, .caseeq = true, .thingeq = false, },
+		{ "a", "b", .empty = false, .eq = false, .caseeq = false, .thingeq = false, },
 
-		{ "a", "aa", false, false, false, },
-		{ "aa", "a", false, false, false, },
-		{ "thing", "a", false, false, true, },
+		{ "a", "aa", .empty = false, .eq = false, .caseeq = false, .thingeq = false, },
+		{ "aa", "a", .empty = false, .eq = false, .caseeq = false, .thingeq = false, },
+		{ "thing", "a", .empty = false, .eq = false, .caseeq = false, .thingeq = true, },
 	};
 
 	static const struct {
@@ -111,9 +112,9 @@ static void hunk_eq_check(void)
 		}
 
 		bool t_empty = hunk_eq(l, empty_shunk);
-		if (shunk_strcaseeq(l, "") != t_empty) {
+		if (t->empty != t_empty) {
 			FAIL_LR("hunk_eq(l, empty_shunk) returned %s, expecting %s",
-				bool_str(t_empty), bool_str(shunk_strcaseeq(l, "")));
+				bool_str(t_empty), bool_str(t->empty));
 		}
 
 		bool t_eq = hunk_eq(l, r);
@@ -134,13 +135,13 @@ static void hunk_eq_check(void)
 				bool_str(t_streq), bool_str(t->eq));
 		}
 
-		bool t_caseeq = shunk_caseeq(l, r);
+		bool t_caseeq = hunk_caseeq(l, r);
 		if (t_caseeq != t->caseeq) {
 			FAIL_LR("shunk_caseeq() returned %s, expecting %s",
 				bool_str(t_caseeq), bool_str(t->caseeq));
 		}
 
-		bool t_strcaseeq = shunk_strcaseeq(l, t->r);
+		bool t_strcaseeq = hunk_strcaseeq(l, t->r);
 		if (t_strcaseeq != t->caseeq) {
 			FAIL_LR("shunk_strcaseeq() returned %s, expecting %s",
 				bool_str(t_strcaseeq), bool_str(t->caseeq));
@@ -288,41 +289,6 @@ static void shunk_span_check(void)
 	}
 }
 
-static void shunk_null_empty_check(void)
-{
-	static const struct test {
-		const char *s;
-		bool null;
-		bool empty;
-	} tests[] = {
-		/*
-		 * Like strings, NULL and EMPTY ("") shunks are
-		 * considered different.
-		 */
-		{ NULL, true, false, },
-		{ "", false, true, },
-		{ "a", false, false, },
-	};
-
-	for (size_t ti = 0; ti < elemsof(tests); ti++) {
-		const struct test *t = &tests[ti];
-		PRINT_S(stdout, "");
-		shunk_t s = shunk1(t->s);
-
-		bool t_null = hunk_eq(s, null_shunk);
-		if (t->null != t_null) {
-			FAIL_S("hunk_eq(s, null_shunk) returned %s, expecting %s",
-			       bool_str(t_null), bool_str(t->null));
-		}
-
-		bool t_empty = hunk_eq(s, empty_shunk);
-		if (t->empty != t_empty) {
-			FAIL_S("hunk_eq(s, empty_shunk) returned %s, expecting %s",
-			       bool_str(t_empty), bool_str(t->empty));
-		}
-	}
-}
-
 static void shunk_clone_check(void)
 {
 	static const struct test {
@@ -356,14 +322,110 @@ static void shunk_clone_check(void)
 	}
 }
 
+static void hunk_startswith_check(void)
+{
+	static const struct test {
+		const char *s;
+		const char *t;
+		bool ok;
+	} tests[] = {
+		/* empty always same */
+		{ "", "", true, },
+		{ "a", "", true, },
+		/* one maybe same */
+		{ "", "a", false, },
+		{ "a", "a", true, },
+		{ "ab", "a", true, },
+	};
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINT_S(stdout, "startswith(%s)", t->t);
+		shunk_t s = shunk1(t->s);
+		bool ok = hunk_startswith(s, t->t);
+		if (ok != t->ok) {
+			FAIL_S("hunk_startswith(%s) returned %s, expecting %s",
+			       t->t, bool_str(ok), bool_str(t->ok));
+		}
+	}
+}
+
+static void hunk_char_check(void)
+{
+	static const struct test {
+		const char *s;
+		size_t i;
+		const char *c;
+	} tests[] = {
+		/* empty always same */
+		{ "", 0, "\0", },
+		{ "a", 0, "a", },
+		{ "a", 1, "\0", },
+		{ "ab", 0, "a", },
+		{ "ab", 1, "b", },
+		{ "ab", 2, "\0", },
+	};
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINT_S(stdout, "[%zu]", t->i);
+		shunk_t s = shunk1(t->s);
+		char c[2] = { hunk_char(s, t->i), };
+		if (c[0] != t->c[0]) {
+			FAIL_S("hunk_char(%zu) returned '%s', expecting '%s'",
+			       t->i, c, t->c);
+		}
+	}
+}
+
+static void shunk_tou_check(void)
+{
+	static const struct test {
+		const char *s;
+		unsigned base;
+		unsigned u;
+		bool ok;
+	} tests[] = {
+		/* default */
+		{ "", 0, 0, false, },
+		{ "1", 0, 1, true, },
+		{ "12", 0, 12, true, },
+		{ "12a", 0, 0, false, },
+		/* 16 */
+		{ "", 16, 0x0, false, },
+		{ "1", 16, 0x1, true, },
+		{ "12", 16, 0x12, true, },
+		{ "12a", 16, 0x12a, true, },
+		{ "12x", 16, 0, false, },
+	};
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINT_S(stdout, "");
+		shunk_t s = shunk1(t->s);
+		unsigned u;
+		bool ok = shunk_tou(s, &u, t->base);
+		if (ok != t->ok) {
+			FAIL_S("shunk_tou() returned '%s', expecting '%s'",
+			       bool_str(ok), bool_str(t->ok));
+		}
+		if (ok && u != t->u) {
+			FAIL_S("shunk_tou() returned %u, expecting %u",
+			       u, t->u);
+		}
+	}
+}
+
 int main(int argc UNUSED, char *argv[] UNUSED)
 {
 	hunk_eq_check();
-	shunk_null_empty_check();
 	shunk_slice_check();
 	shunk_token_check();
 	shunk_span_check();
 	shunk_clone_check();
+	hunk_startswith_check();
+	hunk_char_check();
+	shunk_tou_check();
 
 	if (fails > 0) {
 		fprintf(stderr, "TOTAL FAILURES: %d\n", fails);

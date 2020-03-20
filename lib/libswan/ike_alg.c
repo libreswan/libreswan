@@ -159,7 +159,7 @@ const struct ike_alg *ike_alg_byname(const struct ike_alg_type *type,
 	for (const struct ike_alg **alg = next_alg(type, NULL);
 	     alg != NULL; alg = next_alg(type, alg)) {
 		FOR_EACH_IKE_ALG_NAME(*alg, alg_name) {
-			if (shunk_caseeq(alg_name, name)) {
+			if (hunk_caseeq(alg_name, name)) {
 				return *alg;
 			}
 		}
@@ -355,7 +355,7 @@ static void pexpect_ike_alg_base_in_table(where_t where,
 static bool ike_alg_has_name(const struct ike_alg *alg, shunk_t name)
 {
 	FOR_EACH_IKE_ALG_NAME(alg, alg_name) {
-		if (shunk_caseeq(alg_name, name)) {
+		if (hunk_caseeq(alg_name, name)) {
 			return true;
 		}
 	}
@@ -1136,7 +1136,7 @@ static void lswlog_ike_alg_details(struct lswlog *buf, const struct ike_alg *alg
 
 		FOR_EACH_IKE_ALG_NAME(alg, alg_name) {
 			/* filter out NAME */
-			if (!shunk_strcaseeq(alg_name, alg->fqn)) {
+			if (!hunk_strcaseeq(alg_name, alg->fqn)) {
 				jam(buf, "%s"PRI_SHUNK, sep, pri_shunk(alg_name));
 				sep = ", ";
 			}

@@ -1,4 +1,4 @@
-# shunk_t tests, for libreswan
+# hunk like tests, for libreswan
 #
 # Copyright (C) 2019 Andrew Cagney
 #
@@ -15,9 +15,9 @@
 # XXX: Hack to suppress the man page.  Should one be added?
 PROGRAM_MANPAGE =
 
-PROGRAM = shunkcheck
+PROGRAM = hunkcheck
 
-OBJS += shunkcheck.o
+OBJS += hunkcheck.o
 
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)

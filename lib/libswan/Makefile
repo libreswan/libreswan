@@ -91,6 +91,7 @@ OBJS += ckaid.o
 
 OBJS += chunk.o
 OBJS += shunk.o
+OBJS += hunk.o
 
 OBJS += ip_address.o
 OBJS += ip_endpoint.o

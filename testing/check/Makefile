@@ -16,7 +16,7 @@ SUBDIRS += enum
 SUBDIRS += ip
 SUBDIRS += jambuf
 SUBDIRS += time
-SUBDIRS += shunk
+SUBDIRS += hunk
 SUBDIRS += dn
 
 ifndef top_srcdir

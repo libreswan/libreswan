@@ -941,7 +941,7 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 		}
 
 		/* OIDs must agree */
-		if (!chunk_eq(oid_a, oid_b))
+		if (!hunk_eq(oid_a, oid_b))
 			return FALSE;
 
 		/* does rdn_b contain a wildcard? */
