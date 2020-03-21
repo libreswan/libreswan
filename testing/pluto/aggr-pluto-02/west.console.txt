@@ -46,7 +46,7 @@ west #
 initdone
 west #
  ipsec auto --up westnet-eastnet-aggr
-003 "westnet-eastnet-aggr": IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's
+003 "westnet-eastnet-aggr" #1: IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's
 002 "westnet-eastnet-aggr" #1: initiating Aggressive Mode
 1v1 "westnet-eastnet-aggr" #1: STATE_AGGR_I1: sent AI1, expecting AR1
 002 "westnet-eastnet-aggr" #1: Peer ID is ID_FQDN: '@east'

@@ -176,12 +176,6 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 		c = rw_instantiate(c, &md->sender, NULL, NULL);
 	}
 
-	/* warn for especially dangerous Aggressive Mode and PSK */
-	if (LIN(POLICY_PSK, c->policy) && LIN(POLICY_AGGRESSIVE, c->policy)) {
-		loglog(RC_LOG_SERIOUS,
-			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
-	}
-
 	/* Set up state */
 	struct ike_sa *ike = new_v1_rstate(md);
 	struct state *st = &ike->sa;
@@ -190,6 +184,12 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	set_cur_state(st);
 	update_state_connection(st, c);
 	change_state(st, STATE_AGGR_R1);
+
+	/* warn for especially dangerous Aggressive Mode and PSK */
+	if (LIN(POLICY_PSK, c->policy) && LIN(POLICY_AGGRESSIVE, c->policy)) {
+		log_state(RC_LOG_SERIOUS, st,
+			  "IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
+	}
 
 	st->st_policy = policy;	/* ??? not sure what's needed here */
 
@@ -1007,11 +1007,6 @@ void aggr_outI1(struct fd *whack_sock,
 		const threadtime_t *inception,
 		struct xfrm_user_sec_ctx_ike *uctx)
 {
-	if (LIN(POLICY_PSK, c->policy) && LIN(POLICY_AGGRESSIVE, c->policy)) {
-		loglog(RC_LOG_SERIOUS,
-			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
-	}
-
 	/* set up new state */
 	struct ike_sa *ike = new_v1_istate(whack_sock);
 	struct state *st = &ike->sa;
@@ -1019,6 +1014,11 @@ void aggr_outI1(struct fd *whack_sock,
 	change_state(st, STATE_AGGR_I1);
 	initialize_new_state(st, c, policy, try);
 	push_cur_state(st);
+
+	if (LIN(POLICY_PSK, c->policy) && LIN(POLICY_AGGRESSIVE, c->policy)) {
+		log_state(RC_LOG_SERIOUS, st,
+			  "IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
+	}
 
 	if (!init_aggr_st_oakley(st, policy)) {
 		/*
