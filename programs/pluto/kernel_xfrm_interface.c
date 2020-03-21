@@ -28,7 +28,6 @@
 #include <net/if.h>
 
 #include <linux/rtnetlink.h>
-#include <linux/rtnetlink.h>
 #include <linux/if_addr.h>
 #include <linux/if_link.h>
 #if defined(USE_XFRM_INTERFACE_IFLA_HEADER)
