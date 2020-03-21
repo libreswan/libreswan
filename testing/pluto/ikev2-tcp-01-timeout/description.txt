@@ -1,0 +1,4 @@
+IKEv2 TCP timeouts
+
+West initiates incomplete IKETCP SAs.  East (or the kernel) is
+expected to timeout and close the TCP stream.
