@@ -165,7 +165,7 @@ static void delete_end(struct end *e)
 	if (e->cert.u.nss_cert != NULL)
 		CERT_DestroyCertificate(e->cert.u.nss_cert);
 
-	freeanychunk(e->ca);
+	free_chunk_content(&e->ca);
 	pfreeany(e->updown);
 	pfreeany(e->host_addr_name);
 	pfreeany(e->xauth_password);

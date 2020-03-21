@@ -156,10 +156,10 @@ static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
 		ok = FALSE;
 	}
 
-	freeanychunk(iv);
-	freeanychunk(expected_iv);
-	freeanychunk(tmp);
-	freeanychunk(expected);
+	free_chunk_content(&iv);
+	free_chunk_content(&expected_iv);
+	free_chunk_content(&tmp);
+	free_chunk_content(&expected);
 
 	return ok;
 }

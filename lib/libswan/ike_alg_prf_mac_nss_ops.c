@@ -138,7 +138,7 @@ static void digest_symkey(struct prf_context *prf,
 #endif
 	chunk_t chunk = chunk_from_symkey("nss hmac digest hack", symkey);
 	SECStatus rc = PK11_DigestOp(prf->context, chunk.ptr, chunk.len);
-	freeanychunk(chunk);
+	free_chunk_content(&chunk);
 	passert(rc == SECSuccess);
 }
 

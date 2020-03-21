@@ -30,7 +30,7 @@ void op_chunk(const struct cavp_entry *entry,
 		fprintf(stderr, "missing chunk for '%s'\n", entry->key);
 		exit(1);
 	}
-	freeanychunk(*(entry->chunk));
+	free_chunk_content(entry->chunk);
 	*(entry->chunk) = chunk_from_hex(value, entry->key);
 }
 
@@ -40,7 +40,7 @@ void op_symkey(const struct cavp_entry *entry,
 	release_symkey(__func__, "entry", entry->symkey);
 	chunk_t chunk = chunk_from_hex(value, entry->key);
 	*(entry->symkey) = symkey_from_hunk("symkey", chunk);
-	freeanychunk(chunk);
+	free_chunk_content(&chunk);
 }
 
 void op_signed_long(const struct cavp_entry *entry,

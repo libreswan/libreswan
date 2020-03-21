@@ -114,7 +114,7 @@ stf_status ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 	struct connection *c = ike->sa.st_connection;
 	enum keyword_authby authby = c->spd.this.authby;
 
-	freeanychunk(*no_ppk_auth);	/* in case it was occupied */
+	free_chunk_content(no_ppk_auth);	/* in case it was occupied */
 
 	switch (authby) {
 	case AUTHBY_RSASIG:
@@ -163,7 +163,7 @@ stf_status ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 			memcpy(&blobs[h.len], hashval.ptr, hashval.len);
 			*no_ppk_auth = chunk2(blobs, len);
 		}
-		freeanychunk(hashval);
+		free_chunk_content(&hashval);
 		return STF_OK;
 	}
 	case AUTHBY_PSK:
@@ -188,7 +188,7 @@ static void ppk_recalc_one(PK11SymKey **sk /* updated */, PK11SymKey *ppk_key, c
 	DBG(DBG_PRIVATE, {
 		chunk_t chunk_sk = chunk_from_symkey("sk_chunk", *sk);
 		DBG_dump_hunk(name, chunk_sk);
-		freeanychunk(chunk_sk);
+		free_chunk_content(&chunk_sk);
 	});
 }
 

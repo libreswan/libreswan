@@ -211,8 +211,8 @@ static err_t RSA_unpack_pubkey_content(union pubkey_content *u, chunk_t pubkey)
 
 static void RSA_free_public_content(struct RSA_public_key *rsa)
 {
-	freeanychunk(rsa->n);
-	freeanychunk(rsa->e);
+	free_chunk_content(&rsa->n);
+	free_chunk_content(&rsa->e);
 }
 
 static void RSA_free_pubkey_content(union pubkey_content *u)
@@ -340,7 +340,7 @@ static err_t ECDSA_unpack_pubkey_content(union pubkey_content *u, chunk_t pubkey
 
 static void ECDSA_free_public_content(struct ECDSA_public_key *ecdsa)
 {
-	freeanychunk(ecdsa->pub);
+	free_chunk_content(&ecdsa->pub);
 	/* ??? what about ecdsa->pub.{ecParams,version,ckaid}? */
 }
 
@@ -531,7 +531,7 @@ unsigned pubkey_size(const struct pubkey *pk)
 void free_public_key(struct pubkey *pk)
 {
 	free_id_content(&pk->id);
-	freeanychunk(pk->issuer);
+	free_chunk_content(&pk->issuer);
 	/* algorithm-specific freeing */
 	pk->type->free_pubkey_content(&pk->u);
 	pfree(pk);
@@ -944,7 +944,7 @@ static err_t lsw_process_ppk_static_secret(chunk_t *ppk, chunk_t *ppk_id)
 
 	if (!shift()) {
 		ugh = "No PPK found. PPK should be specified after PPK ID";
-		freeanychunk(*ppk_id);
+		free_chunk_content(ppk_id);
 		return ugh;
 	}
 
@@ -971,7 +971,7 @@ static err_t lsw_process_ppk_static_secret(chunk_t *ppk, chunk_t *ppk_id)
 			/* ttodata didn't like PPK data */
 			ugh = builddiag("PPK data malformed (%s): %s", ugh,
 					flp->tok);
-			freeanychunk(*ppk_id);
+			free_chunk_content(ppk_id);
 		} else {
 			*ppk = clone_bytes_as_chunk(buf, sz, "PPK");
 			(void) shift();

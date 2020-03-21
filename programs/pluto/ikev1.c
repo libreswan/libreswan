@@ -2648,8 +2648,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		release_fragments(st);
 
 		/* scrub the previous packet exchange */
-		freeanychunk(st->st_rpacket);
-		freeanychunk(st->st_tpacket);
+		free_chunk_content(&st->st_rpacket);
+		free_chunk_content(&st->st_tpacket);
 
 		/* in aggressive mode, there will be no reply packet in transition
 		 * from STATE_AGGR_R1 to STATE_AGGR_R2

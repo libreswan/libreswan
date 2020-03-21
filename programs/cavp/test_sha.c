@@ -102,7 +102,7 @@ static void msg_run_test(void)
 	chunk_t bytes = alloc_chunk(l, "bytes");
 	hash_alg->hash_ops->final_bytes(&hash, bytes.ptr, bytes.len);
 	print_chunk("MD", NULL, bytes, 0);
-	freeanychunk(bytes);
+	free_chunk_content(&bytes);
 }
 
 const struct cavp test_sha_msg = {
@@ -165,10 +165,10 @@ static void monte_run_test(void)
 		// OUTPUT: MDj; (aka seed)
 		print_chunk("MD", NULL, seed, 0);
 	}
-	freeanychunk(MDi_3);
-	freeanychunk(MDi_2);
-	freeanychunk(MDi_1);
-	freeanychunk(Mi);
+	free_chunk_content(&MDi_3);
+	free_chunk_content(&MDi_2);
+	free_chunk_content(&MDi_1);
+	free_chunk_content(&Mi);
 	print_line("");
 	exit(0);
 }

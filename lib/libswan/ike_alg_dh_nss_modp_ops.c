@@ -77,8 +77,8 @@ static void nss_modp_calc_secret(const struct dh_desc *group,
 		}
 	} while (group->bytes != (*pubk)->u.dh.publicValue.len);
 
-	freeanychunk(prime);
-	freeanychunk(base);
+	free_chunk_content(&prime);
+	free_chunk_content(&base);
 
 	memcpy(ke, (*pubk)->u.dh.publicValue.data, group->bytes);
 }

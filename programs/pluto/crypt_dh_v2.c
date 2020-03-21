@@ -52,10 +52,10 @@ void cancelled_dh_v2(struct pcr_dh_v2 *dh)
 	release_symkey("cancelled IKEv2 DH", "skeyid_pi", &dh->skeyid_pi);
 	release_symkey("cancelled IKEv2 DH", "skeyid_pr", &dh->skeyid_pr);
 
-	freeanychunk(dh->skey_initiator_salt);
-	freeanychunk(dh->skey_responder_salt);
-	freeanychunk(dh->skey_chunk_SK_pi);
-	freeanychunk(dh->skey_chunk_SK_pr);
+	free_chunk_content(&dh->skey_initiator_salt);
+	free_chunk_content(&dh->skey_responder_salt);
+	free_chunk_content(&dh->skey_chunk_SK_pi);
+	free_chunk_content(&dh->skey_chunk_SK_pr);
 }
 
 /*
@@ -129,10 +129,10 @@ bool finish_dh_v2(struct state *st,
 		free_any_symkey(dhv2->skeyid_er);
 #undef free_any_symkey
 
-		freeanychunk(dhv2->skey_initiator_salt);
-		freeanychunk(dhv2->skey_responder_salt);
-		freeanychunk(dhv2->skey_chunk_SK_pi);
-		freeanychunk(dhv2->skey_chunk_SK_pr);
+		free_chunk_content(&dhv2->skey_initiator_salt);
+		free_chunk_content(&dhv2->skey_responder_salt);
+		free_chunk_content(&dhv2->skey_chunk_SK_pi);
+		free_chunk_content(&dhv2->skey_chunk_SK_pr);
 	} else {
 		pexpect(st->st_skey_d_nss == NULL);
 		st->st_skey_d_nss = dhv2->skeyid_d;

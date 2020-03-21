@@ -61,7 +61,7 @@ static chunk_t derive_ki(const struct prf_desc *prf,
 		in.ptr[i] = ki;
 	}
 	encrypt("K([123])", out, in, prf, key);
-	freeanychunk(in);
+	free_chunk_content(&in);
 	return out;
 }
 
@@ -72,7 +72,7 @@ static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 		DBG_dump_hunk("XCBC: data", bytes);
 		chunk_t k = chunk_from_symkey("K", key);
 		DBG_dump_hunk("XCBC: K:", k);
-		freeanychunk(k);
+		free_chunk_content(&k);
 	}
 
 	chunk_t k1t = derive_ki(prf, key, 1);
@@ -80,7 +80,7 @@ static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 		DBG_dump_hunk("XCBC: K1", k1t);
 	}
 	PK11SymKey *k1 = prf_key_from_hunk("k1", prf, k1t);
-	freeanychunk(k1t);
+	free_chunk_content(&k1t);
 
 	/*
 	 * (2)  Define E[0] = 0x00000000000000000000000000000000
@@ -130,7 +130,7 @@ static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 		if (DBGP(DBG_CRYPT)) {
 			DBG_dump_hunk("XCBC: M[n]^E[n-1]^K2", t);
 		}
-		freeanychunk(k2);
+		free_chunk_content(&k2);
 	} else {
 		chunk_t k3 = derive_ki(prf, key, 3);
 		if (DBGP(DBG_CRYPT)) {
@@ -161,7 +161,7 @@ static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 			DBG_dump_hunk("XCBC: M[n]", m);
 			DBG_dump_hunk("XCBC: M[n]:80...^E[n-1]^K3", t);
 		}
-		freeanychunk(k3);
+		free_chunk_content(&k3);
 	}
 
 	encrypt("K1(M[n]^E[n-1]^K2)", e, t, prf, k1);
@@ -170,7 +170,7 @@ static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 	}
 
 	release_symkey("xcbc", "k1", &k1);
-	freeanychunk(t);
+	free_chunk_content(&t);
 	return e;
 }
 
@@ -204,7 +204,7 @@ static struct prf_context *nss_xcbc_init_symkey(const struct prf_desc *prf_desc,
 						local_draft_key, HERE);
 		/* free all in reverse order */
 		release_symkey(name, "local_draft_key", &local_draft_key);
-		freeanychunk(zeros);
+		free_chunk_content(&zeros);
 	} else if (dkey_sz > prf_desc->prf_key_size) {
 		DBGF(DBG_CRYPT, "XCBC: Key %zd>%zd too big, rehashing to size",
 		     dkey_sz, prf_desc->prf_key_size);
@@ -217,10 +217,10 @@ static struct prf_context *nss_xcbc_init_symkey(const struct prf_desc *prf_desc,
 		chunk_t key_chunk = xcbc_mac(prf_desc, zero_key, draft_chunk);
 		key = prf_key_from_hunk(key_name, prf_desc, key_chunk);
 		/* free all in reverse order */
-		freeanychunk(key_chunk);
-		freeanychunk(draft_chunk);
+		free_chunk_content(&key_chunk);
+		free_chunk_content(&draft_chunk);
 		release_symkey(name, "zero_key", &zero_key);
-		freeanychunk(zeros);
+		free_chunk_content(&zeros);
 	} else {
 		DBGF(DBG_CRYPT, "XCBC: Key %zd=%zd just right",
 		     dkey_sz, prf_desc->prf_key_size);
@@ -275,8 +275,8 @@ static void nss_xcbc_final_bytes(struct prf_context **prf,
 {
 	chunk_t mac = xcbc_mac((*prf)->desc, (*prf)->key, (*prf)->bytes);
 	memcpy(bytes, mac.ptr, sizeof_bytes);
-	freeanychunk(mac);
-	freeanychunk((*prf)->bytes);
+	free_chunk_content(&mac);
+	free_chunk_content(&(*prf)->bytes);
 	release_symkey((*prf)->name, "key", &(*prf)->key);
 	pfree(*prf);
 }
@@ -285,8 +285,8 @@ static PK11SymKey *nss_xcbc_final_symkey(struct prf_context **prf)
 {
 	chunk_t mac = xcbc_mac((*prf)->desc, (*prf)->key, (*prf)->bytes);
 	PK11SymKey *key = symkey_from_hunk("xcbc", mac);
-	freeanychunk(mac);
-	freeanychunk((*prf)->bytes);
+	free_chunk_content(&mac);
+	free_chunk_content(&(*prf)->bytes);
 	release_symkey((*prf)->name, "key", &(*prf)->key);
 	pfree(*prf);
 	return key;

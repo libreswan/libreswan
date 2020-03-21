@@ -700,7 +700,7 @@ static stf_status ikev2_parent_outI1_common(struct state *st)
 	if (IMPAIR(SEND_BOGUS_DCOOKIE)) {
 		/* add or mangle a dcookie so what we will send is bogus */
 		DBG_log("Mangling dcookie because --impair-send-bogus-dcookie is set");
-		freeanychunk(st->st_dcookie);
+		free_chunk_content(&st->st_dcookie);
 		st->st_dcookie.ptr = alloc_bytes(1, "mangled dcookie");
 		st->st_dcookie.len = 1;
 		messupn(st->st_dcookie.ptr, 1);
@@ -826,7 +826,7 @@ static stf_status ikev2_parent_outI1_common(struct state *st)
 	close_output_pbs(&reply_stream);
 
 	/* save packet for later signing */
-	freeanychunk(st->st_firstpacket_me);
+	free_chunk_content(&st->st_firstpacket_me);
 	st->st_firstpacket_me = clone_out_pbs_as_chunk(&reply_stream,
 						       "saved first packet");
 
@@ -1174,7 +1174,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 		"reply packet for ikev2_parent_inI1outR1_tail");
 
 	/* save packet for later signing */
-	freeanychunk(st->st_firstpacket_me);
+	free_chunk_content(&st->st_firstpacket_me);
 	st->st_firstpacket_me = clone_out_pbs_as_chunk(&reply_stream,
 						   "saved first packet");
 
@@ -2412,10 +2412,10 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 			return STF_FATAL;
 		}
 		if (!emit_v2N_hunk(v2N_NULL_AUTH, null_auth, &sk.pbs)) {
-			freeanychunk(null_auth);
+			free_chunk_content(&null_auth);
 			return STF_INTERNAL_ERROR;
 		}
-		freeanychunk(null_auth);
+		free_chunk_content(&null_auth);
 	}
 
 	/* send CP payloads */
@@ -2732,7 +2732,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		}
 
 		const chunk_t *ppk = get_ppk_by_id(&payl.ppk_id);
-		freeanychunk(payl.ppk_id);
+		free_chunk_content(&payl.ppk_id);
 		if (ppk != NULL) {
 			found_ppk = TRUE;
 		}
@@ -2760,10 +2760,10 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 
 			if (!in_raw(no_ppk_auth.ptr, len, &pbs, "NO_PPK_AUTH extract")) {
 				loglog(RC_LOG_SERIOUS, "Failed to extract %zd bytes of NO_PPK_AUTH from Notify payload", len);
-				freeanychunk(no_ppk_auth);
+				free_chunk_content(&no_ppk_auth);
 				return STF_FATAL;
 			}
-			freeanychunk(st->st_no_ppk_auth);	/* in case this was already occupied */
+			free_chunk_content(&st->st_no_ppk_auth);	/* in case this was already occupied */
 			st->st_no_ppk_auth = no_ppk_auth;
 		}
 	}
@@ -2781,7 +2781,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		null_auth = alloc_chunk(len, "NULL_AUTH");
 		if (!in_raw(null_auth.ptr, len, &pbs, "NULL_AUTH extract")) {
 			loglog(RC_LOG_SERIOUS, "Failed to extract %zd bytes of NULL_AUTH from Notify payload", len);
-			freeanychunk(null_auth);
+			free_chunk_content(&null_auth);
 			return STF_FATAL;
 		}
 	}
@@ -2792,11 +2792,11 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 	 * Otherwise use NO_PPK_AUTH
 	 */
 	if (found_ppk && LIN(POLICY_PPK_ALLOW, policy))
-		freeanychunk(st->st_no_ppk_auth);
+		free_chunk_content(&st->st_no_ppk_auth);
 
 	if (!found_ppk && LIN(POLICY_PPK_INSIST, policy)) {
 		loglog(RC_LOG_SERIOUS, "Requested PPK_ID not found and connection requires a valid PPK");
-		freeanychunk(null_auth);
+		free_chunk_content(&null_auth);
 		send_v2N_response_from_state(ike, md,
 					     v2N_AUTHENTICATION_FAILED,
 					     NULL/*no data*/);
@@ -2842,7 +2842,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 			send_v2N_response_from_state(ike, md,
 						     v2N_AUTHENTICATION_FAILED,
 						     NULL/*no data*/);
-			freeanychunk(null_auth);	/* ??? necessary? */
+			free_chunk_content(&null_auth);	/* ??? necessary? */
 			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 			return STF_FATAL;
 		}
@@ -2870,7 +2870,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 				send_v2N_response_from_state(ike, md,
 							     v2N_AUTHENTICATION_FAILED,
 							     NULL/*no data*/);
-				freeanychunk(null_auth);
+				free_chunk_content(&null_auth);
 				pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 				return STF_FATAL;
 			}
@@ -2885,7 +2885,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 				send_v2N_response_from_state(ike, md,
 							     v2N_AUTHENTICATION_FAILED,
 							     NULL/*no data*/);
-				freeanychunk(null_auth);
+				free_chunk_content(&null_auth);
 				pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 				return STF_FATAL;
 			}
@@ -2894,7 +2894,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 
 	/* AUTH succeeded */
 
-	freeanychunk(null_auth);
+	free_chunk_content(&null_auth);
 
 #ifdef XAUTH_HAVE_PAM
 	if (st->st_connection->policy & POLICY_IKEV2_PAM_AUTHORIZE)
@@ -4329,8 +4329,8 @@ stf_status ikev2_child_inIoutR(struct ike_sa *unused_ike UNUSED,
 	pexpect(child != NULL);
 	struct state *st = &child->sa;
 
-	freeanychunk(st->st_ni); /* this is from the parent. */
-	freeanychunk(st->st_nr); /* this is from the parent. */
+	free_chunk_content(&st->st_ni); /* this is from the parent. */
+	free_chunk_content(&st->st_nr); /* this is from the parent. */
 
 	/* Ni in */
 	v2RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_ni, "Ni"));
@@ -4520,8 +4520,8 @@ stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
 	/* child's role could be different from original ike role, of pst; */
 	st->st_original_role = ORIGINAL_RESPONDER;
 
-	freeanychunk(st->st_ni); /* this is from the parent. */
-	freeanychunk(st->st_nr); /* this is from the parent. */
+	free_chunk_content(&st->st_ni); /* this is from the parent. */
+	free_chunk_content(&st->st_nr); /* this is from the parent. */
 
 	/* Ni in */
 	v2RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_ni, "Ni"));
@@ -5063,7 +5063,7 @@ static stf_status add_mobike_response_payloads(
 	    (cookie2->len == 0 || emit_v2N_hunk(v2N_COOKIE2, *cookie2, pbs)))
 		r = STF_OK;
 
-	freeanychunk(*cookie2);
+	free_chunk_content(cookie2);
 	return r;
 }
 /*
@@ -5600,8 +5600,8 @@ void ikev2_initiate_child_sa(struct pending *p)
 	set_cur_state(st); /* we must reset before exit */
 	st->st_try = p->try;
 
-	freeanychunk(st->st_ni); /* this is from the parent. */
-	freeanychunk(st->st_nr); /* this is from the parent. */
+	free_chunk_content(&st->st_ni); /* this is from the parent. */
+	free_chunk_content(&st->st_nr); /* this is from the parent. */
 
 	st->st_original_role = ORIGINAL_INITIATOR;
 

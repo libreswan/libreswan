@@ -124,7 +124,7 @@ void unpack_KE_from_helper(struct state *st,
 			kn->group == st->st_oakley.ta_dh ? "match" : "differ");
 	}
 
-	freeanychunk(*g); /* happens in odd error cases */
+	free_chunk_content(g); /* happens in odd error cases */
 	*g = kn->gi;
 
 	transfer_dh_secret_to_state("KE", &kn->secret, st);
@@ -168,7 +168,7 @@ void unpack_nonce(chunk_t *n, const struct pluto_crypto_req *r)
 {
 	const struct pcr_kenonce *kn = &r->pcr_d.kn;
 
-	freeanychunk(*n);
+	free_chunk_content(n);
 	*n = kn->n;
 }
 

@@ -426,8 +426,8 @@ static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval f
 			break;
 		}
 
-		freeanychunk(pks.u.RSA_private_key.pub.e);
-		freeanychunk(pks.u.RSA_private_key.pub.n);
+		free_chunk_content(&pks.u.RSA_private_key.pub.e);
+		free_chunk_content(&pks.u.RSA_private_key.pub.n);
 
 		if (ret < 0) {
 			break;

@@ -57,7 +57,7 @@ struct msg_digest *md_addref(struct msg_digest *md, where_t where)
 static void free_mdp(struct msg_digest **mdp,
 		     where_t unused_where UNUSED)
 {
-	freeanychunk((*mdp)->raw_packet);
+	free_chunk_content(&(*mdp)->raw_packet);
 	pfreeany((*mdp)->packet_pbs.start);
 	pfree(*mdp);
 	*mdp = NULL;

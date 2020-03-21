@@ -367,7 +367,7 @@ static err_t fetch_asn1_blob(chunk_t url, chunk_t *blob)
 	if (ugh == NULL && blob->len == 0)
 		ugh = "empty ASN.1 blob";
 	if (ugh != NULL)
-		freeanychunk(*blob);
+		free_chunk_content(blob);
 	return ugh;
 }
 
@@ -394,7 +394,7 @@ static bool insert_crl_nss(chunk_t *blob, const chunk_t crl_uri)
 		pfreeany(uri_str);
 	}
 
-	freeanychunk(*blob);
+	free_chunk_content(blob);
 	return ret;
 }
 

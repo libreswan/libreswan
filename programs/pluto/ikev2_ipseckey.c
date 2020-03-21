@@ -293,7 +293,7 @@ static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
 		       dnsr->log_buf);
 	}
 
-	freeanychunk(keyval);
+	free_chunk_content(&keyval);
 	return NULL;
 }
 

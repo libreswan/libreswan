@@ -92,7 +92,7 @@ void fprint_symkey(FILE *file, const char *prefix, const char *json,
 {
 	chunk_t chunk = chunk_from_symkey(prefix, key);
 	fprint_chunk(file, prefix, json, chunk, binlen);
-	freeanychunk(chunk);
+	free_chunk_content(&chunk);
 }
 
 void fprint_line(FILE *file, const char *line)

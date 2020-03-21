@@ -155,13 +155,13 @@ err_t rsa_pubkey_to_base64(chunk_t exponent, chunk_t modulus, char **base64_rr)
 	char *rr = alloc_bytes(rr_len, "base64 resource record");
 	size_t n = datatot(rr_chunk.ptr, rr_chunk.len, 's', rr, rr_len);
 	if (n >= rr_len) {
-		freeanychunk(rr_chunk);
+		free_chunk_content(&rr_chunk);
 		pfreeany(rr);
 		return "base64 encoded RSA public key resource record larger than expected";
 	}
 
 	*base64_rr = rr;
-	freeanychunk(rr_chunk);
+	free_chunk_content(&rr_chunk);
 	return NULL;
 }
 
@@ -222,7 +222,7 @@ err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa, const chunk_t *pub
 	ckaid_t ckaid;
 	err_t err = form_ckaid_ecdsa(ecdsa->pub, &ckaid);
 	if (err != NULL) {
-		freeanychunk(ecdsa->pub);
+		free_chunk_content(&ecdsa->pub);
 		return err;
 	}
 

@@ -580,7 +580,7 @@ bool add_pubkey_from_nss_cert(struct pubkey_list **pubkey_db,
 void free_auth_chain(chunk_t *chain, int chain_len)
 {
 	for (int i = 0; i < chain_len; i++) {
-		freeanychunk(chain[i]);
+		free_chunk_content(&chain[i]);
 	}
 }
 
@@ -1204,10 +1204,10 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 			chunk_t cr_full_hash = ikev2_hash_nss_cert_key(cacert);
 
 			if (!pbs_out_hunk(cr_full_hash, &cr_pbs, "CA cert public key hash")) {
-				freeanychunk(cr_full_hash);
+				free_chunk_content(&cr_full_hash);
 				return FALSE;
 			}
-			freeanychunk(cr_full_hash);
+			free_chunk_content(&cr_full_hash);
 		} else {
 			LSWDBGP(DBG_X509, buf) {
 				jam(buf, "NSS: locating CA cert \'");

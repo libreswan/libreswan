@@ -143,12 +143,12 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 
 #	undef try
 
-	freeanychunk(salted_iv);
-	freeanychunk(aad);
-	freeanychunk(plaintext);
-	freeanychunk(ciphertext);
-	freeanychunk(tag);
-	freeanychunk(text_and_tag);
+	free_chunk_content(&salted_iv);
+	free_chunk_content(&aad);
+	free_chunk_content(&plaintext);
+	free_chunk_content(&ciphertext);
+	free_chunk_content(&tag);
+	free_chunk_content(&text_and_tag);
 
 	/* Clean up.  */
 	release_symkey(__func__, "sym_key", &sym_key);

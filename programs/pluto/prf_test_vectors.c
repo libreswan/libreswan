@@ -190,14 +190,14 @@ static bool test_prf_vector(const struct prf_desc *prf,
 	DBGF(DBG_CRYPT, "%s: %s %s", __func__, test->description, ok ? "passed" : "failed");
 	release_symkey(__func__, "symkey", &symkey_output);
 
-	freeanychunk(chunk_message);
-	freeanychunk(chunk_key);
+	free_chunk_content(&chunk_message);
+	free_chunk_content(&chunk_key);
 
 	release_symkey(__func__, "message", &symkey_message);
 	release_symkey(__func__, "key", &symkey_key);
 	release_symkey(__func__, "output", &symkey_output);
 
-	freeanychunk(prf_output);
+	free_chunk_content(&prf_output);
 	return ok;
 }
 

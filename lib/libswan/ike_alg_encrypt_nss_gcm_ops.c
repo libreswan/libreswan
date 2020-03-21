@@ -110,7 +110,7 @@ static bool ike_alg_nss_gcm(const struct encrypt_desc *alg,
 
 	memcpy(text_and_tag, out_buf, out_len);
 	PR_Free(out_buf);
-	freeanychunk(iv);
+	free_chunk_content(&iv);
 
 	return ok;
 }

@@ -37,7 +37,7 @@ static PK11SymKey *signature_skeyid(const struct prf_desc *prf_desc,
 	struct crypt_prf *prf = crypt_prf_init_hunk("SKEYID sig",
 						    prf_desc,
 						    "Ni|Nr", key);
-	freeanychunk(key);
+	free_chunk_content(&key);
 	/* seed = g^xy */
 	crypt_prf_update_symkey(prf, "g^xy", dh_secret);
 	/* generate */

@@ -117,7 +117,7 @@ static void hmac_run_test(void)
 	chunk_t bytes = alloc_chunk(prf_alg->prf_output_size, "bytes");
 	crypt_prf_final_bytes(&prf, bytes.ptr, bytes.len);
 	print_chunk("Mac", NULL, bytes, tlen);
-	freeanychunk(bytes);
+	free_chunk_content(&bytes);
 }
 
 const struct cavp test_hmac = {

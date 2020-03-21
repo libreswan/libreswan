@@ -85,8 +85,8 @@ void cancelled_ke_and_nonce(struct pcr_kenonce *kn)
 	if (kn->secret != NULL) {
 		free_dh_secret(&kn->secret);
 	}
-	freeanychunk(kn->n);
-	freeanychunk(kn->gi);
+	free_chunk_content(&kn->n);
+	free_chunk_content(&kn->gi);
 }
 
 /* Note: not all cn's are the same subtype */

@@ -210,7 +210,7 @@ static void gcm_run_test(void)
 		print_line("FAIL");
 	}
 	release_symkey(__func__, "GCM-key", &gcm_key);
-	freeanychunk(text_and_tag);
+	free_chunk_content(&text_and_tag);
 }
 
 const struct cavp test_gcm = {

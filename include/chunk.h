@@ -105,15 +105,4 @@ extern const chunk_t empty_chunk;
 
 chunk_t chunk_from_hex(const char *hex, const char *name);
 
-/*
- * Old stuff that can go away.
- */
-
-/* replaced by free_chunk_contents()? */
-#define freeanychunk(CH) {					\
-		chunk_t *chp_ = &(CH); /*eval once */		\
-		pfreeany(chp_->ptr);				\
-		*chp_ = EMPTY_CHUNK;	\
-	}
-
 #endif

@@ -179,10 +179,10 @@ static bool test_ctr_op(const struct encrypt_desc *encrypt_desc,
 		ok = FALSE;
 	}
 
-	freeanychunk(cb);
-	freeanychunk(expected_cb);
-	freeanychunk(tmp);
-	freeanychunk(expected_output);
+	free_chunk_content(&cb);
+	free_chunk_content(&expected_cb);
+	free_chunk_content(&tmp);
+	free_chunk_content(&expected_output);
 
 	return ok;
 }

@@ -498,7 +498,7 @@ void append_chunk_bytes(const char *name, chunk_t *lhs,
 	chunk_t new = alloc_chunk(len, name);
 	memcpy(new.ptr, lhs->ptr, lhs->len);
 	memcpy(new.ptr + lhs->len, rhs, sizeof_rhs);
-	freeanychunk(*lhs);
+	free_chunk_content(lhs);
 	*lhs = new;
 }
 
@@ -506,8 +506,8 @@ void append_chunk_symkey(const char *name, chunk_t *lhs, PK11SymKey *rhs)
 {
 	chunk_t rhs_chunk = chunk_from_symkey(name, rhs);
 	chunk_t new = clone_chunk_chunk(*lhs, rhs_chunk, name);
-	freeanychunk(rhs_chunk);
-	freeanychunk(*lhs);
+	free_chunk_content(&rhs_chunk);
+	free_chunk_content(lhs);
 	*lhs = new;
 }
 

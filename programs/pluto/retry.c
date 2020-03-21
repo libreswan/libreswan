@@ -241,7 +241,7 @@ void retransmit_v2_msg(struct state *st)
 			delete_state(pst);
 		} else {
 			release_fragments(st);
-			freeanychunk(st->st_tpacket);
+			free_chunk_content(&st->st_tpacket);
 		}
 	}
 

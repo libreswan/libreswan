@@ -920,7 +920,7 @@ static stf_status v2_record_outbound_fragments(struct state *st,
 	unsigned int len;
 
 	release_fragments(st);
-	freeanychunk(st->st_tpacket);
+	free_chunk_content(&st->st_tpacket);
 
 	/*
 	 * fragment contents:

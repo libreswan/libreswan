@@ -716,7 +716,7 @@ static void release_v2fragments(struct state *st)
 	if (st->st_v2_rfrags != NULL) {
 		for (unsigned i = 0; i < elemsof(st->st_v2_rfrags->frags); i++) {
 			struct v2_ike_rfrag *frag = &st->st_v2_rfrags->frags[i];
-			freeanychunk(frag->cipher);
+			free_chunk_content(&frag->cipher);
 		}
 		pfree(st->st_v2_rfrags);
 		st->st_v2_rfrags = NULL;
@@ -725,7 +725,7 @@ static void release_v2fragments(struct state *st)
 	for (struct v2_ike_tfrag *frag = st->st_v2_tfrags; frag != NULL; ) {
 		struct v2_ike_tfrag *this = frag;
 		frag = this->next;
-		freeanychunk(this->cipher);
+		free_chunk_content(&this->cipher);
 		pfree(this);
 	}
 	st->st_v2_tfrags = NULL;
@@ -1230,17 +1230,17 @@ void delete_state(struct state *st)
 
 	free_generalNames(st->st_requested_ca, TRUE);
 
-	freeanychunk(st->st_firstpacket_me);
-	freeanychunk(st->st_firstpacket_him);
-	freeanychunk(st->st_tpacket);
-	freeanychunk(st->st_rpacket);
-	freeanychunk(st->st_p1isa);
-	freeanychunk(st->st_gi);
-	freeanychunk(st->st_gr);
-	freeanychunk(st->st_ni);
-	freeanychunk(st->st_nr);
-	freeanychunk(st->st_dcookie);
-	freeanychunk(st->st_v2_id_payload.data);
+	free_chunk_content(&st->st_firstpacket_me);
+	free_chunk_content(&st->st_firstpacket_him);
+	free_chunk_content(&st->st_tpacket);
+	free_chunk_content(&st->st_rpacket);
+	free_chunk_content(&st->st_p1isa);
+	free_chunk_content(&st->st_gi);
+	free_chunk_content(&st->st_gr);
+	free_chunk_content(&st->st_ni);
+	free_chunk_content(&st->st_nr);
+	free_chunk_content(&st->st_dcookie);
+	free_chunk_content(&st->st_v2_id_payload.data);
 
 #    define free_any_nss_symkey(p)  release_symkey(__func__, #p, &(p))
 	free_any_nss_symkey(st->st_shared_nss);
@@ -1260,10 +1260,10 @@ void delete_state(struct state *st)
 
 #   undef free_any_nss_symkey
 
-	freeanychunk(st->st_skey_initiator_salt);
-	freeanychunk(st->st_skey_responder_salt);
-	freeanychunk(st->st_skey_chunk_SK_pi);
-	freeanychunk(st->st_skey_chunk_SK_pr);
+	free_chunk_content(&st->st_skey_initiator_salt);
+	free_chunk_content(&st->st_skey_responder_salt);
+	free_chunk_content(&st->st_skey_chunk_SK_pi);
+	free_chunk_content(&st->st_skey_chunk_SK_pr);
 
 #   define wipe_any(p, l) { \
 		if ((p) != NULL) { \
@@ -1286,7 +1286,7 @@ void delete_state(struct state *st)
 	pfreeany(st->st_seen_cfg_banner);
 
 	pfreeany(st->st_active_redirect_gw);
-	freeanychunk(st->st_no_ppk_auth);
+	free_chunk_content(&st->st_no_ppk_auth);
 
 	pfreeany(st->sec_ctx);
 	messup(st);
