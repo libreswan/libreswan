@@ -100,7 +100,7 @@ chunk_t address_as_chunk(ip_address *address)
 	if (afi == NULL) {
 		return empty_chunk;
 	}
-	return chunk(address->bytes, afi->ip_size);
+	return chunk2(address->bytes, afi->ip_size);
 }
 
 /*

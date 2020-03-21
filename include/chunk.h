@@ -42,7 +42,8 @@ typedef struct /*chunk*/ {
 	size_t len;
 } chunk_t;
 
-chunk_t chunk(void *ptr, size_t len);
+chunk_t chunk1(char *ptr);
+chunk_t chunk2(void *ptr, size_t len);
 
 /*
  * Convert writeable THING to a writeable CHUNK.  When compiled with
@@ -55,7 +56,7 @@ chunk_t chunk(void *ptr, size_t len);
  *
  * For a read-only CHUNK like object, see THING_AS_SHUNK().
  */
-#define THING_AS_CHUNK(THING) chunk(&(THING), sizeof(THING))
+#define THING_AS_CHUNK(THING) chunk2(&(THING), sizeof(THING))
 
 #define THING_AS_HUNK(THING) { .ptr = &(THING), .len = sizeof(THING), }
 #define NULL_HUNK { .ptr = NULL, .len = 0, }
@@ -114,8 +115,5 @@ chunk_t chunk_from_hex(const char *hex, const char *name);
 		pfreeany(chp_->ptr);				\
 		*chp_ = EMPTY_CHUNK;	\
 	}
-
-/* replaced by chunk() */
-#define setchunk(ch, addr, size) { (ch).ptr = (addr); (ch).len = (size); }
 
 #endif

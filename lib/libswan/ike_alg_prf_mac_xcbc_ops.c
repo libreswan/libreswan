@@ -94,7 +94,7 @@ static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 	 */
 	chunk_t t = alloc_chunk(prf->prf_key_size, "t");
 	int n = (bytes.len + prf->prf_key_size - 1) / prf->prf_key_size;
-	chunk_t m = chunk(bytes.ptr, prf->prf_key_size);
+	chunk_t m = chunk2(bytes.ptr, prf->prf_key_size);
 	for (int i = 1; i <= n - 1; i++) {
 		for (unsigned j = 0; j < prf->prf_key_size; j++) {
 			t.ptr[j] = m.ptr[j] ^ e.ptr[j];

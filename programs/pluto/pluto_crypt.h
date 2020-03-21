@@ -167,7 +167,7 @@ extern void wire_clone_chunk(wire_arena_t *arena,
  * during the life of the chunk.
  */
 #define setchunk_from_wire(chunk, parent_ptr, wire) \
-	setchunk(chunk, wire_chunk_ptr(&(parent_ptr)->arena, (wire)), (wire)->len)
+	chunk = chunk2(wire_chunk_ptr(&(parent_ptr)->arena, (wire)), (wire)->len)
 
 /* end of wire_chunk definitions */
 

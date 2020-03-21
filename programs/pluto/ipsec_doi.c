@@ -415,17 +415,17 @@ bool extract_peer_id(enum ike_id_type kind, struct id *peer, const pb_stream *id
 
 		/* ??? ought to do some more sanity check, but what? */
 
-		setchunk(peer->name, id_pbs->cur, left);
+		peer->name = chunk2(id_pbs->cur, left);
 		break;
 
 	case ID_KEY_ID:
-		setchunk(peer->name, id_pbs->cur, left);
+		peer->name = chunk2(id_pbs->cur, left);
 		DBG(DBG_PARSING,
 		    DBG_dump_hunk("KEY ID:", peer->name));
 		break;
 
 	case ID_DER_ASN1_DN:
-		setchunk(peer->name, id_pbs->cur, left);
+		peer->name = chunk2(id_pbs->cur, left);
 		DBG(DBG_PARSING,
 		    DBG_dump_hunk("DER ASN1 DN:", peer->name));
 		break;

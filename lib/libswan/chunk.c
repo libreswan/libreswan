@@ -27,7 +27,12 @@
  */
 const chunk_t empty_chunk = { .ptr = NULL, .len = 0 };
 
-chunk_t chunk(void *ptr, size_t len)
+chunk_t chunk1(char *ptr)
+{
+	return (chunk_t) { .ptr = (void*) ptr, .len = strlen(ptr), };
+}
+
+chunk_t chunk2(void *ptr, size_t len)
 {
 	return (chunk_t) { .ptr = ptr, .len = len, };
 }
@@ -35,7 +40,7 @@ chunk_t chunk(void *ptr, size_t len)
 chunk_t alloc_chunk(size_t count, const char *name)
 {
 	uint8_t *ptr = alloc_things(uint8_t, count, name);
-	return chunk(ptr, count);
+	return chunk2(ptr, count);
 }
 
 void free_chunk_content(chunk_t *chunk)
@@ -76,7 +81,7 @@ chunk_t clone_bytes_as_chunk(const void *bytes, size_t sizeof_bytes, const char 
 	 * orig=PTR; size=0 -> new PTR (for instance a shunk with PTR = "")
 	 * orig=PTR; size>0 -> new PTR
 	 */
-	return chunk(clone_bytes(bytes, sizeof_bytes, name), sizeof_bytes);
+	return chunk2(clone_bytes(bytes, sizeof_bytes, name), sizeof_bytes);
 }
 
 bool chunk_eq(chunk_t a, chunk_t b)

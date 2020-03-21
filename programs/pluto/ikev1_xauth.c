@@ -1263,7 +1263,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 	bool gotname = FALSE,
 		gotpassword = FALSE;
 
-	setchunk(name, unknown, sizeof(unknown) - 1);	/* to make diagnostics easier */
+	name = chunk2(unknown, sizeof(unknown) - 1);	/* to make diagnostics easier */
 
 	/* XXX This needs checking with the proper RFC's - ISAKMP_CFG_ACK got added for Cisco interop */
 	switch (md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute.isama_type) {
@@ -1314,7 +1314,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 					"XAUTH User Name contains NUL character: rejected");
 				return STF_FAIL + NO_PROPOSAL_CHOSEN;
 			}
-			setchunk(name, strattr.cur, sz);
+			name = chunk2(strattr.cur, sz);
 			gotname = TRUE;
 			break;
 
@@ -1335,7 +1335,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 					"XAUTH User Password contains NUL character: rejected");
 				return STF_FAIL + NO_PROPOSAL_CHOSEN;
 			}
-			setchunk(password, strattr.cur, sz);
+			password = chunk2(strattr.cur, sz);
 			gotpassword = TRUE;
 			break;
 

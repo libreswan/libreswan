@@ -45,7 +45,7 @@ bool emit_v1_HASH(enum v1_hash_type hash_type, const char *what,
 		libreswan_log("IMPAIR: sending HASH payload with no data for %s", what);
 	} else {
 		/* reserve space for HASH data */
-		fixup->hash_data = chunk(hash_pbs.cur, st->st_oakley.ta_prf->prf_output_size);
+		fixup->hash_data = chunk2(hash_pbs.cur, st->st_oakley.ta_prf->prf_output_size);
 		if (!out_zero(fixup->hash_data.len, &hash_pbs, "HASH DATA"))
 			return false;
 	}
@@ -140,7 +140,7 @@ bool check_v1_HASH(enum v1_hash_type type, const char *what,
 		.len = st->st_oakley.ta_prf->prf_output_size,
 	};
 	struct v1_hash_fixup expected = {
-		.hash_data = chunk(computed_hash.ptr, computed_hash.len),
+		.hash_data = chunk2(computed_hash.ptr, computed_hash.len),
 		.body = received_hash.ptr + received_hash.len,
 		.what = what,
 		.hash_type = type,

@@ -221,7 +221,7 @@ pb_stream open_v2_message(pb_stream *reply,
 static bool emit_v2SK_iv(v2SK_payload_t *sk)
 {
 	/* compute location/size */
-	sk->iv = chunk(sk->pbs.cur, sk->ike->sa.st_oakley.ta_encrypt->wire_iv_size);
+	sk->iv = chunk2(sk->pbs.cur, sk->ike->sa.st_oakley.ta_encrypt->wire_iv_size);
 	/* make space */
 	if (!out_zero(sk->iv.len, &sk->pbs, "IV")) {
 		return false;
@@ -311,7 +311,7 @@ bool close_v2SK_payload(v2SK_payload_t *sk)
 			    sk->pbs.container->name);
 		return false;
 	}
-	sk->integrity = chunk(sk->pbs.cur, integ_size);
+	sk->integrity = chunk2(sk->pbs.cur, integ_size);
 	if (!out_zero(integ_size, &sk->pbs, "length of truncated HMAC/KEY")) {
 		return false;
 	}
@@ -667,7 +667,7 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 	 * instance, sets them to random values.
 	 */
 	DBG(DBG_CRYPT, DBG_log("stripping %u octets as pad", padlen));
-	setchunk(*chunk, enc_start, enc_size - padlen);
+	*chunk = chunk2(enc_start, enc_size - padlen);
 
 	return true;
 }
@@ -779,7 +779,7 @@ bool ikev2_decrypt_msg(struct state *st, struct msg_digest *md)
 			*e_pbs->cur = ~(*e_pbs->cur);
 		}
 
-		chunk_t c = chunk(md->packet_pbs.start,
+		chunk_t c = chunk2(md->packet_pbs.start,
 				  e_pbs->roof - md->packet_pbs.start);
 		ok = ikev2_verify_and_decrypt_sk_payload(ike_sa(st), md, &c,
 							 e_pbs->cur - md->packet_pbs.start);
@@ -998,8 +998,8 @@ static stf_status v2_record_outbound_fragments(struct state *st,
 
 	while (offset < sk->cleartext.len) {
 		passert(*fragp == NULL);
-		chunk_t fragment = chunk(sk->cleartext.ptr + offset,
-					 PMIN(sk->cleartext.len - offset, len));
+		chunk_t fragment = chunk2(sk->cleartext.ptr + offset,
+					  PMIN(sk->cleartext.len - offset, len));
 		stf_status ret = v2_record_outbound_fragment(sk->ike, &hdr, skf_np, fragp,
 							     &fragment, number, nfrags, desc);
 		if (ret != STF_OK) {

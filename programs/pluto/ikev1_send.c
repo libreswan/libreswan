@@ -127,9 +127,9 @@ static bool send_v1_frags(struct state *st, const char *where)
 			    packet_remainder_len == data_len ? " (last)" : ""));
 
 		if (!send_chunks_using_state(st, where,
-					     chunk(frag_prefix,
-						   NSIZEOF_isakmp_hdr + NSIZEOF_isakmp_ikefrag),
-					     chunk(packet_cursor, data_len)))
+					     chunk2(frag_prefix,
+						    NSIZEOF_isakmp_hdr + NSIZEOF_isakmp_ikefrag),
+					     chunk2(packet_cursor, data_len)))
 			return FALSE;
 
 		packet_remainder_len -= data_len;

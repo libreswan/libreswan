@@ -1567,7 +1567,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 					if (require_ddos_cookies()) {
 						dbg("DDOS so not responding to invalid packet");
 					} else {
-						chunk_t data = chunk(md->message_payloads.data,
+						chunk_t data = chunk2(md->message_payloads.data,
 								     md->message_payloads.data_size);
 						send_v2N_response_from_md(md, md->message_payloads.n,
 									  &data);
@@ -2089,8 +2089,8 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 					 * responder mode.
 					 */
 					v2_msgid_start_responder(ike, &ike->sa, md);
-					chunk_t data = chunk(md->encrypted_payloads.data,
-							     md->encrypted_payloads.data_size);
+					chunk_t data = chunk2(md->encrypted_payloads.data,
+							      md->encrypted_payloads.data_size);
 					send_v2N_response_from_state(ike, *mdp,
 								     md->encrypted_payloads.n,
 								     &data);

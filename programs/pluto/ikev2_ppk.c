@@ -161,7 +161,7 @@ stf_status ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 
 			memcpy(&blobs[0], h.ptr, h.len);
 			memcpy(&blobs[h.len], hashval.ptr, hashval.len);
-			setchunk(*no_ppk_auth, blobs, len);
+			*no_ppk_auth = chunk2(blobs, len);
 		}
 		freeanychunk(hashval);
 		return STF_OK;

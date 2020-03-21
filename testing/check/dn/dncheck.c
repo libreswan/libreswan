@@ -183,7 +183,7 @@ static void dn_check(void)
 		      t->nss != NULL ? " NSS: '" : "",
 		      t->nss != NULL ? t->nss : "",
 		      t->nss != NULL ? "'" : "");
-		chunk_t dn = chunk(t->in, t->len); /* shunk2() */
+		chunk_t dn = chunk2(t->in, t->len); /* shunk2() */
 
 		/* convert it to a string */
 

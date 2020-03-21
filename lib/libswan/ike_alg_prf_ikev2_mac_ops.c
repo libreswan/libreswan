@@ -94,8 +94,8 @@ static PK11SymKey *ike_sa_skeyseed(const struct prf_desc *prf_desc,
 	case IKEv2_PRF_AES128_CMAC:
 	case IKEv2_PRF_AES128_XCBC:
 	{
-		chunk_t Ni64 = chunk(Ni.ptr, BYTES_FOR_BITS(64));
-		chunk_t Nr64 = chunk(Nr.ptr, BYTES_FOR_BITS(64));
+		chunk_t Ni64 = chunk2(Ni.ptr, BYTES_FOR_BITS(64));
+		chunk_t Nr64 = chunk2(Nr.ptr, BYTES_FOR_BITS(64));
 		key = clone_chunk_chunk(Ni64, Nr64, "key = Ni|Nr");
 		key_name = "Ni[0:63] | Nr[0:63]";
 		break;

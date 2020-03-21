@@ -838,7 +838,7 @@ err_t atodn(const char *src, chunk_t *dn)
 
 			unsigned char *ns = ppp[-1];	/* name operand start */
 			asn1_t t = op->type == ASN1_PRINTABLESTRING &&
-				!is_printablestring(chunk(ns, dn_ptr - ns)) ?
+				!is_printablestring(chunk2(ns, dn_ptr - ns)) ?
 				ASN1_T61STRING : op->type;
 
 			END_OBJ(t);	/* 3 value */
