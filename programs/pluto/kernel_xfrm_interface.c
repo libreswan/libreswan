@@ -54,6 +54,7 @@ struct nl_ifinfomsg_req {
 	struct nlmsghdr n;
 	struct ifinfomsg i;
 	char data[NETLINK_REQ_DATA_SIZE];
+	size_t maxlen;
 };
 
 struct ifinfo_response {
@@ -151,12 +152,12 @@ static struct nl_ifinfomsg_req init_nl_ifi(uint16_t type, uint16_t flags)
 {
 	struct nl_ifinfomsg_req req;
 	zero(&req);
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
+	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(struct ifinfomsg)));
+	req.maxlen = req.n.nlmsg_len + sizeof(req.data);
 	req.n.nlmsg_flags = flags;
 	req.n.nlmsg_type = type;
 	req.n.nlmsg_pid = getpid();
-	req.i.ifi_family = AF_PACKET; //AA_2019 test this works to create also. works for dump
-
+	req.i.ifi_family = AF_PACKET;
 	return req;
 }
 
@@ -168,14 +169,14 @@ static bool link_add_nl_msg(const char *if_name,
 	char link_type[] = "xfrm";
 	*req = init_nl_ifi(RTM_NEWLINK, NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL);
 
-	nl_addattrstrz(&req->n, sizeof(struct nl_ifinfomsg_req), IFLA_IFNAME, if_name);
+	nl_addattrstrz(&req->n, req->maxlen, IFLA_IFNAME, if_name);
 
 	struct rtattr *linkinfo;
-	linkinfo = nl_addattr_nest(&req->n, sizeof(struct nl_ifinfomsg_req), IFLA_LINKINFO);
-	nl_addattr_l(&req->n, sizeof(struct nl_ifinfomsg_req), IFLA_INFO_KIND, link_type,
+	linkinfo = nl_addattr_nest(&req->n, req->maxlen, IFLA_LINKINFO);
+	nl_addattr_l(&req->n, req->maxlen, IFLA_INFO_KIND, link_type,
 			strlen(link_type));
 
-	struct rtattr *xfrm_link = nl_addattr_nest(&req->n, sizeof(struct nl_ifinfomsg_req), IFLA_INFO_DATA);
+	struct rtattr *xfrm_link = nl_addattr_nest(&req->n, req->maxlen, IFLA_INFO_DATA);
 	/*
 	 * IFLA_XFRM_IF_ID was added to mainline kernel 4.19 linux/if_link.h
 	 * with older kernel headers 'make USE_XFRM_INTERFACE_IFLA_HEADER=true'
