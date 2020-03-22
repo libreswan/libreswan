@@ -2698,7 +2698,6 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	 */
 	enum state_kind from_state = transition->state;
 	struct connection *c = st->st_connection;
-	enum rc_type w;
 	struct ike_sa *ike = ike_sa(st);
 
 	if (from_state != transition->next_state) {
@@ -2708,51 +2707,22 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	}
 
 	/*
-	 * XXX: When should the Message IDs be updated when a response
-	 * is 'valid' (as in integrity checked out ok so wasn't
-	 * forged) but the contents aren't as desired?  For instance a
-	 * rekey response of INVALID_KE.  The old code updates early
-	 * (but redundantly when success), the new code updates late
-	 * (so will get this case wrong).
+	 * Update counters, and if part of the transition, send the
+	 * new message.
 	 */
+
+	dbg("Message ID: updating counters for #%lu", st->st_serialno);
+	v2_msgid_update_recv(ike, st, md);
+	v2_msgid_update_sent(ike, st, md, transition->send);
+	v2_msgid_schedule_next_initiator(ike);
+
 	if (from_state == STATE_V2_REKEY_IKE_R ||
 	    from_state == STATE_V2_REKEY_IKE_I) {
-		/*
-		 * XXX: need to update ST's IKE SA's msgids before ST
-		 * itself becomes its own IKE SA (making the operation
-		 * futile).
-		 */
-		dbg("Message ID: updating counters for #%lu before emancipating",
-		    st->st_serialno);
-		v2_msgid_update_recv(ike_sa(st), st, md);
-		v2_msgid_update_sent(ike_sa(st), st, md, transition->send);
-		/*
-		 * XXX: should this be merged with the code sending
-		 * with transitions message?  And do this before ST
-		 * turns into its own IKE.
-		 */
-		v2_msgid_schedule_next_initiator(ike);
 		ikev2_child_emancipate(ike, pexpect_child_sa(st),
 				       transition);
 	} else  {
-		/*
-		 * XXX: need to change state before updating Message
-		 * IDs as that is what the update function expects
-		 * (this is not a good reason).
-		 */
 		change_state(st, transition->next_state);
-		dbg("Message ID: updating counters for #%lu after switching state ...",
-		    st->st_serialno);
-		v2_msgid_update_recv(ike_sa(st), st, md);
-		v2_msgid_update_sent(ike_sa(st), st, md, transition->send);
-		/*
-		 * XXX: should this be merged with the code sending
-		 * this transitions message?
-		 */
-		v2_msgid_schedule_next_initiator(ike);
 	}
-
-	w = RC_NEW_V2_STATE + st->st_state->kind;
 
 	/*
 	 * tell whack and log of progress; successful state
@@ -2773,6 +2743,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		pstat_sa_established(st);
 	}
 
+	enum rc_type w;
 	void (*log_details)(struct lswlog *buf, struct state *st);
 	struct state *log_state;
 	if (IS_CHILD_SA_ESTABLISHED(st)) {
@@ -2788,12 +2759,15 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		pexpect(st != &ike->sa);
 		log_details = lswlog_ike_sa_established;
 		log_state = &ike->sa;
+		w = RC_NEW_V2_STATE + st->st_state->kind;
 	} else if (st->st_state->kind == STATE_PARENT_R1) {
 		log_details = lswlog_ike_sa_established;
 		log_state = st;
+		w = RC_NEW_V2_STATE + st->st_state->kind;
 	} else {
 		log_details = NULL;
 		log_state = st;
+		w = RC_NEW_V2_STATE + st->st_state->kind;
 	}
 
 	/*
@@ -2828,9 +2802,10 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		 * Adjust NAT but not for initial state (initial
 		 * outbound message?).
 		 *
-		 * ??? why should STATE_PARENT_I1 be excluded?  XXX:
-		 * and why, for that state, does ikev2_natd_lookup()
-		 * call it.
+		 * ??? why should STATE_PARENT_I1 be excluded?
+		 *
+		 * XXX: and why, for that state, does
+		 * ikev2_natd_lookup() call it.
 		 *
 		 * XXX: STATE_PARENT_I1 is special in that, per the
 		 * RFC, it must switch the local and remote ports to
