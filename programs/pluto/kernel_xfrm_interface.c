@@ -42,6 +42,7 @@
 #include "server.h" /* for struct iface_port */
 #include "kernel_xfrm_interface.h"
 #include "kernel_netlink_reply.h"
+#include "kernel_netlink_query.h"
 #include "iface.h"
 
 #define IPSEC1_XFRM_IF_ID (1U)
@@ -80,43 +81,6 @@ struct ifinfo_response {
 static int xfrm_interface_support;
 static bool stale_checked;
 static uint32_t xfrm_interface_id = IPSEC1_XFRM_IF_ID; /* XFRMA_IF_ID && XFRMA_SET_MARK */
-
-static int nl_send_query(struct nlmsghdr *req, int protocol)
-{
-	size_t len;
-	ssize_t r;
-	int nl_fd = socket(AF_NETLINK, SOCK_DGRAM, protocol);
-
-	if (nl_fd < 0) {
-		LOG_ERRNO(errno, "socket() in nl_send_query() protocol %d", protocol);
-		return nl_fd;
-	}
-
-	if (fcntl(nl_fd, F_SETFL, O_NONBLOCK) != 0) {
-		LOG_ERRNO(errno, "fcntl(O_NONBLOCK) in nl_send_query() protocol %d", protocol);
-		close(nl_fd);
-		return -1;
-	}
-
-	/* req->nlmsg_seq = ++seq; for repeated quries to same socket */
-	len = req->nlmsg_len;
-	do {
-		r = write(nl_fd, req, len);
-	} while (r < 0 && errno == EINTR);
-	if (r < 0) {
-		LOG_ERRNO(errno, "netlink nl_send_query() write");
-		close(nl_fd);
-		return -2;
-	} else if ((size_t)r != len) {
-		loglog(RC_LOG_SERIOUS,
-			"ERROR: netlink write() message truncated: %zd instead of %zu",
-			r, len);
-		close(nl_fd);
-		return -3;
-	}
-
-	return nl_fd;
-}
 
 static bool nl_query_small_resp(struct nlmsghdr *req, int protocol, struct nlm_resp *rsp)
 {
