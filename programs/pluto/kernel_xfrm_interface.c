@@ -48,7 +48,7 @@
 #define IFINFO_REPLY_BUFFER_SIZE (32768 + NL_BUFMARGIN)
 
 
-static struct pluto_xfrmi *pluto_xfrm_interfaces = NULL;
+static struct pluto_xfrmi *pluto_xfrm_interfaces;
 
 struct nl_ifinfomsg_req {
 	struct nlmsghdr n;
@@ -162,7 +162,7 @@ static struct nl_ifinfomsg_req init_nl_ifi(uint16_t type, uint16_t flags)
 }
 
 static bool link_add_nl_msg(const char *if_name,
-                const char *dev_name, const uint32_t if_id,
+		const char *dev_name, const uint32_t if_id,
 		struct nl_ifinfomsg_req *req)
 {
 
@@ -184,7 +184,7 @@ static bool link_add_nl_msg(const char *if_name,
 	nl_addattr32(&req->n, 1024, IFLA_XFRM_IF_ID, if_id);
 
 	if (dev_name != NULL) {
-		uint32_t dev_link_id; /* e.g link id of the interace, eth0 */
+		uint32_t dev_link_id; /* e.g link id of the interface, eth0 */
 		dev_link_id = if_nametoindex(dev_name);
 		if (dev_link_id != 0) {
 			nl_addattr32(&req->n, 1024, IFLA_XFRM_LINK, dev_link_id);
@@ -215,8 +215,7 @@ bool ip_link_set_up(const char *if_name)
 	}
 
 	struct nlm_resp nl_rsp;
-	if (nl_query_small_resp(&req.n, NETLINK_ROUTE, &nl_rsp))
-	{
+	if (nl_query_small_resp(&req.n, NETLINK_ROUTE, &nl_rsp)) {
 		libreswan_log_rc(RC_FATAL, "ERROR:ip_link_set_up() netlink query dev %s", if_name);
 
 	} else {
@@ -241,8 +240,7 @@ static bool ip_link_del(const char *if_name)
 	}
 
 	struct nlm_resp nl_rsp;
-	if (nl_query_small_resp(&req.n, NETLINK_ROUTE, &nl_rsp))
-	{
+	if (nl_query_small_resp(&req.n, NETLINK_ROUTE, &nl_rsp)) {
 		libreswan_log_rc(RC_FATAL, "ERROR: ip_link_del() deleting xfrmi interface %s failed", if_name);
 
 	} else {
@@ -261,22 +259,20 @@ static bool ip_link_add_xfrmi(const char *if_name, const char *dev_name, const u
 	dbg("add xfrm interface %s@%s id=%u", if_name, dev_name, if_id);
 	struct nl_ifinfomsg_req req;
 	zero(&req);
-	if(link_add_nl_msg(if_name, dev_name, if_id, &req))
-	{
+	if (link_add_nl_msg(if_name, dev_name, if_id, &req)) {
 		libreswan_log_rc(RC_FATAL, "ERROR: nl_query_small_resp() creating netlink message failed");
 		return true;
 	}
 
 	struct nlm_resp nl_rsp;
-	if (nl_query_small_resp(&req.n, NETLINK_ROUTE, &nl_rsp))
-	{
+	if (nl_query_small_resp(&req.n, NETLINK_ROUTE, &nl_rsp)) {
 		libreswan_log_rc(RC_FATAL, "ERROR: nl_query_small_resp() netlink query failed");
 
 	} else {
 		/* netlink query succeeded. check NL response */
 		if (nl_rsp.n.nlmsg_type == NLMSG_ERROR &&
 				nl_rsp.u.e.error == -ENOPROTOOPT) {
-			libreswan_log_rc(RC_FATAL,"CONFIG_XFRM_INTERFACE fail got ENOPROTOOPT");
+			libreswan_log_rc(RC_FATAL, "CONFIG_XFRM_INTERFACE fail got ENOPROTOOPT");
 
 			return true;
 		}
@@ -310,13 +306,11 @@ static bool parse_xfrm_linkinfo_data(struct rtattr *attribute, char *if_name,
 			RTA_OK(nested_attrib, attribute->rta_len);
 			nested_attrib = RTA_NEXT(nested_attrib,
 				attribute->rta_len)) {
-		if (nested_attrib->rta_type == IFLA_XFRM_LINK) {
+		if (nested_attrib->rta_type == IFLA_XFRM_LINK)
 			dev_if_id_attr = nested_attrib;
-		}
 
-		if (nested_attrib->rta_type == IFLA_XFRM_IF_ID) {
+		if (nested_attrib->rta_type == IFLA_XFRM_IF_ID)
 			if_id_attr = nested_attrib;
-		}
 	}
 
 	if (dev_if_id_attr != NULL) {
@@ -367,9 +361,8 @@ static int parse_link_info_xfrm(struct rtattr *attribute, char *if_name, struct 
 			nested_attrib = RTA_NEXT(nested_attrib, len)) {
 		if (nested_attrib->rta_type == IFLA_INFO_KIND) {
 			char *kind_str = RTA_DATA(nested_attrib);
-			if (!strcmp("xfrm", kind_str)) {
+			if (!strcmp("xfrm", kind_str))
 				ifi_rsp->match.kind = true;
-			}
 		}
 
 		if (nested_attrib->rta_type == IFLA_INFO_DATA)
@@ -462,8 +455,6 @@ static void process_nlmsgs(char *msgbuf,  ssize_t len, struct ifinfo_response *i
 			break;
 		}
 	}
-
-	return;
 }
 
 static bool find_xfrmi_interface(char *if_name, uint32_t xfrm_if_id)
@@ -480,7 +471,7 @@ static bool find_xfrmi_interface(char *if_name, uint32_t xfrm_if_id)
 	int nl_fd = nl_send_query(&req.n, NETLINK_ROUTE);
 
 	if (nl_fd < 0) {
-		loglog(RC_LOG_SERIOUS, "ERROR write to netlink socket faild");
+		loglog(RC_LOG_SERIOUS, "ERROR write to netlink socket failed");
 		return true;
 	}
 
@@ -547,26 +538,26 @@ static err_t ipsec1_support_test(const char *if_name, const char *dev_name)
 			/*
 			 * faled. assume kernel support is not enabled.
 			 * ip link add ipsec1 type xfrm xfrmi-id 6 dev eth0
-			 * can be quiet when kernel has no CONFIG_XFRM_INTERFACE=no 
+			 * can be quiet when kernel has no CONFIG_XFRM_INTERFACE=no
 			 */
 			xfrm_interface_support = -1;
 			return "missing CONFIG_XFRM_INTERFACE support in kernel";
-		} else {
-			dbg("xfrmi supported success creating %s@%s",
-					if_name, dev_name);
-			ip_link_del(if_name); /* ignore return value??? */
-			xfrm_interface_support = 1; /* success */
 		}
+		dbg("xfrmi supported success creating %s@%s",
+				if_name, dev_name);
+		ip_link_del(if_name); /* ignore return value??? */
+		xfrm_interface_support = 1; /* success */
 	}
 
 	return NULL;
 }
 
-/* 
- * format the name of xfrmi interface. To maintain consistancy 
+/*
+ * format the name of xfrmi interface. To maintain consistency
  * on longer names won't be truncated, instead passert.
  */
-static char *fmt_xfrmi_ifname(uint32_t if_id) {
+static char *fmt_xfrmi_ifname(uint32_t if_id)
+{
 	char *if_name = alloc_things(char, IFNAMSIZ, "xfrmi name");
 	int n  = snprintf(if_name, IFNAMSIZ, XFRMI_DEV_FORMAT, if_id);
 	passert(n < IFNAMSIZ);
@@ -579,13 +570,13 @@ err_t xfrm_iface_supported(void)
 
 	if (xfrm_interface_support == 0) {
 		char *if_name = fmt_xfrmi_ifname(IPSEC1_XFRM_IF_ID);
-		char lo[]  ="lo";
+		char lo[]  = "lo";
 
 		if (dev_exist_check(lo, true /* ignore error */)) {
 			/* possibly no need to pancic may be get smarter one day */
 			xfrm_interface_support = -1;
 			pfreeany(if_name);
-			return ("Could not create find real device needed to test xfrmi support");
+			return "Could not create find real device needed to test xfrmi support";
 		}
 
 		unsigned int if_id = if_nametoindex(if_name);
@@ -593,7 +584,7 @@ err_t xfrm_iface_supported(void)
 		if (if_id == 0 && (e == ENXIO || e == ENODEV)) {
 			err = ipsec1_support_test(if_name, lo);
 		} else if (if_id == 0) {
-			LOG_ERRNO(e, "FATAL unexpeted error in xfrm_iface_supported() while checking device %s",
+			LOG_ERRNO(e, "FATAL unexpected error in xfrm_iface_supported() while checking device %s",
 					if_name);
 			xfrm_interface_support = -1;
 			err = "can not decide xfrmi support. assumed no.";
@@ -631,16 +622,10 @@ static struct pluto_xfrmi *find_pluto_xfrmi_interface(uint32_t if_id)
 	return ret;
 }
 
-/*
-static char *find_exisiting_xfrmi_index(uint32_t if_id) {
-
-}
-*/
-
 static void new_pluto_xfrmi(uint32_t if_id, bool shared, char *name, struct connection *c)
 {
 	struct pluto_xfrmi **head = &pluto_xfrm_interfaces;
-	/* create a new xfrmi it is not added to sytem yet */
+	/* create a new xfrmi it is not added to system yet */
 	struct pluto_xfrmi *p = alloc_thing(struct pluto_xfrmi, "new xfrmi interface");
 	p->if_id = if_id;
 	p->name = name;
@@ -702,8 +687,7 @@ bool add_xfrmi(struct connection *c)
 					c->interface->ip_dev->id_rname,
 					c->xfrmi->if_id))
 			return true;
-		else
-			c->xfrmi->pluto_added = true;
+		c->xfrmi->pluto_added = true;
 	} else { /* device exist match name, type xfrmi, and xfrm_if_id */
 		if (find_xfrmi_interface(c->xfrmi->name, c->xfrmi->if_id)) {
 			/* found wrong device abort adding */
@@ -737,9 +721,8 @@ static void free_xfrmi(struct pluto_xfrmi *xfrmi)
 			pfreeany(xfrmi->name);
 			pfreeany(xfrmi);
 			return;
-		} else {
-			dbg("p=%p xfrmi=%p", p , xfrmi);
 		}
+		dbg("p=%p xfrmi=%p", p, xfrmi);
 	}
 	dbg("p=%p xfrmi=%s if_id=%u not found in the list", xfrmi,
 			xfrmi->name, xfrmi->if_id);
@@ -767,25 +750,23 @@ void stale_xfrmi_interfaces(void)
 		loglog(RC_LOG_SERIOUS, "found an unexpected interface %s if_id=%u From previous pluto run?",
 				if_name, if_id);
 		return; /* ERROR */
+	}
+	if (errno == ENXIO || errno == ENODEV) {
+		dbg("no stale xfrmi interface '%s' found", if_name);
 	} else {
-		if (errno == ENXIO || errno == ENODEV) {
-			dbg("no stale xfrmi interface '%s' found", if_name);
-		} else {
-			LOG_ERRNO(errno, "failed stale_xfrmi_interfaces() call if_nametoindex('%s')",if_name);
-			return;
-		}
+		LOG_ERRNO(errno, "failed stale_xfrmi_interfaces() call if_nametoindex('%s')", if_name);
+		return;
 	}
 }
 
 void free_xfrmi_ipsec1(void)
 {
 	char if_name[IFNAMSIZ];
-	snprintf(if_name, sizeof(if_name), XFRMI_DEV_FORMAT, IPSEC1_XFRM_IF_ID); /* gloabl ipsec1 */
+	snprintf(if_name, sizeof(if_name), XFRMI_DEV_FORMAT, IPSEC1_XFRM_IF_ID); /* global ipsec1 */
 	unsigned int if_id = if_nametoindex(if_name);
 
-	if (if_id > 0) {
+	if (if_id > 0)
 		ip_link_del(if_name); /* ignore return value??? */
-	}
 }
 
 void reference_xfrmi(struct connection *c)
@@ -804,7 +785,6 @@ void unreference_xfrmi(struct connection *c)
 			c->xfrmi, c->xfrmi->name,
 			c->xfrmi->if_id, c->xfrmi->refcount,
 			c->xfrmi->refcount == 0 ? "delete interface." : ".");
-	if (c->xfrmi->refcount == 0) {
+	if (c->xfrmi->refcount == 0)
 		free_xfrmi(c->xfrmi);
-	}
 }
