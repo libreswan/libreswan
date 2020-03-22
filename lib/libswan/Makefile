@@ -62,7 +62,7 @@ OBJS += reqid.o
 
 ifeq ($(USE_NETKEY),true)
 OBJS += addr_lookup.o
-OBJS += kernel_xfrm_reply.o
+OBJS += kernel_netlink_reply.o
 ifeq ($(USE_XFRM_INTERFACE), true)
  OBJS += netlink_attrib.o
 endif

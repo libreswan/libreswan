@@ -21,7 +21,7 @@
 #include <sys/socket.h>
 
 #include "lswalloc.h"
-#include "kernel_xfrm_reply.h"
+#include "kernel_netlink_reply.h"
 
 ssize_t netlink_read_reply(int sock, char **pbuf, size_t bufsize,
 				  unsigned int seqnum, __u32 pid)

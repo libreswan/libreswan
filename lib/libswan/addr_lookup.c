@@ -28,7 +28,7 @@
 #include "constants.h"
 #include "lswalloc.h"
 #include "ipsecconf/confread.h"
-#include "kernel_xfrm_reply.h"
+#include "kernel_netlink_reply.h"
 #include "addr_lookup.h"
 #ifdef USE_DNSSEC
 # include "dnssec.h"

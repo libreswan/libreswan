@@ -41,7 +41,7 @@
 #include "connections.h"
 #include "server.h" /* for struct iface_port */
 #include "kernel_xfrm_interface.h"
-#include "kernel_xfrm_reply.h"
+#include "kernel_netlink_reply.h"
 #include "iface.h"
 
 #define IPSEC1_XFRM_IF_ID (1U)
