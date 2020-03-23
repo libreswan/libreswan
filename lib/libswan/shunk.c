@@ -140,33 +140,129 @@ bool shunk_strcaseeat(shunk_t *shunk, const char *dinner)
 }
 
 /*
- * Convert the entire shunk to an unsigned.
+ * Convert INPUT to an unsigned.
  *
- * Since strtou() expects a NUL terminated string (which a SHUNK is
- * not) fudge one up.  XXX: must be code to do this somewhere?
+ * If OUTPUT is NULL, INPUT must only contain the numeric value, else
+ * OUTPUT is set to any trailing characters.
+ *
+ * If CEILING is non-ZERO, *dest must be less then CEILING.
  */
-bool shunk_tou(shunk_t shunk, unsigned *dest, int base)
+err_t shunk_to_uint(shunk_t input, shunk_t *output, unsigned base,
+		    uintmax_t *dest, uintmax_t ceiling)
 {
-	if (shunk.len == 0) {
-		return false;
+	*dest = 0;
+	if (output != NULL) {
+		*output = (shunk_t) NULL_HUNK;
 	}
-	/* copy SHUNK into a NUL terminated STRING */
-	char string[64] = "";
-	if (shunk.len + 1 >= sizeof(string)) {
-		/* no-space for trailing NUL */
-		return false;
+
+	if (input.len == 0) {
+		return "empty string";
 	}
-	strncpy(string, shunk.ptr, shunk.len);
-	string[shunk.len] = '\0'; /* NUL terminate */
-	/* convert the string, expect entire shunk to be consumed */
-	char *end = NULL;
-	unsigned long ul = strtoul(string, &end, base);
-	if (string + shunk.len > end) {
-		return false;
+
+	/*
+	 * Detect standard prefixes.
+	 *
+	 * MIMIC BSD - only auto detect the prefix when the number has
+	 * at least one valid digit.
+	 */
+	if (base == 0) {
+		if (hunk_strcasestarteq(input, "0x") &&
+		    hunk_char_isxdigit(input, 2)) {
+			shunk_strcaseeat(&input, "0x");
+			base = 16;
+		} else if (hunk_strcasestarteq(input, "0b") &&
+			   hunk_char_isbdigit(input, 2)) {
+			shunk_strcaseeat(&input, "0b");
+			base = 2;
+		} else if (hunk_char(input, 0) == '0') {
+			/* so 0... is interpreted as 0 below */
+			base = 8;
+		} else {
+			base = 10;
+		}
+#if 0 /* don't mimic this part of strtoul()? */
+	} else if (base == 8) {
+		shunk_strcaseeat(&input, "0");
+	} else if (base == 16) {
+		shunk_strcaseeat(&input, "0x");
+#endif
 	}
-	if (ul > UINT_MAX) {
-		return false;
+
+	/* something to convert */
+	shunk_t cursor = input;
+
+	/* something */
+	uintmax_t u = 0;
+	while (hunk_char_isprint(cursor, 0)) {
+		unsigned char c = hunk_char(cursor, 0);
+		/* convert to a digit; <0 will overflow */
+		unsigned d;
+		if (isdigit(c)) {
+			d = c - '0';
+		} else if (c >= 'a') {
+			d = c - 'a' + 10;
+		} else if (c >= 'A') {
+			d = c - 'A' + 10;
+		} else {
+			break;
+		}
+		/* valid? */
+		if (d >= base) {
+			break;
+		}
+		/* will multiplying U by BASE overflow? */
+		const uintmax_t rlimit = UINTMAX_MAX / base;
+		if (u > rlimit) {
+			return "unsigned-long overflow";
+		}
+		u = u * base;
+		/* will adding D to U*BASE overflow? */
+		const uintmax_t dlimit = UINTMAX_MAX - u;
+		if (d > dlimit) {
+			return "unsigned-long overflow";
+		}
+		u = u + d;
+		cursor = shunk_slice(cursor, 1, cursor.len);
 	}
-	*dest = (unsigned)ul;
-	return true;
+
+	if (cursor.len == input.len) {
+		/* nothing valid */
+		switch (base) {
+		case 8:
+			return "first octal digit invalid";
+		case 10:
+			return "first decimal digit invalid";
+		case 16:
+			return "first hex digit invalid";
+		default:
+			return "first digit invalid";
+		}
+	}
+
+	/* everyting consumed? */
+	if (output == NULL) {
+		if (cursor.len > 0) {
+			switch (base) {
+			case 8:
+				return "non-octal digit in number";
+			case 10:
+				return "non-decimal digit in number";
+			case 16:
+				return "non-hex digit in number";
+			default:
+				return "non-digit in number";
+			}
+		}
+	}
+
+	/* in range? */
+	if (ceiling > 0 && u > ceiling) {
+		return "too large";
+	}
+
+	*dest = u;
+	if (output != NULL) {
+		*output = cursor;
+	}
+	return NULL;
 }

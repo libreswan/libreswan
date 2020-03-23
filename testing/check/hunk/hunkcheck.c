@@ -22,6 +22,7 @@
 #include "lswcdefs.h"		/* for elemsof() */
 #include "shunk.h"
 #include "chunk.h"
+#include "where.h"
 
 unsigned fails;
 
@@ -63,7 +64,7 @@ unsigned fails;
 		continue;					\
 	}
 
-static void hunk_eq_check(void)
+static void check_hunk_eq(void)
 {
 	static const struct test {
 		const char *l;
@@ -71,27 +72,34 @@ static void hunk_eq_check(void)
 		bool empty;
 		bool eq;
 		bool caseeq;
+		bool starteq;
+		bool casestarteq;
 		bool thingeq;
 	} tests[] = {
 		/*
 		 * Like strings, NULL and EMPTY ("") shunks are
 		 * considered different.
 		 */
-		{ NULL, NULL, .empty = false, .eq = true, .caseeq = true, .thingeq = false, },
-		{ NULL, "", .empty = false, .eq = false, .caseeq = false, .thingeq = false, },
-		{ "", NULL, .empty = true, .eq = false, .caseeq = false, .thingeq = false, },
-		{ "", "", .empty = true, .eq = true, .caseeq = true, .thingeq = false, },
+		{ NULL, NULL, .empty = false, .eq = true,  .caseeq = true,  .starteq = true,  .casestarteq = true,  .thingeq = false, },
+		{ NULL, "",   .empty = false, .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, },
+		{ "", NULL,   .empty = true,  .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, },
+		{ "", "",     .empty = true,  .eq = true,  .caseeq = true,  .starteq = true,  .casestarteq = true,  .thingeq = false, },
 
-		{ "", "a", .empty = true, .eq = false, .caseeq = false, .thingeq = false, },
-		{ "a", "", .empty = false, .eq = false, .caseeq = false, .thingeq = false, },
+		{ "", "a",    .empty = true,  .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, },
+		{ "a", "",    .empty = false, .eq = false, .caseeq = false, .starteq = true,  .casestarteq = true,  .thingeq = false, },
 
-		{ "a", "a", .empty = false, .eq = true, .caseeq = true, .thingeq = false, },
-		{ "a", "A", .empty = false, .eq = false, .caseeq = true, .thingeq = false, },
-		{ "A", "a", .empty = false, .eq = false, .caseeq = true, .thingeq = false, },
-		{ "a", "b", .empty = false, .eq = false, .caseeq = false, .thingeq = false, },
+		{ "a", "a",   .empty = false, .eq = true,  .caseeq = true,  .starteq = true,  .casestarteq = true,  .thingeq = false, },
+		{ "a", "A",   .empty = false, .eq = false, .caseeq = true,  .starteq = false, .casestarteq = true,  .thingeq = false, },
+		{ "A", "a",   .empty = false, .eq = false, .caseeq = true,  .starteq = false, .casestarteq = true,  .thingeq = false, },
+		{ "a", "b",   .empty = false, .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, },
 
-		{ "a", "aa", .empty = false, .eq = false, .caseeq = false, .thingeq = false, },
-		{ "aa", "a", .empty = false, .eq = false, .caseeq = false, .thingeq = false, },
+		{ "a", "aa",  .empty = false, .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, },
+		{ "A", "aa",  .empty = false, .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, },
+		{ "ab", "a",  .empty = false, .eq = false, .caseeq = false, .starteq = true,  .casestarteq = true,  .thingeq = false, },
+		{ "AB", "a",  .empty = false, .eq = false, .caseeq = false, .starteq = false, .casestarteq = true,  .thingeq = false, },
+		{ "ab", "A",  .empty = false, .eq = false, .caseeq = false, .starteq = false, .casestarteq = true,  .thingeq = false, },
+		{ "ab", "b",  .empty = false, .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, },
+
 		{ "thing", "a", .empty = false, .eq = false, .caseeq = false, .thingeq = true, },
 	};
 
@@ -105,53 +113,59 @@ static void hunk_eq_check(void)
 		shunk_t l = shunk1(t->l);
 		shunk_t r = shunk1(t->r);
 
-		bool t_null = hunk_eq(l, null_shunk);
-		if ((t->l == NULL) != t_null) {
-			FAIL_LR("hunk_eq(l, null_shunk) returned %s, expecting %s",
-				bool_str(t_null), bool_str(t->l == NULL));
+		{
+			bool t_null = hunk_eq(l, null_shunk);
+			if ((t->l == NULL) != t_null) {
+				FAIL_LR("hunk_eq(l, null_shunk) returned %s, expecting %s",
+					bool_str(t_null), bool_str(t->l == NULL));
+			}
 		}
 
-		bool t_empty = hunk_eq(l, empty_shunk);
-		if (t->empty != t_empty) {
-			FAIL_LR("hunk_eq(l, empty_shunk) returned %s, expecting %s",
-				bool_str(t_empty), bool_str(t->empty));
+		{
+			bool t_empty = hunk_eq(l, empty_shunk);
+			if (t->empty != t_empty) {
+				FAIL_LR("hunk_eq(l, empty_shunk) returned %s, expecting %s",
+					bool_str(t_empty), bool_str(t->empty));
+			}
 		}
 
-		bool t_eq = hunk_eq(l, r);
-		if (t_eq != t->eq) {
-			FAIL_LR("hunk_eq() returned %s, expecting %s",
-				bool_str(t_eq), bool_str(t->eq));
+#define HUNK_EQ(OP)							\
+		{							\
+			bool eq = hunk_##OP(l, r);			\
+			if (eq != t->OP) {				\
+				FAIL_LR("hunk_"#OP"() returned %s, expecting %s", \
+					bool_str(eq), bool_str(t->OP));	\
+			}						\
+		}							\
+		{							\
+			bool eq = hunk_str##OP(l, t->r);		\
+			if (eq != t->OP) {				\
+				FAIL_LR("hunk_str"#OP"() returned %s, expecting %s", \
+					bool_str(eq), bool_str(t->OP));	\
+			}						\
+		}
+		HUNK_EQ(eq);
+		HUNK_EQ(caseeq);
+		HUNK_EQ(starteq);
+		HUNK_EQ(casestarteq);
+#undef HUNK_EQ
+
+		{
+			bool t_memeq = hunk_memeq(l, r.ptr, r.len);
+			if (t_memeq != t->eq) {
+				FAIL_LR("hunk_memeq() returned %s, expecting %s",
+					bool_str(t_memeq), bool_str(t->eq));
+			}
 		}
 
-		bool t_memeq = hunk_memeq(l, r.ptr, r.len);
-		if (t_memeq != t->eq) {
-			FAIL_LR("hunk_memeq() returned %s, expecting %s",
-				bool_str(t_memeq), bool_str(t->eq));
+		{
+			bool t_thing = hunk_thingeq(l, thing);
+			if (t_thing != t->thingeq) {
+				FAIL_LR("hunk_thingeq() returned %s, expecting %s",
+					bool_str(t_thing), bool_str(t->thingeq));
+			}
 		}
 
-		bool t_streq = hunk_streq(l, t->r);
-		if (t_streq != t->eq) {
-			FAIL_LR("hunk_streq() returned %s, expecting %s",
-				bool_str(t_streq), bool_str(t->eq));
-		}
-
-		bool t_caseeq = hunk_caseeq(l, r);
-		if (t_caseeq != t->caseeq) {
-			FAIL_LR("shunk_caseeq() returned %s, expecting %s",
-				bool_str(t_caseeq), bool_str(t->caseeq));
-		}
-
-		bool t_strcaseeq = hunk_strcaseeq(l, t->r);
-		if (t_strcaseeq != t->caseeq) {
-			FAIL_LR("shunk_strcaseeq() returned %s, expecting %s",
-				bool_str(t_strcaseeq), bool_str(t->caseeq));
-		}
-
-		bool t_thing = hunk_thingeq(l, thing);
-		if (t_thing != t->thingeq) {
-			FAIL_LR("hunk_thingeq() returned %s, expecting %s",
-				bool_str(t_thing), bool_str(t->thingeq));
-		}
 	}
 }
 
@@ -322,35 +336,7 @@ static void shunk_clone_check(void)
 	}
 }
 
-static void hunk_startswith_check(void)
-{
-	static const struct test {
-		const char *s;
-		const char *t;
-		bool ok;
-	} tests[] = {
-		/* empty always same */
-		{ "", "", true, },
-		{ "a", "", true, },
-		/* one maybe same */
-		{ "", "a", false, },
-		{ "a", "a", true, },
-		{ "ab", "a", true, },
-	};
-
-	for (size_t ti = 0; ti < elemsof(tests); ti++) {
-		const struct test *t = &tests[ti];
-		PRINT_S(stdout, "startswith(%s)", t->t);
-		shunk_t s = shunk1(t->s);
-		bool ok = hunk_startswith(s, t->t);
-		if (ok != t->ok) {
-			FAIL_S("hunk_startswith(%s) returned %s, expecting %s",
-			       t->t, bool_str(ok), bool_str(t->ok));
-		}
-	}
-}
-
-static void hunk_char_check(void)
+static void check_hunk_char(void)
 {
 	static const struct test {
 		const char *s;
@@ -378,54 +364,219 @@ static void hunk_char_check(void)
 	}
 }
 
-static void shunk_tou_check(void)
+static void check_hunk_char_is(void)
 {
 	static const struct test {
 		const char *s;
-		unsigned base;
-		unsigned u;
-		bool ok;
+		bool print;
+		bool digit;
+		bool bdigit;
+		bool odigit;
+		bool xdigit;
 	} tests[] = {
-		/* default */
-		{ "", 0, 0, false, },
-		{ "1", 0, 1, true, },
-		{ "12", 0, 12, true, },
-		{ "12a", 0, 0, false, },
-		/* 16 */
-		{ "", 16, 0x0, false, },
-		{ "1", 16, 0x1, true, },
-		{ "12", 16, 0x12, true, },
-		{ "12a", 16, 0x12a, true, },
-		{ "12x", 16, 0, false, },
+		{ "\037", },
+		{ " ", .print = true, },
+		{ "/", .print = true, },
+		{ "0", .print = true, .xdigit = true, .digit = true, .odigit = true, .bdigit = true, },
+		{ "1", .print = true, .xdigit = true, .digit = true, .odigit = true, .bdigit = true, },
+		{ "2", .print = true, .xdigit = true, .digit = true, .odigit = true, },
+		{ "3", .print = true, .xdigit = true, .digit = true, .odigit = true, },
+		{ "4", .print = true, .xdigit = true, .digit = true, .odigit = true, },
+		{ "5", .print = true, .xdigit = true, .digit = true, .odigit = true, },
+		{ "6", .print = true, .xdigit = true, .digit = true, .odigit = true, },
+		{ "7", .print = true, .xdigit = true, .digit = true, .odigit = true, },
+		{ "8", .print = true, .xdigit = true, .digit = true, },
+		{ "9", .print = true, .xdigit = true, .digit = true, },
+		{ ":", .print = true, },
+		{ "a", .print = true, .xdigit = true, },
+		{ "b", .print = true, .xdigit = true, },
+		{ "c", .print = true, .xdigit = true, },
+		{ "d", .print = true, .xdigit = true, },
+		{ "e", .print = true, .xdigit = true, },
+		{ "f", .print = true, .xdigit = true, },
+		{ "g", .print = true, },
+		{ "A", .print = true, .xdigit = true, },
+		{ "B", .print = true, .xdigit = true, },
+		{ "C", .print = true, .xdigit = true, },
+		{ "D", .print = true, .xdigit = true, },
+		{ "E", .print = true, .xdigit = true, },
+		{ "F", .print = true, .xdigit = true, },
+		{ "G", .print = true, },
+		{ "\177", },
+		{ "", },
 	};
+
+	/* this string matches above */
+	const char string[] = "\037 /0123456789:abcdefgABCDEFG\177";
+	shunk_t s = shunk2(string, sizeof(string)); /* include NUL */
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		PRINT_S(stdout, "");
-		shunk_t s = shunk1(t->s);
-		unsigned u;
-		bool ok = shunk_tou(s, &u, t->base);
-		if (ok != t->ok) {
-			FAIL_S("shunk_tou() returned '%s', expecting '%s'",
-			       bool_str(ok), bool_str(t->ok));
+
+		char c = hunk_char(s, ti);
+		if (c != t->s[0]) {
+			FAIL_S("hunk_char('"PRI_SHUNK"', %zu) returned '%c' (%u), expecting '%c' (%u)",
+			       pri_shunk(s), ti, c, c, t->s[0], t->s[0]);
 		}
-		if (ok && u != t->u) {
-			FAIL_S("shunk_tou() returned %u, expecting %u",
-			       u, t->u);
+
+#define HUNK_IS(OP)							\
+		{							\
+			bool is = hunk_char_is##OP(s, ti);			\
+			if (is != t->OP) {				\
+				FAIL_S("hunk_char_is"#OP"() returned %s, expecting %s",	\
+				       bool_str(is), bool_str(t->OP));	\
+			}						\
+		}
+		HUNK_IS(print);
+		HUNK_IS(bdigit);
+		HUNK_IS(odigit);
+		HUNK_IS(digit);
+		HUNK_IS(xdigit);
+	}
+}
+
+static void check_shunk_to_uint(void)
+{
+	static const struct test {
+		const char *s;
+		unsigned base;
+		uintmax_t ceiling;
+		uintmax_t u;
+		const char *o;
+	} tests[] = {
+
+		/* empty */
+		{ "",      0, 0, 0, NULL, },
+		{ "",      2, 0, 0, NULL, },
+		{ "",      8, 0, 0, NULL, },
+		{ "",     10, 0, 0, NULL, },
+		{ "",     16, 0, 0x0, NULL, },
+
+		/* '0' - 1 */
+		{ "/",     0, 0, 0, NULL, },
+		{ "/",     2, 0, 0, NULL, },
+		{ "/",     8, 0, 0, NULL, },
+		{ "/",    10, 0, 0, NULL, },
+		{ "/",    16, 0, 0x0, NULL, },
+
+		/* base */
+		{ ":",     0, 0, 0, NULL, },
+		{ "2",     2, 0, 0, NULL, },
+		{ "8",     8, 0, 0, NULL, },
+		{ ":",     10, 0, 0, NULL, },
+		{ "g",     16, 0, 0x0, NULL, },
+
+		/* 0 because prefix isn't valid */
+		{ "0:",    0, 0, 0, ":", },
+		{ "08",    0, 0, 0, "8", },
+		{ "0b",    0, 0, 0, "b", },
+		{ "0B2",   0, 0, 0, "B2", },
+		{ "0x",    0, 0, 0, "x", },
+		{ "0Xg",   0, 0, 0, "Xg", },
+
+		/* 0 */
+		{ "0",     0, 0, 0, "", },
+		{ "0",     2, 0, 00, "", },
+		{ "0",     8, 0, 00, "", },
+		{ "0",    10, 0, 0, "", },
+		{ "0",    16, 0, 0x0, "", },
+
+		/* 1 */
+		{ "1",     0, 0, 1, "", },
+		{ "1",     2, 0, 1, "", },
+		{ "1",     8, 0, 1, "", },
+		{ "1",    10, 0, 1, "", },
+		{ "1",    16, 0, 1, "", },
+
+		/* 1 .. base */
+		{ "123456789:", 0, 0, UINTMAX_C(123456789), ":", },
+		{ "12",   2, 0, UINTMAX_C(1), "2", },
+		{ "12345678",   8, 0, UINTMAX_C(01234567), "8", },
+		{ "123456789:",  10, 0, UINTMAX_C(123456789), ":", },
+		{ "123456789abcdefg",   16, 0, UINTMAX_C(0x123456789abcdef), "g", },
+		{ "123456789ABCDEFG",   16, 0, UINTMAX_C(0X123456789ABCDEF), "G", },
+
+		/* base-1 .. / */
+		{ "9876543210/", 0, 0, UINTMAX_C(9876543210), "/", },
+		{ "10/",   2, 0, UINTMAX_C(2), "/", },
+		{ "76543210/",   8, 0, UINTMAX_C(076543210), "/", },
+		{ "9876543210/",  10, 0, UINTMAX_C(9876543210), "/", },
+		{ "fedcba9876543210/", 16, 0, UINTMAX_C(0xfedcba9876543210), "/", },
+		{ "FEDCBA9876543210/", 16, 0, UINTMAX_C(0XFEDCBA9876543210), "/", },
+
+		/* auto select - stopchar */
+		{ "0b012",    0, 0, 1, "2", },
+		{ "012345678",    0, 0, UINTMAX_C(01234567), "8", },
+		{ "0x0123f56789abcdefg",    0, 0, UINTMAX_C(0x0123f56789abcdef), "g", },
+
+		/* limits */
+		{ "1",     0, 1, 1, "", },
+		{ "2",     0, 1, 0, NULL, },
+		{ "18446744073709551615", 0, UINTMAX_MAX, UINTMAX_MAX, "", },
+		/* overflow */
+		{ "0177777777777777777777", 0, 0, UINTMAX_MAX/8, "", },
+		{ "01777777777777777777777", 0, 0, UINTMAX_MAX, "", },
+		{ "02000000000000000000000", 0, 0, 0, NULL, },
+		{ "1844674407370955161", 0, 0, UINTMAX_MAX/10, "", },
+		{ "18446744073709551615", 0, 0, UINTMAX_MAX, "", },
+		{ "18446744073709551616", 0, 0, 0, NULL, },
+		{ "0xfffffffffffffff", 0, 0, UINTMAX_MAX/16, "", },
+		{ "0xffffffffffffffff", 0, 0, UINTMAX_MAX, "", },
+		{ "0x10000000000000000", 0, 0, 0, NULL, },
+	};
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINT_S(stdout, " base=%u unsigned=%ju out=%s",
+			t->base, t->u, t->o == NULL ? "<invalid>" : t->o);
+		uintmax_t u;
+		err_t err;
+
+		shunk_t t_o = shunk1(t->o);
+		shunk_t t_s = shunk1(t->s);
+
+		/* must use entire buffer */
+		err = shunk_to_uint(t_s, NULL, t->base, &u, t->ceiling);
+		bool t_ok = t->o != NULL && t->o[0] == '\0';
+		if ((err == NULL) != t_ok) {
+			FAIL_S("shunk_to_uint(cursor==NULL) returned '%s', expecting '%s'",
+			       err, bool_str(t_ok));
+		}
+		if (u != (t_ok ? t->u : 0)) {
+			FAIL_S("shunk_to_uint(cursor==NULL) returned %ju (0x%jx), expecting %ju (0x%jx)",
+			       u, u, t->u, t->u);
+		}
+
+		/* remainder left in O */
+		shunk_t o;
+		err = shunk_to_uint(t_s, &o, t->base, &u, t->ceiling);
+		bool t_o_ok = t->o != NULL;
+		if ((err == NULL) != t_o_ok) {
+			FAIL_S("shunk_to_uint(&cursor) returned '%s', expecting '%s'",
+			       err, bool_str(t_o_ok));
+		}
+		if (u != t->u) {
+			FAIL_S("shunk_to_uint(&cursor) returned %ju (0x%jx), expecting %ju (0x%jx)",
+			       u, u, t->u, t->u);
+		}
+		if (!hunk_eq(o, t_o)) {
+			FAIL_S("shunk_to_uint(&cursor) returned '"PRI_SHUNK"', expecting '"PRI_SHUNK"'",
+			       pri_shunk(o), pri_shunk(t_o));
 		}
 	}
 }
 
 int main(int argc UNUSED, char *argv[] UNUSED)
 {
-	hunk_eq_check();
+	check_hunk_eq();
 	shunk_slice_check();
 	shunk_token_check();
 	shunk_span_check();
 	shunk_clone_check();
-	hunk_startswith_check();
-	hunk_char_check();
-	shunk_tou_check();
+	check_hunk_char();
+	check_hunk_char_is();
+	check_shunk_to_uint();
 
 	if (fails > 0) {
 		fprintf(stderr, "TOTAL FAILURES: %d\n", fails);

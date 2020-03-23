@@ -18,9 +18,10 @@
 
 #include <stdbool.h>
 #include <stddef.h>	/* size_t */
-#include <stdint.h>	/* uint8_t */
+#include <stdint.h>	/* uint8_t uintmax_t */
 
 #include "hunk.h"
+#include "err.h"
 
 /*
  * Think of shunk_t and shunk_t as opposite solutions to the same
@@ -119,7 +120,8 @@ bool shunk_strcaseeat(shunk_t *lhs, const char *string);
 /*
  * Number conversion.  like strtoul() et.al.
  */
-bool shunk_tou(shunk_t lhs, unsigned *value, int base);
+err_t shunk_to_uint(shunk_t input, shunk_t *cursor, unsigned base,
+		    uintmax_t *value, uintmax_t ceiling);
 
 /*
  * To print, use: printf(PRI_SHUNK, pri_shunk(shunk));
