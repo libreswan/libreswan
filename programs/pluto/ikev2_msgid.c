@@ -568,9 +568,20 @@ static void initiate_next(struct state *st, void *context UNUSED)
 		}
 		dbg_v2_msgid(ike, st, "resuming SA using IKE SA (unack %jd)", unack);
 		so_serial_t old_state = push_cur_state(st);
-		struct msg_digest *md = unsuspend_md(st);
-		complete_v2_state_transition(st, md, pending.cb(ike, st, md));
-		release_any_md(&md);
+
+		if (IS_CHILD_SA_ESTABLISHED(st)) {
+			/*
+			 * this is a continuation of delete message.
+			 * shortcut complete_v2_state_transition()
+			 * to call complete_v2_state_transition, need more work
+			 */
+			pending.cb(ike, st, NULL);
+			v2_msgid_schedule_next_initiator(ike);
+		} else {
+			struct msg_digest *md = unsuspend_md(st);
+			complete_v2_state_transition(st, md, pending.cb(ike, st, md));
+			release_any_md(&md);
+		}
 		pop_cur_state(old_state);
 	}
 }

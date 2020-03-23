@@ -450,9 +450,8 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 				} else {
 					/* note: no md->st to clear */
 					passert(st != &ike->sa);
-					delete_state(st);
+					schedule_next_child_delete(st, ike);
 					st = NULL;
-					v2_expire_unused_ike_sa(ike);
 				}
 			}
 			break;

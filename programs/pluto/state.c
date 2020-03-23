@@ -928,6 +928,40 @@ void discard_state(struct state **st)
 	*st = NULL;
 }
 
+static v2_msgid_pending_cb ikev2_send_delete_continue;
+
+static stf_status ikev2_send_delete_continue(struct ike_sa *ike UNUSED,
+		struct state *st,
+		struct msg_digest *md UNUSED)
+{
+	if (send_delete_check(st)) {
+		send_delete(st);
+		st->st_suppress_del_notify = TRUE;
+		dbg("%s Marked IPSEC state #%lu to suppress sending delete notify", __func__, st->st_serialno);
+	}
+
+	delete_state(st);
+	return STF_OK;
+}
+
+void schedule_next_child_delete(struct state *st, struct ike_sa *ike)
+{
+	if (st->st_ike_version == IKEv2 &&
+			send_delete_check(st)) {
+		/* pre delete check for slot to send delete message */
+		struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
+		intmax_t unack = (initiator->sent - initiator->recv);
+		if (unack >= ike->sa.st_connection->ike_window) {
+			dbg_v2_msgid(ike, st, "next initiator (send delete) blocked by outstanding response (unack %jd). add delete to Q", unack);
+			v2_msgid_queue_initiator(ike, st, ikev2_send_delete_continue);
+			return;
+		}
+	}
+	delete_state(st);
+	st = NULL;
+	v2_expire_unused_ike_sa(ike);
+}
+
 /* delete a state object */
 void delete_state(struct state *st)
 {
