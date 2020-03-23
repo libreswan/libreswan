@@ -38,6 +38,7 @@
 #include "pluto_stats.h"
 #include "demux.h"	/* for struct msg_digest */
 #include "rnd.h"
+#include "log.h"
 
 bool send_recorded_v2_ike_msg(struct state *st, const char *where)
 {
@@ -427,12 +428,11 @@ void send_v2N_response_from_md(struct msg_digest *md,
 		    exchange_type);
 	}
 
-	endpoint_buf b;
-	libreswan_log("responding to %s (%d) message (Message ID %u) from %s with unencrypted notification %s",
-		      exchange_name, exchange_type,
-		      md->hdr.isa_msgid,
-		      str_sensitive_endpoint(&md->sender, &b),
-		      notify_name);
+	plog_md(md,
+		"responding to %s (%d) message (Message ID %u) with unencrypted notification %s",
+		exchange_name, exchange_type,
+		md->hdr.isa_msgid,
+		notify_name);
 
 	/*
 	 * Normally an unencrypted response is only valid for
@@ -456,7 +456,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 					  md /* response */,
 					  exchange_type);
 	if (!pbs_ok(&rbody)) {
-		PEXPECT_LOG("error building header for unencrypted %s %s notification with message ID %u",
+		LOG_PEXPECT("error building header for unencrypted %s %s notification with message ID %u",
 			    exchange_name, notify_name, md->hdr.isa_msgid);
 		return;
 	}
@@ -464,7 +464,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	/* build and add v2N payload to the packet */
 	chunk_t nhunk = ndata == NULL ? empty_chunk : *ndata;
 	if (!emit_v2N_hunk(ntype, nhunk, &rbody)) {
-		PEXPECT_LOG("error building unencrypted %s %s notification with message ID %u",
+		LOG_PEXPECT("error building unencrypted %s %s notification with message ID %u",
 			    exchange_name, notify_name, md->hdr.isa_msgid);
 		return;
 	}
