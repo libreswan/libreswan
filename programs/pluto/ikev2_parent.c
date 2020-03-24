@@ -658,14 +658,13 @@ bool emit_v2KE(chunk_t *g, const struct dh_desc *group,
 	return TRUE;
 }
 
-void ikev2_parent_outI1_continue(struct state *st,
-				 struct msg_digest **unused_mdp UNUSED,
+void ikev2_parent_outI1_continue(struct state *st, struct msg_digest *unused_md,
 				 struct pluto_crypto_req *r)
 {
 	dbg("%s() for #%lu %s",
 	     __func__, st->st_serialno, st->st_state->name);
 
-	pexpect(*unused_mdp == NULL);
+	pexpect(unused_md == NULL);
 
  	struct ike_sa *ike = pexpect_ike_sa(st);
  	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
@@ -965,13 +964,12 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 }
 
 static void ikev2_parent_inI1outR1_continue(struct state *st,
-					    struct msg_digest **mdp,
+					    struct msg_digest *md,
 					    struct pluto_crypto_req *r)
 {
 	dbg("%s() for #%lu %s: calculated ke+nonce, sending R1",
 	    __func__, st->st_serialno, st->st_state->name);
 
-	struct msg_digest *md = *mdp;
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	pexpect(md->st == NULL || md->st == st);
 
@@ -1674,13 +1672,12 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 }
 
 static void ikev2_parent_inR1outI2_continue(struct state *st,
-					    struct msg_digest **mdp,
+					    struct msg_digest *md,
 					    struct pluto_crypto_req *r)
 {
 	dbg("%s() for #%lu %s: g^{xy} calculated, sending I2",
 	    __func__, st->st_serialno, st->st_state->name);
 
-	struct msg_digest *md = *mdp;
 	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
 	pexpect(md->st == NULL || md->st == st);
 
@@ -2453,14 +2450,13 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 static xauth_callback_t ikev2_pam_continue;	/* type assertion */
 
 static void ikev2_pam_continue(struct state *st,
-			       struct msg_digest **mdp,
+			       struct msg_digest *md,
 			       const char *name UNUSED,
 			       bool success)
 {
 	dbg("%s() for #%lu %s",
 	     __func__, st->st_serialno, st->st_state->name);
 
-	struct msg_digest *md = *mdp;
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	pexpect(md->st == NULL || md->st == st);
 
@@ -2562,13 +2558,12 @@ stf_status ikev2_ike_sa_process_auth_request_no_skeyid(struct ike_sa *ike,
 }
 
 static void ikev2_ike_sa_process_auth_request_no_skeyid_continue(struct state *st,
-								 struct msg_digest **mdp,
+								 struct msg_digest *md,
 								 struct pluto_crypto_req *r)
 {
 	dbg("%s() for #%lu %s: calculating g^{xy}, sending R2",
 	    __func__, st->st_serialno, st->st_state->name);
 
-	struct msg_digest *md = *mdp;
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	pexpect(md->st == NULL || md->st == st);
 
@@ -2592,7 +2587,7 @@ static void ikev2_ike_sa_process_auth_request_no_skeyid_continue(struct state *s
 		return;
 	}
 
-	ikev2_process_state_packet(pexpect_ike_sa(st), st, mdp);
+	ikev2_process_state_packet(pexpect_ike_sa(st), st, md);
 }
 
 static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
@@ -4178,13 +4173,12 @@ stf_status ikev2_child_ike_inR(struct ike_sa *ike,
 }
 
 static void ikev2_child_ike_inR_continue(struct state *st,
-					 struct msg_digest **mdp,
+					 struct msg_digest *md,
 					 struct pluto_crypto_req *r)
 {
 	dbg("%s() for #%lu %s",
 	     __func__, st->st_serialno, st->st_state->name);
 
-	struct msg_digest *md = *mdp;
 	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
 	pexpect(md->st == NULL || md->st == st);
 
@@ -4278,13 +4272,12 @@ stf_status ikev2_child_inR(struct ike_sa *unused_ike UNUSED,
 }
 
 static stf_status ikev2_child_inR_continue(struct state *st,
-					   struct msg_digest **mdp)
+					   struct msg_digest *md)
 {
 	dbg("%s() for #%lu %s",
 	     __func__, st->st_serialno, st->st_state->name);
 
 	/* initiator getting back an answer */
-	struct msg_digest *md = *mdp;
 	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
 	pexpect(md->st == NULL || md->st == st);
 
@@ -4410,14 +4403,13 @@ stf_status ikev2_child_inIoutR(struct ike_sa *unused_ike UNUSED,
 static dh_cb ikev2_child_inIoutR_continue_continue;
 
 static void ikev2_child_inIoutR_continue(struct state *st,
-					 struct msg_digest **mdp,
+					 struct msg_digest *md,
 					 struct pluto_crypto_req *r)
 {
 	dbg("%s() for #%lu %s",
 	     __func__, st->st_serialno, st->st_state->name);
 
 	/* responder processing request */
-	struct msg_digest *md = *mdp;
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	pexpect(md->st == NULL || md->st == st);
 
@@ -4461,14 +4453,13 @@ static void ikev2_child_inIoutR_continue(struct state *st,
 }
 
 static stf_status ikev2_child_inIoutR_continue_continue(struct state *st,
-							struct msg_digest **mdp)
+							struct msg_digest *md)
 {
 
 	dbg("%s() for #%lu %s",
 	     __func__, st->st_serialno, st->st_state->name);
 
 	/* 'child' responding to request */
-	struct msg_digest *md = *mdp;
 	passert(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	pexpect(md->st == NULL || md->st == st);
 
@@ -4598,11 +4589,11 @@ stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
 }
 
 static void ikev2_child_ike_inIoutR_continue_continue(struct state *st,
-						      struct msg_digest **mdp,
+						      struct msg_digest *md,
 						      struct pluto_crypto_req *r);
 
 static void ikev2_child_ike_inIoutR_continue(struct state *st,
-					     struct msg_digest **mdp,
+					     struct msg_digest *md,
 					     struct pluto_crypto_req *r)
 {
 	dbg("%s() for #%lu %s",
@@ -4610,7 +4601,6 @@ static void ikev2_child_ike_inIoutR_continue(struct state *st,
 
 	/* responder processing request */
 
-	struct msg_digest *md = *mdp;
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	pexpect(md->st == NULL || md->st == st);
 
@@ -4649,14 +4639,13 @@ static void ikev2_child_ike_inIoutR_continue(struct state *st,
 }
 
 static void ikev2_child_ike_inIoutR_continue_continue(struct state *st,
-						      struct msg_digest **mdp,
+						      struct msg_digest *md,
 						      struct pluto_crypto_req *r)
 {
 	dbg("%s() for #%lu %s",
 	     __func__, st->st_serialno, st->st_state->name);
 
 	/* 'child' responding to request */
-	struct msg_digest *md = *mdp;
 	passert(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	pexpect(md->st == NULL || md->st == st);
 
@@ -5741,14 +5730,14 @@ void ikev2_child_outI(struct state *st)
 static v2_msgid_pending_cb ikev2_child_outI_continue_2;
 
 static void ikev2_child_outI_continue(struct state *st,
-				      struct msg_digest **unused_mdp UNUSED,
+				      struct msg_digest *unused_md,
 				      struct pluto_crypto_req *r)
 {
 	dbg("%s() for #%lu %s",
 	     __func__, st->st_serialno, st->st_state->name);
 
 	/* child initiating exchange */
-	pexpect(*unused_mdp == NULL);
+	pexpect(unused_md == NULL);
 
 	struct ike_sa *ike = ike_sa(st);
 	struct child_sa *child = pexpect_child_sa(st);

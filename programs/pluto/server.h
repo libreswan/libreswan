@@ -108,7 +108,7 @@ extern struct event_base *get_pluto_event_base(void);
  * XXX: resume_cb should return stf_status, but doing this is a mess.
  */
 
-typedef stf_status resume_cb(struct state *st, struct msg_digest **mdp,
+typedef stf_status resume_cb(struct state *st, struct msg_digest *md,
 			     void *context);
 void schedule_resume(const char *name, so_serial_t serialno,
 		     resume_cb *callback, void *context);
@@ -144,7 +144,7 @@ void schedule_callback(const char *name, so_serial_t serialno,
  * waitpid().
  */
 
-typedef void pluto_fork_cb(struct state *st, struct msg_digest **mdp,
+typedef void pluto_fork_cb(struct state *st, struct msg_digest *mdp,
 			   int status, void *context);
 extern int pluto_fork(const char *name, so_serial_t serialno,
 		      int op(void *context),

@@ -78,7 +78,7 @@
 
 
 static void v2_dispatch(struct ike_sa *ike, struct state *st,
-			struct msg_digest **mdp,
+			struct msg_digest *md,
 			const struct state_v2_microcode *transition);
 
 /*
@@ -1399,12 +1399,10 @@ static bool is_duplicate_response(struct ike_sa *ike,
  * IKE SPIs group .....
  */
 
-static void ike_process_packet(struct msg_digest **mdp, struct ike_sa *ike);
+static void ike_process_packet(struct msg_digest *mdp, struct ike_sa *ike);
 
-void ikev2_process_packet(struct msg_digest **mdp)
+void ikev2_process_packet(struct msg_digest *md)
 {
-	struct msg_digest *md = *mdp;
-
 	/* Look for an state that matches the various things we know:
 	 *
 	 * 1) exchange type received?
@@ -1749,7 +1747,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 	 */
 	statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
 	so_serial_t old = push_cur_state(&ike->sa);
-	ike_process_packet(mdp, ike);
+	ike_process_packet(md, ike);
 	pop_cur_state(old);
 	statetime_stop(&start, "%s()", __func__);
 }
@@ -1760,10 +1758,8 @@ void ikev2_process_packet(struct msg_digest **mdp)
  * be sent to.
  */
 
-static void ike_process_packet(struct msg_digest **mdp, struct ike_sa *ike)
+static void ike_process_packet(struct msg_digest *md, struct ike_sa *ike)
 {
-	struct msg_digest *md = *mdp;
-
 	/*
 	 * Deal with duplicate messages and busy states.
 	 */
@@ -1859,7 +1855,7 @@ static void ike_process_packet(struct msg_digest **mdp, struct ike_sa *ike)
 		}
 	}
 
-	ikev2_process_state_packet(ike, st, mdp);
+	ikev2_process_state_packet(ike, st, md);
 }
 
 /*
@@ -1872,9 +1868,8 @@ static void ike_process_packet(struct msg_digest **mdp, struct ike_sa *ike)
  */
 
 void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
-				struct msg_digest **mdp)
+				struct msg_digest *md)
 {
-	struct msg_digest *md = *mdp;
 	passert(ike != NULL);
 	passert(st != NULL);
 
@@ -1896,7 +1891,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
 
-	const enum isakmp_xchg_types ix = (*mdp)->hdr.isa_xchg;
+	const enum isakmp_xchg_types ix = md->hdr.isa_xchg;
 
 	/*
 	 * XXX: Unlike find_v2_state_transition(), the below scans
@@ -2268,14 +2263,13 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		st = &child->sa;
 	}
 
-	v2_dispatch(ike, st, mdp, svm);
+	v2_dispatch(ike, st, md, svm);
 }
 
 static void v2_dispatch(struct ike_sa *ike, struct state *st,
-			struct msg_digest **mdp,
+			struct msg_digest *md,
 			const struct state_v2_microcode *svm)
 {
-	struct msg_digest *md = *mdp;
 	md->st = st;
 	md->svm = svm;
 

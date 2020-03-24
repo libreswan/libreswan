@@ -24,7 +24,7 @@ void ikev1_init_out_pbs_echo_hdr(struct msg_digest *md, bool enc,
 extern void complete_v1_state_transition(struct msg_digest *md,
 					 stf_status result);
 
-extern void process_v1_packet(struct msg_digest **mdp);
+extern void process_v1_packet(struct msg_digest *md);
 
 /*
  * IKEv1 functions: that ikev1_main.c provides and ikev1_aggr.c
@@ -32,7 +32,7 @@ extern void process_v1_packet(struct msg_digest **mdp);
  */
 
 /* continue with encrypted packet */
-extern void process_packet_tail(struct msg_digest **mdp);
+extern void process_packet_tail(struct msg_digest *md);
 
 extern bool ikev1_justship_nonce(chunk_t *n, pb_stream *outs,
 				 const char *name);

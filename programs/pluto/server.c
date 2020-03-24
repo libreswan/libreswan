@@ -590,7 +590,7 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 		enum ike_version ike_version = st->st_ike_version;
 
 		/* run the callback */
-		stf_status status = e->callback(st, &md, e->context);
+		stf_status status = e->callback(st, md, e->context);
 		/* XXX: this may trash ST and MD */
 
 		if (status == STF_SKIP_COMPLETE_STATE_TRANSITION) {
@@ -943,7 +943,7 @@ int pluto_fork(const char *name, so_serial_t serialno,
 static pluto_fork_cb addconn_exited; /* type assertion */
 
 static void addconn_exited(struct state *null_st UNUSED,
-			   struct msg_digest **null_mdp UNUSED,
+			   struct msg_digest *null_mdp UNUSED,
 			   int status, void *context UNUSED)
 {
 	DBG(DBG_CONTROLMORE,
@@ -1041,7 +1041,7 @@ static void childhandler_cb(void)
 							pid_entry->name);
 					}
 					statetime_t start = statetime_start(st);
-					pid_entry->callback(st, &md, status,
+					pid_entry->callback(st, md, status,
 							    pid_entry->context);
 					statetime_stop(&start, "callback for %s",
 						       pid_entry->name);

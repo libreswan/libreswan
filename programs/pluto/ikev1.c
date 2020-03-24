@@ -1233,9 +1233,8 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
  * **mdp should not be freed.  So the caller should be prepared for
  * *mdp being set to NULL.
  */
-void process_v1_packet(struct msg_digest **mdp)
+void process_v1_packet(struct msg_digest *md)
 {
-	struct msg_digest *md = *mdp;
 	const struct state_v1_microcode *smc;
 	bool new_iv_set = FALSE;
 	struct state *st = NULL;
@@ -1785,8 +1784,6 @@ void process_v1_packet(struct msg_digest **mdp)
 		}
 
 		/* Don't release the md, taken care of by the ike_frag code */
-		/* ??? I'm not sure -- DHR */
-		*mdp = NULL;
 		return;
 	}
 
@@ -1881,7 +1878,7 @@ void process_v1_packet(struct msg_digest **mdp)
 		return;
 	}
 
-	process_packet_tail(mdp);
+	process_packet_tail(md);
 	/* our caller will release_any_md(mdp); */
 }
 
@@ -1891,9 +1888,8 @@ void process_v1_packet(struct msg_digest **mdp)
  * **mdp should not be freed.  So the caller should be prepared for
  * *mdp being set to NULL.
  */
-void process_packet_tail(struct msg_digest **mdp)
+void process_packet_tail(struct msg_digest *md)
 {
-	struct msg_digest *md = *mdp;
 	struct state *st = md->st;
 	enum state_kind from_state = md->v1_from_state;
 	const struct state_v1_microcode *smc = md->smc;

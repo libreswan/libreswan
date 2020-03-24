@@ -610,7 +610,7 @@ void delete_cryptographic_continuation(struct state *st)
  *
  */
 static stf_status handle_helper_answer(struct state *st,
-				       struct msg_digest **mdp,
+				       struct msg_digest *md,
 				       void *arg)
 {
 	struct pluto_crypto_req_cont *cn = arg;
@@ -655,7 +655,7 @@ static stf_status handle_helper_answer(struct state *st,
 		cpu_usage_add(st->st_timing.helper_usage, cn->pcrc_time_used);
 		dbg("wall clock time not billed");
 		/* run the callback */
-		status = h->completed_cb(st, mdp, &cn->pcrc_task);
+		status = h->completed_cb(st, md, &cn->pcrc_task);
 		pexpect(cn->pcrc_task == NULL); /* did your job */
 	}
 	pexpect(cn->pcrc_task == NULL); /* cross check - re-check */
@@ -666,13 +666,13 @@ static stf_status handle_helper_answer(struct state *st,
 }
 
 stf_status pcr_completed(struct state *st,
-			 struct msg_digest **mdp,
+			 struct msg_digest *md,
 			 struct crypto_task **task)
 {
 	struct pluto_crypto_req_cont *cn = (*task)->cn;
 	passert(cn->pcrc_func != NULL);
 	pexpect(cn->pcrc_pcr.pcr_type != pcr_crypto);
-	(*cn->pcrc_func)(st, mdp, &cn->pcrc_pcr);
+	(*cn->pcrc_func)(st, md, &cn->pcrc_pcr);
 	pfree(*task);
 	*task = NULL;
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;

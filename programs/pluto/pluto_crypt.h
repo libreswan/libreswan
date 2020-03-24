@@ -62,7 +62,7 @@ typedef void crypto_compute_fn(struct logger *logger,
 			       struct crypto_task *task,
 			       int my_thread);
 typedef stf_status crypto_completed_cb(struct state *st,
-				       struct msg_digest **mdp,
+				       struct msg_digest *md,
 				       struct crypto_task **task);
 typedef void crypto_cancelled_cb(struct crypto_task **task);
 
@@ -322,7 +322,7 @@ struct pluto_crypto_req_cont;	/* forward reference */
  * See also the comments that prefix send_crypto_helper_request().
  */
 
-typedef void crypto_req_cont_func(struct state *st, struct msg_digest **mdp,
+typedef void crypto_req_cont_func(struct state *st, struct msg_digest *md,
 				  struct pluto_crypto_req *r);
 
 /* struct pluto_crypto_req_cont allocators */

@@ -750,11 +750,9 @@ static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
 static crypto_req_cont_func main_inR1_outI2_continue;	/* type assertion */
 
 static void main_inR1_outI2_continue(struct state *st,
-				     struct msg_digest **mdp,
+				     struct msg_digest *md,
 				     struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = *mdp;
-
 	DBG(DBG_CONTROL,
 		DBG_log("main_inR1_outI2_continue for #%lu: calculated ke+nonce, sending I2",
 			st->st_serialno));
@@ -928,11 +926,9 @@ static stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_di
 static crypto_req_cont_func main_inI2_outR2_continue1;	/* type assertion */
 
 static void main_inI2_outR2_continue1(struct state *st,
-				      struct msg_digest **mdp,
+				      struct msg_digest *md,
 				      struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = *mdp;
-
 	DBG(DBG_CONTROL,
 		DBG_log("main_inI2_outR2_continue for #%lu: calculated ke+nonce, sending R2",
 			st->st_serialno));
@@ -976,7 +972,7 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 static crypto_req_cont_func main_inI2_outR2_continue2;	/* type assertion */
 
 static void main_inI2_outR2_continue2(struct state *st,
-				      struct msg_digest **mdp,
+				      struct msg_digest *md,
 				      struct pluto_crypto_req *r)
 {
 	DBG(DBG_CONTROL,
@@ -993,8 +989,8 @@ static void main_inI2_outR2_continue2(struct state *st,
 	 * process it now.
 	 * Otherwise, the result awaits the packet.
 	 */
-	if (*mdp != NULL) {
-		process_packet_tail(mdp);
+	if (md != NULL) {
+		process_packet_tail(md);
 	}
 	reset_cur_state();
 }
@@ -1371,11 +1367,9 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 static crypto_req_cont_func main_inR2_outI3_continue;	/* type assertion */
 
 static void main_inR2_outI3_continue(struct state *st,
-				     struct msg_digest **mdp,
+				     struct msg_digest *md,
 				     struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = *mdp;
-
 	DBG(DBG_CONTROL,
 		DBG_log("main_inR2_outI3_cryptotail for #%lu: calculated DH, sending R1",
 			st->st_serialno));

@@ -60,7 +60,7 @@ void free_dh_secret(struct dh_secret **secret);
  * Compute dh storing result in .st_shared_nss.
  */
 typedef stf_status (dh_cb)(struct state *st,
-			   struct msg_digest **md);
+			   struct msg_digest *md);
 
 extern void submit_dh(struct state *st, chunk_t remote_ke,
 		      dh_cb *callback, const char *name);

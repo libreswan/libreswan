@@ -105,7 +105,7 @@ static void cert_decode_computer(struct logger *logger,
 }
 
 static stf_status cert_decode_completed(struct state *st,
-					struct msg_digest **mdp,
+					struct msg_digest *md,
 					struct crypto_task **task)
 {
 	struct ike_sa *ike = ike_sa(st);
@@ -204,7 +204,7 @@ static stf_status cert_decode_completed(struct state *st,
                 */
 	}
 
-	return cb(st, *mdp);
+	return cb(st, md);
 }
 
 static void cert_decode_cancelled(struct crypto_task **task)

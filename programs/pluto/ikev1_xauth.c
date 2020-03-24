@@ -1087,7 +1087,7 @@ static bool do_file_authentication(struct state *st, const char *name,
 static xauth_callback_t ikev1_xauth_callback;	/* type assertion */
 
 static void ikev1_xauth_callback(struct state *st,
-				 struct msg_digest **mdp UNUSED,
+				 struct msg_digest *md UNUSED,
 				 const char *name, bool results)
 {
 	/*
@@ -1139,7 +1139,7 @@ struct xauth_immediate_context {
 
 static resume_cb xauth_immediate_callback;
 static stf_status xauth_immediate_callback(struct state *st,
-					   struct msg_digest **mdp,
+					   struct msg_digest *md,
 					   void *arg)
 {
 	struct xauth_immediate_context *xic = (struct xauth_immediate_context *)arg;
@@ -1148,7 +1148,7 @@ static stf_status xauth_immediate_callback(struct state *st,
 			      xic->serialno, xic->name);
 	} else {
 		/* ikev1_xauth_callback() will log result */
-		ikev1_xauth_callback(st, mdp, xic->name, xic->success);
+		ikev1_xauth_callback(st, md, xic->name, xic->success);
 	}
 	pfree(xic->name);
 	pfree(xic);

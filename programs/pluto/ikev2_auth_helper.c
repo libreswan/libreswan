@@ -102,10 +102,10 @@ static void v2_auth_signature_computer(struct logger *logger, struct crypto_task
 }
 
 static stf_status v2_auth_signature_completed(struct state *st,
-						 struct msg_digest **mdp,
+						 struct msg_digest *md,
 						 struct crypto_task **task)
 {
-	stf_status status = (*task)->cb(pexpect_ike_sa(st), *mdp, &(*task)->signature);
+	stf_status status = (*task)->cb(pexpect_ike_sa(st), md, &(*task)->signature);
 	pfreeany(*task);
 	return status;
 }

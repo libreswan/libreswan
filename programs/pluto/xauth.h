@@ -21,7 +21,7 @@ struct msg_digest;
 /* ??? needlessly used even if !XAUTH_HAVE_PAM */
 
 typedef void xauth_callback_t(struct state *st,
-			      struct msg_digest **mdp,
+			      struct msg_digest *md,
 			      const char *,
 			      bool success);
 

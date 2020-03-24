@@ -99,7 +99,7 @@ void xauth_pam_abort(struct state *st)
 static pluto_fork_cb pam_callback; /* type assertion */
 
 static void pam_callback(struct state *st,
-			 struct msg_digest **mdp,
+			 struct msg_digest *md,
 			 int status, void *arg)
 {
 	struct xauth *xauth = arg;
@@ -131,7 +131,7 @@ static void pam_callback(struct state *st,
 		libreswan_log("PAM: #%lu: completed for user '%s' with status %s",
 			      xauth->serialno, xauth->ptarg.name,
 			      success ? "SUCCESSS" : "FAILURE");
-		xauth->callback(st, mdp, xauth->ptarg.name, success);
+		xauth->callback(st, md, xauth->ptarg.name, success);
 	}
 
 	pfree_xauth(xauth);

@@ -195,7 +195,7 @@ static void cancel_dh(struct crypto_task **task)
 }
 
 static stf_status complete_dh(struct state *st,
-			      struct msg_digest **mdp,
+			      struct msg_digest *md,
 			      struct crypto_task **task)
 {
 	transfer_dh_secret_to_state("IKEv2 DH", &(*task)->local_secret, st);
@@ -203,7 +203,7 @@ static stf_status complete_dh(struct state *st,
 	pexpect(st->st_shared_nss == NULL);
 	release_symkey(__func__, "st_shared_nss", &st->st_shared_nss);
 	st->st_shared_nss = (*task)->shared_secret;
-	stf_status status = (*task)->cb(st, mdp);
+	stf_status status = (*task)->cb(st, md);
 	pfreeany(*task);
 	return status;
 }
