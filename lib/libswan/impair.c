@@ -260,7 +260,8 @@ void help_impair(const char *prefix)
 static bool parse_biased_unsigned(shunk_t string, unsigned *dest, unsigned bias)
 {
 	uintmax_t u;
-	if (shunk_to_uint(string, NULL, 0/*base*/, &u, 0/*ceiling*/)) {
+	err_t err = shunk_to_uint(string, NULL, 0/*base*/, &u, 0/*ceiling*/);
+	if (err == NULL) {
 		/* UINT_MAX is upper bound of *DEST */
 		if (u <= UINT_MAX - bias) {
 			*dest = u + bias;
