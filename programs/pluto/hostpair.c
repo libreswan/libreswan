@@ -657,12 +657,13 @@ struct connection *find_next_host_connection(
 	return c;
 }
 
-static struct connection *ikev2_find_host_connection(const ip_endpoint *local,
-						     const ip_endpoint *remote,
+static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 						     lset_t policy, bool *send_reject_response)
 {
-	struct connection *c = find_host_connection(local, remote, policy, LEMPTY);
+	const ip_endpoint *local = &md->iface->local_endpoint;
+	const ip_endpoint *remote = &md->sender;
 
+	struct connection *c = find_host_connection(local, remote, policy, LEMPTY);
 	if (c == NULL) {
 		/* See if a wildcarded connection can be found.
 		 * We cannot pick the right connection, so we're making a guess.
@@ -703,18 +704,22 @@ static struct connection *ikev2_find_host_connection(const ip_endpoint *local,
 		}
 		if (c == NULL) {
 			endpoint_buf b;
-			dbg("initial parent SA message received on %s but no connection has been authorized with policy %s",
-			    str_endpoint(local, &b),
-			    bitnamesof(sa_policy_bit_names, policy));
+			dbg_md(md, "%s message received on %s but no connection has been authorized with policy %s",
+			       enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+			       str_endpoint(local, &b),
+			       bitnamesof(sa_policy_bit_names, policy));
 			*send_reject_response = true;
 			return NULL;
 		}
+
 		if (c->kind != CK_TEMPLATE) {
-			endpoint_buf eb;
+			endpoint_buf b;
 			connection_buf cib;
-			dbg("initial parent SA message received on %s for "PRI_CONNECTION" with kind=%s dropped",
-			    str_endpoint(local, &eb), pri_connection(c, &cib),
-			    enum_name(&connection_kind_names, c->kind));
+			dbg_md(md, "%s message received on %s for "PRI_CONNECTION" with kind=%s dropped",
+			       enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+			       str_endpoint(local, &b),
+			       pri_connection(c, &cib),
+			       enum_name(&connection_kind_names, c->kind));
 			/*
 			 * This is used when in IKE_INIT request is
 			 * received but hits an OE clear
@@ -737,11 +742,11 @@ static struct connection *ikev2_find_host_connection(const ip_endpoint *local,
 		/* only allow opportunistic for IKEv2 connections */
 		if (LIN(POLICY_OPPORTUNISTIC, c->policy) &&
 		    c->ike_version == IKEv2) {
-			DBGF(DBG_CONTROL, "oppo_instantiate");
+			dbg_md(md, "oppo_instantiate");
 			c = oppo_instantiate(c, remote, &c->spd.that.id, &c->spd.this.host_addr, remote);
 		} else {
 			/* regular roadwarrior */
-			DBGF(DBG_CONTROL, "rw_instantiate");
+			dbg_md(md, "rw_instantiate");
 			c = rw_instantiate(c, remote, NULL, NULL);
 		}
 	} else {
@@ -753,11 +758,11 @@ static struct connection *ikev2_find_host_connection(const ip_endpoint *local,
 		passert(c->spd.this.virt == NULL);
 
 		if (c->kind == CK_TEMPLATE && c->spd.that.virt != NULL) {
-			DBGF(DBG_CONTROL, "local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation");
+			dbg_md(md, "local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation");
 			c = rw_instantiate(c, remote, NULL, NULL);
 		} else if ((c->kind == CK_TEMPLATE) &&
 				(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
-			DBGF(DBG_CONTROL, "local endpoint has narrowing=yes - needs instantiation");
+			dbg_md(md, "local endpoint has narrowing=yes - needs instantiation");
 			c = rw_instantiate(c, remote, NULL, NULL);
 		}
 	}
@@ -788,29 +793,28 @@ struct connection *find_v2_host_pair_connection(struct msg_digest *md, lset_t *p
 		 */
 		*policy = policies[i] | POLICY_IKEV2_ALLOW;
 		*send_reject_response = true;
-		c = ikev2_find_host_connection(&md->iface->local_endpoint,
-					       &md->sender, *policy,
+		c = ikev2_find_host_connection(md, *policy,
 					       send_reject_response);
 		if (c != NULL)
 			break;
 	}
 
 	if (c == NULL) {
-		endpoint_buf b;
-
 		/* we might want to change this to a debug log message only */
-		loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s but no suitable connection found with IKEv2 policy",
-		       str_endpoint(&md->iface->local_endpoint, &b));
+		endpoint_buf b;
+		plog_md(/*RC_LOG_SERIOUS*/md,
+			"%s message received on %s but no suitable connection found with IKEv2 policy",
+			enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+			str_endpoint(&md->iface->local_endpoint, &b));
 		return NULL;
 	}
 
 	passert(c != NULL);	/* (e != STF_OK) == (c == NULL) */
 
-	DBG(DBG_CONTROL, {
-		char ci[CONN_INST_BUF];
-		DBG_log("found connection: %s%s with policy %s",
-			c->name, fmt_conn_instance(c, ci),
-			bitnamesof(sa_policy_bit_names, *policy));});
+	connection_buf ci;
+	dbg_md(md, "found connection: "PRI_CONNECTION" with policy %s",
+	       pri_connection(c, &ci),
+	       bitnamesof(sa_policy_bit_names, *policy));
 
 	/*
 	 * Did we overlook a type=passthrough foodgroup?
@@ -823,12 +827,12 @@ struct connection *find_v2_host_pair_connection(struct msg_digest *md, lset_t *p
 			    tmp->kind == CK_INSTANCE &&
 			    addrinsubnet(&md->sender, &tmp->spd.that.client))
 			{
-				DBG(DBG_OPPO, DBG_log("passthrough conn %s also matches - check which has longer prefix match", tmp->name));
+				dbg_md(md, "passthrough conn %s also matches - check which has longer prefix match", tmp->name);
 
 				if (c->spd.that.client.maskbits  < tmp->spd.that.client.maskbits) {
-					DBG(DBG_OPPO, DBG_log("passthrough conn was a better match (%d bits versus conn %d bits) - suppressing NO_PROPSAL_CHOSEN reply",
-						tmp->spd.that.client.maskbits,
-						c->spd.that.client.maskbits));
+					dbg_md(md, "passthrough conn was a better match (%d bits versus conn %d bits) - suppressing NO_PROPSAL_CHOSEN reply",
+					       tmp->spd.that.client.maskbits,
+					       c->spd.that.client.maskbits);
 					return NULL;
 				}
 			}
