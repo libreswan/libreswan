@@ -40,52 +40,205 @@
 #include "whack.h"
 #include "lswlog.h"
 
-/**
- * Pack a string to a whack messages
+/*
+ * Pack and unpack a memory hunks.
  *
- * @param wp
- * @param p a string
- * @return bool True if operation was successful
+ * Notes:
+ *
+ * - to prevent the hunk pointer going across the wire, it is set to
+ *   NULL after packing
+ *
+ * - the unpacked pointer points into the whack message do don't free
+ *   it
+ *
+ * - zero length pointers are converted to NULL pointers
  */
-static bool pack_str(struct whackpacker *wp, char **p)
+
+#define PACK_HUNK(WP, HUNK, WHAT)					\
+	{								\
+		if (hunk_isempty(*HUNK)) {				\
+			HUNK->ptr = NULL; /* be safe */			\
+			return true;					\
+		}							\
+									\
+		if ((WP)->str_next + HUNK->len > (WP)->str_roof)  {	\
+			dbg("%s: buffer overflow for '%s'",		\
+			    __func__, WHAT);				\
+			return false; /* would overflow buffer */	\
+		}							\
+									\
+		memcpy((WP)->str_next, HUNK->ptr, HUNK->len);		\
+		(WP)->str_next += HUNK->len;				\
+		HUNK->ptr = NULL; /* kill pointer being sent on wire! */ \
+		return true;						\
+	}
+
+#define UNPACK_HUNK(WP, HUNK, WHAT)					\
+	{								\
+		dbg("%s: '%s' is %zu bytes",				\
+		    __func__, WHAT, HUNK->len);				\
+									\
+		if (HUNK->len == 0) {					\
+			/* expect wire-pointer to be NULL */		\
+			pexpect(HUNK->ptr == NULL);			\
+			HUNK->ptr = NULL;				\
+			return true;					\
+		}							\
+									\
+		uint8_t *end = (WP)->str_next + HUNK->len;		\
+		if (end > wp->str_roof) {				\
+			/* overflow */					\
+			dbg("%s: buffer overflow for '%s'; needing %zu bytes", \
+			    __func__, WHAT, HUNK->len);			\
+			return false;					\
+		}							\
+									\
+		HUNK->ptr = (WP)->str_next;				\
+		(WP)->str_next = end;					\
+		return true;						\
+	}
+
+static bool pack_chunk(struct whackpacker *wp, chunk_t *chunk, const char *what)
+{
+	PACK_HUNK(wp, chunk, what);
+}
+
+static bool unpack_chunk(struct whackpacker *wp, chunk_t *chunk, const char *what)
+{
+	UNPACK_HUNK(wp, chunk, what);
+}
+
+static bool pack_shunk(struct whackpacker *wp, shunk_t *shunk, const char *what)
+{
+	PACK_HUNK(wp, shunk, what);
+}
+
+static bool unpack_shunk(struct whackpacker *wp, shunk_t *shunk, const char *what)
+{
+	UNPACK_HUNK(wp, shunk, what);
+}
+
+/*
+ * Pack and unpack a nul-terminated string to a whack messages
+ *
+ * Notes:
+ *
+ * - to prevent the string pointer going across the wire, it is set to
+ *   NULL after packing
+ *
+ * - the unpacked pointer stored in *P points into the whack message
+ *   do don't free it
+ *
+ * - NULL pointers are converted to ""
+ */
+
+static bool pack_string(struct whackpacker *wp, char **p, const char *what)
 {
 	const char *s = (*p == NULL ? "" : *p); /* note: NULL becomes ""! */
 	size_t len = strlen(s) + 1;
 
 	if (wp->str_roof - wp->str_next < (ptrdiff_t)len) {
-		return FALSE; /* fishy: no end found */
-	} else {
-		strcpy((char *)wp->str_next, s);
-		wp->str_next += len;
-		*p = NULL; /* don't send pointers on the wire! */
-		return TRUE;
+		dbg("%s: buffer overflow for '%s'",
+		    __func__, what);
+		return false; /* would overflow buffer */
 	}
+
+	strcpy((char *)wp->str_next, s);
+	wp->str_next += len;
+	*p = NULL; /* kill pointer being sent on wire! */
+	return true;
 }
 
-/**
- * Unpack the next string from a whack message
- *
- * @param wp Whack Message
- * @param p pointer to a string pointer; the string pointer will point to the next string in *wp.
- * @return bool TRUE if operation successful
- *
- * Note that the string still resides in the whach message.
- */
-static bool unpack_str(struct whackpacker *wp, char **p)
+static bool unpack_string(struct whackpacker *wp, char **p, const char *what)
 {
-	unsigned char *end;
+	/* expect wire-pointer to be NULL */
+	pexpect(*p == NULL);
 
-	end = memchr(wp->str_next, '\0', (wp->str_roof - wp->str_next) );
-
+	uint8_t *end = memchr(wp->str_next, '\0', (wp->str_roof - wp->str_next) );
 	if (end == NULL) {
-		return FALSE; /* fishy: no end found */
-	} else {
-		unsigned char *s = (wp->str_next == end ? NULL : wp->str_next);
-
-		*p = (char *)s;
-		wp->str_next = end + 1;
-		return TRUE;
+		dbg("%s: buffer overflow for '%s'; missing NUL",
+		    __func__, what);
+		return false; /* fishy: no end found */
 	}
+
+	unsigned char *s = (wp->str_next == end ? NULL : wp->str_next);
+
+	dbg("%s: '%s' is %zu bytes", __func__, what, end - wp->str_next);
+
+	*p = (char *)s;
+	wp->str_next = end + 1;
+	return true;
+}
+
+/*
+ * in and out/
+ */
+struct pickler {
+	bool (*string)(struct whackpacker *wp, char **p, const char *what);
+	bool (*shunk)(struct whackpacker *wp, shunk_t *s, const char *what);
+	bool (*chunk)(struct whackpacker *wp, chunk_t *s, const char *what);
+};
+
+struct pickler pickle_packer = {
+	.string = pack_string,
+	.shunk = pack_shunk,
+	.chunk = pack_chunk,
+};
+
+struct pickler pickle_unpacker = {
+	.string = unpack_string,
+	.shunk = unpack_shunk,
+	.chunk = unpack_chunk,
+};
+
+#define PICKLE_STRING(FIELD) pickle->string(wp, FIELD, #FIELD)
+#define PICKLE_CHUNK(FIELD) pickle->chunk(wp, FIELD, #FIELD)
+#define PICKLE_SHUNK(FIELD) pickle->shunk(wp, FIELD, #FIELD)
+
+static bool pickle_whack_end(struct whackpacker *wp, struct whack_end *end,
+			     struct pickler *pickle)
+{
+	return (PICKLE_STRING(&end->id) &&
+		PICKLE_STRING(&end->pubkey) &&
+		PICKLE_STRING(&end->ca) &&
+		PICKLE_STRING(&end->groups) &&
+		PICKLE_STRING(&end->updown) &&
+		PICKLE_STRING(&end->virt) &&
+		PICKLE_STRING(&end->xauth_username) &&
+		true);
+}
+
+static bool pickle_whack_message(struct whackpacker *wp, struct pickler *pickle)
+{
+	return (PICKLE_STRING(&wp->msg->name) && /* first */
+		pickle_whack_end(wp, &wp->msg->left, pickle) &&
+		pickle_whack_end(wp, &wp->msg->right, pickle) &&
+		PICKLE_STRING(&wp->msg->keyid) &&
+		PICKLE_STRING(&wp->msg->ike) &&
+		PICKLE_STRING(&wp->msg->esp) &&
+		PICKLE_STRING(&wp->msg->right.xauth_username) &&
+		PICKLE_STRING(&wp->msg->connalias) &&
+		PICKLE_STRING(&wp->msg->left.host_addr_name) &&
+		PICKLE_STRING(&wp->msg->right.host_addr_name) &&
+		PICKLE_STRING(&wp->msg->string1) &&
+		PICKLE_STRING(&wp->msg->string2) &&
+		PICKLE_STRING(&wp->msg->string3) &&
+		PICKLE_STRING(&wp->msg->dnshostname) &&
+#ifdef HAVE_LABELED_IPSEC
+		PICKLE_STRING(&wp->msg->policy_label) &&
+#endif
+		PICKLE_STRING(&wp->msg->modecfg_dns) &&
+		PICKLE_STRING(&wp->msg->modecfg_domains) &&
+		PICKLE_STRING(&wp->msg->modecfg_banner) &&
+		PICKLE_STRING(&wp->msg->conn_mark_both) &&
+		PICKLE_STRING(&wp->msg->conn_mark_in) &&
+		PICKLE_STRING(&wp->msg->conn_mark_out) &&
+		PICKLE_STRING(&wp->msg->vti_iface) &&
+		PICKLE_STRING(&wp->msg->remote_host) &&
+		PICKLE_STRING(&wp->msg->redirect_to) &&
+		PICKLE_STRING(&wp->msg->accept_redirect_to) &&
+		PICKLE_CHUNK(&wp->msg->keyval) &&
+		true);
 }
 
 /**
@@ -100,61 +253,9 @@ err_t pack_whack_msg(struct whackpacker *wp)
 
 	wp->str_next = wp->msg->string;
 	wp->str_roof = &wp->msg->string[sizeof(wp->msg->string)];
-
-	if (!pack_str(wp, &wp->msg->name) ||			/* string 1 */
-	    !pack_str(wp, &wp->msg->left.id) ||			/* string 2 */
-	    !pack_str(wp, &wp->msg->left.pubkey) ||		/* string 3 */
-	    !pack_str(wp, &wp->msg->left.ca) ||			/* string 4 */
-	    !pack_str(wp, &wp->msg->left.groups) ||		/* string 5 */
-	    !pack_str(wp, &wp->msg->left.updown) ||		/* string 6 */
-	    !pack_str(wp, &wp->msg->left.virt) ||		/* string 7 */
-	    !pack_str(wp, &wp->msg->right.id) ||		/* string 8 */
-	    !pack_str(wp, &wp->msg->right.pubkey) ||		/* string 9 */
-	    !pack_str(wp, &wp->msg->right.ca) ||		/* string 10 */
-	    !pack_str(wp, &wp->msg->right.groups) ||		/* string 11 */
-	    !pack_str(wp, &wp->msg->right.updown) ||		/* string 12 */
-	    !pack_str(wp, &wp->msg->right.virt) ||		/* string 13 */
-	    !pack_str(wp, &wp->msg->keyid) ||			/* string 14 */
-
-	    !pack_str(wp, &wp->msg->ike) ||			/* string 16 */
-	    !pack_str(wp, &wp->msg->esp) ||			/* string 17 */
-	    !pack_str(wp, &wp->msg->left.xauth_username) ||	/* string 18 */
-	    !pack_str(wp, &wp->msg->right.xauth_username) ||	/* string 19 */
-	    !pack_str(wp, &wp->msg->connalias) ||		/* string 20 */
-	    !pack_str(wp, &wp->msg->left.host_addr_name) ||	/* string 21 */
-	    !pack_str(wp, &wp->msg->right.host_addr_name) ||	/* string 22 */
-	    !pack_str(wp, &wp->msg->string1) ||			/* string 23 */
-	    !pack_str(wp, &wp->msg->string2) ||			/* string 24 */
-	    !pack_str(wp, &wp->msg->string3) ||			/* string 25 */
-	    !pack_str(wp, &wp->msg->dnshostname) ||		/* string 26 */
-#ifdef HAVE_LABELED_IPSEC
-	    !pack_str(wp, &wp->msg->policy_label) ||		/* string 27 */
-#endif
-	    !pack_str(wp, &wp->msg->modecfg_dns) ||		/* string 28 */
-	    !pack_str(wp, &wp->msg->modecfg_domains) ||		/* string 28 */
-	    !pack_str(wp, &wp->msg->modecfg_banner) ||		/* string 29 */
-	    !pack_str(wp, &wp->msg->conn_mark_both) ||		/* string 30 */
-	    !pack_str(wp, &wp->msg->conn_mark_in) ||		/* string 31 */
-	    !pack_str(wp, &wp->msg->conn_mark_out) ||		/* string 32 */
-	    !pack_str(wp, &wp->msg->vti_iface) ||		/* string 33 */
-	    !pack_str(wp, &wp->msg->remote_host) ||		/* string 33 */
-	    !pack_str(wp, &wp->msg->redirect_to) ||		/* string 34 */
-	    !pack_str(wp, &wp->msg->accept_redirect_to) ||	/* string 35 */
-	    wp->str_roof - wp->str_next < (ptrdiff_t)wp->msg->keyval.len)	/* key */
-	{
+	if (!pickle_whack_message(wp, &pickle_packer)) {
 		return "too many bytes of strings or key to fit in message to pluto";
 	}
-
-	/*
-	 * Like pack_str, but for the keyval chunk.
-	 * - already checked that there is room for the chunk
-	 * - memcpy wants valid pointers, even if the length is 0.
-	 */
-	if (wp->msg->keyval.len != 0)
-		memcpy(wp->str_next, wp->msg->keyval.ptr, wp->msg->keyval.len);
-	wp->msg->keyval.ptr = NULL;	/* don't send pointers on the wire! */
-	wp->str_next += wp->msg->keyval.len;
-
 	return NULL;
 }
 
@@ -166,59 +267,16 @@ err_t pack_whack_msg(struct whackpacker *wp)
  */
 err_t unpack_whack_msg(struct whackpacker *wp)
 {
-	err_t ugh = NULL;
-
 	if (wp->str_next > wp->str_roof) {
-		ugh = builddiag(
-			"ignoring truncated message from whack: got %d bytes; expected %u",
-			(int) wp->n, (unsigned) sizeof(wp->msg));
-	} else if (!unpack_str(wp, &wp->msg->name) ||			/* string 1 */
-	    !unpack_str(wp, &wp->msg->left.id) ||		/* string 2 */
-	    !unpack_str(wp, &wp->msg->left.pubkey) ||		/* string 3 */
-	    !unpack_str(wp, &wp->msg->left.ca) ||		/* string 4 */
-	    !unpack_str(wp, &wp->msg->left.groups) ||		/* string 5 */
-	    !unpack_str(wp, &wp->msg->left.updown) ||		/* string 6 */
-	    !unpack_str(wp, &wp->msg->left.virt) ||		/* string 7 */
-	    !unpack_str(wp, &wp->msg->right.id) ||		/* string 8 */
-	    !unpack_str(wp, &wp->msg->right.pubkey) ||		/* string 9 */
-	    !unpack_str(wp, &wp->msg->right.ca) ||		/* string 10 */
-	    !unpack_str(wp, &wp->msg->right.groups) ||		/* string 11 */
-	    !unpack_str(wp, &wp->msg->right.updown) ||		/* string 12 */
-	    !unpack_str(wp, &wp->msg->right.virt) ||		/* string 13 */
-	    !unpack_str(wp, &wp->msg->keyid) ||			/* string 14 */
-
-	    !unpack_str(wp, &wp->msg->ike) ||			/* string 16 */
-	    !unpack_str(wp, &wp->msg->esp) ||			/* string 17 */
-	    !unpack_str(wp, &wp->msg->left.xauth_username) ||	/* string 18 */
-	    !unpack_str(wp, &wp->msg->right.xauth_username) ||	/* string 19 */
-	    !unpack_str(wp, &wp->msg->connalias) ||		/* string 20 */
-	    !unpack_str(wp, &wp->msg->left.host_addr_name) ||	/* string 21 */
-	    !unpack_str(wp, &wp->msg->right.host_addr_name) ||	/* string 22 */
-	    !unpack_str(wp, &wp->msg->string1) ||		/* string 23 */
-	    !unpack_str(wp, &wp->msg->string2) ||		/* string 24 */
-	    !unpack_str(wp, &wp->msg->string3) ||		/* string 25 */
-	    !unpack_str(wp, &wp->msg->dnshostname) ||		/* string 26 */
-#ifdef HAVE_LABELED_IPSEC
-	    !unpack_str(wp, &wp->msg->policy_label) ||		/* string 27 */
-#endif
-	    !unpack_str(wp, &wp->msg->modecfg_dns) ||		/* string 28 */
-	    !unpack_str(wp, &wp->msg->modecfg_domains) ||	/* string 28 */
-	    !unpack_str(wp, &wp->msg->modecfg_banner) ||	/* string 29 */
-	    !unpack_str(wp, &wp->msg->conn_mark_both) ||	/* string 30 */
-	    !unpack_str(wp, &wp->msg->conn_mark_in) ||		/* string 31 */
-	    !unpack_str(wp, &wp->msg->conn_mark_out) ||		/* string 32 */
-	    !unpack_str(wp, &wp->msg->vti_iface) ||		/* string 33 */
-	    !unpack_str(wp, &wp->msg->remote_host) ||		/* string 33 */
-	    !unpack_str(wp, &wp->msg->redirect_to) ||		/* string 34 */
-	    !unpack_str(wp, &wp->msg->accept_redirect_to) ||	/* string 35 */
-	    wp->str_roof - wp->str_next != (ptrdiff_t)wp->msg->keyval.len)
-	{
-		ugh = "message from whack contains bad string or key";
-	} else {
-		wp->msg->keyval.ptr = wp->str_next;
+		return builddiag("ignoring truncated message from whack: got %d bytes; expected %u",
+				 (int) wp->n, (unsigned) sizeof(wp->msg));
 	}
 
-	return ugh;
+	if (!pickle_whack_message(wp, &pickle_unpacker)) {
+		return "message from whack contains bad string or key";
+	}
+
+	return NULL;
 }
 
 void clear_end(struct whack_end *e)
