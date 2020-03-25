@@ -68,9 +68,9 @@ west #
 002 shutting down interface eth1 192.1.2.66:500
 002 "float-east" #4: deleting state (STATE_QUICK_I2) and sending notification
 005 "float-east" #4: ESP traffic information: in=0B out=0B
-003 ERROR: "float-east" #4: sendto on eth1 to 192.1.2.23:500 failed in delete notify [...]
+003 ERROR: "float-east" #4: send on eth1 from 192.1.2.66:500 to 192.1.2.23:500 using UDP failed in delete notify [...]
 002 "float-east" #3: deleting state (STATE_MAIN_I4) and sending notification
-003 ERROR: "float-east" #3: sendto on eth1 to 192.1.2.23:500 failed in delete notify [...]
+003 ERROR: "float-east" #3: send on eth1 from 192.1.2.66:500 to 192.1.2.23:500 using UDP failed in delete notify [...]
 002 unroute-host output: RTNETLINK answers: Network is unreachable
 002 "float-east": terminating SAs using this connection
 002 forgetting secrets
