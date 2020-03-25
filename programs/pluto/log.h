@@ -94,6 +94,8 @@ extern void log_pop_from(ip_address old_from, where_t where);
 #define push_cur_from(NEW) log_push_from(NEW, HERE)
 #define pop_cur_from(OLD) log_pop_from(OLD, HERE)
 
+struct logger cur_logger(void);
+
 /*
  * Broadcast a log message.
  *
@@ -112,6 +114,7 @@ extern void log_pop_from(ip_address old_from, where_t where);
 typedef void jam_prefix_fn(jambuf_t *buf, const void *object);
 
 jam_prefix_fn jam_global_prefix;
+jam_prefix_fn jam_from_prefix;
 jam_prefix_fn jam_message_prefix;
 jam_prefix_fn jam_connection_prefix;
 jam_prefix_fn jam_state_prefix;
@@ -132,6 +135,13 @@ struct logger {
 		.where = HERE,					\
 		.global_whackfd = WHACKFD,			\
 		.jam_prefix = jam_global_prefix,		\
+	}
+#define FROM_LOGGER(FROM) (struct logger)			\
+	{							\
+		.where = HERE,					\
+		.global_whackfd = null_fd,			\
+		.jam_prefix = jam_from_prefix,			\
+		.object = FROM,					\
 	}
 #define MESSAGE_LOGGER(MD) (struct logger)			\
 	{							\

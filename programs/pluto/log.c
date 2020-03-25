@@ -85,6 +85,25 @@ static struct state *cur_state = NULL;                 /* current state, for dia
 static struct connection *cur_connection = NULL;       /* current connection, for diagnostics */
 static ip_address cur_from;				/* source of current current message */
 
+struct logger cur_logger(void)
+{
+	passert(in_main_thread());
+
+	if (cur_state != NULL) {
+		return STATE_LOGGER(cur_state);
+	}
+
+	if (cur_connection != NULL) {
+		return CONNECTION_LOGGER(cur_connection, whack_log_fd);
+	}
+
+	if (endpoint_type(&cur_from) != NULL) {
+		return FROM_LOGGER(&cur_from);
+	}
+
+	return GLOBAL_LOGGER(whack_log_fd);
+};
+
 /*
  * if any debugging is on, make sure that we log the connection we are
  * processing, because it may not be clear in later debugging.
@@ -904,6 +923,12 @@ void jam_global_prefix(jambuf_t *unused_buf UNUSED,
 		       const void *unused_object UNUSED)
 {
 	/* jam(buf, "") - nothing to add */
+}
+
+void jam_from_prefix(jambuf_t *buf, const void *object)
+{
+	const ip_endpoint *from = object;
+	jam_log_prefix(buf, NULL/*state*/, NULL/*connection*/, from);
 }
 
 void jam_message_prefix(jambuf_t *buf, const void *object)
