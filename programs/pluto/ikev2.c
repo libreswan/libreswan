@@ -2091,7 +2091,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 					v2_msgid_start_responder(ike, &ike->sa, md);
 					chunk_t data = chunk2(md->encrypted_payloads.data,
 							      md->encrypted_payloads.data_size);
-					send_v2N_response_from_state(ike, *mdp,
+					send_v2N_response_from_state(ike, md,
 								     md->encrypted_payloads.n,
 								     &data);
 					break;
@@ -2108,7 +2108,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				default:
 					bad_case(v2_msg_role(md));
 				}
-				complete_v2_state_transition(st, mdp, STF_FATAL);
+				complete_v2_state_transition(st, md, STF_FATAL);
 				return;
 			}
 		} /* else { go ahead } */
@@ -2175,7 +2175,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				pexpect(st->st_v2_msgid_wip.responder == -1);
 				send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);
 				/* XXX: calls delete_state() */
-				complete_v2_state_transition(st, mdp, STF_FATAL);
+				complete_v2_state_transition(st, md, STF_FATAL);
 			}
 			return;
 		}
@@ -2206,7 +2206,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				send_v2N_response_from_state(ike, md, v2N_INVALID_SYNTAX, NULL);
 			}
 			/* XXX: calls delete_state() */
-			complete_v2_state_transition(st, mdp, STF_FATAL);
+			complete_v2_state_transition(st, md, STF_FATAL);
 			return;
 		}
 		/*
@@ -2323,7 +2323,7 @@ static void v2_dispatch(struct ike_sa *ike, struct state *st,
 	 */
 
 	/* replace (*mdp)->st with st ... */
-	complete_v2_state_transition((*mdp)->st, mdp, e);
+	complete_v2_state_transition(md->st, md, e);
 	/* our caller with release_any_md(mdp) */
 }
 
@@ -3083,7 +3083,7 @@ static void log_stf_suspend(struct state *st, stf_status result)
  * - fragvid, dpd, nortel
  */
 void complete_v2_state_transition(struct state *st,
-				  struct msg_digest **mdp,
+				  struct msg_digest *md,
 				  stf_status result)
 {
 	/* statistics */
@@ -3114,8 +3114,6 @@ void complete_v2_state_transition(struct state *st,
 	 *   should be handled by returning an STF_deleteme and having
 	 *   this code delete the SA.
 	 */
-	passert(mdp != NULL);
-	struct msg_digest *md = *mdp;
 	if (md != NULL) {
 		if (md->st != NULL) {
 			if (st == NULL) {
@@ -3293,11 +3291,11 @@ void complete_v2_state_transition(struct state *st,
 		 * XXX: some initiator code creates a fake MD
 		 * (there isn't a real one); save that as
 		 * well.
+		 *
+		 * XXX: should the helper code be responsible for
+		 * saving an MD reference?
 		 */
-		if (*mdp != NULL) {
-			suspend_md(st, mdp);
-			passert(*mdp == NULL); /* ownership transferred */
-		}
+		suspend_any_md(st, md);
 		log_stf_suspend(st, result);
 		return;
 

@@ -238,6 +238,7 @@ struct msg_digest *unsuspend_md(struct state *st);
  * st_offloaded_task is non-NULL.  However, with XAUTH immediate,
  * there's nothing to check.
  */
+
 #define suspend_md(ST, MDP) {						\
 		dbg("suspending state #%lu and saving MD %p",		\
 		    (ST)->st_serialno, *(MDP));				\
@@ -247,6 +248,21 @@ struct msg_digest *unsuspend_md(struct state *st);
 		(ST)->st_suspended_md_func = __func__;			\
 		(ST)->st_suspended_md_line = __LINE__;			\
 		passert(state_is_busy(ST));				\
+	}
+
+#define suspend_any_md(ST, MD)						\
+	{								\
+		if (MD != NULL) {					\
+			dbg("suspending state #%lu and saving MD %p",	\
+			    (ST)->st_serialno, MD);			\
+			passert((ST)->st_suspended_md == NULL);		\
+			(ST)->st_suspended_md = md_addref(MD, HERE);	\
+			(ST)->st_suspended_md_func = __func__;		\
+			(ST)->st_suspended_md_line = __LINE__;		\
+			passert(state_is_busy(ST));			\
+		} else {						\
+			dbg("no MD to suspend");			\
+		}							\
 	}
 
 /*

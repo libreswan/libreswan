@@ -598,7 +598,7 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 			    e->name, e->serialno, ike_version,
 			    md == old_md ? "" : " and stole MD");
 		} else {
-			/* no stealing MD */
+			/* callback did not steal MD */
 			pexpect(old_md == md);
 			/* don't trust ST */
 			/* XXX: mumble something about struct ike_version */
@@ -615,7 +615,7 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 					    old_st_serialno, md->st->st_serialno);
 					st = md->st;
 				}
-				complete_v2_state_transition(st, &md, status);
+				complete_v2_state_transition(st, md, status);
 				break;
 			default:
 				bad_case(ike_version);

@@ -221,6 +221,7 @@ static struct msg_digest *fake_md(struct state *st)
 	/* asume first microcode is valid */
 	fake_md->svm = st->st_state->v2_transitions;
 	pexpect(fake_md->svm->state == st->st_state->kind);
+	dbg("md@%p is fake", fake_md);
 	return fake_md;
 }
 
@@ -657,15 +658,14 @@ bool emit_v2KE(chunk_t *g, const struct dh_desc *group,
 	return TRUE;
 }
 
-void ikev2_parent_outI1_continue(struct state *st, struct msg_digest **mdp,
+void ikev2_parent_outI1_continue(struct state *st,
+				 struct msg_digest **unused_mdp UNUSED,
 				 struct pluto_crypto_req *r)
 {
 	dbg("%s() for #%lu %s",
 	     __func__, st->st_serialno, st->st_state->name);
 
-	struct msg_digest *md = *mdp;
-	pexpect(v2_msg_role(md) == NO_MESSAGE); /* i.e., MD==NULL */
-	pexpect(md == NULL || md->st == NULL || md->st == st);
+	pexpect(*unused_mdp == NULL);
 
  	struct ike_sa *ike = pexpect_ike_sa(st);
  	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
@@ -679,14 +679,17 @@ void ikev2_parent_outI1_continue(struct state *st, struct msg_digest **mdp,
 	stf_status e = ikev2_parent_outI1_common(st);
 
 	/*
+	 * initiating, so *MD should be NULL; later
+	 *
 	 * XXX: complete state transition expects (*mdp).svm to be
 	 * non-NULL, and SVM comes from ST's current state.
+	 *
+	 * Will release the fake MD after calling complete v2 state
+	 * transition.
 	 */
-	if (*mdp == NULL) {
-		*mdp = fake_md(st);
-	}
-
-	complete_v2_state_transition(st, mdp, e);
+	struct msg_digest *md = fake_md(st); /* released below */
+	complete_v2_state_transition(st, md, e);
+	md_delref(&md, HERE);
 }
 
 static stf_status ikev2_parent_outI1_common(struct state *st)
@@ -984,12 +987,12 @@ static void ikev2_parent_inI1outR1_continue(struct state *st,
 	 */
 	md->st = st;
 
-	stf_status e = ikev2_parent_inI1outR1_continue_tail(st, *mdp, r);
+	stf_status e = ikev2_parent_inI1outR1_continue_tail(st, md, r);
 
 	if (!pexpect(md->st == st)) {
 		st = md->st;
 	}
-	complete_v2_state_transition(st, mdp, e);
+	complete_v2_state_transition(st, md, e);
 }
 
 /*
@@ -1684,9 +1687,9 @@ static void ikev2_parent_inR1outI2_continue(struct state *st,
  	struct ike_sa *ike = pexpect_ike_sa(st);
  	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
 
-	stf_status e = ikev2_parent_inR1outI2_tail(st, *mdp, r);
+	stf_status e = ikev2_parent_inR1outI2_tail(st, md, r);
 	/* replace (*mdp)->st with st ... */
-	complete_v2_state_transition((*mdp)->st, mdp, e);
+	complete_v2_state_transition(md->st, md, e);
 }
 
 /* Misleading name, also used for NULL sized type's */
@@ -2468,7 +2471,7 @@ static void ikev2_pam_continue(struct state *st,
 
 	stf_status stf;
 	if (success) {
-		stf = ikev2_parent_inI2outR2_auth_tail(st, *mdp, success);
+		stf = ikev2_parent_inI2outR2_auth_tail(st, md, success);
 	} else {
 		/*
 		 * XXX: better would be to record the message and
@@ -2480,13 +2483,13 @@ static void ikev2_pam_continue(struct state *st,
 		 * dealing with any duplicate IKE_AUTH requests.
 		 */
 		struct ike_sa *ike = pexpect_ike_sa(st);
-		send_v2N_response_from_state(ike, *mdp, v2N_AUTHENTICATION_FAILED, NULL);
+		send_v2N_response_from_state(ike, md, v2N_AUTHENTICATION_FAILED, NULL);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		stf = STF_FATAL;
 	}
 
 	/* replace (*mdp)->st with st ... */
-	complete_v2_state_transition((*mdp)->st, mdp, stf);
+	complete_v2_state_transition(md->st, md, stf);
 }
 
 /*
@@ -2583,9 +2586,9 @@ static void ikev2_ike_sa_process_auth_request_no_skeyid_continue(struct state *s
 		 * abandon the connection.
 		 */
 		DBG(DBG_CONTROL, DBG_log("aborting IKE SA: DH failed"));
-		send_v2N_response_from_md(*mdp, v2N_INVALID_SYNTAX, NULL);
+		send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);
 		/* replace (*mdp)->st with st ... */
-		complete_v2_state_transition((*mdp)->st, mdp, STF_FATAL);
+		complete_v2_state_transition(md->st, md, STF_FATAL);
 		return;
 	}
 
@@ -4213,7 +4216,7 @@ static void ikev2_child_ike_inR_continue(struct state *st,
 		e = STF_OK;
 	}
 
-	complete_v2_state_transition(st, mdp, e);
+	complete_v2_state_transition(st, md, e);
 }
 
 /*
@@ -4441,21 +4444,20 @@ static void ikev2_child_inIoutR_continue(struct state *st,
 		return;
 	}
 
-	stf_status e = STF_OK;
+	stf_status e;
 	unpack_nonce(&st->st_nr, r);
 	if (r->pcr_type == pcr_build_ke_and_nonce) {
-		pexpect((*mdp)->chain[ISAKMP_NEXT_v2KE] != NULL);
+		pexpect(md->chain[ISAKMP_NEXT_v2KE] != NULL);
 		unpack_KE_from_helper(st, r, &st->st_gr);
 		/* initiate calculation of g^xy */
 		submit_dh(st, st->st_gi, ikev2_child_inIoutR_continue_continue,
 			  "DHv2 for child sa");
 		e = STF_SUSPEND;
-	}
-	if (e == STF_OK) {
-		e = ikev2_child_out_tail(ike, child, *mdp);
+	} else {
+		e = ikev2_child_out_tail(ike, child, md);
 	}
 
-	complete_v2_state_transition(st, mdp, e);
+	complete_v2_state_transition(st, md, e);
 }
 
 static stf_status ikev2_child_inIoutR_continue_continue(struct state *st,
@@ -4627,7 +4629,7 @@ static void ikev2_child_ike_inIoutR_continue(struct state *st,
 	}
 
 	pexpect(r->pcr_type == pcr_build_ke_and_nonce);
-	pexpect((*mdp)->chain[ISAKMP_NEXT_v2KE] != NULL);
+	pexpect(md->chain[ISAKMP_NEXT_v2KE] != NULL);
 	unpack_nonce(&st->st_nr, r);
 	unpack_KE_from_helper(st, r, &st->st_gr);
 
@@ -4636,14 +4638,14 @@ static void ikev2_child_ike_inIoutR_continue(struct state *st,
 	passert(ike_spi_is_zero(&st->st_ike_rekey_spis.responder));
 	ikev2_copy_cookie_from_sa(st->st_accepted_ike_proposal,
 				  &st->st_ike_rekey_spis.initiator);
-	st->st_ike_rekey_spis.responder = ike_responder_spi(&(*mdp)->sender);
+	st->st_ike_rekey_spis.responder = ike_responder_spi(&md->sender);
 	start_dh_v2(st, "DHv2 for REKEY IKE SA", ORIGINAL_RESPONDER,
 		    ike->sa.st_skey_d_nss, /* only IKE has SK_d */
 		    ike->sa.st_oakley.ta_prf, /* for IKE/ESP/AH */
 		    &st->st_ike_rekey_spis,
 		    ikev2_child_ike_inIoutR_continue_continue);
 
-	complete_v2_state_transition(st, mdp, STF_SUSPEND);
+	complete_v2_state_transition(st, md, STF_SUSPEND);
 }
 
 static void ikev2_child_ike_inIoutR_continue_continue(struct state *st,
@@ -4672,19 +4674,18 @@ static void ikev2_child_ike_inIoutR_continue_continue(struct state *st,
 		return;
 	}
 
-	stf_status e = STF_OK;
 	pexpect(r->pcr_type == pcr_compute_dh_v2);
 	bool only_shared_false = false;
+	stf_status e;
 	if (!finish_dh_v2(st, r, only_shared_false)) {
-		send_v2N_response_from_state(ike_sa(st), *mdp,
+		send_v2N_response_from_state(ike_sa(st), md,
 					     v2N_INVALID_SYNTAX, NULL);
 		e = STF_FATAL;
-	}
-	if (e == STF_OK) {
-		e = ikev2_child_out_tail(ike, child, *mdp);
+	} else {
+		e = ikev2_child_out_tail(ike, child, md);
 	}
 
-	complete_v2_state_transition(st, mdp, e);
+	complete_v2_state_transition(st, md, e);
 }
 
 static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *child,
@@ -5740,16 +5741,14 @@ void ikev2_child_outI(struct state *st)
 static v2_msgid_pending_cb ikev2_child_outI_continue_2;
 
 static void ikev2_child_outI_continue(struct state *st,
-				      struct msg_digest **mdp,
+				      struct msg_digest **unused_mdp UNUSED,
 				      struct pluto_crypto_req *r)
 {
 	dbg("%s() for #%lu %s",
 	     __func__, st->st_serialno, st->st_state->name);
 
 	/* child initiating exchange */
-	struct msg_digest *md = *mdp;
-	pexpect(v2_msg_role(md) == NO_MESSAGE); /* i.e., MD==NULL */
-	pexpect(md == NULL || md->st == NULL || md->st == st);
+	pexpect(*unused_mdp == NULL);
 
 	struct ike_sa *ike = ike_sa(st);
 	struct child_sa *child = pexpect_child_sa(st);
@@ -5772,10 +5771,13 @@ static void ikev2_child_outI_continue(struct state *st,
 		return;
 	}
 
-	/* initiating, so *MDP should be NULL; later */
-	if (*mdp == NULL) {
-		*mdp = fake_md(st);
-	}
+	/*
+	 * initiating, so *MDP should be NULL; later
+	 *
+	 * Will release the fake MD after calling complete v2 state
+	 * transition.
+	 */
+	struct msg_digest *md = fake_md(st); /* released below */
 
 	/* IKE SA => DH */
 	pexpect(st->st_state->kind == STATE_V2_REKEY_IKE_I0 ? r->pcr_type == pcr_build_ke_and_nonce : true);
@@ -5788,12 +5790,14 @@ static void ikev2_child_outI_continue(struct state *st,
 	dbg("adding CHILD SA #%lu to IKE SA #%lu message initiator queue",
 	    child->sa.st_serialno, ike->sa.st_serialno);
 	v2_msgid_queue_initiator(ike, &child->sa, ikev2_child_outI_continue_2);
-	complete_v2_state_transition(&child->sa, mdp, STF_SUSPEND);
+
 	/* return STF_SUSPEND */
+	complete_v2_state_transition(&child->sa, md, STF_SUSPEND);
+	md_delref(&md, HERE);
 }
 
 stf_status ikev2_child_outI_continue_2(struct ike_sa *ike, struct state *st,
-				       struct msg_digest **mdp UNUSED)
+				       struct msg_digest *md UNUSED)
 {
 	struct child_sa *child = pexpect_child_sa(st);
 	stf_status e = ikev2_start_new_exchange(ike, child);
