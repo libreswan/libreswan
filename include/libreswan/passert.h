@@ -34,7 +34,7 @@ extern void lsw_passert_fail(where_t where, const char *fmt, ...)
 	PRINTF_LIKE(2);
 
 #define PASSERT_FAIL(FMT, ...)					\
-	lsw_passert_fail(HERE, FMT, __VA_ARGS__)
+	lsw_passert_fail(HERE, FMT,##__VA_ARGS__)
 
 #define passert(ASSERTION) {						\
 		/* wrapping ASSERTION in parens suppresses -Wparen */	\
