@@ -606,7 +606,7 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 			case IKEv1:
 				/* no switching ST */
 				pexpect(md == NULL || md->st == NULL || md->st->st_serialno == old_st_serialno);
-				complete_v1_state_transition(&md, status);
+				complete_v1_state_transition(md, status);
 				break;
 			case IKEv2:
 				/* get grumpy when ST is switched */

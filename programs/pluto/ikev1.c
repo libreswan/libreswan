@@ -1877,7 +1877,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			    st->st_suspended_md);
 			release_any_md(&st->st_suspended_md);
 		}
-		suspend_md(st, mdp);
+		suspend_any_md(st, md);
 		return;
 	}
 
@@ -2388,7 +2388,7 @@ void process_packet_tail(struct msg_digest **mdp)
 
 	/* XXX: pexpect(st == md->st); fails! */
 	statetime_t start = statetime_start(md->st);
-	complete_v1_state_transition(mdp, smc->processor(st, md));
+	complete_v1_state_transition(md, smc->processor(st, md));
 	statetime_stop(&start, "%s()", __func__);
 	/* our caller will release_any_md(mdp); */
 }
@@ -2442,9 +2442,8 @@ static void remember_received_packet(struct state *st, struct msg_digest *md)
  * - smc for smc->flags & SMF_INITIATOR to adjust retransmission
  * - fragvid, dpd, nortel
  */
-void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
+void complete_v1_state_transition(struct msg_digest *md, stf_status result)
 {
-	struct msg_digest *md = *mdp;
 	passert(md != NULL);
 
 	/* handle oddball/meta results now */
@@ -2466,18 +2465,14 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	switch (result) {
 	case STF_SUSPEND:
 		set_cur_state(md->st);	/* might have changed */
-		if (*mdp != NULL) {
-			/*
-			 * If this transition was triggered by an
-			 * incoming packet, save it.
-			 *
-			 * XXX: some initiator code creates a fake MD
-			 * (there isn't a real one); save that as
-			 * well.
-			 */
-			suspend_md(md->st, mdp);
-			passert(*mdp == NULL); /* ownership transferred */
-		}
+		/*
+		 * If this transition was triggered by an incoming
+		 * packet, save it.
+		 *
+		 * XXX: some initiator code creates a fake MD (there
+		 * isn't a real one); save that as well.
+		 */
+		suspend_any_md(md->st, md);
 		return;
 	case STF_IGNORE:
 		return;

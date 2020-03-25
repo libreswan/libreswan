@@ -84,13 +84,15 @@ static void aggr_inI1_outR1_continue2(struct state *st,
 				      struct msg_digest **mdp,
 				      struct pluto_crypto_req *r)
 {
+	struct msg_digest *md = *mdp;
+
 	DBG(DBG_CONTROL,
 		DBG_log("aggr_inI1_outR1_continue2 for #%lu: calculated ke+nonce+DH, sending R1",
 			st->st_serialno));
 
-	passert(*mdp != NULL);
-	stf_status e = aggr_inI1_outR1_continue2_tail(*mdp, r);
-	complete_v1_state_transition(mdp, e);
+	passert(md != NULL);
+	stf_status e = aggr_inI1_outR1_continue2_tail(md, r);
+	complete_v1_state_transition(md, e);
 }
 
 /*
@@ -105,6 +107,8 @@ static void aggr_inI1_outR1_continue1(struct state *st,
 				      struct msg_digest **mdp,
 				      struct pluto_crypto_req *r)
 {
+	struct msg_digest *md = *mdp;
+
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("aggr inI1_outR1: calculated ke+nonce, calculating DH"));
 
@@ -124,7 +128,7 @@ static void aggr_inI1_outR1_continue1(struct state *st,
 	 * suspended.  If the original crypto request did everything
 	 * this wouldn't be needed.
 	 */
-	suspend_md(st, mdp);
+	suspend_any_md(st, md);
 }
 
 /* STATE_AGGR_R0:
@@ -596,22 +600,24 @@ static void aggr_inR1_outI2_crypto_continue(struct state *st,
 					    struct msg_digest **mdp,
 					    struct pluto_crypto_req *r)
 {
+	struct msg_digest *md = *mdp;
+
 	stf_status e;
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("aggr inR1_outI2: calculated DH, sending I2"));
 
 	passert(st != NULL);
-	passert(*mdp != NULL);
-	passert((*mdp)->st == st);
+	passert(md != NULL);
+	passert(md->st == st);
 
 	if (!finish_dh_secretiv(st, r)) {
 		e = STF_FAIL + INVALID_KEY_INFORMATION;
 	} else {
-		e = aggr_inR1_outI2_tail(*mdp);
+		e = aggr_inR1_outI2_tail(md);
 	}
 
-	complete_v1_state_transition(mdp, e);
+	complete_v1_state_transition(md, e);
 }
 
 /* Note: this is only called once.  Not really a tail. */
@@ -1081,10 +1087,8 @@ static void aggr_outI1_continue(struct state *st,
 	fake_md->v1_from_state = STATE_UNDEFINED;	/* ??? */
 	fake_md->fake_dne = true;
 
-	complete_v1_state_transition(&fake_md, e);
-	/*
-	 * XXX: If E==STF_FAIL, fake_md leaks?
-	 */
+	complete_v1_state_transition(fake_md, e);
+	md_delref(&fake_md, HERE);
 }
 
 static stf_status aggr_outI1_tail(struct state *st,

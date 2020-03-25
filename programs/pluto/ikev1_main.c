@@ -753,13 +753,15 @@ static void main_inR1_outI2_continue(struct state *st,
 				     struct msg_digest **mdp,
 				     struct pluto_crypto_req *r)
 {
+	struct msg_digest *md = *mdp;
+
 	DBG(DBG_CONTROL,
 		DBG_log("main_inR1_outI2_continue for #%lu: calculated ke+nonce, sending I2",
 			st->st_serialno));
 
-	passert(*mdp != NULL);
-	stf_status e = main_inR1_outI2_tail(st, *mdp, r);
-	complete_v1_state_transition(mdp, e);
+	passert(md != NULL);
+	stf_status e = main_inR1_outI2_tail(st, md, r);
+	complete_v1_state_transition(md, e);
 }
 
 stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
@@ -929,13 +931,15 @@ static void main_inI2_outR2_continue1(struct state *st,
 				      struct msg_digest **mdp,
 				      struct pluto_crypto_req *r)
 {
+	struct msg_digest *md = *mdp;
+
 	DBG(DBG_CONTROL,
 		DBG_log("main_inI2_outR2_continue for #%lu: calculated ke+nonce, sending R2",
 			st->st_serialno));
 
-	passert(*mdp != NULL);
-	stf_status e = main_inI2_outR2_continue1_tail(st, *mdp, r);
-	complete_v1_state_transition(mdp, e);
+	passert(md != NULL);
+	stf_status e = main_inI2_outR2_continue1_tail(st, md, r);
+	complete_v1_state_transition(md, e);
 }
 
 stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
@@ -1370,18 +1374,20 @@ static void main_inR2_outI3_continue(struct state *st,
 				     struct msg_digest **mdp,
 				     struct pluto_crypto_req *r)
 {
+	struct msg_digest *md = *mdp;
+
 	DBG(DBG_CONTROL,
 		DBG_log("main_inR2_outI3_cryptotail for #%lu: calculated DH, sending R1",
 			st->st_serialno));
 
-	passert(*mdp != NULL);	/* ??? how would this fail? */
+	passert(md != NULL);	/* ??? how would this fail? */
 
 	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(*mdp, TRUE,
+	ikev1_init_out_pbs_echo_hdr(md, TRUE,
 				    &reply_stream, reply_buffer, sizeof(reply_buffer),
 				    &rbody);
-	stf_status e = main_inR2_outI3_continue_tail(*mdp, &rbody, r);
-	complete_v1_state_transition(mdp, e);
+	stf_status e = main_inR2_outI3_continue_tail(md, &rbody, r);
+	complete_v1_state_transition(md, e);
 }
 
 stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)

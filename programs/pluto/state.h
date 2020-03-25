@@ -239,17 +239,6 @@ struct msg_digest *unsuspend_md(struct state *st);
  * there's nothing to check.
  */
 
-#define suspend_md(ST, MDP) {						\
-		dbg("suspending state #%lu and saving MD %p",		\
-		    (ST)->st_serialno, *(MDP));				\
-		passert((ST)->st_suspended_md == NULL);			\
-		(ST)->st_suspended_md = *(MDP);				\
-		*(MDP) = NULL; /* take ownership */			\
-		(ST)->st_suspended_md_func = __func__;			\
-		(ST)->st_suspended_md_line = __LINE__;			\
-		passert(state_is_busy(ST));				\
-	}
-
 #define suspend_any_md(ST, MD)						\
 	{								\
 		if (MD != NULL) {					\
