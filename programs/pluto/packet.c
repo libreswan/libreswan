@@ -23,7 +23,6 @@
 #include <netinet/in.h>
 #include <string.h>
 
-
 #include "constants.h"
 #include "lswlog.h"
 #include "lswalloc.h"
@@ -31,6 +30,9 @@
 #include "ip_info.h"		/* used by pbs_in_address() */
 #include "packet.h"
 #include "shunk.h"
+
+#include "defs.h"
+#include "log.h"
 
 const pb_stream empty_pbs;
 
@@ -1968,200 +1970,231 @@ static void DBG_prefix_print_struct(const pb_stream *pbs,
  *
  * This routine returns TRUE iff it succeeds.
  */
-bool in_struct(void *struct_ptr, struct_desc *sd,
-	       pb_stream *ins, pb_stream *obj_pbs)
+
+bool pbs_in_struct(struct pbs_in *ins,
+		   void *struct_ptr, size_t struct_size, struct_desc *sd,
+		   struct pbs_in *obj_pbs, struct logger *logger)
 {
-	err_t ugh = NULL;
 	uint8_t *cur = ins->cur;
+	if (cur + sd->size > ins->roof) {
+		log_message(RC_LOG, logger,
+			    "not enough room in input packet for %s (remain=%li, sd->size=%zu)",
+			    sd->name, (long int)(ins->roof - cur),
+			    sd->size);
+		return false;
+	}
 
-	if (ins->roof - cur < (ptrdiff_t)sd->size) {
-		ugh = builddiag("not enough room in input packet for %s (remain=%li, sd->size=%zu)",
-				sd->name, (long int)(ins->roof - cur),
-				sd->size);
-	} else {
-		uint8_t *roof = cur + sd->size; /* may be changed by a length field */
-		uint8_t *outp = struct_ptr;
-		bool immediate = FALSE;
-		uintmax_t last_enum = 0;
+	uint8_t *roof = cur + sd->size; /* may be changed by a length field */
+	uint8_t *outp = struct_ptr;
+	bool immediate = FALSE;
+	uintmax_t last_enum = 0;
 
-		for (field_desc *fp = sd->fields; ugh == NULL; fp++) {
+	passert(struct_size == 0 || struct_size >= sd->size);
 
-			/* field ends within PBS? */
-			passert(cur + fp->size <= ins->roof);
-			/* field ends within struct? */
-			passert(cur + fp->size <= ins->cur + sd->size);
-			/* "offset into struct" - "offset into pbs" == "start of struct"? */
-			passert(outp - (cur - ins->cur) == struct_ptr);
+	for (field_desc *fp = sd->fields; fp->field_type != ft_end; fp++) {
+
+		/* field ends within PBS? */
+		passert(cur + fp->size <= ins->roof);
+		/* field ends within struct? */
+		passert(cur + fp->size <= ins->cur + sd->size);
+		/* "offset into struct" - "offset into pbs" == "start of struct"? */
+		passert(outp - (cur - ins->cur) == struct_ptr);
 
 #if 0
-			dbg("%td (%td) '%s'.'%s' %d bytes ",
-			     (cur - ins->cur), (cur - ins->start),
-			     sd->name, fp->name,
-			     fp->size);
+		dbg("%td (%td) '%s'.'%s' %d bytes ",
+		    (cur - ins->cur), (cur - ins->start),
+		    sd->name, fp->name,
+		    fp->size);
 #endif
 
+		switch (fp->field_type) {
+		case ft_zig: /* should be zero, ignore if not - liberal in what to receive, strict to send */
+			for (size_t i = fp->size; i != 0; i--) {
+				uint8_t byte = *cur;
+				if (byte != 0) {
+					/* We cannot zeroize it, it would break our hash calculation. */
+					log_message(RC_LOG, logger,
+						    "byte at offset %td (%td) of '%s'.'%s' is 0x%02"PRIx8" but should have been zero (ignored)",
+						    (cur - ins->cur),
+						    (cur - ins->start),
+						    sd->name, fp->name,
+						    byte);
+				}
+				cur++;
+				*outp++ = '\0'; /* probably redundant */
+			}
+			break;
+
+		case ft_nat:            /* natural number (may be 0) */
+		case ft_len:            /* length of this struct and any following crud */
+		case ft_lv:             /* length/value field of attribute */
+		case ft_enum:           /* value from an enumeration */
+		case ft_loose_enum:     /* value from an enumeration with only some names known */
+		case ft_mnpc:
+		case ft_pnpc:
+		case ft_lss:
+		case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
+		case ft_af_enum:        /* Attribute Format + value from an enumeration */
+		case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
+		case ft_set:            /* bits representing set */
+		{
+			uintmax_t n = 0;
+
+			/* Reportedly fails on arm, see bug #775 */
+			for (size_t i = fp->size; i != 0; i--)
+				n = (n << BITS_PER_BYTE) | *cur++;
+
 			switch (fp->field_type) {
-			case ft_zig: /* should be zero, ignore if not - liberal in what to receive, strict to send */
-				for (size_t i = fp->size; i != 0; i--) {
-					uint8_t byte = *cur;
-					if (byte != 0) {
-						/* We cannot zeroize it, it would break our hash calculation. */
-						libreswan_log( "byte at offset %td (%td) of '%s'.'%s' is 0x%02"PRIx8" but should have been zero (ignored)",
-							       (cur - ins->cur),
-							       (cur - ins->start),
-							       sd->name, fp->name,
-							       byte);
-					}
-					cur++;
-					*outp++ = '\0'; /* probably redundant */
+			case ft_len:    /* length of this struct and any following crud */
+			case ft_lv:     /* length/value field of attribute */
+			{
+				size_t len = fp->field_type ==
+					ft_len ? n :
+					immediate ? sd->size :
+					n + sd->size;
+
+				if (len < sd->size) {
+					log_message(RC_LOG, logger,
+						    "%zd-byte %s of %s is smaller than minimum",
+						    len,
+						    fp->name,
+						    sd->name);
+					return false;
+				}
+
+				if (pbs_left(ins) < len) {
+					log_message(RC_LOG, logger,
+						    "%zd-byte %s of %s is larger than can fit",
+						    len,
+						    fp->name,
+						    sd->name);
+					return false;
+				}
+
+				roof = ins->cur + len;
+				break;
+			}
+
+			case ft_af_loose_enum: /* Attribute Format + value from an enumeration */
+			case ft_af_enum: /* Attribute Format + value from an enumeration */
+				immediate = ((n & ISAKMP_ATTR_AF_MASK) ==
+					     ISAKMP_ATTR_AF_TV);
+				last_enum = n & ~ISAKMP_ATTR_AF_MASK;
+				/*
+				 * Lookup fp->desc using N and
+				 * not LAST_ENUM.  Only when N
+				 * (value or AF+value) is
+				 * found is it acceptable.
+				 */
+				if (fp->field_type == ft_af_enum &&
+				    enum_name(fp->desc, n) == NULL) {
+					log_message(RC_LOG, logger,
+						    "%s of %s has an unknown value: %s%ju (0x%jx)",
+						    fp->name, sd->name,
+						    immediate ? "AF+" : "",
+						    last_enum, n);
+					return false;
 				}
 				break;
 
-			case ft_nat:            /* natural number (may be 0) */
-			case ft_len:            /* length of this struct and any following crud */
-			case ft_lv:             /* length/value field of attribute */
-			case ft_enum:           /* value from an enumeration */
+			case ft_enum:   /* value from an enumeration */
+				if (enum_name(fp->desc, n) == NULL) {
+					log_message(RC_LOG, logger,
+						    "%s of %s has an unknown value: %ju (0x%jx)",
+						    fp->name, sd->name,
+						    n, n);
+					return false;
+				}
+				last_enum = n;
+				break;
+
 			case ft_loose_enum:     /* value from an enumeration with only some names known */
 			case ft_mnpc:
 			case ft_pnpc:
 			case ft_lss:
-			case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
-			case ft_af_enum:        /* Attribute Format + value from an enumeration */
-			case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
-			case ft_set:            /* bits representing set */
+				last_enum = n;
+				break;
+
+			case ft_loose_enum_enum:
 			{
-				uintmax_t n = 0;
-
-				/* Reportedly fails on arm, see bug #775 */
-				for (size_t i = fp->size; i != 0; i--)
-					n = (n << BITS_PER_BYTE) | *cur++;
-
-				switch (fp->field_type) {
-				case ft_len:    /* length of this struct and any following crud */
-				case ft_lv:     /* length/value field of attribute */
-				{
-					size_t len = fp->field_type ==
-							ft_len ? n :
-							immediate ? sd->size :
-							n + sd->size;
-
-					if (len < sd->size) {
-						ugh = builddiag(
-							"%zd-byte %s of %s is smaller than minimum",
-							len,
-							fp->name,
-							sd->name);
-					} else if (pbs_left(ins) < len) {
-						ugh = builddiag(
-							"%zd-byte %s of %s is larger than can fit",
-							len,
-							fp->name,
-							sd->name);
-					} else {
-						roof = ins->cur + len;
-					}
-					break;
+				/* value from an enumeration with partial name table based on previous enum */
+				err_t ugh = enum_enum_checker(sd->name, fp, last_enum);
+				if (ugh != NULL) {
+					log_message(RC_LOG, logger, "%s", ugh);
+					return false;
 				}
-
-				case ft_af_loose_enum: /* Attribute Format + value from an enumeration */
-				case ft_af_enum: /* Attribute Format + value from an enumeration */
-					immediate = ((n & ISAKMP_ATTR_AF_MASK) ==
-						     ISAKMP_ATTR_AF_TV);
-					last_enum = n & ~ISAKMP_ATTR_AF_MASK;
-					/*
-					 * Lookup fp->desc using N and
-					 * not LAST_ENUM.  Only when N
-					 * (value or AF+value) is
-					 * found is it acceptable.
-					 */
-					if (fp->field_type == ft_af_enum &&
-					    enum_name(fp->desc, n) == NULL) {
-						ugh = builddiag("%s of %s has an unknown value: %s%ju (0x%jx)",
-								fp->name, sd->name,
-								immediate ? "AF+" : "",
-								last_enum, n);
-					}
-					break;
-
-				case ft_enum:   /* value from an enumeration */
-					if (enum_name(fp->desc, n) == NULL) {
-						ugh = builddiag("%s of %s has an unknown value: %ju (0x%jx)",
-								fp->name, sd->name,
-								n, n);
-					}
-				/* FALL THROUGH */
-				case ft_loose_enum:     /* value from an enumeration with only some names known */
-				case ft_mnpc:
-				case ft_pnpc:
-				case ft_lss:
-					last_enum = n;
-					break;
-
-				case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
-					ugh = enum_enum_checker(sd->name, fp, last_enum);
-					break;
-
-				case ft_set:            /* bits representing set */
-					if (!testset(fp->desc, n)) {
-						ugh = builddiag("bitset %s of %s has unknown member(s): %s (0x%ju)",
-								fp->name, sd->name,
-								bitnamesof(fp->desc, n),
-								n);
-					}
-					break;
-
-				default:
-					break;
-				}
-
-				/* deposit the value in the struct */
-				switch (fp->size) {
-				case 8 / BITS_PER_BYTE:
-					*(uint8_t *)outp = n;
-					break;
-				case 16 / BITS_PER_BYTE:
-					*(uint16_t *)outp = n;
-					break;
-				case 32 / BITS_PER_BYTE:
-					*(uint32_t *)outp = n;
-					break;
-				default:
-					bad_case(fp->size);
-				}
-				outp += fp->size;
 				break;
 			}
 
-			case ft_raw: /* bytes to be left in network-order */
-				for (size_t i = fp->size; i != 0; i--)
-					*outp++ = *cur++;
-				break;
-
-			case ft_end: /* end of field list */
-				passert(cur == ins->cur + sd->size);
-				if (obj_pbs != NULL) {
-					init_pbs(obj_pbs, ins->cur,
-						 roof - ins->cur, sd->name);
-					obj_pbs->container = ins;
-					obj_pbs->desc = sd;
-					obj_pbs->cur = cur;
+			case ft_set:            /* bits representing set */
+				if (!testset(fp->desc, n)) {
+					log_message(RC_LOG, logger,
+						    "bitset %s of %s has unknown member(s): %s (0x%ju)",
+						    fp->name, sd->name,
+						    bitnamesof(fp->desc, n),
+						    n);
+					return false;
 				}
-				ins->cur = roof;
-				DBG(DBG_PARSING,
-				    DBG_prefix_print_struct(ins, "parse ",
-							    struct_ptr, sd,
-							    TRUE));
-				return TRUE;
+				break;
 
 			default:
-				bad_case(fp->field_type);
+				break;
 			}
+
+			/* deposit the value in the struct */
+			switch (fp->size) {
+			case 8 / BITS_PER_BYTE:
+				*(uint8_t *)outp = n;
+				break;
+			case 16 / BITS_PER_BYTE:
+				*(uint16_t *)outp = n;
+				break;
+			case 32 / BITS_PER_BYTE:
+				*(uint32_t *)outp = n;
+				break;
+			default:
+				bad_case(fp->size);
+			}
+			outp += fp->size;
+			break;
+		}
+
+		case ft_raw: /* bytes to be left in network-order */
+			for (size_t i = fp->size; i != 0; i--)
+				*outp++ = *cur++;
+			break;
+
+		case ft_end: /* end of field list */
+			PASSERT_FAIL("should not be here");
+
+		default:
+			bad_case(fp->field_type);
 		}
 	}
 
-	/* some failure got us here: report it */
-	libreswan_log_rc(RC_LOG_SERIOUS, "%s", ugh);
-	return FALSE;
+	passert(cur == ins->cur + sd->size);
+	if (obj_pbs != NULL) {
+		init_pbs(obj_pbs, ins->cur,
+			 roof - ins->cur, sd->name);
+		obj_pbs->container = ins;
+		obj_pbs->desc = sd;
+		obj_pbs->cur = cur;
+	}
+	ins->cur = roof;
+	if (DBGP(DBG_BASE)) {
+		DBG_prefix_print_struct(ins, "parse ",
+					struct_ptr, sd,
+					true);
+	}
+	return true;
+}
+
+bool in_struct(void *struct_ptr, struct_desc *sd,
+	       struct pbs_in *ins, struct pbs_in *obj_pbs)
+{
+	struct logger logger = cur_logger();
+	return pbs_in_struct(ins, struct_ptr, 0, sd,
+			     obj_pbs, &logger);
 }
 
 bool in_raw(void *bytes, size_t len, pb_stream *ins, const char *name)

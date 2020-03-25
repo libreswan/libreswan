@@ -138,9 +138,10 @@ static struct msg_digest *read_message(const struct iface_port *ifp)
 void process_packet(struct msg_digest **mdp)
 {
 	struct msg_digest *md = *mdp;
+	struct logger logger = MESSAGE_LOGGER(md);
 
-	if (!in_struct(&md->hdr, &isakmp_hdr_desc, &md->packet_pbs,
-		       &md->message_pbs)) {
+	if (!pbs_in_struct(&md->packet_pbs, &md->hdr, sizeof(md->hdr),
+			   &isakmp_hdr_desc, &md->message_pbs, &logger)) {
 		/*
 		 * The packet was very badly mangled. We can't be sure
 		 * of any content - not even to look for major version
