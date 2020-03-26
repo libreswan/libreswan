@@ -40,7 +40,7 @@ enum message_role;
 
 typedef stf_status v2_msgid_pending_cb(struct ike_sa *ike,
 				       struct state *st,
-				       struct msg_digest **mdp);
+				       struct msg_digest *md);
 
 struct v2_msgid_pending {
 	so_serial_t st_serialno;

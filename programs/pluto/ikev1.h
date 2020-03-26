@@ -21,7 +21,7 @@ void ikev1_init_out_pbs_echo_hdr(struct msg_digest *md, bool enc,
 				 size_t sizeof_output_buffer,
 				 pb_stream *rbody);
 
-extern void complete_v1_state_transition(struct msg_digest **mdp,
+extern void complete_v1_state_transition(struct msg_digest *md,
 					 stf_status result);
 
 extern void process_v1_packet(struct msg_digest **mdp);

@@ -604,7 +604,7 @@ static void idi_ipseckey_fetch_tail(struct state *st, bool err)
 	}
 
 	/* replace (*mdp)->st with st ... */
-	complete_v2_state_transition(md->st, &md, stf);
+	complete_v2_state_transition(md->st, md, stf);
 	release_any_md(&md);
 	reset_globals();
 }

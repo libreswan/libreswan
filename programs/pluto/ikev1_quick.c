@@ -1289,6 +1289,8 @@ static void quick_inI1_outR1_continue1(struct state *st,
 				       struct msg_digest **mdp,
 				       struct pluto_crypto_req *r)
 {
+	struct msg_digest *md = *mdp;
+
 	DBG(DBG_CONTROL,
 		DBG_log("quick_inI1_outR1_cryptocontinue1 for #%lu: calculated ke+nonce, calculating DH",
 			st->st_serialno));
@@ -1308,15 +1310,15 @@ static void quick_inI1_outR1_continue1(struct state *st,
 		 * to be re suspended.  If the original crypto request
 		 * did everything this wouldn't be needed.
 		 */
-		suspend_md(st, mdp);
+		suspend_any_md(st, md);
 	} else {
 		/* but if PFS is off, we don't do a second DH, so just
 		 * call the continuation with NULL struct pluto_crypto_req *
 		 */
 		stf_status e = quick_inI1_outR1_continue12_tail(*mdp, NULL);
 		if (e == STF_OK) {
-			passert(*mdp != NULL);	/* ??? when would this fail? */
-			complete_v1_state_transition(mdp, e);
+			passert(md != NULL);	/* ??? when would this fail? */
+			complete_v1_state_transition(md, e);
 		}
 	}
 	/* ??? why does our caller not care about e? */
@@ -1326,14 +1328,16 @@ static void quick_inI1_outR1_continue2(struct state *st,
 				       struct msg_digest **mdp,
 				       struct pluto_crypto_req *r)
 {
+	struct msg_digest *md = *mdp;
+
 	DBG(DBG_CONTROL,
 		DBG_log("quick_inI1_outR1_cryptocontinue2 for #%lu: calculated DH, sending R1",
 			st->st_serialno));
 
 	passert(st->st_connection != NULL);
-	passert(*mdp != NULL);
-	stf_status e = quick_inI1_outR1_continue12_tail(*mdp, r);
-	complete_v1_state_transition(mdp, e);
+	passert(md != NULL);
+	stf_status e = quick_inI1_outR1_continue12_tail(md, r);
+	complete_v1_state_transition(md, e);
 }
 
 /*
@@ -1571,14 +1575,16 @@ static void quick_inR1_outI2_continue(struct state *st,
 				      struct msg_digest **mdp,
 				      struct pluto_crypto_req *r)
 {
+	struct msg_digest *md = *mdp;
+
 	DBG(DBG_CONTROL,
 		DBG_log("quick_inR1_outI2_continue for #%lu: calculated ke+nonce, calculating DH",
 			st->st_serialno));
 
 	passert(st->st_connection != NULL);
-	passert(*mdp != NULL);
-	stf_status e = quick_inR1_outI2_tail(*mdp, r);
-	complete_v1_state_transition(mdp, e);
+	passert(md != NULL);
+	stf_status e = quick_inR1_outI2_tail(md, r);
+	complete_v1_state_transition(md, e);
 }
 
 stf_status quick_inR1_outI2_tail(struct msg_digest *md,
