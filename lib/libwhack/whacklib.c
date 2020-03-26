@@ -205,6 +205,7 @@ static bool pickle_whack_end(struct whackpacker *wp, struct whack_end *end,
 		PICKLE_STRING(&end->updown) &&
 		PICKLE_STRING(&end->virt) &&
 		PICKLE_STRING(&end->xauth_username) &&
+		PICKLE_STRING(&end->host_addr_name) &&
 		true);
 }
 
@@ -216,10 +217,7 @@ static bool pickle_whack_message(struct whackpacker *wp, struct pickler *pickle)
 		PICKLE_STRING(&wp->msg->keyid) &&
 		PICKLE_STRING(&wp->msg->ike) &&
 		PICKLE_STRING(&wp->msg->esp) &&
-		PICKLE_STRING(&wp->msg->right.xauth_username) &&
 		PICKLE_STRING(&wp->msg->connalias) &&
-		PICKLE_STRING(&wp->msg->left.host_addr_name) &&
-		PICKLE_STRING(&wp->msg->right.host_addr_name) &&
 		PICKLE_STRING(&wp->msg->string1) &&
 		PICKLE_STRING(&wp->msg->string2) &&
 		PICKLE_STRING(&wp->msg->string3) &&
