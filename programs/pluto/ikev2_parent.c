@@ -2008,9 +2008,13 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 						     &ike->sa.st_v2_id_payload.mac,
 						     ike->sa.st_firstpacket_me,
 						     hash_algo);
-			return submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
-							authby, auth_method,
-							ikev2_parent_inR1outI2_auth_signature_continue);
+			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
+						      authby, auth_method,
+						      ikev2_parent_inR1outI2_auth_signature_continue)) {
+				dbg("submit_v2_auth_signature() died, fatal");
+				return STF_FATAL;
+			}
+			return STF_SUSPEND;
 		}
 		case IKEv2_AUTH_DIGSIG:
 		{
@@ -2022,9 +2026,13 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 									     &ike->sa.st_v2_id_payload.mac,
 									     ike->sa.st_firstpacket_me,
 									     hash_algo);
-			return submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
-							authby, auth_method,
-							ikev2_parent_inR1outI2_auth_signature_continue);
+			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
+						      authby, auth_method,
+						      ikev2_parent_inR1outI2_auth_signature_continue)) {
+				dbg("submit_v2_auth_signature() died, fatal");
+				return STF_FATAL;
+			}
+			return STF_SUSPEND;
 		}
 		case IKEv2_AUTH_PSK:
 		case IKEv2_AUTH_NULL:
@@ -2381,10 +2389,10 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 		close_output_pbs(&ppks);
 
 		if (!LIN(POLICY_PPK_INSIST, cc->policy)) {
-			stf_status s = ikev2_calc_no_ppk_auth(ike, &ike->sa.st_v2_id_payload.mac_no_ppk_auth,
-							      &ike->sa.st_no_ppk_auth);
-			if (s != STF_OK) {
-				return s;
+			if (!ikev2_calc_no_ppk_auth(ike, &ike->sa.st_v2_id_payload.mac_no_ppk_auth,
+						    &ike->sa.st_no_ppk_auth)) {
+				dbg("ikev2_calc_no_ppk_auth() failed dieing");
+				return STF_FATAL;
 			}
 
 			if (!emit_v2N_hunk(v2N_NO_PPK_AUTH,
@@ -2956,23 +2964,37 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 						     &ike->sa.st_v2_id_payload.mac,
 						     ike->sa.st_firstpacket_me,
 						     hash_algo);
-			return submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
-							authby, auth_method,
-							ikev2_parent_inI2outR2_auth_signature_continue);
+			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
+						      authby, auth_method,
+						      ikev2_parent_inI2outR2_auth_signature_continue)) {
+				dbg("submit_v2_auth_signature() died, fatal");
+				send_v2N_response_from_state(ike, md, v2N_AUTHENTICATION_FAILED,
+							     NULL/*no data*/);
+				return STF_FATAL;
+			}
+			return STF_SUSPEND;
 		}
 		case IKEv2_AUTH_DIGSIG:
 		{
 			const struct hash_desc *hash_algo = v2_auth_negotiated_signature_hash(ike);
 			if (hash_algo == NULL) {
+				send_v2N_response_from_state(ike, md, v2N_AUTHENTICATION_FAILED,
+							     NULL/*no data*/);
 				return STF_FATAL;
 			}
 			struct crypt_mac hash_to_sign = v2_calculate_sighash(ike, ORIGINAL_RESPONDER,
 									     &ike->sa.st_v2_id_payload.mac,
 									     ike->sa.st_firstpacket_me,
 									     hash_algo);
-			return submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
-							authby, auth_method,
-							ikev2_parent_inI2outR2_auth_signature_continue);
+			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
+						      authby, auth_method,
+						      ikev2_parent_inI2outR2_auth_signature_continue)) {
+				dbg("submit_v2_auth_signature() died, fatal");
+				send_v2N_response_from_state(ike, md, v2N_AUTHENTICATION_FAILED,
+							     NULL/*no data*/);
+				return STF_FATAL;
+			}
+			return STF_SUSPEND;
 		}
 		case IKEv2_AUTH_PSK:
 		case IKEv2_AUTH_NULL:

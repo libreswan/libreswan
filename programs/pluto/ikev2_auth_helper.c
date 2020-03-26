@@ -53,12 +53,12 @@ struct crypto_handler v2_auth_signature_handler = {
 	.cancelled_cb = v2_auth_signature_cancelled,
 };
 
-stf_status submit_v2_auth_signature(struct ike_sa *ike,
-				    const struct crypt_mac *hash_to_sign,
-				    const struct hash_desc *hash_algo,
-				    enum keyword_authby authby,
-				    enum ikev2_auth_method auth_method,
-				    v2_auth_signature_cb *cb)
+bool submit_v2_auth_signature(struct ike_sa *ike,
+			      const struct crypt_mac *hash_to_sign,
+			      const struct hash_desc *hash_algo,
+			      enum keyword_authby authby,
+			      enum ikev2_auth_method auth_method,
+			      v2_auth_signature_cb *cb)
 {
 	struct crypto_task task = {
 		.cb = cb,
@@ -73,14 +73,14 @@ stf_status submit_v2_auth_signature(struct ike_sa *ike,
 		task.pks = get_connection_private_key(c, &pubkey_type_rsa);
 		if (task.pks == NULL)
 			/* failure: no key to use */
-			return STF_FAIL;
+			return false;
 		break;
 
 	case AUTHBY_ECDSA:
 		task.pks = get_connection_private_key(c, &pubkey_type_ecdsa);
 		if (task.pks == NULL)
 			/* failure: no key to use */
-			return STF_FAIL;
+			return false;
 		break;
 	default:
 		bad_case(authby);
@@ -90,7 +90,7 @@ stf_status submit_v2_auth_signature(struct ike_sa *ike,
 		      clone_thing(task, "signature task"),
 		      &v2_auth_signature_handler,
 		      "computing responder signature");
-	return STF_SUSPEND;
+	return true;
 }
 
 static void v2_auth_signature_computer(struct logger *logger, struct crypto_task *task,

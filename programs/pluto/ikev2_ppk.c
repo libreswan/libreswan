@@ -36,6 +36,7 @@
 #include "ike_alg_hash.h"
 #include "crypt_mac.h"
 #include "ikev2_auth.h"
+#include "log.h"
 
 /*
  * used by initiator, to properly construct struct
@@ -107,9 +108,9 @@ bool extract_ppk_id(pb_stream *pbs, struct ppk_id_payload *payl)
 	return TRUE;
 }
 
-stf_status ikev2_calc_no_ppk_auth(struct ike_sa *ike,
-				  const struct crypt_mac *id_hash,
-				  chunk_t *no_ppk_auth /* output */)
+bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,
+			    const struct crypt_mac *id_hash,
+			    chunk_t *no_ppk_auth /* output */)
 {
 	struct connection *c = ike->sa.st_connection;
 	enum keyword_authby authby = c->spd.this.authby;
@@ -126,12 +127,13 @@ stf_status ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 				if (!ikev2_calculate_rsa_hash(ike, ike->sa.st_original_role,
 							      id_hash, NULL, no_ppk_auth,
 							      &ike_alg_hash_sha1)) {
-					return STF_FAIL;
+					return false;
 				}
-				return STF_OK;
+				return true;
 			} else {
-				loglog(RC_LOG_SERIOUS, "No compatible hash algo");
-				return STF_FAIL;
+				log_state(RC_LOG_SERIOUS, &ike->sa,
+					  "no compatible hash algo");
+				return false;
 			}
 		}
 
@@ -139,14 +141,14 @@ stf_status ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 		if (h.len == 0) {
 			LOG_PEXPECT("negotiated hash algorithm %s has no RSA ASN1 blob",
 				    hash_algo->common.fqn);
-			return STF_FAIL;
+			return false;
 		}
 
 		chunk_t hashval = NULL_HUNK;
 		if (!ikev2_calculate_rsa_hash(ike, ike->sa.st_original_role,
 					      id_hash, NULL, &hashval,
 					      hash_algo)) {
-			return STF_FAIL;
+			return false;
 		}
 
 		if (ike->sa.st_seen_hashnotify) {
@@ -164,14 +166,14 @@ stf_status ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 			*no_ppk_auth = chunk2(blobs, len);
 		}
 		free_chunk_content(&hashval);
-		return STF_OK;
+		return true;
 	}
 	case AUTHBY_PSK:
 		/* store in no_ppk_auth */
 		if (!ikev2_create_psk_auth(AUTHBY_PSK, ike, id_hash, no_ppk_auth)) {
-			return STF_INTERNAL_ERROR;
+			return false; /* was STF_INTERNAL_ERROR but don't tell */
 		}
-		return STF_OK;
+		return true;
 
 	default:
 		bad_case(authby);

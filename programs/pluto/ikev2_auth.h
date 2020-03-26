@@ -60,11 +60,11 @@ typedef stf_status (v2_auth_signature_cb)(struct ike_sa *ike,
 					  struct msg_digest *md,
 					  const struct hash_signature *sighash_sig);
 
-stf_status submit_v2_auth_signature(struct ike_sa *ike,
-				    const struct crypt_mac *sighash,
-				    const struct hash_desc *hash_algo,
-				    enum keyword_authby authby,
-				    enum ikev2_auth_method auth_method,
-				    v2_auth_signature_cb *cb);
+bool submit_v2_auth_signature(struct ike_sa *ike,
+			      const struct crypt_mac *sighash,
+			      const struct hash_desc *hash_algo,
+			      enum keyword_authby authby,
+			      enum ikev2_auth_method auth_method,
+			      v2_auth_signature_cb *cb);
 
 #endif
