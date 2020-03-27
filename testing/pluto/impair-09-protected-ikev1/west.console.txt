@@ -31,6 +31,8 @@ west #
 west #
  ipsec whack --impair none
 west #
+ ipsec whack --impair suppress-retransmits
+west #
  ../bin/libreswan-up-down.sh  westnet-eastnet -I 192.0.1.254 192.0.2.254
 002 "westnet-eastnet": terminating SAs using this connection
 002 added connection description "westnet-eastnet"

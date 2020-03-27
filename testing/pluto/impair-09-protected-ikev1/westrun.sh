@@ -1,5 +1,6 @@
 # Proper test connection, should work
 ipsec whack --impair none
+ipsec whack --impair suppress-retransmits
 ../bin/libreswan-up-down.sh  westnet-eastnet -I 192.0.1.254 192.0.2.254
 
 # Quick:
