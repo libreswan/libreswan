@@ -887,6 +887,12 @@ static stf_status unexpected(struct state *st, struct msg_digest *md UNUSED)
  */
 static stf_status informational(struct state *st, struct msg_digest *md)
 {
+	/*
+	 * XXX: Danger: ST is deleted midway through this function.
+	 */
+	pexpect(st == md->st);
+	st = md->st;    /* may be NULL */
+
 	struct payload_digest *const n_pld = md->chain[ISAKMP_NEXT_N];
 
 	/* If the Notification Payload is not null... */
@@ -894,18 +900,15 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 		pb_stream *const n_pbs = &n_pld->pbs;
 		struct isakmp_notification *const n =
 			&n_pld->payload.notification;
-		pexpect(st == md->st);
-		st = md->st;    /* may be NULL */
 
 		/* Switch on Notification Type (enum) */
 		/* note that we _can_ get notification payloads unencrypted
 		 * once we are at least in R3/I4.
 		 * and that the handler is expected to treat them suspiciously.
 		 */
-		DBG(DBG_CONTROL, DBG_log("processing informational %s (%d)",
-					 enum_name(&ikev1_notify_names,
-						   n->isan_type),
-					 n->isan_type));
+		dbg("processing informational %s (%d)",
+		    enum_name(&ikev1_notify_names, n->isan_type),
+		    n->isan_type);
 
 		pstats(ikev1_recv_notifies_e, n->isan_type);
 
@@ -919,16 +922,14 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 		 */
 		case R_U_THERE:
 			if (st == NULL) {
-				loglog(RC_LOG_SERIOUS,
-				       "received bogus  R_U_THERE informational message");
+				plog_md(md, "received bogus  R_U_THERE informational message");
 				return STF_IGNORE;
 			}
 			return dpd_inI_outR(st, n, n_pbs);
 
 		case R_U_THERE_ACK:
 			if (st == NULL) {
-				loglog(RC_LOG_SERIOUS,
-				       "received bogus R_U_THERE_ACK informational message");
+				plog_md(md, "received bogus R_U_THERE_ACK informational message");
 				return STF_IGNORE;
 			}
 			return dpd_inR(st, n, n_pbs);
@@ -937,9 +938,8 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 			if (st != NULL) {
 				st->hidden_variables.st_malformed_received++;
 
-				libreswan_log(
-					"received %u malformed payload notifies",
-					st->hidden_variables.st_malformed_received);
+				log_state(RC_LOG, st, "received %u malformed payload notifies",
+					  st->hidden_variables.st_malformed_received);
 
 				if (st->hidden_variables.st_malformed_sent >
 				    MAXIMUM_MALFORMED_NOTIFY / 2 &&
@@ -947,10 +947,9 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				      st->hidden_variables.
 				      st_malformed_received) >
 				     MAXIMUM_MALFORMED_NOTIFY)) {
-					libreswan_log(
-						"too many malformed payloads (we sent %u and received %u",
-						st->hidden_variables.st_malformed_sent,
-						st->hidden_variables.st_malformed_received);
+					log_state(RC_LOG, st, "too many malformed payloads (we sent %u and received %u",
+						  st->hidden_variables.st_malformed_sent,
+						  st->hidden_variables.st_malformed_received);
 					delete_state(st);
 					md->st = st = NULL;
 				}
@@ -965,11 +964,10 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 			 * Is anything else possible?  Expected?  Documented?
 			 */
 			if (st == NULL || !IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
-				loglog(RC_LOG_SERIOUS,
-					"ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message with for unestablished state.");
+				plog_md(md, "ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message with for unestablished state.");
 			} else if (pbs_left(n_pbs) < 4) {
-				loglog(RC_LOG_SERIOUS,
-					"ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message without IPv4 address");
+				log_state(RC_LOG_SERIOUS, st,
+					  "ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message without IPv4 address");
 			} else {
 				/*
 				 * Copy (not cast) the last 4 bytes
@@ -986,10 +984,10 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				if (address_is_any(&new_peer)) {
 					ipstr_buf b;
 
-					loglog(RC_LOG_SERIOUS,
-						"ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message with invalid IPv4 address %s",
-						ipstr(&new_peer, &b));
-					return FALSE;
+					log_state(RC_LOG_SERIOUS, st,
+						  "ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message with invalid IPv4 address %s",
+						  ipstr(&new_peer, &b));
+					return FALSE; /* XXX: STF_*? */
 				}
 
 				/* Saving connection name and whack sock id */
@@ -1061,9 +1059,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				tmp_c->spd.that.host_addr = new_peer;
 
 				/* Modifying connection info to store the redirected remote peer info */
-				DBG(DBG_CONTROLMORE,
-				    DBG_log("Old host_addr_name : %s",
-					    tmp_c->spd.that.host_addr_name));
+				dbg("Old host_addr_name : %s", tmp_c->spd.that.host_addr_name);
 				tmp_c->spd.that.host_addr_name = NULL;
 
 				/* ??? do we know the id.kind has an ip_addr? */
@@ -1073,34 +1069,34 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				ipstr_buf b;
 				if (sameaddr(&tmp_c->spd.this.host_nexthop,
 					     &old_addr)) {
-					DBG(DBG_CONTROLMORE, {
+					if (DBGP(DBG_BASE)) {
 						DBG_log("this host's next hop %s was the same as the old remote addr",
 							ipstr(&old_addr, &b));
 						DBG_log("changing this host's next hop to %s",
 							ipstr(&new_peer, &b));
-					});
+					}
 					tmp_c->spd.this.host_nexthop = new_peer;
 				}
 
 				if (sameaddr(&tmp_c->spd.that.host_srcip,
 					     &old_addr)) {
-					DBG(DBG_CONTROLMORE, {
+					if (DBGP(DBG_BASE)) {
 						DBG_log("Old that host's srcip %s was the same as the old remote addr",
 							ipstr(&old_addr, &b));
 						DBG_log("changing that host's srcip to %s",
 							ipstr(&new_peer, &b));
-					});
+					}
 					tmp_c->spd.that.host_srcip = new_peer;
 				}
 
 				if (sameaddr(&tmp_c->spd.that.client.addr,
 					     &old_addr)) {
-					DBG(DBG_CONTROLMORE, {
+					if (DBGP(DBG_BASE)) {
 						DBG_log("Old that client ip %s was the same as the old remote address",
 							ipstr(&old_addr, &b));
 						DBG_log("changing that client's ip to %s",
 							ipstr(&new_peer, &b));
-					});
+					}
 					tmp_c->spd.that.client.addr = new_peer;
 				}
 
@@ -1125,16 +1121,20 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 			}
 			return STF_IGNORE;
 		default:
-			loglog(RC_LOG_SERIOUS,
-				"received and ignored notification payload: %s",
-				enum_name(&ikev1_notify_names, n->isan_type));
+		{
+			struct logger logger = st != NULL ? STATE_LOGGER(st) : MESSAGE_LOGGER(md);
+			log_message(RC_LOG_SERIOUS, &logger,
+				    "received and ignored notification payload: %s",
+				    enum_name(&ikev1_notify_names, n->isan_type));
 			return STF_IGNORE;
+		}
 		}
 	} else {
 		/* warn if we didn't find any Delete or Notify payload in packet */
 		if (md->chain[ISAKMP_NEXT_D] == NULL) {
-			loglog(RC_LOG_SERIOUS,
-				"received and ignored empty informational notification payload");
+			struct logger logger = st != NULL ? STATE_LOGGER(st) : MESSAGE_LOGGER(md);
+			log_message(RC_LOG_SERIOUS, &logger,
+				    "received and ignored empty informational notification payload");
 		}
 		return STF_IGNORE;
 	}
@@ -2371,6 +2371,10 @@ void process_packet_tail(struct msg_digest *md)
 
 	/* XXX: pexpect(st == md->st); fails! */
 	statetime_t start = statetime_start(md->st);
+	/*
+	 * XXX: danger - the .informational() processor deletes ST;
+	 * and then tunnels this loss through MD.ST.
+	 */
 	complete_v1_state_transition(md, smc->processor(st, md));
 	statetime_stop(&start, "%s()", __func__);
 	/* our caller will release_any_md(mdp); */
