@@ -71,14 +71,25 @@ void fd_leak(struct fd **fdp, where_t where)
 ssize_t fd_sendmsg(const struct fd *fd, const struct msghdr *msg,
 		   int flags, where_t where)
 {
-	if (fd == NULL) {
+	if (fd == NULL || fd->magic != FD_MAGIC) {
 		/*
 		 * XXX: passert() / pexpect() / ... would be recursive
 		 * - they write to whack using fd_sendsmg(), fake it.
 		 */
 		LSWBUF(buf) {
-			jam(buf, "EXPECTATION FAILED: fd is NULL "PRI_WHERE"",
-			    pri_where(where));
+			jam(buf, "EXPECTATION FAILED:");
+			if (fd == NULL) {
+				jam(buf, " fd should not be NULL");
+			} else {
+				jam(buf, " fd magic is %ux, should be %ux",
+				    fd->magic, FD_MAGIC);
+			}
+			jam(buf, " "PRI_WHERE"", pri_where(where));
+			for (unsigned i = 0; i < msg->msg_iovlen; i++) {
+				jam(buf, "; ");
+				struct iovec *iov = &msg->msg_iov[i];
+				jam_sanitized_bytes(buf, iov->iov_base, iov->iov_len);
+			}
 			log_jambuf(LOG_STREAM, null_fd, buf);
 		}
 		return -1;
