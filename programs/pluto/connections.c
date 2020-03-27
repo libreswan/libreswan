@@ -951,20 +951,10 @@ static bool load_end_cert_and_preload_secret(const struct fd *whackfd,
 	passert(cert != NULL);
 
 #ifdef FIPS_CHECK
-	if (libreswan_fipsmode()) {
-		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
-		passert(pk != NULL);
-		if (pk->u.rsa.modulus.len * BITS_PER_BYTE < FIPS_MIN_RSA_KEY_SIZE) {
-			loglog_global(RC_FATAL, whackfd,
-				      "FIPS: Rejecting cert with key size %d which is under %d",
-				      pk->u.rsa.modulus.len * BITS_PER_BYTE,
-				      FIPS_MIN_RSA_KEY_SIZE);
-			SECKEY_DestroyPublicKey(pk);
-			CERT_DestroyCertificate(cert);
-			return false;
-		}
-		/* TODO FORCE MINIMUM SIZE ECDSA KEY */
-		SECKEY_DestroyPublicKey(pk);
+	if (libreswan_fipsmode() &&
+		!cert_fips_verify_public_key(cert, "cert")) {
+		CERT_DestroyCertificate(cert);
+		return false;
 	}
 #endif /* FIPS_CHECK */
 

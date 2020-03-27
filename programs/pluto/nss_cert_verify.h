@@ -60,4 +60,15 @@ extern bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 
 extern SECItem *nss_pkcs7_blob(CERTCertificate *cert, bool send_full_chain);
 
+/**
+ * Check if a certificate's public key adheres to FIPS.
+ *
+ * @return             `true` if the public key's properties are FIPS-approved.
+ * @param cert         The certificate whose public key needs to be checked.
+ * @param cert_desc    Human-friendly description of `cert`. Used only for log
+ *                     messages.
+ */
+extern bool cert_fips_verify_public_key(CERTCertificate * const cert,
+					char const * const cert_desc);
+
 #endif /* NSS_CERT_VFY_H */

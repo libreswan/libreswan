@@ -403,18 +403,10 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 
 	/* extra verification */
 #ifdef FIPS_CHECK
-	if (libreswan_fipsmode()) {
-		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
-		passert(pk != NULL);
-		if ((pk->u.rsa.modulus.len * BITS_PER_BYTE) < FIPS_MIN_RSA_KEY_SIZE) {
-			libreswan_log("FIPS: Rejecting peer cert with key size %d under %d",
-					pk->u.rsa.modulus.len * BITS_PER_BYTE,
-					FIPS_MIN_RSA_KEY_SIZE);
-			SECKEY_DestroyPublicKey(pk);
-			CERT_DestroyCertificate(cert);
-			return;
-		}
-		SECKEY_DestroyPublicKey(pk);
+	if (libreswan_fipsmode() &&
+		!cert_fips_verify_public_key(cert, "peer cert")) {
+		CERT_DestroyCertificate(cert);
+		return;
 	}
 #endif /* FIPS_CHECK */
 
@@ -502,6 +494,66 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 		}
 	}
 	return certs;
+}
+
+/**
+ * Check if a RSA public key meets FIPS requirements.
+ *
+ * @return             `true` if the public key meets FIPS requirements for RSA.
+ * @param pk           The public key to check.
+ * @param cert_desc    Human-friendly description of the certificate for which
+ *                     `pk` is the public key. Used only for log messages.
+ */
+static bool cert_fips_verify_public_key_rsa(SECKEYPublicKey const * const pk,
+					    char const * const cert_desc)
+{
+	if (pk->u.rsa.modulus.len * BITS_PER_BYTE < FIPS_MIN_RSA_KEY_SIZE) {
+		libreswan_log("FIPS: Rejecting %s with key size %d which is under %d",
+				cert_desc,
+				pk->u.rsa.modulus.len * BITS_PER_BYTE,
+				FIPS_MIN_RSA_KEY_SIZE);
+		return false;
+	}
+	return true;
+}
+
+/**
+ * Check if a public key generated using elliptic curve cryptography (ECC)
+ * meet FIPS requirements.
+ *
+ * @return             `true` if the public key meets FIPS requirements for ECC.
+ * @param pk           The public key to check.
+ * @param cert_desc    Human-friendly description of the certificate for which
+ *                     `pk` is the public key. Used only for log messages.
+ */
+static bool cert_fips_verify_public_key_ec(SECKEYPublicKey const * const pk,
+					   char const * const cert_desc)
+{
+	/* If the elliptic curve being used has a name, then `DEREncodedParams`
+	 * contains an ASN Object ID identifying the curve.
+	 * NOTE: SEC_ASN1_OBJECT_ID = 0x06 */
+	if ((pk->u.ec.DEREncodedParams.len > 2) &&
+		(pk->u.ec.DEREncodedParams.data[0] == SEC_ASN1_OBJECT_ID)) {
+		SECItem const curve_oid = {
+			siBuffer,
+			pk->u.ec.DEREncodedParams.data + 2, /* data */
+			pk->u.ec.DEREncodedParams.data[1] /* length */
+		};
+		SECOidTag const curve_tag = SECOID_FindOIDTag(&curve_oid);
+		PRUint32 policy_flags = 0;
+		/* Check if NSS has been configured to accept the elliptic curve in FIPS mode. */
+		if (NSS_GetAlgorithmPolicy(curve_tag, &policy_flags) == SECFailure ||
+			!(policy_flags & NSS_USE_ALG_IN_CERT_SIGNATURE)) {
+			libreswan_log("FIPS: Rejecting %s due to unapproved elliptic curve",
+					cert_desc);
+			return false;
+		} else {
+			return true;
+		}
+	}
+	libreswan_log("FIPS: Rejecting %s since elliptic curve used could not be determined",
+			cert_desc);
+	return false;
 }
 
 /*
@@ -803,4 +855,25 @@ SECItem *nss_pkcs7_blob(CERTCertificate *cert, bool send_full_chain)
 					     NULL, NULL, NULL);
 	SEC_PKCS7DestroyContentInfo(content);
 	return pkcs7;
+}
+
+/**
+ * See header file for comment.
+ */
+bool cert_fips_verify_public_key(CERTCertificate * const cert,
+				 char const * const cert_desc)
+{
+	SECKEYPublicKey * const pk = CERT_ExtractPublicKey(cert);
+	bool ret = false;
+	passert(pk != NULL);
+	if (pk->keyType == rsaKey) {
+		ret = cert_fips_verify_public_key_rsa(pk, cert_desc);
+	} else if(pk->keyType == ecKey) {
+		ret = cert_fips_verify_public_key_ec(pk, cert_desc);
+	} else {
+		libreswan_log("FIPS: Rejecting %s due to unknown public key type",
+				cert_desc);
+	}
+	SECKEY_DestroyPublicKey(pk);
+	return ret;
 }
