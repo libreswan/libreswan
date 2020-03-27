@@ -1466,26 +1466,67 @@ void ikev2_process_packet(struct msg_digest *md)
 		 * Now try to find the state
 		 */
 		switch (v2_msg_role(md)) {
+
 		case MESSAGE_REQUEST:
 			/* The initiator must send: IKE_I && !MSG_R */
 			if (expected_local_ike_role != SA_RESPONDER) {
 				rate_log(md, "dropping IKE_SA_INIT request with conflicting IKE initiator flag");
 				return;
 			}
+
 			/*
 			 * 3.1.  The IKE Header: This [SPIr] value
 			 * MUST be zero in the first message of an IKE
 			 * initial exchange (including repeats of that
 			 * message including a cookie).
+			 *
+			 * (Since the initiator has yet to receive a
+			 * valid message from the responder it can't
+			 * know SPIr's value).
 			 */
 			if (!ike_spi_is_zero(&md->hdr.isa_ike_responder_spi)) {
 				rate_log(md, "dropping IKE_SA_INIT request with non-zero SPIr");
 				return;
 			}
+
 			/*
 			 * Look for a pre-existing IKE SA responder
 			 * state using just the SPIi (SPIr in the
 			 * message is zero so can't be used).
+			 *
+			 * XXX: RFC 7296 says this isn't sufficient:
+			 *
+			 *   2.1.  Use of Retransmission Timers
+			 *
+			 *   Retransmissions of the IKE_SA_INIT
+			 *   request require some special handling.
+			 *   When a responder receives an IKE_SA_INIT
+			 *   request, it has to determine whether the
+			 *   packet is a retransmission belonging to
+			 *   an existing "half-open" IKE SA (in which
+			 *   case the responder retransmits the same
+			 *   response), or a new request (in which
+			 *   case the responder creates a new IKE SA
+			 *   and sends a fresh response), or it
+			 *   belongs to an existing IKE SA where the
+			 *   IKE_AUTH request has been already
+			 *   received (in which case the responder
+			 *   ignores it).
+			 *
+			 *   It is not sufficient to use the
+			 *   initiator's SPI and/or IP address to
+			 *   differentiate between these three cases
+			 *   because two different peers behind a
+			 *   single NAT could choose the same
+			 *   initiator SPI.  Instead, a robust
+			 *   responder will do the IKE SA lookup using
+			 *   the whole packet, its hash, or the Ni
+			 *   payload.
+			 *
+			 * But realistically, either there's an IOT
+			 * device sending out a hardwired SPIi, or
+			 * there is a clash and a retry will generate
+			 * a new conflicting SPIi.
 			 *
 			 * If the lookup succeeds then there are
 			 * several possibilities:
@@ -1524,112 +1565,182 @@ void ikev2_process_packet(struct msg_digest *md)
 			ike = find_v2_ike_sa_by_initiator_spi(&md->hdr.isa_ike_initiator_spi,
 							      expected_local_ike_role);
 			if (ike != NULL) {
-				/*
-				 * Set ST to the state that is
-				 * currently processing the message,
-				 * if it exists.  Pretty easy as it is
-				 * the IKE SA or nothing at all.
-				 *
-				 * let duplicate message code below
-				 * decide what to do
-				 */
-				dbg("received what looks like a duplicate IKE_SA_INIT for #%lu",
-				    ike->sa.st_serialno);
-				pexpect(md->hdr.isa_msgid == 0); /* per above */
-			} else if (drop_new_exchanges()) {
+				intmax_t msgid = md->hdr.isa_msgid;
+				pexpect(msgid == 0); /* per above */
+				/* XXX: keep test results happy */
+				if (md->fake_clone) {
+					log_state(RC_LOG, &ike->sa, "IMPAIR: processing a fake (cloned) message");
+				}
+				if (verbose_state_busy(&ike->sa)) {
+					/* already logged */;
+				} else if (ike->sa.st_state->kind == STATE_PARENT_R1 &&
+					   ike->sa.st_v2_msgid_windows.responder.recv == 0 &&
+					   ike->sa.st_v2_msgid_windows.responder.sent == 0 &&
+					   hunk_eq(ike->sa.st_firstpacket_him,
+						   pbs_in_as_shunk(&md->message_pbs))) {
+					/*
+					 * It looks a lot like a shiny
+					 * new IKE SA that only just
+					 * responded to a message
+					 * identical to this one.
+					 * Re-transmit the response.
+					 *
+					 * XXX: Log message matches
+					 * is_duplicate_request() -
+					 * keep test results happy.
+					 */
+					log_state(RC_LOG, &ike->sa,
+						  "received duplicate %s message request (Message ID %jd); retransmitting response",
+						  enum_short_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+						  msgid);
+					send_recorded_v2_ike_msg(&ike->sa, "IKE_SA_INIT responder retransmit");
+				} else {
+					/*
+					 * Either:
+					 *
+					 * - it is an old duplicate
+					 *   and the packet should be
+					 *   dropped
+					 *
+					 * - it's a second intiator
+					 *   using the same SPIi
+					 *   (wow!) and a new IKE SA
+					 *   should be created
+					 *
+					 * However the odds of the
+					 * later are essentially zero
+					 * so assume the former and
+					 * drop the packet.
+					 *
+					 * XXX: Log message matches
+					 * is_duplicate_request() -
+					 * keep test results happy.
+					 */
+					log_state(RC_LOG, &ike->sa,
+						  "received too old retransmit: %jd < %jd",
+						  msgid, ike->sa.st_v2_msgid_windows.responder.sent);
+				}
+				return;
+			}
+
+			if (drop_new_exchanges()) {
 				/* only log for debug to prevent disk filling up */
 				dbg("pluto is overloaded with half-open IKE SAs; dropping new exchange");
 				return;
-			} else {
-				/*
-				 * Always check for cookies! XXX: why?
-				 *
-				 * Because the v2N_COOKIE payload is
-				 * first, parsing and verifying it
-				 * should be relatively quick and
-				 * cheap, right?
-				 *
-				 * No.  The equation uses v2Ni forcing
-				 * the entire payload to be parsed.
-				 *
-				 * The error notification is probably
-				 * INVALID_SYNTAX, but could be
-				 * v2N_UNSUPPORTED_CRITICAL_PAYLOAD.
-				 */
-				pexpect(!md->message_payloads.parsed);
-				struct logger log = MESSAGE_LOGGER(md);
-				md->message_payloads = ikev2_decode_payloads(&log, md,
-									     &md->message_pbs,
-									     md->hdr.isa_np);
-				if (md->message_payloads.n != v2N_NOTHING_WRONG) {
-					if (require_ddos_cookies()) {
-						dbg("DDOS so not responding to invalid packet");
-					} else {
-						chunk_t data = chunk2(md->message_payloads.data,
-								     md->message_payloads.data_size);
-						send_v2N_response_from_md(md, md->message_payloads.n,
-									  &data);
-					}
-					return;
-				}
-				if (v2_rejected_initiator_cookie(md, require_ddos_cookies())) {
-					dbg("pluto is overloaded and demanding cookies; dropping new exchange");
-					return;
-				}
-				/*
-				 * Check if we would drop the packet
-				 * based on VID before we create a
-				 * state. Move this to ikev2_oppo.c:
-				 * drop_oppo_requests()?
-				 */
-				for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2V]; p != NULL; p = p->next) {
-					if (vid_is_oppo((char *)p->pbs.cur, pbs_left(&p->pbs))) {
-						if (pluto_drop_oppo_null) {
-							DBG(DBG_OPPO, DBG_log("Dropped IKE request for Opportunistic IPsec by global policy"));
-							return;
-						}
-						DBG(DBG_OPPO | DBG_CONTROLMORE, DBG_log("Processing IKE request for Opportunistic IPsec"));
-						break;
-					}
-				}
-				/* else - create a draft state here? */
-				lset_t policy = LEMPTY;
-				bool send_reject_response = true;
-				struct connection *c = find_v2_host_pair_connection(md, &policy,
-										    &send_reject_response);
-				if (c == NULL) {
-					if (send_reject_response) {
-						/*
-						 * NO_PROPOSAL_CHOSEN
-						 * is used when the
-						 * list of proposals
-						 * is empty, like when
-						 * we did not find any
-						 * connection to use.
-						 *
-						 * INVALID_SYNTAX is
-						 * for errors that a
-						 * configuration
-						 * change could not
-						 * fix.
-						 */
-						send_v2N_response_from_md(md, v2N_NO_PROPOSAL_CHOSEN, NULL);
-					}
-					return;
-				}
-				/*
-				 * We've committed to creating a state
-				 * and, presumably, dedicating real
-				 * resources to the connection.
-				 */
-				ike = new_v2_state(STATE_PARENT_R0, SA_RESPONDER,
-						   md->hdr.isa_ike_spis.initiator,
-						   ike_responder_spi(&md->sender),
-						   c, policy, 0, null_fd);
-				pexpect(md->hdr.isa_msgid == 0); /* per above */
 			}
-			/* update lastrecv later on */
-			break;
+
+			/*
+			 * Always check for cookies!
+			 *
+			 * XXX: why?
+			 *
+			 * Because the v2N_COOKIE payload is first,
+			 * parsing and verifying it should be
+			 * relatively quick and cheap.  Right?
+			 *
+			 * No.  The equation uses v2Ni forcing the
+			 * entire payload to be parsed.
+			 *
+			 * The error notification is probably
+			 * INVALID_SYNTAX, but could be
+			 * v2N_UNSUPPORTED_CRITICAL_PAYLOAD.
+			 */
+			pexpect(!md->message_payloads.parsed);
+			struct logger log = MESSAGE_LOGGER(md);
+			md->message_payloads = ikev2_decode_payloads(&log, md,
+								     &md->message_pbs,
+								     md->hdr.isa_np);
+			if (md->message_payloads.n != v2N_NOTHING_WRONG) {
+				if (require_ddos_cookies()) {
+					dbg("DDOS so not responding to invalid packet");
+				} else {
+					chunk_t data = chunk2(md->message_payloads.data,
+							      md->message_payloads.data_size);
+					send_v2N_response_from_md(md, md->message_payloads.n,
+								  &data);
+				}
+				return;
+			}
+
+			if (v2_rejected_initiator_cookie(md, require_ddos_cookies())) {
+				dbg("pluto is overloaded and demanding cookies; dropping new exchange");
+				return;
+			}
+
+			/*
+			 * Check if we would drop the packet based on
+			 * VID before we create a state. Move this to
+			 * ikev2_oppo.c: drop_oppo_requests()?
+			 */
+			for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2V]; p != NULL; p = p->next) {
+				if (vid_is_oppo((char *)p->pbs.cur, pbs_left(&p->pbs))) {
+					if (pluto_drop_oppo_null) {
+						dbg("Dropped IKE request for Opportunistic IPsec by global policy");
+						return;
+					}
+					dbg("Processing IKE request for Opportunistic IPsec");
+					break;
+				}
+			}
+
+			/*
+			 * Does the message match the (only) expected
+			 * transition?
+			 */
+			const struct finite_state *start_state = finite_states[STATE_PARENT_R0];
+			const struct state_v2_microcode *transition = find_v2_state_transition(start_state, md);
+			if (transition == NULL) {
+				/* already logged */
+				return;
+			}
+
+			/*
+			 * Is there a connection that matches the
+			 * message?
+			 */
+			lset_t policy = LEMPTY;
+			bool send_reject_response = true;
+			struct connection *c = find_v2_host_pair_connection(md, &policy,
+									    &send_reject_response);
+			if (c == NULL) {
+				if (send_reject_response) {
+					/*
+					 * NO_PROPOSAL_CHOSEN is used
+					 * when the list of proposals
+					 * is empty, like when we did
+					 * not find any connection to
+					 * use.
+					 *
+					 * INVALID_SYNTAX is for
+					 * errors that a configuration
+					 * change could not fix.
+					 */
+					send_v2N_response_from_md(md, v2N_NO_PROPOSAL_CHOSEN, NULL);
+				}
+				return;
+			}
+
+			/*
+			 * We've committed to creating a state and,
+			 * presumably, dedicating real resources to
+			 * the connection.
+			 */
+			ike = new_v2_state(STATE_PARENT_R0, SA_RESPONDER,
+					   md->hdr.isa_ike_spis.initiator,
+					   ike_responder_spi(&md->sender),
+					   c, policy, 0, null_fd);
+
+			statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
+			/* XXX: keep test results happy */
+			if (md->fake_clone) {
+				log_state(RC_LOG, &ike->sa, "IMPAIR: processing a fake (cloned) message");
+			}
+			push_cur_state(&ike->sa);
+			v2_dispatch(ike, &ike->sa, md, transition);
+			pop_cur_state(SOS_NOBODY);
+			statetime_stop(&start, "%s()", __func__);
+			return;
+
 		case MESSAGE_RESPONSE:
 			/* The responder must send: !IKE_I && MSG_R. */
 			if (expected_local_ike_role != SA_INITIATOR) {
