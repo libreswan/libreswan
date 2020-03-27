@@ -1687,23 +1687,11 @@ void process_v1_packet(struct msg_digest *md)
 		    (fraghdr.isafrag_flags == 1) ? "(last)" : "");
 
 		ike_frag = alloc_thing(struct ike_frag, "ike_frag");
-		ike_frag->md = md;
+		ike_frag->md = md_addref(md, HERE);
 		ike_frag->index = fraghdr.isafrag_number;
 		ike_frag->last = (fraghdr.isafrag_flags & 1);
 		ike_frag->size = pbs_left(&frag_pbs);
 		ike_frag->data = frag_pbs.cur;
-
-#if 0
-/* is this ever hit? It was wrongly checking one byte instead of 4 bytes of marker */
-		/* Strip non-ESP marker from first fragment */
-		if (md->iface->ike_float && ike_frag->index == 1 &&
-		    (ike_frag->size >= NON_ESP_MARKER_SIZE &&
-		     memeq(non_ESP_marker, ike_frag->data,
-			    NON_ESP_MARKER_SIZE))) {
-			ike_frag->data += NON_ESP_MARKER_SIZE;
-			ike_frag->size -= NON_ESP_MARKER_SIZE;
-		}
-#endif
 
 		/* Add the fragment to the state */
 		i = &st->st_v1_rfrags;
@@ -1783,7 +1771,6 @@ void process_v1_packet(struct msg_digest *md)
 			}
 		}
 
-		/* Don't release the md, taken care of by the ike_frag code */
 		return;
 	}
 
