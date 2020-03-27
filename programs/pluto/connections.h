@@ -416,11 +416,11 @@ struct xfrm_user_sec_ctx_ike; /* forward declaration */
 
 extern void initiate_ondemand(const ip_address *our_client,
 			     const ip_address *peer_client,
-			     int transport_proto,
-			     bool held,
-			     struct fd *whackfd,
-			     struct xfrm_user_sec_ctx_ike *uctx,
-			     err_t why);
+			      int transport_proto,
+			      bool held,
+			      struct fd *whackfd, bool background,
+			      struct xfrm_user_sec_ctx_ike *uctx,
+			      const char *why);
 
 extern void terminate_connection(const char *name, bool quiet);
 extern void release_connection(struct connection *c, bool relations);

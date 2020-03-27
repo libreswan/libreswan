@@ -17,9 +17,9 @@
 #ifndef INITIATE_H
 #define INITIATE_H
 
-bool initiate_connection(struct connection *c, struct fd *whackfd,
-			 const char *remote_host);
-void initiate_connections_by_name(const char *name, struct fd *whackfd,
-				  const char *remote_host);
+bool initiate_connection(struct connection *c, const char *remote_host,
+			 struct fd *whackfd, bool background);
+void initiate_connections_by_name(const char *name, const char *remote_host,
+				  struct fd *whackfd, bool background);
 
 #endif

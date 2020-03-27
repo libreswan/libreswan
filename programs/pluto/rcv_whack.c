@@ -503,8 +503,8 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 					pass_remote = TRUE;
 				}
 			}
-			initiate_connections_by_name(m->name, (m->whack_async ? null_fd : whackfd),
-						     pass_remote ? m->remote_host : NULL);
+			initiate_connections_by_name(m->name, pass_remote ? m->remote_host : NULL,
+						     whackfd, m->whack_async);
 		}
 	}
 
@@ -514,11 +514,9 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 				  "need --listen before opportunistic initiation");
 		} else {
 			initiate_ondemand(&m->oppo_my_client,
-						&m->oppo_peer_client, m->oppo_proto,
-						FALSE,
-					  (m->whack_async ? null_fd : whackfd),
-						NULL,
-						"whack");
+					  &m->oppo_peer_client, m->oppo_proto,
+					  FALSE, whackfd, m->whack_async,
+					  NULL, "whack");
 		}
 	}
 

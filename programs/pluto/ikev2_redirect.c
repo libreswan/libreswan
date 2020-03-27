@@ -320,7 +320,9 @@ void initiate_redirect(struct state *st)
 	libreswan_log("initiating a redirect to new gateway (address: %s)",
 			sensitive_ipstr(&redirect_ip, &b));
 
-	initiate_connections_by_name(c->name, st->st_whack_sock, NULL);
+	initiate_connections_by_name(c->name, NULL,
+				     st->st_whack_sock,
+				     st->st_whack_sock == NULL/*background*/);
 
 	event_force(EVENT_SA_EXPIRE, right_state);
 	/*

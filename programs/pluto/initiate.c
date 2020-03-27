@@ -172,11 +172,12 @@ bool orient(struct connection *c)
 
 struct initiate_stuff {
 	struct fd *whackfd;
+	bool background;
 	const char *remote_host;
 };
 
-bool initiate_connection(struct connection *c, struct fd *whackfd,
-			 const char *remote_host)
+bool initiate_connection(struct connection *c, const char *remote_host,
+			 struct fd *whackfd, bool background)
 {
 	threadtime_t inception  = threadtime_start();
 	struct connection *old = push_cur_connection(c);
@@ -353,7 +354,8 @@ bool initiate_connection(struct connection *c, struct fd *whackfd,
 
 	dbg("connection '%s' +POLICY_UP", c->name);
 	c->policy |= POLICY_UP;
-	ipsecdoi_initiate(whackfd, c, c->policy, 1, SOS_NOBODY, &inception, NULL);
+	ipsecdoi_initiate(background ? null_fd : whackfd,
+			  c, c->policy, 1, SOS_NOBODY, &inception, NULL);
 	pop_cur_connection(old);
 	return 1;
 }
@@ -361,32 +363,35 @@ bool initiate_connection(struct connection *c, struct fd *whackfd,
 static int initiate_a_connection(struct connection *c, void *arg)
 {
 	const struct initiate_stuff *is = arg;
-	return initiate_connection(c, is->whackfd, is->remote_host) ? 1 : 0;
+	return initiate_connection(c, is->remote_host,
+				   is->whackfd, is->background) ? 1 : 0;
 }
 
-void initiate_connections_by_name(const char *name, struct fd *whackfd,
-				  const char *remote_host)
+void initiate_connections_by_name(const char *name, const char *remote_host,
+				  struct fd *whackfd, bool background)
 {
 	passert(name != NULL);
 
 	struct connection *c = conn_by_name(name, false/*!strict*/);
 	if (c != NULL) {
-		if (!initiate_connection(c, whackfd, remote_host))
-			whack_log(RC_FATAL, whackfd,
-				  "failed to initiate %s", c->name);
+		if (!initiate_connection(c, remote_host, whackfd, background))
+			loglog_global(RC_FATAL, whackfd,
+				      "failed to initiate %s",
+				      c->name);
 		return;
 	}
 
-	loglog(RC_COMMENT, "initiating all conns with alias='%s'", name);
+	loglog_global(RC_COMMENT, whackfd, "initiating all conns with alias='%s'", name);
 	struct initiate_stuff is = {
 		.whackfd = whackfd, /*on-stack*/
+		.background = background,
 		.remote_host = remote_host,
 	};
 	int count = foreach_connection_by_alias(name, initiate_a_connection, &is);
 
 	if (count == 0) {
-		whack_log(RC_UNKNOWN_NAME, whackfd,
-			  "no connection named \"%s\"", name);
+		loglog_global(RC_UNKNOWN_NAME, whackfd,
+			      "no connection named \"%s\"", name);
 	}
 }
 
@@ -457,7 +462,8 @@ void restart_connections_by_peer(struct connection *const c)
 		for (d = hp->connections; d != NULL; d = d->hp_next) {
 			if (same_host(dnshostname, &host_addr,
 					d->dnshostname, &d->spd.that.host_addr))
-				initiate_connections_by_name(d->name, null_fd, NULL);
+				initiate_connections_by_name(d->name, NULL,
+							     null_fd, true/*background*/);
 		}
 	}
 	pfreeany(dnshostname);
@@ -487,7 +493,7 @@ void restart_connections_by_peer(struct connection *const c)
  */
 
 struct find_oppo_bundle {
-	err_t want;
+	const char *want;
 	bool failure_ok;        /* if true, continue_oppo should not die on DNS failure */
 	ip_address our_client;  /* not pointer! */
 	ip_address peer_client;
@@ -497,6 +503,7 @@ struct find_oppo_bundle {
 	ipsec_spi_t negotiation_shunt; /* in host order! */
 	ipsec_spi_t failure_shunt; /* in host order! */
 	struct fd *whackfd;
+	bool background;
 };
 
 static void cannot_oppo(struct connection *c,
@@ -734,7 +741,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 		if (b->held) {
 			if (assign_holdpass(c, sr, b->transport_proto, b->negotiation_shunt,
 					   &b->our_client, &b->peer_client)) {
-				DBG(DBG_CONTROL, DBG_log("initiate_ondemand_body() installed negotiation_shunt,"));
+				dbg("initiate_ondemand_body() installed negotiation_shunt,");
 			} else {
 				libreswan_log("initiate_ondemand_body() failed to install negotiation_shunt,");
 			}
@@ -744,7 +751,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 			libreswan_log("%s", demandbuf);
 		}
 
-		ipsecdoi_initiate(b->whackfd, c, c->policy, 1,
+		ipsecdoi_initiate(b->background ? null_fd : b->whackfd,
+				  c, c->policy, 1,
 				  SOS_NOBODY, &inception, uctx);
 	} else {
 		/* We are handling an opportunistic situation.
@@ -946,33 +954,32 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 					    b->transport_proto,
 					    b->want));
 
-				ipsecdoi_initiate(b->whackfd, c, c->policy, 1,
+				ipsecdoi_initiate(b->background ? null_fd : b->whackfd,
+						  c, c->policy, 1,
 						  SOS_NOBODY, &inception
 						  , NULL /* shall we pass uctx for opportunistic connections? */
 						  );
 			}
-		}
+	}
 
-		/* the second chunk: initiate the next DNS query (if any) */
-		DBG(DBG_OPPO | DBG_CONTROL, {
-			if (c != NULL) {
-				ipstr_buf b1;
-				ipstr_buf b2;
-				DBG_log("initiate on demand using %s from %s to %s",
-					(c->policy & POLICY_AUTH_NULL) ? "AUTH_NULL" : "RSASIG",
-					ipstr(&b->our_client, &b1),
-					ipstr(&b->peer_client, &b2));
-			}
-		});
+	/* the second chunk: initiate the next DNS query (if any) */
+	if (c != NULL) {
+		address_buf b1;
+		address_buf b2;
+		dbg("initiate on demand using %s from %s to %s",
+		    (c->policy & POLICY_AUTH_NULL) ? "AUTH_NULL" : "RSASIG",
+		    str_address(&b->our_client, &b1),
+		    str_address(&b->peer_client, &b2));
+	}
 }
 
 void initiate_ondemand(const ip_address *our_client,
-		      const ip_address *peer_client,
-		      int transport_proto,
-		      bool held,
-		      struct fd *whackfd,
-		      struct xfrm_user_sec_ctx_ike *uctx,
-		      err_t why)
+		       const ip_address *peer_client,
+		       int transport_proto,
+		       bool held,
+		       struct fd *whackfd, bool background,
+		       struct xfrm_user_sec_ctx_ike *uctx,
+		       const char *why)
 {
 	struct find_oppo_bundle b = {
 		.want = why,   /* fudge */
@@ -985,6 +992,7 @@ void initiate_ondemand(const ip_address *our_client,
 		.negotiation_shunt = SPI_HOLD, /* until we found connection policy */
 		.failure_shunt = SPI_HOLD, /* until we found connection policy */
 		.whackfd = whackfd, /*on-stack*/
+		.background = background,
 	};
 
 	initiate_ondemand_body(&b, uctx);
@@ -1134,7 +1142,7 @@ static void connection_check_ddns1(struct connection *c)
 	update_host_pairs(c);
 	if (c->policy & POLICY_UP) {
 		dbg("ddns: re-initiating connection '%s'", c->name);
-		initiate_connections_by_name(c->name, null_fd, NULL);
+		initiate_connections_by_name(c->name, NULL, null_fd, true/*background*/);
 	} else {
 		dbg("ddns: : connection '%s' was updated, but does not want to be up",
 			c->name);
@@ -1146,8 +1154,10 @@ static void connection_check_ddns1(struct connection *c)
 		return;
 
 	for (d = c->host_pair->connections; d != NULL; d = d->hp_next) {
-		if (c != d && same_in_some_sense(c, d) && (d->policy & POLICY_UP))
-			initiate_connections_by_name(d->name, null_fd, NULL);
+		if (c != d && same_in_some_sense(c, d) && (d->policy & POLICY_UP)) {
+			initiate_connections_by_name(d->name, NULL,
+						     null_fd, true/*background*/);
+		}
 	}
 }
 

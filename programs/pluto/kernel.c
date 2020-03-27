@@ -233,7 +233,8 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 
 	/* actually initiate opportunism / ondemand */
 	initiate_ondemand(&src, &dst, transport_proto,
-			  TRUE, null_fd, uctx, "acquire");
+			  TRUE, null_fd, true/*background*/,
+			  uctx, "acquire");
 
 	if (kernel_ops->remove_orphaned_holds != NULL) {
 		DBG(DBG_OPPO, DBG_log("record_and_initiate_opportunistic(): tell kernel to remove orphan hold for our bare shunt"));

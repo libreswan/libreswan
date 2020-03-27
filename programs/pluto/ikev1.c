@@ -1116,7 +1116,9 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 								    endpoint_hport(&tmp_c->host_pair->remote));
 
 				/* Initiating connection to the redirected peer */
-				initiate_connections_by_name(tmp_name, tmp_whack_sock, NULL);
+				initiate_connections_by_name(tmp_name, NULL,
+							     tmp_whack_sock,
+							     tmp_whack_sock == NULL/*guess*/);
 				close_any(&tmp_whack_sock);
 			}
 			return STF_IGNORE;
