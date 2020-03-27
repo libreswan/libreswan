@@ -2354,6 +2354,11 @@ void process_packet_tail(struct msg_digest *md)
 				DBG_dump("del:", p->pbs.cur,
 					 pbs_left(&p->pbs));
 			}
+			if (md->st != st) {
+				pexpect(md->st == NULL);
+				dbg("zapping ST as accept_delete() zapped MD.ST");
+				st = md->st;
+			}
 			p = p->next;
 		}
 
@@ -2371,7 +2376,7 @@ void process_packet_tail(struct msg_digest *md)
 		/* note: st ought to be NULL from here on */
 	}
 
-	/* XXX: pexpect(st == md->st); fails! */
+	pexpect(st == md->st);
 	statetime_t start = statetime_start(md->st);
 	/*
 	 * XXX: danger - the .informational() processor deletes ST;
