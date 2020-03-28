@@ -2827,7 +2827,7 @@ bool pbs_in_address(ip_address *address, const struct ip_info *ipv,
 	{
 		struct in_addr ip;
 		if (!in_raw(&ip, sizeof(ip), input_pbs, what)) {
-			*address = address_invalid;
+			*address = unset_address;
 			return false;
 		}
 		*address = address_from_in_addr(&ip);
@@ -2837,7 +2837,7 @@ bool pbs_in_address(ip_address *address, const struct ip_info *ipv,
 	{
 		struct in6_addr ip;
 		if (!in_raw(&ip, sizeof(ip), input_pbs, what)) {
-			*address = address_invalid;
+			*address = unset_address;
 			return false;
 		}
 		*address = address_from_in6_addr(&ip);

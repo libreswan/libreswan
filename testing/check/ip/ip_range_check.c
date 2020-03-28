@@ -331,24 +331,24 @@ static void check_range_is(void)
 		int family;
 		const char *lo;
 		const char *hi;
-		bool invalid;
+		bool set;
 		bool specified;
 	} tests[] = {
-		{ 0, "", "", .invalid = true, },
+		{ 0, "", "",                .set = false, },
 
-		{ 4, "0.0.0.0", "0.0.0.0", },
-		{ 4, "0.0.0.1", "0.0.0.2", .specified = true, },
+		{ 4, "0.0.0.0", "0.0.0.0",  .set = true, },
+		{ 4, "0.0.0.1", "0.0.0.2",  .set = true, .specified = true, },
 
-		{ 6, "::", "::", },
-		{ 6, "::1", "::2", .specified = true, },
+		{ 6, "::", "::",            .set = true, },
+		{ 6, "::1", "::2",          .set = true, .specified = true, },
 	};
 
 	const char *oops;
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT_LO2HI(stdout, " -> invalid: %s specified: %s",
-			    bool_str(t->invalid), bool_str(t->specified));
+		PRINT_LO2HI(stdout, " -> set: %s specified: %s",
+			    bool_str(t->set), bool_str(t->specified));
 
 		const struct ip_info *type = IP_TYPE(t->family);
 
@@ -359,7 +359,7 @@ static void check_range_is(void)
 				FAIL_LO2HI("numeric_to_address() failed converting '%s'", t->lo);
 			}
 		} else {
-			lo = address_invalid;
+			lo = unset_address;
 		}
 
 		ip_address hi;
@@ -369,16 +369,16 @@ static void check_range_is(void)
 				FAIL_LO2HI("numeric_to_address() failed converting '%s'", t->hi);
 			}
 		} else {
-			hi = address_invalid;
+			hi = unset_address;
 		}
 
 		ip_range r = range(&lo, &hi);
 		CHECK_TYPE(PRINT_LO2HI, range_type(&r));
 
-		bool invalid = range_is_invalid(&r);
-		if (invalid != t->invalid) {
+		bool set = range_is_set(&r);
+		if (set != t->set) {
 			FAIL_LO2HI("range_is_invalid() returned %s, expecting %s",
-				   bool_str(invalid), bool_str(t->invalid));
+				   bool_str(set), bool_str(t->set));
 		}
 
 		bool specified = range_is_specified(&r);

@@ -5032,7 +5032,7 @@ static void mobike_reset_remote(struct state *st, struct mobike *est_remote)
 	st->st_remote_endpoint = est_remote->remote;
 	st->st_interface = est_remote->interface;
 	pexpect_st_local_endpoint(st);
-	st->st_mobike_remote_endpoint = endpoint_invalid;
+	st->st_mobike_remote_endpoint = unset_endpoint;
 }
 
 /* MOBIKE liveness/update response. set temp remote address/interface */

@@ -30,6 +30,8 @@
 #include "libreswan/passert.h"
 #include "lswlog.h"		/* for pexpect() */
 
+const ip_range unset_range; /* all zeros */
+
 ip_range range(const ip_address *start, const ip_address *end)
 {
 	/* does the caller know best? */
@@ -246,6 +248,11 @@ const struct ip_info *range_type(const ip_range *range)
 		return NULL;
 	}
 	return start;
+}
+
+bool range_is_set(const ip_range *r)
+{
+	return range_type(r) != NULL;
 }
 
 bool range_is_specified(const ip_range *r)

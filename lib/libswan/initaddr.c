@@ -29,7 +29,7 @@ err_t data_to_address(const void *data, size_t sizeof_data,
 		      const struct ip_info *afi, ip_address *dst)
 {
 	if (afi == NULL) {
-		*dst = address_invalid;
+		*dst = unset_address;
 		return "unknown address family";
 	}
 	switch (afi->af) {

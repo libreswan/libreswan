@@ -483,7 +483,7 @@ ttoaddr(const char *src,
 
 err_t domain_to_address(shunk_t src, const struct ip_info *type, ip_address *dst)
 {
-	*dst = address_invalid;
+	*dst = unset_address;
 	if (src.len == 0) {
 		return "empty string";
 	}
@@ -510,7 +510,7 @@ ttoaddr_num(const char *src,
 
 err_t numeric_to_address(shunk_t src, const struct ip_info *type, ip_address *dst)
 {
-	*dst = address_invalid;
+	*dst = unset_address;
 	if (src.len == 0) {
 		return "empty string";
 	}

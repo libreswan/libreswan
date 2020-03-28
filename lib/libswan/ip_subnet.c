@@ -23,7 +23,7 @@
 #include "lswlog.h"	/* for pexpect() */
 #include "ip_info.h"
 
-const ip_subnet subnet_invalid; /* all zeros */
+const ip_subnet unset_subnet; /* all zeros */
 
 static ip_subnet subnet3(const ip_address *address, int maskbits, int port)
 {
@@ -39,7 +39,7 @@ ip_subnet subnet_from_address(const ip_address *address)
 {
 	const struct ip_info *afi = address_type(address);
 	if (!pexpect(afi != NULL)) {
-		return subnet_invalid;
+		return unset_subnet;
 	}
 	return subnet3(address, afi->mask_cnt, 0);
 }
@@ -48,7 +48,7 @@ ip_subnet subnet_from_endpoint(const ip_endpoint *endpoint)
 {
 	const struct ip_info *afi = endpoint_type(endpoint);
 	if (!pexpect(afi != NULL)) {
-		return subnet_invalid;
+		return unset_subnet;
 	}
 	ip_address address = endpoint_address(endpoint);
 	int hport = endpoint_hport(endpoint);
@@ -91,6 +91,11 @@ ip_subnet set_subnet_hport(const ip_subnet *subnet, int hport)
 	return s;
 }
 #endif
+
+bool subnet_is_set(const ip_subnet *s)
+{
+	return subnet_type(s) != NULL;
+}
 
 bool subnet_is_specified(const ip_subnet *s)
 {

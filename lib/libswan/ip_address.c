@@ -21,6 +21,8 @@
 #include "lswlog.h"		/* for libreswan_log() */
 #include "ip_info.h"
 
+const ip_address unset_address; /* all zeros */
+
 ip_address address_from_shunk(const struct ip_info *afi, const shunk_t bytes)
 {
 	passert(afi != NULL);
@@ -303,10 +305,6 @@ const char *str_address_reversed(const ip_address *src,
 	return dst->buf;
 }
 
-const ip_address address_invalid = {
-	.version = 0,
-};
-
 ip_address address_any(const struct ip_info *info)
 {
 	if (info == NULL) {
@@ -321,10 +319,15 @@ ip_address address_any(const struct ip_info *info)
 		 * address_unspecified().
 		 */
 		PEXPECT_LOG("AF_UNSPEC unexpected");
-		return address_invalid;
+		return unset_address;
 	} else {
 		return info->any_address;
 	}
+}
+
+bool address_is_set(const ip_address *address)
+{
+	return address_type(address) != NULL;
 }
 
 bool address_is_any(const ip_address *address)
@@ -386,7 +389,7 @@ ip_address address_blit(ip_address address,
 	chunk_t raw = address_as_chunk(&address);
 
 	if (!pexpect(nr_mask_bits <= raw.len * 8)) {
-		return address_invalid;	/* "can't happen" */
+		return unset_address;	/* "can't happen" */
 	}
 
 	uint8_t *p = raw.ptr; /* cast void* */

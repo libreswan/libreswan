@@ -28,5 +28,5 @@
  */
 bool isanyaddr(const ip_address * src)
 {
-	return address_is_invalid(src) || address_is_any(src);
+	return address_is_set(src) ? address_is_any(src) : true;
 }

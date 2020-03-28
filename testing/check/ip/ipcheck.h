@@ -93,10 +93,10 @@ extern bool use_dns;
 	{								\
 		CHECK_TYPE(PRINT, address_type(ADDRESS));		\
 		/* aka address_type(ADDRESS) == NULL; */		\
-		bool invalid = address_is_invalid(ADDRESS);		\
-		if (invalid != t->invalid) {				\
-			FAIL(PRINT, " address_is_invalid() returned %s; expected %s", \
-			     bool_str(invalid), bool_str(t->invalid));	\
+		bool set = address_is_set(ADDRESS);			\
+		if (set != t->set) {				\
+			FAIL(PRINT, " address_is_set() returned %s; expected %s", \
+			     bool_str(set), bool_str(t->set));	\
 		}							\
 		bool any = address_is_any(ADDRESS);			\
 		if (any != t->any) {					\

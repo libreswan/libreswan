@@ -47,11 +47,22 @@ void jam_range(struct lswlog *buf, const ip_range *range);
 const char *str_range(const ip_range *range, range_buf *buf);
 
 /*
- * Extract internals.
+ * Magic values.
+ *
+ * XXX: While the headers call the all-zero address "ANY" (INADDR_ANY,
+ * IN6ADDR_ANY_INIT), the headers also refer to the IPv6 value as
+ * unspecified (for instance IN6_IS_ADDR_UNSPECIFIED()) leaving the
+ * term "unspecified" underspecified.
+ *
+ * Consequently an AF_UNSPEC address (i.e., uninitialized or unset),
+ * is identified by *_type() returning NULL.
  */
 
+extern const ip_range unset_range;
+
 const struct ip_info *range_type(const ip_range *r);
-#define range_is_invalid(R) (range_type(R) == NULL)
+
+bool range_is_set(const ip_range *r);
 bool range_is_specified(const ip_range *r);
 
 /*

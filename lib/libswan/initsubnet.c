@@ -119,7 +119,7 @@ err_t endtosubnet(const ip_endpoint *endpoint, ip_subnet *dst, where_t where)
 	const struct ip_info *afi = endpoint_type(endpoint);
 	if (afi == NULL) {
 		/* actually AF_UNSPEC */
-		*dst = subnet_invalid;
+		*dst = unset_subnet;
 		return "unknown address family";
 	}
 

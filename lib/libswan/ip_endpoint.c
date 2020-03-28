@@ -20,6 +20,8 @@
 #include "ip_info.h"
 #include "lswlog.h"		/* for bad_case() */
 
+const ip_endpoint unset_endpoint; /* all zeros */
+
 ip_endpoint endpoint(const ip_address *address, int hport)
 {
 #if defined(ENDPOINT_TYPE)
@@ -128,7 +130,7 @@ ip_endpoint set_endpoint_hport(const ip_endpoint *endpoint, int hport)
 	if (afi == NULL) {
 		/* not asserting, who knows what nonsense a user can generate */
 		libreswan_log("endpoint has unspecified type");
-		return endpoint_invalid;
+		return unset_endpoint;
 	}
 #ifdef ENDPOINT_TYPE
 	ip_endpoint dst = {
@@ -154,6 +156,11 @@ const struct ip_info *endpoint_type(const ip_endpoint *endpoint)
 #else
 	return address_type(endpoint);
 #endif
+}
+
+bool endpoint_is_set(const ip_endpoint *endpoint)
+{
+	return endpoint_type(endpoint) != NULL;
 }
 
 bool endpoint_is_specified(const ip_endpoint *e)
@@ -253,14 +260,6 @@ bool endpoint_eq(const ip_endpoint l, ip_endpoint r)
 {
 	return memeq(&l, &r, sizeof(l));
 }
-
-#ifdef ENDPOINT_TYPE
-const ip_endpoint endpoint_invalid = {
-	.address = {
-		.af = AF_UNSPEC,
-	},
-};
-#endif
 
 /*
  * Construct and return a sockaddr structure.

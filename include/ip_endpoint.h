@@ -84,26 +84,17 @@ bool endpoint_eq(const ip_endpoint l, ip_endpoint r);
  * unspecified (for instance IN6_IS_ADDR_UNSPECIFIED()) leaving the
  * term "unspecified" underspecified.
  *
- * Consequently to identify an AF_UNSPEC (i.e., uninitialized)
- * address, see if *_type() returns NULL.
+ * Consequently an AF_UNSPEC address (i.e., uninitialized or unset),
+ * is identified by *_type() returning NULL.
  */
 
-/* AF_UNSPEC(==0); ADDR = 0; PORT = 0, */
-#ifdef ENDPOINT_TYPE
-extern const ip_endpoint endpoint_invalid;
-#else
-#define endpoint_invalid address_invalid
-#endif
+extern const ip_endpoint unset_endpoint;
 
-/* mutually exclusive */
-#if 0
-#define endpoint_is_invalid(A) (endpoint_type(A) == NULL)
-bool endpoint_is_any(const ip_endpoint *endpoint);
-#endif
-bool endpoint_is_specified(const ip_endpoint *endpoint);
-
-/* returns NULL when address_invalid */
 const struct ip_info *endpoint_type(const ip_endpoint *endpoint);
+
+bool endpoint_is_set(const ip_endpoint *endpoint);
+bool endpoint_is_any(const ip_endpoint *endpoint);
+bool endpoint_is_specified(const ip_endpoint *endpoint);
 
 /* Host or Network byte order */
 int endpoint_hport(const ip_endpoint *endpoint);

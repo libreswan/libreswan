@@ -84,17 +84,22 @@ extern const char *str_subnet(const ip_subnet *subnet, subnet_buf *out);
 extern void jam_subnet(struct lswlog *buf, const ip_subnet *subnet);
 
 /*
- * Extract details
+ * Magic values.
+ *
+ * XXX: While the headers call the all-zero address "ANY" (INADDR_ANY,
+ * IN6ADDR_ANY_INIT), the headers also refer to the IPv6 value as
+ * unspecified (for instance IN6_IS_ADDR_UNSPECIFIED()) leaving the
+ * term "unspecified" underspecified.
+ *
+ * Consequently an AF_UNSPEC address (i.e., uninitialized or unset),
+ * is identified by *_type() returning NULL.
  */
+
+extern const ip_subnet unset_subnet;
 
 const struct ip_info *subnet_type(const ip_subnet *subnet);
 
-/* mutually exclusive */
-/* not very well defined, is no_addresses "specified" */
-extern const ip_subnet subnet_invalid;
-#if 0
-#define subnet_is_invalid(S) (subnet_type(S) == NULL)
-#endif
+bool subnet_is_set(const ip_subnet *subnet);
 bool subnet_is_specified(const ip_subnet *subnet);
 
 /* default route - ::/0 or 0.0.0.0/0 - matches all addresses */
