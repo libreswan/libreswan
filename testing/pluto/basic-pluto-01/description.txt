@@ -7,3 +7,6 @@ Basic pluto test (now using XFRM/NETKEY)
 3) west pings 192.0.2.254 again, but pong should be dropped by rule
 4) west initiates connection "westnet-eastnet"; east 192.1.2.23 responds
 5) confirm with ping
+
+It also tests the obsolete PF_KEY API kernel module (af_key.ko) is not loaded,
+by testing that /proc/net/pfkey does not exist.
