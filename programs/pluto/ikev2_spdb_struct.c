@@ -1242,8 +1242,8 @@ static bool emit_transform(pb_stream *r_proposal_pbs,
 	}
 	enum send_impairment impair_key_length_attribute =
 		(protoid == IKEv2_SEC_PROTO_IKE
-		 ? impair_ike_key_length_attribute
-		 : impair_child_key_length_attribute);
+		 ? impair.ike_key_length_attribute
+		 : impair.child_key_length_attribute);
 	if (type != IKEv2_TRANS_TYPE_ENCR ||
 	    impair_key_length_attribute == SEND_NORMAL) {
 		/* XXX: should be >= 0; so that '0' can be sent? */

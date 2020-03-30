@@ -624,7 +624,7 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 bool emit_v2KE(chunk_t *g, const struct dh_desc *group,
 	       pb_stream *outs)
 {
-	if (impair_ke_payload == SEND_OMIT) {
+	if (impair.ke_payload == SEND_OMIT) {
 		libreswan_log("IMPAIR: omitting KE payload");
 		return true;
 	}
@@ -638,14 +638,14 @@ bool emit_v2KE(chunk_t *g, const struct dh_desc *group,
 	if (!out_struct(&v2ke, &ikev2_ke_desc, outs, &kepbs))
 		return FALSE;
 
-	if (impair_ke_payload >= SEND_ROOF) {
-		uint8_t byte = impair_ke_payload - SEND_ROOF;
+	if (impair.ke_payload >= SEND_ROOF) {
+		uint8_t byte = impair.ke_payload - SEND_ROOF;
 		libreswan_log("IMPAIR: sending bogus KE (g^x) == %u value to break DH calculations",
 			      byte);
 		/* Only used to test sending/receiving bogus g^x */
 		if (!out_repeated_byte(byte, g->len, &kepbs, "ikev2 impair KE (g^x) == 0"))
 			return FALSE;
-	} else if (impair_ke_payload == SEND_EMPTY) {
+	} else if (impair.ke_payload == SEND_EMPTY) {
 		libreswan_log("IMPAIR: sending an empty KE value");
 		if (!out_zero(0, &kepbs, "ikev2 impair KE (g^x) == empty"))
 			return FALSE;

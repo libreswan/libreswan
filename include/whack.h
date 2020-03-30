@@ -159,7 +159,6 @@ struct whack_message {
 	bool whack_options;
 
 	lmod_t debugging;
-	lmod_t impairing;
 
 	/* what to impair and how */
 	struct whack_impair impairment;

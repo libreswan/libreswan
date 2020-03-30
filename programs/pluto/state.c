@@ -1151,7 +1151,7 @@ void delete_state(struct state *st)
 			 */
 			dbg("IKE delete_state() for #%lu and connection '%s' that is supposed to remain up;  not a problem - have newer #%lu",
 			    st->st_serialno, c->name, newer_sa);
-		} else if (impair_revival) {
+		} else if (impair.revival) {
 			log_state(RC_LOG, st,
 				  "IMPAIR: skipping revival of connection that is supposed to remain up");
 		} else {

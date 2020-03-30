@@ -1,6 +1,6 @@
 /* impair operation, for libreswan
  *
- * Copyright (C) 2018-2019 Andrew Cagney
+ * Copyright (C) 2018-2020 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -46,13 +46,6 @@ enum exchange_impairment {
 };
 
 /*
- * add more here
- */
-#if 0
-enum xxx_impair ...;
-#endif
-
-/*
  * What can be impaired.
  *
  * See impair.c for documentation.
@@ -60,18 +53,74 @@ enum xxx_impair ...;
  * XXX: make this a structure so it can be copied?
  */
 
-extern bool impair_revival;
-extern bool impair_emitting;
+struct impair {
 
-extern enum send_impairment impair_ke_payload;
-extern enum send_impairment impair_ike_key_length_attribute;
-extern enum send_impairment impair_child_key_length_attribute;
+	bool revival;
+	bool emitting;
 
-extern unsigned impair_log_rate_limit;
+	enum send_impairment ke_payload;
+	enum send_impairment ike_key_length_attribute;
+	enum send_impairment child_key_length_attribute;
 
-extern enum send_impairment impair_v1_hash_payload;
-extern enum exchange_impairment impair_v1_hash_exchange;
-extern bool impair_v1_hash_check;
+	unsigned log_rate_limit;
+
+	enum send_impairment v1_hash_payload;
+	enum exchange_impairment v1_hash_exchange;
+	bool v1_hash_check;
+
+	/*
+	 * add more here
+	 */
+
+	/*
+	 * HACK to keep code using IMPAIR() compiling without a
+	 * massive rename.
+	 */
+
+#define IMPAIR(BEHAVIOUR) (impair.BEHAVIOUR)
+	bool BUST_MI2;
+	bool BUST_MR2;
+	bool DROP_I2;
+	bool SA_CREATION;
+	bool JACOB_TWO_TWO;
+	bool ALLOW_NULL_NONE;
+	bool MAJOR_VERSION_BUMP;
+	bool MINOR_VERSION_BUMP;
+	bool TIMEOUT_ON_RETRANSMIT;
+	bool DELETE_ON_RETRANSMIT;
+	bool SUPPRESS_RETRANSMITS;
+	bool SEND_BOGUS_PAYLOAD_FLAG;
+	bool SEND_BOGUS_ISAKMP_FLAG;
+	bool SEND_NO_DELETE;
+	bool SEND_NO_IKEV2_AUTH;
+	bool SEND_NO_XAUTH_R0;
+	bool DROP_XAUTH_R0;
+	bool SEND_NO_MAIN_R2;
+	bool FORCE_FIPS;
+	bool SEND_KEY_SIZE_CHECK;
+	bool SEND_BOGUS_DCOOKIE;
+	bool OMIT_HASH_NOTIFY_REQUEST;
+	bool IGNORE_HASH_NOTIFY_REQUEST;
+	bool IGNORE_HASH_NOTIFY_RESPONSE;
+	bool IKEv2_EXCLUDE_INTEG_NONE;
+	bool IKEv2_INCLUDE_INTEG_NONE;
+	bool REPLAY_DUPLICATES;
+	bool REPLAY_FORWARD;
+	bool REPLAY_BACKWARD;
+	bool REPLAY_ENCRYPTED;
+	bool CORRUPT_ENCRYPTED;
+	bool PROPOSAL_PARSER;
+	bool ADD_UNKNOWN_PAYLOAD_TO_SA_INIT;
+	bool ADD_UNKNOWN_PAYLOAD_TO_AUTH;
+	bool ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK;
+	bool UNKNOWN_PAYLOAD_CRITICAL;
+	bool ALLOW_DNS_INSECURE;
+	bool SEND_PKCS7_THINGIE;
+	bool IKEv1_DEL_WITH_NOTIFY;
+	bool BAD_IKE_AUTH_XCHG;
+};
+
+extern struct impair impair;
 
 /*
  * What whack sends across the wire for a impair.
@@ -88,7 +137,7 @@ void process_impair(const struct whack_impair *whack_impair);
 
 void help_impair(const char *prefix);
 
-void jam_impairments(jambuf_t *buf, const char *prefix, const char *sep);
-#define lswlog_impairments jam_impairments /* XXX: TBD */
+bool have_impairments(void);
+void jam_impairments(jambuf_t *buf, const char *sep);
 
 #endif

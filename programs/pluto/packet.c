@@ -2555,7 +2555,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 								fp->name, sd->name,
 								n & ISAKMP_ATTR_AF_MASK,
 								last_enum, n);
-						if (impair_emitting) {
+						if (impair.emitting) {
 							libreswan_log("IMPAIR: emitting %s", ugh);
 							ugh = NULL;
 						}

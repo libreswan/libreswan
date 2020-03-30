@@ -1796,7 +1796,6 @@ static bool extract_connection(const struct fd *whackfd,
 	set_policy_prio(c); /* must be after kind is set */
 
 	c->extra_debugging = wm->debugging;
-	c->extra_impairing = wm->impairing;
 
 	/* at most one virt can be present */
 	passert(wm->left.virt == NULL || wm->right.virt == NULL);
@@ -3955,14 +3954,6 @@ void show_one_connection(const struct fd *whackfd,
 			jam(buf, "\"%s\"%s:   debug: ",
 			    c->name, instance);
 			jam_lmod(buf, &debug_names, "+", c->extra_debugging);
-		}
-	}
-
-	if (!lmod_empty(c->extra_impairing)) {
-		WHACK_LOG(RC_COMMENT, whackfd, buf) {
-			jam(buf, "\"%s\"%s:   impair: ",
-			    c->name, instance);
-			jam_lmod(buf, &impair_names, "+", c->extra_impairing);
 		}
 	}
 

@@ -24,97 +24,9 @@
 #include "impair.h"
 #include "lswlog.h"
 
-/*
- * Initialize both the .name and .help arrays.
- *
- * See plutomain.c why the name has an extra "\0" appended (hint it is
- * a hack for encoding what to do with flags).
- *
- * XXX: since only the --impair ... form is supported, has this all
- * become redundant.
- *
- * So that grepping for IMPAIR.<name> finds this file, the N parameter
- * is the full enum name (IMPAIR_...) and not just the truncated
- * suffix.
- */
-
-struct double_double {
-	const char *name[IMPAIR_roof_IX - IMPAIR_floor_IX];
-	const char *help[IMPAIR_roof_IX - IMPAIR_floor_IX];
-};
-
-static struct double_double impair = {
-
-#define S(N,A,H)							\
-	.name[N##_IX - IMPAIR_floor_IX] = A "\0", \
-	.help[N##_IX - IMPAIR_floor_IX] = H
-
-       S(IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_AUTH, "impair-add-unknown-payload-to-auth", "add a payload with an unknown type to AUTH"),
-       S(IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK, "impair-add-unknown-payload-to-auth-sk", "add a payload with an unknown type to AUTH's SK payload"),
-       S(IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_SA_INIT, "impair-add-unknown-payload-to-sa-init", "add a payload with an unknown type to SA_INIT"),
-       S(IMPAIR_ALLOW_DNS_INSECURE, "impair-allow-dns-insecure", "allow IPSECKEY lookups without DNSSEC protection"),
-       S(IMPAIR_ALLOW_NULL_NONE, "impair-allow-null-none", "cause pluto to allow esp=null-none and ah=none for testing"),
-       S(IMPAIR_BUST_MI2, "impair-bust-mi2", "make MI2 really large"),
-       S(IMPAIR_BUST_MR2, "impair-bust-mr2", "make MR2 really large"),
-       S(IMPAIR_CORRUPT_ENCRYPTED, "impair-corrupt-encrypted", "corrupts the encrypted packet so that the decryption fails"),
-       S(IMPAIR_DELETE_ON_RETRANSMIT, "impair-delete-on-retransmit", "causes pluto to fail on the first retransmit"),
-       S(IMPAIR_DROP_I2, "impair-drop-i2", "drop second initiator packet"),
-       S(IMPAIR_DROP_XAUTH_R0, "impair-drop-xauth-r0", "causes pluto to drop an XAUTH user/passwd request on IKE initiator"),
-       S(IMPAIR_FORCE_FIPS, "impair-force-fips", "causes pluto to believe we are in fips mode, NSS needs its own hack"),
-       S(IMPAIR_IGNORE_HASH_NOTIFY_REQUEST, "impair-ignore-hash-notify", "causes pluto to ignore incoming hash notify from IKE_SA_INIT Request"),
-       S(IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE, "impair-ignore-hash-notify-resp", "causes pluto to ignore incoming hash notify from IKE_SA_INIT Response"),
-       S(IMPAIR_IKEv2_EXCLUDE_INTEG_NONE, "impair-ikev2-exclude-integ-none", "lets pluto exclude integrity 'none' in proposals"),
-       S(IMPAIR_IKEv2_INCLUDE_INTEG_NONE, "impair-ikev2-include-integ-none", "lets pluto include integrity 'none' in proposals"),
-       S(IMPAIR_JACOB_TWO_TWO, "impair-jacob-two-two", "cause pluto to send all messages twice."),
-       S(IMPAIR_MAJOR_VERSION_BUMP, "impair-major-version-bump", "cause pluto to send an IKE major version that's higher then we support."),
-       S(IMPAIR_MINOR_VERSION_BUMP, "impair-minor-version-bump", "cause pluto to send an IKE minor version that's higher then we support."),
-       S(IMPAIR_OMIT_HASH_NOTIFY_REQUEST, "impair-omit-hash-notify", "causes pluto to omit sending hash notify in IKE_SA_INIT Request"),
-       S(IMPAIR_PROPOSAL_PARSER, "impair-proposal-parser", "impair algorithm parser - what you see is what you get"),
-       S(IMPAIR_REPLAY_BACKWARD, "impair-replay-backward", "replay all earlier packets new-to-old"),
-       S(IMPAIR_REPLAY_DUPLICATES, "impair-replay-duplicates", "replay duplicates of each incoming packet"),
-       S(IMPAIR_REPLAY_ENCRYPTED, "impair-replay-encrypted", "replay encrypted packets"),
-       S(IMPAIR_REPLAY_FORWARD, "impair-replay-forward", "replay all earlier packets old-to-new"),
-       S(IMPAIR_SA_CREATION, "impair-sa-creation", "fail all SA creation"),
-       S(IMPAIR_SEND_BOGUS_DCOOKIE, "impair-send-bogus-dcookie", "causes pluto to send a a bogus IKEv2 DCOOKIE"),
-       S(IMPAIR_SEND_BOGUS_ISAKMP_FLAG, "impair-send-bogus-isakmp-flag", "causes pluto to set a RESERVED ISAKMP flag to test ignoring/zeroing it"),
-       S(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG, "impair-send-bogus-payload-flag", "causes pluto to set a RESERVED PAYLOAD flag to test ignoring/zeroing it"),
-
-       S(IMPAIR_SEND_KEY_SIZE_CHECK, "impair-send-key-size-check", "causes pluto to omit checking configured ESP key sizes for testing"),
-       S(IMPAIR_SEND_NO_DELETE, "impair-send-no-delete", "causes pluto to omit sending Notify/Delete messages"),
-       S(IMPAIR_SEND_NO_IKEV2_AUTH, "impair-send-no-ikev2-auth", "causes pluto to omit sending an IKEv2 IKE_AUTH packet"),
-       S(IMPAIR_SEND_NO_MAIN_R2, "impair-send-no-main-r2", "causes pluto to omit sending an last Main Mode response packet"),
-       S(IMPAIR_SEND_NO_XAUTH_R0, "impair-send-no-xauth-r0", "causes pluto to omit sending an XAUTH user/passwd request"),
-       S(IMPAIR_SEND_PKCS7_THINGIE, "impair-send-pkcs7-thingie", "send certificates as a PKCS7 thingie"),
-       S(IMPAIR_SUPPRESS_RETRANSMITS, "impair-suppress-retransmits", "causes pluto to never send retransmits (wait the full timeout)"),
-       S(IMPAIR_TIMEOUT_ON_RETRANSMIT, "impair-timeout-on-retransmit", "causes pluto to 'retry' (switch protocol) on the first retransmit"),
-       S(IMPAIR_UNKNOWN_PAYLOAD_CRITICAL, "impair-unknown-payload-critical", "mark the unknown payload as critical"),
-       S(IMPAIR_IKEv1_DEL_WITH_NOTIFY, "impair-ikev1-del-with-notify", "causes pluto to send IKE Delete with additional bogus Notify payload"),
-       S(IMPAIR_BAD_IKE_AUTH_XCHG, "impair-bad-ikev2-auth-xchg", "causes pluto to send IKE_AUTH replies with wrong exchange type"),
-
-#undef S
-};
-
-const enum_names impair_names = {
-	IMPAIR_floor_IX, IMPAIR_roof_IX - 1,
-	ARRAY_REF(impair.name),
-	"impair-",
-	NULL,
-};
-
-const struct lmod_info impair_lmod_info = {
-	.names = &impair_names,
-	.all = IMPAIR_MASK,
-	.mask = IMPAIR_MASK,
-};
-const struct enum_names impair_help = {
-	IMPAIR_floor_IX, IMPAIR_roof_IX - 1,
-	ARRAY_REF(impair.help),
-	NULL, NULL,
-};
-
 static const struct keyword send_impairment_value[] = {
 #define S(E, H) [SEND_##E] = { .name = "SEND_" #E, .sname = #E, .value = SEND_##E, .details = H, }
-	S(NORMAL, "send normal content"),
+	S(NORMAL, "do not modify content"),
 	S(OMIT, "do not send content"),
 	S(EMPTY, "send zero length content"),
 	S(DUPLICATE, "duplicate content"),
@@ -147,6 +59,7 @@ struct impairment {
 	 * If NULL, HOW is assumed to be a boolean.
 	 */
 	const struct keywords *how_keynum;
+	const char *unsigned_help;
 	void *value;
 	/* size_t offsetof_value; */
 	size_t sizeof_value;
@@ -154,23 +67,24 @@ struct impairment {
 
 struct impairment impairments[] = {
 	{ .what = NULL, },
-#define V(V) .value = &V, .sizeof_value = sizeof(V)
+#define V(V) .value = &impair.V, .sizeof_value = sizeof(impair.V)
 
 	{
 		.what = "revival",
 		.help = "disable code that revives a connection that is supposed to stay up",
-		V(impair_revival),
+		V(revival),
 	},
 	{
 		.what = "emitting",
 		.help = "disable correctness-checks when emitting a payload (let anything out)",
-		V(impair_emitting),
+		V(emitting),
 	},
 	{
 		.what = "ke-payload",
 		.help = "corrupt the outgoing KE payload",
 		.how_keynum = &send_impairment_keywords,
-		V(impair_ke_payload),
+		.unsigned_help = "use <unsigned> to byte-fill the KE payload",
+		V(ke_payload),
 	},
 
 	/*
@@ -186,18 +100,20 @@ struct impairment impairments[] = {
 		.what = "ike-key-length-attribute",
 		.help = "corrupt the outgoing IKE proposal's key length attribute",
 		.how_keynum = &send_impairment_keywords,
-		V(impair_ike_key_length_attribute),
+		.unsigned_help = "use <unsigned> as the key length",
+		V(ike_key_length_attribute),
 	},
 	{
 		.what = "child-key-length-attribute",
 		.help = "corrupt the outgoing CHILD proposal's key length attribute",
 		.how_keynum = &send_impairment_keywords,
-		V(impair_child_key_length_attribute),
+		.unsigned_help = "use <unsigned> as the key length",
+		V(child_key_length_attribute),
 	},
 	{
 		.what = "log-rate-limit",
 		.help = "set the per-hour(?) cap on rate-limited log messages",
-		V(impair_log_rate_limit),
+		V(log_rate_limit),
 	},
 
 	/*
@@ -206,41 +122,94 @@ struct impairment impairments[] = {
 	{
 		.what = "v1-hash-check",
 		.help = "disable check of incoming IKEv1 hash payload",
-		V(impair_v1_hash_check),
+		V(v1_hash_check),
 	},
 	{
 		.what = "v1-hash-payload",
 		.help = "corrupt the outgoing HASH payload",
 		.how_keynum = &send_impairment_keywords,
-		V(impair_v1_hash_payload),
+		.unsigned_help = "fill the hash payload with <unsigned> bytes",
+		V(v1_hash_payload),
 	},
 	{
 		.what = "v1-hash-exchange",
 		.help = "the outgoing exchange that should contain the corrupted HASH payload",
 		.how_keynum = &exchange_impairment_keywords,
-		V(impair_v1_hash_exchange),
+		V(v1_hash_exchange),
 	},
+
+	/* old stuff */
+
+#define S(FIELD, WHAT, HELP) { .what = WHAT, .help = HELP, V(FIELD), }
+
+	S(ADD_UNKNOWN_PAYLOAD_TO_AUTH, "add-unknown-payload-to-auth", "add a payload with an unknown type to AUTH"),
+	S(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK, "add-unknown-payload-to-auth-sk", "add a payload with an unknown type to AUTH's SK payload"),
+	S(ADD_UNKNOWN_PAYLOAD_TO_SA_INIT, "add-unknown-payload-to-sa-init", "add a payload with an unknown type to SA_INIT"),
+	S(ALLOW_DNS_INSECURE, "allow-dns-insecure", "allow IPSECKEY lookups without DNSSEC protection"),
+	S(ALLOW_NULL_NONE, "allow-null-none", "cause pluto to allow esp=null-none and ah=none for testing"),
+	S(BUST_MI2, "bust-mi2", "make MI2 really large"),
+	S(BUST_MR2, "bust-mr2", "make MR2 really large"),
+	S(CORRUPT_ENCRYPTED, "corrupt-encrypted", "corrupts the encrypted packet so that the decryption fails"),
+	S(DELETE_ON_RETRANSMIT, "delete-on-retransmit", "causes pluto to fail on the first retransmit"),
+	S(DROP_I2, "drop-i2", "drop second initiator packet"),
+	S(DROP_XAUTH_R0, "drop-xauth-r0", "causes pluto to drop an XAUTH user/passwd request on IKE initiator"),
+	S(FORCE_FIPS, "force-fips", "causes pluto to believe we are in fips mode, NSS needs its own hack"),
+	S(IGNORE_HASH_NOTIFY_REQUEST, "ignore-hash-notify", "causes pluto to ignore incoming hash notify from IKE_SA_INIT Request"),
+	S(IGNORE_HASH_NOTIFY_RESPONSE, "ignore-hash-notify-resp", "causes pluto to ignore incoming hash notify from IKE_SA_INIT Response"),
+	S(IKEv2_EXCLUDE_INTEG_NONE, "ikev2-exclude-integ-none", "lets pluto exclude integrity 'none' in proposals"),
+	S(IKEv2_INCLUDE_INTEG_NONE, "ikev2-include-integ-none", "lets pluto include integrity 'none' in proposals"),
+	S(JACOB_TWO_TWO, "jacob-two-two", "cause pluto to send all messages twice."),
+	S(MAJOR_VERSION_BUMP, "major-version-bump", "cause pluto to send an IKE major version that's higher then we support."),
+	S(MINOR_VERSION_BUMP, "minor-version-bump", "cause pluto to send an IKE minor version that's higher then we support."),
+	S(OMIT_HASH_NOTIFY_REQUEST, "omit-hash-notify", "causes pluto to omit sending hash notify in IKE_SA_INIT Request"),
+	S(PROPOSAL_PARSER, "proposal-parser", "impair algorithm parser - what you see is what you get"),
+	S(REPLAY_BACKWARD, "replay-backward", "replay all earlier packets new-to-old"),
+	S(REPLAY_DUPLICATES, "replay-duplicates", "replay duplicates of each incoming packet"),
+	S(REPLAY_ENCRYPTED, "replay-encrypted", "replay encrypted packets"),
+	S(REPLAY_FORWARD, "replay-forward", "replay all earlier packets old-to-new"),
+	S(SA_CREATION, "sa-creation", "fail all SA creation"),
+	S(SEND_BOGUS_DCOOKIE, "send-bogus-dcookie", "causes pluto to send a a bogus IKEv2 DCOOKIE"),
+	S(SEND_BOGUS_ISAKMP_FLAG, "send-bogus-isakmp-flag", "causes pluto to set a RESERVED ISAKMP flag to test ignoring/zeroing it"),
+	S(SEND_BOGUS_PAYLOAD_FLAG, "send-bogus-payload-flag", "causes pluto to set a RESERVED PAYLOAD flag to test ignoring/zeroing it"),
+
+	S(SEND_KEY_SIZE_CHECK, "send-key-size-check", "causes pluto to omit checking configured ESP key sizes for testing"),
+	S(SEND_NO_DELETE, "send-no-delete", "causes pluto to omit sending Notify/Delete messages"),
+	S(SEND_NO_IKEV2_AUTH, "send-no-ikev2-auth", "causes pluto to omit sending an IKEv2 IKE_AUTH packet"),
+	S(SEND_NO_MAIN_R2, "send-no-main-r2", "causes pluto to omit sending an last Main Mode response packet"),
+	S(SEND_NO_XAUTH_R0, "send-no-xauth-r0", "causes pluto to omit sending an XAUTH user/passwd request"),
+	S(SEND_PKCS7_THINGIE, "send-pkcs7-thingie", "send certificates as a PKCS7 thingie"),
+	S(SUPPRESS_RETRANSMITS, "suppress-retransmits", "causes pluto to never send retransmits (wait the full timeout)"),
+	S(TIMEOUT_ON_RETRANSMIT, "timeout-on-retransmit", "causes pluto to 'retry' (switch protocol) on the first retransmit"),
+	S(UNKNOWN_PAYLOAD_CRITICAL, "unknown-payload-critical", "mark the unknown payload as critical"),
+	S(IKEv1_DEL_WITH_NOTIFY, "ikev1-del-with-notify", "causes pluto to send IKE Delete with additional bogus Notify payload"),
+	S(BAD_IKE_AUTH_XCHG, "bad-ikev2-auth-xchg", "causes pluto to send IKE_AUTH replies with wrong exchange type"),
+
+#undef S
+
 };
 
 static void help(const char *prefix, const struct impairment *cr)
 {
 	LSWLOG_INFO(buf) {
-		lswlogf(buf, "%s%s: %s", prefix, cr->what, cr->help);
+		jam(buf, "%s%s: %s", prefix, cr->what, cr->help);
 	}
 	if (cr->how_keynum != NULL) {
 		const struct keywords *kw = cr->how_keynum;
-		for (unsigned ki = 0; ki < kw->nr_values; ki++) {
+		/* skip 0, always no */
+		for (unsigned ki = 1; ki < kw->nr_values; ki++) {
 			const struct keyword *kv = &kw->values[ki];
-			if (kv->name != NULL) {
+			if (kv->details != NULL) {
 				LSWLOG_INFO(buf) {
-					lswlogf(buf, "%s  %s: %s", prefix,
-						kv->sname, kv->details);
+					jam(buf, "%s  %s: %s", prefix,
+					    kv->sname, kv->details);
 				}
 			}
 		}
+	}
+	if (cr->unsigned_help != NULL) {
 		LSWLOG_INFO(buf) {
-			lswlogf(buf, "%s  %s: %s", prefix,
-				"<unsigned>", "use the unsigned value");
+			jam(buf, "%s  %s: %s", prefix,
+			    "<unsigned>", cr->unsigned_help);
 		}
 	}
 }
@@ -255,22 +224,18 @@ void help_impair(const char *prefix)
 
 /*
  * Return the long value in STRING, but with +ve values adjusted by
- * BIAS.
+ * BIAS.  If the operation fails, zero is returned - bias must be
+ * non-zero.
  */
-static bool parse_biased_unsigned(shunk_t string, unsigned *dest, unsigned bias)
+static unsigned parse_biased_unsigned(shunk_t string, const struct impairment *cr)
 {
+	unsigned bias = cr->how_keynum != NULL ? cr->how_keynum->nr_values : 1;
 	uintmax_t u;
-	err_t err = shunk_to_uint(string, NULL, 0/*base*/, &u, 0/*ceiling*/);
+	err_t err = shunk_to_uint(string, NULL, 0/*base*/, &u, UINTMAX_MAX - bias/*ceiling*/);
 	if (err == NULL) {
-		/* UINT_MAX is upper bound of *DEST */
-		if (u <= UINT_MAX - bias) {
-			*dest = u + bias;
-			return true;
-		} else {
-			return false;
-		}
+		return u + bias;
 	} else {
-		return false;
+		return 0;
 	}
 }
 
@@ -279,76 +244,89 @@ static bool parse_biased_unsigned(shunk_t string, unsigned *dest, unsigned bias)
 
 bool parse_impair(const char *optarg,
 		  struct whack_impair *whack_impair,
-		  bool enable)
+		  bool enable /* --impair ... vs --no-impair ...*/)
 {
 	if (streq(optarg, "help")) {
 		help_impair("");
 		return false;
-	} else if (whack_impair->what != 0) {
+	}
+
+	if (whack_impair->what != 0) {
 		LSWLOG_ERROR(buf) {
-			lswlogf(buf, "ignoring option '--impair %s'", optarg);
+			lswlogf(buf, "ignoring second impair option: --%simpair %s",
+				enable ? "" : "no-", optarg);
 		}
 		return true;
-	} else if (enable && streq(optarg, "none")) {
+	}
+
+	if (enable && streq(optarg, "none")) {
 		*whack_impair = (struct whack_impair) {
 			.what = IMPAIR_DISABLE,
 			.how = 0,
 		};
 		return true;
-	} else if (enable && streq(optarg, "list")) {
+	}
+
+	if (enable && streq(optarg, "list")) {
 		*whack_impair = (struct whack_impair) {
 			.what = IMPAIR_LIST,
 			.how = 0,
 		};
 		return true;
 	}
+
 	/* Break OPTARG into WHAT[=HOW] */
 	shunk_t arg = shunk1(optarg);
 	shunk_t what = shunk_token(&arg, NULL, ":=");
 	shunk_t how = arg;
+
 	/*
 	 * look for both WHAT and for compatibility with the old
 	 * lset_t impair flags, no-WHAT.
 	 */
+
+	bool what_no = shunk_strcaseeat(&what, "no-");
 	unsigned ci = 1;
-	shunk_t nowhat = what;
-	/* reject --no-impair no-... */
-	bool no = enable ? shunk_strcaseeat(&nowhat, "no-") : true;
-	while (true) {
-		if (ci >= elemsof(impairments)) {
-			LSWLOG_ERROR(buf) {
-				lswlogf(buf, "ignoring unrecognized option '-%s-impair "PRI_SHUNK"'",
-					enable ? "" : "-no",
-					pri_shunk(what));
-			}
-			return false;
-		} else if (hunk_strcaseeq(nowhat, impairments[ci].what)) {
+	const struct impairment *cr = NULL;
+	for (ci = 1/*skip 0*/; ci < elemsof(impairments); ci++) {
+		if (hunk_strcaseeq(what, impairments[ci].what)) {
+			cr = &impairments[ci];
 			break;
 		}
-		ci++;
 	}
-	const struct impairment *cr = &impairments[ci];
+	if (cr == NULL) {
+		LSWLOG_ERROR(buf) {
+			jam(buf, "ignoring unrecognized impair option '"PRI_SHUNK"'",
+			    pri_shunk(what));
+		}
+		return false;
+	}
 
-	/* --{,no-}impair WHAT:help always works */
-	if (hunk_strcaseeq(how, "help")) {
+	/*
+	 * no matter how negated, "help" always works
+	 */
+	if (hunk_strcaseeq(how, "help") ||
+	    hunk_strcaseeq(how, "?")) {
 		help("", cr);
 		return false;
 	}
 
 	/*
-	 * Ensure that --no-impair WHAT, --impair no-WHAT, --impair
-	 * WHAT:no, all always work.
+	 * Reject overly negative or conflicting combinations.  For
+	 * instance: --no-impair no-foo:bar.
 	 */
-	if (no || hunk_strcaseeq(how, "no")) {
-		/* reject --no-impair WHAT:no and --impair no-WHAT:no */
-		if (no && how.len > 0) {
-			LSWLOG_ERROR(buf) {
-				lswlogf(buf, "ignoring option '-%s-impair "PRI_SHUNK":"PRI_SHUNK"' with unexpected parameter '"PRI_SHUNK"'",
-					enable ? "" : "-no",
-					pri_shunk(what), pri_shunk(how), pri_shunk(how));
-			}
-			return false;
+	if ((!enable + what_no + (how.ptr != NULL)) > 1) {
+		LSWLOG_ERROR(buf) {
+			jam(buf, "ignoring overly negative --%simpair %s",
+			    enable ? "" : "no-", optarg);
 		}
+		return false;
+	}
+
+	/*
+	 * Always recognize "no".
+	 */
+	if (!enable || what_no || hunk_strcaseeq(how, "no")) {
 		*whack_impair = (struct whack_impair) {
 			.what = ci,
 			.how = 0,
@@ -356,17 +334,10 @@ bool parse_impair(const char *optarg,
 		return true;
 	}
 
+	/*
+	 * For WHAT:HOW, lookup the keyword HOW.
+	 */
 	if (cr->how_keynum != NULL) {
-		/*
-		 * parse --impair WHAT:HOW
-		 */
-		if (how.len == 0) {
-			LSWLOG_ERROR(buf) {
-				lswlogf(buf, "ignoring option '--impair "PRI_SHUNK"' with missing parameter",
-					pri_shunk(what));
-			}
-			return false;
-		}
 		/* try the keyword. */
 		const struct keyword *kw = keyword_by_sname(cr->how_keynum, how);
 		if (kw != NULL) {
@@ -376,69 +347,49 @@ bool parse_impair(const char *optarg,
 			};
 			return true;
 		}
-		unsigned biased_value;
-		if (parse_biased_unsigned(how, &biased_value,
-					  cr->how_keynum->nr_values)) {
+	} else {
+		/*
+		 * Assume boolean - use "yes" and "no" as that is what
+		 * bool_str() prints.
+		 *
+		 * XXX: this can't use keywords as they won't
+		 * interpret "" as yes.
+		 */
+		if (hunk_strcaseeq(how, "no")) {
+			/* --impair WHAT:no */
+			*whack_impair = (struct whack_impair) {
+				.what = ci,
+				.how = false,
+			};
+			return true;
+		}
+
+		if (how.len == 0 || hunk_strcaseeq(how, "yes")) {
+			/* --impair WHAT:yes or --impair WHAT */
+			*whack_impair = (struct whack_impair) {
+				.what = ci,
+				.how = true,
+			};
+			return true;
+		}
+	}
+
+	if (cr->unsigned_help != NULL) {
+		unsigned biased_value = parse_biased_unsigned(how, cr);
+		if (biased_value > 0) {
 			*whack_impair = (struct whack_impair) {
 				.what = ci,
 				.how = biased_value,
 			};
 			return true;
 		}
-		LSWLOG_ERROR(buf) {
-			lswlogf(buf, "ignoring option '--impair "PRI_SHUNK":"PRI_SHUNK"' with unknown parameter '"PRI_SHUNK"'",
-				pri_shunk(what), pri_shunk(how),
-				pri_shunk(how));
-		}
-		return false;
-	} else {
-		/*
-		 * Only allow simple booleans for now (it could call
-		 * parse_piased_unsigned).
-		 *
-		 * Accept some common terms, and assume an empty WHAT
-		 * implies 'yes'.
-		 *
-		 * XXX: Yes, "no" was already handled above.  It's
-		 * also here so that the two if() clauses look
-		 * consistent.
-		 */
-		if (hunk_strcaseeq(how, "false") ||
-		    hunk_strcaseeq(how, "off") ||
-		    hunk_strcaseeq(how, "no")) {
-			/* --impair WHAT:nope */
-			*whack_impair = (struct whack_impair) {
-				.what = ci,
-				.how = 0,
-			};
-			return true;
-		} else if (how.len == 0 ||
-			   hunk_strcaseeq(how, "true") ||
-			   hunk_strcaseeq(how, "on") ||
-			   hunk_strcaseeq(how, "yes")) {
-			/* --impair WHAT:yes */
-			*whack_impair = (struct whack_impair) {
-				.what = ci,
-				.how = 1,
-			};
-			return true;
-		} else {
-			unsigned value = 0;
-			if (parse_biased_unsigned(how, &value, 0)) {
-				*whack_impair = (struct whack_impair) {
-					.what = ci,
-					.how = value,
-				};
-				return true;
-			}
-			/* XXX: ignores "WHAT:" */
-			LSWLOG_ERROR(buf) {
-				lswlogf(buf, "ignoring option '--impair "PRI_SHUNK":"PRI_SHUNK"' with unexpected parameter '"PRI_SHUNK"'",
-					pri_shunk(what), pri_shunk(how), pri_shunk(how));
-			}
-			return false;
-		}
 	}
+
+	LSWLOG_ERROR(buf) {
+		jam(buf, "ignoring impair option '"PRI_SHUNK"' with unrecognized parameter '"PRI_SHUNK"' (%s)",
+		    pri_shunk(what), pri_shunk(how), optarg);
+	}
+	return false;
 }
 
 /*
@@ -462,9 +413,9 @@ static uintmax_t value_of(const struct impairment *cr)
 static void jam_impairment(jambuf_t *buf,
 			   const struct impairment *cr)
 {
+	jam(buf, "%s:", cr->what);
+	unsigned value = value_of(cr);
 	if (cr->how_keynum != NULL) {
-		jam(buf, "%s:", cr->what);
-		unsigned value = value_of(cr);
 		const struct keyword *kw = keyword_by_value(cr->how_keynum, value);
 		if (kw != NULL) {
 			jam_string(buf, kw->sname);
@@ -473,41 +424,36 @@ static void jam_impairment(jambuf_t *buf,
 		} else {
 			jam(buf, "?%u?", value);
 		}
-	} else {
-		/* only bool for now */
-		uintmax_t value = value_of(cr);
+	} else if (cr->unsigned_help != NULL) {
+		/* always one biased */
 		if (value == 0) {
-			/* parser accepts this */
-			jam(buf, "%s:no", cr->what);
-		} else if (value == 1) {
-			/* parser accepts this */
-			jam(buf, "%s", cr->what);
+			jam(buf, "no");
 		} else {
-			jam(buf, "%s:%ju", cr->what, value);
+			jam(buf, "%u", value-1);
+		}
+	} else {
+		switch (value) {
+		case 0: jam(buf, "no"); break;
+		case 1: jam(buf, "yes"); break;
+		default: jam(buf, "?%u?", value);
 		}
 	}
 }
 
-void jam_impairments(jambuf_t *buf, const char *prefix, const char *sep)
+bool have_impairments(void)
 {
 	/* is there anything enabled? */
-	lset_t cur_impairing = (cur_debugging & IMPAIR_MASK);
-	bool enabled = false;
 	for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 		const struct impairment *cr = &impairments[ci];
 		if (value_of(cr) != 0) {
-			enabled = true;
-			break;
+			return true;
 		}
 	}
-	if (!enabled && cur_impairing == LEMPTY) {
-		return;
-	}
-	jam_string(buf, prefix);
-	if (cur_impairing != LEMPTY) {
-		/* avoid LEMPTY being printed as "none" */
-		jam_enum_lset_short(buf, &impair_names, sep, cur_impairing);
-	}
+	return false;
+}
+
+void jam_impairments(jambuf_t *buf, const char *sep)
+{
 	const char *s = "";
 	for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 		const struct impairment *cr = &impairments[ci];
@@ -554,18 +500,16 @@ void process_impair(const struct whack_impair *wc)
 		return;
 	}
 	const struct impairment *cr = &impairments[wc->what];
-	if (cr->how_keynum != NULL) {
-		passert(cr->sizeof_value == sizeof(unsigned));
-		*(unsigned*)cr->value = wc->how; /* do not un-bias */
-	} else switch (cr->sizeof_value) {
+	/* do not un-bias */
+	switch (cr->sizeof_value) {
 #define L(T) case sizeof(uint##T##_t): *(uint##T##_t*)cr->value = wc->how; break;
-			L(8);
-			L(16);
-			L(32);
-			L(64);
+		L(8);
+		L(16);
+		L(32);
+		L(64);
 #undef L
-		default:
-			bad_case(cr->sizeof_value);
+	default:
+		bad_case(cr->sizeof_value);
 	}
 	LSWDBGP(DBG_BASE, buf) {
 		jam_impairment(buf, cr);
@@ -574,18 +518,8 @@ void process_impair(const struct whack_impair *wc)
 
 /*
  * XXX: define these at the end of the file so that all references are
- * forced to use the declaration in the header (help stop code
+ * forced to use the extern declaration in the header (help stop code
  * referring to the wrong variable?).
  */
 
-bool impair_revival;
-bool impair_emitting;
-enum send_impairment impair_ke_payload;
-enum send_impairment impair_ike_key_length_attribute;
-enum send_impairment impair_child_key_length_attribute;
-
-unsigned impair_log_rate_limit;
-
-bool impair_v1_hash_check;
-enum send_impairment impair_v1_hash_payload;
-enum exchange_impairment impair_v1_hash_exchange;
+struct impair impair;

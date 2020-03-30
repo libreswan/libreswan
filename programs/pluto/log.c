@@ -697,13 +697,13 @@ static unsigned nr_rate_limited_logs;
 
 static unsigned log_limit(void)
 {
-	if (impair_log_rate_limit == 0) {
+	if (impair.log_rate_limit == 0) {
 		/* --impair log-rate-limit:no */
 		return RATE_LIMIT;
 	} else {
 		/* --impair log-rate-limit:yes */
 		/* --impair log-rate-limit:NNN */
-		return impair_log_rate_limit;
+		return impair.log_rate_limit;
 	}
 }
 

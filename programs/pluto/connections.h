@@ -335,7 +335,6 @@ struct connection {
 		newest_ipsec_sa;
 
 	lmod_t extra_debugging;
-	lmod_t extra_impairing;
 
 	/* if multiple policies, next one to apply */
 	struct connection *policy_next;

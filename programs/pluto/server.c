@@ -804,7 +804,10 @@ void show_debug_status(const struct fd *whackfd)
 			jam_enum_lset_short(buf, &debug_names,
 					    "+", cur_debugging & DBG_MASK);
 		}
-		jam_impairments(buf, " impair: "/*prefix*/, "+");
+		if (have_impairments()) {
+			jam(buf, " impair: ");
+			jam_impairments(buf, "+");
+		}
 	}
 }
 

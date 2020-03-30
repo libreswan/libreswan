@@ -67,10 +67,10 @@ static uint8_t build_ikev2_version(void)
 	       (IKEv2_MINOR_VERSION + (IMPAIR(MINOR_VERSION_BUMP) ? 1 : 0));
 }
 
-uint8_t build_ikev2_critical(bool impair)
+uint8_t build_ikev2_critical(bool impaired)
 {
 	uint8_t octet = 0;
-	if (impair) {
+	if (impaired) {
 		/* flip the expected bit */
 		libreswan_log("IMPAIR: setting (should be off) critical payload bit");
 		octet = ISAKMP_PAYLOAD_CRITICAL;

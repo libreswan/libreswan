@@ -801,7 +801,7 @@ stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
  */
 bool ikev1_justship_KE(chunk_t *g, pb_stream *outs)
 {
-	switch (impair_ke_payload) {
+	switch (impair.ke_payload) {
 	case SEND_NORMAL:
 		return ikev1_out_generic_chunk(&isakmp_keyex_desc, outs, *g,
 					       "keyex value");
@@ -816,7 +816,7 @@ bool ikev1_justship_KE(chunk_t *g, pb_stream *outs)
 	default:
 	{
 		pb_stream z;
-		uint8_t byte = impair_ke_payload - SEND_ROOF;
+		uint8_t byte = impair.ke_payload - SEND_ROOF;
 		libreswan_log("IMPAIR: sending bogus KE (g^x) == %u value to break DH calculations",
 			      byte);
 		/* Only used to test sending/receiving bogus g^x */
@@ -2236,7 +2236,7 @@ void send_v1_delete(struct state *st)
 					&del_pbs, "delete payload"));
 			close_output_pbs(&del_pbs);
 
-			if (DBGP(IMPAIR_IKEv1_DEL_WITH_NOTIFY)) {
+			if (IMPAIR(IKEv1_DEL_WITH_NOTIFY)) {
 				pb_stream cruft_pbs;
 
 				libreswan_log("IMPAIR: adding bogus Notify payload after IKE Delete payload");

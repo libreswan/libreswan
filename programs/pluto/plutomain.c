@@ -1472,12 +1472,9 @@ int main(int argc, char **argv)
 
 		case OPT_IMPAIR:
 		{
-			lmod_t mod = empty_lmod;
-			if (lmod_arg(&mod, &impair_lmod_info, optarg, true/*enable*/)) {
-				cur_debugging = lmod(cur_debugging, mod);
-			} else {
-				libreswan_log("unrecognized --impair '%s' option ignored",
-					      optarg);
+			struct whack_impair impairment;
+			if (parse_impair(optarg, &impairment, true)) {
+				process_impair(&impairment);
 			}
 			continue;
 		}
@@ -1796,12 +1793,10 @@ int main(int argc, char **argv)
 	/*
 	 * Log impair-* functions that were enabled
 	 */
-	for (long e = next_enum(&impair_names, -1);
-	     e >= 0; e = next_enum(&impair_names, e)) {
-		unsigned bit = e;
-		if (DBGP(LELEM(bit))) {
-			const char *name = enum_name(&impair_names, bit);
-			libreswan_log("Warning: %s enabled", name);
+	if (have_impairments()) {
+		LSWLOG(buf) {
+			jam(buf, "Warning: impairments enabled: ");
+			jam_impairments(buf, "+");
 		}
 	}
 

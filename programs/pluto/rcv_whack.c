@@ -215,8 +215,6 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 				 */
 				lset_t old_debugging = cur_debugging & DBG_MASK;
 				lset_t new_debugging = lmod(old_debugging, m->debugging);
-				lset_t old_impairing = cur_debugging & IMPAIR_MASK;
-				lset_t new_impairing = lmod(old_impairing, m->impairing);
 				set_debugging(cur_debugging | new_debugging);
 				LSWDBGP(DBG_CONTROL, buf) {
 					jam(buf, "old debugging ");
@@ -230,19 +228,7 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 					jam_enum_lset_short(buf, &debug_names,
 							    "+", new_debugging);
 				}
-				LSWDBGP(DBG_CONTROL, buf) {
-					jam(buf, "old impairing ");
-					jam_enum_lset_short(buf, &impair_names,
-							    "+", old_impairing);
-					jam(buf, " + ");
-					jam_lmod(buf, &impair_names, "+", m->impairing);
-				}
-				LSWDBGP(DBG_CONTROL, buf) {
-					jam(buf, "new impairing = ");
-					jam_enum_lset_short(buf, &impair_names,
-							    "+", new_impairing);
-				}
-				set_debugging(new_debugging | new_impairing);
+				set_debugging(new_debugging);
 				process_impair(&m->impairment);
 			} else if (!m->whack_connection) {
 				struct connection *c = conn_by_name(m->name, true/*strict*/);
@@ -257,14 +243,6 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 						jam_lmod(buf, &debug_names,
 							 "+", c->extra_debugging);
 					}
-					c->extra_impairing = m->impairing;
-					LSWDBGP(DBG_CONTROL, buf) {
-						jam(buf, "\"%s\" extra_impairing = ",
-						    c->name);
-						jam_lmod(buf, &impair_names,
-							 "+", c->extra_impairing);
-					}
-					process_impair(&m->impairment);
 				}
 			}
 			break;

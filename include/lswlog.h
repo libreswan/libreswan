@@ -31,6 +31,7 @@
 #include "constants.h"		/* for DBG_... */
 #include "where.h"		/* used by macros */
 #include "fd.h"			/* for null_fd */
+#include "impair.h"
 
 /* Build up a diagnostic in a static buffer -- NOT RE-ENTRANT.
  * Although this would be a generally useful function, it is very
@@ -325,15 +326,6 @@ void DBG_dump(const char *label, const void *p, size_t len);
 
 #define LSWDBGP(DEBUG, BUF) LSWDBG_(DBGP(DEBUG), BUF)
 #define LSWLOG_DEBUG(BUF) LSWDBG_(true, BUF)
-
-/*
- * Impair pluto's behaviour.
- *
- * IMPAIR currently uses the same lset_t as DBG.  Define a separate
- * macro so that, one day, that can change.
- */
-
-#define IMPAIR(BEHAVIOUR) (cur_debugging & (IMPAIR_##BEHAVIOUR))
 
 /*
  * Routines for accumulating output in the lswlog buffer.

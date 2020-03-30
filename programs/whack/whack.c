@@ -919,7 +919,6 @@ int main(int argc, char **argv)
 	assert(LST_LAST - LST_FIRST < LELEM_ROOF);
 	assert(END_LAST - END_FIRST < LELEM_ROOF);
 	assert(CD_LAST - CD_FIRST < LELEM_ROOF);
-	assert(IMPAIR_roof_IX <= LELEM_ROOF);
 
 	zero(&msg);	/* ??? pointer fields might not be NULLed */
 
@@ -2193,7 +2192,6 @@ int main(int argc, char **argv)
 			 * defined by whack.
 			 */
 			msg.debugging = lmod_clr(msg.debugging, DBG_MASK);
-			msg.impairing = lmod_clr(msg.impairing, IMPAIR_MASK);
 			continue;
 
 		case DBGOPT_ALL:	/* --debug-all (obsolete) */
@@ -2213,7 +2211,6 @@ int main(int argc, char **argv)
 			 */
 			msg.debugging = lmod_clr(msg.debugging, DBG_MASK);
 			msg.debugging = lmod_set(msg.debugging, DBG_ALL);
-			msg.impairing = lmod_clr(msg.impairing, IMPAIR_MASK);
 			continue;
 
 		case DBGOPT_DEBUG:	/* --debug */
@@ -2250,33 +2247,7 @@ int main(int argc, char **argv)
 		case DBGOPT_NO_IMPAIR:	/* --no-impair */
 		{
 			bool enable = (c == DBGOPT_IMPAIR);
-			if (streq(optarg, "help") || streq(optarg, "?")) {
-				fprintf(stderr, "impair options:\n");
-				for (long e = next_enum(&impair_names, -1);
-				     e != -1; e = next_enum(&impair_names, e)) {
-					LSWLOG_FILE(stdout, buf) {
-						lswlogs(buf, "  ");
-						lswlog_enum_short(buf, &impair_names, e);
-						const char *help = enum_name(&impair_help, e);
-						if (help != NULL) {
-							lswlogs(buf, ": ");
-							lswlogs(buf, help);
-						}
-					}
-				}
-				help_impair("  ");
-				exit(1);
-			} else if (lmod_arg(&msg.impairing, &impair_lmod_info, optarg, enable)) {
-				if (lmod_is_set(msg.impairing, IMPAIR_FORCE_FIPS)) {
-					fprintf(stderr, "whack: invalid -%s-impair '%s' option; must be passed directly to pluto\n",
-						enable ? "" : "-no", optarg);
-					lmod_clr(msg.impairing, IMPAIR_FORCE_FIPS);
-				}
-				if (streq(optarg, "none")) {
-					/* hack to pass 'none' onto new code */
-					passert(parse_impair(optarg, &msg.impairment, enable));
-				}
-			} else if (!parse_impair(optarg, &msg.impairment, enable)) {
+			if (!parse_impair(optarg, &msg.impairment, enable)) {
 				/* parse_impair() issued the error */
 				exit(1);
 			}

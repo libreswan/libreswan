@@ -15,7 +15,7 @@ static bool test_proposals = false;
 static bool test_algs = false;
 static bool verbose = false;
 static bool debug = false;
-static bool impair = false;
+static bool impaired = false;
 static enum ike_version ike_version = IKEv2;
 static unsigned parser_version = 0;
 static bool ignore_parser_errors = false;
@@ -37,7 +37,7 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 			.ignore_parser_errors = ignore_parser_errors,	\
 		};							\
 		printf("algparse ");					\
-		if (impair) {						\
+		if (impaired) {						\
 			printf("-impair ");				\
 		}							\
 		if (parser_version > 0) {				\
@@ -325,19 +325,19 @@ static void test(void)
 
 	/* ESP tests that should fail */
 
-	esp(impair, "3des168-sha1"); /* wrong keylen */
-	esp(impair, "3des-null"); /* non-null integ */
-	esp(impair, "aes128-null"); /* non-null-integ */
-	esp(impair, "aes224-sha1"); /* wrong keylen */
-	esp(impair, "aes-224-sha1"); /* wrong keylen */
+	esp(impaired, "3des168-sha1"); /* wrong keylen */
+	esp(impaired, "3des-null"); /* non-null integ */
+	esp(impaired, "aes128-null"); /* non-null-integ */
+	esp(impaired, "aes224-sha1"); /* wrong keylen */
+	esp(impaired, "aes-224-sha1"); /* wrong keylen */
 	esp(false, "aes0-sha1"); /* wrong keylen */
 	esp(false, "aes-0-sha1"); /* wrong keylen */
-	esp(impair, "aes512-sha1"); /* wrong keylen */
+	esp(impaired, "aes512-sha1"); /* wrong keylen */
 	esp(false, "aes-sha1555"); /* unknown integ */
-	esp(impair, "camellia666-sha1"); /* wrong keylen */
+	esp(impaired, "camellia666-sha1"); /* wrong keylen */
 	esp(false, "blowfish"); /* obsoleted */
 	esp(false, "des-sha1"); /* obsoleted */
-	esp(impair, "aes_ctr666"); /* bad key size */
+	esp(impaired, "aes_ctr666"); /* bad key size */
 	esp(false, "aes128-sha2_128"); /* _128 does not exist */
 	esp(false, "aes256-sha2_256-4096"); /* double keysize */
 	esp(false, "aes256-sha2_256-128"); /* now what?? */
@@ -346,9 +346,9 @@ static void test(void)
 	esp(false, "aes-sah1"); /* should get rejected */
 	esp(false, "id3"); /* should be rejected; idXXX removed */
 	esp(false, "aes-id3"); /* should be rejected; idXXX removed */
-	esp(impair, "aes_gcm-md5"); /* AEAD must have auth null */
+	esp(impaired, "aes_gcm-md5"); /* AEAD must have auth null */
 	esp(false, "mars"); /* support removed */
-	esp(impair, "aes_gcm-16"); /* don't parse as aes_gcm_16 */
+	esp(impaired, "aes_gcm-16"); /* don't parse as aes_gcm_16 */
 	esp(false, "aes_gcm-0"); /* invalid keylen */
 	esp(false, "aes_gcm-123456789012345"); /* huge keylen */
 	esp(false, "3des-sha1;dh22"); /* support for dh22 removed */
@@ -383,14 +383,14 @@ static void test(void)
 	ah(ike_version == IKEv2, "sha2-none");
 	ah(ike_version == IKEv2, "sha2;none");
 	ah(true, "sha1-modp8192,sha1-modp8192,sha1-modp8192"); /* suppress duplicates */
-	ah(impair, "aes-sha1");
+	ah(impaired, "aes-sha1");
 	ah(false, "vanityhash1");
-	ah(impair, "aes_gcm_c-256");
+	ah(impaired, "aes_gcm_c-256");
 	ah(false, "id3"); /* should be rejected; idXXX removed */
-	ah(impair, "3des");
-	ah(impair, "null");
-	ah(impair, "aes_gcm");
-	ah(impair, "aes_ccm");
+	ah(impaired, "3des");
+	ah(impaired, "null");
+	ah(impaired, "aes_gcm");
+	ah(impaired, "aes_ccm");
 	ah(false, "ripemd"); /* support removed */
 
 	/*
@@ -411,8 +411,8 @@ static void test(void)
 	ike(false, "id2"); /* should be rejected; idXXX removed */
 	ike(false, "3des-id2"); /* should be rejected; idXXX removed */
 	ike(false, "aes_ccm"); /* ESP/AH only */
-	ike(impair, "aes_gcm-sha1-none-modp2048");
-	ike(impair, "aes_gcm+aes_gcm-sha1-none-modp2048");
+	ike(impaired, "aes_gcm-sha1-none-modp2048");
+	ike(impaired, "aes_gcm+aes_gcm-sha1-none-modp2048");
 	ike(false, "aes+aes_gcm"); /* mixing AEAD and NORM encryption */
 }
 
@@ -518,7 +518,7 @@ int main(int argc, char *argv[])
 		} else if (streq(arg, "ignore")) {
 			ignore_parser_errors = true;
 		} else if (streq(arg, "impair")) {
-			impair = true;
+			impaired = true;
 		} else if (streq(arg, "d") || streq(arg, "nssdir")) {
 			char *nssdir = *++argp;
 			if (nssdir == NULL) {
@@ -573,8 +573,8 @@ int main(int argc, char *argv[])
 	if (debug) {
 		cur_debugging |= DBG_PROPOSAL_PARSER | DBG_CRYPT;
 	}
-	if (impair) {
-		cur_debugging |= IMPAIR_PROPOSAL_PARSER;
+	if (impaired) {
+		impair.PROPOSAL_PARSER = true;
 	}
 
 	if (test_algs) {

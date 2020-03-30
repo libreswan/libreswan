@@ -20,6 +20,7 @@
 #include "proposals.h"
 #include "alg_byname.h"
 #include "ike_alg.h"
+#include "impair.h"
 
 bool alg_byname_ok(struct proposal_parser *parser,
 		   const struct ike_alg *alg, shunk_t print_name)

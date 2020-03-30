@@ -775,8 +775,8 @@ bool ikev1_out_sa(pb_stream *outs,
 				 * key-lengths when so impaired.
 				 */
 				enum send_impairment impair_key_length_attribute =
-					(oakley_mode ? impair_ike_key_length_attribute
-					 : impair_child_key_length_attribute);
+					(oakley_mode ? impair.ike_key_length_attribute
+					 : impair.child_key_length_attribute);
 				long key_length_to_impair = -1;
 				for (unsigned an = 0; an != t->attr_cnt; an++) {
 					const struct db_attr *a = &t->attrs[an];

@@ -31,8 +31,8 @@ bool emit_v1_HASH(enum v1_hash_type hash_type, const char *what,
 	zero(fixup);
 	fixup->what = what;
 	fixup->hash_type = hash_type;
-	fixup->impair = (impair_v1_hash_exchange == exchange
-			 ? impair_v1_hash_payload : SEND_NORMAL);
+	fixup->impair = (impair.v1_hash_exchange == exchange
+			 ? impair.v1_hash_payload : SEND_NORMAL);
 	if (fixup->impair == SEND_OMIT) {
 		libreswan_log("IMPAIR: omitting HASH payload for %s", what);
 		return true;
@@ -115,7 +115,7 @@ bool check_v1_HASH(enum v1_hash_type type, const char *what,
 		dbg("message '%s' HASH payload not checked early", what);
 		return true;
 	}
-	if (impair_v1_hash_check) {
+	if (impair.v1_hash_check) {
 		libreswan_log("IMPAIR: skipping check of '%s' HASH payload", what);
 		return true;
 	}
