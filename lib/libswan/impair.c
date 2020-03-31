@@ -206,7 +206,7 @@ struct impairment impairments[] = {
 	{
 		.what = "v1-hash-check",
 		.help = "disable check of incoming IKEv1 hash payload",
-		V(impair_emitting),
+		V(impair_v1_hash_check),
 	},
 	{
 		.what = "v1-hash-payload",
