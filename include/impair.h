@@ -68,6 +68,9 @@ struct impair {
 	enum exchange_impairment v1_hash_exchange;
 	bool v1_hash_check;
 
+	unsigned ike_initiator_spi;
+	unsigned ike_responder_spi;
+
 	/*
 	 * add more here
 	 */
