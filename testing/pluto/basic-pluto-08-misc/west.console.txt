@@ -1,0 +1,67 @@
+# rhbz#1313816
+west #
+ mkdir /tmp/rhbz1313816
+west #
+ rm -f /etc/ipsec.d/*.*
+west #
+ # should abort, not crash, due to missing nss
+west #
+ ipsec pluto --ctlbase /tmp/rhbz1313816 --nofork --stderrlog --log-no-time
+Pluto initialized
+FIPS Product: NO
+FIPS Kernel: NO
+FIPS Mode: NO
+NSS DB directory: sql:/etc/ipsec.d
+Initializing NSS
+Opening NSS database "sql:/etc/ipsec.d" read-only
+Initialization of NSS with read-only database "sql:/etc/ipsec.d" failed (-8174)
+FATAL: NSS initialization failure
+west #
+ #
+west #
+ # rhbz#1041576 start pluto in dir not owned by root
+west #
+ # should not fail with "pluto: unable to create lock dir:"
+west #
+ # not using /tmp or /var/tmp/ due to specialness of parent dir in test
+west #
+ /testing/guestbin/swan-prep
+west #
+ rm -rf /var/cache/otheruser
+west #
+ mkdir -p /var/cache/otheruser/var/run/pluto /var/cache/otheruser/etc
+west #
+ cp /etc/ipsec.d/*.* /var/cache/otheruser/etc/
+west #
+ mv /etc/ipsec.conf /var/cache/otheruser/etc/
+west #
+ chown -R bin.bin /var/cache/otheruser/var/run/pluto /var/cache/otheruser/etc
+west #
+ chmod -R 755 /var/cache/otheruser
+west #
+ ipsec pluto --ctlbase /var/cache/otheruser/var/run/pluto --use-netkey --secretsfile /var/cache/otheruser/etc/ipsec.secrets
+west #
+ # give pluto time to start and create its socket and pid files
+west #
+ sleep 3
+west #
+ # show it is running
+west #
+ ipsec whack --ctlbase /var/cache/otheruser/var/run/pluto --briefstatus
+000  
+000 State Information: DDoS cookies not required, Accepting new IKE connections
+000 IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)
+000 IPsec SAs: total(0), authenticated(0), anonymous(0)
+000  
+west #
+ # shut it down
+west #
+ ipsec whack --ctlbase /var/cache/otheruser/var/run/pluto  --shutdown
+west #
+ echo "initdone"
+initdone
+west #
+ echo done
+done
+west #
+ 

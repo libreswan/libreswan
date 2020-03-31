@@ -1,0 +1,3 @@
+This tests three rhbz's: bz1041576, bz1313821, bz1313816
+
+Based on original redhat downstream tests
