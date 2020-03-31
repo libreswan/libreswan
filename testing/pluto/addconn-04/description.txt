@@ -8,4 +8,5 @@ on startup would not load.
 Additionally, ipsec status would display that /etc/ipsec.conf was used instead
 of /dir/ipsec.conf
 
-
+This also tests another bug, rhbz#1645137 that caused addconn to cras
+on extremely long ike= lines (from systemwide crypto policies)

@@ -19,6 +19,11 @@ west #
  ipsec status | grep configfile
 000 configdir=/etc, configfile=/tmp/test.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d
 west #
+ # rhbz#1645137 test
+west #
+ ipsec addconn --config /tmp/test.conf longike
+002 added connection description "longike"
+west #
  echo done
 done
 west #
