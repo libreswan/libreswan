@@ -46,3 +46,23 @@ bool case_eq(const void *l_ptr, size_t l_len,
 	}
 	return strncasecmp(l_ptr, r_ptr, r_len) == 0;
 }
+
+void hton_bytes(uintmax_t h, void *bytes, size_t size)
+{
+	uint8_t *byte = bytes;
+	for (unsigned i = 0; i < size; i++) {
+		unsigned j = size - i - 1;
+		byte[j] = h & 0xff;
+		h = h >> 8;
+	}
+}
+
+uintmax_t ntoh_bytes(const void *bytes, size_t size)
+{
+	uintmax_t h = 0;
+	const uint8_t *byte = bytes;
+	for (unsigned i = 0; i < size; i++) {
+		h = (h<<8) + byte[i];
+	}
+	return h;
+}

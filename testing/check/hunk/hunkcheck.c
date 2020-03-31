@@ -567,6 +567,45 @@ static void check_shunk_to_uint(void)
 	}
 }
 
+static void check_ntoh_hton_hunk(void)
+{
+	static const struct test {
+		uintmax_t i;
+		uintmax_t o;
+		size_t size;
+		const uint8_t bytes[3]; /* oversize */
+	} tests[] = {
+		/* 00 */
+		{ 0, 0, 0, { 0x01, 0x02, 0x03, }, },
+		{ 0, 0, 1, { 0x00, 0x02, 0x03, }, },
+		{ 0, 0, 2, { 0x00, 0x00, 0x03, }, },
+		/* 0x1234 */
+		{ 0x1234, 0,      0, { 0x01, 0x02, 0x03, }, },
+		{ 0x1234, 0x34,   1, { 0x34, 0x02, 0x03, }, },
+		{ 0x1234, 0x1234, 2, { 0x12, 0x34, 0x03, }, },
+	};
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINTLN(stdout, " size=%zu i=%jx o=%jx", t->size, t->i, t->o);
+
+		shunk_t t_shunk = shunk2(t->bytes, t->size);
+		uintmax_t h = ntoh_hunk(t_shunk);
+		if (h != t->o) {
+			FAIL("hton_hunk() returned %jx, expecting %jx",
+			     h, t->o);
+		}
+
+		uint8_t bytes[sizeof(t->bytes)] = { 0x01, 0x02, 0x03, };
+		chunk_t n = chunk2(bytes, t->size);
+		hton_chunk(t->i, n);
+		if (!memeq(bytes, t->bytes, sizeof(bytes))) {
+			FAIL("hton_chunk() returned %jx, expecting %jx",
+			     ntoh_hunk(n), t->o);
+		}
+	}
+}
+
 int main(int argc UNUSED, char *argv[] UNUSED)
 {
 	check_hunk_eq();
@@ -577,6 +616,7 @@ int main(int argc UNUSED, char *argv[] UNUSED)
 	check_hunk_char();
 	check_hunk_char_is();
 	check_shunk_to_uint();
+	check_ntoh_hton_hunk();
 
 	if (fails > 0) {
 		fprintf(stderr, "TOTAL FAILURES: %d\n", fails);

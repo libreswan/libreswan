@@ -211,4 +211,23 @@ bool case_eq(const void *l_ptr, size_t l_len,
 		memcpy(DST, hunk_.ptr, SIZE);				\
 	})
 
+/*
+ * Convert between uintmax_t and network-byte-ordered data.
+ */
+
+void hton_bytes(uintmax_t h, void *bytes, size_t size);
+uintmax_t ntoh_bytes(const void *bytes, size_t size);
+
+#define ntoh_hunk(HUNK)							\
+	({								\
+		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
+		ntoh_bytes(hunk_.ptr, hunk_.len);			\
+	})
+
+#define hton_chunk(H, HUNK) /* writeable */				\
+	({								\
+		const chunk_t hunk_ = HUNK; /* evaluate once */		\
+		hton_bytes(H, hunk_.ptr, hunk_.len);			\
+	})
+
 #endif
