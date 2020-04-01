@@ -56,6 +56,15 @@ void refresh_ike_spi_secret(void)
  */
 ike_spi_t ike_initiator_spi(void)
 {
+	if (impair.ike_initiator_spi > 0) {
+		/* 1-biased so that 0 is "disable" */
+		uintmax_t v = impair.ike_initiator_spi - 1;
+		dbg("forcing IKE initiator SPI to 0x%jx", v);
+		ike_spi_t spi;
+		hton_chunk(v, THING_AS_CHUNK(spi));
+		return spi;
+	}
+
 	ike_spi_t spi;
 	do {
 		get_rnd_bytes(spi.bytes, sizeof(spi));
@@ -74,6 +83,15 @@ ike_spi_t ike_initiator_spi(void)
  */
 ike_spi_t ike_responder_spi(const ip_address *addr)
 {
+	if (impair.ike_responder_spi > 0) {
+		/* 1-biased so that 0 is "disable" */
+		uintmax_t v = impair.ike_responder_spi - 1;
+		dbg("forcing IKE responder SPI to 0x%jx", v);
+		ike_spi_t spi;
+		hton_chunk(v, THING_AS_CHUNK(spi));
+		return spi;
+	}
+
 	ike_spi_t spi;
 	do {
 		static uint32_t counter = 0; /* STATIC */

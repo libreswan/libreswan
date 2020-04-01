@@ -138,6 +138,19 @@ struct impairment impairments[] = {
 		V(v1_hash_exchange),
 	},
 
+	{
+		.what = "ike-initiator-spi",
+		.help = "corrupt the IKE initiator SPI",
+		.unsigned_help = "set SPI to <unsigned>",
+		V(ike_initiator_spi),
+	},
+	{
+		.what = "ike-responder-spi",
+		.help = "corrupt the IKE responder SPI",
+		.unsigned_help = "set SPI to <unsigned>",
+		V(ike_responder_spi),
+	},
+
 	/* old stuff */
 
 #define S(FIELD, WHAT, HELP) { .what = WHAT, .help = HELP, V(FIELD), }

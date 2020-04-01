@@ -105,11 +105,13 @@ static struct crypt_mac natd_hash(const struct hash_desc *hasher,
 				  const ip_endpoint *endpoint)
 {
 	/* only responder's IKE SPI can be zero */
-	pexpect(!ike_spi_is_zero(&spis->initiator));
-
+	if (ike_spi_is_zero(&spis->initiator)) {
+		dbg("nat: IKE.SPIi is unexpectedly zero");
+		pexpect(impair.ike_initiator_spi-1/*1-bias*/ == 0);
+	}
 	if (ike_spi_is_zero(&spis->responder)) {
 		/* IKE_SA_INIT exchange */
-		dbg("natd_hash: IKE.SPIr is zero");
+		dbg("nat: IKE.SPIr is zero");
 	}
 
 	/*
