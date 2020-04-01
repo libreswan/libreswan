@@ -1,0 +1,20 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add east
+002 added connection description "east"
+east #
+ echo "initdone"
+initdone
+east #
+ grep 'dropping packet' /tmp/pluto.log
+packet from 192.1.2.45:500: IKE_SA_INIT request has zero IKE SA Initiator SPI; dropping packet
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
