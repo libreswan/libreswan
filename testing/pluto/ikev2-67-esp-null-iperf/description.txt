@@ -1,0 +1,2 @@
+esp-null iperf test. It is a place holder to test on dedicated hardware.
+there are strong suggestions esp-null has almost same throughput as AES GCM.
