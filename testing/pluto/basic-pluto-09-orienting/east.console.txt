@@ -1,0 +1,49 @@
+/testing/guestbin/swan-prep
+east #
+ ip tunnel add test0 mode gre local 192.1.2.23 remote 192.1.2.45
+[ 00.00] gre: GRE over IPv4 demultiplexor driver
+[ 00.00] ip_gre: GRE over IPv4 tunneling driver
+east #
+ ip addr add 172.29.1.2/24 dev test0
+east #
+ ip link set dev test0 up
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add test1
+002 "test1": terminating SAs using this connection
+002 added connection description "test1"
+east #
+ ipsec auto --add test2
+002 "test2": terminating SAs using this connection
+002 added connection description "test2"
+east #
+ ipsec auto --add test3
+002 "test3": terminating SAs using this connection
+002 added connection description "test3"
+east #
+ ipsec auto --ready
+002 listening for IKE messages
+002 forgetting secrets
+002 loading secrets from "/etc/ipsec.secrets"
+east #
+ ip addr add 172.29.1.3/24 dev test0
+east #
+ ipsec auto --ready
+002 listening for IKE messages
+002 adding interface test0/test0 (esp-hw-offload not supported by kernel) 172.29.1.3:500
+002 adding interface test0/test0 172.29.1.3:4500
+003 two interfaces match "test3" (test0, test0)
+002 "test3": terminating SAs using this connection
+002 forgetting secrets
+002 loading secrets from "/etc/ipsec.secrets"
+east #
+ ipsec auto --ready
+002 listening for IKE messages
+002 forgetting secrets
+002 loading secrets from "/etc/ipsec.secrets"
+east #
+ 
