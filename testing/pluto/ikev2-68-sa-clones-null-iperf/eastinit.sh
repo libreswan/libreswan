@@ -2,7 +2,8 @@
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec whack --impair allow-null-none
-ipsec whack --impair no-ikev2-exclude-integ-none,ikev2-include-integ-none
+ipsec whack --impair no-ikev2-exclude-integ-none
+ipsec whack --impair ikev2-include-integ-none
 ipsec auto --add west-east
 ipsec auto --status | grep west-east
 ipsec whack --impair suppress-retransmits

@@ -16,7 +16,8 @@ iptables -A INPUT -i eth1 -s 192.0.200.0/24 -j LOGDROP
 iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
-ipsec whack --impair suppress-retransmits,delete-on-retransmit
+ipsec whack --impair suppress-retransmits
+ipsec whack --impair delete-on-retransmit
 
 ipsec auto --add westnet-eastnet-ikev2
 

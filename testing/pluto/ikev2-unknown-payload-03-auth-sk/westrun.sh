@@ -6,6 +6,7 @@ ipsec whack --impair add-unknown-payload-to-auth-sk
 : bad
 ipsec whack --impair none
 ipsec whack --impair delete-on-retransmit
-ipsec whack --impair add-unknown-payload-to-auth-sk,unknown-payload-critical
+ipsec whack --impair add-unknown-payload-to-auth-sk
+ipsec whack --impair unknown-payload-critical
 ../bin/libreswan-up-down.sh westnet-eastnet-ipv4-psk-ikev2 -I 192.0.1.254 192.0.2.254
 echo done

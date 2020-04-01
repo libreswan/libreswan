@@ -29,7 +29,9 @@ Redirecting to: [initsystem]
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
- ipsec whack --impair suppress-retransmits,delete-on-retransmit
+ ipsec whack --impair suppress-retransmits
+west #
+ ipsec whack --impair delete-on-retransmit
 west #
  ipsec auto --add westnet-eastnet-ikev2
 002 added connection description "westnet-eastnet-ikev2"

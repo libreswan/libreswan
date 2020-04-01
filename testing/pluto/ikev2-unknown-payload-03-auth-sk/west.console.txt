@@ -40,7 +40,9 @@ west #
 west #
  ipsec whack --impair delete-on-retransmit
 west #
- ipsec whack --impair add-unknown-payload-to-auth-sk,unknown-payload-critical
+ ipsec whack --impair add-unknown-payload-to-auth-sk
+west #
+ ipsec whack --impair unknown-payload-critical
 west #
  ../bin/libreswan-up-down.sh westnet-eastnet-ipv4-psk-ikev2 -I 192.0.1.254 192.0.2.254
 002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
