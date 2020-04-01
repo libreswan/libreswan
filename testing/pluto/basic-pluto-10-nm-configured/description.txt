@@ -1,0 +1,2 @@
+Testing that NetworkManager is properly signaled.
+port of test described in https://bugzilla.redhat.com/show_bug.cgi?id=1257079
