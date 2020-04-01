@@ -18,7 +18,9 @@ initdone
 west #
  # expected to fail
 west #
- ipsec whack --impair suppress-retransmits --impair revival
+ ipsec whack --impair suppress-retransmits
+west #
+ ipsec whack --impair revival
 west #
  ipsec auto --up westnet-eastnet-ikev2
 1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 IKE SA

@@ -71,7 +71,9 @@ Redirecting to: [initsystem]
 road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
- ipsec whack --impair suppress-retransmits --impair revival
+ ipsec whack --impair suppress-retransmits
+road #
+ ipsec whack --impair revival
 road #
  ipsec auto --add road-east-2
 002 added connection description "road-east-2"

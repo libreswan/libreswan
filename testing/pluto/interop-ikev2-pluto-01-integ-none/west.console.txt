@@ -21,7 +21,9 @@ Redirecting to: [initsystem]
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
- ipsec whack --impair no-ikev2-include-integ-none --impair no-ikev2-exclude-integ-none
+ ipsec whack --impair no-ikev2-include-integ-none
+west #
+ ipsec whack --impair no-ikev2-exclude-integ-none
 west #
  ../bin/libreswan-up-down.sh ike,esp=aes_gcm  -I 192.0.1.254 192.0.2.254
 002 added connection description "ike,esp=aes_gcm"
@@ -39,7 +41,11 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike,esp=aes_gcm" #1: deleting state (STATE_PARENT_I3) and sending notification
 002 "ike,esp=aes_gcm": terminating SAs using this connection
 west #
- ipsec whack --impair    ikev2-include-integ-none --impair no-ikev2-exclude-integ-none
+ #
+west #
+ ipsec whack --impair ikev2-include-integ-none
+west #
+ ipsec whack --impair no-ikev2-exclude-integ-none
 west #
  ../bin/libreswan-up-down.sh ike,esp=aes_gcm  -I 192.0.1.254 192.0.2.254
 002 added connection description "ike,esp=aes_gcm"
@@ -61,7 +67,11 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike,esp=aes_gcm" #3: deleting state (STATE_PARENT_I3) and sending notification
 002 "ike,esp=aes_gcm": terminating SAs using this connection
 west #
- ipsec whack --impair no-ikev2-include-integ-none --impair    ikev2-exclude-integ-none
+ #
+west #
+ ipsec whack --impair no-ikev2-include-integ-none
+west #
+ ipsec whack --impair ikev2-exclude-integ-none
 west #
  ../bin/libreswan-up-down.sh ike,esp=aes_gcm  -I 192.0.1.254 192.0.2.254
 002 added connection description "ike,esp=aes_gcm"

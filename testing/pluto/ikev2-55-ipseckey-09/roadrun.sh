@@ -11,7 +11,8 @@ ipsec stop
 sleep 2
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
-ipsec whack --impair suppress-retransmits --impair revival
+ipsec whack --impair suppress-retransmits
+ipsec whack --impair revival
 ipsec auto --add road-east-2
 # expected to succeed !
 ipsec auto --up road-east-2

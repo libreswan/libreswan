@@ -10,20 +10,47 @@ Redirecting to: [initsystem]
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
- ipsec whack --impair send-key-size-check all --impair suppress-retransmits
-whack error: unexpected argument "all"
+ ipsec whack --impair send-key-size-check
+west #
+ ipsec whack --impair suppress-retransmits
 west #
  ipsec auto --add westnet-eastnet-aes256
-036 Failed to add connection "westnet-eastnet-aes256", esp="3des333-sha1" is invalid: 3DES does not take variable key lengths
+002 added connection description "westnet-eastnet-aes256"
 west #
  ipsec auto --status | grep westnet-eastnet-aes256
+000 "westnet-eastnet-aes256": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet-aes256":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "westnet-eastnet-aes256":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "westnet-eastnet-aes256":   our auth:rsasig, their auth:rsasig
+000 "westnet-eastnet-aes256":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
+000 "westnet-eastnet-aes256":   policy_label:unset;
+000 "westnet-eastnet-aes256":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-aes256":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "westnet-eastnet-aes256":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "westnet-eastnet-aes256":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-aes256":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "westnet-eastnet-aes256":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "westnet-eastnet-aes256":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+000 "westnet-eastnet-aes256":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
+000 "westnet-eastnet-aes256":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-aes256":   IKE algorithms: AES_CBC_128-HMAC_SHA1-MODP2048, AES_CBC_128-HMAC_SHA1-MODP1536
+000 "westnet-eastnet-aes256":   ESP algorithms: 3DES_CBC_333-HMAC_SHA1_96
 west #
  echo "initdone"
 initdone
 west #
  ipsec auto --up westnet-eastnet-aes256
-000 initiating all conns with alias='westnet-eastnet-aes256'
-021 no connection named "westnet-eastnet-aes256"
+002 "westnet-eastnet-aes256" #1: initiating Main Mode
+1v1 "westnet-eastnet-aes256" #1: STATE_MAIN_I1: sent MI1, expecting MR1
+1v1 "westnet-eastnet-aes256" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+1v1 "westnet-eastnet-aes256" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+002 "westnet-eastnet-aes256" #1: Peer ID is ID_FQDN: '@east'
+003 "westnet-eastnet-aes256" #1: authenticated using RSA with SHA-1
+004 "westnet-eastnet-aes256" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+002 "westnet-eastnet-aes256" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+1v1 "westnet-eastnet-aes256" #2: STATE_QUICK_I1: sent QI1, expecting QR1
+031 "westnet-eastnet-aes256" #2: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
+000 "westnet-eastnet-aes256" #2: starting keying attempt 2 of an unlimited number, but releasing whack
 west #
  echo done
 done

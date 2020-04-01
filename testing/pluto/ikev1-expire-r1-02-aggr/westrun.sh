@@ -1,5 +1,7 @@
 # create a partial state on east, don't hold the hack for retransmit
-ipsec whack --impair impair-drop-i2 --impair delete-on-retransmit --impair revival
+ipsec whack --impair impair-drop-i2
+ipsec whack --impair delete-on-retransmit
+ipsec whack --impair revival
 ipsec auto --up westnet-eastnet-aggr
 # we are waiting for east to expire the partial IKE state in 1+1+2+4+8+16+32 secs
 sleep 30

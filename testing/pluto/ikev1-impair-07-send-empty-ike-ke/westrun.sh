@@ -1,5 +1,6 @@
 # should fail fast
-ipsec whack --impair ke-payload:empty --impair delete-on-retransmit
+ipsec whack --impair ke-payload:empty
+ipsec whack --impair delete-on-retransmit
 ipsec auto --up westnet-eastnet-ipv4-psk
 ipsec whack --impair none
 # expected to fail with a timeout

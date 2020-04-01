@@ -15,7 +15,9 @@ initdone
 west #
  # create a partial state on east, don't hold the hack for retransmit
 west #
- ipsec whack --impair impair-drop-i2 --impair delete-on-retransmit
+ ipsec whack --impair impair-drop-i2
+west #
+ ipsec whack --impair delete-on-retransmit
 west #
  ipsec auto --up westnet-eastnet
 002 "westnet-eastnet" #1: initiating Main Mode
