@@ -71,6 +71,11 @@ struct finite_state v2_states[] = {
 
 	S(STATE_PARENT_I2, "sent v2I2, expected v2R2", CAT_OPEN_IKE_SA),
 
+	/* IKE exchange can also create a child */
+
+	S(STATE_V2_IKE_AUTH_CHILD_I0, "ephemeral: initiator creating child from IKE exchange", CAT_IGNORE),
+	S(STATE_V2_IKE_AUTH_CHILD_R0, "ephemeral: responder creating child from IKE exchange", CAT_IGNORE),
+
 	/*
 	 * IKEv1 established states.
 	 *

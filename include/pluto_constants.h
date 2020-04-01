@@ -530,6 +530,11 @@ enum state_kind {
 	STATE_PARENT_R1,	/* IKE_SA_INIT: sent response */
 	STATE_PARENT_R2,	/* IKE_AUTH: sent response */
 
+	/* IKE exchange can also create a child */
+
+	STATE_V2_IKE_AUTH_CHILD_I0,	/* ephemeral: child from IKE exchange */
+	STATE_V2_IKE_AUTH_CHILD_R0,	/* ephemeral: child from IKE exchange */
+
 	/* IKEv2 CREATE_CHILD_SA Initiator states */
 
 	STATE_V2_CREATE_I0,		/* larval: sent nothing yet */
