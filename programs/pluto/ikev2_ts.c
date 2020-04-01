@@ -1183,7 +1183,8 @@ bool v2_process_ts_response(struct child_sa *child,
 stf_status child_rekey_ts_verify(struct msg_digest *md)
 {
 	struct state *st = md->st;
-	passert(st->st_state->kind == STATE_V2_REKEY_CHILD_R || st->st_state->kind == STATE_V2_REKEY_CHILD_I);
+	passert(st->st_state->kind == STATE_V2_REKEY_CHILD_R0 ||
+		st->st_state->kind == STATE_V2_REKEY_CHILD_I);
 
 	struct traffic_selectors their_tsis = { .nr = 0, };
 	struct traffic_selectors their_tsrs = { .nr = 0, };

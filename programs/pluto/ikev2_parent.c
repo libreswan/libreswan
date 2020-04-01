@@ -3830,7 +3830,7 @@ static stf_status ikev2_rekey_child_resp(struct msg_digest *md)
 		 * Magically switch to re-keying a CHILD SA.  XXX:
 		 * Should state machine split cases based on REKEY_SA?
 		 */
-		change_state(st, STATE_V2_REKEY_CHILD_R);
+		change_state(st, STATE_V2_REKEY_CHILD_R0);
 		/*
 		 * find old state to rekey
 		 */
@@ -4062,7 +4062,7 @@ static stf_status ikev2_child_add_ike_payloads(struct child_sa *child,
 	chunk_t *local_g;
 
 	switch (st->st_state->kind) {
-	case STATE_V2_REKEY_IKE_R:
+	case STATE_V2_REKEY_IKE_R0:
 	{
 		local_g = &st->st_gr;
 		local_nonce = st->st_nr;
@@ -4397,7 +4397,7 @@ stf_status ikev2_child_inIoutR(struct ike_sa *unused_ike UNUSED,
 	 * which _always_ has an MD.
 	 */
 	switch (st->st_state->kind) {
-	case STATE_V2_CREATE_R:
+	case STATE_V2_CREATE_R0:
 		if (st->st_pfs_group != NULL) {
 			request_ke_and_nonce("Child Responder KE and nonce nr",
 					     st, st->st_oakley.ta_dh,
@@ -4407,7 +4407,7 @@ stf_status ikev2_child_inIoutR(struct ike_sa *unused_ike UNUSED,
 				      st, ikev2_child_inIoutR_continue);
 		}
 		return STF_SUSPEND;
-	case STATE_V2_REKEY_CHILD_R:
+	case STATE_V2_REKEY_CHILD_R0:
 		if (st->st_pfs_group != NULL) {
 			request_ke_and_nonce("Child Rekey Responder KE and nonce nr",
 					     st, st->st_oakley.ta_dh,
@@ -4447,8 +4447,8 @@ static void ikev2_child_inIoutR_continue(struct state *st,
 	 * Instead of computing the entire DH as a single crypto task,
 	 * does a second continue. Yuck!
 	 */
-	pexpect(st->st_state->kind == STATE_V2_CREATE_R ||
-		st->st_state->kind == STATE_V2_REKEY_CHILD_R);
+	pexpect(st->st_state->kind == STATE_V2_CREATE_R0 ||
+		st->st_state->kind == STATE_V2_REKEY_CHILD_R0);
 
 	/* and a parent? */
 	if (ike == NULL) {
@@ -4494,8 +4494,8 @@ static stf_status ikev2_child_inIoutR_continue_continue(struct state *st,
 	 * handles only one state transition.  If there's commonality
 	 * then the per-transition functions can all call common code.
 	 */
-	pexpect(st->st_state->kind == STATE_V2_CREATE_R ||
-		st->st_state->kind == STATE_V2_REKEY_CHILD_R);
+	pexpect(st->st_state->kind == STATE_V2_CREATE_R0 ||
+		st->st_state->kind == STATE_V2_REKEY_CHILD_R0);
 
 	/* didn't loose parent? */
 	if (ike == NULL) {
@@ -4630,7 +4630,7 @@ static void ikev2_child_ike_inIoutR_continue(struct state *st,
 	struct child_sa *child = pexpect_child_sa(st); /* not yet emancipated */
 	pexpect(child->sa.st_sa_role == SA_RESPONDER);
 
-	pexpect(st->st_state->kind == STATE_V2_REKEY_IKE_R);
+	pexpect(st->st_state->kind == STATE_V2_REKEY_IKE_R0);
 
 	/* and a parent? */
 	if (ike == NULL) {
@@ -4675,7 +4675,7 @@ static void ikev2_child_ike_inIoutR_continue_continue(struct state *st,
 	struct child_sa *child = pexpect_child_sa(st); /* not yet emancipated */
 	passert(child->sa.st_sa_role == SA_RESPONDER);
 
-	pexpect(st->st_state->kind == STATE_V2_REKEY_IKE_R);
+	pexpect(st->st_state->kind == STATE_V2_REKEY_IKE_R0);
 
 	/* didn't loose parent? */
 	if (ike == NULL) {
@@ -4707,9 +4707,9 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 
 	passert(ike != NULL);
 	pexpect((request_md != NULL) == (child->sa.st_sa_role == SA_RESPONDER));
-	pexpect((request_md != NULL) == ((st)->st_state->kind == STATE_V2_REKEY_IKE_R ||
-					 (st)->st_state->kind == STATE_V2_CREATE_R ||
-					 (st)->st_state->kind == STATE_V2_REKEY_CHILD_R));
+	pexpect((request_md != NULL) == ((st)->st_state->kind == STATE_V2_REKEY_IKE_R0 ||
+					 (st)->st_state->kind == STATE_V2_CREATE_R0 ||
+					 (st)->st_state->kind == STATE_V2_REKEY_CHILD_R0));
 
 	ikev2_log_parentSA(st);
 
@@ -4728,7 +4728,7 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 	}
 
 	switch (st->st_state->kind) {
-	case STATE_V2_REKEY_IKE_R:
+	case STATE_V2_REKEY_IKE_R0:
 	case STATE_V2_REKEY_IKE_I0:
 		ret = ikev2_child_add_ike_payloads(child, &sk.pbs);
 		break;
@@ -4753,7 +4753,7 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 	 * "when rekeying, the new Child SA SHOULD NOT have different Traffic
 	 *  Selectors and algorithms than the old one."
 	 */
-	if (st->st_state->kind == STATE_V2_REKEY_CHILD_R ||
+	if (st->st_state->kind == STATE_V2_REKEY_CHILD_R0 ||
 	    st->st_state->kind == STATE_V2_REKEY_CHILD_I) {
 		ret = child_rekey_ts_verify(request_md);
 		if (ret != STF_OK)
@@ -4788,8 +4788,8 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 	record_outbound_ike_msg(&ike->sa, &reply_stream,
 				"packet from ikev2_child_out_cont");
 
-	if (st->st_state->kind == STATE_V2_CREATE_R ||
-			st->st_state->kind == STATE_V2_REKEY_CHILD_R) {
+	if (st->st_state->kind == STATE_V2_CREATE_R0 ||
+			st->st_state->kind == STATE_V2_REKEY_CHILD_R0) {
 		log_ipsec_sa_established("negotiated new IPsec SA", st);
 	}
 

@@ -517,37 +517,39 @@ enum state_kind {
 	 */
 	STATE_IKEv2_FLOOR,
 
-	/* INITIATOR states */
+	/* IKE SA INITIATOR states */
+
 	STATE_PARENT_I0 = STATE_IKEv2_FLOOR,	/* waiting for KE to finish */
 	STATE_PARENT_I1,        /* IKE_SA_INIT: sent initial message, waiting for reply */
 	STATE_PARENT_I2,        /* IKE_AUTH: sent auth message, waiting for reply */
 	STATE_PARENT_I3,        /* IKE_AUTH done: received auth response */
 
-	/*
-	 * RESPONDER states
-	 * No real actions, initiator is responsible
-	 * for all work states.
-	 * ??? what does that mean?
-	 */
+	/* IKE_SA RESPONDER states */
+
 	STATE_PARENT_R0,	/* just starting */
 	STATE_PARENT_R1,	/* IKE_SA_INIT: sent response */
 	STATE_PARENT_R2,	/* IKE_AUTH: sent response */
 
-	/* IKEv2 CREATE_CHILD_SA INITIATOR states */
-	STATE_V2_CREATE_I0,     /* ephemeral: sent nothing yet */
-	STATE_V2_CREATE_I,      /* sent first message of CREATE_CHILD new IPsec */
+	/* IKEv2 CREATE_CHILD_SA Initiator states */
 
-	STATE_V2_REKEY_IKE_I0,  /* ephemeral: sent nothing yet */
-	STATE_V2_REKEY_IKE_I,   /* sent first message (via parrenti) to rekey parent */
-	STATE_V2_REKEY_CHILD_I0,
-	STATE_V2_REKEY_CHILD_I, /* sent first message (via parent to rekey child sa. */
+	STATE_V2_CREATE_I0,		/* larval: sent nothing yet */
+	STATE_V2_CREATE_I,		/* sent first message of CREATE_CHILD new IPsec */
+
+	STATE_V2_REKEY_IKE_I0,		/* larval: sent nothing yet */
+	STATE_V2_REKEY_IKE_I,		/* sent first message (via parrenti) to rekey parent */
+
+	STATE_V2_REKEY_CHILD_I0,	/* larval: sent nothing yet */
+	STATE_V2_REKEY_CHILD_I,		/* sent first message (via parent to rekey child sa. */
+
+	STATE_V2_IPSEC_I,		/* IPsec SA final state - CREATE_CHILD & AUTH */
+
 	/* IKEv2 CREATE_CHILD_SA Responder states */
-	STATE_V2_CREATE_R,     /* ephemeral: sent nothing yet. */
-	STATE_V2_REKEY_IKE_R,  /* ephemeral: sent nothing yet terminal state STATE_PARENT_R2 */
-	STATE_V2_REKEY_CHILD_R,
 
-	STATE_V2_IPSEC_I,	/* IPsec SA final state - CREATE_CHILD & AUTH */
-	STATE_V2_IPSEC_R,
+	STATE_V2_CREATE_R0,		/* larval: sent nothing yet. */
+	STATE_V2_REKEY_IKE_R0,		/* larval: sent nothing yet terminal state STATE_PARENT_R2 */
+	STATE_V2_REKEY_CHILD_R0,	/* larval: sent nothing yet. */
+
+	STATE_V2_IPSEC_R,		/* IPsec SA final state - CREATE_CHILD & AUTH */
 
 	/* IKEv2 Delete States */
 	STATE_IKESA_DEL,
@@ -695,7 +697,7 @@ extern struct keywords sa_role_names;
 
 #define IPSECSA_PENDING_STATES (LELEM(STATE_V2_CREATE_I) | \
 				LELEM(STATE_V2_CREATE_I0) | \
-				LELEM(STATE_V2_CREATE_R) | \
+				LELEM(STATE_V2_CREATE_R0) | \
 	/* due to a quirk in initiator duplication next one is also needed */ \
 				LELEM(STATE_PARENT_I2))
 

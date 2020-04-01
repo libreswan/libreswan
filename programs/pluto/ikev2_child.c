@@ -194,7 +194,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 
 	if (c->spd.that.has_lease &&
 	    md->chain[ISAKMP_NEXT_v2CP] != NULL &&
-	    child->sa.st_state->kind != STATE_V2_REKEY_IKE_R) {
+	    child->sa.st_state->kind != STATE_V2_REKEY_IKE_R0) {
 		/*
 		 * XXX: should this be passed the CHILD SA's
 		 * .st_connection?  Here things are negotiating a new

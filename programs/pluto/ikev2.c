@@ -393,7 +393,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	 *		<-- HDR, SAr1, KEr, Nr
 	 */
 	{ .story      = "Respond to CREATE_CHILD_SA IKE Rekey",
-	  .state      = STATE_V2_REKEY_IKE_R,
+	  .state      = STATE_V2_REKEY_IKE_R0,
 	  .next_state = STATE_PARENT_R2,
 	  .flags      = SMF2_MESSAGE_REQUEST,
 	  .send = MESSAGE_RESPONSE,
@@ -437,7 +437,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .timeout_event = EVENT_SA_REPLACE, },
 
 	{ .story      = "Respond to CREATE_CHILD_SA IPsec SA Request",
-	  .state      = STATE_V2_CREATE_R,
+	  .state      = STATE_V2_CREATE_R0,
 	  .next_state = STATE_V2_IPSEC_R,
 	  .flags      = SMF2_MESSAGE_REQUEST | SMF2_ESTABLISHED,
 	  .send = MESSAGE_RESPONSE,
@@ -960,18 +960,18 @@ static struct child_sa *process_v2_child_ix(struct ike_sa *ike,
 	const char *why = "";
 
 	struct child_sa *child; /* to-be-determined */
-	if (svm->state == STATE_V2_CREATE_R) {
+	if (svm->state == STATE_V2_CREATE_R0) {
 		what = "Child SA Request";
 		child = ikev2_duplicate_state(ike, IPSEC_SA,
 					      SA_RESPONDER,
 					      null_fd);
-		change_state(&child->sa, STATE_V2_CREATE_R);
+		change_state(&child->sa, STATE_V2_CREATE_R0);
 	} else {
 		what = "IKE Rekey Request";
 		child = ikev2_duplicate_state(ike, IKE_SA,
 					      SA_RESPONDER,
 					      null_fd);
-		change_state(&child->sa, STATE_V2_REKEY_IKE_R); /* start with this */
+		change_state(&child->sa, STATE_V2_REKEY_IKE_R0); /* start with this */
 	}
 
 	binlog_refresh_state(&child->sa);
@@ -2878,7 +2878,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	v2_msgid_update_sent(ike, st, md, transition->send);
 	v2_msgid_schedule_next_initiator(ike);
 
-	if (from_state == STATE_V2_REKEY_IKE_R ||
+	if (from_state == STATE_V2_REKEY_IKE_R0 ||
 	    from_state == STATE_V2_REKEY_IKE_I) {
 		ikev2_child_emancipate(ike, pexpect_child_sa(st),
 				       transition);
