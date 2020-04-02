@@ -193,6 +193,11 @@ static void v2_dispatch(struct ike_sa *ike, struct state *st,
 
 static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 
+#define req_clear_payloads message_payloads.required   /* required unencrypted payloads (allows just one) for received packet */
+#define opt_clear_payloads message_payloads.optional   /* optional unencrypted payloads (none or one) for received packet */
+#define req_enc_payloads   encrypted_payloads.required /* required encrypted payloads (allows just one) for received packet */
+#define opt_enc_payloads   encrypted_payloads.optional /* optional encrypted payloads (none or one) for received packet */
+
 	/* no state:   --> CREATE_CHILD IKE Rekey Request
 	 * HDR, SAi, KEi, Ni -->
 	 */
@@ -554,6 +559,12 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	/* last entry */
 	{ .story      = "roof",
 	  .state      = STATE_IKEv2_ROOF }
+
+#undef req_clear_payloads
+#undef opt_clear_payloads
+#undef req_enc_payloads
+#undef opt_enc_payloads
+
 };
 
 void init_ikev2(void)
@@ -629,26 +640,6 @@ void init_ikev2(void)
 			passert(t[-1].state == t->state);
 		}
 		from->nr_transitions++;
-
-
-		/*
-		 * Pack expected payloads et.al. into a structure.
-		 *
-		 * XXX: should be adding everywhere payloads here?!?
-		 */
-		if (t->req_clear_payloads != LEMPTY) {
-			t->message_payloads.required = t->req_clear_payloads;
-		}
-		if (t->opt_clear_payloads != LEMPTY) {
-			t->message_payloads.optional = t->opt_clear_payloads;
-		}
-		if (t->req_enc_payloads != LEMPTY) {
-			t->encrypted_payloads.required = t->req_enc_payloads;
-		}
-		if (t->opt_enc_payloads != LEMPTY) {
-			t->encrypted_payloads.optional = t->opt_enc_payloads;
-		}
-
 	}
 }
 

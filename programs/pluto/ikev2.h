@@ -263,22 +263,13 @@ struct state_v2_microcode {
 	 */
 	enum message_role send;
 
-	const lset_t req_clear_payloads;  /* required unencrypted payloads (allows just one) for received packet */
-	const lset_t opt_clear_payloads;  /* optional unencrypted payloads (none or one) for received packet */
-	const lset_t req_enc_payloads;  /* required encrypted payloads (allows just one) for received packet */
-	const lset_t opt_enc_payloads;  /* optional encrypted payloads (none or one) for received packet */
-
 	/*
-	 * Packed form of above for passing into payload processing
-	 * functions.  If above are specified, they are re-packed into
-	 * the below.
-	 *
 	 * These field names, what ever they are, should exactly match
 	 * equivalent struct payload_summary fields found in struct
 	 * msg_digest.
 	 */
 	struct ikev2_expected_payloads message_payloads;
-	struct ikev2_expected_payloads encrypted_payloads;
+	struct ikev2_expected_payloads encrypted_payloads; /* contents of SK payload */
 
 	const enum event_type timeout_event;
 	ikev2_state_transition_fn *const processor;
