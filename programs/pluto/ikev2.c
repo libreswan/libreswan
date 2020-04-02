@@ -1716,6 +1716,7 @@ void ikev2_process_packet(struct msg_digest *md)
 			const struct state_v2_microcode *transition = find_v2_state_transition(start_state, md);
 			if (transition == NULL) {
 				/* already logged */
+				send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);
 				return;
 			}
 
