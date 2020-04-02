@@ -196,21 +196,26 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 const struct state_v2_microcode *find_v2_state_transition(const struct finite_state *state,
 							  struct msg_digest *md)
 {
+	dbg("looking for message matching transition from %s", state->name);
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
 	for (unsigned i = 0; i < state->nr_transitions; i++) {
 		const struct state_v2_microcode *transition = &state->v2_transitions[i];
+		dbg("  trying %s", transition->story);
 		/* message type? */
 		if (transition->recv_type != md->hdr.isa_xchg) {
+			dbg("    message has wrong exchange type");
 			continue;
 		}
 		/* role? */
 		if (transition->flags & SMF2_MESSAGE_RESPONSE &&
 		    v2_msg_role(md) != MESSAGE_RESPONSE) {
+			dbg("    not a response");
 			continue;
 		}
 		if (transition->flags & SMF2_MESSAGE_REQUEST &&
 		    v2_msg_role(md) != MESSAGE_REQUEST) {
+			dbg("    not a request");
 			continue;
 		}
 		/* message payloads */
@@ -220,13 +225,14 @@ const struct state_v2_microcode *find_v2_state_transition(const struct finite_st
 		struct ikev2_payload_errors message_payload_errors
 			= ikev2_verify_payloads(md, &md->message_payloads,
 						&transition->message_payloads);
-		if (message_payload_errors.bad &&
-		    !message_payload_status.bad) {
-			/* save first */
+		if (message_payload_errors.bad) {
+			dbg("    message has errors");
+			/* save error for last pattern!?! */
 			message_payload_status = message_payload_errors;
 			continue;
 		}
 		if (!(transition->message_payloads.required & P(SK))) {
+			dbg("    matched unencrypted message");
 			return transition;
 		}
 		/* SK{} payloads */
@@ -236,12 +242,13 @@ const struct state_v2_microcode *find_v2_state_transition(const struct finite_st
 		struct ikev2_payload_errors encrypted_payload_errors
 			= ikev2_verify_payloads(md, &md->encrypted_payloads,
 						&transition->encrypted_payloads);
-		if (encrypted_payload_errors.bad &&
-		    !encrypted_payload_status.bad) {
-			/* save first */
+		if (encrypted_payload_errors.bad) {
+			dbg("    encrypted payload has errors");
+			/* save error for last pattern!?! */
 			encrypted_payload_status = encrypted_payload_errors;
 			continue;
 		}
+		dbg("    matched encrypted message");
 		return transition;
 	}
 	/*
