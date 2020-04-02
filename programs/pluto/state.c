@@ -1633,16 +1633,18 @@ struct state *ikev1_duplicate_state(struct state *st,
 	return duplicate_state(st, IPSEC_SA, &state_undefined, whackfd);
 }
 
-struct child_sa *ikev2_duplicate_state(struct ike_sa *ike,
-				       enum sa_type sa_type,
-				       enum sa_role role,
-				       struct fd *whackfd)
+struct child_sa *new_v2_child_state(struct ike_sa *ike,
+				    enum sa_type sa_type,
+				    enum sa_role role,
+				    enum state_kind kind,
+				    struct fd *whackfd)
 {
 	struct state *cst = duplicate_state(&ike->sa, sa_type,
 					    &state_undefined, whackfd);
 	cst->st_sa_role = role;
 	struct child_sa *child = pexpect_child_sa(cst);
 	v2_msgid_init_child(ike, child);
+	change_state(&child->sa, kind);
 	return child;
 }
 

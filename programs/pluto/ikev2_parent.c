@@ -2073,10 +2073,11 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	 * SA.  It might later change whe its discovered that the
 	 * child is for something pending?
 	 */
-	struct child_sa *child = ikev2_duplicate_state(pexpect_ike_sa(pst),
-						       IPSEC_SA,
-						       SA_INITIATOR,
-						       ike->sa.st_whack_sock);
+	struct child_sa *child = new_v2_child_state(pexpect_ike_sa(pst),
+						    IPSEC_SA,
+						    SA_INITIATOR,
+						    STATE_V2_IKE_AUTH_CHILD_I0,
+						    ike->sa.st_whack_sock);
 	struct state *cst = &child->sa;
 
 	/* XXX because the early child state ends up with the try counter check, we need to copy it */
@@ -3039,8 +3040,9 @@ static stf_status ike_auth_child_responder(struct ike_sa *ike,
 			return STF_INTERNAL_ERROR;
 		}
 
-		child = ikev2_duplicate_state(ike, IPSEC_SA, SA_RESPONDER,
-					      null_fd);
+		child = new_v2_child_state(ike, IPSEC_SA, SA_RESPONDER,
+					   STATE_V2_IKE_AUTH_CHILD_R0,
+					   null_fd);
 		update_state_connection(&child->sa, c);
 		binlog_refresh_state(&child->sa);
 		/*
@@ -3080,9 +3082,9 @@ static stf_status ike_auth_child_responder(struct ike_sa *ike,
 		 */
 		pexpect(md->st != NULL);
 		pexpect(md->st == &ike->sa); /* passed in parent */
-		child = ikev2_duplicate_state(ike, IPSEC_SA,
-					      SA_RESPONDER,
-					      null_fd/* XXX: IKE's whack-fd? */);
+		child = new_v2_child_state(ike, IPSEC_SA, SA_RESPONDER,
+					   STATE_V2_IKE_AUTH_CHILD_R0,
+					   null_fd/* XXX: IKE's whack-fd? */);
 		binlog_refresh_state(&child->sa);
 		/*
 		 * XXX: This is to hack around the broken responder
@@ -5669,13 +5671,11 @@ void ikev2_rekey_ike_start(struct ike_sa *ike)
 
 void ikev2_initiate_child_sa(struct pending *p)
 {
-	struct state *st;
-	char replacestr[256];
-	enum state_kind new_state = STATE_UNDEFINED;
-	enum sa_type sa_type = IPSEC_SA;
 	struct ike_sa *ike = p->ike;
 	struct connection *c = p->connection;
+	passert(c != NULL);
 
+	enum sa_type sa_type;
 	if (p->replacing == ike->sa.st_serialno) { /* IKE rekey exchange */
 		sa_type = IKE_SA;
 		ike->sa.st_viable_parent = FALSE;
@@ -5684,81 +5684,75 @@ void ikev2_initiate_child_sa(struct pending *p)
 					c, IPSECSA_PENDING_STATES)) {
 			return;
 		}
+		sa_type = IPSEC_SA;
 	}
-
-	passert(c != NULL);
 
 	struct child_sa *child; /* to be determined */
+	const struct child_sa *child_being_replaced;
 	if (sa_type == IPSEC_SA) {
-		child = ikev2_duplicate_state(ike, IPSEC_SA,
-					      SA_INITIATOR,
-					      p->whack_sock);
-		st = &child->sa;
-	} else {
-		child = ikev2_duplicate_state(ike, IKE_SA,
-					      SA_INITIATOR,
-					      p->whack_sock);
-		st = &child->sa;
-		st->st_oakley = ike->sa.st_oakley;
-		st->st_ike_rekey_spis.initiator = ike_initiator_spi();
-		st->st_ike_pred = ike->sa.st_serialno;
-	}
-	update_state_connection(st, c);
-
-	set_cur_state(st); /* we must reset before exit */
-	st->st_try = p->try;
-
-	free_chunk_content(&st->st_ni); /* this is from the parent. */
-	free_chunk_content(&st->st_nr); /* this is from the parent. */
-
-	st->st_original_role = ORIGINAL_INITIATOR;
-
-	if (sa_type == IPSEC_SA) {
-		const struct state *rst = state_with_serialno(p->replacing);
-
-		if (rst != NULL) {
-			if (IS_CHILD_SA_ESTABLISHED(rst)) {
-				new_state = STATE_V2_REKEY_CHILD_I0;
-				st->st_ipsec_pred = rst->st_serialno;
-				passert(st->st_connection == rst->st_connection);
-				if (HAS_IPSEC_POLICY(rst->st_policy))
-					st->st_policy = rst->st_policy;
-				else
-					p->policy = c->policy; /* where did rst->st_policy go? */
-			} else {
-				rst = NULL;
-				new_state = STATE_V2_CREATE_I0;
-			}
-		} else {
-			new_state = STATE_V2_CREATE_I0;
+		child_being_replaced = pexpect_child_sa(state_with_serialno(p->replacing));
+		if (child_being_replaced != NULL &&
+		    !IS_CHILD_SA_ESTABLISHED(&child_being_replaced->sa)) {
+			/* can't replace a state that isn't established */
+			child_being_replaced = NULL;
 		}
+		child = new_v2_child_state(ike, IPSEC_SA,
+					   SA_INITIATOR,
+					   (child_being_replaced != NULL ? STATE_V2_REKEY_CHILD_I0 :
+					    STATE_V2_CREATE_I0),
+					   p->whack_sock);
 	} else {
-		new_state = STATE_V2_REKEY_IKE_I0;
+		child_being_replaced = NULL; /* obviously the IKE SA */
+		child = new_v2_child_state(ike, IKE_SA,
+					   SA_INITIATOR,
+					   STATE_V2_REKEY_IKE_I0,
+					   p->whack_sock);
+		child->sa.st_oakley = ike->sa.st_oakley;
+		child->sa.st_ike_rekey_spis.initiator = ike_initiator_spi();
+		child->sa.st_ike_pred = ike->sa.st_serialno;
+	}
+	update_state_connection(&child->sa, c);
+
+	set_cur_state(&child->sa); /* we must reset before exit */
+	child->sa.st_try = p->try;
+
+	free_chunk_content(&child->sa.st_ni); /* this is from the parent. */
+	free_chunk_content(&child->sa.st_nr); /* this is from the parent. */
+
+	child->sa.st_original_role = ORIGINAL_INITIATOR;
+
+	if (child_being_replaced != NULL) {
+		pexpect(sa_type == IPSEC_SA);
+		pexpect(IS_CHILD_SA_ESTABLISHED(&child_being_replaced->sa));
+		child->sa.st_ipsec_pred = child_being_replaced->sa.st_serialno;
+		passert(child->sa.st_connection == child_being_replaced->sa.st_connection);
+		if (HAS_IPSEC_POLICY(child_being_replaced->sa.st_policy))
+			child->sa.st_policy = child_being_replaced->sa.st_policy;
+		else
+			p->policy = c->policy; /* where did child_being_replaced->sa.st_policy go? */
 	}
 
-	st->st_policy = p->policy;
+	child->sa.st_policy = p->policy;
 
-	st->sec_ctx = NULL;
+	child->sa.sec_ctx = NULL;
 	if (p->uctx != NULL) {
-		st->sec_ctx = clone_thing(*p->uctx, "sec ctx structure");
+		child->sa.sec_ctx = clone_thing(*p->uctx, "sec ctx structure");
 		DBG(DBG_CONTROL,
 		    DBG_log("pending phase 2 with security context \"%s\"",
-			    st->sec_ctx->sec_ctx_value));
+			    child->sa.sec_ctx->sec_ctx_value));
 	}
-	change_state(st, new_state); /* from STATE_UNDEFINED */
 
-	binlog_refresh_state(st);
+	binlog_refresh_state(&child->sa);
 
-	replacestr[0] = '\0';
+	char replacestr[256] = "";
 	if (p->replacing != SOS_NOBODY) {
 		snprintf(replacestr, sizeof(replacestr), " to replace #%lu",
-				p->replacing);
+			 p->replacing);
 	}
 
-	passert(st->st_connection != NULL);
+	passert(child->sa.st_connection != NULL);
 
 	if (sa_type == IPSEC_SA) {
-		const struct state *rst = state_with_serialno(p->replacing);
 
 		/*
 		 * Use the CREATE_CHILD_SA proposal suite - the
@@ -5779,30 +5773,23 @@ void ikev2_initiate_child_sa(struct pending *p)
 		/* see ikev2_child_add_ipsec_payloads */
 		passert(c->v2_create_child_proposals != NULL);
 
-		st->st_pfs_group = ikev2_proposals_first_dh(child_proposals);
+		child->sa.st_pfs_group = ikev2_proposals_first_dh(child_proposals);
 
-		DBG(DBG_CONTROLMORE, {
-			const char *pfsgroupname = st->st_pfs_group == NULL ?
-			"no-pfs" : st->st_pfs_group->common.name;
-
-			DBG_log("#%lu schedule %s IPsec SA %s%s using IKE# %lu pfs=%s",
-				st->st_serialno,
-				rst != NULL ? "rekey initiate" : "initiate",
-				prettypolicy(p->policy),
-				replacestr,
-				ike->sa.st_serialno,
-				pfsgroupname);
-		});
+		dbg("#%lu schedule %s IPsec SA %s%s using IKE# %lu pfs=%s",
+		    child->sa.st_serialno,
+		    child_being_replaced != NULL ? "rekey initiate" : "initiate",
+		    prettypolicy(p->policy),
+		    replacestr,
+		    ike->sa.st_serialno,
+		    child->sa.st_pfs_group == NULL ? "no-pfs" : child->sa.st_pfs_group->common.name);
 	} else {
-		DBG(DBG_CONTROLMORE, {
-			DBG_log("#%lu schedule initiate IKE Rekey SA %s to replace IKE# %lu",
-				st->st_serialno,
-				prettypolicy(p->policy),
-				ike->sa.st_serialno);
-		});
+		dbg("#%lu schedule initiate IKE Rekey SA %s to replace IKE# %lu",
+		    child->sa.st_serialno,
+		    prettypolicy(p->policy),
+		    ike->sa.st_serialno);
 	}
 
-	event_force(EVENT_v2_INITIATE_CHILD, st);
+	event_force(EVENT_v2_INITIATE_CHILD, &child->sa);
 	reset_globals();
 }
 

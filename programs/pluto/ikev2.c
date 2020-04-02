@@ -952,17 +952,21 @@ static struct child_sa *process_v2_child_ix(struct ike_sa *ike,
 
 	struct child_sa *child; /* to-be-determined */
 	if (svm->state == STATE_V2_CREATE_R0) {
+		/*
+		 * XXX: this could be either a create child, or rekey
+		 * child request.  Need to look at notifies to tell.
+		 */
 		what = "Child SA Request";
-		child = ikev2_duplicate_state(ike, IPSEC_SA,
-					      SA_RESPONDER,
-					      null_fd);
-		change_state(&child->sa, STATE_V2_CREATE_R0);
+		child = new_v2_child_state(ike, IPSEC_SA,
+					   SA_RESPONDER,
+					   STATE_V2_CREATE_R0, /* STATE_V2_REKEY_CHILD_R0? */
+					   null_fd);
 	} else {
 		what = "IKE Rekey Request";
-		child = ikev2_duplicate_state(ike, IKE_SA,
-					      SA_RESPONDER,
-					      null_fd);
-		change_state(&child->sa, STATE_V2_REKEY_IKE_R0); /* start with this */
+		child = new_v2_child_state(ike, IKE_SA,
+					   SA_RESPONDER,
+					   STATE_V2_REKEY_IKE_R0,
+					   null_fd);
 	}
 
 	binlog_refresh_state(&child->sa);

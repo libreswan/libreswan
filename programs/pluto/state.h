@@ -808,11 +808,16 @@ extern bool states_use_connection(const struct connection *c);
 
 struct ike_sa *new_v1_istate(struct fd *whackfd);
 struct ike_sa *new_v1_rstate(struct msg_digest *md);
+
 struct ike_sa *new_v2_state(enum state_kind kind, enum sa_role sa_role,
 			    const ike_spi_t ike_initiator_spi,
 			    const ike_spi_t ike_responder_spi,
 			    struct connection *c, lset_t policy,
 			    int try, struct fd *whack_sock);
+/* could eventually be IKE or CHILD SA */
+struct child_sa *new_v2_child_state(struct ike_sa *st, enum sa_type sa_type,
+				    enum sa_role sa_role, enum state_kind kind,
+				    struct fd *whackfd);
 
 extern void init_states(void);
 extern void rehash_state(struct state *st,
@@ -827,8 +832,6 @@ extern void rekey_p2states_by_connection(struct connection *c);
 extern void delete_my_family(struct state *pst, bool v2_responder_state);
 
 struct state *ikev1_duplicate_state(struct state *st, struct fd *whackfd);
-struct child_sa *ikev2_duplicate_state(struct ike_sa *st, enum sa_type sa_type,
-				       enum sa_role sa_role, struct fd *whackfd);
 
 extern struct state
 	*state_with_serialno(so_serial_t sn),
