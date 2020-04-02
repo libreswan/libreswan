@@ -729,9 +729,10 @@ extern struct keywords sa_role_names;
  * STATE_PARENT_I3/STATE_PARENT_R2 state which it should not.
  * So we fall back to checking if it is cloned, and therefore really a child.
  */
-#define IS_CHILD_SA_ESTABLISHED(st) \
-    ((st->st_state->kind == STATE_V2_IPSEC_I || st->st_state->kind == STATE_V2_IPSEC_R) && \
-      IS_CHILD_SA(st))
+#define IS_CHILD_SA_ESTABLISHED(ST)				\
+	(((ST)->st_state->kind == STATE_V2_IPSEC_I		\
+	  || (ST)->st_state->kind == STATE_V2_IPSEC_R) &&	\
+	 IS_CHILD_SA(ST))
 
 #define IS_PARENT_SA_ESTABLISHED(st) \
     (((st)->st_state->kind == STATE_PARENT_I3 || (st)->st_state->kind == STATE_PARENT_R2) && \
