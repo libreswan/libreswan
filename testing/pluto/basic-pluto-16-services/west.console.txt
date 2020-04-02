@@ -427,6 +427,27 @@ TIMESTAMP west ipsec[XXX]: nflog ipsec capture disabled
 TIMESTAMP west systemd[1]: Started Internet Key Exchange (IKE) Proto…Psec.
 Hint: Some lines were ellipsized, use -l to show in full.
 west #
+ # test for rhbz#1572620
+west #
+ ipsec auto --add mytunnel
+002 added connection description "mytunnel"
+west #
+ # will fail
+west #
+ timeout 10s ipsec auto --up mytunnel
+002 "mytunnel" #1: initiating Main Mode
+1v1 "mytunnel" #1: STATE_MAIN_I1: sent MI1, expecting MR1
+010 "mytunnel" #1: STATE_MAIN_I1: retransmission; will wait 0.5 seconds for response
+010 "mytunnel" #1: STATE_MAIN_I1: retransmission; will wait 1 seconds for response
+010 "mytunnel" #1: STATE_MAIN_I1: retransmission; will wait 2 seconds for response
+010 "mytunnel" #1: STATE_MAIN_I1: retransmission; will wait 4 seconds for response
+010 "mytunnel" #1: STATE_MAIN_I1: retransmission; will wait 8 seconds for response
+west #
+ ipsec status > /dev/null || echo status should have returned 0
+west #
+ grep "pending IPsec SA" /tmp/pluto.log
+| "mytunnel": queuing pending IPsec SA negotiating with 1.2.3.4 IKE SA #1 "mytunnel"
+west #
  echo done
 done
 west #
