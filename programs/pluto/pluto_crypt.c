@@ -46,6 +46,7 @@
 #include "lswlog.h"
 #include "log.h"
 #include "state.h"
+#include "connections.h"
 #include "demux.h"
 #include "pluto_crypt.h"
 #include "timer.h"

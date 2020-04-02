@@ -30,6 +30,7 @@
 #include "state.h"
 #include "secrets.h"
 #include "log.h"
+#include "connections.h"
 
 struct crypto_task {
 	/* in */

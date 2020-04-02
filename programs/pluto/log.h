@@ -128,6 +128,11 @@ struct logger {
 	where_t where;
 	/* used by timing to nest its logging output */
 	int timing_level;
+	/*
+	 * When opportunistic encryption or the initial responder, for
+	 * instance, some logging is suppressed.
+	 */
+	bool suppress;
 };
 
 #define GLOBAL_LOGGER(WHACKFD) (struct logger)			\
@@ -142,6 +147,7 @@ struct logger {
 		.global_whackfd = null_fd,			\
 		.jam_prefix = jam_from_prefix,			\
 		.object = FROM,					\
+		.suppress = true,				\
 	}
 #define MESSAGE_LOGGER(MD) (struct logger)			\
 	{							\
@@ -149,6 +155,7 @@ struct logger {
 		.global_whackfd = null_fd,			\
 		.jam_prefix = jam_message_prefix,		\
 		.object = MD,					\
+		.suppress = true,				\
 	}
 #define CONNECTION_LOGGER(CONNECTION, WHACKFD) (struct logger)	\
 	{							\
@@ -156,6 +163,7 @@ struct logger {
 		.global_whackfd = WHACKFD,			\
 		.jam_prefix = jam_connection_prefix,		\
 		.object = CONNECTION,				\
+		.suppress = CONNECTION->policy & POLICY_OPPORTUNISTIC, \
 	}
 #define PENDING_LOGGER(PENDING) (struct logger)			\
 	{							\
@@ -164,6 +172,7 @@ struct logger {
 		.jam_prefix = jam_connection_prefix,		\
 		.object = (PENDING)->connection,		\
 		.object_whackfd = (PENDING)->whack_sock,	\
+		.suppress = (PENDING)->connection->policy & POLICY_OPPORTUNISTIC, \
 	}
 #define STATE_LOGGER(STATE) (struct logger)			\
 	{							\
@@ -173,6 +182,7 @@ struct logger {
 		.object = STATE,				\
 		.object_whackfd = (STATE)->st_whack_sock,	\
 		.timing_level = (STATE)->st_timing.level,	\
+		.suppress = (STATE)->st_connection->policy & POLICY_OPPORTUNISTIC, \
 	}
 
 struct logger *clone_logger(struct logger log);
