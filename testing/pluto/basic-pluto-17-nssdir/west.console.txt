@@ -1,0 +1,32 @@
+echo "initdone"
+initdone
+west #
+ IPSEC_DIR=/etc/ipsec.d/
+west #
+ IPSEC_TEST_DIR=/tmp/TESTipsec.d
+west #
+ mkdir ${IPSEC_TEST_DIR}
+west #
+ rm -f ${IPSEC_DIR}/*.db
+west #
+ ipsec initnss --nssdir ${IPSEC_TEST_DIR}
+Initializing NSS database
+Warning no default label for /tmp/TESTipsec.d
+west #
+ ls ${IPSEC_DIR} | egrep '*.db' # should show no db files
+west #
+ ls ${IPSEC_TEST_DIR} | egrep '*.db' # should show db files
+cert9.db
+key4.db
+west #
+ ipsec checknss --nssdir ${IPSEC_TEST_DIR}
+west #
+ ls ${IPSEC_DIR} | egrep '*.db' # should show no db files
+west #
+ ls ${IPSEC_TEST_DIR} | egrep '*.db' # should show db files
+cert9.db
+key4.db
+west #
+ rm -rf ${IPSEC_TEST_DIR}
+west #
+ 

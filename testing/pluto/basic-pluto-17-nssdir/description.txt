@@ -1,0 +1,2 @@
+Test the non-standard -nssdir option
+Port from downstream redhat test
