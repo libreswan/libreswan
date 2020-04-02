@@ -96,6 +96,7 @@
 #include "ikev2_auth.h"
 #include "secrets.h"
 #include "cert_decode_helper.h"
+#include "addresspool.h"
 
 struct mobike {
 	ip_endpoint remote;
@@ -3011,6 +3012,101 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 	}
 }
 
+/*
+ * The caller could have done the linux_audit_conn() call, except one case
+ * here deletes the state before returning an STF error
+ */
+
+static stf_status ike_auth_child_responder(struct ike_sa *ike,
+					   struct child_sa **child_out,
+					   struct msg_digest *md)
+{
+	struct connection *c = md->st->st_connection;
+	struct child_sa *child;
+	pexpect(md->hdr.isa_xchg == ISAKMP_v2_IKE_AUTH); /* redundant */
+
+	if (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
+
+		/*
+		 * XXX: unlike above and below, this also screws
+		 * around with the connection.
+		 */
+		ip_address ip;
+
+		err_t e = lease_an_address(c, md->st, &ip);
+		if (e != NULL) {
+			libreswan_log("ikev2 lease_an_address failure %s", e);
+			return STF_INTERNAL_ERROR;
+		}
+
+		child = ikev2_duplicate_state(ike, IPSEC_SA, SA_RESPONDER,
+					      null_fd);
+		update_state_connection(&child->sa, c);
+		binlog_refresh_state(&child->sa);
+		/*
+		 * XXX: This is to hack around the broken responder
+		 * code that switches from the IKE SA to the CHILD SA
+		 * before sending the reply.  Instead, because the
+		 * CHILD SA can fail, the IKE SA should be the one
+		 * processing the message?
+		 */
+		v2_msgid_switch_responder(ike, child, md);
+
+		/*
+		 * XXX: Per above if(), md->st could be either the IKE or the
+		 * CHILD!
+		 */
+		struct spd_route *spd = &md->st->st_connection->spd;
+		spd->that.has_lease = TRUE;
+		spd->that.client.addr = ip;
+
+		if (addrtypeof(&ip) == AF_INET)
+			spd->that.client.maskbits = INTERNL_IP4_PREFIX_LEN; /* export it as value */
+		else
+			spd->that.client.maskbits = INTERNL_IP6_PREFIX_LEN; /* export it as value */
+		spd->that.has_client = TRUE;
+
+		child->sa.st_ts_this = ikev2_end_to_ts(&spd->this);
+		child->sa.st_ts_that = ikev2_end_to_ts(&spd->that);
+
+	} else {
+		/*
+		 * While this function is called with MD->ST pointing
+		 * at either an IKE SA or CHILD SA, this code path
+		 * only works when MD->ST is the IKE SA.
+		 *
+		 * XXX: this create-state code block should be moved
+		 * to the ISAKMP_v2_AUTH caller.
+		 */
+		pexpect(md->st != NULL);
+		pexpect(md->st == &ike->sa); /* passed in parent */
+		child = ikev2_duplicate_state(ike, IPSEC_SA,
+					      SA_RESPONDER,
+					      null_fd/* XXX: IKE's whack-fd? */);
+		binlog_refresh_state(&child->sa);
+		/*
+		 * XXX: This is to hack around the broken responder
+		 * code that switches from the IKE SA to the CHILD SA
+		 * before sending the reply.  Instead, because the
+		 * CHILD SA can fail, the IKE SA should be the one
+		 * processing the message?
+		 */
+		v2_msgid_switch_responder(ike, child, md);
+
+		if (!v2_process_ts_request(child, md)) {
+			/*
+			 * XXX: while the CHILD SA failed, the IKE SA
+			 * should continue to exist.  This STF_FAIL
+			 * will blame MD->ST aka the IKE SA.
+			 */
+			delete_state(&child->sa);
+			return STF_FAIL + v2N_TS_UNACCEPTABLE;
+		}
+	}
+	*child_out = child;
+	return STF_OK;
+}
+
 static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *ike,
 								 struct msg_digest *md,
 								 const struct hash_signature *auth_sig)
@@ -3184,7 +3280,7 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 		/* must have enough to build an CHILD_SA */
 		struct child_sa *child = NULL;
 		stf_status ret;
-		ret = ikev2_auth_child_responder(ike, &child, md);
+		ret = ike_auth_child_responder(ike, &child, md);
 		if (ret != STF_OK) {
 			pexpect(child == NULL);
 			LSWDBGP(DBG_CONTROL, buf) {
