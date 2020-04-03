@@ -1,5 +1,5 @@
 # create a partial state on east, don't hold the hack for retransmit
-ipsec whack --impair impair-drop-i2
+ipsec whack --impair drop-i2
 ipsec whack --impair delete-on-retransmit
 ipsec whack --impair revival
 ipsec auto --up westnet-eastnet-aggr
