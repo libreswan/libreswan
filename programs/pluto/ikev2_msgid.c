@@ -522,22 +522,31 @@ void v2_msgid_free(struct state *st)
 }
 
 void v2_msgid_queue_initiator(struct ike_sa *ike, struct state *st,
+			      enum isakmp_xchg_types ix,
 			      v2_msgid_pending_cb *callback)
 {
 	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
 	/*
-	 * Always append the task.
+	 * v2_CREATE_CHILD_SA append to last the task.
+	 * v2_INFORMATIONAL v2D append to the last v2D task.
 	 */
 	delete_event(st);
 	event_schedule_s(EVENT_SA_REPLACE, MAXIMUM_RESPONDER_WAIT, st);
 	/* find the end; small list? */
 	struct v2_msgid_pending **pp = &initiator->pending;
-	while (*pp != NULL)
+	while (*pp != NULL) {
+		if (ix == ISAKMP_v2_INFORMATIONAL  && (*pp)->ix != ISAKMP_v2_INFORMATIONAL) {
+			dbg("%s %d inserting v2D task for #%lu before #%lu CREATE_CHILD_SA",  __func__, __LINE__, st->st_serialno, (*pp)->st_serialno);
+			break;
+		}
 		pp = &(*pp)->next;
+	}
 	/* append */
 	struct v2_msgid_pending new =  {
 		.st_serialno = st->st_serialno,
+		.ix = ix,
 		.cb = callback,
+		.next = (*pp),
 	};
 	*pp = clone_thing(new, "struct initiate_list");
 	v2_msgid_schedule_next_initiator(ike);

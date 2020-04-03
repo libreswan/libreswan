@@ -44,6 +44,7 @@ typedef stf_status v2_msgid_pending_cb(struct ike_sa *ike,
 
 struct v2_msgid_pending {
 	so_serial_t st_serialno;
+	const enum isakmp_xchg_types ix;
 	v2_msgid_pending_cb *cb;
 	struct v2_msgid_pending *next;
 };
@@ -127,6 +128,7 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
  * message id up front, but only when one was available?
  */
 void v2_msgid_queue_initiator(struct ike_sa *ike, struct state *st,
+			      enum isakmp_xchg_types ix,
 			      v2_msgid_pending_cb *callback);
 void v2_msgid_schedule_next_initiator(struct ike_sa *ike);
 

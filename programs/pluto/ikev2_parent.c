@@ -5883,7 +5883,8 @@ static void ikev2_child_outI_continue(struct state *st,
 
 	dbg("adding CHILD SA #%lu to IKE SA #%lu message initiator queue",
 	    child->sa.st_serialno, ike->sa.st_serialno);
-	v2_msgid_queue_initiator(ike, &child->sa, ikev2_child_outI_continue_2);
+	v2_msgid_queue_initiator(ike, &child->sa, ISAKMP_v2_CREATE_CHILD_SA,
+			ikev2_child_outI_continue_2);
 
 	/* return STF_SUSPEND */
 	complete_v2_state_transition(&child->sa, md, STF_SUSPEND);
