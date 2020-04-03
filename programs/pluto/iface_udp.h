@@ -34,7 +34,7 @@ struct iface_port;
 struct packet;
 struct iface_dev;
 
-struct iface_port *udp_iface_port(struct iface_dev *id, int port,
-				  bool ike_float);
+struct iface_port *bind_udp_iface_port(struct iface_dev *id, int port,
+				       bool ike_float);
 
 #endif

@@ -42,6 +42,7 @@ struct iface_io {
 	ssize_t (*write_packet)(const struct iface_port *ifp,
 				const void *ptr, size_t len,
 				const ip_endpoint *remote_endpoint);
+	void (*cleanup)(struct iface_port *ifp);
 };
 
 /* interface: a te*rminal point for IKE traffic, IPsec transport mode
@@ -79,11 +80,15 @@ struct iface_port {
 	/* udp only */
 	bool ike_float;
 	struct pluto_event *pev;
-	/* tcp only */
-	struct evconnlistener *tcp_listener;
-	bool tcp_espintcp_enabled;
-	ip_endpoint tcp_remote_endpoint;
+	/* tcp port only */
+	struct evconnlistener *tcp_accept_listener;
+	/* tcp stream only */
+	ip_endpoint iketcp_remote_endpoint;
+	enum iketcp_state { IKETCP_OPEN = 1, IKETCP_PREFIXED, IKETCP_RUNNING, } iketcp_state;
+	struct event *iketcp_timeout;
 };
+
+void free_any_iface_port(struct iface_port **ifp);
 
 extern struct iface_port *interfaces;   /* public interfaces */
 

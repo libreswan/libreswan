@@ -1191,11 +1191,8 @@ void delete_state(struct state *st)
 
 	if (st->st_interface->protocol == &ip_protocol_tcp && IS_IKE_SA(st)) {
 		dbg("TCP: freeing interface; release instead?");
-		struct pluto_event *pev = st->st_interface->pev;
-		delete_pluto_event(&pev);
-		close(st->st_interface->fd);
-		/* TCP: delref st->st_interface->ip_dev */
-		pfree((void*)/*TCP: hack*/st->st_interface);
+		struct iface_port **p = (void*)&st->st_interface; /* hack const */
+		free_any_iface_port(p);
 	}
 
 	/* from here on we are just freeing RAM */

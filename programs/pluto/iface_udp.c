@@ -50,7 +50,7 @@
 #include "ip_info.h"
 #include "nat_traversal.h"	/* for nat_traversal_enabled which seems like a broken idea */
 
-static int create_udp_socket(const struct iface_dev *ifd, int port)
+static int bind_udp_socket(const struct iface_dev *ifd, int port)
 {
 	const struct ip_info *type = address_type(&ifd->id_address);
 	int fd = socket(type->af, SOCK_DGRAM, IPPROTO_UDP);
@@ -385,10 +385,10 @@ static const struct iface_io udp_iface_io = {
 	.write_packet = write_udp_packet,
 };
 
-struct iface_port *udp_iface_port(struct iface_dev *ifd, int port,
-				  bool ike_float)
+struct iface_port *bind_udp_iface_port(struct iface_dev *ifd, int port,
+				       bool ike_float)
 {
-	int fd = create_udp_socket(ifd, port);
+	int fd = bind_udp_socket(ifd, port);
 	if (fd < 0)
 		return NULL;
 	if (ike_float && !nat_traversal_espinudp(fd, ifd)) {

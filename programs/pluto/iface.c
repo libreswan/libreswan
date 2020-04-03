@@ -145,10 +145,7 @@ static void free_dead_ifaces(void)
 		for (struct iface_port **pp = &interfaces; (p = *pp) != NULL; ) {
 			if (p->ip_dev->ifd_change == IFD_DELETE) {
 				*pp = p->next; /* advance *pp */
-				delete_pluto_event(&p->pev);
-				close(p->fd);
-				release_iface_dev(&p->ip_dev);
-				pfree(p);
+				free_any_iface_port(&p);
 			} else {
 				pp = &p->next; /* advance pp */
 			}
@@ -180,6 +177,20 @@ void free_ifaces(void)
 	free_dead_ifaces();
 }
 
+void free_any_iface_port(struct iface_port **ifp)
+{
+	/* generic stuff */
+	delete_pluto_event(&(*ifp)->pev);
+	close((*ifp)->fd);
+	(*ifp)->fd = -1;
+	release_iface_dev(&(*ifp)->ip_dev);
+	if ((*ifp)->io->cleanup != NULL) {
+		(*ifp)->io->cleanup(*ifp);
+	}
+	pfree((*ifp));
+	*ifp = NULL;
+}
+
 /*
  * Open new interfaces.
  */
@@ -191,8 +202,8 @@ static void add_new_ifaces(void)
 			continue;
 
 		{
-			struct iface_port *q = udp_iface_port(ifd, pluto_port,
-							      false/*ike_float*/);
+			struct iface_port *q = bind_udp_iface_port(ifd, pluto_port,
+								   false/*ike_float*/);
 			if (q == NULL) {
 				ifd->ifd_change = IFD_DELETE;
 				continue;
@@ -216,7 +227,7 @@ static void add_new_ifaces(void)
 		 * Who should we believe?
 		 */
 		if (address_type(&ifd->id_address) == &ipv4_info) {
-			struct iface_port *q = udp_iface_port(ifd, pluto_nat_port,
+			struct iface_port *q = bind_udp_iface_port(ifd, pluto_nat_port,
 							      true/*ike_float*/);
 			if (q != NULL) {
 				endpoint_buf b;
@@ -227,7 +238,7 @@ static void add_new_ifaces(void)
 		}
 
 		if (pluto_tcpport != 0) {
-			struct iface_port *q = tcp_iface_port(ifd, pluto_tcpport);
+			struct iface_port *q = bind_tcp_iface_port(ifd, pluto_tcpport);
 			if (q != NULL) {
 				endpoint_buf b;
 				libreswan_log("adding TCP interface %s %s",
@@ -277,9 +288,9 @@ void find_ifaces(bool rm_dead)
 								     ifp, "ethX");
 				break;
 			case IPPROTO_TCP:
-				if (ifp->tcp_listener == NULL) {
-					ifp->tcp_listener = add_fd_accept_event_handler(ifp, accept_ike_in_tcp_cb);
-					if (ifp->tcp_listener == NULL) {
+				if (ifp->tcp_accept_listener == NULL) {
+					ifp->tcp_accept_listener = add_fd_accept_event_handler(ifp, accept_ike_in_tcp_cb);
+					if (ifp->tcp_accept_listener == NULL) {
 						libreswan_log("TCP: failed to create IKE-in-TCP listener");
 						continue;
 					}

@@ -33,7 +33,7 @@ struct sockaddr;
 struct iface_port;
 struct iface_dev;
 
-struct iface_port *tcp_iface_port(struct iface_dev *ifd, int port);
+struct iface_port *bind_tcp_iface_port(struct iface_dev *ifd, int port);
 
 void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 			  int fd,

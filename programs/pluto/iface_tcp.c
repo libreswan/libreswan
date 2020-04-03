@@ -49,60 +49,150 @@
 #include "ip_info.h"
 #include "nat_traversal.h"	/* for nat_traversal_enabled which seems like a broken idea */
 
-static const struct iface_io tcp_iface_io;
+static bool iketcp_read_packet(const struct iface_port *ifp,
+			       struct iface_packet *packet)
+{
+	/*
+	 * Fudge up an MD so that it be used as log context prefix.
+	 */
+	struct msg_digest stack_md = {
+		.iface = ifp,
+		.sender = ifp->iketcp_remote_endpoint,
+	};
 
-static void handle_tcp_packet_cb(evutil_socket_t unused_fd UNUSED,
-				 const short unused_event UNUSED,
-				 void *arg)
+	/*
+	 * Reads the entire packet _without_ length, if buffer isn't
+	 * big enough packet is truncated.
+	 */
+	dbg("TCP: reading input");
+	errno = 0;
+	packet->len = read(ifp->fd, packet->ptr, packet->len);
+	packet->sender = ifp->iketcp_remote_endpoint;
+	int packet_errno = errno;
+	if (packet_errno != 0) {
+		plog_md(&stack_md, "read from TCP socket failed "PRI_ERRNO,
+			pri_errno(packet_errno));
+		errno = packet_errno;
+		return false;
+	}
+
+	dbg("TCP: read returned %zd bytes; "PRI_ERRNO"",
+	    packet->len, pri_errno(packet_errno));
+
+	if (packet->len < NON_ESP_MARKER_SIZE) {
+		plog_md(&stack_md,
+			"%zd byte TCP message is way to small",
+			packet->len);
+		return false;
+	}
+
+	static const uint8_t zero_esp_marker[NON_ESP_MARKER_SIZE] = { 0, };
+	if (!memeq(packet->ptr, zero_esp_marker, sizeof(zero_esp_marker))) {
+		plog_md(&stack_md,
+			"%zd byte TCP message missing $d byte zero ESP marker",
+			packet->len);
+		return false;
+	}
+
+	packet->len -= sizeof(zero_esp_marker);
+	packet->ptr += sizeof(zero_esp_marker);
+	return true;
+}
+
+static ssize_t iketcp_write_packet(const struct iface_port *ifp,
+				   const void *ptr, size_t len,
+				   const ip_endpoint *remote_endpoint UNUSED)
+{
+	ssize_t wlen = write(ifp->fd, ptr, len);
+	return wlen;
+}
+
+static void iketcp_cleanup(struct iface_port *ifp)
+{
+	if (ifp->iketcp_timeout != NULL) {
+		/* received the TCP prefix, delete the timeout */
+		event_del(ifp->iketcp_timeout);
+		event_free(ifp->iketcp_timeout);
+		ifp->iketcp_timeout = NULL;
+	}
+}
+
+static const struct iface_io iketcp_iface_io = {
+	.protocol = &ip_protocol_tcp,
+	.read_packet = iketcp_read_packet,
+	.write_packet = iketcp_write_packet,
+	.cleanup = iketcp_cleanup,
+};
+
+static void iketcp_handle_packet_cb(evutil_socket_t unused_fd UNUSED,
+				    const short unused_event UNUSED,
+				    void *arg)
 {
 	struct iface_port *ifp = arg;
-	if (ifp->tcp_espintcp_enabled) {
+	switch (ifp->iketcp_state) {
+
+	case IKETCP_OPEN:
+		dbg("TCP: reading IKETCP prefix");
+		const uint8_t iketcp[] = IKE_IN_TCP_PREFIX;
+		uint8_t buf[sizeof(iketcp)];
+		ssize_t len = read(ifp->fd, buf, sizeof(buf));
+		if (len != sizeof(buf)) {
+			libreswan_log("TCP: problem reading IKETCP prefix - returned %zd bytes but expecting %zu",
+				      len, sizeof(buf));
+			close(ifp->fd);
+			return;
+		}
+
+		dbg("TCP: verifying IKETCP prefix");
+		if (!memeq(buf, iketcp, len)) {
+			/* discard this tcp connection */
+			libreswan_log("TCP: did not receive the IKE-in-TCP stream prefix, closing socket");
+			close(ifp->fd);
+			return;
+		}
+
+		libreswan_log("TCP: accepting connection, stream prefix received");
+
+		/*
+		 * Tell the kernel to load up the ESPINTCP Upper Layer
+		 * Protocol.
+		 *
+		 * From this point on all writes are auto-wrapped in
+		 * their length and reads are auto-blocked.
+		 */
+		dbg("TCP: enabling ESPINTCP");
+		if (setsockopt(ifp->fd, IPPROTO_TCP, TCP_ULP,
+			       "espintcp", sizeof("espintcp"))) {
+			LOG_ERRNO(errno, "setsockopt(SOL_TCP, TCP_ULP) failed in netlink_espintcp(), closing socket");
+			close(ifp->fd);
+			return;
+		}
+
+		/*
+		 * TCP: Should hack the callback to the non-IKETCP
+		 * version, but this is easier - it seems changing the
+		 * event handler while in the event handler isn't
+		 * allowed.
+		 */
+		ifp->iketcp_state = IKETCP_PREFIXED;
+		return;
+
+	case IKETCP_PREFIXED:
+		/* received the first packet; stop the timeout */
+		event_del(ifp->iketcp_timeout);
+		event_free(ifp->iketcp_timeout);
+		ifp->iketcp_timeout = NULL;
+		ifp->iketcp_state = IKETCP_RUNNING;
 		handle_packet_cb(ifp);
 		return;
-	}
 
-	dbg("TCP: reading IKETCP prefix");
-	const uint8_t iketcp[] = IKE_IN_TCP_PREFIX;
-	uint8_t buf[sizeof(iketcp)];
-	ssize_t len = read(ifp->fd, buf, sizeof(buf));
-	if (len != sizeof(buf)) {
-		libreswan_log("TCP: problem reading IKETCP prefix - returned %zd bytes but expecting %zu",
-			      len, sizeof(buf));
-		close(ifp->fd);
+	case IKETCP_RUNNING:
+		handle_packet_cb(ifp);
 		return;
+
+	default:
+		bad_case(ifp->iketcp_state);
 	}
-
-	dbg("TCP: verifying IKETCP prefix");
-	if (!memeq(buf, iketcp, len)) {
-		/* discard this tcp connection */
-		libreswan_log("TCP: did not receive the IKE-in-TCP stream prefix, closing socket");
-		close(ifp->fd);
-		return;
-	}
-
-	libreswan_log("TCP: accepting connection, stream prefix received");
-
-	/*
-	 * Tell the kernel to load up the ESPINTCP Upper Layer
-	 * Protocol.
-	 *
-	 * From this point on all writes are auto-wrapped in their
-	 * length and reads are auto-blocked.
-	 */
-	dbg("TCP: enabling ESPINTCP");
-	if (setsockopt(ifp->fd, IPPROTO_TCP, TCP_ULP,
-		       "espintcp", sizeof("espintcp"))) {
-		LOG_ERRNO(errno, "setsockopt(SOL_TCP, TCP_ULP) failed in netlink_espintcp(), closing socket");
-		close(ifp->fd);
-		return;
-	}
-
-	/*
-	 * TCP: Should hack the callback to the non-IKETCP version,
-	 * but this is easier - it seems changing the event handler
-	 * while in the event handler isn't allowed.
-	 */
-	ifp->tcp_espintcp_enabled = true;
 }
 
 /*
@@ -187,108 +277,37 @@ stf_status create_tcp_interface(struct state *st)
 		return STF_FATAL;
 	}
 
-	struct iface_port *q = alloc_thing(struct iface_port, "TCP iface_port");
-	q->io = &tcp_iface_io;
+	struct iface_port *q = alloc_thing(struct iface_port, "TCP iface initiator");
+	q->io = &iketcp_iface_io;
 	q->fd = fd;
 	q->local_endpoint = local_endpoint;
 	q->ike_float = TRUE;
 	q->ip_dev = add_ref(st->st_interface->ip_dev);
 	q->protocol = &ip_protocol_tcp;
-	q->tcp_remote_endpoint = st->st_remote_endpoint;
-	q->tcp_espintcp_enabled = true;
+	q->iketcp_remote_endpoint = st->st_remote_endpoint;
+	q->iketcp_state = IKETCP_OPEN;
 
+#if 0
 	q->next = interfaces;
 	interfaces = q;
+#endif
 
 	q->pev = add_fd_read_event_handler(q->fd,
-					   handle_tcp_packet_cb,
+					   iketcp_handle_packet_cb,
 					   q, "iketcpX");
 
 	st->st_interface = q; /* TCP: leaks old st_interface? */
 	return STF_OK;
 }
 
-static ssize_t write_tcp_packet(const struct iface_port *ifp,
-				const void *ptr, size_t len,
-				const ip_endpoint *remote_endpoint UNUSED)
+static void iketcp_timeout(evutil_socket_t unused_fd UNUSED,
+			   const short unused_event UNUSED,
+			   void *arg UNUSED)
 {
-#if 0
-	dbg("TCP: switching off NONBLOCK before write");
-	int flags = fcntl(ifp->fd, F_GETFL, 0);
-	if (flags == -1) {
-		LOG_ERRNO(errno, "TCP: fcntl(F_GETFL)");
-	}
-	if (fcntl(ifp->fd, F_SETFL, flags & ~O_NONBLOCK) == -1) {
-		LOG_ERRNO(errno, "TCP: write - fcntl(F_GETFL)");
-	}
-#endif
-	ssize_t wlen = write(ifp->fd, ptr, len);
-
-#if 0
-	dbg("TCP: restoring flags 0-%o after write", flags);
-	if (fcntl(ifp->fd, F_SETFL, flags) == -1) {
-		LOG_ERRNO(errno, "TCP: fcntl(F_GETFL)");
-	}
-	dbg("TCP: flags restored");
-#endif
-	return wlen;
+	struct iface_port *ifp = arg;
+	dbg("TCP: accepted TCP connection timed out");
+	free_any_iface_port(&ifp);
 }
-
-static bool read_tcp_packet(const struct iface_port *ifp,
-			    struct iface_packet *packet)
-{
-	/*
-	 * Fudge up an MD so that it be used as log context prefix.
-	 */
-	struct msg_digest stack_md = {
-		.iface = ifp,
-		.sender = ifp->tcp_remote_endpoint,
-	};
-
-	/*
-	 * Reads the entire packet _without_ length, if buffer isn't
-	 * big enough packet is truncated.
-	 */
-	dbg("TCP: reading input");
-	errno = 0;
-	packet->len = read(ifp->fd, packet->ptr, packet->len);
-	packet->sender = ifp->tcp_remote_endpoint;
-	int packet_errno = errno;
-	if (packet_errno != 0) {
-		plog_md(&stack_md, "read from TCP socket failed "PRI_ERRNO,
-			pri_errno(packet_errno));
-		errno = packet_errno;
-		return false;
-	}
-
-	dbg("TCP: read returned %zd bytes; "PRI_ERRNO"",
-	    packet->len, pri_errno(packet_errno));
-
-	if (packet->len < NON_ESP_MARKER_SIZE) {
-		plog_md(&stack_md,
-			"%zd byte TCP message is way to small",
-			packet->len);
-		return false;
-	}
-
-	static const uint8_t zero_esp_marker[NON_ESP_MARKER_SIZE] = { 0, };
-	if (!memeq(packet->ptr, zero_esp_marker, sizeof(zero_esp_marker))) {
-		plog_md(&stack_md,
-			"%zd byte TCP message missing $d byte zero ESP marker",
-			packet->len);
-		return false;
-	}
-
-	packet->len -= sizeof(zero_esp_marker);
-	packet->ptr += sizeof(zero_esp_marker);
-	return true;
-}
-
-static const struct iface_io tcp_iface_io = {
-	.protocol = &ip_protocol_tcp,
-	.read_packet = read_tcp_packet,
-	.write_packet = write_tcp_packet,
-};
 
 void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 			  int fd,
@@ -306,21 +325,26 @@ void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 		return;
 	}
 
-	struct iface_port *ifp = alloc_thing(struct iface_port, "struct iface_port");
+	struct iface_port *ifp = alloc_thing(struct iface_port, "TCP iface responder");
 	ifp->fd = fd;
-	ifp->io = &tcp_iface_io;
+	ifp->io = &iketcp_iface_io;
 	ifp->protocol = &ip_protocol_tcp;
 	ifp->ike_float = TRUE;
 	ifp->ip_dev = add_ref(socket_ifp->ip_dev); /*TCP: refcnt */
-	ifp->tcp_remote_endpoint = tcp_remote_endpoint;
+	ifp->iketcp_remote_endpoint = tcp_remote_endpoint;
 	ifp->local_endpoint = socket_ifp->local_endpoint;
+	ifp->iketcp_state = IKETCP_OPEN;
+
+	/* set up a timeout to kill the socket when nothing happens */
+	fire_timer_photon_torpedo(&ifp->iketcp_timeout, iketcp_timeout,
+				  ifp, deltatime(1));
 
 	ifp->pev = add_fd_read_event_handler(ifp->fd,
-					     handle_tcp_packet_cb,
+					     iketcp_handle_packet_cb,
 					     ifp, "iketcpX");
 }
 
-static int create_tcp_socket(const struct iface_dev *ifd, int port)
+static int bind_tcp_socket(const struct iface_dev *ifd, int port)
 {
 	const struct ip_info *type = address_type(&ifd->id_address);
 	int fd = socket(type->af, SOCK_STREAM, IPPROTO_TCP);
@@ -463,9 +487,9 @@ static int create_tcp_socket(const struct iface_dev *ifd, int port)
 	return fd;
 }
 
-struct iface_port *tcp_iface_port(struct iface_dev *ifd, int port)
+struct iface_port *bind_tcp_iface_port(struct iface_dev *ifd, int port)
 {
-	int fd = create_tcp_socket(ifd, port);
+	int fd = bind_tcp_socket(ifd, port);
 	if (fd < 0) {
 		return NULL;
 	}
