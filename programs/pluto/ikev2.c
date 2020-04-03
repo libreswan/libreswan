@@ -1654,6 +1654,8 @@ void ikev2_process_packet(struct msg_digest *md)
 				return;
 			}
 
+			struct logger logger = MESSAGE_LOGGER(md);
+
 			/*
 			 * Always check for cookies!
 			 *
@@ -1671,8 +1673,7 @@ void ikev2_process_packet(struct msg_digest *md)
 			 * v2N_UNSUPPORTED_CRITICAL_PAYLOAD.
 			 */
 			pexpect(!md->message_payloads.parsed);
-			struct logger log = MESSAGE_LOGGER(md);
-			md->message_payloads = ikev2_decode_payloads(&log, md,
+			md->message_payloads = ikev2_decode_payloads(&logger, md,
 								     &md->message_pbs,
 								     md->hdr.isa_np);
 			if (md->message_payloads.n != v2N_NOTHING_WRONG) {
@@ -1713,7 +1714,8 @@ void ikev2_process_packet(struct msg_digest *md)
 			 * transition?
 			 */
 			const struct finite_state *start_state = finite_states[STATE_PARENT_R0];
-			const struct state_v2_microcode *transition = find_v2_state_transition(start_state, md);
+			const struct state_v2_microcode *transition =
+				find_v2_state_transition(&logger, start_state, md);
 			if (transition == NULL) {
 				/* already logged */
 				send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);
@@ -1832,9 +1834,11 @@ void ikev2_process_packet(struct msg_digest *md)
 				return;
 			}
 
+			struct logger logger = STATE_LOGGER(&ike->sa);
+
 			dbg("unpacking clear payloads");
-			struct logger log = STATE_LOGGER(&ike->sa);
-			md->message_payloads = ikev2_decode_payloads(&log, md, &md->message_pbs,
+			md->message_payloads = ikev2_decode_payloads(&logger, md,
+								     &md->message_pbs,
 								     md->hdr.isa_np);
 			if (md->message_payloads.n != v2N_NOTHING_WRONG) {
 				/* already logged */
@@ -1843,7 +1847,7 @@ void ikev2_process_packet(struct msg_digest *md)
 
 			/* transition? */
 			const struct state_v2_microcode *transition =
-				find_v2_state_transition(ike->sa.st_state, md);
+				find_v2_state_transition(&logger, ike->sa.st_state, md);
 			if (transition == NULL) {
 				/* already logged */
 				return;
@@ -2317,6 +2321,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 
 	/* no useful state microcode entry? */
 	if (svm->state == STATE_IKEv2_ROOF) {
+		struct logger logger = STATE_LOGGER(st);
 		/* count all the error notifications */
 		for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
 		     ntfy != NULL; ntfy = ntfy->next) {
@@ -2331,7 +2336,8 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * A very messed up message - none of the
 			 * state transitions recognized it!.
 			 */
-			log_v2_payload_errors(st, md, &message_payload_status);
+			log_v2_payload_errors(&logger, md,
+					      &message_payload_status);
 			return;
 		}
 		if (encrypted_payload_status.bad) {
@@ -2354,7 +2360,8 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * message combination so just ignore it (but
 			 * update Message IDs).
 			 */
-			log_v2_payload_errors(st, md, &encrypted_payload_status);
+			log_v2_payload_errors(&logger, md,
+					      &encrypted_payload_status);
 			if (v2_msg_role(md) == MESSAGE_REQUEST) {
 				pexpect(ike->sa.st_v2_msgid_wip.responder == -1);
 				v2_msgid_start_responder(ike, &ike->sa, md);

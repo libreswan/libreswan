@@ -193,7 +193,8 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 	return errors;
 }
 
-const struct state_v2_microcode *find_v2_state_transition(const struct finite_state *state,
+const struct state_v2_microcode *find_v2_state_transition(struct logger *logger,
+							  const struct finite_state *state,
 							  struct msg_digest *md)
 {
 	dbg("looking for message matching transition from %s", state->name);
@@ -260,10 +261,12 @@ const struct state_v2_microcode *find_v2_state_transition(const struct finite_st
 		 * A very messed up message - none of the state
 		 * transitions recognized it!.
 		 */
-		log_v2_payload_errors(NULL, md, &message_payload_status);
+		log_v2_payload_errors(logger, md,
+				      &message_payload_status);
 	} else {
 		pexpect(encrypted_payload_status.bad);
-		log_v2_payload_errors(NULL, md, &encrypted_payload_status);
+		log_v2_payload_errors(logger, md,
+				      &encrypted_payload_status);
 	}
 	return NULL;
 
@@ -273,26 +276,25 @@ const struct state_v2_microcode *find_v2_state_transition(const struct finite_st
  * report problems - but less so when OE
  */
 
-void log_v2_payload_errors(struct state *st, struct msg_digest *md,
+void log_v2_payload_errors(struct logger *logger, struct msg_digest *md,
 			   const struct ikev2_payload_errors *errors)
 {
-	if (!DBGP(DBG_OPPO)) {
-		/*
-		 * ??? this logic is contorted.
-		 * If we have no state, we act as if this is opportunistic.
-		 * But if there is a state, but no connection,
-		 * we act as if this is NOT opportunistic.
-		 */
-		if (st == NULL ||
-		    (st->st_connection != NULL &&
-		     (st->st_connection->policy & POLICY_OPPORTUNISTIC)))
-		{
+	enum stream log_stream;
+	if (logger->suppress) {
+		if (DBGP(DBG_BASE)) {
+			log_stream = DEBUG_STREAM;
+		} else {
+			/*
+			 * presumably the responder so tone things
+			 * down
+			 */
 			return;
 		}
+	} else {
+		log_stream = ALL_STREAMS;
 	}
 
-	/* LOG_MESSAGE(RC_LOG_SERIOUS, st, NULL, &md->from, buf) */
-	LSWLOG_RC(RC_LOG_SERIOUS, buf) {
+	LOG_MESSAGE(RC_LOG_SERIOUS | log_stream, logger, buf) {
 		const enum isakmp_xchg_types ix = md->hdr.isa_xchg;
 		jam(buf, "dropping unexpected ");
 		jam_enum_short(buf, &ikev2_exchange_names, ix);
