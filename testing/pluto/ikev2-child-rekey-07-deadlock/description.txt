@@ -1,11 +1,63 @@
-IKEv2 Message ID deadlock test during rekey, dropping the response message.
+IKEv2 Message ID deadlock test on initiator.
 
-Response to the second rekey is delayed. While waiting for the response to rekey
-an INTFORMATIONAL, v2D, is sent out jumping the Message ID.The response to the
-rekey is dropped by the initiator.
+The responder is running with  PLUTO_CRYPTO_HELPER_DELAY=5. All responses are delayed.
 
-Test use PLUTO_CRYPTO_HELPER_DELAY=5 to re-create the situation.
-The issue was initially reported when running with 72 CHILD_SAs and rekeying them all.
-This kind of message deadlock would happen, and CHILD_SA would disappear, re-initiate.
+Delete messages should not jump the queue, instead get queued for outstanding exchange to finish.
+Note Delete message (v2Ds are added to tail of v2D tasks) will go ahead of CHILD rekey
+or new CREATE_CHILD request.
 
-Delete message should not jump the queue, instead should wait for the rekeys to finish.
+Connections expands to 
+"west-east/1x0"
+"west-east/2x0"
+"west-east/3x0"
+"west-east/4x0"
+
+State #		Message ID:	Exchange	Connection suffix
+#1		0-->		IKE_INIT	4x0
+		Queued(HP)			1x0
+		Queued(HP)			2x0
+		Queued(HP)			3x0
+		Queued(HP)			4x0
+#1		<--0 		IKE_INIT	4x0
+#1 & #2		1-->		IKE_AUTH	4x0 & 1x0
+#1 & #2		<--1		IKE_AUTH	4x0 & 1x0
+#3		2-->		NEW_CHILD	2x0
+#3		<--2		NEW_CHILD	2x0
+#4		3-->		NEW_CHILD	3x0
+#4		<--3		NEW_CHILD	3x0
+#5		4-->		NEW_CHILD	4x0
+#5		<--4		NEW_CHILD	4x0
+
+#6		crypto queued	whack #2	1x0
+#7		queued		whack #3	2x0
+#8		queued		whack #4	3x0
+#9		queued		whack #5	4x0
+#6		5-->		REKEY(#2)	1x0
+#6		<--5		REKEY(#2)	1x0
+#7		6-->		REKEY(#3)	2x0
+#2		queued		v2D (#2)	1x0
+#7		<--6		REKEY(#3)	2x0
+#2		7-->		v2D (#2)	1x0
+#2		<--7		v2D (#2)	1x0
+#8		8-->		REKEY(#4)	3x0
+#8		<--8		REKEY(#4)	3x0
+#3		9-->		v2D (#3)	2x0
+#3		<--9		v2D (#3)	2x0
+#9		10-->		REKEY(#5)	4x0
+#9		<--10		REKEY(#5)	4x0
+#4 		11-->		v2D(#4)		3x0
+#4 		<--11		v2D(#4)		3x0
+#5		12-->		v2D(#5)		4x0
+#5		<--12		v2D(#5)		4x0
+
+000 #6: "west-east/1x0":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest
+IPSEC; eroute owner; isakmp#1; idle;
+000 #7: "west-east/2x0":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest
+IPSEC; eroute owner; isakmp#1; idle;
+000 #8: "west-east/3x0":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest
+IPSEC; eroute owner; isakmp#1; idle;
+000 #1: "west-east/4x0":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REKEY in XXs; newest
+ISAKMP; idle;
+000 #9: "west-east/4x0":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+
+
