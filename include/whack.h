@@ -91,22 +91,23 @@ struct whack_end {
 	enum keyword_authby authby;
 
 	enum keyword_host host_type;
-	ip_address host_addr,
-		   host_nexthop,
-		   host_srcip;
-	ip_subnet  client,
-		   host_vtiip,
-		   ifaceip;
+	ip_address host_addr;
+	uint16_t host_port;	/* host order  (for IKE communications) */
+	ip_address host_nexthop;
+	ip_address host_srcip;
+	ip_subnet host_vtiip;
+	ip_subnet ifaceip;
+
+	ip_subnet client;
+	bool has_client;
+	bool has_client_wildcard;
+	uint16_t port;		/* host order */
+	bool has_port_wildcard;
+	uint8_t protocol;
 
 	bool key_from_DNS_on_demand;
 	enum whack_pubkey_type pubkey_type;
-	bool has_client;
-	bool has_client_wildcard;
-	bool has_port_wildcard;
 	char *updown;		/* string */
-	uint16_t host_port;	/* host order  (for IKE communications) */
-	uint16_t port;		/* host order */
-	uint8_t protocol;
 	char *virt;
 	ip_range pool_range;	/* store start of v4 addresspool */
 	bool xauth_server;	/* for XAUTH */

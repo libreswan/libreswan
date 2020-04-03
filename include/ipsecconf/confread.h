@@ -59,9 +59,12 @@ struct starter_end {
 	sa_family_t addr_family;
 	enum keyword_host addrtype;
 	enum keyword_host nexttype;
-	ip_address addr, nexthop, sourceip;
+	ip_address addr;
+	ip_address nexthop;
+	ip_address sourceip;
 	bool has_client;
-	ip_subnet subnet, vti_ip;
+	ip_subnet subnet;
+	ip_subnet vti_ip;
 	ip_subnet ifaceip;
 	char *iface;
 	char *id;
