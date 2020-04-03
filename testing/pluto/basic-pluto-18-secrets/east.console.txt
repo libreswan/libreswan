@@ -1,0 +1,4 @@
+echo "initdone"
+initdone
+east #
+ 

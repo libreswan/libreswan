@@ -1,0 +1,6 @@
+This tests that secrets file is created with proper umask and that
+creating a newhostkey appends and not overwrites the secrets file.
+
+port from downstream redhat test for rhbz#1449983
+
+Currently only for RSA as those are only raw keys supported

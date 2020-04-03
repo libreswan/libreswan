@@ -1,0 +1,53 @@
+echo "initdone"
+initdone
+west #
+ rm -f /etc/ipsec.secrets
+west #
+ ipsec newhostkey --output /etc/ipsec.secrets --bits 2192 --seeddev /dev/urandom 2> /dev/null
+west #
+ # confirm permissions
+west #
+ ls -l /etc/ipsec.secrets | sed "s:root root .*$:root root TIMESTAMP /etc/ipsec.secrets:"
+-rw-------. 1 root root TIMESTAMP /etc/ipsec.secrets
+west #
+ # confirm append
+west #
+ wc -l /etc/ipsec.secrets
+9 /etc/ipsec.secrets
+west #
+ ipsec newhostkey --output /etc/ipsec.secrets --bits 2192 --seeddev /dev/urandom 2> /dev/null
+west #
+ wc -l /etc/ipsec.secrets
+18 /etc/ipsec.secrets
+west #
+ rm /etc/ipsec.secrets /etc/ipsec.d/*db
+west #
+ ipsec initnss > /dev/null 2> /dev/null
+west #
+ # confirm reject too small keysizes and non-multiples of 16 for RSA
+west #
+ # min size is 2192 (lost to history why not 2048)
+west #
+ ipsec newhostkey --output /etc/ipsec.secrets --bits 512 --seeddev /dev/urandom
+ipsec rsasigkey: requested RSA key size (512) is too small - use 2192 or more
+west #
+ ipsec newhostkey --output /etc/ipsec.secrets --bits 1024 --seeddev /dev/urandom
+ipsec rsasigkey: requested RSA key size (1024) is too small - use 2192 or more
+west #
+ ipsec newhostkey --output /etc/ipsec.secrets --bits 2048 --seeddev /dev/urandom
+ipsec rsasigkey: requested RSA key size (2048) is too small - use 2192 or more
+west #
+ ipsec newhostkey --output /etc/ipsec.secrets --bits 2051 --seeddev /dev/urandom
+ipsec rsasigkey: requested RSA key size (2051) is too small - use 2192 or more
+west #
+ ipsec newhostkey --output /etc/ipsec.secrets --bits 3192 --seeddev /dev/urandom
+ipsec rsasigkey: requested RSA key size (3192) is not a multiple of 16
+west #
+ # there should be no keys
+west #
+ ipsec showhostkey --list
+west #
+ test -f /etc/ipsec.secrets || echo confirm no keys were created
+confirm no keys were created
+west #
+ 
