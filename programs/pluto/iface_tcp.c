@@ -55,42 +55,41 @@ static bool iketcp_read_packet(const struct iface_port *ifp,
 	/*
 	 * Fudge up an MD so that it be used as log context prefix.
 	 */
-	struct msg_digest stack_md = {
-		.iface = ifp,
-		.sender = ifp->iketcp_remote_endpoint,
-	};
+	struct logger logger = FROM_LOGGER(&ifp->iketcp_remote_endpoint);
 
 	/*
 	 * Reads the entire packet _without_ length, if buffer isn't
 	 * big enough packet is truncated.
 	 */
-	dbg("TCP: reading input");
+	dbg("TCP: reading packet");
 	errno = 0;
-	packet->len = read(ifp->fd, packet->ptr, packet->len);
+	size_t buf_size = packet->len;
+	packet->len = read(ifp->fd, packet->ptr, buf_size);
 	packet->sender = ifp->iketcp_remote_endpoint;
 	int packet_errno = errno;
 	if (packet_errno != 0) {
-		plog_md(&stack_md, "read from TCP socket failed "PRI_ERRNO,
-			pri_errno(packet_errno));
+		log_message(RC_LOG, &logger,
+			    "TCP: read from socket failed "PRI_ERRNO,
+			    pri_errno(packet_errno));
 		errno = packet_errno;
 		return false;
 	}
 
-	dbg("TCP: read returned %zd bytes; "PRI_ERRNO"",
-	    packet->len, pri_errno(packet_errno));
+	dbg("TCP: read %zd of %zu bytes; "PRI_ERRNO"",
+	    packet->len, buf_size, pri_errno(packet_errno));
 
 	if (packet->len < NON_ESP_MARKER_SIZE) {
-		plog_md(&stack_md,
-			"%zd byte TCP message is way to small",
-			packet->len);
+		log_message(RC_LOG, &logger,
+			    "TCP: %zd byte message is way to small",
+			    packet->len);
 		return false;
 	}
 
 	static const uint8_t zero_esp_marker[NON_ESP_MARKER_SIZE] = { 0, };
 	if (!memeq(packet->ptr, zero_esp_marker, sizeof(zero_esp_marker))) {
-		plog_md(&stack_md,
-			"%zd byte TCP message missing $d byte zero ESP marker",
-			packet->len);
+		log_message(RC_LOG, &logger,
+			    "TCP: %zd byte message missing $d byte zero ESP marker",
+			    packet->len);
 		return false;
 	}
 
@@ -104,17 +103,33 @@ static ssize_t iketcp_write_packet(const struct iface_port *ifp,
 				   const ip_endpoint *remote_endpoint UNUSED)
 {
 	ssize_t wlen = write(ifp->fd, ptr, len);
+	dbg("TCP: wrote %zd of %zu bytes", wlen, len);
 	return wlen;
 }
 
 static void iketcp_cleanup(struct iface_port *ifp)
 {
+	dbg("TCP: cleaning up interface");
+	pexpect(ifp->pev == NULL);
+	pexpect(ifp->fd < 0);
+	pexpect(ifp->ip_dev == NULL);
 	if (ifp->iketcp_timeout != NULL) {
-		/* received the TCP prefix, delete the timeout */
+		dbg("TCP: cleaning up timeout");
 		event_del(ifp->iketcp_timeout);
 		event_free(ifp->iketcp_timeout);
 		ifp->iketcp_timeout = NULL;
 	}
+}
+
+static void iketcp_timeout(evutil_socket_t unused_fd UNUSED,
+			   const short unused_event UNUSED,
+			   void *arg UNUSED)
+{
+	struct iface_port *ifp = arg;
+	struct logger logger = FROM_LOGGER(&ifp->iketcp_remote_endpoint);
+	log_message(RC_LOG, &logger,
+		    "TCP: timed out before first message received");
+	free_any_iface_port(&ifp);
 }
 
 static const struct iface_io iketcp_iface_io = {
@@ -129,29 +144,39 @@ static void iketcp_handle_packet_cb(evutil_socket_t unused_fd UNUSED,
 				    void *arg)
 {
 	struct iface_port *ifp = arg;
+	struct logger logger = FROM_LOGGER(&ifp->iketcp_remote_endpoint);
+
 	switch (ifp->iketcp_state) {
 
 	case IKETCP_OPEN:
-		dbg("TCP: reading IKETCP prefix");
+		dbg("TCP: OPEN: reading IKETCP prefix");
 		const uint8_t iketcp[] = IKE_IN_TCP_PREFIX;
 		uint8_t buf[sizeof(iketcp)];
 		ssize_t len = read(ifp->fd, buf, sizeof(buf));
-		if (len != sizeof(buf)) {
-			libreswan_log("TCP: problem reading IKETCP prefix - returned %zd bytes but expecting %zu",
-				      len, sizeof(buf));
-			close(ifp->fd);
+		if (len < 0) {
+			/* too strict? */
+			int e = errno;
+			log_message(RC_LOG, &logger,
+				    "TCP: problem reading IKETCP prefix "PRI_ERRNO,
+				    pri_errno(e));
+			free_any_iface_port(&ifp);
+			return;
+		} else if (len != sizeof(buf)) {
+			log_message(RC_LOG, &logger,
+				    "TCP: problem reading IKETCP prefix - returned %zd bytes but expecting %zu; connection closed",
+				    len, sizeof(buf));
+			free_any_iface_port(&ifp);
 			return;
 		}
 
 		dbg("TCP: verifying IKETCP prefix");
 		if (!memeq(buf, iketcp, len)) {
 			/* discard this tcp connection */
-			libreswan_log("TCP: did not receive the IKE-in-TCP stream prefix, closing socket");
-			close(ifp->fd);
+			log_message(RC_LOG, &logger,
+				    "TCP: did not receive the IKE-in-TCP stream prefix, closing socket");
+			free_any_iface_port(&ifp);
 			return;
 		}
-
-		libreswan_log("TCP: accepting connection, stream prefix received");
 
 		/*
 		 * Tell the kernel to load up the ESPINTCP Upper Layer
@@ -163,8 +188,11 @@ static void iketcp_handle_packet_cb(evutil_socket_t unused_fd UNUSED,
 		dbg("TCP: enabling ESPINTCP");
 		if (setsockopt(ifp->fd, IPPROTO_TCP, TCP_ULP,
 			       "espintcp", sizeof("espintcp"))) {
-			LOG_ERRNO(errno, "setsockopt(SOL_TCP, TCP_ULP) failed in netlink_espintcp(), closing socket");
-			close(ifp->fd);
+			int e = errno;
+			log_message(RC_LOG, &logger,
+				    "TCP: setsockopt(SOL_TCP, TCP_ULP, \"espintcp\") failed, closing socket "PRI_ERRNO,
+				    pri_errno(e));
+			free_any_iface_port(&ifp);
 			return;
 		}
 
@@ -178,15 +206,19 @@ static void iketcp_handle_packet_cb(evutil_socket_t unused_fd UNUSED,
 		return;
 
 	case IKETCP_PREFIXED:
+		dbg("TCP: PREFIXED: trying to read first packet");
 		/* received the first packet; stop the timeout */
-		event_del(ifp->iketcp_timeout);
-		event_free(ifp->iketcp_timeout);
-		ifp->iketcp_timeout = NULL;
-		ifp->iketcp_state = IKETCP_RUNNING;
-		handle_packet_cb(ifp);
+		if (handle_packet_cb(ifp)) {
+			dbg("TCP: PREFIXED: first packet read; switching to running and freeing timeout");
+			event_del(ifp->iketcp_timeout);
+			event_free(ifp->iketcp_timeout);
+			ifp->iketcp_timeout = NULL;
+			ifp->iketcp_state = IKETCP_RUNNING;
+		}
 		return;
 
 	case IKETCP_RUNNING:
+		dbg("TCP: RUNNING: trying to read a packet");
 		handle_packet_cb(ifp);
 		return;
 
@@ -300,44 +332,38 @@ stf_status create_tcp_interface(struct state *st)
 	return STF_OK;
 }
 
-static void iketcp_timeout(evutil_socket_t unused_fd UNUSED,
-			   const short unused_event UNUSED,
-			   void *arg UNUSED)
-{
-	struct iface_port *ifp = arg;
-	dbg("TCP: accepted TCP connection timed out");
-	free_any_iface_port(&ifp);
-}
-
 void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
-			  int fd,
+			  int accepted_fd,
 			  struct sockaddr *sockaddr, int sockaddr_len,
 			  void *arg)
 {
-	struct iface_port *socket_ifp = arg;
+	struct iface_port *bind_ifp = arg;
 
 	ip_sockaddr sa = { .sa = *sockaddr, };
 	ip_endpoint tcp_remote_endpoint;
 	err_t err = sockaddr_to_endpoint(&sa, sockaddr_len, &tcp_remote_endpoint);
 	if (err) {
 		libreswan_log("TCP: invalid remote address: %s", err);
-		close(fd);
+		close(accepted_fd);
 		return;
 	}
 
+	struct logger logger = FROM_LOGGER(&tcp_remote_endpoint);
+	log_message(RC_LOG, &logger, "TCP: accepting connection");
+
 	struct iface_port *ifp = alloc_thing(struct iface_port, "TCP iface responder");
-	ifp->fd = fd;
+	ifp->fd = accepted_fd;
 	ifp->io = &iketcp_iface_io;
 	ifp->protocol = &ip_protocol_tcp;
 	ifp->ike_float = TRUE;
-	ifp->ip_dev = add_ref(socket_ifp->ip_dev); /*TCP: refcnt */
+	ifp->ip_dev = add_ref(bind_ifp->ip_dev); /*TCP: refcnt */
 	ifp->iketcp_remote_endpoint = tcp_remote_endpoint;
-	ifp->local_endpoint = socket_ifp->local_endpoint;
+	ifp->local_endpoint = bind_ifp->local_endpoint;
 	ifp->iketcp_state = IKETCP_OPEN;
 
 	/* set up a timeout to kill the socket when nothing happens */
 	fire_timer_photon_torpedo(&ifp->iketcp_timeout, iketcp_timeout,
-				  ifp, deltatime(1));
+				  ifp, deltatime(5)); /* TCP: how much? */
 
 	ifp->pev = add_fd_read_event_handler(ifp->fd,
 					     iketcp_handle_packet_cb,
@@ -409,8 +435,6 @@ static int bind_tcp_socket(const struct iface_dev *ifd, int port)
 				LOG_ERRNO(errno, "setsockopt(SO_SNDBUFFORCE) in find_raw_ifaces4()");
 		}
 	}
-
-
 
 	/* To improve error reporting.  See ip(7). */
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)

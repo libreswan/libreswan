@@ -291,21 +291,26 @@ static void process_md(struct msg_digest **mdp)
 
 static bool impair_incoming(struct msg_digest *md);
 
-void handle_packet_cb(const struct iface_port *ifp)
+bool handle_packet_cb(const struct iface_port *ifp)
 {
+	bool ok;
 	threadtime_t md_start = threadtime_start();
 	struct msg_digest *md = read_message(ifp);
 	if (md != NULL) {
+		ok = true;
 		md->md_inception = md_start;
 		if (!impair_incoming(md)) {
 			process_md(&md);
 		}
 		md_delref(&md, HERE);
 		pexpect(md == NULL);
+	} else {
+		ok = false;
 	}
 	threadtime_stop(&md_start, SOS_NOBODY,
 			"%s() reading and processing packet", __func__);
 	pexpect_reset_globals();
+	return ok;
 }
 
 /*
