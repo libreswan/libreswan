@@ -1,0 +1,11 @@
+IKEv2 Message ID deadlock test during rekey, dropping the response message.
+
+Response to the second rekey is delayed. While waiting for the response to rekey
+an INTFORMATIONAL, v2D, is sent out jumping the Message ID.The response to the
+rekey is dropped by the initiator.
+
+Test use PLUTO_CRYPTO_HELPER_DELAY=5 to re-create the situation.
+The issue was initially reported when running with 72 CHILD_SAs and rekeying them all.
+This kind of message deadlock would happen, and CHILD_SA would disappear, re-initiate.
+
+Delete message should not jump the queue, instead should wait for the rekeys to finish.

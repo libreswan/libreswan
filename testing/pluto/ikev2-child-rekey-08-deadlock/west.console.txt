@@ -1,0 +1,308 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec whack --impair revival
+west #
+ ipsec whack --impair suppress-retransmits
+west #
+ ipsec auto --add west-east
+002 added connection description "west-east/1x0"
+002 added connection description "west-east/2x0"
+002 added connection description "west-east/3x0"
+002 added connection description "west-east/4x0"
+west #
+ sleep 4
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up west-east
+000 initiating all conns with alias='west-east'
+1v2 "west-east/4x0" #1: initiating IKEv2 IKE SA
+000 "west-east/3x0": queuing pending IPsec SA negotiating with 192.1.2.23 IKE SA #1 "west-east/4x0"
+000 "west-east/2x0": queuing pending IPsec SA negotiating with 192.1.2.23 IKE SA #1 "west-east/4x0"
+000 "west-east/1x0": queuing pending IPsec SA negotiating with 192.1.2.23 IKE SA #1 "west-east/4x0"
+1v2 "west-east/4x0" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "west-east/4x0" #1: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "west-east/1x0" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "west-east/4x0" #1: authenticated using authby=secret
+002 "west-east/1x0" #2: negotiated connection [192.0.1.254-192.0.1.254:0-65535 0] -> [192.0.2.254-192.0.2.254:0-65535 0]
+004 "west-east/1x0" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+1v2 "west-east/2x0" #3: STATE_V2_CREATE_I: sent IPsec Child req wait response
+002 "west-east/2x0" #3: negotiated connection [192.0.1.253-192.0.1.253:0-65535 0] -> [192.0.2.254-192.0.2.254:0-65535 0]
+004 "west-east/2x0" #3: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+1v2 "west-east/3x0" #4: STATE_V2_CREATE_I: sent IPsec Child req wait response
+002 "west-east/3x0" #4: negotiated connection [192.0.1.252-192.0.1.252:0-65535 0] -> [192.0.2.254-192.0.2.254:0-65535 0]
+004 "west-east/3x0" #4: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+1v2 "west-east/4x0" #5: STATE_V2_CREATE_I: sent IPsec Child req wait response
+002 "west-east/4x0" #5: negotiated connection [192.0.1.251-192.0.1.251:0-65535 0] -> [192.0.2.254-192.0.2.254:0-65535 0]
+004 "west-east/4x0" #5: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+west #
+ # state #1(STATE_PARENT_I3), #2, #3, #4, and #5
+west #
+ ipsec status | grep STATE_
+000 #2: "west-east/1x0":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #3: "west-east/2x0":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #4: "west-east/3x0":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #1: "west-east/4x0":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
+000 #5: "west-east/4x0":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+west #
+ ipsec whack --rekey-ipsec --name west-east/1x0
+west #
+ ipsec whack --rekey-ipsec --name west-east/2x0
+west #
+ ipsec whack --rekey-ipsec --name west-east/3x0
+west #
+ ipsec whack --rekey-ipsec --name west-east/4x0
+west #
+ sleep 45
+west #
+ # state #1(STATE_PARENT_I3) #6, #7, #8  and #9 in STATE_V2_IPSEC_I
+west #
+ # anything other state is a sign of regression
+west #
+ ipsec status | grep STATE_
+000 #6: "west-east/1x0":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #7: "west-east/2x0":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #8: "west-east/3x0":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #1: "west-east/4x0":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
+000 #9: "west-east/4x0":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+west #
+ # this is complex grep line susceptible to changes to log lines.
+west #
+ # until we find better one keep this.
+west #
+ # May be once the bug is fixed comment it out?
+west #
+ grep -E  "Message ID:|emit IKEv2 Delete Payload|exchange type:|**emit ISAKMP Message|**parse ISAKMP Message" /tmp/pluto.log
+| Message ID: IKE #1 initializing (IKE SA): ike.initiator.sent=0->-1 ike.initiator.recv=0->-1 ike.responder.sent=0->-1 ike.responder.recv=0->-1 ike.wip.initiator=0->-1 ike.wip.responder=0->-1
+| **emit ISAKMP Message:
+|    exchange type: ISAKMP_v2_IKE_SA_INIT (0x22)
+|    Message ID: 0 (00 00 00 00)
+| Message ID: updating counters for #1
+| Message ID: IKE #1 skipping update_recv as MD is fake
+| Message ID: IKE #1 updating initiator sent message request 0: ike.initiator.sent=-1->0 ike.initiator.recv=-1 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=-1->0 ike.wip.responder=-1
+| Message ID: IKE #1 no pending message initiators to schedule: ike.initiator.sent=0 ike.initiator.recv=-1 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=0 ike.wip.responder=-1
+| **parse ISAKMP Message:
+|    exchange type: ISAKMP_v2_IKE_SA_INIT (0x22)
+|    Message ID: 0 (00 00 00 00)
+| Message ID: CHILD #1.#2 initializing (CHILD SA): ike.initiator.sent=0 ike.initiator.recv=-1 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=0->-1 child.wip.responder=0->-1
+| Message ID: IKE #1 switching from IKE SA initiator message response 0: ike.initiator.sent=0 ike.initiator.recv=-1 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=0->-1 ike.wip.responder=-1
+| Message ID: CHILD #1.#2 switching to CHILD SA initiator message response 0: ike.initiator.sent=0 ike.initiator.recv=-1 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1->0 child.wip.responder=-1
+| **emit ISAKMP Message:
+|    exchange type: ISAKMP_v2_IKE_AUTH (0x23)
+|    Message ID: 1 (00 00 00 01)
+| Message ID: updating counters for #2
+| Message ID: CHILD #1.#2 updating initiator received message response 0: ike.initiator.sent=0 ike.initiator.recv=-1->0 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=0->-1 child.wip.responder=-1
+| Message ID: CHILD #1.#2 updating initiator sent message request 1: ike.initiator.sent=0->1 ike.initiator.recv=0 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1->1 child.wip.responder=-1
+| Message ID: IKE #1 no pending message initiators to schedule: ike.initiator.sent=1 ike.initiator.recv=0 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=-1 ike.wip.responder=-1
+| **parse ISAKMP Message:
+|    exchange type: ISAKMP_v2_IKE_AUTH (0x23)
+|    Message ID: 1 (00 00 00 01)
+| Message ID: updating counters for #2
+| Message ID: CHILD #1.#2 updating initiator received message response 1: ike.initiator.sent=1 ike.initiator.recv=0->1 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=1->-1 child.wip.responder=-1
+| Message ID: CHILD #1.#2 skipping update_send as nothing to send: ike.initiator.sent=1 ike.initiator.recv=1 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: IKE #1 no pending message initiators to schedule: ike.initiator.sent=1 ike.initiator.recv=1 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=-1 ike.wip.responder=-1
+| Message ID: CHILD #1.#3 initializing (CHILD SA): ike.initiator.sent=1 ike.initiator.recv=1 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=0->-1 child.wip.responder=0->-1
+| Message ID: CHILD #1.#4 initializing (CHILD SA): ike.initiator.sent=1 ike.initiator.recv=1 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=0->-1 child.wip.responder=0->-1
+| Message ID: CHILD #1.#5 initializing (CHILD SA): ike.initiator.sent=1 ike.initiator.recv=1 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=0->-1 child.wip.responder=0->-1
+| Message ID: CHILD #1.#3 wakeing IKE SA for next initiator (unack 0): ike.initiator.sent=1 ike.initiator.recv=1 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#3 wakeing IKE SA for next initiator (unack 0): ike.initiator.sent=1 ike.initiator.recv=1 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#3 wakeing IKE SA for next initiator (unack 0): ike.initiator.sent=1 ike.initiator.recv=1 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#3 resuming SA using IKE SA (unack 0): ike.initiator.sent=1 ike.initiator.recv=1 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| **emit ISAKMP Message:
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
+|    Message ID: 2 (00 00 00 02)
+| Message ID: updating counters for #3
+| Message ID: IKE #1 skipping update_recv as MD is fake
+| Message ID: CHILD #1.#3 updating initiator sent message request 2: ike.initiator.sent=1->2 ike.initiator.recv=1 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1->2 child.wip.responder=-1
+| Message ID: CHILD #1.#4 next initiator blocked by outstanding response (unack 1): ike.initiator.sent=2 ike.initiator.recv=1 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| **parse ISAKMP Message:
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
+|    Message ID: 2 (00 00 00 02)
+| Message ID: updating counters for #3
+| Message ID: CHILD #1.#3 updating initiator received message response 2: ike.initiator.sent=2 ike.initiator.recv=1->2 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=2->-1 child.wip.responder=-1
+| Message ID: CHILD #1.#3 skipping update_send as nothing to send: ike.initiator.sent=2 ike.initiator.recv=2 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#4 wakeing IKE SA for next initiator (unack 0): ike.initiator.sent=2 ike.initiator.recv=2 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#4 resuming SA using IKE SA (unack 0): ike.initiator.sent=2 ike.initiator.recv=2 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| **emit ISAKMP Message:
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
+|    Message ID: 3 (00 00 00 03)
+| Message ID: updating counters for #4
+| Message ID: IKE #1 skipping update_recv as MD is fake
+| Message ID: CHILD #1.#4 updating initiator sent message request 3: ike.initiator.sent=2->3 ike.initiator.recv=2 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1->3 child.wip.responder=-1
+| Message ID: CHILD #1.#5 next initiator blocked by outstanding response (unack 1): ike.initiator.sent=3 ike.initiator.recv=2 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| **parse ISAKMP Message:
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
+|    Message ID: 3 (00 00 00 03)
+| Message ID: updating counters for #4
+| Message ID: CHILD #1.#4 updating initiator received message response 3: ike.initiator.sent=3 ike.initiator.recv=2->3 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=3->-1 child.wip.responder=-1
+| Message ID: CHILD #1.#4 skipping update_send as nothing to send: ike.initiator.sent=3 ike.initiator.recv=3 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#5 wakeing IKE SA for next initiator (unack 0): ike.initiator.sent=3 ike.initiator.recv=3 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#5 resuming SA using IKE SA (unack 0): ike.initiator.sent=3 ike.initiator.recv=3 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| **emit ISAKMP Message:
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
+|    Message ID: 4 (00 00 00 04)
+| Message ID: updating counters for #5
+| Message ID: IKE #1 skipping update_recv as MD is fake
+| Message ID: CHILD #1.#5 updating initiator sent message request 4: ike.initiator.sent=3->4 ike.initiator.recv=3 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1->4 child.wip.responder=-1
+| Message ID: IKE #1 no pending message initiators to schedule: ike.initiator.sent=4 ike.initiator.recv=3 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=-1 ike.wip.responder=-1
+| **parse ISAKMP Message:
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
+|    Message ID: 4 (00 00 00 04)
+| Message ID: updating counters for #5
+| Message ID: CHILD #1.#5 updating initiator received message response 4: ike.initiator.sent=4 ike.initiator.recv=3->4 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=4->-1 child.wip.responder=-1
+| Message ID: CHILD #1.#5 skipping update_send as nothing to send: ike.initiator.sent=4 ike.initiator.recv=4 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: IKE #1 no pending message initiators to schedule: ike.initiator.sent=4 ike.initiator.recv=4 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=-1 ike.wip.responder=-1
+| Message ID: CHILD #1.#6 initializing (CHILD SA): ike.initiator.sent=4 ike.initiator.recv=4 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=0->-1 child.wip.responder=0->-1
+| Message ID: CHILD #1.#6 wakeing IKE SA for next initiator (unack 0): ike.initiator.sent=4 ike.initiator.recv=4 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#6 resuming SA using IKE SA (unack 0): ike.initiator.sent=4 ike.initiator.recv=4 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| **emit ISAKMP Message:
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
+|    Message ID: 5 (00 00 00 05)
+| Message ID: updating counters for #6
+| Message ID: IKE #1 skipping update_recv as MD is fake
+| Message ID: CHILD #1.#6 updating initiator sent message request 5: ike.initiator.sent=4->5 ike.initiator.recv=4 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1->5 child.wip.responder=-1
+| Message ID: IKE #1 no pending message initiators to schedule: ike.initiator.sent=5 ike.initiator.recv=4 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=-1 ike.wip.responder=-1
+| Message ID: CHILD #1.#7 initializing (CHILD SA): ike.initiator.sent=5 ike.initiator.recv=4 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=0->-1 child.wip.responder=0->-1
+| Message ID: CHILD #1.#7 next initiator blocked by outstanding response (unack 1): ike.initiator.sent=5 ike.initiator.recv=4 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#8 initializing (CHILD SA): ike.initiator.sent=5 ike.initiator.recv=4 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=0->-1 child.wip.responder=0->-1
+| Message ID: CHILD #1.#7 next initiator blocked by outstanding response (unack 1): ike.initiator.sent=5 ike.initiator.recv=4 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#9 initializing (CHILD SA): ike.initiator.sent=5 ike.initiator.recv=4 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=0->-1 child.wip.responder=0->-1
+| Message ID: CHILD #1.#7 next initiator blocked by outstanding response (unack 1): ike.initiator.sent=5 ike.initiator.recv=4 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| **parse ISAKMP Message:
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
+|    Message ID: 5 (00 00 00 05)
+| Message ID: updating counters for #6
+| Message ID: CHILD #1.#6 updating initiator received message response 5: ike.initiator.sent=5 ike.initiator.recv=4->5 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=5->-1 child.wip.responder=-1
+| Message ID: CHILD #1.#6 skipping update_send as nothing to send: ike.initiator.sent=5 ike.initiator.recv=5 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#7 wakeing IKE SA for next initiator (unack 0): ike.initiator.sent=5 ike.initiator.recv=5 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#7 resuming SA using IKE SA (unack 0): ike.initiator.sent=5 ike.initiator.recv=5 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| **emit ISAKMP Message:
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
+|    Message ID: 6 (00 00 00 06)
+| Message ID: updating counters for #7
+| Message ID: IKE #1 skipping update_recv as MD is fake
+| Message ID: CHILD #1.#7 updating initiator sent message request 6: ike.initiator.sent=5->6 ike.initiator.recv=5 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1->6 child.wip.responder=-1
+| Message ID: CHILD #1.#8 next initiator blocked by outstanding response (unack 1): ike.initiator.sent=6 ike.initiator.recv=5 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#2 next initiator (send delete) blocked by outstanding response (unack 1). add delete to Q: ike.initiator.sent=6 ike.initiator.recv=5 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#2 next initiator blocked by outstanding response (unack 1): ike.initiator.sent=6 ike.initiator.recv=5 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| **parse ISAKMP Message:
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
+|    Message ID: 6 (00 00 00 06)
+| Message ID: updating counters for #7
+| Message ID: CHILD #1.#7 updating initiator received message response 6: ike.initiator.sent=6 ike.initiator.recv=5->6 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=6->-1 child.wip.responder=-1
+| Message ID: CHILD #1.#7 skipping update_send as nothing to send: ike.initiator.sent=6 ike.initiator.recv=6 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#2 wakeing IKE SA for next initiator (unack 0): ike.initiator.sent=6 ike.initiator.recv=6 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#2 resuming SA using IKE SA (unack 0): ike.initiator.sent=6 ike.initiator.recv=6 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| **emit ISAKMP Message:
+|    exchange type: ISAKMP_v2_INFORMATIONAL (0x25)
+|    Message ID: 7 (00 00 00 07)
+| ****emit IKEv2 Delete Payload:
+| Message ID: IKE #1 sender #2 in send_delete hacking around record ' send
+| Message ID: IKE #1 updating initiator sent message request 7: ike.initiator.sent=6->7 ike.initiator.recv=6 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=-1->7 ike.wip.responder=-1
+| Message ID: CHILD #1.#8 next initiator blocked by outstanding response (unack 1): ike.initiator.sent=7 ike.initiator.recv=6 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| **parse ISAKMP Message:
+|    exchange type: ISAKMP_v2_INFORMATIONAL (0x25)
+|    Message ID: 7 (00 00 00 07)
+| Message ID: updating counters for #1
+| Message ID: IKE #1 updating initiator received message response 7: ike.initiator.sent=7 ike.initiator.recv=6->7 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=7->-1 ike.wip.responder=-1
+| Message ID: IKE #1 skipping update_send as nothing to send: ike.initiator.sent=7 ike.initiator.recv=7 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=-1 ike.wip.responder=-1
+| Message ID: CHILD #1.#8 wakeing IKE SA for next initiator (unack 0): ike.initiator.sent=7 ike.initiator.recv=7 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#8 resuming SA using IKE SA (unack 0): ike.initiator.sent=7 ike.initiator.recv=7 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| **emit ISAKMP Message:
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
+|    Message ID: 8 (00 00 00 08)
+| Message ID: updating counters for #8
+| Message ID: IKE #1 skipping update_recv as MD is fake
+| Message ID: CHILD #1.#8 updating initiator sent message request 8: ike.initiator.sent=7->8 ike.initiator.recv=7 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1->8 child.wip.responder=-1
+| Message ID: CHILD #1.#9 next initiator blocked by outstanding response (unack 1): ike.initiator.sent=8 ike.initiator.recv=7 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#3 next initiator (send delete) blocked by outstanding response (unack 1). add delete to Q: ike.initiator.sent=8 ike.initiator.recv=7 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#3 next initiator blocked by outstanding response (unack 1): ike.initiator.sent=8 ike.initiator.recv=7 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| **parse ISAKMP Message:
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
+|    Message ID: 8 (00 00 00 08)
+| Message ID: updating counters for #8
+| Message ID: CHILD #1.#8 updating initiator received message response 8: ike.initiator.sent=8 ike.initiator.recv=7->8 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=8->-1 child.wip.responder=-1
+| Message ID: CHILD #1.#8 skipping update_send as nothing to send: ike.initiator.sent=8 ike.initiator.recv=8 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#3 wakeing IKE SA for next initiator (unack 0): ike.initiator.sent=8 ike.initiator.recv=8 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#3 resuming SA using IKE SA (unack 0): ike.initiator.sent=8 ike.initiator.recv=8 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| **emit ISAKMP Message:
+|    exchange type: ISAKMP_v2_INFORMATIONAL (0x25)
+|    Message ID: 9 (00 00 00 09)
+| ****emit IKEv2 Delete Payload:
+| Message ID: IKE #1 sender #3 in send_delete hacking around record ' send
+| Message ID: IKE #1 updating initiator sent message request 9: ike.initiator.sent=8->9 ike.initiator.recv=8 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=-1->9 ike.wip.responder=-1
+| Message ID: CHILD #1.#9 next initiator blocked by outstanding response (unack 1): ike.initiator.sent=9 ike.initiator.recv=8 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| **parse ISAKMP Message:
+|    exchange type: ISAKMP_v2_INFORMATIONAL (0x25)
+|    Message ID: 9 (00 00 00 09)
+| Message ID: updating counters for #1
+| Message ID: IKE #1 updating initiator received message response 9: ike.initiator.sent=9 ike.initiator.recv=8->9 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=9->-1 ike.wip.responder=-1
+| Message ID: IKE #1 skipping update_send as nothing to send: ike.initiator.sent=9 ike.initiator.recv=9 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=-1 ike.wip.responder=-1
+| Message ID: CHILD #1.#9 wakeing IKE SA for next initiator (unack 0): ike.initiator.sent=9 ike.initiator.recv=9 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#9 resuming SA using IKE SA (unack 0): ike.initiator.sent=9 ike.initiator.recv=9 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| **emit ISAKMP Message:
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
+|    Message ID: 10 (00 00 00 0a)
+| Message ID: updating counters for #9
+| Message ID: IKE #1 skipping update_recv as MD is fake
+| Message ID: CHILD #1.#9 updating initiator sent message request 10: ike.initiator.sent=9->10 ike.initiator.recv=9 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1->10 child.wip.responder=-1
+| Message ID: IKE #1 no pending message initiators to schedule: ike.initiator.sent=10 ike.initiator.recv=9 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=-1 ike.wip.responder=-1
+| Message ID: CHILD #1.#4 next initiator (send delete) blocked by outstanding response (unack 1). add delete to Q: ike.initiator.sent=10 ike.initiator.recv=9 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#4 next initiator blocked by outstanding response (unack 1): ike.initiator.sent=10 ike.initiator.recv=9 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| **parse ISAKMP Message:
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
+|    Message ID: 10 (00 00 00 0a)
+| Message ID: updating counters for #9
+| Message ID: CHILD #1.#9 updating initiator received message response 10: ike.initiator.sent=10 ike.initiator.recv=9->10 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=10->-1 child.wip.responder=-1
+| Message ID: CHILD #1.#9 skipping update_send as nothing to send: ike.initiator.sent=10 ike.initiator.recv=10 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#4 wakeing IKE SA for next initiator (unack 0): ike.initiator.sent=10 ike.initiator.recv=10 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| Message ID: CHILD #1.#4 resuming SA using IKE SA (unack 0): ike.initiator.sent=10 ike.initiator.recv=10 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1 child.wip.responder=-1
+| **emit ISAKMP Message:
+|    exchange type: ISAKMP_v2_INFORMATIONAL (0x25)
+|    Message ID: 11 (00 00 00 0b)
+| ****emit IKEv2 Delete Payload:
+| Message ID: IKE #1 sender #4 in send_delete hacking around record ' send
+| Message ID: IKE #1 updating initiator sent message request 11: ike.initiator.sent=10->11 ike.initiator.recv=10 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=-1->11 ike.wip.responder=-1
+| Message ID: IKE #1 no pending message initiators to schedule: ike.initiator.sent=11 ike.initiator.recv=10 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=11 ike.wip.responder=-1
+| **parse ISAKMP Message:
+|    exchange type: ISAKMP_v2_INFORMATIONAL (0x25)
+|    Message ID: 11 (00 00 00 0b)
+| Message ID: updating counters for #1
+| Message ID: IKE #1 updating initiator received message response 11: ike.initiator.sent=11 ike.initiator.recv=10->11 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=11->-1 ike.wip.responder=-1
+| Message ID: IKE #1 skipping update_send as nothing to send: ike.initiator.sent=11 ike.initiator.recv=11 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=-1 ike.wip.responder=-1
+| Message ID: IKE #1 no pending message initiators to schedule: ike.initiator.sent=11 ike.initiator.recv=11 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=-1 ike.wip.responder=-1
+| **emit ISAKMP Message:
+|    exchange type: ISAKMP_v2_INFORMATIONAL (0x25)
+|    Message ID: 12 (00 00 00 0c)
+| ****emit IKEv2 Delete Payload:
+| Message ID: IKE #1 sender #5 in send_delete hacking around record ' send
+| Message ID: IKE #1 updating initiator sent message request 12: ike.initiator.sent=11->12 ike.initiator.recv=11 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=-1->12 ike.wip.responder=-1
+| **parse ISAKMP Message:
+|    exchange type: ISAKMP_v2_INFORMATIONAL (0x25)
+|    Message ID: 12 (00 00 00 0c)
+| Message ID: updating counters for #1
+| Message ID: IKE #1 updating initiator received message response 12: ike.initiator.sent=12 ike.initiator.recv=11->12 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=12->-1 ike.wip.responder=-1
+| Message ID: IKE #1 skipping update_send as nothing to send: ike.initiator.sent=12 ike.initiator.recv=12 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=-1 ike.wip.responder=-1
+| Message ID: IKE #1 no pending message initiators to schedule: ike.initiator.sent=12 ike.initiator.recv=12 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=-1 ike.wip.responder=-1
+west #
+ echo done
+done
+west #
+ ipsec whack --trafficstatus
+006 #6: "west-east/1x0", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+006 #7: "west-east/2x0", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+006 #8: "west-east/3x0", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+006 #9: "west-east/4x0", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+west #
+ # policies and state should be multiple
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

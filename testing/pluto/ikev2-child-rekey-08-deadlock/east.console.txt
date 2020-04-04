@@ -1,0 +1,31 @@
+/testing/guestbin/swan-prep
+east #
+ export PLUTO_CRYPTO_HELPER_DELAY=5; export EF_DISABLE_BANNER=1; ipsec pluto  --config /etc/ipsec.conf
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add west-east
+002 added connection description "west-east/1x0"
+002 added connection description "west-east/2x0"
+002 added connection description "west-east/3x0"
+002 added connection description "west-east/4x0"
+east #
+ ipsec whack --impair revival
+east #
+ ipsec whack --impair suppress-retransmits
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec whack --trafficstatus
+006 #6: "west-east/1x0", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@west'
+006 #7: "west-east/2x0", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@west'
+006 #8: "west-east/3x0", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@west'
+006 #9: "west-east/4x0", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@west'
+east #
+ # policies and state should be multiple
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

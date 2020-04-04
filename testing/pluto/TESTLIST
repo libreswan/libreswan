@@ -657,6 +657,7 @@ kvmplutotest	ikev2-child-rekey-03		wip
 kvmplutotest	ikev2-child-rekey-05		wip # it exists, wasnt in thelist?
 kvmplutotest	ikev2-child-rekey-06-deadlock	good
 kvmplutotest	ikev2-child-rekey-07-deadlock	good
+kvmplutotest	ikev2-child-rekey-08-deadlock	wip
 kvmplutotest	ikev2-child-dual-asym-01	good
 kvmplutotest	ikev2-ike-rekey-01		good
 kvmplutotest	ikev2-ike-rekey-02		good
