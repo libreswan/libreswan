@@ -1,4 +1,4 @@
-send() { ( printf "$@" ; sleep 1000 ; echo timeout 1>&2 ) | ncat east 4500 ; }
+send() { printf "$@" | ncat east 4500 ; }
 # open the TCP socket
 send ''
 # open the TCP socket, send one byte

@@ -1,0 +1,4 @@
+IKEv2 TCP with truncated initial packet + close
+
+West sends an incomplete IKETCP request and then closes STDIN.  East
+(or the kernel) is expected to detect this and close the TCP stream.
