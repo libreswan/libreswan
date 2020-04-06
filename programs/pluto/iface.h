@@ -92,6 +92,7 @@ struct iface_port {
 	struct evconnlistener *tcp_accept_listener;
 	/* tcp stream only */
 	ip_endpoint iketcp_remote_endpoint;
+	bool iketcp_server;
 	enum iketcp_state { IKETCP_OPEN = 1, IKETCP_PREFIXED, IKETCP_RUNNING, } iketcp_state;
 	struct event *iketcp_timeout;
 };

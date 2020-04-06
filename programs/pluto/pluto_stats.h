@@ -51,6 +51,10 @@ extern unsigned long pstats_ike_dpd_recv;
 extern unsigned long pstats_ike_dpd_sent;
 extern unsigned long pstats_ike_dpd_replied;
 
+extern unsigned long pstats_iketcp_started[2];
+extern unsigned long pstats_iketcp_aborted[2];
+extern unsigned long pstats_iketcp_stopped[2];
+
 extern unsigned long pstats_xauth_started;
 extern unsigned long pstats_xauth_stopped;
 extern unsigned long pstats_xauth_aborted;

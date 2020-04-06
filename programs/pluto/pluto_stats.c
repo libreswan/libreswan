@@ -79,6 +79,9 @@ unsigned long pstats_ipsec_tfc;
 unsigned long pstats_ike_dpd_recv;
 unsigned long pstats_ike_dpd_sent;
 unsigned long pstats_ike_dpd_replied;
+unsigned long pstats_iketcp_started[2];
+unsigned long pstats_iketcp_stopped[2];
+unsigned long pstats_iketcp_aborted[2];
 unsigned long pstats_xauth_started;
 unsigned long pstats_xauth_stopped;
 unsigned long pstats_xauth_aborted;
@@ -428,6 +431,13 @@ void show_pluto_stats(const struct fd *whackfd)
 	whack_print(whackfd, "total.xauth.stopped=%lu", pstats_xauth_stopped);
 	whack_print(whackfd, "total.xauth.aborted=%lu", pstats_xauth_aborted);
 
+	whack_print(whackfd, "total.iketcp.client.started=%lu", pstats_iketcp_started[false]);
+	whack_print(whackfd, "total.iketcp.client.stopped=%lu", pstats_iketcp_stopped[false]);
+	whack_print(whackfd, "total.iketcp.client.aborted=%lu", pstats_iketcp_aborted[false]);
+	whack_print(whackfd, "total.iketcp.server.started=%lu", pstats_iketcp_started[true]);
+	whack_print(whackfd, "total.iketcp.server.stopped=%lu", pstats_iketcp_stopped[true]);
+	whack_print(whackfd, "total.iketcp.server.aborted=%lu", pstats_iketcp_aborted[true]);
+
 	ENUM_STATS(&oakley_enc_names, OAKLEY_3DES_CBC, "ikev1.encr", pstats_ikev1_encr);
 	ENUM_STATS(&oakley_hash_names, OAKLEY_MD5, "ikev1.integ", pstats_ikev1_integ);
 	ENUM_STATS(&oakley_group_names, OAKLEY_GROUP_MODP768, "ikev1.group", pstats_ikev1_groups);
@@ -484,6 +494,10 @@ void clear_pluto_stats(void)
 	pstats_ipsec_esn = pstats_ipsec_tfc = 0;
 	pstats_ike_dpd_recv = pstats_ike_dpd_sent = pstats_ike_dpd_replied = 0;
 	pstats_xauth_started = pstats_xauth_stopped = pstats_xauth_aborted = 0;
+
+	memset(pstats_iketcp_started, 0, sizeof(pstats_iketcp_started));
+	memset(pstats_iketcp_stopped, 0, sizeof(pstats_iketcp_stopped));
+	memset(pstats_iketcp_aborted, 0, sizeof(pstats_iketcp_aborted));
 
 	memset(pstats_ikev1_encr, 0, sizeof pstats_ikev1_encr);
 	memset(pstats_ikev2_encr, 0, sizeof pstats_ikev2_encr);

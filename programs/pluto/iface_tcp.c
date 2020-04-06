@@ -48,6 +48,7 @@
 #include "log.h"
 #include "ip_info.h"
 #include "nat_traversal.h"	/* for nat_traversal_enabled which seems like a broken idea */
+#include "pluto_stats.h"
 
 static enum iface_status iketcp_read_packet(const struct iface_port *ifp,
 					    struct iface_packet *packet)
@@ -122,6 +123,14 @@ static ssize_t iketcp_write_packet(const struct iface_port *ifp,
 static void iketcp_cleanup(struct iface_port *ifp)
 {
 	dbg("TCP: cleaning up interface");
+	switch (ifp->iketcp_state) {
+	case IKETCP_RUNNING:
+		pstats_iketcp_stopped[ifp->iketcp_server]++;
+		break;
+	default:
+		pstats_iketcp_aborted[ifp->iketcp_server]++;
+		break;
+	}
 	pexpect(ifp->pev == NULL);
 	pexpect(ifp->fd < 0);
 	pexpect(ifp->ip_dev == NULL);
@@ -133,9 +142,9 @@ static void iketcp_cleanup(struct iface_port *ifp)
 	}
 }
 
-static void iketcp_timeout(evutil_socket_t unused_fd UNUSED,
-			   const short unused_event UNUSED,
-			   void *arg UNUSED)
+static void iketcp_server_timeout(evutil_socket_t unused_fd UNUSED,
+				  const short unused_event UNUSED,
+				  void *arg UNUSED)
 {
 	struct iface_port *ifp = arg;
 	struct logger logger = FROM_LOGGER(&ifp->iketcp_remote_endpoint);
@@ -342,6 +351,7 @@ stf_status create_tcp_interface(struct state *st)
 	q->protocol = &ip_protocol_tcp;
 	q->iketcp_remote_endpoint = st->st_remote_endpoint;
 	q->iketcp_state = IKETCP_OPEN;
+	q->iketcp_server = false;
 
 #if 0
 	q->next = interfaces;
@@ -353,6 +363,7 @@ stf_status create_tcp_interface(struct state *st)
 					   q, "iketcpX");
 
 	st->st_interface = q; /* TCP: leaks old st_interface? */
+	pstats_iketcp_started[q->iketcp_server]++;
 	return STF_OK;
 }
 
@@ -384,14 +395,16 @@ void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 	ifp->iketcp_remote_endpoint = tcp_remote_endpoint;
 	ifp->local_endpoint = bind_ifp->local_endpoint;
 	ifp->iketcp_state = IKETCP_OPEN;
+	ifp->iketcp_server = true;
 
 	/* set up a timeout to kill the socket when nothing happens */
-	fire_timer_photon_torpedo(&ifp->iketcp_timeout, iketcp_timeout,
+	fire_timer_photon_torpedo(&ifp->iketcp_timeout, iketcp_server_timeout,
 				  ifp, deltatime(5)); /* TCP: how much? */
 
 	ifp->pev = add_fd_read_event_handler(ifp->fd,
 					     iketcp_handle_packet_cb,
 					     ifp, "iketcpX");
+	pstats_iketcp_started[ifp->iketcp_server]++;
 }
 
 static int bind_tcp_socket(const struct iface_dev *ifd, int port)
