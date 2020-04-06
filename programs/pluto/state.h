@@ -58,6 +58,7 @@
 #include "crypt_mac.h"
 #include "show.h"
 
+struct state_v2_microcode;
 struct ikev2_ipseckey_dns; /* forward declaration of tag */
 
 struct state;   /* forward declaration of tag */
@@ -424,15 +425,14 @@ struct state {
 	chunk_t st_rpacket;			/* Received packet - v1 only */
 
 	/*
-	 * The last successful state transition (edge, microcode).
-	 * Used when transitioning to this current state.
+	 * State transition, both the one in progress and the most
+	 * recent The last successful state transition (edge,
+	 * microcode).  Used when transitioning to this current state.
 	 */
 	const struct state_v1_microcode *st_v1_last_transition;
-#if 0
-	const struct state_v1_microcode *st_v1_next_transition;
+	const struct state_v1_microcode *st_v1_transition; /* anyone? */
 	const struct state_v2_microcode *st_v2_last_transition;
-	const struct state_v2_microcode *st_v2_next_transition;
-#endif
+	const struct state_v2_microcode *st_v2_transition;
 
 	/* Initialization Vectors for IKEv1 IKE encryption */
 
@@ -809,7 +809,8 @@ extern bool states_use_connection(const struct connection *c);
 struct ike_sa *new_v1_istate(struct fd *whackfd);
 struct ike_sa *new_v1_rstate(struct msg_digest *md);
 
-struct ike_sa *new_v2_state(enum state_kind kind, enum sa_role sa_role,
+struct ike_sa *new_v2_state(const struct state_v2_microcode *transition,
+			    enum sa_role sa_role,
 			    const ike_spi_t ike_initiator_spi,
 			    const ike_spi_t ike_responder_spi,
 			    struct connection *c, lset_t policy,

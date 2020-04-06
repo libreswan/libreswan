@@ -512,7 +512,10 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 		}
 	}
 
-	struct ike_sa *ike = new_v2_state(STATE_PARENT_I0, SA_INITIATOR,
+	const struct finite_state *fs = finite_states[STATE_PARENT_I0];
+	pexpect(fs->nr_transitions == 1);
+	const struct state_v2_microcode *transition = &fs->v2_transitions[0];
+	struct ike_sa *ike = new_v2_state(transition, SA_INITIATOR,
 					  ike_initiator_spi(), zero_ike_spi,
 					  c, policy, try, whack_sock);
 	statetime_t start = statetime_backdate(&ike->sa, inception);

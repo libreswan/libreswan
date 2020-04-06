@@ -600,7 +600,8 @@ struct ike_sa *new_v1_rstate(struct msg_digest *md)
 	return ike;
 }
 
-struct ike_sa *new_v2_state(enum state_kind kind, enum sa_role sa_role,
+struct ike_sa *new_v2_state(const struct state_v2_microcode *transition,
+			    enum sa_role sa_role,
 			    const ike_spi_t ike_initiator_spi,
 			    const ike_spi_t ike_responder_spi,
 			    struct connection *c, lset_t policy,
@@ -609,18 +610,12 @@ struct ike_sa *new_v2_state(enum state_kind kind, enum sa_role sa_role,
 	struct state *st = new_state(IKEv2, &state_undefined,
 				     ike_initiator_spi, ike_responder_spi,
 				     IKE_SA, whack_sock);
-	st->st_sa_role = sa_role;
-	const struct finite_state *fs = finite_states[kind];
-	change_state(st, fs->kind);
 	struct ike_sa *ike = pexpect_ike_sa(st);
+	ike->sa.st_sa_role = sa_role;
+	const struct finite_state *fs = finite_states[transition->state];
+	change_state(&ike->sa, fs->kind);
+	ike->sa.st_v2_transition = transition;
 	v2_msgid_init_ike(ike);
-	/*
-	 * New states are never standing still - they are always in
-	 * transition to the next state.
-	 */
-	pexpect(fs->v2_transitions != NULL);
-	pexpect(fs->nr_transitions == 1);
-	/* st->st_v2_transition = fs->state_transitions[0] */
 	initialize_new_state(&ike->sa, c, policy, try);
 	return ike;
 }
