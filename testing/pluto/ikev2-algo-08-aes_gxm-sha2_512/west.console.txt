@@ -1,0 +1,45 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2-gcm-c
+002 added connection description "westnet-eastnet-ipv4-psk-ikev2-gcm-c"
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up westnet-eastnet-ipv4-psk-ikev2-gcm-c
+1v2 "westnet-eastnet-ipv4-psk-ikev2-gcm-c" #1: initiating IKEv2 IKE SA
+1v2 "westnet-eastnet-ipv4-psk-ikev2-gcm-c" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "westnet-eastnet-ipv4-psk-ikev2-gcm-c" #1: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "westnet-eastnet-ipv4-psk-ikev2-gcm-c" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "westnet-eastnet-ipv4-psk-ikev2-gcm-c" #1: authenticated using authby=secret
+002 "westnet-eastnet-ipv4-psk-ikev2-gcm-c" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "westnet-eastnet-ipv4-psk-ikev2-gcm-c" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+west #
+ MIN_IKEV2_NONCE_SHA2_512="32"
+west #
+ emit_nonce="$(grep 'IKEv2 nonce into IKEv2 Nonce Payload' /tmp/pluto.log | grep 'emitting' | sed 's/^.*emitting \([^ ]\+\) raw .*$/\1/' | head -n 1)"
+west #
+ recv_nonce="$(expr $(grep -A 3 '***parse IKEv2 Nonce Payload:' /tmp/pluto.log | grep 'length:' | sed 's/^.*length: \([^ ]\+\) .*$/\1/' | head -n 1) - 4)"
+west #
+ echo "emited nonce length (${emit_nonce}) should be >= minimum accepted nonce length for SHA2_512 (${MIN_IKEV2_NONCE_SHA2_512})"
+emited nonce length (32) should be >= minimum accepted nonce length for SHA2_512 (32)
+west #
+ test ${emit_nonce} -ge ${MIN_IKEV2_NONCE_SHA2_512} || echo failed
+west #
+ echo "received nonce length (${recv_nonce}) should be >= minimum accepted nonce length for SHA2_512 (${MIN_IKEV2_NONCE_SHA2_512})"
+received nonce length (32) should be >= minimum accepted nonce length for SHA2_512 (32)
+west #
+ test ${recv_nonce} -ge ${MIN_IKEV2_NONCE_SHA2_512} || echo failed
+west #
+ echo done
+done
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
