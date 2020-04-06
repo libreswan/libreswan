@@ -1,2 +1,2 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --46
 echo "initdone"

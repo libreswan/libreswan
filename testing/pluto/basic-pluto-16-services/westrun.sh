@@ -36,6 +36,8 @@ service ipsec status || echo failed
 service ipsec start || echo failed
 service ipsec condrestart || echo failed
 service ipsec status || echo failed	
+# test for rhbz#1127313 (IPsec holes for IPv6 neighbour discovery)
+ip -o xfrm pol |grep ipv6-icmp
 # test for rhbz#1572620
 ipsec auto --add mytunnel
 # will fail

@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --46
 west #
  echo "initdone"
 initdone
@@ -426,6 +426,16 @@ TIMESTAMP west systemd[1]: Starting Internet Key Exchange (IKE) Prot…ec...
 TIMESTAMP west ipsec[XXX]: nflog ipsec capture disabled
 TIMESTAMP west systemd[1]: Started Internet Key Exchange (IKE) Proto…Psec.
 Hint: Some lines were ellipsized, use -l to show in full.
+west #
+ # test for rhbz#1127313 (IPsec holes for IPv6 neighbour discovery)
+west #
+ ip -o xfrm pol |grep ipv6-icmp
+src ::/0 dst ::/0 proto ipv6-icmp type 135 \	dir out priority 1 ptype main \
+src ::/0 dst ::/0 proto ipv6-icmp type 135 \	dir fwd priority 1 ptype main \
+src ::/0 dst ::/0 proto ipv6-icmp type 135 \	dir in priority 1 ptype main \
+src ::/0 dst ::/0 proto ipv6-icmp type 136 \	dir out priority 1 ptype main \
+src ::/0 dst ::/0 proto ipv6-icmp type 136 \	dir fwd priority 1 ptype main \
+src ::/0 dst ::/0 proto ipv6-icmp type 136 \	dir in priority 1 ptype main \
 west #
  # test for rhbz#1572620
 west #
