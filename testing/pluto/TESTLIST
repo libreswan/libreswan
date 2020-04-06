@@ -209,6 +209,7 @@ kvmplutotest	ikev2-algo-04-aes-gcm256		good
 kvmplutotest	ikev2-algo-05-aes-default		good
 kvmplutotest	ikev2-algo-06-aes-aes_xcbc		good
 kvmplutotest	ikev2-algo-07-aes_ctr			good
+kvmplutotest	ikev2-algo-08-aes_gxm-sha2_512		good
 kvmplutotest	ikev2-algo-09-camellia			good
 kvmplutotest	ikev2-algo-10-aes-gcm128		good
 kvmplutotest	ikev2-algo-11-gcm-prop2			good
