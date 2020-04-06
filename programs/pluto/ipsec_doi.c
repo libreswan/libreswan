@@ -503,7 +503,7 @@ void send_delete(struct state *st)
 			 * that the next packet will be sent before
 			 * this one has had a response.
 			 */
-			dbg("Message ID: IKE #%lu sender #%lu in %s hacking around record ' send",
+			dbg("Message ID: IKE #%lu sender #%lu in %s hacking around record 'n' send",
 			    ike->sa.st_serialno, st->st_serialno, __func__);
 			v2_msgid_update_sent(ike, &ike->sa, NULL/*new exchange*/, MESSAGE_REQUEST);
 			break;
