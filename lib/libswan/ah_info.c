@@ -32,15 +32,15 @@
 static bool ah_proposal_ok(struct proposal_parser *parser,
 			   const struct proposal *proposal)
 {
-	impaired_passert(PROPOSAL_PARSER,
+	impaired_passert(proposal_parser,
 			 next_algorithm(proposal, PROPOSAL_encrypt, NULL) == NULL);
-	impaired_passert(PROPOSAL_PARSER,
+	impaired_passert(proposal_parser,
 			 next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL);
-	impaired_passert(PROPOSAL_PARSER,
+	impaired_passert(proposal_parser,
 			 next_algorithm(proposal, PROPOSAL_integ, NULL) != NULL);
 
 	/* ah=null is invalid */
-	if (!IMPAIR(ALLOW_NULL_NONE)) {
+	if (!impair.allow_null_none) {
 		FOR_EACH_ALGORITHM(proposal, integ, alg) {
 			/* passerts */
 			const struct integ_desc *integ = integ_desc(alg->desc);

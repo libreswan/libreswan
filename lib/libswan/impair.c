@@ -67,137 +67,61 @@ struct impairment {
 
 struct impairment impairments[] = {
 	{ .what = NULL, },
-#define V(V) .value = &impair.V, .sizeof_value = sizeof(impair.V)
+#define V(WHAT, VALUE, HELP, ...) { .what = WHAT, .value = &impair.VALUE, .help = HELP, .sizeof_value = sizeof(impair.VALUE),##__VA_ARGS__, }
 
-	{
-		.what = "revival",
-		.help = "disable code that revives a connection that is supposed to stay up",
-		V(revival),
-	},
-	{
-		.what = "emitting",
-		.help = "disable correctness-checks when emitting a payload (let anything out)",
-		V(emitting),
-	},
-	{
-		.what = "ke-payload",
-		.help = "corrupt the outgoing KE payload",
-		.how_keynum = &send_impairment_keywords,
-		.unsigned_help = "use <unsigned> to byte-fill the KE payload",
-		V(ke_payload),
-	},
+	V("add-unknown-payload-to-auth", add_unknown_payload_to_auth, "add a payload with an unknown type to AUTH"),
+	V("add-unknown-payload-to-auth-sk", add_unknown_payload_to_auth_sk, "add a payload with an unknown type to AUTH's SK payload"),
+	V("add-unknown-payload-to-sa-init", add_unknown_payload_to_sa_init, "add a payload with an unknown type to SA_INIT"),
+	V("allow-dns-insecure", allow_dns_insecure, "allow IPSECKEY lookups without DNSSEC protection"),
+	V("allow-null-none", allow_null_none, "cause pluto to allow esp=null-none and ah=none for testing"),
+	V("bad-ikev2-auth-xchg", bad_ike_auth_xchg, "causes pluto to send IKE_AUTH replies with wrong exchange type"),
+	V("bust-mi2", bust_mi2, "make MI2 really large"),
+	V("bust-mr2", bust_mr2, "make MR2 really large"),
+	V("child-key-length-attribute", child_key_length_attribute, "corrupt the outgoing CHILD proposal's key length attribute", .how_keynum = &send_impairment_keywords, .unsigned_help = "use <unsigned> as the key length"),
+	V("corrupt-encrypted", corrupt_encrypted, "corrupts the encrypted packet so that the decryption fails"),
+	V("delete-on-retransmit", delete_on_retransmit, "causes pluto to fail on the first retransmit"),
+	V("drop-i2", drop_i2, "drop second initiator packet"),
+	V("drop-xauth-r0", drop_xauth_r0, "causes pluto to drop an XAUTH user/passwd request on IKE initiator"),
+	V("emitting", emitting, "disable correctness-checks when emitting a payload (let anything out)"),
+	V("force-fips", force_fips, "causes pluto to believe we are in fips mode, NSS needs its own hack"),
+	V("ignore-hash-notify", ignore_hash_notify_request, "causes pluto to ignore incoming hash notify from IKE_SA_INIT Request"),
+	V("ignore-hash-notify-resp", ignore_hash_notify_response, "causes pluto to ignore incoming hash notify from IKE_SA_INIT Response"),
+	V("ike-initiator-spi", ike_initiator_spi, "corrupt the IKE initiator SPI", .unsigned_help = "set SPI to <unsigned>"),
+	V("ike-key-length-attribute", ike_key_length_attribute, "corrupt the outgoing IKE proposal's key length attribute", .how_keynum = &send_impairment_keywords, .unsigned_help = "use <unsigned> as the key length"),
+	V("ike-responder-spi", ike_responder_spi, "corrupt the IKE responder SPI", .unsigned_help = "set SPI to <unsigned>"),
+	V("ikev1-del-with-notify", ikev1_del_with_notify, "causes pluto to send IKE Delete with additional bogus Notify payload"),
+	V("ikev2-exclude-integ-none", ikev2_exclude_integ_none, "lets pluto exclude integrity 'none' in proposals"),
+	V("ikev2-include-integ-none", ikev2_include_integ_none, "lets pluto include integrity 'none' in proposals"),
+	V("jacob-two-two", jacob_two_two, "cause pluto to send all messages twice."),
+	V("ke-payload", ke_payload, "corrupt the outgoing KE payload", .unsigned_help = "use <unsigned> to byte-fill the KE payload", .how_keynum = &send_impairment_keywords),
+	V("log-rate-limit", log_rate_limit, "set the per-hour(?) cap on rate-limited log messages"),
+	V("major-version-bump", major_version_bump, "cause pluto to send an IKE major version that's higher then we support."),
+	V("minor-version-bump", minor_version_bump, "cause pluto to send an IKE minor version that's higher then we support."),
+	V("omit-hash-notify", omit_hash_notify_request, "causes pluto to omit sending hash notify in IKE_SA_INIT Request"),
+	V("proposal-parser", proposal_parser, "impair algorithm parser - what you see is what you get"),
+	V("replay-backward", replay_backward, "replay all earlier packets new-to-old"),
+	V("replay-duplicates", replay_duplicates, "replay duplicates of each incoming packet"),
+	V("replay-encrypted", replay_encrypted, "replay encrypted packets"),
+	V("replay-forward", replay_forward, "replay all earlier packets old-to-new"),
+	V("revival", revival, "disable code that revives a connection that is supposed to stay up"),
+	V("sa-creation", sa_creation, "fail all SA creation"),
+	V("send-bogus-dcookie", send_bogus_dcookie, "causes pluto to send a a bogus IKEv2 DCOOKIE"),
+	V("send-bogus-isakmp-flag", send_bogus_isakmp_flag, "causes pluto to set a RESERVED ISAKMP flag to test ignoring/zeroing it"),
+	V("send-bogus-payload-flag", send_bogus_payload_flag, "causes pluto to set a RESERVED PAYLOAD flag to test ignoring/zeroing it"),
+	V("send-key-size-check", send_key_size_check, "causes pluto to omit checking configured ESP key sizes for testing"),
+	V("send-no-delete", send_no_delete, "causes pluto to omit sending Notify/Delete messages"),
+	V("send-no-ikev2-auth", send_no_ikev2_auth, "causes pluto to omit sending an IKEv2 IKE_AUTH packet"),
+	V("send-no-main-r2", send_no_main_r2, "causes pluto to omit sending an last Main Mode response packet"),
+	V("send-no-xauth-r0", send_no_xauth_r0, "causes pluto to omit sending an XAUTH user/passwd request"),
+	V("send-pkcs7-thingie", send_pkcs7_thingie, "send certificates as a PKCS7 thingie"),
+	V("suppress-retransmits", suppress_retransmits, "causes pluto to never send retransmits (wait the full timeout)"),
+	V("timeout-on-retransmit", timeout_on_retransmit, "causes pluto to 'retry' (switch protocol) on the first retransmit"),
+	V("unknown-payload-critical", unknown_payload_critical, "mark the unknown payload as critical"),
+	V("v1-hash-check", v1_hash_check, "disable check of incoming IKEv1 hash payload"),
+	V("v1-hash-exchange", v1_hash_exchange, "the outgoing exchange that should contain the corrupted HASH payload", .how_keynum = &exchange_impairment_keywords),
+	V("v1-hash-payload", v1_hash_payload, "corrupt the outgoing HASH payload", .how_keynum = &send_impairment_keywords, .unsigned_help = "fill the hash payload with <unsigned> bytes"),
 
-	/*
-	 * IKEv1: the key-length attribute is at the same level as
-	 * other attributes such as encryption.  Just need to know if
-	 * the IKE, or CHILD proposal set should be manipulated.
-	 *
-	 * IKEv2: the key-length attribute is nested within an
-	 * encryption transform.  Hence, also need to know which
-	 * transform to screw with.
-	 */
-	{
-		.what = "ike-key-length-attribute",
-		.help = "corrupt the outgoing IKE proposal's key length attribute",
-		.how_keynum = &send_impairment_keywords,
-		.unsigned_help = "use <unsigned> as the key length",
-		V(ike_key_length_attribute),
-	},
-	{
-		.what = "child-key-length-attribute",
-		.help = "corrupt the outgoing CHILD proposal's key length attribute",
-		.how_keynum = &send_impairment_keywords,
-		.unsigned_help = "use <unsigned> as the key length",
-		V(child_key_length_attribute),
-	},
-	{
-		.what = "log-rate-limit",
-		.help = "set the per-hour(?) cap on rate-limited log messages",
-		V(log_rate_limit),
-	},
-
-	/*
-	 * IKEv1: hash payloads
-	 */
-	{
-		.what = "v1-hash-check",
-		.help = "disable check of incoming IKEv1 hash payload",
-		V(v1_hash_check),
-	},
-	{
-		.what = "v1-hash-payload",
-		.help = "corrupt the outgoing HASH payload",
-		.how_keynum = &send_impairment_keywords,
-		.unsigned_help = "fill the hash payload with <unsigned> bytes",
-		V(v1_hash_payload),
-	},
-	{
-		.what = "v1-hash-exchange",
-		.help = "the outgoing exchange that should contain the corrupted HASH payload",
-		.how_keynum = &exchange_impairment_keywords,
-		V(v1_hash_exchange),
-	},
-
-	{
-		.what = "ike-initiator-spi",
-		.help = "corrupt the IKE initiator SPI",
-		.unsigned_help = "set SPI to <unsigned>",
-		V(ike_initiator_spi),
-	},
-	{
-		.what = "ike-responder-spi",
-		.help = "corrupt the IKE responder SPI",
-		.unsigned_help = "set SPI to <unsigned>",
-		V(ike_responder_spi),
-	},
-
-	/* old stuff */
-
-#define S(FIELD, WHAT, HELP) { .what = WHAT, .help = HELP, V(FIELD), }
-
-	S(ADD_UNKNOWN_PAYLOAD_TO_AUTH, "add-unknown-payload-to-auth", "add a payload with an unknown type to AUTH"),
-	S(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK, "add-unknown-payload-to-auth-sk", "add a payload with an unknown type to AUTH's SK payload"),
-	S(ADD_UNKNOWN_PAYLOAD_TO_SA_INIT, "add-unknown-payload-to-sa-init", "add a payload with an unknown type to SA_INIT"),
-	S(ALLOW_DNS_INSECURE, "allow-dns-insecure", "allow IPSECKEY lookups without DNSSEC protection"),
-	S(ALLOW_NULL_NONE, "allow-null-none", "cause pluto to allow esp=null-none and ah=none for testing"),
-	S(BUST_MI2, "bust-mi2", "make MI2 really large"),
-	S(BUST_MR2, "bust-mr2", "make MR2 really large"),
-	S(CORRUPT_ENCRYPTED, "corrupt-encrypted", "corrupts the encrypted packet so that the decryption fails"),
-	S(DELETE_ON_RETRANSMIT, "delete-on-retransmit", "causes pluto to fail on the first retransmit"),
-	S(DROP_I2, "drop-i2", "drop second initiator packet"),
-	S(DROP_XAUTH_R0, "drop-xauth-r0", "causes pluto to drop an XAUTH user/passwd request on IKE initiator"),
-	S(FORCE_FIPS, "force-fips", "causes pluto to believe we are in fips mode, NSS needs its own hack"),
-	S(IGNORE_HASH_NOTIFY_REQUEST, "ignore-hash-notify", "causes pluto to ignore incoming hash notify from IKE_SA_INIT Request"),
-	S(IGNORE_HASH_NOTIFY_RESPONSE, "ignore-hash-notify-resp", "causes pluto to ignore incoming hash notify from IKE_SA_INIT Response"),
-	S(IKEv2_EXCLUDE_INTEG_NONE, "ikev2-exclude-integ-none", "lets pluto exclude integrity 'none' in proposals"),
-	S(IKEv2_INCLUDE_INTEG_NONE, "ikev2-include-integ-none", "lets pluto include integrity 'none' in proposals"),
-	S(JACOB_TWO_TWO, "jacob-two-two", "cause pluto to send all messages twice."),
-	S(MAJOR_VERSION_BUMP, "major-version-bump", "cause pluto to send an IKE major version that's higher then we support."),
-	S(MINOR_VERSION_BUMP, "minor-version-bump", "cause pluto to send an IKE minor version that's higher then we support."),
-	S(OMIT_HASH_NOTIFY_REQUEST, "omit-hash-notify", "causes pluto to omit sending hash notify in IKE_SA_INIT Request"),
-	S(PROPOSAL_PARSER, "proposal-parser", "impair algorithm parser - what you see is what you get"),
-	S(REPLAY_BACKWARD, "replay-backward", "replay all earlier packets new-to-old"),
-	S(REPLAY_DUPLICATES, "replay-duplicates", "replay duplicates of each incoming packet"),
-	S(REPLAY_ENCRYPTED, "replay-encrypted", "replay encrypted packets"),
-	S(REPLAY_FORWARD, "replay-forward", "replay all earlier packets old-to-new"),
-	S(SA_CREATION, "sa-creation", "fail all SA creation"),
-	S(SEND_BOGUS_DCOOKIE, "send-bogus-dcookie", "causes pluto to send a a bogus IKEv2 DCOOKIE"),
-	S(SEND_BOGUS_ISAKMP_FLAG, "send-bogus-isakmp-flag", "causes pluto to set a RESERVED ISAKMP flag to test ignoring/zeroing it"),
-	S(SEND_BOGUS_PAYLOAD_FLAG, "send-bogus-payload-flag", "causes pluto to set a RESERVED PAYLOAD flag to test ignoring/zeroing it"),
-
-	S(SEND_KEY_SIZE_CHECK, "send-key-size-check", "causes pluto to omit checking configured ESP key sizes for testing"),
-	S(SEND_NO_DELETE, "send-no-delete", "causes pluto to omit sending Notify/Delete messages"),
-	S(SEND_NO_IKEV2_AUTH, "send-no-ikev2-auth", "causes pluto to omit sending an IKEv2 IKE_AUTH packet"),
-	S(SEND_NO_MAIN_R2, "send-no-main-r2", "causes pluto to omit sending an last Main Mode response packet"),
-	S(SEND_NO_XAUTH_R0, "send-no-xauth-r0", "causes pluto to omit sending an XAUTH user/passwd request"),
-	S(SEND_PKCS7_THINGIE, "send-pkcs7-thingie", "send certificates as a PKCS7 thingie"),
-	S(SUPPRESS_RETRANSMITS, "suppress-retransmits", "causes pluto to never send retransmits (wait the full timeout)"),
-	S(TIMEOUT_ON_RETRANSMIT, "timeout-on-retransmit", "causes pluto to 'retry' (switch protocol) on the first retransmit"),
-	S(UNKNOWN_PAYLOAD_CRITICAL, "unknown-payload-critical", "mark the unknown payload as critical"),
-	S(IKEv1_DEL_WITH_NOTIFY, "ikev1-del-with-notify", "causes pluto to send IKE Delete with additional bogus Notify payload"),
-	S(BAD_IKE_AUTH_XCHG, "bad-ikev2-auth-xchg", "causes pluto to send IKE_AUTH replies with wrong exchange type"),
-
-#undef S
+#undef B
 
 };
 

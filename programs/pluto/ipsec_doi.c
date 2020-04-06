@@ -474,7 +474,7 @@ void initialize_new_state(struct state *st,
 
 void send_delete(struct state *st)
 {
-	if (IMPAIR(SEND_NO_DELETE)) {
+	if (impair.send_no_delete) {
 		dbg("IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
 	} else {
 		dbg("#%lu send %s delete notification for %s",

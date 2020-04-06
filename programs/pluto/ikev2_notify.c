@@ -42,7 +42,7 @@ bool decode_v2N_ike_sa_init_request(struct msg_digest *md)
 			break;
 
 		case v2N_SIGNATURE_HASH_ALGORITHMS:
-			if (!IMPAIR(IGNORE_HASH_NOTIFY_REQUEST)) {
+			if (!impair.ignore_hash_notify_request) {
 				if (md->v2N.signature_hash_algorithms != NULL) {
 					dbg("ignoring duplicate Signature Hash Notify payload");
 				} else {
@@ -152,7 +152,7 @@ bool decode_v2N_ike_sa_init_response(struct msg_digest *md)
 			break;
 
 		case v2N_SIGNATURE_HASH_ALGORITHMS:
-			if (!IMPAIR(IGNORE_HASH_NOTIFY_RESPONSE)) {
+			if (!impair.ignore_hash_notify_response) {
 				md->v2N.signature_hash_algorithms = ntfy;
 			} else {
 				libreswan_log("IMPAIR: ignoring the hash notify in IKE_SA_INIT response");

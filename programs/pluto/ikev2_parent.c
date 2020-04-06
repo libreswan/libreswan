@@ -700,7 +700,7 @@ static stf_status ikev2_parent_outI1_common(struct state *st)
 	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 
-	if (IMPAIR(SEND_BOGUS_DCOOKIE)) {
+	if (impair.send_bogus_dcookie) {
 		/* add or mangle a dcookie so what we will send is bogus */
 		DBG_log("Mangling dcookie because --impair-send-bogus-dcookie is set");
 		free_chunk_content(&st->st_dcookie);
@@ -787,7 +787,7 @@ static stf_status ikev2_parent_outI1_common(struct state *st)
 	}
 
 	/* Send SIGNATURE_HASH_ALGORITHMS Notify payload */
-	if (!IMPAIR(OMIT_HASH_NOTIFY_REQUEST)) {
+	if (!impair.omit_hash_notify_request) {
 		if (((c->policy & POLICY_RSASIG) || (c->policy & POLICY_ECDSA))
 			&& (c->sighash_policy != LEMPTY)) {
 			if (!emit_v2N_signature_hash_algorithms(c->sighash_policy, &rbody))
@@ -803,7 +803,7 @@ static stf_status ikev2_parent_outI1_common(struct state *st)
 
 	/* something the other end won't like */
 
-	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_SA_INIT)) {
+	if (impair.add_unknown_payload_to_sa_init) {
 		if (!emit_v2UNKNOWN("IKE_SA_INIT request", &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
@@ -1125,7 +1125,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	}
 
 	/* Send SIGNATURE_HASH_ALGORITHMS notification only if we received one */
-	if (!IMPAIR(IGNORE_HASH_NOTIFY_REQUEST)) {
+	if (!impair.ignore_hash_notify_request) {
 		if (st->st_seen_hashnotify && ((c->policy & POLICY_RSASIG) || (c->policy & POLICY_ECDSA))
 			&& (c->sighash_policy != LEMPTY)) {
 			if (!emit_v2N_signature_hash_algorithms(c->sighash_policy, &rbody))
@@ -1142,7 +1142,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 
 	/* something the other end won't like */
 
-	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_SA_INIT)) {
+	if (impair.add_unknown_payload_to_sa_init) {
 		if (!emit_v2UNKNOWN("IKE_SA_INIT reply", &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
@@ -1535,7 +1535,7 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 	ip_address redirect_ip;
 
 	/* for testing only */
-	if (IMPAIR(SEND_NO_IKEV2_AUTH)) {
+	if (impair.send_no_ikev2_auth) {
 		libreswan_log(
 			"IMPAIR_SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
 		return STF_IGNORE;
@@ -2165,7 +2165,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH)) {
+	if (impair.add_unknown_payload_to_auth) {
 		if (!emit_v2UNKNOWN("IKE_AUTH request", &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
@@ -2203,7 +2203,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 		close_output_pbs(&i_id_pbs);
 	}
 
-	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK)) {
+	if (impair.add_unknown_payload_to_auth_sk) {
 		if (!emit_v2UNKNOWN("IKE_AUTH's SK request", &sk.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
@@ -2612,7 +2612,7 @@ stf_status ikev2_ike_sa_process_auth_request(struct ike_sa *ike,
 	struct state *st = &ike->sa;
 
 	/* for testing only */
-	if (IMPAIR(SEND_NO_IKEV2_AUTH)) {
+	if (impair.send_no_ikev2_auth) {
 		libreswan_log(
 			"IMPAIR_SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
 		return STF_IGNORE;
@@ -3170,7 +3170,7 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 					  md /* response */,
 					  ISAKMP_v2_IKE_AUTH);
 
-	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH)) {
+	if (impair.add_unknown_payload_to_auth) {
 		if (!emit_v2UNKNOWN("IKE_AUTH reply", &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
@@ -3186,7 +3186,7 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK)) {
+	if (impair.add_unknown_payload_to_auth_sk) {
 		if (!emit_v2UNKNOWN("IKE_AUTH's SK reply", &sk.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}

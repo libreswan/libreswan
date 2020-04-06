@@ -125,7 +125,7 @@ void start_retransmits(struct state *st)
 	/* correct values */
 	rt->timeout = c->r_timeout;
 	rt->delay = c->r_interval;
-	if (IMPAIR(SUPPRESS_RETRANSMITS)) {
+	if (impair.suppress_retransmits) {
 		/*
 		 * Suppress retransmits by using the full TIMEOUT as
 		 * the delay.
@@ -174,11 +174,11 @@ enum retransmit_status retransmit(struct state *st)
 	 *
 	 * - trigger the retransmit timeout path after the first delay
 	 */
-	if (IMPAIR(TIMEOUT_ON_RETRANSMIT)) {
+	if (impair.timeout_on_retransmit) {
 		libreswan_log("IMPAIR: retransmit so timing out SA (may retry)");
 		return RETRANSMITS_TIMED_OUT;
 	}
-	if (IMPAIR(DELETE_ON_RETRANSMIT)) {
+	if (impair.delete_on_retransmit) {
 		libreswan_log("IMPAIR: retransmit so deleting SA");
 		return DELETE_ON_RETRANSMIT;
 	}

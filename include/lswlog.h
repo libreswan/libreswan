@@ -515,7 +515,7 @@ void libreswan_bad_case(const char *expression, long value, where_t where) NEVER
 #define bad_case(N)	libreswan_bad_case(#N, (N), HERE)
 
 #define impaired_passert(BEHAVIOUR, ASSERTION) {			\
-		if (IMPAIR(BEHAVIOUR)) {				\
+		if (impair.BEHAVIOUR) {					\
 			bool assertion_ = ASSERTION;			\
 			if (!assertion_) {				\
 				libreswan_log("IMPAIR: assertion '%s' failed", #ASSERTION); \

@@ -58,6 +58,16 @@ struct impair {
 	bool revival;
 	bool emitting;
 
+	/*
+	 * IKEv1: the key-length attribute is at the same level as
+	 * other attributes such as encryption.  Just need to know if
+	 * the IKE, or CHILD proposal set should be manipulated.
+	 *
+	 * IKEv2: the key-length attribute is nested within an
+	 * encryption transform.  Hence, also need to know which
+	 * transform to screw with.
+	 */
+
 	enum send_impairment ke_payload;
 	enum send_impairment ike_key_length_attribute;
 	enum send_impairment child_key_length_attribute;
@@ -71,56 +81,51 @@ struct impair {
 	unsigned ike_initiator_spi;
 	unsigned ike_responder_spi;
 
+	bool bust_mi2;
+	bool bust_mr2;
+	bool drop_i2;
+	bool sa_creation;
+	bool jacob_two_two;
+	bool allow_null_none;
+	bool major_version_bump;
+	bool minor_version_bump;
+	bool timeout_on_retransmit;
+	bool delete_on_retransmit;
+	bool suppress_retransmits;
+	bool send_bogus_payload_flag;
+	bool send_bogus_isakmp_flag;
+	bool send_no_delete;
+	bool send_no_ikev2_auth;
+	bool send_no_xauth_r0;
+	bool drop_xauth_r0;
+	bool send_no_main_r2;
+	bool force_fips;
+	bool send_key_size_check;
+	bool send_bogus_dcookie;
+	bool omit_hash_notify_request;
+	bool ignore_hash_notify_request;
+	bool ignore_hash_notify_response;
+	bool ikev2_exclude_integ_none;
+	bool ikev2_include_integ_none;
+	bool replay_duplicates;
+	bool replay_forward;
+	bool replay_backward;
+	bool replay_encrypted;
+	bool corrupt_encrypted;
+	bool proposal_parser;
+	bool add_unknown_payload_to_sa_init;
+	bool add_unknown_payload_to_auth;
+	bool add_unknown_payload_to_auth_sk;
+	bool unknown_payload_critical;
+	bool allow_dns_insecure;
+	bool send_pkcs7_thingie;
+	bool ikev1_del_with_notify;
+	bool bad_ike_auth_xchg;
+
 	/*
 	 * add more here
 	 */
 
-	/*
-	 * HACK to keep code using IMPAIR() compiling without a
-	 * massive rename.
-	 */
-
-#define IMPAIR(BEHAVIOUR) (impair.BEHAVIOUR)
-	bool BUST_MI2;
-	bool BUST_MR2;
-	bool DROP_I2;
-	bool SA_CREATION;
-	bool JACOB_TWO_TWO;
-	bool ALLOW_NULL_NONE;
-	bool MAJOR_VERSION_BUMP;
-	bool MINOR_VERSION_BUMP;
-	bool TIMEOUT_ON_RETRANSMIT;
-	bool DELETE_ON_RETRANSMIT;
-	bool SUPPRESS_RETRANSMITS;
-	bool SEND_BOGUS_PAYLOAD_FLAG;
-	bool SEND_BOGUS_ISAKMP_FLAG;
-	bool SEND_NO_DELETE;
-	bool SEND_NO_IKEV2_AUTH;
-	bool SEND_NO_XAUTH_R0;
-	bool DROP_XAUTH_R0;
-	bool SEND_NO_MAIN_R2;
-	bool FORCE_FIPS;
-	bool SEND_KEY_SIZE_CHECK;
-	bool SEND_BOGUS_DCOOKIE;
-	bool OMIT_HASH_NOTIFY_REQUEST;
-	bool IGNORE_HASH_NOTIFY_REQUEST;
-	bool IGNORE_HASH_NOTIFY_RESPONSE;
-	bool IKEv2_EXCLUDE_INTEG_NONE;
-	bool IKEv2_INCLUDE_INTEG_NONE;
-	bool REPLAY_DUPLICATES;
-	bool REPLAY_FORWARD;
-	bool REPLAY_BACKWARD;
-	bool REPLAY_ENCRYPTED;
-	bool CORRUPT_ENCRYPTED;
-	bool PROPOSAL_PARSER;
-	bool ADD_UNKNOWN_PAYLOAD_TO_SA_INIT;
-	bool ADD_UNKNOWN_PAYLOAD_TO_AUTH;
-	bool ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK;
-	bool UNKNOWN_PAYLOAD_CRITICAL;
-	bool ALLOW_DNS_INSECURE;
-	bool SEND_PKCS7_THINGIE;
-	bool IKEv1_DEL_WITH_NOTIFY;
-	bool BAD_IKE_AUTH_XCHG;
 };
 
 extern struct impair impair;

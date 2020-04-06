@@ -880,7 +880,7 @@ static bool send_delete_check(const struct state *st)
 static void delete_state_log(struct state *st, struct state *cur_state)
 {
 	struct connection *const c = st->st_connection;
-	bool del_notify = !IMPAIR(SEND_NO_DELETE) && send_delete_check(st);
+	bool del_notify = !impair.send_no_delete && send_delete_check(st);
 
 	if (cur_state != NULL && cur_state == st) {
 		/*

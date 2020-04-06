@@ -366,13 +366,13 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 	}
 
 	bool lookup_encrypt = parser->protocol->encrypt;
-	if (!lookup_encrypt && IMPAIR(PROPOSAL_PARSER)) {
+	if (!lookup_encrypt && impair.proposal_parser) {
 		/* Force lookup, will discard any error. */
 		lookup_encrypt = true;
 	}
 	if (lookup_encrypt && tokens->alg.ptr != NULL && tokens->sep != ';') {
 		if (!parse_encrypt(parser, &tokens, &proposal)) {
-			if (IMPAIR(PROPOSAL_PARSER)) {
+			if (impair.proposal_parser) {
 				/* ignore the lookup and stumble on */
 				parser->error[0] = '\0';
 			} else {
@@ -383,7 +383,7 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 	}
 
 	bool lookup_prf = parser->protocol->prf;
-	if (!lookup_prf && IMPAIR(PROPOSAL_PARSER)) {
+	if (!lookup_prf && impair.proposal_parser) {
 		/*
 		 * When impaired, only force PRF lookup when the the
 		 * token after this one is a valid INTEG algorithm.
@@ -420,7 +420,7 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 	 * clarify this but that makes for a fun parse.
 	 */
 	bool lookup_integ = (!parser->protocol->prf && parser->protocol->integ);
-	if (!lookup_integ && IMPAIR(PROPOSAL_PARSER)) {
+	if (!lookup_integ && impair.proposal_parser) {
 		/* force things */
 		lookup_integ = true;
 	}
@@ -453,7 +453,7 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 		}
 	}
 
-	bool lookup_dh = parser->protocol->dh || IMPAIR(PROPOSAL_PARSER);
+	bool lookup_dh = parser->protocol->dh || impair.proposal_parser;
 	if (lookup_dh && tokens->alg.ptr != NULL) {
 		shunk_t dh = tokens[0].alg;
 		proposal.dh = dh_desc(alg_byname(parser, IKE_ALG_DH, dh, dh));
@@ -469,7 +469,7 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 		return false;
 	}
 
-	if (IMPAIR(PROPOSAL_PARSER)) {
+	if (impair.proposal_parser) {
 		return add_proposal(parser, proposals, &proposal);
 	} else {
 		return merge_default_proposals(parser, proposals, &proposal);

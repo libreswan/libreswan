@@ -574,7 +574,7 @@ int main(int argc, char *argv[])
 		cur_debugging |= DBG_PROPOSAL_PARSER | DBG_CRYPT;
 	}
 	if (impaired) {
-		impair.PROPOSAL_PARSER = true;
+		impair.proposal_parser = true;
 	}
 
 	if (test_algs) {

@@ -1160,7 +1160,7 @@ void ikev1_init_out_pbs_echo_hdr(struct msg_digest *md, bool enc,
 	if (enc)
 		hdr.isa_flags |= ISAKMP_FLAGS_v1_ENCRYPTION;
 
-	if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
+	if (impair.send_bogus_isakmp_flag) {
 		hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 	}
 
@@ -2624,7 +2624,7 @@ void complete_v1_state_transition(struct msg_digest *md, stf_status result)
 			close_output_pbs(&reply_stream); /* good form, but actually a no-op */
 
 			if (st->st_state->kind == STATE_MAIN_R2 &&
-				IMPAIR(SEND_NO_MAIN_R2)) {
+				impair.send_no_main_r2) {
 				/* record-only so we propely emulate packet drop */
 				record_outbound_ike_msg(st, &reply_stream,
 							finite_states[from_state]->name);

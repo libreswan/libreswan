@@ -135,7 +135,7 @@ const struct ike_alg *encrypt_alg_byname(struct proposal_parser *parser,
 		return NULL;
 	}
 	const struct encrypt_desc *encrypt = encrypt_desc(alg);
-	if (!IMPAIR(SEND_KEY_SIZE_CHECK) && key_bit_length > 0) {
+	if (!impair.send_key_size_check && key_bit_length > 0) {
 		if (encrypt->keylen_omitted) {
 			proposal_error(parser, "%s does not take variable key lengths",
 				       enum_short_name(&ikev2_trans_type_encr_names,

@@ -62,9 +62,9 @@
 static uint8_t build_ikev2_version(void)
 {
 	/* TODO: if bumping, we should also set the Version flag in the ISAKMP header */
-	return ((IKEv2_MAJOR_VERSION + (IMPAIR(MAJOR_VERSION_BUMP) ? 1 : 0))
+	return ((IKEv2_MAJOR_VERSION + (impair.major_version_bump ? 1 : 0))
 			<< ISA_MAJ_SHIFT) |
-	       (IKEv2_MINOR_VERSION + (IMPAIR(MINOR_VERSION_BUMP) ? 1 : 0));
+	       (IKEv2_MINOR_VERSION + (impair.minor_version_bump ? 1 : 0));
 }
 
 uint8_t build_ikev2_critical(bool impaired)
@@ -77,7 +77,7 @@ uint8_t build_ikev2_critical(bool impaired)
 	} else {
 		octet = ISAKMP_PAYLOAD_NONCRITICAL;
 	}
-	if (IMPAIR(SEND_BOGUS_PAYLOAD_FLAG)) {
+	if (impair.send_bogus_payload_flag) {
 		libreswan_log("IMPAIR: adding bogus bit to critical octet");
 		octet |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 	}
@@ -104,7 +104,7 @@ pb_stream open_v2_message(pb_stream *reply,
 	passert(ike != NULL || md != NULL);
 
 	struct isakmp_hdr hdr = {
-		.isa_flags = IMPAIR(SEND_BOGUS_ISAKMP_FLAG) ? ISAKMP_FLAGS_RESERVED_BIT6 : LEMPTY,
+		.isa_flags = impair.send_bogus_isakmp_flag ? ISAKMP_FLAGS_RESERVED_BIT6 : LEMPTY,
 		.isa_version = build_ikev2_version(),
 		.isa_xchg = exchange_type,
 		.isa_length = 0, /* filled in when PBS is closed */
@@ -202,7 +202,7 @@ pb_stream open_v2_message(pb_stream *reply,
 		hdr.isa_msgid = ike->sa.st_v2_msgid_windows.initiator.sent + 1;
 	}
 
-	if (IMPAIR(BAD_IKE_AUTH_XCHG)) {
+	if (impair.bad_ike_auth_xchg) {
 		libreswan_log("IMPAIR: Instead of replying with IKE_AUTH, forging an INFORMATIONAL reply");
 		if ((hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) && exchange_type == ISAKMP_v2_IKE_AUTH) {
 			hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
@@ -769,12 +769,12 @@ bool ikev2_decrypt_msg(struct state *st, struct msg_digest *md)
 		 * If so impaired, clone the encrypted message before
 		 * it gets decrypted in-place (but only once).
 		 */
-		if (IMPAIR(REPLAY_ENCRYPTED) && !md->fake_clone) {
+		if (impair.replay_encrypted && !md->fake_clone) {
 			libreswan_log("IMPAIR: cloning incoming encrypted message and scheduling its replay");
 			schedule_md_event("replay encrypted message",
 					  clone_raw_md(md, "copy of encrypted message"));
 		}
-		if (IMPAIR(CORRUPT_ENCRYPTED) && !md->fake_clone) {
+		if (impair.corrupt_encrypted && !md->fake_clone) {
 			libreswan_log("IMPAIR: corrupting incoming encrypted message's SK payload's first byte");
 			*e_pbs->cur = ~(*e_pbs->cur);
 		}

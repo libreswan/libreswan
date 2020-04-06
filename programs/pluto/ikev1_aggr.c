@@ -360,7 +360,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
 		hdr.isa_np = ISAKMP_NEXT_NONE; /* clear NP */
 
-		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
+		if (impair.send_bogus_isakmp_flag) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 
@@ -526,7 +526,7 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	 * when the IP address would not be meaningful (i.e. Road
 	 * Warrior).  So our first task is to unravel the ID payload.
 	 */
-	if (IMPAIR(DROP_I2)) {
+	if (impair.drop_i2) {
 		DBG(DBG_CONTROL, DBG_log("dropping Aggressive Mode I2 packet as per impair"));
 		return STF_IGNORE;
 	}
@@ -701,7 +701,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 		hdr.isa_np = ISAKMP_NEXT_NONE,	/* clear NP */
 		hdr.isa_flags |= ISAKMP_FLAGS_v1_ENCRYPTION;
 
-		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
+		if (impair.send_bogus_isakmp_flag) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 

@@ -75,7 +75,7 @@ bool emit_v2UNKNOWN(const char *victim, pb_stream *outs)
 	libreswan_log("IMPAIR: adding an unknown payload of type %d to %s",
 		      ikev2_unknown_payload_desc.pt, victim);
 	struct ikev2_generic gen = {
-		.isag_critical = build_ikev2_critical(IMPAIR(UNKNOWN_PAYLOAD_CRITICAL)),
+		.isag_critical = build_ikev2_critical(impair.unknown_payload_critical),
 	};
 	pb_stream pbs = open_output_struct_pbs(outs, &gen, &ikev2_unknown_payload_desc);
 	if (!pbs_ok(&pbs)) {

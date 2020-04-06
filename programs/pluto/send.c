@@ -172,7 +172,7 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 	pstats_ike_out_bytes += len;
 
 	/* Send a duplicate packet when this impair is enabled - used for testing */
-	if (IMPAIR(JACOB_TWO_TWO)) {
+	if (impair.jacob_two_two) {
 		/* sleep for half a second, and second another packet */
 		usleep(500000);
 		endpoint_buf b;

@@ -465,7 +465,7 @@ static err_t process_dns_resp(struct p_dns_req *dnsr)
 		return "unbound returned BOGUS response - ignored";
 
 	case UB_EVENT_INSECURE:
-		if (IMPAIR(ALLOW_DNS_INSECURE)) {
+		if (impair.allow_dns_insecure) {
 			DBG(DBG_DNS, DBG_log("Allowing insecure DNS response due to impair"));
 			return parse_rr(dnsr, ldnspkt);
 		}

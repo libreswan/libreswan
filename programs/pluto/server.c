@@ -824,7 +824,7 @@ void show_fips_status(const struct fd *whackfd)
 #else
 		"disabled [support not compiled in]" :
 #endif
-		IMPAIR(FORCE_FIPS) ? "enabled [forced]" : "enabled");
+		impair.force_fips ? "enabled [forced]" : "enabled");
 }
 
 static void huphandler_cb(void)

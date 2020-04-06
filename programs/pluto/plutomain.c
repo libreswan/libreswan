@@ -1649,7 +1649,7 @@ int main(int argc, char **argv)
 			loglog(RC_LOG_SERIOUS, "FIPS mode: debug-private disabled as such logging is not allowed");
 		}
 	}
-	if (IMPAIR(FORCE_FIPS)) {
+	if (impair.force_fips) {
 		libreswan_log("Forcing FIPS checks to true to emulate FIPS mode");
 		lsw_set_fips_mode(LSW_FIPS_ON);
 	}

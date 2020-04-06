@@ -106,7 +106,7 @@ bool proposal_integ_none(const struct proposal *proposal)
 bool proposal_aead_none_ok(struct proposal_parser *parser,
 			   const struct proposal *proposal)
 {
-	if (IMPAIR(ALLOW_NULL_NONE)) {
+	if (impair.allow_null_none) {
 		return true;
 	}
 
@@ -394,7 +394,7 @@ void jam_proposal(struct lswlog *log,
 		lswlogs(log, prf->common.fqn);
 	}
 
-	bool print_integ = (IMPAIR(PROPOSAL_PARSER) ||
+	bool print_integ = (impair.proposal_parser ||
 			    /* no PRF */
 			    next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL ||
 			    /* AEAD should have NONE */
@@ -569,7 +569,7 @@ void proposal_error(struct proposal_parser *parser, const char *fmt, ...)
 bool impair_proposal_errors(struct proposal_parser *parser)
 {
 	pexpect(parser->error[0] != '\0');
-	if (IMPAIR(PROPOSAL_PARSER)) {
+	if (impair.proposal_parser) {
 		libreswan_log("IMPAIR: ignoring proposal error: %s",
 			      parser->error);
 		parser->error[0] = '\0';

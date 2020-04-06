@@ -393,7 +393,7 @@ static void save_md_for_replay(bool already_impaired, struct msg_digest *md)
 static bool impair_incoming(struct msg_digest *md)
 {
 	bool impaired = false;
-	if (IMPAIR(REPLAY_DUPLICATES)) {
+	if (impair.replay_duplicates) {
 		save_md_for_replay(impaired, md);
 		/* MD is the most recent entry */
 		struct replay_entry *e = NULL;
@@ -404,7 +404,7 @@ static bool impair_incoming(struct msg_digest *md)
 		}
 		impaired = true;
 	}
-	if (IMPAIR(REPLAY_FORWARD)) {
+	if (impair.replay_forward) {
 		save_md_for_replay(impaired, md);
 		struct replay_entry *e = NULL;
 		FOR_EACH_LIST_ENTRY_OLD2NEW(&replay_packets, e) {
@@ -413,7 +413,7 @@ static bool impair_incoming(struct msg_digest *md)
 		}
 		impaired = true;
 	}
-	if (IMPAIR(REPLAY_BACKWARD)) {
+	if (impair.replay_backward) {
 		save_md_for_replay(impaired, md);
 		struct replay_entry *e = NULL;
 		FOR_EACH_LIST_ENTRY_NEW2OLD(&replay_packets, e) {

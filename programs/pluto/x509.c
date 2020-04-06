@@ -1342,7 +1342,7 @@ stf_status ikev2_send_cert(const struct state *st, pb_stream *outpbs)
 	bool send_authcerts = st->st_connection->send_ca != CA_SEND_NONE;
 	bool send_full_chain = send_authcerts && st->st_connection->send_ca == CA_SEND_ALL;
 
-	if (IMPAIR(SEND_PKCS7_THINGIE)) {
+	if (impair.send_pkcs7_thingie) {
 		libreswan_log("IMPAIR: sending cert as PKCS7 blob");
 		SECItem *pkcs7 = nss_pkcs7_blob(mycert.u.nss_cert,
 						send_full_chain);

@@ -152,7 +152,7 @@ void main_outI1(struct fd *whack_sock,
 		hdr.isa_ike_initiator_spi = st->st_ike_spis.initiator;
 		/* R-cookie, flags and MessageID are left zero */
 
-		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
+		if (impair.send_bogus_isakmp_flag) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 
@@ -692,7 +692,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
 		hdr.isa_np = ISAKMP_NEXT_NONE; /* clear NP */
 
-		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
+		if (impair.send_bogus_isakmp_flag) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 
@@ -764,7 +764,7 @@ static void main_inR1_outI2_continue(struct state *st,
 
 stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 {
-	if (IMPAIR(DROP_I2)) {
+	if (impair.drop_i2) {
 		DBG(DBG_CONTROL, DBG_log("dropping Main Mode I2 packet as per impair"));
 		return STF_IGNORE;
 	}
@@ -866,7 +866,7 @@ static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
 	if (!ikev1_ship_nonce(&st->st_ni, r, &rbody, "Ni"))
 		return STF_INTERNAL_ERROR;
 
-	if (IMPAIR(BUST_MI2)) {
+	if (impair.bust_mi2) {
 		/*
 		 * generate a pointless large VID payload to push message
 		 * over MTU
@@ -1029,7 +1029,7 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 		if (!ikev1_ship_nonce(&st->st_nr, r, &rbody, "Nr"))
 			return STF_INTERNAL_ERROR;
 
-		if (IMPAIR(BUST_MR2)) {
+		if (impair.bust_mr2) {
 			/*
 			 * generate a pointless large VID payload to push
 			 * message over MTU
@@ -1250,7 +1250,7 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 	}
 
 	/* CERT out */
-	if (send_cert && IMPAIR(SEND_PKCS7_THINGIE)) {
+	if (send_cert && impair.send_pkcs7_thingie) {
 		libreswan_log("IMPAIR: sending cert as pkcs7 blob");
 		SECItem *pkcs7 = nss_pkcs7_blob(mycert.u.nss_cert, send_authcerts);
 		if (!pexpect(pkcs7 != NULL)) {
@@ -1615,7 +1615,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	}
 
 	/* CERT out, if we have one */
-	if (send_cert && IMPAIR(SEND_PKCS7_THINGIE)) {
+	if (send_cert && impair.send_pkcs7_thingie) {
 		libreswan_log("IMPAIR: sending cert as pkcs7 blob");
 		SECItem *pkcs7 = nss_pkcs7_blob(mycert.u.nss_cert, send_authcerts);
 		if (!pexpect(pkcs7 != NULL)) {
@@ -2236,7 +2236,7 @@ void send_v1_delete(struct state *st)
 					&del_pbs, "delete payload"));
 			close_output_pbs(&del_pbs);
 
-			if (IMPAIR(IKEv1_DEL_WITH_NOTIFY)) {
+			if (impair.ikev1_del_with_notify) {
 				pb_stream cruft_pbs;
 
 				libreswan_log("IMPAIR: adding bogus Notify payload after IKE Delete payload");

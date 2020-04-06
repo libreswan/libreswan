@@ -355,7 +355,7 @@ static bool parse_proposal(struct proposal_parser *parser,
 				free_proposal(&proposal);
 				return true;
 			}
-			if (!IMPAIR(PROPOSAL_PARSER)) {
+			if (!impair.proposal_parser) {
 				PEXPECT_LOG("all encryption algorithms skipped");
 				free_proposal(&proposal);
 				return false;
@@ -393,7 +393,7 @@ static bool parse_proposal(struct proposal_parser *parser,
 	 * using sha1 as integrity.  ike-aes_gcm-none-sha1 would
 	 * clarify this but that makes for a fun parse.
 	 */
-	if (!parser->protocol->prf || IMPAIR(PROPOSAL_PARSER)) {
+	if (!parser->protocol->prf || impair.proposal_parser) {
 		PARSE_ALG(';', integ);
 	}
 	PARSE_ALG('\0', dh);
@@ -414,7 +414,7 @@ static bool parse_proposal(struct proposal_parser *parser,
 		free_proposal(&proposal);
 		return false;
 	}
-	if (!IMPAIR(PROPOSAL_PARSER) &&
+	if (!impair.proposal_parser &&
 	    !merge_defaults(parser, proposal)) {
 		free_proposal(&proposal);
 		return false;
