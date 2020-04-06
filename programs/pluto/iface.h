@@ -36,9 +36,17 @@ struct iface_packet {
 	uint8_t *ptr;
 };
 
+enum iface_status {
+	IFACE_OK = 0,
+	IFACE_EOF,
+	IFACE_FATAL,
+	IFACE_IGNORE, /* aka EAGAIN */
+};
+
 struct iface_io {
 	const struct ip_protocol *protocol;
-	bool (*read_packet)(const struct iface_port *ifp, struct iface_packet *);
+	enum iface_status (*read_packet)(const struct iface_port *ifp,
+					 struct iface_packet *);
 	ssize_t (*write_packet)(const struct iface_port *ifp,
 				const void *ptr, size_t len,
 				const ip_endpoint *remote_endpoint);

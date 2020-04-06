@@ -33,7 +33,7 @@
 struct state;   /* forward declaration of tag */
 struct iface_port;
 
-bool handle_packet_cb(const struct iface_port *ifp);
+enum iface_status handle_packet_cb(const struct iface_port *ifp);
 
 /* State transition function infrastructure
  *

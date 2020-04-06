@@ -49,11 +49,12 @@
 #include "ip_info.h"
 #include "nat_traversal.h"	/* for nat_traversal_enabled which seems like a broken idea */
 
-static bool iketcp_read_packet(const struct iface_port *ifp,
-			       struct iface_packet *packet)
+static enum iface_status iketcp_read_packet(const struct iface_port *ifp,
+					    struct iface_packet *packet)
 {
 	/*
-	 * Fudge up an MD so that it be used as log context prefix.
+	 * At this point there's no logger so log it against the
+	 * remote endpoint determined earlier.
 	 */
 	struct logger logger = FROM_LOGGER(&ifp->iketcp_remote_endpoint);
 
@@ -62,40 +63,51 @@ static bool iketcp_read_packet(const struct iface_port *ifp,
 	 * big enough packet is truncated.
 	 */
 	dbg("TCP: reading packet");
-	errno = 0;
-	size_t buf_size = packet->len;
-	packet->len = read(ifp->fd, packet->ptr, buf_size);
 	packet->sender = ifp->iketcp_remote_endpoint;
+	size_t buf_size = packet->len;
+	errno = 0;
+	packet->len = read(ifp->fd, packet->ptr, buf_size);
 	int packet_errno = errno;
 	if (packet_errno != 0) {
 		log_message(RC_LOG, &logger,
 			    "TCP: read from socket failed "PRI_ERRNO,
 			    pri_errno(packet_errno));
-		errno = packet_errno;
-		return false;
+		if (packet_errno == EAGAIN) {
+			return IFACE_IGNORE;
+		} else {
+			return IFACE_FATAL;
+		}
 	}
 
 	dbg("TCP: read %zd of %zu bytes; "PRI_ERRNO"",
 	    packet->len, buf_size, pri_errno(packet_errno));
 
+	if (packet->len == 0) {
+		/* interpret this as EOF */
+		log_message(RC_LOG, &logger,
+			    "TCP: %zd byte message flags EOF",
+			    packet->len);
+		return IFACE_EOF;
+	}
+
 	if (packet->len < NON_ESP_MARKER_SIZE) {
 		log_message(RC_LOG, &logger,
 			    "TCP: %zd byte message is way to small",
 			    packet->len);
-		return false;
+		return IFACE_FATAL;
 	}
 
 	static const uint8_t zero_esp_marker[NON_ESP_MARKER_SIZE] = { 0, };
 	if (!memeq(packet->ptr, zero_esp_marker, sizeof(zero_esp_marker))) {
 		log_message(RC_LOG, &logger,
-			    "TCP: %zd byte message missing $d byte zero ESP marker",
-			    packet->len);
-		return false;
+			    "TCP: %zd byte message missing %d byte zero ESP marker",
+			    packet->len, NON_ESP_MARKER_SIZE);
+		return IFACE_FATAL;
 	}
 
 	packet->len -= sizeof(zero_esp_marker);
 	packet->ptr += sizeof(zero_esp_marker);
-	return true;
+	return IFACE_OK;
 }
 
 static ssize_t iketcp_write_packet(const struct iface_port *ifp,
@@ -208,12 +220,24 @@ static void iketcp_handle_packet_cb(evutil_socket_t unused_fd UNUSED,
 	case IKETCP_PREFIXED:
 		dbg("TCP: PREFIXED: trying to read first packet");
 		/* received the first packet; stop the timeout */
-		if (handle_packet_cb(ifp)) {
-			dbg("TCP: PREFIXED: first packet read; switching to running and freeing timeout");
+		switch (handle_packet_cb(ifp)) {
+		case IFACE_OK:
+			dbg("TCP: PREFIXED: first packet ok; switching to running and freeing timeout");
 			event_del(ifp->iketcp_timeout);
 			event_free(ifp->iketcp_timeout);
 			ifp->iketcp_timeout = NULL;
 			ifp->iketcp_state = IKETCP_RUNNING;
+			break;
+		case IFACE_IGNORE:
+			dbg("TCP: PREFIXED: first packet ignore");
+			break;
+		case IFACE_EOF:
+		case IFACE_FATAL:
+			/* already logged */
+			free_any_iface_port(&ifp);
+			break;
+		default:
+			bad_case(0);
 		}
 		return;
 

@@ -235,8 +235,8 @@ static bool nat_traversal_espinudp(int sk, struct iface_dev *ifd)
 static bool check_msg_errqueue(const struct iface_port *ifp, short interest, const char *func);
 #endif
 
-static bool read_udp_packet(const struct iface_port *ifp,
-			    struct iface_packet *packet)
+static enum iface_status udp_read_packet(const struct iface_port *ifp,
+					 struct iface_packet *packet)
 {
 #ifdef MSG_ERRQUEUE
 	/*
@@ -255,7 +255,7 @@ static bool read_udp_packet(const struct iface_port *ifp,
 		threadtime_stop(&errqueue_start, SOS_NOBODY,
 				"%s() calling check_incoming_msg_errqueue()", __func__);
 		if (!errqueue_ok) {
-			return false; /* no normal message to read */
+			return IFACE_IGNORE; /* no normal message to read */
 		}
 	}
 #endif
@@ -296,7 +296,7 @@ static bool read_udp_packet(const struct iface_port *ifp,
 				    ifp->ip_dev->id_rname, from_ugh,
 				    pri_errno(packet_errno));
 		}
-		return false;
+		return IFACE_IGNORE;
 	}
 
 	/*
@@ -312,7 +312,7 @@ static bool read_udp_packet(const struct iface_port *ifp,
 	if (packet->len < 0) {
 		plog_md(&stack_md, "recvfrom on %s failed "PRI_ERRNO,
 			ifp->ip_dev->id_rname, pri_errno(packet_errno));
-		return false;
+		return IFACE_IGNORE;
 	}
 
 	if (ifp->ike_float) {
@@ -321,12 +321,12 @@ static bool read_udp_packet(const struct iface_port *ifp,
 		if (packet->len < (int)sizeof(uint32_t)) {
 			plog_md(&stack_md, "too small packet (%zd)",
 				packet->len);
-			return NULL;
+			return IFACE_IGNORE;
 		}
 		memcpy(&non_esp, packet->ptr, sizeof(uint32_t));
 		if (non_esp != 0) {
 			plog_md(&stack_md, "has no Non-ESP marker");
-			return NULL;
+			return IFACE_IGNORE;
 		}
 		packet->ptr += sizeof(uint32_t);
 		packet->len -= sizeof(uint32_t);
@@ -344,7 +344,7 @@ static bool read_udp_packet(const struct iface_port *ifp,
 		    memeq(packet->ptr, non_ESP_marker,
 			   NON_ESP_MARKER_SIZE)) {
 			plog_md(&stack_md, "mangled with potential spurious non-esp marker");
-			return false;
+			return IFACE_IGNORE;
 		}
 	}
 
@@ -358,13 +358,13 @@ static bool read_udp_packet(const struct iface_port *ifp,
 		endpoint_buf eb;
 		dbg("NAT-T keep-alive (bogus ?) should not reach this point. Ignored. Sender: %s",
 		    str_endpoint(&packet->sender, &eb)); /* sensitive? */
-		return false;
+		return IFACE_IGNORE;
 	}
 
-	return true;
+	return IFACE_OK;
 }
 
-static ssize_t write_udp_packet(const struct iface_port *ifp,
+static ssize_t udp_write_packet(const struct iface_port *ifp,
 				const void *ptr, size_t len,
 				const ip_endpoint *remote_endpoint)
 {
@@ -381,8 +381,8 @@ static ssize_t write_udp_packet(const struct iface_port *ifp,
 
 static const struct iface_io udp_iface_io = {
 	.protocol = &ip_protocol_udp,
-	.read_packet = read_udp_packet,
-	.write_packet = write_udp_packet,
+	.read_packet = udp_read_packet,
+	.write_packet = udp_write_packet,
 };
 
 struct iface_port *bind_udp_iface_port(struct iface_dev *ifd, int port,

@@ -79,8 +79,11 @@
  * buffer and then copy it to a new, properly sized buffer.
  */
 
-static struct msg_digest *read_message(const struct iface_port *ifp)
+static enum iface_status read_message(const struct iface_port *ifp,
+				      struct msg_digest **mdp)
 {
+	pexpect(*mdp == NULL);
+
 	/* ??? this buffer seems *way* too big */
 	uint8_t bigbuffer[MAX_INPUT_UDP_SIZE];
 	struct iface_packet packet = {
@@ -88,9 +91,10 @@ static struct msg_digest *read_message(const struct iface_port *ifp)
 		.len = sizeof(bigbuffer),
 	};
 
-	if (!ifp->io->read_packet(ifp, &packet)) {
+	enum iface_status status = ifp->io->read_packet(ifp, &packet);
+	if (status != IFACE_OK) {
 		/* already logged */
-		return NULL;
+		return status;
 	}
 
 	/*
@@ -120,7 +124,8 @@ static struct msg_digest *read_message(const struct iface_port *ifp)
 
 	pstats_ike_in_bytes += pbs_room(&md->packet_pbs);
 
-	return md;
+	*mdp = md;
+	return IFACE_OK;
 }
 
 /*
@@ -291,13 +296,14 @@ static void process_md(struct msg_digest **mdp)
 
 static bool impair_incoming(struct msg_digest *md);
 
-bool handle_packet_cb(const struct iface_port *ifp)
+enum iface_status handle_packet_cb(const struct iface_port *ifp)
 {
-	bool ok;
 	threadtime_t md_start = threadtime_start();
-	struct msg_digest *md = read_message(ifp);
-	if (md != NULL) {
-		ok = true;
+	struct msg_digest *md = NULL;
+	enum iface_status status = read_message(ifp, &md);
+	if (status != IFACE_OK) {
+		pexpect(md == NULL);
+	} else if (pexpect(md != NULL)) {
 		md->md_inception = md_start;
 		if (!impair_incoming(md)) {
 			process_md(&md);
@@ -305,12 +311,12 @@ bool handle_packet_cb(const struct iface_port *ifp)
 		md_delref(&md, HERE);
 		pexpect(md == NULL);
 	} else {
-		ok = false;
+		status = IFACE_FATAL;
 	}
 	threadtime_stop(&md_start, SOS_NOBODY,
 			"%s() reading and processing packet", __func__);
 	pexpect_reset_globals();
-	return ok;
+	return status;
 }
 
 /*
