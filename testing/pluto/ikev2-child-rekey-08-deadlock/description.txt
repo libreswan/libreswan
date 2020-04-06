@@ -1,11 +1,28 @@
-IKEv2 Message ID deadlock test during rekey, dropping the response message.
+IKEv2 IPsec child SA, state, vanish before initiating rekey.
 
-Response to the second rekey is delayed. While waiting for the response to rekey
-an INTFORMATIONAL, v2D, is sent out jumping the Message ID.The response to the
-rekey is dropped by the initiator.
+# vanishing state
 
-Test use PLUTO_CRYPTO_HELPER_DELAY=5 to re-create the situation.
-The issue was initially reported when running with 72 CHILD_SAs and rekeying them all.
-This kind of message deadlock would happen, and CHILD_SA would disappear, re-initiate.
+Apr  5 06:44:36.852528: | handling event EVENT_SA_REPLACE for child state #273
 
-Delete message should not jump the queue, instead should wait for the rekeys to finish.
+Apr  5 06:44:36.852962: | #458 schedule rekey initiate IPsec SA PSK+ENCRYPT+TUNNEL+UP+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO to replace #273 using IKE# 1 pfs=no-pfs
+
+Apr  5 06:44:36.853109: | inserting event EVENT_SA_EXPIRE, timeout in 0 seconds for #273
+
+
+Apr  5 06:44:36.853552: | handling event EVENT_SA_EXPIRE for child state #273
+
+Apr  5 06:44:36.854425: | sending 76 bytes for delete notification through eth1 from 192.1.2.45:500 to 192.1.2.23:500 using UDP (for #273)
+
+Apr  5 06:44:36.906441: | State DB: deleting IKEv2 state #273 in V2_IPSEC_I
+
+
+Apr  5 06:44:36.908274: | start processing: state #458 connection "west/55x0" from 192.1.2.23:500 (in initiate_next() at ikev2_msgid.c:570)
+Apr  5 06:44:36.908288: | unsuspending #458 MD 0x560124d5d8f8
+Apr  5 06:44:36.908314: | **emit ISAKMP Message:
+
+Apr  5 06:44:36.909916: "west/55x0" #458: CHILD SA to rekey #273 vanished abort this exchange
+Apr  5 06:44:36.909924: | ikev2_child_sa_respond returned STF_INTERNAL_ERROR
+Apr  5 06:44:36.909930: | MD.ST contains the CHILD SA #458
+Apr  5 06:44:36.909945: | [RE]START processing: state #458 connection "west/55x0" from 192.1.2.23:500 (in complete_v2_state_transition() at ikev2.c:3372)
+Apr  5 06:44:36.909953: | #458 complete_v2_state_transition() V2_REKEY_CHILD_I0 -> V2_REKEY_CHILD_I with status STF_INTERNAL_ERROR
+Apr  5 06:44:36.910213: "west/55x0" #458: state transition function for STATE_V2_REKEY_CHILD_I0 had internal error

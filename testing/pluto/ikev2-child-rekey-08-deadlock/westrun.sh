@@ -25,5 +25,5 @@ sleep 50
 echo "sleep 550-600/600"
 sleep 50
 ipsec status | grep STATE_
-
+grep vanish /tmp/pluto.log
 echo done
