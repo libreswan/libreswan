@@ -4186,9 +4186,16 @@ static bool ikev2_rekey_child_req(struct child_sa *child,
 		 *
 		 * The older child should have discarded this state.
 		 */
+		struct connection *c = child->sa.st_connection;
 		log_state(LOG_STREAM/*not-whack*/, &child->sa,
-			  "CHILD SA to rekey #%lu vanished abort this exchange",
-			  child->sa.st_ipsec_pred);
+				"CHILD SA to rekey #%lu vanished abort this exchange"
+				"rekeymargin installed=%lu,  c->rekeymargin=%lus salifetime=%lus rekeyfuzz=%lu",
+				child->sa.st_ipsec_pred,
+				deltasecs(child->sa.st_replace_margin),
+				deltasecs(c->sa_rekey_margin),
+				deltasecs(c->sa_ipsec_life_seconds),
+				c->sa_rekey_fuzz);
+
 		return false;
 	}
 
@@ -6123,6 +6130,7 @@ void ikev2_initiate_child_sa(struct pending *p)
 		pexpect(sa_type == IPSEC_SA);
 		pexpect(IS_CHILD_SA_ESTABLISHED(&child_being_replaced->sa));
 		child->sa.st_ipsec_pred = child_being_replaced->sa.st_serialno;
+		child->sa.st_replace_margin = child_being_replaced->sa.st_replace_margin;
 		passert(child->sa.st_connection == child_being_replaced->sa.st_connection);
 		if (HAS_IPSEC_POLICY(child_being_replaced->sa.st_policy))
 			child->sa.st_policy = child_being_replaced->sa.st_policy;
@@ -6559,6 +6567,7 @@ static bool expire_ike_because_child_not_used(struct state *st)
 
 void v2_schedule_replace_event(struct state *st)
 {
+	LSWLOG_DEBUG(buf) {
 	struct connection *c = st->st_connection;
 
 	/* unwrapped deltatime_t in seconds */
@@ -6566,6 +6575,7 @@ void v2_schedule_replace_event(struct state *st)
 				   : c->sa_ipsec_life_seconds);
 	st->st_replace_by = monotime_add(mononow(), deltatime(delay));
 
+	jam(buf, "%s %d AA_2020 start delay %lus margin %lus ", __func__, __LINE__, delay, deltasecs(c->sa_rekey_margin));
 	/*
 	 * Important policy lies buried here.  For example, we favour
 	 * the initiator over the responder by making the initiator
@@ -6598,9 +6608,12 @@ void v2_schedule_replace_event(struct state *st)
 			marg += marg *
 				c->sa_rekey_fuzz / 100.E0 *
 				(rand() / (RAND_MAX + 1.E0));
+
+			jam(buf, " as SA_INITIATOR margin %lu ", marg);
 			break;
 		case SA_RESPONDER:
 			marg /= 2;
+			jam(buf, " as SA_RESPONDER margin %lu ", marg);
 			break;
 		default:
 			bad_case(st->st_sa_role);
@@ -6617,6 +6630,8 @@ void v2_schedule_replace_event(struct state *st)
 		}
 	}
 
+	jam(buf, "line %d story so far %s margin %lus",  __LINE__, story, marg);
+
 	st->st_replace_margin = deltatime(marg);
 	if (marg > 0) {
 		passert(kind == EVENT_SA_REKEY);
@@ -6632,6 +6647,7 @@ void v2_schedule_replace_event(struct state *st)
 
 	delete_event(st);
 	event_schedule(kind, deltatime(delay), st);
+	}
 }
 
 void v2_event_sa_rekey(struct state *st)
