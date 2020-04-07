@@ -1,6 +1,6 @@
 Basic pluto with IKEv2 using PSK on the initiator (west), and on the responder.
 
-This test uses aes_gxm-sha2_512 for IKEv2, and checks that the nonce is
+This test uses aes_gcm-sha2_512 for IKEv2, and checks that the nonce is
 large enough. This is a port of downstream test for rhbz#1297816
 
 Math looks a little weird because on emit we get the nonce size going in
