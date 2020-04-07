@@ -9,11 +9,12 @@ v3.31 (March 3, 2020)
 * IKEv2: Fix ikev2 rekey failures due to bad Traffic Selector proposa [Antony]
 * IKEv2: Verify (not ignore) expected TSi/TSr payloads for IPsec rekeys [Paul]
 * IKEv1: Support for XFRMi interfaces [Paul]
+* X509: When IDr payload is type ID_DER_ASN1_DN, don't check for SAN [Paul]
 * pluto: Disable log_to_audit if kernel does not support audit [Paul]
+* pluto: Increase max IKEv2 fragments to 32 to support Windows [John Mah]
 * addconn: Do not assert on ipsec-interface=no [Paul]
 * nat_traversal: Fix not to send nat-t keepalives when there is no nat [Tuomo]
 * KLIPS: Fix _updown.klips (regression introduced in 3.30) [Wolfgang]
-* pluto: Increase max IKEv2 fragments to 32 to support Windows [John Mah]
 
 v3.30 (February 13, 2020)
 * WARNING: This is the last release that supports the KLIPS stack,
