@@ -7,11 +7,12 @@ v3.32 (unreleased)
 * show: Fixup for python3 version of ipaddress module [Paul]
 * IKEv2: Decode notify payloads into the message digest [Andrew]
 * pluto: Fix using syntax left=%eth1 - broken in 3.27 [Antony]
-* building: Remove support for SINGLE_CONF_DIR, EMIT_ISAKMP_SPI, USE_KEYRR [Paul]
-            and TEST_INDECENT_PROPOSAL
+* building: Remove support for SINGLE_CONF_DIR, EMIT_ISAKMP_SPI, [Paul]
+            USE_KEYRR and TEST_INDECENT_PROPOSAL
 * building: Merge userland.mk into config.mk to simplify makefiles [Tuomo]
 * building: Deprecate INC_ variables [Tuomo]
 * building: Remove all support for SERPENT, TWOFISH, CAST and RIPEMD [Paul]
+* building: Remove -DALLOW_MICROSOFT_BAD_PROPOSAL [Tuomo]
 
 v3.31 (March 3, 2020)
 * IKEv2: Opportunistic conns specifying keyingtries=0 are changed to 1 [Paul]
