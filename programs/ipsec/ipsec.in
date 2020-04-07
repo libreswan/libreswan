@@ -280,12 +280,14 @@ ipsec_checknss() {
     if [ -d "${IPSEC_NSSDIR}" -a -w "${IPSEC_NSSDIR}" ]; then
 	IPSEC_NSSDIR_SQL="sql:${IPSEC_NSSDIR}"
 	# Handle nssdir default change from /etc/ipsec.d to /var/lib/ipsec/nss
-	if [ "${IPSEC_CONFDDIR}" != "${IPSEC_NSSDIR}" ]; then
+	if [ "${IPSEC_CONFDDIR}" != "${IPSEC_NSSDIR}" -a \
+	    "${cmd}" = "checknss" ]
+	then
 	    # Check for legacy nss db format in old location and give failure
 	    # We can't handle two operations at same time.
 	    if [ -f "${IPSEC_CONFDDIR}/cert8.db" -a \
 		! -f "${IPSEC_CONFDDIR}/cert9.db" -a \
-		! -f "${IPSEC_NSSDIR}/cert9.db" ]
+		! -f "${IPSEC_NSSDIR}/cert9.db" -a ]
 	    then
 		echo "Failure - we cannot handle both nss db format conversion and nss db move to new location in one run." >&2
 		echo "Run \"ipsec checknss --nssdir ${IPSEC_CONFDDIR}\" manually first to convert db format" >&2
