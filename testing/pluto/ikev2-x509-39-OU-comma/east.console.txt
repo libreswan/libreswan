@@ -2,6 +2,8 @@
 east #
  # always zap and recreate special comma certs
 east #
+ rm /etc/ipsec.d/*.*
+east #
  /testing/x509/nss-certs.sh
 ++ dirname /testing/x509/nss-certs.sh
 + nssdir=/testing/x509/nss
@@ -36,8 +38,6 @@ Notice: Trust flag u is set automatically if the private key is present.
 pk12util: PKCS12 EXPORT SUCCESSFUL
 + pk12util -o /testing/x509/nss/serverX.p12 -n serverX -d sql:/testing/x509/nss -W foobar -K foobar
 pk12util: PKCS12 EXPORT SUCCESSFUL
-east #
- rm /etc/ipsec.d/*.*
 east #
  ipsec initnss > /dev/null 2> /dev/null
 east #
