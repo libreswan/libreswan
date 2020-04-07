@@ -4221,6 +4221,10 @@ void liveness_action(struct connection *c, enum ike_version ike_version)
 	}
 }
 
+/*
+ * This is to support certificates with SAN using wildcard, eg SAN
+ * contains DNS:*.vpnservice.com where our leftid=*.vpnservice.com
+ */
 static bool idr_wildmatch(const struct end *this, const struct id *idr)
 {
 	/* check if received IDr is a valid SAN of our cert */
