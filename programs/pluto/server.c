@@ -580,40 +580,100 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 		pexpect(status == STF_SKIP_COMPLETE_STATE_TRANSITION);
 		threadtime_stop(&start, e->serialno, "resume %s", e->name);
 	} else {
+		/* no previous state */
 		pexpect(push_cur_state(st) == SOS_NOBODY);
 		statetime_t start = statetime_start(st);
 		struct msg_digest *md = unsuspend_md(st);
 
-		/* trust nothing */
-		struct msg_digest *old_md = md;
-		so_serial_t old_st_serialno = st->st_serialno;
+		/* trust nothing; so save everything */
+		so_serial_t old_st = st->st_serialno;
+		so_serial_t old_md_st = md != NULL && md->st != NULL ? md->st->st_serialno : SOS_NOBODY;
 		enum ike_version ike_version = st->st_ike_version;
+		/* when MD.ST it matches ST */
+		pexpect(old_md_st == SOS_NOBODY || old_md_st == old_st);
 
 		/* run the callback */
 		stf_status status = e->callback(st, md, e->context);
-		/* XXX: this may trash ST and MD */
+		/* this may trash MD.ST */
 
 		if (status == STF_SKIP_COMPLETE_STATE_TRANSITION) {
+			/* MD.ST may have been freed! */
 			dbg("resume %s for #%lu suppresed complete_v%d_state_transition()%s",
 			    e->name, e->serialno, ike_version,
-			    md == old_md ? "" : " and stole MD");
+			    (old_md_st != SOS_NOBODY && md->st == NULL ? "; MD.ST disappeared" :
+			     old_md_st != SOS_NOBODY && md->st != st ? "; MD.ST was switched" :
+			     ""));
+		} else if (old_md_st != SOS_NOBODY && md->st == NULL) {
+			/*
+			 * XXX: yes, MD.ST can be set to NULL.
+			 *
+			 * What happens is code deletes ST part way
+			 * through a state transition and then tries
+			 * to signal this by setting MD.ST to NULL
+			 * (presumably it was previously set to ST).
+			 *
+			 * Of course all the intervening code still
+			 * has references to the now-defunct state in
+			 * local ST et.al. variables.  What could
+			 * possibly go wrong .....
+			 *
+			 * The relevant code should instead return
+			 * STF_deleteme (STF_ZOMBIFY?)  so that the
+			 * delete can be performed by the state
+			 * transition function.
+			 *
+			 * XXX/SML: There is no need to abort here in
+			 * all cases where st is null, so moved this
+			 * precondition to where it's needed.  Some
+			 * previous logic appears to have been tooled
+			 * to handle null state, and state might be
+			 * null legitimately in certain failure cases
+			 * (STF_FAIL + xxx).
+			 *
+			 * One condition for null state is when a new
+			 * connection request packet arrives and there
+			 * is no suitable matching configuration.  For
+			 * example, ikev2_parent_inI1outR1() will
+			 * return (STF_FAIL + NO_PROPOSAL_CHOSEN) but
+			 * no state in this case.  While other
+			 * failures may be better caught before this
+			 * function is called, we should be graceful
+			 * here.  And for this particular case, and
+			 * similar failure cases, we want
+			 * SEND_NOTIFICATION (below) to let the peer
+			 * know why we've rejected the request.
+			 *
+			 * Another case of null state is return from
+			 * ikev2_parent_inR1BoutI1B which returns
+			 * STF_IGNORE.
+			 *
+			 * Another case occurs when we finish an
+			 * Informational Exchange message that causes
+			 * us to delete the IKE state.  In fact, that
+			 * can be an STF_OK and yet have no remaining
+			 * state object at this point.
+			 */
+			pexpect(ike_version == IKEv2);
+			dbg("XXX: resume %s for #%lu deleted MD.ST", e->name, old_st);
 		} else {
-			/* callback did not steal MD */
-			pexpect(old_md == md);
-			/* don't trust ST */
 			/* XXX: mumble something about struct ike_version */
 			switch (ike_version) {
 			case IKEv1:
-				/* no switching ST */
-				pexpect(md == NULL || md->st == NULL || md->st->st_serialno == old_st_serialno);
+				/* no switching MD.ST */
+				pexpect(old_md_st == SOS_NOBODY ?
+					md == NULL || md->st == NULL :
+					md != NULL && md->st != NULL && md->st->st_serialno == old_md_st);
 				complete_v1_state_transition(md, status);
 				break;
 			case IKEv2:
-				/* get grumpy when ST is switched */
-				if (md != NULL && md->st != NULL && md->st->st_serialno != old_st_serialno) {
-					dbg("XXX: resume for #%lu switched MD.ST to #%lu",
-					    old_st_serialno, md->st->st_serialno);
-					st = md->st;
+				if (old_md_st == SOS_NOBODY) {
+					pexpect(md == NULL || md->st == NULL);
+				} else if (pexpect(md != NULL && md->st != NULL)) {
+					if (md->st->st_serialno != old_st) {
+						dbg("XXX: resume %s for #%lu switched MD.ST to #%lu",
+						    e->name, old_st, md->st->st_serialno);
+						st = md->st;
+					}
 				}
 				complete_v2_state_transition(st, md, status);
 				break;

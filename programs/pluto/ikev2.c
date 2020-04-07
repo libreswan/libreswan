@@ -2467,7 +2467,6 @@ static void v2_dispatch(struct ike_sa *ike, struct state *st,
 	DBG(DBG_CONTROL,
 	    DBG_log("calling processor %s", svm->story));
 
-	statetime_t start = statetime_start(st);
 	/*
 	 * XXX: for now pass in the possibly NULL child; suspect a
 	 * better model is to drop the child and instead have the IKE
@@ -2477,6 +2476,9 @@ static void v2_dispatch(struct ike_sa *ike, struct state *st,
 	 * that to the IKE SA and then let it do all the create child
 	 * magic.
 	 */
+	statetime_t start = statetime_start(st);
+	so_serial_t old_st = st->st_serialno;
+	so_serial_t old_md_st = md != NULL && md->st != NULL ? md->st->st_serialno : SOS_NOBODY;
 	struct child_sa *child = IS_CHILD_SA(st) ? pexpect_child_sa(st) : NULL;
 	stf_status e = svm->processor(ike, child, md);
 	statetime_stop(&start, "processing: %s in %s()", svm->story, __func__);
@@ -2487,8 +2489,23 @@ static void v2_dispatch(struct ike_sa *ike, struct state *st,
 	 * Hence use that version for now.
 	 */
 
-	/* replace (*mdp)->st with st ... */
-	complete_v2_state_transition(md->st, md, e);
+	if (md->st == NULL) {
+		if (old_md_st != SOS_NOBODY) {
+			/* MD.ST may have been freed! */
+			dbg("XXX: processor '%s' for #%lu deleted state MD.ST",
+			    svm->story, old_st);
+			return;
+		}
+	} else {
+		if (md->st->st_serialno != old_st) {
+			/* MD.ST may have been freed! */
+			dbg("XXX: processor '%s' for #%lu switched state to #%lu",
+			    svm->story, old_st, md->st->st_serialno);
+			st = md->st;
+		}
+	}
+
+	complete_v2_state_transition(st, md, e);
 	/* our caller with release_any_md(mdp) */
 }
 
@@ -3251,6 +3268,11 @@ void complete_v2_state_transition(struct state *st,
 				  struct msg_digest *md,
 				  stf_status result)
 {
+	passert(st != NULL);
+	struct ike_sa *ike = ike_sa(st);
+	/* struct child_sa *child = IS_CHILD_SA(st) ? pexpect_child_sa(st) : NULL; */
+	set_cur_state(st); /* might have changed */ /* XXX: huh? */
+
 	/* statistics */
 	/* this really depends on the type of error whether it is an IKE or IPsec fail */
 	if (result > STF_FAIL) {
@@ -3276,112 +3298,18 @@ void complete_v2_state_transition(struct state *st,
 	 *
 	 * - signal that the SA was deleted mid-transition by clearing
 	 *   MD.ST (so presumably it was previously set); but that
-	 *   should be handled by returning an STF_deleteme and having
+	 *   should be handled by returning an STF_ZOMBIFY and having
 	 *   this code delete the SA.
 	 */
-	if (md != NULL) {
-		if (md->st != NULL) {
-			if (st == NULL) {
-				/* can't happen, both must be null */
-				LOG_PEXPECT("MD.ST contains the unknown %s SA #%lu; expecting NULL",
-					    IS_CHILD_SA(md->st) ? "CHILD" : "IKE",
-					    md->st->st_serialno);
-			} else if (md->st != st) {
-				/* can't happen, must match */
-				LOG_PEXPECT("MD.ST contains the unknown %s SA #%lu; expecting the %s SA #%lu",
-					    IS_CHILD_SA(md->st) ? "CHILD" : "IKE",
-					    md->st->st_serialno,
-					    IS_CHILD_SA(st) ? "CHILD" : "IKE",
-					    st->st_serialno);
-			} else {
-				dbg("MD.ST contains the %s SA #%lu",
-				    IS_CHILD_SA(st) ? "CHILD" : "IKE",
-				    st->st_serialno);
-			}
-		} else if (st != NULL) {
-			dbg("MD.ST contains NULL and ST is %s SA #%lu",
+	if (md != NULL && md->st != NULL && md->st != st) {
+		/* can't happen, must match */
+		LOG_PEXPECT("MD.ST contains the unknown %s SA #%lu; expecting the %s SA #%lu",
+			    IS_CHILD_SA(md->st) ? "CHILD" : "IKE",
+			    md->st->st_serialno,
 			    IS_CHILD_SA(st) ? "CHILD" : "IKE",
 			    st->st_serialno);
-		} else {
-			dbg("MD.ST contains NULL and ST is NULL");
-		}
-	} else if (st != NULL) {
-		dbg("MD.ST does not exist and ST is %s #%lu",
-		    IS_CHILD_SA(st) ? "CHILD" : "IKE",
-		    st->st_serialno);
-	} else {
-		dbg("MD.ST does not exist and ST is NULL");
-	}
-
-	/*
-	 * XXX: yes, ST can be NULL.
-	 *
-	 * What happens is code deletes ST part way through a state
-	 * transition and then tries to signal this by setting MD.ST
-	 * to NULL (presumably it was previously set to ST).  This
-	 * function is then called with MD.ST instead of simply ST.
-	 *
-	 * Of course all the intervening code still has references to
-	 * the now-defunct state in local ST et.al. variables.  What
-	 * could possibly go wrong .....
-	 *
-	 * The relevant code should instead return STF_deleteme
-	 * (STF_ZOMBIFY?)  so that the delete can be performed here.
-	 *
-	 * XXX/SML:  There is no need to abort here in all cases where st is
-	 * null, so moved this precondition to where it's needed.  Some previous
-	 * logic appears to have been tooled to handle null state, and state might
-	 * be null legitimately in certain failure cases (STF_FAIL + xxx).
-	 *
-	 * One condition for null state is when a new connection request packet
-	 * arrives and there is no suitable matching configuration.  For example,
-	 * ikev2_parent_inI1outR1() will return (STF_FAIL + NO_PROPOSAL_CHOSEN) but
-	 * no state in this case.  While other failures may be better caught before
-	 * this function is called, we should be graceful here.  And for this
-	 * particular case, and similar failure cases, we want SEND_NOTIFICATION
-	 * (below) to let the peer know why we've rejected the request.
-	 *
-	 * Another case of null state is return from ikev2_parent_inR1BoutI1B
-	 * which returns STF_IGNORE.
-	 *
-	 * Another case occurs when we finish an Informational Exchange message
-	 * that causes us to delete the IKE state.  In fact, that can be an
-	 * STF_OK and yet have no remaining state object at this point.
-	 */
-	if (st == NULL) {
-		/* see above */
-		pexpect(md == NULL || md->st == NULL);
-		if (result == STF_OK) {
-			/*
-			 * For instance, the successful transition of
-			 * STATE_IKESA_DEL.
-			 */
-			dbg("STF_OK but no state object remains");
-		} else if (result == STF_FAIL) {
-			/* already logged by "delete" */
-			dbg("STF_FAIL but no state object remains");
-		} else if (result > STF_FAIL) {
-			v2_notification_t notification = result - STF_FAIL;
-			/* already logged by "delete" */
-			dbg("STF_FAIL+%s but no state object remains",
-			    enum_name(&ikev2_notify_names, notification));
-			if (v2_msg_role(md) == MESSAGE_REQUEST) {
-				/* will log? */
-				send_v2N_response_from_md(md, notification, NULL);
-			}
-		} else {
-			LSWLOG_PEXPECT(buf) {
-				jam(buf, "NULL ST has unexpected status ");
-				lswlog_v2_stf_status(buf, result);
-			}
-		}
 		return;
 	}
-
-	struct ike_sa *ike = ike_sa(st);
-	/* struct child_sa *child = IS_CHILD_SA(st) ? pexpect_child_sa(st) : NULL; */
-	set_cur_state(st); /* might have changed */ /* XXX: huh? */
-	const char *from_state_name = st->st_state->short_name;
 
 	/*
 	 * Try to get the transition that is being completed ...
@@ -3404,7 +3332,14 @@ void complete_v2_state_transition(struct state *st,
 	 * and .st_v2_state_transition - it just isn't possible to
 	 * squeeze both the IKE and CHILD transitions into MD.ST.
 	 */
+#if 0
+	const struct state_v2_microcode *transition = st->st_v2_transition;
+	if (!pexpect(transition != NULL) && md != NULL) {
+		transition = md->svm;
+	}
+#else
 	const struct state_v2_microcode *transition = md != NULL ? md->svm : NULL;
+#endif
 	static const struct state_v2_microcode undefined_transition = {
 		.story = "suspect message",
 		.state = STATE_UNDEFINED,
@@ -3420,24 +3355,29 @@ void complete_v2_state_transition(struct state *st,
 	}
 
 	LSWDBGP(DBG_BASE, buf) {
+		const struct finite_state *from = st->st_state;
+		const struct finite_state *to = finite_states[transition->next_state];
+		/* consistent? */
+		const struct finite_state *transition_from = finite_states[transition->state];
+
 		jam(buf, "#%lu complete_v2_state_transition()", st->st_serialno);
-		jam(buf, " %s -> %s", from_state_name,
-		    finite_states[transition->next_state]->short_name);
+		jam(buf, " %s", from->short_name);
+		/* does TRANSITION diverge? */
+		if (from != transition_from) {
+			jam(buf, "[%s]", transition_from->short_name);
+		}
+		jam(buf, " -> %s", to->short_name);
 		jam(buf, " with status ");
 		lswlog_v2_stf_status(buf, result);
-		/* also dump any divergence */
-		if (md == NULL) {
-			jam(buf, "; md=NULL");
-		} else if (md->svm == NULL) {
-			jam(buf, "; md.svm=NULL");
-		} else if (md->svm != transition) {
-			jam(buf, "; md.svm=%s->%s",
-			    finite_states[transition->state]->short_name,
-			    finite_states[transition->next_state]->short_name);
-		}
-		if (transition->state != st->st_state->kind) {
-			jam(buf, "; transition.[from]state=%s",
-			    finite_states[transition->state]->short_name);
+		/* does MD diverge? */
+		if (md != NULL) {
+			if (md->svm == NULL) {
+				jam(buf, "; md.svm=NULL");
+			} else if (md->svm != transition) {
+				jam(buf, "; md.svm=%s->%s",
+				    finite_states[md->svm->state]->short_name,
+				    finite_states[md->svm->next_state]->short_name);
+			}
 		}
 	}
 
