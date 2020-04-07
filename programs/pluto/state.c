@@ -547,7 +547,6 @@ union sas { struct child_sa child; struct ike_sa ike; struct state st; };
  */
 
 static struct state *new_state(enum ike_version ike_version,
-			       const struct finite_state *fs,
 			       const ike_spi_t ike_initiator_spi,
 			       const ike_spi_t ike_responder_spi,
 			       enum sa_type sa_type, struct fd *whackfd)
@@ -559,7 +558,7 @@ static struct state *new_state(enum ike_version ike_version,
 	struct state *st = &sas->st;
 	*st = (struct state) {
 		.st_whack_sock = dup_any(whackfd),
-		.st_state = fs,
+		.st_state = &state_undefined,
 		.st_serialno = next_so++,
 		.st_inception = realnow(),
 		.st_ike_version = ike_version,
@@ -583,7 +582,7 @@ static struct state *new_state(enum ike_version ike_version,
 
 struct ike_sa *new_v1_istate(struct fd *whackfd)
 {
-	struct state *st = new_state(IKEv1, &state_undefined, ike_initiator_spi(),
+	struct state *st = new_state(IKEv1, ike_initiator_spi(),
 				     zero_ike_spi, IKE_SA, whackfd);
 	struct ike_sa *ike = pexpect_ike_sa(st);
 	return ike;
@@ -591,8 +590,7 @@ struct ike_sa *new_v1_istate(struct fd *whackfd)
 
 struct ike_sa *new_v1_rstate(struct msg_digest *md)
 {
-	struct state *st = new_state(IKEv1, &state_undefined,
-				     md->hdr.isa_ike_spis.initiator,
+	struct state *st = new_state(IKEv1, md->hdr.isa_ike_spis.initiator,
 				     ike_responder_spi(&md->sender),
 				     IKE_SA, null_fd);
 	struct ike_sa *ike = pexpect_ike_sa(st);
@@ -607,8 +605,7 @@ struct ike_sa *new_v2_ike_state(const struct state_v2_microcode *transition,
 				struct connection *c, lset_t policy,
 				int try, struct fd *whack_sock)
 {
-	struct state *st = new_state(IKEv2, &state_undefined,
-				     ike_initiator_spi, ike_responder_spi,
+	struct state *st = new_state(IKEv2, ike_initiator_spi, ike_responder_spi,
 				     IKE_SA, whack_sock);
 	struct ike_sa *ike = pexpect_ike_sa(st);
 	ike->sa.st_sa_role = sa_role;
@@ -1553,7 +1550,6 @@ void delete_states_by_peer(const struct fd *whackfd, const ip_address *peer)
  */
 static struct state *duplicate_state(struct state *st,
 				     enum sa_type sa_type,
-				     const struct finite_state *fs,
 				     struct fd *whackfd)
 {
 	struct state *nst;
@@ -1565,7 +1561,7 @@ static struct state *duplicate_state(struct state *st,
 		st->st_outbound_time = mononow();
 	}
 
-	nst = new_state(st->st_ike_version, fs,
+	nst = new_state(st->st_ike_version,
 			st->st_ike_spis.initiator,
 			st->st_ike_spis.responder,
 			sa_type, whackfd);
@@ -1660,7 +1656,7 @@ static struct state *duplicate_state(struct state *st,
 struct state *ikev1_duplicate_state(struct state *st,
 				    struct fd *whackfd)
 {
-	return duplicate_state(st, IPSEC_SA, &state_undefined, whackfd);
+	return duplicate_state(st, IPSEC_SA, whackfd);
 }
 
 struct child_sa *new_v2_child_state(struct ike_sa *ike,
@@ -1669,8 +1665,7 @@ struct child_sa *new_v2_child_state(struct ike_sa *ike,
 				    enum state_kind kind,
 				    struct fd *whackfd)
 {
-	struct state *cst = duplicate_state(&ike->sa, sa_type,
-					    &state_undefined, whackfd);
+	struct state *cst = duplicate_state(&ike->sa, sa_type, whackfd);
 	cst->st_sa_role = role;
 	struct child_sa *child = pexpect_child_sa(cst);
 	v2_msgid_init_child(ike, child);
