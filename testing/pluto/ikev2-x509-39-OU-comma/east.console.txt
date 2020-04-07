@@ -2,6 +2,8 @@
 east #
  # always zap and recreate special comma certs
 east #
+ rm /etc/ipsec.d/*.*
+east #
  /testing/x509/nss-certs.sh
 ++ dirname /testing/x509/nss-certs.sh
 + nssdir=/testing/x509/nss
@@ -10,8 +12,7 @@ east #
 + mkdir -p /testing/x509/nss
 + rm -f /testing/x509/nss/cert9.db /testing/x509/nss/cert.noise /testing/x509/nss/client.p12 /testing/x509/nss/clientX.p12 /testing/x509/nss/key4.db /testing/x509/nss/pkcs11.txt /testing/x509/nss/server.p12 /testing/x509/nss/serverX.p12
 + ipsec initnss --nssdir /testing/x509/nss
-Failure - we cannot handle both nss db format conversion and nss db move to new location in one run.
-Run "ipsec checknss --nssdir /etc/ipsec.d" manually first to convert db format
+Initializing NSS database
 + echo dsadasdasdasdadasdasdasdasdsadfwerwerjfdksdjfksdlfhjsdk
 + certutil -S -k rsa -n cacert -s CN=cacert -v 12 -d . -t C,C,C -x -d sql:/testing/x509/nss -z /testing/x509/nss/cert.noise -f /testing/x509/nss-pw
 Generating key.  This may take a few moments...
@@ -37,8 +38,6 @@ Notice: Trust flag u is set automatically if the private key is present.
 pk12util: PKCS12 EXPORT SUCCESSFUL
 + pk12util -o /testing/x509/nss/serverX.p12 -n serverX -d sql:/testing/x509/nss -W foobar -K foobar
 pk12util: PKCS12 EXPORT SUCCESSFUL
-east #
- rm /etc/ipsec.d/*.*
 east #
  ipsec initnss > /dev/null 2> /dev/null
 east #

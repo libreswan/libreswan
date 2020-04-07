@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
 # always zap and recreate special comma certs
-/testing/x509/nss-certs.sh
 rm /etc/ipsec.d/*.*
+/testing/x509/nss-certs.sh
 ipsec initnss > /dev/null 2> /dev/null
 pk12util -i /testing/x509/nss/server.p12 -d sql:/etc/ipsec.d -K 'foobar' -W 'foobar'
 certutil -M -d sql:/etc/ipsec.d -n cacert -t 'CT,,'
