@@ -1757,10 +1757,10 @@ void ikev2_process_packet(struct msg_digest *md)
 			 * presumably, dedicating real resources to
 			 * the connection.
 			 */
-			ike = new_v2_state(transition, SA_RESPONDER,
-					   md->hdr.isa_ike_spis.initiator,
-					   ike_responder_spi(&md->sender),
-					   c, policy, 0, null_fd);
+			ike = new_v2_ike_state(transition, SA_RESPONDER,
+					       md->hdr.isa_ike_spis.initiator,
+					       ike_responder_spi(&md->sender),
+					       c, policy, 0, null_fd);
 
 			statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
 			/* XXX: keep test results happy */

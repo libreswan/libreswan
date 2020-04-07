@@ -809,12 +809,12 @@ extern bool states_use_connection(const struct connection *c);
 struct ike_sa *new_v1_istate(struct fd *whackfd);
 struct ike_sa *new_v1_rstate(struct msg_digest *md);
 
-struct ike_sa *new_v2_state(const struct state_v2_microcode *transition,
-			    enum sa_role sa_role,
-			    const ike_spi_t ike_initiator_spi,
-			    const ike_spi_t ike_responder_spi,
-			    struct connection *c, lset_t policy,
-			    int try, struct fd *whack_sock);
+struct ike_sa *new_v2_ike_state(const struct state_v2_microcode *transition,
+				enum sa_role sa_role,
+				const ike_spi_t ike_initiator_spi,
+				const ike_spi_t ike_responder_spi,
+				struct connection *c, lset_t policy,
+				int try, struct fd *whack_sock);
 /* could eventually be IKE or CHILD SA */
 struct child_sa *new_v2_child_state(struct ike_sa *st, enum sa_type sa_type,
 				    enum sa_role sa_role, enum state_kind kind,

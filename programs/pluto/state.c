@@ -600,12 +600,12 @@ struct ike_sa *new_v1_rstate(struct msg_digest *md)
 	return ike;
 }
 
-struct ike_sa *new_v2_state(const struct state_v2_microcode *transition,
-			    enum sa_role sa_role,
-			    const ike_spi_t ike_initiator_spi,
-			    const ike_spi_t ike_responder_spi,
-			    struct connection *c, lset_t policy,
-			    int try, struct fd *whack_sock)
+struct ike_sa *new_v2_ike_state(const struct state_v2_microcode *transition,
+				enum sa_role sa_role,
+				const ike_spi_t ike_initiator_spi,
+				const ike_spi_t ike_responder_spi,
+				struct connection *c, lset_t policy,
+				int try, struct fd *whack_sock)
 {
 	struct state *st = new_state(IKEv2, &state_undefined,
 				     ike_initiator_spi, ike_responder_spi,
