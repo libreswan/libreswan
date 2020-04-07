@@ -2020,8 +2020,8 @@ void show_setup_plutomain(struct show *s)
 
 	show_comment(s,
 		"ddos-cookies-threshold=%d, ddos-max-halfopen=%d, ddos-mode=%s",
-		pluto_max_halfopen,
 		pluto_ddos_threshold,
+		pluto_max_halfopen,
 		(pluto_ddos_mode == DDOS_AUTO) ? "auto" :
 			(pluto_ddos_mode == DDOS_FORCE_BUSY) ? "busy" : "unlimited");
 
