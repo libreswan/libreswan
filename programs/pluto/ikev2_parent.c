@@ -1348,9 +1348,20 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct ike_sa *ike
 			request_ke_and_nonce("rekey outI", &ike->sa,
 					     ike->sa.st_oakley.ta_dh,
 					     ikev2_parent_outI1_continue);
-			/* let caller delete current MD */
-			/* XXX: shouldn't this be STF_SUSPEND?!? */
-			return STF_IGNORE;
+			/*
+			 * What should this reset return?
+			 *
+			 * STF_IGNORE is no good - it resets
+			 * everything including the still in progress
+			 * .st_v2_transition.
+			 *
+			 * STF_SUSPEND is better - but it will suspend
+			 * the MD even though it isn't needed.
+			 *
+			 * This is still a compromise....
+			 */
+			return STF_SKIP_COMPLETE_STATE_TRANSITION;
+
 		case v2N_REDIRECT:
 		{
 			ip_address redirect_ip;
