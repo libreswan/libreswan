@@ -1136,8 +1136,9 @@ kvmplutotest	algo-esp-netkey-to-netkey-ikev1			good
 kvmplutotest	algo-esp-netkey-to-netkey-ikev2			good
 
 # TCP tests
-kvmplutotest	ikev2-tcp-01-eof		wip
-kvmplutotest	ikev2-tcp-02-timeout		wip
-kvmplutotest	ikev2-tcp-03-basic-rawrsa	wip
-kvmplutotest	ikev2-tcp-17-rekey-ipsec	wip
-kvmplutotest	ikev2-tcp-25-rw-nat		wip
+kvmplutotest	ikev2-tcp-01-eof				wip
+kvmplutotest	ikev2-tcp-02-timeout				wip
+kvmplutotest	ikev2-tcp-03-basic-rawrsa-blocking		wip
+kvmplutotest	ikev2-tcp-03-basic-rawrsa-nonblocking		wip
+kvmplutotest	ikev2-tcp-17-rekey-ipsec			wip
+kvmplutotest	ikev2-tcp-25-rw-nat				wip

@@ -115,8 +115,25 @@ static ssize_t iketcp_write_packet(const struct iface_port *ifp,
 				   const void *ptr, size_t len,
 				   const ip_endpoint *remote_endpoint UNUSED)
 {
+	int flags = 0;
+	if (impair.tcp_use_blocking_write) {
+		libreswan_log("IMPAIR: TCP: switching off NONBLOCK before write");
+		flags = fcntl(ifp->fd, F_GETFL, 0);
+		if (flags == -1) {
+			LOG_ERRNO(errno, "TCP: fcntl(F_GETFL)");
+		}
+		if (fcntl(ifp->fd, F_SETFL, flags & ~O_NONBLOCK) == -1) {
+			LOG_ERRNO(errno, "TCP: write - fcntl(F_GETFL)");
+		}
+	}
 	ssize_t wlen = write(ifp->fd, ptr, len);
 	dbg("TCP: wrote %zd of %zu bytes", wlen, len);
+	if (impair.tcp_use_blocking_write && flags >= 0) {
+		libreswan_log("IMPAIR: TCP: restoring flags 0%o after write", flags);
+		if (fcntl(ifp->fd, F_SETFL, flags) == -1) {
+			LOG_ERRNO(errno, "TCP: fcntl(F_GETFL)");
+		}
+	}
 	return wlen;
 }
 
@@ -319,8 +336,8 @@ stf_status create_tcp_interface(struct state *st)
 
 	/* Socket is now connected, send the IKETCP stream */
 
-	dbg("TCP: sending IKE-in-TCP prefix");
 	{
+		dbg("TCP: sending IKE-in-TCP prefix");
 		const uint8_t iketcp[] = IKE_IN_TCP_PREFIX;
 		if (write(fd, iketcp, sizeof(iketcp)) != (ssize_t)sizeof(iketcp)) {
 			LOG_ERRNO(errno, "TCP: send of IKE-in-TCP prefix");
@@ -336,10 +353,13 @@ stf_status create_tcp_interface(struct state *st)
 	 * From this point on all writes are auto-wrapped in their
 	 * length and reads are auto-blocked.
 	 */
-	if (setsockopt(fd, IPPROTO_TCP, TCP_ULP, "espintcp", sizeof("espintcp"))) {
-		LOG_ERRNO(errno, "setsockopt(SOL_TCP, TCP_ULP) failed in netlink_espintcp()");
-		close(fd);
-		return STF_FATAL;
+	{
+		dbg("TCP: enabling \"espintcp\"");
+		if (setsockopt(fd, IPPROTO_TCP, TCP_ULP, "espintcp", sizeof("espintcp"))) {
+			LOG_ERRNO(errno, "setsockopt(SOL_TCP, TCP_ULP) failed in netlink_espintcp()");
+			close(fd);
+			return STF_FATAL;
+		}
 	}
 
 	struct iface_port *q = alloc_thing(struct iface_port, "TCP iface initiator");
@@ -350,7 +370,7 @@ stf_status create_tcp_interface(struct state *st)
 	q->ip_dev = add_ref(st->st_interface->ip_dev);
 	q->protocol = &ip_protocol_tcp;
 	q->iketcp_remote_endpoint = st->st_remote_endpoint;
-	q->iketcp_state = IKETCP_OPEN;
+	q->iketcp_state = IKETCP_RUNNING;
 	q->iketcp_server = false;
 
 #if 0

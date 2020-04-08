@@ -122,6 +122,8 @@ struct impair {
 	bool ikev1_del_with_notify;
 	bool bad_ike_auth_xchg;
 
+	bool tcp_use_blocking_write;
+
 	/*
 	 * add more here
 	 */

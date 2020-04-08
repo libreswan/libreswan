@@ -5,6 +5,8 @@ Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
+ ipsec whack --impair tcp-use-blocking-write
+east #
  ipsec auto --add westnet-eastnet-ikev2
 002 added connection description "westnet-eastnet-ikev2"
 east #
@@ -14,27 +16,11 @@ east #
  ipsec look
 east NOW
 XFRM state:
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 XFRM policy:
-src 192.0.1.0/24 dst 192.0.2.0/24
-	dir fwd priority 1042407 ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.1.0/24 dst 192.0.2.0/24
-	dir in priority 1042407 ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.0.1.0/24
-	dir out priority 1042407 ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
+	dir out priority 2084814 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
@@ -46,7 +32,6 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-east #
 east #
  ../bin/check-for-core.sh
 east #
