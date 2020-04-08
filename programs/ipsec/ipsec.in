@@ -287,7 +287,7 @@ ipsec_checknss() {
 	    # We can't handle two operations at same time.
 	    if [ -f "${IPSEC_CONFDDIR}/cert8.db" -a \
 		! -f "${IPSEC_CONFDDIR}/cert9.db" -a \
-		! -f "${IPSEC_NSSDIR}/cert9.db" -a ]
+		! -f "${IPSEC_NSSDIR}/cert9.db" ]
 	    then
 		echo "Failure - we cannot handle both nss db format conversion and nss db move to new location in one run." >&2
 		echo "Run \"ipsec checknss --nssdir ${IPSEC_CONFDDIR}\" manually first to convert db format" >&2
