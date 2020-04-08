@@ -18,24 +18,48 @@
 #include "ip_endpoint.h"
 #include "constants.h"		/* for memeq() */
 #include "ip_info.h"
+#include "ip_protocol.h"
 #include "lswlog.h"		/* for bad_case() */
 
 const ip_endpoint unset_endpoint; /* all zeros */
 
-ip_endpoint endpoint(const ip_address *address, int hport)
+static ip_endpoint raw_endpoint(const struct ip_protocol *protocol,
+				const ip_address *address, int hport)
 {
 #if defined(ENDPOINT_TYPE)
 	ip_endpoint endpoint = {
 		.address = *address,
 		.hport = hport,
+		.protocol = protocol->ipproto,
 	};
 	return endpoint;
 #else
-	return set_endpoint_hport(address, hport);
+	ip_endpoint e = *address;
+	e.hport = hport;
+	e.ipproto = protocol->ipproto;
+	return e;
 #endif
 }
 
-err_t sockaddr_to_endpoint(const ip_sockaddr *sa, socklen_t sa_len, ip_endpoint *e)
+ip_endpoint endpoint3(const struct ip_protocol *protocol,
+		      const ip_address *address, int hport)
+{
+#if defined(ENDPOINT_TYPE)
+#else
+	pexpect(address->hport == 0);
+	pexpect(address->ipproto == 0);
+#endif
+	return raw_endpoint(protocol, address, hport);
+}
+
+ip_endpoint endpoint(const ip_address *address, int hport)
+{
+	return raw_endpoint(&ip_protocol_unset, address, hport);
+}
+
+err_t sockaddr_to_endpoint(const struct ip_protocol *protocol,
+			   const ip_sockaddr *sa, socklen_t sa_len,
+			   ip_endpoint *e)
 {
 	/* paranoia from demux.c */
 	if (sa_len < (socklen_t) (offsetof(ip_sockaddr, sa.sa_family) +
@@ -79,7 +103,7 @@ err_t sockaddr_to_endpoint(const ip_sockaddr *sa, socklen_t sa_len, ip_endpoint 
 	default:
 		return "unexpected Address Family";
 	}
-	*e = endpoint(&address, port);
+	*e = endpoint3(protocol, &address, port);
 	return NULL;
 }
 
@@ -156,6 +180,11 @@ const struct ip_info *endpoint_type(const ip_endpoint *endpoint)
 #else
 	return address_type(endpoint);
 #endif
+}
+
+const struct ip_protocol *endpoint_protocol(const ip_endpoint *endpoint)
+{
+	return protocol_by_ipproto(endpoint->ipproto);
 }
 
 bool endpoint_is_set(const ip_endpoint *endpoint)

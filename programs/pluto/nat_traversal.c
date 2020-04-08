@@ -170,7 +170,7 @@ bool ikev2_out_nat_v2n(pb_stream *outs, struct state *st,
 		dbg("NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection");
 		lport = 0;
 	}
-	ip_endpoint local_endpoint = endpoint(&st->st_interface->local_endpoint, lport);
+	ip_endpoint local_endpoint = set_endpoint_hport(&st->st_interface->local_endpoint, lport);
 	ip_endpoint remote_endpoint = st->st_remote_endpoint;
 	return ikev2_out_natd(&local_endpoint, &remote_endpoint,
 			      &ike_spis, outs);

@@ -541,7 +541,11 @@ void jam_log_prefix(struct lswlog *buf,
 		jam(buf, ": ");
 	} else if (from != NULL) {
 		/* peer's IP address */
-		jam(buf, "packet from ");
+		if (endpoint_protocol(from) == &ip_protocol_tcp) {
+			jam(buf, "connection from ");
+		} else {
+			jam(buf, "packet from ");
+		}
 		jam_sensitive_endpoint(buf, from);
 		jam(buf, ": ");
 	}
