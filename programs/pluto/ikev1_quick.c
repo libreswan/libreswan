@@ -1199,9 +1199,7 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 		restore_new_iv(st, b->new_iv);
 
 		set_cur_state(st);      /* (caller will reset) */
-		dbg("switching MD.ST from #%lu to CHILD #%lu; ulgh",
-		    md->st->st_serialno, st->st_serialno);
-		md->st = st;            /* feed back new state */
+		switch_md_st(md, st, HERE);	/* feed back new state */
 
 		st->st_peeruserprotoid = b->his.proto;
 		st->st_peeruserport = b->his.port;

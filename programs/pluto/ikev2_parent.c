@@ -2095,9 +2095,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	v2_msgid_switch_initiator(ike, child, md);
 
 	binlog_refresh_state(cst);
-	dbg("switching MD.ST from #%lu to CHILD #%lu; ulgh",
-	    md->st->st_serialno, cst->st_serialno);
-	md->st = cst;
+	switch_md_st(md, &child->sa, HERE);
 
 	/*
 	 * XXX: Danger!
@@ -2269,9 +2267,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 
 	if (!emit_v2_auth(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, &sk.pbs)) {
 		passert(IS_CHILD_SA(cst));
-		dbg("switching MD.ST from CHILD #%lu to IKE #%lu; ulgh",
-		    md->st->st_serialno, ike->sa.st_serialno);
-		md->st = &ike->sa;
+		switch_md_st(md, &ike->sa, HERE);
 		discard_state(&cst);
 		return STF_INTERNAL_ERROR;
 	}
@@ -2633,9 +2629,9 @@ stf_status ikev2_ike_sa_process_auth_request(struct ike_sa *ike,
 	}
 
 	stf_status e = ikev2_parent_inI2outR2_continue_tail(st, md);
-	LSWDBGP(DBG_CONTROL, buf) {
-		lswlogs(buf, "ikev2_parent_inI2outR2_continue_tail returned ");
-		lswlog_v2_stf_status(buf, e);
+	LSWDBGP(DBG_BASE, buf) {
+		jam(buf, "ikev2_parent_inI2outR2_continue_tail returned ");
+		jam_v2_stf_status(buf, e);
 	}
 
 	/*
@@ -3288,9 +3284,9 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 		ret = ike_auth_child_responder(ike, &child, md);
 		if (ret != STF_OK) {
 			pexpect(child == NULL);
-			LSWDBGP(DBG_CONTROL, buf) {
-				lswlogs(buf, "ikev2_child_sa_responder() returned ");
-				lswlog_v2_stf_status(buf, ret);
+			LSWDBGP(DBG_BASE, buf) {
+				jam(buf, "ikev2_child_sa_responder() returned ");
+				jam_v2_stf_status(buf, ret);
 			}
 			return ret; /* we should continue building a valid reply packet */
 		}
@@ -3299,9 +3295,9 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 					     ISAKMP_v2_IKE_AUTH);
 		/* note: st: parent; md->st: child */
 		if (ret != STF_OK) {
-			LSWDBGP(DBG_CONTROL, buf) {
-				lswlogs(buf, "ikev2_child_sa_respond returned ");
-				lswlog_v2_stf_status(buf, ret);
+			LSWDBGP(DBG_BASE, buf) {
+				jam(buf, "ikev2_child_sa_respond returned ");
+				jam_v2_stf_status(buf, ret);
 			}
 			return ret; /* we should continue building a valid reply packet */
 		}
@@ -3365,9 +3361,9 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 
 	if (ret != STF_OK) {
 		LSWLOG_RC(RC_LOG_SERIOUS, buf) {
-			lswlogs(buf, what);
-			lswlogs(buf, " failed, responder SA processing returned ");
-			lswlog_v2_stf_status(buf, ret);
+			jam_string(buf, what);
+			jam(buf, " failed, responder SA processing returned ");
+			jam_v2_stf_status(buf, ret);
 		}
 		/* XXX: return RET? */
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
@@ -4261,9 +4257,7 @@ stf_status ikev2_child_ike_inR(struct ike_sa *ike,
 		/* free early return items */
 		free_ikev2_proposal(&st->st_accepted_ike_proposal);
 		passert(st->st_accepted_ike_proposal == NULL);
-		dbg("switching MD.ST from #%lu to IKE #%lu; ulgh",
-		    md->st->st_serialno, ike->sa.st_serialno);
-		md->st = &ike->sa;
+		switch_md_st(md, &ike->sa, HERE);
 		return STF_FAIL;
 	}
 
@@ -4670,9 +4664,7 @@ stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
 		 * will delete the child state?  Or perhaps there a
 		 * lurking SO_DISPOSE to clean it up?
 		 */
-		dbg("switching MD.ST from #%lu to IKE #%lu; ulgh",
-		    md->st->st_serialno, ike->sa.st_serialno);
-		md->st = &ike->sa;
+		switch_md_st(md, &ike->sa, HERE);
 		return STF_IGNORE;
 	}
 
@@ -4683,9 +4675,7 @@ stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
 		 * will delete the child state?  Or perhaps there a
 		 * lurking SO_DISPOSE to clean it up?
 		 */
-		dbg("switching MD.ST from #%lu to IKE #%lu; ulgh",
-		    md->st->st_serialno, ike->sa.st_serialno);
-		md->st = &ike->sa;
+		switch_md_st(md, &ike->sa, HERE);
 		return STF_FAIL; /* XXX; STF_FATAL? */
 	}
 
@@ -4864,9 +4854,9 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 	/* note: pst: parent; md->st: child */
 
 	if (ret != STF_OK) {
-		LSWDBGP(DBG_CONTROL, buf) {
-			lswlogs(buf, "ikev2_child_sa_respond returned ");
-			lswlog_v2_stf_status(buf, ret);
+		LSWDBGP(DBG_BASE, buf) {
+			jam(buf, "ikev2_child_sa_respond returned ");
+			jam_v2_stf_status(buf, ret);
 		}
 		return ret; /* abort building the response message */
 	}

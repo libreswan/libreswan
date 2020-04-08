@@ -75,9 +75,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 	struct state *cst = &child->sa;	/* child state */
 
 	/* switch to child */
-	dbg("switching MD.ST from #%lu to CHILD #%lu; ulgh",
-	    md->st != NULL ? md->st->st_serialno : 0, cst->st_serialno);
-	md->st = cst;
+	switch_md_st(md, &child->sa, HERE);
 	c = cst->st_connection;
 
 	if (c->spd.that.has_lease &&

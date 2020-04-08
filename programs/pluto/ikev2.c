@@ -3197,14 +3197,14 @@ static void log_stf_suspend(struct state *st, stf_status result)
 	set_cur_state(st);      /* might have changed */
 
 	fmt_conn_instance(st->st_connection, b);
-	LSWDBGP(DBG_CONTROL, buf) {
-		lswlogf(buf, "\"%s\"%s #%lu complete v2 state %s transition with ",
-			st->st_connection->name, b, st->st_serialno,
-			st->st_state->name);
-		lswlog_v2_stf_status(buf, result);
-		lswlogf(buf, " suspended from %s:%d",
-			st->st_suspended_md_func,
-			st->st_suspended_md_line);
+	LSWDBGP(DBG_BASE, buf) {
+		jam(buf, "\"%s\"%s #%lu complete v2 state %s transition with ",
+		    st->st_connection->name, b, st->st_serialno,
+		    st->st_state->name);
+		jam_v2_stf_status(buf, result);
+		jam(buf, " suspended from %s:%d",
+		    st->st_suspended_md_func,
+		    st->st_suspended_md_line);
 	}
 }
 
@@ -3355,29 +3355,25 @@ void complete_v2_state_transition(struct state *st,
 	}
 
 	LSWDBGP(DBG_BASE, buf) {
-		const struct finite_state *from = st->st_state;
-		const struct finite_state *to = finite_states[transition->next_state];
-		/* consistent? */
 		const struct finite_state *transition_from = finite_states[transition->state];
 
 		jam(buf, "#%lu complete_v2_state_transition()", st->st_serialno);
-		jam(buf, " %s", from->short_name);
-		/* does TRANSITION diverge? */
-		if (from != transition_from) {
-			jam(buf, "[%s]", transition_from->short_name);
+		if (st->st_state != transition_from) {
+			jam(buf, " in state %s", st->st_state->short_name);
 		}
-		jam(buf, " -> %s", to->short_name);
+		jam(buf, " ");
+		jam_v2_transition(buf, transition);
 		jam(buf, " with status ");
-		lswlog_v2_stf_status(buf, result);
-		/* does MD diverge? */
-		if (md != NULL) {
-			if (md->svm == NULL) {
-				jam(buf, "; md.svm=NULL");
-			} else if (md->svm != transition) {
-				jam(buf, "; md.svm=%s->%s",
-				    finite_states[md->svm->state]->short_name,
-				    finite_states[md->svm->next_state]->short_name);
-			}
+		jam_v2_stf_status(buf, result);
+		/* does MD.SVM diverge? */
+		if (md != NULL && transition != md->svm) {
+			jam(buf, "; md.svm=");
+			jam_v2_transition(buf, md->svm);
+		}
+		/* does ST.ST_V2_TRANSITION diverge? */
+		if (transition != st->st_v2_transition) {
+			jam(buf, "; .st_v2_transition=");
+			jam_v2_transition(buf, st->st_v2_transition);
 		}
 	}
 
@@ -3535,13 +3531,13 @@ v2_notification_t accept_v2_nonce(struct msg_digest *md,
 	return v2N_NOTHING_WRONG;
 }
 
-void lswlog_v2_stf_status(struct lswlog *buf, unsigned status)
+void jam_v2_stf_status(struct lswlog *buf, unsigned status)
 {
 	if (status <= STF_FAIL) {
-		lswlog_enum(buf, &stf_status_names, status);
+		jam_enum(buf, &stf_status_names, status);
 	} else {
-		lswlogs(buf, "STF_FAIL+");
-		lswlog_enum(buf, &ikev2_notify_names, status - STF_FAIL);
+		jam(buf, "STF_FAIL+");
+		jam_enum(buf, &ikev2_notify_names, status - STF_FAIL);
 	}
 }
 

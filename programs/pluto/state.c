@@ -611,7 +611,7 @@ struct ike_sa *new_v2_ike_state(const struct state_v2_microcode *transition,
 	ike->sa.st_sa_role = sa_role;
 	const struct finite_state *fs = finite_states[transition->state];
 	change_state(&ike->sa, fs->kind);
-	ike->sa.st_v2_transition = transition;
+	set_v2_transition(&ike->sa, transition, HERE);
 	v2_msgid_init_ike(ike);
 	initialize_new_state(&ike->sa, c, policy, try);
 	return ike;
@@ -3294,4 +3294,53 @@ void list_state_events(const struct fd *whackfd, monotime_t now)
 		whack_log_state_event(whackfd, st, st->st_addr_change_event, now);
 		whack_log_state_event(whackfd, st, st->st_dpd_event, now);
 	}
+}
+
+void set_v1_transition(struct state *st, const struct state_v1_microcode *transition,
+		       where_t where)
+{
+	LSWDBGP(DBG_BASE, buf) {
+		jam(buf, "#%lu.st_v1_transition ", st->st_serialno);
+		jam_v1_transition(buf, st->st_v1_transition);
+		jam(buf, " to ");
+		jam_v1_transition(buf, transition);
+		jam(buf, " "PRI_WHERE, pri_where(where));
+	}
+	st->st_v1_transition = transition;
+}
+
+void set_v2_transition(struct state *st, const struct state_v2_microcode *transition,
+		       where_t where)
+{
+	LSWDBGP(DBG_BASE, buf) {
+		jam(buf, "#%lu.st_v2_transition ", st->st_serialno);
+		jam_v2_transition(buf, st->st_v2_transition);
+		jam(buf, " -> ");
+		jam_v2_transition(buf, transition);
+		jam(buf, " "PRI_WHERE, pri_where(where));
+	}
+	st->st_v2_transition = transition;
+}
+
+static void jam_st(jambuf_t *buf, struct state *st)
+{
+	if (st == NULL) {
+		jam(buf, "NULL");
+	} else {
+		jam(buf, "%s #%lu %s",
+		    IS_CHILD_SA(st) ? "CHILD" : "IKE",
+		    st->st_serialno, st->st_state->short_name);
+	}
+}
+
+void switch_md_st(struct msg_digest *md, struct state *st, where_t where)
+{
+	LSWDBGP(DBG_BASE, buf) {
+		jam(buf, "switching IKEv%d MD.ST from ", st->st_ike_version);
+		jam_st(buf, md->st);
+		jam(buf, " to ");
+		jam_st(buf, st);
+		jam(buf, " "PRI_WHERE, pri_where(where));
+	}
+	md->st = st;
 }

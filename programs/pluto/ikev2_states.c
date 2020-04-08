@@ -342,3 +342,14 @@ void log_v2_payload_errors(struct logger *logger, struct msg_digest *md,
 		}
 	}
 }
+
+void jam_v2_transition(jambuf_t *buf, const struct state_v2_microcode *transition)
+{
+	if (transition == NULL) {
+		jam(buf, "NULL");
+	} else {
+		jam(buf, "%s->%s",
+		    finite_states[transition->state]->short_name,
+		    finite_states[transition->next_state]->short_name);
+	}
+}

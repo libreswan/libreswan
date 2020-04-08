@@ -191,6 +191,17 @@ struct state_v1_microcode {
 	enum v1_hash_type hash_type;
 };
 
+void jam_v1_transition(jambuf_t *buf, const struct state_v1_microcode *transition)
+{
+	if (transition == NULL) {
+		jam(buf, "NULL");
+	} else {
+		jam(buf, "%s->%s",
+		    finite_states[transition->state]->short_name,
+		    finite_states[transition->next_state]->short_name);
+	}
+}
+
 /* State Microcode Flags, in several groups */
 
 /* Oakley Auth values: to which auth values does this entry apply?
