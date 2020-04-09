@@ -70,6 +70,7 @@
 #include "pluto_stats.h"
 #include "keywords.h"
 #include "ikev2_msgid.h"
+#include "ikev2_redirect.h"
 #include "ikev2_states.h"
 #include "ip_endpoint.h"
 #include "hostpair.h"		/* for find_v2_host_connection() */
@@ -1700,6 +1701,18 @@ void ikev2_process_packet(struct msg_digest *md)
 
 			if (v2_rejected_initiator_cookie(md, require_ddos_cookies())) {
 				dbg("pluto is overloaded and demanding cookies; dropping new exchange");
+				return;
+			}
+
+			/*
+			 * Check for v2N_REDIRECT_SUPPORTED/v2N_REDIRECTED_FROM
+			 * notification. If redirection is a MUST, try to respond
+			 * with v2N_REDIRECT and don't continue further.
+			 * Otherwise continue as usual.
+			 *
+			 * The function below will do everything (and log the result).
+			 */
+			if (redirect_global(md)) {
 				return;
 			}
 

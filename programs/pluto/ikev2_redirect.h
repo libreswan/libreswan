@@ -24,32 +24,35 @@ extern enum allow_global_redirect global_redirect;
 extern char *global_redirect_to;
 
 /*
- * Emit IKEv2 Notify Redirect payload.
+ * Check whether we received v2N_REDIRECT_SUPPORTED (in IKE_SA_INIT request),
+ * and if we did, send a response with REDIRECT payload (without creating state -
+ * just as in COOKIE case).
+ *
+ * @param md message digest of IKE_SA_INIT request.
+ * @return bool TRUE if redirection is a MUST, FALSE otherwise.
+ */
+extern bool redirect_global(struct msg_digest *md);
+
+/*
+ * Emit IKEv2 Notify REDIRECTED_FROM payload.
+ *
+ * @param ip_addr IP Address of the previous gateway.
+ * @param pbs output stream
+ */
+extern bool emit_redirected_from_notification(
+		const ip_address *ip_addr,
+		pb_stream *pbs);
+
+/*
+ * Emit IKEv2 Notify REDIRECT payload.
  *
  * @param destination string of IPv4/IPv6/FQDN address.
- * @param optional nonce data containing nonce
  * @param pbs output stream
  */
 extern bool emit_redirect_notification(
 		const char *destination,
-		const chunk_t *nonce, /* optional */
 		pb_stream *pbs);
 
-/*
- * Emit IKEv2 Notify Redirect payload given an already decoded destination.
- *
- * @param ntype type of notification (v2N_REDIRECT or v2N_REDIRECTED_FROM)
- * @param dest_ip IPv4/IPv6 address of destination.
- * @param dest_str string of FQDN address of destination.
- * @param optional nonce data containing nonce
- * @param pbs output stream
- */
-extern bool emit_redirect_notification_decoded_dest(
-		v2_notification_t ntype,
-		const ip_address *dest_ip,
-		const char *dest_str,
-		const chunk_t *nonce, /* optional */
-		pb_stream *pbs);
 /*
  * Extract needed information from IKEv2 Notify Redirect
  * notification.

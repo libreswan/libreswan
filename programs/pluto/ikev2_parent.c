@@ -781,8 +781,7 @@ static stf_status ikev2_parent_outI1_common(struct state *st)
 	 *   and send v2N_REDIRECT_SUPPORTED if we do
 	 */
 	if (address_is_specified(&c->temp_vars.redirect_ip)) {
-		if (!emit_redirect_notification_decoded_dest(v2N_REDIRECTED_FROM,
-				&c->temp_vars.old_gw_address, NULL, NULL, &rbody))
+		if (!emit_redirected_from_notification(&c->temp_vars.old_gw_address, &rbody))
 			return STF_INTERNAL_ERROR;
 	} else if (LIN(POLICY_ACCEPT_REDIRECT_YES, c->policy)) {
 		if (!emit_v2N(v2N_REDIRECT_SUPPORTED, &rbody))
@@ -1115,18 +1114,6 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 			return STF_INTERNAL_ERROR;
 	 }
 
-	if (st->st_seen_redirect_sup &&
-	    (global_redirect == GLOBAL_REDIRECT_YES ||
-	     (global_redirect == GLOBAL_REDIRECT_AUTO && require_ddos_cookies())))
-	{
-		if (global_redirect_to == NULL) {
-			loglog(RC_LOG_SERIOUS, "global-redirect-to is not specified; can't redirect requests");
-		} else {
-			if (!emit_redirect_notification(global_redirect_to, &st->st_ni, &rbody))
-				return STF_INTERNAL_ERROR;
-		}
-	}
-
 	/* Send SIGNATURE_HASH_ALGORITHMS notification only if we received one */
 	if (!impair.ignore_hash_notify_request) {
 		if (st->st_seen_hashnotify && ((c->policy & POLICY_RSASIG) || (c->policy & POLICY_ECDSA))
@@ -1361,7 +1348,33 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct ike_sa *ike
 			/* let caller delete current MD */
 			/* XXX: shouldn't this be STF_SUSPEND?!? */
 			return STF_IGNORE;
-
+		case v2N_REDIRECT:
+		{
+			ip_address redirect_ip;
+			if (!LIN(POLICY_ACCEPT_REDIRECT_YES, ike->sa.st_connection->policy)) {
+				dbg("ignoring v2N_REDIRECT, we don't accept being redirected");
+			} else {
+				err_t err = parse_redirect_payload(&ntfy->pbs,
+								   c->accept_redirect_to,
+								   &ike->sa.st_ni,
+								   &redirect_ip);
+				if (err == NULL) {
+					ike->sa.st_connection->temp_vars.redirect_ip = redirect_ip;
+					event_force(EVENT_v2_REDIRECT, &ike->sa);
+					return STF_SUSPEND;
+				}
+				loglog(RC_LOG_SERIOUS, "warning: parsing of v2N_REDIRECT payload failed: %s", err);
+			}
+			/*
+			 * At this point we can either:
+			 * 	- ignore it (and retransmit our IKE_SA_INIT request)
+			 * 	or
+			 * 	- suspend the state.
+			 * Let's suspend it, because we suspect the response
+			 * to our retransmision will be the same as this one.
+			 */
+			return STF_SUSPEND;
+		}
 		default:
 			/*
 			 * For things like v2N_NO_PROPOSAL_CHOSEN and
@@ -3203,7 +3216,7 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 	}
 
 	if (send_redirect) {
-		if (!emit_redirect_notification(c->redirect_to, NULL, &sk.pbs))
+		if (!emit_redirect_notification(c->redirect_to, &sk.pbs))
 			return STF_INTERNAL_ERROR;
 
 		st->st_sent_redirect = TRUE;	/* mark that we have sent REDIRECT in IKE_AUTH */
@@ -3643,7 +3656,7 @@ stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct 
 							   NULL,
 							   &redirect_ip);
 			if (err != NULL) {
-				loglog(RC_LOG_SERIOUS, "warning: parsing of v2N_REDIRECT payload failed: %s", err);
+				dbg("warning: parsing of v2N_REDIRECT payload failed: %s", err);
 			} else {
 				/* initiate later, because we need to wait for AUTH succees */
 				st->st_connection->temp_vars.redirect_ip = redirect_ip;

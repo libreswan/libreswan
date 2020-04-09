@@ -1,8 +1,9 @@
 /*
  * IKEv2 Redirect Mechanism (RFC 5685) related functions
  *
- * Copyright (C) 2018 Vukasin Karadzic <vukasin.karadzic@gmail.com>
+ * Copyright (C) 2018 - 2020 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  * Copyright (C) 2019 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2020 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -65,44 +66,51 @@ char *global_redirect_to;
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 
-bool emit_redirect_notification(
-		const char *destination,
-		const chunk_t *nonce, /* optional */
-		pb_stream *pbs)
+/*
+ * Build a notification data for REDIRECT (or REDIRECTED_FROM)
+ * payload from the given string or ip.
+ *
+ * NOTE: destination string can also contain an 'unparsed'
+ * IP address.
+ * In ip we will always have already 'parsed' IP address,
+ * obviously. ip will not be NULL only in cases
+ * where we use this function for constructing data
+ * for REDIRECTED_FROM notification.
+ */
+static chunk_t build_redirect_notification_data(
+		const char *dest_str, /* optional */
+		const ip_address *dest_ip, /* optional */
+		const chunk_t *nonce) /* optional */
 {
+	passert((dest_str == NULL) != (dest_ip == NULL));
+
 	ip_address ip_addr;
-	err_t ugh = ttoaddr_num(destination, 0, AF_UNSPEC, &ip_addr);
+	bool send_ip;
+	err_t ugh;
 
-	if (ugh != NULL) {
-		/*
-		 * ttoaddr_num failed: just ship destination as a FQDN
-		 * ??? it may be a bogus string
-		 */
-		return emit_redirect_notification_decoded_dest(v2N_REDIRECT,
-			NULL, destination, nonce, pbs);
+	if (dest_str != NULL) {
+		ugh = ttoaddr_num(dest_str, 0, AF_UNSPEC, &ip_addr);
+		if (ugh != NULL)
+			/*
+			* ttoaddr_num failed: just ship dest_str as a FQDN
+			* ??? it may be a bogus string
+			*/
+			send_ip = false;
+		else
+			send_ip = true;
 	} else {
-		return emit_redirect_notification_decoded_dest(v2N_REDIRECT,
-			&ip_addr, NULL, nonce, pbs);
+		send_ip = true;
+		ip_addr = *dest_ip;
 	}
-}
 
-bool emit_redirect_notification_decoded_dest(
-		v2_notification_t ntype,
-		const ip_address *dest_ip,
-		const char *dest_str,
-		const chunk_t *nonce, /* optional */
-		pb_stream *pbs)
-{
 	struct ikev2_redirect_part gwi;
 	shunk_t id;
 
-	if (dest_ip == NULL) {
+	if (!send_ip) {
 		id = shunk1(dest_str);
 		gwi.gw_identity_type = GW_FQDN;
 	} else {
-		passert(dest_str == NULL);
-
-		switch (addrtypeof(dest_ip)) {
+		switch (addrtypeof(&ip_addr)) {
 		case AF_INET:
 			gwi.gw_identity_type = GW_IPV4;
 			break;
@@ -110,29 +118,126 @@ bool emit_redirect_notification_decoded_dest(
 			gwi.gw_identity_type = GW_IPV6;
 			break;
 		default:
-			bad_case(addrtypeof(dest_ip));
+			bad_case(addrtypeof(&ip_addr));
 		}
-		id = address_as_shunk(dest_ip);
+		id = address_as_shunk(&ip_addr);
 	}
 
 	if (id.len > 0xFF) {
-		/* ??? what should we do? */
 		loglog(RC_LOG_SERIOUS, "redirect destination longer than 255 octets; ignoring");
-		return false;
+		return empty_chunk;
 	}
 	gwi.gw_identity_len = id.len;
 
-	passert(nonce == NULL ||
-		(nonce->len >= IKEv2_MINIMUM_NONCE_SIZE &&
-		 nonce->len <= IKEv2_MAXIMUM_NONCE_SIZE));
+	/*
+	 * Dummy pbs we need for more elegant notification
+	 * data construction (using out_struct and et. al.)
+	 */
+	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
+	pb_stream gwid_pbs = open_out_pbs("gwid_pbs",
+				       buf, sizeof(buf));
+	if (out_struct(&gwi, &ikev2_redirect_desc, &gwid_pbs, NULL) &&
+			out_raw(id.ptr, id.len , &gwid_pbs, "redirect ID") &&
+			(nonce == NULL || pbs_out_hunk(*nonce, &gwid_pbs, "nonce in redirect notify")) &&
+			(close_output_pbs(&gwid_pbs), true))
+		/* please make sure callee frees this chunk */
+		return clone_out_pbs_as_chunk(&gwid_pbs, "redirect notify data");
 
-	pb_stream gwid_pbs;
-	return
-		emit_v2Npl(ntype, pbs, &gwid_pbs) &&
-		out_struct(&gwi, &ikev2_redirect_desc, &gwid_pbs, NULL) &&
-		out_raw(id.ptr, id.len , &gwid_pbs, "redirect ID") &&
-		(nonce == NULL || pbs_out_hunk(*nonce, &gwid_pbs, "nonce in redirect notify")) &&
-		(close_output_pbs(&gwid_pbs), true);
+	return empty_chunk;
+}
+
+bool redirect_global(struct msg_digest *md) {
+	/* if we don't support global redirection, no need to continue */
+	if (global_redirect == GLOBAL_REDIRECT_NO)
+		return false;
+	else if (global_redirect == GLOBAL_REDIRECT_AUTO && !require_ddos_cookies())
+		return false;
+
+	/*
+	 * From this point on we know that redirection is a must, and return
+	 * value will be true. The only thing that we need to note is whether
+	 * we redirect or not, and that difference will be marked with a
+	 * log message.
+	 */
+
+	if (global_redirect_to == NULL) {
+		loglog(RC_LOG_SERIOUS, "global redirect destination is not specified");
+		return true;
+	}
+
+	if (md->chain[ISAKMP_NEXT_v2Ni] == NULL) {
+		/* Ni is used as cookie to protect REDIRECT in IKE_SA_INIT */
+		dbg("Ni payload required for REDIRECT is missing");
+		return true;
+	}
+
+	chunk_t Ni = empty_chunk;
+	bool peer_redirect_support = false;
+
+	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
+		ntfy != NULL; ntfy = ntfy->next) {
+
+		switch (ntfy->payload.v2n.isan_type) {
+			case v2N_REDIRECTED_FROM:
+			case v2N_REDIRECT_SUPPORTED:
+			{
+				peer_redirect_support = true;
+				continue;
+			}
+			default:
+				break;
+		}
+	}
+
+	if (!peer_redirect_support) {
+		dbg("peer didn't indicate support for redirection");
+		return true;
+	}
+
+	Ni = clone_hunk(pbs_in_left_as_shunk(&md->chain[ISAKMP_NEXT_v2Ni]->pbs),
+						"nonce for redirect");
+	if (Ni.len == 0) {
+		dbg("Initiator nonce should not be zero length");
+		return true;
+	}
+
+	chunk_t data = build_redirect_notification_data(global_redirect_to, NULL, &Ni);
+	free_chunk_content(&Ni);
+
+	if (data.len == 0) {
+		loglog(RC_LOG_SERIOUS, "failed to construct REDIRECT notification data");
+	} else {
+		send_v2N_response_from_md(md, v2N_REDIRECT, &data);
+		free_chunk_content(&data);
+	}
+
+	return true;
+}
+
+bool emit_redirect_notification(const char *dest_str, pb_stream *pbs)
+{
+	chunk_t data = build_redirect_notification_data(dest_str, NULL, NULL);
+
+	if (data.len == 0)
+		return false;
+
+	bool ret = emit_v2N_bytes(v2N_REDIRECT, data.ptr, data.len, pbs);
+	free_chunk_content(&data);
+
+	return ret;
+}
+
+bool emit_redirected_from_notification(const ip_address *ip_addr, pb_stream *pbs)
+{
+	chunk_t data = build_redirect_notification_data(NULL, ip_addr, NULL);
+
+	if (data.len == 0)
+		return false;
+
+	bool ret = emit_v2N_bytes(v2N_REDIRECTED_FROM, data.ptr, data.len, pbs);
+	free_chunk_content(&data);
+
+	return ret;
 }
 
 /*
@@ -143,7 +248,7 @@ bool emit_redirect_notification_decoded_dest(
 static bool allow_to_be_redirected(const char *allowed_targets_list, ip_address *dest_ip)
 {
 	if (allowed_targets_list == NULL || streq(allowed_targets_list, "%any"))
-		return TRUE;
+		return true;
 
 	ip_address ip_addr;
 
@@ -167,9 +272,8 @@ static bool allow_to_be_redirected(const char *allowed_targets_list, ip_address 
 		}
 		t += len;	/* skip name */
 	}
-	DBGF(DBG_CONTROLMORE,
-		"we did not find suitable address in the list specified by accept-redirect-to option");
-	return FALSE;
+	dbg("we did not find suitable address in the list specified by accept-redirect-to option");
+	return false;
 }
 
 err_t parse_redirect_payload(pb_stream *input_pbs,
@@ -180,7 +284,7 @@ err_t parse_redirect_payload(pb_stream *input_pbs,
 	struct ikev2_redirect_part gw_info;
 
 	if (!in_struct(&gw_info, &ikev2_redirect_desc, input_pbs, NULL))
-		return "received deformed REDIRECT payload";
+		return "received malformed REDIRECT payload";
 
 	const struct ip_info *af;
 
@@ -241,21 +345,17 @@ err_t parse_redirect_payload(pb_stream *input_pbs,
 
 	if (nonce == NULL) {
 		if (len > 0)
-			return "unexpected extra bytes in Notify data";
-	} else {
-		if (len < IKEv2_MINIMUM_NONCE_SIZE)
-			return "expected nonce is smaller than IKEv2 minimum nonce size";
-		else if (len > IKEv2_MAXIMUM_NONCE_SIZE)
-			return "expected nonce is bigger than IKEv2 maximum nonce size";
+			return "unexpected extra bytes in Notify data after GW data - nonce should have been omitted";
+		else
+			return NULL;
+	}
 
-		if (nonce->len != len ||
-		    !memeq(nonce->ptr, input_pbs->cur, len)) {
-			DBG(DBG_CONTROL, {
-				DBG_dump_hunk("expected nonce", *nonce);
-				DBG_dump("received nonce", input_pbs->cur, len);
-			});
-			return "received nonce is not the same as Ni";
-		}
+	if (nonce->len != len || !memeq(nonce->ptr, input_pbs->cur, len)) {
+		DBG(DBG_CONTROL, {
+			DBG_dump_hunk("expected nonce", *nonce);
+			DBG_dump("received nonce", input_pbs->cur, len);
+		});
+		return "received nonce does not match our expected nonce Ni (spoofed packet?)";
 	}
 
 	return NULL;
@@ -346,7 +446,7 @@ void initiate_redirect(struct state *st)
 static payload_master_t add_redirect_payload;
 static bool add_redirect_payload(struct state *st, pb_stream *pbs)
 {
-	return emit_redirect_notification(st->st_active_redirect_gw, NULL, pbs);
+	return emit_redirect_notification(st->st_active_redirect_gw, pbs);
 }
 
 void send_active_redirect_in_informational(struct state *st)
