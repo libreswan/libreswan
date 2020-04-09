@@ -866,6 +866,7 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 				  struct msg_digest *md)
 {
 	pexpect(child == NULL);
+	struct logger logger = STATE_LOGGER(&ike->sa);
 	struct connection *c = ike->sa.st_connection;
 	/* set up new state */
 	update_ike_endpoints(ike, md);
@@ -898,10 +899,12 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 						  &ike->sa.st_accepted_ike_proposal,
 						  ike_proposals);
 	if (ret != STF_OK) {
-		if (pexpect(ret > STF_FAIL)) {
-			send_v2N_response_from_md(md, ret - STF_FAIL, NULL);
-		}
-		return STF_FATAL;
+		pexpect(ike->sa.st_sa_role == SA_RESPONDER);
+		pexpect(ret > STF_FAIL);
+		record_v2N_response(&logger, ike, md,
+				    ret - STF_FAIL, NULL,
+				    UNENCRYPTED_PAYLOAD);
+		return STF_FAIL;
 	}
 
 	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("accepted IKE proposal",
@@ -1637,7 +1640,7 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 							  ike_proposals);
 		if (ret != STF_OK) {
 			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2_parent_inR1outI2()"));
-			return ret;
+			return ret; /* initiator; no response */
 		}
 
 		if (!ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal,
@@ -3319,6 +3322,7 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 stf_status ikev2_process_child_sa_pl(struct ike_sa *ike, struct child_sa *child,
 				     struct msg_digest *md, bool expect_accepted_proposal)
 {
+	struct logger logger = STATE_LOGGER(&child->sa);
 	struct connection *c = child->sa.st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	enum isakmp_xchg_types isa_xchg = md->hdr.isa_xchg;
@@ -3360,6 +3364,13 @@ stf_status ikev2_process_child_sa_pl(struct ike_sa *ike, struct child_sa *child,
 			jam_string(buf, what);
 			jam(buf, " failed, responder SA processing returned ");
 			jam_v2_stf_status(buf, ret);
+		}
+		if (child->sa.st_sa_role == SA_RESPONDER) {
+			pexpect(ret > STF_FAIL);
+			record_v2N_response(&logger, ike, md,
+					    ret - STF_FAIL, NULL,
+					    ENCRYPTED_PAYLOAD);
+			return STF_FAIL;
 		}
 		/* XXX: return RET? */
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
@@ -4242,7 +4253,7 @@ stf_status ikev2_child_ike_inR(struct ike_sa *ike,
 						  ike_proposals);
 	if (ret != STF_OK) {
 		dbg("failed to accept IKE SA, REKEY, response, in ikev2_child_ike_inR");
-		return ret;
+		return ret; /* initiator; no response */
 	}
 
 	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("accepted IKE proposal",
@@ -4632,6 +4643,7 @@ stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
 				   struct msg_digest *md)
 {
 	pexpect(child != NULL); /* not yet emancipated */
+	struct logger logger = STATE_LOGGER(&child->sa);
 	struct state *st = &child->sa;
 	pexpect(ike != NULL);
 	struct connection *c = st->st_connection;
@@ -4658,8 +4670,13 @@ stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
 						  LIN(POLICY_OPPORTUNISTIC, c->policy),
 						  &st->st_accepted_ike_proposal,
 						  ike_proposals);
-	if (ret != STF_OK)
-		return ret;
+	if (ret != STF_OK) {
+		pexpect(child->sa.st_sa_role == SA_RESPONDER);
+		pexpect(ret > STF_FAIL);
+		record_v2N_response(&logger, ike, md, ret - STF_FAIL, NULL,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FAIL;
+	}
 
 	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("accepted IKE proposal",
 						st->st_accepted_ike_proposal));
