@@ -3285,7 +3285,7 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 		if (ret != STF_OK) {
 			pexpect(child == NULL);
 			LSWDBGP(DBG_BASE, buf) {
-				jam(buf, "ikev2_child_sa_responder() returned ");
+				jam(buf, "ike_auth_child_responder() returned ");
 				jam_v2_stf_status(buf, ret);
 			}
 			return ret; /* we should continue building a valid reply packet */
