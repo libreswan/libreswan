@@ -3892,6 +3892,8 @@ static bool ikev2_rekey_child_req(struct child_sa *child,
 static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 				   struct msg_digest *md)
 {
+	struct logger logger = STATE_LOGGER(&child->sa);
+
 	struct payload_digest *rekey_sa_payload = NULL;
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		switch (ntfy->payload.v2n.isan_type) {
@@ -3931,25 +3933,24 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 		log_state(RC_LOG, &child->sa,
 			  "CREATE_CHILD_SA IPsec SA rekey invalid spi size %u",
 			  rekey_notify->isan_spisize);
-		record_v2N_response_from_state(ike, md, v2N_INVALID_SYNTAX,
-					       NULL/*empty data*/);
+		record_v2N_response(&logger, ike, md, v2N_INVALID_SYNTAX,
+				    NULL/*empty data*/, ENCRYPTED_PAYLOAD);
 		return false;
 	}
 
 	ipsec_spi_t spi = 0;
 	if (!in_raw(&spi, sizeof(spi), &rekey_sa_payload->pbs, "SPI")) {
 		/* already logged */
-		record_v2N_response_from_state(ike, md, v2N_INVALID_SYNTAX,
-					       NULL/*empty data*/);
+		record_v2N_response(&logger, ike, md, v2N_INVALID_SYNTAX,
+				    NULL/*empty data*/, ENCRYPTED_PAYLOAD);
 		return false; /* cannot happen; XXX: why? */
 	}
 
 	if (spi == 0) {
 		log_state(RC_LOG, &child->sa,
 			  "CREATE_CHILD_SA IPsec SA rekey contains zero SPI");
-		record_v2N_response_from_state(ike, md,
-					       v2N_INVALID_SYNTAX,
-					       NULL/*empty data*/);
+		record_v2N_response(&logger, ike, md, v2N_INVALID_SYNTAX,
+				    NULL/*empty data*/, ENCRYPTED_PAYLOAD);
 		return false;
 	}
 
@@ -3958,10 +3959,10 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 		log_state(RC_LOG, &child->sa,
 			  "CREATE_CHILD_SA IPsec SA rekey invalid Protocol ID %s",
 			  enum_show(&ikev2_protocol_names, rekey_notify->isan_protoid));
-		record_v2N_spi_response_from_state(ike, md,
-						   rekey_notify->isan_protoid, &spi,
-						   v2N_CHILD_SA_NOT_FOUND,
-						   NULL/*empty data*/);
+		record_v2N_spi_response(&logger, ike, md,
+					rekey_notify->isan_protoid, &spi,
+					v2N_CHILD_SA_NOT_FOUND,
+					NULL/*empty data*/, ENCRYPTED_PAYLOAD);
 		return false;
 	}
 
@@ -3984,10 +3985,10 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 			  "CREATE_CHILD_SA no such IPsec SA to rekey SA(0x%08" PRIx32 ") Protocol %s",
 			  ntohl((uint32_t) spi),
 			  enum_show(&ikev2_protocol_names, rekey_notify->isan_protoid));
-		record_v2N_spi_response_from_state(ike, md,
-						   rekey_notify->isan_protoid, &spi,
-						   v2N_CHILD_SA_NOT_FOUND,
-						   NULL/*empty data*/);
+		record_v2N_spi_response(&logger, ike, md,
+					rekey_notify->isan_protoid, &spi,
+					v2N_CHILD_SA_NOT_FOUND,
+					NULL/*empty data*/, ENCRYPTED_PAYLOAD);
 		return false;
 	}
 
@@ -4434,6 +4435,7 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 {
 	stf_status status;
 	pexpect(child != NULL);
+	struct logger logger = STATE_LOGGER(&child->sa);
 
 	free_chunk_content(&child->sa.st_ni); /* this is from the parent. */
 	free_chunk_content(&child->sa.st_nr); /* this is from the parent. */
@@ -4458,9 +4460,8 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 		pexpect(child->sa.st_oakley.ta_dh == child->sa.st_pfs_group);
 		if (!accept_KE(&child->sa.st_gi, "Gi", child->sa.st_oakley.ta_dh,
 			       md->chain[ISAKMP_NEXT_v2KE])) {
-			record_v2N_response_from_state(ike, md,
-						       v2N_INVALID_SYNTAX,
-						       NULL/*no data*/);
+			record_v2N_response(&logger, ike, md, v2N_INVALID_SYNTAX,
+					    NULL/*no data*/, ENCRYPTED_PAYLOAD);
 			return STF_FAIL;
 		}
 	}
@@ -4478,9 +4479,8 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 		/* state m/c created CHILD SA */
 		pexpect(child->sa.st_ipsec_pred == SOS_NOBODY);
 		if (!v2_process_ts_request(child, md)) {
-			record_v2N_response_from_state(ike, md,
-						       v2N_TS_UNACCEPTABLE,
-						       NULL/*no data*/);
+			record_v2N_response(&logger, ike, md, v2N_TS_UNACCEPTABLE,
+					    NULL/*no data*/, ENCRYPTED_PAYLOAD);
 			return STF_FAIL;
 		}
 		break;

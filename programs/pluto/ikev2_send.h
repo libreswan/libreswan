@@ -25,17 +25,31 @@ struct msg_digest;
 struct dh_desc;
 struct ike_sa;
 
-void record_v2N_response_from_state(struct ike_sa *ike,
-				    struct msg_digest *md,
-				    v2_notification_t type,
-				    const chunk_t *data /* optional */);
+/*
+ * Should the payload be encrypted/protected (don't confuse this with
+ * authenticated)?
+ */
 
-void record_v2N_spi_response_from_state(struct ike_sa *st,
-					struct msg_digest *md,
-					enum ikev2_sec_proto_id protoid,
-					ipsec_spi_t *spi,
-					v2_notification_t type,
-					const chunk_t *data /* optional */);
+enum payload_security {
+	ENCRYPTED_PAYLOAD = 1,
+	UNENCRYPTED_PAYLOAD,
+};
+
+void record_v2N_response(struct logger *logger,
+			 struct ike_sa *ike,
+			 struct msg_digest *md,
+			 v2_notification_t type,
+			 const chunk_t *data /* optional */,
+			 enum payload_security security);
+
+void record_v2N_spi_response(struct logger *logger,
+			     struct ike_sa *st,
+			     struct msg_digest *md,
+			     enum ikev2_sec_proto_id protoid,
+			     ipsec_spi_t *spi,
+			     v2_notification_t type,
+			     const chunk_t *data /* optional */,
+			     enum payload_security security);
 
 bool send_recorded_v2_ike_msg(struct state *st, const char *where);
 

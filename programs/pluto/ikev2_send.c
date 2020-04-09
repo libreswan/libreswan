@@ -263,22 +263,28 @@ bool emit_v2N_signature_hash_algorithms(lset_t sighash_policy,
  * correctly.
  */
 
-static bool emit_v2N_spi_response_from_state(pb_stream *reply,
-					     struct ike_sa *ike,
-					     struct msg_digest *md,
-					     enum ikev2_sec_proto_id protoid,
-					     ipsec_spi_t *spi,
-					     v2_notification_t ntype,
-					     const chunk_t *ndata /* optional */)
+struct response {
+	/* CONTAINS POINTERS; pass by ref */
+	pb_stream message;
+	pb_stream body;
+	enum payload_security security;
+	struct logger *logger;
+	v2SK_payload_t sk;
+	pb_stream *pbs; /* where to put message */
+};
+
+static bool open_response(struct response *response,
+			  struct logger *logger,
+			  uint8_t *buf, size_t sizeof_buf,
+			  struct ike_sa *ike,
+			  struct msg_digest *md,
+			  enum payload_security security)
 {
-	/*
-	 * The caller must have computed DH and SKEYSEED; but may not
-	 * have authenticated (i.e., don't assume that the IKE SA has
-	 * "established").
-	 */
-	if (!pexpect(ike->sa.hidden_variables.st_skeyid_calculated)) {
-		return false;
-	}
+	*response = (struct response) {
+		.message = open_out_pbs("message response", buf, sizeof_buf),
+		.logger = logger,
+		.security = security,
+	};
 
 	/*
 	 * Never send a response to a response.
@@ -288,6 +294,73 @@ static bool emit_v2N_spi_response_from_state(pb_stream *reply,
 		return false;
 	}
 
+	response->body = open_v2_message(&response->message, ike,
+					 md /* response */,
+					 md->hdr.isa_xchg/* same exchange type */);
+	if (!pbs_ok(&response->body)) {
+		log_message(RC_LOG, response->logger,
+			    "error initializing hdr for encrypted notification");
+		return false;
+	}
+
+	switch (security) {
+	case ENCRYPTED_PAYLOAD:
+		/* never encrypt an IKE_SA_INIT exchange */
+		if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) {
+			LOG_PEXPECT("exchange type IKE_SA_INIT is invalid for encrypted notification");
+			return false;
+		}
+		/* check things are at least protected */
+		if (!pexpect(ike->sa.hidden_variables.st_skeyid_calculated)) {
+			return false;
+		}
+		response->sk = open_v2SK_payload(&response->body, ike);
+		if (!pbs_ok(&response->sk.pbs)) {
+			return false;
+		}
+		response->pbs = &response->sk.pbs;
+		break;
+	case UNENCRYPTED_PAYLOAD:
+		/* unsecured payload when secured allowed? */
+		pexpect(!ike->sa.hidden_variables.st_skeyid_calculated);
+		response->pbs = &response->body;
+		break;
+	}
+	return true;
+}
+
+static bool close_response(struct response *response)
+{
+	switch (response->security) {
+	case ENCRYPTED_PAYLOAD:
+		if (!close_v2SK_payload(&response->sk)) {
+			return false;
+		}
+		close_output_pbs(&response->body);
+		close_output_pbs(&response->message);
+		stf_status ret = encrypt_v2SK_payload(&response->sk);
+		if (ret != STF_OK) {
+			log_message(RC_LOG, response->logger,
+				    "error encrypting response");
+			return false;
+		}
+		break;
+	case UNENCRYPTED_PAYLOAD:
+		close_output_pbs(&response->body);
+		close_output_pbs(&response->message);
+		break;
+	}
+	return true;
+}
+
+static bool emit_v2N_spi_response(struct response *response,
+				  struct ike_sa *ike,
+				  struct msg_digest *md,
+				  enum ikev2_sec_proto_id protoid,
+				  ipsec_spi_t *spi,
+				  v2_notification_t ntype,
+				  const chunk_t *ndata /* optional */)
+{
 	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
 
 	enum isakmp_xchg_types exchange_type = md->hdr.isa_xchg;
@@ -298,36 +371,12 @@ static bool emit_v2N_spi_response_from_state(pb_stream *reply,
 	 * is it ever different to the IKE SA?
 	 */
 	endpoint_buf b;
-	loglog(RC_NOTIFICATION+ntype,
-	       "responding to %s message (ID %u) from %s with encrypted notification %s",
-	       exchange_name, md->hdr.isa_msgid,
-	       str_sensitive_endpoint(&ike->sa.st_remote_endpoint, &b),
-	       notify_name);
-
-	/*
-	 * For encrypted messages, the EXCHANGE TYPE can't be SA_INIT.
-	 */
-	switch (exchange_type) {
-	case ISAKMP_v2_IKE_SA_INIT:
-		PEXPECT_LOG("exchange type %s invalid for encrypted notification",
-			    exchange_name);
-		return false;
-	default:
-		break;
-	}
-
-	pb_stream rbody = open_v2_message(reply, ike,
-					  md /* response */,
-					  exchange_type);
-	if (!pbs_ok(&rbody)) {
-		libreswan_log("error initializing hdr for encrypted notification");
-		return false;
-	}
-
-	v2SK_payload_t sk = open_v2SK_payload(&rbody, ike);
-	if (!pbs_ok(&sk.pbs)) {
-		return false;
-	}
+	log_message(RC_NOTIFICATION+ntype, response->logger,
+		    "responding to %s message (ID %u) from %s with %s notification %s",
+		    exchange_name, md->hdr.isa_msgid,
+		    str_sensitive_endpoint(&ike->sa.st_remote_endpoint, &b),
+		    response->security == ENCRYPTED_PAYLOAD ? "encrypted" : "unencrypted",
+		    notify_name);
 
 	/* actual data */
 
@@ -360,41 +409,39 @@ static bool emit_v2N_spi_response_from_state(pb_stream *reply,
 	}
 
 	pb_stream n_pbs;
-	if (!emit_v2Nsa_pl(ntype, protoid, spi, &sk.pbs, &n_pbs) ||
+	if (!emit_v2Nsa_pl(ntype, protoid, spi, response->pbs, &n_pbs) ||
 	    (ndata != NULL && !pbs_out_hunk(*ndata, &n_pbs, "Notify data"))) {
 		return false;
 	}
+
 	close_output_pbs(&n_pbs);
-
-	if (!close_v2SK_payload(&sk)) {
-		return false;
-	}
-	close_output_pbs(&rbody);
-	close_output_pbs(reply);
-
-	stf_status ret = encrypt_v2SK_payload(&sk);
-	if (ret != STF_OK) {
-		libreswan_log("error encrypting notify message");
-		return false;
-	}
 	return true;
 }
 
-void record_v2N_spi_response_from_state(struct ike_sa *ike,
-					struct msg_digest *md,
-					enum ikev2_sec_proto_id protoid,
-					ipsec_spi_t *spi,
-					v2_notification_t ntype,
-					const chunk_t *ndata /* optional */)
+void record_v2N_spi_response(struct logger *logger,
+			     struct ike_sa *ike,
+			     struct msg_digest *md,
+			     enum ikev2_sec_proto_id protoid,
+			     ipsec_spi_t *spi,
+			     v2_notification_t ntype,
+			     const chunk_t *ndata /* optional */,
+			     enum payload_security security)
 {
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
-	pb_stream reply = open_out_pbs("encrypted notification",
-				       buf, sizeof(buf));
-	if (emit_v2N_spi_response_from_state(&reply, ike, md,
-					     protoid, spi,
-					     ntype, ndata)) {
-		record_outbound_ike_msg(&ike->sa, &reply, "v2N response");
+	struct response response;
+	if (!open_response(&response, logger, buf, sizeof(buf),
+			   ike, md, security)) {
+		return;
 	}
+	if (!emit_v2N_spi_response(&response, ike, md,
+				   protoid, spi, ntype, ndata)) {
+		return;
+	}
+	if (!close_response(&response)) {
+		return;
+	}
+	record_outbound_ike_msg(&ike->sa, &response.message, "v2N response");
+	pstat(ikev2_sent_notifies_e, ntype);
 }
 
 void send_v2N_response_from_state(struct ike_sa *ike,
@@ -403,36 +450,47 @@ void send_v2N_response_from_state(struct ike_sa *ike,
 				  const chunk_t *ndata /* optional */)
 {
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
-	pb_stream reply = open_out_pbs("encrypted notification",
-				       buf, sizeof(buf));
-	if (emit_v2N_spi_response_from_state(&reply, ike, md,
-					     PROTO_v2_RESERVED, NULL/*SPI*/,
-					     ntype, ndata)) {
-		/*
-		 * The notification is piggybacked on the existing
-		 * parent state.  This notification is fire-and-forget
-		 * (not a proper exchange, one with retrying).  So we
-		 * need not preserve the packet we are sending.
-		 *
-		 * XXX: this sounds wrong!  Integrity has been
-		 * established so the outgoing packet should be
-		 * retained and message counters updated.  If ST is
-		 * going to be 'deleted', then, wouldn't it be better
-		 * to have it linger a little so it can handle
-		 * duplicates cleanly.
-		 */
-		send_chunk_using_state(&ike->sa, "v2 notify", same_out_pbs_as_chunk(&reply));
-		pstat(ikev2_sent_notifies_e, ntype);
+	struct response response;
+	struct logger logger = cur_logger();
+	if (!open_response(&response, &logger, buf, sizeof(buf),
+			   ike, md, ENCRYPTED_PAYLOAD)) {
+		return;
 	}
+	if (!emit_v2N_spi_response(&response, ike, md,
+				   PROTO_v2_RESERVED, NULL/*SPI*/,
+				   ntype, ndata)) {
+		return;
+	}
+	if (!close_response(&response)) {
+		return;
+	}
+	/*
+	 * The notification is piggybacked on the existing parent
+	 * state.  This notification is fire-and-forget (not a proper
+	 * exchange, one with retrying).  So we need not preserve the
+	 * packet we are sending.
+	 *
+	 * XXX: this sounds wrong!  Integrity has been established so
+	 * the outgoing packet should be retained and message counters
+	 * updated.  If ST is going to be 'deleted', then, wouldn't it
+	 * be better to have it linger a little so it can handle
+	 * duplicates cleanly.
+	 */
+	send_chunk_using_state(&ike->sa, "v2 notify",
+			       same_out_pbs_as_chunk(&response.message));
+	pstat(ikev2_sent_notifies_e, ntype);
 }
 
-void record_v2N_response_from_state(struct ike_sa *ike,
-				    struct msg_digest *md,
-				    v2_notification_t ntype,
-				    const chunk_t *ndata /* optional */)
+void record_v2N_response(struct logger *logger,
+			 struct ike_sa *ike,
+			 struct msg_digest *md,
+			 v2_notification_t ntype,
+			 const chunk_t *ndata /* optional */,
+			 enum payload_security security)
 {
-	record_v2N_spi_response_from_state(ike, md, PROTO_v2_RESERVED, NULL/*SPI*/,
-					   ntype, ndata);
+	record_v2N_spi_response(logger, ike, md,
+				PROTO_v2_RESERVED, NULL/*SPI*/,
+				ntype, ndata, security);
 }
 
 /*
