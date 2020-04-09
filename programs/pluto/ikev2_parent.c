@@ -228,35 +228,36 @@ static struct msg_digest *fake_md(struct state *st)
 
 /*
  * Check that the bundled keying material (KE) matches the accepted
- * proposal and if it doesn't send out a notification returning true.
+ * proposal and if it doesn't record a response and return false.
  */
-static bool v2_reject_wrong_ke_for_proposal(struct state *st,
-					    struct msg_digest *md,
-					    const struct dh_desc *accepted_dh)
+
+static bool v2_accept_ke_for_proposal(struct ike_sa *ike,
+				      struct state *st,
+				      struct msg_digest *md,
+				      const struct dh_desc *accepted_dh,
+				      enum payload_security security)
 {
+	struct logger logger = STATE_LOGGER(st);
 	passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);
 	int ke_group = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group;
-	if (accepted_dh->common.id[IKEv2_ALG_ID] != ke_group) {
-		struct esb_buf ke_esb;
-		libreswan_log("initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
-			      enum_show_shortb(&oakley_group_names,
-					       ke_group, &ke_esb),
-			      accepted_dh->common.name);
-		pstats(invalidke_sent_u, ke_group);
-		pstats(invalidke_sent_s, accepted_dh->common.id[IKEv2_ALG_ID]);
-		/* convert group to a raw buffer */
-		uint16_t gr = htons(accepted_dh->group);
-		chunk_t nd = THING_AS_CHUNK(gr);
-		if (st != NULL) {
-			send_v2N_response_from_state(ike_sa(st), md,
-						     v2N_INVALID_KE_PAYLOAD, &nd);
-		} else {
-			send_v2N_response_from_md(md, v2N_INVALID_KE_PAYLOAD, &nd);
-		}
+	if (accepted_dh->common.id[IKEv2_ALG_ID] == ke_group) {
 		return true;
-	} else {
-		return false;
 	}
+
+	struct esb_buf ke_esb;
+	log_message(RC_LOG, &logger,
+		    "initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
+		    enum_show_shortb(&oakley_group_names, ke_group, &ke_esb),
+		    accepted_dh->common.name);
+	pstats(invalidke_sent_u, ke_group);
+	pstats(invalidke_sent_s, accepted_dh->common.id[IKEv2_ALG_ID]);
+	/* convert group to a raw buffer */
+	uint16_t gr = htons(accepted_dh->group);
+	chunk_t nd = THING_AS_CHUNK(gr);
+	record_v2N_response(&logger, ike, md,
+			    v2N_INVALID_KE_PAYLOAD, &nd,
+			    security);
+	return false;
 }
 
 /*
@@ -922,10 +923,11 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 	 * Check the MODP group in the payload matches the accepted
 	 * proposal.
 	 */
-	if (v2_reject_wrong_ke_for_proposal(NULL /*not encrypted*/, md,
-					    ike->sa.st_oakley.ta_dh)) {
-		/* already replied */
-		return STF_FATAL;
+	if (!v2_accept_ke_for_proposal(ike, &ike->sa, md,
+				       ike->sa.st_oakley.ta_dh,
+				       UNENCRYPTED_PAYLOAD)) {
+		/* pexpect(reply-recorded) */
+		return STF_FAIL;
 	}
 
 	/*
@@ -4675,15 +4677,11 @@ stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
 		return STF_IGNORE;
 	}
 
-	if (v2_reject_wrong_ke_for_proposal(st/*encrypt*/, md, st->st_oakley.ta_dh)) {
-		/*
-		 * XXX; where is 'st' freed?  Should the code instead
-		 * tunnel back md.st==st and return STF_FATAL which
-		 * will delete the child state?  Or perhaps there a
-		 * lurking SO_DISPOSE to clean it up?
-		 */
-		switch_md_st(md, &ike->sa, HERE);
-		return STF_FAIL; /* XXX; STF_FATAL? */
+	if (!v2_accept_ke_for_proposal(ike, &child->sa, md,
+				       st->st_oakley.ta_dh,
+				       ENCRYPTED_PAYLOAD)) {
+		/* passert(reply-recorded) */
+		return STF_FAIL;
 	}
 
 	/*
