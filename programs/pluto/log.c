@@ -855,6 +855,7 @@ struct logger *clone_logger(const struct logger stack_logger)
 		.where = stack_logger.where,
 		.jam_prefix = jam_string_prefix,
 		.object = clone_str(prefix, "heap logger prefix"),
+		.suppress_log = stack_logger.suppress_log(stack_logger.object) ? always_suppress_log : never_suppress_log,
 	};
 	/* and clone it */
 	return clone_thing(heap, "heap logger");
@@ -953,4 +954,26 @@ void jam_string_prefix(jambuf_t *buf, const void *object)
 {
 	const char *string = object;
 	jam_string(buf, string);
+}
+
+bool always_suppress_log(const void *object UNUSED)
+{
+	return true;
+}
+
+bool never_suppress_log(const void *object UNUSED)
+{
+	return false;
+}
+
+bool suppress_connection_log(const void *object)
+{
+	const struct connection *connection = object;
+	return connection->policy & POLICY_OPPORTUNISTIC;
+}
+
+bool suppress_state_log(const void *object)
+{
+	const struct state *state = object;
+	return state->st_connection->policy & POLICY_OPPORTUNISTIC;
 }

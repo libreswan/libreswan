@@ -120,6 +120,13 @@ jam_prefix_fn jam_connection_prefix;
 jam_prefix_fn jam_state_prefix;
 jam_prefix_fn jam_string_prefix;
 
+typedef bool suppress_log_fn(const void *object);
+
+suppress_log_fn suppress_connection_log;
+suppress_log_fn suppress_state_log;
+suppress_log_fn always_suppress_log;
+suppress_log_fn never_suppress_log;
+
 struct logger {
 	const struct fd *global_whackfd;
 	const struct fd *object_whackfd;
@@ -132,7 +139,7 @@ struct logger {
 	 * When opportunistic encryption or the initial responder, for
 	 * instance, some logging is suppressed.
 	 */
-	bool suppress;
+	suppress_log_fn *suppress_log;
 };
 
 #define GLOBAL_LOGGER(WHACKFD) (struct logger)			\
@@ -140,6 +147,7 @@ struct logger {
 		.where = HERE,					\
 		.global_whackfd = WHACKFD,			\
 		.jam_prefix = jam_global_prefix,		\
+		.suppress_log = never_suppress_log,		\
 	}
 #define FROM_LOGGER(FROM) (struct logger)			\
 	{							\
@@ -147,7 +155,7 @@ struct logger {
 		.global_whackfd = null_fd,			\
 		.jam_prefix = jam_from_prefix,			\
 		.object = FROM,					\
-		.suppress = true,				\
+		.suppress_log = always_suppress_log,		\
 	}
 #define MESSAGE_LOGGER(MD) (struct logger)			\
 	{							\
@@ -155,7 +163,7 @@ struct logger {
 		.global_whackfd = null_fd,			\
 		.jam_prefix = jam_message_prefix,		\
 		.object = MD,					\
-		.suppress = true,				\
+		.suppress_log = always_suppress_log,		\
 	}
 #define CONNECTION_LOGGER(CONNECTION, WHACKFD) (struct logger)	\
 	{							\
@@ -163,7 +171,7 @@ struct logger {
 		.global_whackfd = WHACKFD,			\
 		.jam_prefix = jam_connection_prefix,		\
 		.object = CONNECTION,				\
-		.suppress = CONNECTION->policy & POLICY_OPPORTUNISTIC, \
+		.suppress_log = suppress_connection_log,	\
 	}
 #define PENDING_LOGGER(PENDING) (struct logger)			\
 	{							\
@@ -172,7 +180,7 @@ struct logger {
 		.jam_prefix = jam_connection_prefix,		\
 		.object = (PENDING)->connection,		\
 		.object_whackfd = (PENDING)->whack_sock,	\
-		.suppress = (PENDING)->connection->policy & POLICY_OPPORTUNISTIC, \
+		.suppress_log = suppress_connection_log,	\
 	}
 #define STATE_LOGGER(STATE) (struct logger)			\
 	{							\
@@ -182,7 +190,7 @@ struct logger {
 		.object = STATE,				\
 		.object_whackfd = (STATE)->st_whack_sock,	\
 		.timing_level = (STATE)->st_timing.level,	\
-		.suppress = (STATE)->st_connection->policy & POLICY_OPPORTUNISTIC, \
+		.suppress_log = suppress_state_log,		\
 	}
 
 struct logger *clone_logger(struct logger log);
