@@ -3318,22 +3318,20 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 					"replying to IKE_AUTH request");
 }
 
-stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
-		bool expect_accepted)
+stf_status ikev2_process_child_sa_pl(struct ike_sa *ike, struct child_sa *child,
+				     struct msg_digest *md, bool expect_accepted_proposal)
 {
-	struct state *st = md->st;
-	struct ike_sa *ike = ike_sa(st);
-	struct connection *c = st->st_connection;
+	struct connection *c = child->sa.st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	enum isakmp_xchg_types isa_xchg = md->hdr.isa_xchg;
 	struct ipsec_proto_info *proto_info =
-		ikev2_child_sa_proto_info(pexpect_child_sa(st), c->policy);
+		ikev2_child_sa_proto_info(child, c->policy);
 	stf_status ret;
 
 	const char *what;
 	struct ikev2_proposals *child_proposals;
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
-		if (st->st_state->kind == STATE_V2_CREATE_I) {
+		if (child->sa.st_state->kind == STATE_V2_CREATE_I) {
 			what = "CREATE_CHILD_SA initiator accepting remote ESP/AH proposal";
 		} else {
 			what = "CREATE_CHILD_SA responder matching remote ESP/AH proposals";
@@ -3342,7 +3340,7 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 			? ike->sa.st_oakley.ta_dh
 			: &ike_alg_dh_none;
 		child_proposals = get_v2_create_child_proposals(c, what, default_dh);
-	} else if (expect_accepted) {
+	} else if (expect_accepted_proposal) {
 		what = "IKE_AUTH initiator accepting remote ESP/AH proposal";
 		child_proposals = get_v2_ike_auth_child_proposals(c, what);
 	} else {
@@ -3354,9 +3352,9 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 				       &sa_pd->pbs,
 				       /*expect_ike*/ FALSE,
 				       /*expect_spi*/ TRUE,
-				       expect_accepted,
+				       expect_accepted_proposal,
 				       LIN(POLICY_OPPORTUNISTIC, c->policy),
-				       &st->st_accepted_esp_or_ah_proposal,
+				       &child->sa.st_accepted_esp_or_ah_proposal,
 				       child_proposals);
 
 	if (ret != STF_OK) {
@@ -3369,8 +3367,8 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 	}
 
-	DBG(DBG_CONTROL, DBG_log_ikev2_proposal(what, st->st_accepted_esp_or_ah_proposal));
-	if (!ikev2_proposal_to_proto_info(st->st_accepted_esp_or_ah_proposal, proto_info)) {
+	DBG(DBG_CONTROL, DBG_log_ikev2_proposal(what, child->sa.st_accepted_esp_or_ah_proposal));
+	if (!ikev2_proposal_to_proto_info(child->sa.st_accepted_esp_or_ah_proposal, proto_info)) {
 		loglog(RC_LOG_SERIOUS, "%s proposed/accepted a proposal we don't actually support!", what);
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 	}
@@ -3389,26 +3387,26 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 	const struct dh_desc *accepted_dh =
 		proto_info->attrs.transattrs.ta_dh == &ike_alg_dh_none ? NULL
 		: proto_info->attrs.transattrs.ta_dh;
-	switch (st->st_sa_role) {
+	switch (child->sa.st_sa_role) {
 	case SA_INITIATOR:
-		pexpect(expect_accepted);
-		if (accepted_dh != NULL && accepted_dh != st->st_pfs_group) {
+		pexpect(expect_accepted_proposal);
+		if (accepted_dh != NULL && accepted_dh != child->sa.st_pfs_group) {
 			loglog(RC_LOG_SERIOUS,
 			       "expecting %s but remote's accepted proposal includes %s",
-			       st->st_pfs_group == NULL ? "no DH" : st->st_pfs_group->common.fqn,
+			       child->sa.st_pfs_group == NULL ? "no DH" : child->sa.st_pfs_group->common.fqn,
 			       accepted_dh->common.fqn);
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
-		st->st_pfs_group = accepted_dh;
+		child->sa.st_pfs_group = accepted_dh;
 		break;
 	case SA_RESPONDER:
-		pexpect(!expect_accepted);
-		pexpect(st->st_sa_role == SA_RESPONDER);
-		pexpect(st->st_pfs_group == NULL);
-		st->st_pfs_group = accepted_dh;
+		pexpect(!expect_accepted_proposal);
+		pexpect(child->sa.st_sa_role == SA_RESPONDER);
+		pexpect(child->sa.st_pfs_group == NULL);
+		child->sa.st_pfs_group = accepted_dh;
 		break;
 	default:
-		bad_case(st->st_sa_role);
+		bad_case(child->sa.st_sa_role);
 	}
 
 	/*
@@ -3422,16 +3420,16 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 	 * SA; or perhaps it is getting things ready for an IKE SA
 	 * re-key?
 	 */
-	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA && st->st_pfs_group != NULL) {
+	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA && child->sa.st_pfs_group != NULL) {
 		dbg("updating #%lu's .st_oakley with preserved PRF, but why update?",
-			st->st_serialno);
+			child->sa.st_serialno);
 		struct trans_attrs accepted_oakley = proto_info->attrs.transattrs;
 		pexpect(accepted_oakley.ta_prf == NULL);
-		accepted_oakley.ta_prf = st->st_oakley.ta_prf;
-		st->st_oakley = accepted_oakley;
+		accepted_oakley.ta_prf = child->sa.st_oakley.ta_prf;
+		child->sa.st_oakley = accepted_oakley;
 	}
 
-	return ret;
+	return STF_OK;
 }
 
 static stf_status ikev2_process_cp_respnse(struct msg_digest *md)
@@ -3497,6 +3495,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 	struct child_sa *child = pexpect_child_sa(md->st);
 	struct state *st = &child->sa;
 	struct connection *c = st->st_connection;
+	struct ike_sa *ike = ike_sa(&child->sa);
 
 	RETURN_STF_FAILURE_STATUS(ikev2_process_cp_respnse(md));
 	if (!v2_process_ts_response(child, md)) {
@@ -3510,7 +3509,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 
 	/* examin and accpept SA ESP/AH proposals */
 	if (md->hdr.isa_xchg != ISAKMP_v2_CREATE_CHILD_SA)
-		RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(md, TRUE));
+		RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(ike, child, md, TRUE));
 
 	/* examine notification payloads for Child SA properties */
 	if (!decode_v2N_ike_auth_child(md)) {
@@ -3894,17 +3893,17 @@ static bool ikev2_rekey_child_req(struct child_sa *child,
 	return true;
 }
 
-static stf_status ikev2_rekey_child_resp(struct msg_digest *md)
+static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
+				   struct msg_digest *md)
 {
-	struct state *st = md->st;  /* new child state */
-
 	struct payload_digest *rekey_sa_payload = NULL;
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		switch (ntfy->payload.v2n.isan_type) {
 		case v2N_REKEY_SA:
 			if (rekey_sa_payload != NULL) {
 				/* will tolerate multiple */
-				loglog(RC_LOG_SERIOUS, "ignoring duplicate v2N_REKEY_SA in exchange");
+				log_state(RC_LOG_SERIOUS, &child->sa,
+					  "ignoring duplicate v2N_REKEY_SA in exchange");
 				break;
 			}
 			dbg("received v2N_REKEY_SA");
@@ -3920,96 +3919,94 @@ static stf_status ikev2_rekey_child_resp(struct msg_digest *md)
 		}
 	}
 
-	if (rekey_sa_payload != NULL) {
-		struct ike_sa *ike = ike_sa(st);
-		struct ikev2_notify *rekey_notify = &rekey_sa_payload->payload.v2n;
-		/*
-		 * Magically switch to re-keying a CHILD SA.  XXX:
-		 * Should state machine split cases based on REKEY_SA?
-		 */
-		change_state(st, STATE_V2_REKEY_CHILD_R0);
-		/*
-		 * find old state to rekey
-		 */
-		dbg("CREATE_CHILD_SA IPsec SA rekey Protocol %s",
-		    enum_show(&ikev2_protocol_names, rekey_notify->isan_protoid));
-
-		if (rekey_notify->isan_spisize != sizeof(ipsec_spi_t)) {
-			libreswan_log("CREATE_CHILD_SA IPsec SA rekey invalid spi size %u",
-				      rekey_notify->isan_spisize);
-			send_v2N_response_from_state(ike, md,
-						     v2N_INVALID_SYNTAX,
-						     NULL/*empty data*/);
-			return STF_FATAL;
-		}
-
-		ipsec_spi_t spi = 0;
-		if (!in_raw(&spi, sizeof(spi), &rekey_sa_payload->pbs, "SPI")) {
-			send_v2N_response_from_state(ike, md,
-						     v2N_INVALID_SYNTAX,
-						     NULL/*empty data*/);
-			return STF_INTERNAL_ERROR; /* cannot happen */
-		}
-
-		if (spi == 0) {
-			libreswan_log("CREATE_CHILD_SA IPsec SA rekey contains zero SPI");
-			send_v2N_response_from_state(ike, md,
-						     v2N_INVALID_SYNTAX,
-						     NULL/*empty data*/);
-			return STF_FATAL;
-		}
-
-		if (rekey_notify->isan_protoid != PROTO_IPSEC_ESP &&
-		    rekey_notify->isan_protoid != PROTO_IPSEC_AH) {
-			libreswan_log("CREATE_CHILD_SA IPsec SA rekey invalid Protocol ID %s",
-				      enum_show(&ikev2_protocol_names, rekey_notify->isan_protoid));
-			send_v2N_spi_response_from_state(ike, md,
-							 rekey_notify->isan_protoid, &spi,
-							 v2N_CHILD_SA_NOT_FOUND,
-							 NULL/*empty data*/);
-			return STF_FATAL;
-		}
-
-		dbg("CREATE_CHILD_S to rekey IPsec SA(0x%08" PRIx32 ") Protocol %s",
-		    ntohl((uint32_t) spi),
-		    enum_show(&ikev2_protocol_names, rekey_notify->isan_protoid));
-
-		/*
-		 * From 1.3.3.  Rekeying Child SAs with the
-		 * CREATE_CHILD_SA Exchange: The SA being rekeyed is
-		 * identified by the SPI field in the [REKEY_SA]
-		 * Notify payload; this is the SPI the exchange
-		 * initiator would expect in inbound ESP or AH
-		 * packets.
-		 *
-		 * From our POV, that's the outbound SPI.
-		 */
-		struct child_sa *rst = find_v2_child_sa_by_outbound_spi(ike, rekey_notify->isan_protoid, spi);
-		if (rst == NULL) {
-			libreswan_log("CREATE_CHILD_SA no such IPsec SA to rekey SA(0x%08" PRIx32 ") Protocol %s",
-				      ntohl((uint32_t) spi),
-				      enum_show(&ikev2_protocol_names, rekey_notify->isan_protoid));
-			send_v2N_spi_response_from_state(ike, md,
-							 rekey_notify->isan_protoid, &spi,
-							 v2N_CHILD_SA_NOT_FOUND,
-							 NULL/*empty data*/);
-			return STF_FATAL;
-		}
-
-		st->st_ipsec_pred = rst->sa.st_serialno;
-
-		char cib[CONN_INST_BUF];
-		dbg("#%lu rekey request for \"%s\"%s #%lu TSi TSr",
-		    st->st_serialno,
-		    rst->sa.st_connection->name,
-		    fmt_conn_instance(rst->sa.st_connection, cib),
-		    rst->sa.st_serialno);
-		ikev2_print_ts(&rst->sa.st_ts_this);
-		ikev2_print_ts(&rst->sa.st_ts_that);
-		update_state_connection(st, rst->sa.st_connection);
+	if (rekey_sa_payload == NULL) {
+		LOG_PEXPECT("rekey child can't find its rekey_sa payload");
+		return STF_INTERNAL_ERROR;
 	}
 
-	return STF_OK;
+	struct ikev2_notify *rekey_notify = &rekey_sa_payload->payload.v2n;
+	/*
+	 * find old state to rekey
+	 */
+	dbg("CREATE_CHILD_SA IPsec SA rekey Protocol %s",
+	    enum_show(&ikev2_protocol_names, rekey_notify->isan_protoid));
+
+	if (rekey_notify->isan_spisize != sizeof(ipsec_spi_t)) {
+		log_state(RC_LOG, &child->sa,
+			  "CREATE_CHILD_SA IPsec SA rekey invalid spi size %u",
+			  rekey_notify->isan_spisize);
+		record_v2N_response_from_state(ike, md, v2N_INVALID_SYNTAX,
+					       NULL/*empty data*/);
+		return false;
+	}
+
+	ipsec_spi_t spi = 0;
+	if (!in_raw(&spi, sizeof(spi), &rekey_sa_payload->pbs, "SPI")) {
+		/* already logged */
+		record_v2N_response_from_state(ike, md, v2N_INVALID_SYNTAX,
+					       NULL/*empty data*/);
+		return false; /* cannot happen; XXX: why? */
+	}
+
+	if (spi == 0) {
+		log_state(RC_LOG, &child->sa,
+			  "CREATE_CHILD_SA IPsec SA rekey contains zero SPI");
+		record_v2N_response_from_state(ike, md,
+					       v2N_INVALID_SYNTAX,
+					       NULL/*empty data*/);
+		return false;
+	}
+
+	if (rekey_notify->isan_protoid != PROTO_IPSEC_ESP &&
+	    rekey_notify->isan_protoid != PROTO_IPSEC_AH) {
+		log_state(RC_LOG, &child->sa,
+			  "CREATE_CHILD_SA IPsec SA rekey invalid Protocol ID %s",
+			  enum_show(&ikev2_protocol_names, rekey_notify->isan_protoid));
+		record_v2N_spi_response_from_state(ike, md,
+						   rekey_notify->isan_protoid, &spi,
+						   v2N_CHILD_SA_NOT_FOUND,
+						   NULL/*empty data*/);
+		return false;
+	}
+
+	dbg("CREATE_CHILD_S to rekey IPsec SA(0x%08" PRIx32 ") Protocol %s",
+	    ntohl((uint32_t) spi),
+	    enum_show(&ikev2_protocol_names, rekey_notify->isan_protoid));
+
+	/*
+	 * From 1.3.3.  Rekeying Child SAs with the CREATE_CHILD_SA
+	 * Exchange: The SA being rekeyed is identified by the SPI
+	 * field in the [REKEY_SA] Notify payload; this is the SPI the
+	 * exchange initiator would expect in inbound ESP or AH
+	 * packets.
+	 *
+	 * From our POV, that's the outbound SPI.
+	 */
+	struct child_sa *replaced_child = find_v2_child_sa_by_outbound_spi(ike, rekey_notify->isan_protoid, spi);
+	if (replaced_child == NULL) {
+		log_state(RC_LOG, &child->sa,
+			  "CREATE_CHILD_SA no such IPsec SA to rekey SA(0x%08" PRIx32 ") Protocol %s",
+			  ntohl((uint32_t) spi),
+			  enum_show(&ikev2_protocol_names, rekey_notify->isan_protoid));
+		record_v2N_spi_response_from_state(ike, md,
+						   rekey_notify->isan_protoid, &spi,
+						   v2N_CHILD_SA_NOT_FOUND,
+						   NULL/*empty data*/);
+		return false;
+	}
+
+	child->sa.st_ipsec_pred = replaced_child->sa.st_serialno;
+
+	connection_buf cb;
+	dbg("#%lu rekey request for "PRI_CONNECTION" #%lu TSi TSr",
+	    child->sa.st_serialno,
+	    pri_connection(replaced_child->sa.st_connection, &cb),
+	    replaced_child->sa.st_serialno);
+	ikev2_print_ts(&replaced_child->sa.st_ts_this);
+	ikev2_print_ts(&replaced_child->sa.st_ts_that);
+	update_state_connection(&child->sa, replaced_child->sa.st_connection);
+
+	return true;
 }
 
 static bool ikev2_rekey_child_copy_ts(struct child_sa *child)
@@ -4339,14 +4336,14 @@ static void ikev2_child_ike_inR_continue(struct state *st,
 
 static dh_cb ikev2_child_inR_continue;
 
-stf_status ikev2_child_inR(struct ike_sa *unused_ike UNUSED,
+stf_status ikev2_child_inR(struct ike_sa *ike,
 			   struct child_sa *child, struct msg_digest *md)
 {
 	pexpect(child != NULL);
 	struct state *st = &child->sa;
 	v2RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Nr"));
 
-	RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(md, TRUE));
+	RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(ike, child, md, TRUE));
 
 	/* XXX: only for rekey child? */
 	if (st->st_pfs_group == NULL)
@@ -4435,20 +4432,23 @@ static stf_status ikev2_child_inR_continue(struct state *st,
 
 static crypto_req_cont_func ikev2_child_inIoutR_continue;
 
-stf_status ikev2_child_inIoutR(struct ike_sa *unused_ike UNUSED,
+stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 			       struct child_sa *child,
 			       struct msg_digest *md)
 {
+	stf_status status;
 	pexpect(child != NULL);
-	struct state *st = &child->sa;
 
-	free_chunk_content(&st->st_ni); /* this is from the parent. */
-	free_chunk_content(&st->st_nr); /* this is from the parent. */
+	free_chunk_content(&child->sa.st_ni); /* this is from the parent. */
+	free_chunk_content(&child->sa.st_nr); /* this is from the parent. */
 
 	/* Ni in */
-	v2RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_ni, "Ni"));
+	v2RETURN_STF_FAILURE(accept_v2_nonce(md, &child->sa.st_ni, "Ni"));
 
-	RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(md, FALSE));
+	status = ikev2_process_child_sa_pl(ike, child, md, FALSE);
+	if (status != STF_OK) {
+		return status;
+	}
 
 	/*
 	 * KE in with old(pst) and matching accepted_oakley from
@@ -4458,27 +4458,38 @@ stf_status ikev2_child_inIoutR(struct ike_sa *unused_ike UNUSED,
 	 * replacement has KE or has SA processor handled that by only
 	 * accepting a proposal with KE?
 	 */
-	if (st->st_pfs_group != NULL) {
-		pexpect(st->st_oakley.ta_dh == st->st_pfs_group);
-		if (!accept_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
+	if (child->sa.st_pfs_group != NULL) {
+		pexpect(child->sa.st_oakley.ta_dh == child->sa.st_pfs_group);
+		if (!accept_KE(&child->sa.st_gi, "Gi", child->sa.st_oakley.ta_dh,
 			       md->chain[ISAKMP_NEXT_v2KE])) {
-			send_v2N_response_from_state(ike_sa(st), md,
-						     v2N_INVALID_SYNTAX,
-						     NULL/*no data*/);
-			return STF_FATAL;
+			record_v2N_response_from_state(ike, md,
+						       v2N_INVALID_SYNTAX,
+						       NULL/*no data*/);
+			return STF_FAIL;
 		}
 	}
 
 	/* check N_REKEY_SA in the negotation */
-	RETURN_STF_FAILURE_STATUS(ikev2_rekey_child_resp(md));
-
-	if (st->st_ipsec_pred == SOS_NOBODY) {
-		/* state m/c created CHILD SA */
-		passert(st != NULL);
-		passert(st == md->st);
-		if (!v2_process_ts_request(pexpect_child_sa(st), md)) {
-			return STF_FAIL + v2N_TS_UNACCEPTABLE;
+	switch (child->sa.st_state->kind) {
+	case STATE_V2_REKEY_CHILD_R0:
+		if (!ikev2_rekey_child_resp(ike, child, md)) {
+			/* already logged; already recorded */
+			return STF_FAIL;
 		}
+		pexpect(child->sa.st_ipsec_pred != SOS_NOBODY);
+		break;
+	case STATE_V2_CREATE_R0:
+		/* state m/c created CHILD SA */
+		pexpect(child->sa.st_ipsec_pred == SOS_NOBODY);
+		if (!v2_process_ts_request(child, md)) {
+			record_v2N_response_from_state(ike, md,
+						       v2N_TS_UNACCEPTABLE,
+						       NULL/*no data*/);
+			return STF_FAIL;
+		}
+		break;
+	default:
+		bad_case(child->sa.st_state->kind);
 	}
 
 	/*
@@ -4491,29 +4502,29 @@ stf_status ikev2_child_inIoutR(struct ike_sa *unused_ike UNUSED,
 	 * XXX: 'see above' is lost; this is a responder state
 	 * which _always_ has an MD.
 	 */
-	switch (st->st_state->kind) {
+	switch (child->sa.st_state->kind) {
 	case STATE_V2_CREATE_R0:
-		if (st->st_pfs_group != NULL) {
+		if (child->sa.st_pfs_group != NULL) {
 			request_ke_and_nonce("Child Responder KE and nonce nr",
-					     st, st->st_oakley.ta_dh,
+					     &child->sa, child->sa.st_oakley.ta_dh,
 					     ikev2_child_inIoutR_continue);
 		} else {
 			request_nonce("Child Responder nonce nr",
-				      st, ikev2_child_inIoutR_continue);
+				      &child->sa, ikev2_child_inIoutR_continue);
 		}
 		return STF_SUSPEND;
 	case STATE_V2_REKEY_CHILD_R0:
-		if (st->st_pfs_group != NULL) {
+		if (child->sa.st_pfs_group != NULL) {
 			request_ke_and_nonce("Child Rekey Responder KE and nonce nr",
-					     st, st->st_oakley.ta_dh,
+					     &child->sa, child->sa.st_oakley.ta_dh,
 					     ikev2_child_inIoutR_continue);
 		} else {
 			request_nonce("Child Rekey Responder nonce nr",
-				      st, ikev2_child_inIoutR_continue);
+				      &child->sa, ikev2_child_inIoutR_continue);
 		}
 		return STF_SUSPEND;
 	default:
-		bad_case(st->st_state->kind);
+		bad_case(child->sa.st_state->kind);
 	}
 }
 

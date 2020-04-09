@@ -255,7 +255,7 @@ bool emit_v2N_signature_hash_algorithms(lset_t sighash_policy,
  * This short/sharp notification is always tied to the IKE SA.
  *
  * For a CREATE_CHILD_SA, things have presumably screwed up so badly
- * that the larval child state is deleted.
+ * that the larval child state is about to be deleted.
  *
  * XXX: suspect calls to this function should be replaced by something
  * like record_v2N_spi_response_from_state() - so that the response is
@@ -263,12 +263,13 @@ bool emit_v2N_signature_hash_algorithms(lset_t sighash_policy,
  * correctly.
  */
 
-void send_v2N_spi_response_from_state(struct ike_sa *ike,
-				      struct msg_digest *md,
-				      enum ikev2_sec_proto_id protoid,
-				      ipsec_spi_t *spi,
-				      v2_notification_t ntype,
-				      const chunk_t *ndata /* optional */)
+static bool emit_v2N_spi_response_from_state(pb_stream *reply,
+					     struct ike_sa *ike,
+					     struct msg_digest *md,
+					     enum ikev2_sec_proto_id protoid,
+					     ipsec_spi_t *spi,
+					     v2_notification_t ntype,
+					     const chunk_t *ndata /* optional */)
 {
 	/*
 	 * The caller must have computed DH and SKEYSEED; but may not
@@ -276,7 +277,7 @@ void send_v2N_spi_response_from_state(struct ike_sa *ike,
 	 * "established").
 	 */
 	if (!pexpect(ike->sa.hidden_variables.st_skeyid_calculated)) {
-		return;
+		return false;
 	}
 
 	/*
@@ -284,7 +285,7 @@ void send_v2N_spi_response_from_state(struct ike_sa *ike,
 	 */
 	if (!pexpect(v2_msg_role(md) == MESSAGE_REQUEST)) {
 		/* always responding */
-		return;
+		return false;
 	}
 
 	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
@@ -310,26 +311,22 @@ void send_v2N_spi_response_from_state(struct ike_sa *ike,
 	case ISAKMP_v2_IKE_SA_INIT:
 		PEXPECT_LOG("exchange type %s invalid for encrypted notification",
 			    exchange_name);
-		return;
+		return false;
 	default:
 		break;
 	}
 
-	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
-	pb_stream reply = open_out_pbs("encrypted notification",
-				       buf, sizeof(buf));
-
-	pb_stream rbody = open_v2_message(&reply, ike,
+	pb_stream rbody = open_v2_message(reply, ike,
 					  md /* response */,
 					  exchange_type);
 	if (!pbs_ok(&rbody)) {
 		libreswan_log("error initializing hdr for encrypted notification");
-		return;
+		return false;
 	}
 
 	v2SK_payload_t sk = open_v2SK_payload(&rbody, ike);
 	if (!pbs_ok(&sk.pbs)) {
-		return;
+		return false;
 	}
 
 	/* actual data */
@@ -351,13 +348,13 @@ void send_v2N_spi_response_from_state(struct ike_sa *ike,
 		 * the SPI field of the notification is set to match
 		 * the SPI of the Child SA.
 		*/
-		PEXPECT_LOG("trying to send unimplemented %s notification",
+		LOG_PEXPECT("trying to send unimplemented %s notification",
 			    notify_name);
-		return;
+		return false;
 	case v2N_REKEY_SA:
-		PEXPECT_LOG("%s notification cannot be part of a response",
+		LOG_PEXPECT("%s notification cannot be part of a response",
 			    notify_name);
-		return;
+		return false;
 	default:
 		break;
 	}
@@ -365,36 +362,70 @@ void send_v2N_spi_response_from_state(struct ike_sa *ike,
 	pb_stream n_pbs;
 	if (!emit_v2Nsa_pl(ntype, protoid, spi, &sk.pbs, &n_pbs) ||
 	    (ndata != NULL && !pbs_out_hunk(*ndata, &n_pbs, "Notify data"))) {
-		return;
+		return false;
 	}
 	close_output_pbs(&n_pbs);
 
 	if (!close_v2SK_payload(&sk)) {
-		return;
+		return false;
 	}
 	close_output_pbs(&rbody);
-	close_output_pbs(&reply);
+	close_output_pbs(reply);
 
 	stf_status ret = encrypt_v2SK_payload(&sk);
 	if (ret != STF_OK) {
 		libreswan_log("error encrypting notify message");
-		return;
+		return false;
 	}
+	return true;
+}
 
-	/*
-	 * The notification is piggybacked on the existing parent
-	 * state.  This notification is fire-and-forget (not a proper
-	 * exchange, one with retrying).  So we need not preserve the
-	 * packet we are sending.
-	 *
-	 * XXX: this sounds wrong!  Integrity has been established so
-	 * the outgoing packet should be retained and message counters
-	 * updated.  If ST is going to be 'deleted', then, wouldn't it
-	 * be better to have it linger a little so it can handle
-	 * duplicates cleanly.
-	 */
-	send_chunk_using_state(&ike->sa, "v2 notify", same_out_pbs_as_chunk(&reply));
-	pstat(ikev2_sent_notifies_e, ntype);
+void send_v2N_spi_response_from_state(struct ike_sa *ike,
+				      struct msg_digest *md,
+				      enum ikev2_sec_proto_id protoid,
+				      ipsec_spi_t *spi,
+				      v2_notification_t ntype,
+				      const chunk_t *ndata /* optional */)
+{
+	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
+	pb_stream reply = open_out_pbs("encrypted notification",
+				       buf, sizeof(buf));
+	if (emit_v2N_spi_response_from_state(&reply, ike, md,
+					     protoid, spi,
+					     ntype, ndata)) {
+		/*
+		 * The notification is piggybacked on the existing
+		 * parent state.  This notification is fire-and-forget
+		 * (not a proper exchange, one with retrying).  So we
+		 * need not preserve the packet we are sending.
+		 *
+		 * XXX: this sounds wrong!  Integrity has been
+		 * established so the outgoing packet should be
+		 * retained and message counters updated.  If ST is
+		 * going to be 'deleted', then, wouldn't it be better
+		 * to have it linger a little so it can handle
+		 * duplicates cleanly.
+		 */
+		send_chunk_using_state(&ike->sa, "v2 notify", same_out_pbs_as_chunk(&reply));
+		pstat(ikev2_sent_notifies_e, ntype);
+	}
+}
+
+void record_v2N_spi_response_from_state(struct ike_sa *ike,
+					struct msg_digest *md,
+					enum ikev2_sec_proto_id protoid,
+					ipsec_spi_t *spi,
+					v2_notification_t ntype,
+					const chunk_t *ndata /* optional */)
+{
+	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
+	pb_stream reply = open_out_pbs("encrypted notification",
+				       buf, sizeof(buf));
+	if (emit_v2N_spi_response_from_state(&reply, ike, md,
+					     protoid, spi,
+					     ntype, ndata)) {
+		record_outbound_ike_msg(&ike->sa, &reply, "v2N response");
+	}
 }
 
 void send_v2N_response_from_state(struct ike_sa *ike,
@@ -404,6 +435,15 @@ void send_v2N_response_from_state(struct ike_sa *ike,
 {
 	send_v2N_spi_response_from_state(ike, md, PROTO_v2_RESERVED, NULL/*SPI*/,
 					 ntype, ndata);
+}
+
+void record_v2N_response_from_state(struct ike_sa *ike,
+				    struct msg_digest *md,
+				    v2_notification_t ntype,
+				    const chunk_t *ndata /* optional */)
+{
+	record_v2N_spi_response_from_state(ike, md, PROTO_v2_RESERVED, NULL/*SPI*/,
+					   ntype, ndata);
 }
 
 /*

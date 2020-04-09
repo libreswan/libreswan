@@ -280,8 +280,8 @@ void ikev2_ike_sa_established(struct ike_sa *ike,
 
 struct ikev2_ipseckey_dns;
 
-extern stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
-					    bool expect_accepted);
+extern stf_status ikev2_process_child_sa_pl(struct ike_sa *ike, struct child_sa *child,
+					    struct msg_digest *md, bool expect_accepted);
 
 extern bool emit_v2KE(chunk_t *g, const struct dh_desc *group, pb_stream *outs);
 

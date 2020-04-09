@@ -441,6 +441,11 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
+	/*
+	 * XXX: is there any benefit in having this state -- just
+	 * merge this and next?
+	 */
+
 	{ .story      = "Respond to CREATE_CHILD_SA IPsec SA Request",
 	  .state      = STATE_V2_CREATE_R0,
 	  .next_state = STATE_V2_IPSEC_R,
@@ -449,6 +454,19 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(KE) | P(N) | P(CP),
+	  .processor  = ikev2_child_inIoutR,
+	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .timeout_event = EVENT_SA_REPLACE, },
+
+	{ .story      = "Respond to CREATE_CHILD_SA rekey CHILD SA request",
+	  .state      = STATE_V2_REKEY_CHILD_R0,
+	  .next_state = STATE_V2_IPSEC_R,
+	  .flags      = SMF2_MESSAGE_REQUEST | SMF2_ESTABLISHED,
+	  .send = MESSAGE_RESPONSE,
+	  .message_payloads.required = P(SK),
+	  .encrypted_payloads.required = P(SA) | P(Ni) | P(TSi) | P(TSr),
+	  .encrypted_payloads.optional = P(KE) | P(N) | P(CP),
+	  .encrypted_payloads.notification = v2N_REKEY_SA,
 	  .processor  = ikev2_child_inIoutR,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE, },
@@ -946,37 +964,25 @@ static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 static struct child_sa *process_v2_child_ix(struct ike_sa *ike,
 					    const struct state_v2_microcode *svm)
 {
-	/* for log */
-	const char *what;
-	const char *why = "";
-
-	struct child_sa *child; /* to-be-determined */
-	if (svm->state == STATE_V2_CREATE_R0) {
-		/*
-		 * XXX: this could be either a create child, or rekey
-		 * child request.  Need to look at notifies to tell.
-		 */
-		what = "Child SA Request";
-		child = new_v2_child_state(ike, IPSEC_SA,
-					   SA_RESPONDER,
-					   STATE_V2_CREATE_R0, /* STATE_V2_REKEY_CHILD_R0? */
-					   null_fd);
-	} else {
-		what = "IKE Rekey Request";
-		child = new_v2_child_state(ike, IKE_SA,
-					   SA_RESPONDER,
-					   STATE_V2_REKEY_IKE_R0,
-					   null_fd);
-	}
-
+	/*
+	 * XXX: Still a mess.  Should call processor with the IKE SA.
+	 * The processor can then create a nested state.
+	 */
+	enum sa_type sa_type = (svm->state == STATE_V2_CREATE_R0 ? IPSEC_SA :
+				svm->state == STATE_V2_REKEY_CHILD_R0 ? IPSEC_SA :
+				pexpect(svm->state == STATE_V2_REKEY_IKE_R0) ? IKE_SA :
+				IKE_SA);
+	struct child_sa *child = new_v2_child_state(ike, sa_type,
+						    SA_RESPONDER,
+						    svm->state,
+						    null_fd);
 	binlog_refresh_state(&child->sa);
 
 	connection_buf ibuf;
 	connection_buf cbuf;
-	dbg(PRI_CONNECTION" #%lu received %s CREATE_CHILD_SA%s Child "PRI_CONNECTION" #%lu in %s will process it further",
+	dbg(PRI_CONNECTION" #%lu received %s CREATE_CHILD_SA Child "PRI_CONNECTION" #%lu in %s will process it further",
 	    pri_connection(ike->sa.st_connection, &ibuf),
-	    ike->sa.st_serialno,
-	    what, why,
+	    ike->sa.st_serialno, svm->story,
 	    pri_connection(child->sa.st_connection, &cbuf),
 	    child->sa.st_serialno, child->sa.st_state->name);
 
@@ -3456,6 +3462,24 @@ void complete_v2_state_transition(struct state *st,
 	case STF_FAIL:
 		log_state(RC_NOTIFICATION, st, "state transition '%s' failed",
 			  transition->story);
+		switch (v2_msg_role(md)) {
+		case MESSAGE_RESPONSE:
+			dbg("Message ID: forcing a response received update making space for delete");
+			v2_msgid_update_recv(ike, st, md);
+			break;
+		case MESSAGE_REQUEST:
+			dbg("Message ID: responding with recorded error");
+			v2_msgid_update_recv(ike, st, md);
+			v2_msgid_update_sent(ike, st, md, transition->send);
+			send_recorded_v2_ike_msg(&ike->sa, "STF_FAIL");
+			break;
+		case NO_MESSAGE:
+			break;
+		}
+		release_pending_whacks(st, "fatal error");
+		delete_state(st);
+		/* kill all st pointers */
+		st = NULL; ike = NULL; if (md != NULL) md->st = NULL;
 		break;
 
 	default: /* STF_FAIL+notification */

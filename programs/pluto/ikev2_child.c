@@ -103,7 +103,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 			= ikev2_child_sa_proto_info(pexpect_child_sa(cst), c->policy);
 
 		if (isa_xchg != ISAKMP_v2_CREATE_CHILD_SA)  {
-			stf_status res = ikev2_process_child_sa_pl(md, FALSE);
+			stf_status res = ikev2_process_child_sa_pl(ike, child, md, FALSE);
 			if (res != STF_OK)
 				return res;
 		}
