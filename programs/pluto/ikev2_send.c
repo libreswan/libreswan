@@ -380,37 +380,6 @@ static bool emit_v2N_spi_response_from_state(pb_stream *reply,
 	return true;
 }
 
-void send_v2N_spi_response_from_state(struct ike_sa *ike,
-				      struct msg_digest *md,
-				      enum ikev2_sec_proto_id protoid,
-				      ipsec_spi_t *spi,
-				      v2_notification_t ntype,
-				      const chunk_t *ndata /* optional */)
-{
-	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
-	pb_stream reply = open_out_pbs("encrypted notification",
-				       buf, sizeof(buf));
-	if (emit_v2N_spi_response_from_state(&reply, ike, md,
-					     protoid, spi,
-					     ntype, ndata)) {
-		/*
-		 * The notification is piggybacked on the existing
-		 * parent state.  This notification is fire-and-forget
-		 * (not a proper exchange, one with retrying).  So we
-		 * need not preserve the packet we are sending.
-		 *
-		 * XXX: this sounds wrong!  Integrity has been
-		 * established so the outgoing packet should be
-		 * retained and message counters updated.  If ST is
-		 * going to be 'deleted', then, wouldn't it be better
-		 * to have it linger a little so it can handle
-		 * duplicates cleanly.
-		 */
-		send_chunk_using_state(&ike->sa, "v2 notify", same_out_pbs_as_chunk(&reply));
-		pstat(ikev2_sent_notifies_e, ntype);
-	}
-}
-
 void record_v2N_spi_response_from_state(struct ike_sa *ike,
 					struct msg_digest *md,
 					enum ikev2_sec_proto_id protoid,
@@ -433,8 +402,28 @@ void send_v2N_response_from_state(struct ike_sa *ike,
 				  v2_notification_t ntype,
 				  const chunk_t *ndata /* optional */)
 {
-	send_v2N_spi_response_from_state(ike, md, PROTO_v2_RESERVED, NULL/*SPI*/,
-					 ntype, ndata);
+	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
+	pb_stream reply = open_out_pbs("encrypted notification",
+				       buf, sizeof(buf));
+	if (emit_v2N_spi_response_from_state(&reply, ike, md,
+					     PROTO_v2_RESERVED, NULL/*SPI*/,
+					     ntype, ndata)) {
+		/*
+		 * The notification is piggybacked on the existing
+		 * parent state.  This notification is fire-and-forget
+		 * (not a proper exchange, one with retrying).  So we
+		 * need not preserve the packet we are sending.
+		 *
+		 * XXX: this sounds wrong!  Integrity has been
+		 * established so the outgoing packet should be
+		 * retained and message counters updated.  If ST is
+		 * going to be 'deleted', then, wouldn't it be better
+		 * to have it linger a little so it can handle
+		 * duplicates cleanly.
+		 */
+		send_chunk_using_state(&ike->sa, "v2 notify", same_out_pbs_as_chunk(&reply));
+		pstat(ikev2_sent_notifies_e, ntype);
+	}
 }
 
 void record_v2N_response_from_state(struct ike_sa *ike,

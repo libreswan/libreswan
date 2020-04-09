@@ -39,14 +39,7 @@ void record_v2N_spi_response_from_state(struct ike_sa *st,
 
 bool send_recorded_v2_ike_msg(struct state *st, const char *where);
 
-void send_v2N_spi_response_from_state(struct ike_sa *st,
-				      struct msg_digest *md,
-				      enum ikev2_sec_proto_id protoid,
-				      ipsec_spi_t *spi,
-				      v2_notification_t type,
-				      const chunk_t *data /* optional */);
-
-void send_v2N_response_from_state(struct ike_sa *st,
+void send_v2N_response_from_state(struct ike_sa *st, /* XXX: USE record_v2N_response_from_state() */
 				  struct msg_digest *md,
 				  v2_notification_t type,
 				  const chunk_t *data /* optional */);
