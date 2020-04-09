@@ -161,7 +161,8 @@ static int bind_udp_socket(const struct iface_dev *ifd, int port)
 	 * Old code seemed to assume that it should be reset to pluto_port.
 	 * But only on successful bind.  Seems wrong or unnecessary.
 	 */
-	ip_endpoint if_endpoint = endpoint(&ifd->id_address, port);
+	ip_endpoint if_endpoint = endpoint3(&ip_protocol_udp,
+					    &ifd->id_address, port);
 	ip_sockaddr if_sa;
 	size_t if_sa_size = endpoint_to_sockaddr(&if_endpoint, &if_sa);
 	if (bind(fd, &if_sa.sa, if_sa_size) < 0) {
@@ -273,7 +274,8 @@ static enum iface_status udp_read_packet(const struct iface_port *ifp,
 	 * If that fails report some sense of error and then always
 	 * give up.
 	 */
-	const char *from_ugh = sockaddr_to_endpoint(&from, from_len, &packet->sender);
+	const char *from_ugh = sockaddr_to_endpoint(&ip_protocol_udp,
+						    &from, from_len, &packet->sender);
 	if (from_ugh != NULL) {
 		if (packet->len >= 0) {
 			/* technically it worked, but returned value was useless */
@@ -400,7 +402,8 @@ struct iface_port *bind_udp_iface_port(struct iface_dev *ifd, int port,
 
 	q->ip_dev = add_ref(ifd);
 	q->fd = fd;
-	q->local_endpoint = endpoint(&ifd->id_address, port);
+	q->local_endpoint = endpoint3(&ip_protocol_udp,
+				      &ifd->id_address, port);
 	q->ike_float = ike_float;
 	q->io = &udp_iface_io;
 	q->protocol = &ip_protocol_udp;

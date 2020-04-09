@@ -22,6 +22,7 @@
 #include "lswcdefs.h"		/* for elemsof() */
 #include "constants.h"		/* for streq() */
 #include "ip_endpoint.h"
+#include "ip_protocol.h"
 
 #include "ipcheck.h"
 
@@ -116,7 +117,7 @@ static void check_sockaddr_as_endpoint(void)
 
 		/* sockaddr->endpoint */
 		ip_endpoint endpoint;
-		err_t err = sockaddr_to_endpoint(&sa, t->size, &endpoint);
+		err_t err = sockaddr_to_endpoint(&ip_protocol_unset, &sa, t->size, &endpoint);
 		if (err != NULL) {
 			if (t->err == NULL) {
 				FAIL_IN("sockaddr_to_endpoint() unexpectedly failed: %s", err);
