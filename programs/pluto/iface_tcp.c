@@ -321,8 +321,8 @@ stf_status create_tcp_interface(struct state *st)
 			close(fd);
 			return STF_FATAL;
 		}
-		err_t err = sockaddr_to_endpoint(&ip_protocol_tcp, &local_sockaddr,
-						 local_sockaddr_size, &local_endpoint);
+		err_t err = sockaddr_to_endpoint(&local_sockaddr, local_sockaddr_size,
+						 &local_endpoint);
 		if (err != NULL) {
 			libreswan_log("TCP: failed to get local TCP address, %s", err);
 			close(fd);
@@ -396,8 +396,7 @@ void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 
 	ip_sockaddr sa = { .sa = *sockaddr, };
 	ip_endpoint tcp_remote_endpoint;
-	err_t err = sockaddr_to_endpoint(&ip_protocol_tcp,
-					 &sa, sockaddr_len, &tcp_remote_endpoint);
+	err_t err = sockaddr_to_endpoint(&sa, sockaddr_len, &tcp_remote_endpoint);
 	if (err) {
 		libreswan_log("TCP: invalid remote address: %s", err);
 		close(accepted_fd);
@@ -539,8 +538,7 @@ static int bind_tcp_socket(const struct iface_dev *ifd, int port)
 	 * Old code seemed to assume that it should be reset to pluto_port.
 	 * But only on successful bind.  Seems wrong or unnecessary.
 	 */
-	ip_endpoint if_endpoint = endpoint3(&ip_protocol_tcp,
-					    &ifd->id_address, port);
+	ip_endpoint if_endpoint = endpoint(&ifd->id_address, port);
 	ip_sockaddr if_sa;
 	size_t if_sa_size = endpoint_to_sockaddr(&if_endpoint, &if_sa);
 	if (bind(fd, &if_sa.sa, if_sa_size) < 0) {
@@ -581,8 +579,7 @@ struct iface_port *bind_tcp_iface_port(struct iface_dev *ifd, int port)
 					   "struct iface_port");
 	q->ip_dev = add_ref(ifd);
 
-	q->local_endpoint = endpoint3(&ip_protocol_tcp,
-				      &ifd->id_address, port);
+	q->local_endpoint = endpoint(&ifd->id_address, port);
 	q->fd = fd;
 	q->protocol = &ip_protocol_tcp;
 	q->next = interfaces;

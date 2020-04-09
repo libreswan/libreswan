@@ -40,7 +40,6 @@ struct ip_protocol {
 	unsigned ipproto;
 };
 
-extern const struct ip_protocol ip_protocol_unset;
 extern const struct ip_protocol ip_protocol_icmp;	/* Internet Control Message */
 extern const struct ip_protocol ip_protocol_ipip;	/* IPv4 encapsulation */
 extern const struct ip_protocol ip_protocol_tcp;	/* any host internal protocol */

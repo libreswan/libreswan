@@ -37,7 +37,6 @@
 #include "ipsecconf/starterlog.h"
 #include "lswlog.h"	/* for pexpect() */
 #include "ip_info.h"
-#include "ip_protocol.h"
 
 bool starter_iface_find(const char *iface, const struct ip_info *family,
 			ip_address *dst, ip_address *nh)
@@ -72,8 +71,7 @@ bool starter_iface_find(const char *iface, const struct ip_info *family,
 		if (req.ifr_addr.sa_family == family->af) {
 			const ip_sockaddr sa = { .sa = req.ifr_addr, };
 			ip_endpoint nhe;
-			happy(sockaddr_to_endpoint(&ip_protocol_unset,
-						   &sa, family->sockaddr_size, &nhe));
+			happy(sockaddr_to_endpoint(&sa, family->sockaddr_size, &nhe));
 			pexpect(endpoint_hport(&nhe) == 0);
 			*nh = endpoint_address(&nhe);
 		}
@@ -84,8 +82,7 @@ bool starter_iface_find(const char *iface, const struct ip_info *family,
 		if (req.ifr_addr.sa_family == family->af) {
 			const ip_sockaddr sa = { .sa = req.ifr_addr, };
 			ip_endpoint dste;
-			happy(sockaddr_to_endpoint(&ip_protocol_unset,
-						   &sa, family->sockaddr_size, &dste));
+			happy(sockaddr_to_endpoint(&sa, family->sockaddr_size, &dste));
 			pexpect(endpoint_hport(&dste) == 0);
 			*dst = endpoint_address(&dste);
 		}

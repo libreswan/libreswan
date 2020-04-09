@@ -25,7 +25,6 @@
 #include "ip_sockaddr.h"
 
 struct lswlog;
-struct ip_protocol;
 
 /*
  * ip_endpoint and ip_address should be distinct types where the
@@ -43,7 +42,6 @@ typedef struct {
 	 * endpoint, is that none?).
 	 */
 	int hport;
-	unsigned ipproto;
 } ip_endpoint;
 #else
 typedef ip_address ip_endpoint;
@@ -54,9 +52,6 @@ typedef ip_address ip_endpoint;
  */
 
 ip_endpoint endpoint(const ip_address *address, int port);
-
-ip_endpoint endpoint3(const struct ip_protocol *protocol,
-		      const ip_address *address, int port);
 
 /*
  * Formatting
@@ -96,8 +91,6 @@ bool endpoint_eq(const ip_endpoint l, ip_endpoint r);
 extern const ip_endpoint unset_endpoint;
 
 const struct ip_info *endpoint_type(const ip_endpoint *endpoint);
-const struct ip_protocol *endpoint_protocol(const ip_endpoint *endpoint);
-ip_address endpoint_address(const ip_endpoint *endpoint);
 
 bool endpoint_is_set(const ip_endpoint *endpoint);
 bool endpoint_is_any(const ip_endpoint *endpoint);
@@ -109,13 +102,14 @@ int endpoint_nport(const ip_endpoint *endpoint);
 
 ip_endpoint set_endpoint_hport(const ip_endpoint *endpoint,
 			       int hport) MUST_USE_RESULT;
-ip_endpoint set_endpoint_address(const ip_endpoint *endpoint,
-				 const ip_address) MUST_USE_RESULT;
 
 #define update_endpoint_hport(ENDPOINT, HPORT)			\
 	{ *(ENDPOINT) = set_endpoint_hport(ENDPOINT, HPORT); }
 #define update_endpoint_nport(ENDPOINT, NPORT)			\
 	{ *(ENDPOINT) = set_endpoint_hport(ENDPOINT, ntohs(NPORT)); }
+
+/* currently forces port to zero */
+ip_address endpoint_address(const ip_endpoint *endpoint);
 
 /*
  * conversions
@@ -124,9 +118,7 @@ ip_endpoint set_endpoint_address(const ip_endpoint *endpoint,
 /* convert the endpoint to a sockaddr; return true size */
 size_t endpoint_to_sockaddr(const ip_endpoint *endpoint, ip_sockaddr *sa);
 /* convert sockaddr to an endpoint */
-err_t sockaddr_to_endpoint(const struct ip_protocol *protocol,
-			   const ip_sockaddr *sa, socklen_t sa_len,
-			   ip_endpoint *endpoint);
+err_t sockaddr_to_endpoint(const ip_sockaddr *sa, socklen_t sa_len, ip_endpoint *endpoint);
 
 /*
  * Old style.

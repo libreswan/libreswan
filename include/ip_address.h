@@ -69,7 +69,6 @@ typedef struct {
 	 *
 	 */
 	uint16_t hport;
-	unsigned ipproto;
 #endif
 } ip_address;
 

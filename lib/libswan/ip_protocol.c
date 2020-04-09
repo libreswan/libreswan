@@ -20,12 +20,13 @@
 
 #include "libreswan/pfkeyv2.h"
 
-const struct ip_protocol ip_protocol_unset = {
+#if 0
+const struct ip_protocol ip_protocol_unspec = {
 	.prefix = "unk",
 	.description = "unknown",
 	.name = "UNKNOWN",
-	.ipproto = IPPROTO_NONE,
 };
+#endif
 
 const struct ip_protocol ip_protocol_icmp = {
 	.description = "Internet Control Message",
@@ -88,23 +89,22 @@ const struct ip_protocol ip_protocol_internal = {
 	.description = "any host internal protocol",
 	.prefix = "int",
 	.name = "INT",
-#define INTERNAL 61
-	.ipproto = INTERNAL,
+	.ipproto = 61,
+};
+
+static const struct ip_protocol *ip_protocols[] = {
+	&ip_protocol_icmp,
+	&ip_protocol_ipip,
+	&ip_protocol_tcp,
+	&ip_protocol_udp,
+	&ip_protocol_esp,
+	&ip_protocol_ah,
+	&ip_protocol_comp,
+	&ip_protocol_internal,
 };
 
 const struct ip_protocol *protocol_by_prefix(const char *prefix)
 {
-	static const struct ip_protocol *ip_protocols[] = {
-		&ip_protocol_unset,
-		&ip_protocol_icmp,
-		&ip_protocol_ipip,
-		&ip_protocol_tcp,
-		&ip_protocol_udp,
-		&ip_protocol_esp,
-		&ip_protocol_ah,
-		&ip_protocol_comp,
-		&ip_protocol_internal,
-	};
 	for (unsigned u = 0; u < elemsof(ip_protocols); u++) {
 		const struct ip_protocol *p = ip_protocols[u];
 		if (strncaseeq(prefix, p->prefix, strlen(p->prefix))) {
@@ -116,27 +116,11 @@ const struct ip_protocol *protocol_by_prefix(const char *prefix)
 
 const struct ip_protocol *protocol_by_ipproto(unsigned ipproto)
 {
-	/* perhaps a little sparse */
-	static const struct ip_protocol *ip_protocols[] = {
-		[IPPROTO_NONE] = &ip_protocol_unset,
-		[IPPROTO_ICMP] = &ip_protocol_icmp,
-		[IPPROTO_IPIP] = &ip_protocol_ipip,
-		[IPPROTO_TCP] = &ip_protocol_tcp,
-		[IPPROTO_UDP] = &ip_protocol_udp,
-		[IPPROTO_ESP] = &ip_protocol_esp,
-		[IPPROTO_AH] = &ip_protocol_ah,
-#ifdef IPPROTO_IPCOMP
-		[IPPROTO_IPCOMP] = &ip_protocol_comp,
-
-#endif
-#ifdef IPPROTO_COMP
-		[IPPROTO_COMP] = &ip_protocol_comp,
-#endif
-		[INTERNAL] = &ip_protocol_internal,
-	};
-	if (ipproto < elemsof(ip_protocols)) {
-		return ip_protocols[ipproto];
-	} else {
-		return NULL;
+	for (unsigned u = 0; u < elemsof(ip_protocols); u++) {
+		const struct ip_protocol *p = ip_protocols[u];
+		if (p->ipproto == ipproto) {
+			return p;
+		}
 	}
+	return NULL;
 }
