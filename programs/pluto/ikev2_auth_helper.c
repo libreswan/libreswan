@@ -86,8 +86,8 @@ bool submit_v2_auth_signature(struct ike_sa *ike,
 	default:
 		bad_case(authby);
 	}
-	submit_crypto(STATE_LOGGER(&ike->sa),
-		      &ike->sa /*state to resume*/,
+	struct logger logger = STATE_LOGGER(&ike->sa);
+	submit_crypto(&logger, &ike->sa /*state to resume*/,
 		      clone_thing(task, "signature task"),
 		      &v2_auth_signature_handler,
 		      "computing responder signature");

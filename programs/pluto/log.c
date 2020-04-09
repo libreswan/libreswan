@@ -837,7 +837,7 @@ void log_message(lset_t rc_flags, const struct logger *log,
 	va_end(ap);
 }
 
-struct logger *clone_logger(const struct logger stack_logger)
+struct logger *clone_logger(const struct logger *stack)
 {
 	/*
 	 * Convert the dynamicically generated OBJECT prefix into an
@@ -846,16 +846,16 @@ struct logger *clone_logger(const struct logger stack_logger)
 	 */
 	char prefix[LOG_WIDTH];
 	jambuf_t prefix_buf = ARRAY_AS_JAMBUF(prefix);
-	stack_logger.jam_prefix(&prefix_buf, stack_logger.object);
+	stack->jam_prefix(&prefix_buf, stack->object);
 	/* construct the clone */
 	struct logger heap = {
 		/* XXX: fight const stupidity */
-		.global_whackfd = dup_any((struct fd*) stack_logger.global_whackfd),
-		.object_whackfd = dup_any((struct fd*) stack_logger.object_whackfd),
-		.where = stack_logger.where,
+		.global_whackfd = dup_any((struct fd*) stack->global_whackfd),
+		.object_whackfd = dup_any((struct fd*) stack->object_whackfd),
+		.where = stack->where,
 		.jam_prefix = jam_string_prefix,
 		.object = clone_str(prefix, "heap logger prefix"),
-		.suppress_log = stack_logger.suppress_log(stack_logger.object) ? always_suppress_log : never_suppress_log,
+		.suppress_log = stack->suppress_log(stack->object) ? always_suppress_log : never_suppress_log,
 	};
 	/* and clone it */
 	return clone_thing(heap, "heap logger");

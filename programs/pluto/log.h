@@ -193,7 +193,7 @@ struct logger {
 		.suppress_log = suppress_state_log,		\
 	}
 
-struct logger *clone_logger(struct logger log);
+struct logger *clone_logger(const struct logger *stack);
 void free_logger(struct logger **logp);
 
 void log_message(lset_t rc_flags,

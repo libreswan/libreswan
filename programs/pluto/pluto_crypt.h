@@ -73,11 +73,11 @@ struct crypto_handler {
 	crypto_cancelled_cb *cancelled_cb;
 };
 
-extern void submit_crypto(struct logger logger,
+extern void submit_crypto(const struct logger *logger,
 			  struct state *st,
-		   struct crypto_task *task,
-		   const struct crypto_handler *handler,
-		   const char *name);
+			  struct crypto_task *task,
+			  const struct crypto_handler *handler,
+			  const char *name);
 
 /*
  * cryptographic helper operations.

@@ -518,7 +518,7 @@ static void inline_worker(struct state *unused_st UNUSED,
  */
 
 static void submit_crypto_request(struct pluto_crypto_req_cont *cn,
-				  struct logger logger,
+				  const struct logger *logger,
 				  struct state *st,
 				  struct crypto_task *task,
 				  const struct crypto_handler *handler)
@@ -837,11 +837,12 @@ void send_crypto_helper_request(struct state *st,
 	passert(cn->pcrc_pcr.pcr_type != pcr_crypto);
 	struct crypto_task *task = alloc_thing(struct crypto_task, "pcr_task");
 	task->cn = cn;
-	submit_crypto_request(cn, STATE_LOGGER(st), st,
+	struct logger logger = STATE_LOGGER(st);
+	submit_crypto_request(cn, &logger, st,
 			      task, &pcr_handler);
 }
 
-void submit_crypto(struct logger logger,
+void submit_crypto(const struct logger *logger,
 		   struct state *st,
 		   struct crypto_task *task,
 		   const struct crypto_handler *handler,
