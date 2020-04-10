@@ -51,10 +51,8 @@ west #
  echo done
 done
 west #
- grep -e v2N_INVALID_KE_PAYLOAD -e v2N_INVALID_SYNTAX /tmp/pluto.log
-| #1 complete_v2_state_transition() PARENT_I1 -> PARENT_I2 with status STF_FAIL+v2N_INVALID_SYNTAX
+ grep -e v2N_INVALID_KE_PAYLOAD -e v2N_INVALID_SYNTAX /tmp/pluto.log | grep -v -e '^|'
 "westnet-eastnet-ipv4-psk-ikev2" #1: state transition 'Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH' failed with v2N_INVALID_SYNTAX
-| #2 complete_v2_state_transition() PARENT_I1 -> PARENT_I2 with status STF_FAIL+v2N_INVALID_SYNTAX
 "westnet-eastnet-ipv4-psk-ikev2" #2: state transition 'Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH' failed with v2N_INVALID_SYNTAX
 west #
  ../bin/check-for-core.sh
