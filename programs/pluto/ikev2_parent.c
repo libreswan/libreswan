@@ -1548,7 +1548,6 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 {
 	struct state *st = &ike->sa;
 	struct connection *c = st->st_connection;
-	ip_address redirect_ip;
 
 	/* for testing only */
 	if (impair.send_no_ikev2_auth) {
@@ -1587,22 +1586,6 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 	ike->sa.st_seen_ppk = false;
 	ike->sa.st_seen_fragvid = md->v2N.fragmentation_supported;
 	ike->sa.st_seen_ppk = md->v2N.use_ppk;
-	if (md->v2N.redirect != NULL) {
-		if (!LIN(POLICY_ACCEPT_REDIRECT_YES, ike->sa.st_connection->policy)) {
-			dbg("ignoring v2N_REDIRECT, we don't accept being redirected");
-		} else {
-			err_t err = parse_redirect_payload(&md->v2N.redirect->pbs,
-							   c->accept_redirect_to,
-							   &ike->sa.st_ni,
-							   &redirect_ip);
-			if (err == NULL) {
-				ike->sa.st_connection->temp_vars.redirect_ip = redirect_ip;
-				event_force(EVENT_v2_REDIRECT, st);
-				return STF_SUSPEND;
-			}
-			loglog(RC_LOG_SERIOUS, "warning: parsing of v2N_REDIRECT payload failed: %s", err);
-		}
-	}
 	if (md->v2N.signature_hash_algorithms != NULL) {
 		ike->sa.st_seen_hashnotify = TRUE;
 		if (!negotiate_hash_algo_from_notification(md->v2N.signature_hash_algorithms, st)) {
