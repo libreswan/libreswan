@@ -2477,7 +2477,7 @@ static void ikev2_pam_continue(struct state *st,
 
 	stf_status stf;
 	if (success) {
-		stf = ikev2_parent_inI2outR2_auth_tail(st, md, success);
+		stf = ikev2_parent_inI2outR2_auth_tail(&ike->sa, md, success);
 	} else {
 		/*
 		 * XXX: better would be to record the message and
@@ -2488,10 +2488,11 @@ static void ikev2_pam_continue(struct state *st,
 		 * to ZOMBIE (aka *_DEL*).  There it can linger while
 		 * dealing with any duplicate IKE_AUTH requests.
 		 */
-		struct ike_sa *ike = pexpect_ike_sa(st);
-		send_v2N_response_from_state(ike, md, v2N_AUTHENTICATION_FAILED, NULL);
+		struct logger logger = STATE_LOGGER(&ike->sa);
+		record_v2N_response(&logger, ike, md, v2N_AUTHENTICATION_FAILED,
+				    NULL, ENCRYPTED_PAYLOAD);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
-		stf = STF_FATAL;
+		stf = STF_FAIL; /* STF_ZOMBIFY */
 	}
 
 	/* replace (*mdp)->st with st ... */
@@ -2609,12 +2610,12 @@ stf_status ikev2_ike_sa_process_auth_request(struct ike_sa *ike,
 {
 	/* The connection is "up", start authenticating it */
 	pexpect(child == NULL);
-	struct state *st = &ike->sa;
+	pexpect(md->st == NULL || md->st == &ike->sa);
 
 	/* for testing only */
 	if (impair.send_no_ikev2_auth) {
-		libreswan_log(
-			"IMPAIR_SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
+		log_state(RC_LOG, &ike->sa,
+			  "IMPAIR_SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
 		return STF_IGNORE;
 	}
 
@@ -2629,7 +2630,7 @@ stf_status ikev2_ike_sa_process_auth_request(struct ike_sa *ike,
 		lswlog_msg_digest(buf, md);
 	}
 
-	stf_status e = ikev2_parent_inI2outR2_continue_tail(st, md);
+	stf_status e = ikev2_parent_inI2outR2_continue_tail(&ike->sa, md);
 	LSWDBGP(DBG_BASE, buf) {
 		jam(buf, "ikev2_parent_inI2outR2_continue_tail returned ");
 		jam_v2_stf_status(buf, e);
@@ -2643,13 +2644,12 @@ stf_status ikev2_ike_sa_process_auth_request(struct ike_sa *ike,
 	 * we have deleted the SA from our end.
 	 */
 	if (e >= STF_FAIL &&
-	    (st->st_connection->policy & POLICY_OPPORTUNISTIC)) {
-		DBG(DBG_OPPO,
-			DBG_log("(pretending?) Deleting opportunistic Parent with no Child SA"));
-		e = STF_FATAL;
-		send_v2N_response_from_state(ike, md,
-					     v2N_AUTHENTICATION_FAILED,
-					     NULL/*no data*/);
+	    (ike->sa.st_connection->policy & POLICY_OPPORTUNISTIC)) {
+		dbg("(pretending?) Deleting opportunistic Parent with no Child SA");
+		struct logger logger = STATE_LOGGER(&ike->sa);
+		record_v2N_response(&logger, ike, md, v2N_AUTHENTICATION_FAILED,
+				    NULL/*no data*/, ENCRYPTED_PAYLOAD);
+		e = STF_FAIL; /* STF_ZOMBIFY */
 	}
 
 	return e;
@@ -2697,8 +2697,10 @@ static stf_status v2_inI2outR2_post_cert_decode(struct state *st,
 		event_force(EVENT_SA_EXPIRE, st);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		release_pending_whacks(st, "Authentication failed");
-		/* this is really STF_FATAL but we need to send a reply packet out */
-		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
+		struct logger logger = STATE_LOGGER(&ike->sa);
+		record_v2N_response(&logger, ike, md, v2N_AUTHENTICATION_FAILED,
+				    NULL, ENCRYPTED_PAYLOAD);
+		return STF_FAIL;
 	}
 
 	enum ikev2_auth_method atype = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
@@ -2803,12 +2805,12 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		free_chunk_content(&st->st_no_ppk_auth);
 
 	if (!found_ppk && LIN(POLICY_PPK_INSIST, policy)) {
-		loglog(RC_LOG_SERIOUS, "Requested PPK_ID not found and connection requires a valid PPK");
+		log_state(RC_LOG_SERIOUS, &ike->sa, "Requested PPK_ID not found and connection requires a valid PPK");
 		free_chunk_content(&null_auth);
-		send_v2N_response_from_state(ike, md,
-					     v2N_AUTHENTICATION_FAILED,
-					     NULL/*no data*/);
-		return STF_FATAL;
+		struct logger logger = STATE_LOGGER(&ike->sa);
+		record_v2N_response(&logger, ike, md, v2N_AUTHENTICATION_FAILED,
+				    NULL/*no data*/, ENCRYPTED_PAYLOAD);
+		return STF_FAIL;
 	}
 
 	/* calculate hash of IDi for AUTH below */
@@ -2844,15 +2846,13 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 				   ike, ORIGINAL_RESPONDER, &idhash_in,
 				   &pbs_no_ppk_auth,
-				   ike->sa.st_connection->spd.that.authby, "no-PPK-auth"))
-		{
-			struct ike_sa *ike = ike_sa(st);
-			send_v2N_response_from_state(ike, md,
-						     v2N_AUTHENTICATION_FAILED,
-						     NULL/*no data*/);
+				   ike->sa.st_connection->spd.that.authby, "no-PPK-auth")) {
+			struct logger logger = STATE_LOGGER(&ike->sa);
+			record_v2N_response(&logger, ike, md, v2N_AUTHENTICATION_FAILED,
+					    NULL/*no data*/, ENCRYPTED_PAYLOAD);
 			free_chunk_content(&null_auth);	/* ??? necessary? */
 			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
-			return STF_FATAL;
+			return STF_FAIL;
 		}
 		DBG(DBG_CONTROL, DBG_log("NO_PPK_AUTH verified"));
 	} else {
@@ -2872,15 +2872,13 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 			init_pbs(&pbs_null_auth, null_auth.ptr, len, "pb_stream for verifying NULL_AUTH");
 			if (!v2_check_auth(IKEv2_AUTH_NULL, ike,
 					   ORIGINAL_RESPONDER, &idhash_in,
-					   &pbs_null_auth, AUTHBY_NULL, "NULL_auth from Notify Payload"))
-			{
-				struct ike_sa *ike = ike_sa(st);
-				send_v2N_response_from_state(ike, md,
-							     v2N_AUTHENTICATION_FAILED,
-							     NULL/*no data*/);
+					   &pbs_null_auth, AUTHBY_NULL, "NULL_auth from Notify Payload")) {
+				struct logger logger = STATE_LOGGER(&ike->sa);
+				record_v2N_response(&logger, ike, md, v2N_AUTHENTICATION_FAILED,
+						    NULL/*no data*/, ENCRYPTED_PAYLOAD);
 				free_chunk_content(&null_auth);
 				pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
-				return STF_FATAL;
+				return STF_FAIL;
 			}
 			DBG(DBG_CONTROL, DBG_log("NULL_AUTH verified"));
 		} else {
@@ -2889,13 +2887,12 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 					   ike, ORIGINAL_RESPONDER, &idhash_in,
 					   &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
 					   st->st_connection->spd.that.authby, "I2 Auth Payload")) {
-				struct ike_sa *ike = ike_sa(st);
-				send_v2N_response_from_state(ike, md,
-							     v2N_AUTHENTICATION_FAILED,
-							     NULL/*no data*/);
+				struct logger logger = STATE_LOGGER(&ike->sa);
+				record_v2N_response(&logger, ike, md, v2N_AUTHENTICATION_FAILED,
+						    NULL/*no data*/, ENCRYPTED_PAYLOAD);
 				free_chunk_content(&null_auth);
 				pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
-				return STF_FATAL;
+				return STF_FAIL;
 			}
 		}
 	}
@@ -2925,10 +2922,10 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		 * TBD: send this notification encrypted because the
 		 * AUTH payload succeed
 		 */
-		send_v2N_response_from_state(ike_sa(st), md,
-					     v2N_AUTHENTICATION_FAILED,
-					     NULL/*no data*/);
-		return STF_FATAL;
+		struct logger logger = STATE_LOGGER(&ike->sa);
+		record_v2N_response(&logger, ike, md, v2N_AUTHENTICATION_FAILED,
+				    NULL/*no data*/, ENCRYPTED_PAYLOAD);
+		return STF_FAIL;
 	}
 
 	/*
@@ -2970,9 +2967,10 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 						      authby, auth_method,
 						      ikev2_parent_inI2outR2_auth_signature_continue)) {
 				dbg("submit_v2_auth_signature() died, fatal");
-				send_v2N_response_from_state(ike, md, v2N_AUTHENTICATION_FAILED,
-							     NULL/*no data*/);
-				return STF_FATAL;
+				struct logger logger = STATE_LOGGER(&ike->sa);
+				record_v2N_response(&logger, ike, md, v2N_AUTHENTICATION_FAILED,
+						    NULL/*no data*/, ENCRYPTED_PAYLOAD);
+				return STF_FAIL;
 			}
 			return STF_SUSPEND;
 		}
@@ -2980,9 +2978,10 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		{
 			const struct hash_desc *hash_algo = v2_auth_negotiated_signature_hash(ike);
 			if (hash_algo == NULL) {
-				send_v2N_response_from_state(ike, md, v2N_AUTHENTICATION_FAILED,
-							     NULL/*no data*/);
-				return STF_FATAL;
+				struct logger logger = STATE_LOGGER(&ike->sa);
+				record_v2N_response(&logger, ike, md, v2N_AUTHENTICATION_FAILED,
+						    NULL/*no data*/, ENCRYPTED_PAYLOAD);
+				return STF_FAIL;
 			}
 			struct crypt_mac hash_to_sign = v2_calculate_sighash(ike, ORIGINAL_RESPONDER,
 									     &ike->sa.st_v2_id_payload.mac,
@@ -2992,9 +2991,10 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 						      authby, auth_method,
 						      ikev2_parent_inI2outR2_auth_signature_continue)) {
 				dbg("submit_v2_auth_signature() died, fatal");
-				send_v2N_response_from_state(ike, md, v2N_AUTHENTICATION_FAILED,
-							     NULL/*no data*/);
-				return STF_FATAL;
+				struct logger logger = STATE_LOGGER(&ike->sa);
+				record_v2N_response(&logger, ike, md, v2N_AUTHENTICATION_FAILED,
+						    NULL/*no data*/, ENCRYPTED_PAYLOAD);
+				return STF_FAIL;
 			}
 			return STF_SUSPEND;
 		}
