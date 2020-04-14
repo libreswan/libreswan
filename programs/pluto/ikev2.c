@@ -1857,10 +1857,8 @@ void ikev2_process_packet(struct msg_digest *md)
 				return;
 			}
 
-			struct logger logger = STATE_LOGGER(&ike->sa);
-
 			dbg("unpacking clear payloads");
-			md->message_payloads = ikev2_decode_payloads(&logger, md,
+			md->message_payloads = ikev2_decode_payloads(ike->sa.st_logger, md,
 								     &md->message_pbs,
 								     md->hdr.isa_np);
 			if (md->message_payloads.n != v2N_NOTHING_WRONG) {
@@ -1870,7 +1868,7 @@ void ikev2_process_packet(struct msg_digest *md)
 
 			/* transition? */
 			const struct state_v2_microcode *transition =
-				find_v2_state_transition(&logger, ike->sa.st_state, md);
+				find_v2_state_transition(ike->sa.st_logger, ike->sa.st_state, md);
 			if (transition == NULL) {
 				/* already logged */
 				return;
@@ -2039,9 +2037,8 @@ static void ike_process_packet(struct msg_digest *md, struct ike_sa *ike)
 		dbg("unpacking clear payload");
 		pexpect(v2_msg_role(md) == MESSAGE_RESPONSE ||
 			md->hdr.isa_xchg != ISAKMP_v2_IKE_SA_INIT);
-		struct logger log = STATE_LOGGER(st);
 		md->message_payloads =
-			ikev2_decode_payloads(&log, md, &md->message_pbs,
+			ikev2_decode_payloads(st->st_logger, md, &md->message_pbs,
 					      md->hdr.isa_np);
 		if (md->message_payloads.n != v2N_NOTHING_WRONG) {
 			/*
@@ -2272,8 +2269,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * our problems.
 			 */
 			struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
-			struct logger log = STATE_LOGGER(st);
-			md->encrypted_payloads = ikev2_decode_payloads(&log, md, &sk->pbs,
+			md->encrypted_payloads = ikev2_decode_payloads(st->st_logger, md, &sk->pbs,
 								       sk->payload.generic.isag_np);
 			if (md->encrypted_payloads.n != v2N_NOTHING_WRONG) {
 				switch (v2_msg_role(md)) {
@@ -2344,7 +2340,6 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 
 	/* no useful state microcode entry? */
 	if (svm->state == STATE_IKEv2_ROOF) {
-		struct logger logger = STATE_LOGGER(st);
 		/* count all the error notifications */
 		for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
 		     ntfy != NULL; ntfy = ntfy->next) {
@@ -2359,7 +2354,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * A very messed up message - none of the
 			 * state transitions recognized it!.
 			 */
-			log_v2_payload_errors(&logger, md,
+			log_v2_payload_errors(st->st_logger, md,
 					      &message_payload_status);
 			return;
 		}
@@ -2383,7 +2378,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * message combination so just ignore it (but
 			 * update Message IDs).
 			 */
-			log_v2_payload_errors(&logger, md,
+			log_v2_payload_errors(st->st_logger, md,
 					      &encrypted_payload_status);
 			if (v2_msg_role(md) == MESSAGE_REQUEST) {
 				pexpect(ike->sa.st_v2_msgid_wip.responder == -1);
@@ -2986,8 +2981,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 			}
 		}
 	} else {
-		struct logger logger = STATE_LOGGER(log_state);
-		LOG_MESSAGE(w, &logger, buf) {
+		LOG_MESSAGE(w, log_state->st_logger, buf) {
 			jam(buf, "%s: %s", st->st_state->name,
 			    st->st_state->story);
 			/* document SA details for admin's pleasure */

@@ -837,8 +837,7 @@ void send_crypto_helper_request(struct state *st,
 	passert(cn->pcrc_pcr.pcr_type != pcr_crypto);
 	struct crypto_task *task = alloc_thing(struct crypto_task, "pcr_task");
 	task->cn = cn;
-	struct logger logger = STATE_LOGGER(st);
-	submit_crypto_request(cn, &logger, st,
+	submit_crypto_request(cn, st->st_logger, st,
 			      task, &pcr_handler);
 }
 

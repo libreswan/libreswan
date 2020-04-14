@@ -223,6 +223,5 @@ void submit_dh(struct state *st, chunk_t remote_ke,
 	task->remote_ke = clone_hunk(remote_ke, "DH crypto");
 	transfer_dh_secret_to_helper(st, "DH", &task->local_secret);
 	task->cb = cb;
-	struct logger logger = STATE_LOGGER(st);
-	submit_crypto(&logger, st, task, &dh_handler, name);
+	submit_crypto(st->st_logger, st, task, &dh_handler, name);
 }

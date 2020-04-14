@@ -182,16 +182,6 @@ struct logger {
 		.object_whackfd = (PENDING)->whack_sock,	\
 		.suppress_log = suppress_connection_log,	\
 	}
-#define STATE_LOGGER(STATE) (struct logger)			\
-	{							\
-		.where = HERE,					\
-		.global_whackfd = whack_log_fd,			\
-		.jam_prefix = jam_state_prefix,			\
-		.object = STATE,				\
-		.object_whackfd = (STATE)->st_whack_sock,	\
-		.timing_level = (STATE)->st_timing.level,	\
-		.suppress_log = suppress_state_log,		\
-	}
 
 struct logger *clone_logger(const struct logger *stack);
 void free_logger(struct logger **logp);

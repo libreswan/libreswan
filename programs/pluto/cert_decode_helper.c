@@ -90,8 +90,7 @@ void submit_cert_decode(struct ike_sa *ike, struct state *state_to_resume,
 			.crl_strict = crl_strict,
 		},
 	};
-	struct logger logger = STATE_LOGGER(&ike->sa);
-	submit_crypto(&logger, state_to_resume,
+	submit_crypto(ike->sa.st_logger, state_to_resume,
 		      clone_thing(task, "decode certificate payload task"),
 		      &cert_decode_handler, why);
 }

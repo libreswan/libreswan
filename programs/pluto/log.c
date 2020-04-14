@@ -90,7 +90,7 @@ struct logger cur_logger(void)
 	passert(in_main_thread());
 
 	if (cur_state != NULL) {
-		return STATE_LOGGER(cur_state);
+		return *(cur_state->st_logger);
 	}
 
 	if (cur_connection != NULL) {
@@ -894,8 +894,7 @@ void log_state(lset_t rc_flags, const struct state *st,
 {
 	va_list ap;
 	va_start(ap, format);
-	struct logger log = STATE_LOGGER(st);
-	broadcast(rc_flags, &log, format, ap);
+	broadcast(rc_flags, st->st_logger, format, ap);
 	va_end(ap);
 }
 

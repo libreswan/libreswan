@@ -860,8 +860,7 @@ bool v1_decode_certs(struct msg_digest *md)
 	};
 
 	struct root_certs *root_certs = root_certs_addref(HERE); /* must-release */
-	struct logger log = STATE_LOGGER(st);
-	struct verified_certs certs = find_and_verify_certs(&log, st->st_ike_version,
+	struct verified_certs certs = find_and_verify_certs(st->st_logger, st->st_ike_version,
 							    cert_payloads, &rev_opts,
 							    root_certs, &c->spd.that.id);
 	root_certs_delref(&root_certs, HERE);

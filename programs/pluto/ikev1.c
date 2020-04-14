@@ -1135,7 +1135,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 			return STF_IGNORE;
 		default:
 		{
-			struct logger logger = st != NULL ? STATE_LOGGER(st) : MESSAGE_LOGGER(md);
+			struct logger logger = st != NULL ? *(st->st_logger) : MESSAGE_LOGGER(md);
 			log_message(RC_LOG_SERIOUS, &logger,
 				    "received and ignored notification payload: %s",
 				    enum_name(&ikev1_notify_names, n->isan_type));
@@ -1145,7 +1145,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 	} else {
 		/* warn if we didn't find any Delete or Notify payload in packet */
 		if (md->chain[ISAKMP_NEXT_D] == NULL) {
-			struct logger logger = st != NULL ? STATE_LOGGER(st) : MESSAGE_LOGGER(md);
+			struct logger logger = st != NULL ? *(st->st_logger) : MESSAGE_LOGGER(md);
 			log_message(RC_LOG_SERIOUS, &logger,
 				    "received and ignored empty informational notification payload");
 		}

@@ -237,7 +237,6 @@ static bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 				      const struct dh_desc *accepted_dh,
 				      enum payload_security security)
 {
-	struct logger logger = STATE_LOGGER(st);
 	passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);
 	int ke_group = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group;
 	if (accepted_dh->common.id[IKEv2_ALG_ID] == ke_group) {
@@ -245,7 +244,7 @@ static bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 	}
 
 	struct esb_buf ke_esb;
-	log_message(RC_LOG, &logger,
+	log_message(RC_LOG, st->st_logger,
 		    "initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
 		    enum_show_shortb(&oakley_group_names, ke_group, &ke_esb),
 		    accepted_dh->common.name);
@@ -254,7 +253,7 @@ static bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 	/* convert group to a raw buffer */
 	uint16_t gr = htons(accepted_dh->group);
 	chunk_t nd = THING_AS_CHUNK(gr);
-	record_v2N_response(&logger, ike, md,
+	record_v2N_response(st->st_logger, ike, md,
 			    v2N_INVALID_KE_PAYLOAD, &nd,
 			    security);
 	return false;
@@ -866,7 +865,6 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 				  struct msg_digest *md)
 {
 	pexpect(child == NULL);
-	struct logger logger = STATE_LOGGER(&ike->sa);
 	struct connection *c = ike->sa.st_connection;
 	/* set up new state */
 	update_ike_endpoints(ike, md);
@@ -901,7 +899,7 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 	if (ret != STF_OK) {
 		pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 		pexpect(ret > STF_FAIL);
-		record_v2N_response(&logger, ike, md,
+		record_v2N_response(ike->sa.st_logger, ike, md,
 				    ret - STF_FAIL, NULL,
 				    UNENCRYPTED_PAYLOAD);
 		return STF_FAIL;
@@ -2488,8 +2486,7 @@ static void ikev2_pam_continue(struct state *st,
 		 * to ZOMBIE (aka *_DEL*).  There it can linger while
 		 * dealing with any duplicate IKE_AUTH requests.
 		 */
-		struct logger logger = STATE_LOGGER(&ike->sa);
-		record_v2N_response(&logger, ike, md, v2N_AUTHENTICATION_FAILED,
+		record_v2N_response(ike->sa.st_logger, ike, md, v2N_AUTHENTICATION_FAILED,
 				    NULL, ENCRYPTED_PAYLOAD);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		stf = STF_FAIL; /* STF_ZOMBIFY */
@@ -2646,8 +2643,7 @@ stf_status ikev2_ike_sa_process_auth_request(struct ike_sa *ike,
 	if (e >= STF_FAIL &&
 	    (ike->sa.st_connection->policy & POLICY_OPPORTUNISTIC)) {
 		dbg("(pretending?) Deleting opportunistic Parent with no Child SA");
-		struct logger logger = STATE_LOGGER(&ike->sa);
-		record_v2N_response(&logger, ike, md, v2N_AUTHENTICATION_FAILED,
+		record_v2N_response(ike->sa.st_logger, ike, md, v2N_AUTHENTICATION_FAILED,
 				    NULL/*no data*/, ENCRYPTED_PAYLOAD);
 		e = STF_FAIL; /* STF_ZOMBIFY */
 	}
@@ -2697,8 +2693,7 @@ static stf_status v2_inI2outR2_post_cert_decode(struct state *st,
 		event_force(EVENT_SA_EXPIRE, st);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		release_pending_whacks(st, "Authentication failed");
-		struct logger logger = STATE_LOGGER(&ike->sa);
-		record_v2N_response(&logger, ike, md, v2N_AUTHENTICATION_FAILED,
+		record_v2N_response(ike->sa.st_logger, ike, md, v2N_AUTHENTICATION_FAILED,
 				    NULL, ENCRYPTED_PAYLOAD);
 		return STF_FAIL;
 	}
@@ -2807,8 +2802,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 	if (!found_ppk && LIN(POLICY_PPK_INSIST, policy)) {
 		log_state(RC_LOG_SERIOUS, &ike->sa, "Requested PPK_ID not found and connection requires a valid PPK");
 		free_chunk_content(&null_auth);
-		struct logger logger = STATE_LOGGER(&ike->sa);
-		record_v2N_response(&logger, ike, md, v2N_AUTHENTICATION_FAILED,
+		record_v2N_response(ike->sa.st_logger, ike, md, v2N_AUTHENTICATION_FAILED,
 				    NULL/*no data*/, ENCRYPTED_PAYLOAD);
 		return STF_FAIL;
 	}
@@ -2847,8 +2841,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 				   ike, ORIGINAL_RESPONDER, &idhash_in,
 				   &pbs_no_ppk_auth,
 				   ike->sa.st_connection->spd.that.authby, "no-PPK-auth")) {
-			struct logger logger = STATE_LOGGER(&ike->sa);
-			record_v2N_response(&logger, ike, md, v2N_AUTHENTICATION_FAILED,
+			record_v2N_response(ike->sa.st_logger, ike, md, v2N_AUTHENTICATION_FAILED,
 					    NULL/*no data*/, ENCRYPTED_PAYLOAD);
 			free_chunk_content(&null_auth);	/* ??? necessary? */
 			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
@@ -2873,8 +2866,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 			if (!v2_check_auth(IKEv2_AUTH_NULL, ike,
 					   ORIGINAL_RESPONDER, &idhash_in,
 					   &pbs_null_auth, AUTHBY_NULL, "NULL_auth from Notify Payload")) {
-				struct logger logger = STATE_LOGGER(&ike->sa);
-				record_v2N_response(&logger, ike, md, v2N_AUTHENTICATION_FAILED,
+				record_v2N_response(ike->sa.st_logger, ike, md, v2N_AUTHENTICATION_FAILED,
 						    NULL/*no data*/, ENCRYPTED_PAYLOAD);
 				free_chunk_content(&null_auth);
 				pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
@@ -2887,8 +2879,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 					   ike, ORIGINAL_RESPONDER, &idhash_in,
 					   &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
 					   st->st_connection->spd.that.authby, "I2 Auth Payload")) {
-				struct logger logger = STATE_LOGGER(&ike->sa);
-				record_v2N_response(&logger, ike, md, v2N_AUTHENTICATION_FAILED,
+				record_v2N_response(ike->sa.st_logger, ike, md, v2N_AUTHENTICATION_FAILED,
 						    NULL/*no data*/, ENCRYPTED_PAYLOAD);
 				free_chunk_content(&null_auth);
 				pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
@@ -2922,8 +2913,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		 * TBD: send this notification encrypted because the
 		 * AUTH payload succeed
 		 */
-		struct logger logger = STATE_LOGGER(&ike->sa);
-		record_v2N_response(&logger, ike, md, v2N_AUTHENTICATION_FAILED,
+		record_v2N_response(ike->sa.st_logger, ike, md, v2N_AUTHENTICATION_FAILED,
 				    NULL/*no data*/, ENCRYPTED_PAYLOAD);
 		return STF_FAIL;
 	}
@@ -2967,8 +2957,8 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 						      authby, auth_method,
 						      ikev2_parent_inI2outR2_auth_signature_continue)) {
 				dbg("submit_v2_auth_signature() died, fatal");
-				struct logger logger = STATE_LOGGER(&ike->sa);
-				record_v2N_response(&logger, ike, md, v2N_AUTHENTICATION_FAILED,
+				record_v2N_response(ike->sa.st_logger, ike, md,
+						    v2N_AUTHENTICATION_FAILED,
 						    NULL/*no data*/, ENCRYPTED_PAYLOAD);
 				return STF_FAIL;
 			}
@@ -2978,8 +2968,8 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		{
 			const struct hash_desc *hash_algo = v2_auth_negotiated_signature_hash(ike);
 			if (hash_algo == NULL) {
-				struct logger logger = STATE_LOGGER(&ike->sa);
-				record_v2N_response(&logger, ike, md, v2N_AUTHENTICATION_FAILED,
+				record_v2N_response(ike->sa.st_logger, ike, md,
+						    v2N_AUTHENTICATION_FAILED,
 						    NULL/*no data*/, ENCRYPTED_PAYLOAD);
 				return STF_FAIL;
 			}
@@ -2991,8 +2981,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 						      authby, auth_method,
 						      ikev2_parent_inI2outR2_auth_signature_continue)) {
 				dbg("submit_v2_auth_signature() died, fatal");
-				struct logger logger = STATE_LOGGER(&ike->sa);
-				record_v2N_response(&logger, ike, md, v2N_AUTHENTICATION_FAILED,
+				record_v2N_response(ike->sa.st_logger, ike, md, v2N_AUTHENTICATION_FAILED,
 						    NULL/*no data*/, ENCRYPTED_PAYLOAD);
 				return STF_FAIL;
 			}
@@ -3322,7 +3311,6 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 stf_status ikev2_process_child_sa_pl(struct ike_sa *ike, struct child_sa *child,
 				     struct msg_digest *md, bool expect_accepted_proposal)
 {
-	struct logger logger = STATE_LOGGER(&child->sa);
 	struct connection *c = child->sa.st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	enum isakmp_xchg_types isa_xchg = md->hdr.isa_xchg;
@@ -3367,7 +3355,7 @@ stf_status ikev2_process_child_sa_pl(struct ike_sa *ike, struct child_sa *child,
 		}
 		if (child->sa.st_sa_role == SA_RESPONDER) {
 			pexpect(ret > STF_FAIL);
-			record_v2N_response(&logger, ike, md,
+			record_v2N_response(child->sa.st_logger, ike, md,
 					    ret - STF_FAIL, NULL,
 					    ENCRYPTED_PAYLOAD);
 			return STF_FAIL;
@@ -3905,8 +3893,6 @@ static bool ikev2_rekey_child_req(struct child_sa *child,
 static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 				   struct msg_digest *md)
 {
-	struct logger logger = STATE_LOGGER(&child->sa);
-
 	struct payload_digest *rekey_sa_payload = NULL;
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		switch (ntfy->payload.v2n.isan_type) {
@@ -3946,7 +3932,7 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 		log_state(RC_LOG, &child->sa,
 			  "CREATE_CHILD_SA IPsec SA rekey invalid spi size %u",
 			  rekey_notify->isan_spisize);
-		record_v2N_response(&logger, ike, md, v2N_INVALID_SYNTAX,
+		record_v2N_response(child->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
 				    NULL/*empty data*/, ENCRYPTED_PAYLOAD);
 		return false;
 	}
@@ -3954,7 +3940,7 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 	ipsec_spi_t spi = 0;
 	if (!in_raw(&spi, sizeof(spi), &rekey_sa_payload->pbs, "SPI")) {
 		/* already logged */
-		record_v2N_response(&logger, ike, md, v2N_INVALID_SYNTAX,
+		record_v2N_response(child->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
 				    NULL/*empty data*/, ENCRYPTED_PAYLOAD);
 		return false; /* cannot happen; XXX: why? */
 	}
@@ -3962,7 +3948,7 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 	if (spi == 0) {
 		log_state(RC_LOG, &child->sa,
 			  "CREATE_CHILD_SA IPsec SA rekey contains zero SPI");
-		record_v2N_response(&logger, ike, md, v2N_INVALID_SYNTAX,
+		record_v2N_response(child->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
 				    NULL/*empty data*/, ENCRYPTED_PAYLOAD);
 		return false;
 	}
@@ -3972,7 +3958,7 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 		log_state(RC_LOG, &child->sa,
 			  "CREATE_CHILD_SA IPsec SA rekey invalid Protocol ID %s",
 			  enum_show(&ikev2_protocol_names, rekey_notify->isan_protoid));
-		record_v2N_spi_response(&logger, ike, md,
+		record_v2N_spi_response(child->sa.st_logger, ike, md,
 					rekey_notify->isan_protoid, &spi,
 					v2N_CHILD_SA_NOT_FOUND,
 					NULL/*empty data*/, ENCRYPTED_PAYLOAD);
@@ -3998,7 +3984,7 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 			  "CREATE_CHILD_SA no such IPsec SA to rekey SA(0x%08" PRIx32 ") Protocol %s",
 			  ntohl((uint32_t) spi),
 			  enum_show(&ikev2_protocol_names, rekey_notify->isan_protoid));
-		record_v2N_spi_response(&logger, ike, md,
+		record_v2N_spi_response(child->sa.st_logger, ike, md,
 					rekey_notify->isan_protoid, &spi,
 					v2N_CHILD_SA_NOT_FOUND,
 					NULL/*empty data*/, ENCRYPTED_PAYLOAD);
@@ -4448,7 +4434,6 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 {
 	stf_status status;
 	pexpect(child != NULL);
-	struct logger logger = STATE_LOGGER(&child->sa);
 
 	free_chunk_content(&child->sa.st_ni); /* this is from the parent. */
 	free_chunk_content(&child->sa.st_nr); /* this is from the parent. */
@@ -4473,7 +4458,7 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 		pexpect(child->sa.st_oakley.ta_dh == child->sa.st_pfs_group);
 		if (!accept_KE(&child->sa.st_gi, "Gi", child->sa.st_oakley.ta_dh,
 			       md->chain[ISAKMP_NEXT_v2KE])) {
-			record_v2N_response(&logger, ike, md, v2N_INVALID_SYNTAX,
+			record_v2N_response(child->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
 					    NULL/*no data*/, ENCRYPTED_PAYLOAD);
 			return STF_FAIL;
 		}
@@ -4492,7 +4477,7 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 		/* state m/c created CHILD SA */
 		pexpect(child->sa.st_ipsec_pred == SOS_NOBODY);
 		if (!v2_process_ts_request(child, md)) {
-			record_v2N_response(&logger, ike, md, v2N_TS_UNACCEPTABLE,
+			record_v2N_response(child->sa.st_logger, ike, md, v2N_TS_UNACCEPTABLE,
 					    NULL/*no data*/, ENCRYPTED_PAYLOAD);
 			return STF_FAIL;
 		}
@@ -4643,7 +4628,6 @@ stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
 				   struct msg_digest *md)
 {
 	pexpect(child != NULL); /* not yet emancipated */
-	struct logger logger = STATE_LOGGER(&child->sa);
 	struct state *st = &child->sa;
 	pexpect(ike != NULL);
 	struct connection *c = st->st_connection;
@@ -4673,7 +4657,7 @@ stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
 	if (ret != STF_OK) {
 		pexpect(child->sa.st_sa_role == SA_RESPONDER);
 		pexpect(ret > STF_FAIL);
-		record_v2N_response(&logger, ike, md, ret - STF_FAIL, NULL,
+		record_v2N_response(child->sa.st_logger, ike, md, ret - STF_FAIL, NULL,
 				    ENCRYPTED_PAYLOAD);
 		return STF_FAIL;
 	}
@@ -4901,8 +4885,7 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0) {
 		if (!child_rekey_ts_verify(child, request_md)) {
 			/* logged; but not recorded */
-			struct logger logger = STATE_LOGGER(&child->sa);
-			record_v2N_response(&logger, ike, request_md, v2N_TS_UNACCEPTABLE,
+			record_v2N_response(child->sa.st_logger, ike, request_md, v2N_TS_UNACCEPTABLE,
 					    NULL, ENCRYPTED_PAYLOAD);
 			return STF_FAIL;
 		}
