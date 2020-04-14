@@ -4858,6 +4858,13 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 		ret = ikev2_child_add_ipsec_payloads(child, &sk.pbs);
 		break;
 	case STATE_V2_CREATE_R0:
+		if (!pexpect(child->sa.st_ipsec_pred == SOS_NOBODY)) {
+			return STF_INTERNAL_ERROR;
+		}
+		ret = ikev2_child_sa_respond(ike, child,
+					     request_md, &sk.pbs,
+					     ISAKMP_v2_CREATE_CHILD_SA);
+		break;
 	case STATE_V2_REKEY_CHILD_R0:
 		if (!pexpect(child->sa.st_ipsec_pred != SOS_NOBODY)) {
 			return STF_INTERNAL_ERROR;
