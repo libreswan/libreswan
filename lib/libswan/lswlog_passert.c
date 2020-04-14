@@ -20,7 +20,7 @@
 
 void lswlog_passert_prefix(struct lswlog *buf)
 {
-	lswlog_log_prefix(buf);
+	jam_cur_prefix(buf);
 	lswlogs(buf, "ABORT: ASSERTION FAILED: ");
 }
 

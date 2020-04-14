@@ -288,11 +288,6 @@ void rate_log(const struct msg_digest *md,
  * Log 'cur' directly (without setting it first).
  */
 
-void jam_log_prefix(struct lswlog *buf,
-		    const struct state *st,
-		    const struct connection *c,
-		    const ip_address *from);
-
 extern void pluto_init_log(void);
 void init_rate_log(void);
 extern void close_log(void);

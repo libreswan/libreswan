@@ -458,7 +458,7 @@ bool whack_prompt_for(struct state *st, const char *prompt,
 	 */
 	LSWBUF(buf) {
 		/* XXX: one of these is redundant */
-		jam_log_prefix(buf, st, NULL/*connection*/, NULL/*from*/);
+		jam_state_prefix(buf, st);
 		jam(buf, "%s ", st->st_connection->name);
 		/* the real message */
 		jam(buf, "prompt for %s:", prompt);
@@ -506,56 +506,19 @@ static void whack_raw(jambuf_t *buf, enum rc_type rc)
 	jambuf_to_whack(buf, whackfd, rc);
 }
 
-/*
- * This needs to mimic both lswlog_log_prefix() and
- * lswlog_dbg_prefix().
- */
-
-void jam_log_prefix(struct lswlog *buf,
-		    const struct state *st,
-		    const struct connection *c,
-		    const ip_address *from)
+void jam_cur_prefix(struct lswlog *buf)
 {
 	if (!in_main_thread()) {
 		return;
 	}
 
-	if (st != NULL) {
-		/*
-		 * XXX: When delete state() triggers a delete
-		 * connection, this can be NULL.
-		 */
-		if (st->st_connection != NULL) {
-			jam_connection(buf, st->st_connection);
-		}
-		/* state number */
-		lswlogf(buf, " #%lu", st->st_serialno);
-		/* state name */
-		if (DBGP(DBG_ADD_PREFIX)) {
-			lswlogf(buf, " ");
-			lswlogs(buf, st->st_state->short_name);
-		}
-		jam(buf, ": ");
-	} else if (c != NULL) {
-		jam_connection(buf, c);
-		jam(buf, ": ");
-	} else if (from != NULL) {
-		/* peer's IP address */
-		if (endpoint_protocol(from) == &ip_protocol_tcp) {
-			jam(buf, "connection from ");
-		} else {
-			jam(buf, "packet from ");
-		}
-		jam_sensitive_endpoint(buf, from);
-		jam(buf, ": ");
+	if (cur_state != NULL) {
+		jam_state_prefix(buf, cur_state);
+	} else if (cur_connection != NULL) {
+		jam_connection_prefix(buf, cur_connection);
+	} else if (endpoint_type(&cur_from) != NULL) {
+		jam_from_prefix(buf, &cur_from);
 	}
-}
-
-void lswlog_log_prefix(struct lswlog *buf)
-{
-	/* convert FROM into a pointer so logic is easier */
-	const ip_address *from = (endpoint_type(&cur_from) != NULL ? &cur_from : NULL);
-	jam_log_prefix(buf, cur_state, cur_connection, from);
 }
 
 static void log_raw(int severity, const char *prefix, struct lswlog *buf)
@@ -602,7 +565,7 @@ void close_log(void)
 void lswlog_errno_prefix(struct lswlog *buf, const char *prefix)
 {
 	lswlogs(buf, prefix);
-	lswlog_log_prefix(buf);
+	jam_cur_prefix(buf);
 }
 
 void lswlog_errno_suffix(struct lswlog *buf, int e)
@@ -617,7 +580,7 @@ void exit_log(const char *message, ...)
 	LSWBUF(buf) {
 		/* FATAL ERROR: <state...><message> */
 		lswlogs(buf, "FATAL ERROR: ");
-		lswlog_log_prefix(buf);
+		jam_cur_prefix(buf);
 		va_list args;
 		va_start(args, message);
 		lswlogvf(buf, message, args);
@@ -718,7 +681,7 @@ static void rate_log_raw(const char *prefix,
 {
 	LSWBUF(buf) {
 		jam_string(buf, prefix);
-		jam_log_prefix(buf, NULL/*st*/, NULL/*c*/, &md->sender);
+		jam_from_prefix(buf, &md->sender);
 		jam_va_list(buf, message, ap);
 		log_jambuf(LOG_STREAM, null_fd, buf);
 	}
@@ -930,26 +893,72 @@ void jam_global_prefix(jambuf_t *unused_buf UNUSED,
 
 void jam_from_prefix(jambuf_t *buf, const void *object)
 {
-	const ip_endpoint *from = object;
-	jam_log_prefix(buf, NULL/*state*/, NULL/*connection*/, from);
+	if (!in_main_thread()) {
+		jam(buf, "EXPECTATION FAILED: %s in main thread: ", __func__);
+	} else if (object == NULL) {
+		jam(buf, "EXPECTATION FAILED: %s NULL: ", __func__);
+	} else {
+		const ip_endpoint *from = object;
+		/* peer's IP address */
+		if (endpoint_protocol(from) == &ip_protocol_tcp) {
+			jam(buf, "connection from ");
+		} else {
+			jam(buf, "packet from ");
+		}
+		jam_sensitive_endpoint(buf, from);
+		jam(buf, ": ");
+	}
 }
 
 void jam_message_prefix(jambuf_t *buf, const void *object)
 {
-	const struct msg_digest *message = object;
-	jam_log_prefix(buf, NULL/*state*/, NULL/*connection*/, &message->sender);
+	if (!in_main_thread()) {
+		jam(buf, "EXPECTATION FAILED: %s in main thread: ", __func__);
+	} else if (object == NULL) {
+		jam(buf, "EXPECTATION FAILED: %s NULL: ", __func__);
+	} else {
+		const struct msg_digest *md = object;
+		jam_from_prefix(buf, &md->sender);
+	}
 }
 
 void jam_connection_prefix(jambuf_t *buf, const void *object)
 {
-	const struct connection *connection = object;
-	jam_log_prefix(buf, NULL/*state*/, connection, NULL/*message*/);
+	if (!in_main_thread()) {
+		jam(buf, "EXPECTATION FAILED: %s in main thread: ", __func__);
+	} else if (object == NULL) {
+		jam(buf, "EXPECTATION FAILED: %s NULL: ", __func__);
+	} else {
+		const struct connection *c = object;
+		jam_connection(buf, c);
+		jam(buf, ": ");
+	}
 }
 
 void jam_state_prefix(jambuf_t *buf, const void *object)
 {
-	const struct state *state = object;
-	jam_log_prefix(buf, state, NULL/*connection*/, NULL/*message*/);
+	if (!in_main_thread()) {
+		jam(buf, "EXPECTATION FAILED: %s in main thread: ", __func__);
+	} else if (object == NULL) {
+		jam(buf, "EXPECTATION FAILED: %s NULL: ", __func__);
+	} else {
+		const struct state *st = object;
+		/*
+		 * XXX: When delete state() triggers a delete
+		 * connection, this can be NULL.
+		 */
+		if (st->st_connection != NULL) {
+			jam_connection(buf, st->st_connection);
+		}
+		/* state number */
+		lswlogf(buf, " #%lu", st->st_serialno);
+		/* state name */
+		if (DBGP(DBG_ADD_PREFIX)) {
+			lswlogf(buf, " ");
+			lswlogs(buf, st->st_state->short_name);
+		}
+		jam(buf, ": ");
+	}
 }
 
 void jam_string_prefix(jambuf_t *buf, const void *object)

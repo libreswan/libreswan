@@ -71,7 +71,7 @@ void lswlog_errno_suffix(struct lswlog *buf, int e)
 	}
 }
 
-void lswlog_log_prefix(struct lswlog *buf)
+void jam_cur_prefix(struct lswlog *buf)
 {
 	lswlogf(buf, "%s%s", progname, prog_suffix);
 }

@@ -215,14 +215,14 @@ void lswlog_to_error_stream(struct lswlog *buf);
  * double log!  Hence LSWLOG_RC().
  */
 
-void lswlog_log_prefix(struct lswlog *buf);
+void jam_cur_prefix(struct lswlog *buf);
 
 extern void libreswan_log_rc(enum rc_type, const char *fmt, ...) PRINTF_LIKE(2);
 #define loglog	libreswan_log_rc
 
 #define LSWLOG_RC(RC, BUF)						\
 	LSWLOG_(true, BUF,						\
-		lswlog_log_prefix(BUF),					\
+		jam_cur_prefix(BUF),					\
 		lswlog_to_default_streams(BUF, RC))
 
 /* signature needs to match printf() */
@@ -542,7 +542,7 @@ void lswlog_errno_suffix(struct lswlog *buf, int e);
 
 #define LSWLOG_ERROR(BUF)			\
 	LSWLOG_(true, BUF,			\
-		lswlog_log_prefix(BUF),		\
+		jam_cur_prefix(BUF),		\
 		lswlog_to_error_stream(buf))
 
 #endif /* _LSWLOG_H_ */
