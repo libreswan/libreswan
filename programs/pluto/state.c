@@ -1192,7 +1192,8 @@ void delete_state(struct state *st)
 				  "IMPAIR: skipping revival of connection that is supposed to remain up");
 		} else {
 			/* XXX: why not whack? */
-			plog_state(st, "deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS");
+			log_state(LOG_STREAM/*not-whack*/, st,
+				  "deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS");
 			add_revival(c);
 		}
 	}
@@ -3041,8 +3042,9 @@ bool verbose_state_busy(const struct state *st)
 		/* not whack */
 		/* XXX: why not whack? */
 		/* XXX: can this and below be merged; is there always an offloaded task? */
-		plog_state(st, "discarding packet received during asynchronous work (DNS or crypto) in %s",
-			   st->st_state->name);
+		log_state(LOG_STREAM/*not-whack*/, st,
+			  "discarding packet received during asynchronous work (DNS or crypto) in %s",
+			  st->st_state->name);
 	} else if (st->st_offloaded_task != NULL) {
 		log_state(RC_LOG, st, "message received while calculating. Ignored.");
 	}

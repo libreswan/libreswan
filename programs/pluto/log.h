@@ -278,8 +278,6 @@ void log_connection(lset_t rc_flags, struct fd *whackfd,
  * with whack_log() and manually add the prefix as needed.
  */
 
-#define plog_state(ST, MESSAGE, ...) log_state(LOG_STREAM, ST, MESSAGE,##__VA_ARGS__);
-
 /*
  * rate limited logging
  */
