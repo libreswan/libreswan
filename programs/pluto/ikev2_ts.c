@@ -23,8 +23,6 @@
  *
  */
 
-#include "lswlog.h"
-
 #include "defs.h"
 #include "ikev2_ts.h"
 #include "connections.h"	/* for struct end */
@@ -33,6 +31,7 @@
 #include "hostpair.h"
 #include "ip_info.h"
 #include "ip_selector.h"
+#include "log.h"
 
 /*
  * While the RFC seems to suggest that the traffic selectors come in
@@ -1180,33 +1179,34 @@ bool v2_process_ts_response(struct child_sa *child,
  *
  * We already matched the right connection by the SPI of v2N_REKEY_SA
  */
-stf_status child_rekey_ts_verify(struct msg_digest *md)
+bool child_rekey_ts_verify(struct child_sa *child, struct msg_digest *md)
 {
-	struct state *st = md->st;
-	passert(st->st_state->kind == STATE_V2_REKEY_CHILD_R0 ||
-		st->st_state->kind == STATE_V2_REKEY_CHILD_I);
+	if (!pexpect(child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 ||
+		     child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I)) {
+		return false;
+	}
 
 	struct traffic_selectors their_tsis = { .nr = 0, };
 	struct traffic_selectors their_tsrs = { .nr = 0, };
 	enum message_role md_role = v2_msg_role(md);
 
-	/* should really return stf_status, not bool */
 	if (!v2_parse_tss(md, &their_tsis, &their_tsrs)) {
-		loglog(RC_LOG_SERIOUS, "Received malformed TSi/TSr payload(s)");
-		return STF_FAIL + v2N_INVALID_SYNTAX;
+		log_state(RC_LOG_SERIOUS, &child->sa, "received malformed TSi/TSr payload(s)");
+		return false;
 	}
 
-	struct traffic_selector ts_this = ikev2_end_to_ts(&st->st_connection->spd.this);
-	struct traffic_selector ts_that = ikev2_end_to_ts(&st->st_connection->spd.that);
+	struct traffic_selector ts_this = ikev2_end_to_ts(&child->sa.st_connection->spd.this);
+	struct traffic_selector ts_that = ikev2_end_to_ts(&child->sa.st_connection->spd.that);
 
 	if (!ts_in_tslist(&their_tsis, (md_role == MESSAGE_REQUEST) ? &ts_that : &ts_this)) {
-		loglog(RC_LOG_SERIOUS, "Received TSi payload does not contain existing IPsec SA traffic Selectors");
-		return STF_FAIL + v2N_TS_UNACCEPTABLE;
+		log_state(RC_LOG_SERIOUS, &child->sa,
+			  "received TSi payload does not contain existing IPsec SA traffic Selectors");
+		return false;
 	}
 
 	if (!ts_in_tslist(&their_tsrs, (md_role == MESSAGE_REQUEST) ? &ts_this : &ts_that)) {
-		loglog(RC_LOG_SERIOUS, "Received TSr payload(s) does not contain existing IPsec SA Traffic Selectors");
-		return STF_FAIL + v2N_TS_UNACCEPTABLE;
+		log_state(RC_LOG_SERIOUS, &child->sa, "received TSr payload(s) does not contain existing IPsec SA Traffic Selectors");
+		return false;
 	}
-	return STF_OK;
+	return true;
 }

@@ -4815,16 +4815,24 @@ static void ikev2_child_ike_inIoutR_continue_continue(struct state *st,
 static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *child,
 				       struct msg_digest *request_md)
 {
-	struct state *st = &child->sa;
 	stf_status ret;
 
 	passert(ike != NULL);
 	pexpect((request_md != NULL) == (child->sa.st_sa_role == SA_RESPONDER));
-	pexpect((request_md != NULL) == ((st)->st_state->kind == STATE_V2_REKEY_IKE_R0 ||
-					 (st)->st_state->kind == STATE_V2_CREATE_R0 ||
-					 (st)->st_state->kind == STATE_V2_REKEY_CHILD_R0));
+	/* 3 initiator initiating states */
+	pexpect((request_md == NULL) == (child->sa.st_state->kind == STATE_V2_REKEY_IKE_I0 ||
+					 child->sa.st_state->kind == STATE_V2_CREATE_I0 ||
+					 child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0));
+	/* 3 responder replying states */
+	pexpect((request_md != NULL) == (child->sa.st_state->kind == STATE_V2_REKEY_IKE_R0 ||
+					 child->sa.st_state->kind == STATE_V2_CREATE_R0 ||
+					 child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0));
+	/* 3 initiator receiving; can't happen here */
+	pexpect(child->sa.st_state->kind != STATE_V2_REKEY_IKE_I &&
+		child->sa.st_state->kind != STATE_V2_CREATE_I &&
+		child->sa.st_state->kind != STATE_V2_REKEY_CHILD_I);
 
-	ikev2_log_parentSA(st);
+	ikev2_log_parentSA(&child->sa);
 
 	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer), "reply packet");
 
@@ -4840,7 +4848,7 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 		return STF_INTERNAL_ERROR;
 	}
 
-	switch (st->st_state->kind) {
+	switch (child->sa.st_state->kind) {
 	case STATE_V2_REKEY_IKE_R0:
 	case STATE_V2_REKEY_IKE_I0:
 		ret = ikev2_child_add_ike_payloads(child, &sk.pbs);
@@ -4849,31 +4857,26 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 	case STATE_V2_REKEY_CHILD_I0:
 		ret = ikev2_child_add_ipsec_payloads(child, &sk.pbs);
 		break;
-	default:
-		/* ??? which states are actually correct? */
-		if (child->sa.st_ipsec_pred != SOS_NOBODY &&
-		    !ikev2_rekey_child_copy_ts(child)) {
+	case STATE_V2_CREATE_R0:
+	case STATE_V2_REKEY_CHILD_R0:
+		if (!pexpect(child->sa.st_ipsec_pred != SOS_NOBODY)) {
+			return STF_INTERNAL_ERROR;
+		}
+		if (!ikev2_rekey_child_copy_ts(child)) {
 			/* Should "just work", not working is a screw up */
 			return STF_INTERNAL_ERROR;
 		}
 		ret = ikev2_child_sa_respond(ike, child,
 					     request_md, &sk.pbs,
 					     ISAKMP_v2_CREATE_CHILD_SA);
+		break;
+	case STATE_V2_REKEY_IKE_I:
+	case STATE_V2_CREATE_I:
+	case STATE_V2_REKEY_CHILD_I:
+		return STF_INTERNAL_ERROR;
+	default:
+		bad_case(child->sa.st_state->kind);
 	}
-
-	/*
-	 * RFC 7296 https://tools.ietf.org/html/rfc7296#section-2.8
-	 * "when rekeying, the new Child SA SHOULD NOT have different Traffic
-	 *  Selectors and algorithms than the old one."
-	 */
-	if (st->st_state->kind == STATE_V2_REKEY_CHILD_R0 ||
-	    st->st_state->kind == STATE_V2_REKEY_CHILD_I) {
-		ret = child_rekey_ts_verify(request_md);
-		if (ret != STF_OK)
-			return ret;
-	}
-
-	/* note: pst: parent; md->st: child */
 
 	if (ret != STF_OK) {
 		LSWDBGP(DBG_BASE, buf) {
@@ -4882,6 +4885,23 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 		}
 		return ret; /* abort building the response message */
 	}
+
+	/*
+	 * RFC 7296 https://tools.ietf.org/html/rfc7296#section-2.8
+	 * "when rekeying, the new Child SA SHOULD NOT have different Traffic
+	 *  Selectors and algorithms than the old one."
+	 */
+	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0) {
+		if (!child_rekey_ts_verify(child, request_md)) {
+			/* logged; but not recorded */
+			struct logger logger = STATE_LOGGER(&child->sa);
+			record_v2N_response(&logger, ike, request_md, v2N_TS_UNACCEPTABLE,
+					    NULL, ENCRYPTED_PAYLOAD);
+			return STF_FAIL;
+		}
+	}
+
+	/* note: pst: parent; md->st: child */
 
 	/* const unsigned int len = pbs_offset(&sk.pbs); */
 	if (!close_v2SK_payload(&sk)) {
@@ -4901,9 +4921,9 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 	record_outbound_ike_msg(&ike->sa, &reply_stream,
 				"packet from ikev2_child_out_cont");
 
-	if (st->st_state->kind == STATE_V2_CREATE_R0 ||
-			st->st_state->kind == STATE_V2_REKEY_CHILD_R0) {
-		log_ipsec_sa_established("negotiated new IPsec SA", st);
+	if (child->sa.st_state->kind == STATE_V2_CREATE_R0 ||
+	    child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0) {
+		log_ipsec_sa_established("negotiated new IPsec SA", &child->sa);
 	}
 
 	return STF_OK;
