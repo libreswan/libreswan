@@ -62,7 +62,7 @@ char *pluto_stats_binary = NULL;
  * (apparently) If the context provides a whack file descriptor,
  * messages should be copied to it -- see whack_log()
  */
-const struct fd *whack_log_fd = NULL;      /* only set during whack_handle() */
+struct fd *whack_log_fd = NULL;      /* only set during whack_handle() */
 
 /*
  * Context for logging.
@@ -799,7 +799,7 @@ void jambuf_to_log(jambuf_t *buf, const struct logger *logger, lset_t rc_flags)
 	}
 }
 
-void log_jambuf(lset_t rc_flags, const struct fd *object_whackfd, jambuf_t *buf)
+void log_jambuf(lset_t rc_flags, struct fd *object_whackfd, jambuf_t *buf)
 {
 	struct logger logger = {
 		.global_whackfd = in_main_thread() ? whack_log_fd/*GLOBAL*/ : null_fd,

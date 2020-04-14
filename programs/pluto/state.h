@@ -359,10 +359,8 @@ struct state {
 	bool st_suppress_del_notify;            /* suppress sending DELETE - eg replaced conn */
 
 	struct connection *st_connection;       /* connection for this SA */
-	struct fd *st_whack_sock;                /* fd for our Whack TCP socket.
-						 * Single copy: close when
-						 * freeing struct.
-						 */
+ 	struct logger *st_logger;
+#define st_whack_sock st_logger->object_whackfd
 
 	/* collected received fragments */
 	struct ike_frag *st_v1_rfrags;

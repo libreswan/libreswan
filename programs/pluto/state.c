@@ -557,7 +557,6 @@ static struct state *new_state(enum ike_version ike_version,
 	passert(&sas->st == &sas->ike.sa);
 	struct state *st = &sas->st;
 	*st = (struct state) {
-		.st_whack_sock = dup_any(whackfd),
 		.st_state = &state_undefined,
 		.st_serialno = next_so++,
 		.st_inception = realnow(),
@@ -569,6 +568,16 @@ static struct state *new_state(enum ike_version ike_version,
 		},
 	};
 	passert(next_so > SOS_FIRST);   /* overflow can't happen! */
+
+	/* fight "assignment of read-only location ‘*st->st_logger" */
+	struct logger logger = {
+		.where = HERE, /* const */
+		.jam_prefix = jam_state_prefix,
+		.object = st,
+		.object_whackfd = dup_any(whackfd),
+		.suppress_log = suppress_state_log,
+	};
+	st->st_logger = clone_thing(logger, "state logger");
 
 	st->hidden_variables.st_nat_oa = address_any(&ipv4_info);
 	st->hidden_variables.st_natd = address_any(&ipv4_info);
@@ -1312,6 +1321,7 @@ void delete_state(struct state *st)
 	free_chunk_content(&st->st_no_ppk_auth);
 
 	pfreeany(st->sec_ctx);
+	pfreeany(st->st_logger);
 	messup(st);
 	pfree(st);
 }

@@ -99,7 +99,7 @@ struct connection *connections = NULL;
 #define MINIMUM_IPSEC_SA_RANDOM_MARK 65536
 static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 
-static bool load_end_cert_and_preload_secret(const struct fd *whackfd,
+static bool load_end_cert_and_preload_secret(struct fd *whackfd,
 					     const char *which, const char *pubkey,
 					     enum whack_pubkey_type pubkey_type,
 					     struct end *dst_end);
@@ -716,7 +716,7 @@ static void unshare_connection(struct connection *c)
 		reference_xfrmi(c);
 }
 
-static int extract_end(const struct fd *whackfd,
+static int extract_end(struct fd *whackfd,
 		       struct end *dst, const struct whack_end *src,
 		       const char *which)
 {
@@ -890,7 +890,7 @@ static bool check_connection_end(const struct whack_end *this,
 	return TRUE; /* happy */
 }
 
-static bool load_end_cert_and_preload_secret(const struct fd *whackfd,
+static bool load_end_cert_and_preload_secret(struct fd *whackfd,
 					     const char *which, const char *pubkey,
 					     enum whack_pubkey_type pubkey_type,
 					     struct end *dst_end)
@@ -1080,7 +1080,7 @@ static void mark_parse(const char *cnm, /*const*/ char *wmmark, struct sa_mark *
  * was freshy allocated so no duplication should be needed (or at
  * least shouldn't be) (look for strange free() vs delref() sequence).
  */
-static bool extract_connection(const struct fd *whackfd,
+static bool extract_connection(struct fd *whackfd,
 			       const struct whack_message *wm,
 			       struct connection *c)
 {
@@ -1826,7 +1826,7 @@ static bool extract_connection(const struct fd *whackfd,
 	return true;
 }
 
-void add_connection(const struct fd *whackfd, const struct whack_message *wm)
+void add_connection(struct fd *whackfd, const struct whack_message *wm)
 {
 	struct connection *c = alloc_thing(struct connection,
 					   "struct connection");

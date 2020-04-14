@@ -52,7 +52,7 @@ extern char *pluto_stats_binary;
  * If the context provides a whack file descriptor, messages
  * should be copied to it -- see whack_log()
  */
-extern const struct fd *whack_log_fd;                        /* only set during whack_handle() */
+extern struct fd *whack_log_fd;           /* only set during whack_handle() */
 
 extern bool whack_prompt_for(struct state *st, const char *prompt,
 			     bool echo, char *ansbuf, size_t ansbuf_len);
@@ -128,8 +128,8 @@ suppress_log_fn always_suppress_log;
 suppress_log_fn never_suppress_log;
 
 struct logger {
-	const struct fd *global_whackfd;
-	const struct fd *object_whackfd;
+	struct fd *global_whackfd;
+	struct fd *object_whackfd;
 	const void *object;
 	jam_prefix_fn *jam_prefix;
 	where_t where;

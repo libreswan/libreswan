@@ -187,7 +187,7 @@ enum stream {
 	NO_STREAM	= 0xf00000,	/* n/a */
 };
 
-void log_jambuf(lset_t rc_flags, const struct fd *object_fd, jambuf_t *buf);
+void log_jambuf(lset_t rc_flags, struct fd *object_fd, jambuf_t *buf);
 
 size_t lswlog_to_file_stream(struct lswlog *buf, FILE *file);
 

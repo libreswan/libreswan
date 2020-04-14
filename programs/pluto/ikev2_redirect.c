@@ -36,6 +36,7 @@
 #include "ip_info.h"
 #include "ikev2_redirect.h"
 #include "initiate.h"
+#include "log.h"
 
 enum allow_global_redirect global_redirect;
 char *global_redirect_to;

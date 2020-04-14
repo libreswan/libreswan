@@ -407,7 +407,7 @@ extern size_t format_end(char *buf, size_t buf_len,
 			 bool is_left, lset_t policy, bool filter_rnh);
 
 struct whack_message;   /* forward declaration of tag whack_msg */
-extern void add_connection(const struct fd *whackfd, const struct whack_message *wm);
+extern void add_connection(struct fd *whackfd, const struct whack_message *wm);
 extern void restart_connections_by_peer(struct connection *c);
 extern void flush_revival(const struct connection *c);
 
