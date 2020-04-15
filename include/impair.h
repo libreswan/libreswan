@@ -123,6 +123,7 @@ struct impair {
 	bool bad_ike_auth_xchg;
 
 	bool tcp_use_blocking_write;
+	bool tcp_skip_setsockopt_espintcp;
 
 	/*
 	 * add more here

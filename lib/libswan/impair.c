@@ -121,8 +121,9 @@ struct impairment impairments[] = {
 	V("v1-hash-exchange", v1_hash_exchange, "the outgoing exchange that should contain the corrupted HASH payload", .how_keynum = &exchange_impairment_keywords),
 	V("v1-hash-payload", v1_hash_payload, "corrupt the outgoing HASH payload", .how_keynum = &send_impairment_keywords, .unsigned_help = "fill the hash payload with <unsigned> bytes"),
 	V("tcp-use-blocking-write", tcp_use_blocking_write, "use a blocking write when sending TCP encapsulated IKE messages"),
+	V("tcp-skip-setsockopt-espintcp", tcp_skip_setsockopt_espintcp, "skip the required setsockopt(\"espintcp\") call"),
 
-#undef B
+#undef V
 
 };
 

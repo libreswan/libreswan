@@ -223,15 +223,19 @@ static void iketcp_handle_packet_cb(evutil_socket_t unused_fd UNUSED,
 		 * From this point on all writes are auto-wrapped in
 		 * their length and reads are auto-blocked.
 		 */
-		dbg("TCP: enabling ESPINTCP");
-		if (setsockopt(ifp->fd, IPPROTO_TCP, TCP_ULP,
-			       "espintcp", sizeof("espintcp"))) {
-			int e = errno;
-			log_message(RC_LOG, &logger,
-				    "TCP: setsockopt(SOL_TCP, TCP_ULP, \"espintcp\") failed, closing socket "PRI_ERRNO,
-				    pri_errno(e));
-			free_any_iface_port(&ifp);
-			return;
+		if (impair.tcp_skip_setsockopt_espintcp) {
+			log_message(RC_LOG, &logger, "IMPAIR: TCP: skipping setsockopt(ESPINTCP)");
+		} else {
+			dbg("TCP: enabling ESPINTCP");
+			if (setsockopt(ifp->fd, IPPROTO_TCP, TCP_ULP,
+				      "espintcp", sizeof("espintcp"))) {
+				int e = errno;
+				log_message(RC_LOG, &logger,
+					    "TCP: setsockopt(SOL_TCP, TCP_ULP, \"espintcp\") failed, closing socket "PRI_ERRNO,
+					    pri_errno(e));
+				free_any_iface_port(&ifp);
+				return;
+			}
 		}
 
 		/*
@@ -353,7 +357,9 @@ stf_status create_tcp_interface(struct state *st)
 	 * From this point on all writes are auto-wrapped in their
 	 * length and reads are auto-blocked.
 	 */
-	{
+	if (impair.tcp_skip_setsockopt_espintcp) {
+		log_state(RC_LOG, st, "IMPAIR: TCP: skipping setsockopt(espintcp)");
+	} else {
 		dbg("TCP: enabling \"espintcp\"");
 		if (setsockopt(fd, IPPROTO_TCP, TCP_ULP, "espintcp", sizeof("espintcp"))) {
 			LOG_ERRNO(errno, "setsockopt(SOL_TCP, TCP_ULP) failed in netlink_espintcp()");
