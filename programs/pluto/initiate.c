@@ -1050,54 +1050,50 @@ static void connection_check_ddns1(struct connection *c)
 	 * updated? Do we do that when terminating the conn?
 	 */
 	if (endpoint_is_specified(&c->spd.that.host_addr)) {
-		DBG(DBG_DNS, {
-			char cib[CONN_INST_BUF];
-			DBG_log("pending ddns: connection \"%s\"%s has address",
-				c->name, fmt_conn_instance(c, cib));
-		});
+		connection_buf cib;
+		dbg("pending ddns: connection "PRI_CONNECTION" has address",
+		    pri_connection(c, &cib));
 		return;
 	}
 
 	if (c->spd.that.has_client_wildcard || c->spd.that.has_port_wildcard ||
 	    ((c->policy & POLICY_SHUNT_MASK) == POLICY_SHUNT_TRAP &&
 	     c->spd.that.has_id_wildcards)) {
-		DBG(DBG_DNS, {
-			char cib[CONN_INST_BUF];
-			DBG_log("pending ddns: connection \"%s\"%s with wildcard not started",
-				c->name, fmt_conn_instance(c, cib));
-		});
+		connection_buf cib;
+		dbg("pending ddns: connection "PRI_CONNECTION" with wildcard not started",
+		    pri_connection(c, &cib));
 		return;
 	}
 
 	e = ttoaddr(c->dnshostname, 0, AF_UNSPEC, &new_addr);
 	if (e != NULL) {
-		DBG(DBG_DNS, {
-			char cib[CONN_INST_BUF];
-			DBG_log("pending ddns: connection \"%s\"%s lookup of \"%s\" failed: %s",
-				c->name, fmt_conn_instance(c, cib),
-				c->dnshostname, e);
-		});
+		connection_buf cib;
+		dbg("pending ddns: connection "PRI_CONNECTION" lookup of \"%s\" failed: %s",
+		    pri_connection(c, &cib), c->dnshostname, e);
 		return;
 	}
 
 	if (isanyaddr(&new_addr)) {
-		DBG(DBG_DNS, {
-			char cib[CONN_INST_BUF];
-			DBG_log("pending ddns: connection \"%s\"%s still no address for \"%s\"",
-				c->name, fmt_conn_instance(c, cib),
-				c->dnshostname);
-		});
+		connection_buf cib;
+		dbg("pending ddns: connection "PRI_CONNECTION" still no address for \"%s\"",
+		    pri_connection(c, &cib), c->dnshostname);
 		return;
 	}
 
 	/* do not touch what is not broken */
 	if ((c->newest_isakmp_sa != SOS_NOBODY) &&
-	    IS_IKE_SA_ESTABLISHED(state_with_serialno(c->newest_isakmp_sa)))
+	    IS_IKE_SA_ESTABLISHED(state_with_serialno(c->newest_isakmp_sa))) {
+		connection_buf cib;
+		dbg("pending ddns: connection "PRI_CONNECTION" is established",
+		    pri_connection(c, &cib));
 		return;
+	}
 
 	/* This cannot currently be reached. If in the future we do, don't do weird things */
 	if (sameaddr(&new_addr, &c->spd.that.host_addr)) {
-		dbg("ddns: IP address unchanged for connection '%s'", c->name);
+		connection_buf cib;
+		dbg("pending ddns: IP address unchanged for connection "PRI_CONNECTION"",
+		    pri_connection(c, &cib));
 		return;
 	}
 
@@ -1112,16 +1108,14 @@ static void connection_check_ddns1(struct connection *c)
 	 * be placed into CK_PERMANENT.
 	 */
 
-	DBG(DBG_DNS, {
-		char cib[CONN_INST_BUF];
-		dbg("ddns: changing connection \"%s\"%s to CK_PERMANENT", c->name,
-			fmt_conn_instance(c, cib));
-	});
+	connection_buf cib;
+	dbg("pending ddns: changing connection "PRI_CONNECTION" to CK_PERMANENT",
+	    pri_connection(c, &cib));
 	c->kind = CK_PERMANENT;
 
-	dbg("ddns: Updating IP address for %s from %s to %s",
-		c->dnshostname, sensitive_ipstr(&c->spd.that.host_addr, &old),
-			sensitive_ipstr(&new_addr, &new));
+	dbg("pending ddns: updating IP address for %s from %s to %s",
+	    c->dnshostname, sensitive_ipstr(&c->spd.that.host_addr, &old),
+	    sensitive_ipstr(&new_addr, &new));
 	c->spd.that.host_addr = new_addr;
 
 	/* a small bit of code from default_end to fixup the end point */
@@ -1141,11 +1135,14 @@ static void connection_check_ddns1(struct connection *c)
 	 */
 	update_host_pairs(c);
 	if (c->policy & POLICY_UP) {
-		dbg("ddns: re-initiating connection '%s'", c->name);
+		connection_buf cib;
+		dbg("pending ddns: re-initiating connection "PRI_CONNECTION"",
+		    pri_connection(c, &cib));
 		initiate_connections_by_name(c->name, NULL, null_fd, true/*background*/);
 	} else {
-		dbg("ddns: : connection '%s' was updated, but does not want to be up",
-			c->name);
+		connection_buf cib;
+		dbg("pending ddns: connection "PRI_CONNECTION" was updated, but does not want to be up",
+		    pri_connection(c, &cib));
 	}
 
 	/* no host pairs, no more to do */
