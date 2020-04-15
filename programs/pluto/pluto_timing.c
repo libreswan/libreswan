@@ -112,7 +112,7 @@ struct cpu_usage logtime_stop(const logtime_t *start, const char *fmt, ...)
 			for (int i = 0; i < start->level; i++) {
 				lswlogs(buf, INDENT INDENT);
 			}
-			start->logger->jam_prefix(buf, start->logger->object);
+			jam_log_prefix(buf, start->logger);
 			jam(buf, PRI_CPU_USAGE" in ",
 			    pri_cpu_usage(usage));
 			va_list ap;

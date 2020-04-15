@@ -569,13 +569,12 @@ static struct state *new_state(enum ike_version ike_version,
 	};
 	passert(next_so > SOS_FIRST);   /* overflow can't happen! */
 
-	/* fight "assignment of read-only location ‘*st->st_logger" */
+	/* fight "assignment of read-only location ‘st->st_logger->where" */
 	struct logger logger = {
 		.where = HERE, /* const */
-		.jam_prefix = jam_state_prefix,
 		.object = st,
 		.object_whackfd = dup_any(whackfd),
-		.suppress_log = suppress_state_log,
+		.object_vec = &logger_state_vec,
 	};
 	st->st_logger = clone_thing(logger, "state logger");
 
@@ -1323,7 +1322,7 @@ void delete_state(struct state *st)
 	free_chunk_content(&st->st_no_ppk_auth);
 
 	pfreeany(st->sec_ctx);
-	pfreeany(st->st_logger);
+	free_logger(&st->st_logger);
 	messup(st);
 	pfree(st);
 }

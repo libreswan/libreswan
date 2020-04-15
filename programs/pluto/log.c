@@ -460,7 +460,7 @@ bool whack_prompt_for(struct state *st, const char *prompt,
 	 */
 	LSWBUF(buf) {
 		/* XXX: one of these is redundant */
-		jam_state_prefix(buf, st);
+		jam_log_prefix(buf, st->st_logger);
 		jam(buf, "%s ", st->st_connection->name);
 		/* the real message */
 		jam(buf, "prompt for %s:", prompt);
@@ -511,16 +511,24 @@ static void whack_raw(jambuf_t *buf, enum rc_type rc)
 void jam_cur_prefix(struct lswlog *buf)
 {
 	if (!in_main_thread()) {
+#if 0
+		if (DBGP(DBG_BASE)) {
+			jam(buf, "LOGGING EXPECTATION FAILED: in main thread: ");
+		}
+#endif
 		return;
 	}
 
-	if (cur_state != NULL) {
-		jam_state_prefix(buf, cur_state);
-	} else if (cur_connection != NULL) {
-		jam_connection_prefix(buf, cur_connection);
-	} else if (endpoint_type(&cur_from) != NULL) {
-		jam_from_prefix(buf, &cur_from);
+	struct logger logger = cur_logger();
+#if 0
+	if (DBGP(DBG_BASE)) {
+		if (logger.object_vec == &logger_from_vec) {
+			jam(buf, "LOGGING EXPECATATION FAILED: using cur_%s: ",
+				logger.object_vec.name);
+		}
 	}
+#endif
+	jam_log_prefix(buf, &logger);
 }
 
 static void log_raw(int severity, const char *prefix, struct lswlog *buf)
@@ -677,13 +685,13 @@ static unsigned log_limit(void)
 }
 
 static void rate_log_raw(const char *prefix,
-			 const struct msg_digest *md,
+			 struct logger *logger,
 			 const char *message,
 			 va_list ap)
 {
 	LSWBUF(buf) {
 		jam_string(buf, prefix);
-		jam_from_prefix(buf, &md->sender);
+		jam_log_prefix(buf, logger);
 		jam_va_list(buf, message, ap);
 		log_jambuf(LOG_STREAM, null_fd, buf);
 	}
@@ -692,16 +700,17 @@ static void rate_log_raw(const char *prefix,
 void rate_log(const struct msg_digest *md,
 	      const char *message, ...)
 {
+	struct logger logger = MESSAGE_LOGGER(md);
 	unsigned limit = log_limit();
 	va_list ap;
 	va_start(ap, message);
 	if (nr_rate_limited_logs < limit) {
-		rate_log_raw("", md, message, ap);
+		rate_log_raw("", &logger, message, ap);
 	} else if (nr_rate_limited_logs == limit) {
-		rate_log_raw("", md, message, ap);
+		rate_log_raw("", &logger, message, ap);
 		plog_global("rate limited log reached limit of %u entries", limit);
 	} else if (DBGP(DBG_BASE)) {
-		rate_log_raw(DEBUG_PREFIX, md, message, ap);
+		rate_log_raw(DEBUG_PREFIX, &logger, message, ap);
 	}
 	va_end(ap);
 	nr_rate_limited_logs++;
@@ -791,7 +800,7 @@ static void broadcast(lset_t rc_flags, const struct logger *log,
 		 * Can a shorter prefix be used?
 		 */
 		/* jam_debug_prefix(buf, st, c, from) */
-		log->jam_prefix(buf, log->object);
+		jam_log_prefix(buf, log);
 		jam_va_list(buf, message, ap);
 		jambuf_to_log(buf, log, rc_flags);
 	}
@@ -804,47 +813,6 @@ void log_message(lset_t rc_flags, const struct logger *log,
 	va_start(ap, format);
 	broadcast(rc_flags, log, format, ap);
 	va_end(ap);
-}
-
-struct logger *clone_logger(const struct logger *stack)
-{
-	/*
-	 * Convert the dynamicically generated OBJECT prefix into an
-	 * unchanging string.  This way the prefix can be safely
-	 * accessed on a helper thread.
-	 */
-	char prefix[LOG_WIDTH];
-	jambuf_t prefix_buf = ARRAY_AS_JAMBUF(prefix);
-	stack->jam_prefix(&prefix_buf, stack->object);
-	/* construct the clone */
-	struct logger heap = {
-		.global_whackfd = dup_any(stack->global_whackfd),
-		.object_whackfd = dup_any(stack->object_whackfd),
-		.where = stack->where,
-		.jam_prefix = jam_string_prefix,
-		.object = clone_str(prefix, "heap logger prefix"),
-		.suppress_log = stack->suppress_log(stack->object) ? always_suppress_log : never_suppress_log,
-	};
-	/* and clone it */
-	return clone_thing(heap, "heap logger");
-}
-
-void free_logger(struct logger **logp)
-{
-	struct fd *const_stupidity;
-	/* global_whackfd */
-	const_stupidity = (struct fd*) (*logp)->global_whackfd;
-	(*logp)->global_whackfd = NULL;
-	close_any(&const_stupidity);
-	/* object_whackfd */
-	const_stupidity = (struct fd*) (*logp)->object_whackfd;
-	(*logp)->object_whackfd = NULL;
-	close_any(&const_stupidity);
-	/* this object - a string - really is on the heap */
-	pfree((void*) (*logp)->object);
-	/* done */
-	pfree(*logp);
-	*logp = NULL;
 }
 
 void log_pending(lset_t rc_flags, const struct pending *pending,
@@ -895,13 +863,30 @@ void log_md(lset_t rc_flags, const struct msg_digest *md,
 	va_end(ap);
 }
 
-void jam_global_prefix(jambuf_t *unused_buf UNUSED,
-		       const void *unused_object UNUSED)
+static bool always_suppress_log(const void *object UNUSED)
+{
+	return true;
+}
+
+static bool never_suppress_log(const void *object UNUSED)
+{
+	return false;
+}
+
+static void jam_global_prefix(jambuf_t *unused_buf UNUSED,
+			      const void *unused_object UNUSED)
 {
 	/* jam(buf, "") - nothing to add */
 }
 
-void jam_from_prefix(jambuf_t *buf, const void *object)
+const struct logger_object_vec logger_global_vec = {
+	.name = "global",
+	.suppress_object_log = never_suppress_log,
+	.jam_object_prefix = jam_global_prefix,
+	.free_object = false,
+};
+
+static void jam_from_prefix(jambuf_t *buf, const void *object)
 {
 	if (!in_main_thread()) {
 		jam(buf, "EXPECTATION FAILED: %s in main thread: ", __func__);
@@ -920,7 +905,14 @@ void jam_from_prefix(jambuf_t *buf, const void *object)
 	}
 }
 
-void jam_message_prefix(jambuf_t *buf, const void *object)
+const struct logger_object_vec logger_from_vec = {
+	.name = "from",
+	.suppress_object_log = always_suppress_log,
+	.jam_object_prefix = jam_from_prefix,
+	.free_object = false,
+};
+
+static void jam_message_prefix(jambuf_t *buf, const void *object)
 {
 	if (!in_main_thread()) {
 		jam(buf, "EXPECTATION FAILED: %s in main thread: ", __func__);
@@ -932,7 +924,14 @@ void jam_message_prefix(jambuf_t *buf, const void *object)
 	}
 }
 
-void jam_connection_prefix(jambuf_t *buf, const void *object)
+const struct logger_object_vec logger_message_vec = {
+	.name = "message",
+	.suppress_object_log = always_suppress_log,
+	.jam_object_prefix = jam_message_prefix,
+	.free_object = false,
+};
+
+static void jam_connection_prefix(jambuf_t *buf, const void *object)
 {
 	if (!in_main_thread()) {
 		jam(buf, "EXPECTATION FAILED: %s in main thread: ", __func__);
@@ -945,7 +944,20 @@ void jam_connection_prefix(jambuf_t *buf, const void *object)
 	}
 }
 
-void jam_state_prefix(jambuf_t *buf, const void *object)
+static bool suppress_connection_log(const void *object)
+{
+	const struct connection *connection = object;
+	return connection->policy & POLICY_OPPORTUNISTIC;
+}
+
+const struct logger_object_vec logger_connection_vec = {
+	.name = "connection",
+	.suppress_object_log = suppress_connection_log,
+	.jam_object_prefix = jam_connection_prefix,
+	.free_object = false,
+};
+
+static void jam_state_prefix(jambuf_t *buf, const void *object)
 {
 	if (!in_main_thread()) {
 		jam(buf, "EXPECTATION FAILED: %s in main thread: ", __func__);
@@ -971,30 +983,80 @@ void jam_state_prefix(jambuf_t *buf, const void *object)
 	}
 }
 
-void jam_string_prefix(jambuf_t *buf, const void *object)
+static bool suppress_state_log(const void *object)
+{
+	const struct state *state = object;
+	return state->st_connection->policy & POLICY_OPPORTUNISTIC;
+}
+
+const struct logger_object_vec logger_state_vec = {
+	.name = "state",
+	.suppress_object_log = suppress_state_log,
+	.jam_object_prefix = jam_state_prefix,
+	.free_object = false,
+};
+
+static void jam_string_prefix(jambuf_t *buf, const void *object)
 {
 	const char *string = object;
 	jam_string(buf, string);
 }
 
-bool always_suppress_log(const void *object UNUSED)
+struct logger *clone_logger(const struct logger *stack)
 {
-	return true;
+	/*
+	 * Convert the dynamicically generated OBJECT prefix into an
+	 * unchanging string.  This way the prefix can be safely
+	 * accessed on a helper thread.
+	 */
+	char prefix[LOG_WIDTH];
+	jambuf_t prefix_buf = ARRAY_AS_JAMBUF(prefix);
+	jam_log_prefix(&prefix_buf, stack);
+	/*
+	 * choose a logger object vec with a hardwired suppress.
+	 */
+	const struct logger_object_vec *object_vec;
+	if (suppress_log(stack)) {
+		static const struct logger_object_vec always_suppress_vec = {
+			.name = "string(always-suppressed)",
+			.suppress_object_log = always_suppress_log,
+			.jam_object_prefix = jam_string_prefix,
+			.free_object = true,
+		};
+		object_vec = &always_suppress_vec;
+	} else {
+		static const struct logger_object_vec never_suppress_vec = {
+			.name = "string(never-suppress)",
+			.suppress_object_log = never_suppress_log,
+			.jam_object_prefix = jam_string_prefix,
+			.free_object = true,
+		};
+		object_vec = &never_suppress_vec;
+	}
+	/* construct the clone */
+	struct logger heap = {
+		.global_whackfd = dup_any(stack->global_whackfd),
+		.object_whackfd = dup_any(stack->object_whackfd),
+		.where = stack->where,
+		.object_vec = object_vec,
+		.object = clone_str(prefix, "heap logger prefix"),
+	};
+	/* and clone it */
+	return clone_thing(heap, "heap logger");
 }
 
-bool never_suppress_log(const void *object UNUSED)
+void free_logger(struct logger **logp)
 {
-	return false;
-}
-
-bool suppress_connection_log(const void *object)
-{
-	const struct connection *connection = object;
-	return connection->policy & POLICY_OPPORTUNISTIC;
-}
-
-bool suppress_state_log(const void *object)
-{
-	const struct state *state = object;
-	return state->st_connection->policy & POLICY_OPPORTUNISTIC;
+	close_any(&(*logp)->global_whackfd);
+	close_any(&(*logp)->object_whackfd);
+	/*
+	 * For instance the string allocated by clone_logger().  More
+	 * complex objects are freed by other means.
+	 */
+	if ((*logp)->object_vec->free_object) {
+		pfree((void*) (*logp)->object);
+	}
+	/* done */
+	pfree(*logp);
+	*logp = NULL;
 }

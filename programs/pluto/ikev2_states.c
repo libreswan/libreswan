@@ -280,7 +280,7 @@ void log_v2_payload_errors(struct logger *logger, struct msg_digest *md,
 			   const struct ikev2_payload_errors *errors)
 {
 	enum stream log_stream;
-	if (logger->suppress_log(logger->object)) {
+	if (suppress_log(logger)) {
 		if (DBGP(DBG_BASE)) {
 			log_stream = DEBUG_STREAM;
 		} else {

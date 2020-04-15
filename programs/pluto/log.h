@@ -111,76 +111,70 @@ struct logger cur_logger(void);
  * prefix, and logs to ST's whackfd when possible.
  */
 
-typedef void jam_prefix_fn(jambuf_t *buf, const void *object);
+struct logger_object_vec {
+	const char *name;
+	bool free_object;
+	void (*jam_object_prefix)(jambuf_t *buf, const void *object);
+#define jam_log_prefix(BUF, LOGGER) (LOGGER)->object_vec->jam_object_prefix(BUF, (LOGGER)->object)
+	/*
+	 * When opportunistic encryption or the initial responder, for
+	 * instance, some logging is suppressed.
+	 */
+	bool (*suppress_object_log)(const void *object);
+#define suppress_log(LOGGER) (LOGGER)->object_vec->suppress_object_log((LOGGER)->object)
+};
 
-jam_prefix_fn jam_global_prefix;
-jam_prefix_fn jam_from_prefix;
-jam_prefix_fn jam_message_prefix;
-jam_prefix_fn jam_connection_prefix;
-jam_prefix_fn jam_state_prefix;
-jam_prefix_fn jam_string_prefix;
-
-typedef bool suppress_log_fn(const void *object);
-
-suppress_log_fn suppress_connection_log;
-suppress_log_fn suppress_state_log;
-suppress_log_fn always_suppress_log;
-suppress_log_fn never_suppress_log;
+extern const struct logger_object_vec logger_global_vec;
+extern const struct logger_object_vec logger_from_vec;
+extern const struct logger_object_vec logger_message_vec;
+extern const struct logger_object_vec logger_connection_vec;
+extern const struct logger_object_vec logger_state_vec;
 
 struct logger {
 	struct fd *global_whackfd;
 	struct fd *object_whackfd;
 	const void *object;
-	jam_prefix_fn *jam_prefix;
+	const struct logger_object_vec *object_vec;
 	where_t where;
 	/* used by timing to nest its logging output */
 	int timing_level;
-	/*
-	 * When opportunistic encryption or the initial responder, for
-	 * instance, some logging is suppressed.
-	 */
-	suppress_log_fn *suppress_log;
 };
 
 #define GLOBAL_LOGGER(WHACKFD) (struct logger)			\
 	{							\
 		.where = HERE,					\
 		.global_whackfd = WHACKFD,			\
-		.jam_prefix = jam_global_prefix,		\
-		.suppress_log = never_suppress_log,		\
+		.object = NULL,					\
+		.object_vec = &logger_global_vec,		\
 	}
 #define FROM_LOGGER(FROM) (struct logger)			\
 	{							\
 		.where = HERE,					\
 		.global_whackfd = null_fd,			\
-		.jam_prefix = jam_from_prefix,			\
 		.object = FROM,					\
-		.suppress_log = always_suppress_log,		\
+		.object_vec = &logger_from_vec, 		\
 	}
 #define MESSAGE_LOGGER(MD) (struct logger)			\
 	{							\
 		.where = HERE,					\
 		.global_whackfd = null_fd,			\
-		.jam_prefix = jam_message_prefix,		\
 		.object = MD,					\
-		.suppress_log = always_suppress_log,		\
+		.object_vec = &logger_message_vec,		\
 	}
 #define CONNECTION_LOGGER(CONNECTION, WHACKFD) (struct logger)	\
 	{							\
 		.where = HERE,					\
 		.global_whackfd = WHACKFD,			\
-		.jam_prefix = jam_connection_prefix,		\
 		.object = CONNECTION,				\
-		.suppress_log = suppress_connection_log,	\
+		.object_vec = &logger_connection_vec,		\
 	}
 #define PENDING_LOGGER(PENDING) (struct logger)			\
 	{							\
 		.where = HERE,					\
 		.global_whackfd = whack_log_fd,			\
-		.jam_prefix = jam_connection_prefix,		\
-		.object = (PENDING)->connection,		\
 		.object_whackfd = (PENDING)->whack_sock,	\
-		.suppress_log = suppress_connection_log,	\
+		.object = (PENDING)->connection,		\
+		.object_vec = &logger_connection_vec,		\
 	}
 
 struct logger *clone_logger(const struct logger *stack);
@@ -194,7 +188,7 @@ void jambuf_to_log(jambuf_t *buf, const struct logger *logger, lset_t rc_flags);
 
 #define LOG_MESSAGE(RC_FLAGS, LOGGER, BUF)				\
 	LSWLOG_(true, BUF,						\
-		(LOGGER)->jam_prefix(BUF, (LOGGER)->object),		\
+		jam_log_prefix(BUF, LOGGER),				\
 		jambuf_to_log(BUF, (LOGGER), RC_FLAGS))
 
 void log_pending(lset_t rc_flags,
