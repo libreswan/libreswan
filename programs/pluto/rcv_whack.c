@@ -312,10 +312,14 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 			state_with_serialno(m->whack_deletestateno);
 
 		if (st == NULL) {
-			log_state(RC_UNKNOWN_NAME, st, "no state #%lu to delete",
-				  m->whack_deletestateno);
+			loglog_global(RC_UNKNOWN_NAME, whackfd, "no state #%lu to delete",
+				      m->whack_deletestateno);
 		} else {
 			set_cur_state(st);
+			/* needs an abstraction */
+			if (st->st_logger->global_whackfd == NULL) {
+				st->st_logger->global_whackfd = dup_any(whackfd);
+			}
 			log_state(LOG_STREAM/*not-whack*/, st,
 				  "received whack to delete %s state #%lu %s",
 				  enum_name(&ike_version_names, st->st_ike_version),
@@ -326,9 +330,11 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 				log_state(LOG_STREAM/*not-whack*/, st,
 					  "Also deleting any corresponding CHILD_SAs");
 				delete_my_family(st, FALSE);
+				st = NULL;
 				/* note: no md->st to clear */
 			} else {
 				delete_state(st);
+				st = NULL;
 				/* note: no md->st to clear */
 			}
 		}
