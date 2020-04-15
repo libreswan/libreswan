@@ -706,7 +706,8 @@ void release_any_whack(struct state *st, where_t where, const char *why)
 {
 	dbg("releasing #%lu's "PRI_FD" because %s",
 	    st->st_serialno, pri_fd(st->st_whack_sock), why);
-	close_any_fd(&st->st_whack_sock, where);
+	close_any_fd(&st->st_logger->object_whackfd, where);
+	close_any_fd(&st->st_logger->global_whackfd, where);
 }
 
 static void release_v2fragments(struct state *st)
