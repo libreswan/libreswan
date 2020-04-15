@@ -90,7 +90,9 @@ struct logger cur_logger(void)
 	passert(in_main_thread());
 
 	if (cur_state != NULL) {
-		return *(cur_state->st_logger);
+		struct logger logger = *(cur_state->st_logger);
+		logger.global_whackfd = whack_log_fd;
+		return logger;
 	}
 
 	if (cur_connection != NULL) {
@@ -860,7 +862,15 @@ void log_state(lset_t rc_flags, const struct state *st,
 {
 	va_list ap;
 	va_start(ap, format);
+#if 0
 	broadcast(rc_flags, st->st_logger, format, ap);
+#else
+	struct logger logger = *(st->st_logger);
+	if (in_main_thread()) {
+		logger.global_whackfd = whack_log_fd; /* hack */
+	}
+	broadcast(rc_flags, &logger, format, ap);
+#endif
 	va_end(ap);
 }
 
