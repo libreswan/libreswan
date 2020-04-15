@@ -9,7 +9,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013,2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2017-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017-2020 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -853,9 +853,8 @@ struct logger *clone_logger(const struct logger *stack)
 	stack->jam_prefix(&prefix_buf, stack->object);
 	/* construct the clone */
 	struct logger heap = {
-		/* XXX: fight const stupidity */
-		.global_whackfd = dup_any((struct fd*) stack->global_whackfd),
-		.object_whackfd = dup_any((struct fd*) stack->object_whackfd),
+		.global_whackfd = dup_any(stack->global_whackfd),
+		.object_whackfd = dup_any(stack->object_whackfd),
 		.where = stack->where,
 		.jam_prefix = jam_string_prefix,
 		.object = clone_str(prefix, "heap logger prefix"),
