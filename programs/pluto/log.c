@@ -520,14 +520,12 @@ void jam_cur_prefix(struct lswlog *buf)
 	}
 
 	struct logger logger = cur_logger();
-#if 0
 	if (DBGP(DBG_BASE)) {
 		if (logger.object_vec == &logger_from_vec) {
 			jam(buf, "LOGGING EXPECATATION FAILED: using cur_%s: ",
-				logger.object_vec.name);
+			    logger.object_vec->name);
 		}
 	}
-#endif
 	jam_log_prefix(buf, &logger);
 }
 
