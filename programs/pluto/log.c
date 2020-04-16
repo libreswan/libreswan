@@ -506,11 +506,9 @@ static void whack_raw(struct jambuf *buf, enum rc_type rc)
 void jam_cur_prefix(struct jambuf *buf)
 {
 	if (!in_main_thread()) {
-#if 0
 		if (DBGP(DBG_BASE)) {
-			jam(buf, "[EXPECTATION FAILED not in main thread] ");
+			jam(buf, "[EXPECTATION FAILED: in main thread] ");
 		}
-#endif
 		return;
 	}
 
