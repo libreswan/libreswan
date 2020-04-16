@@ -34,6 +34,7 @@
 #include "ikev2.h"
 #include "log.h"
 #include "connections.h"
+#include "ikev2_notify.h"
 
 struct finite_state v2_states[] = {
 
@@ -176,15 +177,8 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 	}
 
 	if (payloads->notification != v2N_NOTHING_WRONG) {
-		bool found = false;
-		for (struct payload_digest *pd = md->chain[ISAKMP_NEXT_v2N];
-		     pd != NULL; pd = pd->next) {
-			if (pd->payload.v2n.isan_type == payloads->notification) {
-				found = true;
-				break;
-			}
-		}
-		if (!found) {
+		enum v2N_pbs v2N_pbs = v2_notification_to_v2N_pbs(payloads->notification);
+		if (md->v2N.pbs[v2N_pbs] == NULL) {
 			errors.bad = true;
 			errors.notification = payloads->notification;
 		}

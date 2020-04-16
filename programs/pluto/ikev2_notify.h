@@ -20,6 +20,13 @@
 
 struct msg_digest;
 struct ike_sa;
+struct logger;
+struct payload_digest;
+
+void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
+			const struct payload_digest *notify);
+
+enum v2N_pbs v2_notification_to_v2N_pbs(v2_notification_t);
 
 bool decode_v2N_ike_sa_init_request(struct msg_digest *md);
 bool decode_v2N_ike_sa_init_response(struct msg_digest *md);

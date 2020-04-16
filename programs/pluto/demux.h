@@ -77,6 +77,40 @@ struct payload_summary {
 	size_t data_size;
 };
 
+/*
+ * Internal-to-pluto IKEv2 notification payloads.  Unlike the official
+ * numbers, these are contigious.
+ */
+
+enum v2N_pbs {
+	v2N_PBS_INVALID = 0,
+
+	v2N_PBS_REKEY_SA,
+	v2N_PBS_NO_PPK_AUTH,
+	v2N_PBS_PPK_IDENTITY,
+	v2N_PBS_SIGNATURE_HASH_ALGORITHMS,
+	v2N_PBS_NULL_AUTH,
+	v2N_PBS_IPCOMP_SUPPORTED,
+	v2N_PBS_IKEV2_FRAGMENTATION_SUPPORTED,
+	v2N_PBS_USE_PPK,
+	v2N_PBS_REDIRECTED_FROM,
+	v2N_PBS_REDIRECT_SUPPORTED,
+	v2N_PBS_NAT_DETECTION_SOURCE_IP,
+	v2N_PBS_NAT_DETECTION_DESTINATION_IP,
+	v2N_PBS_ESP_TFC_PADDING_NOT_SUPPORTED,
+	v2N_PBS_USE_TRANSPORT_MODE,
+	v2N_PBS_MOBIKE_SUPPORTED,
+	v2N_PBS_INITIAL_CONTACT,
+	v2N_PBS_REDIRECT,
+	v2N_PBS_INVALID_SYNTAX,
+	v2N_PBS_AUTHENTICATION_FAILED,
+	v2N_PBS_UNSUPPORTED_CRITICAL_PAYLOAD,
+	v2N_PBS_COOKIE,
+	v2N_PBS_COOKIE2,
+
+	v2N_PBS_ROOF,
+};
+
 /* message digest
  * Note: raw_packet and packet_pbs are "owners" of space on heap.
  */
@@ -122,6 +156,13 @@ struct msg_digest {
 		bool mobike_supported;
 		bool initial_contact;
 		struct payload_digest *ipcomp_supported;
+		/*
+		 * Note that .v2N.pbs[] is indexed using enum v2N_pbs
+		 * and not v2_notification_t.  This is because the
+		 * former is contiguous, while the latter is very very
+		 * sparse.
+		 */
+		const struct pbs_in *pbs[v2N_PBS_ROOF];
 	} v2N;
 
 	/*

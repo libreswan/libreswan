@@ -78,10 +78,9 @@ char *global_redirect_to;
  * where we use this function for constructing data
  * for REDIRECTED_FROM notification.
  */
-static chunk_t build_redirect_notification_data(
-		const char *dest_str, /* optional */
-		const ip_address *dest_ip, /* optional */
-		const chunk_t *nonce) /* optional */
+static chunk_t build_redirect_notification_data(const char *dest_str, /* optional */
+						const ip_address *dest_ip, /* optional */
+						const shunk_t *nonce) /* optional */
 {
 	passert((dest_str == NULL) != (dest_ip == NULL));
 
@@ -147,7 +146,8 @@ static chunk_t build_redirect_notification_data(
 	return empty_chunk;
 }
 
-bool redirect_global(struct msg_digest *md) {
+bool redirect_global(struct msg_digest *md)
+{
 	/* if we don't support global redirection, no need to continue */
 	if (global_redirect == GLOBAL_REDIRECT_NO)
 		return false;
@@ -162,7 +162,8 @@ bool redirect_global(struct msg_digest *md) {
 	 */
 
 	if (global_redirect_to == NULL) {
-		loglog(RC_LOG_SERIOUS, "global redirect destination is not specified");
+		log_md(RC_LOG_SERIOUS, md,
+		       "global redirect destination is not specified");
 		return true;
 	}
 
@@ -172,46 +173,31 @@ bool redirect_global(struct msg_digest *md) {
 		return true;
 	}
 
-	chunk_t Ni = empty_chunk;
-	bool peer_redirect_support = false;
-
-	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
-		ntfy != NULL; ntfy = ntfy->next) {
-
-		switch (ntfy->payload.v2n.isan_type) {
-			case v2N_REDIRECTED_FROM:
-			case v2N_REDIRECT_SUPPORTED:
-			{
-				peer_redirect_support = true;
-				continue;
-			}
-			default:
-				break;
-		}
-	}
+	bool peer_redirect_support =
+		(md->v2N.pbs[v2N_PBS_REDIRECTED_FROM] != NULL ||
+		 md->v2N.pbs[v2N_PBS_REDIRECT_SUPPORTED] != NULL);
 
 	if (!peer_redirect_support) {
 		dbg("peer didn't indicate support for redirection");
 		return true;
 	}
 
-	Ni = clone_hunk(pbs_in_left_as_shunk(&md->chain[ISAKMP_NEXT_v2Ni]->pbs),
-						"nonce for redirect");
+	shunk_t Ni = pbs_in_left_as_shunk(&md->chain[ISAKMP_NEXT_v2Ni]->pbs);
 	if (Ni.len == 0) {
 		dbg("Initiator nonce should not be zero length");
 		return true;
 	}
 
 	chunk_t data = build_redirect_notification_data(global_redirect_to, NULL, &Ni);
-	free_chunk_content(&Ni);
 
 	if (data.len == 0) {
-		loglog(RC_LOG_SERIOUS, "failed to construct REDIRECT notification data");
-	} else {
-		send_v2N_response_from_md(md, v2N_REDIRECT, &data);
-		free_chunk_content(&data);
+		log_md(RC_LOG_SERIOUS, md,
+		       "failed to construct REDIRECT notification data");
+		return true;
 	}
 
+	send_v2N_response_from_md(md, v2N_REDIRECT, &data);
+	free_chunk_content(&data);
 	return true;
 }
 

@@ -104,6 +104,7 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 	    pexpect(md->chain[ISAKMP_NEXT_v2N] != NULL) &&
 	    md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type == v2N_COOKIE) {
 		cookie_digest = md->chain[ISAKMP_NEXT_v2N];
+		pexpect(&cookie_digest->pbs == md->v2N.pbs[v2N_PBS_COOKIE]);
 	}
 	if (!me_want_cookie && cookie_digest == NULL) {
 		dbg("DDOS disabled and no cookie sent, continuing");

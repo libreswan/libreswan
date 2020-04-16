@@ -76,7 +76,7 @@
 #include "hostpair.h"		/* for find_v2_host_connection() */
 #include "kernel.h"
 #include "iface.h"
-
+#include "ikev2_notify.h"
 
 static void v2_dispatch(struct ike_sa *ike, struct state *st,
 			struct msg_digest *md,
@@ -717,7 +717,10 @@ static struct payload_summary ikev2_decode_payloads(struct logger *log,
 		 */
 		struct payload_digest *const pd = md->digest + md->digest_roof;
 
-		/* map the payload onto a way to decode it */
+		/*
+		 * map the payload onto its payload descriptor which
+		 * describes how to decode it
+		 */
 		const struct_desc *sd = v2_payload_desc(np);
 
 		if (sd == NULL) {
@@ -798,7 +801,9 @@ static struct payload_summary ikev2_decode_payloads(struct logger *log,
 			/* np is a proper subscript for chain[] */
 			passert(np < elemsof(md->chain));
 			struct payload_digest **p = &md->chain[np];
-
+			/*
+			 * XXX: this is O(#payloads^2/2)?!?
+			 */
 			while (*p != NULL)
 				p = &(*p)->next;
 			*p = pd;
@@ -806,33 +811,49 @@ static struct payload_summary ikev2_decode_payloads(struct logger *log,
 		}
 
 		/*
+		 * Go deeper:
+		 *
 		 * XXX: should this do 'deeper' analysis of packets.
 		 * For instance checking the SPI of a notification
 		 * payload?  Probably not as the value may be ignored.
+		 *
+		 * The exception is seems to be v2N - both cookie and
+		 * redirect code happen early and use the values.
 		 */
 
+		switch (np) {
+		case ISAKMP_NEXT_v2N:
+			decode_v2N_payload(log, md, pd);
+			break;
+		default:
+			break;
+		}
+
 		/*
-		 * Advance next payload.
+		 * Determine the next payload.
+		 *
+		 * SK and SKF are special - their next-payload field
+		 * is for the first embedded payload - so force it to
+		 * NONE:
+		 *
+		 * RFC 5996 2.14 "Encrypted Payload":
+		 *
+		 * Next Payload - The payload type of the first
+		 * embedded payload.  Note that this is an exception
+		 * in the standard header format, since the Encrypted
+		 * payload is the last payload in the message and
+		 * therefore the Next Payload field would normally be
+		 * zero.  But because the content of this payload is
+		 * embedded payloads and there was no natural place to
+		 * put the type of the first one, that type is placed
+		 * here.
 		 */
 		switch (np) {
 		case ISAKMP_NEXT_v2SK:
 		case ISAKMP_NEXT_v2SKF:
-			/* RFC 5996 2.14 "Encrypted Payload":
-			 *
-			 * Next Payload - The payload type of the
-			 * first embedded payload.  Note that this is
-			 * an exception in the standard header format,
-			 * since the Encrypted payload is the last
-			 * payload in the message and therefore the
-			 * Next Payload field would normally be zero.
-			 * But because the content of this payload is
-			 * embedded payloads and there was no natural
-			 * place to put the type of the first one,
-			 * that type is placed here.
-			 */
+			/* special */
 			np = ISAKMP_NEXT_v2NONE;
 			break;
-
 		default:
 			np = pd->payload.generic.isag_np;
 			break;
@@ -1699,6 +1720,9 @@ void ikev2_process_packet(struct msg_digest *md)
 				return;
 			}
 
+			/*
+			 * Do I want a cookie?
+			 */
 			if (v2_rejected_initiator_cookie(md, require_ddos_cookies())) {
 				dbg("pluto is overloaded and demanding cookies; dropping new exchange");
 				return;

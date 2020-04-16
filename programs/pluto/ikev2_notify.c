@@ -32,6 +32,37 @@
 #include "demux.h"
 #include "pluto_stats.h"
 
+enum v2N_pbs v2_notification_to_v2N_pbs(v2_notification_t n)
+{
+#define C(N) case v2N_##N: return v2N_PBS_##N;
+	switch (n) {
+	C(REKEY_SA);
+	C(NO_PPK_AUTH);
+	C(PPK_IDENTITY);
+	C(SIGNATURE_HASH_ALGORITHMS);
+	C(NULL_AUTH);
+	C(IPCOMP_SUPPORTED);
+	C(IKEV2_FRAGMENTATION_SUPPORTED);
+	C(USE_PPK);
+	C(REDIRECTED_FROM);
+	C(REDIRECT_SUPPORTED);
+	C(NAT_DETECTION_SOURCE_IP);
+	C(NAT_DETECTION_DESTINATION_IP);
+	C(ESP_TFC_PADDING_NOT_SUPPORTED);
+	C(USE_TRANSPORT_MODE);
+	C(MOBIKE_SUPPORTED);
+	C(INITIAL_CONTACT);
+	C(REDIRECT);
+	C(INVALID_SYNTAX);
+	C(AUTHENTICATION_FAILED);
+	C(UNSUPPORTED_CRITICAL_PAYLOAD);
+	C(COOKIE);
+	C(COOKIE2);
+	default: return v2N_PBS_INVALID;
+	}
+#undef C
+}
+
 bool decode_v2N_ike_sa_init_request(struct msg_digest *md)
 {
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
@@ -313,4 +344,28 @@ bool decode_v2N_ike_auth_child(struct msg_digest *md)
 		}
 	}
 	return true;
+}
+
+void decode_v2N_payload(struct logger *unused_logger UNUSED, struct msg_digest *md,
+			const struct payload_digest *notify)
+{
+	v2_notification_t n = notify->payload.v2n.isan_type;
+	const char *name = enum_name(&ikev2_notify_names, n);
+	if (name == NULL) {
+		dbg("ignoring unrecognized %d notify", n);
+		return;
+	}
+	enum v2N_pbs v2N_pbs = v2_notification_to_v2N_pbs(n);
+	if (v2N_pbs == v2N_PBS_INVALID) {
+		dbg("ignoring unsupported %s notify", name);
+		return;
+	}
+	if (md->v2N.pbs[v2N_pbs] != NULL) {
+		dbg("ignoring duplicate %s notify", name);
+		return;
+	}
+	if (DBGP(DBG_TMI)) {
+		DBG_log("adding %s notify", name);
+	}
+	md->v2N.pbs[v2N_pbs] = &notify->pbs;
 }
