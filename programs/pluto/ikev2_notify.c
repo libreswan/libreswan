@@ -58,6 +58,8 @@ enum v2N_pbs v2_notification_to_v2N_pbs(v2_notification_t n)
 	C(UNSUPPORTED_CRITICAL_PAYLOAD);
 	C(COOKIE);
 	C(COOKIE2);
+	C(INVALID_KE_PAYLOAD);
+	C(INVALID_MAJOR_VERSION);
 	default: return v2N_PBS_INVALID;
 	}
 #undef C
