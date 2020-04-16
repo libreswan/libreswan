@@ -794,19 +794,17 @@ static struct payload_summary ikev2_decode_payloads(struct logger *log,
 		    pbs_left(&pd->pbs));
 
 		/*
-		 * Place payload at the end of the chain for this type.
-		 * This code appears in ikev1.c and ikev2.c.
+		 * Place payload at the end of the chain for this
+		 * type.
 		 */
-		{
-			/* np is a proper subscript for chain[] */
-			passert(np < elemsof(md->chain));
-			struct payload_digest **p = &md->chain[np];
-			/*
-			 * XXX: this is O(#payloads^2/2)?!?
-			 */
-			while (*p != NULL)
-				p = &(*p)->next;
-			*p = pd;
+		if (md->last[np] == NULL) {
+			/* first */
+			md->chain[np] = md->last[np] = pd;
+			pd->next = NULL;
+		} else {
+			/* append */
+			md->last[np]->next = pd;
+			md->last[np] = pd;
 			pd->next = NULL;
 		}
 

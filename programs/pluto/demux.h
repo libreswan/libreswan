@@ -207,6 +207,7 @@ struct msg_digest {
 	 * the result was confusing custom mapping code everywhere).
 	 */
 	struct payload_digest *chain[LELEM_ROOF];
+	struct payload_digest *last[LELEM_ROOF];
 	struct isakmp_quirks quirks;
 };
 
