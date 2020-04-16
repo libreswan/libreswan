@@ -43,6 +43,9 @@
 #include "kernel_xfrm_interface.h"
 #include "iface.h"
 #include "show.h"
+#ifdef HAVE_SECCOMP
+#include "pluto_seccomp.h"
+#endif
 
 void show_spacer(struct show *s)
 {
@@ -80,8 +83,8 @@ static void show_system_security(const struct fd *whackfd)
 		selinux == 0 ? "disabled" : selinux == 1 ? "enabled" : "indeterminate");
 #ifdef HAVE_SECCOMP
 	whack_comment(whackfd, "seccomp=%s",
-		pluto_seccomp_mode == SECCOMP_ENABLED ? "enabled" :
-			pluto_seccomp_mode == SECCOMP_TOLERANT ? "tolerant" : "disabled");
+		      pluto_seccomp_mode == SECCOMP_ENABLED ? "enabled" :
+		      pluto_seccomp_mode == SECCOMP_TOLERANT ? "tolerant" : "disabled");
 #else
 	whack_comment(whackfd, "seccomp=unsupported");
 #endif

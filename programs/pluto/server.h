@@ -49,7 +49,6 @@ extern stf_status create_tcp_interface(struct state *st); /* TCP: terrible name?
 
 extern bool listening;  /* should we pay attention to IKE messages? */
 extern enum ddos_mode pluto_ddos_mode; /* auto-detect or manual? */
-extern enum seccomp_mode pluto_seccomp_mode;
 extern unsigned int pluto_max_halfopen; /* Max allowed half-open IKE SA's before refusing */
 extern unsigned int pluto_ddos_threshold; /* Max incoming IKE before activating DCOOKIES */
 extern deltatime_t pluto_shunt_lifetime; /* lifetime before we cleanup bare shunts (for OE) */

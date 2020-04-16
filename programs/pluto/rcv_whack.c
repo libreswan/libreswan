@@ -78,6 +78,9 @@
 #include "initiate.h"
 #include "iface.h"
 #include "show.h"
+#ifdef HAVE_SECCOMP
+#include "pluto_seccomp.h"
+#endif
 
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"

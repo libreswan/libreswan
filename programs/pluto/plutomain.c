@@ -88,6 +88,10 @@
 #include "dnssec.h"
 #endif
 
+#ifdef HAVE_SECCOMP
+#include "pluto_seccomp.h"
+#endif
+
 static const char *pluto_name;	/* name (path) we were invoked with */
 
 static pthread_t main_thread;

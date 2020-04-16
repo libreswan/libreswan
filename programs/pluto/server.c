@@ -1284,18 +1284,7 @@ void call_server(char *conffile)
 	/* parent continues */
 
 #ifdef HAVE_SECCOMP
-	switch (pluto_seccomp_mode) {
-	case SECCOMP_ENABLED:
-		init_seccomp_main(SCMP_ACT_KILL);
-		break;
-	case SECCOMP_TOLERANT:
-		init_seccomp_main(SCMP_ACT_TRAP);
-		break;
-	case SECCOMP_DISABLED:
-		break;
-	default:
-		bad_case(pluto_seccomp_mode);
-	}
+	init_seccomp_main();
 #else
 	libreswan_log("seccomp security not supported");
 #endif

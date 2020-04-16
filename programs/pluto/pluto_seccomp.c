@@ -20,7 +20,7 @@
 #include <unistd.h>
 
 #include "defs.h"
-#include "lswlog.h"
+#include "log.h"
 
 #define LSW_SECCOMP_EXIT_FAIL PLUTO_EXIT_SECCOMP_FAIL
 #include "lswseccomp.h"
@@ -33,8 +33,8 @@ static void init_seccomp(uint32_t def_action, bool main)
 {
 	scmp_filter_ctx ctx = seccomp_init(def_action);
 	if (ctx == NULL) {
-			libreswan_log("seccomp_init() failed!");
-			exit_pluto(PLUTO_EXIT_SECCOMP_FAIL);
+		plog_global("seccomp_init() failed!");
+		exit_pluto(PLUTO_EXIT_SECCOMP_FAIL);
 	}
 
 	/*
@@ -155,17 +155,38 @@ static void init_seccomp(uint32_t def_action, bool main)
 		seccomp_release(ctx);
 		exit_pluto(PLUTO_EXIT_SECCOMP_FAIL);
 	}
-
-	libreswan_log("seccomp security enabled");
 }
 
-void init_seccomp_main(uint32_t def_action)
+void init_seccomp_main(void)
 {
-	init_seccomp(def_action, TRUE);
+	switch (pluto_seccomp_mode) {
+	case SECCOMP_ENABLED:
+		init_seccomp(SCMP_ACT_KILL, true);
+		break;
+	case SECCOMP_TOLERANT:
+		init_seccomp(SCMP_ACT_TRAP, true);
+		break;
+	case SECCOMP_DISABLED:
+		break;
+	default:
+		bad_case(pluto_seccomp_mode);
+	}
+	plog_global("seccomp security enabled");
 }
 
-void init_seccomp_cryptohelper(uint32_t def_action)
+void init_seccomp_cryptohelper(int helpernum)
 {
-	init_seccomp(def_action, FALSE);
+	switch (pluto_seccomp_mode) {
+	case SECCOMP_ENABLED:
+		init_seccomp(SCMP_ACT_KILL, false);
+		break;
+	case SECCOMP_TOLERANT:
+		init_seccomp(SCMP_ACT_TRAP, false);
+		break;
+	case SECCOMP_DISABLED:
+		break;
+	default:
+		bad_case(pluto_seccomp_mode);
+	}
+	plog_global("seccomp security enabled in crypto helper %d", helpernum);
 }
-

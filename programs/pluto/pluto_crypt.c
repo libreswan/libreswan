@@ -370,18 +370,7 @@ static void *pluto_crypto_helper_thread(void *arg)
 	dbg("starting up helper thread %d", w->pcw_helpernum);
 
 #ifdef HAVE_SECCOMP
-	switch (pluto_seccomp_mode) {
-	case SECCOMP_ENABLED:
-		init_seccomp_cryptohelper(SCMP_ACT_KILL);
-		break;
-	case SECCOMP_TOLERANT:
-		init_seccomp_cryptohelper(SCMP_ACT_TRAP);
-		break;
-	case SECCOMP_DISABLED:
-		break;
-	default:
-		bad_case(pluto_seccomp_mode);
-	}
+	init_seccomp_cryptohelper(w->pcw_helpernum);
 #else
 	libreswan_log("seccomp security for crypto helper not supported");
 #endif
