@@ -506,92 +506,21 @@ struct find_oppo_bundle {
 	bool background;
 };
 
-static void cannot_oppo(struct connection *c,
-			struct find_oppo_bundle *b,
-			err_t ughmsg)
+static void cannot_oppo(struct find_oppo_bundle *b, err_t ughmsg)
 {
 	address_buf ocb_buf;
 	const char *ocb = ipstr(&b->our_client, &ocb_buf);
 	address_buf pcb_buf;
 	const char *pcb = ipstr(&b->peer_client, &pcb_buf);
 
-	enum stream logger = (DBGP(DBG_OPPO) ? ALL_STREAMS : WHACK_STREAM);
-	log_connection(logger | RC_OPPOFAILURE, b->whackfd, c,
-		       "cannot opportunistically initiate for %s to %s: %s",
-		       ocb, pcb, ughmsg);
-
-	if (c != NULL && c->policy_next != NULL) {
-		/* there is some policy that comes afterwards */
-		struct connection *nc = c->policy_next;
-
-		passert(c->kind == CK_TEMPLATE);
-		passert(nc->kind == CK_PERMANENT);
-
-		DBG(DBG_OPPO,
-		    DBG_log("OE failed for %s to %s, but %s overrides shunt",
-			    ocb, pcb, nc->name));
-
-		/*
-		 * okay, here we need add to the "next" policy, which ought
-		 * to be an instance.
-		 * We will add another entry to the spd_route list for the specific
-		 * situation that we have.
-		 */
-
-		struct spd_route *shunt_spd = clone_thing(nc->spd, "shunt eroute policy");
-
-		shunt_spd->spd_next = nc->spd.spd_next;
-		nc->spd.spd_next = shunt_spd;
-
-		happy(addrtosubnet(&b->peer_client, &shunt_spd->that.client));
-
-		if (sameaddr(&b->peer_client, &shunt_spd->that.host_addr))
-			shunt_spd->that.has_client = FALSE;
-
-		/*
-		 * override the tunnel destination with the one from the secondaried
-		 * policy
-		 */
-		shunt_spd->that.host_addr = nc->spd.that.host_addr;
-
-		/* now, lookup the state, and poke it up. */
-
-		struct state *st = state_with_serialno(nc->newest_ipsec_sa);
-
-		/* XXX what to do if the IPSEC SA has died? */
-		passert(st != NULL);
-
-		/*
-		 * link the new connection instance to the state's list of
-		 * connections
-		 */
-
-		DBG(DBG_OPPO, DBG_log("installing state: %lu for %s to %s",
-				      nc->newest_ipsec_sa,
-				      ocb, pcb));
-
-		DBG(DBG_OPPO | DBG_CONTROLMORE, {
-			char state_buf[LOG_WIDTH];
-			char state_buf2[LOG_WIDTH];
-
-			fmt_state(st, mononow(), state_buf, sizeof(state_buf),
-				  state_buf2, sizeof(state_buf2));
-			DBG_log("cannot_oppo, failure SA1: %s", state_buf);
-			DBG_log("cannot_oppo, failure SA2: %s", state_buf2);
-		});
-
-		if (!route_and_eroute(c, shunt_spd, st)) {
-			log_connection(WHACK_STREAM|RC_OPPOFAILURE, b->whackfd, c,
-				       "failed to instantiate shunt policy %s for %s to %s",
-				       c->name,
-				       ocb, pcb);
-		}
-		return;
-	}
+	enum stream logger_stream = (DBGP(DBG_OPPO) ? ALL_STREAMS : WHACK_STREAM);
+	loglog_global(logger_stream | RC_OPPOFAILURE, b->whackfd,
+		      "cannot opportunistically initiate for %s to %s: %s",
+		      ocb, pcb, ughmsg);
 
 	if (b->held) {
 		/* this was filled in for us based on packet trigger, not whack --oppo trigger */
-		DBG(DBG_CONTROL, DBG_log("cannot_oppo() detected packet triggered shunt from bundle"));
+		dbg("cannot_oppo() detected packet triggered shunt from bundle");
 
 		/*
 		 * Replace negotiationshunt (hold or pass) with failureshunt (hold or pass)
@@ -603,13 +532,11 @@ static void cannot_oppo(struct connection *c,
 					  b->negotiation_shunt,
 					  b->failure_shunt,
 					  b->transport_proto,
-					  ughmsg))
-		{
-			DBG(DBG_CONTROL,
-				DBG_log("cannot_oppo() replaced negotiationshunt with bare failureshunt=%s",
-					enum_short_name(&spi_names, b->failure_shunt)));
+					  ughmsg)) {
+			dbg("cannot_oppo() replaced negotiationshunt with bare failureshunt=%s",
+			    enum_short_name(&spi_names, b->failure_shunt));
 		} else {
-			libreswan_log("cannot_oppo() failed to replace negotiationshunt with bare failureshunt");
+			loglog_global(RC_LOG, b->whackfd, "cannot_oppo() failed to replace negotiationshunt with bare failureshunt");
 		}
 	}
 }
@@ -659,11 +586,11 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 	}
 
 	if (isanyaddr(&b->our_client) || isanyaddr(&b->peer_client)) {
-		cannot_oppo(NULL, b, "impossible IP address");
+		cannot_oppo(b, "impossible IP address");
 	} else if (sameaddr(&b->our_client, &b->peer_client)) {
 		/* NETKEY gives us acquires for our own IP */
 		/* this does not catch talking to ourselves on another ip */
-		cannot_oppo(NULL, b, "acquire for our own IP address");
+		cannot_oppo(b, "acquire for our own IP address");
 	} else if ((c = find_connection_for_clients(&sr,
 						     &b->our_client,
 						     &b->peer_client,
@@ -677,10 +604,10 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 			libreswan_log("%s", demandbuf);
 		}
 
-		cannot_oppo(NULL, b, "no routed template covers this pair");
+		cannot_oppo(b, "no routed template covers this pair");
 	} else if ((c->policy & POLICY_OPPORTUNISTIC) && !orient(c)) {
 		/* happens when dst is ourselves on a different IP */
-		cannot_oppo(NULL, b, "connection to self on another IP?");
+		cannot_oppo(b, "connection to self on another IP?");
 	}  else if (c->kind == CK_TEMPLATE && (c->policy & POLICY_OPPORTUNISTIC) == 0) {
 		if (!loggedit) {
 			libreswan_log("%s", demandbuf);
