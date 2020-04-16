@@ -3487,6 +3487,16 @@ void complete_v2_state_transition(struct state *st,
 			v2_msgid_update_recv(ike, NULL, md);
 			break;
 		case MESSAGE_REQUEST:
+			dbg("Message ID: responding with recorded fatal error");
+			pexpect(transition->send == MESSAGE_RESPONSE);
+			if (ike->sa.st_v2_tfrags != NULL || ike->sa.st_tpacket.len > 0) {
+				v2_msgid_update_recv(ike, st, md);
+				v2_msgid_update_sent(ike, st, md, transition->send);
+				send_recorded_v2_ike_msg(&ike->sa, "STF_FATAL");
+				release_pending_whacks(st, "fatal error");
+				delete_my_family(&ike->sa, true);
+				return;
+			}
 			dbg("Message ID: exchange zombie as no response?");
 			break;
 		case NO_MESSAGE:
@@ -3508,6 +3518,7 @@ void complete_v2_state_transition(struct state *st,
 			break;
 		case MESSAGE_REQUEST:
 			dbg("Message ID: responding with recorded error");
+			pexpect(transition->send == MESSAGE_RESPONSE);
 			v2_msgid_update_recv(ike, st, md);
 			v2_msgid_update_sent(ike, st, md, transition->send);
 			send_recorded_v2_ike_msg(&ike->sa, "STF_FAIL");

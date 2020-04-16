@@ -4589,7 +4589,6 @@ static void ikev2_child_inIoutR_continue(struct state *st,
 static stf_status ikev2_child_inIoutR_continue_continue(struct state *st,
 							struct msg_digest *md)
 {
-
 	dbg("%s() for #%lu %s",
 	     __func__, st->st_serialno, st->st_state->name);
 
@@ -4606,8 +4605,8 @@ static stf_status ikev2_child_inIoutR_continue_continue(struct state *st,
 	 * handles only one state transition.  If there's commonality
 	 * then the per-transition functions can all call common code.
 	 */
-	pexpect(st->st_state->kind == STATE_V2_CREATE_R0 ||
-		st->st_state->kind == STATE_V2_REKEY_CHILD_R0);
+	pexpect(child->sa.st_state->kind == STATE_V2_CREATE_R0 ||
+		child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0);
 
 	/* didn't loose parent? */
 	if (ike == NULL) {
@@ -4618,13 +4617,11 @@ static stf_status ikev2_child_inIoutR_continue_continue(struct state *st,
 	}
 
 	if (st->st_shared_nss == NULL) {
-		/*
-		 * XXX: this is the initiator so returning a
-		 * notification is kind of useless.
-		 */
-		send_v2N_response_from_state(ike, md,
-					     v2N_INVALID_SYNTAX, NULL);
-		return STF_FATAL;
+		log_state(RC_LOG, &child->sa, "DH failed");
+		record_v2N_response(child->sa.st_logger, ike, md,
+				    v2N_INVALID_SYNTAX, NULL,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FATAL; /* kill family */
 	}
 	return ikev2_child_out_tail(ike, child, md);
 }
@@ -4707,10 +4704,10 @@ stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
 	pexpect(st->st_pfs_group == NULL);
 	if (!accept_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
 		       md->chain[ISAKMP_NEXT_v2KE])) {
-		send_v2N_response_from_state(ike_sa(st), md,
-					     v2N_INVALID_SYNTAX,
-					     NULL/*no data*/);
-		return STF_FATAL;
+		record_v2N_response(ike->sa.st_logger, ike, md,
+				    v2N_INVALID_SYNTAX, NULL/*no data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FATAL; /* kill family */
 	}
 
 	request_ke_and_nonce("IKE rekey KE response gir", st,
@@ -4798,9 +4795,10 @@ static void ikev2_child_ike_inIoutR_continue_continue(struct state *st,
 	bool only_shared_false = false;
 	stf_status e;
 	if (!finish_dh_v2(st, r, only_shared_false)) {
-		send_v2N_response_from_state(ike_sa(st), md,
-					     v2N_INVALID_SYNTAX, NULL);
-		e = STF_FATAL;
+		record_v2N_response(ike->sa.st_logger, ike, md,
+				    v2N_INVALID_SYNTAX, NULL,
+				    ENCRYPTED_PAYLOAD);
+		e = STF_FATAL; /* kill family */
 	} else {
 		e = ikev2_child_out_tail(ike, child, md);
 	}
