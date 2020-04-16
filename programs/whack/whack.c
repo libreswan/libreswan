@@ -82,7 +82,7 @@ static void help(void)
 		"	[--ikeport <port-number>] [--srcip <ip-address>] \\\n"
 		"	[--vtiip <ip-address>/mask] \\\n"
 		"	[--updown <updown>] \\\n"
-		"	[--authby <psk | rsasig | null>] \\\n"
+		"	[--authby <psk | rsasig | ecdsa | null>] \\\n"
 		"	[--groups <access control groups>] \\\n"
 		"	[--cert <friendly_name> | --ckaid <ckaid>] \\\n"
 		"	[--ca <distinguished name>] \\\n"
@@ -91,7 +91,7 @@ static void help(void)
 		"	[--client <subnet> \\\n"
 		"	[--clientprotoport <protocol>/<port>] \\\n"
 		"	[--dnskeyondemand] [--updown <updown>] \\\n"
-		"	[--psk] | [--rsasig] | [--rsa-sha2] | [--rsa-sha2_256] | \\\n"
+		"	[--psk] | [--rsasig] | [--rsa-sha1] | [--rsa-sha2] | [--rsa-sha2_256] | \\\n"
 		"		[--rsa-sha2_384 ] | [--rsa-sha2_512 ] | [ --auth-null] | \\\n"
 		"		[--auth-never] \\\n"
 		"	[--encrypt] [--authenticate] [--compress] [--sha2-truncbug] \\\n"
@@ -219,6 +219,8 @@ static const char *label = NULL;
 static const char *name = NULL;
 
 static const char *remote_host = NULL;
+
+static bool auth_specified = FALSE;
 
 /*
  * Print a string as a diagnostic, then exit whack unhappily
@@ -461,11 +463,25 @@ enum option_enums {
 	CD_XAUTHBY,
 	CD_XAUTHFAIL,
 	CD_NIC_OFFLOAD,
-	CD_RSA_SHA2_256,
-	CD_RSA_SHA2_384,
-	CD_RSA_SHA2_512,
 	CD_ESP,
 #   define CD_LAST CD_ESP	/* last connection description */
+
+/*
+ * Algorithm options (just because CD_ was full)
+ */
+#define ALGO_FIRST	ALGO_RSASIG
+	ALGO_RSASIG, /* SHA1 and (for IKEv2) SHA2 */
+	ALGO_RSA_SHA1,
+	ALGO_RSA_SHA2,
+	ALGO_RSA_SHA2_256,
+	ALGO_RSA_SHA2_384,
+	ALGO_RSA_SHA2_512,
+	ALGO_ECDSA, /* no SHA1 support */
+	ALGO_ECDSA_SHA2_256,
+	ALGO_ECDSA_SHA2_384,
+	ALGO_ECDSA_SHA2_512,
+
+#define ALGO_LAST	ALGO_ECDSA_SHA2_512
 
 /*
  * Policy options
@@ -632,8 +648,10 @@ static const struct option long_opts[] = {
 
 #define PS(o, p)	{ o, no_argument, NULL, CDP_SINGLETON + POLICY_##p##_IX + OO }
 	PS("psk", PSK),
-	PS("rsasig", RSASIG),
-	PS("ecdsa", ECDSA),
+	/* These require more complicated settings now, done below
+	 * PS("rsasig", RSASIG),
+	 * PS("ecdsa", ECDSA),
+	 */
 	PS("auth-never", AUTH_NEVER),
 	PS("auth-null", AUTH_NULL),
 
@@ -725,17 +743,10 @@ static const struct option long_opts[] = {
 	{ "sendca", required_argument, NULL, CD_SEND_CA + OO },
 	{ "ipv4", no_argument, NULL, CD_CONNIPV4 + OO },
 	{ "ipv6", no_argument, NULL, CD_CONNIPV6 + OO },
-
-	{ "rsa-sha2", no_argument, NULL, CD_RSA_SHA2_256 + OO },
-	{ "rsa-sha2_256", no_argument, NULL, CD_RSA_SHA2_256 + OO },
-	{ "rsa-sha2_384", no_argument, NULL, CD_RSA_SHA2_384 + OO },
-	{ "rsa-sha2_512", no_argument, NULL, CD_RSA_SHA2_512 + OO },
-
 	{ "ikelifetime", required_argument, NULL, CD_IKELIFETIME + OO + NUMERIC_ARG },
 	{ "ipseclifetime", required_argument, NULL, CD_IPSECLIFETIME + OO + NUMERIC_ARG },
 	{ "retransmit-timeout", required_argument, NULL, CD_RETRANSMIT_T + OO + NUMERIC_ARG },
 	{ "retransmit-interval", required_argument, NULL, CD_RETRANSMIT_I + OO + NUMERIC_ARG },
-
 	{ "rekeymargin", required_argument, NULL, CD_RKMARGIN + OO + NUMERIC_ARG },
 	/* OBSOLETE */
 	{ "rekeywindow", required_argument, NULL, CD_RKMARGIN + OO + NUMERIC_ARG },
@@ -748,6 +759,18 @@ static const struct option long_opts[] = {
 	{ "esp", required_argument, NULL, CD_ESP + OO },
 	{ "remote_peer_type", required_argument, NULL, CD_REMOTEPEERTYPE + OO },
 	{ "nic-offload", required_argument, NULL, CD_NIC_OFFLOAD + OO},
+
+	{ "rsasig", no_argument, NULL, ALGO_RSASIG + OO },
+	{ "ecdsa", no_argument, NULL, ALGO_ECDSA + OO },
+	{ "ecdsa-sha2", no_argument, NULL, ALGO_ECDSA + OO },
+	{ "ecdsa-sha2_256", no_argument, NULL, ALGO_ECDSA_SHA2_256 + OO },
+	{ "ecdsa-sha2_384", no_argument, NULL, ALGO_ECDSA_SHA2_384 + OO },
+	{ "ecdsa-sha2_512", no_argument, NULL, ALGO_ECDSA_SHA2_512 + OO },
+	{ "rsa-sha1", no_argument, NULL, ALGO_RSA_SHA1 + OO },
+	{ "rsa-sha2", no_argument, NULL, ALGO_RSA_SHA2 + OO },
+	{ "rsa-sha2_256", no_argument, NULL, ALGO_RSA_SHA2_256 + OO },
+	{ "rsa-sha2_384", no_argument, NULL, ALGO_RSA_SHA2_384 + OO },
+	{ "rsa-sha2_512", no_argument, NULL, ALGO_RSA_SHA2_512 + OO },
 
 
 	PS("ikev1-allow", IKEV1_ALLOW),
@@ -770,9 +793,9 @@ static const struct option long_opts[] = {
 	PS("dns-match-id", DNS_MATCH_ID),
 #undef PS
 
-
 #ifdef HAVE_NM
-	{ "nm_configured", no_argument, NULL, CD_NMCONFIGURED + OO },
+	{ "nm_configured", no_argument, NULL, CD_NMCONFIGURED + OO }, /* backwards compat */
+	{ "nm-configured", no_argument, NULL, CD_NMCONFIGURED + OO },
 #endif
 #ifdef HAVE_LABELED_IPSEC
 	{ "labeledipsec", no_argument, NULL, CD_LABELED_IPSEC + OO },
@@ -896,7 +919,8 @@ int main(int argc, char **argv)
 		lst_seen = LEMPTY,
 		cd_seen = LEMPTY,
 		cdp_seen = LEMPTY,
-		end_seen = LEMPTY;
+		end_seen = LEMPTY,
+		algo_seen = LEMPTY;
 	const char
 		*af_used_by = NULL,
 		*tunnel_af_used_by = NULL;
@@ -919,6 +943,7 @@ int main(int argc, char **argv)
 	assert(LST_LAST - LST_FIRST < LELEM_ROOF);
 	assert(END_LAST - END_FIRST < LELEM_ROOF);
 	assert(CD_LAST - CD_FIRST < LELEM_ROOF);
+	assert(ALGO_LAST - ALGO_FIRST < LELEM_ROOF);
 
 	zero(&msg);	/* ??? pointer fields might not be NULLed */
 
@@ -1083,6 +1108,18 @@ int main(int argc, char **argv)
 				diagq("duplicated flag",
 				      long_opts[long_index].name);
 			cdp_seen |= f;
+			opts1_seen |= LELEM(OPT_CD);
+		} else if (ALGO_FIRST <= c && c <= ALGO_LAST) {
+			/*
+ 			 * ALGO options all translate into two lset's
+ 			 * msg.policy and msg.sighash
+ 			 */
+			lset_t f = LELEM(c - ALGO_FIRST);
+
+			if (algo_seen & f)
+				diagq("duplicated flag",
+				      long_opts[long_index].name);
+			algo_seen |= f;
 			opts1_seen |= LELEM(OPT_CD);
 		}
 
@@ -1607,13 +1644,16 @@ int main(int argc, char **argv)
 		 *  Note: auth-never cannot be asymmetrical
 		 */
 		case END_AUTHBY:
+			auth_specified = TRUE;
 			if (streq(optarg, "psk"))
 				msg.right.authby = AUTHBY_PSK;
 			else if (streq(optarg, "null"))
 				msg.right.authby = AUTHBY_NULL;
 			else if (streq(optarg, "rsasig"))
 				msg.right.authby = AUTHBY_RSASIG;
-			else diag("authby option is not one of psk, rsasig or null");
+			else if (streq(optarg, "ecdsa"))
+				msg.right.authby = AUTHBY_ECDSA;
+			else diag("authby option is not one of psk, ecdsa, rsasig or null");
 			continue;
 
 		case END_CLIENT:	/* --client <subnet> */
@@ -1662,10 +1702,12 @@ int main(int argc, char **argv)
 			end_seen = LEMPTY;
 			continue;
 
+		/* RSASIG/ECDSA need more than a single policy bit */
 		case CDP_SINGLETON + POLICY_PSK_IX:	/* --psk */
-		case CDP_SINGLETON + POLICY_RSASIG_IX:	/* --rsasig */
 		case CDP_SINGLETON + POLICY_AUTH_NEVER_IX:	/* --auth-never */
 		case CDP_SINGLETON + POLICY_AUTH_NULL_IX:	/* --auth-null */
+			auth_specified = TRUE;
+			/* FALL THROUGH */
 
 		case CDP_SINGLETON + POLICY_ENCRYPT_IX:	/* --encrypt */
 		/* --authenticate */
@@ -1941,7 +1983,7 @@ int main(int argc, char **argv)
 			continue;
 
 #ifdef HAVE_NM
-		case CD_NMCONFIGURED:	/* --nm_configured */
+		case CD_NMCONFIGURED:	/* --nm-configured */
 			msg.nmconfigured = TRUE;
 			continue;
 #endif
@@ -1969,14 +2011,62 @@ int main(int argc, char **argv)
 			 */
 			continue;
 
-		case CD_RSA_SHA2_256:	/* --rsa-sha2, --rsa-sha2_256 */
+		case ALGO_RSASIG: /* --rsasig */
+			auth_specified = TRUE;
+			msg.policy |= POLICY_RSASIG;
+			msg.policy |= POLICY_RSASIG_v1_5;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
-			continue;
-		case CD_RSA_SHA2_384:	/* --rsa-sha2_384 */
 			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
-			continue;
-		case CD_RSA_SHA2_512:	/* --rsa-sha2_512 */
 			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
+			continue;
+		case ALGO_RSA_SHA1: /* --rsa-sha1 */
+			auth_specified = TRUE;
+			msg.policy |= POLICY_RSASIG_v1_5;
+			continue;
+		case ALGO_RSA_SHA2: /* --rsa-sha2 */
+			auth_specified = TRUE;
+			msg.policy |= POLICY_RSASIG;
+			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
+			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
+			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
+			continue;
+		case ALGO_RSA_SHA2_256:	/* --rsa-sha2_256 */
+			auth_specified = TRUE;
+			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
+			msg.policy |= POLICY_RSASIG;
+			continue;
+		case ALGO_RSA_SHA2_384:	/* --rsa-sha2_384 */
+			auth_specified = TRUE;
+			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
+			msg.policy |= POLICY_RSASIG;
+			continue;
+		case ALGO_RSA_SHA2_512:	/* --rsa-sha2_512 */
+			auth_specified = TRUE;
+			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
+			msg.policy |= POLICY_RSASIG;
+			continue;
+
+		case ALGO_ECDSA: /* --ecdsa and --ecdsa-sha2 */
+			auth_specified = TRUE;
+			msg.policy |= POLICY_ECDSA;
+			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
+			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
+			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
+			continue;
+		case ALGO_ECDSA_SHA2_256:	/* --ecdsa-sha2_256 */
+			auth_specified = TRUE;
+			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
+			msg.policy |= POLICY_ECDSA;
+			continue;
+		case ALGO_ECDSA_SHA2_384:	/* --ecdsa-sha2_384 */
+			auth_specified = TRUE;
+			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
+			msg.policy |= POLICY_ECDSA;
+			continue;
+		case ALGO_ECDSA_SHA2_512:	/* --ecdsa-sha2_512 */
+			auth_specified = TRUE;
+			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
+			msg.policy |= POLICY_ECDSA;
 			continue;
 
 		case CD_CONNIPV6:	/* --ipv6 */
@@ -2110,9 +2200,7 @@ int main(int argc, char **argv)
 				msg.xauthby = XAUTHBY_ALWAYSOK;
 				continue;
 			} else {
-				fprintf(stderr,
-					"whack: unknown xauthby method '%s' ignored\n",
-					optarg);
+				diagq("whack: unknown xauthby method", optarg);
 			}
 			continue;
 
@@ -2264,7 +2352,33 @@ int main(int argc, char **argv)
 		if (msg.policy & POLICY_IKEV1_ALLOW) {
 			diag("connection can no longer have --ikev1-allow and --ikev2-allow");
 		}
+	} else if (!(msg.policy & POLICY_IKEV1_ALLOW)) {
+		/* no ike version specified, default to IKEv2 */
+		msg.policy |= POLICY_IKEV2_ALLOW;
 	}
+
+	if (msg.policy & POLICY_IKEV1_ALLOW) {
+		if (msg.policy & POLICY_ECDSA)
+			diag("connection cannot specify --ecdsa and --ikev1-allow");
+		if (msg.sighash_policy != LEMPTY)
+			diag("connection cannot specify --ikev1-allow and --ecdsa-sha2 or --rsa-sha2");
+	} else {
+		if (msg.policy & POLICY_AGGRESSIVE)
+			diag("connection cannot specify --ikev2 and --aggressive");
+	}
+
+	if (!auth_specified) {
+		/* match the parser loading defaults to whack defaults */
+		msg.policy |= POLICY_RSASIG;
+		if (msg.policy & POLICY_IKEV2_ALLOW) {
+			msg.policy |= POLICY_RSASIG_v1_5;
+			msg.policy |= POLICY_ECDSA;
+			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
+			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
+			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
+		}
+	}
+
 
 	if (oppo_dport != 0)
 		setportof(htons(oppo_dport), &msg.oppo_peer_client);
