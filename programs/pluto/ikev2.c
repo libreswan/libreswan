@@ -1926,8 +1926,8 @@ void ikev2_process_packet(struct msg_digest *md)
 	if (ike == NULL) {
 		struct esb_buf ixb;
 		rate_log(md, "%s message %s has no corresponding IKE SA",
-			 v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response",
-			 enum_show_shortb(&ikev2_exchange_names, ix, &ixb));
+			 enum_show_shortb(&ikev2_exchange_names, ix, &ixb),
+			 v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");
 		return;
 	}
 
