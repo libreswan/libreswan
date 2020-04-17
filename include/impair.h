@@ -121,6 +121,9 @@ struct impair {
 	bool send_pkcs7_thingie;
 	bool ikev1_del_with_notify;
 	bool bad_ike_auth_xchg;
+	bool rekey_initiate_supernet;
+	bool rekey_respond_supernet;
+	bool rekey_respond_subnet;
 
 	bool tcp_use_blocking_write;
 	bool tcp_skip_setsockopt_espintcp;

@@ -206,20 +206,82 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 	return STF_OK;
 }
 
+static struct traffic_selector impair_ts_to_subnet(const struct traffic_selector *ts)
+{
+	struct traffic_selector ts_ret = *ts;
+
+	ts_ret.net.end = ts_ret.net.start;
+	ts_ret.net.is_subnet = true;
+
+	return ts_ret;
+}
+
+
+static struct traffic_selector impair_ts_to_supernet(const struct traffic_selector *ts)
+{
+	struct traffic_selector ts_ret = *ts;
+
+	if (ts_ret.ts_type == IKEv2_TS_IPV4_ADDR_RANGE) {
+		ts_ret.net = range_from_subnet(&ipv4_info.all_addresses);
+	} else if (ts_ret.ts_type == IKEv2_TS_IPV6_ADDR_RANGE) {
+		ts_ret.net = range_from_subnet(&ipv6_info.all_addresses);
+	}
+
+	ts_ret.net.is_subnet = true;
+
+	return ts_ret;
+}
+
 stf_status v2_emit_ts_payloads(const struct child_sa *child,
 			       pb_stream *outpbs,
 			       const struct connection *c0)
 {
 	const struct traffic_selector *ts_i, *ts_r;
+	struct traffic_selector ts_i_impaired, ts_r_impaired;
+
 
 	switch (child->sa.st_sa_role) {
 	case SA_INITIATOR:
 		ts_i = &child->sa.st_ts_this;
 		ts_r = &child->sa.st_ts_that;
+		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
+				impair.rekey_initiate_supernet) {
+			ts_i_impaired =  impair_ts_to_supernet(ts_i);
+			ts_i = ts_r =  &ts_i_impaired; /* supernet TSi = TSr = 0/0 */
+			range_buf tsi_buf;
+                        range_buf tsr_buf;
+			dbg("rekey-initiate-supernet TSi and TSr set to %s %s",
+					str_range(&ts_i->net, &tsi_buf),
+					str_range(&ts_r->net, &tsr_buf));
+
+		}
 		break;
 	case SA_RESPONDER:
 		ts_i = &child->sa.st_ts_that;
 		ts_r = &child->sa.st_ts_this;
+		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
+				impair.rekey_respond_subnet) {
+			ts_i_impaired =  impair_ts_to_subnet(ts_i);
+			ts_r_impaired =  impair_ts_to_subnet(ts_r);
+
+			ts_i = &ts_i_impaired;
+			ts_r = &ts_r_impaired;
+			range_buf tsi_buf;
+			range_buf tsr_buf;
+			dbg("rekey-respond-subnet TSi and TSr set to %s %s",
+					str_range(&ts_i->net, &tsi_buf),
+					str_range(&ts_r->net, &tsr_buf));
+		}
+		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
+				impair.rekey_respond_supernet) {
+			ts_i_impaired =  impair_ts_to_supernet(ts_i);
+			ts_i = ts_r =  &ts_i_impaired; /* supernet TSi = TSr = 0/0 */
+			range_buf tsi_buf;
+                        range_buf tsr_buf;
+			dbg("rekey-respond-supernet TSi and TSr set to %s %s",
+					str_range(&ts_i->net, &tsi_buf),
+					str_range(&ts_r->net, &tsr_buf));
+		}
 		break;
 	default:
 		bad_case(child->sa.st_sa_role);

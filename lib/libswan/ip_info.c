@@ -52,7 +52,6 @@ const struct ip_info ipv4_info = {
 	.mask_cnt = 32,
 	.no_addresses = { .addr = ANY_IPv4_ENDPOINT, .maskbits = 32, }, /* 0.0.0.0/32 */
 	.all_addresses = { .addr = ANY_IPv4_ENDPOINT, .maskbits = 0, }, /* 0.0.0.0/32 */
-
 	/* ike */
 	.ikev1_max_fragment_size = ISAKMP_V1_FRAG_MAXLEN_IPv4,
 	.ikev2_max_fragment_size = ISAKMP_V2_FRAG_MAXLEN_IPv4,
