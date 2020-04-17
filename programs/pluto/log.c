@@ -515,8 +515,9 @@ void jam_cur_prefix(struct jambuf *buf)
 
 	struct logger logger = cur_logger();
 	if (DBGP(DBG_BASE)) {
-		if (logger.object_vec == &logger_from_vec) {
-			jam(buf, "[EXPECTATION FAILED using cur_%s] ",
+		if (logger.object_vec == &logger_from_vec ||
+		    logger.object_vec == &logger_connection_vec) {
+			jam(buf, "LOGGING EXPECATATION FAILED: using cur_%s: ",
 			    logger.object_vec->name);
 		}
 	}
