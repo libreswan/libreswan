@@ -205,7 +205,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 
 	{ .story      = "Initiate CREATE_CHILD_SA IKE Rekey",
 	  .state      = STATE_V2_REKEY_IKE_I0,
-	  .next_state = STATE_V2_REKEY_IKE_I,
+	  .next_state = STATE_V2_REKEY_IKE_I1,
 	  .flags      = SMF2_MESSAGE_RESPONSE,
 	  .send = MESSAGE_REQUEST,
 	  .processor  = NULL,
@@ -216,7 +216,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	 */
 	{ .story      = "Initiate CREATE_CHILD_SA IPsec Rekey SA",
 	  .state      = STATE_V2_REKEY_CHILD_I0,
-	  .next_state = STATE_V2_REKEY_CHILD_I,
+	  .next_state = STATE_V2_REKEY_CHILD_I1,
 	  .flags =      SMF2_MESSAGE_RESPONSE,
 	  .send = MESSAGE_REQUEST,
 	  .processor  = NULL,
@@ -226,8 +226,8 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	 * HDR, SAi1, {KEi,} Ni TSi TSr -->
 	 */
 	{ .story      = "Initiate CREATE_CHILD_SA IPsec SA",
-	  .state      = STATE_V2_CREATE_I0,
-	  .next_state = STATE_V2_CREATE_I,
+	  .state      = STATE_V2_NEW_CHILD_I0,
+	  .next_state = STATE_V2_NEW_CHILD_I1,
 	  .flags =      SMF2_MESSAGE_RESPONSE,
 	  .send = MESSAGE_REQUEST,
 	  .processor  = NULL,
@@ -411,7 +411,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .timeout_event = EVENT_SA_REPLACE },
 
 	{ .story      = "Process CREATE_CHILD_SA IKE Rekey Response",
-	  .state      = STATE_V2_REKEY_IKE_I,
+	  .state      = STATE_V2_REKEY_IKE_I1,
 	  .next_state = STATE_PARENT_I3,
 	  .flags      = SMF2_MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
@@ -432,7 +432,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	 * [V+][N+]
 	 */
 	{ .story      = "Process CREATE_CHILD_SA IPsec SA Response",
-	  .state      = STATE_V2_CREATE_I,
+	  .state      = STATE_V2_NEW_CHILD_I1,
 	  .next_state = STATE_V2_IPSEC_I,
 	  .flags      = SMF2_MESSAGE_RESPONSE | SMF2_ESTABLISHED,
 	  .req_clear_payloads = P(SK),
@@ -448,7 +448,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	 */
 
 	{ .story      = "Respond to CREATE_CHILD_SA IPsec SA Request",
-	  .state      = STATE_V2_CREATE_R0,
+	  .state      = STATE_V2_NEW_CHILD_R0,
 	  .next_state = STATE_V2_IPSEC_R,
 	  .flags      = SMF2_MESSAGE_REQUEST | SMF2_ESTABLISHED,
 	  .send = MESSAGE_RESPONSE,
@@ -988,7 +988,7 @@ static struct child_sa *process_v2_child_ix(struct ike_sa *ike,
 	 * XXX: Still a mess.  Should call processor with the IKE SA.
 	 * The processor can then create a nested state.
 	 */
-	enum sa_type sa_type = (svm->state == STATE_V2_CREATE_R0 ? IPSEC_SA :
+	enum sa_type sa_type = (svm->state == STATE_V2_NEW_CHILD_R0 ? IPSEC_SA :
 				svm->state == STATE_V2_REKEY_CHILD_R0 ? IPSEC_SA :
 				pexpect(svm->state == STATE_V2_REKEY_IKE_R0) ? IKE_SA :
 				IKE_SA);
@@ -2929,7 +2929,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	v2_msgid_schedule_next_initiator(ike);
 
 	if (from_state == STATE_V2_REKEY_IKE_R0 ||
-	    from_state == STATE_V2_REKEY_IKE_I) {
+	    from_state == STATE_V2_REKEY_IKE_I1) {
 		ikev2_child_emancipate(ike, pexpect_child_sa(st),
 				       transition);
 	} else  {
@@ -3103,7 +3103,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		 */
 		if (nat_traversal_enabled &&
 		    from_state != STATE_PARENT_I0 &&
-		    from_state != STATE_V2_CREATE_I0 &&
+		    from_state != STATE_V2_NEW_CHILD_I0 &&
 		    from_state != STATE_V2_REKEY_CHILD_I0 &&
 		    from_state != STATE_V2_REKEY_IKE_I0 &&
 		    from_state != STATE_PARENT_R0 &&

@@ -1182,7 +1182,7 @@ bool v2_process_ts_response(struct child_sa *child,
 bool child_rekey_ts_verify(struct child_sa *child, struct msg_digest *md)
 {
 	if (!pexpect(child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 ||
-		     child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I)) {
+		     child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I1)) {
 		return false;
 	}
 

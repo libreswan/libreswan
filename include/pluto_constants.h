@@ -537,20 +537,20 @@ enum state_kind {
 
 	/* IKEv2 CREATE_CHILD_SA Initiator states */
 
-	STATE_V2_CREATE_I0,		/* larval: sent nothing yet */
-	STATE_V2_CREATE_I,		/* sent first message of CREATE_CHILD new IPsec */
+	STATE_V2_NEW_CHILD_I0,		/* larval: sent nothing yet */
+	STATE_V2_NEW_CHILD_I1,		/* sent first message of CREATE_CHILD new IPsec */
 
 	STATE_V2_REKEY_IKE_I0,		/* larval: sent nothing yet */
-	STATE_V2_REKEY_IKE_I,		/* sent first message (via parrenti) to rekey parent */
+	STATE_V2_REKEY_IKE_I1,		/* sent first message (via parrenti) to rekey parent */
 
 	STATE_V2_REKEY_CHILD_I0,	/* larval: sent nothing yet */
-	STATE_V2_REKEY_CHILD_I,		/* sent first message (via parent to rekey child sa. */
+	STATE_V2_REKEY_CHILD_I1,	/* sent first message (via parent to rekey child sa. */
 
 	STATE_V2_IPSEC_I,		/* IPsec SA final state - CREATE_CHILD & AUTH */
 
 	/* IKEv2 CREATE_CHILD_SA Responder states */
 
-	STATE_V2_CREATE_R0,		/* larval: sent nothing yet. */
+	STATE_V2_NEW_CHILD_R0,		/* larval: sent nothing yet. */
 	STATE_V2_REKEY_IKE_R0,		/* larval: sent nothing yet terminal state STATE_PARENT_R2 */
 	STATE_V2_REKEY_CHILD_R0,	/* larval: sent nothing yet. */
 
@@ -700,9 +700,9 @@ extern struct keywords sa_role_names;
 
 #define IS_ISAKMP_SA_ESTABLISHED(s) ((LELEM(s->kind) & ISAKMP_SA_ESTABLISHED_STATES) != LEMPTY)
 
-#define IPSECSA_PENDING_STATES (LELEM(STATE_V2_CREATE_I) | \
-				LELEM(STATE_V2_CREATE_I0) | \
-				LELEM(STATE_V2_CREATE_R0) | \
+#define IPSECSA_PENDING_STATES (LELEM(STATE_V2_NEW_CHILD_I1) | \
+				LELEM(STATE_V2_NEW_CHILD_I0) | \
+				LELEM(STATE_V2_NEW_CHILD_R0) | \
 	/* due to a quirk in initiator duplication next one is also needed */ \
 				LELEM(STATE_PARENT_I2))
 

@@ -54,7 +54,7 @@ west #
  # test rekey
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #3: STATE_V2_CREATE_I: sent IPsec Child req wait response
+1v2 "westnet-eastnet-ipv4-psk-ikev2" #3: STATE_V2_NEW_CHILD_I1: sent IPsec Child req wait response
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ipv4-psk-ikev2" #3: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #

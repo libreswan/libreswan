@@ -93,7 +93,7 @@ west #
  ipsec status | grep STATE_
 000 #1: "west":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
 000 #3: "west":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #4: "west":500 STATE_V2_REKEY_CHILD_I (STATE_V2_REKEY_CHILD_I); EVENT_RETRANSMIT in XXs; idle;
+000 #4: "west":500 STATE_V2_REKEY_CHILD_I1 (STATE_V2_REKEY_CHILD_I1); EVENT_RETRANSMIT in XXs; idle;
 000 #5: "west":500 STATE_V2_REKEY_CHILD_I0 (STATE_V2_REKEY_CHILD_I0); EVENT_SA_REPLACE in XXs; crypto/dns-lookup;
 west #
  echo done

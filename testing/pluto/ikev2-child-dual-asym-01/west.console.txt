@@ -29,7 +29,7 @@ west #
 004 "one" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --up two
-1v2 "two" #3: STATE_V2_CREATE_I: sent IPsec Child req wait response
+1v2 "two" #3: STATE_V2_NEW_CHILD_I1: sent IPsec Child req wait response
 002 "two" #3: negotiated connection [192.1.2.45-192.1.2.45:0-65535 17] -> [192.1.2.23-192.1.2.23:6081-6081 17]
 004 "two" #3: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
 west #

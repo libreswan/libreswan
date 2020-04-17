@@ -54,7 +54,7 @@ west #
 004 "westnet-eastnet-vti-01" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --up westnet-eastnet-vti-02
-1v2 "westnet-eastnet-vti-02" #3: STATE_V2_CREATE_I: sent IPsec Child req wait response
+1v2 "westnet-eastnet-vti-02" #3: STATE_V2_NEW_CHILD_I1: sent IPsec Child req wait response
 002 "westnet-eastnet-vti-02" #3: up-client output: vti interface "ipsec0" already exists with conflicting setting
 002 "westnet-eastnet-vti-02" #3: up-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
 002 "westnet-eastnet-vti-02" #3: up-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
