@@ -1,0 +1,9 @@
+Test that auto=add connections with authby=rsasig load the same config
+as whack using --rsasig
+
+It also tests authby=rsa-sha1 verus whack --rsa-sha1
+
+It compares the defaults for when no algos and no ikev2 version is specified.
+
+It also checks the ecdsa values.
+
