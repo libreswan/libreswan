@@ -5641,43 +5641,6 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 	return STF_OK;
 }
 
-stf_status ikev2_send_livenss_probe(struct state *st)
-{
-	struct ike_sa *ike = ike_sa(st);
-	if (ike == NULL) {
-		DBG(DBG_CONTROL,
-		    DBG_log("IKE SA does not exist for this child SA - should not happen"));
-		DBG(DBG_CONTROL,
-		    DBG_log("INFORMATIONAL exchange cannot be sent"));
-		return STF_IGNORE;
-	}
-
-	/*
-	 * XXX: What does it mean to send a liveness probe for a CHILD
-	 * SA?  Since the packet contents are empty there's nothing
-	 * for the other end to identify which child this is for!
-	 *
-	 * XXX: See record 'n'_send for how screwed up all this is:
-	 * need to pass in the CHILD SA so that it's liveness
-	 * timestamp (and not the IKE) gets updated.
-	 */
-	stf_status e = record_v2_informational_request("liveness probe informational request",
-						       ike, st/*sender*/,
-						       NULL /* beast master */);
-	pstats_ike_dpd_sent++;
-	if (e == STF_OK) {
-		send_recorded_v2_ike_msg(st, "liveness probe informational request");
-		/*
-		 * XXX: record 'n' send violates the RFC.  This code should
-		 * instead let success_v2_state_transition() deal with things.
-		 */
-		dbg_v2_msgid(ike, st, "XXX: in %s() hacking around record'n'send bypassing send queue",
-			     __func__);
-		v2_msgid_update_sent(ike, &ike->sa, NULL /* new exchange */, MESSAGE_REQUEST);
-	}
-	return e;
-}
-
 #ifdef NETKEY_SUPPORT
 static payload_master_t add_mobike_payloads;
 static bool add_mobike_payloads(struct state *st, pb_stream *pbs)
