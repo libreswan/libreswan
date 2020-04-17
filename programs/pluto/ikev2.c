@@ -1473,7 +1473,6 @@ void ikev2_process_packet(struct msg_digest *md)
 	 * request due to cookies) then a new IKE SA is created.
 	 */
 
-	struct ike_sa *ike;
 	if (ix == ISAKMP_v2_IKE_SA_INIT) {
 		/*
 		 * The message ID of the initial exchange is always
@@ -1617,21 +1616,22 @@ void ikev2_process_packet(struct msg_digest *md)
 			 * cleenly - let the duplicate code drop the
 			 * packet.
 			 */
-			ike = find_v2_ike_sa_by_initiator_spi(&md->hdr.isa_ike_initiator_spi,
-							      expected_local_ike_role);
-			if (ike != NULL) {
+			struct ike_sa *old =
+				find_v2_ike_sa_by_initiator_spi(&md->hdr.isa_ike_initiator_spi,
+								expected_local_ike_role);
+			if (old != NULL) {
 				intmax_t msgid = md->hdr.isa_msgid;
 				pexpect(msgid == 0); /* per above */
 				/* XXX: keep test results happy */
 				if (md->fake_clone) {
-					log_state(RC_LOG, &ike->sa, "IMPAIR: processing a fake (cloned) message");
+					log_state(RC_LOG, &old->sa, "IMPAIR: processing a fake (cloned) message");
 				}
-				if (verbose_state_busy(&ike->sa)) {
+				if (verbose_state_busy(&old->sa)) {
 					/* already logged */;
-				} else if (ike->sa.st_state->kind == STATE_PARENT_R1 &&
-					   ike->sa.st_v2_msgid_windows.responder.recv == 0 &&
-					   ike->sa.st_v2_msgid_windows.responder.sent == 0 &&
-					   hunk_eq(ike->sa.st_firstpacket_him,
+				} else if (old->sa.st_state->kind == STATE_PARENT_R1 &&
+					   old->sa.st_v2_msgid_windows.responder.recv == 0 &&
+					   old->sa.st_v2_msgid_windows.responder.sent == 0 &&
+					   hunk_eq(old->sa.st_firstpacket_him,
 						   pbs_in_as_shunk(&md->message_pbs))) {
 					/*
 					 * It looks a lot like a shiny
@@ -1644,11 +1644,11 @@ void ikev2_process_packet(struct msg_digest *md)
 					 * is_duplicate_request() -
 					 * keep test results happy.
 					 */
-					log_state(RC_LOG, &ike->sa,
+					log_state(RC_LOG, &old->sa,
 						  "received duplicate %s message request (Message ID %jd); retransmitting response",
 						  enum_short_name(&ikev2_exchange_names, md->hdr.isa_xchg),
 						  msgid);
-					send_recorded_v2_ike_msg(&ike->sa, "IKE_SA_INIT responder retransmit");
+					send_recorded_v2_ike_msg(&old->sa, "IKE_SA_INIT responder retransmit");
 				} else {
 					/*
 					 * Either:
@@ -1671,9 +1671,9 @@ void ikev2_process_packet(struct msg_digest *md)
 					 * is_duplicate_request() -
 					 * keep test results happy.
 					 */
-					log_state(RC_LOG, &ike->sa,
+					log_state(RC_LOG, &old->sa,
 						  "received too old retransmit: %jd < %jd",
-						  msgid, ike->sa.st_v2_msgid_windows.responder.sent);
+						  msgid, old->sa.st_v2_msgid_windows.responder.sent);
 				}
 				return;
 			}
@@ -1798,10 +1798,10 @@ void ikev2_process_packet(struct msg_digest *md)
 			 * presumably, dedicating real resources to
 			 * the connection.
 			 */
-			ike = new_v2_ike_state(transition, SA_RESPONDER,
-					       md->hdr.isa_ike_spis.initiator,
-					       ike_responder_spi(&md->sender),
-					       c, policy, 0, null_fd);
+			struct ike_sa *ike = new_v2_ike_state(transition, SA_RESPONDER,
+							      md->hdr.isa_ike_spis.initiator,
+							      ike_responder_spi(&md->sender),
+							      c, policy, 0, null_fd);
 
 			statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
 			/* XXX: keep test results happy */
@@ -1849,8 +1849,9 @@ void ikev2_process_packet(struct msg_digest *md)
 			 * contain an as yet unknown but non-zero SPIr
 			 * so looking for it won't work.
 			 */
-			ike = find_v2_ike_sa_by_initiator_spi(&md->hdr.isa_ike_initiator_spi,
-							      expected_local_ike_role);
+			struct ike_sa *ike =
+				find_v2_ike_sa_by_initiator_spi(&md->hdr.isa_ike_initiator_spi,
+								expected_local_ike_role);
 			if (ike == NULL) {
 				/*
 				 * There should be a state matching
@@ -1908,48 +1909,31 @@ void ikev2_process_packet(struct msg_digest *md)
 			bad_case(v2_msg_role(md));
 		}
 
-	} else if (v2_msg_role(md) == MESSAGE_REQUEST) {
-		/*
-		 * A (possibly new) request; start with the IKE SA
-		 * with matching SPIs.  If it is a new CHILD SA
-		 * request then the state machine will will morph ST
-		 * into a child state before dispatching.
-		 *
-		 * XXX: what about a request that's already
-		 * in-progress?
-		 */
-		ike = find_v2_ike_sa(&md->hdr.isa_ike_spis,
-				     expected_local_ike_role);
-		if (ike == NULL) {
-			struct esb_buf ixb;
-			rate_log(md, "%s message request has no corresponding IKE SA",
-				 enum_show_shortb(&ikev2_exchange_names,
-						  ix, &ixb));
-			return;
-		}
-	} else if (v2_msg_role(md) == MESSAGE_RESPONSE) {
-		/*
-		 * A response to this ends request.  First find the
-		 * IKE SA and then, within that group, find the
-		 * initiator (it might also be the IKE SA but it might
-		 * not).
-		 */
-		ike = find_v2_ike_sa(&md->hdr.isa_ike_spis,
-				     expected_local_ike_role);
-		if (ike == NULL) {
-			/* technically IKE or CHILD SA */
-			rate_log(md, "%s message response has no matching IKE SA",
-				 enum_name(&ikev2_exchange_names, ix));
-			return;
-		}
-	} else {
-		PASSERT_FAIL("message role %d invalid", v2_msg_role(md));
+	}
+
+	passert(v2_msg_role(md) == MESSAGE_REQUEST ||
+		v2_msg_role(md) == MESSAGE_RESPONSE);
+
+	/*
+	 * Find the IKE SA with matching SPIs.
+	 *
+	 * The IKE SA's Message IDs can then be used to determine if
+	 * the message fits in the message window (new request,
+	 * expected response, or old message).
+	 */
+	struct ike_sa *ike = find_v2_ike_sa(&md->hdr.isa_ike_spis,
+					    expected_local_ike_role);
+	if (ike == NULL) {
+		struct esb_buf ixb;
+		rate_log(md, "%s message %s has no corresponding IKE SA",
+			 v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response",
+			 enum_show_shortb(&ikev2_exchange_names, ix, &ixb));
+		return;
 	}
 
 	/*
 	 * There's at least an IKE SA, and possibly ST willing to
-	 * process the message.  Backdate billing to when the message
-	 * first arrived.
+	 * process the message.
 	 */
 	passert(ike != NULL);
 
@@ -2052,28 +2036,28 @@ static void ike_process_packet(struct msg_digest *md, struct ike_sa *ike)
 	push_cur_state(st);
 
 	/*
-	 * If not already done above in the IKE_SA_INIT responder code
-	 * path, decode the packet now.
+	 * Have a state an and IKE SA, time to decode the payloads.
 	 */
-	if (!md->message_payloads.parsed) {
-		dbg("unpacking clear payload");
-		pexpect(v2_msg_role(md) == MESSAGE_RESPONSE ||
-			md->hdr.isa_xchg != ISAKMP_v2_IKE_SA_INIT);
-		md->message_payloads =
-			ikev2_decode_payloads(st->st_logger, md, &md->message_pbs,
-					      md->hdr.isa_np);
-		if (md->message_payloads.n != v2N_NOTHING_WRONG) {
-			/*
-			 * Should only respond when the message is an
-			 * IKE_SA_INIT request.  But that was handled
-			 * above when dealing with cookies so here,
-			 * there's zero reason to respond.
-			 *
-			 * decode calls packet code and that logs
-			 * errors on the spot
-			 */
-			return;
-		}
+	dbg("unpacking clear payload");
+	passert(!md->message_payloads.parsed);
+	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE ||
+		md->hdr.isa_xchg != ISAKMP_v2_IKE_SA_INIT);
+	md->message_payloads =
+		ikev2_decode_payloads(st->st_logger, md,
+				      &md->message_pbs,
+				      md->hdr.isa_np);
+	if (md->message_payloads.n != v2N_NOTHING_WRONG) {
+		/*
+		 * Should only respond when the message is an
+		 * IKE_SA_INIT request.  But that was handled above
+		 * when dealing with cookies so here, there's zero
+		 * reason to respond.
+		 *
+		 * decode calls packet code and that logs errors on
+		 * the spot
+		 */
+		/* already logged */
+		return;
 	}
 
 	ikev2_process_state_packet(ike, st, md);
