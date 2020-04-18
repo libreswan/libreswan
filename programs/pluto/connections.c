@@ -309,8 +309,10 @@ static void discard_connection(struct connection *c,
 	pfree(c);
 }
 
-int foreach_connection_by_alias(const char *alias,
-				int (*f)(struct connection *c, void *arg),
+int foreach_connection_by_alias(const char *alias, struct fd *whackfd,
+				int (*f)(struct connection *c,
+					 struct fd *whackfd,
+					 void *arg),
 				void *arg)
 {
 	struct connection *p, *pnext;
@@ -321,12 +323,14 @@ int foreach_connection_by_alias(const char *alias,
 		pnext = p->ac_next;
 
 		if (lsw_alias_cmp(alias, p->connalias))
-			count += (*f)(p, arg);
+			count += (*f)(p, whackfd, arg);
 	}
 	return count;
 }
 
-static int delete_connection_wrap(struct connection *c, void *arg)
+static int delete_connection_wrap(struct connection *c,
+				  struct fd *unused_whackfd UNUSED,
+				  void *arg)
 {
 	bool *barg = (bool *)arg;
 
@@ -337,13 +341,15 @@ static int delete_connection_wrap(struct connection *c, void *arg)
 /* Delete connections with the specified name */
 void delete_connections_by_name(const char *name, bool strict)
 {
+	struct fd *whackfd = whack_log_fd; /* placeholder */
 	bool f = FALSE;
 
 	passert(name != NULL);
 	struct connection *c = conn_by_name(name, strict);
 
 	if (c == NULL) {
-		(void)foreach_connection_by_alias(name, delete_connection_wrap,
+		(void)foreach_connection_by_alias(name, whackfd,
+						  delete_connection_wrap,
 						  &f);
 	} else {
 		for (; c != NULL; c = conn_by_name(name, false/*!strict*/))

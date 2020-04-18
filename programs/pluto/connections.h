@@ -557,7 +557,9 @@ void connection_check_phase2(void);
 void init_connections(void);
 
 extern int foreach_connection_by_alias(const char *alias,
+				       struct fd *whackfd,
 				       int (*f)(struct connection *c,
+						struct fd *whackfd,
 						void *arg),
 				       void *arg);
 

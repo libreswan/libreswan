@@ -51,7 +51,9 @@ static void rekey_by_conn(struct connection *c, enum sa_type sa_type)
 	}
 }
 
-static int rekey_connection_now(struct connection *c,  void *arg)
+static int rekey_connection_now(struct connection *c,
+				struct fd *unused_whackfd UNUSED,
+				void *arg)
 {
 	enum sa_type sa_type = *(enum sa_type *)arg;
 	int ret = 0;
@@ -74,6 +76,7 @@ static int rekey_connection_now(struct connection *c,  void *arg)
 
 void rekey_now(const char *str, enum sa_type sa_type)
 {
+	struct fd *whackfd = whack_log_fd; /* placeholder */
 	/*
 	 * Loop because more than one may match (master and instances)
 	 * But at least one is required (enforced by conn_by_name).
@@ -95,12 +98,14 @@ void rekey_now(const char *str, enum sa_type sa_type)
 				if (streq(c->name, str) &&
 				    c->kind >= CK_PERMANENT &&
 				    !NEVER_NEGOTIATE(c->policy)) {
-					(void)rekey_connection_now(c, &sa_type);
+					rekey_connection_now(c, whackfd, &sa_type);
 				}
 				c = c->ac_next;
 			}
 		} else {
-			int count = foreach_connection_by_alias(str, rekey_connection_now, &sa_type);
+			int count = foreach_connection_by_alias(str, whackfd,
+								rekey_connection_now,
+								&sa_type);
 			if (count == 0) {
 				loglog(RC_UNKNOWN_NAME, "no such connection or aliased connection named \"%s\"", str);
 			} else {

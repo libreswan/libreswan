@@ -89,9 +89,9 @@
 #include "pluto_stats.h"
 
 static int whack_route_connection(struct connection *c,
-				  void *arg)
+				  struct fd *whackfd,
+				  void *unused_arg UNUSED)
 {
-	struct fd *whackfd = arg;
 	struct connection *old = push_cur_connection(c);
 
 	if (!oriented(*c)) {
@@ -109,9 +109,9 @@ static int whack_route_connection(struct connection *c,
 }
 
 static int whack_unroute_connection(struct connection *c,
-				    void *arg)
+				    struct fd *whackfd,
+				    void *unused_arg UNUSED)
 {
-	struct fd *whackfd = arg;
 	const struct spd_route *sr;
 	int fail = 0;
 
@@ -446,10 +446,10 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 			struct connection *c = conn_by_name(m->name, true/*strict*/);
 
 			if (c != NULL) {
-				whack_route_connection(c, whackfd);
-			} else if (0 == foreach_connection_by_alias(m->name,
+				whack_route_connection(c, whackfd, NULL);
+			} else if (0 == foreach_connection_by_alias(m->name, whackfd,
 								    whack_route_connection,
-								    whackfd)) {
+								    NULL)) {
 				whack_log(RC_ROUTE, whackfd,
 					  "no connection or alias '%s'",
 					  m->name);
@@ -462,10 +462,10 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 
 		struct connection *c = conn_by_name(m->name, true/*strict*/);
 		if (c != NULL) {
-			whack_unroute_connection(c, whackfd);
-		} else if (0 == foreach_connection_by_alias(m->name,
+			whack_unroute_connection(c, whackfd, NULL);
+		} else if (0 == foreach_connection_by_alias(m->name, whackfd,
 							    whack_unroute_connection,
-							    whackfd)) {
+							    NULL)) {
 			whack_log(RC_ROUTE, whackfd,
 				  "no connection or alias '%s'",
 				  m->name);

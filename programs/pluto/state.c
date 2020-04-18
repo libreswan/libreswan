@@ -2471,9 +2471,9 @@ static struct state **sort_states(int (*sort_fn)(const void *, const void *),
 	return array;
 }
 
-static int whack_log_newest_state_traffic(struct connection *c, void *arg)
+static int whack_log_newest_state_traffic(struct connection *c, struct fd *whackfd,
+					  void *unused_arg UNUSED)
 {
-	struct fd *whackfd = arg;
 	struct state *st = state_by_serialno(c->newest_ipsec_sa);
 
 	if (st == NULL)
@@ -2483,7 +2483,7 @@ static int whack_log_newest_state_traffic(struct connection *c, void *arg)
 	return 1;
 }
 
-void show_traffic_status(const struct fd *whackfd, const char *name)
+void show_traffic_status(struct fd *whackfd, const char *name)
 {
 	if (name == NULL) {
 		struct state **array = sort_states(state_compare_serial,
@@ -2504,12 +2504,12 @@ void show_traffic_status(const struct fd *whackfd, const char *name)
 
 		if (c != NULL) {
 			/* cast away const sillyness */
-			whack_log_newest_state_traffic(c, (void*)whackfd);
+			whack_log_newest_state_traffic(c, whackfd, NULL);
 		} else {
 			/* cast away const sillyness */
-			int count = foreach_connection_by_alias(name,
+			int count = foreach_connection_by_alias(name, whackfd,
 								whack_log_newest_state_traffic,
-								(void*)whackfd);
+								NULL);
 			if (count == 0) {
 				whack_log(RC_UNKNOWN_NAME, whackfd,
 					  "no such connection or aliased connection named \"%s\"", name);

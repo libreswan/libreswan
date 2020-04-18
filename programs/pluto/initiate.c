@@ -171,7 +171,6 @@ bool orient(struct connection *c)
 }
 
 struct initiate_stuff {
-	struct fd *whackfd;
 	bool background;
 	const char *remote_host;
 };
@@ -360,11 +359,11 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 	return 1;
 }
 
-static int initiate_a_connection(struct connection *c, void *arg)
+static int initiate_a_connection(struct connection *c, struct fd *whackfd, void *arg)
 {
 	const struct initiate_stuff *is = arg;
 	return initiate_connection(c, is->remote_host,
-				   is->whackfd, is->background) ? 1 : 0;
+				   whackfd, is->background) ? 1 : 0;
 }
 
 void initiate_connections_by_name(const char *name, const char *remote_host,
@@ -383,11 +382,10 @@ void initiate_connections_by_name(const char *name, const char *remote_host,
 
 	loglog_global(RC_COMMENT, whackfd, "initiating all conns with alias='%s'", name);
 	struct initiate_stuff is = {
-		.whackfd = whackfd, /*on-stack*/
 		.background = background,
 		.remote_host = remote_host,
 	};
-	int count = foreach_connection_by_alias(name, initiate_a_connection, &is);
+	int count = foreach_connection_by_alias(name, whackfd, initiate_a_connection, &is);
 
 	if (count == 0) {
 		loglog_global(RC_UNKNOWN_NAME, whackfd,
@@ -1113,6 +1111,7 @@ void connection_check_ddns(void)
  */
 void connection_check_phase2(void)
 {
+	struct fd *whackfd = whack_log_fd; /* placeholder */
 	struct connection *c, *cnext;
 
 	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
@@ -1168,10 +1167,9 @@ void connection_check_phase2(void)
 			} else {
 				/* start a new connection. Something wanted it up */
 				struct initiate_stuff is = {
-					.whackfd = null_fd/*on-stack*/,
 					.remote_host = NULL,
 				};
-				initiate_a_connection(c, &is);
+				initiate_a_connection(c, whackfd, &is);
 			}
 		}
 	}

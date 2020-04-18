@@ -64,23 +64,26 @@
 
 #include "hostpair.h"
 
-static int terminate_a_connection(struct connection *c, void *arg UNUSED)
+static int terminate_a_connection(struct connection *c, struct fd *whackfd,
+				  void *unused_arg UNUSED)
 {
 	set_cur_connection(c);
-	libreswan_log("terminating SAs using this connection");
+	log_connection(RC_LOG, whackfd, c,
+		       "terminating SAs using this connection");
 	dbg("connection '%s' -POLICY_UP", c->name);
 	c->policy &= ~POLICY_UP;
 	flush_pending_by_connection(c);
 
 	if (shared_phase1_connection(c)) {
-		libreswan_log("IKE SA is shared - only terminating IPsec SA");
+		log_connection(RC_LOG, whackfd, c,
+			       "IKE SA is shared - only terminating IPsec SA");
 		if (c->newest_ipsec_sa != SOS_NOBODY) {
 			struct state *st = state_with_serialno(c->newest_ipsec_sa);
 			set_cur_state(st);
 			delete_state(st);
 		}
 	} else {
-		DBG(DBG_CONTROL, DBG_log("connection not shared - terminating IKE and IPsec SA"));
+		dbg("connection not shared - terminating IKE and IPsec SA");
 		delete_states_by_connection(c, FALSE);
 	}
 
@@ -91,6 +94,7 @@ static int terminate_a_connection(struct connection *c, void *arg UNUSED)
 
 void terminate_connection(const char *name, bool quiet)
 {
+	struct fd *whackfd = whack_log_fd; /* placeholder */
 	/*
 	 * Loop because more than one may match (master and instances)
 	 * But at least one is required (enforced by conn_by_name).
@@ -105,11 +109,11 @@ void terminate_connection(const char *name, bool quiet)
 			if (streq(c->name, name) &&
 			    c->kind >= CK_PERMANENT &&
 			    !NEVER_NEGOTIATE(c->policy))
-				(void) terminate_a_connection(c, NULL);
+				(void) terminate_a_connection(c, whackfd, NULL);
 			c = n;
 		}
 	} else {
-		int count = foreach_connection_by_alias(name, terminate_a_connection, NULL);
+		int count = foreach_connection_by_alias(name, whackfd, terminate_a_connection, NULL);
 		if (count == 0) {
 			if (!quiet)
 				loglog(RC_UNKNOWN_NAME,

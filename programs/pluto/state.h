@@ -874,7 +874,7 @@ extern void initialize_new_state(struct state *st,
 				 lset_t policy,
 				 int try);
 
-extern void show_traffic_status(const struct fd *whackfd, const char *name);
+extern void show_traffic_status(struct fd *whackfd, const char *name);
 extern void show_brief_status(const struct fd *whackfd);
 extern void show_states(struct show *s);
 
