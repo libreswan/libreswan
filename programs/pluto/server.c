@@ -1099,8 +1099,9 @@ static void childhandler_cb(void)
 					struct msg_digest *md = unsuspend_md(st);
 					if (DBGP(DBG_CPU_USAGE)) {
 						deltatime_t took = monotimediff(mononow(), pid_entry->start_time);
-						DBG_log("#%lu waited "PRI_DELTATIME" for '%s' fork()",
-							st->st_serialno, pri_deltatime(took),
+						deltatime_buf dtb;
+						DBG_log("#%lu waited %s for '%s' fork()",
+							st->st_serialno, str_deltatime(took, &dtb),
 							pid_entry->name);
 					}
 					statetime_t start = statetime_start(st);

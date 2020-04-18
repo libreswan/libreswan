@@ -95,14 +95,4 @@ const char *str_deltatime(deltatime_t d, deltatime_buf *buf);
 size_t jam_deltatime(jambuf_t *buf, deltatime_t d);
 #define lswlog_deltatime jam_deltatime /* XXX: TBD */
 
-/* jam_deltatime() */
-
-/*
- * legacy.
- */
-
-/* But what about -ve? */
-#define PRI_DELTATIME "%jd.%03jd"
-#define pri_deltatime(D) (deltamillisecs(D) / 1000), (deltamillisecs(D) % 1000)
-
 #endif

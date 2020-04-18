@@ -888,25 +888,25 @@ static void delete_state_log(struct state *st, struct state *cur_state)
 		* Don't log state and connection if it is the same as
 		* the message prefix.
 		*/
-		libreswan_log("deleting state (%s) aged "PRI_DELTATIME"s and %ssending notification",
-			st->st_state->name,
-			pri_deltatime(realtimediff(realnow(), st->st_inception)),
-			del_notify ? "" : "NOT ");
+		deltatime_buf dtb;
+		libreswan_log("deleting state (%s) aged %ss and %ssending notification",
+			      st->st_state->name,
+			      str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
+			      del_notify ? "" : "NOT ");
 	} else if (cur_state != NULL && cur_state->st_connection == st->st_connection) {
-		libreswan_log("deleting other state #%lu (%s) aged "PRI_DELTATIME"s and %ssending notification",
-			st->st_serialno,
-			st->st_state->name,
-			pri_deltatime(realtimediff(realnow(), st->st_inception)),
-			del_notify ? "" : "NOT ");
+		deltatime_buf dtb;
+		libreswan_log("deleting other state #%lu (%s) aged %ss and %ssending notification",
+			      st->st_serialno, st->st_state->name,
+			      str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
+			      del_notify ? "" : "NOT ");
 	} else {
-		char cib[CONN_INST_BUF];
-		libreswan_log("deleting other state #%lu connection (%s) \"%s\"%s aged "PRI_DELTATIME"s and %ssending notification",
-			st->st_serialno,
-			st->st_state->name,
-			c->name,
-			fmt_conn_instance(c, cib),
-			pri_deltatime(realtimediff(realnow(), st->st_inception)),
-			del_notify ? "" : "NOT ");
+		deltatime_buf dtb;
+		connection_buf cib;
+		libreswan_log("deleting other state #%lu connection (%s) "PRI_CONNECTION" aged %ss and %ssending notification",
+			      st->st_serialno, st->st_state->name,
+			      pri_connection(c, &cib),
+			      str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
+			      del_notify ? "" : "NOT ");
 	}
 
 	dbg("%s state #%lu: %s(%s) => delete",

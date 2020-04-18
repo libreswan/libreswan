@@ -338,9 +338,9 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		 */
 		passert(st != NULL);
 		deltatime_t timeout = (st->st_ike_version == IKEv2) ? deltatime(MAXIMUM_RESPONDER_WAIT) : st->st_connection->r_timeout;
-
-		libreswan_log("deleting incomplete state after "PRI_DELTATIME" seconds",
-			      pri_deltatime(timeout));
+		deltatime_buf dtb;
+		libreswan_log("deleting incomplete state after %s seconds",
+			      str_deltatime(timeout, &dtb));
 		/*
 		 * If no other reason has been given then this is a
 		 * timeout.
