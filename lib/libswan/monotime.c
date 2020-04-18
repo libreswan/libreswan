@@ -75,12 +75,19 @@ intmax_t monosecs(monotime_t m)
 	return m.mt.tv_sec;
 }
 
-monotime_t monotimesum(monotime_t t, deltatime_t d)
+monotime_t monotime_add(monotime_t t, deltatime_t d)
 {
-	intmax_t d_ms = deltamillisecs(d);
-	struct timeval dt = { d_ms / 1000, d_ms % 1000 };
+	struct timeval dt = deltatimeval(d);
 	monotime_t s = MONOTIME_EPOCH;
 	timeradd(&t.mt, &dt, &s.mt);
+	return s;
+}
+
+monotime_t monotime_sub(monotime_t t, deltatime_t d)
+{
+	struct timeval dt = deltatimeval(d);
+	monotime_t s = MONOTIME_EPOCH;
+	timersub(&t.mt, &dt, &s.mt);
 	return s;
 }
 

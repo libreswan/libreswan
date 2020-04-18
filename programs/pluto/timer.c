@@ -219,7 +219,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 				dbg("not replacing stale %s SA %lu; #%lu will do",
 				    satype, st->st_serialno, newer_sa);
 			} else if (type == EVENT_v1_SA_REPLACE_IF_USED &&
-				   !monobefore(mononow(), monotimesum(st->st_outbound_time, c->sa_rekey_margin))) {
+				   !monobefore(mononow(), monotime_add(st->st_outbound_time, c->sa_rekey_margin))) {
 				/*
 				 * we observed no recent use: no need to replace
 				 *
@@ -455,7 +455,7 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 	ev->ev_name = en;
 	ev->ev_state = st;
 
-	ev->ev_time = monotimesum(mononow(), delay);
+	ev->ev_time = monotime_add(mononow(), delay);
 
 	/*
 	 * Put a pointer to the event in the state object, so we can

@@ -66,6 +66,9 @@ deltatime_t deltatime_max(deltatime_t a, deltatime_t b);
 /* a+b */
 deltatime_t deltatime_add(deltatime_t a, deltatime_t b);
 
+/* a-b */
+deltatime_t deltatime_sub(deltatime_t a, deltatime_t b);
+
 /* a*s */
 deltatime_t deltatime_mulu(deltatime_t a, unsigned scalar);
 

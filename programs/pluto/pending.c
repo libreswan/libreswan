@@ -353,7 +353,7 @@ bool pending_check_timeout(const struct connection *c)
 
 		if (deltasecs(c->dpd_timeout) > 0) {
 			if (!monobefore(mononow(),
-				monotimesum(p->pend_time,
+				monotime_add(p->pend_time,
 					deltatimescale(3, 1, c->dpd_timeout)))) {
 				DBG(DBG_DPD, {
 					char cib[CONN_INST_BUF];

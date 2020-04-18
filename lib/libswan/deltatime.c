@@ -97,6 +97,13 @@ deltatime_t deltatime_add(deltatime_t a, deltatime_t b)
 	return res;
 }
 
+deltatime_t deltatime_sub(deltatime_t a, deltatime_t b)
+{
+	deltatime_t res;
+	timersub(&a.dt, &b.dt, &res.dt);
+	return res;
+}
+
 deltatime_t deltatime_mulu(deltatime_t a, unsigned scalar)
 {
 	return deltatime_ms(deltamillisecs(a) * scalar);

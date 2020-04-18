@@ -170,7 +170,7 @@ static void dpd_sched_timeout(struct state *p1st, monotime_t nw, deltatime_t tim
 {
 	passert(deltasecs(timeout) > 0);
 	if (p1st->st_dpd_event == NULL ||
-	    monobefore(monotimesum(nw, timeout), p1st->st_dpd_event->ev_time)) {
+	    monobefore(monotime_add(nw, timeout), p1st->st_dpd_event->ev_time)) {
 		DBG(DBG_DPD, DBG_log("DPD: scheduling timeout to %ld",
 				     (long)deltasecs(timeout)));
 		delete_dpd_event(p1st);
@@ -229,7 +229,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	monotime_t last = !monobefore(p1st->st_last_dpd, st->st_last_dpd) ?
 		p1st->st_last_dpd : st->st_last_dpd;
 
-	monotime_t next_time = monotimesum(last, delay);
+	monotime_t next_time = monotime_add(last, delay);
 	deltatime_t next_delay = monotimediff(next_time, nw);
 
 	/* has there been enough activity of late? */

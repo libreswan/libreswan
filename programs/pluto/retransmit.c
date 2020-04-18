@@ -295,7 +295,7 @@ void suppress_retransmits(struct state *st)
 	}
 
 	monotime_t now = mononow();
-	rt->delay = monotimediff(monotimesum(rt->start, rt->timeout), now);
+	rt->delay = monotimediff(monotime_add(rt->start, rt->timeout), now);
 	rt->delays = deltatime_add(rt->delays, rt->delay);
 	/*
 	 * XXX: Can't call delete_event() because that calls

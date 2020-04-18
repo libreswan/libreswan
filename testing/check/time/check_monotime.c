@@ -21,6 +21,36 @@
 #include "monotime.h"
 #include "timecheck.h"
 
+struct test_op {
+	intmax_t lms, rms;
+	intmax_t o;
+};
+
+#define CHECK_DELTATIME_OP(OP)						\
+	check_deltatime_op(test_deltatime_##OP,				\
+			   elemsof(test_deltatime_##OP),		\
+			   monotime_##OP, #OP)
+
+static void check_deltatime_op(const struct test_op *tests, size_t nr_tests,
+			       monotime_t (*op)(monotime_t, deltatime_t),
+			       const char *op_name)
+{
+	for (unsigned i = 0; i < nr_tests; i++) {
+		const struct test_op *t = &tests[i];
+		monotime_t l = monotime(t->lms);
+		deltatime_t r = deltatime(t->rms);
+		intmax_t o = monosecs(op(l, r));
+		FILE *out = (o == t->o) ? stdout : stderr;
+		fprintf(out, "monosecs(monotime_%s(%jd, %jd)) == %jd",
+			op_name, t->lms, t->rms, t->o);
+		if (out == stderr) {
+			fprintf(out, "; FAIL: returned %jd", o);
+			fails++;
+		}
+		fprintf(out, "\n");
+	}
+}
+
 void check_monotime(void)
 {
 	char what[1000];
@@ -49,4 +79,19 @@ void check_monotime(void)
 			printf("%s\n", what);
 		}
 	}
+
+	static const struct test_op test_deltatime_add[] = {
+		{  1000,  100, 1100 },
+		{  1000,    0, 1000 },
+		{  1000, -200,  800 },
+	};
+	CHECK_DELTATIME_OP(add);
+
+	static const struct test_op test_deltatime_sub[] = {
+		{  1000,  100,  900 },
+		{  1000,    0, 1000 },
+		{  1000, -200, 1200 },
+	};
+	CHECK_DELTATIME_OP(sub);
+
 }

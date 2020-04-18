@@ -6167,7 +6167,7 @@ void v2_schedule_replace_event(struct state *st)
 	/* unwrapped deltatime_t in seconds */
 	intmax_t delay = deltasecs(IS_IKE_SA(st) ? c->sa_ike_life_seconds
 				   : c->sa_ipsec_life_seconds);
-	st->st_replace_by = monotimesum(mononow(), deltatime(delay));
+	st->st_replace_by = monotime_add(mononow(), deltatime(delay));
 
 	/*
 	 * Important policy lies buried here.  For example, we favour
