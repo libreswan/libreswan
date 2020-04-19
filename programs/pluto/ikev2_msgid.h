@@ -42,13 +42,6 @@ typedef stf_status v2_msgid_pending_cb(struct ike_sa *ike,
 				       struct state *st,
 				       struct msg_digest *md);
 
-struct v2_msgid_pending {
-	so_serial_t st_serialno;
-	const enum isakmp_xchg_types ix;
-	v2_msgid_pending_cb *cb;
-	struct v2_msgid_pending *next;
-};
-
 struct v2_msgid_window {
 	intmax_t sent;
 	intmax_t recv;

@@ -510,6 +510,13 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 			  ike, &old, sender, &old_sender);
 }
 
+struct v2_msgid_pending {
+	so_serial_t st_serialno;
+	const enum isakmp_xchg_types ix;
+	v2_msgid_pending_cb *cb;
+	struct v2_msgid_pending *next;
+};
+
 void v2_msgid_free(struct state *st)
 {
 	/* find the end; small list? */
