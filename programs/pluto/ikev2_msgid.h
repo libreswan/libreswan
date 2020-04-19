@@ -19,6 +19,8 @@
 
 #include <stdint.h>		/* for intmax_t */
 
+#include "monotime.h"
+
 struct state;
 struct ike_sa;
 struct msg_digest;
@@ -43,6 +45,7 @@ typedef stf_status v2_msgid_pending_cb(struct ike_sa *ike,
 				       struct msg_digest *md);
 
 struct v2_msgid_window {
+	monotime_t last_contact;  /* received a message */
 	intmax_t sent;
 	intmax_t recv;
 	struct v2_msgid_pending *pending;

@@ -57,6 +57,12 @@ static void jam_ike_window(jambuf_t *buf, const char *what,
 	if (new != NULL && old->recv != new->recv) {
 		jam(buf, "->%jd", new->recv);
 	}
+	monotime_buf mb;
+	jam(buf, " ike.%s.last_contact=%s", what,
+	    str_monotime(old->last_contact, &mb));
+	if (new != NULL && !monotime_eq(old->last_contact, new->last_contact)) {
+		jam(buf, "->%s", str_monotime(new->last_contact, &mb));
+	}
 }
 
 static void jam_ike_windows(jambuf_t *buf,
@@ -179,8 +185,11 @@ static const struct v2_msgid_wip empty_v2_msgid_wip = {
 
 void v2_msgid_init_ike(struct ike_sa *ike)
 {
+	monotime_t now = mononow();
 	struct v2_msgid_windows old_windows = ike->sa.st_v2_msgid_windows;
 	ike->sa.st_v2_msgid_windows = empty_v2_msgid_windows;
+	ike->sa.st_v2_msgid_windows.initiator.last_contact = now;
+	ike->sa.st_v2_msgid_windows.responder.last_contact = now;
 	struct v2_msgid_wip old_wip = ike->sa.st_v2_msgid_wip;
 	ike->sa.st_v2_msgid_wip = empty_v2_msgid_wip;
 	/* pretend there's a sender */
@@ -339,6 +348,7 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 	/* save old value, and add shortcut to new */
 	const struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
 	struct v2_msgid_windows *new = &ike->sa.st_v2_msgid_windows;
+	monotime_t time_received = mononow(); /* not strictly correct */
 
 	/*
 	 * If the receiver is known, save a copy of the old values.
@@ -378,6 +388,7 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 		}
 		/* last request we received */
 		new->responder.recv = msgid;
+		new->responder.last_contact = time_received;
 		break;
 	case MESSAGE_RESPONSE:
 		update_received_story = "updating initiator received";
@@ -431,6 +442,7 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 		}
 		/* last response we received */
 		new->initiator.recv = msgid;
+		new->initiator.last_contact = time_received;
 		break;
 	case NO_MESSAGE:
 		dbg("Message ID: IKE #%lu skipping update_recv as MD is fake",
