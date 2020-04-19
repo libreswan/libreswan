@@ -96,6 +96,11 @@ bool monobefore(monotime_t a, monotime_t b)
 	return timercmp(&a.mt, &b.mt, <);
 }
 
+bool monotime_eq(monotime_t a, monotime_t b)
+{
+	return timercmp(&a.mt, &b.mt, ==);
+}
+
 deltatime_t monotimediff(monotime_t a, monotime_t b)
 {
 	return deltatime_timevals_diff(a.mt, b.mt);

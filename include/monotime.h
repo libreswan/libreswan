@@ -59,6 +59,7 @@ bool is_monotime_epoch(monotime_t t);
 monotime_t mononow(void);
 monotime_t monotime_add(monotime_t t, deltatime_t d);
 monotime_t monotime_sub(monotime_t t, deltatime_t d);
+bool monotime_eq(monotime_t a, monotime_t b);
 bool monobefore(monotime_t a, monotime_t b);
 deltatime_t monotimediff(monotime_t a, monotime_t b);
 intmax_t monosecs(monotime_t m);
