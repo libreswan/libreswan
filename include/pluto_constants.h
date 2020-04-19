@@ -724,10 +724,10 @@ extern struct keywords sa_role_names;
 		(s->kind) == STATE_PARENT_I3 || (s->kind) == STATE_V2_IPSEC_I || \
 		(s->kind) == STATE_V2_IPSEC_R)
 
-#define IS_IKE_SA_ESTABLISHED(st) \
-	( IS_ISAKMP_SA_ESTABLISHED(st->st_state) || \
-		(IS_PARENT_SA_ESTABLISHED(st) && \
-		 (st->st_clonedfrom == SOS_NOBODY)))
+#define IS_IKE_SA_ESTABLISHED(ST) \
+	( IS_ISAKMP_SA_ESTABLISHED((ST)->st_state) ||	\
+		(IS_PARENT_SA_ESTABLISHED(ST) && \
+		 ((ST)->st_clonedfrom == SOS_NOBODY)))
 
 /*
  * ??? Issue here is that our child SA appears as a
