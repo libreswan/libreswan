@@ -447,18 +447,6 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	 * merge this and next?
 	 */
 
-	{ .story      = "Respond to CREATE_CHILD_SA IPsec SA Request",
-	  .state      = STATE_V2_NEW_CHILD_R0,
-	  .next_state = STATE_V2_IPSEC_R,
-	  .flags      = SMF2_MESSAGE_REQUEST | SMF2_ESTABLISHED,
-	  .send = MESSAGE_RESPONSE,
-	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
-	  .opt_enc_payloads = P(KE) | P(N) | P(CP),
-	  .processor  = ikev2_child_inIoutR,
-	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
-	  .timeout_event = EVENT_SA_REPLACE, },
-
 	{ .story      = "Respond to CREATE_CHILD_SA rekey CHILD SA request",
 	  .state      = STATE_V2_REKEY_CHILD_R0,
 	  .next_state = STATE_V2_IPSEC_R,
@@ -468,6 +456,18 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .encrypted_payloads.required = P(SA) | P(Ni) | P(TSi) | P(TSr),
 	  .encrypted_payloads.optional = P(KE) | P(N) | P(CP),
 	  .encrypted_payloads.notification = v2N_REKEY_SA,
+	  .processor  = ikev2_child_inIoutR,
+	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .timeout_event = EVENT_SA_REPLACE, },
+
+	{ .story      = "Respond to CREATE_CHILD_SA IPsec SA Request",
+	  .state      = STATE_V2_NEW_CHILD_R0,
+	  .next_state = STATE_V2_IPSEC_R,
+	  .flags      = SMF2_MESSAGE_REQUEST | SMF2_ESTABLISHED,
+	  .send = MESSAGE_RESPONSE,
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
+	  .opt_enc_payloads = P(KE) | P(N) | P(CP),
 	  .processor  = ikev2_child_inIoutR,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE, },
