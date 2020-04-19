@@ -513,7 +513,7 @@ void jam_cur_prefix(struct lswlog *buf)
 	if (!in_main_thread()) {
 #if 0
 		if (DBGP(DBG_BASE)) {
-			jam(buf, "LOGGING EXPECTATION FAILED: in main thread: ");
+			jam(buf, "[EXPECTATION FAILED not in main thread] ");
 		}
 #endif
 		return;
@@ -522,7 +522,7 @@ void jam_cur_prefix(struct lswlog *buf)
 	struct logger logger = cur_logger();
 	if (DBGP(DBG_BASE)) {
 		if (logger.object_vec == &logger_from_vec) {
-			jam(buf, "LOGGING EXPECATATION FAILED: using cur_%s: ",
+			jam(buf, "[EXPECTATION FAILED using cur_%s] ",
 			    logger.object_vec->name);
 		}
 	}
