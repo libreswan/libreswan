@@ -50,7 +50,6 @@ Depends:
  libnspr4,
  libnss3 (>= 3.16),
  libnss3-tools,
- systemd,
  ${misc:Depends},
  ${shlibs:Depends},
 Recommends:
