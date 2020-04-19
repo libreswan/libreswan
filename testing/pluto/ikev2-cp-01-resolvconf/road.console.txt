@@ -62,7 +62,7 @@ road #
 005 "eastnet-any"[1] 192.1.2.23 #2: ESP traffic information: in=336B out=336B
 002 "eastnet-any"[1] 192.1.2.23 #2: down-client output: restoring resolvconf
 002 "eastnet-any"[1] 192.1.2.23 #1: deleting state (STATE_PARENT_I3) and sending notification
-002 "eastnet-any"[1] 192.1.2.23: deleting connection "eastnet-any"[1] 192.1.2.23 instance with peer 192.1.2.23
+002 "eastnet-any"[1] 192.1.2.23: deleting connection instance with peer 192.1.2.23
 road #
  cat /etc/resolv.conf
 domain testing.libreswan.org

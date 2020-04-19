@@ -207,13 +207,10 @@ void delete_connection(struct connection *c, bool relations)
 		ipstr_buf b;
 
 		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-			char cib[CONN_INST_BUF];
-
-			libreswan_log(
-				"deleting connection \"%s\"%s instance with peer %s {isakmp=#%lu/ipsec=#%lu}",
-				c->name, fmt_conn_instance(c, cib),
-				sensitive_ipstr(&c->spd.that.host_addr, &b),
-				c->newest_isakmp_sa, c->newest_ipsec_sa);
+			log_connection(RC_LOG, whack_log_fd, c,
+				       "deleting connection instance with peer %s {isakmp=#%lu/ipsec=#%lu}",
+				       sensitive_ipstr(&c->spd.that.host_addr, &b),
+				       c->newest_isakmp_sa, c->newest_ipsec_sa);
 		}
 		c->kind = CK_GOING_AWAY;
 		if (c->pool != NULL)
