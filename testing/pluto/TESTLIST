@@ -660,6 +660,9 @@ kvmplutotest	ikev2-child-rekey-06-deadlock	good
 kvmplutotest	ikev2-child-rekey-07-deadlock	good
 kvmplutotest	ikev2-child-rekey-08-deadlock	wip
 kvmplutotest	ikev2-child-rekey-09-windows	wip
+kvmplutotest	ikev2-child-rekey-10-impair-rekey-initiate-subnet	wip
+kvmplutotest	ikev2-child-rekey-10-impair-rekey-respond-supernet	wip
+kvmplutotest	ikev2-child-rekey-10-impair-rekey-respond-supernet	wip
 kvmplutotest	ikev2-child-dual-asym-01	good
 kvmplutotest	ikev2-ike-rekey-01		good
 kvmplutotest	ikev2-ike-rekey-02		good
