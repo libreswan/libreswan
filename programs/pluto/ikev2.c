@@ -2935,12 +2935,6 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	} else  {
 		change_state(st, transition->next_state);
 	}
-
-	/*
-	 * tell whack and log of progress; successful state
-	 * transitions always advance (even when they go round to the
-	 * same state).
-	 */
 	passert(st->st_state->kind >= STATE_IKEv2_FLOOR);
 	passert(st->st_state->kind <  STATE_IKEv2_ROOF);
 
@@ -2955,10 +2949,26 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		pstat_sa_established(st);
 	}
 
+	/*
+	 * Tell whack and logs our progress - unless OE or a state
+	 * transition we're not telling anyone about, then be quiet.
+	 *
+	 * XXX: This code uses the new state, and not the state
+	 * transition to determine if things established :-(
+	 */
+
+	dbg("announcing the state transition");
 	enum rc_type w;
 	void (*log_details)(struct lswlog *buf, struct state *st);
 	struct state *log_state;
-	if (IS_CHILD_SA_ESTABLISHED(st)) {
+	if (transition->state == transition->next_state) {
+		/*
+		 * HACK for seemingly going around in circles
+		 */
+		log_details = NULL;
+		log_state = st;
+		w = RC_NEW_V2_STATE + st->st_state->kind;
+	} else if (IS_CHILD_SA_ESTABLISHED(st)) {
 		log_ipsec_sa_established("negotiated connection", st);
 		log_details = lswlog_child_sa_established;
 		log_state = st;
@@ -2982,10 +2992,6 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		w = RC_NEW_V2_STATE + st->st_state->kind;
 	}
 
-	/*
-	 * Tell whack and logs our progress - unless OE or a state
-	 * transition we're not telling anyone about, then be quiet.
-	 */
 	if ((transition->flags & SMF2_SUPPRESS_SUCCESS_LOG) ||
 	    (c != NULL && (c->policy & POLICY_OPPORTUNISTIC))) {
 		LSWDBGP(DBG_BASE, buf) {
@@ -3107,7 +3113,9 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		    from_state != STATE_V2_REKEY_CHILD_I0 &&
 		    from_state != STATE_V2_REKEY_IKE_I0 &&
 		    from_state != STATE_PARENT_R0 &&
-		    from_state != STATE_PARENT_I1) {
+		    from_state != STATE_PARENT_I1 &&
+		    from_state != STATE_V2_IPSEC_I &&
+		    from_state != STATE_V2_IPSEC_R) {
 			/* from_state = STATE_PARENT_R1 */
 			/* from_state = STATE_CREATE_R */
 			/* from_state = STATE_REKEY_IKE_R */
