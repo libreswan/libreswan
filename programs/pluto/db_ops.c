@@ -265,14 +265,15 @@ struct db_prop *db_prop_get(struct db_context *ctx)
 	return &ctx->prop;
 }
 
-void db_ops_show_status(const struct fd *whackfd)
+void show_db_ops_status(struct show *s)
 {
-	whack_comment(whackfd, "stats db_ops: "
-		  DB_OPS_STATS_DESC " :"
-		  DB_OPS_STATS_STR("context")
-		  DB_OPS_STATS_STR("trans")
-		  DB_OPS_STATS_STR("attrs"),
-		  DB_OPS_STATS_F(db_context_st),
-		  DB_OPS_STATS_F(db_trans_st),
-		  DB_OPS_STATS_F(db_attrs_st));
+	show_separator(s);
+	show_comment(s, "stats db_ops: "
+		     DB_OPS_STATS_DESC " :"
+		     DB_OPS_STATS_STR("context")
+		     DB_OPS_STATS_STR("trans")
+		     DB_OPS_STATS_STR("attrs"),
+		     DB_OPS_STATS_F(db_context_st),
+		     DB_OPS_STATS_F(db_trans_st),
+		     DB_OPS_STATS_F(db_attrs_st));
 }

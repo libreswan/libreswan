@@ -44,7 +44,7 @@
  *      - this connection (result from ike= string)
  *      - newest SA
  */
-void ike_alg_show_connection(const struct fd *whackfd,
+void show_ike_alg_connection(struct show *s,
 			     const struct connection *c,
 			     const char *instance)
 {
@@ -78,7 +78,7 @@ void ike_alg_show_connection(const struct fd *whackfd,
 		 * AES_CBC_256+AES_CBC_128-... (which we hope is not
 		 * impossible to parse)?
 		 */
-		WHACK_LOG(RC_COMMENT, whackfd, buf) {
+		WHACK_LOG(RC_COMMENT, show_fd(s), buf) {
 			jam(buf, "\"%s\"%s:   IKE algorithms: ",
 			    c->name, instance);
 			jam_proposals(buf, c->ike_proposals.p);
@@ -88,7 +88,7 @@ void ike_alg_show_connection(const struct fd *whackfd,
 	const struct state *st = state_with_serialno(c->newest_isakmp_sa);
 
 	if (st != NULL) {
-		WHACK_LOG(RC_COMMENT, whackfd, buf) {
+		WHACK_LOG(RC_COMMENT, show_fd(s), buf) {
 			jam(buf,
 			    "\"%s\"%s:   %s algorithm newest: ",
 			    c->name, instance,
@@ -128,10 +128,11 @@ void ike_alg_show_connection(const struct fd *whackfd,
 /*
  * Show registered IKE algorithms
  */
-void ike_alg_show_status(const struct fd *whackfd)
+void show_ike_alg_status(struct show *s)
 {
-	whack_comment(whackfd, "IKE algorithms supported:");
-	whack_comment(whackfd, " "); /* spacer */
+	show_separator(s);
+	show_comment(s, "IKE algorithms supported:");
+	show_separator(s);
 
 	for (const struct encrypt_desc **algp = next_encrypt_desc(NULL);
 	     algp != NULL; algp = next_encrypt_desc(algp)) {
@@ -139,7 +140,7 @@ void ike_alg_show_status(const struct fd *whackfd)
 		if (ike_alg_is_ike(&(alg)->common)) {
 			struct esb_buf v1namebuf, v2namebuf;
 			passert(alg->common.ikev1_oakley_id >= 0 || alg->common.id[IKEv2_ALG_ID] >= 0);
-			whack_comment(whackfd,
+			show_comment(s,
 				  "algorithm IKE encrypt: v1id=%d, v1name=%s, v2id=%d, v2name=%s, blocksize=%zu, keydeflen=%u",
 				  alg->common.ikev1_oakley_id,
 				  (alg->common.ikev1_oakley_id >= 0
@@ -162,7 +163,7 @@ void ike_alg_show_status(const struct fd *whackfd)
 	     algp != NULL; algp = next_prf_desc(algp)) {
 		const struct prf_desc *alg = (*algp);
 		if (ike_alg_is_ike(&(alg)->common)) {
-			whack_comment(whackfd,
+			show_comment(s,
 				  "algorithm IKE PRF: name=%s, hashlen=%zu",
 				  alg->common.fqn, alg->prf_output_size);
 		}
@@ -173,12 +174,10 @@ void ike_alg_show_status(const struct fd *whackfd)
 		const struct dh_desc *gdesc = *gdescp;
 		if (gdesc->bytes > 0) {
 			/* nothing crazy like 'none' */
-			whack_comment(whackfd,
+			show_comment(s,
 				  "algorithm IKE DH Key Exchange: name=%s, bits=%d",
 				  gdesc->common.name,
 				  (int)gdesc->bytes * BITS_PER_BYTE);
 		}
 	}
-
-	whack_comment(whackfd, " "); /* spacer */
 }

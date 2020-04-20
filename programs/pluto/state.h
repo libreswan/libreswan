@@ -874,8 +874,8 @@ extern void initialize_new_state(struct state *st,
 				 lset_t policy,
 				 int try);
 
-extern void show_traffic_status(struct fd *whackfd, const char *name);
-extern void show_brief_status(const struct fd *whackfd);
+extern void show_traffic_status(struct show *s, const char *name);
+extern void show_brief_status(struct show *s);
 extern void show_states(struct show *s);
 
 void v2_migrate_children(struct ike_sa *from, struct child_sa *to);
@@ -914,7 +914,7 @@ extern bool state_is_busy(const struct state *st);
 extern bool verbose_state_busy(const struct state *st);
 extern bool drop_new_exchanges(void);
 extern bool require_ddos_cookies(void);
-extern void show_globalstate_status(const struct fd *whackfd);
+extern void show_globalstate_status(struct show *s);
 extern void set_newest_ipsec_sa(const char *m, struct state *const st);
 extern void update_ike_endpoints(struct ike_sa *ike, const struct msg_digest *md);
 extern bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md);

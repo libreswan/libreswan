@@ -207,16 +207,17 @@ static struct db_context *kernel_alg_db_new(struct child_proposals proposals,
 	return ctx_new;
 }
 
-void kernel_alg_show_status(const struct fd *whackfd)
+void show_kernel_alg_status(struct show *s)
 {
-	whack_comment(whackfd, "Kernel algorithms supported:");
-	whack_comment(whackfd, " "); /* spacer */
+	show_separator(s);
+	show_comment(s, "Kernel algorithms supported:");
+	show_separator(s);
 
 	for (const struct encrypt_desc **alg_p = next_kernel_encrypt_desc(NULL);
 	     alg_p != NULL; alg_p = next_kernel_encrypt_desc(alg_p)) {
 		const struct encrypt_desc *alg = *alg_p;
 		if (alg != NULL) /* nostack gives us no algos */
-			whack_comment(whackfd,
+			show_comment(s,
 				"algorithm ESP encrypt: name=%s, keysizemin=%d, keysizemax=%d",
 				alg->common.fqn,
 				encrypt_min_key_bit_length(alg),
@@ -227,16 +228,14 @@ void kernel_alg_show_status(const struct fd *whackfd)
 	     alg_p != NULL; alg_p = next_kernel_integ_desc(alg_p)) {
 		const struct integ_desc *alg = *alg_p;
 		if (alg != NULL) /* nostack doesn't give us algos */
-			whack_comment(whackfd,
+			show_comment(s,
 				"algorithm AH/ESP auth: name=%s, key-length=%zu",
 				alg->common.fqn,
 				alg->integ_keymat_size * BITS_PER_BYTE);
 	}
-
-	whack_comment(whackfd, " "); /* spacer */
 }
 
-void kernel_alg_show_connection(const struct fd *whackfd,
+void show_kernel_alg_connection(struct show *s,
 				const struct connection *c,
 				const char *instance)
 {
@@ -287,7 +286,7 @@ void kernel_alg_show_connection(const struct fd *whackfd,
 	 */
 	if (c->child_proposals.p != NULL &&
 	    !default_proposals(c->child_proposals.p)) {
-		WHACK_LOG(RC_COMMENT, whackfd, buf) {
+		WHACK_LOG(RC_COMMENT, show_fd(s), buf) {
 			/*
 			 * If DH (PFS) was specified in the esp= or
 			 * ah= line then the below will display it
@@ -314,7 +313,7 @@ void kernel_alg_show_connection(const struct fd *whackfd,
 	const struct state *st = state_with_serialno(c->newest_ipsec_sa);
 
 	if (st != NULL && st->st_esp.present) {
-		whack_comment(whackfd,
+		show_comment(s,
 			  "\"%s\"%s:   %s algorithm newest: %s_%03d-%s; pfsgroup=%s",
 			  c->name,
 			  instance, satype,
@@ -325,7 +324,7 @@ void kernel_alg_show_connection(const struct fd *whackfd,
 	}
 
 	if (st != NULL && st->st_ah.present) {
-		whack_comment(whackfd,
+		show_comment(s,
 			  "\"%s\"%s:   %s algorithm newest: %s; pfsgroup=%s",
 			  c->name,
 			  instance, satype,
