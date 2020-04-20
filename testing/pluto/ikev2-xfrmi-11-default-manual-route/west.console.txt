@@ -79,7 +79,6 @@ west #
 000 interface eth1 192.1.2.45:4500
 000 interface eth1 192.1.2.45:500
 000  
-000  
 000 fips mode=disabled;
 000 SElinux=XXXXX
 000 seccomp=OFF
