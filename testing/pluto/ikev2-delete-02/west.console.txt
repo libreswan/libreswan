@@ -60,6 +60,7 @@ west #
 west #
  ipsec auto --status
 000 using kernel interface: netkey
+000  
 000 interface lo 127.0.0.1:4500
 000 interface lo 127.0.0.1:500
 000 interface eth0 192.0.1.254:4500
@@ -195,6 +196,7 @@ west #
 west #
  ipsec auto --status
 000 using kernel interface: netkey
+000  
 000 interface lo 127.0.0.1:4500
 000 interface lo 127.0.0.1:500
 000 interface eth0 192.0.1.254:4500
@@ -322,6 +324,7 @@ west #
 west #
  ipsec auto --status
 000 using kernel interface: netkey
+000  
 000 interface lo 127.0.0.1:4500
 000 interface lo 127.0.0.1:500
 000 interface eth0 192.0.1.254:4500
