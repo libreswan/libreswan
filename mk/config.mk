@@ -333,6 +333,10 @@ ifeq ($(INITSYSTEM),systemd)
 USE_SYSTEMD_WATCHDOG ?= true
 SD_RESTART_TYPE ?= on-failure
 SD_PLUTO_OPTIONS ?= --leak-detective
+SYSTEMUNITDIR ?= $(shell pkg-config systemd --variable=systemdsystemunitdir)
+UNITDIR ?= $(DESTDIR)$(SYSTEMUNITDIR)
+SYSTEMTMPFILESDIR ?= $(shell pkg-config systemd --variable=tmpfilesdir)
+TMPFILESDIR ?= $(DESTDIR)$(SYSTEMTMPFILESDIR)
 else
 USE_SYSTEMD_WATCHDOG ?= false
 endif

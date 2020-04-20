@@ -2,12 +2,8 @@ ifndef top_srcdir
 include ../../mk/dirs.mk
 endif
 
-SYSTEMUNITDIR=$(shell pkg-config systemd --variable=systemdsystemunitdir)
 UNITFILE=ipsec.service
-UNITDIR=$(DESTDIR)$(SYSTEMUNITDIR)
-SYSTEMTMPFILESDIR=$(shell pkg-config systemd --variable=tmpfilesdir)
 TMPFILESCONFIG=libreswan.conf
-TMPFILESDIR=$(DESTDIR)$(SYSTEMTMPFILESDIR)
 
 include $(top_srcdir)/Makefile.inc
 
