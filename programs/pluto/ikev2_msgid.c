@@ -540,6 +540,19 @@ void v2_msgid_free(struct state *st)
 	}
 }
 
+bool v2_msgid_request_outstanding(struct ike_sa *ike)
+{
+	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
+	intmax_t unack = (initiator->sent - initiator->recv);
+	return (unack != 0); /* well >0  */
+}
+
+bool v2_msgid_request_pending(struct ike_sa *ike)
+{
+	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
+	return initiator->pending != NULL;
+}
+
 void v2_msgid_queue_initiator(struct ike_sa *ike, struct state *st,
 			      enum isakmp_xchg_types ix,
 			      v2_msgid_pending_cb *callback)

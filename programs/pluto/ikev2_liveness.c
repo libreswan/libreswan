@@ -72,58 +72,141 @@ static stf_status ikev2_send_livenss_probe(struct state *st)
 	return e;
 }
 
-static bool parent_vanished(struct state *st)
+static void schedule_liveness(struct child_sa *child, deltatime_t time_since_last_contact,
+			      const char *reason)
 {
-	struct connection *c = st->st_connection;
-	struct state *pst = state_with_serialno(st->st_clonedfrom);
-
-	if (pst != NULL) {
-		if (c != pst->st_connection) {
-			char cib1[CONN_INST_BUF];
-			char cib2[CONN_INST_BUF];
-
-			fmt_conn_instance(c, cib1);
-			fmt_conn_instance(pst->st_connection, cib2);
-
-			DBG(DBG_CONTROLMORE,
-				DBG_log("\"%s\"%s #%lu parent connection of this state is diffeent \"%s\"%s #%lu",
-					c->name, cib1, st->st_serialno,
-					pst->st_connection->name, cib2,
-					pst->st_serialno));
+	struct connection *c = child->sa.st_connection;
+	deltatime_t delay = c->dpd_delay;
+	/* reduce wait if contact was by some other means */
+	delay = deltatime_sub(delay, time_since_last_contact);
+	/* in case above screws up? */
+	delay = deltatime_max(c->dpd_delay, deltatime(MIN_LIVENESS));
+	LSWDBGP(DBG_BASE, buf) {
+		deltatime_buf db;
+		endpoint_buf remote_buf;
+		jam(buf, "liveness: #%lu scheduling next check for %s in %s seconds",
+		    child->sa.st_serialno,
+		    str_endpoint(&child->sa.st_remote_endpoint, &remote_buf),
+		    str_deltatime(delay, &db));
+		if (deltatime_cmp(time_since_last_contact, deltatime(0)) != 0) {
+			deltatime_buf lcb;
+			jam(buf, " (%s was %s seconds ago)",
+			    reason, str_deltatime(time_since_last_contact, &lcb));
+		} else {
+			jam(buf, " (%s)", reason);
 		}
-		return FALSE;
 	}
-
-	loglog(RC_LOG_SERIOUS, "liveness_check error, no IKEv2 parent state #%lu to take %s",
-			st->st_clonedfrom,
-			enum_name(&dpd_action_names, c->dpd_action));
-
-	return TRUE;
+	event_schedule(EVENT_v2_LIVENESS, delay, &child->sa);
 }
 
 /* note: this mutates *st by calling get_sa_info */
 void liveness_check(struct state *st)
 {
 	passert(st->st_ike_version == IKEv2);
+	struct ike_sa *ike = ike_sa(st);
+	if (ike == NULL) {
+		LOG_PEXPECT("liveness: state #%lu has no IKE SA; deleting orphaned child",
+			    st->st_serialno);
+		event_schedule(EVENT_SO_DISCARD, deltatime(0), st);
+		return;
+	}
 
-	struct state *pst = NULL;
-	deltatime_t last_msg_age;
+	struct child_sa *child = pexpect_child_sa(st);
+	if (child == NULL) {
+		return;
+	}
+	struct connection *c = child->sa.st_connection;
+	struct v2_msgid_window *our = &ike->sa.st_v2_msgid_windows.initiator;
+	/* if nothing else this is when the state was created */
+	pexpect(!is_monotime_epoch(our->last_contact));
+	monotime_t now = mononow();
 
-	struct connection *c = st->st_connection;
+	/*
+	 * If the child is lingering (replaced but not yet deleted),
+	 * don't do liveness.
+	 */
+	if (c->newest_ipsec_sa != child->sa.st_serialno) {
+		dbg("liveness: #%lu was replaced by #%lu so not needed",
+		    child->sa.st_serialno, c->newest_ipsec_sa);
+		return;
+	}
 
-	set_cur_state(st);
-
-	/* this should be called on a child sa */
-	if (IS_CHILD_SA(st)) {
-		if (parent_vanished(st)) {
-			liveness_action(c, st->st_ike_version);
-			return;
-		} else {
-			pst = state_with_serialno(st->st_clonedfrom);
+	/*
+	 * If there's been traffic flowing through the CHILD SA and it
+	 * was less than .dpd_delay ago then re-schedule the probe.
+	 *
+	 * XXX: is this useful?  Liveness should be checking
+	 * round-trip but this is just looking at incomming data -
+	 * outgoing data could lost and this traffic is all
+	 * re-transmit requests ...
+	 */
+	deltatime_t time_since_last_message;
+	if (get_sa_info(&child->sa, true, &time_since_last_message) &&
+	    /* time_since_last_message < .dpd_delay */
+	    deltaless(time_since_last_message, c->dpd_delay)) {
+		/*
+		 * Update .st_liveness_last, with the time of this
+		 * traffic (unless other traffic is more recent).
+		 */
+		monotime_t last_contact = monotime_sub(now, time_since_last_message);
+		if (monobefore(our->last_contact, last_contact)) {
+			monotime_buf m0, m1;
+			dbg("liveness: #%lu updating #%lu last contact from %s to %s",
+			    child->sa.st_serialno, ike->sa.st_serialno,
+			    str_monotime(our->last_contact, &m0),
+			    str_monotime(last_contact, &m1));
+			our->last_contact = last_contact;
 		}
-	} else {
-		pexpect(pst == NULL); /* no more dpd in IKE state */
-		pst = st;
+		/*
+		 * schedule in .dpd_delay seconds, but adjust for:
+		 * time since last traffic, and min liveness vis
+		 *
+		 * max(dpd_delay - time_since_last_message, * deltatime(MIN_LIVENESS))
+		 */
+		schedule_liveness(child, time_since_last_message, "traffic");
+		return;
+	}
+
+	/*
+	 * If there's already a message request outstanding assume it
+	 * will succeed - if it doesn't the entire family will be
+	 * killed.
+	 *
+	 * No probe is needed for another .dpd_delay seconds.
+	 */
+	if (v2_msgid_request_outstanding(ike)) {
+#if 0
+		schedule_liveness(child, deltatime(0), "request outstanding");
+		return;
+#else
+		dbg("liveness: #%lu should reschedule because there is an outstanding exchange",
+		    child->sa.st_serialno);
+#endif
+	}
+
+	/*
+	 * If there's an exchange pending; assume it will succeed (for
+	 * instance last exchange just finished, next exchange about
+	 * to start), reschedule the probe.
+	 */
+	if (v2_msgid_request_pending(ike)) {
+#if 0
+		schedule_liveness(child, deltatime(0), "request pending");
+		return;
+#else
+		dbg("liveness: #%lu should reschedule because there is a pending exchange",
+		    child->sa.st_serialno);
+#endif
+	}
+
+	/*
+	 * If was a successful exchange less than .dpd_delay ago,
+	 * reschedule the probe.
+	 */
+	deltatime_t time_since_last_contact = monotimediff(now, our->last_contact);
+	if (deltaless(time_since_last_contact, c->dpd_delay)) {
+		schedule_liveness(child, time_since_last_contact, "successful exchange");
+		return;
 	}
 
 	pexpect_st_local_endpoint(st);
@@ -132,19 +215,9 @@ void liveness_check(struct state *st)
 	address_buf that_buf;
 	const char *that_ip = ipstr(&st->st_remote_endpoint, &that_buf);
 
-	/*
-	 * If we are a lingering (replaced) IPsec SA, don't do liveness
-	 */
-	if (pst->st_connection->newest_ipsec_sa != st->st_serialno) {
-		DBG(DBG_DPD,
-		   DBG_log("liveness: no need to send or schedule DPD for replaced IPsec SA"));
-		return;
-	}
+	struct state *pst = &ike->sa;
+	deltatime_t last_msg_age;
 
-	/*
-	 * don't bother sending the check and reset
-	 * liveness stats if there has been incoming traffic
-	 */
 	if (get_sa_info(st, TRUE, &last_msg_age) &&
 		deltaless(last_msg_age, c->dpd_timeout)) {
 		pst->st_pend_liveness = FALSE;
@@ -206,8 +279,6 @@ void liveness_check(struct state *st)
 		}
 	}
 
-	DBG(DBG_DPD, DBG_log("#%lu liveness_check - peer %s is ok schedule new",
-				st->st_serialno, that_ip));
-	deltatime_t delay = deltatime_max(c->dpd_delay, deltatime(MIN_LIVENESS));
-	event_schedule(EVENT_v2_LIVENESS, delay, st);
+	/* in case above screws up? */
+	schedule_liveness(child, deltatime(0), "backup for liveness probe");
 }
