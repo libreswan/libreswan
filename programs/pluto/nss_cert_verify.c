@@ -401,12 +401,14 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 	}
 	dbg("decoded cert: %s", cert->subjectName);
 
-	/* extra verification */
 #ifdef FIPS_CHECK
+	/* XXX: Currently only a check for RSA seems needed */
+	/* See also RSA_secret_sane() and ECDSA_secret_sane() */
 	if (libreswan_fipsmode()) {
 		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
 		passert(pk != NULL);
-		if ((pk->u.rsa.modulus.len * BITS_PER_BYTE) < FIPS_MIN_RSA_KEY_SIZE) {
+		if (pk->keyType == rsaKey &&
+			((pk->u.rsa.modulus.len * BITS_PER_BYTE) < FIPS_MIN_RSA_KEY_SIZE)) {
 			libreswan_log("FIPS: Rejecting peer cert with key size %d under %d",
 					pk->u.rsa.modulus.len * BITS_PER_BYTE,
 					FIPS_MIN_RSA_KEY_SIZE);
