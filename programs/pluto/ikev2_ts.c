@@ -254,7 +254,20 @@ stf_status v2_emit_ts_payloads(const struct child_sa *child,
 					str_range(&ts_i->net, &tsi_buf),
 					str_range(&ts_r->net, &tsr_buf));
 
+		}else if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
+				impair.rekey_initiate_subnet) {
+			ts_i_impaired =  impair_ts_to_subnet(ts_i);
+			ts_r_impaired =  impair_ts_to_subnet(ts_r);
+			ts_i = &ts_i_impaired;
+			ts_r = &ts_r_impaired;
+			range_buf tsi_buf;
+                        range_buf tsr_buf;
+			dbg("rekey-initiate-subnet TSi and TSr set to %s %s",
+					str_range(&ts_i->net, &tsi_buf),
+					str_range(&ts_r->net, &tsr_buf));
+
 		}
+
 		break;
 	case SA_RESPONDER:
 		ts_i = &child->sa.st_ts_that;

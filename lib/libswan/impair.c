@@ -100,6 +100,7 @@ struct impairment impairments[] = {
 	V("omit-hash-notify", omit_hash_notify_request, "causes pluto to omit sending hash notify in IKE_SA_INIT Request"),
 	V("proposal-parser", proposal_parser, "impair algorithm parser - what you see is what you get"),
 	V("rekey-initiate-supernet", rekey_initiate_supernet, "impair IPsec SA rekey initiator TSi and TSR to 0/0 ::0, emulate Windows client"),
+	V("rekey-initiate-subnet", rekey_initiate_subnet, "impair IPsec SA rekey initiator TSi and TSR to X/32 or X/128"),
 	V("rekey-respond-supernet", rekey_respond_supernet, "impair IPsec SA rekey responder TSi and TSR to 0/0 ::0"),
 	V("rekey-respond-subnet", rekey_respond_subnet, "impair IPsec SA rekey responder TSi and TSR to X/32 X/128"),
 	V("replay-backward", replay_backward, "replay all earlier packets new-to-old"),

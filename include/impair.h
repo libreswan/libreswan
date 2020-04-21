@@ -122,6 +122,7 @@ struct impair {
 	bool ikev1_del_with_notify;
 	bool bad_ike_auth_xchg;
 	bool rekey_initiate_supernet;
+	bool rekey_initiate_subnet;
 	bool rekey_respond_supernet;
 	bool rekey_respond_subnet;
 
