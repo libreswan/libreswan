@@ -2136,8 +2136,8 @@ static void jam_state_traffic(jambuf_t *buf, struct state *st)
 	}
 }
 
-static void whack_log_state_traffic(const struct fd *whackfd,
-				    enum rc_type rc, struct state *st)
+static void show_state_traffic(struct show *s,
+			       enum rc_type rc, struct state *st)
 {
 	if (IS_IKE_SA(st))
 		return; /* ignore non-IPsec states */
@@ -2146,7 +2146,7 @@ static void whack_log_state_traffic(const struct fd *whackfd,
 		return; /* ignore non established states */
 
 	/* whack-log-global - no prefix */
-	WHACK_LOG(rc, whackfd, buf) {
+	WHACK_LOG(rc, show_fd(s), buf) {
 		/* note: this mutates *st by calling get_sa_info */
 		jam_state_traffic(buf, st);
 	}
@@ -2471,19 +2471,21 @@ static struct state **sort_states(int (*sort_fn)(const void *, const void *),
 	return array;
 }
 
-static int whack_log_newest_state_traffic(struct connection *c, struct fd *whackfd,
-					  void *unused_arg UNUSED)
+static int show_newest_state_traffic(struct connection *c,
+				     struct fd *whackfd UNUSED,
+				     void *arg)
 {
+	struct show *s = arg;
 	struct state *st = state_by_serialno(c->newest_ipsec_sa);
 
 	if (st == NULL)
 		return 0;
 
-	whack_log_state_traffic(whackfd, RC_INFORMATIONAL_TRAFFIC, st);
+	show_state_traffic(s, RC_INFORMATIONAL_TRAFFIC, st);
 	return 1;
 }
 
-void show_traffic_status(struct fd *whackfd, const char *name)
+void show_traffic_status(struct show *s, const char *name)
 {
 	if (name == NULL) {
 		struct state **array = sort_states(state_compare_serial,
@@ -2493,9 +2495,9 @@ void show_traffic_status(struct fd *whackfd, const char *name)
 		if (array != NULL) {
 			int i;
 			for (i = 0; array[i] != NULL; i++) {
-				whack_log_state_traffic(whackfd,
-							RC_INFORMATIONAL_TRAFFIC,
-							array[i]);
+				show_state_traffic(s,
+						   RC_INFORMATIONAL_TRAFFIC,
+						   array[i]);
 			}
 			pfree(array);
 		}
@@ -2504,33 +2506,34 @@ void show_traffic_status(struct fd *whackfd, const char *name)
 
 		if (c != NULL) {
 			/* cast away const sillyness */
-			whack_log_newest_state_traffic(c, whackfd, NULL);
+			show_newest_state_traffic(c, NULL, s);
 		} else {
 			/* cast away const sillyness */
-			int count = foreach_connection_by_alias(name, whackfd,
-								whack_log_newest_state_traffic,
-								NULL);
+			int count = foreach_connection_by_alias(name, NULL,
+								show_newest_state_traffic,
+								s);
 			if (count == 0) {
-				whack_log(RC_UNKNOWN_NAME, whackfd,
+				whack_log(RC_UNKNOWN_NAME, show_fd(s),
 					  "no such connection or aliased connection named \"%s\"", name);
 			}
 		}
 	}
 }
 
-void show_brief_status(const struct fd *whackfd)
+void show_brief_status(struct show *s)
 {
-	whack_comment(whackfd, "State Information: DDoS cookies %s, %s new IKE connections",
-		  require_ddos_cookies() ? "REQUIRED" : "not required",
-		  drop_new_exchanges() ? "NOT ACCEPTING" : "Accepting");
+	show_separator(s);
+	show_comment(s, "State Information: DDoS cookies %s, %s new IKE connections",
+		     require_ddos_cookies() ? "REQUIRED" : "not required",
+		     drop_new_exchanges() ? "NOT ACCEPTING" : "Accepting");
 
-	whack_comment(whackfd, "IKE SAs: total("PRI_CAT"), half-open("PRI_CAT"), open("PRI_CAT"), authenticated("PRI_CAT"), anonymous("PRI_CAT")",
+	show_comment(s, "IKE SAs: total("PRI_CAT"), half-open("PRI_CAT"), open("PRI_CAT"), authenticated("PRI_CAT"), anonymous("PRI_CAT")",
 		  total_ike_sa(),
 		  cat_count[CAT_HALF_OPEN_IKE_SA],
 		  cat_count[CAT_OPEN_IKE_SA],
 		  cat_count_ike_sa[CAT_AUTHENTICATED],
 		  cat_count_ike_sa[CAT_ANONYMOUS]);
-	whack_comment(whackfd, "IPsec SAs: total("PRI_CAT"), authenticated("PRI_CAT"), anonymous("PRI_CAT")",
+	show_comment(s, "IPsec SAs: total("PRI_CAT"), authenticated("PRI_CAT"), anonymous("PRI_CAT")",
 		  cat_count[CAT_ESTABLISHED_CHILD_SA],
 		  cat_count_child_sa[CAT_AUTHENTICATED],
 		  cat_count_child_sa[CAT_ANONYMOUS]);
@@ -2538,6 +2541,7 @@ void show_brief_status(const struct fd *whackfd)
 
 void show_states(struct show *s)
 {
+	show_separator(s);
 	struct state **array = sort_states(state_compare_connection,
 					   __func__);
 
@@ -2558,11 +2562,10 @@ void show_states(struct show *s)
 
 			/* show any associated pending Phase 2s */
 			if (IS_IKE_SA(st))
-				show_pending_phase2(s->whackfd, st->st_connection,
+				show_pending_phase2(s, st->st_connection,
 						    pexpect_ike_sa(st));
 		}
 		pfree(array);
-		s->spacer = true;
 	}
 }
 
@@ -3063,8 +3066,9 @@ bool drop_new_exchanges(void)
 	return cat_count[CAT_HALF_OPEN_IKE_SA] >= pluto_max_halfopen;
 }
 
-void show_globalstate_status(const struct fd *whackfd)
+void show_globalstate_status(struct show *s)
 {
+	struct fd *whackfd = show_fd(s);
 	unsigned shunts = shunt_count();
 
 	whack_print(whackfd, "config.setup.ike.ddos_threshold=%u", pluto_ddos_threshold);

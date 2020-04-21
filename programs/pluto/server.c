@@ -855,9 +855,9 @@ void timer_list(const struct fd *whackfd)
 	list_state_events(whackfd, nw);
 }
 
-void show_debug_status(const struct fd *whackfd)
+void show_debug_status(struct show *s)
 {
-	WHACK_LOG(RC_COMMENT, whackfd, buf) {
+	WHACK_LOG(RC_COMMENT, show_fd(s), buf) {
 		jam(buf, "debug:");
 		if (cur_debugging & DBG_MASK) {
 			jam(buf, " ");
@@ -871,14 +871,14 @@ void show_debug_status(const struct fd *whackfd)
 	}
 }
 
-void show_fips_status(const struct fd *whackfd)
+void show_fips_status(struct show *s)
 {
 #ifdef FIPS_CHECK
 	bool fips = libreswan_fipsmode();
 #else
 	bool fips = FALSE;
 #endif
-	whack_comment(whackfd, "FIPS mode %s", !fips ?
+	show_comment(s, "FIPS mode %s", !fips ?
 #ifdef FIPS_CHECK
 		"disabled" :
 #else

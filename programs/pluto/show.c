@@ -47,26 +47,99 @@
 #include "pluto_seccomp.h"
 #endif
 
-void show_spacer(struct show *s)
+struct show {
+	/*
+	 * where to send the output
+	 */
+	struct fd *whackfd;
+	/*
+	 * Should the next output be preceeded by a blank line?
+	 */
+	enum separation { NO_SEPARATOR = 1, HAD_OUTPUT, SEPARATE_NEXT_OUTPUT, } separator;
+};
+
+struct show *new_show(struct fd *whackfd)
 {
-	if (s->spacer) {
+	struct show s = {
+		.separator = NO_SEPARATOR,
+		.whackfd = whackfd,
+	};
+	return clone_thing(s, "on show");
+}
+
+void free_show(struct show **sp)
+{
+	{
+		struct show *s = *sp;
+		switch (s->separator) {
+		case NO_SEPARATOR:
+		case HAD_OUTPUT:
+			break;
+		case SEPARATE_NEXT_OUTPUT:
+			whack_comment(s->whackfd, " ");
+			break;
+		default:
+			bad_case(s->separator);
+		}
+	}
+	pfree(*sp);
+	*sp = NULL;
+}
+
+struct fd *show_fd(struct show *s)
+{
+	/* assume this is to for some whack log call */
+	switch (s->separator) {
+	case NO_SEPARATOR:
+	case HAD_OUTPUT:
+		break;
+	case SEPARATE_NEXT_OUTPUT:
 		whack_comment(s->whackfd, " ");
-		s->spacer = false;
+		break;
+	default:
+		bad_case(s->separator);
+	}
+	s->separator = HAD_OUTPUT;
+	return s->whackfd;
+}
+
+void show_separator(struct show *s)
+{
+	switch (s->separator) {
+	case NO_SEPARATOR:
+		break;
+	case HAD_OUTPUT:
+	case SEPARATE_NEXT_OUTPUT:
+		s->separator = SEPARATE_NEXT_OUTPUT;
+		break;
+	default:
+		bad_case(s->separator);
+		break;
 	}
 }
 
 void show_comment(struct show *s, const char *message, ...)
 {
-	show_spacer(s);
+	switch (s->separator) {
+	case NO_SEPARATOR:
+	case HAD_OUTPUT:
+		break;
+	case SEPARATE_NEXT_OUTPUT:
+		whack_comment(s->whackfd, " ");
+		break;
+	default:
+		bad_case(s->separator);
+	}
 	WHACK_LOG(RC_COMMENT, s->whackfd, buf) {
 		va_list args;
 		va_start(args, message);
 		jam_va_list(buf, message, args);
 		va_end(args);
 	}
+	s->separator = HAD_OUTPUT;
 }
 
-static void show_system_security(const struct fd *whackfd)
+static void show_system_security(struct show *s)
 {
 	int selinux = libreswan_selinux();
 #ifdef FIPS_CHECK
@@ -75,53 +148,43 @@ static void show_system_security(const struct fd *whackfd)
 	int fips = FALSE;
 #endif
 
-	whack_comment(whackfd, " ");     /* spacer */
-
-	whack_comment(whackfd, "fips mode=%s;", fips ? "enabled" : "disabled");
-
-	whack_comment(whackfd, "SElinux=%s",
+	show_separator(s);
+	show_comment(s, "fips mode=%s;", fips ? "enabled" : "disabled");
+	show_comment(s, "SElinux=%s",
 		selinux == 0 ? "disabled" : selinux == 1 ? "enabled" : "indeterminate");
 #ifdef HAVE_SECCOMP
-	whack_comment(whackfd, "seccomp=%s",
-		      pluto_seccomp_mode == SECCOMP_ENABLED ? "enabled" :
-		      pluto_seccomp_mode == SECCOMP_TOLERANT ? "tolerant" : "disabled");
+	show_comment(s, "seccomp=%s",
+		     pluto_seccomp_mode == SECCOMP_ENABLED ? "enabled" :
+		     pluto_seccomp_mode == SECCOMP_TOLERANT ? "tolerant" : "disabled");
 #else
-	whack_comment(whackfd, "seccomp=unsupported");
+	show_comment(s, "seccomp=unsupported");
 #endif
-	whack_comment(whackfd, " ");     /* spacer */
 }
 
-void show_global_status(const struct fd *whackfd)
+void show_global_status(struct show *s)
 {
-	show_globalstate_status(whackfd);
-	show_pluto_stats(whackfd);
+	show_globalstate_status(s);
+	show_pluto_stats(s->whackfd);
 }
 
-void show_status(const struct fd *whackfd)
+void show_status(struct show *s)
 {
-	show_kernel_interface(whackfd);
-	show_ifaces_status(whackfd);
-	whack_comment(whackfd, " ");     /* spacer */
-	show_system_security(whackfd);
-	show_setup_plutomain(whackfd);
-	show_debug_status(whackfd);
-	show_setup_natt(whackfd);
-	show_virtual_private(whackfd);
-	kernel_alg_show_status(whackfd);
-	ike_alg_show_status(whackfd);
-	db_ops_show_status(whackfd);
-	show_connections_status(whackfd);
-	whack_comment(whackfd, " ");     /* spacer */
-	show_brief_status(whackfd);
-	struct show s = {
-		.whackfd = whackfd,
-		.spacer = true,
-	};
-	show_states(&s);
+	show_kernel_interface(s);
+	show_ifaces_status(s);
+	show_system_security(s);
+	show_setup_plutomain(s);
+	show_debug_status(s);
+	show_setup_natt(s);
+	show_virtual_private(s);
+	show_kernel_alg_status(s);
+	show_ike_alg_status(s);
+	show_db_ops_status(s);
+	show_connections_status(s);
+	show_brief_status(s);
+	show_states(s);
 #if defined(NETKEY_SUPPORT)
-	show_shunt_status(&s);
+	show_shunt_status(s);
 #endif
-	show_spacer(&s); /* if needed, force a trailing blank line */
 }
 
 /*

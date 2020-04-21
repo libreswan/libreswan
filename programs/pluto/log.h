@@ -31,6 +31,7 @@ struct state;
 struct connection;
 struct msg_digest;
 struct pending;
+struct show;
 
 /* moved common code to library file */
 #include "libreswan/passert.h"
@@ -314,10 +315,10 @@ void jambuf_to_whack(jambuf_t *buf, const struct fd *whackfd, enum rc_type rc);
 		/*NO-PREFIX*/,						\
 		jambuf_to_whack(BUF, WHACKFD, RC))
 
-extern void show_status(const struct fd *whackfd);
-extern void show_setup_plutomain(const struct fd *whackfd);
-extern void show_setup_natt(const struct fd *whackfd);
-extern void show_global_status(const struct fd *whackfd);
+extern void show_status(struct show *s);
+extern void show_setup_plutomain(struct show *s);
+extern void show_setup_natt(struct show *s);
+extern void show_global_status(struct show *s);
 
 enum linux_audit_kind {
 	LAK_PARENT_START,

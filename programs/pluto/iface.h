@@ -29,6 +29,7 @@
 struct fd;
 struct raw_iface;
 struct iface_port;
+struct show;
 
 struct iface_packet {
 	ssize_t len;
@@ -104,7 +105,7 @@ extern struct iface_port *interfaces;   /* public interfaces */
 extern struct iface_port *find_iface_port_by_local_endpoint(ip_endpoint *local_endpoint);
 extern bool use_interface(const char *rifn);
 extern void find_ifaces(bool rm_dead);
-extern void show_ifaces_status(const struct fd *whackfd);
+extern void show_ifaces_status(struct show *s);
 extern void free_ifaces(void);
 
 #endif

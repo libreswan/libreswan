@@ -514,35 +514,35 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 		terminate_connection(m->name, TRUE);
 	}
 
-	struct show s = {
-		.whackfd = whackfd,
-		.spacer = false,
-	};
+	{
+		struct show *s = new_show(whackfd); /* must free */
 
-	if (m->whack_status)
-		show_status(whackfd);
+		if (m->whack_status)
+			show_status(s);
 
-	if (m->whack_global_status)
-		show_global_status(whackfd);
+		if (m->whack_global_status)
+			show_global_status(s);
 
-	if (m->whack_clear_stats)
-		clear_pluto_stats();
+		if (m->whack_clear_stats)
+			clear_pluto_stats();
 
-	if (m->whack_traffic_status)
-		show_traffic_status(whackfd, m->name);
+		if (m->whack_traffic_status)
+			show_traffic_status(s, m->name);
 
-	if (m->whack_shunt_status) {
-		show_shunt_status(&s);
+		if (m->whack_shunt_status)
+			show_shunt_status(s);
+
+		if (m->whack_fips_status)
+			show_fips_status(s);
+
+		if (m->whack_brief_status)
+			show_brief_status(s);
+
+		if (m->whack_show_states)
+			show_states(s);
+
+		free_show(&s);
 	}
-
-	if (m->whack_fips_status)
-		show_fips_status(whackfd);
-
-	if (m->whack_brief_status)
-		show_brief_status(whackfd);
-
-	if (m->whack_show_states)
-		show_states(&s);
 
 #ifdef HAVE_SECCOMP
 	if (m->whack_seccomp_crashtest) {
@@ -675,8 +675,11 @@ static bool whack_handle(struct fd *whackfd)
 
 			if (msg.magic == WHACK_BASIC_MAGIC) {
 				/* Only basic commands.  Simpler inter-version compatibility. */
-				if (msg.whack_status)
-					show_status(whackfd);
+				if (msg.whack_status) {
+					struct show *s = new_show(whackfd);
+					show_status(s);
+					free_show(&s);
+				}
 				/* bail early, but without complaint */
 				return false; /* don't shutdown */
 			}

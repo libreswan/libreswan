@@ -318,14 +318,13 @@ struct iface_port *find_iface_port_by_local_endpoint(ip_endpoint *local_endpoint
 	return NULL;
 }
 
-void show_ifaces_status(const struct fd *whackfd)
+void show_ifaces_status(struct show *s)
 {
-	struct iface_port *p;
-
-	for (p = interfaces; p != NULL; p = p->next) {
+	show_separator(s); /* if needed */
+	for (struct iface_port *p = interfaces; p != NULL; p = p->next) {
 		endpoint_buf b;
-		whack_comment(whackfd, "interface %s %s",
-			  p->ip_dev->id_rname,
-			  str_endpoint(&p->local_endpoint, &b));
+		show_comment(s, "interface %s %s",
+			     p->ip_dev->id_rname,
+			     str_endpoint(&p->local_endpoint, &b));
 	}
 }

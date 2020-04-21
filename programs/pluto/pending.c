@@ -423,7 +423,7 @@ void flush_pending_by_connection(const struct connection *c)
 	}
 }
 
-void show_pending_phase2(const struct fd *whackfd,
+void show_pending_phase2(struct show *s,
 			 const struct connection *c,
 			 const struct ike_sa *ike)
 {
@@ -436,7 +436,7 @@ void show_pending_phase2(const struct fd *whackfd,
 	for (p = *pp; p != NULL; p = p->next) {
 		if (p->ike == ike) {
 			/* connection-name state-number [replacing state-number] */
-			WHACK_LOG(RC_COMMENT, whackfd, buf) {
+			WHACK_LOG(RC_COMMENT, show_fd(s), buf) {
 				jam(buf, "#%lu: pending ", p->ike->sa.st_serialno);
 				jam_string(buf, (ike->sa.st_ike_version == IKEv2) ? "CHILD SA" : "Phase 2");
 				jam(buf, " for ");

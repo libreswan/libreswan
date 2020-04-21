@@ -10,6 +10,7 @@ east #
 east #
  ipsec auto --status
 000 using kernel interface: netkey
+000  
 000 interface eth1 [2001:db8:1:2::23]:500
 000 interface eth0 [2001:db8:0:2::254]:500
 000 interface lo [::1]:500
@@ -19,7 +20,6 @@ east #
 000 interface eth0 192.0.2.254:500
 000 interface eth1 192.1.2.23:4500
 000 interface eth1 192.1.2.23:500
-000  
 000  
 000 fips mode=disabled;
 000 SElinux=XXXXX

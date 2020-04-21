@@ -1155,8 +1155,10 @@ unsigned shunt_count(void)
 
 void show_shunt_status(struct show *s)
 {
+	show_separator(s);
 	show_comment(s, "Bare Shunt list:");
-	show_comment(s, " ");
+	show_separator(s);
+
 	for (const struct bare_shunt *bs = bare_shunts; bs != NULL; bs = bs->next) {
 		/* Print interesting fields.  Ignore count and last_active. */
 		selector_buf ourst;
@@ -1173,8 +1175,6 @@ void show_shunt_status(struct show *s)
 			     str_said(&(bs)->said, &sat),
 			     prio, bs->why);
 	}
-	/* need a spacer if any shunts were listed */
-	s->spacer = (bare_shunts != NULL);
 }
 
 /* Setup an IPsec route entry.
@@ -2657,11 +2657,11 @@ void init_kernel(void)
 	}
 }
 
-void show_kernel_interface(const struct fd *whackfd)
+void show_kernel_interface(struct show *s)
 {
 	if (kernel_ops != NULL) {
-		whack_comment(whackfd, "using kernel interface: %s",
-			kernel_ops->kern_name);
+		show_comment(s, "using kernel interface: %s",
+			     kernel_ops->kern_name);
 	}
 }
 

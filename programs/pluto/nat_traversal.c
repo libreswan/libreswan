@@ -886,13 +886,13 @@ void v1_maybe_natify_initiator_endpoints(struct state *st, where_t where)
 	pexpect_st_local_endpoint(st);
 }
 
-void show_setup_natt(const struct fd *whackfd)
+void show_setup_natt(struct show *s)
 {
-	whack_comment(whackfd, " ");     /* spacer */
-	whack_comment(whackfd, "nat-traversal=%s, keep-alive=%ld, nat-ikeport=%d",
-		  bool_str(nat_traversal_enabled),
-		  (long) deltasecs(nat_kap),
-		  pluto_nat_port);
+	show_separator(s);
+	show_comment(s, "nat-traversal=%s, keep-alive=%ld, nat-ikeport=%d",
+		     bool_str(nat_traversal_enabled),
+		     (long) deltasecs(nat_kap),
+		     pluto_nat_port);
 }
 
 void ikev2_natd_lookup(struct msg_digest *md, const ike_spi_t *ike_responder_spi)
