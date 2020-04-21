@@ -55,7 +55,7 @@ enum ike_version {
 #define IPSEC_SA_LIFETIME_MAXIMUM secs_per_day
 #define FIPS_IPSEC_SA_LIFETIME_MAXIMUM secs_per_hour * 8
 #define FIPS_IKE_SA_LIFETIME_MAXIMUM secs_per_hour * 24
-#define FIPS_MIN_RSA_KEY_SIZE 3072
+#define FIPS_MIN_RSA_KEY_SIZE 2048 /* 112 bits, see SP800-131A */
 
 #define PLUTO_SHUNT_LIFE_DURATION_DEFAULT (15 * secs_per_minute)
 #define PLUTO_HALFOPEN_SA_LIFE (secs_per_minute )
