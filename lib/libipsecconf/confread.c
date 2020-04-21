@@ -612,6 +612,15 @@ static bool validate_end(struct starter_conn *conn_st,
 
 		pfreeany(end->id);
 		end->id = clone_str(value, "end->id");
+		/* fixup old ",," in a ID_DER_ASN1_DN to proper backslash comma */
+		if ((end->id[0] != '@') && (strstr(end->id, ",,") != NULL)
+			&& strstr(end->id, "=") != NULL)
+		{
+			char *cc;
+			while ((cc = strstr(end->id, ",,")) != NULL) {
+				cc[0] = '\\';
+			}
+		}
 	}
 
 	if (end->options_set[KSCF_RSAKEY1]) {
