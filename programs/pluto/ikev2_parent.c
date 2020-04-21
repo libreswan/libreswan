@@ -5941,7 +5941,7 @@ void ikev2_record_deladdr(struct state *st, void *arg_ip)
 		migration_down(cst->st_connection, cst);
 		unroute_connection(st->st_connection);
 
-		delete_liveness_event(cst);
+		event_delete(EVENT_v2_LIVENESS, cst);
 
 		if (st->st_addr_change_event == NULL) {
 			event_schedule_s(EVENT_v2_ADDR_CHANGE, 0, st);
@@ -6285,7 +6285,7 @@ void v2_event_sa_rekey(struct state *st)
 	 * happens to the new child if the old one disappears.
 	 */
 	dbg("scheduling drop-dead replace event for #%lu", st->st_serialno);
-	delete_liveness_event(st);
+	event_delete(EVENT_v2_LIVENESS, st);
 	event_schedule(EVENT_SA_REPLACE, monotimediff(st->st_replace_by, now), st);
 }
 
@@ -6311,7 +6311,7 @@ void v2_event_sa_replace(struct state *st)
 			    st->st_serialno, newer_sa);
 		}
 		/* XXX: are these calls needed? it's about to die */
-		delete_liveness_event(st);
+		event_delete(EVENT_v2_LIVENESS, st);
 		event_force(EVENT_SA_EXPIRE, st);
 		return;
 	}
@@ -6327,6 +6327,6 @@ void v2_event_sa_replace(struct state *st)
 	 */
 	dbg("replacing stale %s SA", satype);
 	ipsecdoi_replace(st, 1);
-	delete_liveness_event(st);
+	event_delete(EVENT_v2_LIVENESS, st);
 	event_force(EVENT_SA_EXPIRE, st);
 }

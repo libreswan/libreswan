@@ -155,7 +155,7 @@ stf_status dpd_init(struct state *st)
 		if (st->st_dpd_event == NULL || ev_before(st->st_dpd_event,
 			st->st_connection->dpd_delay))
 		{
-			delete_dpd_event(st);
+			event_delete(EVENT_DPD, st);
 			event_schedule(EVENT_DPD, st->st_connection->dpd_delay, st);
 		}
 	}
@@ -173,7 +173,7 @@ static void dpd_sched_timeout(struct state *p1st, monotime_t nw, deltatime_t tim
 	    monobefore(monotime_add(nw, timeout), p1st->st_dpd_event->ev_time)) {
 		DBG(DBG_DPD, DBG_log("DPD: scheduling timeout to %ld",
 				     (long)deltasecs(timeout)));
-		delete_dpd_event(p1st);
+		event_delete(EVENT_DPD, p1st);
 		event_schedule(EVENT_DPD_TIMEOUT, timeout, p1st);
 	}
 }
@@ -269,7 +269,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 		    p1st->st_dpd_event->ev_type == EVENT_DPD_TIMEOUT) {
 			DBG(DBG_DPD,
 			    DBG_log("DPD: deleting p1st DPD event"));
-			delete_dpd_event(p1st);
+			event_delete(EVENT_DPD, p1st);
 		}
 
 		event_schedule(EVENT_DPD, next_delay, st);
@@ -466,7 +466,7 @@ stf_status dpd_inI_outR(struct state *p1st,
 	 */
 	if (p1st->st_dpd_event != NULL &&
 	    p1st->st_dpd_event->ev_type == EVENT_DPD_TIMEOUT)
-		delete_dpd_event(p1st);
+		event_delete(EVENT_DPD, p1st);
 
 	return STF_IGNORE;
 }
@@ -546,7 +546,7 @@ stf_status dpd_inR(struct state *p1st,
 	 */
 	if (p1st->st_dpd_event != NULL &&
 	    p1st->st_dpd_event->ev_type == EVENT_DPD_TIMEOUT)
-		delete_dpd_event(p1st);
+		event_delete(EVENT_DPD, p1st);
 
 	return STF_IGNORE;
 }

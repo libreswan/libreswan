@@ -1192,7 +1192,7 @@ static void xauth_launch_authent(struct state *st,
 	 * Two alternative events can be outstanding. Cancel both.
 	 */
 	delete_event(st);
-	delete_state_event(st, &st->st_send_xauth_event);
+	event_delete(EVENT_v1_SEND_XAUTH, st);
 
 	switch (st->st_connection->xauthby) {
 #ifdef XAUTH_HAVE_PAM

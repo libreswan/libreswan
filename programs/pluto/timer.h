@@ -37,16 +37,13 @@ struct pluto_event {
 
 extern void event_schedule(enum event_type type, deltatime_t delay,
 			   struct state *st);
+void event_delete(enum event_type type, struct state *st);
 extern void event_schedule_s(enum event_type type, time_t delay_seconds,
 			     struct state *st);
 extern void event_force(enum event_type type, struct state *st);
 extern void delete_event(struct state *st);
 extern void handle_next_timer_event(void);
 extern void init_timer(void);
-
-extern void delete_state_event(struct state *st, struct pluto_event **ev);
-#define delete_liveness_event(ST) delete_state_event((ST), &(ST)->st_liveness_event)
-#define delete_dpd_event(ST) delete_state_event((ST), &(ST)->st_dpd_event)
 
 extern void timer_list(const struct fd *whackfd);
 extern char *revive_conn;

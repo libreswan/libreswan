@@ -1096,11 +1096,12 @@ void delete_state(struct state *st)
 	}
 #endif
 
-	delete_dpd_event(st);
-	delete_liveness_event(st);
-	delete_state_event(st, &st->st_rel_whack_event);
-	delete_state_event(st, &st->st_send_xauth_event);
-	delete_state_event(st, &st->st_addr_change_event);
+	event_delete(EVENT_DPD, st);
+	event_delete(EVENT_v2_LIVENESS, st);
+	event_delete(EVENT_v2_RELEASE_WHACK, st);
+	event_delete(EVENT_v1_SEND_XAUTH, st);
+	event_delete(EVENT_v2_ADDR_CHANGE, st);
+	event_delete(EVENT_RETRANSMIT, st);
 
 	/* if there is a suspended state transition, disconnect us */
 	struct msg_digest *md = unsuspend_md(st);
