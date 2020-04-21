@@ -585,7 +585,7 @@ static bool take_a_crack(struct tac_state *s,
 		    kr->type->name, key_id_str, story);
 		return true;
 	} else {
-		dbg("an %s Sig check failed '%s' with *%s [%s]",
+		loglog(RC_LOG_SERIOUS, "an %s Sig check failed '%s' with *%s [%s]",
 		    kr->type->name, ugh + 1, key_id_str, story);
 		if (s->best_ugh == NULL || s->best_ugh[0] < ugh[0])
 			s->best_ugh = ugh;
