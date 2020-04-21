@@ -1,0 +1,4 @@
+Basic pluto with IKEv2 on the initiator (west), and on the responder.
+It uses certificates, with east in FIPS mode that should reject west's
+RSA key that is too small.
+
