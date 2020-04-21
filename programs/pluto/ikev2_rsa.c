@@ -156,8 +156,10 @@ static err_t try_RSA_signature_v2(const struct crypt_mac *hash,
 		return "1" "no key available"; /* failure: no key to use */
 
 	/* decrypt the signature -- reversing RSA_sign_hash */
-	if (sig_len != k->k)
+	if (sig_len != k->k) {
+		loglog(RC_LOG_SERIOUS, "sig length %zu does not match pubkey length %d", sig_len, k->k);
 		return "1" "SIG length does not match public key length";
+	}
 
 	err_t ugh = RSA_signature_verify_nss(k, hash, sig_val, sig_len,
 					     hash_algo);
@@ -178,11 +180,17 @@ stf_status ikev2_verify_rsa_hash(struct ike_sa *ike,
 {
 	statetime_t start = statetime_start(&ike->sa);
 	enum original_role invertrole = (role == ORIGINAL_INITIATOR ? ORIGINAL_RESPONDER : ORIGINAL_INITIATOR);
+	size_t sig_len = pbs_left(sig_pbs);
 
 	/* XXX: table lookup? */
 	if (hash_algo->common.ikev2_alg_id < 0) {
-		libreswan_log("unknown or unsupported hash algorithm");
+		loglog(RC_LOG_SERIOUS, "unknown or unsupported hash algorithm");
 		return STF_INTERNAL_ERROR;
+	}
+
+	if (sig_len ==0) {
+		loglog(RC_LOG_SERIOUS, "rejecting received zero-length RSA signature");
+		return STF_FATAL;
 	}
 
 	struct crypt_mac hash = v2_calculate_sighash(ike, invertrole, idhash,
