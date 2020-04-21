@@ -376,7 +376,8 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		 * time to delete it.
 		 */
 		passert(st != NULL);
-		deltatime_t timeout = (st->st_ike_version == IKEv2) ? deltatime(MAXIMUM_RESPONDER_WAIT) : st->st_connection->r_timeout;
+		deltatime_t timeout = (st->st_ike_version == IKEv2 ? MAXIMUM_RESPONDER_WAIT_DELAY :
+				       st->st_connection->r_timeout);
 		deltatime_buf dtb;
 		libreswan_log("deleting incomplete state after %s seconds",
 			      str_deltatime(timeout, &dtb));
@@ -523,12 +524,6 @@ void event_delete(enum event_type type, struct state *st)
 		delete_pluto_event(evp);
 		pexpect((*evp) == NULL);
 	};
-}
-
-void event_schedule_s(enum event_type type, time_t delay_sec, struct state *st)
-{
-	deltatime_t delay = deltatime(delay_sec);
-	event_schedule(type, delay, st);
 }
 
 void event_force(enum event_type type, struct state *st)

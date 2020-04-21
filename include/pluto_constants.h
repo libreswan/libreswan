@@ -228,8 +228,8 @@ enum event_type {
 
 #define RTM_NEWADDR_ROUTE_DELAY		deltatime(3) /* seconds */
 
-#define PARENT_MIN_LIFE			1 /* second */
-#define EXPIRE_OLD_SA			1 /* second */
+#define PARENT_MIN_LIFE_DELAY		deltatime(1) /* second */
+#define EXPIRE_OLD_SA_DELAY		deltatime(1) /* second */
 #define REPLACE_ORPHAN_DELAY		deltatime(1) /* second */
 
 /*
@@ -333,7 +333,8 @@ typedef enum {
  */
 #define MAXIMUM_RETRANSMITS_PER_EXCHANGE     12
 
-#define MAXIMUM_RESPONDER_WAIT		   200 /* seconds before responder giveup */
+#define MAXIMUM_RESPONDER_WAIT_DELAY	   	deltatime(200) /* seconds before responder giveup */
+
 #define MAXIMUM_INVALID_KE_RETRANS 3
 
 #define MAXIMUM_MALFORMED_NOTIFY             16

@@ -3192,7 +3192,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 
 		case EVENT_SO_DISCARD:
 			delete_event(st);
-			event_schedule_s(kind, MAXIMUM_RESPONDER_WAIT, st);
+			event_schedule(kind, MAXIMUM_RESPONDER_WAIT_DELAY, st);
 			break;
 
 		case EVENT_NULL:
@@ -3549,9 +3549,9 @@ void complete_v2_state_transition(struct state *st,
 				dbg("forcing #%lu to a discard event",
 				    st->st_serialno);
 				delete_event(st);
-				event_schedule_s(EVENT_SO_DISCARD,
-						 MAXIMUM_RESPONDER_WAIT,
-						 st);
+				event_schedule(EVENT_SO_DISCARD,
+					       MAXIMUM_RESPONDER_WAIT_DELAY,
+					       st);
 			}
 		} else {
 			log_state(RC_NOTIFICATION+notification, st,
