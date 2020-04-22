@@ -69,7 +69,7 @@ deltatime_t deltatime_timevals_diff(struct timeval a, struct timeval b)
 	return res;
 }
 
-int deltatime_cmp(deltatime_t a, deltatime_t b)
+int deltatime_cmp_sign(deltatime_t a, deltatime_t b)
 {
 	/* sign(l - r) */
 	if (timercmp(&a.dt, &b.dt, <)) {
@@ -129,11 +129,6 @@ deltatime_t deltatimescale(int num, int denom, deltatime_t d)
 {
 	/* ??? should check for overflow */
 	return deltatime(deltasecs(d) * num / denom);
-}
-
-bool deltaless(deltatime_t a, deltatime_t b)
-{
-	return timercmp(&a.dt, &b.dt, <);
 }
 
 bool deltaless_tv_dt(const struct timeval a, const deltatime_t b)

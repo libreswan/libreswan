@@ -233,7 +233,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	deltatime_t next_delay = monotimediff(next_time, nw);
 
 	/* has there been enough activity of late? */
-	if (deltatime_cmp(next_delay, deltatime(0)) > 0) {
+	if (deltatime_cmp(next_delay, >, deltatime(0))) {
 		/* Yes, just reschedule "phase 2" */
 		LSWDBGP(DBG_DPD, buf) {
 			lswlogs(buf, "DPD: not yet time for dpd event: ");

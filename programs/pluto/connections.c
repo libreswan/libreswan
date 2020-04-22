@@ -1501,7 +1501,7 @@ static bool extract_connection(struct fd *whackfd,
 		c->r_timeout = wm->r_timeout;
 		c->r_interval = wm->r_interval;
 
-		if (!deltaless(c->sa_rekey_margin, c->sa_ipsec_life_seconds)) {
+		if (deltatime_cmp(c->sa_rekey_margin, >=, c->sa_ipsec_life_seconds)) {
 			deltatime_t new_rkm = deltatimescale(1, 2, c->sa_ipsec_life_seconds);
 
 			libreswan_log("conn: %s, rekeymargin (%jds) >= salifetime (%jds); reducing rekeymargin to %jds seconds",

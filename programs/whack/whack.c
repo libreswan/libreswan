@@ -830,7 +830,7 @@ static void check_life_time(deltatime_t life, time_t raw_limit,
 	deltatime_t limit = deltatime(raw_limit);
 	deltatime_t mint = deltatimescale(100 + msg->sa_rekey_fuzz, 100, msg->sa_rekey_margin);
 
-	if (deltaless(limit, life)) {
+	if (deltatime_cmp(limit, <, life)) {
 		char buf[200];	/* arbitrary limit */
 
 		snprintf(buf, sizeof(buf),
@@ -840,7 +840,7 @@ static void check_life_time(deltatime_t life, time_t raw_limit,
 			 (long)deltasecs(limit));
 		diag(buf);
 	}
-	if ((msg->policy & POLICY_DONT_REKEY) == LEMPTY && !deltaless(mint, life)) {
+	if ((msg->policy & POLICY_DONT_REKEY) == LEMPTY && !deltatime_cmp(mint, <, life)) {
 		char buf[200];	/* arbitrary limit */
 
 		snprintf(buf, sizeof(buf),

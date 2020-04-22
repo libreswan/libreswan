@@ -385,7 +385,8 @@ void initiate_redirect(struct state *st)
 	c->temp_vars.num_redirects++;
 
 	if (c->temp_vars.num_redirects > MAX_REDIRECTS) {
-		if (deltatime_cmp(deltatime(REDIRECT_LOOP_DETECT_PERIOD),
+		/* XXX: is this correct? */
+		if (deltatime_cmp(deltatime(REDIRECT_LOOP_DETECT_PERIOD), !=,
 				  realtimediff(c->temp_vars.first_redirect_time, realnow()))) {
 			loglog(RC_LOG_SERIOUS, "redirect loop, stop initiating IKEv2 exchanges");
 			event_force(EVENT_SA_EXPIRE, right_state);

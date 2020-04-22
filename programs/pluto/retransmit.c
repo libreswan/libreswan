@@ -63,7 +63,7 @@ static void double_delay(retransmit_t *rt, unsigned long nr_retransmits)
 {
 	if (nr_retransmits > 0) {
 		deltatime_t delay = deltatime_add(rt->delay, rt->delay);
-		if (deltatime_cmp(delay, rt->timeout) < 0) {
+		if (deltatime_cmp(delay, <, rt->timeout)) {
 			rt->delay = delay;
 		}
 	}
@@ -204,9 +204,9 @@ enum retransmit_status retransmit(struct state *st)
 	monotime_t now = mononow();
 	unsigned long nr_retransmits = retransmit_count(st);
 	bool retransmit_count_exceeded = nr_retransmits >= rt->limit;
-	bool deltatime_exceeds_limit = deltatime_cmp(rt->delays, rt->timeout) >= 0;
+	bool deltatime_exceeds_limit = deltatime_cmp(rt->delays, >=, rt->timeout);
 	deltatime_t waited = monotimediff(now, rt->start);
-	bool monotime_exceeds_limit = deltatime_cmp(waited, rt->timeout) >= 0;
+	bool monotime_exceeds_limit = deltatime_cmp(waited, >=, rt->timeout);
 	LSWDBGP(DBG_RETRANSMITS, buf) {
 		lswlogs(buf, "retransmits: ");
 		lswlogs(buf, "current time ");
