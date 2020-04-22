@@ -1,6 +1,9 @@
+# should see #2 and #3 on east 
+# only #2 on the road
+ipsec trafficstatus
+# should not find a match
 grep "Notify Message Type: v2N_TS_UNACCEPTABLE" /tmp/pluto.log
-echo done
-../../pluto/bin/ipsec-look.sh
+# road fail to rekey and no clear log message to grep
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
