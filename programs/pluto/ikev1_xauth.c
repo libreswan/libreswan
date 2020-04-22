@@ -549,8 +549,7 @@ static stf_status modecfg_send_set(struct state *st)
 	/* Transmit */
 	record_and_send_v1_ike_msg(st, &reply, "ModeCfg set");
 
-	if (st->st_event->ev_type != EVENT_RETRANSMIT &&
-	    st->st_event->ev_type != EVENT_NULL) {
+	if (state_event(st, EVENT_RETRANSMIT) == NULL) {
 		delete_event(st);
 		start_retransmits(st);
 	}
@@ -683,7 +682,7 @@ stf_status xauth_send_request(struct state *st)
 		}
 	}
 
-	if (st->st_event->ev_type != EVENT_RETRANSMIT) {
+	if (state_event(st, EVENT_RETRANSMIT) == NULL) {
 		delete_event(st);
 		start_retransmits(st);
 	}
@@ -782,7 +781,7 @@ stf_status modecfg_send_request(struct state *st)
 	/* Transmit */
 	record_and_send_v1_ike_msg(st, &reply, "modecfg: req");
 
-	if (st->st_event->ev_type != EVENT_RETRANSMIT) {
+	if (state_event(st, EVENT_RETRANSMIT) == NULL) {
 		delete_event(st);
 		start_retransmits(st);
 	}

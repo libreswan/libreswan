@@ -732,7 +732,7 @@ struct state {
 	struct pluto_event *st_rel_whack_event;
 	struct pluto_event *st_send_xauth_event;
 	struct pluto_event *st_addr_change_event;
-
+	struct pluto_event *st_retransmit_event;
 
 	/* RFC 3706 Dead Peer Detection */
 	monotime_t st_last_dpd;			/* Time of last DPD transmit (0 means never?) */

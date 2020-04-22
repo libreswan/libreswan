@@ -66,7 +66,7 @@
 #include "iface.h"
 #include "ikev2_liveness.h"
 
-static struct pluto_event **state_event(struct state *st, enum event_type type)
+struct pluto_event **state_event(struct state *st, enum event_type type)
 {
 	/*
 	 * Return a pointer to the event in the state object.
@@ -91,6 +91,9 @@ static struct pluto_event **state_event(struct state *st, enum event_type type)
 	case  EVENT_v1_SEND_XAUTH:
 		return &st->st_send_xauth_event;
 
+	case EVENT_RETRANSMIT:
+		return &st->st_retransmit_event;
+
 	case EVENT_FREE_ROOT_CERTS:
 	case EVENT_RESET_LOG_RATE_LIMIT:
 	case EVENT_PROCESS_KERNEL_QUEUE:
@@ -100,7 +103,6 @@ static struct pluto_event **state_event(struct state *st, enum event_type type)
 	case EVENT_SA_REPLACE:
 	case EVENT_SA_EXPIRE:
 	case EVENT_v1_SA_REPLACE_IF_USED:
-	case EVENT_RETRANSMIT:
 	case EVENT_CRYPTO_TIMEOUT:
 	case EVENT_PAM_TIMEOUT:
 	case EVENT_v2_INITIATE_CHILD:
@@ -123,7 +125,7 @@ static struct pluto_event **state_event(struct state *st, enum event_type type)
 	case EVENT_REVIVE_CONNS:
 		return NULL;
 	}
-	return NULL;
+	bad_case(type);
 }
 
 /*
@@ -210,13 +212,12 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		break;
 
 	case EVENT_RETRANSMIT:
+		dbg("IKEv%d retransmit event", st->st_ike_version);
 		switch (st->st_ike_version) {
 		case IKEv2:
-			dbg("IKEv2 retransmit event");
 			retransmit_v2_msg(st);
 			break;
 		case IKEv1:
-			dbg("IKEv1 retransmit event");
 			retransmit_v1_msg(st);
 			break;
 		default:
@@ -449,15 +450,29 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
  */
 void delete_event(struct state *st)
 {
-	if (st->st_event != NULL) {
-		dbg("state #%lu requesting %s to be deleted",
-		    st->st_serialno, enum_show(&timer_event_names,
-					       st->st_event->ev_type));
-
-		if (st->st_event->ev_type == EVENT_RETRANSMIT)
-			clear_retransmits(st);
-
-		delete_pluto_event(&st->st_event);
+	struct liveness {
+		const char *name;
+		struct pluto_event **event;
+	} events[] = {
+		{ "st_event", &st->st_event, },
+		{ "st_retransmit_event", &st->st_retransmit_event, },
+	};
+	for (unsigned e = 0; e < elemsof(events); e++) {
+		struct liveness *l = &events[e];
+		if (*(l->event) == NULL) {
+			dbg("state #%lu has no .%s to delete", st->st_serialno,
+			    l->name);
+		} else {
+			dbg("state #%lu deleting .%s %s",
+			    st->st_serialno, l->name,
+			    enum_show(&timer_event_names,
+				      (*l->event)->ev_type));
+			if ((*l->event)->ev_type == EVENT_RETRANSMIT) {
+				dbg("clearing retransmits from delete_event()");
+				clear_retransmits(st);
+			}
+			delete_pluto_event(l->event);
+		}
 	}
 }
 
@@ -483,9 +498,10 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 		return;
 	}
 	if (*pe != NULL) {
-		LOG_PEXPECT("#%lu has a pending %s",
+		LOG_PEXPECT("#%lu already has a scheduled %s",
 			    st->st_serialno,
 			    enum_name(&timer_event_names, type));
+		passert(*pe == NULL);
 		return;
 	}
 

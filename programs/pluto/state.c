@@ -2207,12 +2207,22 @@ void fmt_state(struct state *st, const monotime_t now,
 		}
 	}
 
-	intmax_t delta;
-	if (st->st_event != NULL) {
-		delta = deltasecs(monotimediff(st->st_event->ev_time, now));
-	} else {
-		delta = -1;	/* ??? sort of odd signifier */
+	/*
+	 * Hunt and peck for an event?  Should it show the first?
+	 */
+	struct pluto_event *liveness_events[] = {
+		st->st_event,
+		st->st_retransmit_event,
+	};
+	struct pluto_event *liveness = NULL;
+	for (unsigned e = 0; e < elemsof(liveness_events); e++) {
+		liveness = liveness_events[e];
+		if (liveness != NULL) {
+			break;
+		}
 	}
+	intmax_t delta = (liveness == NULL ? -1 : /* ??? sort of odd signifier */
+			  deltasecs(monotimediff(liveness->ev_time, now)));
 
 	snprintf(state_buf, state_buf_len,
 		 "#%lu: \"%s\"%s:%u %s (%s); %s in %jds%s%s%s%s; %s;",
@@ -2221,8 +2231,8 @@ void fmt_state(struct state *st, const monotime_t now,
 		 endpoint_hport(&st->st_remote_endpoint),
 		 st->st_state->name,
 		 st->st_state->story,
-		 st->st_event == NULL ? "none" :
-			enum_name(&timer_event_names, st->st_event->ev_type),
+		 (liveness == NULL ? "none" :
+		  enum_name(&timer_event_names, liveness->ev_type)),
 		 delta,
 		 np1, np2, eo, dpdbuf,
 		 (st->st_offloaded_task != NULL && !st->st_v1_offloaded_task_in_background)
