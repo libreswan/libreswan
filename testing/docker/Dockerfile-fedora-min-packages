@@ -1,11 +1,12 @@
 # FROM fedora:27
 # MAINTAINER "Antony Antony" <antony@phenome.org>
 # ENV container docker
-RUN dnf -y update
+RUN dnf update -y
 # RUN mkdir -p /home/build/libreswan
 RUN mkdir -p /home/build/
-COPY . /home/build/libreswan
-RUN dnf -y install systemd; \
+# next line for docker not for podman
+# COPY . /home/build/libreswan
+RUN dnf install -y systemd; \
 (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done); \
 rm -f /lib/systemd/system/multi-user.target.wants/*;\
 rm -f /etc/systemd/system/*.wants/*;\

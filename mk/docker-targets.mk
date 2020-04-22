@@ -31,6 +31,8 @@ D_USE_NSS_AVA_COPY ?= true
 
 DOCKERFILE ?= $(D)/dockerfile
 
+NOGPGPCHECK ?= false
+
 SUDO_CMD ?= sudo
 PKG_CMD = $(shell test -f /usr/bin/dnf && echo /usr/bin/dnf || (test -f /usr/bin/yum && echo /usr/bin/yum || echo "no yum or dnf found" && exit 1))
 PKG_BUILDDEP = $(shell test -f /usr/bin/dnf && echo "/usr/bin/dnf builddep" || echo /usr/bin/yum-builddep )
@@ -97,7 +99,8 @@ endif
 
 ifeq ($(DISTRO), fedora)
 	ifeq ($(DISTRO_REL), rawhide)
-		TWEAKS += rawhide-remove-dnf-update
+		# TWEAKS += rawhide-remove-dnf-update
+		TWEAKS += dnf-nogpgcheck
 	endif
 
 	MAKE_BASE = base
@@ -105,10 +108,19 @@ ifeq ($(DISTRO), fedora)
 	LOCAL_MAKE_FLAGS =
 endif
 
+ifeq ($(NOGPGPCHECK), true)
+	TWEAKS += dnf-nogpgcheck
+endif
+
 .PHONY: rawhide-remove-dnf-update
 rawhide-remove-dnf-update:
 	# on rawhide RUN dnf -y update could be a bad idea
 	$(shell sed -i '/RUN dnf -y update/d' testing/docker/dockerfile)
+
+.PHONY: dnf-nogpgcheck
+dnf-nogpgcheck:
+	$(shell sed -i 's/dnf install -y /dnf install --nogpgcheck -y /' testing/docker/dockerfile)
+	$(shell sed -i 's/dnf update -y/dnf update -y --nogpgcheck /' testing/docker/dockerfile)
 
 .PHONY: dockerfile-remove-libreswan-spec
 dockerfile-remove-libreswan-spec:
@@ -199,8 +211,9 @@ travis-ubuntu-xenial: ubuntu-xenial-packages
 .PHONY: docker-build
 docker-build: dockerfile
 	# --volume is only in podman
-	# $(DOCKER_CMD) build -t $(DI_T) --volume /home/build/libreswan:/home/build/libreswan -f $(DOCKERFILE) .
-	$(DOCKER_CMD) build -t $(DI_T) -f $(DOCKERFILE) .
+	$(DOCKER_CMD) build -t $(DI_T) --volume /home/build/libreswan:/home/build/libreswan -f $(DOCKERFILE) .
+	# for docker
+	# $(DOCKER_CMD) build -t $(DI_T) -f $(DOCKERFILE) .
 
 .PHONY: docker-ssh-image
 docker-ssh-image: DOCKERFILE_SSH = $(D)/Dockerfile-swan-ssh

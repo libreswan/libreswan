@@ -82,7 +82,6 @@ KVM_UPGRADE_PACKAGES ?= \
     pam-devel \
     patch \
     perf \
-    pexpect \
     policycoreutils-python-utils \
     psmisc \
     python3-pyOpenSSL \
