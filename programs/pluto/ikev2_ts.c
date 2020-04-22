@@ -221,11 +221,10 @@ static struct traffic_selector impair_ts_to_supernet(const struct traffic_select
 {
 	struct traffic_selector ts_ret = *ts;
 
-	if (ts_ret.ts_type == IKEv2_TS_IPV4_ADDR_RANGE) {
+	if (ts_ret.ts_type == IKEv2_TS_IPV4_ADDR_RANGE)
 		ts_ret.net = range_from_subnet(&ipv4_info.all_addresses);
-	} else if (ts_ret.ts_type == IKEv2_TS_IPV6_ADDR_RANGE) {
+	else if (ts_ret.ts_type == IKEv2_TS_IPV6_ADDR_RANGE)
 		ts_ret.net = range_from_subnet(&ipv6_info.all_addresses);
-	}
 
 	ts_ret.net.is_subnet = true;
 
@@ -254,14 +253,14 @@ stf_status v2_emit_ts_payloads(const struct child_sa *child,
 					str_range(&ts_i->net, &tsi_buf),
 					str_range(&ts_r->net, &tsr_buf));
 
-		}else if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
+		} else if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
 				impair.rekey_initiate_subnet) {
 			ts_i_impaired =  impair_ts_to_subnet(ts_i);
 			ts_r_impaired =  impair_ts_to_subnet(ts_r);
 			ts_i = &ts_i_impaired;
 			ts_r = &ts_r_impaired;
 			range_buf tsi_buf;
-                        range_buf tsr_buf;
+			range_buf tsr_buf;
 			dbg("rekey-initiate-subnet TSi and TSr set to %s %s",
 					str_range(&ts_i->net, &tsi_buf),
 					str_range(&ts_r->net, &tsr_buf));
