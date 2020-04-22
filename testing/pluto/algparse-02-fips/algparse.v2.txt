@@ -243,9 +243,9 @@ algparse -fips -v2 'esp=aes-sha1;none'
 algparse -fips -v2 'esp=3des168-sha1'
 	ERROR: 3DES does not take variable key lengths
 algparse -fips -v2 'esp=3des-null'
-	ERROR: non-AEAD ESP encryption algorithm '3des_cbc' cannot have 'none' as the integrity algorithm
+	ERROR: non-AEAD ESP encryption algorithm '3DES_CBC' cannot have 'NONE' as the integrity algorithm
 algparse -fips -v2 'esp=aes128-null'
-	ERROR: non-AEAD ESP encryption algorithm 'aes' cannot have 'none' as the integrity algorithm
+	ERROR: non-AEAD ESP encryption algorithm 'AES_CBC' cannot have 'NONE' as the integrity algorithm
 algparse -fips -v2 'esp=aes224-sha1'
 	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256
 algparse -fips -v2 'esp=aes-224-sha1'
@@ -419,7 +419,7 @@ algparse -fips -v2 'ike=aes_ccm'
 algparse -fips -v2 'ike=aes_gcm-sha1-none-modp2048'
 	ERROR: 'modp2048' unexpected
 algparse -fips -v2 'ike=aes_gcm+aes_gcm-sha1-none-modp2048'
-	WARNING: discarding duplicate algorithm 'aes_gcm_16'
+	WARNING: discarding duplicate algorithm 'AES_GCM_16'
 	ERROR: 'modp2048' unexpected
 algparse -fips -v2 'ike=aes+aes_gcm'
 	ERROR: AEAD and non-AEAD IKE encryption algorithm can not be combined

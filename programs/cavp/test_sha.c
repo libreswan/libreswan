@@ -37,7 +37,7 @@ static struct cavp_entry config[] = {
 
 struct hash_desc ike_alg_hash_sha2_224 = {
 	.common = {
-		.name = "sha2_224",
+		.fqn = "SHA2_224",
 		.algo_type = IKE_ALG_HASH,
 		.fips = TRUE,
 	},
@@ -74,7 +74,7 @@ static void print_config(void)
 		fprintf(stderr, "SHA length %lu not recognised\n", l);
 	} else {
 		fprintf(stderr, "SHA %s with length %lu\n",
-			hash_alg->common.name, l);
+			hash_alg->common.fqn, l);
 	}
 }
 

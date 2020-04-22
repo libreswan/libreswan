@@ -65,7 +65,7 @@ void calc_ke(struct pcr_kenonce *kn)
 
 	DBG(DBG_CRYPT,
 	    DBG_log("NSS: Local DH %s secret (pointer): %p",
-		    group->common.name, kn->secret);
+		    group->common.fqn, kn->secret);
 	    DBG_dump_hunk("NSS: Public DH wire value:",
 			   kn->gi));
 }

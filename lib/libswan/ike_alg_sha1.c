@@ -37,7 +37,6 @@ static const uint8_t asn1_blob_ecdsa_sha1[] = { LEN_ECDSA_SHA1_BLOB, ECDSA_SHA1_
 
 const struct hash_desc ike_alg_hash_sha1 = {
 	.common = {
-		.name = "sha",
 		.fqn = "SHA1",
 		.names = "sha,sha1",
 		.algo_type = IKE_ALG_HASH,
@@ -61,7 +60,6 @@ const struct hash_desc ike_alg_hash_sha1 = {
 
 const struct prf_desc ike_alg_prf_sha1 = {
 	.common = {
-		.name = "sha",
 		.fqn = "HMAC_SHA1",
 		.names = "sha,sha1,hmac_sha1",
 		.algo_type = IKE_ALG_PRF,
@@ -91,7 +89,6 @@ const struct prf_desc ike_alg_prf_sha1 = {
 
 const struct integ_desc ike_alg_integ_sha1 = {
 	.common = {
-		.name = "sha",
 		.fqn = "HMAC_SHA1_96",
 		.names = "sha,sha1,sha1_96,hmac_sha1,hmac_sha1_96",
 		.algo_type = IKE_ALG_INTEG,

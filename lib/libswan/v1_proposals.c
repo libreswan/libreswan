@@ -82,7 +82,7 @@ static bool add_alg_defaults(struct proposal_parser *parser,
 	     *default_alg; default_alg++) {
 		const struct ike_alg *alg = *default_alg;
 		if (!alg_byname_ok(parser, alg,
-				   shunk1(alg->name))) {
+				   shunk1(alg->fqn))) {
 			DBG(DBG_PROPOSAL_PARSER,
 			    DBG_log("skipping default %s",
 				    parser->error));
@@ -93,7 +93,7 @@ static bool add_alg_defaults(struct proposal_parser *parser,
 		DBG(DBG_PROPOSAL_PARSER,
 		    DBG_log("adding default %s %s",
 			    ike_alg_type_name(type),
-			    alg->name));
+			    alg->fqn));
 		struct v1_proposal merged_proposal = merge_alg_default(*proposal,
 									 *default_alg);
 		if (!add_proposal_defaults(parser, defaults,
@@ -207,7 +207,7 @@ static bool add_proposal_defaults(struct proposal_parser *parser,
 		if (merged_proposal.integ == NULL) {
 			proposal_error(parser, "%s integrity derived from PRF '%s' is not supported",
 				       proposal->protocol->name,
-				       proposal->prf->common.name);
+				       proposal->prf->common.fqn);
 			return false;
 		}
 		return add_proposal_defaults(parser, defaults,

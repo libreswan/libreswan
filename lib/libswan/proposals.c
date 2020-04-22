@@ -133,9 +133,9 @@ bool proposal_aead_none_ok(struct proposal_parser *parser,
 		 * At least one of the integrity algorithms wasn't
 		 * NONE.  For instance, esp=aes_gcm-sha1" is invalid.
 		 */
-		proposal_error(parser, "AEAD %s encryption algorithm '%s' must have 'none' as the integrity algorithm",
+		proposal_error(parser, "AEAD %s encryption algorithm '%s' must have 'NONE' as the integrity algorithm",
 			       proposal->protocol->name,
-			       encrypt->name);
+			       encrypt->fqn);
 		return false;
 	}
 
@@ -147,9 +147,9 @@ bool proposal_aead_none_ok(struct proposal_parser *parser,
 		 * algorithm was NONE.  For instance,
 		 * esp=aes_cbc-none" is invalid.
 		 */
-		proposal_error(parser, "non-AEAD %s encryption algorithm '%s' cannot have 'none' as the integrity algorithm",
+		proposal_error(parser, "non-AEAD %s encryption algorithm '%s' cannot have 'NONE' as the integrity algorithm",
 			       proposal->protocol->name,
-			       encrypt->name);
+			       encrypt->fqn);
 		return false;
 	}
 
@@ -356,7 +356,7 @@ void append_algorithm(struct proposal_parser *parser,
 		     ((*end)->enckeylen == 0 ||
 		      enckeylen == (*end)->enckeylen))) {
 			parser->policy->warning("discarding duplicate algorithm '%s'",
-						alg->name);
+						alg->fqn);
 			return;
 		}
 		end = &(*end)->next;
@@ -366,7 +366,7 @@ void append_algorithm(struct proposal_parser *parser,
 		.enckeylen = enckeylen,
 	};
 	DBGF(DBG_PROPOSAL_PARSER, "appending %s algorithm %s[_%d]",
-	     ike_alg_type_name(alg->algo_type), alg->name, enckeylen);
+	     ike_alg_type_name(alg->algo_type), alg->fqn, enckeylen);
 	*end = clone_thing(new_algorithm, "alg");
 }
 

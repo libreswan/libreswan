@@ -247,7 +247,7 @@ static bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 	log_message(RC_LOG, st->st_logger,
 		    "initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
 		    enum_show_shortb(&oakley_group_names, ke_group, &ke_esb),
-		    accepted_dh->common.name);
+		    accepted_dh->common.fqn);
 	pstats(invalidke_sent_u, ke_group);
 	pstats(invalidke_sent_s, accepted_dh->common.id[IKEv2_ALG_ID]);
 	/* convert group to a raw buffer */
@@ -1315,7 +1315,7 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct ike_sa *ike
 			if (!ikev2_proposals_include_modp(ike_proposals, sg.sg_group)) {
 				struct esb_buf esb;
 				libreswan_log("Discarding unauthenticated INVALID_KE_PAYLOAD response to DH %s; suggested DH %s is not acceptable",
-					      ike->sa.st_oakley.ta_dh->common.name,
+					      ike->sa.st_oakley.ta_dh->common.fqn,
 					      enum_show_shortb(&oakley_group_names,
 							       sg.sg_group, &esb));
 				return STF_IGNORE;
@@ -1331,8 +1331,8 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct ike_sa *ike
 			const struct dh_desc *new_group = ikev2_get_dh_desc(sg.sg_group);
 			passert(new_group != NULL);
 			libreswan_log("Received unauthenticated INVALID_KE_PAYLOAD response to DH %s; resending with suggested DH %s",
-				      ike->sa.st_oakley.ta_dh->common.name,
-				      new_group->common.name);
+				      ike->sa.st_oakley.ta_dh->common.fqn,
+				      new_group->common.fqn);
 			ike->sa.st_oakley.ta_dh = new_group;
 			/* wipe our mismatched KE */
 			free_dh_secret(&ike->sa.st_dh_secret);
@@ -5779,7 +5779,7 @@ void ikev2_initiate_child_sa(struct pending *p)
 		    prettypolicy(p->policy),
 		    replacestr,
 		    ike->sa.st_serialno,
-		    child->sa.st_pfs_group == NULL ? "no-pfs" : child->sa.st_pfs_group->common.name);
+		    child->sa.st_pfs_group == NULL ? "no-pfs" : child->sa.st_pfs_group->common.fqn);
 	} else {
 		dbg("#%lu schedule initiate IKE Rekey SA %s to replace IKE# %lu",
 		    child->sa.st_serialno,

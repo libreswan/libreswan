@@ -230,9 +230,9 @@ algparse -fips -v1 'esp=aes-sha1;none'
 algparse -fips -v1 'esp=3des168-sha1'
 	ERROR: 3DES does not take variable key lengths
 algparse -fips -v1 'esp=3des-null'
-	ERROR: non-AEAD ESP encryption algorithm '3des_cbc' cannot have 'none' as the integrity algorithm
+	ERROR: non-AEAD ESP encryption algorithm '3DES_CBC' cannot have 'NONE' as the integrity algorithm
 algparse -fips -v1 'esp=aes128-null'
-	ERROR: non-AEAD ESP encryption algorithm 'aes' cannot have 'none' as the integrity algorithm
+	ERROR: non-AEAD ESP encryption algorithm 'AES_CBC' cannot have 'NONE' as the integrity algorithm
 algparse -fips -v1 'esp=aes224-sha1'
 	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256
 algparse -fips -v1 'esp=aes-224-sha1'

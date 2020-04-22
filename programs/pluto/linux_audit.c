@@ -238,7 +238,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 
 		jam(&buf, " prf=%s", prfname); /* could be "none" */
 		jam(&buf, " pfs=%s", (st->st_oakley.ta_dh == NULL ? "none"
-				      : st->st_oakley.ta_dh->common.name));
+				      : st->st_oakley.ta_dh->common.fqn));
 
 		/* XXX: empty SPI to keep tests happy */
 		jam(&buf, " ");

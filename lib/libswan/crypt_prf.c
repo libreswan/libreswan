@@ -83,7 +83,7 @@ static struct crypt_prf *wrap(const struct prf_desc *prf_desc,
 		};
 	}
 	DBGF(DBG_CRYPT, "%s PRF %s crypt-prf@%p",
-	     name, prf_desc->common.name, prf);
+	     name, prf_desc->common.fqn, prf);
 	return prf;
 }
 
@@ -93,7 +93,7 @@ struct crypt_prf *crypt_prf_init_bytes(const char *name,
 {
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("%s PRF %s init %s-chunk@%p (length %zd)",
-			name, prf_desc->common.name,
+			name, prf_desc->common.fqn,
 			key_name, key, key_size);
 		DBG_dump(NULL, key, key_size);
 	}
@@ -108,7 +108,7 @@ struct crypt_prf *crypt_prf_init_symkey(const char *name,
 {
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("%s PRF %s init %s-key@%p (size %zd)",
-			name, prf_desc->common.name,
+			name, prf_desc->common.fqn,
 			key_name, key, sizeof_symkey(key));
 		DBG_symkey(name, key_name, key);
 	}
@@ -126,7 +126,7 @@ void crypt_prf_update_symkey(struct crypt_prf *prf,
 {
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("%s PRF %s update %s-key@%p (size %zd)",
-			prf->name, prf->desc->common.name,
+			prf->name, prf->desc->common.fqn,
 			name, update, sizeof_symkey(update));
 		DBG_symkey(prf->name, name, update);
 	}
@@ -138,7 +138,7 @@ void crypt_prf_update_byte(struct crypt_prf *prf,
 {
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("%s PRF %s update %s-byte@0x%x (%u)",
-			prf->name, prf->desc->common.name,
+			prf->name, prf->desc->common.fqn,
 			name, update, update);
 		DBG_dump_thing(NULL, update);
 	}
@@ -150,7 +150,7 @@ void crypt_prf_update_bytes(struct crypt_prf *prf,
 {
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("%s PRF %s update %s-bytes@%p (length %zd)",
-			prf->name, prf->desc->common.name,
+			prf->name, prf->desc->common.fqn,
 			name, update, sizeof_update);
 		DBG_dump(NULL, update, sizeof_update);
 	}
@@ -163,7 +163,7 @@ PK11SymKey *crypt_prf_final_symkey(struct crypt_prf **prfp)
 	PK11SymKey *tmp = prf->desc->prf_mac_ops->final_symkey(&prf->context);
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("%s PRF %s final-key@%p (size %zu)",
-			(*prfp)->name, (*prfp)->desc->common.name,
+			(*prfp)->name, (*prfp)->desc->common.fqn,
 			tmp, sizeof_symkey(tmp));
 		DBG_symkey((*prfp)->name, "key", tmp);
 	}
@@ -179,7 +179,7 @@ void crypt_prf_final_bytes(struct crypt_prf **prfp,
 	prf->desc->prf_mac_ops->final_bytes(&prf->context, bytes, sizeof_bytes);
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("%s PRF %s final-bytes@%p (length %zu)",
-			(*prfp)->name, (*prfp)->desc->common.name,
+			(*prfp)->name, (*prfp)->desc->common.fqn,
 			bytes, sizeof_bytes);
 		DBG_dump(NULL, bytes, sizeof_bytes);
 	}
@@ -207,7 +207,7 @@ struct crypt_mac crypt_prf_final_mac(struct crypt_prf **prfp, const struct integ
 					    prf->desc->prf_output_size);
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("%s PRF %s final length %zu",
-			(*prfp)->name, (*prfp)->desc->common.name,
+			(*prfp)->name, (*prfp)->desc->common.fqn,
 			output.len);
 		DBG_dump_hunk(NULL, output);
 	}

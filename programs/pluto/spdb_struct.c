@@ -160,15 +160,15 @@ struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 
 		DBG(DBG_CONTROL,
 		    DBG_log("oakley_alg_makedb() processing ealg=%s=%u halg=%s=%u modp=%s=%u eklen=%u",
-			    algs.encrypt->common.name, ealg,
-			    algs.prf->common.name, halg,
-			    algs.dh->common.name, modp,
+			    algs.encrypt->common.fqn, ealg,
+			    algs.prf->common.fqn, halg,
+			    algs.dh->common.fqn, modp,
 			    eklen));
 
 		const struct encrypt_desc *enc_desc = algs.encrypt;
 		if (eklen != 0 && !encrypt_has_key_bit_length(enc_desc, eklen)) {
 			PEXPECT_LOG("IKEv1 proposal with ENCRYPT%s (specified) keylen:%d, not valid, should have been dropped",
-				    enc_desc->common.name,
+				    enc_desc->common.fqn,
 				    eklen);
 			continue;
 		}
@@ -270,7 +270,7 @@ struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 						 algs.encrypt->common.ikev1_oakley_id),
 				       enum_name(&oakley_hash_names,
 						 algs.prf->common.ikev1_oakley_id),
-				       algs.dh->common.name,
+				       algs.dh->common.fqn,
 				       algs.enckeylen);
 				free_sa(&emp_sp);
 			} else {

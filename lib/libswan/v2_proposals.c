@@ -116,7 +116,7 @@ static bool merge_defaults(struct proposal_parser *parser,
 				if (integ == NULL) {
 					proposal_error(parser, "%s integrity derived from PRF '%s' is not supported",
 						       parser->protocol->name,
-						       prf->desc->name);
+						       prf->desc->fqn);
 					return false;
 				}
 				append_algorithm(parser, proposal,

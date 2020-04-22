@@ -44,7 +44,6 @@ const CK_RSA_PKCS_PSS_PARAMS rsa_pss_sha2_256 = {
 
 const struct hash_desc ike_alg_hash_sha2_256 = {
 	.common = {
-		.name = "sha2_256",
 		.fqn = "SHA2_256",
 		.names = "sha2,sha256,sha2_256",
 		.algo_type = IKE_ALG_HASH,
@@ -70,7 +69,6 @@ const struct hash_desc ike_alg_hash_sha2_256 = {
 
 const struct prf_desc ike_alg_prf_sha2_256 = {
 	.common = {
-		.name = "sha2_256",
 		.fqn = "HMAC_SHA2_256",
 		.names = "sha2,sha256,sha2_256,hmac_sha2_256",
 		.algo_type = IKE_ALG_PRF,
@@ -100,7 +98,6 @@ const struct prf_desc ike_alg_prf_sha2_256 = {
 
 const struct integ_desc ike_alg_integ_sha2_256 = {
 	.common = {
-		.name = "sha2_256",
 		.fqn = "HMAC_SHA2_256_128",
 		.names = "sha2,sha256,sha2_256,sha2_256_128,hmac_sha2_256,hmac_sha2_256_128",
 		.algo_type = IKE_ALG_INTEG,
@@ -129,7 +126,6 @@ const struct integ_desc ike_alg_integ_sha2_256 = {
 
 const struct integ_desc ike_alg_integ_hmac_sha2_256_truncbug = {
 	.common = {
-		.name = "hmac_sha2_256_truncbug",
 		.fqn = "HMAC_SHA2_256_TRUNCBUG",
 		.names = "hmac_sha2_256_truncbug",
 		.algo_type = IKE_ALG_INTEG,
@@ -165,7 +161,6 @@ const CK_RSA_PKCS_PSS_PARAMS rsa_pss_sha2_384 = {
 
 const struct hash_desc ike_alg_hash_sha2_384 = {
 	.common = {
-		.name = "sha2_384",
 		.fqn = "SHA2_384",
 		.names = "sha384,sha2_384",
 		.algo_type = IKE_ALG_HASH,
@@ -191,7 +186,6 @@ const struct hash_desc ike_alg_hash_sha2_384 = {
 
 const struct prf_desc ike_alg_prf_sha2_384 = {
 	.common = {
-		.name = "sha2_384",
 		.fqn = "HMAC_SHA2_384",
 		.names = "sha384,sha2_384,hmac_sha2_384",
 		.algo_type = IKE_ALG_PRF,
@@ -221,7 +215,6 @@ const struct prf_desc ike_alg_prf_sha2_384 = {
 
 const struct integ_desc ike_alg_integ_sha2_384 = {
 	.common = {
-		.name = "sha2_384",
 		.fqn = "HMAC_SHA2_384_192",
 		.names = "sha384,sha2_384,sha2_384_192,hmac_sha2_384,hmac_sha2_384_192",
 		.algo_type = IKE_ALG_INTEG,
@@ -261,7 +254,6 @@ const CK_RSA_PKCS_PSS_PARAMS rsa_pss_sha2_512 = {
 
 const struct hash_desc ike_alg_hash_sha2_512 = {
 	.common = {
-		.name = "sha2_512",
 		.fqn = "SHA2_512",
 		.names = "sha512,sha2_512",
 		.algo_type = IKE_ALG_HASH,
@@ -287,7 +279,6 @@ const struct hash_desc ike_alg_hash_sha2_512 = {
 
 const struct prf_desc ike_alg_prf_sha2_512 = {
 	.common = {
-		.name = "sha2_512",
 		.fqn = "HMAC_SHA2_512",
 		.names = "sha512,sha2_512,hmac_sha2_512",
 		.algo_type = IKE_ALG_PRF,
@@ -317,7 +308,6 @@ const struct prf_desc ike_alg_prf_sha2_512 = {
 
 const struct integ_desc ike_alg_integ_sha2_512 = {
 	.common = {
-		.name = "sha2_512",
 		.fqn = "HMAC_SHA2_512_256",
 		.names = "sha512,sha2_512,sha2_512_256,hmac_sha2_512,hmac_sha2_512_256",
 		.algo_type = IKE_ALG_INTEG,

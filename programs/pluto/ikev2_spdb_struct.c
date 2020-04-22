@@ -1700,12 +1700,12 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 	if (encrypt->common.id[IKEv2_ALG_ID] == 0) {
 		loglog(RC_LOG_SERIOUS,
 		       "IKEv2 %s %s ENCRYPT transform is not supported",
-		       protocol, encrypt->common.name);
+		       protocol, encrypt->common.fqn);
 		return FALSE;
 	}
 	if (keylen > 0 && !encrypt_has_key_bit_length(encrypt, keylen)) {
 		PEXPECT_LOG("IKEv2 %s %s ENCRYPT transform has an invalid key length of %u",
-			    protocol, encrypt->common.name, keylen);
+			    protocol, encrypt->common.fqn, keylen);
 		return FALSE;
 	}
 
@@ -1719,14 +1719,14 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 		 * valid key length.
 		 */
 		DBG(DBG_CONTROL, DBG_log("omitting IKEv2 %s %s ENCRYPT transform key-length",
-					 protocol, encrypt->common.name));
+					 protocol, encrypt->common.fqn));
 		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 				 encrypt->common.id[IKEv2_ALG_ID], 0);
 	} else if (encrypt->keydeflen == encrypt_max_key_bit_length(encrypt)) {
 		passert(encrypt->keydeflen > 0);
 		DBG(DBG_CONTROL,
 		    DBG_log("forcing IKEv2 %s %s ENCRYPT transform key length: %u",
-			    protocol, encrypt->common.name, encrypt->keydeflen));
+			    protocol, encrypt->common.fqn, encrypt->keydeflen));
 		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 				 encrypt->common.id[IKEv2_ALG_ID], encrypt->keydeflen);
 	} else {
@@ -1766,7 +1766,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 		case IKEv2_SEC_PROTO_IKE:
 			DBG(DBG_CONTROL,
 			    DBG_log("forcing IKEv2 %s %s ENCRYPT transform high-to-low key lengths: %u %u",
-				    protocol, encrypt->common.name,
+				    protocol, encrypt->common.fqn,
 				    keymaxlen, encrypt->keydeflen));
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 					 encrypt->common.id[IKEv2_ALG_ID], keymaxlen);
@@ -1776,7 +1776,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 		case IKEv2_SEC_PROTO_ESP:
 			DBG(DBG_CONTROL,
 			    DBG_log("forcing IKEv2 %s %s ENCRYPT transform low-to-high key lengths: %u %u",
-				    protocol, encrypt->common.name,
+				    protocol, encrypt->common.fqn,
 				    encrypt->keydeflen, keymaxlen));
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 					 encrypt->common.id[IKEv2_ALG_ID], encrypt->keydeflen);
@@ -1786,7 +1786,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 		default:
 			/* presumably AH */
 			libreswan_log("dropping local IKEv2 %s %s ENCRYPT transform with wrong protocol",
-				      protocol, encrypt->common.name);
+				      protocol, encrypt->common.fqn);
 			break;
 		}
 	}
@@ -1965,7 +1965,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct ikev2_proposals **c
 		} else if (default_dh == &unset_group) {
 			jam_string(buf, "all DH removed");
 		} else {
-			jam(buf, "default DH %s", default_dh->common.name);
+			jam(buf, "default DH %s", default_dh->common.fqn);
 		}
 		jam(buf, "  for %s (%s)", c->name, why);
 	}

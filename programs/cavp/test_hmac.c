@@ -41,7 +41,7 @@ static struct cavp_entry config[] = {
 #ifdef USE_SHA2
 static struct prf_desc ike_alg_prf_sha2_224 = {
 	.common = {
-		.name = "sha2_224",
+		.fqn = "SHA2_224",
 		.algo_type = IKE_ALG_PRF,
 		.fips = TRUE,
 	},
@@ -82,7 +82,7 @@ static void hmac_print_config(void)
 		fprintf(stderr, "HMAC length %lu not recognised\n", l);
 	} else {
 		fprintf(stderr, "HMAC %s with length %lu\n",
-			prf_alg->common.name, l);
+			prf_alg->common.fqn, l);
 	}
 }
 

@@ -33,7 +33,7 @@ struct crypt_hash {
 struct crypt_hash *crypt_hash_init(const char *name, const struct hash_desc *hash_desc)
 {
 	DBGF(DBG_CRYPT, "%s hash %s init",
-	     name, hash_desc->common.name);
+	     name, hash_desc->common.fqn);
 	struct hash_context *context =
 		hash_desc->hash_ops->init(hash_desc, name);
 	if (context == NULL) {
@@ -53,7 +53,7 @@ void crypt_hash_digest_symkey(struct crypt_hash *hash,
 {
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("%s hash %s digest %s-key@%p (size %zu)",
-			hash->name, hash->desc->common.name,
+			hash->name, hash->desc->common.fqn,
 			name, symkey, sizeof_symkey(symkey));
 		DBG_symkey(hash->name, name, symkey);
 	}
@@ -65,7 +65,7 @@ void crypt_hash_digest_byte(struct crypt_hash *hash,
 {
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("%s hash %s digest %s-byte@0x%x (%d)",
-			hash->name, hash->desc->common.name,
+			hash->name, hash->desc->common.fqn,
 			name, byte, byte);
 		DBG_dump_thing(NULL, byte);
 	}
@@ -79,7 +79,7 @@ void crypt_hash_digest_bytes(struct crypt_hash *hash,
 {
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("%s hash %s digest %s-bytes@%p (length %zu)",
-			hash->name, hash->desc->common.name,
+			hash->name, hash->desc->common.fqn,
 			name, bytes, sizeof_bytes);
 		DBG_dump(NULL, bytes, sizeof_bytes);
 	}
@@ -95,7 +95,7 @@ void crypt_hash_final_bytes(struct crypt_hash **hashp,
 	hash->desc->hash_ops->final_bytes(&hash->context, bytes, sizeof_bytes);
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("%s hash %s final bytes@%p (length %zu)",
-			hash->name, hash->desc->common.name,
+			hash->name, hash->desc->common.fqn,
 			bytes, sizeof_bytes);
 		DBG_dump(NULL, bytes, sizeof_bytes);
 	}
@@ -111,7 +111,7 @@ struct crypt_mac crypt_hash_final_mac(struct crypt_hash **hashp)
 	hash->desc->hash_ops->final_bytes(&hash->context, output.ptr, output.len);
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("%s hash %s final length %zu",
-			hash->name, hash->desc->common.name, output.len);
+			hash->name, hash->desc->common.fqn, output.len);
 		DBG_dump_hunk(NULL, output);
 	}
 	pfree(*hashp);
@@ -123,7 +123,7 @@ PK11SymKey *crypt_hash_symkey(const char *name, const struct hash_desc *hash_des
 			      const char *symkey_name, PK11SymKey *symkey)
 {
 	DBGF(DBG_CRYPT, "%s hash %s %s-key@%p (size %zu)",
-	     name, hash_desc->common.name,
+	     name, hash_desc->common.fqn,
 	     symkey_name, symkey, sizeof_symkey(symkey));
 	struct crypt_hash *hash = crypt_hash_init(name, hash_desc);
 	crypt_hash_digest_symkey(hash, symkey_name, symkey);

@@ -74,7 +74,7 @@ static struct cavp_entry data[] = {
 
 static struct encrypt_desc ike_alg_encrypt_aes_gcm_4 = {
 	.common = {
-		.name = "aes_gcm",
+		.fqn = "AES_GCM",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.fips =        TRUE,
 	},
@@ -92,7 +92,7 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_4 = {
 
 static struct encrypt_desc ike_alg_encrypt_aes_gcm_13 = {
 	.common = {
-		.name = "aes_gcm",
+		.fqn = "AES_GCM",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.fips =        TRUE,
 	},
@@ -110,7 +110,7 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_13 = {
 
 static struct encrypt_desc ike_alg_encrypt_aes_gcm_14 = {
 	.common = {
-		.name = "aes_gcm",
+		.fqn = "AES_GCM",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.fips =        TRUE,
 	},
@@ -128,7 +128,7 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_14 = {
 
 static struct encrypt_desc ike_alg_encrypt_aes_gcm_15 = {
 	.common = {
-		.name = "aes_gcm",
+		.fqn = "AES_GCM",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.fips =        TRUE,
 	},

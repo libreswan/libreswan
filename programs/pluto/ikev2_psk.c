@@ -133,14 +133,14 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 				       "FIPS: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
 				       ike->sa.st_connection->name,
 				       pss->len,
-				       ike->sa.st_oakley.ta_prf->common.name,
+				       ike->sa.st_oakley.ta_prf->common.fqn,
 				       key_size_min);
 				return empty_mac;
 			} else {
 				libreswan_log("WARNING: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
 					      ike->sa.st_connection->name,
 					      pss->len,
-					      ike->sa.st_oakley.ta_prf->common.name,
+					      ike->sa.st_oakley.ta_prf->common.fqn,
 					      key_size_min);
 			}
 		}
@@ -230,7 +230,7 @@ bool ikev2_verify_psk_auth(enum keyword_authby authby,
 	if (sig.len != hash_len) {
 		log_state(RC_LOG, &ike->sa,
 			  "hash length in I2 packet (%zu) does not equal hash length (%zu) of negotiated PRF (%s)",
-			  sig.len, hash_len, ike->sa.st_oakley.ta_prf->common.name);
+			  sig.len, hash_len, ike->sa.st_oakley.ta_prf->common.fqn);
 		return false;
 	}
 

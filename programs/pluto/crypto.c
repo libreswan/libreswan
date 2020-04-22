@@ -176,7 +176,7 @@ void show_ike_alg_status(struct show *s)
 			/* nothing crazy like 'none' */
 			show_comment(s,
 				  "algorithm IKE DH Key Exchange: name=%s, bits=%d",
-				  gdesc->common.name,
+				  gdesc->common.fqn,
 				  (int)gdesc->bytes * BITS_PER_BYTE);
 		}
 	}

@@ -54,25 +54,25 @@ static struct prf_context *init(const struct prf_desc *prf_desc,
 	if (context == NULL) {
 		LSWLOG(buf) {
 			lswlogf(buf, "NSS: %s create %s context from key %s(%p) failed",
-				name, prf_desc->common.name,
+				name, prf_desc->common.fqn,
 				key_name, key);
 			lswlog_nss_error(buf);
 		}
 		return NULL;
 	}
 	DBGF(DBG_CRYPT, "%s prf: created %s context %p from %s-key@%p",
-	     name, prf_desc->common.name,
+	     name, prf_desc->common.fqn,
 	     context, key_name, key);
 
 	SECStatus rc = PK11_DigestBegin(context);
 	if (rc) {
 		libreswan_log("NSS: %s digest begin failed for %s (%x)\n",
-			      name, prf_desc->common.name, rc);
+			      name, prf_desc->common.fqn, rc);
 		PK11_DestroyContext(context, PR_TRUE);
 		return NULL;
 	}
 	DBGF(DBG_CRYPT, "%s prf: begin %s with context %p from %s-key@%p",
-	     name, prf_desc->common.name,
+	     name, prf_desc->common.fqn,
 	     context, key_name, key);
 
 	struct prf_context *prf = alloc_thing(struct prf_context, name);

@@ -931,7 +931,7 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 		 * Requiring this is easier than trying to ensure that
 		 * changes to NAME don't break NAMES.
 		 */
-		pexpect_ike_alg_has_name(HERE, alg, alg->name, ".name");
+		pexpect_ike_alg_has_name(HERE, alg, alg->fqn, ".name");
 
 		/*
 		 * Don't allow 0 as an algorithm ID.

@@ -44,7 +44,6 @@ typedef struct {
 const struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 {
 	.common = {
-		.name = "camellia",
 		.fqn = "CAMELLIA_CBC",
 		.names = "camellia,camellia_cbc",
 		.algo_type =   IKE_ALG_ENCRYPT,
@@ -75,7 +74,6 @@ const struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 const struct encrypt_desc ike_alg_encrypt_camellia_ctr =
 {
 	.common = {
-		.name = "camellia_ctr",
 		.fqn = "CAMELLIA_CTR",
 		.names = "camellia_ctr",
 		.algo_type =   IKE_ALG_ENCRYPT,

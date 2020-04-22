@@ -119,8 +119,8 @@ void unpack_KE_from_helper(struct state *st,
 	 */
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("wire (crypto helper) group %s and state group %s %s",
-			kn->group ? kn->group->common.name : "NULL",
-			st->st_oakley.ta_dh ? st->st_oakley.ta_dh->common.name : "NULL",
+			kn->group ? kn->group->common.fqn : "NULL",
+			st->st_oakley.ta_dh ? st->st_oakley.ta_dh->common.fqn : "NULL",
 			kn->group == st->st_oakley.ta_dh ? "match" : "differ");
 	}
 
@@ -552,7 +552,7 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 
 		if ((st->st_ike_version == IKEv2) && st->st_pfs_group != NULL)  {
 			lswlogs(buf, "-");
-			lswlogs(buf, st->st_pfs_group->common.name);
+			lswlogs(buf, st->st_pfs_group->common.fqn);
 		}
 
 		ini = " ";

@@ -209,8 +209,8 @@ static void calc_skeyseed_v2(struct pcr_dh_v2 *sk,
 	passert(sk->prf != NULL);
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey-size=%zu salt-size=%zu",
-		    sk->prf->common.name,
-		    (sk->integ ? sk->integ->common.name : "n/a"),
+		    sk->prf->common.fqn,
+		    (sk->integ ? sk->integ->common.fqn : "n/a"),
 		    key_size, salt_size));
 
 	const struct prf_desc *prf = sk->prf;

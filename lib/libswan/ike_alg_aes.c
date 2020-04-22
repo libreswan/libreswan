@@ -35,7 +35,6 @@
 
 const struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 	.common = {
-		.name = "aes",
 		.fqn = "AES_CBC",
 		.names = "aes,aes_cbc",
 		.algo_type =   IKE_ALG_ENCRYPT,
@@ -70,7 +69,6 @@ const struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 const struct encrypt_desc ike_alg_encrypt_aes_ctr =
 {
 	.common = {
-		.name = "aes_ctr",
 		.fqn = "AES_CTR",
 		.names = "aesctr,aes_ctr",
 		.algo_type =   IKE_ALG_ENCRYPT,
@@ -103,7 +101,6 @@ const struct encrypt_desc ike_alg_encrypt_aes_ctr =
 const struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 {
 	.common = {
-		.name = "aes_gcm_8",
 		.fqn = "AES_GCM_8",
 		.names = "aes_gcm_8,aes_gcm_a",
 		/* XXX: aes_gcm_16 has aes_gcm as alias */
@@ -141,7 +138,6 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 const struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 {
 	.common = {
-		.name = "aes_gcm_12",
 		.fqn = "AES_GCM_12",
 		.names = "aes_gcm_12,aes_gcm_b",
 		.algo_type =   IKE_ALG_ENCRYPT,
@@ -178,7 +174,6 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 const struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 {
 	.common = {
-		.name = "aes_gcm_16",
 		.fqn = "AES_GCM_16",
 		/* aes_gcm_8 has aes_gcm as officname */
 		.names = "aes_gcm,aes_gcm_16,aes_gcm_c",
@@ -223,7 +218,6 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 const struct encrypt_desc ike_alg_encrypt_aes_ccm_8 = 
 {
 	.common = {
-		.name = "aes_ccm_8",
 		.fqn = "AES_CCM_8",
 		.names = "aes_ccm_8,aes_ccm_a",
 		.algo_type =    IKE_ALG_ENCRYPT,
@@ -254,7 +248,6 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 const struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 {
 	.common = {
-		.name = "aes_ccm_12",
 		.fqn = "AES_CCM_12",
 		.names = "aes_ccm_12,aes_ccm_b",
 		.algo_type =    IKE_ALG_ENCRYPT,
@@ -285,7 +278,6 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 const struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 {
 	.common = {
-		.name = "aes_ccm_16",
 		.fqn = "AES_CCM_16",
 		.names = "aes_ccm,aes_ccm_16,aes_ccm_c",
 		.algo_type =   IKE_ALG_ENCRYPT,
@@ -316,7 +308,6 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 #ifdef USE_PRF_AES_XCBC
 const struct prf_desc ike_alg_prf_aes_xcbc = {
 	.common = {
-		.name = "aes_xcbc",
 		.fqn = "AES_XCBC",
 		.names = "aes128_xcbc,aes_xcbc",
 		.algo_type = IKE_ALG_PRF,
@@ -341,7 +332,6 @@ const struct prf_desc ike_alg_prf_aes_xcbc = {
 
 const struct integ_desc ike_alg_integ_aes_xcbc = {
 	.common = {
-		.name = "aes_xcbc",
 		.fqn = "AES_XCBC_96",
 		.names = "aes_xcbc,aes128_xcbc,aes_xcbc_96,aes128_xcbc_96",
 		.algo_type = IKE_ALG_INTEG,
@@ -369,7 +359,6 @@ const struct integ_desc ike_alg_integ_aes_xcbc = {
 
 const struct integ_desc ike_alg_integ_aes_cmac = {
 	.common = {
-		.name = "aes_cmac",
 		.fqn = "AES_CMAC_96",
 		.names = "aes_cmac,aes_cmac_96",
 		.algo_type = IKE_ALG_INTEG,
@@ -398,7 +387,6 @@ const struct integ_desc ike_alg_integ_aes_cmac = {
 
 const struct encrypt_desc ike_alg_encrypt_null_integ_aes_gmac = {
 	.common = {
-		.name = "aes_gmac",
 		.fqn = "NULL_AUTH_AES_GMAC",
 		.names = "null_auth_aes_gmac,aes_gmac",
 		.algo_type = IKE_ALG_ENCRYPT,

@@ -33,11 +33,11 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 			    uint8_t *in_buf, size_t in_buf_len, PK11SymKey *symkey,
 			    uint8_t *iv, bool enc)
 {
-	DBG(DBG_CRYPT, DBG_log("NSS ike_alg_nss_cbc: %s - enter", alg->common.name));
+	DBG(DBG_CRYPT, DBG_log("NSS ike_alg_nss_cbc: %s - enter", alg->common.fqn));
 
 	if (symkey == NULL) {
 		PASSERT_FAIL("%s - NSS derived enc key in NULL",
-			     alg->common.name);
+			     alg->common.fqn);
 	}
 
 	SECItem ivitem;
@@ -47,7 +47,7 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 	SECItem *secparam = PK11_ParamFromIV(alg->nss.mechanism, &ivitem);
 	if (secparam == NULL) {
 		PASSERT_FAIL("%s - Failure to set up PKCS11 param (err %d)",
-			     alg->common.name, PR_GetError());
+			     alg->common.fqn, PR_GetError());
 	}
 
 	PK11Context *enccontext;
@@ -57,7 +57,7 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 	if (enccontext == NULL) {
 		LSWLOG_PASSERT(buf) {
 			lswlogf(buf, "NSS: %s: PKCS11 context creation failure",
-				alg->common.name);
+				alg->common.fqn);
 			lswlog_nss_error(buf);
 		}
 	}
@@ -71,7 +71,7 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 	if (rv != SECSuccess) {
 		LSWLOG_PASSERT(buf) {
 			lswlogf(buf, "NSS: %s: PKCS11 operation failure",
-				alg->common.name);
+				alg->common.fqn);
 			lswlog_nss_error(buf);
 		}
 	}
@@ -106,7 +106,7 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 
 	if (secparam != NULL)
 		SECITEM_FreeItem(secparam, PR_TRUE);
-	DBG(DBG_CRYPT, DBG_log("NSS ike_alg_nss_cbc: %s - exit", alg->common.name));
+	DBG(DBG_CRYPT, DBG_log("NSS ike_alg_nss_cbc: %s - exit", alg->common.fqn));
 }
 
 static void nss_cbc_check(const struct encrypt_desc *encrypt)

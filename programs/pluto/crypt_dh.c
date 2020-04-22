@@ -75,7 +75,7 @@ struct dh_secret {
 static void lswlog_dh_secret(struct lswlog *buf, struct dh_secret *secret)
 {
 	lswlogf(buf, "DH secret %s@%p: ",
-		secret->group->common.name, secret);
+		secret->group->common.fqn, secret);
 }
 
 struct dh_secret *calc_dh_secret(const struct dh_desc *group,

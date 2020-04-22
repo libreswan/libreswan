@@ -52,7 +52,7 @@ static void nss_ecp_calc_secret(const struct dh_desc *group,
 	SECOidData *pk11_data = SECOID_FindOIDByTag(group->nss_oid);
 	if (pk11_data == NULL) {
 		PASSERT_FAIL("Lookup of OID %d for EC group %s parameters failed",
-			     group->nss_oid, group->common.name);
+			     group->nss_oid, group->common.fqn);
 	}
 	LSWDBGP(DBG_CRYPT, buf) {
 		lswlogs(buf, "pk11_data->oid: ");

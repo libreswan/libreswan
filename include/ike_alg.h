@@ -37,7 +37,6 @@ enum ike_alg_key;
 #define pri_ike_alg(ALG)						\
 		ike_alg_type_name((ALG)->algo_type),			\
 			((ALG)->fqn != NULL ? (ALG)->fqn		\
-			 : (ALG)->name != NULL ? (ALG)->name		\
 			 : "NULL")
 
 #define pexpect_ike_alg(ALG, ASSERTION)					\
@@ -254,9 +253,8 @@ int ike_alg_enum_match(const struct ike_alg_type *type, enum ike_alg_key key,
  */
 struct ike_alg {
 	/*
-	 * Name to print when logging.  FQN = fully-qualified-name.
+	 * Name to print when logging; FQN = fully-qualified-name.
 	 */
-	const char *name;
 	const char *fqn;
 	/*
 	 * String containing a comma separated list of all names that
