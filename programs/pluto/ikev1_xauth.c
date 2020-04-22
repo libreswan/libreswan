@@ -1203,7 +1203,7 @@ static void xauth_launch_authent(struct state *st,
 				       arg_name, arg_password,
 				       "XAUTH",
 				       ikev1_xauth_callback);
-		event_schedule_s(EVENT_PAM_TIMEOUT, EVENT_PAM_TIMEOUT_DELAY, st);
+		event_schedule(EVENT_PAM_TIMEOUT, EVENT_PAM_TIMEOUT_DELAY, st);
 		break;
 #endif
 

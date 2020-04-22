@@ -4942,7 +4942,7 @@ static stf_status ikev2_start_new_exchange(struct ike_sa *ike,
 			loglog(RC_LOG_SERIOUS, "no viable to parent to initiate CREATE_CHILD_EXCHANGE %s; trying replace",
 			       child->sa.st_state->name);
 			delete_event(&child->sa);
-			event_schedule_s(EVENT_SA_REPLACE, REPLACE_ORPHAN, &child->sa);
+			event_schedule(EVENT_SA_REPLACE, REPLACE_ORPHAN_DELAY, &child->sa);
 			/* ??? surely this isn't yet a failure or a success */
 			return STF_FAIL;
 		}
@@ -5913,8 +5913,8 @@ void ikev2_record_newaddr(struct state *st, void *arg_ip)
 		 * A better fix would be listen to  RTM_NEWROUTE, RTM_DELROUTE
 		 */
 		if (st->st_addr_change_event == NULL) {
-			event_schedule_s(EVENT_v2_ADDR_CHANGE,
-					 RTM_NEWADDR_ROUTE_DELAY, st);
+			event_schedule(EVENT_v2_ADDR_CHANGE,
+				       RTM_NEWADDR_ROUTE_DELAY, st);
 		} else {
 			ipstr_buf b;
 			DBG(DBG_CONTROL, DBG_log("#%lu MOBIKE ignore address %s change pending previous",

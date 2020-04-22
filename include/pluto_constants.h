@@ -226,11 +226,11 @@ enum event_type {
 #define EVENT_GIVEUP_ON_DNS_DELAY	(5 * secs_per_minute)
 #define EVENT_RELEASE_WHACK_DELAY	10	/* seconds */
 
-#define RTM_NEWADDR_ROUTE_DELAY		3 /* seconds */
+#define RTM_NEWADDR_ROUTE_DELAY		deltatime(3) /* seconds */
 
 #define PARENT_MIN_LIFE			1 /* second */
 #define EXPIRE_OLD_SA			1 /* second */
-#define REPLACE_ORPHAN			1 /* second */
+#define REPLACE_ORPHAN_DELAY		deltatime(1) /* second */
 
 /*
  * an arbitrary milliseconds delay for responder. A workaround for iOS, iPhone.
@@ -242,9 +242,9 @@ enum event_type {
 #ifndef RETRANSMIT_INTERVAL_DEFAULT_MS
 # define RETRANSMIT_INTERVAL_DEFAULT_MS	500 /* wait time doubled each retransmit - in milliseconds */
 #endif
-#define DELETE_SA_DELAY			RETRANSMIT_TIMEOUT_DEFAULT /* wait until the other side giveup on us */
-#define EVENT_CRYPTO_TIMEOUT_DELAY	RETRANSMIT_TIMEOUT_DEFAULT /* wait till the other side give up on us */
-#define EVENT_PAM_TIMEOUT_DELAY		RETRANSMIT_TIMEOUT_DEFAULT /* wait until this side give up on PAM */
+#define DELETE_SA_DELAY			deltatime(RETRANSMIT_TIMEOUT_DEFAULT) /* wait until the other side giveup on us */
+#define EVENT_CRYPTO_TIMEOUT_DELAY	deltatime(RETRANSMIT_TIMEOUT_DEFAULT) /* wait till the other side give up on us */
+#define EVENT_PAM_TIMEOUT_DELAY		deltatime(RETRANSMIT_TIMEOUT_DEFAULT) /* wait until this side give up on PAM */
 
 #define REVIVE_CONN_DELAY	5 /* seconds */
 #define REVIVE_CONN_DELAY_MAX  300 /* Do not delay more than 5 minutes per attempt */

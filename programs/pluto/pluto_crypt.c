@@ -546,7 +546,7 @@ static void submit_crypto_request(struct pluto_crypto_req_cont *cn,
 			    cn->pcrc_name, cn->pcrc_id,
 			    cn->pcrc_serialno));
 		delete_event(st);
-		event_schedule_s(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, st);
+		event_schedule(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, st);
 		/* add to backlog */
 		pthread_mutex_lock(&backlog_mutex);
 		{
