@@ -1,1 +1,1 @@
-IKEv2 RW test with rekey-responder-subnet
+IKEv2 RW test with rekey-responder-subnet rekey should fail on road.

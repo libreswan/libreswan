@@ -1,0 +1,30 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add east
+002 added connection description "east"
+east #
+ ipsec whack --impair revival
+east #
+ echo "initdone"
+initdone
+east #
+ # only #2 and not #3
+east #
+ ipsec trafficstatus
+006 #2: "east"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=672, outBytes=672, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org', lease=192.0.2.100/32
+east #
+ # should find a match on both east and road
+east #
+ grep "Notify Message Type: v2N_TS_UNACCEPTABLE" /tmp/pluto.log
+|    Notify Message Type: v2N_TS_UNACCEPTABLE (0x26)
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

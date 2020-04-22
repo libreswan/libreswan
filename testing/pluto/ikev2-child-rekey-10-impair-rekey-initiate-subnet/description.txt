@@ -1,2 +1,2 @@
-IKEv2 RW test with rekey-initiator-subnet.
+IKEv2 RW test with rekey-initiator-subnet rekey should fail.
 
