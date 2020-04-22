@@ -55,6 +55,7 @@ typedef struct { struct timeval dt; } deltatime_t;
 deltatime_t deltatime(time_t secs);
 deltatime_t deltatime_ms(intmax_t ms);
 
+/* for monotime(a-b) and realtime(a-b) */
 deltatime_t deltatime_timevals_diff(struct timeval l, struct timeval r);
 
 /* sign(a - b); see timercmp() for hacks origin */
@@ -79,10 +80,10 @@ deltatime_t deltatime_divu(deltatime_t a, unsigned scalar);
 intmax_t deltamillisecs(deltatime_t d);
 intmax_t deltasecs(deltatime_t d);
 deltatime_t deltatimescale(int num, int denom, deltatime_t d);
-bool deltaless_tv_dt(const struct timeval a, const deltatime_t b);
 
-/* Convert to struct timeval. */
-struct timeval deltatimeval(deltatime_t);
+/* Convert to/from struct timeval - time used by libevent. */
+struct timeval timeval_from_deltatime(deltatime_t);
+deltatime_t deltatime_from_timeval(const struct timeval a);
 
 /* output as "smart" seconds */
 

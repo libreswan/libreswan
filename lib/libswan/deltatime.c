@@ -131,14 +131,15 @@ deltatime_t deltatimescale(int num, int denom, deltatime_t d)
 	return deltatime(deltasecs(d) * num / denom);
 }
 
-bool deltaless_tv_dt(const struct timeval a, const deltatime_t b)
-{
-	return timercmp(&a, &b.dt, <);
-}
-
-struct timeval deltatimeval(deltatime_t d)
+struct timeval timeval_from_deltatime(deltatime_t d)
 {
 	return d.dt;
+}
+
+deltatime_t deltatime_from_timeval(struct timeval t)
+{
+	deltatime_t d = { t, };
+	return d;
 }
 
 /*

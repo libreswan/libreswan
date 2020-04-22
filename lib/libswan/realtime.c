@@ -31,9 +31,8 @@ realtime_t realtime(time_t time)
 
 realtime_t realtimesum(realtime_t t, deltatime_t d)
 {
-	struct timeval dv = deltatimeval(d);
 	realtime_t s;
-	timeradd(&t.rt, &dv, &s.rt);
+	timeradd(&t.rt, &d.dt, &s.rt);
 	return s;
 }
 
