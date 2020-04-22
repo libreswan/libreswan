@@ -6,4 +6,7 @@ certutil -M -d sql:/etc/ipsec.d -n cacert -t 'CT,,'
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add x509
+ipsec auto --add x509-comma-comma
+# show both conns are interpreted with \,
+ipsec status |grep idtype
 echo "initdone"
