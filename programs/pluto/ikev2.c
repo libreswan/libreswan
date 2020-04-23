@@ -944,6 +944,12 @@ static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 	struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
 	pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2SKF]->pbs;
 
+	if (!st->st_seen_fragvid) {
+		DBG(DBG_CONTROL,
+                    DBG_log(" fragments claiming to be from peer while peer did not signal fragmentation support - dropped"));
+		return FALSE;
+	}
+
 	if (!ikev2_check_fragment(md, st)) {
 		return FALSE;
 	}
