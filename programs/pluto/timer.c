@@ -88,7 +88,7 @@ struct pluto_event **state_event(struct state *st, enum event_type type)
 	case EVENT_v2_RELEASE_WHACK:
 		return &st->st_rel_whack_event;
 
-	case  EVENT_v1_SEND_XAUTH:
+	case EVENT_v1_SEND_XAUTH:
 		return &st->st_send_xauth_event;
 
 	case EVENT_RETRANSMIT:
