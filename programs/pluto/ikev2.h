@@ -168,13 +168,6 @@ extern bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
 				     chunk_t *no_ppk_auth /* optional output */,
 				     const struct hash_desc *hash_algo);
 
-extern bool ikev2_calculate_ecdsa_hash(struct ike_sa *ike,
-				       enum original_role role,
-				       const struct crypt_mac *idhash,
-				       pb_stream *a_pbs,
-				       chunk_t *no_ppk_auth /* optional output */,
-				       const struct hash_desc *hash_algo);
-
 extern bool ikev2_emit_psk_auth(enum keyword_authby authby,
 				const struct ike_sa *ike,
 				const struct crypt_mac *idhash,
