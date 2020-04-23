@@ -2012,20 +2012,22 @@ bool ikev2_viable_parent(const struct ike_sa *ike)
 
 	monotime_t now = mononow();
 	const struct pluto_event *ev = ike->sa.st_event;
-	long lifetime = monobefore(now, ev->ev_time) ?
-				deltasecs(monotimediff(ev->ev_time, now)) :
-				-1 * deltasecs(monotimediff(now, ev->ev_time));
+	deltatime_t lifetime = monotimediff(ev->ev_time, now);
 
-	if (lifetime > PARENT_MIN_LIFE)
-		/* in case st_margin == 0, insist minimum life */
-		if (lifetime > deltasecs(ike->sa.st_replace_margin))
-			return TRUE;
+	if (deltatime_cmp(lifetime, >, PARENT_MIN_LIFE_DELAY) &&
+	    /* in case st_margin == 0, insist minimum life */
+	    deltatime_cmp(lifetime, >, ike->sa.st_replace_margin)) {
+		return true;
+	}
 
-		loglog(RC_LOG_SERIOUS, "no new CREATE_CHILD_SA exchange using #%lu. Parent lifetime %ld < st_margin %jd",
-				ike->sa.st_serialno, lifetime,
-				deltasecs(ike->sa.st_replace_margin));
+	deltatime_buf lb, rb;
+	log_state(RC_LOG_SERIOUS, &ike->sa,
+		  "no new CREATE_CHILD_SA exchange using #%lu. Parent lifetime %s < st_margin %s",
+		  ike->sa.st_serialno,
+		  str_deltatime(lifetime, &lb),
+		  str_deltatime(ike->sa.st_replace_margin, &rb));
 
-	return FALSE;
+	return false;
 }
 
 /*

@@ -2218,7 +2218,7 @@ static bool netlink_eroute_idle(struct state *st, deltatime_t idle_max)
 
 	passert(st != NULL);
 	return !get_sa_info(st, TRUE, &idle_time) ||
-		!deltaless(idle_time, idle_max);
+		deltatime_cmp(idle_time, >=, idle_max);
 }
 
 static bool netlink_shunt_eroute(const struct connection *c,

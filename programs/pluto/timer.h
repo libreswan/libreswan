@@ -38,8 +38,6 @@ struct pluto_event {
 extern void event_schedule(enum event_type type, deltatime_t delay,
 			   struct state *st);
 void event_delete(enum event_type type, struct state *st);
-extern void event_schedule_s(enum event_type type, time_t delay_seconds,
-			     struct state *st);
 struct pluto_event **state_event(struct state *st, enum event_type type);
 extern void event_force(enum event_type type, struct state *st);
 extern void delete_event(struct state *st);

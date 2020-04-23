@@ -3473,7 +3473,7 @@ static stf_status ikev2_process_cp_respnse(struct msg_digest *md)
 static void ikev2_rekey_expire_pred(const struct state *st, so_serial_t pred)
 {
 	struct state *rst = state_with_serialno(pred);
-	long lifetime = -1;
+	deltatime_t lifetime = deltatime(0); /* .lt. EXPIRE_OLD_SA_DELAY */
 
 	if (rst !=  NULL && IS_V2_ESTABLISHED(rst->st_state)) {
 		/* on initiator, delete st_ipsec_pred. The responder should not */
@@ -3481,19 +3481,18 @@ static void ikev2_rekey_expire_pred(const struct state *st, so_serial_t pred)
 		const struct pluto_event *ev = rst->st_event;
 
 		if (ev != NULL)
-			lifetime = monobefore(now, ev->ev_time) ?
-				deltasecs(monotimediff(ev->ev_time, now)) :
-				-1 * deltasecs(monotimediff(now, ev->ev_time));
+			lifetime = monotimediff(ev->ev_time, now);
 	}
 
-	libreswan_log("rekeyed #%lu %s %s remaining life %lds", pred,
-			st->st_state->name,
-			rst ==  NULL ? "and the state is gone" : "and expire it",
-			lifetime);
+	deltatime_buf lb;
+	log_state(RC_LOG, st, "rekeyed #%lu %s %s remaining life %ss", pred,
+		  st->st_state->name,
+		  rst ==  NULL ? "and the state is gone" : "and expire it",
+		  str_deltatime(lifetime, &lb));
 
-	if (lifetime > EXPIRE_OLD_SA) {
+	if (deltatime_cmp(lifetime, >, EXPIRE_OLD_SA_DELAY)) {
 		delete_event(rst);
-		event_schedule_s(EVENT_SA_EXPIRE, EXPIRE_OLD_SA, rst);
+		event_schedule(EVENT_SA_EXPIRE, EXPIRE_OLD_SA_DELAY, rst);
 	}
 	/* else it should be on its way to expire no need to kick dead state */
 }
@@ -5944,7 +5943,7 @@ void ikev2_record_deladdr(struct state *st, void *arg_ip)
 		event_delete(EVENT_v2_LIVENESS, cst);
 
 		if (st->st_addr_change_event == NULL) {
-			event_schedule_s(EVENT_v2_ADDR_CHANGE, 0, st);
+			event_schedule(EVENT_v2_ADDR_CHANGE, deltatime(0), st);
 		} else {
 			ipstr_buf o, n;
 			dbg("#%lu MOBIKE new RTM_DELADDR %s pending previous %s",

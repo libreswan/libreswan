@@ -258,7 +258,7 @@ void enable_periodic_timer(enum event_type type, global_timer_cb *cb,
 	gt->cb = cb;
 	passert(event_get_events(&gt->ev) == (EV_TIMEOUT|EV_PERSIST));
 	/* enable */
-	struct timeval t = deltatimeval(period);
+	struct timeval t = timeval_from_deltatime(period);
 	passert(event_add(&gt->ev, &t) >= 0);
 	/* log */
 	deltatime_buf buf;
@@ -289,7 +289,7 @@ void schedule_oneshot_timer(enum event_type type, deltatime_t delay)
 	    gt->name, str_deltatime(delay, &buf));
 	passert(event_initialized(&gt->ev));
 	passert(event_get_events(&gt->ev) == (EV_TIMEOUT));
-	struct timeval t = deltatimeval(delay);
+	struct timeval t = timeval_from_deltatime(delay);
 	passert(event_add(&gt->ev, &t) >= 0);
 }
 
@@ -533,7 +533,7 @@ void fire_timer_photon_torpedo(struct event **evp,
 	 * before it has been saved by the helper thread.
 	 */
 	*evp = ev;
-	struct timeval t = deltatimeval(delay);
+	struct timeval t = timeval_from_deltatime(delay);
 	passert(event_add(ev, &t) >= 0);
 }
 
@@ -1294,11 +1294,13 @@ void call_server(char *conffile)
 	passert(r == 0);
 }
 
-bool ev_before(struct pluto_event *pev, deltatime_t delay) {
+bool ev_before(struct pluto_event *pev, deltatime_t delay)
+{
 	struct timeval timeout;
-
-	return (event_pending(pev->ev, EV_TIMEOUT, &timeout) & EV_TIMEOUT) &&
-		deltaless_tv_dt(timeout, delay);
+	if (!(event_pending(pev->ev, EV_TIMEOUT, &timeout) & EV_TIMEOUT)) {
+		return false;
+	}
+	return deltatime_cmp(deltatime_from_timeval(timeout), <, delay);
 }
 
 void set_whack_pluto_ddos(enum ddos_mode mode)

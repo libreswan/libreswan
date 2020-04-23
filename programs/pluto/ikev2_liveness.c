@@ -88,7 +88,7 @@ static void schedule_liveness(struct child_sa *child, deltatime_t time_since_las
 		    child->sa.st_serialno,
 		    str_endpoint(&child->sa.st_remote_endpoint, &remote_buf),
 		    str_deltatime(delay, &db));
-		if (deltatime_cmp(time_since_last_contact, deltatime(0)) != 0) {
+		if (deltatime_cmp(time_since_last_contact, !=, deltatime(0))) {
 			deltatime_buf lcb;
 			jam(buf, " (%s was %s seconds ago)",
 			    reason, str_deltatime(time_since_last_contact, &lcb));
@@ -143,7 +143,7 @@ void liveness_check(struct state *st)
 	deltatime_t time_since_last_message;
 	if (get_sa_info(&child->sa, true, &time_since_last_message) &&
 	    /* time_since_last_message < .dpd_delay */
-	    deltaless(time_since_last_message, c->dpd_delay)) {
+	    deltatime_cmp(time_since_last_message, <, c->dpd_delay)) {
 		/*
 		 * Update .st_liveness_last, with the time of this
 		 * traffic (unless other traffic is more recent).
@@ -204,7 +204,7 @@ void liveness_check(struct state *st)
 	 * reschedule the probe.
 	 */
 	deltatime_t time_since_last_contact = monotimediff(now, our->last_contact);
-	if (deltaless(time_since_last_contact, c->dpd_delay)) {
+	if (deltatime_cmp(time_since_last_contact, <, c->dpd_delay)) {
 		schedule_liveness(child, time_since_last_contact, "successful exchange");
 		return;
 	}
@@ -219,7 +219,7 @@ void liveness_check(struct state *st)
 	deltatime_t last_msg_age;
 
 	if (get_sa_info(st, TRUE, &last_msg_age) &&
-		deltaless(last_msg_age, c->dpd_timeout)) {
+	    deltatime_cmp(last_msg_age, <, c->dpd_timeout)) {
 		pst->st_pend_liveness = FALSE;
 		pst->st_last_liveness = monotime_epoch;
 	} else {
@@ -249,7 +249,7 @@ void liveness_check(struct state *st)
 						    deltatime_mulu(c->dpd_delay, 3));
 
 		if (pst->st_pend_liveness &&
-		    deltatime_cmp(monotimediff(tm, last_liveness), timeout) >= 0) {
+		    deltatime_cmp(monotimediff(tm, last_liveness), >=, timeout)) {
 			LSWLOG(buf) {
 				lswlogf(buf, "liveness_check - peer %s has not responded in %jd seconds, with a timeout of ",
 					log_ip ? that_ip : "<ip address>",

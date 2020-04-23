@@ -20,6 +20,7 @@
 #include "lswcdefs.h"		/* for elemsof() */
 #include "deltatime.h"
 #include "timecheck.h"
+#include "constants.h"		/* for bool_str() */
 
 struct test_op {
 	intmax_t lms, rms;
@@ -99,25 +100,37 @@ void check_deltatime(void)
 	};
 	CHECK_DELTATIME_OP(sub);
 
-	static const struct test_deltaless {
+	static const struct test_deltatime_cmp {
 		intmax_t lms, rms;
-		bool less;
+		bool lt, le, eq, ge, gt, ne;
 	} test_deltaless[] = {
-		{  1000,  100, false },
-		{ -1000,    0, true },
-		{  -100, -200, false },
+		{  1000,  100, false, false, false, true,  true,  true, },
+		{ -1000,    0, true,  true,  false, false, false, true, },
+		{     0,    0, false, true,  true,  true,  false, false, },
+		{  -100, -200, false, false, false, true,  true,  true, },
 	};
 	for (unsigned i = 0; i < elemsof(test_deltaless); i++) {
-		const struct test_deltaless *t = &test_deltaless[i];
+		const struct test_deltatime_cmp *t = &test_deltaless[i];
 		deltatime_t l = deltatime_ms(t->lms);
 		deltatime_t r = deltatime_ms(t->rms);
-		bool less = deltaless(l, r);
-		snprintf(what, sizeof(what), "deltaless(%jdms, %jdms) == %s", t->lms, t->rms, t->less ? "true" : "false");
-		if (less != t->less) {
-			fprintf(stderr, "FAIL: %s vs %s\n", what, less ? "true" : "false");
-			fails++;
-		} else {
-			printf("%s\n", what);
+#define CMP(OP, F)							\
+		{							\
+			bool op = deltatime_cmp(l, OP, r);		\
+			snprintf(what, sizeof(what),			\
+				 "deltatime_cmp(%jdms, %s, %jdms) == %s", \
+				 t->lms, #OP, t->rms, bool_str(t->F));	\
+			if (op != t->F) {				\
+				fprintf(stderr, "FAIL: %s vs %s\n", what, bool_str(op)); \
+				fails++;				\
+			} else {					\
+				printf("%s\n", what);			\
+			}						\
 		}
+		CMP(<,  lt);
+		CMP(<=, le);
+		CMP(==, eq);
+		CMP(>=, ge);
+		CMP(>, gt);
+		CMP(!=, ne);
 	}
 }
