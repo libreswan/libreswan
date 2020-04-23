@@ -172,12 +172,12 @@ static err_t try_RSA_signature_v2(const struct crypt_mac *hash,
 }
 
 stf_status ikev2_verify_rsa_hash(struct ike_sa *ike,
-				 enum original_role role,
 				 const struct crypt_mac *idhash,
 				 pb_stream *sig_pbs,
 				 const struct hash_desc *hash_algo)
 {
 	statetime_t start = statetime_start(&ike->sa);
+	const enum original_role role = ike->sa.st_original_role;
 	enum original_role invertrole = (role == ORIGINAL_INITIATOR ? ORIGINAL_RESPONDER : ORIGINAL_INITIATOR);
 	size_t sig_len = pbs_left(sig_pbs);
 

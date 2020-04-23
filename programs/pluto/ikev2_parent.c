@@ -274,7 +274,6 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 			  const enum keyword_authby that_authby,
 			  const char *context)
 {
-	const enum original_role role = ike->sa.st_original_role;
 	switch (recv_auth) {
 	case IKEv2_AUTH_RSA:
 	{
@@ -286,12 +285,8 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 			return false;
 		}
 
-		stf_status authstat = ikev2_verify_rsa_hash(
-				ike,
-				role,
-				idhash_in,
-				pbs,
-				&ike_alg_hash_sha1);
+		stf_status authstat = ikev2_verify_rsa_hash(ike, idhash_in, pbs,
+							    &ike_alg_hash_sha1);
 
 		if (authstat != STF_OK) {
 			log_state(RC_LOG, &ike->sa,
@@ -397,12 +392,12 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 
 		switch (that_authby) {
 		case AUTHBY_RSASIG:
-			authstat = ikev2_verify_rsa_hash(ike, role, idhash_in, pbs,
+			authstat = ikev2_verify_rsa_hash(ike, idhash_in, pbs,
 							 hap->algo);
 			break;
 
 		case AUTHBY_ECDSA:
-			authstat = ikev2_verify_ecdsa_hash(ike, role, idhash_in, pbs,
+			authstat = ikev2_verify_ecdsa_hash(ike, idhash_in, pbs,
 							   hap->algo);
 			break;
 

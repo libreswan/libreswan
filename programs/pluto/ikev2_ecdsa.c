@@ -179,7 +179,6 @@ static err_t try_ECDSA_signature_v2(const struct crypt_mac *hash,
 }
 
 stf_status ikev2_verify_ecdsa_hash(struct ike_sa *ike,
-				   enum original_role role,
 				   const struct crypt_mac *idhash,
 				   pb_stream *sig_pbs,
 				   const struct hash_desc *hash_algo)
@@ -188,6 +187,7 @@ stf_status ikev2_verify_ecdsa_hash(struct ike_sa *ike,
 		return STF_FATAL;
 	}
 
+	const enum original_role role = ike->sa.st_original_role;
 	enum original_role invertrole = (role == ORIGINAL_INITIATOR ? ORIGINAL_RESPONDER : ORIGINAL_INITIATOR);
 	struct crypt_mac calc_hash = v2_calculate_sighash(ike, invertrole, idhash,
 							  ike->sa.st_firstpacket_him,
