@@ -79,9 +79,8 @@ bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
 	const struct RSA_private_key *k = &pks->u.RSA_private_key;
 	unsigned int sz = k->pub.k;
 
-	struct crypt_mac hash = v2_calculate_sighash(ike, ike->sa.st_original_role, idhash,
-						     ike->sa.st_firstpacket_me,
-						     hash_algo);
+	struct crypt_mac hash = v2_calculate_sighash(ike, idhash, hash_algo,
+						     LOCAL_PERSPECTIVE);
 
 	/*
 	 * Allocate large enough space for any digest.  Bound could be
@@ -177,8 +176,6 @@ stf_status ikev2_verify_rsa_hash(struct ike_sa *ike,
 				 const struct hash_desc *hash_algo)
 {
 	statetime_t start = statetime_start(&ike->sa);
-	const enum original_role role = ike->sa.st_original_role;
-	enum original_role invertrole = (role == ORIGINAL_INITIATOR ? ORIGINAL_RESPONDER : ORIGINAL_INITIATOR);
 	size_t sig_len = pbs_left(sig_pbs);
 
 	/* XXX: table lookup? */
@@ -192,9 +189,8 @@ stf_status ikev2_verify_rsa_hash(struct ike_sa *ike,
 		return STF_FATAL;
 	}
 
-	struct crypt_mac hash = v2_calculate_sighash(ike, invertrole, idhash,
-						     ike->sa.st_firstpacket_him,
-						     hash_algo);
+	struct crypt_mac hash = v2_calculate_sighash(ike, idhash, hash_algo,
+						     REMOTE_PERSPECTIVE);
 	stf_status retstat = check_signature_gen(&ike->sa, &hash, sig_pbs, hash_algo,
 						 &pubkey_type_rsa, try_RSA_signature_v2);
 	statetime_stop(&start, "%s()", __func__);

@@ -187,11 +187,8 @@ stf_status ikev2_verify_ecdsa_hash(struct ike_sa *ike,
 		return STF_FATAL;
 	}
 
-	const enum original_role role = ike->sa.st_original_role;
-	enum original_role invertrole = (role == ORIGINAL_INITIATOR ? ORIGINAL_RESPONDER : ORIGINAL_INITIATOR);
-	struct crypt_mac calc_hash = v2_calculate_sighash(ike, invertrole, idhash,
-							  ike->sa.st_firstpacket_him,
-							  hash_algo);
+	struct crypt_mac calc_hash = v2_calculate_sighash(ike, idhash, hash_algo,
+							  REMOTE_PERSPECTIVE);
 	return check_signature_gen(&ike->sa, &calc_hash, sig_pbs, hash_algo,
 				   &pubkey_type_ecdsa, try_ECDSA_signature_v2);
 }

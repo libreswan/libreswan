@@ -266,6 +266,9 @@ static bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 /*
  * ??? Several verify routines return an stf_status and yet we just return a bool.
  *     We perhaps should return an stf_status so distinctions don't get lost.
+ *
+ * XXX: this is answering a simple yes/no question.  Did auth succeed.
+ * Caller needs to decide what response is appropriate.
  */
 static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 			  struct ike_sa *ike,
@@ -2013,10 +2016,8 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		{
 			const struct hash_desc *hash_algo = &ike_alg_hash_sha1;
 			struct crypt_mac hash_to_sign =
-				v2_calculate_sighash(ike, ORIGINAL_INITIATOR,
-						     &ike->sa.st_v2_id_payload.mac,
-						     ike->sa.st_firstpacket_me,
-						     hash_algo);
+				v2_calculate_sighash(ike, &ike->sa.st_v2_id_payload.mac,
+						     hash_algo, LOCAL_PERSPECTIVE);
 			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
 						      authby, auth_method,
 						      ikev2_parent_inR1outI2_auth_signature_continue)) {
@@ -2031,10 +2032,9 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			if (hash_algo == NULL) {
 				return STF_FATAL;
 			}
-			struct crypt_mac hash_to_sign = v2_calculate_sighash(ike, ORIGINAL_INITIATOR,
-									     &ike->sa.st_v2_id_payload.mac,
-									     ike->sa.st_firstpacket_me,
-									     hash_algo);
+			struct crypt_mac hash_to_sign =
+				v2_calculate_sighash(ike, &ike->sa.st_v2_id_payload.mac,
+						     hash_algo, LOCAL_PERSPECTIVE);
 			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
 						      authby, auth_method,
 						      ikev2_parent_inR1outI2_auth_signature_continue)) {
@@ -2952,10 +2952,8 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		{
 			const struct hash_desc *hash_algo = &ike_alg_hash_sha1;
 			struct crypt_mac hash_to_sign =
-				v2_calculate_sighash(ike, ORIGINAL_RESPONDER,
-						     &ike->sa.st_v2_id_payload.mac,
-						     ike->sa.st_firstpacket_me,
-						     hash_algo);
+				v2_calculate_sighash(ike, &ike->sa.st_v2_id_payload.mac,
+						     hash_algo, LOCAL_PERSPECTIVE);
 			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
 						      authby, auth_method,
 						      ikev2_parent_inI2outR2_auth_signature_continue)) {
@@ -2976,10 +2974,9 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 						    NULL/*no data*/, ENCRYPTED_PAYLOAD);
 				return STF_FAIL;
 			}
-			struct crypt_mac hash_to_sign = v2_calculate_sighash(ike, ORIGINAL_RESPONDER,
-									     &ike->sa.st_v2_id_payload.mac,
-									     ike->sa.st_firstpacket_me,
-									     hash_algo);
+			struct crypt_mac hash_to_sign =
+				v2_calculate_sighash(ike, &ike->sa.st_v2_id_payload.mac,
+						     hash_algo, LOCAL_PERSPECTIVE);
 			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
 						      authby, auth_method,
 						      ikev2_parent_inI2outR2_auth_signature_continue)) {

@@ -29,12 +29,12 @@ struct msg_digest;
 struct hash_desc;
 struct logger;
 struct private_key_stuff;
+enum perspective;
 
 struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
-				      enum original_role role,
 				      const struct crypt_mac *idhash,
-				      const chunk_t firstpacket,
-				      const struct hash_desc *hasher);
+				      const struct hash_desc *hasher,
+				      enum perspective from_the_perspective_of);
 
 enum keyword_authby v2_auth_by(struct ike_sa *ike);
 enum ikev2_auth_method v2_auth_method(struct ike_sa *ike, enum keyword_authby authby);
