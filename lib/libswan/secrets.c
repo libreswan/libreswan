@@ -342,7 +342,14 @@ static err_t ECDSA_unpack_pubkey_content(union pubkey_content *u, chunk_t pubkey
 static void ECDSA_free_public_content(struct ECDSA_public_key *ecdsa)
 {
 	free_chunk_content(&ecdsa->pub);
-	/* ??? what about ecdsa->pub.{ecParams,version,ckaid}? */
+	free_chunk_content(&ecdsa->ecParams);
+	/* ckaid is an embedded struct (no pointer) */
+	/*
+	 * ??? what about ecdsa->pub.{version,ckaid}?
+	 *
+	 * CKAID's been changed to an embedded struct (so no pointer).
+	 * VERSION was dropped?
+	 */
 }
 
 static void ECDSA_free_pubkey_content(union pubkey_content *u)
@@ -373,8 +380,6 @@ static void ECDSA_free_secret_content(struct private_key_stuff *pks)
 {
 	SECKEY_DestroyPrivateKey(pks->private_key);
 	struct ECDSA_private_key *ecdsak = &pks->u.ECDSA_private_key;
-	dbg("leaking ECDSA content?");
-	/* ??? what about freeing the rest of the key? */
 	ECDSA_free_public_content(&ecdsak->pub);
 }
 
@@ -1736,11 +1741,7 @@ struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert)
 
 struct pubkey *allocate_ECDSA_public_key_nss(CERTCertificate *cert)
 {
-	ckaid_t ckaid;
-	chunk_t pub;
-	chunk_t ecParams;
-	unsigned int k;
-	char keyid[KEYID_BUF];
+	struct pubkey *pk;
 	{
 		SECKEYPublicKey *nsspk = SECKEY_ExtractPublicKey(&cert->subjectPublicKeyInfo);
 		if (nsspk == NULL) {
@@ -1750,38 +1751,41 @@ struct pubkey *allocate_ECDSA_public_key_nss(CERTCertificate *cert)
 			return NULL;
 		}
 
-		pub = clone_secitem_as_chunk(nsspk->u.ec.publicValue, "ECDSA pub");
-		ecParams = clone_secitem_as_chunk(nsspk->u.ec.DEREncodedParams, "ECDSA ecParams");
+		/* assume things succeed */
+		pk = alloc_thing(struct pubkey, "ECDSA pubkey");
 
-		DBG_dump("pub", nsspk->u.ec.publicValue.data, nsspk->u.ec.publicValue.len);
-		DBG_dump("ecParams", nsspk->u.ec.DEREncodedParams.data, nsspk->u.ec.DEREncodedParams.len);
+		pk->u.ecdsa.pub = clone_secitem_as_chunk(nsspk->u.ec.publicValue, "ECDSA pub");
+		if (DBGP(DBG_BASE)) {
+			DBG_dump_hunk("pub", pk->u.ecdsa.pub);
+		}
 
+		pk->u.ecdsa.ecParams = clone_secitem_as_chunk(nsspk->u.ec.DEREncodedParams, "ECDSA ecParams");
+		if (DBGP(DBG_BASE)) {
+			DBG_dump_hunk("ecParams", pk->u.ecdsa.ecParams);
+		}
+
+		/* keyid */
+		char keyid[KEYID_BUF] = "";
 		memcpy(keyid, nsspk->u.ec.publicValue.data, KEYID_BUF-1);
-		DBG_dump("keyid", keyid, KEYID_BUF-1);
+		if (DBGP(DBG_BASE)) {
+			DBG_dump("keyid", keyid, KEYID_BUF-1);
+		}
+		keyblobtoid((const unsigned char *)keyid, KEYID_BUF,
+			    pk->u.ecdsa.keyid, KEYID_BUF);
 
-		k = nsspk->u.ec.publicValue.len;
+		pk->u.ecdsa.k = nsspk->u.ec.publicValue.len;
 
 		SECKEY_DestroyPublicKey(nsspk);
 	}
 
-
-	struct pubkey *pk = alloc_thing(struct pubkey, "ECDSA pubkey");
-	pk->u.ecdsa.pub = pub;
-	pk->u.ecdsa.k = k;
-	pk->u.ecdsa.ecParams = ecParams;
-
-	/* keyid */
-	keyblobtoid((const unsigned char *)keyid, KEYID_BUF,
-		    pk->u.ecdsa.keyid, KEYID_BUF);
-
 	/* ckaid */
-	err_t err = form_ckaid_ecdsa(pub, &ckaid);
+	err_t err = form_ckaid_ecdsa(pk->u.ecdsa.pub, &pk->u.ecdsa.ckaid);
 	if (err != NULL) {
+		ECDSA_free_public_content(&pk->u.ecdsa);
 		pfree(pk);
 		return NULL;
 	}
 
-	pk->u.ecdsa.ckaid = ckaid;
 	/*
 	 * based on comments in form_keyid, the modulus length
 	 * returned by NSS might contain a leading zero and this
