@@ -269,12 +269,12 @@ static bool v2_accept_ke_for_proposal(struct ike_sa *ike,
  */
 static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 			  struct ike_sa *ike,
-			  const enum original_role role,
 			  const struct crypt_mac *idhash_in,
 			  pb_stream *pbs,
 			  const enum keyword_authby that_authby,
 			  const char *context)
 {
+	const enum original_role role = ike->sa.st_original_role;
 	switch (recv_auth) {
 	case IKEv2_AUTH_RSA:
 	{
@@ -2849,8 +2849,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		init_pbs(&pbs_no_ppk_auth, ike->sa.st_no_ppk_auth.ptr, len, "pb_stream for verifying NO_PPK_AUTH");
 
 		if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-				   ike, ORIGINAL_RESPONDER, &idhash_in,
-				   &pbs_no_ppk_auth,
+				   ike, &idhash_in, &pbs_no_ppk_auth,
 				   ike->sa.st_connection->spd.that.authby, "no-PPK-auth")) {
 			record_v2N_response(ike->sa.st_logger, ike, md, v2N_AUTHENTICATION_FAILED,
 					    NULL/*no data*/, ENCRYPTED_PAYLOAD);
@@ -2874,8 +2873,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 
 			DBG(DBG_CONTROL, DBG_log("going to try to verify NULL_AUTH from Notify payload"));
 			init_pbs(&pbs_null_auth, null_auth.ptr, len, "pb_stream for verifying NULL_AUTH");
-			if (!v2_check_auth(IKEv2_AUTH_NULL, ike,
-					   ORIGINAL_RESPONDER, &idhash_in,
+			if (!v2_check_auth(IKEv2_AUTH_NULL, ike, &idhash_in,
 					   &pbs_null_auth, AUTHBY_NULL, "NULL_auth from Notify Payload")) {
 				record_v2N_response(ike->sa.st_logger, ike, md, v2N_AUTHENTICATION_FAILED,
 						    NULL/*no data*/, ENCRYPTED_PAYLOAD);
@@ -2887,8 +2885,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		} else {
 			DBGF(DBG_CONTROL, "verifying AUTH payload");
 			if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-					   ike, ORIGINAL_RESPONDER, &idhash_in,
-					   &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
+					   ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
 					   st->st_connection->spd.that.authby, "I2 Auth Payload")) {
 				record_v2N_response(ike->sa.st_logger, ike, md, v2N_AUTHENTICATION_FAILED,
 						    NULL/*no data*/, ENCRYPTED_PAYLOAD);
@@ -3758,8 +3755,8 @@ static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *
 
 	DBGF(DBG_CONTROL, "verifying AUTH payload");
 	if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-			   ike, ORIGINAL_INITIATOR, &idhash_in,
-			   &md->chain[ISAKMP_NEXT_v2AUTH]->pbs, that_authby, "R2 Auth Payload"))
+			   ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
+			   that_authby, "R2 Auth Payload"))
 	{
 		/*
 		 * We cannot send a response as we are processing IKE_AUTH reply
