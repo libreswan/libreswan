@@ -266,10 +266,12 @@ static bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 /*
  * ??? Several verify routines return an stf_status and yet we just return a bool.
  *     We perhaps should return an stf_status so distinctions don't get lost.
+ *
+ * XXX: this is answering a simple yes/no question.  Did auth succeed.
+ * Caller needs to decide what response is appropriate.
  */
 static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 			  struct ike_sa *ike,
-			  const enum original_role role,
 			  const struct crypt_mac *idhash_in,
 			  pb_stream *pbs,
 			  const enum keyword_authby that_authby,
@@ -286,12 +288,8 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 			return false;
 		}
 
-		stf_status authstat = ikev2_verify_rsa_hash(
-				ike,
-				role,
-				idhash_in,
-				pbs,
-				&ike_alg_hash_sha1);
+		stf_status authstat = ikev2_verify_rsa_hash(ike, idhash_in, pbs,
+							    &ike_alg_hash_sha1);
 
 		if (authstat != STF_OK) {
 			log_state(RC_LOG, &ike->sa,
@@ -397,12 +395,12 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 
 		switch (that_authby) {
 		case AUTHBY_RSASIG:
-			authstat = ikev2_verify_rsa_hash(ike, role, idhash_in, pbs,
+			authstat = ikev2_verify_rsa_hash(ike, idhash_in, pbs,
 							 hap->algo);
 			break;
 
 		case AUTHBY_ECDSA:
-			authstat = ikev2_verify_ecdsa_hash(ike, role, idhash_in, pbs,
+			authstat = ikev2_verify_ecdsa_hash(ike, idhash_in, pbs,
 							   hap->algo);
 			break;
 
@@ -2018,10 +2016,8 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		{
 			const struct hash_desc *hash_algo = &ike_alg_hash_sha1;
 			struct crypt_mac hash_to_sign =
-				v2_calculate_sighash(ike, ORIGINAL_INITIATOR,
-						     &ike->sa.st_v2_id_payload.mac,
-						     ike->sa.st_firstpacket_me,
-						     hash_algo);
+				v2_calculate_sighash(ike, &ike->sa.st_v2_id_payload.mac,
+						     hash_algo, LOCAL_PERSPECTIVE);
 			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
 						      authby, auth_method,
 						      ikev2_parent_inR1outI2_auth_signature_continue)) {
@@ -2036,10 +2032,9 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			if (hash_algo == NULL) {
 				return STF_FATAL;
 			}
-			struct crypt_mac hash_to_sign = v2_calculate_sighash(ike, ORIGINAL_INITIATOR,
-									     &ike->sa.st_v2_id_payload.mac,
-									     ike->sa.st_firstpacket_me,
-									     hash_algo);
+			struct crypt_mac hash_to_sign =
+				v2_calculate_sighash(ike, &ike->sa.st_v2_id_payload.mac,
+						     hash_algo, LOCAL_PERSPECTIVE);
 			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
 						      authby, auth_method,
 						      ikev2_parent_inR1outI2_auth_signature_continue)) {
@@ -2849,8 +2844,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		init_pbs(&pbs_no_ppk_auth, ike->sa.st_no_ppk_auth.ptr, len, "pb_stream for verifying NO_PPK_AUTH");
 
 		if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-				   ike, ORIGINAL_RESPONDER, &idhash_in,
-				   &pbs_no_ppk_auth,
+				   ike, &idhash_in, &pbs_no_ppk_auth,
 				   ike->sa.st_connection->spd.that.authby, "no-PPK-auth")) {
 			record_v2N_response(ike->sa.st_logger, ike, md, v2N_AUTHENTICATION_FAILED,
 					    NULL/*no data*/, ENCRYPTED_PAYLOAD);
@@ -2874,8 +2868,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 
 			DBG(DBG_CONTROL, DBG_log("going to try to verify NULL_AUTH from Notify payload"));
 			init_pbs(&pbs_null_auth, null_auth.ptr, len, "pb_stream for verifying NULL_AUTH");
-			if (!v2_check_auth(IKEv2_AUTH_NULL, ike,
-					   ORIGINAL_RESPONDER, &idhash_in,
+			if (!v2_check_auth(IKEv2_AUTH_NULL, ike, &idhash_in,
 					   &pbs_null_auth, AUTHBY_NULL, "NULL_auth from Notify Payload")) {
 				record_v2N_response(ike->sa.st_logger, ike, md, v2N_AUTHENTICATION_FAILED,
 						    NULL/*no data*/, ENCRYPTED_PAYLOAD);
@@ -2887,8 +2880,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		} else {
 			DBGF(DBG_CONTROL, "verifying AUTH payload");
 			if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-					   ike, ORIGINAL_RESPONDER, &idhash_in,
-					   &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
+					   ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
 					   st->st_connection->spd.that.authby, "I2 Auth Payload")) {
 				record_v2N_response(ike->sa.st_logger, ike, md, v2N_AUTHENTICATION_FAILED,
 						    NULL/*no data*/, ENCRYPTED_PAYLOAD);
@@ -2960,10 +2952,8 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		{
 			const struct hash_desc *hash_algo = &ike_alg_hash_sha1;
 			struct crypt_mac hash_to_sign =
-				v2_calculate_sighash(ike, ORIGINAL_RESPONDER,
-						     &ike->sa.st_v2_id_payload.mac,
-						     ike->sa.st_firstpacket_me,
-						     hash_algo);
+				v2_calculate_sighash(ike, &ike->sa.st_v2_id_payload.mac,
+						     hash_algo, LOCAL_PERSPECTIVE);
 			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
 						      authby, auth_method,
 						      ikev2_parent_inI2outR2_auth_signature_continue)) {
@@ -2984,10 +2974,9 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 						    NULL/*no data*/, ENCRYPTED_PAYLOAD);
 				return STF_FAIL;
 			}
-			struct crypt_mac hash_to_sign = v2_calculate_sighash(ike, ORIGINAL_RESPONDER,
-									     &ike->sa.st_v2_id_payload.mac,
-									     ike->sa.st_firstpacket_me,
-									     hash_algo);
+			struct crypt_mac hash_to_sign =
+				v2_calculate_sighash(ike, &ike->sa.st_v2_id_payload.mac,
+						     hash_algo, LOCAL_PERSPECTIVE);
 			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
 						      authby, auth_method,
 						      ikev2_parent_inI2outR2_auth_signature_continue)) {
@@ -3758,8 +3747,8 @@ static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *
 
 	DBGF(DBG_CONTROL, "verifying AUTH payload");
 	if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-			   ike, ORIGINAL_INITIATOR, &idhash_in,
-			   &md->chain[ISAKMP_NEXT_v2AUTH]->pbs, that_authby, "R2 Auth Payload"))
+			   ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
+			   that_authby, "R2 Auth Payload"))
 	{
 		/*
 		 * We cannot send a response as we are processing IKE_AUTH reply

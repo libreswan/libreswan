@@ -378,6 +378,19 @@ enum_enum_names sa_type_names = {
 	ARRAY_REF(sa_type_name),
 };
 
+static const char *const perspective_name[] = {
+	[NO_PERSPECTIVE] = "NO_PERSPECTIVE",
+	[LOCAL_PERSPECTIVE] = "LOCAL_PERSPECTIVE",
+	[REMOTE_PERSPECTIVE] = "REMOTE_PERSPECTIVE"
+};
+
+enum_names perspective_names = {
+	NO_PERSPECTIVE, REMOTE_PERSPECTIVE,
+	ARRAY_REF(perspective_name),
+	NULL, /* prefix */
+	NULL,
+};
+
 /* print a policy: like bitnamesof, but it also does the non-bitfields.
  * Suppress the shunt and fail fields if 0.
  */
@@ -416,6 +429,7 @@ static const enum_names *pluto_enum_names_checklist[] = {
 #endif
 	&v1_sa_type_names,
 	&v2_sa_type_names,
+	&perspective_names,
 };
 
 void init_pluto_constants(void) {
