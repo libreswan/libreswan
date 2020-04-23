@@ -42,6 +42,12 @@
 #define GLOB_ABORTED GLOB_ABEND        /* fix for old versions */
 #endif
 
+#include <nss.h>
+#include <pk11pub.h>
+#include <prerror.h>
+#include <cert.h>
+#include <cryptohi.h>
+#include <keyhi.h>
 
 #include "sysdep.h"
 #include "lswlog.h"
@@ -53,11 +59,6 @@
 #include "certs.h"
 #include "lex.h"
 
-#include <nss.h>
-#include <pk11pub.h>
-#include <prerror.h>
-#include <cert.h>
-#include <keyhi.h>
 #include "lswconf.h"
 #include "lswnss.h"
 #include "ip_info.h"
@@ -395,25 +396,26 @@ static struct hash_signature ECDSA_sign_hash(const struct private_key_stuff *pks
 
 	DBG(DBG_CRYPT, DBG_log("ECDSA_sign_hash: Started using NSS"));
 
-	/* point hash at HASH_VAL */
-	SECItem hash = {
+	/* point HASH to sign at HASH_VAL */
+	SECItem hash_to_sign = {
 		.type = siBuffer,
 		.len = hash_len,
 		.data = DISCARD_CONST(uint8_t *, hash_val),
 	};
 
 	/* point signature at the SIG_VAL buffer */
-	struct hash_signature sig = { .len = PK11_SignatureLen(pks->private_key), };
-	passert(sig.len <= sizeof(sig.ptr/*array*/));
-	SECItem signature = {
+	uint8_t raw_signature_data[sizeof(struct hash_signature)];
+	SECItem raw_signature = {
 		.type = siBuffer,
-		.len = sig.len,
-		.data = sig.ptr,
+		.len = PK11_SignatureLen(pks->private_key),
+		.data = raw_signature_data,
 	};
-	dbg("ECDSA signature.len %d", signature.len);
+	passert(raw_signature.len <= sizeof(raw_signature_data));
+	dbg("ECDSA signature.len %d", raw_signature.len);
 
-	SECStatus s = PK11_Sign(pks->private_key, &signature, &hash);
-	DBG(DBG_CRYPT, DBG_dump("sig_from_nss", signature.data, signature.len));
+	/* create the raw signature */
+	SECStatus s = PK11_Sign(pks->private_key, &raw_signature, &hash_to_sign);
+	DBG(DBG_CRYPT, DBG_dump("sig_from_nss", raw_signature.data, raw_signature.len));
 	if (s != SECSuccess) {
 		LSWDBGP(DBG_CRYPT, buf) {
 			lswlogf(buf, "NSS: signing hash using PK11_Sign() failed:");
@@ -422,8 +424,24 @@ static struct hash_signature ECDSA_sign_hash(const struct private_key_stuff *pks
 		return (struct hash_signature) { .len = 0, };
 	}
 
+	SECItem encoded_signature;
+	if (DSAU_EncodeDerSigWithLen(&encoded_signature, &raw_signature,
+				     raw_signature.len) != SECSuccess) {
+		LSWLOG(buf) {
+			lswlogs(buf, "NSS: constructing DER encoded ECDSA signature using DSAU_EncodeDerSigWithLen() failed:");
+			lswlog_nss_error(buf);
+		}
+		return (struct hash_signature) { .len = 0, };
+	}
+	struct hash_signature signature = {
+		.len = encoded_signature.len,
+	};
+	passert(encoded_signature.len <= sizeof(signature.ptr/*an-array*/));
+	memcpy(signature.ptr, encoded_signature.data, encoded_signature.len);
+	SECITEM_FreeItem(&encoded_signature, PR_FALSE);
+
 	DBG(DBG_CRYPT, DBG_log("ECDSA_sign_hash: Ended using NSS"));
-	return sig;
+	return signature;
 }
 
 const struct pubkey_type pubkey_type_ecdsa = {
