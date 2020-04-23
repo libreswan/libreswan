@@ -568,6 +568,21 @@ enum state_kind {
 #define STATE_IKE_ROOF (STATE_IKEv2_ROOF+1)	/* not a state! */
 
 /*
+ * From whos perspective is the operation being performed.
+ *
+ * For instance, is the hash being computed from the LOCAL or REMOTE
+ * perspective?
+ */
+
+enum perspective {
+	NO_PERSPECTIVE,
+	LOCAL_PERSPECTIVE,
+	REMOTE_PERSPECTIVE,
+};
+
+extern enum_names perspective_names;
+
+/*
  * The IKEv2 (RFC 7296) original role.  Either the "original
  * initiator" or the "original responder" as identified by the I
  * (Initiator flag).
