@@ -1030,7 +1030,9 @@ stf_status record_outbound_v2SK_msg(struct state *msg_sa,
 
 	stf_status ret;
 	/* IPv4 and IPv6 have different fragment sizes */
-	if (len >= endpoint_type(&sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size) {
+	if (LIN(POLICY_IKE_FRAG_ALLOW, sk->ike->sa.st_connection->policy) &&
+	    sk->ike->sa.st_seen_fragvid &&
+	    len >= endpoint_type(&sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size) {
 		ret = v2_record_outbound_fragments(msg_sa, msg, sk, what);
 	} else {
 		ret = encrypt_v2SK_payload(sk);
