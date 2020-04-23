@@ -60,7 +60,6 @@ static const uint8_t rsa_sha1_der_header[] = {
 };
 
 bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
-			      enum original_role role,
 			      const struct crypt_mac *idhash,
 			      pb_stream *a_pbs,
 			      chunk_t *no_ppk_auth, /* optional output */
@@ -80,7 +79,7 @@ bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
 	const struct RSA_private_key *k = &pks->u.RSA_private_key;
 	unsigned int sz = k->pub.k;
 
-	struct crypt_mac hash = v2_calculate_sighash(ike, role, idhash,
+	struct crypt_mac hash = v2_calculate_sighash(ike, ike->sa.st_original_role, idhash,
 						     ike->sa.st_firstpacket_me,
 						     hash_algo);
 

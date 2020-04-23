@@ -162,7 +162,6 @@ extern bool ikev2_decode_peer_id(struct msg_digest *md);
 extern void ikev2_log_parentSA(const struct state *st);
 
 extern bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
-				     enum original_role role,
 				     const struct crypt_mac *idhash,
 				     pb_stream *a_pbs,
 				     chunk_t *no_ppk_auth /* optional output */,
