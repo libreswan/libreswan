@@ -1,0 +1,3 @@
+east disabled fragmentation.
+
+west should not use fragments
