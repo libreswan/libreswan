@@ -371,8 +371,10 @@ if hostname != "nic":
     if args.userland == "strongswan":
         # check version and fail early
         output = subprocess.getoutput("strongswan version")
-        if not "U5.8.2" in output:
-            sys.exit("strongswan 5.8.2 must be installed")
+        if not "U5.8.4" in output:
+            print("strongswan 5.8.2 must be installed")
+            print("")
+            print(output)
         # required to write log file in /tmp
         subprocess.getoutput("setenforce 0")
         strongswanconf = choose_conf_file(hostname, testpath, "strongswan.conf", "%sstrongswan.conf" % (hostname), args.userland)

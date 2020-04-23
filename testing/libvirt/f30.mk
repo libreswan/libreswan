@@ -36,7 +36,7 @@ KVM_KERNEL_PACKAGES ?= \
 # libgcrypt-devel isn't sufficient).
 
 KVM_STRONGSWAN_PACKAGES = \
-    https://kojipkgs.fedoraproject.org//packages/strongswan/5.8.2/2.fc30/x86_64/strongswan-5.8.2-2.fc30.x86_64.rpm \
+    https://nohats.ca/ftp/strongswan/strongswan-5.8.4-2.fc30.x86_64.rpm \
     libgcrypt
 
 KVM_INSTALL_PACKAGES ?= \
