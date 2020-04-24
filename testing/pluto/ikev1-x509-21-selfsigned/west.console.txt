@@ -30,24 +30,34 @@ west #
 initdone
 west #
  ipsec auto --up west-x509
-1v2 "west-x509" #1: initiating IKEv2 IKE SA
-1v2 "west-x509" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-1v2 "west-x509" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "west-x509" #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'CN=east-selfsigned.testing.libreswan.org'
-003 "west-x509" #2: Authenticated using RSA with IKEv2_AUTH_HASH_SHA2_512
-002 "west-x509" #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
-004 "west-x509" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+002 "west-x509" #1: initiating Main Mode
+1v1 "west-x509" #1: STATE_MAIN_I1: sent MI1, expecting MR1
+1v1 "west-x509" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+002 "west-x509" #1: I am sending my cert
+002 "west-x509" #1: I am sending a certificate request
+1v1 "west-x509" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+002 "west-x509" #1: Peer ID is ID_DER_ASN1_DN: 'CN=east-selfsigned.testing.libreswan.org'
+003 "west-x509" #1: authenticated using RSA with SHA-1
+004 "west-x509" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+002 "west-x509" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+1v1 "west-x509" #2: STATE_QUICK_I1: sent QI1, expecting QR1
+004 "west-x509" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ipsec whack --impair delete-on-retransmit
 west #
  # this one should fail, as east is only expecting selfsigned cert of west, not road
 west #
  ipsec auto --up road-x509
-1v2 "road-x509" #3: initiating IKEv2 IKE SA
-1v2 "road-x509" #3: STATE_PARENT_I1: sent v2I1, expected v2R1
-1v2 "road-x509" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "road-x509" #4: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
-000 "road-x509" #4: scheduling retry attempt 1 of an unlimited number, but releasing whack
+002 "road-x509" #3: initiating Main Mode
+1v1 "road-x509" #3: STATE_MAIN_I1: sent MI1, expecting MR1
+1v1 "road-x509" #3: STATE_MAIN_I2: sent MI2, expecting MR2
+002 "road-x509" #3: I am sending my cert
+002 "road-x509" #3: I am sending a certificate request
+1v1 "road-x509" #3: STATE_MAIN_I3: sent MI3, expecting MR3
+003 "road-x509" #3: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
+003 "road-x509" #3: received and ignored notification payload: INVALID_ID_INFORMATION
+002 "road-x509" #3: IMPAIR: retransmit so deleting SA
+002 "road-x509" #3: deleting state (STATE_MAIN_I3) and NOT sending notification
 west #
  echo "done"
 done
