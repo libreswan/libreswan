@@ -1,5 +1,5 @@
-/*
- * timer event handling
+/* timer event handling
+ *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
  * Copyright (C) 2005-2008 Michael Richardson <mcr@xelerance.com>
@@ -9,7 +9,7 @@
  * Copyright (C) 2012-2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2017 Antony Antony <antony@phenome.org>
- * Copyright (C) 2017-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017-2020 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -142,49 +142,62 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 {
 	threadtime_t inception = threadtime_start();
 
-	struct pluto_event *ev = arg;
-	DBG(DBG_LIFECYCLE,
-	    DBG_log("%s: processing event@%p", __func__, ev));
-	enum event_type type = ev->ev_type;
-	const char *event_name = enum_short_name(&timer_event_names, type);
-	struct state *st = ev->ev_state;	/* note: *st might be changed */
-	passert(st != NULL);
+	/*
+	 * Get rid of the old timer event before calling the timer
+	 * event processor (was deleting the old timer after calling
+	 * the processor giving the impression that the processor's
+	 * just created event was being deleted).
+	 */
+	struct state *st;
+	enum event_type type;
+	const char *event_name;
+	{
+		struct pluto_event *ev = arg;
+		dbg("%s: processing event@%p", __func__, ev);
+		passert(ev != NULL);
+		type = ev->ev_type;
+		event_name = enum_short_name(&timer_event_names, type);
+		st = ev->ev_state;	/* note: *st might be changed; XXX: why? */
+		passert(st != NULL);
 
-	dbg("handling event %s for %s state #%lu",
-	    enum_show(&timer_event_names, type),
-	    (st->st_clonedfrom == SOS_NOBODY) ? "parent" : "child",
-	    st->st_serialno);
+		dbg("handling event %s for %s state #%lu",
+		    enum_show(&timer_event_names, type),
+		    (st->st_clonedfrom == SOS_NOBODY) ? "parent" : "child",
+		    st->st_serialno);
+
+#if 0
+		/*
+		 * XXX: this line, which is a merger of the above two
+		 * lines, leaks into the expected test output causing
+		 * failures.
+		 */
+		dbg("%s: processing %s-event@%p for %s SA #%lu in state %s",
+		    __func__, event_name, ev,
+		    IS_IKE_SA(st) ? "IKE" : "CHILD",
+		    st->st_serialno, st->st_state->short_name);
+#endif
+
+		struct pluto_event **evp = state_event(st, type);
+		if (evp == NULL) {
+			LOG_PEXPECT("#%lu has no .st_event field for %s",
+				    st->st_serialno, enum_name(&timer_event_names, type));
+			return;
+		}
+		if (*evp != ev) {
+			LOG_PEXPECT("#%lu .st_event is %p but should be %s-pe@%p",
+				    st->st_serialno, *evp,
+				    enum_name(&timer_event_names, (*evp)->ev_type),
+				    ev);
+			return;
+		}
+		delete_pluto_event(evp);
+		arg = ev = *evp = NULL; /* all gone */
+	}
 
 	pexpect_reset_globals();
 	so_serial_t old_state = push_cur_state(st);
 	pexpect(old_state == SOS_NOBODY); /* since globals are reset */
 	statetime_t start = statetime_backdate(st, &inception);
-
-#if 0
-	/*
-	 * XXX: this line, which is a merger of the above two lines,
-	 * leaks into the expected test output causing failures.
-	 */
-	dbg("%s: processing %s-event@%p for %s SA #%lu in state %s",
-	    __func__, event_name, ev,
-	    IS_IKE_SA(st) ? "IKE" : "CHILD",
-	    st->st_serialno, st->st_state->short_name);
-#endif
-
-	struct pluto_event **evp = state_event(st, type);
-	if (evp == NULL) {
-		LOG_PEXPECT("#%lu has no .st_event field for %s",
-			    st->st_serialno, enum_name(&timer_event_names, type));
-		return;
-	}
-	if (*evp != ev) {
-		LOG_PEXPECT("#%lu .st_event is %p but should be %s-pe@%p",
-			    st->st_serialno, *evp,
-			    enum_name(&timer_event_names, (*evp)->ev_type),
-			    ev);
-		return;
-	}
-	*evp = NULL; /* will be freed below */
 
 	/*
 	 * Check that st is as expected for the event type.
@@ -441,7 +454,6 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		bad_case(type);
 	}
 
-	delete_pluto_event(&ev);
 	statetime_stop(&start, "%s() %s", __func__, event_name);
 	pop_cur_state(old_state);
 }
@@ -491,19 +503,19 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 
 	const char *en = enum_name(&timer_event_names, type);
 
-	struct pluto_event **pe = state_event(st, type);
-	if (pe == NULL) {
+	struct pluto_event **evp = state_event(st, type);
+	if (evp == NULL) {
 		LOG_PEXPECT("#%lu has no .st_*event field for %s",
 			    st->st_serialno,
 			    enum_name(&timer_event_names, type));
 		return;
 	}
-	if (*pe != NULL) {
-		LOG_PEXPECT("#%lu already has a scheduled %s",
+	if (*evp != NULL) {
+		/* help debugging by stumbling on */
+		LOG_PEXPECT("#%lu already has a scheduled %s; forcing replacement",
 			    st->st_serialno,
 			    enum_name(&timer_event_names, type));
-		passert(*pe == NULL);
-		return;
+		delete_pluto_event(evp);
 	}
 
 	struct pluto_event *ev = alloc_thing(struct pluto_event, en);
@@ -512,7 +524,7 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 	ev->ev_name = en;
 	ev->ev_state = st;
 	ev->ev_time = monotime_add(mononow(), delay);
-	*pe = ev;
+	*evp = ev;
 
 	deltatime_buf buf;
 	dbg("inserting event %s, timeout in %s seconds for #%lu",
