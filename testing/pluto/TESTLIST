@@ -381,6 +381,7 @@ kvmplutotest	ikev1-x509-17-id-any			good
 kvmplutotest	ikev1-x509-18-id-notany			good
 kvmplutotest	ikev1-x509-19-id-notany-responder	good
 kvmplutotest	ikev1-x509-20-id-any-responder		good
+kvmplutotest	ikev1-x509-21-selfsigned		wip
 kvmplutotest	ikev2-x509-32-id-any			good
 kvmplutotest	ikev2-x509-33-id-notany			good
 kvmplutotest	ikev2-x509-34-id-notany-responder	good
