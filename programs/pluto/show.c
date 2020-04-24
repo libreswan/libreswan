@@ -45,11 +45,7 @@
 static void show_system_security(struct fd *whackfd)
 {
 	int selinux = libreswan_selinux();
-#ifdef FIPS_CHECK
 	bool fips = libreswan_fipsmode();
-#else
-	int fips = FALSE;
-#endif
 
 	whack_comment(whackfd, " ");     /* spacer */
 

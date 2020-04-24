@@ -239,7 +239,12 @@ local-install:
 
 .PHONY: install-fipshmac
 install-fipshmac:
+ifeq ($(USE_FIPSCHECK),true)
 	fipshmac $(LIBEXECDIR)/pluto
+else
+	@echo "install-fipshmac target requires compiling with USE_FIPSCHECK"
+	@exit 1
+endif
 
 include ${LIBRESWANSRCDIR}/mk/docker-targets.mk
 include ${LIBRESWANSRCDIR}/mk/kvm-targets.mk

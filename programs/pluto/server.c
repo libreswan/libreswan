@@ -1087,17 +1087,9 @@ void show_debug_status(void)
 
 void show_fips_status(struct fd *whackfd)
 {
-#ifdef FIPS_CHECK
 	bool fips = libreswan_fipsmode();
-#else
-	bool fips = FALSE;
-#endif
 	whack_comment(whackfd, "FIPS mode %s", !fips ?
-#ifdef FIPS_CHECK
 		"disabled" :
-#else
-		"disabled [support not compiled in]" :
-#endif
 		IMPAIR(FORCE_FIPS) ? "enabled [forced]" : "enabled");
 }
 

@@ -9,14 +9,13 @@
 %global libreswan_config \\\
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
     FINALMANDIR=%{_mandir} \\\
-    FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \\\
     INC_RCDEFAULT=%{_initrddir} \\\
     INC_USRLOCAL=%{_prefix} \\\
     INITSYSTEM=systemd \\\
     PYTHON_BINARY=%{__python3} \\\
     SHELL_BINARY=%{_bindir}/sh \\\
     USE_DNSSEC=true \\\
-    USE_FIPSCHECK=true \\\
+    USE_FIPSCHECK=false \\\
     USE_KLIPS=false \\\
     USE_LABELED_IPSEC=true \\\
     USE_LDAP=true \\\
@@ -48,7 +47,6 @@ Source3: https://download.libreswan.org/cavs/ikev2.fax.bz2
 BuildRequires: audit-libs-devel
 BuildRequires: bison
 BuildRequires: curl-devel
-BuildRequires: fipscheck-devel
 BuildRequires: flex
 BuildRequires: gcc
 BuildRequires: hostname
@@ -68,7 +66,6 @@ BuildRequires: xmlto
 %if 0%{with_efence}
 BuildRequires: ElectricFence
 %endif
-Requires: fipscheck%{_isa}
 Requires: iproute >= 2.6.8
 Requires: nss >= %{nss_version}
 Requires: nss-softokn
@@ -122,14 +119,6 @@ make %{?_smp_mflags} \
     programs
 FS=$(pwd)
 
-# Add generation of HMAC checksums of the final stripped binaries
-%define __spec_install_post \
-    %{?__debug_package:%{__debug_install_post}} \
-    %{__arch_install_post} \
-    %{__os_install_post} \
-    fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_libexecdir}/ipsec/pluto \
-%{nil}
-
 %install
 make \
     DESTDIR=%{buildroot} \
@@ -147,8 +136,6 @@ install -d %{buildroot}%{_sbindir}
 install -d %{buildroot}%{_sysconfdir}/sysctl.d
 install -m 0644 packaging/fedora/libreswan-sysctl.conf \
     %{buildroot}%{_sysconfdir}/sysctl.d/50-libreswan.conf
-
-mkdir -p %{buildroot}%{_libdir}/fipscheck
 
 echo "include %{_sysconfdir}/ipsec.d/*.secrets" \
     > %{buildroot}%{_sysconfdir}/ipsec.secrets
@@ -215,7 +202,6 @@ certutil -N -d sql:$tmpdir --empty-password
 %{_sbindir}/ipsec
 %{_libexecdir}/ipsec
 %doc %{_mandir}/*/*
-%{_libdir}/fipscheck/pluto.hmac
 
 %changelog
 * Mon Mar 30 2020 Team Libreswan <team@libreswan.org> - 3.32-1

@@ -61,10 +61,6 @@
 #include "lswconf.h"
 #include "lswnss.h"
 
-#ifdef FIPS_CHECK
-#  include <fipscheck.h>
-#endif
-
 /*
  * We allow 2192 as a minimum, but default to a random value between 3072 and
  * 4096. The range is used to avoid a mono-culture of key sizes.

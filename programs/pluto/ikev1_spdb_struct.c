@@ -1992,10 +1992,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				 * SA_LIFE_DURATION_MAXIMUM.
 				 */
 				unsigned int lifemax = IPSEC_SA_LIFETIME_MAXIMUM;
-#ifdef FIPS_CHECK
 				if (libreswan_fipsmode())
 					lifemax = FIPS_IPSEC_SA_LIFETIME_MAXIMUM;
-#endif
 				attrs->life_seconds = val > lifemax ?
 					deltatime(lifemax) :
 				    (time_t)val > deltasecs(st->st_connection->sa_ipsec_life_seconds) ?

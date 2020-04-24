@@ -207,7 +207,7 @@ static const char compile_time_interop_options[] = ""
 	" SYSTEMD_WATCHDOG"
 #endif
 #ifdef FIPS_CHECK
-	" FIPS_CHECK"
+	" FIPS_BINCHECK"
 #endif
 #ifdef HAVE_LABELED_IPSEC
 	" LABELED_IPSEC"
@@ -1612,7 +1612,6 @@ int main(int argc, char **argv)
 
 	pluto_init_log();
 
-#ifdef FIPS_CHECK
 	/*
 	 * Probe FIPS support.  Part #1 of #2.
 	 *
@@ -1639,7 +1638,6 @@ int main(int argc, char **argv)
 		libreswan_log("Forcing FIPS checks to true to emulate FIPS mode");
 		lsw_set_fips_mode(LSW_FIPS_ON);
 	}
-#endif
 
 	if (!pluto_init_nss(oco->nssdir)) {
 		loglog(RC_LOG_SERIOUS, "FATAL: NSS initialization failure");
@@ -1659,58 +1657,56 @@ int main(int argc, char **argv)
 		}
 	}
 
-#ifdef FIPS_CHECK
 	/*
 	 * Probe FIPS support.  Part #2 of #2.
 	 *
 	 * Now that NSS is initialized, need to verify it matches the
 	 * mode pluto is in.
 	 */
-	libreswan_log("FIPS HMAC integrity support [enabled]");
-	{
-		bool nss_fips_mode = PK11_IsFIPS();
+	bool nss_fips_mode = PK11_IsFIPS();
 
-		/*
-		 * Now verify the consequences.  Always run the tests
-		 * as combinations such as NSS in fips mode but as out
-		 * of it could be bad.
-		 */
-		switch (pluto_fips_mode) {
-		case LSW_FIPS_UNKNOWN:
-			loglog(RC_LOG_SERIOUS, "ABORT: pluto FIPS mode could not be determined");
-			exit_pluto(PLUTO_EXIT_FIPS_FAIL);
-			break;
-		case LSW_FIPS_ON:
-			libreswan_log("FIPS mode enabled for pluto daemon");
-			if (nss_fips_mode) {
-				libreswan_log("NSS library is running in FIPS mode");
-			} else {
-				loglog(RC_LOG_SERIOUS, "ABORT: pluto in FIPS mode but NSS library is not");
-				exit_pluto(PLUTO_EXIT_FIPS_FAIL);
-			}
-			break;
-		case LSW_FIPS_OFF:
-			libreswan_log("FIPS mode disabled for pluto daemon");
-			if (nss_fips_mode) {
-				loglog(RC_LOG_SERIOUS, "Warning: NSS library is running in FIPS mode");
-			}
-			break;
-		case LSW_FIPS_UNSET:
-		default:
-			bad_case(pluto_fips_mode);
-		}
-
-		/* always run hmac check so we can print diagnostic */
-		bool fips_files = FIPSCHECK_verify_files(fips_package_files);
-
-		if (fips_files) {
-			libreswan_log("FIPS HMAC integrity verification self-test passed");
+	/*
+	 * Now verify the consequences.  Always run the tests
+	 * as combinations such as NSS in fips mode but as out
+	 * of it could be bad.
+	 */
+	switch (pluto_fips_mode) {
+	case LSW_FIPS_UNKNOWN:
+		loglog(RC_LOG_SERIOUS, "ABORT: pluto FIPS mode could not be determined");
+		exit_pluto(PLUTO_EXIT_FIPS_FAIL);
+		break;
+	case LSW_FIPS_ON:
+		libreswan_log("FIPS mode enabled for pluto daemon");
+		if (nss_fips_mode) {
+			libreswan_log("NSS library is running in FIPS mode");
 		} else {
-			loglog(RC_LOG_SERIOUS, "FIPS HMAC integrity verification self-test FAILED");
-		}
-		if (pluto_fips_mode == LSW_FIPS_ON && !fips_files) {
+			loglog(RC_LOG_SERIOUS, "ABORT: pluto in FIPS mode but NSS library is not");
 			exit_pluto(PLUTO_EXIT_FIPS_FAIL);
 		}
+		break;
+	case LSW_FIPS_OFF:
+		libreswan_log("FIPS mode disabled for pluto daemon");
+		if (nss_fips_mode) {
+			loglog(RC_LOG_SERIOUS, "Warning: NSS library is running in FIPS mode");
+		}
+		break;
+	case LSW_FIPS_UNSET:
+	default:
+		bad_case(pluto_fips_mode);
+	}
+
+#ifdef FIPS_CHECK
+	bool fips_files = FIPSCHECK_verify_files(fips_package_files);
+
+	libreswan_log("FIPS HMAC integrity support [enabled]");
+
+	if (fips_files) {
+		libreswan_log("FIPS HMAC integrity verification self-test passed");
+	} else {
+		loglog(RC_LOG_SERIOUS, "FIPS HMAC integrity verification self-test FAILED");
+	}
+	if (pluto_fips_mode == LSW_FIPS_ON && !fips_files) {
+		exit_pluto(PLUTO_EXIT_FIPS_FAIL);
 	}
 #else
 	libreswan_log("FIPS HMAC integrity support [disabled]");
