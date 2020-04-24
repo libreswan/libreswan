@@ -19,7 +19,13 @@ function info() {
     fi
 }
 
-BRANCHES="master travis-fedora-31 travis-fedora-30 travis-fedora-29 travis-fedora-28 travis-fedora-rawhide travis-centos-8 travis-centos-7 travis-centos-6 travis-ubuntu-xenial travis-ubuntu-bionic travis-ubuntu-cosmic travis-ubuntu-disco travis-ubuntu-eoan travis-debian-experimental travis-debian-sid travis-debian-bullseye travis-debian-buster travis-debian-stretch travis-debian-jessie"
+BRANCHES="master travis-fedora-rawhide travis-fedora-31 travis-fedora-30
+	  travis-fedora-29 travis-fedora-28 \
+	  travis-centos-8 travis-centos-7 travis-centos-6 \
+	  travis-ubuntu-focal travis-ubuntu-bionic travis-ubuntu-xenial \
+	  travis-ubuntu-eon travis-ubuntu-disco travis-ubuntu-cosmic \
+	  travis-debian-experimental travis-debian-sid travis-debian-bullseye \
+	  travis-debian-buster travis-debian-stretch travis-debian-jessie"
 
 DIR="${DIR:-/home/build/git/libreswan}"
 FETCH_REMOTE=yes
