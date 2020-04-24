@@ -954,7 +954,6 @@ static bool load_end_cert_and_preload_secret(struct fd *whackfd,
 	passert(cert != NULL);
 
 /* copy of this code lives in nss_cert_verify.c */
-#ifdef FIPS_CHECK
 	if (libreswan_fipsmode()) {
 		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
 		passert(pk != NULL);
@@ -973,7 +972,6 @@ static bool load_end_cert_and_preload_secret(struct fd *whackfd,
 		/* TODO FORCE MINIMUM SIZE ECDSA KEY */
 		SECKEY_DestroyPublicKey(pk);
 	}
-#endif /* FIPS_CHECK */
 
 	/* XXX: should this be after validity check? */
 	select_nss_cert_id(cert, &dst_end->id);
@@ -1346,7 +1344,6 @@ static bool extract_connection(struct fd *whackfd,
 		c->ike_version = 0;
 	}
 
-#ifdef FIPS_CHECK
 	if (libreswan_fipsmode()) {
 		if (c->policy & POLICY_NEGO_PASS) {
 			c->policy &= ~POLICY_NEGO_PASS;
@@ -1360,7 +1357,7 @@ static bool extract_connection(struct fd *whackfd,
 				"FIPS: ignored failureshunt=passthrough - packets MUST be blocked in FIPS mode");
 		}
 	}
-#endif
+
 	DBGF(DBG_CONTROL, "Added new connection %s with policy %s%s",
 		c->name,
 		prettypolicy(c->policy),

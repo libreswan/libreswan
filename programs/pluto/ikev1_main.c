@@ -778,12 +778,10 @@ stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 							NULL, TRUE, st));
 	}
 
-#ifdef FIPS_CHECK
 	if (libreswan_fipsmode() && st->st_oakley.ta_prf == NULL) {
 		loglog(RC_LOG_SERIOUS, "Missing prf - algo not allowed in fips mode (inR1_outI2)?");
 		return STF_FAIL + SITUATION_NOT_SUPPORTED;
 	}
-#endif
 
 	merge_quirks(st, md);
 
@@ -998,13 +996,11 @@ static void main_inI2_outR2_continue2(struct state *st,
 stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *md,
 					  struct pluto_crypto_req *r)
 {
-#ifdef FIPS_CHECK
 	if (libreswan_fipsmode() && st->st_oakley.ta_prf == NULL) {
 		loglog(RC_LOG_SERIOUS,
 		       "Missing prf - algo not allowed in fips mode (inI2_outR2)?");
 		return STF_FAIL + SITUATION_NOT_SUPPORTED;
 	}
-#endif
 
 	/* send CR if auth is RSA and no preloaded RSA public key exists*/
 	bool send_cr = FALSE;

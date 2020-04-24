@@ -197,7 +197,6 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 	if (m->whack_options) {
 		switch (m->opt_set) {
 		case WHACK_ADJUSTOPTIONS:
-#ifdef FIPS_CHECK
 			if (libreswan_fipsmode()) {
 				if (lmod_is_set(m->debugging, DBG_PRIVATE)) {
 					whack_log(RC_FATAL, whackfd,
@@ -205,7 +204,6 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 					return false; /*don't shutdown*/
 				}
 			}
-#endif
 			if (m->name == NULL) {
 				/*
 				 * This is done in two two-steps so

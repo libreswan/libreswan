@@ -24,11 +24,7 @@
 #include "lswlog.h"
 #include "lswfips.h"
 
-#ifdef FIPS_CHECK
 #define LSW_FIPS_DEFAULT LSW_FIPS_UNSET
-#else
-#define LSW_FIPS_DEFAULT LSW_FIPS_OFF
-#endif
 
 /*
  * Is the machine running in FIPS kernel mode (fips=1 kernel argument)
@@ -61,10 +57,13 @@ static enum lsw_fips_mode lsw_fipskernel(void)
 }
 
 /*
+ * Legacy FIPS product test. This is only used for RHEL6 to RHEL8 
+ *
  * Return TRUE if we are a fips product.
  * This is irrespective of whether we are running in FIPS mode
  * yes (1), no (0), unknown(-1)
  */
+#ifdef FIPS_CHECK
 static enum lsw_fips_mode lsw_fipsproduct(void)
 {
 	if (access(FIPSPRODUCTCHECK, F_OK) != 0) {
@@ -79,6 +78,7 @@ static enum lsw_fips_mode lsw_fipsproduct(void)
 	}
 	return LSW_FIPS_ON;
 }
+#endif
 
 static enum lsw_fips_mode fips_mode = LSW_FIPS_DEFAULT;
 
@@ -98,19 +98,22 @@ enum lsw_fips_mode lsw_get_fips_mode(void)
 		return fips_mode;
 	}
 
+#ifdef FIPS_CHECK
 	enum lsw_fips_mode product = lsw_fipsproduct();
+#endif
 	enum lsw_fips_mode kernel = lsw_fipskernel();
 
-	if (product == LSW_FIPS_UNKNOWN || kernel == LSW_FIPS_UNKNOWN) {
+	fips_mode = kernel;
+
+#ifdef FIPS_CHECK
+	if (product == LSW_FIPS_UNKNOWN)
 		fips_mode = LSW_FIPS_UNKNOWN;
-	} else if (product == LSW_FIPS_ON && kernel== LSW_FIPS_ON)  {
-		fips_mode = LSW_FIPS_ON;
-	} else {
+	if (product == LSW_FIPS_OFF && kernel== LSW_FIPS_ON)
 		fips_mode = LSW_FIPS_OFF;
-	}
 
 	libreswan_log("FIPS Product: %s", product == LSW_FIPS_UNKNOWN ? "UNKNOWN" : product == LSW_FIPS_ON ? "YES" : "NO");
 	libreswan_log("FIPS Kernel: %s",  kernel == LSW_FIPS_UNKNOWN ? "UNKNOWN" :  kernel == LSW_FIPS_ON ? "YES" : "NO");
+#endif
 	libreswan_log("FIPS Mode: %s", fips_mode == LSW_FIPS_ON ? "YES" : fips_mode == LSW_FIPS_OFF ? "NO" : "UNKNOWN");
 	return fips_mode;
 }

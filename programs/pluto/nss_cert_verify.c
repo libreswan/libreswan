@@ -401,7 +401,6 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 	}
 	dbg("decoded cert: %s", cert->subjectName);
 
-#ifdef FIPS_CHECK
 	/* XXX: Currently only a check for RSA seems needed */
 	/* See also RSA_secret_sane() and ECDSA_secret_sane() */
 	if (libreswan_fipsmode()) {
@@ -418,7 +417,6 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 		}
 		SECKEY_DestroyPublicKey(pk);
 	}
-#endif /* FIPS_CHECK */
 
 	/*
 	 * Append the certificate to the CERTS array.

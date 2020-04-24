@@ -142,11 +142,7 @@ void show_comment(struct show *s, const char *message, ...)
 static void show_system_security(struct show *s)
 {
 	int selinux = libreswan_selinux();
-#ifdef FIPS_CHECK
 	bool fips = libreswan_fipsmode();
-#else
-	int fips = FALSE;
-#endif
 
 	show_separator(s);
 	show_comment(s, "fips mode=%s;", fips ? "enabled" : "disabled");

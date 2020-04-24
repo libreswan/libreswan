@@ -2077,13 +2077,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		if (said_next->integ == &ike_alg_integ_sha2_256 &&
 			LIN(POLICY_SHA2_TRUNCBUG, c->policy)) {
 			if (kernel_ops->sha2_truncbug_support) {
-#ifdef FIPS_CHECK
 				if (libreswan_fipsmode() == 1) {
 					loglog(RC_LOG_SERIOUS,
 						"Error: sha2-truncbug=yes is not allowed in FIPS mode");
 					goto fail;
 				}
-#endif
 				DBG(DBG_KERNEL,
 					DBG_log(" authalg converted for sha2 truncation at 96bits instead of IETF's mandated 128bits"));
 				/*
