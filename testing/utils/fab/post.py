@@ -102,11 +102,12 @@ class Issues:
     GPFAULT = "GPFAULT"
     PRINTF_NULL = "PRINTF_NULL"
     KERNEL = "KERNEL"
-    ISCNTRL = "ISCNTRL"
 
     TIMEOUT = "timeout"
 
     CRASHED = {ASSERTION, EXPECTATION, CORE, SEGFAULT, GPFAULT}
+
+    ISCNTRL = "iscntrl"
 
     OUTPUT_MISSING = "output-missing"
     OUTPUT_UNCHECKED = "output-unchecked"
