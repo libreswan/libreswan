@@ -211,7 +211,7 @@ travis-ubuntu-xenial: ubuntu-xenial-packages
 .PHONY: docker-build
 docker-build: dockerfile
 	# --volume is only in podman
-	$(DOCKER_CMD) build -t $(DI_T) --volume /home/build/libreswan:/home/build/libreswan -f $(DOCKERFILE) .
+	$(DOCKER_CMD) build -t $(DI_T) --volume $(PWD):/home/build/libreswan -f $(DOCKERFILE) .
 	# for docker
 	# $(DOCKER_CMD) build -t $(DI_T) -f $(DOCKERFILE) .
 
