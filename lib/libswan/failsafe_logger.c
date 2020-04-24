@@ -38,8 +38,12 @@ static const struct logger_object_vec logger_failsafe_vec = {
 	.free_object = false,
 };
 
+const struct where failsafe_where = {
+	.line = 0, .file = "<failsafe>", .func = "<failsafe>",
+};
+
 const struct logger failsafe_logger = {
-	.where = { .line = 0, .file = "<failsafe>", .func = "<failsafe>", },
+	.where = &failsafe_where,
 	.object = NULL,
 	.object_vec = &logger_failsafe_vec,
 };

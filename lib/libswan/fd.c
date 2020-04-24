@@ -31,7 +31,7 @@ struct fd {
 	refcnt_t refcnt;
 };
 
-struct fd *fd_dup(struct fd *fd, where_t where)
+struct fd *fd_dup(struct fd *fd, const struct where *where)
 {
 	pexpect(fd == NULL || fd->magic == FD_MAGIC);
 	refcnt_addref(fd, where);
@@ -83,7 +83,7 @@ ssize_t fd_sendmsg(const struct fd *fd, const struct msghdr *msg, int flags)
 	return s < 0 ? -errno : s;
 }
 
-struct fd *fd_accept(int socket, where_t where, struct logger *logger)
+struct fd *fd_accept(int socket, const struct where *where, struct logger *logger)
 {
 	struct sockaddr_un addr;
 	socklen_t addrlen = sizeof(addr);

@@ -38,7 +38,7 @@ void refcnt_init(const char *what, const void *pointer,
 
 #define refcnt_alloc(THING, WHERE)				       \
 	({							       \
-		THING *t_ = alloc_bytes(sizeof(THING), (WHERE).func);  \
+		THING *t_ = alloc_bytes(sizeof(THING), (WHERE)->func);  \
 		refcnt_init(#THING, t_, &t_->refcnt, WHERE);	       \
 		t_;						       \
 	})

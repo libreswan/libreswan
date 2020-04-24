@@ -32,14 +32,22 @@
  * For appending: (in FUNC() at FILE:LINE)
  */
 
-typedef const struct {
+typedef const struct where {
 	const char *func;
 	const char *file;
 	long line;
-} where_t;
+} *where_t;
 
-#define HERE (where_t) { .func = __func__, .file = HERE_FILENAME , .line = __LINE__}
+#define HERE						\
+	({						\
+		static const struct where here = {	\
+			.func = __func__,		\
+			.file = HERE_FILENAME,		\
+			.line = __LINE__,		\
+		};					\
+		&here;					\
+	})
 #define PRI_WHERE "(%s() +%lu %s)"
-#define pri_where(SC) (SC).func, (SC).line, (SC).file
+#define pri_where(SC) (SC)->func, (SC)->line, (SC)->file
 
 #endif

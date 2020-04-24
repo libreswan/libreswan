@@ -133,13 +133,13 @@ static struct connection *finish_connection(struct connection *c, const char *na
 
 struct connection *alloc_connection(const char *name, where_t where)
 {
-	struct connection *c = alloc_thing(struct connection, where.func);
+	struct connection *c = alloc_thing(struct connection, where->func);
 	return finish_connection(c, name, where);
 }
 
 struct connection *clone_connection(const char *name, struct connection *t, where_t where)
 {
-	struct connection *c = clone_thing(*t, where.func);
+	struct connection *c = clone_thing(*t, where->func);
 	return finish_connection(c, name, where);
 }
 
