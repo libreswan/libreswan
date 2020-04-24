@@ -11,20 +11,20 @@
 
 #define PREFIX "         "
 
-enum where {
+enum enum_name_expectation {
 	OPTIONAL,
 	PRESENT,
 	ABSENT,
 };
 
 static void test_enum(enum_names *enum_test, int i,
-		      enum where where)
+		      enum enum_name_expectation expect)
 {
 	char scratch[100];
 
 	/* find a name, if any, for this value */
 	const char *name = enum_name(enum_test, i);
-	switch (where) {
+	switch (expect) {
 	case OPTIONAL:
 		if (name == NULL) {
 			return;
