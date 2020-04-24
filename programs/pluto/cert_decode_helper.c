@@ -108,7 +108,7 @@ static stf_status cert_decode_completed(struct state *st,
 					struct msg_digest *md,
 					struct crypto_task **task)
 {
-	struct ike_sa *ike = ike_sa(st);
+	struct ike_sa *ike = ike_sa(st, HERE);
 	pexpect(!ike->sa.st_remote_certs.processed);
 	ike->sa.st_remote_certs.processed = true;
 	ike->sa.st_remote_certs.harmless = (*task)->verified.harmless;

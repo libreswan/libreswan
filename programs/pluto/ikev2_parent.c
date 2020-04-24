@@ -582,7 +582,7 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 			else
 				st->st_ike_pred = predecessor->st_serialno;
 		}
-		update_pending(ike_sa(predecessor), pexpect_ike_sa(st));
+		update_pending(ike_sa(predecessor, HERE), pexpect_ike_sa(st));
 	} else {
 		log_state(logger | (RC_NEW_V2_STATE + STATE_PARENT_I1), &ike->sa,
 			  "initiating IKEv2 IKE SA");
@@ -712,7 +712,7 @@ static stf_status ikev2_parent_outI1_common(struct state *st)
 
 	/* HDR out */
 
-	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st),
+	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st, HERE),
 					  NULL /* request */,
 					  ISAKMP_v2_IKE_SA_INIT);
 	if (!pbs_ok(&rbody)) {
@@ -1039,7 +1039,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 		     "reply packet");
 
 	/* HDR out */
-	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st),
+	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st, HERE),
 					  md /* response */,
 					  ISAKMP_v2_IKE_SA_INIT);
 	if (!pbs_ok(&rbody)) {
@@ -2165,7 +2165,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 
 	/* HDR out */
 
-	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(pst),
+	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(pst, HERE),
 					  NULL /* request */,
 					  ISAKMP_v2_IKE_AUTH);
 	if (!pbs_ok(&rbody)) {
@@ -2180,7 +2180,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 
 	/* insert an Encryption payload header (SK) */
 
-	v2SK_payload_t sk = open_v2SK_payload(&rbody, ike_sa(pst));
+	v2SK_payload_t sk = open_v2SK_payload(&rbody, ike_sa(pst, HERE));
 	if (!pbs_ok(&sk.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -2664,7 +2664,7 @@ static stf_status v2_inI2outR2_post_cert_decode(struct state *st,
 static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
 						       struct msg_digest *md)
 {
-	struct ike_sa *ike = ike_sa(st);
+	struct ike_sa *ike = ike_sa(st, HERE);
 
 	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
 	if (cert_payloads != NULL) {
@@ -2683,7 +2683,7 @@ static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
 static stf_status v2_inI2outR2_post_cert_decode(struct state *st,
 						struct msg_digest *md)
 {
-	struct ike_sa *ike = ike_sa(st);
+	struct ike_sa *ike = ike_sa(st, HERE);
 
 	ikev2_log_parentSA(st);
 
@@ -3156,7 +3156,7 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 
 	/* HDR out */
 
-	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st),
+	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st, HERE),
 					  md /* response */,
 					  ISAKMP_v2_IKE_AUTH);
 
@@ -3171,7 +3171,7 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 
 	/* insert an Encryption payload header */
 
-	v2SK_payload_t sk = open_v2SK_payload(&rbody, ike_sa(st));
+	v2SK_payload_t sk = open_v2SK_payload(&rbody, ike_sa(st, HERE));
 	if (!pbs_ok(&sk.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -3494,7 +3494,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 	struct child_sa *child = pexpect_child_sa(md->st);
 	struct state *st = &child->sa;
 	struct connection *c = st->st_connection;
-	struct ike_sa *ike = ike_sa(&child->sa);
+	struct ike_sa *ike = ike_sa(&child->sa, HERE);
 
 	RETURN_STF_FAILURE_STATUS(ikev2_process_cp_respnse(md));
 	if (!v2_process_ts_response(child, md)) {
@@ -3681,7 +3681,7 @@ stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct 
 static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *md)
 {
 	passert(md != NULL);
-	struct ike_sa *ike = ike_sa(st);
+	struct ike_sa *ike = ike_sa(st, HERE);
 	struct state *pst = &ike->sa;
 
 	if (!ikev2_decode_peer_id(md)) {
@@ -4297,7 +4297,7 @@ static void ikev2_child_ike_inR_continue(struct state *st,
 	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
 	pexpect(md->st == NULL || md->st == st);
 
-	struct ike_sa *ike = ike_sa(st);
+	struct ike_sa *ike = ike_sa(st, HERE);
 	struct child_sa *child = pexpect_child_sa(st); /* not yet emancipated */
 	pexpect(child->sa.st_sa_role == SA_INITIATOR);
 
@@ -4396,7 +4396,7 @@ static stf_status ikev2_child_inR_continue(struct state *st,
 	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
 	pexpect(md->st == NULL || md->st == st);
 
-	struct ike_sa *ike = ike_sa(st);
+	struct ike_sa *ike = ike_sa(st, HERE);
 	struct child_sa *child = pexpect_child_sa(st);
 	pexpect(child->sa.st_sa_role == SA_INITIATOR);
 
@@ -4540,7 +4540,7 @@ static void ikev2_child_inIoutR_continue(struct state *st,
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	pexpect(md->st == NULL || md->st == st);
 
-	struct ike_sa *ike = ike_sa(st);
+	struct ike_sa *ike = ike_sa(st, HERE);
 	struct child_sa *child = pexpect_child_sa(st);
 	pexpect(child->sa.st_sa_role == SA_RESPONDER);
 
@@ -4589,7 +4589,7 @@ static stf_status ikev2_child_inIoutR_continue_continue(struct state *st,
 	passert(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	pexpect(md->st == NULL || md->st == st);
 
-	struct ike_sa *ike = ike_sa(st);
+	struct ike_sa *ike = ike_sa(st, HERE);
 	struct child_sa *child = pexpect_child_sa(st);
 	passert(child->sa.st_sa_role == SA_RESPONDER);
 
@@ -4725,7 +4725,7 @@ static void ikev2_child_ike_inIoutR_continue(struct state *st,
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	pexpect(md->st == NULL || md->st == st);
 
-	struct ike_sa *ike = ike_sa(st);
+	struct ike_sa *ike = ike_sa(st, HERE);
 	struct child_sa *child = pexpect_child_sa(st); /* not yet emancipated */
 	pexpect(child->sa.st_sa_role == SA_RESPONDER);
 
@@ -4770,7 +4770,7 @@ static void ikev2_child_ike_inIoutR_continue_continue(struct state *st,
 	passert(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	pexpect(md->st == NULL || md->st == st);
 
-	struct ike_sa *ike = ike_sa(st);
+	struct ike_sa *ike = ike_sa(st, HERE);
 	struct child_sa *child = pexpect_child_sa(st); /* not yet emancipated */
 	passert(child->sa.st_sa_role == SA_RESPONDER);
 
@@ -4993,7 +4993,7 @@ static bool mobike_check_established(const struct state *st)
 static bool process_mobike_resp(struct msg_digest *md)
 {
 	struct state *st = md->st;
-	struct ike_sa *ike = ike_sa(st);
+	struct ike_sa *ike = ike_sa(st, HERE);
 	bool may_mobike = mobike_check_established(st);
 	/* ??? there is currently no need for separate natd_[sd] variables */
 	bool natd_s = FALSE;
@@ -5040,7 +5040,7 @@ static void process_informational_notify_req(struct msg_digest *md, bool *redire
 {
 	struct payload_digest *ntfy;
 	struct state *st = md->st;
-	struct ike_sa *ike = ike_sa(st);
+	struct ike_sa *ike = ike_sa(st, HERE);
 	bool may_mobike = mobike_check_established(st);
 	bool ntfy_update_sa = FALSE;
 	ip_address redirect_ip;
@@ -5836,7 +5836,7 @@ static void ikev2_child_outI_continue(struct state *st,
 	/* child initiating exchange */
 	pexpect(unused_md == NULL);
 
-	struct ike_sa *ike = ike_sa(st);
+	struct ike_sa *ike = ike_sa(st, HERE);
 	struct child_sa *child = pexpect_child_sa(st);
 	pexpect(child->sa.st_sa_role == SA_INITIATOR);
 
@@ -5951,7 +5951,7 @@ void ikev2_record_deladdr(struct state *st, void *arg_ip)
 static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 		const struct iface_port *iface)
 {
-	struct ike_sa *ike = ike_sa(st);
+	struct ike_sa *ike = ike_sa(st, HERE);
 	/*
 	 * caveat: could a CP initiator find an address received
 	 * from the pool as a new source address?
@@ -6136,7 +6136,7 @@ static bool expire_ike_because_child_not_used(struct state *st)
 		}
 	} else {
 		cst = st;
-		ike = ike_sa(st);
+		ike = ike_sa(st, HERE);
 	}
 
 	dbg("#%lu check last used on newest CHILD SA #%lu",
@@ -6247,7 +6247,7 @@ void v2_event_sa_rekey(struct state *st)
 	}
 
 	if (expire_ike_because_child_not_used(st)) {
-		struct ike_sa *ike = ike_sa(st);
+		struct ike_sa *ike = ike_sa(st, HERE);
 		event_force(EVENT_SA_EXPIRE, &ike->sa);
 		return;
 	}
@@ -6312,7 +6312,7 @@ void v2_event_sa_replace(struct state *st)
 	}
 
 	if (expire_ike_because_child_not_used(st)) {
-		struct ike_sa *ike = ike_sa(st);
+		struct ike_sa *ike = ike_sa(st, HERE);
 		event_force(EVENT_SA_EXPIRE, &ike->sa);
 		return;
 	}

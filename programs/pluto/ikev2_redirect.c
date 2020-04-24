@@ -375,7 +375,7 @@ static void del_spi_trick(struct state *st)
 void initiate_redirect(struct state *st)
 {
 	ipstr_buf b;
-	struct state *right_state = &ike_sa(st)->sa;
+	struct state *right_state = &ike_sa(st, HERE)->sa;
 	struct connection *c = right_state->st_connection;
 	ip_address redirect_ip = c->temp_vars.redirect_ip;
 
@@ -439,7 +439,7 @@ static bool add_redirect_payload(struct state *st, pb_stream *pbs)
 
 void send_active_redirect_in_informational(struct state *st)
 {
-	struct ike_sa *ike = ike_sa(st);
+	struct ike_sa *ike = ike_sa(st, HERE);
 	stf_status e = record_v2_informational_request("active REDIRECT informational request",
 						       ike, st, add_redirect_payload);
 	if (e == STF_OK) {

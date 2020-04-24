@@ -910,7 +910,7 @@ bool v1_decode_certs(struct msg_digest *md)
 bool v1_verify_certs(struct msg_digest *md)
 {
 	struct state *st = md->st;
-	struct ike_sa *ike = ike_sa(st);
+	struct ike_sa *ike = ike_sa(st, HERE);
 	struct connection *c = st->st_connection;
 	passert(st->st_ike_version == IKEv1);
 

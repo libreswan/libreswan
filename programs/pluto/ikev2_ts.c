@@ -797,7 +797,7 @@ bool v2_process_ts_request(struct child_sa *child,
 	 */
 	if (md->st == &child->sa) {
 		dbg("Child SA TS Request has child->sa == md->st; so using child connection");
-	} else if (md->st == &ike_sa(&child->sa)->sa) {
+	} else if (md->st == &ike_sa(&child->sa, HERE)->sa) {
 		dbg("Child SA TS Request has ike->sa == md->st; so using parent connection");
 	} else {
 		dbg("Child SA TS Request has an unknown md->st; so using unknown connection");

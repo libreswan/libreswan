@@ -153,7 +153,7 @@ void release_pending_whacks(struct state *st, err_t story)
 	 */
 	struct ike_sa *ike_with_same_whack = NULL;
 	if (IS_CHILD_SA(st)) {
-		struct ike_sa *ike = ike_sa(st);
+		struct ike_sa *ike = ike_sa(st, HERE);
 		if (same_fd(st->st_whack_sock, ike->sa.st_whack_sock)) {
 			ike_with_same_whack = ike;
 			release_any_whack(&ike->sa, HERE, "release pending whacks state's IKE SA");

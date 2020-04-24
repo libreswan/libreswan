@@ -37,7 +37,7 @@
 
 static stf_status ikev2_send_livenss_probe(struct state *st)
 {
-	struct ike_sa *ike = ike_sa(st);
+	struct ike_sa *ike = ike_sa(st, HERE);
 	if (ike == NULL) {
 		DBG(DBG_CONTROL,
 		    DBG_log("IKE SA does not exist for this child SA - should not happen"));
@@ -103,7 +103,7 @@ static void schedule_liveness(struct child_sa *child, deltatime_t time_since_las
 void liveness_check(struct state *st)
 {
 	passert(st->st_ike_version == IKEv2);
-	struct ike_sa *ike = ike_sa(st);
+	struct ike_sa *ike = ike_sa(st, HERE);
 	if (ike == NULL) {
 		LOG_PEXPECT("liveness: state #%lu has no IKE SA; deleting orphaned child",
 			    st->st_serialno);

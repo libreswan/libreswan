@@ -581,7 +581,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 
 void record_v2_delete(struct state *const st)
 {
-	struct ike_sa *ike = ike_sa(st);
+	struct ike_sa *ike = ike_sa(st, HERE);
 	if (ike == NULL) {
 		/* ike_sa() will have already complained loudly */
 		return;

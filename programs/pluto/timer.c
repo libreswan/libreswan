@@ -344,7 +344,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 				delete_my_family(st, FALSE);
 				/* note: no md->st to clear */
 			} else {
-				struct ike_sa *ike = ike_sa(st);
+				struct ike_sa *ike = ike_sa(st, HERE);
 				if (ike == NULL) {
 					/*
 					 * XXX: SNAFU with IKE SA

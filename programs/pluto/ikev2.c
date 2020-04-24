@@ -2789,7 +2789,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 
 bool ikev2_decode_peer_id(struct msg_digest *md)
 {
-	return decode_peer_id_counted(ike_sa(md->st), md, 0);
+	return decode_peer_id_counted(ike_sa(md->st, HERE), md, 0);
 }
 
 /*
@@ -2916,7 +2916,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	 */
 	enum state_kind from_state = transition->state;
 	struct connection *c = st->st_connection;
-	struct ike_sa *ike = ike_sa(st);
+	struct ike_sa *ike = ike_sa(st, HERE);
 
 	if (from_state != transition->next_state) {
 		dbg("transitioning from state %s to state %s",
@@ -3139,7 +3139,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		/* XXX should call unpend again on parent SA */
 		if (IS_CHILD_SA(st)) {
 			/* with failed child sa, we end up here with an orphan?? */
-			struct ike_sa *ike = ike_sa(st);
+			struct ike_sa *ike = ike_sa(st, HERE);
 			dbg("unpending #%lu's IKE SA #%lu", st->st_serialno,
 			    ike->sa.st_serialno);
 			/* a better call unpend in ikev2_ike_sa_established? */
@@ -3306,7 +3306,7 @@ void complete_v2_state_transition(struct state *st,
 				  stf_status result)
 {
 	passert(st != NULL);
-	struct ike_sa *ike = ike_sa(st);
+	struct ike_sa *ike = ike_sa(st, HERE);
 	/* struct child_sa *child = IS_CHILD_SA(st) ? pexpect_child_sa(st) : NULL; */
 	set_cur_state(st); /* might have changed */ /* XXX: huh? */
 

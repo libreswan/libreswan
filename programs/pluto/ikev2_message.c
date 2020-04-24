@@ -703,7 +703,7 @@ static bool ikev2_reassemble_fragments(struct state *st,
 		 * have been adjusted to just point at the data.
 		 */
 		plain[i] = frag->cipher;
-		if (!ikev2_verify_and_decrypt_sk_payload(ike_sa(st), md,
+		if (!ikev2_verify_and_decrypt_sk_payload(ike_sa(st, HERE), md,
 							 &plain[i], frag->iv)) {
 			loglog(RC_LOG_SERIOUS, "fragment %u of %u invalid",
 			       i, st->st_v2_rfrags->total);
@@ -781,7 +781,7 @@ bool ikev2_decrypt_msg(struct state *st, struct msg_digest *md)
 
 		chunk_t c = chunk2(md->packet_pbs.start,
 				  e_pbs->roof - md->packet_pbs.start);
-		ok = ikev2_verify_and_decrypt_sk_payload(ike_sa(st), md, &c,
+		ok = ikev2_verify_and_decrypt_sk_payload(ike_sa(st, HERE), md, &c,
 							 e_pbs->cur - md->packet_pbs.start);
 		md->chain[ISAKMP_NEXT_v2SK]->pbs = same_chunk_as_in_pbs(c, "decrypted SK payload");
 	}

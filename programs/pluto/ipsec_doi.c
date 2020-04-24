@@ -488,7 +488,7 @@ void send_delete(struct state *st)
 		case IKEv2:
 			record_v2_delete(st);
 			send_recorded_v2_ike_msg(st, "delete notification");
-			struct ike_sa *ike = ike_sa(st);
+			struct ike_sa *ike = ike_sa(st, HERE);
 			/*
 			 * XXX: The record 'n' send call shouldn't be
 			 * needed.  Instead, as part of this

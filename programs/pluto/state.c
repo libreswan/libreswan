@@ -499,12 +499,12 @@ static char *readable_humber(uint64_t num,
  * Get the IKE SA managing the security association.
  */
 
-struct ike_sa *ike_sa(struct state *st)
+struct ike_sa *ike_sa(struct state *st, where_t where)
 {
 	if (st != NULL && IS_CHILD_SA(st)) {
 		struct state *pst = state_by_serialno(st->st_clonedfrom);
 		if (pst == NULL) {
-			PEXPECT_LOG("child state #%lu missing parent state #%lu",
+			log_pexpect(where, "child state #%lu missing parent state #%lu",
 				    st->st_serialno, st->st_clonedfrom);
 			/* about to crash with an NPE */
 		}
@@ -1360,7 +1360,7 @@ bool v2_child_connection_probably_shared(struct child_sa *child)
 	}
 
 	dbg("FOR_EACH_STATE_... in %s", __func__);
-	struct ike_sa *ike = ike_sa(&child->sa);
+	struct ike_sa *ike = ike_sa(&child->sa, HERE);
 	struct state *st = NULL;
 	FOR_EACH_STATE_NEW2OLD(st) {
 		if (st->st_connection != c) {

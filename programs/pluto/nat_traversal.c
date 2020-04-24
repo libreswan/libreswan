@@ -834,7 +834,7 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 		 * states and established kernel SA)
 		 */
 		if (!endpoint_eq(md->sender, st->st_remote_endpoint)) {
-			nat_traversal_new_mapping(ike_sa(st), &md->sender);
+			nat_traversal_new_mapping(ike_sa(st, HERE), &md->sender);
 		}
 
 		/*
