@@ -47,6 +47,8 @@ oldest_commit=$(cd ${repodir} && git show --no-patch --format=%H HEAD)
 if test $# -gt 0 ; then
     # could be a tag; convert after updating repo
     first_test_commit=$1; shift
+else
+    first_test_commit=
 fi
 
 json_status="${webdir}/json-status.sh --json ${summarydir}/status.json"
@@ -123,8 +125,11 @@ while true ; do
 
     ${status} "looking for work"
     if test "${first_test_commit}" != "" ; then
-	# convert the potential tag to a hash
-	commit=$(cd ${repodir} && git rev-parse ${first_test_commit})
+	# Use ^{} + rev-parse to convert the potentially signed tag
+	# into the hash that the tag is refering to.  Without ^{}
+	# rev-parse returns the hash of the tag.
+	commit=$(cd ${repodir} && git rev-parse ${first_test_commit}^{})
+	first_test_commit=
     elif ! commit=$(${webdir}/gime-work.sh ${summarydir} ${repodir} ${oldest_commit}) ; then \
 	# Seemlingly nothing to do; github gets updated up every 15
 	# minutes so sleep for less than that
