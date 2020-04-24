@@ -3019,125 +3019,117 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		}
 	}
 
-	/* if requested, send the new reply packet */
-	if (transition->send != NO_MESSAGE) {
-		/*
-		 * Adjust NAT but not for initial state (initial
-		 * outbound message?).
-		 *
-		 * ??? why should STATE_PARENT_I1 be excluded?
-		 *
-		 * XXX: and why, for that state, does
-		 * ikev2_natd_lookup() call it.
-		 *
-		 * XXX: STATE_PARENT_I1 is special in that, per the
-		 * RFC, it must switch the local and remote ports to
-		 * :4500.
-		 *
-		 * XXX: The "initial outbound message" check was first
-		 * added by commit "pluto: various fixups associated
-		 * with RFC 7383 code".  At the time a fake MD
-		 * (created when an initiator initiates) had the magic
-		 * state STATE_IKEv2_BASE and so it checked for that.
-		 * What isn't clear is if the check was intended to
-		 * block just an IKE SA initiating, or also block a
-		 * CHILD SA initiate.
-		 *
-		 * XXX: STATE_PARENT_R1 (AUTH responder), in addition
-		 * to the below, will also call nat*() explicitly.
-		 * Perhaps multiple calls are benign?
-		 *
-		 * XXX: This is getting silly:
-		 *
-		 * - check for MD != NULL - while initial initiators
-		 * don't have an incomming message it gets twarted by
-		 * fake_md()
-		 *
-		 * - delete the call - IKE state transition code is
-		 * already somewhat doing this and why would nat need
-		 * to be updated during a child exchange
-		 *
-		 * - or what about an STF flag on the state?
-		 *
-		 * XXX: it would appear this is only for secure
-		 * responder states.
-		 *
-		 * XXX: It's a hack trying to implement the below:
-		 *
-		 * - the correct check for this end not being behind a
-		 *   NAT is !NATED_HOST && NATED_PEER
-		 *
-		 * - the state checks wrongly assume the responder
-		 *   isn't behind a NAT; and will completely fail if,
-		 *   after a REKEY, the initiator and responder roles
-		 *   switch
-		 *
-		 * - ikev2_parent_inI2outR2_continue_tail()'s call can
-		 *   be merged; suspect the thing to do is move the
-		 *   code to after the message is decrypted?
-		 *
-		 * - is MOBIKE mutually excluded through policy flag
-		 *   checks?
-		 *
-		 * 2.23.  NAT Traversal
-		 *
-		 * There are cases where a NAT box decides to remove
-		 * mappings that are still alive (for example, the
-		 * keepalive interval is too long, or the NAT box is
-		 * rebooted).  This will be apparent to a host if it
-		 * receives a packet whose integrity protection
-		 * validates, but has a different port, address, or
-		 * both from the one that was associated with the SA
-		 * in the validated packet.  When such a validated
-		 * packet is found, a host that does not support other
-		 * methods of recovery such as IKEv2 Mobility and
-		 * Multihoming (MOBIKE) [MOBIKE], and that is not
-		 * behind a NAT, SHOULD send all packets (including
-		 * retransmission packets) to the IP address and port
-		 * in the validated packet, and SHOULD store this as
-		 * the new address and port combination for the SA
-		 * (that is, they SHOULD dynamically update the
-		 * address).  A host behind a NAT SHOULD NOT do this
-		 * type of dynamic address update if a validated
-		 * packet has different port and/or address values
-		 * because it opens a possible DoS attack (such as
-		 * allowing an attacker to break the connection with a
-		 * single packet).  Also, dynamic address update
-		 * should only be done in response to a new packet;
-		 * otherwise, an attacker can revert the addresses
-		 * with old replayed packets.  Because of this,
-		 * dynamic updates can only be done safely if replay
-		 * protection is enabled.  When IKEv2 is used with
-		 * MOBIKE, dynamically updating the addresses
-		 * described above interferes with MOBIKE's way of
-		 * recovering from the same situation.  See Section
-		 * 3.8 of [MOBIKE] for more information.
-		 */
-		if (nat_traversal_enabled &&
-		    from_state != STATE_PARENT_I0 &&
-		    from_state != STATE_V2_NEW_CHILD_I0 &&
-		    from_state != STATE_V2_REKEY_CHILD_I0 &&
-		    from_state != STATE_V2_REKEY_IKE_I0 &&
-		    from_state != STATE_PARENT_R0 &&
-		    from_state != STATE_PARENT_I1 &&
-		    from_state != STATE_V2_IPSEC_I &&
-		    from_state != STATE_V2_IPSEC_R) {
-			/* from_state = STATE_PARENT_R1 */
-			/* from_state = STATE_CREATE_R */
-			/* from_state = STATE_REKEY_IKE_R */
-			/* from_state = ??? */
-			/* adjust our destination port if necessary */
-			nat_traversal_change_port_lookup(md, &ike->sa);
-		}
+	/*
+	 * Adjust NAT but not for initial state (initial outbound
+	 * message?).
+	 *
+	 * ??? why should STATE_PARENT_I1 be excluded?
+	 *
+	 * XXX: and why, for that state, does ikev2_natd_lookup() call
+	 * it.
+	 *
+	 * XXX: STATE_PARENT_I1 is special in that, per the RFC, it
+	 * must switch the local and remote ports to :4500.
+	 *
+	 * XXX: The "initial outbound message" check was first added
+	 * by commit "pluto: various fixups associated with RFC 7383
+	 * code".  At the time a fake MD (created when an initiator
+	 * initiates) had the magic state STATE_IKEv2_BASE and so it
+	 * checked for that.  What isn't clear is if the check was
+	 * intended to block just an IKE SA initiating, or also block
+	 * a CHILD SA initiate.
+	 *
+	 * XXX: STATE_PARENT_R1 (AUTH responder), in addition to the
+	 * below, will also call nat*() explicitly.  Perhaps multiple
+	 * calls are benign?
+	 *
+	 * XXX: This is getting silly:
+	 *
+	 * - check for MD != NULL - while initial initiators don't
+	 *   have an incomming message it gets twarted by fake_md()
+	 *
+	 * - delete the call - IKE state transition code is already
+	 *   somewhat doing this and why would nat need to be updated
+	 *   during a child exchange
+	 *
+	 * - or what about an STF flag on the state?
+	 *
+	 * XXX: it would appear this is only for secure responder
+	 * states.
+	 *
+	 * XXX: It's a hack trying to implement the below:
+	 *
+	 * - the correct check for this end not being behind a NAT is
+	 *   !NATED_HOST && NATED_PEER
+	 *
+	 * - the state checks wrongly assume the responder isn't
+	 *   behind a NAT; and will completely fail if, after a REKEY,
+	 *   the initiator and responder roles switch
+	 *
+	 * - ikev2_parent_inI2outR2_continue_tail()'s call can be
+	 *   merged; suspect the thing to do is move the code to after
+	 *   the message is decrypted?
+	 *
+	 * - is MOBIKE mutually excluded through policy flag checks?
+	 *
+	 * 2.23.  NAT Traversal
+	 *
+	 * There are cases where a NAT box decides to remove mappings
+	 * that are still alive (for example, the keepalive interval
+	 * is too long, or the NAT box is rebooted).  This will be
+	 * apparent to a host if it receives a packet whose integrity
+	 * protection validates, but has a different port, address, or
+	 * both from the one that was associated with the SA in the
+	 * validated packet.  When such a validated packet is found, a
+	 * host that does not support other methods of recovery such
+	 * as IKEv2 Mobility and Multihoming (MOBIKE) [MOBIKE], and
+	 * that is not behind a NAT, SHOULD send all packets
+	 * (including retransmission packets) to the IP address and
+	 * port in the validated packet, and SHOULD store this as the
+	 * new address and port combination for the SA (that is, they
+	 * SHOULD dynamically update the address).  A host behind a
+	 * NAT SHOULD NOT do this type of dynamic address update if a
+	 * validated packet has different port and/or address values
+	 * because it opens a possible DoS attack (such as allowing an
+	 * attacker to break the connection with a single packet).
+	 * Also, dynamic address update should only be done in
+	 * response to a new packet; otherwise, an attacker can revert
+	 * the addresses with old replayed packets.  Because of this,
+	 * dynamic updates can only be done safely if replay
+	 * protection is enabled.  When IKEv2 is used with MOBIKE,
+	 * dynamically updating the addresses described above
+	 * interferes with MOBIKE's way of recovering from the same
+	 * situation.  See Section 3.8 of [MOBIKE] for more
+	 * information.
+	 */
+	if (transition->send != NO_MESSAGE &&
+	    nat_traversal_enabled &&
+	    from_state != STATE_PARENT_I0 &&
+	    from_state != STATE_V2_NEW_CHILD_I0 &&
+	    from_state != STATE_V2_REKEY_CHILD_I0 &&
+	    from_state != STATE_V2_REKEY_IKE_I0 &&
+	    from_state != STATE_PARENT_R0 &&
+	    from_state != STATE_PARENT_I1 &&
+	    from_state != STATE_V2_IPSEC_I &&
+	    from_state != STATE_V2_IPSEC_R) {
+		/* from_state = STATE_PARENT_R1 */
+		/* from_state = STATE_CREATE_R */
+		/* from_state = STATE_REKEY_IKE_R */
+		/* from_state = ??? */
+		/* adjust our destination port if necessary */
+		nat_traversal_change_port_lookup(md, &ike->sa);
+	}
 
+	/* if requested, send the new reply packet */
+	if (transition->send == MESSAGE_REQUEST ||
+	    transition->send == MESSAGE_RESPONSE) {
 		endpoint_buf b;
 		endpoint_buf b2;
 		pexpect_st_local_endpoint(st);
 		dbg("sending V2 %s packet to %s (from %s)",
-		    v2_msg_role(md) == MESSAGE_REQUEST ? "new request" : "reply",
+		    transition->send == MESSAGE_REQUEST ? "request" : "response",
 		    str_endpoint(&st->st_remote_endpoint, &b),
 		    str_endpoint(&st->st_interface->local_endpoint, &b2));
-
 		send_recorded_v2_ike_msg(&ike->sa, finite_states[from_state]->name);
 	}
 
