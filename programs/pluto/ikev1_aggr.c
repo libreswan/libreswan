@@ -1187,6 +1187,7 @@ static stf_status aggr_outI1_tail(struct state *st,
 
 	/* Set up a retransmission event, half a minute hence */
 	delete_event(st);
+	clear_retransmits(st);
 	start_retransmits(st);
 
 	loglog(RC_NEW_V1_STATE + st->st_state->kind,

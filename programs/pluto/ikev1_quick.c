@@ -824,6 +824,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 		"reply packet from quick_outI1");
 
 	delete_event(st);
+	clear_retransmits(st);
 	start_retransmits(st);
 
 	if (st->st_ipsec_pred == SOS_NOBODY) {

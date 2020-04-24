@@ -2130,6 +2130,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 
 	pexpect(md->svm->timeout_event == EVENT_RETRANSMIT); /* for CST */
 	delete_event(pst);
+	clear_retransmits(pst);
 	deltatime_t halfopen = deltatime_max(deltatime_mulu(ike->sa.st_connection->r_timeout, 2),
 					     deltatime(PLUTO_HALFOPEN_SA_LIFE));
 	event_schedule(EVENT_SA_REPLACE, halfopen, pst);
@@ -3443,6 +3444,7 @@ static stf_status ikev2_process_cp_respnse(struct msg_digest *md)
 			loglog(RC_LOG_SERIOUS, "missing v2CP reply, not attempting to setup child SA");
 			/* Delete previous retransmission event. */
 			delete_event(st);
+			clear_retransmits(st);
 			/*
 			 * ??? this isn't really a failure, is it?
 			 * If none of those payloads appeared, isn't this is a
@@ -3481,6 +3483,7 @@ static void ikev2_rekey_expire_pred(const struct state *st, so_serial_t pred)
 
 	if (deltatime_cmp(lifetime, >, EXPIRE_OLD_SA_DELAY)) {
 		delete_event(rst);
+		clear_retransmits(rst);
 		event_schedule(EVENT_SA_EXPIRE, EXPIRE_OLD_SA_DELAY, rst);
 	}
 	/* else it should be on its way to expire no need to kick dead state */
@@ -3583,6 +3586,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 	 * Delete previous retransmission event.
 	 */
 	delete_event(st);
+	clear_retransmits(st);
 
 	if (st->st_state->kind == STATE_V2_REKEY_CHILD_I1)
 		ikev2_rekey_expire_pred(st, st->st_ipsec_pred);
@@ -3811,6 +3815,7 @@ static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *
 		 * Delete previous retransmission event.
 		 */
 		delete_event(st);
+		clear_retransmits(st);
 		/*
 		 * ??? this isn't really a failure, is it?
 		 * If none of those payloads appeared, isn't this is a
@@ -4930,6 +4935,7 @@ static stf_status ikev2_start_new_exchange(struct ike_sa *ike,
 			loglog(RC_LOG_SERIOUS, "no viable to parent to initiate CREATE_CHILD_EXCHANGE %s; trying replace",
 			       child->sa.st_state->name);
 			delete_event(&child->sa);
+			clear_retransmits(&child->sa);
 			event_schedule(EVENT_SA_REPLACE, REPLACE_ORPHAN_DELAY, &child->sa);
 			/* ??? surely this isn't yet a failure or a success */
 			return STF_FAIL;
@@ -6222,6 +6228,7 @@ void v2_schedule_replace_event(struct state *st)
 	}
 
 	delete_event(st);
+	clear_retransmits(st);
 	event_schedule(kind, deltatime(delay), st);
 }
 

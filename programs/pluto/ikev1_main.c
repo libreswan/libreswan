@@ -206,6 +206,7 @@ void main_outI1(struct fd *whack_sock,
 		"reply packet for main_outI1");
 
 	delete_event(st);
+	clear_retransmits(st);
 	start_retransmits(st);
 
 	if (predecessor != NULL) {

@@ -1101,7 +1101,6 @@ void delete_state(struct state *st)
 	event_delete(EVENT_v2_RELEASE_WHACK, st);
 	event_delete(EVENT_v1_SEND_XAUTH, st);
 	event_delete(EVENT_v2_ADDR_CHANGE, st);
-	event_delete(EVENT_RETRANSMIT, st);
 
 	/* if there is a suspended state transition, disconnect us */
 	struct msg_digest *md = unsuspend_md(st);
@@ -1127,6 +1126,7 @@ void delete_state(struct state *st)
 	}
 
 	delete_event(st); /* delete any pending timer event */
+	clear_retransmits(st);
 
 	/*
 	 * Ditch anything pending on ISAKMP SA being established.

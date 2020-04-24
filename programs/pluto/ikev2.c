@@ -3179,6 +3179,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		switch (kind) {
 		case EVENT_RETRANSMIT:
 			delete_event(st);
+			clear_retransmits(st);
 			dbg("success_v2_state_transition scheduling EVENT_RETRANSMIT of c->r_interval=%jdms",
 			    deltamillisecs(c->r_interval));
 			start_retransmits(st);
@@ -3190,6 +3191,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 
 		case EVENT_SO_DISCARD:
 			delete_event(st);
+			clear_retransmits(st);
 			event_schedule(kind, MAXIMUM_RESPONDER_WAIT_DELAY, st);
 			break;
 
@@ -3547,6 +3549,7 @@ void complete_v2_state_transition(struct state *st,
 				dbg("forcing #%lu to a discard event",
 				    st->st_serialno);
 				delete_event(st);
+				clear_retransmits(st);
 				event_schedule(EVENT_SO_DISCARD,
 					       MAXIMUM_RESPONDER_WAIT_DELAY,
 					       st);

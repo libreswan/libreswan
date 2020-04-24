@@ -459,7 +459,21 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 }
 
 /*
- * Delete an event (if any); leave st->st_event == NULL.
+ * Delete all of the lifetime events (if any).
+ *
+ * Most lifetime events (things that kill the state) try to share a
+ * single .st_event.  However, there has been and likely will be
+ * exceptions (for instance the retransmit timer), and the code below
+ * is written to deal with it.
+ *
+ * XXX:
+ *
+ * The decision to have all the loosely lifetime related timers
+ * (retransmit, rekey, replace, ...) share a single .st_event field is
+ * ...  unfortunate.  The code has to constantly juggle the field
+ * deciding which event is next.  Far easier to set and forget each
+ * independently.  This is why the retransmit timer has been split
+ * off.
  */
 void delete_event(struct state *st)
 {
@@ -468,7 +482,6 @@ void delete_event(struct state *st)
 		struct pluto_event **event;
 	} events[] = {
 		{ "st_event", &st->st_event, },
-		{ "st_retransmit_event", &st->st_retransmit_event, },
 	};
 	for (unsigned e = 0; e < elemsof(events); e++) {
 		struct liveness *l = &events[e];
@@ -480,10 +493,6 @@ void delete_event(struct state *st)
 			    st->st_serialno, l->name,
 			    enum_show(&timer_event_names,
 				      (*l->event)->ev_type));
-			if ((*l->event)->ev_type == EVENT_RETRANSMIT) {
-				dbg("clearing retransmits from delete_event()");
-				clear_retransmits(st);
-			}
 			delete_pluto_event(l->event);
 		}
 	}
@@ -557,6 +566,7 @@ void event_delete(enum event_type type, struct state *st)
 void event_force(enum event_type type, struct state *st)
 {
 	delete_event(st);
+	clear_retransmits(st);
 	deltatime_t delay = deltatime(0);
 	event_schedule(type, delay, st);
 }

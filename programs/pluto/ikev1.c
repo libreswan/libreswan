@@ -2590,6 +2590,7 @@ void complete_v1_state_transition(struct msg_digest *md, stf_status result)
 			 * New event will be scheduled below.
 			 */
 			delete_event(st);
+			clear_retransmits(st);
 		}
 
 		/* Delete IKE fragments */

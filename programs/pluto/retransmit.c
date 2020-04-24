@@ -109,6 +109,7 @@ void clear_retransmits(struct state *st)
 	rt->delay = deltatime(0);
 	rt->start = monotime_epoch;
 	rt->timeout = deltatime(0);
+	event_delete(EVENT_RETRANSMIT, st);
 	LSWDBGP(DBG_RETRANSMITS, buf) {
 		lswlog_retransmit_prefix(buf, st);
 		lswlogs(buf, "cleared");
@@ -297,12 +298,6 @@ void suppress_retransmits(struct state *st)
 	monotime_t now = mononow();
 	rt->delay = monotimediff(monotime_add(rt->start, rt->timeout), now);
 	rt->delays = deltatime_add(rt->delays, rt->delay);
-	/*
-	 * XXX: Can't call delete_event() because that calls
-	 * clear_retransmits().  However, got to wonder why
-	 * event_schedule() doesn't just wipe the old event
-	 * automatically?
-	 */
 	event_delete(EVENT_RETRANSMIT, st);
 	event_schedule(EVENT_RETRANSMIT, rt->delay, st);
 	LSWLOG_RC(RC_RETRANSMISSION, buf) {

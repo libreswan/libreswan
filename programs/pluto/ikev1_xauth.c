@@ -551,6 +551,7 @@ static stf_status modecfg_send_set(struct state *st)
 
 	if (state_event(st, EVENT_RETRANSMIT) == NULL) {
 		delete_event(st);
+		clear_retransmits(st);
 		start_retransmits(st);
 	}
 
@@ -684,6 +685,7 @@ stf_status xauth_send_request(struct state *st)
 
 	if (state_event(st, EVENT_RETRANSMIT) == NULL) {
 		delete_event(st);
+		clear_retransmits(st);
 		start_retransmits(st);
 	}
 
@@ -783,6 +785,7 @@ stf_status modecfg_send_request(struct state *st)
 
 	if (state_event(st, EVENT_RETRANSMIT) == NULL) {
 		delete_event(st);
+		clear_retransmits(st);
 		start_retransmits(st);
 	}
 	st->hidden_variables.st_modecfg_started = TRUE;
@@ -869,6 +872,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 	/* Set up a retransmission event, half a minute hence */
 	/* Schedule retransmit before sending, to avoid race with master thread */
 	delete_event(st);
+	clear_retransmits(st);
 	start_retransmits(st);
 
 	/* Transmit */
@@ -1191,6 +1195,7 @@ static void xauth_launch_authent(struct state *st,
 	 * Two alternative events can be outstanding. Cancel both.
 	 */
 	delete_event(st);
+	clear_retransmits(st);
 	event_delete(EVENT_v1_SEND_XAUTH, st);
 
 	switch (st->st_connection->xauthby) {
