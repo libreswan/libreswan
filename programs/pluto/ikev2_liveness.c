@@ -32,20 +32,14 @@
 #include "pluto_stats.h"
 #include "timer.h"
 #include "server.h"
-
+#include "ikev2.h"			/* for struct state_v2_microcode */
 #include "ikev2_liveness.h"
+#include "state_db.h"			/* for state_by_serialno() */
 
-static stf_status ikev2_send_livenss_probe(struct state *st)
+static stf_status v2_send_liveness_request(struct ike_sa *ike,
+					   struct child_sa *child UNUSED,
+					   struct msg_digest *md UNUSED)
 {
-	struct ike_sa *ike = ike_sa(st, HERE);
-	if (ike == NULL) {
-		DBG(DBG_CONTROL,
-		    DBG_log("IKE SA does not exist for this child SA - should not happen"));
-		DBG(DBG_CONTROL,
-		    DBG_log("INFORMATIONAL exchange cannot be sent"));
-		return STF_IGNORE;
-	}
-
 	/*
 	 * XXX: What does it mean to send a liveness probe for a CHILD
 	 * SA?  Since the packet contents are empty there's nothing
@@ -55,21 +49,14 @@ static stf_status ikev2_send_livenss_probe(struct state *st)
 	 * need to pass in the CHILD SA so that it's liveness
 	 * timestamp (and not the IKE) gets updated.
 	 */
-	stf_status e = record_v2_informational_request("liveness probe informational request",
-						       ike, st/*sender*/,
-						       NULL /* beast master */);
 	pstats_ike_dpd_sent++;
-	if (e == STF_OK) {
-		send_recorded_v2_ike_msg(st, "liveness probe informational request");
-		/*
-		 * XXX: record 'n' send violates the RFC.  This code should
-		 * instead let success_v2_state_transition() deal with things.
-		 */
-		dbg_v2_msgid(ike, st, "XXX: in %s() hacking around record'n'send bypassing send queue",
-			     __func__);
-		v2_msgid_update_sent(ike, &ike->sa, NULL /* new exchange */, MESSAGE_REQUEST);
+	stf_status e = record_v2_informational_request("liveness probe informational request",
+						       ike, &ike->sa/*sender*/,
+						       NULL /* beast master */);
+	if (e != STF_OK) {
+		return STF_INTERNAL_ERROR;
 	}
-	return e;
+	return STF_OK;
 }
 
 static void schedule_liveness(struct child_sa *child, deltatime_t time_since_last_contact,
@@ -99,17 +86,47 @@ static void schedule_liveness(struct child_sa *child, deltatime_t time_since_las
 	event_schedule(EVENT_v2_LIVENESS, delay, &child->sa);
 }
 
+/*
+ * XXX: where to put this?
+ */
+
+static const struct state_v2_microcode v2_liveness_probe_i = {
+	.story = "liveness probe",
+	.state = STATE_V2_IPSEC_I,
+	.next_state = STATE_V2_IPSEC_I,
+	.send = MESSAGE_REQUEST,
+	.processor = v2_send_liveness_request,
+	.timeout_event =  EVENT_RETAIN,
+};
+
+static const struct state_v2_microcode v2_liveness_probe_r = {
+	.story = "liveness probe",
+	.state = STATE_V2_IPSEC_R,
+	.next_state = STATE_V2_IPSEC_R,
+	.send = MESSAGE_REQUEST,
+	.processor = v2_send_liveness_request,
+	.timeout_event =  EVENT_RETAIN,
+};
+
 /* note: this mutates *st by calling get_sa_info */
 void liveness_check(struct state *st)
 {
 	passert(st->st_ike_version == IKEv2);
-	struct ike_sa *ike = ike_sa(st, HERE);
-	if (ike == NULL) {
-		LOG_PEXPECT("liveness: state #%lu has no IKE SA; deleting orphaned child",
-			    st->st_serialno);
+	struct state *pst = state_by_serialno(st->st_clonedfrom);
+	if (pst == NULL) {
+		/*
+		 * When the retransmits timeout the IKE SA gets
+		 * deleted, but not the child.
+		 *
+		 * XXX: might need to tone this down.
+		 */
+		dbg("liveness: state #%lu has no IKE SA; deleting orphaned child",
+		    st->st_serialno);
+		event_delete(EVENT_SO_DISCARD, st);
 		event_schedule(EVENT_SO_DISCARD, deltatime(0), st);
 		return;
 	}
+	struct ike_sa *ike = pexpect_ike_sa(pst);
 
 	struct child_sa *child = pexpect_child_sa(st);
 	if (child == NULL) {
@@ -151,7 +168,7 @@ void liveness_check(struct state *st)
 		monotime_t last_contact = monotime_sub(now, time_since_last_message);
 		if (monobefore(our->last_contact, last_contact)) {
 			monotime_buf m0, m1;
-			dbg("liveness: #%lu updating #%lu last contact from %s to %s",
+			dbg("liveness: #%lu updating #%lu last contact from %s to %s (last IPsec traffic flow)",
 			    child->sa.st_serialno, ike->sa.st_serialno,
 			    str_monotime(our->last_contact, &m0),
 			    str_monotime(last_contact, &m1));
@@ -163,7 +180,7 @@ void liveness_check(struct state *st)
 		 *
 		 * max(dpd_delay - time_since_last_message, * deltatime(MIN_LIVENESS))
 		 */
-		schedule_liveness(child, time_since_last_message, "traffic");
+		schedule_liveness(child, time_since_last_message, "recent IPsec traffic");
 		return;
 	}
 
@@ -175,13 +192,8 @@ void liveness_check(struct state *st)
 	 * No probe is needed for another .dpd_delay seconds.
 	 */
 	if (v2_msgid_request_outstanding(ike)) {
-#if 0
 		schedule_liveness(child, deltatime(0), "request outstanding");
 		return;
-#else
-		dbg("liveness: #%lu should reschedule because there is an outstanding exchange",
-		    child->sa.st_serialno);
-#endif
 	}
 
 	/*
@@ -190,13 +202,8 @@ void liveness_check(struct state *st)
 	 * to start), reschedule the probe.
 	 */
 	if (v2_msgid_request_pending(ike)) {
-#if 0
 		schedule_liveness(child, deltatime(0), "request pending");
 		return;
-#else
-		dbg("liveness: #%lu should reschedule because there is a pending exchange",
-		    child->sa.st_serialno);
-#endif
 	}
 
 	/*
@@ -209,74 +216,23 @@ void liveness_check(struct state *st)
 		return;
 	}
 
-	pexpect_st_local_endpoint(st);
-	address_buf this_buf;
-	const char *this_ip = ipstr(&st->st_interface->local_endpoint, &this_buf);
-	address_buf that_buf;
-	const char *that_ip = ipstr(&st->st_remote_endpoint, &that_buf);
-
-	struct state *pst = &ike->sa;
-	deltatime_t last_msg_age;
-
-	if (get_sa_info(st, TRUE, &last_msg_age) &&
-	    deltatime_cmp(last_msg_age, <, c->dpd_timeout)) {
-		pst->st_pend_liveness = FALSE;
-		pst->st_last_liveness = monotime_epoch;
+	endpoint_buf remote_buf;
+	dbg("liveness: #%lu queueing liveness probe for %s using #%lu",
+	    child->sa.st_serialno,
+	    str_endpoint(&child->sa.st_remote_endpoint, &remote_buf),
+	    ike->sa.st_serialno);
+	const struct state_v2_microcode *transition =
+		child->sa.st_state->kind == v2_liveness_probe_i.state ? &v2_liveness_probe_i :
+		child->sa.st_state->kind == v2_liveness_probe_r.state ? &v2_liveness_probe_r :
+		NULL;
+	if (transition == NULL) {
+		dbg("liveness: #%lu unexpectedly in state %s; should be %s or %s",
+		    child->sa.st_serialno, child->sa.st_state->short_name,
+		    finite_states[v2_liveness_probe_i.state]->short_name,
+		    finite_states[v2_liveness_probe_r.state]->short_name);
 	} else {
-		monotime_t tm = mononow();
-		monotime_t last_liveness = pst->st_last_liveness;
-
-		/* ensure that the very first liveness_check works out */
-		if (is_monotime_epoch(last_liveness)) {
-			pst->st_last_liveness = last_liveness = tm;
-			LSWDBGP(DBG_DPD, buf) {
-				lswlogf(buf, "#%lu liveness initial timestamp set ",
-					st->st_serialno);
-				lswlog_monotime(buf, tm);
-			}
-		}
-
-		LSWDBGP(DBG_DPD, buf) {
-			lswlogf(buf, "#%lu liveness_check - last_liveness: ",
-				st->st_serialno);
-			lswlog_monotime(buf, last_liveness);
-			lswlogf(buf, ", now: ");
-			lswlog_monotime(buf, tm);
-			lswlogf(buf, " parent #%lu", pst->st_serialno);
-		}
-
-		deltatime_t timeout = deltatime_max(c->dpd_timeout,
-						    deltatime_mulu(c->dpd_delay, 3));
-
-		if (pst->st_pend_liveness &&
-		    deltatime_cmp(monotimediff(tm, last_liveness), >=, timeout)) {
-			LSWLOG(buf) {
-				lswlogf(buf, "liveness_check - peer %s has not responded in %jd seconds, with a timeout of ",
-					log_ip ? that_ip : "<ip address>",
-					deltasecs(monotimediff(tm, last_liveness)));
-				lswlog_deltatime(buf, timeout);
-				lswlogf(buf, ", taking %s",
-					enum_name(&dpd_action_names, c->dpd_action));
-			}
-			liveness_action(c, st->st_ike_version);
-			return;
-		} else {
-			stf_status ret = ikev2_send_livenss_probe(st);
-
-			DBG(DBG_DPD,
-				DBG_log("#%lu liveness_check - peer %s is missing - giving them some time to come back",
-					st->st_serialno, that_ip));
-
-			if (ret != STF_OK) {
-				DBG(DBG_DPD,
-					DBG_log("#%lu failed to send liveness informational from %s to %s using parent  #%lu",
-						st->st_serialno,
-						this_ip,
-						that_ip,
-						pst->st_serialno));
-				return; /* this prevents any new scheduling ??? */
-			}
-		}
+		v2_msgid_queue_initiator(ike, &child->sa, ISAKMP_v2_INFORMATIONAL,
+					 transition, NULL);
 	}
 
 	/* in case above screws up? */

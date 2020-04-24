@@ -207,9 +207,20 @@ void retransmit_v2_msg(struct state *st)
 	}
 
 	/*
-	 * The entire family is dead dead and will be deleted at the
-	 * end of the function.
+	 * The entire family is dead dead head
 	 */
+	if (IS_IKE_SA_ESTABLISHED(&ike->sa)) {
+		/*
+		 * Since the IKE SA is established, mimic the
+		 * (probably wrong) behaviour of the old liveness code
+		 * path - it needs to revive all the connections under
+		 * the IKE SA and not just this one child(?).
+		 */
+		/* already logged */
+		liveness_action(st->st_connection, st->st_ike_version);
+		/* presumably liveness_action() deletes the state? */
+		return;
+	}
 
 	if (try != 0 && (try <= try_limit || try_limit == 0)) {
 		/*
