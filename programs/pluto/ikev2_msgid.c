@@ -526,6 +526,7 @@ struct v2_msgid_pending {
 	so_serial_t st_serialno;
 	const enum isakmp_xchg_types ix;
 	v2_msgid_pending_cb *cb;
+	const struct state_v2_microcode *transition;
 	struct v2_msgid_pending *next;
 };
 
@@ -555,6 +556,7 @@ bool v2_msgid_request_pending(struct ike_sa *ike)
 
 void v2_msgid_queue_initiator(struct ike_sa *ike, struct state *st,
 			      enum isakmp_xchg_types ix,
+			      const struct state_v2_microcode *transition,
 			      v2_msgid_pending_cb *callback)
 {
 	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
@@ -578,6 +580,7 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct state *st,
 		.st_serialno = st->st_serialno,
 		.ix = ix,
 		.cb = callback,
+		.transition = transition,
 		.next = (*pp),
 	};
 	*pp = clone_thing(new, "struct initiate_list");
@@ -609,8 +612,40 @@ static void initiate_next(struct state *st, void *context UNUSED)
 		}
 		dbg_v2_msgid(ike, st, "resuming SA using IKE SA (unack %jd)", unack);
 		so_serial_t old_state = push_cur_state(st);
+		struct child_sa *child = IS_CHILD_SA(st) ? pexpect_child_sa(st) : NULL;
 
-		if (IS_CHILD_SA_ESTABLISHED(st)) {
+		if (pending.transition != NULL) {
+			/*
+			 * try to check that the transition still applies ...
+			 */
+#if 0
+			passert(pending.transition->state == st->st_state->kind);
+#endif
+			if (!IS_IKE_SA_ESTABLISHED(&ike->sa) ||
+			    (child != NULL && !IS_CHILD_SA_ESTABLISHED(&child->sa))) {
+				log_state(RC_LOG, st, "dropping transition: %s",
+					  pending.transition->story);
+			} else {
+				/*
+				 * XXX: complete_v2_state_transition()
+				 * assumes MD is non-null and contains
+				 * the current state transition.  Need
+				 * to move it to state.
+				 */
+				struct msg_digest *fake_md = alloc_md("fake IKEv2 msg_digest");
+				fake_md->st = st;
+				fake_md->hdr.isa_msgid = v2_INVALID_MSGID;
+				fake_md->hdr.isa_version = (IKEv2_MAJOR_VERSION << ISA_MAJ_SHIFT);
+				fake_md->fake_dne = true;
+				/* asume first microcode is valid */
+				fake_md->svm = pending.transition;
+				dbg("created the fake md@%p for pending transition processor: %s",
+				    fake_md, pending.transition->story);
+				stf_status status = pending.transition->processor(ike, child, fake_md);
+				complete_v2_state_transition(st, fake_md, status);
+				md_delref(&fake_md, HERE);
+			}
+		} else if (IS_CHILD_SA_ESTABLISHED(st)) {
 			/*
 			 * this is a continuation of delete message.
 			 * shortcut complete_v2_state_transition()
