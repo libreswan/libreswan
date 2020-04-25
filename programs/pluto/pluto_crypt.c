@@ -545,6 +545,12 @@ static void submit_crypto_request(struct pluto_crypto_req_cont *cn,
 		    DBG_log("adding %s work-order %u for state #%lu",
 			    cn->pcrc_name, cn->pcrc_id,
 			    cn->pcrc_serialno));
+		/*
+		 * XXX: Danger:
+		 *
+		 * Clearing retransmits here is wrong, for instance
+		 * when crypto is being run in the background.
+		 */
 		delete_event(st);
 		clear_retransmits(st);
 		event_schedule(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, st);

@@ -29,6 +29,7 @@ typedef struct {
 	unsigned long nr_retransmits;
 	unsigned long nr_duplicate_replies;
 	unsigned long limit;
+	so_serial_t who_for;
 } retransmit_t;
 
 unsigned long retransmit_count(struct state *st);

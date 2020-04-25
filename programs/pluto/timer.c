@@ -565,8 +565,7 @@ void event_delete(enum event_type type, struct state *st)
 
 void event_force(enum event_type type, struct state *st)
 {
-	delete_event(st);
-	clear_retransmits(st);
+	event_delete(type, st);
 	deltatime_t delay = deltatime(0);
 	event_schedule(type, delay, st);
 }

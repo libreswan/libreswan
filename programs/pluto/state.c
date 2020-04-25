@@ -801,6 +801,12 @@ void v2_expire_unused_ike_sa(struct ike_sa *ike)
 }
 
 
+/*
+ * XXX: This is broken on IKEv2.  It schedules a replace event for
+ * each child except that fires _after_ the IKE SA has been deleted.
+ * Should it schedule pending events?
+ */
+
 static bool flush_incomplete_child(struct state *st, void *pst UNUSED)
 {
 	if (!IS_IPSEC_SA_ESTABLISHED(st)) {

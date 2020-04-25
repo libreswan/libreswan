@@ -563,7 +563,6 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct state *st,
 	 * v2_INFORMATIONAL v2D append to the last v2D task.
 	 */
 	delete_event(st);
-	clear_retransmits(st);
 	event_schedule(EVENT_SA_REPLACE, MAXIMUM_RESPONDER_WAIT_DELAY, st);
 	/* find the end; small list? */
 	struct v2_msgid_pending **pp = &initiator->pending;

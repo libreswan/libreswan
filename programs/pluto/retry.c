@@ -133,34 +133,36 @@ void retransmit_v1_msg(struct state *st)
 
 void retransmit_v2_msg(struct state *st)
 {
-	struct connection *c;
-	unsigned long try;
-	unsigned long try_limit;
-	struct state *pst = IS_CHILD_SA(st) ? state_with_serialno(st->st_clonedfrom) : st;
-
 	passert(st != NULL);
-	passert(IS_IKE_SA(pst));
+	struct ike_sa *ike = ike_sa(st, HERE);
+	if (ike == NULL) {
+		dbg("no ike sa so going away");
+		delete_state(st);
+	}
 
 	set_cur_state(st);
-	c = st->st_connection;
-	try_limit = c->sa_keying_tries;
-	try = st->st_try + 1;
+	struct connection *c = st->st_connection;
+	unsigned long try_limit = c->sa_keying_tries;
+	unsigned long try = st->st_try + 1;
 
-	/* Paul: this line can stay attempt 3 of 2 because the cleanup happens when over the maximum */
-	DBG(DBG_CONTROL|DBG_RETRANSMITS, {
+	/*
+	 * Paul: this line can stay attempt 3 of 2 because the cleanup
+	 * happens when over the maximum
+	 */
+	if (DBGP(DBG_BASE)) {
 		ipstr_buf b;
-		char cib[CONN_INST_BUF];
-		DBG_log("handling event EVENT_RETRANSMIT for %s \"%s\"%s #%lu attempt %lu of %lu",
+		connection_buf cib;
+		DBG_log("handling event EVENT_RETRANSMIT for %s "PRI_CONNECTION" #%lu attempt %lu of %lu",
 			ipstr(&c->spd.that.host_addr, &b),
-			c->name, fmt_conn_instance(c, cib),
+			pri_connection(c, &cib),
 			st->st_serialno, try, try_limit);
-		DBG_log("and parent for %s \"%s\"%s #%lu keying attempt %lu of %lu; retransmit %lu",
+		DBG_log("and parent for %s "PRI_CONNECTION" #%lu keying attempt %lu of %lu; retransmit %lu",
 			ipstr(&c->spd.that.host_addr, &b),
-			c->name, fmt_conn_instance(c, cib),
-			pst->st_serialno,
-			pst->st_try, try_limit,
-			retransmit_count(pst) + 1);
-		});
+			pri_connection(c, &cib),
+			ike->sa.st_serialno,
+			ike->sa.st_try, try_limit,
+			retransmit_count(&ike->sa) + 1);
+	}
 
 	/*
 	 * if this connection has a newer Child SA than this state
@@ -184,7 +186,7 @@ void retransmit_v2_msg(struct state *st)
 
 	switch (retransmit(st)) {
 	case RETRANSMIT_YES:
-		send_recorded_v2_ike_msg(pst, "EVENT_RETRANSMIT");
+		send_recorded_v2_ike_msg(&ike->sa, "EVENT_RETRANSMIT");
 		return;
 	case RETRANSMIT_NO:
 		return;
@@ -197,8 +199,8 @@ void retransmit_v2_msg(struct state *st)
 	}
 
 	/*
-	 * Current state is dead and will be deleted at the end of the
-	 * function.
+	 * The entire family is dead dead and will be deleted at the
+	 * end of the function.
 	 */
 
 	if (try != 0 && (try <= try_limit || try_limit == 0)) {
@@ -229,16 +231,14 @@ void retransmit_v2_msg(struct state *st)
 
 		ipsecdoi_replace(st, try);
 	} else {
-		DBG(DBG_CONTROL|DBG_RETRANSMITS,
-		    DBG_log("maximum number of keyingtries reached - deleting state"));
+		dbg("maximum number of keyingtries reached - deleting state");
 	}
 
-
-	if (pst != st) {
-		set_cur_state(pst);  /* now we are on pst */
-		if (pst->st_state->kind == STATE_PARENT_I2) {
-			pstat_sa_failed(pst, REASON_TOO_MANY_RETRANSMITS);
-			delete_state(pst);
+	if (&ike->sa != st) {
+		set_cur_state(&ike->sa);  /* now we are on pst */
+		if (ike->sa.st_state->kind == STATE_PARENT_I2) {
+			pstat_sa_failed(&ike->sa, REASON_TOO_MANY_RETRANSMITS);
+			delete_state(&ike->sa);
 		} else {
 			release_fragments(st);
 			free_chunk_content(&st->st_tpacket);
