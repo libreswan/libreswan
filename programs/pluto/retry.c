@@ -170,15 +170,23 @@ void retransmit_v2_msg(struct state *st)
 	 * cover if there are multiple CREATE_CHILD_SA pending on this
 	 * IKE negotiation ???
 	 *
-	 * XXX: this is testing for an IKE SA that's been superseed by
-	 * a newer IKE SA (not child).  Suspect this is to handle a
-	 * race where the other end brings up the IKE SA first?  For
-	 * that case, shouldn't this state have been deleted?
+	 * XXX: Suspect this is to handle a race where the other end
+	 * brings up the connection first?  For that case, shouldn't
+	 * this state have been deleted?
 	 */
-	if (st->st_state->kind != STATE_PARENT_I1 &&
-	    c->newest_ipsec_sa > st->st_serialno) {
-		libreswan_log("suppressing retransmit because superseded by #%lu try=%lu. Drop this negotiation",
-				c->newest_ipsec_sa, st->st_try);
+	if (st->st_establishing_sa == IKE_SA &&
+	    c->newest_isakmp_sa > st->st_serialno) {
+		log_state(RC_LOG, st,
+			  "suppressing retransmit because IKE SA was superseded #%lu try=%lu; drop this negotiation",
+			  c->newest_isakmp_sa, st->st_try);
+		pstat_sa_failed(st, REASON_TOO_MANY_RETRANSMITS);
+		delete_state(st);
+		return;
+	} else if (st->st_establishing_sa == IPSEC_SA &&
+		   c->newest_ipsec_sa > st->st_serialno) {
+		log_state(RC_LOG, st,
+			  "suppressing retransmit because CHILD SA was superseded by #%lu try=%lu; drop this negotiation",
+			  c->newest_ipsec_sa, st->st_try);
 		pstat_sa_failed(st, REASON_TOO_MANY_RETRANSMITS);
 		delete_state(st);
 		return;
@@ -193,7 +201,7 @@ void retransmit_v2_msg(struct state *st)
 	case RETRANSMITS_TIMED_OUT:
 		break;
 	case DELETE_ON_RETRANSMIT:
-		/* disable re-key code */
+		/* disable revival code */
 		try = 0;
 		break;
 	}
