@@ -84,4 +84,8 @@ extern void initiate_redirect(struct state *st);
  */
 extern void send_active_redirect_in_informational(struct state *st);
 
+stf_status process_IKE_SA_INIT_v2N_REDIRECT_response(struct ike_sa *ike,
+						     struct child_sa *child,
+						     struct msg_digest *md);
+
 #endif

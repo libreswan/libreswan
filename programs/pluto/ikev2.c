@@ -269,6 +269,18 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
 	  .timeout_event = EVENT_SO_DISCARD, },
 
+	{ .story      = "received REDIRECT notify response; resending IKE_SA_INIT request to new destination",
+	  .state      = STATE_PARENT_I1,
+	  .next_state = STATE_IKESA_DEL,
+	  .flags = SMF2_MESSAGE_RESPONSE | SMF2_SUPPRESS_SUCCESS_LOG,
+	  .send = NO_MESSAGE,
+	  .message_payloads = { .required = P(N), .notification = v2N_REDIRECT, },
+	  .processor = process_IKE_SA_INIT_v2N_REDIRECT_response,
+	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
+	  /* XXX: this is an instant timeout */
+	  .timeout_event = EVENT_v2_REDIRECT,
+	},
+
 	{ .story      = "Initiator: process SA_INIT reply notification",
 	  .state      = STATE_PARENT_I1,
 	  .next_state = STATE_PARENT_I1,
@@ -3247,6 +3259,11 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 			 */
 			LOG_PEXPECT("V2 microcode entry (%s) has unspecified timeout_event",
 				    transition->story);
+			break;
+
+		case EVENT_v2_REDIRECT:
+			event_delete(EVENT_v2_REDIRECT, st);
+			event_schedule(EVENT_v2_REDIRECT, deltatime(0), st);
 			break;
 
 		case EVENT_RETAIN:

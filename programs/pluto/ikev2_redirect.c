@@ -459,3 +459,42 @@ void send_active_redirect_in_informational(struct state *st)
 		libreswan_log("redirect not successful");
 	}
 }
+
+stf_status process_IKE_SA_INIT_v2N_REDIRECT_response(struct ike_sa *ike,
+						     struct child_sa *child,
+						     struct msg_digest *md)
+{
+	struct connection *c = ike->sa.st_connection;
+	pexpect(child == NULL);
+	if (!pexpect(md->pbs[PBS_v2N_REDIRECT] != NULL)) {
+		return STF_INTERNAL_ERROR;
+	}
+	struct pbs_in redirect_pbs = *md->pbs[PBS_v2N_REDIRECT];
+
+	if (!LIN(POLICY_ACCEPT_REDIRECT_YES, ike->sa.st_connection->policy)) {
+		log_state(RC_LOG, &ike->sa,
+			  "ignoring v2N_REDIRECT, we don't accept being redirected");
+		return STF_IGNORE;
+	}
+
+	ip_address redirect_ip;
+	err_t err = parse_redirect_payload(&redirect_pbs,
+					   c->accept_redirect_to,
+					   &ike->sa.st_ni,
+					   &redirect_ip);
+	if (err != NULL) {
+		log_state(RC_LOG_SERIOUS, &ike->sa,
+			  "warning: parsing of v2N_REDIRECT payload failed: %s", err);
+		return STF_IGNORE;
+	}
+
+	/*
+	 * MAGIC: the redirect event will delete the IKE SA and start
+	 * a new one with the new IP.
+	 *
+	 * XXX: could this, like COOKIE and INVALID_KE_PAYLOAD, just
+	 * continue with the current state.
+	 */
+	ike->sa.st_connection->temp_vars.redirect_ip = redirect_ip;
+	return STF_OK;
+}

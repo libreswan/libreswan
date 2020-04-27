@@ -1242,7 +1242,6 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct ike_sa *ike
 							      struct msg_digest *md)
 {
 	pexpect(child == NULL);
-	struct connection *c = ike->sa.st_connection;
 	/* not yet updated */
 	pexpect(ike_spi_is_zero(&ike->sa.st_ike_spis.responder));
 
@@ -1259,35 +1258,6 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct ike_sa *ike
 		}
 
 		switch (ntfy->payload.v2n.isan_type) {
-
-
-		case v2N_REDIRECT:
-		{
-			ip_address redirect_ip;
-			if (!LIN(POLICY_ACCEPT_REDIRECT_YES, ike->sa.st_connection->policy)) {
-				dbg("ignoring v2N_REDIRECT, we don't accept being redirected");
-			} else {
-				err_t err = parse_redirect_payload(&ntfy->pbs,
-								   c->accept_redirect_to,
-								   &ike->sa.st_ni,
-								   &redirect_ip);
-				if (err == NULL) {
-					ike->sa.st_connection->temp_vars.redirect_ip = redirect_ip;
-					event_force(EVENT_v2_REDIRECT, &ike->sa);
-					return STF_SUSPEND;
-				}
-				loglog(RC_LOG_SERIOUS, "warning: parsing of v2N_REDIRECT payload failed: %s", err);
-			}
-			/*
-			 * At this point we can either:
-			 * 	- ignore it (and retransmit our IKE_SA_INIT request)
-			 * 	or
-			 * 	- suspend the state.
-			 * Let's suspend it, because we suspect the response
-			 * to our retransmision will be the same as this one.
-			 */
-			return STF_SUSPEND;
-		}
 
 		default:
 			/*
