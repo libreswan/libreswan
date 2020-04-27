@@ -32,9 +32,9 @@
 #include "demux.h"
 #include "pluto_stats.h"
 
-enum v2N_pbs v2_notification_to_v2N_pbs(v2_notification_t n)
+enum v2_pbs v2_notification_to_v2_pbs(v2_notification_t n)
 {
-#define C(N) case v2N_##N: return v2N_PBS_##N;
+#define C(N) case v2N_##N: return PBS_v2N_##N;
 	switch (n) {
 	C(REKEY_SA);
 	C(NO_PPK_AUTH);
@@ -60,7 +60,7 @@ enum v2N_pbs v2_notification_to_v2N_pbs(v2_notification_t n)
 	C(COOKIE2);
 	C(INVALID_KE_PAYLOAD);
 	C(INVALID_MAJOR_VERSION);
-	default: return v2N_PBS_INVALID;
+	default: return PBS_v2_INVALID;
 	}
 #undef C
 }
@@ -357,17 +357,17 @@ void decode_v2N_payload(struct logger *unused_logger UNUSED, struct msg_digest *
 		dbg("ignoring unrecognized %d notify", n);
 		return;
 	}
-	enum v2N_pbs v2N_pbs = v2_notification_to_v2N_pbs(n);
-	if (v2N_pbs == v2N_PBS_INVALID) {
+	enum v2_pbs v2_pbs = v2_notification_to_v2_pbs(n);
+	if (v2_pbs == PBS_v2_INVALID) {
 		dbg("ignoring unsupported %s notify", name);
 		return;
 	}
-	if (md->v2N.pbs[v2N_pbs] != NULL) {
+	if (md->pbs[v2_pbs] != NULL) {
 		dbg("ignoring duplicate %s notify", name);
 		return;
 	}
 	if (DBGP(DBG_TMI)) {
 		DBG_log("adding %s notify", name);
 	}
-	md->v2N.pbs[v2N_pbs] = &notify->pbs;
+	md->pbs[v2_pbs] = &notify->pbs;
 }

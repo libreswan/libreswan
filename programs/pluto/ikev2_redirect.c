@@ -174,8 +174,8 @@ bool redirect_global(struct msg_digest *md)
 	}
 
 	bool peer_redirect_support =
-		(md->v2N.pbs[v2N_PBS_REDIRECTED_FROM] != NULL ||
-		 md->v2N.pbs[v2N_PBS_REDIRECT_SUPPORTED] != NULL);
+		(md->pbs[PBS_v2N_REDIRECTED_FROM] != NULL ||
+		 md->pbs[PBS_v2N_REDIRECT_SUPPORTED] != NULL);
 
 	if (!peer_redirect_support) {
 		dbg("peer didn't indicate support for redirection");
