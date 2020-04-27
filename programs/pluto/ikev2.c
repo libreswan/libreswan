@@ -280,17 +280,6 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .timeout_event = EVENT_v2_REDIRECT,
 	},
 
-	{ .story      = "Initiator: process SA_INIT reply notification",
-	  .state      = STATE_PARENT_I1,
-	  .next_state = STATE_PARENT_I1,
-	  .send       = MESSAGE_REQUEST,
-	  .req_clear_payloads = P(N),
-	  .opt_clear_payloads = LEMPTY,
-	  .processor = ikev2_IKE_SA_process_SA_INIT_response_notification,
-	  .recv_role  = MESSAGE_RESPONSE,
-	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
-	  .timeout_event = EVENT_RETRANSMIT, },
-
 	/* STATE_PARENT_I1: R1 --> I2
 	 *                     <--  HDR, SAr1, KEr, Nr, [CERTREQ]
 	 * HDR, SK {IDi, [CERT,] [CERTREQ,]

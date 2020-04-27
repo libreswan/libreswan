@@ -1282,45 +1282,6 @@ stf_status process_IKE_SA_INIT_v2N_INVALID_KE_PAYLOAD_response(struct ike_sa *ik
 	return STF_OK;
 }
 
-stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct ike_sa *ike,
-							      struct child_sa *child,
-							      struct msg_digest *md)
-{
-	pexpect(child == NULL);
-	/* not yet updated */
-	pexpect(ike_spi_is_zero(&ike->sa.st_ike_spis.responder));
-
-	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-		if (ntfy->payload.v2n.isan_spisize != 0) {
-			libreswan_log("Notify payload for IKE must have zero length SPI - message dropped");
-			return STF_IGNORE;
-		}
-
-		if (ntfy->payload.v2n.isan_type >= v2N_STATUS_FLOOR) {
-			pstat(ikev2_recv_notifies_s, ntfy->payload.v2n.isan_type);
-		} else {
-			pstat(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
-		}
-
-		switch (ntfy->payload.v2n.isan_type) {
-
-		default:
-			/*
-			 * For things like v2N_NO_PROPOSAL_CHOSEN and
-			 * v2N_UNKNOWN_CRITICIAL_PAYLOAD, because they
-			 * were part of the unprotected SA_INIT
-			 * message, they really can't be trusted.
-			 * Just log and forget.
-			 */
-			libreswan_log("%s: received unauthenticated %s - ignored",
-				      ike->sa.st_state->name,
-				      enum_name(&ikev2_notify_names,
-						ntfy->payload.v2n.isan_type));
-		}
-	}
-	return STF_IGNORE;
-}
-
 stf_status ikev2_auth_initiator_process_failure_notification(struct ike_sa *ike,
 							     struct child_sa *child,
 							     struct msg_digest *md)
