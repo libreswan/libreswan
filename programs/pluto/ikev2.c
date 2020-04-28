@@ -3255,24 +3255,6 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	}
 }
 
-static void log_stf_suspend(struct state *st, stf_status result)
-{
-	char b[CONN_INST_BUF];
-
-	set_cur_state(st);      /* might have changed */
-
-	fmt_conn_instance(st->st_connection, b);
-	LSWDBGP(DBG_BASE, buf) {
-		jam(buf, "\"%s\"%s #%lu complete v2 state %s transition with ",
-		    st->st_connection->name, b, st->st_serialno,
-		    st->st_state->name);
-		jam_v2_stf_status(buf, result);
-		jam(buf, " suspended from %s:%d",
-		    st->st_suspended_md_func,
-		    st->st_suspended_md_line);
-	}
-}
-
 /*
  * Dependant on RESULT, either complete, suspend, abandon, or abort
  * (delete state) the state transition started by the state-specific
@@ -3450,6 +3432,7 @@ void complete_v2_state_transition(struct state *st,
 	switch (result) {
 
 	case STF_SUSPEND:
+	{
 		/*
 		 * If this transition was triggered by an
 		 * incoming packet, save it.
@@ -3462,7 +3445,6 @@ void complete_v2_state_transition(struct state *st,
 		 * saving an MD reference?
 		 */
 		suspend_any_md(st, md);
-		log_stf_suspend(st, result);
 		return;
 
 	case STF_IGNORE:
