@@ -192,6 +192,16 @@ void jambuf_to_log(jambuf_t *buf, const struct logger *logger, lset_t rc_flags);
 		jam_log_prefix(BUF, LOGGER),				\
 		jambuf_to_log(BUF, (LOGGER), RC_FLAGS))
 
+#define log_verbose(RC_FLAGS, LOGGER, FORMAT, ...)			\
+	{								\
+		if (suppress_log(LOGGER)) {				\
+			dbg(FORMAT, ##__VA_ARGS__);			\
+		} else {						\
+			log_message(RC_FLAGS, LOGGER, FORMAT,		\
+				    ##__VA_ARGS__);			\
+		}							\
+	}
+
 void log_pending(lset_t rc_flags,
 		 const struct pending *pending,
 		 const char *format, ...) PRINTF_LIKE(3);
