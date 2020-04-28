@@ -953,12 +953,16 @@ static bool load_end_cert_and_preload_secret(struct fd *whackfd,
 
 	passert(cert != NULL);
 
-/* copy of this code lives in nss_cert_verify.c */
+	/*
+	 * A copy of this code lives in nss_cert_verify.c :/
+	 * Currently only a check for RSA is needed, as the only ECDSA
+	 * key size not allowed in FIPS mode (p192 curve), is not implemented
+	 * by NSS.
+	 * See also RSA_secret_sane() and ECDSA_secret_sane()
+	 */
 	if (libreswan_fipsmode()) {
 		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
 		passert(pk != NULL);
-		/* XXX: Currently only a check for RSA seems needed */
-		/* See also RSA_secret_sane() and ECDSA_secret_sane() */
 		if (pk->keyType == rsaKey &&
 			((pk->u.rsa.modulus.len * BITS_PER_BYTE) < FIPS_MIN_RSA_KEY_SIZE)) {
 				loglog_global(RC_FATAL, whackfd,

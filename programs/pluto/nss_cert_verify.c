@@ -401,8 +401,12 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 	}
 	dbg("decoded cert: %s", cert->subjectName);
 
-	/* XXX: Currently only a check for RSA seems needed */
-	/* See also RSA_secret_sane() and ECDSA_secret_sane() */
+	/*
+	 * Currently only a check for RSA is needed, as the only ECDSA
+	 * key size not allowed in FIPS mode (p192 curve), is not implemented
+	 * by NSS.
+	 * See also RSA_secret_sane() and ECDSA_secret_sane()
+	 */
 	if (libreswan_fipsmode()) {
 		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
 		passert(pk != NULL);

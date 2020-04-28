@@ -383,6 +383,11 @@ static void ECDSA_free_secret_content(struct private_key_stuff *pks)
 	ECDSA_free_public_content(&ecdsak->pub);
 }
 
+/*
+ * The only unsafe (according to FIPS) curve is p192, and NSS does not
+ * implement this, so there is no ECDSA curve that libreswan needs to
+ * disallow for security reasons
+ */
 static err_t ECDSA_secret_sane(struct private_key_stuff *pks_unused UNUSED)
 {
 	dbg("ECDSA is assumed to be sane");
