@@ -991,6 +991,9 @@ kvmplutotest	fips-09-ikev2-gcm			good
 kvmplutotest	fips-10-ikev2-psk			good
 kvmplutotest    fips-11-ikev2-esp-dh                    good
 kvmplutotest    fips-12-ikev2-esp-dh-wrong              good
+kvmplutotest    fips-13-ikev2-x509-key2032              good
+kvmplutotest    fips-14-ikev2-x509-ecdsa                good
+kvmplutotest    fips-15-ikev2-x509-key2048              good
 
 #################################################################
 # passthrough tests
