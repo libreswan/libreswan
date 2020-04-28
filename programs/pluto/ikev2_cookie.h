@@ -20,10 +20,16 @@
 #include <stdbool.h>
 
 struct msg_digest;
+struct ike_sa;
+struct child_sa;
 
 void refresh_v2_cookie_secret(void);
 
 bool v2_rejected_initiator_cookie(struct msg_digest *md,
 				  bool me_want_cookies);
+
+stf_status process_IKE_SA_INIT_v2N_COOKIE_response(struct ike_sa *ike,
+						   struct child_sa *child,
+						   struct msg_digest *md);
 
 #endif

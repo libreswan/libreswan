@@ -45,7 +45,7 @@ extern void complete_v2_state_transition(struct state *st,
 
 typedef stf_status ikev2_state_transition_fn(struct ike_sa *ike,
 					     struct child_sa *child, /* could be NULL */
-					     struct msg_digest *md);
+					     struct msg_digest *md /* could be NULL */);
 
 extern ikev2_state_transition_fn process_encrypted_informational_ikev2;
 
@@ -62,6 +62,12 @@ extern ikev2_state_transition_fn ikev2_ike_sa_process_auth_request_no_skeyid;
 extern ikev2_state_transition_fn ikev2_ike_sa_process_auth_request;
 extern ikev2_state_transition_fn ikev2_parent_inR1outI2;
 extern ikev2_state_transition_fn ikev2_parent_inR2;
+
+void schedule_reinitiate_v2_ike_sa_init(struct ike_sa *ike,
+					stf_status (*resume)(struct ike_sa *ike));
+
+bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike);
+extern ikev2_state_transition_fn process_IKE_SA_INIT_v2N_INVALID_KE_PAYLOAD_response;
 
 extern void ikev2_initiate_child_sa(struct pending *p);
 

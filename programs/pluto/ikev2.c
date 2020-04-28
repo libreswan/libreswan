@@ -248,6 +248,27 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	 *                     <--  HDR, N
 	 * HDR, N, SAi1, KEi, Ni -->
 	 */
+
+	{ .story      = "received anti-DDOS COOKIE notify response; resending IKE_SA_INIT request with cookie payload added",
+	  .state      = STATE_PARENT_I1,
+	  .next_state = STATE_PARENT_I0,
+	  .flags = SMF2_MESSAGE_RESPONSE | SMF2_SUPPRESS_SUCCESS_LOG,
+	  .send = NO_MESSAGE,
+	  .message_payloads = { .required = P(N), .notification = v2N_COOKIE, },
+	  .processor = process_IKE_SA_INIT_v2N_COOKIE_response,
+	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
+	  .timeout_event = EVENT_SO_DISCARD, },
+
+	{ .story      = "received IKE_SA_INIT INVALID_KE_PAYLOAD notify response; resending IKE_SA_INIT with new KE payload",
+	  .state      = STATE_PARENT_I1,
+	  .next_state = STATE_PARENT_I0,
+	  .flags = SMF2_MESSAGE_RESPONSE | SMF2_SUPPRESS_SUCCESS_LOG,
+	  .send = NO_MESSAGE,
+	  .message_payloads = { .required = P(N), .notification = v2N_INVALID_KE_PAYLOAD, },
+	  .processor = process_IKE_SA_INIT_v2N_INVALID_KE_PAYLOAD_response,
+	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
+	  .timeout_event = EVENT_SO_DISCARD, },
+
 	{ .story      = "Initiator: process SA_INIT reply notification",
 	  .state      = STATE_PARENT_I1,
 	  .next_state = STATE_PARENT_I1,
@@ -3657,3 +3678,37 @@ bool emit_v2N_compression(struct state *cst,
 		return true;
 	}
 }
+
+static void reinitiate_ike_sa_init(struct state *st, void *arg)
+{
+	if (st == NULL) {
+		dbg("re-initiate lost state");
+		return;
+	}
+	struct ike_sa *ike = ike_sa(st, HERE);
+	if (ike == NULL) {
+		/* already logged */
+		return;
+	}
+	stf_status (*resume)(struct ike_sa *ike) = arg;
+
+	/*
+	 * Need to wind back the Message ID counters so that the send
+	 * code things it is creating Message 0.
+	 */
+	v2_msgid_init_ike(ike);
+
+	/*
+	 * Pretend to be running the initiate state.
+	 */
+	set_v2_transition(&ike->sa, finite_states[STATE_PARENT_I0]->v2_transitions, HERE); /* first */
+	complete_v2_state_transition(&ike->sa, NULL/*no-MD*/, resume(ike));
+}
+
+void schedule_reinitiate_v2_ike_sa_init(struct ike_sa *ike,
+					stf_status (*resume)(struct ike_sa *ike))
+{
+	schedule_callback("reinitiating IKE_SA_INIT", ike->sa.st_serialno,
+			  reinitiate_ike_sa_init, resume);
+}
+
