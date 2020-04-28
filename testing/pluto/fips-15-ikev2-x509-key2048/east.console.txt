@@ -1,0 +1,22 @@
+/testing/guestbin/swan-prep --x509 --fips
+Preparing X.509 files
+Password changed successfully.
+FIPS mode enabled.
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ikev2
+002 added connection description "westnet-eastnet-ikev2"
+east #
+ echo "initdone"
+initdone
+east #
+ hostname | grep east > /dev/null && grep "FIPS: Rejecting" /tmp/pluto.log
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
