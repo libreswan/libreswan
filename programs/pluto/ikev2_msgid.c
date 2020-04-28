@@ -626,24 +626,9 @@ static void initiate_next(struct state *st, void *context UNUSED)
 				log_state(RC_LOG, st, "dropping transition: %s",
 					  pending.transition->story);
 			} else {
-				/*
-				 * XXX: complete_v2_state_transition()
-				 * assumes MD is non-null and contains
-				 * the current state transition.  Need
-				 * to move it to state.
-				 */
-				struct msg_digest *fake_md = alloc_md("fake IKEv2 msg_digest");
-				fake_md->st = st;
-				fake_md->hdr.isa_msgid = v2_INVALID_MSGID;
-				fake_md->hdr.isa_version = (IKEv2_MAJOR_VERSION << ISA_MAJ_SHIFT);
-				fake_md->fake_dne = true;
-				/* asume first microcode is valid */
-				fake_md->svm = pending.transition;
-				dbg("created the fake md@%p for pending transition processor: %s",
-				    fake_md, pending.transition->story);
-				stf_status status = pending.transition->processor(ike, child, fake_md);
-				complete_v2_state_transition(st, fake_md, status);
-				md_delref(&fake_md, HERE);
+				set_v2_transition(st, pending.transition, HERE);
+				stf_status status = pending.transition->processor(ike, child, NULL);
+				complete_v2_state_transition(st, NULL/*initiate so no md*/, status);
 			}
 		} else if (IS_CHILD_SA_ESTABLISHED(st)) {
 			/*

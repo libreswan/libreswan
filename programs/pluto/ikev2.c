@@ -3045,8 +3045,8 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	 *
 	 * XXX: This is getting silly:
 	 *
-	 * - check for MD != NULL - while initial initiators don't
-	 *   have an incomming message it gets twarted by fake_md()
+	 * - check for MD != NULL (aka NO_MESSAGE) - while initiators
+	 *   don't have an incomming message
 	 *
 	 * - delete the call - IKE state transition code is already
 	 *   somewhat doing this and why would nat need to be updated
@@ -3275,9 +3275,9 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
  *
  * XXX: Some state transition functions switch state part way (see
  * AUTH child code) and then tunnel the new state to this code via
- * (*MDP)->st (hence fake_md() and some callers passing in
- * (*MDP)->st).  The fix is for the AUTH code to handle the CHILD SA
- * as a nested or separate transition.
+ * (*MDP)->st and some callers passing in (*MDP)->st).  The fix is for
+ * the AUTH code to handle the CHILD SA as a nested or separate
+ * transition.
  *
  * XXX: The state transition structure (microcode) is stored in (*MDP)
  * forcing that structure to be created.  The fix is to store the
@@ -3332,12 +3332,10 @@ void complete_v2_state_transition(struct state *st,
 	 * XXX: If MD and MD.ST are non-NULL, expect MD.ST to point to
 	 * ST.
 	 *
-	 * An exchange initiator doesn't have an MD but code insists
-	 * that it should be and creates one (look for fake_md()).
-	 * This is presumably because MD / MD.ST are being used to:
+	 * An exchange initiator doesn't have an MD:
 	 *
 	 * - store the state transition; but that information really
-             belongs in ST
+	 *   belongs in ST
 	 *
 	 * - store the CHILD SA when created midway through a state
          *   transition (see IKE_AUTH); but that should be either a
@@ -3385,7 +3383,7 @@ void complete_v2_state_transition(struct state *st,
 		transition = md->svm;
 	}
 #else
-	const struct state_v2_microcode *transition = md != NULL ? md->svm : NULL;
+	const struct state_v2_microcode *transition = md != NULL ? md->svm : st->st_v2_transition;
 #endif
 	static const struct state_v2_microcode undefined_transition = {
 		.story = "suspect message",

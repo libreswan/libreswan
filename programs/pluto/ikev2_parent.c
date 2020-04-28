@@ -212,20 +212,6 @@ void ikev2_ike_sa_established(struct ike_sa *ike,
 	pstat_sa_established(&ike->sa);
 }
 
-static struct msg_digest *fake_md(struct state *st)
-{
-	struct msg_digest *fake_md = alloc_md("fake IKEv2 msg_digest");
-	fake_md->st = st;
-	fake_md->hdr.isa_msgid = v2_INVALID_MSGID;
-	fake_md->hdr.isa_version = (IKEv2_MAJOR_VERSION << ISA_MAJ_SHIFT);
-	fake_md->fake_dne = true;
-	/* asume first microcode is valid */
-	fake_md->svm = st->st_state->v2_transitions;
-	pexpect(fake_md->svm->state == st->st_state->kind);
-	dbg("md@%p is fake", fake_md);
-	return fake_md;
-}
-
 /*
  * Check that the bundled keying material (KE) matches the accepted
  * proposal and if it doesn't record a response and return false.
@@ -678,19 +664,7 @@ void ikev2_parent_outI1_continue(struct state *st, struct msg_digest *unused_md,
 	unpack_KE_from_helper(st, r, &st->st_gi);
 	unpack_nonce(&st->st_ni, r);
 	stf_status e = ikev2_parent_outI1_common(st);
-
-	/*
-	 * initiating, so *MD should be NULL; later
-	 *
-	 * XXX: complete state transition expects (*mdp).svm to be
-	 * non-NULL, and SVM comes from ST's current state.
-	 *
-	 * Will release the fake MD after calling complete v2 state
-	 * transition.
-	 */
-	struct msg_digest *md = fake_md(st); /* released below */
-	complete_v2_state_transition(st, md, e);
-	md_delref(&md, HERE);
+	complete_v2_state_transition(st, NULL/*initiator*/, e);
 }
 
 static stf_status ikev2_parent_outI1_common(struct state *st)
@@ -5860,14 +5834,6 @@ static void ikev2_child_outI_continue(struct state *st,
 		return;
 	}
 
-	/*
-	 * initiating, so *MDP should be NULL; later
-	 *
-	 * Will release the fake MD after calling complete v2 state
-	 * transition.
-	 */
-	struct msg_digest *md = fake_md(st); /* released below */
-
 	/* IKE SA => DH */
 	pexpect(st->st_state->kind == STATE_V2_REKEY_IKE_I0 ? r->pcr_type == pcr_build_ke_and_nonce : true);
 
@@ -5882,8 +5848,7 @@ static void ikev2_child_outI_continue(struct state *st,
 				 NULL, ikev2_child_outI_continue_2);
 
 	/* return STF_SUSPEND */
-	complete_v2_state_transition(&child->sa, md, STF_SUSPEND);
-	md_delref(&md, HERE);
+	complete_v2_state_transition(&child->sa, NULL/*initiator*/, STF_SUSPEND);
 }
 
 stf_status ikev2_child_outI_continue_2(struct ike_sa *ike, struct state *st,

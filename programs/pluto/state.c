@@ -1688,6 +1688,8 @@ struct child_sa *new_v2_child_state(struct ike_sa *ike,
 	struct child_sa *child = pexpect_child_sa(cst);
 	v2_msgid_init_child(ike, child);
 	change_state(&child->sa, kind);
+	const struct state_v2_microcode *transition = child->sa.st_state->v2_transitions;
+	set_v2_transition(&child->sa, transition, HERE);
 	return child;
 }
 
