@@ -3432,7 +3432,6 @@ void complete_v2_state_transition(struct state *st,
 	switch (result) {
 
 	case STF_SUSPEND:
-	{
 		/*
 		 * If this transition was triggered by an
 		 * incoming packet, save it.
