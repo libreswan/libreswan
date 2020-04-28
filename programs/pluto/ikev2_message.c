@@ -181,23 +181,25 @@ pb_stream open_v2_message(pb_stream *reply,
 
 	/*
 	 * Message ID
-	 *
-	 * If there's a message digest (MD) (presumably containing a
-	 * message request) then this must be a response - use the
-	 * message digest's message ID.  A better choice should be
-	 * .st_msgid_lastrecv (or .st_msgid_lastrecv+1), but it isn't
-	 * clear if/when that value is updated and the IKE SA isn't
-	 * always available.
-	 *
-	 * If it isn't a response then use the IKE SA's
-	 * .st_msgid_nextuse.  The caller still needs to both
-	 * increment .st_msgid_nextuse (can't do this until the packet
-	 * is finished) and update .st_msgid (only caller knows if
-	 * this is for the IKE SA or a CHILD SA).
 	 */
 	if (md != NULL) {
+		/*
+		 * Since there is a message digest (MD) it is assumed
+		 * to contain a message request.  Presumably this open
+		 * is for the message response - use the Message ID
+		 * from the request.  A better choice would be
+		 * .st_v2_msgid_windows.responder.recv+1, but it isn't
+		 * clear if/when that value is updated and the IKE SA
+		 * isn't always available.
+		 */
 		hdr.isa_msgid = md->hdr.isa_msgid;
 	} else {
+		/*
+		 * If it isn't a response then use the IKE SA's
+		 * .st_v2_msgid_windows.initiator.sent+1.  The field
+		 * will be updated as part of finishing the state
+		 * transition and sending the message.
+		 */
 		passert(ike != NULL);
 		hdr.isa_msgid = ike->sa.st_v2_msgid_windows.initiator.sent + 1;
 	}
