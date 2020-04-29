@@ -217,19 +217,15 @@ void log_state(lset_t rc_flags,
  * attached).
  */
 
-#define plog_global(MESSAGE, ...)					\
-	{								\
-		struct logger log_ = GLOBAL_LOGGER(null_fd);		\
-		log_message(LOG_STREAM, &log_,				\
-			    MESSAGE,##__VA_ARGS__);			\
-	}
-
-#define loglog_global(RC, WHACKFD, MESSAGE, ...)			\
+#define log_global(RC, WHACKFD, MESSAGE, ...)				\
 	{								\
 		struct logger log_ = GLOBAL_LOGGER(WHACKFD);		\
 		log_message(RC,	&log_,					\
 			    MESSAGE,##__VA_ARGS__);			\
 	}
+
+#define plog_global(MESSAGE, ...) log_global(LOG_STREAM, null_fd, MESSAGE, ##__VA_ARGS__)
+#define loglog_global log_global
 
 /*
  * XXX: log_md() should never be called directly - *log_md() is only

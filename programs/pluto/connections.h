@@ -444,7 +444,8 @@ extern struct connection *route_owner(struct connection *c,
 
 extern struct connection *shunt_owner(const ip_subnet *ours,
 				      const ip_subnet *his);
-extern void rekey_now(const char *name, enum sa_type sa_type);
+extern void rekey_now(const char *name, enum sa_type sa_type, struct fd *whackfd,
+		      bool background);
 
 #define remote_id_was_instantiated(c) \
 	( (c)->kind == CK_INSTANCE && \
