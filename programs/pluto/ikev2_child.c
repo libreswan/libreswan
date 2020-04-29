@@ -75,7 +75,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 	struct state *cst = &child->sa;	/* child state */
 
 	/* switch to child */
-	switch_md_st(md, &child->sa, HERE);
+	pexpect(md->st == &child->sa);
 	c = cst->st_connection;
 
 	if (c->spd.that.has_lease &&

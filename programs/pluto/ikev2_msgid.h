@@ -83,8 +83,11 @@ void v2_msgid_free(struct state *st);
 void v2_msgid_start_responder(struct ike_sa *ike, struct state *responder,
 			      const struct msg_digest *md);
 
-void v2_msgid_switch_responder(struct ike_sa *ike, struct child_sa *child,
-			       const struct msg_digest *md);
+void v2_msgid_switch_responder_to_child(struct ike_sa *ike, struct child_sa *child,
+					struct msg_digest *md, where_t where);
+void v2_msgid_switch_responder_from_child(struct ike_sa *ike, struct child_sa *child,
+					  struct msg_digest *md, where_t where);
+
 void v2_msgid_switch_initiator(struct ike_sa *ike, struct child_sa *child,
 			       const struct msg_digest *md);
 

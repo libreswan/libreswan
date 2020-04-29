@@ -2185,8 +2185,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	/* send out the AUTH payload */
 
 	if (!emit_v2_auth(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, &sk.pbs)) {
-		passert(IS_CHILD_SA(cst));
-		switch_md_st(md, &ike->sa, HERE);
+		v2_msgid_switch_responder_from_child(ike, pexpect_child_sa(cst), md, HERE);
 		discard_state(&cst);
 		return STF_INTERNAL_ERROR;
 	}
@@ -2562,10 +2561,12 @@ stf_status ikev2_ike_sa_process_auth_request(struct ike_sa *ike,
 	 */
 	if (e >= STF_FAIL &&
 	    (ike->sa.st_connection->policy & POLICY_OPPORTUNISTIC)) {
-		dbg("(pretending?) Deleting opportunistic Parent with no Child SA");
-		record_v2N_response(ike->sa.st_logger, ike, md, v2N_AUTHENTICATION_FAILED,
-				    NULL/*no data*/, ENCRYPTED_PAYLOAD);
-		e = STF_FAIL; /* STF_ZOMBIFY */
+		dbg("deleting opportunistic IKE SA with no Child SA");
+		pexpect(md->st == &ike->sa);
+		record_v2N_response(ike->sa.st_logger, ike, md,
+				    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FAIL; /* STF_ZOMBIFY */
 	}
 
 	return e;
@@ -2955,7 +2956,7 @@ static stf_status ike_auth_child_responder(struct ike_sa *ike,
 		 * CHILD SA can fail, the IKE SA should be the one
 		 * processing the message?
 		 */
-		v2_msgid_switch_responder(ike, child, md);
+		v2_msgid_switch_responder_to_child(ike, child, md, HERE);
 
 		/*
 		 * XXX: Per above if(), md->st could be either the IKE or the
@@ -2996,7 +2997,7 @@ static stf_status ike_auth_child_responder(struct ike_sa *ike,
 		 * CHILD SA can fail, the IKE SA should be the one
 		 * processing the message?
 		 */
-		v2_msgid_switch_responder(ike, child, md);
+		v2_msgid_switch_responder_to_child(ike, child, md, HERE);
 
 		if (!v2_process_ts_request(child, md)) {
 			/*
@@ -3004,6 +3005,7 @@ static stf_status ike_auth_child_responder(struct ike_sa *ike,
 			 * should continue to exist.  This STF_FAIL
 			 * will blame MD->ST aka the IKE SA.
 			 */
+			v2_msgid_switch_responder_from_child(ike, child, md, HERE);
 			delete_state(&child->sa);
 			return STF_FAIL + v2N_TS_UNACCEPTABLE;
 		}
