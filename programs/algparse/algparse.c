@@ -196,18 +196,25 @@ static void test(void)
 	esp(true, NULL);
 	esp(false, "");
 
+#ifdef USE_AES
 	esp(true, "aes");
 	esp(true, "aes;modp2048");
+# ifdef USE_SHA1
 	esp(true, "aes-sha1");
 	esp(true, "aes-sha1");
 	esp(true, "aes-sha1-modp2048");
-	esp(true, "aes-128");
 	esp(true, "aes-128-sha1");
 	esp(true, "aes-128-sha1");
 	esp(true, "aes-128-sha1-modp2048");
-
+# endif
+	esp(true, "aes-128");
 	esp(true, "aes_gcm_a-128-null");
+#endif
+#ifdef USE_3DES
+# ifdef USE_DH2
 	esp(false, "3des-sha1;modp1024");
+# endif
+# ifdef USE_SHA1
 	esp(!fips, "3des-sha1;modp1536");
 	esp(true, "3des-sha1;modp2048");
 	esp(ike_version == IKEv2, "3des-sha1;dh21");
@@ -215,29 +222,45 @@ static void test(void)
 	esp(false, "3des-sha1;dh23");
 	esp(false, "3des-sha1;dh24");
 	esp(true, "3des-sha1");
+# endif
+#endif
+#ifdef USE_SHA1
 	esp(!fips, "null-sha1");
-
+#endif
+#ifdef USE_AES
 	esp(true, "aes_cbc");
+# ifdef USE_SHA1
 	esp(true, "aes-sha");
 	esp(true, "aes-sha1");
+	esp(true, "aes128-sha1");
+# endif
+# ifdef USE_SHA2
 	esp(true, "aes-sha2");
 	esp(true, "aes-sha256");
 	esp(true, "aes-sha384");
 	esp(true, "aes-sha512");
-	esp(true, "aes128-sha1");
+# endif
 	esp(!fips, "aes128-aes_xcbc");
+# ifdef USE_SHA1
 	esp(true, "aes192-sha1");
 	esp(true, "aes256-sha1");
 	esp(true, "aes256-sha");
+# endif
+# ifdef USE_SHA2
 	esp(true, "aes256-sha2");
 	esp(true, "aes256-sha2_256");
 	esp(true, "aes256-sha2_384");
 	esp(true, "aes256-sha2_512");
+# endif
+#endif
+#ifdef USE_CAMELLIA
 	esp(!fips, "camellia");
 	esp(!fips, "camellia128");
 	esp(!fips, "camellia192");
 	esp(!fips, "camellia256");
+#endif
 
+#ifdef USE_AES
 	/* this checks the bit sizes as well */
 	esp(true, "aes_ccm");
 	esp(true, "aes_ccm_a-128-null");
@@ -303,20 +326,43 @@ static void test(void)
 	esp(true, "aes_ctr128");
 	esp(true, "aes_ctr192");
 	esp(true, "aes_ctr256");
+#endif
+#ifdef USE_SERPENT
+	esp(!fips, "serpent");
+#endif
+#ifdef USE_TWOFISH
+	esp(!fips, "twofish");
+#endif
 
+#ifdef USE_CAMELLIA
 	esp(!fips, "camellia_cbc_256-hmac_sha2_512_256;modp8192"); /* long */
+#endif
 	esp(true, "null_auth_aes_gmac_256-null;modp8192"); /* long */
+#ifdef USE_3DES
+# ifdef USE_SHA1
 	esp(true, "3des-sha1;modp8192"); /* allow ';' when unambigious */
 	esp(true, "3des-sha1-modp8192"); /* allow '-' when unambigious */
+# endif
+#endif
+#ifdef USE_AES
+# ifdef USE_3DES
+#  ifdef USE_SHA1
 	esp(!pfs, "aes-sha1,3des-sha1;modp8192");
 	esp(true, "aes-sha1-modp8192,3des-sha1-modp8192"); /* silly */
+#  endif
+# endif
+# ifdef USE_SHA1
 	esp(true, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
+# endif
 
 	esp(ike_version == IKEv2, "aes;none");
 	esp(ike_version == IKEv2 && !pfs, "aes;none,aes");
 	esp(ike_version == IKEv2, "aes;none,aes;modp2048");
+# ifdef USE_SHA1
 	esp(ike_version == IKEv2, "aes-sha1-none");
 	esp(ike_version == IKEv2, "aes-sha1;none");
+# endif
+#endif
 
 	/*
 	 * should this be supported - for now man page says not
@@ -324,6 +370,7 @@ static void test(void)
 	 */
 
 	/* ESP tests that should fail */
+	/* So these do not require ifdef's to prevent bad exit code */
 
 	esp(impaired, "3des168-sha1"); /* wrong keylen */
 	esp(impaired, "3des-null"); /* non-null integ */
@@ -368,10 +415,15 @@ static void test(void)
 
 	ah(true, NULL);
 	ah(false, "");
+#ifdef USE_MD5
 	ah(!fips, "md5");
+#endif
+#ifdef USE_SHA1
 	ah(true, "sha");
 	ah(true, "sha;modp2048");
 	ah(true, "sha1");
+#endif
+#ifdef USE_SHA2
 	ah(true, "sha2");
 	ah(true, "sha256");
 	ah(true, "sha384");
@@ -379,18 +431,31 @@ static void test(void)
 	ah(true, "sha2_256");
 	ah(true, "sha2_384");
 	ah(true, "sha2_512");
+#endif
+#ifdef USE_AES
 	ah(!fips, "aes_xcbc");
+#endif
+#ifdef USE_SHA2
 	ah(ike_version == IKEv2, "sha2-none");
 	ah(ike_version == IKEv2, "sha2;none");
+#endif
+#ifdef USE_SHA1
 	ah(true, "sha1-modp8192,sha1-modp8192,sha1-modp8192"); /* suppress duplicates */
 	ah(impaired, "aes-sha1");
+#endif
 	ah(false, "vanityhash1");
+#ifdef USE_AES
 	ah(impaired, "aes_gcm_c-256");
+#endif
 	ah(false, "id3"); /* should be rejected; idXXX removed */
+#ifdef USE_3DES
 	ah(impaired, "3des");
+#endif
 	ah(impaired, "null");
+#ifdef USE_AES
 	ah(impaired, "aes_gcm");
 	ah(impaired, "aes_ccm");
+#endif
 	ah(false, "ripemd"); /* support removed */
 
 	/*
