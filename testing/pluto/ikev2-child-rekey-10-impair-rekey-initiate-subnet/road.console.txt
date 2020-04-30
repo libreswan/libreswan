@@ -18,11 +18,8 @@ initdone
 road #
  #!/bin/sh
 road #
- ping -q -n -c 2 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../pluto/bin/ping-once.sh --up 192.1.2.23
+up
 road #
  ipsec auto --up road-east-x509-ipv4
 1v2 "road-east-x509-ipv4"[1] 192.1.2.23 #1: initiating IKEv2 IKE SA
@@ -35,29 +32,23 @@ road #
 002 "road-east-x509-ipv4"[1] 192.1.2.23 #2: negotiated connection [192.0.2.100-192.0.2.100:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0]
 004 "road-east-x509-ipv4"[1] 192.1.2.23 #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
- ping -q -n -c 4 -I 192.0.2.100 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.0.2.100 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../pluto/bin/ping-once.sh --up -I 192.0.2.100 192.1.2.23
+up
 road #
  ipsec whack --trafficstatus
-006 #2: "road-east-x509-ipv4"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.100/32
+006 #2: "road-east-x509-ipv4"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.100/32
 road #
  ipsec whack --impair rekey-initiate-subnet
 road #
- ipsec whack --rekey-ipsec --name road-east-x509-ipv4
+ ipsec whack --rekey-ipsec --name road-east-x509-ipv4 --async
 road #
  echo "sleep 40 seconds"
 sleep 40 seconds
 road #
  sleep 40
 road #
- ping -q -n -c 4 -I 192.0.2.100 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.0.2.100 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../pluto/bin/ping-once.sh --down -I 192.0.2.100 192.1.2.23
+down
 road #
  echo done
 done
@@ -65,7 +56,7 @@ road #
  # only #2 and not #3
 road #
  ipsec trafficstatus
-006 #2: "road-east-x509-ipv4"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=672, outBytes=672, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.100/32
+006 #2: "road-east-x509-ipv4"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=168, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.100/32
 road #
  # should find a match on both east and road
 road #

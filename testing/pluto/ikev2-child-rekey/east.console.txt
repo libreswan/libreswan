@@ -12,7 +12,7 @@ east #
 initdone
 east #
  ipsec whack --trafficstatus
-006 #4: "east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@west'
+006 #4: "east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@west'
 east #
  ../bin/check-for-core.sh
 east #

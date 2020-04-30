@@ -1,17 +1,17 @@
+# IKE #1 CHILD #2
 ipsec auto --up west
-ping -W 4 -n -c 4 -I 192.0.1.254 192.0.2.254
+../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 ipsec whack --trafficstatus
-echo "sleep 13"
+# why?
 sleep 13
+# IKE #3 CHILD #2
 ipsec whack --rekey-ike --name west
-ping -W 4 -n -c 4 -I 192.0.1.254 192.0.2.254
+../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 ipsec whack --trafficstatus
 ipsec status |grep STATE_
-# expect #2 IPsec #3 IKE
-echo "sleep 21"
+# why?
 sleep 21
+# IKE #4 CHILD #2
 ipsec whack --rekey-ike --name west
-ping -W 4 -n -c 4 -I 192.0.1.254 192.0.2.254
+../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 ipsec status |grep STATE_
-# expect #2 IPsec #4 IKE
-echo done
