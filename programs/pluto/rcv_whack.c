@@ -256,19 +256,25 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 	}
 
 	if (m->whack_rekey_ike) {
-		if (m->name == NULL)
-			whack_log(RC_FATAL, whackfd,
-				  "received whack command to rekey IKE SA of connection, but did not receive the connection name or state number - ignored");
-		else
-			rekey_now(m->name, IKE_SA);
+		if (m->name == NULL) {
+			/* leave bread crumb */
+			log_global(RC_FATAL, whackfd,
+				   "received whack command to rekey IKE SA of connection, but did not receive the connection name or state number - ignored");
+		} else {
+			rekey_now(m->name, IKE_SA, whackfd,
+				  m->whack_async/*background*/);
+		}
 	}
 
 	if (m->whack_rekey_ipsec) {
-		if (m->name == NULL)
-			whack_log(RC_FATAL, whackfd,
-				  "received whack command to rekey IPsec SA of connection, but did not receive the connection name or state number - ignored");
-		else
-			rekey_now(m->name, IPSEC_SA);
+		if (m->name == NULL) {
+			/* leave bread crumb */
+			log_global(RC_FATAL, whackfd,
+				   "received whack command to rekey IPsec SA of connection, but did not receive the connection name or state number - ignored");
+		} else {
+			rekey_now(m->name, IPSEC_SA, whackfd,
+				  m->whack_async/*background*/);
+		}
 	}
 
 	/* Deleting combined with adding a connection works as replace.

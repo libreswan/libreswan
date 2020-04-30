@@ -1,5 +1,6 @@
 ipsec auto --status | grep west
 ipsec auto --up west
+# ../../pluto/bin/ping-once.sh ...?
 taskset 0x3 ping -w 3 -n -c 2 192.1.2.23
 ipsec trafficstatus
 # this rekey, 1 #3, should succeed

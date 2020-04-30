@@ -12,6 +12,7 @@ s,\(initiating Quick Mode .* to replace #.*\) {using isakmp#.*},\1,
 s,{msgid.*},,
 
 s,\( EVENT_[a-z0-9A-Z_]\+ in \)[0-9]\+s,\1XXs,g
+s, remaining life [0-9][0-9\.]*s, remaining life XXs,
 
 s,\(003 .* received Vendor ID payload \[Libreswan \).*,\1,
 /WARNING: calc_dh_shared(): for OAKLEY_GROUP_MODP/d

@@ -27,56 +27,59 @@
 #include "timer.h"
 #include "state_db.h"
 
-static void rekey_by_state(struct state *st)
-{
-		event_force(EVENT_SA_REKEY, st);
-}
+struct rekey_how {
+	bool background;
+	enum sa_type sa_type;
+};
 
-static void rekey_by_conn(struct connection *c, enum sa_type sa_type)
+static void rekey_state(struct state *st, struct fd *whackfd, bool background)
 {
-	struct state *st = NULL;
-	if (sa_type == IPSEC_SA) {
-		st = state_by_serialno(c->newest_ipsec_sa);
-	} else if (sa_type == IKE_SA) {
-		st = state_by_serialno(c->newest_isakmp_sa);
-	} else {
-		libreswan_log("unknown SA type %d", sa_type);
-		return;
+	if (!background) {
+		/* XXX: something better */
+		close_any(&st->st_logger->object_whackfd);
+		st->st_logger->object_whackfd = dup_any(whackfd);
 	}
-	if (c->ike_version == IKEv1) {
-		/* the behaviour of IKEv1 is not clear, so lets block it for now */
-		loglog(RC_FATAL, "--rekey-ike-now and --rekey-ipsec-now requires ikev2");
-	} else {
-		event_force(EVENT_SA_REKEY, st);
-	}
+	event_force(EVENT_SA_REKEY, st);
 }
 
 static int rekey_connection_now(struct connection *c,
-				struct fd *unused_whackfd UNUSED,
+				struct fd *whackfd,
 				void *arg)
 {
-	enum sa_type sa_type = *(enum sa_type *)arg;
-	int ret = 0;
-
-	set_cur_connection(c);
-
-	if (sa_type == IKE_SA && c->newest_isakmp_sa == SOS_NOBODY) {
-		libreswan_log("can not rekey IKE SA, newest IKE SA is SOS_NOBODY");
-		ret = 1;
-	} else if (sa_type == IPSEC_SA && c->newest_ipsec_sa == SOS_NOBODY) {
-		libreswan_log("can not rekey IPsec SA, newest IPsec SA is SOS_NOBODY");
-		ret = 1;
-	} else {
-		rekey_by_conn(c, sa_type);
+	if (c->ike_version != IKEv2) {
+		log_global(RC_LOG, whackfd, "cannot force rekey of %s connection",
+			   enum_name(&ike_version_names, c->ike_version));
+		return 1;
 	}
-	reset_cur_connection();
-
-	return ret;
+	struct rekey_how *how = arg;
+	struct state *st;
+	switch (how->sa_type) {
+	case IKE_SA:
+		st = state_by_serialno(c->newest_isakmp_sa);
+		break;
+	case IPSEC_SA:
+		st = state_by_serialno(c->newest_ipsec_sa);
+		break;
+	default:
+		bad_case(how->sa_type);
+	}
+	if (st == NULL) {
+		log_global(RC_LOG, whackfd, "connection does not have %s",
+			   enum_enum_name(&sa_type_names, c->ike_version, how->sa_type));
+		return 1;
+	}
+	rekey_state(st, whackfd, how->background);
+	return 0;
 }
 
-void rekey_now(const char *str, enum sa_type sa_type)
+void rekey_now(const char *str, enum sa_type sa_type,
+	       struct fd *whackfd, bool background)
 {
-	struct fd *whackfd = whack_log_fd; /* placeholder */
+	struct rekey_how how = {
+		.background = background,
+		.sa_type = sa_type,
+	};
+
 	/*
 	 * Loop because more than one may match (master and instances)
 	 * But at least one is required (enforced by conn_by_name).
@@ -98,19 +101,21 @@ void rekey_now(const char *str, enum sa_type sa_type)
 				if (streq(c->name, str) &&
 				    c->kind >= CK_PERMANENT &&
 				    !NEVER_NEGOTIATE(c->policy)) {
-					rekey_connection_now(c, whackfd, &sa_type);
+					rekey_connection_now(c, whackfd, &how);
 				}
 				c = c->ac_next;
 			}
 		} else {
 			int count = foreach_connection_by_alias(str, whackfd,
 								rekey_connection_now,
-								&sa_type);
+								&how);
 			if (count == 0) {
-				loglog(RC_UNKNOWN_NAME, "no such connection or aliased connection named \"%s\"", str);
+				log_global(RC_UNKNOWN_NAME, whackfd,
+					   "no such connection or aliased connection named \"%s\"", str);
 			} else {
-				loglog(RC_COMMENT, "terminated %d connections from aliased connection \"%s\"",
-					count, str);
+				log_global(RC_COMMENT, whackfd,
+					   "terminated %d connections from aliased connection \"%s\"",
+					   count, str);
 			}
 		}
 	} else {
@@ -118,11 +123,15 @@ void rekey_now(const char *str, enum sa_type sa_type)
 		struct state *st = state_by_serialno(num);
 		struct connection *c = st->st_connection;
 		if (IS_IKE_SA(st)) {
-			libreswan_log("rekeying IKE SA state #%d of connection %s", num, c->name);
-			rekey_by_state(st);
+			connection_buf cb;
+			log_global(RC_LOG, whackfd, "rekeying IKE SA state #%d of connection "PRI_CONNECTION"",
+				   num, pri_connection(c, &cb));
+			rekey_state(st, whackfd, background);
 		} else {
-			libreswan_log("rekeying IPsec SA state #%d of connection %s", num, c->name);
-			rekey_by_state(st);
+			connection_buf cb;
+			log_global(RC_LOG, whackfd, "rekeying IPsec SA state #%d of connection "PRI_CONNECTION"",
+				   num, pri_connection(c, &cb));
+			rekey_state(st, whackfd, background);
 		}
 	}
 }
