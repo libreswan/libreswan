@@ -212,6 +212,8 @@ static void test(void)
 #endif
 #ifdef USE_3DES
 # ifdef USE_DH2
+	esp(true, "3des-sha1;modp1024");
+# else
 	esp(false, "3des-sha1;modp1024");
 # endif
 # ifdef USE_SHA1
