@@ -3153,18 +3153,6 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		nat_traversal_change_port_lookup(md, &ike->sa);
 	}
 
-	/*
-	 * clear the retransmits for the old message
-	 *
-	 * XXX: Because the IKE_AUTH initiator switches states from
-	 * IKE->CHILD part way through this code ends up clearing the
-	 * child's retransmits when what is needed is the IKE.
-	 */
-	if (v2_msg_role(md) == MESSAGE_RESPONSE) {
-		dbg("success_v2_state_transition clearing retransmits as response received");
-		clear_retransmits(st);
-	}
-
 	/* if requested, send the new reply packet */
 	if (transition->send == MESSAGE_REQUEST ||
 	    transition->send == MESSAGE_RESPONSE) {
@@ -3176,14 +3164,6 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		    str_endpoint(&st->st_remote_endpoint, &b),
 		    str_endpoint(&st->st_interface->local_endpoint, &b2));
 		send_recorded_v2_ike_msg(&ike->sa, finite_states[from_state]->name);
-	}
-
-	/* retransmit new message */
-	if (transition->send == MESSAGE_REQUEST) {
-		deltatime_buf ib;
-		dbg("success_v2_state_transition scheduling EVENT_RETRANSMIT of c->r_interval=%ss",
-		    str_deltatime(c->r_interval, &ib));
-		start_retransmits(st);
 	}
 
 	if (w == RC_SUCCESS) {

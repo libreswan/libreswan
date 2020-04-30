@@ -465,6 +465,21 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 			}
 			/* this is what matters */
 			pexpect(receiver->st_v2_msgid_wip.initiator != msgid);
+			/*
+			 * clear the retransmits for the old message
+			 *
+			 * XXX: Because the IKE_AUTH initiator
+			 * switches states from IKE->CHILD part way
+			 * through, this code can end up clearing the
+			 * child's retransmits when what is needed is
+			 * to clear the IKE SA's retransmits.
+			 */
+			if (receiver->st_retransmit_event != NULL) {
+				dbg_v2_msgid(ike, receiver, "clearing EVENT_RETRANSMIT as response received");
+				clear_retransmits(receiver);
+			} else {
+				dbg_v2_msgid(ike, receiver, "XXX: no EVENT_RETRANSMIT to clear; suspect IKE->CHILD switch");
+			}
 		} else {
 			/*
 			 * For instance, the IKE_AUTH response is
@@ -532,6 +547,12 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 				     old_sender.initiator);
 		}
 #endif
+		if (sender->st_retransmit_event == NULL) {
+			dbg_v2_msgid(ike, sender, "scheduling EVENT_RETRANSMIT");
+			start_retransmits(sender);
+		} else {
+			dbg_v2_msgid(ike, sender, "XXX: EVENT_RETRANSMIT already scheduled -- suspect record'n'send");
+		}
 		break;
 	case MESSAGE_RESPONSE:
 		update_sent_story = "updating responder sent";
