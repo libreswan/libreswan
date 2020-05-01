@@ -5526,7 +5526,7 @@ static bool add_mobike_payloads(struct state *st, pb_stream *pbs)
 void ikev2_rekey_ike_start(struct ike_sa *ike)
 {
 	struct pending p = {
-		.whack_sock = null_fd,/*on-stack*/
+		.whack_sock = ike->sa.st_whack_sock,/*on-stack*/
 		.ike = ike,
 		.connection = ike->sa.st_connection,
 		.policy = LEMPTY,
