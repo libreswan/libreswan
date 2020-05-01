@@ -1017,6 +1017,8 @@ kvmplutotest    fips-12-ikev2-esp-dh-wrong              good
 kvmplutotest    fips-13-ikev2-x509-key2032		good
 kvmplutotest    fips-14-ikev2-x509-ecdsa		good
 kvmplutotest    fips-15-ikev2-x509-key2048		good
+# BSI seed tests
+kvmplutotest    basic-pluto-19-seedbits			good
 
 #################################################################
 # passthrough tests
