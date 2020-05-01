@@ -145,7 +145,7 @@ static PK11SymKey *ike_sa_keymat(const struct prf_desc *prf_desc,
 	append_chunk_hunk("seed_data = Nir || SPIi", &seed_data, SPIi);
 	append_chunk_hunk("seed_data = Nir || SPIir", &seed_data, SPIr);
 	prf_plus = prfplus_key_data("keymat", prf_desc, skeyseed, NULL, seed_data, required_bytes);
-	freeanychunk(seed_data);
+	free_chunk_content(&seed_data);
 	return prf_plus;
 }
 
@@ -163,7 +163,7 @@ static PK11SymKey *child_sa_keymat(const struct prf_desc *prf_desc,
 
 	seed_data = clone_chunk_chunk(Ni, Nr, "seed_data = Ni || Nr");
 	prf_plus = prfplus_key_data("keymat", prf_desc, SK_d, new_dh_secret, seed_data, required_bytes);
-	freeanychunk(seed_data);
+	free_chunk_content(&seed_data);
 	return prf_plus;
 }
 
@@ -180,11 +180,11 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
 		if (pss_key == NULL) {
 			if (libreswan_fipsmode()) {
 				PASSERT_FAIL("FIPS: failure creating %s PRF context for digesting PSK",
-					     prf_desc->common.name);
+					     prf_desc->common.fqn);
 			}
 			loglog(RC_LOG_SERIOUS,
 			       "failure creating %s PRF context for digesting PSK",
-			       prf_desc->common.name);
+			       prf_desc->common.fqn);
 			return empty_mac;
 		}
 
