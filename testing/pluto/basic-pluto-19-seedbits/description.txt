@@ -1,0 +1,5 @@
+This tests the seedbits= option which causes libreswan to read some
+entropy from /dev/random (blocking) to seed the NSS library. T
+creating a newhostkey appends and not overwrites the secrets file.
+
+This is a BSI requirement
