@@ -92,8 +92,8 @@ static void schedule_liveness(struct child_sa *child, deltatime_t time_since_las
 
 static const struct state_v2_microcode v2_liveness_probe_i = {
 	.story = "liveness probe",
-	.state = STATE_V2_IPSEC_I,
-	.next_state = STATE_V2_IPSEC_I,
+	.state = STATE_PARENT_I3,
+	.next_state = STATE_PARENT_I3,
 	.send = MESSAGE_REQUEST,
 	.processor = v2_send_liveness_request,
 	.timeout_event =  EVENT_RETAIN,
@@ -101,8 +101,8 @@ static const struct state_v2_microcode v2_liveness_probe_i = {
 
 static const struct state_v2_microcode v2_liveness_probe_r = {
 	.story = "liveness probe",
-	.state = STATE_V2_IPSEC_R,
-	.next_state = STATE_V2_IPSEC_R,
+	.state = STATE_PARENT_R2,
+	.next_state = STATE_PARENT_R2,
 	.send = MESSAGE_REQUEST,
 	.processor = v2_send_liveness_request,
 	.timeout_event =  EVENT_RETAIN,
@@ -217,21 +217,22 @@ void liveness_check(struct state *st)
 	}
 
 	endpoint_buf remote_buf;
+	struct state *handler = &ike->sa;
 	dbg("liveness: #%lu queueing liveness probe for %s using #%lu",
 	    child->sa.st_serialno,
 	    str_endpoint(&child->sa.st_remote_endpoint, &remote_buf),
-	    ike->sa.st_serialno);
+	    handler->st_serialno);
 	const struct state_v2_microcode *transition =
-		child->sa.st_state->kind == v2_liveness_probe_i.state ? &v2_liveness_probe_i :
-		child->sa.st_state->kind == v2_liveness_probe_r.state ? &v2_liveness_probe_r :
+		handler->st_state->kind == v2_liveness_probe_i.state ? &v2_liveness_probe_i :
+		handler->st_state->kind == v2_liveness_probe_r.state ? &v2_liveness_probe_r :
 		NULL;
 	if (transition == NULL) {
 		dbg("liveness: #%lu unexpectedly in state %s; should be %s or %s",
-		    child->sa.st_serialno, child->sa.st_state->short_name,
+		    handler->st_serialno, handler->st_state->short_name,
 		    finite_states[v2_liveness_probe_i.state]->short_name,
 		    finite_states[v2_liveness_probe_r.state]->short_name);
 	} else {
-		v2_msgid_queue_initiator(ike, &child->sa, ISAKMP_v2_INFORMATIONAL,
+		v2_msgid_queue_initiator(ike, handler, ISAKMP_v2_INFORMATIONAL,
 					 transition, NULL);
 	}
 
