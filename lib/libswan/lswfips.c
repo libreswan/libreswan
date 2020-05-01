@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012,2020 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -22,38 +22,19 @@
 #include <errno.h>
 
 #include "lswlog.h"
+#include "lswnss.h"
 #include "lswfips.h"
 
 #define LSW_FIPS_DEFAULT LSW_FIPS_UNSET
 
 /*
  * Is the machine running in FIPS kernel mode (fips=1 kernel argument)
+ * We no longer check this ourselves, but depend solely on NSS, as
+ * the mechanisms are expected to change in the future.
  */
-static enum lsw_fips_mode lsw_fipskernel(void)
+static enum lsw_fips_mode lsw_fips_system(void)
 {
-	char fips_flag[1];
-	int n;
-	FILE *fd = fopen("/proc/sys/crypto/fips_enabled", "r");
-
-	if (fd == NULL) {
-		DBG(DBG_CONTROL,
-			DBG_log("FIPS: could not open /proc/sys/crypto/fips_enabled");
-			);
-		return LSW_FIPS_OFF;
-	}
-
-	n = fread((void *)fips_flag, 1, 1, fd);
-	fclose(fd);
-	if (n != 1) {
-		loglog(RC_LOG_SERIOUS,
-			"FIPS: could not read 1 byte from /proc/sys/crypto/fips_enabled");
-		return LSW_FIPS_UNKNOWN;
-	}
-
-	if (fips_flag[0] == '1')
-		return LSW_FIPS_ON;
-
-	return LSW_FIPS_OFF;
+	return PK11_IsFIPS() ? LSW_FIPS_ON : LSW_FIPS_OFF;
 }
 
 /*
@@ -90,7 +71,7 @@ enum lsw_fips_mode lsw_get_fips_mode(void)
 	/*
 	 * Fips mode as set by the below.
 	 *
-	 * Otherwise determine value using fipsproduct and fipskernel.
+	 * Otherwise determine value using fipsproduct and fips_system.
 	 * The problem here is that confread.c calls this (from
 	 * addconn) without first calling set_fipsmode.
 	 */
@@ -101,25 +82,25 @@ enum lsw_fips_mode lsw_get_fips_mode(void)
 #ifdef FIPS_CHECK
 	enum lsw_fips_mode product = lsw_fipsproduct();
 #endif
-	enum lsw_fips_mode kernel = lsw_fipskernel();
+	enum lsw_fips_mode system = lsw_fips_system();
 
-	fips_mode = kernel;
+	fips_mode = system;
 
 #ifdef FIPS_CHECK
 	if (product == LSW_FIPS_UNKNOWN)
 		fips_mode = LSW_FIPS_UNKNOWN;
-	if (product == LSW_FIPS_OFF && kernel== LSW_FIPS_ON)
+	if (product == LSW_FIPS_OFF && system == LSW_FIPS_ON)
 		fips_mode = LSW_FIPS_OFF;
 
 	libreswan_log("FIPS Product: %s", product == LSW_FIPS_UNKNOWN ? "UNKNOWN" : product == LSW_FIPS_ON ? "YES" : "NO");
-	libreswan_log("FIPS Kernel: %s",  kernel == LSW_FIPS_UNKNOWN ? "UNKNOWN" :  kernel == LSW_FIPS_ON ? "YES" : "NO");
+	libreswan_log("FIPS System: %s",  system == LSW_FIPS_UNKNOWN ? "UNKNOWN" :  system == LSW_FIPS_ON ? "YES" : "NO");
 #endif
 	libreswan_log("FIPS Mode: %s", fips_mode == LSW_FIPS_ON ? "YES" : fips_mode == LSW_FIPS_OFF ? "NO" : "UNKNOWN");
 	return fips_mode;
 }
 
 /*
- * Is the machine running in FIPS mode (fips product AND fips kernel mode)
+ * Is the machine running in FIPS mode (fips product AND fips system (kernel) mode)
  * Only pluto needs to know UNKNOWN, so it can abort. Every other caller can
  * just check for fips mode using: if (libreswan_fipsmode())
  */
