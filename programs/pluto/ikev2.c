@@ -2283,9 +2283,9 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				return;
 			}
 			/*
-			 * The message decrypted and the integrity
+			 * The message is protected - the integrity
 			 * check passed - so it was definitly sent by
-			 * the remote IKE SA.
+			 * the other end of the secured IKE SA.
 			 *
 			 * However, for an AUTH packet, the other end
 			 * hasn't yet been authenticated (and an
@@ -2308,7 +2308,10 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * causes a delete, it says nothing for
 			 * exchanges that follow.
 			 *
-			 * For moment treat it the same.
+			 * For moment treat it the same.  Given the
+			 * PAYLOAD ID that should identify the problem
+			 * isn't being returned this is the least of
+			 * our problems.
 			 */
 			struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
 			md->encrypted_payloads = ikev2_decode_payloads(st->st_logger, md, &sk->pbs,
@@ -2318,44 +2321,23 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				case MESSAGE_REQUEST:
 				{
 					/*
-					 * XXX: Hack to get the
-					 * transition that would have
-					 * been run so it can be
-					 * 'failed'.
-					 *
-					 * It is the second state
-					 * because the first is the
-					 * NOSKEYSEED transition.
-					 * Once SKEYSEED is off-loaded
-					 * and STATE_PARENT_I1 has
-					 * only one transition, this
-					 * is no longer a hack.
-					 */
-					const struct finite_state *state = finite_states[STATE_PARENT_R1];
-					pexpect(state->nr_transitions == 2);
-					const struct state_v2_microcode *transition = &state->v2_transitions[1];
-					pexpect(transition->state == STATE_PARENT_R1 &&
-						transition->next_state == STATE_V2_IPSEC_R);
-					/*
 					 * Send back a protected error
 					 * response.  Need to first
 					 * put the IKE SA into
 					 * responder mode.
 					 */
-					pexpect(ike->sa.st_v2_transition == NULL);
-					ike->sa.st_v2_transition = transition;
 					v2_msgid_start_responder(ike, &ike->sa, md);
 					chunk_t data = chunk2(md->encrypted_payloads.data,
 							      md->encrypted_payloads.data_size);
-					record_v2N_response(ike->sa.st_logger, ike, md,
-							    md->encrypted_payloads.n, &data,
-							    ENCRYPTED_PAYLOAD);
+					send_v2N_response_from_state(ike, md,
+								     md->encrypted_payloads.n,
+								     &data);
 					break;
 				}
 				case MESSAGE_RESPONSE:
 					/*
 					 * Can't respond so kill the
-					 * IKE SA - the secured
+					 * IKE SA.  The secured
 					 * message contained crap so
 					 * there's little that can be
 					 * done.
@@ -2364,8 +2346,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				default:
 					bad_case(v2_msg_role(md));
 				}
-				/* XXX: calls delete_state() */
-				complete_v2_state_transition(&ike->sa, md, STF_FATAL);
+				complete_v2_state_transition(st, md, STF_FATAL);
 				return;
 			}
 		} /* else { go ahead } */
@@ -2444,51 +2425,13 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 */
 			log_v2_payload_errors(st->st_logger, md,
 					      &encrypted_payload_status);
-			switch (v2_msg_role(md)) {
-			case MESSAGE_REQUEST:
-			{
-				/*
-				 * XXX: Hack to get the transition
-				 * that would have been run so it can
-				 * be 'failed'.
-				 *
-				 * It is the second state because the
-				 * first is the NOSKEYSEED transition.
-				 * Once SKEYSEED is off-loaded and
-				 * STATE_PARENT_I1 has only one
-				 * transition, this is no longer a
-				 * hack.
-				 */
-				const struct finite_state *state = finite_states[STATE_PARENT_R1];
-				pexpect(state->nr_transitions == 2);
-				const struct state_v2_microcode *transition = &state->v2_transitions[1];
-				pexpect(transition->state == STATE_PARENT_R1 &&
-					transition->next_state == STATE_V2_IPSEC_R);
-				/*
-				 * Send back a protected error
-				 * response.  Need to first put the
-				 * IKE SA into responder mode.
-				 */
-				pexpect(ike->sa.st_v2_transition == NULL);
-				ike->sa.st_v2_transition = transition;
+			if (v2_msg_role(md) == MESSAGE_REQUEST) {
+				pexpect(ike->sa.st_v2_msgid_wip.responder == -1);
 				v2_msgid_start_responder(ike, &ike->sa, md);
-				record_v2N_response(ike->sa.st_logger, ike, md,
-						    v2N_INVALID_SYNTAX, NULL,
-						    ENCRYPTED_PAYLOAD);
-				break;
-			}
-			case MESSAGE_RESPONSE:
-				/*
-				 * Can't respond so kill the IKE SA -
-				 * the secured message contained crap
-				 * so there's little that can be done.
-				 */
-				break;
-			default:
-				bad_case(v2_msg_role(md));
+				send_v2N_response_from_state(ike, md, v2N_INVALID_SYNTAX, NULL);
 			}
 			/* XXX: calls delete_state() */
-			complete_v2_state_transition(&ike->sa, md, STF_FATAL);
+			complete_v2_state_transition(st, md, STF_FATAL);
 			return;
 		}
 		/*
