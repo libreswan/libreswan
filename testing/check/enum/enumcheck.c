@@ -11,6 +11,8 @@
 
 #define PREFIX "         "
 
+unsigned errors;
+
 enum enum_name_expectation {
 	OPTIONAL,
 	PRESENT,
@@ -59,10 +61,12 @@ static void test_enum(enum_names *enum_test, int i,
 		jambuf_t buf = ARRAY_AS_JAMBUF(scratch);
 		jam_enum(&buf, enum_test, i);
 		shunk_t s = jambuf_as_shunk(&buf);
+		printf(""PRI_SHUNK" ", pri_shunk(s));
 		if (hunk_streq(s, name)) {
 			printf("OK\n");
 		} else {
 			printf("ERROR\n");
+			errors++;
 		}
 	}
 
@@ -71,6 +75,7 @@ static void test_enum(enum_names *enum_test, int i,
 		int e = enum_search(enum_test, name);
 		if (e != i) {
 			printf("%d ERROR\n", e);
+			errors++;
 		} else {
 			printf("OK\n");
 		}
@@ -81,6 +86,7 @@ static void test_enum(enum_names *enum_test, int i,
 		int e = enum_match(enum_test, shunk1(name));
 		if (e != i) {
 			printf("%d ERROR\n", e);
+			errors++;
 		} else {
 			printf("OK\n");
 		}
@@ -97,6 +103,7 @@ static void test_enum(enum_names *enum_test, int i,
 		pfree(clone);
 		if (e != i) {
 			printf("%d ERROR\n", e);
+			errors++;
 		} else {
 			printf("OK\n");
 		}
@@ -104,11 +111,13 @@ static void test_enum(enum_names *enum_test, int i,
 
 	printf(PREFIX "short_name %d: ", i);
 	const char *short_name = enum_short_name(enum_test, i);
+	printf("%s ", short_name);
 	if (short_name == NULL) {
 		printf("ERROR\n");
+		errors++;
 		return;
 	} else {
-		printf(" OK\n");
+		printf("OK\n");
 	}
 
 	{
@@ -116,10 +125,12 @@ static void test_enum(enum_names *enum_test, int i,
 		jambuf_t buf = ARRAY_AS_JAMBUF(scratch);
 		jam_enum_short(&buf, enum_test, i);
 		shunk_t s = jambuf_as_shunk(&buf);
+		printf(""PRI_SHUNK" ", pri_shunk(s));
 		if (hunk_streq(s, short_name)) {
 			printf("OK\n");
 		} else {
 			printf("ERROR\n");
+			errors++;
 		}
 	}
 
@@ -133,6 +144,7 @@ static void test_enum(enum_names *enum_test, int i,
 		int e = enum_match(enum_test, shunk1(short_name));
 		if (e != i) {
 			printf("%d ERROR\n", e);
+			errors++;
 		} else {
 			printf("OK\n");
 		}
@@ -146,6 +158,7 @@ static void test_enum(enum_names *enum_test, int i,
 		pfree(trunc_short_name);
 		if (e != i) {
 			printf("%d ERROR\n", e);
+			errors++;
 		} else {
 			printf("OK\n");
 		}
@@ -197,15 +210,18 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 			printf("OK\n");
 		} else {
 			printf("ERROR\n");
+			errors++;
 		}
 	}
 
 	printf(PREFIX "enum_enum_name %lu %lu: ", table, val);
 	const char *name = enum_enum_name(een, table, val);
+	printf("%s ", name == NULL ? "NULL" : name);
 	if ((val_ok) == (name != NULL)) {
 		printf("OK\n");
 	} else {
 		printf("ERROR\n");
+		errors++;
 	}
 
 	printf(PREFIX "enum_name table %lu: ", val);
@@ -215,6 +231,7 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 		printf("OK\n");
 	} else {
 		printf("ERROR\n");
+		errors++;
 	}
 
 	{
@@ -222,6 +239,7 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 		jambuf_t buf = ARRAY_AS_JAMBUF(scratch);
 		jam_enum_enum(&buf, een, table, val);
 		shunk_t s = jambuf_as_shunk(&buf);
+		printf(""PRI_SHUNK" ", pri_shunk(s));
 		/* ??? clang says that name might be NULL */
 		if (val_ok && name == NULL) {
 			printf("name == NULL\n");
@@ -231,6 +249,7 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 			printf("OK\n");
 		} else {
 			printf("ERROR [empty]\n");
+			errors++;
 		}
 	}
 
@@ -239,12 +258,14 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 		jambuf_t buf = ARRAY_AS_JAMBUF(scratch);
 		jam_enum_enum_short(&buf, een, table, val);
 		shunk_t s = jambuf_as_shunk(&buf);
+		printf(""PRI_SHUNK" ", pri_shunk(s));
 		if (val_ok && hunk_streq(s, enum_short_name(en, val))) {
 			printf("OK\n");
 		} else if (s.len > 0) {
 			printf("OK\n");
 		} else {
 			printf("ERROR [empty]\n");
+			errors++;
 		}
 	}
 }
@@ -344,5 +365,5 @@ int main(int argc UNUSED, char *argv[])
 	printf("\n");
 
 	report_leaks();
-	exit(0);
+	exit(errors > 0 ? 1 : 0);
 }
