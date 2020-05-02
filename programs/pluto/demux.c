@@ -570,8 +570,8 @@ char *cisco_stringify(pb_stream *input_pbs, const char *attr_name)
 void lswlog_msg_digest(struct lswlog *buf, const struct msg_digest *md)
 {
 	enum ike_version ike_version = hdr_ike_version(&md->hdr);
-	lswlog_enum_enum_short(buf, &exchange_type_names, ike_version,
-			       md->hdr.isa_xchg);
+	jam_enum_enum_short(buf, &exchange_type_names, ike_version,
+			    md->hdr.isa_xchg);
 	if (ike_version == IKEv2) {
 		switch (v2_msg_role(md)) {
 		case MESSAGE_REQUEST: lswlogs(buf, " request"); break;
@@ -596,9 +596,9 @@ void lswlog_msg_digest(struct lswlog *buf, const struct msg_digest *md)
 		} else {
 			sep = ",";
 		}
-		lswlog_enum_enum_short(buf, &payload_type_names,
-				       ike_version,
-				       pd->payload_type);
+		jam_enum_enum_short(buf, &payload_type_names,
+				    ike_version,
+				    pd->payload_type);
 	}
-	lswlogs(buf, term);
+	jam_string(buf, term);
 }

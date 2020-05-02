@@ -154,10 +154,10 @@ static void confwrite_int(FILE *out,
 
 				if (val != 0) {
 					LSWLOG_FILE(out, buf) {
-						lswlogf(buf, "\t%s%s=\"", side, k->keyname);
-						lswlog_enum_lset_short(buf, k->info->names,
-								       ",", val);
-						lswlogf(buf, "\"");
+						jam(buf, "\t%s%s=\"", side, k->keyname);
+						jam_enum_lset_short(buf, k->info->names,
+								    ",", val);
+						jam(buf, "\"");
 					}
 				}
 			}

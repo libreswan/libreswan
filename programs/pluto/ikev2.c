@@ -1492,7 +1492,7 @@ void ikev2_process_packet(struct msg_digest *md)
 			bad_case(expected_local_ike_role);
 		}
 		jam(buf, " receiving an IKEv2 ");
-		lswlog_enum_short(buf, &ikev2_exchange_names, ix);
+		jam_enum_short(buf, &ikev2_exchange_names, ix);
 		switch (v2_msg_role(md)) {
 		case MESSAGE_RESPONSE:
 			jam(buf, " response ");

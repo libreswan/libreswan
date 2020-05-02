@@ -193,7 +193,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 				jam_string(&buf, (c->policy & POLICY_PSK) ? "PRESHARED_KEY" :
 					(c->policy & POLICY_RSASIG) ? "RSA_SIG" : "unknown");
 			else
-				lswlog_enum_short(&buf, &oakley_auth_names, st->st_oakley.auth);
+				jam_enum_short(&buf, &oakley_auth_names, st->st_oakley.auth);
 		}
 
 		jam(&buf, " cipher=%s ksize=%d",

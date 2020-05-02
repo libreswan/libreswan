@@ -618,9 +618,9 @@ void lswlog_ike_sa_established(struct lswlog *buf, struct state *st)
 
 	lswlogs(buf, " {auth=");
 	if (st->st_ike_version == IKEv2) {
-		lswlogs(buf, "IKEv2");
+		jam(buf, "IKEv2");
 	} else {
-		lswlog_enum_short(buf, &oakley_auth_names, st->st_oakley.auth);
+		jam_enum_short(buf, &oakley_auth_names, st->st_oakley.auth);
 	}
 
 	lswlogf(buf, " cipher=%s", st->st_oakley.ta_encrypt->common.fqn);

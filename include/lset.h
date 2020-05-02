@@ -62,10 +62,8 @@ extern const char *bitnamesof(const char *const table[], lset_t val);	/* NOT RE-
 extern const char *bitnamesofb(const char *const table[],
 			       lset_t val,
 			       char *buf, size_t blen);
-/* old */
-size_t lswlog_enum_lset_short(struct lswlog *, const struct enum_names *sd,
+
+size_t jam_enum_lset_short(struct lswlog *, const struct enum_names *sd,
 			      const char *separator, lset_t val);
-/* new */
-#define jam_enum_lset_short lswlog_enum_lset_short
 
 #endif /* CONSTANTS_H */

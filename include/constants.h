@@ -202,10 +202,10 @@ extern char *add_str(char *buf, size_t size, char *hint, const char *src);
  * enum_showb() is like enum_show() but uses a caller-supplied buffer
  *    for any unnamed value and thus is re-entrant.
  *
- * lswlog_enum() appends the name of an enum value; if unnamed, append
- * a mashup of the standard prefix and the numeric value.
+ * jam_enum() appends the name of an enum value; if unnamed, append a
+ * mashup of the standard prefix and the numeric value.
  *
- * lswlog_enum_short() appends the name of an enum value with any
+ * jam_enum_short() appends the name of an enum value with any
  * standard prefix removed; if unnamed, append a mashup of the
  * standard prefix and the numeric value.
  */
@@ -216,11 +216,8 @@ extern const char *enum_name(enum_names *ed, unsigned long val);
 extern const char *enum_short_name(enum_names *ed, unsigned long val);
 
 /* old names */
-size_t lswlog_enum(struct lswlog *, enum_names *en, unsigned long val);
-size_t lswlog_enum_short(struct lswlog *, enum_names *en, unsigned long val);
-/* new names */
-#define jam_enum lswlog_enum
-#define jam_enum_short lswlog_enum
+size_t jam_enum(struct lswlog *, enum_names *en, unsigned long val);
+size_t jam_enum_short(struct lswlog *, enum_names *en, unsigned long val);
 
 /* caller-allocated buffer for enum_showb */
 struct esb_buf {
@@ -274,10 +271,10 @@ extern int enum_match(enum_names *ed, shunk_t string);
  * enum_enum_name() returns TABLE VAL's enum, or NULL.
  * enum_enum_showb() returns TABLE VAL's enum or %ld using BUF.
  *
- * lswlog_enum_enum() appends TABLE VAL's enum name; if unnamed,
- * append a mashup of the standard prefix and the numeric value.
+ * jam_enum_enum() appends TABLE VAL's enum name; if unnamed, append a
+ * mashup of the standard prefix and the numeric value.
  *
- * lswlog_enum_enum_short() appends TABLE VAL's enum name with any
+ * jam_enum_enum_short() appends TABLE VAL's enum name with any
  * standard prefix removed; if unnamed, append a mashup of the
  * standard prefix and the numeric value.
  */
@@ -290,14 +287,10 @@ const char *enum_enum_name(enum_enum_names *e, unsigned long table,
 const char *enum_enum_showb(enum_enum_names *e, unsigned long table,
 			    unsigned long val, struct esb_buf *buf);
 
-/* old */
-size_t lswlog_enum_enum(struct lswlog *log, enum_enum_names *een,
-			unsigned long table, unsigned long val);
-size_t lswlog_enum_enum_short(struct lswlog *log, enum_enum_names *een,
-			      unsigned long table, unsigned long val);
-/* new */
-#define jam_enum_enum lswlog_enum_enum
-#define jam_enum_enum_short lswlog_enum_enum_short
+size_t jam_enum_enum(struct lswlog *log, enum_enum_names *een,
+		     unsigned long table, unsigned long val);
+size_t jam_enum_enum_short(struct lswlog *log, enum_enum_names *een,
+			   unsigned long table, unsigned long val);
 
 /*
  * The sparser_name should be transformed into keyword_enum_value

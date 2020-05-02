@@ -2311,15 +2311,15 @@ int main(int argc, char **argv)
 				     e != -1; e = next_enum(&debug_names, e)) {
 					LSWLOG_FILE(stdout, buf) {
 						if (LELEM(e) & DBG_ALL) {
-							lswlogs(buf, " *");
+							jam(buf, " *");
 						} else {
-							lswlogs(buf, "  ");
+							jam(buf, "  ");
 						}
-						lswlog_enum_short(buf, &debug_names, e);
+						jam_enum_short(buf, &debug_names, e);
 						const char *help = enum_name(&debug_help, e);
 						if (help != NULL) {
-							lswlogs(buf, ": ");
-							lswlogs(buf, help);
+							jam(buf, ": ");
+							jam_string(buf, help);
 						}
 					}
 				}

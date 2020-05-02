@@ -10,7 +10,8 @@
 # $ ./OBJ.linux.x86_64/testing/enumcheck/enumcheck > testing/enumcheck/OUTPUT.enumcheck.txt
 # $ git diff
 
-ipsec enumcheck | cmp ../../check/enum/OUTPUT.enumcheck.txt - || echo "Does the file OUTPUT.enumcheck.txt need updating?"
+ipsec enumcheck > OUTPUT/enumcheck.out || echo "Enum check barfed"
+cmp ../../check/enum/OUTPUT.enumcheck.txt OUTPUT/enumcheck.out || echo "Does the file OUTPUT.enumcheck.txt need updating?"
 
 # other checks
 

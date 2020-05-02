@@ -2234,30 +2234,30 @@ const char *enum_short_name(enum_names *ed, unsigned long val)
 		strip_prefix(p, ed->en_prefix);
 }
 
-size_t lswlog_enum(struct lswlog *buf, enum_names *en, unsigned long val)
+size_t jam_enum(jambuf_t *buf, enum_names *en, unsigned long val)
 {
 	const char *name = enum_name(en, val);
 	if (name == NULL) {
 		if (en->en_prefix != NULL) {
-			lswlogs(buf, en->en_prefix);
-			lswlogs(buf, "_");
+			jam_string(buf, en->en_prefix);
+			jam_string(buf, "_");
 		}
-		return lswlogf(buf, "%lu??", val);
+		return jam(buf, "%lu??", val);
 	}
-	return lswlogs(buf, name);
+	return jam_string(buf, name);
 }
 
-size_t lswlog_enum_short(struct lswlog *buf, enum_names *en, unsigned long val)
+size_t jam_enum_short(jambuf_t *buf, enum_names *en, unsigned long val)
 {
 	const char *name = enum_short_name(en, val);
 	if (name == NULL) {
 		if (en->en_prefix != NULL) {
-			lswlogs(buf, en->en_prefix);
-			lswlogs(buf, "_");
+			jam_string(buf, en->en_prefix);
+			jam_string(buf, "_");
 		}
-		return lswlogf(buf, "%lu??", val);
+		return jam(buf, "%lu??", val);
 	}
-	return lswlogs(buf, name);
+	return jam_string(buf, name);
 }
 
 /*
@@ -2412,26 +2412,26 @@ const char *enum_enum_showb(enum_enum_names *een, unsigned long table,
 	return b->buf;
 }
 
-size_t lswlog_enum_enum(struct lswlog *buf, enum_enum_names *een,
-			unsigned long table, unsigned long val)
+size_t jam_enum_enum(struct lswlog *buf, enum_enum_names *een,
+		     unsigned long table, unsigned long val)
 {
 	enum_names *en = enum_enum_table(een, table);
 	if (en == NULL) {
 		/* XXX: dump something more meaningful */
-		return lswlogf(buf, "%lu??%lu??", table, val);
+		return jam(buf, "%lu??%lu??", table, val);
 	}
-	return lswlog_enum(buf, en, val);
+	return jam_enum(buf, en, val);
 }
 
-size_t lswlog_enum_enum_short(struct lswlog *buf, enum_enum_names *een,
-			      unsigned long table, unsigned long val)
+size_t jam_enum_enum_short(struct lswlog *buf, enum_enum_names *een,
+			   unsigned long table, unsigned long val)
 {
 	enum_names *en = enum_enum_table(een, table);
 	if (en == NULL) {
 		/* XXX: dump something more meaningful */
-		return lswlogf(buf, "%lu??%lu??", table, val);
+		return jam(buf, "%lu??%lu??", table, val);
 	}
-	return lswlog_enum_short(buf, en, val);
+	return jam_enum_short(buf, en, val);
 }
 
 const char sparse_end[] = "end of sparse names";

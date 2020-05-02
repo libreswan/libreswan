@@ -783,7 +783,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 
 	LSWLOG_RC(RC_LOG_SERIOUS, buf) {
 		jam(buf, "certificate subjectAltName extension does not match ");
-		lswlog_enum(buf, &ike_idtype_names, id->kind);
+		jam_enum(buf, &ike_idtype_names, id->kind);
 		jam(buf, " '");
 		jam_sanitized_bytes(buf, raw_id, strlen(raw_id));
 		jam(buf, "'");

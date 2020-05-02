@@ -286,11 +286,11 @@ void lswlog_finite_state(struct lswlog *buf, const struct finite_state *fs)
 	if (fs == NULL) {
 		lswlogs(buf, "NULL-FINITE_STATE");
 	} else {
-		lswlogf(buf, "%s:", fs->short_name);
-		lswlogf(buf, " category: ");
-		lswlog_enum_short(buf, &state_category_names, fs->category);
+		jam(buf, "%s:", fs->short_name);
+		jam(buf, " category: ");
+		jam_enum_short(buf, &state_category_names, fs->category);
 		/* no enum_name available? */
-		lswlogf(buf, "; flags: "PRI_LSET, fs->flags);
+		jam(buf, "; flags: "PRI_LSET, fs->flags);
 	}
 }
 
