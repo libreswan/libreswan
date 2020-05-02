@@ -52,12 +52,12 @@ west #
 west #
  ipsec auto --up westnet-eastnet-ikev2b
 1v2 "westnet-eastnet-ikev2b" #3: STATE_V2_NEW_CHILD_I1: sent IPsec Child req wait response
-003 "westnet-eastnet-ikev2b" #3: dropping unexpected ISAKMP_v2_CREATE_CHILD_SA message containing v2N_TS_UNACCEPTABLE notification; message payloads: SK; encrypted payloads: N; missing payloads: SA,Ni,TSi,TSr
+003 "westnet-eastnet-ikev2b" #3: dropping unexpected CREATE_CHILD_SA message containing TS_UNACCEPTABLE notification; message payloads: SK; encrypted payloads: N; missing payloads: SA,Ni,TSi,TSr
 036 "westnet-eastnet-ikev2b" #3: encountered fatal error in state STATE_V2_NEW_CHILD_I1
 west #
  ipsec auto --up westnet-eastnet-ikev2c
 1v2 "westnet-eastnet-ikev2c" #4: STATE_V2_NEW_CHILD_I1: sent IPsec Child req wait response
-003 "westnet-eastnet-ikev2c" #4: dropping unexpected ISAKMP_v2_CREATE_CHILD_SA message containing v2N_TS_UNACCEPTABLE notification; message payloads: SK; encrypted payloads: N; missing payloads: SA,Ni,TSi,TSr
+003 "westnet-eastnet-ikev2c" #4: dropping unexpected CREATE_CHILD_SA message containing TS_UNACCEPTABLE notification; message payloads: SK; encrypted payloads: N; missing payloads: SA,Ni,TSi,TSr
 036 "westnet-eastnet-ikev2c" #4: encountered fatal error in state STATE_V2_NEW_CHILD_I1
 west #
  #
