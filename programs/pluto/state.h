@@ -163,8 +163,8 @@ struct ipsec_proto_info {
 	uint64_t add_time;
 };
 
-struct ike_frag {
-	struct ike_frag *next;
+struct v1_ike_rfrag {
+	struct v1_ike_rfrag *next;
 	struct msg_digest *md;
 	int index;
 	int last;
@@ -363,7 +363,7 @@ struct state {
 #define st_whack_sock st_logger->object_whackfd
 
 	/* collected received fragments */
-	struct ike_frag *st_v1_rfrags;
+	struct v1_ike_rfrag *st_v1_rfrags;
 	struct v2_ike_rfrags *st_v2_rfrags;
 
 	struct trans_attrs st_oakley;

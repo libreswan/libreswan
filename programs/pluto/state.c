@@ -735,9 +735,9 @@ static void release_v1fragments(struct state *st)
 {
 	passert(st->st_ike_version == IKEv1);
 
-	struct ike_frag *frag = st->st_v1_rfrags;
+	struct v1_ike_rfrag *frag = st->st_v1_rfrags;
 	while (frag != NULL) {
-		struct ike_frag *this = frag;
+		struct v1_ike_rfrag *this = frag;
 
 		frag = this->next;
 		pexpect(this->md != NULL);

@@ -1670,7 +1670,6 @@ void process_v1_packet(struct msg_digest *md)
 	/* Handle IKE fragmentation payloads */
 	if (md->hdr.isa_np == ISAKMP_NEXT_IKE_FRAGMENTATION) {
 		struct isakmp_ikefrag fraghdr;
-		struct ike_frag *ike_frag, **i;
 		int last_frag_index = 0;  /* index of the last fragment */
 		pb_stream frag_pbs;
 
@@ -1699,7 +1698,7 @@ void process_v1_packet(struct msg_digest *md)
 		    fraghdr.isafrag_number,
 		    (fraghdr.isafrag_flags == 1) ? "(last)" : "");
 
-		ike_frag = alloc_thing(struct ike_frag, "ike_frag");
+		struct v1_ike_rfrag *ike_frag = alloc_thing(struct v1_ike_rfrag, "ike_frag");
 		ike_frag->md = md_addref(md, HERE);
 		ike_frag->index = fraghdr.isafrag_number;
 		ike_frag->last = (fraghdr.isafrag_flags & 1);
@@ -1707,7 +1706,7 @@ void process_v1_packet(struct msg_digest *md)
 		ike_frag->data = frag_pbs.cur;
 
 		/* Add the fragment to the state */
-		i = &st->st_v1_rfrags;
+		struct v1_ike_rfrag **i = &st->st_v1_rfrags;
 		for (;;) {
 			if (ike_frag != NULL) {
 				/* Still looking for a place to insert ike_frag */
@@ -1718,7 +1717,7 @@ void process_v1_packet(struct msg_digest *md)
 					ike_frag = NULL;
 				} else if ((*i)->index == ike_frag->index) {
 					/* Replace fragment with same index */
-					struct ike_frag *old = *i;
+					struct v1_ike_rfrag *old = *i;
 
 					ike_frag->next = old->next;
 					*i = ike_frag;
@@ -1742,9 +1741,8 @@ void process_v1_packet(struct msg_digest *md)
 		if (last_frag_index != 0) {
 			size_t size = 0;
 			int prev_index = 0;
-			struct ike_frag *frag;
 
-			for (frag = st->st_v1_rfrags; frag; frag = frag->next) {
+			for (struct v1_ike_rfrag *frag = st->st_v1_rfrags; frag; frag = frag->next) {
 				size += frag->size;
 				if (frag->index != ++prev_index) {
 					break; /* fragment list incomplete */
