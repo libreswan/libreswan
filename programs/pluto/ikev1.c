@@ -2596,7 +2596,7 @@ void complete_v1_state_transition(struct msg_digest *md, stf_status result)
 
 		/* scrub the previous packet exchange */
 		free_chunk_content(&st->st_v1_rpacket);
-		free_chunk_content(&st->st_tpacket);
+		free_chunk_content(&st->st_v1_tpacket);
 
 		/* in aggressive mode, there will be no reply packet in transition
 		 * from STATE_AGGR_R1 to STATE_AGGR_R2

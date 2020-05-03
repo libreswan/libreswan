@@ -67,8 +67,8 @@ static bool send_v1_frags(struct state *st, const char *where)
 		(natt_bonus + NSIZEOF_isakmp_hdr +
 		 NSIZEOF_isakmp_ikefrag);
 
-	uint8_t *packet_cursor = st->st_tpacket.ptr;
-	size_t packet_remainder_len = st->st_tpacket.len;
+	uint8_t *packet_cursor = st->st_v1_tpacket.ptr;
+	size_t packet_remainder_len = st->st_v1_tpacket.len;
 
 	/* BUG: this code does not use the marshalling code
 	 * in packet.h to translate between wire and host format.
@@ -97,7 +97,7 @@ static bool send_v1_frags(struct state *st, const char *where)
 			struct isakmp_hdr *ih =
 				(struct isakmp_hdr *) frag_prefix;
 
-			memcpy(ih, st->st_tpacket.ptr, NSIZEOF_isakmp_hdr);
+			memcpy(ih, st->st_v1_tpacket.ptr, NSIZEOF_isakmp_hdr);
 			ih->isa_np = ISAKMP_NEXT_IKE_FRAGMENTATION; /* one octet */
 			/* Do we need to set any of ISAKMP_FLAGS_v1_ENCRYPTION?
 			 * Seems there might be disagreement between Cisco and Microsoft.
@@ -176,8 +176,8 @@ static bool send_or_resend_v1_ike_msg_from_state(struct state *st,
 		return FALSE;
 	}
 	/* another bandaid */
-	if (st->st_tpacket.ptr == NULL) {
-		libreswan_log("Cannot send packet - st_tpacket.ptr is NULL");
+	if (st->st_v1_tpacket.ptr == NULL) {
+		libreswan_log("Cannot send packet - st_v1_tpacket.ptr is NULL");
 		return false;
 	}
 
@@ -187,7 +187,7 @@ static bool send_or_resend_v1_ike_msg_from_state(struct state *st,
 	 * needed).
 	 */
 	size_t natt_bonus = st->st_interface->ike_float ? NON_ESP_MARKER_SIZE : 0;
-	size_t len = st->st_tpacket.len;
+	size_t len = st->st_v1_tpacket.len;
 
 	passert(len != 0);
 
@@ -203,7 +203,7 @@ static bool send_or_resend_v1_ike_msg_from_state(struct state *st,
 	    should_fragment_v1_ike_msg(st, len + natt_bonus, resending)) {
 		return send_v1_frags(st, where);
 	} else {
-		return send_chunk_using_state(st, where, st->st_tpacket);
+		return send_chunk_using_state(st, where, st->st_v1_tpacket);
 	}
 }
 
@@ -230,8 +230,8 @@ void record_outbound_v1_ike_msg(struct state *st, pb_stream *pbs, const char *wh
 {
 	passert(pbs_offset(pbs) != 0);
 	free_v1_message_queues(st);
-	free_chunk_content(&st->st_tpacket);
-	st->st_tpacket = clone_out_pbs_as_chunk(pbs, what);
+	free_chunk_content(&st->st_v1_tpacket);
+	st->st_v1_tpacket = clone_out_pbs_as_chunk(pbs, what);
 	st->st_last_liveness = mononow();
 }
 

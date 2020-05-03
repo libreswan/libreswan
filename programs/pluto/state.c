@@ -1232,7 +1232,7 @@ void delete_state(struct state *st)
 
 	free_chunk_content(&st->st_firstpacket_me);
 	free_chunk_content(&st->st_firstpacket_him);
-	free_chunk_content(&st->st_tpacket);
+	free_chunk_content(&st->st_v1_tpacket);
 	free_chunk_content(&st->st_v1_rpacket);
 	free_chunk_content(&st->st_p1isa);
 	free_chunk_content(&st->st_gi);

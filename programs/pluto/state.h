@@ -365,9 +365,6 @@ struct state {
  	struct logger *st_logger;
 #define st_whack_sock st_logger->object_whackfd
 
-	/* collected received fragments */
-	struct v1_ike_rfrag *st_v1_rfrags;
-
 	struct trans_attrs st_oakley;
 
 	struct ipsec_proto_info st_ah;
@@ -413,6 +410,7 @@ struct state {
 	ip_address st_mobike_host_nexthop;	/* for updown script */
 
 	/** IKEv1-only things **/
+	/* XXX: union { struct { .. } v1; struct {...} v2;} st? */
 
 	struct {
 		msgid_t id;             /* MSG-ID from header. Network Order?!? */
@@ -422,6 +420,9 @@ struct state {
 	/* only for a state representing an ISAKMP SA */
 	struct msgid_list *st_used_msgids;	/* used-up msgids */
 
+	/* collected received fragments */
+	struct v1_ike_rfrag *st_v1_rfrags;
+	chunk_t st_v1_tpacket;                  /* Transmitted packet */
 	chunk_t st_v1_rpacket;			/* Received packet - v1 only */
 
 	/*
@@ -443,7 +444,10 @@ struct state {
 	/* end of IKEv1-only things */
 
 	/** IKEv2-only things **/
+	/* XXX: union { struct { .. } v1; struct {...} v2;} st? */
 
+	/* collected received fragments */
+	struct v2_ike_rfrags *st_v2_rfrags;
 	struct v2_outgoing_fragment *st_v2_outgoing[MESSAGE_ROLE_ROOF];
 	struct v2_incomming_fragments *st_v2_incomming[MESSAGE_ROLE_ROOF];
 
@@ -498,7 +502,6 @@ struct state {
 	chunk_t st_dcookie;                     /* DOS cookie of responder - v2 only */
 
 	/* my stuff */
-	chunk_t st_tpacket;                     /* Transmitted packet */
 
 	struct xfrm_user_sec_ctx_ike *sec_ctx;
 
