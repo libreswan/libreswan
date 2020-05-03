@@ -35,6 +35,7 @@
 #include "ikev2.h"			/* for struct state_v2_microcode */
 #include "ikev2_liveness.h"
 #include "state_db.h"			/* for state_by_serialno() */
+#include "ikev2_states.h"
 
 static stf_status v2_send_liveness_request(struct ike_sa *ike,
 					   struct child_sa *child UNUSED,
@@ -97,6 +98,7 @@ static const struct state_v2_microcode v2_liveness_probe_i = {
 	.send = MESSAGE_REQUEST,
 	.processor = v2_send_liveness_request,
 	.timeout_event =  EVENT_RETAIN,
+	.flags = SMF2_SUPPRESS_SUCCESS_LOG,
 };
 
 static const struct state_v2_microcode v2_liveness_probe_r = {
@@ -106,6 +108,7 @@ static const struct state_v2_microcode v2_liveness_probe_r = {
 	.send = MESSAGE_REQUEST,
 	.processor = v2_send_liveness_request,
 	.timeout_event =  EVENT_RETAIN,
+	.flags = SMF2_SUPPRESS_SUCCESS_LOG,
 };
 
 /* note: this mutates *st by calling get_sa_info */
