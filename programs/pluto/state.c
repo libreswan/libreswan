@@ -1273,7 +1273,7 @@ void delete_state(struct state *st)
 	free_chunk_content(&st->st_firstpacket_me);
 	free_chunk_content(&st->st_firstpacket_him);
 	free_chunk_content(&st->st_tpacket);
-	free_chunk_content(&st->st_rpacket);
+	free_chunk_content(&st->st_v1_rpacket);
 	free_chunk_content(&st->st_p1isa);
 	free_chunk_content(&st->st_gi);
 	free_chunk_content(&st->st_gr);
@@ -3010,7 +3010,7 @@ bool state_is_busy(const struct state *st)
 	/*
 	 * Ignore a packet if the state has a suspended state
 	 * transition.  Probably a duplicated packet but the original
-	 * packet is not yet recorded in st->st_rpacket, so duplicate
+	 * packet is not yet recorded in st->st_v1_rpacket, so duplicate
 	 * checking won't catch.
 	 *
 	 * ??? Should the packet be recorded earlier to improve

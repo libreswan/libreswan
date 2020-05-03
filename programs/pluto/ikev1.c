@@ -1191,10 +1191,10 @@ void ikev1_init_out_pbs_echo_hdr(struct msg_digest *md, bool enc,
 static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
 {
 	passert(st != NULL);
-	if (st->st_rpacket.ptr != NULL &&
-	    st->st_rpacket.len == pbs_room(&md->packet_pbs) &&
-	    memeq(st->st_rpacket.ptr, md->packet_pbs.start,
-		  st->st_rpacket.len)) {
+	if (st->st_v1_rpacket.ptr != NULL &&
+	    st->st_v1_rpacket.len == pbs_room(&md->packet_pbs) &&
+	    memeq(st->st_v1_rpacket.ptr, md->packet_pbs.start,
+		  st->st_v1_rpacket.len)) {
 		/*
 		 * Duplicate.  Drop or retransmit?
 		 *
@@ -2409,14 +2409,14 @@ static void remember_received_packet(struct state *st, struct msg_digest *md)
 	if (md->encrypted) {
 		/* if encrypted, duplication already done */
 		if (md->raw_packet.ptr != NULL) {
-			pfreeany(st->st_rpacket.ptr);
-			st->st_rpacket = md->raw_packet;
+			pfreeany(st->st_v1_rpacket.ptr);
+			st->st_v1_rpacket = md->raw_packet;
 			md->raw_packet = EMPTY_CHUNK;
 		}
 	} else {
 		/* this may be a repeat, but it will work */
-		free_chunk_content(&st->st_rpacket);
-		st->st_rpacket = clone_bytes_as_chunk(md->packet_pbs.start,
+		free_chunk_content(&st->st_v1_rpacket);
+		st->st_v1_rpacket = clone_bytes_as_chunk(md->packet_pbs.start,
 						      pbs_room(&md->packet_pbs),
 						      "raw packet");
 	}
@@ -2595,7 +2595,7 @@ void complete_v1_state_transition(struct msg_digest *md, stf_status result)
 		release_fragments(st);
 
 		/* scrub the previous packet exchange */
-		free_chunk_content(&st->st_rpacket);
+		free_chunk_content(&st->st_v1_rpacket);
 		free_chunk_content(&st->st_tpacket);
 
 		/* in aggressive mode, there will be no reply packet in transition

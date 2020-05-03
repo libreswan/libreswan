@@ -420,7 +420,7 @@ struct state {
 	/* only for a state representing an ISAKMP SA */
 	struct msgid_list *st_used_msgids;	/* used-up msgids */
 
-	chunk_t st_rpacket;			/* Received packet - v1 only */
+	chunk_t st_v1_rpacket;			/* Received packet - v1 only */
 
 	/*
 	 * State transition, both the one in progress and the most
