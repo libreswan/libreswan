@@ -1302,11 +1302,11 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 }
 
 bool ikev2_send_certreq_INIT_decision(const struct state *st,
-				      enum original_role role)
+				      enum sa_role role)
 {
 	DBG(DBG_X509, DBG_log("IKEv2 CERTREQ: send a cert request?"));
 
-	if (role != ORIGINAL_INITIATOR) {
+	if (role != SA_INITIATOR) {
 		DBGF(DBG_X509, "IKEv2 CERTREQ: not the original initiator");
 		return FALSE;
 	}

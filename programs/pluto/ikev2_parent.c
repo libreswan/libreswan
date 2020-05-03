@@ -1547,7 +1547,7 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 		.responder = md->hdr.isa_ike_responder_spi,
 	};
 	start_dh_v2(st, "ikev2_inR1outI2 KE",
-		    ORIGINAL_INITIATOR,
+		    SA_INITIATOR,
 		    NULL, NULL, &st->st_ike_rekey_spis,
 		    ikev2_parent_inR1outI2_continue);
 	return STF_SUSPEND;
@@ -2104,7 +2104,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 			return certstat;
 
 		/* send CERTREQ  */
-		bool send_certreq = ikev2_send_certreq_INIT_decision(cst, ORIGINAL_INITIATOR);
+		bool send_certreq = ikev2_send_certreq_INIT_decision(cst, SA_INITIATOR);
 		if (send_certreq) {
 			if (DBGP(DBG_BASE)) {
 				dn_buf buf;
@@ -2446,7 +2446,7 @@ stf_status ikev2_ike_sa_process_auth_request_no_skeyid(struct ike_sa *ike,
 
 	/* initiate calculation of g^xy */
 	start_dh_v2(st, "ikev2_inI2outR2 KE",
-		    ORIGINAL_RESPONDER,
+		    SA_RESPONDER,
 		    NULL, NULL, &st->st_ike_spis,
 		    ikev2_ike_sa_process_auth_request_no_skeyid_continue);
 	return STF_SUSPEND;
@@ -4147,7 +4147,7 @@ stf_status ikev2_child_ike_inR(struct ike_sa *ike,
 
 	/* initiate calculation of g^xy for rekey */
 	start_dh_v2(st, "DHv2 for IKE sa rekey initiator",
-		    ORIGINAL_INITIATOR,
+		    SA_INITIATOR,
 		    ike->sa.st_skey_d_nss, /* only IKE has SK_d */
 		    ike->sa.st_oakley.ta_prf, /* for IKE/ESP/AH */
 		    &child->sa.st_ike_rekey_spis, /* new SPIs */
@@ -4615,7 +4615,7 @@ static void ikev2_child_ike_inIoutR_continue(struct state *st,
 	ikev2_copy_cookie_from_sa(st->st_accepted_ike_proposal,
 				  &st->st_ike_rekey_spis.initiator);
 	st->st_ike_rekey_spis.responder = ike_responder_spi(&md->sender);
-	start_dh_v2(st, "DHv2 for REKEY IKE SA", ORIGINAL_RESPONDER,
+	start_dh_v2(st, "DHv2 for REKEY IKE SA", SA_RESPONDER,
 		    ike->sa.st_skey_d_nss, /* only IKE has SK_d */
 		    ike->sa.st_oakley.ta_prf, /* for IKE/ESP/AH */
 		    &st->st_ike_rekey_spis,

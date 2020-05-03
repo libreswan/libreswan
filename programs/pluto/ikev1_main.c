@@ -1104,7 +1104,7 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 				st->st_oakley.ta_dh->group));
 
 		start_dh_v1_secretiv(main_inI2_outR2_continue2, "main_inI2_outR2_tail",
-				     st, ORIGINAL_RESPONDER, st->st_oakley.ta_dh);
+				     st, SA_RESPONDER, st->st_oakley.ta_dh);
 
 		/* we are calculating in the background, so it doesn't count */
 		DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __func__, __LINE__));
@@ -1393,7 +1393,7 @@ stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
 	/* Nr in */
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_nr, "Nr"));
 	start_dh_v1_secretiv(main_inR2_outI3_continue, "aggr outR1 DH",
-			     st, ORIGINAL_INITIATOR, st->st_oakley.ta_dh);
+			     st, SA_INITIATOR, st->st_oakley.ta_dh);
 	return STF_SUSPEND;
 }
 

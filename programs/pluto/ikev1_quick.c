@@ -1301,7 +1301,7 @@ static void quick_inI1_outR1_continue1(struct state *st,
 		/* PFS is on: do a new DH */
 		unpack_KE_from_helper(st, r, &st->st_gr);
 		start_dh_v1_secret(quick_inI1_outR1_continue2, "quick outR1 DH",
-				   st, ORIGINAL_RESPONDER, st->st_pfs_group);
+				   st, SA_RESPONDER, st->st_pfs_group);
 		/*
 		 * XXX: Since more crypto has been requsted, MD needs
 		 * to be re suspended.  If the original crypto request
@@ -1558,7 +1558,7 @@ stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 	if (st->st_pfs_group != NULL) {
 		/* set up DH calculation */
 		start_dh_v1_secret(quick_inR1_outI2_continue, "quick outI2 DH",
-				   st, ORIGINAL_INITIATOR, st->st_pfs_group);
+				   st, SA_INITIATOR, st->st_pfs_group);
 		return STF_SUSPEND;
 	} else {
 		/* just call the tail function */

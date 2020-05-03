@@ -55,7 +55,7 @@ void cancelled_v1_dh(struct pcr_v1_dh *dh)
  * invoke helper to do DH work (IKEv1)
  */
 void start_dh_v1_secretiv(crypto_req_cont_func fn, const char *name,
-			  struct state *st, enum original_role role,
+			  struct state *st, enum sa_role role,
 			  const struct dh_desc *oakley_group2)
 {
 	const chunk_t *pss = get_psk(st->st_connection);
@@ -119,7 +119,7 @@ bool finish_dh_secretiv(struct state *st,
 }
 
 void start_dh_v1_secret(crypto_req_cont_func fn, const char *name,
-			struct state *st, enum original_role role,
+			struct state *st, enum sa_role role,
 			const struct dh_desc *oakley_group2)
 {
 	const chunk_t *pss = get_psk(st->st_connection);
@@ -163,7 +163,7 @@ void calc_dh(struct pcr_v1_dh *dh)
 
 	/* now calculate the (g^x)(g^y) */
 	chunk_t g;
-	setchunk_from_wire(g, dh, dh->role == ORIGINAL_RESPONDER ? &dh->gi : &dh->gr);
+	setchunk_from_wire(g, dh, dh->role == SA_RESPONDER ? &dh->gi : &dh->gr);
 	DBG(DBG_CRYPT, DBG_dump_hunk("peer's g: ", g));
 
 	dh->shared = calc_dh_shared(dh->secret, g);
@@ -285,7 +285,7 @@ void calc_dh_iv(struct pcr_v1_dh *dh)
 
 	chunk_t g;
 	setchunk_from_wire(g, dh,
-		dh->role == ORIGINAL_RESPONDER ? &dh->gi : &dh->gr);
+		dh->role == SA_RESPONDER ? &dh->gi : &dh->gr);
 
 	DBG(DBG_CRYPT, DBG_dump_hunk("peer's g: ", g));
 

@@ -118,7 +118,7 @@ static void aggr_inI1_outR1_continue1(struct state *st,
 
 	/* set up second calculation */
 	start_dh_v1_secretiv(aggr_inI1_outR1_continue2, "aggr outR1 DH",
-			     st, ORIGINAL_RESPONDER, st->st_oakley.ta_dh);
+			     st, SA_RESPONDER, st->st_oakley.ta_dh);
 	/*
 	 * XXX: Since more crypto has been requsted, MD needs to be re
 	 * suspended.  If the original crypto request did everything
@@ -586,7 +586,7 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 
 	/* set up second calculation */
 	start_dh_v1_secretiv(aggr_inR1_outI2_crypto_continue, "aggr outR1 DH",
-			     st, ORIGINAL_INITIATOR, st->st_oakley.ta_dh);
+			     st, SA_INITIATOR, st->st_oakley.ta_dh);
 	return STF_SUSPEND;
 }
 

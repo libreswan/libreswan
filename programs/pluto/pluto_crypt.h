@@ -207,7 +207,7 @@ struct pcr_v1_dh {
 	const struct integ_desc *integ;
 	const struct prf_desc *prf;
 	const struct encrypt_desc *encrypter;
-	enum original_role role;
+	enum sa_role role;
 	size_t key_size; /* of encryptor, in bytes */
 	size_t salt_size; /* of IV salt, in bytes */
 	wire_chunk_t gi;
@@ -240,7 +240,7 @@ struct pcr_dh_v2 {
 	const struct integ_desc *integ;
 	const struct prf_desc *prf;
 	const struct encrypt_desc *encrypt;
-	enum original_role role;
+	enum sa_role role;
 	size_t key_size; /* of encryptor, in bytes */
 	size_t salt_size; /* of IV salt, in bytes */
 	wire_chunk_t gi;
@@ -367,14 +367,14 @@ extern void compute_dh_shared(struct state *st, const chunk_t g,
 			      const struct dh_desc *group);
 
 extern void start_dh_v1_secretiv(crypto_req_cont_func fn, const char *name,
-				 struct state *st, enum original_role role,
+				 struct state *st, enum sa_role role,
 				 const struct dh_desc *oakley_group2);
 
 extern bool finish_dh_secretiv(struct state *st,
 			       struct pluto_crypto_req *r);
 
 extern void start_dh_v1_secret(crypto_req_cont_func fn, const char *name,
-			       struct state *st, enum original_role role,
+			       struct state *st, enum sa_role role,
 			       const struct dh_desc *oakley_group2);
 
 extern void finish_dh_secret(struct state *st,
@@ -391,7 +391,7 @@ extern void cancelled_v1_dh(struct pcr_v1_dh *dh);
 
 extern void start_dh_v2(struct state *st,
 			const char *name,
-			enum original_role role,
+			enum sa_role role,
 			PK11SymKey *skey_d_old,
 			const struct prf_desc *old_prf,
 			const ike_spis_t *ike_spis,
