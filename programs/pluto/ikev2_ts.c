@@ -54,23 +54,64 @@ enum fit {
 	END_WIDER_THAN_TS,
 };
 
-
-static bool ts_in_tslist(struct traffic_selectors *haystack,
-			struct traffic_selector *needle)
+static bool rangeinrange(struct traffic_selector *ts1_ts, struct traffic_selector *ts2_ts)
 {
-	for (unsigned int i = 0; i < haystack->nr; i++) {
-		struct traffic_selector hay = haystack->ts[i];
+	ip_subnet ts1_net, ts2_net;
+	err_t e;
 
-		if (needle->ts_type == hay.ts_type &&
-			needle->ipprotoid == hay.ipprotoid &&
-			needle->startport == hay.startport &&
-			needle->endport == hay.endport &&
-			sameaddr(&needle->net.start, &hay.net.start) &&
-			sameaddr(&needle->net.end, &hay.net.end))
-                        {
-				return TRUE;
-                        }
+	e = rangetosubnet(&ts1_ts->net.start, &ts1_ts->net.end, &ts1_net);
+	if (e != NULL)
+		return FALSE;
+	e = rangetosubnet(&ts2_ts->net.start, &ts2_ts->net.end, &ts2_net);
+	if (e != NULL)
+		return FALSE;
+
+	subnet_buf b1,b2;
+	dbg("Checking to see if subnet %s is within subnet %s",
+		str_subnet_port(&ts1_net, &b1),
+		str_subnet_port(&ts2_net, &b2));
+
+	return subnetinsubnet(&ts1_net, &ts2_net);
+}
+
+/*
+ * This is used when responding to a rekey. We only want to ensure
+ * that their request is wider or equal to ours. We will ignore
+ * their content afterwards and just re-propose our existing TS
+ */
+static bool ts_in_tslist(struct traffic_selectors *recv,
+			struct traffic_selector *our_ts,
+			bool narrowing)
+{
+	for (unsigned int i = 0; i < recv->nr; i++) {
+		struct traffic_selector their = recv->ts[i];
+
+		if (narrowing) {
+			if (our_ts->ts_type == their.ts_type &&
+				(our_ts->ipprotoid == their.ipprotoid ||
+				their.ipprotoid == 0) &&
+				our_ts->startport >= their.startport &&
+				our_ts->endport <= their.endport &&
+				rangeinrange(our_ts, &their))
+				{
+					dbg("ts_in_tslist() is happy with narrowing");
+					return TRUE;
+				}
+		} else {
+			if (our_ts->ts_type == their.ts_type &&
+				our_ts->ipprotoid == their.ipprotoid &&
+				our_ts->startport == their.startport &&
+				our_ts->endport == their.endport &&
+				sameaddr(&our_ts->net.start, &their.net.start) &&
+				sameaddr(&our_ts->net.end, &their.net.end))
+				{
+					dbg("ts_in_tslist() is happy without narrowing");
+					return TRUE;
+				}
+		}
 	}
+
+	dbg("ts_in_tslist() did not find an acceptable Traffic Selector in the proposal that matches our connection");
 	return FALSE;
 }
 
@@ -1121,8 +1162,7 @@ bool v2_process_ts_response(struct child_sa *child,
 	struct best_score best = score_ends(initiator_widening, c, &e, &tsi, &tsr);
 
 	if (!best.ok) {
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("reject responder TSi/TSr Traffic Selector"));
+		loglog(RC_LOG_SERIOUS, "rejecting responder TSi/TSr Traffic Selector");
 			/* prevents parent from going to I3 */
 			return false;
 	}
@@ -1197,13 +1237,15 @@ stf_status child_rekey_ts_verify(struct msg_digest *md)
 
 	struct traffic_selector ts_this = ikev2_end_to_ts(&st->st_connection->spd.this);
 	struct traffic_selector ts_that = ikev2_end_to_ts(&st->st_connection->spd.that);
+	bool narrowing = LIN(POLICY_IKEV2_ALLOW_NARROWING, md->st->st_connection->policy) ||
+			 md->st->st_connection->pool != NULL; /* using addresspool really means narrowing */
 
-	if (!ts_in_tslist(&their_tsis, (md_role == MESSAGE_REQUEST) ? &ts_that : &ts_this)) {
+	if (!ts_in_tslist(&their_tsis, (md_role == MESSAGE_REQUEST) ? &ts_that : &ts_this, narrowing)) {
 		loglog(RC_LOG_SERIOUS, "Received TSi payload does not contain existing IPsec SA traffic Selectors");
 		return STF_FAIL + v2N_TS_UNACCEPTABLE;
 	}
 
-	if (!ts_in_tslist(&their_tsrs, (md_role == MESSAGE_REQUEST) ? &ts_this : &ts_that)) {
+	if (!ts_in_tslist(&their_tsrs, (md_role == MESSAGE_REQUEST) ? &ts_this : &ts_that, narrowing)) {
 		loglog(RC_LOG_SERIOUS, "Received TSr payload(s) does not contain existing IPsec SA Traffic Selectors");
 		return STF_FAIL + v2N_TS_UNACCEPTABLE;
 	}
