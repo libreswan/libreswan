@@ -1,8 +1,9 @@
 
 See also https://libreswan.org/
 
-v3.32 (May 4, 2020)
+v3.32 (May 11, 2020)
 * SECURITY: Fixes CVE-2020-1763 https://libreswan.org/security/CVE-2020-1763
+* IKEv2: Support non-narrowed child rekey for narrowing (regression in 3.31)
 * FIPS: ECDSA keys were mistakenly rejected as "too weak" [Paul]
 * FIPS: Minimum RSA key size is 2048, not 3072 [Paul]
 * FIPS: Use NSS to check FIPS mode instead of manually checking fips=1 [Paul]
