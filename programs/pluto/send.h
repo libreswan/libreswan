@@ -43,9 +43,6 @@ bool send_chunk_using_state(struct state *st, const char *where,
 bool send_ike_msg_without_recording(struct state *st, pb_stream *pbs,
 				    const char *where);
 
-void record_outbound_ike_msg(struct state *st, pb_stream *pbs,
-			     const char *what);
-
 bool send_keepalive(struct state *st, const char *where);
 
 #endif

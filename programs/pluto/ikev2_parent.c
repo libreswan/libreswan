@@ -805,7 +805,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 						       "saved first packet");
 
 	/* Transmit */
-	record_outbound_ike_msg(&ike->sa, &reply_stream, "IKE_SA_INIT request");
+	record_outbound_v2_ike_msg(&ike->sa, &reply_stream, "IKE_SA_INIT request");
 	return true;
 }
 
@@ -1132,7 +1132,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	close_output_pbs(&rbody);
 	close_output_pbs(&reply_stream);
 
-	record_outbound_ike_msg(st, &reply_stream,
+	record_outbound_v2_ike_msg(st, &reply_stream,
 		"reply packet for ikev2_parent_inI1outR1_tail");
 
 	/* save packet for later signing */
@@ -4781,7 +4781,7 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 	 * CREATE_CHILD_SA request and response are small 300 - 750 bytes.
 	 * ??? Should we support fragmenting?  Maybe one day.
 	 */
-	record_outbound_ike_msg(&ike->sa, &reply_stream,
+	record_outbound_v2_ike_msg(&ike->sa, &reply_stream,
 				"packet from ikev2_child_out_cont");
 
 	if (child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
@@ -5454,7 +5454,7 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 		mobike_switch_remote(md, &mobike_remote);
 
 		/* ??? should we support fragmenting?  Maybe one day. */
-		record_outbound_ike_msg(&ike->sa, &reply_stream, "reply packet for process_encrypted_informational_ikev2");
+		record_outbound_v2_ike_msg(&ike->sa, &reply_stream, "reply packet for process_encrypted_informational_ikev2");
 		send_recorded_v2_ike_msg(&ike->sa, "reply packet for process_encrypted_informational_ikev2");
 
 		/*

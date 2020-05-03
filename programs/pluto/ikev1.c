@@ -1773,7 +1773,7 @@ void process_v1_packet(struct msg_digest *md)
 
 					process_packet(&whole_md);
 					release_any_md(&whole_md);
-					release_fragments(st);
+					free_v1_message_queues(st);
 					/* optimize: if receiving fragments, immediately respond with fragments too */
 					st->st_seen_fragments = TRUE;
 					dbg(" updated IKE fragment state to respond using fragments without waiting for re-transmits");
@@ -2592,7 +2592,7 @@ void complete_v1_state_transition(struct msg_digest *md, stf_status result)
 		}
 
 		/* Delete IKE fragments */
-		release_fragments(st);
+		free_v1_message_queues(st);
 
 		/* scrub the previous packet exchange */
 		free_chunk_content(&st->st_v1_rpacket);
@@ -2636,8 +2636,8 @@ void complete_v1_state_transition(struct msg_digest *md, stf_status result)
 			if (st->st_state->kind == STATE_MAIN_R2 &&
 				impair.send_no_main_r2) {
 				/* record-only so we propely emulate packet drop */
-				record_outbound_ike_msg(st, &reply_stream,
-							finite_states[from_state]->name);
+				record_outbound_v1_ike_msg(st, &reply_stream,
+							   finite_states[from_state]->name);
 				libreswan_log("IMPAIR: Skipped sending STATE_MAIN_R2 response packet");
 			} else {
 				record_and_send_v1_ike_msg(st, &reply_stream,

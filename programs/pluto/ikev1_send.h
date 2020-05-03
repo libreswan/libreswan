@@ -20,9 +20,12 @@
 
 struct state;
 
+void record_outbound_v1_ike_msg(struct state *st, pb_stream *pbs, const char *what);
 bool record_and_send_v1_ike_msg(struct state *st, pb_stream *pbs,
 				const char *what);
 
 bool resend_recorded_v1_ike_msg(struct state *st, const char *where);
+
+void free_v1_message_queues(struct state *st);
 
 #endif

@@ -78,6 +78,8 @@
 #include "kernel.h"
 #include "kernel_xfrm_interface.h"
 #include "iface.h"
+#include "ikev1_send.h"		/* for free_v1_messages() */
+#include "ikev2_send.h"		/* for free_v2_messages() */
 
 #include <nss.h>
 #include <pk11pub.h>
@@ -709,62 +711,6 @@ void release_any_whack(struct state *st, where_t where, const char *why)
 	close_any_fd(&st->st_logger->global_whackfd, where);
 }
 
-static void release_v2fragments(struct state *st)
-{
-	passert(st->st_ike_version == IKEv2);
-
-	if (st->st_v2_rfrags != NULL) {
-		for (unsigned i = 0; i < elemsof(st->st_v2_rfrags->frags); i++) {
-			struct v2_ike_rfrag *frag = &st->st_v2_rfrags->frags[i];
-			free_chunk_content(&frag->cipher);
-		}
-		pfree(st->st_v2_rfrags);
-		st->st_v2_rfrags = NULL;
-	}
-
-	for (struct v2_ike_tfrag *frag = st->st_v2_tfrags; frag != NULL; ) {
-		struct v2_ike_tfrag *this = frag;
-		frag = this->next;
-		free_chunk_content(&this->cipher);
-		pfree(this);
-	}
-	st->st_v2_tfrags = NULL;
-}
-
-static void release_v1fragments(struct state *st)
-{
-	passert(st->st_ike_version == IKEv1);
-
-	struct v1_ike_rfrag *frag = st->st_v1_rfrags;
-	while (frag != NULL) {
-		struct v1_ike_rfrag *this = frag;
-
-		frag = this->next;
-		pexpect(this->md != NULL);
-		release_any_md(&this->md);
-		pfree(this);
-	}
-
-	st->st_v1_rfrags = NULL;
-}
-
-/*
- * Release stored IKE fragments. This is a union in st so only call one!
- */
-void release_fragments(struct state *st)
-{
-	switch (st->st_ike_version) {
-	case IKEv1:
-		release_v1fragments(st);
-		break;
-	case IKEv2:
-		release_v2fragments(st);
-		break;
-	default:
-		bad_case(st->st_ike_version);
-	}
-}
-
 void v2_expire_unused_ike_sa(struct ike_sa *ike)
 {
 	passert(ike != NULL);
@@ -1243,7 +1189,21 @@ void delete_state(struct state *st)
 
 	ikev1_clear_msgid_list(st);
 	unreference_key(&st->st_peer_pubkey);
-	release_fragments(st);
+
+	/*
+	 * Release stored IKE fragments. This is a union in st so only
+	 * call one!  XXX: should be a union???
+	 */
+	switch (st->st_ike_version) {
+	case IKEv1:
+		free_v1_message_queues(st);
+		break;
+	case IKEv2:
+		free_v2_message_queues(st);
+		break;
+	default:
+		bad_case(st->st_ike_version);
+	}
 
 	/*
 	 * Free the accepted proposal first, it points into the

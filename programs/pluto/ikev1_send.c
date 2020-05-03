@@ -35,6 +35,7 @@
 #include "connections.h"
 #include "ip_info.h"
 #include "iface.h"
+#include "demux.h"
 
 /*
  * (IKE v1) send fragments of packet.
@@ -179,7 +180,7 @@ static bool send_or_resend_v1_ike_msg_from_state(struct state *st,
 		libreswan_log("Cannot send packet - st_tpacket.ptr is NULL");
 		return false;
 	}
-	passert(st->st_v2_tfrags == NULL);
+
 	/*
 	 * Each fragment, if we are doing NATT, needs a non-ESP_Marker
 	 * prefix.  natt_bonus is the size of the addition (0 if not
@@ -221,6 +222,32 @@ bool resend_recorded_v1_ike_msg(struct state *st, const char *where)
 
 bool record_and_send_v1_ike_msg(struct state *st, pb_stream *pbs, const char *what)
 {
-	record_outbound_ike_msg(st, pbs, what);
+	record_outbound_v1_ike_msg(st, pbs, what);
 	return send_or_resend_v1_ike_msg_from_state(st, what, FALSE);
+}
+
+void record_outbound_v1_ike_msg(struct state *st, pb_stream *pbs, const char *what)
+{
+	passert(pbs_offset(pbs) != 0);
+	free_v1_message_queues(st);
+	free_chunk_content(&st->st_tpacket);
+	st->st_tpacket = clone_out_pbs_as_chunk(pbs, what);
+	st->st_last_liveness = mononow();
+}
+
+void free_v1_message_queues(struct state *st)
+{
+	passert(st->st_ike_version == IKEv1);
+
+	struct v1_ike_rfrag *frag = st->st_v1_rfrags;
+	while (frag != NULL) {
+		struct v1_ike_rfrag *this = frag;
+
+		frag = this->next;
+		pexpect(this->md != NULL);
+		release_any_md(&this->md);
+		pfree(this);
+	}
+
+	st->st_v1_rfrags = NULL;
 }

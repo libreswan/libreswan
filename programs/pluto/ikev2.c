@@ -955,7 +955,7 @@ static bool ikev2_check_fragment(struct msg_digest *md, struct state *st)
 		if (skf->isaskf_total > st->st_v2_rfrags->total) {
 			DBG(DBG_CONTROL, DBG_log(
 				"discarding saved fragments because this fragment has larger total"));
-			release_fragments(st);
+			free_v2_message_queues(st);
 			return TRUE;
 		} else {
 			DBG(DBG_CONTROL, DBG_log(

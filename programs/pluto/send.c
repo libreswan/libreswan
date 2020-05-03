@@ -229,15 +229,6 @@ bool send_ike_msg_without_recording(struct state *st, pb_stream *pbs,
 	return send_chunk_using_state(st, where, same_out_pbs_as_chunk(pbs));
 }
 
-void record_outbound_ike_msg(struct state *st, pb_stream *pbs, const char *what)
-{
-	passert(pbs_offset(pbs) != 0);
-	release_fragments(st);
-	free_chunk_content(&st->st_tpacket);
-	st->st_tpacket = clone_out_pbs_as_chunk(pbs, what);
-	st->st_last_liveness = mononow();
-}
-
 /*
  * send keepalive is special in two ways:
  * We don't want send errors logged (too noisy).

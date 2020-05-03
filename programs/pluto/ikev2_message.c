@@ -45,6 +45,7 @@
 #include "ip_info.h"
 #include "iface.h"
 #include "ip_protocol.h"
+#include "ikev2_send.h"
 
 /*
  * Determine the IKE version we will use for the IKE packet
@@ -709,7 +710,7 @@ static bool ikev2_reassemble_fragments(struct state *st,
 							 &plain[i], frag->iv)) {
 			loglog(RC_LOG_SERIOUS, "fragment %u of %u invalid",
 			       i, st->st_v2_rfrags->total);
-			release_fragments(st);
+			free_v2_message_queues(st);
 			return false;
 		}
 		size += plain[i].len;
@@ -745,7 +746,7 @@ static bool ikev2_reassemble_fragments(struct state *st,
 	md->chain[ISAKMP_NEXT_v2SK] = skf;
 	*skf = sk; /* scribble */
 
-	release_fragments(st);
+	free_v2_message_queues(st);
 
 	return true;
 }
@@ -921,7 +922,7 @@ static stf_status v2_record_outbound_fragments(struct state *st,
 {
 	unsigned int len;
 
-	release_fragments(st);
+	free_v2_message_queues(st);
 	free_chunk_content(&st->st_tpacket);
 
 	/*
@@ -1049,7 +1050,7 @@ stf_status record_outbound_v2SK_msg(struct state *msg_sa,
 			libreswan_log("error encrypting %s message", what);
 			return ret;
 		}
-		record_outbound_ike_msg(msg_sa, &reply_stream, what);
+		record_outbound_v2_ike_msg(msg_sa, &reply_stream, what);
 	}
 	return ret;
 }

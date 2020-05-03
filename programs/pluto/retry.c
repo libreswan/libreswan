@@ -259,8 +259,7 @@ void retransmit_v2_msg(struct state *st)
 			pstat_sa_failed(&ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			delete_state(&ike->sa);
 		} else {
-			release_fragments(st);
-			free_chunk_content(&st->st_tpacket);
+			free_v2_message_queues(st);
 		}
 	}
 

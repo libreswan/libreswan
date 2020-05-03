@@ -71,6 +71,10 @@ extern stf_status record_v2_informational_request(const char *name,
 						  struct state *sender,
 						  payload_master_t *payloads);
 
+void record_outbound_v2_ike_msg(struct state *st, pb_stream *pbs,
+				const char *what);
+void free_v2_message_queues(struct state *st);
+
 /*
  * Emit an IKEv2 payload.
  *

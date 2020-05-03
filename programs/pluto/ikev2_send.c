@@ -440,7 +440,7 @@ void record_v2N_spi_response(struct logger *logger,
 	if (!close_response(&response)) {
 		return;
 	}
-	record_outbound_ike_msg(&ike->sa, &response.message, "v2N response");
+	record_outbound_v2_ike_msg(&ike->sa, &response.message, "v2N response");
 	pstat(ikev2_sent_notifies_e, ntype);
 }
 
@@ -648,7 +648,7 @@ void record_v2_delete(struct state *const st)
 		return;
 	}
 
-	record_outbound_ike_msg(st, &packet, "packet for ikev2 delete informational");
+	record_outbound_v2_ike_msg(st, &packet, "packet for ikev2 delete informational");
 }
 
 /*
@@ -698,6 +698,38 @@ stf_status record_v2_informational_request(const char *name,
 	}
 
 	ike->sa.st_pend_liveness = TRUE; /* we should only do this when dpd/liveness is active? */
-	record_outbound_ike_msg(sender, &packet, name);
+	record_outbound_v2_ike_msg(sender, &packet, name);
 	return STF_OK;
 }
+
+void free_v2_message_queues(struct state *st)
+{
+	passert(st->st_ike_version == IKEv2);
+
+	if (st->st_v2_rfrags != NULL) {
+		for (unsigned i = 0; i < elemsof(st->st_v2_rfrags->frags); i++) {
+			struct v2_ike_rfrag *frag = &st->st_v2_rfrags->frags[i];
+			free_chunk_content(&frag->cipher);
+		}
+		pfree(st->st_v2_rfrags);
+		st->st_v2_rfrags = NULL;
+	}
+
+	for (struct v2_ike_tfrag *frag = st->st_v2_tfrags; frag != NULL; ) {
+		struct v2_ike_tfrag *this = frag;
+		frag = this->next;
+		free_chunk_content(&this->cipher);
+		pfree(this);
+	}
+	st->st_v2_tfrags = NULL;
+}
+
+void record_outbound_v2_ike_msg(struct state *st, pb_stream *pbs, const char *what)
+{
+	passert(pbs_offset(pbs) != 0);
+	free_v2_message_queues(st);
+	free_chunk_content(&st->st_tpacket);
+	st->st_tpacket = clone_out_pbs_as_chunk(pbs, what);
+	st->st_last_liveness = mononow();
+}
+
