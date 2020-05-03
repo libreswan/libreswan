@@ -507,7 +507,6 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 	struct state *st = &ike->sa;
 	passert(st->st_ike_version == IKEv2);
 	passert(st->st_state->kind == STATE_PARENT_I0);
-	st->st_original_role = ORIGINAL_INITIATOR;
 	passert(st->st_sa_role == SA_INITIATOR);
 	st->st_try = try;
 
@@ -837,7 +836,6 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 	update_ike_endpoints(ike, md);
 	passert(ike->sa.st_ike_version == IKEv2);
 	passert(ike->sa.st_state->kind == STATE_PARENT_R0);
-	ike->sa.st_original_role = ORIGINAL_RESPONDER;
 	passert(ike->sa.st_sa_role == SA_RESPONDER);
 	/* set by caller */
 	pexpect(md->svm == finite_states[STATE_PARENT_R0]->v2_transitions);
@@ -4504,9 +4502,6 @@ stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
 	pexpect(ike != NULL);
 	struct connection *c = st->st_connection;
 
-	/* child's role could be different from original ike role, of pst; */
-	st->st_original_role = ORIGINAL_RESPONDER;
-
 	free_chunk_content(&st->st_ni); /* this is from the parent. */
 	free_chunk_content(&st->st_nr); /* this is from the parent. */
 
@@ -5579,8 +5574,6 @@ void ikev2_initiate_child_sa(struct pending *p)
 
 	free_chunk_content(&child->sa.st_ni); /* this is from the parent. */
 	free_chunk_content(&child->sa.st_nr); /* this is from the parent. */
-
-	child->sa.st_original_role = ORIGINAL_INITIATOR;
 
 	if (child_being_replaced != NULL) {
 		pexpect(sa_type == IPSEC_SA);
