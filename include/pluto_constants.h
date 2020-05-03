@@ -583,34 +583,6 @@ enum perspective {
 extern enum_names perspective_names;
 
 /*
- * The IKEv2 (RFC 7296) original role.  Either the "original
- * initiator" or the "original responder" as identified by the I
- * (Initiator flag).
- *
- * The "original initiator" will set the I (Initiator) flag
- * (ISAKMP_FLAGS_v2_IKE_I) when sending either the initial SA_INIT
- * packet or CREATE_CHILD_SA rekey-ike request.  The original
- * responder will see the I flag set in all packets it receives from
- * the original initiator.
- *
- * The IKEv1 equivalent is the phase1 role.  It is identified by the
- * IKEv1 IS_PHASE1_INIT() macro.
- *
- * The values are chosen such that no role has values that overlap.
- *
- * XXX: If IKEv2 code correctly uses CHILD_SA and IKE_SA then the, is
- * probably be redundant - An IKE SA's SA_ROLE should be consistent
- * with its ORIGINAL_ROLE.  Currently code isn't consistent, so both
- * are used/defined.
- */
-
-enum original_role {
-	/* values follow after enum message_role */
-	ORIGINAL_INITIATOR = 5, /* IKE_I present */
-	ORIGINAL_RESPONDER = 6, /* IKE_I missing */
-};
-
-/*
  * The IKEv2 message role.  Is this message a request or a response
  * (to a request) as determined by the IKEv2 "R (Response)" flag.
  *
@@ -621,16 +593,14 @@ enum original_role {
  * the MESSAGE_RESPONSE) and request responder (receives the
  * MESSAGE_REQUEST), and not the original (IKE SA) initiator /
  * responder that determine how crypto material is carved up.
- *
- * The values are chosen such that no role has values that overlap.
  */
 
 enum message_role {
 	NO_MESSAGE = 0,
-	/* values follow after enum sa_role */
-	MESSAGE_REQUEST = 3, /* MSG_R missing */
-	MESSAGE_RESPONSE = 4, /* MSR_R present */
-	/* followed by enum original_role */
+#define MESSAGE_ROLE_FLOOR 1
+	MESSAGE_REQUEST = 1, /* MSG_R missing */
+	MESSAGE_RESPONSE = 2, /* MSR_R present */
+#define MESSAGE_ROLE_ROOF 3
 };
 
 extern struct keywords message_role_names;
@@ -650,14 +620,11 @@ extern struct keywords message_role_names;
  *
  * The IKEv1 equivalent is the phase1 role.  It is identified by the
  * IKEv1 IS_PHASE1_INIT() macro.
- *
- * The values are chosen such that no role has values that overlap.
  */
 
 enum sa_role {
 	SA_INITIATOR = 1,
 	SA_RESPONDER = 2,
-	/* followed by enum message_role */
 };
 
 extern struct keywords sa_role_names;
