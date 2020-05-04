@@ -17,8 +17,6 @@ algparse -v2 'esp=aes-sha1'
 algparse -v2 'esp=aes-sha1-modp2048'
 	WARNING: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
-algparse -v2 'esp=aes-128'
-	AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 'esp=aes-128-sha1'
 	AES_CBC_128-HMAC_SHA1_96
 algparse -v2 'esp=aes-128-sha1'
@@ -26,6 +24,8 @@ algparse -v2 'esp=aes-128-sha1'
 algparse -v2 'esp=aes-128-sha1-modp2048'
 	WARNING: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
 	AES_CBC_128-HMAC_SHA1_96
+algparse -v2 'esp=aes-128'
+	AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 'esp=aes_gcm_a-128-null'
 	AES_GCM_8_128-NONE
 algparse -v2 'esp=3des-sha1;modp1024'
@@ -56,6 +56,8 @@ algparse -v2 'esp=aes-sha'
 	AES_CBC-HMAC_SHA1_96
 algparse -v2 'esp=aes-sha1'
 	AES_CBC-HMAC_SHA1_96
+algparse -v2 'esp=aes128-sha1'
+	AES_CBC_128-HMAC_SHA1_96
 algparse -v2 'esp=aes-sha2'
 	AES_CBC-HMAC_SHA2_256_128
 algparse -v2 'esp=aes-sha256'
@@ -64,8 +66,6 @@ algparse -v2 'esp=aes-sha384'
 	AES_CBC-HMAC_SHA2_384_192
 algparse -v2 'esp=aes-sha512'
 	AES_CBC-HMAC_SHA2_512_256
-algparse -v2 'esp=aes128-sha1'
-	AES_CBC_128-HMAC_SHA1_96
 algparse -v2 'esp=aes128-aes_xcbc'
 	AES_CBC_128-AES_XCBC_96
 algparse -v2 'esp=aes192-sha1'
