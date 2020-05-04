@@ -222,19 +222,33 @@ static void free_static_event(struct event *ev)
  * Global timer events.
  */
 
-struct global_timer {
+struct global_timer_desc {
 	struct event ev;
 	global_timer_cb *cb;
-	const char *name;
+	const char *const name;
 };
 
-static struct global_timer global_timers[GLOBAL_TIMERS_ROOF];
+static struct global_timer_desc global_timers[] = {
+#define E(T) [T] = { .name = #T, }
+	E(EVENT_REINIT_SECRET),
+	E(EVENT_SHUNT_SCAN),
+	E(EVENT_PENDING_DDNS),
+	E(EVENT_SD_WATCHDOG),
+	E(EVENT_PENDING_PHASE2),
+	E(EVENT_CHECK_CRLS),
+	E(EVENT_REVIVE_CONNS),
+	E(EVENT_FREE_ROOT_CERTS),
+	E(EVENT_RESET_LOG_RATE_LIMIT),
+	E(EVENT_PROCESS_KERNEL_QUEUE),
+	E(EVENT_NAT_T_KEEPALIVE),
+#undef E
+};
 
 static void global_timer_event(evutil_socket_t fd UNUSED,
 			       const short event, void *arg)
 {
 	passert(in_main_thread());
-	struct global_timer *gt = arg;
+	struct global_timer_desc *gt = arg;
 	passert(event & EV_TIMEOUT);
 	passert(gt >= global_timers);
 	passert(gt < global_timers + elemsof(global_timers));
@@ -244,17 +258,18 @@ static void global_timer_event(evutil_socket_t fd UNUSED,
 	threadtime_stop(&start, SOS_NOBODY, "global timer %s", gt->name);
 }
 
-void enable_periodic_timer(enum event_type type, global_timer_cb *cb,
+void enable_periodic_timer(enum global_timer type, global_timer_cb *cb,
 			   deltatime_t period)
 {
 	passert(in_main_thread());
 	passert(type < elemsof(global_timers));
-	struct global_timer *gt = &global_timers[type];
+	struct global_timer_desc *gt = &global_timers[type];
 	/* initialize */
+	passert(gt->name != NULL);
 	passert(!event_initialized(&gt->ev));
 	event_assign(&gt->ev, pluto_eb, (evutil_socket_t)-1,
-		     EV_TIMEOUT|EV_PERSIST, global_timer_event, gt/*arg*/);
-	gt->name = enum_name(&timer_event_names, type);
+		     EV_TIMEOUT|EV_PERSIST,
+		     global_timer_event, gt/*arg*/);
 	gt->cb = cb;
 	passert(event_get_events(&gt->ev) == (EV_TIMEOUT|EV_PERSIST));
 	/* enable */
@@ -266,24 +281,26 @@ void enable_periodic_timer(enum event_type type, global_timer_cb *cb,
 	    gt->name, str_deltatime(period, &buf));
 }
 
-void init_oneshot_timer(enum event_type type, global_timer_cb *cb)
+void init_oneshot_timer(enum global_timer type, global_timer_cb *cb)
 {
 	passert(in_main_thread());
 	passert(type < elemsof(global_timers));
-	struct global_timer *gt = &global_timers[type];
+	struct global_timer_desc *gt = &global_timers[type];
+	/* initialize */
+	passert(gt->name != NULL);
 	passert(!event_initialized(&gt->ev));
 	event_assign(&gt->ev, pluto_eb, (evutil_socket_t)-1,
-		     EV_TIMEOUT, global_timer_event, gt/*arg*/);
-	gt->name = enum_name(&timer_event_names, type);
+		     EV_TIMEOUT,
+		     global_timer_event, gt/*arg*/);
 	gt->cb = cb;
 	passert(event_get_events(&gt->ev) == (EV_TIMEOUT));
 	dbg("global one-shot timer %s initialized", gt->name);
 }
 
-void schedule_oneshot_timer(enum event_type type, deltatime_t delay)
+void schedule_oneshot_timer(enum global_timer type, deltatime_t delay)
 {
 	passert(type < elemsof(global_timers));
-	struct global_timer *gt = &global_timers[type];
+	struct global_timer_desc *gt = &global_timers[type];
 	deltatime_buf buf;
 	dbg("global one-shot timer %s scheduled in %s seconds",
 	    gt->name, str_deltatime(delay, &buf));
@@ -294,10 +311,10 @@ void schedule_oneshot_timer(enum event_type type, deltatime_t delay)
 }
 
 /* urban dictionary says deschedule is a word */
-void deschedule_oneshot_timer(enum event_type type)
+void deschedule_oneshot_timer(enum global_timer type)
 {
 	passert(type < elemsof(global_timers));
-	struct global_timer *gt = &global_timers[type];
+	struct global_timer_desc *gt = &global_timers[type];
 	dbg("global one-shot timer %s disabled", gt->name);
 	passert(event_initialized(&gt->ev));
 	passert(event_del(&gt->ev) >= 0);
@@ -306,7 +323,7 @@ void deschedule_oneshot_timer(enum event_type type)
 static void free_global_timers(void)
 {
 	for (unsigned u = 0; u < elemsof(global_timers); u++) {
-		struct global_timer *gt = &global_timers[u];
+		struct global_timer_desc *gt = &global_timers[u];
 		if (event_initialized(&gt->ev)) {
 			free_static_event(&gt->ev);
 			dbg("global timer %s uninitialized", gt->name);
@@ -318,7 +335,7 @@ static void list_global_timers(const struct fd *whackfd,
 			       monotime_t now)
 {
 	for (unsigned u = 0; u < elemsof(global_timers); u++) {
-		struct global_timer *gt = &global_timers[u];
+		struct global_timer_desc *gt = &global_timers[u];
 		/*
 		 * XXX: DUE.mt is "set to hold the time at which the
 		 * timeout will expire" which is presumably a time and

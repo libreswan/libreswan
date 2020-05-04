@@ -94,10 +94,6 @@ struct pluto_event **state_event(struct state *st, enum event_type type)
 	case EVENT_RETRANSMIT:
 		return &st->st_retransmit_event;
 
-	case EVENT_FREE_ROOT_CERTS:
-	case EVENT_RESET_LOG_RATE_LIMIT:
-	case EVENT_PROCESS_KERNEL_QUEUE:
-	case GLOBAL_TIMERS_ROOF:
 	case EVENT_SO_DISCARD:
 	case EVENT_SA_REKEY:
 	case EVENT_SA_REPLACE:
@@ -115,14 +111,6 @@ struct pluto_event **state_event(struct state *st, enum event_type type)
 
 	case EVENT_RETAIN:
 	case EVENT_NULL:
-	case EVENT_REINIT_SECRET:
-	case EVENT_SHUNT_SCAN:
-	case EVENT_PENDING_DDNS:
-	case EVENT_PENDING_PHASE2:
-	case EVENT_SD_WATCHDOG:
-	case EVENT_NAT_T_KEEPALIVE:
-	case EVENT_CHECK_CRLS:
-	case EVENT_REVIVE_CONNS:
 		return NULL;
 	}
 	bad_case(type);
@@ -442,14 +430,6 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		break;
 #endif
 
-	case EVENT_REINIT_SECRET:
-	case EVENT_SHUNT_SCAN:
-	case EVENT_PENDING_DDNS:
-	case EVENT_PENDING_PHASE2:
-	case EVENT_SD_WATCHDOG:
-	case EVENT_NAT_T_KEEPALIVE:
-	case EVENT_CHECK_CRLS:
-	case EVENT_REVIVE_CONNS:
 	default:
 		bad_case(type);
 	}

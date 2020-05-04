@@ -164,14 +164,12 @@ enum natt_method {
 
 /* Timer events */
 
-enum event_type {
-	EVENT_NULL,			/* non-event */
+/*
+ * Timer events not associated with states (aka global
+ * timers).
+ */
 
-	/*
-	 * Timer events not associated with states (aka global
-	 * timers).
-	 */
-
+enum global_timer {
 	EVENT_REINIT_SECRET,		/* Refresh cookie secret */
 	EVENT_SHUNT_SCAN,		/* scan shunt eroutes known to kernel */
 	EVENT_PENDING_DDNS,		/* try to start connections where DNS failed at init */
@@ -189,8 +187,10 @@ enum event_type {
 	EVENT_NAT_T_KEEPALIVE,		/* NAT Traversal Keepalive */
 
 	EVENT_PROCESS_KERNEL_QUEUE,	/* non-netkey */
+};
 
-	GLOBAL_TIMERS_ROOF,
+enum event_type {
+	EVENT_NULL,			/* non-event */
 
 	/* events associated with connections */
 

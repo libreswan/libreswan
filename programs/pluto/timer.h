@@ -59,11 +59,11 @@ extern char *revive_conn;
  * is just easier.
  */
 typedef void (global_timer_cb)(struct fd *whackfd);
-void enable_periodic_timer(enum event_type type, global_timer_cb *cb,
+void enable_periodic_timer(enum global_timer type, global_timer_cb *cb,
 			   deltatime_t period);
 
-void init_oneshot_timer(enum event_type type, global_timer_cb *cb);
-void schedule_oneshot_timer(enum event_type type, deltatime_t delay);
-void deschedule_oneshot_timer(enum event_type type);
+void init_oneshot_timer(enum global_timer type, global_timer_cb *cb);
+void schedule_oneshot_timer(enum global_timer type, deltatime_t delay);
+void deschedule_oneshot_timer(enum global_timer type);
 
 #endif /* _TIMER_H */
