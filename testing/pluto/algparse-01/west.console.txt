@@ -21,12 +21,9 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  grep ^FIPS /tmp/pluto.log
-FIPS Product: NO
-FIPS Kernel: NO
 FIPS Mode: NO
-FIPS HMAC integrity support [enabled]
 FIPS mode disabled for pluto daemon
-FIPS HMAC integrity verification self-test passed
+FIPS HMAC integrity support [disabled]
 west #
  # check pluto algorithm list
 west #
