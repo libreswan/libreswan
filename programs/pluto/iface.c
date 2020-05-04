@@ -64,14 +64,14 @@ static void add_iface_dev(const struct raw_iface *ifp)
 	struct iface_dev *ifd = alloc_thing(struct iface_dev,
 					    "struct iface_dev");
 	init_ref(ifd);
-	ifd->ifd_entry = list_entry(&iface_dev_info, ifd);
-	insert_list_entry(&interface_dev, &ifd->ifd_entry);
 	ifd->id_rname = clone_str(ifp->name,
 				 "real device name");
 	ifd->id_nic_offload = kernel_ops->detect_offload(ifp);
 	ifd->id_address = ifp->addr;
-	dbg("iface: marking %s add", ifd->id_rname);
 	ifd->ifd_change = IFD_ADD;
+	ifd->ifd_entry = list_entry(&iface_dev_info, ifd);
+	insert_list_entry(&interface_dev, &ifd->ifd_entry);
+	dbg("iface: marking %s add", ifd->id_rname);
 }
 
 static void mark_ifaces_dead(void)
