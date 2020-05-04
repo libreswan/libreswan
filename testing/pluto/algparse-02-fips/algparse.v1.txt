@@ -14,14 +14,14 @@ algparse -fips -v1 'esp=aes-sha1'
 algparse -fips -v1 'esp=aes-sha1-modp2048'
 	WARNING: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
-algparse -fips -v1 'esp=aes-128'
-	AES_CBC_128-HMAC_SHA1_96
 algparse -fips -v1 'esp=aes-128-sha1'
 	AES_CBC_128-HMAC_SHA1_96
 algparse -fips -v1 'esp=aes-128-sha1'
 	AES_CBC_128-HMAC_SHA1_96
 algparse -fips -v1 'esp=aes-128-sha1-modp2048'
 	WARNING: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+	AES_CBC_128-HMAC_SHA1_96
+algparse -fips -v1 'esp=aes-128'
 	AES_CBC_128-HMAC_SHA1_96
 algparse -fips -v1 'esp=aes_gcm_a-128-null'
 	AES_GCM_8_128-NONE
@@ -50,6 +50,8 @@ algparse -fips -v1 'esp=aes-sha'
 	AES_CBC-HMAC_SHA1_96
 algparse -fips -v1 'esp=aes-sha1'
 	AES_CBC-HMAC_SHA1_96
+algparse -fips -v1 'esp=aes128-sha1'
+	AES_CBC_128-HMAC_SHA1_96
 algparse -fips -v1 'esp=aes-sha2'
 	AES_CBC-HMAC_SHA2_256_128
 algparse -fips -v1 'esp=aes-sha256'
@@ -58,8 +60,6 @@ algparse -fips -v1 'esp=aes-sha384'
 	AES_CBC-HMAC_SHA2_384_192
 algparse -fips -v1 'esp=aes-sha512'
 	AES_CBC-HMAC_SHA2_512_256
-algparse -fips -v1 'esp=aes128-sha1'
-	AES_CBC_128-HMAC_SHA1_96
 algparse -fips -v1 'esp=aes128-aes_xcbc'
 	ERROR: ESP integrity algorithm 'aes_xcbc' is not supported
 algparse -fips -v1 'esp=aes192-sha1'
