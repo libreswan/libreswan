@@ -51,10 +51,14 @@ extern char *revive_conn;
  * Since global timers (one-shot or periodic) rely on global state
  * they don't need a context parameter.
  *
+ * Global timers do not have a whackfd, however global timers can be
+ * triggered manually using whack (well that's the theory, needs some
+ * code).  Hence the parameter.
+ *
  * XXX: implementation can be found in server.c and not timer.c as it
  * is just easier.
  */
-typedef void (global_timer_cb)(void);
+typedef void (global_timer_cb)(struct fd *whackfd);
 void enable_periodic_timer(enum event_type type, global_timer_cb *cb,
 			   deltatime_t period);
 

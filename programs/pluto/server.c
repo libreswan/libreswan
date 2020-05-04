@@ -240,7 +240,7 @@ static void global_timer_event(evutil_socket_t fd UNUSED,
 	passert(gt < global_timers + elemsof(global_timers));
 	dbg("processing global timer %s", gt->name);
 	threadtime_t start = threadtime_start();
-	gt->cb();
+	gt->cb(null_fd);
 	threadtime_stop(&start, SOS_NOBODY, "global timer %s", gt->name);
 }
 

@@ -2542,7 +2542,7 @@ static void kernel_process_msg_cb(evutil_socket_t fd,
 
 static global_timer_cb kernel_process_queue_cb;
 
-static void kernel_process_queue_cb(void)
+static void kernel_process_queue_cb(struct fd *unused_whackfd UNUSED)
 {
 	if (pexpect(kernel_ops->process_queue != NULL)) {
 		kernel_ops->process_queue();
@@ -2564,7 +2564,7 @@ const struct kernel_ops *kernel_ops =
 
 deltatime_t bare_shunt_interval = DELTATIME_INIT(SHUNT_SCAN_INTERVAL);
 
-static void kernel_scan_shunts(void)
+static void kernel_scan_shunts(struct fd *unused_whackfd UNUSED)
 {
 	kernel_ops->scan_shunts();
 }

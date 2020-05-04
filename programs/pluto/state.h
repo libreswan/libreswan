@@ -934,7 +934,7 @@ extern bool ikev2_viable_parent(const struct ike_sa *ike);
 
 extern bool uniqueIDs;  /* --uniqueids? */
 extern void ISAKMP_SA_established(const struct state *pst);
-extern void revive_conns(void);
+extern void revive_conns(struct fd *whackfd);
 
 void list_state_events(const struct fd *whackfd, monotime_t now);
 

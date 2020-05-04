@@ -125,7 +125,7 @@ void init_root_certs(void)
 	init_oneshot_timer(EVENT_FREE_ROOT_CERTS, free_root_certs);
 }
 
-void free_root_certs(void)
+void free_root_certs(struct fd *unused_whackfd UNUSED)
 {
 	passert(in_main_thread());
 	root_certs_delref(&root_certs, HERE);

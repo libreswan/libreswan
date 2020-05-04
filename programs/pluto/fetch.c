@@ -448,7 +448,7 @@ static void fetch_crls(void)
  * Similarly, if check_crls() is called more frequently than
  * fetch_crls() can process, redundant fetches will be merged.
  */
-void check_crls(void)
+void check_crls(struct fd *unused_whackfd UNUSED)
 {
 	schedule_oneshot_timer(EVENT_CHECK_CRLS, crl_check_interval);
 	struct crl_fetch_request *requests = NULL;

@@ -82,7 +82,7 @@ void pluto_sd(int action, int status)
 	}
 }
 
-void sd_watchdog_event(void)
+void sd_watchdog_event(struct fd *unused_whackfd UNUSED)
 {
 	pluto_sd(PLUTO_SD_WATCHDOG, SD_REPORT_NO_STATUS);
 }

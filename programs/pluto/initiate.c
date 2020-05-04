@@ -1083,7 +1083,7 @@ static void connection_check_ddns1(struct connection *c)
 	}
 }
 
-void connection_check_ddns(void)
+void connection_check_ddns(struct fd *unused_whackfd UNUSED)
 {
 	struct connection *c, *cnext;
 	realtime_t tv1 = realnow();
@@ -1109,9 +1109,8 @@ void connection_check_ddns(void)
  * call me periodically to check to see if pending phase2s ever got
  * unstuck, and if not, perform DPD action.
  */
-void connection_check_phase2(void)
+void connection_check_phase2(struct fd *whackfd)
 {
-	struct fd *whackfd = whack_log_fd; /* placeholder */
 	struct connection *c, *cnext;
 
 	dbg("FOR_EACH_CONNECTION_... in %s", __func__);

@@ -397,7 +397,7 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 
 	if (m->whack_ddns) {
 		libreswan_log("updating pending dns lookups");
-		connection_check_ddns();
+		connection_check_ddns(whackfd);
 	}
 
 	if (m->whack_reread & REREAD_SECRETS)

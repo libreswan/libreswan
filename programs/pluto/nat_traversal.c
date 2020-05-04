@@ -746,7 +746,7 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 	}
 }
 
-void nat_traversal_ka_event(void)
+void nat_traversal_ka_event(struct fd *unused_whackfd UNUSED)
 {
 	unsigned int nat_kap_st = 0;
 

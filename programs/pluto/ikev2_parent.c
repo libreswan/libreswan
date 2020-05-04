@@ -3010,8 +3010,10 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 
 	if (LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
 		/* ensure we run keepalives if needed */
-		if (c->nat_keepalive)
-			nat_traversal_ka_event();
+		if (c->nat_keepalive) {
+			/* XXX: just trigger this event? */
+			nat_traversal_ka_event(null_fd);
+		}
 	}
 
 	/* send response */
@@ -3660,8 +3662,10 @@ static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *
 
 	if (LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
 		/* ensure we run keepalives if needed */
-		if (c->nat_keepalive)
-			nat_traversal_ka_event();
+		if (c->nat_keepalive) {
+			/* XXX: just trigger this event */
+			nat_traversal_ka_event(null_fd);
+		}
 	}
 
 	/* AUTH is ok, we can trust the notify payloads */

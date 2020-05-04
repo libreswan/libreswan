@@ -1866,6 +1866,8 @@ volatile bool exiting_pluto = false;
  */
 void exit_pluto(enum pluto_exit_code status)
 {
+	/* now whack; right? */
+	struct fd *whackfd = null_fd;
 	/*
 	 * Tell the world, well actually all the threads, that pluto
 	 * is exiting and they should quit.  Even if pthread_cancel()
@@ -1898,7 +1900,7 @@ void exit_pluto(enum pluto_exit_code status)
 	 */
 	stop_crypto_helpers();
 
-	free_root_certs();
+	free_root_certs(whackfd);
 	free_preshared_secrets();
 	free_remembered_public_keys();
 	delete_every_connection();

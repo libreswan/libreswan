@@ -244,7 +244,7 @@ static void add_revival(struct connection *c)
 	}
 }
 
-void revive_conns(void)
+void revive_conns(struct fd *unused_whackfd UNUSED)
 {
 	/*
 	 * XXX: Revive all listed connections regardless of their
@@ -2452,7 +2452,7 @@ static struct state **sort_states(int (*sort_fn)(const void *, const void *),
 }
 
 static int show_newest_state_traffic(struct connection *c,
-				     struct fd *whackfd UNUSED,
+				     struct fd *unused_whackfd UNUSED,
 				     void *arg)
 {
 	struct show *s = arg;
