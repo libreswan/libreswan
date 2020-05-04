@@ -955,7 +955,7 @@ static bool ikev2_check_fragment(struct msg_digest *md, struct state *st)
 		if (skf->isaskf_total > st->st_v2_rfrags->total) {
 			DBG(DBG_CONTROL, DBG_log(
 				"discarding saved fragments because this fragment has larger total"));
-			free_v2_message_queues(st);
+			free_v2_ike_rfrags(st);
 			return TRUE;
 		} else {
 			DBG(DBG_CONTROL, DBG_log(
@@ -1191,7 +1191,7 @@ static bool is_duplicate_request(struct ike_sa *ike,
 		 * presumably, a response was sent.  Retransmit the
 		 * saved response (the response was saved right?).
 		 */
-		if (ike->sa.st_tpacket.len == 0 && ike->sa.st_v2_tfrags == NULL) {
+		if (ike->sa.st_v2_outgoing[MESSAGE_RESPONSE] == NULL) {
 			FAIL_V2_MSGID(ike, &ike->sa,
 				      "retransmission for messsage %jd exchange %s failed responder.sent %jd - there is no stored message or fragments to retransmit",
 				      msgid, enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
@@ -1216,13 +1216,15 @@ static bool is_duplicate_request(struct ike_sa *ike,
 				  "received duplicate %s message request (Message ID %jd); retransmitting response",
 				  enum_short_name(&ikev2_exchange_names, md->hdr.isa_xchg),
 				  msgid);
-			send_recorded_v2_ike_msg(&ike->sa, "ikev2-responder-retransmit");
+			send_recorded_v2_message(ike, "ikev2-responder-retransmit",
+						 MESSAGE_RESPONSE);
 		} else if (fragment == 1) {
 			log_state(RC_LOG, &ike->sa,
 				  "received duplicate %s message request (Message ID %jd, fragment %u); retransmitting response",
 				  enum_short_name(&ikev2_exchange_names, md->hdr.isa_xchg),
 				  msgid, fragment);
-			send_recorded_v2_ike_msg(&ike->sa, "ikev2-responder-retransmt (fragment 1)");
+			send_recorded_v2_message(ike, "ikev2-responder-retransmt (fragment 1)",
+						 MESSAGE_RESPONSE);
 		} else {
 			dbg_v2_msgid(ike, &ike->sa,
 				     "received duplicate %s message request (Message ID %jd, fragment %u); discarded as not fragment 1",
@@ -1687,7 +1689,8 @@ void ikev2_process_packet(struct msg_digest *md)
 						  "received duplicate %s message request (Message ID %jd); retransmitting response",
 						  enum_short_name(&ikev2_exchange_names, md->hdr.isa_xchg),
 						  msgid);
-					send_recorded_v2_ike_msg(&old->sa, "IKE_SA_INIT responder retransmit");
+					send_recorded_v2_message(old, "IKE_SA_INIT responder retransmit",
+								 MESSAGE_RESPONSE);
 				} else {
 					/*
 					 * Either:
@@ -3154,16 +3157,16 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	}
 
 	/* if requested, send the new reply packet */
-	if (transition->send == MESSAGE_REQUEST ||
-	    transition->send == MESSAGE_RESPONSE) {
-		endpoint_buf b;
-		endpoint_buf b2;
-		pexpect_st_local_endpoint(st);
-		dbg("sending V2 %s packet to %s (from %s)",
-		    transition->send == MESSAGE_REQUEST ? "request" : "response",
-		    str_endpoint(&st->st_remote_endpoint, &b),
-		    str_endpoint(&st->st_interface->local_endpoint, &b2));
-		send_recorded_v2_ike_msg(&ike->sa, finite_states[from_state]->name);
+	switch (transition->send) {
+	case MESSAGE_REQUEST:
+	case MESSAGE_RESPONSE:
+		send_recorded_v2_message(ike, finite_states[from_state]->name,
+					 transition->send);
+		break;
+	case NO_MESSAGE:
+		break;
+	default:
+		bad_case(transition->send);;
 	}
 
 	if (w == RC_SUCCESS) {
@@ -3506,10 +3509,11 @@ void complete_v2_state_transition(struct state *st,
 		case MESSAGE_REQUEST:
 			dbg("Message ID: responding with recorded fatal error");
 			pexpect(transition->send == MESSAGE_RESPONSE);
-			if (ike->sa.st_v2_tfrags != NULL || ike->sa.st_tpacket.len > 0) {
+			if (ike->sa.st_v2_outgoing[MESSAGE_RESPONSE] != NULL) {
 				v2_msgid_update_recv(ike, st, md);
 				v2_msgid_update_sent(ike, st, md, transition->send);
-				send_recorded_v2_ike_msg(&ike->sa, "STF_FATAL");
+				send_recorded_v2_message(ike, "STF_FATAL",
+							 MESSAGE_RESPONSE);
 				release_pending_whacks(st, "fatal error");
 				delete_my_family(&ike->sa, true);
 				return;
@@ -3538,7 +3542,7 @@ void complete_v2_state_transition(struct state *st,
 			pexpect(transition->send == MESSAGE_RESPONSE);
 			v2_msgid_update_recv(ike, st, md);
 			v2_msgid_update_sent(ike, st, md, transition->send);
-			send_recorded_v2_ike_msg(&ike->sa, "STF_FAIL");
+			send_recorded_v2_message(ike, "STF_FAIL", MESSAGE_RESPONSE);
 			break;
 		case NO_MESSAGE:
 			break;

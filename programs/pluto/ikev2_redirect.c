@@ -443,7 +443,8 @@ void send_active_redirect_in_informational(struct state *st)
 	stf_status e = record_v2_informational_request("active REDIRECT informational request",
 						       ike, st, add_redirect_payload);
 	if (e == STF_OK) {
-		send_recorded_v2_ike_msg(st, "active REDIRECT informational request");
+		send_recorded_v2_message(ike, "active REDIRECT informational request",
+					 MESSAGE_REQUEST);
 		/*
 		 * XXX: record 'n' send violates the RFC.  This code
 		 * should instead let success_v2_state_transition()

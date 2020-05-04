@@ -191,9 +191,12 @@ struct v2_ike_rfrags {
 	struct v2_ike_rfrag frags[MAX_IKE_FRAGMENTS + 1];
 };
 
-struct v2_ike_tfrag {
-	struct v2_ike_tfrag *next;
-	chunk_t cipher;
+/* hunk like */
+
+struct v2_outgoing_fragment {
+	struct v2_outgoing_fragment *next;
+	size_t len;
+	uint8_t ptr[1]; /* can be bigger */
 };
 
 struct v2_id_payload {
@@ -441,6 +444,9 @@ struct state {
 	/* end of IKEv1-only things */
 
 	/** IKEv2-only things **/
+
+	struct v2_outgoing_fragment *st_v2_outgoing[MESSAGE_ROLE_ROOF];
+
 	bool st_viable_parent;	/* can initiate new CERAET_CHILD_SA */
 	struct ikev2_proposal *st_accepted_ike_proposal;
 	struct ikev2_proposal *st_accepted_esp_or_ah_proposal;
@@ -493,7 +499,6 @@ struct state {
 
 	/* my stuff */
 	chunk_t st_tpacket;                     /* Transmitted packet */
-	struct v2_ike_tfrag *st_v2_tfrags;	/* Transmitted fragments */
 
 	struct xfrm_user_sec_ctx_ike *sec_ctx;
 

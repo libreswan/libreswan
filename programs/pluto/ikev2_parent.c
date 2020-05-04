@@ -804,7 +804,8 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 						       "saved first packet");
 
 	/* Transmit */
-	record_outbound_v2_ike_msg(&ike->sa, &reply_stream, "IKE_SA_INIT request");
+	record_v2_message(ike, &reply_stream, "IKE_SA_INIT request",
+			  MESSAGE_REQUEST);
 	return true;
 }
 
@@ -975,6 +976,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 						       struct msg_digest *md,
 						       struct pluto_crypto_req *r)
 {
+	struct ike_sa *ike = pexpect_ike_sa(st);
 	struct connection *c = st->st_connection;
 	bool send_certreq = FALSE;
 
@@ -1130,8 +1132,9 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	close_output_pbs(&rbody);
 	close_output_pbs(&reply_stream);
 
-	record_outbound_v2_ike_msg(st, &reply_stream,
-		"reply packet for ikev2_parent_inI1outR1_tail");
+	record_v2_message(ike, &reply_stream,
+			  "reply packet for ikev2_parent_inI1outR1_tail",
+			  MESSAGE_RESPONSE);
 
 	/* save packet for later signing */
 	free_chunk_content(&st->st_firstpacket_me);
@@ -2061,7 +2064,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 
 	/* insert an Encryption payload header (SK) */
 
-	v2SK_payload_t sk = open_v2SK_payload(&rbody, ike_sa(pst, HERE));
+	v2SK_payload_t sk = open_v2SK_payload(child->sa.st_logger, &rbody, ike_sa(pst, HERE));
 	if (!pbs_ok(&sk.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -2336,8 +2339,9 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	 * For AUTH exchange, store the message in the IKE SA.  The
 	 * attempt to create the CHILD SA could have failed.
 	 */
-	return record_outbound_v2SK_msg(&sk.ike->sa, &reply_stream, &sk,
-					"sending IKE_AUTH request");
+	return record_v2SK_message(&reply_stream, &sk,
+				   "sending IKE_AUTH request",
+				   MESSAGE_REQUEST);
 }
 
 #ifdef XAUTH_HAVE_PAM
@@ -3054,7 +3058,7 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 
 	/* insert an Encryption payload header */
 
-	v2SK_payload_t sk = open_v2SK_payload(&rbody, ike_sa(st, HERE));
+	v2SK_payload_t sk = open_v2SK_payload(st->st_logger, &rbody, ike);
 	if (!pbs_ok(&sk.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -3188,8 +3192,9 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 	 * The attempt to create the CHILD SA could have
 	 * failed.
 	 */
-	return record_outbound_v2SK_msg(&sk.ike->sa, &reply_stream, &sk,
-					"replying to IKE_AUTH request");
+	return record_v2SK_message(&reply_stream, &sk,
+				   "replying to IKE_AUTH request",
+				   MESSAGE_RESPONSE);
 }
 
 stf_status ikev2_process_child_sa_pl(struct ike_sa *ike, struct child_sa *child,
@@ -4695,7 +4700,7 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 
 	/* insert an Encryption payload header */
 
-	v2SK_payload_t sk = open_v2SK_payload(&rbody, ike);
+	v2SK_payload_t sk = open_v2SK_payload(child->sa.st_logger, &rbody, ike);
 	if (!pbs_ok(&sk.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -4776,8 +4781,9 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 	 * CREATE_CHILD_SA request and response are small 300 - 750 bytes.
 	 * ??? Should we support fragmenting?  Maybe one day.
 	 */
-	record_outbound_v2_ike_msg(&ike->sa, &reply_stream,
-				"packet from ikev2_child_out_cont");
+	record_v2_message(ike, &reply_stream,
+			  "packet from ikev2_child_out_cont",
+			  request_md != NULL ? MESSAGE_RESPONSE : MESSAGE_REQUEST);
 
 	if (child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
 	    child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0) {
@@ -5243,7 +5249,7 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 
 		/* insert an Encryption payload header */
 
-		sk = open_v2SK_payload(&rbody, ike);
+		sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
 		if (!pbs_ok(&sk.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
@@ -5449,8 +5455,10 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 		mobike_switch_remote(md, &mobike_remote);
 
 		/* ??? should we support fragmenting?  Maybe one day. */
-		record_outbound_v2_ike_msg(&ike->sa, &reply_stream, "reply packet for process_encrypted_informational_ikev2");
-		send_recorded_v2_ike_msg(&ike->sa, "reply packet for process_encrypted_informational_ikev2");
+		record_v2_message(ike, &reply_stream, "reply packet for process_encrypted_informational_ikev2",
+				  MESSAGE_RESPONSE);
+		send_recorded_v2_message(ike, "reply packet for process_encrypted_informational_ikev2",
+					 MESSAGE_RESPONSE);
 
 		/*
 		 * XXX: This code should be neither using record 'n'
@@ -5829,7 +5837,8 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 						       ike, st/*sender*/,
 						       add_mobike_payloads);
 	if (e == STF_OK) {
-		send_recorded_v2_ike_msg(st, "mobike informational request");
+		send_recorded_v2_message(ike, "mobike informational request",
+					 MESSAGE_REQUEST);
 		/*
 		 * XXX: record 'n' send violates the RFC.  This code should
 		 * instead let success_v2_state_transition() deal with things.

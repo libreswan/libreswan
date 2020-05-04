@@ -31,6 +31,7 @@ pb_stream open_v2_message(pb_stream *reply,
 			  enum isakmp_xchg_types exchange_type);
 
 typedef struct {
+	struct logger *logger;
 	struct ike_sa *ike;
 	pb_stream pbs; /* within SK */
 	/* pointers into SK header+contents */
@@ -42,16 +43,17 @@ typedef struct {
 	chunk_t integrity;
 } v2SK_payload_t;
 
-v2SK_payload_t open_v2SK_payload(pb_stream *container,
+v2SK_payload_t open_v2SK_payload(struct logger *logger,
+				 pb_stream *container,
 				 struct ike_sa *st);
 bool close_v2SK_payload(v2SK_payload_t *sk);
 
 stf_status encrypt_v2SK_payload(v2SK_payload_t *sk);
 
-stf_status record_outbound_v2SK_msg(struct state *msg_sa,
-				    pb_stream *msg,
-				    v2SK_payload_t *sk,
-				    const char *what);
+stf_status record_v2SK_message(struct pbs_out *msg,
+			       v2SK_payload_t *sk,
+			       const char *what,
+			       enum message_role message);
 
 uint8_t build_ikev2_critical(bool impair);
 

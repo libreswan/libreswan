@@ -40,30 +40,52 @@
 #include "rnd.h"
 #include "log.h"
 
-bool send_recorded_v2_ike_msg(struct state *st, const char *where)
+bool send_recorded_v2_message(struct ike_sa *ike,
+			      const char *where,
+			      enum message_role message)
 {
-	if (st->st_interface == NULL) {
-		libreswan_log("Cannot send packet - interface vanished!");
+	struct v2_outgoing_fragment *frags = ike->sa.st_v2_outgoing[message];
+	if (ike->sa.st_interface == NULL) {
+		log_state(RC_LOG, &ike->sa, "cannot send packet - interface vanished!");
 		return false;
-	} else if (st->st_v2_tfrags != NULL) {
-		/* if a V2 packet needs fragmenting it would have already happened */
-		passert(st->st_ike_version == IKEv2);
-		passert(st->st_tpacket.ptr == NULL);
-		unsigned nr_frags = 0;
-		dbg("sending fragments ...");
-		for (struct v2_ike_tfrag *frag = st->st_v2_tfrags;
-		     frag != NULL; frag = frag->next) {
-			if (!send_chunk_using_state(st, where, frag->cipher)) {
-				dbg("send of fragment %u failed", nr_frags);
-				return false;
-			}
-			nr_frags++;
-		}
-		dbg("sent %u fragments", nr_frags);
-		return true;
-	} else {
-		return send_chunk_using_state(st, where, st->st_tpacket);
 	}
+	if (frags == NULL) {
+		log_state(RC_LOG, &ike->sa, "no %s message to send", where);
+		return false;
+	}
+
+	unsigned nr_frags = 0;
+	for (struct v2_outgoing_fragment *frag = frags;
+	     frag != NULL; frag = frag->next) {
+		nr_frags++;
+		if (!send_hunk_using_state(&ike->sa, where, *frag)) {
+			dbg("send of %s fragment %u failed", where, nr_frags);
+			return false;
+		}
+	}
+	dbg("sent %u messages", nr_frags);
+	return true;
+}
+
+void record_v2_outgoing_fragment(struct pbs_out *pbs,
+				 const char *what,
+				 struct v2_outgoing_fragment **frags)
+{
+	pexpect(*frags == NULL);
+	chunk_t frag = same_out_pbs_as_chunk(pbs);
+	*frags = alloc_bytes(sizeof(struct v2_outgoing_fragment) + frag.len, what);
+	(*frags)->len = frag.len;
+	memcpy((*frags)->ptr/*array*/, frag.ptr, frag.len);
+}
+
+void record_v2_message(struct ike_sa *ike,
+		       struct pbs_out *msg,
+		       const char *what,
+		       enum message_role message)
+{
+	struct v2_outgoing_fragment **frags = &ike->sa.st_v2_outgoing[message];
+	free_v2_outgoing_fragments(frags);
+	record_v2_outgoing_fragment(msg, what, frags);
 }
 
 /*
@@ -314,7 +336,7 @@ static bool open_response(struct response *response,
 		if (!pexpect(ike->sa.hidden_variables.st_skeyid_calculated)) {
 			return false;
 		}
-		response->sk = open_v2SK_payload(&response->body, ike);
+		response->sk = open_v2SK_payload(logger, &response->body, ike);
 		if (!pbs_ok(&response->sk.pbs)) {
 			return false;
 		}
@@ -440,7 +462,8 @@ void record_v2N_spi_response(struct logger *logger,
 	if (!close_response(&response)) {
 		return;
 	}
-	record_outbound_v2_ike_msg(&ike->sa, &response.message, "v2N response");
+	record_v2_message(ike, &response.message, "v2N response",
+			  MESSAGE_RESPONSE);
 	pstat(ikev2_sent_notifies_e, ntype);
 }
 
@@ -598,7 +621,7 @@ void record_v2_delete(struct state *const st)
 		return;
 	}
 
-	v2SK_payload_t sk = open_v2SK_payload(&rbody, ike);
+	v2SK_payload_t sk = open_v2SK_payload(st->st_logger, &rbody, ike);
 	if (!pbs_ok(&sk.pbs)) {
 		return;
 	}
@@ -648,7 +671,8 @@ void record_v2_delete(struct state *const st)
 		return;
 	}
 
-	record_outbound_v2_ike_msg(st, &packet, "packet for ikev2 delete informational");
+	record_v2_message(ike, &packet, "packet for ikev2 delete informational",
+			  MESSAGE_REQUEST);
 }
 
 /*
@@ -683,7 +707,7 @@ stf_status record_v2_informational_request(const char *name,
 		return STF_INTERNAL_ERROR;
 	}
 
-	v2SK_payload_t sk = open_v2SK_payload(&message, ike);
+	v2SK_payload_t sk = open_v2SK_payload(sender->st_logger, &message, ike);
 	if (!pbs_ok(&sk.pbs) ||
 	    (payloads != NULL && !payloads(sender, &sk.pbs)) ||
 	    !close_v2SK_payload(&sk)) {
@@ -698,11 +722,24 @@ stf_status record_v2_informational_request(const char *name,
 	}
 
 	ike->sa.st_pend_liveness = TRUE; /* we should only do this when dpd/liveness is active? */
-	record_outbound_v2_ike_msg(sender, &packet, name);
+	record_v2_message(ike, &packet, name, MESSAGE_REQUEST);
 	return STF_OK;
 }
 
-void free_v2_message_queues(struct state *st)
+void free_v2_outgoing_fragments(struct v2_outgoing_fragment **frags)
+{
+	if (*frags != NULL) {
+		struct v2_outgoing_fragment *frag = *frags;
+		do {
+			struct v2_outgoing_fragment *next = frag->next;
+			pfree(frag);
+			frag = next;
+		} while (frag != NULL);
+		*frags = NULL;
+	}
+}
+
+void free_v2_ike_rfrags(struct state *st)
 {
 	passert(st->st_ike_version == IKEv2);
 
@@ -714,22 +751,13 @@ void free_v2_message_queues(struct state *st)
 		pfree(st->st_v2_rfrags);
 		st->st_v2_rfrags = NULL;
 	}
-
-	for (struct v2_ike_tfrag *frag = st->st_v2_tfrags; frag != NULL; ) {
-		struct v2_ike_tfrag *this = frag;
-		frag = this->next;
-		free_chunk_content(&this->cipher);
-		pfree(this);
-	}
-	st->st_v2_tfrags = NULL;
 }
 
-void record_outbound_v2_ike_msg(struct state *st, pb_stream *pbs, const char *what)
+void free_v2_message_queues(struct state *st)
 {
-	passert(pbs_offset(pbs) != 0);
-	free_v2_message_queues(st);
-	free_chunk_content(&st->st_tpacket);
-	st->st_tpacket = clone_out_pbs_as_chunk(pbs, what);
-	st->st_last_liveness = mononow();
+	free_v2_ike_rfrags(st);
+	for (enum message_role message = MESSAGE_ROLE_FLOOR;
+	     message < MESSAGE_ROLE_ROOF; message++) {
+		free_v2_outgoing_fragments(&st->st_v2_outgoing[message]);
+	}
 }
-

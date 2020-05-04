@@ -24,6 +24,7 @@
 struct msg_digest;
 struct dh_desc;
 struct ike_sa;
+struct v2_outgoing_fragment;
 
 /*
  * Should the payload be encrypted/protected (don't confuse this with
@@ -51,7 +52,8 @@ void record_v2N_spi_response(struct logger *logger,
 			     const chunk_t *data /* optional */,
 			     enum payload_security security);
 
-bool send_recorded_v2_ike_msg(struct state *st, const char *where);
+bool send_recorded_v2_message(struct ike_sa *ike, const char *where,
+			      enum message_role role);
 
 void send_v2N_response_from_state(struct ike_sa *st, /* XXX: USE record_v2N_response_from_state() */
 				  struct msg_digest *md,
@@ -70,10 +72,17 @@ extern stf_status record_v2_informational_request(const char *name,
 						  struct ike_sa *owner,
 						  struct state *sender,
 						  payload_master_t *payloads);
+void record_v2_outgoing_fragment(struct pbs_out *pbs,
+				 const char *what,
+				 struct v2_outgoing_fragment **frags);
+void record_v2_message(struct ike_sa *ike,
+		       struct pbs_out *msg,
+		       const char *what,
+		       enum message_role message);
 
-void record_outbound_v2_ike_msg(struct state *st, pb_stream *pbs,
-				const char *what);
 void free_v2_message_queues(struct state *st);
+void free_v2_ike_rfrags(struct state *st);
+void free_v2_outgoing_fragments(struct v2_outgoing_fragment **frags);
 
 /*
  * Emit an IKEv2 payload.

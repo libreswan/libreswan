@@ -39,6 +39,11 @@ bool send_chunks_using_state(struct state *st, const char *where,
 
 bool send_chunk_using_state(struct state *st, const char *where,
 			    chunk_t packet);
+#define send_hunk_using_state(ST, WHERE, HUNK)				\
+	({								\
+		chunk_t h_ = { .ptr = (HUNK).ptr, .len = (HUNK).len, };	\
+		send_chunk_using_state(ST, WHERE, h_);			\
+	})
 
 bool send_ike_msg_without_recording(struct state *st, pb_stream *pbs,
 				    const char *where);
