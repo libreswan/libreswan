@@ -23,12 +23,9 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  grep ^FIPS /tmp/pluto.log
-FIPS Product: YES
-FIPS Kernel: YES
 FIPS Mode: YES
-FIPS HMAC integrity support [enabled]
 FIPS mode enabled for pluto daemon
-FIPS HMAC integrity verification self-test passed
+FIPS HMAC integrity support [disabled]
 FIPS Encryption algorithms:
 FIPS Hash algorithms:
 FIPS PRF algorithms:
