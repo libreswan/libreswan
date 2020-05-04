@@ -27,7 +27,14 @@ size_t lswlog_nss_cka(struct lswlog *buf, CK_ATTRIBUTE_TYPE attribute)
 #define CASE(T) case T: return lswlogs(buf, #T + strlen("CKA_"))
 		CASE(CKA_DERIVE);
 		CASE(CKA_FLAGS_ONLY);
+		CASE(CKA_WRAP);
 		CASE(CKA_UNWRAP);
+		CASE(CKA_ENCRYPT);
+		CASE(CKA_DECRYPT);
+		CASE(CKA_SIGN);
+		CASE(CKA_SIGN_RECOVER);
+		CASE(CKA_VERIFY);
+		CASE(CKA_VERIFY_RECOVER);
 #undef CASE
 	default:
 		return lswlogf(buf, "CKA_%08lx", (long)attribute);
