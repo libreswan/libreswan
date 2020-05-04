@@ -25,6 +25,7 @@ struct msg_digest;
 struct dh_desc;
 struct ike_sa;
 struct v2_outgoing_fragment;
+struct v2_incomming_fragments;
 
 /*
  * Should the payload be encrypted/protected (don't confuse this with
@@ -81,7 +82,7 @@ void record_v2_message(struct ike_sa *ike,
 		       enum message_role message);
 
 void free_v2_message_queues(struct state *st);
-void free_v2_ike_rfrags(struct state *st);
+void free_v2_incomming_fragments(struct v2_incomming_fragments **frags);
 void free_v2_outgoing_fragments(struct v2_outgoing_fragment **frags);
 
 /*

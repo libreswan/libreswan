@@ -739,25 +739,23 @@ void free_v2_outgoing_fragments(struct v2_outgoing_fragment **frags)
 	}
 }
 
-void free_v2_ike_rfrags(struct state *st)
+void free_v2_incomming_fragments(struct v2_incomming_fragments **frags)
 {
-	passert(st->st_ike_version == IKEv2);
-
-	if (st->st_v2_rfrags != NULL) {
-		for (unsigned i = 0; i < elemsof(st->st_v2_rfrags->frags); i++) {
-			struct v2_ike_rfrag *frag = &st->st_v2_rfrags->frags[i];
+	if (*frags != NULL) {
+		for (unsigned i = 0; i < elemsof((*frags)->frags); i++) {
+			struct v2_incomming_fragment *frag = &(*frags)->frags[i];
 			free_chunk_content(&frag->cipher);
 		}
-		pfree(st->st_v2_rfrags);
-		st->st_v2_rfrags = NULL;
+		pfree(*frags);
+		*frags = NULL;
 	}
 }
 
 void free_v2_message_queues(struct state *st)
 {
-	free_v2_ike_rfrags(st);
 	for (enum message_role message = MESSAGE_ROLE_FLOOR;
 	     message < MESSAGE_ROLE_ROOF; message++) {
 		free_v2_outgoing_fragments(&st->st_v2_outgoing[message]);
+		free_v2_incomming_fragments(&st->st_v2_incomming[message]);
 	}
 }

@@ -172,12 +172,12 @@ struct v1_ike_rfrag {
 	size_t size;
 };
 
-struct v2_ike_rfrag {
+struct v2_incomming_fragment {
 	chunk_t cipher;
 	unsigned int iv;
 };
 
-struct v2_ike_rfrags {
+struct v2_incomming_fragments {
 	unsigned total;
 	unsigned count;
 	/*
@@ -188,7 +188,7 @@ struct v2_ike_rfrags {
 	 * For simplicity, index by fragment number which is 1-based;
 	 * leaving element 0 empty.
 	 */
-	struct v2_ike_rfrag frags[MAX_IKE_FRAGMENTS + 1];
+	struct v2_incomming_fragment frags[MAX_IKE_FRAGMENTS + 1];
 };
 
 /* hunk like */
@@ -367,7 +367,6 @@ struct state {
 
 	/* collected received fragments */
 	struct v1_ike_rfrag *st_v1_rfrags;
-	struct v2_ike_rfrags *st_v2_rfrags;
 
 	struct trans_attrs st_oakley;
 
@@ -446,6 +445,7 @@ struct state {
 	/** IKEv2-only things **/
 
 	struct v2_outgoing_fragment *st_v2_outgoing[MESSAGE_ROLE_ROOF];
+	struct v2_incomming_fragments *st_v2_incomming[MESSAGE_ROLE_ROOF];
 
 	bool st_viable_parent;	/* can initiate new CERAET_CHILD_SA */
 	struct ikev2_proposal *st_accepted_ike_proposal;

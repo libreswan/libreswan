@@ -898,6 +898,7 @@ static struct payload_summary ikev2_decode_payloads(struct logger *log,
 
 static bool ikev2_check_fragment(struct msg_digest *md, struct state *st)
 {
+	struct v2_incomming_fragments **frags = &st->st_v2_incomming[v2_msg_role(md)];
 	struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
 
 	/* ??? CLANG 3.5 thinks st might be NULL */
@@ -935,12 +936,12 @@ static bool ikev2_check_fragment(struct msg_digest *md, struct state *st)
 		return FALSE;
 	}
 
-	if (st->st_v2_rfrags == NULL) {
-		/* first fragment: must be good */
+	if (*frags == NULL) {
+		/* first fragment, so must be good */
 		return TRUE;
 	}
 
-	if (skf->isaskf_total != st->st_v2_rfrags->total) {
+	if (skf->isaskf_total != (*frags)->total) {
 		/*
 		 * total number of fragments changed.
 		 * Either this fragment is wrong or all the
@@ -952,17 +953,17 @@ static bool ikev2_check_fragment(struct msg_digest *md, struct state *st)
 		 * OK: skf->isaskf_total > i->total
 		 * Bad: skf->isaskf_total < i->total
 		 */
-		if (skf->isaskf_total > st->st_v2_rfrags->total) {
+		if (skf->isaskf_total > (*frags)->total) {
 			DBG(DBG_CONTROL, DBG_log(
 				"discarding saved fragments because this fragment has larger total"));
-			free_v2_ike_rfrags(st);
+			free_v2_incomming_fragments(frags);
 			return TRUE;
 		} else {
 			DBG(DBG_CONTROL, DBG_log(
 				"ignoring odd IKE encrypted fragment (total shrank)"));
 			return FALSE;
 		}
-	} else if (st->st_v2_rfrags->frags[skf->isaskf_number].cipher.ptr != NULL) {
+	} else if ((*frags)->frags[skf->isaskf_number].cipher.ptr != NULL) {
 		/* retain earlier fragment with same index */
 		DBG(DBG_CONTROL, DBG_log(
 			    "ignoring repeated IKE encrypted fragment"));
@@ -974,6 +975,7 @@ static bool ikev2_check_fragment(struct msg_digest *md, struct state *st)
 
 static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 {
+	struct v2_incomming_fragments **frags = &st->st_v2_incomming[v2_msg_role(md)];
 	struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
 	pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2SKF]->pbs;
 
@@ -998,13 +1000,13 @@ static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 	 * Since the fragment check above can result in all fragments
 	 * so-far being discarded; always check/fix frags.
 	 */
-	if (st->st_v2_rfrags == NULL) {
-		st->st_v2_rfrags = alloc_thing(struct v2_ike_rfrags, "incoming v2_ike_rfrags");
-		st->st_v2_rfrags->total = skf->isaskf_total;
+	if ((*frags) == NULL) {
+		*frags = alloc_thing(struct v2_incomming_fragments, "incoming v2_ike_rfrags");
+		(*frags)->total = skf->isaskf_total;
 	}
 
-	passert(skf->isaskf_number < elemsof(st->st_v2_rfrags->frags));
-	struct v2_ike_rfrag *frag = &st->st_v2_rfrags->frags[skf->isaskf_number];
+	passert(skf->isaskf_number < elemsof((*frags)->frags));
+	struct v2_incomming_fragment *frag = &(*frags)->frags[skf->isaskf_number];
 	passert(frag->cipher.ptr == NULL);
 	frag->iv = e_pbs->cur - md->packet_pbs.start;
 	frag->cipher = clone_bytes_as_chunk(md->packet_pbs.start,
@@ -1012,12 +1014,12 @@ static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 					    "incoming IKEv2 encrypted fragment");
 
 	if (skf->isaskf_number == 1) {
-		st->st_v2_rfrags->first_np = skf->isaskf_np;
+		(*frags)->first_np = skf->isaskf_np;
 	}
 
-	passert(st->st_v2_rfrags->count < st->st_v2_rfrags->total);
-	st->st_v2_rfrags->count++;
-	return st->st_v2_rfrags->count == st->st_v2_rfrags->total;
+	passert((*frags)->count < (*frags)->total);
+	(*frags)->count++;
+	return (*frags)->count == (*frags)->total;
 }
 
 static struct child_sa *process_v2_child_ix(struct ike_sa *ike,
@@ -1304,8 +1306,9 @@ static bool is_duplicate_request(struct ike_sa *ike,
 		return true;
 	}
 
-	if (ike->sa.st_v2_rfrags != NULL) {
-		pexpect(ike->sa.st_v2_rfrags->count < ike->sa.st_v2_rfrags->total);
+	struct v2_incomming_fragments *frags = ike->sa.st_v2_incomming[MESSAGE_REQUEST];
+	if (frags != NULL) {
+		pexpect(frags->count < frags->total);
 		dbg_v2_msgid(ike, &ike->sa,
 			     "not a duplicate - responder is accumulating fragments for message request %jd",
 			     msgid);
@@ -2224,9 +2227,10 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * with all fragments present (so "the"
 			 * function should not be called).
 			 */
+			struct v2_incomming_fragments *frags =
+				st->st_v2_incomming[v2_msg_role(md)];
 			bool have_all_fragments =
-				(st->st_v2_rfrags != NULL &&
-				 st->st_v2_rfrags->count == st->st_v2_rfrags->total);
+				(frags != NULL && frags->count == frags->total);
 			/*
 			 * XXX: Because fragments are only checked
 			 * all-at-once after they have all arrived, a

@@ -698,13 +698,14 @@ static bool ikev2_reassemble_fragments(struct state *st,
 		return false;
 	}
 
-	passert(st->st_v2_rfrags != NULL);
+	struct v2_incomming_fragments **frags = &st->st_v2_incomming[v2_msg_role(md)];
+	passert(*frags != NULL);
 
 	chunk_t plain[MAX_IKE_FRAGMENTS + 1];
-	passert(elemsof(plain) == elemsof(st->st_v2_rfrags->frags));
+	passert(elemsof(plain) == elemsof((*frags)->frags));
 	unsigned int size = 0;
-	for (unsigned i = 1; i <= st->st_v2_rfrags->total; i++) {
-		struct v2_ike_rfrag *frag = &st->st_v2_rfrags->frags[i];
+	for (unsigned i = 1; i <= (*frags)->total; i++) {
+		struct v2_incomming_fragment *frag = &(*frags)->frags[i];
 		/*
 		 * Point PLAIN at the encrypted fragment and then
 		 * decrypt in-place.  After the decryption, PLAIN will
@@ -714,8 +715,8 @@ static bool ikev2_reassemble_fragments(struct state *st,
 		if (!ikev2_verify_and_decrypt_sk_payload(ike_sa(st, HERE), md,
 							 &plain[i], frag->iv)) {
 			loglog(RC_LOG_SERIOUS, "fragment %u of %u invalid",
-			       i, st->st_v2_rfrags->total);
-			free_v2_ike_rfrags(st);
+			       i, (*frags)->total);
+			free_v2_incomming_fragments(frags);
 			return false;
 		}
 		size += plain[i].len;
@@ -728,7 +729,7 @@ static bool ikev2_reassemble_fragments(struct state *st,
 	pexpect(md->raw_packet.ptr == NULL); /* empty */
 	md->raw_packet = alloc_chunk(size, "IKEv2 fragments buffer");
 	unsigned int offset = 0;
-	for (unsigned i = 1; i <= st->st_v2_rfrags->total; i++) {
+	for (unsigned i = 1; i <= (*frags)->total; i++) {
 		passert(offset + plain[i].len <= size);
 		memcpy(md->raw_packet.ptr + offset, plain[i].ptr,
 		       plain[i].len);
@@ -744,14 +745,14 @@ static bool ikev2_reassemble_fragments(struct state *st,
 	struct payload_digest sk = {
 		.pbs = same_chunk_as_in_pbs(md->raw_packet, "decrypted SFK payloads"),
 		.payload_type = ISAKMP_NEXT_v2SK,
-		.payload.generic.isag_np = st->st_v2_rfrags->first_np,
+		.payload.generic.isag_np = (*frags)->first_np,
 	};
 	struct payload_digest *skf = md->chain[ISAKMP_NEXT_v2SKF];
 	md->chain[ISAKMP_NEXT_v2SKF] = NULL;
 	md->chain[ISAKMP_NEXT_v2SK] = skf;
 	*skf = sk; /* scribble */
 
-	free_v2_ike_rfrags(st);
+	free_v2_incomming_fragments(frags);
 
 	return true;
 }
