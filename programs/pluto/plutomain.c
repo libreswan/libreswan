@@ -413,7 +413,7 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf)
 		nbytes));
 }
 
-static bool pluto_init_nss(char *nssdir)
+static void pluto_init_nss(char *nssdir)
 {
 	SECStatus rv;
 
@@ -423,10 +423,9 @@ static bool pluto_init_nss(char *nssdir)
 	lsw_nss_buf_t err;
 	if (!lsw_nss_setup(nssdir, LSW_NSS_READONLY, lsw_nss_get_password, err)) {
 		loglog(RC_LOG_SERIOUS, "%s", err);
-		return FALSE;
+		loglog(RC_LOG_SERIOUS, "FATAL: NSS initialization failure");
+		exit_pluto(PLUTO_EXIT_NSS_FAIL);
 	}
-
-	libreswan_log("NSS initialized");
 
 	/*
 	 * This exists purely to make the BSI happy.
@@ -443,8 +442,7 @@ static bool pluto_init_nss(char *nssdir)
 		messupn(buf, seedbytes);
 		pfree(buf);
 	}
-
-	return TRUE;
+	libreswan_log("NSS crypto library initialized");
 }
 
 /* 0 is special and default: do not check crls dynamically */
@@ -1609,18 +1607,9 @@ int main(int argc, char **argv)
 
 	init_constants();
 	init_pluto_constants();
-
 	pluto_init_log();
+	pluto_init_nss(oco->nssdir);
 
-	/*
-	 * Probe FIPS support.  Part #1 of #2.
-	 *
-	 * This needs to occur very early, after pluto's log has been
-	 * initialized so that the result gets written to a file.
-	 *
-	 * This call is what triggers the FIPS Product: et.al. log
-	 * messages.
-	 */
 	enum lsw_fips_mode pluto_fips_mode = lsw_get_fips_mode();
 	if (pluto_fips_mode == LSW_FIPS_ON) {
 		/*
@@ -1638,12 +1627,6 @@ int main(int argc, char **argv)
 		libreswan_log("Forcing FIPS checks to true to emulate FIPS mode");
 		lsw_set_fips_mode(LSW_FIPS_ON);
 	}
-
-	if (!pluto_init_nss(oco->nssdir)) {
-		loglog(RC_LOG_SERIOUS, "FATAL: NSS initialization failure");
-		exit_pluto(PLUTO_EXIT_NSS_FAIL);
-	}
-	libreswan_log("NSS crypto library initialized");
 
 	if (ocsp_enable) {
 		if (!init_nss_ocsp(ocsp_uri, ocsp_trust_name,
