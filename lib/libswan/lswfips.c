@@ -79,6 +79,15 @@ enum lsw_fips_mode lsw_get_fips_mode(void)
 		return fips_mode;
 	}
 
+	/*
+	 * NSS returns bogus results for the FIPS check if you did not open
+	 * a database. If the program/tool runs libswan code without a
+	 * config file (and so it doesn't know where any nss db lives),
+	 * that tool should call NSS_NoDB_Init("."); before using libswan
+	 * code. See algparse as an example.
+	 */
+	passert(NSS_IsInitialized());
+
 #ifdef FIPS_CHECK
 	enum lsw_fips_mode product = lsw_fipsproduct();
 #endif
