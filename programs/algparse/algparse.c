@@ -607,6 +607,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	NSS_NoDB_Init("."); /* or else fips mode detection fails */
 	fips = libreswan_fipsmode();
 
 	/*
