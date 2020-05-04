@@ -5,6 +5,8 @@
  * Copyright (C) 2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2020 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2020 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -21,6 +23,13 @@
 #include "ike_alg_prf_ikev1_ops.h"
 #include "crypt_symkey.h"
 #include "lswlog.h"
+
+#ifdef USE_NSS_PRF
+# ifndef CK_NSS_IKE1_APP_B_PRF_DERIVE_PARAMS
+#  error Upgrade to NSS with support for CK_NSS_IKE1_APP_B_PRF_DERIVE_PARAMS or compile with USE_NSS_PRF=false
+#  undef USE_NSS_PRF /* quiet the error a bit */
+# endif
+#endif
 
 /*
  * Compute: SKEYID = prf(Ni_b | Nr_b, g^xy)
@@ -176,7 +185,7 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf,
 				       PK11SymKey *skeyid_e,
 				       unsigned required_keymat)
 {
-#ifdef LATEST_NSS
+#ifdef USE_NSS_PRF
 	CK_MECHANISM_TYPE mechanism = prf->nss.mechanism;
 	CK_MECHANISM_TYPE target = encrypter->nss.mechanism;
 	SECItem params = {
@@ -204,7 +213,40 @@ static chunk_t section_5_keymat(const struct prf_desc *prf,
 				chunk_t Ni_b, chunk_t Nr_b,
 				unsigned required_keymat)
 {
-#ifdef LATEST_NSS
+#ifdef USE_NSS_PRF
+	size_t extra_size = (1/* protocol*/ + SPI.len + Ni_b.len + Nr_b.len);
+	uint8_t *extra = alloc_things(uint8_t, extra_size,
+				      "protocol | SPI | Ni_b | Nr_b");
+	uint8_t *p = extra;
+	*p++ = protocol;
+	memcpy(p, SPI.ptr, SPI.len);
+	p += SPI.len;
+	memcpy(p, Ni_b.ptr, Ni_b.len);
+	p += Ni_b.len;
+	memcpy(p, Nr_b.ptr, Nr_b.len);
+	p += Nr_b.len;
+	passert(extra + extra_size == p);
+
+	CK_NSS_IKE1_APP_B_PRF_DERIVE_PARAMS dparams = {
+		.prfMechanism = prf->nss.mechanism,
+		.bHasKeygxy = g_xy != NULL,
+		.hKeygxy = g_xy != NULL ? PK11_GetSymKeyHandle(g_xy) : 0,
+		.pExtraData = extra, /* protocol | SPI | Ni_b | Nr_b */
+		.ulExtraDataLen = extra_size,
+	};
+	SECItem params = {
+		.data = (unsigned char *)&dparams,
+		.len = sizeof(dparams),
+	};
+	PK11SymKey *key = crypt_derive(SKEYID_d, CKM_NSS_IKE1_APP_B_PRF_DERIVE, &params,
+				       "section_5_keymat", CKM_EXTRACT_KEY_FROM_KEY,
+				       CKA_ENCRYPT,
+				       /*key-size*/required_keymat,
+				       /*flags*/CKF_DECRYPT|CKF_ENCRYPT, HERE);
+	chunk_t keymat = chunk_from_symkey("section 5 keymat", key);
+	release_symkey("section 5 keymat", "keymat", &key);
+	pfree(extra);
+	return keymat;
 #else
 	DBG_log("using MAC ops for %s", __func__);
 	return ike_alg_prf_ikev1_mac_ops.section_5_keymat(prf, SKEYID_d, g_xy,
@@ -214,7 +256,7 @@ static chunk_t section_5_keymat(const struct prf_desc *prf,
 }
 
 const struct prf_ikev1_ops ike_alg_prf_ikev1_nss_ops = {
-#ifdef LATEST_NSS
+#ifdef USE_NSS_PRF
 	.backend = "NSS",
 #else
 	.backend = "NSS+native",
