@@ -266,7 +266,7 @@ endif
 # secure hash functions to build our own PRF. With this enabled,
 # libreswan itself no longer needs to be FIPS validated.
 #
-# Requires NSS > 3.44
+# Requires NSS > 3.52 (3.44 up to 3.51 are missing one required KDF function)
 
 USE_NSS_PRF ?= false
 ifeq ($(USE_NSS_PRF),true)
