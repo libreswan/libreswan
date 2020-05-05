@@ -694,7 +694,9 @@ endif
 # secure hash functions to build our own PRF. With this enabled,
 # libreswan itself no longer needs to be FIPS validated.
 #
-# Requires NSS > 3.44 which should include:
+# Requires NSS >= 3.52
+# NSS 3.44 - 3.51 can be used if the following NSS upstream commit
+# is applied:
 #
 # HG changeset patch
 # User Robert Relyea <rrelyea@redhat.com>
