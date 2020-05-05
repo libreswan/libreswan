@@ -3418,7 +3418,8 @@ void complete_v2_state_transition(struct state *st,
 		transition = md->svm;
 	}
 #else
-	const struct state_v2_microcode *transition = md != NULL ? md->svm : st->st_v2_transition;
+	const struct state_v2_microcode *transition = (md != NULL && md->svm != NULL ? md->svm :
+						       st->st_v2_transition);
 #endif
 	static const struct state_v2_microcode undefined_transition = {
 		.story = "suspect message",
