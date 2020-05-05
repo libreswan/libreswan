@@ -679,6 +679,16 @@ void init_ikev2(void)
 		}
 
 		/*
+		 * Check that the NOTIFY -> PBS -> MD.pbs[]!=NULL will work.
+		 */
+		if (t->message_payloads.notification != v2N_NOTHING_WRONG) {
+			pexpect(v2_notification_to_v2_pbs(t->message_payloads.notification) != PBS_v2_INVALID);
+		}
+		if (t->encrypted_payloads.notification != v2N_NOTHING_WRONG) {
+			pexpect(v2_notification_to_v2_pbs(t->encrypted_payloads.notification) != PBS_v2_INVALID);
+		}
+
+		/*
 		 * Point .fs_v2_microcode at the first transition for
 		 * the from state.  All other transitions for the from
 		 * state should follow immediately after (or to put it
