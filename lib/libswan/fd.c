@@ -54,18 +54,18 @@ static void free_fd(struct fd **fdp, where_t where)
 	pfree(fd);
 }
 
-void close_any_fd(struct fd **fdp, where_t where)
+void close_any_fd(struct fd **fd, where_t where)
 {
-	ref_delete(fdp, free_fd, where);
+	ref_delete(fd, free_fd, where);
 }
 
-void fd_leak(struct fd **fdp, where_t where)
+void fd_leak(struct fd **fd, where_t where)
 {
 	dbg("leaking "PRI_FD"'s FD; will be closed when pluto exits "PRI_WHERE"",
-	    pri_fd(*fdp), pri_where(where));
+	    pri_fd(*fd), pri_where(where));
 	/* leave the old fd hanging */
-	(*fdp)->fd = dup((*fdp)->fd);
-	ref_delete(fdp, free_fd, where);
+	(*fd)->fd = dup((*fd)->fd);
+	ref_delete(fd, free_fd, where);
 }
 
 ssize_t fd_sendmsg(const struct fd *fd, const struct msghdr *msg,
