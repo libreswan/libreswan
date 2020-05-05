@@ -24,13 +24,6 @@
 #include "crypt_symkey.h"
 #include "lswlog.h"
 
-#ifdef USE_NSS_PRF
-# ifndef CK_NSS_IKE1_APP_B_PRF_DERIVE_PARAMS
-#  error Upgrade to NSS with support for CK_NSS_IKE1_APP_B_PRF_DERIVE_PARAMS or compile with USE_NSS_PRF=false
-#  undef USE_NSS_PRF /* quiet the error a bit */
-# endif
-#endif
-
 /*
  * Compute: SKEYID = prf(Ni_b | Nr_b, g^xy)
  *
@@ -227,6 +220,11 @@ static chunk_t section_5_keymat(const struct prf_desc *prf,
 	p += Nr_b.len;
 	passert(extra + extra_size == p);
 
+	/*
+	 * If this fails to compile, a newer nss version is needed.
+	 * Alternatively compile with USE_NSS_PRF=false.
+	 * But then for FIPS, compiling with USE_FIPSCHECK is needed again.
+	 */
 	CK_NSS_IKE1_APP_B_PRF_DERIVE_PARAMS dparams = {
 		.prfMechanism = prf->nss.mechanism,
 		.bHasKeygxy = g_xy != NULL,
