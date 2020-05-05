@@ -56,11 +56,6 @@ void record_v2N_spi_response(struct logger *logger,
 bool send_recorded_v2_message(struct ike_sa *ike, const char *where,
 			      enum message_role role);
 
-void send_v2N_response_from_state(struct ike_sa *st, /* XXX: USE record_v2N_response_from_state() */
-				  struct msg_digest *md,
-				  v2_notification_t type,
-				  const chunk_t *data /* optional */);
-
 void send_v2N_response_from_md(struct msg_digest *md,
 			       v2_notification_t type,
 			       const chunk_t *data);
