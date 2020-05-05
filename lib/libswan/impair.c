@@ -90,6 +90,9 @@ static struct double_double impair = {
        S(IMPAIR_UNKNOWN_PAYLOAD_CRITICAL, "impair-unknown-payload-critical", "mark the unknown payload as critical"),
        S(IMPAIR_IKEv1_DEL_WITH_NOTIFY, "impair-ikev1-del-with-notify", "causes pluto to send IKE Delete with additional bogus Notify payload"),
        S(IMPAIR_BAD_IKE_AUTH_XCHG, "impair-bad-ikev2-auth-xchg", "causes pluto to send IKE_AUTH replies with wrong exchange type"),
+       S(IMPAIR_REKEY_INITIATOR_SUPERNET, "impair-rekey-initiate-supernet", "cause pluto to send IPsec SA rekey on initiator with TSi and TSR to 0/0 ::0, to emulate Windows client"),
+       S(IMPAIR_REKEY_RESPOND_SUPERNET, "impair-rekey-respond-supernet", "cause pluto to send IPsec SA rekey responder TSi and TSR to 0/0 ::0"),
+       S(IMPAIR_REKEY_RESPOND_SUBNET, "impair-rekey-respond-subnet", "cause pluto to send IPsec SA rekey responder TSi and TSR to X/32 X/128"),
 
 #undef S
 };
