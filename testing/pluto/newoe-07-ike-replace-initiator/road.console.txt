@@ -31,6 +31,7 @@ road #
  ipsec whack --rekey-ike --name 1
 002 rekeying IKE SA state #1 of connection "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23
 002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiate rekey of IKEv2 CREATE_CHILD_SA IKE Rekey
+002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #3: rekeyed #1 STATE_V2_REKEY_IKE_I1 and expire it remaining life XXs
 002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: deleting state (STATE_PARENT_I3) and sending notification
 road #
  # wait two seconds to ensure old parent has expired

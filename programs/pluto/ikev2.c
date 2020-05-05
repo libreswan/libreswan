@@ -3094,6 +3094,8 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	 *
 	 * XXX: This code uses the new state, and not the state
 	 * transition to determine if things established :-(
+	 *
+	 * This should be a bit in the transition!
 	 */
 
 	dbg("announcing the state transition");
@@ -3115,8 +3117,10 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		w = RC_SUCCESS;
 	} else if (st->st_state->kind == STATE_PARENT_I2) {
 		/*
-		 * Hack around md->st being forced to the CHILD_SA.
+		 * Hack around md->st being forced to the CHILD_SA
+		 * with an IKE SA state.
 		 */
+		pexpect(IS_CHILD_SA(st));
 		pexpect(st != &ike->sa);
 		log_details = lswlog_ike_sa_established;
 		log_state = &ike->sa;
@@ -3125,6 +3129,24 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		log_details = lswlog_ike_sa_established;
 		log_state = st;
 		w = RC_NEW_V2_STATE + st->st_state->kind;
+	} else if (transition->state == STATE_V2_REKEY_IKE_R0 &&
+		   transition->next_state == STATE_PARENT_R2) {
+		pexpect(st->st_sa_role == SA_RESPONDER);
+		pexpect(IS_IKE_SA(st));
+		pexpect(st != &ike->sa);
+		log_details = lswlog_ike_sa_established;
+		log_state = st;
+		/* log our success and trigger detach */
+		w = RC_SUCCESS;
+	} else if (transition->state == STATE_V2_REKEY_IKE_I1 &&
+		   transition->next_state == STATE_PARENT_I3) {
+		pexpect(st->st_sa_role == SA_INITIATOR);
+		pexpect(IS_IKE_SA(st));
+		pexpect(st != &ike->sa);
+		log_details = lswlog_ike_sa_established;
+		log_state = st;
+		/* log our success and trigger detach */
+		w = RC_SUCCESS;
 	} else {
 		log_details = NULL;
 		log_state = st;
