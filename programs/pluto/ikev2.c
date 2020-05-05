@@ -3683,9 +3683,17 @@ void complete_v2_state_transition(struct state *st,
 		/* Only the responder sends a notification */
 		if (v2_msg_role(md) == MESSAGE_REQUEST) {
 			dbg("sending a notification reply");
-			send_v2N_response_from_state(ike, md,
-						     notification,
-						     NULL/*no data*/);
+			v2_msgid_update_recv(ike, st, md);
+			record_v2N_response(st->st_logger, ike, md,
+					    notification, NULL/*no data*/,
+					    ENCRYPTED_PAYLOAD);
+			v2_msgid_update_sent(ike, st, md, transition->send);
+			send_recorded_v2_message(ike, "STF_FAIL",
+						 MESSAGE_RESPONSE);
+			/*
+			 * XXX: is this always false; if true above
+			 * record would pexpect()?
+			 */
 			if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) {
 				delete_state(st);
 				/* kill all st pointers */
