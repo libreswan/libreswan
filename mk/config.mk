@@ -694,7 +694,15 @@ endif
 # secure hash functions to build our own PRF. With this enabled,
 # libreswan itself no longer needs to be FIPS validated.
 #
-# Requires NSS > 3.44
+# Requires NSS > 3.44 which should include:
+#
+# HG changeset patch
+# User Robert Relyea <rrelyea@redhat.com>
+# Date 1587427096 25200
+#      Mon Apr 20 16:58:16 2020 -0700
+# Node ID 225bb39eade102eef5f3999eae04a7a16da9b330
+# Parent  aae226c20dfd2189fb395f43269fe06cf1fb9cb1
+# Bug 1629663 NSS missing IKEv1 Quick Mode KDF prf r=kjacobs
 
 USE_NSS_PRF ?= false
 ifeq ($(USE_NSS_PRF),true)

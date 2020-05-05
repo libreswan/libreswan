@@ -178,7 +178,17 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf,
 				       PK11SymKey *skeyid_e,
 				       unsigned required_keymat)
 {
-#ifdef USE_NSS_PRF
+
+	/*
+	 * XXX: This requires a fix to an old bug adding
+	 * CKM_NSS_IKE1_APP_B_PRF_DERIVE to the allowed operations
+	 * that was embedded in the below changeset.
+	 *
+	 * changeset:   15575:225bb39eade1
+	 * user:        Robert Relyea <rrelyea@redhat.com>
+	 * date:        Mon Apr 20 16:58:16 2020 -0700
+	 * summary:     Bug 1629663 NSS missing IKEv1 Quick Mode KDF prf r=kjacobs
+	 */
 	CK_MECHANISM_TYPE mechanism = prf->nss.mechanism;
 	CK_MECHANISM_TYPE target = encrypter->nss.mechanism;
 	SECItem params = {
@@ -191,11 +201,6 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf,
 	return crypt_derive(skeyid_e, CKM_NSS_IKE1_APP_B_PRF_DERIVE,
 			    &params, "keymat_e", target, CKA_ENCRYPT,
 			    /*key-size*/required_keymat, /*flags*/CKF_DECRYPT|CKF_ENCRYPT, HERE);
-#else
-	DBG_log("using MAC ops for %s", __func__);
-	return ike_alg_prf_ikev1_mac_ops.appendix_b_keymat_e(prf, encrypter, skeyid_e,
-							     required_keymat);
-#endif
 }
 
 static chunk_t section_5_keymat(const struct prf_desc *prf,
@@ -206,7 +211,36 @@ static chunk_t section_5_keymat(const struct prf_desc *prf,
 				chunk_t Ni_b, chunk_t Nr_b,
 				unsigned required_keymat)
 {
-#ifdef USE_NSS_PRF
+	/*
+	 * XXX: this requires:
+	 *
+	 * changeset:   15575:225bb39eade1
+	 * user:        Robert Relyea <rrelyea@redhat.com>
+	 * date:        Mon Apr 20 16:58:16 2020 -0700
+	 * summary:     Bug 1629663 NSS missing IKEv1 Quick Mode KDF prf r=kjacobs
+	 *
+	 * We found another KDF function in libreswan that is not
+	 * using the NSS KDF API.
+	 *
+	 * Unfortunately, it seems the existing IKE KDF's in NSS are
+	 * not usable for the Quick Mode use.
+	 *
+	 * The libreswan code is in compute_proto_keymat() and the
+	 * specification is in
+	 * https://tools.ietf.org/html/rfc2409#section-5.5
+	 *
+	 * [...]
+	 *
+	 * This patch implements this by extendind the Appendix B
+	 * Mechanism to take and optional key and data in a new
+	 * Mechanism parameter structure.  Which flavor is used (old
+	 * CK_MECHANISM_TYPE or the new parameter) is determined by
+	 * the mechanism parameter lengths. Application which try to
+	 * use this new feature on old versions of NSS will get an
+	 * error (rather than invalid data).
+	 *
+	 * XXX: yes, it looks at params.len; ewwwww!
+	 */
 	size_t extra_size = (1/* protocol*/ + SPI.len + Ni_b.len + Nr_b.len);
 	uint8_t *extra = alloc_things(uint8_t, extra_size,
 				      "protocol | SPI | Ni_b | Nr_b");
@@ -245,20 +279,10 @@ static chunk_t section_5_keymat(const struct prf_desc *prf,
 	release_symkey("section 5 keymat", "keymat", &key);
 	pfree(extra);
 	return keymat;
-#else
-	DBG_log("using MAC ops for %s", __func__);
-	return ike_alg_prf_ikev1_mac_ops.section_5_keymat(prf, SKEYID_d, g_xy,
-							  protocol, SPI, Ni_b, Nr_b,
-							  required_keymat);
-#endif
 }
 
 const struct prf_ikev1_ops ike_alg_prf_ikev1_nss_ops = {
-#ifdef USE_NSS_PRF
 	.backend = "NSS",
-#else
-	.backend = "NSS+native",
-#endif
 	.signature_skeyid = signature_skeyid,
 	.pre_shared_key_skeyid = pre_shared_key_skeyid,
 	.skeyid_d = skeyid_d,
