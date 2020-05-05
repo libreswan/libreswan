@@ -17,6 +17,10 @@ road #
 road #
  sleep 5
 road #
+ ipsec status | grep private- | grep keyingtries:
+000 "private-or-clear":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
+000 "private-or-clear#192.1.2.0/24":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
+road #
  ip -s xfrm monitor > /tmp/xfrm-monitor.out &
 [x] PID
 road #
