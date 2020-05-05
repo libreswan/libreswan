@@ -60,6 +60,7 @@ enum v2_pbs v2_notification_to_v2_pbs(v2_notification_t n)
 	C(COOKIE2);
 	C(INVALID_KE_PAYLOAD);
 	C(INVALID_MAJOR_VERSION);
+	C(TS_UNACCEPTABLE);
 	default: return PBS_v2_INVALID;
 	}
 #undef C
