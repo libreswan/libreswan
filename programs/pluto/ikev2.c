@@ -2119,6 +2119,61 @@ static void ike_process_packet(struct msg_digest *md, struct ike_sa *ike)
 }
 
 /*
+ * XXX: Hack to find the transition that would have been run if the
+ * packet was ok, so it can be 'failed'.
+ *
+ * This is largely astetic.  It could use the first transition but
+ * often a later transition.  Perhaps the last transition since,
+ * presuably, that is the most generic?
+ */
+
+static void hack_error_transition(struct state *st)
+{
+	const struct state_v2_microcode *transition;
+	const struct finite_state *state = st->st_state;
+	switch (state->kind) {
+	case STATE_PARENT_R1:
+		/*
+		 * Responding to IKE_AUTH request: it is the second
+		 * state because the first is the NOSKEYSEED
+		 * transition.  Once SKEYSEED is off-loaded and
+		 * STATE_PARENT_I1 has only one transition, this is no
+		 * longer a hack.
+		 */
+		pexpect(state->nr_transitions == 2);
+		transition = &state->v2_transitions[1];
+		pexpect(transition->state == STATE_PARENT_R1 &&
+			transition->next_state == STATE_V2_IPSEC_R);
+		break;
+	case STATE_PARENT_I2:
+		/*
+		 * Receiving IKE_AUTH response: it is burried deep
+		 * down; would adding an extra transition that always
+		 * matches be better?
+		 */
+		pexpect(state->nr_transitions == 5);
+		transition = &state->v2_transitions[3];
+		pexpect(transition->state == STATE_PARENT_I2 &&
+			transition->next_state == STATE_V2_IPSEC_I);
+		break;
+	default:
+		if (pexpect(state->nr_transitions > 0)) {
+			transition = &state->v2_transitions[state->nr_transitions-1];
+		} else {
+			static const struct state_v2_microcode undefined_transition = {
+				.story = "suspect message",
+				.state = STATE_UNDEFINED,
+				.next_state = STATE_UNDEFINED,
+			};
+			transition = &undefined_transition;
+		}
+		break;
+	}
+	/*pexpect(st->st_v2_transition == NULL);*/
+	st->st_v2_transition = transition;
+}
+
+/*
  * The SA the message is intended for has also been identified.
  * Continue ...
  *
@@ -2334,23 +2389,28 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			md->encrypted_payloads = ikev2_decode_payloads(st->st_logger, md, &sk->pbs,
 								       sk->payload.generic.isag_np);
 			if (md->encrypted_payloads.n != v2N_NOTHING_WRONG) {
+				/*
+				 * XXX: Hack to get the
+				 * transition that would have
+				 * been run so it can be
+				 * 'failed'.
+				 */
+				hack_error_transition(st);
 				switch (v2_msg_role(md)) {
 				case MESSAGE_REQUEST:
-				{
 					/*
 					 * Send back a protected error
 					 * response.  Need to first
 					 * put the IKE SA into
 					 * responder mode.
 					 */
-					v2_msgid_start_responder(ike, &ike->sa, md);
+					v2_msgid_start_responder(ike, st, md);
 					chunk_t data = chunk2(md->encrypted_payloads.data,
 							      md->encrypted_payloads.data_size);
-					send_v2N_response_from_state(ike, md,
-								     md->encrypted_payloads.n,
-								     &data);
+					record_v2N_response(st->st_logger, ike, md,
+							    md->encrypted_payloads.n, &data,
+							    ENCRYPTED_PAYLOAD);
 					break;
-				}
 				case MESSAGE_RESPONSE:
 					/*
 					 * Can't respond so kill the
@@ -2442,10 +2502,33 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 */
 			log_v2_payload_errors(st->st_logger, md,
 					      &encrypted_payload_status);
-			if (v2_msg_role(md) == MESSAGE_REQUEST) {
-				pexpect(ike->sa.st_v2_msgid_wip.responder == -1);
-				v2_msgid_start_responder(ike, &ike->sa, md);
-				send_v2N_response_from_state(ike, md, v2N_INVALID_SYNTAX, NULL);
+			/*
+			 * XXX: Hack to get the transition
+			 * that would have been run so it can
+			 * be 'failed'.
+			 */
+			hack_error_transition(st);
+			switch (v2_msg_role(md)) {
+			case MESSAGE_REQUEST:
+				/*
+				 * Send back a protected error
+				 * response.  Need to first put the
+				 * IKE SA into responder mode.
+				 */
+				v2_msgid_start_responder(ike, st, md);
+				record_v2N_response(st->st_logger, ike, md,
+						    v2N_INVALID_SYNTAX, NULL,
+						    ENCRYPTED_PAYLOAD);
+				break;
+			case MESSAGE_RESPONSE:
+				/*
+				 * Can't respond so kill the IKE SA -
+				 * the secured message contained crap
+				 * so there's little that can be done.
+				 */
+				break;
+			default:
+				bad_case(v2_msg_role(md));
 			}
 			/* XXX: calls delete_state() */
 			complete_v2_state_transition(st, md, STF_FATAL);
@@ -3426,12 +3509,8 @@ void complete_v2_state_transition(struct state *st,
 		.state = STATE_UNDEFINED,
 		.next_state = STATE_UNDEFINED,
 	};
-	if (transition == NULL) {
-		if (result != STF_FATAL && result != STF_IGNORE) {
-			LOG_PEXPECT("state #%lu has no transition", st->st_serialno);
-		} else {
-			dbg("no transition for FATAL or IGNORE");
-		}
+	/* double negative */
+	if (!pexpect(transition != NULL)) {
 		transition = &undefined_transition;
 	}
 
