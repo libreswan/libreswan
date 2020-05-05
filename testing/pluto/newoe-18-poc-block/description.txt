@@ -1,0 +1,3 @@
+Regular poc-block test, but it also tests to see keyingtries=0 (the default)
+is also corrected to keyingtries=1 for OE connections.
+
