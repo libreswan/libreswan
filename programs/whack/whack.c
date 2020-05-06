@@ -2335,10 +2335,13 @@ int main(int argc, char **argv)
 		case DBGOPT_NO_IMPAIR:	/* --no-impair */
 		{
 			bool enable = (c == DBGOPT_IMPAIR);
-			if (!parse_impair(optarg, &msg.impairment, enable)) {
+			realloc_things(msg.impairments, msg.nr_impairments,
+				       msg.nr_impairments+1, "impairments");
+			if (!parse_impair(optarg, &msg.impairments[msg.nr_impairments], enable)) {
 				/* parse_impair() issued the error */
 				exit(1);
 			}
+			msg.nr_impairments++;
 			continue;
 		}
 

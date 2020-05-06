@@ -162,7 +162,8 @@ struct whack_message {
 	lmod_t debugging;
 
 	/* what to impair and how */
-	struct whack_impair impairment;
+	struct whack_impair *impairments;
+	unsigned nr_impairments;
 
 	/* for WHACK_CONNECTION */
 
