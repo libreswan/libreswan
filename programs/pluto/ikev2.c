@@ -2157,7 +2157,7 @@ static void hack_error_transition(struct state *st)
 			transition->next_state == STATE_V2_IPSEC_I);
 		break;
 	default:
-		if (pexpect(state->nr_transitions > 0)) {
+		if (/*pexpect*/(state->nr_transitions > 0)) {
 			transition = &state->v2_transitions[state->nr_transitions-1];
 		} else {
 			static const struct state_v2_microcode undefined_transition = {
