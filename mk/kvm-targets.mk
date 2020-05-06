@@ -442,9 +442,12 @@ $(KVM_KEYS):	$(top_srcdir)/testing/x509/dist_certs.py \
 	cd testing/x509 && tar xf kvm-keys.tar
 	rm -f testing/x509/kvm-keys.tar
 	:
-	: Also regenerate the DNSSEC keys -- uses host
+	: Also regenerate the DNSSEC keys
 	:
-	$(top_srcdir)/testing/baseconfigs/all/etc/bind/generate-dnssec.sh
+	$(KVMSH) --chdir . $(KVM_BUILD_DOMAIN) ./testing/baseconfigs/all/etc/bind/generate-dnssec.sh
+	:
+	: All done.
+	:
 	$(KVMSH) --shutdown $(KVM_BUILD_DOMAIN)
 	touch $@
 
