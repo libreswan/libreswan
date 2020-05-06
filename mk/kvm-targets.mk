@@ -719,7 +719,7 @@ define shadow-kvm-disk
 	$(KVMSH) --shutdown $(basename $(notdir $(1)))
 	: create a shadow - from is used as a backing store
 	rm -f $(2)
-	qemu-img create -f qcow2 -b $(1) $(2)
+	qemu-img create -f qcow2 -F qcow2 -b $(1) $(2)
 endef
 
 KVM_BASE_DISK_CLONES = $(addsuffix .qcow2, $(addprefix $(KVM_LOCALDIR)/, $(KVM_BASE_DOMAIN_CLONES)))
