@@ -33,4 +33,6 @@ extern void reference_addresspool(struct connection *c);
 extern err_t lease_an_address(const struct connection *c, const struct state *st, ip_address *ipa /*result*/);
 extern void rel_lease_addr(struct connection *c);
 
+extern void show_addresspool_status(struct show *s);
+
 #endif /* _ADDRESSPOOL_H */

@@ -198,7 +198,7 @@ static void help(void)
 		"\n"
 		"status: whack [--status] | [--trafficstatus] | [--globalstatus] | \\\n"
 		"	[--clearstats] | [--shuntstatus] | [--fipsstatus] | [--briefstatus] \n"
-		"	[--showstates] \n"
+		"	[--showstates] | [--addresspoolstatus]\n"
 		"\n"
 		"refresh dns: whack --ddns\n"
 		"\n"
@@ -331,6 +331,7 @@ enum option_enums {
 	OPT_TRAFFIC_STATUS,
 	OPT_SHUNT_STATUS,
 	OPT_SHOW_STATES,
+	OPT_ADDRESSPOOL_STATUS,
 	OPT_FIPS_STATUS,
 	OPT_BRIEF_STATUS,
 
@@ -588,6 +589,7 @@ static const struct option long_opts[] = {
 	{ "clearstats", no_argument, NULL, OPT_CLEAR_STATS + OO },
 	{ "trafficstatus", no_argument, NULL, OPT_TRAFFIC_STATUS + OO },
 	{ "shuntstatus", no_argument, NULL, OPT_SHUNT_STATUS + OO },
+	{ "addresspoolstatus", no_argument, NULL, OPT_ADDRESSPOOL_STATUS + OO },
 	{ "fipsstatus", no_argument, NULL, OPT_FIPS_STATUS + OO },
 	{ "briefstatus", no_argument, NULL, OPT_BRIEF_STATUS + OO },
 	{ "showstates", no_argument, NULL, OPT_SHOW_STATES + OO },
@@ -1398,6 +1400,11 @@ int main(int argc, char **argv)
 
 		case OPT_SHUNT_STATUS:	/* --shuntstatus */
 			msg.whack_shunt_status = TRUE;
+			ignore_errors = TRUE;
+			continue;
+
+		case OPT_ADDRESSPOOL_STATUS:	/* --addresspoolstatus */
+			msg.whack_addresspool_status = TRUE;
 			ignore_errors = TRUE;
 			continue;
 
@@ -2510,6 +2517,7 @@ int main(int argc, char **argv)
 	      msg.whack_ddos != DDOS_undefined || msg.whack_ddns ||
 	      msg.whack_reread || msg.whack_crash || msg.whack_shunt_status ||
 	      msg.whack_status || msg.whack_global_status || msg.whack_traffic_status ||
+	      msg.whack_addresspool_status ||
 	      msg.whack_fips_status || msg.whack_brief_status || msg.whack_clear_stats || msg.whack_options ||
 	      msg.whack_shutdown || msg.whack_purgeocsp || msg.whack_seccomp_crashtest || msg.whack_show_states ||
 	      msg.whack_rekey_ike || msg.whack_rekey_ipsec))

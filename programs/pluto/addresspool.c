@@ -750,3 +750,50 @@ struct ip_pool *install_addresspool(const ip_range *pool_range)
 	}
 	return pool;
 }
+
+void show_addresspool_status(struct show *s)
+{
+	show_separator(s);
+#define CHECK(A, B)							\
+	if ((A) != (B)) {						\
+		LOG_PEXPECT("" #A " (%u) does not match " #B " (%u)",	\
+			    A, B);					\
+	}
+	for (struct ip_pool *pool = pluto_pools;
+	     pool != NULL; pool = pool->next) {
+		range_buf rb;
+		show_comment(s, "address pool %s: %u addresses, %u leases, %u in-use, %u free (%u reusable)",
+			     str_range(&pool->r, &rb),
+			     pool->size, pool->nr_leases, pool->nr_in_use,
+			     pool->free_list.nr,
+			     pool->nr_reusable);
+		unsigned nr_free = 0;
+		unsigned nr_reusable_entries = 0;
+		unsigned nr_reusable_names = 0;
+		for (unsigned l = 0; l < pool->nr_leases; l++) {
+			struct lease *lease = &pool->leases[l];
+			ip_address lease_ip = lease_address(pool, lease);
+			address_buf ipb;
+			struct state *st = state_by_serialno(lease->assigned_to);
+			nr_free += IS_INSERTED(lease, free_entry) ? 1 : 0;
+			nr_reusable_entries += IS_INSERTED(lease, reusable_entry) ? 1 : 0;
+			nr_reusable_names += lease->reusable_name != NULL ? 1 : 0;
+			show_comment(s, "    %s %u %s #%lu %s%s%s",
+				     str_address(&lease_ip, &ipb),
+				     lease->lease_refcount,
+				     IS_INSERTED(lease, free_entry) ? "free" : "in-use",
+				     lease->assigned_to,
+				     (lease->assigned_to == SOS_NOBODY ? "unassigned" :
+				      st != NULL ? st->st_state->short_name : "DNE"),
+				     lease->reusable_name != NULL ? " " : "",
+				     lease->reusable_name != NULL ? lease->reusable_name : ""
+				);
+			CHECK(IS_INSERTED(lease, reusable_entry), lease->reusable_name != NULL);
+		}
+		CHECK(pool->nr_leases, pool->nr_in_use + pool->free_list.nr);
+		CHECK(nr_free, pool->free_list.nr);
+		CHECK(nr_reusable_entries, pool->nr_reusable);
+		CHECK(nr_reusable_names, pool->nr_reusable);
+#undef CHECK
+	}
+}

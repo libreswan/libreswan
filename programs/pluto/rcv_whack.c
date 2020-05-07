@@ -85,6 +85,7 @@
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"
 #endif
+#include "addresspool.h"
 
 #include "pluto_stats.h"
 #include "state_db.h"
@@ -578,6 +579,8 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 
 		if (m->whack_brief_status)
 			show_brief_status(s);
+		if (m->whack_addresspool_status)
+			show_addresspool_status(s);
 
 		if (m->whack_show_states)
 			show_states(s);
