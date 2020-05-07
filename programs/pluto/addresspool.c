@@ -391,6 +391,7 @@ void rel_lease_addr(struct connection *c)
 		/* the lease is reusable, leave it lingering */
 		if (lease->lease_refcount == 0) {
 			APPEND(pool, free_list, free_entry, lease);
+			pool->nr_in_use--;
 			if (DBGP(DBG_BASE)) {
 				connection_buf cb;
 				DBG_lease(true, pool, lease, "lingering reusable lease '%s' for connection "PRI_CONNECTION,
@@ -405,6 +406,7 @@ void rel_lease_addr(struct connection *c)
 		/* cannot share: free it */
 		passert(lease->lease_refcount == 0);
 		PREPEND(pool, free_list, free_entry, lease);
+		pool->nr_in_use--;
 		if (DBGP(DBG_BASE)) {
 			connection_buf cb;
 			DBG_lease(true, pool, lease, "returning one-time lease for connection "PRI_CONNECTION,
@@ -540,6 +542,7 @@ err_t lease_an_address(const struct connection *c, const struct state *st UNUSED
 		new_lease = HEAD(pool, free_list, free_entry);
 		passert(new_lease != NULL);
 		REMOVE(pool, free_list, free_entry, new_lease);
+		pool->nr_in_use++;
 		if (new_lease->reusable_name != NULL) {
 			/* oops; takeing over this lingering lease */
 			if (DBGP(DBG_BASE)) {
@@ -553,7 +556,6 @@ err_t lease_an_address(const struct connection *c, const struct state *st UNUSED
 			new_lease->reusable_name = clone_str(thatstr, "lease name");
 			hash_lease_id(pool, new_lease);
 		}
-		pool->nr_in_use++;
 		new_lease->lease_refcount++;
 	}
 
