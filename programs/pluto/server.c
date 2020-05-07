@@ -244,8 +244,8 @@ static struct global_timer_desc global_timers[] = {
 #undef E
 };
 
-static void global_timer_event(evutil_socket_t fd UNUSED,
-			       const short event, void *arg)
+static void global_timer_event_cb(evutil_socket_t fd UNUSED,
+				  const short event, void *arg)
 {
 	passert(in_main_thread());
 	struct global_timer_desc *gt = arg;
@@ -255,6 +255,25 @@ static void global_timer_event(evutil_socket_t fd UNUSED,
 	dbg("processing global timer %s", gt->name);
 	threadtime_t start = threadtime_start();
 	gt->cb(null_fd);
+	threadtime_stop(&start, SOS_NOBODY, "global timer %s", gt->name);
+}
+
+void call_global_event_inline(enum global_timer timer, struct fd *whackfd)
+{
+	passert(in_main_thread());
+	if (!pexpect(timer < elemsof(global_timers))) {
+		/* timer is hardwired so shouldn't happen */
+		return;
+	}
+	struct global_timer_desc *gt = &global_timers[timer];
+	passert(gt->name != NULL);
+	if (!event_initialized(&gt->ev)) {
+		log_global(RC_LOG, whackfd, "inject: timer %s is not initialized",
+			   gt->name);
+	}
+	log_global(RC_LOG, whackfd, "inject: injecting timer event %s", gt->name);
+	threadtime_t start = threadtime_start();
+	gt->cb(whackfd);
 	threadtime_stop(&start, SOS_NOBODY, "global timer %s", gt->name);
 }
 
@@ -269,7 +288,7 @@ void enable_periodic_timer(enum global_timer type, global_timer_cb *cb,
 	passert(!event_initialized(&gt->ev));
 	event_assign(&gt->ev, pluto_eb, (evutil_socket_t)-1,
 		     EV_TIMEOUT|EV_PERSIST,
-		     global_timer_event, gt/*arg*/);
+		     global_timer_event_cb, gt/*arg*/);
 	gt->cb = cb;
 	passert(event_get_events(&gt->ev) == (EV_TIMEOUT|EV_PERSIST));
 	/* enable */
@@ -291,7 +310,7 @@ void init_oneshot_timer(enum global_timer type, global_timer_cb *cb)
 	passert(!event_initialized(&gt->ev));
 	event_assign(&gt->ev, pluto_eb, (evutil_socket_t)-1,
 		     EV_TIMEOUT,
-		     global_timer_event, gt/*arg*/);
+		     global_timer_event_cb, gt/*arg*/);
 	gt->cb = cb;
 	passert(event_get_events(&gt->ev) == (EV_TIMEOUT));
 	dbg("global one-shot timer %s initialized", gt->name);

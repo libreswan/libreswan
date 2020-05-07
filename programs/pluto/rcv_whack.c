@@ -87,6 +87,38 @@
 #endif
 
 #include "pluto_stats.h"
+#include "state_db.h"
+
+static void whack_impair_action(enum impair_action action, unsigned event,
+				unsigned biased_what, bool background, struct fd *whackfd)
+{
+	switch (action) {
+	case IMPAIR_UPDATE:
+		/* err... */
+		break;
+	case CALL_GLOBAL_EVENT:
+		call_global_event_inline(event, whackfd);
+		break;
+	case CALL_STATE_EVENT:
+	{
+		if (biased_what == 0) {
+			log_global(RC_COMMENT, whackfd,
+				   "state 'no' is not valid");
+			return;
+		}
+		so_serial_t so = biased_what - 1; /* unbias */
+		struct state *st = state_by_serialno(so);
+		if (st == NULL) {
+			log_global(RC_COMMENT, whackfd,
+				   "state #%lu", so);
+			return;
+		}
+		/* will log */
+		call_state_event_inline(st, event, background, whackfd);
+		break;
+	}
+	}
+}
 
 static int whack_route_connection(struct connection *c,
 				  struct fd *whackfd,
@@ -231,7 +263,10 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 				}
 				set_debugging(new_debugging);
 				for (unsigned i = 0; i < m->nr_impairments; i++) {
-					process_impair(&m->impairments[i]);
+					process_impair(&m->impairments[i],
+						       whack_impair_action,
+						       m->whack_async/*background*/,
+						       whackfd);
 				}
 			} else if (!m->whack_connection) {
 				struct connection *c = conn_by_name(m->name, true/*strict*/);

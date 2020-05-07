@@ -21,6 +21,8 @@
 
 #include "lswcdefs.h"
 
+struct fd;
+
 /*
  * Meddle with the contents of a payload.
  */
@@ -148,7 +150,18 @@ struct whack_impair {
 
 bool parse_impair(const char *optarg, struct whack_impair *whack_impair, bool enable);
 
-void process_impair(const struct whack_impair *whack_impair);
+enum impair_action {
+	IMPAIR_UPDATE,
+	CALL_GLOBAL_EVENT,
+	CALL_STATE_EVENT,
+};
+
+void process_impair(const struct whack_impair *whack_impair,
+		    void (*action)(enum impair_action, unsigned what,
+				   unsigned how, bool background,
+				   struct fd *whackfd),
+		    bool background,
+		    struct fd *whackfd);
 
 void help_impair(const char *prefix);
 

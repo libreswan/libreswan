@@ -1476,7 +1476,7 @@ int main(int argc, char **argv)
 		{
 			struct whack_impair impairment;
 			if (parse_impair(optarg, &impairment, true)) {
-				process_impair(&impairment);
+				process_impair(&impairment, NULL, true, null_fd);
 			}
 			continue;
 		}

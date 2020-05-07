@@ -44,6 +44,10 @@ extern void delete_event(struct state *st);
 extern void handle_next_timer_event(void);
 extern void init_timer(void);
 
+void call_state_event_inline(struct state *st, enum event_type type,
+			     bool background, struct fd *whackfd);
+void call_global_event_inline(enum global_timer type, struct fd *whackfd);
+
 extern void timer_list(const struct fd *whackfd);
 extern char *revive_conn;
 

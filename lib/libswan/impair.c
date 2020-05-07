@@ -63,11 +63,15 @@ struct impairment {
 	void *value;
 	/* size_t offsetof_value; */
 	size_t sizeof_value;
+	enum impair_action action;
+	unsigned param;
 };
 
 struct impairment impairments[] = {
 	{ .what = NULL, },
-#define V(WHAT, VALUE, HELP, ...) { .what = WHAT, .value = &impair.VALUE, .help = HELP, .sizeof_value = sizeof(impair.VALUE),##__VA_ARGS__, }
+
+#define A(WHAT, ACTION, PARAM, HELP, UNSIGNED_HELP, ...) { .what = WHAT, .action = CALL_##ACTION##_EVENT, .param = PARAM, .help = HELP, .unsigned_help = UNSIGNED_HELP, ##__VA_ARGS__, }
+#define V(WHAT, VALUE, HELP, ...) { .what = WHAT, .action = IMPAIR_UPDATE, .value = &impair.VALUE, .help = HELP, .sizeof_value = sizeof(impair.VALUE), ##__VA_ARGS__, }
 
 	V("add-unknown-payload-to-auth", add_unknown_payload_to_auth, "add a payload with an unknown type to AUTH"),
 	V("add-unknown-payload-to-auth-sk", add_unknown_payload_to_auth_sk, "add a payload with an unknown type to AUTH's SK payload"),
@@ -127,7 +131,10 @@ struct impairment impairments[] = {
 	V("tcp-use-blocking-write", tcp_use_blocking_write, "use a blocking write when sending TCP encapsulated IKE messages"),
 	V("tcp-skip-setsockopt-espintcp", tcp_skip_setsockopt_espintcp, "skip the required setsockopt(\"espintcp\") call"),
 
+	A("rekey", STATE, EVENT_SA_REKEY, "inject a rekey event", "state to rekey"),
+
 #undef V
+#undef A
 
 };
 
@@ -388,7 +395,8 @@ bool have_impairments(void)
 	/* is there anything enabled? */
 	for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 		const struct impairment *cr = &impairments[ci];
-		if (value_of(cr) != 0) {
+		if (cr->action == IMPAIR_UPDATE &&
+		    value_of(cr) != 0) {
 			return true;
 		}
 	}
@@ -400,14 +408,20 @@ void jam_impairments(jambuf_t *buf, const char *sep)
 	const char *s = "";
 	for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 		const struct impairment *cr = &impairments[ci];
-		if (value_of(cr) != 0) {
+		if (cr->action == IMPAIR_UPDATE &&
+		    value_of(cr) != 0) {
 			jam_string(buf, s); s = sep;
 			jam_impairment(buf, cr);
 		}
 	}
 }
 
-void process_impair(const struct whack_impair *wc)
+void process_impair(const struct whack_impair *wc,
+		    void (*action)(enum impair_action, unsigned param,
+				   unsigned update, bool background,
+				   struct fd *whackfd),
+		    bool background,
+		    struct fd *whackfd)
 {
 	if (wc->what == 0) {
 		/* ignore; silently */
@@ -415,7 +429,8 @@ void process_impair(const struct whack_impair *wc)
 	} else if (wc->what == IMPAIR_DISABLE) {
 		for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 			const struct impairment *cr = &impairments[ci];
-			if (value_of(cr) != 0) {
+			if (cr->action == IMPAIR_UPDATE &&
+			    value_of(cr) != 0) {
 				LSWDBGP(DBG_BASE, buf) {
 					lswlogf(buf, "%s: ", cr->what);
 					lswlogs(buf, " disabled");
@@ -427,7 +442,8 @@ void process_impair(const struct whack_impair *wc)
 	} else if (wc->what == IMPAIR_LIST) {
 		for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 			const struct impairment *cr = &impairments[ci];
-			if (value_of(cr) != 0) {
+			if (cr->action == IMPAIR_UPDATE &&
+			    value_of(cr) != 0) {
 				/* XXX: should be whack log? */
 				LSWLOG_INFO(buf) {
 					jam_impairment(buf, cr);
@@ -443,19 +459,28 @@ void process_impair(const struct whack_impair *wc)
 		return;
 	}
 	const struct impairment *cr = &impairments[wc->what];
-	/* do not un-bias */
-	switch (cr->sizeof_value) {
+	switch (cr->action) {
+	case IMPAIR_UPDATE:
+		/* do not un-bias */
+		switch (cr->sizeof_value) {
 #define L(T) case sizeof(uint##T##_t): *(uint##T##_t*)cr->value = wc->how; break;
-		L(8);
-		L(16);
-		L(32);
-		L(64);
+			L(8);
+			L(16);
+			L(32);
+			L(64);
 #undef L
-	default:
-		bad_case(cr->sizeof_value);
-	}
-	LSWDBGP(DBG_BASE, buf) {
-		jam_impairment(buf, cr);
+		default:
+			bad_case(cr->sizeof_value);
+		}
+		LSWDBGP(DBG_BASE, buf) {
+			jam_impairment(buf, cr);
+		}
+		break;
+	case CALL_GLOBAL_EVENT:
+	case CALL_STATE_EVENT:
+		/* how is always biased */
+		action(cr->action, cr->param, wc->how, background, whackfd);
+		break;
 	}
 }
 
