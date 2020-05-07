@@ -233,4 +233,7 @@ cat << EOD >> /etc/hosts
 192.1.2.254 nic
 EOD
 
+# enable password root logins (f32 disables these per default)
+echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+
 %end
