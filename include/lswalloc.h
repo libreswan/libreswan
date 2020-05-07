@@ -79,8 +79,8 @@ extern void report_leaks(void);
 	{								\
 		void *things_ = THINGS;					\
 		realloc_bytes(&things_,					\
-			      OLD_COUNT * sizeof((THINGS)[0]),		\
-			      NEW_COUNT * sizeof((THINGS)[0]),		\
+			      (OLD_COUNT) * sizeof((THINGS)[0]),	\
+			      (NEW_COUNT) * sizeof((THINGS)[0]),	\
 			      NAME);					\
 		THINGS = things_;					\
 	}
