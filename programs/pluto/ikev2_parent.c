@@ -2898,79 +2898,56 @@ static stf_status ike_auth_child_responder(struct ike_sa *ike,
 					   struct child_sa **child_out,
 					   struct msg_digest *md)
 {
+	pexpect(md->st != NULL);
+	pexpect(md->st == &ike->sa); /* passed in parent */
 	struct connection *c = md->st->st_connection;
-	struct child_sa *child;
 	pexpect(md->hdr.isa_xchg == ISAKMP_v2_IKE_AUTH); /* redundant */
+
+	struct child_sa *child = new_v2_child_state(ike, IPSEC_SA, SA_RESPONDER,
+						    STATE_V2_IKE_AUTH_CHILD_R0,
+						    null_fd);
+	update_state_connection(&child->sa, c);
+	binlog_refresh_state(&child->sa);
+
+	/*
+	 * XXX: This is to hack around the broken responder code that
+	 * switches from the IKE SA to the CHILD SA before sending the
+	 * reply.  Instead, because the CHILD SA can fail, the IKE SA
+	 * should be the one processing the message?
+	 */
+	v2_msgid_switch_responder_to_child(ike, child, md, HERE);
 
 	if (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
 
-		/*
-		 * XXX: unlike above and below, this also screws
-		 * around with the connection.
-		 */
-		ip_address ip;
+		struct spd_route *spd = &child->sa.st_connection->spd;
+		if (!spd->that.has_lease) {
+			ip_address ip;
+			err_t e = lease_an_address(c, md->st, &ip);
+			if (e != NULL) {
+				log_state(RC_LOG, &child->sa, "ikev2 lease_an_address failure %s", e);
+				/*
+				 * XXX: while the CHILD SA failed, the
+				 * IKE SA should continue to exist.
+				 * This STF_FAIL will blame MD->ST aka
+				 * the IKE SA.
+				 */
+				v2_msgid_switch_responder_from_child(ike, child, md, HERE);
+				delete_state(&child->sa);
+				return STF_INTERNAL_ERROR; /* XXX: better? */
+			}
+			spd->that.has_lease = true;
+			spd->that.client.addr = ip;
 
-		err_t e = lease_an_address(c, md->st, &ip);
-		if (e != NULL) {
-			libreswan_log("ikev2 lease_an_address failure %s", e);
-			return STF_INTERNAL_ERROR;
+			if (addrtypeof(&ip) == AF_INET)
+				spd->that.client.maskbits = INTERNL_IP4_PREFIX_LEN; /* export it as value */
+			else
+				spd->that.client.maskbits = INTERNL_IP6_PREFIX_LEN; /* export it as value */
 		}
-
-		child = new_v2_child_state(ike, IPSEC_SA, SA_RESPONDER,
-					   STATE_V2_IKE_AUTH_CHILD_R0,
-					   null_fd);
-		update_state_connection(&child->sa, c);
-		binlog_refresh_state(&child->sa);
-		/*
-		 * XXX: This is to hack around the broken responder
-		 * code that switches from the IKE SA to the CHILD SA
-		 * before sending the reply.  Instead, because the
-		 * CHILD SA can fail, the IKE SA should be the one
-		 * processing the message?
-		 */
-		v2_msgid_switch_responder_to_child(ike, child, md, HERE);
-
-		/*
-		 * XXX: Per above if(), md->st could be either the IKE or the
-		 * CHILD!
-		 */
-		struct spd_route *spd = &md->st->st_connection->spd;
-		spd->that.has_lease = TRUE;
-		spd->that.client.addr = ip;
-
-		if (addrtypeof(&ip) == AF_INET)
-			spd->that.client.maskbits = INTERNL_IP4_PREFIX_LEN; /* export it as value */
-		else
-			spd->that.client.maskbits = INTERNL_IP6_PREFIX_LEN; /* export it as value */
-		spd->that.has_client = TRUE;
-
+		spd->that.has_client = true;
 		child->sa.st_ts_this = ikev2_end_to_ts(&spd->this);
 		child->sa.st_ts_that = ikev2_end_to_ts(&spd->that);
 
 	} else {
-		/*
-		 * While this function is called with MD->ST pointing
-		 * at either an IKE SA or CHILD SA, this code path
-		 * only works when MD->ST is the IKE SA.
-		 *
-		 * XXX: this create-state code block should be moved
-		 * to the ISAKMP_v2_AUTH caller.
-		 */
-		pexpect(md->st != NULL);
-		pexpect(md->st == &ike->sa); /* passed in parent */
-		child = new_v2_child_state(ike, IPSEC_SA, SA_RESPONDER,
-					   STATE_V2_IKE_AUTH_CHILD_R0,
-					   null_fd/* XXX: IKE's whack-fd? */);
-		binlog_refresh_state(&child->sa);
-		/*
-		 * XXX: This is to hack around the broken responder
-		 * code that switches from the IKE SA to the CHILD SA
-		 * before sending the reply.  Instead, because the
-		 * CHILD SA can fail, the IKE SA should be the one
-		 * processing the message?
-		 */
-		v2_msgid_switch_responder_to_child(ike, child, md, HERE);
-
 		if (!v2_process_ts_request(child, md)) {
 			/*
 			 * XXX: while the CHILD SA failed, the IKE SA
