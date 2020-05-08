@@ -2890,6 +2890,62 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 }
 
 /*
+ * Deal with either CP or TS.
+ *
+ * A CREATE_CHILD_SA can, technically, include a CP (Configuration)
+ * payload.  However no one does it.  Allow it here so that the code
+ * paths are consistent (and it seems that pluto has supported it).
+ */
+
+static bool assign_child_responder_client(struct ike_sa *ike,
+					  struct child_sa *child,
+					  struct msg_digest *md)
+{
+	pexpect(md->st == &child->sa);
+	struct connection *c = child->sa.st_connection;
+
+	if (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
+		struct spd_route *spd = &child->sa.st_connection->spd;
+		/*
+		 * See ikev2-hostpair-02 where the connection is
+		 * constantly clawed back as the SA keeps trying to
+		 * establish / replace / rekey.
+		 */
+		if (!spd->that.has_lease) {
+			ip_address ip;
+			err_t e = lease_an_address(c, md->st, &ip);
+			if (e != NULL) {
+				log_state(RC_LOG, &child->sa, "ikev2 lease_an_address failure %s", e);
+				/* XXX: record what? */
+				record_v2N_response(child->sa.st_logger, ike, md,
+						    v2N_INTERNAL_ADDRESS_FAILURE, NULL/*no data*/,
+						    ENCRYPTED_PAYLOAD);
+				return false;
+			}
+			spd->that.has_lease = true;
+			spd->that.client.addr = ip;
+			/* XXX: ip_selector */
+			if (addrtypeof(&ip) == AF_INET)
+				spd->that.client.maskbits = INTERNL_IP4_PREFIX_LEN; /* export it as value */
+			else
+				spd->that.client.maskbits = INTERNL_IP6_PREFIX_LEN; /* export it as value */
+		}
+		spd->that.has_client = true;
+		child->sa.st_ts_this = ikev2_end_to_ts(&spd->this);
+		child->sa.st_ts_that = ikev2_end_to_ts(&spd->that);
+	} else {
+		if (!v2_process_ts_request(child, md)) {
+			/* already logged? */
+			record_v2N_response(child->sa.st_logger, ike, md,
+					    v2N_TS_UNACCEPTABLE, NULL/*no data*/,
+					    ENCRYPTED_PAYLOAD);
+			return false;
+		}
+	}
+	return true;
+}
+
+/*
  * The caller could have done the linux_audit_conn() call, except one case
  * here deletes the state before returning an STF error
  */
@@ -2917,47 +2973,16 @@ static stf_status ike_auth_child_responder(struct ike_sa *ike,
 	 */
 	v2_msgid_switch_responder_to_child(ike, child, md, HERE);
 
-	if (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
-
-		struct spd_route *spd = &child->sa.st_connection->spd;
-		if (!spd->that.has_lease) {
-			ip_address ip;
-			err_t e = lease_an_address(c, md->st, &ip);
-			if (e != NULL) {
-				log_state(RC_LOG, &child->sa, "ikev2 lease_an_address failure %s", e);
-				/*
-				 * XXX: while the CHILD SA failed, the
-				 * IKE SA should continue to exist.
-				 * This STF_FAIL will blame MD->ST aka
-				 * the IKE SA.
-				 */
-				v2_msgid_switch_responder_from_child(ike, child, md, HERE);
-				delete_state(&child->sa);
-				return STF_INTERNAL_ERROR; /* XXX: better? */
-			}
-			spd->that.has_lease = true;
-			spd->that.client.addr = ip;
-
-			if (addrtypeof(&ip) == AF_INET)
-				spd->that.client.maskbits = INTERNL_IP4_PREFIX_LEN; /* export it as value */
-			else
-				spd->that.client.maskbits = INTERNL_IP6_PREFIX_LEN; /* export it as value */
-		}
-		spd->that.has_client = true;
-		child->sa.st_ts_this = ikev2_end_to_ts(&spd->this);
-		child->sa.st_ts_that = ikev2_end_to_ts(&spd->that);
-
-	} else {
-		if (!v2_process_ts_request(child, md)) {
-			/*
-			 * XXX: while the CHILD SA failed, the IKE SA
-			 * should continue to exist.  This STF_FAIL
-			 * will blame MD->ST aka the IKE SA.
-			 */
-			v2_msgid_switch_responder_from_child(ike, child, md, HERE);
-			delete_state(&child->sa);
-			return STF_FAIL + v2N_TS_UNACCEPTABLE;
-		}
+	if (!assign_child_responder_client(ike, child, md)) {
+		/* already logged; already recorded */
+		/*
+		 * XXX: while the CHILD SA failed, the IKE SA should
+		 * continue to exist.  This STF_FAIL will blame MD->ST
+		 * aka the IKE SA.
+		 */
+		v2_msgid_switch_responder_from_child(ike, child, md, HERE);
+		delete_state(&child->sa);
+		return STF_FAIL; /* XXX: better? */
 	}
 	*child_out = child;
 	return STF_OK;
@@ -4335,9 +4360,8 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 	case STATE_V2_NEW_CHILD_R0:
 		/* state m/c created CHILD SA */
 		pexpect(child->sa.st_ipsec_pred == SOS_NOBODY);
-		if (!v2_process_ts_request(child, md)) {
-			record_v2N_response(child->sa.st_logger, ike, md, v2N_TS_UNACCEPTABLE,
-					    NULL/*no data*/, ENCRYPTED_PAYLOAD);
+		if (!assign_child_responder_client(ike, child, md)) {
+			/* already logged; already recorded */
 			return STF_FAIL;
 		}
 		break;
