@@ -5,7 +5,7 @@
  * And in IKEv2 to respond to Configuration Payload (CP) request.
  *
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
- * Copyright (C) 2019  Andrew Cagney
+ * Copyright (C) 2019-2020  Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -30,7 +30,6 @@
  */
 
 #include "lswalloc.h"
-#include "lswlog.h"
 #include "connections.h"
 #include "defs.h"
 #include "constants.h"
@@ -38,8 +37,11 @@
 #include "monotime.h"
 #include "ip_address.h"
 #include "ip_range.h"
+#include "log.h"
+#include "state_db.h"
 
 #define SENTINEL (unsigned)-1
+#define ENTRY_UNUSED (unsigned)-2
 
 struct entry {
 	unsigned prev;
@@ -47,8 +49,8 @@ struct entry {
 };
 
 static const struct entry empty_entry = {
-	.prev = SENTINEL,
-	.next = SENTINEL,
+	.prev = ENTRY_UNUSED,
+	.next = ENTRY_UNUSED,
 };
 
 struct list {
@@ -62,6 +64,9 @@ static const struct list empty_list = {
 	.first = SENTINEL,
 	.last = SENTINEL,
 };
+
+#define IS_INSERTED(WHAT, LIST) (WHAT->LIST.prev != ENTRY_UNUSED || \
+				 WHAT->LIST.next != ENTRY_UNUSED)
 
 #define IS_EMPTY(WHAT, LIST)						\
 	({								\
@@ -91,6 +96,7 @@ static const struct list empty_list = {
 
 #define REMOVE(WHAT, LIST, ENTRY, LEASE)				\
 	{								\
+		passert(IS_INSERTED(LEASE, ENTRY));			\
 		unsigned index = LEASE - pool->leases;			\
 		if (WHAT->LIST.first == index) {			\
 			WHAT->LIST.first = LEASE->ENTRY.next;		\
@@ -110,8 +116,9 @@ static const struct list empty_list = {
 			pool->leases[LEASE->ENTRY.next].ENTRY.prev =	\
 				LEASE->ENTRY.prev;			\
 		}							\
-		LEASE->ENTRY.next = LEASE->ENTRY.prev = SENTINEL;	\
+		LEASE->ENTRY.next = LEASE->ENTRY.prev = ENTRY_UNUSED;	\
 		WHAT->LIST.nr--;					\
+		passert(!IS_INSERTED(LEASE, ENTRY));			\
 	}
 
 #define FILL(WHAT, LIST, ENTRY, LEASE)					\
@@ -124,6 +131,7 @@ static const struct list empty_list = {
 
 #define APPEND(WHAT, LIST, ENTRY, LEASE)				\
 	{								\
+		passert(!IS_INSERTED(LEASE, ENTRY));			\
 		if (IS_EMPTY(WHAT, LIST)) {				\
 			FILL(WHAT, LIST, ENTRY, LEASE);			\
 		} else {						\
@@ -135,10 +143,12 @@ static const struct list empty_list = {
 			WHAT->LIST.last = index;			\
 		}							\
 		WHAT->LIST.nr++;					\
+		passert(IS_INSERTED(LEASE, ENTRY));			\
 	}
 
 #define PREPEND(WHAT, LIST, ENTRY, LEASE)				\
 	{								\
+		passert(!IS_INSERTED(LEASE, ENTRY));			\
 		if (IS_EMPTY(WHAT, LIST)) {				\
 			/* empty */					\
 			FILL(WHAT, LIST, ENTRY, LEASE);			\
@@ -151,6 +161,7 @@ static const struct list empty_list = {
 			WHAT->LIST.first = index;			\
 		}							\
 		WHAT->LIST.nr++;					\
+		passert(IS_INSERTED(LEASE, ENTRY));			\
 	}
 
 /*
@@ -163,6 +174,8 @@ static const struct list empty_list = {
 
 struct lease {
 	unsigned lease_refcount;	/* reference counted */
+
+	so_serial_t assigned_to;
 
 	struct entry free_entry;
 	struct entry reusable_entry;
@@ -222,12 +235,14 @@ static void hash_lease_id(struct ip_pool *pool, struct lease *lease)
 {
 	struct lease *bucket = lease_id_bucket(pool, lease->reusable_name);
 	APPEND(bucket, reusable_bucket, reusable_entry, lease);
+	pool->nr_reusable++;
 }
 
 static void unhash_lease_id(struct ip_pool *pool, struct lease *lease)
 {
 	struct lease *bucket = lease_id_bucket(pool, lease->reusable_name);
 	REMOVE(bucket, reusable_bucket, reusable_entry, lease);
+	pool->nr_reusable--;
 }
 
 static ip_address lease_address(const struct ip_pool *pool,
@@ -438,11 +453,10 @@ static struct lease *recover_lease(const struct connection *c, const char *that_
 		lease = &pool->leases[current];
 		passert(lease->reusable_name != NULL);
 		if (streq(that_name, lease->reusable_name)) {
-			if (lease->lease_refcount == 0) {
+			if (IS_INSERTED(lease, free_entry)) {
 				REMOVE(pool, free_list, free_entry, lease);
 				pool->nr_in_use++;
 			}
-			lease->lease_refcount++;
 			if (DBGP(DBG_BASE)) {
 				connection_buf cb;
 				DBG_lease(false, pool, lease, "reclaimed by "PRI_CONNECTION" using '%s'",
@@ -454,7 +468,7 @@ static struct lease *recover_lease(const struct connection *c, const char *that_
 	return NULL;
 }
 
-err_t lease_an_address(const struct connection *c, const struct state *st UNUSED,
+err_t lease_an_address(const struct connection *c, const struct state *st,
 		       ip_address *ipa /*result*/)
 {
 	struct ip_pool *pool = c->pool;
@@ -464,6 +478,7 @@ err_t lease_an_address(const struct connection *c, const struct state *st UNUSED
 	id_buf that_idb;
 	char thatstr[IDTOA_BUF + MAX_XAUTH_USERNAME_LEN];
 	const char *that_name = str_id(that_id, &that_idb);
+	const char *story;
 
 	jam_str(thatstr, sizeof(thatstr), that_name);
 
@@ -490,6 +505,7 @@ err_t lease_an_address(const struct connection *c, const struct state *st UNUSED
 	struct lease *new_lease = NULL;
 	if (reusable) {
 		new_lease = recover_lease(c, thatstr);
+		story = "recovered";
 	}
 	if (new_lease == NULL) {
 		if (IS_EMPTY(pool, free_list)) {
@@ -532,6 +548,7 @@ err_t lease_an_address(const struct connection *c, const struct state *st UNUSED
 				lease->reusable_bucket = empty_list;
 			}
 			/* build a new hash table containing old */
+			pool->nr_reusable = 0;
 			for (unsigned l = 0; l < old_nr_leases; l++) {
 				struct lease *lease = &pool->leases[l];
 				if (lease->reusable_name != NULL) {
@@ -550,13 +567,15 @@ err_t lease_an_address(const struct connection *c, const struct state *st UNUSED
 					  new_lease->reusable_name);
 			}
 			unhash_lease_id(pool, new_lease);
+			story = "stolen";
+		} else {
+			story = "unused";
 		}
 		free_lease_content(new_lease);
 		if (reusable) {
 			new_lease->reusable_name = clone_str(thatstr, "lease name");
 			hash_lease_id(pool, new_lease);
 		}
-		new_lease->lease_refcount++;
 	}
 
 	/*
@@ -565,14 +584,19 @@ err_t lease_an_address(const struct connection *c, const struct state *st UNUSED
 	 * XXX: does this update that.client addr as a side effect?
 	 */
 	*ipa = lease_address(pool, new_lease);
+	new_lease->assigned_to = st->st_serialno;
+	new_lease->lease_refcount++;
 
 	if (DBGP(DBG_BASE)) {
 		subnet_buf a;
 		connection_buf cb;
-		DBG_lease(false, pool, new_lease,
-			  "assigning %s lease to "PRI_CONNECTION" with ID '%s' and that.client %s",
+		DBG_lease(true, pool, new_lease,
+			  "assign %s %s lease to "PRI_CONNECTION" #%lu with ID '%s' and that.client %s",
+			  story,
 			  reusable ? "reusable" : "one-time",
-			  pri_connection(c, &cb), thatstr,
+			  pri_connection(c, &cb),
+			  new_lease->assigned_to,
+			  thatstr,
 			  str_subnet(&c->spd.that.client, &a));
 	}
 
