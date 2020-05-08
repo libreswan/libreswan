@@ -381,7 +381,7 @@ static bool load_setup(struct starter_config *cfg,
 	return err;
 }
 
-static bool validate_ip_cider(const char *value, ip_subnet *ip, const char *leftright, char *err_p,
+static bool validate_ip_cidr(const char *value, ip_subnet *ip, const char *leftright, char *err_p,
 		starter_errors_t *perrl)
 {
 	bool err = FALSE;
@@ -537,7 +537,7 @@ static bool validate_end(struct starter_conn *conn_st,
 	end->addr_family = hostfam->af;
 
 	if (end->strings_set[KSCF_VTI_IP]) {
-		err = validate_ip_cider(end->strings[KSCF_VTI_IP],
+		err = validate_ip_cidr(end->strings[KSCF_VTI_IP],
 				&end->vti_ip, leftright, "vti", perrl);
 	}
 
@@ -761,7 +761,7 @@ static bool validate_end(struct starter_conn *conn_st,
 	}
 
 	if (end->strings_set[KSCF_INTERFACE_IP]) {
-		err = validate_ip_cider(end->strings[KSCF_INTERFACE_IP],
+		err = validate_ip_cidr(end->strings[KSCF_INTERFACE_IP],
 				&end->ifaceip, leftright, "interface-ip", perrl);
 		if (end->strings_set[KSCF_SOURCEIP]) {
 			ERR_FOUND("can  not specify  %sinterface-ip=%s and  %sssourceip=%s",
