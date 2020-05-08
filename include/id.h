@@ -81,8 +81,6 @@ extern int id_count_wildcards(const struct id *id);
 #define id_is_ipaddr(id) ((id)->kind == ID_IPV4_ADDR || (id)->kind == \
 			  ID_IPV6_ADDR)
 
-extern bool same_dn_any_order(chunk_t a, chunk_t b);
-
 /* returns ID Type; and points body at Identification Data */
 enum ike_id_type id_to_payload(const struct id *id, const ip_address *host, shunk_t *body);
 

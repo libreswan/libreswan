@@ -541,23 +541,6 @@ static bool match_dn_unordered(const chunk_t a, const chunk_t b, int *const wild
 	return matched > 0 && rdn_num > 0 && matched == rdn_num;
 }
 
-bool same_dn_any_order(chunk_t a, chunk_t b)
-{
-	bool ret = same_dn(a, b);
-
-	if (!ret) {
-		DBG(DBG_CONTROL, {
-			DBG_log("%s: not an exact match, now checking any RDN order",
-				 __func__);
-			// DBG_dump_hunk("a", a);
-			// DBG_dump_hunk("b", b);
-		});
-		ret = match_dn_unordered(a, b, NULL);
-	}
-
-	return ret;
-}
-
 bool match_dn_any_order_wild(chunk_t a, chunk_t b, int *wildcards)
 {
 	bool ret = match_dn(a, b, wildcards);

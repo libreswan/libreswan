@@ -237,7 +237,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 	*pathlen = 0;
 
 	/* CA a equals CA b => we have a match */
-	if (same_dn_any_order(a, b)) {
+	if (same_dn(a, b)) {
 		return TRUE;
 	}
 
@@ -266,7 +266,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 
 		/* does the issuer of CA a match CA b? */
 		chunk_t i_dn = same_secitem_as_chunk(cacert->derIssuer);
-		match = same_dn_any_order(i_dn, b);
+		match = same_dn(i_dn, b);
 
 		if (match) {
 			/* we have a match: exit the loop */
@@ -388,7 +388,7 @@ generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 					top = gn;
 					break;
 				}
-				if (same_dn_any_order(gn->name,
+				if (same_dn(gn->name,
 						      d->spd.that.ca)) {
 					break;
 				}
