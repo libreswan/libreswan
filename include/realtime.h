@@ -62,7 +62,6 @@ typedef struct {
 
 const char *str_realtime(realtime_t r, bool utc, realtime_buf *buf);
 size_t jam_realtime(jambuf_t *buf, realtime_t r, bool utc);
-#define lswlog_realtime jam_realtime /* XXX: TBD */
 
 /*
  * math
