@@ -402,6 +402,14 @@ static stf_status modecfg_resp(struct state *st,
 				return STF_INTERNAL_ERROR;
 		}
 
+		/*
+		 * XXX: since the code that follows only saves the
+		 * address when USE_MODECFG_ADDR_AS_CLIENT_ADDR, can
+		 * this leak?
+		 *
+		 * XXX: like for ikev2-hostpair-02, could this be
+		 * re-assigning the same address?
+		 */
 		if (!get_internal_addresses(st, &ia, &has_lease))
 			return STF_INTERNAL_ERROR;
 
