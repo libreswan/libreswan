@@ -75,6 +75,5 @@ typedef struct {
 
 const char *str_monotime(monotime_t d, monotime_buf *buf);
 size_t jam_monotime(jambuf_t *buf, monotime_t d);
-#define lswlog_monotime jam_monotime /* XXX: TBD */
 
 #endif

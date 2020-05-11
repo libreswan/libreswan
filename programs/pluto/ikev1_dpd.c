@@ -235,12 +235,10 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	/* has there been enough activity of late? */
 	if (deltatime_cmp(next_delay, >, deltatime(0))) {
 		/* Yes, just reschedule "phase 2" */
-		LSWDBGP(DBG_DPD, buf) {
-			lswlogs(buf, "DPD: not yet time for dpd event: ");
-			lswlog_monotime(buf, nw);
-			lswlogs(buf, " < ");
-			lswlog_monotime(buf, next_time);
-		}
+		monotime_buf mb1, mb2;
+		dbg("DPD: not yet time for dpd event: %s < %s",
+		    str_monotime(nw, &mb1),
+		    str_monotime(next_time, &mb2));
 		event_schedule(EVENT_DPD, next_delay, st);
 		return;
 	}
@@ -436,16 +434,12 @@ stf_status dpd_inI_outR(struct state *p1st,
 		p1st->st_dpd_rdupcount = 0;
 	}
 
-	LSWDBGP(DBG_DPD, buf) {
-		lswlogf(buf, "DPD: received R_U_THERE seq:%u monotime:",
-			seqno);
-		lswlog_monotime(buf, nw);
-		char cib[CONN_INST_BUF];
-		lswlogf(buf, " (state=#%lu name=\"%s\"%s)",
-			p1st->st_serialno,
-			p1st->st_connection->name,
-			fmt_conn_instance(p1st->st_connection, cib));
-	};
+	monotime_buf nwb;
+	connection_buf cib;
+	dbg("DPD: received R_U_THERE seq:%u monotime: %s (state=#%lu name="PRI_CONNECTION")",
+	    seqno, str_monotime(nw, &nwb),
+	    p1st->st_serialno,
+	    pri_connection(p1st->st_connection, &cib));
 
 	p1st->st_dpd_peerseqno = seqno;
 

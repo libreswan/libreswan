@@ -152,7 +152,7 @@ void start_retransmits(struct state *st)
 		lswlogs(buf, " seconds; timeout in ");
 		jam_deltatime(buf, rt->timeout);
 		lswlogf(buf, " seconds; limit of %lu retransmits; current time is ", rt->limit);
-		lswlog_monotime(buf, rt->start);
+		jam_monotime(buf, rt->start);
 	}
 }
 
@@ -211,7 +211,7 @@ enum retransmit_status retransmit(struct state *st)
 	LSWDBGP(DBG_RETRANSMITS, buf) {
 		lswlogs(buf, "retransmits: ");
 		lswlogs(buf, "current time ");
-		lswlog_monotime(buf, now);
+		jam_monotime(buf, now);
 		/* number of packets so far */
 		lswlogf(buf, "; retransmit count %lu exceeds limit? %s", nr_retransmits,
 			retransmit_count_exceeded ? "YES" : "NO");
