@@ -134,6 +134,7 @@ struct impairment impairments[] = {
 	A("rekey", CALL_STATE_EVENT, EVENT_SA_REKEY, "inject a rekey event", "state to rekey"),
 
 	A("initiate-v2-liveness", INITIATE_v2_LIVENESS, 0, "initiate an IKEv2 liveness exchange", "IKE SA"),
+	A("initiate-v2-delete", INITIATE_v2_DELETE, 0, "initiate an IKEv2 delete exchange", "IKE SA"),
 
 #undef V
 #undef A
@@ -478,6 +479,7 @@ void process_impair(const struct whack_impair *wc,
 			jam_impairment(buf, cr);
 		}
 		break;
+	case INITIATE_v2_DELETE:
 	case INITIATE_v2_LIVENESS:
 	case CALL_GLOBAL_EVENT:
 	case CALL_STATE_EVENT:

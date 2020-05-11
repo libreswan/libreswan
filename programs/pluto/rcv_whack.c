@@ -70,6 +70,7 @@
 #include "ikev2.h"
 #include "ikev2_redirect.h"
 #include "ikev2_liveness.h"
+#include "ikev2_delete.h"
 #include "server.h" /* for pluto_seccomp */
 #include "kernel_alg.h"
 #include "ike_alg.h"
@@ -159,6 +160,18 @@ static void whack_impair_action(enum impair_action action, unsigned event,
 		struct logger logger = attach_logger(&ike->sa, background, whackfd);
 		log_message(RC_COMMENT, &logger, "initiating liveness");
 		initiate_v2_liveness(&logger, ike);
+		break;
+	}
+	case INITIATE_v2_DELETE:
+	{
+		struct state *st = find_impaired_state(biased_what, whackfd);
+		if (st == NULL) {
+			/* already logged */
+			return;
+		}
+		/* will log */
+		attach_logger(st, background, whackfd);
+		initiate_v2_delete(ike_sa(st, HERE), st);
 		break;
 	}
 	}

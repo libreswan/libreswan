@@ -85,6 +85,7 @@
 #include "chunk.h"
 #include "pending.h"
 #include "iface.h"
+#include "ikev2_delete.h"	/* for record_v2_delete(); but call is dying */
 
 /*
  * Process KE values.
@@ -486,8 +487,9 @@ void send_delete(struct state *st)
 			send_v1_delete(st);
 			break;
 		case IKEv2:
-			record_v2_delete(st);
+		{
 			struct ike_sa *ike = ike_sa(st, HERE);
+			record_v2_delete(ike, st);
 			send_recorded_v2_message(ike, "delete notification",
 						 MESSAGE_REQUEST);
 			/*
@@ -508,6 +510,7 @@ void send_delete(struct state *st)
 			    ike->sa.st_serialno, st->st_serialno, __func__);
 			v2_msgid_update_sent(ike, &ike->sa, NULL/*new exchange*/, MESSAGE_REQUEST);
 			break;
+		}
 		default:
 			bad_case(st->st_ike_version);
 		}

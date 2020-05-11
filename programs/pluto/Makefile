@@ -59,6 +59,7 @@ OBJS += ikev2_ts.o
 OBJS += ikev2_msgid.o
 OBJS += ikev2_auth.o
 OBJS += ikev2_auth_helper.o
+OBJS += ikev2_delete.o
 OBJS += ikev2_liveness.o
 
 OBJS += state_db.o
