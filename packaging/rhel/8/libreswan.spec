@@ -61,7 +61,7 @@ BuildRequires: nss-tools
 BuildRequires: openldap-devel
 BuildRequires: pam-devel
 BuildRequires: pkgconfig
-BuildRequires: pkgconfig hostname
+BuildRequires: hostname
 BuildRequires: redhat-rpm-config
 BuildRequires: systemd-devel
 BuildRequires: unbound-devel >= %{unbound_version}

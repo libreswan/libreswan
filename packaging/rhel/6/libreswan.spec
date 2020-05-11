@@ -60,7 +60,7 @@ BuildRequires: nss-tools
 BuildRequires: openldap-devel
 BuildRequires: pam-devel
 BuildRequires: pkgconfig
-BuildRequires: pkgconfig net-tools
+BuildRequires: net-tools
 BuildRequires: redhat-rpm-config
 BuildRequires: xmlto
 %if 0%{with_efence}

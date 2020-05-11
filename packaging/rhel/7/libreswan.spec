@@ -58,7 +58,6 @@ BuildRequires: nss-tools
 BuildRequires: openldap-devel
 BuildRequires: pam-devel
 BuildRequires: pkgconfig
-BuildRequires: pkgconfig
 BuildRequires: redhat-rpm-config
 BuildRequires: systemd-devel
 BuildRequires: xmlto
