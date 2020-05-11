@@ -1,18 +1,34 @@
 
 See also https://libreswan.org/
 
-v3.32 (unreleased)
+v3.33 (unreleased)
 * KLIPS: Support for KLIPS completely removed [Paul]
 * pluto: Support for deprecated algos removed: serpent, twofish, cast [Paul]
 * show: Fixup for python3 version of ipaddress module [Paul]
 * IKEv2: Decode notify payloads into the message digest [Andrew]
-* pluto: Fix using syntax left=%eth1 - broken in 3.27 [Antony]
 * building: Remove support for SINGLE_CONF_DIR, EMIT_ISAKMP_SPI, [Paul]
             USE_KEYRR and TEST_INDECENT_PROPOSAL
 * building: Merge userland.mk into config.mk to simplify makefiles [Tuomo]
 * building: Deprecate INC_ variables [Tuomo]
 * building: Remove all support for SERPENT, TWOFISH, CAST and RIPEMD [Paul]
 * building: Remove -DALLOW_MICROSOFT_BAD_PROPOSAL [Tuomo]
+
+v3.32 (May 11, 2020)
+* SECURITY: Fixes CVE-2020-1763 https://libreswan.org/security/CVE-2020-1763
+* IKEv2: Support non-narrowed child rekey for narrowing (regression in 3.31)
+* FIPS: ECDSA keys were mistakenly rejected as "too weak" [Paul]
+* FIPS: Minimum RSA key size is 2048, not 3072 [Paul]
+* FIPS: Use NSS to check FIPS mode instead of manually checking fips=1 [Paul]
+* IKEv2: Do not use fragments if not appropriate (regression from v3.30) [Paul]
+* IKEv1: Add NSS KDF support for the Quick Mode KDF [Andrew/Paul]
+* libipsecconf: support old-style ",," to mean "\," in specifying id [Paul]
+* libipsecconf: left/rightinterface-ip= are not kt_obsolete [Paul]
+* whack: Add missing ecdsa/sha2 and compat rsa policy options to whack [Paul]
+* Fix left=%iface syntax due to string length miscalculation [Antony]
+* X509: don't try to match up ID on SAN when ID type is ID_DER_ASN1_DN [Paul]
+* packaging: debian fixes [Tuomo]
+* building: USE_NSS_KDF=true now uses NSS for all KDF functions
+            Using this option, libreswan no longer needs FIPS certification
 
 v3.31 (March 3, 2020)
 * IKEv2: Opportunistic conns specifying keyingtries=0 are changed to 1 [Paul]
