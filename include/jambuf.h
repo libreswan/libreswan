@@ -146,6 +146,10 @@ size_t jam_char(jambuf_t *buf, char c);
 size_t jam_string(jambuf_t *buf, const char *string);
 size_t jam_jambuf(jambuf_t *buf, jambuf_t *in);
 
+#define lswlogvf jam_va_list /* XXX: TBD */
+#define lswlogs jam_string /* XXX: TBD */
+#define lswlogf jam /* XXX: TBD */
+
 /*
  * Jam a string of bytes formatted in some way.
  */

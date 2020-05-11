@@ -128,7 +128,6 @@ OBJS += log_pexpect.o
 
 OBJS += jambuf.o
 OBJS += jam_bytes.o
-OBJS += lswlog.o
 OBJS += lswlog_nss_error.o
 OBJS += lswlog_nss_ckm.o
 OBJS += lswlog_nss_ckf.o

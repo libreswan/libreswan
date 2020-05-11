@@ -328,27 +328,6 @@ void DBG_dump(const char *label, const void *p, size_t len);
 #define LSWLOG_DEBUG(BUF) LSWDBG_(true, BUF)
 
 /*
- * Routines for accumulating output in the lswlog buffer.
- *
- * If there is insufficient space, the output is truncated and "..."
- * is appended.
- *
- * Similar to C99 snprintf() et.al., these functions return the
- * untruncated size of output that the call would append (the value
- * can never be negative).
- *
- * While probably not directly useful, it provides a sink for code
- * that needs to consume an otherwise ignored return value (the
- * compiler attribute warn_unused_result can't be suppressed using a
- * (void) cast).
- */
-
-size_t lswlogvf(struct lswlog *log, const char *format, va_list ap);
-size_t lswlogf(struct lswlog *log, const char *format, ...) PRINTF_LIKE(2);
-size_t lswlogs(struct lswlog *log, const char *string);
-size_t lswlogl(struct lswlog *log, struct lswlog *buf);
-
-/*
  * Code wrappers that cover up the details of allocating,
  * initializing, de-allocating (and possibly logging) a 'struct
  * lswlog' buffer.
