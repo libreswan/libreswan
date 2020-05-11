@@ -107,18 +107,15 @@ static void pam_callback(struct state *st,
 	pstats_xauth_stopped++;
 
 	bool success = WIFEXITED(status) && WEXITSTATUS(status) == 0;
-	LSWDBGP(DBG_XAUTH, buf) {
-		lswlogf(buf, "PAM: #%lu: main-process cleaning up PAM-process for user '%s' result %s time elapsed ",
-			xauth->serialno,
-			xauth->ptarg.name,
-			success ? "SUCCESS" : "FAILURE");
-		lswlog_deltatime(buf, monotimediff(mononow(), xauth->start_time));
-		if (st == NULL) {
-			lswlogs(buf, " (state deleted)");
-		} else if (st->st_xauth == NULL) {
-			lswlogs(buf, " (aborted)");
-		}
-	}
+	deltatime_buf db;
+	dbg("PAM: #%lu: main-process cleaning up PAM-process for user '%s' result %s time elapsed %s seconds%s",
+	    xauth->serialno,
+	    xauth->ptarg.name,
+	    success ? "SUCCESS" : "FAILURE",
+	    str_deltatime(monotimediff(mononow(), xauth->start_time), &db),
+	    (st == NULL ? " (state deleted)" :
+	     st->st_xauth == NULL ? " (aborted)" :
+	     ""));
 
 	/*
 	 * Try to find the corresponding state.
@@ -128,9 +125,10 @@ static void pam_callback(struct state *st,
 	 */
 	if (st != NULL) {
 		st->st_xauth = NULL; /* all done */
-		libreswan_log("PAM: #%lu: completed for user '%s' with status %s",
-			      xauth->serialno, xauth->ptarg.name,
-			      success ? "SUCCESSS" : "FAILURE");
+		log_state(RC_LOG, st,
+			  "PAM: #%lu: completed for user '%s' with status %s",
+			  xauth->serialno, xauth->ptarg.name,
+			  success ? "SUCCESSS" : "FAILURE");
 		xauth->callback(st, md, xauth->ptarg.name, success);
 	}
 

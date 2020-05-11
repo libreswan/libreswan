@@ -94,6 +94,5 @@ typedef struct {
 
 const char *str_deltatime(deltatime_t d, deltatime_buf *buf);
 size_t jam_deltatime(jambuf_t *buf, deltatime_t d);
-#define lswlog_deltatime jam_deltatime /* XXX: TBD */
 
 #endif

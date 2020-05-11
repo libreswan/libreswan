@@ -506,38 +506,38 @@ void free_ipseckey_dns(struct p_dns_req *d)
 static void ikev2_ipseckey_log_missing_st(struct p_dns_req *dnsr)
 {
 	deltatime_t served_delta = realtimediff(dnsr->done_time, dnsr->start_time);
-	LSWLOG_RC(RC_LOG_SERIOUS, buf) {
-		lswlogf(buf, "%s The state #%lu is gone. %s returned %s elapsed time ",
-			dnsr->dbg_buf, dnsr->so_serial_t,
-			dnsr->log_buf, dnsr->rcode_name);
-		lswlog_deltatime(buf, served_delta);
-	}
+	deltatime_buf db;
+	log_global(RC_LOG_SERIOUS, null_fd,
+		   "%s The state #%lu is gone. %s returned %s elapsed time %s seconds",
+		   dnsr->dbg_buf, dnsr->so_serial_t,
+		   dnsr->log_buf, dnsr->rcode_name,
+		   str_deltatime(served_delta, &db));
 }
 
-static void ikev2_ipseckey_log_dns_err(struct p_dns_req *dnsr,
-		const char *err)
+static void ikev2_ipseckey_log_dns_err(struct state *st,
+				       struct p_dns_req *dnsr,
+				       const char *err)
 {
 	deltatime_t served_delta = realtimediff(dnsr->done_time, dnsr->start_time);
-	LSWLOG_RC(RC_LOG_SERIOUS, buf) {
-		lswlogf(buf, "%s returned %s rr parse error %s elapsed time ",
-			dnsr->log_buf,
-			dnsr->rcode_name, err);
-		lswlog_deltatime(buf, served_delta);
-	}
+	deltatime_buf db;
+	log_state(RC_LOG_SERIOUS, st,
+		  "%s returned %s rr parse error %s elapsed time %s seconds",
+		  dnsr->log_buf,
+		  dnsr->rcode_name, err,
+		  str_deltatime(served_delta, &db));
 }
 
 static void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr)
 {
 	deltatime_t served_delta = realtimediff(dnsr->done_time, dnsr->start_time);
-	LSWDBGP(DBG_CONTROL, buf) {
-		lswlogf(buf, "%s returned %s cache=%s elapsed time ",
-			dnsr->log_buf,
-			dnsr->rcode_name,
-			bool_str(dnsr->cache_hit));
-		lswlog_deltatime(buf, served_delta);
-	}
+	deltatime_buf db;
+	dbg("%s returned %s cache=%s elapsed time %s seconds",
+	    dnsr->log_buf,
+	    dnsr->rcode_name,
+	    bool_str(dnsr->cache_hit),
+	    str_deltatime(served_delta, &db));
 
-	DBG(DBG_DNS, {
+	if (DBGP(DBG_BASE)) {
 		const enum lswub_resolve_event_secure_kind k = dnsr->secure;
 
 		DBG_log("DNSSEC=%s %s MSG SIZE %d bytes",
@@ -548,7 +548,7 @@ static void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr)
 
 			k == UB_EVENT_BOGUS ? dnsr->why_bogus : "",
 			dnsr->wire_len);
-	});
+	}
 }
 
 static void idr_ipseckey_fetch_continue(struct p_dns_req *dnsr)
@@ -571,7 +571,7 @@ static void idr_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 	parse_err = process_dns_resp(dnsr);
 
 	if (parse_err != NULL) {
-		ikev2_ipseckey_log_dns_err(dnsr, parse_err);
+		ikev2_ipseckey_log_dns_err(st, dnsr, parse_err);
 	}
 
 	if (dnsr->cache_hit) {
@@ -695,7 +695,7 @@ static void idi_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 	parse_err = process_dns_resp(dnsr);
 
 	if (parse_err != NULL) {
-		ikev2_ipseckey_log_dns_err(dnsr, parse_err);
+		ikev2_ipseckey_log_dns_err(st, dnsr, parse_err);
 	}
 
 	if (dnsr->rcode == 0 && parse_err == NULL) {

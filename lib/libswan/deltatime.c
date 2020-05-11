@@ -173,6 +173,6 @@ size_t jam_deltatime(jambuf_t *buf, deltatime_t d)
 const char *str_deltatime(deltatime_t d, deltatime_buf *out)
 {
 	jambuf_t buf = ARRAY_AS_JAMBUF(out->buf);
-	lswlog_deltatime(&buf, d);
+	jam_deltatime(&buf, d);
 	return out->buf;
 }

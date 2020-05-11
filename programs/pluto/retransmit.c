@@ -138,7 +138,7 @@ void start_retransmits(struct state *st)
 		rt->delay = c->r_timeout;
 		LSWLOG(buf) {
 			lswlogs(buf, "IMPAIR: suppressing retransmits; scheduling timeout in ");
-			lswlog_deltatime(buf, rt->delay);
+			jam_deltatime(buf, rt->delay);
 			lswlogs(buf, " seconds");
 		}
 	}
@@ -148,9 +148,9 @@ void start_retransmits(struct state *st)
 	LSWDBGP(DBG_RETRANSMITS, buf) {
 		lswlog_retransmit_prefix(buf, st);
 		lswlogs(buf, "first event in ");
-		lswlog_deltatime(buf, rt->delay);
+		jam_deltatime(buf, rt->delay);
 		lswlogs(buf, " seconds; timeout in ");
-		lswlog_deltatime(buf, rt->timeout);
+		jam_deltatime(buf, rt->timeout);
 		lswlogf(buf, " seconds; limit of %lu retransmits; current time is ", rt->limit);
 		lswlog_monotime(buf, rt->start);
 	}
@@ -217,12 +217,12 @@ enum retransmit_status retransmit(struct state *st)
 			retransmit_count_exceeded ? "YES" : "NO");
 		/* accumulated delay (ignores timewarp) */
 		lswlogs(buf, "; deltatime ");
-		lswlog_deltatime(buf, rt->delays);
+		jam_deltatime(buf, rt->delays);
 		lswlogf(buf, " exceeds limit? %s",
 			deltatime_exceeds_limit ? "YES" : "NO");
 		/* waittime, perhaps went to sleep but can warp */
 		lswlogs(buf, "; monotime ");
-		lswlog_deltatime(buf, waited);
+		jam_deltatime(buf, waited);
 		lswlogf(buf, " exceeds limit? %s",
 			monotime_exceeds_limit ? "YES" : "NO");
 	}
@@ -235,10 +235,10 @@ enum retransmit_status retransmit(struct state *st)
 			if (retransmit_count_exceeded) {
 				lswlogf(buf, "max number of retransmissions (%lu) reached after ",
 					nr_retransmits);
-				lswlog_deltatime(buf, waited);
+				jam_deltatime(buf, waited);
 				lswlogs(buf, " seconds");
 			} else {
-				lswlog_deltatime(buf, rt->timeout);
+				jam_deltatime(buf, rt->timeout);
 				lswlogf(buf, " second timeout exceeded after %lu retransmits",
 					nr_retransmits);
 			}
@@ -278,7 +278,7 @@ enum retransmit_status retransmit(struct state *st)
 	LSWLOG_RC(RC_RETRANSMISSION, buf) {
 		lswlogf(buf, "%s: retransmission; will wait ",
 			st->st_state->name);
-		lswlog_deltatime(buf, rt->delay);
+		jam_deltatime(buf, rt->delay);
 		lswlogs(buf, " seconds for response");
 	}
 	return RETRANSMIT_YES;
@@ -303,7 +303,7 @@ void suppress_retransmits(struct state *st)
 	LSWLOG_RC(RC_RETRANSMISSION, buf) {
 		lswlogf(buf, "%s: suppressing retransmits; will wait ",
 			st->st_state->name);
-		lswlog_deltatime(buf, rt->delay);
+		jam_deltatime(buf, rt->delay);
 		lswlogs(buf, " seconds for retry");
 	}
 }

@@ -1086,7 +1086,7 @@ static void connection_check_ddns1(struct connection *c)
 void connection_check_ddns(struct fd *unused_whackfd UNUSED)
 {
 	struct connection *c, *cnext;
-	realtime_t tv1 = realnow();
+	threadtime_t start = threadtime_start();
 
 	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 	for (c = connections; c != NULL; c = cnext) {
@@ -1095,11 +1095,7 @@ void connection_check_ddns(struct fd *unused_whackfd UNUSED)
 	}
 	check_orientations();
 
-	LSWDBGP(DBG_DNS, buf) {
-		realtime_t tv2 = realnow();
-		lswlogf(buf, "elapsed time in %s for hostname lookup ", __func__);
-		lswlog_deltatime(buf, realtimediff(tv2, tv1));
-	};
+	threadtime_stop(&start, SOS_NOBODY, "in %s for hostname lookup", __func__);
 }
 
 /* time between scans of pending phase2 */

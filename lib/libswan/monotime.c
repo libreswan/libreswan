@@ -107,7 +107,7 @@ deltatime_t monotimediff(monotime_t a, monotime_t b)
 size_t jam_monotime(jambuf_t *buf, monotime_t m)
 {
 	/* convert it to time-since-epoch and log that */
-	return lswlog_deltatime(buf, monotimediff(m, monotime_epoch));
+	return jam_deltatime(buf, monotimediff(m, monotime_epoch));
 }
 
 const char *str_monotime(monotime_t m, monotime_buf *buf)
