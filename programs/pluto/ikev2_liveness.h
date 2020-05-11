@@ -17,7 +17,10 @@
 #define IKEv2_LIVENESS_H
 
 struct state;
+struct ike_sa;
+struct child_sa;
 
 void liveness_check(struct state *st);
+void initiate_v2_liveness(struct logger *logger, struct ike_sa *ike);
 
 #endif

@@ -550,31 +550,23 @@ void event_force(enum event_type type, struct state *st)
 	event_schedule(type, delay, st);
 }
 
-void call_state_event_inline(struct state *st, enum event_type event,
-			     bool background, struct fd *whackfd)
+void call_state_event_inline(struct logger *logger, struct state *st,
+			     enum event_type event)
 {
-	/* so errors go to whack and file regardless of BACKGROUND */
-	struct logger logger = *st->st_logger;
-	logger.global_whackfd = whackfd;
-	if (!background) {
-		/* XXX: something better */
-		close_any(&st->st_logger->object_whackfd);
-		st->st_logger->object_whackfd = dup_any(whackfd);
-	}
 	/* sanity checks */
 	struct pluto_event **evp = state_event(st, event);
 	if (evp == NULL) {
-		log_message(RC_COMMENT, &logger, "%s is not a valid event",
+		log_message(RC_COMMENT, logger, "%s is not a valid event",
 			    enum_name(&timer_event_names, event));
 		return;
 	}
 	if (*evp == NULL) {
-		log_message(RC_COMMENT, &logger, "no handler for %s",
+		log_message(RC_COMMENT, logger, "no handler for %s",
 			    enum_name(&timer_event_names, event));
 		return;
 	}
 	if ((*evp)->ev_type != event) {
-		log_message(RC_COMMENT, &logger, "handler for %s is actually %s",
+		log_message(RC_COMMENT, logger, "handler for %s is actually %s",
 			    enum_name(&timer_event_names, event),
 			    enum_name(&timer_event_names, (*evp)->ev_type));
 		return;
@@ -583,7 +575,7 @@ void call_state_event_inline(struct state *st, enum event_type event,
 	 * XXX: can this kill off the old event when it is still
 	 * pending?
 	 */
-	log_message(RC_COMMENT, &logger, "calling %s",
+	log_message(RC_COMMENT, logger, "calling %s",
 		    enum_name(&timer_event_names, event));
 	timer_event_cb(0/*sock*/, 0/*event*/, *evp);
 }

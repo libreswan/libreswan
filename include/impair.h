@@ -152,6 +152,7 @@ bool parse_impair(const char *optarg, struct whack_impair *whack_impair, bool en
 
 enum impair_action {
 	IMPAIR_UPDATE,
+	INITIATE_v2_LIVENESS,
 	CALL_GLOBAL_EVENT,
 	CALL_STATE_EVENT,
 };

@@ -525,7 +525,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "I3: Informational Request",
 	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
-	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG,
+	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG|SMF2_MESSAGE_REQUEST,
 	  .message_payloads.required = P(SK),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
@@ -534,7 +534,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "I3: Informational Response",
 	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
-	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG,
+	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG|SMF2_MESSAGE_RESPONSE|SMF2_RELEASE_WHACK,
 	  .message_payloads.required = P(SK),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
@@ -563,7 +563,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "R2: process Informational Request",
 	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
-	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG,
+	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG|SMF2_MESSAGE_REQUEST,
 	  .message_payloads.required = P(SK),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
@@ -572,7 +572,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "R2: process Informational Response",
 	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
-	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG,
+	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG|SMF2_MESSAGE_RESPONSE|SMF2_RELEASE_WHACK,
 	  .message_payloads.required = P(SK),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
@@ -3101,18 +3101,18 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	dbg("announcing the state transition");
 	enum rc_type w;
 	void (*log_details)(struct lswlog *buf, struct state *st);
-	struct state *log_state;
+	struct state *log_st;
 	if (transition->state == transition->next_state) {
 		/*
 		 * HACK for seemingly going around in circles
 		 */
 		log_details = NULL;
-		log_state = st;
+		log_st = st;
 		w = RC_NEW_V2_STATE + st->st_state->kind;
 	} else if (IS_CHILD_SA_ESTABLISHED(st)) {
 		log_ipsec_sa_established("negotiated connection", st);
 		log_details = lswlog_child_sa_established;
-		log_state = st;
+		log_st = st;
 		/* log our success and trigger detach */
 		w = RC_SUCCESS;
 	} else if (st->st_state->kind == STATE_PARENT_I2) {
@@ -3123,11 +3123,11 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		pexpect(IS_CHILD_SA(st));
 		pexpect(st != &ike->sa);
 		log_details = lswlog_ike_sa_established;
-		log_state = &ike->sa;
+		log_st = &ike->sa;
 		w = RC_NEW_V2_STATE + st->st_state->kind;
 	} else if (st->st_state->kind == STATE_PARENT_R1) {
 		log_details = lswlog_ike_sa_established;
-		log_state = st;
+		log_st = st;
 		w = RC_NEW_V2_STATE + st->st_state->kind;
 	} else if (transition->state == STATE_V2_REKEY_IKE_R0 &&
 		   transition->next_state == STATE_PARENT_R2) {
@@ -3135,7 +3135,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		pexpect(IS_IKE_SA(st));
 		pexpect(st != &ike->sa);
 		log_details = lswlog_ike_sa_established;
-		log_state = st;
+		log_st = st;
 		/* log our success and trigger detach */
 		w = RC_SUCCESS;
 	} else if (transition->state == STATE_V2_REKEY_IKE_I1 &&
@@ -3144,12 +3144,12 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		pexpect(IS_IKE_SA(st));
 		pexpect(st != &ike->sa);
 		log_details = lswlog_ike_sa_established;
-		log_state = st;
+		log_st = st;
 		/* log our success and trigger detach */
 		w = RC_SUCCESS;
 	} else {
 		log_details = NULL;
-		log_state = st;
+		log_st = st;
 		w = RC_NEW_V2_STATE + st->st_state->kind;
 	}
 
@@ -3164,7 +3164,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 			}
 		}
 	} else {
-		LOG_MESSAGE(w, log_state->st_logger, buf) {
+		LOG_MESSAGE(w, log_st->st_logger, buf) {
 			jam(buf, "%s: %s", st->st_state->name,
 			    st->st_state->story);
 			/* document SA details for admin's pleasure */
@@ -3323,6 +3323,12 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 				}
 			}
 			release_any_whack(&ike->sa, HERE, "IKEv2 transitions finished so releaseing IKE SA");
+		}
+	} else if (transition->flags & SMF2_RELEASE_WHACK) {
+		log_state(RC_COMMENT, st, "releasing whack");
+		release_any_whack(st, HERE, "ST per transition");
+		if (st != &ike->sa) {
+			release_any_whack(&ike->sa, HERE, "IKE per transition");
 		}
 	}
 

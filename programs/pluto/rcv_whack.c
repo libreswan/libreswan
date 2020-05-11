@@ -69,6 +69,7 @@
 #include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "ikev2_redirect.h"
+#include "ikev2_liveness.h"
 #include "server.h" /* for pluto_seccomp */
 #include "kernel_alg.h"
 #include "ike_alg.h"
@@ -90,6 +91,36 @@
 #include "pluto_stats.h"
 #include "state_db.h"
 
+static struct state *find_impaired_state(unsigned biased_what, struct fd *whackfd)
+{
+	if (biased_what == 0) {
+		log_global(RC_COMMENT, whackfd,
+			   "state 'no' is not valid");
+		return NULL;
+	}
+	so_serial_t so = biased_what - 1; /* unbias */
+	struct state *st = state_by_serialno(so);
+	if (st == NULL) {
+		log_global(RC_COMMENT, whackfd,
+			   "state #%lu not found", so);
+		return NULL;
+	}
+	return st;
+}
+
+static struct logger attach_logger(struct state *st, bool background, struct fd *whackfd)
+{
+	/* so errors go to whack and file regardless of BACKGROUND */
+	struct logger logger = *st->st_logger;
+	logger.global_whackfd = whackfd;
+	if (!background) {
+		/* XXX: something better */
+		close_any(&st->st_logger->object_whackfd);
+		st->st_logger->object_whackfd = dup_any(whackfd);
+	}
+	return logger;
+}
+
 static void whack_impair_action(enum impair_action action, unsigned event,
 				unsigned biased_what, bool background, struct fd *whackfd)
 {
@@ -102,20 +133,32 @@ static void whack_impair_action(enum impair_action action, unsigned event,
 		break;
 	case CALL_STATE_EVENT:
 	{
-		if (biased_what == 0) {
-			log_global(RC_COMMENT, whackfd,
-				   "state 'no' is not valid");
-			return;
-		}
-		so_serial_t so = biased_what - 1; /* unbias */
-		struct state *st = state_by_serialno(so);
+		struct state *st = find_impaired_state(biased_what, whackfd);
 		if (st == NULL) {
-			log_global(RC_COMMENT, whackfd,
-				   "state #%lu", so);
+			/* already logged */
 			return;
 		}
 		/* will log */
-		call_state_event_inline(st, event, background, whackfd);
+		struct logger logger = attach_logger(st, background, whackfd);
+		call_state_event_inline(&logger, st, event);
+		break;
+	}
+	case INITIATE_v2_LIVENESS:
+	{
+		struct state *st = find_impaired_state(biased_what, whackfd);
+		if (st == NULL) {
+			/* already logged */
+			return;
+		}
+		/* will log */
+		struct ike_sa *ike = ike_sa(st, HERE);
+		if (ike == NULL) {
+			/* already logged */
+			return;
+		}
+		struct logger logger = attach_logger(&ike->sa, background, whackfd);
+		log_message(RC_COMMENT, &logger, "initiating liveness");
+		initiate_v2_liveness(&logger, ike);
 		break;
 	}
 	}

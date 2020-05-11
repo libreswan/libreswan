@@ -68,6 +68,11 @@ enum smf2_flags {
 	 * also danger note below.
 	 */
 	SMF2_ESTABLISHED = LELEM(9),
+
+	/*
+	 * Should whack be released?
+	 */
+	SMF2_RELEASE_WHACK = LELEM(10),
 };
 
 struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,

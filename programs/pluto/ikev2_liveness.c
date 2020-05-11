@@ -37,7 +37,7 @@
 #include "state_db.h"			/* for state_by_serialno() */
 #include "ikev2_states.h"
 
-static stf_status v2_send_liveness_request(struct ike_sa *ike,
+static stf_status send_v2_liveness_request(struct ike_sa *ike,
 					   struct child_sa *child UNUSED,
 					   struct msg_digest *md UNUSED)
 {
@@ -86,30 +86,6 @@ static void schedule_liveness(struct child_sa *child, deltatime_t time_since_las
 	}
 	event_schedule(EVENT_v2_LIVENESS, delay, &child->sa);
 }
-
-/*
- * XXX: where to put this?
- */
-
-static const struct state_v2_microcode v2_liveness_probe_i = {
-	.story = "liveness probe",
-	.state = STATE_PARENT_I3,
-	.next_state = STATE_PARENT_I3,
-	.send = MESSAGE_REQUEST,
-	.processor = v2_send_liveness_request,
-	.timeout_event =  EVENT_RETAIN,
-	.flags = SMF2_SUPPRESS_SUCCESS_LOG,
-};
-
-static const struct state_v2_microcode v2_liveness_probe_r = {
-	.story = "liveness probe",
-	.state = STATE_PARENT_R2,
-	.next_state = STATE_PARENT_R2,
-	.send = MESSAGE_REQUEST,
-	.processor = v2_send_liveness_request,
-	.timeout_event =  EVENT_RETAIN,
-	.flags = SMF2_SUPPRESS_SUCCESS_LOG,
-};
 
 /* note: this mutates *st by calling get_sa_info */
 void liveness_check(struct state *st)
@@ -225,20 +201,52 @@ void liveness_check(struct state *st)
 	    child->sa.st_serialno,
 	    str_endpoint(&child->sa.st_remote_endpoint, &remote_buf),
 	    handler->st_serialno);
-	const struct state_v2_microcode *transition =
-		handler->st_state->kind == v2_liveness_probe_i.state ? &v2_liveness_probe_i :
-		handler->st_state->kind == v2_liveness_probe_r.state ? &v2_liveness_probe_r :
-		NULL;
-	if (transition == NULL) {
-		dbg("liveness: #%lu unexpectedly in state %s; should be %s or %s",
-		    handler->st_serialno, handler->st_state->short_name,
-		    finite_states[v2_liveness_probe_i.state]->short_name,
-		    finite_states[v2_liveness_probe_r.state]->short_name);
-	} else {
-		v2_msgid_queue_initiator(ike, handler, ISAKMP_v2_INFORMATIONAL,
-					 transition, NULL);
-	}
+	initiate_v2_liveness(child->sa.st_logger, ike);
 
 	/* in case above screws up? */
 	schedule_liveness(child, deltatime(0), "backup for liveness probe");
+}
+
+/*
+ * XXX: where to put this?
+ */
+
+static const struct state_v2_microcode v2_liveness_probe_i = {
+	.story = "liveness probe",
+	.state = STATE_PARENT_I3,
+	.next_state = STATE_PARENT_I3,
+	.send = MESSAGE_REQUEST,
+	.processor = send_v2_liveness_request,
+	.timeout_event =  EVENT_RETAIN,
+	.flags = SMF2_SUPPRESS_SUCCESS_LOG,
+};
+
+static const struct state_v2_microcode v2_liveness_probe_r = {
+	.story = "liveness probe",
+	.state = STATE_PARENT_R2,
+	.next_state = STATE_PARENT_R2,
+	.send = MESSAGE_REQUEST,
+	.processor = send_v2_liveness_request,
+	.timeout_event =  EVENT_RETAIN,
+	.flags = SMF2_SUPPRESS_SUCCESS_LOG,
+};
+
+static const struct state_v2_microcode *transitions[] = {
+	[SA_INITIATOR] = &v2_liveness_probe_i,
+	[SA_RESPONDER] = &v2_liveness_probe_r,
+};
+
+void initiate_v2_liveness(struct logger *logger, struct ike_sa *ike)
+{
+	const struct state_v2_microcode *transition = transitions[ike->sa.st_sa_role];
+	if (ike->sa.st_state->kind != transition->state) {
+		log_message(RC_LOG, logger,
+			    "liveness: #%lu unexpectedly in state %s; should be %s",
+			    ike->sa.st_serialno, ike->sa.st_state->short_name,
+			    finite_states[transition->state]->short_name);
+		return;
+	}
+
+	v2_msgid_queue_initiator(ike, &ike->sa, ISAKMP_v2_INFORMATIONAL,
+				 transition, NULL);
 }
