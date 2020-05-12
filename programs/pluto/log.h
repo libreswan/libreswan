@@ -97,49 +97,11 @@ extern void log_pop_from(ip_address old_from, where_t where);
 
 struct logger cur_logger(void);
 
-/*
- * Broadcast a log message.
- *
- * By default send it to the log file and any attached whacks (both
- * globally and the object).
- *
- * If any *_STREAM flag is specified then only send the message to
- * that stream.
- *
- * log_message() is a catch-all for code that may or may not have ST.
- * For instance a responder decoding a message may not yet have
- * created the state.  It will will use ST, MD, or nothing as the
- * prefix, and logs to ST's whackfd when possible.
- */
-
-struct logger_object_vec {
-	const char *name;
-	bool free_object;
-	size_t (*jam_object_prefix)(jambuf_t *buf, const void *object);
-#define jam_log_prefix(BUF, LOGGER) (LOGGER)->object_vec->jam_object_prefix(BUF, (LOGGER)->object)
-	/*
-	 * When opportunistic encryption or the initial responder, for
-	 * instance, some logging is suppressed.
-	 */
-	bool (*suppress_object_log)(const void *object);
-#define suppress_log(LOGGER) (LOGGER)->object_vec->suppress_object_log((LOGGER)->object)
-};
-
 extern const struct logger_object_vec logger_global_vec;
 extern const struct logger_object_vec logger_from_vec;
 extern const struct logger_object_vec logger_message_vec;
 extern const struct logger_object_vec logger_connection_vec;
 extern const struct logger_object_vec logger_state_vec;
-
-struct logger {
-	struct fd *global_whackfd;
-	struct fd *object_whackfd;
-	const void *object;
-	const struct logger_object_vec *object_vec;
-	where_t where;
-	/* used by timing to nest its logging output */
-	int timing_level;
-};
 
 #define GLOBAL_LOGGER(WHACKFD) (struct logger)			\
 	{							\
@@ -180,17 +142,6 @@ struct logger {
 
 struct logger *clone_logger(const struct logger *stack);
 void free_logger(struct logger **logp);
-
-void log_message(lset_t rc_flags,
-		 const struct logger *log,
-		 const char *format, ...) PRINTF_LIKE(3);
-
-void jambuf_to_log(jambuf_t *buf, const struct logger *logger, lset_t rc_flags);
-
-#define LOG_MESSAGE(RC_FLAGS, LOGGER, BUF)				\
-	LSWLOG_(true, BUF,						\
-		jam_log_prefix(BUF, LOGGER),				\
-		jambuf_to_log(BUF, (LOGGER), RC_FLAGS))
 
 #define log_verbose(RC_FLAGS, LOGGER, FORMAT, ...)			\
 	{								\

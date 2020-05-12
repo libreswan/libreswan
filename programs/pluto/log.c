@@ -460,7 +460,7 @@ bool whack_prompt_for(struct state *st, const char *prompt,
 	 */
 	LSWBUF(buf) {
 		/* XXX: one of these is redundant */
-		jam_log_prefix(buf, st->st_logger);
+		jam_logger_prefix(buf, st->st_logger);
 		jam(buf, "%s ", st->st_connection->name);
 		/* the real message */
 		jam(buf, "prompt for %s:", prompt);
@@ -526,7 +526,7 @@ void jam_cur_prefix(struct lswlog *buf)
 			    logger.object_vec->name);
 		}
 	}
-	jam_log_prefix(buf, &logger);
+	jam_logger_prefix(buf, &logger);
 }
 
 static void log_raw(int severity, const char *prefix, struct lswlog *buf)
@@ -689,7 +689,7 @@ static void rate_log_raw(const char *prefix,
 {
 	LSWBUF(buf) {
 		jam_string(buf, prefix);
-		jam_log_prefix(buf, logger);
+		jam_logger_prefix(buf, logger);
 		jam_va_list(buf, message, ap);
 		log_jambuf(LOG_STREAM, null_fd, buf);
 	}
@@ -741,7 +741,7 @@ static void log_whacks(enum rc_type rc, const struct fd *global_whackfd,
 	}
 }
 
-void jambuf_to_log(jambuf_t *buf, const struct logger *logger, lset_t rc_flags)
+void jambuf_to_logger(jambuf_t *buf, const struct logger *logger, lset_t rc_flags)
 {
 	enum rc_type rc = rc_flags & RC_MASK;
 	enum stream only = rc_flags & ~RC_MASK;
@@ -781,7 +781,7 @@ void log_jambuf(lset_t rc_flags, struct fd *object_whackfd, jambuf_t *buf)
 		.global_whackfd = in_main_thread() ? whack_log_fd/*GLOBAL*/ : null_fd,
 		.object_whackfd = object_whackfd,
 	};
-	jambuf_to_log(buf, &logger, rc_flags);
+	jambuf_to_logger(buf, &logger, rc_flags);
 }
 
 static void broadcast(lset_t rc_flags, const struct logger *log,
@@ -798,9 +798,9 @@ static void broadcast(lset_t rc_flags, const struct logger *log,
 		 * Can a shorter prefix be used?
 		 */
 		/* jam_debug_prefix(buf, st, c, from) */
-		jam_log_prefix(buf, log);
+		jam_logger_prefix(buf, log);
 		jam_va_list(buf, message, ap);
-		jambuf_to_log(buf, log, rc_flags);
+		jambuf_to_logger(buf, log, rc_flags);
 	}
 }
 
@@ -1019,7 +1019,7 @@ struct logger *clone_logger(const struct logger *stack)
 	 */
 	char prefix[LOG_WIDTH];
 	jambuf_t prefix_buf = ARRAY_AS_JAMBUF(prefix);
-	jam_log_prefix(&prefix_buf, stack);
+	jam_logger_prefix(&prefix_buf, stack);
 	/*
 	 * choose a logger object vec with a hardwired suppress.
 	 */

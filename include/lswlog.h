@@ -187,6 +187,56 @@ enum stream {
 	NO_STREAM	= 0xf00000,	/* n/a */
 };
 
+/*
+ * Broadcast a log message.
+ *
+ * By default send it to the log file and any attached whacks (both
+ * globally and the object).
+ *
+ * If any *_STREAM flag is specified then only send the message to
+ * that stream.
+ *
+ * log_message() is a catch-all for code that may or may not have ST.
+ * For instance a responder decoding a message may not yet have
+ * created the state.  It will will use ST, MD, or nothing as the
+ * prefix, and logs to ST's whackfd when possible.
+ */
+
+struct logger_object_vec {
+	const char *name;
+	bool free_object;
+	size_t (*jam_object_prefix)(jambuf_t *buf, const void *object);
+#define jam_logger_prefix(BUF, LOGGER) (LOGGER)->object_vec->jam_object_prefix(BUF, (LOGGER)->object)
+	/*
+	 * When opportunistic encryption or the initial responder, for
+	 * instance, some logging is suppressed.
+	 */
+	bool (*suppress_object_log)(const void *object);
+#define suppress_log(LOGGER) (LOGGER)->object_vec->suppress_object_log((LOGGER)->object)
+};
+
+struct logger {
+	struct fd *global_whackfd;
+	struct fd *object_whackfd;
+	const void *object;
+	const struct logger_object_vec *object_vec;
+	where_t where;
+	/* used by timing to nest its logging output */
+	int timing_level;
+};
+
+void log_message(lset_t rc_flags,
+		 const struct logger *log,
+		 const char *format, ...) PRINTF_LIKE(3);
+
+void jambuf_to_logger(jambuf_t *buf, const struct logger *logger, lset_t rc_flags);
+
+#define LOG_MESSAGE(RC_FLAGS, LOGGER, BUF)				\
+	LSWLOG_(true, BUF,						\
+		jam_logger_prefix(BUF, LOGGER),				\
+		jambuf_to_logger(BUF, (LOGGER), RC_FLAGS))
+
+
 void log_jambuf(lset_t rc_flags, struct fd *object_fd, jambuf_t *buf);
 
 size_t lswlog_to_file_stream(struct lswlog *buf, FILE *file);
