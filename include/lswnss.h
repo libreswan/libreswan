@@ -22,6 +22,12 @@
 #include "lswalloc.h"
 #include "secrets.h"
 
+/*
+ * Special advise from Bob Relyea
+ *
+ */
+#define NSS_PKCS11_2_0_COMPAT 1
+
 enum lsw_nss_flags {
 	LSW_NSS_READONLY = 1,
 	/*
