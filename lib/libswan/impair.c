@@ -131,10 +131,9 @@ struct impairment impairments[] = {
 	V("tcp-use-blocking-write", tcp_use_blocking_write, "use a blocking write when sending TCP encapsulated IKE messages"),
 	V("tcp-skip-setsockopt-espintcp", tcp_skip_setsockopt_espintcp, "skip the required setsockopt(\"espintcp\") call"),
 
-	A("rekey", CALL_STATE_EVENT, EVENT_SA_REKEY, "inject a rekey event", "state to rekey"),
-
 	A("initiate-v2-liveness", INITIATE_v2_LIVENESS, 0, "initiate an IKEv2 liveness exchange", "IKE SA"),
-	A("initiate-v2-delete", INITIATE_v2_DELETE, 0, "initiate an IKEv2 delete exchange", "IKE SA"),
+	A("initiate-v2-delete", INITIATE_v2_DELETE, 0, "initiate an IKEv2 delete exchange", "SA"),
+	A("initiate-v2-rekey", INITIATE_v2_REKEY, 0, "initiate an IKEv2 rekey using the CREATE_CHILD_SA exchange", "SA"),
 
 #undef V
 #undef A
@@ -481,6 +480,7 @@ void process_impair(const struct whack_impair *wc,
 		break;
 	case INITIATE_v2_DELETE:
 	case INITIATE_v2_LIVENESS:
+	case INITIATE_v2_REKEY:
 	case CALL_GLOBAL_EVENT:
 	case CALL_STATE_EVENT:
 		/* how is always biased */
