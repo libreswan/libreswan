@@ -871,10 +871,11 @@ static bool never_suppress_log(const void *object UNUSED)
 	return false;
 }
 
-static void jam_global_prefix(jambuf_t *unused_buf UNUSED,
+static size_t jam_global_prefix(jambuf_t *unused_buf UNUSED,
 			      const void *unused_object UNUSED)
 {
 	/* jam(buf, "") - nothing to add */
+	return 0;
 }
 
 const struct logger_object_vec logger_global_vec = {
@@ -884,23 +885,25 @@ const struct logger_object_vec logger_global_vec = {
 	.free_object = false,
 };
 
-static void jam_from_prefix(jambuf_t *buf, const void *object)
+static size_t jam_from_prefix(jambuf_t *buf, const void *object)
 {
+	size_t s = 0;
 	if (!in_main_thread()) {
-		jam(buf, "EXPECTATION FAILED: %s in main thread: ", __func__);
+		s += jam(buf, "EXPECTATION FAILED: %s in main thread: ", __func__);
 	} else if (object == NULL) {
-		jam(buf, "EXPECTATION FAILED: %s NULL: ", __func__);
+		s += jam(buf, "EXPECTATION FAILED: %s NULL: ", __func__);
 	} else {
 		const ip_endpoint *from = object;
 		/* peer's IP address */
 		if (endpoint_protocol(from) == &ip_protocol_tcp) {
-			jam(buf, "connection from ");
+			s += jam(buf, "connection from ");
 		} else {
-			jam(buf, "packet from ");
+			s += jam(buf, "packet from ");
 		}
-		jam_sensitive_endpoint(buf, from);
-		jam(buf, ": ");
+		s += jam_sensitive_endpoint(buf, from);
+		s += jam(buf, ": ");
 	}
+	return s;
 }
 
 const struct logger_object_vec logger_from_vec = {
@@ -910,16 +913,18 @@ const struct logger_object_vec logger_from_vec = {
 	.free_object = false,
 };
 
-static void jam_message_prefix(jambuf_t *buf, const void *object)
+static size_t jam_message_prefix(jambuf_t *buf, const void *object)
 {
+	size_t s = 0;
 	if (!in_main_thread()) {
-		jam(buf, "EXPECTATION FAILED: %s in main thread: ", __func__);
+		s += jam(buf, "EXPECTATION FAILED: %s in main thread: ", __func__);
 	} else if (object == NULL) {
-		jam(buf, "EXPECTATION FAILED: %s NULL: ", __func__);
+		s += jam(buf, "EXPECTATION FAILED: %s NULL: ", __func__);
 	} else {
 		const struct msg_digest *md = object;
-		jam_from_prefix(buf, &md->sender);
+		s += jam_from_prefix(buf, &md->sender);
 	}
+	return s;
 }
 
 const struct logger_object_vec logger_message_vec = {
@@ -929,17 +934,20 @@ const struct logger_object_vec logger_message_vec = {
 	.free_object = false,
 };
 
-static void jam_connection_prefix(jambuf_t *buf, const void *object)
+static size_t jam_connection_prefix(jambuf_t *buf, const void *object)
 {
+	size_t s = 0;
 	if (!in_main_thread()) {
-		jam(buf, "EXPECTATION FAILED: %s in main thread: ", __func__);
+		s += jam(buf, "EXPECTATION FAILED: %s in main thread: ",
+			 __func__);
 	} else if (object == NULL) {
-		jam(buf, "EXPECTATION FAILED: %s NULL: ", __func__);
+		s += jam(buf, "EXPECTATION FAILED: %s NULL: ", __func__);
 	} else {
 		const struct connection *c = object;
-		jam_connection(buf, c);
-		jam(buf, ": ");
+		s += jam_connection(buf, c);
+		s += jam(buf, ": ");
 	}
+	return s;
 }
 
 static bool suppress_connection_log(const void *object)
@@ -955,12 +963,13 @@ const struct logger_object_vec logger_connection_vec = {
 	.free_object = false,
 };
 
-static void jam_state_prefix(jambuf_t *buf, const void *object)
+static size_t jam_state_prefix(jambuf_t *buf, const void *object)
 {
+	size_t s = 0;
 	if (!in_main_thread()) {
-		jam(buf, "EXPECTATION FAILED: %s in main thread: ", __func__);
+		s += jam(buf, "EXPECTATION FAILED: %s in main thread: ", __func__);
 	} else if (object == NULL) {
-		jam(buf, "EXPECTATION FAILED: %s NULL: ", __func__);
+		s += jam(buf, "EXPECTATION FAILED: %s NULL: ", __func__);
 	} else {
 		const struct state *st = object;
 		/*
@@ -968,17 +977,18 @@ static void jam_state_prefix(jambuf_t *buf, const void *object)
 		 * connection, this can be NULL.
 		 */
 		if (st->st_connection != NULL) {
-			jam_connection(buf, st->st_connection);
+			s += jam_connection(buf, st->st_connection);
 		}
 		/* state number */
-		lswlogf(buf, " #%lu", st->st_serialno);
+		s += jam(buf, " #%lu", st->st_serialno);
 		/* state name */
 		if (DBGP(DBG_ADD_PREFIX)) {
-			lswlogf(buf, " ");
-			lswlogs(buf, st->st_state->short_name);
+			s += jam(buf, " ");
+			s += jam_string(buf, st->st_state->short_name);
 		}
-		jam(buf, ": ");
+		s += jam(buf, ": ");
 	}
+	return s;
 }
 
 static bool suppress_state_log(const void *object)
@@ -994,10 +1004,10 @@ const struct logger_object_vec logger_state_vec = {
 	.free_object = false,
 };
 
-static void jam_string_prefix(jambuf_t *buf, const void *object)
+static size_t jam_string_prefix(jambuf_t *buf, const void *object)
 {
 	const char *string = object;
-	jam_string(buf, string);
+	return jam_string(buf, string);
 }
 
 struct logger *clone_logger(const struct logger *stack)

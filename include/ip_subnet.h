@@ -80,8 +80,7 @@ typedef struct {
 	char buf[sizeof(address_buf) + 4/*"/NNN"*/];
 } subnet_buf;
 extern const char *str_subnet(const ip_subnet *subnet, subnet_buf *out);
-
-extern void jam_subnet(struct lswlog *buf, const ip_subnet *subnet);
+extern size_t jam_subnet(struct lswlog *buf, const ip_subnet *subnet);
 
 /*
  * Magic values.

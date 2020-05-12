@@ -22,7 +22,7 @@
 #include "lswcdefs.h"		/* for elemsof() */
 #include "constants.h"		/* for streq() */
 #include "ip_address.h"
-
+#include "jambuf.h"
 #include "ipcheck.h"
 
 static void check_shunk_to_address(void)
@@ -140,25 +140,9 @@ static void check_shunk_to_address(void)
 			}
 		}
 
-		address_buf buf;
-
 		/* now convert it back cooked */
-		const char *cooked = str_address(&a, &buf);
-		if (cooked == NULL) {
-			FAIL_IN("str_address() failed");
-		} else if (!strcaseeq(t->cooked, cooked)) {
-			FAIL_IN("str_address() returned '%s', expected '%s'",
-				cooked, t->cooked);
-		}
-
-		/* now convert it back */
-		const char *raw = str_address_raw(&a, t->sep, &buf);
-		if (raw == NULL) {
-			FAIL_IN("str_address_raw() failed");
-		} else if (!strcaseeq(raw, t->raw == NULL ? t->cooked : t->raw)) {
-			FAIL_IN("str_address_raw() returned '%s', expected '%s'",
-				raw, t->raw == NULL ? t->cooked : t->raw);
-		}
+		CHECK_STR(address_buf, address, t->cooked, &a);
+		CHECK_STR(address_buf, address_raw, t->raw == NULL ? t->cooked : t->raw, &a, t->sep);
 
 	}
 }
@@ -187,16 +171,7 @@ static void check_str_address_sensitive(void)
 			continue;
 		}
 		CHECK_TYPE(PRINT_IN, address_type(&a));
-
-		/* now convert it back */
-		address_buf buf;
-		const char *out = str_address_sensitive(&a, &buf);
-		if (out == NULL) {
-			FAIL_IN("failed");
-		} else if (!strcaseeq(t->out, out)) {
-			FAIL_IN("returned '%s', expected '%s'",
-				out, t->out);
-		}
+		CHECK_STR(address_buf, address_sensitive, t->out, &a);
 	}
 }
 
@@ -226,13 +201,7 @@ static void check_str_address_reversed(void)
 			continue;
 		}
 		CHECK_TYPE(PRINT_IN, address_type(&a));
-
-		address_reversed_buf buf;
-		const char *out = str_address_reversed(&a, &buf);
-		if (!strcaseeq(t->out, out)) {
-			FAIL_IN("str_address_reversed returned '%s', expected '%s'",
-				out, t->out);
-		}
+		CHECK_STR(address_reversed_buf, address_reversed, t->out, &a);
 	}
 }
 

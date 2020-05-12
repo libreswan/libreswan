@@ -115,7 +115,7 @@ struct logger cur_logger(void);
 struct logger_object_vec {
 	const char *name;
 	bool free_object;
-	void (*jam_object_prefix)(jambuf_t *buf, const void *object);
+	size_t (*jam_object_prefix)(jambuf_t *buf, const void *object);
 #define jam_log_prefix(BUF, LOGGER) (LOGGER)->object_vec->jam_object_prefix(BUF, (LOGGER)->object)
 	/*
 	 * When opportunistic encryption or the initial responder, for

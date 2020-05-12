@@ -109,28 +109,31 @@ chunk_t address_as_chunk(ip_address *address)
  * Implement https://tools.ietf.org/html/rfc5952
  */
 
-static void jam_raw_ipv4_address(jambuf_t *buf, shunk_t a, char sepc)
+static size_t jam_raw_ipv4_address(jambuf_t *buf, shunk_t a, char sepc)
 {
 	const char seps[2] = { sepc == 0 ? '.' : sepc, 0, };
 	const char *sep = "";
+	size_t s = 0;
 	for (size_t i = 0; i < a.len; i++) {
 		const uint8_t *bytes = a.ptr;
-		jam(buf, "%s%"PRIu8, sep, bytes[i]);
+		s += jam(buf, "%s%"PRIu8, sep, bytes[i]);
 		sep = seps;
 	}
+	return s;
 }
 
-static void jam_raw_ipv6_address(jambuf_t *buf, shunk_t a, char sepc,
-				 shunk_t skip)
+static size_t jam_raw_ipv6_address(jambuf_t *buf, shunk_t a, char sepc,
+				   shunk_t skip)
 {
 	const char seps[2] = { sepc == 0 ? ':' : sepc, 0, };
 	const void *ptr = a.ptr;
 	const char *sep = "";
 	const void *last = a.ptr + a.len - 2;
+	size_t s = 0;
 	while (ptr <= last) {
 		if (ptr == skip.ptr) {
 			/* skip zero run */
-			jam(buf, "%s%s", seps, seps);
+			s += jam(buf, "%s%s", seps, seps);
 			sep = "";
 			ptr += skip.len;
 		} else {
@@ -141,35 +144,39 @@ static void jam_raw_ipv6_address(jambuf_t *buf, shunk_t a, char sepc,
 			 */
 			const uint8_t *p = (const uint8_t*)ptr;
 			unsigned ia = (p[0] << 8) + p[1];
-			jam(buf, "%s%x", sep, ia);
+			s += jam(buf, "%s%x", sep, ia);
 			sep = seps;
 			ptr += 2;
 		}
 	}
+	return s;
 }
 
-void jam_address_raw(jambuf_t *buf, const ip_address *address, char sepc)
+size_t jam_address_raw(jambuf_t *buf, const ip_address *address, char sepc)
 {
 	if (address == NULL) {
-		jam(buf, "<none>");
-		return;
+		return jam(buf, "<none>");
 	}
+
 	shunk_t a = address_as_shunk(address);
 	int type = addrtypeof(address);
+	size_t s = 0;
+
 	switch (type) {
 	case AF_INET: /* N.N.N.N */
-		jam_raw_ipv4_address(buf, a, sepc);
+		s += jam_raw_ipv4_address(buf, a, sepc);
 		break;
 	case AF_INET6: /* N:N:...:N */
-		jam_raw_ipv6_address(buf, a, sepc, null_shunk);
+		s += jam_raw_ipv6_address(buf, a, sepc, null_shunk);
 		break;
 	case AF_UNSPEC:
-		jam(buf, "<unspecified>");
+		s += jam(buf, "<unspecified>");
 		break;
 	default:
-		jam(buf, "<invalid>");
+		s += jam(buf, "<invalid>");
 		break;
 	}
+	return s;
 }
 
 /*
@@ -199,78 +206,84 @@ static shunk_t zeros_to_skip(shunk_t a)
 	return zero;
 }
 
-static void format_address_cooked(jambuf_t *buf, bool sensitive,
-				  const ip_address *address)
+static size_t format_address_cooked(jambuf_t *buf, bool sensitive,
+				    const ip_address *address)
 {
 	/*
 	 * A NULL address can't be sensitive.
 	 */
 	if (address == NULL) {
-		jam(buf, "<none>");
-		return;
+		return jam(buf, "<none>");
 	}
+
 	if (sensitive) {
-		jam(buf, "<ip-address>");
-		return;
+		return jam(buf, "<ip-address>");
 	}
+
 	shunk_t a = address_as_shunk(address);
 	int type = addrtypeof(address);
+	size_t s = 0;
+
 	switch (type) {
 	case AF_INET: /* N.N.N.N */
-		jam_raw_ipv4_address(buf, a, 0);
+		s += jam_raw_ipv4_address(buf, a, 0);
 		break;
 	case AF_INET6: /* N:N:...:N */
-		jam_raw_ipv6_address(buf, a, 0, zeros_to_skip(a));
+		s += jam_raw_ipv6_address(buf, a, 0, zeros_to_skip(a));
 		break;
 	case AF_UNSPEC:
-		jam(buf, "<unspecified>");
+		s += jam(buf, "<unspecified>");
 		break;
 	default:
-		jam(buf, "<invalid>");
+		s += jam(buf, "<invalid>");
 		break;
 	}
+	return s;
 }
 
-void jam_address(jambuf_t *buf, const ip_address *address)
+size_t jam_address(jambuf_t *buf, const ip_address *address)
 {
-	format_address_cooked(buf, false, address);
+	return format_address_cooked(buf, false, address);
 }
 
-void jam_address_sensitive(jambuf_t *buf, const ip_address *address)
+size_t jam_address_sensitive(jambuf_t *buf, const ip_address *address)
 {
-	format_address_cooked(buf, !log_ip, address);
+	return format_address_cooked(buf, !log_ip, address);
 }
 
-void jam_address_reversed(jambuf_t *buf, const ip_address *address)
+size_t jam_address_reversed(jambuf_t *buf, const ip_address *address)
 {
 	shunk_t bytes = address_as_shunk(address);
 	int type = addrtypeof(address);
+	size_t s = 0;
+
 	switch (type) {
 	case AF_INET:
 	{
 		for (int i = bytes.len - 1; i >= 0; i--) {
 			const uint8_t *byte = bytes.ptr;
-			jam(buf, "%d.", byte[i]);
+			s += jam(buf, "%d.", byte[i]);
 		}
-		jam(buf, "IN-ADDR.ARPA.");
+		s += jam(buf, "IN-ADDR.ARPA.");
 		break;
 	}
 	case AF_INET6:
 	{
 		for (int i = bytes.len - 1; i >= 0; i--) {
 			const uint8_t *byte = bytes.ptr;
-			jam(buf, "%x.%x.", byte[i] & 0xf, byte[i] >> 4);
+			s += jam(buf, "%x.%x.", byte[i] & 0xf, byte[i] >> 4);
 		}
-		jam(buf, "IP6.ARPA.");
+		s += jam(buf, "IP6.ARPA.");
 		break;
 	}
 	case AF_UNSPEC:
-		jam(buf, "<unspecified>");
+		s += jam(buf, "<unspecified>");
 		break;
 	default:
-		jam(buf, "<invalid>");
+		s += jam(buf, "<invalid>");
 		break;
 	}
+	return s;
 }
 
 const char *str_address_raw(const ip_address *src, char sep,

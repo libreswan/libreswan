@@ -2097,53 +2097,59 @@ void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF])
  * Opportunistic: [" " myclient "==="] " ..." peer ["===" hisclient] '\0'
  */
 
-static void jam_connection_client(jambuf_t *b,
-				  const char *prefix, const char *suffix,
-				  const ip_subnet *client, const ip_address *gw)
+static size_t jam_connection_client(jambuf_t *b,
+				    const char *prefix, const char *suffix,
+				    const ip_subnet *client, const ip_address *gw)
 {
+	size_t s = 0;
 	if (subnetisaddr(client, gw)) {
 		/* compact denotation for "self" */
 	} else {
-		jam_string(b, prefix);
+		s += jam_string(b, prefix);
 		if (subnet_contains_no_addresses(client)) {
-			jam_string(b, "?"); /* unknown */
+			s += jam_string(b, "?"); /* unknown */
 		} else {
-			jam_subnet(b, client);
+			s += jam_subnet(b, client);
 		}
-		jam_string(b, suffix);
+		s += jam_string(b, suffix);
 	}
+	return s;
 }
 
-void jam_connection_instance(jambuf_t *buf, const struct connection *c)
+size_t jam_connection_instance(jambuf_t *buf, const struct connection *c)
 {
 	if (!pexpect(c->kind == CK_INSTANCE ||
 		     c->kind == CK_GOING_AWAY)) {
-		return;
+		return 0;
 	}
+	size_t s = 0;
 	if (c->instance_serial != 0) {
-		jam(buf, "[%lu]", c->instance_serial);
+		s += jam(buf, "[%lu]", c->instance_serial);
 	}
 	if (c->policy & POLICY_OPPORTUNISTIC) {
-		jam_connection_client(buf, " ", "===",
-				      &c->spd.this.client,
-				      &c->spd.this.host_addr);
-		jam_string(buf, " ...");
-		jam_address(buf, &c->spd.that.host_addr);
-		jam_connection_client(buf, "===", "",
-				      &c->spd.that.client,
-				      &c->spd.that.host_addr);
+		s += jam_connection_client(buf, " ", "===",
+					   &c->spd.this.client,
+					   &c->spd.this.host_addr);
+		s += jam_string(buf, " ...");
+		s += jam_address(buf, &c->spd.that.host_addr);
+		s += jam_connection_client(buf, "===", "",
+					   &c->spd.that.client,
+					   &c->spd.that.host_addr);
 	} else {
-		jam_string(buf, " ");
-		jam_address_sensitive(buf, &c->spd.that.host_addr);
+		s += jam_string(buf, " ");
+		s += jam_address_sensitive(buf, &c->spd.that.host_addr);
 	}
+	return s;
 }
 
-void jam_connection(struct lswlog *buf, const struct connection *c)
+size_t jam_connection(struct lswlog *buf, const struct connection *c)
 {
-	jam(buf, "\"%s\"", c->name);
+	size_t s = 0;
+	s += jam(buf, "\"%s\"", c->name);
 	if (c->kind == CK_INSTANCE || c->kind == CK_GOING_AWAY) {
-		jam_connection_instance(buf, c);
+		s += jam_connection_instance(buf, c);
 	}
+	return s;
 }
 
 const char *str_connection_instance(const struct connection *c, connection_buf *buf)

@@ -140,10 +140,12 @@ ip_address subnet_mask(const ip_subnet *src)
 			    src->maskbits);
 }
 
-void jam_subnet(jambuf_t *buf, const ip_subnet *subnet)
+size_t jam_subnet(jambuf_t *buf, const ip_subnet *subnet)
 {
-	jam_address(buf, &subnet->addr); /* sensitive? */
-	jam(buf, "/%u", subnet->maskbits);
+	size_t s = 0;
+	s += jam_address(buf, &subnet->addr); /* sensitive? */
+	s += jam(buf, "/%u", subnet->maskbits);
+	return s;
 }
 
 const char *str_subnet(const ip_subnet *subnet, subnet_buf *out)

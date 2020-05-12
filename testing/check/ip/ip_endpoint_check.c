@@ -23,7 +23,7 @@
 #include "constants.h"		/* for streq() */
 #include "ip_endpoint.h"
 #include "ip_protocol.h"
-
+#include "jambuf.h"
 #include "ipcheck.h"
 
 static void check_str_endpoint(void)
@@ -59,14 +59,7 @@ static void check_str_endpoint(void)
 		CHECK_TYPE(PRINT_IN, endpoint_type(&e));
 
 		/* now convert it back */
-		endpoint_buf buf;
-		const char *out = str_endpoint(&e, &buf);
-		if (out == NULL) {
-			FAIL_IN("failed");
-		} else if (!strcaseeq(t->out, out)) {
-			FAIL_IN("returned '%s', expected '%s'",
-				out, t->out);
-		}
+		CHECK_STR(endpoint_buf, endpoint, t->out, &e);
 	}
 }
 
@@ -153,14 +146,7 @@ static void check_sockaddr_as_endpoint(void)
 		}
 
 		/* as a string */
-		endpoint_buf buf;
-		const char *out = str_endpoint(&endpoint, &buf);
-		if (out == NULL) {
-			FAIL_IN("str_endpoint() returned NULL");
-		} else if (!strcaseeq(expect_out, out)) {
-			FAIL_IN("str_endpoint() returned '%s', expecting '%s'",
-				out, expect_out);
-		}
+		CHECK_STR(endpoint_buf, endpoint, expect_out, &endpoint);
 	}
 }
 

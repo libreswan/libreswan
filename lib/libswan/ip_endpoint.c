@@ -211,15 +211,14 @@ bool endpoint_is_specified(const ip_endpoint *e)
  * cannot be used, while for UDP, the source port is optional
  * and a value of zero means no port.
  */
-static void format_endpoint(jambuf_t *buf, bool sensitive,
+static size_t format_endpoint(jambuf_t *buf, bool sensitive,
 			    const ip_endpoint *endpoint)
 {
 	/*
 	 * A NULL endpoint can't be sensitive so always log it.
 	 */
 	if (endpoint == NULL) {
-		jam(buf, "<none:>");
-		return;
+		return jam(buf, "<none:>");
 	}
 
 	/*
@@ -228,42 +227,43 @@ static void format_endpoint(jambuf_t *buf, bool sensitive,
 	 */
 	const struct ip_info *afi = endpoint_type(endpoint);
 	if (afi == NULL) {
-		jam(buf, "<unspecified:>");
-		return;
+		return jam(buf, "<unspecified:>");
 	}
 
 	if (sensitive) {
-		jam(buf, "<address:>");
-		return;
+		return jam(buf, "<address:>");
 	}
+
 	ip_address address = endpoint_address(endpoint);
 	int hport = endpoint_hport(endpoint);
+	size_t s = 0;
 
 	switch (afi->af) {
 	case AF_INET: /* N.N.N.N[:PORT] */
-		jam_address(buf, &address);
+		s += jam_address(buf, &address);
 		if (hport > 0) {
-			jam(buf, ":%d", hport);
+			s += jam(buf, ":%d", hport);
 		}
 		break;
 	case AF_INET6: /* [N:..:N]:PORT or N:..:N */
 		if (hport > 0) {
-			jam(buf, "[");
-			jam_address(buf, &address);
-			jam(buf, "]");
-			jam(buf, ":%d", hport);
+			s += jam(buf, "[");
+			s += jam_address(buf, &address);
+			s += jam(buf, "]");
+			s += jam(buf, ":%d", hport);
 		} else {
-			jam_address(buf, &address);
+			s += jam_address(buf, &address);
 		}
 		break;
 	default:
 		bad_case(afi->af);
 	}
+	return s;
 }
 
-void jam_endpoint(jambuf_t *buf, const ip_endpoint *endpoint)
+size_t jam_endpoint(jambuf_t *buf, const ip_endpoint *endpoint)
 {
-	format_endpoint(buf, false, endpoint);
+	return format_endpoint(buf, false, endpoint);
 }
 
 const char *str_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
@@ -273,9 +273,9 @@ const char *str_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
 	return dst->buf;
 }
 
-void jam_sensitive_endpoint(jambuf_t *buf, const ip_endpoint *endpoint)
+size_t jam_sensitive_endpoint(jambuf_t *buf, const ip_endpoint *endpoint)
 {
-	format_endpoint(buf, !log_ip, endpoint);
+	return format_endpoint(buf, !log_ip, endpoint);
 }
 
 const char *str_sensitive_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)

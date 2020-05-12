@@ -115,4 +115,26 @@ extern bool use_dns;
 		}							\
 	}
 
+#define CHECK_STR(BUF, OP, EXPECTED, ...)				\
+		{							\
+			BUF buf;					\
+			const char *s = str_##OP(__VA_ARGS__, &buf);	\
+			if (s == NULL) {				\
+				FAIL_IN("str_"#OP"() unexpectedly returned NULL"); \
+			}						\
+			printf("expected %s s %s\n", EXPECTED, s);	\
+			if (!strcaseeq(EXPECTED, s)) {			\
+				FAIL_IN("str_"#OP"() returned '%s', expected '%s'", \
+					s, EXPECTED);			\
+			}						\
+			size_t ssize = strlen(s);			\
+			char js[sizeof(buf)];				\
+			jambuf_t jbuf = ARRAY_AS_JAMBUF(js);		\
+			size_t jsize = jam_##OP(&jbuf, __VA_ARGS__);	\
+			if (jsize != ssize) {				\
+				FAIL_IN("jam_"#OP"() returned %zu, expecting %zu", \
+					jsize, ssize);			\
+			}						\
+		}
+
 #endif
