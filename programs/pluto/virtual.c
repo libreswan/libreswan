@@ -135,7 +135,7 @@ void init_virtual_ip(const char *private_list)
 		if (next == NULL)
 			next = str + strlen(str);
 
-		bool incl;
+		bool incl = FALSE;
 		ip_subnet sub;	/* sink: value never used */
 
 		if (read_subnet(str, next - str, &sub, &sub, &incl)) {
