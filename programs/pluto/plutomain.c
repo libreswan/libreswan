@@ -1475,8 +1475,16 @@ int main(int argc, char **argv)
 		case OPT_IMPAIR:
 		{
 			struct whack_impair impairment;
-			if (parse_impair(optarg, &impairment, true)) {
+			switch (parse_impair(optarg, &impairment, true, pluto_name)) {
+			case IMPAIR_OK:
 				process_impair(&impairment, NULL, true, null_fd);
+				break;
+			case IMPAIR_ERROR:
+				/* parse_impair() printed error */
+				exit(1);
+			case IMPAIR_HELP:
+				/* parse_impair() printed error */
+				exit(0);
 			}
 			continue;
 		}

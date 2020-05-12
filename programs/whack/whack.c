@@ -2341,8 +2341,14 @@ int main(int argc, char **argv)
 			bool enable = (c == DBGOPT_IMPAIR);
 			realloc_things(msg.impairments, msg.nr_impairments,
 				       msg.nr_impairments+1, "impairments");
-			if (!parse_impair(optarg, &msg.impairments[msg.nr_impairments], enable)) {
-				/* parse_impair() issued the error */
+			switch (parse_impair(optarg, &msg.impairments[msg.nr_impairments], enable, progname)) {
+			case IMPAIR_OK:
+				break;
+			case IMPAIR_HELP:
+				/* parse_impair() printed help */
+				exit(0);
+			case IMPAIR_ERROR:
+				/* parse_impair() printed the error */
 				exit(1);
 			}
 			msg.nr_impairments++;

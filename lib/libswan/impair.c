@@ -140,37 +140,31 @@ struct impairment impairments[] = {
 
 };
 
-static void help(const char *prefix, const struct impairment *cr)
+static void help(const char *prefix, const struct impairment *cr, FILE *file)
 {
-	LSWLOG_INFO(buf) {
-		jam(buf, "%s%s: %s", prefix, cr->what, cr->help);
-	}
+	fprintf(file, "%s%s: %s\n", prefix, cr->what, cr->help);
 	if (cr->how_keynum != NULL) {
 		const struct keywords *kw = cr->how_keynum;
 		/* skip 0, always no */
 		for (unsigned ki = 1; ki < kw->nr_values; ki++) {
 			const struct keyword *kv = &kw->values[ki];
 			if (kv->details != NULL) {
-				LSWLOG_INFO(buf) {
-					jam(buf, "%s  %s: %s", prefix,
-					    kv->sname, kv->details);
-				}
+				fprintf(file, "%s  %s: %s\n",
+					prefix, kv->sname, kv->details);
 			}
 		}
 	}
 	if (cr->unsigned_help != NULL) {
-		LSWLOG_INFO(buf) {
-			jam(buf, "%s  %s: %s", prefix,
-			    "<unsigned>", cr->unsigned_help);
-		}
+		fprintf(file, "%s  %s: %s\n",
+			prefix, "<unsigned>", cr->unsigned_help);
 	}
 }
 
-void help_impair(const char *prefix)
+static void help_impair(const char *prefix, FILE *file)
 {
 	for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 		const struct impairment *cr = &impairments[ci];
-		help(prefix, cr);
+		help(prefix, cr, file);
 	}
 }
 
@@ -194,21 +188,14 @@ static unsigned parse_biased_unsigned(shunk_t string, const struct impairment *c
 #define IMPAIR_DISABLE (elemsof(impairments) + 0)
 #define IMPAIR_LIST (elemsof(impairments) + 1)
 
-bool parse_impair(const char *optarg,
-		  struct whack_impair *whack_impair,
-		  bool enable /* --impair ... vs --no-impair ...*/)
+enum impair_status parse_impair(const char *optarg,
+				struct whack_impair *whack_impair,
+				bool enable /* --impair ... vs --no-impair ...*/,
+				const char *progname)
 {
 	if (streq(optarg, "help")) {
-		help_impair("");
-		return false;
-	}
-
-	if (whack_impair->what != 0) {
-		LSWLOG_ERROR(buf) {
-			lswlogf(buf, "ignoring second impair option: --%simpair %s",
-				enable ? "" : "no-", optarg);
-		}
-		return true;
+		help_impair("", stdout);
+		return IMPAIR_HELP;
 	}
 
 	if (enable && streq(optarg, "none")) {
@@ -216,7 +203,7 @@ bool parse_impair(const char *optarg,
 			.what = IMPAIR_DISABLE,
 			.how = 0,
 		};
-		return true;
+		return IMPAIR_OK;
 	}
 
 	if (enable && streq(optarg, "list")) {
@@ -224,7 +211,7 @@ bool parse_impair(const char *optarg,
 			.what = IMPAIR_LIST,
 			.how = 0,
 		};
-		return true;
+		return IMPAIR_OK;
 	}
 
 	/* Break OPTARG into WHAT[=HOW] */
@@ -247,11 +234,9 @@ bool parse_impair(const char *optarg,
 		}
 	}
 	if (cr == NULL) {
-		LSWLOG_ERROR(buf) {
-			jam(buf, "ignoring unrecognized impair option '"PRI_SHUNK"'",
-			    pri_shunk(what));
-		}
-		return false;
+		fprintf(stderr, "%s: unrecognized impair option '"PRI_SHUNK"'\n",
+			progname, pri_shunk(what));
+		return IMPAIR_ERROR;
 	}
 
 	/*
@@ -259,8 +244,8 @@ bool parse_impair(const char *optarg,
 	 */
 	if (hunk_strcaseeq(how, "help") ||
 	    hunk_strcaseeq(how, "?")) {
-		help("", cr);
-		return false;
+		help("", cr, stdout);
+		return IMPAIR_HELP;
 	}
 
 	/*
@@ -268,11 +253,9 @@ bool parse_impair(const char *optarg,
 	 * instance: --no-impair no-foo:bar.
 	 */
 	if ((!enable + what_no + (how.ptr != NULL)) > 1) {
-		LSWLOG_ERROR(buf) {
-			jam(buf, "ignoring overly negative --%simpair %s",
-			    enable ? "" : "no-", optarg);
-		}
-		return false;
+		fprintf(stderr, "%s overly negative --%simpair %s",
+			progname, enable ? "" : "no-", optarg);
+		return IMPAIR_ERROR;
 	}
 
 	/*
@@ -283,7 +266,7 @@ bool parse_impair(const char *optarg,
 			.what = ci,
 			.how = 0,
 		};
-		return true;
+		return IMPAIR_OK;
 	}
 
 	/*
@@ -297,7 +280,7 @@ bool parse_impair(const char *optarg,
 				.what = ci,
 				.how = kw->value,
 			};
-			return true;
+			return IMPAIR_OK;
 		}
 	} else {
 		/*
@@ -313,7 +296,7 @@ bool parse_impair(const char *optarg,
 				.what = ci,
 				.how = false,
 			};
-			return true;
+			return IMPAIR_OK;
 		}
 
 		if (how.len == 0 || hunk_strcaseeq(how, "yes")) {
@@ -322,7 +305,7 @@ bool parse_impair(const char *optarg,
 				.what = ci,
 				.how = true,
 			};
-			return true;
+			return IMPAIR_OK;
 		}
 	}
 
@@ -333,15 +316,13 @@ bool parse_impair(const char *optarg,
 				.what = ci,
 				.how = biased_value,
 			};
-			return true;
+			return IMPAIR_OK;
 		}
 	}
 
-	LSWLOG_ERROR(buf) {
-		jam(buf, "ignoring impair option '"PRI_SHUNK"' with unrecognized parameter '"PRI_SHUNK"' (%s)",
-		    pri_shunk(what), pri_shunk(how), optarg);
-	}
-	return false;
+fprintf(stderr, "%s: ignoring impair option '"PRI_SHUNK"' with unrecognized parameter '"PRI_SHUNK"' (%s)",
+	progname, pri_shunk(what), pri_shunk(how), optarg);
+	return IMPAIR_ERROR;
 }
 
 /*

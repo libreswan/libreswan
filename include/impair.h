@@ -148,7 +148,13 @@ struct whack_impair {
 	unsigned how;
 };
 
-bool parse_impair(const char *optarg, struct whack_impair *whack_impair, bool enable);
+enum impair_status {
+	IMPAIR_OK = 1,
+	IMPAIR_HELP,
+	IMPAIR_ERROR,
+};
+
+enum impair_status parse_impair(const char *optarg, struct whack_impair *whack_impair, bool enable, const char *progname);
 
 enum impair_action {
 	IMPAIR_UPDATE,
@@ -165,8 +171,6 @@ void process_impair(const struct whack_impair *whack_impair,
 				   struct fd *whackfd),
 		    bool background,
 		    struct fd *whackfd);
-
-void help_impair(const char *prefix);
 
 bool have_impairments(void);
 void jam_impairments(jambuf_t *buf, const char *sep);
