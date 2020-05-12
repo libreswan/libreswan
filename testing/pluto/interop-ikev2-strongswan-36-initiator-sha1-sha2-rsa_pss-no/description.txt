@@ -1,0 +1,16 @@
+Basic pluto with IKEv2 using X.509 on the responder (east), and Strongswan on
+the initiator (west).
+
+This tests libreswan as server accepting rsa-sha1 (v1.5) and rsa-sha2 (PSS)
+
+unfortunately, strongswan per default will response with rsa-sha2 (v1.5) unless
+you set  ra_pss = true in strongswan.cond. This test does that.
+
+However, it indicates an unfixable problem. How to migrate strongswan rsa-sha1 clients
+to rsa-sha2. strongswan does not support on-the-fly decisions on RSA v1.5 vs RSA PSS
+and libreswan does not support RSA v1.5 for all new style RFC 7427 digital signature
+methods.
+
+We might be biased, but believe strongswan should fix their code :)
+
+
