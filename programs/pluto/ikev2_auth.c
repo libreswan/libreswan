@@ -266,7 +266,8 @@ struct hash_signature v2_auth_signature(struct logger *logger,
 	struct hash_signature sig = pks->pubkey_type->sign_hash(pks,
 								hash_octets,
 								hash_len,
-								hash_algo);
+								hash_algo,
+								logger);
 	logtime_stop(&sign_time, "%s() calling sign_hash()", __func__);
 	passert(sig.len <= sizeof(sig.ptr/*array*/));
 	logtime_stop(&start, "%s()", __func__);

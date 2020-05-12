@@ -17,8 +17,11 @@
 #ifndef _LSWNSS_H_
 #define _LSWNSS_H_
 
+#include <prerror.h>		/* for PRErrorCode, for PR_GetError() */
 #include <pk11pub.h>
 
+#include "lswcdefs.h"		/* for PRINTF_LIKE() */
+#include "lset.h"
 #include "lswalloc.h"
 #include "secrets.h"
 
@@ -52,6 +55,8 @@ PK11SlotInfo *lsw_nss_get_authenticated_slot(lsw_nss_buf_t err);
 
 /* _(SECERR: N (0xX): <error-string>) */
 size_t lswlog_nss_error(struct lswlog *log);
+void log_nss_error(lset_t rc_log, struct logger *logger, PRErrorCode pr_error,
+		   const char *message, ...) PRINTF_LIKE(4);
 
 size_t lswlog_nss_ckm(struct lswlog *buf, CK_MECHANISM_TYPE mechanism);
 size_t lswlog_nss_ckf(struct lswlog *buf, CK_FLAGS flags);

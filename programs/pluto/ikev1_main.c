@@ -299,7 +299,8 @@ struct crypt_mac main_mode_hash(struct state *st,
  */
 
 struct hash_signature v1_sign_hash_RSA(const struct connection *c,
-				       const struct crypt_mac *hash)
+				       const struct crypt_mac *hash,
+				       struct logger *logger)
 {
 	const struct private_key_stuff *pks = get_connection_private_key(c, &pubkey_type_rsa);
 	if (pks == NULL) {
@@ -314,7 +315,9 @@ struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 	passert(RSA_MIN_OCTETS <= sz &&
 		4 + hash->len < sz &&
 		sz <= sizeof(sig.ptr/*array*/));
-	sig = pubkey_type_rsa.sign_hash(pks, hash->ptr, hash->len, 0 /* for ikev2 only */);
+	sig = pubkey_type_rsa.sign_hash(pks, hash->ptr, hash->len,
+					0/* for ikev2 only */,
+					logger);
 	passert(sig.len == 0 || sz == sig.len);
 	return sig;
 }
@@ -1311,10 +1314,10 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 			/* SIG_I out */
 			struct hash_signature sig;
 			passert(sizeof(sig.ptr/*array*/) >= RSA_MAX_OCTETS);
-			sig = v1_sign_hash_RSA(c, &hash);
+			sig = v1_sign_hash_RSA(c, &hash, st->st_logger);
 			if (sig.len == 0) {
-				loglog(RC_LOG_SERIOUS,
-					"unable to locate my private key for RSA Signature");
+				log_state(RC_LOG_SERIOUS, st,
+					  "unable to locate my private key for RSA Signature");
 				return STF_FAIL + AUTHENTICATION_FAILED;
 			}
 
@@ -1664,10 +1667,10 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 			/* SIG_R out */
 			struct hash_signature sig;
 			passert(sizeof(sig.ptr/*array*/) >= RSA_MAX_OCTETS);
-			sig = v1_sign_hash_RSA(c, &hash);
+			sig = v1_sign_hash_RSA(c, &hash, st->st_logger);
 			if (sig.len == 0) {
-				loglog(RC_LOG_SERIOUS,
-					"unable to locate my private key for RSA Signature");
+				log_state(RC_LOG_SERIOUS, st,
+					  "unable to locate my private key for RSA Signature");
 				return STF_FAIL + AUTHENTICATION_FAILED;
 			}
 

@@ -32,6 +32,7 @@
 #include "realtime.h"
 #include "ckaid.h"
 
+struct logger;
 struct state;	/* forward declaration */
 struct secret;	/* opaque definition, private to secrets.c */
 struct pubkey;		/* forward */
@@ -180,7 +181,8 @@ struct pubkey_type {
 	err_t (*secret_sane)(struct private_key_stuff *pks);
 	struct hash_signature (*sign_hash)(const struct private_key_stuff *pks,
 					   const uint8_t *hash_octets, size_t hash_len,
-					   const struct hash_desc *hash_algo);
+					   const struct hash_desc *hash_algo,
+					   struct logger *logger);
 };
 
 extern const struct pubkey_type pubkey_type_rsa;

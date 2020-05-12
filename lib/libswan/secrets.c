@@ -263,7 +263,8 @@ static err_t RSA_secret_sane(struct private_key_stuff *pks)
 /* returns the length of the result on success; 0 on failure */
 static struct hash_signature RSA_sign_hash(const struct private_key_stuff *pks,
 					   const uint8_t *hash_val, size_t hash_len,
-					   const struct hash_desc *hash_algo)
+					   const struct hash_desc *hash_algo,
+					   struct logger *logger)
 {
 	dbg("RSA_sign_hash: Started using NSS");
 	if (!pexpect(pks->private_key != NULL)) {
@@ -289,9 +290,9 @@ static struct hash_signature RSA_sign_hash(const struct private_key_stuff *pks,
 	    hash_algo == &ike_alg_hash_sha1 /* old style rsa with SHA1*/) {
 		SECStatus s = PK11_Sign(pks->private_key, &signature, &data);
 		if (s != SECSuccess) {
-			loglog(RC_LOG_SERIOUS,
-			       "RSA_sign_hash: sign function failed (%d)",
-			       PR_GetError());
+			/* PR_GetError() returns the thread-local error */
+			log_nss_error(RC_LOG_SERIOUS, logger, PR_GetError(),
+				      "RSA sign function failed");
 			return (struct hash_signature) { .len = 0, };
 		}
 	} else { /* Digital signature scheme with rsa-pss*/
@@ -311,9 +312,9 @@ static struct hash_signature RSA_sign_hash(const struct private_key_stuff *pks,
 		SECStatus s = PK11_SignWithMechanism(pks->private_key, CKM_RSA_PKCS_PSS,
 						     &mech_item, &signature, &data);
 		if (s != SECSuccess) {
-			loglog(RC_LOG_SERIOUS,
-			       "RSA_sign_hash: sign function failed (%d)",
-			       PR_GetError());
+			/* PR_GetError() returns the thread-local error */
+			log_nss_error(RC_LOG_SERIOUS, logger, PR_GetError(),
+				      "RSA DSS sign function failed");
 			return (struct hash_signature) { .len = 0, };
 		}
 	}
@@ -396,7 +397,8 @@ static err_t ECDSA_secret_sane(struct private_key_stuff *pks_unused UNUSED)
 
 static struct hash_signature ECDSA_sign_hash(const struct private_key_stuff *pks,
 					     const uint8_t *hash_val, size_t hash_len,
-					     const struct hash_desc *hash_algo_unused UNUSED)
+					     const struct hash_desc *hash_algo_unused UNUSED,
+					     struct logger *logger)
 {
 
 	if (!pexpect(pks->private_key != NULL)) {
@@ -427,20 +429,18 @@ static struct hash_signature ECDSA_sign_hash(const struct private_key_stuff *pks
 	SECStatus s = PK11_Sign(pks->private_key, &raw_signature, &hash_to_sign);
 	DBG(DBG_CRYPT, DBG_dump("sig_from_nss", raw_signature.data, raw_signature.len));
 	if (s != SECSuccess) {
-		LSWDBGP(DBG_CRYPT, buf) {
-			lswlogf(buf, "NSS: signing hash using PK11_Sign() failed:");
-			lswlog_nss_error(buf);
-		}
+		/* PR_GetError() returns the thread-local error */
+		log_nss_error(RC_LOG_SERIOUS, logger, PR_GetError(),
+			      "ECDSA sign function failed");
 		return (struct hash_signature) { .len = 0, };
 	}
 
 	SECItem encoded_signature;
 	if (DSAU_EncodeDerSigWithLen(&encoded_signature, &raw_signature,
 				     raw_signature.len) != SECSuccess) {
-		LSWLOG(buf) {
-			lswlogs(buf, "NSS: constructing DER encoded ECDSA signature using DSAU_EncodeDerSigWithLen() failed:");
-			lswlog_nss_error(buf);
-		}
+		/* PR_GetError() returns the thread-local error */
+		log_nss_error(RC_LOG, logger, PR_GetError(),
+			      "NSS: constructing DER encoded ECDSA signature using DSAU_EncodeDerSigWithLen() failed:");
 		return (struct hash_signature) { .len = 0, };
 	}
 	struct hash_signature signature = {

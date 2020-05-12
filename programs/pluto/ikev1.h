@@ -81,7 +81,8 @@ extern bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 			   bool aggrmode);
 
 struct hash_signature v1_sign_hash_RSA(const struct connection *c,
-				       const struct crypt_mac *hash);
+				       const struct crypt_mac *hash,
+				       struct logger *logger);
 
 struct crypt_mac main_mode_hash(struct state *st, enum sa_role role,
 				const pb_stream *idpl);  /* ID payload, as PBS; cur must be at end */
