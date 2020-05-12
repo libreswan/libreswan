@@ -16,6 +16,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/*
+ * Special advise from Bob Relyea - needs to go before any nss include
+ *
+ */
+#define NSS_PKCS11_2_0_COMPAT 1
+
 #include "lswlog.h"
 #include "lswnss.h"
 #include "prmem.h"
