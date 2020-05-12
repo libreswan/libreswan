@@ -804,15 +804,6 @@ static void broadcast(lset_t rc_flags, const struct logger *log,
 	}
 }
 
-void log_message(lset_t rc_flags, const struct logger *log,
-		 const char *format, ...)
-{
-	va_list ap;
-	va_start(ap, format);
-	broadcast(rc_flags, log, format, ap);
-	va_end(ap);
-}
-
 void log_pending(lset_t rc_flags, const struct pending *pending,
 		 const char *format, ...)
 {
