@@ -1,0 +1,8 @@
+Basic pluto with IKEv2 using X.509 on the responder (east), and Strongswan on
+the initiator (west).
+
+This tests libreswan as server accepting only rsa-sha1 (v1.5) strongswan
+using rsa_pss = true which strongwan upstream claims would fall back to
+old method.
+
+
