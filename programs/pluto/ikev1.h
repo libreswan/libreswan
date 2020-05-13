@@ -41,10 +41,11 @@ extern bool ikev1_justship_nonce(chunk_t *n, pb_stream *outs,
 extern bool ikev1_ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
 			     pb_stream *outs, const char *name);
 
-extern notification_t accept_v1_nonce(struct msg_digest *md, chunk_t *dest,
+extern notification_t accept_v1_nonce(struct logger *logger,
+				      struct msg_digest *md, chunk_t *dest,
 				      const char *name);
 
-extern bool ikev1_justship_KE(chunk_t *g, pb_stream *outs);
+extern bool ikev1_justship_KE(struct logger *logger, chunk_t *g, pb_stream *outs);
 
 /* just calls previous two routines now */
 extern bool ikev1_ship_KE(struct state *st, struct pluto_crypto_req *r,

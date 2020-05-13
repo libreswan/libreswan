@@ -1260,7 +1260,7 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 		}
 
 		/* Ni in */
-		RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_ni, "Ni"));
+		RETURN_STF_FAILURE(accept_v1_nonce(st->st_logger, md, &st->st_ni, "Ni"));
 
 		/* [ KE ] in (for PFS) */
 		RETURN_STF_FAILURE(accept_PFS_KE(md, &st->st_gi,
@@ -1479,7 +1479,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 
 	/* [ KE ] out (for PFS) */
 	if (st->st_pfs_group != NULL && r != NULL) {
-		if (!ikev1_justship_KE(&st->st_gr, &rbody))
+		if (!ikev1_justship_KE(st->st_logger, &st->st_gr, &rbody))
 			return STF_INTERNAL_ERROR;
 
 		finish_dh_secret(st, r);
@@ -1549,7 +1549,7 @@ stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 	}
 
 	/* Nr in */
-	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_nr, "Nr"));
+	RETURN_STF_FAILURE(accept_v1_nonce(st->st_logger, md, &st->st_nr, "Nr"));
 
 	/* [ KE ] in (for PFS) */
 	RETURN_STF_FAILURE(accept_PFS_KE(md, &st->st_gr, "Gr",

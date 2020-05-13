@@ -270,7 +270,7 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	}
 
 	/* Ni in */
-	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_ni, "Ni"));
+	RETURN_STF_FAILURE(accept_v1_nonce(st->st_logger, md, &st->st_ni, "Ni"));
 
 	/* calculate KE and Nonce */
 	request_ke_and_nonce("outI2 KE", st,
@@ -402,7 +402,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 	/************** build rest of output: KE, Nr, IDir, HASH_R/SIG_R ********/
 
 	/* KE */
-	if (!ikev1_justship_KE(&st->st_gr, &rbody)) {
+	if (!ikev1_justship_KE(st->st_logger, &st->st_gr, &rbody)) {
 		free_auth_chain(auth_chain, chain_len);
 		return STF_INTERNAL_ERROR;
 	}
@@ -577,7 +577,7 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	}
 
 	/* Ni in */
-	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_nr, "Nr"));
+	RETURN_STF_FAILURE(accept_v1_nonce(st->st_logger, md, &st->st_nr, "Nr"));
 
 	/* moved the following up as we need Rcookie for hash, skeyids */
 	/* Reinsert the state, using the responder cookie we just received */
