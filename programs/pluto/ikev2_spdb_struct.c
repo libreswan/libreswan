@@ -381,13 +381,13 @@ static void jam_v2_proposals(jambuf_t *buf,
 	}
 }
 
-static void plog_connection_proposals(const char *prefix, struct connection *c, const struct ikev2_proposals *proposals)
+static void log_proposals(struct logger *logger, const char *prefix,
+			  const struct ikev2_proposals *proposals)
 {
 	int propnum;
 	const struct ikev2_proposal *proposal;
-	struct logger logger = CONNECTION_LOGGER(c, null_fd/*no whack*/);
 	FOR_EACH_V2_PROPOSAL(propnum, proposal, proposals) {
-		LOG_MESSAGE(RC_LOG|LOG_STREAM, &logger, buf) {
+		LOG_MESSAGE(RC_LOG|LOG_STREAM, logger, buf) {
 			jam_string(buf, prefix);
 			jam_v2_proposal(buf, propnum, proposal);
 		}
@@ -1924,8 +1924,10 @@ struct ikev2_proposals *get_v2_ike_proposals(struct connection *c, const char *w
 
 	c->v2_ike_proposals = v2_proposals;
 	passert(c->v2_ike_proposals != NULL);
-	plog_connection(c, "local IKE proposals (%s): ", why);
-	plog_connection_proposals("  ", c, c->v2_ike_proposals);
+	struct logger logger = CONNECTION_LOGGER(c, null_fd/*no whack*/);
+	log_message(RC_LOG|LOG_STREAM/*not-whack*/, &logger,
+		    "local IKE proposals (%s): ", why);
+	log_proposals(&logger, "  ", c->v2_ike_proposals);
 	return c->v2_ike_proposals;
 }
 
@@ -2040,8 +2042,10 @@ static struct ikev2_proposals *get_v2_child_proposals(struct ikev2_proposals **c
 
 	*child_proposals = v2_proposals;
 	passert(*child_proposals != NULL);
-	plog_connection(c, "local ESP/AH proposals (%s): ", why);
-	plog_connection_proposals("  ", c, *child_proposals);
+	struct logger logger = CONNECTION_LOGGER(c, null_fd/*no whack*/);
+	log_message(RC_LOG|LOG_STREAM/*not-whack*/, &logger,
+		    "local ESP/AH proposals (%s): ", why);
+	log_proposals(&logger, "  ", *child_proposals);
 	return *child_proposals;
 }
 

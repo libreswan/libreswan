@@ -609,16 +609,16 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		}
 
 		if (c == NULL) {
-			plog_md(/*RC_LOG_SERIOUS,*/md, 
-				"initial Main Mode message received but no connection has been authorized with policy %s",
-				bitnamesof(sa_policy_bit_names, policy));
+			log_md(RC_LOG_SERIOUS, md,
+			       "initial Main Mode message received but no connection has been authorized with policy %s",
+			       bitnamesof(sa_policy_bit_names, policy));
 			/* XXX notification is in order! */
 			return STF_IGNORE;
 		} else if (c->kind != CK_TEMPLATE) {
 			connection_buf cib;
-			plog_md(/*RC_LOG_SERIOUS,*/md,
-				"initial Main Mode message received but "PRI_CONNECTION" forbids connection",
-				pri_connection(c, &cib));
+			log_md(RC_LOG_SERIOUS, md,
+			       "initial Main Mode message received but "PRI_CONNECTION" forbids connection",
+			       pri_connection(c, &cib));
 			/* XXX notification is in order! */
 			return STF_IGNORE;
 		} else {

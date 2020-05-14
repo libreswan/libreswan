@@ -802,10 +802,10 @@ struct connection *find_v2_host_pair_connection(struct msg_digest *md, lset_t *p
 	if (c == NULL) {
 		/* we might want to change this to a debug log message only */
 		endpoint_buf b;
-		plog_md(/*RC_LOG_SERIOUS*/md,
-			"%s message received on %s but no suitable connection found with IKEv2 policy",
-			enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
-			str_endpoint(&md->iface->local_endpoint, &b));
+		log_md(RC_LOG_SERIOUS, md,
+		       "%s message received on %s but no suitable connection found with IKEv2 policy",
+		       enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+		       str_endpoint(&md->iface->local_endpoint, &b));
 		return NULL;
 	}
 

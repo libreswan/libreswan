@@ -312,8 +312,8 @@ static enum iface_status udp_read_packet(const struct iface_port *ifp,
 	};
 
 	if (packet->len < 0) {
-		plog_md(&stack_md, "recvfrom on %s failed "PRI_ERRNO,
-			ifp->ip_dev->id_rname, pri_errno(packet_errno));
+		log_md(RC_LOG, &stack_md, "recvfrom on %s failed "PRI_ERRNO,
+		       ifp->ip_dev->id_rname, pri_errno(packet_errno));
 		return IFACE_IGNORE;
 	}
 
@@ -321,13 +321,13 @@ static enum iface_status udp_read_packet(const struct iface_port *ifp,
 		uint32_t non_esp;
 
 		if (packet->len < (int)sizeof(uint32_t)) {
-			plog_md(&stack_md, "too small packet (%zd)",
-				packet->len);
+			log_md(RC_LOG, &stack_md, "too small packet (%zd)",
+			       packet->len);
 			return IFACE_IGNORE;
 		}
 		memcpy(&non_esp, packet->ptr, sizeof(uint32_t));
 		if (non_esp != 0) {
-			plog_md(&stack_md, "has no Non-ESP marker");
+			log_md(RC_LOG, &stack_md, "has no Non-ESP marker");
 			return IFACE_IGNORE;
 		}
 		packet->ptr += sizeof(uint32_t);
@@ -345,7 +345,7 @@ static enum iface_status udp_read_packet(const struct iface_port *ifp,
 		    packet->len >= NON_ESP_MARKER_SIZE &&
 		    memeq(packet->ptr, non_ESP_marker,
 			   NON_ESP_MARKER_SIZE)) {
-			plog_md(&stack_md, "mangled with potential spurious non-esp marker");
+			log_md(RC_LOG, &stack_md, "mangled with potential spurious non-esp marker");
 			return IFACE_IGNORE;
 		}
 	}

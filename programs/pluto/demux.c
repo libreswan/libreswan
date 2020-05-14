@@ -152,7 +152,7 @@ void process_packet(struct msg_digest **mdp)
 		 * of any content - not even to look for major version
 		 * number!  So we'll just drop it.
 		 */
-		plog_md(md, "received packet with mangled IKE header - dropped");
+		log_md(RC_LOG, md, "received packet with mangled IKE header - dropped");
 		return;
 	}
 
@@ -178,7 +178,7 @@ void process_packet(struct msg_digest **mdp)
 		 * IKEv2 doesn't say what to do with low versions,
 		 * just drop them.
 		 */
-		plog_md(md, "ignoring packet with IKE major version '%d'", vmaj);
+		log_md(RC_LOG, md, "ignoring packet with IKE major version '%d'", vmaj);
 		return;
 
 	case ISAKMP_MAJOR_VERSION: /* IKEv1 */
@@ -197,7 +197,7 @@ void process_packet(struct msg_digest **mdp)
 			 * own, given the major version numbers are
 			 * identical.
 			 */
-			plog_md(md, "ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
+			log_md(RC_LOG, md, "ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
 			send_notification_from_md(md, INVALID_MINOR_VERSION);
 			return;
 		}
@@ -214,7 +214,7 @@ void process_packet(struct msg_digest **mdp)
 			/* Unlike IKEv1, for IKEv2 we are supposed to try to
 			 * continue on unknown minors
 			 */
-			plog_md(md, "Ignoring unknown IKEv2 minor version number %d", vmin);
+			log_md(RC_LOG, md, "Ignoring unknown IKEv2 minor version number %d", vmin);
 		}
 		dbg(" processing version=%u.%u packet with exchange type=%s (%d)",
 		    vmaj, vmin,
@@ -224,7 +224,7 @@ void process_packet(struct msg_digest **mdp)
 		break;
 
 	default:
-		plog_md(md, "message contains unsupported IKE major version '%d'", vmaj);
+		log_md(RC_LOG, md, "message contains unsupported IKE major version '%d'", vmaj);
 		/*
 		 * According to 1.5.  Informational Messages outside
 		 * of an IKE SA, [...] the message is always sent

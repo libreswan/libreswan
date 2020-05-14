@@ -933,14 +933,14 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 		 */
 		case R_U_THERE:
 			if (st == NULL) {
-				plog_md(md, "received bogus  R_U_THERE informational message");
+				log_md(RC_LOG, md, "received bogus  R_U_THERE informational message");
 				return STF_IGNORE;
 			}
 			return dpd_inI_outR(st, n, n_pbs);
 
 		case R_U_THERE_ACK:
 			if (st == NULL) {
-				plog_md(md, "received bogus R_U_THERE_ACK informational message");
+				log_md(RC_LOG, md, "received bogus R_U_THERE_ACK informational message");
 				return STF_IGNORE;
 			}
 			return dpd_inR(st, n, n_pbs);
@@ -975,7 +975,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 			 * Is anything else possible?  Expected?  Documented?
 			 */
 			if (st == NULL || !IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
-				plog_md(md, "ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message with for unestablished state.");
+				log_md(RC_LOG, md, "ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message with for unestablished state.");
 			} else if (pbs_left(n_pbs) < 4) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message without IPv4 address");
@@ -1342,7 +1342,7 @@ void process_v1_packet(struct msg_digest *md)
 							   md->hdr.isa_msgid);
 
 				if (st == NULL) {
-					plog_md(md, "phase 1 message is part of an unknown exchange");
+					log_md(RC_LOG, md, "phase 1 message is part of an unknown exchange");
 					/* XXX Could send notification back */
 					return;
 				}

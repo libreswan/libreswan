@@ -501,11 +501,11 @@ void send_v2N_response_from_md(struct msg_digest *md,
 		    exchange_type);
 	}
 
-	plog_md(md,
-		"responding to %s (%d) message (Message ID %u) with unencrypted notification %s",
-		exchange_name, exchange_type,
-		md->hdr.isa_msgid,
-		notify_name);
+	log_md(RC_LOG, md,
+	       "responding to %s (%d) message (Message ID %u) with unencrypted notification %s",
+	       exchange_name, exchange_type,
+	       md->hdr.isa_msgid,
+	       notify_name);
 
 	/*
 	 * Normally an unencrypted response is only valid for

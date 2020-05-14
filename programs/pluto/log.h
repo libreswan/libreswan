@@ -1,4 +1,4 @@
-/* logging declarations
+/* logging declarations, for libreswan's pluto
  *
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
  * Copyright (C) 2004 Michael Richardson <mcr@xelerance.com>
@@ -153,14 +153,6 @@ void free_logger(struct logger **logp);
 		}							\
 	}
 
-void log_pending(lset_t rc_flags,
-		 const struct pending *pending,
-		 const char *format, ...) PRINTF_LIKE(3);
-
-void log_state(lset_t rc_flags,
-	       const struct state *st,
-	       const char *format, ...)	PRINTF_LIKE(3);
-
 /*
  * Log with no context.
  *
@@ -179,20 +171,36 @@ void log_state(lset_t rc_flags,
 #define loglog_global log_global
 
 /*
- * XXX: log_md() should never be called directly - *log_md() is only
- * useful when in the packet (MD) event handler.  Since this means it
- * isn't in the whack event handler there can't be a whack calling
- * log_md(RC) is useless.
+ * The message digest.
+ *
+ * Since MD code is only ever executed when on the socket handler,
+ * isn't WHACK_FD always NULL and hence RC_FLAGS uses.  Almost:
+ *
+ * - dbg_md() uses it to signal that it is a debug log
+ * - any event injection will likely want to attach a whack fd
+ *
+ * and it is just easier.
  */
 
-void log_md(lset_t rc_flags,
-	    const struct msg_digest *md,
-	    const char *format, ...) PRINTF_LIKE(3);
-#define plog_md(MD, MESSAGE, ...) log_md(LOG_STREAM, MD, MESSAGE,##__VA_ARGS__)
+#define log_md(RC_FLAGS, MD, FORMAT, ...)				\
+	{								\
+		if (pexpect((MD) != NULL) &&				\
+		    pexpect(in_main_thread())) {			\
+			struct logger logger_ = MESSAGE_LOGGER(MD);	\
+			log_message(RC_FLAGS, &logger_,			\
+				    FORMAT, ##__VA_ARGS__);		\
+		} else {						\
+			/* still get the message out */			\
+			log_global(RC_FLAGS, null_fd,			\
+				   FORMAT, ##__VA_ARGS__);		\
+		}							\
+	}
+
 #define dbg_md(MD, MESSAGE, ...)					\
 	{								\
 		if (DBGP(DBG_BASE)) {					\
-			log_md(DEBUG_STREAM, MD, MESSAGE,##__VA_ARGS__); \
+			log_md(DEBUG_STREAM, MD,			\
+			       MESSAGE,##__VA_ARGS__);			\
 		}							\
 	}
 
@@ -207,12 +215,86 @@ void log_md(lset_t rc_flags,
  * a state or pending struct.
  */
 
-void log_connection(lset_t rc_flags, struct fd *whackfd,
-		    const struct connection *c,
-		    const char *format, ...) PRINTF_LIKE(4);
+#define log_connection(RC_FLAGS, WHACKFD, C, FORMAT, ...)		\
+	{								\
+		if (pexpect((C) != NULL) &&				\
+		    pexpect(in_main_thread())) {			\
+			struct logger logger_ = CONNECTION_LOGGER(C, WHACKFD); \
+			log_message(RC_FLAGS, &logger_,			\
+				    FORMAT, ##__VA_ARGS__);		\
+		} else {						\
+			/* still get the message out */			\
+			log_global(RC_FLAGS, null_fd,			\
+				   FORMAT, ##__VA_ARGS__);		\
+		}							\
+	}
 
-#define plog_connection(C, MESSAGE, ...)				\
-	log_connection(LOG_STREAM, null_fd, C, MESSAGE,##__VA_ARGS__)
+#if 0
+#define dbg_connection(C, FORMAT, ...)					\
+	{								\
+		if (DBGP(DBG_BASE)) {					\
+			log_connection(DEBUG_STREAM, null_fd, C,	\
+				       FORMAT, ##__VA_ARGS__);		\
+		}							\
+	}
+#endif
+
+#define log_pending(RC_FLAGS, PENDING, FORMAT, ...)			\
+	{								\
+		if (pexpect((PENDING) != NULL) &&			\
+		    pexpect(in_main_thread())) {			\
+			struct logger logger_ = PENDING_LOGGER(PENDING); \
+			log_message(RC_FLAGS, &logger_,			\
+				    FORMAT, ##__VA_ARGS__);		\
+		} else {						\
+			/* still get the message out */			\
+			log_global(RC_FLAGS, null_fd,			\
+				   FORMAT, ##__VA_ARGS__);		\
+		}							\
+	}
+
+#if 0
+#define dbg_pending(PENDING, FORMAT, ...)				\
+	{								\
+		if (DBGP(DBG_BASE)) {					\
+			log_pending(DEBUG_STREAM, PENDING,		\
+				    FORMAT, ##__VA_ARGS__);		\
+		}							\
+	}
+#endif
+
+/*
+ * log the state; notice how it still needs to pick up the global
+ * whackfd.
+ */
+
+#define log_state(RC_FLAGS, ST, FORMAT, ...)				\
+	{								\
+		if (pexpect((ST) != NULL) &&				\
+		    pexpect(in_main_thread())) {			\
+			struct logger logger_ = *((ST)->st_logger);	\
+			/* hack */					\
+			if (whack_log_fd != NULL) {			\
+				logger_.global_whackfd = whack_log_fd;	\
+			}						\
+			log_message(RC_FLAGS, &logger_,			\
+				    FORMAT, ##__VA_ARGS__);		\
+		} else {						\
+			/* still get the message out */			\
+			log_global(RC_FLAGS, null_fd,			\
+				   FORMAT, ##__VA_ARGS__);		\
+		}							\
+	}
+
+#if 0
+#define dbg_state(ST, FORMAT, ...)					\
+	{								\
+		if (DBGP(DBG_BASE)) {					\
+			log_state(DEBUG_STREAM, ST,			\
+				  FORMAT, ##__VA_ARGS__);		\
+		}							\
+	}
+#endif
 
 /*
  * Wrappers.
