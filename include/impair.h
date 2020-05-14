@@ -22,6 +22,7 @@
 #include "lswcdefs.h"
 
 struct fd;
+struct logger;
 
 /*
  * Meddle with the contents of a payload.
@@ -165,12 +166,12 @@ enum impair_action {
 	CALL_STATE_EVENT,
 };
 
-void process_impair(const struct whack_impair *whack_impair,
+bool process_impair(const struct whack_impair *whack_impair,
 		    void (*action)(enum impair_action, unsigned what,
 				   unsigned how, bool background,
 				   struct fd *whackfd),
-		    bool background,
-		    struct fd *whackfd);
+		    bool background, struct fd *whackfd,
+		    struct logger *logger);
 
 bool have_impairments(void);
 void jam_impairments(jambuf_t *buf, const char *sep);

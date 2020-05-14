@@ -1475,10 +1475,38 @@ int main(int argc, char **argv)
 		case OPT_IMPAIR:
 		{
 			struct whack_impair impairment;
+			/*
+			 * XXX: logging here is weird:
+			 *
+			 * parse_impair() directly calls fprintf() and
+			 * STDOUT / STDERR.  This seems reasonable
+			 * since the output is intended for the
+			 * command line user (and the process hasn't
+			 * deteached and logging has yet to be
+			 * redirected).
+			 *
+			 * process_impair() tries to use the global
+			 * logger but that result in a strange date
+			 * prefix.  The 'logger' could be pointed at
+			 * STDOUT / STDERR; however suspect the
+			 * problem is in the code emitting the log
+			 * record.  Since logging isn't re-directed it
+			 * should be producing command-line user
+			 * friendly output.
+			 */
 			switch (parse_impair(optarg, &impairment, true, pluto_name)) {
 			case IMPAIR_OK:
-				process_impair(&impairment, NULL, true, null_fd);
+			{
+				/* see note above */
+				struct logger global_logger = GLOBAL_LOGGER(null_fd);
+				if (!process_impair(&impairment, NULL, true, null_fd,
+						    &global_logger)) {
+					fprintf(stderr, "%s: impair option '%s' is not valid from the command line\n",
+						pluto_name, optarg);
+					exit(1);
+				}
 				break;
+			}
 			case IMPAIR_ERROR:
 				/* parse_impair() printed error */
 				exit(1);

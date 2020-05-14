@@ -399,47 +399,41 @@ void jam_impairments(jambuf_t *buf, const char *sep)
 	}
 }
 
-void process_impair(const struct whack_impair *wc,
+bool process_impair(const struct whack_impair *wc,
 		    void (*action)(enum impair_action, unsigned param,
 				   unsigned update, bool background,
 				   struct fd *whackfd),
-		    bool background,
-		    struct fd *whackfd)
+		    bool background, struct fd *whackfd,
+		    struct logger *logger)
 {
 	if (wc->what == 0) {
 		/* ignore; silently */
-		return;
+		return true;
 	} else if (wc->what == IMPAIR_DISABLE) {
 		for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 			const struct impairment *cr = &impairments[ci];
 			if (cr->action == IMPAIR_UPDATE &&
 			    value_of(cr) != 0) {
-				LSWDBGP(DBG_BASE, buf) {
-					lswlogf(buf, "%s: ", cr->what);
-					lswlogs(buf, " disabled");
-				}
+				dbg("%s: disabled", cr->what);
 				memset(cr->value, 0, cr->sizeof_value);
 			}
 		}
-		return;
+		return true;
 	} else if (wc->what == IMPAIR_LIST) {
 		for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 			const struct impairment *cr = &impairments[ci];
 			if (cr->action == IMPAIR_UPDATE &&
 			    value_of(cr) != 0) {
-				/* XXX: should be whack log? */
-				LSWLOG_INFO(buf) {
+				LOG_MESSAGE(RC_COMMENT, logger, buf) {
 					jam_impairment(buf, cr);
 				}
 			}
 		}
-		return;
+		return true;
 	} else if (wc->what >= elemsof(impairments)) {
-		LSWLOG_ERROR(buf) {
-			lswlogf(buf, "impairment %u out-of-range",
-				wc->what);
-		}
-		return;
+		log_message(RC_LOG|ERROR_STREAM, logger,
+			    "impairment %u out-of-range", wc->what);
+		return false;
 	}
 	const struct impairment *cr = &impairments[wc->what];
 	switch (cr->action) {
@@ -455,19 +449,27 @@ void process_impair(const struct whack_impair *wc,
 		default:
 			bad_case(cr->sizeof_value);
 		}
-		LSWDBGP(DBG_BASE, buf) {
+		/* log the update */
+		LOG_MESSAGE(DEBUG_STREAM, logger, buf) {
 			jam_impairment(buf, cr);
 		}
-		break;
+		return true;
 	case INITIATE_v2_DELETE:
 	case INITIATE_v2_LIVENESS:
 	case INITIATE_v2_REKEY:
 	case CALL_GLOBAL_EVENT:
 	case CALL_STATE_EVENT:
 		/* how is always biased */
+		if (action == NULL) {
+			log_message(RC_LOG|DEBUG_STREAM, logger,
+				    "no action for impairment %s", cr->what);
+			return false;
+		}
 		action(cr->action, cr->param, wc->how, background, whackfd);
-		break;
+		return true;
 	}
+	/* not inside case */
+	bad_case(cr->action);
 }
 
 /*

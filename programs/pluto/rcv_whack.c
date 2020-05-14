@@ -332,11 +332,12 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 							    "+", new_debugging);
 				}
 				set_debugging(new_debugging);
+				struct logger global_logger = GLOBAL_LOGGER(whackfd);
 				for (unsigned i = 0; i < m->nr_impairments; i++) {
 					process_impair(&m->impairments[i],
 						       whack_impair_action,
 						       m->whack_async/*background*/,
-						       whackfd);
+						       whackfd, &global_logger);
 				}
 			} else if (!m->whack_connection) {
 				struct connection *c = conn_by_name(m->name, true/*strict*/);
