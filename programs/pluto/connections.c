@@ -932,7 +932,14 @@ static bool load_end_cert_and_preload_secret(struct fd *whackfd,
 			dst_end->id = key->id;
 			return true;
 		}
-		cert = get_cert_by_ckaid_from_nss(pubkey);
+		ckaid_t ckaid;
+		err_t err = string_to_ckaid(pubkey, &ckaid);
+		if (err != NULL) {
+			/* should have been rejected by whack? */
+			log_global(RC_LOG, whackfd, "invalid hex CKAID '%s': %s", pubkey, err);
+			return false;
+		}
+		cert = get_cert_by_ckaid_from_nss(&ckaid);
 		if (cert == NULL) {
 			loglog_global(RC_LOG_SERIOUS, whackfd,
 				      "failed to find certificate ckaid '%s' in the NSS database",

@@ -23,7 +23,6 @@
 #include <secrets.h>
 
 extern CERTCertificate *get_cert_by_nickname_from_nss(const char *nickname);
-extern CERTCertificate *get_cert_by_ckaid_from_nss(const char *ckaid);
-extern CERTCertificate *get_cert_by_ckaid_t_from_nss(const ckaid_t *ckaid);
+extern CERTCertificate *get_cert_by_ckaid_from_nss(const ckaid_t *ckaid);
 
 #endif /* _NSS_CERT_LOAD_H */

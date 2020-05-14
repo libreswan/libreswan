@@ -43,6 +43,8 @@ typedef struct {
 
 bool ckaid_starts_with(const ckaid_t *ckaid, const char *start);
 
+err_t string_to_ckaid(const char *string, ckaid_t *ckaid);
+
  /* raw bytes in lower-case hex */
 typedef struct {
 	char buf[CKAID_SIZE * 2 + 1/*nul*/ + 1/*canary*/];

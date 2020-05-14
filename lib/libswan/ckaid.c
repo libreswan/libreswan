@@ -128,3 +128,24 @@ err_t form_ckaid_ecdsa(chunk_t pub_value, ckaid_t *ckaid)
 	SECITEM_FreeItem(nss_ckaid, PR_TRUE);
 	return NULL;
 }
+
+/* convert hex string ckaid to binary bin */
+
+err_t string_to_ckaid(const char *string, ckaid_t *ckaid)
+{
+	if (string == NULL) {
+		return "empty";
+	}
+
+	ckaid->len = (strlen(string) + 1) / 2;
+	if (ckaid->len > sizeof(ckaid->ptr/*array*/)) {
+		return "too long";
+	}
+
+	/* binlen will be "fixed"; ttodata doesn't take void* */
+	const char *err = ttodata(string, 0, 16, (void*)ckaid->ptr, ckaid->len, &ckaid->len);
+	if (err != NULL) {
+		return err;
+	}
+	return NULL;
+}
