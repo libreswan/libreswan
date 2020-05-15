@@ -111,6 +111,40 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike,
 				       struct child_sa *child,
 				       struct msg_digest *request_md);
 
+static bool accept_v2_nonce(struct logger *logger, struct msg_digest *md,
+			    chunk_t *dest, const char *name)
+{
+	/*
+	 * note ISAKMP_NEXT_v2Ni == ISAKMP_NEXT_v2Nr
+	 * so when we refer to ISAKMP_NEXT_v2Ni, it might be ISAKMP_NEXT_v2Nr
+	 */
+	pb_stream *nonce_pbs = &md->chain[ISAKMP_NEXT_v2Ni]->pbs;
+	shunk_t nonce = pbs_in_left_as_shunk(nonce_pbs);
+
+	/*
+	 * RFC 7296 Section 2.10:
+	 * Nonces used in IKEv2 MUST be randomly chosen, MUST be at least 128
+	 * bits in size, and MUST be at least half the key size of the
+	 * negotiated pseudorandom function (PRF).  However, the initiator
+	 * chooses the nonce before the outcome of the negotiation is known.
+	 * Because of that, the nonce has to be long enough for all the PRFs
+	 * being proposed.
+	 *
+	 * We will check for a minimum/maximum here - not meeting that
+	 * requirement is a syntax error(?).  Once the PRF is
+	 * selected, we verify the nonce is big enough.
+	 */
+
+	if (nonce.len < IKEv2_MINIMUM_NONCE_SIZE || nonce.len > IKEv2_MAXIMUM_NONCE_SIZE) {
+		log_message(RC_LOG_SERIOUS, logger, "%s length %zu not between %d and %d",
+			    name, nonce.len, IKEv2_MINIMUM_NONCE_SIZE, IKEv2_MAXIMUM_NONCE_SIZE);
+		return false;
+	}
+	free_chunk_content(dest);
+	*dest = clone_hunk(nonce, name);
+	return true;
+}
+
 static bool negotiate_hash_algo_from_notification(struct payload_digest *p, struct state *st)
 {
 	lset_t sighash_policy = st->st_connection->sighash_policy;
@@ -1030,7 +1064,16 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	}
 
 	/* Ni in */
-	v2RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_ni, "Ni"));
+	if (!accept_v2_nonce(st->st_logger, md, &st->st_ni, "Ni")) {
+		/*
+		 * Presumably not our fault.  Syntax errors kill the
+		 * family, hence FATAL.
+		 */
+		record_v2N_response(ike->sa.st_logger, ike, md,
+				    v2N_INVALID_SYNTAX, NULL/*no-data*/,
+				    UNENCRYPTED_PAYLOAD);
+		return STF_FATAL;
+	}
 
 	/* ??? from here on, this looks a lot like the end of ikev2_parent_outI1_common */
 
@@ -1498,7 +1541,14 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 	}
 
 	/* Ni in */
-	v2RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Ni"));
+	if (!accept_v2_nonce(st->st_logger, md, &st->st_nr, "Nr")) {
+		/*
+		 * Presumably not our fault.  Syntax errors in a
+		 * response kill the family (and trigger no further
+		 * exchange).
+		 */
+		return STF_FATAL;
+	}
 
 	/* We're missing processing a CERTREQ in here */
 
@@ -4114,7 +4164,14 @@ stf_status ikev2_child_ike_inR(struct ike_sa *ike,
 	struct connection *c = st->st_connection;
 
 	/* Ni in */
-	v2RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Nr"));
+	if (!accept_v2_nonce(st->st_logger, md, &st->st_nr, "Nr")) {
+		/*
+		 * Presumably not our fault.  Syntax errors in a
+		 * response kill the family and trigger no further
+		 * exchange.
+		 */
+		return STF_FATAL; /* NEED RESTART? */
+	}
 
 	/* Get the proposals ready.  */
 	struct ikev2_proposals *ike_proposals =
@@ -4229,7 +4286,16 @@ stf_status ikev2_child_inR(struct ike_sa *ike,
 {
 	pexpect(child != NULL);
 	struct state *st = &child->sa;
-	v2RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Nr"));
+
+	/* Ni in */
+	if (!accept_v2_nonce(st->st_logger, md, &st->st_nr, "Nr")) {
+		/*
+		 * Presumably not our fault.  Syntax errors in a
+		 * response kill the family (and trigger no further
+		 * exchange).
+		 */
+		return STF_FATAL;
+	}
 
 	RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(ike, child, md, TRUE));
 
@@ -4331,7 +4397,16 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 	free_chunk_content(&child->sa.st_nr); /* this is from the parent. */
 
 	/* Ni in */
-	v2RETURN_STF_FAILURE(accept_v2_nonce(md, &child->sa.st_ni, "Ni"));
+	if (!accept_v2_nonce(child->sa.st_logger, md, &child->sa.st_ni, "Ni")) {
+		/*
+		 * Presumably not our fault.  Syntax error response
+		 * impicitly kills the family.
+		 */
+		record_v2N_response(ike->sa.st_logger, ike, md,
+				    v2N_INVALID_SYNTAX, NULL/*no-data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FATAL; /* invalid syntax means we're dead */
+	}
 
 	status = ikev2_process_child_sa_pl(ike, child, md, FALSE);
 	if (status != STF_OK) {
@@ -4524,7 +4599,16 @@ stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
 	free_chunk_content(&st->st_nr); /* this is from the parent. */
 
 	/* Ni in */
-	v2RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_ni, "Ni"));
+	if (!accept_v2_nonce(st->st_logger, md, &st->st_ni, "Ni")) {
+		/*
+		 * Presumably not our fault.  A syntax error response
+		 * implicitly kills the entire family.
+		 */
+		record_v2N_response(ike->sa.st_logger, ike, md,
+				    v2N_INVALID_SYNTAX, NULL/*no-data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FATAL; /* we're doomed */
+	}
 
 	/* Get the proposals ready.  */
 	struct ikev2_proposals *ike_proposals =

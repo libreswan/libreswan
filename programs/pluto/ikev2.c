@@ -3721,41 +3721,6 @@ void complete_v2_state_transition(struct state *st,
 	}
 }
 
-v2_notification_t accept_v2_nonce(struct msg_digest *md,
-				chunk_t *dest,
-				const char *name)
-{
-	/*
-	 * note ISAKMP_NEXT_v2Ni == ISAKMP_NEXT_v2Nr
-	 * so when we refer to ISAKMP_NEXT_v2Ni, it might be ISAKMP_NEXT_v2Nr
-	 */
-	pb_stream *nonce_pbs = &md->chain[ISAKMP_NEXT_v2Ni]->pbs;
-	size_t len = pbs_left(nonce_pbs);
-
-	/*
-	 * RFC 7296 Section 2.10:
-	 * Nonces used in IKEv2 MUST be randomly chosen, MUST be at least 128
-	 * bits in size, and MUST be at least half the key size of the
-	 * negotiated pseudorandom function (PRF).  However, the initiator
-	 * chooses the nonce before the outcome of the negotiation is known.
-	 * Because of that, the nonce has to be long enough for all the PRFs
-	 * being proposed.
-	 *
-	 * We will check for a minimum/maximum here. Once the PRF is selected,
-	 * we verify the nonce is big enough.
-	 */
-
-	if (len < IKEv2_MINIMUM_NONCE_SIZE || len > IKEv2_MAXIMUM_NONCE_SIZE) {
-		loglog(RC_LOG_SERIOUS, "%s length %zu not between %d and %d",
-			name, len, IKEv2_MINIMUM_NONCE_SIZE, IKEv2_MAXIMUM_NONCE_SIZE);
-		return v2N_INVALID_SYNTAX; /* ??? */
-	}
-	free_chunk_content(dest);
-	*dest = clone_hunk(pbs_in_left_as_shunk(nonce_pbs), "nonce");
-	passert(len == dest->len);
-	return v2N_NOTHING_WRONG;
-}
-
 void jam_v2_stf_status(struct lswlog *buf, unsigned status)
 {
 	if (status <= STF_FAIL) {
