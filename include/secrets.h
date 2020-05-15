@@ -174,9 +174,9 @@ struct pubkey_type {
 	enum PrivateKeyKind private_key_kind;
 	void (*free_pubkey_content)(union pubkey_content *pkc);
 	err_t (*unpack_pubkey_content)(union pubkey_content *pkc, chunk_t key);
-	void (*unpack_secret_content)(struct private_key_stuff *pks,
-				      SECKEYPublicKey *pubk,
-				      SECItem *cert_ckaid);
+	void (*extract_private_key_stuff)(struct private_key_stuff *pks,
+					  SECKEYPublicKey *pubk,
+					  SECItem *cert_ckaid);
 	void (*free_secret_content)(struct private_key_stuff *pks);
 	err_t (*secret_sane)(struct private_key_stuff *pks);
 	struct hash_signature (*sign_hash)(const struct private_key_stuff *pks,
