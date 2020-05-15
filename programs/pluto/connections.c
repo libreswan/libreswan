@@ -188,11 +188,15 @@ static void delete_sr(struct spd_route *sr)
  */
 
 static void discard_connection(struct connection *c,
-			       struct connection *old_cur_connection,
-			       bool connection_valid);
+			       bool connection_valid,
+			       struct logger *connection_logger);
 
 void delete_connection(struct connection *c, bool relations)
 {
+	/* make a copy of the logger so it works even after the delete */
+	struct logger tmp = CONNECTION_LOGGER(c, whack_log_fd);
+	struct logger *connection_logger = clone_logger(&tmp); /* must-free */
+
 	struct connection *old_cur_connection = push_cur_connection(c);
 	if (old_cur_connection == c) {
 		old_cur_connection = NULL;
@@ -204,25 +208,26 @@ void delete_connection(struct connection *c, bool relations)
 	 */
 	passert(c->kind != CK_GOING_AWAY);
 	if (c->kind == CK_INSTANCE) {
-		ipstr_buf b;
-
 		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-			log_connection(RC_LOG, whack_log_fd, c,
-				       "deleting connection instance with peer %s {isakmp=#%lu/ipsec=#%lu}",
-				       sensitive_ipstr(&c->spd.that.host_addr, &b),
-				       c->newest_isakmp_sa, c->newest_ipsec_sa);
+			address_buf b;
+			log_message(RC_LOG, connection_logger,
+				    "deleting connection instance with peer %s {isakmp=#%lu/ipsec=#%lu}",
+				    str_address_sensitive(&c->spd.that.host_addr, &b),
+				    c->newest_isakmp_sa, c->newest_ipsec_sa);
 		}
 		c->kind = CK_GOING_AWAY;
 		if (c->pool != NULL)
 			rel_lease_addr(c);
 	}
 	release_connection(c, relations); /* won't delete c */
-	discard_connection(c, old_cur_connection, true/*connection_valid*/);
+	pop_cur_connection(old_cur_connection);
+	discard_connection(c, true/*connection_valid*/, connection_logger);
+	free_logger(&connection_logger);
 }
 
 static void discard_connection(struct connection *c,
-			       struct connection *old_cur_connection,
-			       bool connection_valid)
+			       bool connection_valid,
+			       struct logger *connection_logger)
 {
 	if (c->kind == CK_GROUP)
 		delete_group(c);
@@ -231,7 +236,7 @@ static void discard_connection(struct connection *c,
 		unreference_addresspool(c);
 
 	if (IS_XFRMI && c->xfrmi != NULL)
-		unreference_xfrmi(c);
+		unreference_xfrmi(c, connection_logger);
 
 	/* free up any logging resources */
 	perpeer_logfree(c);
@@ -251,9 +256,6 @@ static void discard_connection(struct connection *c,
 	host_pair_remove_connection(c, connection_valid);
 
 	flush_revival(c);
-
-	/* any logging past this point is for the wrong connection */
-	pop_cur_connection(old_cur_connection);
 
 	pfreeany(c->name);
 	pfreeany(c->foodgroup);
@@ -1212,16 +1214,16 @@ static bool extract_connection(struct fd *whackfd,
 
 	if (wm->policy & POLICY_MOBIKE) {
 		if (kernel_ops->migrate_sa_check == NULL) {
-			libreswan_log_rc(RC_FATAL, "MOBIKE not supported by %s interface",
-					 kernel_ops->kern_name);
+			log_connection(RC_FATAL, whackfd, c, "MOBIKE not supported by %s interface",
+				       kernel_ops->kern_name);
 			return false;
 		}
 		/* probe the interface */
 		err_t err = kernel_ops->migrate_sa_check();
 		if (err != NULL) {
-			libreswan_log_rc(RC_FATAL,
-					 "MOBIKE kernel support missing for %s interface: %s",
-					 kernel_ops->kern_name, err);
+			log_connection(RC_FATAL, whackfd, c,
+				       "MOBIKE kernel support missing for %s interface: %s",
+				       kernel_ops->kern_name, err);
 			return false;
 		}
 	}
@@ -1607,12 +1609,14 @@ static bool extract_connection(struct fd *whackfd,
 		c->vti_shared = wm->vti_shared;
 #ifdef USE_XFRM_INTERFACE
 		if (wm->xfrm_if_id != yn_no) {
-			err_t err = xfrm_iface_supported();
+			struct logger logger = CONNECTION_LOGGER(c, whackfd);
+			err_t err = xfrm_iface_supported(&logger);
 			if (err == NULL) {
 				if (setup_xfrm_interface(c, wm->xfrm_if_id))
 					return false;
 			} else {
-				libreswan_log_rc(RC_FATAL, "ipsec-interface=%u not supported. %s", wm->xfrm_if_id, err);
+				log_message(RC_FATAL, &logger,
+					    "ipsec-interface=%u not supported. %s", wm->xfrm_if_id, err);
 				return false;
 			}
 		}
@@ -1867,8 +1871,8 @@ void add_connection(struct fd *whackfd, const struct whack_message *wm)
 		 * extract_connection() has already displayed an
 		 * RC_FATAL log message.
 		 */
-		discard_connection(c, NULL/*no previous connection*/,
-				   false/*not valid*/);
+		struct logger logger = GLOBAL_LOGGER(whackfd);
+		discard_connection(c, false/*not-valid*/, &logger);
 	}
 }
 

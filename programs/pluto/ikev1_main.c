@@ -1712,7 +1712,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	ISAKMP_SA_established(st);
 #ifdef USE_XFRM_INTERFACE
 	if (c->xfrmi != NULL && c->xfrmi->if_id != yn_no)
-		if (add_xfrmi(c))
+		if (add_xfrmi(c, st->st_logger))
 			return STF_FATAL;
 #endif
 	linux_audit_conn(st, LAK_PARENT_START);
@@ -1767,7 +1767,7 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 	ISAKMP_SA_established(st);
 #ifdef USE_XFRM_INTERFACE
 	if (c->xfrmi != NULL && c->xfrmi->if_id != yn_no)
-		if (add_xfrmi(c))
+		if (add_xfrmi(c, st->st_logger))
 			return STF_FATAL;
 #endif
 	linux_audit_conn(st, LAK_PARENT_START);

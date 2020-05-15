@@ -37,10 +37,10 @@ struct pluto_xfrmi {
 	struct pluto_xfrmi *next;
 };
 extern bool setup_xfrm_interface(struct connection *c, uint32_t xfrm_if_id);
-extern bool add_xfrmi(struct connection *c);
-extern bool ip_link_set_up(const char *if_name);
+extern bool add_xfrmi(struct connection *c, struct logger *logger);
+extern bool ip_link_set_up(const char *if_name, struct logger *logger);
 extern void stale_xfrmi_interfaces(void);
-extern err_t xfrm_iface_supported(void);
-extern void free_xfrmi_ipsec1(void);
-extern void unreference_xfrmi(struct connection *c);
+extern err_t xfrm_iface_supported(struct logger *logger);
+extern void free_xfrmi_ipsec1(struct logger *logger);
+extern void unreference_xfrmi(struct connection *c, struct logger *logger);
 extern void reference_xfrmi(struct connection *c);

@@ -846,7 +846,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 	ISAKMP_SA_established(st);
 #ifdef USE_XFRM_INTERFACE
 	if (c->xfrmi != NULL && c->xfrmi->if_id != yn_no)
-		if (add_xfrmi(c))
+		if (add_xfrmi(c, st->st_logger))
 			return STF_FATAL;
 #endif
 
@@ -977,7 +977,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	ISAKMP_SA_established(st);
 #ifdef USE_XFRM_INTERFACE
 	if (c->xfrmi != NULL && c->xfrmi->if_id != yn_no)
-		if (add_xfrmi(c))
+		if (add_xfrmi(c, st->st_logger))
 			return STF_FATAL;
 #endif
 

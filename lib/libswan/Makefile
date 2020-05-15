@@ -122,7 +122,7 @@ OBJS += libreswan_log_errno.o
 OBJS += libreswan_bad_case.o
 
 OBJS += libreswan_log.o
-OBJS += libreswan_log_rc.o
+OBJS += loglog.o
 
 OBJS += log_pexpect.o
 

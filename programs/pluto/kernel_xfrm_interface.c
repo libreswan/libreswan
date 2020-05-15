@@ -166,51 +166,53 @@ static bool link_add_nl_msg(const char *if_name,
 	return false;
 }
 
-bool ip_link_set_up(const char *if_name)
+bool ip_link_set_up(const char *if_name, struct logger *logger)
 {
 	struct nl_ifinfomsg_req req = init_nl_ifi(RTM_NEWLINK, NLM_F_REQUEST);
 	req.i.ifi_change |= IFF_UP;
 	req.i.ifi_flags |= IFF_UP;
 	req.i.ifi_index = if_nametoindex(if_name);
 	if (req.i.ifi_index == 0) {
-		LOG_ERRNO(errno, "link_set_up_nl() can not find index of xfrm interface %s",
-				if_name);
+		log_errno(logger, errno,
+			  "link_set_up_nl() can not find index of xfrm interface %s",
+			  if_name);
 		return true;
 	}
 
 	struct nlm_resp nl_rsp;
 	if (nl_query_small_resp(&req.n, NETLINK_ROUTE, &nl_rsp)) {
-		libreswan_log_rc(RC_FATAL, "ERROR:ip_link_set_up() netlink query dev %s", if_name);
+		log_message(RC_FATAL, logger, "ERROR:ip_link_set_up() netlink query dev %s", if_name);
 
 	} else {
 		/* netlink query succeeded. check NL response */
 		if (nl_rsp.n.nlmsg_type == NLMSG_ERROR) {
-			libreswan_log_rc(RC_INFORMATIONAL, "deleting interface %s failed", if_name);
-
+			log_message(RC_INFORMATIONAL, logger, "deleting interface %s failed", if_name);
 			return true;
 		}
 	}
 	return false;
 }
 
-static bool ip_link_del(const char *if_name)
+static bool ip_link_del(const char *if_name, struct logger *logger)
 {
 	struct nl_ifinfomsg_req req = init_nl_ifi(RTM_DELLINK, NLM_F_REQUEST);
 	req.i.ifi_index = if_nametoindex(if_name);
 	if (req.i.ifi_index == 0) {
-		LOG_ERRNO(errno, "ip_link_del() can not find index of interface %s",
-				if_name);
+		log_errno(logger, errno, "ip_link_del() can not find index of interface %s",
+			  if_name);
 		return true;
 	}
 
 	struct nlm_resp nl_rsp;
 	if (nl_query_small_resp(&req.n, NETLINK_ROUTE, &nl_rsp)) {
-		libreswan_log_rc(RC_FATAL, "ERROR: ip_link_del() deleting xfrmi interface %s failed", if_name);
+		log_message(RC_FATAL, logger,
+			    "ERROR: ip_link_del() deleting xfrmi interface %s failed", if_name);
 
 	} else {
 		/* netlink query succeeded. Lets check NL response */
 		if (nl_rsp.n.nlmsg_type == NLMSG_ERROR) {
-			libreswan_log_rc(RC_INFORMATIONAL, "WARNING: ip_link_del() deleting interface %s failed", if_name);
+			log_message(RC_INFORMATIONAL, logger,
+				    "WARNING: ip_link_del() deleting interface %s failed", if_name);
 
 			return true;
 		}
@@ -218,26 +220,29 @@ static bool ip_link_del(const char *if_name)
 	return false;
 }
 
-static bool ip_link_add_xfrmi(const char *if_name, const char *dev_name, const uint32_t if_id)
+static bool ip_link_add_xfrmi(const char *if_name, const char *dev_name, const uint32_t if_id,
+			      struct logger *logger)
 {
 	dbg("add xfrm interface %s@%s id=%u", if_name, dev_name, if_id);
 	struct nl_ifinfomsg_req req;
 	zero(&req);
 	if (link_add_nl_msg(if_name, dev_name, if_id, &req)) {
-		libreswan_log_rc(RC_FATAL, "ERROR: nl_query_small_resp() creating netlink message failed");
+		log_message(RC_FATAL, logger,
+			    "ERROR: nl_query_small_resp() creating netlink message failed");
 		return true;
 	}
 
 	struct nlm_resp nl_rsp;
 	if (nl_query_small_resp(&req.n, NETLINK_ROUTE, &nl_rsp)) {
-		libreswan_log_rc(RC_FATAL, "ERROR: nl_query_small_resp() netlink query failed");
+		log_message(RC_FATAL, logger,
+			    "ERROR: nl_query_small_resp() netlink query failed");
 
 	} else {
 		/* netlink query succeeded. check NL response */
 		if (nl_rsp.n.nlmsg_type == NLMSG_ERROR &&
 				nl_rsp.u.e.error == -ENOPROTOOPT) {
-			libreswan_log_rc(RC_FATAL, "CONFIG_XFRM_INTERFACE fail got ENOPROTOOPT");
-
+			log_message(RC_FATAL, logger,
+				    "CONFIG_XFRM_INTERFACE fail got ENOPROTOOPT");
 			return true;
 		}
 	}
@@ -487,14 +492,15 @@ static bool find_any_xfrmi_interface(void)
 	return false;
 }
 
-static err_t ipsec1_support_test(const char *if_name, const char *dev_name)
+static err_t ipsec1_support_test(const char *if_name, const char *dev_name,
+				 struct logger *logger)
 {
 	if (!find_any_xfrmi_interface())
 		return NULL; /* success there is already xfrmi interefaces */
 
 	dbg("create and delete an xfrmi interrace '%s@%s' to test xfrmi support",
 			if_name, dev_name);
-	if (ip_link_add_xfrmi(if_name, dev_name, xfrm_interface_id)) {
+	if (ip_link_add_xfrmi(if_name, dev_name, xfrm_interface_id, logger)) {
 		xfrm_interface_support = -1;
 		dbg("xfrmi is not supported. failed to create %s@%s", if_name, dev_name);
 	} else {
@@ -509,7 +515,7 @@ static err_t ipsec1_support_test(const char *if_name, const char *dev_name)
 		}
 		dbg("xfrmi supported success creating %s@%s",
 				if_name, dev_name);
-		ip_link_del(if_name); /* ignore return value??? */
+		ip_link_del(if_name, logger); /* ignore return value??? */
 		xfrm_interface_support = 1; /* success */
 	}
 
@@ -528,7 +534,7 @@ static char *fmt_xfrmi_ifname(uint32_t if_id)
 	return if_name;
 }
 
-err_t xfrm_iface_supported(void)
+err_t xfrm_iface_supported(struct logger *logger)
 {
 	err_t err = NULL; /* success */
 
@@ -544,12 +550,13 @@ err_t xfrm_iface_supported(void)
 		}
 
 		unsigned int if_id = if_nametoindex(if_name);
-		int e = errno;
+		int e = errno; /* save error */
 		if (if_id == 0 && (e == ENXIO || e == ENODEV)) {
-			err = ipsec1_support_test(if_name, lo);
+			err = ipsec1_support_test(if_name, lo, logger);
 		} else if (if_id == 0) {
-			LOG_ERRNO(e, "FATAL unexpected error in xfrm_iface_supported() while checking device %s",
-					if_name);
+			log_errno(logger, e,
+				  "FATAL unexpected error in xfrm_iface_supported() while checking device %s",
+				  if_name);
 			xfrm_interface_support = -1;
 			err = "can not decide xfrmi support. assumed no.";
 		} else {
@@ -557,8 +564,9 @@ err_t xfrm_iface_supported(void)
 			 * may be more extensive checks?
 			 * such if it is a xfrmi device or something else
 			 */
-			loglog(RC_LOG_SERIOUS, "conflict %s already exist can not support xfrm-interface. May be leftover from previous pluto?",
-					if_name);
+			log_message(RC_LOG_SERIOUS, logger,
+				    "conflict %s already exist can not support xfrm-interface. May be leftover from previous pluto?",
+				    if_name);
 			xfrm_interface_support = -1;
 			err = "device name conflict in xfrm_iface_supported()";
 		}
@@ -644,28 +652,30 @@ bool setup_xfrm_interface(struct connection *c, uint32_t xfrm_if_id)
 	return init_pluto_xfrmi(c, xfrm_if_id, shared);
 }
 
-bool add_xfrmi(struct connection *c)
+bool add_xfrmi(struct connection *c, struct logger *logger)
 {
 	if (dev_exist_check(c->xfrmi->name, true /* ignore error */)) {
 		if (ip_link_add_xfrmi(c->xfrmi->name,
 					c->interface->ip_dev->id_rname,
-					c->xfrmi->if_id))
+				      c->xfrmi->if_id,
+				      logger))
 			return true;
 		c->xfrmi->pluto_added = true;
 	} else { /* device exist match name, type xfrmi, and xfrm_if_id */
 		if (find_xfrmi_interface(c->xfrmi->name, c->xfrmi->if_id)) {
 			/* found wrong device abort adding */
-			loglog(RC_LOG_SERIOUS, "ERROR device %s exist and do not match expected type xfrm or xfrm_if_id %u. check 'ip -d link show dev %s'", c->xfrmi->name, c->xfrmi->if_id, c->xfrmi->name);
+			log_message(RC_LOG_SERIOUS, logger,
+				    "ERROR device %s exist and do not match expected type xfrm or xfrm_if_id %u. check 'ip -d link show dev %s'", c->xfrmi->name, c->xfrmi->if_id, c->xfrmi->name);
 			return true;
 		}
 	}
 
-	if (ip_link_set_up(c->xfrmi->name))
+	if (ip_link_set_up(c->xfrmi->name, logger))
 		return true;
 	return false;
 }
 
-static void free_xfrmi(struct pluto_xfrmi *xfrmi)
+static void free_xfrmi(struct pluto_xfrmi *xfrmi, struct logger *logger)
 {
 	struct pluto_xfrmi **pp;
 	struct pluto_xfrmi *p;
@@ -676,11 +686,13 @@ static void free_xfrmi(struct pluto_xfrmi *xfrmi)
 		if (p == xfrmi) {
 			*pp = p->next;
 			if (xfrmi->pluto_added)  {
-				ip_link_del(xfrmi->name);
-				libreswan_log("delete ipsec-interface=%s if_id=%u added by pluto", xfrmi->name, xfrmi->if_id);
+				ip_link_del(xfrmi->name, logger);
+				log_message(RC_LOG, logger,
+					    "delete ipsec-interface=%s if_id=%u added by pluto", xfrmi->name, xfrmi->if_id);
 			} else {
 
-				libreswan_log("can not delete ipsec-interface=%s if_id=%u, not created by pluto", xfrmi->name, xfrmi->if_id);
+				log_message(RC_LOG, logger,
+					    "can not delete ipsec-interface=%s if_id=%u, not created by pluto", xfrmi->name, xfrmi->if_id);
 			}
 			pfreeany(xfrmi->name);
 			pfreeany(xfrmi);
@@ -723,14 +735,14 @@ void stale_xfrmi_interfaces(void)
 	}
 }
 
-void free_xfrmi_ipsec1(void)
+void free_xfrmi_ipsec1(struct logger *logger)
 {
 	char if_name[IFNAMSIZ];
 	snprintf(if_name, sizeof(if_name), XFRMI_DEV_FORMAT, IPSEC1_XFRM_IF_ID); /* global ipsec1 */
 	unsigned int if_id = if_nametoindex(if_name);
 
 	if (if_id > 0)
-		ip_link_del(if_name); /* ignore return value??? */
+		ip_link_del(if_name, logger); /* ignore return value??? */
 }
 
 void reference_xfrmi(struct connection *c)
@@ -740,7 +752,7 @@ void reference_xfrmi(struct connection *c)
 			c->xfrmi->name, c->xfrmi->if_id, c->xfrmi->refcount);
 }
 
-void unreference_xfrmi(struct connection *c)
+void unreference_xfrmi(struct connection *c, struct logger *logger)
 {
 	passert(c->xfrmi->refcount > 0);
 	c->xfrmi->refcount--;
@@ -750,5 +762,5 @@ void unreference_xfrmi(struct connection *c)
 			c->xfrmi->if_id, c->xfrmi->refcount,
 			c->xfrmi->refcount == 0 ? "delete interface." : ".");
 	if (c->xfrmi->refcount == 0)
-		free_xfrmi(c->xfrmi);
+		free_xfrmi(c->xfrmi, logger);
 }

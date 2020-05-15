@@ -2200,9 +2200,10 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 bool in_raw(void *bytes, size_t len, pb_stream *ins, const char *name)
 {
 	if (pbs_left(ins) < len) {
-		libreswan_log_rc(RC_LOG_SERIOUS,
-				 "not enough bytes left to get %s from %s",
-				 name, ins->name);
+		/* XXX: needs current logger embedded in pbs_in? */
+		loglog(RC_LOG_SERIOUS,
+		       "not enough bytes left to get %s from %s",
+		       name, ins->name);
 		return FALSE;
 	} else {
 		if (bytes == NULL) {

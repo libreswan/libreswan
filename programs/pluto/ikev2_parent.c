@@ -3461,7 +3461,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 	if (st->st_state->kind != STATE_V2_REKEY_CHILD_I1)
 		if (c->xfrmi != NULL &&
 				c->xfrmi->if_id != yn_no)
-			if (add_xfrmi(c))
+			if (add_xfrmi(c, child->sa.st_logger))
 				return STF_FATAL;
 #endif
 	/* now install child SAs */

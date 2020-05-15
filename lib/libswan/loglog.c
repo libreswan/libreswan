@@ -19,7 +19,7 @@
 
 #include "lswlog.h"
 
-void libreswan_log_rc(enum rc_type rc, const char *fmt, ...)
+void loglog(enum rc_type rc, const char *fmt, ...)
 {
 	LSWLOG_RC(rc, buf) {
 		va_list ap;
