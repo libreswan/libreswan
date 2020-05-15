@@ -5379,7 +5379,7 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 		 * Even if there are are other Delete Payloads,
 		 * they cannot matter: we delete the family.
 		 */
-		delete_my_family(&ike->sa, true);
+		delete_ike_family(ike, DONT_SEND_DELETE);
 		md->st = NULL;
 		ike = NULL;
 	} else if (!responding && md->chain[ISAKMP_NEXT_v2D] == NULL) {
@@ -5566,7 +5566,7 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 		 * When DEL_IKE, the update isn't needed but what
 		 * ever.
 		 */
-		dbg_v2_msgid(ike, &ike->sa, "XXX: in %s() hacking around record 'n' send bypassing send queue hacking around delete_my_family()",
+		dbg_v2_msgid(ike, &ike->sa, "XXX: in %s() hacking around record 'n' send bypassing send queue hacking around delete_ike_family()",
 			     __func__);
 		v2_msgid_update_sent(ike, &ike->sa, md, MESSAGE_RESPONSE);
 
@@ -5574,7 +5574,7 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 
 		/* Now we can delete the IKE SA if we want to */
 		if (del_ike) {
-			delete_my_family(&ike->sa, true);
+			delete_ike_family(ike, PROBABLY_SEND_DELETE);
 			md->st = NULL;
 			ike = NULL;
 		}

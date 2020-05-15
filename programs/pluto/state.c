@@ -655,7 +655,7 @@ void delete_state_by_id_name(struct state *st, void *name)
 	id_buf thatidb;
 	const char *thatidbuf = str_id(&c->spd.that.id, &thatidb);
 	if (streq(thatidbuf, name)) {
-		delete_my_family(st, FALSE);
+		delete_ike_family(pexpect_ike_sa(st), PROBABLY_SEND_DELETE);
 		/* note: no md->st to clear */
 	}
 }
@@ -667,7 +667,7 @@ void v1_delete_state_by_username(struct state *st, void *name)
 		return;
 
 	if (IS_IKE_SA(st) && streq(st->st_xauth_username, name)) {
-		delete_my_family(st, FALSE);
+		delete_ike_family(pexpect_ike_sa(st), PROBABLY_SEND_DELETE);
 		/* note: no md->st to clear */
 	}
 }
@@ -2899,27 +2899,26 @@ void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 			  v2_migrate_predicate, &filter, __func__);
 }
 
-struct delete_filter {
-	bool v2_responder_state;
-};
-
-static bool delete_predicate(struct state *st, void *context)
+static bool delete_ike_family_child(struct state *st, void *unused_context UNUSED)
 {
-	struct delete_filter *filter = context;
 	struct ike_sa *ike = ike_sa(st, HERE);
 	/* pass down whack fd; better abstraction? */
 	if (ike != NULL && fd_p(ike->sa.st_logger->global_whackfd)) {
 		close_any(&st->st_logger->global_whackfd);
 		st->st_logger->global_whackfd = dup_any(ike->sa.st_logger->global_whackfd);
 	}
-	if (filter->v2_responder_state) {
+	switch (st->st_ike_version) {
+	case IKEv1:
+		break;
+	case IKEv2:
 		st->st_dont_send_delete = true;
+		break;
 	}
 	delete_state(st);
 	return false; /* keep going */
 }
 
-void delete_my_family(struct state *pst, bool v2_responder_state)
+void delete_ike_family(struct ike_sa *ike, enum send_delete send_delete)
 {
 	/*
 	 * We are a parent: delete our children and
@@ -2927,23 +2926,23 @@ void delete_my_family(struct state *pst, bool v2_responder_state)
 	 * Our children will be on the same hash chain
 	 * because we share IKE SPIs.
 	 */
-	passert(!IS_CHILD_SA(pst));	/* we had better be a parent */
-	struct delete_filter delete_filter = {
-		.v2_responder_state = v2_responder_state,
-	};
-	state_by_ike_spis(pst->st_ike_version,
-			  &pst->st_serialno,
+	state_by_ike_spis(ike->sa.st_ike_version,
+			  &ike->sa.st_serialno,
 			  NULL/*ignore v1 msgid*/,
 			  NULL/*ignore-sa-role*/,
-			  &pst->st_ike_spis,
-			  delete_predicate, &delete_filter,
+			  &ike->sa.st_ike_spis,
+			  delete_ike_family_child, NULL,
 			  __func__);
 	/* delete self */
-	if (v2_responder_state) {
-		pst->st_dont_send_delete = true;
+	switch (send_delete) {
+	case DONT_SEND_DELETE:
+		ike->sa.st_dont_send_delete = true;
+		break;
+	case PROBABLY_SEND_DELETE:
+		/* let delete_state()'s vodo make the decision */
+		break;
 	}
-	delete_state(pst);
-	/* note: no md->st to clear */
+	delete_state(&ike->sa);
 }
 
 /*

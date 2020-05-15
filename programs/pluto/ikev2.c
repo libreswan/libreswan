@@ -3637,7 +3637,7 @@ void complete_v2_state_transition(struct state *st,
 				send_recorded_v2_message(ike, "STF_FATAL",
 							 MESSAGE_RESPONSE);
 				release_pending_whacks(st, "fatal error");
-				delete_my_family(&ike->sa, true);
+				delete_ike_family(ike, DONT_SEND_DELETE);
 				return;
 			}
 			dbg("Message ID: exchange zombie as no response?");

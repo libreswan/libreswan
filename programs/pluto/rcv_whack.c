@@ -443,7 +443,8 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 			if ((st->st_ike_version == IKEv2) && !IS_CHILD_SA(st)) {
 				log_state(LOG_STREAM/*not-whack*/, st,
 					  "Also deleting any corresponding CHILD_SAs");
-				delete_my_family(st, FALSE);
+				delete_ike_family(pexpect_ike_sa(st),
+						  PROBABLY_SEND_DELETE);
 				st = NULL;
 				/* note: no md->st to clear */
 			} else {
