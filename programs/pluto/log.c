@@ -85,27 +85,6 @@ static struct state *cur_state = NULL;                 /* current state, for dia
 static struct connection *cur_connection = NULL;       /* current connection, for diagnostics */
 static ip_address cur_from;				/* source of current current message */
 
-struct logger cur_logger(void)
-{
-	passert(in_main_thread());
-
-	if (cur_state != NULL) {
-		struct logger logger = *(cur_state->st_logger);
-		logger.global_whackfd = whack_log_fd;
-		return logger;
-	}
-
-	if (cur_connection != NULL) {
-		return CONNECTION_LOGGER(cur_connection, whack_log_fd);
-	}
-
-	if (endpoint_type(&cur_from) != NULL) {
-		return FROM_LOGGER(&cur_from);
-	}
-
-	return GLOBAL_LOGGER(whack_log_fd);
-};
-
 /*
  * if any debugging is on, make sure that we log the connection we are
  * processing, because it may not be clear in later debugging.
@@ -991,3 +970,37 @@ void free_logger(struct logger **logp)
 	pfree(*logp);
 	*logp = NULL;
 }
+
+struct logger cur_logger(void)
+{
+	if (!pexpect(in_main_thread())) {
+		static const struct logger_object_vec logger_pexpect_vec = {
+			.name = "pexpect",
+			.suppress_object_log = never_suppress_log,
+			.jam_object_prefix = jam_string_prefix,
+			.free_object = false,
+		};
+		static const struct logger pexpect_logger = {
+			.object = "[EXPECTATION FAILED on-main-thread] ",
+			.where = { .func = __func__, .basename = HERE_BASENAME , .line = __LINE__},/*HERE*/
+			.object_vec = &logger_pexpect_vec,
+		};
+		return pexpect_logger;
+	}
+
+	if (cur_state != NULL) {
+		struct logger logger = *(cur_state->st_logger);
+		logger.global_whackfd = whack_log_fd;
+		return logger;
+	}
+
+	if (cur_connection != NULL) {
+		return CONNECTION_LOGGER(cur_connection, whack_log_fd);
+	}
+
+	if (endpoint_type(&cur_from) != NULL) {
+		return FROM_LOGGER(&cur_from);
+	}
+
+	return GLOBAL_LOGGER(whack_log_fd);
+};
