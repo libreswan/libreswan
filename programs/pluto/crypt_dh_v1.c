@@ -58,7 +58,7 @@ void start_dh_v1_secretiv(crypto_req_cont_func fn, const char *name,
 			  struct state *st, enum sa_role role,
 			  const struct dh_desc *oakley_group2)
 {
-	const chunk_t *pss = get_psk(st->st_connection);
+	const chunk_t *pss = get_psk(st->st_connection, st->st_logger);
 
 	struct pluto_crypto_req_cont *dh = new_pcrc(fn, name);
 	struct pcr_v1_dh *const dhq = pcr_v1_dh_init(dh, pcr_compute_dh_iv);
@@ -122,7 +122,7 @@ void start_dh_v1_secret(crypto_req_cont_func fn, const char *name,
 			struct state *st, enum sa_role role,
 			const struct dh_desc *oakley_group2)
 {
-	const chunk_t *pss = get_psk(st->st_connection);
+	const chunk_t *pss = get_psk(st->st_connection, st->st_logger);
 	struct pluto_crypto_req_cont *cn = new_pcrc(fn, name);
 	struct pcr_v1_dh *const dhq = pcr_v1_dh_init(cn, pcr_compute_dh);
 

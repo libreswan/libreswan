@@ -304,7 +304,9 @@ struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 				       const struct crypt_mac *hash,
 				       struct logger *logger)
 {
-	const struct private_key_stuff *pks = get_connection_private_key(c, &pubkey_type_rsa);
+	const struct private_key_stuff *pks =
+		get_connection_private_key(c, &pubkey_type_rsa,
+					   logger);
 	if (pks == NULL) {
 		return (struct hash_signature) { .len = 0, }; /* failure: no key to use */
 	}

@@ -1355,7 +1355,7 @@ psk_common:
 						ugh = "policy does not allow OAKLEY_PRESHARED_KEY authentication";
 					} else {
 						/* check that we can find a proper preshared secret */
-						pss = get_psk(c);
+						pss = get_psk(c, st->st_logger);
 
 						if (pss == NULL)
 						{

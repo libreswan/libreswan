@@ -1792,11 +1792,12 @@ err_t lsw_add_secret(struct secret **secrets, CERTCertificate *cert)
 }
 
 static struct pubkey *allocate_pubkey_nss_3(CERTCertificate *cert,
-					    SECKEYPublicKey *pubkey_nss/*, struct logger *logger*/)
+					    SECKEYPublicKey *pubkey_nss,
+					    struct logger *logger)
 {
 	const struct pubkey_type *type = pubkey_type_nss(pubkey_nss);
 	if (type == NULL) {
-		libreswan_log(/*log_message(RC_LOG, logger,*/
+		log_message(RC_LOG, logger,
 			    "NSS: certificate key kind is unknown; not creating pubkey");
 		return NULL;
 	}
@@ -1805,7 +1806,7 @@ static struct pubkey *allocate_pubkey_nss_3(CERTCertificate *cert,
 							  lsw_return_nss_password_file_info()); /* must free */
 	if (ckaid_nss == NULL) {
 		/* someone deleted CERT from the NSS DB */
-		libreswan_log(/*log_message(RC_LOG, logger,*/
+		log_message(RC_LOG, logger,
 			    "NSS: could not extract CKAID from RSA certificate '%s'",
 			    cert->nickname);
 		return NULL;
@@ -1820,7 +1821,7 @@ static struct pubkey *allocate_pubkey_nss_3(CERTCertificate *cert,
 	return pk;
 }
 
-struct pubkey *allocate_pubkey_nss(CERTCertificate *cert/*, struct logger *logger*/)
+struct pubkey *allocate_pubkey_nss(CERTCertificate *cert, struct logger *logger)
 {
 	if (!pexpect(cert != NULL)) {
 		return NULL;
@@ -1828,13 +1829,13 @@ struct pubkey *allocate_pubkey_nss(CERTCertificate *cert/*, struct logger *logge
 
 	SECKEYPublicKey *pubkey_nss = SECKEY_ExtractPublicKey(&cert->subjectPublicKeyInfo); /* must free */
 	if (pubkey_nss == NULL) {
-		libreswan_log(/*log_message(RC_LOG, logger,*/
+		log_message(RC_LOG, logger,
 			    "NSS: could not extract public key from certificate '%s'",
 			    cert->nickname);
 		return NULL;
 	}
 
-	struct pubkey *pubkey = allocate_pubkey_nss_3(cert, pubkey_nss/*, logger*/);
+	struct pubkey *pubkey = allocate_pubkey_nss_3(cert, pubkey_nss, logger);
 	SECKEY_DestroyPublicKey(pubkey_nss);
 	return pubkey;
 }

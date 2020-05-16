@@ -510,30 +510,23 @@ stf_status check_signature_gen(struct state *st,
  */
 static struct secret *lsw_get_secret(const struct connection *c,
 				     enum PrivateKeyKind kind,
-				     bool asym)
+				     bool asym, struct logger *logger)
 {
 	/* is there a certificate assigned to this connection? */
 	if ((kind == PKK_ECDSA || kind == PKK_RSA) &&
 	    c->spd.this.cert.ty == CERT_X509_SIGNATURE &&
 	    c->spd.this.cert.u.nss_cert != NULL) {
 
-		if (DBGP(DBG_BASE)) {
-			id_buf this_buf, that_buf;
-			DBG_log("%s() using certificate for %s->%s of kind %s",
-				__func__,
-				str_id(&c->spd.this.id, &this_buf),
-				str_id(&c->spd.that.id, &that_buf),
-				enum_name(&pkk_names, kind));
-		}
+		id_buf this_buf, that_buf;
+		dbg("%s() using certificate for %s->%s of kind %s",
+		    __func__,
+		    str_id(&c->spd.this.id, &this_buf),
+		    str_id(&c->spd.that.id, &that_buf),
+		    enum_name(&pkk_names, kind));
 
 		dbg("allocating public key using connection's certificate; only to throw it a way");
 		/* from here on: must free my_public_key */
-#if 0
-		struct logger logger = cur_logger();/*pexpect:helper-thread*/
-		struct pubkey *my_public_key = allocate_pubkey_nss(c->spd.this.cert.u.nss_cert, &logger);
-#else
-		struct pubkey *my_public_key = allocate_pubkey_nss(c->spd.this.cert.u.nss_cert);
-#endif
+		struct pubkey *my_public_key = allocate_pubkey_nss(c->spd.this.cert.u.nss_cert, logger);
 		if (my_public_key == NULL) {
 			loglog(RC_LOG_SERIOUS, "private key not found (certificate missing from NSS DB or token locked?)");
 			return NULL;
@@ -591,23 +584,19 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		rw_id.kind = addrtypeof(&c->spd.that.host_addr) == AF_INET ?
 			     ID_IPV4_ADDR : ID_IPV6_ADDR;
 		rw_id.ip_addr = address_any(address_type(&c->spd.that.host_addr));
-		if (DBGP(DBG_BASE)) {
-			id_buf old_buf, new_buf;
-			DBG_log("%s() switching remote roadwarrier ID from %s to %s (%%ANYADDR)",
-				__func__, str_id(that_id, &old_buf), str_id(&rw_id, &new_buf));
-		}
+		id_buf old_buf, new_buf;
+		dbg("%s() switching remote roadwarrier ID from %s to %s (%%ANYADDR)",
+		    __func__, str_id(that_id, &old_buf), str_id(&rw_id, &new_buf));
 		that_id = &rw_id;
 
 	}
 
-	if (DBGP(DBG_BASE)) {
-		id_buf this_buf, that_buf;
-		DBG_log("%s() using IDs for %s->%s of kind %s",
-			__func__,
-			str_id(this_id, &this_buf),
-			str_id(that_id, &that_buf),
-			enum_name(&pkk_names, kind));
-	}
+	id_buf this_buf, that_buf;
+	dbg("%s() using IDs for %s->%s of kind %s",
+	    __func__,
+	    str_id(this_id, &this_buf),
+	    str_id(that_id, &that_buf),
+	    enum_name(&pkk_names, kind));
 
 	return lsw_find_secret_by_id(pluto_secrets,
 				     kind,
@@ -652,14 +641,15 @@ static bool has_private_rawkey(struct pubkey *pk)
  * Note: the result is not to be freed by the caller.
  * Note2: this seems to be called for connections using RSA too?
  */
-const chunk_t *get_psk(const struct connection *c)
+const chunk_t *get_psk(const struct connection *c,
+		       struct logger *logger)
 {
 	if (c->policy & POLICY_AUTH_NULL) {
 		DBG(DBG_CRYPT, DBG_log("Mutual AUTH_NULL secret - returning empty_chunk"));
 		return &empty_chunk;
 	}
 
-	struct secret *s = lsw_get_secret(c, PKK_PSK, FALSE);
+	struct secret *s = lsw_get_secret(c, PKK_PSK, FALSE, logger);
 	const chunk_t *psk =
 		s == NULL ? NULL : &lsw_get_pks(s)->u.preshared_secret;
 
@@ -676,9 +666,10 @@ const chunk_t *get_psk(const struct connection *c)
 
 /* Return ppk and store ppk_id in *ppk_id */
 
-chunk_t *get_ppk(const struct connection *c, chunk_t **ppk_id)
+chunk_t *get_ppk(const struct connection *c, chunk_t **ppk_id,
+		 struct logger *logger)
 {
-	struct secret *s = lsw_get_secret(c, PKK_PPK, FALSE);
+	struct secret *s = lsw_get_secret(c, PKK_PPK, FALSE, logger);
 
 	if (s == NULL) {
 		*ppk_id = NULL;
@@ -723,9 +714,10 @@ const chunk_t *get_ppk_by_id(const chunk_t *ppk_id)
  */
 
 const struct private_key_stuff *get_connection_private_key(const struct connection *c,
-							   const struct pubkey_type *type)
+							   const struct pubkey_type *type,
+							   struct logger *logger)
 {
-	struct secret *s = lsw_get_secret(c, type->private_key_kind, TRUE);
+	struct secret *s = lsw_get_secret(c, type->private_key_kind, TRUE, logger);
 	if (s == NULL) {
 		dbg("no %s private key Found", type->name);
 		return NULL;

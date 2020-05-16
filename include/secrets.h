@@ -282,6 +282,6 @@ SECItem same_chunk_as_secitem(chunk_t chunk, SECItemType type);
 
 chunk_t clone_secitem_as_chunk(SECItem si, const char *name);
 
-struct pubkey *allocate_pubkey_nss(CERTCertificate *cert/*, struct logger *logger*/);
+struct pubkey *allocate_pubkey_nss(CERTCertificate *cert, struct logger *logger);
 
 #endif /* _SECRETS_H */

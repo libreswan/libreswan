@@ -615,7 +615,7 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 	}
 
 	logtime_t start_add = logtime_start(logger);
-	add_pubkey_from_nss_cert(&result.pubkey_db, keyid, end_cert);
+	add_pubkey_from_nss_cert(&result.pubkey_db, keyid, end_cert, logger);
 	logtime_stop(&start_add, "%s() calling add_pubkey_from_nss_cert()", __func__);
 
 	return result;

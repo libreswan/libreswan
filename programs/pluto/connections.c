@@ -900,6 +900,7 @@ static bool load_end_cert_and_preload_secret(struct fd *whackfd,
 					     enum whack_pubkey_type pubkey_type,
 					     struct end *dst_end)
 {
+	struct logger logger[] = { GLOBAL_LOGGER(whackfd), };
 	dst_end->cert.ty = CERT_NONE;
 	dst_end->cert.u.nss_cert = NULL;
 
@@ -911,9 +912,9 @@ static bool load_end_cert_and_preload_secret(struct fd *whackfd,
 		cert_source = "nickname";
 		cert = get_cert_by_nickname_from_nss(pubkey);
 		if (cert == NULL) {
-			loglog_global(RC_LOG_SERIOUS, whackfd,
-				      "failed to find certificate named '%s' in the NSS database",
-				      pubkey);
+			log_message(RC_LOG_SERIOUS, logger,
+				    "failed to find certificate named '%s' in the NSS database",
+				    pubkey);
 			return false;
 		}
 		break;
@@ -938,14 +939,14 @@ static bool load_end_cert_and_preload_secret(struct fd *whackfd,
 		err_t err = string_to_ckaid(pubkey, &ckaid);
 		if (err != NULL) {
 			/* should have been rejected by whack? */
-			log_global(RC_LOG, whackfd, "invalid hex CKAID '%s': %s", pubkey, err);
+			log_message(RC_LOG, logger, "invalid hex CKAID '%s': %s", pubkey, err);
 			return false;
 		}
 		cert = get_cert_by_ckaid_from_nss(&ckaid);
 		if (cert == NULL) {
-			loglog_global(RC_LOG_SERIOUS, whackfd,
-				      "failed to find certificate ckaid '%s' in the NSS database",
-				      pubkey);
+			log_message(RC_LOG_SERIOUS, logger,
+				    "failed to find certificate ckaid '%s' in the NSS database",
+				    pubkey);
 			return false;
 		}
 		break;
@@ -954,8 +955,8 @@ static bool load_end_cert_and_preload_secret(struct fd *whackfd,
 		pexpect(pubkey == NULL);
 		return true;
 	default:
-		loglog_global(RC_LOG_SERIOUS, whackfd,
-			      "warning: unknown pubkey '%s' of type %d", pubkey, pubkey_type);
+		log_message(RC_LOG_SERIOUS, logger,
+			    "warning: unknown pubkey '%s' of type %d", pubkey, pubkey_type);
 		/* recoverable screwup? */
 		return true;
 	}
@@ -973,11 +974,11 @@ static bool load_end_cert_and_preload_secret(struct fd *whackfd,
 		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
 		passert(pk != NULL);
 		if (pk->keyType == rsaKey &&
-			((pk->u.rsa.modulus.len * BITS_PER_BYTE) < FIPS_MIN_RSA_KEY_SIZE)) {
-				loglog_global(RC_FATAL, whackfd,
-				      "FIPS: Rejecting cert with key size %d which is under %d",
-				      pk->u.rsa.modulus.len * BITS_PER_BYTE,
-				      FIPS_MIN_RSA_KEY_SIZE);
+		    ((pk->u.rsa.modulus.len * BITS_PER_BYTE) < FIPS_MIN_RSA_KEY_SIZE)) {
+			log_message(RC_FATAL, logger,
+				    "FIPS: Rejecting cert with key size %d which is under %d",
+				    pk->u.rsa.modulus.len * BITS_PER_BYTE,
+				    FIPS_MIN_RSA_KEY_SIZE);
 			SECKEY_DestroyPublicKey(pk);
 			CERT_DestroyCertificate(cert);
 			return false;
@@ -992,15 +993,15 @@ static bool load_end_cert_and_preload_secret(struct fd *whackfd,
 	/* check validity of cert */
 	if (CERT_CheckCertValidTimes(cert, PR_Now(), FALSE) !=
 			secCertTimeValid) {
-		loglog_global(RC_LOG_SERIOUS, whackfd,
-			      "%s certificate \'%s\' is expired or not yet valid",
-			      which, pubkey);
+		log_message(RC_LOG_SERIOUS, logger,
+			    "%s certificate \'%s\' is expired or not yet valid",
+			    which, pubkey);
 		CERT_DestroyCertificate(cert);
 		return false;
 	}
 
 	dbg("loading %s certificate \'%s\' pubkey", which, pubkey);
-	if (!add_pubkey_from_nss_cert(&pluto_pubkeys, &dst_end->id, cert)) {
+	if (!add_pubkey_from_nss_cert(&pluto_pubkeys, &dst_end->id, cert, logger)) {
 		CERT_DestroyCertificate(cert);
 		return false;
 	}
@@ -2832,7 +2833,7 @@ struct connection *refine_host_connection(const struct state *st,
 	{
 		switch (this_authby) {
 		case AUTHBY_PSK:
-			psk = get_psk(c);
+			psk = get_psk(c, st->st_logger);
 			/*
 			 * It should be virtually impossible to fail to find
 			 * PSK: we just used it to decode the current message!
@@ -2855,7 +2856,7 @@ struct connection *refine_host_connection(const struct state *st,
 			 * message.  Paul: only true for IKEv1
 			 */
 			const struct pubkey_type *type = &pubkey_type_rsa;
-			if (get_connection_private_key(c, type) == NULL) {
+			if (get_connection_private_key(c, type, st->st_logger) == NULL) {
 				loglog(RC_LOG_SERIOUS, "cannot find %s key", type->name);
 				 /* cannot determine my private key, so not switching */
 				return c;
@@ -3067,7 +3068,7 @@ struct connection *refine_host_connection(const struct state *st,
 
 			if (this_authby == AUTHBY_PSK) {
 				/* secret must match the one we already used */
-				const chunk_t *dpsk = get_psk(d);
+				const chunk_t *dpsk = get_psk(d, st->st_logger);
 
 				/*
 				 * We can change PSK mid-way in IKEv2 or aggressive mode.
@@ -3095,7 +3096,7 @@ struct connection *refine_host_connection(const struct state *st,
 				 * we sent previously.
 				 */
 				const struct pubkey_type *type = &pubkey_type_rsa;
-				const struct private_key_stuff *pks = get_connection_private_key(d, type);
+				const struct private_key_stuff *pks = get_connection_private_key(d, type, st->st_logger);
 				if (pks == NULL)
 					continue;	/* no key */
 
