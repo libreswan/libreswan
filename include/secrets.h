@@ -174,6 +174,9 @@ struct pubkey_type {
 	enum PrivateKeyKind private_key_kind;
 	void (*free_pubkey_content)(union pubkey_content *pkc);
 	err_t (*unpack_pubkey_content)(union pubkey_content *pkc, chunk_t key);
+	void (*extract_pubkey_content)(union pubkey_content *pkc,
+				       SECKEYPublicKey *pubkey_nss,
+				       SECItem *ckaid_nss);
 	void (*extract_private_key_stuff)(struct private_key_stuff *pks,
 					  SECKEYPublicKey *pubk,
 					  SECItem *cert_ckaid);
@@ -273,13 +276,12 @@ extern struct secret *lsw_get_ppk_by_id(struct secret *secrets, chunk_t ppk_id);
 
 extern err_t lsw_add_secret(struct secret **secrets, CERTCertificate *cert);
 
-extern struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert);
-extern struct pubkey *allocate_ECDSA_public_key_nss(CERTCertificate *cert);
-
 /* these do not clone */
 chunk_t same_secitem_as_chunk(SECItem si);
 SECItem same_chunk_as_secitem(chunk_t chunk, SECItemType type);
 
 chunk_t clone_secitem_as_chunk(SECItem si, const char *name);
+
+struct pubkey *allocate_pubkey_nss(CERTCertificate *cert/*, struct logger *logger*/);
 
 #endif /* _SECRETS_H */

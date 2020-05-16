@@ -81,6 +81,4 @@ extern stf_status check_signature_gen(struct state *st,
 				      const struct pubkey_type *type,
 				      try_signature_fn *try_signature);
 
-enum PrivateKeyKind nss_cert_key_kind(CERTCertificate *cert);
-
 #endif /* _KEYS_H */

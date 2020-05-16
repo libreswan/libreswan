@@ -480,24 +480,17 @@ static void replace_public_key(struct pubkey_list **pubkey_db,
 static struct pubkey *create_cert_pubkey(const struct id *id,
 					 CERTCertificate *cert)
 {
-	enum PrivateKeyKind kind = nss_cert_key_kind(cert);
 	/*
 	 * Try to convert CERT to an internal PUBKEY object.  If
 	 * someone, in parallel, deletes the underlying cert from the
 	 * NSS DB, then this will fail.
 	 */
-	struct pubkey *pk;
-	switch (kind) {
-	case PKK_RSA:
-		pk = allocate_RSA_public_key_nss(cert);
-		break;
-	case PKK_ECDSA:
-		pk = allocate_ECDSA_public_key_nss(cert);
-		break;
-	default:
-		libreswan_log("NSS: certificate key kind %d is unknown; not creating pubkey", kind);
-		return NULL;
-	}
+#if 0
+	struct logger logger = cur_logger();/*pexpect:helper-thread*/
+	struct pubkey *pk = allocate_pubkey_nss(cert, &logger);
+#else
+	struct pubkey *pk = allocate_pubkey_nss(cert);
+#endif
 	if (pk == NULL) {
 		dbg("failed to allocate/extract pubkey from cert '%s'", cert->nickname);
 		return NULL;

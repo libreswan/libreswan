@@ -149,39 +149,6 @@ void list_psks(struct fd *whackfd)
 	lsw_foreach_secret(pluto_secrets, print_secrets, whackfd);
 }
 
-enum PrivateKeyKind nss_cert_key_kind(CERTCertificate *cert)
-{
-	if (!pexpect(cert != NULL)) {
-		return PKK_INVALID;
-	}
-
-	SECKEYPublicKey *pk = SECKEY_ExtractPublicKey(&cert->subjectPublicKeyInfo);
-	if (pk == NULL) {
-		LSWLOG(buf) {
-			lswlogs(buf, "NSS: could not determine certificate kind; SECKEY_ExtractPublicKey() returned");
-			lswlog_nss_error(buf);
-		}
-		return PKK_INVALID;
-	}
-
-	KeyType type = SECKEY_GetPublicKeyType(pk);
-	enum PrivateKeyKind kind;
-	switch (type) {
-	case rsaKey:
-		kind = PKK_RSA;
-		break;
-	case ecKey:
-		kind = PKK_ECDSA;
-		break;
-	default:
-		kind = PKK_INVALID;
-		break;
-	}
-
-	SECKEY_DestroyPublicKey(pk);
-	return kind;
-}
-
 err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 			       const struct crypt_mac *expected_hash,
 			       const uint8_t *sig_val, size_t sig_len,
@@ -561,18 +528,12 @@ static struct secret *lsw_get_secret(const struct connection *c,
 
 		dbg("allocating public key using connection's certificate; only to throw it a way");
 		/* from here on: must free my_public_key */
-		struct pubkey *my_public_key;
-		switch (kind) {
-		case PKK_RSA:
-			my_public_key = allocate_RSA_public_key_nss(c->spd.this.cert.u.nss_cert);
-			break;
-		case PKK_ECDSA:
-			my_public_key = allocate_ECDSA_public_key_nss(c->spd.this.cert.u.nss_cert);
-			break;
-		default:
-			bad_case(kind);
-		}
-
+#if 0
+		struct logger logger = cur_logger();/*pexpect:helper-thread*/
+		struct pubkey *my_public_key = allocate_pubkey_nss(c->spd.this.cert.u.nss_cert, &logger);
+#else
+		struct pubkey *my_public_key = allocate_pubkey_nss(c->spd.this.cert.u.nss_cert);
+#endif
 		if (my_public_key == NULL) {
 			loglog(RC_LOG_SERIOUS, "private key not found (certificate missing from NSS DB or token locked?)");
 			return NULL;
