@@ -314,7 +314,7 @@ void v2_msgid_switch_responder_from_aborted_child(struct ike_sa *ike, struct chi
 	}
 	/* and don't forget MD.ST */
 	switch_md_st(md, &ike->sa, where);
-	child->sa.st_suppress_del_notify = true; /* just to be sure */
+	child->sa.st_dont_send_delete = true; /* just to be sure */
 	delete_state(&child->sa);
 	*childp = NULL;
 }

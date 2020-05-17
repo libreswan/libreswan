@@ -5461,7 +5461,7 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 							      v2del->isad_protoid), ntohl((uint32_t)spi));
 
 						/* we just received a delete, don't send another delete */
-						dst->sa.st_suppress_del_notify = TRUE;
+						dst->sa.st_dont_send_delete = true;
 						/* st is a parent */
 						passert(&ike->sa != &dst->sa);
 						passert(ike->sa.st_serialno == dst->sa.st_clonedfrom);

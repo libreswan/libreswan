@@ -809,31 +809,43 @@ static void flush_incomplete_children(struct ike_sa *ike)
 			  flush_incomplete_child, NULL/*arg*/, __func__);
 }
 
-static bool send_delete_check(const struct state *st)
+static bool should_send_delete(const struct state *st)
 {
-	if (st->st_suppress_del_notify)
-		return FALSE;
-
-	if (IS_IPSEC_SA_ESTABLISHED(st) ||
-			IS_ISAKMP_SA_ESTABLISHED(st->st_state))
-	{
-		if ((st->st_ike_version == IKEv2) &&
-				IS_CHILD_SA(st) &&
-				state_with_serialno(st->st_clonedfrom) == NULL) {
-			/* ??? in v2, there must be a parent */
-			DBG(DBG_CONTROL, DBG_log("deleting state but IKE SA does not exist for this child SA so Informational Exchange cannot be sent"));
-
-			return FALSE;
-		}
-		return TRUE;
+	if (st->st_dont_send_delete) {
+		dbg("%s: no, just because", __func__);
+		return false;
 	}
-	return FALSE;
+
+	if (!IS_IPSEC_SA_ESTABLISHED(st) &&
+	    !IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+		dbg("%s: no, not established", __func__);
+		return false;
+	}
+
+	if ((st->st_ike_version == IKEv2) &&
+	    IS_CHILD_SA(st) &&
+	    state_with_serialno(st->st_clonedfrom) == NULL) {
+		/*
+		 * ??? in v2, there must be a parent
+		 *
+		 * XXX: except when delete_state(ike), instead of
+		 * delete_ike_family(ike), is called ...
+		 *
+		 * Without an IKE SA sending the notify isn't
+		 * possible.
+		 */
+		dbg("%s: no, lost parent; suspect IKE SA was deleted without deleting children", __func__);
+		return false;
+	}
+
+	dbg("%s: yes", __func__);
+	return true;
 }
 
 static void delete_state_log(struct state *st, struct state *cur_state)
 {
 	struct connection *const c = st->st_connection;
-	bool del_notify = !impair.send_no_delete && send_delete_check(st);
+	bool del_notify = !impair.send_no_delete && should_send_delete(st);
 
 	if (cur_state != NULL && cur_state == st) {
 		/*
@@ -867,29 +879,15 @@ static void delete_state_log(struct state *st, struct state *cur_state)
 	    enum_name(&state_category_names, st->st_state->category));
 }
 
-void discard_state(struct state **st)
-{
-	/*
-	 * try to stop revival and messages
-	 */
-	if (IS_IKE_SA(*st)) {
-		change_state(*st, STATE_IKESA_DEL);
-	} else {
-		change_state(*st, STATE_CHILDSA_DEL);
-	}
-	delete_state(*st);
-	*st = NULL;
-}
-
 static v2_msgid_pending_cb ikev2_send_delete_continue;
 
 static stf_status ikev2_send_delete_continue(struct ike_sa *ike UNUSED,
 		struct state *st,
 		struct msg_digest *md UNUSED)
 {
-	if (send_delete_check(st)) {
+	if (should_send_delete(st)) {
 		send_delete(st);
-		st->st_suppress_del_notify = TRUE;
+		st->st_dont_send_delete = true;
 		dbg("%s Marked IPSEC state #%lu to suppress sending delete notify", __func__, st->st_serialno);
 	}
 
@@ -900,7 +898,7 @@ static stf_status ikev2_send_delete_continue(struct ike_sa *ike UNUSED,
 void schedule_next_child_delete(struct state *st, struct ike_sa *ike)
 {
 	if (st->st_ike_version == IKEv2 &&
-			send_delete_check(st)) {
+	    should_send_delete(st)) {
 		/* pre delete check for slot to send delete message */
 		struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
 		intmax_t unack = (initiator->sent - initiator->recv);
@@ -1063,7 +1061,7 @@ void delete_state(struct state *st)
 		release_any_md(&md);
 	}
 
-	if (send_delete_check(st)) {
+	if (should_send_delete(st)) {
 		/*
 		 * tell the other side of any IPSEC SAs that are going down
 		 *
@@ -2915,11 +2913,7 @@ static bool delete_predicate(struct state *st, void *context)
 		st->st_logger->global_whackfd = dup_any(ike->sa.st_logger->global_whackfd);
 	}
 	if (filter->v2_responder_state) {
-		/*
-		 * XXX: Suspect forcing the state to ..._DEL is a
-		 * secret code for do-not send a delete notification?
-		 */
-		change_state(st, STATE_CHILDSA_DEL);
+		st->st_dont_send_delete = true;
 	}
 	delete_state(st);
 	return false; /* keep going */
@@ -2946,11 +2940,7 @@ void delete_my_family(struct state *pst, bool v2_responder_state)
 			  __func__);
 	/* delete self */
 	if (v2_responder_state) {
-		/*
-		 * XXX: Suspect forcing the state to ..._DEL is a
-		 * secret code for do-not send a delete notification?
-		 */
-		change_state(pst, STATE_IKESA_DEL);
+		pst->st_dont_send_delete = true;
 	}
 	delete_state(pst);
 	/* note: no md->st to clear */
@@ -3175,7 +3165,7 @@ static void suppress_delete_notify(const struct ike_sa *ike,
 		return;
 	}
 
-	st->st_suppress_del_notify = TRUE;
+	st->st_dont_send_delete = true;
 	dbg("marked %s state #%lu to suppress sending delete notify",
 	    what, st->st_serialno);
 }
@@ -3275,7 +3265,7 @@ void IKE_SA_established(const struct ike_sa *ike)
 
 				dbg("deleting replaced IKE state for %s",
 				    old_p1->st_connection->name);
-				old_p1->st_suppress_del_notify = TRUE;
+				old_p1->st_dont_send_delete = true;
 				event_force(EVENT_SA_EXPIRE, old_p1);
 			}
 
@@ -3286,7 +3276,7 @@ void IKE_SA_established(const struct ike_sa *ike)
 				if (c == d && same_id(&c->spd.that.id, &d->spd.that.id)) {
 					DBG(DBG_CONTROL, DBG_log("Initial Contact received, deleting old state #%lu from connection '%s'",
 						c->newest_ipsec_sa, c->name));
-					old_p2->st_suppress_del_notify = TRUE;
+					old_p2->st_dont_send_delete = true;
 					event_force(EVENT_SA_EXPIRE, old_p2);
 				}
 			}
