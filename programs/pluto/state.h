@@ -838,7 +838,7 @@ extern void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 			       unsigned long count, monotime_t nw);
 extern void delete_state(struct state *st);
 extern void discard_state(struct state **st);
-extern void delete_states_by_connection(struct connection *c, bool relations);
+extern void delete_states_by_connection(struct connection *c, bool relations, struct fd *whackfd);
 extern void rekey_p2states_by_connection(struct connection *c);
 extern void delete_my_family(struct state *pst, bool v2_responder_state);
 extern void schedule_next_child_delete(struct state *st, struct ike_sa *ike);
@@ -905,7 +905,7 @@ extern void set_state_ike_endpoints(struct state *st,
 				    struct connection *c);
 
 extern void delete_cryptographic_continuation(struct state *st);
-extern void delete_states_dead_interfaces(void);
+extern void delete_states_dead_interfaces(struct fd *whackfd);
 extern bool dpd_active_locally(const struct state *st);
 
 /*

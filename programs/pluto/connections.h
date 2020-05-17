@@ -421,11 +421,13 @@ extern void initiate_ondemand(const ip_address *our_client,
 			      struct xfrm_user_sec_ctx_ike *uctx,
 			      const char *why);
 
-extern void terminate_connection(const char *name, bool quiet);
-extern void release_connection(struct connection *c, bool relations);
+extern void terminate_connection(const char *name, bool quiet,
+				 struct fd *whack);
+extern void release_connection(struct connection *c, bool relations, struct fd *whackfd);
 extern void delete_connection(struct connection *c, bool relations);
 extern void suppress_delete(struct connection *c);
-extern void delete_connections_by_name(const char *name, bool strict);
+extern void delete_connections_by_name(const char *name, bool strict,
+				       struct fd *whack);
 extern void delete_every_connection(void);
 extern char *add_group_instance(const struct fd *whack,
 				struct connection *group,

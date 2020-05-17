@@ -245,9 +245,9 @@ static void do_whacklisten(struct fd *whackfd)
 #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_RELOADING, SD_REPORT_NO_STATUS);
 #endif
-	libreswan_log("listening for IKE messages");
-	listening = TRUE;
-	find_ifaces(TRUE /* remove dead interfaces */);
+	log_global(RC_LOG, whackfd, "listening for IKE messages");
+	listening = true;
+	find_ifaces(true /* remove dead interfaces */, whackfd);
 #ifdef USE_XFRM_INTERFACE
 	stale_xfrmi_interfaces();
 #endif
@@ -394,8 +394,8 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 			whack_log(RC_FATAL, whackfd,
 				  "received whack command to delete a connection, but did not receive the connection name - ignored");
 		} else {
-			terminate_connection(m->name, TRUE);
-			delete_connections_by_name(m->name, !m->whack_connection);
+			terminate_connection(m->name, true, whackfd);
+			delete_connections_by_name(m->name, !m->whack_connection, whackfd);
 		}
 	}
 
@@ -432,9 +432,8 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 		} else {
 			set_cur_state(st);
 			/* needs an abstraction */
-			if (st->st_logger->global_whackfd == NULL) {
-				st->st_logger->global_whackfd = dup_any(whackfd);
-			}
+			close_any(&st->st_logger->global_whackfd);
+			st->st_logger->global_whackfd = dup_any(whackfd);
 			log_state(LOG_STREAM/*not-whack*/, st,
 				  "received whack to delete %s state #%lu %s",
 				  enum_name(&ike_version_names, st->st_ike_version),
@@ -623,7 +622,7 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 
 	if (m->whack_terminate) {
 		passert(m->name != NULL);
-		terminate_connection(m->name, TRUE);
+		terminate_connection(m->name, true, whackfd);
 	}
 
 	{

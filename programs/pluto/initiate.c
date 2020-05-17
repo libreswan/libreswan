@@ -120,6 +120,7 @@ static void swap_ends(struct connection *c)
 
 bool orient(struct connection *c)
 {
+	struct fd *whackfd = whack_log_fd; /* placeholder */
 	if (!oriented(*c)) {
 		const struct iface_port *p;
 		struct spd_route *sr = &c->spd;
@@ -148,7 +149,7 @@ bool orient(struct connection *c)
 								c->interface->ip_dev->id_rname,
 								p->ip_dev->id_rname);
 							}
-						terminate_connection(c->name, FALSE);
+						terminate_connection(c->name, false, whackfd);
 						c->interface = NULL; /* withdraw orientation */
 						return FALSE;
 					}
@@ -412,6 +413,7 @@ static bool same_in_some_sense(const struct connection *a,
 
 void restart_connections_by_peer(struct connection *const c)
 {
+	struct fd *whackfd = whack_log_fd; /* placeholder */
 	/*
 	 * If c is a CK_INSTANCE, it will be removed by terminate_connection.
 	 * Any parts of c we need after that must be copied first.
@@ -439,7 +441,7 @@ void restart_connections_by_peer(struct connection *const c)
 		{
 			/* This might delete c if CK_INSTANCE */
 			/* ??? is there a chance hp becomes dangling? */
-			terminate_connection(d->name, FALSE);
+			terminate_connection(d->name, false, whackfd);
 		}
 		d = next;
 	}

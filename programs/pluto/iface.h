@@ -104,7 +104,7 @@ extern struct iface_port *interfaces;   /* public interfaces */
 
 extern struct iface_port *find_iface_port_by_local_endpoint(ip_endpoint *local_endpoint);
 extern bool use_interface(const char *rifn);
-extern void find_ifaces(bool rm_dead);
+extern void find_ifaces(bool rm_dead, struct fd *whackfd);
 extern void show_ifaces_status(struct show *s);
 extern void free_ifaces(void);
 

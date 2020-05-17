@@ -1357,9 +1357,10 @@ bool v2_child_connection_probably_shared(struct child_sa *child)
  * returns true.
  */
 static void foreach_state_by_connection_func_delete(struct connection *c,
-					      bool (*comparefunc)(
-						      struct state *st,
-						      struct connection *c))
+						    bool (*comparefunc)(
+							    struct state *st,
+							    struct connection *c),
+						    struct fd *whackfd)
 {
 	/* this kludge avoids an n^2 algorithm */
 
@@ -1373,9 +1374,7 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 		dbg("FOR_EACH_STATE_... in %s", __func__);
 		struct state *this = NULL;
 		FOR_EACH_STATE_NEW2OLD(this) {
-			DBG(DBG_CONTROL,
-			    DBG_log("state #%lu",
-				this->st_serialno));
+			dbg("state #%lu", this->st_serialno);
 
 			/* on first pass, ignore established ISAKMP SA's */
 			if (pass == 0 &&
@@ -1391,6 +1390,9 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 				 * other state'.
 				 */
 				so_serial_t old_serialno = push_cur_state(this);
+				/* XXX: better way? */
+				close_any(&this->st_logger->global_whackfd);
+				this->st_logger->global_whackfd = dup_any(whackfd);
 				delete_state(this);
 				pop_cur_state(old_serialno);
 			}
@@ -1403,7 +1405,7 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
  * but using interfaces that are going down
  */
 
-void delete_states_dead_interfaces(void)
+void delete_states_dead_interfaces(struct fd *whackfd)
 {
 	struct state *this = NULL;
 	dbg("FOR_EACH_STATE_... in %s", __func__);
@@ -1416,9 +1418,12 @@ void delete_states_dead_interfaces(void)
 				id_vname = c->xfrmi->name;
 			else
 				id_vname = this->st_interface->ip_dev->id_rname;
-			libreswan_log(
-				"deleting lasting state #%lu on interface (%s) which is shutting down",
-				this->st_serialno, id_vname);
+			log_global(RC_LOG, whackfd,
+				   "deleting lasting state #%lu on interface (%s) which is shutting down",
+				   this->st_serialno, id_vname);
+			/* XXX: better? */
+			close_any(&this->st_logger->global_whackfd);
+			this->st_logger->global_whackfd = dup_any(whackfd);
 			delete_state(this);
 			/* note: no md->st to clear */
 		}
@@ -1447,14 +1452,13 @@ static bool same_phase1_sa_relations(struct state *this,
 		this->st_clonedfrom == parent_sa);
 }
 
-void delete_states_by_connection(struct connection *c, bool relations)
+void delete_states_by_connection(struct connection *c, bool relations, struct fd *whackfd)
 {
 	enum connection_kind ck = c->kind;
 
-	DBG(DBG_CONTROL, DBG_log("Deleting states for connection - %s",
-		relations ? "including all other IPsec SA's of this IKE SA" :
-			"not including other IPsec SA's"
-		));
+	dbg("deleting states for connection - %s",
+	    relations ? "including all other IPsec SA's of this IKE SA" :
+	    "not including other IPsec SA's");
 
 	/*
 	 * save this connection's isakmp SA,
@@ -1464,7 +1468,8 @@ void delete_states_by_connection(struct connection *c, bool relations)
 		c->kind = CK_GOING_AWAY;
 
 	foreach_state_by_connection_func_delete(c,
-		relations ? same_phase1_sa_relations : same_phase1_sa);
+						relations ? same_phase1_sa_relations : same_phase1_sa,
+						whackfd);
 
 	const struct spd_route *sr;
 
@@ -2903,6 +2908,12 @@ struct delete_filter {
 static bool delete_predicate(struct state *st, void *context)
 {
 	struct delete_filter *filter = context;
+	struct ike_sa *ike = ike_sa(st, HERE);
+	/* pass down whack fd; better abstraction? */
+	if (ike != NULL && fd_p(ike->sa.st_logger->global_whackfd)) {
+		close_any(&st->st_logger->global_whackfd);
+		st->st_logger->global_whackfd = dup_any(ike->sa.st_logger->global_whackfd);
+	}
 	if (filter->v2_responder_state) {
 		/*
 		 * XXX: Suspect forcing the state to ..._DEL is a
@@ -3208,7 +3219,16 @@ void ISAKMP_SA_established(const struct state *pst)
 				} else {
 					DBG(DBG_CONTROL, DBG_log("Unorienting old connection with same IDs"));
 					suppress_delete(d); /* don't send a delete */
-					release_connection(d, FALSE); /* this deletes the states */
+					/*
+					 * XXX: assume this call
+					 * doesn't want to log to
+					 * whack(?).  While PST still
+					 * has an attached whack, the
+					 * global whack that this call
+					 * would have used detached
+					 * long ago.
+					 */
+					release_connection(d, false, null_fd); /* this deletes the states */
 				}
 			}
 			d = next;

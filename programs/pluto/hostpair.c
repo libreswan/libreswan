@@ -301,7 +301,7 @@ void connect_to_host_pair(struct connection *c)
 	}
 }
 
-void release_dead_interfaces(void)
+void release_dead_interfaces(struct fd *whackfd)
 {
 	for (unsigned i = 0; i < host_pairs.nr_slots; i++) {
 		struct list_head *bucket = &host_pairs.slots[i];
@@ -314,7 +314,7 @@ void release_dead_interfaces(void)
 					/* this connection's interface is going away */
 					enum connection_kind k = p->kind;
 
-					release_connection(p, TRUE);
+					release_connection(p, true, whackfd);
 
 					if (k <= CK_PERMANENT) {
 						/* The connection should have survived release:
@@ -322,7 +322,7 @@ void release_dead_interfaces(void)
 						 */
 						passert(p == *pp);
 
-						terminate_connection(p->name, FALSE);
+						terminate_connection(p->name, false, whackfd);
 						p->interface = NULL; /* withdraw orientation */
 
 						*pp = p->hp_next; /* advance *pp */

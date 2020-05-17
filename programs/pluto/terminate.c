@@ -80,11 +80,14 @@ static int terminate_a_connection(struct connection *c, struct fd *whackfd,
 		if (c->newest_ipsec_sa != SOS_NOBODY) {
 			struct state *st = state_with_serialno(c->newest_ipsec_sa);
 			set_cur_state(st);
+			/* XXX: better? */
+			close_any(&st->st_logger->global_whackfd);
+			st->st_logger->global_whackfd = dup_any(whackfd);
 			delete_state(st);
 		}
 	} else {
 		dbg("connection not shared - terminating IKE and IPsec SA");
-		delete_states_by_connection(c, FALSE);
+		delete_states_by_connection(c, false, whackfd);
 	}
 
 	reset_cur_connection();
@@ -92,9 +95,8 @@ static int terminate_a_connection(struct connection *c, struct fd *whackfd,
 	return 1;
 }
 
-void terminate_connection(const char *name, bool quiet)
+void terminate_connection(const char *name, bool quiet, struct fd *whackfd)
 {
-	struct fd *whackfd = whack_log_fd; /* placeholder */
 	/*
 	 * Loop because more than one may match (master and instances)
 	 * But at least one is required (enforced by conn_by_name).

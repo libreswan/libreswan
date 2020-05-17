@@ -112,7 +112,7 @@ void release_iface_dev(struct iface_dev **id)
 	delete_ref(id, free_iface_dev);
 }
 
-static void free_dead_ifaces(void)
+static void free_dead_ifaces(struct fd *whackfd)
 {
 	struct iface_port *p;
 	bool some_dead = false;
@@ -123,12 +123,14 @@ static void free_dead_ifaces(void)
 	 * interface_devs, so that it can list all IFACE_PORTs being
 	 * shutdown before shutting them down.  Is this useful?
 	 */
+	dbg("updating interfaces - listing interfaces that are going down");
 	for (p = interfaces; p != NULL; p = p->next) {
 		if (p->ip_dev->ifd_change == IFD_DELETE) {
 			endpoint_buf b;
-			libreswan_log("shutting down interface %s %s",
-				      p->ip_dev->id_rname,
-				      str_endpoint(&p->local_endpoint, &b));
+			log_global(RC_LOG, whackfd,
+				   "shutting down interface %s %s",
+				   p->ip_dev->id_rname,
+				   str_endpoint(&p->local_endpoint, &b));
 			some_dead = TRUE;
 		} else if (p->ip_dev->ifd_change == IFD_ADD) {
 			some_new = TRUE;
@@ -136,12 +138,13 @@ static void free_dead_ifaces(void)
 	}
 
 	if (some_dead) {
+		dbg("updating interfaces - deleting the dead");
 		/*
 		 * Delete any iface_port's pointing at the dead
 		 * iface_dev.
 		 */
-		release_dead_interfaces();
-		delete_states_dead_interfaces();
+		release_dead_interfaces(whackfd);
+		delete_states_dead_interfaces(whackfd);
 		for (struct iface_port **pp = &interfaces; (p = *pp) != NULL; ) {
 			if (p->ip_dev->ifd_change == IFD_DELETE) {
 				*pp = p->next; /* advance *pp */
@@ -167,14 +170,16 @@ static void free_dead_ifaces(void)
 	 * in case some to the newly unoriented connections can
 	 * become oriented here.
 	 */
-	if (some_dead || some_new)
+	if (some_dead || some_new) {
+		dbg("updating interfaces - checking orientation");
 		check_orientations();
+	}
 }
 
 void free_ifaces(void)
 {
 	mark_ifaces_dead();
-	free_dead_ifaces();
+	free_dead_ifaces(null_fd);
 }
 
 void free_any_iface_port(struct iface_port **ifp)
@@ -257,7 +262,7 @@ static void handle_udp_packet_cb(evutil_socket_t unused_fd UNUSED,
 	handle_packet_cb(ifp);
 }
 
-void find_ifaces(bool rm_dead)
+void find_ifaces(bool rm_dead, struct fd *whackfd)
 {
 	/*
 	 * Sweep the interfaces, after this each is either KEEP, DEAD,
@@ -271,10 +276,10 @@ void find_ifaces(bool rm_dead)
 	add_new_ifaces();
 
 	if (rm_dead)
-		free_dead_ifaces(); /* ditch remaining old entries */
+		free_dead_ifaces(whackfd); /* ditch remaining old entries */
 
 	if (interfaces == NULL)
-		loglog(RC_LOG_SERIOUS, "no public interfaces found");
+		log_global(RC_LOG_SERIOUS, whackfd, "no public interfaces found");
 
 	if (listening) {
 		struct iface_port *ifp;
@@ -291,7 +296,8 @@ void find_ifaces(bool rm_dead)
 				if (ifp->tcp_accept_listener == NULL) {
 					ifp->tcp_accept_listener = add_fd_accept_event_handler(ifp, accept_ike_in_tcp_cb);
 					if (ifp->tcp_accept_listener == NULL) {
-						libreswan_log("TCP: failed to create IKE-in-TCP listener");
+						log_global(RC_LOG, whackfd,
+							   "TCP: failed to create IKE-in-TCP listener");
 						continue;
 					}
 				}

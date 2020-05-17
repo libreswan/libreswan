@@ -54,7 +54,7 @@ extern struct connection *connections;
 
 extern void update_host_pairs(struct connection *c);
 
-extern void release_dead_interfaces(void);
+extern void release_dead_interfaces(struct fd *whackfd);
 extern void check_orientations(void);
 
 void init_host_pair(void);
