@@ -3164,6 +3164,22 @@ void append_st_cfg_domain(struct state *st, char *domain)
 	}
 }
 
+static void suppress_delete_notify(const struct ike_sa *ike,
+				   const char *what, so_serial_t so)
+{
+	struct state *st = state_by_serialno(so);
+	if (st == NULL) {
+		log_state(RC_LOG, &ike->sa,
+			  "did not find old %s state #%lu to mark for suppressing delete",
+			  what, so);
+		return;
+	}
+
+	st->st_suppress_del_notify = TRUE;
+	dbg("marked %s state #%lu to suppress sending delete notify",
+	    what, st->st_serialno);
+}
+
 /*
  * an ISAKMP SA has been established.
  * Note the serial number, and release any connections with
@@ -3180,9 +3196,10 @@ void append_st_cfg_domain(struct state *st, char *domain)
  * IKEv1 code does not send or process INITIAL_CONTACT
  * IKEv2 codes does so we take it into account.
  */
-void ISAKMP_SA_established(const struct state *pst)
+
+void IKE_SA_established(const struct ike_sa *ike)
 {
-	struct connection *c = pst->st_connection;
+	struct connection *c = ike->sa.st_connection;
 	bool authnull = (LIN(POLICY_AUTH_NULL, c->policy) || c->spd.that.authby == AUTHBY_NULL);
 
 	if (c->spd.this.xauth_server && LIN(POLICY_PSK, c->policy)) {
@@ -3190,9 +3207,9 @@ void ISAKMP_SA_established(const struct state *pst)
 		 * If we are a server and use PSK, all clients use the same group ID
 		 * Note that "xauth_server" also refers to IKEv2 CP
 		 */
-		DBG(DBG_CONTROL, DBG_log("We are a server using PSK and clients are using a group ID"));
+		dbg("We are a server using PSK and clients are using a group ID");
 	} else if (!uniqueIDs) {
-		DBG(DBG_CONTROL, DBG_log("uniqueIDs disabled, not contemplating releasing older self"));
+		dbg("uniqueIDs disabled, not contemplating releasing older self");
 	} else {
 		/*
 		 * for all existing connections: if the same Phase 1 IDs are used,
@@ -3213,12 +3230,19 @@ void ISAKMP_SA_established(const struct state *pst)
 				bool same_remote_ip = sameaddr(&c->spd.that.host_addr, &d->spd.that.host_addr);
 
 				if (same_remote_ip && (!old_is_nullauth && authnull)) {
-					libreswan_log("cannot replace old authenticated connection with authnull connection");
+					log_state(RC_LOG, &ike->sa, "cannot replace old authenticated connection with authnull connection");
 				} else if (!same_remote_ip && old_is_nullauth && authnull) {
-						libreswan_log("NULL auth ID for different IP's cannot replace each other");
+					log_state(RC_LOG, &ike->sa, "NULL auth ID for different IP's cannot replace each other");
 				} else {
-					DBG(DBG_CONTROL, DBG_log("Unorienting old connection with same IDs"));
-					suppress_delete(d); /* don't send a delete */
+					dbg("unorienting old connection with same IDs");
+					/*
+					 * When replacing an old
+					 * existing connection,
+					 * suppress sending delete
+					 * notify
+					 */
+					suppress_delete_notify(ike, "ISAKMP", d->newest_isakmp_sa);
+					suppress_delete_notify(ike, "IKE", d->newest_ipsec_sa);
 					/*
 					 * XXX: assume this call
 					 * doesn't want to log to
@@ -3244,13 +3268,13 @@ void ISAKMP_SA_established(const struct state *pst)
 		 * of QuickMode is installed, so the remote endpoints view
 		 * this IKE SA still as the active one?
 		 */
-		if (pst->st_seen_initialc) {
+		if (ike->sa.st_seen_initialc) {
 			if (c->newest_isakmp_sa != SOS_NOBODY &&
-			    c->newest_isakmp_sa != pst->st_serialno) {
+			    c->newest_isakmp_sa != ike->sa.st_serialno) {
 				struct state *old_p1 = state_by_serialno(c->newest_isakmp_sa);
 
-				DBG(DBG_CONTROL, DBG_log("deleting replaced IKE state for %s",
-					old_p1->st_connection->name));
+				dbg("deleting replaced IKE state for %s",
+				    old_p1->st_connection->name);
 				old_p1->st_suppress_del_notify = TRUE;
 				event_force(EVENT_SA_EXPIRE, old_p1);
 			}
@@ -3269,7 +3293,7 @@ void ISAKMP_SA_established(const struct state *pst)
 		}
 	}
 
-	c->newest_isakmp_sa = pst->st_serialno;
+	c->newest_isakmp_sa = ike->sa.st_serialno;
 }
 
 static void whack_log_state_event(const struct fd *whackfd, struct state *st,

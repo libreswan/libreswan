@@ -1711,7 +1711,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 		}
 	}
 
-	ISAKMP_SA_established(st);
+	IKE_SA_established(pexpect_ike_sa(st));
 #ifdef USE_XFRM_INTERFACE
 	if (c->xfrmi != NULL && c->xfrmi->if_id != yn_no)
 		if (add_xfrmi(c, st->st_logger))
@@ -1766,7 +1766,7 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 		}
 	}
 
-	ISAKMP_SA_established(st);
+	IKE_SA_established(pexpect_ike_sa(st));
 #ifdef USE_XFRM_INTERFACE
 	if (c->xfrmi != NULL && c->xfrmi->if_id != yn_no)
 		if (add_xfrmi(c, st->st_logger))

@@ -314,7 +314,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 			if (add_xfrmi(c, child->sa.st_logger))
 				return STF_FATAL;
 #endif
-		ISAKMP_SA_established(&ike->sa);
+		IKE_SA_established(ike);
 	}
 
 	/* install inbound and outbound SPI info */

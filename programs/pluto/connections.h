@@ -425,7 +425,6 @@ extern void terminate_connection(const char *name, bool quiet,
 				 struct fd *whack);
 extern void release_connection(struct connection *c, bool relations, struct fd *whackfd);
 extern void delete_connection(struct connection *c, bool relations);
-extern void suppress_delete(struct connection *c);
 extern void delete_connections_by_name(const char *name, bool strict,
 				       struct fd *whack);
 extern void delete_every_connection(void);
