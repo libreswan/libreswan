@@ -277,9 +277,10 @@ void v2_msgid_switch_responder_to_child(struct ike_sa *ike, struct child_sa *chi
 	switch_md_st(md, &child->sa, where);
 }
 
-void v2_msgid_switch_responder_from_child(struct ike_sa *ike, struct child_sa *child,
-					  struct msg_digest *md, where_t where)
+void v2_msgid_switch_responder_from_aborted_child(struct ike_sa *ike, struct child_sa **childp,
+						  struct msg_digest *md, where_t where)
 {
+	struct child_sa *child = *childp;
 	enum message_role role = v2_msg_role(md);
 	if (!pexpect(role == MESSAGE_REQUEST)) {
 		return;
@@ -313,6 +314,9 @@ void v2_msgid_switch_responder_from_child(struct ike_sa *ike, struct child_sa *c
 	}
 	/* and don't forget MD.ST */
 	switch_md_st(md, &ike->sa, where);
+	child->sa.st_suppress_del_notify = true; /* just to be sure */
+	delete_state(&child->sa);
+	*childp = NULL;
 }
 
 void v2_msgid_switch_initiator(struct ike_sa *ike, struct child_sa *child,

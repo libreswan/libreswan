@@ -2207,8 +2207,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	/* send out the AUTH payload */
 
 	if (!emit_v2_auth(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, &sk.pbs)) {
-		v2_msgid_switch_responder_from_child(ike, pexpect_child_sa(cst), md, HERE);
-		discard_state(&cst);
+		v2_msgid_switch_responder_from_aborted_child(ike, &child, md, HERE);
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -3040,8 +3039,7 @@ static stf_status ike_auth_child_responder(struct ike_sa *ike,
 		 * continue to exist.  This STF_FAIL will blame MD->ST
 		 * aka the IKE SA.
 		 */
-		v2_msgid_switch_responder_from_child(ike, child, md, HERE);
-		delete_state(&child->sa);
+		v2_msgid_switch_responder_from_aborted_child(ike, &child, md, HERE);
 		return STF_FAIL; /* XXX: better? */
 	}
 	*child_out = child;
