@@ -5395,8 +5395,9 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 		 * so no point processing the other Delete SA payloads.
 		 * We won't catch nonsense in those payloads.
 		 *
-		 * But wait: we cannot delete the IKE SA until after we've sent
-		 * the response packet.  To be continued...
+		 * But wait: we cannot delete the IKE SA until after
+		 * we've sent the response packet.  To be continued
+		 * below ...
 		 */
 		passert(responding);
 	} else {
@@ -5572,9 +5573,13 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 
 		mobike_reset_remote(&ike->sa, &mobike_remote);
 
-		/* Now we can delete the IKE SA if we want to */
+		/*
+		 * ... now we can delete the IKE SA if we want to.
+		 *
+		 * The response is hopefully empty.
+		 */
 		if (del_ike) {
-			delete_ike_family(ike, PROBABLY_SEND_DELETE);
+			delete_ike_family(ike, DONT_SEND_DELETE);
 			md->st = NULL;
 			ike = NULL;
 		}
