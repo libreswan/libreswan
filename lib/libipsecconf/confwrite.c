@@ -354,18 +354,10 @@ static void confwrite_side(FILE *out,
 	if (end->rsakey2 != NULL && end->rsakey2[0] != '\0')
 		fprintf(out, "\t%srsasigkey2=%s\n", side, end->rsakey2);
 
-	if (end->port != 0 || end->protocol != 0) {
-		/* it is hoped that any number fits within 32 characters */
-		char portstr[32] = "%any";
-		char protostr[32] = "%any";
-
-		if (end->port != 0)
-			snprintf(portstr, sizeof(portstr), "%u", end->port);
-		if (end->protocol != 0)
-			snprintf(protostr, sizeof(protostr), "%u", end->protocol);
-
-		fprintf(out, "\t%sprotoport=%s/%s\n", side,
-			protostr, portstr);
+	if (protoport_is_set(&end->protoport)) {
+		protoport_buf buf;
+		fprintf(out, "\t%sprotoport=%s\n", side,
+			str_protoport(&end->protoport, &buf));
 	}
 
 	if (end->certx != NULL)

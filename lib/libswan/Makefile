@@ -48,7 +48,7 @@ OBJS += constants.o \
 	lswfips.o \
 	rangetosubnet.o sameaddr.o \
 	secrets.o \
-	subnettypeof.o ttoaddr.o ttodata.o ttoprotoport.o \
+	subnettypeof.o ttoaddr.o ttodata.o \
 	ttosa.o ttosubnet.o ttoul.o \
 	secitem_chunk.o \
 	base64_pubkey.o \
@@ -102,6 +102,7 @@ OBJS += ip_range.o
 OBJS += ip_said.o
 OBJS += ip_subnet.o
 OBJS += ip_selector.o
+OBJS += ip_protoport.o
 
 OBJS += lmod.o
 OBJS += lset.o

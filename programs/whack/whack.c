@@ -857,13 +857,13 @@ static void update_ports(struct whack_message *m)
 {
 	int port;
 
-	if (m->left.port != 0) {
-		port = htons(m->left.port);
+	if (m->left.protoport.port != 0) {
+		port = htons(m->left.protoport.port);
 		setportof(port, &m->left.host_addr);
 		setportof(port, &m->left.client.addr);
 	}
-	if (m->right.port != 0) {
-		port = htons(m->right.port);
+	if (m->right.protoport.port != 0) {
+		port = htons(m->right.protoport.port);
 		setportof(port, &m->right.host_addr);
 		setportof(port, &m->right.client.addr);
 	}
@@ -885,7 +885,7 @@ static void check_end(struct whack_end *this, struct whack_end *that,
 	}
 
 	/* check protocol */
-	if (this->protocol != that->protocol) {
+	if (this->protoport.protocol != that->protoport.protocol) {
 		diagq("the protocol for leftprotoport and rightprotoport must be the same",
 			NULL);
 	}
@@ -1678,10 +1678,8 @@ int main(int argc, char **argv)
 
 		/* --clientprotoport <protocol>/<port> */
 		case END_CLIENTPROTOPORT:
-			diagq(ttoprotoport(optarg, 0, &msg.right.protocol,
-					   &msg.right.port,
-					   &msg.right.has_port_wildcard),
-			      optarg);
+			diagq(ttoprotoport(optarg, &msg.right.protoport),
+				optarg);
 			continue;
 
 		case END_DNSKEYONDEMAND:	/* --dnskeyondemand */

@@ -789,9 +789,9 @@ static int extract_end(struct fd *whackfd,
 
 	dst->authby = src->authby;
 
-	dst->protocol = src->protocol;
-	dst->port = src->port;
-	dst->has_port_wildcard = src->has_port_wildcard;
+	dst->protocol = src->protoport.protocol;
+	dst->port = src->protoport.port;
+	dst->has_port_wildcard = protoport_has_any_port(&src->protoport);
 	dst->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
 	dst->has_client = src->has_client;
 	dst->has_client_wildcard = src->has_client_wildcard;
@@ -891,9 +891,9 @@ static bool check_connection_end(const struct whack_end *this,
 		}
 	}
 
-	if (this->protocol == 0 && this->port != 0) {
+	if (this->protoport.protocol == 0 && this->protoport.port != 0) {
 		loglog(RC_ORIENT, "connection %s cannot specify non-zero port %d for prototcol 0",
-			wm->name, this->port);
+			wm->name, this->protoport.port);
 		return FALSE;
 	}
 
@@ -1316,10 +1316,11 @@ static bool extract_connection(struct fd *whackfd,
 		}
 	}
 
-	if (wm->right.has_port_wildcard && wm->left.has_port_wildcard) {
-		loglog(RC_FATAL,
-			"Failed to add connection \"%s\": cannot have protoport with %%any on both sides",
-				wm->name);
+	if (protoport_has_any_port(&wm->right.protoport) &&
+	    protoport_has_any_port(&wm->left.protoport)) {
+		log_global(RC_FATAL, whackfd,
+			   "failed to add connection \"%s\": cannot have protoport with %%any on both sides",
+			   wm->name);
 		return false;
 	}
 	if (!check_connection_end(&wm->right, &wm->left, wm) ||

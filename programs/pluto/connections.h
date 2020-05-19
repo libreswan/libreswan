@@ -173,10 +173,15 @@ struct end {
 	bool key_from_DNS_on_demand;
 	bool has_client;
 	bool has_client_wildcard;
-	bool has_port_wildcard;
 	bool has_id_wildcards;
 	char *updown;
 	uint16_t host_port;		/* where the IKE port is */
+	/*
+	 * Was the PORT, in the PROTOPORT included in the whack
+	 * message "wild"?  Can't use .port as that will have been
+	 * scribbled on by a negotiation :-(
+	 */
+	bool has_port_wildcard;
 	uint16_t port;			/* port number, if per-port keying */
 	uint8_t protocol;		/* transport-protocol number, if per-X keying */
 

@@ -727,12 +727,8 @@ static bool validate_end(struct starter_conn *conn_st,
 	}
 
 	if (end->strings_set[KSCF_PROTOPORT]) {
-		err_t ugh;
 		char *value = end->strings[KSCF_PROTOPORT];
-
-		ugh = ttoprotoport(value, 0, &end->protocol, &end->port,
-				   &end->has_port_wildcard);
-
+		err_t ugh = ttoprotoport(value, &end->protoport);
 		if (ugh != NULL)
 			ERR_FOUND("bad %sprotoport=%s [%s]", leftright, value,
 				  ugh);
