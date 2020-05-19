@@ -165,9 +165,8 @@ static void read_foodgroup(struct fg_groups *g)
 					zero(spport_str);
 					zero(dpport_str);
 					int errl;
-					uint8_t proto = 0;
-					uint16_t sport = 0, dport = 0;
-					bool has_port_wildcard;
+					ip_protoport src;
+					ip_protoport dst;
 
 					/* check for protocol and ports */
 					/* syntax then must be: proto sport dport */
@@ -181,14 +180,17 @@ static void read_foodgroup(struct fg_groups *g)
 						(void)shift();
 						if (flp->bdry == B_none) {
 							add_str(spport_str, sizeof(spport_str), spport_str, flp->tok);
-							ugh = ttoprotoport(spport_str, 0, &proto, &sport, &has_port_wildcard);
-							if (ugh == NULL && proto != 0 && proto != 50 && proto != 51) {
+							ugh = ttoprotoport(spport_str, &src);
+							if (ugh == NULL &&
+							    src.protocol != 0 &&
+							    src.protocol != 50 &&
+							    src.protocol != 51) {
 								(void)shift();
 								if (flp->bdry == B_none) {
 									add_str(dpport_str, sizeof(dpport_str), dpport_str, flp->tok);
-									ugh = ttoprotoport(dpport_str, 0, &proto, &dport, &has_port_wildcard);
+									ugh = ttoprotoport(dpport_str, &dst);
 									if (ugh == NULL) {
-										if (dport == 0 && (strlen(flp->tok) != 1 || flp->tok[0] != '0')) {
+										if (dst.port == 0 && (strlen(flp->tok) != 1 || flp->tok[0] != '0')) {
 											loglog(RC_LOG_SERIOUS,
 												"\"%s\" line %d: unknown destination port '%s' - port name did not resolve to a valid number",
 												flp->filename, errl, flp->tok);
@@ -239,9 +241,9 @@ static void read_foodgroup(struct fg_groups *g)
 						if (r != 0)
 							break;
 
-						if (proto == (*pp)->proto &&
-						    sport == (*pp)->sport &&
-						    dport == (*pp)->dport) {
+						if (src.protocol == (*pp)->proto &&
+						    src.port == (*pp)->sport &&
+						    dst.port == (*pp)->dport) {
 							break;
 						}
 					}
@@ -254,7 +256,7 @@ static void read_foodgroup(struct fg_groups *g)
 						       flp->filename,
 						       flp->lino,
 						       str_subnet(&sn, &dest),
-						       proto, sport, dport,
+						       src.protocol, src.port, dst.port,
 						       str_subnet(lsn, &source),
 						       (*pp)->group->connection->name);
 					} else {
@@ -266,9 +268,9 @@ static void read_foodgroup(struct fg_groups *g)
 						f->next = *pp;
 						f->group = g;
 						f->subnet = sn;
-						f->proto = proto;
-						f->sport = sport;
-						f->dport = dport;
+						f->proto = src.protocol;
+						f->sport = src.port;
+						f->dport = dst.port;
 						f->name = NULL;
 						*pp = f;
 					}

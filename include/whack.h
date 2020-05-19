@@ -34,6 +34,7 @@
 #include "impair.h"
 #include "ip_range.h"
 #include "ip_subnet.h"
+#include "ip_protoport.h"
 
 #ifndef DEFAULT_RUNDIR
 # define DEFAULT_RUNDIR "/run/pluto/"
@@ -99,11 +100,10 @@ struct whack_end {
 	ip_subnet ifaceip;
 
 	ip_subnet client;
+	ip_protoport protoport;
+
 	bool has_client;
 	bool has_client_wildcard;
-	uint16_t port;		/* host order */
-	bool has_port_wildcard;
-	uint8_t protocol;
 
 	bool key_from_DNS_on_demand;
 	enum whack_pubkey_type pubkey_type;
