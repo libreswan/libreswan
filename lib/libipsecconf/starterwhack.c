@@ -55,22 +55,6 @@
 #include "ip_address.h"
 #include "ip_info.h"
 
-static void update_ports(struct whack_message * m)
-{
-	int port;
-
-	if (m->left.protoport.port != 0) {
-		port = htons(m->left.protoport.port);
-		setportof(port, &m->left.host_addr);
-		setportof(port, &m->left.client.addr);
-	}
-	if (m->right.protoport.port != 0) {
-		port = htons(m->right.protoport.port);
-		setportof(port, &m->right.host_addr);
-		setportof(port, &m->right.client.addr);
-	}
-}
-
 static int send_reply(int sock, char *buf, ssize_t len)
 {
 	/* send the secret to pluto */
@@ -709,9 +693,6 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 
 	set_whack_end("left",  &msg.left, &conn->left);
 	set_whack_end("right", &msg.right, &conn->right);
-
-	/* for bug #1004 */
-	update_ports(&msg);
 
 	msg.esp = conn->esp;
 	conn_log_val(conn, "esp", msg.esp);

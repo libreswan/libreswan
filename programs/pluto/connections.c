@@ -791,6 +791,9 @@ static int extract_end(struct fd *whackfd,
 
 	dst->protocol = src->protoport.protocol;
 	dst->port = src->protoport.port;
+	if (dst->port != 0) {
+		update_subnet_hport(&dst->client, dst->port);
+	}
 	dst->has_port_wildcard = protoport_has_any_port(&src->protoport);
 	dst->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
 	dst->has_client = src->has_client;
