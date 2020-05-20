@@ -211,34 +211,19 @@ void liveness_check(struct state *st)
  * XXX: where to put this?
  */
 
-static const struct state_v2_microcode v2_liveness_probe_i = {
+static const struct state_v2_microcode v2_liveness_probe = {
 	.story = "liveness probe",
-	.state = STATE_PARENT_I3,
-	.next_state = STATE_PARENT_I3,
+	.state = STATE_V2_ESTABLISHED_IKE_SA,
+	.next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	.send = MESSAGE_REQUEST,
 	.processor = send_v2_liveness_request,
 	.timeout_event =  EVENT_RETAIN,
 	.flags = SMF2_SUPPRESS_SUCCESS_LOG,
-};
-
-static const struct state_v2_microcode v2_liveness_probe_r = {
-	.story = "liveness probe",
-	.state = STATE_PARENT_R2,
-	.next_state = STATE_PARENT_R2,
-	.send = MESSAGE_REQUEST,
-	.processor = send_v2_liveness_request,
-	.timeout_event =  EVENT_RETAIN,
-	.flags = SMF2_SUPPRESS_SUCCESS_LOG,
-};
-
-static const struct state_v2_microcode *transitions[] = {
-	[SA_INITIATOR] = &v2_liveness_probe_i,
-	[SA_RESPONDER] = &v2_liveness_probe_r,
 };
 
 void initiate_v2_liveness(struct logger *logger, struct ike_sa *ike)
 {
-	const struct state_v2_microcode *transition = transitions[ike->sa.st_sa_role];
+	const struct state_v2_microcode *transition = &v2_liveness_probe;
 	if (ike->sa.st_state->kind != transition->state) {
 		log_message(RC_LOG, logger,
 			    "liveness: #%lu unexpectedly in state %s; should be %s",

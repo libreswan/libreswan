@@ -433,7 +433,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	 */
 	{ .story      = "Respond to CREATE_CHILD_SA IKE Rekey",
 	  .state      = STATE_V2_REKEY_IKE_R0,
-	  .next_state = STATE_PARENT_R2,
+	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_MESSAGE_REQUEST,
 	  .send = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
@@ -445,7 +445,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 
 	{ .story      = "Process CREATE_CHILD_SA IKE Rekey Response",
 	  .state      = STATE_V2_REKEY_IKE_I1,
-	  .next_state = STATE_PARENT_I3,
+	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni) |  P(KE),
@@ -522,27 +522,27 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	 * outside of this table.
 	 */
 
-	{ .story      = "I3: Informational Request",
-	  .state      = STATE_PARENT_I3,
-	  .next_state = STATE_PARENT_I3,
+	{ .story      = "Informational Request (liveness probe)",
+	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
+	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG|SMF2_MESSAGE_REQUEST,
 	  .message_payloads.required = P(SK),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_RETAIN, },
 
-	{ .story      = "I3: Informational Response",
-	  .state      = STATE_PARENT_I3,
-	  .next_state = STATE_PARENT_I3,
+	{ .story      = "Informational Response (liveness probe)",
+	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
+	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG|SMF2_MESSAGE_RESPONSE|SMF2_RELEASE_WHACK,
 	  .message_payloads.required = P(SK),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_RETAIN, },
 
-	{ .story      = "I3: INFORMATIONAL Request",
-	  .state      = STATE_PARENT_I3,
-	  .next_state = STATE_PARENT_I3,
+	{ .story      = "Informational Request",
+	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
+	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = LEMPTY,
 	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
@@ -550,47 +550,9 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_RETAIN, },
 
-	{ .story      = "I3: INFORMATIONAL Response",
-	  .state      = STATE_PARENT_I3,
-	  .next_state = STATE_PARENT_I3,
-	  .flags      = LEMPTY,
-	  .req_clear_payloads = P(SK),
-	  .opt_enc_payloads = P(N) | P(D) | P(CP),
-	  .processor  = process_encrypted_informational_ikev2,
-	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
-	  .timeout_event = EVENT_RETAIN, },
-
-	{ .story      = "R2: process Informational Request",
-	  .state      = STATE_PARENT_R2,
-	  .next_state = STATE_PARENT_R2,
-	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG|SMF2_MESSAGE_REQUEST,
-	  .message_payloads.required = P(SK),
-	  .processor  = process_encrypted_informational_ikev2,
-	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
-	  .timeout_event = EVENT_RETAIN, },
-
-	{ .story      = "R2: process Informational Response",
-	  .state      = STATE_PARENT_R2,
-	  .next_state = STATE_PARENT_R2,
-	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG|SMF2_MESSAGE_RESPONSE|SMF2_RELEASE_WHACK,
-	  .message_payloads.required = P(SK),
-	  .processor  = process_encrypted_informational_ikev2,
-	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
-	  .timeout_event = EVENT_RETAIN, },
-
-	{ .story      = "R2: process INFORMATIONAL Request",
-	  .state      = STATE_PARENT_R2,
-	  .next_state = STATE_PARENT_R2,
-	  .flags      = LEMPTY,
-	  .req_clear_payloads = P(SK),
-	  .opt_enc_payloads = P(N) | P(D) | P(CP),
-	  .processor  = process_encrypted_informational_ikev2,
-	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
-	  .timeout_event = EVENT_RETAIN, },
-
-	{ .story      = "R2: process INFORMATIONAL Response",
-	  .state      = STATE_PARENT_R2,
-	  .next_state = STATE_PARENT_R2,
+	{ .story      = "Informational Response",
+	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
+	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = LEMPTY,
 	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
@@ -3130,7 +3092,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		log_st = st;
 		w = RC_NEW_V2_STATE + st->st_state->kind;
 	} else if (transition->state == STATE_V2_REKEY_IKE_R0 &&
-		   transition->next_state == STATE_PARENT_R2) {
+		   transition->next_state == STATE_V2_ESTABLISHED_IKE_SA) {
 		pexpect(st->st_sa_role == SA_RESPONDER);
 		pexpect(IS_IKE_SA(st));
 		pexpect(st != &ike->sa);
@@ -3139,7 +3101,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		/* log our success and trigger detach */
 		w = RC_SUCCESS;
 	} else if (transition->state == STATE_V2_REKEY_IKE_I1 &&
-		   transition->next_state == STATE_PARENT_I3) {
+		   transition->next_state == STATE_V2_ESTABLISHED_IKE_SA) {
 		pexpect(st->st_sa_role == SA_INITIATOR);
 		pexpect(IS_IKE_SA(st));
 		pexpect(st != &ike->sa);

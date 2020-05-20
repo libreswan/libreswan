@@ -46,6 +46,14 @@ struct finite_state v2_states[] = {
 		.category = CAT,				\
 	}
 
+#define V2(KIND, STORY, CAT) [KIND - STATE_IKEv2_FLOOR] = {	\
+		.kind = KIND,					\
+		.name = #KIND,					\
+		.short_name = #KIND + 9/*STATE_V2_*/,		\
+		.story = STORY,					\
+		.category = CAT,				\
+	}
+
 	/*
 	 * IKEv2 IKE SA initiator, while the the SA_INIT packet is
 	 * being constructed, are in state.  Only once the packet has
@@ -96,8 +104,7 @@ struct finite_state v2_states[] = {
 	 * IKEv2 established states.
 	 */
 
-	S(STATE_PARENT_I3, "PARENT SA established", CAT_ESTABLISHED_IKE_SA),
-	S(STATE_PARENT_R2, "received v2I2, PARENT SA established", CAT_ESTABLISHED_IKE_SA),
+	V2(STATE_V2_ESTABLISHED_IKE_SA, "established IKE SA", CAT_ESTABLISHED_IKE_SA),
 
 	S(STATE_V2_IPSEC_I, "IPsec SA established", CAT_ESTABLISHED_CHILD_SA),
 	S(STATE_V2_IPSEC_R, "IPsec SA established", CAT_ESTABLISHED_CHILD_SA),
