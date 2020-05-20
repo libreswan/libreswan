@@ -390,7 +390,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 
 	policylen = sizeof(*policy_struct);
 
-	switch (sa_proto->protoid) {
+	switch (sa_proto->ipproto) {
 	case IPPROTO_ESP:
 	case IPPROTO_AH:
 	case IPPROTO_IPCOMP:
@@ -411,9 +411,9 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 
 		ir->sadb_x_ipsecrequest_len = (sizeof(struct sadb_x_ipsecrequest) +
 					       local_sa_len + remote_sa_len);
-		ir->sadb_x_ipsecrequest_proto = sa_proto->protoid;
+		ir->sadb_x_ipsecrequest_proto = sa_proto->ipproto;
 
-		if (sa_proto->protoid == ET_IPIP)
+		if (sa_proto->ipproto == ET_IPIP)
 			ir->sadb_x_ipsecrequest_mode = IPSEC_MODE_TUNNEL;
 		else
 			ir->sadb_x_ipsecrequest_mode = IPSEC_MODE_TRANSPORT;
