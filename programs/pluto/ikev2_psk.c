@@ -85,8 +85,6 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 			nonce_name = "create: initiator inputs to hash2 (responder nonce)";
 			break;
 		}
-		/* FALL THROUGH */
-	case STATE_PARENT_I3:
 		/* we are initiator verifying PSK */
 		passert(verify);
 		nullauth_pss = &ike->sa.st_skey_chunk_SK_pr;
@@ -102,12 +100,24 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 		nonce_name = "verify: initiator inputs to hash2 (responder nonce)";
 		break;
 
-	case STATE_PARENT_R2:
-		/* we are responder sending PSK */
-		passert(!verify);
-		nullauth_pss = &ike->sa.st_skey_chunk_SK_pr;
-		nonce = &ike->sa.st_ni;
-		nonce_name = "create: responder inputs to hash2 (initiator nonce)";
+	case STATE_V2_ESTABLISHED_IKE_SA:
+		/*
+		 * Presumably the IKE SA's state was changed before
+		 * the transition completed.
+		 */
+		if (verify) {
+			/* we are initiator verifying PSK */
+			passert(verify);
+			nullauth_pss = &ike->sa.st_skey_chunk_SK_pr;
+			nonce = &ike->sa.st_ni;
+			nonce_name = "verify: initiator inputs to hash2 (initiator nonce)";
+		} else {
+			/* we are responder sending PSK */
+			passert(!verify);
+			nullauth_pss = &ike->sa.st_skey_chunk_SK_pr;
+			nonce = &ike->sa.st_ni;
+			nonce_name = "create: responder inputs to hash2 (initiator nonce)";
+		}
 		break;
 
 	default:

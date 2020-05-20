@@ -56,7 +56,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "esp=null-none": terminating SAs using this connection
 002 "esp=null-none" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "esp=null-none" #2: ESP traffic information: in=84B out=84B
-002 "esp=null-none" #1: deleting state (STATE_PARENT_I3) and sending notification
+002 "esp=null-none" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "esp=null-none": terminating SAs using this connection
 west #
  # exclude INTEG=NONE in the proposal
@@ -80,7 +80,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "esp=null-none": terminating SAs using this connection
 002 "esp=null-none" #4: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "esp=null-none" #4: ESP traffic information: in=84B out=84B
-002 "esp=null-none" #3: deleting state (STATE_PARENT_I3) and sending notification
+002 "esp=null-none" #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "esp=null-none": terminating SAs using this connection
 west #
  echo done

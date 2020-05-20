@@ -518,18 +518,16 @@ enum state_kind {
 	 */
 	STATE_IKEv2_FLOOR,
 
-	/* IKE SA INITIATOR states */
+	/* IKE SA */
 
 	STATE_PARENT_I0 = STATE_IKEv2_FLOOR,	/* waiting for KE to finish */
 	STATE_PARENT_I1,        /* IKE_SA_INIT: sent initial message, waiting for reply */
 	STATE_PARENT_I2,        /* IKE_AUTH: sent auth message, waiting for reply */
-	STATE_PARENT_I3,        /* IKE_AUTH done: received auth response */
-
-	/* IKE_SA RESPONDER states */
 
 	STATE_PARENT_R0,	/* just starting */
 	STATE_PARENT_R1,	/* IKE_SA_INIT: sent response */
-	STATE_PARENT_R2,	/* IKE_AUTH: sent response */
+
+	STATE_V2_ESTABLISHED_IKE_SA,
 
 	/* IKE exchange can also create a child */
 
@@ -679,8 +677,7 @@ extern struct keywords sa_role_names;
 				       LELEM(STATE_MODE_CFG_I1) | \
 				       LELEM(STATE_XAUTH_I0) | \
 				       LELEM(STATE_XAUTH_I1) | \
-				       LELEM(STATE_PARENT_I3) | \
-				       LELEM(STATE_PARENT_R2))
+				       LELEM(STATE_V2_ESTABLISHED_IKE_SA))
 
 #define IS_ISAKMP_SA_ESTABLISHED(s) ((LELEM(s->kind) & ISAKMP_SA_ESTABLISHED_STATES) != LEMPTY)
 
@@ -704,9 +701,9 @@ extern struct keywords sa_role_names;
 
 /* adding for just a R2 or I3 check. Will need to be changed when parent/child discerning is fixed */
 
-#define IS_V2_ESTABLISHED(s) ((s->kind) == STATE_PARENT_R2 || \
-		(s->kind) == STATE_PARENT_I3 || (s->kind) == STATE_V2_IPSEC_I || \
-		(s->kind) == STATE_V2_IPSEC_R)
+#define IS_V2_ESTABLISHED(s) ((s->kind) == STATE_V2_ESTABLISHED_IKE_SA || \
+			      (s->kind) == STATE_V2_IPSEC_I ||		\
+			      (s->kind) == STATE_V2_IPSEC_R)
 
 #define IS_IKE_SA_ESTABLISHED(ST) \
 	( IS_ISAKMP_SA_ESTABLISHED((ST)->st_state) ||	\
@@ -723,9 +720,8 @@ extern struct keywords sa_role_names;
 	  || (ST)->st_state->kind == STATE_V2_IPSEC_R) &&	\
 	 IS_CHILD_SA(ST))
 
-#define IS_PARENT_SA_ESTABLISHED(st) \
-    (((st)->st_state->kind == STATE_PARENT_I3 || (st)->st_state->kind == STATE_PARENT_R2) && \
-    !IS_CHILD_SA(st))
+#define IS_PARENT_SA_ESTABLISHED(st) (((st)->st_state->kind == STATE_V2_ESTABLISHED_IKE_SA) && \
+				      !IS_CHILD_SA(st))
 
 #define IS_CHILD_SA(st)  ((st)->st_clonedfrom != SOS_NOBODY)
 #define IS_IKE_SA(st)	 ((st)->st_clonedfrom == SOS_NOBODY)

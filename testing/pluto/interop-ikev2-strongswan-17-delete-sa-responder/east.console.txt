@@ -15,7 +15,7 @@ east #
 002 "westnet-eastnet-ikev2": terminating SAs using this connection
 002 "westnet-eastnet-ikev2" #3: deleting state (STATE_V2_IPSEC_R) and sending notification
 005 "westnet-eastnet-ikev2" #3: ESP traffic information: in=336B out=336B
-002 "westnet-eastnet-ikev2" #2: deleting state (STATE_PARENT_R2) and sending notification
+002 "westnet-eastnet-ikev2" #2: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 east #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then sleep 5 ; fi
 east #

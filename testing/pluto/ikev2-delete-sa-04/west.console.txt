@@ -21,7 +21,7 @@ west #
 002 "west-east-auto": terminating SAs using this connection
 002 "west-east-auto" #2: deleting state (STATE_V2_IPSEC_R) and sending notification
 005 "west-east-auto" #2: ESP traffic information: in=0B out=0B
-002 "west-east-auto" #1: deleting state (STATE_PARENT_R2) and sending notification
+002 "west-east-auto" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 west #
  # give Delete/Notify some time
 west #

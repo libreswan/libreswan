@@ -48,7 +48,7 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: deleting state (STATE_V2_IPSEC_I) and NOT sending notification
 005 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: ESP traffic information: in=168B out=168B
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: down-client output: restoring resolvconf
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: deleting state (STATE_PARENT_I3) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: deleting connection instance with peer 192.1.2.23
 002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
 road #
@@ -70,7 +70,7 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: deleting state (STATE_V2_IPSEC_I) and NOT sending notification
 005 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: down-client output: restoring resolvconf
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #3: deleting state (STATE_PARENT_I3) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: deleting connection instance with peer 192.1.2.23
 002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
 road #
@@ -92,7 +92,7 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: deleting state (STATE_V2_IPSEC_I) and NOT sending notification
 005 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: down-client output: restoring resolvconf
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #5: deleting state (STATE_PARENT_I3) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #5: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: deleting connection instance with peer 192.1.2.23
 002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
 road #
@@ -126,7 +126,7 @@ road #
 done
 road #
  ipsec status | grep STATE_
-000 #7: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23:4500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
+000 #7: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23:4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
 000 #8: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23:4500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#7; idle;
 road #
  ip xfrm policy

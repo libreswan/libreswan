@@ -62,7 +62,7 @@ west #
 west #
  sleep 45
 west #
- # state #1(STATE_PARENT_I3) #6, #7, #8  and #9 in STATE_V2_IPSEC_I
+ # state #1(STATE_V2_ESTABLISHED_IKE_SA) #6, #7, #8  and #9 in STATE_V2_IPSEC_I
 west #
  # anything other state is a sign of regression
 west #
@@ -70,7 +70,7 @@ west #
 000 #6: "west-east/1x0":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #7: "west-east/2x0":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #8: "west-east/3x0":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #1: "west-east/4x0":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
+000 #1: "west-east/4x0":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
 000 #9: "west-east/4x0":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 west #
  # this is complex grep line susceptible to changes to log lines.

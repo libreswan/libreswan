@@ -44,8 +44,8 @@ west #
 002 "west" #1: initiate rekey of IKEv2 CREATE_CHILD_SA IKE Rekey
 1v2 "west" #3: STATE_V2_REKEY_IKE_I1: STATE_V2_REKEY_IKE_I1
 002 "west" #3: rekeyed #1 STATE_V2_REKEY_IKE_I1 and expire it remaining life XXs
-004 "west" #3: STATE_PARENT_I3: PARENT SA established {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "west" #1: deleting state (STATE_PARENT_I3) and sending notification
+004 "west" #3: STATE_V2_ESTABLISHED_IKE_SA: established IKE SA {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "west" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 west #
  ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -55,7 +55,7 @@ west #
 west #
  ipsec status |grep STATE_
 000 #2: "west":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#3; idle;
-000 #3: "west":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
+000 #3: "west":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
 west #
  # why?
 west #
@@ -67,22 +67,22 @@ west #
 002 "west" #3: initiate rekey of IKEv2 CREATE_CHILD_SA IKE Rekey
 1v2 "west" #4: STATE_V2_REKEY_IKE_I1: STATE_V2_REKEY_IKE_I1
 002 "west" #4: rekeyed #3 STATE_V2_REKEY_IKE_I1 and expire it remaining life XXs
-004 "west" #4: STATE_PARENT_I3: PARENT SA established {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "west" #3: deleting state (STATE_PARENT_I3) and sending notification
+004 "west" #4: STATE_V2_ESTABLISHED_IKE_SA: established IKE SA {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "west" #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 west #
  ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  ipsec status |grep STATE_
 000 #2: "west":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#4; idle;
-000 #4: "west":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
+000 #4: "west":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
 west #
  ipsec whack --trafficstatus
 006 #2: "west", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@east'
 west #
  ipsec status |grep STATE_
 000 #2: "west":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#4; idle;
-000 #4: "west":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
+000 #4: "west":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
 west #
  ../bin/check-for-core.sh
 west #

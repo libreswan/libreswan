@@ -27,7 +27,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "aes128": terminating SAs using this connection
 002 "aes128" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "aes128" #2: ESP traffic information: in=84B out=84B
-002 "aes128" #1: deleting state (STATE_PARENT_I3) and sending notification
+002 "aes128" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "aes128": terminating SAs using this connection
 west #
  ipsec whack --impair none
@@ -84,7 +84,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "aes128": terminating SAs using this connection
 002 "aes128" #8: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "aes128" #8: ESP traffic information: in=84B out=84B
-002 "aes128" #7: deleting state (STATE_PARENT_I3) and sending notification
+002 "aes128" #7: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "aes128": terminating SAs using this connection
 west #
  ipsec whack --impair none
@@ -107,7 +107,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "aes128": terminating SAs using this connection
 002 "aes128" #10: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "aes128" #10: ESP traffic information: in=84B out=84B
-002 "aes128" #9: deleting state (STATE_PARENT_I3) and sending notification
+002 "aes128" #9: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "aes128": terminating SAs using this connection
 west #
  ipsec whack --impair none
@@ -199,7 +199,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "3des": terminating SAs using this connection
 002 "3des" #20: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "3des" #20: ESP traffic information: in=84B out=84B
-002 "3des" #19: deleting state (STATE_PARENT_I3) and sending notification
+002 "3des" #19: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "3des": terminating SAs using this connection
 west #
  ipsec whack --impair none
@@ -224,7 +224,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "3des": terminating SAs using this connection
 002 "3des" #22: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "3des" #22: ESP traffic information: in=84B out=84B
-002 "3des" #21: deleting state (STATE_PARENT_I3) and sending notification
+002 "3des" #21: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "3des": terminating SAs using this connection
 west #
  ipsec whack --impair none

@@ -38,7 +38,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike,esp=aes_gcm": terminating SAs using this connection
 002 "ike,esp=aes_gcm" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "ike,esp=aes_gcm" #2: ESP traffic information: in=84B out=84B
-002 "ike,esp=aes_gcm" #1: deleting state (STATE_PARENT_I3) and sending notification
+002 "ike,esp=aes_gcm" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike,esp=aes_gcm": terminating SAs using this connection
 west #
  #
@@ -64,7 +64,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike,esp=aes_gcm": terminating SAs using this connection
 002 "ike,esp=aes_gcm" #4: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "ike,esp=aes_gcm" #4: ESP traffic information: in=84B out=84B
-002 "ike,esp=aes_gcm" #3: deleting state (STATE_PARENT_I3) and sending notification
+002 "ike,esp=aes_gcm" #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike,esp=aes_gcm": terminating SAs using this connection
 west #
  #
@@ -90,7 +90,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike,esp=aes_gcm": terminating SAs using this connection
 002 "ike,esp=aes_gcm" #6: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "ike,esp=aes_gcm" #6: ESP traffic information: in=84B out=84B
-002 "ike,esp=aes_gcm" #5: deleting state (STATE_PARENT_I3) and sending notification
+002 "ike,esp=aes_gcm" #5: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike,esp=aes_gcm": terminating SAs using this connection
 west #
  ipsec stop

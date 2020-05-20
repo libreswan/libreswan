@@ -37,7 +37,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ah=md5": terminating SAs using this connection
 002 "ah=md5" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "ah=md5" #2: AH traffic information: in=84B out=84B
-002 "ah=md5" #1: deleting state (STATE_PARENT_I3) and sending notification
+002 "ah=md5" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ah=md5": terminating SAs using this connection
 west #
  ../bin/libreswan-up-down.sh ah=sha1 -I 192.0.1.254 192.0.2.254
@@ -53,7 +53,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ah=sha1": terminating SAs using this connection
 002 "ah=sha1" #4: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "ah=sha1" #4: AH traffic information: in=84B out=84B
-002 "ah=sha1" #3: deleting state (STATE_PARENT_I3) and sending notification
+002 "ah=sha1" #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ah=sha1": terminating SAs using this connection
 west #
  # Test rekey
