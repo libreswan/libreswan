@@ -7,7 +7,7 @@
 #include "lswalloc.h"
 #include "lswtool.h"
 #include "jambuf.h"
-#include "libreswan/passert.h"
+#include "passert.h"
 
 #define PREFIX "         "
 
