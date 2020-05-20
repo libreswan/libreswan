@@ -3064,7 +3064,7 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 	 * transitions for the IKE and CHILD SAs and then have the IKE
 	 * SA invoke the CHILD SA's transition.
 	 */
-	pexpect(md->svm->next_state == STATE_V2_IPSEC_R);
+	pexpect(md->svm->next_state == STATE_V2_ESTABLISHED_CHILD_SA);
 	ikev2_ike_sa_established(ike, md->svm, STATE_V2_ESTABLISHED_IKE_SA);
 
 	if (LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
@@ -3716,7 +3716,7 @@ static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *
 	 * transitions for the IKE and CHILD SAs and then have the IKE
 	 * SA invoke the CHILD SA's transition.
 	 */
-	pexpect(md->svm->next_state == STATE_V2_IPSEC_I);
+	pexpect(md->svm->next_state == STATE_V2_ESTABLISHED_CHILD_SA);
 	ikev2_ike_sa_established(pexpect_ike_sa(pst), md->svm, STATE_V2_ESTABLISHED_IKE_SA);
 
 	if (LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {

@@ -53,34 +53,23 @@ static const struct state_v2_microcode v2_rekey_ike = {
 	.timeout_event =  EVENT_RETAIN,
 };
 
-static const struct state_v2_microcode v2_rekey_child_i = {
+static const struct state_v2_microcode v2_rekey_child = {
 	.story = "rekey CHILD SA",
-	.state = STATE_V2_IPSEC_I,
-	.next_state = STATE_V2_IPSEC_I,
+	.state = STATE_V2_ESTABLISHED_CHILD_SA,
+	.next_state = STATE_V2_ESTABLISHED_CHILD_SA,
 	.send = MESSAGE_REQUEST,
 	.processor = send_v2_rekey_child_request,
 	.timeout_event =  EVENT_RETAIN,
 };
 
-static const struct state_v2_microcode v2_rekey_child_r = {
-	.story = "rekey CHILD SA",
-	.state = STATE_V2_IPSEC_R,
-	.next_state = STATE_V2_IPSEC_R,
-	.send = MESSAGE_REQUEST,
-	.processor = send_v2_rekey_child_request,
-	.timeout_event =  EVENT_RETAIN,
-};
-
-static const struct state_v2_microcode *transitions[SA_TYPE_ROOF][SA_ROLE_ROOF] = {
-	[IKE_SA][SA_INITIATOR] = &v2_rekey_ike,
-	[IKE_SA][SA_RESPONDER] = &v2_rekey_ike,
-	[IPSEC_SA][SA_INITIATOR] = &v2_rekey_child_i,
-	[IPSEC_SA][SA_RESPONDER] = &v2_rekey_child_r,
+static const struct state_v2_microcode *transitions[SA_TYPE_ROOF] = {
+	[IKE_SA] = &v2_rekey_ike,
+	[IPSEC_SA] = &v2_rekey_child,
 };
 
 void initiate_v2_rekey(struct ike_sa *ike, struct state *st)
 {
-	const struct state_v2_microcode *transition = transitions[st->st_establishing_sa][st->st_sa_role];
+	const struct state_v2_microcode *transition = transitions[st->st_establishing_sa];
 	if (st->st_state->kind != transition->state) {
 		log_state(RC_LOG, st, "in state %s but need state %s to initiate rekey",
 			  st->st_state->short_name,
