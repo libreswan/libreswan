@@ -2293,7 +2293,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * "mode".
 		 */
 		if (st->st_ipcomp.present) {
-			proto_info[i].proto = IPPROTO_COMP;
+			proto_info[i].proto = ip_protocol_comp.ipproto;
 			proto_info[i].mode =
 				st->st_ipcomp.attrs.mode;
 			proto_info[i].reqid = reqid_ipcomp(c->spd.reqid);

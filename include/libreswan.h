@@ -38,14 +38,6 @@
 
 #define DEBUG_NO_STATIC static
 
-#ifndef IPPROTO_COMP
-#  define IPPROTO_COMP 108
-#endif /* !IPPROTO_COMP */
-
-#ifndef IPPROTO_INT
-#  define IPPROTO_INT 61
-#endif /* !IPPROTO_INT */
-
 #if !defined(ESPINUDP_WITH_NON_IKE)
 #define ESPINUDP_WITH_NON_IKE   1       /* draft-ietf-ipsec-nat-t-ike-00/01 */
 #define ESPINUDP_WITH_NON_ESP   2       /* draft-ietf-ipsec-nat-t-ike-02    */

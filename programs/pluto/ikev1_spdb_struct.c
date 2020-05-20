@@ -2327,7 +2327,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			ah_seen = FALSE,
 			esp_seen = FALSE,
 			ipcomp_seen = FALSE;
-		int inner_proto = 0;
+		const ip_protocol *inner_proto = NULL;
 		bool tunnel_mode = FALSE;
 		uint16_t well_known_cpi = 0;
 
@@ -2585,7 +2585,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				continue;
 			}
 			ah_attrs.spi = ah_spi;
-			inner_proto = IPPROTO_AH;
+			inner_proto = &ip_protocol_ah;
 			if (ah_attrs.mode ==
 			    ENCAPSULATION_MODE_TUNNEL)
 				tunnel_mode = TRUE;
@@ -2650,7 +2650,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				continue; /* we didn't find a nice one */
 
 			esp_attrs.spi = esp_spi;
-			inner_proto = IPPROTO_ESP;
+			inner_proto = &ip_protocol_esp;
 			if (esp_attrs.mode ==
 			    ENCAPSULATION_MODE_TUNNEL)
 				tunnel_mode = TRUE;
@@ -2761,7 +2761,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			if (tn == ipcomp_proposal.isap_notrans)
 				continue; /* we didn't find a nice one */
 			ipcomp_attrs.spi = ipcomp_cpi;
-			inner_proto = IPPROTO_COMP;
+			inner_proto = &ip_protocol_comp;
 			if (ipcomp_attrs.mode ==
 			    ENCAPSULATION_MODE_TUNNEL)
 				tunnel_mode = TRUE;
@@ -2787,7 +2787,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					      &ah_trans_pbs,
 					      &st->st_connection->spd,
 					      tunnel_mode &&
-						inner_proto == IPPROTO_AH);
+						inner_proto == &ip_protocol_ah);
 			}
 
 			/* ESP proposal */
@@ -2801,7 +2801,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					      &esp_trans_pbs,
 					      &st->st_connection->spd,
 					      tunnel_mode &&
-						inner_proto == IPPROTO_ESP);
+						inner_proto == &ip_protocol_esp);
 			}
 
 			/* IPCOMP proposal */
@@ -2815,7 +2815,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					      &ipcomp_trans_pbs,
 					      &st->st_connection->spd,
 					      tunnel_mode &&
-						inner_proto == IPPROTO_COMP);
+						inner_proto == &ip_protocol_comp);
 			}
 
 			close_output_pbs(r_sa_pbs);

@@ -27,7 +27,7 @@
  * Also see ip(7) and socket(IF_INET, SOCK_RAW, protocol).
  */
 
-struct ip_protocol {
+typedef struct ip_protocol {
 	const char *description;
 	const char *prefix;
 	const char *name;
@@ -38,7 +38,7 @@ struct ip_protocol {
 	 * IPPROTO_*
 	 */
 	unsigned ipproto;
-};
+} ip_protocol;
 
 extern const struct ip_protocol ip_protocol_unset;
 extern const struct ip_protocol ip_protocol_icmp;	/* Internet Control Message */
