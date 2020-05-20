@@ -162,16 +162,19 @@ void init_seccomp_main(void)
 	switch (pluto_seccomp_mode) {
 	case SECCOMP_ENABLED:
 		init_seccomp(SCMP_ACT_KILL, true);
+		plog_global("seccomp security enabled in strict mode");
 		break;
 	case SECCOMP_TOLERANT:
 		init_seccomp(SCMP_ACT_TRAP, true);
+		plog_global("seccomp security enabled in tolerant mode");
 		break;
 	case SECCOMP_DISABLED:
+		plog_global("seccomp security disabled");
 		break;
 	default:
 		bad_case(pluto_seccomp_mode);
 	}
-	plog_global("seccomp security enabled");
+
 }
 
 void init_seccomp_cryptohelper(int helpernum)
@@ -179,14 +182,16 @@ void init_seccomp_cryptohelper(int helpernum)
 	switch (pluto_seccomp_mode) {
 	case SECCOMP_ENABLED:
 		init_seccomp(SCMP_ACT_KILL, false);
+		plog_global("seccomp security enabled in strict mode for crypto helper %d", helpernum);
 		break;
 	case SECCOMP_TOLERANT:
 		init_seccomp(SCMP_ACT_TRAP, false);
+		plog_global("seccomp security enabled in tolerant mode for crypto helper %d", helpernum);
 		break;
 	case SECCOMP_DISABLED:
+		plog_global("seccomp security disabled for crypto helper %d", helpernum);
 		break;
 	default:
 		bad_case(pluto_seccomp_mode);
 	}
-	plog_global("seccomp security enabled in crypto helper %d", helpernum);
 }
