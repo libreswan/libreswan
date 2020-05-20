@@ -28,7 +28,7 @@ west #
 002 "west-east": terminating SAs using this connection
 002 "west-east" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "west-east" #2: ESP traffic information: in=0B out=0B
-002 "west-east" #1: deleting state (STATE_PARENT_I3) and sending notification
+002 "west-east" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 west #
  ../bin/check-for-core.sh
 west #

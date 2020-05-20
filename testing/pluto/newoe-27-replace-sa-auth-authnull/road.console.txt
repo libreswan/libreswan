@@ -124,7 +124,7 @@ road #
 002 "authenticated": terminating SAs using this connection
 002 "authenticated" #2: deleting state (STATE_V2_IPSEC_I) and NOT sending notification
 005 "authenticated" #2: ESP traffic information: in=168B out=168B
-002 "authenticated" #1: deleting state (STATE_PARENT_I3) and NOT sending notification
+002 "authenticated" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and NOT sending notification
 road #
  sleep 5
 road #

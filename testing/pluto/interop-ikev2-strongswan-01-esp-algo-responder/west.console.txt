@@ -37,7 +37,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "esp=null-md5": terminating SAs using this connection
 002 "esp=null-md5" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "esp=null-md5" #2: ESP traffic information: in=84B out=84B
-002 "esp=null-md5" #1: deleting state (STATE_PARENT_I3) and sending notification
+002 "esp=null-md5" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "esp=null-md5": terminating SAs using this connection
 west #
  ../bin/libreswan-up-down.sh esp=null-sha1 -I 192.0.1.254 192.0.2.254
@@ -53,7 +53,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "esp=null-sha1": terminating SAs using this connection
 002 "esp=null-sha1" #4: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "esp=null-sha1" #4: ESP traffic information: in=84B out=84B
-002 "esp=null-sha1" #3: deleting state (STATE_PARENT_I3) and sending notification
+002 "esp=null-sha1" #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "esp=null-sha1": terminating SAs using this connection
 west #
  ../bin/libreswan-up-down.sh esp=null_auth_aes_gmac-null -I 192.0.1.254 192.0.2.254
@@ -69,7 +69,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "esp=null_auth_aes_gmac-null": terminating SAs using this connection
 002 "esp=null_auth_aes_gmac-null" #6: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "esp=null_auth_aes_gmac-null" #6: ESP traffic information: in=84B out=84B
-002 "esp=null_auth_aes_gmac-null" #5: deleting state (STATE_PARENT_I3) and sending notification
+002 "esp=null_auth_aes_gmac-null" #5: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "esp=null_auth_aes_gmac-null": terminating SAs using this connection
 west #
  modinfo chacha20poly1305 > /dev/null && ../bin/libreswan-up-down.sh esp=chacha20_poly1305-null -I 192.0.1.254 192.0.2.254 || true
@@ -85,7 +85,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "esp=chacha20_poly1305-null": terminating SAs using this connection
 002 "esp=chacha20_poly1305-null" #8: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "esp=chacha20_poly1305-null" #8: ESP traffic information: in=84B out=84B
-002 "esp=chacha20_poly1305-null" #7: deleting state (STATE_PARENT_I3) and sending notification
+002 "esp=chacha20_poly1305-null" #7: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "esp=chacha20_poly1305-null": terminating SAs using this connection
 west #
  echo done

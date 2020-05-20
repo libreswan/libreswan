@@ -34,7 +34,7 @@ up
 002 "encrypt-ikev2-aes-sha1": terminating SAs using this connection
 002 "encrypt-ikev2-aes-sha1" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "encrypt-ikev2-aes-sha1" #2: ESP traffic information: in=84B out=84B
-002 "encrypt-ikev2-aes-sha1" #1: deleting state (STATE_PARENT_I3) and sending notification
+002 "encrypt-ikev2-aes-sha1" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 +
 west #
  ../../pluto/bin/ipsec-look.sh

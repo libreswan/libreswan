@@ -124,7 +124,7 @@ ipsec auto --up road-eastnet-nonat
 1v2 "road-eastnet-nonat" #1: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
 002 "road-eastnet-nonat" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 002 "road-eastnet-nonat" #2: negotiated connection [192.0.2.219-192.0.2.219:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "road-eastnet-nonat" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
+004 "road-eastnet-nonat" #2: STATE_V2_ESTABLISHED_IKE_SA: established IKE SA tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 road #
 ping -n -c 4 -I 192.0.2.219  192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.2.219 : 56(84) bytes of data.
