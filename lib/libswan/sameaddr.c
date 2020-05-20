@@ -19,7 +19,7 @@
 #include "ip_said.h"
 #include "ip_subnet.h"
 #include "ip_info.h"
-#include "libreswan/passert.h"
+#include "passert.h"
 
 static bool samenbits(const ip_address *a, const ip_address *b, int n);
 

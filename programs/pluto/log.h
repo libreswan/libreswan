@@ -34,7 +34,7 @@ struct pending;
 struct show;
 
 /* moved common code to library file */
-#include "libreswan/passert.h"
+#include "passert.h"
 
 extern bool
 	log_with_timestamp,     /* prefix timestamp */

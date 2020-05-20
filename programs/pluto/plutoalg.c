@@ -22,7 +22,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <libreswan/pfkeyv2.h>
-#include <libreswan/passert.h>
+#include "passert.h"
 
 #include "sysdep.h"
 #include "constants.h"

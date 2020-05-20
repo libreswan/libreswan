@@ -27,7 +27,7 @@
 #include "jambuf.h"
 #include "ip_range.h"
 #include "ip_info.h"
-#include "libreswan/passert.h"
+#include "passert.h"
 #include "lswlog.h"		/* for pexpect() */
 
 const ip_range unset_range; /* all zeros */

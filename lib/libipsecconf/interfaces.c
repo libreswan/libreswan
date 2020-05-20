@@ -31,7 +31,7 @@
 #include "ip_address.h"
 #include "socketwrapper.h"
 //#include "libreswan/ipsec_tunnel.h"
-#include "libreswan/passert.h"
+#include "passert.h"
 #include "ipsecconf/interfaces.h"
 #include "ipsecconf/exec.h"
 #include "ipsecconf/starterlog.h"

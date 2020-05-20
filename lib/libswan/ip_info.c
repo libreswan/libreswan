@@ -19,7 +19,7 @@
 
 #include "ietf_constants.h"
 #include "ip_info.h"
-#include "libreswan/passert.h"
+#include "passert.h"
 #include "lswlog.h"		/* for bad_case() */
 
 /*

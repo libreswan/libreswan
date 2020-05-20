@@ -14,7 +14,7 @@
  */
 
 #include "reqid.h"
-#include "libreswan/passert.h"
+#include "passert.h"
 
 /*
  * generate a base reqid for automatic keying

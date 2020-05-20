@@ -24,7 +24,7 @@
 #include "certs.h"
 
 #include "lswalloc.h"
-#include "libreswan/passert.h"
+#include "passert.h"
 
 void release_certs(struct certs **head)
 {

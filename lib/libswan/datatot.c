@@ -15,7 +15,7 @@
 
 #include <stddef.h>
 
-#include "libreswan/passert.h"
+#include "passert.h"
 #include "libreswan.h"
 
 static void convert(const char *src, size_t nreal, int format, char *out);

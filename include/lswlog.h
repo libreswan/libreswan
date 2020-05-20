@@ -27,7 +27,7 @@
 #include "lset.h"
 #include "lswcdefs.h"
 #include "jambuf.h"
-#include "libreswan/passert.h"
+#include "passert.h"
 #include "constants.h"		/* for DBG_... */
 #include "where.h"		/* used by macros */
 #include "fd.h"			/* for null_fd */

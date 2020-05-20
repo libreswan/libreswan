@@ -19,7 +19,7 @@
 
 #include "jambuf.h"
 #include "ip_subnet.h"
-#include "libreswan/passert.h"
+#include "passert.h"
 #include "lswlog.h"	/* for pexpect() */
 #include "ip_info.h"
 

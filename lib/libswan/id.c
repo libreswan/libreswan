@@ -34,7 +34,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "libreswan/passert.h"
+#include "passert.h"
 #include "lswalloc.h"
 #include "lswlog.h"
 #include "sysdep.h"

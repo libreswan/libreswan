@@ -30,7 +30,7 @@
 #include <netinet/in.h>
 
 #include <ietf_constants.h>
-#include <libreswan/passert.h>
+#include "passert.h"
 
 #include "constants.h"
 #include "enum_names.h"

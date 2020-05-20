@@ -28,7 +28,7 @@
 #ifdef NETKEY_SUPPORT
 #include "linux/xfrm.h" /* local (if configured) or system copy */
 #endif
-#include <libreswan/passert.h>
+#include "passert.h"
 
 #include "constants.h"
 #include "enum_names.h"

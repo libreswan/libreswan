@@ -19,7 +19,7 @@
 
 #include "ip_info.h"
 #include "ip_address.h"
-#include "libreswan/passert.h"
+#include "passert.h"
 #include "lswlog.h"		/* for bad_case() */
 
 /*
