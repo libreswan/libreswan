@@ -15,7 +15,6 @@
 
 #ifndef IPCHECK_H
 
-#include <stdio.h>
 #include <stdbool.h>
 #include "ip_info.h"
 #include "where.h"
@@ -26,7 +25,6 @@ extern void ip_range_check(void);
 extern void ip_subnet_check(void);
 extern void ip_said_check(void);
 extern void ip_info_check(void);
-extern void ip_protoport_check(void);
 
 /*
  * See: https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html

@@ -108,6 +108,8 @@ extern size_t splitkeytoid(const unsigned char *e, size_t elen,
 		    const unsigned char *m,
 		    size_t mlen, char *dst, size_t dstlen);
 #define KEYID_BUF       10      /* up to 9 text digits plus NUL */
+extern err_t ttoprotoport(char *src, size_t src_len, u_int8_t *proto, u_int16_t *port,
+			  bool *has_port_wildcard);
 
 /* odds and ends */
 extern const char *ipsec_version_code(void);

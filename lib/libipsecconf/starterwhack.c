@@ -59,13 +59,13 @@ static void update_ports(struct whack_message * m)
 {
 	int port;
 
-	if (m->left.protoport.port != 0) {
-		port = htons(m->left.protoport.port);
+	if (m->left.port != 0) {
+		port = htons(m->left.port);
 		setportof(port, &m->left.host_addr);
 		setportof(port, &m->left.client.addr);
 	}
-	if (m->right.protoport.port != 0) {
-		port = htons(m->right.protoport.port);
+	if (m->right.port != 0) {
+		port = htons(m->right.port);
 		setportof(port, &m->right.host_addr);
 		setportof(port, &m->right.client.addr);
 	}
@@ -385,7 +385,7 @@ static void set_whack_end(char *lr,
 
 	w->host_port = IKE_UDP_PORT; /* XXX starter should support (nat)-ike-port */
 	w->has_client_wildcard = l->has_client_wildcard;
-	w->protoport = l->protoport;
+	w->has_port_wildcard = l->has_port_wildcard;
 
 	if (l->certx != NULL) {
 		w->pubkey = l->certx;
@@ -406,6 +406,8 @@ static void set_whack_end(char *lr,
 
 	w->updown = l->updown;
 	w->virt = NULL;
+	w->protocol = l->protocol;
+	w->port = l->port;
 	w->virt = l->virt;
 	w->key_from_DNS_on_demand = l->key_from_DNS_on_demand;
 
