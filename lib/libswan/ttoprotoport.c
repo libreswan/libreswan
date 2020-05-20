@@ -21,6 +21,58 @@
 
 #include "libreswan.h"
 
+err_t ttoipproto(const char *proto_name, unsigned *proto)
+{
+	/* extract protocol by trying to resolve it by name */
+	const struct protoent *protocol = getprotobyname(proto_name);
+	if (protocol != NULL) {
+		*proto = protocol->p_proto;
+		return NULL;
+	}
+
+	/* failed, now try it by number */
+	char *end;
+	long l = strtol(proto_name, &end, 0);
+	if (*proto_name && *end) {
+		*proto = 0;
+		return "<protocol> is neither a number nor a valid name";
+	}
+
+	if (l < 0 || l > 0xff) {
+		*proto = 0;
+		return "<protocol> must be between 0 and 255";
+	}
+
+	*proto = (uint8_t)l;
+	return NULL;
+}
+
+err_t ttoport(const char *service_name, unsigned *port)
+{
+	/* extract port by trying to resolve it by name */
+	const struct servent *service = getservbyname(service_name, NULL);
+	if (service != NULL) {
+		*port = ntohs(service->s_port);
+		return NULL;
+	}
+
+	/* failed, now try it by number */
+	char *end;
+	long l = strtol(service_name, &end, 0);
+	if (*service_name && *end) {
+		*port = 0;
+		return "<protocol> is neither a number nor a valid name";
+	}
+
+	if (l < 0 || l > 0xffff) {
+		*port = 0;
+		return "<port> must be between 0 and 65535";
+	}
+
+	*port = l;
+	return NULL;
+}
+
 /*
  * ttoprotoport - converts from protocol/port string to protocol and port
  */

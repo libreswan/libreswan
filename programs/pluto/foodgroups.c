@@ -100,7 +100,7 @@ static int subnetcmp(const ip_subnet *a, const ip_subnet *b)
 	return r;
 }
 
-static void read_foodgroup(struct fg_groups *g)
+static void read_foodgroup(struct fg_groups *g, struct fd *whackfd)
 {
 	const char *fgn = g->connection->name;
 	const ip_subnet *lsn = &g->connection->spd.this.client;
@@ -122,7 +122,7 @@ static void read_foodgroup(struct fg_groups *g)
 				    getcwd(cwd, sizeof(cwd)));
 		    });
 	} else {
-		libreswan_log("loading group \"%s\"", fg_path);
+		log_global(RC_LOG, whackfd, "loading group \"%s\"", fg_path);
 		for (;; ) {
 			switch (flp->bdry) {
 			case B_none:
@@ -147,78 +147,100 @@ static void read_foodgroup(struct fg_groups *g)
 				}
 
 				if (ugh != NULL) {
-					loglog(RC_LOG_SERIOUS,
-					       "\"%s\" line %d ignored: %s \"%s\"",
-					       flp->filename, flp->lino, ugh,
-					       flp->tok);
-						flushline(NULL);
+					log_global(RC_LOG_SERIOUS, whackfd,
+						   "\"%s\" line %d ignored: %s \"%s\"",
+						   flp->filename, flp->lino, ugh,
+						   flp->tok);
+					flushline(NULL);
 				} else if ((afi->af != AF_INET) && (afi->af != AF_INET6)) {
-					loglog(RC_LOG_SERIOUS,
-					       "\"%s\" line %d: unsupported Address Family \"%s\"",
-					       flp->filename, flp->lino,
-					       flp->tok);
-						(void)shift();
-						flushline(NULL);
-				} else {
-					char spport_str[256];
-					char dpport_str[256];
-					zero(spport_str);
-					zero(dpport_str);
-					int errl;
-					uint8_t proto = 0;
-					uint16_t sport = 0, dport = 0;
-					bool has_port_wildcard;
-
-					/* check for protocol and ports */
-					/* syntax then must be: proto sport dport */
+					log_global(RC_LOG_SERIOUS, whackfd,
+						   "\"%s\" line %d: unsupported Address Family \"%s\"",
+						   flp->filename, flp->lino,
+						   flp->tok);
 					(void)shift();
-					errl = flp->lino;
+					flushline(NULL);
+				} else {
+					unsigned proto = 0;
+					unsigned sport = 0;
+					unsigned dport = 0;
+
+					/* check for: protocol sport dport */
+					(void)shift();
 					if (flp->bdry == B_none) {
-						jam_str(spport_str, sizeof(spport_str), flp->tok);
-						add_str(spport_str, sizeof(spport_str), spport_str, "/");
-						jam_str(dpport_str, sizeof(dpport_str), flp->tok);
-						add_str(dpport_str, sizeof(dpport_str), dpport_str, "/");
+						int line = flp->lino;
+						err_t err;
+						/* protocol */
 						(void)shift();
-						if (flp->bdry == B_none) {
-							add_str(spport_str, sizeof(spport_str), spport_str, flp->tok);
-							ugh = ttoprotoport(spport_str, 0, &proto, &sport, &has_port_wildcard);
-							if (ugh == NULL && proto != 0 && proto != 50 && proto != 51) {
-								(void)shift();
-								if (flp->bdry == B_none) {
-									add_str(dpport_str, sizeof(dpport_str), dpport_str, flp->tok);
-									ugh = ttoprotoport(dpport_str, 0, &proto, &dport, &has_port_wildcard);
-									if (ugh == NULL) {
-										if (dport == 0 && (strlen(flp->tok) != 1 || flp->tok[0] != '0')) {
-											loglog(RC_LOG_SERIOUS,
-												"\"%s\" line %d: unknown destination port '%s' - port name did not resolve to a valid number",
-												flp->filename, errl, flp->tok);
-											break;
-										}
-									} else {
-										loglog(RC_LOG_SERIOUS,
-											"\"%s\" line %d: unknown destination port %s - port name did not resolve to a valid number",
-											flp->filename, errl, dpport_str);
-										break;
-									}
-								} else if (flp->bdry != B_file){
-									loglog(RC_LOG_SERIOUS,
-										"\"%s\" line %d: wrong number of arguments: either only specify CIDR, or specify CIDR proto source_port dest_port",
-										flp->filename, errl);
-									break;
-								}
-							} else {
-								loglog(RC_LOG_SERIOUS,
-									"\"%s\" line %d: unknown protocol or port - names did not resolve to a number or protocol mistakenlly defined to be 0 or 50(esp) or 51(ah)",
-									flp->filename, errl);
-								break;
-							}
-						} else {
-							loglog(RC_LOG_SERIOUS,
-								"\"%s\" line %d: entry must either have only a destination CIDR, or 'CIDR proto source_port dest_port' specified",
-								flp->filename, errl);
+						if (flp->bdry != B_none) {
+							log_global(RC_LOG_SERIOUS, whackfd,
+								   "\"%s\" line %d: entry must either have only a destination CIDR, or 'CIDR proto source_port dest_port' specified",
+								   flp->filename, line);
 							break;
 						}
+						err = ttoipproto(flp->tok, &proto);
+						if (err != NULL) {
+							log_global(RC_LOG_SERIOUS, whackfd,
+								   "\"%s\" line %d: protocol '%s' invalid: %s",
+								   flp->filename, line, flp->tok, err);
+							break;
+						}
+						if (proto == 0 || proto == IPPROTO_ESP || proto == IPPROTO_AH) {
+							log_global(RC_LOG_SERIOUS, whackfd,
+								   "\"%s\" line %d: invalid protocol '%s' - mistakenlly defined to be 0 or 50(esp) or 51(ah)",
+								   flp->filename, line, flp->tok);
+							break;
+						}
+						/* source port */
+						(void)shift();
+						if (flp->bdry != B_none) {
+							log_global(RC_LOG_SERIOUS, whackfd,
+								   "\"%s\" line %d: wrong number of arguments: either only specify CIDR, or specify CIDR proto source_port dest_port",
+								   flp->filename, line);
+							break;
+						}
+						err = ttoport(flp->tok, &sport);
+						if (ugh != NULL) {
+							log_global(RC_LOG_SERIOUS, whackfd,
+								   "\"%s\" line %d: source port '%s' invalid: %s",
+								   flp->filename, line, flp->tok, err);
+							break;
+						}
+						/* dest port */
+						(void)shift();
+						if (flp->bdry != B_none) {
+							log_global(RC_LOG_SERIOUS, whackfd,
+								   "\"%s\" line %d: wrong number of arguments: either only specify CIDR, or specify CIDR proto source_port dest_port",
+								   flp->filename, line);
+							break;
+						}
+						err = ttoport(flp->tok, &dport);
+						if (ugh != NULL) {
+							log_global(RC_LOG_SERIOUS, whackfd,
+								   "\"%s\" line %d: destination port '%s' invalid: %s",
+								   flp->filename, line, flp->tok, err);
+							break;
+						}
+						/*
+						 * XXX: Check at end
+						 * of line/file?
+						 *
+						 * XXX: there was a
+						 * test for flp->bdry
+						 * != B_file but that
+						 * had the effect of
+						 * allowing '0' when
+						 * the file was
+						 * truncated?
+						 *
+						 * Suspect the intent
+						 * was to reject
+						 * truncated lines,
+						 * but for that to
+						 * work shift() would
+						 * be needed.
+						 */
 					}
+					/* will skip any trailing tokens? */
 					flushline(NULL);
 
 					/* Find where new entry ought to go in new_targets. */
@@ -249,14 +271,14 @@ static void read_foodgroup(struct fg_groups *g)
 					if (r == 0) {
 						subnet_buf source;
 						subnet_buf dest;
-						loglog(RC_LOG_SERIOUS,
-						       "\"%s\" line %d: subnet \"%s\", proto %d, sport %d dport %d, source %s, already \"%s\"",
-						       flp->filename,
-						       flp->lino,
-						       str_subnet(&sn, &dest),
-						       proto, sport, dport,
-						       str_subnet(lsn, &source),
-						       (*pp)->group->connection->name);
+						log_global(RC_LOG_SERIOUS, whackfd,
+							   "\"%s\" line %d: subnet \"%s\", proto %d, sport %d dport %d, source %s, already \"%s\"",
+							   flp->filename,
+							   flp->lino,
+							   str_subnet(&sn, &dest),
+							   proto, sport, dport,
+							   str_subnet(lsn, &source),
+							   (*pp)->group->connection->name);
 					} else {
 						struct fg_targets *f =
 							alloc_thing(
@@ -311,7 +333,7 @@ void load_groups(struct fd *whackfd)
 
 		for (g = groups; g != NULL; g = g->next)
 			if (oriented(*g->connection))
-				read_foodgroup(g);
+				read_foodgroup(g, whackfd);
 	}
 
 	/* dump new_targets */
