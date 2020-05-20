@@ -891,6 +891,12 @@ static bool check_connection_end(const struct whack_end *this,
 		}
 	}
 
+	if (this->protocol == 0 && this->port != 0) {
+		loglog(RC_ORIENT, "connection %s cannot specify non-zero port %d for prototcol 0",
+			wm->name, this->port);
+		return FALSE;
+	}
+
 	return TRUE; /* happy */
 }
 
