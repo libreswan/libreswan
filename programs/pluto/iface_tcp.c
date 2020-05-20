@@ -518,7 +518,7 @@ static int bind_tcp_socket(const struct iface_dev *ifd, int port)
 	 * See draft-ietf-ipngwg-rfc2292bis-01.txt 11.1
 	 */
 #ifdef IPV6_USE_MIN_MTU /* YUCK: not always defined */
-	if (addrtypeof(&ifp->addr) == AF_INET6 &&
+	if (addrtypeof(&ifd->id_address) == AF_INET6 &&
 	    setsockopt(fd, SOL_SOCKET, IPV6_USE_MIN_MTU,
 		       (const void *)&on, sizeof(on)) < 0) {
 		LOG_ERRNO(errno, "setsockopt IPV6_USE_MIN_MTU in process_raw_ifaces()");
