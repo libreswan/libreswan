@@ -27,7 +27,7 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 8.8.8.8
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: up-client output: updating resolvconf
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: negotiated connection [192.0.2.1-192.0.2.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
-004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
+004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
  ping -n -c 2 -I 192.0.2.1 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.0.2.1 : 56(84) bytes of data.
@@ -46,7 +46,7 @@ road #
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: deleting state (STATE_V2_IPSEC_I) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and NOT sending notification
 005 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: ESP traffic information: in=168B out=168B
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: down-client output: restoring resolvconf
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and NOT sending notification
@@ -65,11 +65,11 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: received INTERNAL_IP4_DNS 1.2.3.4
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: up-client output: updating resolvconf
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: negotiated connection [192.0.2.1-192.0.2.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
-004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
+004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: deleting state (STATE_V2_IPSEC_I) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and NOT sending notification
 005 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: down-client output: restoring resolvconf
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and NOT sending notification
@@ -88,11 +88,11 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: received INTERNAL_IP4_DNS 1.2.3.4
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: up-client output: updating resolvconf
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: negotiated connection [192.0.2.1-192.0.2.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
-004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
+004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: deleting state (STATE_V2_IPSEC_I) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and NOT sending notification
 005 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: down-client output: restoring resolvconf
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #5: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and NOT sending notification
@@ -111,7 +111,7 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: received INTERNAL_IP4_DNS 1.2.3.4
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: up-client output: updating resolvconf
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: negotiated connection [192.0.2.1-192.0.2.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
-004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
+004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
  ping -n -c 4 -I 192.0.2.1 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.0.2.1 : 56(84) bytes of data.
@@ -131,7 +131,7 @@ done
 road #
  ipsec status | grep STATE_
 000 #7: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23:4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
-000 #8: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23:4500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#7; idle;
+000 #8: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23:4500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#7; idle;
 road #
  ip xfrm policy
 src 192.0.2.1/32 dst 192.1.2.23/32 

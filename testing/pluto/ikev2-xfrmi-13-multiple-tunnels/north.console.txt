@@ -33,7 +33,7 @@ north #
 002 "north-east-21" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "north-east-21" #1: authenticated using authby=secret
 002 "north-east-21" #2: negotiated connection [192.0.31.0-192.0.31.255:0-65535 0] -> [192.0.21.0-192.0.21.255:0-65535 0]
-004 "north-east-21" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "north-east-21" #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 north #
  ipsec auto --up north-east-22
 1v2 "north-east-22" #3: initiating IKEv2 IKE SA
@@ -42,7 +42,7 @@ north #
 002 "north-east-22" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "north-east-22" #3: authenticated using authby=secret
 002 "north-east-22" #4: negotiated connection [192.0.32.0-192.0.32.255:0-65535 0] -> [192.0.22.0-192.0.22.255:0-65535 0]
-004 "north-east-22" #4: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "north-east-22" #4: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 north #
  ipsec auto --up north-east-23
 1v2 "north-east-23" #5: initiating IKEv2 IKE SA
@@ -51,7 +51,7 @@ north #
 002 "north-east-23" #6: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "north-east-23" #5: authenticated using authby=secret
 002 "north-east-23" #6: negotiated connection [192.0.33.0-192.0.33.255:0-65535 0] -> [192.0.23.0-192.0.23.255:0-65535 0]
-004 "north-east-23" #6: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "north-east-23" #6: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 north #
  ipsec auto --up north-east-24
 1v2 "north-east-24" #7: initiating IKEv2 IKE SA
@@ -60,7 +60,7 @@ north #
 002 "north-east-24" #8: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "north-east-24" #7: authenticated using authby=secret
 002 "north-east-24" #8: negotiated connection [192.0.34.0-192.0.34.255:0-65535 0] -> [192.0.24.0-192.0.24.255:0-65535 0]
-004 "north-east-24" #8: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "north-east-24" #8: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 north #
  ip link show type xfrm
 X: ipsec21@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN

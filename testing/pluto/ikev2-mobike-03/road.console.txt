@@ -38,7 +38,7 @@ road #
 003 "road-eastnet"[1] 192.1.2.23 #1: authenticated using authby=secret
 002 "road-eastnet"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.3.10
 002 "road-eastnet"[1] 192.1.2.23 #2: negotiated connection [192.0.3.10-192.0.3.10:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "road-eastnet"[1] 192.1.2.23 #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "road-eastnet"[1] 192.1.2.23 #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 road #
  ping -W 1 -q -n -c 2 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.

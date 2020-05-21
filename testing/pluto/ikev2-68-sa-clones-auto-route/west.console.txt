@@ -76,14 +76,14 @@ west #
 002 "westnet-eastnet-0" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-0" #1: authenticated using authby=secret
 002 "westnet-eastnet-0" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] --(0)--> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-0" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-0" #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 1v2 "westnet-eastnet-1" #4: STATE_V2_NEW_CHILD_I1: sent IPsec Child req wait response
 003 "westnet-eastnet-2" #3: message id deadlock? wait sending, add to send next list using parent #1 unacknowledged 1 next message id=3 ike exchange window 1
 1v2 "westnet-eastnet-2" #3: STATE_V2_NEW_CHILD_I1: sent IPsec Child req wait response
 002 "westnet-eastnet-1" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] --(1)--> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-1" #4: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-1" #4: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
 002 "westnet-eastnet-2" #3: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] --(2)--> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-2" #3: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-2" #3: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
 west #
  taskset 0x1 ping -n -c 2 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -199,11 +199,11 @@ west #
 000 "westnet-eastnet-2":   aliases: westnet-eastnet
 000 "westnet-eastnet-2":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
 000 #1: "westnet-eastnet-0":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
-000 #2: "westnet-eastnet-0":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #2: "westnet-eastnet-0":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #2: "westnet-eastnet-0" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 ref=0 refhim=0 Traffic: ESPin=0B ESPout=0B! ESPmax=0B 
-000 #4: "westnet-eastnet-1":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #4: "westnet-eastnet-1":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #4: "westnet-eastnet-1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 ref=0 refhim=0 Traffic: ESPin=168B ESPout=168B! ESPmax=0B 
-000 #3: "westnet-eastnet-2":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #3: "westnet-eastnet-2":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #3: "westnet-eastnet-2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 ref=0 refhim=0 Traffic: ESPin=168B ESPout=168B! ESPmax=0B 
 west #
  ../bin/check-for-core.sh

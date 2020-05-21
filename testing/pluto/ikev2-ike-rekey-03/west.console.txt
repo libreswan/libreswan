@@ -46,21 +46,21 @@ west #
 002 "westnet-eastnet-ikev2a" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2a" #1: authenticated using authby=secret
 002 "westnet-eastnet-ikev2a" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2a" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2a" #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  # bring up #3; rekey at 23, 46, 69, ...
 west #
  ipsec auto --up westnet-eastnet-ikev2b
 1v2 "westnet-eastnet-ikev2b" #3: STATE_V2_NEW_CHILD_I1: sent IPsec Child req wait response
 002 "westnet-eastnet-ikev2b" #3: negotiated connection [192.0.100.0-192.0.100.255:0-65535 0] -> [192.0.200.0-192.0.200.255:0-65535 0]
-004 "westnet-eastnet-ikev2b" #3: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2b" #3: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  # bring up #4; rekey at 23, 46, 69, ...
 west #
  ipsec auto --up westnet-eastnet-ikev2c
 1v2 "westnet-eastnet-ikev2c" #4: STATE_V2_NEW_CHILD_I1: sent IPsec Child req wait response
 002 "westnet-eastnet-ikev2c" #4: negotiated connection [192.0.101.0-192.0.101.255:0-65535 0] -> [192.0.201.0-192.0.201.255:0-65535 0]
-004 "westnet-eastnet-ikev2c" #4: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2c" #4: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  # confirm #2-#4 up
 west #
@@ -80,9 +80,9 @@ west #
 west #
  ipsec status |grep STATE_
 000 #1: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
-000 #2: "westnet-eastnet-ikev2a":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #3: "westnet-eastnet-ikev2b":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #4: "westnet-eastnet-ikev2c":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #2: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #3: "westnet-eastnet-ikev2b":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #4: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 west #
  # Wait intil 30(23+10) - between 23 and 46
 west #
@@ -108,9 +108,9 @@ west #
 west #
  ipsec status |grep STATE_|sort
 000 #1: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
-000 #5: "westnet-eastnet-ikev2a":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #6: "westnet-eastnet-ikev2b":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #7: "westnet-eastnet-ikev2c":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #5: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #6: "westnet-eastnet-ikev2b":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #7: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 west #
  # Wait intil 60(30+30) - between 46 and 69, after 53
 west #
@@ -142,10 +142,10 @@ west #
 006 #10: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 west #
  ipsec status |grep STATE_ | sort
-000 #10: "westnet-eastnet-ikev2c":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#11; idle;
+000 #10: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#11; idle;
 000 #11: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
-000 #8: "westnet-eastnet-ikev2a":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#11; idle;
-000 #9: "westnet-eastnet-ikev2b":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#11; idle;
+000 #8: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#11; idle;
+000 #9: "westnet-eastnet-ikev2b":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#11; idle;
 west #
  # there should be only one IKE_INIT exchange created on west
 west #

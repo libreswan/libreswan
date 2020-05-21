@@ -22,7 +22,7 @@ road #
 002 "road-eastnet" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "road-eastnet" #1: authenticated using RSA with SHA2_512
 002 "road-eastnet" #2: negotiated connection [192.1.3.209-192.1.3.209:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "road-eastnet" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "road-eastnet" #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 road #
  ping -w 4 -n -c4 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.

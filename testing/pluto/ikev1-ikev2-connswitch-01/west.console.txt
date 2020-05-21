@@ -39,7 +39,7 @@ west #
 002 "westnet-eastnet2" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet2" #3: authenticated using RSA with SHA2_512
 002 "westnet-eastnet2" #4: negotiated connection [10.0.1.0-10.0.1.255:0-65535 0] -> [10.0.2.0-10.0.2.255:0-65535 0]
-004 "westnet-eastnet2" #4: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet2" #4: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  echo done
 done
