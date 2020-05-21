@@ -32,10 +32,10 @@ west #
 002 "ah=md5" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ah=md5" #1: authenticated using authby=secret
 002 "ah=md5" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "ah=md5" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {AH=>0xAHAH <0xAHAH xfrm=HMAC_MD5_96 NATOA=none NATD=none DPD=passive}
+004 "ah=md5" #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {AH=>0xAHAH <0xAHAH xfrm=HMAC_MD5_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ah=md5": terminating SAs using this connection
-002 "ah=md5" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
+002 "ah=md5" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ah=md5" #2: AH traffic information: in=84B out=84B
 002 "ah=md5" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ah=md5": terminating SAs using this connection
@@ -48,10 +48,10 @@ west #
 002 "ah=sha1" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ah=sha1" #3: authenticated using authby=secret
 002 "ah=sha1" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "ah=sha1" #4: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+004 "ah=sha1" #4: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ah=sha1": terminating SAs using this connection
-002 "ah=sha1" #4: deleting state (STATE_V2_IPSEC_I) and sending notification
+002 "ah=sha1" #4: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ah=sha1" #4: AH traffic information: in=84B out=84B
 002 "ah=sha1" #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ah=sha1": terminating SAs using this connection
@@ -68,7 +68,7 @@ west #
 002 "ah=sha1" #6: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ah=sha1" #5: authenticated using authby=secret
 002 "ah=sha1" #6: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "ah=sha1" #6: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+004 "ah=sha1" #6: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ping -c2 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -83,7 +83,7 @@ west #
  ipsec auto --up ah=sha1
 1v2 "ah=sha1" #7: STATE_V2_NEW_CHILD_I1: sent IPsec Child req wait response
 002 "ah=sha1" #7: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "ah=sha1" #7: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+004 "ah=sha1" #7: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  sleep 1
 west #

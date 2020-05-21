@@ -29,7 +29,7 @@ west #
 002 "ikev2-westnet-eastnet-x509-cr" #2: X509: connection allows unmatched IKE ID and certificate SAN
 003 "ikev2-westnet-eastnet-x509-cr" #1: authenticated using RSA with SHA2_512
 002 "ikev2-westnet-eastnet-x509-cr" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "ikev2-westnet-eastnet-x509-cr" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "ikev2-westnet-eastnet-x509-cr" #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  echo "done"
 done

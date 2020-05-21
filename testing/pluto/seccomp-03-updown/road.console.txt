@@ -36,7 +36,7 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: up-client output: ok removed 0 rrsets, 0 messages and 0 key entries
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: up-client output: ok
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: negotiated connection [100.64.0.1-100.64.0.1:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0]
-004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
+004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
  ipsec whack --trafficstatus
 006 #2: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east', lease=100.64.0.1/32
@@ -52,7 +52,7 @@ test.tld. IN forward 8.8.8.8 1.2.3.4
 road #
  ipsec auto --down westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: deleting state (STATE_V2_IPSEC_I) and sending notification
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: down-client output: flushing local nameserver of test.tld
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: down-client output: ok

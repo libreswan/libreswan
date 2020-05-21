@@ -24,7 +24,7 @@ north #
 002 "north-east" #2: received INTERNAL_IP4_DNS 5.6.7.8
 002 "north-east" #2: up-client output: updating resolvconf
 002 "north-east" #2: negotiated connection [192.0.2.102-192.0.2.102:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0]
-004 "north-east" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "north-east" #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 north #
  sleep 3
 north #

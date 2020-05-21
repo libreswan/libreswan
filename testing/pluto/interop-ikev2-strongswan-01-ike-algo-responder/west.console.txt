@@ -36,10 +36,10 @@ west #
 002 "ike=chacha20poly1305-sha2-dh19" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ike=chacha20poly1305-sha2-dh19" #1: authenticated using authby=secret
 002 "ike=chacha20poly1305-sha2-dh19" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "ike=chacha20poly1305-sha2-dh19" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "ike=chacha20poly1305-sha2-dh19" #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike=chacha20poly1305-sha2-dh19": terminating SAs using this connection
-002 "ike=chacha20poly1305-sha2-dh19" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
+002 "ike=chacha20poly1305-sha2-dh19" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ike=chacha20poly1305-sha2-dh19" #2: ESP traffic information: in=84B out=84B
 002 "ike=chacha20poly1305-sha2-dh19" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike=chacha20poly1305-sha2-dh19": terminating SAs using this connection
@@ -52,10 +52,10 @@ west #
 002 "ike=aes128-sha2-dh19" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ike=aes128-sha2-dh19" #3: authenticated using authby=secret
 002 "ike=aes128-sha2-dh19" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "ike=aes128-sha2-dh19" #4: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "ike=aes128-sha2-dh19" #4: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike=aes128-sha2-dh19": terminating SAs using this connection
-002 "ike=aes128-sha2-dh19" #4: deleting state (STATE_V2_IPSEC_I) and sending notification
+002 "ike=aes128-sha2-dh19" #4: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ike=aes128-sha2-dh19" #4: ESP traffic information: in=84B out=84B
 002 "ike=aes128-sha2-dh19" #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike=aes128-sha2-dh19": terminating SAs using this connection
@@ -68,10 +68,10 @@ west #
 002 "ike=aes128-sha2-dh20" #6: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ike=aes128-sha2-dh20" #5: authenticated using authby=secret
 002 "ike=aes128-sha2-dh20" #6: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "ike=aes128-sha2-dh20" #6: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "ike=aes128-sha2-dh20" #6: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike=aes128-sha2-dh20": terminating SAs using this connection
-002 "ike=aes128-sha2-dh20" #6: deleting state (STATE_V2_IPSEC_I) and sending notification
+002 "ike=aes128-sha2-dh20" #6: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ike=aes128-sha2-dh20" #6: ESP traffic information: in=84B out=84B
 002 "ike=aes128-sha2-dh20" #5: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike=aes128-sha2-dh20": terminating SAs using this connection
@@ -84,10 +84,10 @@ west #
 002 "ike=aes128-sha2-dh21" #8: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ike=aes128-sha2-dh21" #7: authenticated using authby=secret
 002 "ike=aes128-sha2-dh21" #8: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "ike=aes128-sha2-dh21" #8: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "ike=aes128-sha2-dh21" #8: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike=aes128-sha2-dh21": terminating SAs using this connection
-002 "ike=aes128-sha2-dh21" #8: deleting state (STATE_V2_IPSEC_I) and sending notification
+002 "ike=aes128-sha2-dh21" #8: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ike=aes128-sha2-dh21" #8: ESP traffic information: in=84B out=84B
 002 "ike=aes128-sha2-dh21" #7: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike=aes128-sha2-dh21": terminating SAs using this connection
@@ -100,10 +100,10 @@ west #
 002 "ike=aes128-sha1-dh19" #10: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ike=aes128-sha1-dh19" #9: authenticated using authby=secret
 002 "ike=aes128-sha1-dh19" #10: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "ike=aes128-sha1-dh19" #10: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "ike=aes128-sha1-dh19" #10: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike=aes128-sha1-dh19": terminating SAs using this connection
-002 "ike=aes128-sha1-dh19" #10: deleting state (STATE_V2_IPSEC_I) and sending notification
+002 "ike=aes128-sha1-dh19" #10: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ike=aes128-sha1-dh19" #10: ESP traffic information: in=84B out=84B
 002 "ike=aes128-sha1-dh19" #9: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike=aes128-sha1-dh19": terminating SAs using this connection
@@ -116,10 +116,10 @@ west #
 002 "ike=aes128-sha1-dh20" #12: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ike=aes128-sha1-dh20" #12: authenticated using authby=secret
 002 "ike=aes128-sha1-dh20" #12: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "ike=aes128-sha1-dh20" #12: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "ike=aes128-sha1-dh20" #12: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike=aes128-sha1-dh20": terminating SAs using this connection
-002 "ike=aes128-sha1-dh20" #12: deleting state (STATE_V2_IPSEC_I) and sending notification
+002 "ike=aes128-sha1-dh20" #12: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ike=aes128-sha1-dh20" #12: ESP traffic information: in=84B out=84B
 002 "ike=aes128-sha1-dh20" #11: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike=aes128-sha1-dh20": terminating SAs using this connection
@@ -132,10 +132,10 @@ west #
 002 "ike=aes128-sha1-dh21" #14: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ike=aes128-sha1-dh21" #14: authenticated using authby=secret
 002 "ike=aes128-sha1-dh21" #14: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "ike=aes128-sha1-dh21" #14: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "ike=aes128-sha1-dh21" #14: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike=aes128-sha1-dh21": terminating SAs using this connection
-002 "ike=aes128-sha1-dh21" #14: deleting state (STATE_V2_IPSEC_I) and sending notification
+002 "ike=aes128-sha1-dh21" #14: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ike=aes128-sha1-dh21" #14: ESP traffic information: in=84B out=84B
 002 "ike=aes128-sha1-dh21" #13: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike=aes128-sha1-dh21": terminating SAs using this connection
@@ -148,10 +148,10 @@ west #
 002 "ike=aes_ctr128-sha1-dh21" #16: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ike=aes_ctr128-sha1-dh21" #15: authenticated using authby=secret
 002 "ike=aes_ctr128-sha1-dh21" #16: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "ike=aes_ctr128-sha1-dh21" #16: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "ike=aes_ctr128-sha1-dh21" #16: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike=aes_ctr128-sha1-dh21": terminating SAs using this connection
-002 "ike=aes_ctr128-sha1-dh21" #16: deleting state (STATE_V2_IPSEC_I) and sending notification
+002 "ike=aes_ctr128-sha1-dh21" #16: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ike=aes_ctr128-sha1-dh21" #16: ESP traffic information: in=84B out=84B
 002 "ike=aes_ctr128-sha1-dh21" #15: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike=aes_ctr128-sha1-dh21": terminating SAs using this connection
@@ -164,10 +164,10 @@ west #
 002 "ike=3des-sha2-modp2048" #18: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ike=3des-sha2-modp2048" #18: authenticated using authby=secret
 002 "ike=3des-sha2-modp2048" #18: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "ike=3des-sha2-modp2048" #18: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "ike=3des-sha2-modp2048" #18: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike=3des-sha2-modp2048": terminating SAs using this connection
-002 "ike=3des-sha2-modp2048" #18: deleting state (STATE_V2_IPSEC_I) and sending notification
+002 "ike=3des-sha2-modp2048" #18: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ike=3des-sha2-modp2048" #18: ESP traffic information: in=84B out=84B
 002 "ike=3des-sha2-modp2048" #17: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike=3des-sha2-modp2048": terminating SAs using this connection
@@ -180,10 +180,10 @@ west #
 002 "ike=aes128-aes_xcbc-modp2048" #20: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ike=aes128-aes_xcbc-modp2048" #19: authenticated using authby=secret
 002 "ike=aes128-aes_xcbc-modp2048" #20: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "ike=aes128-aes_xcbc-modp2048" #20: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "ike=aes128-aes_xcbc-modp2048" #20: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike=aes128-aes_xcbc-modp2048": terminating SAs using this connection
-002 "ike=aes128-aes_xcbc-modp2048" #20: deleting state (STATE_V2_IPSEC_I) and sending notification
+002 "ike=aes128-aes_xcbc-modp2048" #20: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ike=aes128-aes_xcbc-modp2048" #20: ESP traffic information: in=84B out=84B
 002 "ike=aes128-aes_xcbc-modp2048" #19: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike=aes128-aes_xcbc-modp2048": terminating SAs using this connection

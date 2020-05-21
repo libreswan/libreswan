@@ -58,7 +58,7 @@ west #
 002 "west" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "west" #1: authenticated using authby=secret
 002 "west" #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
-004 "west" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "west" #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  taskset 0x3 ping -w 3 -n -c 2 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
@@ -77,8 +77,8 @@ west #
 1v2 "west" #3: STATE_V2_REKEY_CHILD_I1: STATE_V2_REKEY_CHILD_I1
 002 "west" #3: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 002 "west" #3: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
-004 "west" #3: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
-002 "west" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
+004 "west" #3: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+002 "west" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "west" #2: ESP traffic information: in=168B out=168B
 west #
  sleep 15
@@ -90,7 +90,7 @@ west #
 031 "west" #4: STATE_V2_REKEY_CHILD_I1: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv2 message
 002 "west" #4: liveness action - putting connection into hold
 002 "west" #4: deleting state (STATE_V2_REKEY_CHILD_I1) and NOT sending notification
-002 "west" #3: deleting state (STATE_V2_IPSEC_I) and sending notification
+002 "west" #3: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "west" #3: ESP traffic information: in=0B out=0B
 west #
  # this rekey, 3 #5, message will not be sent, #1.#5

@@ -31,7 +31,7 @@ north #
 002 "north-east" #2: up-client output: net.ipv4.conf.vti0.forwarding = 1
 002 "north-east" #2: prepare-client output: vti interface "vti0" already exists with conflicting setting (perhaps need vti-sharing=yes ?
 002 "north-east" #2: negotiated connection [0.0.0.0-255.255.255.255:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0]
-004 "north-east" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "north-east" #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 north #
  ping -w 4 -c 4 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.

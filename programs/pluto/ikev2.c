@@ -340,12 +340,12 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	 * initial state and the CHILD SA's final state.  There should
 	 * instead be two separate state transitions: IKE SA:
 	 * STATE_PARENT_I2 -> STATE_PARENT_I3; CHILD SA: ??? ->
-	 * STATE_V2_IPSEC_I->???.  The IKE SA could then initiate the
-	 * CHILD SA's transaction.
+	 * STATE_V2_ESTABLISHED_CHILD_SA -> ???.  The IKE SA could
+	 * then initiate the CHILD SA's transaction.
 	 */
 	{ .story      = "Initiator: process IKE_AUTH response",
 	  .state      = STATE_PARENT_I2,
-	  .next_state = STATE_V2_IPSEC_I,
+	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
 	  .flags = SMF2_MESSAGE_RESPONSE | SMF2_ESTABLISHED,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDr) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
@@ -399,13 +399,13 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	 * XXX: Danger! This state transition mashes the IKE SA's
 	 * initial state and the CHILD SA's final state.  There should
 	 * instead be two separate state transitions: IKE SA:
-	 * STATE_PARENT_R1->STATE_PARENT_R2; CHILD SA::
-	 * ???->STATE_V2_IPSEC_R.  The IKE SA could then initiate the
-	 * CHILD SA's transaction.
+	 * STATE_PARENT_R1->STATE_PARENT_R2; CHILD SA:: ??? ->
+	 * STATE_V2_ESTABLISHED_CHILD_SA.  The IKE SA could then
+	 * initiate the CHILD SA's transaction.
 	 */
 	{ .story      = "Responder: process IKE_AUTH request",
 	  .state      = STATE_PARENT_R1,
-	  .next_state = STATE_V2_IPSEC_R,
+	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
 	  .flags = SMF2_MESSAGE_REQUEST | SMF2_ESTABLISHED,
 	  .send = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
@@ -466,7 +466,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	 */
 	{ .story      = "Process CREATE_CHILD_SA IPsec SA Response",
 	  .state      = STATE_V2_NEW_CHILD_I1,
-	  .next_state = STATE_V2_IPSEC_I,
+	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
 	  .flags      = SMF2_MESSAGE_RESPONSE | SMF2_ESTABLISHED,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
@@ -482,7 +482,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 
 	{ .story      = "Respond to CREATE_CHILD_SA rekey CHILD SA request",
 	  .state      = STATE_V2_REKEY_CHILD_R0,
-	  .next_state = STATE_V2_IPSEC_R,
+	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
 	  .flags      = SMF2_MESSAGE_REQUEST | SMF2_ESTABLISHED,
 	  .send = MESSAGE_RESPONSE,
 	  .message_payloads.required = P(SK),
@@ -495,7 +495,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 
 	{ .story      = "Respond to CREATE_CHILD_SA IPsec SA Request",
 	  .state      = STATE_V2_NEW_CHILD_R0,
-	  .next_state = STATE_V2_IPSEC_R,
+	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
 	  .flags      = SMF2_MESSAGE_REQUEST | SMF2_ESTABLISHED,
 	  .send = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
@@ -2105,7 +2105,7 @@ static void hack_error_transition(struct state *st)
 		pexpect(state->nr_transitions == 2);
 		transition = &state->v2_transitions[1];
 		pexpect(transition->state == STATE_PARENT_R1 &&
-			transition->next_state == STATE_V2_IPSEC_R);
+			transition->next_state == STATE_V2_ESTABLISHED_CHILD_SA);
 		break;
 	case STATE_PARENT_I2:
 		/*
@@ -2116,7 +2116,7 @@ static void hack_error_transition(struct state *st)
 		pexpect(state->nr_transitions == 5);
 		transition = &state->v2_transitions[3];
 		pexpect(transition->state == STATE_PARENT_I2 &&
-			transition->next_state == STATE_V2_IPSEC_I);
+			transition->next_state == STATE_V2_ESTABLISHED_CHILD_SA);
 		break;
 	default:
 		if (/*pexpect*/(state->nr_transitions > 0)) {
@@ -3227,8 +3227,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	    from_state != STATE_V2_REKEY_IKE_I0 &&
 	    from_state != STATE_PARENT_R0 &&
 	    from_state != STATE_PARENT_I1 &&
-	    from_state != STATE_V2_IPSEC_I &&
-	    from_state != STATE_V2_IPSEC_R) {
+	    from_state != STATE_V2_ESTABLISHED_CHILD_SA) {
 		/* from_state = STATE_PARENT_R1 */
 		/* from_state = STATE_CREATE_R */
 		/* from_state = STATE_REKEY_IKE_R */

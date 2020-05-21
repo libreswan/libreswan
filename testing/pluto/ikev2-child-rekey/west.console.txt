@@ -26,7 +26,7 @@ west #
 002 "west" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "west" #1: authenticated using authby=secret
 002 "west" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "west" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "west" #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -49,8 +49,8 @@ west #
 1v2 "west" #3: STATE_V2_REKEY_CHILD_I1: STATE_V2_REKEY_CHILD_I1
 002 "west" #3: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 002 "west" #3: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "west" #3: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
-002 "west" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
+004 "west" #3: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+002 "west" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "west" #2: ESP traffic information: in=84B out=84B
 west #
  sleep 2
@@ -59,7 +59,7 @@ west #
 west #
  ipsec status |grep STATE_
 000 #1: "west":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
-000 #3: "west":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #3: "west":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 west #
  ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -83,8 +83,8 @@ west #
 1v2 "west" #4: STATE_V2_REKEY_CHILD_I1: STATE_V2_REKEY_CHILD_I1
 002 "west" #4: rekeyed #3 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 002 "west" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "west" #4: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
-002 "west" #3: deleting state (STATE_V2_IPSEC_I) and sending notification
+004 "west" #4: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+002 "west" #3: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "west" #3: ESP traffic information: in=168B out=168B
 west #
  sleep 2
@@ -93,7 +93,7 @@ west #
 west #
  ipsec status |grep STATE_
 000 #1: "west":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
-000 #4: "west":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #4: "west":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 west #
  ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up

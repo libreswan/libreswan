@@ -54,11 +54,11 @@ west #
 002 "westnet-eastnet-ikev2-modp2048" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2-modp2048" #1: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-ikev2-modp2048" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2-modp2048" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2-modp2048" #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-ikev2-modp2048
 002 "westnet-eastnet-ikev2-modp2048": terminating SAs using this connection
-002 "westnet-eastnet-ikev2-modp2048" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
+002 "westnet-eastnet-ikev2-modp2048" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "westnet-eastnet-ikev2-modp2048" #2: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-ikev2-modp2048" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 west #
@@ -69,11 +69,11 @@ west #
 002 "westnet-eastnet-ikev2-modp3072" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2-modp3072" #3: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-ikev2-modp3072" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2-modp3072" #4: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2-modp3072" #4: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-ikev2-modp3072
 002 "westnet-eastnet-ikev2-modp3072": terminating SAs using this connection
-002 "westnet-eastnet-ikev2-modp3072" #4: deleting state (STATE_V2_IPSEC_I) and sending notification
+002 "westnet-eastnet-ikev2-modp3072" #4: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "westnet-eastnet-ikev2-modp3072" #4: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-ikev2-modp3072" #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 west #
@@ -84,11 +84,11 @@ west #
 002 "westnet-eastnet-ikev2-modp4096" #6: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2-modp4096" #5: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-ikev2-modp4096" #6: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2-modp4096" #6: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2-modp4096" #6: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-ikev2-modp4096
 002 "westnet-eastnet-ikev2-modp4096": terminating SAs using this connection
-002 "westnet-eastnet-ikev2-modp4096" #6: deleting state (STATE_V2_IPSEC_I) and sending notification
+002 "westnet-eastnet-ikev2-modp4096" #6: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "westnet-eastnet-ikev2-modp4096" #6: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-ikev2-modp4096" #5: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 west #
@@ -99,11 +99,11 @@ west #
 002 "westnet-eastnet-ikev2-modp8192" #8: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2-modp8192" #7: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-ikev2-modp8192" #8: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2-modp8192" #8: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2-modp8192" #8: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-ikev2-modp8192
 002 "westnet-eastnet-ikev2-modp8192": terminating SAs using this connection
-002 "westnet-eastnet-ikev2-modp8192" #8: deleting state (STATE_V2_IPSEC_I) and sending notification
+002 "westnet-eastnet-ikev2-modp8192" #8: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "westnet-eastnet-ikev2-modp8192" #8: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-ikev2-modp8192" #7: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 west #
@@ -114,11 +114,11 @@ west #
 002 "westnet-eastnet-ikev2-dh19" #10: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2-dh19" #9: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-ikev2-dh19" #10: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2-dh19" #10: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2-dh19" #10: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-ikev2-dh19
 002 "westnet-eastnet-ikev2-dh19": terminating SAs using this connection
-002 "westnet-eastnet-ikev2-dh19" #10: deleting state (STATE_V2_IPSEC_I) and sending notification
+002 "westnet-eastnet-ikev2-dh19" #10: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "westnet-eastnet-ikev2-dh19" #10: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-ikev2-dh19" #9: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 west #
@@ -129,11 +129,11 @@ west #
 002 "westnet-eastnet-ikev2-dh20" #12: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2-dh20" #11: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-ikev2-dh20" #12: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2-dh20" #12: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2-dh20" #12: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-ikev2-dh20
 002 "westnet-eastnet-ikev2-dh20": terminating SAs using this connection
-002 "westnet-eastnet-ikev2-dh20" #12: deleting state (STATE_V2_IPSEC_I) and sending notification
+002 "westnet-eastnet-ikev2-dh20" #12: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "westnet-eastnet-ikev2-dh20" #12: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-ikev2-dh20" #11: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 west #
@@ -144,11 +144,11 @@ west #
 002 "westnet-eastnet-ikev2-dh21" #14: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2-dh21" #13: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-ikev2-dh21" #14: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2-dh21" #14: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2-dh21" #14: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-ikev2-dh21
 002 "westnet-eastnet-ikev2-dh21": terminating SAs using this connection
-002 "westnet-eastnet-ikev2-dh21" #14: deleting state (STATE_V2_IPSEC_I) and sending notification
+002 "westnet-eastnet-ikev2-dh21" #14: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "westnet-eastnet-ikev2-dh21" #14: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-ikev2-dh21" #13: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 west #
@@ -159,11 +159,11 @@ west #
 002 "westnet-eastnet-ikev2-dh31" #16: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2-dh31" #15: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-ikev2-dh31" #16: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2-dh31" #16: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2-dh31" #16: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-ikev2-dh31
 002 "westnet-eastnet-ikev2-dh31": terminating SAs using this connection
-002 "westnet-eastnet-ikev2-dh31" #16: deleting state (STATE_V2_IPSEC_I) and sending notification
+002 "westnet-eastnet-ikev2-dh31" #16: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "westnet-eastnet-ikev2-dh31" #16: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-ikev2-dh31" #15: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 west #

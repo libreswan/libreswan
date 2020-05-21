@@ -29,7 +29,7 @@ road #
 003 "road-east-x509-ipv4"[1] 192.1.2.23 #1: authenticated using RSA with SHA2_512
 002 "road-east-x509-ipv4"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.100
 002 "road-east-x509-ipv4"[1] 192.1.2.23 #2: negotiated connection [192.0.2.100-192.0.2.100:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0]
-004 "road-east-x509-ipv4"[1] 192.1.2.23 #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
+004 "road-east-x509-ipv4"[1] 192.1.2.23 #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
  ping -q -n -c 4 -I 192.0.2.100 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.0.2.100 : 56(84) bytes of data.
