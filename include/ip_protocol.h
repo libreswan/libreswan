@@ -38,6 +38,10 @@ typedef struct ip_protocol {
 	 * IPPROTO_*
 	 */
 	unsigned ipproto;
+	/*
+	 * Using this to encapsulate.
+	 */
+	const struct ip_encap *encap_esp;
 } ip_protocol;
 
 extern const struct ip_protocol ip_protocol_unset;

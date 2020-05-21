@@ -13,12 +13,13 @@
  * for more details.
  */
 
-#include "ip_protocol.h"
-#include "ietf_constants.h"
+#include <netinet/in.h>		/* for IPPROTO_* */
+
 #include "lswcdefs.h"		/* for elemsof() */
 #include "constants.h"		/* for strncaseeq() */
 
-#include "libreswan/pfkeyv2.h"
+#include "ip_protocol.h"
+#include "ip_encap.h"
 
 const struct ip_protocol ip_protocol_unset = {
 	.prefix = "unk",
@@ -46,6 +47,7 @@ const struct ip_protocol ip_protocol_tcp = {
 	.prefix = "tcp",
 	.name = "TCP",
 	.ipproto = IPPROTO_TCP,
+	.encap_esp = &ip_encap_esp_in_tcp,
 };
 
 const struct ip_protocol ip_protocol_udp = {
@@ -53,6 +55,7 @@ const struct ip_protocol ip_protocol_udp = {
 	.prefix = "udp",
 	.name = "UDP",
 	.ipproto = IPPROTO_UDP,
+	.encap_esp = &ip_encap_esp_in_udp,
 };
 
 const struct ip_protocol ip_protocol_esp = {

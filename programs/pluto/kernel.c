@@ -37,12 +37,6 @@
 #include <sys/utsname.h>
 #include <sys/ioctl.h>
 
-/* TCP: build barf */
-#include <linux/udp.h>			/* for TCP_ENCAP_ESPINTCP and UDP_ENCAP_ESPINUDP */
-#ifndef TCP_ENCAP_ESPINTCP
-#define TCP_ENCAP_ESPINTCP 7
-#endif
-
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -87,6 +81,7 @@
 # include "kernel_xfrm_interface.h"
 #include "iface.h"
 #include "ip_selector.h"
+#include "ip_encap.h"
 #include "show.h"
 
 bool can_do_IPcomp = TRUE;  /* can system actually perform IPCOMP? */
@@ -1959,14 +1954,13 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			peer_keymat;
 		const struct trans_attrs *ta = &st->st_esp.attrs.transattrs;
 
-		unsigned encap_type = 0;
+		const struct ip_encap *encap_type = NULL;
 		uint16_t encap_sport = 0, encap_dport = 0;
 		ip_address natt_oa;
 
 		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED ||
 		    st->st_interface->protocol == &ip_protocol_tcp) {
-			encap_type = (st->st_interface->protocol == &ip_protocol_tcp ? TCP_ENCAP_ESPINTCP
-				      : ESPINUDP_WITH_NON_ESP);
+			encap_type = st->st_interface->protocol->encap_esp;
 			if (inbound) {
 				encap_sport = endpoint_hport(&st->st_remote_endpoint);
 				encap_dport = endpoint_hport(&st->st_interface->local_endpoint);
@@ -1975,8 +1969,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				encap_dport = endpoint_hport(&st->st_remote_endpoint);
 			}
 			natt_oa = st->hidden_variables.st_nat_oa;
-			dbg("natt/tcp sa type=%u sport=%d dport=%d",
-			    encap_type, encap_sport, encap_dport);
+			dbg("natt/tcp sa encap_type="PRI_IP_ENCAP" sport=%d dport=%d",
+			    pri_ip_encap(encap_type), encap_sport, encap_dport);
 		}
 
 		DBG(DBG_CONTROL,

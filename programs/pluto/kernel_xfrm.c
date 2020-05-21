@@ -95,6 +95,7 @@
 # include "kernel_xfrm_interface.h"
 #include "iface.h"
 #include "ip_selector.h"
+#include "ip_encap.h"
 
 /* required for Linux 2.6.26 kernel and later */
 #ifndef XFRM_STATE_AF_UNSPEC
@@ -880,10 +881,11 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 {
 	const struct connection *const c = st->st_connection;
 
-	const int encap_type =
-		(st->st_interface->protocol == &ip_protocol_tcp) ? TCP_ENCAP_ESPINTCP :
-		(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ? ESPINUDP_WITH_NON_ESP : 0;
-	dbg("TCP: encap type %d", encap_type);
+	const struct ip_encap *encap_type =
+		(st->st_interface->protocol == &ip_protocol_tcp) ? &ip_encap_esp_in_tcp :
+		(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ? &ip_encap_esp_in_udp :
+		NULL;
+	dbg("TCP/NAT: encap type "PRI_IP_ENCAP, pri_ip_encap(encap_type));
 
 	const struct ip_protocol *proto;
 	struct ipsec_proto_info *proto_info;
@@ -928,7 +930,7 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			sa.dst.new_address = &st->st_mobike_local_endpoint;
 			sa.spi = proto_info->our_spi;
 			set_text_said(n, dst, sa.spi, proto);
-			if (encap_type != 0) {
+			if (encap_type != NULL) {
 				encap_sport = endpoint_hport(&st->st_remote_endpoint);
 				encap_dport = endpoint_hport(&st->st_mobike_local_endpoint);
 			}
@@ -941,7 +943,7 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			sa.dst.new_address = dst;
 			sa.spi = proto_info->attrs.spi;
 			set_text_said(n, src, sa.spi, proto);
-			if (encap_type != 0) {
+			if (encap_type != NULL) {
 				encap_sport = endpoint_hport(&st->st_mobike_local_endpoint);
 				encap_dport = endpoint_hport(&st->st_remote_endpoint);
 			}
@@ -961,7 +963,7 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			sa.dst.new_address = &c->spd.this.host_addr;
 			sa.spi = proto_info->our_spi;
 			set_text_said(n, src, sa.spi, proto);
-			if (encap_type != 0) {
+			if (encap_type != NULL) {
 				encap_sport = endpoint_hport(&st->st_mobike_remote_endpoint);
 				pexpect_st_local_endpoint(st);
 				encap_dport = endpoint_hport(&st->st_interface->local_endpoint);
@@ -976,7 +978,7 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			sa.spi = proto_info->attrs.spi;
 			set_text_said(n, dst, sa.spi, proto);
 
-			if (encap_type != 0) {
+			if (encap_type != NULL) {
 				pexpect_st_local_endpoint(st);
 				encap_sport = endpoint_hport(&st->st_interface->local_endpoint);
 				encap_dport = endpoint_hport(&st->st_mobike_remote_endpoint);
@@ -1043,13 +1045,14 @@ static bool migrate_xfrm_sa(const struct kernel_sa *sa)
 		req.n.nlmsg_len += attr->rta_len;
 	}
 
-	if (sa->encap_type != 0) {
-		dbg("adding xfrm_encap_templ when migrating sa type=%d sport=%d dport=%d",
-		    sa->encap_type, sa->src.encap_port, sa->dst.encap_port);
+	if (sa->encap_type != NULL) {
+		dbg("adding xfrm_encap_templ when migrating sa encap_type="PRI_IP_ENCAP" sport=%d dport=%d",
+		    pri_ip_encap(sa->encap_type),
+		    sa->src.encap_port, sa->dst.encap_port);
 		attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 		struct xfrm_encap_tmpl natt;
 
-		natt.encap_type = sa->encap_type;
+		natt.encap_type = sa->encap_type->encap_type;
 		natt.encap_sport = ntohs(sa->src.encap_port);
 		natt.encap_dport = ntohs(sa->dst.encap_port);
 		zero(&natt.encap_oa);
@@ -1519,12 +1522,13 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		}
 	}
 
-	if (sa->encap_type != 0) {
-		dbg("adding xfrm-encap-tmpl when adding sa type=%d sport=%d dport=%d",
-		    sa->encap_type, sa->src.encap_port, sa->dst.encap_port);
+	if (sa->encap_type != NULL) {
+		dbg("adding xfrm-encap-tmpl when adding sa encap_type="PRI_IP_ENCAP" sport=%d dport=%d",
+		    pri_ip_encap(sa->encap_type),
+		    sa->src.encap_port, sa->dst.encap_port);
 		struct xfrm_encap_tmpl natt;
 
-		natt.encap_type = sa->encap_type;
+		natt.encap_type = sa->encap_type->encap_type;
 		natt.encap_sport = ntohs(sa->src.encap_port);
 		natt.encap_dport = ntohs(sa->dst.encap_port);
 		zero(&natt.encap_oa);

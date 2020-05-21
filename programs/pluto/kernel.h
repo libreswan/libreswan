@@ -166,7 +166,7 @@ struct kernel_sa {
 	IPsecSAref_t refhim;
 
 	int mode;		/* transport or tunnel */
-	uint8_t encap_type;	/* TCP or UDP */
+	const struct ip_encap *encap_type;		/* ESP in TCP or UDP; or NULL */
 	ip_address *natt_oa;
 	const char *text_said;
 	struct xfrm_user_sec_ctx_ike *sec_ctx;
