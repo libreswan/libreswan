@@ -1167,7 +1167,7 @@ static bool is_duplicate_request(struct ike_sa *ike,
 		 */
 		if (ike->sa.st_v2_outgoing[MESSAGE_RESPONSE] == NULL) {
 			FAIL_V2_MSGID(ike, &ike->sa,
-				      "retransmission for messsage %jd exchange %s failed responder.sent %jd - there is no stored message or fragments to retransmit",
+				      "retransmission for message %jd exchange %s failed responder.sent %jd - there is no stored message or fragments to retransmit",
 				      msgid, enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
 				      ike->sa.st_v2_msgid_windows.responder.sent);
 			return true;
@@ -2109,7 +2109,7 @@ static void hack_error_transition(struct state *st)
 		break;
 	case STATE_PARENT_I2:
 		/*
-		 * Receiving IKE_AUTH response: it is burried deep
+		 * Receiving IKE_AUTH response: it is buried deep
 		 * down; would adding an extra transition that always
 		 * matches be better?
 		 */
@@ -2177,7 +2177,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	 *
 	 * XXX: Unlike find_v2_state_transition(), this code detects
 	 * and decrypts packets and fragments in the middle of the
-	 * lookup.  Being more agressive with decrypting fragments
+	 * lookup.  Being more aggressive with decrypting fragments
 	 * will likely force that logic to be moved to before this
 	 * lookup.
 	 */
@@ -2268,7 +2268,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * XXX: This code should instead check
 			 * fragments as they arrive.  That means
 			 * kicking off the g^{xy} calculation in the
-			 * background (if it were in the forground,
+			 * background (if it were in the foreground,
 			 * the fragments would be dropped).  Later.
 			 */
 			if (md->message_payloads.present & P(SKF)) {
@@ -2318,7 +2318,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			}
 			/*
 			 * The message is protected - the integrity
-			 * check passed - so it was definitly sent by
+			 * check passed - so it was definitely sent by
 			 * the other end of the secured IKE SA.
 			 *
 			 * However, for an AUTH packet, the other end
@@ -2986,7 +2986,7 @@ void log_ipsec_sa_established(const char *m, const struct state *st)
 static void ikev2_child_emancipate(struct ike_sa *from, struct child_sa *to,
 				   const struct state_v2_microcode *transition)
 {
-	/* initialze the the new IKE SA. reset and message ID */
+	/* initialize the the new IKE SA. reset and message ID */
 	to->sa.st_clonedfrom = SOS_NOBODY;
 	v2_msgid_init_ike(pexpect_ike_sa(&to->sa));
 
@@ -3163,7 +3163,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	 * XXX: This is getting silly:
 	 *
 	 * - check for MD != NULL (aka NO_MESSAGE) - while initiators
-	 *   don't have an incomming message
+	 *   don't have an incoming message
 	 *
 	 * - delete the call - IKE state transition code is already
 	 *   somewhat doing this and why would nat need to be updated
@@ -3363,7 +3363,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 }
 
 /*
- * Dependant on RESULT, either complete, suspend, abandon, or abort
+ * Dependent on RESULT, either complete, suspend, abandon, or abort
  * (delete state) the state transition started by the state-specific
  * state transition function.
  *

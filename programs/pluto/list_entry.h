@@ -46,7 +46,7 @@ struct list_info {
  * is detached from any list.  Otherwise both must be non-NULL.
  *
  * Currently all elements of a list must have identical .info values.
- * This could easily be changed if we needed heterogenous lists.
+ * This could easily be changed if we needed heterogeneous lists.
  */
 
 struct list_entry {

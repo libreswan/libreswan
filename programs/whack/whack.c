@@ -1516,7 +1516,7 @@ int main(int argc, char **argv)
 					 */
 				} else {
 					/*
-					 * We asssume that we have a DNS name.
+					 * We assume that we have a DNS name.
 					 * This logic matches confread.c.
 					 * ??? it would be kind to check
 					 * the syntax.

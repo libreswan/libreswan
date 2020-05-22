@@ -129,7 +129,7 @@ void fail_v2_msgid(where_t where, struct ike_sa *ike, struct state *wip_sa,
  * Dump the MSGIDs along with any changes.
  *
  * Why not just dump the one that changed in the calling function?
- * Because MSGIDs have this strange habbit of mysteriously changing
+ * Because MSGIDs have this strange habit of mysteriously changing
  * between calls.
  */
 
@@ -717,7 +717,7 @@ void v2_msgid_schedule_next_initiator(struct ike_sa *ike)
 	 */
 	if (initiator->pending != NULL) {
 		intmax_t unack = (initiator->sent - initiator->recv);
-		/* if this returns NULL, thats ok; will log "LOST" */
+		/* if this returns NULL, that's ok; will log "LOST" */
 		struct state *wip_sa = state_by_serialno(initiator->pending->st_serialno);
 		if (unack < ike->sa.st_connection->ike_window) {
 			dbg_v2_msgid(ike, wip_sa, "wakeing IKE SA for next initiator (unack %jd)", unack);

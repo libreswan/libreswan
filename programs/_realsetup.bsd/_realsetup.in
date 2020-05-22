@@ -22,7 +22,7 @@ LC_ALL=C export LC_ALL
 
 me='ipsec setup'		# for messages
 
-# Misc. paths (some of this should perhaps be overrideable from ipsec.conf).
+# Misc. paths (some of this should perhaps be overridable from ipsec.conf).
 plutopid=/var/run/pluto/pluto.pid
 plutoctl=/var/run/pluto/pluto.ctl
 subsyslock=/var/lock/subsys/ipsec

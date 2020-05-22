@@ -508,7 +508,7 @@ extern struct connection *build_outgoing_opportunistic_connection(
 extern char *fmt_conn_instance(const struct connection *c,
 			       char buf[CONN_INST_BUF]);
 
-/* publically useful? */
+/* publicly useful? */
 size_t jam_connection_instance(struct lswlog *buf, const struct connection *c);
 size_t jam_connection(struct lswlog *buf, const struct connection *c);
 

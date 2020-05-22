@@ -54,7 +54,7 @@ struct iface_io {
 	void (*cleanup)(struct iface_port *ifp);
 };
 
-/* interface: a te*rminal point for IKE traffic, IPsec transport mode
+/* interface: a terminal point for IKE traffic, IPsec transport mode
  * and IPsec tunnels.
  * Essentially:
  * - an IP device (eg. eth1), and

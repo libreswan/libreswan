@@ -84,7 +84,7 @@ extern struct event_base *get_pluto_event_base(void);
 /*
  * Schedule an event (with no timeout) to resume a suspended state.
  * SERIALNO (so_serial_t) is used to identify the state because the
- * state object may not be directly accessable (as happens with worker
+ * state object may not be directly accessible (as happens with worker
  * threads).
  *
  * For instance: a worker thread needing to resume processing of a

@@ -69,7 +69,7 @@ a suffix of -v6 is added to this verb.
  <varlistentry>
   <term><emphasis remap='B'>PLUTO_INTERFACE</emphasis></term>
   <listitem>
-   <para> is the name of the real interace used by encrypted traffic and IKE traffic.
+   <para> is the name of the real interface used by encrypted traffic and IKE traffic.
    </para>
   </listitem>
  </varlistentry>

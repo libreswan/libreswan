@@ -184,7 +184,7 @@ struct state_v1_microcode {
 	enum state_kind state, next_state;
 	lset_t flags;
 	lset_t req_payloads;    /* required payloads (allows just one) */
-	lset_t opt_payloads;    /* optional payloads (any mumber) */
+	lset_t opt_payloads;    /* optional payloads (any number) */
 	enum event_type timeout_event;
 	ikev1_state_transition_fn *processor;
 	const char *message;
@@ -219,7 +219,7 @@ void jam_v1_transition(jambuf_t *buf, const struct state_v1_microcode *transitio
  * STATE_MAIN_R3 with SMF_DS_AUTH requires P(SIG).
  *
  * In IKEv2, it is the message header and payload types that select
- * the state.  As for how the IKEv1 'from state' is slected, look for
+ * the state.  As for how the IKEv1 'from state' is selected, look for
  * a big nasty magic switch.
  *
  * XXX: the state transition table is littered with STATE_UNDEFINED /
@@ -841,7 +841,7 @@ void init_ikev1(void)
 		 * not-yet-taken potential future state transition and
 		 * not the previous one.
 		 *
-		 * This is just trying to extact extract them and
+		 * This is just trying to extract them and
 		 * check they are consistent.
 		 *
 		 * XXX: this is confusing
@@ -1299,7 +1299,7 @@ void process_v1_packet(struct msg_digest *md)
 
 			/*
 			 * If there is already an existing state with
-			 * this ICOOKIE, asssume it is some sort of
+			 * this ICOOKIE, assume it is some sort of
 			 * re-transmit.
 			 */
 			st = find_state_ikev1_init(&md->hdr.isa_ike_initiator_spi,
@@ -1814,7 +1814,7 @@ void process_v1_packet(struct msg_digest *md)
 	 * creating a CHILD_SA), .flags|=SMF_ALL_AUTH so the first
 	 * (only) one always matches.
 	 *
-	 * XXX: The code assums that when there is always a match (if
+	 * XXX: The code assumes that when there is always a match (if
 	 * there isn't the passert() triggers.  If needed, bogus
 	 * transitions that log/drop the packet are added to the
 	 * table?  Would simply dropping the packets be easier.
@@ -2645,7 +2645,7 @@ void complete_v1_state_transition(struct msg_digest *md, stf_status result)
 
 			if (st->st_state->kind == STATE_MAIN_R2 &&
 				impair.send_no_main_r2) {
-				/* record-only so we propely emulate packet drop */
+				/* record-only so we properly emulate packet drop */
 				record_outbound_v1_ike_msg(st, &reply_stream,
 							   finite_states[from_state]->name);
 				log_state(RC_LOG, st, "IMPAIR: Skipped sending STATE_MAIN_R2 response packet");

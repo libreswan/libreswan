@@ -229,11 +229,11 @@ struct state_v2_microcode {
 	 * message expected and, if so, is it a request or response.
 	 *
 	 * Old code had a simple flag (SMF2_SEND) and then tried to
-	 * reverse engineer this value from the incomming message.
+	 * reverse engineer this value from the incoming message.
 	 * While in theory possible, it didn't seem to go well.  For
 	 * instance, because the code didn't clearly differentiate
 	 * between a FAKE_MD (created because old code insisted on
-	 * there always being an incomming message) and a real request
+	 * there always being an incoming message) and a real request
 	 * or response it ended up trying to use STATE_KIND to figure
 	 * things out.  While perhaps it is possible to make all this
 	 * work, spelling it out seems clearer.

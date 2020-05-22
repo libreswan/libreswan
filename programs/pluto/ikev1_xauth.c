@@ -686,7 +686,7 @@ stf_status xauth_send_request(struct state *st)
 	} else {
 		libreswan_log("IMPAIR: Skipped sending XAUTH user/pass packet");
 		if (p_state == STATE_AGGR_R2) {
-			/* record-only so we propely emulate packet drop */
+			/* record-only so we properly emulate packet drop */
 			record_outbound_v1_ike_msg(st, &reply, "XAUTH: req");
 		}
 	}

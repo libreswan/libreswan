@@ -326,7 +326,7 @@ static int show_confkey(struct private_key_stuff *pks,
 /*
  * XXX: this code is broken:
  *
- * - it dupliates stuff in secrets.c
+ * - it duplicates stuff in secrets.c
  *
  * - it doesn't support ECDSA
  *

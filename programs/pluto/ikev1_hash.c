@@ -1,4 +1,4 @@
-/* IKEv1 HASH payload wierdness, for Libreswan
+/* IKEv1 HASH payload weirdness, for Libreswan
  *
  * Copyright (C) 2019  Andrew Cagney
  *

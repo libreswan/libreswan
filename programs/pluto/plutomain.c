@@ -714,7 +714,7 @@ int main(int argc, char **argv)
 	 * We read the intentions for how to log from command line options
 	 * and the config file. Then we prepare to be able to log, but until
 	 * then log to stderr (better then nothing). Once we are ready to
-	 * actually do loggin according to the methods desired, we set the
+	 * actually do logging according to the methods desired, we set the
 	 * variables for those methods
 	 */
 	bool log_to_stderr_desired = FALSE;

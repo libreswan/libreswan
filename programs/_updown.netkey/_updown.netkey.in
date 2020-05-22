@@ -60,7 +60,7 @@ export LC_ALL
 #		must be sent.
 #
 #	PLUTO_INTERFACE
-#		is the name of the real interace used by encrypted traffic and IKE traffic
+#		is the name of the real interface used by encrypted traffic and IKE traffic
 #
 #	PLUTO_ME
 #		is the IP address of our host.
@@ -207,7 +207,7 @@ case "${PLUTO_CONN_ADDRFAMILY}" in
 	SCOPE=global
 	;;
     *)
-	echo "unkown address family \"${PLUTO_CONN_ADDRFAMILY}\"" >&2
+	echo "unknown address family \"${PLUTO_CONN_ADDRFAMILY}\"" >&2
 	exit 1
 	;;
 esac
@@ -399,7 +399,7 @@ notifyNM() {
     # This will be called whenever a connection is established or
     # fails to establish (either phase 1, xauth phase, or phase 2)
     # or whenever an already established connection is being terminated.
-    # This will send a singal to NetworkManager over dbus so that NM
+    # This will send a signal to NetworkManager over dbus so that NM
     # can keep track of the coonnections.
 
     if [ 0${PLUTO_NM_CONFIGURED} -eq 1 ]; then
@@ -691,7 +691,7 @@ doroute() {
 
     parms2="${parms2} dev ${peer_interface%:*}"
 
-    # make sure whe have sourceip locally in this machine
+    # make sure we have sourceip locally in this machine
     if [ "${cmd}" = "replace" -a -n "${PLUTO_MY_SOURCEIP}" ]; then
 	addsource
 	# use sourceip as route default source

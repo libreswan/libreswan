@@ -18,7 +18,7 @@
 #
 # This is the version for use on Linux.
 
-# Misc. paths (some of this should perhaps be overrideable from ipsec.conf).
+# Misc. paths (some of this should perhaps be overridable from ipsec.conf).
 rundir=@IPSEC_RUNDIR@
 
 #pluto searches the current directory, so this is required for making it selinux compliant

@@ -201,7 +201,7 @@ generate_certificate() {
     LetsEncryptConfFile="/etc/letsencrypt/renewal/${HostName}.conf"
     echo "reuse_key = True" >>"${LetsEncryptConfFile}"
 
-    # creating a crontab fot automatic cert renewals
+    # creating a crontab for automatic cert renewals
     if [ -d /etc/cron.d ]; then
 	if [ ! -f /etc/cron.d/ipsec-cert-renewal ]; then
 	    echo "0 1 * * * root certbot renew --deploy-hook 'ipsec letsencrypt --update-certificate ${HostName}'" \

@@ -434,7 +434,7 @@ bool whack_prompt_for(struct state *st, const char *prompt,
 
 	/*
 	 * XXX: This includes the connection name twice: first from
-	 * the state prefix; and second explictly.  Only reason is so
+	 * the state prefix; and second explicitly.  Only reason is so
 	 * that tests are happy.
 	 */
 	LSWBUF(buf) {

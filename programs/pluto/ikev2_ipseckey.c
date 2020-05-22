@@ -241,7 +241,7 @@ static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
 	 * negotiating
 	 */
 	uint32_t ttl_used = max(ttl, (uint32_t)RETRANSMIT_TIMEOUT_DEFAULT);
-	char ttl_buf[ULTOT_BUF + 32]; /* 32 is aribitary */
+	char ttl_buf[ULTOT_BUF + 32]; /* 32 is arbitrary */
 
 	if (ttl_used == ttl) {
 		snprintf(ttl_buf, sizeof(ttl_buf), "ttl %u", ttl);
@@ -919,7 +919,7 @@ stf_status idr_ipseckey_fetch(struct state *st)
 /*
  * On responder query IPSECKEY for IDi, it could be FQDN or IP.
  * The returned ipsec key(s) will be added to public store, with keyid IDi.
- * New key(s) will overwrite any exisitng one(s) with same keyid in pluto's
+ * New key(s) will overwrite any existing one(s) with same keyid in pluto's
  * global public key store.
  *
  * If DNS returns multiple IPSECKEY RR add all of keys, with same keyid.

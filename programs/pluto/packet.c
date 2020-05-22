@@ -1769,7 +1769,7 @@ static void DBG_print_nat(const field_desc *fp, uintmax_t nat)
 		jam(buf, " (");
 		/*
 		 * Note that a single byte value such as "(23)" is
-		 * ambigious.  Since it is prefixed by the equivalent
+		 * ambiguous.  Since it is prefixed by the equivalent
 		 * decimal it should be clear.
 		 *
 		 * XXX: the same conversion code appears in
@@ -2339,7 +2339,7 @@ static void update_next_payload_chain(pb_stream *outs,
 	 * this is stored in the outermost PBS.
 	 *
 	 * XXX: don't try to be all fancy and copy back values; could
-	 * use an outs->message pointer; but since nesting is minimial
+	 * use an outs->message pointer; but since nesting is minimal
 	 * this isn't really urgent
 	 */
 	pb_stream *message = outs->container;

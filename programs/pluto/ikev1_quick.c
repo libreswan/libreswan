@@ -674,7 +674,7 @@ void quick_outI1(struct fd *whack_sock,
 		lswlogf(buf, "}");
 	}
 
-	/* save for post crytpo logging */
+	/* save for post crypto logging */
 	st->st_ipsec_pred = replacing;
 
 	if (policy & POLICY_PFS) {
@@ -1303,7 +1303,7 @@ static void quick_inI1_outR1_continue1(struct state *st,
 		start_dh_v1_secret(quick_inI1_outR1_continue2, "quick outR1 DH",
 				   st, SA_RESPONDER, st->st_pfs_group);
 		/*
-		 * XXX: Since more crypto has been requsted, MD needs
+		 * XXX: Since more crypto has been requested, MD needs
 		 * to be re suspended.  If the original crypto request
 		 * did everything this wouldn't be needed.
 		 */

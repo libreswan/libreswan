@@ -1399,7 +1399,7 @@ stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
 }
 
 /*
- * Processs the Main Mode ID Payload and the Authenticator
+ * Process the Main Mode ID Payload and the Authenticator
  * (Hash or Signature Payload).
  * Note: oakley_id_and_auth may switch the connection being used!
  * But only if we are a Main Mode Responder.

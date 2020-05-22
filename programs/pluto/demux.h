@@ -54,7 +54,7 @@ enum iface_status handle_packet_cb(const struct iface_port *ifp);
  * A message digest (struct msg_digest) holds the dissected
  * packet (and more) during a state transition.  This gets
  * a bit muddied by the way packet fragments are re-assembled
- * and the way asyncronous processing cause state transitions
+ * and the way asynchronous processing cause state transitions
  * to be suspended (eg. crypto helper work).  Think of those
  * things as being within a single state transition.
  */
@@ -79,7 +79,7 @@ struct payload_summary {
 
 /*
  * Compact enum of useful-to-pluto IKEv2 payloads.  Unlike the
- * official numbers, these are contigious.
+ * official numbers, these are contiguous.
  */
 
 enum v2_pbs {
@@ -204,7 +204,7 @@ struct msg_digest {
 	 * than LELEM_ROOF.  This is because the next-payload
 	 * (converted to a bit map) is also stored in lset_t (lset_t
 	 * has LELEM_ROOF as its bound). Any larger value, such as
-	 * v2IKE_FRAGMENTATION, must have been droped before things
+	 * v2IKE_FRAGMENTATION, must have been dropped before things
 	 * get this far.
 	 *
 	 * XXX: While the real upper bound is closer to 53 (vs 64)
@@ -213,7 +213,7 @@ struct msg_digest {
 	 *
 	 * XXX: Even though the IKEv2 values start at 33, they are not
 	 * biased to save space.  This is because it would break the
-	 * 1:1 correspondance between the wire-value, this array, and
+	 * 1:1 correspondence between the wire-value, this array, and
 	 * the lset_t bit (at one point the lset_t values were biased,
 	 * the result was confusing custom mapping code everywhere).
 	 */
