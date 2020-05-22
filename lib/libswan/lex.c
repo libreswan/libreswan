@@ -21,11 +21,11 @@
 #include <unistd.h>
 #include <errno.h>
 
-
 #include "sysdep.h"
 #include "constants.h"
 #include "lswlog.h"
 #include "lex.h"
+#include "lswlog.h"
 
 struct file_lex_position *flp = NULL;
 
@@ -41,15 +41,19 @@ struct file_lex_position *flp = NULL;
  * @return bool True if successful
  */
 bool lexopen(struct file_lex_position *new_flp, const char *name,
-	bool optional)
+	     bool optional)
 {
 	FILE *f = fopen(name, "r");
 
 	if (f == NULL) {
-		if (!optional || errno != ENOENT)
+		if (!optional || errno != ENOENT) {
 			LOG_ERRNO(errno, "could not open \"%s\"", name);
-		return FALSE;
+		} else {
+			DBGF(DBG_TMI, "lex open: %s: "PRI_ERRNO, name, pri_errno(errno));
+		}
+		return false;
 	} else {
+		DBGF(DBG_TMI, "lex open: %s", name);
 		new_flp->previous = flp;
 		flp = new_flp;
 		flp->filename = name;
@@ -61,7 +65,7 @@ bool lexopen(struct file_lex_position *new_flp, const char *name,
 		flp->under = *flp->cur = '\0';
 
 		(void) shift();	/* prime tok */
-		return TRUE;
+		return true;
 	}
 }
 
@@ -70,6 +74,7 @@ bool lexopen(struct file_lex_position *new_flp, const char *name,
  */
 void lexclose(void)
 {
+	DBGF(DBG_TMI, "lex close:");
 	fclose(flp->fp);
 	flp = flp->previous;
 }
@@ -112,7 +117,8 @@ bool shift(void)
 					flp->fp) == NULL) {
 				flp->bdry = B_file;
 				flp->tok = flp->cur = NULL;
-				return FALSE;
+				DBGF(DBG_TMI, "lex shift: file(eof)");
+				return false;
 			} else {
 				/* strip trailing whitespace, including \n */
 				for (p = flp->buffer + strlen(flp->buffer);
@@ -157,7 +163,8 @@ bool shift(void)
 				flp->under = *p;
 				*p = '\0';
 				flp->cur = p;
-				return TRUE;
+				DBGF(DBG_TMI, "lex shift: '%s'", flp->tok);
+				return true;
 			}
 		/* FALL THROUGH */
 		default:
@@ -195,7 +202,8 @@ bool shift(void)
 				flp->under = *p;
 				*p = '\0';
 				flp->cur = p;
-				return TRUE;
+				DBGF(DBG_TMI, "lex shift: '%s'", flp->tok);
+				return true;
 			}
 
 			/*
@@ -206,7 +214,8 @@ bool shift(void)
 			flp->tok = NULL;
 			flp->under = *p;
 			flp->cur = p;
-			return FALSE;
+			DBGF(DBG_TMI, "lex shift: record(new line)");
+			return false;
 		}
 	}
 }
@@ -220,12 +229,14 @@ bool shift(void)
 bool flushline(const char *m)
 {
 	if (flp->bdry != B_none) {
-		return TRUE;
+		DBGF(DBG_TMI, "lex flush: on eof or record");
+		return true;
 	} else {
+		DBGF(DBG_TMI, "lex flush: on token");
 		if (m != NULL)
 			loglog(RC_LOG_SERIOUS, "\"%s\" line %d: %s",
 				flp->filename, flp->lino, m);
 		do {} while (shift());
-		return FALSE;
+		return false;
 	}
 }
