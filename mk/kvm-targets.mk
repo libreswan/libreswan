@@ -203,15 +203,11 @@ endef
 # Only do this once per boot.
 #
 
-$(KVM_LOCALDIR)/$(KVM_PREFIX)boot: \
-		$(firstword $(wildcard /var/run/rc.log /proc/uptime)) \
-		| \
-		$(KVM_LOCALDIR)
-	touch $@
+KVM_BOOT_FILE = $(firstword $(wildcard /var/run/rc.log /proc/uptime))
 
 KVM_ENTROPY_FILE ?= /proc/sys/kernel/random/entropy_avail
 
-$(KVM_LOCALDIR)/$(KVM_PREFIX)entropy-ok: $(KVM_LOCALDIR)/$(KVM_PREFIX)boot
+$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)entropy-ok: $(KVM_BOOT_FILE)
 	@if test ! -r $(KVM_ENTROPY_FILE); then				\
 		echo no entropy to check ;				\
 	elif test $$(cat $(KVM_ENTROPY_FILE)) -gt 100 ; then		\
@@ -232,7 +228,7 @@ $(KVM_LOCALDIR)/$(KVM_PREFIX)entropy-ok: $(KVM_LOCALDIR)/$(KVM_PREFIX)boot
 
 KVM_QEMUDIR ?= /var/lib/libvirt/qemu
 
-$(KVM_LOCALDIR)/$(KVM_PREFIX)qemudir-ok: $(KVM_LOCALDIR)/$(KVM_PREFIX)boot
+$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok: $(KVM_BOOT_FILE)
 	@if ! test -w $(KVM_QEMUDIR) ; then				\
 		echo ;							\
 		echo  The directory:					\
@@ -325,8 +321,8 @@ web-pages-disabled:
 
 define kvm-test
 .PHONY: $(1)
-$(1): 		$(KVM_LOCALDIR)/$(KVM_PREFIX)qemudir-ok \
-		$(KVM_LOCALDIR)/$(KVM_PREFIX)entropy-ok \
+$(1): 		$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok \
+		$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)entropy-ok \
 		kvm-keys-ok \
 		kvm-shutdown-local-domains
 	@$(MAKE) $$(if $$(WEB_ENABLED), web-test-prep, -s web-pages-disabled)
@@ -426,9 +422,9 @@ kvm-keys: $(KVM_KEYS)
 $(KVM_KEYS):	$(top_srcdir)/testing/x509/dist_certs.py \
 		$(top_srcdir)/testing/x509/openssl.cnf \
 		$(top_srcdir)/testing/x509/strongswan-ec-gen.sh \
-		$(top_srcdir)/testing/baseconfigs/all/etc/bind/generate-dnssec.sh \
-		$(KVM_LOCALDIR)/$(KVM_PREFIX)qemudir-ok \
-		$(KVM_LOCALDIR)/$(KVM_PREFIX)entropy-ok
+		$(top_srcdir)/testing/baseconfigs/all/etc/bind/generate-dnssec.sh
+	: check machine ok
+	$(MAKE) $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)entropy-ok
 	: invoke phony target to shut things down and delete old keys
 	$(MAKE) kvm-shutdown-local-domains
 	$(MAKE) $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
@@ -677,7 +673,6 @@ endef
 
 .PRECIOUS: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks
 $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks: \
-		$(KVM_LOCALDIR)/$(KVM_PREFIX)qemudir-ok \
 		| \
 		$(KVM_ISO) \
 		$(KVM_KICKSTART_FILE) \
@@ -685,6 +680,9 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks: \
 		$(KVM_POOLDIR)
 	: Confirm that there is a tty - else virt-install fails mysteriously
 	tty
+	: Confirm that QEMU is ok - not a dependency else as only needed when building
+	$(MAKE) $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok \
+	: clean up
 	$(call destroy-kvm-domain,$(KVM_BASE_DOMAIN))
 	: delete any old disk and let virt-install create the image
 	rm -f '$(basename $@).qcow2'
@@ -698,9 +696,8 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks: \
 	: the reboot message from virt-install can be ignored
 	touch $@
 
-$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded: \
-		$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks \
-		$(KVM_LOCALDIR)/$(KVM_PREFIX)qemudir-ok
+$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks
+	$(MAKE) $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok
 	$(if $(KVM_PACKAGE_INSTALL), $(if $(KVM_INSTALL_PACKAGES), \
 		$(KVMSH) $(KVM_BASE_DOMAIN) $(KVM_PACKAGE_INSTALL) $(KVM_INSTALL_PACKAGES)))
 	$(if $(KVM_PACKAGE_UPGRADE), $(if $(KVM_UPGRADE_PACKAGES), \
@@ -745,7 +742,7 @@ endef
 
 KVM_BASE_DISK_CLONES = $(addsuffix .qcow2, $(addprefix $(KVM_LOCALDIR)/, $(KVM_BASE_DOMAIN_CLONES)))
 $(KVM_BASE_DISK_CLONES): \
-		$(KVM_LOCALDIR)/$(KVM_PREFIX)qemudir-ok \
+		$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok \
 		| \
 		$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded \
 		$(KVM_LOCALDIR)
@@ -762,7 +759,7 @@ $(KVM_BASE_DISK_CLONES): \
 
 KVM_BUILD_DISK_CLONES = $(addsuffix .qcow2, $(addprefix $(KVM_LOCALDIR)/, $(KVM_BUILD_DOMAIN_CLONES)))
 $(KVM_BUILD_DISK_CLONES): \
-		$(KVM_LOCALDIR)/$(KVM_PREFIX)qemudir-ok \
+		$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok \
 		| \
 		$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2 \
 		$(KVM_LOCALDIR)
@@ -791,7 +788,7 @@ $(KVM_BUILD_DISK_CLONES): \
 #
 
 $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml: \
-		$(KVM_LOCALDIR)/$(KVM_PREFIX)qemudir-ok \
+		$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok \
 		| \
 		$(KVM_BASE_GATEWAY_FILE) \
 		$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded \
@@ -818,7 +815,7 @@ define install-kvm-test-domain
   .PHONY: install-kvm-domain-$(1)$(2)
   install-kvm-domain-$(1)$(2): $$(KVM_LOCALDIR)/$(1)$(2).xml
   $$(KVM_LOCALDIR)/$(1)$(2).xml: \
-		$(KVM_LOCALDIR)/$(KVM_PREFIX)qemudir-ok \
+		$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok \
 		| \
 		$$(foreach subnet,$$(KVM_TEST_SUBNETS), \
 			$$(KVM_POOLDIR)/$(1)$$(subnet).net) \
@@ -963,7 +960,7 @@ kvm-demolish: kvm-uninstall-base-network
 
 .PHONY: kvm-$(KVM_BUILD_DOMAIN)-build
 kvm-$(KVM_BUILD_DOMAIN)-build: \
-		$(KVM_LOCALDIR)/$(KVM_PREFIX)qemudir-ok \
+		$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok \
 		| \
 		$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
 ifeq ($(KVM_INSTLL_RPM), true)
@@ -988,7 +985,7 @@ kvm-build: $(foreach domain, $(KVM_BUILD_DOMAIN_CLONES), uninstall-kvm-domain-$(
 
 .PHONY: kvm-$(KVM_BUILD_DOMAIN)-install
 kvm-$(KVM_BUILD_DOMAIN)-install: \
-		$(KVM_LOCALDIR)/$(KVM_PREFIX)qemudir-ok \
+		$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok \
 		kvm-$(KVM_BUILD_DOMAIN)-build \
 		| \
 		$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
@@ -1028,7 +1025,7 @@ kvm-bisect:
 define kvmsh-DOMAIN
   #(info kvmsh-DOMAIN domain=$(1) file=$(2))
   .PHONY: kvmsh-$(1)
-  kvmsh-$(1):	$(KVM_LOCALDIR)/$(KVM_PREFIX)qemudir-ok \
+  kvmsh-$(1):	$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok \
 		| \
 		$(2)
 	: kvmsh-DOMAIN domain=$(1) file=$(2)
