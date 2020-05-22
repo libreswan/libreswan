@@ -6,7 +6,6 @@ road #
  ip route del default
 road #
  ip tuntap add mode tun tun0
-[ 00.00] tun: Universal TUN/TAP device driver VERSION
 road #
  ifconfig tun0 10.11.12.13/24
 road #
