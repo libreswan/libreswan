@@ -8,9 +8,6 @@ west #
 west #
  ipsec pluto --ctlbase /tmp/rhbz1313816 --nofork --stderrlog --log-no-time
 Pluto initialized
-FIPS Product: NO
-FIPS Kernel: NO
-FIPS Mode: NO
 NSS DB directory: sql:/etc/ipsec.d
 Initializing NSS
 Opening NSS database "sql:/etc/ipsec.d" read-only
