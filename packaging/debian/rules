@@ -30,7 +30,7 @@ DISTRO_CONF += $(shell grep -qE 'cosmic|jessie|xenial' /etc/os-release && echo U
 DISTRO_CONF += $(shell grep -qE 'bionic|stretch' /etc/os-release && echo USE_XFRM_INTERFACE_IFLA_HEADER=true)
 
 override_dh_auto_build:
-	$(MAKE) programs \
+	dh_auto_build -- programs \
 		ARCH=$(DEB_HOST_ARCH) \
 		IPSECVERSION=$(DEB_VERSION_UPSTREAM_REVISION) \
 		PREFIX=/usr \
