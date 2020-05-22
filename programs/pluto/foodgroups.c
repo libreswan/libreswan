@@ -113,203 +113,180 @@ static void read_foodgroup(struct fg_groups *g, struct fd *whackfd)
 		fg_path_space = plen + 10;
 		fg_path = alloc_bytes(fg_path_space, "policy group path");
 	}
+
+	/* danger, global buffer */
 	snprintf(fg_path, fg_path_space, "%s/%s", oco->policies_dir, fgn);
 	if (!lexopen(&flp_space, fg_path, TRUE)) {
-		DBG(DBG_CONTROL, {
-			    char cwd[PATH_MAX];
-			    DBG_log("no group file \"%s\" (pwd:%s)",
-				    fg_path,
-				    getcwd(cwd, sizeof(cwd)));
-		    });
-	} else {
-		log_global(RC_LOG, whackfd, "loading group \"%s\"", fg_path);
-		for (;; ) {
-			switch (flp->bdry) {
-			case B_none:
-			{
-				const struct ip_info *afi =
-					strchr(flp->tok, ':') == NULL ?
-					&ipv4_info : &ipv6_info;
-				ip_subnet sn;
-				err_t ugh;
-
-				if (strchr(flp->tok, '/') == NULL) {
-					/* no /, so treat as /32 or V6 equivalent */
-					ip_address t;
-
-					ugh = ttoaddr_num(flp->tok, 0, afi->af,
-						      &t);
-					if (ugh == NULL)
-						ugh = addrtosubnet(&t, &sn);
-				} else {
-					ugh = ttosubnet(flp->tok, 0, afi->af,
-							'x', &sn);
-				}
-
-				if (ugh != NULL) {
-					log_global(RC_LOG_SERIOUS, whackfd,
-						   "\"%s\" line %d ignored: %s \"%s\"",
-						   flp->filename, flp->lino, ugh,
-						   flp->tok);
-					flushline(NULL);
-				} else if ((afi->af != AF_INET) && (afi->af != AF_INET6)) {
-					log_global(RC_LOG_SERIOUS, whackfd,
-						   "\"%s\" line %d: unsupported Address Family \"%s\"",
-						   flp->filename, flp->lino,
-						   flp->tok);
-					(void)shift();
-					flushline(NULL);
-				} else {
-					unsigned proto = 0;
-					unsigned sport = 0;
-					unsigned dport = 0;
-
-					/* check for: protocol sport dport */
-					(void)shift();
-					if (flp->bdry == B_none) {
-						int line = flp->lino;
-						err_t err;
-						/* protocol */
-						(void)shift();
-						if (flp->bdry != B_none) {
-							log_global(RC_LOG_SERIOUS, whackfd,
-								   "\"%s\" line %d: entry must either have only a destination CIDR, or 'CIDR proto source_port dest_port' specified",
-								   flp->filename, line);
-							break;
-						}
-						err = ttoipproto(flp->tok, &proto);
-						if (err != NULL) {
-							log_global(RC_LOG_SERIOUS, whackfd,
-								   "\"%s\" line %d: protocol '%s' invalid: %s",
-								   flp->filename, line, flp->tok, err);
-							break;
-						}
-						if (proto == 0 || proto == IPPROTO_ESP || proto == IPPROTO_AH) {
-							log_global(RC_LOG_SERIOUS, whackfd,
-								   "\"%s\" line %d: invalid protocol '%s' - mistakenlly defined to be 0 or 50(esp) or 51(ah)",
-								   flp->filename, line, flp->tok);
-							break;
-						}
-						/* source port */
-						(void)shift();
-						if (flp->bdry != B_none) {
-							log_global(RC_LOG_SERIOUS, whackfd,
-								   "\"%s\" line %d: wrong number of arguments: either only specify CIDR, or specify CIDR proto source_port dest_port",
-								   flp->filename, line);
-							break;
-						}
-						err = ttoport(flp->tok, &sport);
-						if (ugh != NULL) {
-							log_global(RC_LOG_SERIOUS, whackfd,
-								   "\"%s\" line %d: source port '%s' invalid: %s",
-								   flp->filename, line, flp->tok, err);
-							break;
-						}
-						/* dest port */
-						(void)shift();
-						if (flp->bdry != B_none) {
-							log_global(RC_LOG_SERIOUS, whackfd,
-								   "\"%s\" line %d: wrong number of arguments: either only specify CIDR, or specify CIDR proto source_port dest_port",
-								   flp->filename, line);
-							break;
-						}
-						err = ttoport(flp->tok, &dport);
-						if (ugh != NULL) {
-							log_global(RC_LOG_SERIOUS, whackfd,
-								   "\"%s\" line %d: destination port '%s' invalid: %s",
-								   flp->filename, line, flp->tok, err);
-							break;
-						}
-						/*
-						 * XXX: Check at end
-						 * of line/file?
-						 *
-						 * XXX: there was a
-						 * test for flp->bdry
-						 * != B_file but that
-						 * had the effect of
-						 * allowing '0' when
-						 * the file was
-						 * truncated?
-						 *
-						 * Suspect the intent
-						 * was to reject
-						 * truncated lines,
-						 * but for that to
-						 * work shift() would
-						 * be needed.
-						 */
-					}
-					/* will skip any trailing tokens? */
-					flushline(NULL);
-
-					/* Find where new entry ought to go in new_targets. */
-					struct fg_targets **pp;
-					int r;
-
-					for (pp = &new_targets;;
-					     pp = &(*pp)->next) {
-						if (*pp == NULL) {
-							r = -1; /* end of list is infinite */
-							break;
-						}
-						r = subnetcmp(lsn,
-							      &(*pp)->group->connection->spd.this.client);
-						if (r == 0) {
-							r = subnetcmp(&sn, &(*pp)->subnet);
-						}
-						if (r != 0)
-							break;
-
-						if (proto == (*pp)->proto &&
-						    sport == (*pp)->sport &&
-						    dport == (*pp)->dport) {
-							break;
-						}
-					}
-
-					if (r == 0) {
-						subnet_buf source;
-						subnet_buf dest;
-						log_global(RC_LOG_SERIOUS, whackfd,
-							   "\"%s\" line %d: subnet \"%s\", proto %d, sport %d dport %d, source %s, already \"%s\"",
-							   flp->filename,
-							   flp->lino,
-							   str_subnet(&sn, &dest),
-							   proto, sport, dport,
-							   str_subnet(lsn, &source),
-							   (*pp)->group->connection->name);
-					} else {
-						struct fg_targets *f =
-							alloc_thing(
-								struct fg_targets,
-								"fg_target");
-
-						f->next = *pp;
-						f->group = g;
-						f->subnet = sn;
-						f->proto = proto;
-						f->sport = sport;
-						f->dport = dport;
-						f->name = NULL;
-						*pp = f;
-					}
-				}
-				continue;
-			}
-
-			case B_record:
-				flp->bdry = B_none;     /* eat the Record Boundary */
-				(void)shift();          /* get real first token */
-				continue;
-
-			case B_file:
-				break;  /* done */
-			}
-			break;          /* if we reach here, out of loop */
-		}
-		lexclose();
+		char cwd[PATH_MAX];
+		dbg("no group file \"%s\" (pwd:%s)", fg_path, getcwd(cwd, sizeof(cwd)));
+		return;
 	}
+
+	log_global(RC_LOG, whackfd, "loading group \"%s\"", fg_path);
+	while (flp->bdry == B_record) {
+
+		/* force advance to first token */
+		flp->bdry = B_none;     /* eat the Record Boundary */
+		(void)shift();          /* get real first token */
+		if (flp->bdry != B_none) {
+			continue;
+		}
+
+		/* address or address/mask */
+		ip_subnet sn;
+		if (strchr(flp->tok, '/') == NULL) {
+			/* no /, so treat as /32 or V6 equivalent */
+			ip_address t;
+			err_t err = numeric_to_address(shunk1(flp->tok), NULL, &t);
+			if (err != NULL) {
+				log_global(RC_LOG_SERIOUS, whackfd,
+					   "\"%s\" line %d ignored, '%s' is not an address: %s",
+					   flp->filename, flp->lino, flp->tok, err);
+				flushline(NULL/*shh*/);
+				continue;
+			}
+			sn = subnet_from_address(&t);
+		} else {
+			const struct ip_info *afi = strchr(flp->tok, ':') == NULL ? &ipv4_info : &ipv6_info;
+			err_t err = ttosubnet(flp->tok, 0, afi->af, 'x', &sn);
+			if (err != NULL) {
+				log_global(RC_LOG_SERIOUS, whackfd,
+					   "\"%s\" line %d ignored, '%s' is not a subnet: %s",
+					   flp->filename, flp->lino, flp->tok, err);
+				flushline(NULL/*shh*/);
+				continue;
+			}
+		}
+
+		const struct ip_info *type = subnet_type(&sn);
+		if (type == NULL) {
+			log_global(RC_LOG_SERIOUS, whackfd,
+				   "\"%s\" line %d ignored, unsupported Address Family \"%s\"",
+				   flp->filename, flp->lino, flp->tok);
+			flushline(NULL);
+			continue;
+		}
+
+		unsigned proto = 0;
+		unsigned sport = 0;
+		unsigned dport = 0;
+		int line = flp->lino;
+
+		/* check for: [protocol sport dport] */
+		(void)shift();
+		if (flp->bdry == B_none) {
+			err_t err;
+			/* protocol */
+			err = ttoipproto(flp->tok, &proto);
+			if (err != NULL) {
+				log_global(RC_LOG_SERIOUS, whackfd,
+					   "\"%s\" line %d: protocol '%s' invalid: %s",
+					   flp->filename, line, flp->tok, err);
+				break;
+			}
+			if (proto == 0 || proto == IPPROTO_ESP || proto == IPPROTO_AH) {
+				log_global(RC_LOG_SERIOUS, whackfd,
+					   "\"%s\" line %d: invalid protocol '%s' - mistakenly defined to be 0 or %u(esp) or %u(ah)",
+					   flp->filename, line, flp->tok, IPPROTO_ESP, IPPROTO_AH);
+				break;
+			}
+			(void)shift();
+			/* source port */
+			if (flp->bdry != B_none) {
+				log_global(RC_LOG_SERIOUS, whackfd,
+					   "\"%s\" line %d: missing source_port: either only specify CIDR, or specify CIDR protocol source_port dest_port",
+					   flp->filename, line);
+				break;
+			}
+			err = ttoport(flp->tok, &sport);
+			if (err != NULL) {
+				log_global(RC_LOG_SERIOUS, whackfd,
+					   "\"%s\" line %d: source port '%s' invalid: %s",
+					   flp->filename, line, flp->tok, err);
+				break;
+			}
+			(void)shift();
+			/* dest port */
+			if (flp->bdry != B_none) {
+				log_global(RC_LOG_SERIOUS, whackfd,
+					   "\"%s\" line %d: missing dest_port: either only specify CIDR, or specify CIDR protocol source_port dest_port",
+					   flp->filename, line);
+				break;
+			}
+			err = ttoport(flp->tok, &dport);
+			if (err != NULL) {
+				log_global(RC_LOG_SERIOUS, whackfd,
+					   "\"%s\" line %d: destination port '%s' invalid: %s",
+					   flp->filename, line, flp->tok, err);
+				break;
+			}
+			shift();
+			/* more stuff? */
+			if (flp->bdry == B_none) {
+				log_global(RC_LOG_SERIOUS, whackfd,
+					   "\"%s\" line %d: garbage '%s' at end of line: either only specify CIDR, or specify CIDR protocol source_port dest_port",
+					   flp->filename, line, flp->tok);
+				break;
+			}
+		}
+
+		pexpect(flp->bdry == B_record || flp->bdry == B_file);
+
+		/* Find where new entry ought to go in new_targets. */
+		struct fg_targets **pp;
+		int r;
+
+		for (pp = &new_targets;;
+		     pp = &(*pp)->next) {
+			if (*pp == NULL) {
+				r = -1; /* end of list is infinite */
+				break;
+			}
+			r = subnetcmp(lsn,
+				      &(*pp)->group->connection->spd.this.client);
+			if (r == 0) {
+				r = subnetcmp(&sn, &(*pp)->subnet);
+			}
+			if (r != 0)
+				break;
+
+			if (proto == (*pp)->proto &&
+			    sport == (*pp)->sport &&
+			    dport == (*pp)->dport) {
+				break;
+			}
+		}
+
+		if (r == 0) {
+			subnet_buf source;
+			subnet_buf dest;
+			log_global(RC_LOG_SERIOUS, whackfd,
+				   "\"%s\" line %d: subnet \"%s\", proto %d, sport %d dport %d, source %s, already \"%s\"",
+				   flp->filename,
+				   flp->lino,
+				   str_subnet(&sn, &dest),
+				   proto, sport, dport,
+				   str_subnet(lsn, &source),
+				   (*pp)->group->connection->name);
+		} else {
+			struct fg_targets *f = alloc_thing(struct fg_targets,
+							   "fg_target");
+			f->next = *pp;
+			f->group = g;
+			f->subnet = sn;
+			f->proto = proto;
+			f->sport = sport;
+			f->dport = dport;
+			f->name = NULL;
+			*pp = f;
+		}
+	}
+	if (flp->bdry != B_file) {
+		log_global(RC_LOG_SERIOUS, whackfd,
+			   "\"%s\" line %d: rest of file ignored",
+			   flp->filename, flp->lino);
+	}
+	lexclose();
 }
 
 static void free_targets(void)
