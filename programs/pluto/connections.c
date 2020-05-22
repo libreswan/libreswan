@@ -1889,7 +1889,7 @@ void add_connection(struct fd *whackfd, const struct whack_message *wm)
  * Returns name of new connection.  NULL on failure (duplicated name).
  * Caller is responsible for pfreeing name.
  */
-char *add_group_instance(const struct fd *whackfd,
+char *add_group_instance(struct fd *whackfd,
 			 struct connection *group, const ip_subnet *target,
 			 uint8_t proto , uint16_t sport , uint16_t dport)
 {
@@ -1970,7 +1970,7 @@ char *add_group_instance(const struct fd *whackfd,
 
 		/* route if group is routed */
 		if (group->policy & POLICY_GROUTED) {
-			if (!trap_connection(t))
+			if (!trap_connection(t, whackfd))
 				whack_log(RC_ROUTE, whackfd,
 					  "could not route");
 		}

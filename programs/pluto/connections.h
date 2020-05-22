@@ -433,7 +433,7 @@ extern void delete_connection(struct connection *c, bool relations);
 extern void delete_connections_by_name(const char *name, bool strict,
 				       struct fd *whack);
 extern void delete_every_connection(void);
-extern char *add_group_instance(const struct fd *whack,
+extern char *add_group_instance(struct fd *whack,
 				struct connection *group,
 				const ip_subnet *target,
 				uint8_t proto,

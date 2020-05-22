@@ -202,7 +202,7 @@ static int whack_route_connection(struct connection *c,
 			       "we cannot identify ourselves with either end of this connection");
 	} else if (c->policy & POLICY_GROUP) {
 		route_group(whackfd, c);
-	} else if (!trap_connection(c)) {
+	} else if (!trap_connection(c, whackfd)) {
 		/* XXX: why whack only? */
 		log_connection(RC_ROUTE|WHACK_STREAM, whackfd, c, "could not route");
 	}

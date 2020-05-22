@@ -827,16 +827,19 @@ static enum routability note_nearconflict(
 /*
  * Note: this may mutate c
  */
-static enum routability could_route(struct connection *c)
+static enum routability could_route(struct connection *c, struct logger *logger)
 {
-	DBG(DBG_CONTROL,
-		DBG_log("could_route called for %s (kind=%s)",
-			c->name,
-			enum_show(&connection_kind_names, c->kind)));
+	dbg("could_route called for %s; kind=%s that.has_client=%s oppo=%s this.host_port=%u",
+	    c->name,
+	    enum_show(&connection_kind_names, c->kind),
+	    bool_str(c->spd.that.has_client),
+	    bool_str(c->policy & POLICY_OPPORTUNISTIC),
+	    c->spd.this.host_port);
 
 	/* it makes no sense to route a connection that is ISAKMP-only */
 	if (!NEVER_NEGOTIATE(c->policy) && !HAS_IPSEC_POLICY(c->policy)) {
-		loglog(RC_ROUTE, "cannot route an ISAKMP-only connection");
+		log_message(RC_ROUTE, logger,
+			    "cannot route an ISAKMP-only connection");
 		return route_impossible;
 	}
 
@@ -852,10 +855,11 @@ static enum routability could_route(struct connection *c)
 	 * Opportunistic template is OK.
 	 */
 	if (!c->spd.that.has_client &&
-		c->kind == CK_TEMPLATE &&
-		!(c->policy & POLICY_OPPORTUNISTIC)) {
-		loglog(RC_ROUTE, "cannot route template policy of %s",
-			prettypolicy(c->policy));
+	    c->kind == CK_TEMPLATE &&
+	    !(c->policy & POLICY_OPPORTUNISTIC)) {
+		log_message(RC_ROUTE, logger,
+			    "cannot route template policy of %s",
+			    prettypolicy(c->policy));
 		return route_impossible;
 	}
 
@@ -864,8 +868,8 @@ static enum routability could_route(struct connection *c)
 	    c->spd.this.host_port != pluto_nat_port &&
 	    c->spd.this.host_port != pluto_port &&
 	    addrinsubnet(&c->spd.that.host_addr, &c->spd.that.client)) {
-		loglog(RC_LOG_SERIOUS,
-			"cannot install route: peer is within its client");
+		log_message(RC_LOG_SERIOUS, logger,
+			    "cannot install route: peer is within its client");
 		return route_impossible;
 	}
 
@@ -881,7 +885,6 @@ static enum routability could_route(struct connection *c)
 	 * This is as it should be -- it will arise during rekeying.
 	 */
 	if (ro != NULL && !routes_agree(ro, c)) {
-		char cib[CONN_INST_BUF];
 
 		if (!compatible_overlapping_connections(c, ero)) {
 			/*
@@ -889,14 +892,16 @@ static enum routability could_route(struct connection *c)
 			 * TODO: NETKEY can do this? For now excempt OE only
 			 */
 			if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-				loglog(RC_LOG_SERIOUS,
-					"cannot route -- route already in use for \"%s\"%s",
-					ro->name, fmt_conn_instance(ro, cib));
+				connection_buf cib;
+				log_message(RC_LOG_SERIOUS, logger,
+					    "cannot route -- route already in use for "PRI_CONNECTION"",
+					    pri_connection(ro, &cib));
 				return route_impossible;
 			} else {
-				loglog(RC_LOG_SERIOUS,
-					"cannot route -- route already in use for \"%s\"%s - but allowing anyway",
-					ro->name, fmt_conn_instance(ro, cib));
+				connection_buf cib;
+				log_message(RC_LOG_SERIOUS, logger,
+					    "cannot route -- route already in use for "PRI_CONNECTION" - but allowing anyway",
+					    pri_connection(ro, &cib));
 			}
 		}
 	}
@@ -908,9 +913,6 @@ static enum routability could_route(struct connection *c)
 		 * note, wavesec (PERMANENT) goes *outside* and
 		 * OE goes *inside* (TEMPLATE)
 		 */
-		char inst[CONN_INST_BUF];
-		struct connection *ep;
-
 		if (ero->kind == CK_PERMANENT &&
 			c->kind == CK_TEMPLATE) {
 			return note_nearconflict(ero, c);
@@ -921,7 +923,7 @@ static enum routability could_route(struct connection *c)
 
 		/* look along the chain of policies for one with the same name */
 
-		for (ep = ero; ep != NULL; ep = ero->policy_next) {
+		for (struct connection *ep = ero; ep != NULL; ep = ero->policy_next) {
 			if (ep->kind == CK_TEMPLATE &&
 				streq(ep->name, c->name))
 				return route_easy;
@@ -937,29 +939,29 @@ static enum routability could_route(struct connection *c)
 		 * other than c, conflicts with c?
 		 */
 
-		fmt_conn_instance(ero, inst);
-
 		if (LDISJOINT(POLICY_OVERLAPIP, c->policy | ero->policy)) {
 			/*
 			 * another connection is already using the eroute,
 			 * TODO: NETKEY apparently can do this though
 			 */
-			loglog(RC_LOG_SERIOUS,
-				"cannot install eroute -- it is in use for \"%s\"%s #%lu",
-				ero->name, inst, esr->eroute_owner);
+			connection_buf erob;
+			log_message(RC_LOG_SERIOUS, logger,
+				    "cannot install eroute -- it is in use for "PRI_CONNECTION" #%lu",
+				    pri_connection(ero, &erob), esr->eroute_owner);
 			return route_impossible;
 		}
 
-		DBG(DBG_CONTROL,
-			DBG_log("overlapping permitted with \"%s\"%s #%lu",
-				ero->name, inst, esr->eroute_owner));
+		connection_buf erob;
+		dbg("overlapping permitted with "PRI_CONNECTION" #%lu",
+		    pri_connection(ero, &erob), esr->eroute_owner);
 	}
 	return route_easy;
 }
 
-bool trap_connection(struct connection *c)
+bool trap_connection(struct connection *c, struct fd *whackfd)
 {
-	enum routability r = could_route(c);
+	struct logger logger = CONNECTION_LOGGER(c, whackfd);
+	enum routability r = could_route(c, &logger);
 
 	switch (r) {
 	case route_impossible:
@@ -2752,7 +2754,7 @@ bool install_inbound_ipsec_sa(struct state *st)
 	DBG(DBG_CONTROL,
 		DBG_log("install_inbound_ipsec_sa() checking if we can route"));
 	/* check that we will be able to route and eroute */
-	switch (could_route(c)) {
+	switch (could_route(c, st->st_logger)) {
 	case route_easy:
 	case route_nearconflict:
 		DBG(DBG_CONTROL,
@@ -3128,7 +3130,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 	dbg("install_ipsec_sa() for #%lu: %s", st->st_serialno,
 	    inbound_also ? "inbound and outbound" : "outbound only");
 
-	enum routability rb = could_route(st->st_connection);
+	enum routability rb = could_route(st->st_connection, st->st_logger);
 
 	switch (rb) {
 	case route_easy:

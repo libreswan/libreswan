@@ -381,7 +381,7 @@ extern void record_and_initiate_opportunistic(const ip_subnet *,
 extern void init_kernel(void);
 
 struct connection;      /* forward declaration of tag */
-extern bool trap_connection(struct connection *c);
+extern bool trap_connection(struct connection *c, struct fd *whackfd);
 extern void unroute_connection(struct connection *c);
 extern void migration_up(struct connection *c,  struct state *st);
 extern void migration_down(struct connection *c,  struct state *st);

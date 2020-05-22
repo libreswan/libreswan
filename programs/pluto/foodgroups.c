@@ -430,7 +430,7 @@ void route_group(struct fd *whackfd, struct connection *c)
 					 * breadcrumb in the log file?
 					 */
 					struct connection *old = push_cur_connection(ci); /* for trap_connection() */
-					if (!trap_connection(ci))
+					if (!trap_connection(ci, whackfd))
 						log_connection(WHACK_STREAM|RC_ROUTE, whackfd, c,
 							       "could not route");
 					pop_cur_connection(old);
