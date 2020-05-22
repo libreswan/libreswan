@@ -111,7 +111,8 @@ err_t ttoprotoport(const char *src, ip_protoport *protoport)
 
 	/* is there a port wildcard? */
 	unsigned port;
-	if (streq(service_name, "%any")) {
+	bool any_port = streq(service_name, "%any");
+	if (any_port) {
 		port = 0;
 	} else if (service_name[0] == '\0') {
 		/* allow N/ and N */
@@ -128,6 +129,7 @@ err_t ttoprotoport(const char *src, ip_protoport *protoport)
 	}
 
 	protoport->protocol = protocol;
+	protoport->any_port = any_port;
 	protoport->port = port;
 	return NULL;
 }
@@ -141,7 +143,7 @@ size_t jam_protoport(jambuf_t *buf, const ip_protoport *protoport)
 		s += jam(buf, "%u", protoport->protocol);
 	}
 	jam(buf, "/");
-	if (protoport->port == 0) { /* XXX:->any_port?*/
+	if (protoport->any_port) { /* XXX:->any_port?*/
 		s += jam_string(buf, "%any");
 	} else {
 		s += jam(buf, "%u", protoport->port);
@@ -163,5 +165,5 @@ bool protoport_is_set(const ip_protoport *protoport)
 
 bool protoport_has_any_port(const ip_protoport *protoport)
 {
-	return protoport->protocol != 0 && protoport->port == 0;
+	return protoport->protocol != 0 && protoport->any_port;
 }

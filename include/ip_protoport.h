@@ -25,8 +25,9 @@
 #include "jambuf.h"
 
 typedef struct {
-	unsigned port;		/* 0..65535; 0->%any */
-	unsigned protocol;	/* 0..65535; 0->%any */
+	bool any_port;
+	unsigned port;		/* 1..65535; 0->0-65535 */
+	unsigned protocol;	/* 1..255; 0->unset */
 } ip_protoport;
 
 err_t ttoprotoport(const char *src, ip_protoport *protoport);
