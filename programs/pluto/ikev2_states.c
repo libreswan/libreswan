@@ -204,14 +204,10 @@ const struct state_v2_microcode *find_v2_state_transition(struct logger *logger,
 			continue;
 		}
 		/* role? */
-		if (transition->flags & SMF2_MESSAGE_RESPONSE &&
-		    v2_msg_role(md) != MESSAGE_RESPONSE) {
-			dbg("    not a response");
-			continue;
-		}
-		if (transition->flags & SMF2_MESSAGE_REQUEST &&
-		    v2_msg_role(md) != MESSAGE_REQUEST) {
-			dbg("    not a request");
+		if (transition->recv_role != v2_msg_role(md)) {
+			dbg("    not a %s", (transition->recv_role == MESSAGE_REQUEST ? "request" :
+					     transition->recv_role == MESSAGE_RESPONSE ? "response" :
+					     "no-message"));
 			continue;
 		}
 		/* message payloads */

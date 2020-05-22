@@ -223,7 +223,9 @@ struct state_v2_microcode {
 	const enum state_kind state;
 	const enum state_kind next_state;
 	const enum isakmp_xchg_types recv_type;
+	enum message_role recv_role;
 	const lset_t flags;
+
 	/*
 	 * During a successful state transition is an out going
 	 * message expected and, if so, is it a request or response.

@@ -24,22 +24,6 @@ extern struct finite_state v2_states[STATE_IKEv2_ROOF - STATE_IKEv2_FLOOR];
 
 enum smf2_flags {
 	/*
-	 * Is this a message request or response?
-	 *
-	 * Requests have the (R) bit clear, and responses have the (R)
-	 * bit set.
-	 *
-	 * Don't assume one of these flags are present.  Some state
-	 * processors internally deal with both the request and the
-	 * reply.
-	 *
-	 * In general, the relationship MSG_R != IKE_I does not hold
-	 * (it just holds during the initial exchange).
-	 */
-	SMF2_MESSAGE_RESPONSE = LELEM(5),
-	SMF2_MESSAGE_REQUEST = LELEM(6),
-
-	/*
 	 * Should the SK (secured-by-key) decryption and verification
 	 * be skipped?
 	 *
