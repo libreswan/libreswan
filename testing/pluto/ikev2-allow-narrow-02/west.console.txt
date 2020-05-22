@@ -41,7 +41,9 @@ west #
 003 "westnet-eastnet-ikev2" #1: authenticated using RSA with SHA2_512
 238 "westnet-eastnet-ikev2" #2: state transition 'Initiator: process IKE_AUTH response' failed with v2N_TS_UNACCEPTABLE
 031 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: 60 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
-000 "westnet-eastnet-ikev2" #2: starting keying attempt 2 of an unlimited number, but releasing whack
+002 "westnet-eastnet-ikev2" #2: liveness action - putting connection into hold
+002 "westnet-eastnet-ikev2" #2: deleting state (STATE_PARENT_I2) and NOT sending notification
+002 "westnet-eastnet-ikev2" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 west #
  echo done
 done

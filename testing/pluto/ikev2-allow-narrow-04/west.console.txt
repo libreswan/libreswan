@@ -42,7 +42,7 @@ west #
 1v2 "westnet-eastnet-ikev2"[1] 192.1.2.23 #1: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "westnet-eastnet-ikev2"[1] 192.1.2.23 #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2"[1] 192.1.2.23 #1: authenticated using RSA with SHA2_512
-002 "westnet-eastnet-ikev2"[1] 192.1.2.23 #2: negotiated connection [192.0.1.0-192.0.1.255:1234-1234 0] -> [192.0.2.0-192.0.2.255:1234-1234 0]
+002 "westnet-eastnet-ikev2"[1] 192.1.2.23 #2: negotiated connection [192.0.1.0-192.0.1.255:1234-1234 17] -> [192.0.2.0-192.0.2.255:1234-1234 17]
 004 "westnet-eastnet-ikev2"[1] 192.1.2.23 #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  # ideally trafficstatus would show IPsec SA like eroute did
@@ -65,16 +65,16 @@ src 192.1.2.45 dst 192.1.2.23
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 XFRM policy:
-src 192.0.1.0/24 dst 192.0.2.0/24 sport 1234 dport 1234
-	dir out priority 1560527 ptype main
+src 192.0.1.0/24 dst 192.0.2.0/24 proto udp sport 1234 dport 1234
+	dir out priority 1429455 ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24 sport 1234 dport 1234
-	dir fwd priority 1560527 ptype main
+src 192.0.2.0/24 dst 192.0.1.0/24 proto udp sport 1234 dport 1234
+	dir fwd priority 1429455 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24 sport 1234 dport 1234
-	dir in priority 1560527 ptype main
+src 192.0.2.0/24 dst 192.0.1.0/24 proto udp sport 1234 dport 1234
+	dir in priority 1429455 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 XFRM done
