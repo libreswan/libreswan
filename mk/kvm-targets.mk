@@ -195,39 +195,57 @@ define kvm-HOST-DOMAIN
 endef
 
 
+
 #
 # Check that things are correctly configured for creating the KVM
 # domains
 #
-# Use := so that the make variable is evaluated only once.  Result is
-# either empty, or a make target that will print the error.
+# Only do this once per boot.
 #
 
-KVM_ENTROPY_FILE ?= /proc/sys/kernel/random/entropy_avail
-KVM_ENTROPY_OK := $(shell test ! -r $(KVM_ENTROPY_FILE) || test $(shell cat $(KVM_ENTROPY_FILE)) -gt 100 || echo broken-kvm-entropy)
-.PHONY: broken-kvm-entropy
-broken-kvm-entropy:
-	:
-	:  According to $(KVM_ENTROPY_FILE) your computer does not seem to have much entropy.
-	:
-	:  Check the wiki for hints on how to fix this.
-	:
-	false
+$(KVM_LOCALDIR)/$(KVM_PREFIX)boot: \
+		$(firstword $(wildcard /var/run/rc.log /proc/uptime)) \
+		| \
+		$(KVM_LOCALDIR)
+	touch $@
 
+KVM_ENTROPY_FILE ?= /proc/sys/kernel/random/entropy_avail
+
+$(KVM_LOCALDIR)/$(KVM_PREFIX)entropy-ok: $(KVM_LOCALDIR)/$(KVM_PREFIX)boot
+	@if test ! -r $(KVM_ENTROPY_FILE); then				\
+		echo no entropy to check ;				\
+	elif test $$(cat $(KVM_ENTROPY_FILE)) -gt 100 ; then		\
+		echo lots of entropy ;					\
+	else								\
+		echo ;							\
+		echo  According to:					\
+		echo ;							\
+		echo      $(KVM_ENTROPY_FILE) ;				\
+		echo ;							\
+		echo  your computer does not have much entropy ;	\
+		echo ;							\
+		echo  Check the wiki for hints on how to fix this. ;	\
+		echo ;							\
+		false ;							\
+	fi
+	touch $@
 
 KVM_QEMUDIR ?= /var/lib/libvirt/qemu
-KVM_QEMUDIR_OK := $(shell test -w $(KVM_QEMUDIR) || echo broken-kvm-qemu-directory)
-.PHONY: broken-kvm-qemu-directory
-broken-kvm-qemu-directory:
-	:
-	:  The directory:
-	:
-	:      $(KVM_QEMUDIR)
-	:
-	:  is not writeable.  This will break virsh which is
-	:  used to manipulate the domains.
-	:
-	false
+
+$(KVM_LOCALDIR)/$(KVM_PREFIX)qemudir-ok: $(KVM_LOCALDIR)/$(KVM_PREFIX)boot
+	@if ! test -w $(KVM_QEMUDIR) ; then				\
+		echo ;							\
+		echo  The directory:					\
+		echo ;							\
+		echo      $(KVM_QEMUDIR) ;				\
+		echo ;							\
+		echo  is not writeable. ;				\
+		echo  This will break virsh which is ;			\
+		echo  used to manipulate the domains. ;			\
+		echo ;							\
+		false ;							\
+	fi
+	touch $@
 
 
 #
@@ -307,8 +325,8 @@ web-pages-disabled:
 
 define kvm-test
 .PHONY: $(1)
-$(1): 		$$(KVM_QMUDIR_OK) \
-		$$(KVM_ENTROPY_OK) \
+$(1): 		$(KVM_LOCALDIR)/$(KVM_PREFIX)qemudir-ok \
+		$(KVM_LOCALDIR)/$(KVM_PREFIX)entropy-ok \
 		kvm-keys-ok \
 		kvm-shutdown-local-domains
 	@$(MAKE) $$(if $$(WEB_ENABLED), web-test-prep, -s web-pages-disabled)
@@ -409,8 +427,8 @@ $(KVM_KEYS):	$(top_srcdir)/testing/x509/dist_certs.py \
 		$(top_srcdir)/testing/x509/openssl.cnf \
 		$(top_srcdir)/testing/x509/strongswan-ec-gen.sh \
 		$(top_srcdir)/testing/baseconfigs/all/etc/bind/generate-dnssec.sh \
-		$(KVM_QEMUDIR_OK) \
-		$(KVM_ENTROPY_OK)
+		$(KVM_LOCALDIR)/$(KVM_PREFIX)qemudir-ok \
+		$(KVM_LOCALDIR)/$(KVM_PREFIX)entropy-ok
 	: invoke phony target to shut things down and delete old keys
 	$(MAKE) kvm-shutdown-local-domains
 	$(MAKE) $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
@@ -659,7 +677,7 @@ endef
 
 .PRECIOUS: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks
 $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks: \
-		$(KVM_QEMUDIR_OK) \
+		$(KVM_LOCALDIR)/$(KVM_PREFIX)qemudir-ok \
 		| \
 		$(KVM_ISO) \
 		$(KVM_KICKSTART_FILE) \
@@ -682,7 +700,7 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks: \
 
 $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded: \
 		$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks \
-		$(KVM_QEMUDIR_OK)
+		$(KVM_LOCALDIR)/$(KVM_PREFIX)qemudir-ok
 	$(if $(KVM_PACKAGE_INSTALL), $(if $(KVM_INSTALL_PACKAGES), \
 		$(KVMSH) $(KVM_BASE_DOMAIN) $(KVM_PACKAGE_INSTALL) $(KVM_INSTALL_PACKAGES)))
 	$(if $(KVM_PACKAGE_UPGRADE), $(if $(KVM_UPGRADE_PACKAGES), \
@@ -727,7 +745,7 @@ endef
 
 KVM_BASE_DISK_CLONES = $(addsuffix .qcow2, $(addprefix $(KVM_LOCALDIR)/, $(KVM_BASE_DOMAIN_CLONES)))
 $(KVM_BASE_DISK_CLONES): \
-		$(KVM_QEMUDIR_OK) \
+		$(KVM_LOCALDIR)/$(KVM_PREFIX)qemudir-ok \
 		| \
 		$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded \
 		$(KVM_LOCALDIR)
@@ -744,7 +762,7 @@ $(KVM_BASE_DISK_CLONES): \
 
 KVM_BUILD_DISK_CLONES = $(addsuffix .qcow2, $(addprefix $(KVM_LOCALDIR)/, $(KVM_BUILD_DOMAIN_CLONES)))
 $(KVM_BUILD_DISK_CLONES): \
-		$(KVM_QEMUDIR_OK) \
+		$(KVM_LOCALDIR)/$(KVM_PREFIX)qemudir-ok \
 		| \
 		$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2 \
 		$(KVM_LOCALDIR)
@@ -773,7 +791,7 @@ $(KVM_BUILD_DISK_CLONES): \
 #
 
 $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml: \
-		$(KVM_QEMUDIR_OK) \
+		$(KVM_LOCALDIR)/$(KVM_PREFIX)qemudir-ok \
 		| \
 		$(KVM_BASE_GATEWAY_FILE) \
 		$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded \
@@ -800,7 +818,7 @@ define install-kvm-test-domain
   .PHONY: install-kvm-domain-$(1)$(2)
   install-kvm-domain-$(1)$(2): $$(KVM_LOCALDIR)/$(1)$(2).xml
   $$(KVM_LOCALDIR)/$(1)$(2).xml: \
-		$$(KVM_QEMUDIR_OK) \
+		$(KVM_LOCALDIR)/$(KVM_PREFIX)qemudir-ok \
 		| \
 		$$(foreach subnet,$$(KVM_TEST_SUBNETS), \
 			$$(KVM_POOLDIR)/$(1)$$(subnet).net) \
@@ -945,7 +963,7 @@ kvm-demolish: kvm-uninstall-base-network
 
 .PHONY: kvm-$(KVM_BUILD_DOMAIN)-build
 kvm-$(KVM_BUILD_DOMAIN)-build: \
-		$(KVM_QEMUDIR_OK) \
+		$(KVM_LOCALDIR)/$(KVM_PREFIX)qemudir-ok \
 		| \
 		$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
 ifeq ($(KVM_INSTLL_RPM), true)
@@ -969,7 +987,11 @@ kvm-build: $(foreach domain, $(KVM_BUILD_DOMAIN_CLONES), uninstall-kvm-domain-$(
 # things barf because the build domain things its disk is in use).
 
 .PHONY: kvm-$(KVM_BUILD_DOMAIN)-install
-kvm-$(KVM_BUILD_DOMAIN)-install: $(KVM_QEMUDIR_OK) kvm-$(KVM_BUILD_DOMAIN)-build | $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
+kvm-$(KVM_BUILD_DOMAIN)-install: \
+		$(KVM_LOCALDIR)/$(KVM_PREFIX)qemudir-ok \
+		kvm-$(KVM_BUILD_DOMAIN)-build \
+		| \
+		$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
 ifeq ($(KVM_INSTLL_RPM), true)
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'rpm -aq | grep libreswan && rpm -e $$(rpm -aq | grep libreswan) || true'
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'rpm -i ~/rpmbuild/RPMS/x86_64/libreswan*rpm'
@@ -1006,7 +1028,7 @@ kvm-bisect:
 define kvmsh-DOMAIN
   #(info kvmsh-DOMAIN domain=$(1) file=$(2))
   .PHONY: kvmsh-$(1)
-  kvmsh-$(1):	$$(KVM_QEMUDIR_OK) \
+  kvmsh-$(1):	$(KVM_LOCALDIR)/$(KVM_PREFIX)qemudir-ok \
 		| \
 		$(2)
 	: kvmsh-DOMAIN domain=$(1) file=$(2)
