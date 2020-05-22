@@ -58,7 +58,6 @@ current.states.enumerate.STATE_V2_REKEY_IKE_I0=0
 current.states.enumerate.STATE_V2_REKEY_IKE_I1=0
 current.states.enumerate.STATE_V2_REKEY_CHILD_I0=0
 current.states.enumerate.STATE_V2_REKEY_CHILD_I1=0
-current.states.enumerate.STATE_V2_ESTABLISHED_CHILD_SA=0
 current.states.enumerate.STATE_V2_NEW_CHILD_R0=0
 current.states.enumerate.STATE_V2_REKEY_IKE_R0=0
 current.states.enumerate.STATE_V2_REKEY_CHILD_R0=0
