@@ -49,7 +49,7 @@ static bool pack_raw(struct whackpacker *wp,
 		     const char *what)
 {
 	if (wp->str_next + nr_bytes > wp->str_roof)  {
-		dbg("%s: buffer overflow for '%s'",
+		DBGF(DBG_TMI, "%s: buffer overflow for '%s'",
 		    __func__, what);
 		return false; /* would overflow buffer */
 	}
@@ -65,7 +65,7 @@ static bool unpack_raw(struct whackpacker *wp,
 	uint8_t *end = wp->str_next + nr_bytes;
 	if (end > wp->str_roof) {
 		/* overflow */
-		dbg("%s: buffer overflow for '%s'; needing %zu bytes",
+		DBGF(DBG_TMI, "%s: buffer overflow for '%s'; needing %zu bytes",
 		    __func__, what, nr_bytes);
 		return false;
 	}
@@ -157,7 +157,7 @@ static bool pack_string(struct whackpacker *wp, char **p, const char *what)
 	size_t len = strlen(s) + 1;
 
 	if (wp->str_roof - wp->str_next < (ptrdiff_t)len) {
-		dbg("%s: buffer overflow for '%s'",
+		DBGF(DBG_TMI, "%s: buffer overflow for '%s'",
 		    __func__, what);
 		return false; /* would overflow buffer */
 	}
@@ -175,14 +175,14 @@ static bool unpack_string(struct whackpacker *wp, char **p, const char *what)
 
 	uint8_t *end = memchr(wp->str_next, '\0', (wp->str_roof - wp->str_next) );
 	if (end == NULL) {
-		dbg("%s: buffer overflow for '%s'; missing NUL",
+		DBGF(DBG_TMI, "%s: buffer overflow for '%s'; missing NUL",
 		    __func__, what);
 		return false; /* fishy: no end found */
 	}
 
 	unsigned char *s = (wp->str_next == end ? NULL : wp->str_next);
 
-	dbg("%s: '%s' is %zu bytes", __func__, what, end - wp->str_next);
+	DBGF(DBG_TMI, "%s: '%s' is %zu bytes", __func__, what, end - wp->str_next);
 
 	*p = (char *)s;
 	wp->str_next = end + 1;
