@@ -21,7 +21,6 @@ pk12util: PKCS12 IMPORT SUCCESSFUL
 pk12util: PKCS12 IMPORT SUCCESSFUL
 pk12util: PKCS12 IMPORT SUCCESSFUL
 pk12util: PKCS12 IMPORT SUCCESSFUL
-pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -117,7 +116,7 @@ west #
 1v2 "west-ekuCritical-eku-ipsecIKE" #9: initiating IKEv2 IKE SA
 1v2 "west-ekuCritical-eku-ipsecIKE" #9: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-ekuCritical-eku-ipsecIKE" #9: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "west-ekuCritical-eku-ipsecIKE" #10: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "west-ekuCritical-eku-ipsecIKE" #9: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 002 "west-ekuCritical-eku-ipsecIKE" #10: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 003 "west-ekuCritical-eku-ipsecIKE" #9: authenticated using RSA with SHA2_512
 002 "west-ekuCritical-eku-ipsecIKE" #10: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
@@ -135,7 +134,7 @@ west #
 1v2 "west-eku-serverAuth" #11: initiating IKEv2 IKE SA
 1v2 "west-eku-serverAuth" #11: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-eku-serverAuth" #11: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "west-eku-serverAuth" #12: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "west-eku-serverAuth" #11: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 002 "west-eku-serverAuth" #12: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 003 "west-eku-serverAuth" #11: authenticated using RSA with SHA2_512
 002 "west-eku-serverAuth" #12: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
@@ -153,7 +152,7 @@ west #
 1v2 "west-ku-nonRepudiation" #13: initiating IKEv2 IKE SA
 1v2 "west-ku-nonRepudiation" #13: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-ku-nonRepudiation" #13: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "west-ku-nonRepudiation" #14: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "west-ku-nonRepudiation" #13: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 002 "west-ku-nonRepudiation" #14: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 003 "west-ku-nonRepudiation" #13: authenticated using RSA with SHA2_512
 002 "west-ku-nonRepudiation" #14: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
@@ -171,7 +170,7 @@ west #
 1v2 "west-sanCritical" #15: initiating IKEv2 IKE SA
 1v2 "west-sanCritical" #15: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-sanCritical" #15: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "west-sanCritical" #16: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "west-sanCritical" #15: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 002 "west-sanCritical" #16: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 003 "west-sanCritical" #15: authenticated using RSA with SHA2_512
 002 "west-sanCritical" #16: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
@@ -191,9 +190,9 @@ west #
 1v2 "west-ekuCritical" #17: initiating IKEv2 IKE SA
 1v2 "west-ekuCritical" #17: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-ekuCritical" #17: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "west-ekuCritical" #18: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "west-ekuCritical" #17: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 002 "west-ekuCritical" #18: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-003 "west-ekuCritical" #18: authenticated using RSA with SHA2_512
+003 "west-ekuCritical" #17: authenticated using RSA with SHA2_512
 002 "west-ekuCritical" #18: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 004 "west-ekuCritical" #18: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
@@ -209,7 +208,7 @@ west #
 1v2 "west-kuCritical" #19: initiating IKEv2 IKE SA
 1v2 "west-kuCritical" #19: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-kuCritical" #19: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "west-kuCritical" #20: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "west-kuCritical" #19: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 002 "west-kuCritical" #20: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 003 "west-kuCritical" #19: authenticated using RSA with SHA2_512
 002 "west-kuCritical" #20: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
@@ -227,7 +226,7 @@ west #
 1v2 "west-kuOmit" #21: initiating IKEv2 IKE SA
 1v2 "west-kuOmit" #21: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-kuOmit" #21: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "west-kuOmit" #22: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "west-kuOmit" #21: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 002 "west-kuOmit" #22: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 003 "west-kuOmit" #21: authenticated using RSA with SHA2_512
 002 "west-kuOmit" #22: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
@@ -245,9 +244,9 @@ west #
 1v2 "west-eku-clientAuth" #23: initiating IKEv2 IKE SA
 1v2 "west-eku-clientAuth" #23: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-eku-clientAuth" #23: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "west-eku-clientAuth" #24: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "west-eku-clientAuth" #23: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 002 "west-eku-clientAuth" #24: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-003 "west-eku-clientAuth" #24: authenticated using RSA with SHA2_512
+003 "west-eku-clientAuth" #23: authenticated using RSA with SHA2_512
 002 "west-eku-clientAuth" #24: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 004 "west-eku-clientAuth" #24: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
@@ -263,9 +262,9 @@ west #
 1v2 "west-eku-ipsecIKE" #25: initiating IKEv2 IKE SA
 1v2 "west-eku-ipsecIKE" #25: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-eku-ipsecIKE" #25: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "west-eku-ipsecIKE" #26: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "west-eku-ipsecIKE" #25: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 002 "west-eku-ipsecIKE" #26: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-003 "west-eku-ipsecIKE" #26: authenticated using RSA with SHA2_512
+003 "west-eku-ipsecIKE" #25: authenticated using RSA with SHA2_512
 002 "west-eku-ipsecIKE" #26: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 004 "west-eku-ipsecIKE" #26: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
@@ -281,9 +280,9 @@ west #
 1v2 "west-ku-keyAgreement-digitalSignature" #27: initiating IKEv2 IKE SA
 1v2 "west-ku-keyAgreement-digitalSignature" #27: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-ku-keyAgreement-digitalSignature" #27: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "west-ku-keyAgreement-digitalSignature" #28: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "west-ku-keyAgreement-digitalSignature" #27: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 002 "west-ku-keyAgreement-digitalSignature" #28: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-003 "west-ku-keyAgreement-digitalSignature" #28: authenticated using RSA with SHA2_512
+003 "west-ku-keyAgreement-digitalSignature" #27: authenticated using RSA with SHA2_512
 002 "west-ku-keyAgreement-digitalSignature" #28: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 004 "west-ku-keyAgreement-digitalSignature" #28: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
@@ -301,9 +300,9 @@ west #
 1v2 "west-ekuCritical-eku-emailProtection" #29: initiating IKEv2 IKE SA
 1v2 "west-ekuCritical-eku-emailProtection" #29: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-ekuCritical-eku-emailProtection" #29: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "west-ekuCritical-eku-emailProtection" #30: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "west-ekuCritical-eku-emailProtection" #29: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 002 "west-ekuCritical-eku-emailProtection" #30: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-003 "west-ekuCritical-eku-emailProtection" #30: authenticated using RSA with SHA2_512
+003 "west-ekuCritical-eku-emailProtection" #29: authenticated using RSA with SHA2_512
 002 "west-ekuCritical-eku-emailProtection" #30: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 004 "west-ekuCritical-eku-emailProtection" #30: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #

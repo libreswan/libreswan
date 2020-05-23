@@ -10,7 +10,7 @@ east #
 ++ dirname /testing/x509/nss-certs.sh
 + mydir=/testing/x509
 + mkdir -p /testing/x509/nss
-+ rm -f /testing/x509/nss/cert9.db /testing/x509/nss/cert.noise /testing/x509/nss/client.p12 /testing/x509/nss/clientX.p12 /testing/x509/nss/key4.db /testing/x509/nss/pkcs11.txt /testing/x509/nss/server.p12 /testing/x509/nss/serverX.p12
++ rm -f '/testing/x509/nss/*'
 + ipsec initnss --nssdir /testing/x509/nss
 Initializing NSS database
 + echo dsadasdasdasdadasdasdasdasdsadfwerwerjfdksdjfksdlfhjsdk
