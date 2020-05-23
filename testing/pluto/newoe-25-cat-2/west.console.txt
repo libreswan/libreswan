@@ -39,7 +39,7 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec whack --trafficstatus
 006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL'
-006 #4: "private-or-clear#192.1.2.0/24"[2] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=588, outBytes=588, id='ID_NULL', lease=10.0.10.1/32
+006 #4: "private-or-clear#192.1.2.0/24"[2] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=588, outBytes=336, id='ID_NULL', lease=10.0.10.1/32
 west #
  iptables -t nat -L -n
 Chain PREROUTING (policy ACCEPT)
