@@ -26,14 +26,17 @@ const ip_address unset_address; /* all zeros */
 ip_address strip_endpoint(const ip_address *in, where_t where)
 {
 	ip_address out = *in;
-	if (in->hport != 0 || in->ipproto != 0) {
+	if (in->hport != 0 || in->ipproto != 0 || in->is_endpoint) {
 		address_buf b;
-		dbg("stripping address %s of hport=%u ipproto=%u "PRI_WHERE,
-		    str_address(in, &b),
+		dbg("stripping address %s of is_endpoint=%d hport=%u ipproto=%u "PRI_WHERE,
+		    str_address(in, &b), in->is_endpoint,
 		    in->hport, in->ipproto, pri_where(where));
 		out.hport = 0;
 		out.ipproto = 0;
+		out.is_endpoint = false;
 	}
+	out.is_address = true;
+	paddress(&out);
 	return out;
 }
 
@@ -42,9 +45,11 @@ ip_address address_from_shunk(const struct ip_info *afi, const shunk_t bytes)
 	passert(afi != NULL);
 	ip_address address = {
 		.version = afi->ip_version,
+		.is_address = true,
 	};
 	passert(afi->ip_size == bytes.len);
 	memcpy(&address.bytes, bytes.ptr, bytes.len);
+	paddress(&address);
 	return address;
 }
 

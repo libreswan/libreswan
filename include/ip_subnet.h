@@ -53,14 +53,36 @@ typedef struct {
 #ifdef SUBNET_TYPE
 	/* proper subnet, not libreswan mashup */
 	ip_address addr;
-	int maskbits;
 #else
 	/* (routing)prefix|host(id):port */
 	ip_endpoint addr;
+	bool is_selector;
+#endif
 	/* (routing prefix) bits */
 	int maskbits;
-#endif
+	bool is_subnet;
 } ip_subnet;
+
+#define PRI_SUBNET "{"PRI_ADDRESS"} maskbits=%u is_subnet=%s is_selector=%s"
+#define pri_subnet(S, B)						\
+	pri_address(&(S)->addr, B),					\
+		(S)->maskbits,						\
+		bool_str((S)->is_subnet),				\
+		bool_str((S)->is_selector)
+
+#define psubnet(S)							\
+	{								\
+		if ((S) != NULL && (S)->addr.version != 0) {		\
+			if ((S)->is_subnet == false ||			\
+			    (S)->is_selector == true) {			\
+				address_buf b_;				\
+				where_t here_ = HERE;			\
+				dbg("EXPECTATION FAILED: %s is not a subnet; "PRI_SUBNET" "PRI_WHERE, \
+				    #S, pri_subnet(S, &b_),		\
+				    pri_where(here_));			\
+			}						\
+		}							\
+	}
 
 /*
  * Constructors

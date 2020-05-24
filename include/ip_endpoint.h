@@ -37,17 +37,44 @@ struct ip_protocol;
 
 #ifdef ENDPOINT_TYPE
 typedef struct {
-	ip_address address;
+	/*
+	 * Index into the struct ip_info array; must be stream
+	 * friendly.
+	 */
+	unsigned version; /* 0, 4, 6 */
+	/*
+	 * We need something that makes static IPv4 initializers possible
+	 * (struct in_addr requires htonl() which is run-time only).
+	 */
+	struct ip_bytes { uint8_t byte[16]; } bytes;
 	/*
 	 * In pluto "0" denotes all ports (or, in the context of an
 	 * endpoint, is that none?).
 	 */
 	int hport;
 	unsigned ipproto;
+	bool is_endpoint;
 } ip_endpoint;
 #else
 typedef ip_address ip_endpoint;
 #endif
+
+#define pendpoint(E)							\
+	{								\
+		if ((E) != NULL && (E)->version != 0) {			\
+			/* i.e., is set */				\
+			if ((E)->is_endpoint == false ||		\
+			    (E)->is_address == true ||			\
+			    (E)->hport == 0 ||				\
+			    (E)->ipproto == 0) {			\
+				address_buf b_;				\
+				where_t here_ = HERE;			\
+				dbg("EXPECTATION FAILED: %s is not an endpoint; "PRI_ADDRESS" "PRI_WHERE, \
+				    #E, pri_address(E, &b_),		\
+				    pri_where(here_));			\
+			}						\
+		}							\
+	}
 
 /*
  * Constructors.

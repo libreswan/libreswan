@@ -31,7 +31,9 @@ static ip_subnet subnet3(const ip_address *address, int maskbits, int port)
 	ip_subnet s = {
 		.addr = e,
 		.maskbits = maskbits,
+		.is_subnet = true,
 	};
+	psubnet(&s);
 	return s;
 }
 

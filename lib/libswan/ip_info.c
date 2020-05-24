@@ -26,15 +26,15 @@
  * Construct well known addresses.
  */
 
-#define ANY_IPv4_ADDRESS { .version = 4, .bytes = { .byte = { 0, }, }, }
-#define ANY_IPv6_ADDRESS { .version = 6, .bytes = { .byte = { 0, }, }, }
+#define ANY_IPv4_ADDRESS { .is_address = true, .version = 4, }
+#define ANY_IPv6_ADDRESS { .is_address = true, .version = 6, }
 
 #ifdef ENDPOINT_TYPE
 #define ANY_IPv4_ENDPOINT { .address = ANY_IPv4_ADDRESS, .hport = 0, }
 #define ANY_IPv6_ENDPOINT { .address = ANY_IPv6_ADDRESS, .hport = 0, }
 #else
-#define ANY_IPv4_ENDPOINT ANY_IPv4_ADDRESS
-#define ANY_IPv6_ENDPOINT ANY_IPv6_ADDRESS
+#define ANY_IPv4_ENDPOINT { .is_endpoint = true, .version = 4, }
+#define ANY_IPv6_ENDPOINT { .is_endpoint = true, .version = 6, }
 #endif
 
 const struct ip_info ipv4_info = {

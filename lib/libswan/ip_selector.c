@@ -55,9 +55,17 @@ ip_selector selector_from_subnet(const ip_subnet *subnet,
 	if (!pexpect(afi != NULL)) {
 		return unset_selector;
 	}
-	ip_selector selector = *subnet;
-	selector.addr.ipproto = protoport->protocol;
-	selector.addr.hport = protoport->port;
+	ip_selector selector = {
+		.is_selector = true,
+		.maskbits = subnet->maskbits,
+		.addr = {
+			.version = subnet->addr.version,
+			.bytes = subnet->addr.bytes,
+			.ipproto = protoport->protocol,
+			.hport = protoport->port,
+		},
+	};
+	pselector(&selector);
 	return selector;
 }
 

@@ -26,19 +26,15 @@ const ip_endpoint unset_endpoint; /* all zeros */
 static ip_endpoint raw_endpoint(const struct ip_protocol *protocol,
 				const ip_address *address, int hport)
 {
-#if defined(ENDPOINT_TYPE)
 	ip_endpoint endpoint = {
-		.address = *address,
-		.hport = hport,
-		.protocol = protocol->ipproto,
-	};
-#else
-	ip_endpoint endpoint = {
-		.hport = hport,
 		.version = address->version,
-		.ipproto = protocol->ipproto,
 		.bytes = address->bytes,
+		.hport = hport,
+		.ipproto = protocol->ipproto,
+		.is_endpoint = true,
 	};
+#if 0
+	pendpoint(&endpoint);
 #endif
 	return endpoint;
 }
@@ -59,20 +55,16 @@ ip_endpoint endpoint(const ip_address *address, int hport)
 
 ip_address endpoint_address(const ip_endpoint *endpoint)
 {
-#if defined(ENDPOINT_TYPE)
 	const struct ip_info *afi = endpoint_type(endpoint);
 	if (afi == NULL) {
-		/* not asserting, who knows what nonsense a user can generate */
-		libreswan_log("endpoint has unspecified type");
-		return address_invalid;
+		return unset_address; /* empty_address? */
 	}
-	ip_address address = endpoint->address;
-#else
-	ip_address address = *endpoint;
-	/* scrub protocol+port */
-	address.hport = 0;
-	address.ipproto = 0;
-#endif
+	shunk_t bytes = {
+		.ptr = &endpoint->bytes,
+		.len = afi->ip_size,
+	};
+	ip_address address = address_from_shunk(afi, bytes);
+	paddress(&address);
 	return address;
 }
 
