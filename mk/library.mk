@@ -10,7 +10,7 @@ include $(top_srcdir)/mk/targets.mk
 
 INCLUDES+=-I${LIBRESWANSRCDIR}/include
 # nss
-INCLUDES+=${NSSFLAGS}
+INCLUDES+=${NSS_CFLAGS}
 
 CFLAGS+=${PORTINCLUDE} ${INCLUDES} ${CROSSFLAGS}
 

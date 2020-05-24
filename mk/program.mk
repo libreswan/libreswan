@@ -25,7 +25,7 @@ CFLAGS += -pthread
 CFLAGS += $(USERLAND_CFLAGS)
 CFLAGS += $(PORTINCLUDE)
 CFLAGS += -I$(top_srcdir)/include
-CFLAGS += $(NSSFLAGS)
+CFLAGS += $(NSS_CFLAGS)
 CFLAGS += $(CROSSFLAGS)
 
 ifneq ($(LD_LIBRARY_PATH),)

@@ -241,10 +241,11 @@ INSTCONFFLAGS ?= -m 0644
 # flags for bison, overrode in packages/default/foo
 BISONOSFLAGS ?=
 
-# XXX: Don't add NSSFLAGS to USERLAND_CFLAGS for now.  It needs to go
-# after -I$(top_srcdir)/include and fixing that is an entirely
+# XXX: Don't add NSS_CFLAGS to USERLAND_CFLAGS for now.  It needs to
+# go after -I$(top_srcdir)/include and fixing that is an entirely
 # separate cleanup.
-NSSFLAGS ?= $(NSS_CFLAGS)
+NSS_CFLAGS ?= $(shell $(PKG_CONFIG) --cflags nss)
+
 # We don't want to link against every library pkg-config --libs nss
 # returns
 NSS_LDFLAGS ?= -lnss3
@@ -257,7 +258,7 @@ NSPR_LDFLAGS ?= -lnspr4
 # This work-around is needed with nss versions before 3.30.
 USE_NSS_AVA_COPY ?= false
 ifeq ($(USE_NSS_AVA_COPY),true)
-NSSFLAGS += -DNSS_REQ_AVA_COPY
+USERLAND_CFLAGS += -DNSS_REQ_AVA_COPY
 endif
 
 # Use nss IPsec profile for X509 validation. This is less restrictive
@@ -265,7 +266,7 @@ endif
 # See https://bugzilla.mozilla.org/show_bug.cgi?id=1252891
 USE_NSS_IPSEC_PROFILE ?= true
 ifeq ($(USE_NSS_IPSEC_PROFILE),true)
-NSSFLAGS += -DNSS_IPSEC_PROFILE
+USERLAND_CFLAGS += -DNSS_IPSEC_PROFILE
 endif
 
 # Use a local copy of xfrm.h. This can be needed on older systems

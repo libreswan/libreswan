@@ -40,8 +40,3 @@ ifeq ($(LINUX_VARIANT),fedora)
   endif
 endif
 #(info USE_GLIBC_KERN_FLIP_HEADERS=$(USE_GLIBC_KERN_FLIP_HEADERS))
-
-ifndef NSS_CFLAGS
-  NSS_CFLAGS := $(shell $(PKG_CONFIG) --cflags nss)
-  export NSS_CFLAGS
-endif

@@ -210,10 +210,10 @@ endif
 # Original flags; this is a mess.
 CFLAGS+=${PORTINCLUDE} -I.
 CFLAGS+=-I${LIBRESWANSRCDIR}
-CFLAGS+= $(NSSFLAGS)
-CFLAGS+=-I${LIBRESWANSRCDIR}/include ${PORTINCLUDE}
 # XXX: hack until everything uses a consistent .c.o rule
 CFLAGS+=$(USERLAND_CFLAGS)
+CFLAGS+=-I${LIBRESWANSRCDIR}/include ${PORTINCLUDE}
+CFLAGS+=$(NSS_CFLAGS)
 CFLAGS+=${CROSSFLAGS}
 
 OBJS += $(abs_builddir)/version.o
