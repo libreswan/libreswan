@@ -300,6 +300,8 @@ GCC ?= gcc
 
 MAKE ?= make
 
+PKG_CONFIG ?= pkg-config
+
 # Enable AddressSanitizer - see https://libreswan.org/wiki/Compiling_with_AddressSanitizer
 # requires clang or gcc >= 4.8 and libasan. Do not combine with Electric Fence and do not
 # run pluto with --leak-detective
@@ -333,9 +335,9 @@ ifeq ($(INITSYSTEM),systemd)
 USE_SYSTEMD_WATCHDOG ?= true
 SD_RESTART_TYPE ?= on-failure
 SD_PLUTO_OPTIONS ?= --leak-detective
-SYSTEMUNITDIR ?= $(shell pkg-config systemd --variable=systemdsystemunitdir)
+SYSTEMUNITDIR ?= $(shell $(PKG_CONFIG) systemd --variable=systemdsystemunitdir)
 UNITDIR ?= $(DESTDIR)$(SYSTEMUNITDIR)
-SYSTEMTMPFILESDIR ?= $(shell pkg-config systemd --variable=tmpfilesdir)
+SYSTEMTMPFILESDIR ?= $(shell $(PKG_CONFIG) systemd --variable=tmpfilesdir)
 TMPFILESDIR ?= $(DESTDIR)$(SYSTEMTMPFILESDIR)
 else
 USE_SYSTEMD_WATCHDOG ?= false
