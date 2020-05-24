@@ -285,9 +285,14 @@ INSTCONFFLAGS ?= -m 0644
 # flags for bison, overrode in packages/default/foo
 BISONOSFLAGS ?=
 
+# must be before all uses; invoking is expensive called once
+PKG_CONFIG ?= pkg-config
+
 # XXX: Append NSS_CFLAGS to USERLAND_INCLUDES which puts it after
-# -I$(top_srcdir)/include.
-NSS_CFLAGS ?= $(shell $(PKG_CONFIG) --cflags nss)
+# -I$(top_srcdir)/include; expanded on every compile so invoke once.
+ifndef NSS_CFLAGS
+NSS_CFLAGS := $(shell $(PKG_CONFIG) --cflags nss)
+endif
 USERLAND_INCLUDES += $(NSS_CFLAGS)
 
 # We don't want to link against every library pkg-config --libs nss
@@ -339,14 +344,6 @@ USE_PORTEXCLUDES ?= false
 # The default DNSSEC root key location is set to /var/lib/unbound/root.key
 # DEFAULT_DNSSEC_ROOTKEY_FILE=/var/lib/unbound/root.key
 
-# To build with clang, use: scan-build make programs
-#GCC=clang
-GCC ?= gcc
-
-MAKE ?= make
-
-PKG_CONFIG ?= pkg-config
-
 # Enable AddressSanitizer - see https://libreswan.org/wiki/Compiling_with_AddressSanitizer
 # requires clang or gcc >= 4.8 and libasan. Do not combine with Electric Fence and do not
 # run pluto with --leak-detective
@@ -379,8 +376,8 @@ USE_SYSTEMD_WATCHDOG ?= true
 SD_RESTART_TYPE ?= on-failure
 SD_PLUTO_OPTIONS ?= --leak-detective
 SYSTEMUNITDIR ?= $(shell $(PKG_CONFIG) systemd --variable=systemdsystemunitdir)
-UNITDIR ?= $(DESTDIR)$(SYSTEMUNITDIR)
 SYSTEMTMPFILESDIR ?= $(shell $(PKG_CONFIG) systemd --variable=tmpfilesdir)
+UNITDIR ?= $(DESTDIR)$(SYSTEMUNITDIR)
 TMPFILESDIR ?= $(DESTDIR)$(SYSTEMTMPFILESDIR)
 else
 USE_SYSTEMD_WATCHDOG ?= false
