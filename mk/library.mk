@@ -8,17 +8,6 @@ include $(top_srcdir)/mk/config.mk
 include $(top_srcdir)/mk/version.mk
 include $(top_srcdir)/mk/targets.mk
 
-INCLUDES+=-I${LIBRESWANSRCDIR}/include
-# nss
-INCLUDES+=${NSS_CFLAGS}
-
-CFLAGS+= ${INCLUDES} ${CROSSFLAGS}
-
-CFLAGS+=-pthread
-
-# XXX: hack until everything uses a consistent .c.o rule
-CFLAGS+=$(USERLAND_CFLAGS)
-
 ARFLAGS=crvs
 
 local-base: $(LIB)

@@ -25,9 +25,6 @@ SRCS+=interfaces.c
 
 OBJS=${SRCS:.c=.o}
 
-# pick up generated LEX/YACC files
-INCLUDES += -I$(builddir)
-
 ifdef top_srcdir
 include ${top_srcdir}/mk/library.mk
 else

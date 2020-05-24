@@ -16,10 +16,6 @@
 ifndef OBJS
 $(error define OBJS)
 endif
-# cflags for this variant of the compile command
-ifndef CFLAGS
-$(error define CFLAGS)
-endif
 
 # In addition to compiling the .c file to .o, generate a dependency
 # file.  Force all output to the build directory.  $(basename
@@ -31,7 +27,7 @@ endif
 # -MF: where to write the dependency
 
 .c.o:
-	$(CC) $(CFLAGS) \
+	$(CC) $(USERLAND_CFLAGS) $(USERLAND_INCLUDES) $(CFLAGS) \
 		-MF $(builddir)/$(basename $(notdir $@)).d \
 		-MP -MMD -MT $@ \
 		-o $(builddir)/$(notdir $@) \

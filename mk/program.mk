@@ -20,12 +20,6 @@ LEX=flex
 BISON=bison
 RM=rm
 
-# XXX: hack until everything uses a consistent .c.o rule.
-CFLAGS += -pthread
-CFLAGS += $(USERLAND_CFLAGS)
-CFLAGS += -I$(top_srcdir)/include
-CFLAGS += $(NSS_CFLAGS)
-
 ifneq ($(LD_LIBRARY_PATH),)
 LDFLAGS+=-L$(LD_LIBRARY_PATH)
 endif
@@ -115,7 +109,7 @@ ifdef OBJS
 # instance something is removed), a re-link is triggered.
 
 $(PROGRAM): $(OBJS) $(srcdir)/Makefile
-	cd $(builddir) && $(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS) $(USERLAND_LDFLAGS)
+	cd $(builddir) && $(CC) $(USERLAND_CFLAGS) $(USERLAND_INCLUDES) $(CFLAGS)  -o $@ $(OBJS) $(USERLAND_LDFLAGS) $(LDFAGS)
 
 include $(top_srcdir)/mk/depend.mk
 

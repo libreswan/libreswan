@@ -69,21 +69,19 @@ OBJS += retransmit.o
 
 # local (possibly more up to date) copy of <linux/xfrm.h>
 ifeq ($(USE_XFRM_HEADER_COPY),true)
-CFLAGS+=-I ${LIBRESWANSRCDIR}/programs/pluto/linux-copy
+USERLAND_INCLUDES += -I${LIBRESWANSRCDIR}/programs/pluto/linux-copy
 endif
 
 ifeq ($(USE_XFRM_INTERFACE), true)
 ifeq ($(USE_XFRM_INTERFACE_IFLA_HEADER), true)
-CFLAGS+=-I ${LIBRESWANSRCDIR}/programs/pluto/linux-extra-if-link -DUSE_XFRM_INTERFACE_IFLA_HEADER
+USERLAND_CFLAGS += -DUSE_XFRM_INTERFACE_IFLA_HEADER
+USERLAND_INCLUDES += -I${LIBRESWANSRCDIR}/programs/pluto/linux-extra-if-link
 endif
 endif
 
 ifeq ($(USE_GLIBC_KERN_FLIP_HEADERS),true)
-CFLAGS+=-DGLIBC_KERN_FLIP_HEADERS
+USERLAND_CFLAGS += -DGLIBC_KERN_FLIP_HEADERS
 endif
-
-# where to find libreswan headers
-HDRDIRS +=-I${LIBRESWANSRCDIR}/include
 
 ifeq ($(USE_NETKEY),true)
 OBJS += kernel_xfrm.o
@@ -94,7 +92,7 @@ endif
 
 ifeq ($(USE_BSDKAME),true)
 OBJS += kernel_bsdkame.o
-LDFLAGS += $(BSDPFKEYLIB)
+USERLAND_LDFLAGS += $(BSDPFKEYLIB)
 endif
 
 OBJS += x509.o
@@ -102,27 +100,27 @@ OBJS += fetch.o
 OBJS += crl_queue.o
 
 ifeq ($(USE_IPSEC_CONNECTION_LIMIT),true)
-CFLAGS += -DIPSEC_CONNECTION_LIMIT=$(IPSEC_CONNECTION_LIMIT)
+USERLAND_CFLAGS += -DIPSEC_CONNECTION_LIMIT=$(IPSEC_CONNECTION_LIMIT)
 endif
 
 OBJS += addresspool.o
 
 # ikev1_xauth.c calls crypt(), link it in.
 OBJS += ikev1_xauth.o
-LDFLAGS += $(CRYPT_LDFLAGS)
+USERLAND_LDFLAGS += $(CRYPT_LDFLAGS)
 
 ifeq ($(USE_XAUTHPAM),true)
 OBJS += xauth.o
 OBJS += pam_conv.o
 endif
-LDFLAGS += $(XAUTHPAM_LDFLAGS)
+USERLAND_LDFLAGS += $(XAUTHPAM_LDFLAGS)
 
 OBJS += ikev1_aggr.o
 
 # LABELED IPSEC support - requires SElinux
 ifeq ($(USE_LABELED_IPSEC),true)
 OBJS += security_selinux.o
-LDFLAGS += -lselinux
+USERLAND_LDFLAGS += -lselinux
 endif
 
 ifeq ($(USE_SECCOMP),true)
@@ -130,31 +128,31 @@ OBJS += pluto_seccomp.o
 endif
 
 OBJS += $(call if-enabled, USE_SYSTEMD_WATCHDOG, pluto_sd.o)
-LDFLAGS += $(SYSTEMD_WATCHDOG_LDFLAGS)
+USERLAND_LDFLAGS += $(SYSTEMD_WATCHDOG_LDFLAGS)
 
-LDFLAGS += $(CURL_LDFLAGS)
+USERLAND_LDFLAGS += $(CURL_LDFLAGS)
 
 ifeq ($(USE_UNBOUND_EVENT_H_COPY),true)
-CFLAGS+=-I${LIBRESWANSRCDIR}/include/unbound
+USERLAND_INCLUDES += -I${LIBRESWANSRCDIR}/include/unbound
 endif
 
 OBJS += db_ops.o
 
 # libefence is a free memory allocation debugger
 # Solaris 2 needs -lsocket -lnsl
-LDFLAGS += $(SECCOMP_LDFLAGS)
-LDFLAGS += $(NSS_SMIME_LDFLAGS)
-LDFLAGS += $(NSS_LDFLAGS)
-LDFLAGS += $(NSPR_LDFLAGS)
+USERLAND_LDFLAGS += $(SECCOMP_LDFLAGS)
+USERLAND_LDFLAGS += $(NSS_SMIME_LDFLAGS)
+USERLAND_LDFLAGS += $(NSS_LDFLAGS)
+USERLAND_LDFLAGS += $(NSPR_LDFLAGS)
 
 # For avoiding implicit DSO linking
-LDFLAGS += -lpthread
+USERLAND_LDFLAGS += -lpthread
 
-LDFLAGS += $(FIPSCHECK_LDFLAGS)
-LDFLAGS += $(LIBCAP_NG_LDFLAGS)
+USERLAND_LDFLAGS += $(FIPSCHECK_LDFLAGS)
+USERLAND_LDFLAGS += $(LIBCAP_NG_LDFLAGS)
 
 # Add RT_LDFLAGS for glibc < 2.17
-LDFLAGS += $(RT_LDFLAGS)
+USERLAND_LDFLAGS += $(RT_LDFLAGS)
 
 ifeq ($(USE_BSDKAME),true)
 OBJS += kernel_bsd.o
@@ -166,21 +164,15 @@ ifneq ($(LD_LIBRARY_PATH),)
 LDFLAGS+=-L$(LD_LIBRARY_PATH)
 endif
 
-LDFLAGS += $(UNBOUND_LDFLAGS)
-LDFLAGS += $(LINUX_AUDIT_LDFLAGS)
+USERLAND_LDFLAGS += $(UNBOUND_LDFLAGS)
+USERLAND_LDFLAGS += $(LINUX_AUDIT_LDFLAGS)
 
 OBJS += linux_audit.o
 
-LDFLAGS += -levent
-LDFLAGS += -levent_pthreads
+USERLAND_LDFLAGS += -levent
+USERLAND_LDFLAGS += -levent_pthreads
 
-LDFLAGS += $(LDAP_LDFLAGS)
-
-RM = /bin/rm
-RMFLAGS = -f
-
-.SUFFIXES:
-.SUFFIXES: .c .o
+USERLAND_LDFLAGS += $(LDAP_LDFLAGS)
 
 OBJS += connections.o initiate.o terminate.o ikev2_rekey_now.o
 OBJS += cbc_test_vectors.o
@@ -233,17 +225,5 @@ OBJS += $(LIBRESWANLIB)
 OBJS += $(WHACKLIB)
 OBJS += $(IPSECCONFLIB)
 OBJS += $(LIBRESWANLIB)
-
-# legacy mess, something is still needed
-CFLAGS += $(USERLAND_CFLAGS)
-CFLAGS += $(COPTS)
-CFLAGS += $(HDRDIRS)
-CFLAGS += $(NSS_CFLAGS)
-oCFLAGS += $(EXTRA_DEFINES) \
-	${VENDORID} \
-	$(KEYRR_DEFINES) \
-	${LABELED_IPSEC_DEFS} \
-	${SYSTEMD_NOTIFY_DEFS} \
-	${CURL_DEFS}
 
 include $(top_srcdir)/mk/program.mk

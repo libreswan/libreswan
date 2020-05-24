@@ -16,8 +16,8 @@ PROGRAM=_import_crl
 OBJS += $(PROGRAM).o
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
-LDFLAGS += $(NSS_LDFLAGS)
-LDFLAGS += $(NSPR_LDFLAGS)
+USERLAND_LDFLAGS += $(NSS_LDFLAGS)
+USERLAND_LDFLAGS += $(NSPR_LDFLAGS)
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk

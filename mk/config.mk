@@ -70,6 +70,50 @@ include ${LIBRESWANSRCDIR}/mk/defaults/${BUILDENV}.mk
 # Note: Variables here are for Makefiles and build system only.
 # IPSEC_ prefixed variables are to be used in source code
 
+# -D... goes in here
+USERLAND_CFLAGS ?= -pthread
+
+# should this go in CFLAGS?
+USERLAND_CFLAGS += -std=gnu99
+
+#
+# Options that really belong in CFLAGS (making for an intuitive way to
+# override them).
+#
+# Unfortunately this file is shared with the kernel which seems to
+# have its own ideas on CFLAGS.
+#
+
+DEBUG_CFLAGS ?= -g
+USERLAND_CFLAGS += $(DEBUG_CFLAGS)
+
+# eventually: -Wshadow -pedantic?
+WERROR_CFLAGS ?= -Werror -Wno-missing-field-initializers
+USERLAND_CFLAGS += $(WERROR_CFLAGS)
+WARNING_CFLAGS ?= -Wall -Wextra -Wformat -Wformat-nonliteral -Wformat-security -Wundef -Wmissing-declarations -Wredundant-decls -Wnested-externs
+USERLAND_CFLAGS += $(WARNING_CFLAGS)
+
+# _FORTIFY_SOURCE requires at least -O.  Gentoo, pre-defines
+# _FORTIFY_SOURCE (to what? who knows!); force it to our preferred
+# value.
+OPTIMIZE_CFLAGS ?= -O2 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2
+USERLAND_CFLAGS += $(OPTIMIZE_CFLAGS)
+
+# Dumping ground for an arbitrary set of flags.  Should probably be
+# separated out.
+USERCOMPILE ?= -fstack-protector-all -fno-strict-aliasing -fPIE -DPIE
+USERLAND_CFLAGS += $(USERCOMPILE)
+
+# Basic linking flags
+USERLINK ?= -Wl,-z,relro,-z,now -pie
+USERLAND_LDFLAGS += -Wl,--as-needed
+USERLAND_LDFLAGS += $(USERLINK) $(ASAN)
+
+# Accumulate values in these fields.
+# is -pthread CFLAG or LDFLAG
+USERLAND_INCLUDES ?= -I$(srcdir) -I$(builddir) -I$(top_srcdir)/include
+
+
 ### install pathnames
 
 # DESTDIR can be used to supply a prefix to all install targets.
@@ -241,10 +285,10 @@ INSTCONFFLAGS ?= -m 0644
 # flags for bison, overrode in packages/default/foo
 BISONOSFLAGS ?=
 
-# XXX: Don't add NSS_CFLAGS to USERLAND_CFLAGS for now.  It needs to
-# go after -I$(top_srcdir)/include and fixing that is an entirely
-# separate cleanup.
+# XXX: Append NSS_CFLAGS to USERLAND_INCLUDES which puts it after
+# -I$(top_srcdir)/include.
 NSS_CFLAGS ?= $(shell $(PKG_CONFIG) --cflags nss)
+USERLAND_INCLUDES += $(NSS_CFLAGS)
 
 # We don't want to link against every library pkg-config --libs nss
 # returns
@@ -473,45 +517,6 @@ OSMEDIA ?= http://download.fedoraproject.org/pub/fedora/linux/releases/28/Server
 # Ubuntu media
 # OSTYPE ?= ubuntu
 # OSMEDIA ?= http://ftp.ubuntu.com/ubuntu/dists/precise/main/installer-amd64/
-
-# Now that all the configuration variables are defined, use them to
-# define USERLAND_CFLAGS and USERLAND_LDFLAGS
-
-# -D... goes in here
-USERLAND_CFLAGS += -std=gnu99
-
-#
-# Options that really belong in CFLAGS (making for an intuitive way to
-# override them).
-#
-# Unfortunately this file is shared with the kernel which seems to
-# have its own ideas on CFLAGS.
-#
-
-DEBUG_CFLAGS ?= -g
-USERLAND_CFLAGS += $(DEBUG_CFLAGS)
-
-# eventually: -Wshadow -pedantic?
-WERROR_CFLAGS ?= -Werror -Wno-missing-field-initializers
-USERLAND_CFLAGS += $(WERROR_CFLAGS)
-WARNING_CFLAGS ?= -Wall -Wextra -Wformat -Wformat-nonliteral -Wformat-security -Wundef -Wmissing-declarations -Wredundant-decls -Wnested-externs
-USERLAND_CFLAGS += $(WARNING_CFLAGS)
-
-# _FORTIFY_SOURCE requires at least -O.  Gentoo, pre-defines
-# _FORTIFY_SOURCE (to what? who knows!); force it to our preferred
-# value.
-OPTIMIZE_CFLAGS ?= -O2 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2
-USERLAND_CFLAGS += $(OPTIMIZE_CFLAGS)
-
-# Dumping ground for an arbitrary set of flags.  Should probably be
-# separated out.
-USERCOMPILE ?= -fstack-protector-all -fno-strict-aliasing -fPIE -DPIE
-USERLAND_CFLAGS += $(USERCOMPILE)
-
-# Basic linking flags
-USERLINK ?= -Wl,-z,relro,-z,now -pie
-USERLAND_LDFLAGS += -Wl,--as-needed
-USERLAND_LDFLAGS += $(USERLINK) $(ASAN)
 
 # Build/link against the more pedantic ElectricFence memory allocator;
 # used when testing.

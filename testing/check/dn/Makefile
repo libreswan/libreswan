@@ -23,8 +23,8 @@ OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
 
 # Add RT_LDFLAGS for glibc < 2.17
-LDFLAGS += $(RT_LDFLAGS)
-LDFLAGS += $(NSS_LDFLAGS)
+USERLAND_LDFLAGS += $(RT_LDFLAGS)
+USERLAND_LDFLAGS += $(NSS_LDFLAGS)
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
