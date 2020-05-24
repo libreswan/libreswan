@@ -26,7 +26,7 @@
 #
 # Pull in all its defaults so that they override everything below.
 
-KVM_GUEST_OS ?= f30
+KVM_GUEST_OS ?= f32
 include testing/libvirt/$(KVM_GUEST_OS).mk
 
 
