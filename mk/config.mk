@@ -315,8 +315,6 @@ ASAN ?=
 # You can also run this before starting libreswan on glibc systems:
 #export MALLOC_PERTURB_=$(($RANDOM % 255 + 1))
 
-PORTINCLUDE ?=
-
 # look for POD2MAN command
 POD2MAN ?= $(shell which pod2man | grep / | head -n1)
 
@@ -424,7 +422,7 @@ WHACKLIB = ${OBJDIRTOP}/lib/libwhack/libwhack.a
 IPSECCONFLIB = ${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
 
 # export everything so that scripts can use them.
-export LIBSWANDIR LIBRESWANSRCDIR ARCH PORTINCLUDE
+export LIBSWANDIR LIBRESWANSRCDIR ARCH
 export LIBRESWANLIB LSWTOOLLIB
 export WHACKLIB IPSECCONFLIB
 

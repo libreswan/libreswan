@@ -208,13 +208,12 @@ OBJS += unbound.o
 endif
 
 # Original flags; this is a mess.
-CFLAGS+=${PORTINCLUDE} -I.
+CFLAGS+= -I.
 CFLAGS+=-I${LIBRESWANSRCDIR}
 # XXX: hack until everything uses a consistent .c.o rule
 CFLAGS+=$(USERLAND_CFLAGS)
-CFLAGS+=-I${LIBRESWANSRCDIR}/include ${PORTINCLUDE}
+CFLAGS+=-I${LIBRESWANSRCDIR}/include
 CFLAGS+=$(NSS_CFLAGS)
-CFLAGS+=${CROSSFLAGS}
 
 OBJS += $(abs_builddir)/version.o
 
