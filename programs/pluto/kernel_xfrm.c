@@ -183,23 +183,30 @@ static void xfrm2ip(const xfrm_address_t *xaddr, ip_address *addr, const sa_fami
 }
 
 /*
- * ip2xfrm - Take an IP address and convert to an xfrm.
- *
- * @param addr ip_address
- * @param xaddr xfrm_address_t - IPv[46] Address from addr is copied here.
+ * xfrm_from-address - Take an IP address and convert to an xfrm.
  */
-static void ip2xfrm(const ip_address *addr, xfrm_address_t *xaddr)
+static xfrm_address_t xfrm_from_address(const ip_address *addr)
 {
+	xfrm_address_t xaddr;
+	zero(&xaddr);
+
 	shunk_t a = address_as_shunk(addr);
-
 	/* .len == ipv6 len */
-	chunk_t x = THING_AS_CHUNK(*xaddr);
-
+	chunk_t x = THING_AS_CHUNK(xaddr);
 	/* x = a */
 	passert(x.len >= a.len);
-	zero(xaddr);
 	memcpy(x.ptr, a.ptr, a.len);
+	return xaddr;
 }
+
+#define CLIENT_TO_XFRM(CLIENT, REQ, L)					\
+	{								\
+		ip_selector client_ = *(CLIENT);			\
+		ip_address prefix = subnet_prefix(&client_); /* cough */ \
+		(REQ).L##addr = xfrm_from_address(&prefix);		\
+		(REQ).prefixlen_##L = client_.maskbits;			\
+		(REQ).L##port = subnet_nport(&client_); /* cough */	\
+	}
 
 static void init_netlink_route_fd(void)
 {
@@ -594,11 +601,11 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 
 		if (dir == XFRM_POLICY_OUT) {
 			local_port = portof(&that_client->addr);
-			addrtosubnet(that_host, &local_client);
+			local_client = subnet_from_address(that_host);
 			that_client = &local_client;
 		} else {
 			local_port = portof(&this_client->addr);
-			addrtosubnet(this_host, &local_client);
+			local_client = subnet_from_address(this_host);
 			this_client = &local_client;
 		}
 		setportof(local_port, &local_client.addr);
@@ -612,10 +619,13 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 
 	const int family = subnet_type(that_client)->af;
 
-	req.u.p.sel.sport = subnet_nport(this_client);
-	req.u.p.sel.dport = subnet_nport(that_client);
+	/* .[sd]addr, .prefixlen_[sd], .[sd]port */
+	CLIENT_TO_XFRM(this_client, req.u.p.sel, s);
+	CLIENT_TO_XFRM(that_client, req.u.p.sel, d);
 
 	/*
+	 * Munge .[sd]port?
+	 *
 	 * As per RFC 4301/5996, icmp type is put in the most significant
 	 * 8 bits and icmp code is in the least significant 8 bits of port
 	 * field.
@@ -643,10 +653,6 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 
 	req.u.p.sel.sport_mask = req.u.p.sel.sport == 0 ? 0 : ~0;
 	req.u.p.sel.dport_mask = req.u.p.sel.dport == 0 ? 0 : ~0;
-	ip2xfrm(&this_client->addr, &req.u.p.sel.saddr);
-	ip2xfrm(&that_client->addr, &req.u.p.sel.daddr);
-	req.u.p.sel.prefixlen_s = this_client->maskbits;
-	req.u.p.sel.prefixlen_d = that_client->maskbits;
 	req.u.p.sel.proto = transport_proto;
 	req.u.p.sel.family = family;
 
@@ -705,8 +711,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 				if (!tmpl[i].mode)
 					continue;
 
-				ip2xfrm(this_host, &tmpl[i].saddr);
-				ip2xfrm(that_host, &tmpl[i].id.daddr);
+				tmpl[i].saddr = xfrm_from_address(this_host);
+				tmpl[i].id.daddr = xfrm_from_address(that_host);
 			}
 
 			attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
@@ -814,7 +820,7 @@ static void netlink_sa_policy_to_id(struct xfrm_userpolicy_id *id,
 }
 
 static bool netlink_get_sa_policy(const struct kernel_sa *sa,
-		struct xfrm_userpolicy_id *id)
+				  struct xfrm_userpolicy_id *id)
 {
 	struct {
 		struct nlmsghdr n;
@@ -832,13 +838,21 @@ static bool netlink_get_sa_policy(const struct kernel_sa *sa,
 	req.id.dir = sa->nk_dir;	/* clang 6.0.0 thinks RHS is garbage or undefined */
 	req.id.sel.family = address_type(sa->src.address)->af;
 
-	ip2xfrm(&sa->src.client->addr, &req.id.sel.saddr);
-	ip2xfrm(&sa->dst.client->addr, &req.id.sel.daddr);
-	req.id.sel.prefixlen_s = sa->src.client->maskbits;
-	req.id.sel.prefixlen_d = sa->dst.client->maskbits;
+	/* .[sd]addr, .prefixlen_[sd], .[sd]port */
+	CLIENT_TO_XFRM(sa->src.client, req.id.sel, s);
+	CLIENT_TO_XFRM(sa->dst.client, req.id.sel, d);
 
-	req.id.sel.sport = subnet_nport(sa->src.client);
-	req.id.sel.dport = subnet_nport(sa->dst.client);
+	/*
+	 * XXX: the other calls to CLIENT_TO_XFRM() also munge the
+	 * .[sd]port per ICMP, and set .[sd]port_mask.
+	 *
+	 * This code does not.
+	 *
+	 * Presumably this code, which is called from
+	 * netlink_migrate_sa(), and is handling MOBIKE only allows
+	 * addresses (no port, no rotocol).  Hence the default value
+	 * of .[sd]port_mask (0), is correct.
+	 */
 
 	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWPOLICY, &rsp, "Get policy",
 			      sa->text_said)) {
@@ -865,10 +879,10 @@ static bool netlink_get_sa_policy(const struct kernel_sa *sa,
 static void  set_migration_attr(const struct kernel_sa *sa,
 		struct xfrm_user_migrate *m)
 {
-	ip2xfrm(sa->src.address, &m->old_saddr);
-	ip2xfrm(sa->dst.address, &m->old_daddr);
-	ip2xfrm(sa->src.new_address, &m->new_saddr);
-	ip2xfrm(sa->dst.new_address, &m->new_daddr);
+	m->old_saddr = xfrm_from_address(sa->src.address);
+	m->old_daddr = xfrm_from_address(sa->dst.address);
+	m->new_saddr = xfrm_from_address(sa->src.new_address);
+	m->new_daddr = xfrm_from_address(sa->dst.new_address);
 
 	m->proto = sa->proto->ipproto;
 	m->mode = XFRM_MODE_TUNNEL;  /* AA_201705 hard coded how to figure this out */
@@ -1237,8 +1251,8 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 	req.n.nlmsg_type = replace ? XFRM_MSG_UPDSA : XFRM_MSG_NEWSA;
 
-	ip2xfrm(sa->src.address, &req.p.saddr);
-	ip2xfrm(sa->dst.address, &req.p.id.daddr);
+	req.p.saddr = xfrm_from_address(sa->src.address);
+	req.p.id.daddr = xfrm_from_address(sa->dst.address);
 
 	req.p.id.spi = sa->spi;
 	req.p.id.proto = esatype2proto(sa->esatype);
@@ -1275,23 +1289,26 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		 * the peer. Here we substitute real client ip with NATD ip.
 		 */
 		if (sa->inbound == 0) {
-			addrtosubnet(sa->dst.address, &dst_tmp);
+			dst_tmp = subnet_from_address(sa->dst.address);
 			dst = &dst_tmp;
 		} else {
 			dst = sa->dst.client;
 		}
 
 		if (sa->inbound == 1) {
-			addrtosubnet(sa->src.address, &src_tmp);
+			src_tmp = subnet_from_address(sa->src.address);
 			src = &src_tmp;
 		} else {
 			src = sa->src.client;
 		}
 
-		req.p.sel.sport = subnet_nport(sa->src.client);
-		req.p.sel.dport = subnet_nport(sa->dst.client);
+		/* .[sd]addr, .prefixlen_[sd], .[sd]port */
+		CLIENT_TO_XFRM(src, req.p.sel, s);
+		CLIENT_TO_XFRM(dst, req.p.sel, d);
 
 		/*
+		 * Munge .[sd]port?
+		 *
 		 * As per RFC 4301/5996, icmp type is put in the most
 		 * significant 8 bits and icmp code is in the least
 		 * significant 8 bits of port field. Although Libreswan does
@@ -1320,10 +1337,6 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 
 		req.p.sel.sport_mask = req.p.sel.sport == 0 ? 0 : ~0;
 		req.p.sel.dport_mask = req.p.sel.dport == 0 ? 0 : ~0;
-		ip2xfrm(&src->addr, &req.p.sel.saddr);
-		ip2xfrm(&dst->addr, &req.p.sel.daddr);
-		req.p.sel.prefixlen_s = src->maskbits;
-		req.p.sel.prefixlen_d = dst->maskbits;
 		req.p.sel.proto = sa->transport_proto;
 		req.p.sel.family = subnet_type(src)->af;
 	}
@@ -1629,7 +1642,7 @@ static bool netlink_del_sa(const struct kernel_sa *sa)
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 	req.n.nlmsg_type = XFRM_MSG_DELSA;
 
-	ip2xfrm(sa->dst.address, &req.id.daddr);
+	req.id.daddr = xfrm_from_address(sa->dst.address);
 
 	req.id.spi = sa->spi;
 	req.id.family = addrtypeof(sa->src.address);
@@ -1650,52 +1663,42 @@ static bool netlink_del_sa(const struct kernel_sa *sa)
  * @param dst ip_address formatted destination
  * @return err_t NULL if okay, otherwise an error
  */
-static err_t xfrm_to_ip_address(unsigned family, const xfrm_address_t *xaddr,
-				ip_address *addr)
+static ip_address address_from_xfrm(const struct ip_info *afi,
+				    const xfrm_address_t *xaddr)
 {
-	const struct ip_info *afi = aftoinfo(family);
-	if (afi == NULL) {
-		return "unknown address family";
-	}
-
 	/* .len == ipv6 size */
 	shunk_t x = THING_AS_SHUNK(*xaddr);
 
-	*addr = afi->any_address; /* "zero" it & set type */
-	chunk_t a = address_as_chunk(addr);
+	ip_address addr = afi->any_address; /* "zero" it & set type */
+	chunk_t a = address_as_chunk(&addr);
 
 	/* a = x */
 	passert(a.len <= x.len);
 	memcpy(a.ptr, x.ptr, a.len);
 
-	return NULL;
+	return addr;
 }
 
 /*
  * Create ip_endpoint out of xfrm_address_t:NPORT.
  */
-static err_t xfrm_to_endpoint(unsigned family, const xfrm_address_t *src,
-			      uint16_t nport, ip_endpoint *dst)
+static ip_subnet client_from_xfrm(const struct ip_info *afi, unsigned proto,
+				  const xfrm_address_t *src,
+				  uint16_t nport)
 {
-	ip_address ip;
-	err_t err = xfrm_to_ip_address(family, src, &ip);
-	if (err != NULL) {
-		return err;
-	}
-	*dst = endpoint(&ip, ntohs(nport));
-	return NULL;
+	ip_address address = address_from_xfrm(afi, src);
+	ip_endpoint end = endpoint(&address, ntohs(nport));
+	ip_subnet client = subnet_from_endpoint(&end);
+	client.addr.ipproto = proto;
+	return client;
 }
 
 static void netlink_acquire(struct nlmsghdr *n)
 {
 	struct xfrm_user_acquire *acquire;
 	const xfrm_address_t *srcx, *dstx;
-	int src_proto, dst_proto;
-	ip_endpoint src, dst;
-	ip_subnet ours, his;
 	unsigned family;
 	unsigned transport_proto;
-	err_t ugh = NULL;
 	struct xfrm_user_sec_ctx_ike *uctx = NULL;
 	struct xfrm_user_sec_ctx_ike uctx_space;
 
@@ -1829,45 +1832,39 @@ static void netlink_acquire(struct nlmsghdr *n)
 		attr = RTA_NEXT(attr, remaining);
 	}
 
-	src_proto = dst_proto = acquire->sel.proto;
-
 	/*
 	 * XXX also the type of src/dst should be checked to make sure
 	 *     that they aren't v4 to v6 or something goofy
 	 */
-	if (NULL == (ugh = xfrm_to_endpoint(family, srcx, acquire->sel.sport, &src)) &&
-	    NULL == (ugh = xfrm_to_endpoint(family, dstx, acquire->sel.dport, &dst)) &&
-	    NULL == (ugh = (src_proto == dst_proto ?
-			NULL : "src and dst protocols differ")) &&
-	    NULL == (ugh = addrtosubnet(&src, &ours)) &&
-	    NULL == (ugh = addrtosubnet(&dst, &his)))
-		record_and_initiate_opportunistic(&ours, &his, transport_proto, uctx,
-			"%acquire-netlink");
+	const struct ip_info *afi = aftoinfo(family);
+	if (afi == NULL) {
+		libreswan_log("XFRM_MSG_ACQUIRE message from kernel malformed: family %u unknown",
+			      family);
+		return;
+	}
 
-	if (ugh != NULL)
-		libreswan_log(
-			"XFRM_MSG_ACQUIRE message from kernel malformed: %s",
-			ugh);
+	ip_selector ours, his;
+	ours = client_from_xfrm(afi, acquire->sel.proto, srcx, acquire->sel.sport);
+	his = client_from_xfrm(afi, acquire->sel.proto, dstx, acquire->sel.dport);
+	record_and_initiate_opportunistic(&ours, &his, transport_proto, uctx,
+					  "%acquire-netlink");
 }
 
 static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol)
 {
 	const xfrm_address_t *srcx = &pol->sel.saddr;
 	const xfrm_address_t *dstx = &pol->sel.daddr;
-	unsigned family = pol->sel.family;
 	unsigned transport_proto = pol->sel.proto;
-	ip_address src, dst;
-	err_t ugh;
 
-	ugh = xfrm_to_ip_address(family, srcx, &src);
-	if (ugh == NULL)
-		ugh = xfrm_to_ip_address(family, dstx, &dst);
-	if (ugh != NULL) {
-		libreswan_log(
-			"XFRM_MSG_POLEXPIRE message from kernel malformed: %s",
-			ugh);
+	const struct ip_info *afi = aftoinfo(pol->sel.family);
+	if (afi == NULL) {
+		libreswan_log("XFRM_MSG_POLEXPIRE message from kernel malformed: address family %u unknown",
+			      pol->sel.family);
 		return;
 	}
+
+	ip_address src = address_from_xfrm(afi, srcx);
+	ip_address dst = address_from_xfrm(afi, dstx);
 
 	if (delete_bare_shunt(&src, &dst,
 			transport_proto, SPI_HOLD /* why spi to use? */,
@@ -2085,8 +2082,8 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 	req.n.nlmsg_flags = NLM_F_REQUEST;
 	req.n.nlmsg_type = XFRM_MSG_ALLOCSPI;
 
-	ip2xfrm(src, &req.spi.info.saddr);
-	ip2xfrm(dst, &req.spi.info.id.daddr);
+	req.spi.info.saddr = xfrm_from_address(src);
+	req.spi.info.id.daddr = xfrm_from_address(dst);
 	req.spi.info.mode = tunnel_mode;
 	req.spi.info.reqid = reqid;
 	req.spi.info.id.proto = proto->ipproto;
@@ -2535,7 +2532,7 @@ static bool netlink_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 	req.n.nlmsg_flags = NLM_F_REQUEST;
 	req.n.nlmsg_type = XFRM_MSG_GETSA;
 
-	ip2xfrm(sa->dst.address, &req.id.daddr);
+	req.id.daddr = xfrm_from_address(sa->dst.address);
 
 	req.id.spi = sa->spi;
 	req.id.family = addrtypeof(sa->src.address);
