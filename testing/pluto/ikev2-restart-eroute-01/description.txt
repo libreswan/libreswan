@@ -1,0 +1,3 @@
+Two connections are the same with respect to IPsec SA Traffic Selectors. One connection
+is brought up and down. The other is then brought up and down. This should work without
+errors.
