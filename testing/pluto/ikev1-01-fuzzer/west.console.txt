@@ -5,6 +5,8 @@ initdone
 west #
  ./cve-2015-3204.py
 west #
+ ./cve-2009-0790.py
+west #
  echo done
 done
 west #
