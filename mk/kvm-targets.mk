@@ -681,7 +681,7 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks: \
 	: Confirm that there is a tty - else virt-install fails mysteriously
 	tty
 	: Confirm that QEMU is ok - not a dependency else as only needed when building
-	$(MAKE) $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok \
+	$(MAKE) $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok
 	: clean up
 	$(call destroy-kvm-domain,$(KVM_BASE_DOMAIN))
 	: delete any old disk and let virt-install create the image
