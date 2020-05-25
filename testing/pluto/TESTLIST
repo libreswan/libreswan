@@ -470,6 +470,8 @@ kvmplutotest	ikev2-frag-04-nofrag			wip
 
 kvmplutotest	dynamic-iface-01			good
 
+kvmplutotest	ikev1-replay-window			good
+kvmplutotest	ikev2-replay-window			good
 
 kvmplutotest	interop-ikev2-strongswan-45-initiator-ecdsa-384		good
 kvmplutotest	interop-ikev2-strongswan-46-responder-ecdsa-384		good
