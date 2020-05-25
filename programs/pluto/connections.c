@@ -380,12 +380,6 @@ static err_t default_end(struct end *e, ip_address *dflt_nexthop)
 	if (isanyaddr(&e->host_nexthop))
 		e->host_nexthop = *dflt_nexthop;
 
-	/* Default client to subnet containing only self */
-	if (!e->has_client) {
-		/* XXX: this uses ADDRESS:PORT */
-		ugh = addrtosubnet(&e->host_addr, &e->client);
-	}
-
 	if (e->sendcert == 0) {
 		/* uninitialized (ugly hack) */
 		e->sendcert = CERT_SENDIFASKED;
@@ -776,7 +770,6 @@ static int extract_end(struct fd *whackfd,
 	dst->host_nexthop = src->host_nexthop;
 	dst->host_srcip = src->host_srcip;
 	dst->host_vtiip = src->host_vtiip;
-	dst->client = src->client;
 	dst->ifaceip = src->ifaceip;
 	dst->modecfg_server = src->modecfg_server;
 	dst->modecfg_client = src->modecfg_client;
@@ -789,14 +782,22 @@ static int extract_end(struct fd *whackfd,
 
 	dst->authby = src->authby;
 
-	dst->protocol = src->protoport.protocol;
-	dst->port = src->protoport.port;
-	if (dst->port != 0) {
+	dst->has_client = src->has_client;
+	if (src->has_client) {
+		dst->client = src->client;
+	} else {
+		/* Default client to subnet containing only self */
+		dst->client = subnet_from_address(&src->host_addr);
+	}
+	if (src->protoport.port != 0) {
+		/* check protocol? */
 		update_subnet_hport(&dst->client, dst->port);
 	}
+
+	dst->protocol = src->protoport.protocol;
+	dst->port = src->protoport.port;
 	dst->has_port_wildcard = protoport_has_any_port(&src->protoport);
 	dst->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
-	dst->has_client = src->has_client;
 	dst->has_client_wildcard = src->has_client_wildcard;
 	dst->updown = clone_str(src->updown, "updown");
 	dst->host_port = src->host_port;
