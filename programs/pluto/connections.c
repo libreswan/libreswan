@@ -791,7 +791,7 @@ static int extract_end(struct fd *whackfd,
 	}
 	if (src->protoport.port != 0) {
 		/* check protocol? */
-		update_subnet_hport(&dst->client, dst->port);
+		update_subnet_hport(&dst->client, src->protoport.port);
 	}
 
 	dst->protocol = src->protoport.protocol;
