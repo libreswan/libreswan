@@ -207,7 +207,7 @@ KVM_BOOT_FILE = $(firstword $(wildcard /var/run/rc.log /proc/uptime))
 
 KVM_ENTROPY_FILE ?= /proc/sys/kernel/random/entropy_avail
 
-$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)entropy-ok: $(KVM_BOOT_FILE)
+$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)entropy-ok: $(KVM_BOOT_FILE) | $(KVM_LOCALDIR)
 	@if test ! -r $(KVM_ENTROPY_FILE); then				\
 		echo no entropy to check ;				\
 	elif test $$(cat $(KVM_ENTROPY_FILE)) -gt 100 ; then		\
@@ -228,7 +228,7 @@ $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)entropy-ok: $(KVM_BOOT_FILE)
 
 KVM_QEMUDIR ?= /var/lib/libvirt/qemu
 
-$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok: $(KVM_BOOT_FILE)
+$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok: $(KVM_BOOT_FILE) | $(KVM_LOCALDIR)
 	@if ! test -w $(KVM_QEMUDIR) ; then				\
 		echo ;							\
 		echo  The directory:					\
