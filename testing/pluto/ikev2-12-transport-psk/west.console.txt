@@ -41,6 +41,7 @@ west #
 000 "ipv4-psk-ikev2-transport":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "ipv4-psk-ikev2-transport":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "ipv4-psk-ikev2-transport":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "ipv4-psk-ikev2-transport":   ESP algorithms: 3DES_CBC-HMAC_SHA2_256_128
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -54,7 +55,7 @@ west #
 002 "ipv4-psk-ikev2-transport" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ipv4-psk-ikev2-transport" #1: authenticated using authby=secret
 002 "ipv4-psk-ikev2-transport" #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
-004 "ipv4-psk-ikev2-transport" #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "ipv4-psk-ikev2-transport" #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
  ../../pluto/bin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 up
@@ -68,7 +69,7 @@ west #
 1v2 "ipv4-psk-ikev2-transport" #3: STATE_V2_REKEY_CHILD_I1: STATE_V2_REKEY_CHILD_I1
 002 "ipv4-psk-ikev2-transport" #3: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 002 "ipv4-psk-ikev2-transport" #3: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
-004 "ipv4-psk-ikev2-transport" #3: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+004 "ipv4-psk-ikev2-transport" #3: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA2_256_128-MODP2048 NATOA=none NATD=none DPD=passive}
 002 "ipv4-psk-ikev2-transport" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ipv4-psk-ikev2-transport" #2: ESP traffic information: in=64B out=64B
 west #
@@ -87,12 +88,14 @@ XFRM state:
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	auth-trunc hmac(sha256) 0xHASHKEY 128
+	enc cbc(des3_ede) 0xENCKEY
 	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	auth-trunc hmac(sha256) 0xHASHKEY 128
+	enc cbc(des3_ede) 0xENCKEY
 	sel src 192.1.2.45/32 dst 192.1.2.23/32 
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.2.45/32
