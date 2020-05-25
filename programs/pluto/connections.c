@@ -791,7 +791,7 @@ static int extract_end(struct fd *whackfd,
 	}
 	if (src->protoport.port != 0) {
 		/* check protocol? */
-		update_subnet_hport(&dst->client, dst->port);
+		update_subnet_hport(&dst->client, src->protoport.port);
 	}
 
 	dst->protocol = src->protoport.protocol;
@@ -2370,11 +2370,11 @@ struct connection *oppo_instantiate(struct connection *c,
 		 */
 		passert(addrinsubnet(our_client, &d->spd.this.client) || sameaddr(our_client, &d->spd.this.host_addr));
 
-		if (addrinsubnet(our_client, &d->spd.this.client))
-			happy(addrtosubnet(our_client, &d->spd.this.client));
-
+		if (addrinsubnet(our_client, &d->spd.this.client)) {
+			d->spd.this.client = subnet_from_address(our_client);
+		}
 		/* opportunistic connections do not use port selectors */
-		setportof(0, &d->spd.this.client.addr);
+		pexpect(subnet_hport(&d->spd.this.client) == 0);
 	} else {
 		/*
 		 * There was no client in the abstract connection
@@ -2389,10 +2389,7 @@ struct connection *oppo_instantiate(struct connection *c,
 	 */
 	passert(d->policy & POLICY_OPPORTUNISTIC);
 	passert(addrinsubnet(peer_client, &d->spd.that.client));
-	happy(addrtosubnet(peer_client, &d->spd.that.client));
-
-	/* opportunistic connections do not use port selectors */
-	setportof(0, &d->spd.that.client.addr);
+	d->spd.that.client = subnet_from_address(peer_client);
 
 	if (sameaddr(peer_client, &d->spd.that.host_addr))
 		d->spd.that.has_client = FALSE;

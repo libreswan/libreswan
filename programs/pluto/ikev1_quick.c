@@ -411,7 +411,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			/* XXX Could send notification back */
 			return false;
 		}
-		happy(addrtosubnet(&temp_address, net));
+		*net = subnet_from_address(&temp_address);
 		subnet_buf b;
 		dbg("%s is %s", which, str_subnet(net, &b));
 		break;
@@ -924,9 +924,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		if (id_pd->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
 			loglog(RC_LOG_SERIOUS,
 			       "Applying workaround for MS-818043 NAT-T bug");
-			zero(&b.his.net);
-			happy(addrtosubnet(&c->spd.that.host_addr,
-					   &b.his.net));
+			b.his.net = subnet_from_address(&c->spd.that.host_addr);
 		}
 		/* End Hack for MS 818043 NAT-T Update */
 
@@ -974,7 +972,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 			nat_traversal_natoa_lookup(md, &hv);
 
 			if (address_is_specified(&hv.st_nat_oa)) {
-				addrtosubnet(&hv.st_nat_oa, &b.his.net);
+				b.his.net = subnet_from_address(&hv.st_nat_oa);
 				subnet_buf buf;
 				loglog(RC_LOG_SERIOUS,
 				       "IDci was FQDN: %s, using NAT_OA=%s %d as IDci",
@@ -988,8 +986,8 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		    endpoint_type(&c->spd.that.host_addr))
 			return STF_FAIL;
 
-		happy(addrtosubnet(&c->spd.this.host_addr, &b.my.net));
-		happy(addrtosubnet(&c->spd.that.host_addr, &b.his.net));
+		b.my.net = subnet_from_address(&c->spd.this.host_addr);
+		b.his.net = subnet_from_address(&c->spd.that.host_addr);
 		b.his.proto = b.my.proto = 0;
 		b.his.port = b.my.port = 0;
 	}
@@ -1649,8 +1647,7 @@ stf_status quick_inR1_outI2_tail(struct msg_digest *md,
 				memcpy(idfqdn, IDcr->pbs.cur, idlen);
 				idfqdn[idlen] = '\0';
 
-				addrtosubnet(&st->hidden_variables.st_nat_oa,
-					     &st->st_connection->spd.that.client);
+				st->st_connection->spd.that.client = subnet_from_address(&st->hidden_variables.st_nat_oa);
 				subnet_buf buf;
 				loglog(RC_LOG_SERIOUS,
 				       "IDcr was FQDN: %s, using NAT_OA=%s as IDcr",

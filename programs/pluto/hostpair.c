@@ -430,7 +430,7 @@ void update_host_pairs(struct connection *c)
 			 * client info
 			 */
 			if (!d->spd.that.has_client) {
-				addrtosubnet(&new_addr, &d->spd.that.client);
+				d->spd.that.client = subnet_from_address(&new_addr);
 			}
 
 			d->spd.that.host_addr = new_addr;
