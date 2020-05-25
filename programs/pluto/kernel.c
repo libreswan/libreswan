@@ -1260,8 +1260,8 @@ bool has_bare_hold(const ip_address *src, const ip_address *dst,
 	ip_subnet this_client, that_client;
 
 	passert(addrtypeof(src) == addrtypeof(dst));
-	happy(addrtosubnet(src, &this_client));
-	happy(addrtosubnet(dst, &that_client));
+	this_client = subnet_from_address(src);
+	that_client = subnet_from_address(dst);
 
 	/*const*/ struct bare_shunt **bspp =
 		bare_shunt_ptr(&this_client, &that_client, transport_proto);
@@ -1339,8 +1339,8 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 	DBG(DBG_CONTROL, DBG_log("fiddle_bare_shunt called"));
 
 	passert(addrtypeof(src) == addrtypeof(dst));
-	happy(addrtosubnet(src, &this_client));
-	happy(addrtosubnet(dst, &that_client));
+	this_client = subnet_from_address(src);
+	that_client = subnet_from_address(dst);
 
 	/*
 	 * ??? this comment might be obsolete.
@@ -1484,7 +1484,7 @@ bool eroute_connection(const struct spd_route *sr,
 	if (sr->this.has_cat) {
 		ip_subnet client;
 
-		addrtosubnet(&sr->this.host_addr, &client);
+		client = subnet_from_address(&sr->this.host_addr);
 		bool t = raw_eroute(&sr->this.host_addr, &client,
 				    &peer, &sr->that.client,
 				cur_spi,

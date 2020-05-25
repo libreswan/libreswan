@@ -723,17 +723,13 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 			{
 				const char *const delmsg = "delete bare kernel shunt - was replaced with  negotiationshunt";
 				const char *const addwidemsg = "oe-negotiating";
-				ip_subnet this_client, that_client;
 				int shunt_proto = b->transport_proto;
 
-				happy(addrtosubnet(&b->our_client, &this_client));
-				happy(addrtosubnet(&b->peer_client, &that_client));
+				/* ports are always zero */
+				ip_subnet this_client = subnet_from_address(&b->our_client);
+				ip_subnet that_client = subnet_from_address(&b->peer_client);
 				/* OLD: negotiationshunt must be wider than bare shunt, esp on NETKEY */
 				/* if the connection we found has protoports, match those for the shunt */
-
-
-				setportof(0, &this_client.addr); /* always catch all ephemeral to dest */
-				setportof(0, &that_client.addr); /* default unless connection says otherwise */
 				if (b->transport_proto != 0) {
 					if (c->spd.that.protocol == 0) {
 						DBG(DBG_OPPO, DBG_log("shunt widened for protoports since conn does not limit protocols"));
@@ -1053,7 +1049,7 @@ static void connection_check_ddns1(struct connection *c)
 	/* default client to subnet containing only self */
 	if (!c->spd.that.has_client) {
 		/* XXX: this uses ADDRESS:PORT */
-		addrtosubnet(&c->spd.that.host_addr, &c->spd.that.client);
+		c->spd.that.client = subnet_from_address(&c->spd.that.host_addr);
 	}
 
 	/*
