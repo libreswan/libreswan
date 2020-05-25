@@ -139,8 +139,11 @@ struct raw_iface *find_raw_ifaces4(void)
 		ip_endpoint any_ep = endpoint(&any, pluto_port);
 		ip_sockaddr any_sa;
 		size_t any_sa_size = endpoint_to_sockaddr(&any_ep, &any_sa);
-		if (bind(master_sock, &any_sa.sa, any_sa_size) < 0)
-			EXIT_LOG_ERRNO(errno, "bind() failed in %s()", __func__);
+		if (bind(master_sock, &any_sa.sa, any_sa_size) < 0) {
+			endpoint_buf eb;
+			EXIT_LOG_ERRNO(errno, "bind(%s) failed in %s()",
+				       str_endpoint(&any_ep, &eb), __func__);
+		}
 	}
 
 	/* a million interfaces is probably the maximum, ever... */
