@@ -5,3 +5,5 @@ creating a newhostkey appends and not overwrites the secrets file.
 This is a BSI requirement
 
 This test also checks for proper secure linking using checksec.sh
+
+this also tests the type=block for installing a proper block shunt

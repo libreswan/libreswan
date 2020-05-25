@@ -40,6 +40,13 @@ Redirecting to: [initsystem]
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
+ sleep 10
+west #
+ # this ping should fail due to the type=block connection
+west #
+ ping -c 1 192.1.2.23
+ping: connect: Operation not permitted
+west #
  ipsec stop
 Redirecting to: [initsystem]
 west #
@@ -47,5 +54,13 @@ west #
 | need 2048 bits random for extra seeding of the NSS PRNG
 | read 256 bytes from /dev/random for NSS PRNG
 seeded 256 bytes into the NSS PRNG
+west #
+ test -f PATH/libexec/ipsec/pluto && PLUTOBIN="PATH/libexec/ipsec/pluto"
+west #
+ test -f PATH/libexec/ipsec/pluto && PLUTOBIN="PATH/libexec/ipsec/pluto"
+west #
+ ./checksec.sh --file $PLUTOBIN
+RELRO           STACK CANARY      NX            PIE             RPATH      RUNPATH      FILE
+Full RELRO      Canary found      NX enabled    PIE enabled     No RPATH   No RUNPATH   PATH/libexec/ipsec/pluto
 west #
  
