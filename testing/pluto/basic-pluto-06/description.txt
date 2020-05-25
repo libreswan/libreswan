@@ -4,5 +4,3 @@ configuration files in directories not owned by root.
 This tests that we can properly read the configuration files
 before we drop the CAP_DAC_OVERRIDE capability
 
-This still uses the regular NSS (although it is not used because the
-test uses PSK)
