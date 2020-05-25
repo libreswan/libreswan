@@ -51,7 +51,7 @@ typedef struct {
 	 * We need something that makes static IPv4 initializers possible
 	 * (struct in_addr requires htonl() which is run-time only).
 	 */
-	uint8_t bytes[16];
+	struct { uint8_t byte[16]; } bytes;
 #ifndef ENDPOINT_TYPE
 	/*
 	 * XXX: An address abstraction - type+bytes - should not

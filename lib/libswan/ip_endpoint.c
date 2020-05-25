@@ -32,13 +32,15 @@ static ip_endpoint raw_endpoint(const struct ip_protocol *protocol,
 		.hport = hport,
 		.protocol = protocol->ipproto,
 	};
-	return endpoint;
 #else
-	ip_endpoint e = *address;
-	e.hport = hport;
-	e.ipproto = protocol->ipproto;
-	return e;
+	ip_endpoint endpoint = {
+		.hport = hport,
+		.version = address->version,
+		.ipproto = protocol->ipproto,
+		.bytes = address->bytes,
+	};
 #endif
+	return endpoint;
 }
 
 ip_endpoint endpoint3(const struct ip_protocol *protocol,
@@ -288,7 +290,7 @@ const char *str_sensitive_endpoint(const ip_endpoint *endpoint, endpoint_buf *ds
 bool endpoint_eq(const ip_endpoint l, ip_endpoint r)
 {
 	if (l.version == r.version && l.hport == r.hport &&
-	    memeq(l.bytes, r.bytes, sizeof(l.bytes))) {
+	    memeq(&l.bytes, &r.bytes, sizeof(l.bytes))) {
 		if (l.ipproto != r.ipproto) {
 			dbg("ipproto mismatch");
 		}

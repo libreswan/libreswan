@@ -30,7 +30,7 @@ ip_address address_from_shunk(const struct ip_info *afi, const shunk_t bytes)
 		.version = afi->ip_version,
 	};
 	passert(afi->ip_size == bytes.len);
-	memcpy(address.bytes, bytes.ptr, bytes.len);
+	memcpy(&address.bytes, bytes.ptr, bytes.len);
 	return address;
 }
 
@@ -90,7 +90,7 @@ shunk_t address_as_shunk(const ip_address *address)
 	if (afi == NULL) {
 		return null_shunk;
 	}
-	return shunk2(address->bytes, afi->ip_size);
+	return shunk2(&address->bytes, afi->ip_size);
 }
 
 chunk_t address_as_chunk(ip_address *address)
@@ -102,7 +102,7 @@ chunk_t address_as_chunk(ip_address *address)
 	if (afi == NULL) {
 		return empty_chunk;
 	}
-	return chunk2(address->bytes, afi->ip_size);
+	return chunk2(&address->bytes, afi->ip_size);
 }
 
 /*
