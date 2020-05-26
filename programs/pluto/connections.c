@@ -376,6 +376,11 @@ static err_t default_end(struct end *e, ip_address *dflt_nexthop)
 		e->has_id_wildcards = FALSE;
 	}
 
+	if (!e->has_client) {
+		/* Default client to subnet containing only self */
+		e->client = selector_from_ipproto_address_hport(e->protocol, &e->host_addr, e->port);
+	}
+
 	/* Default nexthop to other side. */
 	if (isanyaddr(&e->host_nexthop))
 		e->host_nexthop = *dflt_nexthop;
@@ -782,16 +787,14 @@ static int extract_end(struct fd *whackfd,
 
 	dst->authby = src->authby;
 
+	/*
+	 * .has_client means that .client contains a hardwired value,
+	 * if it doesn't then it is filled in later (for instance by
+	 * default_end()) using .host_addr+proto+port.
+	 */
 	dst->has_client = src->has_client;
 	if (src->has_client) {
-		dst->client = src->client;
-	} else {
-		/* Default client to subnet containing only self */
-		dst->client = subnet_from_address(&src->host_addr);
-	}
-	if (src->protoport.port != 0) {
-		/* check protocol? */
-		update_subnet_hport(&dst->client, src->protoport.port);
+		dst->client = selector_from_subnet_protoport(&src->client, &src->protoport);
 	}
 
 	dst->protocol = src->protoport.protocol;

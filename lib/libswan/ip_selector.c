@@ -54,3 +54,19 @@ ip_selector selector_from_ipproto_address_hport(unsigned ipproto,
 #endif
 	return selector;
 }
+
+ip_selector selector_from_subnet_protoport(const ip_subnet *subnet,
+					   const ip_protoport *protoport)
+{
+#ifdef SELECTOR_TYPE
+#else
+	const struct ip_info *afi = subnet_type(subnet);
+	if (!pexpect(afi != NULL)) {
+		return unset_selector;
+	}
+	ip_selector selector = *subnet;
+	selector.addr.ipproto = protoport->protocol;
+	selector.addr.hport = protoport->port;
+#endif
+	return selector;
+}
