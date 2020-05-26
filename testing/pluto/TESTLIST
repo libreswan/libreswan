@@ -154,6 +154,7 @@ kvmplutotest	ikev2-32-nat-rw-rekey			good
 kvmplutotest	ikev2-33-clearport-01			good
 kvmplutotest	ikev2-34-clearport-02			good
 kvmplutotest	ikev2-35-mismatched-child		good
+kvmplutotest	ikev2-36-transport-protoport-01		good
 kvmplutotest	ikev2-41-rw-replace			good
 kvmplutotest	ikev2-42-rw-replace-responder		good
 kvmplutotest	ikev1-impair-01-replay-duplicates	good
@@ -315,6 +316,8 @@ kvmplutotest	impair-09-protected-ikev1		good
 
 kvmplutotest	ikev1-psk-dual-behind-nat-01		good
 kvmplutotest	ikev1-psk-two-rw-id-ip-01		good
+
+kvmplutotest	ikev1-transport-protoport-01		good
 
 kvmplutotest	ikev1-x509-05-san-firstemail-match	good
 kvmplutotest	ikev1-x509-06-san-email-mismatch	good
