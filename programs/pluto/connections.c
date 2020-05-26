@@ -305,6 +305,8 @@ static void discard_connection(struct connection *c,
 	free_ikev2_proposals(&c->v2_create_child_proposals);
 	c->v2_create_child_proposals_default_dh = NULL; /* static pointer */
 
+	remove_connection_from_db(c);
+
 	pfree(c);
 }
 
@@ -1861,8 +1863,7 @@ static bool extract_connection(struct fd *whackfd,
 
 void add_connection(struct fd *whackfd, const struct whack_message *wm)
 {
-	struct connection *c = alloc_thing(struct connection,
-					   "struct connection");
+	struct connection *c = alloc_connection(HERE);
 	if (extract_connection(whackfd, wm, c)) {
 		/* log all about this connection */
 		libreswan_log("added connection description \"%s\"", c->name);
@@ -1928,7 +1929,7 @@ char *add_group_instance(struct fd *whackfd,
 			namebuf);
 		return NULL;
 	} else {
-		struct connection *t = clone_thing(*group, "group instance");
+		struct connection *t = clone_connection(group, HERE);
 
 		t->foodgroup = clone_str(t->name, "cloned from groupname"); /* not set in group template */
 		t->name = namebuf;	/* trick: unsharing will clone this for us */
@@ -2007,15 +2008,13 @@ void remove_group_instance(const struct connection *group,
  * Note that instantiate can only deal with a single SPD/eroute.
  */
 struct connection *instantiate(struct connection *c, const ip_address *him,
-			const struct id *his_id)
+			       const struct id *his_id)
 {
-	struct connection *d;
-
 	passert(c->kind == CK_TEMPLATE);
 	passert(c->spd.spd_next == NULL);
 
 	c->instance_serial++;
-	d = clone_thing(*c, "instantiated connection");
+	struct connection *d = clone_connection(c, HERE);
 	if (his_id != NULL) {
 		int wildcards;	/* value ignored */
 

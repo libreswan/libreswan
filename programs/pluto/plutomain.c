@@ -59,7 +59,8 @@
 #include "pluto_crypt.h"
 #include "enum_names.h"
 #include "virtual.h"	/* needs connections.h */
-#include "state_db.h"	/* for init_state_db() */
+#include "state_db.h"		/* for init_state_db() */
+#include "connection_db.h"	/* for connection_state_db() */
 #include "nat_traversal.h"
 #include "ike_alg.h"
 #include "ikev2_redirect.h"
@@ -1822,6 +1823,7 @@ int main(int argc, char **argv)
 /* Initialize all of the various features */
 
 	init_state_db();
+	init_connection_db();
 	init_server();
 
 	init_rate_log();

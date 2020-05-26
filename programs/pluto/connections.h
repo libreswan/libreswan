@@ -32,6 +32,8 @@
 
 #include "fd.h"
 #include "proposals.h"
+#include "connection_db.h"		/* for co_serial_t */
+#include "hash_table.h"
 
 /* There are two kinds of connections:
  * - ISAKMP connections, between hosts (for IKE communication)
@@ -256,6 +258,7 @@ struct ephemeral_variables {
 };
 
 struct connection {
+	co_serial_t serialno;
 	char *name;
 	enum ike_version ike_version;
 	char *foodgroup;
@@ -395,6 +398,9 @@ struct connection {
 
 	char *redirect_to;        /* RFC 5685 */
 	char *accept_redirect_to;
+
+	struct list_entry serialno_list_entry;
+	struct list_entry hash_table_entries[CONNECTION_HASH_TABLES_ROOF];
 };
 
 #define oriented(c) ((c).interface != NULL)

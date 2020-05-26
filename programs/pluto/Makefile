@@ -174,7 +174,9 @@ USERLAND_LDFLAGS += -levent_pthreads
 
 USERLAND_LDFLAGS += $(LDAP_LDFLAGS)
 
-OBJS += connections.o initiate.o terminate.o ikev2_rekey_now.o
+OBJS += connections.o
+OBJS += connection_db.o
+OBJS += initiate.o terminate.o ikev2_rekey_now.o
 OBJS += cbc_test_vectors.o
 OBJS += ctr_test_vectors.o
 OBJS += gcm_test_vectors.o
