@@ -626,12 +626,13 @@ kvm-uninstall-test-networks: kvm-uninstall-test-domains
 # Build KVM domains from scratch
 #
 
-KVM_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_ISO_URL))
+KVM_ISO = $(notdir $(KVM_ISO_URL))
 
 .PHONY: kvm-iso
 kvm-iso: $(KVM_ISO)
-$(KVM_ISO): | $(KVM_POOLDIR)
-	cd $(KVM_POOLDIR) && wget $(KVM_ISO_URL)
+$(KVM_POOLDIR)/$(KVM_ISO): | $(KVM_POOLDIR)
+	wget --output-document $@.tmp --no-clobber -- $(KVM_ISO_URL)
+	mv $@.tmp $@
 
 define destroy-kvm-domain
 	: destroy-kvm-domain domain=$(1)
@@ -674,7 +675,7 @@ endef
 .PRECIOUS: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks
 $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks: \
 		| \
-		$(KVM_ISO) \
+		$(KVM_POOLDIR)/$(KVM_ISO) \
 		$(KVM_KICKSTART_FILE) \
 		$(KVM_GATEWAY_FILE) \
 		$(KVM_POOLDIR)
@@ -690,7 +691,7 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks: \
 		--name=$(KVM_BASE_DOMAIN) \
 		--memory 1024 \
 		--disk size=$(VIRT_DISK_SIZE_GB),cache=writeback,path=$(basename $@).qcow2 \
-		--location=$(KVM_ISO) \
+		--location=$(KVM_POOLDIR)/$(KVM_ISO) \
 		--initrd-inject=$(KVM_KICKSTART_FILE) \
 		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(notdir $(KVM_KICKSTART_FILE)) console=tty0 console=ttyS0,115200 net.ifnames=0 biosdevname=0"
 	: the reboot message from virt-install can be ignored
