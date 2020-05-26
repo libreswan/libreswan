@@ -78,7 +78,7 @@ road #
 004 "road"[1] 192.1.2.23 #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 road #
  ping6 -c 2 -w 4 192.0.2.254
-ping: 192.0.2.254: Address family for hostname not supported
+ping6: 192.0.2.254: Address family for hostname not supported
 road #
  ipsec trafficstatus
 006 #2: "road"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east', lease=192.0.3.1/32
