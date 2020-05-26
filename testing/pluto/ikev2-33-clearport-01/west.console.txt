@@ -22,6 +22,42 @@ west #
 west #
  ipsec auto --route pass-222
 west #
+ ip xfrm pol
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 222 
+	dir fwd priority 1687486 ptype main 
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 222 
+	dir in priority 1687486 ptype main 
+src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 222 
+	dir out priority 1687486 ptype main 
+src 192.1.2.45/32 dst 192.1.2.23/32 
+	dir out priority 2080702 ptype main 
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+west #
  # send packet over the clear exception - should return connection refused
 west #
  echo 'test' | nc -v -w 5 192.1.2.23 222
