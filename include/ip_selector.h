@@ -56,6 +56,10 @@ typedef ip_subnet ip_selector;
 
 #endif
 
+extern const ip_selector unset_selector;
+
+ip_selector selector_from_ipproto_address_hport(unsigned ipproto, const ip_address *address, unsigned hport);
+
 typedef struct {
 	char buf[sizeof(address_buf) + 4/*"/NNN"*/ + 6/*:65535*/];
 } selector_buf;

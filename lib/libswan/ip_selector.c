@@ -13,7 +13,12 @@
  * for more details.
  */
 
+#include "lswlog.h"
+
 #include "ip_selector.h"
+#include "ip_info.h"
+
+const ip_selector unset_selector;
 
 void jam_selector(jambuf_t *buf, const ip_subnet *subnet)
 {
@@ -30,4 +35,22 @@ const char *str_selector(const ip_selector *selector, selector_buf *out)
 	jambuf_t buf = ARRAY_AS_JAMBUF(out->buf);
 	jam_selector(&buf, selector);
 	return out->buf;
+}
+
+ip_selector selector_from_ipproto_address_hport(unsigned ipproto,
+						const ip_address *address,
+						unsigned hport)
+{
+#ifdef SELECTOR_TYPE
+#else
+	const struct ip_info *afi = address_type(address);
+	if (!pexpect(afi != NULL)) {
+		return unset_selector;
+	}
+	ip_selector selector = afi->no_addresses; /* ::/128 or 0.0.0.0/32 */
+	selector.addr = *address;
+	selector.addr.ipproto = ipproto;
+	selector.addr.hport = hport;
+#endif
+	return selector;
 }

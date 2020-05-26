@@ -1680,25 +1680,19 @@ static ip_address address_from_xfrm(const struct ip_info *afi,
 }
 
 /*
- * Create ip_endpoint out of xfrm_address_t:NPORT.
+ * Create ip_selector / ip_client out of xfrm_address_t:NPORT.
  */
-static ip_subnet client_from_xfrm(const struct ip_info *afi, unsigned proto,
-				  const xfrm_address_t *src,
-				  uint16_t nport)
+
+static ip_selector client_from_xfrm(const struct ip_info *afi, unsigned ipproto,
+				    const xfrm_address_t *src, uint16_t nport)
 {
 	ip_address address = address_from_xfrm(afi, src);
-	ip_endpoint end = endpoint(&address, ntohs(nport));
-	ip_subnet client = subnet_from_endpoint(&end);
-	client.addr.ipproto = proto;
-	return client;
+	return selector_from_ipproto_address_hport(ipproto, &address, ntohs(nport));
 }
 
 static void netlink_acquire(struct nlmsghdr *n)
 {
 	struct xfrm_user_acquire *acquire;
-	const xfrm_address_t *srcx, *dstx;
-	unsigned family;
-	unsigned transport_proto;
 	struct xfrm_user_sec_ctx_ike *uctx = NULL;
 	struct xfrm_user_sec_ctx_ike uctx_space;
 
@@ -1732,10 +1726,18 @@ static void netlink_acquire(struct nlmsghdr *n)
 	 */
 	acquire = NLMSG_DATA(n);	/* insufficiently aligned */
 
-	srcx = &acquire->sel.saddr;
-	dstx = &acquire->sel.daddr;
-	family = acquire->policy.sel.family;
-	transport_proto = acquire->sel.proto;
+	const struct ip_info *afi = aftoinfo(acquire->policy.sel.family);
+	if (afi == NULL) {
+		libreswan_log("XFRM_MSG_ACQUIRE message from kernel malformed: family %u unknown",
+			      acquire->policy.sel.family);
+		return;
+	}
+	ip_selector ours = client_from_xfrm(afi, acquire->sel.proto,
+					    &acquire->sel.saddr,
+					    acquire->sel.sport);
+	ip_selector theirs = client_from_xfrm(afi, acquire->sel.proto,
+					      &acquire->sel.daddr,
+					      acquire->sel.dport);
 
 	/*
 	 * Run through rtattributes looking for XFRMA_SEC_CTX
@@ -1749,18 +1751,18 @@ static void netlink_acquire(struct nlmsghdr *n)
 			NLMSG_SPACE(sizeof(struct xfrm_user_acquire));
 
 	while (remaining > 0) {
-		DBG(DBG_KERNEL,
-			DBG_log("xfrm acquire rtattribute type %u", attr->rta_type));
+		dbg("xfrm acquire rtattribute type %u ...", attr->rta_type);
 		switch (attr->rta_type) {
 		case XFRMA_TMPL:
 		{
 			struct xfrm_user_tmpl* tmpl = (struct xfrm_user_tmpl *) RTA_DATA(attr);
-			DBG(DBG_KERNEL,
-				DBG_log("xfrm template attribute with reqid:%d, spi:%d, proto:%d", tmpl->reqid, tmpl->id.spi, tmpl->id.proto));
+			dbg("... xfrm template attribute with reqid:%d, spi:%d, proto:%d",
+			    tmpl->reqid, tmpl->id.spi, tmpl->id.proto);
 			break;
 		}
 		case XFRMA_POLICY_TYPE:
 			/* discard */
+			dbg("... xfrm policy type ignored");
 			break;
 		case XFRMA_SEC_CTX:
 		{
@@ -1768,11 +1770,10 @@ static void netlink_acquire(struct nlmsghdr *n)
 			/* length of text of label */
 			size_t len = xuctx->ctx_len;
 
-			DBG(DBG_KERNEL,
-				DBG_log("xfrm xuctx: exttype=%d, len=%d, ctx_doi=%d, ctx_alg=%d, ctx_len=%zu",
-					xuctx->exttype, xuctx->len,
-					xuctx->ctx_doi, xuctx->ctx_alg,
-					len));
+			dbg("... xfrm xuctx: exttype=%d, len=%d, ctx_doi=%d, ctx_alg=%d, ctx_len=%zu",
+			    xuctx->exttype, xuctx->len,
+			    xuctx->ctx_doi, xuctx->ctx_alg,
+			    len);
 
 			if (uctx != NULL) {
 				libreswan_log("Second Sec Ctx label in a single Acquire message; ignoring Acquire message");
@@ -1789,10 +1790,9 @@ static void netlink_acquire(struct nlmsghdr *n)
 			 * note: xuctx + 1 is tricky:
 			 * first byte after header
 			 */
-			DBG(DBG_KERNEL,
-				DBG_log("xfrm: xuctx security context value: %.*s",
-					xuctx->ctx_len,
-					(const char *) (xuctx + 1)));
+			dbg("xfrm: xuctx security context value: %.*s",
+			    xuctx->ctx_len,
+			    (const char *) (xuctx + 1));
 
 			zero(&uctx_space);
 			uctx = &uctx_space;
@@ -1823,9 +1823,8 @@ static void netlink_acquire(struct nlmsghdr *n)
 			break;
 		}
 		default:
-			DBG(DBG_KERNEL,
-				DBG_log("ignoring unknown xfrm acquire payload type %u",
-					attr->rta_type));
+			dbg("... ignoring unknown xfrm acquire payload type %u",
+			    attr->rta_type);
 			break;
 		}
 		/* updates remaining too */
@@ -1836,17 +1835,9 @@ static void netlink_acquire(struct nlmsghdr *n)
 	 * XXX also the type of src/dst should be checked to make sure
 	 *     that they aren't v4 to v6 or something goofy
 	 */
-	const struct ip_info *afi = aftoinfo(family);
-	if (afi == NULL) {
-		libreswan_log("XFRM_MSG_ACQUIRE message from kernel malformed: family %u unknown",
-			      family);
-		return;
-	}
 
-	ip_selector ours, his;
-	ours = client_from_xfrm(afi, acquire->sel.proto, srcx, acquire->sel.sport);
-	his = client_from_xfrm(afi, acquire->sel.proto, dstx, acquire->sel.dport);
-	record_and_initiate_opportunistic(&ours, &his, transport_proto, uctx,
+	record_and_initiate_opportunistic(&ours, &theirs,
+					  acquire->sel.proto, uctx,
 					  "%acquire-netlink");
 }
 
