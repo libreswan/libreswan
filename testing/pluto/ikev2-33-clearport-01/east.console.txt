@@ -1,0 +1,17 @@
+/testing/guestbin/swan-prep
+east #
+ # no pluto needed
+east #
+ #(nc -l 193.1.2.23 222 >/dev/null 2>/dev/null &)
+east #
+ #(nc -l 193.1.2.23 80 >/dev/null 2>/dev/null &)
+east #
+ echo "initdone"
+initdone
+east #
+ : ==== tuc ====
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
