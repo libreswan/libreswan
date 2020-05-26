@@ -157,6 +157,7 @@ struct virtual_t;	/* opaque type */
 struct host_pair;	/* opaque type */
 
 struct end {
+	const char *leftright;
 	struct id id;
 
 	enum keyword_host host_type;

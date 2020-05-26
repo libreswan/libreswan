@@ -722,8 +722,10 @@ static void unshare_connection(struct connection *c)
 
 static int extract_end(struct fd *whackfd,
 		       struct end *dst, const struct whack_end *src,
-		       const char *which)
+		       const char *leftright)
 {
+	dst->leftright = leftright;
+
 	bool same_ca = 0;
 
 	/*
@@ -736,8 +738,9 @@ static int extract_end(struct fd *whackfd,
 	} else {
 		err_t ugh = atoid(src->id, &dst->id);
 		if (ugh != NULL) {
-			loglog(RC_BADID, "bad %s --id: %s (ignored)", which,
-			       ugh);
+			log_global(RC_BADID, whackfd,
+				   "bad %s --id: %s (ignored)",
+				   leftright, ugh);
 		}
 	}
 
@@ -751,9 +754,9 @@ static int extract_end(struct fd *whackfd,
 
 			ugh = atodn(src->ca, &dst->ca); /* static result! */
 			if (ugh != NULL) {
-				libreswan_log(
-					"bad CA string '%s': %s (ignored)",
-					src->ca, ugh);
+				log_global(RC_LOG, whackfd,
+					   "bad %s CA string '%s': %s (ignored)",
+					   leftright, src->ca, ugh);
 				dst->ca = EMPTY_CHUNK;
 			} else {
 				dst->ca = clone_hunk(dst->ca, "ca string");
@@ -761,7 +764,7 @@ static int extract_end(struct fd *whackfd,
 		}
 	}
 
-	if (!load_end_cert_and_preload_secret(whackfd, which/*side*/, src->pubkey,
+	if (!load_end_cert_and_preload_secret(whackfd, leftright/*side*/, src->pubkey,
 					      src->pubkey_type, dst)) {
 		return -1;
 	}
@@ -821,8 +824,9 @@ static int extract_end(struct fd *whackfd,
 			setportof(port, &dst->host_addr);
 
 			if (er != NULL) {
-				loglog(RC_COMMENT,
-					"failed to convert '%s' at load time: %s", dst->host_addr_name, er);
+				log_global(RC_COMMENT, whackfd,
+					   "failed to convert '%s' at load time: %s",
+					   dst->host_addr_name, er);
 			}
 			break;
 
