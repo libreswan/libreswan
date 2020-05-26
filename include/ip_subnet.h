@@ -139,6 +139,7 @@ extern err_t ttosubnet(const char *src, size_t srclen, int af, int clash, ip_sub
 extern err_t initsubnet(const ip_address *addr, int maskbits, int clash,
 		 ip_subnet *dst);
 extern err_t endtosubnet(const ip_endpoint *end, ip_subnet *dst, where_t where);
+#define addrtosubnet(ADDR, DST) endtosubnet(ADDR, DST, HERE)
 
 /* misc. conversions and related */
 extern err_t rangetosubnet(const ip_address *from, const ip_address *to,

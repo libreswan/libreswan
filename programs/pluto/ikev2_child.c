@@ -436,7 +436,8 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 			c->spd.this.has_cat = TRUE; /* create iptable entry */
 		}
 	} else {
-		c->spd.this.client = subnet_from_address(&ip);
+		addrtosubnet(&ip, &c->spd.this.client);
+		setportof(0, &c->spd.this.client.addr); /* ??? redundant? */
 		/* only set sourceip= value if unset in configuration */
 		if (address_type(&c->spd.this.host_srcip) == NULL ||
 		    isanyaddr(&c->spd.this.host_srcip)) {

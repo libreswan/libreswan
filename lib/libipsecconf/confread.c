@@ -683,11 +683,11 @@ static bool validate_end(struct starter_conn *conn_st,
 					leftright, value, er);
 		}
 		if (!end->has_client) {
-			if (address_type(&end->sourceip) == NULL) {
+			er = addrtosubnet(&end->sourceip, &end->subnet);
+			if (er != NULL) {
 				ERR_FOUND("attempt to default %ssubnet from %s failed: %s",
-					leftright, value, "address family unknown");
+					leftright, value, er);
 			}
-			end->subnet = subnet_from_address(&end->sourceip);
 			end->has_client = TRUE;
 			end->has_client_wildcard = FALSE;
 		}

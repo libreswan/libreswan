@@ -376,14 +376,15 @@ static err_t default_end(struct end *e, ip_address *dflt_nexthop)
 		e->has_id_wildcards = FALSE;
 	}
 
-	if (!e->has_client) {
-		/* Default client to subnet containing only self */
-		e->client = selector_from_ipproto_address_hport(e->protocol, &e->host_addr, e->port);
-	}
-
 	/* Default nexthop to other side. */
 	if (isanyaddr(&e->host_nexthop))
 		e->host_nexthop = *dflt_nexthop;
+
+	/* Default client to subnet containing only self */
+	if (!e->has_client) {
+		/* XXX: this uses ADDRESS:PORT */
+		ugh = addrtosubnet(&e->host_addr, &e->client);
+	}
 
 	if (e->sendcert == 0) {
 		/* uninitialized (ugly hack) */
@@ -775,6 +776,7 @@ static int extract_end(struct fd *whackfd,
 	dst->host_nexthop = src->host_nexthop;
 	dst->host_srcip = src->host_srcip;
 	dst->host_vtiip = src->host_vtiip;
+	dst->client = src->client;
 	dst->ifaceip = src->ifaceip;
 	dst->modecfg_server = src->modecfg_server;
 	dst->modecfg_client = src->modecfg_client;
@@ -787,20 +789,14 @@ static int extract_end(struct fd *whackfd,
 
 	dst->authby = src->authby;
 
-	/*
-	 * .has_client means that .client contains a hardwired value,
-	 * if it doesn't then it is filled in later (for instance by
-	 * default_end()) using .host_addr+proto+port.
-	 */
-	dst->has_client = src->has_client;
-	if (src->has_client) {
-		dst->client = selector_from_subnet_protoport(&src->client, &src->protoport);
-	}
-
 	dst->protocol = src->protoport.protocol;
 	dst->port = src->protoport.port;
+	if (dst->port != 0) {
+		update_subnet_hport(&dst->client, dst->port);
+	}
 	dst->has_port_wildcard = protoport_has_any_port(&src->protoport);
 	dst->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
+	dst->has_client = src->has_client;
 	dst->has_client_wildcard = src->has_client_wildcard;
 	dst->updown = clone_str(src->updown, "updown");
 	dst->host_port = src->host_port;
@@ -2373,11 +2369,11 @@ struct connection *oppo_instantiate(struct connection *c,
 		 */
 		passert(addrinsubnet(our_client, &d->spd.this.client) || sameaddr(our_client, &d->spd.this.host_addr));
 
-		if (addrinsubnet(our_client, &d->spd.this.client)) {
-			d->spd.this.client = subnet_from_address(our_client);
-		}
+		if (addrinsubnet(our_client, &d->spd.this.client))
+			happy(addrtosubnet(our_client, &d->spd.this.client));
+
 		/* opportunistic connections do not use port selectors */
-		pexpect(subnet_hport(&d->spd.this.client) == 0);
+		setportof(0, &d->spd.this.client.addr);
 	} else {
 		/*
 		 * There was no client in the abstract connection
@@ -2392,7 +2388,10 @@ struct connection *oppo_instantiate(struct connection *c,
 	 */
 	passert(d->policy & POLICY_OPPORTUNISTIC);
 	passert(addrinsubnet(peer_client, &d->spd.that.client));
-	d->spd.that.client = subnet_from_address(peer_client);
+	happy(addrtosubnet(peer_client, &d->spd.that.client));
+
+	/* opportunistic connections do not use port selectors */
+	setportof(0, &d->spd.that.client.addr);
 
 	if (sameaddr(peer_client, &d->spd.that.host_addr))
 		d->spd.that.has_client = FALSE;

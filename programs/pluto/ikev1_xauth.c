@@ -1572,8 +1572,9 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 			if (!pbs_in_address(&a, &ipv4_info, &strattr, "addr")) {
 				return STF_FATAL;
 			}
-			c->spd.this.client = subnet_from_address(&a);
-			c->spd.this.has_client = true;
+			addrtosubnet(&a, &c->spd.this.client);
+
+			c->spd.this.has_client = TRUE;
 			subnet_buf caddr;
 			str_subnet(&c->spd.this.client, &caddr);
 			loglog(RC_LOG, "Received IP address %s", caddr.buf);
@@ -1724,7 +1725,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				if (!pbs_in_address(&a, &ipv4_info, &strattr, "addr")) {
 					return STF_FATAL;
 				}
-				c->spd.this.client = subnet_from_address(&a);
+				addrtosubnet(&a, &c->spd.this.client);
 
 				c->spd.this.has_client = TRUE;
 				subnet_buf caddr;

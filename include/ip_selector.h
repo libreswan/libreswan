@@ -18,7 +18,6 @@
 #define IP_SELECTOR_H
 
 #include "jambuf.h"
-#include "ip_protoport.h"
 
 /*
  * IKEv2 style traffic selectors can describe.
@@ -56,14 +55,6 @@ struct {
 typedef ip_subnet ip_selector;
 
 #endif
-
-extern const ip_selector unset_selector;
-
-ip_selector selector_from_ipproto_address_hport(unsigned ipproto,
-						const ip_address *address,
-						unsigned hport);
-ip_selector selector_from_subnet_protoport(const ip_subnet *subnet,
-					   const ip_protoport *protoport);
 
 typedef struct {
 	char buf[sizeof(address_buf) + 4/*"/NNN"*/ + 6/*:65535*/];
