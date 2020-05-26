@@ -53,7 +53,7 @@ struct show {
 	 */
 	struct fd *whackfd;
 	/*
-	 * Should the next output be preceeded by a blank line?
+	 * Should the next output be preceded by a blank line?
 	 */
 	enum separation { NO_SEPARATOR = 1, HAD_OUTPUT, SEPARATE_NEXT_OUTPUT, } separator;
 };
@@ -240,7 +240,7 @@ static void connection_state(struct state *st, void *data)
 		if (lc->conn->host_pair != st->st_connection->host_pair ||
 		    !same_peer_ids(lc->conn, st->st_connection, NULL))
 			return;
-		/* phase1 is shared with another connnection */
+		/* phase1 is shared with another connection */
 	}
 
 	/* ignore undefined states (i.e. just deleted) */

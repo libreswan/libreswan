@@ -264,7 +264,7 @@ void show_kernel_alg_connection(struct show *s,
 
 	if (c->policy & POLICY_PFS) {
 		/*
-		 * Get the DH algorthm specified for the child (ESP or AH).
+		 * Get the DH algorithm specified for the child (ESP or AH).
 		 *
 		 * If this is NULL and PFS is required then callers fall back to using
 		 * the parent's DH algorithm.

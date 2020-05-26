@@ -5,7 +5,7 @@
 # This file specifies higher priority (lower number) rules to define exceptions
 # Exceptions will prevent ACQUIREs, but if gw responded to OE, tunnel will be
 #   up but exceptions will take priority and thus 'leak' in the clear.
-# NONE of these exceptions will overrule a staticly configured tunnel, unless
+# NONE of these exceptions will overrule a statically configured tunnel, unless
 #  a priority of <= XXX is specified
 
 # direction (in/out/both) | protocol | source IP@port range | dest IP@port range | prio

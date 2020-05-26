@@ -127,7 +127,7 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
  * Complicating this is how each individual initiate code path needs
  * to be modified so that delays calling queue_initiator() until it is
  * ready to actually send (and a message id can be assigned).  Would
- * it be simplier if there was a gate keeper that assigned request
+ * it be simpler if there was a gate keeper that assigned request
  * message id up front, but only when one was available?
  */
 void v2_msgid_queue_initiator(struct ike_sa *ike, struct state *st,

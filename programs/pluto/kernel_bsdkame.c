@@ -238,7 +238,7 @@ static void bsdkame_pfkey_acquire(struct sadb_msg *msg UNUSED)
 	DBG_log("received acquire --- discarded");
 }
 
-/* processs a pfkey message */
+/* process a pfkey message */
 static void bsdkame_pfkey_async(struct sadb_msg *reply)
 {
 	switch (reply->sadb_msg_type) {

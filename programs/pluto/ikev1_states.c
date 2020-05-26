@@ -93,7 +93,7 @@ struct finite_state v1_states[] = {
 	 * IKEv1: Post established negotiation.
 	 */
 
-	S(STATE_MODE_CFG_I1, "ModeCfg inititator - awaiting CFG_reply", CAT_ESTABLISHED_IKE_SA),
+	S(STATE_MODE_CFG_I1, "ModeCfg initiator - awaiting CFG_reply", CAT_ESTABLISHED_IKE_SA),
 	S(STATE_MODE_CFG_R1, "ModeCfg Set sent, expecting Ack", CAT_ESTABLISHED_IKE_SA),
 	S(STATE_MODE_CFG_R2, "ModeCfg R2", CAT_ESTABLISHED_IKE_SA),
 

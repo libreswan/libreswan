@@ -782,7 +782,7 @@ bool ikev1_out_sa(pb_stream *outs,
 					const struct db_attr *a = &t->attrs[an];
 					/*
 					 * Strip out or duplicate
-					 * key-length attibute?
+					 * key-length attribute?
 					 */
 					if (impair_key_length_attribute > 0 &&
 					    (oakley_mode ? a->type.oakley == OAKLEY_KEY_LENGTH
@@ -1682,7 +1682,7 @@ rsasig_common:
  *
  */
 
-/* XXX MCR. I suspect that actually all of this is redundent */
+/* XXX MCR. I suspect that actually all of this is redundant */
 bool init_aggr_st_oakley(struct state *st, lset_t policy)
 {
 	const struct connection *c = st->st_connection;
@@ -2177,7 +2177,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 	/*
 	 * For ESP, if the integrity algorithm (AUTH_ALGORITHM) was
-	 * completly missing, set it to NONE.
+	 * completely missing, set it to NONE.
 	 *
 	 * This way the caller has sufficient information to
 	 * differentiate between missing integrity (NONE) and unknown
@@ -2513,7 +2513,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 		} while (next_proposal.isap_proposal == propno);
 
 		/* Now that we have all conjuncts, we should try
-		 * the Cartesian product of each's tranforms!
+		 * the Cartesian product of each's transforms!
 		 * At the moment, we take short-cuts on account of
 		 * our rudimentary hard-wired policy.
 		 * For now, we find an acceptable AH (if any)

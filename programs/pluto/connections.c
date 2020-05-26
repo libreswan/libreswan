@@ -672,7 +672,7 @@ void unshare_connection_end(struct end *e)
  * XXX: unshare_connection() and the shallow clone should be merged
  * into a routine that allocates a new connection and then explicitly
  * copy over the data.  Cloning pointers and then trying to fix them
- * up after the event, a guarenteed way to create use-after-free
+ * up after the event, a guaranteed way to create use-after-free
  * problems.
  */
 static void unshare_connection(struct connection *c)
@@ -1707,7 +1707,7 @@ static bool extract_connection(struct fd *whackfd,
 	default_end(&c->spd.that, &c->spd.this.host_addr);
 
 	/*
-	 * If both left/rightauth is unset, fill it in with (prefered) symmetric policy
+	 * If both left/rightauth is unset, fill it in with (preferred) symmetric policy
 	 */
 	if (wm->left.authby == AUTHBY_UNSET && wm->right.authby == AUTHBY_UNSET) {
 		if (c->policy & POLICY_RSASIG)
@@ -1787,7 +1787,7 @@ static bool extract_connection(struct fd *whackfd,
 		 * we gain infinite partial IKE SA's. But also, more than one makes
 		 * no sense, since it will be installing a failureshunt (not
 		 * negotiationshunt) on the 2nd keyingtry, and try to re-install another
-		 * negotation or failure shunt
+		 * negotiation or failure shunt
 		 */
 		if (c->sa_keying_tries == 0) {
 			c->sa_keying_tries = 1;

@@ -162,7 +162,7 @@ const struct finite_state *finite_states[STATE_IKE_ROOF] = {
  * Each name is recorded only once.
  *
  * XXX: This functionality totally overlaps both "initiate" and
- * "pending" and should be merged (howerver, this simple code might
+ * "pending" and should be merged (however, this simple code might
  * prove to be a better starting point).
  */
 
@@ -322,8 +322,8 @@ enum_names state_category_names = {
  *
  * Hack: CAT_T is unsigned (like values it gets compared against), and
  * assumed to be implemented using 2's complement.  However, the value
- * is printed as a "signed" value - so that should underflow occure it
- * is diplayed as -ve (rather than a huge positive).
+ * is printed as a "signed" value - so that should underflow occur it
+ * is displayed as -ve (rather than a huge positive).
  */
 
 typedef unsigned long cat_t;
@@ -364,7 +364,7 @@ static void update_state_stat(struct state *st,
 		/*
 		 * When deleting, st->st_connection can be NULL, so we
 		 * cannot look at the policy to determine
-		 * anonimity. We therefore use a scratchpad at
+		 * anonymity. We therefore use a scratchpad at
 		 * st->st_ikev2_anon (a bool) which is copied from
 		 * parent to child states
 		 */
@@ -684,7 +684,7 @@ struct state *state_with_serialno(so_serial_t sn)
 }
 
 /*
- * Re-insert the state in the dabase after updating the RCOOKIE, and
+ * Re-insert the state in the database after updating the RCOOKIE, and
  * possibly the ICOOKIE.
  *
  * ICOOKIE is only updated if icookie != NULL
@@ -1120,7 +1120,7 @@ void delete_state(struct state *st)
 	 *
 	 * XXX: need more info from someone knowing what the problem
 	 * is.
-	 * ??? What problem is this refering to?
+	 * ??? What problem is this referring to?
 	 */
 	if ((c->policy & (POLICY_UP | POLICY_DONT_REKEY)) == POLICY_UP &&
 	    IS_IKE_SA(st)) {
@@ -1731,7 +1731,7 @@ struct ike_sa *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initiator_sp
  * Find an IKEv2 CHILD SA using the protocol and the (from our POV)
  * 'outbound' SPI.
  *
- * The remote end, when identifing a CHILD SA in a Delete or REKEY_SA
+ * The remote end, when identifying a CHILD SA in a Delete or REKEY_SA
  * notification, sends its end's inbound SPI, which from our
  * point-of-view is the outbound SPI aka 'attrs.spi'.
  *

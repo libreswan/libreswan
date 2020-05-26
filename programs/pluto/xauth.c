@@ -128,7 +128,7 @@ static void pam_callback(struct state *st,
 		log_state(RC_LOG, st,
 			  "PAM: #%lu: completed for user '%s' with status %s",
 			  xauth->serialno, xauth->ptarg.name,
-			  success ? "SUCCESSS" : "FAILURE");
+			  success ? "SUCCESS" : "FAILURE");
 		xauth->callback(st, md, xauth->ptarg.name, success);
 	}
 

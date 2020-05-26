@@ -1747,7 +1747,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 	/*
 	 * mode: encapsulation mode called for
-	 * encap_oneshot: copy of "encapsultion" but reset to
+	 * encap_oneshot: copy of "encapsulation" but reset to
 	 *	ENCAPSULATION_MODE_TRANSPORT after use.
 	 */
 	int mode = ENCAPSULATION_MODE_TRANSPORT;
@@ -2315,7 +2315,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		proto_info[i].proto = 0;
 
 		/*
-		 * ??? why is mode overwitten ONLY if
+		 * ??? why is mode overwritten ONLY if
 		 * kernel_ops->inbound_eroute?
 		 */
 		if (kernel_ops->inbound_eroute &&

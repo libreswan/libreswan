@@ -434,7 +434,7 @@ struct iface_port *bind_udp_iface_port(struct iface_dev *ifd, int port,
  * ??? we should link this message with one we've sent
  * so that the diagnostic can refer to that negotiation.
  *
- * ??? how long can the messge be?
+ * ??? how long can the message be?
  *
  * ??? poll(2) has a very incomplete description of the POLL* events.
  * We assume that POLLIN, POLLOUT, and POLLERR are all we need to deal with

@@ -197,7 +197,7 @@ static bool send_or_resend_v1_ike_msg_from_state(struct state *st,
 	 * fragment.
 	 *
 	 * ??? why can't we fragment in STATE_MAIN_I1?  XXX: something
-	 * to do with the attacks inital packet?
+	 * to do with the attacks initial packet?
 	 */
 	if (st->st_state->kind != STATE_MAIN_I1 &&
 	    should_fragment_v1_ike_msg(st, len + natt_bonus, resending)) {

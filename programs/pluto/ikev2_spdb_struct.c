@@ -814,7 +814,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 	 * local proposal, and each entry contains a pointer best
 	 * matching transform, or the sentinel transform.
 	 *
-	 * The required, optional, and sentinal fields are initialized
+	 * The required, optional, and sentinel fields are initialized
 	 * here.  The remaining fields are initialized each time a
 	 * remote proposal is parsed.
 	 *

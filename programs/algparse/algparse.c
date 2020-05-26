@@ -342,8 +342,8 @@ static void test(void)
 	esp(true, "null_auth_aes_gmac_256-null;modp8192"); /* long */
 #ifdef USE_3DES
 # ifdef USE_SHA1
-	esp(true, "3des-sha1;modp8192"); /* allow ';' when unambigious */
-	esp(true, "3des-sha1-modp8192"); /* allow '-' when unambigious */
+	esp(true, "3des-sha1;modp8192"); /* allow ';' when unambiguous */
+	esp(true, "3des-sha1-modp8192"); /* allow '-' when unambiguous */
 # endif
 #endif
 #ifdef USE_AES

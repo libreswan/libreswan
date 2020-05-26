@@ -555,7 +555,7 @@ struct state {
 	 *
 	 * In IKEv1, both the the DH exchange and authentication can
 	 * be combined into a single packet.  Consequently, processing
-	 * consits of: first DH is used to derive the shared secret
+	 * consists of: first DH is used to derive the shared secret
 	 * from DH_SECRET and the keying material; and then
 	 * authentication is performed.  However, should
 	 * authentication fail, everything thing derived from that
@@ -600,7 +600,7 @@ struct state {
 	 * from enum state_kind this is far more robust.
 	 *
 	 * DELETE_REASON, if the SA establishes it contains
-	 * REASON_COMPLETED, else it is explictly set to failure
+	 * REASON_COMPLETED, else it is explicitly set to failure
 	 * indication (or defaults to REASON_UNKNOWN).  Note that the
 	 * information can't be reliably extracted from enum
 	 * state_kind in delete_state() because, by that point, state

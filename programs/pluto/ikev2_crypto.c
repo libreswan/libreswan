@@ -138,7 +138,7 @@ void ikev2_derive_child_keys(struct child_sa *child)
 
 	/*
 	 * The initiator stores outgoing initiator-to-responder keymat
-	 * in PEER, and incomming responder-to-initiator keymat in
+	 * in PEER, and incoming responder-to-initiator keymat in
 	 * OUR.
 	 */
 	switch (child->sa.st_sa_role) {

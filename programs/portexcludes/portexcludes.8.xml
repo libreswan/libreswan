@@ -54,7 +54,7 @@
 
     <para>The portexcludes.conf file takes the following format. Each non-empty
     line and line that does not start with a # symbol is read and parsed into
-    five fields seperated by whitespace: direction protocol source dest priority. If a rule
+    five fields separated by whitespace: direction protocol source dest priority. If a rule
     is not limited by source or destination being ipv4 or ipv6 specific, the rule will be
     applied for both ipv4 and ipv6.</para>
 

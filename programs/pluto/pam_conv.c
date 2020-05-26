@@ -118,7 +118,7 @@ static void log_pam_step(const struct pam_thread_arg *arg, const char *what)
 }
 
 /*
- * PAM (Plugable Authentication Modules) interaction with external module
+ * PAM (Pluggable Authentication Modules) interaction with external module
  * NO locks/mutex here all data is copied already
  *
  * @return bool success

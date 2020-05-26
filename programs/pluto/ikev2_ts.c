@@ -303,9 +303,9 @@ stf_status v2_emit_ts_payloads(const struct child_sa *child,
 	 * XXX: this looks wrong
 	 *
 	 * - instead of emitting two traffic selector payloads (TSi
-	 *   TSr) each containg all the corresponding traffic
+	 *   TSr) each containing all the corresponding traffic
 	 *   selectors, it is emitting a sequence of traffic selector
-	 *   payloads each containg just one traffic selector
+	 *   payloads each containing just one traffic selector
 	 *
 	 * - should multiple initiator (responder) traffic selector
 	 *   payloads be emitted then they will all contain the same

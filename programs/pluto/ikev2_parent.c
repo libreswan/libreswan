@@ -1085,7 +1085,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	 *
 	 * IKEv2 code (arguably, incorrectly) uses st_oakley.ta_dh to
 	 * track the most recent KE sent out.  It should instead be
-	 * maintaing a list of KEs sent out (so that they can be
+	 * maintaining a list of KEs sent out (so that they can be
 	 * reused should the initial responder flip-flop) and only set
 	 * st_oakley.ta_dh once the proposal has been accepted.
 	 */
@@ -2002,7 +2002,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	 * back to the IKE SA.
 	 *
 	 * Start with the CHILD SA bound to the same whackfd as it IKE
-	 * SA.  It might later change whe its discovered that the
+	 * SA.  It might later change when its discovered that the
 	 * child is for something pending?
 	 */
 	struct child_sa *child = new_v2_child_state(pexpect_ike_sa(pst),
@@ -2332,7 +2332,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 		if (!LIN(POLICY_PPK_INSIST, cc->policy)) {
 			if (!ikev2_calc_no_ppk_auth(ike, &ike->sa.st_v2_id_payload.mac_no_ppk_auth,
 						    &ike->sa.st_no_ppk_auth)) {
-				dbg("ikev2_calc_no_ppk_auth() failed dieing");
+				dbg("ikev2_calc_no_ppk_auth() failed dying");
 				return STF_FATAL;
 			}
 
@@ -2483,7 +2483,7 @@ static stf_status ikev2_start_pam_authorize(struct state *st)
  * [Parent SA established]
  */
 
-static crypto_req_cont_func ikev2_ike_sa_process_auth_request_no_skeyid_continue;	/* type asssertion */
+static crypto_req_cont_func ikev2_ike_sa_process_auth_request_no_skeyid_continue;	/* type assertion */
 
 stf_status ikev2_ike_sa_process_auth_request_no_skeyid(struct ike_sa *ike,
 						       struct child_sa *child,
@@ -2577,7 +2577,7 @@ stf_status ikev2_ike_sa_process_auth_request(struct ike_sa *ike,
 	}
 
 	/*
-	 * if failed OE, delete state completly, no create_child_sa
+	 * if failed OE, delete state completely, no create_child_sa
 	 * allowed so childless parent makes no sense. That is also
 	 * the reason why we send v2N_AUTHENTICATION_FAILED, even
 	 * though authenticated succeeded. It shows the remote end
@@ -3451,7 +3451,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 		return STF_FAIL + v2N_TS_UNACCEPTABLE;
 	}
 
-	/* examin and accpept SA ESP/AH proposals */
+	/* examine and accept SA ESP/AH proposals */
 	if (md->hdr.isa_xchg != ISAKMP_v2_CREATE_CHILD_SA)
 		RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(ike, child, md, TRUE));
 
@@ -3584,7 +3584,7 @@ stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct 
 			if (err != NULL) {
 				dbg("warning: parsing of v2N_REDIRECT payload failed: %s", err);
 			} else {
-				/* initiate later, because we need to wait for AUTH succees */
+				/* initiate later, because we need to wait for AUTH success */
 				st->st_connection->temp_vars.redirect_ip = redirect_ip;
 			}
 		}
@@ -4430,7 +4430,7 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 		}
 	}
 
-	/* check N_REKEY_SA in the negotation */
+	/* check N_REKEY_SA in the negotiation */
 	switch (child->sa.st_state->kind) {
 	case STATE_V2_REKEY_CHILD_R0:
 		if (!ikev2_rekey_child_resp(ike, child, md)) {
@@ -4580,7 +4580,7 @@ static stf_status ikev2_child_inIoutR_continue_continue(struct state *st,
 }
 
 /*
- * processsing a new Rekey IKE SA (RFC 7296 1.3.2) request
+ * processing a new Rekey IKE SA (RFC 7296 1.3.2) request
  */
 
 static crypto_req_cont_func ikev2_child_ike_inIoutR_continue;

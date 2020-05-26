@@ -89,7 +89,7 @@ static void swap_ends(struct connection *c)
 	sr->that = t;
 
 	/*
-	 * in case of asymetric auth c->policy contains left.authby
+	 * in case of asymmetric auth c->policy contains left.authby
 	 * This magic will help responder to find connction during INIT
 	 */
 	if (sr->this.authby != sr->that.authby)
@@ -474,7 +474,7 @@ void restart_connections_by_peer(struct connection *const c)
  * This may involve discovering a gateway and instantiating an
  * Opportunistic connection.  Called when a packet is caught by
  * a %trap, or when whack --oppohere --oppothere is used.
- * It may turn out that an existing or non-opporunistic connnection
+ * It may turn out that an existing or non-opporunistic connection
  * can handle the traffic.
  *
  * Most of the code will be restarted if an ADNS request is made

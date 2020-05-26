@@ -147,7 +147,7 @@ void release_pending_whacks(struct state *st, err_t story)
 	 * CHILD_SA fails with a timeout then this code will be called
 	 * with the CHILD_SA.
 	 *
-	 * XXX: Since this is ment to release pending whacks, should
+	 * XXX: Since this is meant to release pending whacks, should
 	 * this check for, and release the whacks for any pending
 	 * CHILD_SA attached to this ST's IKE SA?
 	 */
@@ -173,7 +173,7 @@ void release_pending_whacks(struct state *st, err_t story)
 	 * waiting on it should be deleted.
 	 *
 	 * SAME_FD() is used to identify whack sockets that are
-	 * differnt to ST - when found a further release message is
+	 * different to ST - when found a further release message is
 	 * printed.
 	 */
 

@@ -471,7 +471,7 @@ enum ike_version hdr_ike_version(const struct isakmp_hdr *hdr)
  *   either of the initiator and/or responder values
  *
  * - encourages the coding style where the two cases - REQUEST and
- *   RESPONSE - are clearly labled, that is:
+ *   RESPONSE - are clearly labeled, that is:
  *
  *       switch(role) {
  *       case MESSAGE_REQUEST: ...; break;
@@ -534,14 +534,14 @@ char *cisco_stringify(pb_stream *input_pbs, const char *attr_name)
 			/*
 			 * preserve sanitize_string() behaviour:
 			 *
-			 * exception is that all veritical space just
+			 * exception is that all vertical space just
 			 * becomes white space
 			 */
 			jam(&buf, " ");
 			break;
 		default:
 			/*
-			 * preserve sanitize_string() behavour:
+			 * preserve sanitize_string() behaviour:
 			 *
 			 * XXX: isprint() is wrong as it is affected
 			 * by locale - need portable is printable

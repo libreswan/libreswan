@@ -130,7 +130,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 		close_output_pbs(&pb_nr);
 
 		/*
-		 * XXX: shoudn't this be conditional on the local end
+		 * XXX: shouldn't this be conditional on the local end
 		 * having computed KE and not what the remote sent?
 		 */
 		if (md->chain[ISAKMP_NEXT_v2KE] != NULL)  {
@@ -185,7 +185,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 				return STF_FATAL;
 			}
 			if ((c->policy & POLICY_COMPRESS) == LEMPTY) {
-				DBG(DBG_CONTROLMORE, DBG_log("Ignored IPCOMP request as connection has compres=no"));
+				DBG(DBG_CONTROLMORE, DBG_log("Ignored IPCOMP request as connection has compress=no"));
 				cst->st_ipcomp.present = FALSE;
 				break;
 			}

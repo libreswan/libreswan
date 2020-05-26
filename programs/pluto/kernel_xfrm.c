@@ -174,7 +174,7 @@ static void xfrm2ip(const xfrm_address_t *xaddr, ip_address *addr, const sa_fami
 	const struct ip_info *afi = aftoinfo(family);
 	passert(afi != NULL);
 
-	*addr = afi->any_address; /* initalize dst type and zero */
+	*addr = afi->any_address; /* initialize dst type and zero */
 	chunk_t a = address_as_chunk(addr);
 
 	/* a = x */
@@ -1285,7 +1285,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 
 		/*
 		 * With XFRM/NETKEY and transport mode with nat-traversal we
-		 * need to change outbound IPsec SA to point to exteral ip of
+		 * need to change outbound IPsec SA to point to external ip of
 		 * the peer. Here we substitute real client ip with NATD ip.
 		 */
 		if (sa->inbound == 0) {
