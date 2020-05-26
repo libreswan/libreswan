@@ -1,0 +1,24 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add west-east
+002 added connection description "west-east"
+east #
+ ipsec auto --add pass-222
+002 added connection description "pass-222"
+east #
+ ipsec auto --route pass-222
+east #
+ echo "initdone"
+initdone
+east #
+ : ==== tuc ====
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

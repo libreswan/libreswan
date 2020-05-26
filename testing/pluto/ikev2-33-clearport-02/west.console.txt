@@ -1,0 +1,104 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add west-east
+002 added connection description "west-east"
+west #
+ ipsec auto --add pass-222
+002 added connection description "pass-222"
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up west-east
+1v2 "west-east" #1: initiating IKEv2 IKE SA
+1v2 "west-east" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "west-east" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "west-east" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "west-east" #2: Authenticated using authby=secret
+002 "west-east" #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
+004 "west-east" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+west #
+ # poke a hole to port 222, those packets will be allowed cleartext
+west #
+ ipsec auto --route pass-222
+west #
+ ip xfrm pol
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 222 
+	dir fwd priority 1687486 ptype main 
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 222 
+	dir in priority 1687486 ptype main 
+src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 222 
+	dir out priority 1687486 ptype main 
+src 192.1.2.45/32 dst 192.1.2.23/32 
+	dir out priority 2080702 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid 16389 mode tunnel
+src 192.1.2.23/32 dst 192.1.2.45/32 
+	dir fwd priority 2080702 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid 16389 mode tunnel
+src 192.1.2.23/32 dst 192.1.2.45/32 
+	dir in priority 2080702 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid 16389 mode tunnel
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+west #
+ # send packet over the clear exception - should return connection refused
+west #
+ echo 'test' | nc -v -w 5 192.1.2.23 222
+Ncat: Version 7.80 ( https://nmap.org/ncat )
+Ncat: Connection refused.
+west #
+ # counters should be zero
+west #
+ ipsec trafficstatus
+006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+west #
+ # send packet over the 'tunnel' should get encrypted
+west #
+ echo 'test' | nc -v -w 5 192.1.2.23 80
+Ncat: Version 7.80 ( https://nmap.org/ncat )
+Ncat: Connection refused.
+west #
+ ipsec trafficstatus
+006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=40, outBytes=60, id='@east'
+west #
+ # counters should be zero
+west #
+ echo done
+done
+west #
+ : ==== tuc ====
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

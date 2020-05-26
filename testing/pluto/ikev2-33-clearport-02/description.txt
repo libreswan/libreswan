@@ -1,0 +1,6 @@
+Test that a conn pass override for a single port works.
+
+This is done by routing a connection covering the IP, without bringing
+it up, so all traffic that would be encrypted is dropped, and then a
+connection to the excempted clear text port is done, which should succeed
+
