@@ -94,8 +94,8 @@ static hash_t hp_hasher(const ip_endpoint *local, const ip_endpoint *remote)
 	/* NULL -> any_address aka zero; must hash it */
 	ip_address raddr = (remote != NULL ? endpoint_address(remote) : endpoint_type(local)->any_address);
 	hash_t hash = zero_hash;
-	hash = hasher(address_as_shunk(&laddr), hash);
-	hash = hasher(address_as_shunk(&raddr), hash);
+	hash = hash_table_hasher(address_as_shunk(&laddr), hash);
+	hash = hash_table_hasher(address_as_shunk(&raddr), hash);
 	return hash;
 }
 

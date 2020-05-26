@@ -261,13 +261,13 @@ struct msg_digest *unsuspend_md(struct state *st);
 /*
  * All the hash tables states are stored in.
  */
-enum state_hash {
-	SERIALNO_STATE_HASH,
-	CONNECTION_STATE_HASH,
-	REQID_STATE_HASH,
-	IKE_SPIS_STATE_HASH,
-	IKE_INITIATOR_SPI_STATE_HASH,
-	STATE_HASH_ROOF,
+enum state_hash_tables {
+	STATE_SERIALNO_HASH_TABLE,
+	STATE_CONNECTION_HASH_TABLE,
+	STATE_REQID_HASH_TABLE,
+	STATE_IKE_SPIS_HASH_TABLE,
+	STATE_IKE_INITIATOR_SPI_HASH_TABLE,
+	STATE_HASH_TABLES_ROOF,
 };
 
 /*
@@ -725,7 +725,7 @@ struct state {
 	struct list_entry st_serialno_list_entry;
 
 	/* all the hash table entries */
-	struct list_entry st_hash_entries[STATE_HASH_ROOF];
+	struct list_entry st_hash_table_entries[STATE_HASH_TABLES_ROOF];
 
 	struct hidden_variables hidden_variables;
 

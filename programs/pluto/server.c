@@ -966,7 +966,7 @@ static void jam_pid_entry(struct lswlog *buf, const void *data)
 
 static hash_t pid_hasher(const pid_t *pid)
 {
-	return hasher(shunk2(pid, sizeof(*pid)), zero_hash);
+	return hash_table_hasher(shunk2(pid, sizeof(*pid)), zero_hash);
 }
 
 static hash_t pid_entry_hasher(const void *data)

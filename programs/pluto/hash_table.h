@@ -37,7 +37,7 @@ struct hash_table {
 
 void init_hash_table(struct hash_table *table);
 
-hash_t hasher(shunk_t data, hash_t hash);
+hash_t hash_table_hasher(shunk_t data, hash_t hash);
 
 /*
  * Maintain the table.

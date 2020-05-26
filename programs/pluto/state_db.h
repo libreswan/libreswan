@@ -38,13 +38,13 @@ struct child_sa *child_sa_by_serialno(so_serial_t serialno);
  * new-to-old order.
  */
 
-extern struct list_head serialno_list_head;
+extern struct list_head state_serialno_list_head;
 
 #define FOR_EACH_STATE_NEW2OLD(ST)				\
-	FOR_EACH_LIST_ENTRY_NEW2OLD(&serialno_list_head, ST)
+	FOR_EACH_LIST_ENTRY_NEW2OLD(&state_serialno_list_head, ST)
 
 #define FOR_EACH_STATE_OLD2NEW(ST)				\
-	FOR_EACH_LIST_ENTRY_OLD2NEW(&serialno_list_head, ST)
+	FOR_EACH_LIST_ENTRY_OLD2NEW(&state_serialno_list_head, ST)
 
 /*
  * Lookup and generic search functions.
