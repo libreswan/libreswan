@@ -1,0 +1,36 @@
+/testing/guestbin/swan-prep
+west #
+ echo "initdone"
+initdone
+west #
+ # show default listen on all IPs
+west #
+ ipsec pluto --config west.conf
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec status | grep "000 interface"
+000 interface lo/lo 127.0.0.1:4500
+000 interface lo/lo 127.0.0.1:500
+000 interface eth0/eth0 192.0.1.254:4500
+000 interface eth0/eth0 192.0.1.254:500
+000 interface eth1/eth1 192.1.2.45:4500
+000 interface eth1/eth1 192.1.2.45:500
+west #
+ ipsec whack --shutdown
+west #
+ ipsec pluto --config west-listen.conf
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ # It should only listen on 192.1.2.45 and not on 192.0.1.254
+west #
+ ipsec status | grep "000 interface"
+000 interface eth1/eth1 192.1.2.45:4500
+000 interface eth1/eth1 192.1.2.45:500
+west #
+ ipsec whack --shutdown
+west #
+ echo done
+done
+
