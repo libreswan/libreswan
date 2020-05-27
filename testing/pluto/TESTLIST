@@ -805,10 +805,7 @@ kvmplutotest	basic-pluto-16-services	good
 kvmplutotest	basic-pluto-17-nssdir	good
 kvmplutotest	basic-pluto-18-secrets	good
 
-# this tests rekeys (--down/--up) when behind a NAT. a --replace
-# may cancel things that the --down/--up may not. This also
-# tests that the responder is happy with us doing that.
-#
+kvmplutotest	pluto-rekey-01		good
 kvmplutotest	pluto-rekey-02		good
 
 kvmplutotest	psk-pluto-03		good
