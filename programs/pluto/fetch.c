@@ -142,7 +142,7 @@ static err_t fetch_curl(chunk_t url,
 
 	if (curl != NULL) {
 		/* we need a NUL-terminated string for curl */
-		uri = clone_chunk_as_string(url, "NUL-terminated url");
+		uri = clone_hunk_as_string(url, "NUL-terminated url");
 
 		if (curl_timeout > 0)
 			timeout = curl_timeout;
@@ -380,7 +380,7 @@ static bool insert_crl_nss(chunk_t *blob, const chunk_t crl_uri)
 	if (crl_uri.len == 0) {
 		dbg("no CRL URI available");
 	} else {
-		char *uri_str = clone_chunk_as_string(crl_uri, "URI str");
+		char *uri_str = clone_hunk_as_string(crl_uri, "NUL-terminated URI");
 		int r = send_crl_to_import(blob->ptr, blob->len, uri_str);
 		if (r == -1) {
 			libreswan_log("_import_crl internal error");

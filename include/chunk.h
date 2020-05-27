@@ -67,11 +67,17 @@ chunk_t alloc_chunk(size_t count, const char *name);
 			clone_bytes_as_chunk(hunk_.ptr, hunk_.len, NAME); \
 		})
 
+
 /* clone(first+second) */
 chunk_t clone_chunk_chunk(chunk_t first, chunk_t second, const char *name);
 
 /* always NUL terminated; NULL is NULL */
-char *clone_chunk_as_string(chunk_t chunk, const char *name);
+char *clone_bytes_as_string(const void *ptr, size_t len, const char *name);
+#define clone_hunk_as_string(HUNK, NAME)				\
+	({								\
+		typeof(HUNK) hunk_ = HUNK; /* evaluate once */		\
+		clone_bytes_as_string(hunk_.ptr, hunk_.len, NAME);	\
+	})
 
 /* BYTES==NULL => NULL_CHUNK */
 chunk_t clone_bytes_as_chunk(const void *bytes, size_t sizeof_bytes, const char *name);

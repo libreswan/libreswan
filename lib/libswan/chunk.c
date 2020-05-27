@@ -61,17 +61,21 @@ chunk_t clone_chunk_chunk(chunk_t lhs, chunk_t rhs, const char *name)
 	return cat;
 }
 
-char *clone_chunk_as_string(chunk_t chunk, const char *name)
+char *clone_bytes_as_string(const void *ptr, size_t len, const char *name)
 {
-	if (chunk.ptr == NULL) {
+	if (ptr == NULL) {
 		return NULL;
-	} else if (chunk.len > 0 && chunk.ptr[chunk.len - 1] == '\0') {
-		return clone_bytes(chunk.ptr, chunk.len, name);
-	} else {
-		char *string = alloc_things(char, chunk.len + 1, name);
-		memcpy(string, chunk.ptr, chunk.len);
-		return string;
 	}
+
+	/* NUL terminated (could also contain NULs, oops)? */
+	const char *in = ptr;
+	if (len > 0 && in[len - 1] == '\0') {
+		return clone_bytes(in, len, name);
+	}
+
+	char *out = alloc_things(char, len + 1, name);
+	memcpy(out, ptr, len);
+	return out;
 }
 
 chunk_t clone_bytes_as_chunk(const void *bytes, size_t sizeof_bytes, const char *name)
