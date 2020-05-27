@@ -1,3 +1,5 @@
 In FIPS mode create an IKEv2 child with strong DH
 
 Was dumping core.
+
+additionally test sha2_512, just because we haven't elsewhere in fips mode
