@@ -5,5 +5,3 @@ In libreswan-3.9, an 3des<->aes mismatched ESP proposal caused an SA to be setup
 with the initiator proposal instead of being rejected.
 
 We use an impair function to fail quickly without retransmits.
-
-this uses netkey for no particular reason
