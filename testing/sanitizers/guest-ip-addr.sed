@@ -15,6 +15,7 @@ b end
   # strip trailing spaces
   s/ $//
 
+  # append next line; delete current; try again
   /altname / { N; s/^.*\n//; b next }
 
 b match
