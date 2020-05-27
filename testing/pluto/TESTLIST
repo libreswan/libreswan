@@ -99,6 +99,7 @@ kvmplutotest	libipsecconf-02				good
 kvmplutotest	libipsecconf-04				good
 kvmplutotest	libipsecconf-05-empty_option		wip
 kvmplutotest	libipsecconf-06-ikev2-hash-algo		good
+kvmplutotest	libipsecconf-07				good
 
 #################################################################
 # Whack UI tests
