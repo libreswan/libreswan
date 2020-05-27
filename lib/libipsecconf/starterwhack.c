@@ -368,7 +368,6 @@ static void set_whack_end(char *lr,
 	}
 
 	w->host_port = IKE_UDP_PORT; /* XXX starter should support (nat)-ike-port */
-	w->has_client_wildcard = l->has_client_wildcard;
 	w->protoport = l->protoport;
 
 	if (l->certx != NULL) {

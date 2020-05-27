@@ -175,7 +175,6 @@ struct end {
 
 	bool key_from_DNS_on_demand;
 	bool has_client;
-	bool has_client_wildcard;
 	bool has_id_wildcards;
 	char *updown;
 	uint16_t host_port;		/* where the IKE port is */

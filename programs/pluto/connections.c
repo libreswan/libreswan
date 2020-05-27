@@ -475,9 +475,6 @@ static void jam_end_client(jambuf_t *buf, const struct end *this,
 		if (!boring && !is_left) {
 			jam_string(buf, "===");
 		}
-		if (this->has_client_wildcard) {
-			jam_string(buf, "{");
-		}
 
 		if (boring) {
 			/* boring case */
@@ -492,9 +489,6 @@ static void jam_end_client(jambuf_t *buf, const struct end *this,
 			jam_subnet(buf, &this->client);
 		}
 
-		if (this->has_client_wildcard) {
-			jam_string(buf, "}");
-		}
 		if (!boring && is_left) {
 			jam_string(buf, "===");
 		}
@@ -802,7 +796,6 @@ static int extract_end(struct fd *whackfd,
 	dst->has_port_wildcard = protoport_has_any_port(&src->protoport);
 	dst->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
 	dst->has_client = src->has_client;
-	dst->has_client_wildcard = src->has_client_wildcard;
 	dst->updown = clone_str(src->updown, "updown");
 	dst->host_port = src->host_port;
 	dst->sendcert =  src->sendcert;
@@ -1747,7 +1740,6 @@ static bool extract_connection(struct fd *whackfd,
 	 * or any wildcard ID to _that_ end
 	 */
 	if (isanyaddr(&c->spd.this.host_addr) ||
-	    c->spd.this.has_client_wildcard ||
 	    c->spd.this.has_port_wildcard ||
 	    c->spd.this.has_id_wildcards) {
 		struct end t = c->spd.this;
@@ -1802,7 +1794,6 @@ static bool extract_connection(struct fd *whackfd,
 		add_group(c);
 	} else if ((isanyaddr(&c->spd.that.host_addr) &&
 			!NEVER_NEGOTIATE(c->policy)) ||
-		c->spd.that.has_client_wildcard ||
 		c->spd.that.has_port_wildcard ||
 		((c->policy & POLICY_SHUNT_MASK) == POLICY_SHUNT_TRAP &&
 			c->spd.that.has_id_wildcards )) {
@@ -3376,10 +3367,6 @@ static struct connection *fc_try(const struct connection *c,
 			}
 
 			if (sr->that.has_client) {
-				if (sr->that.has_client_wildcard &&
-				    !subnetinsubnet(peer_net, &sr->that.client))
-						continue;
-
 				if (!samesubnet(&sr->that.client, peer_net) &&
 				    !is_virtual_sr(sr)) {
 					if (DBGP(DBG_BASE)) {

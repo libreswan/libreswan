@@ -689,7 +689,6 @@ static bool validate_end(struct starter_conn *conn_st,
 					leftright, value, er);
 			}
 			end->has_client = TRUE;
-			end->has_client_wildcard = FALSE;
 		}
 		if (end->strings_set[KSCF_INTERFACE_IP]) {
 			ERR_FOUND("can  not specify  %sinterface-ip=%s and  %sssourceip=%s",

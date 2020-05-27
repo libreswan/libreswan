@@ -1125,15 +1125,10 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 
 		/* fill in the client's true ip address/subnet */
 		DBG(DBG_CONTROLMORE,
-		    DBG_log("client wildcard: %s  port wildcard: %s  virtual: %s",
-			    bool_str(c->spd.that.has_client_wildcard),
+		    DBG_log("client: %s  port wildcard: %s  virtual: %s",
+			    bool_str(c->spd.that.has_client),
 			    bool_str(c->spd.that.has_port_wildcard),
 			    bool_str(is_virtual_connection(c))));
-
-		if (c->spd.that.has_client_wildcard) {
-			c->spd.that.client = *his_net;
-			c->spd.that.has_client_wildcard = FALSE;
-		}
 
 		/* fill in the client's true port */
 		if (c->spd.that.has_port_wildcard) {

@@ -76,7 +76,6 @@ struct starter_end {
 	enum keyword_pubkey rsakey1_type, rsakey2_type;
 	char *rsakey1;
 	char *rsakey2;
-	bool has_client_wildcard;
 	bool key_from_DNS_on_demand;
 	char *virt;
 	char *certx;

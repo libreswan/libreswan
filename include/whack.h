@@ -103,7 +103,6 @@ struct whack_end {
 	ip_protoport protoport;
 
 	bool has_client;
-	bool has_client_wildcard;
 
 	bool key_from_DNS_on_demand;
 	enum whack_pubkey_type pubkey_type;
