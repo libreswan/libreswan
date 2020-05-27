@@ -20,6 +20,7 @@
 #include "ip_protoport.h"
 
 #include "constants.h"		/* for zero() */
+#include "chunk.h"		/* for clone_bytes_as_string() */
 
 const ip_protoport unset_protoport;
 
@@ -83,7 +84,6 @@ err_t ttoprotoport(const char *src, ip_protoport *protoport)
 {
 	err_t err;
 	zero(protoport);
-	char proto_name[16];
 
 	/* get the length of the string */
 	size_t src_len = strlen(src);
@@ -100,15 +100,15 @@ err_t ttoprotoport(const char *src, ip_protoport *protoport)
 		service_name = src + src_len;
 	}
 
-	/* copy protocol name */
-	memset(proto_name, '\0', sizeof(proto_name));
-	memcpy(proto_name, src, proto_len);
-
 	/* extract protocol by trying to resolve it by name */
 	unsigned protocol;
-	err = ttoipproto(proto_name, &protocol);
-	if (err != NULL) {
-		return err;
+	{
+		char *proto_name = clone_bytes_as_string(src, proto_len, "proto name"); /* must free */
+		err = ttoipproto(proto_name, &protocol);
+		pfree(proto_name);
+		if (err != NULL) {
+			return err;
+		}
 	}
 
 	/* is there a port wildcard? */

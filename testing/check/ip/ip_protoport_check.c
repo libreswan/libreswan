@@ -32,6 +32,7 @@ void ip_protoport_check(void)
 		{ "0/0", 0, 0, true,  },
 		{ "47", 47, 0, true, },
 		{ "47/", 47, 0, true, },
+		{ "something-longer-than-16-bytes/0", 0, 0, false, }
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
