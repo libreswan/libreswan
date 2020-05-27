@@ -27,6 +27,7 @@ extern void ip_subnet_check(void);
 extern void ip_said_check(void);
 extern void ip_info_check(void);
 extern void ip_protoport_check(void);
+extern void ip_selector_check(void);
 
 /*
  * See: https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
@@ -77,12 +78,12 @@ extern bool use_dns;
 
 #define FAIL_LO2HI(FMT, ...) FAIL(PRINT_LO2HI, FMT,##__VA_ARGS__)
 
-#define CHECK_TYPE(PRINT, TYPE)						\
+#define CHECK_FAMILY(PRINT, FAMILY, TYPE)				\
 	{								\
 		const struct ip_info *actual = TYPE;			\
 		const char *actual_name =				\
 			actual == NULL ? "unspec" : actual->af_name;	\
-		const struct ip_info *expected = IP_TYPE(t->family);	\
+		const struct ip_info *expected = IP_TYPE(FAMILY);	\
 		const char *expected_name =				\
 			expected == NULL ? "unspec" : expected->af_name; \
 		if (actual != expected) {				\
@@ -90,6 +91,9 @@ extern bool use_dns;
 			     actual_name, expected_name);		\
 		}							\
 	}
+
+#define CHECK_TYPE(PRINT, TYPE)						\
+	CHECK_FAMILY(PRINT, t->family, TYPE)
 
 #define CHECK_ADDRESS(PRINT, ADDRESS)					\
 	{								\

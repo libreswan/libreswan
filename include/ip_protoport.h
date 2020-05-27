@@ -30,6 +30,8 @@ typedef struct {
 	unsigned protocol;	/* 1..255; 0->unset */
 } ip_protoport;
 
+extern const ip_protoport unset_protoport;
+
 err_t ttoprotoport(const char *src, ip_protoport *protoport);
 err_t ttoipproto(const char *text, unsigned *ipproto);
 err_t ttoport(const char *text, unsigned *port);

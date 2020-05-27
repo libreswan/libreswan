@@ -21,6 +21,8 @@
 
 #include "constants.h"		/* for zero() */
 
+const ip_protoport unset_protoport;
+
 err_t ttoipproto(const char *proto_name, unsigned *proto)
 {
        /* extract protocol by trying to resolve it by name */
