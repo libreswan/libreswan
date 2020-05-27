@@ -153,6 +153,8 @@ extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 #include "err.h"
 #include "state.h"
 #include "ip_endpoint.h"
+#include "ip_selector.h"
+#include "ip_protoport.h"
 
 struct virtual_t;	/* opaque type */
 
@@ -169,9 +171,18 @@ struct end {
 		host_nexthop,
 		host_srcip;
 	ip_subnet
-		client,
 		host_vtiip,
 		ifaceip;
+
+	ip_selector client;
+
+	/* original information from whack */
+	struct {
+		struct {
+			ip_subnet subnet;
+			ip_protoport protoport;
+		} client;
+	} raw;
 
 	bool key_from_DNS_on_demand;
 	bool has_client;

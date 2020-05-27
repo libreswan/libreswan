@@ -384,8 +384,13 @@ static err_t default_end(struct end *e, ip_address *dflt_nexthop)
 
 	/* Default client to subnet containing only self */
 	if (!e->has_client) {
-		/* XXX: this uses ADDRESS:PORT */
-		ugh = addrtosubnet(&e->host_addr, &e->client);
+		/*
+		 * Default client to a subnet containing only self.
+		 *
+		 * For instance, the config file omitted subnet, but
+		 * specified protoport; merge that.
+		 */
+		e->client = selector_from_address(&e->host_addr, &e->raw.client.protoport);
 	}
 
 	if (e->sendcert == 0) {
@@ -775,7 +780,6 @@ static int extract_end(struct fd *whackfd,
 	dst->host_nexthop = src->host_nexthop;
 	dst->host_srcip = src->host_srcip;
 	dst->host_vtiip = src->host_vtiip;
-	dst->client = src->client;
 	dst->ifaceip = src->ifaceip;
 	dst->modecfg_server = src->modecfg_server;
 	dst->modecfg_client = src->modecfg_client;
@@ -788,14 +792,27 @@ static int extract_end(struct fd *whackfd,
 
 	dst->authby = src->authby;
 
+	/* save some defaults */
+	dst->raw.client.subnet = src->client;
+	dst->raw.client.protoport = src->protoport;
+
+	/*
+	 * .has_client means that .client contains a hardwired value,
+	 * if it doesn't then it is filled in later (for instance by
+	 * instantiate() calling default_end() after host_addr is
+	 * known).
+	 */
+	dst->has_client = src->has_client;
+	if (src->has_client) {
+		pexpect(subnet_is_set(&src->client));
+		dst->client = selector_from_subnet(&src->client,
+						   &src->protoport);
+	}
+
 	dst->protocol = src->protoport.protocol;
 	dst->port = src->protoport.port;
-	if (dst->port != 0) {
-		update_subnet_hport(&dst->client, dst->port);
-	}
 	dst->has_port_wildcard = protoport_has_any_port(&src->protoport);
 	dst->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
-	dst->has_client = src->has_client;
 	dst->updown = clone_str(src->updown, "updown");
 	dst->host_port = src->host_port;
 	dst->sendcert =  src->sendcert;
