@@ -1708,8 +1708,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	/* Build an inbound or outbound SA */
 
 	struct connection *c = st->st_connection;
-	ip_subnet src, dst;
-	ip_subnet src_client, dst_client;
 	ipsec_spi_t inner_spi = 0;
 	const struct ip_protocol *proto = NULL;
 	enum eroute_type esatype = ET_UNSPEC;
@@ -1729,20 +1727,22 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	char text_esp[SATOT_BUF];
 	char text_ah[SATOT_BUF];
 
-	src.maskbits = 0;
-	dst.maskbits = 0;
-
+	ip_address src, dst;
+	ip_selector src_client, dst_client;
 	if (inbound) {
-		src.addr = c->spd.that.host_addr;
+		src = c->spd.that.host_addr;
 		src_client = c->spd.that.client;
-		dst.addr = c->spd.this.host_addr;
+		dst = c->spd.this.host_addr;
 		dst_client = c->spd.this.client;
 	} else {
-		src.addr = c->spd.this.host_addr,
+		src = c->spd.this.host_addr,
 		src_client = c->spd.this.client;
-		dst.addr = c->spd.that.host_addr;
+		dst = c->spd.that.host_addr;
 		dst_client = c->spd.that.client;
 	}
+	/* XXX: code is stuffing an endpoint in .host_addr */
+	src = strip_endpoint(&src, HERE);
+	dst = strip_endpoint(&dst, HERE);
 
 	/*
 	 * mode: encapsulation mode called for
@@ -1769,8 +1769,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	int encap_oneshot = mode;
 
 	struct kernel_sa said_boilerplate = {
-		.src.address = &src.addr,
-		.dst.address = &dst.addr,
+		.src.address = &src,
+		.dst.address = &dst,
 		.src.client = &src_client,
 		.dst.client = &dst_client,
 		.inbound = inbound,
@@ -1899,7 +1899,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			goto fail;
 		}
 
-		set_text_said(text_ipcomp, &dst.addr, ipcomp_spi, &ip_protocol_comp);
+		set_text_said(text_ipcomp, &dst, ipcomp_spi, &ip_protocol_comp);
 
 		*said_next = said_boilerplate;
 		said_next->spi = ipcomp_spi;
@@ -2041,7 +2041,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		passert(st->st_esp.keymat_len == encrypt_keymat_size + integ_keymat_size);
 
-		set_text_said(text_esp, &dst.addr, esp_spi, &ip_protocol_esp);
+		set_text_said(text_esp, &dst, esp_spi, &ip_protocol_esp);
 
 		*said_next = said_boilerplate;
 		said_next->spi = esp_spi;
@@ -2200,7 +2200,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		passert(st->st_ah.keymat_len == keymat_size);
 
-		set_text_said(text_ah, &dst.addr, ah_spi, &ip_protocol_ah);
+		set_text_said(text_ah, &dst, ah_spi, &ip_protocol_ah);
 
 		*said_next = said_boilerplate;
 		said_next->spi = ah_spi;
@@ -2398,7 +2398,7 @@ fail:
 			if (said_next->proto != 0) {
 				(void) del_spi(said_next->spi,
 					said_next->proto,
-					&src.addr, said_next->dst.address);
+					&src, said_next->dst.address);
 			}
 		}
 		return FALSE;
@@ -3417,8 +3417,7 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 		.text_said = text_said,
 	};
 
-	DBG(DBG_KERNEL,
-		DBG_log("get_sa_info %s", text_said));
+	dbg("get_sa_info %s", text_said);
 
 	uint64_t bytes;
 	uint64_t add_time;
