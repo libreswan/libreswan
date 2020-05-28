@@ -24,6 +24,15 @@
 
 const ip_protoport unset_protoport;
 
+ip_protoport protoport2(unsigned ipproto, unsigned hport)
+{
+	ip_protoport protoport = {
+		.protocol = ipproto,
+		.port = hport,
+	};
+	return protoport;
+}
+
 err_t ttoipproto(const char *proto_name, unsigned *proto)
 {
        /* extract protocol by trying to resolve it by name */
