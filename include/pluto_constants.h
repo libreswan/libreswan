@@ -71,10 +71,9 @@ enum ike_version {
 #define DEFAULT_XFRM_IF_NAME "ipsec1"
 
 enum kernel_interface {
-	NO_KERNEL = 1,
-	USE_NETKEY= 2,
-	USE_BSDKAME = 3,
-	USE_WIN2K = 4,
+	USE_NATIVE,
+	USE_NETKEY,
+	USE_BSDKAME,
 };
 
 /* RFC 3706 Dead Peer Detection */

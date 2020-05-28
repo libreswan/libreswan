@@ -240,14 +240,12 @@ static const struct keyword_enum_values kw_rsasigkey_list = VALUES_INITIALIZER(k
  * Values for protostack={netkey, none, mast or none }
  */
 static const struct keyword_enum_value kw_proto_stack_list[] = {
-	{ "none",         NO_KERNEL },
-	{ "auto",         USE_NETKEY }, /* auto now means netkey */
+	{ "auto",         USE_NATIVE },
+	{ "native",       USE_NATIVE },
 	{ "netkey",       USE_NETKEY },
-	{ "native",       USE_NETKEY },
 	{ "bsd",          USE_BSDKAME },
 	{ "kame",         USE_BSDKAME },
 	{ "bsdkame",      USE_BSDKAME },
-	{ "win2k",        USE_WIN2K },
 };
 
 static const struct keyword_enum_values kw_proto_stack = VALUES_INITIALIZER(kw_proto_stack_list);

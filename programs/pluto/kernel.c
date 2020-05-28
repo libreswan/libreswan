@@ -864,8 +864,7 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 	}
 
 	/* if routing would affect IKE messages, reject */
-	if (kernel_ops->type != NO_KERNEL &&
-	    c->spd.this.host_port != pluto_nat_port &&
+	if (c->spd.this.host_port != pluto_nat_port &&
 	    c->spd.this.host_port != pluto_port &&
 	    addrinsubnet(&c->spd.that.host_addr, &c->spd.that.client)) {
 		log_message(RC_LOG_SERIOUS, logger,
@@ -2595,11 +2594,6 @@ void init_kernel(void)
 		break;
 #endif
 
-	case NO_KERNEL:
-		libreswan_log("Using 'no_kernel' interface code on %s",
-			      kversion);
-		break;
-
 	default:
 		libreswan_log("FATAL: kernel interface '%s' not available",
 			enum_name(&kern_interface_names,
@@ -3236,10 +3230,6 @@ bool migrate_ipsec_sa(struct state *st)
 
 		return TRUE;
 
-	case NO_KERNEL:
-		DBG(DBG_CONTROL, DBG_log("No support required to migrate_ipsec_sa with NoKernel support"));
-		return TRUE;
-
 	default:
 		DBG(DBG_CONTROL,
 			DBG_log("Usupported kernel stack in migrate_ipsec_sa"));
@@ -3344,10 +3334,6 @@ void delete_ipsec_sa(struct state *st)
 		}
 		(void) teardown_half_ipsec_sa(st, TRUE);
 
-		break;
-	case NO_KERNEL:
-		DBG(DBG_CONTROL,
-			DBG_log("No support required to delete_ipsec_sa with NoKernel support"));
 		break;
 	default:
 		DBG(DBG_CONTROL,

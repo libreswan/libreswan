@@ -47,15 +47,15 @@
  */
 
 static const char *const kern_interface_name[] = {
-	"no-kernel", /* run without stack */
-	"netkey",
-	"bsdkame",
-	"win2k",
+	[USE_NATIVE] = "native",
+	[USE_NETKEY] = "netkey",
+	[USE_BSDKAME] = "bsdkame",
 };
+
 enum_names kern_interface_names = {
-	NO_KERNEL, USE_WIN2K,
+	USE_NATIVE, USE_BSDKAME,
 	ARRAY_REF(kern_interface_name),
-	NULL, /* prefix */
+	"USE_", /* prefix */
 	NULL
 };
 

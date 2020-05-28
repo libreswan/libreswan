@@ -131,10 +131,7 @@ bool orient(struct connection *c)
 			for (;;) {
 				/* check if this interface matches this end */
 				if (sameaddr(&sr->this.host_addr,
-					     &p->local_endpoint) &&
-				    (kernel_ops->type != NO_KERNEL ||
-				     sr->this.host_port ==
-				     pluto_port)) {
+					     &p->local_endpoint)) {
 					if (oriented(*c)) {
 						if (c->interface->ip_dev == p->ip_dev) {
 							char cib[CONN_INST_BUF];
@@ -157,11 +154,8 @@ bool orient(struct connection *c)
 				}
 
 				/* done with this interface if it doesn't match that end */
-				if (!(sameaddr(&sr->that.host_addr,
-					       &p->local_endpoint) &&
-				      (kernel_ops->type != NO_KERNEL ||
-				       sr->that.host_port ==
-				       pluto_port)))
+				if (!sameaddr(&sr->that.host_addr,
+					      &p->local_endpoint))
 					break;
 
 				swap_ends(c);

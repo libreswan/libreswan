@@ -275,7 +275,6 @@ extern int useful_mastno;
 #endif
 
 extern const struct kernel_ops *kernel_ops;
-extern const struct kernel_ops nokernel_kernel_ops;
 #ifdef NETKEY_SUPPORT
 extern const struct kernel_ops netkey_kernel_ops;
 #endif
