@@ -2380,11 +2380,12 @@ struct connection *oppo_instantiate(struct connection *c,
 		 */
 		passert(addrinsubnet(our_client, &d->spd.this.client) || sameaddr(our_client, &d->spd.this.host_addr));
 
-		if (addrinsubnet(our_client, &d->spd.this.client))
-			happy(addrtosubnet(our_client, &d->spd.this.client));
-
 		/* opportunistic connections do not use port selectors */
-		setportof(0, &d->spd.this.client.addr);
+		if (addrinsubnet(our_client, &d->spd.this.client)) {
+			d->spd.this.client = selector_from_address(our_client, &unset_protoport/*all*/);
+		} else {
+			update_selector_hport(&d->spd.this.client, 0);
+		}
 	} else {
 		/*
 		 * There was no client in the abstract connection

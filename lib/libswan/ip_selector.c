@@ -40,6 +40,10 @@ const char *str_selector(const ip_selector *selector, selector_buf *out)
 ip_selector selector_from_address(const ip_address *address,
 				  const ip_protoport *protoport)
 {
+	const struct ip_info *afi = address_type(address);
+	if (!pexpect(afi != NULL)) {
+		return unset_selector;
+	}
 	ip_subnet subnet = subnet_from_address(address);
 	return selector_from_subnet(&subnet, protoport);
 }
@@ -65,15 +69,13 @@ err_t range_to_selector(const ip_range *range,
 	if (!pexpect(afi != NULL)) {
 		return "range has unknown type";
 	}
-	/* XXX: hack while code cleaned up */
+	/* XXX: hack while code cleaned up - subnet should have range */
 	ip_subnet subnet;
 	err_t err = rangetosubnet(&range->start, &range->end, &subnet);
 	if (err != NULL) {
 		return err;
 	}
-	*selector = subnet;
-	selector->addr.ipproto = protoport->protocol;
-	selector->addr.hport = protoport->port;
+	*selector = selector_from_subnet(&subnet, protoport);
 	return NULL;
 }
 
@@ -91,6 +93,11 @@ const struct ip_info *selector_type(const ip_selector *selector)
 unsigned selector_hport(const ip_selector *selector)
 {
 	return selector->addr.hport;
+}
+
+void update_selector_hport(ip_selector *selector, unsigned hport)
+{
+	selector->addr.hport = hport;
 }
 
 unsigned selector_ipproto(const ip_selector *selector)
