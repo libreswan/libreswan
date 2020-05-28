@@ -8,7 +8,7 @@ USERLAND_CFLAGS += -Ds6_addr32=__u6_addr.__u6_addr32
 USE_BSDKAME=true
 USE_LIBCAP_NG=false
 
-LDFLAGS +=  -lipsec -L/usr/pkg/lib -Wl,-rpath,/usr/pkg/lib
+USERLAND_LDFLAGS +=  -lipsec -L/usr/pkg/lib -Wl,-rpath,/usr/pkg/lib
 
 NSS_CFLAGS = -I/usr/pkg/include/nspr -I/usr/pkg/include/nss/nss
 NSS_LDFLAGS = -L/usr/pkg/lib/nss -Wl,-rpath,/usr/pkg/lib/nss -lnss3 -lfreebl3 -lssl3
