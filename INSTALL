@@ -6,16 +6,19 @@ Specific vendors/distribution build instructions available in packaging/
 Build requirements
 ------------------
 bison flex pkgconfig gcc make xmlto
-nss-devel nspr-devel libevent-devel
+nss nspr libevent
 
-for systemd: pkgconfig hostname systemd-devel
-for pam/xauth: pam-devel
-for dnssec support: unbound-devel ldns-devel
-for FIPS support: fipscheck-devel
-for libcap-ng support: libcap-ng-devel
-for CRL fetching support: libcurl-devel
-for CRL ldap fetching support: openldap-devel
-for audit support: audit-libs-devel
+for systemd: pkgconfig hostname systemd
+for pam/xauth: pam
+for dnssec support: unbound ldns
+for legacy FIPS support: fipscheck
+for libcap-ng support: libcap-ng
+for CRL fetching support: libcurl
+for CRL ldap fetching support: openldap
+for audit support: audit-libs
+for seccomp support: libseccomp
+for labeled ipsec support: libselinux
+for man page regeneration: xmlto
 
 Building userland
 -----------------
