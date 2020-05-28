@@ -954,31 +954,11 @@ kvm-demolish: kvm-uninstall-base-domain
 kvm-demolish: kvm-uninstall-base-network
 
 #
-# kvm-build target
+# kvm-install target
 #
 # First delete all of the build domain's clones.  The build domain
 # won't boot when its clones are running.
-
-.PHONY: kvm-$(KVM_BUILD_DOMAIN)-build
-kvm-$(KVM_BUILD_DOMAIN)-build: \
-		$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok \
-		| \
-		$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
-ifeq ($(KVM_INSTLL_RPM), true)
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'rm -fr ~/rpmbuild/*RPMS'
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'make kvm-rpm'
-else
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'export OBJDIR=$(KVM_OBJDIR)'
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'make OBJDIR=$(KVM_OBJDIR) $(KVM_MAKEFLAGS) base'
-endif
-	: install will run $(KVMSH) --shutdown $(1)
-
-.PHONY: kvm-build
-kvm-build: $(foreach domain, $(KVM_BUILD_DOMAIN_CLONES), uninstall-kvm-domain-$(domain))
-	$(MAKE) kvm-$(KVM_BUILD_DOMAIN)-build
-
 #
-# kvm-install target
 #
 # So that all the INSTALL domains are deleted before the build domain
 # is booted, this is done using a series of sub-makes (without this,
@@ -987,16 +967,17 @@ kvm-build: $(foreach domain, $(KVM_BUILD_DOMAIN_CLONES), uninstall-kvm-domain-$(
 .PHONY: kvm-$(KVM_BUILD_DOMAIN)-install
 kvm-$(KVM_BUILD_DOMAIN)-install: \
 		$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok \
-		kvm-$(KVM_BUILD_DOMAIN)-build \
 		| \
 		$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
-ifeq ($(KVM_INSTLL_RPM), true)
+ifeq ($(KVM_INSTALL_RPM), true)
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'rm -fr ~/rpmbuild/*RPMS'
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'make kvm-rpm'
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'rpm -aq | grep libreswan && rpm -e $$(rpm -aq | grep libreswan) || true'
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'rpm -i ~/rpmbuild/RPMS/x86_64/libreswan*rpm'
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'cp -f ~/rpmbuild/RPMS/x86_64/libreswan*rpm /source/'
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'cp -f ~/rpmbuild/SRPMS/libreswan*rpm /source/'
 else
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'make OBJDIR=$(KVM_OBJDIR) $(KVM_MAKEFLAGS) install-base'
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'export OBJDIR=$(KVM_OBJDIR) ; make OBJDIR=$(KVM_OBJDIR) $(KVM_MAKEFLAGS) install-base'
 ifeq ($(KVM_USE_FIPSCHECK),true)
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'make OBJDIR=$(KVM_OBJDIR) $(KVM_MAKEFLAGS) install-fipshmac'
 endif
