@@ -683,7 +683,7 @@ static bool validate_end(struct starter_conn *conn_st,
 					leftright, value, er);
 		}
 		if (!end->has_client) {
-			er = addrtosubnet(&end->sourceip, &end->subnet);
+			er = endtosubnet(&end->sourceip, &end->subnet, HERE);
 			if (er != NULL) {
 				ERR_FOUND("attempt to default %ssubnet from %s failed: %s",
 					leftright, value, er);

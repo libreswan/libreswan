@@ -752,8 +752,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 		ip_subnet this_client, that_client;
 		int shunt_proto = b->transport_proto;
 
-		happy(addrtosubnet(&b->our_client, &this_client));
-		happy(addrtosubnet(&b->peer_client, &that_client));
+		happy(endtosubnet(&b->our_client, &this_client, HERE));
+		happy(endtosubnet(&b->peer_client, &that_client, HERE));
 		/* OLD: negotiationshunt must be wider than bare shunt, esp on NETKEY */
 		/* if the connection we found has protoports, match those for the shunt */
 
@@ -1065,7 +1065,7 @@ static void connection_check_ddns1(struct connection *c)
 	/* default client to subnet containing only self */
 	if (!c->spd.that.has_client) {
 		/* XXX: this uses ADDRESS:PORT */
-		addrtosubnet(&c->spd.that.host_addr, &c->spd.that.client);
+		endtosubnet(&c->spd.that.host_addr, &c->spd.that.client, HERE);
 	}
 
 	/*

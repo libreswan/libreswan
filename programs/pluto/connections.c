@@ -2400,7 +2400,7 @@ struct connection *oppo_instantiate(struct connection *c,
 	 */
 	passert(d->policy & POLICY_OPPORTUNISTIC);
 	passert(addrinsubnet(peer_client, &d->spd.that.client));
-	happy(addrtosubnet(peer_client, &d->spd.that.client));
+	happy(endtosubnet(peer_client, &d->spd.that.client, HERE));
 
 	/* opportunistic connections do not use port selectors */
 	setportof(0, &d->spd.that.client.addr);

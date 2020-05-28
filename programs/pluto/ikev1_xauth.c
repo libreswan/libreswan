@@ -1572,7 +1572,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 			if (!pbs_in_address(&a, &ipv4_info, &strattr, "addr")) {
 				return STF_FATAL;
 			}
-			addrtosubnet(&a, &c->spd.this.client);
+			endtosubnet(&a, &c->spd.this.client, HERE);
 
 			c->spd.this.has_client = TRUE;
 			subnet_buf caddr;
@@ -1725,7 +1725,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				if (!pbs_in_address(&a, &ipv4_info, &strattr, "addr")) {
 					return STF_FATAL;
 				}
-				addrtosubnet(&a, &c->spd.this.client);
+				endtosubnet(&a, &c->spd.this.client, HERE);
 
 				c->spd.this.has_client = TRUE;
 				subnet_buf caddr;

@@ -594,11 +594,11 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 
 		if (dir == XFRM_POLICY_OUT) {
 			local_port = portof(&that_client->addr);
-			addrtosubnet(that_host, &local_client);
+			endtosubnet(that_host, &local_client, HERE);
 			that_client = &local_client;
 		} else {
 			local_port = portof(&this_client->addr);
-			addrtosubnet(this_host, &local_client);
+			endtosubnet(this_host, &local_client, HERE);
 			this_client = &local_client;
 		}
 		setportof(local_port, &local_client.addr);
@@ -1275,14 +1275,14 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		 * the peer. Here we substitute real client ip with NATD ip.
 		 */
 		if (sa->inbound == 0) {
-			addrtosubnet(sa->dst.address, &dst_tmp);
+			endtosubnet(sa->dst.address, &dst_tmp, HERE);
 			dst = &dst_tmp;
 		} else {
 			dst = sa->dst.client;
 		}
 
 		if (sa->inbound == 1) {
-			addrtosubnet(sa->src.address, &src_tmp);
+			endtosubnet(sa->src.address, &src_tmp, HERE);
 			src = &src_tmp;
 		} else {
 			src = sa->src.client;
@@ -1839,8 +1839,8 @@ static void netlink_acquire(struct nlmsghdr *n)
 	    NULL == (ugh = xfrm_to_endpoint(family, dstx, acquire->sel.dport, &dst)) &&
 	    NULL == (ugh = (src_proto == dst_proto ?
 			NULL : "src and dst protocols differ")) &&
-	    NULL == (ugh = addrtosubnet(&src, &ours)) &&
-	    NULL == (ugh = addrtosubnet(&dst, &his)))
+	    NULL == (ugh = endtosubnet(&src, &ours, HERE)) &&
+	    NULL == (ugh = endtosubnet(&dst, &his, HERE)))
 		record_and_initiate_opportunistic(&ours, &his, transport_proto, uctx,
 			"%acquire-netlink");
 
