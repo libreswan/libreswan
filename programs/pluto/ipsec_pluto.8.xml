@@ -44,9 +44,8 @@
       <arg choice="opt">--log-no-append</arg>
       <arg choice="opt">--log-no-ip</arg>
       <arg choice="opt">--log-no-audit</arg>
-      <arg choice="opt">--use-klips</arg>
       <arg choice="opt">--use-netkey</arg>
-      <arg choice="opt">--use-nostack</arg>
+      <arg choice="opt">--use-bsdkame</arg>
       <arg choice="opt">--uniqueids</arg>
       <arg choice="opt">--virtual-private <replaceable>network_list</replaceable></arg>
       <arg choice="opt">--keep-alive <replaceable>delay_sec</replaceable></arg>
@@ -921,15 +920,17 @@
       NAT-Traversal, then UDP port 4500 is also taken by pluto to listen
       on.</para>
 
-      <para>Pluto supports different IPstacks on different operating systems.
-      This can be configured using one of the options <option>--use-netkey</option>
-      (the default), <option>--use-klips</option>, <option>--use-mast</option>,
-      <option>--use-bsdkame</option>, <option>--use-win2k</option> or
-      <option>--use-nostack</option>. The
-      latter is meant for testing only - no actual IPsec connections will be
-      loaded into the kernel. The option <option>--use-auto</option> has
-      been obsoleted. On startup, pluto might also read the  <option>protostack=</option> option to select the IPsec stack to use if  <option>--config /etc/ipsec.conf</option> is given as argument to pluto. If both  <option>--use-XXX</option> and  <option>--config /etc/ipsec.conf</option> are specified, the last
-      command line argument specified takes precedence.
+      <para>
+	Pluto supports different IPstacks on different operating
+	systems.  This can be configured using one of the options
+	<option>--use-netkey</option> (Linux),
+	<option>--use-bsdkame</option> (BSD).  On startup, pluto might
+	also read the <option>protostack=</option> option to select
+	the IPsec stack to use if <option>--config
+	/etc/ipsec.conf</option> is given as argument to pluto.  If
+	both <option>--use-XXX</option> and <option>--config
+	/etc/ipsec.conf</option> are specified, the last command line
+	argument specified takes precedence.
       </para>
 
       <para>Pluto supports RFC 3947 NAT-Traversal. The allowed range behind the NAT routers is submitted using the
@@ -3133,25 +3134,6 @@
           </listitem>
         </varlistentry>
       </variablelist>
-
-      <para>For example</para>
-
-      <variablelist remap="TP">
-        <varlistentry>
-          <term>pluto --secretsfile&nbsp;ipsec.secrets
-          --ctlbase&nbsp;pluto.base --ikeport&nbsp;8500 --nofork --use-nostack
-          --stderrlog</term>
-
-          <listitem>
-            <para></para>
-
-            <!-- FIXME: blank list item -->
-          </listitem>
-        </varlistentry>
-      </variablelist>
-
-      <para>lets one test <emphasis remap="B">pluto</emphasis> without using
-      the superuser account.</para>
 
       <para>
 	<emphasis remap="B">pluto</emphasis> is willing to produce a
