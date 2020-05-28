@@ -85,7 +85,8 @@ ssize_t fd_sendmsg(const struct fd *fd, const struct msghdr *msg,
 				    fd->magic, FD_MAGIC);
 			}
 			jam(buf, " "PRI_WHERE"", pri_where(where));
-			for (unsigned i = 0; i < msg->msg_iovlen; i++) {
+			/* XXX: on BSD msg_iovlen is an INT */
+			for (unsigned i = 0; i < (unsigned)msg->msg_iovlen; i++) {
 				jam(buf, "; ");
 				struct iovec *iov = &msg->msg_iov[i];
 				jam_sanitized_bytes(buf, iov->iov_base, iov->iov_len);
