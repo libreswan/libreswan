@@ -203,7 +203,7 @@ endef
 # Only do this once per boot.
 #
 
-KVM_BOOT_FILE = $(firstword $(wildcard /var/run/rc.log /proc/uptime))
+KVM_BOOT_FILE = $(firstword $(wildcard /var/run/rc.log /var/log/boot.log))
 
 KVM_ENTROPY_FILE ?= /proc/sys/kernel/random/entropy_avail
 
@@ -229,6 +229,7 @@ $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)entropy-ok: $(KVM_BOOT_FILE) | $(KVM_LOCALDIR
 KVM_QEMUDIR ?= /var/lib/libvirt/qemu
 
 $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok: $(KVM_BOOT_FILE) | $(KVM_LOCALDIR)
+	echo $(KVM_BOOT_FILE)
 	@if ! test -w $(KVM_QEMUDIR) ; then				\
 		echo ;							\
 		echo  The directory:					\
@@ -743,12 +744,11 @@ endef
 
 KVM_BASE_DISK_CLONES = $(addsuffix .qcow2, $(addprefix $(KVM_LOCALDIR)/, $(KVM_BASE_DOMAIN_CLONES)))
 $(KVM_BASE_DISK_CLONES): \
-		$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok \
 		| \
 		$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded \
 		$(KVM_LOCALDIR)
-	: copy-base-disk from=$< to=$@
 	$(MAKE) kvm-shutdown-base-domain
+	: copy-base-disk $@
 	test -r $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2 || sudo chgrp $(KVM_GROUP) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
 	test -r $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2 || sudo chmod g+r          $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
 	: if this test fails, the steps:
@@ -760,7 +760,6 @@ $(KVM_BASE_DISK_CLONES): \
 
 KVM_BUILD_DISK_CLONES = $(addsuffix .qcow2, $(addprefix $(KVM_LOCALDIR)/, $(KVM_BUILD_DOMAIN_CLONES)))
 $(KVM_BUILD_DISK_CLONES): \
-		$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok \
 		| \
 		$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2 \
 		$(KVM_LOCALDIR)
