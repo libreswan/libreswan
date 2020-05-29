@@ -823,8 +823,13 @@ static int extract_end(struct fd *whackfd,
 			   leftright, src->host_ikeport);
 		dst->raw.host.ikeport = 0;
 	}
-	dst->host_port = (dst->raw.host.ikeport ? dst->raw.host.ikeport :
-			  pluto_port);
+	/*
+	 * XXX: When DST is the peer setting .host_port to PLUTO_PORT
+	 * (our port) is wrong.  IKE_UDP_PORT is the next best thing.
+	 *
+	 * But what if DST is THIS?  .host_port gets ignored?
+	 */
+	dst->host_port = (dst->raw.host.ikeport ? dst->raw.host.ikeport : IKE_UDP_PORT);
 
 
 	/*
