@@ -17,8 +17,8 @@ east #
 east #
  ipsec whack --listen
 002 listening for IKE messages
-002 adding interface eth1 192.1.2.24:500
-002 adding interface eth1 192.1.2.24:4500
+002 adding UDP interfaceeth1 192.1.2.24:500
+002 adding UDP interfaceeth1 192.1.2.24:4500
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
 002 loaded private key for keyid: PKK_RSA:AQO9bJbr3

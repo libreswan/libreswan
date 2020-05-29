@@ -38,8 +38,8 @@ Received 0 response(s)
 west #
  ipsec auto --ready
 002 listening for IKE messages
-002 adding interface eth1 192.1.2.66:500
-002 adding interface eth1 192.1.2.66:4500
+002 adding UDP interfaceeth1 192.1.2.66:500
+002 adding UDP interfaceeth1 192.1.2.66:4500
 003 two interfaces match "west-float" (eth1, eth1)
 002 "west-float": terminating SAs using this connection
 002 forgetting secrets

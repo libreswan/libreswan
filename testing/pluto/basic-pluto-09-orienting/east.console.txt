@@ -34,8 +34,8 @@ east #
 east #
  ipsec auto --ready
 002 listening for IKE messages
-002 adding interface test0 172.29.1.3:500
-002 adding interface test0 172.29.1.3:4500
+002 adding UDP interfacetest0 172.29.1.3:500
+002 adding UDP interfacetest0 172.29.1.3:4500
 003 two interfaces match "test3" (test0, test0)
 002 "test3": terminating SAs using this connection
 002 forgetting secrets
