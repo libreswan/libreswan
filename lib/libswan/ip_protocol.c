@@ -25,7 +25,7 @@ const struct ip_protocol ip_protocol_unset = {
 	.prefix = "unk",
 	.description = "unknown",
 	.name = "UNKNOWN",
-	.ipproto = IPPROTO_NONE,
+	.ipproto = 0,
 };
 
 const struct ip_protocol ip_protocol_icmp = {
@@ -121,7 +121,7 @@ const struct ip_protocol *protocol_by_ipproto(unsigned ipproto)
 {
 	/* perhaps a little sparse */
 	static const struct ip_protocol *ip_protocols[] = {
-		[IPPROTO_NONE] = &ip_protocol_unset,
+		[0] = &ip_protocol_unset,
 		[IPPROTO_ICMP] = &ip_protocol_icmp,
 		[IPPROTO_IPIP] = &ip_protocol_ipip,
 		[IPPROTO_TCP] = &ip_protocol_tcp,
