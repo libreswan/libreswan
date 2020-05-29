@@ -1596,7 +1596,7 @@ int main(int argc, char **argv)
 				diagq("<port-number> must be a number between 1 and 65535",
 					optarg);
 			}
-			msg.right.host_port = opt_whole;
+			msg.right.host_ikeport = opt_whole;
 			continue;
 
 		case END_NEXTHOP:	/* --nexthop <ip-address> */

@@ -5926,7 +5926,12 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 	    str_endpoint(&st->st_remote_endpoint, &b),
 	    ipstr(&this->nexthop, &g));
 	pexpect_st_local_endpoint(st);
-	/* XXX: why not local_endpoint or is this redundant */
+	/*
+	 * XXX: why not local_endpoint or is this redundant?
+	 *
+	 * The interface changed (new address in .address) but
+	 * continue to use the existing port.
+	 */
 	st->st_mobike_local_endpoint =
 		endpoint(&this->addr, endpoint_hport(&st->st_interface->local_endpoint));
 	st->st_mobike_host_nexthop = this->nexthop; /* for updown, after xfrm migration */

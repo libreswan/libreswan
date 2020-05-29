@@ -456,7 +456,7 @@ static void jam_end_host(jambuf_t *buf, const struct end *this, lset_t policy)
 		jam(buf, "<%s>", this->host_addr_name);
 	}
 
-	if (this->host_port != pluto_port) {
+	if (this->raw.host.ikeport != 0 || this->host_port != pluto_port) {
 		/*
 		 * XXX: Part of the problem is that code is stomping
 		 * on the HOST_ADDR's port setting it to the CLIENT's
@@ -814,8 +814,18 @@ static int extract_end(struct fd *whackfd,
 	dst->has_port_wildcard = protoport_has_any_port(&src->protoport);
 	dst->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
 	dst->updown = clone_str(src->updown, "updown");
-	dst->host_port = src->host_port;
 	dst->sendcert =  src->sendcert;
+
+	dst->raw.host.ikeport = src->host_ikeport;
+	if (src->host_ikeport > 65535) {
+		log_global(RC_BADID, whackfd,
+			   "%sikeport=%u must be between 1..65535, ignored",
+			   leftright, src->host_ikeport);
+		dst->raw.host.ikeport = 0;
+	}
+	dst->host_port = (dst->raw.host.ikeport ? dst->raw.host.ikeport :
+			  pluto_port);
+
 
 	/*
 	 * see if we can resolve the DNS name right now

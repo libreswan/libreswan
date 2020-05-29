@@ -192,7 +192,9 @@ enum keyword_numeric_conn_field {
 	KNCF_MODECONFIGCLIENT,	/* left/right */
 	KNCF_CAT,	/* left/right */
 	KNCF_SENDCERT,	/* left/right */
+	KNCF_IKEPORT,		/* left/right: IKE Port that must be used */
 	KNCF_AUTH,	/* left/right */
+
 		KNCF_last_leftright = KNCF_AUTH,
 
 	KNCF_FIREWALL,

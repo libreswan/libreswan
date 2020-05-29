@@ -367,7 +367,7 @@ static void set_whack_end(char *lr,
 		w->client = (aftoinfo(l->addr_family)->all_addresses);
 	}
 
-	w->host_port = IKE_UDP_PORT; /* XXX starter should support (nat)-ike-port */
+	w->host_ikeport = l->options[KNCF_IKEPORT];
 	w->protoport = l->protoport;
 
 	if (l->certx != NULL) {

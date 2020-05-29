@@ -93,7 +93,7 @@ struct whack_end {
 
 	enum keyword_host host_type;
 	ip_address host_addr;
-	uint16_t host_port;	/* host order  (for IKE communications) */
+	unsigned host_ikeport;
 	ip_address host_nexthop;
 	ip_address host_srcip;
 	ip_subnet host_vtiip;

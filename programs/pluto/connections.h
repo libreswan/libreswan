@@ -182,6 +182,9 @@ struct end {
 			ip_subnet subnet;
 			ip_protoport protoport;
 		} client;
+		struct {
+			unsigned ikeport;
+		} host;
 	} raw;
 
 	bool key_from_DNS_on_demand;
