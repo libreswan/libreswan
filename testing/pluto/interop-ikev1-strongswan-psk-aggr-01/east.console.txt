@@ -1,0 +1,23 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add psk
+002 added connection description "psk"
+east #
+ echo "initdone"
+initdone
+east #
+ # confirm the right ID types were sent/received
+east #
+ hostname | grep east > /dev/null &&  grep "ID type" /tmp/pluto.log | sort | uniq
+|    ID type: ID_FQDN (0x2)
+|    ID type: ID_IPV4_ADDR (0x1)
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
