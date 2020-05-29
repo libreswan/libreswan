@@ -32,9 +32,16 @@ else
 include ../../mk/program.mk
 endif
 
-xmlsources := $(patsubst d.ipsec.conf/%,${srcdir}/d.ipsec.conf/%,$(shell cat ${srcdir}/d.ipsec.conf/order.txt))
+# Since man page is generated, override the default rule for
+# generating $(buildir)/$(MANPAGE).tmp from $(MANPAGE).xml
 
-# Custom transform rule since man page is generated.
-$(builddir)/ipsec.conf.5.tmp: $(xmlsources) | $(builddir)
-	cat $(xmlsources) | $(TRANSFORM_VARIABLES) > $@.tmp
+xmlsources = d.ipsec.conf/order.txt
+
+$(builddir)/ipsec.conf.5.tmp: d.ipsec.conf/*.xml $(xmlsources) | $(builddir)
+	missing=$$(find d.ipsec.conf -name '*.xml' | sort - $(xmlsources) | uniq -u) ; \
+	if test "$${missing}" != ""; then	\
+		echo "$${missing}" ;		\
+		exit 1 ;			\
+	fi
+	cat $(xmlsources) | xargs cat | $(TRANSFORM_VARIABLES) > $@.tmp
 	mv $@.tmp $@

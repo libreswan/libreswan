@@ -1,0 +1,10 @@
+<varlistentry>
+  <term>
+    <emphasis remap='B'>leftikeport</emphasis>
+  </term>
+  <listitem>
+    <para>
+      The IKE port to listen on.
+    </para>
+  </listitem>
+</varlistentry>
