@@ -118,14 +118,14 @@ ip_address endpoint_address(const ip_endpoint *endpoint)
 		libreswan_log("endpoint has unspecified type");
 		return address_invalid;
 	}
-	return endpoint->address;
+	ip_address address = endpoint->address;
 #else
-	if (address_type(endpoint) != NULL) {
-		return set_endpoint_hport(endpoint, 0); /* scrub the port */
-	} else {
-		return *endpoint; /* empty_address? */
-	}
+	ip_address address = *endpoint;
+	/* scrub protocol+port */
+	address.hport = 0;
+	address.ipproto = 0;
 #endif
+	return address;
 }
 
 int endpoint_hport(const ip_endpoint *endpoint)
