@@ -916,6 +916,16 @@ static bool check_connection_end(const struct whack_end *this,
 		return FALSE;
 	}
 
+	if (this->id != NULL && streq(this->id, "%fromcert")) {
+		lset_t auth_pol = (wm->policy & POLICY_ID_AUTH_MASK);
+
+		if (this->authby == AUTHBY_PSK || this->authby == AUTHBY_NULL ||
+			auth_pol == POLICY_PSK || auth_pol == POLICY_AUTH_NULL) {
+			loglog(RC_FATAL, "ID cannot be specified as %%fromcert if PSK or AUTH-NULL is used");
+			return false;
+		}
+	}
+
 	return TRUE; /* happy */
 }
 
@@ -1342,6 +1352,7 @@ static bool extract_connection(struct fd *whackfd,
 			   wm->name);
 		return false;
 	}
+
 	if (!check_connection_end(&wm->right, &wm->left, wm) ||
 	    !check_connection_end(&wm->left, &wm->right, wm)) {
 		loglog(RC_FATAL, "Failed to load connection \"%s\": attempt to load incomplete connection",
