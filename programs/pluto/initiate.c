@@ -117,52 +117,150 @@ static void swap_ends(struct connection *c)
 	}
 }
 
+static bool orient_new_iface_port(struct connection *c, struct fd *whackfd, bool this)
+{
+	struct end *end = (this ? &c->spd.this : &c->spd.that);
+	if (end->raw.host.ikeport == 0) {
+		return false;
+	}
+	if (!address_is_set(&end->host_addr)) {
+		return false;
+	}
+	struct iface_dev *dev = find_iface_dev_by_address(&end->host_addr);
+	if (dev == NULL) {
+		return false;
+	}
+	/* XXX: abstract this? */
+	/* assume UDP for now */
+	struct iface_port *ifp = bind_iface_port(dev, &udp_iface_io,
+						 end->raw.host.ikeport, false);
+	if (ifp == NULL) {
+		dbg("could not create new interface");
+		return false;
+	}
+	endpoint_buf b;
+	log_global(RC_LOG, whackfd, "adding interface %s %s",
+		   ifp->ip_dev->id_rname,
+		   str_endpoint(&ifp->local_endpoint, &b));
+	c->interface = ifp;
+	if (!this) {
+		dbg("swapping to that; new interface");
+		swap_ends(c);
+	}
+	if (listening) {
+		struct logger logger = CONNECTION_LOGGER(c, whackfd);
+		listen_on_iface_port(ifp, &logger);
+	}
+	return true;
+}
+
+static bool end_matches_port(struct end *end, const struct iface_port *ifp)
+{
+	/*
+	 * XXX: something stomps on .host_addr turning it into an
+	 * endpoint - .ipproto gets set; hack around it
+	 */
+	ip_address host_addr = strip_endpoint(&end->host_addr, HERE);
+	unsigned port = end->raw.host.ikeport ? end->raw.host.ikeport : pluto_port;
+	ip_endpoint host_end = endpoint3(ifp->protocol, &host_addr, port);
+	return endpoint_eq(host_end, ifp->local_endpoint);
+}
 
 bool orient(struct connection *c)
 {
 	struct fd *whackfd = whack_log_fd; /* placeholder */
-	if (!oriented(*c)) {
-		const struct iface_port *p;
-		struct spd_route *sr = &c->spd;
-		for (p = interfaces; p != NULL; p = p->next) {
-			if (p->ike_float)
-				continue;
-
-			for (;;) {
-				/* check if this interface matches this end */
-				if (sameaddr(&sr->this.host_addr,
-					     &p->local_endpoint)) {
-					if (oriented(*c)) {
-						if (c->interface->ip_dev == p->ip_dev) {
-							char cib[CONN_INST_BUF];
-							loglog(RC_LOG_SERIOUS,
-								"both sides of \"%s\"%s are our interface %s!",
-								c->name, fmt_conn_instance(c, cib),
-								p->ip_dev->id_rname);
-						} else {
-							char cib[CONN_INST_BUF];
-							loglog(RC_LOG_SERIOUS, "two interfaces match \"%s\"%s (%s, %s)",
-								c->name, fmt_conn_instance(c, cib),
-								c->interface->ip_dev->id_rname,
-								p->ip_dev->id_rname);
-							}
-						terminate_connection(c->name, false, whackfd);
-						c->interface = NULL; /* withdraw orientation */
-						return FALSE;
-					}
-					c->interface = p;
-				}
-
-				/* done with this interface if it doesn't match that end */
-				if (!sameaddr(&sr->that.host_addr,
-					      &p->local_endpoint))
-					break;
-
-				swap_ends(c);
-			}
-		}
+	if (oriented(*c)) {
+		dbg("already oriented");
+		return true;
 	}
-	return oriented(*c);
+
+	dbg("orienting %s", c->name);
+	bool swap = false;
+	for (const struct iface_port *ifp = interfaces; ifp != NULL; ifp = ifp->next) {
+
+		/* XXX: check connection allows p->protocol? */
+		bool this = end_matches_port(&c->spd.this, ifp);
+		bool that = end_matches_port(&c->spd.that, ifp);
+
+		if (this && that) {
+			/* too many choices */
+			connection_buf cib;
+			log_global(RC_LOG_SERIOUS, whackfd,
+				   "both sides of "PRI_CONNECTION" are our interface %s!",
+				   pri_connection(c, &cib),
+				   ifp->ip_dev->id_rname);
+			terminate_connection(c->name, false, whackfd);
+			c->interface = NULL; /* withdraw orientation */
+			return false;
+		}
+
+		if (!this && !that) {
+			endpoint_buf eb;
+			dbg("%s doesn't match %s at all",
+			    c->name, str_endpoint(&ifp->local_endpoint, &eb));
+			continue;
+		}
+		pexpect(this != that); /* only one */
+
+		if (oriented(*c)) {
+			/* oops, second match */
+			if (c->interface->ip_dev == ifp->ip_dev) {
+				connection_buf cib;
+				log_global(RC_LOG_SERIOUS, whackfd,
+					   "both sides of "PRI_CONNECTION" are our interface %s!",
+					   pri_connection(c, &cib),
+					   ifp->ip_dev->id_rname);
+			} else {
+				/*
+				 * XXX: if an interface has two
+				 * addresses vis <<ip addr add
+				 * 192.1.2.23/24 dev eth1>> this log
+				 * line doesn't differnetiate.
+				 */
+				connection_buf cib;
+				address_buf cb, ifpb;
+				log_global(RC_LOG_SERIOUS, whackfd,
+					   "two interfaces match \"%s\"%s (%s %s, %s %s)",
+					   pri_connection(c, &cib),
+					   c->interface->ip_dev->id_rname,
+					   str_address(&c->interface->ip_dev->id_address, &cb),
+					   ifp->ip_dev->id_rname,
+					   str_address(&ifp->ip_dev->id_address, &ifpb));
+			}
+			terminate_connection(c->name, false, whackfd);
+			c->interface = NULL; /* withdraw orientation */
+			return false;
+		}
+
+		/* orient then continue search */
+		if (this) {
+			dbg("oriented %s's this", c->name);
+			swap = false;
+		} else if (that) {
+			dbg("oriented %s's that", c->name);
+			swap = true;
+		}
+		c->interface = ifp;
+		passert(oriented(*c));
+	}
+	if (oriented(*c)) {
+		if (swap) {
+			dbg("swapping ends so that that is this")
+			swap_ends(c);
+		}
+		return true;
+	}
+
+	/*
+	 * No existing interface worked, should a new one be created?
+	 */
+	if (orient_new_iface_port(c, whackfd, true)) {
+		return true;
+	}
+	if (orient_new_iface_port(c, whackfd, false)) {
+		return true;
+	}
+	return false;
 }
 
 struct initiate_stuff {
