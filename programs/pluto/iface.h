@@ -85,6 +85,7 @@ struct iface_dev {
 
 void release_iface_dev(struct iface_dev **id);
 void add_or_keep_iface_dev(struct raw_iface *ifp);
+struct iface_dev *find_iface_dev_by_address(const ip_address *address);
 
 struct iface_port {
 	struct iface_dev   *ip_dev;

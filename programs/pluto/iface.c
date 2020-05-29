@@ -72,6 +72,17 @@ static void add_iface_dev(const struct raw_iface *ifp)
 	dbg("iface: marking %s add", ifd->id_rname);
 }
 
+struct iface_dev *find_iface_dev_by_address(const ip_address *address)
+{
+	struct iface_dev *ifd;
+	FOR_EACH_LIST_ENTRY_OLD2NEW(&interface_dev, ifd) {
+		if (sameaddr(address, &ifd->id_address)) {
+			return ifd;
+		}
+	}
+	return NULL;
+}
+
 static void mark_ifaces_dead(void)
 {
 	struct iface_dev *ifd;
