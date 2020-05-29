@@ -254,12 +254,14 @@ static void add_new_ifaces(void)
 	}
 }
 
-static void handle_udp_packet_cb(evutil_socket_t unused_fd UNUSED,
-				 const short unused_event UNUSED,
-				 void *arg)
+void listen_on_iface_port(struct iface_port *ifp, struct logger *logger)
 {
-	const struct iface_port *ifp = arg;
-	handle_packet_cb(ifp);
+	ifp->io->listen(ifp, logger);
+	endpoint_buf b;
+	dbg("setup callback for interface %s %s fd %d on %s",
+	    ifp->ip_dev->id_rname,
+	    str_endpoint(&ifp->local_endpoint, &b),
+	    ifp->fd, ifp->protocol->name);
 }
 
 void find_ifaces(bool rm_dead, struct fd *whackfd)
@@ -282,34 +284,9 @@ void find_ifaces(bool rm_dead, struct fd *whackfd)
 		log_global(RC_LOG_SERIOUS, whackfd, "no public interfaces found");
 
 	if (listening) {
-		struct iface_port *ifp;
-
-		for (ifp = interfaces; ifp != NULL; ifp = ifp->next) {
-			delete_pluto_event(&ifp->pev);
-			switch (ifp->protocol->ipproto) {
-			case IPPROTO_UDP:
-				ifp->pev = add_fd_read_event_handler(ifp->fd,
-								     handle_udp_packet_cb,
-								     ifp, "ethX");
-				break;
-			case IPPROTO_TCP:
-				if (ifp->tcp_accept_listener == NULL) {
-					ifp->tcp_accept_listener = add_fd_accept_event_handler(ifp, accept_ike_in_tcp_cb);
-					if (ifp->tcp_accept_listener == NULL) {
-						log_global(RC_LOG, whackfd,
-							   "TCP: failed to create IKE-in-TCP listener");
-						continue;
-					}
-				}
-				break;
-			default:
-				bad_case(ifp->protocol->ipproto);
-			}
-			endpoint_buf b;
-			dbg("setup callback for interface %s %s fd %d on %s",
-			    ifp->ip_dev->id_rname,
-			    str_endpoint(&ifp->local_endpoint, &b),
-			    ifp->fd, ifp->protocol->name);
+		for (struct iface_port *ifp = interfaces; ifp != NULL; ifp = ifp->next) {
+			struct logger logger = GLOBAL_LOGGER(whackfd);
+			listen_on_iface_port(ifp, &logger);
 		}
 	}
 }

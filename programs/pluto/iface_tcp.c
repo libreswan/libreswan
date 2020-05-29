@@ -50,6 +50,11 @@
 #include "nat_traversal.h"	/* for nat_traversal_enabled which seems like a broken idea */
 #include "pluto_stats.h"
 
+static void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
+				 int accepted_fd,
+				 struct sockaddr *sockaddr, int sockaddr_len,
+				 void *arg);
+
 static enum iface_status iketcp_read_packet(const struct iface_port *ifp,
 					    struct iface_packet *packet)
 {
@@ -170,11 +175,24 @@ static void iketcp_server_timeout(evutil_socket_t unused_fd UNUSED,
 	free_any_iface_port(&ifp);
 }
 
+static void iketcp_listen(struct iface_port *ifp,
+			  struct logger *logger)
+{
+	if (ifp->tcp_accept_listener == NULL) {
+		ifp->tcp_accept_listener = add_fd_accept_event_handler(ifp, accept_ike_in_tcp_cb);
+		if (ifp->tcp_accept_listener == NULL) {
+			log_message(RC_LOG, logger,
+				    "TCP: failed to create IKE-in-TCP listener");
+		}
+	}
+}
+
 static const struct iface_io iketcp_iface_io = {
 	.protocol = &ip_protocol_tcp,
 	.read_packet = iketcp_read_packet,
 	.write_packet = iketcp_write_packet,
 	.cleanup = iketcp_cleanup,
+	.listen = iketcp_listen,
 };
 
 static void iketcp_handle_packet_cb(evutil_socket_t unused_fd UNUSED,

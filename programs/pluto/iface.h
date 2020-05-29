@@ -52,6 +52,7 @@ struct iface_io {
 				const void *ptr, size_t len,
 				const ip_endpoint *remote_endpoint);
 	void (*cleanup)(struct iface_port *ifp);
+	void (*listen)(struct iface_port *fip, struct logger *logger);
 };
 
 /* interface: a terminal point for IKE traffic, IPsec transport mode
@@ -107,5 +108,6 @@ extern bool use_interface(const char *rifn);
 extern void find_ifaces(bool rm_dead, struct fd *whackfd);
 extern void show_ifaces_status(struct show *s);
 extern void free_ifaces(void);
+void listen_on_iface_port(struct iface_port *ifp, struct logger *logger);
 
 #endif

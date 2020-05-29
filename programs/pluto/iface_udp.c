@@ -381,10 +381,28 @@ static ssize_t udp_write_packet(const struct iface_port *ifp,
 	return sendto(ifp->fd, ptr, len, 0, &remote_sa.sa, remote_sa_size);
 };
 
+static void handle_udp_packet_cb(evutil_socket_t unused_fd UNUSED,
+				 const short unused_event UNUSED,
+				 void *arg)
+{
+	const struct iface_port *ifp = arg;
+	handle_packet_cb(ifp);
+}
+
+static void udp_listen(struct iface_port *ifp,
+		       struct logger *unused_logger UNUSED)
+{
+	delete_pluto_event(&ifp->pev);
+	ifp->pev = add_fd_read_event_handler(ifp->fd,
+					     handle_udp_packet_cb,
+					     ifp, "ethX");
+}
+
 static const struct iface_io udp_iface_io = {
 	.protocol = &ip_protocol_udp,
 	.read_packet = udp_read_packet,
 	.write_packet = udp_write_packet,
+	.listen = udp_listen,
 };
 
 struct iface_port *bind_udp_iface_port(struct iface_dev *ifd, int port,
