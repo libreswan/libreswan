@@ -79,7 +79,6 @@
 #include "connections.h"
 #include "kernel.h"
 #include "server.h"
-#include "iface_udp.h"
 #include "nat_traversal.h"
 #include "state.h"
 #include "kernel_xfrm.h"

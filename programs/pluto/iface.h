@@ -30,6 +30,7 @@ struct fd;
 struct raw_iface;
 struct iface_port;
 struct show;
+struct iface_dev;
 
 struct iface_packet {
 	ssize_t len;
@@ -53,7 +54,12 @@ struct iface_io {
 				const ip_endpoint *remote_endpoint);
 	void (*cleanup)(struct iface_port *ifp);
 	void (*listen)(struct iface_port *fip, struct logger *logger);
+	int (*bind_iface_port)(struct iface_dev *ifd,
+			       int port, bool ike_float);
 };
+
+extern const struct iface_io udp_iface_io;
+extern const struct iface_io iketcp_iface_io; /*IKETCP specific*/
 
 /* interface: a terminal point for IKE traffic, IPsec transport mode
  * and IPsec tunnels.
@@ -109,5 +115,7 @@ extern void find_ifaces(bool rm_dead, struct fd *whackfd);
 extern void show_ifaces_status(struct show *s);
 extern void free_ifaces(void);
 void listen_on_iface_port(struct iface_port *ifp, struct logger *logger);
+struct iface_port *bind_iface_port(struct iface_dev *ifd, const struct iface_io *io,
+				   int port, bool ike_float);
 
 #endif

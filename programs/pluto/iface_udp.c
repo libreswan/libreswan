@@ -41,7 +41,6 @@
 
 #include "defs.h"
 #include "kernel.h"
-#include "iface_udp.h"
 #include "server.h"		/* for pluto_sock_bufsize */
 #include "iface.h"
 #include "demux.h"
@@ -398,43 +397,25 @@ static void udp_listen(struct iface_port *ifp,
 					     ifp, "ethX");
 }
 
-static const struct iface_io udp_iface_io = {
+static int udp_bind_iface_port(struct iface_dev *ifd, int port, bool ike_float)
+{
+	int fd = bind_udp_socket(ifd, port);
+	if (fd < 0) {
+		return -1;
+	}
+	if (ike_float && !nat_traversal_espinudp(fd, ifd)) {
+		dbg("nat-traversal failed");
+	}
+	return fd;
+}
+
+const struct iface_io udp_iface_io = {
 	.protocol = &ip_protocol_udp,
 	.read_packet = udp_read_packet,
 	.write_packet = udp_write_packet,
 	.listen = udp_listen,
+	.bind_iface_port = udp_bind_iface_port,
 };
-
-struct iface_port *bind_udp_iface_port(struct iface_dev *ifd, int port,
-				       bool ike_float)
-{
-	int fd = bind_udp_socket(ifd, port);
-	if (fd < 0)
-		return NULL;
-	if (ike_float && !nat_traversal_espinudp(fd, ifd)) {
-		dbg("nat-traversal failed");
-	}
-
-	struct iface_port *q = alloc_thing(struct iface_port,
-					   "struct iface_port");
-
-	q->ip_dev = add_ref(ifd);
-	q->fd = fd;
-	q->local_endpoint = endpoint3(&ip_protocol_udp,
-				      &ifd->id_address, port);
-	q->ike_float = ike_float;
-	q->io = &udp_iface_io;
-	q->protocol = &ip_protocol_udp;
-
-	q->next = interfaces;
-	interfaces = q;
-
-	endpoint_buf b;
-	dbg("adding interface %s %s",
-	    q->ip_dev->id_rname,
-	    str_endpoint(&q->local_endpoint, &b));
-	return q;
-}
 
 #ifdef MSG_ERRQUEUE
 

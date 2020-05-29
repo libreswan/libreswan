@@ -40,7 +40,6 @@
 
 #include "defs.h"
 #include "kernel.h"
-#include "iface_tcp.h"
 #include "server.h"		/* for pluto_sock_bufsize */
 #include "iface.h"
 #include "demux.h"
@@ -187,12 +186,161 @@ static void iketcp_listen(struct iface_port *ifp,
 	}
 }
 
-static const struct iface_io iketcp_iface_io = {
+static int bind_tcp_socket(const struct iface_dev *ifd, int port)
+{
+	const struct ip_info *type = address_type(&ifd->id_address);
+	int fd = socket(type->af, SOCK_STREAM, IPPROTO_TCP);
+	if (fd < 0) {
+		LOG_ERRNO(errno, "socket() in %s()", __func__);
+		return -1;
+	}
+
+	int fcntl_flags;
+	static const int on = TRUE;     /* by-reference parameter; constant, we hope */
+
+	/* Set socket Nonblocking */
+	if ((fcntl_flags = fcntl(fd, F_GETFL)) >= 0) {
+		if (!(fcntl_flags & O_NONBLOCK)) {
+			fcntl_flags |= O_NONBLOCK;
+			if (fcntl(fd, F_SETFL, fcntl_flags) == -1) {
+				LOG_ERRNO(errno, "fcntl(,, O_NONBLOCK) in create_socket()");
+			}
+		}
+	}
+
+	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
+		LOG_ERRNO(errno, "fcntl(,, FD_CLOEXEC) in create_socket()");
+		close(fd);
+		return -1;
+	}
+
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
+		       (const void *)&on, sizeof(on)) < 0) {
+		LOG_ERRNO(errno, "setsockopt SO_REUSEADDR in create_socket()");
+		close(fd);
+		return -1;
+	}
+
+#ifdef SO_PRIORITY
+	static const int so_prio = 6; /* rumored maximum priority, might be 7 on linux? */
+	if (setsockopt(fd, SOL_SOCKET, SO_PRIORITY,
+			(const void *)&so_prio, sizeof(so_prio)) < 0) {
+		LOG_ERRNO(errno, "setsockopt(SO_PRIORITY) in find_raw_ifaces4()");
+		/* non-fatal */
+	}
+#endif
+
+	if (pluto_sock_bufsize != IKE_BUF_AUTO) {
+#if defined(linux)
+		/*
+		 * Override system maximum
+		 * Requires CAP_NET_ADMIN
+		 */
+		int so_rcv = SO_RCVBUFFORCE;
+		int so_snd = SO_SNDBUFFORCE;
+#else
+		int so_rcv = SO_RCVBUF;
+		int so_snd = SO_SNDBUF;
+#endif
+		if (setsockopt(fd, SOL_SOCKET, so_rcv,
+			(const void *)&pluto_sock_bufsize, sizeof(pluto_sock_bufsize)) < 0) {
+				LOG_ERRNO(errno, "setsockopt(SO_RCVBUFFORCE) in find_raw_ifaces4()");
+		}
+		if (setsockopt(fd, SOL_SOCKET, so_snd,
+			(const void *)&pluto_sock_bufsize, sizeof(pluto_sock_bufsize)) < 0) {
+				LOG_ERRNO(errno, "setsockopt(SO_SNDBUFFORCE) in find_raw_ifaces4()");
+		}
+	}
+
+	/* To improve error reporting.  See ip(7). */
+#if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
+	if (pluto_sock_errqueue) {
+		if (setsockopt(fd, SOL_IP, IP_RECVERR, (const void *)&on, sizeof(on)) < 0) {
+			LOG_ERRNO(errno, "setsockopt IP_RECVERR in create_socket()");
+			close(fd);
+			return -1;
+		}
+	}
+#endif
+
+	/* With IPv6, there is no fragmentation after
+	 * it leaves our interface.  PMTU discovery
+	 * is mandatory but doesn't work well with IKE (why?).
+	 * So we must set the IPV6_USE_MIN_MTU option.
+	 * See draft-ietf-ipngwg-rfc2292bis-01.txt 11.1
+	 */
+#ifdef IPV6_USE_MIN_MTU /* YUCK: not always defined */
+	if (addrtypeof(&ifd->id_address) == AF_INET6 &&
+	    setsockopt(fd, SOL_SOCKET, IPV6_USE_MIN_MTU,
+		       (const void *)&on, sizeof(on)) < 0) {
+		LOG_ERRNO(errno, "setsockopt IPV6_USE_MIN_MTU in process_raw_ifaces()");
+		close(fd);
+		return -1;
+	}
+#endif
+
+	/*
+	 * NETKEY requires us to poke an IPsec policy hole that allows
+	 * IKE packets, unlike KLIPS which implicitly always allows
+	 * plaintext IKE.  This installs one IPsec policy per socket
+	 * but this function is called for each: IPv4 port 500 and
+	 * 4500 IPv6 port 500
+	 */
+	if (kernel_ops->poke_ipsec_policy_hole != NULL &&
+	    !kernel_ops->poke_ipsec_policy_hole(ifd, fd)) {
+		close(fd);
+		return -1;
+	}
+
+	/*
+	 * ??? does anyone care about the value of port of ifp->addr?
+	 * Old code seemed to assume that it should be reset to pluto_port.
+	 * But only on successful bind.  Seems wrong or unnecessary.
+	 */
+	ip_endpoint if_endpoint = endpoint3(&ip_protocol_tcp,
+					    &ifd->id_address, port);
+	ip_sockaddr if_sa;
+	size_t if_sa_size = endpoint_to_sockaddr(&if_endpoint, &if_sa);
+	if (bind(fd, &if_sa.sa, if_sa_size) < 0) {
+		endpoint_buf b;
+		LOG_ERRNO(errno, "bind() for %s %s in process_raw_ifaces()",
+			  ifd->id_rname,
+			  str_endpoint(&if_endpoint, &b));
+		close(fd);
+		return -1;
+	}
+
+#if defined(HAVE_UDPFROMTO)
+	/* we are going to use udpfromto.c, so initialize it */
+	if (udpfromto_init(fd) == -1) {
+		LOG_ERRNO(errno, "udpfromto_init() returned an error - ignored");
+	}
+#endif
+
+	/* poke a hole for IKE messages in the IPsec layer */
+	if (kernel_ops->exceptsocket != NULL) {
+		if (!kernel_ops->exceptsocket(fd, AF_INET)) {
+			close(fd);
+			return -1;
+		}
+	}
+
+	return fd;
+}
+
+static int iketcp_bind_iface_port(struct iface_dev *ifd, int port,
+						 bool unused_ike_float UNUSED)
+{
+	return bind_tcp_socket(ifd, port);
+}
+
+const struct iface_io iketcp_iface_io = {
 	.protocol = &ip_protocol_tcp,
 	.read_packet = iketcp_read_packet,
 	.write_packet = iketcp_write_packet,
 	.cleanup = iketcp_cleanup,
 	.listen = iketcp_listen,
+	.bind_iface_port = iketcp_bind_iface_port,
 };
 
 static void iketcp_handle_packet_cb(evutil_socket_t unused_fd UNUSED,
@@ -450,167 +598,4 @@ void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 					     iketcp_handle_packet_cb,
 					     ifp, "iketcpX");
 	pstats_iketcp_started[ifp->iketcp_server]++;
-}
-
-static int bind_tcp_socket(const struct iface_dev *ifd, int port)
-{
-	const struct ip_info *type = address_type(&ifd->id_address);
-	int fd = socket(type->af, SOCK_STREAM, IPPROTO_TCP);
-	if (fd < 0) {
-		LOG_ERRNO(errno, "socket() in %s()", __func__);
-		return -1;
-	}
-
-	int fcntl_flags;
-	static const int on = TRUE;     /* by-reference parameter; constant, we hope */
-
-	/* Set socket Nonblocking */
-	if ((fcntl_flags = fcntl(fd, F_GETFL)) >= 0) {
-		if (!(fcntl_flags & O_NONBLOCK)) {
-			fcntl_flags |= O_NONBLOCK;
-			if (fcntl(fd, F_SETFL, fcntl_flags) == -1) {
-				LOG_ERRNO(errno, "fcntl(,, O_NONBLOCK) in create_socket()");
-			}
-		}
-	}
-
-	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
-		LOG_ERRNO(errno, "fcntl(,, FD_CLOEXEC) in create_socket()");
-		close(fd);
-		return -1;
-	}
-
-	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
-		       (const void *)&on, sizeof(on)) < 0) {
-		LOG_ERRNO(errno, "setsockopt SO_REUSEADDR in create_socket()");
-		close(fd);
-		return -1;
-	}
-
-#ifdef SO_PRIORITY
-	static const int so_prio = 6; /* rumored maximum priority, might be 7 on linux? */
-	if (setsockopt(fd, SOL_SOCKET, SO_PRIORITY,
-			(const void *)&so_prio, sizeof(so_prio)) < 0) {
-		LOG_ERRNO(errno, "setsockopt(SO_PRIORITY) in find_raw_ifaces4()");
-		/* non-fatal */
-	}
-#endif
-
-	if (pluto_sock_bufsize != IKE_BUF_AUTO) {
-#if defined(linux)
-		/*
-		 * Override system maximum
-		 * Requires CAP_NET_ADMIN
-		 */
-		int so_rcv = SO_RCVBUFFORCE;
-		int so_snd = SO_SNDBUFFORCE;
-#else
-		int so_rcv = SO_RCVBUF;
-		int so_snd = SO_SNDBUF;
-#endif
-		if (setsockopt(fd, SOL_SOCKET, so_rcv,
-			(const void *)&pluto_sock_bufsize, sizeof(pluto_sock_bufsize)) < 0) {
-				LOG_ERRNO(errno, "setsockopt(SO_RCVBUFFORCE) in find_raw_ifaces4()");
-		}
-		if (setsockopt(fd, SOL_SOCKET, so_snd,
-			(const void *)&pluto_sock_bufsize, sizeof(pluto_sock_bufsize)) < 0) {
-				LOG_ERRNO(errno, "setsockopt(SO_SNDBUFFORCE) in find_raw_ifaces4()");
-		}
-	}
-
-	/* To improve error reporting.  See ip(7). */
-#if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
-	if (pluto_sock_errqueue) {
-		if (setsockopt(fd, SOL_IP, IP_RECVERR, (const void *)&on, sizeof(on)) < 0) {
-			LOG_ERRNO(errno, "setsockopt IP_RECVERR in create_socket()");
-			close(fd);
-			return -1;
-		}
-	}
-#endif
-
-	/* With IPv6, there is no fragmentation after
-	 * it leaves our interface.  PMTU discovery
-	 * is mandatory but doesn't work well with IKE (why?).
-	 * So we must set the IPV6_USE_MIN_MTU option.
-	 * See draft-ietf-ipngwg-rfc2292bis-01.txt 11.1
-	 */
-#ifdef IPV6_USE_MIN_MTU /* YUCK: not always defined */
-	if (addrtypeof(&ifd->id_address) == AF_INET6 &&
-	    setsockopt(fd, SOL_SOCKET, IPV6_USE_MIN_MTU,
-		       (const void *)&on, sizeof(on)) < 0) {
-		LOG_ERRNO(errno, "setsockopt IPV6_USE_MIN_MTU in process_raw_ifaces()");
-		close(fd);
-		return -1;
-	}
-#endif
-
-	/*
-	 * NETKEY requires us to poke an IPsec policy hole that allows
-	 * IKE packets, unlike KLIPS which implicitly always allows
-	 * plaintext IKE.  This installs one IPsec policy per socket
-	 * but this function is called for each: IPv4 port 500 and
-	 * 4500 IPv6 port 500
-	 */
-	if (kernel_ops->poke_ipsec_policy_hole != NULL &&
-	    !kernel_ops->poke_ipsec_policy_hole(ifd, fd)) {
-		close(fd);
-		return -1;
-	}
-
-	/*
-	 * ??? does anyone care about the value of port of ifp->addr?
-	 * Old code seemed to assume that it should be reset to pluto_port.
-	 * But only on successful bind.  Seems wrong or unnecessary.
-	 */
-	ip_endpoint if_endpoint = endpoint3(&ip_protocol_tcp,
-					    &ifd->id_address, port);
-	ip_sockaddr if_sa;
-	size_t if_sa_size = endpoint_to_sockaddr(&if_endpoint, &if_sa);
-	if (bind(fd, &if_sa.sa, if_sa_size) < 0) {
-		endpoint_buf b;
-		LOG_ERRNO(errno, "bind() for %s %s in process_raw_ifaces()",
-			  ifd->id_rname,
-			  str_endpoint(&if_endpoint, &b));
-		close(fd);
-		return -1;
-	}
-
-#if defined(HAVE_UDPFROMTO)
-	/* we are going to use udpfromto.c, so initialize it */
-	if (udpfromto_init(fd) == -1) {
-		LOG_ERRNO(errno, "udpfromto_init() returned an error - ignored");
-	}
-#endif
-
-	/* poke a hole for IKE messages in the IPsec layer */
-	if (kernel_ops->exceptsocket != NULL) {
-		if (!kernel_ops->exceptsocket(fd, AF_INET)) {
-			close(fd);
-			return -1;
-		}
-	}
-
-	return fd;
-}
-
-struct iface_port *bind_tcp_iface_port(struct iface_dev *ifd, int port)
-{
-	int fd = bind_tcp_socket(ifd, port);
-	if (fd < 0) {
-		return NULL;
-	}
-
-	struct iface_port *q = alloc_thing(struct iface_port,
-					   "struct iface_port");
-	q->ip_dev = add_ref(ifd);
-
-	q->local_endpoint = endpoint3(&ip_protocol_tcp,
-				      &ifd->id_address, port);
-	q->fd = fd;
-	q->protocol = &ip_protocol_tcp;
-	q->next = interfaces;
-	q->ike_float = TRUE;
-	interfaces = q;
-	return q;
 }

@@ -36,9 +36,7 @@
 #include "server.h"			/* for *_pluto_event() */
 #include "kernel.h"
 #include "demux.h"
-#include "iface_udp.h"
 #include "ip_info.h"
-#include "iface_tcp.h"
 
 struct iface_port  *interfaces = NULL;  /* public interfaces */
 
@@ -196,6 +194,36 @@ void free_any_iface_port(struct iface_port **ifp)
 	*ifp = NULL;
 }
 
+struct iface_port *bind_iface_port(struct iface_dev *ifd, const struct iface_io *io,
+				   int port, bool ike_float)
+{
+	int fd = io->bind_iface_port(ifd, port, ike_float);
+	if (fd < 0) {
+		/* already logged? */
+		return NULL;
+	}
+
+	struct iface_port *ifp = alloc_thing(struct iface_port,
+					     "struct iface_port");
+	ifp->fd = fd;
+	ifp->ip_dev = add_ref(ifd);
+	ifp->io = io;
+	ifp->ike_float = ike_float;
+	ifp->protocol = io->protocol;
+	ifp->local_endpoint = endpoint3(io->protocol,
+					&ifd->id_address, port);
+
+	/* insert */
+	ifp->next = interfaces;
+	interfaces = ifp;
+
+	endpoint_buf b;
+	libreswan_log("adding %s interface %s %s",
+		      io->protocol->name, ifp->ip_dev->id_rname,
+		      str_endpoint(&ifp->local_endpoint, &b));
+	return ifp;
+}
+
 /*
  * Open new interfaces.
  */
@@ -207,17 +235,11 @@ static void add_new_ifaces(void)
 			continue;
 
 		{
-			struct iface_port *q = bind_udp_iface_port(ifd, pluto_port,
-								   false/*ike_float*/);
-			if (q == NULL) {
+			if (bind_iface_port(ifd, &udp_iface_io, pluto_port,
+					    false/*ike_float*/)  == NULL) {
 				ifd->ifd_change = IFD_DELETE;
 				continue;
 			}
-
-			endpoint_buf b;
-			libreswan_log("adding interface %s %s",
-				      q->ip_dev->id_rname,
-				      str_endpoint(&q->local_endpoint, &b));
 		}
 
 		/*
@@ -232,24 +254,13 @@ static void add_new_ifaces(void)
 		 * Who should we believe?
 		 */
 		if (address_type(&ifd->id_address) == &ipv4_info) {
-			struct iface_port *q = bind_udp_iface_port(ifd, pluto_nat_port,
-							      true/*ike_float*/);
-			if (q != NULL) {
-				endpoint_buf b;
-				libreswan_log("adding interface %s %s",
-					      q->ip_dev->id_rname,
-					      str_endpoint(&q->local_endpoint, &b));
-			}
+			bind_iface_port(ifd, &udp_iface_io, pluto_nat_port,
+					true/*ike_float*/);
 		}
 
 		if (pluto_tcpport != 0) {
-			struct iface_port *q = bind_tcp_iface_port(ifd, pluto_tcpport);
-			if (q != NULL) {
-				endpoint_buf b;
-				libreswan_log("adding TCP interface %s %s",
-					      q->ip_dev->id_rname,
-					      str_endpoint(&q->local_endpoint, &b));
-			}
+			bind_iface_port(ifd, &iketcp_iface_io, pluto_tcpport,
+					true/*ike_float; why?*/);
 		}
 	}
 }
