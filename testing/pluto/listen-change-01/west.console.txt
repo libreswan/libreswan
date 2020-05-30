@@ -40,8 +40,8 @@ west #
 west #
  ipsec auto --ready
 002 listening for IKE messages
-002 adding UDP interfaceeth1 192.1.2.23:500
-002 adding UDP interfaceeth1 192.1.2.23:4500
+002 adding UDP interface eth1 192.1.2.23:500
+002 adding UDP interface eth1 192.1.2.23:4500
 003 two interfaces match "west-east" (eth1, eth1)
 002 "west-east": terminating SAs using this connection
 002 "west-east" #2: deleting state (STATE_QUICK_I2) and sending notification
