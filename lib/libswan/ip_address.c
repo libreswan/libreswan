@@ -23,6 +23,20 @@
 
 const ip_address unset_address; /* all zeros */
 
+ip_address strip_endpoint(const ip_address *in, where_t where)
+{
+	ip_address out = *in;
+	if (in->hport != 0 || in->ipproto != 0) {
+		address_buf b;
+		dbg("stripping address %s of hport=%u ipproto=%u "PRI_WHERE,
+		    str_address(in, &b),
+		    in->hport, in->ipproto, pri_where(where));
+		out.hport = 0;
+		out.ipproto = 0;
+	}
+	return out;
+}
+
 ip_address address_from_shunk(const struct ip_info *afi, const shunk_t bytes)
 {
 	passert(afi != NULL);

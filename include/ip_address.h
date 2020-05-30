@@ -23,6 +23,7 @@
 #include "shunk.h"
 #include "chunk.h"
 #include "err.h"
+#include "where.h"
 
 struct lswlog;
 struct ip_info;
@@ -72,6 +73,8 @@ typedef struct {
 	unsigned ipproto;
 #endif
 } ip_address;
+
+ip_address strip_endpoint(const ip_address *address, where_t where);
 
 /*
  * Constructors.
