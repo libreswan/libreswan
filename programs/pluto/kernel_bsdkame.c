@@ -52,7 +52,6 @@
 #include "kernel_alg.h"
 #include "kernel_sadb.h"
 #include "iface.h"
-#include "iface_udp.h"
 
 int pfkeyfd = NULL_FD;
 unsigned int pfkey_seq = 1;
