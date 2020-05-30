@@ -136,8 +136,8 @@ done
 west #
  # Confirm expired IPsec SA will not trigger a liveness probe
 west #
- grep "liveness: no need to send"  /tmp/pluto.log
-| liveness: no need to send or schedule DPD for replaced IPsec SA
+ grep "liveness: .* was replaced by "  /tmp/pluto.log
+| liveness: #2 was replaced by #3 so not needed
 west #
  ../bin/check-for-core.sh
 west #
