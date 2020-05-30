@@ -71,7 +71,7 @@ include ${LIBRESWANSRCDIR}/mk/defaults/${BUILDENV}.mk
 # IPSEC_ prefixed variables are to be used in source code
 
 # -D... goes in here
-USERLAND_CFLAGS ?= -pthread
+USERLAND_CFLAGS += -pthread
 
 # should this go in CFLAGS?
 USERLAND_CFLAGS += -std=gnu99
@@ -111,7 +111,7 @@ USERLAND_LDFLAGS += $(USERLINK) $(ASAN)
 
 # Accumulate values in these fields.
 # is -pthread CFLAG or LDFLAG
-USERLAND_INCLUDES ?= -I$(srcdir) -I$(builddir) -I$(top_srcdir)/include
+USERLAND_INCLUDES += -I$(srcdir) -I$(builddir) -I$(top_srcdir)/include
 
 
 ### install pathnames
