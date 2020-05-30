@@ -199,21 +199,12 @@ ifeq ($(USE_NSS_AVA_COPY),true)
 OBJS += nss_copies.o
 endif
 
-ifeq ($(USE_UNBOUND_EVENT_H_COPY),true)
-CFLAGS+=-I${LIBRESWANSRCDIR}/include/unbound
-endif
-
 ifeq ($(USE_DNSSEC),true)
 OBJS += unbound.o
 endif
-
-# Original flags; this is a mess.
-CFLAGS+= -I.
-CFLAGS+=-I${LIBRESWANSRCDIR}
-# XXX: hack until everything uses a consistent .c.o rule
-CFLAGS+=$(USERLAND_CFLAGS)
-CFLAGS+=-I${LIBRESWANSRCDIR}/include
-CFLAGS+=$(NSS_CFLAGS)
+ifeq ($(USE_UNBOUND_EVENT_H_COPY),true)
+USERLAND_INCLUDES += -I$(top_srcdir)/include/unbound
+endif
 
 OBJS += $(abs_builddir)/version.o
 
