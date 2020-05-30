@@ -205,6 +205,7 @@ local-install:
 		echo -e "**********************************************************************\n" ; \
 	fi \
 	fi
+ifeq ($(USE_XAUTHPAM),true)
 	@if test ! -f $(DESTDIR)/etc/pam.d/pluto ; then \
 		mkdir -p $(DESTDIR)/etc/pam.d/ ; \
 		$(INSTALL) $(INSTCONFFLAGS) pam.d/pluto $(DESTDIR)/etc/pam.d/pluto ; \
@@ -214,6 +215,7 @@ local-install:
 		echo "was already present.  You may wish to update it yourself if desired." ; \
 		echo -e "**********************************************************************\n" ; \
 	fi
+endif
 
 # Test only target (run by swan-install) that generates FIPS .*.hmac
 # file for pluto that will be verified by fipscheck.
