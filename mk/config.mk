@@ -271,12 +271,11 @@ MODPROBEARGS ?= --quiet --use-blacklist
 INSTALL ?= install
 
 # flags to the install program, for programs, manpages, and config
-# files -b has install make backups (n.b., unlinks original), --suffix
-# controls how backup names are composed.  Since install procedures
-# will never overwrite an existing config file they omit -b.
+# files -b has install make backups (n.b., unlinks original) (let
+# install choose the suffix).  Since install procedures will never
+# overwrite an existing config file they omit -b.
 
-# While --suffix is linux centric, there isn't a portable alternative.
-INSTBINFLAGS ?= -b --suffix=.old
+INSTBINFLAGS ?= -b
 
 # The -m flag is more portable than --mode=.
 INSTMANFLAGS ?= -m 0644
