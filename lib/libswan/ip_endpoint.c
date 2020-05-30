@@ -289,12 +289,17 @@ const char *str_sensitive_endpoint(const ip_endpoint *endpoint, endpoint_buf *ds
 
 bool endpoint_eq(const ip_endpoint l, ip_endpoint r)
 {
-	if (l.version == r.version && l.hport == r.hport &&
+	if (l.version == r.version &&
+	    l.hport == r.hport &&
 	    memeq(&l.bytes, &r.bytes, sizeof(l.bytes))) {
-		if (l.ipproto != r.ipproto) {
-			dbg("ipproto mismatch");
+		if (l.ipproto == r.ipproto) {
+			/* both 0; or both valid */
+			return true;
 		}
-		return true;
+		if (l.ipproto == 0 || r.ipproto == 0) {
+			dbg("endpoint fuzzy ipproto match");
+			return true;
+		}
 	}
 	return false;
 }
