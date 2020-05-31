@@ -600,8 +600,8 @@ bool fmt_common_shell_out(char *buf, size_t blen, const struct connection *c,
 	 * true==inbound: inbound updates OUR_BYTES; !inbound updates
 	 * PEER_BYTES.
 	 */
-	bool outbytes = st != NULL && IS_IKE_SA(st) && get_sa_info(st, false, NULL);
-	bool inbytes = st != NULL && IS_IKE_SA(st) && get_sa_info(st, true, NULL);
+	bool outbytes = st != NULL && get_sa_info(st, false, NULL);
+	bool inbytes = st != NULL && get_sa_info(st, true, NULL);
 	jambuf_t jambuf = array_as_jambuf(buf, blen);
 	jam_common_shell_out(&jambuf, c, sr, st, inbytes, outbytes);
 	return jambuf_ok(&jambuf);
