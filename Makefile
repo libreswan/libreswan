@@ -34,7 +34,9 @@ MAIN_RPM_SPECFILE = $(shell if [ -f /etc/fedora-release ]; then echo packaging/f
 SRCDIR?=$(shell pwd)/
 
 # dummy default rule
-def help:
+def: all
+
+help:
 	@echo
 	@echo "To build and install on a recent Linux kernel:"
 	@echo
