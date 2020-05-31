@@ -31,7 +31,8 @@ struct from_test {
 	struct selector from;
 	const char *range;
 	unsigned ipproto;
-	unsigned hport;
+	uint16_t hport;
+	uint8_t nport[2];
 };
 
 static void check_selector_from(const struct from_test *tests, unsigned nr_tests,
@@ -69,10 +70,18 @@ static void check_selector_from(const struct from_test *tests, unsigned nr_tests
 			FAIL(OUT, "ipproto was %u, expected %u", ipproto, t->ipproto);
 		}
 
-		unsigned hport = selector_hport(&selector);
-		if (hport != t->hport) {
-			FAIL(OUT, "hport was %u, expected %u", hport, t->hport);
+		uint16_t hport = selector_hport(&selector);
+		if (!memeq(&hport, &t->hport, sizeof(hport))) {
+			FAIL(OUT, "selector_hport() returned '%d', expected '%d'",
+			     hport, t->hport);
 		}
+
+		uint16_t nport = selector_nport(&selector);
+		if (!memeq(&nport, &t->nport, sizeof(nport))) {
+			FAIL(OUT, "selector_nport() returned '%04x', expected '%02x%02x'",
+			     nport, t->nport[0], t->nport[1]);
+		}
+
 	}
 #undef OUT
 }
@@ -101,8 +110,8 @@ static err_t to_selector_address(const struct selector *s,
 static void check_selector_from_address(void)
 {
 	static const struct from_test tests[] = {
-		{ { 4, "128.0.0.0", "0/0", }, "128.0.0.0-128.0.0.0", 0,0, },
-		{ { 6, "8000::", "16/10", }, "8000::-8000::", 16, 10, },
+		{ { 4, "128.0.0.0", "0/0", }, "128.0.0.0-128.0.0.0", 0, 0, { 0, 0, }, },
+		{ { 6, "8000::", "16/10", }, "8000::-8000::", 16, 10, { 0, 10, }, },
 	};
 	check_selector_from(tests, elemsof(tests), "address",
 			    to_selector_address);
@@ -132,11 +141,14 @@ static err_t to_selector_subnet(const struct selector *s,
 static void check_selector_from_subnet(void)
 {
 	static const struct from_test tests[] = {
-		{ { 4, "128.0.0.0/32", "0/0", }, "128.0.0.0-128.0.0.0", 0,0, },
-		{ { 6, "8000::/128", "16/10", }, "8000::-8000::", 16, 10, },
+		{ { 4, "128.0.0.0/32", "0/0", }, "128.0.0.0-128.0.0.0", 0, 0, { 0, 0, }, },
+		{ { 6, "8000::/128", "16/10", }, "8000::-8000::", 16, 10, { 0, 10, } },
 
-		{ { 4, "128.0.0.0/31", "0/0", }, "128.0.0.0-128.0.0.1", 0,0, },
-		{ { 6, "8000::0/127", "16/10", }, "8000::-8000::1", 16, 10, },
+		{ { 4, "128.0.0.0/31", "0/0", }, "128.0.0.0-128.0.0.1", 0, 0, { 0, 0, }, },
+		{ { 6, "8000::0/127", "16/10", }, "8000::-8000::1", 16, 10, { 0, 10, }, },
+
+		{ { 4, "128.0.0.0/32", "16/65534", }, "128.0.0.0-128.0.0.0", 16, 65534, { 255, 254, }, },
+		{ { 6, "8000::0/127", "16/65534", }, "8000::-8000::1", 16, 65534, { 255, 254, }, },
 	};
 	check_selector_from(tests, elemsof(tests), "subnet",
 			    to_selector_subnet);
@@ -166,9 +178,9 @@ static err_t to_selector_range(const struct selector *s,
 static void check_selector_from_range(void)
 {
 	static const struct from_test tests[] = {
-		{ { 4, "128.0.0.0-128.0.0.0", "0/0", }, "128.0.0.0-128.0.0.0", 0,0, },
-		{ { 4, "128.0.0.0-128.0.0.1", "0/0", }, "128.0.0.0-128.0.0.1", 0,0, },
-		{ { 6, "8000::-8000::1", "16/10", }, "8000::-8000::1", 16, 10, },
+		{ { 4, "128.0.0.0-128.0.0.0", "0/0", }, "128.0.0.0-128.0.0.0", 0, 0, { 0, 0, }, },
+		{ { 4, "128.0.0.0-128.0.0.1", "0/0", }, "128.0.0.0-128.0.0.1", 0,0, { 0, 0, }, },
+		{ { 6, "8000::-8000::1", "16/10", }, "8000::-8000::1", 16, 10, { 0, 10, }, },
 	};
 	check_selector_from(tests, elemsof(tests), "range",
 			    to_selector_range);

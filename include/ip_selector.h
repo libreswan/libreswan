@@ -86,6 +86,11 @@ const struct ip_info *selector_type(const ip_selector *selector);
 unsigned selector_ipproto(const ip_selector *selector);
 ip_range selector_range(const ip_selector *selector);
 unsigned selector_hport(const ip_selector *selector);
+unsigned selector_nport(const ip_selector *selector);
+
+/* assuming a subnet like XFRM does */
+ip_address selector_prefix(const ip_selector *selector);
+unsigned selector_maskbits(const ip_selector *selector);
 
 bool selector_has_all_addresses(const ip_selector *selector);
 bool selector_has_one_address(const ip_selector *selector);

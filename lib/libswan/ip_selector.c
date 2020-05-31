@@ -95,6 +95,11 @@ unsigned selector_hport(const ip_selector *selector)
 	return selector->addr.hport;
 }
 
+unsigned selector_nport(const ip_selector *selector)
+{
+	return htons(selector->addr.hport);
+}
+
 void update_selector_hport(ip_selector *selector, unsigned hport)
 {
 	selector->addr.hport = hport;
@@ -108,6 +113,16 @@ unsigned selector_ipproto(const ip_selector *selector)
 ip_range selector_range(const ip_selector *selector)
 {
 	return range_from_subnet(selector);
+}
+
+ip_address selector_prefix(const ip_selector *selector)
+{
+	return strip_endpoint(&selector->addr, HERE);
+}
+
+unsigned selector_maskbits(const ip_selector *selector)
+{
+	return selector->maskbits;
 }
 
 bool selector_has_all_addresses(const ip_selector *selector)
