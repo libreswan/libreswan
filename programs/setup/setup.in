@@ -79,7 +79,7 @@ case "$1" in
 		# if namespace testing, start pluto directly
 		if echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1 ; then
 		    echo "Redirecting to: namespaces direct start via ipsec pluto"
-		    exec ipsec pluto --config /etc/ipsec.conf --leak-detective
+		    exec ipsec pluto --config @FINALSYSCONFDIR@/ipsec.conf --leak-detective
 		else
 		    echo "Redirecting to: /etc/init.d/ipsec start"
 		    exec /etc/init.d/ipsec start
@@ -87,7 +87,7 @@ case "$1" in
 		;;
 	    "" )
 		echo "Redirecting to: ipsec pluto"
-		exec ipsec pluto --config /etc/ipsec.conf --leak-detective
+		exec ipsec pluto --logfile @FINALLOGDIR@/pluto.log --config @FINALSYSCONFDIR@/ipsec.conf --leak-detective
 		;;
 	    * )
 		echo "Unknown init system in use - aborted"
