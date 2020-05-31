@@ -28,111 +28,119 @@ cd /
 LIBRESWAN_RESOLV_CONF=${rundir}/libreswan-resolv-conf-backup
 ORIG_RESOLV_CONF=@FINALSYSCONFDIR@/resolv.conf
 
+initsystem="@INITSYSTEM@"
 
-if [ $(ip addr list|grep -c cipsec) -ne 0 ]; then
-    echo "Cisco IPsec client is already loaded, aborting! (cipsec# device found)"
-    exit 1
-fi
-
-initsystem=@INITSYSTEM@
-
-# this magic should go. build already decided initsystem.
-# it breaks inside a namespace take what was decided at build
-
-if [ "${initsystem}" = "docker" ]; then
-    initsystem="docker"
-elif [ -d /run/systemd/system ]; then
-    initsystem=systemd
-elif [ -f /sbin/start ]; then
-    if [ -r /etc/redhat-release ]; then
-	initsystem=rhsysv
-    else
-	initsystem=upstart
-    fi
-elif [ -f /sbin/rc-service ]; then
-    initsystem=openrc
-elif [ -x /etc/init.d/ipsec ]; then
-    initsystem=sysv
-fi
+case "${initsystem}" in
+    systemd | rhsysv )
+	if [ $(ip addr list|grep -c cipsec) -ne 0 ]; then
+	    echo "Cisco IPsec client is already loaded, aborting! (cipsec# device found)"
+	    exit 1
+	fi
+	;;
+esac
 
 case "$1" in
+
     start|--start|_autostart)
 	# preliminaries
 	mkdir -p ${rundir}
 	chmod 700 ${rundir} > /dev/null 2>/dev/null
 
-	# if namespace testing, start pluto directly
-	echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1
-	RETVAL=$?
-	if [ $RETVAL -eq 0 ]; then
-	    echo "Redirecting to: namespaces direct start via ipsec pluto"
-	    exec ipsec pluto --config /etc/ipsec.conf --leak-detective
-	fi
-
 	# start regular pluto daemon in a restart loop
-	if [ ${initsystem} = systemd ]; then
-	    systemctl status ipsec.service > /dev/null
-	    RETVAL=$?
-	    if [ $RETVAL -eq 0 ]; then
-		echo "systemd: ipsec service is already running"
-		exit 1
-	    else
-		echo "Redirecting to: systemctl start ipsec.service"
-		exec systemctl start ipsec.service
-	    fi
-	elif [ ${initsystem} = rhsysv ]; then
-	    echo "Redirecting to: service ipsec start"
-	    exec service ipsec start
-	elif [ ${initsystem} = upstart ]; then
-	    echo "Redirecting to: start ipsec"
-	    exec start ipsec
-	elif [ ${initsystem} = openrc ]; then
-	    echo "Redirecting to: rc-service ipsec start"
-	    exec rc-service ipsec start
-	elif [ ${initsystem} = sysv ]; then
-	    echo "Redirecting to: /etc/init.d/ipsec start"
-	    exec /etc/init.d/ipsec start
-	elif [ ${initsystem} = docker ]; then
-	    echo "Redirecting to: /etc/init.d/ipsec start"
-	    exec /etc/init.d/ipsec start
-	else
-	    echo "Unknown init system in use - aborted"
-	    exit 3
-	fi
-	exit 0
+	case "${initsystem}" in
+	    systemd )
+		systemctl status ipsec.service > /dev/null
+		RETVAL=$?
+		if [ $RETVAL -eq 0 ]; then
+		    echo "systemd: ipsec service is already running"
+		    exit 1
+		else
+		    echo "Redirecting to: systemctl start ipsec.service"
+		    exec systemctl start ipsec.service
+		fi
+		;;
+	    rhsysv )
+		echo "Redirecting to: service ipsec start"
+		exec service ipsec start
+		;;
+	    upstart )
+		echo "Redirecting to: start ipsec"
+		exec start ipsec
+		;;
+	    openrc )
+		echo "Redirecting to: rc-service ipsec start"
+		exec rc-service ipsec start
+		;;
+	    sysv )
+		echo "Redirecting to: /etc/init.d/ipsec start"
+		exec /etc/init.d/ipsec start
+		;;
+	    docker )
+		# if namespace testing, start pluto directly
+		if echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1 ; then
+		    echo "Redirecting to: namespaces direct start via ipsec pluto"
+		    exec ipsec pluto --config /etc/ipsec.conf --leak-detective
+		else
+		    echo "Redirecting to: /etc/init.d/ipsec start"
+		    exec /etc/init.d/ipsec start
+		fi
+		;;
+	    "" )
+		echo "Redirecting to: ipsec pluto"
+		exec ipsec pluto --config /etc/ipsec.conf --leak-detective
+		;;
+	    * )
+		echo "Unknown init system in use - aborted"
+		exit 3
+		;;
+	esac
+	exit 0 # never happens?
 	;;
+
   stop|--stop|_autostop)	# _autostop is same as stop
 	# Shut things down.
 
-	# if namespace testing, stop pluto directly
-	echo $SUDO_COMMAND | grep "/bin/nsenter " && echo "Redirecting to: [stop manually]"
-	echo $SUDO_COMMAND | grep "/bin/nsenter " && ipsec whack --shutdown
-	echo $SUDO_COMMAND | grep "/bin/nsenter " && exec ip xfrm state flush
-
-
-	if [ ${initsystem} = systemd ]; then
-	    echo "Redirecting to: systemctl stop ipsec.service"
-	    # don't exec, we need to cleanup the IPsec stack afterwards
-	    systemctl stop ipsec.service
-	elif [ ${initsystem} = rhsysv ]; then
-	    echo "Redirecting to: service ipsec stop"
-	    exec service ipsec stop
-	elif [ ${initsystem} = upstart ]; then
-	    echo "Redirecting to: stop ipsec"
-	    stop ipsec
-	elif [ ${initsystem} = openrc ]; then
-	    echo "Redirecting to: rc-service ipsec stop"
-	    exec rc-service ipsec stop
-	elif [ ${initsystem} = sysv ]; then
-	    echo "Redirecting to: /etc/init.d/ipsec stop"
-	    exec /etc/init.d/ipsec stop
-	elif [ ${initsystem} = docker ]; then
-	    echo "Redirecting to: /etc/init.d/ipsec stop"
-	    exec /etc/init.d/ipsec stop
-	else
-	    echo "Unknown init system in use - aborted"
-	    exit 3
-	fi
+	case "${initsystem}" in
+	    systemd )
+		echo "Redirecting to: systemctl stop ipsec.service"
+		# don't exec, we need to cleanup the IPsec stack afterwards
+		systemctl stop ipsec.service
+		;;
+	    rhsysv )
+		echo "Redirecting to: service ipsec stop"
+		exec service ipsec stop
+		;;
+	    upstart )
+		echo "Redirecting to: stop ipsec"
+		stop ipsec
+		;;
+	    openrc )
+		echo "Redirecting to: rc-service ipsec stop"
+		exec rc-service ipsec stop
+		;;
+	    sysv )
+		echo "Redirecting to: /etc/init.d/ipsec stop"
+		exec /etc/init.d/ipsec stop
+		;;
+	    docker )
+		if echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1 ; then
+		    # if namespace testing, stop pluto directly
+		    echo "Redirecting to: [stop manually]"
+		    ipsec whack --shutdown
+		    ip xfrm state flush
+		else
+		    echo "Redirecting to: /etc/init.d/ipsec stop"
+		    exec /etc/init.d/ipsec stop
+		fi
+		;;
+	    "" )
+		ipsec whack --shutdown
+		;;
+	    * )
+		echo "Unknown init system in use - aborted"
+		exit 3
+		;;
+	esac
        	# Remove any loaded IPsec stack
 	[ -f /proc/modules ] && ipsec _stackmanager stop
 
@@ -149,55 +157,73 @@ case "$1" in
 	fi
 	exit 0
 	;;
+
     status|--status)
-	if [ ${initsystem} = systemd ]; then
-	    echo "Redirecting to: systemctl status ipsec.service"
-	    exec systemctl status ipsec.service
-	elif [ ${initsystem} = rhsysv ]; then
-	    echo "Redirecting to: service ipsec status"
-	    exec service ipsec status
-	elif [ ${initsystem} = upstart ]; then
-	    echo "Redirecting to: status ipsec"
-	    exec status ipsec
-	elif [ ${initsystem} = openrc ]; then
-	    echo "Redirecting to: rc-service ipsec status"
-	    exec rc-service ipsec status
-	elif [ ${initsystem} = sysv ]; then
-	    echo "Redirecting to: /etc/init.d/ipsec status"
-	    exec /etc/init.d/ipsec status
-	else
-	    echo "Unknown init system in use - aborted"
-	    exit 3
-	fi
+	case "${initsystem}" in
+	    systemd )
+		echo "Redirecting to: systemctl status ipsec.service"
+		exec systemctl status ipsec.service
+		;;
+	    rhsysv )
+		echo "Redirecting to: service ipsec status"
+		exec service ipsec status
+		;;
+	    upstart )
+		echo "Redirecting to: status ipsec"
+		exec status ipsec
+		;;
+	    openrc )
+		echo "Redirecting to: rc-service ipsec status"
+		exec rc-service ipsec status
+		;;
+	    sysv )
+		echo "Redirecting to: /etc/init.d/ipsec status"
+		exec /etc/init.d/ipsec status
+		;;
+	    * )
+		echo "Unknown init system in use - aborted"
+		exit 3
+		;;
+	esac
 	exit 0
 	;;
+
     restart|--restart)
 	# assumes preparations for running have already been done,
 	# as service should be running now
-	if [ ${initsystem} = systemd ]; then
-	    echo "Redirecting to: systemctl restart ipsec.service"
-	    exec systemctl restart ipsec.service
-	elif [ ${initsystem} = rhsysv ]; then
-	    echo "Redirecting to: service ipsec restart"
-	    exec service ipsec restart
-	elif [ ${initsystem} = upstart ]; then
-	    echo "Redirecting to: restart ipsec"
-	    exec restart ipsec
-	elif [ ${initsystem} = openrc ]; then
-	    echo "Redirecting to: rc-service ipsec restart"
-	    exec rc-service ipsec restart
-	elif [ ${initsystem} = sysv ]; then
-	    echo "Redirecting to: /etc/init.d/ipsec restart"
-	    exec /etc/init.d/ipsec restart
-	elif [ ${initsystem} = docker ]; then
-	    echo "Redirecting to: /etc/init.d/ipsec restart"
-	    exec /etc/init.d/ipsec restart
-	else
-	    echo "Unknown init system in use - aborted"
-	    exit 3
-	fi
+	case "${initsystem}" in
+	    systemd )
+		echo "Redirecting to: systemctl restart ipsec.service"
+		exec systemctl restart ipsec.service
+		;;
+	    rhsysv )
+		echo "Redirecting to: service ipsec restart"
+		exec service ipsec restart
+		;;
+	    upstart )
+		echo "Redirecting to: restart ipsec"
+		exec restart ipsec
+		;;
+	    openrc )
+		echo "Redirecting to: rc-service ipsec restart"
+		exec rc-service ipsec restart
+		;;
+	    sysv )
+		echo "Redirecting to: /etc/init.d/ipsec restart"
+		exec /etc/init.d/ipsec restart
+		;;
+	    docker )
+		echo "Redirecting to: /etc/init.d/ipsec restart"
+		exec /etc/init.d/ipsec restart
+		;;
+	    * )
+		echo "Unknown init system in use - aborted"
+		exit 3
+		;;
+	esac
 	exit 0
 	;;
+
     *)
 	echo "Usage: {--start|--stop|--restart|--status}" >&2
 	exit 2
