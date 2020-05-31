@@ -101,8 +101,7 @@ road #
 road #
  grep "initiate on demand" /tmp/pluto.log
 initiate on demand from 192.1.3.209:8 to 192.1.2.23:0 proto=1 because: acquire
-| initiate on demand from 192.1.3.209:0 to 192.1.2.23:0 proto=1 because: acquire
-| initiate on demand using AUTH_NULL from 192.1.3.209 to 192.1.2.23
+| initiate on demand from 192.1.3.209:0 to 192.1.2.23:0 using AUTH_NULL proto=1 because: acquire
 road #
  echo done
 done
