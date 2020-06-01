@@ -129,6 +129,9 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 #ifdef SADB_X_EALG_AES_GCM8
 	.encrypt_sadb_ealg_id = SADB_X_EALG_AES_GCM8,
 #endif
+#ifdef SADB_X_EALG_AESGCM8
+	.encrypt_sadb_ealg_id = SADB_X_EALG_AESGCM8, /* NetBSD */
+#endif
 	.encrypt_netlink_xfrm_name = "rfc4106(gcm(aes))",
 	.encrypt_tcpdump_name = "aes_gcm",
 	.encrypt_ike_audit_name = "aes_gcm",
@@ -164,6 +167,9 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 #endif
 #ifdef SADB_X_EALG_AES_GCM12
 	.encrypt_sadb_ealg_id = SADB_X_EALG_AES_GCM12,
+#endif
+#ifdef SADB_X_EALG_AESGCM12
+	.encrypt_sadb_ealg_id = SADB_X_EALG_AESGCM12, /* NetBSD */
 #endif
 	.encrypt_netlink_xfrm_name = "rfc4106(gcm(aes))",
 	.encrypt_tcpdump_name = "aes_gcm_12",
@@ -201,6 +207,9 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 #endif
 #ifdef SADB_X_EALG_AES_GCM16
 	.encrypt_sadb_ealg_id = SADB_X_EALG_AES_GCM16,
+#endif
+#ifdef SADB_X_EALG_AESGCM16
+	.encrypt_sadb_ealg_id = SADB_X_EALG_AESGCM16, /* NetBSD */
 #endif
 	.encrypt_netlink_xfrm_name = "rfc4106(gcm(aes))",
 	.encrypt_tcpdump_name = "aes_gcm_16",
