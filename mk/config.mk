@@ -471,6 +471,7 @@ IPSEC_SECRETS_FILE ?= $(FINALCONFDIR)/ipsec.secrets
 # how to do variable substitution in sed-transformed files
 TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "/@${OSDEP}_START@/,/@${OSDEP}_END@/d" \
+			-e "s:@OSDEP@:${OSDEP}:g" \
 			-e "s:@EXAMPLECONFDIR@:$(EXAMPLECONFDIR):g" \
 			-e "s:@FINALCONFDDIR@:$(FINALCONFDDIR):g" \
 			-e "s:@FINALCONFDIR@:$(FINALCONFDIR):g" \
