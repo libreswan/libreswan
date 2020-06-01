@@ -632,7 +632,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 #endif
 	}
 
-	if (c->kind != CK_TEMPLATE) {
+	if (c->kind != CK_TEMPLATE && c->newest_isakmp_sa == SOS_NOBODY) {
 		/*
 		 * We've found a connection that can serve.  Do we
 		 * have to initiate it?  Not if there is currently an
@@ -687,10 +687,17 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		return;
 	}
 
+	/* match is HEAD SA just initiate the sub SA for cpu */
+	if (c->sa_clones > 0 && c->desired_state == STARTUP_ONDEMAND) {
+		ipsecdoi_clone_initiate(b->whackfd, b->clone_cpu_id, c, &inception,
+				uctx);
+		return;
+
+	}
+
 	/*
 	 * We are handling an opportunistic situation.  This involves
 	 * several DNS lookup steps that require suspension.
-	 *
 	 * NOTE: will be re-implemented
 	 *
 	 * old comment:
