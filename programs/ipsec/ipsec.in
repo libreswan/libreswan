@@ -36,7 +36,7 @@ CTLSOCKET="${IPSEC_RUNDIR}/pluto.ctl"
 export IPSEC_EXECDIR IPSEC_CONF IPSEC_RUNDIR CTLSOCKET
 
 # standardize PATH, and export it for everything else's benefit
-PATH="${IPSEC_SBINDIR}":/sbin:/usr/sbin:/usr/local/bin:/bin:/usr/bin
+PATH="${IPSEC_SBINDIR}:${PATH#${IPSEC_SBINDIR}:}"
 export PATH
 
 # suppress ElectricFence banner changing our reference testing output
