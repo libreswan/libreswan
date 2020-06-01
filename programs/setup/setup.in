@@ -49,15 +49,8 @@ case "$1" in
 	# start regular pluto daemon in a restart loop
 	case "${initsystem}" in
 	    systemd )
-		systemctl status ipsec.service > /dev/null
-		RETVAL=$?
-		if [ $RETVAL -eq 0 ]; then
-		    echo "systemd: ipsec service is already running"
-		    exit 1
-		else
-		    echo "Redirecting to: systemctl start ipsec.service"
-		    exec systemctl start ipsec.service
-		fi
+		echo "Redirecting to: systemctl start ipsec.service"
+		exec systemctl start ipsec.service
 		;;
 	    rhsysv )
 		echo "Redirecting to: service ipsec start"
