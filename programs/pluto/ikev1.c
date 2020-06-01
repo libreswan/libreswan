@@ -1121,8 +1121,9 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				 * presumably the port wasn't
 				 * updated(?).
 				 */
-				tmp_c->host_pair->remote = endpoint(&new_peer,
-								    endpoint_hport(&tmp_c->host_pair->remote));
+				tmp_c->host_pair->remote = endpoint3(&ip_protocol_udp,
+								     &new_peer,
+								     endpoint_hport(&tmp_c->host_pair->remote));
 
 				/* Initiating connection to the redirected peer */
 				initiate_connections_by_name(tmp_name, NULL,

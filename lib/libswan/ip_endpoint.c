@@ -46,10 +46,8 @@ static ip_endpoint raw_endpoint(const struct ip_protocol *protocol,
 ip_endpoint endpoint3(const struct ip_protocol *protocol,
 		      const ip_address *address, int hport)
 {
-#if defined(ENDPOINT_TYPE)
-#else
-	pexpect(address->hport == 0);
-	pexpect(address->ipproto == 0);
+#if 0
+	padddress(address);
 #endif
 	return raw_endpoint(protocol, address, hport);
 }

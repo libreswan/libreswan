@@ -2820,7 +2820,9 @@ void set_state_ike_endpoints(struct state *st,
 	passert(st->st_interface != NULL);
 	pexpect_st_local_endpoint(st);
 
-	st->st_remote_endpoint = endpoint(&c->spd.that.host_addr, c->spd.that.host_port);
+	st->st_remote_endpoint = endpoint3(c->interface->protocol,
+					   &c->spd.that.host_addr,
+					   c->spd.that.host_port);
 }
 
 /* seems to be a good spot for now */

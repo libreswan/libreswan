@@ -5911,7 +5911,7 @@ void ikev2_record_deladdr(struct state *st, void *arg_ip)
 
 #ifdef NETKEY_SUPPORT
 static void initiate_mobike_probe(struct state *st, struct starter_end *this,
-		const struct iface_port *iface)
+				  const struct iface_port *iface)
 {
 	struct ike_sa *ike = ike_sa(st, HERE);
 	/*
@@ -5932,8 +5932,9 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 	 * The interface changed (new address in .address) but
 	 * continue to use the existing port.
 	 */
-	st->st_mobike_local_endpoint =
-		endpoint(&this->addr, endpoint_hport(&st->st_interface->local_endpoint));
+	unsigned hport = endpoint_hport(&st->st_interface->local_endpoint);
+	st->st_mobike_local_endpoint = endpoint3(st->st_interface->protocol,
+						 &this->addr, hport);
 	st->st_mobike_host_nexthop = this->nexthop; /* for updown, after xfrm migration */
 	const struct iface_port *o_iface = st->st_interface;
 	/* notice how it gets set back below */
@@ -5965,7 +5966,9 @@ static const struct iface_port *ikev2_src_iface(struct state *st,
 	struct fd *whackfd = whack_log_fd; /* placeholder */
 	/* success found a new source address */
 	pexpect_st_local_endpoint(st);
-	ip_endpoint local_endpoint = endpoint(&this->addr, endpoint_hport(&st->st_interface->local_endpoint));
+	int hport = endpoint_hport(&st->st_interface->local_endpoint);
+	ip_endpoint local_endpoint = endpoint3(st->st_interface->protocol,
+					       &this->addr, hport);
 	const struct iface_port *iface = find_iface_port_by_local_endpoint(&local_endpoint);
 	if (iface == NULL) {
 		endpoint_buf b;
