@@ -182,19 +182,8 @@ void free_logger(struct logger **logp);
  * and it is just easier.
  */
 
-#define log_md(RC_FLAGS, MD, FORMAT, ...)				\
-	{								\
-		if (pexpect((MD) != NULL) &&				\
-		    pexpect(in_main_thread())) {			\
-			struct logger logger_ = MESSAGE_LOGGER(MD);	\
-			log_message(RC_FLAGS, &logger_,			\
-				    FORMAT, ##__VA_ARGS__);		\
-		} else {						\
-			/* still get the message out */			\
-			log_global(RC_FLAGS, null_fd,			\
-				   FORMAT, ##__VA_ARGS__);		\
-		}							\
-	}
+void log_md(lset_t rc_flags, const struct msg_digest *md,
+	    const char *msg, ...) PRINTF_LIKE(3);
 
 #define dbg_md(MD, MESSAGE, ...)					\
 	{								\
@@ -215,19 +204,8 @@ void free_logger(struct logger **logp);
  * a state or pending struct.
  */
 
-#define log_connection(RC_FLAGS, WHACKFD, C, FORMAT, ...)		\
-	{								\
-		if (pexpect((C) != NULL) &&				\
-		    pexpect(in_main_thread())) {			\
-			struct logger logger_ = CONNECTION_LOGGER(C, WHACKFD); \
-			log_message(RC_FLAGS, &logger_,			\
-				    FORMAT, ##__VA_ARGS__);		\
-		} else {						\
-			/* still get the message out */			\
-			log_global(RC_FLAGS, null_fd,			\
-				   FORMAT, ##__VA_ARGS__);		\
-		}							\
-	}
+void log_connection(lset_t rc_flags, struct fd *whackfd, const struct connection *c,
+		    const char *msg, ...) PRINTF_LIKE(4);
 
 #if 0
 #define dbg_connection(C, FORMAT, ...)					\
@@ -239,19 +217,8 @@ void free_logger(struct logger **logp);
 	}
 #endif
 
-#define log_pending(RC_FLAGS, PENDING, FORMAT, ...)			\
-	{								\
-		if (pexpect((PENDING) != NULL) &&			\
-		    pexpect(in_main_thread())) {			\
-			struct logger logger_ = PENDING_LOGGER(PENDING); \
-			log_message(RC_FLAGS, &logger_,			\
-				    FORMAT, ##__VA_ARGS__);		\
-		} else {						\
-			/* still get the message out */			\
-			log_global(RC_FLAGS, null_fd,			\
-				   FORMAT, ##__VA_ARGS__);		\
-		}							\
-	}
+void log_pending(lset_t rc_flags, const struct pending *p,
+		 const char *msg, ...) PRINTF_LIKE(3);
 
 #if 0
 #define dbg_pending(PENDING, FORMAT, ...)				\
@@ -268,23 +235,8 @@ void free_logger(struct logger **logp);
  * whackfd.
  */
 
-#define log_state(RC_FLAGS, ST, FORMAT, ...)				\
-	{								\
-		if (pexpect((ST) != NULL) &&				\
-		    pexpect(in_main_thread())) {			\
-			struct logger logger_ = *((ST)->st_logger);	\
-			/* hack */					\
-			if (whack_log_fd != NULL) {			\
-				logger_.global_whackfd = whack_log_fd;	\
-			}						\
-			log_message(RC_FLAGS, &logger_,			\
-				    FORMAT, ##__VA_ARGS__);		\
-		} else {						\
-			/* still get the message out */			\
-			log_global(RC_FLAGS, null_fd,			\
-				   FORMAT, ##__VA_ARGS__);		\
-		}							\
-	}
+void log_state(lset_t rc_flags, const struct state *st,
+	       const char *msg, ...) PRINTF_LIKE(3);
 
 #if 0
 #define dbg_state(ST, FORMAT, ...)					\

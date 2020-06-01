@@ -229,6 +229,9 @@ void log_message(lset_t rc_flags,
 		 const struct logger *log,
 		 const char *format, ...) PRINTF_LIKE(3);
 
+void log_va_list(lset_t rc_flags, const struct logger *logger,
+		 const char *message, va_list ap);
+
 void jambuf_to_logger(jambuf_t *buf, const struct logger *logger, lset_t rc_flags);
 
 #define LOG_MESSAGE(RC_FLAGS, LOGGER, BUF)				\

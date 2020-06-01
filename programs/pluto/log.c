@@ -1004,3 +1004,71 @@ struct logger cur_logger(void)
 
 	return GLOBAL_LOGGER(whack_log_fd);
 };
+
+/*
+ * XXX: these were macros only older GCC's, seeing for some code
+ * paths, OBJECT was always non-NULL and pexpect(OBJECT!=NULL) was
+ * constant, would generate a -Werror=address:
+ *
+ * error: the comparison will always evaluate as 'true' for the
+ * address of 'stack_md' will never be NULL [-Werror=address]
+ */
+
+void log_md(lset_t rc_flags, const struct msg_digest *md, const char *msg, ...)
+{
+	va_list ap;
+	va_start(ap, msg);
+	struct logger logger = (pexpect(md != NULL) && pexpect(in_main_thread()))
+		? MESSAGE_LOGGER(md)
+		: GLOBAL_LOGGER(null_fd);
+	log_va_list(rc_flags, &logger, msg, ap);
+	va_end(ap);
+}
+
+void log_connection(lset_t rc_flags, struct fd *whackfd,
+		    const struct connection *c, const char *msg, ...)
+{
+	va_list ap;
+	va_start(ap, msg);
+	struct logger logger = (pexpect(c != NULL) && pexpect(in_main_thread()))
+		? CONNECTION_LOGGER(c, whackfd)
+		: GLOBAL_LOGGER(null_fd);
+	log_va_list(rc_flags, &logger, msg, ap);
+	va_end(ap);
+}
+
+void log_pending(lset_t rc_flags, const struct pending *p, const char *msg, ...)
+{
+	va_list ap;
+	va_start(ap, msg);
+	struct logger logger = (pexpect(p != NULL) && pexpect(in_main_thread()))
+		? PENDING_LOGGER(p)
+		: GLOBAL_LOGGER(null_fd);
+	log_va_list(rc_flags, &logger, msg, ap);
+	va_end(ap);
+}
+
+void log_state(lset_t rc_flags, const struct state *st,
+	       const char *msg, ...)
+{
+	va_list ap;
+	va_start(ap, msg);
+	if (pexpect((st) != NULL) &&
+	    pexpect(in_main_thread())) {
+		struct logger logger = *(st->st_logger);
+		/*
+		 * XXX: the state logger still needs to pick up the
+		 * global whack FD :-(
+		 */
+		if (whack_log_fd != NULL) {
+			logger.global_whackfd = whack_log_fd;
+		}
+		log_va_list(rc_flags, &logger, msg, ap);
+	} else {
+		/* still get the message out */
+		struct logger logger = GLOBAL_LOGGER(null_fd);
+		log_va_list(rc_flags, &logger, msg, ap);
+
+	}
+	va_end(ap);
+}
