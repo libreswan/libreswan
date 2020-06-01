@@ -75,6 +75,14 @@ static void resolve_defaultroute(struct starter_conn *conn UNUSED)
 	if (resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0) == 1)
 		resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0);
 #else /* !defined(NETKEY_SUPPORT) */
+	/* What kind of result are we seeking? */
+	bool seeking_src = (conn->left.addrtype == KH_DEFAULTROUTE ||
+			    conn->right.addrtype == KH_DEFAULTROUTE);
+	bool seeking_gateway = (conn->left.nexttype == KH_DEFAULTROUTE ||
+				conn->right.nexttype == KH_DEFAULTROUTE);
+	if (!seeking_src && !seeking_gateway)
+		return;	/* this end already figured out */
+
 	fprintf(stderr, "addcon: without XFRM/NETKEY, cannot resolve_defaultroute()\n");
 	exit(7);	/* random code */
 #endif
