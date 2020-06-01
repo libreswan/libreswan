@@ -30,15 +30,6 @@ ORIG_RESOLV_CONF=@FINALSYSCONFDIR@/resolv.conf
 
 initsystem="@INITSYSTEM@"
 
-case "${initsystem}" in
-    systemd | rhsysv )
-	if [ $(ip addr list|grep -c cipsec) -ne 0 ]; then
-	    echo "Cisco IPsec client is already loaded, aborting! (cipsec# device found)"
-	    exit 1
-	fi
-	;;
-esac
-
 case "$1" in
 
     start|--start|_autostart)
