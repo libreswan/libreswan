@@ -37,6 +37,12 @@ case "$1" in
 	mkdir -p ${rundir}
 	chmod 700 ${rundir} > /dev/null 2>/dev/null
 
+	# if namespace testing, start pluto directly
+	if echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1 ; then
+	    echo "Redirecting to: namespaces direct start via ipsec pluto"
+	    exec ipsec pluto --config @FINALSYSCONFDIR@/ipsec.conf --leak-detective
+	fi
+
 	# start regular pluto daemon in a restart loop
 	case "${initsystem}" in
 	    systemd )
@@ -67,14 +73,8 @@ case "$1" in
 		exec /etc/init.d/ipsec start
 		;;
 	    docker )
-		# if namespace testing, start pluto directly
-		if echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1 ; then
-		    echo "Redirecting to: namespaces direct start via ipsec pluto"
-		    exec ipsec pluto --config @FINALSYSCONFDIR@/ipsec.conf --leak-detective
-		else
 		    echo "Redirecting to: /etc/init.d/ipsec start"
 		    exec /etc/init.d/ipsec start
-		fi
 		;;
 	    rc.d )
 		echo "Redirecting to: /etc/rc.d/pluto onestart"
@@ -95,6 +95,13 @@ case "$1" in
 
   stop|--stop|_autostop)	# _autostop is same as stop
 	# Shut things down.
+
+	if echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1 ; then
+	    # if namespace testing, stop pluto directly
+	    echo "Redirecting to: [stop manually]"
+	    ipsec whack --shutdown
+	    ip xfrm state flush
+	fi
 
 	case "${initsystem}" in
 	    systemd )
@@ -119,15 +126,8 @@ case "$1" in
 		exec /etc/init.d/ipsec stop
 		;;
 	    docker )
-		if echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1 ; then
-		    # if namespace testing, stop pluto directly
-		    echo "Redirecting to: [stop manually]"
-		    ipsec whack --shutdown
-		    ip xfrm state flush
-		else
-		    echo "Redirecting to: /etc/init.d/ipsec stop"
-		    exec /etc/init.d/ipsec stop
-		fi
+		echo "Redirecting to: /etc/init.d/ipsec stop"
+		exec /etc/init.d/ipsec stop
 		;;
 	    rc.d )
 		echo "Redirecting to: /etc/rc.d/pluto onestop"
