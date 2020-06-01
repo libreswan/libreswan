@@ -374,7 +374,7 @@ static void check_hunk_char_is(void)
 		bool odigit;
 		bool xdigit;
 	} tests[] = {
-		{ "\037", },
+		{ "\037", .print = false, },
 		{ " ", .print = true, },
 		{ "/", .print = true, },
 		{ "0", .print = true, .xdigit = true, .digit = true, .odigit = true, .bdigit = true, },
@@ -402,8 +402,8 @@ static void check_hunk_char_is(void)
 		{ "E", .print = true, .xdigit = true, },
 		{ "F", .print = true, .xdigit = true, },
 		{ "G", .print = true, },
-		{ "\177", },
-		{ "", },
+		{ "\177", .print = false, },
+		{ "", .print = false, },
 	};
 
 	/* this string matches above */

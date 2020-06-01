@@ -74,8 +74,8 @@ static void check_sockaddr_as_endpoint(void)
 		const char *err;
 		const char *out;
 	} tests[] = {
-		{ 4, "1.2.3.4:65535", { 1, 2, 3, 4, }, 65535, sizeof(struct sockaddr_in), },
-		{ 6, "[1::1]:65535", { [1] = 1, [15] = 1, }, 65535, sizeof(struct sockaddr_in6), },
+		{ 4, "1.2.3.4:65535", { 1, 2, 3, 4, }, 65535, sizeof(struct sockaddr_in), NULL, NULL, },
+		{ 6, "[1::1]:65535", { [1] = 1, [15] = 1, }, 65535, sizeof(struct sockaddr_in6), NULL, NULL, },
 		/* far too small */
 		{ 4, "1.2.3.4:65535", { 1, 2, 3, 4, }, 65535, 0, "truncated", "<unspecified:>", },
 		{ 6, "[1::1]:65535", { [1] = 1, [15] = 1, }, 65535, 0, "truncated", "<unspecified:>", },

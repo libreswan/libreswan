@@ -51,6 +51,7 @@ static void dn_check(void)
 			  ASN1_OID, 3, /*OID*/85, 4, 3,
 			  ASN1_PRINTABLESTRING, 6,
 			  '0',  '1',  '2',  '3',  '4',  '5', },
+			NULL,
 		},
 		/* escape leading '#' and ' ' and trailing ' ' */
 		{
@@ -84,6 +85,7 @@ static void dn_check(void)
 			  ASN1_OID, 3, /*OID*/85, 4, 3,
 			  ASN1_PRINTABLESTRING, 6,
 			  '.',  ' ',  ' ',  ' ',  ' ',  ' ', },
+			NULL,
 		},
 		{
 			/* don't escape trailing '#' */
@@ -107,6 +109,7 @@ static void dn_check(void)
 			  ASN1_OID, 3, /*OID*/85, 4, 3,
 			  ASN1_UTF8STRING, 6,
 			  0,  'y',  0,  0,  'z',  0, },
+			NULL,
 		},
 		{
 			/* 31->32 */
@@ -117,6 +120,7 @@ static void dn_check(void)
 			  ASN1_SEQUENCE, 13,
 			  ASN1_OID, 3, /*OID*/ 85, 4, 3,
 			  ASN1_UTF8STRING, 6, 29, 30,  31,  32,  33,  34, },
+			NULL,
 		},
 		{
 			/* 126->128 */
@@ -127,6 +131,7 @@ static void dn_check(void)
 			  ASN1_SEQUENCE, 13,
 			  ASN1_OID, 3, /*OID*/ 85, 4, 3,
 			  ASN1_UTF8STRING, 6, 124, 125,  126,  127, 128, 129, },
+			NULL,
 		},
 		{
 			"CN=\\+\\,\\;\\<\\>\\\\", 19, /* reserved */
@@ -135,6 +140,7 @@ static void dn_check(void)
 			  ASN1_SEQUENCE, 13,
 			  ASN1_OID, 3, /*OID*/85, 4, 3,
 			  ASN1_PRINTABLESTRING, 6, '+',  ',',  ';',  '<',  '>',  '\\', },
+			NULL,
 		},
 		{
 			/* not reserved */
@@ -156,6 +162,7 @@ static void dn_check(void)
 			  ASN1_SEQUENCE, 11,
 			  ASN1_OID, 1, /*OID*/ 40*2+39, /* see encoding schema */
 			  ASN1_PRINTABLESTRING, 6, '0',  '1',  '2',  '3',  '4',  '5', },
+			NULL,
 		},
 		{ /* 3-bytes */
 			"2.39.1.2=#1306303132333435",
@@ -165,6 +172,7 @@ static void dn_check(void)
 			  ASN1_SEQUENCE, 13,
 			  ASN1_OID, 3, /*OID*/ 40*2+39, 1, 2,
 			  ASN1_PRINTABLESTRING, 6, '0',  '1',  '2',  '3',  '4',  '5', },
+			NULL,
 		},
 		{ /*1+2-bytes */
 			"2.39.16383=#1306303132333435",
@@ -174,6 +182,7 @@ static void dn_check(void)
 			  ASN1_SEQUENCE, 13,
 			  ASN1_OID, 3, /*OID*/ 40*2+39, 0x80|(16383>>7), 16383&0x7f,
 			  ASN1_PRINTABLESTRING, 6, '0',  '1',  '2',  '3',  '4',  '5', },
+			NULL,
 		},
 	};
 
