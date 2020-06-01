@@ -145,7 +145,6 @@ case "$1" in
 	[ -f /proc/modules ] && ipsec _stackmanager stop
 
 	# If stack is non-modular, we want to force clean too
-	[ -f /proc/net/pf_key ] && ipsec eroute --clear
 	[ -f /proc/sys/net/core/xfrm_acq_expires ] && ip xfrm state flush && ip xfrm policy flush
 
 	# Cleaning up backup resolv.conf
