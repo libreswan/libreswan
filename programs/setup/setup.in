@@ -30,18 +30,21 @@ ORIG_RESOLV_CONF=@FINALSYSCONFDIR@/resolv.conf
 
 initsystem="@INITSYSTEM@"
 
+# linux_START
+# The stock Fedora/RHEL RPM gets tested in side namespaces where
+# things get invoked directly is needed.
+if echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1 ; then
+    # direct start
+    initsystem=namespaces
+fi
+# linux_STOP
+
 case "$1" in
 
     start|--start|_autostart)
 	# preliminaries
 	mkdir -p ${rundir}
 	chmod 700 ${rundir} > /dev/null 2>/dev/null
-
-	# if namespace testing, start pluto directly
-	if echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1 ; then
-	    echo "Redirecting to: namespaces direct start via ipsec pluto"
-	    exec ipsec pluto --config @FINALSYSCONFDIR@/ipsec.conf --leak-detective
-	fi
 
 	# start regular pluto daemon in a restart loop
 	case "${initsystem}" in
@@ -73,20 +76,24 @@ case "$1" in
 		exec /etc/init.d/ipsec start
 		;;
 	    docker )
-		    echo "Redirecting to: /etc/init.d/ipsec start"
-		    exec /etc/init.d/ipsec start
+	    	echo "Redirecting to: /etc/init.d/ipsec start"
+		exec /etc/init.d/ipsec start
 		;;
 	    rc.d )
 		echo "Redirecting to: /etc/rc.d/pluto onestart"
 		exec /etc/rc.d/pluto onestart
 		;;
+	    namespaces )
+		echo "Redirecting to: namespaces direct start via ipsec pluto"
+		exec ipsec pluto --config @FINALSYSCONFDIR@/ipsec.conf --leak-detective
+		;;
 	    "" )
 		what="ipsec pluto --logfile @FINALLOGDIR@/pluto.log --config @FINALSYSCONFDIR@/ipsec.conf --leak-detective"
-		echo "Redirecting to: ${what}"
+		echo "Redirecting to: ${what} [start manually]"
 		exec ${what}
 		;;
 	    * )
-		echo "Unknown init system in use - aborted"
+		echo "Unknown init system ${initsystem} in use - aborted"
 		exit 3
 		;;
 	esac
@@ -95,13 +102,6 @@ case "$1" in
 
   stop|--stop|_autostop)	# _autostop is same as stop
 	# Shut things down.
-
-	if echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1 ; then
-	    # if namespace testing, stop pluto directly
-	    echo "Redirecting to: [stop manually]"
-	    ipsec whack --shutdown
-	    ip xfrm state flush
-	fi
 
 	case "${initsystem}" in
 	    systemd )
@@ -133,19 +133,31 @@ case "$1" in
 		echo "Redirecting to: /etc/rc.d/pluto onestop"
 		/etc/rc.d/pluto onestop
 		;;
-	    "" )
+	    namespaces )
+		echo "Redirecting to: namespaces direct stop via ipsec whack --shutdown"
 		ipsec whack --shutdown
+		ip xfrm state flush
+		;;
+	    "" )
+		what="ipsec whack --shutdown"
+		echo "Redirecting to: ${what} [stop manually]"
+		${what}
 		;;
 	    * )
-		echo "Unknown init system in use - aborted"
+		echo "Unknown init system ${initsystem} in use - aborted"
 		exit 3
 		;;
 	esac
+
        	# Remove any loaded IPsec stack
+	# linux_START
 	[ -f /proc/modules ] && ipsec _stackmanager stop
+	# linux_STOP
 
 	# If stack is non-modular, we want to force clean too
+	# linux_START
 	[ -f /proc/sys/net/core/xfrm_acq_expires ] && ip xfrm state flush && ip xfrm policy flush
+	# linux_STOP
 
 	# Cleaning up backup resolv.conf
 	if [ -e ${LIBRESWAN_RESOLV_CONF} ]; then
@@ -184,7 +196,7 @@ case "$1" in
 		exec /etc/rc.d/pluto onestatus
 		;;
 	    * )
-		echo "Unknown init system in use - aborted"
+		echo "Unknown init system ${initsystem} in use - aborted"
 		exit 3
 		;;
 	esac
@@ -223,8 +235,14 @@ case "$1" in
 		echo "Redirecting to: /etc/rc.d/pluto onerestart"
 		exec /etc/rc.d/pluto onerestart
 		;;
+	    "" )
+		echo "Redirecting to: [stop start manually]"
+		${0} stop
+		${0} start
+		exit 0
+		;;
 	    * )
-		echo "Unknown init system in use - aborted"
+		echo "Unknown init system ${initsystem} in use - aborted"
 		exit 3
 		;;
 	esac
