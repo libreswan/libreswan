@@ -88,7 +88,7 @@ DEBUG_CFLAGS ?= -g
 USERLAND_CFLAGS += $(DEBUG_CFLAGS)
 
 # eventually: -Wshadow -pedantic?
-WERROR_CFLAGS ?= -Werror -Wno-missing-field-initializers
+WERROR_CFLAGS ?= -Werror
 USERLAND_CFLAGS += $(WERROR_CFLAGS)
 WARNING_CFLAGS ?= -Wall -Wextra -Wformat -Wformat-nonliteral -Wformat-security -Wundef -Wmissing-declarations -Wredundant-decls -Wnested-externs
 USERLAND_CFLAGS += $(WARNING_CFLAGS)
