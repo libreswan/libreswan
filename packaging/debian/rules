@@ -28,6 +28,7 @@ DISTRO_CONF += $(shell grep -qE 'jessie|stretch|xenial' /etc/os-release && echo 
 DISTRO_CONF += $(shell grep -qE 'jessie|stretch' /etc/os-release && echo USE_DH31=false)
 DISTRO_CONF += $(shell grep -qE 'cosmic|jessie|xenial' /etc/os-release && echo USE_XFRM_INTERFACE=false)
 DISTRO_CONF += $(shell grep -qE 'bionic|stretch' /etc/os-release && echo USE_XFRM_INTERFACE_IFLA_HEADER=true)
+DISTRO_CONF += $(shell grep -qE 'jessie|stretch|xenial' /etc/os-release && echo 'WERROR_CFLAGS="-Werror -Wno-error=address"')
 
 override_dh_auto_build:
 	dh_auto_build -- programs \

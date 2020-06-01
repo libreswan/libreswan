@@ -116,7 +116,7 @@ make %{?_smp_mflags} \
 %if 0%{with_efence}
     USE_EFENCE=true \
 %endif
-    WERROR_CFLAGS="-Werror -Wno-missing-field-initializers" \
+    WERROR_CFLAGS="-Werror -Wno-missing-field-initializers -Wno-error=address" \
     USERLINK="%{?__global_ldflags}" \
     %{libreswan_config} \
     programs
