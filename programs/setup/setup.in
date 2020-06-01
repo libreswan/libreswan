@@ -85,9 +85,14 @@ case "$1" in
 		    exec /etc/init.d/ipsec start
 		fi
 		;;
+	    rc.d )
+		echo "Redirecting to: /etc/rc.d/pluto onestart"
+		exec /etc/rc.d/pluto onestart
+		;;
 	    "" )
-		echo "Redirecting to: ipsec pluto"
-		exec ipsec pluto --logfile @FINALLOGDIR@/pluto.log --config @FINALSYSCONFDIR@/ipsec.conf --leak-detective
+		what="ipsec pluto --logfile @FINALLOGDIR@/pluto.log --config @FINALSYSCONFDIR@/ipsec.conf --leak-detective"
+		echo "Redirecting to: ${what}"
+		exec ${what}
 		;;
 	    * )
 		echo "Unknown init system in use - aborted"
@@ -132,6 +137,10 @@ case "$1" in
 		    echo "Redirecting to: /etc/init.d/ipsec stop"
 		    exec /etc/init.d/ipsec stop
 		fi
+		;;
+	    rc.d )
+		echo "Redirecting to: /etc/rc.d/pluto onestop"
+		/etc/rc.d/pluto onestop
 		;;
 	    "" )
 		ipsec whack --shutdown
@@ -180,6 +189,10 @@ case "$1" in
 		echo "Redirecting to: /etc/init.d/ipsec status"
 		exec /etc/init.d/ipsec status
 		;;
+	    rc.d )
+		echo "Redirecting to: /etc/rc.d/pluto onestatus"
+		exec /etc/rc.d/pluto onestatus
+		;;
 	    * )
 		echo "Unknown init system in use - aborted"
 		exit 3
@@ -215,6 +228,10 @@ case "$1" in
 	    docker )
 		echo "Redirecting to: /etc/init.d/ipsec restart"
 		exec /etc/init.d/ipsec restart
+		;;
+	    rc.d )
+		echo "Redirecting to: /etc/rc.d/pluto onerestart"
+		exec /etc/rc.d/pluto onerestart
 		;;
 	    * )
 		echo "Unknown init system in use - aborted"
