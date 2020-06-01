@@ -15,6 +15,7 @@ pidfile="@IPSEC_RUNDIR@/${name}.pid"
 command="@FINALLIBEXECDIR@/pluto"
 command_args="--logfile @FINALLOGDIR@/pluto.log --config @FINALSYSCONFDIR@/ipsec.conf --leak-detective"
 required_files="@FINALSYSCONFDIR@/ipsec.conf"
+start_precmd="@FINALSBINDIR@/ipsec checknss"
 
 load_rc_config $name
 run_rc_command "$1"
