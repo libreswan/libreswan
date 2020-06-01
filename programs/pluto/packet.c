@@ -98,10 +98,10 @@ struct_desc isakmp_hdr_desc = {
 static field_desc raw_isa_fields[] = {
 	{ ft_raw, IKE_SA_SPI_SIZE, "initiator SPI", NULL },
 	{ ft_raw, IKE_SA_SPI_SIZE, "responder SPI", NULL },
-	{ ft_nat, 8 / BITS_PER_BYTE, "next payload type", },
-	{ ft_nat, 8 / BITS_PER_BYTE, "ISAKMP version", },
-	{ ft_nat, 8 / BITS_PER_BYTE, "exchange type", },
-	{ ft_nat, 8 / BITS_PER_BYTE, "flags", },
+	{ ft_nat, 8 / BITS_PER_BYTE, "next payload type", NULL, },
+	{ ft_nat, 8 / BITS_PER_BYTE, "ISAKMP version", NULL, },
+	{ ft_nat, 8 / BITS_PER_BYTE, "exchange type", NULL, },
+	{ ft_nat, 8 / BITS_PER_BYTE, "flags", NULL, },
 	{ ft_nat, 32 / BITS_PER_BYTE, "Message ID", NULL },
 	{ ft_nat, 32 / BITS_PER_BYTE, "length", NULL },
 	{ ft_end, 0, NULL, NULL }
