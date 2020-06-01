@@ -1,5 +1,7 @@
 Basic pluto with IKEv2 using PSK on the initiator (west), and on the responder.
 
-This is a meta-test case not meant to run in KVM. It is for testing a setup using NAMESPACES
+This tests for namespace use without configuration include files, but also works when run under kvm
 
-It is using netkey because klips does not support NAMESPACES
+Test extended to also test for PLUTO_BYTES_IN and PLUTO_BYTES_OUT are passed in to updown script.
+This was a regression in libreswan 3.30 - 3.32
+

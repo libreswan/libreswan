@@ -1,4 +1,3 @@
-../../pluto/bin/ipsec-look.sh
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
