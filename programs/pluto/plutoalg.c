@@ -21,9 +21,8 @@
 
 #include <sys/types.h>
 #include <stdlib.h>
-#include <libreswan/pfkeyv2.h>
-#include "passert.h"
 
+#include "passert.h"
 #include "sysdep.h"
 #include "constants.h"
 #include "defs.h"

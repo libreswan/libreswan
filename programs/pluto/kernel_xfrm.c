@@ -56,7 +56,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-#include "kameipsec.h"
+#include "kernel_xfrm_kameipsec.h"
 #include <linux/rtnetlink.h>
 #include <linux/if_addr.h>
 #include <linux/if_link.h>

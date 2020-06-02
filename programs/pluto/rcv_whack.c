@@ -37,8 +37,6 @@
 #include <fcntl.h>
 #include <unistd.h>		/* for gethostname() */
 
-#include "libreswan/pfkeyv2.h"
-
 #include <event2/event.h>
 #include <event2/event_struct.h>
 
