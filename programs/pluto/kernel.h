@@ -203,7 +203,6 @@ struct kernel_ops {
 	void (*init)(void);
 	void (*shutdown)();
 	void (*pfkey_register)(void);
-	void (*pfkey_register_response)(const struct sadb_msg *msg);
 	void (*process_queue)(void);
 	void (*process_msg)(int);
 	void (*scan_shunts)(void);

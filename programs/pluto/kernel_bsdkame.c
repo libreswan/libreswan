@@ -930,13 +930,11 @@ static bool bsdkame_detect_offload(const struct raw_iface *ifp UNUSED)
 }
 
 const struct kernel_ops bsdkame_kernel_ops = {
-	type: USE_BSDKAME,
-	kern_name: "bsdkame",
-	async_fdp: &pfkeyfd,
-	replay_window: 64,
-
+	.type =USE_BSDKAME,
+	.kern_name = "bsdkame",
+	.async_fdp = &pfkeyfd,
+	.replay_window = 64,
 	.pfkey_register = bsdkame_pfkey_register,
-	.pfkey_register_response = bsdkame_pfkey_register_response,
 	.process_queue = bsdkame_dequeue,
 	.process_msg = bsdkame_process_msg,
 	.raw_eroute = bsdkame_raw_eroute,
