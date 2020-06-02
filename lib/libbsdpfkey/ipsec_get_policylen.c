@@ -1,3 +1,5 @@
+/*	$NetBSD: ipsec_get_policylen.c,v 1.8 2018/05/28 19:22:40 maxv Exp $	*/
+
 /*	$KAME: ipsec_get_policylen.c,v 1.5 2000/05/07 05:25:03 itojun Exp $	*/
 
 /*
@@ -29,20 +31,23 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD$");
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/socket.h>
 
-#include <netinet6/ipsec.h>
+#include PATH_IPSEC_H
 
 #include <net/pfkeyv2.h>
 
+#include "libpfkey.h"
 #include "ipsec_strerror.h"
 
-int ipsec_get_policylen(policy)
-caddr_t policy;
+int
+ipsec_get_policylen(ipsec_policy_t policy)
 {
 	return policy ? PFKEY_EXTLEN(policy) : -1;
 }
