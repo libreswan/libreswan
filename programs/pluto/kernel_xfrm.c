@@ -2646,7 +2646,7 @@ static bool netlink_v6holes(void)
 {
 	/* this could be per interface specific too */
 	char proc_f[] = "/proc/sys/net/ipv6/conf/all/disable_ipv6";
-	int disable_ipv6 = 0;
+	int disable_ipv6 = -1;
 	bool ret = FALSE;
 	struct stat sts;
 
@@ -2662,13 +2662,18 @@ static bool netlink_v6holes(void)
 			LOG_ERRNO(errno, "\"%s\"", proc_f);
 		}
 	} else {
-		LOG_ERRNO(errno, "could not stat \"%s\"", proc_f);
+		DBG(DBG_KERNEL, DBG_log("starting without ipv6 support! could not stat \"%s\"" PRI_ERRNO, proc_f, pri_errno(errno)));
+		/*
+		 * pretend success, do not exit pluto,
+		 * likely IPv6 is disabled in kernel at compile time. e.g. OpenWRT.
+		 */
+		ret = TRUE;
 	}
 
 	if (disable_ipv6 == 1) {
 		DBG(DBG_KERNEL, DBG_log("net.ipv6.conf.all.disable_ipv6=1 ignore ipv6 holes"));
 		ret = TRUE; /* pretend success, do not exit pluto */
-	} else {
+	} else if (disable_ipv6 == 0) {
 		ret = netlink_bypass_policy(AF_INET6, IPPROTO_ICMPV6,
 						ICMP_NEIGHBOR_DISCOVERY);
 		ret &= netlink_bypass_policy(AF_INET6, IPPROTO_ICMPV6,
