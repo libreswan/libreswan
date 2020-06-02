@@ -43,7 +43,6 @@
 #include "connections.h"
 #include "state.h"
 #include "kernel.h"
-#include "kernel_pfkey.h"
 #include "timer.h"
 #include "log.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
