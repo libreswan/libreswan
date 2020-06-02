@@ -26,3 +26,4 @@ s/^Protocol mismatch\.$/Invalid SSH identification string./g
 /^.*for ASN.1 blob for method.*$/d
 # nss picks up softhsm/opendnssec token?
 /^.* for token "OpenDNSSEC".*$/d
+/^Relabeled \/testing.*$/d
