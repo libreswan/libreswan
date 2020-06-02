@@ -32,7 +32,7 @@
 #include <net/pfkeyv2.h>
 #include <netinet/in.h>
 #include <netipsec/ipsec.h>
-#include "libbsdkame/libpfkey.h"         /* this is a copy of a freebsd libipsec/ file */
+#include "libbsdpfkey/libpfkey.h"
 
 #include "sysdep.h"
 #include "constants.h"
@@ -51,6 +51,7 @@
 #include "kernel_alg.h"
 #include "kernel_sadb.h"
 #include "iface.h"
+#include "ip_sockaddr.h"
 
 int pfkeyfd = NULL_FD;
 unsigned int pfkey_seq = 1;
@@ -66,27 +67,21 @@ TAILQ_HEAD(, pfkey_item) pfkey_iq;
 
 static void bsdkame_init_pfkey(void)
 {
-	int pid = getpid();
-
 	/* open PF_KEY socket */
 
 	TAILQ_INIT(&pfkey_iq);
 
-	pfkeyfd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
-
-	if (pfkeyfd == -1)
+	pfkeyfd = pfkey_open();
+	if (pfkeyfd < 0)
 		EXIT_LOG_ERRNO(errno, "socket() in init_pfkeyfd()");
 
-#ifdef NEVER    /* apparently unsupported! */
-	if (fcntl(pfkeyfd, F_SETFL, O_NONBLOCK) != 0)
-		EXIT_LOG_ERRNO(errno, "fcntl(O_NONBLOCK) in init_pfkeyfd()");
-#endif
-	if (fcntl(pfkeyfd, F_SETFD, FD_CLOEXEC) != 0)
-		EXIT_LOG_ERRNO(errno, "fcntl(FD_CLOEXEC) in init_pfkeyfd()");
+	dbg("listening for PF_KEY_V2 on file descriptor %d", pfkeyfd);
 
-	DBG(DBG_KERNEL,
-	    DBG_log("process %u listening for PF_KEY_V2 on file descriptor %d",
-		    (unsigned)pid, pfkeyfd));
+	/* probe to see if it is alive */
+	if (pfkey_send_register(pfkeyfd, SADB_SATYPE_UNSPEC) < 0 ||
+	    pfkey_recv_register(pfkeyfd) < 0) {
+		EXIT_LOG_ERRNO(errno, "pfkey probe failed");
+	}
 }
 
 static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
@@ -226,7 +221,7 @@ static void bsdkame_pfkey_register(void)
 	foreach_supported_alg(bsdkame_algregister);
 }
 
-static void bsdkame_pfkey_register_response(const struct sadb_msg *msg)
+static void bsdkame_pfkey_register_response(struct sadb_msg *msg)
 {
 	pfkey_set_supported(msg, msg->sadb_msg_len);
 }
@@ -321,10 +316,8 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 			       const char *text_said UNUSED,
 			       const char *policy_label UNUSED)
 {
-	const struct sockaddr *saddr =
-		(const struct sockaddr *)&this_client->addr;
-	const struct sockaddr *daddr =
-		(const struct sockaddr *)&that_client->addr;
+	ip_sockaddr saddr = sockaddr_from_endpoint(&this_client->addr);
+	ip_sockaddr daddr = sockaddr_from_endpoint(&that_client->addr);
 	char pbuf[512];
 	struct sadb_x_policy *policy_struct = (struct sadb_x_policy *)pbuf;
 	struct sadb_x_ipsecrequest *ir;
@@ -401,14 +394,13 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 	}
 
 	if (policy == IPSEC_POLICY_IPSEC) {
-		ip_sockaddr local_sa, remote_sa;
-		size_t local_sa_len = endpoint_to_sockaddr(this_host, &local_sa);
-		size_t remote_sa_len = endpoint_to_sockaddr(that_host, &remote_sa);
+		ip_sockaddr local_sa = sockaddr_from_endpoint(this_host);
+		ip_sockaddr remote_sa = sockaddr_from_endpoint(that_host);
 
 		ir = (struct sadb_x_ipsecrequest *)&policy_struct[1];
 
 		ir->sadb_x_ipsecrequest_len = (sizeof(struct sadb_x_ipsecrequest) +
-					       local_sa_len + remote_sa_len);
+					       local_sa.len + remote_sa.len);
 		ir->sadb_x_ipsecrequest_proto = sa_proto->ipproto;
 
 		if (sa_proto->ipproto == ET_IPIP)
@@ -419,10 +411,10 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 		ir->sadb_x_ipsecrequest_reqid = 0; /* not used for now */
 
 		uint8_t *addrmem = (uint8_t*)&ir[1];
-		memcpy(addrmem, &local_sa.sa,  local_sa_len);
-		addrmem += local_sa_len;
-		memcpy(addrmem, &remote_sa.sa, remote_sa_len);
-		addrmem += remote_sa_len;
+		memcpy(addrmem, &local_sa.sa,  local_sa.len);
+		addrmem += local_sa.len;
+		memcpy(addrmem, &remote_sa.sa, remote_sa.len);
+		addrmem += remote_sa.len;
 
 		policylen += ir->sadb_x_ipsecrequest_len;
 
@@ -436,22 +428,27 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 
 	pfkey_seq++;
 
+	dbg("calling pfkey_send_spdadd() from %s", __func__);
 	ret = pfkey_send_spdadd(pfkeyfd,
-				saddr, this_client->maskbits,
-				daddr, that_client->maskbits,
+				&saddr.sa.sa, this_client->maskbits,
+				&daddr.sa.sa, that_client->maskbits,
 				transport_proto ? transport_proto : 255 /* proto */,
 				(caddr_t)policy_struct, policylen,
 				pfkey_seq);
 
+	dbg("consuming pfkey from %s", __func__);
 	bsdkame_consume_pfkey(pfkeyfd, pfkey_seq);
 
 	if (ret < 0) {
-		DBG_log("ret = %d from send_spdadd: %s addr=%p/%p seq=%u opname=eroute", ret,
-			ipsec_strerror(),
-			saddr, daddr, pfkey_seq);
-		return FALSE;
+		endpoint_buf s, d;
+		libreswan_log("ret = %d from send_spdadd: %s addr=%s/%s seq=%u opname=eroute", ret,
+			      ipsec_strerror(),
+			      str_endpoint(&this_client->addr, &s),
+			      str_endpoint(&that_client->addr, &d),
+			      pfkey_seq);
+		return false;
 	}
-	return TRUE;
+	return true;
 }
 
 /* Add/replace/delete a shunt eroute.
@@ -558,10 +555,8 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 	{
 		const ip_subnet *mine   = &sr->this.client;
 		const ip_subnet *his    = &sr->that.client;
-		const struct sockaddr *saddr =
-			(const struct sockaddr *)&mine->addr;
-		const struct sockaddr *daddr =
-			(const struct sockaddr *)&his->addr;
+		ip_sockaddr saddr = sockaddr_from_endpoint(&mine->addr);
+		ip_sockaddr daddr = sockaddr_from_endpoint(&his->addr);
 		char pbuf[512];
 		char buf2[256];
 		struct sadb_x_policy *policy_struct =
@@ -593,14 +588,13 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 		policylen = sizeof(*policy_struct);
 
 		if (policy == IPSEC_POLICY_IPSEC) {
-			ip_sockaddr local_sa, remote_sa;
-			size_t local_sa_len = endpoint_to_sockaddr(&sr->this.host_addr, &local_sa);
-			size_t remote_sa_len = endpoint_to_sockaddr(&sr->that.host_addr, &remote_sa);
+			ip_sockaddr local_sa = sockaddr_from_endpoint(&sr->this.host_addr);
+			ip_sockaddr remote_sa = sockaddr_from_endpoint(&sr->that.host_addr);
 
 			ir = (struct sadb_x_ipsecrequest *)&policy_struct[1];
 
 			ir->sadb_x_ipsecrequest_len = (sizeof(struct sadb_x_ipsecrequest) +
-						       local_sa_len + remote_sa_len);
+						       local_sa.len + remote_sa.len);
 			if (c->policy & POLICY_ENCRYPT) {
 				/* maybe should look at IPCOMP too */
 				ir->sadb_x_ipsecrequest_proto = IPPROTO_ESP;
@@ -618,10 +612,10 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 			ir->sadb_x_ipsecrequest_reqid = 0; /* not used for now */
 
 			uint8_t *addrmem = (uint8_t *)&ir[1];
-			memcpy(addrmem, &local_sa.sa,  local_sa_len);
-			addrmem += local_sa_len;
-			memcpy(addrmem, &remote_sa.sa, remote_sa_len);
-			addrmem += remote_sa_len;
+			memcpy(addrmem, &local_sa.sa,  local_sa.len);
+			addrmem += local_sa.len;
+			memcpy(addrmem, &remote_sa.sa, remote_sa.len);
+			addrmem += remote_sa.len;
 
 			policylen += ir->sadb_x_ipsecrequest_len;
 
@@ -635,9 +629,10 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 		policy_struct->sadb_x_policy_len = PFKEY_UNIT64(policylen);
 
 		pfkey_seq++;
+		dbg("calling pfkey_send_spdadd() from %s", __func__);
 		ret = pfkey_send_spdadd(pfkeyfd,
-					saddr, mine->maskbits,
-					daddr, his->maskbits,
+					&saddr.sa.sa, mine->maskbits,
+					&daddr.sa.sa, his->maskbits,
 					255 /* proto */,
 					(caddr_t)policy_struct, policylen,
 					pfkey_seq);
@@ -645,9 +640,12 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 		bsdkame_consume_pfkey(pfkeyfd, pfkey_seq);
 
 		if (ret < 0) {
-			DBG_log("ret = %d from send_spdadd: %s addr=%p/%p seq=%u opname=%s", ret,
-				ipsec_strerror(),
-				saddr, daddr, pfkey_seq, opname);
+			endpoint_buf s, d;
+			libreswan_log("ret = %d from send_spdadd: %s addr=%s/%s seq=%u opname=%s", ret,
+				      ipsec_strerror(),
+				      str_endpoint(&mine->addr, &s),
+				      str_endpoint(&his->addr, &d),
+				      pfkey_seq, opname);
 			return FALSE;
 		}
 		return TRUE;
@@ -658,10 +656,8 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 		/* need to send a delete message */
 		const ip_subnet *mine   = &sr->this.client;
 		const ip_subnet *his    = &sr->that.client;
-		const struct sockaddr *saddr =
-			(const struct sockaddr *)&mine->addr;
-		const struct sockaddr *daddr =
-			(const struct sockaddr *)&his->addr;
+		ip_sockaddr saddr = sockaddr_from_endpoint(&mine->addr);
+		ip_sockaddr daddr = sockaddr_from_endpoint(&his->addr);
 		char pbuf[512];
 		char buf2[256];
 		struct sadb_x_policy *policy_struct =
@@ -694,9 +690,10 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 		policy_struct->sadb_x_policy_len = PFKEY_UNIT64(policylen);
 
 		pfkey_seq++;
+		dbg("calling pfkey_send_spddelete() from %s", __func__);
 		ret = pfkey_send_spddelete(pfkeyfd,
-					   saddr, mine->maskbits,
-					   daddr, his->maskbits,
+					   &saddr.sa.sa, mine->maskbits,
+					   &daddr.sa.sa, his->maskbits,
 					   255 /* proto */,
 					   (caddr_t)policy_struct, policylen,
 					   pfkey_seq);
@@ -704,9 +701,12 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 		bsdkame_consume_pfkey(pfkeyfd, pfkey_seq);
 
 		if (ret < 0) {
-			DBG_log("ret = %d from send_spdadd: %s addr=%p/%p seq=%u opname=%s", ret,
-				ipsec_strerror(),
-				saddr, daddr, pfkey_seq, opname);
+			endpoint_buf s, d;
+			libreswan_log("ret = %d from send_spdadd: %s addr=%s/%s seq=%u opname=%s", ret,
+				      ipsec_strerror(),
+				      str_endpoint(&mine->addr, &s),
+				      str_endpoint(&his->addr, &d),
+				      pfkey_seq, opname);
 			return FALSE;
 		}
 		return TRUE;
@@ -776,8 +776,8 @@ static bool bsdkame_sag_eroute(const struct state *st,
 
 static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace)
 {
-	const struct sockaddr *saddr = (const struct sockaddr *)sa->src.address;
-	const struct sockaddr *daddr = (const struct sockaddr *)sa->dst.address;
+	ip_sockaddr saddr = sockaddr_from_endpoint(sa->src.address);
+	ip_sockaddr daddr = sockaddr_from_endpoint(sa->dst.address);
 	char keymat[256];
 	int ret, mode, satype;
 
@@ -796,11 +796,12 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace)
 	case ET_IPCOMP:
 		satype = SADB_X_SATYPE_IPCOMP;
 		break;
-#if 0
 	case ET_IPIP:
+#if 0
 		satype = K_SADB_X_SATYPE_IPIP;
-		break;
 #endif
+		bad_case(sa->esatype);
+		break;
 
 	default:
 	case ET_INT:
@@ -821,23 +822,23 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace)
 	memcpy(keymat, sa->enckey, sa->enckeylen);
 	memcpy(keymat + sa->enckeylen, sa->authkey, sa->authkeylen);
 
-	DBG(DBG_KERNEL,
-	    DBG_log("calling pfkey_send_x1 for pfkeyseq=%d encalg=%s/%d authalg=%s/%d spi=%08x, reqid=%u, satype=%d",
-		    pfkey_seq,
-		    sa->encrypt->common.fqn, sa->enckeylen,
-		    sa->integ->common.fqn, sa->authkeylen,
-		    sa->spi, sa->reqid, satype));
+	DBG_dump("keymat", keymat, sa->enckeylen + sa->authkeylen);
+	dbg("calling pfkey_send_add2() for pfkeyseq=%d encalg=%s/%d authalg=%s/%d spi=%08x, reqid=%u, satype=%d",
+	    pfkey_seq,
+	    sa->encrypt->common.fqn, sa->enckeylen,
+	    sa->integ->common.fqn, sa->authkeylen,
+	    sa->spi, sa->reqid, satype);
 
-	ret = pfkey_send_x1(pfkeyfd, (replace ? SADB_UPDATE : SADB_ADD),
+	ret =  (replace ? pfkey_send_update : pfkey_send_add)(pfkeyfd,
 			    satype, mode,
-			    saddr, daddr,
+			    &saddr.sa.sa, &daddr.sa.sa,
 			    sa->spi,
 			    sa->reqid,  /* reqid */
 			    64,         /* wsize, replay window size */
 			    keymat,
-			    sa->encrypt->common.ikev1_esp_id,
+							      sa->encrypt->encrypt_sadb_ealg_id,
 			    sa->enckeylen,
-			    sa->integ->common.ikev1_esp_id,
+							      sa->integ->integ_sadb_aalg_id,
 			    sa->authkeylen,
 			    0,                  /*flags */
 			    0,                  /* l_alloc */
@@ -845,6 +846,31 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace)
 			    deltasecs(sa->sa_lifetime),    /* l_addtime */
 			    0,                  /* l_usetime, */
 			    pfkey_seq);
+#if 0
+	struct pfkey_send_sa_args add_args = {
+		.so = pfkeyfd,
+		.type = (replace ? SADB_UPDATE : SADB_ADD),
+		.satype = satype,
+		.mode = mode,
+		.src = &saddr.sa.sa,
+		.dst = &daddr.sa.sa,
+		.spi = sa->spi,
+		.reqid = sa->reqid,  /* reqid */
+		.wsize = 64,         /* wsize, replay window size */
+		.keymat = keymat,
+		.e_type = sa->encrypt->encrypt_sadb_ealg_id,
+		.e_keylen = sa->enckeylen,
+		.a_type = sa->integ->integ_sadb_aalg_id,
+		.a_keylen = sa->authkeylen,
+		.flags = 0,                  /*flags */
+		.l_alloc = 0,                  /* l_alloc */
+		.l_bytes = 0,                  /* l_bytes */
+		.l_addtime = deltasecs(sa->sa_lifetime),    /* l_addtime */
+		.l_usetime = 0,                  /* l_usetime, */
+		.seq = pfkey_seq,
+	};
+	ret = pfkey_send_add2(&add_args);
+#endif
 
 	bsdkame_consume_pfkey(pfkeyfd, pfkey_seq);
 

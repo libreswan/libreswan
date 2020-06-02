@@ -1,5 +1,6 @@
-/*	$FreeBSD$	*/
-/*	$KAME: policy_token.l,v 1.13 2003/05/09 05:19:55 sakane Exp $	*/
+/*	$NetBSD: policy_token.l,v 1.10 2018/05/28 20:45:38 maxv Exp $	*/
+
+/* Id: policy_token.l,v 1.12 2005/05/05 12:32:18 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -31,14 +32,16 @@
  */
 
 %{
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
-#include <net/route.h>
 #include <net/pfkeyv2.h>
-#include <netkey/keydb.h>
 #include <netinet/in.h>
-#include <netinet6/ipsec.h>
+#include PATH_IPSEC_H
 
 #include <stdlib.h>
 #include <limits.h>
@@ -46,14 +49,22 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include "libpfkey.h"
+
+#if !defined(__NetBSD__) && !defined(__FreeBSD__) && !defined(__linux__)  && \
+!defined(__APPLE__) && !defined(__MACH__)
 #include "y.tab.h"
-#define yylval __libipsecyylval	/* XXX */
+#else
+#include "policy_parse.h"
+#endif
+#define yylval __libipseclval	/* XXX */
 
 int yylex(void);
 %}
 
 %option noyywrap
 %option nounput
+%option noinput
 
 /* common section */
 nl		\n
@@ -72,6 +83,7 @@ blcl		\[
 elcl		\]
 percent		\%
 semi		\;
+plus	\+
 usec		{dot}{digit}{1,6}
 comment		\#.*
 ccomment	"/*"
@@ -87,6 +99,25 @@ ipaddress	[a-zA-Z0-9:\._][a-zA-Z0-9:\._]*(%[a-zA-Z0-9]+)?
 
 in		{ yylval.num = IPSEC_DIR_INBOUND; return(DIR); }
 out		{ yylval.num = IPSEC_DIR_OUTBOUND; return(DIR); }
+fwd		{ 
+#ifdef HAVE_POLICY_FWD
+		  yylval.num = IPSEC_DIR_FWD; return(DIR); 
+#else
+		  yylval.num = IPSEC_DIR_INBOUND; return(DIR); 
+#endif
+		}
+
+priority	{ return(PRIORITY); }
+prio	{ return(PRIORITY); }
+low	{ yylval.num32 = PRIORITY_LOW; return(PRIO_BASE); }
+def { yylval.num32 = PRIORITY_DEFAULT; return(PRIO_BASE); }
+high	{ yylval.num32 = PRIORITY_HIGH; return(PRIO_BASE); }
+{plus}	{ return(PLUS); }
+{decstring}	{
+			yylval.val.len = strlen(yytext);
+			yylval.val.buf = yytext;
+			return(PRIO_OFFSET);
+}
 
 discard		{ yylval.num = IPSEC_POLICY_DISCARD; return(ACTION); }
 none		{ yylval.num = IPSEC_POLICY_NONE; return(ACTION); }
@@ -97,7 +128,6 @@ entrust		{ yylval.num = IPSEC_POLICY_ENTRUST; return(ACTION); }
 esp		{ yylval.num = IPPROTO_ESP; return(PROTOCOL); }
 ah		{ yylval.num = IPPROTO_AH; return(PROTOCOL); }
 ipcomp		{ yylval.num = IPPROTO_IPCOMP; return(PROTOCOL); }
-tcp		{ yylval.num = IPPROTO_TCP; return(PROTOCOL); }
 
 transport	{ yylval.num = IPSEC_MODE_TRANSPORT; return(MODE); }
 tunnel		{ yylval.num = IPSEC_MODE_TUNNEL; return(MODE); }
@@ -124,6 +154,14 @@ unique		{ yylval.num = IPSEC_LEVEL_UNIQUE; return(LEVEL); }
 
 {hyphen}	{ return(HYPHEN); }
 
+{blcl}{decstring}{elcl} {
+			/* Remove leading '[' and trailing ']' */
+			yylval.val.buf = yytext + 1;
+			yylval.val.len = strlen(yytext) - 2;
+
+			return(PORT);
+		}
+
 {ws}		{ ; }
 {nl}		{ ; }
 
@@ -135,17 +173,20 @@ void __policy__strbuffer__free__(void);
 static YY_BUFFER_STATE strbuffer;
 
 void
-__policy__strbuffer__init__(msg)
-	char *msg;
+__policy__strbuffer__init__(char *msg)
 {
-	if (yy_current_buffer)
-		yy_delete_buffer(yy_current_buffer);
+	if (YY_CURRENT_BUFFER)
+		yy_delete_buffer(YY_CURRENT_BUFFER);
 	strbuffer = (YY_BUFFER_STATE)yy_scan_string(msg);
 	yy_switch_to_buffer(strbuffer);
+
+	return;
 }
 
 void
-__policy__strbuffer__free__()
+__policy__strbuffer__free__(void)
 {
 	yy_delete_buffer(strbuffer);
+
+	return;
 }

@@ -1,4 +1,6 @@
-/*	$KAME: policy_parse.y,v 1.14 2003/06/27 03:39:20 itojun Exp $	*/
+/*	$NetBSD: policy_parse.y,v 1.14 2018/05/28 20:45:38 maxv Exp $	*/
+
+/*	$KAME: policy_parse.y,v 1.21 2003/12/12 08:01:26 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -31,8 +33,20 @@
 
 /*
  * IN/OUT bound policy configuration take place such below:
- *	in <policy>
- *	out <policy>
+ *	in <priority> <policy>
+ *	out <priority> <policy>
+ *
+ * <priority> is one of the following:
+ * priority <signed int> where the integer is an offset from the default
+ *                       priority, where negative numbers indicate lower
+ *                       priority (towards end of list) and positive numbers 
+ *                       indicate higher priority (towards beginning of list)
+ *
+ * priority {low,def,high} {+,-} <unsigned int>  where low and high are
+ *                                               constants which are closer
+ *                                               to the end of the list and
+ *                                               beginning of the list,
+ *                                               respectively
  *
  * <policy> is one of following:
  *	"discard", "none", "ipsec <requests>", "entrust", "bypass",
@@ -49,66 +63,87 @@
  */
 
 %{
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD$");
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 
 #include <netinet/in.h>
-#include <netinet6/ipsec.h>
+#include PATH_IPSEC_H
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <netdb.h>
 
+#include <errno.h>
+
+#include "config.h"
+
 #include "ipsec_strerror.h"
+#include "libpfkey.h"
+
+#ifndef INT32_MAX
+#define INT32_MAX	(0xffffffff)
+#endif
+
+#ifndef INT32_MIN
+#define INT32_MIN	(-INT32_MAX-1)
+#endif
 
 #define ATOX(c) \
   (isdigit(c) ? (c - '0') : (isupper(c) ? (c - 'A' + 10) : (c - 'a' + 10) ))
 
-static caddr_t pbuf = NULL;		/* sadb_x_policy buffer */
+static u_int8_t *pbuf = NULL;		/* sadb_x_policy buffer */
 static int tlen = 0;			/* total length of pbuf */
 static int offset = 0;			/* offset of pbuf */
 static int p_dir, p_type, p_protocol, p_mode, p_level, p_reqid;
+static u_int32_t p_priority = 0;
+static long p_priority_offset = 0;
 static struct sockaddr *p_src = NULL;
 static struct sockaddr *p_dst = NULL;
 
 struct _val;
-extern void yyerror(char *msg);
-static struct sockaddr *parse_sockaddr(struct _val *buf);
+extern void yyerror(const char *msg);
+static struct sockaddr *parse_sockaddr(struct _val *addrbuf,
+    struct _val *portbuf);
 static int rule_check(void);
 static int init_x_policy(void);
-static int set_x_request(struct sockaddr *src, struct sockaddr *dst);
-static int set_sockaddr(struct sockaddr *addr);
+static int set_x_request(struct sockaddr *, struct sockaddr *);
+static int set_sockaddr(struct sockaddr *);
 static void policy_parse_request_init(void);
-static caddr_t policy_parse(char *msg, int msglen);
+static void *policy_parse(const char *, int);
 
-extern void __policy__strbuffer__init__(char *msg);
+extern void __policy__strbuffer__init__(const char *);
 extern void __policy__strbuffer__free__(void);
 extern int yyparse(void);
 extern int yylex(void);
 
-extern char *__libipsecyytext;	/*XXX*/
+extern char *__libipsectext;	/*XXX*/
 
 %}
 
 %union {
 	u_int num;
+	u_int32_t num32;
 	struct _val {
 		int len;
 		char *buf;
 	} val;
 }
 
-%token DIR ACTION PROTOCOL MODE LEVEL LEVEL_SPECIFY
-%token IPADDRESS
+%token DIR 
+%token PRIORITY PLUS
+%token <num32> PRIO_BASE 
+%token <val> PRIO_OFFSET 
+%token ACTION PROTOCOL MODE LEVEL LEVEL_SPECIFY IPADDRESS PORT
 %token ME ANY
 %token SLASH HYPHEN
-%type <num> DIR ACTION PROTOCOL MODE LEVEL
-%type <val> IPADDRESS LEVEL_SPECIFY
+%type <num> DIR PRIORITY ACTION PROTOCOL MODE LEVEL
+%type <val> IPADDRESS LEVEL_SPECIFY PORT
 
 %%
 policy_spec
@@ -116,6 +151,108 @@ policy_spec
 		{
 			p_dir = $1;
 			p_type = $2;
+
+#ifdef HAVE_PFKEY_POLICY_PRIORITY
+			p_priority = PRIORITY_DEFAULT;
+#else
+			p_priority = 0;
+#endif
+
+			if (init_x_policy())
+				return -1;
+		}
+		rules
+	|	DIR PRIORITY PRIO_OFFSET ACTION
+		{
+			p_dir = $1;
+			p_type = $4;
+			p_priority_offset = -atol($3.buf);
+
+			errno = 0;
+			if (errno != 0 || p_priority_offset < INT32_MIN)
+			{
+				__ipsec_errcode = EIPSEC_INVAL_PRIORITY_OFFSET;
+				return -1;
+			}
+
+			p_priority = PRIORITY_DEFAULT + (u_int32_t) p_priority_offset;
+
+			if (init_x_policy())
+				return -1;
+		}
+		rules
+	|	DIR PRIORITY HYPHEN PRIO_OFFSET ACTION
+		{
+			p_dir = $1;
+			p_type = $5;
+
+			errno = 0;
+			p_priority_offset = atol($4.buf);
+
+			if (errno != 0 || p_priority_offset > INT32_MAX)
+			{
+				__ipsec_errcode = EIPSEC_INVAL_PRIORITY_OFFSET;
+				return -1;
+			}
+
+			/* negative input value means lower priority, therefore higher
+			   actual value so that is closer to the end of the list */
+			p_priority = PRIORITY_DEFAULT + (u_int32_t) p_priority_offset;
+
+			if (init_x_policy())
+				return -1;
+		}
+		rules
+	|	DIR PRIORITY PRIO_BASE ACTION
+		{
+			p_dir = $1;
+			p_type = $4;
+
+			p_priority = $3;
+
+			if (init_x_policy())
+				return -1;
+		}
+		rules
+	|	DIR PRIORITY PRIO_BASE PLUS PRIO_OFFSET ACTION
+		{
+			p_dir = $1;
+			p_type = $6;
+
+			errno = 0;
+			p_priority_offset = atol($5.buf);
+
+			if (errno != 0 || p_priority_offset > PRIORITY_OFFSET_NEGATIVE_MAX)
+			{
+				__ipsec_errcode = EIPSEC_INVAL_PRIORITY_BASE_OFFSET;
+				return -1;
+			}
+
+			/* adding value means higher priority, therefore lower
+			   actual value so that is closer to the beginning of the list */
+			p_priority = $3 - (u_int32_t) p_priority_offset;
+
+			if (init_x_policy())
+				return -1;
+		}
+		rules
+	|	DIR PRIORITY PRIO_BASE HYPHEN PRIO_OFFSET ACTION
+		{
+			p_dir = $1;
+			p_type = $6;
+
+			errno = 0;
+			p_priority_offset = atol($5.buf);
+
+			if (errno != 0 || p_priority_offset > PRIORITY_OFFSET_POSITIVE_MAX)
+			{
+				__ipsec_errcode = EIPSEC_INVAL_PRIORITY_BASE_OFFSET;
+				return -1;
+			}
+
+			/* subtracting value means lower priority, therefore higher
+			   actual value so that is closer to the end of the list */
+			p_priority = $3 + (u_int32_t) p_priority_offset;
 
 			if (init_x_policy())
 				return -1;
@@ -125,6 +262,8 @@ policy_spec
 		{
 			p_dir = $1;
 			p_type = 0;	/* ignored it by kernel */
+
+			p_priority = 0;
 
 			if (init_x_policy())
 				return -1;
@@ -182,13 +321,24 @@ level
 
 addresses
 	:	IPADDRESS {
-			p_src = parse_sockaddr(&$1);
+			p_src = parse_sockaddr(&$1, NULL);
 			if (p_src == NULL)
 				return -1;
 		}
 		HYPHEN
 		IPADDRESS {
-			p_dst = parse_sockaddr(&$4);
+			p_dst = parse_sockaddr(&$4, NULL);
+			if (p_dst == NULL)
+				return -1;
+		}
+	|	IPADDRESS PORT {
+			p_src = parse_sockaddr(&$1, &$2);
+			if (p_src == NULL)
+				return -1;
+		}
+		HYPHEN
+		IPADDRESS PORT {
+			p_dst = parse_sockaddr(&$5, &$6);
 			if (p_dst == NULL)
 				return -1;
 		}
@@ -212,26 +362,52 @@ addresses
 %%
 
 void
-yyerror(msg)
-	char *msg;
+yyerror(const char *msg)
 {
 	fprintf(stderr, "libipsec: %s while parsing \"%s\"\n",
-		msg, __libipsecyytext);
+		msg, __libipsectext);
+
+	return;
 }
 
 static struct sockaddr *
-parse_sockaddr(buf)
-	struct _val *buf;
+parse_sockaddr(struct _val *addrbuf, struct _val *portbuf)
 {
 	struct addrinfo hints, *res;
+	char *addr;
 	char *serv = NULL;
 	int error;
 	struct sockaddr *newaddr = NULL;
 
+	if ((addr = malloc(addrbuf->len + 1)) == NULL) {
+		yyerror("malloc failed");
+		__ipsec_set_strerror(strerror(errno));
+		return NULL;
+	}
+
+	if (portbuf && ((serv = malloc(portbuf->len + 1)) == NULL)) {
+		free(addr);
+		yyerror("malloc failed");
+		__ipsec_set_strerror(strerror(errno));
+		return NULL;
+	}
+
+	strncpy(addr, addrbuf->buf, addrbuf->len);
+	addr[addrbuf->len] = '\0';
+
+	if (portbuf) {
+		strncpy(serv, portbuf->buf, portbuf->len);
+		serv[portbuf->len] = '\0';
+	}
+
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_flags = AI_NUMERICHOST;
-	error = getaddrinfo(buf->buf, serv, &hints, &res);
+	hints.ai_socktype = SOCK_DGRAM;
+	error = getaddrinfo(addr, serv, &hints, &res);
+	free(addr);
+	if (serv != NULL)
+		free(serv);
 	if (error != 0) {
 		yyerror("invalid IP address");
 		__ipsec_set_strerror(gai_strerror(error));
@@ -244,13 +420,13 @@ parse_sockaddr(buf)
 		return NULL;
 	}
 
-	newaddr = malloc(res->ai_addr->sa_len);
+	newaddr = malloc(res->ai_addrlen);
 	if (newaddr == NULL) {
 		__ipsec_errcode = EIPSEC_NO_BUFS;
 		freeaddrinfo(res);
 		return NULL;
 	}
-	memcpy(newaddr, res->ai_addr, res->ai_addr->sa_len);
+	memcpy(newaddr, res->ai_addr, res->ai_addrlen);
 
 	freeaddrinfo(res);
 
@@ -267,8 +443,8 @@ rule_check(void)
 			return -1;
 		}
 
-		if (p_mode != IPSEC_MODE_TRANSPORT &&
-		    p_mode != IPSEC_MODE_TUNNEL) {
+		if (p_mode != IPSEC_MODE_TRANSPORT
+		 && p_mode != IPSEC_MODE_TUNNEL) {
 			__ipsec_errcode = EIPSEC_INVAL_MODE;
 			return -1;
 		}
@@ -294,13 +470,17 @@ init_x_policy(void)
 {
 	struct sadb_x_policy *p;
 
-	tlen = sizeof(struct sadb_x_policy);
-
-	pbuf = malloc(tlen);
+	if (pbuf) {
+		free(pbuf);
+		tlen = 0;
+	}
+	pbuf = malloc(sizeof(struct sadb_x_policy));
 	if (pbuf == NULL) {
 		__ipsec_errcode = EIPSEC_NO_BUFS;
 		return -1;
 	}
+	tlen = sizeof(struct sadb_x_policy);
+
 	memset(pbuf, 0, tlen);
 	p = (struct sadb_x_policy *)pbuf;
 	p->sadb_x_policy_len = 0;	/* must update later */
@@ -308,6 +488,17 @@ init_x_policy(void)
 	p->sadb_x_policy_type = p_type;
 	p->sadb_x_policy_dir = p_dir;
 	p->sadb_x_policy_id = 0;
+#ifdef HAVE_PFKEY_POLICY_PRIORITY
+	p->sadb_x_policy_priority = p_priority;
+#else
+    /* fail if given a priority and libipsec was not compiled with 
+	   priority support */
+	if (p_priority != 0)
+	{
+		__ipsec_errcode = EIPSEC_PRIORITY_NOT_COMPILED;
+		return -1;
+	}
+#endif
 
 	offset = tlen;
 
@@ -316,23 +507,24 @@ init_x_policy(void)
 }
 
 static int
-set_x_request(src, dst)
-	struct sockaddr *src, *dst;
+set_x_request(struct sockaddr *src, struct sockaddr *dst)
 {
 	struct sadb_x_ipsecrequest *p;
 	int reqlen;
+	u_int8_t *n;
 
 	reqlen = sizeof(*p)
-		+ (src ? src->sa_len : 0)
-		+ (dst ? dst->sa_len : 0);
+		+ (src ? sysdep_sa_len(src) : 0)
+		+ (dst ? sysdep_sa_len(dst) : 0);
 	tlen += reqlen;		/* increment to total length */
 
-	caddr_t t = realloc(pbuf, tlen);
-	if (t == NULL) {
+	n = realloc(pbuf, tlen);
+	if (n == NULL) {
 		__ipsec_errcode = EIPSEC_NO_BUFS;
 		return -1;
 	}
-	pbuf = t;
+	pbuf = n;
+
 	p = (struct sadb_x_ipsecrequest *)&pbuf[offset];
 	p->sadb_x_ipsecrequest_len = reqlen;
 	p->sadb_x_ipsecrequest_proto = p_protocol;
@@ -349,8 +541,7 @@ set_x_request(src, dst)
 }
 
 static int
-set_sockaddr(addr)
-	struct sockaddr *addr;
+set_sockaddr(struct sockaddr *addr)
 {
 	if (addr == NULL) {
 		__ipsec_errcode = EIPSEC_NO_ERROR;
@@ -359,9 +550,9 @@ set_sockaddr(addr)
 
 	/* tlen has already incremented */
 
-	memcpy(&pbuf[offset], addr, addr->sa_len);
+	memcpy(&pbuf[offset], addr, sysdep_sa_len(addr));
 
-	offset += addr->sa_len;
+	offset += sysdep_sa_len(addr);
 
 	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return 0;
@@ -382,14 +573,15 @@ policy_parse_request_init(void)
 		free(p_dst);
 		p_dst = NULL;
 	}
+
+	return;
 }
 
-static caddr_t
-policy_parse(msg, msglen)
-	char *msg;
-	int msglen;
+static void *
+policy_parse(const char *msg, int msglen)
 {
 	int error;
+
 	pbuf = NULL;
 	tlen = 0;
 
@@ -416,10 +608,8 @@ policy_parse(msg, msglen)
 	return pbuf;
 }
 
-caddr_t
-ipsec_set_policy(msg, msglen)
-	char *msg;
-	int msglen;
+ipsec_policy_t
+ipsec_set_policy(__ipsec_const char *msg, int msglen)
 {
 	caddr_t policy;
 
@@ -433,4 +623,3 @@ ipsec_set_policy(msg, msglen)
 	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return policy;
 }
-
