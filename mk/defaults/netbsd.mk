@@ -12,7 +12,7 @@ USERLAND_CFLAGS += -Ds6_addr32=__u6_addr.__u6_addr32
 
 USERLAND_INCLUDES += -I$(PKG_BASE)/include
 
-USERLAND_LDFLAGS += -lipsec -L$(PKG_BASE)/lib -Wl,-rpath,$(PKG_BASE)/lib
+USERLAND_LDFLAGS += -L$(PKG_BASE)/lib -Wl,-rpath,$(PKG_BASE)/lib
 
 NSS_CFLAGS = -I$(PKG_BASE)/include/nspr -I$(PKG_BASE)/include/nss/nss
 NSS_LDFLAGS = -L$(PKG_BASE)/lib/nss -Wl,-rpath,$(PKG_BASE)/lib/nss -lnss3 -lfreebl3 -lssl3
