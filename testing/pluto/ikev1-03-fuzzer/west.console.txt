@@ -17,7 +17,7 @@ west #
 west #
  hostname |grep east > /dev/null && ipsec whack --shutdown
 west #
- hostname |grep east > /dev/null && grep "packet from" /tmp/pluto.log
+ hostname |grep east > /dev/null && grep "packet from" /tmp/pluto.log | sed "s/^.*packet from//"
 west #
  ../bin/check-for-core.sh
 west #
