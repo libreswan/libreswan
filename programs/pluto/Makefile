@@ -92,7 +92,6 @@ endif
 
 ifeq ($(USE_BSDKAME),true)
 OBJS += kernel_bsdkame.o
-USERLAND_LDFLAGS += $(BSDPFKEYLIB)
 endif
 
 OBJS += x509.o
@@ -227,5 +226,8 @@ OBJS += $(LIBRESWANLIB)
 OBJS += $(WHACKLIB)
 OBJS += $(IPSECCONFLIB)
 OBJS += $(LIBRESWANLIB)
+ifeq ($(USE_BSDKAME),true)
+OBJS += $(BSDPFKEYLIB)
+endif
 
 include $(top_srcdir)/mk/program.mk
