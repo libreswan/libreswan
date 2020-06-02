@@ -50,6 +50,8 @@
 #include "ipsec_strerror.h"
 #include "libpfkey.h"
 
+#include "lswlog.h"
+
 #define CALLOC(size, cast) (cast)calloc(1, (size))
 
 static int findsupportedmap(int);
@@ -127,7 +129,7 @@ static int supported_map[] = {
 static int
 findsupportedmap(int satype)
 {
-	int i;
+	unsigned i;
 
 	for (i = 0; i < sizeof(supported_map)/sizeof(supported_map[0]); i++)
 		if (supported_map[i] == satype)
@@ -139,7 +141,7 @@ static struct sadb_alg *
 findsupportedalg(u_int satype, u_int alg_id)
 {
 	int algno;
-	int tlen;
+	size_t tlen;
 	caddr_t p;
 
 	/* validity check */
@@ -595,7 +597,7 @@ pfkey_send_delete(int so, u_int satype, u_int mode, struct sockaddr *src,
  */
 /*ARGSUSED*/
 int
-pfkey_send_delete_all(int so, u_int satype, u_int mode, struct sockaddr *src,
+pfkey_send_delete_all(int so, u_int satype, u_int mode UNUSED, struct sockaddr *src,
     struct sockaddr *dst)
 {
 	struct sadb_msg *newmsg;
@@ -697,7 +699,7 @@ pfkey_send_register(int so, u_int satype)
 	int len, algno;
 
 	if (satype == SADB_SATYPE_UNSPEC) {
-		for (algno = 0;
+		for (size_t algno = 0;
 		     algno < sizeof(supported_map)/sizeof(supported_map[0]);
 		     algno++) {
 			if (ipsec_supported[algno]) {
@@ -743,7 +745,7 @@ pfkey_recv_register(int so)
 		if ((newmsg = pfkey_recv(so)) == NULL)
 			return -1;
 		if (newmsg->sadb_msg_type == SADB_REGISTER &&
-		    newmsg->sadb_msg_pid == pid)
+		    (int)newmsg->sadb_msg_pid == pid)
 			break;
 		free(newmsg);
 	}
@@ -791,7 +793,7 @@ pfkey_set_supported(struct sadb_msg *msg, int tlen)
 	while (p < ep) {
 		sup = (void *)p;
 		if (ep < p + sizeof(*sup) ||
-		    PFKEY_EXTLEN(sup) < sizeof(*sup) ||
+		    PFKEY_EXTLEN(sup) < (ssize_t)sizeof(*sup) ||
 		    ep < p + sup->sadb_supported_len) {
 			/* invalid format */
 			break;
@@ -1481,7 +1483,7 @@ pfkey_send_x1(struct pfkey_send_sa_args *sa_parms)
 /* sending SADB_DELETE or SADB_GET message to the kernel */
 /*ARGSUSED*/
 static int
-pfkey_send_x2(int so, u_int type, u_int satype, u_int mode,
+pfkey_send_x2(int so, u_int type, u_int satype, u_int mode UNUSED,
     struct sockaddr *src, struct sockaddr *dst, u_int32_t spi)
 {
 	struct sadb_msg *newmsg;
@@ -1632,7 +1634,7 @@ pfkey_send_x4(int so, u_int type, struct sockaddr *src, u_int prefs,
 	struct sadb_msg *newmsg;
 	int len;
 	caddr_t p;
-	int plen;
+	size_t plen;
 	caddr_t ep;
 
 	/* validity check */
@@ -1881,7 +1883,7 @@ pfkey_recv(int so)
 		return NULL;
 	}
 
-	if (len < sizeof(buf)) {
+	if (len < (ssize_t)sizeof(buf)) {
 		recv(so, (void *)&buf, sizeof(buf), 0);
 		__ipsec_errcode = EIPSEC_MAX;
 		return NULL;
@@ -1928,6 +1930,10 @@ pfkey_recv(int so)
 int
 pfkey_send(int so, struct sadb_msg *msg, int len)
 {
+	if (DBGP(DBG_BASE)) {
+		pfkey_sadump(msg);
+	}
+
 	if ((len = send(so, (void *)msg, (socklen_t)len, 0)) < 0) {
 		__ipsec_set_strerror(strerror(errno));
 		return -1;
@@ -1980,7 +1986,7 @@ pfkey_align(struct sadb_msg *msg, caddr_t *mhp)
 
 	while (p < ep) {
 		ext = (void *)p;
-		if (ep < p + sizeof(*ext) || PFKEY_EXTLEN(ext) < sizeof(*ext) ||
+		if (ep < p + sizeof(*ext) || PFKEY_EXTLEN(ext) < (ssize_t)sizeof(*ext) ||
 		    ep < p + PFKEY_EXTLEN(ext)) {
 			/* invalid format */
 			break;
@@ -2659,4 +2665,44 @@ pfkey_send_add_nat(int so, u_int satype, u_int mode, struct sockaddr *src,
 	psaa.l_natt_frag = l_natt_frag;
 
 	return pfkey_send_add2(&psaa);
+}
+
+void foreach_supported_alg(void (*algregister)(int satype, int extype,
+					       struct sadb_alg *alg))
+{
+	int algno;
+	int tlen;
+	int satype, supported_exttype;
+
+	caddr_t p;
+
+	for (unsigned i = 0; i < sizeof(supported_map) / sizeof(supported_map[0]);
+	     i++) {
+		satype = supported_map[i];
+
+		algno = i;
+
+		if (ipsec_supported[algno] == NULL)
+			continue;
+
+		tlen = ipsec_supported[algno]->sadb_supported_len -
+		       sizeof(struct sadb_supported);
+		supported_exttype =
+			ipsec_supported[algno]->sadb_supported_exttype;
+		p = (caddr_t)(ipsec_supported[algno] + 1);
+
+		while (tlen > 0) {
+			struct sadb_alg *a = ((struct sadb_alg *)p);
+
+			if ((unsigned) tlen < sizeof(struct sadb_alg)) {
+				/* invalid format */
+				break;
+			}
+
+			algregister(satype, supported_exttype, a);
+
+			tlen -= sizeof(struct sadb_alg);
+			p += sizeof(struct sadb_alg);
+		}
+	}
 }

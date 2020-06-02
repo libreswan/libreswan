@@ -54,6 +54,9 @@
 #include "ipsec_strerror.h"
 #include "libpfkey.h"
 
+#include "lswlog.h"
+#define printf(ARGS, ...)  DBGF(DBG_CRYPT, ARGS, ##__VA_ARGS__)
+
 /* cope with old kame headers - ugly */
 #ifndef SADB_X_AALG_MD5
 #define SADB_X_AALG_MD5		SADB_AALG_MD5	
@@ -85,9 +88,9 @@ do { \
 	/*CONSTCOND*/ \
 	if (sizeof((str)[0]) == 0 \
 	 || num >= sizeof(str)/sizeof((str)[0])) \
-		printf("%u ", (num)); \
+		printf("%u ", (num)) \
 	else if (strlen((str)[(num)]) == 0) \
-		printf("%u ", (num)); \
+		printf("%u ", (num)) \
 	else \
 		printf("%s ", (str)[(num)]); \
 } while (/*CONSTCOND*/0)
@@ -100,9 +103,9 @@ do { \
 			break; \
 	} \
 	if (p && p->str) \
-		printf("%s ", p->str); \
+		printf("%s ", p->str) \
 	else \
-		printf("%u ", (num)); \
+		printf("%u ", (num)) \
 } while (/*CONSTCOND*/0)
 
 static const char *str_ipaddr(struct sockaddr *);
@@ -313,9 +316,9 @@ pfkey_sadump1(struct sadb_msg *m, int withports)
 	}
 	sa = (void *)(m_saddr + 1);
 	if (withports)
-		printf("%s[%s]", str_ipaddr(sa), str_ipport(sa));
+		printf("%s[%s]", str_ipaddr(sa), str_ipport(sa))
 	else
-		printf("%s", str_ipaddr(sa));
+		printf("%s", str_ipaddr(sa))
 #ifdef SADB_X_EXT_NAT_T_TYPE
 	if (use_natt && natt_sport)
 		printf("[%u]", ntohs(natt_sport->sadb_x_nat_t_port_port));
@@ -329,9 +332,9 @@ pfkey_sadump1(struct sadb_msg *m, int withports)
 	}
 	sa = (void *)(m_daddr + 1);
 	if (withports)
-		printf("%s[%s]", str_ipaddr(sa), str_ipport(sa));
+		printf("%s[%s]", str_ipaddr(sa), str_ipport(sa))
 	else
-		printf("%s", str_ipaddr(sa));
+		printf("%s", str_ipaddr(sa))
 #ifdef SADB_X_EXT_NAT_T_TYPE
 	if (use_natt && natt_dport)
 		printf("[%u]", ntohs(natt_dport->sadb_x_nat_t_port_port));
@@ -351,9 +354,9 @@ pfkey_sadump1(struct sadb_msg *m, int withports)
 
 #ifdef SADB_X_EXT_NAT_T_TYPE
 	if (use_natt && m->sadb_msg_satype == SADB_SATYPE_ESP)
-		printf("esp-udp ");
+		printf("esp-udp ")
 	else if (use_natt)
-		printf("natt+");
+		printf("natt+")
 
 	if (!use_natt || m->sadb_msg_satype != SADB_SATYPE_ESP)
 #endif
@@ -612,7 +615,7 @@ pfkey_spdump1(struct sadb_msg *m, int withports)
 		d_xpl = ipsec_dump_policy((ipsec_policy_t)m_xpl, "\n\t");
 		
 	if (!d_xpl)
-		printf("\n\tPolicy:[%s]\n", ipsec_strerror());
+		printf("\n\tPolicy:[%s]\n", ipsec_strerror())
 	else {
 		/* dump SPD */
 		printf("\n\t%s\n", d_xpl);
@@ -704,7 +707,7 @@ str_prefport(u_int family, u_int pref, u_int port, u_int ulp)
 	static char buf[128];
 	char prefbuf[128];
 	char portbuf[128];
-	int plen;
+	size_t plen;
 
 	switch (family) {
 	case AF_INET:
@@ -749,7 +752,7 @@ str_upperspec(u_int ulp, u_int p1, u_int p2)
 
 	ent = getprotobynumber((int)ulp);
 	if (ent)
-		printf("%u(%s)", ulp, ent->p_name);
+		printf("%u(%s)", ulp, ent->p_name)
 	else
 		printf("%u", ulp);
 

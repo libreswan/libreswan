@@ -92,7 +92,7 @@ ipsec_dump_policy1(void *policy, const char *delimiter, int withports)
 {
 	struct sadb_x_policy *xpl = policy;
 	struct sadb_x_ipsecrequest *xisr;
-	size_t off, buflen;
+	ssize_t off, buflen;
 	char *buf;
 	char isrbuf[1024];
 	char *newbuf;

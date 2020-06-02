@@ -68,8 +68,15 @@
 #include <stdlib.h>
 #endif /* !_KERNEL */
 
+#if 0
 #include "config.h"
+#endif
 #include "libpfkey.h"
+
+#include "lswlog.h"
+
+#define panic(MSG) PASSERT_FAIL("%s", MSG)
+#define printf(MSG, ...) DBGF(DBG_CRYPT, MSG, ##__VA_ARGS__)
 
 static void kdebug_sadb_prop(struct sadb_ext *);
 static void kdebug_sadb_identity(struct sadb_ext *);
@@ -102,8 +109,10 @@ static void kdebug_sadb_x_kmaddress(struct sadb_ext *);
 static void kdebug_secreplay(struct secreplay *);
 #endif
 
+#if 0
 #ifndef _KERNEL
 #define panic(param)	{ printf(param); exit(1); }
+#endif
 #endif
 
 #include "libpfkey.h"
@@ -299,10 +308,11 @@ kdebug_sadb_identity(struct sadb_ext *ext)
 			p = (void *)(id + 1);
 			ep = p + len;
 			for (/*nothing*/; *p && p < ep; p++) {
-				if (isprint((int)*p))
+				if (isprint((int)*p)) {
 					printf("%c", *p & 0xff);
-				else
+				} else {
 					printf("\\%03o", *p & 0xff);
+				}
 			}
 #endif
 			printf("\"");
@@ -418,7 +428,7 @@ kdebug_sadb_key(struct sadb_ext *ext)
 			(long)PFKEY_UNUNIT64(key->sadb_key_len) - sizeof(struct sadb_key));
 	}
 
-	ipsec_hexdump(key + sizeof(struct sadb_key),
+	ipsec_hexdump(key + 1,
 	              (int)((uint32_t)key->sadb_key_bits >> 3));
 	printf(" }\n");
 	return;

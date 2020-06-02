@@ -54,7 +54,7 @@ struct sockaddr;
 struct sadb_alg;
 
 #include <sys/types.h>
-#include PATH_IPSEC_H
+#include <netipsec/ipsec.h>
 
 #ifndef HAVE_IPSEC_POLICY_T
 typedef caddr_t ipsec_policy_t;
@@ -108,11 +108,15 @@ int ipsec_check_keylen2(u_int, u_int, u_int);
 int ipsec_get_keylen(u_int, u_int, struct sadb_alg *);
 char *ipsec_dump_policy_withports(void *, const char *);
 void ipsec_hexdump(const void *, int);
+#if 0
 const char *ipsec_strerror(void);
+#endif
 void kdebug_sadb(struct sadb_msg *);
+#if 0
 ipsec_policy_t ipsec_set_policy(__ipsec_const char *, int);
 int  ipsec_get_policylen(ipsec_policy_t);
 char *ipsec_dump_policy(ipsec_policy_t, __ipsec_const char *);
+#endif
 
 /* PFKey Routines */
 
@@ -237,5 +241,9 @@ sysdep_sa_len (const struct sockaddr *sa)
 #endif
 
 #endif /* KAME_LIBPFKEY_H */
+
+extern void foreach_supported_alg(void (*algregister)(int satype,
+						      int extype,
+						      struct sadb_alg *alg));
 
 #endif /* _LIBPFKEY_H */
