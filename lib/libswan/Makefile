@@ -96,6 +96,7 @@ OBJS += hunk.o
 
 OBJS += ip_address.o
 OBJS += ip_endpoint.o
+OBJS += ip_sockaddr.o
 OBJS += ip_info.o
 OBJS += ip_protocol.o
 OBJS += ip_range.o

@@ -37,6 +37,7 @@
 #endif
 
 #include "ip_address.h"
+#include "ip_sockaddr.h"
 
 #include "defs.h"
 #include "kernel.h"
@@ -299,9 +300,8 @@ static int bind_tcp_socket(const struct iface_dev *ifd, int port)
 	 */
 	ip_endpoint if_endpoint = endpoint3(&ip_protocol_tcp,
 					    &ifd->id_address, port);
-	ip_sockaddr if_sa;
-	size_t if_sa_size = endpoint_to_sockaddr(&if_endpoint, &if_sa);
-	if (bind(fd, &if_sa.sa, if_sa_size) < 0) {
+	ip_sockaddr if_sa = sockaddr_from_endpoint(&if_endpoint);
+	if (bind(fd, &if_sa.sa.sa, if_sa.len) < 0) {
 		endpoint_buf b;
 		LOG_ERRNO(errno, "bind() for %s %s in process_raw_ifaces()",
 			  ifd->id_rname,
@@ -472,9 +472,8 @@ stf_status create_tcp_interface(struct state *st)
 
 	dbg("TCP: connecting");
 	{
-		ip_sockaddr remote_sockaddr;
-		size_t remote_sockaddr_size = endpoint_to_sockaddr(&st->st_remote_endpoint, &remote_sockaddr);
-		if (connect(fd, &remote_sockaddr.sa, remote_sockaddr_size) < 0) {
+		ip_sockaddr remote_sockaddr = sockaddr_from_endpoint(&st->st_remote_endpoint);
+		if (connect(fd, &remote_sockaddr.sa.sa, remote_sockaddr.len) < 0) {
 			LOG_ERRNO(errno, "TCP: connect() failed");
 			close(fd);
 			return STF_FATAL;
@@ -484,15 +483,16 @@ stf_status create_tcp_interface(struct state *st)
 	dbg("TCP: getting local randomly assigned port");
 	ip_endpoint local_endpoint;
 	{
-		ip_sockaddr local_sockaddr; /* port gets assigned randomly */
-		socklen_t local_sockaddr_size = sizeof(local_sockaddr);
-		if (getsockname(fd, &local_sockaddr.sa, &local_sockaddr_size) < 0) {
+		/* port gets assigned randomly */
+		ip_sockaddr local_sockaddr = {
+			.len = sizeof(local_sockaddr.sa),
+		};
+		if (getsockname(fd, &local_sockaddr.sa.sa, &local_sockaddr.len) < 0) {
 			LOG_ERRNO(errno, "TCP: failed to get local TCP address");
 			close(fd);
 			return STF_FATAL;
 		}
-		err_t err = sockaddr_to_endpoint(&ip_protocol_tcp, &local_sockaddr,
-						 local_sockaddr_size, &local_endpoint);
+		err_t err = sockaddr_to_endpoint(&ip_protocol_tcp, &local_sockaddr, &local_endpoint);
 		if (err != NULL) {
 			libreswan_log("TCP: failed to get local TCP address, %s", err);
 			close(fd);
@@ -566,10 +566,12 @@ void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 {
 	struct iface_port *bind_ifp = arg;
 
-	ip_sockaddr sa = { .sa = *sockaddr, };
+	ip_sockaddr sa = {
+		.len = sockaddr_len,
+		.sa.sa = *sockaddr,
+	};
 	ip_endpoint tcp_remote_endpoint;
-	err_t err = sockaddr_to_endpoint(&ip_protocol_tcp,
-					 &sa, sockaddr_len, &tcp_remote_endpoint);
+	err_t err = sockaddr_to_endpoint(&ip_protocol_tcp, &sa, &tcp_remote_endpoint);
 	if (err) {
 		libreswan_log("TCP: invalid remote address: %s", err);
 		close(accepted_fd);

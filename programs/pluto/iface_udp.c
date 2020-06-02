@@ -47,6 +47,7 @@
 #include "state_db.h"		/* for state_by_ike_spis() */
 #include "log.h"
 #include "ip_info.h"
+#include "ip_sockaddr.h"
 #include "nat_traversal.h"	/* for nat_traversal_enabled which seems like a broken idea */
 
 static int bind_udp_socket(const struct iface_dev *ifd, int port)
@@ -162,9 +163,8 @@ static int bind_udp_socket(const struct iface_dev *ifd, int port)
 	 */
 	ip_endpoint if_endpoint = endpoint3(&ip_protocol_udp,
 					    &ifd->id_address, port);
-	ip_sockaddr if_sa;
-	size_t if_sa_size = endpoint_to_sockaddr(&if_endpoint, &if_sa);
-	if (bind(fd, &if_sa.sa, if_sa_size) < 0) {
+	ip_sockaddr if_sa = sockaddr_from_endpoint(&if_endpoint);
+	if (bind(fd, &if_sa.sa.sa, if_sa.len) < 0) {
 		endpoint_buf b;
 		LOG_ERRNO(errno, "bind() for %s %s in process_raw_ifaces()",
 			  ifd->id_rname, str_endpoint(&if_endpoint, &b));
@@ -260,11 +260,11 @@ static enum iface_status udp_read_packet(const struct iface_port *ifp,
 	}
 #endif
 
-	ip_sockaddr from;
-	zero(&from);
-	socklen_t from_len = sizeof(from);
+	ip_sockaddr from = {
+		.len = sizeof(from.sa),
+	};
 	packet->len = recvfrom(ifp->fd, packet->ptr, packet->len, /*flags*/ 0,
-			       &from.sa, &from_len);
+			       &from.sa.sa, &from.len);
 	int packet_errno = errno; /* save!!! */
 
 	/*
@@ -273,14 +273,14 @@ static enum iface_status udp_read_packet(const struct iface_port *ifp,
 	 * If that fails report some sense of error and then always
 	 * give up.
 	 */
-	const char *from_ugh = sockaddr_to_endpoint(&ip_protocol_udp,
-						    &from, from_len, &packet->sender);
+	const char *from_ugh = sockaddr_to_endpoint(&ip_protocol_udp, &from,
+						    &packet->sender);
 	if (from_ugh != NULL) {
 		if (packet->len >= 0) {
 			/* technically it worked, but returned value was useless */
 			plog_global("recvfrom on %s returned malformed source sockaddr: %s",
 				    ifp->ip_dev->id_rname, from_ugh);
-		} else if (from_len == sizeof(from) &&
+		} else if (from.len == sizeof(from) &&
 			   all_zero((const void *)&from, sizeof(from)) &&
 			   packet_errno == ECONNREFUSED) {
 			/*
@@ -375,9 +375,8 @@ static ssize_t udp_write_packet(const struct iface_port *ifp,
 	}
 #endif
 
-	ip_sockaddr remote_sa;
-	size_t remote_sa_size = endpoint_to_sockaddr(remote_endpoint, &remote_sa);
-	return sendto(ifp->fd, ptr, len, 0, &remote_sa.sa, remote_sa_size);
+	ip_sockaddr remote_sa = sockaddr_from_endpoint(remote_endpoint);
+	return sendto(ifp->fd, ptr, len, 0, &remote_sa.sa.sa, remote_sa.len);
 };
 
 static void handle_udp_packet_cb(evutil_socket_t unused_fd UNUSED,
@@ -567,11 +566,7 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 		 */
 		uint8_t buffer[sizeof(struct isakmp_hdr) * 2];
 
-		union {
-			struct sockaddr sa;
-			struct sockaddr_in sa_in4;
-			struct sockaddr_in6 sa_in6;
-		} from;
+		ip_sockaddr from;
 
 		ssize_t packet_len;
 
@@ -586,14 +581,12 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 		} ecms_buf;
 
 		struct cmsghdr *cm;
-		char fromstr[sizeof(" for message to  port 65536") +
-			     INET6_ADDRSTRLEN];
 		struct state *sender = NULL;
 
-		zero(&from.sa);
+		zero(&from);
 
 		emh.msg_name = &from.sa; /* ??? filled in? */
-		emh.msg_namelen = sizeof(from);
+		emh.msg_namelen = sizeof(from.sa);
 		emh.msg_iov = &eiov;
 		emh.msg_iovlen = 1;
 		emh.msg_control = &ecms_buf;
@@ -661,28 +654,18 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 			DBG_dump(NULL, emh.msg_name, emh.msg_namelen);
 		}
 
-		fromstr[0] = '\0'; /* usual case :-( */
-		switch (from.sa.sa_family) {
-			char as[INET6_ADDRSTRLEN];
-
-		case AF_INET:
-			if (emh.msg_namelen == sizeof(struct sockaddr_in))
+		const struct ip_info *afi = aftoinfo(from.sa.sa.sa_family);
+		/* usual case :-( */
+		char fromstr[sizeof(" for message to ?") + sizeof(endpoint_buf)] = "";
+		if (afi != NULL && emh.msg_namelen == afi->sockaddr_size) {
+			ip_endpoint endpoint;
+			/* this is a udp socket so presumably the endpoint is udp */
+			if (sockaddr_to_endpoint(&ip_protocol_udp, &from, &endpoint) == NULL) {
+				endpoint_buf ab;
 				snprintf(fromstr, sizeof(fromstr),
-					 " for message to %s port %u",
-					 inet_ntop(from.sa.sa_family,
-						   &from.sa_in4.sin_addr, as,
-						   sizeof(as)),
-					 ntohs(from.sa_in4.sin_port));
-			break;
-		case AF_INET6:
-			if (emh.msg_namelen == sizeof(struct sockaddr_in6))
-				snprintf(fromstr, sizeof(fromstr),
-					 " for message to %s port %u",
-					 inet_ntop(from.sa.sa_family,
-						   &from.sa_in6.sin6_addr, as,
-						   sizeof(as)),
-					 ntohs(from.sa_in6.sin6_port));
-			break;
+					 " for message to %s",
+					 str_sensitive_endpoint(&endpoint, &ab));
+			}
 		}
 
 		for (cm = CMSG_FIRSTHDR(&emh)

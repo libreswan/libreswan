@@ -17,10 +17,13 @@
 #ifndef IP_SOCKADDR_H
 #define IP_SOCKADDR_H
 
+#include <sys/socket.h>		/* for struct sockaddr */
 #include <netinet/in.h>		/* for struct sockaddr_in */
 #ifdef HAVE_INET6_IN6_H
 #include <netinet6/in6.h>	/* for struct sockaddr_in6 */
 #endif
+
+#include <ip_endpoint.h>
 
 /*
  * Size the socaddr buffer big enough for all known
@@ -30,13 +33,26 @@
  * passert(sizeof(struct sockaddr) >= sizeof(struct sockaddr_in6));
  */
 
-typedef union {
-	/* sa.sa_* */
-	struct sockaddr sa;
-	/* sin.sin_* */
-	struct sockaddr_in sin;
-	/* sin6.sin6_* */
-	struct sockaddr_in6 sin6;
+typedef struct {
+	socklen_t len;
+	union {
+		/* sa.sa_* */
+		struct sockaddr sa;
+		/* sin.sin_* */
+		struct sockaddr_in sin;
+		/* sin6.sin6_* */
+		struct sockaddr_in6 sin6;
+	} sa;
 } ip_sockaddr;
+
+/*
+ * conversions
+ */
+
+/* convert the endpoint to a sockaddr */
+ip_sockaddr sockaddr_from_endpoint(const ip_endpoint *endpoint);
+/* convert sockaddr to an endpoint */
+err_t sockaddr_to_endpoint(const struct ip_protocol *protocol,
+			   const ip_sockaddr *sa, ip_endpoint *endpoint);
 
 #endif

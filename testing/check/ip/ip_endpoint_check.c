@@ -13,7 +13,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
- *
  */
 
 #include <stdio.h>
@@ -60,93 +59,6 @@ static void check_str_endpoint(void)
 
 		/* now convert it back */
 		CHECK_STR(endpoint_buf, endpoint, t->out, &e);
-	}
-}
-
-static void check_sockaddr_as_endpoint(void)
-{
-	static const struct test {
-		const int family;
-		const char *in;
-		uint8_t addr[16];
-		int port;
-		size_t size;
-		const char *err;
-		const char *out;
-	} tests[] = {
-		{ 4, "1.2.3.4:65535", { 1, 2, 3, 4, }, 65535, sizeof(struct sockaddr_in), NULL, NULL, },
-		{ 6, "[1::1]:65535", { [1] = 1, [15] = 1, }, 65535, sizeof(struct sockaddr_in6), NULL, NULL, },
-		/* far too small */
-		{ 4, "1.2.3.4:65535", { 1, 2, 3, 4, }, 65535, 0, "truncated", "<unspecified:>", },
-		{ 6, "[1::1]:65535", { [1] = 1, [15] = 1, }, 65535, 0, "truncated", "<unspecified:>", },
-		/* somewhat too small */
-#define SIZE offsetof(struct sockaddr, sa_family) + sizeof(sa_family_t)
-		{ 4, "1.2.3.4:65535", { 1, 2, 3, 4, }, 65535, SIZE, "wrong length", "<unspecified:>", },
-		{ 6, "[1::1]:65535", { [1] = 1, [15] = 1, }, 65535, SIZE, "wrong length", "<unspecified:>", },
-#undef SIZE
-	};
-
-	for (size_t ti = 0; ti < elemsof(tests); ti++) {
-		const struct test *t = &tests[ti];
-		const char *expect_out = t->out == NULL ? t->in : t->out;
-		PRINT_IN(stdout, " -> '%s'", expect_out);
-
-		/* construct a raw sockaddr */
-		ip_sockaddr sa = {
-			.sa = {
-				.sa_family = SA_FAMILY(t->family),
-			},
-		};
-		switch (t->family) {
-		case 4:
-			memcpy(&sa.sin.sin_addr, t->addr, sizeof(sa.sin.sin_addr));
-			sa.sin.sin_port = htons(t->port);
-			break;
-		case 6:
-			memcpy(&sa.sin6.sin6_addr, t->addr, sizeof(sa.sin6.sin6_addr));
-			sa.sin6.sin6_port = htons(t->port);
-			break;
-		}
-
-		/* sockaddr->endpoint */
-		ip_endpoint endpoint;
-		err_t err = sockaddr_to_endpoint(&ip_protocol_unset, &sa, t->size, &endpoint);
-		if (err != NULL) {
-			if (t->err == NULL) {
-				FAIL_IN("sockaddr_to_endpoint() unexpectedly failed: %s", err);
-			} else if (!streq(err, t->err)) {
-				FAIL_IN("sockaddr_to_endpoint() returned error '%s', expecting '%s'", err, t->err);
-			}
-			if (endpoint_type(&endpoint) != NULL) {
-				FAIL_IN("sockaddr_to_endpoint() failed yet endpoint has a type");
-			}
-		} else if (t->err != NULL) {
-			FAIL_IN("sockaddr_to_endpoint() should have failed: %s", t->err);
-		} else {
-			CHECK_TYPE(PRINT_IN, endpoint_type(&endpoint));
-		}
-
-		/* endpoint->sockaddr */
-		ip_sockaddr esa;
-		size_t size = endpoint_to_sockaddr(&endpoint, &esa);
-		if (err == NULL) {
-			if (size == 0) {
-				FAIL_IN("endpoint_to_sockaddr() returned %zu, expecting non-zero", size);
-			} else if (size > sizeof(esa)) {
-				FAIL_IN("endpoint_to_sockaddr() returned %zu, expecting %zu or smaller",
-					size, sizeof(esa));
-			} else if (!memeq(&esa, &sa, sizeof(esa))) {
-				/* compare the entire buffer, not just size */
-				FAIL_IN("endpoint_to_sockaddr() returned a different value");
-			}
-		} else {
-			if (size != 0) {
-				FAIL_IN("endpoint_to_sockaddr() returned %zu, expecting non-zero", size);
-			}
-		}
-
-		/* as a string */
-		CHECK_STR(endpoint_buf, endpoint, expect_out, &endpoint);
 	}
 }
 
@@ -233,6 +145,5 @@ static void check_endpoint_port(void)
 void ip_endpoint_check(void)
 {
 	check_str_endpoint();
-	check_sockaddr_as_endpoint();
 	check_endpoint_port();
 }

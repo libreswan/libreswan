@@ -39,6 +39,7 @@
 #include "demux.h"
 #include "pluto_stats.h"
 #include "ip_endpoint.h"
+#include "ip_sockaddr.h"
 #include "ip_protocol.h"
 #include "iface.h"
 
@@ -183,9 +184,8 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 			str_endpoint(&interface->local_endpoint, &ib),
 			str_endpoint(&remote_endpoint, &b));
 
-		ip_sockaddr remote_sa;
-		size_t remote_sa_size = endpoint_to_sockaddr(&remote_endpoint, &remote_sa);
-		wlen = sendto(interface->fd, ptr, len, 0, &remote_sa.sa, remote_sa_size);
+		ip_sockaddr remote_sa = sockaddr_from_endpoint(&remote_endpoint);
+		wlen = sendto(interface->fd, ptr, len, 0, &remote_sa.sa.sa, remote_sa.len);
 		if (wlen != (ssize_t)len) {
 			if (!just_a_keepalive) {
 				LOG_ERRNO(errno,

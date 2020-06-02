@@ -22,7 +22,6 @@
 #include "chunk.h"
 #include "err.h"
 #include "ip_address.h"
-#include "ip_sockaddr.h"
 
 struct lswlog;
 struct ip_protocol;
@@ -116,17 +115,6 @@ ip_endpoint set_endpoint_address(const ip_endpoint *endpoint,
 	{ *(ENDPOINT) = set_endpoint_hport(ENDPOINT, HPORT); }
 #define update_endpoint_nport(ENDPOINT, NPORT)			\
 	{ *(ENDPOINT) = set_endpoint_hport(ENDPOINT, ntohs(NPORT)); }
-
-/*
- * conversions
- */
-
-/* convert the endpoint to a sockaddr; return true size */
-size_t endpoint_to_sockaddr(const ip_endpoint *endpoint, ip_sockaddr *sa);
-/* convert sockaddr to an endpoint */
-err_t sockaddr_to_endpoint(const struct ip_protocol *protocol,
-			   const ip_sockaddr *sa, socklen_t sa_len,
-			   ip_endpoint *endpoint);
 
 /*
  * Old style.

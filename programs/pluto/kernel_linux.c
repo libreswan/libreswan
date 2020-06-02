@@ -57,6 +57,7 @@
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 #include "keys.h"
 #include "ip_address.h"
+#include "ip_sockaddr.h"
 #include "ip_info.h"
 #include "iface.h"
 
@@ -137,9 +138,8 @@ struct raw_iface *find_raw_ifaces4(void)
 	{
 		ip_address any = address_any(&ipv4_info);
 		ip_endpoint any_ep = endpoint3(&ip_protocol_udp, &any, pluto_port);
-		ip_sockaddr any_sa;
-		size_t any_sa_size = endpoint_to_sockaddr(&any_ep, &any_sa);
-		if (bind(master_sock, &any_sa.sa, any_sa_size) < 0) {
+		ip_sockaddr any_sa = sockaddr_from_endpoint(&any_ep);
+		if (bind(master_sock, &any_sa.sa.sa, any_sa.len) < 0) {
 			endpoint_buf eb;
 			EXIT_LOG_ERRNO(errno, "bind(%s) failed in %s()",
 				       str_endpoint(&any_ep, &eb), __func__);

@@ -18,6 +18,7 @@ PROGRAM_MANPAGE =
 PROGRAM = ipcheck
 
 OBJS += ipcheck.o
+OBJS += ip_sockaddr_check.o
 OBJS += ip_address_check.o
 OBJS += ip_endpoint_check.o
 OBJS += ip_range_check.o

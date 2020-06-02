@@ -38,6 +38,7 @@
 #include "lswlog.h"	/* for pexpect() */
 #include "ip_info.h"
 #include "ip_protocol.h"
+#include "ip_sockaddr.h"
 
 bool starter_iface_find(const char *iface, const struct ip_info *family,
 			ip_address *dst, ip_address *nh)
@@ -70,10 +71,12 @@ bool starter_iface_find(const char *iface, const struct ip_info *family,
 	if ((req.ifr_flags & IFF_POINTOPOINT) != 0x0 && nh != NULL &&
 	    (ioctl(sock, SIOCGIFDSTADDR, &req) == 0)) {
 		if (req.ifr_addr.sa_family == family->af) {
-			const ip_sockaddr sa = { .sa = req.ifr_addr, };
+			const ip_sockaddr sa = {
+				.len = family->sockaddr_size,
+				.sa.sa = req.ifr_addr,
+			};
 			ip_endpoint nhe;
-			happy(sockaddr_to_endpoint(&ip_protocol_unset,
-						   &sa, family->sockaddr_size, &nhe));
+			happy(sockaddr_to_endpoint(&ip_protocol_unset, &sa, &nhe));
 			pexpect(endpoint_hport(&nhe) == 0);
 			*nh = endpoint_address(&nhe);
 		}
@@ -82,10 +85,12 @@ bool starter_iface_find(const char *iface, const struct ip_info *family,
 	/* get DST */
 	if (dst != NULL && ioctl(sock, SIOCGIFADDR, &req) == 0) {
 		if (req.ifr_addr.sa_family == family->af) {
-			const ip_sockaddr sa = { .sa = req.ifr_addr, };
+			const ip_sockaddr sa = {
+				.len = family->sockaddr_size,
+				.sa.sa = req.ifr_addr,
+			};
 			ip_endpoint dste;
-			happy(sockaddr_to_endpoint(&ip_protocol_unset,
-						   &sa, family->sockaddr_size, &dste));
+			happy(sockaddr_to_endpoint(&ip_protocol_unset, &sa, &dste));
 			pexpect(endpoint_hport(&dste) == 0);
 			*dst = endpoint_address(&dste);
 		}

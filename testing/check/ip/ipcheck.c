@@ -49,6 +49,7 @@ int main(int argc, char *argv[])
 	ip_info_check();
 	ip_protoport_check();
 	ip_selector_check();
+	ip_sockaddr_check();
 
 	if (fails > 0) {
 		fprintf(stderr, "TOTAL FAILURES: %d\n", fails);
