@@ -1225,13 +1225,14 @@ bool raw_eroute(const ip_address *this_host,
 	if (DBGP(DBG_BASE)) {
 		selector_buf mybuf;
 		selector_buf peerbuf;
-		DBG_log("%s eroute %s --%d-> %s => %s using reqid %d (raw_eroute)",
+		DBG_log("%s eroute %s --%d-> %s => %s using reqid %d (raw_eroute) proto=%d",
 			opname,
 			str_selector(this_client, &mybuf),
 			transport_proto,
 			str_selector(that_client, &peerbuf),
 			text_said,
-			proto_info->reqid);
+			proto_info->reqid,
+			proto_info->proto);
 
 		if (policy_label != NULL)
 			DBG_log("policy security label %s",
@@ -2273,10 +2274,13 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	 * Note reversed ends.
 	 * Not much to be done on failure.
 	 */
+	dbg("%s() is installing inbound eroute? inbound=%d inbound_eroute=%d owner=#%lu mode=%d",
+	    __func__, inbound, kernel_ops->inbound_eroute, c->spd.eroute_owner, mode);
 	if (inbound &&
 		(kernel_ops->inbound_eroute ?
 			c->spd.eroute_owner == SOS_NOBODY :
 			mode == ENCAPSULATION_MODE_TUNNEL)) {
+		dbg("%s() is installing inbound eroute", __func__);
 		struct pfkey_proto_info proto_info[4];
 		int i = 0;
 
@@ -2311,6 +2315,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			i++;
 		}
 
+		dbg("%s() before proto %d", __func__, proto_info[0].proto);
 		proto_info[i].proto = 0;
 
 		/*
@@ -2325,10 +2330,12 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				proto_info[i].mode =
 					ENCAPSULATION_MODE_TRANSPORT;
 		}
+		dbg("%s() after proto %d", __func__, proto_info[0].proto);
 
 		uint32_t xfrm_if_id = c->xfrmi != NULL ?
 			c->xfrmi->if_id : 0;
 
+		dbg("%s() calling raw_eroute backwards (i.e., inbound)", __func__);
 		/* MCR - should be passed a spd_eroute structure here */
 		/* note: this and that are intentionally reversed */
 		if (!raw_eroute(&c->spd.that.host_addr,		/* this_host */
