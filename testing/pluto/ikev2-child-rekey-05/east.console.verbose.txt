@@ -49,8 +49,6 @@ initdone
 000 config setup options:
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d
-000 nssdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
-000 dnssec-rootkey-file=/var/lib/unbound/root.key, dnssec-trusted=<unset>
 000 sbindir=/usr/local/sbin, libexecdir=/usr/local/libexec/ipsec
 000 pluto_version=3.22_538_gd830a1b_ipsec_rekey_child-1, pluto_vendorid=OE-Libreswan-v3.22-538
 000 nhelpers=-1, uniqueids=yes, dnssec-enable=yes, perpeerlog=no, logappend=no, logip=yes, shuntlifetime=900s, xfrmlifetime=300s
