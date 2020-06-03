@@ -11,7 +11,7 @@
 # $ git diff
 
 ipsec enumcheck > OUTPUT/enumcheck.out || echo "Enum check barfed"
-cmp ../../check/enum/OUTPUT.enumcheck.txt OUTPUT/enumcheck.out || echo "Does the file OUTPUT.enumcheck.txt need updating?"
+cmp ../../check/enum/OUTPUT.enumcheck.txt OUTPUT/enumcheck.out || echo "Does the file OUTPUT.enumcheck.txt need updating? See description.txt"
 
 # other checks
 

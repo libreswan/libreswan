@@ -21,7 +21,7 @@ west #
  ipsec enumcheck > OUTPUT/enumcheck.out || echo "Enum check barfed"
 enumcheck: leak detective found no leaks
 west #
- cmp ../../check/enum/OUTPUT.enumcheck.txt OUTPUT/enumcheck.out || echo "Does the file OUTPUT.enumcheck.txt need updating?"
+ cmp ../../check/enum/OUTPUT.enumcheck.txt OUTPUT/enumcheck.out || echo "Does the file OUTPUT.enumcheck.txt need updating? See description.txt"
 west #
  # other checks
 west #

@@ -8,7 +8,7 @@ or whack protocol).
 
 To update run:
 
-$ ./OBJ.linux.x86_64/testing/enumcheck/enumcheck > testing/enumcheck/OUTPUT.enumcheck.txt
+$ ./OBJ.linux.x86_64/testing/check/enum/enumcheck > testing/check/enum/OUTPUT.enumcheck.txt
 $ git diff
 
 and then carefully examine the changes

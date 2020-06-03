@@ -982,52 +982,6 @@ IETF registry enum_names:
          short_name 4: PROTO_IPCOMP OK
          jam_enum_short 4: PROTO_IPCOMP OK
 
-  ikev2_protocol_names:
-    0 -> PROTO_v2_RESERVED
-         jam_enum 0: PROTO_v2_RESERVED OK
-         search PROTO_v2_RESERVED: OK
-         match PROTO_v2_RESERVED: OK
-         short_name 0: PROTO_v2_RESERVED OK
-         jam_enum_short 0: PROTO_v2_RESERVED OK
-    1 -> PROTO_v2_IKE
-         jam_enum 1: PROTO_v2_IKE OK
-         search PROTO_v2_IKE: OK
-         match PROTO_v2_IKE: OK
-         short_name 1: PROTO_v2_IKE OK
-         jam_enum_short 1: PROTO_v2_IKE OK
-    2 -> PROTO_v2_AH
-         jam_enum 2: PROTO_v2_AH OK
-         search PROTO_v2_AH: OK
-         match PROTO_v2_AH: OK
-         short_name 2: PROTO_v2_AH OK
-         jam_enum_short 2: PROTO_v2_AH OK
-    3 -> PROTO_v2_ESP
-         jam_enum 3: PROTO_v2_ESP OK
-         search PROTO_v2_ESP: OK
-         match PROTO_v2_ESP: OK
-         short_name 3: PROTO_v2_ESP OK
-         jam_enum_short 3: PROTO_v2_ESP OK
-
-  ikev2_del_protocol_names:
-    1 -> PROTO_v2_IKE
-         jam_enum 1: PROTO_v2_IKE OK
-         search PROTO_v2_IKE: OK
-         match PROTO_v2_IKE: OK
-         short_name 1: PROTO_v2_IKE OK
-         jam_enum_short 1: PROTO_v2_IKE OK
-    2 -> PROTO_v2_AH
-         jam_enum 2: PROTO_v2_AH OK
-         search PROTO_v2_AH: OK
-         match PROTO_v2_AH: OK
-         short_name 2: PROTO_v2_AH OK
-         jam_enum_short 2: PROTO_v2_AH OK
-    3 -> PROTO_v2_ESP
-         jam_enum 3: PROTO_v2_ESP OK
-         search PROTO_v2_ESP: OK
-         match PROTO_v2_ESP: OK
-         short_name 3: PROTO_v2_ESP OK
-         jam_enum_short 3: PROTO_v2_ESP OK
-
   isakmp_transformid_names:
     1 -> KEY_IKE
          jam_enum 1: KEY_IKE OK
@@ -3079,7 +3033,7 @@ IETF registry enum_names:
          short_name 4: ISAKMP_CFG_ACK OK
          jam_enum_short 4: ISAKMP_CFG_ACK OK
 
-  ikev2_sec_proto_id_names:
+  ikev2_proposal_protocol_id_names:
     1 -> IKEv2_SEC_PROTO_IKE
          jam_enum 1: IKEv2_SEC_PROTO_IKE OK
          search IKEv2_SEC_PROTO_IKE: OK
@@ -3113,6 +3067,52 @@ IETF registry enum_names:
          match IKEv2_SEC_FC_CT_AUTHENTICATION: OK
          short_name 5: IKEv2_SEC_FC_CT_AUTHENTICATION OK
          jam_enum_short 5: IKEv2_SEC_FC_CT_AUTHENTICATION OK
+
+  ikev2_delete_protocol_id_names:
+    1 -> IKEv2_SEC_PROTO_IKE
+         jam_enum 1: IKEv2_SEC_PROTO_IKE OK
+         search IKEv2_SEC_PROTO_IKE: OK
+         match IKEv2_SEC_PROTO_IKE: OK
+         short_name 1: IKE OK
+         jam_enum_short 1: IKE OK
+         match IKE [short]: OK
+    2 -> IKEv2_SEC_PROTO_AH
+         jam_enum 2: IKEv2_SEC_PROTO_AH OK
+         search IKEv2_SEC_PROTO_AH: OK
+         match IKEv2_SEC_PROTO_AH: OK
+         short_name 2: AH OK
+         jam_enum_short 2: AH OK
+         match AH [short]: OK
+    3 -> IKEv2_SEC_PROTO_ESP
+         jam_enum 3: IKEv2_SEC_PROTO_ESP OK
+         search IKEv2_SEC_PROTO_ESP: OK
+         match IKEv2_SEC_PROTO_ESP: OK
+         short_name 3: ESP OK
+         jam_enum_short 3: ESP OK
+         match ESP [short]: OK
+
+  ikev2_notify_protocol_id_names:
+    0 -> IKEv2_SEC_PROTO_NONE
+         jam_enum 0: IKEv2_SEC_PROTO_NONE OK
+         search IKEv2_SEC_PROTO_NONE: OK
+         match IKEv2_SEC_PROTO_NONE: OK
+         short_name 0: NONE OK
+         jam_enum_short 0: NONE OK
+         match NONE [short]: OK
+    2 -> IKEv2_SEC_PROTO_AH
+         jam_enum 2: IKEv2_SEC_PROTO_AH OK
+         search IKEv2_SEC_PROTO_AH: OK
+         match IKEv2_SEC_PROTO_AH: OK
+         short_name 2: AH OK
+         jam_enum_short 2: AH OK
+         match AH [short]: OK
+    3 -> IKEv2_SEC_PROTO_ESP
+         jam_enum 3: IKEv2_SEC_PROTO_ESP OK
+         search IKEv2_SEC_PROTO_ESP: OK
+         match IKEv2_SEC_PROTO_ESP: OK
+         short_name 3: ESP OK
+         jam_enum_short 3: ESP OK
+         match ESP [short]: OK
 
   ikev2_auth_names:
     0 -> IKEv2_AUTH_RESERVED
