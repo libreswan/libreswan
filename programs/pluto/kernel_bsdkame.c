@@ -302,17 +302,17 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 			       const ip_subnet *this_client,
 			       const ip_address *that_host,
 			       const ip_subnet *that_client,
-			       ipsec_spi_t cur_spi,
-			       ipsec_spi_t new_spi UNUSED,
+			       ipsec_spi_t cur_spi UNUSED,
+			       ipsec_spi_t new_spi,
 			       const struct ip_protocol *sa_proto,
 			       unsigned int transport_proto,
 			       enum eroute_type esatype UNUSED,
-			       const struct pfkey_proto_info *proto_info UNUSED,
+			       const struct pfkey_proto_info *proto_info,
 			       deltatime_t use_lifetime UNUSED,
 			       uint32_t sa_priority UNUSED,
 			       const struct sa_marks *sa_marks UNUSED,
 			       const uint32_t xfrm_if_id UNUSED,
-			       enum pluto_sadb_operations op,
+			       enum pluto_sadb_operations sadb_op,
 			       const char *text_said UNUSED,
 			       const char *policy_label UNUSED)
 {
@@ -323,51 +323,67 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 	struct sadb_x_ipsecrequest *ir;
 	int policylen;
 	int ret;
-	int policy = -1;
 
-	switch (cur_spi) {
-	case 0:
-		/* we're supposed to end up with no eroute: rejig op and opname */
-		switch (op) {
-		case ERO_REPLACE:
-			/* replace with nothing == delete */
-			op = ERO_DELETE;
+	int policy = IPSEC_POLICY_IPSEC;
+
+	switch (esatype) {
+	case ET_UNSPEC:
+	case ET_AH:
+	case ET_ESP:
+	case ET_IPCOMP:
+	case ET_IPIP:
+		break;
+
+	case ET_INT:
+		/* shunt route */
+		switch (ntohl(new_spi)) {
+		case SPI_PASS:
+			DBG(DBG_KERNEL, DBG_log("netlink_raw_eroute: SPI_PASS"));
+			policy = IPSEC_POLICY_NONE;
 			break;
-		case ERO_ADD:
-			/* add nothing == do nothing */
-			return TRUE;
-
-		case ERO_DELETE:
-			/* delete remains delete */
+		case SPI_HOLD:
+			/*
+			 * We don't know how to implement %hold, but it is okay.
+			 * When we need a hold, the kernel XFRM acquire state
+			 * will do the job (by dropping or holding the packet)
+			 * until this entry expires. See /proc/sys/net/core/xfrm_acq_expires
+			 * After expiration, the underlying policy causing the original acquire
+			 * will fire again, dropping further packets.
+			 */
+			DBG(DBG_KERNEL, DBG_log("netlink_raw_eroute: SPI_HOLD implemented as no-op"));
+			return TRUE; /* yes really */
+		case SPI_DROP:
+		case SPI_REJECT:
+		case 0: /* used with type=passthrough - can it not use SPI_PASS ?? */
+			policy = IPSEC_POLICY_DISCARD;
 			break;
+		case SPI_TRAP:
+			if (sadb_op == ERO_ADD_INBOUND ||
+				sadb_op == ERO_DEL_INBOUND)
+				return TRUE;
 
-		case ERO_ADD_INBOUND:
 			break;
-
-		case ERO_DEL_INBOUND:
-			break;
-
+		case SPI_TRAPSUBNET: /* unused in our code */
 		default:
-			bad_case(op);
+			bad_case(ntohl(new_spi));
 		}
 		break;
 
-	case SPI_TRAP:
-		policy = IPSEC_POLICY_IPSEC;
-		break;
-
-	case SPI_PASS:
-		policy = IPSEC_POLICY_NONE; /* BYPASS is for sockets only */
-		break;
-
-	case SPI_REJECT:
-	case SPI_DROP:
-		policy = IPSEC_POLICY_DISCARD;
-		break;
-
 	default:
-		DBG_log("shunt_eroute called with cur_spi=%08x", cur_spi);
-		policy = IPSEC_POLICY_IPSEC;
+		bad_case(esatype);
+	}
+
+	const int dir = ((sadb_op == ERO_ADD_INBOUND || sadb_op == ERO_DEL_INBOUND) ?
+			 IPSEC_DIR_INBOUND : IPSEC_DIR_OUTBOUND);
+
+	/*
+	 * XXX: Hack: don't install an inbound spdb entry when tunnel
+	 * mode?
+	 */
+	if (dir == IPSEC_DIR_INBOUND && sa_proto != &ip_protocol_ipip) {
+		dbg("%s() ignoring inbound non-tunnel %s eroute entry", __func__,
+			sa_proto->name);
+		return true;
 	}
 
 	zero(&pbuf);	/* OK: no pointer fields */
@@ -376,22 +392,10 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 
 	policy_struct->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
 	policy_struct->sadb_x_policy_type = policy;
-	policy_struct->sadb_x_policy_dir  = IPSEC_DIR_OUTBOUND;
+	policy_struct->sadb_x_policy_dir = dir;
 	policy_struct->sadb_x_policy_id   = 0; /* needs to be set, and recorded */
 
 	policylen = sizeof(*policy_struct);
-
-	switch (sa_proto->ipproto) {
-	case IPPROTO_ESP:
-	case IPPROTO_AH:
-	case IPPROTO_IPCOMP:
-		break;
-
-	default:
-		DBG_log("bsdkame_raw_eroute not installing eroute to proto=%s",
-			sa_proto->name);
-		return TRUE;
-	}
 
 	if (policy == IPSEC_POLICY_IPSEC) {
 		ip_sockaddr local_sa = sockaddr_from_endpoint(this_host);
@@ -401,12 +405,16 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 
 		ir->sadb_x_ipsecrequest_len = (sizeof(struct sadb_x_ipsecrequest) +
 					       local_sa.len + remote_sa.len);
-		ir->sadb_x_ipsecrequest_proto = sa_proto->ipproto;
-
-		if (sa_proto->ipproto == ET_IPIP)
+		dbg("%s() sa_proto is %d %s", __func__, sa_proto->ipproto, sa_proto->name);
+		if (sa_proto->ipproto == ET_IPIP) {
 			ir->sadb_x_ipsecrequest_mode = IPSEC_MODE_TUNNEL;
-		else
+			ir->sadb_x_ipsecrequest_proto = proto_info != NULL ? (unsigned)proto_info->proto : sa_proto->ipproto;
+		} else {
 			ir->sadb_x_ipsecrequest_mode = IPSEC_MODE_TRANSPORT;
+			ir->sadb_x_ipsecrequest_proto = sa_proto->ipproto;
+		}
+		dbg("%s() sadb mode %d proto %d",
+		    __func__, ir->sadb_x_ipsecrequest_mode, ir->sadb_x_ipsecrequest_proto);
 		ir->sadb_x_ipsecrequest_level = IPSEC_LEVEL_REQUIRE;
 		ir->sadb_x_ipsecrequest_reqid = 0; /* not used for now */
 
@@ -418,10 +426,10 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 
 		policylen += ir->sadb_x_ipsecrequest_len;
 
-		DBG_log("request_len=%u policylen=%u",
-			ir->sadb_x_ipsecrequest_len, policylen);
+		dbg("request_len=%u policylen=%u",
+		    ir->sadb_x_ipsecrequest_len, policylen);
 	} else {
-		DBG_log("setting policy=%d", policy);
+		dbg("setting policy=%d", policy);
 	}
 
 	policy_struct->sadb_x_policy_len = PFKEY_UNIT64(policylen);
@@ -738,21 +746,59 @@ static bool bsdkame_sag_eroute(const struct state *st,
 {
 	const struct ip_protocol *proto;
 
-	DBG_log("sag eroute called");
+	dbg("sag eroute called");
 
-	proto = 0;
-	if (st->st_ah.present)
+	/*
+	 * figure out the SPI and protocol (in two forms)
+	 * for the innermost transformation.
+	 */
+	struct pfkey_proto_info proto_info[4] = { { .proto = 0, }, };
+	bool tunnel = false;
+	int i = elemsof(proto_info) - 1;
+	proto_info[i].proto = 0; /*sentinel entry*/
+
+	if (st->st_ah.present) {
+		i--;
 		proto = &ip_protocol_ah;
-	else if (st->st_esp.present)
-		proto = &ip_protocol_esp;
-	else if (st->st_ipcomp.present)
-		proto = &ip_protocol_comp;
-
-	if (!sr->this.has_port_wildcard) {
-		passert(subnet_hport(&sr->this.client) == sr->this.port);
+		proto_info[i].proto = IPPROTO_AH;
+		proto_info[i].mode = st->st_ah.attrs.mode;
+		tunnel |= proto_info[i].mode ==
+			ENCAPSULATION_MODE_TUNNEL;
+		proto_info[i].reqid = reqid_ah(sr->reqid);
 	}
-	if (!sr->that.has_port_wildcard) {
-		passert(subnet_hport(&sr->that.client) == sr->that.port);
+
+	if (st->st_esp.present) {
+		i--;
+		proto = &ip_protocol_esp;
+		proto_info[i].proto = IPPROTO_ESP;
+		proto_info[i].mode = st->st_esp.attrs.mode;
+		tunnel |= proto_info[i].mode ==
+			ENCAPSULATION_MODE_TUNNEL;
+		proto_info[i].reqid = reqid_esp(sr->reqid);
+	}
+
+	if (st->st_ipcomp.present) {
+		i--;
+		proto = &ip_protocol_comp;
+		proto_info[i].proto = ip_protocol_comp.ipproto;
+		proto_info[i].mode =
+			st->st_ipcomp.attrs.mode;
+		tunnel |= proto_info[i].mode ==
+			ENCAPSULATION_MODE_TUNNEL;
+		proto_info[i].reqid = reqid_ipcomp(sr->reqid);
+	}
+
+	/* check for no transform at all */
+	passert(st->st_ipcomp.present || st->st_esp.present ||
+			st->st_ah.present);
+
+	if (tunnel) {
+		proto = &ip_protocol_ipip;
+		int j;
+		proto_info[i].mode = ENCAPSULATION_MODE_TUNNEL;
+		for (j = i + 1; proto_info[j].proto; j++)
+			proto_info[j].mode =
+				ENCAPSULATION_MODE_TRANSPORT;
 	}
 
 	return bsdkame_raw_eroute(&sr->this.host_addr,
@@ -764,7 +810,7 @@ static bool bsdkame_sag_eroute(const struct state *st,
 				  proto,
 				  sr->this.protocol,
 				  0,            /* esatype unused */
-				  NULL,         /* proto_info unused */
+				  proto_info + i,  /* first filled in entry */
 				  deltatime(0),            /* use lifetime unused */
 				  0,		/* sa_priority */
 				  NULL,		/* sa_marks */
@@ -797,11 +843,8 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace)
 		satype = SADB_X_SATYPE_IPCOMP;
 		break;
 	case ET_IPIP:
-#if 0
-		satype = K_SADB_X_SATYPE_IPIP;
-#endif
-		bad_case(sa->esatype);
-		break;
+		libreswan_log("in %s() ignoring nonsensical ET_IPIP", __func__);
+		return true;
 
 	default:
 	case ET_INT:
@@ -971,7 +1014,7 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	.del_sa = bsdkame_del_sa,
 	.get_spi = NULL,
 	.eroute_idle = bsdkame_was_eroute_idle,
-	.inbound_eroute = FALSE,
+	.inbound_eroute = true,
 	.scan_shunts = expire_bare_shunts,
 	.init = bsdkame_init_pfkey,
 	.shutdown = NULL,
