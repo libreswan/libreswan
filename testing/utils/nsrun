@@ -116,8 +116,8 @@ class DefaultVariables ():
         # 100s of NS.
         self.node = "swantest"
         self.node = platform.node().split('.')[0]
-        self.sudo_c = "/usr/bin/sudo"
-        self.nsenter_c = "/usr/bin/nsenter"
+        self.sudo_c = "sudo"
+        self.nsenter_c = "nsenter"
         self.nsenter_ns_args = ['--mount=/run/mountns/',
                                 '--net=/run/netns/', '--uts=/run/utsns/']
 
@@ -126,7 +126,7 @@ class DefaultVariables ():
         self.netns_dir = "%s/netns" % self.nsroot_dir
         self.mountns_dir = "%s/mountns" % self.nsroot_dir
 
-        self.ip_c = '/usr/sbin/ip'
+        self.ip_c = 'ip'
 
         self.docker_c = 'podman'
 
@@ -2830,7 +2830,7 @@ def ns_add_root_dirs(args, sudo):
             raise Exception("ERROR: %s" % cmd)
 
     if not is_mount("tmpfs", DEF.mountns_dir):
-        # mountns need special bid on some systems, like Fedora
+        # mountns need special bind on some systems, like Fedora
         # https://github.com/karelzak/util-linux/issues/289
         cmd = "mount --bind %s %s" % (DEF.mountns_dir, DEF.mountns_dir)
         if sudo_shell_run(cmd, sudo):
@@ -2921,7 +2921,7 @@ def unshare_cmd(host, testname):
     cmd = "unshare "
     for a in DEF.nsenter_ns_args:
         cmd += " %s%s" % (a, ns)
-    cmd += ' /usr/bin/hostname ' + host
+    cmd += ' /bin/hostname ' + host
 
     return cmd
 
@@ -3584,7 +3584,7 @@ class Namespace:
         cmd = self.nsenter_cmd("%s-%s" % (host, test_name)) + ' ipsec stop; ip link show type xfrm'
         # next command is bit smarter than the previous one, it does not seems
         # to work with subprocess, may be in pexpect
-        # cmd = self.nsenter_cmd("%s-%s" % (host, test_name)) +  ' /usr/bin/findmnt /run/pluto/ && ls /run/pluto/pluto.pid &&  ipsec stop'
+        # cmd = self.nsenter_cmd("%s-%s" % (host, test_name)) +  ' /bin/findmnt /run/pluto/ && ls /run/pluto/pluto.pid &&  ipsec stop'
         logger.debug("ns_clean_prev_run %s" % cmd)
         try:
             output = subprocess.check_output(cmd, shell=True, timeout=timer)

@@ -66,7 +66,7 @@ def mount_bind(src, dst, mode=None, touch_src_file=False, mkdir_src=False, wipe_
                  % (src, dst, mode_str))
         return True
 
-    cmd = ['/usr/bin/mount', '--bind',  src, dst]
+    cmd = ['/bin/mount', '--bind',  src, dst]
 
     o = subprocess.run(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
                         encoding='utf-8')
@@ -92,7 +92,7 @@ def lsw_cp_file(src, dst, mode=None, nsbasepath=''):
 
 def umount(dst):
     if os.path.isdir(dst) or os.path.isfile(dst):
-        subprocess.getoutput("/usr/bin/umount %s" % dst)
+        subprocess.getoutput("/bin/umount %s" % dst)
     else:
         if os.path.islink(dst):
             os.unlink(dst)
@@ -285,7 +285,7 @@ if os.path.isfile("/lib/systemd/system/ipsec.service") and not args.namespace:
         fp = open("/lib/systemd/system/ipsec.service", "w")
         fp.write("".join(service).replace("Restart=always", "Restart=no"))
     # always reload to avoid "service is masked" errors
-    subprocess.getoutput("/usr/bin/systemctl daemon-reload")
+    subprocess.getoutput("/bin/systemctl daemon-reload")
 
 # AA_201902 what happens to audit log namespace
 # we have to cleanup the audit log or we could get entries from previous test
@@ -293,12 +293,12 @@ if os.path.isfile("/var/log/audit/audit.log"):
     fp = open("/var/log/audit/audit.log", "w")
     fp.close()
     if os.path.isfile("/lib/systemd/system/auditd.service"):
-        subprocess.getoutput("/usr/bin/systemctl restart auditd.service")
+        subprocess.getoutput("/bin/systemctl restart auditd.service")
 
 # disable some daemons that could cause noise packets getting encrypted
 if not args.namespace :
-    subprocess.getoutput("/usr/bin/systemctl stop chronyd")
-    subprocess.getoutput("/usr/bin/systemctl stop sssd")
+    subprocess.getoutput("/bin/systemctl stop chronyd")
+    subprocess.getoutput("/bin/systemctl stop sssd")
 
 # ensure cores are just dropped, not sent to aobrt-hook-ccpp or systemd.
 # setting /proc/sys/kernel/core_pattern to "core" or a pattern does not
@@ -321,6 +321,10 @@ if hostname != "nic":
     if args.namespace :
         if mount_bind(src, dst, mkdir_src=True,  wipe_old_dst=True):
             sys.exit(1)
+        if os.path.isdir("/var/lib/ipsec/nss"):
+            dst = "/var/lib/ipsec/nss"
+            if mount_bind(src, dst, mkdir_src=True,  wipe_old_dst=True):
+                sys.exit(1)
 
     if args.userland in ("libreswan", "openswan"):
         dst = "/run/pluto"
@@ -421,7 +425,7 @@ sysconfigd = "%s/etc/sysconfig" % (nsbasepath)
 if not os.path.isdir(sysconfigd):
     os.makedirs(sysconfigd)
 
-if args.userland in ("libreswan", "openswan") and hostname != "nic":
+if args.userland in ("libreswan", "openswan") and hostname != "nic" and not args.namespace:
     if args.fips and args.userland in ("libreswan", "openswan"):
         # the test also requires using a modutil cmd which we cannot run here
         shutil.copyfile("/testing/baseconfigs/all/etc/sysconfig/pluto.fips", "/etc/sysconfig/pluto")
