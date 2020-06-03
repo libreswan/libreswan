@@ -1931,7 +1931,7 @@ int
 pfkey_send(int so, struct sadb_msg *msg, int len)
 {
 	if (DBGP(DBG_BASE)) {
-		pfkey_sadump(msg);
+		kdebug_sadb(msg);
 	}
 
 	if ((len = send(so, (void *)msg, (socklen_t)len, 0)) < 0) {
