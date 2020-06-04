@@ -134,8 +134,8 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 static bool bsdkame_do_command(const struct connection *c, const struct spd_route *sr,
 			       const char *verb, const char *verb_suffix, struct state *st)
 {
-	char cmd[1536]; /* arbitrary limit on shell command length */
-	char common_shell_out_str[1024];
+	char cmd[2048]; /* arbitrary limit on shell command length */
+	char common_shell_out_str[2048];
 
 	if (!fmt_common_shell_out(common_shell_out_str,
 				  sizeof(common_shell_out_str), c, sr,
