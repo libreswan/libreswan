@@ -12,6 +12,7 @@ end of file /etc/ipsec.conf
 Loading default conn
 starter: left is KH_NOTSET
 Loading conn west
+Loading conn west-bogus
 Loading conn east
 loading named conns: east
 seeking_src = 0, seeking_gateway = 0, has_peer = 1

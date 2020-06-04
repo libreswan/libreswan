@@ -12,6 +12,7 @@ end of file /etc/ipsec.conf
 Loading default conn
 starter: left is KH_NOTSET
 Loading conn west
+Loading conn west-bogus
 Loading conn east
 loading named conns: west
 seeking_src = 0, seeking_gateway = 0, has_peer = 1
@@ -28,6 +29,31 @@ conn: "west" accept-redirect-to=<unset>
 conn: "west" esp=<unset>
 conn: "west" ike=<unset>
 002 added connection description "west"
+west #
+ ipsec addconn --verbose west-bogus
+opening file: /etc/ipsec.conf
+debugging mode enabled
+end of file /etc/ipsec.conf
+Loading default conn
+starter: left is KH_NOTSET
+Loading conn west
+Loading conn west-bogus
+Loading conn east
+loading named conns: west-bogus
+seeking_src = 0, seeking_gateway = 0, has_peer = 1
+seeking_src = 0, seeking_gateway = 0, has_peer = 0
+conn: "west-bogus" modecfgdns=<unset>
+conn: "west-bogus" modecfgdomains=<unset>
+conn: "west-bogus" modecfgbanner=<unset>
+conn: "west-bogus" mark=<unset>
+conn: "west-bogus" mark-in=<unset>
+conn: "west-bogus" mark-out=<unset>
+conn: "west-bogus" vti_iface=<unset>
+conn: "west-bogus" redirect-to=<unset>
+conn: "west-bogus" accept-redirect-to=<unset>
+conn: "west-bogus" esp=<unset>
+conn: "west-bogus" ike=<unset>
+002 added connection description "west-bogus"
 west #
  echo "initdone"
 initdone
