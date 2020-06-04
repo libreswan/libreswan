@@ -2,4 +2,5 @@
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec addconn --verbose west
+ipsec addconn --verbose west-bogus
 echo "initdone"

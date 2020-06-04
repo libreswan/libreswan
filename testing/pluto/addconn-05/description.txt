@@ -1,3 +1,5 @@
 test addconn with left=%eth1 Bugtracker #350
 
 The connection on west should initiate and establish
+
+specifying a bogus interface should not cause a crash
