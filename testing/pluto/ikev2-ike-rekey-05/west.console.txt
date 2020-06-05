@@ -1,0 +1,167 @@
+/testing/guestbin/swan-prep
+west #
+ ip addr show dev eth0 | grep 192.0.100.254 || ip addr add 192.0.100.254/24 dev eth0
+west #
+ ip addr show dev eth0 | grep 192.0.101.254 || ip addr add 192.0.101.254/24 dev eth0
+west #
+ ip route show scope global | grep 192.0.200.0 || ip route add 192.0.200.0/24 via 192.1.2.23  dev eth1
+west #
+ ip route show scope global | grep 192.0.201.0 || ip route add 192.0.201.0/24 via 192.1.2.23  dev eth1
+west #
+ # ensure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+west #
+ iptables -A INPUT -i eth1 -s 192.0.200.0/24 -j LOGDROP
+west #
+ iptables -A INPUT -i eth1 -s 192.0.201.0/24 -j LOGDROP
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec whack --debug-all --impair suppress-retransmits
+west #
+ ipsec auto --add westnet-eastnet-a
+002 added connection description "westnet-eastnet-a"
+west #
+ ipsec auto --add westnet-eastnet-b
+002 added connection description "westnet-eastnet-b"
+west #
+ ipsec auto --add westnet-eastnet-c
+002 added connection description "westnet-eastnet-c"
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up westnet-eastnet-a
+1v2 "westnet-eastnet-a" #1: initiating IKEv2 IKE SA
+1v2 "westnet-eastnet-a" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "westnet-eastnet-a" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "westnet-eastnet-a" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "westnet-eastnet-a" #2: Authenticated using authby=secret
+002 "westnet-eastnet-a" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "westnet-eastnet-a" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+west #
+ ping -w 4 -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ipsec auto --up westnet-eastnet-b
+1v2 "westnet-eastnet-b" #3: STATE_V2_CREATE_I: sent IPsec Child req wait response
+002 "westnet-eastnet-b" #3: negotiated connection [192.0.100.0-192.0.100.255:0-65535 0] -> [192.0.200.0-192.0.200.255:0-65535 0]
+004 "westnet-eastnet-b" #3: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+west #
+ ping -w 4 -n -c 4 -I 192.0.100.254 192.0.200.254
+PING 192.0.200.254 (192.0.200.254) from 192.0.100.254 : 56(84) bytes of data.
+64 bytes from 192.0.200.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.200.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.200.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.200.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.200.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ipsec auto --up westnet-eastnet-c
+1v2 "westnet-eastnet-c" #4: STATE_V2_CREATE_I: sent IPsec Child req wait response
+002 "westnet-eastnet-c" #4: negotiated connection [192.0.101.0-192.0.101.255:0-65535 0] -> [192.0.201.0-192.0.201.255:0-65535 0]
+004 "westnet-eastnet-c" #4: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+west #
+ ping -w 4 -n -c 4 -I 192.0.101.254 192.0.201.254
+PING 192.0.201.254 (192.0.201.254) from 192.0.101.254 : 56(84) bytes of data.
+64 bytes from 192.0.201.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.201.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.201.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.201.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.201.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ipsec whack --trafficstatus
+006 #2: "westnet-eastnet-a", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+006 #3: "westnet-eastnet-b", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+006 #4: "westnet-eastnet-c", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+west #
+ ipsec status |grep STATE_
+000 #1: "westnet-eastnet-a":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
+000 #2: "westnet-eastnet-a":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #3: "westnet-eastnet-b":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #4: "westnet-eastnet-c":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+west #
+ echo sleep 3m
+sleep 3m
+west #
+ sleep 60
+west #
+ sleep 60
+west #
+ sleep 60
+west #
+ ipsec whack --trafficstatus
+006 #2: "westnet-eastnet-a", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+006 #6: "westnet-eastnet-b", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+006 #4: "westnet-eastnet-c", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+west #
+ ipsec status |grep STATE_
+000 #2: "westnet-eastnet-a":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#7; idle;
+000 #7: "westnet-eastnet-a":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
+000 #6: "westnet-eastnet-b":500 STATE_V2_IPSEC_R (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#7; idle;
+000 #4: "westnet-eastnet-c":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#7; idle;
+west #
+ sleep 60
+west #
+ ipsec whack --trafficstatus
+006 #8: "westnet-eastnet-a", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+006 #6: "westnet-eastnet-b", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+006 #9: "westnet-eastnet-c", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+west #
+ ipsec status |grep STATE_
+000 #7: "westnet-eastnet-a":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
+000 #8: "westnet-eastnet-a":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#7; idle;
+000 #6: "westnet-eastnet-b":500 STATE_V2_IPSEC_R (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#7; idle;
+000 #9: "westnet-eastnet-c":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#7; idle;
+west #
+ sleep 60
+west #
+ sleep 60
+west #
+ sleep 60
+west #
+ sleep 60
+west #
+ sleep 60
+west #
+ echo done
+done
+west #
+ ipsec whack --trafficstatus
+006 #13: "westnet-eastnet-a", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+006 #15: "westnet-eastnet-b", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+006 #14: "westnet-eastnet-c", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+west #
+ ipsec status |grep STATE_
+000 #13: "westnet-eastnet-a":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#17; idle;
+000 #17: "westnet-eastnet-a":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
+000 #15: "westnet-eastnet-b":500 STATE_V2_IPSEC_R (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#17; idle;
+000 #14: "westnet-eastnet-c":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#17; idle;
+west #
+ # there should be only one IKE_INIT exchange
+west #
+ grep "STATE_PARENT_I1 to " /tmp/pluto.log
+| transitioning from state STATE_PARENT_I1 to state STATE_PARENT_I2
+west #
+ grep "PARENT_R1 with status STF_OK" /tmp/pluto.log
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
