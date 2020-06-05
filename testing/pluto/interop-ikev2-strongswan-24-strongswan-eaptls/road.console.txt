@@ -29,19 +29,18 @@ establishing CHILD_SA rw-eap{1}
 generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) CERTREQ IDr CPRQ(ADDR DNS) SA TSi TSr N(MOBIKE_SUP) N(NO_ADD_ADDR) N(MULT_AUTH) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
 sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
-parsed IKE_AUTH response 1 [ EF(1/2) ]
-received fragment #1 of 2, waiting for complete IKE message
-received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
 parsed IKE_AUTH response 1 [ EF(2/2) ]
-received fragment #2 of 2, reassembled fragmented IKE message (XXX bytes)
+received fragment #2 of 2, waiting for complete IKE message
+received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
+parsed IKE_AUTH response 1 [ EF(1/2) ]
+received fragment #1 of 2, reassembled fragmented IKE message (XXX bytes)
 parsed IKE_AUTH response 1 [ IDr CERT AUTH EAP/REQ/ID ]
 received end entity cert "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
   using certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
   using trusted ca certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
 checking certificate status of "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
   requesting ocsp status from 'http://nic.testing.libreswan.org:2560' ...
-libcurl request failed [7]: Failed to connect to nic.testing.libreswan.org XXX
-ocsp request to http://nic.testing.libreswan.org:2560 failed
+ocsp response verification failed, no signer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=nic.testing.libreswan.org, E=user-nic@testing.libreswan.org' found
 ocsp check failed, fallback to crl
   fetching crl from 'http://nic.testing.libreswan.org/revoked.crl' ...
 libcurl request failed [7]: Failed to connect to nic.testing.libreswan.org XXX
@@ -73,8 +72,7 @@ received TLS server certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Te
   using trusted ca certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
 checking certificate status of "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
   requesting ocsp status from 'http://nic.testing.libreswan.org:2560' ...
-libcurl request failed [7]: Failed to connect to nic.testing.libreswan.org XXX
-ocsp request to http://nic.testing.libreswan.org:2560 failed
+ocsp response verification failed, no signer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=nic.testing.libreswan.org, E=user-nic@testing.libreswan.org' found
 ocsp check failed, fallback to crl
   fetching crl from 'http://nic.testing.libreswan.org/revoked.crl' ...
 libcurl request failed [7]: Failed to connect to nic.testing.libreswan.org XXX
@@ -92,8 +90,6 @@ sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
 parsed IKE_AUTH response 7 [ EAP/REQ/TLS ]
 generating IKE_AUTH request 8 [ EAP/RES/TLS ]
-sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
-retransmit 1 of request with message ID 8
 sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
 parsed IKE_AUTH response 8 [ EAP/REQ/TLS ]

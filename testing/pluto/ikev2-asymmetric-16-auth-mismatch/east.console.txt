@@ -10,7 +10,7 @@ east #
 002 added connection description "westnet-eastnet-ikev2"
 east #
  ipsec auto --status | grep westnet-eastnet-ikev2
-000 "westnet-eastnet-ikev2": 192.0.2.0/24===192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...192.1.2.45<192.1.2.45>[ID_NULL]===192.0.1.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet-ikev2": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[ID_NULL]===192.0.1.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-ikev2":     oriented; my_ip=unset; their_ip=unset; mycert=east; my_updown=ipsec _updown;
 000 "westnet-eastnet-ikev2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-ikev2":   our auth:null, their auth:null
@@ -24,7 +24,7 @@ east #
 000 "westnet-eastnet-ikev2":   v2-auth-hash-policy: none;
 000 "westnet-eastnet-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "westnet-eastnet-ikev2":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_NULL; their id=ID_NULL
+000 "westnet-eastnet-ikev2":   our idtype: ID_FQDN; our id=@east; their idtype: ID_NULL; their id=ID_NULL
 000 "westnet-eastnet-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 east #

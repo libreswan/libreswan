@@ -4,7 +4,6 @@ east #
  ip route del default
 east #
  ip tuntap add mode tun tun0
-[ 00.00] tun: Universal TUN/TAP device driver VERSION
 east #
  ifconfig tun0 10.13.13.13/24
 east #

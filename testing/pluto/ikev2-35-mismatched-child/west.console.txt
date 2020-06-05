@@ -33,6 +33,7 @@ west #
 |    exchange type: ISAKMP_v2_IKE_SA_INIT (0x22)
 |    exchange type: ISAKMP_v2_IKE_AUTH (0x23)
 |    exchange type: ISAKMP_v2_IKE_AUTH (0x23)
+|    exchange type: ISAKMP_v2_INFORMATIONAL (0x25)
 west #
  ../bin/check-for-core.sh
 west #

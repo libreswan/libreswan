@@ -29,7 +29,7 @@ west #
 002 initiate on demand from 192.1.2.45:0 to 192.1.2.23:0 proto=0 because: whack
 1v2 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiating IKEv2 IKE SA
 002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
-000 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: scheduling retry attempt 1 of an unlimited number, but releasing whack
+036 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: encountered fatal error in state STATE_PARENT_I2
 west #
  echo done
 done
