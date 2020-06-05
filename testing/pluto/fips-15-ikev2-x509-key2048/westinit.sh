@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep --x509 --x509name mediumkey
+/testing/guestbin/swan-prep --x509 --x509name key2032
 fipscheck
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
