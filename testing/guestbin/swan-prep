@@ -300,6 +300,9 @@ if not args.namespace :
     subprocess.getoutput("/bin/systemctl stop chronyd")
     subprocess.getoutput("/bin/systemctl stop sssd")
 
+# work around for ACQUIRE losing sub-type, causing false positive test results
+subprocess.getoutput('sysctl net.ipv4.ping_group_range="1 0"')
+
 # ensure cores are just dropped, not sent to aobrt-hook-ccpp or systemd.
 # setting /proc/sys/kernel/core_pattern to "core" or a pattern does not
 # work. And you cannot use shell redirection ">". So we hack it with "tee"
