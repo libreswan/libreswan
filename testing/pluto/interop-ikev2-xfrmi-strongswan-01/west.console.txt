@@ -1,0 +1,148 @@
+/testing/guestbin/swan-prep --userland strongswan
+strongswan 5.8.2 must be installed
+Linux strongSwan U5.8.2/K5.6.14-300.fc32.x86_64
+University of Applied Sciences Rapperswil, Switzerland
+See 'strongswan --copyright' for copyright information.
+west #
+ ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+west #
+ ../../pluto/bin/strongswan-start.sh
+west #
+ ip link add ipsec2 type xfrm if_id 2 dev eth0
+west #
+ swanctl  --load-conns
+loaded connection 'west'
+successfully loaded 1 connections, 0 unloaded
+west #
+ echo "initdone"
+initdone
+west #
+ swanctl --initiate --child westnet-eastnet
+[IKE] initiating IKE_SA west[1] to 192.1.2.23
+[ENC] generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
+[NET] sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (1080 bytes)
+[NET] received packet: from 192.1.2.23[500] to 192.1.2.45[500] (280 bytes)
+[ENC] parsed IKE_SA_INIT response 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(CHDLESS_SUP) N(MULT_AUTH) ]
+[CFG] selected proposal: IKE:AES_CBC_128/HMAC_SHA2_256_128/PRF_AES128_XCBC/ECP_256
+[IKE] authentication of 'west' (myself) with pre-shared key
+[IKE] establishing CHILD_SA westnet-eastnet{1}
+[ENC] generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MULT_AUTH) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
+[NET] sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (304 bytes)
+[NET] received packet: from 192.1.2.23[500] to 192.1.2.45[500] (208 bytes)
+[ENC] parsed IKE_AUTH response 1 [ IDr AUTH SA TSi TSr ]
+[IKE] authentication of 'east' with pre-shared key successful
+[IKE] IKE_SA west[1] established between 192.1.2.45[west]...192.1.2.23[east]
+[IKE] scheduling rekeying in 14360s
+[IKE] maximum IKE_SA lifetime 15800s
+[CFG] selected proposal: ESP:AES_CBC_128/HMAC_SHA2_256_128/NO_EXT_SEQ
+[IKE] CHILD_SA westnet-eastnet{1} established with SPIs c69a7aa5_i c80339a4_o and TS 192.0.1.0/24 === 192.0.2.0/24
+initiate completed successfully
+west #
+ ping -w 4 -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ip xfrm policy
+src 192.0.1.0/24 dst 192.0.2.0/24 
+	dir out priority 375423 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp spi 0xSPISPI reqid REQID mode tunnel
+	if_id 0x2
+src 192.0.2.0/24 dst 192.0.1.0/24 
+	dir fwd priority 375423 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+	if_id 0x2
+src 192.0.2.0/24 dst 192.0.1.0/24 
+	dir in priority 375423 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+	if_id 0x2
+src 192.1.2.0/24 dst 192.1.2.0/24 
+	dir fwd priority 175423 ptype main 
+src 192.1.2.0/24 dst 192.1.2.0/24 
+	dir in priority 175423 ptype main 
+src 192.1.2.0/24 dst 192.1.2.0/24 
+	dir out priority 175423 ptype main 
+src 192.0.1.0/24 dst 192.0.1.0/24 
+	dir fwd priority 175423 ptype main 
+src 192.0.1.0/24 dst 192.0.1.0/24 
+	dir in priority 175423 ptype main 
+src 192.0.1.0/24 dst 192.0.1.0/24 
+	dir out priority 175423 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+west #
+ ip xfrm state
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	auth-trunc hmac(sha256) 0xHASHKEY 128
+	enc cbc(aes) 0xENCKEY
+	if_id 0x2
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha256) 0xHASHKEY 128
+	enc cbc(aes) 0xENCKEY
+	if_id 0x2
+west #
+ ip route del 192.0.2.0/24
+west #
+ ip link set up dev ipsec2
+west #
+ ip route add 192.0.2.0/24 dev ipsec2
+west #
+ ping -w 4 -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 0 received, 100% packet loss, time XXXX
+west #
+ ip -s link show ipsec2
+X: ipsec2@eth0: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+    RX: bytes  packets  errors  dropped overrun mcast   
+    0          0        0       0       0       0       
+    TX: bytes  packets  errors  dropped carrier collsns 
+    336        4        0       0       0       0       
+west #
+ ip rule show
+0:	from all lookup local
+220:	from all lookup 220
+32766:	from all lookup main
+32767:	from all lookup default
+west #
+ ip route
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 dev ipsec2 scope link
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+west #
+ ip route show table 220
+192.0.1.0/24 dev eth0
+192.1.2.0/24 dev eth1
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

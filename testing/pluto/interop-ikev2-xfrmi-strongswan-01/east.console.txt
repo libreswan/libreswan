@@ -1,0 +1,46 @@
+/testing/guestbin/swan-prep --userland strongswan
+strongswan 5.8.2 must be installed
+Linux strongSwan U5.8.2/K5.6.14-300.fc32.x86_64
+University of Applied Sciences Rapperswil, Switzerland
+See 'strongswan --copyright' for copyright information.
+east #
+ #../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+east #
+ ../../pluto/bin/strongswan-start.sh
+east #
+ ip link add ipsec2 type xfrm if_id 2 dev eth0
+east #
+ swanctl  --load-conns
+loaded connection 'east'
+successfully loaded 1 connections, 0 unloaded
+east #
+ echo "initdone"
+initdone
+east #
+ ip -s link show ipsec2
+X: ipsec2@eth0: <NOARP> mtu 1500 qdisc state DOWN
+    RX: bytes  packets  errors  dropped overrun mcast   
+    0          0        0       0       0       0       
+    TX: bytes  packets  errors  dropped carrier collsns 
+    0          0        0       0       0       0       
+east #
+ ip rule show
+0:	from all lookup local
+220:	from all lookup 220
+32766:	from all lookup main
+32767:	from all lookup default
+east #
+ ip route
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+east #
+ ip route show table 220
+192.0.2.0/24 dev eth0
+192.1.2.0/24 dev eth1
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
