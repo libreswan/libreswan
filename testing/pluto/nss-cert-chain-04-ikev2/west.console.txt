@@ -62,7 +62,7 @@ west #
  echo done
 done
 west #
- hostname | grep east > /dev/null && grep switched /tmp/pluto.log
+ hostname | grep east > /dev/null && grep "switched from" /tmp/pluto.log
 west #
  ../bin/check-for-core.sh
 west #
