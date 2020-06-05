@@ -43,7 +43,6 @@ east #
 east #
  grep ERROR /tmp/pluto.log
 "nss-cert" #1: NSS ERROR: Issuer certificate is invalid.
-"nss-cert" #2: NSS ERROR: Issuer certificate is invalid.
 east #
  ../bin/check-for-core.sh
 east #
