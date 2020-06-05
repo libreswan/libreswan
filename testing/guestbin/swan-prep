@@ -379,7 +379,7 @@ if hostname != "nic":
         # check version and fail early
         output = subprocess.getoutput("strongswan version")
         if not "U5.8.4" in output:
-            print("strongswan 5.8.2 must be installed")
+            print("strongswan 5.8.4 must be installed")
             print("")
             print(output)
         # required to write log file in /tmp
