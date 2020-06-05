@@ -21,8 +21,9 @@ b end
   # - according to IANA: 49152-65535
   # - according to Linux: 32768-61000
   # the below matches 30000-..  which is good enough
-  s/ sport [3-6][0-9][0-9][0-9][0-9] / sport EPHEMERAL /g
-  s/ dport [3-6][0-9][0-9][0-9][0-9] / dport EPHEMERAL /g;
+  # but not good enough because fedora23 starts in the 29xxx range now :P
+  s/ sport [2-6][0-9][0-9][0-9][0-9] / sport EPHEMERAL /g
+  s/ dport [2-6][0-9][0-9][0-9][0-9] / dport EPHEMERAL /g;
 
 b match
 
