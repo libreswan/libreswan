@@ -1,3 +1,4 @@
+ipsec stop
 hostname | grep east > /dev/null && grep "FIPS: Rejecting" /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
