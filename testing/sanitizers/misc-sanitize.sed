@@ -29,4 +29,4 @@ s/^Protocol mismatch\.$/Invalid SSH identification string./g
 /^Relabeled \/testing.*$/d
 # some things are different on Debian/Ubuntu, and we dont really need to see those for testing
 /000 nssdir=.*$/d
-/000 =dnssec-rootkey-file=.*$/d
+/000 dnssec-rootkey-file=.*$/d
