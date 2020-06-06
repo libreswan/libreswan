@@ -29,6 +29,8 @@ extern void ip_info_check(void);
 extern void ip_protoport_check(void);
 extern void ip_selector_check(void);
 extern void ip_sockaddr_check(void);
+extern void ip_port_check(void);
+extern void ip_port_range_check(void);
 
 /*
  * See: https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html

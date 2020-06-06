@@ -27,6 +27,8 @@ OBJS += ip_selector_check.o
 OBJS += ip_said_check.o
 OBJS += ip_info_check.o
 OBJS += ip_protoport_check.o
+OBJS += ip_port_check.o
+OBJS += ip_port_range_check.o
 
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
