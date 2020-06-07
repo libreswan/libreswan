@@ -835,29 +835,21 @@ static int extract_end(struct fd *whackfd,
 	 * XXX this is WRONG, we should do this asynchronously, as part of
 	 * the normal loading process
 	 */
+	switch (dst->host_type) {
+	case KH_IPHOSTNAME:
 	{
-		err_t er;
-		int port;
-
-		switch (dst->host_type) {
-		case KH_IPHOSTNAME:
-			er = ttoaddr(dst->host_addr_name, 0, addrtypeof(&dst->host_addr),
-				&dst->host_addr);
-
-			/* The above call wipes out the port, put it again */
-			port = htons(dst->port);
-			setportof(port, &dst->host_addr);
-
-			if (er != NULL) {
-				log_global(RC_COMMENT, whackfd,
-					   "failed to convert '%s' at load time: %s",
-					   dst->host_addr_name, er);
-			}
-			break;
-
-		default:
-			break;
+		err_t er = domain_to_address(shunk1(dst->host_addr_name),
+					     address_type(&dst->host_addr),
+					     &dst->host_addr);
+		if (er != NULL) {
+			log_global(RC_COMMENT, whackfd,
+				   "failed to convert '%s' at load time: %s", dst->host_addr_name, er);
 		}
+		break;
+	}
+
+	default:
+		break;
 	}
 
 	return same_ca;
