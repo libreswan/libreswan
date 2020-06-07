@@ -278,6 +278,7 @@ static void check_subnet_prefix(void)
 	}
 }
 
+#if 0
 static void check_subnet_port(void)
 {
 	static const struct test {
@@ -379,6 +380,7 @@ static void check_subnet_port(void)
 		}
 	}
 }
+#endif
 
 static void check_subnet_has(void)
 {
@@ -552,7 +554,6 @@ void ip_subnet_check(void)
 	check_str_subnet_port();
 	check_subnet_prefix();
 	check_subnet_mask();
-	check_subnet_port();
 	check_subnet_has();
 	check_subnet_from_address();
 	check_subnet_from_endpoint();

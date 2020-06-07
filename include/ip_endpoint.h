@@ -1,6 +1,6 @@
 /* ip endpoint (address + port), for libreswan
  *
- * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2019-2020 Andrew Cagney <cagney@gnu.org>
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
@@ -22,6 +22,7 @@
 #include "chunk.h"
 #include "err.h"
 #include "ip_address.h"
+#include "ip_port.h"
 
 struct lswlog;
 struct ip_protocol;
@@ -104,17 +105,12 @@ bool endpoint_is_specified(const ip_endpoint *endpoint);
 
 /* Host or Network byte order */
 int endpoint_hport(const ip_endpoint *endpoint);
-int endpoint_nport(const ip_endpoint *endpoint);
+ip_port endpoint_port(const ip_endpoint *endpoint);
 
 ip_endpoint set_endpoint_hport(const ip_endpoint *endpoint,
 			       int hport) MUST_USE_RESULT;
 ip_endpoint set_endpoint_address(const ip_endpoint *endpoint,
 				 const ip_address) MUST_USE_RESULT;
-
-#define update_endpoint_hport(ENDPOINT, HPORT)			\
-	{ *(ENDPOINT) = set_endpoint_hport(ENDPOINT, HPORT); }
-#define update_endpoint_nport(ENDPOINT, NPORT)			\
-	{ *(ENDPOINT) = set_endpoint_hport(ENDPOINT, ntohs(NPORT)); }
 
 /*
  * Old style.
@@ -126,7 +122,7 @@ ip_endpoint set_endpoint_address(const ip_endpoint *endpoint,
  * setportof() should be replaced by update_{subnet,endpoint}_nport();
  * code is assuming ip_subnet.addr is an endpoint.
  */
-#define portof(SRC) endpoint_nport((SRC))
-#define setportof(PORT, DST) update_endpoint_nport(DST, PORT)
+#define portof(SRC) nport(endpoint_port((SRC)))
+#define setportof(NPORT, ENDPOINT) { *(ENDPOINT) = set_endpoint_hport((ENDPOINT), ntohs(NPORT)); }
 
 #endif

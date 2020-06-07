@@ -42,10 +42,10 @@ void ip_port_range_check(void)
 
 		ip_port lo = ip_hport(t->lo);
 		ip_port hi = ip_hport(t->hi);
-		ip_port_range pr = ip_port_range_from_ports(&lo, &hi);
+		ip_port_range pr = ip_port_range_from_ports(lo, hi);
 
 		port_range_buf prb;
-		if (!streq(t->out, str_port_range(&pr, &prb))) {
+		if (!streq(t->out, str_port_range(pr, &prb))) {
 			FAIL(OUT, "str_port_range() returned %s, expecting %s",
 			     prb.buf, t->out);
 		}

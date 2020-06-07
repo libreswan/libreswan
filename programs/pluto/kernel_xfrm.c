@@ -202,9 +202,9 @@ static xfrm_address_t xfrm_from_address(const ip_address *addr)
 	{								\
 		ip_selector client_ = *(CLIENT);			\
 		ip_address address = selector_prefix(&client_);		\
-		(REQ).L##addr = xfrm_from_address(&address);	\
-		(REQ).prefixlen_##L = selector_maskbits(&client_); \
-		(REQ).L##port = selector_nport(&client_);		\
+		(REQ).L##addr = xfrm_from_address(&address);		\
+		(REQ).prefixlen_##L = selector_maskbits(&client_);	\
+		(REQ).L##port = nport(selector_port(&client_));		\
 	}
 
 static void init_netlink_route_fd(void)

@@ -47,26 +47,26 @@ void ip_port_check(void)
 
 		ip_port port = ip_hport(t->hport);
 
-		uint16_t hp = hport(&port);
+		uint16_t hp = hport(port);
 		if (hp != t->hport) {
 			FAIL(OUT, "hport() returned %u, expecting %u",
 			     hp, t->hport);
 		}
 
 		port_buf hstr;
-		if (!streq(t->hstr, str_hport(&port, &hstr))) {
+		if (!streq(t->hstr, str_hport(port, &hstr))) {
 			FAIL(OUT, "str_hport() returned %s, expecting %s",
 			     hstr.buf, t->hstr);
 		}
 
-		uint16_t np = nport(&port);
+		uint16_t np = nport(port);
 		if (!memeq(&np, t->nport, sizeof(np))) {
 			FAIL(OUT, "nport() returned %u, expecting %02x%02x",
 			     np, (unsigned)t->nport[0], (unsigned)t->nport[1]);
 		}
 
 		port_buf nstr;
-		if (!streq(t->nstr, str_nport(&port, &nstr))) {
+		if (!streq(t->nstr, str_nport(port, &nstr))) {
 			FAIL(OUT, "str_nport() returned %s, expecting %s",
 			     nstr.buf, t->nstr);
 		}

@@ -62,12 +62,6 @@ typedef struct {
 	 * In pluto, port "0" is reserved and indicates all ports (but
 	 * does it also denote no port?).  Hopefully it is only paired
 	 * with the zero (any) address.
-	 *
-	 * XXX: Would separate and incompatible ip_hport and ip_nport
-	 * types help stop host <-> network port conversion screwups?
-	 * For instance, using ntohs() when using htons() is needed -
-	 * while wrong they have the same effect.
-	 *
 	 */
 	uint16_t hport;
 	unsigned ipproto;

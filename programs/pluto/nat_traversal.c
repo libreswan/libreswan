@@ -130,8 +130,8 @@ static struct crypt_mac natd_hash(const struct hash_desc *hasher,
 	shunk_t ap = address_as_shunk(&ip);
 	crypt_hash_digest_hunk(ctx, "IP addr", ap);
 
-	uint16_t nport = endpoint_nport(endpoint);
-	crypt_hash_digest_thing(ctx, "PORT", nport);
+	uint16_t np = nport(endpoint_port(endpoint));
+	crypt_hash_digest_thing(ctx, "PORT", np);
 	struct crypt_mac hash = crypt_hash_final_mac(&ctx);
 
 	if (DBGP(DBG_BASE)) {
@@ -140,7 +140,7 @@ static struct crypt_mac natd_hash(const struct hash_desc *hasher,
 		DBG_dump_thing("natd_hash: icookie=", spis->initiator);
 		DBG_dump_thing("natd_hash: rcookie=", spis->responder);
 		DBG_dump_hunk("natd_hash: ip=", ap);
-		DBG_dump_thing("natd_hash: port=", nport);
+		DBG_dump_thing("natd_hash: port=", np);
 		DBG_dump_hunk("natd_hash: hash=", hash);
 	}
 	return hash;
@@ -993,5 +993,6 @@ void natify_initiator_endpoints(struct state *st, where_t where)
 	dbg("NAT-T: #%lu floating remote port from %d to %d using pluto_nat_port "PRI_WHERE,
 	    st->st_serialno, endpoint_hport(&st->st_remote_endpoint), pluto_nat_port,
 	    pri_where(where));
-	update_endpoint_hport(&st->st_remote_endpoint, pluto_nat_port);
+	st->st_remote_endpoint = set_endpoint_hport(&st->st_remote_endpoint,
+						    pluto_nat_port);
 }

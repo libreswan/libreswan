@@ -87,15 +87,15 @@ int endpoint_hport(const ip_endpoint *endpoint)
 	return endpoint->hport;
 }
 
-int endpoint_nport(const ip_endpoint *endpoint)
+ip_port endpoint_port(const ip_endpoint *endpoint)
 {
 	const struct ip_info *afi = endpoint_type(endpoint);
 	if (afi == NULL) {
 		/* not asserting, who knows what nonsense a user can generate */
 		libreswan_log("%s has unspecified type", __func__);
-		return -1;
+		return unset_port;
 	}
-	return htons(endpoint->hport);
+	return ip_hport(endpoint->hport);
 }
 
 ip_endpoint set_endpoint_hport(const ip_endpoint *endpoint, int hport)

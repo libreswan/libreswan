@@ -863,7 +863,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 								   "Dragons! connection port %d mismatches shunt dest port %d",
 								   c->spd.that.port, peer_port);
 						} else {
-							update_subnet_hport(&that_client, peer_port);
+							update_selector_hport(&that_client, peer_port);
 							dbg("bare shunt destination port set to %d", peer_port);
 						}
 					} else {

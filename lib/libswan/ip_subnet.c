@@ -76,22 +76,6 @@ int subnet_hport(const ip_subnet *s)
 }
 #endif
 
-#ifndef SUBNET_TYPE
-int subnet_nport(const ip_subnet *s)
-{
-	return endpoint_nport(&s->addr);
-}
-#endif
-
-#ifndef SUBNET_TYPE
-ip_subnet set_subnet_hport(const ip_subnet *subnet, int hport)
-{
-	ip_subnet s = *subnet;
-	s.addr = set_endpoint_hport(&subnet->addr, hport);
-	return s;
-}
-#endif
-
 bool subnet_is_set(const ip_subnet *s)
 {
 	return subnet_type(s) != NULL;

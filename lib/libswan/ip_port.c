@@ -30,48 +30,40 @@ ip_port ip_nport(unsigned nport)
 	return ip_hport(ntohs(nport));
 }
 
-unsigned hport(const ip_port *port)
+unsigned hport(const ip_port port)
 {
-	return port->hport;
+	return port.hport;
 }
 
-unsigned nport(const ip_port *port)
+unsigned nport(const ip_port port)
 {
-	return htons(port->hport);
+	return htons(port.hport);
 }
 
-bool port_is_unset(const ip_port *port)
+bool port_is_unset(ip_port port)
 {
-	return port->hport == 0;
+	return port.hport == 0;
 }
 
-size_t jam_hport(jambuf_t *buf, const ip_port *port)
+size_t jam_hport(jambuf_t *buf, ip_port port)
 {
-	if (port == NULL) {
-		return jam(buf, "<invalid>");
-	} else {
-		return jam(buf, PRI_HPORT, hport(port));
-	}
+	return jam(buf, PRI_HPORT, hport(port));
 
 }
 
-size_t jam_nport(jambuf_t *buf, const ip_port *port)
+size_t jam_nport(jambuf_t *buf, ip_port port)
 {
-	if (port == NULL) {
-		return jam(buf, "<invalid>");
-	} else {
-		return jam(buf, PRI_NPORT, pri_nport(port));
-	}
+	return jam(buf, PRI_NPORT, pri_nport(port));
 }
 
-const char *str_hport(const ip_port *port, port_buf *buf)
+const char *str_hport(ip_port port, port_buf *buf)
 {
 	jambuf_t jambuf = ARRAY_AS_JAMBUF(buf->buf);
 	jam_hport(&jambuf, port);
 	return buf->buf;
 }
 
-const char *str_nport(const ip_port *port, port_buf *buf)
+const char *str_nport(ip_port port, port_buf *buf)
 {
 	jambuf_t jambuf = ARRAY_AS_JAMBUF(buf->buf);
 	jam_nport(&jambuf, port);

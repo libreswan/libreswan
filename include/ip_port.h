@@ -39,10 +39,10 @@ extern ip_port unset_port; /* aka all ports? */
 ip_port ip_hport(unsigned hport);
 ip_port ip_nport(unsigned nport);
 
-unsigned hport(const ip_port *port);
-unsigned nport(const ip_port *port);
+unsigned hport(ip_port port);
+unsigned nport(ip_port port);
 
-bool port_is_unset(const ip_port *port);
+bool port_is_unset(ip_port port);
 #define port_is_set !port_is_unset
 
 /*
@@ -61,10 +61,10 @@ typedef struct {
 	char buf[sizeof("65535")+1/*canary*/];
 } port_buf;
 
-size_t jam_hport(jambuf_t *buf, const ip_port *port);
-size_t jam_nport(jambuf_t *buf, const ip_port *port);
+size_t jam_hport(jambuf_t *buf, ip_port port);
+size_t jam_nport(jambuf_t *buf, ip_port port);
 
-const char *str_hport(const ip_port *port, port_buf *buf);
-const char *str_nport(const ip_port *port, port_buf *buf);
+const char *str_hport(ip_port port, port_buf *buf);
+const char *str_nport(ip_port port, port_buf *buf);
 
 #endif

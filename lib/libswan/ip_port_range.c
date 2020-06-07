@@ -19,27 +19,24 @@
 
 ip_port unset_port_range; /* aka all ports? */
 
-ip_port_range ip_port_range_from_ports(const ip_port *lo, const ip_port *hi)
+ip_port_range ip_port_range_from_ports(ip_port lo, ip_port hi)
 {
 	ip_port_range port_range = {
-		.lo = *lo,
-		.hi = *hi,
+		.lo = lo,
+		.hi = hi,
 	};
 	return port_range;
 }
 
-bool port_range_is_unset(const ip_port_range *port_range)
+bool port_range_is_unset(ip_port_range port_range)
 {
-	return port_is_unset(&port_range->lo) && port_is_unset(&port_range->hi);
+	return port_is_unset(port_range.lo) && port_is_unset(port_range.hi);
 }
 
-size_t jam_port_range(jambuf_t *buf, const ip_port_range *port_range)
+size_t jam_port_range(jambuf_t *buf, ip_port_range port_range)
 {
-	if (port_range == NULL) {
-		return jam(buf, "<invalid>");
-	};
-	unsigned lo = hport(&port_range->lo);
-	unsigned hi = hport(&port_range->hi);
+	unsigned lo = hport(port_range.lo);
+	unsigned hi = hport(port_range.hi);
 	if (lo == hi) {
 		return jam(buf, "%u", lo);
 	} else {
@@ -48,7 +45,7 @@ size_t jam_port_range(jambuf_t *buf, const ip_port_range *port_range)
 
 }
 
-const char *str_port_range(const ip_port_range *port, port_range_buf *buf)
+const char *str_port_range(ip_port_range port, port_range_buf *buf)
 {
 	jambuf_t jambuf = ARRAY_AS_JAMBUF(buf->buf);
 	jam_port_range(&jambuf, port);

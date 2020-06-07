@@ -90,14 +90,9 @@ const struct ip_info *selector_type(const ip_selector *selector)
 	return endpoint_type(&selector->addr);
 }
 
-unsigned selector_hport(const ip_selector *selector)
+ip_port selector_port(const ip_selector *selector)
 {
-	return selector->addr.hport;
-}
-
-unsigned selector_nport(const ip_selector *selector)
-{
-	return htons(selector->addr.hport);
+	return ip_hport(selector->addr.hport);
 }
 
 void update_selector_hport(ip_selector *selector, unsigned hport)

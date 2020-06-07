@@ -114,7 +114,6 @@ bool subnet_contains_endpoint(const ip_subnet *subnet, const ip_address *address
 
 /* h(ost) or n(etwork) ordered */
 int subnet_hport(const ip_subnet *subnet);
-int subnet_nport(const ip_subnet *subnet);
 
 ip_subnet set_subnet_hport(const ip_subnet *subnet,
 			   int hport) MUST_USE_RESULT;

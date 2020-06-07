@@ -549,7 +549,8 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 		/* TCP: does this belong in retransmit.[hc]?  */
 		dbg("TCP: forcing #%lu remote endpoint port to %d",
 		    st->st_serialno, c->remote_tcpport);
-		update_endpoint_hport(&st->st_remote_endpoint, c->remote_tcpport);
+		st->st_remote_endpoint = set_endpoint_hport(&st->st_remote_endpoint,
+							    c->remote_tcpport);
 		stf_status ret = create_tcp_interface(st);
 		if (ret != STF_OK) {
 			/* TCP: already logged? */
