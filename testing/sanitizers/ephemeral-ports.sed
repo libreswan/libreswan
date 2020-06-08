@@ -1,5 +1,7 @@
 # fix up output containing random numbers
 
+s/ 192.1.2.\([0-9]*\):[0-9]* STATE_/ 192.1.2.\1:XXXXX STATE_/
+
 # match: ip (|-[46]) xfrm state ...
 /^ ip xfrm state/ b match
 /^ ip -4 xfrm state/ b match
