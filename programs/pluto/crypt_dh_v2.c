@@ -34,6 +34,7 @@
 #include "ikev2_prf.h"
 #include "crypt_dh.h"
 #include "state.h"
+#include "connections.h"
 
 void cancelled_v2_dh_shared_secret(struct pcr_dh_v2 *dh)
 {
@@ -134,8 +135,6 @@ bool finish_v2_dh_shared_secret(struct state *st,
 	} else {
 		pexpect(st->st_skey_d_nss == NULL);
 		st->st_skey_d_nss = dhv2->skeyid_d;
-
-		pexpect(st->st_skey_ai_nss == NULL);
 
 		pexpect(st->st_skey_ai_nss == NULL);
 		st->st_skey_ai_nss = dhv2->skeyid_ai;
@@ -262,7 +261,6 @@ static void calc_skeyseed_v2(struct pcr_dh_v2 *sk,
 	next_byte += integ_size;
 
 	/* The encryption key and salt are extracted together. */
-
 	if (encrypter != NULL)
 		SK_ei_k = encrypt_key_from_symkey_bytes("SK_ei_k",
 							encrypter,
@@ -389,4 +387,122 @@ void calc_v2_dh_shared_secret(struct pluto_crypto_req *r, struct logger *logger)
 			 &sk->skey_chunk_SK_pi, /* output */
 			 &sk->skey_chunk_SK_pr, /* output */
 			 logger);
+}
+
+bool skeyseed_v2_sr (struct state *st,
+		     PK11SymKey *sk_d_old, enum sa_role role,
+		     struct logger *logger)
+{
+	const size_t salt_size =  st->st_oakley.ta_encrypt != NULL ?
+		st->st_oakley.ta_encrypt->salt_size : 0;
+	const size_t key_size = st->st_oakley.enckeylen / BITS_PER_BYTE;
+
+	passert(st->st_oakley.ta_prf != NULL);
+	dbg("calculating skeyseed using prf=%s integ=%s cipherkey-size=%zu salt-size=%zu",
+	    st->st_oakley.ta_prf->common.fqn,
+	    (st->st_oakley.ta_integ ? st->st_oakley.ta_integ->common.fqn : "n/a"),
+	    key_size, salt_size);
+
+	PK11SymKey *skeyseed_k = ikev2_ike_sa_session_resume_skeyseed(st->st_oakley.ta_prf, 
+								 sk_d_old, st->st_ni, st->st_nr,
+								 logger);
+	release_symkey(__func__, "sk_d_old", &sk_d_old);
+
+	passert(skeyseed_k != NULL);
+
+	const struct encrypt_desc *encrypter = st->st_oakley.ta_encrypt;
+
+	int skd_bytes = st->st_oakley.ta_prf->prf_key_size;
+	int skp_bytes =  st->st_oakley.ta_prf->prf_key_size;
+	int integ_size =  st->st_oakley.ta_integ ?  st->st_oakley.ta_integ->integ_keymat_size : 0;
+	size_t total_keysize = skd_bytes + 2*skp_bytes + 2*key_size + 2*salt_size + 2*integ_size;
+	PK11SymKey *finalkey = ikev2_ike_sa_keymat(st->st_oakley.ta_prf, skeyseed_k,
+						   st->st_ni, st->st_nr, role == SA_INITIATOR ?
+						   &st->st_ike_rekey_spis : &st->st_ike_spis,
+						   total_keysize, logger);
+	release_symkey(__func__, "skeyseed_k", &skeyseed_k);
+	
+	size_t next_byte = 0;
+
+	pexpect(st->st_skey_d_nss == NULL);
+	st->st_skey_d_nss = key_from_symkey_bytes(finalkey, next_byte, skd_bytes,
+					      HERE, logger);
+	next_byte += skd_bytes;
+
+	pexpect(st->st_skey_ai_nss == NULL);
+	st->st_skey_ai_nss = key_from_symkey_bytes(finalkey, next_byte, integ_size,
+					      HERE, logger);
+	next_byte += integ_size;
+
+	pexpect(st->st_skey_ar_nss == NULL);
+	st->st_skey_ar_nss = key_from_symkey_bytes(finalkey, next_byte, integ_size,
+					      HERE, logger);
+	next_byte += integ_size;
+
+	/* The encryption key and salt are extracted together. */
+	pexpect(st->st_skey_ei_nss== NULL);
+	if (encrypter != NULL)
+		st->st_skey_ei_nss = encrypt_key_from_symkey_bytes("SK_ei_k",
+						encrypter,
+						next_byte, key_size,
+						finalkey,
+						HERE, logger);
+	else
+		st->st_skey_ei_nss = NULL;
+
+	next_byte += key_size;
+	PK11SymKey *initiator_salt_key = key_from_symkey_bytes(finalkey, next_byte,
+							       salt_size,
+								   HERE, logger);
+	st->st_skey_initiator_salt = chunk_from_symkey("initiator salt",
+					   initiator_salt_key,
+					   logger);
+	release_symkey(__func__, "initiator-salt-key", &initiator_salt_key);
+
+	next_byte += salt_size;
+
+	/* The encryption key and salt are extracted together. */
+	pexpect(st->st_skey_er_nss== NULL);
+	if (encrypter != NULL)
+		st->st_skey_er_nss = encrypt_key_from_symkey_bytes("SK_er_k",
+							encrypter,
+							next_byte, key_size,
+							finalkey,
+							HERE, logger);
+	else
+		st->st_skey_er_nss = NULL;
+
+	next_byte += key_size;
+	PK11SymKey *responder_salt_key = key_from_symkey_bytes(finalkey, next_byte,
+							       salt_size,
+								   HERE, logger);
+	st->st_skey_responder_salt = chunk_from_symkey("responder salt",
+					   responder_salt_key,
+					   logger);
+	release_symkey(__func__, "responder-salt-key", &responder_salt_key);
+	next_byte += salt_size;
+
+	pexpect(st->st_skey_pi_nss== NULL);
+	st->st_skey_pi_nss = key_from_symkey_bytes(finalkey, next_byte, skp_bytes, HERE, logger);
+	st->st_skey_chunk_SK_pi = chunk_from_symkey("chunk_SK_pi", st->st_skey_pi_nss, logger);
+	next_byte += skp_bytes;
+
+	pexpect(st->st_skey_pr_nss== NULL);
+	st->st_skey_pr_nss = key_from_symkey_bytes(finalkey, next_byte, skp_bytes, HERE, logger);
+	st->st_skey_chunk_SK_pr = chunk_from_symkey("chunk_SK_pr", st->st_skey_pr_nss, logger);
+
+	DBG(DBG_CRYPT, {
+	    DBG_log("calc_skeyseed_v2 pointers: SK_d-key@%p, SK_ai-key@%p, SK_ar-key@%p, SK_ei-key@%p, SK_er-key@%p, SK_pi-key@%p, SK_pr-key@%p",
+			st->st_skey_d_nss, st->st_skey_ai_nss, st->st_skey_ar_nss, st->st_skey_ei_nss, st->st_skey_er_nss, st->st_skey_pi_nss, st->st_skey_pr_nss);
+		DBG_dump_hunk("calc_skeyseed_v2 initiator salt", st->st_skey_initiator_salt);
+		DBG_dump_hunk("calc_skeyseed_v2 responder salt", st->st_skey_responder_salt);
+		DBG_dump_hunk("calc_skeyseed_v2 SK_pi", st->st_skey_chunk_SK_pi);
+		DBG_dump_hunk("calc_skeyseed_v2 SK_pr", st->st_skey_chunk_SK_pr);
+	})
+
+	DBG(DBG_CRYPT,
+	    DBG_log("NSS ikev2: finished computing individual keys for IKEv2 SA Session Resume"));
+	release_symkey(__func__, "finalkey", &finalkey);
+	st->hidden_variables.st_skeyid_calculated = TRUE;
+	return true;
 }

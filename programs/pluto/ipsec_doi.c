@@ -82,6 +82,7 @@
 #include "pending.h"
 #include "iface.h"
 #include "ikev2_delete.h"	/* for record_v2_delete(); but call is dying */
+#include "ikev2_resume.h"
 
 /*
  * Process KE values.
@@ -185,7 +186,17 @@ static initiator_function *pick_initiator(struct connection *c,
 					  lset_t policy)
 {
 	if (policy & c->policy & POLICY_IKEV2_ALLOW) {
-		return ikev2_parent_outI1;
+		if (c->temp_vars.ticket_variables.stored_ticket.len > 0) {
+			if(time(NULL)-c->temp_vars.ticket_variables.sr_our_expire < c->temp_vars.ticket_variables.sr_server_expire) {
+				return ikev2_session_resume_outI1;
+			} else {
+				libreswan_log("ticket has been expired, dropping it");
+				free_chunk_content(&c->temp_vars.ticket_variables.stored_ticket);
+				return ikev2_parent_outI1;
+			}
+		} else {
+			return ikev2_parent_outI1;
+		}
 	} else {
 		/* we may try V1; Aggressive or Main Mode? */
 		return (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;

@@ -211,6 +211,7 @@ OBJS += ikev2_states.o
 OBJS += ikev2_ecdsa.o ikev2_rsa.o ikev2_psk.o ikev2_ppk.o ikev2_crypto.o
 OBJS += ikev2_redirect.o
 OBJS += ikev2_prf.o
+OBJS += ikev2_resume.o
 OBJS += cert_decode_helper.o
 OBJS += kernel.o
 OBJS += rcv_whack.o pluto_stats.o

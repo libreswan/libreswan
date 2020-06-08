@@ -94,7 +94,7 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 	/* establish some home truths, but don't barf */
 	if (!pexpect(md->hdr.isa_msgid == 0) ||
 	    !pexpect(v2_msg_role(md) == MESSAGE_REQUEST) ||
-	    !pexpect(md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) ||
+	    !pexpect((md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) || (md->hdr.isa_xchg == ISAKMP_v2_IKE_SESSION_RESUME)) ||
 	    !pexpect(md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I)) {
 		return true; /* reject cookie */
 	}
@@ -192,10 +192,20 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 
 static stf_status resume_IKE_SA_INIT_with_cookie(struct ike_sa *ike)
 {
-	if (!record_v2_IKE_SA_INIT_request(ike)) {
+	if (!record_v2_IKE_SA_INIT_OR_RESUME_request(ike)) {
 		return STF_INTERNAL_ERROR;
 	}
 	return STF_OK;
+}
+
+
+stf_status process_IKE_SESSION_RESUME_v2N_COOKIE_response(struct ike_sa *ike,
+						   struct child_sa *child,
+						   struct msg_digest *md)
+{
+	if (ike || child || md)
+		dbg("stub to make gcc happy - merge/refactor me with function below");
+	return STF_INTERNAL_ERROR;
 }
 
 stf_status process_IKE_SA_INIT_v2N_COOKIE_response(struct ike_sa *ike,

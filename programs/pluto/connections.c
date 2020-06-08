@@ -4118,12 +4118,13 @@ void show_one_connection(struct show *s,
 	}
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		jam(buf, "\"%s\"%s:   newest ISAKMP SA: #%lu; newest IPsec SA: #%lu; conn serial: "PRI_CO"",
+		jam(buf, "\"%s\"%s:   newest ISAKMP SA: #%lu; newest IPsec SA: #%lu; conn serial: "PRI_CO"; ticket: %lubytes",
 		    c->name,
 		    instance,
 		    c->newest_isakmp_sa,
 		    c->newest_ipsec_sa,
-		    pri_co(c->serialno));
+		    pri_co(c->serialno),
+		    c->temp_vars.ticket_variables.stored_ticket.len);
 		if (c->serial_from.co/*oops*/ != 0) {
 			jam(buf, ", instantiated from: "PRI_CO";",
 			    pri_co(c->serial_from));

@@ -47,6 +47,11 @@ PK11SymKey *ikev2_ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 					const chunk_t Ni, const chunk_t Nr,
 					struct logger *logger);
 
+PK11SymKey *ikev2_ike_sa_session_resume_skeyseed(const struct prf_desc *prf_desc,
+					PK11SymKey *old_SK_d,
+					const chunk_t Ni, const chunk_t Nr,
+					struct logger *logger);
+
 PK11SymKey *ikev2_ike_sa_keymat(const struct prf_desc *prf_desc,
 				PK11SymKey *skeyseed,
 				const chunk_t Ni, const chunk_t Nr,
@@ -74,4 +79,9 @@ struct crypt_mac ikev2_psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
 				struct logger *logger,
 				bool use_intermediate, chunk_t intermediate_packet);
 
+/*
+ * IKE Resumption Authentication.
+ */
+struct crypt_mac ikev2_psk_resume(const struct prf_desc *prf_desc, chunk_t SK_px,
+				chunk_t first_packet, struct logger *logger);
 #endif

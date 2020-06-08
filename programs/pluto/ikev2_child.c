@@ -312,6 +312,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 				return STF_FATAL;
 #endif
 		IKE_SA_established(ike);
+		ike->sa.st_resuming = FALSE;
 	}
 
 	/* install inbound and outbound SPI info */

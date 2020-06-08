@@ -350,7 +350,7 @@ static bool open_response(struct response *response,
 	switch (security) {
 	case ENCRYPTED_PAYLOAD:
 		/* never encrypt an IKE_SA_INIT exchange */
-		if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) {
+		if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT || ISAKMP_v2_IKE_SESSION_RESUME) {
 			pexpect_fail(response->logger, HERE,
 				     "exchange type IKE_SA_INIT is invalid for encrypted notification");
 			return false;
@@ -541,6 +541,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	 */
 	switch (exchange_type) {
 	case ISAKMP_v2_IKE_SA_INIT:
+	case ISAKMP_v2_IKE_SESSION_RESUME:
 	case ISAKMP_v2_IKE_AUTH:
 		break;
 	default:

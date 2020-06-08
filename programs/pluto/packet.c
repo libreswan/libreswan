@@ -1569,6 +1569,27 @@ struct_desc suggested_group_desc = {
 };
 
 /*
+ * TICKET_LT_OPAQUE Notify Payload - variable part
+ *
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    |                       Lifetime                                |
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    |                                                               |
+ *    ~                        Ticket                                 ~
+ *    |                                                               |
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ */
+static field_desc ikev2_ticket_fields[] = {
+	{ ft_nat, 32 / BITS_PER_BYTE, "Lifetime", NULL },
+	{ ft_end,  0, NULL, NULL }
+};
+struct_desc ikev2_ticket_lt_desc = {
+	.name = "TICKET_LT_OPAQUE Notify Data",
+	.fields = ikev2_ticket_fields,
+	.size = sizeof(struct ikev2_ticket_lifetime),
+};
+
+/*
  * IPcomp Notify as per RFC 7296:
  *
  * The data associated with this Notify message includes a two-octet

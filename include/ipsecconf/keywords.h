@@ -272,6 +272,7 @@ enum keyword_numeric_conn_field {
 	KNCF_TCP,		/* TCP (yes/no/fallback) */
 	KNCF_REMOTE_TCPPORT,	/* TCP remote port - default 4500  */
 	KNCF_IGNORE_PEER_DNS,	/* Accept DNS nameservers from peer */
+    KNCF_SESSION_RESUME,
 
 	KNCF_ROOF
 };

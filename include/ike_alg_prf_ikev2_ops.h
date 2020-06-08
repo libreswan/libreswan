@@ -44,6 +44,14 @@ struct prf_ikev2_ops {
 					     PK11SymKey *new_dh_secret,
 					     const chunk_t Ni, const chunk_t Nr,
 					     struct logger *logger);
+	/*
+	 * IKEv2 - RFC5723 	5.1 SKEYSEED - calculation
+	 * SKEYSEED = prf(SK_d (old), "Resumption" | Ni | Nr)
+	 */
+	PK11SymKey *(*ike_sa_session_resume_skeyseed)(const struct prf_desc *prf_desc,
+			       PK11SymKey *old_SK_d,
+			       const chunk_t Ni, const chunk_t Nr,
+				   struct logger *logger);
 	/* KEYMAT = prf+ (SKEYSEED, Ni | Nr | SPIi | SPIr) */
 	PK11SymKey *(*ike_sa_keymat)(const struct prf_desc *prf_desc,
 				     PK11SymKey *skeyseed,
@@ -63,6 +71,9 @@ struct prf_ikev2_ops {
 				     chunk_t first_packet, chunk_t nonce,
 				     const struct crypt_mac *id_hash,
 				     struct logger *logger, bool use_intermediate, chunk_t intermediate_packet);
+	/* AUTH = prf(SK_px, <message octets>) */
+	struct crypt_mac (*psk_resume)(const struct prf_desc *prf_desc, chunk_t SK_px,
+				     chunk_t first_packet, struct logger *logger);
 };
 
 extern const struct prf_ikev2_ops ike_alg_prf_ikev2_mac_ops;

@@ -259,6 +259,7 @@ const char *const sa_policy_bit_names[] = {
 	"INTERMEDIATE",
 	"IGNORE_PEER_DNS",
 	"RSASIG_v1_5",
+	"SESSION_RESUME",
 	NULL	/* end for bitnamesof() */
 };
 

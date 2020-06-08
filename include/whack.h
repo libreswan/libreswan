@@ -349,6 +349,9 @@ struct whack_message {
 
 	char *active_redirect_dests;
 
+	/* for RFC 5723 - IKEv2 Session Resumption */
+	bool whack_suspend;
+
 	/* what metric to put on ipsec routes */
 	int metric;
 

@@ -114,4 +114,8 @@ extern stf_status process_IKE_SA_INIT_v2N_REDIRECT_response(struct ike_sa *ike,
 						     struct child_sa *child,
 						     struct msg_digest *md);
 
+extern stf_status process_IKE_SESSION_RESUME_v2N_REDIRECT_response(struct ike_sa *ike,
+						     struct child_sa *child,
+						     struct msg_digest *md);
+
 #endif

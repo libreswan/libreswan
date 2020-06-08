@@ -56,6 +56,7 @@
 #include "rnd.h"
 #include "ikev2_message.h"		/* for build_ikev2_critical() */
 #include "nat_traversal.h"
+#include "ikev2_resume.h"
 
 /*
  * Two possible attribute formats (fixed and variable).  In IKEv2 the
@@ -2327,4 +2328,30 @@ void ikev2_copy_cookie_from_sa(const struct ikev2_proposal *accepted_ike_proposa
 	passert(accepted_ike_proposal->remote_spi.size == COOKIE_SIZE);
 	/* st_icookie is an array of len COOKIE_SIZE. only accept this length */
 	memcpy(&cookie->bytes, accepted_ike_proposal->remote_spi.bytes, COOKIE_SIZE);
+}
+
+bool set_ikev2_accepted_proposal(struct ike_sa *ike, int enc_keylen,
+								  int encr, int prf, int integ, int dh)
+{
+	passert(ike->sa.st_accepted_ike_proposal == NULL);
+	struct ikev2_proposal *temp_proposal = alloc_thing(struct ikev2_proposal, "temp proposal");
+
+	temp_proposal->propnum = 0;
+	temp_proposal->protoid = 1;
+	temp_proposal->remote_spi.size = 0;
+	temp_proposal->transforms[IKEv2_TRANS_TYPE_ENCR].transform->id = encr;
+	temp_proposal->transforms[IKEv2_TRANS_TYPE_ENCR].transform->attr_keylen = enc_keylen;
+	temp_proposal->transforms[IKEv2_TRANS_TYPE_PRF].transform->id = prf;
+	temp_proposal->transforms[IKEv2_TRANS_TYPE_INTEG].transform->id = integ;
+	temp_proposal->transforms[IKEv2_TRANS_TYPE_DH].transform->id = dh;
+
+	for(int i=1; i<5; i++) {
+		temp_proposal->transforms[i].transform->valid = true;
+	}
+
+	/* transfer ownership of TEMP_PROPOSAL to caller */
+	ike->sa.st_accepted_ike_proposal = temp_proposal;
+	temp_proposal = NULL;
+
+	return true;
 }

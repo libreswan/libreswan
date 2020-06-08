@@ -513,6 +513,7 @@ static void prf_desc_check(const struct ike_alg *alg, struct logger *logger)
 		pexpect_ike_alg(logger, alg, prf->prf_ikev2_ops->prfplus != NULL);
 		pexpect_ike_alg(logger, alg, prf->prf_ikev2_ops->ike_sa_skeyseed != NULL);
 		pexpect_ike_alg(logger, alg, prf->prf_ikev2_ops->ike_sa_rekey_skeyseed != NULL);
+		pexpect_ike_alg(logger, alg, prf->prf_ikev2_ops->ike_sa_session_resume_skeyseed != NULL);
 		pexpect_ike_alg(logger, alg, prf->prf_ikev2_ops->ike_sa_keymat != NULL);
 		pexpect_ike_alg(logger, alg, prf->prf_ikev2_ops->child_sa_keymat != NULL);
 		pexpect_ike_alg(logger, alg, prf->prf_ikev2_ops->psk_auth != NULL);

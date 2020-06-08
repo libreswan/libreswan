@@ -15,6 +15,7 @@
  * Copyright (C) 2016-2018 Antony Antony <appu@phenome.org>
  * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
  * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -70,6 +71,7 @@
 #include "keywords.h"
 #include "ikev2_msgid.h"
 #include "ikev2_redirect.h"
+#include "ikev2_resume.h"
 #include "ikev2_states.h"
 #include "ip_endpoint.h"
 #include "hostpair.h"		/* for find_v2_host_connection() */
@@ -239,6 +241,13 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .processor  = NULL,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
+	{ .story      = "initiate IKE_SA_RESUME",
+	  .state      = STATE_PARENT_RESUME_I0,
+	  .next_state = STATE_PARENT_I1,
+	  .send       = MESSAGE_REQUEST,
+	  .processor  = NULL,
+	  .timeout_event = EVENT_RETRANSMIT, },
+
 	/* STATE_PARENT_I1: R1B --> I1B
 	 *                     <--  HDR, N
 	 * HDR, N, SAi1, KEi, Ni -->
@@ -253,6 +262,17 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .processor = process_IKE_SA_INIT_v2N_COOKIE_response,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
+	  .timeout_event = EVENT_SO_DISCARD, },
+
+	{ .story      = "received anti-DDOS COOKIE notify response; resending IKE_SESSION_RESUME request with cookie payload added",
+	  .state      = STATE_PARENT_I1,
+	  .next_state = STATE_PARENT_RESUME_I0,
+	  .flags = SMF2_SUPPRESS_SUCCESS_LOG,
+	  .send       = NO_MESSAGE,
+	  .message_payloads = { .required = P(N), .notification = v2N_COOKIE, },
+	  .processor = process_IKE_SESSION_RESUME_v2N_COOKIE_response,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .recv_type  = ISAKMP_v2_IKE_SESSION_RESUME,
 	  .timeout_event = EVENT_SO_DISCARD, },
 
 	{ .story      = "received IKE_SA_INIT INVALID_KE_PAYLOAD notify response; resending IKE_SA_INIT with new KE payload",
@@ -275,6 +295,19 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .processor = process_IKE_SA_INIT_v2N_REDIRECT_response,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
+	  /* XXX: this is an instant timeout */
+	  .timeout_event = EVENT_v2_REDIRECT,
+	},
+
+	{ .story      = "received REDIRECT notify response; aborting resumption and start IKE_SA_INIT request to new destination",
+	  .state      = STATE_PARENT_I1,
+	  .next_state = STATE_IKESA_DEL,
+	  .flags = SMF2_SUPPRESS_SUCCESS_LOG,
+	  .send       = NO_MESSAGE,
+	  .message_payloads = { .required = P(N), .notification = v2N_REDIRECT, },
+	  .processor = process_IKE_SESSION_RESUME_v2N_REDIRECT_response,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .recv_type  = ISAKMP_v2_IKE_SESSION_RESUME,
 	  /* XXX: this is an instant timeout */
 	  .timeout_event = EVENT_v2_REDIRECT,
 	},
@@ -306,6 +339,14 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .processor  = ikev2_parent_inR1outI2,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_IKE_INTERMEDIATE,
+	{ .story      = "Initiator: process incoming Session Resume Packet from Responder , initiate IKE_AUTH",
+	  .state      = STATE_PARENT_I1,
+	  .next_state = STATE_PARENT_I2,
+	  .send       = MESSAGE_REQUEST,
+	  .req_clear_payloads = P(Nr),
+	  .processor  = ikev2_parent_inR1outI2,
+	  .recv_role = MESSAGE_RESPONSE,
+	  .recv_type  = ISAKMP_v2_IKE_SESSION_RESUME,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
 	/* STATE_PARENT_I2: R2 -->
@@ -353,6 +394,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_IKE_AUTH,
 	  .timeout_event = EVENT_SA_REPLACE, },
+
 	{ .story      = "IKE SA: process IKE_AUTH response containing unknown notification",
 	  .state      = STATE_PARENT_I2, .next_state = STATE_PARENT_I2,
 	  .message_payloads = { .required = P(SK), },
@@ -373,6 +415,16 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .processor  = ikev2_parent_inI1outR1,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
+	  .timeout_event = EVENT_SO_DISCARD, },
+
+	{ .story      = "Responder: Response to First Session Resume Exchange Packet",
+	  .state      = STATE_PARENT_R0,
+	  .next_state = STATE_PARENT_R1,
+	  .send       = MESSAGE_RESPONSE,
+	  .req_clear_payloads = P(N) | P(Ni),
+	  .processor  = ikev2_parent_inI1outR1,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .recv_type  = ISAKMP_v2_IKE_SESSION_RESUME,
 	  .timeout_event = EVENT_SO_DISCARD, },
 
 	/* STATE_PARENT_R1: I2 --> R2
@@ -617,6 +669,13 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_RETAIN, },
 
+	/*{.story      = "SESSION_RESUME_IKE_AUTH reply is processed and IKE_SA is established",
+	  .state      = STATE_PARENT_I1,
+	  .next_state = STATE_PARENT_I2,
+	  .flags      = 0,
+	  .processor  = NULL,
+	  .timeout_event = EVENT_RETRANSMIT, },*/
+	
 	/* last entry */
 	{ .story      = "roof",
 	  .state      = STATE_IKEv2_ROOF }
@@ -1420,7 +1479,7 @@ void ikev2_process_packet(struct msg_digest *md)
 	 * request due to cookies) then a new IKE SA is created.
 	 */
 
-	if (ix == ISAKMP_v2_IKE_SA_INIT) {
+	if (ix == ISAKMP_v2_IKE_SA_INIT || ix == ISAKMP_v2_IKE_SESSION_RESUME) {
 		/*
 		 * The message ID of the initial exchange is always
 		 * zero.
@@ -1988,7 +2047,7 @@ static void ike_process_packet(struct msg_digest *md, struct ike_sa *ike)
 	dbg("unpacking clear payload");
 	passert(!md->message_payloads.parsed);
 	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE ||
-		md->hdr.isa_xchg != ISAKMP_v2_IKE_SA_INIT);
+		md->hdr.isa_xchg != ISAKMP_v2_IKE_SA_INIT || ISAKMP_v2_IKE_SESSION_RESUME);
 	md->message_payloads =
 		ikev2_decode_payloads(st->st_logger, md,
 				      &md->message_pbs,
@@ -3158,6 +3217,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	if (transition->send != NO_MESSAGE &&
 	    nat_traversal_enabled &&
 	    from_state != STATE_PARENT_I0 &&
+		from_state != STATE_PARENT_RESUME_I0 &&
 	    from_state != STATE_V2_NEW_CHILD_I0 &&
 	    from_state != STATE_V2_REKEY_CHILD_I0 &&
 	    from_state != STATE_V2_REKEY_IKE_I0 &&
@@ -3614,7 +3674,7 @@ void complete_v2_state_transition(struct state *st,
 			 * XXX: is this always false; if true above
 			 * record would pexpect()?
 			 */
-			if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) {
+			if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT || ISAKMP_v2_IKE_SESSION_RESUME) {
 				delete_state(st);
 				/* kill all st pointers */
 				st = NULL; ike = NULL; md->st = NULL;

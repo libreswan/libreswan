@@ -272,6 +272,28 @@ struct ephemeral_variables {
 	realtime_t first_redirect_time;
 	ip_address redirect_ip;		/* where to redirect */
 	ip_address old_gw_address;	/* address of old gateway */
+
+/* this struct will be used for
+ * storing variables required for session
+ * resumption.
+ */
+	struct {
+		unsigned long sr_serialco;
+		id_buf peer_id;
+
+		chunk_t sk_d_old;
+
+		int sr_encr;
+		int sr_prf;
+		int sr_integ;
+		int sr_dh;
+		int sr_enc_keylen;
+		enum keyword_authby sr_auth_method;
+			
+		int sr_server_expire;
+		int sr_our_expire;
+		chunk_t stored_ticket;
+	} ticket_variables;
 };
 
 struct connection {

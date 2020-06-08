@@ -1150,7 +1150,6 @@ extern struct_desc ikev2_skf_desc;
 extern struct_desc ikev2_vendor_id_desc;
 
 
-
 /* union of all payloads */
 
 union payload {
@@ -1200,6 +1199,11 @@ struct ikev2_notify_ipcomp_data {
 	u_int8_t ikev2_notify_ipcomp_trans;
 };
 extern struct_desc ikev2notify_ipcomp_data_desc;
+
+struct ikev2_ticket_lifetime {
+    uint32_t sr_lifetime;
+};
+extern struct_desc ikev2_ticket_lt_desc;
 
 extern struct_desc sec_ctx_desc;
 

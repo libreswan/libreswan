@@ -79,6 +79,7 @@
 #include "iface.h"
 #include "show.h"
 #include "impair_message.h"
+#include "ikev2_resume.h"
 #ifdef HAVE_SECCOMP
 #include "pluto_seccomp.h"
 #endif
@@ -741,6 +742,28 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			}
 			initiate_connections_by_name(m->name, pass_remote ? m->remote_host : NULL,
 						     whackfd, m->whack_async);
+		}
+	}
+
+	if (m->whack_suspend) {
+		if(m->name == NULL) {
+			whack_log(RC_FATAL, whackfd,
+			"received whack command to suspend a connection, but did not receive the connection name - ignored");
+		} else {
+			struct connection *c = conn_by_name(m->name, FALSE);
+			if (c == NULL) {
+				whack_log(RC_UNKNOWN_NAME, whackfd,
+				"Connection with given name not found, try again with valid name");
+			} else {
+				if (c->temp_vars.ticket_variables.stored_ticket.len == 0) {
+					whack_log(RC_FATAL, whackfd,
+					"no stored ticket, cannot suspend connection");
+				}
+				else
+				{
+					suspend_connection(c);
+				}
+			}
 		}
 	}
 

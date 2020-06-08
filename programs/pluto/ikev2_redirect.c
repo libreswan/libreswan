@@ -561,6 +561,18 @@ void send_active_redirect_in_informational(struct state *st)
 	    sensitive_ipstr(&st->st_remote_endpoint, &b));
 }
 
+stf_status process_IKE_SESSION_RESUME_v2N_REDIRECT_response(struct ike_sa *ike,
+						     struct child_sa *child,
+						     struct msg_digest *md)
+{
+	/* dropping the ticket */
+	free_chunk_content(&ike->sa.st_connection->temp_vars.ticket_variables.stored_ticket);
+
+	stf_status e = process_IKE_SA_INIT_v2N_REDIRECT_response(ike, child, md) ? STF_OK : STF_INTERNAL_ERROR;
+	complete_v2_state_transition(md->st, md, e);
+	return STF_SUSPEND;
+}
+
 stf_status process_IKE_SA_INIT_v2N_REDIRECT_response(struct ike_sa *ike,
 						     struct child_sa *child,
 						     struct msg_digest *md)

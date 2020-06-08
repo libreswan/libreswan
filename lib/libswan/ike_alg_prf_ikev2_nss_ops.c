@@ -252,6 +252,12 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
 	return signed_octets;
 }
 
+static struct crypt_mac psk_resume(const struct prf_desc *prf_desc, chunk_t SK_px,
+				 chunk_t first_packet, struct logger *logger)
+{
+#error not yet supported by NSS - compile with USE_NSS_KDF=false until NSS supports this
+}
+
 const struct prf_ikev2_ops ike_alg_prf_ikev2_nss_ops = {
 	.backend = "NSS",
 	.prfplus = prfplus,
@@ -260,4 +266,5 @@ const struct prf_ikev2_ops ike_alg_prf_ikev2_nss_ops = {
 	.ike_sa_keymat = ike_sa_keymat,
 	.child_sa_keymat = child_sa_keymat,
 	.psk_auth = psk_auth,
+	.psk_resume = psk_resume,
 };

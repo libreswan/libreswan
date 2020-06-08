@@ -115,6 +115,7 @@ static void help(void)
 		"	[--ikefrag-allow | --ikefrag-force] [--no-ikepad] \\\n"
 		"	[--esn ] [--no-esn] [--decap-dscp] [--nopmtudisc] [--mobike] \\\n"
 		"	[--tcp <no|yes|fallback>] --tcp-remote-port <port>\\\n"
+		"	[--tcp ] [--no-udp] [--session-resumption] \\\n"
 #ifdef HAVE_NM
 		"	[--nm-configured] \\\n"
 #endif
@@ -198,6 +199,8 @@ static void help(void)
 		"	[--showstates] | [--addresspoolstatus]\n"
 		"\n"
 		"refresh dns: whack --ddns\n"
+		"\n"
+		"suspend: whack --suspend --name <connection_name>\n"
 		"\n"
 #ifdef HAVE_SECCOMP
 		"testing: whack --seccomp-crashtest (CAREFUL!)\n"
@@ -350,6 +353,8 @@ enum option_enums {
 	OPT_USERNAME,
 	OPT_XAUTHPASS,
 
+	OPT_SESSION_SUSPEND,
+
 #define OPT_LAST2 OPT_XAUTHPASS	/* last "normal" option, range 2 */
 
 /* List options */
@@ -449,6 +454,7 @@ enum option_enums {
 	CD_CISCO_UNITY,
 	CD_FAKE_STRONGSWAN,
 	CD_MOBIKE,
+	CD_SESSION_RESUME,
 	CD_IKE,
 	CD_IKE_TCP,
 	CD_IKE_TCP_REMOTE_PORT,
@@ -606,6 +612,7 @@ static const struct option long_opts[] = {
 	{ "oppodport", required_argument, NULL, OPT_OPPO_DPORT + OO },
 
 	{ "asynchronous", no_argument, NULL, OPT_ASYNC + OO },
+	{ "suspend", no_argument, NULL, OPT_SESSION_SUSPEND + OO },
 
 	{ "rekey-ike", no_argument, NULL, OPT_REKEY_IKE + OO },
 	{ "rekey-ipsec", no_argument, NULL, OPT_REKEY_IPSEC + OO },
@@ -704,6 +711,7 @@ static const struct option long_opts[] = {
 	{ "cisco-unity", no_argument, NULL, CD_CISCO_UNITY + OO },
 	{ "fake-strongswan", no_argument, NULL, CD_FAKE_STRONGSWAN + OO },
 	PS("mobike", MOBIKE),
+	PS("session-resumption", SESSION_RESUME),
 
 	{ "dpddelay", required_argument, NULL, CD_DPDDELAY + OO + NUMERIC_ARG },
 	{ "dpdtimeout", required_argument, NULL, CD_DPDTIMEOUT + OO + NUMERIC_ARG },
@@ -1287,6 +1295,10 @@ int main(int argc, char **argv)
 			msg.whack_rekey_ipsec = TRUE;
 			continue;
 
+		case OPT_SESSION_SUSPEND: /* --suspend */
+			msg.whack_suspend = TRUE;
+			continue;
+
 		case OPT_DELETE:	/* --delete */
 			msg.whack_delete = TRUE;
 			continue;
@@ -1719,6 +1731,8 @@ int main(int argc, char **argv)
 
 		/* --intermediate */
 		case CDP_SINGLETON + POLICY_INTERMEDIATE_IX:
+		/* --session-resumption */
+		case CDP_SINGLETON + POLICY_SESSION_RESUME_IX:
 
 		/* --ikefrag-allow */
 		case CDP_SINGLETON + POLICY_IKE_FRAG_ALLOW_IX:
@@ -2482,7 +2496,8 @@ int main(int argc, char **argv)
 		       LELEM(OPT_DELETE) |  LELEM(OPT_DELETEID) |
 		       LELEM(OPT_DELETEUSER) | LELEM(OPT_CD) |
 		       LELEM(OPT_REKEY_IKE) |
-		       LELEM(OPT_REKEY_IPSEC))) {
+		       LELEM(OPT_REKEY_IPSEC) |
+		       LELEM(OPT_SESSION_SUSPEND))) {
 		if (!LHAS(opts1_seen, OPT_NAME))
 			diag("missing --name <connection_name>");
 	} else if (msg.whack_options == LEMPTY) {
@@ -2513,7 +2528,7 @@ int main(int argc, char **argv)
 	      msg.whack_addresspool_status ||
 	      msg.whack_fips_status || msg.whack_brief_status || msg.whack_clear_stats || msg.whack_options ||
 	      msg.whack_shutdown || msg.whack_purgeocsp || msg.whack_seccomp_crashtest || msg.whack_show_states ||
-	      msg.whack_rekey_ike || msg.whack_rekey_ipsec))
+	      msg.whack_rekey_ike || msg.whack_rekey_ipsec || msg.whack_suspend))
 		diag("no action specified; try --help for hints");
 
 	if (msg.policy & POLICY_AGGRESSIVE) {

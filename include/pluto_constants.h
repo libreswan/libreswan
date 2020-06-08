@@ -11,6 +11,7 @@
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  * Copyright (C) 2019-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -512,11 +513,13 @@ enum state_kind {
 	/* IKE SA */
 
 	STATE_PARENT_I0 = STATE_IKEv2_FLOOR,	/* waiting for KE to finish */
+	STATE_PARENT_RESUME_I0,		/* resuming */
 	STATE_PARENT_I1,        /* IKE_SA_INIT: sent initial message, waiting for reply */
 	STATE_PARENT_I2,        /* IKE_AUTH: sent auth message, waiting for reply */
 
 	STATE_PARENT_R0,	/* just starting */
 	STATE_PARENT_R1,	/* IKE_SA_INIT: sent response */
+
 
 	STATE_V2_ESTABLISHED_IKE_SA,
 
@@ -940,7 +943,9 @@ enum sa_policy_bits {
 	POLICY_INTERMEDIATE_IX, /* allow Intermediate Exchange */
 	POLICY_IGNORE_PEER_DNS_IX, /* install obtained DNS servers locally */
 	POLICY_RSASIG_v1_5_IX,
-#define POLICY_IX_LAST	POLICY_RSASIG_v1_5_IX
+
+	POLICY_SESSION_RESUME_IX,
+#define POLICY_IX_LAST	POLICY_SESSION_RESUME_IX
 };
 
 #define POLICY_PSK	LELEM(POLICY_PSK_IX)
@@ -993,6 +998,7 @@ enum sa_policy_bits {
 #define POLICY_INTERMEDIATE	LELEM(POLICY_INTERMEDIATE_IX) /* allow Intermediate Exchange */
 #define POLICY_IGNORE_PEER_DNS	LELEM(POLICY_IGNORE_PEER_DNS_IX)
 #define POLICY_RSASIG_v1_5	LELEM(POLICY_RSASIG_v1_5_IX)
+#define POLICY_SESSION_RESUME	LELEM(POLICY_SESSION_RESUME_IX)
 
 #define NEGOTIATE_AUTH_HASH_SHA1		LELEM(IKEv2_HASH_ALGORITHM_SHA1)	/* rfc7427 does responder support SHA1? */
 #define NEGOTIATE_AUTH_HASH_SHA2_256		LELEM(IKEv2_HASH_ALGORITHM_SHA2_256)	/* rfc7427 does responder support SHA2-256?  */

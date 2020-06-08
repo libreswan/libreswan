@@ -400,6 +400,10 @@ extern bool finish_v2_dh_shared_secret(struct state *st,
 				       struct pluto_crypto_req *r,
 				       bool only_shared);
 
+extern bool skeyseed_v2_sr (struct state *st,
+			     PK11SymKey *sk_d_old, enum sa_role role,
+			     struct logger *logger);
+
 /* internal */
 extern void calc_v2_dh_shared_secret(struct pluto_crypto_req *r, struct logger *logger);
 extern void cancelled_v2_dh_shared_secret(struct pcr_dh_v2 *dh);

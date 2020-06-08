@@ -62,6 +62,7 @@ struct finite_state v2_states[] = {
 	 */
 
 	S(STATE_PARENT_I0, "waiting for KE to finish", CAT_IGNORE),
+	S(STATE_PARENT_RESUME_I0, "resuming", CAT_IGNORE),
 
 	/*
 	 * Count I1 as half-open too because with ondemand, a
@@ -69,9 +70,9 @@ struct finite_state v2_states[] = {
 	 * IKE SA.
 	 */
 
-	S(STATE_PARENT_I1, "sent IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA),
+	S(STATE_PARENT_I1, "sent IKE_SA_INIT/IKE_SESSION_RESUME request", CAT_HALF_OPEN_IKE_SA),
 	S(STATE_PARENT_R0, "processing IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA),
-	S(STATE_PARENT_R1, "sent IKE_SA_INIT reply", CAT_HALF_OPEN_IKE_SA),
+	S(STATE_PARENT_R1, "sent IKE_SA_INIT/IKE_SESSION_RESUME reply", CAT_HALF_OPEN_IKE_SA),
 
 	/*
 	 * All IKEv1 MAIN modes except the first (half-open) and last

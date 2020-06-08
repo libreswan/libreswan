@@ -67,7 +67,7 @@ extern ikev2_state_transition_fn ikev2_parent_inR2;
 void schedule_reinitiate_v2_ike_sa_init(struct ike_sa *ike,
 					stf_status (*resume)(struct ike_sa *ike));
 
-bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike);
+bool record_v2_IKE_SA_INIT_OR_RESUME_request(struct ike_sa *ike);
 extern ikev2_state_transition_fn process_IKE_SA_INIT_v2N_INVALID_KE_PAYLOAD_response;
 
 extern void ikev2_initiate_child_sa(struct pending *p);

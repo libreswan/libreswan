@@ -152,6 +152,34 @@ static PK11SymKey *ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 }
 
 /*
+ * SKEYSEED = prf(SK_d (old), "Resumption" | Ni | Nr)
+ */
+static PK11SymKey *ike_sa_session_resume_skeyseed(const struct prf_desc *prf_desc,
+					PK11SymKey *SK_d_old, 
+					const chunk_t Ni, const chunk_t Nr,
+					struct logger *logger)
+{
+	/* key = SK_d (old) */
+	struct crypt_prf *prf = crypt_prf_init_symkey("ike sa session resume skeyseed", prf_desc,
+						      "SK_d (old)", SK_d_old,
+							  logger);
+
+	if (prf == NULL) {
+		pexpect_fail(logger, HERE,
+			     "failed to create IKEv2 PRF for computing SKEYSEED = prf(SK_d (old), 'Resumption' | Ni | Nr)");
+		return NULL;
+	}
+
+	/* seed: 'resumption' | Ni | Nr) */
+	static const char sr_str[] = "Resumption";
+	crypt_prf_update_bytes(prf,sr_str, sr_str, sizeof(sr_str) - 1);
+	crypt_prf_update_hunk(prf, "Ni", Ni);
+	crypt_prf_update_hunk(prf, "Nr", Nr);
+	/* generate */
+	return crypt_prf_final_symkey(&prf);
+}
+
+/*
  * Compute: prf+ (SKEYSEED, Ni | Nr | SPIi | SPIr)
  */
 static PK11SymKey *ike_sa_keymat(const struct prf_desc *prf_desc,
@@ -274,12 +302,36 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
 	return signed_octets;
 }
 
+static struct crypt_mac psk_resume(const struct prf_desc *prf_desc, chunk_t SK_px,
+				 chunk_t first_packet, struct logger *logger)
+{
+	struct crypt_mac signed_octets;
+	{
+		struct crypt_prf *prf = 
+			crypt_prf_init_hunk("<signed-octets> = prf(SK_px, <message octets>)",
+					      prf_desc, "<SK_px>", SK_px, logger);
+
+		if (prf == NULL) {
+		pexpect_fail(logger, HERE,
+			     "failed to create IKEv2 PRF for computing signed-octets = prf(SK_px, <message octets>");
+		return empty_mac;
+		}
+
+		crypt_prf_update_hunk(prf, "first-packet", first_packet);
+		signed_octets = crypt_prf_final_mac(&prf, NULL);
+	}
+
+	return signed_octets;
+}
+
 const struct prf_ikev2_ops ike_alg_prf_ikev2_mac_ops = {
 	.backend = "native",
 	.prfplus = prfplus,
 	.ike_sa_skeyseed = ike_sa_skeyseed,
 	.ike_sa_rekey_skeyseed = ike_sa_rekey_skeyseed,
+	.ike_sa_session_resume_skeyseed = ike_sa_session_resume_skeyseed,
 	.ike_sa_keymat = ike_sa_keymat,
 	.child_sa_keymat = child_sa_keymat,
 	.psk_auth = psk_auth,
+	.psk_resume = psk_resume,
 };

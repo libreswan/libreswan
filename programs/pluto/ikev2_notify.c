@@ -63,6 +63,11 @@ enum v2_pbs v2_notification_to_v2_pbs(v2_notification_t n)
 	C(INVALID_MAJOR_VERSION);
 	C(TS_UNACCEPTABLE);
 	C(INTERMEDIATE_EXCHANGE_SUPPORTED);
+	C(TICKET_LT_OPAQUE);
+	C(TICKET_REQUEST);
+	C(TICKET_ACK);
+	C(TICKET_NACK);
+	C(TICKET_OPAQUE);
 	default: return PBS_v2_INVALID;
 	}
 #undef C

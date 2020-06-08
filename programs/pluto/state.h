@@ -349,6 +349,9 @@ struct state {
 
 	ip_endpoint st_remote_endpoint;        /* where to send packets to */
 
+	char st_sk_d_old[256];			/* store the sk_d_ol from session resumption ticket */
+	int st_sk_d_old_len;			/* store actual length of sk_d_old */
+
 	/*
 	 * dhr 2013: why [.st_interface]? There was already
 	 * connection->interface
@@ -418,6 +421,7 @@ struct state {
 	struct v2_outgoing_fragment *st_v2_outgoing[MESSAGE_ROLE_ROOF];
 	struct v2_incomming_fragments *st_v2_incomming[MESSAGE_ROLE_ROOF];
 
+	bool st_resuming;	/* Session Resumption */
 	bool st_viable_parent;	/* can initiate new CERAET_CHILD_SA */
 	struct ikev2_proposal *st_accepted_ike_proposal;
 	struct ikev2_proposal *st_accepted_esp_or_ah_proposal;
@@ -737,6 +741,10 @@ struct state {
 	bool st_seen_redirect_sup;		/* did we receive IKEv2_REDIRECT_SUPPORTED */
 	bool st_sent_redirect;			/* did we send IKEv2_REDIRECT in IKE_AUTH (response) */
 	bool st_redirected_in_auth;		/* were we redirected in IKE_AUTH */
+	bool st_seen_ticket_request;		/* did we receive session ticket request */
+	bool st_seen_ticket_ack;		/* did we receive session ticket ack */
+	bool st_seen_ticket_nack;		/* did we receive session ticket nack */
+	chunk_t stored_ticket;			/* ticket stored by client */
 	generalName_t *st_requested_ca;		/* collected certificate requests */
 	uint8_t st_reply_xchg;
 	bool st_peer_wants_null;		/* We received IDr payload of type ID_NULL (and we allow POLICY_AUTH_NULL */
