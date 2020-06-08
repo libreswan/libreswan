@@ -68,6 +68,7 @@ OBJS += unpack.o
 OBJS += impair_message.o
 # exchanges
 OBJS += ikev2_ike_sa_init.o
+OBJS += ikev2_ike_session_resume.o
 OBJS += ikev2_ike_intermediate.o
 OBJS += ikev2_ike_auth.o
 OBJS += ikev2_create_child_sa.o
@@ -118,6 +119,7 @@ OBJS += whack_route.o
 OBJS += whack_showstates.o
 OBJS += whack_shutdown.o
 OBJS += whack_status.o
+OBJS += whack_suspend.o
 OBJS += whack_trafficstatus.o
 OBJS += whack_unroute.o
 

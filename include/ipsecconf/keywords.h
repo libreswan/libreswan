@@ -13,6 +13,7 @@
  * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  * Copyright (C) 2020, Yulia Kuzovkova <ukuzovkova@gmail.com>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -279,6 +280,7 @@ enum keywords {
 	KNCF_ENABLE_TCP,	/* TCP (yes/no/fallback) */
 	KNCF_TCP_REMOTEPORT,	/* TCP remote port - default 4500 */
 	KNCF_IGNORE_PEER_DNS,	/* Accept DNS nameservers from peer */
+	KNCF_SESSION_RESUMPTION,	/* RFC 5723 IKE_RESUME */
 
 	KW_roof,
 };

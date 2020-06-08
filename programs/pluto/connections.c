@@ -19,6 +19,7 @@
  * Copyright (C) 2016-2020 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  * Copyright (C) 20212-2022 Paul Wouters <paul.wouters@aiven.io>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -102,6 +103,7 @@
 #include "connection_event.h"
 #include "ike_alg_dh.h"		/* for ike_alg_dh_none; */
 #include "sparse_names.h"
+#include "ikev2_ike_session_resume.h"	/* for pfree_session() */
 
 static void discard_connection(struct connection **cp, bool connection_valid, where_t where);
 
@@ -476,6 +478,8 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	iface_endpoint_delref(&c->revival.local);
 
 	free_chunk_content(&c->child.sec_label);
+
+	pfree_session(&c->session);
 
 	/*
 	 * Only free config when the root connection.  Non-root
@@ -2358,6 +2362,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
+	config->session_resumption = extract_yn("", "session_resumption", wm->session_resumption,
+						/*default*/false, wm, c->logger);
+	if (config->session_resumption) {
+		if (wm->ike_version < IKEv2) {
+			return diag("session resumption requires IKEv2");
+		}
+	}
+
 	config->sha2_truncbug = extract_yn("", "sha2-truncbug", wm->sha2_truncbug, /*default*/false,wm, c->logger);
 	config->overlapip = extract_yn("", "overlapip", wm->overlapip, /*default*/false,wm, c->logger);
 
@@ -4035,6 +4047,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	CT(esn.yes, ESN_YES);
 	CT(intermediate, INTERMEDIATE);
 	CT(ignore_peer_dns, IGNORE_PEER_DNS);
+	CT(session_resumption, RESUME);
 
 	CNN(is_group(c), GROUP);
 

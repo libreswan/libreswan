@@ -14,6 +14,7 @@
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2019-2022 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -322,6 +323,9 @@ struct config {
 
 	msgid_t ike_window;		/* IKE v2 window size
 					 * 7296#section-2.3 */
+
+	bool session_resumption;	/* RFC 5723 - IKEv2 Session
+					 * Resumption */
 
 	struct {
 		char *interface;
@@ -800,6 +804,12 @@ struct connection {
 		ip_endpoint remote;
 		struct iface_endpoint *local;
 	} revival;
+
+	/*
+	 * This struct will be used for storing variables required for
+	 * session resumption (when re-animating the IKE SA).
+	 */
+	struct session *session;
 
 	/*
 	 * Private variables for tracking routing.  Only updated by

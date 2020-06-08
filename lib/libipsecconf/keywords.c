@@ -10,6 +10,7 @@
  * Copyright (C) 2016-2022 Andrew Cagney
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -449,6 +450,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "accept-redirect",  kv_conn,  kt_sparse_name, KNCF_ACCEPT_REDIRECT, &yn_option_names, NULL, },
   { "accept-redirect-to",  kv_conn,  kt_string, KSCF_ACCEPT_REDIRECT_TO, NULL, NULL, },
   { "pfs",  kv_conn,  kt_sparse_name,  KNCF_PFS, &yn_option_names, NULL, },
+  { "session-resumption",  kv_conn,  kt_sparse_name,  KNCF_SESSION_RESUMPTION, &yn_option_names, NULL, },
 
   { "nat-keepalive",  kv_conn,  kt_bool,  KNCF_NAT_KEEPALIVE, NULL, NULL, },
 

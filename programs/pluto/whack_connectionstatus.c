@@ -19,6 +19,7 @@
  * Copyright (C) 2016-2022 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  * Copyright (C) 20212-2022 Paul Wouters <paul.wouters@aiven.io>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -49,6 +50,8 @@
 #include "plutoalg.h"	/* for show_kernel_alg_connection() */
 #include "kernel.h"		/* for enum direction */
 #include "sparse_names.h"
+#include "monotime.h"
+#include "ikev2_ike_session_resume.h"	/* for show_session_resume() */
 
 /* Passed in to jam_end_client() */
 static const char END_SEPARATOR[] = "===";
@@ -905,6 +908,16 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		}
 		jam_connection_owners(buf, c, IKE_SA_OWNER_FLOOR, IKE_SA_OWNER_ROOF);
 		jam_connection_owners(buf, c, CHILD_SA_OWNER_FLOOR, CHILD_SA_OWNER_ROOF);
+	}
+
+	if (c->config->session_resumption) {
+		SHOW_JAMBUF(s, buf) {
+			jam_connection_short(buf, c);
+			jam_string(buf, ":  ");
+			/* ticket */
+			jam_string(buf, " ");
+			jam_session(buf, c->session);
+		}
 	}
 
 	SHOW_JAMBUF(s, buf) {

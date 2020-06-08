@@ -12,6 +12,7 @@
  * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -457,6 +458,8 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.accept_redirect_to = conn->values[KSCF_ACCEPT_REDIRECT_TO].string;
 	conn_log_val(logger, conn, "accept-redirect-to", msg.accept_redirect_to);
 	msg.send_redirect = conn->values[KNCF_SEND_REDIRECT].option;
+
+	msg.session_resumption = conn->values[KNCF_SESSION_RESUMPTION].option;
 
 	msg.mobike = conn->values[KNCF_MOBIKE].option; /*yn_options*/
 	msg.intermediate = conn->values[KNCF_INTERMEDIATE].option; /*yn_options*/

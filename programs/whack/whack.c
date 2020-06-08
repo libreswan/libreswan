@@ -1,5 +1,4 @@
-/*
- * command interface to Pluto
+/* command interface to Pluto
  *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2003  D. Hugh Redelmeier.
@@ -19,6 +18,7 @@
  * Copyright (C) 2019 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
  * Copyright (C) 20212-2022 Paul Wouters <paul.wouters@aiven.io>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -123,6 +123,7 @@ static void help(void)
 		"	[--ikefrag-allow | --ikefrag-force] \\\n"
 		"	[--esn ] [--no-esn] [--decap-dscp] [--encap-dscp] [--nopmtudisc] [--mobike] \\\n"
 		"	[--tcp <no|yes|fallback>] --tcp-remote-port <port>\\\n"
+		"	[--session-resumption[={yes,no}]] \\\n"
 #ifdef HAVE_NM
 		"	[--nm-configured] \\\n"
 #endif
@@ -215,6 +216,8 @@ static void help(void)
 		"statistics: [--globalstatus] | [--clearstats]\n"
 		"\n"
 		"refresh dns: whack --ddns\n"
+		"\n"
+		"suspend: whack --suspend --name <connection_name>\n"
 		"\n"
 #ifdef USE_SECCOMP
 		"testing: whack --seccomp-crashtest (CAREFUL!)\n"
@@ -353,6 +356,8 @@ enum option_enums {
 
 	OPT_ROUTE,
 	OPT_UNROUTE,
+
+	OPT_SUSPEND,
 
 	OPT_INITIATE,
 	OPT_DOWN,
@@ -538,6 +543,7 @@ enum option_enums {
 	CD_CISCO_UNITY,
 	CD_FAKE_STRONGSWAN,
 	CD_MOBIKE,
+	CD_SESSION_RESUMPTION,
 	CD_IKE,
 	CD_IKE_TCP,
 	CD_IKE_TCP_REMOTE_PORT,
@@ -746,6 +752,9 @@ const struct option long_opts[] = {
 	{ "delete-child", no_argument, NULL, OPT_DELETE_CHILD },
 	{ "down-ike", no_argument, NULL, OPT_DOWN_IKE },
 	{ "down-child", no_argument, NULL, OPT_DOWN_CHILD },
+
+	{ "suspend", no_argument, NULL, OPT_SUSPEND, },
+	{ "session-resumption", optional_argument, NULL, CD_SESSION_RESUMPTION, },
 
 	/* list options */
 
@@ -1308,6 +1317,13 @@ int main(int argc, char **argv)
 			msg.whack_sa = WHACK_DOWN_SA;
 			msg.whack_sa_type = CHILD_SA;
 			continue;
+
+		case OPT_SUSPEND: /* --suspend */
+			msg.whack_suspend = true;
+			continue;
+		case CD_SESSION_RESUMPTION:
+			msg.session_resumption = optarg_sparse(YN_YES, &yn_option_names);
+			break;
 
 		case OPT_DELETE:	/* --delete */
 			msg.whack_delete = true;
@@ -2580,6 +2596,7 @@ int main(int argc, char **argv)
 	    seen[OPT_DELETE_CHILD] ||
 	    seen[OPT_DOWN_IKE] ||
 	    seen[OPT_DOWN_CHILD] ||
+	    seen[OPT_SUSPEND] ||
 	    (opts_seen & CONN_OPT_SEEN)) {
 		if (!seen[OPT_NAME]) {
 			diagw("missing --name <connection_name>");

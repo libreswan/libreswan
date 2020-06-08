@@ -11,6 +11,7 @@
  * Copyright (C) 2014-2020 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2014-2017 Antony Antony <antony@phenome.org>
  * Copyright (C) 2019-2023 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -75,6 +76,7 @@
 #include "whack_trafficstatus.h"
 #include "whack_unroute.h"
 #include "whack_showstates.h"
+#include "whack_suspend.h"
 
 static void whack_rereadsecrets(struct show *s)
 {
@@ -599,6 +601,12 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			  (m->name == NULL ? "<null>" : m->name),
 			  m->remote_host != NULL ? m->remote_host : "<null>",
 			  bool_str(m->whack_async));
+	}
+
+	if (m->whack_suspend) {
+		dbg_whack(s, "suspend: start:");
+		whack_suspend(m, s);
+		dbg_whack(s, "suspend: stop:");
 	}
 
 	if (m->whack_oppo_initiate) {

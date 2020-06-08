@@ -8,6 +8,7 @@
  * Copyright (C) 2013,2016 Antony Antony <antony@phenome.org>
  * Copyright (C) 2016,2018 Andrew Cagney
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -231,6 +232,9 @@ struct whack_message {
 	enum yn_options compress;
 	enum type_options type;		/* type=tunnel|transport|SHUNT */
 	enum encap_proto phase2;	/* outer protocol: ESP|AH */
+	enum yn_options session_resumption;	/* for RFC 5723 -
+						 * IKEv2 Session
+						 * Resumption */
 
 	uintmax_t sa_ipsec_max_bytes;
 	uintmax_t sa_ipsec_max_packets;
@@ -458,6 +462,9 @@ struct whack_message {
 	enum yn_options accept_redirect;
 	char *accept_redirect_to;
 	enum yna_options send_redirect;
+
+	/* for RFC 5723 - IKEv2 Session Resumption */
+	bool whack_suspend;
 
 	/* what metric to put on ipsec routes */
 	int metric;
