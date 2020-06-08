@@ -5,333 +5,72 @@ initdone
 west #
  systemctl start ipsec.service || echo failed
 west #
- systemctl status ipsec.service || echo failed
-● ipsec.service - Internet Key Exchange (IKE) Protocol Daemon for IPsec
-   Loaded: loaded (PATH/lib/systemd/system/ipsec.service; disabled; vendor preset: disabled)
-   Active: active (running) since TIMESTAMP
-     Docs: man:ipsec(8)
-           man:pluto(8)
-           man:ipsec.conf(5)
-  [XXX]ExecStartPre=PATH/libexec/ipsec/addconn --config /etc/ipsec.conf --checkconfig (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/libexec/ipsec/_stackmanager start (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/sbin/ipsec --checknss (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/sbin/ipsec --checknflog (code=exited, status=0/SUCCESS)
- Main PID: XXX
-   Status: "Startup completed."
-    Tasks: 2 (limit: XXX)
-   Memory: XXX
-   CGroup: /system.slice/ipsec.service
-           └─ XXX PATH/libexec/ipsec/pluto --leak-detective --config /etc/…
-TIMESTAMP west systemd[1]: Starting Internet Key Exchange (IKE) Prot…ec...
-TIMESTAMP west ipsec[XXX]: Migrating NSS db to sql:/etc/ipsec.d
-TIMESTAMP west ipsec[XXX]: database already upgraded.
-TIMESTAMP west ipsec[XXX]: NSS upgrade complete
-TIMESTAMP west ipsec[XXX]: nflog ipsec capture disabled
-TIMESTAMP west systemd[1]: Started Internet Key Exchange (IKE) Proto…Psec.
-Hint: Some lines were ellipsized, use -l to show in full.
+ systemctl status ipsec.service >/dev/null || echo failed
 west #
  systemctl start ipsec.service && echo detected proper failure
 detected proper failure
 west #
- systemctl status ipsec.service || echo failed
-● ipsec.service - Internet Key Exchange (IKE) Protocol Daemon for IPsec
-   Loaded: loaded (PATH/lib/systemd/system/ipsec.service; disabled; vendor preset: disabled)
-   Active: active (running) since TIMESTAMP
-     Docs: man:ipsec(8)
-           man:pluto(8)
-           man:ipsec.conf(5)
-  [XXX]ExecStartPre=PATH/libexec/ipsec/addconn --config /etc/ipsec.conf --checkconfig (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/libexec/ipsec/_stackmanager start (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/sbin/ipsec --checknss (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/sbin/ipsec --checknflog (code=exited, status=0/SUCCESS)
- Main PID: XXX
-   Status: "Startup completed."
-    Tasks: 2 (limit: XXX)
-   Memory: XXX
-   CGroup: /system.slice/ipsec.service
-           └─ XXX PATH/libexec/ipsec/pluto --leak-detective --config /etc/…
-TIMESTAMP west systemd[1]: Starting Internet Key Exchange (IKE) Prot…ec...
-TIMESTAMP west ipsec[XXX]: Migrating NSS db to sql:/etc/ipsec.d
-TIMESTAMP west ipsec[XXX]: database already upgraded.
-TIMESTAMP west ipsec[XXX]: NSS upgrade complete
-TIMESTAMP west ipsec[XXX]: nflog ipsec capture disabled
-TIMESTAMP west systemd[1]: Started Internet Key Exchange (IKE) Proto…Psec.
-Hint: Some lines were ellipsized, use -l to show in full.
+ systemctl status ipsec.service >/dev/null || echo failed
 west #
  systemctl restart ipsec.service || echo failed
 west #
- systemctl status ipsec.service || echo failed
-● ipsec.service - Internet Key Exchange (IKE) Protocol Daemon for IPsec
-   Loaded: loaded (PATH/lib/systemd/system/ipsec.service; disabled; vendor preset: disabled)
-   Active: active (running) since TIMESTAMP
-     Docs: man:ipsec(8)
-           man:pluto(8)
-           man:ipsec.conf(5)
-  [XXX]ExecStartPre=PATH/libexec/ipsec/addconn --config /etc/ipsec.conf --checkconfig (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/libexec/ipsec/_stackmanager start (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/sbin/ipsec --checknss (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/sbin/ipsec --checknflog (code=exited, status=0/SUCCESS)
- Main PID: XXX
-   Status: "Startup completed."
-    Tasks: 2 (limit: XXX)
-   Memory: XXX
-   CGroup: /system.slice/ipsec.service
-           └─ XXX PATH/libexec/ipsec/pluto --leak-detective --config /etc…
-TIMESTAMP west systemd[1]: Starting Internet Key Exchange (IKE) Prot…ec...
-TIMESTAMP west ipsec[XXX]: nflog ipsec capture disabled
-TIMESTAMP west systemd[1]: Started Internet Key Exchange (IKE) Proto…Psec.
-Hint: Some lines were ellipsized, use -l to show in full.
+ systemctl status ipsec.service >/dev/null || echo failed
 west #
  systemctl stop ipsec.service || echo failed
 west #
- systemctl status ipsec.service && echo detected proper failure
-● ipsec.service - Internet Key Exchange (IKE) Protocol Daemon for IPsec
-   Loaded: loaded (PATH/lib/systemd/system/ipsec.service; disabled; vendor preset: disabled)
-   Active: inactive (dead)
-     Docs: man:ipsec(8)
-           man:pluto(8)
-           man:ipsec.conf(5)
-TIMESTAMP west whack[XXX]: 002 shutting down
-TIMESTAMP west systemd[1]: ipsec.service: Succeeded.
-TIMESTAMP west systemd[1]: Stopped Internet Key Exchange (IKE) Proto…Psec.
-TIMESTAMP west systemd[1]: Starting Internet Key Exchange (IKE) Prot…ec...
-TIMESTAMP west ipsec[XXX]: nflog ipsec capture disabled
-TIMESTAMP west systemd[1]: Started Internet Key Exchange (IKE) Proto…Psec.
-TIMESTAMP west systemd[1]: Stopping Internet Key Exchange (IKE) Prot…ec...
-TIMESTAMP west whack[XXX]: 002 shutting down
-TIMESTAMP west systemd[1]: ipsec.service: Succeeded.
-TIMESTAMP west systemd[1]: Stopped Internet Key Exchange (IKE) Proto…Psec.
-Hint: Some lines were ellipsized, use -l to show in full.
+ systemctl status ipsec.service >/dev/null && echo detected proper failure
 west #
  systemctl stop ipsec.service || echo failed
 west #
- systemctl status ipsec.service && echo detected proper failure
-● ipsec.service - Internet Key Exchange (IKE) Protocol Daemon for IPsec
-   Loaded: loaded (PATH/lib/systemd/system/ipsec.service; disabled; vendor preset: disabled)
-   Active: inactive (dead)
-     Docs: man:ipsec(8)
-           man:pluto(8)
-           man:ipsec.conf(5)
-TIMESTAMP west whack[XXX]: 002 shutting down
-TIMESTAMP west systemd[1]: ipsec.service: Succeeded.
-TIMESTAMP west systemd[1]: Stopped Internet Key Exchange (IKE) Proto…Psec.
-TIMESTAMP west systemd[1]: Starting Internet Key Exchange (IKE) Prot…ec...
-TIMESTAMP west ipsec[XXX]: nflog ipsec capture disabled
-TIMESTAMP west systemd[1]: Started Internet Key Exchange (IKE) Proto…Psec.
-TIMESTAMP west systemd[1]: Stopping Internet Key Exchange (IKE) Prot…ec...
-TIMESTAMP west whack[XXX]: 002 shutting down
-TIMESTAMP west systemd[1]: ipsec.service: Succeeded.
-TIMESTAMP west systemd[1]: Stopped Internet Key Exchange (IKE) Proto…Psec.
-Hint: Some lines were ellipsized, use -l to show in full.
+ systemctl status ipsec.service >/dev/null && echo detected proper failure
 west #
  systemctl start ipsec.service || echo failed
 west #
  systemctl force-reload ipsec.service || echo failed
 west #
- systemctl status ipsec.service || echo failed
-● ipsec.service - Internet Key Exchange (IKE) Protocol Daemon for IPsec
-   Loaded: loaded (PATH/lib/systemd/system/ipsec.service; disabled; vendor preset: disabled)
-   Active: active (running) since TIMESTAMP
-     Docs: man:ipsec(8)
-           man:pluto(8)
-           man:ipsec.conf(5)
-  [XXX]ExecStartPre=PATH/libexec/ipsec/addconn --config /etc/ipsec.conf --checkconfig (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/libexec/ipsec/_stackmanager start (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/sbin/ipsec --checknss (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/sbin/ipsec --checknflog (code=exited, status=0/SUCCESS)
-  [XXX]ExecReload=PATH/libexec/ipsec/whack --listen (code=exited, status=0/SUCCESS)
- Main PID: XXX
-   Status: "Startup completed."
-    Tasks: 2 (limit: XXX)
-   Memory: XXX
-   CGroup: /system.slice/ipsec.service
-           └─ XXX PATH/libexec/ipsec/pluto --leak-detective --config /etc…
-TIMESTAMP west systemd[1]: Starting Internet Key Exchange (IKE) Prot…ec...
-TIMESTAMP west ipsec[XXX]: nflog ipsec capture disabled
-TIMESTAMP west systemd[1]: Started Internet Key Exchange (IKE) Proto…Psec.
-TIMESTAMP west systemd[1]: Reloading Internet Key Exchange (IKE) Pro…Psec.
-TIMESTAMP west whack[XXX]: 002 listening for IKE messages
-TIMESTAMP west whack[XXX]: 002 forgetting secrets
-TIMESTAMP west whack[XXX]: 002 loading secrets from "/etc/ipsec.secrets"
-TIMESTAMP west whack[XXX]: 002 loaded private key for keyid: PKK_RSA…dY/4
-TIMESTAMP west systemd[1]: Reloaded Internet Key Exchange (IKE) Prot…Psec.
-Hint: Some lines were ellipsized, use -l to show in full.
+ systemctl status ipsec.service >/dev/null || echo failed
 west #
  systemctl start ipsec.service || echo failed
 west #
  systemctl restart ipsec.service || echo failed
 west #
- systemctl status ipsec.service || echo failed
-● ipsec.service - Internet Key Exchange (IKE) Protocol Daemon for IPsec
-   Loaded: loaded (PATH/lib/systemd/system/ipsec.service; disabled; vendor preset: disabled)
-   Active: active (running) since TIMESTAMP
-     Docs: man:ipsec(8)
-           man:pluto(8)
-           man:ipsec.conf(5)
-  [XXX]ExecStartPre=PATH/libexec/ipsec/addconn --config /etc/ipsec.conf --checkconfig (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/libexec/ipsec/_stackmanager start (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/sbin/ipsec --checknss (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/sbin/ipsec --checknflog (code=exited, status=0/SUCCESS)
- Main PID: XXX
-   Status: "Startup completed."
-    Tasks: 2 (limit: XXX)
-   Memory: XXX
-   CGroup: /system.slice/ipsec.service
-           └─ XXX PATH/libexec/ipsec/pluto --leak-detective --config /etc…
-TIMESTAMP west systemd[1]: Starting Internet Key Exchange (IKE) Prot…ec...
-TIMESTAMP west ipsec[XXX]: nflog ipsec capture disabled
-TIMESTAMP west systemd[1]: Started Internet Key Exchange (IKE) Proto…Psec.
-Hint: Some lines were ellipsized, use -l to show in full.
+ systemctl status ipsec.service >/dev/null || echo failed
 west #
  systemctl start ipsec.service || echo failed
 west #
  systemctl condrestart ipsec.service || echo failed
 west #
- systemctl status ipsec.service || echo failed
-● ipsec.service - Internet Key Exchange (IKE) Protocol Daemon for IPsec
-   Loaded: loaded (PATH/lib/systemd/system/ipsec.service; disabled; vendor preset: disabled)
-   Active: active (running) since TIMESTAMP
-     Docs: man:ipsec(8)
-           man:pluto(8)
-           man:ipsec.conf(5)
-  [XXX]ExecStartPre=PATH/libexec/ipsec/addconn --config /etc/ipsec.conf --checkconfig (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/libexec/ipsec/_stackmanager start (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/sbin/ipsec --checknss (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/sbin/ipsec --checknflog (code=exited, status=0/SUCCESS)
- Main PID: XXX
-   Status: "Startup completed."
-    Tasks: 2 (limit: XXX)
-   Memory: XXX
-   CGroup: /system.slice/ipsec.service
-           └─ XXX PATH/libexec/ipsec/pluto --leak-detective --config /etc…
-TIMESTAMP west systemd[1]: Starting Internet Key Exchange (IKE) Prot…ec...
-TIMESTAMP west ipsec[XXX]: nflog ipsec capture disabled
-TIMESTAMP west systemd[1]: Started Internet Key Exchange (IKE) Proto…Psec.
-Hint: Some lines were ellipsized, use -l to show in full.
+ systemctl status ipsec.service >/dev/null || echo failed
 west #
  service ipsec start || echo failed
 Redirecting to /bin/systemctl start ipsec.service
 west #
- service ipsec status || echo failed
+ service ipsec status >/dev/null || echo failed
 Redirecting to /bin/systemctl status ipsec.service
-● ipsec.service - Internet Key Exchange (IKE) Protocol Daemon for IPsec
-   Loaded: loaded (PATH/lib/systemd/system/ipsec.service; disabled; vendor preset: disabled)
-   Active: active (running) since TIMESTAMP
-     Docs: man:ipsec(8)
-           man:pluto(8)
-           man:ipsec.conf(5)
-  [XXX]ExecStartPre=PATH/libexec/ipsec/addconn --config /etc/ipsec.conf --checkconfig (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/libexec/ipsec/_stackmanager start (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/sbin/ipsec --checknss (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/sbin/ipsec --checknflog (code=exited, status=0/SUCCESS)
- Main PID: XXX
-   Status: "Startup completed."
-    Tasks: 2 (limit: XXX)
-   Memory: XXX
-   CGroup: /system.slice/ipsec.service
-           └─ XXX PATH/libexec/ipsec/pluto --leak-detective --config /etc…
-TIMESTAMP west systemd[1]: Starting Internet Key Exchange (IKE) Prot…ec...
-TIMESTAMP west ipsec[XXX]: nflog ipsec capture disabled
-TIMESTAMP west systemd[1]: Started Internet Key Exchange (IKE) Proto…Psec.
-Hint: Some lines were ellipsized, use -l to show in full.
 west #
  service ipsec start || echo failed
 Redirecting to /bin/systemctl start ipsec.service
 west #
- service ipsec status || echo failed
+ service ipsec status >/dev/null || echo failed
 Redirecting to /bin/systemctl status ipsec.service
-● ipsec.service - Internet Key Exchange (IKE) Protocol Daemon for IPsec
-   Loaded: loaded (PATH/lib/systemd/system/ipsec.service; disabled; vendor preset: disabled)
-   Active: active (running) since TIMESTAMP
-     Docs: man:ipsec(8)
-           man:pluto(8)
-           man:ipsec.conf(5)
-  [XXX]ExecStartPre=PATH/libexec/ipsec/addconn --config /etc/ipsec.conf --checkconfig (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/libexec/ipsec/_stackmanager start (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/sbin/ipsec --checknss (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/sbin/ipsec --checknflog (code=exited, status=0/SUCCESS)
- Main PID: XXX
-   Status: "Startup completed."
-    Tasks: 2 (limit: XXX)
-   Memory: XXX
-   CGroup: /system.slice/ipsec.service
-           └─ XXX PATH/libexec/ipsec/pluto --leak-detective --config /etc…
-TIMESTAMP west systemd[1]: Starting Internet Key Exchange (IKE) Prot…ec...
-TIMESTAMP west ipsec[XXX]: nflog ipsec capture disabled
-TIMESTAMP west systemd[1]: Started Internet Key Exchange (IKE) Proto…Psec.
-Hint: Some lines were ellipsized, use -l to show in full.
 west #
  service ipsec restart || echo failed
 Redirecting to /bin/systemctl restart ipsec.service
 west #
- service ipsec status || echo failed
+ service ipsec status >/dev/null || echo failed
 Redirecting to /bin/systemctl status ipsec.service
-● ipsec.service - Internet Key Exchange (IKE) Protocol Daemon for IPsec
-   Loaded: loaded (PATH/lib/systemd/system/ipsec.service; disabled; vendor preset: disabled)
-   Active: active (running) since TIMESTAMP
-     Docs: man:ipsec(8)
-           man:pluto(8)
-           man:ipsec.conf(5)
-  [XXX]ExecStartPre=PATH/libexec/ipsec/addconn --config /etc/ipsec.conf --checkconfig (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/libexec/ipsec/_stackmanager start (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/sbin/ipsec --checknss (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/sbin/ipsec --checknflog (code=exited, status=0/SUCCESS)
- Main PID: XXX
-   Status: "Startup completed."
-    Tasks: 2 (limit: XXX)
-   Memory: XXX
-   CGroup: /system.slice/ipsec.service
-           └─ XXX PATH/libexec/ipsec/pluto --leak-detective --config /etc…
-TIMESTAMP west systemd[1]: Starting Internet Key Exchange (IKE) Prot…ec...
-TIMESTAMP west ipsec[XXX]: nflog ipsec capture disabled
-TIMESTAMP west systemd[1]: Started Internet Key Exchange (IKE) Proto…Psec.
-Hint: Some lines were ellipsized, use -l to show in full.
 west #
  service ipsec stop || echo failed
 Redirecting to /bin/systemctl stop ipsec.service
 west #
- service ipsec status && echo detected proper failure
+ service ipsec status >/dev/null && echo detected proper failure
 Redirecting to /bin/systemctl status ipsec.service
-● ipsec.service - Internet Key Exchange (IKE) Protocol Daemon for IPsec
-   Loaded: loaded (PATH/lib/systemd/system/ipsec.service; disabled; vendor preset: disabled)
-   Active: inactive (dead)
-     Docs: man:ipsec(8)
-           man:pluto(8)
-           man:ipsec.conf(5)
-TIMESTAMP west whack[XXX]: 002 shutting down
-TIMESTAMP west systemd[1]: ipsec.service: Succeeded.
-TIMESTAMP west systemd[1]: Stopped Internet Key Exchange (IKE) Proto…Psec.
-TIMESTAMP west systemd[1]: Starting Internet Key Exchange (IKE) Prot…ec...
-TIMESTAMP west ipsec[XXX]: nflog ipsec capture disabled
-TIMESTAMP west systemd[1]: Started Internet Key Exchange (IKE) Proto…Psec.
-TIMESTAMP west systemd[1]: Stopping Internet Key Exchange (IKE) Prot…ec...
-TIMESTAMP west whack[XXX]: 002 shutting down
-TIMESTAMP west systemd[1]: ipsec.service: Succeeded.
-TIMESTAMP west systemd[1]: Stopped Internet Key Exchange (IKE) Proto…Psec.
-Hint: Some lines were ellipsized, use -l to show in full.
 west #
  service ipsec stop || echo failed
 Redirecting to /bin/systemctl stop ipsec.service
 west #
- service ipsec status && echo detected proper failure
+ service ipsec status >/dev/null && echo detected proper failure
 Redirecting to /bin/systemctl status ipsec.service
-● ipsec.service - Internet Key Exchange (IKE) Protocol Daemon for IPsec
-   Loaded: loaded (PATH/lib/systemd/system/ipsec.service; disabled; vendor preset: disabled)
-   Active: inactive (dead)
-     Docs: man:ipsec(8)
-           man:pluto(8)
-           man:ipsec.conf(5)
-TIMESTAMP west whack[XXX]: 002 shutting down
-TIMESTAMP west systemd[1]: ipsec.service: Succeeded.
-TIMESTAMP west systemd[1]: Stopped Internet Key Exchange (IKE) Proto…Psec.
-TIMESTAMP west systemd[1]: Starting Internet Key Exchange (IKE) Prot…ec...
-TIMESTAMP west ipsec[XXX]: nflog ipsec capture disabled
-TIMESTAMP west systemd[1]: Started Internet Key Exchange (IKE) Proto…Psec.
-TIMESTAMP west systemd[1]: Stopping Internet Key Exchange (IKE) Prot…ec...
-TIMESTAMP west whack[XXX]: 002 shutting down
-TIMESTAMP west systemd[1]: ipsec.service: Succeeded.
-TIMESTAMP west systemd[1]: Stopped Internet Key Exchange (IKE) Proto…Psec.
-Hint: Some lines were ellipsized, use -l to show in full.
 west #
  service ipsec start || echo failed
 Redirecting to /bin/systemctl start ipsec.service
@@ -339,35 +78,8 @@ west #
  service ipsec force-reload || echo failed
 Redirecting to /bin/systemctl force-reload ipsec.service
 west #
- service ipsec status || echo failed
+ service ipsec status >/dev/null || echo failed
 Redirecting to /bin/systemctl status ipsec.service
-● ipsec.service - Internet Key Exchange (IKE) Protocol Daemon for IPsec
-   Loaded: loaded (PATH/lib/systemd/system/ipsec.service; disabled; vendor preset: disabled)
-   Active: active (running) since TIMESTAMP
-     Docs: man:ipsec(8)
-           man:pluto(8)
-           man:ipsec.conf(5)
-  [XXX]ExecStartPre=PATH/libexec/ipsec/addconn --config /etc/ipsec.conf --checkconfig (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/libexec/ipsec/_stackmanager start (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/sbin/ipsec --checknss (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/sbin/ipsec --checknflog (code=exited, status=0/SUCCESS)
-  [XXX]ExecReload=PATH/libexec/ipsec/whack --listen (code=exited, status=0/SUCCESS)
- Main PID: XXX
-   Status: "Startup completed."
-    Tasks: 2 (limit: XXX)
-   Memory: XXX
-   CGroup: /system.slice/ipsec.service
-           └─ XXX PATH/libexec/ipsec/pluto --leak-detective --config /etc…
-TIMESTAMP west systemd[1]: Starting Internet Key Exchange (IKE) Prot…ec...
-TIMESTAMP west ipsec[XXX]: nflog ipsec capture disabled
-TIMESTAMP west systemd[1]: Started Internet Key Exchange (IKE) Proto…Psec.
-TIMESTAMP west systemd[1]: Reloading Internet Key Exchange (IKE) Pro…Psec.
-TIMESTAMP west whack[XXX]: 002 listening for IKE messages
-TIMESTAMP west whack[XXX]: 002 forgetting secrets
-TIMESTAMP west whack[XXX]: 002 loading secrets from "/etc/ipsec.secrets"
-TIMESTAMP west whack[XXX]: 002 loaded private key for keyid: PKK_RSA…dY/4
-TIMESTAMP west systemd[1]: Reloaded Internet Key Exchange (IKE) Prot…Psec.
-Hint: Some lines were ellipsized, use -l to show in full.
 west #
  service ipsec start || echo failed
 Redirecting to /bin/systemctl start ipsec.service
@@ -375,28 +87,8 @@ west #
  service ipsec restart || echo failed
 Redirecting to /bin/systemctl restart ipsec.service
 west #
- service ipsec status || echo failed
+ service ipsec status >/dev/null || echo failed
 Redirecting to /bin/systemctl status ipsec.service
-● ipsec.service - Internet Key Exchange (IKE) Protocol Daemon for IPsec
-   Loaded: loaded (PATH/lib/systemd/system/ipsec.service; disabled; vendor preset: disabled)
-   Active: active (running) since TIMESTAMP
-     Docs: man:ipsec(8)
-           man:pluto(8)
-           man:ipsec.conf(5)
-  [XXX]ExecStartPre=PATH/libexec/ipsec/addconn --config /etc/ipsec.conf --checkconfig (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/libexec/ipsec/_stackmanager start (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/sbin/ipsec --checknss (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/sbin/ipsec --checknflog (code=exited, status=0/SUCCESS)
- Main PID: XXX
-   Status: "Startup completed."
-    Tasks: 2 (limit: XXX)
-   Memory: XXX
-   CGroup: /system.slice/ipsec.service
-           └─ XXX PATH/libexec/ipsec/pluto --leak-detective --config /etc…
-TIMESTAMP west systemd[1]: Starting Internet Key Exchange (IKE) Prot…ec...
-TIMESTAMP west ipsec[XXX]: nflog ipsec capture disabled
-TIMESTAMP west systemd[1]: Started Internet Key Exchange (IKE) Proto…Psec.
-Hint: Some lines were ellipsized, use -l to show in full.
 west #
  service ipsec start || echo failed
 Redirecting to /bin/systemctl start ipsec.service
@@ -404,28 +96,13 @@ west #
  service ipsec condrestart || echo failed
 Redirecting to /bin/systemctl condrestart ipsec.service
 west #
- service ipsec status || echo failed
+ service ipsec status >/dev/null || echo failed
 Redirecting to /bin/systemctl status ipsec.service
-● ipsec.service - Internet Key Exchange (IKE) Protocol Daemon for IPsec
-   Loaded: loaded (PATH/lib/systemd/system/ipsec.service; disabled; vendor preset: disabled)
-   Active: active (running) since TIMESTAMP
-     Docs: man:ipsec(8)
-           man:pluto(8)
-           man:ipsec.conf(5)
-  [XXX]ExecStartPre=PATH/libexec/ipsec/addconn --config /etc/ipsec.conf --checkconfig (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/libexec/ipsec/_stackmanager start (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/sbin/ipsec --checknss (code=exited, status=0/SUCCESS)
-  [XXX]ExecStartPre=PATH/sbin/ipsec --checknflog (code=exited, status=0/SUCCESS)
- Main PID: XXX
-   Status: "Startup completed."
-    Tasks: 2 (limit: XXX)
-   Memory: XXX
-   CGroup: /system.slice/ipsec.service
-           └─ XXX PATH/libexec/ipsec/pluto --leak-detective --config /etc…
-TIMESTAMP west systemd[1]: Starting Internet Key Exchange (IKE) Prot…ec...
-TIMESTAMP west ipsec[XXX]: nflog ipsec capture disabled
-TIMESTAMP west systemd[1]: Started Internet Key Exchange (IKE) Proto…Psec.
-Hint: Some lines were ellipsized, use -l to show in full.
+west #
+ # test for fix that starts ipsec only after nic/network is online, rhbz#1145245
+west #
+ grep "After=network-online.target" /lib/systemd/system/ipsec.service
+After=network-online.target
 west #
  # test for rhbz#1127313 (IPsec holes for IPv6 neighbour discovery)
 west #
