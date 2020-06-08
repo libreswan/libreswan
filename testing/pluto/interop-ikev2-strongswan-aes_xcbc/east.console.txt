@@ -1,8 +1,4 @@
 /testing/guestbin/swan-prep --userland strongswan
-strongswan 5.8.2 must be installed
-Linux strongSwan U5.8.2/K5.6.14-300.fc32.x86_64
-University of Applied Sciences Rapperswil, Switzerland
-See 'strongswan --copyright' for copyright information.
 east #
  ../../pluto/bin/strongswan-start.sh
 east #

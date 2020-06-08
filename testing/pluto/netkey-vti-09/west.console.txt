@@ -71,7 +71,7 @@ west #
 up
 west #
  ping -n -c 4 -I 10.0.1.254 10.0.2.254
-bind: Cannot assign requested address
+ping: bind: Cannot assign requested address
 west #
  ipsec whack --trafficstatus
 006 #2: "westnet-eastnet-vti-01", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'

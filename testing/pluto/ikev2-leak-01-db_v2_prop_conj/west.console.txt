@@ -26,6 +26,7 @@ done
 west #
  grep NO_PROPOSAL_CHOSEN /tmp/pluto.log
 |    Notify Message Type: v2N_NO_PROPOSAL_CHOSEN (0xe)
+| ignoring unsupported v2N_NO_PROPOSAL_CHOSEN notify
 "westnet-eastnet-ipv4-psk-ikev2" #2: IKE_AUTH response contained the error notification NO_PROPOSAL_CHOSEN
 west #
  ipsec whack --shutdown

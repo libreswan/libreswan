@@ -23,9 +23,8 @@ west #
 002 "westnet-eastnet-x509" #1: I am sending my cert
 002 "westnet-eastnet-x509" #1: I am sending a certificate request
 1v1 "westnet-eastnet-x509" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+002 "westnet-eastnet-x509" #1: no Certificate Authority in NSS Certificate DB! certificate payloads discarded
 002 "westnet-eastnet-x509" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-002 "westnet-eastnet-x509" #1: no Certificate Authority in NSS Certificate DB! certificate payloads discarded
-002 "westnet-eastnet-x509" #1: no Certificate Authority in NSS Certificate DB! certificate payloads discarded
 003 "westnet-eastnet-x509" #1: authenticated using RSA with SHA-1
 004 "westnet-eastnet-x509" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-x509" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
