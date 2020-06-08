@@ -13,6 +13,7 @@
  * Copyright (C) 2012-2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -41,6 +42,7 @@
 #include "ikev2_create_child_sa.h"	/* for initiate_v2_CREATE_CHILD_SA_create_child() */
 #include "instantiate.h"
 #include "terminate.h"
+#include "ikev2_ike_session_resume.h"
 
 static bool initiate_connection_1_basics(struct connection *c,
 					 const char *remote_host,
@@ -369,9 +371,18 @@ void initiate(struct connection *c,
 			break;
 #endif
 		case IKEv2:
-			ike = initiate_v2_IKE_SA_INIT_request(c, NULL, policy,
-							      inception, sec_label,
-							      detach_whack);
+			if (c->session != NULL) {
+				/* if session is expired, this
+				 * redirects to IKE_SA_INIT */
+				ike = initiate_v2_IKE_SESSION_RESUME_request(c, policy,
+									     inception,
+									     sec_label,
+									     detach_whack);
+			} else {
+				ike = initiate_v2_IKE_SA_INIT_request(c, NULL, policy,
+								      inception, sec_label,
+								      detach_whack);
+			}
 			break;
 		}
 		if (ike == NULL) {

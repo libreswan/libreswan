@@ -13,6 +13,7 @@
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -437,6 +438,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	 */
 	switch (exchange_type) {
 	case ISAKMP_v2_IKE_SA_INIT:
+	case ISAKMP_v2_IKE_SESSION_RESUME:
 	case ISAKMP_v2_IKE_AUTH:
 		break;
 	default:

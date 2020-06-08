@@ -1,5 +1,4 @@
-/*
- * IKEv2 notify routines, for Libreswan
+/* IKEv2 notify routines, for Libreswan
  *
  * Copyright (C) 2007-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2008-2011 Paul Wouters <paul@xelerance.com>
@@ -16,6 +15,7 @@
  * Copyright (C) 2017-2018 Sahana Prasad <sahana.prasad07@gmail.com>
  * Copyright (C) 2017-2018 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -73,6 +73,11 @@ enum v2_pd v2_pd_from_notification(v2_notification_t n)
 	C(USE_PPK_INT);
 	C(USE_TRANSPORT_MODE);
 	C(USE_AGGFRAG);
+	C(TICKET_LT_OPAQUE);
+	C(TICKET_REQUEST);
+	C(TICKET_ACK);
+	C(TICKET_NACK);
+	C(TICKET_OPAQUE);
 #undef C
 	default: return PD_v2_INVALID;
 	}

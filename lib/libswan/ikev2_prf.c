@@ -7,6 +7,7 @@
  * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -30,6 +31,7 @@
 #include "crypt_prf.h"
 #include "crypt_symkey.h"
 #include "fips_mode.h"
+#include "pexpect.h"
 
 /*
  * IKEv2 - RFC4306 2.14 SKEYSEED - calculation.
@@ -127,3 +129,37 @@ struct crypt_mac ikev2_psk_auth(const struct prf_desc *prf_desc, shunk_t pss,
 	return prf_desc->prf_ikev2_ops->psk_auth(prf_desc, pss, first_packet, nonce,
 						 id_hash, intermediate_packet, logger);
 }
+
+/*
+ * SKEYSEED = prf(SK_d (old), "Resumption" | Ni | Nr)
+ *
+ * XXX: once NSS is figured out this should become part of the PRF
+ * vector (as it was on the branch).
+ */
+
+PK11SymKey *ikev2_ike_sa_resume_skeyseed(const struct prf_desc *prf_desc,
+					 PK11SymKey *SK_d_old,
+					 const chunk_t Ni, const chunk_t Nr,
+					 struct logger *logger)
+{
+	return prf_desc->prf_ikev2_ops->ike_sa_resume_skeyseed(prf_desc,
+							       SK_d_old,
+							       Ni, Nr,
+							       logger);
+}
+
+/*
+ * XXX: once NSS is figured out this should become part of the PRF
+ * vector (as it was on the branch).
+ */
+
+struct crypt_mac ikev2_psk_resume(const struct prf_desc *prf_desc,
+				  PK11SymKey *SK_px,
+				  chunk_t first_packet,
+				  struct logger *logger)
+{
+	return prf_desc->prf_ikev2_ops->psk_resume(prf_desc, SK_px,
+						   first_packet,
+						   logger);
+}
+

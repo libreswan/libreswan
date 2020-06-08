@@ -10,6 +10,7 @@
  * Copyright (C) 2013-2019 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013-2014 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2016-2018 Andrew Cagney
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -571,9 +572,11 @@ static void prf_desc_check(const struct ike_alg *alg, struct logger *logger)
 		pexpect_ike_alg(logger, alg, prf->prf_ikev2_ops->prfplus != NULL);
 		pexpect_ike_alg(logger, alg, prf->prf_ikev2_ops->ike_sa_skeyseed != NULL);
 		pexpect_ike_alg(logger, alg, prf->prf_ikev2_ops->ike_sa_rekey_skeyseed != NULL);
+		pexpect_ike_alg(logger, alg, prf->prf_ikev2_ops->ike_sa_resume_skeyseed != NULL);
 		pexpect_ike_alg(logger, alg, prf->prf_ikev2_ops->ike_sa_keymat != NULL);
 		pexpect_ike_alg(logger, alg, prf->prf_ikev2_ops->child_sa_keymat != NULL);
 		pexpect_ike_alg(logger, alg, prf->prf_ikev2_ops->psk_auth != NULL);
+		pexpect_ike_alg(logger, alg, prf->prf_ikev2_ops->psk_resume != NULL);
 	}
 
 	if (prf->hasher != NULL) {

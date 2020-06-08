@@ -16,6 +16,7 @@
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1398,7 +1399,8 @@ bool open_v2_message(const char *story,
 	switch (security) {
 	case ENCRYPTED_PAYLOAD:
 		/* never encrypt an IKE_SA_INIT exchange */
-		if (exchange_type == ISAKMP_v2_IKE_SA_INIT) {
+		if (exchange_type == ISAKMP_v2_IKE_SA_INIT ||
+		    exchange_type == ISAKMP_v2_IKE_SESSION_RESUME) {
 			llog_pexpect(message->logger, HERE,
 				     "exchange type IKE_SA_INIT is invalid for encrypted notification");
 			return false;

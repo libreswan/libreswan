@@ -11,6 +11,7 @@
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  * Copyright (C) 2019-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -572,6 +573,12 @@ enum state_kind {
 	STATE_V2_IKE_INTERMEDIATE_I,
 	STATE_V2_IKE_INTERMEDIATE_R,
 	STATE_V2_IKE_INTERMEDIATE_IR,
+
+	STATE_V2_IKE_SESSION_RESUME_I0,
+	STATE_V2_IKE_SESSION_RESUME_I,
+	STATE_V2_IKE_SESSION_RESUME_R0,
+	STATE_V2_IKE_SESSION_RESUME_R,
+	STATE_V2_IKE_SESSION_RESUME_IR,
 
 	STATE_V2_IKE_AUTH_EAP_R,  /* IKE_AUTH EAP negotiation */
 

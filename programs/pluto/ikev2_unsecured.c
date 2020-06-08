@@ -15,6 +15,7 @@
  * Copyright (C) 2016-2018 Antony Antony <appu@phenome.org>
  * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
  * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -46,6 +47,7 @@
 #include "iface.h"
 #include "log_limiter.h"
 #include "ikev2_ike_sa_init.h"
+#include "ikev2_ike_session_resume.h"
 
 static void process_v2_UNSECURED_request(struct msg_digest *md)
 {
@@ -508,7 +510,8 @@ static void process_v2_UNSECURED_response(struct msg_digest *md)
 	 * XXX: Probably made redundant by v2_exchange above, but no
 	 * harm.
 	 */
-	if (ike->sa.st_state != &state_v2_IKE_SA_INIT_I) {
+	if (ike->sa.st_state != &state_v2_IKE_SA_INIT_I &&
+	    ike->sa.st_state != &state_v2_IKE_SESSION_RESUME_I) {
 		name_buf xb;
 		limited_llog(ike->sa.logger, UNSECURED_LOG_LIMITER,
 			     "dropping %s response with Message ID %jd, IKE SA is in state %s",
@@ -576,4 +579,4 @@ void process_v2_UNSECURED_message(struct msg_digest *md)
 V2_STATE(UNSECURED_R,
 	 "larval unsecured IKE SA responder",
 	 CAT_HALF_OPEN_IKE_SA, /*secured*/false,
-	 &v2_IKE_SA_INIT_exchange);
+	 &v2_IKE_SA_INIT_exchange, &v2_IKE_SESSION_RESUME_exchange);

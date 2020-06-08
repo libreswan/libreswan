@@ -24,10 +24,18 @@ struct logger;
 
 #define S(KIND, ...) extern const struct finite_state state_v2_##KIND
 S(UNSECURED_R);
+/* includes larval states */
 S(IKE_SA_INIT_I0);
 S(IKE_SA_INIT_I);
 S(IKE_SA_INIT_R);
 S(IKE_SA_INIT_IR);
+/* includes larval states */
+S(IKE_SESSION_RESUME_I0);
+S(IKE_SESSION_RESUME_I);
+S(IKE_SESSION_RESUME_R0);
+S(IKE_SESSION_RESUME_R);
+S(IKE_SESSION_RESUME_IR);
+/* come afer above */
 S(IKE_INTERMEDIATE_I);
 S(IKE_INTERMEDIATE_R);
 S(IKE_INTERMEDIATE_IR);

@@ -17,6 +17,7 @@
  * Copyright (C) 2017-2018 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -530,7 +531,8 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 		return;
 	}
 
-	if (!PEXPECT(ike->sa.logger, ike->sa.st_state == &state_v2_IKE_SA_INIT_R)) {
+	if (!PEXPECT(ike->sa.logger, (ike->sa.st_state == &state_v2_IKE_SA_INIT_R ||
+				      ike->sa.st_state == &state_v2_IKE_SESSION_RESUME_R))) {
 		/*
 		 * Still in IKE_SA_INIT responder state.
 		 */
@@ -627,4 +629,31 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 				/*no-md:in-background*/NULL,
 				ike->sa.st_gi/*responder needs initiator KE*/,
 				process_v2_request_no_skeyseed_continue, HERE);
+}
+
+void record_first_v2_packet(struct ike_sa *ike, struct msg_digest *md,
+			    where_t where)
+{
+	/*
+	 * Record first packet for later checking of signature.
+	 *
+	 * XXX:
+	 *
+	 * Should this code use pbs_in_all() which uses
+	 * [.start...roof)?  The original code used:
+	 *
+	 * 	clonetochunk(st->st_firstpacket_peer, md->message_pbs.start,
+	 *		     md->message_pbs(.cur-start),
+	 *		     "saved first received packet");
+	 *
+	 * and pbs_in_to_cursor() both use (.cur-.start).
+	 *
+	 * Suspect it doesn't matter as the code initializing
+	 * .message_pbs forces .roof==.cur - look for the comment
+	 * "trim padding (not actually legit)".
+	 */
+	PEXPECT(ike->sa.logger, md->message_pbs.cur == md->message_pbs.roof);
+	replace_chunk(&ike->sa.st_firstpacket_peer,
+		      pbs_in_to_cursor(&md->message_pbs),
+		      where->func);
 }

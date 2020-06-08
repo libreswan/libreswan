@@ -8,6 +8,7 @@
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2019 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -2596,4 +2597,32 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_ike_proposals(struct ike_sa
 				       /*default_dh-ignored*/&ike_alg_dh_none,
 				       /*ms_dh_downgrade*/false,
 				       logger);
+}
+
+void set_ikev2_accepted_proposal(struct ike_sa *ike,
+				 enum ikev2_trans_type_encr encr,
+				 enum ikev2_trans_type_prf prf,
+				 enum ikev2_trans_type_integ integ,
+				 enum ike_trans_type_dh dh,
+				 unsigned enc_keylen)
+{
+	PASSERT(ike->sa.logger, ike->sa.st_v2_accepted_proposal == NULL);
+	struct ikev2_proposal *temp_proposal = alloc_thing(struct ikev2_proposal, "temp proposal");
+
+	temp_proposal->propnum = 0;
+	temp_proposal->protoid = 1;
+	temp_proposal->remote_spi.size = 0;
+	temp_proposal->transforms[IKEv2_TRANS_TYPE_ENCR].transform->id = encr;
+	temp_proposal->transforms[IKEv2_TRANS_TYPE_PRF].transform->id = prf;
+	temp_proposal->transforms[IKEv2_TRANS_TYPE_INTEG].transform->id = integ;
+	temp_proposal->transforms[IKEv2_TRANS_TYPE_DH].transform->id = dh;
+	temp_proposal->transforms[IKEv2_TRANS_TYPE_ENCR].transform->attr_keylen = enc_keylen;
+
+	for(int i=1; i<5; i++) {
+		temp_proposal->transforms[i].transform->valid = true;
+	}
+
+	/* transfer ownership of TEMP_PROPOSAL to caller */
+	ike->sa.st_v2_accepted_proposal = temp_proposal;
+	temp_proposal = NULL;
 }

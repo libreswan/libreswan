@@ -14,6 +14,7 @@
  * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017-2018 Sahana Prasad <sahana.prasad07@gmail.com>
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -96,7 +97,8 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 	/* establish some home truths, but don't barf */
 	if (!pexpect(md->hdr.isa_msgid == 0) ||
 	    !pexpect(v2_msg_role(md) == MESSAGE_REQUEST) ||
-	    !pexpect(md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) ||
+	    !pexpect((md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) ||
+		     (md->hdr.isa_xchg == ISAKMP_v2_IKE_SESSION_RESUME)) ||
 	    !pexpect(md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I)) {
 		return true; /* reject cookie */
 	}
@@ -267,4 +269,12 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_COOKIE(struct ike_sa *ike,
 	 */
 	schedule_reinitiate_v2_ike_sa_init(ike, resume_IKE_SA_INIT_with_cookie);
 	return STF_OK;
+}
+
+stf_status process_v2_IKE_SESSION_RESUME_response_v2N_COOKIE(struct ike_sa *ike,
+							     struct child_sa *child UNUSED,
+							     struct msg_digest *md UNUSED)
+{
+	llog_pexpect(ike->sa.logger, HERE, "not implemented");
+	return STF_FATAL;
 }

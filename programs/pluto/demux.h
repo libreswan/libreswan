@@ -7,6 +7,7 @@
  * Copyright (C) 2018-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -127,6 +128,11 @@ enum v2_pd {
 	PD_v2N_USE_PPK_INT,
 	PD_v2N_USE_TRANSPORT_MODE,
 	PD_v2N_USE_AGGFRAG,
+	PD_v2N_TICKET_LT_OPAQUE,
+	PD_v2N_TICKET_REQUEST,
+	PD_v2N_TICKET_ACK,
+	PD_v2N_TICKET_NACK,
+	PD_v2N_TICKET_OPAQUE,
 
 	PD_v2_ROOF,
 };

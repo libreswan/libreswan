@@ -18,6 +18,7 @@
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
  * Copyright (C) 2021 Paul Wouters <paul.wouters@aiven.io>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -276,6 +277,11 @@ struct state {
 	struct child_policy st_policy;                       /* policy for IPsec SA */
 
 	ip_endpoint st_remote_endpoint;        /* where to send packets to */
+
+	bool st_resuming;		/* IKE SA is from Session
+					 * Resumption; IKE_AUTH uses
+					 * this to skip non resume
+					 * stuff. */
 
 	/*
 	 * Digital Signature authentication.

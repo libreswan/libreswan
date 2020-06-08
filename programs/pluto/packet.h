@@ -9,6 +9,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
  * Copyright (C) 2018-2019 Andrew Cagney
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1222,7 +1223,6 @@ extern struct_desc ikev2_skf_desc;
 extern struct_desc ikev2_vendor_id_desc;
 
 
-
 /* union of all payloads */
 
 union payload {
@@ -1272,6 +1272,13 @@ struct ikev2_notify_ipcomp_data {
 	u_int8_t ikev2_notify_ipcomp_trans;
 };
 extern struct_desc ikev2notify_ipcomp_data_desc;
+
+struct ikev2_ticket_lifetime {
+    uint32_t sr_lifetime;
+};
+extern struct_desc ikev2_ticket_lifetime_desc;
+
+extern struct_desc sec_ctx_desc;
 
 /*
  * Nasty evil global packet buffer.

@@ -14,6 +14,7 @@
  * Copyright (C) 2015-2019 Andrew Cagney
  * Copyright (C) 2016-2018 Antony Antony <appu@phenome.org>
  * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -291,10 +292,18 @@ V2_STATE(ZOMBIE, "deleted state", CAT_ESTABLISHED_IKE_SA, /*secured*/true);
 static const struct finite_state *v2_states[] = {
 #define S(KIND, ...) [STATE_V2_##KIND - STATE_IKEv2_FLOOR] = &state_v2_##KIND
 	S(UNSECURED_R),
+	/* includes larval states */
 	S(IKE_SA_INIT_I0),
 	S(IKE_SA_INIT_I),
 	S(IKE_SA_INIT_R),
 	S(IKE_SA_INIT_IR),
+	/* includes larval states */
+	S(IKE_SESSION_RESUME_I0),
+	S(IKE_SESSION_RESUME_I),
+	S(IKE_SESSION_RESUME_R0),
+	S(IKE_SESSION_RESUME_R),
+	S(IKE_SESSION_RESUME_IR),
+	/* comes after above */
 	S(IKE_INTERMEDIATE_I),
 	S(IKE_INTERMEDIATE_R),
 	S(IKE_INTERMEDIATE_IR),

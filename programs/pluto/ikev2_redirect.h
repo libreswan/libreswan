@@ -81,6 +81,8 @@ extern stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ik
 							       struct child_sa *child,
 							       struct msg_digest *md);
 
+/* redirect by established IKE SA */
+
 extern const struct v2_exchange v2_INFORMATIONAL_v2N_REDIRECT_exchange;
 
 #endif

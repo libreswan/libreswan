@@ -116,10 +116,15 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 
 enum keyword_auth local_v2_auth(struct ike_sa *ike)
 {
+	if (ike->sa.st_resuming) {
+		return AUTH_PSK;
+	}
+
 	if (ike->sa.st_peer_wants_null) {
 		/* we allow authby=null and IDr payload told us to use it */
 		return AUTH_NULL;
 	}
+
 	const struct connection *c = ike->sa.st_connection;
 	enum keyword_auth authby = c->local->host.config->auth;
 	pexpect(authby != AUTH_UNSET);

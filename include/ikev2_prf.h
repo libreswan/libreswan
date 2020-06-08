@@ -1,11 +1,11 @@
-/*
- * Calculate IKEv2 prf and keying material, for libreswan
+/* Calculate IKEv2 prf and keying material, for libreswan
  *
  * Copyright (C) 2007 Michael C. Richardson <mcr@xelerance.com>
  * Copyright (C) 2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -59,6 +59,11 @@ PK11SymKey *ikev2_ike_sa_ppk_interm_skeyseed(const struct prf_desc *prf_desc,
 					     shunk_t ppk,
 					     struct logger *logger);
 
+PK11SymKey *ikev2_ike_sa_resume_skeyseed(const struct prf_desc *prf_desc,
+					 PK11SymKey *old_SK_d,
+					 const chunk_t Ni, const chunk_t Nr,
+					 struct logger *logger);
+
 /*
  * Child SA
  */
@@ -78,5 +83,10 @@ struct crypt_mac ikev2_psk_auth(const struct prf_desc *prf_desc, shunk_t pss,
 				const struct crypt_mac *id_hash,
 				chunk_t intermediate_packet,
 				struct logger *logger);
+
+struct crypt_mac ikev2_psk_resume(const struct prf_desc *prf_desc,
+				  PK11SymKey *SK_px,
+				  chunk_t first_packet,
+				  struct logger *logger);
 
 #endif

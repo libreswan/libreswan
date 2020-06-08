@@ -2663,6 +2663,7 @@ int main(int argc, char **argv)
 	      msg.whack_seccomp_crashtest ||
 	      msg.whack_showstates ||
 	      msg.whack_sa ||
+	      msg.whack_suspend ||
 	      msg.whack_listpubkeys ||
 	      msg.whack_checkpubkeys)) {
 		diagw("no action specified; try --help for hints");

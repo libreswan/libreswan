@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2015,2018 Andrew Cagney
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1670,6 +1671,27 @@ struct_desc suggested_group_desc = {
 	.fields = suggested_group_fields,
 	.size = sizeof(struct suggested_group),
 	.pt = ISAKMP_NEXT_v2NONE,
+};
+
+/*
+ * TICKET_LT_OPAQUE Notify Payload - variable part
+ *
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    |                       Lifetime                                |
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    |                                                               |
+ *    ~                        Ticket                                 ~
+ *    |                                                               |
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ */
+static field_desc ikev2_ticket_lifetime_fields[] = {
+	{ ft_nat, 32 / BITS_IN_BYTE, "Lifetime", NULL },
+	{ ft_end,  0, NULL, NULL }
+};
+struct_desc ikev2_ticket_lifetime_desc = {
+	.name = "TICKET_LT_OPAQUE Lifetime",
+	.fields = ikev2_ticket_lifetime_fields,
+	.size = sizeof(struct ikev2_ticket_lifetime),
 };
 
 /*

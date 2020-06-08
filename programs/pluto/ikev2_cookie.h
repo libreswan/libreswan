@@ -1,6 +1,7 @@
 /* IKEv2 cookie calculation, for Libreswan
  *
  * Copyright (C) 2018-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -31,5 +32,9 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 stf_status process_v2_IKE_SA_INIT_response_v2N_COOKIE(struct ike_sa *ike,
 						      struct child_sa *child,
 						      struct msg_digest *md);
+
+stf_status process_v2_IKE_SESSION_RESUME_response_v2N_COOKIE(struct ike_sa *ike,
+							     struct child_sa *child,
+							     struct msg_digest *md);
 
 #endif

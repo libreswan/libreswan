@@ -17,6 +17,7 @@
  * Copyright (C) 2017-2018 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -71,6 +72,7 @@
 #include "revival.h"
 #include "ikev2_parent.h"
 #include "ikev2_states.h"
+#include "ikev2_ike_session_resume.h"
 
 static ikev2_state_transition_fn process_v2_IKE_AUTH_request;
 
@@ -220,7 +222,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 
 	/* send [CERT,] payload RFC 4306 3.6, 1.2) */
 
-	if (send_cert) {
+	if (!ike->sa.st_resuming && send_cert) {
 		stf_status certstat = emit_v2CERT(ike->sa.st_connection, request.pbs);
 		if (certstat != STF_OK)
 			return certstat;
@@ -228,7 +230,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 
 	/* send CERTREQ */
 
-	if (need_v2CERTREQ_in_IKE_AUTH_request(ike)) {
+	if (!ike->sa.st_resuming && need_v2CERTREQ_in_IKE_AUTH_request(ike)) {
 		if (DBGP(DBG_BASE)) {
 			dn_buf buf;
 			DBG_log("Sending [CERTREQ] of %s",
@@ -238,7 +240,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	}
 
 	/* you Tarzan, me Jane support */
-	if (send_idr) {
+	if (!ike->sa.st_resuming && send_idr) {
 		switch (pc->remote->host.id.kind) {
 		case ID_DER_ASN1_DN:
 		case ID_FQDN:
@@ -286,6 +288,14 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 
 	if (ike->sa.st_connection->config->mobike) {
 		if (!emit_v2N(v2N_MOBIKE_SUPPORTED, request.pbs)) {
+			return STF_INTERNAL_ERROR;
+		}
+	}
+
+	/* Notification payload for ticket request */
+	if (ike->sa.st_connection->config->session_resumption) {
+		llog(RC_LOG, ike->sa.logger, "asking for session resume ticket");
+		if (!emit_v2N(v2N_TICKET_REQUEST, request.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -681,11 +691,13 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 
 	/* process AUTH payload */
 
-	enum keyword_auth remote_auth = ike->sa.st_connection->remote->host.config->auth;
-	struct authby remote_authby = ike->sa.st_connection->remote->host.config->authby;
-	passert(remote_auth != AUTH_NEVER && remote_auth != AUTH_UNSET);
-	bool remote_can_authby_null = remote_authby.null;
-	bool remote_can_authby_digsig = authby_has_digsig(remote_authby);
+	struct connection *c = ike->sa.st_connection;
+	enum keyword_auth initiator_auth = (ike->sa.st_resuming ? AUTH_PSK :
+					    c->remote->host.config->auth);
+	struct authby initiator_authby = c->remote->host.config->authby;
+	passert(initiator_auth != AUTH_NEVER && initiator_auth != AUTH_UNSET);
+	bool remote_can_authby_null = initiator_authby.null;
+	bool remote_can_authby_digsig = authby_has_digsig(initiator_authby);
 
 	if (!ike->sa.st_ppk_ike_auth_used && ike->sa.st_no_ppk_auth.ptr != NULL) {
 		/*
@@ -704,7 +716,8 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 			pbs_in_from_shunk(HUNK_AS_SHUNK(ike->sa.st_no_ppk_auth),
 					  "struct pbs_in for verifying NO_PPK_AUTH");
 		diag_t d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-						 ike, &idhash_in, &pbs_no_ppk_auth, remote_auth);
+						 ike, &idhash_in, &pbs_no_ppk_auth,
+						 initiator_auth);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
@@ -745,8 +758,9 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 	} else {
 		dbg("responder verifying AUTH payload");
 		diag_t d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-						 ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
-						 remote_auth);
+						 ike, &idhash_in,
+						 &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
+						 initiator_auth);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
@@ -938,6 +952,22 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 		ike->sa.st_sent_redirect = true;	/* mark that we have sent REDIRECT in IKE_AUTH */
 	}
 
+	/*
+	 * Ticket request is in IKE_AUTH, not IKE_SA_INIT, so no need
+	 * to store it in the state.
+	 */
+	if (md->pd[PD_v2N_TICKET_REQUEST] != NULL) {
+		if (c->config->session_resumption) {
+			if (!emit_v2N_TICKET_LT_OPAQUE(ike, response.pbs)) {
+				return STF_INTERNAL_ERROR;
+			}
+		} else {
+			if (!emit_v2N(v2N_TICKET_NACK, response.pbs)) {
+				return STF_INTERNAL_ERROR;
+			}
+		}
+	}
+
 	/* send out the IDr payload */
 	{
 		struct pbs_out r_id_pbs;
@@ -955,7 +985,7 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 	 * upon which our received I2 CERTREQ is ignored,
 	 * but ultimately should go into the CERT decision
 	 */
-	if (send_cert) {
+	if (!ike->sa.st_resuming && send_cert) {
 		stf_status certstat = emit_v2CERT(ike->sa.st_connection, response.pbs);
 		if (certstat != STF_OK)
 			return certstat;
@@ -1046,9 +1076,10 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	}
 
 	struct connection *c = ike->sa.st_connection;
-	enum keyword_auth that_authby = c->remote->host.config->auth;
+	enum keyword_auth responder_auth = (ike->sa.st_resuming ? AUTH_PSK :
+					    c->remote->host.config->auth);
 
-	passert(that_authby != AUTH_NEVER && that_authby != AUTH_UNSET);
+	passert(responder_auth != AUTH_NEVER && responder_auth != AUTH_UNSET);
 
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_AUTH) {
 		if (md->pd[PD_v2N_PPK_IDENTITY] != NULL) {
@@ -1095,7 +1126,9 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 
 	dbg("initiator verifying AUTH payload");
 	d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-				  ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs, that_authby);
+				  ike, &idhash_in,
+				  &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
+				  responder_auth);
 	if (d != NULL) {
 		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 		pfree_diag(&d);
@@ -1127,6 +1160,20 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	stf_status redirect_status = STF_OK;
 	if (redirect_ike_auth(ike, md, &redirect_status)) {
 		return redirect_status;
+	}
+
+	if (md->pd[PD_v2N_TICKET_NACK] != NULL) {
+		llog(RC_LOG, ike->sa.logger, "received v2N_TICKET_NACK");
+	}
+
+	if (md->pd[PD_v2N_TICKET_ACK] != NULL) {
+		llog(RC_LOG, ike->sa.logger, "received v2N_TICKET_ACK");
+	}
+
+	if (md->pd[PD_v2N_TICKET_LT_OPAQUE] != NULL) {
+		if (!process_v2N_TICKET_LT_OPAQUE(ike, md->pd[PD_v2N_TICKET_LT_OPAQUE])) {
+			return STF_FATAL;
+		}
 	}
 
 	ike->sa.st_v2_mobike.enabled =
@@ -1398,4 +1445,6 @@ static const struct v2_transition v2_IKE_AUTH_response_transition[] = {
 
 V2_EXCHANGE(IKE_AUTH, "authenticate IKE SA", "",
 	    CAT_OPEN_IKE_SA, CAT_ESTABLISHED_IKE_SA, /*secured*/true,
-	    &state_v2_IKE_SA_INIT_IR, &state_v2_IKE_INTERMEDIATE_IR);
+	    &state_v2_IKE_SA_INIT_IR,
+	    &state_v2_IKE_INTERMEDIATE_IR,
+	    &state_v2_IKE_SESSION_RESUME_IR);

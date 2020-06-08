@@ -8,6 +8,7 @@
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2019 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -117,5 +118,12 @@ bool ikev2_proposals_include_modp(const struct ikev2_proposals *proposals,
 
 void ikev2_copy_child_spi_from_proposal(const struct ikev2_proposal *accepted_ike_proposal,
 					ike_spi_t *cookie);
+
+void set_ikev2_accepted_proposal(struct ike_sa *ike,
+				 enum ikev2_trans_type_encr sr_encr,
+				 enum ikev2_trans_type_prf sr_prf,
+				 enum ikev2_trans_type_integ sr_integ,
+				 enum ike_trans_type_dh sr_dh,
+				 unsigned sr_enc_keylen);
 
 #endif

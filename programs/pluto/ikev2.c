@@ -16,6 +16,7 @@
  * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
  * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
  * Copyright (C) 2021 Paul Wouters <paul.wouters@aiven.io>
+ * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -842,7 +843,8 @@ void ikev2_process_packet(struct msg_digest *md)
 	}
 
 	/*
-	 * Handle the unsecured IKE_SA_INIT exchange.
+	 * Handle an unsecured IKE exchange (IKE_SA_INIT or
+	 * IKE_SESSION_RESUME).
 	 *
 	 * Unlike for later exchanges (which requires an existing
 	 * secured IKE SA), the code processing an unsecured
@@ -852,11 +854,16 @@ void ikev2_process_packet(struct msg_digest *md)
 	 * For instance, when a cookie is required, a message with no
 	 * cookie is rejected before the IKE SA is created.
 	 *
-	 * Hence, the unprotected IKE_SA_INIT exchange is given its
-	 * own separate code path.
+	 * Hence, the unsecured exchanges are given their own separate
+	 * code path.
 	 */
 
 	if (ix == ISAKMP_v2_IKE_SA_INIT) {
+		process_v2_UNSECURED_message(md);
+		return;
+	}
+
+	if (ix == ISAKMP_v2_IKE_SESSION_RESUME) {
 		process_v2_UNSECURED_message(md);
 		return;
 	}
@@ -889,9 +896,9 @@ void ikev2_process_packet(struct msg_digest *md)
 	}
 
 	/*
-	 * Since the IKE_SA_INIT exchanges have been excluded, the
-	 * only acceptable option is a protected exchange (has SK or
-	 * SKF) using a secured IKE SA.
+	 * Since unsecured exchanges (IKE_SA_INIT, IKE_SESSION_RESUME)
+	 * have been excluded, the only acceptable option is a
+	 * protected exchange (has SK or SKF) using a secured IKE SA.
 	 *
 	 * Narrow things further by ensuring that the IKE SA is,
 	 * indeed, secured.
