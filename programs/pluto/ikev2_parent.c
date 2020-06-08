@@ -3731,13 +3731,14 @@ static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *
 	/* AUTH is ok, we can trust the notify payloads */
 	if (md->v2N.use_transport_mode) { /* FIXME: use new RFC logic turning this into a request, not requirement */
 		if (LIN(POLICY_TUNNEL, st->st_connection->policy)) {
-			loglog(RC_LOG_SERIOUS, "local policy requires Tunnel Mode but peer requires required Transport Mode");
-			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN; /* applies only to Child SA */
+			log_state(RC_LOG_SERIOUS, st, "local policy requires Tunnel Mode but peer requires required Transport Mode");
+			return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA; /* should just delete child */
+
 		}
 	} else {
 		if (!LIN(POLICY_TUNNEL, st->st_connection->policy)) {
-			loglog(RC_LOG_SERIOUS, "local policy requires Transport Mode but peer requires required Tunnel Mode");
-			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN; /* applies only to Child SA */
+			log_state(RC_LOG_SERIOUS, st, "local policy requires Transport Mode but peer requires required Tunnel Mode");
+			return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA; /* should just delete child */
 		}
 	}
 

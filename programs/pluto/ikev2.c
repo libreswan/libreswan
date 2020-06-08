@@ -3600,6 +3600,22 @@ void complete_v2_state_transition(struct state *st,
 		release_pending_whacks(st, "internal error");
 		break;
 
+	case STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA:
+		/* initiator processing response */
+		pexpect(v2_msg_role(md) == MESSAGE_RESPONSE);
+		/* lie -- the delete _hopefully_ does what is wanted? */
+		log_state(RC_LOG, &ike->sa, "sending IKE SA delete");
+		dbg("Message ID: forcing a response received update");
+		v2_msgid_update_recv(ike, NULL, md);
+		/*
+		 * XXX: this call will fire and forget.  It should
+		 * call v2_msgid_queue_initiator() with high priority
+		 * so this is performed as a separate transition?
+		 */
+		delete_ike_family(ike, PROBABLY_SEND_DELETE);
+		/* get out of here -- everthing is invalid */
+		return;
+
 	case STF_FATAL:
 		/*
 		 * XXX: even when a packet is invalid and no
