@@ -2031,19 +2031,20 @@ void remove_group_instance(const struct connection *group,
  *
  * Note that instantiate can only deal with a single SPD/eroute.
  */
-struct connection *instantiate(struct connection *c, const ip_address *him,
-			       const struct id *his_id)
+struct connection *instantiate(struct connection *c,
+			       const ip_address *peer_addr,
+			       const struct id *peer_id)
 {
 	passert(c->kind == CK_TEMPLATE);
 	passert(c->spd.spd_next == NULL);
 
 	c->instance_serial++;
 	struct connection *d = clone_connection(c, HERE);
-	if (his_id != NULL) {
+	if (peer_id != NULL) {
 		int wildcards;	/* value ignored */
 
-		passert(d->spd.that.id.kind == ID_FROMCERT || match_id(his_id, &d->spd.that.id, &wildcards));
-		d->spd.that.id = *his_id;
+		passert(d->spd.that.id.kind == ID_FROMCERT || match_id(peer_id, &d->spd.that.id, &wildcards));
+		d->spd.that.id = *peer_id;
 		d->spd.that.has_id_wildcards = FALSE;
 	}
 	unshare_connection(d);
@@ -2051,9 +2052,9 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 	d->kind = CK_INSTANCE;
 
 	passert(oriented(*d));
-	if (him != NULL)
-		d->spd.that.host_addr = *him;
-	setportof(htons(c->spd.that.port), &d->spd.that.host_addr);
+	if (peer_addr != NULL) {
+		d->spd.that.host_addr = *peer_addr;
+	}
 	default_end(&d->spd.that, &d->spd.this.host_addr);
 
 	/*
@@ -2096,15 +2097,15 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 }
 
 struct connection *rw_instantiate(struct connection *c,
-				const ip_address *him,
-				const ip_subnet *his_net,
-				const struct id *his_id)
+				  const ip_address *peer_addr,
+				  const ip_subnet *peer_subnet,
+				  const struct id *peer_id)
 {
-	struct connection *d = instantiate(c, him, his_id);
+	struct connection *d = instantiate(c, peer_addr, peer_id);
 
-	if (his_net != NULL && is_virtual_connection(c)) {
-		d->spd.that.client = *his_net;
-		if (subnetishost(his_net) && addrinsubnet(him, his_net))
+	if (peer_subnet != NULL && is_virtual_connection(c)) {
+		d->spd.that.client = *peer_subnet;
+		if (subnetishost(peer_subnet) && addrinsubnet(peer_addr, peer_subnet))
 			d->spd.that.has_client = FALSE;
 	}
 
@@ -2117,13 +2118,11 @@ struct connection *rw_instantiate(struct connection *c,
 		 */
 		d->spd.that.client = subnet_type(&d->spd.that.client)->no_addresses;
 	}
-	DBG(DBG_CONTROL, {
-		ipstr_buf b;
-		char inst[CONN_INST_BUF];
-		DBG_log("rw_instantiate() instantiated \"%s\"%s for %s",
-			d->name, fmt_conn_instance(d, inst),
-			ipstr(him, &b));
-	});
+	connection_buf inst;
+	address_buf b;
+	dbg("rw_instantiate() instantiated "PRI_CONNECTION" for %s",
+	    pri_connection(d, &inst),
+	    str_address(peer_addr, &b));
 	return d;
 }
 
@@ -2366,12 +2365,12 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 }
 
 struct connection *oppo_instantiate(struct connection *c,
-				    const ip_address *him,
-				    const struct id *his_id,
+				    const ip_address *peer_addr,
+				    const struct id *peer_id,
 				    const ip_address *our_client,
 				    const ip_address *peer_client)
 {
-	struct connection *d = instantiate(c, him, his_id);
+	struct connection *d = instantiate(c, peer_addr, peer_id);
 
 	DBGF(DBG_CONTROL, "oppo instantiate d=\"%s\" from c=\"%s\" with c->routing %s, d->routing %s",
 		d->name, c->name,
@@ -2476,7 +2475,8 @@ struct connection *oppo_instantiate(struct connection *c,
  * that we need to instantiate an opportunistic connection.
  */
 struct connection *build_outgoing_opportunistic_connection(const ip_address *our_client,
-						const ip_address *peer_client, const int transport_proto)
+							   const ip_address *peer_client,
+							   const int transport_proto)
 {
 	struct connection *best = NULL;
 	struct spd_route *bestsr = NULL;	/* initialization not necessary */
@@ -2553,7 +2553,8 @@ struct connection *build_outgoing_opportunistic_connection(const ip_address *our
 		return NULL;
 	} else {
 		/* XXX we might not yet know the ID! */
-		return oppo_instantiate(best, peer_client, NULL,
+		ip_address peer_addr = endpoint_address(peer_client);
+		return oppo_instantiate(best, &peer_addr, NULL,
 					our_client, peer_client);
 	}
 }
@@ -4378,9 +4379,9 @@ so_serial_t get_newer_sa_from_connection(struct state *st)
 
 /* check to see that Ids of peers match */
 bool same_peer_ids(const struct connection *c, const struct connection *d,
-		   const struct id *his_id)
+		   const struct id *peer_id)
 {
 	return same_id(&c->spd.this.id, &d->spd.this.id) &&
-	       same_id(his_id == NULL ? &c->spd.that.id : his_id,
+	       same_id(peer_id == NULL ? &c->spd.that.id : peer_id,
 		       &d->spd.that.id);
 }

@@ -743,11 +743,13 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 		if (LIN(POLICY_OPPORTUNISTIC, c->policy) &&
 		    c->ike_version == IKEv2) {
 			dbg_md(md, "oppo_instantiate");
-			c = oppo_instantiate(c, remote, &c->spd.that.id, &c->spd.this.host_addr, remote);
+			ip_address remote_addr = endpoint_address(remote);
+			c = oppo_instantiate(c, &remote_addr, &c->spd.that.id, &c->spd.this.host_addr, remote);
 		} else {
 			/* regular roadwarrior */
 			dbg_md(md, "rw_instantiate");
-			c = rw_instantiate(c, remote, NULL, NULL);
+			ip_address remote_addr = endpoint_address(remote);
+			c = rw_instantiate(c, &remote_addr, NULL, NULL);
 		}
 	} else {
 		/*
@@ -759,11 +761,13 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 
 		if (c->kind == CK_TEMPLATE && c->spd.that.virt != NULL) {
 			dbg_md(md, "local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation");
-			c = rw_instantiate(c, remote, NULL, NULL);
+			ip_address remote_addr = endpoint_address(remote);
+			c = rw_instantiate(c, &remote_addr, NULL, NULL);
 		} else if ((c->kind == CK_TEMPLATE) &&
 				(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
 			dbg_md(md, "local endpoint has narrowing=yes - needs instantiation");
-			c = rw_instantiate(c, remote, NULL, NULL);
+			ip_address remote_addr = endpoint_address(remote);
+			c = rw_instantiate(c, &remote_addr, NULL, NULL);
 		}
 	}
 	return c;

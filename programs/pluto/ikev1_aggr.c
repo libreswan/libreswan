@@ -173,7 +173,8 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 		/* Create a temporary connection that is a copy of this one.
 		 * His ID isn't declared yet.
 		 */
-		c = rw_instantiate(c, &md->sender, NULL, NULL);
+		ip_address sender_address = endpoint_address(&md->sender);
+		c = rw_instantiate(c, &sender_address, NULL, NULL);
 	}
 
 	/* Set up state */

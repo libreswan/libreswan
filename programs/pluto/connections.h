@@ -504,17 +504,17 @@ extern struct connection
 struct alg_info;        /* forward declaration of tag (defined in alg_info.h) */
 
 extern struct connection *rw_instantiate(struct connection *c,
-					 const ip_address *him,
-					 const ip_subnet *his_net,
-					 const struct id *his_id);
+					 const ip_address *peer_addr,
+					 const ip_subnet *peer_subnet,
+					 const struct id *peer_id);
 struct connection *oppo_instantiate(struct connection *c,
-				    const ip_address *him,
-				    const struct id *his_id,
+				    const ip_address *peer_addr,
+				    const struct id *peer_id,
 				    const ip_address *our_client,
 				    const ip_address *peer_client);
 extern struct connection *instantiate(struct connection *c,
-				      const ip_address *him,
-				      const struct id *his_id);
+				      const ip_address *peer_addr,
+				      const struct id *peer_id);
 
 extern struct connection *build_outgoing_opportunistic_connection(
 		const ip_address *our_client,

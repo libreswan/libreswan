@@ -1101,8 +1101,7 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 				/* Plain Road Warrior because no OPPO for IKEv1
 				 * instantiate, carrying over authenticated peer ID
 				 */
-				p = rw_instantiate(p,
-						   &c->spd.that.host_addr,
+				p = rw_instantiate(p, &c->spd.that.host_addr,
 						   his_net,
 						   &c->spd.that.id);
 			}

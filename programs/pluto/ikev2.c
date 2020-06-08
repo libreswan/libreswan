@@ -2861,7 +2861,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 				if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
 					/* instantiate it, filling in peer's ID */
 					r = rw_instantiate(r, &c->spd.that.host_addr,
-						   NULL, &peer_id);
+							   NULL, &peer_id);
 				}
 
 				update_state_connection(md->st, r);
