@@ -7,6 +7,7 @@
 %global with_cavstests 0
 %global _exec_prefix %{_prefix}/local
 %global initsystem @INITSYSTEM@
+%global optflags -g
 # Libreswan config options
 %global libreswan_config \\\
     FINALDOCDIR=%{_pkgdocdir} \\\
@@ -15,7 +16,6 @@
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
     FINALMANDIR=%{_mandir} \\\
     FINALRUNDIR=%{_rundir}/pluto \\\
-    FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \\\
     INITSYSTEM=%{initsystem} \\\
     IPSECVERSION=%{IPSECVERSION} \\\
     PREFIX=%{_exec_prefix} \\\
@@ -45,7 +45,7 @@ Source1: https://download.libreswan.org/cavs/ikev1_dsa.fax.bz2
 Source2: https://download.libreswan.org/cavs/ikev1_psk.fax.bz2
 Source3: https://download.libreswan.org/cavs/ikev2.fax.bz2
 %endif
-BuildRequires: gcc
+BuildRequires: gcc make
 BuildRequires: bison
 BuildRequires: flex
 BuildRequires: pkgconfig
@@ -65,8 +65,6 @@ BuildRequires: unbound-devel >= 1.5.0-1
 BuildRequires: ldns-devel
 BuildRequires: libseccomp-devel
 BuildRequires: libselinux-devel
-BuildRequires: fipscheck-devel
-Requires: fipscheck%{_isa}
 Buildrequires: audit-libs-devel
 BuildRequires: libcap-ng-devel
 BuildRequires: openldap-devel
@@ -81,20 +79,9 @@ Requires: nss-softokn
 Requires: iproute >= 2.6.8
 
 %description
-Libreswan is a free implementation of IPsec & IKE for Linux.  IPsec is
-the Internet Protocol Security and uses strong cryptography to provide
-both authentication and encryption services.  These services allow you
-to build secure tunnels through untrusted networks.  Everything passing
-through the untrusted net is encrypted by the ipsec gateway machine and
-decrypted by the gateway at the other end of the tunnel.  The resulting
-tunnel is a virtual private network or VPN.
+Libreswan testing RPM for debugging and testrun only, without -O2.
 
-This package contains the daemons and userland tools for setting up
-Libreswan. To build KLIPS, see the kmod-libreswan.spec file.
-
-Libreswan also supports IKEv2 (RFC4309) and Secure Labeling
-
-Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
+This package contains the daemons and userland tools for setting up Libreswan.
 
 %prep
 %setup -q -n libreswan-%{version}%{?prever}
@@ -102,11 +89,7 @@ sed -i "s:#[ ]*include \(.*\)\(/crypto-policies/back-ends/libreswan.config\)$:in
 
 %build
 make %{?_smp_mflags} \
-%if 0%{with_development}
-    OPTIMIZE_CFLAGS="%{?_hardened_cflags}" \
-%else
     OPTIMIZE_CFLAGS="%{optflags}" \
-%endif
 %if 0%{with_efence}
     USE_EFENCE=true \
 %endif
@@ -119,7 +102,6 @@ FS=$(pwd)
     %{?__debug_package:%{__debug_install_post}} \
     %{__arch_install_post} \
     %{__os_install_post} \
-    fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_libexecdir}/ipsec/pluto \
 %{nil}
 
 %install
@@ -139,8 +121,6 @@ install -d %{buildroot}%{_sbindir}
 install -d %{buildroot}%{_sysconfdir}/sysctl.d
 install -m 0644 packaging/fedora/libreswan-sysctl.conf \
     %{buildroot}%{_sysconfdir}/sysctl.d/50-libreswan.conf
-
-mkdir -p %{buildroot}%{_libdir}/fipscheck
 
 echo "include %{_sysconfdir}/ipsec.d/*.secrets" \
     > %{buildroot}%{_sysconfdir}/ipsec.secrets
@@ -204,7 +184,6 @@ export NSS_DISABLE_HW_GCM=1
 %{_sbindir}/ipsec
 %{_libexecdir}/ipsec
 %{_mandir}/*/*
-%{_libdir}/fipscheck/pluto.hmac
 
 %changelog
 * Wed Aug  9 2017 Team Libreswan <team@libreswan.org> - @IPSECBASEVERSION@

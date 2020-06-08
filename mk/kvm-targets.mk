@@ -505,7 +505,7 @@ kvm-rpm:
 	sed -e "s/@IPSECBASEVERSION@/$(RPM_VERSION)/g" \
 		-e "s/^Version:.*/Version: $(RPM_VERSION)/g" \
 		-e "s/@INITSYSTEM@/$(INITSYSTEM)/g" \
-		packaging/fedora/libreswan-testing.spec \
+		testing/packaging/fedora/libreswan-testing.spec \
 		> ~/rpmbuild/SPECS/libreswan-testing.spec
 	mkdir -p ~/rpmbuild/SOURCES
 	git archive --format=tar --prefix=$(RPM_PREFIX)/ \
