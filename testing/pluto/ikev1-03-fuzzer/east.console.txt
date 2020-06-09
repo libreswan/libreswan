@@ -19,10 +19,10 @@ east #
  hostname |grep east > /dev/null && ipsec whack --shutdown
 east #
  hostname |grep east > /dev/null && grep "packet from" /tmp/pluto.log | sed "s/^.*packet from//"
- 192.1.2.45:XXXXX message ignored because it contains a payload type (ISAKMP_NEXT_SA) unexpected by state STATE_INFO
- 192.1.2.45:XXXXX sending notification INVALID_PAYLOAD_TYPE to 192.1.2.45:55099
- 192.1.2.45:XXXXX message ignored because it contains a payload type (ISAKMP_NEXT_SIG) unexpected by state STATE_MAIN_R0
- 192.1.2.45:XXXXX sending notification INVALID_PAYLOAD_TYPE to 192.1.2.45:38955
+ 192.1.2.45:EPHEMERAL: message ignored because it contains a payload type (ISAKMP_NEXT_SA) unexpected by state STATE_INFO
+ 192.1.2.45:EPHEMERAL: sending notification INVALID_PAYLOAD_TYPE to 192.1.2.45:EPHEMERAL
+ 192.1.2.45:EPHEMERAL: message ignored because it contains a payload type (ISAKMP_NEXT_SIG) unexpected by state STATE_MAIN_R0
+ 192.1.2.45:EPHEMERAL: sending notification INVALID_PAYLOAD_TYPE to 192.1.2.45:EPHEMERAL
 east #
  ../bin/check-for-core.sh
 east #
