@@ -1,8 +1,11 @@
 # fix up output containing random numbers
 
-s/ 192.1.2.\([0-9]*\):[0-9]* STATE_/ 192.1.2.\1:XXXXX STATE_/
-s/ 192.1.2.\([0-9]*\):[0-9]*: message ignored/ 192.1.2.\1:XXXXX message ignored/
-s/ 192.1.2.\([0-9]*\):[0-9]*: sending notification/ 192.1.2.\1:XXXXX sending notification/
+# IPv4
+s/ \([0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\):[2-6][0-9][0-9][0-9][0-9]$/ \1:EPHEMERAL/g
+s/ \([0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\):[2-6][0-9][0-9][0-9][0-9]\([: ]\)/ \1:EPHEMERAL\2/g
+# IPv6
+s/ \[\([0-9a-z:]*\)\]:[2-6][0-9][0-9][0-9][0-9]$/ \1:EPHEMERAL/g
+s/ \[\([0-9a-z:]*\)\]:[2-6][0-9][0-9][0-9][0-9]\([: ]\)/ \1:EPHEMERAL\2/g
 
 # match: ip (|-[46]) xfrm state ...
 /^ ip xfrm state/ b match
