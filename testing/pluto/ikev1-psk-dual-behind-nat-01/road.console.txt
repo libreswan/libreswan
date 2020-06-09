@@ -45,7 +45,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.2.102 : 56(84) bytes of data.
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
- ipsec whack --trafficstatus | sed "s/port [0-9]* /port EPHEMERAL /"
+ ipsec whack --trafficstatus | sed "s/port [0-9]* /port EPHEM /"
 006 #2: "road-east", username=xroad, type=ESP, add_time=1234567890, inBytes=336, outBytes=336
 road #
  echo done

@@ -19,7 +19,7 @@ src 192.1.2.111 dst 192.1.2.23
 	replay-window 32 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
-	encap type espinudp sport EPHEMERAL dport 4500 addr 0.0.0.0
+	encap type espinudp sport EPHEM dport 4500 addr 0.0.0.0
 src 192.1.2.23 dst 192.1.2.111
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
