@@ -1,5 +1,5 @@
 ipsec whack --trafficstatus
-../../pluto/bin/ipsec-look.sh | sed "s/port [0-9][0-9][0-9][0-9][0-9]/port PORT/"
+../../pluto/bin/ipsec-look.sh
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
