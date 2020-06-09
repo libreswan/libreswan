@@ -1142,8 +1142,7 @@ void delete_state(struct state *st)
 			log_state(RC_LOG, st,
 				  "IMPAIR: skipping revival of connection that is supposed to remain up");
 		} else {
-			/* XXX: why not whack? */
-			log_state(LOG_STREAM/*not-whack*/, st,
+			log_state(RC_LOG, st,
 				  "deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS");
 			add_revival(c);
 		}
