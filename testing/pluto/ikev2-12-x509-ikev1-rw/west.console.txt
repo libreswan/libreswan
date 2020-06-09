@@ -25,6 +25,7 @@ west #
 1v1 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: sent MI1, expecting MR1
 002 "westnet-eastnet-ikev2" #1: IMPAIR: retransmit so deleting SA
 002 "westnet-eastnet-ikev2" #1: deleting state (STATE_MAIN_I1) and NOT sending notification
+002 "westnet-eastnet-ikev2" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  echo done
 done

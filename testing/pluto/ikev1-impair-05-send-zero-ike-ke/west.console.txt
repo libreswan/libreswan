@@ -26,6 +26,7 @@ west #
 217 "westnet-eastnet-ipv4-psk" #1: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 217 "westnet-eastnet-ipv4-psk" #1: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 002 "westnet-eastnet-ipv4-psk" #1: deleting state (STATE_MAIN_I2) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  ipsec whack --impair none
 west #
@@ -46,6 +47,7 @@ west #
 217 "westnet-eastnet-ipv4-psk" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 217 "westnet-eastnet-ipv4-psk" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 002 "westnet-eastnet-ipv4-psk" #3: deleting state (STATE_MAIN_I2) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk" #3: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  echo done
 done

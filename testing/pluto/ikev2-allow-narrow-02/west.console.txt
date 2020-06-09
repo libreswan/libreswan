@@ -44,6 +44,7 @@ west #
 002 "westnet-eastnet-ikev2" #2: liveness action - putting connection into hold
 002 "westnet-eastnet-ikev2" #2: deleting state (STATE_PARENT_I2) and NOT sending notification
 002 "westnet-eastnet-ikev2" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "westnet-eastnet-ikev2" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  echo done
 done

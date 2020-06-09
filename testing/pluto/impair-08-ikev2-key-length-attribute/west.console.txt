@@ -46,6 +46,7 @@ west #
 002 "aes128" #3: STATE_PARENT_I1: received unauthenticated v2N_NO_PROPOSAL_CHOSEN - ignored
 002 "aes128" #3: IMPAIR: retransmit so deleting SA
 002 "aes128" #3: deleting state (STATE_PARENT_I1) and NOT sending notification
+002 "aes128" #3: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  ipsec whack --impair none
 west #
@@ -126,6 +127,7 @@ west #
 002 "aes128" #11: STATE_PARENT_I1: received unauthenticated v2N_NO_PROPOSAL_CHOSEN - ignored
 002 "aes128" #11: IMPAIR: retransmit so deleting SA
 002 "aes128" #11: deleting state (STATE_PARENT_I1) and NOT sending notification
+002 "aes128" #11: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  ipsec whack --impair none
 west #
@@ -161,6 +163,7 @@ west #
 002 "aes128" #15: STATE_PARENT_I1: received unauthenticated v2N_INVALID_SYNTAX - ignored
 002 "aes128" #15: IMPAIR: retransmit so deleting SA
 002 "aes128" #15: deleting state (STATE_PARENT_I1) and NOT sending notification
+002 "aes128" #15: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  ipsec whack --impair none
 west #
@@ -179,6 +182,7 @@ west #
 002 "aes128" #17: STATE_PARENT_I1: received unauthenticated v2N_INVALID_SYNTAX - ignored
 002 "aes128" #17: IMPAIR: retransmit so deleting SA
 002 "aes128" #17: deleting state (STATE_PARENT_I1) and NOT sending notification
+002 "aes128" #17: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  ipsec whack --impair none
 west #
@@ -243,6 +247,7 @@ west #
 002 "3des" #23: STATE_PARENT_I1: received unauthenticated v2N_NO_PROPOSAL_CHOSEN - ignored
 002 "3des" #23: IMPAIR: retransmit so deleting SA
 002 "3des" #23: deleting state (STATE_PARENT_I1) and NOT sending notification
+002 "3des" #23: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  ipsec whack --impair none
 west #

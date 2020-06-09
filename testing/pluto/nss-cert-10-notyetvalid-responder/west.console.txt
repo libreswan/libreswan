@@ -32,6 +32,7 @@ west #
 218 "nss-cert" #1: sending encrypted notification INVALID_ID_INFORMATION to 192.1.2.23:500
 002 "nss-cert" #1: IMPAIR: retransmit so deleting SA
 002 "nss-cert" #1: deleting state (STATE_MAIN_I3) and NOT sending notification
+002 "nss-cert" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  echo done
 done
