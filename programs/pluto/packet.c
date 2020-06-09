@@ -453,7 +453,7 @@ static field_desc isaiid_fields[] = {
 	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "ID type", &ike_idtype_names },
-	{ ft_nat, 8 / BITS_PER_BYTE, "Protocol ID", NULL }, /* ??? UDP/TCP or 0? */
+	{ ft_loose_enum, 8 / BITS_PER_BYTE, "Protocol ID", &ip_protocol_id_names, },
 	{ ft_nat, 16 / BITS_PER_BYTE, "port", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
@@ -1426,7 +1426,7 @@ struct_desc ikev2_ts_r_desc = {
  */
 static field_desc ikev2ts1_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "TS type", &ikev2_ts_type_names },
-	{ ft_nat,  8 / BITS_PER_BYTE, "IP Protocol ID", NULL },
+	{ ft_loose_enum,  8 / BITS_PER_BYTE, "IP Protocol ID", &ip_protocol_id_names, },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat, 16 / BITS_PER_BYTE, "start port", NULL },
 	{ ft_nat, 16 / BITS_PER_BYTE, "end port", NULL },

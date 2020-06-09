@@ -4,6 +4,8 @@
 #include <sys/types.h>
 #include <libreswan.h>
 
+extern enum_names ip_protocol_id_names;	/* aka ipproto_*; in ip_protocol.c */
+
 extern enum_names kern_interface_names;
 extern enum_names timer_event_names;
 

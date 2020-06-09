@@ -17,6 +17,7 @@
 
 #include "lswcdefs.h"		/* for elemsof() */
 #include "constants.h"		/* for strncaseeq() */
+#include "enum_names.h"
 
 #include "ip_protocol.h"
 #include "ip_encap.h"
@@ -143,3 +144,19 @@ const struct ip_protocol *protocol_by_ipproto(unsigned ipproto)
 		return NULL;
 	}
 }
+
+static const char *const ip_protocol_id_name[] = {
+	[0] = "ALL",
+#define A(P) [IPPROTO_##P] = #P
+	A(UDP),
+	A(TCP),
+	A(ICMP),
+#undef A
+};
+
+enum_names ip_protocol_id_names = {
+	0, elemsof(ip_protocol_id_name) - 1,
+	ARRAY_REF(ip_protocol_id_name),
+	NULL, /* prefix */
+	NULL, /* next */
+};
