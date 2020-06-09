@@ -26,6 +26,7 @@ west #
 003 "westnet-eastnet-ipv4-psk" #1: received and ignored notification payload: INVALID_KEY_INFORMATION
 002 "westnet-eastnet-ipv4-psk" #1: IMPAIR: retransmit so deleting SA
 002 "westnet-eastnet-ipv4-psk" #1: deleting state (STATE_MAIN_I2) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  ipsec whack --impair none
 west #

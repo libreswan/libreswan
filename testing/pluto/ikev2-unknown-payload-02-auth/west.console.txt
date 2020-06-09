@@ -54,6 +54,7 @@ west #
 002 "westnet-eastnet-ipv4-psk-ikev2" #4: IMPAIR: retransmit so deleting SA
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: deleting state (STATE_PARENT_I2) and NOT sending notification
 003 "westnet-eastnet-ipv4-psk-ikev2" #3: reschedule pending child #4 STATE_PARENT_I2 of connection "westnet-eastnet-ipv4-psk-ikev2" - the parent is going away
+002 "westnet-eastnet-ipv4-psk-ikev2" #3: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  echo done
 done
