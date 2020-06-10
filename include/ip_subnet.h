@@ -137,14 +137,6 @@ bool subnet_contains_endpoint(const ip_subnet *subnet, const ip_address *address
 /* h(ost) or n(etwork) ordered */
 int subnet_hport(const ip_subnet *subnet);
 
-ip_subnet set_subnet_hport(const ip_subnet *subnet,
-			   int hport) MUST_USE_RESULT;
-
-#define update_subnet_hport(SUBNET, HPORT)			\
-	{ *(SUBNET) = set_subnet_hport(SUBNET, HPORT); }
-#define update_subnet_nport(SUBNET, NPORT)			\
-	{ *(SUBNET) = set_subnet_hport(SUBNET, ntohs(NPORT)); }
-
 /* when applied to an address, leaves just the routing prefix */
 extern ip_address subnet_mask(const ip_subnet *subnet);
 /* Given ROUTING_PREFIX|HOST_ID return ROUTING_PREFIX|0 */
