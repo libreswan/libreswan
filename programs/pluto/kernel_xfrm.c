@@ -1295,10 +1295,14 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		 */
 		if (sa->inbound) {
 			/* inbound; fix this end */
-			src = selector_from_address(sa->src.address, &unset_protoport/*all*/);
+			ip_port port = selector_port(sa->src.client);
+			ip_protoport protoport = protoport2(sa->transport_proto, hport(port));
+			src = selector_from_address(sa->src.address, &protoport);
 		} else {
 			/* outbound; fix other end */
-			dst = selector_from_address(sa->dst.address, &unset_protoport/*all*/);
+			ip_port port = selector_port(sa->dst.client);
+			ip_protoport protoport = protoport2(sa->transport_proto, hport(port));
+			dst = selector_from_address(sa->dst.address, &protoport);
 		}
 
 		/* .[sd]addr, .prefixlen_[sd], .[sd]port */
