@@ -173,9 +173,7 @@ static const struct list empty_list = {
  */
 
 struct lease {
-	unsigned lease_refcount;	/* reference counted */
-
-	so_serial_t assigned_to;
+	co_serial_t assigned_to; /* ALWAYS 1:1 */
 
 	struct entry free_entry;
 	struct entry reusable_entry;
@@ -297,15 +295,20 @@ static void DBG_lease(bool verbose, const struct ip_pool *pool, const struct lea
 		jam(buf, " lease ");
 		ip_address addr = lease_address(pool, lease);
 		jam_address(buf, &addr);
+		if (co_serial_is_set(lease->assigned_to)) {
+			jam(buf, " "PRI_CO, pri_co(lease->assigned_to));
+		} else {
+			jam(buf, " unassigned");
+		}
 		jam(buf, ": ");
 		va_list args;
 		va_start(args, format);
 		jam_va_list(buf, format, args);
 		va_end(args);
 		if (verbose) {
-			jam(buf, "; lease-refcount %u; leases %u in-use %u free %u reusable %u",
-			    lease->lease_refcount, pool->nr_leases,
-			    pool->nr_in_use, pool->free_list.nr, pool->nr_reusable);
+			jam(buf, "; leases %u in-use %u free %u reusable %u",
+			    pool->nr_leases, pool->nr_in_use,
+			    pool->free_list.nr, pool->nr_reusable);
 		}
 	}
 }
@@ -363,6 +366,34 @@ static bool can_reuse_lease(const struct connection *c)
 }
 
 /*
+ * return the connection's current lease.
+ */
+static struct lease *connection_lease(struct connection *c)
+{
+	if (!c->spd.that.has_lease) {
+		return NULL;
+	}
+
+	/*
+	 * "i" is index of client.addr within pool's range.
+	 *
+	 * Using unsigned arithmetic means that if client.addr is less
+	 * than start, i will wrap around to a very large value.
+	 * Therefore a single test against size will indicate
+	 * membership in the range.
+	 */
+	struct ip_pool *pool = c->pool;
+	ip_address cp = subnet_prefix(&c->spd.that.client);
+	uint32_t i = ntohl_address(&cp) - ntohl_address(&pool->r.start);
+	passert(pool->nr_leases <= pool->size);
+	passert(i < pool->nr_leases);
+	struct lease *lease = &pool->leases[i];
+	pexpect(co_serial_is_set(lease->assigned_to));
+	pexpect(co_serial_eq(lease->assigned_to, c->serialno));
+	return lease;
+}
+
+/*
  * mark a lease as ended.
  *
  * If the ID is distinctive and uniqueid is set, the lease "lingers"
@@ -373,53 +404,29 @@ static bool can_reuse_lease(const struct connection *c)
  *
  * If uniqueIDs is set or thatid is ID_NONE, we don't know how to share.
  * In that case, we do free the lease since that ID isn't distinctive.
- * Note: without sharing the refcnt should be 1.
  */
 
-void rel_lease_addr(struct connection *c)
+void free_that_address_lease(struct connection *c)
 {
-	struct ip_pool *pool = c->pool;
-
-	if (!c->spd.that.has_lease)
-		return; /* it is not from the addresspool to free */
-
 	passert(subnet_type(&c->spd.that.client) != NULL);
 
-	/* i is index of client.addr within pool's range.
-	 * Using unsigned arithmetic means that if client.addr is less than
-	 * start, i will wrap around to a very large value.
-	 * Therefore a single test against size will indicate
-	 * membership in the range.
-	 */
-	ip_address cp = subnet_prefix(&c->spd.that.client);
-	uint32_t i = ntohl_address(&cp) - ntohl_address(&pool->r.start);
+	struct lease *lease = connection_lease(c);
+	if (lease == NULL) {
+		return;
+	}
 
-	passert(pool->nr_leases <= pool->size);
-	passert(i < pool->nr_leases);
-	struct lease *lease = &pool->leases[i];
-
-	passert(lease->lease_refcount > 0);
-	lease->lease_refcount--;
-	c->spd.that.has_lease = false;
-
+	struct ip_pool *pool = c->pool;
 	if (lease->reusable_name != NULL) {
 		/* the lease is reusable, leave it lingering */
-		if (lease->lease_refcount == 0) {
-			APPEND(pool, free_list, free_entry, lease);
-			pool->nr_in_use--;
-			if (DBGP(DBG_BASE)) {
-				connection_buf cb;
-				DBG_lease(true, pool, lease, "lingering reusable lease '%s' for connection "PRI_CONNECTION,
-					  lease->reusable_name, pri_connection(c, &cb));
-			}
-		} else if (DBGP(DBG_BASE)) {
+		APPEND(pool, free_list, free_entry, lease);
+		pool->nr_in_use--;
+		if (DBGP(DBG_BASE)) {
 			connection_buf cb;
-			DBG_lease(true, pool, lease, "returning reusable lease '%s' for connection "PRI_CONNECTION,
+			DBG_lease(true, pool, lease, "lingering reusable lease '%s' for connection "PRI_CONNECTION,
 				  lease->reusable_name, pri_connection(c, &cb));
 		}
 	} else {
 		/* cannot share: free it */
-		passert(lease->lease_refcount == 0);
 		PREPEND(pool, free_list, free_entry, lease);
 		pool->nr_in_use--;
 		if (DBGP(DBG_BASE)) {
@@ -428,6 +435,10 @@ void rel_lease_addr(struct connection *c)
 				  pri_connection(c, &cb));
 		}
 	}
+
+	/* break the link */
+	c->spd.that.has_lease = false;
+	lease->assigned_to = unset_co_serial;
 }
 
 /*
@@ -468,9 +479,14 @@ static struct lease *recover_lease(const struct connection *c, const char *that_
 	return NULL;
 }
 
-err_t lease_an_address(const struct connection *c, const struct state *st,
-		       ip_address *ipa /*result*/)
+err_t lease_that_address(struct connection *c, const struct state *st)
 {
+	struct lease *lease = connection_lease(c);
+	if (lease != NULL) {
+		/* already leased */
+		return NULL;
+	}
+
 	struct ip_pool *pool = c->pool;
 	const struct id *that_id = &c->spd.that.id;
 	bool reusable = can_reuse_lease(c);
@@ -583,19 +599,21 @@ err_t lease_an_address(const struct connection *c, const struct state *st,
 	 *
 	 * XXX: does this update that.client addr as a side effect?
 	 */
-	*ipa = lease_address(pool, new_lease);
-	new_lease->assigned_to = st->st_serialno;
-	new_lease->lease_refcount++;
+	ip_address ia = lease_address(pool, new_lease);
+	c->spd.that.has_lease = true;
+	c->spd.that.has_client = true;
+	c->spd.that.client = selector_from_address(&ia, &unset_protoport);
+	new_lease->assigned_to = c->serialno;
 
 	if (DBGP(DBG_BASE)) {
 		subnet_buf a;
 		connection_buf cb;
 		DBG_lease(true, pool, new_lease,
-			  "assign %s %s lease to "PRI_CONNECTION" #%lu with ID '%s' and that.client %s",
+			  "assign %s %s lease to "PRI_CONNECTION" "PRI_CO" with ID '%s' and that.client %s",
 			  story,
 			  reusable ? "reusable" : "one-time",
 			  pri_connection(c, &cb),
-			  new_lease->assigned_to,
+			  pri_co(new_lease->assigned_to),
 			  thatstr,
 			  str_subnet(&c->spd.that.client, &a));
 	}
@@ -773,21 +791,31 @@ void show_addresspool_status(struct show *s)
 		for (unsigned l = 0; l < pool->nr_leases; l++) {
 			struct lease *lease = &pool->leases[l];
 			ip_address lease_ip = lease_address(pool, lease);
-			address_buf ipb;
-			struct state *st = state_by_serialno(lease->assigned_to);
+			address_buf lease_ipb;
+			const char *lease_str = str_address(&lease_ip, &lease_ipb);
+			struct connection *c = connection_by_serialno(lease->assigned_to);
 			nr_free += IS_INSERTED(lease, free_entry) ? 1 : 0;
 			nr_reusable_entries += IS_INSERTED(lease, reusable_entry) ? 1 : 0;
 			nr_reusable_names += lease->reusable_name != NULL ? 1 : 0;
-			show_comment(s, "    %s %u %s #%lu %s%s%s",
-				     str_address(&lease_ip, &ipb),
-				     lease->lease_refcount,
-				     IS_INSERTED(lease, free_entry) ? "free" : "in-use",
-				     lease->assigned_to,
-				     (lease->assigned_to == SOS_NOBODY ? "unassigned" :
-				      st != NULL ? st->st_state->short_name : "DNE"),
-				     lease->reusable_name != NULL ? " " : "",
-				     lease->reusable_name != NULL ? lease->reusable_name : ""
-				);
+			{
+				/* fudge indent so show*() calls are aligned */
+				show_comment(s, "    %*s %s "PRI_CO" %s%s",
+					     (int)strlen(lease_str), lease_str,
+					     IS_INSERTED(lease, free_entry) ? "free" : "assigned to",
+					     pri_co(lease->assigned_to),
+					     lease->reusable_name != NULL ? " " : "",
+					     lease->reusable_name != NULL ? lease->reusable_name : "");
+			}
+			if (c != NULL) {
+				connection_buf cb;
+				show_comment(s, "    %*s "PRI_CONNECTION,
+					     (int)strlen(lease_str), "",
+					     pri_connection(c, &cb));
+			} else {
+				show_comment(s, "    %*s connection "PRI_CO" does not exist",
+					     (int)strlen(lease_str), "",
+					     pri_co(lease->assigned_to));
+			}
 			CHECK(IS_INSERTED(lease, reusable_entry), lease->reusable_name != NULL);
 		}
 		CHECK(pool->nr_leases, pool->nr_in_use + pool->free_list.nr);

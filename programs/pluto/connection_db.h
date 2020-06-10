@@ -21,8 +21,15 @@
 struct connection;
 
 typedef struct { unsigned long co; } co_serial_t;
-#define PRI_CO "%%%lu"
-#define pri_co(C) (C)->serialno.co
+
+#define PRI_CO "$%lu"
+#define pri_co(CO) ((CO).co)
+
+extern const co_serial_t unset_co_serial;
+
+#define co_serial_is_unset(CO) ((CO).co == 0)
+#define co_serial_is_set !co_serial_is_unset
+#define co_serial_eq(L, R) ((L).co == (R).co)
 
 void init_connection_db(void);
 
@@ -38,6 +45,7 @@ struct connection *connection_by_serialno(co_serial_t serialno);
  */
 enum connection_hash_tables {
 	CONNECTION_SERIALNO_HASH_TABLE,
+	/* add tables here */
 	CONNECTION_HASH_TABLES_ROOF,
 };
 

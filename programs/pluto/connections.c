@@ -207,8 +207,9 @@ void delete_connection(struct connection *c, bool relations)
 				       c->newest_isakmp_sa, c->newest_ipsec_sa);
 		}
 		c->kind = CK_GOING_AWAY;
-		if (c->pool != NULL)
-			rel_lease_addr(c);
+		if (c->pool != NULL) {
+			free_that_address_lease(c);
+		}
 	}
 	release_connection(c, relations, whackfd); /* won't delete c */
 	pop_cur_connection(old_cur_connection);

@@ -369,23 +369,21 @@ static stf_status modecfg_resp(struct state *st,
 		 * XXX: like for ikev2-hostpair-02, could this be
 		 * re-assigning the same address?
 		 */
-		ip_address ia = unset_address;
+
+		ip_address ia;
 		if (use_modecfg_addr_as_client_addr &&
-		    c->pool != NULL &&
-		    !c->spd.that.has_lease) {
-			err_t e = lease_an_address(c, st, &ia);
+		    c->pool != NULL) {
+			err_t e = lease_that_address(c, st);
 			if (e != NULL) {
 				log_state(RC_LOG, st, "lease_an_address failure %s", e);
 				return STF_INTERNAL_ERROR;
 			}
-			c->spd.that.client = selector_from_address(&ia, &unset_protoport);
-			c->spd.that.has_client = true;
-			c->spd.that.has_lease = true;
+			ia = selector_prefix(&c->spd.that.client);
 			address_buf iab;
 			dbg("a lease %s", str_address(&ia, &iab));
 		} else {
 			pexpect(subnet_is_specified(&c->spd.that.client));
-			ia = subnet_prefix(&c->spd.that.client);
+			ia = selector_prefix(&c->spd.that.client);
 			address_buf iab;
 			dbg("a client %s", str_address(&ia, &iab));
 		}
@@ -884,7 +882,7 @@ static bool add_xauth_addresspool(struct connection *c,
 
 		/* delete existing pool if it exists */
 		if (c->pool != NULL) {
-			rel_lease_addr(c);
+			free_that_address_lease(c);
 			unreference_addresspool(c);
 		}
 

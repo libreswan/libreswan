@@ -18,6 +18,8 @@
 #include "log.h"
 #include "hash_table.h"
 
+const co_serial_t unset_co_serial;
+
 static struct hash_table connection_hash_tables[];
 
 static void jam_connection_serialno(struct lswlog *buf, const void *data)
@@ -26,7 +28,7 @@ static void jam_connection_serialno(struct lswlog *buf, const void *data)
 		jam(buf, PRI_CO, 0UL);
 	} else {
 		const struct connection *c = data;
-		jam(buf, PRI_CO, pri_co(c));
+		jam(buf, PRI_CO, pri_co(c->serialno));
 	}
 }
 
@@ -103,7 +105,7 @@ static struct hash_table connection_hash_tables[] = {
 
 static void add_connection_to_db(struct connection *c)
 {
-	dbg("Connection DB: adding connection "PRI_CO"", pri_co(c));
+	dbg("Connection DB: adding connection "PRI_CO"", pri_co(c->serialno));
 	passert(c->serialno.co != 0);
 
 	/* serial NR list, entries are only added */
@@ -139,7 +141,7 @@ struct connection *clone_connection(struct connection *t, where_t where)
 
 void remove_connection_from_db(struct connection *c)
 {
-	dbg("Connection DB: deleting connection "PRI_CO, pri_co(c));
+	dbg("Connection DB: deleting connection "PRI_CO, pri_co(c->serialno));
 	remove_list_entry(&c->serialno_list_entry);
 	for (unsigned h = 0; h < elemsof(connection_hash_tables); h++) {
 		del_hash_table_entry(&connection_hash_tables[h], c);

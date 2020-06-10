@@ -2971,26 +2971,15 @@ static bool assign_child_responder_client(struct ike_sa *ike,
 		 * constantly clawed back as the SA keeps trying to
 		 * establish / replace / rekey.
 		 */
-		if (!spd->that.has_lease) {
-			ip_address ip;
-			err_t e = lease_an_address(c, md->st, &ip);
-			if (e != NULL) {
-				log_state(RC_LOG, &child->sa, "ikev2 lease_an_address failure %s", e);
-				/* XXX: record what? */
-				record_v2N_response(child->sa.st_logger, ike, md,
-						    v2N_INTERNAL_ADDRESS_FAILURE, NULL/*no data*/,
-						    ENCRYPTED_PAYLOAD);
-				return false;
-			}
-			spd->that.has_lease = true;
-			spd->that.client.addr = ip;
-			/* XXX: ip_selector */
-			if (addrtypeof(&ip) == AF_INET)
-				spd->that.client.maskbits = INTERNL_IP4_PREFIX_LEN; /* export it as value */
-			else
-				spd->that.client.maskbits = INTERNL_IP6_PREFIX_LEN; /* export it as value */
+		err_t e = lease_that_address(c, md->st);
+		if (e != NULL) {
+			log_state(RC_LOG, &child->sa, "ikev2 lease_an_address failure %s", e);
+			/* XXX: record what? */
+			record_v2N_response(child->sa.st_logger, ike, md,
+					    v2N_INTERNAL_ADDRESS_FAILURE, NULL/*no data*/,
+					    ENCRYPTED_PAYLOAD);
+			return false;
 		}
-		spd->that.has_client = true;
 		child->sa.st_ts_this = ikev2_end_to_ts(&spd->this);
 		child->sa.st_ts_that = ikev2_end_to_ts(&spd->that);
 	} else {
