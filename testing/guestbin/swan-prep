@@ -361,29 +361,26 @@ if hostname != "nic":
             for dbfile in dbfiles:
                 os.chown(dbfile, 0, 0)
 
-    elif args.userland in ("strongswan"):
-        prefix = "strongswan/"
-        dst = "/etc/strongswan/ipsec.d"
-        if not os.path.isdir(dst):
-            os.mkdir(dst)
+    elif args.userland == "strongswan":
 
-    # test specific files
-    xl2tpdconf = "%s/%s.xl2tpd.conf" % (testpath, hostname)
-    pppoptions = "%s/%s.ppp-options.xl2tpd" % (testpath, hostname)
-    chapfile = "%s/chap-secrets" % testpath
-
-    ipsecconf = choose_conf_file(hostname, testpath, "ipsec.conf", "%s.conf" % (hostname), args.userland)
-    ipsecsecrets = choose_conf_file(hostname, testpath, "ipsec.secrets", "%s.secrets" % (hostname), args.userland)
-
-    if args.userland == "strongswan":
-        # check version and fail early
+        # check version and spew all over test output
         output = subprocess.getoutput("strongswan version")
         if not "U5.8.4" in output:
             print("strongswan 5.8.4 must be installed")
             print("")
             print(output)
+
         # required to write log file in /tmp
         subprocess.getoutput("setenforce 0")
+
+        # wipe the strongswan tree
+        prefix = "strongswan/"
+        dst = "/etc/strongswan/"
+        if os.path.isdir(dst):
+            shutil.rmtree(dst)
+        for directory in ("", "ipsec.d/", "ipsec.d/aacerts/", "ipsec.d/ocspcerts/", "ipsec.d/cacerts/"):
+            os.mkdir("%s%s" % (dst, directory))
+
         strongswanconf = choose_conf_file(hostname, testpath, "strongswan.conf", "%sstrongswan.conf" % (hostname), args.userland)
         if strongswanconf:
             shutil.copy(strongswanconf, "/etc/strongswan/strongswan.conf")
@@ -395,9 +392,13 @@ if hostname != "nic":
                 os.mkdir(dst)
             shutil.copy(swanctlconf, "%s/swanctl.conf" % (dst))
 
-        for dir in ("/etc/strongswan/ipsec.d/aacerts", "/etc/strongswan/ipsec.d/ocspcerts"):
-            if not os.path.isdir(dir):
-                os.mkdir(dir)
+    # test specific files
+    xl2tpdconf = "%s/%s.xl2tpd.conf" % (testpath, hostname)
+    pppoptions = "%s/%s.ppp-options.xl2tpd" % (testpath, hostname)
+    chapfile = "%s/chap-secrets" % testpath
+
+    ipsecconf = choose_conf_file(hostname, testpath, "ipsec.conf", "%s.conf" % (hostname), args.userland)
+    ipsecsecrets = choose_conf_file(hostname, testpath, "ipsec.secrets", "%s.secrets" % (hostname), args.userland)
 
     dstconf = "/etc/%sipsec.conf" % (prefix)
     dstsecrets = "/etc/%sipsec.secrets" % (prefix)
@@ -482,9 +483,6 @@ if userland in ("libreswan", "openswan"):
 
     # this section is getting rough. could use a nice refactoring
     if args.x509:
-        if userland == "strongswan":
-            shutil.rmtree("/etc/strongswan/ipsec.d/cacerts/")
-            os.mkdir("/etc/strongswan/ipsec.d/cacerts/")
 
         if not os.path.isfile("/testing/x509/keys/mainca.key"):
             print("\n\n---------------------------------------------------------------------\n"
