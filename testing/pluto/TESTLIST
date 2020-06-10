@@ -1003,8 +1003,8 @@ kvmplutotest 	ikev2-55-ipseckey-09				good
 
 kvmplutotest	replay-authip-01			good
 
-kvmplutotest	l2tp-01					good
-kvmplutotest	l2tp-02					good
+kvmplutotest	ikev1-l2tp-01				good
+kvmplutotest	ikev1-l2tp-02				good
 
 kvmplutotest	ikeport-01				wip
 kvmplutotest	listen-change-01			good
