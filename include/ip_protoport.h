@@ -23,6 +23,7 @@
 
 #include "err.h"
 #include "jambuf.h"
+#include "ip_port.h"
 
 typedef struct {
 	bool any_port;
@@ -32,7 +33,7 @@ typedef struct {
 
 extern const ip_protoport unset_protoport;
 
-ip_protoport protoport2(unsigned ipproto, unsigned hport);
+ip_protoport protoport2(unsigned ipproto, ip_port port);
 
 err_t ttoprotoport(const char *src, ip_protoport *protoport);
 err_t ttoipproto(const char *text, unsigned *ipproto);

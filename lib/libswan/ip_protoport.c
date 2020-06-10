@@ -24,11 +24,11 @@
 
 const ip_protoport unset_protoport;
 
-ip_protoport protoport2(unsigned ipproto, unsigned hport)
+ip_protoport protoport2(unsigned ipproto, ip_port port)
 {
 	ip_protoport protoport = {
 		.protocol = ipproto,
-		.port = hport,
+		.port = hport(port),
 	};
 	return protoport;
 }
