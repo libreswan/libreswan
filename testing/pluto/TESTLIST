@@ -1165,6 +1165,7 @@ kvmplutotest	algo-esp-netkey-to-netkey-ikev2			good
 kvmplutotest	ikev2-tcp-01-eof				wip
 kvmplutotest	ikev2-tcp-02-timeout				wip
 kvmplutotest	ikev2-tcp-03-basic-rawrsa-blocking		wip
-kvmplutotest	ikev2-tcp-03-basic-rawrsa-nonblocking		wip
+# this test spews a gigabyte of logs because of a busy-wait kernel bug
+kvmplutotest	ikev2-tcp-03-basic-rawrsa-nonblocking		skip
 kvmplutotest	ikev2-tcp-17-rekey-ipsec			wip
 kvmplutotest	ikev2-tcp-25-rw-nat				wip
