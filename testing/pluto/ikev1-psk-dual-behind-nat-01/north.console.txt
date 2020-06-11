@@ -10,6 +10,8 @@ north #
  ipsec auto --add north-east
 002 added connection description "north-east"
 north #
+ ipsec whack --impair suppress-retransmits
+north #
  ipsec whack --xauthname 'use1' --xauthpass 'use1pass' --name north-east --initiate
 002 "north-east" #1: initiating Main Mode
 1v1 "north-east" #1: STATE_MAIN_I1: sent MI1, expecting MR1
@@ -30,20 +32,11 @@ north #
 1v1 "north-east" #2: STATE_QUICK_I1: sent QI1, expecting QR1
 004 "north-east" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive username=use1}
 north #
- ping -n -c 4 -I 192.0.2.101 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.2.101 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../pluto/bin/ping-once.sh --up -I 192.0.2.101 192.0.2.254
+up
 north #
  ipsec whack --trafficstatus
-006 #2: "north-east", username=use1, type=ESP, add_time=1234567890, inBytes=336, outBytes=336
-north #
- ipsec whack --impair suppress-retransmits
+006 #2: "north-east", username=use1, type=ESP, add_time=1234567890, inBytes=84, outBytes=84
 north #
  echo initdone
 initdone
@@ -98,7 +91,7 @@ north #
  hostname | grep east > /dev/null && ping -c2 192.0.2.102
 north #
  ipsec whack --trafficstatus
-006 #2: "north-east", username=use1, type=ESP, add_time=1234567890, inBytes=504, outBytes=504
+006 #2: "north-east", username=use1, type=ESP, add_time=1234567890, inBytes=252, outBytes=252
 north #
  ../bin/check-for-core.sh
 north #
