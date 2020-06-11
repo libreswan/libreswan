@@ -198,33 +198,42 @@ void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
  * because we use it indefinitely without copying or pfreeing.
  * Simple rule: use a string literal.
  */
-void record_and_initiate_opportunistic(const ip_subnet *ours,
-				const ip_subnet *his,
-				int transport_proto,
-				struct xfrm_user_sec_ctx_ike *uctx,
-				const char *why)
+
+void record_and_initiate_opportunistic(const ip_selector *our_client,
+				       const ip_selector *peer_client,
+				       unsigned transport_proto,
+				       struct xfrm_user_sec_ctx_ike *uctx,
+				       const char *why)
 {
-	passert(subnet_type(ours) == subnet_type(his));
+	passert(selector_type(our_client) == selector_type(peer_client));
+	passert(selector_ipproto(our_client) == transport_proto);
+	passert(selector_ipproto(peer_client) == transport_proto);
+	/* XXX: port may or may not be zero */
 
 	/*
 	 * Add the kernel shunt to the pluto bare shunt list.
-	 * We need to do this because the %hold shunt was installed by kernel
-	 * and we want to keep track of it inside pluto.
+	 *
+	 * We need to do this because the %hold shunt was installed by
+	 * kernel and we want to keep track of it inside pluto.
 	 */
 
-	ip_address sp = subnet_prefix(ours);
-	ip_address dp = subnet_prefix(his);
-
-	ip_endpoint src = endpoint(&sp, subnet_hport(ours));
-	ip_endpoint dst = endpoint(&dp, subnet_hport(his));
-
-	/* This check should not be needed :( */
-	if (has_bare_hold(&src, &dst, transport_proto)) {
-		loglog(RC_LOG_SERIOUS, "existing bare shunt found - refusing to add a duplicate");
+	/*const*/ struct bare_shunt **bspp = bare_shunt_ptr(our_client, peer_client,
+							    transport_proto);
+	if (bspp != NULL &&
+	    (*bspp)->said.proto == &ip_protocol_internal &&
+	    (*bspp)->said.spi == htonl(SPI_HOLD)) {
+		log_global(RC_LOG_SERIOUS, null_fd, "existing bare shunt found - refusing to add a duplicate");
 		/* should we continue with initiate_ondemand() ? */
 	} else {
-		add_bare_shunt(ours, his, transport_proto, SPI_HOLD, why);
+		add_bare_shunt(our_client, peer_client, transport_proto, SPI_HOLD, why);
 	}
+
+	/* XXX: missing transport_proto */
+	ip_address sp = subnet_prefix(our_client);
+	ip_address dp = subnet_prefix(peer_client);
+	ip_endpoint src = endpoint(&sp, subnet_hport(our_client));
+	ip_endpoint dst = endpoint(&dp, subnet_hport(peer_client));
+	passert(endpoint_type(&src) == endpoint_type(&dst)); /* duh */
 
 	/* actually initiate opportunism / ondemand */
 	initiate_ondemand(&src, &dst, transport_proto,
@@ -232,9 +241,9 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 			  uctx, "acquire");
 
 	if (kernel_ops->remove_orphaned_holds != NULL) {
-		DBG(DBG_OPPO, DBG_log("record_and_initiate_opportunistic(): tell kernel to remove orphan hold for our bare shunt"));
-		(*kernel_ops->remove_orphaned_holds)
-			(transport_proto, ours, his);
+		dbg("record_and_initiate_opportunistic(): tell kernel to remove orphan hold for our bare shunt");
+		kernel_ops->remove_orphaned_holds(transport_proto,
+						  our_client, peer_client);
 	}
 }
 
@@ -1251,24 +1260,6 @@ bool raw_eroute(const ip_address *this_host,
 		result ? "success" : "failed"));
 
 	return result;
-}
-
-/* test to see if %hold remains */
-bool has_bare_hold(const ip_address *src, const ip_address *dst,
-		int transport_proto)
-{
-	ip_subnet this_client, that_client;
-
-	passert(addrtypeof(src) == addrtypeof(dst));
-	happy(endtosubnet(src, &this_client, HERE));
-	happy(endtosubnet(dst, &that_client, HERE));
-
-	/*const*/ struct bare_shunt **bspp =
-		bare_shunt_ptr(&this_client, &that_client, transport_proto);
-
-	return bspp != NULL &&
-		(*bspp)->said.proto == &ip_protocol_internal && (*bspp)->said.spi == htonl(
-			SPI_HOLD);
 }
 
 /*

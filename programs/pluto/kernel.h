@@ -371,9 +371,9 @@ struct bare_shunt **bare_shunt_ptr(const ip_subnet *ours,
  * Simple rule: use a string literal.
  */
 struct xfrm_user_sec_ctx_ike; /* forward declaration of tag */
-extern void record_and_initiate_opportunistic(const ip_subnet *,
-					      const ip_subnet *,
-					      int transport_proto,
+extern void record_and_initiate_opportunistic(const ip_selector *our_client,
+					      const ip_selector *peer_client,
+					      unsigned transport_proto,
 					      struct xfrm_user_sec_ctx_ike *,
 					      const char *why);
 extern void init_kernel(void);
@@ -383,9 +383,6 @@ extern bool trap_connection(struct connection *c, struct fd *whackfd);
 extern void unroute_connection(struct connection *c);
 extern void migration_up(struct connection *c,  struct state *st);
 extern void migration_down(struct connection *c,  struct state *st);
-
-extern bool has_bare_hold(const ip_address *src, const ip_address *dst,
-			  int transport_proto);
 
 extern bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
 			       int transport_proto, ipsec_spi_t shunt_spi,
