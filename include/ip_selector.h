@@ -23,6 +23,7 @@
 #include "ip_endpoint.h"
 #include "ip_subnet.h"
 #include "ip_protoport.h"
+#include "ip_protocol.h"
 #include "ip_range.h"
 
 /*
@@ -80,6 +81,7 @@ ip_selector selector_from_address(const ip_address *address,
 				  const ip_protoport *protoport);
 ip_selector selector_from_subnet(const ip_subnet *subnet,
 				 const ip_protoport *protoport);
+ip_selector selector_from_endpoint(const ip_endpoint *address);
 #if 0
 ip_selector selector_from_range(const ip_range *range,
 				const ip_protoport *protoport);
@@ -98,20 +100,23 @@ bool selector_is_unset(const ip_selector *selector);
 void update_selector_hport(ip_selector *selector, unsigned hport);
 const struct ip_info *selector_type(const ip_selector *selector);
 unsigned selector_ipproto(const ip_selector *selector);
+const ip_protocol *selector_protocol(const ip_selector *selector);
 ip_range selector_range(const ip_selector *selector);
+ip_protoport selector_protoport(const ip_selector *selector);
 ip_port selector_port(const ip_selector *selector);
 
 /* assuming a subnet like XFRM does */
 ip_address selector_prefix(const ip_selector *selector);
 unsigned selector_maskbits(const ip_selector *selector);
 
-bool selector_has_all_addresses(const ip_selector *selector);
-bool selector_has_one_address(const ip_selector *selector);
-bool selector_has_no_addresses(const ip_selector *selector);
+bool selector_contains_all_addresses(const ip_selector *selector);
+bool selector_contains_one_address(const ip_selector *selector);
+bool selector_contains_no_addresses(const ip_selector *selector);
 
 bool selector_in_selector(const ip_selector *l, const ip_selector *r);
-bool address_in_selector(const ip_address *l, const ip_selector *r);
 bool endpoint_in_selector(const ip_endpoint *l, const ip_selector *r);
+bool address_in_selector(const ip_address *l, const ip_selector *r);
+
 bool selector_eq(const ip_selector *l, const ip_selector *r);
 bool selector_address_eq(const ip_selector *l, const ip_selector *r);
 

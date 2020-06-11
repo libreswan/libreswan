@@ -20,6 +20,11 @@
 
 const ip_selector unset_selector;
 
+bool selector_is_unset(const ip_selector *selector)
+{
+	return memeq(&unset_selector, selector, sizeof(unset_selector));
+}
+
 void jam_selector(jambuf_t *buf, const ip_subnet *subnet)
 {
 	jam_address(buf, &subnet->addr); /* sensitive? */
@@ -46,6 +51,20 @@ ip_selector selector_from_address(const ip_address *address,
 	}
 	ip_subnet subnet = subnet_from_address(address);
 	return selector_from_subnet(&subnet, protoport);
+}
+
+ip_selector selector_from_endpoint(const ip_endpoint *endpoint)
+{
+	const struct ip_info *afi = endpoint_type(endpoint);
+	if (!pexpect(afi != NULL)) {
+		return unset_selector;
+	}
+	const ip_protocol *protocol = endpoint_protocol(endpoint);
+	ip_port port = endpoint_port(endpoint);
+	ip_protoport protoport = protoport2(protocol->ipproto, port);
+	ip_address address = endpoint_address(endpoint);
+	ip_subnet subnet = subnet_from_address(&address);
+	return selector_from_subnet(&subnet, &protoport);
 }
 
 ip_selector selector_from_subnet(const ip_subnet *subnet,
@@ -98,6 +117,12 @@ const struct ip_info *selector_type(const ip_selector *selector)
 	return endpoint_type(&selector->addr);
 }
 
+ip_protoport selector_protoport(const ip_selector *selector)
+{
+	return protoport2(selector->addr.ipproto,
+			  ip_hport(selector->addr.hport));
+}
+
 ip_port selector_port(const ip_selector *selector)
 {
 	return ip_hport(selector->addr.hport);
@@ -111,6 +136,11 @@ void update_selector_hport(ip_selector *selector, unsigned hport)
 unsigned selector_ipproto(const ip_selector *selector)
 {
 	return selector->addr.ipproto;
+}
+
+const ip_protocol *selector_protocol(const ip_selector *selector)
+{
+	return protocol_by_ipproto(selector->addr.ipproto);
 }
 
 ip_range selector_range(const ip_selector *selector)
@@ -128,33 +158,51 @@ unsigned selector_maskbits(const ip_selector *selector)
 	return selector->maskbits;
 }
 
-bool selector_has_all_addresses(const ip_selector *selector)
+bool selector_contains_all_addresses(const ip_selector *selector)
 {
 	return subnet_contains_all_addresses(selector);
 }
 
-bool selector_has_one_address(const ip_selector *selector)
+bool selector_contains_one_address(const ip_selector *selector)
 {
-	/*
-	 * Unlike subnetishost() this rejects 0.0.0.0/32.
-	 */
-	return (subnetishost(selector) &&
-		!subnet_contains_no_addresses(selector));
+	return subnet_contains_one_address(selector);
 }
 
-bool selector_has_no_addresses(const ip_selector *selector)
+bool selector_contains_no_addresses(const ip_selector *selector)
 {
 	return subnet_contains_no_addresses(selector);
 }
 
 bool selector_in_selector(const ip_selector *l, const ip_selector *r)
 {
-	return subnetinsubnet(l, r);
+	return (/* exclude unset */
+		selector_is_set(r) &&
+		/* version (4/6) wildcards!?! */
+		(r->addr.version == 0 || l->addr.version == r->addr.version) &&
+		/* protocol wildcards */
+		(r->addr.ipproto == 0 || l->addr.ipproto == r->addr.ipproto) &&
+		/* port wildcards */
+		(r->addr.hport == 0 || l->addr.hport == r->addr.hport) &&
+		/* exclude any(zero), other than for any/0 */
+		(address_is_any(&r->addr) ? r->maskbits == 0 : r->maskbits > 0) &&
+		/* address < range */
+		addrinsubnet(&l->addr, r) &&
+		/* more maskbits => more address & smaller subnet */
+		l->maskbits >= r->maskbits);
 }
 
-bool address_in_selector(const ip_address *l, const ip_selector *r)
+bool address_in_selector(const ip_address *address, const ip_selector *selector)
 {
-	return addrinsubnet(l, r);
+	ip_protoport protoport = selector_protoport(selector);
+	/* HACK: use same prot/port as selector so they always match */
+	ip_selector inner = selector_from_address(address, &protoport);
+	return selector_in_selector(&inner, selector);
+}
+
+bool endpoint_in_selector(const ip_endpoint *endpoint, const ip_selector *selector)
+{
+	ip_selector inner = selector_from_endpoint(endpoint);
+	return selector_in_selector(&inner, selector);
 }
 
 #if 0

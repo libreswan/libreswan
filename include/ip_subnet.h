@@ -2,7 +2,7 @@
  *
  * Copyright (C) 1998, 1999, 2000  Henry Spencer.
  * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
- * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2019-2020 Andrew Cagney <cagney@gnu.org>
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
@@ -117,19 +117,20 @@ extern const ip_subnet unset_subnet;
 
 const struct ip_info *subnet_type(const ip_subnet *subnet);
 
-bool subnet_is_set(const ip_subnet *subnet);
-bool subnet_is_specified(const ip_subnet *subnet);
+bool subnet_is_unset(const ip_subnet *subnet);
+#define subnet_is_set !subnet_is_unset
 
 /* default route - ::/0 or 0.0.0.0/0 - matches all addresses */
 bool subnet_contains_all_addresses(const ip_subnet *subnet);
+/* !unset, !all, !none */
+bool subnet_is_specified(const ip_subnet *subnet);
+/* ADDRESS..ADDRESS; unlike subnetishost() this rejects 0.0.0.0/32. */
+bool subnet_contains_one_address(const ip_subnet *subnet);
 /* unspecified address - ::/128 or 0.0.0.0/32 - matches no addresses */
 bool subnet_contains_no_addresses(const ip_subnet *subnet);
-#if 0
-/* ADDRESS..ADDRESS:0..65535 in SUBNET */
-bool subnet_contains_address(const ip_subnet *subnet, const ip_address *address);
-/* ADDRESS..ADDRESS:PORT..PORT in SUBNET */
-bool subnet_contains_endpoint(const ip_subnet *subnet, const ip_address *address);
-#endif
+
+/* ADDRESS..ADDRESS in SUBNET */
+bool address_in_subnet(const ip_address *address, const ip_subnet *subnet);
 
 /* h(ost) or n(etwork) ordered */
 int subnet_hport(const ip_subnet *subnet);

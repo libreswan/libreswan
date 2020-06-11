@@ -97,45 +97,48 @@ static void check_ip_info_subnet(void)
 	static const struct test {
 		int family;
 		const ip_subnet *subnet;
-		bool set;
-		bool no;
-		bool all;
+		bool is_unset;
+		bool contains_all_addresses;
+		bool is_specified;
+		bool contains_one_address;
+		bool contains_no_addresses;
 	} tests[] = {
-		{ 0, &unset_subnet,              .set = false, },
-		{ 4, &ipv4_info.no_addresses,    .set = true, .no = true },
-		{ 6, &ipv6_info.no_addresses,    .set = true, .no = true },
-		{ 4, &ipv4_info.all_addresses,   .set = true, .all = true },
-		{ 6, &ipv6_info.all_addresses,   .set = true, .all = true },
+		{ 0, &unset_subnet,              true, false, false, false, false, },
+		{ 4, &ipv4_info.no_addresses,    false, false, false, false, true },
+		{ 6, &ipv6_info.no_addresses,    false, false, false, false, true },
+		{ 4, &ipv4_info.all_addresses,   false, true, false, false, false, },
+		{ 6, &ipv6_info.all_addresses,   false, true, false, false, false, },
 	};
+#define OUT(FILE, FMT, ...)						\
+	PRINT(FILE, "%s unset=%s all=%s some=%s one=%s none=%s"FMT,	\
+	      pri_family(t->family),					\
+	      bool_str(t->is_unset),					\
+	      bool_str(t->contains_all_addresses),			\
+	      bool_str(t->is_specified),				\
+	      bool_str(t->contains_one_address),			\
+	      bool_str(t->contains_no_addresses),			\
+	      ##__VA_ARGS__)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT_INFO(stdout, "");
+		OUT(stdout, "");
 
-		CHECK_TYPE(PRINT_INFO, subnet_type(t->subnet));
-
-		bool set = subnet_is_set(t->subnet);
-		if (set != t->set) {
-			FAIL_INFO("subnet_is_set() returned %s, expecting %s",
-				  bool_str(set), bool_str(t->set));
+		if (t->family != 0) {
+			CHECK_TYPE(PRINT_INFO, subnet_type(t->subnet));
 		}
 
-		if (t->set) {
-			bool no = subnet_contains_no_addresses(t->subnet);
-			if (no != t->no) {
-				FAIL_INFO("subnet_is_no() returned %s, expecting %s",
-					  bool_str(no), bool_str(t->no));
-			}
+#define T(COND)								\
+		bool COND = subnet_##COND(t->subnet);			\
+		if (COND != t->COND) {					\
+			FAIL_INFO("subnet_"#COND"() returned %s, expecting %s", \
+				  bool_str(COND), bool_str(t->COND));	\
 		}
-
-		if (t->set) {
-			bool all = subnet_contains_all_addresses(t->subnet);
-			if (all != t->all) {
-				FAIL_INFO("subnet_is_all() returned %s, expecting %s",
-					  bool_str(all), bool_str(t->all));
-			}
-		}
-
+		T(is_unset);
+		T(contains_all_addresses);
+		T(is_specified);
+		T(contains_one_address);
+		T(contains_no_addresses);
+#undef T
 	}
 }
 

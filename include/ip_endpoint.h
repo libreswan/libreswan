@@ -23,6 +23,7 @@
 #include "err.h"
 #include "ip_address.h"
 #include "ip_port.h"
+#include "ip_protoport.h"
 
 struct lswlog;
 struct ip_protocol;

@@ -65,9 +65,9 @@ int subnet_hport(const ip_subnet *s)
 }
 #endif
 
-bool subnet_is_set(const ip_subnet *s)
+bool subnet_is_unset(const ip_subnet *s)
 {
-	return subnet_type(s) != NULL;
+	return subnet_type(s) == NULL;
 }
 
 bool subnet_is_specified(const ip_subnet *s)
@@ -78,25 +78,51 @@ bool subnet_is_specified(const ip_subnet *s)
 bool subnet_contains_all_addresses(const ip_subnet *s)
 {
 	const struct ip_info *afi = subnet_type(s);
-	if (!pexpect(afi != NULL) ||
-	    s->maskbits != 0) {
+	if (afi == NULL) {
+		return false;
+	}
+	if (s->addr.hport != 0) {
+		return false;
+	}
+	if (s->maskbits != 0) {
 		return false;
 	}
 	ip_address network = subnet_prefix(s);
-	return (address_is_any(&network)
-		&& subnet_hport(s) == 0);
+	return address_is_any(&network);
 }
 
 bool subnet_contains_no_addresses(const ip_subnet *s)
 {
 	const struct ip_info *afi = subnet_type(s);
-	if (!pexpect(afi != NULL) ||
-	    s->maskbits != afi->mask_cnt) {
+	if (afi == NULL) {
 		return false;
 	}
+	if (s->maskbits != afi->mask_cnt) {
+		return false;
+	}
+	if (s->addr.hport != 0) {
+		return false; /* weird one */
+	}
 	ip_address network = subnet_prefix(s);
-	return (address_is_any(&network)
-		&& subnet_hport(s) == 0);
+	return address_is_any(&network);
+}
+
+bool subnet_contains_one_address(const ip_subnet *s)
+{
+	/* Unlike subnetishost() this rejects 0.0.0.0/32. */
+	const struct ip_info *afi = subnet_type(s);
+	if (afi == NULL) {
+		return false;
+	}
+	if (s->addr.hport != 0) {
+		return false;
+	}
+	if (s->maskbits != afi->mask_cnt) {
+		return false;
+	}
+	/* ignore port */
+	ip_address network = subnet_prefix(s);
+	return !address_is_any(&network); /* i.e., non-zero */
 }
 
 /*
