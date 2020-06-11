@@ -114,6 +114,31 @@ ip_subnet *dst;
  *
  * NULL for success, else string literal
  */
+
+static ip_subnet subnet3(const ip_address *address, int maskbits, int port)
+{
+	ip_endpoint e = endpoint(address, port);
+	ip_subnet s = {
+		.addr = e,
+		.maskbits = maskbits,
+		.is_subnet = true,
+	};
+	psubnet(&s);
+	return s;
+}
+
+static ip_subnet subnet_from_endpoint(const ip_endpoint *endpoint)
+{
+	const struct ip_info *afi = endpoint_type(endpoint);
+	if (!pexpect(afi != NULL)) {
+		return unset_subnet;
+	}
+	ip_address address = endpoint_address(endpoint);
+	int hport = endpoint_hport(endpoint);
+	pexpect(hport != 0);
+	return subnet3(&address, afi->mask_cnt, hport);
+}
+
 err_t endtosubnet(const ip_endpoint *endpoint, ip_subnet *dst, where_t where)
 {
 	const struct ip_info *afi = endpoint_type(endpoint);

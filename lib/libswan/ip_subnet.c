@@ -25,11 +25,10 @@
 
 const ip_subnet unset_subnet; /* all zeros */
 
-static ip_subnet subnet3(const ip_address *address, int maskbits, int port)
+static ip_subnet subnet2(const ip_address *address, int maskbits)
 {
-	ip_endpoint e = endpoint(address, port);
 	ip_subnet s = {
-		.addr = e,
+		.addr = strip_endpoint(address, HERE),
 		.maskbits = maskbits,
 		.is_subnet = true,
 	};
@@ -43,19 +42,7 @@ ip_subnet subnet_from_address(const ip_address *address)
 	if (!pexpect(afi != NULL)) {
 		return unset_subnet;
 	}
-	return subnet3(address, afi->mask_cnt, 0);
-}
-
-ip_subnet subnet_from_endpoint(const ip_endpoint *endpoint)
-{
-	const struct ip_info *afi = endpoint_type(endpoint);
-	if (!pexpect(afi != NULL)) {
-		return unset_subnet;
-	}
-	ip_address address = endpoint_address(endpoint);
-	int hport = endpoint_hport(endpoint);
-	pexpect(hport != 0);
-	return subnet3(&address, afi->mask_cnt, hport);
+	return subnet2(address, afi->mask_cnt);
 }
 
 ip_address subnet_prefix(const ip_subnet *src)

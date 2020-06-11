@@ -90,9 +90,6 @@ typedef struct {
 
 /* ADDRESS..ADDRESS:0..65535 */
 ip_subnet subnet_from_address(const ip_address *address);
-/* ENDPOINT.ADDRESS..ENDPOINT.ADDRESS:ENDPOINT.PORT..ENDPOINT.PORT */
-/* XXX: what hapens if ENDPOINT.PORT==0 */
-ip_subnet subnet_from_endpoint(const ip_endpoint *endpoint);
 
 /*
  * Format as a string.

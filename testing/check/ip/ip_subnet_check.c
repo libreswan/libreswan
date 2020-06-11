@@ -497,57 +497,6 @@ static void check_subnet_from_address(void)
 	}
 }
 
-static void check_subnet_from_endpoint(void)
-{
-	static const struct test {
-		int family;
-		const char *in;
-		int hport;
-	} tests[] = {
-		{ 4, "0.0.0.0", 1, },
-		{ 6, "::", 2, },
-		{ 4, "127.0.0.1", 3, },
-		{ 6, "::1",  4, },
-	};
-
-	for (size_t ti = 0; ti < elemsof(tests); ti++) {
-		const struct test *t = &tests[ti];
-		PRINT_IN(stdout, " -> %d", t->hport);
-
-		const struct ip_info *type = IP_TYPE(t->family);
-
-		ip_address a;
-		err_t oops = numeric_to_address(shunk1(t->in), type, &a);
-		if (oops != NULL) {
-			FAIL_IN("numeric_to_address() failed: %s", oops);
-		}
-		ip_endpoint e = endpoint(&a, t->hport);
-		ip_subnet s = subnet_from_endpoint(&e);
-
-		CHECK_TYPE(PRINT_IN, subnet_type(&s));
-
-		int hport = subnet_hport(&s);
-		if (hport != t->hport) {
-			FAIL_IN("subnet_port() returned %d, expecting %d",
-				hport, t->hport);
-		}
-
-		ip_address prefix = subnet_prefix(&s);
-		if (!sameaddr(&prefix, &a)) {
-			address_buf pb, ab;
-			FAIL_IN("subnet_prefix(&s) returned %s, expecting %s",
-				str_address(&prefix, &pb), str_address(&a, &ab));
-		}
-
-		ip_address mask = subnet_mask(&s);
-		if (!address_is_0xff(&mask)) {
-			address_buf mb;
-			FAIL_IN("subnet_mask(&s) returned %s, expecting 255.255.255.255",
-				str_address(&mask, &mb));
-		}
-	}
-}
-
 void ip_subnet_check(void)
 {
 	check_str_subnet();
@@ -556,5 +505,4 @@ void ip_subnet_check(void)
 	check_subnet_mask();
 	check_subnet_has();
 	check_subnet_from_address();
-	check_subnet_from_endpoint();
 }
