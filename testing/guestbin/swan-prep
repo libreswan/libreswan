@@ -378,7 +378,7 @@ if hostname != "nic":
         dst = "/etc/strongswan/"
         if os.path.isdir(dst):
             shutil.rmtree(dst)
-        for directory in ("", "ipsec.d/", "ipsec.d/aacerts/", "ipsec.d/ocspcerts/", "ipsec.d/cacerts/"):
+        for directory in ("", "ipsec.d/", "ipsec.d/aacerts/", "ipsec.d/ocspcerts/", "ipsec.d/cacerts/", "ipsec.d/private/", "ipsec.d/certs/"):
             os.mkdir("%s%s" % (dst, directory))
 
         strongswanconf = choose_conf_file(hostname, testpath, "strongswan.conf", "%sstrongswan.conf" % (hostname), args.userland)
