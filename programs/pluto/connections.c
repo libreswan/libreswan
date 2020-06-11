@@ -97,11 +97,6 @@ struct connection *connections = NULL;
 #define MINIMUM_IPSEC_SA_RANDOM_MARK 65536
 static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 
-static bool load_end_cert_and_preload_secret(struct fd *whackfd,
-					     const char *which, const char *pubkey,
-					     enum whack_pubkey_type pubkey_type,
-					     struct end *dst_end);
-
 static bool idr_wildmatch(const struct end *this, const struct id *b);
 
 /*
@@ -934,10 +929,10 @@ static bool check_connection_end(const struct whack_end *this,
 	return TRUE; /* happy */
 }
 
-static bool load_end_cert_and_preload_secret(struct fd *whackfd,
-					     const char *which, const char *pubkey,
-					     enum whack_pubkey_type pubkey_type,
-					     struct end *dst_end)
+bool load_end_cert_and_preload_secret(struct fd *whackfd,
+				      const char *which, const char *pubkey,
+				      enum whack_pubkey_type pubkey_type,
+				      struct end *dst_end)
 {
 	struct logger logger[] = { GLOBAL_LOGGER(whackfd), };
 	dst_end->cert.ty = CERT_NONE;
