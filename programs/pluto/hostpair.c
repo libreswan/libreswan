@@ -278,12 +278,12 @@ void connect_to_host_pair(struct connection *c)
 			hp->magic = host_pair_magic;
 			hp->local = endpoint3(c->interface->protocol,
 					      &c->spd.this.host_addr,
-					      nat_traversal_enabled ?
-					      pluto_port : c->spd.this.host_port);
+					      ip_hport(nat_traversal_enabled ? pluto_port
+						       : c->spd.this.host_port));
 			hp->remote = endpoint3(c->interface->protocol,
 					       &c->spd.that.host_addr,
-					       nat_traversal_enabled ?
-					       pluto_port : c->spd.that.host_port);
+					       ip_hport(nat_traversal_enabled ? pluto_port
+							: c->spd.that.host_port));
 			hp->connections = NULL;
 			hp->pending = NULL;
 			add_hash_table_entry(&host_pairs, hp);

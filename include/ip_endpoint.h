@@ -83,7 +83,7 @@ typedef ip_address ip_endpoint;
 ip_endpoint endpoint(const ip_address *address, int port);
 
 ip_endpoint endpoint3(const struct ip_protocol *protocol,
-		      const ip_address *address, int port);
+		      const ip_address *address, ip_port port);
 
 /*
  * Formatting

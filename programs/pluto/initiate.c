@@ -131,7 +131,8 @@ static bool orient_new_iface_port(struct connection *c, struct fd *whackfd, bool
 	/* XXX: abstract this? */
 	/* assume UDP for now */
 	struct iface_port *ifp = bind_iface_port(dev, &udp_iface_io,
-						 end->raw.host.ikeport, false);
+						 ip_hport(end->raw.host.ikeport),
+						 false);
 	if (ifp == NULL) {
 		dbg("could not create new interface");
 		return false;
@@ -159,7 +160,7 @@ static bool end_matches_port(struct end *end, const struct iface_port *ifp)
 	 * endpoint - .ipproto gets set; hack around it
 	 */
 	ip_address host_addr = strip_endpoint(&end->host_addr, HERE);
-	unsigned port = end->raw.host.ikeport ? end->raw.host.ikeport : pluto_port;
+	ip_port port = ip_hport(end->raw.host.ikeport ? end->raw.host.ikeport : pluto_port);
 	ip_endpoint host_end = endpoint3(ifp->protocol, &host_addr, port);
 	return endpoint_eq(host_end, ifp->local_endpoint);
 }

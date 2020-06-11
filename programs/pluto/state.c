@@ -2821,7 +2821,7 @@ void set_state_ike_endpoints(struct state *st,
 
 	st->st_remote_endpoint = endpoint3(c->interface->protocol,
 					   &c->spd.that.host_addr,
-					   c->spd.that.host_port);
+					   ip_hport(c->spd.that.host_port));
 }
 
 /* seems to be a good spot for now */

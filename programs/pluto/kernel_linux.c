@@ -137,7 +137,7 @@ struct raw_iface *find_raw_ifaces4(void)
 	/* bind the socket */
 	{
 		ip_address any = address_any(&ipv4_info);
-		ip_endpoint any_ep = endpoint3(&ip_protocol_udp, &any, pluto_port);
+		ip_endpoint any_ep = endpoint3(&ip_protocol_udp, &any, ip_hport(pluto_port));
 		ip_sockaddr any_sa = sockaddr_from_endpoint(&any_ep);
 		if (bind(master_sock, &any_sa.sa.sa, any_sa.len) < 0) {
 			endpoint_buf eb;

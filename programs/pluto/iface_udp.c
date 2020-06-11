@@ -50,7 +50,7 @@
 #include "ip_sockaddr.h"
 #include "nat_traversal.h"	/* for nat_traversal_enabled which seems like a broken idea */
 
-static int bind_udp_socket(const struct iface_dev *ifd, int port)
+static int bind_udp_socket(const struct iface_dev *ifd, ip_port port)
 {
 	const struct ip_info *type = address_type(&ifd->id_address);
 	int fd = socket(type->af, SOCK_DGRAM, IPPROTO_UDP);
@@ -396,7 +396,7 @@ static void udp_listen(struct iface_port *ifp,
 					     ifp, "ethX");
 }
 
-static int udp_bind_iface_port(struct iface_dev *ifd, int port, bool ike_float)
+static int udp_bind_iface_port(struct iface_dev *ifd, ip_port port, bool ike_float)
 {
 	int fd = bind_udp_socket(ifd, port);
 	if (fd < 0) {

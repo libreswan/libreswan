@@ -206,7 +206,7 @@ void free_any_iface_port(struct iface_port **ifp)
 }
 
 struct iface_port *bind_iface_port(struct iface_dev *ifd, const struct iface_io *io,
-				   int port, bool ike_float)
+				   ip_port port, bool ike_float)
 {
 	int fd = io->bind_iface_port(ifd, port, ike_float);
 	if (fd < 0) {
@@ -246,7 +246,7 @@ static void add_new_ifaces(void)
 			continue;
 
 		{
-			if (bind_iface_port(ifd, &udp_iface_io, pluto_port,
+			if (bind_iface_port(ifd, &udp_iface_io, ip_hport(pluto_port),
 					    false/*ike_float*/)  == NULL) {
 				ifd->ifd_change = IFD_DELETE;
 				continue;
@@ -265,12 +265,12 @@ static void add_new_ifaces(void)
 		 * Who should we believe?
 		 */
 		if (address_type(&ifd->id_address) == &ipv4_info) {
-			bind_iface_port(ifd, &udp_iface_io, pluto_nat_port,
+			bind_iface_port(ifd, &udp_iface_io, ip_hport(pluto_nat_port),
 					true/*ike_float*/);
 		}
 
 		if (pluto_tcpport != 0) {
-			bind_iface_port(ifd, &iketcp_iface_io, pluto_tcpport,
+			bind_iface_port(ifd, &iketcp_iface_io, ip_hport(pluto_tcpport),
 					true/*ike_float; why?*/);
 		}
 	}

@@ -40,12 +40,12 @@ static ip_endpoint raw_endpoint(const struct ip_protocol *protocol,
 }
 
 ip_endpoint endpoint3(const struct ip_protocol *protocol,
-		      const ip_address *address, int hport)
+		      const ip_address *address, ip_port port)
 {
 #if 0
 	padddress(address);
 #endif
-	return raw_endpoint(protocol, address, hport);
+	return raw_endpoint(protocol, address, hport(port));
 }
 
 ip_endpoint endpoint(const ip_address *address, int hport)

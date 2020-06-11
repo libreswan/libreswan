@@ -187,7 +187,7 @@ static void iketcp_listen(struct iface_port *ifp,
 	}
 }
 
-static int bind_tcp_socket(const struct iface_dev *ifd, int port)
+static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port)
 {
 	const struct ip_info *type = address_type(&ifd->id_address);
 	int fd = socket(type->af, SOCK_STREAM, IPPROTO_TCP);
@@ -328,7 +328,7 @@ static int bind_tcp_socket(const struct iface_dev *ifd, int port)
 	return fd;
 }
 
-static int iketcp_bind_iface_port(struct iface_dev *ifd, int port,
+static int iketcp_bind_iface_port(struct iface_dev *ifd, ip_port port,
 						 bool unused_ike_float UNUSED)
 {
 	return bind_tcp_socket(ifd, port);

@@ -37,7 +37,7 @@ err_t sockaddr_to_endpoint(const struct ip_protocol *protocol,
 	 * ensure these code paths work using testing.
 	 */
 	ip_address address;
-	int port;
+	ip_port port;
 	switch (sa->sa.sa.sa_family) {
 	case AF_INET:
 	{
@@ -46,7 +46,7 @@ err_t sockaddr_to_endpoint(const struct ip_protocol *protocol,
 			return "wrong length";
 		}
 		address = address_from_in_addr(&sa->sa.sin.sin_addr);
-		port = ntohs(sa->sa.sin.sin_port);
+		port = ip_nport(sa->sa.sin.sin_port);
 		break;
 	}
 	case AF_INET6:
@@ -56,7 +56,7 @@ err_t sockaddr_to_endpoint(const struct ip_protocol *protocol,
 			return "wrong length";
 		}
 		address = address_from_in6_addr(&sa->sa.sin6.sin6_addr);
-		port = ntohs(sa->sa.sin6.sin6_port);
+		port = ip_nport(sa->sa.sin6.sin6_port);
 		break;
 	}
 	case AF_UNSPEC:

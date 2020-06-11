@@ -1123,7 +1123,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				 */
 				tmp_c->host_pair->remote = endpoint3(&ip_protocol_udp,
 								     &new_peer,
-								     endpoint_hport(&tmp_c->host_pair->remote));
+								     endpoint_port(&tmp_c->host_pair->remote));
 
 				/* Initiating connection to the redirected peer */
 				initiate_connections_by_name(tmp_name, NULL,
