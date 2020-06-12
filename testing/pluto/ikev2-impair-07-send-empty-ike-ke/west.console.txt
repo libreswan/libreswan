@@ -23,7 +23,7 @@ west #
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 IKE SA
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: sending an empty KE value
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I1: received unauthenticated v2N_INVALID_SYNTAX - ignored
+003 "westnet-eastnet-ipv4-psk-ikev2" #1: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: retransmit so deleting SA
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting state (STATE_PARENT_I1) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: skipping revival of connection that is supposed to remain up
@@ -46,7 +46,6 @@ west #
 done
 west #
  grep -e v2N_INVALID_KE_PAYLOAD -e v2N_INVALID_SYNTAX /tmp/pluto.log | grep -v -e '^|'
-"westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I1: received unauthenticated v2N_INVALID_SYNTAX - ignored
 "westnet-eastnet-ipv4-psk-ikev2" #2: state transition 'Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH' failed with v2N_INVALID_SYNTAX
 "westnet-eastnet-ipv4-psk-ikev2" #3: state transition 'Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH' failed with v2N_INVALID_SYNTAX
 west #
