@@ -4,6 +4,8 @@ See also https://libreswan.org/
 v3.33 (unreleased)
 * KLIPS: Support for KLIPS completely removed [Paul]
 * pluto: Support for deprecated algos removed: serpent, twofish, cast [Paul]
+* pluto: Support for rereading configured certificates from NSS [Myungjin Lee]
+* whack: Support for ipsec whack --rereadcerts [Paul]
 * show: Fixup for python3 version of ipaddress module [Paul]
 * IKEv2: Decode notify payloads into the message digest [Andrew]
 * building: Remove support for SINGLE_CONF_DIR, EMIT_ISAKMP_SPI, [Paul]
