@@ -1652,9 +1652,11 @@ static bool netlink_del_sa(const struct kernel_sa *sa,
 	req.id.proto = sa->proto->ipproto;
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
-	 unsigned short maxlen = req.n.nlmsg_len + MAX_NETLINK_DATA_SIZE;
 
 	dbg("XFRM: deleting IPsec SA with reqid %d", sa->reqid);
+
+#ifdef USE_CLONES_UNUSED
+	unsigned short maxlen = req.n.nlmsg_len + MAX_NETLINK_DATA_SIZE;
 	if (sa->clone_id > CLONE_SA_HEAD) {
 		struct rtattr *attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 
@@ -1666,6 +1668,7 @@ static bool netlink_del_sa(const struct kernel_sa *sa,
 		nl_addattr_l(&req.n, maxlen, XFRMA_SRCADDR,
 		&srcaddr, sizeof(srcaddr));
 	}
+#endif
 
 	return send_netlink_msg(&req.n, NLMSG_NOOP, NULL,
 				"Del SA", sa->text_said, logger);
@@ -2539,7 +2542,9 @@ static bool netlink_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 
 	req.id.daddr = xfrm_from_address(sa->dst.address);
 // Paul: hunk needs rewrite to cleaned up xfrm netlink building
-#ifdef USE_CLONES
+	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
+
+#ifdef USE_CLONES_UNUSED
 	if (sa->clone_id > CLONE_SA_HEAD) {
 		struct rtattr *attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 		DBG_log("AA_2020 %s %d clone_id %u 0x%x %s", __func__, __LINE__, sa->clone_id, ntohl(sa->spi), sa->inbound ? "inbound" : "outbound");
