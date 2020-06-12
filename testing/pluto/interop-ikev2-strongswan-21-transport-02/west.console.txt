@@ -25,9 +25,10 @@ west #
 002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2" #1: authenticated using authby=secret
 003 "westnet-eastnet-ikev2" #2: local policy requires Transport Mode but peer requires required Tunnel Mode
-214 "westnet-eastnet-ikev2" #2: state transition 'Initiator: process IKE_AUTH response' failed with v2N_NO_PROPOSAL_CHOSEN
-031 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: 60 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
-000 "westnet-eastnet-ikev2" #2: starting keying attempt 2 of an unlimited number, but releasing whack
+002 "westnet-eastnet-ikev2" #1: sending IKE SA delete
+002 "westnet-eastnet-ikev2" #2: deleting state (STATE_PARENT_I2) and NOT sending notification
+002 "westnet-eastnet-ikev2" #1: deleting other state #1 connection (STATE_V2_ESTABLISHED_IKE_SA) "westnet-eastnet-ikev2" and sending notification
+002 "westnet-eastnet-ikev2" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -45,6 +46,14 @@ west #
  if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
 west NOW
 XFRM state:
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 XFRM policy:
 XFRM done
 IPSEC mangle TABLES

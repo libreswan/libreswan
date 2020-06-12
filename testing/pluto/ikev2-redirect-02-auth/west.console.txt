@@ -27,6 +27,7 @@ west #
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IKE SA expired (LATEST!)
 002 "westnet-eastnet-ipv4-psk-ikev2" #2: deleting other state #2 (STATE_PARENT_I2) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #3: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev2" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ipv4-psk-ikev2" #3: authenticated using authby=secret
