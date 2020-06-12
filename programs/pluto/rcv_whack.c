@@ -8,7 +8,7 @@
  * Copyright (C) 2010 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2011 Mika Ilmaranta <ilmis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2014-2019 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2014-2020 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2014-2017 Antony Antony <antony@phenome.org>
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  *
@@ -90,6 +90,8 @@
 
 #include "pluto_stats.h"
 #include "state_db.h"
+
+#include "nss_cert_reread.h"
 
 static struct state *find_impaired_state(unsigned biased_what, struct fd *whackfd)
 {
@@ -187,8 +189,6 @@ static void whack_impair_action(enum impair_action action, unsigned event,
 	}
 	}
 }
-
-#include "cert_rotation.h"
 
 static int whack_route_connection(struct connection *c,
 				  struct fd *whackfd,
@@ -526,6 +526,10 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 		add_crl_fetch_requests(NULL);
 #endif
 
+	if (m->whack_reread & REREAD_CERTS) {
+		reread_cert_connections(whackfd);
+	}
+
 	if (m->whack_list & LIST_PSKS)
 		list_psks(whackfd);
 
@@ -714,9 +718,6 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 		libreswan_log("shutting down");
 		return true; /* shutting down */
 	}
-
-	if (m->whack_rotate_cert)
-		rotate_cert(whackfd, m);
 
 	return false; /* don't shut down */
 }

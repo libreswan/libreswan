@@ -333,9 +333,6 @@ struct whack_message {
 	/* for WHACK_REREAD */
 	u_char whack_reread;
 
-	/* for WHACK_ROTATE_CERT */
-	bool whack_rotate_cert;
-
 	/* for connalias string */
 	char *connalias;
 
@@ -396,7 +393,8 @@ struct whack_message {
 #define REREAD_SECRETS	0x01		/* reread /etc/ipsec.secrets */
 #define REREAD_CRLS	0x02		/* obsoleted - just gives a warning */
 #define REREAD_FETCH	0x04		/* update CRL from distribution point(s) */
-#define REREAD_ALL	LRANGES(REREAD_SECRETS, REREAD_FETCH)	/* all reread options */
+#define REREAD_CERTS	0x08		/* update CERT(S) of connection(s) */
+#define REREAD_ALL	LRANGES(REREAD_SECRETS, REREAD_CERTS)	/* all reread options */
 
 struct whackpacker {
 	struct whack_message *msg;

@@ -87,7 +87,8 @@ connection</replaceable></arg>
 <cmdsynopsis>
   <command>ipsec</command>
     <arg choice='plain'><replaceable>auto</replaceable></arg>
-    <arg choice='plain'>--rotatecert</arg>
+    <arg choice='opt'>--utc </arg>
+    <arg choice='opt'>--rereadcerts</arg>
     <arg choice='plain'><replaceable>connection</replaceable></arg>
 </cmdsynopsis>
 </refsect1>
@@ -110,8 +111,6 @@ is
 <option>--route</option>,
 <option>--unroute</option>,
 <option>--ondemand</option>,
-or
-<option>--rotatecert</option>.
 The
 <option>--ready</option>,
 <option>--rereadsecrets</option>,
@@ -205,12 +204,6 @@ operation is equivalent to running first with
 and then with
 <option>--route</option>, causing same effect as connection configuration option
 <option>auto=ondemand</option>.</para>
-
-<para>The
-<option>--rotatecert</option>
-operation is used to rotate cert without tearing down the connection and
-bringing it up. The operation asks <emphasis remap='I'>pluto</emphasis>
-to reload cert and key associated with the connection.</para>
 
 <para>The
 <option>--ready</option>

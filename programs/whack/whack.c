@@ -9,7 +9,7 @@
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2010-2019 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2011 Mika Ilmaranta <ilmis@foobar.fi>
- * Copyright (C) 2012-2019 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2020 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
@@ -205,8 +205,6 @@ static void help(void)
 #endif
 		"shutdown: whack --shutdown\n"
 		"\n"
-		"rotatecert: whack --rotatecert --name <connection_name>\n"
-		"\n"
 		"Libreswan %s\n",
 		ipsec_version_code());
 }
@@ -319,6 +317,7 @@ enum option_enums {
 	OPT_REREADSECRETS,
 	OPT_REREADCRLS,
 	OPT_FETCHCRLS,
+	OPT_REREADCERTS,
 	OPT_REREADALL,
 
 	OPT_PURGEOCSP,
@@ -507,11 +506,6 @@ enum option_enums {
 
 /* === end of correspondence with POLICY_* === */
 
-/* cert rotation options */
-#   define CROPT_FIRST CR_ROTATECERT
-	CR_ROTATECERT,
-#   define CROPT_LAST CR_ROTATECERT
-
 #   define DBGOPT_FIRST DBGOPT_NONE
 	DBGOPT_NONE,
 	DBGOPT_ALL,
@@ -583,6 +577,7 @@ static const struct option long_opts[] = {
 
 	{ "rereadsecrets", no_argument, NULL, OPT_REREADSECRETS + OO },
 	{ "rereadcrls", no_argument, NULL, OPT_REREADCRLS + OO }, /* obsolete */
+	{ "rereadcerts", no_argument, NULL, OPT_REREADCERTS + OO },
 	{ "fetchcrls", no_argument, NULL, OPT_FETCHCRLS + OO },
 	{ "rereadall", no_argument, NULL, OPT_REREADALL + OO },
 
@@ -653,8 +648,6 @@ static const struct option long_opts[] = {
 	{ "to", no_argument, NULL, CD_TO + OO },
 
 	/* option for cert rotation */
-
-	{ "rotatecert", no_argument, NULL, CR_ROTATECERT + OO },
 
 #define PS(o, p)	{ o, no_argument, NULL, CDP_SINGLETON + POLICY_##p##_IX + OO }
 	PS("psk", PSK),
@@ -938,7 +931,6 @@ int main(int argc, char **argv)
 	assert(END_LAST - END_FIRST < LELEM_ROOF);
 	assert(CD_LAST - CD_FIRST < LELEM_ROOF);
 	assert(ALGO_LAST - ALGO_FIRST < LELEM_ROOF);
-	assert(CROPT_LAST - CROPT_FIRST < LELEM_ROOF);
 
 	zero(&msg);	/* ??? pointer fields might not be NULLed */
 
@@ -1360,6 +1352,7 @@ int main(int argc, char **argv)
 
 		case OPT_REREADSECRETS:	/* --rereadsecrets */
 		case OPT_REREADCRLS:    /* --rereadcrls */
+		case OPT_REREADCERTS:    /* --rereadcerts */
 		case OPT_FETCHCRLS:    /* --fetchcrls */
 			msg.whack_reread |= LELEM(c - OPT_REREADSECRETS);
 			continue;
@@ -2349,10 +2342,6 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		case CR_ROTATECERT:	/* --rotatecert */
-			msg.whack_rotate_cert = TRUE;
-			continue;
-
 		default:
 			bad_case(c);
 		}
@@ -2521,7 +2510,7 @@ int main(int argc, char **argv)
 	      msg.whack_addresspool_status ||
 	      msg.whack_fips_status || msg.whack_brief_status || msg.whack_clear_stats || msg.whack_options ||
 	      msg.whack_shutdown || msg.whack_purgeocsp || msg.whack_seccomp_crashtest || msg.whack_show_states ||
-	      msg.whack_rekey_ike || msg.whack_rekey_ipsec || msg.whack_rotate_cert))
+	      msg.whack_rekey_ike || msg.whack_rekey_ipsec))
 		diag("no action specified; try --help for hints");
 
 	/* do the logic for --redirect command */

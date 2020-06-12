@@ -25,13 +25,12 @@ usage="Usage:
 	${me} [--showonly] --{add|delete|replace|start} connectionname
 	${me} [--showonly] --{route|unroute|ondemand} connectionname
 	${me} [--showonly] --{ready|status|rereadsecrets|rereadgroups}
-	${me} [--showonly] --{rereadcrls|rereadall}
+	${me} [--showonly] --{rereadcrls|rereadcerts|rereadall}
 	${me} [--showonly] [--utc] --{listpubkeys|listcerts}
 	${me} [--showonly] [--utc] --checkpubkeys
 	${me} [--showonly] [--utc] --{listcacerts|listgroups}
 	${me} [--showonly] [--utc] --{listcrls|listall}
 	${me} [--showonly] [--utc] --purgeocsp
-	${me} [--showonly] --rotatecert connectionname
 
 	other options: [--config ipsecconfigfile] [--verbose] [--ctlsocket <file>]"
 
@@ -90,7 +89,7 @@ do
 	    argc=1
 	    ;;
 	--ready|--status|--rereadsecrets|--rereadgroups|\
-	--rereadcacerts|--rereadcrls|--rereadall|\
+	--rereadcacerts|--rereadcrls|--rereadcerts| --rereadall|\
 	--listpubkeys|--listcerts|\
 	--checkpubkeys|\
 	--listcacerts|--listgroups|\
@@ -126,7 +125,7 @@ case "${op}$#:$1:$2" in
 	op="--$2"
 	;;
     1:ready:|1:status:|1:rereadsecrets:|\
-    1:rereadcacerts:|1:rereadcrls:|1:rereadall:|\
+    1:rereadcacerts:|1:rereadcrls:|1:rereadcerts:|1:rereadall:|\
     1:listpubkeys:|1:listcerts:|\
     1:listcacerts:|1:listgroups:|\
     1:listcrls:|1:listall:)
@@ -166,6 +165,10 @@ case "${op}" in
     --rereadcrls)
 	echo "ipsec auto --rereadcrls has been obsoleted - please see: ipsec crls"
 	exit 1
+	;;
+    --rereadcerts)
+	${showonly} ipsec whack  --ctlsocket "${CTLSOCKET}" --rereadcerts
+	exit
 	;;
     --rereadall)
 	${showonly} ipsec whack --ctlsocket "${CTLSOCKET}" --rereadall
@@ -240,10 +243,6 @@ case "${op}" in
     --replace)
 	${showonly} ipsec whack --ctlsocket "${CTLSOCKET}" --name ${names} --delete
 	${showonly} ipsec addconn --ctlsocket "${CTLSOCKET}" ${verbose} ${config} ${names}
-	exit
-	;;
-    --rotatecert)
-	${showonly} ipsec whack --ctlsocket "${CTLSOCKET}" --name ${names} --rotatecert
 	exit
 	;;
 esac

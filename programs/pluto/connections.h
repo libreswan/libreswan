@@ -10,7 +10,7 @@
  * Copyright (C) 2013 Kim Heino <b@bbbs.net>
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2013-2019 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2020 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
@@ -604,5 +604,6 @@ extern bool load_end_cert_and_preload_secret(struct fd *whackfd,
 					     const char *which, const char *pubkey,
 					     enum whack_pubkey_type pubkey_type,
 					     struct end *dst_end);
+extern void reread_cert_connections(struct fd *whackfd);
 
 #endif

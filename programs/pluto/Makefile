@@ -220,7 +220,7 @@ OBJS += nss_ocsp.o nss_crl_import.o
 OBJS += nss_err.o
 OBJS += root_certs.o
 OBJS += pluto_timing.o
-OBJS += cert_rotation.o
+OBJS += nss_cert_reread.o
 
 # Archives
 OBJS += $(LIBRESWANLIB)
