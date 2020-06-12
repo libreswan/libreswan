@@ -1132,12 +1132,11 @@ struct bare_shunt **bare_shunt_ptr(const ip_selector *our_client,
 	struct bare_shunt *p, **pp;
 
 	for (pp = &bare_shunts; (p = *pp) != NULL; pp = &p->next) {
-		if (samesubnet(our_client, &p->our_client) &&
-		    samesubnet(peer_client, &p->peer_client) &&
-		    transport_proto == p->transport_proto &&
-		    subnet_hport(our_client) == subnet_hport(&p->our_client) &&
-		    subnet_hport(peer_client) == subnet_hport(&p->peer_client))
+		if (transport_proto == p->transport_proto &&
+		    selector_eq(our_client, &p->our_client) &&
+		    selector_eq(peer_client, &p->peer_client)) {
 			return pp;
+		}
 	}
 	return NULL;
 }
@@ -1288,14 +1287,10 @@ static void clear_narrow_holds(const ip_selector *our_client,
 		/*
 		 * is p->{local,remote} within {local,remote}.
 		 */
-		if (subnetishost(&p->our_client) &&
-		    subnetishost(&p->peer_client) &&
-		    p->said.spi == htonl(SPI_HOLD) &&
-		    addrinsubnet(&p->our_client.addr, our_client) &&
-		    addrinsubnet(&p->peer_client.addr, peer_client) &&
+		if (p->said.spi == htonl(SPI_HOLD) &&
 		    transport_proto == p->transport_proto &&
-		    subnet_hport(our_client) == subnet_hport(&p->our_client) &&
-		    subnet_hport(peer_client) == subnet_hport(&p->peer_client)) {
+		    selector_in_selector(&p->our_client, our_client) &&
+		    selector_in_selector(&p->peer_client, peer_client)) {
 			if (!delete_bare_shunt(&p->our_client.addr, &p->peer_client.addr,
 					       transport_proto, SPI_HOLD,
 					       "removing clashing narrow hold")) {
