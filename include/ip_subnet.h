@@ -91,6 +91,9 @@ typedef struct {
 /* ADDRESS..ADDRESS:0..65535 */
 ip_subnet subnet_from_address(const ip_address *address);
 
+err_t address_mask_to_subnet(const ip_address *address, const ip_address *mask,
+			     ip_subnet *subnet);
+
 /*
  * Format as a string.
  */

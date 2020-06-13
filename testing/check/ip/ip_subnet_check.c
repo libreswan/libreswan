@@ -341,6 +341,9 @@ static void check_subnet_contains(void)
 		T(contains_one_address);
 		T(contains_all_addresses);
 	}
+#undef T
+#undef OUT
+
 }
 
 static bool address_is_0xff(const ip_address *a)
@@ -404,6 +407,90 @@ static void check_subnet_from_address(void)
 	}
 }
 
+static void check_address_mask_to_subnet(void)
+{
+	static const struct test {
+		const char *address;
+		const char *mask;
+		const char *subnet;
+	} tests[] = {
+		/* XXX: this code isn/t used by IPv6? */
+
+		/* any address */
+		{ "0.0.0.0", "0.0.0.0", "0.0.0.0/0" },
+		{ "::", "::", "::/0" },
+
+		/* one address */
+		{ "1.2.3.4", "255.255.255.255", "1.2.3.4/32" },
+		{ "1:2:3:4:5:6:7:8", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "1:2:3:4:5:6:7:8/128" },
+
+		/* subnet boundary on byte */
+		{ "1.2.0.0", "255.255.0.0", "1.2.0.0/16" },
+		{ "1:2:3:4::", "ffff:ffff:ffff:ffff::", "1:2:3:4::/64" },
+
+		/* subnet boundary within byte */
+		{ "1.2.192.0", "255.255.192.0", "1.2.192.0/18" },
+		{ "1:2:3:4:c000::", "ffff:ffff:ffff:ffff:c000::", "1:2:3:4:c000::/66" },
+
+		/* address/mask type mashup */
+		{ "1.2.192.0", "::", NULL, },
+		{ "1:2:3:4:c000::", "0.0.0.0", NULL, },
+
+		/* gaps */
+		{ "1.2.3.4", "255.0.255.0", NULL, },
+		{ "1.2.3.4", "255.254.255.255", NULL, },
+
+		/* fixup screwup */
+		{ "1.2.3.255", "255.255.255.0", "1.2.3.0/24", },
+		{ "1.2.3.255", "255.255.255.128", "1.2.3.128/25", },
+
+	};
+#define OUT(FILE, FMT, ...)						\
+	PRINT(FILE, "%s/%s -> %s"FMT,					\
+	      t->address != NULL ? t->address : "N/A",			\
+	      t->mask != NULL ? t->mask : "N/A",			\
+	      t->subnet != NULL ? t->subnet : "<error>",		\
+	      ##__VA_ARGS__)
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		err_t err;
+		const struct test *t = &tests[ti];
+		OUT(stdout, "");
+
+		ip_address address;
+		err = numeric_to_address(shunk1(t->address), NULL, &address);
+		if (err != NULL) {
+			FAIL(OUT, "numeric_to_address(%s) failed: %s",
+			     t->address, err);
+		}
+
+		ip_address mask;
+		err = numeric_to_address(shunk1(t->mask), NULL, &mask);
+		if (err != NULL) {
+			FAIL(OUT, "numeric_to_address(%s) failed: %s",
+			     t->mask, err);
+		}
+
+		ip_subnet subnet;
+		err = address_mask_to_subnet(&address, &mask, &subnet);
+		if (err != NULL) {
+			if (t->subnet != NULL) {
+				FAIL(OUT, "address_mask_to_subnet() unexpectedly failed: %s", err);
+			}
+			continue;
+		} else if (t->subnet == NULL) {
+			FAIL(OUT, "address_mask_to_subnet() unexpectedly succeeded");
+		}
+
+		subnet_buf sb;
+		const char *s = str_subnet(&subnet, &sb);
+		if (!streq(s, t->subnet)) {
+			FAIL(OUT, "str_subnet() returned %s, expecting %s", s, t->subnet);
+		}
+	}
+#undef OUT
+}
+
 void ip_subnet_check(void)
 {
 	check_str_subnet();
@@ -412,4 +499,5 @@ void ip_subnet_check(void)
 	check_subnet_mask();
 	check_subnet_contains();
 	check_subnet_from_address();
+	check_address_mask_to_subnet();
 }

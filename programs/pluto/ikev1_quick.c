@@ -427,9 +427,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 		if (!pbs_in_address(&temp_mask, afi, id_pbs, "ID mask")) {
 			return false;
 		}
-		err_t ughmsg = initsubnet(&temp_address,
-					  masktocount(&temp_mask),
-					  '0', net);
+		err_t ughmsg = address_mask_to_subnet(&temp_address, &temp_mask, net);
 		if (ughmsg == NULL &&
 		    subnet_contains_no_addresses(net))
 			/* i.e., ::/128 or 0.0.0.0/32 */
