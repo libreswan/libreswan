@@ -107,49 +107,58 @@ const struct pfkey_proto_info null_proto_info[2] = {
 	}
 };
 
+struct bare_shunt {
+	policy_prio_t policy_prio;
+	ip_selector our_client;
+	ip_selector peer_client;
+	ip_said said;
+	int transport_proto; /* XXX: same value in local/remote */
+	unsigned long count;
+	monotime_t last_activity;
+
+	/*
+	 * Note: "why" must be in stable storage (not auto, not heap)
+	 * because we use it indefinitely without copying or pfreeing.
+	 * Simple rule: use a string literal.
+	 */
+	const char *why;
+	/* the connection from where it came - used to re-load /32 conns */
+	char *from_cn;
+
+	struct bare_shunt *next;
+};
+
 static struct bare_shunt *bare_shunts = NULL;
 
 #ifdef IPSEC_CONNECTION_LIMIT
 static int num_ipsec_eroute = 0;
 #endif
 
-static void DBG_bare_shunt(const char *op, const struct bare_shunt *bs)
-{
-	/* same as log_bare_shunt but goes to debug log */
-	if (DBGP(DBG_BASE)) {
-		said_buf sat;
-		selector_buf ourst;
-		selector_buf hist;
-
-		char prio[POLICY_PRIO_BUF];
-		fmt_policy_prio(bs->policy_prio, prio);
-
-		DBG_log("%s bare shunt %p %s --%d--> %s => %s %s    %s",
-			op, (const void *)bs,
-			str_selector(&bs->ours, &ourst),
-			bs->transport_proto,
-			str_selector(&bs->his, &hist),
-			str_said(&bs->said, &sat),
-			prio, bs->why);
-	}
-}
-
-static void log_bare_shunt(const char *op, const struct bare_shunt *bs)
+static void log_bare_shunt(lset_t rc_flags, const char *op, const struct bare_shunt *bs)
 {
 	said_buf sat;
-	selector_buf ourst;
-	selector_buf hist;
+	selector_buf ourb;
+	selector_buf peerb;
 
 	char prio[POLICY_PRIO_BUF];
 	fmt_policy_prio(bs->policy_prio, prio);
 
-	libreswan_log("%s bare shunt %p %s --%d--> %s => %s %s    %s",
-		      op, (const void *)bs,
-		      str_selector(&bs->ours, &ourst),
-		      bs->transport_proto,
-		      str_selector(&bs->his, &hist),
-		      str_said(&bs->said, &sat),
-		      prio, bs->why);
+	log_global(rc_flags, null_fd,
+		   "%s bare shunt %p %s --%d--> %s => %s %s    %s",
+		   op, (const void *)bs,
+		   str_selector(&bs->our_client, &ourb),
+		   bs->transport_proto,
+		   str_selector(&bs->peer_client, &peerb),
+		   str_said(&bs->said, &sat),
+		   prio, bs->why);
+}
+
+static void dbg_bare_shunt(const char *op, const struct bare_shunt *bs)
+{
+	/* same as log_bare_shunt but goes to debug log */
+	if (DBGP(DBG_BASE)) {
+		log_bare_shunt(DEBUG_STREAM, op, bs);
+	}
 }
 
 /*
@@ -157,16 +166,16 @@ static void log_bare_shunt(const char *op, const struct bare_shunt *bs)
  * because we use it indefinitely without copying or pfreeing.
  * Simple rule: use a string literal.
  */
-void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
-	int transport_proto, ipsec_spi_t shunt_spi,
-	const char *why)
+void add_bare_shunt(const ip_subnet *our_client, const ip_subnet *peer_client,
+		    int transport_proto, ipsec_spi_t shunt_spi,
+		    const char *why)
 {
 	/* report any duplication; this should NOT happen */
-	struct bare_shunt **bspp = bare_shunt_ptr(ours, his, transport_proto);
+	struct bare_shunt **bspp = bare_shunt_ptr(our_client, peer_client, transport_proto);
 
 	if (bspp != NULL) {
 		/* maybe: passert(bsp == NULL); */
-		log_bare_shunt("CONFLICTING existing", *bspp);
+		log_bare_shunt(RC_LOG, "CONFLICTING existing", *bspp);
 	}
 
 	struct bare_shunt *bs = alloc_thing(struct bare_shunt,
@@ -174,22 +183,23 @@ void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
 
 	bs->why = why;
 	bs->from_cn = NULL;
-	bs->ours = *ours;
-	bs->his = *his;
+	bs->our_client = *our_client;
+	bs->peer_client = *peer_client;
 	bs->transport_proto = transport_proto;
 	bs->policy_prio = BOTTOM_PRIO;
 
-	bs->said = said3(&subnet_type(ours)->any_address, htonl(shunt_spi), &ip_protocol_internal);
+	bs->said = said3(&subnet_type(our_client)->any_address, htonl(shunt_spi), &ip_protocol_internal);
 	bs->count = 0;
 	bs->last_activity = mononow();
 
 	bs->next = bare_shunts;
 	bare_shunts = bs;
-	DBG_bare_shunt("add", bs);
+	dbg_bare_shunt("add", bs);
 
 	/* report duplication; this should NOT happen */
-	if (bspp != NULL)
-		log_bare_shunt("CONFLICTING      new", bs);
+	if (bspp != NULL) {
+		log_bare_shunt(RC_LOG, "CONFLICTING      new", bs);
+	}
 }
 
 
@@ -1114,18 +1124,19 @@ void set_text_said(char *text_said, const ip_address *dst,
  * Trick: return a pointer to the pointer to the entry;
  * this allows the entry to be deleted.
  */
-struct bare_shunt **bare_shunt_ptr(const ip_subnet *ours, const ip_subnet *his,
+struct bare_shunt **bare_shunt_ptr(const ip_selector *our_client,
+				   const ip_selector *peer_client,
 				   int transport_proto)
 
 {
 	struct bare_shunt *p, **pp;
 
 	for (pp = &bare_shunts; (p = *pp) != NULL; pp = &p->next) {
-		if (samesubnet(ours, &p->ours) &&
-		    samesubnet(his, &p->his) &&
+		if (samesubnet(our_client, &p->our_client) &&
+		    samesubnet(peer_client, &p->peer_client) &&
 		    transport_proto == p->transport_proto &&
-		    subnet_hport(ours) == subnet_hport(&p->ours) &&
-		    subnet_hport(his) == subnet_hport(&p->his))
+		    subnet_hport(our_client) == subnet_hport(&p->our_client) &&
+		    subnet_hport(peer_client) == subnet_hport(&p->peer_client))
 			return pp;
 	}
 	return NULL;
@@ -1141,7 +1152,7 @@ static void free_bare_shunt(struct bare_shunt **pp)
 	p = *pp;
 
 	*pp = p->next;
-	DBG_bare_shunt("delete", p);
+	dbg_bare_shunt("delete", p);
 	pfreeany(p->from_cn);
 	pfree(p);
 }
@@ -1166,17 +1177,17 @@ void show_shunt_status(struct show *s)
 
 	for (const struct bare_shunt *bs = bare_shunts; bs != NULL; bs = bs->next) {
 		/* Print interesting fields.  Ignore count and last_active. */
-		selector_buf ourst;
-		selector_buf hist;
+		selector_buf ourb;
+		selector_buf peerb;
 		said_buf sat;
 
 		char prio[POLICY_PRIO_BUF];
 		fmt_policy_prio(bs->policy_prio, prio);
 
 		show_comment(s, "%s -%d-> %s => %s %s    %s",
-			     str_selector(&(bs)->ours, &ourst),
+			     str_selector(&(bs)->our_client, &ourb),
 			     bs->transport_proto,
-			     str_selector(&(bs)->his, &hist),
+			     str_selector(&(bs)->peer_client, &peerb),
 			     str_said(&(bs)->said, &sat),
 			     prio, bs->why);
 	}
@@ -1263,31 +1274,33 @@ bool raw_eroute(const ip_address *this_host,
 }
 
 /*
- * Clear any bare shunt holds that overlap with the network we have just routed.
- * We only consider "narrow" holds: ones for a single address to single address.
+ * Clear any bare shunt holds that overlap with the network we have
+ * just routed.  We only consider "narrow" holds: ones for a single
+ * address to single address.
  */
-static void clear_narrow_holds(const ip_subnet *ours,
-			const ip_subnet *his,
-			int transport_proto)
+static void clear_narrow_holds(const ip_selector *our_client,
+			       const ip_selector *peer_client,
+			       int transport_proto)
 {
 	struct bare_shunt *p, **pp;
 
 	for (pp = &bare_shunts; (p = *pp) != NULL; ) {
-		if (subnetishost(&p->ours) &&
-		    subnetishost(&p->his) &&
+		/*
+		 * is p->{local,remote} within {local,remote}.
+		 */
+		if (subnetishost(&p->our_client) &&
+		    subnetishost(&p->peer_client) &&
 		    p->said.spi == htonl(SPI_HOLD) &&
-		    addrinsubnet(&p->ours.addr, ours) &&
-		    addrinsubnet(&p->his.addr, his) &&
+		    addrinsubnet(&p->our_client.addr, our_client) &&
+		    addrinsubnet(&p->peer_client.addr, peer_client) &&
 		    transport_proto == p->transport_proto &&
-		    subnet_hport(ours) == subnet_hport(&p->ours) &&
-		    subnet_hport(his) == subnet_hport(&p->his))
-		{
-			if (!delete_bare_shunt(&p->ours.addr, &p->his.addr,
-					transport_proto, SPI_HOLD,
-					"removing clashing narrow hold"))
-			{
+		    subnet_hport(our_client) == subnet_hport(&p->our_client) &&
+		    subnet_hport(peer_client) == subnet_hport(&p->peer_client)) {
+			if (!delete_bare_shunt(&p->our_client.addr, &p->peer_client.addr,
+					       transport_proto, SPI_HOLD,
+					       "removing clashing narrow hold")) {
 				/* ??? we could not delete a bare shunt */
-				log_bare_shunt("failed to delete", p);
+				log_bare_shunt(RC_LOG, "failed to delete", p);
 				break;	/* unlikely to succeed a second time */
 			} else if (*pp == p) {
 				/*
@@ -1297,7 +1310,7 @@ static void clear_narrow_holds(const ip_subnet *ours,
 				 * different one.
 				 * Log it!  And keep deleting.
 				 */
-				log_bare_shunt("UNEXPECTEDLY SURVIVING", p);
+				log_bare_shunt(RC_LOG, "UNEXPECTEDLY SURVIVING", p);
 				pp = &bare_shunts;	/* just in case, start over */
 			}
 			/*
@@ -1412,7 +1425,7 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 			bs->said = said3(&null_host, htonl(new_shunt_spi), &ip_protocol_internal);
 			bs->count = 0;
 			bs->last_activity = mononow();
-			DBG_bare_shunt("change", bs);
+			dbg_bare_shunt("change", bs);
 		} else {
 			/* delete pluto bare shunt */
 			free_bare_shunt(bs_pp);
@@ -3043,9 +3056,9 @@ bool route_and_eroute(struct connection *c,
 				struct bare_shunt *bs = *bspp;
 
 				if (!raw_eroute(&bs->said.dst,        /* should be useless */
-						&bs->ours,
+						&bs->our_client,
 						&bs->said.dst,        /* should be useless */
-						&bs->his,
+						&bs->peer_client,
 						bs->said.spi,         /* unused? network order */
 						bs->said.spi,         /* network order */
 						&ip_protocol_internal,               /* proto */
@@ -3515,8 +3528,8 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 		struct bare_shunt *bs = alloc_thing(struct bare_shunt, "orphan shunt");
 
 		bs->why = "oe-failing";
-		bs->ours = sr->this.client;
-		bs->his = sr->that.client;
+		bs->our_client = sr->this.client;
+		bs->peer_client = sr->that.client;
 		bs->transport_proto = sr->this.protocol;
 		bs->policy_prio = BOTTOM_PRIO;
 
@@ -3531,7 +3544,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 
 		bs->next = bare_shunts;
 		bare_shunts = bs;
-		DBG_bare_shunt("add", bs);
+		dbg_bare_shunt("add", bs);
 
 		/* update kernel policy if needed */
 		/* This really causes the name to remain "oe-failing", we should be able to update only only the name of the shunt */
@@ -3557,14 +3570,14 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 /* XXX move to proper kernel_ops in kernel_netlink */
 void expire_bare_shunts(void)
 {
-	DBG(DBG_OPPO, DBG_log("checking for aged bare shunts from shunt table to expire"));
+	dbg("checking for aged bare shunts from shunt table to expire");
 	for (struct bare_shunt **bspp = &bare_shunts; *bspp != NULL; ) {
 		struct bare_shunt *bsp = *bspp;
 		time_t age = deltasecs(monotimediff(mononow(), bsp->last_activity));
 		struct connection *c = NULL;
 
 		if (age > deltasecs(pluto_shunt_lifetime)) {
-			DBG_bare_shunt("expiring old", bsp);
+			dbg_bare_shunt("expiring old", bsp);
 			if (bsp->from_cn != NULL) {
 				c = conn_by_name(bsp->from_cn, FALSE);
 				if (c != NULL) {
@@ -3573,14 +3586,16 @@ void expire_bare_shunts(void)
 					}
 				}
 			}
-			if (!delete_bare_shunt(&bsp->ours.addr, &bsp->his.addr,
-				bsp->transport_proto, ntohl(bsp->said.spi),
-				bsp->from_cn == NULL ? "expire_bare_shunt" : "IGNORE_ON_XFRM: expire_bare_shunt")) {
-					loglog(RC_LOG_SERIOUS, "failed to delete bare shunt");
+			if (!delete_bare_shunt(&bsp->our_client.addr, &bsp->peer_client.addr,
+					       bsp->transport_proto,
+					       ntohl(bsp->said.spi),
+					       (bsp->from_cn == NULL ? "expire_bare_shunt" :
+						"IGNORE_ON_XFRM: expire_bare_shunt"))) {
+				    log_global(RC_LOG_SERIOUS, null_fd, "failed to delete bare shunt");
 			}
 			passert(bsp != *bspp);
 		} else {
-			DBG_bare_shunt("keeping recent", bsp);
+			dbg_bare_shunt("keeping recent", bsp);
 			bspp = &bsp->next;
 		}
 	}

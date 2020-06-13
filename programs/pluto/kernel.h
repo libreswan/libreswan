@@ -330,27 +330,6 @@ struct eroute_info {
  */
 #define SHUNT_PATIENCE  (SHUNT_SCAN_INTERVAL * 15 / 2)  /* inactivity timeout */
 
-struct bare_shunt {
-	policy_prio_t policy_prio;
-	ip_subnet ours;
-	ip_subnet his;
-	ip_said said;
-	int transport_proto;
-	unsigned long count;
-	monotime_t last_activity;
-
-	/*
-	 * Note: "why" must be in stable storage (not auto, not heap)
-	 * because we use it indefinitely without copying or pfreeing.
-	 * Simple rule: use a string literal.
-	 */
-	const char *why;
-	/* the connection from where it came - used to re-load /32 conns */
-	char *from_cn;
-
-	struct bare_shunt *next;
-};
-
 extern void show_shunt_status(struct show *);
 extern unsigned shunt_count(void);
 
