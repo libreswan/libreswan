@@ -23,9 +23,9 @@
  * The only hard part is checking for host-part bits turned on.
  */
 err_t	/* NULL for success, else string literal */
-initsubnet(addr, count, clash, dst)
+initsubnet(addr, maskbits, clash, dst)
 const ip_address * addr;
-int count;
+int maskbits;
 int clash;	/* '0' zero host-part bits, 'x' die on them */
 ip_subnet *dst;
 {
@@ -60,7 +60,7 @@ ip_subnet *dst;
 		return "unknown clash-control value in initsubnet";
 	}
 
-	c = count / 8;
+	c = maskbits / 8;
 	if (c > n)
 		return "impossible mask count";
 
@@ -68,7 +68,7 @@ ip_subnet *dst;
 	n -= c;
 
 	m = 0xff;
-	c = count % 8;
+	c = maskbits % 8;
 	if (n > 0 && c != 0)	/* partial byte */
 		m >>= c;
 
@@ -85,13 +85,13 @@ ip_subnet *dst;
 		p++;
 	}
 
-	dst->maskbits = count;
+	dst->maskbits = maskbits;
 
 	if (warning) {
 		LSWLOG(buf) {
 			jam(buf, "WARNING:improper subnet mask, host-part bits on input ");
 			jam_address(buf, addr);
-			jam(buf, "/%d ", count);
+			jam(buf, "/%d ", maskbits);
 			jam(buf, " extracted subnet ");
 			jam_subnet(buf, dst);
 		}
