@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 1998-2002,2015  D. Hugh Redelmeier.
- * Copyright (C) 2016-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016-2020 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -66,12 +66,68 @@ err_t address_mask_to_subnet(const ip_address *address,
 	return NULL;
 }
 
+err_t text_cidr_to_subnet(shunk_t cidr, const struct ip_info *afi, ip_subnet *subnet)
+{
+	err_t err;
+
+	/* split CIDR into ADDRESS/MASK */
+	shunk_t mask = cidr;
+	shunk_t address = shunk_token(&mask, NULL, "/");
+	/* mask could be empty/null */
+
+	/* parse ADDRESS */
+	ip_address subnet_address;
+	err = numeric_to_address(address, afi/*possibly NULL */,
+				 &subnet_address);
+	if (err != NULL) {
+		return err;
+	}
+	/* Fix AFI, now that it is known */
+	afi = address_type(&subnet_address);
+	passert(afi != NULL);
+
+	/* parse mask; required */
+	if (mask.ptr == NULL) {
+		return "missing '/MASK'";
+	}
+	if (mask.len == 0) {
+		return "empty '/MASK'";
+	}
+	uintmax_t maskbits = afi->mask_cnt;
+	/* don't use bound - error is confusing */
+	err = shunk_to_uint(mask, NULL, 0, &maskbits, 0);
+	if (err != NULL) {
+		/* not a number */
+		return err;
+	}
+	if (maskbits > (uintmax_t)afi->mask_cnt) {
+		return "'/MASK' too big";
+	}
+
+	/* combine */
+	*subnet = subnet2(&subnet_address, maskbits);
+	return NULL;
+}
+
 ip_address subnet_prefix(const ip_subnet *src)
 {
-	return address_blit(endpoint_address(&src->addr),
+	return address_blit(strip_endpoint(&src->addr, HERE),
 			    /*routing-prefix*/&keep_bits,
 			    /*host-id*/&clear_bits,
 			    src->maskbits);
+}
+
+ip_address subnet_host(const ip_subnet *src)
+{
+	return address_blit(strip_endpoint(&src->addr, HERE),
+			    /*routing-prefix*/&clear_bits,
+			    /*host-id*/&keep_bits,
+			    src->maskbits);
+}
+
+ip_address subnet_address(const ip_subnet *src)
+{
+	return strip_endpoint(&src->addr, HERE);
 }
 
 const struct ip_info *subnet_type(const ip_subnet *src)

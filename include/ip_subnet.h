@@ -22,19 +22,24 @@
 /*
  * This is not the subnet you're looking for.
  *
- * In libreswan ip_subnet is used to store client routing information.
- * IKEv2 calls this traffic selectors and it allows the negotiation
- * of:
+ * In libreswan ip_subnet is used to store multiple things:
  *
- *    LO_ADDRESS..HI_ADDRESS : LO_PORT..HI_PORT
  *
- * The structures below can only handle a limited subset of this,
- * namely:
+ * #1 addresses i.e., NETWORK_PREFIX|HOST_IDENTIFIER / MASK
+ * #2 subnets i.e., NETWORK_PREFIX|0 / MASK
  *
- *    NETWORK_PREFIX | 0 / MASK : PORT
+ * OK, so far so good, they are kind of eqivalent.
+ *
+ * #3 selectors i.e., NETWORK_PREFIX | 0 / MASK : PORT
  *
  * where PORT==0 imples 0..65535, and (presumably) port can only be
  * non-zero when the NETWORK_PREFIX/MASK is for a single address.
+ *
+ * the latter being a less general form of:
+ *
+ *    LO_ADDRESS..HI_ADDRESS : LO_PORT..HI_PORT
+ *
+ *
  */
 
 /*
@@ -94,6 +99,9 @@ ip_subnet subnet_from_address(const ip_address *address);
 err_t address_mask_to_subnet(const ip_address *address, const ip_address *mask,
 			     ip_subnet *subnet);
 
+/* convert CIDR addresss/mask to subnet */
+err_t text_cidr_to_subnet(shunk_t cidr, const struct ip_info *afi, ip_subnet *subnet);
+
 /*
  * Format as a string.
  */
@@ -142,6 +150,10 @@ int subnet_hport(const ip_subnet *subnet);
 extern ip_address subnet_mask(const ip_subnet *subnet);
 /* Given ROUTING_PREFIX|HOST_ID return ROUTING_PREFIX|0 */
 ip_address subnet_prefix(const ip_subnet *subnet);
+/* Given ROUTING_PREFIX|HOST_ID return 0|HOST_ID */
+ip_address subnet_host(const ip_subnet *subnet);
+/* Given ROUTING_PREFIX|HOST_ID return ROUTING_PREFIX|HOST_ID */
+ip_address subnet_address(const ip_subnet *subnet);
 
 /*
  * old

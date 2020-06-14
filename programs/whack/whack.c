@@ -1622,14 +1622,8 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_VTIIP:	/* --vtiip <ip-address/mask> */
-			if (strchr(optarg, '/') == NULL)
-				diag("vtiip needs an address/mask value");
-			diagq(ttosubnet(optarg, 0,
-					msg.tunnel_addr_family,
-					'0' /* ip/mask host bits on allowed */,
-					&msg.right.host_vtiip), optarg);
-			/* ttosubnet() sets to lowest subnet address, fixup needed */
-			diagq(tnatoaddr(optarg, strchr(optarg, '/') - optarg, AF_UNSPEC, &msg.right.host_vtiip.addr), optarg);
+			diagq(text_cidr_to_subnet(shunk1(optarg), aftoinfo(msg.tunnel_addr_family),
+						  &msg.right.host_vtiip), optarg);
 			continue;
 
 		/*
