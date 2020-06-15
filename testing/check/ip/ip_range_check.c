@@ -159,7 +159,7 @@ static void check_iprange_bits(void)
 	}
 }
 
-static void check_ttorange__to__str_range(struct logger *logger)
+static void check_ttorange__to__str_range(void)
 {
 	static const struct test {
 		int family;
@@ -167,47 +167,52 @@ static void check_ttorange__to__str_range(struct logger *logger)
 		long pool;
 		const char *out;
 	} tests[] = {
+		/* single address */
+		{ 4, "4.3.2.1", 1, "4.3.2.1-4.3.2.1", },
+		{ 6, "::1", 1, "::1-::1", },
 		/* smallest */
-		{ 6, "8000::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 4294967295, "8000::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
+		{ 4, "4.3.2.1-4.3.2.1", 1, "4.3.2.1-4.3.2.1", },
 		{ 6, "::1-::1", 1, "::1-::1", },
+		{ 4, "4.3.2.1/32", 1, "4.3.2.1-4.3.2.1", },
 		{ 6, "::2/128", 1, "::2/128", },
-		{ 4, "1.2.3.4-1.2.3.4", 1, "1.2.3.4-1.2.3.4", },
-		/* normal */
+		/* normal range */
 		{ 6, "::1-::2", 2, "::1-::2", },
 		{ 4, "1.2.3.0-1.2.3.9", 10, "1.2.3.0-1.2.3.9", },
-		{ 6, "1:0:3:0:0:0:0:2/128", 1, "1:0:3::2/128", },
-		{ 6, "2001:db8:0:9:1:2::/112", 65536, "2001:db8:0:9:1:2::/112", },
-		{ 6, "abcd:ef01:2345:6789:0:00a:000:20/128", 1, "abcd:ef01:2345:6789:0:a:0:20/128", },
-		{ 6, "2001:db8:0:8::/112", 65536, "2001:db8:0:8::/112",},
 		{ 6, "2001:db8:0:9:ffff:fffe::-2001:db8:0:9:ffff:ffff::", 4294967295,"2001:db8:0:9:ffff:fffe::-2001:db8:0:9:ffff:ffff::", },
 		{ 6, "2001:db8:0:9:ffff:ffff:0:2-2001:db8:0:9:ffff:ffff:ffff:ffff", 4294967294, "2001:db8:0:9:ffff:ffff:0:2-2001:db8:0:9:ffff:ffff:ffff:ffff", },
 		{ 6, "2001:db8:0:9::1-2001:db8:0:9:0:0:ffff:ffff", 4294967295, "2001:db8:0:9::1-2001:db8:0:9::ffff:ffff", },
 		{ 6, "2001:db8:0:1:2:ffff:0:2-2001:db8:0:1:2:ffff:ffff:fffe", 4294967293, "2001:db8:0:1:2:ffff:0:2-2001:db8:0:1:2:ffff:ffff:fffe", },
-		{ 6, "2001:db8:0:7::/97", 2147483648, "2001:db8:0:7::/97", },
-		/* truncated ranges */
+		/* saturated number of bits */
+		{ 6, "8000::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 4294967295, "8000::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
 		{ 6, "2001:db8:0:1::-2001:db8:0:1:0:0:ffff:ffff", 4294967295, "2001:db8:0:1::-2001:db8:0:1::ffff:ffff", },
 		{ 6, "2001:db8:0:3::-2001:db8:0:3:0:ffff:ffff:ffff", 4294967295, "2001:db8:0:3::-2001:db8:0:3:0:ffff:ffff:ffff", },
+		{ 6, "2001:db8:0:fffe::2-2001:db8:0:ffff::", 4294967294, "2001:db8:0:fffe::2-2001:db8:0:ffff::", },
+		{ 6, "2001:db8:0:1:2:fffe::-2001:db8:0:1:2:ffff:ffff:ffee", 4294967295, "2001:db8:0:1:2:fffe::-2001:db8:0:1:2:ffff:ffff:ffee", },
+		{ 6, "1000::-1fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 4294967295, "1000::-1fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
+		{ 6, "8000::2-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 4294967294, "8000::2-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
+		{ 6, "::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 4294967295, "::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
+
+		/* allow mask */
+		{ 4, "1.2.3.0/32", 1, "1.2.3.0-1.2.3.0", },
+		{ 6, "1:0:3:0:0:0:0:2/128", 1, "1:0:3::2/128", },
+		{ 6, "2001:db8:0:9:1:2::/112", 65536, "2001:db8:0:9:1:2::/112", },
+		{ 6, "abcd:ef01:2345:6789:0:00a:000:20/128", 1, "abcd:ef01:2345:6789:0:a:0:20/128", },
+		{ 6, "2001:db8:0:8::/112", 65536, "2001:db8:0:8::/112",},
+		{ 6, "2001:db8:0:7::/97", 2147483648, "2001:db8:0:7::/97", },
 		{ 6, "2001:db8:0:4::/96", 4294967295, "2001:db8:0:4::/96", },
 		{ 6, "2001:db8:0:6::/64", 4294967295, "2001:db8:0:6::/64", },
 		{ 6, "2001:db8::/32", 4294967295, "2001:db8::/32", },
 		{ 6, "2000::/3", 4294967295, "2000::/3", },
 		{ 6, "4000::/2", 4294967295, "4000::/2", },
 		{ 6, "8000::/1", 4294967295, "8000::/1", },
-		{ 6, "2001:db8:0:fffe::2-2001:db8:0:ffff::", 4294967294, "2001:db8:0:fffe::2-2001:db8:0:ffff::", },
-		{ 6, "2001:db8:0:1:2:fffe::-2001:db8:0:1:2:ffff:ffff:ffee", 4294967295, "2001:db8:0:1:2:fffe::-2001:db8:0:1:2:ffff:ffff:ffee", },
-		{ 6, "1000::-1fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 4294967295, "1000::-1fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
-		{ 6, "8000::2-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 4294967294, "8000::2-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
-		{ 6, "::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 4294967295, "::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
-		{ 6, "2001:db8:0:7::/97:0", 2147483648, "2001:db8:0:7::/97", }, /* would be nice to error on this too */
-		/* no port */
+
+		/* reject port */
+		{ 6, "2001:db8:0:7::/97:0", -1, NULL, },
 		{ 6, "2001:db8:0:7::/97:30", -1, NULL},
 		/* wrong order */
 		{ 4, "1.2.3.4-1.2.3.3", -1, NULL, },
 		{ 6, "::2-::1", -1, NULL, },
-		/* not masks; but why? */
-		{ 4, "1.2.3.0/255.255.255.0", -1, NULL, },
-		{ 4, "1.2.3.0/32", -1, NULL, },
-		/* not any */
+		/* cannot contain %any */
 		{ 4, "0.0.0.0-0.0.0.0", -1, NULL, },
 		{ 4, "0.0.0.0-0.0.0.1", -1, NULL, },
 		{ 6, "::-::", -1, NULL, },
@@ -233,7 +238,7 @@ static void check_ttorange__to__str_range(struct logger *logger)
 		const char *oops = NULL;
 
 		ip_range r;
-		oops = ttorange(t->in, IP_TYPE(t->family), &r, logger);
+		oops = ttorange(t->in, IP_TYPE(t->family), &r);
 		if (oops != NULL && t->out == NULL) {
 			/* Error was expected, do nothing */
 			continue;
@@ -393,7 +398,7 @@ void ip_range_check(struct logger *logger)
 {
 	check_rangetosubnet();
 	check_iprange_bits();
-	check_ttorange__to__str_range(logger);
+	check_ttorange__to__str_range();
 	check_range_from_subnet(logger);
 	check_range_is();
 }

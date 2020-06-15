@@ -191,7 +191,7 @@ static void check_selector_from_subnet(struct logger *logger)
 
 static err_t to_range_selector(const struct selector *s,
 			       ip_selector *selector,
-			       struct logger *logger)
+			       struct logger *logger UNUSED)
 {
 	if (s->family == 0) {
 		*selector = unset_selector;
@@ -199,7 +199,7 @@ static err_t to_range_selector(const struct selector *s,
 	}
 
 	ip_range range;
-	err_t err = ttorange(s->addresses, IP_TYPE(s->family), &range, logger);
+	err_t err = ttorange(s->addresses, IP_TYPE(s->family), &range);
 	if (err != NULL) {
 		return err;
 	}

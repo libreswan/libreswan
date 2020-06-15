@@ -128,89 +128,91 @@ int iprange_bits(ip_address low, ip_address high)
 	return (n - lastnz) * 8 - bo;
 }
 
-static err_t extract_ends(const char *src, const struct ip_info *afi, ip_range *dst)
-{
-	const char *dash;
-	const char *high;
-	size_t hlen;
-	const char *oops;
-	size_t srclen = strlen(src);
-
-	dash = memchr(src, '-', srclen);
-	if (dash == NULL)
-		return "not ipv4 address range with '-' or ipv6 subnet";
-
-	high = dash + 1;
-	hlen = srclen - (high - src);
-
-	/* extract start ip address */
-	oops = ttoaddr_num(src, dash - src, afi->af, &dst->start);
-	if (oops != NULL)
-		return oops;
-
-	/* extract end ip address */
-	oops = ttoaddr_num(high, hlen, afi->af, &dst->end);
-	if (oops != NULL)
-		return oops;
-
-	return NULL;
-}
-
 /*
  * ttorange - convert text v4 "addr1-addr2" to address_start address_end
  *            v6 allows "subnet/mask" to address_start address_end
  */
-err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst,
-	       struct logger *logger)
+err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 {
-	err_t er = NULL;
+	*dst = unset_range;
+	err_t err;
 
-	zero(dst);
-	ip_range tmp = *dst; /* clear it */
+	/* START or START/MASK or START-END */
+	shunk_t end = shunk1(src);
+	char sep = '\0';
+	shunk_t start = shunk_token(&end, &sep, "/-");
 
-	ip_subnet v6_subnet;
-	er = ttosubnet(src, 0, AF_INET6, '6', &v6_subnet, logger);
-	if (er == NULL) {
-		if (v6_subnet.addr.hport != 0)
-			return "port must be zero for IPv6 addresspool";
-		tmp = range_from_subnet(&v6_subnet);
-		tmp.is_subnet = true;
-		afi = &ipv6_info;
-	} else  {
-		if (afi == NULL) {
-			afi = &ipv4_info;
-			if (extract_ends(src, afi, &tmp) != NULL) {
-				afi = &ipv6_info;
-				er = extract_ends(src, afi, &tmp);
-				if (er != NULL)
-					return er; /* v4 error is ignored */
+	/* convert start address */
+	ip_address start_address;
+	err = numeric_to_address(start, afi, &start_address);
+	if (err != NULL) {
+		return err;
+	}
 
-			}
-		} else {
-			er = extract_ends(src, afi, &tmp);
-			if (er != NULL)
-				return er;
+	if (address_is_any(&start_address)) {
+		/* XXX: being more specific would mean diag_t */
+		return "0.0.0.0 or :: not allowed in range";
+	}
+
+	/* get real AFI */
+	afi = address_type(&start_address);
+	if (afi == NULL) {
+		/* should never happen */
+		return "INTERNAL ERROR: ttorange() encountered an unknown type";
+	}
+
+	switch (sep) {
+	case '\0':
+	{
+		/* single address */
+		*dst = (ip_range) {
+			.start = start_address,
+			.end = start_address,
+		};
+		return NULL;
+	}
+	case '/':
+	{
+		/* START/MASK */
+		uintmax_t maskbits = afi->mask_cnt;
+		err = shunk_to_uint(end, NULL, 0, &maskbits, afi->mask_cnt);
+		if (err != NULL) {
+			return err;
 		}
+		/* XXX: should this reject bad addresses */
+		*dst = (ip_range) {
+			.start = address_blit(start_address, &keep_bits, &clear_bits, maskbits),
+			.end = address_blit(start_address, &keep_bits, &set_bits, maskbits),
+		};
+		dst->is_subnet = (afi == &ipv6_info);
+		return NULL;
 	}
-
-	if (addrcmp(&tmp.start, &tmp.end) > 0) {
-		return "start of range must not be greater than end";
+	case '-':
+	{
+		/* START-END */
+		ip_address end_address;
+		err = numeric_to_address(end, afi, &end_address);
+		if (err != NULL) {
+			return err;
+		}
+		if (addrcmp(&start_address, &end_address) > 0) {
+			return "start of range must not be greater than end";
+		}
+		*dst = (ip_range) {
+			.start = start_address,
+			.end = end_address,
+		};
+		return NULL;
 	}
-
-	if (address_is_any(&tmp.start) ||
-	    address_is_any(&tmp.end)) {
-		return "'0.0.0.0 or ::0' not allowed in range";
 	}
-
-	/* We have validated the range. Now put bounds in dst. */
-	*dst = tmp;
-	return NULL;
+	/* SEP is invalid, but being more specific means diag_t */
+	return "error";
 }
 
 void jam_range(struct jambuf *buf, const ip_range *range)
 {
 	jam_address(buf, &range->start);
-	if (range_type(range) == &ipv6_info && range->is_subnet) {
+	if (range->is_subnet) {
 		ip_subnet tmp_subnet;
 		rangetosubnet(&range->start, &range->end, &tmp_subnet);
 		jam(buf, "/%u", tmp_subnet.maskbits);

@@ -1,4 +1,5 @@
-/*
+/* address range, for libreswan
+ *
  * header file for Libreswan library functions
  * Copyright (C) 1998, 1999, 2000  Henry Spencer.
  * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
@@ -33,8 +34,7 @@ ip_range range(const ip_address *start, const ip_address *end);
 
 ip_range range_from_subnet(const ip_subnet *subnet);
 
-extern err_t ttorange(const char *src, const struct ip_info *afi,
-		      ip_range *dst, struct logger *logger);
+err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst) MUST_USE_RESULT;
 
 /*
  * Formatting

@@ -2137,7 +2137,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_ADDRESSPOOL:	/* --addresspool */
-			ttorange(optarg, NULL, &msg.right.pool_range, logger);
+			diagq(ttorange(optarg, NULL, &msg.right.pool_range), optarg);
 			continue;
 
 		case CD_MODECFGDNS:	/* --modecfgdns */

@@ -709,7 +709,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			    "connection's %saddresspool set to: %s",
 			    leftright, end->strings[KSCF_ADDRESSPOOL] );
 
-		er = ttorange(addresspool, NULL, &end->pool_range, logger);
+		er = ttorange(addresspool, NULL, &end->pool_range);
 		if (er != NULL)
 			ERR_FOUND("bad %saddresspool=%s [%s]", leftright,
 					addresspool, er);
