@@ -1,41 +1,36 @@
 /testing/guestbin/swan-prep
-[ 00.00] sssd (356) used greatest stack depth: 12048 bytes left
 west #
- dmesg -n 6
+ # dmesg -n 6
 west #
  # nohup tcpdump -i eth1 -s 65535 -X -vv -nn tcp > OUTPUT/west.tcpdump &
 west #
- nohup dumpcap -i eth1 -w /tmp/west.pcap > OUTPUT/west.dumpcap &
-[x] PID
+ # nohup dumpcap -i eth1 -w /tmp/west.pcap > OUTPUT/west.dumpcap &
 west #
  # confirm that the network is alive
-nohup: ignoring input and redirecting stderr to stdout
 west #
- ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
-destination -I 192.0.1.254 192.0.2.254 is alive
+ # ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
 west #
  # make sure that clear text does not get through
 west #
- iptables -F
+ # iptables -F
 west #
- iptables -X
+ # iptables -X
 west #
- iptables -N LOGDROP
+ # iptables -N LOGDROP
 west #
- iptables -A LOGDROP -j LOG
+ # iptables -A LOGDROP -j LOG
 west #
- iptables -A LOGDROP -j DROP
+ # iptables -A LOGDROP -j DROP
 west #
  # does this block the ping response?
 west #
- # iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+ # iptables -A OUTPUT -o eth1 -p tcp --dport 4500 -j ACCEPT
 west #
- iptables -A OUTPUT -o eth1 -p tcp --dport 4500 -j ACCEPT
+ # iptables -A OUTPUT -o eth1 -s 192.0.2.0/24 -j LOGDROP
 west #
  # confirm with a ping
 west #
- ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
-up UNEXPECTED
+ # ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -116,6 +111,8 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
+west #
+ grep '^connection from' /tmp/pluto.log
 west #
  ../bin/check-for-core.sh
 west #
