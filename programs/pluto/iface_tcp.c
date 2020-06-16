@@ -439,7 +439,21 @@ static void iketcp_handle_packet_cb(evutil_socket_t unused_fd UNUSED,
 
 	case IKETCP_RUNNING:
 		dbg("TCP: RUNNING: trying to read a packet");
-		handle_packet_cb(ifp);
+		switch (handle_packet_cb(ifp)) {
+		case IFACE_OK:
+			dbg("TCP: RUNNING: packet read ok");
+			break;
+		case IFACE_IGNORE:
+			dbg("TCP: RUNNING: packet ignored (why?)");
+			break;
+		case IFACE_EOF:
+		case IFACE_FATAL:
+			/* already logged */
+			free_any_iface_port(&ifp);
+			break;
+		default:
+			bad_case(0);
+		}
 		return;
 
 	default:
