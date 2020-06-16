@@ -329,7 +329,7 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port)
 }
 
 static int iketcp_bind_iface_port(struct iface_dev *ifd, ip_port port,
-						 bool unused_ike_float UNUSED)
+						 bool unused_add_ike_encapsulation_prefix UNUSED)
 {
 	return bind_tcp_socket(ifd, port);
 }
@@ -552,7 +552,7 @@ stf_status create_tcp_interface(struct state *st)
 	q->io = &iketcp_iface_io;
 	q->fd = fd;
 	q->local_endpoint = local_endpoint;
-	q->ike_float = TRUE;
+	q->add_ike_encapsulation_prefix = true;
 	q->ip_dev = add_ref(st->st_interface->ip_dev);
 	q->protocol = &ip_protocol_tcp;
 	q->iketcp_remote_endpoint = st->st_remote_endpoint;
@@ -599,7 +599,7 @@ void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 	ifp->fd = accepted_fd;
 	ifp->io = &iketcp_iface_io;
 	ifp->protocol = &ip_protocol_tcp;
-	ifp->ike_float = TRUE;
+	ifp->add_ike_encapsulation_prefix = true;
 	ifp->ip_dev = add_ref(bind_ifp->ip_dev); /*TCP: refcnt */
 	ifp->iketcp_remote_endpoint = tcp_remote_endpoint;
 	ifp->local_endpoint = bind_ifp->local_endpoint;

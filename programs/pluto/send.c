@@ -111,7 +111,7 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 	}
 
 	natt_bonus = !just_a_keepalive &&
-				  interface->ike_float ?
+				  interface->add_ike_encapsulation_prefix ?
 				  NON_ESP_MARKER_SIZE : 0;
 
 	const uint8_t *ptr;

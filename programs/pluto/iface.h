@@ -55,7 +55,7 @@ struct iface_io {
 	void (*cleanup)(struct iface_port *ifp);
 	void (*listen)(struct iface_port *fip, struct logger *logger);
 	int (*bind_iface_port)(struct iface_dev *ifd,
-			       ip_port port, bool ike_float);
+			       ip_port port, bool add_ike_encapsulation_prefix);
 };
 
 extern const struct iface_io udp_iface_io;
@@ -94,8 +94,8 @@ struct iface_port {
 	int fd;                 /* file descriptor of socket for IKE UDP messages */
 	struct iface_port *next;
 	const struct ip_protocol *protocol;
+	bool add_ike_encapsulation_prefix;
 	/* udp only */
-	bool ike_float;
 	struct pluto_event *pev;
 	/* tcp port only */
 	struct evconnlistener *tcp_accept_listener;
@@ -117,6 +117,6 @@ extern void show_ifaces_status(struct show *s);
 extern void free_ifaces(void);
 void listen_on_iface_port(struct iface_port *ifp, struct logger *logger);
 struct iface_port *bind_iface_port(struct iface_dev *ifd, const struct iface_io *io,
-				   ip_port port, bool ike_float);
+				   ip_port port, bool add_ike_encapsulation_prefix);
 
 #endif

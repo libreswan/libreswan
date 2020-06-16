@@ -316,7 +316,7 @@ static enum iface_status udp_read_packet(const struct iface_port *ifp,
 		return IFACE_IGNORE;
 	}
 
-	if (ifp->ike_float) {
+	if (ifp->add_ike_encapsulation_prefix) {
 		uint32_t non_esp;
 
 		if (packet->len < (int)sizeof(uint32_t)) {
@@ -340,7 +340,7 @@ static enum iface_status udp_read_packet(const struct iface_port *ifp,
 	{
 		static const uint8_t non_ESP_marker[NON_ESP_MARKER_SIZE] =
 			{ 0x00, };
-		if (ifp->ike_float &&
+		if (ifp->add_ike_encapsulation_prefix &&
 		    packet->len >= NON_ESP_MARKER_SIZE &&
 		    memeq(packet->ptr, non_ESP_marker,
 			   NON_ESP_MARKER_SIZE)) {
@@ -396,13 +396,14 @@ static void udp_listen(struct iface_port *ifp,
 					     ifp, "ethX");
 }
 
-static int udp_bind_iface_port(struct iface_dev *ifd, ip_port port, bool ike_float)
+static int udp_bind_iface_port(struct iface_dev *ifd, ip_port port, bool add_ike_encapsulation_prefix)
 {
 	int fd = bind_udp_socket(ifd, port);
 	if (fd < 0) {
 		return -1;
 	}
-	if (ike_float && !nat_traversal_espinudp(fd, ifd)) {
+	if (add_ike_encapsulation_prefix &&
+	    !nat_traversal_espinudp(fd, ifd)) {
 		dbg("nat-traversal failed");
 	}
 	return fd;

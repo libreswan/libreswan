@@ -206,9 +206,9 @@ void free_any_iface_port(struct iface_port **ifp)
 }
 
 struct iface_port *bind_iface_port(struct iface_dev *ifd, const struct iface_io *io,
-				   ip_port port, bool ike_float)
+				   ip_port port, bool add_ike_encapsulation_prefix)
 {
-	int fd = io->bind_iface_port(ifd, port, ike_float);
+	int fd = io->bind_iface_port(ifd, port, add_ike_encapsulation_prefix);
 	if (fd < 0) {
 		/* already logged? */
 		return NULL;
@@ -219,7 +219,7 @@ struct iface_port *bind_iface_port(struct iface_dev *ifd, const struct iface_io 
 	ifp->fd = fd;
 	ifp->ip_dev = add_ref(ifd);
 	ifp->io = io;
-	ifp->ike_float = ike_float;
+	ifp->add_ike_encapsulation_prefix = add_ike_encapsulation_prefix;
 	ifp->protocol = io->protocol;
 	ifp->local_endpoint = endpoint3(io->protocol,
 					&ifd->id_address, port);
@@ -247,7 +247,7 @@ static void add_new_ifaces(void)
 
 		{
 			if (bind_iface_port(ifd, &udp_iface_io, ip_hport(pluto_port),
-					    false/*ike_float*/)  == NULL) {
+					    false/*add_ike_encapsulation_prefix*/)  == NULL) {
 				ifd->ifd_change = IFD_DELETE;
 				continue;
 			}
@@ -266,12 +266,12 @@ static void add_new_ifaces(void)
 		 */
 		if (address_type(&ifd->id_address) == &ipv4_info) {
 			bind_iface_port(ifd, &udp_iface_io, ip_hport(pluto_nat_port),
-					true/*ike_float*/);
+					true/*add_ike_encapsulation_prefix*/);
 		}
 
 		if (pluto_tcpport != 0) {
 			bind_iface_port(ifd, &iketcp_iface_io, ip_hport(pluto_tcpport),
-					true/*ike_float; why?*/);
+					true/*add_ike_encapsulation_prefix; why?*/);
 		}
 	}
 }
