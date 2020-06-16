@@ -120,7 +120,7 @@ void terminate_connection(const char *name, bool quiet, struct fd *whackfd)
 				log_global(RC_UNKNOWN_NAME, whackfd,
 					   "no such connection or aliased connection named \"%s\"", name);
 		} else {
-			log_global(RC_COMMENT, whackfd,,
+			log_global(RC_COMMENT, whackfd,
 				   "terminated %d connections from aliased connection \"%s\"",
 				   count, name);
 		}
