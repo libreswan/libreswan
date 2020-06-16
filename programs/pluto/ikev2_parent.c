@@ -5566,7 +5566,7 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 }
 
 #ifdef NETKEY_SUPPORT
-static payload_master_t add_mobike_payloads;
+static payload_emitter_fn add_mobike_payloads;
 static bool add_mobike_payloads(struct state *st, pb_stream *pbs)
 {
 	ip_endpoint local_endpoint = st->st_mobike_local_endpoint;

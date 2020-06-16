@@ -431,7 +431,7 @@ void initiate_redirect(struct state *st)
 }
 
 /* helper function for send_v2_informational_request() */
-static payload_master_t add_redirect_payload;
+static payload_emitter_fn add_redirect_payload;
 static bool add_redirect_payload(struct state *st, pb_stream *pbs)
 {
 	return emit_redirect_notification(st->st_active_redirect_gw, pbs);

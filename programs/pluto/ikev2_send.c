@@ -567,7 +567,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 stf_status record_v2_informational_request(const char *name,
 					   struct ike_sa *ike,
 					   struct state *sender,
-					   payload_master_t *payloads)
+					   payload_emitter_fn *emit_payloads)
 {
 	/*
 	 * Buffer in which to marshal our informational message.  We
@@ -589,7 +589,7 @@ stf_status record_v2_informational_request(const char *name,
 
 	v2SK_payload_t sk = open_v2SK_payload(sender->st_logger, &message, ike);
 	if (!pbs_ok(&sk.pbs) ||
-	    (payloads != NULL && !payloads(sender, &sk.pbs)) ||
+	    (emit_payloads != NULL && !emit_payloads(sender, &sk.pbs)) ||
 	    !close_v2SK_payload(&sk)) {
 		return STF_INTERNAL_ERROR;
 	}

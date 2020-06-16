@@ -1,6 +1,6 @@
 /* IKEv2 send packet routines, for Libreswan
  *
- * Copyright (C) 2018-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2018-202- Andrew Cagney
  * Copyright (C) 2019 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -60,12 +60,12 @@ void send_v2N_response_from_md(struct msg_digest *md,
 			       v2_notification_t type,
 			       const chunk_t *data);
 
-typedef bool payload_master_t(struct state *st, pb_stream *pbs);
+typedef bool payload_emitter_fn(struct state *st, pb_stream *pbs);
 
 extern stf_status record_v2_informational_request(const char *name,
 						  struct ike_sa *owner,
 						  struct state *sender,
-						  payload_master_t *payloads);
+						  payload_emitter_fn *emit_payloads);
 void record_v2_outgoing_fragment(struct pbs_out *pbs,
 				 const char *what,
 				 struct v2_outgoing_fragment **frags);
