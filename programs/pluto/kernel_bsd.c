@@ -129,7 +129,7 @@ struct raw_iface *find_raw_ifaces4(void)
 	/* bind the socket */
 	{
 		ip_address anya = address_any(&ipv4_info);
-		ip_endpoint any = endpoint3(&ip_protocol_udp, &anya, 0);
+		ip_endpoint any = endpoint3(&ip_protocol_udp, &anya, unset_port);
 		ip_sockaddr any_sa = sockaddr_from_endpoint(&any);
 		if (bind(master_sock, &any_sa.sa.sa, any_sa.len) < 0)
 			EXIT_LOG_ERRNO(errno, "bind() failed in find_raw_ifaces4()");
