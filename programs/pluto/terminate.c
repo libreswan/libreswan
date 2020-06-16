@@ -96,9 +96,10 @@ static int terminate_a_connection(struct connection *c, struct fd *whackfd,
 void terminate_connection(const char *name, bool quiet, struct fd *whackfd)
 {
 	/*
-	 * Loop because more than one may match (master and instances)
-	 * But at least one is required (enforced by conn_by_name).
-	 * Don't log an error if not found before we checked aliases
+	 * Loop because more than one may match (template and
+	 * instances).  But at least one is required (enforced by
+	 * conn_by_name).  Don't log an error if not found before we
+	 * checked aliases
 	 */
 	struct connection *c = conn_by_name(name, true/*strict*/);
 
@@ -116,11 +117,12 @@ void terminate_connection(const char *name, bool quiet, struct fd *whackfd)
 		int count = foreach_connection_by_alias(name, whackfd, terminate_a_connection, NULL);
 		if (count == 0) {
 			if (!quiet)
-				loglog(RC_UNKNOWN_NAME,
-					"no such connection or aliased connection named \"%s\"", name);
+				log_global(RC_UNKNOWN_NAME, whackfd,
+					   "no such connection or aliased connection named \"%s\"", name);
 		} else {
-			loglog(RC_COMMENT, "terminated %d connections from aliased connection \"%s\"",
-				count, name);
+			log_global(RC_COMMENT, whackfd,,
+				   "terminated %d connections from aliased connection \"%s\"",
+				   count, name);
 		}
 	}
 }

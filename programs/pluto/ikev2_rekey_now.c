@@ -81,9 +81,10 @@ void rekey_now(const char *str, enum sa_type sa_type,
 	};
 
 	/*
-	 * Loop because more than one may match (master and instances)
-	 * But at least one is required (enforced by conn_by_name).
-	 * Don't log an error if not found before we checked aliases
+	 * Loop because more than one may match (template and
+	 * instances) But at least one is required (enforced by
+	 * conn_by_name).  Don't log an error if not found before we
+	 * checked aliases
 	 *
 	 * connection instances may need more work to work ???
 	 */
