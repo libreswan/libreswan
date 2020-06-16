@@ -1,3 +1,9 @@
-Basic pluto using TCP encapsulation with IKEv2 on the initiator (west), and on the responder,
-using RAW RSA keys for authentication.
+TCP encapsulation with writes in blocking mode
 
+Early kernels would fail non-blocking writes to the ESPINTCP socket.
+
+This test works around the problem by putting the socket into blocking
+mode before writing.
+
+If this test passes ikev2-tcp-03-basic-rawrsa-nonblocking fails then
+the kernel lacks the blocking fix.
