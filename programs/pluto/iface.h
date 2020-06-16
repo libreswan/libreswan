@@ -3,7 +3,7 @@
  * Copyright (C) 1998-2001,2013  D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
- * Copyright (C) 2019 Andrew Cagney
+ * Copyright (C) 2019-2020 Andrew Cagney
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -95,6 +95,13 @@ struct iface_port {
 	struct iface_port *next;
 	const struct ip_protocol *protocol;
 	bool add_ike_encapsulation_prefix;
+	/*
+	 * For IKEv2 2.23.  NAT Traversal.  When NAT is detected, must
+	 * the initiators float away, switching to port 4500?  This
+	 * doesn't make sense for TCP, and this doesn't make sense
+	 * when using IKEPORT.
+	 */
+	bool float_nat_initiator;
 	/* udp only */
 	struct pluto_event *pev;
 	/* tcp port only */
@@ -117,6 +124,8 @@ extern void show_ifaces_status(struct show *s);
 extern void free_ifaces(void);
 void listen_on_iface_port(struct iface_port *ifp, struct logger *logger);
 struct iface_port *bind_iface_port(struct iface_dev *ifd, const struct iface_io *io,
-				   ip_port port, bool add_ike_encapsulation_prefix);
+				   ip_port port,
+				   bool add_ike_encapsulation_prefix,
+				   bool float_nat_initiator);
 
 #endif

@@ -128,11 +128,17 @@ static bool orient_new_iface_port(struct connection *c, struct fd *whackfd, bool
 	if (dev == NULL) {
 		return false;
 	}
-	/* XXX: abstract this? */
-	/* assume UDP for now */
+	/*
+	 * assume UDP for now
+	 *
+	 * A custom IKEPORT should not float away to port 4500.  For
+	 * now leave ADD_IKE_ENCAPSULATION_PREFIX clear so it can talk
+	 * to port 500.  Perhaps it doesn't belong in iface?
+	 */
 	struct iface_port *ifp = bind_iface_port(dev, &udp_iface_io,
 						 ip_hport(end->raw.host.ikeport),
-						 false);
+						 false/*add_ike_encapsulation_prefix*/,
+						 false/*float_nat_initiator*/);
 	if (ifp == NULL) {
 		dbg("could not create new interface");
 		return false;

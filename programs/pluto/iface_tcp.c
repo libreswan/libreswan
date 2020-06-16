@@ -553,6 +553,7 @@ stf_status create_tcp_interface(struct state *st)
 	q->fd = fd;
 	q->local_endpoint = local_endpoint;
 	q->add_ike_encapsulation_prefix = true;
+	q->float_nat_initiator = false;
 	q->ip_dev = add_ref(st->st_interface->ip_dev);
 	q->protocol = &ip_protocol_tcp;
 	q->iketcp_remote_endpoint = st->st_remote_endpoint;
@@ -600,6 +601,7 @@ void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 	ifp->io = &iketcp_iface_io;
 	ifp->protocol = &ip_protocol_tcp;
 	ifp->add_ike_encapsulation_prefix = true;
+	ifp->float_nat_initiator = false;
 	ifp->ip_dev = add_ref(bind_ifp->ip_dev); /*TCP: refcnt */
 	ifp->iketcp_remote_endpoint = tcp_remote_endpoint;
 	ifp->local_endpoint = bind_ifp->local_endpoint;

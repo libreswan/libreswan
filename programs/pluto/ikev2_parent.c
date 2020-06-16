@@ -1819,7 +1819,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	 */
 
 	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
-		if (ike->sa.st_interface->io == &udp_iface_io) {
+		if (ike->sa.st_interface->float_nat_initiator) {
 			ikev2_natd_lookup(md, &ike->sa.st_ike_spis.responder);
 			if (ike->sa.hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
 				natify_initiator_endpoints(&ike->sa, HERE);

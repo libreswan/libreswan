@@ -206,7 +206,9 @@ void free_any_iface_port(struct iface_port **ifp)
 }
 
 struct iface_port *bind_iface_port(struct iface_dev *ifd, const struct iface_io *io,
-				   ip_port port, bool add_ike_encapsulation_prefix)
+				   ip_port port,
+				   bool add_ike_encapsulation_prefix,
+				   bool float_nat_initiator)
 {
 	int fd = io->bind_iface_port(ifd, port, add_ike_encapsulation_prefix);
 	if (fd < 0) {
@@ -220,6 +222,7 @@ struct iface_port *bind_iface_port(struct iface_dev *ifd, const struct iface_io 
 	ifp->ip_dev = add_ref(ifd);
 	ifp->io = io;
 	ifp->add_ike_encapsulation_prefix = add_ike_encapsulation_prefix;
+	ifp->float_nat_initiator = float_nat_initiator;
 	ifp->protocol = io->protocol;
 	ifp->local_endpoint = endpoint3(io->protocol,
 					&ifd->id_address, port);
@@ -238,6 +241,7 @@ struct iface_port *bind_iface_port(struct iface_dev *ifd, const struct iface_io 
 /*
  * Open new interfaces.
  */
+
 static void add_new_ifaces(void)
 {
 	struct iface_dev *ifd;
@@ -245,12 +249,16 @@ static void add_new_ifaces(void)
 		if (ifd->ifd_change != IFD_ADD)
 			continue;
 
-		{
-			if (bind_iface_port(ifd, &udp_iface_io, ip_hport(pluto_port),
-					    false/*add_ike_encapsulation_prefix*/)  == NULL) {
-				ifd->ifd_change = IFD_DELETE;
-				continue;
-			}
+		/*
+		 * Port 500 must not add the ESP encapsulation prefix.
+		 * And, when NAT is detected, float away.
+		 */
+
+		if (bind_iface_port(ifd, &udp_iface_io, ip_hport(pluto_port),
+				    false/*add_ike_encapsulation_prefix*/,
+				    true/*float_nat_initiator*/)  == NULL) {
+			ifd->ifd_change = IFD_DELETE;
+			continue;
 		}
 
 		/*
@@ -263,15 +271,24 @@ static void add_new_ifaces(void)
 		 * gave an error it one tried to turn it on.
 		 *
 		 * Who should we believe?
+		 *
+		 * Port 4500 can add the ESP encapsulation prefix.
+		 * Let it float to itself - code might rely on it?
 		 */
 		if (address_type(&ifd->id_address) == &ipv4_info) {
 			bind_iface_port(ifd, &udp_iface_io, ip_hport(pluto_nat_port),
-					true/*add_ike_encapsulation_prefix*/);
+					true/*add_ike_encapsulation_prefix*/,
+					true/*float_nat_initiator*/);
 		}
 
+		/*
+		 * An explicit IKEPORT can't float away.  As for the
+		 * encapsulation prefix?
+		 */
 		if (pluto_tcpport != 0) {
 			bind_iface_port(ifd, &iketcp_iface_io, ip_hport(pluto_tcpport),
-					true/*add_ike_encapsulation_prefix; why?*/);
+					true/*add_ike_encapsulation_prefix; why? why not?*/,
+					false/*float_nat_initiator*/);
 		}
 	}
 }
