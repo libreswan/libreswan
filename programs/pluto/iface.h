@@ -94,6 +94,27 @@ struct iface_port {
 	int fd;                 /* file descriptor of socket for IKE UDP messages */
 	struct iface_port *next;
 	const struct ip_protocol *protocol;
+	/*
+	 * This field is overloaded:
+	 *
+	 * - should UDP try to enable "espinudp" on the port?
+	 *
+	 * - Should the ESP=0 ike encapsulation prefix be included in
+	 * outgoing messages?
+	 *
+	 * XXX: The second one looks backward / deficient:
+	 *
+	 * It's the other end's port+protocol that determine if ESP=0
+	 * can / should / must be added, not the initiator.  For
+	 * instance:
+	 *
+	 * UDP initiator=2500 responder=500  => MUST NOT
+	 * UDP initiator=2500 responder=4500 => MAYBE
+	 * TCP initiator=* responder=*       => MUST
+	 *
+	 * However, ADD_IKE_ENCAPSULATION_PREFIX is also used to flag
+	 * that espinudp should be enabled on the socket.
+	 */
 	bool add_ike_encapsulation_prefix;
 	/*
 	 * For IKEv2 2.23.  NAT Traversal.  When NAT is detected, must

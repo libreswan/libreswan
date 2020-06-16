@@ -282,12 +282,17 @@ static void add_new_ifaces(void)
 		}
 
 		/*
-		 * An explicit IKEPORT can't float away.  As for the
-		 * encapsulation prefix?
+		 * An explicit {left,right}IKEPORT can't float away.
+		 *
+		 * An explicit {left,right}IKEPORT may end up talking
+		 * to port 500 which does not allow the IKE
+		 * encapsulation prefix, so don't add it.
+		 *
+		 * See comments in iface.h - this is backwards.
 		 */
 		if (pluto_tcpport != 0) {
 			bind_iface_port(ifd, &iketcp_iface_io, ip_hport(pluto_tcpport),
-					true/*add_ike_encapsulation_prefix; why? why not?*/,
+					false/*add_ike_encapsulation_prefix*/,
 					false/*float_nat_initiator*/);
 		}
 	}
