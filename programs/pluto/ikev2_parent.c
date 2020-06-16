@@ -1023,7 +1023,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	 * Should this code use clone_in_pbs_as_chunk() which uses
 	 * pbs_room() (.roof-.start)?  The original code:
 	 *
-	 * 	clonetochunk(st->st_firstpacket_him, md->message_pbs.start,
+	 * 	clonetochunk(st->st_firstpacket_peer, md->message_pbs.start,
 	 *		     pbs_offset(&md->message_pbs),
 	 *		     "saved first received packet");
 	 *
@@ -1035,7 +1035,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	 * "trim padding (not actually legit)".
 	 */
 	/* record first packet for later checking of signature */
-	st->st_firstpacket_him = clone_out_pbs_as_chunk(&md->message_pbs,
+	st->st_firstpacket_peer = clone_out_pbs_as_chunk(&md->message_pbs,
 							"saved first received packet");
 
 	/* make sure HDR is at start of a clean buffer */
@@ -2043,7 +2043,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	 * Should this code use clone_in_pbs_as_chunk() which uses
 	 * pbs_room() (.roof-.start)?  The original code:
 	 *
-	 * 	clonetochunk(st->st_firstpacket_him, md->message_pbs.start,
+	 * 	clonetochunk(st->st_firstpacket_peer, md->message_pbs.start,
 	 *		     pbs_offset(&md->message_pbs),
 	 *		     "saved first received packet");
 	 *
@@ -2055,7 +2055,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	 * "trim padding (not actually legit)".
 	 */
 	/* record first packet for later checking of signature */
-	pst->st_firstpacket_him = clone_out_pbs_as_chunk(&md->message_pbs,
+	pst->st_firstpacket_peer = clone_out_pbs_as_chunk(&md->message_pbs,
 							 "saved first received packet");
 
 	/* beginning of data going out */
@@ -3458,7 +3458,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 		}
 		dbg("Received compression CPI=%d", n_ipcomp.ikev2_cpi);
 
-		//st->st_ipcomp.attrs.spi = uniquify_his_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), st, 0);
+		//st->st_ipcomp.attrs.spi = uniquify_peer_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), st, 0);
 		st->st_ipcomp.attrs.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
 		st->st_ipcomp.attrs.transattrs.ta_comp = n_ipcomp.ikev2_notify_ipcomp_trans;
 		st->st_ipcomp.attrs.mode = ENCAPSULATION_MODE_TUNNEL; /* always? */

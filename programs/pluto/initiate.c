@@ -1038,7 +1038,7 @@ void initiate_ondemand(const ip_address *our_client,
  * There ought to be only one.
  * This might get to be a bottleneck -- try hashing if it does.
  */
-struct connection *shunt_owner(const ip_subnet *ours, const ip_subnet *his)
+struct connection *shunt_owner(const ip_subnet *ours, const ip_subnet *peers)
 {
 	struct connection *c;
 
@@ -1049,7 +1049,7 @@ struct connection *shunt_owner(const ip_subnet *ours, const ip_subnet *his)
 		for (sr = &c->spd; sr; sr = sr->spd_next) {
 			if (shunt_erouted(sr->routing) &&
 			    samesubnet(ours, &sr->this.client) &&
-			    samesubnet(his, &sr->that.client))
+			    samesubnet(peers, &sr->that.client))
 				return c;
 		}
 	}

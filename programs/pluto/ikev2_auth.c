@@ -54,7 +54,7 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 		role = ike->sa.st_sa_role;
 		break;
 	case REMOTE_PERSPECTIVE:
-		firstpacket = ike->sa.st_firstpacket_him;
+		firstpacket = ike->sa.st_firstpacket_peer;
 		role = (ike->sa.st_sa_role == SA_INITIATOR ? SA_RESPONDER :
 			ike->sa.st_sa_role == SA_RESPONDER ? SA_INITIATOR :
 			0);

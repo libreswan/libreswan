@@ -300,7 +300,7 @@ void set_nat_traversal(struct state *st, const struct msg_digest *md)
 
 static void natd_lookup_common(struct state *st,
 	const ip_address *sender,
-	bool found_me, bool found_him)
+	bool found_me, bool found_peer)
 {
 	st->hidden_variables.st_natd = address_any(&ipv4_info);
 
@@ -316,7 +316,7 @@ static void natd_lookup_common(struct state *st,
 			DBG(DBG_NATT, DBG_log("NAT_TRAVERSAL this end is NOT behind NAT"));
 		}
 
-		if (!found_him) {
+		if (!found_peer) {
 			DBG(DBG_NATT, {
 				ipstr_buf b;
 				DBG_log("NAT_TRAVERSAL that end is behind NAT %s",

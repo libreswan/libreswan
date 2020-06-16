@@ -104,7 +104,7 @@
  *       identity isn't required.  For example, always accept the same
  *       kinds of encryption.  Accept Public Key Id authentication
  *       since the Initiator presumably has our public key and thinks
- *       we must have / can find his.  This approach is weakest
+ *       we must have / can find peers.  This approach is weakest
  *       for preshared key since the actual key must be known to
  *       decrypt the Initiator's ID Payload.
  *     These choices can be blended.  For example, a class of Identities

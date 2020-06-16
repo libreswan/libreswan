@@ -32,7 +32,7 @@ struct isakmp_quirks {
 	bool xauth_ack_msgid;	/**< Whether to reset the msgid after an
 				 * xauth set, such as for SSH Sentinel.
 				 */
-	bool modecfg_pull_mode;	/* if the client should request his IP */
+	bool modecfg_pull_mode;	/* if the client should request peers IP */
 	enum known_vendorid qnat_traversal_vid;	/**< which NAT-type vendor IDs we got */
 	bool xauth_vid;	/**< if the client has XAUTH */
 };

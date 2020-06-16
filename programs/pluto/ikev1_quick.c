@@ -878,7 +878,7 @@ struct verify_oppo_bundle {
 				 * other things on DNS failure
 				 */
 	struct msg_digest *md;
-	struct p2id my, his;
+	struct p2id my, peers;
 	struct crypt_mac new_iv;
 	/* int whackfd; */	/* not needed because we are Responder */
 };
@@ -906,7 +906,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		/* IDci (initiator is peer) */
 
 		if (!decode_net_id(&id_pd->payload.ipsec_id, &id_pd->pbs,
-				   &b.his.net, "peer client"))
+				   &b.peers.net, "peer client"))
 			return STF_FAIL + INVALID_ID_INFORMATION;
 
 		/* Hack for MS 818043 NAT-T Update.
@@ -922,15 +922,15 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		if (id_pd->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
 			loglog(RC_LOG_SERIOUS,
 			       "Applying workaround for MS-818043 NAT-T bug");
-			zero(&b.his.net);
+			zero(&b.peers.net);
 			happy(endtosubnet(&c->spd.that.host_addr,
-					  &b.his.net, HERE));
+					  &b.peers.net, HERE));
 		}
 		/* End Hack for MS 818043 NAT-T Update */
 
-		b.his.proto = id_pd->payload.ipsec_id.isaiid_protoid;
-		b.his.port = id_pd->payload.ipsec_id.isaiid_port;
-		update_selector_hport(&b.his.net, b.his.port);
+		b.peers.proto = id_pd->payload.ipsec_id.isaiid_protoid;
+		b.peers.port = id_pd->payload.ipsec_id.isaiid_port;
+		update_selector_hport(&b.peers.net, b.peers.port);
 
 		/* IDcr (we are responder) */
 
@@ -972,11 +972,11 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 			nat_traversal_natoa_lookup(md, &hv);
 
 			if (address_is_specified(&hv.st_nat_oa)) {
-				endtosubnet(&hv.st_nat_oa, &b.his.net, HERE);
+				endtosubnet(&hv.st_nat_oa, &b.peers.net, HERE);
 				subnet_buf buf;
 				loglog(RC_LOG_SERIOUS,
 				       "IDci was FQDN: %s, using NAT_OA=%s %d as IDci",
-				       idfqdn, str_subnet(&b.his.net, &buf),
+				       idfqdn, str_subnet(&b.peers.net, &buf),
 				       isanyaddr(&hv.st_nat_oa)/*XXX: always 0?*/);
 			}
 		}
@@ -987,9 +987,9 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 			return STF_FAIL;
 
 		happy(endtosubnet(&c->spd.this.host_addr, &b.my.net, HERE));
-		happy(endtosubnet(&c->spd.that.host_addr, &b.his.net, HERE));
-		b.his.proto = b.my.proto = 0;
-		b.his.port = b.my.port = 0;
+		happy(endtosubnet(&c->spd.that.host_addr, &b.peers.net, HERE));
+		b.peers.proto = b.my.proto = 0;
+		b.peers.port = b.my.port = 0;
 	}
 	b.md = md;
 	save_new_iv(p1st, b.new_iv);
@@ -1018,7 +1018,7 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 	struct state *const p1st = md->st;
 	struct connection *c = p1st->st_connection;
 	ip_subnet *our_net = &b->my.net,
-	*his_net = &b->his.net;
+	*peers_net = &b->peers.net;
 	struct hidden_variables hv;
 
 	{
@@ -1032,7 +1032,7 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 		subnet_buf s1, d1;
 		libreswan_log("the peer proposed: %s:%d/%d -> %s:%d/%d",
 			      str_subnet(our_net, &s1), c->spd.this.protocol, c->spd.this.port,
-			      str_subnet(his_net, &d1), c->spd.that.protocol, c->spd.that.port);
+			      str_subnet(peers_net, &d1), c->spd.that.protocol, c->spd.that.port);
 	}
 
 	/* Now that we have identities of client subnets, we must look for
@@ -1040,11 +1040,11 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 	 */
 	{
 		struct connection *p = find_client_connection(c,
-							      our_net, his_net,
+							      our_net, peers_net,
 							      b->my.proto,
 							      b->my.port,
-							      b->his.proto,
-							      b->his.port);
+							      b->peers.proto,
+							      b->peers.port);
 
 		if ((p1st->hidden_variables.st_nat_traversal &
 		      NAT_T_DETECTED) &&
@@ -1074,10 +1074,10 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 			me.protocol = b->my.proto;
 			me.port = b->my.port;
 
-			he.client = *his_net;
-			he.has_client = !subnetisaddr(his_net, &he.host_addr);
-			he.protocol = b->his.proto;
-			he.port = b->his.port;
+			he.client = *peers_net;
+			he.has_client = !subnetisaddr(peers_net, &he.host_addr);
+			he.protocol = b->peers.proto;
+			he.port = b->peers.port;
 
 			l = format_end(buf, sizeof(buf), &me, NULL, TRUE,
 				       LEMPTY, oriented(*c));
@@ -1100,7 +1100,7 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 				 * instantiate, carrying over authenticated peer ID
 				 */
 				p = rw_instantiate(p, &c->spd.that.host_addr,
-						   his_net,
+						   peers_net,
 						   &c->spd.that.id);
 			}
 			/* temporarily bump up cur_debugging to get "using..." message
@@ -1129,24 +1129,24 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 
 		/* fill in the client's true port */
 		if (c->spd.that.has_port_wildcard) {
-			int port = htons(b->his.port);
+			int port = htons(b->peers.port);
 
 			setportof(port, &c->spd.that.host_addr);
 			setportof(port, &c->spd.that.client.addr);
 
-			c->spd.that.port = b->his.port;
+			c->spd.that.port = b->peers.port;
 			c->spd.that.has_port_wildcard = FALSE;
 		}
 
 		if (is_virtual_connection(c)) {
 			char cthat[END_BUF];
 
-			c->spd.that.client = *his_net;
+			c->spd.that.client = *peers_net;
 			c->spd.that.has_client = TRUE;
 			c->spd.that.virt = NULL;	/* ??? leak? */
 
-			if (subnetishost(his_net) &&
-			    addrinsubnet(&c->spd.that.host_addr, his_net)) {
+			if (subnetishost(peers_net) &&
+			    addrinsubnet(&c->spd.that.host_addr, peers_net)) {
 				c->spd.that.has_client = FALSE;
 			}
 
@@ -1194,8 +1194,8 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 		set_cur_state(st);      /* (caller will reset) */
 		switch_md_st(md, st, HERE);	/* feed back new state */
 
-		st->st_peeruserprotoid = b->his.proto;
-		st->st_peeruserport = b->his.port;
+		st->st_peeruserprotoid = b->peers.proto;
+		st->st_peeruserport = b->peers.port;
 		st->st_myuserprotoid = b->my.proto;
 		st->st_myuserport = b->my.port;
 

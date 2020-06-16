@@ -374,7 +374,7 @@ struct state {
 	ipsec_spi_t st_tunnel_in_spi;		/* KLUDGE */
 	ipsec_spi_t st_tunnel_out_spi;		/* KLUDGE */
 	IPsecSAref_t st_ref;                    /* our kernel name for our incoming SA */
-	IPsecSAref_t st_refhim;                 /* our kernel name for our outgoing SA */
+	IPsecSAref_t st_ref_peer;                 /* our kernel name for our outgoing SA */
 	reqid_t st_reqid;			/* bundle of 4 (out,in, compout,compin */
 
 	bool st_outbound_done;			/* if true, then outgoing SA already installed */
@@ -468,7 +468,7 @@ struct state {
 	msgid_t st_msgid_lastreplied;         /* to decide retransmit CREATE_CHILD_SA */
 
 	chunk_t st_firstpacket_me;              /* copy of my message 1 (for hashing) */
-	chunk_t st_firstpacket_him;             /* copy of his message 1 (for hashing) */
+	chunk_t st_firstpacket_peer;             /* copy of peers message 1 (for hashing) */
 
 	struct p_dns_req *ipseckey_dnsr;    /* ipseckey of that end */
 	struct p_dns_req *ipseckey_fwd_dnsr;/* validate IDi that IP in forward A/AAAA */
@@ -509,7 +509,7 @@ struct state {
 	uint8_t st_myuserprotoid;             /* IDcx.protoid */
 	uint16_t st_myuserport;
 
-	/* his stuff */
+	/* peers stuff */
 
 	/* Phase 2 ID payload info about peer's user */
 	uint8_t st_peeruserprotoid;           /* IDcx.protoid */
@@ -834,7 +834,7 @@ extern void init_states(void);
 extern void rehash_state(struct state *st,
 			 const ike_spi_t *ike_responder_spi);
 extern void release_any_whack(struct state *st, where_t where, const char *why);
-extern void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
+extern void state_eroute_usage(const ip_subnet *ours, const ip_subnet *peers,
 			       unsigned long count, monotime_t nw);
 extern void delete_state(struct state *st);
 extern void delete_states_by_connection(struct connection *c, bool relations, struct fd *whackfd);
@@ -890,7 +890,7 @@ void for_each_state(void (*f)(struct state *, void *data), void *data,
 		    const char *func);
 
 extern void find_my_cpi_gap(cpi_t *latest_cpi, cpi_t *first_busy_cpi);
-extern ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, const struct state *st, int tries);
+extern ipsec_spi_t uniquify_peer_cpi(ipsec_spi_t cpi, const struct state *st, int tries);
 
 extern void fmt_state(struct state *st, const monotime_t n,
 		      char *state_buf, const size_t state_buf_len,

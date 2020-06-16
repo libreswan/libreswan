@@ -1228,7 +1228,7 @@ void delete_state(struct state *st)
 	free_generalNames(st->st_requested_ca, TRUE);
 
 	free_chunk_content(&st->st_firstpacket_me);
-	free_chunk_content(&st->st_firstpacket_him);
+	free_chunk_content(&st->st_firstpacket_peer);
 	free_chunk_content(&st->st_v1_tpacket);
 	free_chunk_content(&st->st_v1_rpacket);
 	free_chunk_content(&st->st_p1isa);
@@ -2025,7 +2025,7 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 	return best;
 }
 
-void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
+void state_eroute_usage(const ip_subnet *ours, const ip_subnet *peers,
 			unsigned long count, monotime_t nw)
 {
 	dbg("FOR_EACH_STATE_... in %s", __func__);
@@ -2038,7 +2038,7 @@ void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 		    c->spd.eroute_owner == st->st_serialno &&
 		    c->spd.routing == RT_ROUTED_TUNNEL &&
 		    samesubnet(&c->spd.this.client, ours) &&
-		    samesubnet(&c->spd.that.client, his)) {
+		    samesubnet(&c->spd.that.client, peers)) {
 			if (st->st_outbound_count != count) {
 				st->st_outbound_count = count;
 				st->st_outbound_time = nw;
@@ -2051,7 +2051,7 @@ void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 		selector_buf hist;
 		DBG_log("unknown tunnel eroute %s -> %s found in scan",
 			str_selector(ours, &ourst),
-			str_selector(his, &hist));
+			str_selector(peers, &hist));
 	}
 }
 
@@ -2341,13 +2341,13 @@ void fmt_state(struct state *st, const monotime_t now,
 #endif
 
 		snprintf(state_buf2, state_buf2_len,
-			"#%lu: \"%s\"%s%s%s ref=%" PRIu32 " refhim=%" PRIu32 " %s %s%s",
+			"#%lu: \"%s\"%s%s%s ref=%" PRIu32 " ref_peer=%" PRIu32 " %s %s%s",
 			st->st_serialno,
 			c->name, inst,
 			lastused,
 			saids_buf,
 			st->st_ref,
-			st->st_refhim,
+			st->st_ref_peer,
 			traffic_buf,
 			st->st_xauth_username[0] != '\0' ? "username=" : "",
 			st->st_xauth_username);
@@ -2611,7 +2611,7 @@ startover:
  * v1-only.
  * cpi is in network order.
  */
-ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, const struct state *st, int tries)
+ipsec_spi_t uniquify_peer_cpi(ipsec_spi_t cpi, const struct state *st, int tries)
 {
 	/* cpi is in network order so first two bytes are the high order ones */
 	get_rnd_bytes((u_char *)&cpi, 2);
@@ -2630,7 +2630,7 @@ ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, const struct state *st, int tries)
 		{
 			if (++tries == 20)
 				return 0; /* FAILURE */
-			return uniquify_his_cpi(cpi, st, tries);
+			return uniquify_peer_cpi(cpi, st, tries);
 		}
 	}
 	return cpi;

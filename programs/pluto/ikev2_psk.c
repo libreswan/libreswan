@@ -245,7 +245,7 @@ bool ikev2_verify_psk_auth(enum keyword_authby authby,
 	}
 
 	struct crypt_mac calc_hash = ikev2_calculate_psk_sighash(TRUE, ike, authby, idhash,
-								 ike->sa.st_firstpacket_him);
+								 ike->sa.st_firstpacket_peer);
 	if (calc_hash.len == 0) {
 		return false;
 	}

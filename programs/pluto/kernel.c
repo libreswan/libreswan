@@ -1411,7 +1411,7 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 		if (repl) {
 			/*
 			 * change over to new bare eroute
-			 * ours, his, transport_proto are the same.
+			 * ours, peers, transport_proto are the same.
 			 */
 			struct bare_shunt *bs = *bs_pp;
 
@@ -1714,8 +1714,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	bool replace = inbound && (kernel_ops->get_spi != NULL);
 	bool outgoing_ref_set = FALSE;
 	bool incoming_ref_set = FALSE;
-	IPsecSAref_t refhim = st->st_refhim;
-	IPsecSAref_t new_refhim = IPSEC_SAREF_NULL;
+	IPsecSAref_t ref_peer = st->st_ref_peer;
+	IPsecSAref_t new_ref_peer = IPSEC_SAREF_NULL;
 	bool nic_offload_fallback = FALSE;
 
 	/* SPIs, saved for spigrouping or undoing, if necessary */
@@ -1834,10 +1834,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			 * set corresponding outbound SA. We can do this on
 			 * each SA in the bundle without harm.
 			 */
-			said_next->refhim = refhim;
+			said_next->ref_peer = ref_peer;
 		} else if (!outgoing_ref_set) {
 			/* on outbound, pick up the SAref if not already done */
-			said_next->ref    = refhim;
+			said_next->ref    = ref_peer;
 			outgoing_ref_set  = TRUE;
 		}
 
@@ -1860,14 +1860,14 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * The inner most one is interesting for the outgoing SA,
 		 * since we refer to it in the policy that we instantiate.
 		 */
-		if (new_refhim == IPSEC_SAREF_NULL && !inbound) {
+		if (new_ref_peer == IPSEC_SAREF_NULL && !inbound) {
 			DBG(DBG_KERNEL,
-				DBG_log("recorded ref=%u as refhim",
+				DBG_log("recorded ref=%u as ref_peer",
 					said_next->ref));
-			new_refhim = said_next->ref;
+			new_ref_peer = said_next->ref;
 			if (kernel_ops->type != USE_NETKEY &&
-				new_refhim == IPSEC_SAREF_NULL)
-				new_refhim = IPSEC_SAREF_NA;
+				new_ref_peer == IPSEC_SAREF_NULL)
+				new_ref_peer = IPSEC_SAREF_NA;
 		}
 		if (!incoming_ref_set && inbound) {
 			st->st_ref = said_next->ref;
@@ -1914,10 +1914,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			 * set corresponding outbound SA. We can do this on
 			 * each SA in the bundle without harm.
 			 */
-			said_next->refhim = refhim;
+			said_next->ref_peer = ref_peer;
 		} else if (!outgoing_ref_set) {
 			/* on outbound, pick up the SAref if not already done */
-			said_next->ref    = refhim;
+			said_next->ref    = ref_peer;
 			outgoing_ref_set  = TRUE;
 		}
 
@@ -1931,10 +1931,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * The inner most one is interesting for the outgoing SA,
 		 * since we refer to it in the policy that we instantiate.
 		 */
-		if (new_refhim == IPSEC_SAREF_NULL && !inbound) {
-			new_refhim = said_next->ref;
-			if (kernel_ops->type != USE_NETKEY && new_refhim == IPSEC_SAREF_NULL)
-				new_refhim = IPSEC_SAREF_NA;
+		if (new_ref_peer == IPSEC_SAREF_NULL && !inbound) {
+			new_ref_peer = said_next->ref;
+			if (kernel_ops->type != USE_NETKEY && new_ref_peer == IPSEC_SAREF_NULL)
+				new_ref_peer = IPSEC_SAREF_NA;
 		}
 		if (!incoming_ref_set && inbound) {
 			st->st_ref = said_next->ref;
@@ -2138,10 +2138,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			 * set corresponding outbound SA. We can do this on
 			 * each SA in the bundle without harm.
 			 */
-			said_next->refhim = refhim;
+			said_next->ref_peer = ref_peer;
 		} else if (!outgoing_ref_set) {
 			/* on outbound, pick up the SAref if not already done */
-			said_next->ref = refhim;
+			said_next->ref = ref_peer;
 			outgoing_ref_set = TRUE;
 		}
 		setup_esp_nic_offload(said_next, c, &nic_offload_fallback);
@@ -2167,10 +2167,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * The inner most one is interesting for the outgoing SA,
 		 * since we refer to it in the policy that we instantiate.
 		 */
-		if (new_refhim == IPSEC_SAREF_NULL && !inbound) {
-			new_refhim = said_next->ref;
-			if (kernel_ops->type != USE_NETKEY && new_refhim == IPSEC_SAREF_NULL)
-				new_refhim = IPSEC_SAREF_NA;
+		if (new_ref_peer == IPSEC_SAREF_NULL && !inbound) {
+			new_ref_peer = said_next->ref;
+			if (kernel_ops->type != USE_NETKEY && new_ref_peer == IPSEC_SAREF_NULL)
+				new_ref_peer = IPSEC_SAREF_NA;
 		}
 		if (!incoming_ref_set && inbound) {
 			st->st_ref = said_next->ref;
@@ -2231,10 +2231,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			 * set corresponding outbound SA. We can do this on
 			 * each SA in the bundle without harm.
 			 */
-			said_next->refhim = refhim;
+			said_next->ref_peer = ref_peer;
 		} else if (!outgoing_ref_set) {
 			/* on outbound, pick up the SAref if not already done */
-			said_next->ref = refhim;
+			said_next->ref = ref_peer;
 			outgoing_ref_set = TRUE;	/* outgoing_ref_set not subsequently used */
 		}
 
@@ -2251,10 +2251,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * The inner most one is interesting for the outgoing SA,
 		 * since we refer to it in the policy that we instantiate.
 		 */
-		if (new_refhim == IPSEC_SAREF_NULL && !inbound) {
-			new_refhim = said_next->ref;
-			if (kernel_ops->type != USE_NETKEY && new_refhim == IPSEC_SAREF_NULL)
-				new_refhim = IPSEC_SAREF_NA;
+		if (new_ref_peer == IPSEC_SAREF_NULL && !inbound) {
+			new_ref_peer = said_next->ref;
+			if (kernel_ops->type != USE_NETKEY && new_ref_peer == IPSEC_SAREF_NULL)
+				new_ref_peer = IPSEC_SAREF_NA;
 		}
 		if (!incoming_ref_set && inbound) {
 			st->st_ref = said_next->ref;
@@ -2386,8 +2386,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		/* could update said, but it will not be used */
 	}
 
-	if (new_refhim != IPSEC_SAREF_NULL)
-		st->st_refhim = new_refhim;
+	if (new_ref_peer != IPSEC_SAREF_NULL)
+		st->st_ref_peer = new_ref_peer;
 
 	/* if the impaired is set, pretend this fails */
 	if (impair.sa_creation) {
@@ -2682,9 +2682,9 @@ static void look_for_replacement_state(struct state *st)
 		 * then there is an old state associated, and it is
 		 * different then the new one.
 		 */
-		libreswan_log("keeping refhim=%" PRIu32 " during rekey",
-			ost->st_refhim);
-		st->st_refhim = ost->st_refhim;
+		libreswan_log("keeping ref_peer=%" PRIu32 " during rekey",
+			ost->st_ref_peer);
+		st->st_ref_peer = ost->st_ref_peer;
 	}
 }
 
@@ -2779,19 +2779,19 @@ bool install_inbound_ipsec_sa(struct state *st)
 	 * we now have to set up the outgoing SA first, so that
 	 * we can refer to it in the incoming SA.
 	 */
-	if (st->st_refhim == IPSEC_SAREF_NULL && !st->st_outbound_done) {
+	if (st->st_ref_peer == IPSEC_SAREF_NULL && !st->st_outbound_done) {
 		DBG(DBG_CONTROL,
-			DBG_log("installing outgoing SA now as refhim=%u",
-				st->st_refhim));
+			DBG_log("installing outgoing SA now as ref_peer=%u",
+				st->st_ref_peer));
 		if (!setup_half_ipsec_sa(st, FALSE)) {
 			DBG_log("failed to install outgoing SA: %u",
-				st->st_refhim);
+				st->st_ref_peer);
 			return FALSE;
 		}
 
 		st->st_outbound_done = TRUE;
 	}
-	DBG(DBG_CONTROL, DBG_log("outgoing SA has refhim=%u", st->st_refhim));
+	DBG(DBG_CONTROL, DBG_log("outgoing SA has ref_peer=%u", st->st_ref_peer));
 
 	/* (attempt to) actually set up the SAs */
 
@@ -3151,7 +3151,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 		}
 
 		dbg("set up outgoing SA, ref=%u/%u", st->st_ref,
-		    st->st_refhim);
+		    st->st_ref_peer);
 		st->st_outbound_done = TRUE;
 	}
 
@@ -3161,7 +3161,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 			return FALSE;
 
 		dbg("set up incoming SA, ref=%u/%u", st->st_ref,
-		    st->st_refhim);
+		    st->st_ref_peer);
 
 		/*
 		 * We successfully installed an IPsec SA, meaning it is safe

@@ -376,12 +376,12 @@ static bool net_in_list(const ip_subnet *peer_net, const ip_subnet *list,
  *
  * @param c Connection structure (active)
  * @param peer_net IP Subnet the peer proposes
- * @param his_addr Peers IP Address
+ * @param peers_addr Peers IP Address
  * @return err_t NULL if allowed, diagnostic otherwise
  */
 err_t check_virtual_net_allowed(const struct connection *c,
 			     const ip_subnet *peer_net,
-			     const ip_address *his_addr)
+			     const ip_address *peers_addr)
 {
 	const struct virtual_t *virt = c->spd.that.virt;
 	if (virt == NULL)
@@ -395,7 +395,7 @@ err_t check_virtual_net_allowed(const struct connection *c,
 		return NULL;
 
 	if (virt->flags & F_VIRTUAL_NO) {
-		if (subnetishost(peer_net) && addrinsubnet(his_addr, peer_net))
+		if (subnetishost(peer_net) && addrinsubnet(peers_addr, peer_net))
 		{
 			return NULL;
 		}

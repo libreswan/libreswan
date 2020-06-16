@@ -146,7 +146,7 @@ static bool should_fragment_v1_ike_msg(struct state *st, size_t len, bool resend
 
 	/* This condition is complex.  Formatting is meant to help reader.
 	 *
-	 * Hugh thinks his banished style would make this earlier version
+	 * Hugh thinks peers banished style would make this earlier version
 	 * a little clearer:
 	 * len + natt_bonus
 	 *    >= (st->st_connection->addr_family == AF_INET

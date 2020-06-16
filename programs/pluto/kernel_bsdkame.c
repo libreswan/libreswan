@@ -562,9 +562,9 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 	case ERO_ADD:
 	{
 		const ip_subnet *mine   = &sr->this.client;
-		const ip_subnet *his    = &sr->that.client;
+		const ip_subnet *peers    = &sr->that.client;
 		ip_sockaddr saddr = sockaddr_from_endpoint(&mine->addr);
-		ip_sockaddr daddr = sockaddr_from_endpoint(&his->addr);
+		ip_sockaddr daddr = sockaddr_from_endpoint(&peers->addr);
 		char pbuf[512];
 		char buf2[256];
 		struct sadb_x_policy *policy_struct =
@@ -580,10 +580,10 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 
 		/* XXX need to fix this for v6 */
 #if 1
-		dbg("blatting mine/his sin_len");
+		dbg("blatting mine/peers sin_len");
 #else
 		mine->addr.u.v4.sin_len  = sizeof(struct sockaddr_in);
-		his->addr.u.v4.sin_len   = sizeof(struct sockaddr_in);
+		peers->addr.u.v4.sin_len   = sizeof(struct sockaddr_in);
 #endif
 
 		passert(policy != -1);
@@ -640,7 +640,7 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 		dbg("calling pfkey_send_spdadd() from %s", __func__);
 		ret = pfkey_send_spdadd(pfkeyfd,
 					&saddr.sa.sa, mine->maskbits,
-					&daddr.sa.sa, his->maskbits,
+					&daddr.sa.sa, peers->maskbits,
 					255 /* proto */,
 					(caddr_t)policy_struct, policylen,
 					pfkey_seq);
@@ -652,7 +652,7 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 			libreswan_log("ret = %d from send_spdadd: %s addr=%s/%s seq=%u opname=%s", ret,
 				      ipsec_strerror(),
 				      str_endpoint(&mine->addr, &s),
-				      str_endpoint(&his->addr, &d),
+				      str_endpoint(&peers->addr, &d),
 				      pfkey_seq, opname);
 			return FALSE;
 		}
@@ -663,9 +663,9 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 	{
 		/* need to send a delete message */
 		const ip_subnet *mine   = &sr->this.client;
-		const ip_subnet *his    = &sr->that.client;
+		const ip_subnet *peers    = &sr->that.client;
 		ip_sockaddr saddr = sockaddr_from_endpoint(&mine->addr);
-		ip_sockaddr daddr = sockaddr_from_endpoint(&his->addr);
+		ip_sockaddr daddr = sockaddr_from_endpoint(&peers->addr);
 		char pbuf[512];
 		char buf2[256];
 		struct sadb_x_policy *policy_struct =
@@ -680,10 +680,10 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 
 		/* XXX need to fix this for v6 */
 #if 1
-		dbg("blatting mine/his sin_len");
+		dbg("blatting mine/peers sin_len");
 #else
 		mine->addr.u.v4.sin_len  = sizeof(struct sockaddr_in);
-		his->addr.u.v4.sin_len   = sizeof(struct sockaddr_in);
+		peers->addr.u.v4.sin_len   = sizeof(struct sockaddr_in);
 #endif
 
 		policy_struct->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
@@ -701,7 +701,7 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 		dbg("calling pfkey_send_spddelete() from %s", __func__);
 		ret = pfkey_send_spddelete(pfkeyfd,
 					   &saddr.sa.sa, mine->maskbits,
-					   &daddr.sa.sa, his->maskbits,
+					   &daddr.sa.sa, peers->maskbits,
 					   255 /* proto */,
 					   (caddr_t)policy_struct, policylen,
 					   pfkey_seq);
@@ -713,7 +713,7 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 			libreswan_log("ret = %d from send_spdadd: %s addr=%s/%s seq=%u opname=%s", ret,
 				      ipsec_strerror(),
 				      str_endpoint(&mine->addr, &s),
-				      str_endpoint(&his->addr, &d),
+				      str_endpoint(&peers->addr, &d),
 				      pfkey_seq, opname);
 			return FALSE;
 		}
@@ -945,7 +945,7 @@ static bool bsdkame_was_eroute_idle(struct state *st UNUSED,
 
 static void bsdkame_remove_orphaned_holds(int transport_proto UNUSED,
 					  const ip_subnet *ours UNUSED,
-					  const ip_subnet *his UNUSED)
+					  const ip_subnet *peers UNUSED)
 {
 	passert(FALSE);
 }

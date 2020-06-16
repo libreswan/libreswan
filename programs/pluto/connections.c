@@ -2019,10 +2019,10 @@ void remove_group_instance(const struct connection *group,
 
 /*
  * Common part of instantiating a Road Warrior or Opportunistic connection.
- * his_id can be used to carry over an ID discovered in Phase 1.
+ * peers_id can be used to carry over an ID discovered in Phase 1.
  * It must not disagree with the one in c, but if that is unspecified,
- * the new connection will use his_id.
- * If his_id is NULL, and c.that.id is uninstantiated (ID_NONE), the
+ * the new connection will use peers_id.
+ * If peers_id is NULL, and c.that.id is uninstantiated (ID_NONE), the
  * new connection will continue to have an uninstantiated that.id.
  * Note: instantiation does not affect port numbers.
  *
@@ -2056,7 +2056,7 @@ struct connection *instantiate(struct connection *c,
 
 	/*
 	 * We cannot guess what our next_hop should be, but if it was
-	 * explicitly specified as 0.0.0.0, we set it to be him.
+	 * explicitly specified as 0.0.0.0, we set it to be peer.
 	 * (whack will not allow nexthop to be elided in RW case.)
 	 */
 	default_end(&d->spd.this, &d->spd.that.host_addr);
@@ -2139,7 +2139,7 @@ void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF])
  * Format any information needed to identify an instance of a connection.
  * Fills any needed information into buf which MUST be big enough.
  * Road Warrior: peer's IP address
- * Opportunistic: [" " myclient "==="] " ..." peer ["===" hisclient] '\0'
+ * Opportunistic: [" " myclient "==="] " ..." peer ["===" peer_client] '\0'
  */
 
 static size_t jam_connection_client(jambuf_t *b,
@@ -3540,7 +3540,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 			 * rule.
 			 * - our smallest client subnet is preferred (longest
 			 *   mask)
-			 * - given that, his smallest client subnet is preferred
+			 * - given that, peers smallest client subnet is preferred
 			 * - given that, a routed connection is preferrred
 			 * - given that, the smallest number of ID wildcards
 			 *   are preferred
@@ -3752,7 +3752,7 @@ static void show_one_sr(struct show *s,
 		OPT_HOST(&c->spd.this.host_srcip, thisipb),
 		OPT_HOST(&c->spd.that.host_srcip, thatipb),
 		OPT_PREFIX_STR("; mycert=", cert_nickname(&sr->this.cert)),
-		OPT_PREFIX_STR("; hiscert=", cert_nickname(&sr->that.cert)),
+		OPT_PREFIX_STR("; peercert=", cert_nickname(&sr->that.cert)),
 		(sr->this.updown == NULL || streq(sr->this.updown, "%disabled")) ?
 			"<disabled>" : sr->this.updown
 	);

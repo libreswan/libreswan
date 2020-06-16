@@ -228,9 +228,9 @@ static void remove_host_pair(struct host_pair *hp)
 
 /* find head of list of connections with this pair of hosts */
 struct connection *find_host_pair_connections(const ip_address *myaddr,
-					      const ip_address *hisaddr)
+					      const ip_address *peer_addr)
 {
-	struct host_pair *hp = find_host_pair(myaddr, hisaddr);
+	struct host_pair *hp = find_host_pair(myaddr, peer_addr);
 
 	/*
 	DBG(DBG_CONTROLMORE, {
@@ -240,8 +240,8 @@ struct connection *find_host_pair_connections(const ip_address *myaddr,
 
 		DBG_log("find_host_pair_conn: %s:%d %s:%d -> hp:%s%s",
 			ipstr(myaddr, &bm), myport,
-			hisaddr != NULL ? ipstr(hisaddr, &bh) : "%any",
-			hisport,
+			peer_addr != NULL ? ipstr(peer_addr, &bh) : "%any",
+			peer_port,
 			hp != NULL && hp->connections != NULL ?
 				hp->connections->name : "none",
 			hp != NULL && hp->connections != NULL ?

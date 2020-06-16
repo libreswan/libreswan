@@ -324,7 +324,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
  * @param replytype int
  * @param use_modecfg_addr_as_client_addr bool
  *	True means force the IP assigned by Mode Config to be the
- *	spd.that.addr.  Useful when you know the client will change his IP
+ *	spd.that.addr.  Useful when you know the client will change peers IP
  *	to be what was assigned immediately after authentication.
  * @param ap_id ISAMA Identifier
  * @return stf_status STF_OK or STF_INTERNAL_ERROR

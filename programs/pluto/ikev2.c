@@ -1667,7 +1667,7 @@ void ikev2_process_packet(struct msg_digest *md)
 				} else if (old->sa.st_state->kind == STATE_PARENT_R1 &&
 					   old->sa.st_v2_msgid_windows.responder.recv == 0 &&
 					   old->sa.st_v2_msgid_windows.responder.sent == 0 &&
-					   hunk_eq(old->sa.st_firstpacket_him,
+					   hunk_eq(old->sa.st_firstpacket_peer,
 						   pbs_in_as_shunk(&md->message_pbs))) {
 					/*
 					 * It looks a lot like a shiny
@@ -2664,19 +2664,19 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 	bool initiator = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0;
 	bool must_switch = FALSE;
 
-	struct payload_digest *const id_him = initiator ?
+	struct payload_digest *const id_peer = initiator ?
 		md->chain[ISAKMP_NEXT_v2IDr] : md->chain[ISAKMP_NEXT_v2IDi];
 
-	if (id_him == NULL) {
-		libreswan_log("IKEv2 mode no peer ID (hisID)");
+	if (id_peer == NULL) {
+		libreswan_log("IKEv2 mode no peer ID");
 		return FALSE;
 	}
 
-	enum ike_id_type hik = id_him->payload.v2id.isai_type;	/* His Id Kind */
+	enum ike_id_type hik = id_peer->payload.v2id.isai_type;	/* Peers Id Kind */
 
 	struct id peer_id;
 
-	if (!extract_peer_id(hik, &peer_id, &id_him->pbs)) {
+	if (!extract_peer_id(hik, &peer_id, &id_peer->pbs)) {
 		libreswan_log("IKEv2 mode peer ID extraction failed");
 		return FALSE;
 	}

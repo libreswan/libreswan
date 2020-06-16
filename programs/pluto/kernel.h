@@ -163,7 +163,7 @@ struct kernel_sa {
 
 	int outif;
 	IPsecSAref_t ref;
-	IPsecSAref_t refhim;
+	IPsecSAref_t ref_peer;
 
 	int mode;		/* transport or tunnel */
 	const struct ip_encap *encap_type;		/* ESP in TCP or UDP; or NULL */
@@ -233,7 +233,7 @@ struct kernel_ops {
 	bool (*eroute_idle)(struct state *st, deltatime_t idle_max);	/* may mutate *st */
 	void (*remove_orphaned_holds)(int transportproto,
 				      const ip_subnet *ours,
-				      const ip_subnet *his);
+				      const ip_subnet *peers);
 	bool (*add_sa)(const struct kernel_sa *sa, bool replace);
 	bool (*grp_sa)(const struct kernel_sa *sa_outer,
 		       const struct kernel_sa *sa_inner);
@@ -302,7 +302,7 @@ extern bool invoke_command(const char *verb, const char *verb_suffix,
 struct eroute_info {
 	unsigned long count;
 	ip_subnet ours;
-	ip_subnet his;
+	ip_subnet peers;
 	ip_address dst;
 	ip_said said;
 	int transport_proto;
@@ -334,7 +334,7 @@ extern void show_shunt_status(struct show *);
 extern unsigned shunt_count(void);
 
 struct bare_shunt **bare_shunt_ptr(const ip_subnet *ours,
-				   const ip_subnet *his,
+				   const ip_subnet *peers,
 				   int transport_proto);
 
 /* A netlink header defines EM_MAXRELSPIS, the max number of SAs in a group.
@@ -438,7 +438,7 @@ extern void expire_bare_shunts(void);
  * because we use it indefinitely without copying or pfreeing.
  * Simple rule: use a string literal.
  */
-extern void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
+extern void add_bare_shunt(const ip_subnet *ours, const ip_subnet *peers,
 		int transport_proto, ipsec_spi_t shunt_spi,
 		const char *why);
 

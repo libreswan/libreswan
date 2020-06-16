@@ -1411,13 +1411,22 @@ rsasig_common:
 					if ((iap & POLICY_RSASIG) == LEMPTY) {
 						ugh = "policy does not allow OAKLEY_RSA_SIG authentication";
 					} else {
-						/* We'd like to check that we can find a public
-						 * key for him and a private key for us that is
-						 * suitable, but we don't yet have his
-						 * Id Payload, so it seems futile to try.
-						 * We can assume that if he proposes it, he
-						 * thinks we've got it.  If we proposed it,
-						 * perhaps we know what we're doing.
+						/* We'd like to check
+						 * that we can find a
+						 * public key for peer
+						 * and a private key
+						 * for us that is
+						 * suitable, but we
+						 * don't yet have
+						 * peer's ID Payload,
+						 * so it seems futile
+						 * to try.  We can
+						 * assume that if he
+						 * proposes it, he
+						 * thinks we've got
+						 * it.  If we proposed
+						 * it, perhaps we know
+						 * what we're doing.
 						 */
 						ta.auth = OAKLEY_RSA_SIG;
 					}
@@ -2395,7 +2404,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				switch (ntohl(next_spi)) {
 				case IPCOMP_DEFLATE:
 					well_known_cpi = ntohl(next_spi);
-					next_spi = uniquify_his_cpi(next_spi, st, 0);
+					next_spi = uniquify_peer_cpi(next_spi, st, 0);
 					if (next_spi == 0) {
 						loglog(RC_LOG_SERIOUS,
 						       "IPsec Proposal contains well-known CPI that I cannot uniquify");

@@ -191,7 +191,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 			}
 			DBG(DBG_CONTROL, DBG_log("Received compression CPI=%d", htonl(n_ipcomp.ikev2_cpi)));
 
-			//cst->st_ipcomp.attrs.spi = uniquify_his_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), cst, 0);
+			//cst->st_ipcomp.attrs.spi = uniquify_peer_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), cst, 0);
 			cst->st_ipcomp.attrs.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
 			cst->st_ipcomp.attrs.transattrs.ta_comp = n_ipcomp.ikev2_notify_ipcomp_trans;
 			cst->st_ipcomp.attrs.mode = ENCAPSULATION_MODE_TUNNEL; /* always? */

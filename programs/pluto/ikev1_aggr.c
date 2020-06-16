@@ -171,7 +171,7 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 		}
 		passert(LIN(policy, c->policy));
 		/* Create a temporary connection that is a copy of this one.
-		 * His ID isn't declared yet.
+		 * Peers ID isn't declared yet.
 		 */
 		ip_address sender_address = endpoint_address(&md->sender);
 		c = rw_instantiate(c, &sender_address, NULL, NULL);

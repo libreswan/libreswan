@@ -421,7 +421,7 @@ struct connection {
 extern bool orient(struct connection *c);
 
 extern bool same_peer_ids(const struct connection *c,
-			  const struct connection *d, const struct id *his_id);
+			  const struct connection *d, const struct id *peers_id);
 
 /* Format the topology of a connection end, leaving out defaults.
  * Largest left end looks like: client === host : port [ host_id ] --- hop
@@ -470,7 +470,7 @@ extern struct connection *route_owner(struct connection *c,
 				      struct spd_route **esrp);
 
 extern struct connection *shunt_owner(const ip_subnet *ours,
-				      const ip_subnet *his);
+				      const ip_subnet *peers);
 extern void rekey_now(const char *name, enum sa_type sa_type, struct fd *whackfd,
 		      bool background);
 
@@ -522,7 +522,7 @@ extern struct connection *build_outgoing_opportunistic_connection(
 		const ip_address *peer_client,
 		const int transport_proto);
 
-/* worst case: "[" serial "] " myclient "=== ..." peer "===" hisclient '\0' <cookie> */
+/* worst case: "[" serial "] " myclient "=== ..." peer "===" peer_client '\0' <cookie> */
 #define CONN_INST_BUF \
 	(2 + 10 + 1 + SUBNETTOT_BUF + 7 + ADDRTOT_BUF + 3 + SUBNETTOT_BUF + 1 + 1)
 
