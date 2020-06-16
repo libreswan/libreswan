@@ -23,8 +23,7 @@
  */
 
 /*
- * This is an internal interface between a master pluto process
- * and a cryptographic helper thread.
+ * This is an internal interface between the main and helper threads.
  *
  * The helper performs the heavy lifting of cryptographic functions
  * for pluto. It does this to avoid head-of-queue problems with aggressive

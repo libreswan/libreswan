@@ -1112,14 +1112,14 @@ Configuration:
     $(call kvm-var-value,KVM_POOLDIR)$(if $(wildcard $(KVM_POOLDIR)),, [MISSING])
 	default directory for storing VM files
     $(call kvm-var-value,KVM_POOLDIR)$(if $(wildcard $(KVM_POOLDIR)),, [MISSING])
-	directory for storing the shared base (master) VM;
+	directory for storing the shared base VM;
 	should be relatively permanent storage
     $(call kvm-var-value,KVM_LOCALDIR)$(if $(wildcard $(KVM_LOCALDIR)),, [MISSING])
 	directory for storing the VMs local to this build tree;
 	can be temporary storage (for instance /tmp)
     $(call kvm-var-value,KVM_GATEWAY)
 	the shared NATting gateway;
-	used by the base (master) domain along with any local domains
+	used by the base domain along with any local domains
 	when internet access is required
     $(call kvm-var-value,KVM_GUEST_OS)
     $(call kvm-var-value,KVM_KICKSTART_FILE)

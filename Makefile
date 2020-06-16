@@ -1,4 +1,4 @@
-# Libreswan master makefile
+# Libreswan top level Makefile
 #
 # Copyright (C) 1998-2002  Henry Spencer.
 # Copyright (C) 2003-2004  Xelerance Corporation

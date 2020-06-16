@@ -53,7 +53,7 @@ static stf_status send_v2_liveness_request(struct ike_sa *ike,
 	pstats_ike_dpd_sent++;
 	stf_status e = record_v2_informational_request("liveness probe informational request",
 						       ike, &ike->sa/*sender*/,
-						       NULL /* beast master */);
+						       NULL/*no payloads to emit*/);
 	if (e != STF_OK) {
 		return STF_INTERNAL_ERROR;
 	}

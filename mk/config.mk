@@ -1,4 +1,4 @@
-# Libreswan pathnames and other master configuration
+# Libreswan configuration
 #
 # Copyright (C) 2001, 2002  Henry Spencer.
 # Copyright (C) 2003-2006   Xelerance Corporation

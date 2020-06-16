@@ -834,7 +834,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 		return STF_INTERNAL_ERROR;
 
 	/* Set up a retransmission event, half a minute hence */
-	/* Schedule retransmit before sending, to avoid race with master thread */
+	/* Schedule retransmit before sending, to avoid race with main thread */
 	delete_event(st);
 	clear_retransmits(st);
 	start_retransmits(st);
