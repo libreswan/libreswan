@@ -26,6 +26,9 @@
  */
 
 #include <unistd.h>
+#include <sys/ioctl.h>
+
+#include "socketwrapper.h"		/* for safe_sock() */
 
 #include "defs.h"
 
@@ -37,6 +40,7 @@
 #include "kernel.h"
 #include "demux.h"
 #include "ip_info.h"
+#include "ip_sockaddr.h"
 
 struct iface_port  *interfaces = NULL;  /* public interfaces */
 
@@ -306,6 +310,134 @@ void listen_on_iface_port(struct iface_port *ifp, struct logger *logger)
 	    ifp->ip_dev->id_rname,
 	    str_endpoint(&ifp->local_endpoint, &b),
 	    ifp->fd, ifp->protocol->name);
+}
+
+static struct raw_iface *find_raw_ifaces4(void)
+{
+	int j;	/* index into buf */
+	struct ifconf ifconf;
+	struct ifreq *buf = NULL;	/* for list of interfaces -- arbitrary limit */
+	struct raw_iface *rifaces = NULL;
+	int udp_sock = safe_socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);        /* Get a UDP socket */
+	static const int on = TRUE;     /* by-reference parameter; constant, we hope */
+
+	/*
+	 * Current upper bound on number of interfaces.
+	 * Tricky: because this is a static, we won't have to start from
+	 * 64 in subsequent calls.
+	 */
+	static int num = 64;
+
+	/* get list of interfaces with assigned IPv4 addresses from system */
+
+	if (udp_sock == -1)
+		EXIT_LOG_ERRNO(errno, "socket() failed in find_raw_ifaces4()");
+
+	/*
+	 * Without SO_REUSEADDR, bind() of udp_sock will cause
+	 * 'address already in use?
+	 */
+	if (setsockopt(udp_sock, SOL_SOCKET, SO_REUSEADDR,
+		       (const void *)&on, sizeof(on)) < 0) {
+		EXIT_LOG_ERRNO(errno, "setsockopt(SO_REUSEADDR) in find_raw_ifaces4()");
+	}
+
+	/*
+	 * bind the socket; somewhat convoluted as BSD as size field.
+	 */
+	{
+		ip_address any = address_any(&ipv4_info);
+		ip_endpoint any_ep = endpoint3(&ip_protocol_udp, &any, ip_hport(pluto_port));
+		ip_sockaddr any_sa = sockaddr_from_endpoint(&any_ep);
+		if (bind(udp_sock, &any_sa.sa.sa, any_sa.len) < 0) {
+			endpoint_buf eb;
+			EXIT_LOG_ERRNO(errno, "bind(%s) failed in %s()",
+				       str_endpoint(&any_ep, &eb), __func__);
+		}
+	}
+
+	/* a million interfaces is probably the maximum, ever... */
+	for (; num < (1024 * 1024); num *= 2) {
+		/* Get num local interfaces.  See netdevice(7). */
+		ifconf.ifc_len = num * sizeof(struct ifreq);
+
+		struct ifreq *tmpbuf = realloc(buf, ifconf.ifc_len);
+
+		if (tmpbuf == NULL) {
+			free(buf);
+			EXIT_LOG_ERRNO(errno,
+				       "realloc of %d in find_raw_ifaces4()",
+				       ifconf.ifc_len);
+		}
+		buf = tmpbuf;
+		memset(buf, 0xDF, ifconf.ifc_len);	/* stomp */
+		ifconf.ifc_buf = (void *) buf;
+
+		if (ioctl(udp_sock, SIOCGIFCONF, &ifconf) == -1) {
+			EXIT_LOG_ERRNO(errno,
+				       "ioctl(SIOCGIFCONF) in find_raw_ifaces4()");
+		}
+
+		/* if we got back less than we asked for, we have them all */
+		if (ifconf.ifc_len < (int)(sizeof(struct ifreq) * num))
+			break;
+	}
+
+	/* Add an entry to rifaces for each interesting interface. */
+	for (j = 0; (j + 1) * sizeof(struct ifreq) <= (size_t)ifconf.ifc_len; j++) {
+		struct raw_iface ri;
+		const struct sockaddr_in *rs =
+			(struct sockaddr_in *) &buf[j].ifr_addr;
+		struct ifreq auxinfo;
+
+		/* build a NUL-terminated copy of the rname field */
+		memcpy(ri.name, buf[j].ifr_name, IFNAMSIZ-1);
+		ri.name[IFNAMSIZ-1] = '\0';
+		dbg("Inspecting interface %s ", ri.name);
+
+		/* ignore all but AF_INET interfaces */
+		if (rs->sin_family != AF_INET) {
+			dbg("Ignoring non AF_INET interface %s ", ri.name);
+			continue; /* not interesting */
+		}
+
+		/* Find out stuff about this interface.  See netdevice(7). */
+		zero(&auxinfo); /* paranoia */
+		memcpy(auxinfo.ifr_name, buf[j].ifr_name, IFNAMSIZ-1);
+		/* auxinfo.ifr_name[IFNAMSIZ-1] already '\0' */
+		if (ioctl(udp_sock, SIOCGIFFLAGS, &auxinfo) == -1) {
+			LOG_ERRNO(errno,
+				  "Ignored interface %s - ioctl(SIOCGIFFLAGS) failed in find_raw_ifaces4()",
+				  ri.name);
+			continue; /* happens when using device with label? */
+		}
+		if (!(auxinfo.ifr_flags & IFF_UP)) {
+			dbg("Ignored interface %s - it is not up", ri.name);
+			continue; /* ignore an interface that isn't UP */
+		}
+#ifdef IFF_SLAVE
+		/* only linux ... */
+		if (auxinfo.ifr_flags & IFF_SLAVE) {
+			dbg("Ignored interface %s - it is a slave interface", ri.name);
+			continue; /* ignore slave interfaces; they share IPs with their master */
+		}
+#endif
+		/* ignore unconfigured interfaces */
+		if (rs->sin_addr.s_addr == 0) {
+			dbg("Ignored interface %s - it is unconfigured", ri.name);
+			continue;
+		}
+
+		ri.addr = address_from_in_addr(&rs->sin_addr);
+		ipstr_buf b;
+		dbg("found %s with address %s", ri.name, ipstr(&ri.addr, &b));
+		ri.next = rifaces;
+		rifaces = clone_thing(ri, "struct raw_iface");
+	}
+
+	free(buf);	/* was allocated via realloc() */
+	close(udp_sock);
+	return rifaces;
 }
 
 void find_ifaces(bool rm_dead, struct fd *whackfd)

@@ -224,9 +224,9 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port)
 
 #ifdef SO_PRIORITY
 	static const int so_prio = 6; /* rumored maximum priority, might be 7 on linux? */
-	if (setsockopt(fd, SOL_SOCKET, SO_PRIORITY,
-			(const void *)&so_prio, sizeof(so_prio)) < 0) {
-		LOG_ERRNO(errno, "setsockopt(SO_PRIORITY) in find_raw_ifaces4()");
+	if (setsockopt(fd, SOL_SOCKET, SO_PRIORITY, (const void *)&so_prio,
+		       sizeof(so_prio)) < 0) {
+		LOG_ERRNO(errno, "setsockopt(SO_PRIORITY) in %s()", __func__);
 		/* non-fatal */
 	}
 #endif
@@ -243,13 +243,13 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port)
 		int so_rcv = SO_RCVBUF;
 		int so_snd = SO_SNDBUF;
 #endif
-		if (setsockopt(fd, SOL_SOCKET, so_rcv,
-			(const void *)&pluto_sock_bufsize, sizeof(pluto_sock_bufsize)) < 0) {
-				LOG_ERRNO(errno, "setsockopt(SO_RCVBUFFORCE) in find_raw_ifaces4()");
+		if (setsockopt(fd, SOL_SOCKET, so_rcv, (const void *)&pluto_sock_bufsize,
+			       sizeof(pluto_sock_bufsize)) < 0) {
+			LOG_ERRNO(errno, "setsockopt(SO_RCVBUFFORCE) in %s()", __func__);
 		}
-		if (setsockopt(fd, SOL_SOCKET, so_snd,
-			(const void *)&pluto_sock_bufsize, sizeof(pluto_sock_bufsize)) < 0) {
-				LOG_ERRNO(errno, "setsockopt(SO_SNDBUFFORCE) in find_raw_ifaces4()");
+		if (setsockopt(fd, SOL_SOCKET, so_snd, (const void *)&pluto_sock_bufsize,
+			       sizeof(pluto_sock_bufsize)) < 0) {
+			LOG_ERRNO(errno, "setsockopt(SO_SNDBUFFORCE) in %s()", __func__);
 		}
 	}
 

@@ -281,7 +281,6 @@ extern const struct kernel_ops netkey_kernel_ops;
 extern const struct kernel_ops bsdkame_kernel_ops;
 #endif
 
-extern struct raw_iface *find_raw_ifaces4(void);
 extern struct raw_iface *find_raw_ifaces6(void);
 
 /* helper for invoking call outs */
