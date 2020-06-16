@@ -1,4 +1,5 @@
-send() { printf "$@" | ncat east 4500 ; }
+# the sleep is to keep the pipe open, something better?
+send() { { printf "$@" ; for c in 1 2 3 4 5 6 7 8 9 10 ; do sleep 1 ; printf "" ; done; } | ncat east 4500 ; }
 # open the TCP socket
 send ''
 # open the TCP socket, send one byte

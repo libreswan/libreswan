@@ -1,30 +1,36 @@
 /testing/guestbin/swan-prep
 west #
+ # dmesg -n 6
+west #
+ # nohup tcpdump -i eth1 -s 65535 -X -vv -nn tcp > OUTPUT/west.tcpdump &
+west #
+ # nohup dumpcap -i eth1 -w /tmp/west.pcap > OUTPUT/west.dumpcap &
+west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
-destination -I 192.0.1.254 192.0.2.254 is alive
+ # ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
 west #
  # make sure that clear text does not get through
 west #
- iptables -F
+ # iptables -F
 west #
- iptables -X
+ # iptables -X
 west #
- iptables -N LOGDROP
+ # iptables -N LOGDROP
 west #
- iptables -A LOGDROP -j LOG
+ # iptables -A LOGDROP -j LOG
 west #
- iptables -A LOGDROP -j DROP
+ # iptables -A LOGDROP -j DROP
 west #
- iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+ # does this block the ping response?
 west #
- iptables -A OUTPUT -o eth1 -p tcp --dport 4500 -j ACCEPT
+ # iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+west #
+ # iptables -A OUTPUT -o eth1 -p tcp --dport 4500 -j ACCEPT
 west #
  # confirm with a ping
 west #
- ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
-down
+ # ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -55,49 +61,47 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up  westnet-eastnet-ikev2
-002 "westnet-eastnet-ikev2" #1: initiating v2 parent SA
-1v2 "westnet-eastnet-ikev2" #1: initiate
-1v2 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-1v2 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-ikev2" #2: Authenticated using RSA with IKEv2_AUTH_HASH_SHA2_512
-002 "westnet-eastnet-ikev2" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2" #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP/TCP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+ # the sleep is to keep the pipe open, something better?
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-up
+ send() { { printf "$@" ; for c in 1 2 3 4 5 6 7 8 9 10 ; do sleep 1 ; printf "" ; done; } | ncat east 4500 ; }
 west #
- ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
+ # open the TCP socket
 west #
- echo done
-done
+ send ''
+west #
+ # open the TCP socket, send one byte
+west #
+ send '\0'
+west #
+ # open the TCP socket, send not IKETCP
+west #
+ send '123456'
+west #
+ # open the TCP socket, send IKETCP
+west #
+ send 'IKETCP'
+west #
+ # open the TCP socket, send IKETCP<byte>
+west #
+ send 'IKETCP\0'
+west #
+ # open the TCP socket, send IKETCP<0x0000>
+west #
+ send 'IKETCP\x0\x0'
+Ncat: Connection reset by peer.
+west #
+ # open the TCP socket, send IKETCP<0x00ff>
+west #
+ send 'IKETCP\x0\xff'
+west #
+ # open the TCP socket, send IKETCP<0xffff>
+west #
+ send 'IKETCP\xff\xff'
 west #
  ipsec look
 west NOW
 XFRM state:
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 XFRM policy:
-src 192.0.1.0/24 dst 192.0.2.0/24
-	dir out priority 1042407 ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24
-	dir fwd priority 1042407 ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24
-	dir in priority 1042407 ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
@@ -110,6 +114,7 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
+ grep '^connection from' /tmp/pluto.log
 west #
  ../bin/check-for-core.sh
 west #

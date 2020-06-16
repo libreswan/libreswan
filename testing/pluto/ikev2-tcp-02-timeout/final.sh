@@ -1,4 +1,5 @@
 ipsec look
+grep '^connection from' /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
