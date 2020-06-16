@@ -46,26 +46,19 @@ west #
 initdone
 west #
  ipsec auto --up  westnet-eastnet-ikev2
-002 "westnet-eastnet-ikev2" #1: initiating v2 parent SA
-133 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: initiate
-133 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
+1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 IKE SA
+1v2 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "westnet-eastnet-ikev2" #1: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "westnet-eastnet-ikev2" #1: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-ikev2" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2" #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP/TCP=>0xESPESP <0xESPESP xfrm=AES_GCM_C_256-NONE NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2" #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP/TCP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
- ping -n -c 4 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
 west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+006 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 west #
  # wait for rekey event
 west #
@@ -80,7 +73,7 @@ west #
  # rekey of IPsec SA means traffic counters should be 0
 west #
  ipsec whack --trafficstatus
-006 #4: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+006 #3: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
 west #
  echo done
 done
@@ -89,63 +82,39 @@ west #
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type 7 sport 4500 dport EPHEM addr 0.0.0.0
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type 7 sport EPHEM dport 4500 addr 0.0.0.0
 XFRM policy:
-src 0.0.0.0/0 dst 0.0.0.0/0 proto udp dport 4500 
-	dir in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 proto udp dport 500 
-	dir in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 proto udp sport 4500 
-	dir out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 proto udp sport 500 
-	dir out priority 0 ptype main 
-src 192.0.1.0/24 dst 192.0.2.0/24 
-	dir out priority 2344 ptype main 
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority 2084814 ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir fwd priority 2344 ptype main 
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir fwd priority 2084814 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir in priority 2344 ptype main 
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir in priority 2084814 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
-src ::/0 dst ::/0 proto ipv6-icmp type 135 
-	dir fwd priority 0 ptype main 
-src ::/0 dst ::/0 proto ipv6-icmp type 135 
-	dir in priority 0 ptype main 
-src ::/0 dst ::/0 proto ipv6-icmp type 135 
-	dir out priority 0 ptype main 
-src ::/0 dst ::/0 proto ipv6-icmp type 136 
-	dir fwd priority 0 ptype main 
-src ::/0 dst ::/0 proto ipv6-icmp type 136 
-	dir in priority 0 ptype main 
-src ::/0 dst ::/0 proto ipv6-icmp type 136 
-	dir out priority 0 ptype main 
-src ::/0 dst ::/0 proto udp dport 500 
-	dir in priority 0 ptype main 
-src ::/0 dst ::/0 proto udp sport 500 
-	dir out priority 0 ptype main 
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254 
-192.0.2.0/24 via 192.1.2.23 dev eth1 
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
-192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45 
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-west #
 west #
  ../bin/check-for-core.sh
 west #
