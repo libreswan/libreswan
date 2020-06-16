@@ -1,4 +1,4 @@
-( cd libreswan-web/slave/ && make kvm-install-base-domain )# Example
+# Example
 
 
 See: http://testing.libreswan.org/
@@ -32,14 +32,14 @@ Lets assume everything is being set up under ~/libreswan-web/:
 
 With the following layout:
 
-      ~/libreswan-web/slave/ - repository/directory under test
-      ~/libreswan-web/master/ - repostory/directory with scripts
-      ~/libreswan-web/pool/ - directory containing VM disks et.al.
-      ~/libreswan-web/results/ - directory containing published results
+      ~/libreswan-web/test-repo/     - repository/directory under test
+      ~/libreswan-web/script-repo/   - repostory/directory with scripts
+      ~/libreswan-web/pool/          - directory containing VM disks et.al.
+      ~/libreswan-web/results/       - directory containing published results
 
 and optionally:
 
-      /tmp/pool - tmpfs containing test vm disks
+      /tmp/pool                      - tmpfs containing test vm disks
 
 
 - check that the host machine is correctly configured, see:
@@ -61,45 +61,45 @@ and optionally:
       $ cd ~/libreswan-web/
       $ mkdir -p pool/
 
-- checkout a dedicated repository for running tests (aka slave/)
+- checkout a dedicated repository for running tests (aka test-repo/)
 
   In addition to regular updates using "git fetch + git rebase", this
   repository is switched to the commit being tested using "git reset
   --hard".
 
       $ cd ~/libreswan-web/
-      $ git clone https://github.com/libreswan/libreswan.git slave/
+      $ git clone https://github.com/libreswan/libreswan.git test-repo/
 
 - configure the dedicated test repository as desired
 
   increase the number of reboots allowed in parallel (since a reboot
   seems to tie up two cores a rule of thumb is number-cores/2):
 
-      $ echo 'KVM_WORKERS=2' >> slave/Makefile.inc.local
+      $ echo 'KVM_WORKERS=2' >> test-repo/Makefile.inc.local
 
   increase the number of test domains (and give them unique prefixes
   so that they don't run with the default domain names):
 
-      $ echo 'KVM_PREFIXES=w1. w2.' >> slave/Makefile.inc.local
+      $ echo 'KVM_PREFIXES=w1. w2.' >> test-repo/Makefile.inc.local
 
   enable the wip tests:
 
-      $ echo "KVM_TEST_FLAGS=--test-status 'good|wip'" >> slave/Makefile.inc.local
+      $ echo "KVM_TEST_FLAGS=--test-status 'good|wip'" >> test-repo/Makefile.inc.local
 
   move the test domains to /tmp (tmpfs):
 
-      $ echo 'KVM_LOCALDIR=/tmp/pool' >> slave/Makefile.inc.local
+      $ echo 'KVM_LOCALDIR=/tmp/pool' >> test-repo/Makefile.inc.local
 
-- checkout a repository for the web sources and scripts (aka master/)
+- checkout a repository for the web sources and scripts (aka script-repo/)
 
       $ cd ~/libreswan-web/
-      $ git clone https://github.com/libreswan/libreswan.git master/
+      $ git clone https://github.com/libreswan/libreswan.git script-repo/
 
 - create the base domain (creating the base domain requires a TTY;
   blame kvm):
 
       $ cd ~/libreswan-web/
-      $ ( cd slave/ && make kvm-install-base-domain )
+      $ ( cd test-repo/ && make kvm-install-base-domain )
 
 
 ## Running
@@ -112,13 +112,13 @@ Either:
 
     $ cd libreswan-web/
     $ rm -f nohup.out
-    $ nohup master/testing/web/tester.sh slave/ results/ &
+    $ nohup script-repo/testing/web/tester.sh test-repo/ results/ &
     $ tail -f nohup.out
 
 or:
 
     $ rm -f nohup.out
-    $ nohup ./libreswan-web/master/testing/web/tester.sh libreswan-web/slave libreswan-web/results/ &
+    $ nohup ./libreswan-web/script-repo/testing/web/tester.sh libreswan-web/test-repo libreswan-web/results/ &
     $ tail -f nohup.out
 
 
@@ -165,27 +165,27 @@ with "restart"):
   crash it by running the following a few times:
 
       $ cd libreswan-web/
-      $ ( cd slave/ && make kvm-uninstall )
+      $ ( cd test-repo/ && make kvm-uninstall )
 
 - (optional, but recommended) upgrade and reboot the test machine:
 
       $ sudo dnf upgrade -y
       $ sudo reboot
 
-- (optional) cleanup and update the slave (tester.sh will do this
+- (optional) cleanup and update the test-repo/ (tester.sh will do this
   anyway)
 
       $ cd libreswan-web/
-      $ ( cd slave/ && git clean -f )
-      $ ( cd slave/ && git pull --ff-only )
+      $ ( cd test-repo/ && git clean -f )
+      $ ( cd test-repo/ && git pull --ff-only )
 
-- (optional) update the master repository:
+- (optional) update the script-repo/ repository:
 
   Remember to first check for local changes:
 
       $ cd libreswan-web/
-      $ ( cd master/ && git status )
-      $ ( cd master/ && git pull --ff-only )
+      $ ( cd script-repo/ && git status )
+      $ ( cd script-repo/ && git pull --ff-only )
 
 - (optional) examine, and perhaps delete, any test runs where tests
   have 'missing-output':
@@ -205,7 +205,7 @@ with "restart"):
     a list of test runs along with their commit and "interest" level
     (see below):
 
-        $ ./master/testing/web/gime-work.sh results slave 2>&1 | tee commits.tmp
+        $ ./script-repo/testing/web/gime-work.sh results test-repo/ 2>&1 | tee commits.tmp
 
   - strip the raw list of everything but test runs; also exclude the
     most recent test run (so the latest result isn't deleted):
