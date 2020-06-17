@@ -498,7 +498,7 @@ err_t lease_that_address(struct connection *c, const struct state *st)
 
 	jam_str(thatstr, sizeof(thatstr), that_name);
 
-	if(st->st_xauth_username != NULL)
+	if(st->st_xauth_username[0] != '\0')
 		add_str(thatstr, sizeof(thatstr), thatstr, st->st_xauth_username);
 
 	if (DBGP(DBG_BASE)) {
