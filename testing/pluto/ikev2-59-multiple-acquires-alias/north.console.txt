@@ -81,10 +81,10 @@ north #
 000 "north-eastnets/0x2":   ESP algorithms: AES_CBC_128-HMAC_SHA2_512_256-MODP3072
 000 "north-eastnets/0x2":   ESP algorithm newest: AES_CBC_128-HMAC_SHA2_512_256; pfsgroup=MODP3072
 000 #2: "north-eastnets/0x1":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #2: "north-eastnets/0x1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.33 tun.0@192.1.2.23 tun.0@192.1.3.33 ref=0 refhim=0 Traffic: ESPin=0B ESPout=0B! ESPmax=0B 
+000 #2: "north-eastnets/0x1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.33 tun.0@192.1.2.23 tun.0@192.1.3.33 Traffic: ESPin=0B ESPout=0B! ESPmax=0B 
 000 #1: "north-eastnets/0x2":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
 000 #3: "north-eastnets/0x2":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #3: "north-eastnets/0x2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.33 tun.0@192.1.2.23 tun.0@192.1.3.33 ref=0 refhim=0 Traffic: ESPin=0B ESPout=0B! ESPmax=0B 
+000 #3: "north-eastnets/0x2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.33 tun.0@192.1.2.23 tun.0@192.1.3.33 Traffic: ESPin=0B ESPout=0B! ESPmax=0B 
 000 #4: "north-eastnets/0x2":500 STATE_PARENT_R1 (received v2I1, sent v2R1); EVENT_SO_DISCARD in XXs; idle;
 north #
  ping -n -c 2 -I 192.0.3.254 192.0.2.254
