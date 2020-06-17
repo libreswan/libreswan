@@ -430,7 +430,7 @@ bool ikev1_nat_traversal_add_natd(pb_stream *outs,
 
 	passert(st->st_oakley.ta_prf != NULL);
 
-	DBG(DBG_EMITTING | DBG_NATT, DBG_log("sending NAT-D payloads"));
+	dbg("sending NAT-D payloads");
 
 	unsigned remote_port = endpoint_hport(&st->st_remote_endpoint);
 	pexpect_st_local_endpoint(st);

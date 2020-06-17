@@ -298,9 +298,8 @@ bool close_v2SK_payload(v2SK_payload_t *sk)
 	} else {
 		padding = 1;
 	}
-	DBG(DBG_EMITTING,
-	    DBG_log("adding %zd bytes of padding (including 1 byte padding-length)",
-		    padding));
+	dbg("adding %zd bytes of padding (including 1 byte padding-length)",
+	    padding);
 	for (unsigned i = 0; i < padding; i++) {
 		if (!out_repeated_byte(i, 1, &sk->pbs, "padding and length")) {
 			libreswan_log("error initializing padding for encrypted %s payload",

@@ -195,13 +195,12 @@ static bool out_attr(int type,
 
 		close_output_pbs(&val_pbs);
 	}
-	DBG(DBG_EMITTING, {
-		    enum_names *d = attr_val_descs[type];
-
-		    if (d != NULL)
-			    DBG_log("    [%lu is %s]",
-				    val, enum_show(d, val));
-	    });
+	if (DBGP(DBG_BASE)) {
+		enum_names *d = attr_val_descs[type];
+		if (d != NULL)
+			DBG_log("    [%lu is %s]",
+				val, enum_show(d, val));
+	}
 	return TRUE;
 }
 
@@ -488,9 +487,7 @@ bool ikev1_out_sa(pb_stream *outs,
 		const struct db_prop_conj *const pc = &sadb->prop_conjs[pcn];
 		int valid_prop_cnt = pc->prop_cnt;
 
-		DBG(DBG_EMITTING,
-		    DBG_log("ikev1_out_sa pcn: %d has %d valid proposals",
-			    pcn, valid_prop_cnt));
+		dbg("%s() pcn: %d has %d valid proposals", __func__, pcn, valid_prop_cnt);
 
 		for (unsigned pn = 0; pn < pc->prop_cnt; pn++) {
 			const struct db_prop *const p = &pc->props[pn];
@@ -508,10 +505,9 @@ bool ikev1_out_sa(pb_stream *outs,
 			 * pick the part of the proposal we are trying to work on
 			 */
 
-			DBG(DBG_EMITTING,
-			    DBG_log("ikev1_out_sa pcn: %d pn: %d<%d valid_count: %d trans_cnt: %d",
-				    pcn, pn, pc->prop_cnt, valid_prop_cnt,
-				    p->trans_cnt));
+			dbg("%s() pcn: %d pn: %d<%d valid_count: %d trans_cnt: %d",
+			    __func__, pcn, pn, pc->prop_cnt, valid_prop_cnt,
+			    p->trans_cnt);
 
 			/* but, skip things if the transform count is zero */
 			if (p->trans_cnt == 0)

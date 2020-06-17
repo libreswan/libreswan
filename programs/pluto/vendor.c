@@ -922,8 +922,7 @@ bool out_vid(pb_stream *outs, unsigned int vid)
 	for (pvid = vid_tab; pvid->id != vid; pvid++)
 		passert(pvid->id != VID_none); /* we must find what we are trying to send */
 
-	DBG(DBG_EMITTING,
-	    DBG_log("out_vid(): sending [%s]", pvid->descr));
+	dbg("out_vid(): sending [%s]", pvid->descr);
 
 	return ikev1_out_generic_raw(&isakmp_vendor_id_desc, outs,
 			       pvid->vid, pvid->vid_len, "V_ID");

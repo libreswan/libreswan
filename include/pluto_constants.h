@@ -408,7 +408,6 @@ enum {
 
 /* so things don't break */
 #define DBG_PARSING	DBG_BASE
-#define DBG_EMITTING	DBG_BASE
 #define DBG_CONTROL	DBG_BASE
 #define DBG_KERNEL	DBG_BASE
 #define DBG_DNS		DBG_BASE
