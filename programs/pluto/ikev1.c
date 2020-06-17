@@ -1013,6 +1013,9 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				/* ??? how do we know that tmp_name hasn't been freed? */
 				struct connection *tmp_c = conn_by_name(tmp_name, false/*!strict*/);
 
+				if (tmp_c == NULL)
+					return STF_IGNORE;
+
 				if (DBGP(DBG_BASE)) {
 					address_buf npb;
 					DBG_log("new peer address: %s",
@@ -1062,8 +1065,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				}
 
 				/* save peer's old address for comparison purposes */
-				if (tmp_c != NULL)
-					ip_address old_addr = tmp_c->spd.that.host_addr;
+				ip_address old_addr = tmp_c->spd.that.host_addr;
 
 				/* update peer's address */
 				tmp_c->spd.that.host_addr = new_peer;
