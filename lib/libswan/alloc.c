@@ -256,6 +256,7 @@ void *uninitialized_realloc(void *ptr, size_t new_size, const char *name)
 		remove_allocation(p);
 		p = realloc(p, sizeof(union mhdr) + new_size);
 		if (p == NULL) {
+			PASSERT_FAIL("unable to reallocate %zu bytes for %s", new_size, name);
 		}
 		install_allocation(p, new_size, name);
 		return p+1;
