@@ -270,9 +270,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 
 		if (match) {
 			/* we have a match: exit the loop */
-			DBG(DBG_X509 | DBG_CONTROLMORE,
-			    DBG_log("%s: A is a subordinate of B",
-				    __func__));
+			dbg("%s: A is a subordinate of B", __func__);
 			break;
 		}
 
@@ -282,11 +280,8 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 		cacert = NULL;
 	}
 
-	DBG(DBG_X509 | DBG_CONTROLMORE,
-		DBG_log("%s: returning %s at pathlen %d",
-			__func__,
-			match ? "trusted" : "untrusted",
-			*pathlen));
+	dbg("%s: returning %s at pathlen %d",
+	    __func__, match ? "trusted" : "untrusted", *pathlen);
 
 	if (cacert != NULL) {
 		CERT_DestroyCertificate(cacert);
@@ -300,8 +295,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 void select_nss_cert_id(CERTCertificate *cert, struct id *end_id)
 {
 	if (end_id->kind == ID_FROMCERT) {
-		DBG(DBG_X509,
-		    DBG_log("setting ID to ID_DER_ASN1_DN: \'%s\'", cert->subjectName));
+		dbg("setting ID to ID_DER_ASN1_DN: \'%s\'", cert->subjectName);
 		end_id->name = clone_secitem_as_chunk(cert->derSubject, "cert id");
 		end_id->kind = ID_DER_ASN1_DN;
 	}
@@ -316,8 +310,8 @@ generalName_t *gndp_from_nss_cert(CERTCertificate *cert)
 
 	if (CERT_FindCertExtension(cert, SEC_OID_X509_CRL_DIST_POINTS,
 						       &crlval) != SECSuccess) {
-		LSWDBGP(DBG_X509, buf) {
-			lswlogs(buf, "NSS: finding CRL distribution points using CERT_FindCertExtension() failed: ");
+		LSWDBGP(DBG_BASE, buf) {
+			jam(buf, "NSS: finding CRL distribution points using CERT_FindCertExtension() failed: ");
 			lswlog_nss_error(buf);
 		}
 		return NULL;
@@ -326,8 +320,8 @@ generalName_t *gndp_from_nss_cert(CERTCertificate *cert)
 	CERTCrlDistributionPoints *dps = CERT_DecodeCRLDistributionPoints(cert->arena,
 						    &crlval);
 	if (dps == NULL) {
-		LSWDBGP(DBG_X509, buf) {
-			lswlogs(buf, "NSS: decoding CRL distribution points using CERT_DecodeCRLDistributionPoints() failed: ");
+		LSWDBGP(DBG_BASE, buf) {
+			jam(buf, "NSS: decoding CRL distribution points using CERT_DecodeCRLDistributionPoints() failed: ");
 			lswlog_nss_error(buf);
 		}
 		return NULL;
@@ -454,8 +448,7 @@ static void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn
 			generalName_t *pluto_gn =
 				alloc_thing(generalName_t,
 					    "get_pluto_gn_from_nss_cert: converted gn");
-			DBG(DBG_X509, DBG_log("%s: allocated pluto_gn %p",
-						__func__, pluto_gn));
+			dbg("%s: allocated pluto_gn %p", __func__, pluto_gn);
 			same_nss_gn_as_pluto_gn(cur_nss_gn, pluto_gn);
 			pluto_gn->next = pgn_list;
 			pgn_list = pluto_gn;
@@ -639,7 +632,7 @@ bool find_fetch_dn(SECItem *dn, struct connection *c,
 		   CERTCertificate *cert)
 {
 	if (dn == NULL) {
-		DBG(DBG_X509, DBG_log("%s invalid use", __func__));
+		dbg("%s invalid use", __func__);
 		return FALSE;
 	}
 
@@ -1185,8 +1178,7 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 			CERT_FindCertByName(handle, &caname);
 
 		if (cacert != NULL && CERT_IsCACert(cacert, NULL)) {
-			DBG(DBG_X509, DBG_log("located CA cert %s for CERTREQ",
-							  cacert->subjectName));
+			dbg("located CA cert %s for CERTREQ", cacert->subjectName);
 			/*
 			 * build CR body containing the concatenated SHA-1 hashes of the
 			 * CA's public key. This function currently only uses a single CA
@@ -1200,7 +1192,7 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 			}
 			free_chunk_content(&cr_full_hash);
 		} else {
-			LSWDBGP(DBG_X509, buf) {
+			LSWDBGP(DBG_BASE, buf) {
 				jam(buf, "NSS: locating CA cert \'");
 				jam_dn(buf, ca, jam_sanitized_bytes);
 				jam(buf, "\' for CERTREQ using CERT_FindCertByName() failed: ");
@@ -1224,30 +1216,26 @@ bool ikev2_send_cert_decision(const struct state *st)
 	const struct connection *c = st->st_connection;
 	const struct end *this = &c->spd.this;
 
-	DBG(DBG_X509, DBG_log("IKEv2 CERT: send a certificate?"));
+	dbg("IKEv2 CERT: send a certificate?");
 
 	bool sendit = FALSE;
 
 	if (st->st_peer_wants_null) {
 		/* ??? should we log something?  All others do. */
 	} else if (LDISJOINT(c->policy, POLICY_ECDSA | POLICY_RSASIG)) {
-		DBG(DBG_X509,
-			DBG_log("IKEv2 CERT: policy does not have RSASIG or ECDSA: %s",
-				prettypolicy(c->policy & POLICY_ID_AUTH_MASK)));
+		dbg("IKEv2 CERT: policy does not have RSASIG or ECDSA: %s",
+		    prettypolicy(c->policy & POLICY_ID_AUTH_MASK));
 	} else if (this->cert.ty == CERT_NONE || this->cert.u.nss_cert == NULL) {
-		DBG(DBG_X509,
-			DBG_log("IKEv2 CERT: no certificate to send"));
+		dbg("IKEv2 CERT: no certificate to send");
 	} else if (this->sendcert == CERT_SENDIFASKED &&
-		   st->hidden_variables.st_got_certrequest)
-	{
-		DBG(DBG_X509, DBG_log("IKEv2 CERT: OK to send requested certificate"));
+		   st->hidden_variables.st_got_certrequest) {
+		dbg("IKEv2 CERT: OK to send requested certificate");
 		sendit = TRUE;
 	} else if (this->sendcert == CERT_ALWAYSSEND) {
-		DBG(DBG_X509, DBG_log("IKEv2 CERT: OK to send a certificate (always)"));
+		dbg("IKEv2 CERT: OK to send a certificate (always)");
 		sendit = TRUE;
 	} else {
-		DBG(DBG_X509,
-			DBG_log("IKEv2 CERT: no cert requested or we don't want to send"));
+		dbg("IKEv2 CERT: no cert requested or we don't want to send");
 	}
 	return sendit;
 }
@@ -1256,22 +1244,19 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 			      pb_stream *outpbs)
 {
 	if (st->st_connection->kind == CK_PERMANENT) {
-		DBG(DBG_X509,
-		    DBG_log("connection->kind is CK_PERMANENT so send CERTREQ"));
+		dbg("connection->kind is CK_PERMANENT so send CERTREQ");
 
 		if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
 					     st->st_connection->spd.that.ca,
 					     outpbs))
 			return STF_INTERNAL_ERROR;
 	} else {
-		DBG(DBG_X509,
-		    DBG_log("connection->kind is not CK_PERMANENT (instance), so collect CAs"));
+		dbg("connection->kind is not CK_PERMANENT (instance), so collect CAs");
 
 		generalName_t *gn = collect_rw_ca_candidates(md);
 
 		if (gn != NULL) {
-			DBG(DBG_X509,
-			    DBG_log("connection is RW, lookup CA candidates"));
+			dbg("connection is RW, lookup CA candidates");
 
 			for (generalName_t *ca = gn; ca != NULL; ca = ca->next) {
 				if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
@@ -1282,8 +1267,7 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 			}
 			free_generalNames(gn, FALSE);
 		} else {
-			DBG(DBG_X509,
-			    DBG_log("Not a roadwarrior instance, sending empty CA in CERTREQ"));
+			dbg("not a roadwarrior instance, sending empty CA in CERTREQ");
 			if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
 					       EMPTY_CHUNK,
 					       outpbs))
@@ -1296,32 +1280,32 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 bool ikev2_send_certreq_INIT_decision(const struct state *st,
 				      enum sa_role role)
 {
-	DBG(DBG_X509, DBG_log("IKEv2 CERTREQ: send a cert request?"));
+	dbg("IKEv2 CERTREQ: send a cert request?");
 
 	if (role != SA_INITIATOR) {
-		DBGF(DBG_X509, "IKEv2 CERTREQ: not the original initiator");
+		dbg("IKEv2 CERTREQ: not the original initiator");
 		return FALSE;
 	}
 
 	const struct connection *c = st->st_connection;
 
 	if (!(c->policy & POLICY_RSASIG)) {
-		DBGF(DBG_X509, "IKEv2 CERTREQ: policy does not have RSASIG: %s",
-			prettypolicy(c->policy & POLICY_ID_AUTH_MASK));
+		dbg("IKEv2 CERTREQ: policy does not have RSASIG: %s",
+		    prettypolicy(c->policy & POLICY_ID_AUTH_MASK));
 		return FALSE;
 	}
 
 	if (has_preloaded_public_key(st)) {
-		DBGF(DBG_X509, "IKEv2 CERTREQ: public key already known");
+		dbg("IKEv2 CERTREQ: public key already known");
 		return FALSE;
 	}
 
 	if (c->spd.that.ca.ptr == NULL || c->spd.that.ca.len < 1) {
-		DBGF(DBG_X509, "IKEv2 CERTREQ: no CA DN known to send");
+		dbg("IKEv2 CERTREQ: no CA DN known to send");
 		return FALSE;
 	}
 
-	DBGF(DBG_X509, "IKEv2 CERTREQ: OK to send a certificate request");
+	dbg("IKEv2 CERTREQ: OK to send a certificate request");
 
 	return TRUE;
 }
@@ -1393,8 +1377,7 @@ stf_status ikev2_send_cert(const struct state *st, pb_stream *outpbs)
 	{
 		pb_stream cert_pbs;
 
-		DBG(DBG_X509, DBG_log("Sending [CERT] of certificate: %s",
-					mycert.u.nss_cert->subjectName));
+		dbg("sending [CERT] of certificate: %s", mycert.u.nss_cert->subjectName);
 
 		if (!out_struct(&certhdr, &ikev2_certificate_desc,
 				outpbs, &cert_pbs) ||
@@ -1412,7 +1395,7 @@ stf_status ikev2_send_cert(const struct state *st, pb_stream *outpbs)
 		for (int i = 0; i < chain_len ; i++) {
 			pb_stream cert_pbs;
 
-			DBG(DBG_X509, DBG_log("Sending an authcert"));
+			dbg("sending an authcert");
 
 			if (!out_struct(&certhdr, &ikev2_certificate_desc,
 				outpbs, &cert_pbs) ||
@@ -1706,6 +1689,6 @@ void list_authcerts(const struct fd *whackfd)
 
 void clear_ocsp_cache(void)
 {
-	DBG(DBG_X509, DBG_log("calling NSS to clear OCSP cache"));
+	dbg("calling NSS to clear OCSP cache");
 	(void)CERT_ClearOCSPCache();
 }

@@ -2855,7 +2855,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 
 				update_state_connection(md->st, r);
 				/* redo from scratch so we read and check CERT payload */
-				DBGF(DBG_X509, "retrying ikev2_decode_peer_id_and_certs() with new conn");
+				dbg("retrying ikev2_decode_peer_id_and_certs() with new conn");
 				return decode_peer_id_counted(ike, md, depth + 1);
 			} else if (must_switch) {
 					id_buf peer_str;
@@ -2868,7 +2868,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 				duplicate_id(&c->spd.that.id, &peer_id);
 				c->spd.that.has_id_wildcards = FALSE;
 			} else if (fromcert) {
-				DBGF(DBG_X509, "copying ID for fromcert");
+				dbg("copying ID for fromcert");
 				duplicate_id(&c->spd.that.id, &peer_id);
 			}
 		}

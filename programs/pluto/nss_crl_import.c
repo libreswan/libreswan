@@ -119,8 +119,8 @@ int send_crl_to_import(u_char *der, size_t len, const char *url)
 
 	/* arena owned by crl */
 	if ((crl = CERT_DecodeDERCrl(arena, &crl_si, SEC_CRL_TYPE)) == NULL) {
-		LSWDBGP(DBG_X509, buf) {
-			lswlogs(buf, "NSS: decoding CRL using CERT_DecodeDERCrl() failed: ");
+		LSWDBGP(DBG_BASE, buf) {
+			jam(buf, "NSS: decoding CRL using CERT_DecodeDERCrl() failed: ");
 			lswlog_nss_error(buf);
 		}
 		PORT_FreeArena(arena, FALSE);
@@ -128,8 +128,8 @@ int send_crl_to_import(u_char *der, size_t len, const char *url)
 	}
 
 	if ((cacert = CERT_FindCertByName(handle, &crl->crl.derName)) == NULL) {
-		LSWDBGP(DBG_X509, buf) {
-			lswlogs(buf, "NSS: finding cert by name using CERT_FindCertByName() failed: ");
+		LSWDBGP(DBG_BASE, buf) {
+			jam(buf, "NSS: finding cert by name using CERT_FindCertByName() failed: ");
 			lswlog_nss_error(buf);
 		}
 		SEC_DestroyCrl(crl);

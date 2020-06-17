@@ -173,10 +173,9 @@ static err_t fetch_curl(chunk_t url,
 		curl_easy_cleanup(curl);
 
 		/* ??? where/how should this be logged? */
-		DBG(DBG_X509, {
-			if (errorbuffer[0] != '\0')
-				DBG_log("libcurl(%s) yielded %s", uri, errorbuffer);
-		});
+		if (errorbuffer[0] != '\0') {
+			dbg("libcurl(%s) yielded %s", uri, errorbuffer);
+		}
 		pfreeany(uri);
 
 		if (response.ptr != NULL)
