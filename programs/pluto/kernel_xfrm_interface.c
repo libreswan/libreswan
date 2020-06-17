@@ -586,9 +586,10 @@ static struct pluto_xfrmi *find_pluto_xfrmi_interface(uint32_t if_id)
 	struct pluto_xfrmi *ret = NULL;
 
 	for (h = pluto_xfrm_interfaces;  h != NULL; h = h->next) {
-		if (h->if_id == if_id)
-		ret = h;
-		break;
+		if (h->if_id == if_id) {
+			ret = h;
+			break;
+		}
 	}
 
 	return ret;
