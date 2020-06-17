@@ -91,9 +91,8 @@ void init_nat_traversal(deltatime_t keep_alive_period)
 	if (deltamillisecs(keep_alive_period) != 0)
 		nat_kap = keep_alive_period;
 
-	DBG(DBG_NATT,
-	    DBG_log("init_nat_traversal() initialized with keep_alive=%jds",
-		    deltasecs(keep_alive_period)));
+	dbg("init_nat_traversal() initialized with keep_alive=%jds",
+	    deltasecs(keep_alive_period));
 	libreswan_log("NAT-Traversal support %s",
 		nat_traversal_enabled ? " [enabled]" : " [disabled]");
 
@@ -183,9 +182,8 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 {
 	struct crypt_mac hb;
 
-	DBG(DBG_NATT,
-		DBG_log(" NAT-Traversal support %s add v2N payloads.",
-			nat_traversal_enabled ? " [enabled]" : " [disabled]"));
+	dbg(" NAT-Traversal support %s add v2N payloads.",
+	    nat_traversal_enabled ? " [enabled]" : " [disabled]");
 
 	/* First: one with local (source) IP & port */
 
@@ -211,7 +209,7 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
  */
 bool nat_traversal_insert_vid(pb_stream *outs, const struct connection *c)
 {
-	DBG(DBG_NATT, DBG_log("nat add vid"));
+	dbg("nat add vid");
 
 	/*
 	 * Some Cisco's have a broken NAT-T implementation where it
@@ -225,16 +223,16 @@ bool nat_traversal_insert_vid(pb_stream *outs, const struct connection *c)
 	 */
 	switch (c->ikev1_natt) {
 	case NATT_RFC:
-		DBG(DBG_NATT, DBG_log("skipping VID_NATT drafts"));
+		dbg("skipping VID_NATT drafts");
 		return out_vid(outs, VID_NATT_RFC);
 
 	case NATT_BOTH:
-		DBG(DBG_NATT, DBG_log("sending draft and RFC NATT VIDs"));
+		dbg("sending draft and RFC NATT VIDs");
 		if (!out_vid(outs, VID_NATT_RFC))
 			return FALSE;
 		/* FALL THROUGH */
 	case NATT_DRAFTS:
-		DBG(DBG_NATT, DBG_log("skipping VID_NATT_RFC"));
+		dbg("skipping VID_NATT_RFC");
 		return
 			out_vid(outs, VID_NATT_IETF_03) &&
 			out_vid(outs, VID_NATT_IETF_02_N) &&
@@ -242,7 +240,7 @@ bool nat_traversal_insert_vid(pb_stream *outs, const struct connection *c)
 
 	case NATT_NONE:
 		/* This should never be reached, but makes compiler happy */
-		DBG(DBG_NATT, DBG_log("not sending any NATT VID's"));
+		dbg("not sending any NATT VID's");
 		return TRUE;
 
 	default:
@@ -254,15 +252,13 @@ static enum natt_method nat_traversal_vid_to_method(enum known_vendorid nat_t_vi
 {
 	switch (nat_t_vid) {
 	case VID_NATT_IETF_00:
-		DBG(DBG_NATT,
-			DBG_log("NAT_TRAVERSAL_METHOD_IETF_00_01 no longer supported"));
+		dbg("NAT_TRAVERSAL_METHOD_IETF_00_01 no longer supported");
 		return NAT_TRAVERSAL_METHOD_none;
 
 	case VID_NATT_IETF_02:
 	case VID_NATT_IETF_02_N:
 	case VID_NATT_IETF_03:
-		DBG(DBG_NATT,
-			DBG_log("returning NAT-T method NAT_TRAVERSAL_METHOD_IETF_02_03"));
+		dbg("returning NAT-T method NAT_TRAVERSAL_METHOD_IETF_02_03");
 		return NAT_TRAVERSAL_METHOD_IETF_02_03;
 
 	case VID_NATT_IETF_04:
@@ -271,12 +267,10 @@ static enum natt_method nat_traversal_vid_to_method(enum known_vendorid nat_t_vi
 	case VID_NATT_IETF_07:
 	case VID_NATT_IETF_08:
 	case VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE:
-		DBG(DBG_NATT,
-			DBG_log("NAT-T VID draft-ietf-ipsc-nat-t-ike-04 to 08 assumed to function as RFC 3947 "));
+		dbg("NAT-T VID draft-ietf-ipsc-nat-t-ike-04 to 08 assumed to function as RFC 3947 ");
 		/* FALL THROUGH */
 	case VID_NATT_RFC:
-		DBG(DBG_NATT,
-			DBG_log("returning NAT-T method NAT_TRAVERSAL_METHOD_IETF_RFC"));
+		dbg("returning NAT-T method NAT_TRAVERSAL_METHOD_IETF_RFC");
 		return NAT_TRAVERSAL_METHOD_IETF_RFC;
 
 	default:
@@ -286,15 +280,15 @@ static enum natt_method nat_traversal_vid_to_method(enum known_vendorid nat_t_vi
 
 void set_nat_traversal(struct state *st, const struct msg_digest *md)
 {
-	DBG(DBG_NATT, DBG_log("sender checking NAT-T: %s; VID %d",
-				     nat_traversal_enabled ? "enabled" : "disabled",
-				     md->quirks.qnat_traversal_vid));
+	dbg("sender checking NAT-T: %s; VID %d",
+	    nat_traversal_enabled ? "enabled" : "disabled",
+	    md->quirks.qnat_traversal_vid);
 	if (nat_traversal_enabled && md->quirks.qnat_traversal_vid != VID_none) {
 		enum natt_method v = nat_traversal_vid_to_method(md->quirks.qnat_traversal_vid);
 
 		st->hidden_variables.st_nat_traversal = LELEM(v);
-		DBG(DBG_NATT, DBG_log("enabling possible NAT-traversal with method %s",
-			      enum_name(&natt_method_names, v)));
+		dbg("enabling possible NAT-traversal with method %s",
+		    enum_name(&natt_method_names, v));
 	}
 }
 
@@ -307,37 +301,34 @@ static void natd_lookup_common(struct state *st,
 	/* update NAT-T settings for local policy */
 	switch (st->st_connection->encaps) {
 	case yna_auto:
-		DBG(DBG_NATT, DBG_log("NAT_TRAVERSAL encaps using auto-detect"));
+		dbg("NAT_TRAVERSAL encaps using auto-detect");
 		if (!found_me) {
-			DBG(DBG_NATT, DBG_log("NAT_TRAVERSAL this end is behind NAT"));
+			dbg("NAT_TRAVERSAL this end is behind NAT");
 			st->hidden_variables.st_nat_traversal |= LELEM(NATED_HOST);
 			st->hidden_variables.st_natd = *sender;
 		} else {
-			DBG(DBG_NATT, DBG_log("NAT_TRAVERSAL this end is NOT behind NAT"));
+			dbg("NAT_TRAVERSAL this end is NOT behind NAT");
 		}
 
 		if (!found_peer) {
-			DBG(DBG_NATT, {
-				ipstr_buf b;
-				DBG_log("NAT_TRAVERSAL that end is behind NAT %s",
-					ipstr(sender, &b));
-			});
+			address_buf b;
+			dbg("NAT_TRAVERSAL that end is behind NAT %s",
+			    str_address(sender, &b));
 			st->hidden_variables.st_nat_traversal |= LELEM(NATED_PEER);
 			st->hidden_variables.st_natd = *sender;
 		} else {
-			DBG(DBG_NATT, DBG_log("NAT_TRAVERSAL that end is NOT behind NAT"));
+			dbg("NAT_TRAVERSAL that end is NOT behind NAT");
 		}
 		break;
 
 	case yna_no:
 		st->hidden_variables.st_nat_traversal |= LEMPTY;
-		DBG(DBG_NATT, DBG_log("NAT_TRAVERSAL local policy prohibits encapsulation"));
+		dbg("NAT_TRAVERSAL local policy prohibits encapsulation");
 		break;
 
 	case yna_yes:
-		DBG(DBG_NATT, DBG_log("NAT_TRAVERSAL local policy enforces encapsulation"));
-
-		DBG(DBG_NATT, DBG_log("NAT_TRAVERSAL forceencaps enabled"));
+		dbg("NAT_TRAVERSAL local policy enforces encapsulation");
+		dbg("NAT_TRAVERSAL forceencaps enabled");
 		st->hidden_variables.st_nat_traversal |=
 			LELEM(NATED_PEER) | LELEM(NATED_HOST);
 		st->hidden_variables.st_natd = *sender;
@@ -345,11 +336,8 @@ static void natd_lookup_common(struct state *st,
 	}
 
 	if (st->st_connection->nat_keepalive) {
-		DBG(DBG_NATT, {
-			ipstr_buf b;
-			DBG_log("NAT_TRAVERSAL nat-keepalive enabled %s",
-				ipstr(sender, &b));
-		});
+		address_buf b;
+		dbg("NAT_TRAVERSAL nat-keepalive enabled %s", str_address(sender, &b));
 	}
 }
 
@@ -396,9 +384,10 @@ static void ikev1_natd_lookup(struct msg_digest *md)
 	bool found_remote = false;
 
 	for (const struct payload_digest *p = hd; p != NULL; p = p->next) {
-		DBG(DBG_NATT,
+		if (DBGP(DBG_BASE)) {
 			DBG_dump("received NAT-D:", p->pbs.cur,
-				pbs_left(&p->pbs)));
+				 pbs_left(&p->pbs));
+		}
 
 		shunk_t left = pbs_in_left_as_shunk(&p->pbs);
 		if (hunk_eq(left, hash_local))
@@ -436,8 +425,7 @@ bool ikev1_nat_traversal_add_natd(pb_stream *outs,
 	pexpect_st_local_endpoint(st);
 	unsigned short local_port = endpoint_hport(&st->st_interface->local_endpoint);
 	if (st->st_connection->encaps == yna_yes) {
-		DBG(DBG_NATT,
-			DBG_log("NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection"));
+		dbg("NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection");
 		local_port = remote_port = 0;
 	}
 
@@ -486,8 +474,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 		i++;
 	}
 
-	DBG(DBG_NATT,
-		DBG_log("NAT-Traversal: received %d NAT-OA.", i));
+	dbg("NAT-Traversal: received %d NAT-OA.", i);
 
 	if (i == 0)
 		return;
@@ -593,25 +580,23 @@ static void nat_traversal_show_result(lset_t nt, uint16_t sport)
 		bitnamesof(natt_bit_names, nt & NAT_T_DETECTED) :
 		"no NAT detected";
 
-	DBG(DBG_NATT, DBG_log(
-		"NAT-Traversal: Result using %s sender port %" PRIu16 ": %s",
-		LHAS(nt, NAT_TRAVERSAL_METHOD_IETF_RFC) ?
-			enum_name(&natt_method_names,
-				  NAT_TRAVERSAL_METHOD_IETF_RFC) :
-		LHAS(nt, NAT_TRAVERSAL_METHOD_IETF_02_03) ?
-			enum_name(&natt_method_names,
-				  NAT_TRAVERSAL_METHOD_IETF_02_03) :
-		"unknown or unsupported method",
-		sport,
-		rslt));
+	dbg("NAT-Traversal: Result using %s sender port %" PRIu16 ": %s",
+	    LHAS(nt, NAT_TRAVERSAL_METHOD_IETF_RFC) ?
+	    enum_name(&natt_method_names,
+		      NAT_TRAVERSAL_METHOD_IETF_RFC) :
+	    LHAS(nt, NAT_TRAVERSAL_METHOD_IETF_02_03) ?
+	    enum_name(&natt_method_names,
+		      NAT_TRAVERSAL_METHOD_IETF_02_03) :
+	    "unknown or unsupported method",
+	    sport,
+	    rslt);
 }
 
 void ikev1_natd_init(struct state *st, struct msg_digest *md)
 {
-	DBG(DBG_NATT,
-	    DBG_log("init checking NAT-T: %s; %s",
-		    nat_traversal_enabled ? "enabled" : "disabled",
-		    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
+	dbg("init checking NAT-T: %s; %s",
+	    nat_traversal_enabled ? "enabled" : "disabled",
+	    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal));
 
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 		if (md->st->st_oakley.ta_prf == NULL) {
@@ -632,7 +617,7 @@ void ikev1_natd_init(struct state *st, struct msg_digest *md)
 		}
 	}
 	if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_KA) {
-		DBG(DBG_NATT, DBG_log(" NAT_T_WITH_KA detected"));
+		dbg(" NAT_T_WITH_KA detected");
 		nat_traversal_new_ka_event();
 	}
 }
@@ -669,16 +654,14 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 	const struct connection *c = st->st_connection;
 
 	if (!LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
-		DBG(DBG_NATT,
-			DBG_log("not behind NAT: no NAT-T KEEP-ALIVE required for conn %s",
-				c->name));
+		dbg("not behind NAT: no NAT-T KEEP-ALIVE required for conn %s",
+		    c->name);
 		return;
 	}
 
 	if (!c->nat_keepalive) {
-		DBG(DBG_NATT,
-			DBG_log("Suppressing sending of NAT-T KEEP-ALIVE for conn %s (nat-keepalive=no)",
-				c->name));
+		dbg("Suppressing sending of NAT-T KEEP-ALIVE for conn %s (nat-keepalive=no)",
+		    c->name);
 		return;
 	}
 
@@ -706,8 +689,8 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 		if (!is_monotime_epoch(st->st_last_liveness) &&
 			deltasecs(monotimediff(mononow(), st->st_last_liveness)) < DEFAULT_KEEP_ALIVE_SECS)
 		{
-			DBG(DBG_NATT, DBG_log("NAT-T: keepalive packet not required as recent DPD event used the IKE SA on conn %s",
-				c->name));
+			dbg("NAT-T: keepalive packet not required as recent DPD event used the IKE SA on conn %s",
+			    c->name);
 			return;
 		}
 
@@ -718,9 +701,8 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 		 * expensive as we have to find some/all IPsec states and ask the kernel,
 		 * every 20s.
 		 */
-		DBG(DBG_NATT,
-			DBG_log("we are behind NAT: sending of NAT-T KEEP-ALIVE for conn %s (nat-keepalive=yes)",
-				c->name));
+		dbg("we are behind NAT: sending of NAT-T KEEP-ALIVE for conn %s (nat-keepalive=yes)",
+		    c->name);
 		nat_traversal_send_ka(st);
 		return;
 	}

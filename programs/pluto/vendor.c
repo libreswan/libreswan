@@ -777,13 +777,10 @@ static void handle_known_vendorid_v1(struct msg_digest *md,
 		/* FALL THROUGH */
 	case VID_NATT_RFC:
 		if (md->quirks.qnat_traversal_vid < vid->id) {
-			DBG(DBG_NATT, DBG_log(" quirks.qnat_traversal_vid set to=%d [%s]",
-					      vid->id, vid->descr));
+			dbg(" quirks.qnat_traversal_vid set to=%d [%s]", vid->id, vid->descr);
 			md->quirks.qnat_traversal_vid = vid->id;
 		} else {
-			DBG(DBG_NATT,
-			    DBG_log("Ignoring older NAT-T Vendor ID payload [%s]",
-				    vid->descr));
+			dbg("Ignoring older NAT-T Vendor ID payload [%s]", vid->descr);
 			vid_useful = FALSE;
 		}
 		break;
