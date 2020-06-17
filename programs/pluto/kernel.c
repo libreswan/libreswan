@@ -3398,6 +3398,8 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 	    address_is_specified(&c->temp_vars.redirect_ip)) {
 		redirected = TRUE;
 		tmp_ip = c->spd.that.host_addr;
+		tmp_ip.version = c->spd.that.host_addr.version;
+		tmp_ip.hport = c->spd.that.host_addr.hport;
 		c->spd.that.host_addr = st->st_remote_endpoint;
 	}
 
