@@ -610,7 +610,7 @@ static void cannot_oppo(struct find_oppo_bundle *b, err_t ughmsg)
 	address_buf pcb_buf;
 	const char *pcb = ipstr(&b->peer_client, &pcb_buf);
 
-	enum stream logger_stream = (DBGP(DBG_OPPO) ? ALL_STREAMS : WHACK_STREAM);
+	enum stream logger_stream = (DBGP(DBG_BASE) ? ALL_STREAMS : WHACK_STREAM);
 	log_global(logger_stream | RC_OPPOFAILURE, b->whackfd,
 		   "cannot opportunistically initiate for %s to %s: %s",
 		   ocb, pcb, ughmsg);

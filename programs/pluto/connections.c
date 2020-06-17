@@ -2499,7 +2499,7 @@ struct connection *build_outgoing_opportunistic_connection(const ip_address *our
 		c = find_host_pair_connections(&p->local_endpoint, NULL);
 
 		for (; c != NULL; c = c->hp_next) {
-			DBGF(DBG_OPPO, "checking %s", c->name);
+			dbg("checking %s", c->name);
 			if (c->kind == CK_GROUP)
 				continue;
 

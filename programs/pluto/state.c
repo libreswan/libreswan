@@ -959,10 +959,9 @@ void delete_state(struct state *st)
 		ipsec_spi_t failure_shunt = shunt_policy_spi(c, FALSE /* failure_shunt */);
 		ipsec_spi_t nego_shunt = shunt_policy_spi(c, TRUE /* negotiation shunt */);
 
-		DBG(DBG_OPPO, DBG_log(
-			"OE: delete_state orphaning hold with failureshunt %s (negotiation shunt would have been %s)",
-			enum_short_name(&spi_names, failure_shunt),
-			enum_short_name(&spi_names, nego_shunt)));
+		dbg("OE: delete_state orphaning hold with failureshunt %s (negotiation shunt would have been %s)",
+		    enum_short_name(&spi_names, failure_shunt),
+		    enum_short_name(&spi_names, nego_shunt));
 
 		if (!orphan_holdpass(c, &c->spd, c->spd.this.protocol, failure_shunt)) {
 			loglog(RC_LOG_SERIOUS, "orphan_holdpass() failure ignored");
