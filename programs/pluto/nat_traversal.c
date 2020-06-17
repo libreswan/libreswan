@@ -655,7 +655,7 @@ static void nat_traversal_send_ka(struct state *st)
 	    st->st_serialno);
 
 	/* send keep alive */
-	DBG(DBG_NATT | DBG_DPD, DBG_log("sending NAT-T Keep Alive"));
+	dbg("sending NAT-T Keep Alive");
 	send_keepalive(st, "NAT-T Keep Alive");
 	reset_cur_state();
 }

@@ -3367,8 +3367,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 			st->st_state->kind != STATE_UNDEFINED &&
 			IS_CHILD_SA_ESTABLISHED(st) &&
 			dpd_active_locally(st)) {
-			DBG(DBG_DPD,
-			    DBG_log("dpd enabled, scheduling ikev2 liveness checks"));
+			dbg("dpd enabled, scheduling ikev2 liveness checks");
 			deltatime_t delay = deltatime_max(c->dpd_delay, deltatime(MIN_LIVENESS));
 			event_schedule(EVENT_v2_LIVENESS, delay, st);
 		}

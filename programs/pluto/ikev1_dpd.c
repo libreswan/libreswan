@@ -122,26 +122,26 @@ stf_status dpd_init(struct state *st)
 	bool want_dpd = dpd_active_locally(st);
 
 	if (IS_IKE_SA(st)) { /* so we log this only once */
-		DBG(DBG_DPD, DBG_log("DPD: dpd_init() called on ISAKMP SA"));
+		dbg("DPD: dpd_init() called on ISAKMP SA");
 
 		if (!peer_supports_dpd) {
-			DBG(DBG_DPD, DBG_log("DPD: Peer does not support Dead Peer Detection"));
+			dbg("DPD: Peer does not support Dead Peer Detection");
 			if (want_dpd)
 				loglog(RC_LOG_SERIOUS,
 					"Configured DPD (RFC 3706) support not enabled because remote peer did not advertise DPD support");
 			return STF_OK;
 		} else {
-			DBG(DBG_DPD, DBG_log("DPD: Peer supports Dead Peer Detection"));
+			dbg("DPD: Peer supports Dead Peer Detection");
 		}
 
 		if (!want_dpd) {
-			DBG(DBG_DPD, DBG_log("DPD: not initializing DPD because DPD is disabled locally"));
+			dbg("DPD: not initializing DPD because DPD is disabled locally");
 			return STF_OK;
 		}
 	} else {
-		DBG(DBG_DPD, DBG_log("DPD: dpd_init() called on IPsec SA"));
+		dbg("DPD: dpd_init() called on IPsec SA");
 		if (!peer_supports_dpd || !want_dpd) {
-			DBG(DBG_DPD, DBG_log("DPD: Peer does not support Dead Peer Detection"));
+			dbg("DPD: Peer does not support Dead Peer Detection");
 			return STF_OK;
 		}
 
@@ -171,8 +171,7 @@ static void dpd_sched_timeout(struct state *p1st, monotime_t nw, deltatime_t tim
 	passert(deltasecs(timeout) > 0);
 	if (p1st->st_dpd_event == NULL ||
 	    monobefore(monotime_add(nw, timeout), p1st->st_dpd_event->ev_time)) {
-		DBG(DBG_DPD, DBG_log("DPD: scheduling timeout to %ld",
-				     (long)deltasecs(timeout)));
+		dbg("DPD: scheduling timeout to %jd", deltasecs(timeout));
 		event_delete(EVENT_DPD, p1st);
 		event_schedule(EVENT_DPD_TIMEOUT, timeout, p1st);
 	}
@@ -189,25 +188,21 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 {
 	uint32_t seqno;
 
-	DBG(DBG_DPD, {
-		char cib[CONN_INST_BUF];
-		DBG_log("DPD: processing for state #%lu (\"%s\"%s)",
-			st->st_serialno,
-			st->st_connection->name,
-			fmt_conn_instance(st->st_connection, cib));
-	});
+	connection_buf cib;
+	dbg("DPD: processing for state #%lu ("PRI_CONNECTION")",
+	    st->st_serialno, pri_connection(st->st_connection, &cib));
 
 	/* if peer doesn't support DPD, DPD should never have started */
 	pexpect(st->hidden_variables.st_peer_supports_dpd);	/* ??? passert? */
 	if (!st->hidden_variables.st_peer_supports_dpd) {
-		DBG(DBG_DPD, DBG_log("DPD: peer does not support dpd"));
+		dbg("DPD: peer does not support dpd");
 		return;
 	}
 
 	/* If there is no IKE state, there can be no DPD */
 	pexpect(IS_ISAKMP_SA_ESTABLISHED(p1st->st_state));	/* ??? passert? */
 	if (!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state)) {
-		DBG(DBG_DPD, DBG_log("DPD: no phase1 state, so no DPD"));
+		dbg("DPD: no phase1 state, so no DPD");
 		return;
 	}
 
@@ -252,7 +247,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	if (eroute_care && st->hidden_variables.st_nat_traversal == LEMPTY &&
 			!was_eroute_idle(st, delay))
 	{
-		DBG(DBG_DPD, DBG_log("DPD: out event not sent, phase 2 active"));
+		dbg("DPD: out event not sent, phase 2 active");
 
 		/* update phase 2 time stamp only */
 		st->st_last_dpd = nw;
@@ -265,8 +260,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 		 */
 		if (p1st->st_dpd_event != NULL &&
 		    p1st->st_dpd_event->ev_type == EVENT_DPD_TIMEOUT) {
-			DBG(DBG_DPD,
-			    DBG_log("DPD: deleting p1st DPD event"));
+			dbg("DPD: deleting p1st DPD event");
 			event_delete(EVENT_DPD, p1st);
 		}
 
@@ -340,8 +334,7 @@ static void p2_dpd_outI1(struct state *p2st)
 	}
 
 	if (st->st_connection->newest_ipsec_sa != p2st->st_serialno) {
-		DBG(DBG_DPD,
-		    DBG_log("DPD: no need to send or schedule DPD for replaced IPsec SA"));
+		dbg("DPD: no need to send or schedule DPD for replaced IPsec SA");
 		return;
 	}
 
@@ -391,14 +384,12 @@ stf_status dpd_inI_outR(struct state *p1st,
 	if (!memeq(pbs->cur, p1st->st_ike_spis.initiator.bytes, COOKIE_SIZE)) {
 		/* RFC states we *SHOULD* check cookies, not MUST.  So invalid
 		   cookies are technically valid, as per Geoffrey Huang */
-		DBG(DBG_DPD,
-		    DBG_log("DPD: R_U_THERE has invalid icookie (tolerated)"));
+		dbg("DPD: R_U_THERE has invalid icookie (tolerated)");
 	}
 	pbs->cur += COOKIE_SIZE;
 
 	if (!memeq(pbs->cur, p1st->st_ike_spis.responder.bytes, COOKIE_SIZE)) {
-		DBG(DBG_DPD,
-		    DBG_log("DPD: R_U_THERE has invalid rcookie (tolerated)"));
+		dbg("DPD: R_U_THERE has invalid rcookie (tolerated)");
 	}
 	pbs->cur += COOKIE_SIZE;
 
@@ -496,16 +487,14 @@ stf_status dpd_inR(struct state *p1st,
 	if (!memeq(pbs->cur, p1st->st_ike_spis.initiator.bytes, COOKIE_SIZE)) {
 		/* RFC states we *SHOULD* check cookies, not MUST.  So invalid
 		   cookies are technically valid, as per Geoffrey Huang */
-		DBG(DBG_DPD,
-		    DBG_log("DPD: R_U_THERE_ACK has invalid icookie"));
+		dbg("DPD: R_U_THERE_ACK has invalid icookie");
 	}
 	pbs->cur += COOKIE_SIZE;
 
 	if (!memeq(pbs->cur, p1st->st_ike_spis.responder.bytes, COOKIE_SIZE)) {
 		/* RFC states we *SHOULD* check cookies, not MUST.  So invalid
 		   cookies are technically valid, as per Geoffrey Huang */
-		DBG(DBG_DPD,
-		    DBG_log("DPD: R_U_THERE_ACK has invalid rcookie"));
+		dbg("DPD: R_U_THERE_ACK has invalid rcookie");
 	}
 	pbs->cur += COOKIE_SIZE;
 
@@ -517,9 +506,8 @@ stf_status dpd_inR(struct state *p1st,
 	}
 
 	seqno = ntohl(*(uint32_t *)pbs->cur);
-	DBG(DBG_DPD,
-	    DBG_log("DPD: R_U_THERE_ACK, seqno received: %u expected: %u (state=#%lu)",
-		    seqno, p1st->st_dpd_expectseqno, p1st->st_serialno));
+	dbg("DPD: R_U_THERE_ACK, seqno received: %u expected: %u (state=#%lu)",
+	    seqno, p1st->st_dpd_expectseqno, p1st->st_serialno);
 
 	if (seqno == p1st->st_dpd_expectseqno) {
 		/* update the time stamp */

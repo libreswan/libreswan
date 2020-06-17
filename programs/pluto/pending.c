@@ -220,19 +220,16 @@ static void delete_pending(struct pending **pp)
 		connection_discard(p->connection);
 	close_any(&p->whack_sock); /*on-heap*/
 
-	DBG(DBG_DPD, {
+	if (DBGP(DBG_BASE)) {
 		if (p->connection == NULL) {
 			/* ??? when does this happen? */
-			DBG_log("removing pending policy for no connection {%p}",
-				p);
+			DBG_log("removing pending policy for no connection {%p}", p);
 		} else {
-			char cib[CONN_INST_BUF];
-			DBG_log("removing pending policy for \"%s\"%s {%p}",
-				p->connection->name,
-				fmt_conn_instance(p->connection, cib),
-				p);
+			connection_buf cib;
+			DBG_log("removing pending policy for "PRI_CONNECTION" {%p}",
+				pri_connection(p->connection, &cib), p);
 		}
-	});
+	}
 
 	pfreeany(p->uctx);
 	pfree(p);
@@ -341,25 +338,18 @@ bool pending_check_timeout(const struct connection *c)
 	struct pending **pp, *p;
 
 	for (pp = host_pair_first_pending(c); (p = *pp) != NULL; ) {
-		DBG(DBG_DPD, {
-			deltatime_t waited = monotimediff(mononow(), p->pend_time);
-			char cib[CONN_INST_BUF];
-			DBG_log("checking connection \"%s\"%s for stuck phase 2s (waited %jd, patience 3*%jd)",
-				c->name,
-				fmt_conn_instance(c, cib),
-				deltasecs(waited),
-				deltasecs(c->dpd_timeout));
-			});
-
+		deltatime_t waited = monotimediff(mononow(), p->pend_time);
+		connection_buf cib;
+		dbg("checking connection "PRI_CONNECTION" for stuck phase 2s (waited %jd, patience 3*%jd)",
+		    pri_connection(c, &cib), deltasecs(waited),
+		    deltasecs(c->dpd_timeout));
 		if (deltasecs(c->dpd_timeout) > 0) {
 			if (!monobefore(mononow(),
 				monotime_add(p->pend_time,
 					deltatimescale(3, 1, c->dpd_timeout)))) {
-				DBG(DBG_DPD, {
-					char cib[CONN_INST_BUF];
-					DBG_log("connection \"%s\"%s stuck, restarting",
-						c->name, fmt_conn_instance(c, cib));
-				});
+				connection_buf cib;
+				dbg("connection "PRI_CONNECTION" stuck, restarting",
+				    pri_connection(c, &cib));
 				return TRUE;
 			}
 		}

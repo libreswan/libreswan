@@ -4211,8 +4211,8 @@ void liveness_clear_connection(struct connection *c, const char *v)
 	} else {
 		flush_pending_by_connection(c); /* remove any partial negotiations that are failing */
 		delete_states_by_connection(c, TRUE, null_fd/*no-whack?*/);
-		DBGF(DBG_DPD, "%s: unrouting connection %s action - clearing",
-			enum_name(&connection_kind_names, c->kind), v);
+		dbg("%s: unrouting connection %s action - clearing",
+		    enum_name(&connection_kind_names, c->kind), v);
 		unroute_connection(c); /* --unroute */
 	}
 }
@@ -4241,8 +4241,7 @@ void liveness_action(struct connection *c, enum ike_version ike_version)
 	case DPD_ACTION_HOLD:
 		libreswan_log("%s action - putting connection into hold", ikev);
 		if (c->kind == CK_INSTANCE) {
-			DBGF(DBG_DPD, "%s warning dpdaction=hold on instance futile - will be deleted",
-				ikev);
+			dbg("%s warning dpdaction=hold on instance futile - will be deleted", ikev);
 		}
 		delete_states_by_connection(c, TRUE, null_fd/*no-whack?*/);
 		break;
