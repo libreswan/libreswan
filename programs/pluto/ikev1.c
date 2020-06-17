@@ -1062,7 +1062,8 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				}
 
 				/* save peer's old address for comparison purposes */
-				ip_address old_addr = tmp_c->spd.that.host_addr;
+				if (tmp_c != NULL)
+					ip_address old_addr = tmp_c->spd.that.host_addr;
 
 				/* update peer's address */
 				tmp_c->spd.that.host_addr = new_peer;
