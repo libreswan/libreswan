@@ -48,10 +48,7 @@ sleep 2
 ipsec auto --up west-ekuCritical-eku-emailProtection
 ipsec auto --delete west-ekuCritical-eku-emailProtection
 sleep 2
-# following tests should fail (but it does not?)
+# following test should fail (but it does not - It is an nss-ism - we will ignore it for now)
 ipsec auto --up west-ekuBOGUS-bad
 ipsec auto --delete west-ekuBOGUS-bad
-sleep 2
-ipsec auto --up west-ku-keyAgreement-bad
-ipsec auto --delete west-ku-keyAgreement-bad
 echo "done"
