@@ -864,14 +864,12 @@ static bool add_xauth_addresspool(struct connection *c,
 		snprintf(single_addresspool, sizeof(single_addresspool),
 			"%s-%s",
 			addresspool, addresspool);
-		DBG(DBG_CONTROLMORE|DBG_XAUTH,
-			DBG_log("XAUTH: adding single ip addresspool entry %s for the conn %s user=%s",
-				single_addresspool, c->name, userid));
+		dbg("XAUTH: adding single ip addresspool entry %s for the conn %s user=%s",
+		    single_addresspool, c->name, userid);
 		er = ttorange(single_addresspool, &ipv4_info, &pool_range);
 	} else {
-		DBG(DBG_CONTROLMORE|DBG_XAUTH,
-			DBG_log("XAUTH: adding addresspool entry %s for the conn %s user %s",
-				addresspool, c->name, userid));
+		dbg("XAUTH: adding addresspool entry %s for the conn %s user %s",
+		    addresspool, c->name, userid);
 		er = ttorange(addresspool, &ipv4_info, &pool_range);
 	}
 	if (er != NULL) {
@@ -998,12 +996,11 @@ static bool do_file_authentication(struct state *st, const char *name,
 		if (connectionname != NULL && connectionname[0] == '\0')
 			connectionname = NULL;
 
-		DBG(DBG_XAUTH|DBG_CONTROLMORE,
-			DBG_log("XAUTH: found user(%s/%s) pass(%s) connid(%s/%s) addresspool(%s)",
-				userid, name, passwdhash,
-				connectionname == NULL ? "" : connectionname,
-				connname,
-				addresspool == NULL ? "" : addresspool));
+		dbg("XAUTH: found user(%s/%s) pass(%s) connid(%s/%s) addresspool(%s)",
+		    userid, name, passwdhash,
+		    connectionname == NULL ? "" : connectionname,
+		    connname,
+		    addresspool == NULL ? "" : addresspool);
 
 		/* If connectionname is null, it applies to all connections */
 		if (streq(userid, name) &&
@@ -1272,8 +1269,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 
 		case XAUTH_USER_NAME | ISAKMP_ATTR_AF_TLV:
 			if (gotname) {
-				DBG(DBG_CONTROLMORE|DBG_XAUTH,
-				    DBG_log("XAUTH: two User Names!  Rejected"));
+				dbg("XAUTH: two User Names!  Rejected");
 				return STF_FAIL + NO_PROPOSAL_CHOSEN;
 			}
 			sz = pbs_left(&strattr);
@@ -2252,12 +2248,12 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 	}
 
 	if (gotrequest) {
-		DBG(DBG_CONTROLMORE|DBG_XAUTH, {
+		if (DBGP(DBG_BASE)) {
 			if (xauth_resp &
 			    (XAUTHLELEM(XAUTH_USER_NAME) |
 			     XAUTHLELEM(XAUTH_USER_PASSWORD)))
 				DBG_log("XAUTH: Username or password request received");
-		});
+		}
 
 		/* sanitize what we were asked to reply to */
 		if (LDISJOINT(xauth_resp,

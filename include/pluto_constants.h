@@ -416,7 +416,6 @@ enum {
 #define DBG_NATT	DBG_BASE
 #define DBG_X509	DBG_BASE
 #define DBG_DPD		DBG_BASE
-#define DBG_XAUTH	DBG_BASE
 
 /* These are not part of "base" debugging */
 #define DBG_TMI		LELEM(DBG_TMI_IX)
