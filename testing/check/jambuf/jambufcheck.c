@@ -104,6 +104,7 @@ static void check_jambuf(const char *expect, bool ok, ...)
 			}
 			str = va_arg(ap, const char *);
 		} while (str != NULL);
+		va_end(ap);
 		if (jambuf_ok(&buf) != ok) {
 			FAIL("jambuf_ok() is not %s at end", oks);
 			return;
