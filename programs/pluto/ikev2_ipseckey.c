@@ -109,7 +109,7 @@ static void dbg_log_dns_question(struct p_dns_req *dnsr,
 				ldns_rr_list_rr(
 					ldns_pkt_question(ldnspkt), i));
 		if (status != LDNS_STATUS_OK) {
-			DBG(DBG_DNS, DBG_log("could not parse DNS QUESTION section for %s", dnsr->dbg_buf));
+			dbg("could not parse DNS QUESTION section for %s", dnsr->dbg_buf);
 			return;
 		}
 	}
@@ -301,8 +301,6 @@ static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
 {
 	struct state *st = state_with_serialno(dnsr->so_serial_t);
 	ip_address ipaddr;
-	ipstr_buf ra;
-	ipstr_buf rb;
 	const struct ip_info *afi = address_type(&st->st_remote_endpoint);
 
 	if (dnsr->qtype != LDNS_RR_TYPE_A) {
@@ -314,18 +312,18 @@ static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
 		return;
 
 	if (!sameaddr(&ipaddr, &st->st_remote_endpoint)) {
-		DBG(DBG_DNS,
-			DBG_log(" forward address of IDi %s do not match remote address %s != %s",
-				dnsr->qname,
-				ipstr(&st->st_remote_endpoint, &ra),
-				ipstr(&ipaddr, &rb)));
+		address_buf ra, rb;
+		dbg(" forward address of IDi %s do not match remote address %s != %s",
+		    dnsr->qname,
+		    str_address(&st->st_remote_endpoint, &ra),
+		    str_address(&ipaddr, &rb));
 		return;
 	}
 
 	dnsr->fwd_addr_valid = TRUE;
-	DBG(DBG_DNS, DBG_log("address of IDi %s match remote address %s",
-				dnsr->qname,
-				ipstr(&st->st_remote_endpoint, &ra)));
+	address_buf ra;
+	dbg("address of IDi %s match remote address %s",
+	    dnsr->qname, str_address(&st->st_remote_endpoint, &ra));
 }
 
 static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
@@ -356,18 +354,15 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 		output = ldns_buffer_new((dnsr->wire_len * 8/6 + 2 +1) * 2);
 
 		if (qclass != dnsr->qclass) {
-			DBG(DBG_DNS,
-				DBG_log("dns answer %zu qclass mismatch expect %s vs %s ignore the answer now",
-					i, class_e->name, class->name));
+			dbg("dns answer %zu qclass mismatch expect %s vs %s ignore the answer now",
+			    i, class_e->name, class->name);
 			/* unexpected qclass. possibly malfuctioning dns */
 			continue;
 		}
 
 		rdf = ldns_rr_rdf(ans, 0);
 		if (rdf == NULL) {
-			DBG(DBG_DNS,
-				DBG_log("dns answer %zu did not convert to rdf ignore this answer",
-					i));
+			dbg("dns answer %zu did not convert to rdf ignore this answer", i);
 			continue;
 		}
 
@@ -418,7 +413,7 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 			continue;
 		}
 
-		DBG(DBG_DNS, DBG_log("%s", ldns_buffer_begin(output)));
+		dbg("%s", ldns_buffer_begin(output));
 		ldns_buffer_free(output);
 		output = NULL;
 
@@ -432,9 +427,8 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 
 		if (atype != dnsr->qtype) {
 			/* dns server stuffed extra rr types, ignore */
-			DBG(DBG_DNS,
-				DBG_log("dns answer %zu qtype mismatch expect %d vs %d ignore this answer",
-					i, dnsr->qtype, atype));
+			dbg("dns answer %zu qtype mismatch expect %d vs %d ignore this answer",
+			    i, dnsr->qtype, atype);
 		}
 	}
 
@@ -466,7 +460,7 @@ static err_t process_dns_resp(struct p_dns_req *dnsr)
 
 	case UB_EVENT_INSECURE:
 		if (impair.allow_dns_insecure) {
-			DBG(DBG_DNS, DBG_log("Allowing insecure DNS response due to impair"));
+			libreswan_log("IMPAIR: allowing insecure DNS response");
 			return parse_rr(dnsr, ldnspkt);
 		}
 		return "unbound returned INSECURE response - ignored";

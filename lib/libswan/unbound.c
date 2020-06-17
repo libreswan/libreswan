@@ -58,10 +58,10 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 {
 	int ugh;
 
-	if (DBGP(DBG_DNS)) {
+	if (DBGP(DBG_BASE)) {
 		ub_ctx_debuglevel(dns_ctx, 5);
 		DBG_log("unbound context created - setting debug level to 5");
-	};
+	}
 
 	/* lookup from /etc/hosts before DNS lookups as people expect that */
 	ugh = ub_ctx_hosts(dns_ctx, "/etc/hosts");
@@ -69,7 +69,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 		loglog(RC_LOG_SERIOUS, "error reading hosts: %s: %s",
 			ub_strerror(ugh), strerror(errno));
 	} else {
-		DBGF(DBG_DNS, "/etc/hosts lookups activated");
+		dbg("/etc/hosts lookups activated");
 	}
 
 	/*
@@ -92,7 +92,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 		loglog(RC_LOG_SERIOUS, "error reading /etc/resolv.conf: %s: [errno: %s]",
 			ub_strerror(ugh), strerror(e));
 	} else {
-		DBGF(DBG_DNS, "/etc/resolv.conf usage activated");
+		dbg("/etc/resolv.conf usage activated");
 	}
 
 	/*
@@ -104,7 +104,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 		loglog(RC_LOG_SERIOUS, "error setting outgoing-port-avoid: %s: %s",
 			ub_strerror(ugh), strerror(errno));
 	} else {
-		DBGF(DBG_DNS, "outgoing-port-avoid set 0-65535");
+		dbg("outgoing-port-avoid set 0-65535");
 	}
 
 	errno = 0;
@@ -113,12 +113,12 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 		loglog(RC_LOG_SERIOUS, "error setting outgoing-port-permit: %s: %s",
 			ub_strerror(ugh), strerror(errno));
 	} else {
-		DBGF(DBG_DNS, "outgoing-port-permit set 32768-60999");
+		dbg("outgoing-port-permit set 32768-60999");
 	}
 
 	if (!do_dnssec) {
 		/* No DNSSEC - nothing more to configure */
-		DBGF(DBG_DNS, "dnssec validation disabled by configuration");
+		dbg("dnssec validation disabled by configuration");
 		return;
 	}
 
@@ -132,7 +132,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 			loglog(RC_LOG_SERIOUS, "dnssec-enable=yes but no dnssec-rootkey-file specified. Additional trust anchor file MUST include a root trust anchor or DNSSEC validation will be disabled");
 		}
 	} else {
-		DBGF(DBG_DNS, "Loading dnssec root key from:%s", rootfile);
+		dbg("loading dnssec root key from:%s", rootfile);
 		errno = 0;
 		ugh = ub_ctx_add_ta_file(dns_ctx, rootfile);
 		if (ugh != 0) {
@@ -145,7 +145,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 	}
 
 	if (trusted == NULL) {
-		DBGF(DBG_DNS, "No additional dnssec trust anchors defined via dnssec-trusted= option");
+		dbg("no additional dnssec trust anchors defined via dnssec-trusted= option");
 	} else {
 		glob_t globbuf;
 		char **fnp;
@@ -159,7 +159,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 					loglog(RC_LOG_SERIOUS, "Ignored trusted key file %s: %s",
 						*fnp,  ub_strerror(ugh));
 				} else {
-					DBGF(DBG_DNS, "Added contents of trusted key file %s to unbound resolver context",
+					dbg("added contents of trusted key file %s to unbound resolver context",
 						*fnp);
 				}
 			}
@@ -257,17 +257,17 @@ bool unbound_resolve(char *src, size_t srclen, int af, ip_address *ipaddr)
 	}
 	if (!result->havedata) {
 		if (result->secure) {
-			DBGF(DBG_DNS, "Validated reply proves '%s' does not exist",
+			dbg("validated reply proves '%s' does not exist",
 				src);
 		} else {
-			DBGF(DBG_DNS, "Failed to resolve '%s' (%s)", src,
+			dbg("failed to resolve '%s' (%s)", src,
 				result->bogus ? "BOGUS" : "insecure");
 		}
 		ub_resolve_free(result);
 		return FALSE;
 	} else if (!result->bogus) {
 		if (!result->secure) {
-			DBGF(DBG_DNS, "warning: %s lookup was not protected by DNSSEC!",
+			dbg("warning: %s lookup was not protected by DNSSEC!",
 				result->qname);
 		}
 	}
@@ -302,7 +302,7 @@ bool unbound_resolve(char *src, size_t srclen, int af, ip_address *ipaddr)
 			0, af, ipaddr);
 		ub_resolve_free(result);
 		if (err == NULL) {
-			DBGF(DBG_DNS, "success for %s lookup",
+			dbg("success for %s lookup",
 				(af == AF_INET) ? "IPv4" : "IPv6");
 			return TRUE;
 		} else {
