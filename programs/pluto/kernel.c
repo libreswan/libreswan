@@ -2682,8 +2682,7 @@ static void look_for_replacement_state(struct state *st)
 		 * then there is an old state associated, and it is
 		 * different then the new one.
 		 */
-		libreswan_log("keeping ref_peer=%" PRIu32 " during rekey",
-			ost->st_ref_peer);
+		dbg("keeping ref_peer=%" PRIu32 " during rekey", ost->st_ref_peer);
 		st->st_ref_peer = ost->st_ref_peer;
 	}
 }
@@ -2780,9 +2779,7 @@ bool install_inbound_ipsec_sa(struct state *st)
 	 * we can refer to it in the incoming SA.
 	 */
 	if (st->st_ref_peer == IPSEC_SAREF_NULL && !st->st_outbound_done) {
-		DBG(DBG_CONTROL,
-			DBG_log("installing outgoing SA now as ref_peer=%u",
-				st->st_ref_peer));
+		dbg("installing outgoing SA now as ref_peer=%u", st->st_ref_peer);
 		if (!setup_half_ipsec_sa(st, FALSE)) {
 			DBG_log("failed to install outgoing SA: %u",
 				st->st_ref_peer);
@@ -2791,7 +2788,7 @@ bool install_inbound_ipsec_sa(struct state *st)
 
 		st->st_outbound_done = TRUE;
 	}
-	DBG(DBG_CONTROL, DBG_log("outgoing SA has ref_peer=%u", st->st_ref_peer));
+	dbg("outgoing SA has ref_peer=%u", st->st_ref_peer);
 
 	/* (attempt to) actually set up the SAs */
 

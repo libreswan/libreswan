@@ -2341,13 +2341,11 @@ void fmt_state(struct state *st, const monotime_t now,
 #endif
 
 		snprintf(state_buf2, state_buf2_len,
-			"#%lu: \"%s\"%s%s%s ref=%" PRIu32 " ref_peer=%" PRIu32 " %s %s%s",
+			"#%lu: \"%s\"%s%s%s %s %s%s",
 			st->st_serialno,
 			c->name, inst,
 			lastused,
 			saids_buf,
-			st->st_ref,
-			st->st_ref_peer,
 			traffic_buf,
 			st->st_xauth_username[0] != '\0' ? "username=" : "",
 			st->st_xauth_username);
