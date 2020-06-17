@@ -2590,11 +2590,11 @@ static void v2_dispatch(struct ike_sa *ike, struct state *st,
 		v2_msgid_start_responder(ike, st, md);
 	}
 
-	DBG(DBG_PARSING, {
-		    if (pbs_left(&md->message_pbs) != 0)
-			    DBG_log("removing %d bytes of padding",
-				    (int) pbs_left(&md->message_pbs));
-	    });
+	if (DBGP(DBG_BASE)) {
+		if (pbs_left(&md->message_pbs) != 0)
+			DBG_log("removing %d bytes of padding",
+				(int) pbs_left(&md->message_pbs));
+	}
 
 	md->message_pbs.roof = md->message_pbs.cur;	/* trim padding (not actually legit) */
 

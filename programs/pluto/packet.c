@@ -2207,16 +2207,18 @@ bool in_raw(void *bytes, size_t len, pb_stream *ins, const char *name)
 		return FALSE;
 	} else {
 		if (bytes == NULL) {
-			DBG(DBG_PARSING,
-			    DBG_log("skipping %u raw bytes of %s (%s)",
-				    (unsigned) len, ins->name, name);
-			    DBG_dump(name, ins->cur, len));
+			if (DBGP(DBG_BASE)) {
+				DBG_log("skipping %u raw bytes of %s (%s)",
+					(unsigned) len, ins->name, name);
+				DBG_dump(name, ins->cur, len);
+			}
 		} else {
 			memcpy(bytes, ins->cur, len);
-			DBG(DBG_PARSING,
-			    DBG_log("parsing %u raw bytes of %s into %s",
-				    (unsigned) len, ins->name, name);
-			    DBG_dump(name, bytes, len));
+			if (DBGP(DBG_BASE)) {
+				DBG_log("parsing %u raw bytes of %s into %s",
+					(unsigned) len, ins->name, name);
+				DBG_dump(name, bytes, len);
+			}
 		}
 		ins->cur += len;
 		return TRUE;

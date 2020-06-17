@@ -293,19 +293,16 @@ static void compute_proto_keymat(struct state *st,
 					needed_len =
 						pi->attrs.transattrs.enckeylen
 						/ BITS_PER_BYTE;
-					DBG(DBG_PARSING,
-					    DBG_log("compute_proto_keymat: key_len=%d from peer",
-						    (int)needed_len));
+					dbg("compute_proto_keymat: key_len=%d from peer",
+					    (int)needed_len);
 				}
 				break;
 			}
 			bad_case(pi->attrs.transattrs.ta_ikev1_encrypt);
 		}
-		DBG(DBG_PARSING, DBG_log("compute_proto_keymat: needed_len (after ESP enc)=%d",
-					 (int)needed_len));
+		dbg("compute_proto_keymat: needed_len (after ESP enc)=%d", (int)needed_len);
 		needed_len += pi->attrs.transattrs.ta_integ->integ_keymat_size;
-		DBG(DBG_PARSING, DBG_log("compute_proto_keymat: needed_len (after ESP auth)=%d",
-					 (int)needed_len));
+		dbg("compute_proto_keymat: needed_len (after ESP auth)=%d", (int)needed_len);
 		break;
 
 	case PROTO_IPSEC_AH:
@@ -481,9 +478,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 	/* set the port selector */
 	setportof(htons(id->isaiid_port), &net->addr);
 
-	DBG(DBG_PARSING | DBG_CONTROL,
-	    DBG_log("%s protocol/port is %d/%d", which, id->isaiid_protoid,
-		    id->isaiid_port));
+	dbg("%s protocol/port is %d/%d", which, id->isaiid_protoid, id->isaiid_port);
 
 	return TRUE;
 }

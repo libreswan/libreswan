@@ -495,8 +495,9 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 	/* Take first */
 	p = md->chain[ISAKMP_NEXT_NATOA_RFC];
 
-	DBG(DBG_PARSING,
-		DBG_dump("NAT-OA:", p->pbs.start, pbs_room(&p->pbs)));
+	if (DBGP(DBG_BASE)) {
+		DBG_dump("NAT-OA:", p->pbs.start, pbs_room(&p->pbs));
+	}
 
 	ip_address ip;
 	struct pbs_in pbs = p->pbs;

@@ -419,20 +419,23 @@ bool extract_peer_id(enum ike_id_type kind, struct id *peer, const pb_stream *id
 
 	case ID_KEY_ID:
 		peer->name = chunk2(id_pbs->cur, left);
-		DBG(DBG_PARSING,
-		    DBG_dump_hunk("KEY ID:", peer->name));
+		if (DBGP(DBG_BASE)) {
+			DBG_dump_hunk("KEY ID:", peer->name);
+		}
 		break;
 
 	case ID_DER_ASN1_DN:
 		peer->name = chunk2(id_pbs->cur, left);
-		DBG(DBG_PARSING,
-		    DBG_dump_hunk("DER ASN1 DN:", peer->name));
+		if (DBGP(DBG_BASE)) {
+		    DBG_dump_hunk("DER ASN1 DN:", peer->name);
+		}
 		break;
 
 	case ID_NULL:
 		if (left != 0) {
-			DBG(DBG_PARSING,
-				DBG_dump("unauthenticated NULL ID:", id_pbs->cur, left));
+			if (DBGP(DBG_BASE)) {
+				DBG_dump("unauthenticated NULL ID:", id_pbs->cur, left);
+			}
 		}
 		break;
 

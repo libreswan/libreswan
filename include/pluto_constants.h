@@ -407,7 +407,6 @@ enum {
 /* singleton sets: must be kept in sync with the items! */
 
 /* so things don't break */
-#define DBG_PARSING	DBG_BASE
 #define DBG_CONTROL	DBG_BASE
 #define DBG_KERNEL	DBG_BASE
 #define DBG_CONTROLMORE	DBG_BASE

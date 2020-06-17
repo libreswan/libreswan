@@ -170,9 +170,8 @@ bool kernel_alg_encrypt_key_size(const struct encrypt_desc *encrypt,
 	 * much.
 	 */
 	*key_size = keylen / BITS_PER_BYTE;
-	DBG(DBG_PARSING,
-	    DBG_log("encrypt %s keylen=%d transid=%d, key_size=%zu, encryptalg=%d",
-		    encrypt->common.fqn, keylen, transid, *key_size, sadb_ealg));
+	dbg("encrypt %s keylen=%d transid=%d, key_size=%zu, encryptalg=%d",
+	    encrypt->common.fqn, keylen, transid, *key_size, sadb_ealg);
 	return true;
 }
 

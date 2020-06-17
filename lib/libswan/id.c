@@ -309,7 +309,7 @@ bool any_id(const struct id *a)
 bool same_id(const struct id *a, const struct id *b)
 {
 	if (b->kind == ID_NONE || a->kind == ID_NONE) {
-		DBG(DBG_PARSING, DBG_log("id type with ID_NONE means wildcard match"));
+		dbg("id type with ID_NONE means wildcard match");
 		return TRUE; /* it's the wildcard */
 	}
 
@@ -323,7 +323,7 @@ bool same_id(const struct id *a, const struct id *b)
 
 	case ID_NULL:
 		if (a->kind == b->kind) {
-			DBG(DBG_PARSING, DBG_log("ID_NULL: id kind matches"));
+			dbg("ID_NULL: id kind matches");
 			return TRUE;
 		}
 		return FALSE;

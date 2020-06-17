@@ -77,8 +77,7 @@ size_t asn1_length(chunk_t *blob)
 
 	if (blob->len < 2)
 	{
-		DBG(DBG_PARSING, DBG_log(
-			"insufficient number of octets to parse ASN.1 length"));
+		dbg("insufficient number of octets to parse ASN.1 length");
 		return ASN1_INVALID_LENGTH;
 	}
 
@@ -92,8 +91,7 @@ size_t asn1_length(chunk_t *blob)
 
 	if ((n & 0x80) == 0) { /* single length octet */
 		if (n > blob->len) {
-			DBG(DBG_PARSING,
-				DBG_log("number of length octets is larger than ASN.1 object"));
+			dbg("number of length octets is larger than ASN.1 object");
 			return ASN1_INVALID_LENGTH;
 		}
 		return n;
@@ -103,15 +101,13 @@ size_t asn1_length(chunk_t *blob)
 	n &= 0x7f;
 
 	if (n > blob->len) {
-		DBG(DBG_PARSING,
-			DBG_log("number of length octets is larger than ASN.1 object"));
+		dbg("number of length octets is larger than ASN.1 object");
 		return ASN1_INVALID_LENGTH;
 	}
 
 	if (n > sizeof(len)) {
-		DBG(DBG_PARSING,
-			DBG_log("number of length octets is larger than limit of %d octets",
-				(int) sizeof(len)));
+		dbg("number of length octets is larger than limit of %zd octets",
+		    sizeof(len));
 		return ASN1_INVALID_LENGTH;
 	}
 
@@ -122,8 +118,7 @@ size_t asn1_length(chunk_t *blob)
 		blob->len--;
 	}
 	if (len > blob->len) {
-		DBG(DBG_PARSING,
-			DBG_log("length is larger than remaining blob size"));
+		dbg("length is larger than remaining blob size");
 		return ASN1_INVALID_LENGTH;
 	}
 
@@ -136,10 +131,8 @@ size_t asn1_length_signature(chunk_t *blob , chunk_t *sig_val)
 	u_char type_r,type_s;
 	int len_r,len_s;
 
-	if (blob->len < 2)
-	{
-		DBG(DBG_PARSING, DBG_log(
-			"insufficient number of octets to parse DER Signature length"));
+	if (blob->len < 2) {
+		dbg("insufficient number of octets to parse DER Signature length");
 		return ASN1_INVALID_LENGTH;
 	}
 
@@ -163,7 +156,7 @@ size_t asn1_length_signature(chunk_t *blob , chunk_t *sig_val)
 		sig_val->len = len_r;
 		/* XXX: need to check len_r and len_s fits in this */
 		sig_val->ptr = alloc_bytes(len_r * 2, "ec points");
-		DBG(DBG_PARSING, DBG_log(" sig_val  len is %zu",sig_val->len));
+		dbg(" sig_val  len is %zu", sig_val->len);
 		/* copy the values of r into signature */
 		memcpy(sig_val->ptr,blob->ptr,len_r);
 
@@ -171,7 +164,7 @@ size_t asn1_length_signature(chunk_t *blob , chunk_t *sig_val)
 		blob->ptr += len_r;
 		type_s = *(blob->ptr);
 
-		DBG(DBG_PARSING, DBG_log(" type_s is %d",type_s));
+		dbg(" type_s is %d", type_s);
 		if (type_s == 0x02) {
 			/* find the length of integer r*/
 			blob->ptr++;
@@ -181,19 +174,18 @@ size_t asn1_length_signature(chunk_t *blob , chunk_t *sig_val)
 				/* advance to the next octet as the current octet is 0 */
 				blob->ptr++;
 			}
-			DBG(DBG_PARSING, DBG_log("  len_s is %d",len_s));
+			dbg("  len_s is %d",len_s);
 			sig_val->len += len_s;
-			DBG(DBG_PARSING, DBG_log(" sig_val total len is %zu",sig_val->len));
+			dbg(" sig_val total len is %zu", sig_val->len);
 			/* copy the values of r into signature */
 			memcpy(sig_val->ptr+len_r,blob->ptr,len_s);
 		}
 	} else {
-		DBG(DBG_PARSING, DBG_log("Invalid DER encoded signature"));
+		dbg("Invalid DER encoded signature");
 	}
 
 		if (n > blob->len) {
-			DBG(DBG_PARSING,
-				DBG_log("number of length octets is larger than ASN.1 object"));
+			dbg("number of length octets is larger than ASN.1 object");
 			return ASN1_INVALID_LENGTH;
 		}
 
@@ -276,8 +268,7 @@ bool is_asn1(chunk_t blob)
 	unsigned len;
 
 	if (blob.len < 1) {
-		DBG(DBG_PARSING,
-			DBG_log("  cert blob is empty: not binary ASN.1"));
+		dbg("  cert blob is empty: not binary ASN.1");
 		return FALSE;
 	}
 
@@ -286,16 +277,14 @@ bool is_asn1(chunk_t blob)
 	case ASN1_SET:
 		break;	/* looks OK */
 	default:
-		DBG(DBG_PARSING,
-			DBG_log("  cert blob content is not binary ASN.1"));
+		dbg("  cert blob content is not binary ASN.1");
 		return FALSE;
 	}
 
 	len = asn1_length(&blob);
 	if (len != blob.len) {
-		DBG(DBG_PARSING,
-			DBG_log("  cert blob size (%zu) does not match ASN.1 coded length (%u)",
-				blob.len, len));
+		dbg("  cert blob size (%zu) does not match ASN.1 coded length (%u)",
+		    blob.len, len);
 		return FALSE;
 	}
 	return TRUE;
@@ -305,8 +294,7 @@ bool is_asn1_der_encoded_signature(chunk_t blob, chunk_t *sig_val)
 {
 
 	if (blob.len < 1) {
-		DBG(DBG_PARSING,
-			DBG_log("  Signature is empty: not binary ASN.1 DER encoded Signature"));
+		dbg("  Signature is empty: not binary ASN.1 DER encoded Signature");
 		return FALSE;
 	}
 
@@ -314,8 +302,7 @@ bool is_asn1_der_encoded_signature(chunk_t blob, chunk_t *sig_val)
 	case ASN1_SEQUENCE:
 		break;	/* looks OK */
 	default:
-		DBG(DBG_PARSING,
-			DBG_log("  Signature blob content is not binary ASN.1"));
+		dbg("  Signature blob content is not binary ASN.1");
 		return FALSE;
 	}
 

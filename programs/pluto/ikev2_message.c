@@ -614,7 +614,7 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 			return false;
 		}
 
-		DBG(DBG_PARSING, DBG_log("authenticator matched"));
+		dbg("authenticator matched");
 
 		/* decrypt */
 

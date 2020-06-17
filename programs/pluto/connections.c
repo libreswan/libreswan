@@ -2596,15 +2596,14 @@ struct connection *route_owner(struct connection *c,
 		 * consider policies different if the either in or out marks
 		 * differ (after masking)
 		 */
-		DBG(DBG_PARSING, {
+		if (DBGP(DBG_BASE)) {
 			DBG_log(" conn %s mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32 " vs",
 				c->name, c->sa_marks.in.val, c->sa_marks.in.mask,
 				c->sa_marks.out.val, c->sa_marks.out.mask);
-
 			DBG_log(" conn %s mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32,
 				d->name, d->sa_marks.in.val, d->sa_marks.in.mask,
 				d->sa_marks.out.val, d->sa_marks.out.mask);
-		});
+		}
 
 		if ( (c->sa_marks.in.val & c->sa_marks.in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask) ||
 		     (c->sa_marks.out.val & c->sa_marks.out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask) )

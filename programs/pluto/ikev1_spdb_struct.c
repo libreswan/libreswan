@@ -143,8 +143,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 		/* ??? should we check that this label and first one match? */
 		DBG_log("Received sec ctx in responder state again: ignoring this one");
 	} else if (st->st_state->kind == STATE_QUICK_I1) {
-		DBG(DBG_PARSING,
-		    DBG_log("Initiator state received security context from responder state, now verifying if both are same"));
+		dbg("initiator state received security context from responder state, now verifying if both are same");
 		if (streq(st->sec_ctx->sec_ctx_value, uctx.sec_ctx_value)) {
 			DBG_log("security contexts are verified in the initiator state");
 		} else {
@@ -870,15 +869,12 @@ static uint32_t decode_long_duration(pb_stream *pbs)
 	if (pbs_left(pbs) > sizeof(val)) {
 		/* "clamp" too large value to max representable value */
 		val -= 1; /* portable way to get to maximum value */
-		DBG(DBG_PARSING,
-		    DBG_log("   too large duration clamped to: %" PRIu32,
-			    val));
+		dbg("   too large duration clamped to: %" PRIu32, val);
 	} else {
 		/* decode number */
 		while (pbs_left(pbs) != 0)
 			val = (val << BITS_PER_BYTE) | *pbs->cur++;
-		DBG(DBG_PARSING,
-		    DBG_log("   long duration: %" PRIu32, val));
+		dbg("   long duration: %" PRIu32, val);
 	}
 	return val;
 }
@@ -1260,24 +1256,23 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 
 			val = a.isaat_lv;
 
-			DBG(DBG_PARSING,
-			    {
-				    enum_names *vdesc = oakley_attr_val_descs
-							[a.isaat_af_type &
-							 ISAKMP_ATTR_RTYPE_MASK];
+			if (DBGP(DBG_BASE)) {
+				enum_names *vdesc = oakley_attr_val_descs
+					[a.isaat_af_type &
+					 ISAKMP_ATTR_RTYPE_MASK];
 
-				    if (vdesc != NULL) {
-					    const char *nm =
-						    enum_name(vdesc,
-							      val);
+				if (vdesc != NULL) {
+					const char *nm =
+						enum_name(vdesc,
+							  val);
 
-					    if (nm != NULL) {
-						    DBG_log("   [%u is %s]",
-							    (unsigned)val,
-							    nm);
-					    }
-				    }
-			    });
+					if (nm != NULL) {
+						DBG_log("   [%u is %s]",
+							(unsigned)val,
+							nm);
+					}
+				}
+			}
 
 			switch (a.isaat_af_type) {
 			case OAKLEY_ENCRYPTION_ALGORITHM | ISAKMP_ATTR_AF_TV:
@@ -1607,9 +1602,7 @@ rsasig_common:
 			 * Let's finish early and leave.
 			 */
 
-			DBG(DBG_PARSING | DBG_CRYPT,
-			    DBG_log("Oakley Transform %u accepted",
-				    trans.isat_transnum));
+			dbg("Oakley Transform %u accepted", trans.isat_transnum);
 
 			if (r_sa_pbs != NULL) {
 
@@ -1916,15 +1909,15 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 						 a.isaat_af_type));
 				return FALSE;
 			}
-			DBG(DBG_PARSING, {
-				    if ((a.isaat_af_type &
-					 ISAKMP_ATTR_AF_MASK) ==
-					ISAKMP_ATTR_AF_TV) {
-					    DBG_log("   [%" PRIu32 " is %s]",
-						    val,
-						    enum_show(vdesc, val));
-				    }
-			    });
+			if (DBGP(DBG_BASE)) {
+				if ((a.isaat_af_type &
+				     ISAKMP_ATTR_AF_MASK) ==
+				    ISAKMP_ATTR_AF_TV) {
+					DBG_log("   [%" PRIu32 " is %s]",
+						val,
+						enum_show(vdesc, val));
+				}
+			}
 		}
 
 		switch (a.isaat_af_type) {
@@ -2187,7 +2180,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	 * For instance, AEAD+[NONE].
 	 */
 	if (proto == PROTO_IPSEC_ESP && !LHAS(seen_attrs, AUTH_ALGORITHM)) {
-		DBG(DBG_PARSING, DBG_log("ES missing INTEG aka AUTH, setting it to NONE"));
+		dbg("ES missing INTEG aka AUTH, setting it to NONE");
 		attrs->transattrs.ta_integ = &ike_alg_integ_none;
 	}
 
@@ -2550,8 +2543,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				 */
 				if (ah_attrs.transattrs.ta_integ == NULL) {
 					/* error already logged */
-					DBG(DBG_PARSING,
-					    DBG_log("ignoring AH proposal with unknown integrity"));
+					dbg("ignoring AH proposal with unknown integrity");
 					continue;       /* try another */
 				}
 
@@ -2627,11 +2619,11 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				if (esp_attrs.transattrs.ta_integ == &ike_alg_integ_none) {
 					if (!encrypt_desc_is_aead(esp_attrs.transattrs.ta_encrypt) &&
 					    !ah_seen) {
-						LSWDBGP(DBG_PARSING, buf) {
+						LSWDBGP(DBG_BASE, buf) {
 							lswlogs(buf, "ESP from ");
 							jam_endpoint(buf, &c->spd.that.host_addr);
 							lswlogs(buf, " must either have AUTH or be combined with AH");
-						};
+						}
 						continue; /* try another */
 					}
 				}
