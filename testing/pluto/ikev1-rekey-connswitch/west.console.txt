@@ -121,7 +121,7 @@ west #
 west #
  ipsec auto --status | grep TUNNEL
 000 "TUNNEL-A": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.254/32; erouted; eroute owner: #2
-000 "TUNNEL-A":     oriented; my_ip=unset; their_ip=unset; mycert=west; hiscert=east; my_updown=ipsec _updown;
+000 "TUNNEL-A":     oriented; my_ip=unset; their_ip=unset; mycert=west; peercert=east; my_updown=ipsec _updown;
 000 "TUNNEL-A":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "TUNNEL-A":   our auth:rsasig, their auth:rsasig
 000 "TUNNEL-A":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
@@ -138,7 +138,7 @@ west #
 000 "TUNNEL-A":   newest ISAKMP SA: #0; newest IPsec SA: #2;
 000 "TUNNEL-A":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 "TUNNEL-B": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.244/32; prospective erouted; eroute owner: #0
-000 "TUNNEL-B":     oriented; my_ip=unset; their_ip=unset; mycert=west; hiscert=east; my_updown=ipsec _updown;
+000 "TUNNEL-B":     oriented; my_ip=unset; their_ip=unset; mycert=west; peercert=east; my_updown=ipsec _updown;
 000 "TUNNEL-B":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "TUNNEL-B":   our auth:rsasig, their auth:rsasig
 000 "TUNNEL-B":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
@@ -171,9 +171,9 @@ west #
 000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4;
 000 "TUNNEL-C":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 #2: "TUNNEL-A":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_v1_SA_REPLACE_IF_USED in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 ref=0 refhim=0 Traffic: ESPin=336B ESPout=336B! ESPmax=4194303B 
+000 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B! ESPmax=4194303B 
 000 #4: "TUNNEL-C":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_v1_SA_REPLACE_IF_USED in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 ref=0 refhim=0 Traffic: ESPin=336B ESPout=336B! ESPmax=4194303B 
+000 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B! ESPmax=4194303B 
 west #
  ipsec auto --delete TUNNEL-B
 002 "TUNNEL-B": terminating SAs using this connection
@@ -182,7 +182,7 @@ west #
 west #
  ipsec auto --status | grep TUNNEL
 000 "TUNNEL-A": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.254/32; erouted; eroute owner: #2
-000 "TUNNEL-A":     oriented; my_ip=unset; their_ip=unset; mycert=west; hiscert=east; my_updown=ipsec _updown;
+000 "TUNNEL-A":     oriented; my_ip=unset; their_ip=unset; mycert=west; peercert=east; my_updown=ipsec _updown;
 000 "TUNNEL-A":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "TUNNEL-A":   our auth:rsasig, their auth:rsasig
 000 "TUNNEL-A":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
@@ -216,9 +216,9 @@ west #
 000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4;
 000 "TUNNEL-C":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 #2: "TUNNEL-A":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_v1_SA_REPLACE_IF_USED in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 ref=0 refhim=0 Traffic: ESPin=336B ESPout=336B! ESPmax=4194303B 
+000 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B! ESPmax=4194303B 
 000 #4: "TUNNEL-C":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_v1_SA_REPLACE_IF_USED in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 ref=0 refhim=0 Traffic: ESPin=336B ESPout=336B! ESPmax=4194303B 
+000 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B! ESPmax=4194303B 
 west #
  echo done
 done

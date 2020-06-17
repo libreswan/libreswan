@@ -32,7 +32,7 @@ east #
 000 "roadnet-eastnet-ipv4-psk-ikev1":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "roadnet-eastnet-ipv4-psk-ikev1":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "roadnet-eastnet-ipv4-psk-ikev1"[1]: 192.1.2.23/32===192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+XS+S=C]...192.1.2.254[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+XS+S=C]===192.0.2.1/32; erouted; eroute owner: #4
-000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:     oriented; my_ip=unset; their_ip=unset; mycert=east; hiscert=road; my_updown=ipsec _updown;
+000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:     oriented; my_ip=unset; their_ip=unset; mycert=east; peercert=road; my_updown=ipsec _updown;
 000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   xauth us:server, xauth them:server, xauthby:alwaysok; my_username=[any]; their_username=[any]
 000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   our auth:rsasig, their auth:rsasig
 000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   modecfg info: us:server, them:client, modecfg policy:push, dns:1.2.3.4, domains:unset, banner:unset, cat:unset;
@@ -51,10 +51,10 @@ east #
 000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 #1: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:EPHEM STATE_MAIN_R3 (sent MR3, ISAKMP SA established); EVENT_SA_REPLACE in XXs; lastdpd=-1s(seq in:0 out:0); idle;
 000 #2: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:EPHEM STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in XXs; isakmp#1; idle;
-000 #2: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254 esp.ESPSPIi@192.1.2.254 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.254 tun.0@192.1.2.23 ref=0 refhim=0 Traffic: ESPin=168B ESPout=168B! ESPmax=4194303B username=use3
+000 #2: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254 esp.ESPSPIi@192.1.2.254 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.254 tun.0@192.1.2.23 Traffic: ESPin=168B ESPout=168B! ESPmax=4194303B username=use3
 000 #3: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:EPHEM STATE_MAIN_R3 (sent MR3, ISAKMP SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
 000 #4: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:EPHEM STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#3; idle;
-000 #4: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254 esp.ESPSPIi@192.1.2.254 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.254 tun.0@192.1.2.23 ref=0 refhim=0 Traffic: ESPin=336B ESPout=336B! ESPmax=4194303B username=use3
+000 #4: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254 esp.ESPSPIi@192.1.2.254 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.254 tun.0@192.1.2.23 Traffic: ESPin=336B ESPout=336B! ESPmax=4194303B username=use3
 east #
  # should show no hits
 east #
