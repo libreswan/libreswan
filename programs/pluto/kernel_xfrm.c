@@ -388,18 +388,14 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 			continue;
 		} else if (addr.nl_pid != 0) {
 			/* not for us: ignore */
-			DBG(DBG_KERNEL,
-				DBG_log("netlink: ignoring %s message from process %u",
-					sparse_val_show(xfrm_type_names,
-							rsp.n.nlmsg_type),
-					addr.nl_pid));
+			dbg("netlink: ignoring %s message from process %u",
+			    sparse_val_show(xfrm_type_names, rsp.n.nlmsg_type),
+			    addr.nl_pid);
 			continue;
 		} else if (rsp.n.nlmsg_seq != seq) {
-			DBG(DBG_KERNEL,
-				DBG_log("netlink: ignoring out of sequence (%u/%u) message %s",
-					rsp.n.nlmsg_seq, seq,
-					sparse_val_show(xfrm_type_names,
-							rsp.n.nlmsg_type)));
+			dbg("netlink: ignoring out of sequence (%u/%u) message %s",
+			    rsp.n.nlmsg_seq, seq,
+			    sparse_val_show(xfrm_type_names, rsp.n.nlmsg_type));
 			continue;
 		}
 		break;
@@ -428,9 +424,8 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 		 * we'll let it pass.
 		 * This really happens for netlink_add_sa().
 		 */
-		DBG(DBG_KERNEL,
-			DBG_log("netlink response for %s %s included non-error error",
-				description, text_said));
+		dbg("netlink response for %s %s included non-error error",
+		    description, text_said);
 		/* ignore */
 	}
 	if (rbuf == NULL) {
@@ -545,7 +540,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		/* shunt route */
 		switch (ntohl(new_spi)) {
 		case SPI_PASS:
-			DBG(DBG_KERNEL, DBG_log("netlink_raw_eroute: SPI_PASS"));
+			dbg("netlink_raw_eroute: SPI_PASS");
 			policy = IPSEC_POLICY_NONE;
 			break;
 		case SPI_HOLD:
@@ -557,7 +552,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			 * After expiration, the underlying policy causing the original acquire
 			 * will fire again, dropping further packets.
 			 */
-			DBG(DBG_KERNEL, DBG_log("netlink_raw_eroute: SPI_HOLD implemented as no-op"));
+			dbg("netlink_raw_eroute: SPI_HOLD implemented as no-op");
 			return TRUE; /* yes really */
 		case SPI_DROP:
 		case SPI_REJECT:
@@ -608,9 +603,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			this_client = &local_client;
 		}
 		setportof(local_port, &local_client.addr);
-		DBG(DBG_KERNEL,
-			DBG_log("%s: using host address instead of client subnet",
-				__func__));
+		dbg("%s: using host address instead of client subnet", __func__);
 	}
 
 	zero(&req);
@@ -664,7 +657,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 
 		/* The caller should have set the proper priority by now */
 		req.u.p.priority = sa_priority;
-		DBG(DBG_KERNEL, DBG_log("IPsec Sa SPD priority set to %d", req.u.p.priority));
+		dbg("IPsec Sa SPD priority set to %d", req.u.p.priority);
 
 		req.u.p.action = XFRM_POLICY_ALLOW;
 		if (policy == IPSEC_POLICY_DISCARD)
@@ -743,7 +736,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
                if (xfrm_if_id > 0) {
 #ifdef USE_XFRM_INTERFACE
 			struct rtattr *attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
-			DBG(DBG_KERNEL, DBG_log("%s netlink: XFRMA_IF_ID  %" PRIu32 " req.n.nlmsg_type=%" PRIu32, __func__, xfrm_if_id, req.n.nlmsg_type));
+			dbg("%s netlink: XFRMA_IF_ID  %" PRIu32 " req.n.nlmsg_type=%" PRIu32,
+			    __func__, xfrm_if_id, req.n.nlmsg_type);
 			attr->rta_type = XFRMA_IF_ID;
 			attr->rta_len = RTA_LENGTH(sizeof(uint32_t));
 			memcpy(RTA_DATA(attr), &xfrm_if_id, sizeof(uint32_t));
@@ -769,9 +763,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		passert(len <= MAX_SECCTX_LEN);
 		attr->rta_type = XFRMA_SEC_CTX;
 
-		DBG(DBG_KERNEL,
-			DBG_log("passing security label \"%s\" to kernel",
-				policy_label));
+		dbg("passing security label \"%s\" to kernel", policy_label);
 		attr->rta_len =
 			RTA_LENGTH(sizeof(struct xfrm_user_sec_ctx) + len);
 		uctx = RTA_DATA(attr);
@@ -855,11 +847,9 @@ static bool netlink_get_sa_policy(const struct kernel_sa *sa,
 
 	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWPOLICY, &rsp, "Get policy",
 			      sa->text_said)) {
-		DBG(DBG_KERNEL, DBG_log(" netlink_get_sa_policy : policy died on us: %s, "
-				       "index=%d %s",
-					enum_name(&netkey_sa_dir_names,
-						req.id.dir),
-					req.id.index, sa->text_said));
+		dbg(" netlink_get_sa_policy : policy died on us: %s, index=%d %s",
+		    enum_name(&netkey_sa_dir_names, req.id.dir),
+		    req.id.index, sa->text_said);
 		return FALSE;
 	} else if (rsp.n.nlmsg_len < NLMSG_LENGTH(sizeof(rsp.u.pol))) {
 		libreswan_log(" netlink_get_sa_policy: XFRM_MSG_GETPOLICY %s "
@@ -1016,7 +1006,7 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			enum_name(&netkey_sa_dir_names, dir));
 	add_str(text_said, SAMIGTOT_BUF, text_said, reqid_buf);
 
-	DBG(DBG_KERNEL, DBG_log("%s", text_said));
+	dbg("%s", text_said);
 
 	*ret_sa = sa;
 	return TRUE;
@@ -1261,11 +1251,11 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	 * tunnels in linux 2.6.25+
 	 */
 	if (sa->mode == ENCAPSULATION_MODE_TUNNEL) {
-		DBG(DBG_KERNEL, DBG_log("netlink: enabling tunnel mode"));
+		dbg("netlink: enabling tunnel mode");
 		req.p.mode = XFRM_MODE_TUNNEL;
 		req.p.flags |= XFRM_STATE_AF_UNSPEC;
 	} else {
-		DBG(DBG_KERNEL, DBG_log("netlink: enabling transport mode"));
+		dbg("netlink: enabling transport mode");
 		req.p.mode = XFRM_MODE_TRANSPORT;
 	}
 
@@ -1345,7 +1335,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	}
 
 	req.p.reqid = sa->reqid;
-	DBG(DBG_KERNEL, DBG_log("XFRM: adding IPsec SA with reqid %d", sa->reqid));
+	dbg("XFRM: adding IPsec SA with reqid %d", sa->reqid);
 
 	/* TODO expose limits to kernel_sa via config */
 	req.p.lft.soft_byte_limit = XFRM_INF;
@@ -1372,29 +1362,29 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	 * (XFRM_STATE_ALIGN4) do change original behavior.
 	*/
 	if (sa->esatype == ET_AH && addrtypeof(sa->src.address) == AF_INET) {
-		DBG(DBG_KERNEL, DBG_log("netlink: aligning IPv4 AH to 32bits as per RFC-4302, Section 3.3.3.2.1"));
+		dbg("netlink: aligning IPv4 AH to 32bits as per RFC-4302, Section 3.3.3.2.1");
 		req.p.flags |= XFRM_STATE_ALIGN4;
 	}
 
 	if (sa->esatype != ET_IPCOMP) {
 		if (sa->esn) {
-			DBG(DBG_KERNEL, DBG_log("netlink: enabling ESN"));
+			dbg("netlink: enabling ESN");
 			req.p.flags |= XFRM_STATE_ESN;
 		}
 		if (sa->decap_dscp) {
-			DBG(DBG_KERNEL, DBG_log("netlink: enabling Decap DSCP"));
+			dbg("netlink: enabling Decap DSCP");
 			req.p.flags |= XFRM_STATE_DECAP_DSCP;
 		}
 		if (sa->nopmtudisc) {
-			DBG(DBG_KERNEL, DBG_log("netlink: disabling Path MTU Discovery"));
+			dbg("netlink: disabling Path MTU Discovery");
 			req.p.flags |= XFRM_STATE_NOPMTUDISC;
 		}
 
 		if (sa->replay_window <= 32 && !sa->esn) {
 			/* this only works up to 32, for > 32 and for ESN, we need struct xfrm_replay_state_esn */
 			req.p.replay_window = sa->replay_window;
-			DBG(DBG_KERNEL, DBG_log("netlink: setting IPsec SA replay-window to %d using old-style req",
-				req.p.replay_window));
+			dbg("netlink: setting IPsec SA replay-window to %d using old-style req",
+			    req.p.replay_window);
 		} else {
 			uint32_t bmp_size = BYTES_FOR_BITS(sa->replay_window +
 				pad_up(sa->replay_window, sizeof(uint32_t) * BITS_PER_BYTE) );
@@ -1404,8 +1394,8 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 				.replay_window = sa->replay_window,
 				.bmp_len = bmp_size / sizeof(uint32_t),
 			};
-			DBG(DBG_KERNEL, DBG_log("netlink: setting IPsec SA replay-window to %" PRIu32 " using xfrm_replay_state_esn",
-				xre.replay_window));
+			dbg("netlink: setting IPsec SA replay-window to %" PRIu32 " using xfrm_replay_state_esn",
+			    xre.replay_window);
 
 			attr->rta_type = XFRMA_REPLAY_ESN_VAL;
 			attr->rta_len = RTA_LENGTH(sizeof(xre) + bmp_size);
@@ -1524,9 +1514,8 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 			/* Traffic Flow Confidentiality is only for ESP tunnel mode */
 			if (sa->tfcpad != 0 &&
 			    sa->mode == ENCAPSULATION_MODE_TUNNEL) {
-				DBG(DBG_KERNEL,
-					DBG_log("netlink: setting TFC to %" PRIu32 " (up to PMTU)",
-						sa->tfcpad));
+				dbg("netlink: setting TFC to %" PRIu32 " (up to PMTU)",
+				    sa->tfcpad);
 
 				attr->rta_type = XFRMA_TFCPAD;
 				attr->rta_len = RTA_LENGTH(sizeof(sa->tfcpad));
@@ -1560,7 +1549,8 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 
 	if (sa->xfrm_if_id > 0) {
 #ifdef USE_XFRM_INTERFACE
-		DBG(DBG_KERNEL, DBG_log("%s netlink: XFRMA_IF_ID %" PRIu32 " req.n.nlmsg_type=%" PRIu32, __func__, sa->xfrm_if_id, req.n.nlmsg_type));
+		dbg("%s netlink: XFRMA_IF_ID %" PRIu32 " req.n.nlmsg_type=%" PRIu32,
+		    __func__, sa->xfrm_if_id, req.n.nlmsg_type);
 		attr->rta_type = XFRMA_IF_ID;
 		attr->rta_len = RTA_LENGTH(sizeof(uint32_t));
 		memcpy(RTA_DATA(attr), &sa->xfrm_if_id, sizeof(uint32_t));
@@ -1590,9 +1580,9 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 
 		req.n.nlmsg_len += attr->rta_len;
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
-		DBG(DBG_KERNEL, DBG_log("netlink: esp-hw-offload set via interface %s for IPsec SA", sa->nic_offload_dev));
+		dbg("netlink: esp-hw-offload set via interface %s for IPsec SA", sa->nic_offload_dev);
 	} else {
-		DBG(DBG_KERNEL, DBG_log("netlink: esp-hw-offload not set for IPsec SA"));
+		dbg("netlink: esp-hw-offload not set for IPsec SA");
 	}
 
 	if (sa->sec_ctx != NULL) {
@@ -1653,7 +1643,7 @@ static bool netlink_del_sa(const struct kernel_sa *sa)
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
-	DBG(DBG_KERNEL, DBG_log("XFRM: deleting IPsec SA with reqid %d", sa->reqid));
+	dbg("XFRM: deleting IPsec SA with reqid %d", sa->reqid);
 
 	return send_netlink_msg(&req.n, NLMSG_NOOP, NULL, "Del SA", sa->text_said);
 }
@@ -1700,9 +1690,7 @@ static void netlink_acquire(struct nlmsghdr *n)
 	struct xfrm_user_sec_ctx_ike *uctx = NULL;
 	struct xfrm_user_sec_ctx_ike uctx_space;
 
-	DBG(DBG_KERNEL,
-		DBG_log("xfrm netlink msg len %zu",
-			(size_t) n->nlmsg_len));
+	dbg("xfrm netlink msg len %zu", (size_t) n->nlmsg_len);
 
 	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*acquire))) {
 		libreswan_log(
@@ -1876,11 +1864,10 @@ static void process_addr_chage(struct nlmsghdr *n)
 	struct rtattr *rta = IFLA_RTA(nl_msg);
 	size_t msg_size = IFA_PAYLOAD (n);
 	ip_address ip;
-	ipstr_buf ip_str;
 
-	DBG(DBG_KERNEL, DBG_log("xfrm netlink address change %s msg len %zu",
-				sparse_val_show(rtm_type_names, n->nlmsg_type),
-				(size_t) n->nlmsg_len));
+	dbg("xfrm netlink address change %s msg len %zu",
+	    sparse_val_show(rtm_type_names, n->nlmsg_type),
+	    (size_t) n->nlmsg_len);
 
 	while (RTA_OK(rta, msg_size)) {
 		err_t ugh;
@@ -1903,18 +1890,18 @@ static void process_addr_chage(struct nlmsghdr *n)
 			ugh = data_to_address(RTA_DATA(rta), RTA_PAYLOAD(rta)/*size*/,
 					      aftoinfo(nl_msg->ifa_family), &ip);
 			if (ugh != NULL) {
-				libreswan_log("ERROR IFA_ADDRESS invalid %s",
-						ugh);
+				libreswan_log("ERROR IFA_ADDRESS invalid %s", ugh);
 			} else  {
-				DBG(DBG_KERNEL, DBG_log("XFRM IFA_ADDRESS %s IFA_ADDRESS is this PPP?",
-							ipstr(&ip, &ip_str)));
+				address_buf ip_str;
+				dbg("XFRM IFA_ADDRESS %s IFA_ADDRESS is this PPP?",
+				    str_address(&ip, &ip_str));
 			}
 			break;
 
 		default:
-			DBG(DBG_KERNEL, DBG_log("IKEv2 received address %s type %u",
-						sparse_val_show(rtm_type_names, n->nlmsg_type),
-						rta->rta_type));
+			dbg("IKEv2 received address %s type %u",
+			    sparse_val_show(rtm_type_names, n->nlmsg_type),
+			    rta->rta_type);
 			break;
 		}
 
@@ -1944,15 +1931,13 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 	upe = NLMSG_DATA(n);
 	xfrm2ip(&upe->pol.sel.saddr, &src, upe->pol.sel.family);
 	xfrm2ip(&upe->pol.sel.daddr, &dst, upe->pol.sel.family);
-	DBG(DBG_KERNEL, {
-			ipstr_buf a;
-			ipstr_buf b;
-			DBG_log("%s src %s/%u dst %s/%u dir %d index %d",
-					__func__,
-					ipstr(&src, &a), upe->pol.sel.prefixlen_s,
-					ipstr(&dst, &b), upe->pol.sel.prefixlen_d,
-					upe->pol.dir, upe->pol.index);
-			});
+	address_buf a;
+	address_buf b;
+	dbg("%s src %s/%u dst %s/%u dir %d index %d",
+	    __func__,
+	    str_address(&src, &a), upe->pol.sel.prefixlen_s,
+	    str_address(&dst, &b), upe->pol.sel.prefixlen_d,
+	    upe->pol.dir, upe->pol.index);
 
 	req.id.dir = upe->pol.dir;
 	req.id.index = upe->pol.index;
@@ -1961,22 +1946,19 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
 	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWPOLICY, &rsp, "Get policy", "?")) {
-		DBG(DBG_KERNEL,
-			DBG_log("netlink_policy_expire: policy died on us: dir=%d, index=%d",
-				req.id.dir, req.id.index));
+		dbg("netlink_policy_expire: policy died on us: dir=%d, index=%d",
+		    req.id.dir, req.id.index);
 	} else if (rsp.n.nlmsg_len < NLMSG_LENGTH(sizeof(rsp.u.pol))) {
 		libreswan_log(
 			"netlink_policy_expire: XFRM_MSG_GETPOLICY returned message with length %zu < %zu bytes; ignore message",
 			(size_t) rsp.n.nlmsg_len,
 			sizeof(rsp.u.pol));
 	} else if (req.id.index != rsp.u.pol.index) {
-		DBG(DBG_KERNEL,
-			DBG_log("netlink_policy_expire: policy was replaced: dir=%d, oldindex=%d, newindex=%d",
-				req.id.dir, req.id.index, rsp.u.pol.index));
+		dbg("netlink_policy_expire: policy was replaced: dir=%d, oldindex=%d, newindex=%d",
+		    req.id.dir, req.id.index, rsp.u.pol.index);
 	} else if (upe->pol.curlft.add_time != rsp.u.pol.curlft.add_time) {
-		DBG(DBG_KERNEL,
-			DBG_log("netlink_policy_expire: policy was replaced  and you have won the lottery: dir=%d, index=%d",
-				req.id.dir, req.id.index));
+		dbg("netlink_policy_expire: policy was replaced  and you have won the lottery: dir=%d, index=%d",
+		    req.id.dir, req.id.index);
 	} else {
 		switch (upe->pol.dir) {
 		case XFRM_POLICY_OUT:
@@ -2011,11 +1993,9 @@ static bool netlink_get(int fd)
 		return TRUE;
 	} else if (addr.nl_pid != 0) {
 		/* not for us: ignore */
-		DBG(DBG_KERNEL,
-			DBG_log("netlink_get: ignoring %s message from process %u",
-				sparse_val_show(xfrm_type_names,
-						rsp.n.nlmsg_type),
-				addr.nl_pid));
+		dbg("netlink_get: ignoring %s message from process %u",
+		    sparse_val_show(xfrm_type_names, rsp.n.nlmsg_type),
+		    addr.nl_pid);
 		return TRUE;
 	} else if ((size_t)r != rsp.n.nlmsg_len) {
 		libreswan_log(
@@ -2024,9 +2004,8 @@ static bool netlink_get(int fd)
 		return TRUE;
 	}
 
-	DBG(DBG_KERNEL,
-		DBG_log("netlink_get: %s message",
-			sparse_val_show(xfrm_type_names, rsp.n.nlmsg_type)));
+	dbg("netlink_get: %s message",
+	    sparse_val_show(xfrm_type_names, rsp.n.nlmsg_type));
 
 	switch (rsp.n.nlmsg_type) {
 	case XFRM_MSG_ACQUIRE:
@@ -2101,9 +2080,8 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 		return 0;
 	}
 
-	DBG(DBG_KERNEL,
-		DBG_log("netlink_get_spi: allocated 0x%x for %s",
-			ntohl(rsp.u.sa.id.spi), text_said));
+	dbg("netlink_get_spi: allocated 0x%x for %s",
+	    ntohl(rsp.u.sa.id.spi), text_said);
 	return rsp.u.sa.id.spi;
 }
 
@@ -2380,11 +2358,8 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 			DBG_log("invalid listen= option ignored: %s", e);
 			pluto_listen = NULL;
 		}
-		DBG(DBG_CONTROL, {
-			ipstr_buf b;
-			DBG_log("Only looking to listen on %s",
-				ipstr(&lip, &b));
-		});
+		address_buf b;
+		dbg("Only looking to listen on %s", str_address(&lip, &b));
 	}
 
 	/*
@@ -2666,7 +2641,8 @@ static bool netlink_v6holes(void)
 			LOG_ERRNO(errno, "\"%s\"", proc_f);
 		}
 	} else {
-		DBG(DBG_KERNEL, DBG_log("starting without ipv6 support! could not stat \"%s\"" PRI_ERRNO, proc_f, pri_errno(errno)));
+		dbg("starting without ipv6 support! could not stat \"%s\"" PRI_ERRNO,
+		    proc_f, pri_errno(errno));
 		/*
 		 * pretend success, do not exit pluto,
 		 * likely IPv6 is disabled in kernel at compile time. e.g. OpenWRT.
@@ -2675,7 +2651,7 @@ static bool netlink_v6holes(void)
 	}
 
 	if (disable_ipv6 == 1) {
-		DBG(DBG_KERNEL, DBG_log("net.ipv6.conf.all.disable_ipv6=1 ignore ipv6 holes"));
+		dbg("net.ipv6.conf.all.disable_ipv6=1 ignore ipv6 holes");
 		ret = TRUE; /* pretend success, do not exit pluto */
 	} else if (disable_ipv6 == 0) {
 		ret = netlink_bypass_policy(AF_INET6, IPPROTO_ICMPV6,
@@ -2734,7 +2710,7 @@ static bool qry_xfrm_mirgrate_support(struct nlmsghdr *hdr)
 				continue;
 			} else if (errno == EAGAIN) {
 				/* old kernel F22 - dos not return proper error ??? */
-				DBG(DBG_KERNEL, DBG_log("ignore EAGAIN in %s assume MOBIKE migration is supported", __func__));
+				dbg("ignore EAGAIN in %s assume MOBIKE migration is supported", __func__);
 				break;
 			}
 		}
@@ -2744,7 +2720,7 @@ static bool qry_xfrm_mirgrate_support(struct nlmsghdr *hdr)
 	close(nl_fd);
 
 	if (rsp.n.nlmsg_type == NLMSG_ERROR && rsp.u.e.error == -ENOPROTOOPT) {
-		DBG(DBG_KERNEL, DBG_log("MOBIKE will fail got ENOPROTOOPT"));
+		dbg("MOBIKE will fail got ENOPROTOOPT");
 		return FALSE;
 	}
 

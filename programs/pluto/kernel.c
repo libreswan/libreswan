@@ -1266,8 +1266,7 @@ bool raw_eroute(const ip_address *this_host,
 					use_lifetime, sa_priority, sa_marks,
 					xfrm_if_id, op, text_said,
 					policy_label);
-	DBG(DBG_CONTROL | DBG_KERNEL, DBG_log("raw_eroute result=%s",
-		result ? "success" : "failed"));
+	dbg("raw_eroute result=%s", result ? "success" : "failed");
 
 	return result;
 }
@@ -1335,7 +1334,7 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 	ip_subnet this_client, that_client;
 	const ip_address null_host = address_any(address_type(src));
 
-	DBG(DBG_CONTROL, DBG_log("fiddle_bare_shunt called"));
+	dbg("fiddle_bare_shunt called");
 
 	passert(addrtypeof(src) == addrtypeof(dst));
 	happy(endtosubnet(src, &this_client, HERE));
@@ -1351,15 +1350,11 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 	 *
 	 */
 
-	DBG(DBG_CONTROL,
-		if (transport_proto != 0)
-			DBG_log("fiddle_bare_shunt with transport_proto %d", transport_proto));
+	dbg("fiddle_bare_shunt with transport_proto %d", transport_proto);
 
 	enum pluto_sadb_operations op = repl ? ERO_REPLACE : ERO_DELETE;
 
-	DBG(DBG_KERNEL,
-		DBG_log("%s specific host-to-host bare shunt",
-			repl ? "replacing" : "removing"));
+	dbg("%s specific host-to-host bare shunt", repl ? "replacing" : "removing");
 	if (kernel_ops->type == USE_NETKEY && strstr(why, "IGNORE_ON_XFRM:") != NULL) {
 		dbg("skipping raw_eroute because IGNORE_ON_XFRM");
 		struct bare_shunt **bs_pp = bare_shunt_ptr(
@@ -1390,10 +1385,9 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 			&that_client,
 			transport_proto);
 
-		DBG(DBG_CONTROL, DBG_log("raw_eroute with op='%s' for transport_proto='%d' kernel shunt succeeded, bare shunt lookup %s",
-			repl ? "replace" : "delete",
-			transport_proto,
-			(bs_pp == NULL) ? "failed" : "succeeded"));
+		dbg("raw_eroute with op='%s' for transport_proto='%d' kernel shunt succeeded, bare shunt lookup %s",
+		    repl ? "replace" : "delete", transport_proto,
+		    (bs_pp == NULL) ? "failed" : "succeeded");
 
 		/* we can have proto mismatching acquires with netkey - this is a bad workaround */
 		/* ??? what is the nature of those mismatching acquires? */
@@ -1663,7 +1657,7 @@ bool del_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
 
 	set_text_said(text_said, dest, spi, proto);
 
-	DBG(DBG_KERNEL, DBG_log("delete %s", text_said));
+	dbg("delete %s", text_said);
 
 	struct kernel_sa sa = {
 		.spi = spi,
@@ -1842,7 +1836,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		}
 
 		if (!kernel_ops->add_sa(said_next, replace)) {
-			DBG(DBG_KERNEL, DBG_log("add_sa tunnel failed"));
+			dbg("add_sa tunnel failed");
 			goto fail;
 		}
 
@@ -1852,8 +1846,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			st->st_esp.peer_lastused = mononow();
 		}
 
-		DBG(DBG_KERNEL,
-			DBG_log("added tunnel with ref=%u", said_next->ref));
+		dbg("added tunnel with ref=%u", said_next->ref);
 
 		/*
 		 * SA refs will have been allocated for this SA.
@@ -1861,9 +1854,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * since we refer to it in the policy that we instantiate.
 		 */
 		if (new_ref_peer == IPSEC_SAREF_NULL && !inbound) {
-			DBG(DBG_KERNEL,
-				DBG_log("recorded ref=%u as ref_peer",
-					said_next->ref));
+			dbg("recorded ref=%u as ref_peer", said_next->ref);
 			new_ref_peer = said_next->ref;
 			if (kernel_ops->type != USE_NETKEY &&
 				new_ref_peer == IPSEC_SAREF_NULL)
@@ -1974,9 +1965,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			    pri_ip_encap(encap_type), encap_sport, encap_dport);
 		}
 
-		DBG(DBG_CONTROL,
-			DBG_log("looking for alg with encrypt: %s keylen: %d integ: %s",
-				ta->ta_encrypt->common.fqn, ta->enckeylen, ta->ta_integ->common.fqn));
+		dbg("looking for alg with encrypt: %s keylen: %d integ: %s",
+		    ta->ta_encrypt->common.fqn, ta->enckeylen, ta->ta_integ->common.fqn);
 
 		/*
 		 * Check that both integrity and encryption are
@@ -2018,26 +2008,23 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			/* Grrrrr.... f*cking 7 bits jurassic algos  */
 			/* 168 bits in kernel, need 192 bits for keymat_len */
 			if (encrypt_keymat_size == 21) {
-				DBG(DBG_KERNEL,
-				    DBG_log("%s requires a 7-bit jurassic adjust",
-					    ta->ta_encrypt->common.fqn));
+				dbg("%s requires a 7-bit jurassic adjust",
+				    ta->ta_encrypt->common.fqn);
 				encrypt_keymat_size = 24;
 			}
 		}
 #endif
 
 		if (ta->ta_encrypt->salt_size > 0) {
-			DBG(DBG_KERNEL,
-			    DBG_log("%s requires %zu salt bytes",
-				    ta->ta_encrypt->common.fqn, ta->ta_encrypt->salt_size));
+			dbg("%s requires %zu salt bytes",
+			    ta->ta_encrypt->common.fqn, ta->ta_encrypt->salt_size);
 			encrypt_keymat_size += ta->ta_encrypt->salt_size;
 		}
 
 		size_t integ_keymat_size = ta->ta_integ->integ_keymat_size; /* BYTES */
 
-		DBG(DBG_KERNEL, DBG_log(
-			"st->st_esp.keymat_len=%" PRIu16 " is encrypt_keymat_size=%zu + integ_keymat_size=%zu",
-			st->st_esp.keymat_len, encrypt_keymat_size, integ_keymat_size));
+		dbg("st->st_esp.keymat_len=%" PRIu16 " is encrypt_keymat_size=%zu + integ_keymat_size=%zu",
+		    st->st_esp.keymat_len, encrypt_keymat_size, integ_keymat_size);
 
 		passert(st->st_esp.keymat_len == encrypt_keymat_size + integ_keymat_size);
 
@@ -2047,23 +2034,22 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->spi = esp_spi;
 		said_next->esatype = ET_ESP;
 		said_next->replay_window = c->sa_replay_window;
-		DBG(DBG_KERNEL, DBG_log("setting IPsec SA replay-window to %d",
-			c->sa_replay_window));
+		dbg("setting IPsec SA replay-window to %d", c->sa_replay_window);
 
 		if (c->xfrmi != NULL)
 			said_next->xfrm_if_id = c->xfrmi->if_id;
 
 		if (!inbound && c->sa_tfcpad != 0 && !st->st_seen_no_tfc) {
-			DBG(DBG_KERNEL, DBG_log("Enabling TFC at %d bytes (up to PMTU)", c->sa_tfcpad));
+			dbg("Enabling TFC at %d bytes (up to PMTU)", c->sa_tfcpad);
 			said_next->tfcpad = c->sa_tfcpad;
 		}
 
 		if (c->policy & POLICY_DECAP_DSCP) {
-			DBG(DBG_KERNEL, DBG_log("Enabling Decap ToS/DSCP bits"));
+			dbg("Enabling Decap ToS/DSCP bits");
 			said_next->decap_dscp = TRUE;
 		}
 		if (c->policy & POLICY_NOPMTUDISC) {
-			DBG(DBG_KERNEL, DBG_log("Disabling Path MTU Discovery"));
+			dbg("Disabling Path MTU Discovery");
 			said_next->nopmtudisc = TRUE;
 		}
 
@@ -2077,8 +2063,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 						"Error: sha2-truncbug=yes is not allowed in FIPS mode");
 					goto fail;
 				}
-				DBG(DBG_KERNEL,
-					DBG_log(" authalg converted for sha2 truncation at 96bits instead of IETF's mandated 128bits"));
+				dbg(" authalg converted for sha2 truncation at 96bits instead of IETF's mandated 128bits");
 				/*
 				 * We need to tell the kernel to mangle
 				 * the sha2_256, as instructed by the user
@@ -2095,7 +2080,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->authalg = said_next->integ->integ_ikev1_ah_transform;
 
 		if (st->st_esp.attrs.transattrs.esn_enabled) {
-			DBG(DBG_KERNEL, DBG_log("Enabling ESN"));
+			dbg("Enabling ESN");
 			said_next->esn = TRUE;
 		}
 
@@ -2213,11 +2198,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->reqid = reqid_ah(c->spd.reqid);
 		said_next->text_said = text_ah;
 		said_next->replay_window = c->sa_replay_window;
-		DBG(DBG_KERNEL, DBG_log("setting IPsec SA replay-window to %d",
-			c->sa_replay_window));
+		dbg("setting IPsec SA replay-window to %d", c->sa_replay_window);
 
 		if (st->st_ah.attrs.transattrs.esn_enabled) {
-			DBG(DBG_KERNEL, DBG_log("Enabling ESN"));
+			dbg("Enabling ESN");
 			said_next->esn = TRUE;
 		}
 
@@ -2374,10 +2358,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * the grouping would be ipip:esp, esp:ah.
 		 */
 		for (s = said; s < said_next - 1; s++) {
-			DBG(DBG_KERNEL,
-				DBG_log("grouping %s (ref=%u) and %s (ref=%u)",
-					s[0].text_said, s[0].ref,
-					s[1].text_said, s[1].ref));
+			dbg("grouping %s (ref=%u) and %s (ref=%u)",
+			    s[0].text_said, s[0].ref,
+			    s[1].text_said, s[1].ref);
 			if (!kernel_ops->grp_sa(s + 1, s)) {
 				libreswan_log("grp_sa failed");
 				goto fail;
@@ -2626,7 +2609,7 @@ void init_kernel(void)
 	enable_periodic_timer(EVENT_SHUNT_SCAN, kernel_scan_shunts,
 			      bare_shunt_interval);
 
-	DBG(DBG_KERNEL, DBG_log("setup kernel fd callback"));
+	dbg("setup kernel fd callback");
 
 	if (kernel_ops->async_fdp != NULL)
 		/* Note: kernel_ops is const but pluto_event_add cannot know that */

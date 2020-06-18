@@ -3100,17 +3100,15 @@ void set_newest_ipsec_sa(const char *m, struct state *const st)
 
 void record_newaddr(ip_address *ip, char *a_type)
 {
-	ipstr_buf ip_str;
-	DBG(DBG_KERNEL, DBG_log("XFRM RTM_NEWADDR %s %s",
-				ipstr(ip, &ip_str), a_type));
+	address_buf ip_str;
+	dbg("XFRM RTM_NEWADDR %s %s", str_address(ip, &ip_str), a_type);
 	for_each_state(ikev2_record_newaddr, ip, __func__);
 }
 
 void record_deladdr(ip_address *ip, char *a_type)
 {
-	ipstr_buf ip_str;
-	DBG(DBG_KERNEL, DBG_log("XFRM RTM_DELADDR %s %s",
-				ipstr(ip, &ip_str), a_type));
+	address_buf ip_str;
+	dbg("XFRM RTM_DELADDR %s %s", str_address(ip, &ip_str), a_type);
 	for_each_state(ikev2_record_deladdr, ip, __func__);
 }
 

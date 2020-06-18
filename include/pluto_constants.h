@@ -408,7 +408,6 @@ enum {
 
 /* so things don't break */
 #define DBG_CONTROL	DBG_BASE
-#define DBG_KERNEL	DBG_BASE
 #define DBG_CONTROLMORE	DBG_BASE
 
 /* These are not part of "base" debugging */

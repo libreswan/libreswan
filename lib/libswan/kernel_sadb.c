@@ -52,7 +52,7 @@ void kernel_add_sadb_alg(int satype, int exttype, const struct sadb_alg *sadb_al
 		break;
 	}
 
-	LSWDBGP(DBG_KERNEL|DBG_CRYPT, buf) {
+	LSWDBGP(DBG_BASE, buf) {
 		lswlogs(buf, __func__);
 		lswlogs(buf, ":");
 		lswlogf(buf, " satype=%d(%s)", satype,
