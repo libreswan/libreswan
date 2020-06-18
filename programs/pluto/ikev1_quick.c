@@ -574,9 +574,8 @@ static crypto_req_cont_func quick_outI1_continue;	/* type assertion */
 static void quick_outI1_continue(struct state *st, struct msg_digest *md UNUSED,
 				 struct pluto_crypto_req *r)
 {
-	DBG(DBG_CONTROL,
-		DBG_log("quick_outI1_continue for #%lu: calculated ke+nonce, sending I1",
-			st->st_serialno));
+	dbg("quick_outI1_continue for #%lu: calculated ke+nonce, sending I1",
+	    st->st_serialno);
 
 	pexpect(md == NULL); /* no packet */
 	passert(st != NULL);
@@ -608,9 +607,8 @@ void quick_outI1(struct fd *whack_sock,
 	st->sec_ctx = NULL;
 	if (uctx != NULL) {
 		st->sec_ctx = clone_thing(*uctx, "sec ctx structure");
-		DBG(DBG_CONTROL,
-		    DBG_log("pending phase 2 with security context \"%s\"",
-			    st->sec_ctx->sec_ctx_value));
+		dbg("pending phase 2 with security context \"%s\"",
+		    st->sec_ctx->sec_ctx_value);
 	}
 
 	st->st_myuserprotoid = c->spd.this.protocol;
@@ -1046,11 +1044,9 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 		     !(p1st->st_policy & POLICY_TUNNEL) &&
 		     p == NULL) {
 			p = c;
-			DBG(DBG_CONTROL, {
-				char cib[CONN_INST_BUF];
-				DBG_log("using something (we hope the IP we or they are NAT'ed to) for transport mode connection \"%s\"%s",
-				    p->name, fmt_conn_instance(p, cib));
-			});
+			connection_buf cib;
+			dbg("using something (we hope the IP we or they are NAT'ed to) for transport mode connection "PRI_CONNECTION"",
+			    pri_connection(p, &cib));
 		}
 
 		if (p == NULL) {
@@ -1105,22 +1101,19 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 				lset_t old_cur_debugging = cur_debugging;
 
 				set_debugging(lmod(cur_debugging, p->extra_debugging));
-				DBG(DBG_CONTROL, {
-					char cib[CONN_INST_BUF];
-					DBG_log("using connection \"%s\"%s",
-						p->name, fmt_conn_instance(p, cib));
-				});
+				connection_buf cib;
+				dbg("using connection "PRI_CONNECTION"",
+				    pri_connection(p, &cib));
 				set_debugging(old_cur_debugging);
 			}
 			c = p;
 		}
 
 		/* fill in the client's true ip address/subnet */
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("client: %s  port wildcard: %s  virtual: %s",
-			    bool_str(c->spd.that.has_client),
-			    bool_str(c->spd.that.has_port_wildcard),
-			    bool_str(is_virtual_connection(c))));
+		dbg("client: %s  port wildcard: %s  virtual: %s",
+		    bool_str(c->spd.that.has_client),
+		    bool_str(c->spd.that.has_port_wildcard),
+		    bool_str(is_virtual_connection(c)));
 
 		/* fill in the client's true port */
 		if (c->spd.that.has_port_wildcard) {
@@ -1147,9 +1140,7 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 
 			format_end(cthat, sizeof(cthat), &c->spd.that, NULL,
 				   TRUE, LEMPTY, oriented(*c));
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("setting phase 2 virtual values to %s",
-				    cthat));
+			dbg("setting phase 2 virtual values to %s", cthat);
 		}
 	}
 
@@ -1275,9 +1266,8 @@ static void quick_inI1_outR1_continue1(struct state *st,
 				       struct msg_digest *md,
 				       struct pluto_crypto_req *r)
 {
-	DBG(DBG_CONTROL,
-		DBG_log("quick_inI1_outR1_cryptocontinue1 for #%lu: calculated ke+nonce, calculating DH",
-			st->st_serialno));
+	dbg("quick_inI1_outR1_cryptocontinue1 for #%lu: calculated ke+nonce, calculating DH",
+	    st->st_serialno);
 
 	passert(st->st_connection != NULL);
 
@@ -1312,9 +1302,8 @@ static void quick_inI1_outR1_continue2(struct state *st,
 				       struct msg_digest *md,
 				       struct pluto_crypto_req *r)
 {
-	DBG(DBG_CONTROL,
-		DBG_log("quick_inI1_outR1_cryptocontinue2 for #%lu: calculated DH, sending R1",
-			st->st_serialno));
+	dbg("quick_inI1_outR1_cryptocontinue2 for #%lu: calculated DH, sending R1",
+	    st->st_serialno);
 
 	passert(st->st_connection != NULL);
 	passert(md != NULL);
@@ -1509,7 +1498,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
-	DBG(DBG_CONTROLMORE, DBG_log("finished processing quick inI1"));
+	dbg("finished processing quick inI1");
 	return STF_OK;
 }
 
@@ -1557,9 +1546,8 @@ static void quick_inR1_outI2_continue(struct state *st,
 				      struct msg_digest *md,
 				      struct pluto_crypto_req *r)
 {
-	DBG(DBG_CONTROL,
-		DBG_log("quick_inR1_outI2_continue for #%lu: calculated ke+nonce, calculating DH",
-			st->st_serialno));
+	dbg("quick_inR1_outI2_continue for #%lu: calculated ke+nonce, calculating DH",
+	    st->st_serialno);
 
 	passert(st->st_connection != NULL);
 	passert(md != NULL);

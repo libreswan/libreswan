@@ -652,15 +652,13 @@ static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 	st->ipseckey_fwd_dnsr = NULL;
 
 	if (st->ipseckey_dnsr != NULL) {
-		DBG(DBG_CONTROL, DBG_log("wait for IPSECKEY DNS response %s",
-					dnsr->qname));
+		dbg("wait for IPSECKEY DNS response %s", dnsr->qname);
 		/* wait for additional A/AAAA dns response */
 		free_ipseckey_dns(dnsr);
 		return;
 	}
 
-	DBG(DBG_CONTROL, DBG_log("%s unsuspend id=%s", dnsr->dbg_buf,
-				dnsr->qname));
+	dbg("%s unsuspend id=%s", dnsr->dbg_buf, dnsr->qname);
 
 	free_ipseckey_dns(dnsr);
 
@@ -717,14 +715,12 @@ static void idi_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 	st->ipseckey_dnsr = NULL;
 
 	if (st->ipseckey_fwd_dnsr != NULL) {
-		DBG(DBG_CONTROL, DBG_log("wait for additional DNS A/AAAA check %s",
-					dnsr->qname));
+		dbg("wait for additional DNS A/AAAA check %s", dnsr->qname);
 		/* wait for additional A/AAAA dns response */
 		free_ipseckey_dns(dnsr);
 		return;
 	} else {
-		DBG(DBG_CONTROL, DBG_log("%s unsuspend id=%s", dnsr->dbg_buf,
-					dnsr->qname));
+		dbg("%s unsuspend id=%s", dnsr->dbg_buf, dnsr->qname);
 		free_ipseckey_dns(dnsr);
 		idi_ipseckey_fetch_tail(st, err);
 	}
@@ -852,7 +848,7 @@ static stf_status dns_qry_start(struct p_dns_req *dnsr)
 
 	passert(get_unbound_ctx() != NULL);
 
-	DBG(DBG_CONTROL, DBG_log("%s start %s", dnsr->dbg_buf, dnsr->log_buf));
+	dbg("%s start %s", dnsr->dbg_buf, dnsr->log_buf);
 
 	dnsr->start_time = realnow();
 

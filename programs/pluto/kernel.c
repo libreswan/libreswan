@@ -314,13 +314,11 @@ ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
 		while (spi < IPSEC_DOI_SPI_OUR_MIN || spi == ntohl(avoid))
 			get_rnd_bytes((u_char *)&spi, sizeof(spi));
 
-		DBG(DBG_CONTROL,
-			{
-				ipsec_spi_t spi_net = htonl(spi);
-
-				DBG_dump("generate SPI:", (u_char *)&spi_net,
-					sizeof(spi_net));
-			});
+		if (DBGP(DBG_BASE)) {
+			ipsec_spi_t spi_net = htonl(spi);
+			DBG_dump("generate SPI:", (u_char *)&spi_net,
+				 sizeof(spi_net));
+		}
 
 		return htonl(spi);
 	}
@@ -638,10 +636,10 @@ bool do_command(const struct connection *c,
 	 * Useful on busy servers that do not need to use updown for anything
 	 */
 	if (sr->this.updown == NULL || streq(sr->this.updown, "%disabled")) {
-		DBG(DBG_CONTROL, DBG_log("skipped updown %s command - disabled per policy", verb));
+		dbg("skipped updown %s command - disabled per policy", verb);
 		return TRUE;
 	}
-	DBG(DBG_CONTROL, DBG_log("running updown command \"%s\" for verb %s ", sr->this.updown, verb));
+	dbg("running updown command \"%s\" for verb %s ", sr->this.updown, verb);
 
 	/*
 	 * Figure out which verb suffix applies.
@@ -668,12 +666,10 @@ bool do_command(const struct connection *c,
 			hs : cs;
 	}
 
-	DBG(DBG_CONTROL, DBG_log("command executing %s%s",
-					verb, verb_suffix));
+	dbg("command executing %s%s", verb, verb_suffix);
 
 	if (kernel_ops->docommand == NULL) {
-		DBG(DBG_CONTROL, DBG_log("no do_command for method %s",
-						kernel_ops->kern_name));
+		dbg("no do_command for method %s", kernel_ops->kern_name);
 	} else {
 		return (*kernel_ops->docommand)(c, sr, verb, verb_suffix, st);
 	}
@@ -683,7 +679,7 @@ bool do_command(const struct connection *c,
 bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd)
 {
 #	define CHUNK_WIDTH	80	/* units for cmd logging */
-	DBG(DBG_CONTROL, {
+	if (DBGP(DBG_BASE)) {
 		int slen = strlen(cmd);
 		int i;
 
@@ -694,7 +690,7 @@ bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd)
 			DBG_log("cmd(%4d):%.*s:", i,
 				slen-i < CHUNK_WIDTH? slen-i : CHUNK_WIDTH,
 				&cmd[i]);
-	});
+	}
 #	undef CHUNK_WIDTH
 
 
@@ -1494,7 +1490,7 @@ bool eroute_connection(const struct spd_route *sr,
 		if (!t)
 			libreswan_log("CAT: failed to eroute additional Client Address Translation policy");
 
-	DBG(DBG_CONTROL, DBG_log("%s CAT extra route added return=%d", __func__, t));
+		dbg("%s CAT extra route added return=%d", __func__, t);
 	}
 
 	return raw_eroute(&sr->this.host_addr, &sr->this.client,
@@ -1542,10 +1538,9 @@ bool assign_holdpass(const struct connection *c,
 		break;
 	}
 
-	DBG(DBG_CONTROL,
-		DBG_log("assign hold, routing was %s, needs to be %s",
-			enum_name(&routing_story, ro),
-			enum_name(&routing_story, rn)));
+	dbg("assign hold, routing was %s, needs to be %s",
+	    enum_name(&routing_story, ro),
+	    enum_name(&routing_story, rn));
 
 	if (eclipsable(sr)) {
 		/*
@@ -1559,13 +1554,11 @@ bool assign_holdpass(const struct connection *c,
 			libreswan_log("assign_holdpass() no bare shunt to remove? - mismatch?");
 		} else {
 			/* ??? should this happen? */
-			DBG(DBG_CONTROL,
-				DBG_log("assign_holdpass() removing bare shunt"));
+			dbg("assign_holdpass() removing bare shunt");
 			free_bare_shunt(old);
 		}
 	} else {
-		DBG(DBG_CONTROL,
-			DBG_log("assign_holdpass() need broad(er) shunt"));
+		dbg("assign_holdpass() need broad(er) shunt");
 		/*
 		 * we need a broad %hold, not the narrow one.
 		 * First we ensure that there is a broad %hold.
@@ -1598,8 +1591,7 @@ bool assign_holdpass(const struct connection *c,
 						reason,
 						c->policy_label))
 			{
-				DBG(DBG_CONTROL,
-					DBG_log("assign_holdpass() eroute_connection() done"));
+				dbg("assign_holdpass() eroute_connection() done");
 			} else {
 				libreswan_log("assign_holdpass() eroute_connection() failed");
 				return FALSE;
@@ -1610,17 +1602,15 @@ bool assign_holdpass(const struct connection *c,
 					transport_proto,
 					(c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD,
 					(c->policy & POLICY_NEGO_PASS) ? "delete narrow %pass" :
-						"delete narrow %hold"))
-		{
-			DBG(DBG_CONTROL,
-				DBG_log("assign_holdpass() delete_bare_shunt() succeeded"));
+						"delete narrow %hold")) {
+			dbg("assign_holdpass() delete_bare_shunt() succeeded");
 		} else {
 			libreswan_log("assign_holdpass() delete_bare_shunt() failed");
 				return FALSE;
 		}
 	}
 	sr->routing = rn;
-	DBG(DBG_CONTROL, DBG_log(" assign_holdpass() done - returning success"));
+	dbg(" assign_holdpass() done - returning success");
 	return TRUE;
 }
 
@@ -2653,12 +2643,12 @@ static void look_for_replacement_state(struct state *st)
 	struct connection *c = st->st_connection;
 	struct state *ost = state_with_serialno(c->newest_ipsec_sa);
 
-	DBG(DBG_CONTROL, {
-			DBG_log("checking if this is a replacement state");
-			DBG_log("  st=%p ost=%p st->serialno=#%lu ost->serialno=#%lu",
-				st, ost, st->st_serialno,
-				ost == NULL ? 0 : ost->st_serialno);
-		});
+	if (DBGP(DBG_BASE)) {
+		DBG_log("checking if this is a replacement state");
+		DBG_log("  st=%p ost=%p st->serialno=#%lu ost->serialno=#%lu",
+			st, ost, st->st_serialno,
+			ost == NULL ? 0 : ost->st_serialno);
+	}
 
 	if (ost != NULL && ost != st && ost->st_serialno != st->st_serialno) {
 		/*
@@ -2733,14 +2723,12 @@ bool install_inbound_ipsec_sa(struct state *st)
 		}
 	}
 
-	DBG(DBG_CONTROL,
-		DBG_log("install_inbound_ipsec_sa() checking if we can route"));
+	dbg("install_inbound_ipsec_sa() checking if we can route");
 	/* check that we will be able to route and eroute */
 	switch (could_route(c, st->st_logger)) {
 	case route_easy:
 	case route_nearconflict:
-		DBG(DBG_CONTROL,
-			DBG_log("   routing is easy, or has resolvable near-conflict"));
+		dbg("   routing is easy, or has resolvable near-conflict");
 		break;
 
 	case route_unnecessary:
@@ -2787,8 +2775,8 @@ bool route_and_eroute(struct connection *c,
 		struct spd_route *sr,
 		struct state *st)
 {
-	DBG(DBG_CONTROLMORE, DBG_log("route_and_eroute() for proto %d, and source port %d dest port %d",
-		sr->this.protocol, sr->this.port, sr->that.port));
+	dbg("route_and_eroute() for proto %d, and source port %d dest port %d",
+	    sr->this.protocol, sr->this.port, sr->that.port);
 	setportof(htons(sr->this.port), &sr->this.client.addr);
 	setportof(htons(sr->that.port), &sr->that.client.addr);
 
@@ -2796,15 +2784,14 @@ bool route_and_eroute(struct connection *c,
 	struct connection *ero,
 		*ro = route_owner(c, sr, &rosr, &ero, &esr);	/* who, if anyone, owns our eroute? */
 
-	DBG(DBG_CONTROLMORE,
-		DBG_log("route_and_eroute with c: %s (next: %s) ero:%s esr:{%p} ro:%s rosr:{%p} and state: #%lu",
-			c->name,
-			(c->policy_next ? c->policy_next->name : "none"),
-			ero == NULL ? "null" : ero->name,
-			esr,
-			ro == NULL ? "null" : ro->name,
-			rosr,
-			st == NULL ? 0 : st->st_serialno));
+	dbg("route_and_eroute with c: %s (next: %s) ero:%s esr:{%p} ro:%s rosr:{%p} and state: #%lu",
+	    c->name,
+	    (c->policy_next ? c->policy_next->name : "none"),
+	    ero == NULL ? "null" : ero->name,
+	    esr,
+	    ro == NULL ? "null" : ro->name,
+	    rosr,
+	    st == NULL ? 0 : st->st_serialno);
 
 	/* look along the chain of policies for same one */
 
@@ -2883,20 +2870,17 @@ bool route_and_eroute(struct connection *c,
 
 	bool route_installed = FALSE;
 
-	DBG(DBG_CONTROL,
-		DBG_log("route_and_eroute: firewall_notified: %s",
-			firewall_notified ? "true" : "false"));
+	dbg("route_and_eroute: firewall_notified: %s",
+	    firewall_notified ? "true" : "false");
 	if (!firewall_notified) {
 		/* we're in trouble -- don't do routing */
 	} else if (ro == NULL) {
 		/* a new route: no deletion required, but preparation is */
 		if (!do_command(c, sr, "prepare", st))
-			DBG(DBG_CONTROL,
-				DBG_log("prepare command returned an error"));
+			dbg("prepare command returned an error");
 		route_installed = do_command(c, sr, "route", st);
 		if (!route_installed)
-			DBG(DBG_CONTROL,
-				DBG_log("route command returned an error"));
+			dbg("route command returned an error");
 	} else if (routed(sr->routing) ||
 		routes_agree(ro, c)) {
 		route_installed = TRUE; /* nothing to be done */
@@ -2914,22 +2898,18 @@ bool route_and_eroute(struct connection *c,
 		if (sameaddr(&sr->this.host_nexthop,
 				&esr->this.host_nexthop)) {
 			if (!do_command(ro, sr, "unroute", st)) {
-				DBG(DBG_CONTROL,
-					DBG_log("unroute command returned an error"));
+				dbg("unroute command returned an error");
 			}
 			route_installed = do_command(c, sr, "route", st);
 			if (!route_installed)
-				DBG(DBG_CONTROL,
-					DBG_log("route command returned an error"));
+				dbg("route command returned an error");
 		} else {
 			route_installed = do_command(c, sr, "route", st);
 			if (!route_installed)
-				DBG(DBG_CONTROL,
-					DBG_log("route command returned an error"));
+				dbg("route command returned an error");
 
 			if (!do_command(ro, sr, "unroute", st)) {
-				DBG(DBG_CONTROL,
-					DBG_log("unroute command returned an error"));
+				dbg("unroute command returned an error");
 			}
 		}
 
@@ -2978,18 +2958,13 @@ bool route_and_eroute(struct connection *c,
 			sr->routing = RT_ROUTED_PROSPECTIVE;
 		} else {
 			sr->routing = RT_ROUTED_TUNNEL;
-
-			DBG(DBG_CONTROL, {
-					char cib[CONN_INST_BUF];
-					DBG_log("route_and_eroute: instance \"%s\"%s, setting eroute_owner {spd=%p,sr=%p} to #%lu (was #%lu) (newest_ipsec_sa=#%lu)",
-						st->st_connection->name,
-						fmt_conn_instance(st->st_connection,
-								cib),
-						&st->st_connection->spd, sr,
-						st->st_serialno,
-						sr->eroute_owner,
-						st->st_connection->newest_ipsec_sa);
-				});
+			connection_buf cib;
+			dbg("route_and_eroute: instance "PRI_CONNECTION", setting eroute_owner {spd=%p,sr=%p} to #%lu (was #%lu) (newest_ipsec_sa=#%lu)",
+			    pri_connection(st->st_connection, &cib),
+			    &st->st_connection->spd, sr,
+			    st->st_serialno,
+			    sr->eroute_owner,
+			    st->st_connection->newest_ipsec_sa);
 			sr->eroute_owner = st->st_serialno;
 			/* clear host shunts that clash with freshly installed route */
 			clear_narrow_holds(&sr->this.client, &sr->that.client,
@@ -3010,8 +2985,7 @@ bool route_and_eroute(struct connection *c,
 		/* Failure!  Unwind our work. */
 		if (firewall_notified && sr->eroute_owner == SOS_NOBODY) {
 			if (!do_command(c, sr, "down", st))
-				DBG(DBG_CONTROL,
-					DBG_log("down command returned an error"));
+				dbg("down command returned an error");
 		}
 
 		if (eroute_installed) {
@@ -3217,8 +3191,7 @@ bool migrate_ipsec_sa(struct state *st)
 		return TRUE;
 
 	default:
-		DBG(DBG_CONTROL,
-			DBG_log("Usupported kernel stack in migrate_ipsec_sa"));
+		dbg("Usupported kernel stack in migrate_ipsec_sa");
 		return FALSE;
 	}
 }
@@ -3322,8 +3295,7 @@ void delete_ipsec_sa(struct state *st)
 
 		break;
 	default:
-		DBG(DBG_CONTROL,
-			DBG_log("Unknown kernel stack in delete_ipsec_sa"));
+		dbg("unknown kernel stack in delete_ipsec_sa");
 		break;
 	} /* switch kernel_ops->type */
 }
@@ -3447,16 +3419,13 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 	ipsec_spi_t negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_DROP;
 
 	if (negotiation_shunt != failure_shunt ) {
-		DBG(DBG_CONTROL,
-			DBG_log("failureshunt != negotiationshunt, needs replacing"));
+		dbg("failureshunt != negotiationshunt, needs replacing");
 	} else {
-		DBG(DBG_CONTROL,
-			DBG_log("failureshunt == negotiationshunt, no replace needed"));
+		dbg("failureshunt == negotiationshunt, no replace needed");
 	}
 
-	DBG(DBG_CONTROL,
-		DBG_log("orphan_holdpass() called for %s with transport_proto '%d' and sport %d and dport %d",
-			c->name, transport_proto, sr->this.port, sr->that.port));
+	dbg("orphan_holdpass() called for %s with transport_proto '%d' and sport %d and dport %d",
+	    c->name, transport_proto, sr->this.port, sr->that.port);
 
 	passert(LHAS(LELEM(CK_PERMANENT) | LELEM(CK_INSTANCE) |
 				LELEM(CK_GOING_AWAY), c->kind));
@@ -3464,28 +3433,26 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 	switch (ro) {
 	case RT_UNROUTED_HOLD:
 		rn = RT_UNROUTED;
-		DBG(DBG_CONTROL, DBG_log("orphan_holdpass unrouted: hold -> pass"));
+		dbg("orphan_holdpass unrouted: hold -> pass");
 		break;
 	case RT_UNROUTED:
 		rn = RT_UNROUTED_HOLD;
-		DBG(DBG_CONTROL, DBG_log("orphan_holdpass unrouted: pass -> hold"));
+		dbg("orphan_holdpass unrouted: pass -> hold");
 		break;
 	case RT_ROUTED_HOLD:
 		rn = RT_ROUTED_PROSPECTIVE;
-		DBG(DBG_CONTROL, DBG_log("orphan_holdpass routed: hold -> trap (?)"));
+		dbg("orphan_holdpass routed: hold -> trap (?)");
 		break;
 	default:
-		DBG(DBG_CONTROL, DBG_log(
-			"no routing change needed for ro=%s - negotiation shunt matched failure shunt?",
-			enum_name(&routing_story, ro)));
+		dbg("no routing change needed for ro=%s - negotiation shunt matched failure shunt?",
+		    enum_name(&routing_story, ro));
 		break;
 	}
 
-	DBG(DBG_CONTROL,
-		DBG_log("orphaning holdpass for connection '%s', routing was %s, needs to be %s",
-			c->name,
-			enum_name(&routing_story, ro),
-			enum_name(&routing_story, rn)));
+	dbg("orphaning holdpass for connection '%s', routing was %s, needs to be %s",
+	    c->name,
+	    enum_name(&routing_story, ro),
+	    enum_name(&routing_story, rn));
 
 	{
 		/* are we replacing a bare shunt ? */
@@ -3524,21 +3491,20 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 		/* update kernel policy if needed */
 		/* This really causes the name to remain "oe-failing", we should be able to update only only the name of the shunt */
 		if (negotiation_shunt != failure_shunt ) {
-			DBG(DBG_CONTROL, DBG_log("replacing negotiation_shunt with failure_shunt"));
+			dbg("replacing negotiation_shunt with failure_shunt");
 			if (!replace_bare_shunt(&sr->this.host_addr, &sr->that.host_addr, bs->policy_prio,
-				negotiation_shunt, failure_shunt, bs->transport_proto,
-				"oe-failed"))
-			{
+						negotiation_shunt, failure_shunt, bs->transport_proto,
+						"oe-failed")) {
 				libreswan_log("assign_holdpass() failed to update shunt policy");
 			}
 		} else {
-			DBG(DBG_CONTROL, DBG_log("No need to replace negotiation_shunt with failure_shunt - they are the same"));
+			dbg("No need to replace negotiation_shunt with failure_shunt - they are the same");
 		}
 	}
 
 	/* change routing so we don't get cleared out when state/connection dies */
 	sr->routing = rn;
-	DBG(DBG_CONTROL, DBG_log("orphan_holdpas() done - returning success"));
+	dbg("orphan_holdpas() done - returning success");
 	return TRUE;
 }
 

@@ -312,8 +312,7 @@ static bool ikev1_verify_esp(const struct connection *c,
 		     ta->enckeylen == 0 ||
 		     algs.enckeylen == ta->enckeylen) &&
 		    algs.integ == ta->ta_integ) {
-			DBG(DBG_CONTROL,
-			    DBG_log("ESP IPsec Transform verified; matches alg_info entry"));
+			dbg("ESP IPsec Transform verified; matches alg_info entry");
 			return true;
 		}
 	}
@@ -347,16 +346,14 @@ static bool ikev1_verify_ah(const struct connection *c,
 		return false;
 	}
 	if (c->child_proposals.p == NULL) {
-		DBG(DBG_CONTROL,
-		    DBG_log("AH IPsec Transform verified unconditionally; no alg_info to check against"));
+		dbg("AH IPsec Transform verified unconditionally; no alg_info to check against");
 		return true;
 	}
 
 	FOR_EACH_PROPOSAL(c->child_proposals.p, proposal) {	/* really AH */
 		struct v1_proposal algs = v1_proposal(proposal);
 		if (algs.integ == ta->ta_integ) {
-			DBG(DBG_CONTROL,
-			    DBG_log("ESP IPsec Transform verified; matches alg_info entry"));
+			dbg("ESP IPsec Transform verified; matches alg_info entry");
 			return true;
 		}
 	}
@@ -988,8 +985,7 @@ static bool ikev1_verify_ike(const struct trans_attrs *ta,
 		return false;
 	}
 	if (ike_proposals.p == NULL) {
-		DBG(DBG_CONTROL,
-		    DBG_log("OAKLEY proposal verified unconditionally; no alg_info to check against"));
+		dbg("OAKLEY proposal verified unconditionally; no alg_info to check against");
 		return true;
 	}
 
@@ -1012,8 +1008,7 @@ static bool ikev1_verify_ike(const struct trans_attrs *ta,
 				       "You should NOT use insecure/broken IKE algorithms (%s)!",
 				       ta->ta_encrypt->common.fqn);
 			} else {
-				DBG(DBG_CONTROL,
-					DBG_log("OAKLEY proposal verified; matching alg_info found"));
+				dbg("OAKLEY proposal verified; matching alg_info found");
 				return true;
 			}
 		}
@@ -1724,11 +1719,8 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	const struct db_attr *auth = &trans->attrs[2];
 	const struct db_attr *grp  = &trans->attrs[3];
 
-	DBG(DBG_CONTROL,
-	    DBG_log("initiating aggressive mode with IKE=E=%d-H=%d-M=%d",
-		    enc->val,
-		    hash->val,
-		    grp->val));
+	dbg("initiating aggressive mode with IKE=E=%d-H=%d-M=%d",
+	    enc->val, hash->val, grp->val);
 
 	passert(enc->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM);
 
@@ -2647,22 +2639,18 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			    ENCAPSULATION_MODE_TUNNEL)
 				tunnel_mode = TRUE;
 		} else if (st->st_policy & POLICY_ENCRYPT) {
-			DBG(DBG_CONTROL | DBG_CRYPT, {
-				ipstr_buf b;
-				char cib[CONN_INST_BUF];
-				DBG_log("policy for \"%s\"%s requires encryption but ESP not in Proposal from %s",
-					c->name, fmt_conn_instance(c, cib),
-					ipstr(&c->spd.that.host_addr, &b));
-			});
+			connection_buf cib;
+			address_buf b;
+			dbg("policy for "PRI_CONNECTION" requires encryption but ESP not in Proposal from %s",
+			    pri_connection(c, &cib),
+			    str_address(&c->spd.that.host_addr, &b));
 			continue; /* we needed encryption, but didn't find ESP */
 		} else if ((st->st_policy & POLICY_AUTHENTICATE) && !ah_seen) {
-			DBG(DBG_CONTROL | DBG_CRYPT, {
-				ipstr_buf b;
-				char cib[CONN_INST_BUF];
-				DBG_log("policy for \"%s\"%s requires authentication but none in Proposal from %s",
-					c->name, fmt_conn_instance(c, cib),
-					ipstr(&c->spd.that.host_addr, &b));
-			});
+			connection_buf cib;
+			address_buf b;
+			dbg("policy for \"%s\"%s requires authentication but none in Proposal from %s",
+			    pri_connection(c, &cib),
+			    str_address(&c->spd.that.host_addr, &b));
 			continue; /* we need authentication, but we found neither ESP nor AH */
 		}
 
@@ -2725,27 +2713,25 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					break;
 
 				default:
-					DBG(DBG_CONTROL | DBG_CRYPT, {
-						ipstr_buf b;
-						DBG_log("unsupported IPCOMP Transform %d from %s",
-							ipcomp_attrs.transattrs.ta_comp,
-							ipstr(&c->spd.that.host_addr, &b));
-					});
+				{
+					address_buf b;
+					dbg("unsupported IPCOMP Transform %d from %s",
+					    ipcomp_attrs.transattrs.ta_comp,
+					    str_address(&c->spd.that.host_addr, &b));
 					continue; /* try another */
+				}
 				}
 
 				if (ah_seen &&
 				    ah_attrs.mode !=
 				      ipcomp_attrs.mode) {
 					/* ??? This should be an error, but is it? */
-					DBG(DBG_CONTROL | DBG_CRYPT,
-					    DBG_log("AH and IPCOMP transforms disagree about mode; TUNNEL presumed"));
+					dbg("AH and IPCOMP transforms disagree about mode; TUNNEL presumed");
 				} else if (esp_seen &&
 					   esp_attrs.mode !=
 					     ipcomp_attrs.mode) {
 					/* ??? This should be an error, but is it? */
-					DBG(DBG_CONTROL | DBG_CRYPT,
-					    DBG_log("ESP and IPCOMP transforms disagree about mode; TUNNEL presumed"));
+					dbg("ESP and IPCOMP transforms disagree about mode; TUNNEL presumed");
 				}
 
 				break; /* we seem to be happy */

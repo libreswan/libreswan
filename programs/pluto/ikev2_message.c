@@ -794,11 +794,10 @@ bool ikev2_decrypt_msg(struct state *st, struct msg_digest *md)
 		md->chain[ISAKMP_NEXT_v2SK]->pbs = same_chunk_as_in_pbs(c, "decrypted SK payload");
 	}
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("#%lu ikev2 %s decrypt %s",
-		    st->st_serialno,
-		    enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
-		    ok ? "success" : "failed"));
+	dbg("#%lu ikev2 %s decrypt %s",
+	    st->st_serialno,
+	    enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+	    ok ? "success" : "failed");
 
 	return ok;
 }

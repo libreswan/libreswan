@@ -104,8 +104,10 @@ err_t form_ckaid_rsa(chunk_t modulus, ckaid_t *ckaid)
 	if (nss_ckaid == NULL) {
 		return "unable to compute 'CKAID' from modulus";
 	}
-	DBG(DBG_CONTROLMORE, DBG_dump("computed rsa CKAID",
-				      nss_ckaid->data, nss_ckaid->len));
+	if (DBGP(DBG_BASE)) {
+		DBG_dump("computed rsa CKAID",
+			 nss_ckaid->data, nss_ckaid->len);
+	}
 	*ckaid = ckaid_from_secitem(nss_ckaid);
 	SECITEM_FreeItem(nss_ckaid, PR_TRUE);
 	return NULL;
@@ -122,8 +124,10 @@ err_t form_ckaid_ecdsa(chunk_t pub_value, ckaid_t *ckaid)
 	if (nss_ckaid == NULL) {
 		return "unable to compute 'CKAID' from public value";
 	}
-	DBG(DBG_CONTROLMORE, DBG_dump("computed ecdsa CKAID",
-					nss_ckaid->data, nss_ckaid->len));
+	if (DBGP(DBG_BASE)) {
+		DBG_dump("computed ecdsa CKAID",
+			 nss_ckaid->data, nss_ckaid->len);
+	}
 	*ckaid = ckaid_from_secitem(nss_ckaid);
 	SECITEM_FreeItem(nss_ckaid, PR_TRUE);
 	return NULL;

@@ -180,7 +180,7 @@ bool emit_v2Nsa_pl(v2_notification_t ntype,
 		break;
 	}
 
-	DBG(DBG_CONTROLMORE, DBG_log("Adding a v2N Payload"));
+	dbg("adding a v2N Payload");
 
 	struct ikev2_notify n = {
 		.isan_critical = build_ikev2_critical(false),

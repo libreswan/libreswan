@@ -1054,9 +1054,7 @@ void delete_state(struct state *st)
 	/* if there is a suspended state transition, disconnect us */
 	struct msg_digest *md = unsuspend_md(st);
 	if (md != NULL) {
-		DBG(DBG_CONTROL,
-		    DBG_log("disconnecting state #%lu from md",
-			    st->st_serialno));
+		dbg("disconnecting state #%lu from md", st->st_serialno);
 		release_any_md(&md);
 	}
 
@@ -1366,7 +1364,7 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 	 * ISAKMP SA states found in the first pass, avoiding a second.
 	 */
 	for (int pass = 0; pass != 2; pass++) {
-		DBG(DBG_CONTROL, DBG_log("pass %d", pass));
+		dbg("pass %d", pass);
 		dbg("FOR_EACH_STATE_... in %s", __func__);
 		struct state *this = NULL;
 		FOR_EACH_STATE_NEW2OLD(this) {
@@ -1532,7 +1530,6 @@ static struct state *duplicate_state(struct state *st,
 				     struct fd *whackfd)
 {
 	struct state *nst;
-	char cib[CONN_INST_BUF];
 
 	if (sa_type == IPSEC_SA) {
 		/* record use of the Phase 1 / Parent state */
@@ -1545,13 +1542,10 @@ static struct state *duplicate_state(struct state *st,
 			st->st_ike_spis.responder,
 			sa_type, whackfd);
 
-	DBG(DBG_CONTROL,
-		DBG_log("duplicating state object #%lu \"%s\"%s as #%lu for %s",
-			 st->st_serialno,
-			 st->st_connection->name,
-			 fmt_conn_instance(st->st_connection, cib),
-			 nst->st_serialno,
-			 sa_type == IPSEC_SA ? "IPSEC SA" : "IKE SA"));
+	connection_buf cib;
+	dbg("duplicating state object #%lu "PRI_CONNECTION" as #%lu for %s",
+	    st->st_serialno, pri_connection(st->st_connection, &cib),
+	    nst->st_serialno, sa_type == IPSEC_SA ? "IPSEC SA" : "IKE SA");
 
 	update_state_connection(nst, st->st_connection);
 
@@ -1960,9 +1954,8 @@ bool find_pending_phase2(const so_serial_t psn,
 	}
 
 	if (n > 0) {
-		DBG(DBG_CONTROL,
-			DBG_log("connection %s has %d pending IPsec negotiations ike #%lu last child state #%lu",
-				c->name, n, psn, best->st_serialno));
+		dbg("connection %s has %d pending IPsec negotiations ike #%lu last child state #%lu",
+		    c->name, n, psn, best->st_serialno);
 	}
 
 	return best != NULL;
@@ -2735,8 +2728,8 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 		 str_sensitive_endpoint(&old_endpoint, &old),
 		 str_sensitive_endpoint(&new_endpoint, &new));
 
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu pst=#%lu %s", child->sa.st_serialno,
-					ike->sa.st_serialno, buf));
+	dbg("#%lu pst=#%lu %s", child->sa.st_serialno,
+	    ike->sa.st_serialno, buf);
 
 	if (endpoint_eq(old_endpoint, new_endpoint)) {
 		if (md_role == MESSAGE_REQUEST) {
@@ -3012,11 +3005,11 @@ bool state_is_busy(const struct state *st)
 bool verbose_state_busy(const struct state *st)
 {
 	if (st == NULL) {
-		DBG(DBG_CONTROLMORE, DBG_log("#null state always idle"));
+		dbg("#null state always idle");
 		return false;
 	}
 	if (!state_is_busy(st)) {
-		DBG(DBG_CONTROLMORE, DBG_log("#%lu idle", st->st_serialno));
+		dbg("#%lu idle", st->st_serialno);
 		return false;
 	}
 	if (st->st_suspended_md != NULL) {
@@ -3080,14 +3073,13 @@ void show_globalstate_status(struct show *s)
 static void log_newest_sa_change(const char *f, so_serial_t old_ipsec_sa,
 			  struct state *const st)
 {
-	DBG(DBG_CONTROLMORE,
-			DBG_log("%s: instance %s[%lu], setting %s newest_ipsec_sa to #%lu (was #%lu) (spd.eroute=#%lu) cloned from #%lu",
-				f, st->st_connection->name,
-				st->st_connection->instance_serial,
-				enum_name(&ike_version_names, st->st_ike_version),
-				st->st_connection->newest_ipsec_sa, old_ipsec_sa,
-				st->st_connection->spd.eroute_owner,
-				st->st_clonedfrom));
+	dbg("%s: instance %s[%lu], setting %s newest_ipsec_sa to #%lu (was #%lu) (spd.eroute=#%lu) cloned from #%lu",
+	    f, st->st_connection->name,
+	    st->st_connection->instance_serial,
+	    enum_name(&ike_version_names, st->st_ike_version),
+	    st->st_connection->newest_ipsec_sa, old_ipsec_sa,
+	    st->st_connection->spd.eroute_owner,
+	    st->st_clonedfrom);
 }
 
 void set_newest_ipsec_sa(const char *m, struct state *const st)
@@ -3269,8 +3261,8 @@ void IKE_SA_established(const struct ike_sa *ike)
 				struct connection *d = old_p2 == NULL ? NULL : old_p2->st_connection;
 
 				if (c == d && same_id(&c->spd.that.id, &d->spd.that.id)) {
-					DBG(DBG_CONTROL, DBG_log("Initial Contact received, deleting old state #%lu from connection '%s'",
-						c->newest_ipsec_sa, c->name));
+					dbg("Initial Contact received, deleting old state #%lu from connection '%s'",
+					    c->newest_ipsec_sa, c->name);
 					old_p2->st_dont_send_delete = true;
 					event_force(EVENT_SA_EXPIRE, old_p2);
 				}

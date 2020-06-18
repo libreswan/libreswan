@@ -41,12 +41,11 @@ static SECStatus ckaid_match(CERTCertificate *cert, SECItem *ignore1 UNUSED, voi
 	SECItem *ckaid = PK11_GetLowLevelKeyIDForCert(NULL, cert,
 						      lsw_return_nss_password_file_info());
 	if (ckaid == NULL) {
-		DBG(DBG_CONTROL,
-		    DBG_log("GetLowLevelID for cert %s failed", cert->nickname));
+		dbg("GetLowLevelID for cert %s failed", cert->nickname);
 		return SECSuccess;
 	}
 	if (SECITEM_ItemsAreEqual(ckaid, &ckaid_match_arg->ckaid)) {
-		DBG(DBG_CONTROLMORE, DBG_log("CKAID matched cert %s", cert->nickname));
+		dbg("CKAID matched cert %s", cert->nickname);
 		ckaid_match_arg->cert = CERT_DupCertificate(cert);
 		/* bail early, but how?  */
 	}

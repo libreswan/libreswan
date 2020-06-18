@@ -1850,9 +1850,8 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol)
 
 	if (delete_bare_shunt(&src, &dst,
 			transport_proto, SPI_HOLD /* why spi to use? */,
-			"delete expired bare shunt"))
-	{
-		DBG(DBG_CONTROL, DBG_log("netlink_shunt_expire() called delete_bare_shunt() with success"));
+			      "delete expired bare shunt")) {
+		dbg("netlink_shunt_expire() called delete_bare_shunt() with success");
 	} else {
 		libreswan_log("netlink_shunt_expire() called delete_bare_shunt() which failed!");
 	}
@@ -2440,12 +2439,9 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 
 		/* what if we didn't find a virtual interface? */
 		if (v == NULL) {
-			DBG(DBG_CONTROL, {
-				ipstr_buf b;
-				DBG_log("IP interface %s %s has no matching ipsec* interface -- ignored",
-					ifp->name,
-					ipstr(&ifp->addr, &b));
-			});
+			address_buf b;
+			dbg("IP interface %s %s has no matching ipsec* interface -- ignored",
+			    ifp->name, str_address(&ifp->addr, &b));
 			continue;
 		}
 

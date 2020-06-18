@@ -692,8 +692,8 @@ static void vidlog(const char *vidstr, size_t len, struct vid_struct *vid, bool 
 			 vid->descr ? vid->descr : "");
 	}
 
-	DBG(DBG_CONTROL, DBG_log("%s Vendor ID payload [%s]",
-	       vid_useful ? "received" : "ignoring", vid_dump));
+	dbg("%s Vendor ID payload [%s]",
+	    vid_useful ? "received" : "ignoring", vid_dump);
 }
 
 /*
@@ -994,7 +994,7 @@ bool vid_is_oppo(const char *vid, size_t len)
 		passert(pvid->id != VID_none); /* we must find VID_OPPORTUNISTIC */
 
 	if (pvid->vid_len == len && memeq(vid, pvid->vid, len)) {
-		DBG(DBG_CONTROL, DBG_log("VID_OPPORTUNISTIC received"));
+		dbg("VID_OPPORTUNISTIC received");
 		return TRUE;
 	} else {
 		return FALSE;

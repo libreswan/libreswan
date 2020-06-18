@@ -125,7 +125,7 @@ static err_t try_ECDSA_signature_v2(const struct crypt_mac *hash,
 		.data = sig_pbs->cur,
 		.len = pbs_left(sig_pbs),
 	};
-	LSWDBGP(DBG_CONTROL, buf) {
+	LSWDBGP(DBG_BASE, buf) {
 		lswlogf(buf, "%d-byte DER encoded ECDSA signature: ",
 			der_signature.len);
 		lswlog_nss_secitem(buf, &der_signature);
@@ -140,7 +140,7 @@ static err_t try_ECDSA_signature_v2(const struct crypt_mac *hash,
 		PORT_FreeArena(arena, PR_FALSE);
 		return "1" "Decode failed";
 	}
-	LSWDBGP(DBG_CONTROL, buf) {
+	LSWDBGP(DBG_BASE, buf) {
 		lswlogf(buf, "%d-byte raw ESCSA signature: ",
 			raw_signature->len);
 		lswlog_nss_secitem(buf, raw_signature);

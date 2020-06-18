@@ -421,7 +421,7 @@ static stf_status modecfg_resp(struct state *st,
 			dbg("We are sending '%s' as domain", strtok(c->modecfg_domains, ", "));
 			isakmp_add_attr(&strattr, MODECFG_DOMAIN, &ia, st);
 		} else {
-			DBG(DBG_CONTROLMORE, DBG_log("We are not sending a domain"));
+			dbg("we are not sending a domain");
 		}
 
 		if (c->modecfg_banner != NULL) {
@@ -1198,10 +1198,10 @@ static void xauth_launch_authent(struct state *st,
 /* log a nice description of an unsupported attribute */
 static void log_bad_attr(const char *kind, enum_names *ed, unsigned val)
 {
-	DBG(DBG_CONTROLMORE, DBG_log("Unsupported %s %s attribute %s received.",
-		kind,
-		(val & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
-		enum_show(ed, val & ISAKMP_ATTR_RTYPE_MASK)));
+	dbg("Unsupported %s %s attribute %s received.",
+	    kind,
+	    (val & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
+	    enum_show(ed, val & ISAKMP_ATTR_RTYPE_MASK));
 }
 
 /*
@@ -1259,10 +1259,8 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 		case XAUTH_TYPE | ISAKMP_ATTR_AF_TV:
 			/* since we only accept XAUTH_TYPE_GENERIC we don't need to record this attribute */
 			if (attr.isaat_lv != XAUTH_TYPE_GENERIC) {
-				DBG(DBG_CONTROLMORE, DBG_log(
-					"unsupported XAUTH_TYPE value %s received",
-					enum_show(&xauth_type_names,
-						  attr.isaat_lv)));
+				dbg("unsupported XAUTH_TYPE value %s received",
+				    enum_show(&xauth_type_names, attr.isaat_lv));
 				return STF_FAIL + NO_PROPOSAL_CHOSEN;
 			}
 			break;
@@ -1360,22 +1358,19 @@ stf_status xauth_inR1(struct state *st, struct msg_digest *md UNUSED)
 	st->st_oakley.doing_xauth = FALSE;
 
 	if (!st->st_connection->spd.this.modecfg_server) {
-		DBG(DBG_CONTROL,
-		    DBG_log("Not server, starting new exchange"));
+		dbg("not server, starting new exchange");
 		st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	}
 
 	if (st->st_connection->spd.this.modecfg_server &&
 	    st->hidden_variables.st_modecfg_vars_set) {
-		DBG(DBG_CONTROL,
-		    DBG_log("modecfg server, vars are set. Starting new exchange."));
+		dbg("modecfg server, vars are set. Starting new exchange.");
 		st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	}
 
 	if (st->st_connection->spd.this.modecfg_server &&
 	    st->st_connection->policy & POLICY_MODECFG_PULL) {
-		DBG(DBG_CONTROL,
-		    DBG_log("modecfg server, pull mode. Starting new exchange."));
+		dbg("modecfg server, pull mode. Starting new exchange.");
 		st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	}
 	return STF_OK;
@@ -1407,7 +1402,7 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	lset_t resp = LEMPTY;
 
-	DBG(DBG_CONTROLMORE, DBG_log("arrived in modecfg_inR0"));
+	dbg("arrived in modecfg_inR0");
 
 	st->st_v1_msgid.phase15 = md->hdr.isa_msgid;
 
@@ -1492,7 +1487,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 	uint16_t isama_id = ma->isama_identifier;
 	lset_t resp = LEMPTY;
 
-	DBG(DBG_CONTROL, DBG_log("modecfg_inI2"));
+	dbg("modecfg_inI2");
 
 	st->st_v1_msgid.phase15 = md->hdr.isa_msgid;
 
@@ -1584,7 +1579,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 	if (resp != LEMPTY)
 		st->hidden_variables.st_modecfg_vars_set = TRUE;
 
-	DBG(DBG_CONTROL, DBG_log("modecfg_inI2(STF_OK)"));
+	dbg("modecfg_inI2(STF_OK)");
 	return STF_OK;
 }
 
@@ -1606,7 +1601,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	lset_t resp = LEMPTY;
 
-	DBG(DBG_CONTROL, DBG_log("modecfg_inR1: received mode cfg reply"));
+	dbg("modecfg_inR1: received mode cfg reply");
 
 	st->st_v1_msgid.phase15 = md->hdr.isa_msgid;
 
@@ -1697,15 +1692,13 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 			case INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
 			{
-				ipstr_buf b;
-
 				ip_address a;
 				if (!pbs_in_address(&a, &ipv4_info, &strattr, "addr")) {
 					return STF_FATAL;
 				}
 
-				DBG(DBG_CONTROL, DBG_log("Received IP4 NETMASK %s",
-					ipstr(&a, &b)));
+				address_buf b;
+				dbg("Received IP4 NETMASK %s", str_address(&a, &b));
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
 			}
@@ -1843,7 +1836,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 	if (resp != LEMPTY)
 		st->hidden_variables.st_modecfg_vars_set = TRUE;
 
-	DBG(DBG_CONTROL, DBG_log("modecfg_inR1(STF_OK)"));
+	dbg("modecfg_inR1(STF_OK)");
 	return STF_OK;
 }
 
@@ -1969,10 +1962,9 @@ static stf_status xauth_client_resp(struct state *st,
 							lsw_get_xauthsecret(
 								st->st_xauth_username);
 
-						DBG(DBG_CONTROLMORE,
-						    DBG_log("looked up username=%s, got=%p",
-							    st->st_xauth_username,
-							    s));
+						dbg("looked up username=%s, got=%p",
+						    st->st_xauth_username,
+						    s);
 						if (s != NULL) {
 							struct private_key_stuff
 								*pks = lsw_get_pks(s);
@@ -2104,7 +2096,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 	if (st->hidden_variables.st_xauth_client_done)
 		return modecfg_inI2(md, &rbody);
 
-	DBG(DBG_CONTROLMORE, DBG_log("arrived in xauth_inI0"));
+	dbg("arrived in xauth_inI0");
 
 	if (impair.drop_xauth_r0) {
 		libreswan_log("IMPAIR: drop XAUTH R0 message ");
@@ -2150,7 +2142,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 				status = attr.isaat_lv;
 				break;
 			case XAUTH_STATUS_OK:
-				DBG(DBG_CONTROLMORE, DBG_log("Received Cisco XAUTH status: OK"));
+				dbg("received Cisco XAUTH status: OK");
 				status = attr.isaat_lv;
 				break;
 			default:
@@ -2168,7 +2160,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 			size_t len = attr.isaat_lv;
 			char msgbuf[81];
 
-			DBG(DBG_CONTROLMORE, DBG_log("Received Cisco XAUTH message"));
+			dbg("received Cisco XAUTH message");
 			if (len >= sizeof(msgbuf) )
 				len = sizeof(msgbuf) - 1;
 			memcpy(msgbuf, strattr.cur, len);
@@ -2185,38 +2177,38 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 					attr.isaat_lv);
 				return STF_IGNORE;
 			}
-			DBG(DBG_CONTROLMORE, DBG_log("Received Cisco XAUTH type: Generic"));
+			dbg("received Cisco XAUTH type: Generic");
 			xauth_resp |= XAUTHLELEM(XAUTH_TYPE);
 			break;
 
 		case XAUTH_USER_NAME | ISAKMP_ATTR_AF_TLV:
-			DBG(DBG_CONTROLMORE, DBG_log("Received Cisco XAUTH username"));
+			dbg("received Cisco XAUTH username");
 			xauth_resp |= XAUTHLELEM(XAUTH_USER_NAME);
 			break;
 
 		case XAUTH_USER_PASSWORD | ISAKMP_ATTR_AF_TLV:
-			DBG(DBG_CONTROLMORE, DBG_log("Received Cisco XAUTH password"));
+			dbg("received Cisco XAUTH password");
 			xauth_resp |= XAUTHLELEM(XAUTH_USER_PASSWORD);
 			break;
 
 		case INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
-			DBG(DBG_CONTROLMORE, DBG_log("Received Cisco Internal IPv4 address"));
+			dbg("received Cisco Internal IPv4 address");
 			break;
 
 		case INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
-			DBG(DBG_CONTROLMORE, DBG_log("Received Cisco Internal IPv4 netmask"));
+			dbg("received Cisco Internal IPv4 netmask");
 			break;
 
 		case INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
-			DBG(DBG_CONTROLMORE, DBG_log("Received Cisco IPv4 DNS info"));
+			dbg("received Cisco IPv4 DNS info");
 			break;
 
 		case INTERNAL_IP4_SUBNET | ISAKMP_ATTR_AF_TV:
-			DBG(DBG_CONTROLMORE, DBG_log("Received Cisco IPv4 Subnet info"));
+			dbg("received Cisco IPv4 Subnet info");
 			break;
 
 		case INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TV:
-			DBG(DBG_CONTROLMORE, DBG_log("Received Cisco NetBEUI NS info"));
+			dbg("received Cisco NetBEUI NS info");
 			break;
 
 		default:
@@ -2287,7 +2279,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 	/* reset the message ID */
 	st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 
-	DBG(DBG_CONTROLMORE, DBG_log("xauth_inI0(STF_OK)"));
+	dbg("xauth_inI0(STF_OK)");
 	return STF_OK;
 }
 
@@ -2356,13 +2348,13 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 	stf_status stat;
 	lset_t xauth_resp = LEMPTY;	/* ??? value never used */
 
-	DBG(DBG_CONTROLMORE, DBG_log("xauth_inI1"));
+	dbg("xauth_inI1");
 
 	if (st->hidden_variables.st_xauth_client_done) {
-		DBG(DBG_CONTROLMORE, DBG_log("st_xauth_client_done, moving into modecfg_inI2"));
+		dbg("st_xauth_client_done, moving into modecfg_inI2");
 		return modecfg_inI2(md, &rbody);
 	}
-	DBG(DBG_CONTROLMORE, DBG_log("Continuing with xauth_inI1"));
+	dbg("Continuing with xauth_inI1");
 
 	st->st_v1_msgid.phase15 = md->hdr.isa_msgid;
 

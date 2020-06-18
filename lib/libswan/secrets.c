@@ -705,10 +705,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					match |= match_default;
 			}
 
-			DBG(DBG_CONTROL,
-				DBG_log("line %d: match=0%02o",
-					s->pks.line, match);
-				);
+			dbg("line %d: match=0%02o", s->pks.line, match);
 
 			switch (match) {
 			case match_local:
@@ -774,8 +771,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 						bad_case(kind);
 					}
 					if (!same) {
-						DBG(DBG_CONTROL,
-						    DBG_log("multiple ipsec.secrets entries with distinct secrets match endpoints: first secret used"));
+						dbg("multiple ipsec.secrets entries with distinct secrets match endpoints: first secret used");
 						/*
 						 * list is backwards:
 						 * take latest in list
@@ -783,31 +779,25 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 						best = s;
 					}
 				} else if (match > best_match) {
-					DBG(DBG_CONTROL,
-						DBG_log("match 0%02o beats previous best_match 0%02o match=%p (line=%d)",
-							match,
-							best_match,
-							s, s->pks.line);
-						);
+					dbg("match 0%02o beats previous best_match 0%02o match=%p (line=%d)",
+					    match,
+					    best_match,
+					    s, s->pks.line);
 
 					/* this is the best match so far */
 					best_match = match;
 					best = s;
 				} else {
-					DBG(DBG_CONTROL,
-						DBG_log("match 0%02o loses to best_match 0%02o",
-							match, best_match);
-						);
+					dbg("match 0%02o loses to best_match 0%02o",
+					    match, best_match);
 				}
 			}
 		}
 	}
 
-	DBG(DBG_CONTROL,
-		DBG_log("concluding with best_match=0%02o best=%p (lineno=%d)",
-			best_match, best,
-			best == NULL ? -1 : best->pks.line);
-		);
+	dbg("concluding with best_match=0%02o best=%p (lineno=%d)",
+	    best_match, best,
+	    best == NULL ? -1 : best->pks.line);
 
 	return best;
 }
@@ -906,10 +896,8 @@ static err_t lsw_process_psk_secret(chunk_t *psk)
 		}
 	}
 
-	DBG(DBG_CONTROL,
-		DBG_log("Processing PSK at line %d: %s",
-			flp->lino, ugh == NULL ? "passed" : ugh);
-		);
+	dbg("processing PSK at line %d: %s",
+	    flp->lino, ugh == NULL ? "passed" : ugh);
 
 	return ugh;
 }
@@ -947,10 +935,8 @@ static err_t lsw_process_xauth_secret(chunk_t *xauth)
 		}
 	}
 
-	DBG(DBG_CONTROL,
-		DBG_log("Processing XAUTH at line %d: %s",
-			flp->lino, ugh == NULL ? "passed" : ugh);
-		);
+	dbg("processing XAUTH at line %d: %s",
+	    flp->lino, ugh == NULL ? "passed" : ugh);
 
 	return ugh;
 }
@@ -1005,10 +991,8 @@ static err_t lsw_process_ppk_static_secret(chunk_t *ppk, chunk_t *ppk_id)
 		}
 	}
 
-	DBG(DBG_CONTROL,
-		DBG_log("Processing PPK at line %d: %s",
-			flp->lino, ugh == NULL ? "passed" : ugh);
-		);
+	dbg("processing PPK at line %d: %s",
+	    flp->lino, ugh == NULL ? "passed" : ugh);
 
 	return ugh;
 }
@@ -1114,13 +1098,13 @@ static err_t lsw_process_rsa_secret(struct private_key_stuff *pks)
 
 		/* dispose of the data */
 		if (p->offset >= 0) {
-			DBG(DBG_CONTROLMORE, DBG_log("saving %s", p->name));
+			dbg("saving %s", p->name);
 			DBG(DBG_PRIVATE, DBG_dump(p->name, bv, bvlen));
 			chunk_t *n = (chunk_t*) ((char *)rsak + p->offset);
 			*n = clone_bytes_as_chunk(bv, bvlen, p->name);
 			DBG(DBG_PRIVATE, DBG_dump_hunk(p->name, *n));
 		} else {
-			DBG(DBG_CONTROL, DBG_log("ignoring %s", p->name));
+			dbg("ignoring %s", p->name);
 		}
 	}
 	passert(tokeq("}"));
@@ -1420,14 +1404,10 @@ static void lsw_process_secret_records(struct secret **psecrets)
 					i->id = id;
 					i->next = s->ids;
 					s->ids = i;
-					DBG(DBG_CONTROL, {
-						id_buf b;
-						DBG_log("id type added to secret(%p) %s: %s",
-							s,
-							enum_name(&pkk_names,
-								s->pks.kind),
-							str_id(&id, &b));
-					});
+					id_buf b;
+					dbg("id type added to secret(%p) %s: %s",
+					    s, enum_name(&pkk_names, s->pks.kind),
+					    str_id(&id, &b));
 				}
 				if (!shift()) {
 					/* unexpected Record Boundary or EOF */
@@ -1570,13 +1550,9 @@ void unreference_key(struct pubkey **pkp)
 		return;
 
 	/* print stuff */
-	DBG(DBG_CONTROLMORE, {
-		id_buf b;
-		DBG_log("unreference key: %p %s cnt %d--",
-			pk,
-			str_id(&pk->id, &b),
-			pk->refcnt);
-	});
+	id_buf b;
+	dbg("unreference key: %p %s cnt %d--",
+	    pk, str_id(&pk->id, &b), pk->refcnt);
 
 	/* cancel out the pointer */
 	*pkp = NULL;

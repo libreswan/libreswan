@@ -371,7 +371,6 @@ struct db_sa *kernel_alg_makedb(lset_t policy,
 
 	db_destroy(dbnew);
 
-	DBG(DBG_CONTROL,
-	    DBG_log("returning new proposal from esp_info"));
+	dbg("returning new proposal from esp_info");
 	return n;
 }

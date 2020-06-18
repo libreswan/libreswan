@@ -406,10 +406,6 @@ enum {
 
 /* singleton sets: must be kept in sync with the items! */
 
-/* so things don't break */
-#define DBG_CONTROL	DBG_BASE
-#define DBG_CONTROLMORE	DBG_BASE
-
 /* These are not part of "base" debugging */
 #define DBG_TMI		LELEM(DBG_TMI_IX)
 #define DBG_CRYPT	LELEM(DBG_CRYPT_IX)

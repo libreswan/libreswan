@@ -73,13 +73,11 @@ void add_pending(struct fd *whack_sock,
 
 	for (p = pp ? *pp : NULL; p != NULL; p = p->next) {
 		if (p->connection == c && p->ike == ike) {
-			DBG(DBG_CONTROL, {
-				ipstr_buf b;
-				char cib[CONN_INST_BUF];
-				DBG_log("Ignored already queued up pending IPsec SA negotiation with %s \"%s\"%s",
-					ipstr(&c->spd.that.host_addr, &b),
-					c->name, fmt_conn_instance(c, cib));
-			});
+			address_buf b;
+			connection_buf cib;
+			dbg("Ignored already queued up pending IPsec SA negotiation with %s "PRI_CONNECTION"",
+			    str_address(&c->spd.that.host_addr, &b),
+			    pri_connection(c, &cib));
 			return;
 		}
 	}
@@ -96,10 +94,9 @@ void add_pending(struct fd *whack_sock,
 	p->uctx = NULL;
 	if (uctx != NULL) {
 		p->uctx = clone_thing(*uctx, "pending security context");
-		DBG(DBG_CONTROL,
-		    DBG_log("pending IPsec SA negotiation with security context %s, %d",
-			    p->uctx->sec_ctx_value,
-			    p->uctx->ctx.ctx_len));
+		dbg("pending IPsec SA negotiation with security context %s, %d",
+		    p->uctx->sec_ctx_value,
+		    p->uctx->ctx.ctx_len);
 	}
 
 	/*
@@ -288,16 +285,13 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 			default:
 				bad_case(ike->sa.st_ike_version);
 			}
-			DBG(DBG_CONTROL, {
-				ipstr_buf b;
-				char cib[CONN_INST_BUF];
-				DBG_log("%s pending %s with %s \"%s\"%s",
-					what,
-					(ike->sa.st_ike_version == IKEv2) ? "Child SA" : "Quick Mode",
-					ipstr(&p->connection->spd.that.host_addr, &b),
-					p->connection->name,
-					fmt_conn_instance(p->connection, cib));
-			});
+			address_buf b;
+			connection_buf cib;
+			dbg("%s pending %s with %s "PRI_CONNECTION"",
+			    what,
+			    (ike->sa.st_ike_version == IKEv2) ? "Child SA" : "Quick Mode",
+			    str_address(&p->connection->spd.that.host_addr, &b),
+			    pri_connection(p->connection, &cib));
 
 			p->connection = NULL;           /* ownership transferred */
 			delete_pending(pp);	/* in effect, advances pp */

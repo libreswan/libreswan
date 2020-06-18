@@ -232,22 +232,18 @@ struct connection *find_host_pair_connections(const ip_address *myaddr,
 {
 	struct host_pair *hp = find_host_pair(myaddr, peer_addr);
 
-	/*
-	DBG(DBG_CONTROLMORE, {
-		ipstr_buf bm;
-		ipstr_buf bh;
-		char ci[CONN_INST_BUF];
-
-		DBG_log("find_host_pair_conn: %s:%d %s:%d -> hp:%s%s",
-			ipstr(myaddr, &bm), myport,
-			peer_addr != NULL ? ipstr(peer_addr, &bh) : "%any",
-			peer_port,
-			hp != NULL && hp->connections != NULL ?
-				hp->connections->name : "none",
-			hp != NULL && hp->connections != NULL ?
-				fmt_conn_instance(hp->connections, ci) : "");
-	    });
-	    */
+#if 0
+	address_buf bm, bh;
+	connection_buf ci;
+	dbg("find_host_pair_conn: %s:%d %s:%d -> hp:%s%s",
+	    str_address(myaddr, &bm), myport,
+	    peer_addr != NULL ? str_address(peer_addr, &bh) : "%any",
+	    peer_port,
+	    hp != NULL && hp->connections != NULL ?
+	    hp->connections->name : "none",
+	    hp != NULL && hp->connections != NULL ?
+	    str_conn_instance(hp->connections, ci) : ""));
+#endif
 
 	return hp == NULL ? NULL : hp->connections;
 }
@@ -258,18 +254,13 @@ void connect_to_host_pair(struct connection *c)
 		struct host_pair *hp = find_host_pair(&c->spd.this.host_addr,
 						      &c->spd.that.host_addr);
 
-		DBG(DBG_CONTROLMORE, {
-			ipstr_buf b1;
-			ipstr_buf b2;
-			DBG_log("connect_to_host_pair: %s:%d %s:%d -> hp@%p: %s",
-				ipstr(&c->spd.this.host_addr, &b1),
-				c->spd.this.host_port,
-				ipstr(&c->spd.that.host_addr, &b2),
-				c->spd.that.host_port,
-				hp,
-				(hp != NULL && hp->connections) ?
-					hp->connections->name : "none");
-		});
+		address_buf b1, b2;
+		dbg("connect_to_host_pair: %s:%d %s:%d -> hp@%p: %s",
+		    str_address(&c->spd.this.host_addr, &b1),
+		    c->spd.this.host_port,
+		    str_address(&c->spd.that.host_addr, &b2),
+		    c->spd.that.host_port,
+		    hp, (hp != NULL && hp->connections != NULL) ? hp->connections->name : "none");
 
 		if (hp == NULL) {
 			/* no suitable host_pair -- build one */
@@ -596,13 +587,13 @@ struct connection *find_next_host_connection(
 	struct connection *c,
 	lset_t req_policy, lset_t policy_exact_mask)
 {
-	DBGF(DBG_CONTROLMORE, "find_next_host_connection policy=%s",
-			bitnamesof(sa_policy_bit_names, req_policy));
+	dbg("find_next_host_connection policy=%s",
+	    bitnamesof(sa_policy_bit_names, req_policy));
 
 	for (; c != NULL; c = c->hp_next) {
-		DBGF(DBG_CONTROLMORE, "found policy = %s (%s)",
-			bitnamesof(sa_policy_bit_names, c->policy),
-			c->name);
+		dbg("found policy = %s (%s)",
+		    bitnamesof(sa_policy_bit_names, c->policy),
+		    c->name);
 
 		if (NEVER_NEGOTIATE(c->policy)) {
 			/* are we a block or clear connection? */
@@ -647,12 +638,15 @@ struct connection *find_next_host_connection(
 			break;
 	}
 
-	DBG(DBG_CONTROLMORE, {
-			char ci[CONN_INST_BUF];
-			DBG_log("find_next_host_connection returns %s%s",
-					c != NULL ? c->name : "empty",
-					c != NULL ? fmt_conn_instance(c, ci) :
-					""); });
+	if (DBGP(DBG_BASE)) {
+		if (c == NULL) {
+			DBG_log("find_next_host_connection returns <empty>");
+		} else {
+			connection_buf ci;
+			DBG_log("find_next_host_connection returns "PRI_CONNECTION"",
+				pri_connection(c, &ci));
+		}
+	}
 
 	return c;
 }

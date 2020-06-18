@@ -195,7 +195,7 @@ struct raw_iface *find_raw_ifaces6(void)
 	FILE *proc_sock = fopen(proc_name, "r");
 
 	if (proc_sock == NULL) {
-		DBG(DBG_CONTROL, DBG_log("could not open %s", proc_name));
+		dbg("could not open %s", proc_name);
 	} else {
 		for (;; ) {
 			struct raw_iface ri;

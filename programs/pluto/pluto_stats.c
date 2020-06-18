@@ -477,7 +477,7 @@ void show_pluto_stats(const struct fd *whackfd)
 
 void clear_pluto_stats(void)
 {
-	DBG(DBG_CONTROL, DBG_log("clearing pluto stats"));
+	dbg("clearing pluto stats");
 
 	pstats_ipsec_sa = pstats_ikev1_sa = pstats_ikev2_sa = 0;
 	pstats_ikev1_fail = pstats_ikev2_fail = 0;

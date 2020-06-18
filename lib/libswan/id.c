@@ -354,8 +354,7 @@ bool same_id(const struct id *a, const struct id *b)
 				(char *)b->name.ptr, al);
 	}
 	case ID_FROMCERT:
-		DBG(DBG_CONTROL,
-			DBG_log("same_id() received ID_FROMCERT - unexpected"));
+		dbg("same_id() received ID_FROMCERT - unexpected");
 		/* FALLTHROUGH */
 	case ID_DER_ASN1_DN:
 		return same_dn(a->name, b->name);
@@ -387,12 +386,12 @@ bool match_id(const struct id *a, const struct id *b, int *wildcards)
 		match = same_id(a, b);
 	}
 
-	DBG(DBG_CONTROLMORE, {
+	if (DBGP(DBG_BASE)) {
 		id_buf buf;
 		DBG_log("   match_id a=%s", str_id(a, &buf));
 		DBG_log("            b=%s", str_id(b, &buf));
 		DBG_log("   results  %s", match ? "matched" : "fail");
-	});
+	}
 
 	return match;
 }
@@ -413,12 +412,8 @@ int id_count_wildcards(const struct id *id)
 		break;
 	}
 
-	DBG(DBG_CONTROL, {
-		id_buf b;
-		DBG_log("counting wild cards for %s is %d",
-			str_id(id, &b),
-			count);
-	});
+	id_buf b;
+	dbg("counting wild cards for %s is %d", str_id(id, &b), count);
 
 	return count;
 }
@@ -546,9 +541,8 @@ bool match_dn_any_order_wild(chunk_t a, chunk_t b, int *wildcards)
 	bool ret = match_dn(a, b, wildcards);
 
 	if (!ret) {
-		DBG(DBG_CONTROL,
-		    DBG_log("%s: not an exact match, now checking any RDN order with %d wildcards",
-				 __func__, *wildcards));
+		dbg("%s: not an exact match, now checking any RDN order with %d wildcards",
+		    __func__, *wildcards);
 		/* recount wildcards */
 		*wildcards = 0;
 		ret = match_dn_unordered(a, b, wildcards);

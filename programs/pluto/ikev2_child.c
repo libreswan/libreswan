@@ -91,9 +91,8 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 			return STF_INTERNAL_ERROR;
 		}
 	} else if (md->chain[ISAKMP_NEXT_v2CP] != NULL) {
-		DBG(DBG_CONTROL, DBG_log("#%lu %s ignoring unexpected v2CP payload",
-					 cst->st_serialno,
-					 cst->st_state->name));
+		dbg("#%lu %s ignoring unexpected v2CP payload",
+		    cst->st_serialno, cst->st_state->name);
 	}
 
 	/* start of SA out */
@@ -155,12 +154,11 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
 		case v2N_COOKIE:
 		case v2N_USE_PPK:
-			DBG(DBG_CONTROL, DBG_log("received %s which is not valid for current exchange",
-						 enum_name(&ikev2_notify_names,
-							   ntfy->payload.v2n.isan_type)));
+			dbg("received %s which is not valid for current exchange",
+			    enum_name(&ikev2_notify_names, ntfy->payload.v2n.isan_type));
 			break;
 		case v2N_USE_TRANSPORT_MODE:
-			DBG(DBG_CONTROL, DBG_log("received USE_TRANSPORT_MODE"));
+			dbg("received USE_TRANSPORT_MODE");
 			cst->st_seen_use_transport = TRUE;
 			break;
 		case v2N_IPCOMP_SUPPORTED:
@@ -169,7 +167,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 			size_t len = pbs_left(&pbs);
 			struct ikev2_notify_ipcomp_data n_ipcomp;
 
-			DBG(DBG_CONTROLMORE, DBG_log("received v2N_IPCOMP_SUPPORTED of length %zd", len));
+			dbg("received v2N_IPCOMP_SUPPORTED of length %zd", len);
 
 			if (!in_struct(&n_ipcomp, &ikev2notify_ipcomp_data_desc, &pbs, NULL)) {
 				return STF_FATAL;
@@ -185,11 +183,11 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 				return STF_FATAL;
 			}
 			if ((c->policy & POLICY_COMPRESS) == LEMPTY) {
-				DBG(DBG_CONTROLMORE, DBG_log("Ignored IPCOMP request as connection has compress=no"));
+				dbg("Ignored IPCOMP request as connection has compress=no");
 				cst->st_ipcomp.present = FALSE;
 				break;
 			}
-			DBG(DBG_CONTROL, DBG_log("Received compression CPI=%d", htonl(n_ipcomp.ikev2_cpi)));
+			dbg("Received compression CPI=%d", htonl(n_ipcomp.ikev2_cpi));
 
 			//cst->st_ipcomp.attrs.spi = uniquify_peer_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), cst, 0);
 			cst->st_ipcomp.attrs.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
@@ -200,25 +198,25 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 			break;
 		}
 		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
-			DBG(DBG_CONTROL, DBG_log("received ESP_TFC_PADDING_NOT_SUPPORTED"));
+			dbg("received ESP_TFC_PADDING_NOT_SUPPORTED");
 			cst->st_seen_no_tfc = TRUE;
 			break;
 		case v2N_MOBIKE_SUPPORTED:
-			DBG(DBG_CONTROL, DBG_log("received v2N_MOBIKE_SUPPORTED"));
+			dbg("received v2N_MOBIKE_SUPPORTED");
 			cst->st_seen_mobike = ike->sa.st_seen_mobike = TRUE;
 			break;
 		case v2N_INITIAL_CONTACT:
-			DBG(DBG_CONTROL, DBG_log("received v2N_INITIAL_CONTACT"));
+			dbg("received v2N_INITIAL_CONTACT");
 			cst->st_seen_initialc = ike->sa.st_seen_initialc = TRUE;
 			break;
 		case v2N_REKEY_SA:
-			DBG(DBG_CONTROL, DBG_log("received REKEY_SA already proceesd"));
+			dbg("received REKEY_SA already proceesd");
 			break;
 		case v2N_PPK_IDENTITY:
-			DBG(DBG_CONTROL, DBG_log("received PPK_IDENTITY already processed"));
+			dbg("received PPK_IDENTITY already processed");
 			break;
 		case v2N_NO_PPK_AUTH:
-			DBG(DBG_CONTROL, DBG_log("received NO_PPK_AUTH already processed"));
+			dbg("received NO_PPK_AUTH already processed");
 			break;
 		default:
 			libreswan_log("received unsupported NOTIFY %s ",
@@ -244,11 +242,11 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 
 		if (c->policy & POLICY_COMPRESS) {
 			if (!cst->st_seen_use_ipcomp) {
-				DBG(DBG_CONTROLMORE, DBG_log("policy suggested compression, but peer did not offer support"));
+				dbg("policy suggested compression, but peer did not offer support");
 			}
 		} else {
 			if (cst->st_seen_use_ipcomp) {
-				DBG(DBG_CONTROLMORE, DBG_log("policy did not allow compression, ignoring peer's request"));
+				dbg("policy did not allow compression, ignoring peer's request");
 			}
 		}
 
@@ -267,7 +265,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 		if (c->policy & POLICY_TUNNEL) {
 			libreswan_log("Local policy is tunnel mode - ignoring request for transport mode");
 		} else {
-			DBG(DBG_CONTROL, DBG_log("Local policy is transport mode and received USE_TRANSPORT_MODE"));
+			dbg("Local policy is transport mode and received USE_TRANSPORT_MODE");
 			if (cst->st_esp.present) {
 				cst->st_esp.attrs.mode =
 					ENCAPSULATION_MODE_TRANSPORT;
@@ -289,7 +287,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 	}
 
 	if (c->send_no_esp_tfc) {
-		DBG(DBG_CONTROL, DBG_log("Sending ESP_TFC_PADDING_NOT_SUPPORTED"));
+		dbg("Sending ESP_TFC_PADDING_NOT_SUPPORTED");
 		if (!emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, outpbs))
 			return STF_INTERNAL_ERROR;
 	}
@@ -456,8 +454,8 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 	struct connection *c = st->st_connection;
 	pb_stream *attrs = &cp_pd->pbs;
 
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s[%lu] parsing ISAKMP_NEXT_v2CP payload",
-				st->st_serialno, c->name, c->instance_serial));
+	dbg("#%lu %s[%lu] parsing ISAKMP_NEXT_v2CP payload",
+	    st->st_serialno, c->name, c->instance_serial);
 
 	if (st->st_state->kind == STATE_PARENT_I2 && cp->isacp_type !=  IKEv2_CP_CFG_REPLY) {
 		loglog(RC_LOG_SERIOUS, "ERROR expected IKEv2_CP_CFG_REPLY got a %s",

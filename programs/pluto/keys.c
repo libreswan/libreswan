@@ -610,9 +610,7 @@ struct secret *lsw_get_xauthsecret(char *xauthname)
 {
 	struct secret *best = NULL;
 
-	DBG(DBG_CONTROL,
-	    DBG_log("started looking for xauth secret for %s",
-		    xauthname));
+	dbg("started looking for xauth secret for %s", xauthname);
 
 	struct id xa_id = {
 		.kind = ID_FQDN,
@@ -658,7 +656,7 @@ const chunk_t *get_psk(const struct connection *c,
 			DBG_dump_hunk("PreShared Key", *psk);
 		});
 	} else {
-		DBG(DBG_CONTROL, DBG_log("no PreShared Key Found"));
+		dbg("no PreShared Key Found");
 	}
 	return psk;
 }
@@ -702,9 +700,7 @@ const chunk_t *get_ppk_by_id(const chunk_t *ppk_id)
 		});
 		return &pks->ppk;
 	}
-	DBG(DBG_CONTROL, {
-		DBG_log("No PPK found with given PPK_ID");
-	});
+	dbg("No PPK found with given PPK_ID");
 	return NULL;
 }
 
@@ -884,7 +880,7 @@ static bool rsa_pubkey_ckaid_matches(struct pubkey *pubkey, char *buf, size_t bu
 		dbg("RSA pubkey incomputable CKAID");
 		return FALSE;
 	}
-	LSWDBGP(DBG_CONTROL, buf) {
+	LSWDBGP(DBG_BASE, buf) {
 		lswlogs(buf, "comparing ckaid with: ");
 		lswlog_nss_secitem(buf, pubkey_ckaid);
 	}
@@ -906,8 +902,9 @@ struct pubkey *get_pubkey_with_matching_ckaid(const char *ckaid)
 		libreswan_log("invalid hex CKAID '%s': %s", ckaid, ugh);
 		return NULL;
 	}
-	DBG(DBG_CONTROL,
-	    DBG_dump("looking for pubkey with CKAID that matches", bin, binlen));
+	if (DBGP(DBG_BASE)) {
+		DBG_dump("looking for pubkey with CKAID that matches", bin, binlen);
+	}
 
 	struct pubkey_list *p;
 	for (p = pluto_pubkeys; p != NULL; p = p->next) {

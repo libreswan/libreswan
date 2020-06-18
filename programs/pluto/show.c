@@ -297,22 +297,18 @@ void binlog_state(struct state *st, enum state_kind new_state)
 		return;
 
 	if (st == NULL) {
-		DBG(DBG_CONTROLMORE, DBG_log(
-			    "log_state() called without state"));
+		dbg("log_state() called without state");
 		return;
 	}
 
 	struct connection *conn = st->st_connection;
 
 	if (conn == NULL || st->st_connection->name == NULL) {
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("log_state() called without st->st_connection or without st->st_connection->name"));
+		dbg("log_state() called without st->st_connection or without st->st_connection->name");
 		return;
 	}
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("log_state called for state update for connection %s ",
-		    conn->name));
+	dbg("log_state called for state update for connection %s ", conn->name);
 
 	struct log_conn_info lc = {
 		.conn = conn,
@@ -334,15 +330,13 @@ void binlog_state(struct state *st, enum state_kind new_state)
 		uint32_t sv = IPsecSAref2NFmark(st->st_ref) | LOG_CONN_STATSVAL(&lc);
 
 		if (conn->statsval == sv) {
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("log_state for connection %s state change signature (%d) matches last one - skip logging",
-				    conn->name, sv));
+			dbg("log_state for connection %s state change signature (%d) matches last one - skip logging",
+			    conn->name, sv);
 			return;
 		}
 		conn->statsval = sv;
-		DBG(DBG_CONTROLMORE,
-			DBG_log("log_state set state change signature for connection %s to %d",
-				conn->name, sv));
+		dbg("log_state set state change signature for connection %s to %d",
+		    conn->name, sv);
 	}
 
 	const char *tun;
@@ -375,9 +369,8 @@ void binlog_state(struct state *st, enum state_kind new_state)
 	case p2_up:	p2 = "up";	break;
 	default:	p2 = "down";	break;
 	}
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("log_state calling %s for connection %s with tunnel(%s) phase1(%s) phase2(%s)",
-		    pluto_stats_binary, conn->name, tun, p1, p2));
+	dbg("log_state calling %s for connection %s with tunnel(%s) phase1(%s) phase2(%s)",
+	    pluto_stats_binary, conn->name, tun, p1, p2);
 
 	/* ??? tun, p1, p2 cannot be NULL -- why handle that case? */
 
@@ -407,6 +400,5 @@ void binlog_state(struct state *st, enum state_kind new_state)
 	if (system(buf) == -1) {
 		loglog(RC_LOG_SERIOUS, "statsbin= failed to send status update notification");
 	}
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("log_state for connection %s completed", conn->name));
+	dbg("log_state for connection %s completed", conn->name);
 }

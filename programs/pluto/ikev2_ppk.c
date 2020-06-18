@@ -85,13 +85,12 @@ bool extract_ppk_id(pb_stream *pbs, struct ppk_id_payload *payl)
 		return FALSE;
 	}
 
-	DBG(DBG_CONTROL, DBG_log("received PPK_ID type: %s",
-		enum_name(&ikev2_ppk_id_type_names, dst[0])));
+	dbg("received PPK_ID type: %s", enum_name(&ikev2_ppk_id_type_names, dst[0]));
 
 	idtype = (int)dst[0];
 	switch (idtype) {
 	case PPK_ID_FIXED:
-		DBG(DBG_CONTROL, DBG_log("PPK_ID of type PPK_ID_FIXED."));
+		dbg("PPK_ID of type PPK_ID_FIXED.");
 		break;
 
 	case PPK_ID_OPAQUE:
@@ -103,7 +102,9 @@ bool extract_ppk_id(pb_stream *pbs, struct ppk_id_payload *payl)
 
 	/* clone ppk id data without ppk id type byte */
 	payl->ppk_id = clone_bytes_as_chunk(dst + 1, len - 1, "PPK_ID data");
-	DBG(DBG_CONTROL, DBG_dump_hunk("Extracted PPK_ID", payl->ppk_id));
+	if (DBGP(DBG_BASE)) {
+		DBG_dump_hunk("Extracted PPK_ID", payl->ppk_id);
+	}
 
 	return TRUE;
 }

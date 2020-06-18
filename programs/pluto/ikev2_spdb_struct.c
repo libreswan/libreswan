@@ -414,11 +414,10 @@ static int process_transforms(pb_stream *prop_pbs, jambuf_t *remote_jam_buf,
 			      const int local_propnum_base, const int local_propnum_bound,
 			      struct ikev2_proposal_match *matching_local_proposals)
 {
-	DBG(DBG_CONTROL,
-	    DBG_log("Comparing remote proposal %u containing %d transforms against local proposal [%d..%d] of %d local proposals",
-		    remote_propnum, num_remote_transforms,
-		    local_propnum_base, local_propnum_bound - 1,
-		    local_proposals->roof - 1));
+	dbg("Comparing remote proposal %u containing %d transforms against local proposal [%d..%d] of %d local proposals",
+	    remote_propnum, num_remote_transforms,
+	    local_propnum_base, local_propnum_bound - 1,
+	    local_proposals->roof - 1);
 
 	/*
 	 * The MATCHING_LOCAL_PROPOSALS table contains one entry per
@@ -599,7 +598,7 @@ static int process_transforms(pb_stream *prop_pbs, jambuf_t *remote_jam_buf,
 					}
 					if (local_transform->id == remote_transform.id &&
 					    local_transform->attr_keylen == remote_transform.attr_keylen) {
-						LSWDBGP(DBG_CONTROLMORE, buf) {
+						LSWDBGP(DBG_BASE, buf) {
 							jam(buf, "remote proposal %u transform %d (",
 							    remote_propnum, remote_transform_nr);
 							jam_type_transform(buf, type, &remote_transform);
@@ -650,7 +649,7 @@ static int process_transforms(pb_stream *prop_pbs, jambuf_t *remote_jam_buf,
 	 *   transform types".
 	 */
 	lset_t unmatched_remote_transform_types = proposed_remote_transform_types & ~matched_remote_transform_types;
-	LSWDBGP(DBG_CONTROLMORE, buf) {
+	LSWDBGP(DBG_BASE, buf) {
 		jam(buf, "remote proposal %u proposed transforms: ",
 			remote_propnum);
 		jam_trans_types(buf, proposed_remote_transform_types);
@@ -660,7 +659,7 @@ static int process_transforms(pb_stream *prop_pbs, jambuf_t *remote_jam_buf,
 		jam_trans_types(buf, unmatched_remote_transform_types);
 	}
 	if (unmatched_remote_transform_types) {
-		LSWDBGP(DBG_CONTROL, buf) {
+		LSWDBGP(DBG_BASE, buf) {
 			jam(buf, "remote proposal %u does not match; unmatched remote transforms: ",
 				remote_propnum);
 			jam_trans_types(buf, unmatched_remote_transform_types);
@@ -673,7 +672,7 @@ static int process_transforms(pb_stream *prop_pbs, jambuf_t *remote_jam_buf,
 	FOR_EACH_V2_PROPOSAL_IN_RANGE(local_propnum, local_proposal, local_proposals,
 				      local_propnum_base, local_propnum_bound) {
 		struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_propnum];
-		LSWDBGP(DBG_CONTROLMORE, log) {
+		LSWDBGP(DBG_BASE, log) {
 			jam(log, "comparing remote proposal %u containing ",
 			    remote_propnum);
 			jam_trans_types(log, proposed_remote_transform_types);
@@ -755,7 +754,7 @@ static int process_transforms(pb_stream *prop_pbs, jambuf_t *remote_jam_buf,
 		 *   ENCR!AEAD+ESP=NO     ENCR       INTEG+ESP  INTEG
 		 */
 		if (unmatched || missing) {
-			LSWDBGP(DBG_CONTROL, log) {
+			LSWDBGP(DBG_BASE, log) {
 				jam(log, "remote proposal %d does not match local proposal %d; unmatched transforms: ",
 					remote_propnum, local_propnum);
 				jam_trans_types(log, unmatched);
@@ -763,14 +762,13 @@ static int process_transforms(pb_stream *prop_pbs, jambuf_t *remote_jam_buf,
 				jam_trans_types(log, missing);
 			}
 		} else {
-			DBG(DBG_CONTROL,
-			    DBG_log("remote proposal %u matches local proposal %d",
-				    remote_propnum, local_propnum));
+			dbg("remote proposal %u matches local proposal %d",
+			    remote_propnum, local_propnum);
 			return local_propnum;
 		}
 	}
 
-	DBG(DBG_CONTROL, DBG_log("Remote proposal %u matches no local proposals", remote_propnum));
+	dbg("remote proposal %u matches no local proposals", remote_propnum); /*  */
 	return 0;
 }
 
@@ -856,10 +854,9 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 				/* save the sentinel */
 				passert(!sentinel_transform->valid);
 				matching_local_proposal->sentinel_transform[type] = sentinel_transform;
-				DBG(DBG_CONTROLMORE,
-				    DBG_log("local proposal %d type %s has %td transforms",
-					    local_propnum, trans_type_name(type),
-					    sentinel_transform - local_transforms->transform));
+				dbg("local proposal %d type %s has %td transforms",
+				    local_propnum, trans_type_name(type),
+				    sentinel_transform - local_transforms->transform);
 			}
 			/*
 			 * A proposal's transform type can't be both
@@ -873,7 +870,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 			 */
 			matching_local_proposal->optional_transform_types = optional_transform_types;
 			matching_local_proposal->required_transform_types = all_transform_types & ~optional_transform_types;
-			LSWDBGP(DBG_CONTROLMORE, buf) {
+			LSWDBGP(DBG_BASE, buf) {
 				jam(buf, "local proposal %d transforms: required: ",
 					local_propnum);
 				jam_trans_types(buf, matching_local_proposal->
@@ -1128,8 +1125,8 @@ stf_status ikev2_process_sa_payload(const char *what,
 				    struct ikev2_proposal **chosen_proposal,
 				    const struct ikev2_proposals *local_proposals)
 {
-	DBG(DBG_CONTROL, DBG_log("Comparing remote proposals against %s %d local proposals",
-				 what, local_proposals->roof - 1));
+	dbg("comparing remote proposals against %s %d local proposals",
+	    what, local_proposals->roof - 1);
 
 	passert(*chosen_proposal == NULL);
 
@@ -1186,13 +1183,13 @@ stf_status ikev2_process_sa_payload(const char *what,
 			if (expect_accepted) {
 				pexpect(matching_local_propnum == best_proposal->propnum);
 				/* don't log on initiator's end - redundant */
-				LSWDBGP(DBG_CONTROL, buf) {
+				LSWDBGP(DBG_BASE, buf) {
 					jam_string(buf, "remote accepted the proposal ");
 					jam_jambuf(buf, remote_jam_buf);
 				}
 			} else {
 				if (opportunistic) {
-					LSWDBGP(DBG_CONTROL, buf) {
+					LSWDBGP(DBG_BASE, buf) {
 						jam_chosen_proposal(buf, best_proposal,
 								    remote_jam_buf);
 					}
@@ -1425,7 +1422,7 @@ bool ikev2_emit_sa_proposals(pb_stream *pbs,
 			     const struct ikev2_proposals *proposals,
 			     const chunk_t *local_spi)
 {
-	DBG(DBG_CONTROL, DBG_log("Emitting ikev2_proposals ..."));
+	dbg("Emitting ikev2_proposals ...");
 
 	/* SA header out */
 	struct ikev2_sa sa = {
@@ -1455,7 +1452,7 @@ bool ikev2_emit_sa_proposal(pb_stream *pbs,
 			    const struct ikev2_proposal *proposal,
 			    const chunk_t *local_spi)
 {
-	DBG(DBG_CONTROL, DBG_log("Emitting ikev2_proposal ..."));
+	dbg("emitting ikev2_proposal ...");
 	passert(pbs != NULL);
 
 	/* SA header out */
@@ -1479,7 +1476,7 @@ bool ikev2_emit_sa_proposal(pb_stream *pbs,
 bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 				   struct trans_attrs *ta_out)
 {
-	DBG(DBG_CONTROL, DBG_log("converting proposal to internal trans attrs"));
+	dbg("converting proposal to internal trans attrs");
 
 	/*
 	 * Start with an empty TA.
@@ -1716,15 +1713,14 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 		 * attribute - it's redundant as there is only one
 		 * valid key length.
 		 */
-		DBG(DBG_CONTROL, DBG_log("omitting IKEv2 %s %s ENCRYPT transform key-length",
-					 protocol, encrypt->common.fqn));
+		dbg("omitting IKEv2 %s %s ENCRYPT transform key-length",
+		    protocol, encrypt->common.fqn);
 		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 				 encrypt->common.id[IKEv2_ALG_ID], 0);
 	} else if (encrypt->keydeflen == encrypt_max_key_bit_length(encrypt)) {
 		passert(encrypt->keydeflen > 0);
-		DBG(DBG_CONTROL,
-		    DBG_log("forcing IKEv2 %s %s ENCRYPT transform key length: %u",
-			    protocol, encrypt->common.fqn, encrypt->keydeflen));
+		dbg("forcing IKEv2 %s %s ENCRYPT transform key length: %u",
+		    protocol, encrypt->common.fqn, encrypt->keydeflen);
 		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 				 encrypt->common.id[IKEv2_ALG_ID], encrypt->keydeflen);
 	} else {
@@ -1762,20 +1758,18 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 		passert(keymaxlen > encrypt->keydeflen);
 		switch (proposal->protoid) {
 		case IKEv2_SEC_PROTO_IKE:
-			DBG(DBG_CONTROL,
-			    DBG_log("forcing IKEv2 %s %s ENCRYPT transform high-to-low key lengths: %u %u",
-				    protocol, encrypt->common.fqn,
-				    keymaxlen, encrypt->keydeflen));
+			dbg("forcing IKEv2 %s %s ENCRYPT transform high-to-low key lengths: %u %u",
+			    protocol, encrypt->common.fqn,
+			    keymaxlen, encrypt->keydeflen);
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 					 encrypt->common.id[IKEv2_ALG_ID], keymaxlen);
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 					 encrypt->common.id[IKEv2_ALG_ID], encrypt->keydeflen);
 			break;
 		case IKEv2_SEC_PROTO_ESP:
-			DBG(DBG_CONTROL,
-			    DBG_log("forcing IKEv2 %s %s ENCRYPT transform low-to-high key lengths: %u %u",
-				    protocol, encrypt->common.fqn,
-				    encrypt->keydeflen, keymaxlen));
+			dbg("forcing IKEv2 %s %s ENCRYPT transform low-to-high key lengths: %u %u",
+			    protocol, encrypt->common.fqn,
+			    encrypt->keydeflen, keymaxlen);
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 					 encrypt->common.id[IKEv2_ALG_ID], encrypt->keydeflen);
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
@@ -1880,7 +1874,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 struct ikev2_proposals *get_v2_ike_proposals(struct connection *c, const char *why)
 {
 	if (c->v2_ike_proposals != NULL) {
-		LSWDBGP(DBG_CONTROL, buf) {
+		LSWDBGP(DBG_BASE, buf) {
 			jam(buf, "using existing local IKE proposals for connection %s (%s): ",
 				c->name, why);
 			jam_v2_proposals(buf, c->v2_ike_proposals);
@@ -1902,7 +1896,7 @@ struct ikev2_proposals *get_v2_ike_proposals(struct connection *c, const char *w
 	v2_proposals->roof = 1;
 
 	FOR_EACH_PROPOSAL(proposals, ike_info) {
-		LSWDBGP(DBG_CONTROL, buf) {
+		LSWDBGP(DBG_BASE, buf) {
 			jam_string(buf, "converting ike_info ");
 			fmt_proposal(buf, ike_info);
 			jam_string(buf, " to ikev2 ...");
@@ -1914,8 +1908,9 @@ struct ikev2_proposals *get_v2_ike_proposals(struct connection *c, const char *w
 							  IKEv2_SEC_PROTO_IKE,
 							  v2_proposals, NULL);
 		if (v2_proposal != NULL) {
-			DBG(DBG_CONTROL,
-			    DBG_log_ikev2_proposal("... ", v2_proposal));
+			if (DBGP(DBG_BASE)) {
+				DBG_log_ikev2_proposal("... ", v2_proposal);
+			}
 			v2_proposals->roof++;
 		}
 	}
@@ -1946,7 +1941,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct ikev2_proposals **c
 						      const struct dh_desc *default_dh)
 {
 	if (*child_proposals != NULL) {
-		LSWDBGP(DBG_CONTROL, buf) {
+		LSWDBGP(DBG_BASE, buf) {
 			jam(buf, "using existing local ESP/AH proposals for %s (%s): ",
 				c->name, why);
 			jam_v2_proposals(buf, *child_proposals);
@@ -1958,7 +1953,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct ikev2_proposals **c
 		return NULL;
 	}
 
-	LSWDBGP(DBG_CONTROL, buf) {
+	LSWDBGP(DBG_BASE, buf) {
 		jam_string(buf, "constructing ESP/AH proposals with ");
 		if (default_dh == NULL) {
 			jam_string(buf, "no default DH");
@@ -2006,7 +2001,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct ikev2_proposals **c
 
 	for (int dup = 0; dup < (add_empty_msdh_duplicates ? 2 : 1); dup++) {
 		FOR_EACH_PROPOSAL(c->child_proposals.p, esp_info) {
-			LSWDBGP(DBG_CONTROL, log) {
+			LSWDBGP(DBG_BASE, log) {
 				jam(log, "converting proposal ");
 				fmt_proposal(log, esp_info);
 				jam(log, " to ikev2 ...");
@@ -2031,8 +2026,9 @@ static struct ikev2_proposals *get_v2_child_proposals(struct ikev2_proposals **c
 								  dup ? &unset_group : default_dh);
 			if (v2_proposal != NULL) {
 				add_esn_transforms(v2_proposal, c->policy);
-				DBG(DBG_CONTROL,
-				    DBG_log_ikev2_proposal("... ", v2_proposal));
+				if (DBGP(DBG_BASE)) {
+					DBG_log_ikev2_proposal("... ", v2_proposal);
+				}
 				v2_proposals->roof++;
 			}
 		}
@@ -2183,7 +2179,7 @@ bool ikev2_proposals_include_modp(const struct ikev2_proposals *proposals,
 			}
 		}
 	}
-	DBG(DBG_CONTROL, DBG_log("No first MODP (DH) transform found"));
+	dbg("no first MODP (DH) transform found");
 	return FALSE;
 }
 

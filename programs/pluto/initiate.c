@@ -553,8 +553,7 @@ void restart_connections_by_peer(struct connection *const c)
 
 	if (c_kind == CK_INSTANCE && hp_next == NULL) {
 		/* in simple cases this is  a dangling hp */
-		DBG(DBG_CONTROL,
-			DBG_log ("no connection to restart after termination"));
+		dbg("no connection to restart after termination");
 	} else {
 		for (d = hp->connections; d != NULL; d = d->hp_next) {
 			if (same_host(dnshostname, &host_addr,
@@ -1225,28 +1224,22 @@ void connection_check_phase2(struct fd *whackfd)
 		cnext = c->ac_next;
 
 		if (NEVER_NEGOTIATE(c->policy)) {
-			DBG(DBG_CONTROL, {
-				char cib[CONN_INST_BUF];
-				DBG_log("pending review: connection \"%s\"%s has no negotiated policy, skipped",
-					c->name, fmt_conn_instance(c, cib));
-			});
+			connection_buf cib;
+			dbg("pending review: connection "PRI_CONNECTION" has no negotiated policy, skipped",
+			    pri_connection(c, &cib));
 			continue;
 		}
 
 		if (!(c->policy & POLICY_UP)) {
-			char cib[CONN_INST_BUF];
-			DBG(DBG_CONTROL, {
-				DBG_log("pending review: connection \"%s\"%s was not up, skipped",
-					c->name, fmt_conn_instance(c, cib));
-			});
+			connection_buf cib;
+			dbg("pending review: connection "PRI_CONNECTION" was not up, skipped",
+			    pri_connection(c, &cib));
 			continue;
 		}
 
-		DBG(DBG_CONTROL, {
-			char cib[CONN_INST_BUF];
-			DBG_log("pending review: connection \"%s\"%s checked",
-				c->name, fmt_conn_instance(c, cib));
-		});
+		connection_buf cib;
+		dbg("pending review: connection "PRI_CONNECTION" checked",
+		    pri_connection(c, &cib));
 
 		if (pending_check_timeout(c)) {
 			struct state *p1st;
