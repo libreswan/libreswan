@@ -406,23 +406,6 @@ enum {
 
 /* singleton sets: must be kept in sync with the items! */
 
-/* so things don't break */
-#define DBG_RAW		DBG_BASE
-#define DBG_PARSING	DBG_BASE
-#define DBG_EMITTING	DBG_BASE
-#define DBG_CONTROL	DBG_BASE
-#define DBG_LIFECYCLE	DBG_BASE
-#define DBG_KERNEL	DBG_BASE
-#define DBG_DNS		DBG_BASE
-#define DBG_OPPO	DBG_BASE
-#define DBG_CONTROLMORE	DBG_BASE
-#define DBG_NATT	DBG_BASE
-#define DBG_X509	DBG_BASE
-#define DBG_DPD		DBG_BASE
-#define DBG_XAUTH	DBG_BASE
-#define DBG_RETRANSMITS	DBG_BASE
-#define DBG_OPPOINFO	DBG_BASE
-
 /* These are not part of "base" debugging */
 #define DBG_TMI		LELEM(DBG_TMI_IX)
 #define DBG_CRYPT	LELEM(DBG_CRYPT_IX)

@@ -378,9 +378,8 @@ static void *pluto_crypto_helper_thread(void *arg)
 	/* OS X does not have pthread_setschedprio */
 #if USE_PTHREAD_SETSCHEDPRIO
 	int status = pthread_setschedprio(pthread_self(), 10);
-	DBG(DBG_CONTROL,
-	    DBG_log("status value returned by setting the priority of this thread (crypto helper %d) %d",
-		    w->pcw_helpernum, status));
+	dbg("status value returned by setting the priority of this thread (crypto helper %d) %d",
+	    w->pcw_helpernum, status);
 #endif
 
 	while (true) {
@@ -541,10 +540,9 @@ static void submit_crypto_request(struct pluto_crypto_req_cont *cn,
 		 */
 		schedule_callback("inline crypto", SOS_NOBODY, inline_worker, cn);
 	} else {
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("adding %s work-order %u for state #%lu",
-			    cn->pcrc_name, cn->pcrc_id,
-			    cn->pcrc_serialno));
+		dbg("adding %s work-order %u for state #%lu",
+		    cn->pcrc_name, cn->pcrc_id,
+		    cn->pcrc_serialno);
 		/*
 		 * XXX: Danger:
 		 *
@@ -612,16 +610,13 @@ static stf_status handle_helper_answer(struct state *st,
 {
 	struct pluto_crypto_req_cont *cn = arg;
 
-	DBG(DBG_CONTROL,
-		DBG_log("crypto helper %d replies to request ID %u",
-			cn->pcrc_helpernum, cn->pcrc_id));
+	dbg("crypto helper %d replies to request ID %u",
+	    cn->pcrc_helpernum, cn->pcrc_id);
 
 	const struct crypto_handler *h = cn->pcrc_handler;
 	passert(h != NULL);
 
-	DBG(DBG_CONTROL,
-		DBG_log("calling continuation function %p",
-			h->completed_cb));
+	dbg("calling continuation function %p", h->completed_cb);
 
 	/*
 	 * call the continuation (skip if suppressed)
@@ -629,8 +624,8 @@ static stf_status handle_helper_answer(struct state *st,
 	stf_status status;
 	if (cn->pcrc_cancelled) {
 		/* suppressed */
-		DBG(DBG_CONTROL, DBG_log("work-order %u state #%lu crypto result suppressed",
-					 cn->pcrc_id, cn->pcrc_serialno));
+		dbg("work-order %u state #%lu crypto result suppressed",
+		    cn->pcrc_id, cn->pcrc_serialno);
 		pexpect(st == NULL || st->st_offloaded_task == NULL);
 		h->cancelled_cb(&cn->pcrc_task);
 		pexpect(cn->pcrc_task == NULL); /* did your job */

@@ -756,7 +756,7 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 
 				enum stream logger;
 				if (packet_len == 1 && buffer[0] == 0xff &&
-				    (cur_debugging & DBG_NATT) == 0) {
+				    (cur_debugging & DBG_BASE) == 0) {
 					/*
 					 * don't log NAT-T keepalive related errors unless NATT debug is
 					 * enabled

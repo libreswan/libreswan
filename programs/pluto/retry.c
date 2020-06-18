@@ -61,15 +61,13 @@ void retransmit_v1_msg(struct state *st)
 	set_cur_state(st);
 
 	/* Paul: this line can say attempt 3 of 2 because the cleanup happens when over the maximum */
-	DBG(DBG_CONTROL|DBG_RETRANSMITS, {
-		ipstr_buf b;
-		char cib[CONN_INST_BUF];
-		DBG_log("handling event EVENT_RETRANSMIT for %s \"%s\"%s #%lu keying attempt %lu of %lu; retransmit %lu",
-			ipstr(&c->spd.that.host_addr, &b),
-			c->name, fmt_conn_instance(c, cib),
-			st->st_serialno, try, try_limit,
-			retransmit_count(st) + 1);
-	});
+	address_buf b;
+	connection_buf cib;
+	dbg("handling event EVENT_RETRANSMIT for %s "PRI_CONNECTION" #%lu keying attempt %lu of %lu; retransmit %lu",
+	    str_address(&c->spd.that.host_addr, &b),
+	    pri_connection(c, &cib),
+	    st->st_serialno, try, try_limit,
+	    retransmit_count(st) + 1);
 
 	switch (retransmit(st)) {
 	case RETRANSMIT_YES:

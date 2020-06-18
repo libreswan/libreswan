@@ -319,14 +319,14 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 				lset_t old_debugging = cur_debugging & DBG_MASK;
 				lset_t new_debugging = lmod(old_debugging, m->debugging);
 				set_debugging(cur_debugging | new_debugging);
-				LSWDBGP(DBG_CONTROL, buf) {
+				LSWDBGP(DBG_BASE, buf) {
 					jam(buf, "old debugging ");
 					jam_enum_lset_short(buf, &debug_names,
 							    "+", old_debugging);
 					jam(buf, " + ");
 					jam_lmod(buf, &debug_names, "+", m->debugging);
 				}
-				LSWDBGP(DBG_CONTROL, buf) {
+				LSWDBGP(DBG_BASE, buf) {
 					jam(buf, "new debugging = ");
 					jam_enum_lset_short(buf, &debug_names,
 							    "+", new_debugging);
@@ -346,7 +346,7 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 						  "no connection named \"%s\"", m->name);
 				} else if (c != NULL) {
 					c->extra_debugging = m->debugging;
-					LSWDBGP(DBG_CONTROL, buf) {
+					LSWDBGP(DBG_BASE, buf) {
 						jam(buf, "\"%s\" extra_debugging = ",
 						    c->name);
 						jam_lmod(buf, &debug_names,

@@ -121,11 +121,10 @@ static bool send_v1_frags(struct state *st, const char *where)
 			fh->isafrag_flags = packet_remainder_len == data_len ?
 					    ISAKMP_FRAG_LAST : 0;
 		}
-		DBG(DBG_CONTROL,
-		    DBG_log("sending IKE fragment id '%d', number '%u'%s",
-			    1, /* hard coded for now, seems to be what all the cool implementations do */
-			    fragnum,
-			    packet_remainder_len == data_len ? " (last)" : ""));
+		dbg("sending IKE fragment id '%d', number '%u'%s",
+		    1, /* hard coded for now, seems to be what all the cool implementations do */
+		    fragnum,
+		    packet_remainder_len == data_len ? " (last)" : "");
 
 		if (!send_chunks_using_state(st, where,
 					     chunk2(frag_prefix,

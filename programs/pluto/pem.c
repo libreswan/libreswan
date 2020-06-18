@@ -97,9 +97,7 @@ static bool find_boundary(const char *tag, chunk_t *line)
 	name.ptr = line->ptr;
 	while (line->len > 0) {
 		if (present("-----", line)) {
-			DBG(DBG_PARSING,
-				DBG_log("  -----%s %.*s-----",
-					tag, (int)name.len, name.ptr));
+			dbg("  -----%s %.*s-----", tag, (int)name.len, name.ptr);
 			return TRUE;
 		}
 		line->ptr++;
@@ -149,8 +147,7 @@ static bool extract_token(chunk_t *token, char termination, chunk_t *src)
  */
 static bool extract_parameter(chunk_t *name, chunk_t *value, chunk_t *line)
 {
-	DBG(DBG_PARSING,
-		DBG_log("  %.*s", (int)line->len, line->ptr));
+	dbg("  %.*s", (int)line->len, line->ptr);
 
 	/* extract name */
 	if (!extract_token(name, ':', line))
@@ -261,8 +258,7 @@ err_t pemtobin(chunk_t *blob)
 					(char *)dst.ptr,
 					blob->len - dst.len, &len);
 				if (ugh != NULL) {
-					DBG(DBG_PARSING,
-						DBG_log("  %s", ugh));
+					dbg("  %s", ugh);
 					state = PEM_ABORT;
 					break;
 				} else {

@@ -168,34 +168,31 @@ static void bsdkame_algregister(int satype, int supp_exttype,
 
 	case SADB_SATYPE_AH:
 		kernel_add_sadb_alg(satype, supp_exttype, alg);
-		DBG(DBG_KERNEL,
-		    DBG_log("algregister_ah(%p) exttype=%d alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d",
-			    alg, supp_exttype,
-			    alg->sadb_alg_id,
-			    alg->sadb_alg_ivlen,
-			    alg->sadb_alg_minbits,
-			    alg->sadb_alg_maxbits));
+		dbg("algregister_ah(%p) exttype=%d alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d",
+		    alg, supp_exttype,
+		    alg->sadb_alg_id,
+		    alg->sadb_alg_ivlen,
+		    alg->sadb_alg_minbits,
+		    alg->sadb_alg_maxbits);
 		break;
 
 	case SADB_SATYPE_ESP:
 		kernel_add_sadb_alg(satype, supp_exttype, alg);
-		DBG(DBG_KERNEL,
-			DBG_log("algregister(%p) alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d",
-				alg,
-				alg->sadb_alg_id,
-				alg->sadb_alg_ivlen,
-				alg->sadb_alg_minbits,
-				alg->sadb_alg_maxbits));
+		dbg("algregister(%p) alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d",
+		    alg,
+		    alg->sadb_alg_id,
+		    alg->sadb_alg_ivlen,
+		    alg->sadb_alg_minbits,
+		    alg->sadb_alg_maxbits);
 		break;
 
 	case SADB_X_SATYPE_IPCOMP:
-		DBG(DBG_KERNEL,
-			DBG_log("ipcomp algregister(%p) alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d",
-				alg,
-				alg->sadb_alg_id,
-				alg->sadb_alg_ivlen,
-				alg->sadb_alg_minbits,
-				alg->sadb_alg_maxbits));
+		dbg("ipcomp algregister(%p) alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d",
+		    alg,
+		    alg->sadb_alg_id,
+		    alg->sadb_alg_ivlen,
+		    alg->sadb_alg_minbits,
+		    alg->sadb_alg_maxbits);
 		can_do_IPcomp = TRUE;
 		break;
 
@@ -338,7 +335,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 		/* shunt route */
 		switch (ntohl(new_spi)) {
 		case SPI_PASS:
-			DBG(DBG_KERNEL, DBG_log("netlink_raw_eroute: SPI_PASS"));
+			dbg("netlink_raw_eroute: SPI_PASS");
 			policy = IPSEC_POLICY_NONE;
 			break;
 		case SPI_HOLD:
@@ -350,7 +347,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 			 * After expiration, the underlying policy causing the original acquire
 			 * will fire again, dropping further packets.
 			 */
-			DBG(DBG_KERNEL, DBG_log("netlink_raw_eroute: SPI_HOLD implemented as no-op"));
+			dbg("netlink_raw_eroute: SPI_HOLD implemented as no-op");
 			return TRUE; /* yes really */
 		case SPI_DROP:
 		case SPI_REJECT:

@@ -895,20 +895,17 @@ static bool ikev2_check_fragment(struct msg_digest *md, struct state *st)
 
 	/* ??? CLANG 3.5 thinks st might be NULL */
 	if (!(st->st_connection->policy & POLICY_IKE_FRAG_ALLOW)) {
-		DBG(DBG_CONTROL, DBG_log(
-			"discarding IKE encrypted fragment - fragmentation not allowed by local policy (ike_frag=no)"));
+		dbg("discarding IKE encrypted fragment - fragmentation not allowed by local policy (ike_frag=no)");
 		return FALSE;
 	}
 
 	if (!(st->st_seen_fragvid)) {
-		DBG(DBG_CONTROL, DBG_log(
-			    "discarding IKE encrypted fragment - remote never proposed fragmentation"));
+		dbg("discarding IKE encrypted fragment - remote never proposed fragmentation");
 		return FALSE;
 	}
 
-	DBG(DBG_CONTROL, DBG_log(
-		"received IKE encrypted fragment number '%u', total number '%u', next payload '%u'",
-		    skf->isaskf_number, skf->isaskf_total, skf->isaskf_np));
+	dbg("received IKE encrypted fragment number '%u', total number '%u', next payload '%u'",
+	    skf->isaskf_number, skf->isaskf_total, skf->isaskf_np);
 
 	/*
 	 * Sanity check:
@@ -923,8 +920,7 @@ static bool ikev2_check_fragment(struct msg_digest *md, struct state *st)
 	      skf->isaskf_total <= MAX_IKE_FRAGMENTS &&
 	      (skf->isaskf_number == 1) != (skf->isaskf_np == ISAKMP_NEXT_v2NONE)))
 	{
-		DBG(DBG_CONTROL, DBG_log(
-			"ignoring invalid IKE encrypted fragment"));
+		dbg("ignoring invalid IKE encrypted fragment");
 		return FALSE;
 	}
 
@@ -946,19 +942,16 @@ static bool ikev2_check_fragment(struct msg_digest *md, struct state *st)
 		 * Bad: skf->isaskf_total < i->total
 		 */
 		if (skf->isaskf_total > (*frags)->total) {
-			DBG(DBG_CONTROL, DBG_log(
-				"discarding saved fragments because this fragment has larger total"));
+			dbg("discarding saved fragments because this fragment has larger total");
 			free_v2_incomming_fragments(frags);
 			return TRUE;
 		} else {
-			DBG(DBG_CONTROL, DBG_log(
-				"ignoring odd IKE encrypted fragment (total shrank)"));
+			dbg("ignoring odd IKE encrypted fragment (total shrank)");
 			return FALSE;
 		}
 	} else if ((*frags)->frags[skf->isaskf_number].cipher.ptr != NULL) {
 		/* retain earlier fragment with same index */
-		DBG(DBG_CONTROL, DBG_log(
-			    "ignoring repeated IKE encrypted fragment"));
+		dbg("ignoring repeated IKE encrypted fragment");
 		return FALSE;
 	} else {
 		return TRUE;
@@ -972,8 +965,7 @@ static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 	pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2SKF]->pbs;
 
 	if (!st->st_seen_fragvid) {
-		DBG(DBG_CONTROL,
-                    DBG_log(" fragments claiming to be from peer while peer did not signal fragmentation support - dropped"));
+		dbg(" fragments claiming to be from peer while peer did not signal fragmentation support - dropped");
 		return FALSE;
 	}
 
@@ -984,8 +976,7 @@ static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 	/* if receiving fragments, respond with fragments too */
 	if (!st->st_seen_fragments) {
 		st->st_seen_fragments = TRUE;
-		DBG(DBG_CONTROL,
-		    DBG_log(" updated IKE fragment state to respond using fragments without waiting for re-transmits"));
+		dbg(" updated IKE fragment state to respond using fragments without waiting for re-transmits");
 	}
 
 	/*
@@ -2286,8 +2277,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 */
 			if (md->message_payloads.present & P(SKF)) {
 				if (have_all_fragments) {
-					DBG(DBG_CONTROL,
-					    DBG_log("already have all fragments, skipping fragment collection"));
+					dbg("already have all fragments, skipping fragment collection");
 				} else if (!ikev2_collect_fragment(md, st)) {
 					return;
 				}
@@ -2433,7 +2423,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		break;
 	}
 
-	DBG(DBG_CONTROL, DBG_log("selected state microcode %s", svm->story));
+	dbg("selected state microcode %s", svm->story);
 
 	/* no useful state microcode entry? */
 	if (svm->state == STATE_IKEv2_ROOF) {
@@ -2590,16 +2580,15 @@ static void v2_dispatch(struct ike_sa *ike, struct state *st,
 		v2_msgid_start_responder(ike, st, md);
 	}
 
-	DBG(DBG_PARSING, {
-		    if (pbs_left(&md->message_pbs) != 0)
-			    DBG_log("removing %d bytes of padding",
-				    (int) pbs_left(&md->message_pbs));
-	    });
+	if (DBGP(DBG_BASE)) {
+		if (pbs_left(&md->message_pbs) != 0)
+			DBG_log("removing %d bytes of padding",
+				(int) pbs_left(&md->message_pbs));
+	}
 
 	md->message_pbs.roof = md->message_pbs.cur;	/* trim padding (not actually legit) */
 
-	DBG(DBG_CONTROL,
-	    DBG_log("calling processor %s", svm->story));
+	dbg("calling processor %s", svm->story);
 
 	/*
 	 * XXX: for now pass in the possibly NULL child; suspect a
@@ -2693,7 +2682,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 			 * ??? problem with diagnostics: what we're calling "peer ID"
 			 * is really our "peer's peer ID", in other words us!
 			 */
-			DBGF(DBG_CONTROL, "received IDr payload - extracting our alleged ID");
+			dbg("received IDr payload - extracting our alleged ID");
 			if (!extract_peer_id(tarzan_pld->payload.v2id.isai_type,
 					&tarzan_id, &tarzan_pld->pbs))
 			{
@@ -2786,7 +2775,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 			/* FALL THROUGH */
 		case IKEv2_AUTH_NONE:
 		default:
-			DBG(DBG_CONTROL, DBG_log("ikev2 skipping refine_host_connection due to unknown policy"));
+			dbg("ikev2 skipping refine_host_connection due to unknown policy");
 		}
 
 		if (authby != AUTHBY_NEVER) {
@@ -2834,7 +2823,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 						return FALSE;
 					}
 				} else {
-					DBGF(DBG_CONTROL, "Peer ID matches and no better connection found - continuing with existing connection");
+					dbg("peer ID matches and no better connection found - continuing with existing connection");
 				}
 			} else if (r != c) {
 				/* r is an improvement on c -- replace */
@@ -2855,7 +2844,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 
 				update_state_connection(md->st, r);
 				/* redo from scratch so we read and check CERT payload */
-				DBGF(DBG_X509, "retrying ikev2_decode_peer_id_and_certs() with new conn");
+				dbg("retrying ikev2_decode_peer_id_and_certs() with new conn");
 				return decode_peer_id_counted(ike, md, depth + 1);
 			} else if (must_switch) {
 					id_buf peer_str;
@@ -2868,7 +2857,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 				duplicate_id(&c->spd.that.id, &peer_id);
 				c->spd.that.has_id_wildcards = FALSE;
 			} else if (fromcert) {
-				DBGF(DBG_X509, "copying ID for fromcert");
+				dbg("copying ID for fromcert");
 				duplicate_id(&c->spd.that.id, &peer_id);
 			}
 		}
@@ -3367,8 +3356,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 			st->st_state->kind != STATE_UNDEFINED &&
 			IS_CHILD_SA_ESTABLISHED(st) &&
 			dpd_active_locally(st)) {
-			DBG(DBG_DPD,
-			    DBG_log("dpd enabled, scheduling ikev2 liveness checks"));
+			dbg("dpd enabled, scheduling ikev2 liveness checks");
 			deltatime_t delay = deltatime_max(c->dpd_delay, deltatime(MIN_LIVENESS));
 			event_schedule(EVENT_v2_LIVENESS, delay, st);
 		}
@@ -3731,7 +3719,7 @@ bool emit_v2N_compression(struct state *cst,
 	if ((c->policy & POLICY_COMPRESS) && OK) {
 		uint16_t c_spi;
 
-		DBG(DBG_CONTROL, DBG_log("Initiator child policy is compress=yes, sending v2N_IPCOMP_SUPPORTED for DEFLATE"));
+		dbg("Initiator child policy is compress=yes, sending v2N_IPCOMP_SUPPORTED for DEFLATE");
 
 		/* calculate and keep our CPI */
 		if (cst->st_ipcomp.our_spi == 0) {
@@ -3743,7 +3731,7 @@ bool emit_v2N_compression(struct state *cst,
 				loglog(RC_LOG_SERIOUS, "kernel failed to calculate compression CPI (CPI=%d)", c_spi);
 				return false;
 			}
-			DBG(DBG_CONTROL, DBG_log("Calculated compression CPI=%d", c_spi));
+			dbg("calculated compression CPI=%d", c_spi);
 		} else {
 			c_spi = (uint16_t)ntohl(cst->st_ipcomp.our_spi);
 		}
@@ -3760,7 +3748,7 @@ bool emit_v2N_compression(struct state *cst,
 		close_output_pbs(&d_pbs);
 		return r;
 	} else {
-		DBG(DBG_CONTROL, DBG_log("Initiator child policy is compress=no, NOT sending v2N_IPCOMP_SUPPORTED"));
+		dbg("initiator child policy is compress=no, NOT sending v2N_IPCOMP_SUPPORTED");
 		return true;
 	}
 }

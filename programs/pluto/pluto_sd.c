@@ -53,8 +53,8 @@ void pluto_sd_init(void)
  */
 void pluto_sd(int action, int status)
 {
-	DBG(DBG_CONTROL, DBG_log("pluto_sd: executing action %s(%d), status %d",
-		enum_name(&sd_action_names, action), action, status));
+	dbg("pluto_sd: executing action %s(%d), status %d",
+	    enum_name(&sd_action_names, action), action, status);
 
 	switch (action) {
 	case PLUTO_SD_WATCHDOG:

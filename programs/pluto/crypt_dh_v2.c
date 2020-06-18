@@ -71,12 +71,11 @@ void start_dh_v2(struct state *st,
 	struct pluto_crypto_req_cont *dh = new_pcrc(pcrc_func, name);
 	struct pcr_dh_v2 *const dhq = pcr_dh_v2_init(dh);
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("offloading IKEv2 SKEYSEED using prf=%s integ=%s cipherkey=%s",
-		    st->st_oakley.ta_prf->common.fqn,
-		    st->st_oakley.ta_integ->common.fqn,
-		    st->st_oakley.ta_encrypt != NULL ?
-			st->st_oakley.ta_encrypt->common.fqn : "N/A"));
+	dbg("offloading IKEv2 SKEYSEED using prf=%s integ=%s cipherkey=%s",
+	    st->st_oakley.ta_prf->common.fqn,
+	    st->st_oakley.ta_integ->common.fqn,
+	    st->st_oakley.ta_encrypt != NULL ?
+	    st->st_oakley.ta_encrypt->common.fqn : "N/A");
 
 	/* convert appropriate data to dhq */
 	dhq->prf = st->st_oakley.ta_prf;
@@ -207,11 +206,10 @@ static void calc_skeyseed_v2(struct pcr_dh_v2 *sk,
 	setchunk_from_wire(nr, sk, &sk->nr);
 
 	passert(sk->prf != NULL);
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey-size=%zu salt-size=%zu",
-		    sk->prf->common.fqn,
-		    (sk->integ ? sk->integ->common.fqn : "n/a"),
-		    key_size, salt_size));
+	dbg("calculating skeyseed using prf=%s integ=%s cipherkey-size=%zu salt-size=%zu",
+	    sk->prf->common.fqn,
+	    (sk->integ ? sk->integ->common.fqn : "n/a"),
+	    key_size, salt_size);
 
 	const struct prf_desc *prf = sk->prf;
 

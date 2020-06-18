@@ -45,16 +45,14 @@ bool init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 				       nss_err_str(PORT_GetError()));
 		return FALSE;
 	}
-	DBG(DBG_X509, DBG_log("NSS OCSP checking enabled"));
+	dbg("NSS OCSP checking enabled");
 
 	/*
 	 * enable a default responder
 	 */
 	if (responder_url != NULL && trust_cert_name != NULL) {
-		DBG(DBG_X509, DBG_log("OCSP default responder url: %s",
-					 responder_url));
-		DBG(DBG_X509, DBG_log("OCSP responder cert NSS nickname: %s",
-					 trust_cert_name));
+		dbg("OCSP default responder url: %s", responder_url);
+		dbg("OCSP responder cert NSS nickname: %s", trust_cert_name);
 
 		rv = CERT_SetOCSPDefaultResponder(handle, responder_url,
 							  trust_cert_name);
@@ -85,8 +83,7 @@ bool init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 	}
 
 	if (timeout != 0) {
-		DBG(DBG_X509, DBG_log("OCSP timeout of %d seconds",
-					 timeout));
+		dbg("OCSP timeout of %d seconds", timeout);
 		if (CERT_SetOCSPTimeout(timeout) != SECSuccess) {
 			/* don't shoot pluto over this */
 			loglog(RC_LOG_SERIOUS, "NSS error setting OCSP timeout: %s",
@@ -107,7 +104,7 @@ bool init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 
 	if (ocsp_post) {
 		rv = CERT_ForcePostMethodForOCSP(TRUE);
-		DBG(DBG_X509, DBG_log("OCSP will use POST method"));		
+		dbg("OCSP will use POST method");
 	}
 	else
 		rv = CERT_ForcePostMethodForOCSP(FALSE);

@@ -118,7 +118,7 @@ static enum iface_status read_message(const struct iface_port *ifp,
 	    str_endpoint(&ifp->local_endpoint, &lb),
 	    ifp->protocol->name);
 
-	if (DBGP(DBG_RAW)) {
+	if (DBGP(DBG_BASE)) {
 		DBG_dump(NULL, md->packet_pbs.start, pbs_room(&md->packet_pbs));
 	}
 
@@ -160,7 +160,7 @@ void process_packet(struct msg_digest **mdp)
 		/* Some (old?) versions of the Cisco VPN client send an additional
 		 * 16 bytes of zero bytes - Complain but accept it
 		 */
-		if (DBGP(DBG_CONTROL)) {
+		if (DBGP(DBG_BASE)) {
 			DBG_log("size (%u) in received packet is larger than the size specified in ISAKMP HDR (%u) - ignoring extraneous bytes",
 				(unsigned) pbs_room(&md->packet_pbs),
 				md->hdr.isa_length);
@@ -345,7 +345,7 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 		va_end(ap);
 		lswlogf(buf, " (%d bytes)", (int)pbs_room(&md->packet_pbs));
 	}
-	if (DBGP(DBG_RAW)) {
+	if (DBGP(DBG_BASE)) {
 		DBG_dump(NULL, md->packet_pbs.start, pbs_room(&md->packet_pbs));
 	}
 

@@ -86,14 +86,14 @@ static const char *fit_string(enum fit fit)
 
 void ikev2_print_ts(const struct traffic_selector *ts)
 {
-	DBG(DBG_CONTROLMORE, {
+	if (DBGP(DBG_BASE)) {
 		DBG_log("printing contents struct traffic_selector");
 		DBG_log("  ts_type: %s", enum_name(&ikev2_ts_type_names, ts->ts_type));
 		DBG_log("  ipprotoid: %d", ts->ipprotoid);
 		DBG_log("  port range: %d-%d", ts->startport, ts->endport);
 		range_buf b;
 		DBG_log("  ip range: %s", str_range(&ts->net, &b));
-	});
+	}
 }
 
 /* rewrite me with address_as_{chunk,shunk}()? */
@@ -673,14 +673,13 @@ static struct score score_end(const struct end *end,
 			      const char *what, unsigned index)
 {
 	const struct traffic_selector *ts = &tss->ts[index];
-	DBG(DBG_CONTROLMORE,
-	    range_buf ts_net;
-	    DBG_log("    %s[%u] .net=%s .iporotoid=%d .{start,end}port=%d..%d",
-		    what, index,
-		    str_range(&ts->net, &ts_net),
-		    ts->ipprotoid,
-		    ts->startport,
-		    ts->endport));
+	range_buf ts_net;
+	dbg("    %s[%u] .net=%s .iporotoid=%d .{start,end}port=%d..%d",
+	    what, index,
+	    str_range(&ts->net, &ts_net),
+	    ts->ipprotoid,
+	    ts->startport,
+	    ts->endport);
 
 	struct score score = { .ok = false, };
 	score.address = score_address_range(end, tss, fit, what, index);
@@ -1194,14 +1193,12 @@ bool v2_process_ts_response(struct child_sa *child,
 	struct best_score best = score_ends(initiator_widening, c, &e, &tsi, &tsr);
 
 	if (!best.ok) {
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("reject responder TSi/TSr Traffic Selector"));
-			/* prevents parent from going to I3 */
-			return false;
+		dbg("reject responder TSi/TSr Traffic Selector");
+		/* prevents parent from going to I3 */
+		return false;
 	}
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("found an acceptable TSi/TSr Traffic Selector"));
+	dbg("found an acceptable TSi/TSr Traffic Selector");
 	struct state *st = &child->sa;
 	memcpy(&st->st_ts_this, best.tsi,
 	       sizeof(struct traffic_selector));

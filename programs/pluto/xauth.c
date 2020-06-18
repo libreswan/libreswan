@@ -142,15 +142,13 @@ static int pam_child(void *arg)
 {
 	struct xauth *xauth = arg;
 
-	DBG(DBG_XAUTH,
-	    DBG_log("PAM: #%lu: PAM-process authenticating user '%s'",
-		    xauth->serialno,
-		    xauth->ptarg.name));
+	dbg("PAM: #%lu: PAM-process authenticating user '%s'",
+	    xauth->serialno,
+	    xauth->ptarg.name);
 	bool success = do_pam_authentication(&xauth->ptarg);
-	DBG(DBG_XAUTH,
-	    DBG_log("PAM: #%lu: PAM-process completed for user '%s' with result %s",
-		    xauth->serialno, xauth->ptarg.name,
-		    success ? "SUCCESS" : "FAILURE"));
+	dbg("PAM: #%lu: PAM-process completed for user '%s' with result %s",
+	    xauth->serialno, xauth->ptarg.name,
+	    success ? "SUCCESS" : "FAILURE");
 	return success ? 0 : 1;
 }
 
@@ -183,9 +181,8 @@ void xauth_fork_pam_process(struct state *st,
 	xauth->ptarg.c_instance_serial = st->st_connection->instance_serial;
 	xauth->ptarg.atype = atype;
 
-	DBG(DBG_XAUTH,
-	    DBG_log("PAM: #%lu: main-process starting PAM-process for authenticating user '%s'",
-		    xauth->serialno, xauth->ptarg.name));
+	dbg("PAM: #%lu: main-process starting PAM-process for authenticating user '%s'",
+	    xauth->serialno, xauth->ptarg.name);
 	xauth->child = pluto_fork("xauth", xauth->serialno,
 				  pam_child, pam_callback, xauth);
 	if (xauth->child < 0) {

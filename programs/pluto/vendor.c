@@ -692,8 +692,8 @@ static void vidlog(const char *vidstr, size_t len, struct vid_struct *vid, bool 
 			 vid->descr ? vid->descr : "");
 	}
 
-	DBG(DBG_CONTROL, DBG_log("%s Vendor ID payload [%s]",
-	       vid_useful ? "received" : "ignoring", vid_dump));
+	dbg("%s Vendor ID payload [%s]",
+	    vid_useful ? "received" : "ignoring", vid_dump);
 }
 
 /*
@@ -777,13 +777,10 @@ static void handle_known_vendorid_v1(struct msg_digest *md,
 		/* FALL THROUGH */
 	case VID_NATT_RFC:
 		if (md->quirks.qnat_traversal_vid < vid->id) {
-			DBG(DBG_NATT, DBG_log(" quirks.qnat_traversal_vid set to=%d [%s]",
-					      vid->id, vid->descr));
+			dbg(" quirks.qnat_traversal_vid set to=%d [%s]", vid->id, vid->descr);
 			md->quirks.qnat_traversal_vid = vid->id;
 		} else {
-			DBG(DBG_NATT,
-			    DBG_log("Ignoring older NAT-T Vendor ID payload [%s]",
-				    vid->descr));
+			dbg("Ignoring older NAT-T Vendor ID payload [%s]", vid->descr);
 			vid_useful = FALSE;
 		}
 		break;
@@ -922,8 +919,7 @@ bool out_vid(pb_stream *outs, unsigned int vid)
 	for (pvid = vid_tab; pvid->id != vid; pvid++)
 		passert(pvid->id != VID_none); /* we must find what we are trying to send */
 
-	DBG(DBG_EMITTING,
-	    DBG_log("out_vid(): sending [%s]", pvid->descr));
+	dbg("out_vid(): sending [%s]", pvid->descr);
 
 	return ikev1_out_generic_raw(&isakmp_vendor_id_desc, outs,
 			       pvid->vid, pvid->vid_len, "V_ID");
@@ -998,7 +994,7 @@ bool vid_is_oppo(const char *vid, size_t len)
 		passert(pvid->id != VID_none); /* we must find VID_OPPORTUNISTIC */
 
 	if (pvid->vid_len == len && memeq(vid, pvid->vid, len)) {
-		DBG(DBG_CONTROL, DBG_log("VID_OPPORTUNISTIC received"));
+		dbg("VID_OPPORTUNISTIC received");
 		return TRUE;
 	} else {
 		return FALSE;

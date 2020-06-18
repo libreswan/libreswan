@@ -298,9 +298,8 @@ bool close_v2SK_payload(v2SK_payload_t *sk)
 	} else {
 		padding = 1;
 	}
-	DBG(DBG_EMITTING,
-	    DBG_log("adding %zd bytes of padding (including 1 byte padding-length)",
-		    padding));
+	dbg("adding %zd bytes of padding (including 1 byte padding-length)",
+	    padding);
 	for (unsigned i = 0; i < padding; i++) {
 		if (!out_repeated_byte(i, 1, &sk->pbs, "padding and length")) {
 			libreswan_log("error initializing padding for encrypted %s payload",
@@ -615,7 +614,7 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 			return false;
 		}
 
-		DBG(DBG_PARSING, DBG_log("authenticator matched"));
+		dbg("authenticator matched");
 
 		/* decrypt */
 
@@ -795,11 +794,10 @@ bool ikev2_decrypt_msg(struct state *st, struct msg_digest *md)
 		md->chain[ISAKMP_NEXT_v2SK]->pbs = same_chunk_as_in_pbs(c, "decrypted SK payload");
 	}
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("#%lu ikev2 %s decrypt %s",
-		    st->st_serialno,
-		    enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
-		    ok ? "success" : "failed"));
+	dbg("#%lu ikev2 %s decrypt %s",
+	    st->st_serialno,
+	    enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+	    ok ? "success" : "failed");
 
 	return ok;
 }

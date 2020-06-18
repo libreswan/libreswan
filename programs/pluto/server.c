@@ -997,8 +997,7 @@ static struct hash_table pids_hash_table = {
 static void add_pid(const char *name, so_serial_t serialno, pid_t pid,
 		    pluto_fork_cb *callback, void *context)
 {
-	DBG(DBG_CONTROL,
-	    DBG_log("forked child %d", pid));
+	dbg("forked child %d", pid);
 	struct pid_entry *new_pid = alloc_thing(struct pid_entry, "fork pid");
 	new_pid->magic = PID_MAGIC;
 	new_pid->pid = pid;
@@ -1035,8 +1034,7 @@ static void addconn_exited(struct state *null_st UNUSED,
 			   struct msg_digest *null_mdp UNUSED,
 			   int status, void *context UNUSED)
 {
-	DBG(DBG_CONTROLMORE,
-	   DBG_log("reaped addconn helper child (status %d)", status));
+	dbg("reaped addconn helper child (status %d)", status);
 	addconn_child_pid = 0;
 }
 
@@ -1077,18 +1075,16 @@ static void childhandler_cb(void)
 		switch (child) {
 		case -1: /* error? */
 			if (errno == ECHILD) {
-				DBG(DBG_CONTROLMORE,
-				    DBG_log("waitpid returned ECHILD (no child processes left)"));
+				dbg("waitpid returned ECHILD (no child processes left)");
 			} else {
 				LOG_ERRNO(errno, "waitpid unexpectedly failed");
 			}
 			return;
 		case 0: /* nothing to do */
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("waitpid returned nothing left to do (all child processes are busy)"));
+			dbg("waitpid returned nothing left to do (all child processes are busy)");
 			return;
 		default:
-			LSWDBGP(DBG_CONTROLMORE, buf) {
+			LSWDBGP(DBG_BASE, buf) {
 				lswlogf(buf, "waitpid returned pid %d",
 					child);
 				log_status(buf, status);
@@ -1114,7 +1110,7 @@ static void childhandler_cb(void)
 					pid_entry->callback(NULL, NULL,
 							    status, pid_entry->context);
 				} else if (st == NULL) {
-					LSWDBGP(DBG_CONTROLMORE, buf) {
+					LSWDBGP(DBG_BASE, buf) {
 						jam_pid_entry(buf, pid_entry);
 						lswlogs(buf, " disappeared");
 					}
@@ -1215,7 +1211,7 @@ void call_server(char *conffile)
 	 * setup basic events, CTL and SIGNALs
 	 */
 
-	DBG(DBG_CONTROLMORE, DBG_log("Setting up events, loop start"));
+	dbg("Setting up events, loop start");
 
 	add_fd_read_event_handler(ctl_fd, whack_handle_cb, NULL, "PLUTO_CTL_FD");
 
@@ -1301,9 +1297,8 @@ void call_server(char *conffile)
 
 		/* Parent */
 
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("created addconn helper (pid:%d) using %s+execve",
-			    addconn_child_pid, USE_VFORK ? "vfork" : "fork"));
+		dbg("created addconn helper (pid:%d) using %s+execve",
+		    addconn_child_pid, USE_VFORK ? "vfork" : "fork");
 		add_pid("addconn", SOS_NOBODY, addconn_child_pid,
 			addconn_exited, NULL);
 	}

@@ -74,7 +74,7 @@ extern void clear_pluto_stats(void);
 		const unsigned __pstat = (INDEX);			\
 		if (__pstat < elemsof(pstats_##TYPE)) {			\
 			pstats_##TYPE[__pstat]++;			\
-		} else if (DBGP(DBG_CONTROLMORE)) {			\
+		} else if (DBGP(DBG_BASE)) {			\
 			DBG_log("pstats %s %d", #TYPE, __pstat);	\
 		}							\
 	}

@@ -73,13 +73,11 @@ void add_pending(struct fd *whack_sock,
 
 	for (p = pp ? *pp : NULL; p != NULL; p = p->next) {
 		if (p->connection == c && p->ike == ike) {
-			DBG(DBG_CONTROL, {
-				ipstr_buf b;
-				char cib[CONN_INST_BUF];
-				DBG_log("Ignored already queued up pending IPsec SA negotiation with %s \"%s\"%s",
-					ipstr(&c->spd.that.host_addr, &b),
-					c->name, fmt_conn_instance(c, cib));
-			});
+			address_buf b;
+			connection_buf cib;
+			dbg("Ignored already queued up pending IPsec SA negotiation with %s "PRI_CONNECTION"",
+			    str_address(&c->spd.that.host_addr, &b),
+			    pri_connection(c, &cib));
 			return;
 		}
 	}
@@ -96,10 +94,9 @@ void add_pending(struct fd *whack_sock,
 	p->uctx = NULL;
 	if (uctx != NULL) {
 		p->uctx = clone_thing(*uctx, "pending security context");
-		DBG(DBG_CONTROL,
-		    DBG_log("pending IPsec SA negotiation with security context %s, %d",
-			    p->uctx->sec_ctx_value,
-			    p->uctx->ctx.ctx_len));
+		dbg("pending IPsec SA negotiation with security context %s, %d",
+		    p->uctx->sec_ctx_value,
+		    p->uctx->ctx.ctx_len);
 	}
 
 	/*
@@ -220,19 +217,16 @@ static void delete_pending(struct pending **pp)
 		connection_discard(p->connection);
 	close_any(&p->whack_sock); /*on-heap*/
 
-	DBG(DBG_DPD, {
+	if (DBGP(DBG_BASE)) {
 		if (p->connection == NULL) {
 			/* ??? when does this happen? */
-			DBG_log("removing pending policy for no connection {%p}",
-				p);
+			DBG_log("removing pending policy for no connection {%p}", p);
 		} else {
-			char cib[CONN_INST_BUF];
-			DBG_log("removing pending policy for \"%s\"%s {%p}",
-				p->connection->name,
-				fmt_conn_instance(p->connection, cib),
-				p);
+			connection_buf cib;
+			DBG_log("removing pending policy for "PRI_CONNECTION" {%p}",
+				pri_connection(p->connection, &cib), p);
 		}
-	});
+	}
 
 	pfreeany(p->uctx);
 	pfree(p);
@@ -291,16 +285,13 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 			default:
 				bad_case(ike->sa.st_ike_version);
 			}
-			DBG(DBG_CONTROL, {
-				ipstr_buf b;
-				char cib[CONN_INST_BUF];
-				DBG_log("%s pending %s with %s \"%s\"%s",
-					what,
-					(ike->sa.st_ike_version == IKEv2) ? "Child SA" : "Quick Mode",
-					ipstr(&p->connection->spd.that.host_addr, &b),
-					p->connection->name,
-					fmt_conn_instance(p->connection, cib));
-			});
+			address_buf b;
+			connection_buf cib;
+			dbg("%s pending %s with %s "PRI_CONNECTION"",
+			    what,
+			    (ike->sa.st_ike_version == IKEv2) ? "Child SA" : "Quick Mode",
+			    str_address(&p->connection->spd.that.host_addr, &b),
+			    pri_connection(p->connection, &cib));
 
 			p->connection = NULL;           /* ownership transferred */
 			delete_pending(pp);	/* in effect, advances pp */
@@ -341,25 +332,18 @@ bool pending_check_timeout(const struct connection *c)
 	struct pending **pp, *p;
 
 	for (pp = host_pair_first_pending(c); (p = *pp) != NULL; ) {
-		DBG(DBG_DPD, {
-			deltatime_t waited = monotimediff(mononow(), p->pend_time);
-			char cib[CONN_INST_BUF];
-			DBG_log("checking connection \"%s\"%s for stuck phase 2s (waited %jd, patience 3*%jd)",
-				c->name,
-				fmt_conn_instance(c, cib),
-				deltasecs(waited),
-				deltasecs(c->dpd_timeout));
-			});
-
+		deltatime_t waited = monotimediff(mononow(), p->pend_time);
+		connection_buf cib;
+		dbg("checking connection "PRI_CONNECTION" for stuck phase 2s (waited %jd, patience 3*%jd)",
+		    pri_connection(c, &cib), deltasecs(waited),
+		    deltasecs(c->dpd_timeout));
 		if (deltasecs(c->dpd_timeout) > 0) {
 			if (!monobefore(mononow(),
 				monotime_add(p->pend_time,
 					deltatimescale(3, 1, c->dpd_timeout)))) {
-				DBG(DBG_DPD, {
-					char cib[CONN_INST_BUF];
-					DBG_log("connection \"%s\"%s stuck, restarting",
-						c->name, fmt_conn_instance(c, cib));
-				});
+				connection_buf cib;
+				dbg("connection "PRI_CONNECTION" stuck, restarting",
+				    pri_connection(c, &cib));
 				return TRUE;
 			}
 		}

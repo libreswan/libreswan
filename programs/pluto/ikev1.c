@@ -751,7 +751,7 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 
 void init_ikev1(void)
 {
-	DBGF(DBG_CONTROL, "checking IKEv1 state table");
+	dbg("checking IKEv1 state table");
 
 	/*
 	 * Fill in FINITE_STATES[].
@@ -2176,9 +2176,10 @@ void process_packet_tail(struct msg_digest *md)
 			case ISAKMP_NEXT_ID:
 			case ISAKMP_NEXT_NATOA_RFC:
 				/* dump ID section */
-				DBG(DBG_PARSING,
-				    DBG_dump("     obj: ", pd->pbs.cur,
-					     pbs_left(&pd->pbs)));
+				if (DBGP(DBG_BASE)) {
+					DBG_dump("     obj: ", pd->pbs.cur,
+						 pbs_left(&pd->pbs));
+				}
 				break;
 			default:
 				break;

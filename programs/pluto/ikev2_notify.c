@@ -276,7 +276,7 @@ bool decode_v2N_ike_auth_response(struct msg_digest *md)
 			md->v2N.mobike_supported = true;
 			break;
 		case v2N_PPK_IDENTITY:
-			DBG(DBG_CONTROL, DBG_log("received v2N_PPK_IDENTITY, responder used PPK"));
+			dbg("received v2N_PPK_IDENTITY, responder used PPK");
 			md->v2N.ppk_identity = ntfy;
 			break;
 		case v2N_REDIRECT:

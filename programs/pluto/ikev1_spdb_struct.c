@@ -143,8 +143,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 		/* ??? should we check that this label and first one match? */
 		DBG_log("Received sec ctx in responder state again: ignoring this one");
 	} else if (st->st_state->kind == STATE_QUICK_I1) {
-		DBG(DBG_PARSING,
-		    DBG_log("Initiator state received security context from responder state, now verifying if both are same"));
+		dbg("initiator state received security context from responder state, now verifying if both are same");
 		if (streq(st->sec_ctx->sec_ctx_value, uctx.sec_ctx_value)) {
 			DBG_log("security contexts are verified in the initiator state");
 		} else {
@@ -195,13 +194,12 @@ static bool out_attr(int type,
 
 		close_output_pbs(&val_pbs);
 	}
-	DBG(DBG_EMITTING, {
-		    enum_names *d = attr_val_descs[type];
-
-		    if (d != NULL)
-			    DBG_log("    [%lu is %s]",
-				    val, enum_show(d, val));
-	    });
+	if (DBGP(DBG_BASE)) {
+		enum_names *d = attr_val_descs[type];
+		if (d != NULL)
+			DBG_log("    [%lu is %s]",
+				val, enum_show(d, val));
+	}
 	return TRUE;
 }
 
@@ -314,8 +312,7 @@ static bool ikev1_verify_esp(const struct connection *c,
 		     ta->enckeylen == 0 ||
 		     algs.enckeylen == ta->enckeylen) &&
 		    algs.integ == ta->ta_integ) {
-			DBG(DBG_CONTROL,
-			    DBG_log("ESP IPsec Transform verified; matches alg_info entry"));
+			dbg("ESP IPsec Transform verified; matches alg_info entry");
 			return true;
 		}
 	}
@@ -349,16 +346,14 @@ static bool ikev1_verify_ah(const struct connection *c,
 		return false;
 	}
 	if (c->child_proposals.p == NULL) {
-		DBG(DBG_CONTROL,
-		    DBG_log("AH IPsec Transform verified unconditionally; no alg_info to check against"));
+		dbg("AH IPsec Transform verified unconditionally; no alg_info to check against");
 		return true;
 	}
 
 	FOR_EACH_PROPOSAL(c->child_proposals.p, proposal) {	/* really AH */
 		struct v1_proposal algs = v1_proposal(proposal);
 		if (algs.integ == ta->ta_integ) {
-			DBG(DBG_CONTROL,
-			    DBG_log("ESP IPsec Transform verified; matches alg_info entry"));
+			dbg("ESP IPsec Transform verified; matches alg_info entry");
 			return true;
 		}
 	}
@@ -488,9 +483,7 @@ bool ikev1_out_sa(pb_stream *outs,
 		const struct db_prop_conj *const pc = &sadb->prop_conjs[pcn];
 		int valid_prop_cnt = pc->prop_cnt;
 
-		DBG(DBG_EMITTING,
-		    DBG_log("ikev1_out_sa pcn: %d has %d valid proposals",
-			    pcn, valid_prop_cnt));
+		dbg("%s() pcn: %d has %d valid proposals", __func__, pcn, valid_prop_cnt);
 
 		for (unsigned pn = 0; pn < pc->prop_cnt; pn++) {
 			const struct db_prop *const p = &pc->props[pn];
@@ -508,10 +501,9 @@ bool ikev1_out_sa(pb_stream *outs,
 			 * pick the part of the proposal we are trying to work on
 			 */
 
-			DBG(DBG_EMITTING,
-			    DBG_log("ikev1_out_sa pcn: %d pn: %d<%d valid_count: %d trans_cnt: %d",
-				    pcn, pn, pc->prop_cnt, valid_prop_cnt,
-				    p->trans_cnt));
+			dbg("%s() pcn: %d pn: %d<%d valid_count: %d trans_cnt: %d",
+			    __func__, pcn, pn, pc->prop_cnt, valid_prop_cnt,
+			    p->trans_cnt);
 
 			/* but, skip things if the transform count is zero */
 			if (p->trans_cnt == 0)
@@ -874,15 +866,12 @@ static uint32_t decode_long_duration(pb_stream *pbs)
 	if (pbs_left(pbs) > sizeof(val)) {
 		/* "clamp" too large value to max representable value */
 		val -= 1; /* portable way to get to maximum value */
-		DBG(DBG_PARSING,
-		    DBG_log("   too large duration clamped to: %" PRIu32,
-			    val));
+		dbg("   too large duration clamped to: %" PRIu32, val);
 	} else {
 		/* decode number */
 		while (pbs_left(pbs) != 0)
 			val = (val << BITS_PER_BYTE) | *pbs->cur++;
-		DBG(DBG_PARSING,
-		    DBG_log("   long duration: %" PRIu32, val));
+		dbg("   long duration: %" PRIu32, val);
 	}
 	return val;
 }
@@ -996,8 +985,7 @@ static bool ikev1_verify_ike(const struct trans_attrs *ta,
 		return false;
 	}
 	if (ike_proposals.p == NULL) {
-		DBG(DBG_CONTROL,
-		    DBG_log("OAKLEY proposal verified unconditionally; no alg_info to check against"));
+		dbg("OAKLEY proposal verified unconditionally; no alg_info to check against");
 		return true;
 	}
 
@@ -1020,8 +1008,7 @@ static bool ikev1_verify_ike(const struct trans_attrs *ta,
 				       "You should NOT use insecure/broken IKE algorithms (%s)!",
 				       ta->ta_encrypt->common.fqn);
 			} else {
-				DBG(DBG_CONTROL,
-					DBG_log("OAKLEY proposal verified; matching alg_info found"));
+				dbg("OAKLEY proposal verified; matching alg_info found");
 				return true;
 			}
 		}
@@ -1264,24 +1251,23 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 
 			val = a.isaat_lv;
 
-			DBG(DBG_PARSING,
-			    {
-				    enum_names *vdesc = oakley_attr_val_descs
-							[a.isaat_af_type &
-							 ISAKMP_ATTR_RTYPE_MASK];
+			if (DBGP(DBG_BASE)) {
+				enum_names *vdesc = oakley_attr_val_descs
+					[a.isaat_af_type &
+					 ISAKMP_ATTR_RTYPE_MASK];
 
-				    if (vdesc != NULL) {
-					    const char *nm =
-						    enum_name(vdesc,
-							      val);
+				if (vdesc != NULL) {
+					const char *nm =
+						enum_name(vdesc,
+							  val);
 
-					    if (nm != NULL) {
-						    DBG_log("   [%u is %s]",
-							    (unsigned)val,
-							    nm);
-					    }
-				    }
-			    });
+					if (nm != NULL) {
+						DBG_log("   [%u is %s]",
+							(unsigned)val,
+							nm);
+					}
+				}
+			}
 
 			switch (a.isaat_af_type) {
 			case OAKLEY_ENCRYPTION_ALGORITHM | ISAKMP_ATTR_AF_TV:
@@ -1611,9 +1597,7 @@ rsasig_common:
 			 * Let's finish early and leave.
 			 */
 
-			DBG(DBG_PARSING | DBG_CRYPT,
-			    DBG_log("Oakley Transform %u accepted",
-				    trans.isat_transnum));
+			dbg("Oakley Transform %u accepted", trans.isat_transnum);
 
 			if (r_sa_pbs != NULL) {
 
@@ -1735,11 +1719,8 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	const struct db_attr *auth = &trans->attrs[2];
 	const struct db_attr *grp  = &trans->attrs[3];
 
-	DBG(DBG_CONTROL,
-	    DBG_log("initiating aggressive mode with IKE=E=%d-H=%d-M=%d",
-		    enc->val,
-		    hash->val,
-		    grp->val));
+	dbg("initiating aggressive mode with IKE=E=%d-H=%d-M=%d",
+	    enc->val, hash->val, grp->val);
 
 	passert(enc->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM);
 
@@ -1920,15 +1901,15 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 						 a.isaat_af_type));
 				return FALSE;
 			}
-			DBG(DBG_PARSING, {
-				    if ((a.isaat_af_type &
-					 ISAKMP_ATTR_AF_MASK) ==
-					ISAKMP_ATTR_AF_TV) {
-					    DBG_log("   [%" PRIu32 " is %s]",
-						    val,
-						    enum_show(vdesc, val));
-				    }
-			    });
+			if (DBGP(DBG_BASE)) {
+				if ((a.isaat_af_type &
+				     ISAKMP_ATTR_AF_MASK) ==
+				    ISAKMP_ATTR_AF_TV) {
+					DBG_log("   [%" PRIu32 " is %s]",
+						val,
+						enum_show(vdesc, val));
+				}
+			}
 		}
 
 		switch (a.isaat_af_type) {
@@ -2022,23 +2003,20 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			switch (val) {
 			case ENCAPSULATION_MODE_TUNNEL:
 			case ENCAPSULATION_MODE_TRANSPORT:
-				DBG(DBG_NATT,
-				    DBG_log("NAT-T non-encap: Installing IPsec SA without ENCAP, st->hidden_variables.st_nat_traversal is %s",
-					    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
+				dbg("NAT-T non-encap: Installing IPsec SA without ENCAP, st->hidden_variables.st_nat_traversal is %s",
+				    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal));
 				break;
 
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS:
 			case ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS:
-				DBG(DBG_NATT,
-				    DBG_log("NAT-T draft: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is %s",
-					    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
+				dbg("NAT-T draft: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is %s",
+				    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal));
 				break;
 
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_RFC:
 			case ENCAPSULATION_MODE_UDP_TUNNEL_RFC:
-				DBG(DBG_NATT,
-				    DBG_log("NAT-T RFC: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is %s",
-					    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
+				dbg("NAT-T RFC: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is %s",
+				    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal));
 				break;
 
 			default:
@@ -2194,7 +2172,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	 * For instance, AEAD+[NONE].
 	 */
 	if (proto == PROTO_IPSEC_ESP && !LHAS(seen_attrs, AUTH_ALGORITHM)) {
-		DBG(DBG_PARSING, DBG_log("ES missing INTEG aka AUTH, setting it to NONE"));
+		dbg("ES missing INTEG aka AUTH, setting it to NONE");
 		attrs->transattrs.ta_integ = &ike_alg_integ_none;
 	}
 
@@ -2557,8 +2535,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				 */
 				if (ah_attrs.transattrs.ta_integ == NULL) {
 					/* error already logged */
-					DBG(DBG_PARSING,
-					    DBG_log("ignoring AH proposal with unknown integrity"));
+					dbg("ignoring AH proposal with unknown integrity");
 					continue;       /* try another */
 				}
 
@@ -2634,11 +2611,11 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				if (esp_attrs.transattrs.ta_integ == &ike_alg_integ_none) {
 					if (!encrypt_desc_is_aead(esp_attrs.transattrs.ta_encrypt) &&
 					    !ah_seen) {
-						LSWDBGP(DBG_PARSING, buf) {
+						LSWDBGP(DBG_BASE, buf) {
 							lswlogs(buf, "ESP from ");
 							jam_endpoint(buf, &c->spd.that.host_addr);
 							lswlogs(buf, " must either have AUTH or be combined with AH");
-						};
+						}
 						continue; /* try another */
 					}
 				}
@@ -2662,22 +2639,18 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			    ENCAPSULATION_MODE_TUNNEL)
 				tunnel_mode = TRUE;
 		} else if (st->st_policy & POLICY_ENCRYPT) {
-			DBG(DBG_CONTROL | DBG_CRYPT, {
-				ipstr_buf b;
-				char cib[CONN_INST_BUF];
-				DBG_log("policy for \"%s\"%s requires encryption but ESP not in Proposal from %s",
-					c->name, fmt_conn_instance(c, cib),
-					ipstr(&c->spd.that.host_addr, &b));
-			});
+			connection_buf cib;
+			address_buf b;
+			dbg("policy for "PRI_CONNECTION" requires encryption but ESP not in Proposal from %s",
+			    pri_connection(c, &cib),
+			    str_address(&c->spd.that.host_addr, &b));
 			continue; /* we needed encryption, but didn't find ESP */
 		} else if ((st->st_policy & POLICY_AUTHENTICATE) && !ah_seen) {
-			DBG(DBG_CONTROL | DBG_CRYPT, {
-				ipstr_buf b;
-				char cib[CONN_INST_BUF];
-				DBG_log("policy for \"%s\"%s requires authentication but none in Proposal from %s",
-					c->name, fmt_conn_instance(c, cib),
-					ipstr(&c->spd.that.host_addr, &b));
-			});
+			connection_buf cib;
+			address_buf b;
+			dbg("policy for \"%s\"%s requires authentication but none in Proposal from %s",
+			    pri_connection(c, &cib),
+			    str_address(&c->spd.that.host_addr, &b));
 			continue; /* we need authentication, but we found neither ESP nor AH */
 		}
 
@@ -2740,27 +2713,25 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					break;
 
 				default:
-					DBG(DBG_CONTROL | DBG_CRYPT, {
-						ipstr_buf b;
-						DBG_log("unsupported IPCOMP Transform %d from %s",
-							ipcomp_attrs.transattrs.ta_comp,
-							ipstr(&c->spd.that.host_addr, &b));
-					});
+				{
+					address_buf b;
+					dbg("unsupported IPCOMP Transform %d from %s",
+					    ipcomp_attrs.transattrs.ta_comp,
+					    str_address(&c->spd.that.host_addr, &b));
 					continue; /* try another */
+				}
 				}
 
 				if (ah_seen &&
 				    ah_attrs.mode !=
 				      ipcomp_attrs.mode) {
 					/* ??? This should be an error, but is it? */
-					DBG(DBG_CONTROL | DBG_CRYPT,
-					    DBG_log("AH and IPCOMP transforms disagree about mode; TUNNEL presumed"));
+					dbg("AH and IPCOMP transforms disagree about mode; TUNNEL presumed");
 				} else if (esp_seen &&
 					   esp_attrs.mode !=
 					     ipcomp_attrs.mode) {
 					/* ??? This should be an error, but is it? */
-					DBG(DBG_CONTROL | DBG_CRYPT,
-					    DBG_log("ESP and IPCOMP transforms disagree about mode; TUNNEL presumed"));
+					dbg("ESP and IPCOMP transforms disagree about mode; TUNNEL presumed");
 				}
 
 				break; /* we seem to be happy */

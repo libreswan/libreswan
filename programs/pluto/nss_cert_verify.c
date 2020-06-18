@@ -57,8 +57,8 @@ static bool prepare_nss_import(PK11SlotInfo **slot)
 	 */
 	*slot = PK11_GetInternalKeySlot();
 	if (*slot == NULL) {
-		LSWDBGP(DBG_X509, buf) {
-			lswlogs(buf, "NSS: cert import calling PK11_GetInternalKeySlot() failed: ");
+		LSWDBGP(DBG_BASE, buf) {
+			jam(buf, "NSS: cert import calling PK11_GetInternalKeySlot() failed: ");
 			lswlog_nss_error(buf);
 		}
 		return FALSE;
@@ -290,7 +290,7 @@ static bool verify_end_cert(struct logger *logger,
 	}
 
 	for (const struct usage_desc *p = usages; ; p++) {
-		DBGF(DBG_X509, "verify_end_cert trying profile %s", p->usageName);
+		dbg("verify_end_cert trying profile %s", p->usageName);
 
 		new_vfy_log(&vfy_log);
 		SECStatus rv = CERT_PKIXVerifyCert(end_cert, p->usage, cvin, cvout, NULL);
@@ -298,7 +298,7 @@ static bool verify_end_cert(struct logger *logger,
 		if (rv == SECSuccess) {
 			/* success! */
 			pexpect(vfy_log.count == 0 && vfy_log.head == NULL);
-			DBGF(DBG_X509, "certificate is valid (profile %s)", p->usageName);
+			dbg("certificate is valid (profile %s)", p->usageName);
 			verified = true;
 			break;
 		}

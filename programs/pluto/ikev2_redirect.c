@@ -248,14 +248,12 @@ static bool allow_to_be_redirected(const char *allowed_targets_list, ip_address 
 		err_t ugh = ttoaddr_num(t, len, AF_UNSPEC, &ip_addr);
 
 		if (ugh != NULL) {
-			DBGF(DBG_CONTROLMORE, "address %.*s isn't a valid address", len, t);
+			dbg("address %.*s isn't a valid address", len, t);
 		} else if (sameaddr(dest_ip, &ip_addr)) {
-			DBGF(DBG_CONTROLMORE,
-				"address %.*s is a match to received GW identity", len, t);
+			dbg("address %.*s is a match to received GW identity", len, t);
 			return TRUE;
 		} else {
-			DBGF(DBG_CONTROLMORE,
-				"address %.*s is not a match to received GW identity", len, t);
+			dbg("address %.*s is not a match to received GW identity", len, t);
 		}
 		t += len;	/* skip name */
 	}
@@ -338,10 +336,10 @@ err_t parse_redirect_payload(pb_stream *input_pbs,
 	}
 
 	if (nonce->len != len || !memeq(nonce->ptr, input_pbs->cur, len)) {
-		DBG(DBG_CONTROL, {
+		if (DBGP(DBG_BASE)) {
 			DBG_dump_hunk("expected nonce", *nonce);
 			DBG_dump("received nonce", input_pbs->cur, len);
-		});
+		}
 		return "received nonce does not match our expected nonce Ni (spoofed packet?)";
 	}
 
@@ -366,9 +364,9 @@ static void del_spi_trick(struct state *st)
 	if (del_spi(st->st_esp.our_spi, &ip_protocol_esp,
 		    &st->st_connection->temp_vars.old_gw_address,
 		    &st->st_connection->spd.this.host_addr)) {
-		DBG(DBG_CONTROL, DBG_log("redirect: successfully deleted lingering SPI entry"));
+		dbg("redirect: successfully deleted lingering SPI entry");
 	} else {
-		DBG(DBG_CONTROL, DBG_log("redirect: failed to delete lingering SPI entry"));
+		dbg("redirect: failed to delete lingering SPI entry");
 	}
 }
 
