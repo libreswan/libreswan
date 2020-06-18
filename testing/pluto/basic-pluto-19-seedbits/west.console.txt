@@ -59,7 +59,7 @@ west #
 west #
  test -f PATH/libexec/ipsec/pluto && PLUTOBIN="PATH/libexec/ipsec/pluto"
 west #
- sh ./checksec.sh --file $PLUTOBIN
+ /testing/guestbin/checksec.sh --file $PLUTOBIN
 RELRO           STACK CANARY      NX            PIE             RPATH      RUNPATH      FILE
 Full RELRO      Canary found      NX enabled    PIE enabled     No RPATH   No RUNPATH   PATH/libexec/ipsec/pluto
 west #

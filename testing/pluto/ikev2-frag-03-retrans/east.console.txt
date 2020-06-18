@@ -16,7 +16,7 @@ initdone
 east #
  # On east this shows the duplicates on west there is nothing.
 east #
- grep "received duplicate [^ ]* message request .* fragment" /tmp/pluto.log | sed "s/last_contact=.[^ ]* /last_contact=XXX /g"
+ grep "received duplicate [^ ]* message request .* fragment" /tmp/pluto.log | sed "s/last_contact=XX.XXX[^ ]* /last_contact=XXX /g"
 "westnet-eastnet-ikev2" #1: received duplicate IKE_AUTH message request (Message ID 1, fragment 1); retransmitting response
 | Message ID: IKE #1 received duplicate IKE_AUTH message request (Message ID 1, fragment 2); discarded as not fragment 1: ike.initiator.sent=-1 ike.initiator.recv=-1 ike.initiator.last_contact=XXX ike.responder.sent=1 ike.responder.recv=1 ike.responder.last_contact=XXX ike.wip.initiator=-1 ike.wip.responder=-1
 | Message ID: IKE #1 received duplicate IKE_AUTH message request (Message ID 1, fragment 3); discarded as not fragment 1: ike.initiator.sent=-1 ike.initiator.recv=-1 ike.initiator.last_contact=XXX ike.responder.sent=1 ike.responder.recv=1 ike.responder.last_contact=XXX ike.wip.initiator=-1 ike.wip.responder=-1

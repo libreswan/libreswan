@@ -578,8 +578,9 @@ kvmplutotest	certoe-17-asymmetric-cert-nat-testing-server-restarts	good
 kvmplutotest	certoe-17-asymmetric-cert-nat-testing-client-restart	good
 kvmplutotest	certoe-17-asymmetric-cert-nat-testing-server-crash	good
 kvmplutotest	certoe-17-asymmetric-dual-clients-behind-nat-01		good
-kvmplutotest	certoe-18-pass-then-go-slash24		good
-kvmplutotest	certoe-18-pass-then-go-slash32		good
+# the non-keyingtries1 now fail because we enforce keyingtries=1 for OE
+kvmplutotest	certoe-18-pass-then-go-slash24		wip
+kvmplutotest	certoe-18-pass-then-go-slash32		wip
 kvmplutotest	certoe-18-pass-then-go-slash24-keyingtries1	good
 kvmplutotest	certoe-18-pass-then-go-slash32-keyingtries1	good
 kvmplutotest	certoe-19-bareshunts-expire		good
@@ -959,7 +960,6 @@ kvmplutotest	interop-ikev2-strongswan-35-ipsec-rekey		good
 kvmplutotest	interop-ikev2-strongswan-35-rekey-pfs		good
 kvmplutotest	interop-ikev2-strongswan-35-responder-rekey-pfs good
 kvmplutotest	interop-ikev2-strongswan-35-initiator-rekey	good
-kvmplutotest	interop-ikev2-strongswan-36-initiator-sha1-sha2-rsa_pss-no	wip
 kvmplutotest	interop-ikev2-strongswan-36-initiator-sha1-sha2-rsa_pss-yes	good
 kvmplutotest	interop-ikev2-strongswan-36-initiator-sha1-rsa_pss-yes		good
 kvmplutotest	interop-ikev2-strongswan-37-initiator-no-digsig	good
@@ -970,6 +970,9 @@ kvmplutotest	interop-ikev2-strongswan-42-initiator-digsig-rsa-pss-384	good
 kvmplutotest	interop-ikev2-strongswan-43-initiator-digsig-rsa-pss-multi-hash	good
 kvmplutotest	interop-ikev2-strongswan-44-responder-digsig-rsa-pss-multi-hash	good
 kvmplutotest	interop-ikev2-pluto-01-integ-none		good
+
+# Fails in purpose - shows strongswan issue
+kvmplutotest	interop-ikev2-strongswan-36-initiator-sha1-sha2-rsa_pss-no	wip
 
 #################################################################
 # RFC 7427

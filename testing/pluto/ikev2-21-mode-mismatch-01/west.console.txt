@@ -43,9 +43,10 @@ west #
 002 "ipv4-psk-ikev2-transport" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ipv4-psk-ikev2-transport" #1: authenticated using authby=secret
 003 "ipv4-psk-ikev2-transport" #2: local policy requires Transport Mode but peer requires required Tunnel Mode
-214 "ipv4-psk-ikev2-transport" #2: state transition 'Initiator: process IKE_AUTH response' failed with v2N_NO_PROPOSAL_CHOSEN
-031 "ipv4-psk-ikev2-transport" #2: STATE_PARENT_I2: 60 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
-000 "ipv4-psk-ikev2-transport" #2: starting keying attempt 2 of an unlimited number, but releasing whack
+002 "ipv4-psk-ikev2-transport" #1: sending IKE SA delete
+002 "ipv4-psk-ikev2-transport" #2: deleting state (STATE_PARENT_I2) and NOT sending notification
+002 "ipv4-psk-ikev2-transport" #1: deleting other state #1 connection (STATE_V2_ESTABLISHED_IKE_SA) "ipv4-psk-ikev2-transport" and sending notification
+002 "ipv4-psk-ikev2-transport" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  echo done
 done
