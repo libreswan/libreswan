@@ -236,7 +236,4 @@ EOD
 # enable password root logins (f32 disables these per default)
 echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
 
-# don't update
-dnf config-manager --disable updates
-
 %end
