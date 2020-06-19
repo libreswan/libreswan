@@ -657,7 +657,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 
 		/* The caller should have set the proper priority by now */
 		req.u.p.priority = sa_priority;
-		dbg("IPsec Sa SPD priority set to %d", req.u.p.priority);
+		dbg("IPsec SA SPD priority set to %d", req.u.p.priority);
 
 		req.u.p.action = XFRM_POLICY_ALLOW;
 		if (policy == IPSEC_POLICY_DISCARD)

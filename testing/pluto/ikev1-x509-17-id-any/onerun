@@ -3815,7 +3815,7 @@
 | netlink response for Add SA esp.48ff48ca@192.1.2.23 included non-error error
 | priority calculation of connection "ikev2-westnet-eastnet-x509-cr" is 0xfe7e7
 | add inbound eroute 192.0.1.0/24:0 --0-> 192.0.2.0/24:0 => tun.10000@192.1.2.23 (raw_eroute)
-| IPsec Sa SPD priority set to 1042407
+| IPsec SA SPD priority set to 1042407
 | raw_eroute result=success
 | set up incoming SA, ref=0/0
 | sr for #2: unrouted
@@ -3826,7 +3826,7 @@
 | route_and_eroute with c: ikev2-westnet-eastnet-x509-cr (next: none) ero:null esr:{(nil)} ro:null rosr:{(nil)} and state: #2
 | priority calculation of connection "ikev2-westnet-eastnet-x509-cr" is 0xfe7e7
 | eroute_connection add eroute 192.0.2.0/24:0 --0-> 192.0.1.0/24:0 => tun.0@192.1.2.45 (raw_eroute)
-| IPsec Sa SPD priority set to 1042407
+| IPsec SA SPD priority set to 1042407
 | raw_eroute result=success
 | running updown command "ipsec _updown" for verb up 
 | command executing up-client
@@ -4754,7 +4754,7 @@
 | shunt_eroute() called for connection 'ikev2-westnet-eastnet-x509-cr' to 'replace with shunt' for rt_kind 'prospective erouted' using protoports 0--0->-0
 | netlink_shunt_eroute for proto 0, and source port 0 dest port 0
 | priority calculation of connection "ikev2-westnet-eastnet-x509-cr" is 0xfe7e7
-| IPsec Sa SPD priority set to 1042407
+| IPsec SA SPD priority set to 1042407
 | delete esp.90d046d4@192.1.2.45
 | netlink response for Del SA esp.90d046d4@192.1.2.45 included non-error error
 | priority calculation of connection "ikev2-westnet-eastnet-x509-cr" is 0xfe7e7
