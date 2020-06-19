@@ -236,4 +236,9 @@ EOD
 # enable password root logins (f32 disables these per default)
 echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
 
+# blacklist NetworkManager since it conflits with systemd-networkd
+sed -i $'s/enabled=1/enabled=1\\\nexclude=NetworkManager*/g' /etc/yum.repos.d/fedora.repo
+sed -i $'s/enabled=1/enabled=1\\\nexclude=NetworkManager*/g' /etc/yum.repos.d/fedora-updates.repo
+
+
 %end
