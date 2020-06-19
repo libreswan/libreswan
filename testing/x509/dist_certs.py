@@ -918,7 +918,8 @@ def create_nss_pw():
 def main():
     outdir = os.path.dirname(sys.argv[0])
     cwd = os.getcwd()
-    os.chdir(outdir)
+    if outdir:
+        os.chdir(outdir)
     global dates
     global dirbase
     reset_files()
