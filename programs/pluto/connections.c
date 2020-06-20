@@ -3894,7 +3894,7 @@ void show_one_connection(struct show *s,
 		strcpy(mtustr, "unset");
 
 	if (c->sa_priority != 0)
-		snprintf(sapriostr, sizeof(sapriostr), "%#" PRIx32, c->sa_priority);
+		snprintf(sapriostr, sizeof(sapriostr), "%" PRIu32, c->sa_priority);
 	else
 		strcpy(sapriostr, "auto");
 
@@ -4260,8 +4260,8 @@ static bool idr_wildmatch(const struct end *this, const struct id *idr)
 uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt)
 {
 	if (c->sa_priority != 0) {
-		dbg("priority calculation of connection \"%s\" overruled by connection specification of %#" PRIx32,
-		    c->name, c->sa_priority);
+		dbg("priority calculation of connection \"%s\" overruled by connection specification of %"PRIu32" (%#"PRIx32")",
+		    c->name, c->sa_priority, c->sa_priority);
 		return c->sa_priority;
 	}
 
@@ -4302,8 +4302,8 @@ uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt)
 
 	uint32_t prio = pmax - (portsw << 18 | protow << 17 | srcw << 9 | dstw << 1 | instw);
 
-	dbg("priority calculation of connection \"%s\" is %#" PRIx32,
-	    c->name, prio);
+	dbg("priority calculation of connection \"%s\" is %"PRIu32" (%#"PRIx32")",
+	    c->name, prio, prio);
 	return prio;
 }
 
