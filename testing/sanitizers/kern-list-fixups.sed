@@ -9,6 +9,7 @@ s/^\[\s\+[0-9]\+.[0-9]\+\] /\[ 00.00] /
   / kauditd_printk_skb:/d
   / Netfilter messages via NETLINK/d
   / IPsec XFRM device driver/d
+  / used greatest stack depth: [0-9]* bytes left/d
 }
 
 # XXX: how many of these are still generated?
