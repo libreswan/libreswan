@@ -1706,7 +1706,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	struct kernel_sa said[EM_MAXRELSPIS];
 	struct kernel_sa *said_next = said;
 
-	char text_ipip[SATOT_BUF];
 	char text_ipcomp[SATOT_BUF];
 	char text_esp[SATOT_BUF];
 	char text_ah[SATOT_BUF];
@@ -1765,100 +1764,16 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		.sec_ctx = st->sec_ctx,
 	};
 
-	if (true/*kernel_ops->inbound_eroute*/) {
-		inner_spi = SPI_PASS;
-		if (mode == ENCAPSULATION_MODE_TUNNEL) {
-			/* If we are tunnelling, set up IP in IP pseudo SA */
-			proto = &ip_protocol_ipip;
-			esatype = ET_IPIP;
-		} else {
-			/* For transport mode set ESP */
-			/* ??? why are we sure that this isn't AH? */
-			proto = &ip_protocol_esp;
-			esatype = ET_ESP;
-		}
-	} else if (mode == ENCAPSULATION_MODE_TUNNEL) {
-		/*
-		 * XXX hack alert -- we SHOULD NOT HAVE TO HAVE A DIFFERENT SPI
-		 * XXX FOR IP-in-IP ENCAPSULATION!
-		 */
-
-		ipsec_spi_t ipip_spi;
-
-		/*
-		 * Allocate an SPI for the tunnel.
-		 * Since our peer will never see this,
-		 * and it comes from its own number space,
-		 * it is purely a local implementation wart.
-		 */
-		{
-			static ipsec_spi_t last_tunnel_spi =
-				IPSEC_DOI_SPI_OUR_MIN;
-
-			ipip_spi = htonl(last_tunnel_spi);
-			last_tunnel_spi++;
-			/* ??? what should we do on wrap-around? */
-			passert(last_tunnel_spi >= IPSEC_DOI_SPI_OUR_MIN);
-			if (inbound)
-				st->st_tunnel_in_spi = ipip_spi;
-			else
-				st->st_tunnel_out_spi = ipip_spi;
-		}
-
-		set_text_said(text_ipip,
-			&c->spd.that.host_addr, ipip_spi, &ip_protocol_ipip);
-
-		*said_next = said_boilerplate;
-		said_next->spi = ipip_spi;
-		said_next->esatype = ET_IPIP;
-		said_next->text_said = text_ipip;
-
-		if (inbound) {
-			/*
-			 * set corresponding outbound SA. We can do this on
-			 * each SA in the bundle without harm.
-			 */
-			said_next->ref_peer = ref_peer;
-		} else if (!outgoing_ref_set) {
-			/* on outbound, pick up the SAref if not already done */
-			said_next->ref    = ref_peer;
-			outgoing_ref_set  = TRUE;
-		}
-
-		if (!kernel_ops->add_sa(said_next, replace)) {
-			dbg("add_sa tunnel failed");
-			goto fail;
-		}
-
-		if (inbound) {
-			st->st_esp.our_lastused = mononow();
-		} else {
-			st->st_esp.peer_lastused = mononow();
-		}
-
-		dbg("added tunnel with ref=%u", said_next->ref);
-
-		/*
-		 * SA refs will have been allocated for this SA.
-		 * The inner most one is interesting for the outgoing SA,
-		 * since we refer to it in the policy that we instantiate.
-		 */
-		if (new_ref_peer == IPSEC_SAREF_NULL && !inbound) {
-			dbg("recorded ref=%u as ref_peer", said_next->ref);
-			new_ref_peer = said_next->ref;
-			if (kernel_ops->type != USE_NETKEY &&
-				new_ref_peer == IPSEC_SAREF_NULL)
-				new_ref_peer = IPSEC_SAREF_NA;
-		}
-		if (!incoming_ref_set && inbound) {
-			st->st_ref = said_next->ref;
-			incoming_ref_set = TRUE;
-		}
-		said_next++;
-
-		inner_spi = ipip_spi;
+	inner_spi = SPI_PASS;
+	if (mode == ENCAPSULATION_MODE_TUNNEL) {
+		/* If we are tunnelling, set up IP in IP pseudo SA */
 		proto = &ip_protocol_ipip;
 		esatype = ET_IPIP;
+	} else {
+		/* For transport mode set ESP */
+		/* ??? why are we sure that this isn't AH? */
+		proto = &ip_protocol_esp;
+		esatype = ET_ESP;
 	}
 
 	/* set up IPCOMP SA, if any */
@@ -2247,12 +2162,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	 * Note reversed ends.
 	 * Not much to be done on failure.
 	 */
-	dbg("%s() is installing inbound eroute? inbound=%d inbound_eroute=%d owner=#%lu mode=%d",
-	    __func__, inbound, true/*kernel_ops->inbound_eroute*/, c->spd.eroute_owner, mode);
-	if (inbound &&
-		(true/*kernel_ops->inbound_eroute*/ ?
-			c->spd.eroute_owner == SOS_NOBODY :
-			mode == ENCAPSULATION_MODE_TUNNEL)) {
+	dbg("%s() is installing inbound eroute? inbound=%d owner=#%lu mode=%d",
+	    __func__, inbound, c->spd.eroute_owner, mode);
+	if (inbound && c->spd.eroute_owner == SOS_NOBODY) {
 		dbg("%s() is installing inbound eroute", __func__);
 		struct pfkey_proto_info proto_info[4];
 		int i = 0;
@@ -2295,8 +2207,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * ??? why is mode overwritten ONLY if true
 		 * (kernel_ops->inbound_eroute)?
 		 */
-		if (true/*kernel_ops->inbound_eroute*/ &&
-			mode == ENCAPSULATION_MODE_TUNNEL) {
+		if (mode == ENCAPSULATION_MODE_TUNNEL) {
 			proto_info[0].mode =
 				ENCAPSULATION_MODE_TUNNEL;
 			for (i = 1; proto_info[i].proto; i++)
@@ -2419,8 +2330,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 	}
 
 	/* ??? CLANG 3.5 thinks that c might be NULL */
-	if (true/*kernel_ops->inbound_eroute*/ && inbound &&
-	    c->spd.eroute_owner == SOS_NOBODY) {
+	if (inbound && c->spd.eroute_owner == SOS_NOBODY) {
 		if (!raw_eroute(&c->spd.that.host_addr,
 				&c->spd.that.client,
 				&c->spd.this.host_addr,
