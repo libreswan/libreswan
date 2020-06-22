@@ -1765,7 +1765,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		.sec_ctx = st->sec_ctx,
 	};
 
-	if (kernel_ops->inbound_eroute) {
+	if (true/*kernel_ops->inbound_eroute*/) {
 		inner_spi = SPI_PASS;
 		if (mode == ENCAPSULATION_MODE_TUNNEL) {
 			/* If we are tunnelling, set up IP in IP pseudo SA */
@@ -2248,9 +2248,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	 * Not much to be done on failure.
 	 */
 	dbg("%s() is installing inbound eroute? inbound=%d inbound_eroute=%d owner=#%lu mode=%d",
-	    __func__, inbound, kernel_ops->inbound_eroute, c->spd.eroute_owner, mode);
+	    __func__, inbound, true/*kernel_ops->inbound_eroute*/, c->spd.eroute_owner, mode);
 	if (inbound &&
-		(kernel_ops->inbound_eroute ?
+		(true/*kernel_ops->inbound_eroute*/ ?
 			c->spd.eroute_owner == SOS_NOBODY :
 			mode == ENCAPSULATION_MODE_TUNNEL)) {
 		dbg("%s() is installing inbound eroute", __func__);
@@ -2292,10 +2292,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		proto_info[i].proto = 0;
 
 		/*
-		 * ??? why is mode overwritten ONLY if
-		 * kernel_ops->inbound_eroute?
+		 * ??? why is mode overwritten ONLY if true
+		 * (kernel_ops->inbound_eroute)?
 		 */
-		if (kernel_ops->inbound_eroute &&
+		if (true/*kernel_ops->inbound_eroute*/ &&
 			mode == ENCAPSULATION_MODE_TUNNEL) {
 			proto_info[0].mode =
 				ENCAPSULATION_MODE_TUNNEL;
@@ -2419,7 +2419,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 	}
 
 	/* ??? CLANG 3.5 thinks that c might be NULL */
-	if (kernel_ops->inbound_eroute && inbound &&
+	if (true/*kernel_ops->inbound_eroute*/ && inbound &&
 	    c->spd.eroute_owner == SOS_NOBODY) {
 		if (!raw_eroute(&c->spd.that.host_addr,
 				&c->spd.that.client,
