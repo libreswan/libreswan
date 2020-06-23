@@ -11,10 +11,10 @@ west #
 west #
  iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 west #
- # confirm with a ping
+ ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+down
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-down UNEXPECTED
+ # start ...
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -62,21 +62,27 @@ west #
 west #
  # wait for rekey event
 west #
- sleep 20
+ sleep 5
 west #
- sleep 20
-west #
- sleep 20
-west #
- sleep 20
+ ipsec whack --rekey-ipsec --name 2
+002 rekeying IPsec SA state #2 of connection "westnet-eastnet-ikev2"
+1v2 "westnet-eastnet-ikev2" #3: STATE_V2_REKEY_CHILD_I1: STATE_V2_REKEY_CHILD_I1
+002 "westnet-eastnet-ikev2" #3: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
+002 "westnet-eastnet-ikev2" #3: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "westnet-eastnet-ikev2" #3: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP/TCP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+002 "westnet-eastnet-ikev2" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
+005 "westnet-eastnet-ikev2" #2: ESP traffic information: in=84B out=84B
 west #
  # rekey of IPsec SA means traffic counters should be 0
 west #
  ipsec whack --trafficstatus
 006 #3: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
 west #
- echo done
-done
+ ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec whack --trafficstatus
+006 #3: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 west #
  ipsec look
 west NOW

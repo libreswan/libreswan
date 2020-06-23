@@ -1170,5 +1170,6 @@ kvmplutotest	ikev2-tcp-02-timeout				wip
 kvmplutotest	ikev2-tcp-03-basic-rawrsa-blocking		wip
 # this test spews a gigabyte of logs because of a busy-wait kernel bug
 kvmplutotest	ikev2-tcp-03-basic-rawrsa-nonblocking		skip
-kvmplutotest	ikev2-tcp-17-rekey-ipsec			wip
+kvmplutotest	ikev2-tcp-10-rekey-child			wip
+kvmplutotest	ikev2-tcp-10-rekey-ike				wip
 kvmplutotest	ikev2-tcp-25-rw-nat				wip
