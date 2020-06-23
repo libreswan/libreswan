@@ -34,7 +34,7 @@
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
 #include "ipsecconf/starterwhack.h"
-#ifdef NETKEY_SUPPORT
+#ifdef XFRM_SUPPORT
 #include "addr_lookup.h"
 #endif
 #ifdef USE_DNSSEC
@@ -69,12 +69,12 @@ static char *environlize(const char *str)
  */
 static void resolve_defaultroute(struct starter_conn *conn UNUSED)
 {
-#ifdef NETKEY_SUPPORT
+#ifdef XFRM_SUPPORT
 	if (resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0) == 1)
 		resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0);
 	if (resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0) == 1)
 		resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0);
-#else /* !defined(NETKEY_SUPPORT) */
+#else /* !defined(XFRM_SUPPORT) */
 	/* What kind of result are we seeking? */
 	bool seeking_src = (conn->left.addrtype == KH_DEFAULTROUTE ||
 			    conn->right.addrtype == KH_DEFAULTROUTE);

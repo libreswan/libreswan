@@ -167,7 +167,7 @@ static void invocation_fail(err_t mess)
 
 /* string naming compile-time options that have interop implications */
 static const char compile_time_interop_options[] = ""
-#ifdef NETKEY_SUPPORT
+#ifdef XFRM_SUPPORT
 	" XFRM(netkey)"
 #endif
 #ifdef USE_XFRM_INTERFACE
@@ -944,7 +944,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'K':	/* --use-netkey */
-#ifdef NETKEY_SUPPORT
+#ifdef XFRM_SUPPORT
 			kernel_ops = &netkey_kernel_ops;
 #else
 			libreswan_log("--use-netkey not supported");
@@ -1421,7 +1421,7 @@ int main(int argc, char **argv)
 				} else if (streq(protostack, "native")) {
 					libreswan_log("the option protostack=native is obsoleted, falling back to protostack=%s",
 						      kernel_ops->kern_name);
-#ifdef NETKEY_SUPPORT
+#ifdef XFRM_SUPPORT
 				} else if (streq(protostack, "netkey") ||
 					   streq(protostack, "native")) {
 					kernel_ops = &netkey_kernel_ops;

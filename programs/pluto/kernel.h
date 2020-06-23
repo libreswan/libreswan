@@ -274,7 +274,7 @@ extern int useful_mastno;
 #endif
 
 extern const struct kernel_ops *kernel_ops;
-#ifdef NETKEY_SUPPORT
+#ifdef XFRM_SUPPORT
 extern const struct kernel_ops netkey_kernel_ops;
 #endif
 #ifdef BSD_KAME

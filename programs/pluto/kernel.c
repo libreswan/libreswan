@@ -2528,7 +2528,7 @@ static void kernel_process_queue_cb(struct fd *unused_whackfd UNUSED)
 static char kversion[256];
 
 const struct kernel_ops *kernel_ops =
-#ifdef NETKEY_SUPPORT
+#ifdef XFRM_SUPPORT
 	&netkey_kernel_ops
 #endif
 #ifdef BSD_KAME
@@ -2552,7 +2552,7 @@ void init_kernel(void)
 	jam_str(kversion, sizeof(kversion), un.release);
 
 	switch (kernel_ops->type) {
-#if defined(NETKEY_SUPPORT)
+#if defined(XFRM_SUPPORT)
 	case USE_NETKEY:
 	{
 		struct stat buf;

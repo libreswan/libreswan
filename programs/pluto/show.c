@@ -178,7 +178,7 @@ void show_status(struct show *s)
 	show_connections_status(s);
 	show_brief_status(s);
 	show_states(s);
-#if defined(NETKEY_SUPPORT)
+#if defined(XFRM_SUPPORT)
 	show_shunt_status(s);
 #endif
 }

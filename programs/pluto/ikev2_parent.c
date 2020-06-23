@@ -5561,7 +5561,7 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 	return STF_OK;
 }
 
-#ifdef NETKEY_SUPPORT
+#ifdef XFRM_SUPPORT
 static payload_emitter_fn add_mobike_payloads;
 static bool add_mobike_payloads(struct state *st, pb_stream *pbs)
 {
@@ -5860,7 +5860,7 @@ void ikev2_record_deladdr(struct state *st, void *arg_ip)
 	}
 }
 
-#ifdef NETKEY_SUPPORT
+#ifdef XFRM_SUPPORT
 static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 				  const struct iface_port *iface)
 {
@@ -5910,7 +5910,7 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 }
 #endif
 
-#ifdef NETKEY_SUPPORT
+#ifdef XFRM_SUPPORT
 static const struct iface_port *ikev2_src_iface(struct state *st,
 						struct starter_end *this)
 {
@@ -5941,7 +5941,7 @@ void ikev2_addr_change(struct state *st)
 	if (!mobike_check_established(st))
 		return;
 
-#ifdef NETKEY_SUPPORT
+#ifdef XFRM_SUPPORT
 
 	/* let's re-discover local address */
 
@@ -6006,7 +6006,7 @@ void ikev2_addr_change(struct state *st)
 		break;
 	}
 
-#else /* !defined(NETKEY_SUPPORT) */
+#else /* !defined(XFRM_SUPPORT) */
 
 	libreswan_log("without NETKEY we cannot ikev2_addr_change()");
 
