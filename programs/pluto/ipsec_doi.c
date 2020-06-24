@@ -90,7 +90,6 @@ void ipsecdoi_clone_initiate(struct fd *whack_sock,
 		struct xfrm_user_sec_ctx_ike *uctx)
 {
 	/* head one is already initiated, now initiate pcpu one */
-
 	uint32_t sa_clone_id = clone_cpu_id + 1;
 	if (sa_clone_id <= c->sa_clones) {
 		char tmpconnname[256];

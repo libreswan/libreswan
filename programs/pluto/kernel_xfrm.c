@@ -1716,6 +1716,7 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 {
 	struct xfrm_user_acquire *acquire;
 	struct xfrm_user_sec_ctx_ike *uctx = NULL;
+	uint32_t cpu_id = UINT32_MAX;
 	chunk_t sec_label = {
 		.ptr = NULL,
 		.len = 0

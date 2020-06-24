@@ -678,21 +678,15 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		    str_endpoint(&b->local.client, &b1),
 		    str_endpoint(&b->remote.client, &b2));
 
-		if (c->sa_clones > 0 &&  c->desired_state == STARTUP_ONDEMAND) {
-			ipsecdoi_clone_initiate(b->whackfd,
-					b->clone_cpu_id, c,
-					&inception, sec_label);
-		}
-
 		return;
 	}
 
-	/* match is HEAD SA just initiate the sub SA for cpu */
-	if (c->sa_clones > 0 && c->desired_state == STARTUP_ONDEMAND) {
+	/* acquire matched Connection HEAD SA initiate the sub SA for cpu */
+	if (c->sa_clones > 0 && c->desired_state == STARTUP_ONDEMAND &&
+			b->clone_cpu_id < UINT32_MAX) {
 		ipsecdoi_clone_initiate(b->whackfd, b->clone_cpu_id, c, &inception,
 				uctx);
 		return;
-
 	}
 
 	/*
