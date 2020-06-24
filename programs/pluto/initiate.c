@@ -682,10 +682,13 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	}
 
 	/* acquire matched Connection HEAD SA initiate the sub SA for cpu */
-	if (c->sa_clones > 0 && c->desired_state == STARTUP_ONDEMAND &&
-			b->clone_cpu_id < UINT32_MAX) {
-		ipsecdoi_clone_initiate(b->whackfd, b->clone_cpu_id, c, &inception,
+	if (c->sa_clones > 0 && c->desired_state == STARTUP_ONDEMAND) {
+		if (b->clone_cpu_id < UINT32_MAX)
+			ipsecdoi_clone_initiate(b->whackfd, b->clone_cpu_id, c, &inception,
 				uctx);
+		else
+			dbg("AA_2020 %s %d discard acquire clone_cpu_id %u", __func__, __LINE__, b->clone_cpu_id);
+
 		return;
 	}
 
