@@ -225,7 +225,9 @@ struct msg_digest {
 enum ike_version hdr_ike_version(const struct isakmp_hdr *hdr);
 enum message_role v2_msg_role(const struct msg_digest *md);
 
-extern struct msg_digest *alloc_md(const char *mdname);
+extern struct msg_digest *alloc_md(const struct iface_port *ifp,
+				   const ip_endpoint *sender,
+				   where_t where);
 struct msg_digest *md_addref(struct msg_digest *md, where_t where);
 void md_delref(struct msg_digest **mdp, where_t where);
 

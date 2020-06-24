@@ -1065,7 +1065,7 @@ static void aggr_outI1_continue(struct state *st,
 	 * complete_v1_state_transition() assuming that there is an
 	 * MD.  This hacks around it.
 	 */
-	struct msg_digest *fake_md = alloc_md("msg_digest by aggr_outI1");
+	struct msg_digest *fake_md = alloc_md(NULL/*iface-port*/, &unset_endpoint, HERE);
 	fake_md->st = st;
 	fake_md->smc = NULL;	/* ??? */
 	fake_md->v1_from_state = STATE_UNDEFINED;	/* ??? */

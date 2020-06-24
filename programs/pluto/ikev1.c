@@ -1760,13 +1760,12 @@ void process_v1_packet(struct msg_digest *md)
 				if (frag->index != ++prev_index) {
 					break; /* fragment list incomplete */
 				} else if (frag->index == last_frag_index) {
-					struct msg_digest *whole_md = alloc_md("msg_digest by ikev1 fragment handler");
+					struct msg_digest *whole_md = alloc_md(frag->md->iface,
+									       &frag->md->sender,
+									       HERE);
 					uint8_t *buffer = alloc_bytes(size,
 								       "IKE fragments buffer");
 					size_t offset = 0;
-
-					whole_md->iface = frag->md->iface;
-					whole_md->sender = frag->md->sender;
 
 					/* Reassemble fragments in buffer */
 					frag = st->st_v1_rfrags;

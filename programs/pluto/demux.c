@@ -101,9 +101,7 @@ static enum iface_status read_message(const struct iface_port *ifp,
 	 * Create the real message digest; and set up md->packet_pbs
 	 * to describe it.
 	 */
-	struct msg_digest *md = alloc_md("msg_digest in read_packet");
-	md->sender = packet.sender;
-	md->iface = ifp;
+	struct msg_digest *md = alloc_md(ifp, &packet.sender, HERE);
 	init_pbs(&md->packet_pbs,
 		 clone_bytes(packet.ptr, packet.len,
 			     "message buffer in read_packet()"),
