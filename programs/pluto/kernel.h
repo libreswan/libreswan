@@ -256,6 +256,7 @@ struct kernel_ops {
 			       reqid_t reqid,
 			       ipsec_spi_t min,
 			       ipsec_spi_t max,
+			       uint32_t sa_clone_id,
 			       const char *text_said,
 			       struct logger *logger);
 	void (*process_raw_ifaces)(struct raw_iface *rifaces, struct logger *logger);
@@ -394,6 +395,7 @@ struct state;   /* forward declaration of tag */
 extern ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
 				 const struct ip_protocol *proto,
 				 const struct spd_route *sr,
+				 const uint32_t sa_clone_id,
 				 bool tunnel_mode,
 				 struct logger *logger);
 extern ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel_mode,

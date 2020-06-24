@@ -2079,6 +2079,7 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 				   reqid_t reqid,
 				   ipsec_spi_t min,
 				   ipsec_spi_t max,
+				   const uint32_t sa_clone_id,
 				   const char *text_said,
 				   struct logger *logger)
 {
@@ -2103,6 +2104,14 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 
 	req.spi.min = min;
 	req.spi.max = max;
+
+#ifdef USE_CLONES
+	if (sa_clone_id > CLONE_SA_HEAD) {
+		struct rtattr *attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
+		DBG_log("AA_2020 %s %d add clone_id %u", __func__, __LINE__, sa_clone_id);
+		add_sa_clone_atribs(sa_clone_id, attr, &req);
+	}
+#endif /* USE_CLONES */
 
 	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWSA, &rsp,
 			      "Get SPI", text_said, logger)) {
