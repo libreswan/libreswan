@@ -10,4 +10,5 @@ east #
 east #
  echo "initdone"
 initdone
-
+east #
+ 
