@@ -52,11 +52,14 @@ static bool send_v1_frags(struct state *st, const char *where)
 {
 	unsigned int fragnum = 0;
 
-	/* Each fragment, if we are doing NATT, needs a non-ESP_Marker prefix.
-	 * natt_bonus is the size of the addition (0 if not needed).
+	/*
+	 * If we are doing NATT, so that the other end doesn't mistake
+	 * this message for ESP, each fragment needs a non-ESP_Marker
+	 * prefix.  natt_bonus is the size of the addition (0 if not
+	 * needed).
 	 */
 	const size_t natt_bonus =
-		st->st_interface->add_ike_encapsulation_prefix ? NON_ESP_MARKER_SIZE : 0;
+		st->st_interface->esp_encapsulation_enabled ? NON_ESP_MARKER_SIZE : 0;
 
 	/* We limit fragment packets to ISAKMP_FRAG_MAXLEN octets.
 	 * max_data_len is the maximum data length that will fit within it.
@@ -140,7 +143,13 @@ static bool send_v1_frags(struct state *st, const char *where)
 
 static bool should_fragment_v1_ike_msg(struct state *st, size_t len, bool resending)
 {
-	if (st->st_interface != NULL && st->st_interface->add_ike_encapsulation_prefix)
+	/*
+	 * If we are doing NATT, so that the other end doesn't mistake
+	 * this message for ESP, each fragment needs a non-ESP_Marker
+	 * prefix.  natt_bonus is the size of the addition (0 if not
+	 * needed).
+	 */
+	if (st->st_interface != NULL && st->st_interface->esp_encapsulation_enabled)
 		len += NON_ESP_MARKER_SIZE;
 
 	/* This condition is complex.  Formatting is meant to help reader.
@@ -181,11 +190,12 @@ static bool send_or_resend_v1_ike_msg_from_state(struct state *st,
 	}
 
 	/*
-	 * Each fragment, if we are doing NATT, needs a non-ESP_Marker
+	 * If we are doing NATT, so that the other end doesn't mistake
+	 * this message for ESP, each fragment needs a non-ESP_Marker
 	 * prefix.  natt_bonus is the size of the addition (0 if not
 	 * needed).
 	 */
-	size_t natt_bonus = st->st_interface->add_ike_encapsulation_prefix ? NON_ESP_MARKER_SIZE : 0;
+	size_t natt_bonus = st->st_interface->esp_encapsulation_enabled ? NON_ESP_MARKER_SIZE : 0;
 	size_t len = st->st_v1_tpacket.len;
 
 	passert(len != 0);

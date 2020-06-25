@@ -137,7 +137,7 @@ static bool orient_new_iface_port(struct connection *c, struct fd *whackfd, bool
 	 */
 	struct iface_port *ifp = bind_iface_port(dev, &udp_iface_io,
 						 ip_hport(end->raw.host.ikeport),
-						 false/*add_ike_encapsulation_prefix*/,
+						 true/*esp_encapsulation_enabled*/,
 						 false/*float_nat_initiator*/);
 	if (ifp == NULL) {
 		dbg("could not create new interface");
@@ -159,14 +159,23 @@ static bool orient_new_iface_port(struct connection *c, struct fd *whackfd, bool
 	return true;
 }
 
-static bool end_matches_port(struct end *end, const struct iface_port *ifp)
+static bool end_matches_port(const struct end *end, const struct end *other,
+			     const struct iface_port *ifp)
 {
 	/*
 	 * XXX: something stomps on .host_addr turning it into an
 	 * endpoint - .ipproto gets set; hack around it
 	 */
 	ip_address host_addr = strip_endpoint(&end->host_addr, HERE);
-	ip_port port = ip_hport(end->raw.host.ikeport ? end->raw.host.ikeport : pluto_port);
+	/*
+	 * First choice is the IKEPORT.  Second choice, when the other
+	 * end is using IKEPORT, is to use the PLUTO_NAT_PORT -
+	 * IKEPORT assumes esp encapsulation which means sending the
+	 * ESP=0 prefix and that doesn't work with PLUTO_PORT.
+	 */
+	ip_port port = ip_hport(end->raw.host.ikeport ? end->raw.host.ikeport :
+				other->raw.host.ikeport ? pluto_nat_port :
+				pluto_port);
 	ip_endpoint host_end = endpoint3(ifp->protocol, &host_addr, port);
 	return endpoint_eq(host_end, ifp->local_endpoint);
 }
@@ -184,8 +193,8 @@ bool orient(struct connection *c)
 	for (const struct iface_port *ifp = interfaces; ifp != NULL; ifp = ifp->next) {
 
 		/* XXX: check connection allows p->protocol? */
-		bool this = end_matches_port(&c->spd.this, ifp);
-		bool that = end_matches_port(&c->spd.that, ifp);
+		bool this = end_matches_port(&c->spd.this, &c->spd.that, ifp);
+		bool that = end_matches_port(&c->spd.that, &c->spd.this, ifp);
 
 		if (this && that) {
 			/* too many choices */

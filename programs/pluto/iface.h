@@ -55,7 +55,7 @@ struct iface_io {
 	void (*cleanup)(struct iface_port *ifp);
 	void (*listen)(struct iface_port *fip, struct logger *logger);
 	int (*bind_iface_port)(struct iface_dev *ifd,
-			       ip_port port, bool add_ike_encapsulation_prefix);
+			       ip_port port, bool esp_encapsulation_enabled);
 };
 
 extern const struct iface_io udp_iface_io;
@@ -95,27 +95,54 @@ struct iface_port {
 	struct iface_port *next;
 	const struct ip_protocol *protocol;
 	/*
-	 * This field is overloaded:
+	 * Here's what the RFC has to say:
 	 *
-	 * - should UDP try to enable "espinudp" on the port?
+	 * 2.  IKE Protocol Details and Variations
 	 *
-	 * - Should the ESP=0 ike encapsulation prefix be included in
-	 * outgoing messages?
+	 *     The UDP payload of all packets containing IKE messages
+	 *     sent on port 4500 MUST begin with the prefix of four
+	 *     zeros; otherwise, the receiver won't know how to handle
+	 *     them.
 	 *
-	 * XXX: The second one looks backward / deficient:
+	 * 2.23.  NAT Traversal
 	 *
-	 * It's the other end's port+protocol that determine if ESP=0
-	 * can / should / must be added, not the initiator.  For
-	 * instance:
+	 *     ... UDP encapsulation MUST NOT be done on port 500.
 	 *
-	 * UDP initiator=2500 responder=500  => MUST NOT
-	 * UDP initiator=2500 responder=4500 => MAYBE
-	 * TCP initiator=* responder=*       => MUST
+	 * 3.1.  The IKE Header
 	 *
-	 * However, ADD_IKE_ENCAPSULATION_PREFIX is also used to flag
-	 * that espinudp should be enabled on the socket.
+	 *     When sent on UDP port 500, IKE messages begin
+	 *     immediately following the UDP header.  When sent on UDP
+	 *     port 4500, IKE messages have prepended four octets of
+	 *     zeros.
+	 *
+	 * I'm assuming that "sent on port ..." is intended to mean
+	 * "sent from port ... to port ...".  But now we've got us
+	 * deliberately sending from a random port to ...
+	 *
+	 * to port 500 with no ESP=0:
+	 * -> since esp encal is disabled, the kernel passes the packet through
+	 * -> pluto responds with no ESP=0
+	 *
+	 * to port 500 with ESP=0:
+	 * -> since esp encal is disabled, the kernel passes the packet through
+	 * -> pluto sees the ESP=0 prefix and rejects it
+	 *
+	 * to port 4500 with no ESP=0:
+	 * -> since esp encap is enabled, the kernel will see the leading bytes
+	 * are non-zero and eats an ESP packet
+	 *
+	 * to port 4500 with ESP=0:
+	 * -> since esp encap is enabled, and ESP=0, kernel passes the packet through
+	 * -> pluto sees ESP=0 prefix
+	 * -> pluto responds with ESP=0 prefix
+	 *
+	 * to a random port:
+	 * - to be able to work with NAT esp encap needs to be enabled and that
+	 * in turn means all incoming messages must have the ESP=0 prefix
+	 * - trying to negotiate to port 500 will fail - the incomming message
+	 * will be missing the ESP=0 prefix
 	 */
-	bool add_ike_encapsulation_prefix;
+	bool esp_encapsulation_enabled;
 	/*
 	 * For IKEv2 2.23.  NAT Traversal.  When NAT is detected, must
 	 * the initiators float away, switching to port 4500?  This
@@ -146,7 +173,7 @@ extern void free_ifaces(void);
 void listen_on_iface_port(struct iface_port *ifp, struct logger *logger);
 struct iface_port *bind_iface_port(struct iface_dev *ifd, const struct iface_io *io,
 				   ip_port port,
-				   bool add_ike_encapsulation_prefix,
+				   bool esp_encapsulation_enabled,
 				   bool float_nat_initiator);
 
 #endif
