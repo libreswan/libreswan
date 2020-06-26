@@ -3092,7 +3092,7 @@ def localhost_sudo(args, testname):
                      username="root")
     if s:
         logger.info("sudo pexpect '%s' pid %d", cmd, s.child.pid)
-        s.sendline('export HISTFILE=/dev/null; TERM=dumb; export TERM; unset LS_COLORS')
+        s.sendline('export HISTFILE=/dev/null; export TERM=dumb; unset LS_COLORS')
         s.sendline("export PS1='" + DEFAULTCONFIG["PS1"] + "'")
         # this has to before shell.run()
         s.chdir("%s/testing/pluto/%s" % (args.libreswandir, testname))
@@ -3840,6 +3840,8 @@ class Test():
         if not os.path.exists(script):
             logger.error("can not find the script %s", script)
             return True
+
+        status = console.run("export PATH=$PATH:/usr/local/sbin/", timeout=2)
 
         console_out = "OUTPUT/%s.console.verbose.txt" % host
 
