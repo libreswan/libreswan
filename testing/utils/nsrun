@@ -153,6 +153,7 @@ dqstop = Queue()
 
 parent_pid = os.getpid()
 
+exitcode = 0
 
 class MyArgParser(argparse.ArgumentParser):
 
@@ -1860,7 +1861,7 @@ def write_result(args, test, sanity=None, result='FAILED', e=None):
     f.write("\n")
     f.close
     logger.debug("wrote result to %s/%s", testname, output_file)
-
+    return result
 
 def compile_regex_arg(string):
     return re.compile(string)
@@ -1889,6 +1890,9 @@ def cmdline():
 
     parser.add_argument("--failed", default=None, action="store_true",
                         help="re-run result=failed and expected == good")
+
+    parser.add_argument("--exitcode", default=None, action="store_true",
+                        help="if test fails, return with exit code. Do not use when running via make check")
 
     parser.add_argument("--graphsappend", default='',
                         help="update this graph entry. full path ")
@@ -2024,6 +2028,9 @@ def cmdline():
         args.prefix = args.new_prefix
 
     print("prefix %s %d" % (args.prefix, len(args.prefix)))
+
+    global exitcode
+    exitcode = args.exitcode
 
     global logger
     logutil.config(args, sys.stdout)
@@ -3216,7 +3223,7 @@ def do_single_test(args=None, test=None, tlr=None):
     ## test.grep_4_known_errors()
 
     s = sanitize(args.sanitizer)
-    write_result(args, test, s)
+    ret = write_result(args, test, s)
 
     if tlr:
         # first without OUTPUT/RESULT. then with to be. So copying is atomic
@@ -3228,6 +3235,8 @@ def do_single_test(args=None, test=None, tlr=None):
     if tlr:
         os.chdir("..")  # chdir end
 
+    if (ret == "failed" and exitcode):
+        sys.exit(1)
 
 def scancwd(args):
     r = args.testlist or none
