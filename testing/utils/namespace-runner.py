@@ -34,7 +34,7 @@ def task(test):
     output = ""
     print("START: %s"%test)
     try:
-        output = subprocess.check_output("%s --ns --shutdown --exitcode --testname %s"%(nsrun,test), stderr=subprocess.STDOUT, shell=True, text=True)
+        output = subprocess.check_output("%s --ns --shutdown --exitcode --testname %s"%(nsrun,test), stderr=subprocess.STDOUT, shell=True)
         print("   PASSED: %s"%test)
         passed.append(test)
     except:
