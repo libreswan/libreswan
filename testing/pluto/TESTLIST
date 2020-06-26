@@ -844,7 +844,9 @@ kvmplutotest	multinet-03		wip
 kvmplutotest	multinet-04		good
 
 # transport mode related tests
-kvmplutotest	nat-transport-02	good
+kvmplutotest	ikev1-nat-transport-02		good
+# this test shows two clients behind single NAT bug
+kvmplutotest	ikev1-nat-transport-03		wip
 kvmplutotest	ikev2-21-mode-mismatch-01	good
 kvmplutotest	ikev2-21-mode-mismatch-02	good
 
