@@ -42,7 +42,7 @@ west #
 000 "westnet-eastnet-subnets/1x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-subnets/1x1":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-subnets/1x1":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet-subnets/1x1":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: 1, instantiated from: 0;
+000 "westnet-eastnet-subnets/1x1":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "westnet-eastnet-subnets/1x1":   aliases: westnet-eastnet-subnets
 000 "westnet-eastnet-subnets/1x2": 192.0.1.0/28===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.64/30; unrouted; eroute owner: #0
 000 "westnet-eastnet-subnets/1x2":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
@@ -58,7 +58,7 @@ west #
 000 "westnet-eastnet-subnets/1x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-subnets/1x2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-subnets/1x2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet-subnets/1x2":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: 1, instantiated from: 0;
+000 "westnet-eastnet-subnets/1x2":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "westnet-eastnet-subnets/1x2":   aliases: westnet-eastnet-subnets
 000 "westnet-eastnet-subnets/2x1": 192.0.1.128/28===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.16/28; unrouted; eroute owner: #0
 000 "westnet-eastnet-subnets/2x1":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
@@ -74,7 +74,7 @@ west #
 000 "westnet-eastnet-subnets/2x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-subnets/2x1":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-subnets/2x1":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet-subnets/2x1":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: 1, instantiated from: 0;
+000 "westnet-eastnet-subnets/2x1":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "westnet-eastnet-subnets/2x1":   aliases: westnet-eastnet-subnets
 000 "westnet-eastnet-subnets/2x2": 192.0.1.128/28===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.64/30; unrouted; eroute owner: #0
 000 "westnet-eastnet-subnets/2x2":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
@@ -90,7 +90,7 @@ west #
 000 "westnet-eastnet-subnets/2x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-subnets/2x2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-subnets/2x2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet-subnets/2x2":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: 1, instantiated from: 0;
+000 "westnet-eastnet-subnets/2x2":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "westnet-eastnet-subnets/2x2":   aliases: westnet-eastnet-subnets
 west #
  echo "initdone"
@@ -162,7 +162,7 @@ west #
 000 "westnet-eastnet-subnets/1x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-subnets/1x1":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-subnets/1x1":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet-subnets/1x1":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: 1, instantiated from: 0;
+000 "westnet-eastnet-subnets/1x1":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "westnet-eastnet-subnets/1x1":   aliases: westnet-eastnet-subnets
 000 "westnet-eastnet-subnets/1x2": 192.0.1.0/28===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.64/30; prospective erouted; eroute owner: #0
 000 "westnet-eastnet-subnets/1x2":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
@@ -178,7 +178,7 @@ west #
 000 "westnet-eastnet-subnets/1x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-subnets/1x2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-subnets/1x2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet-subnets/1x2":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: 1, instantiated from: 0;
+000 "westnet-eastnet-subnets/1x2":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "westnet-eastnet-subnets/1x2":   aliases: westnet-eastnet-subnets
 000 "westnet-eastnet-subnets/2x1": 192.0.1.128/28===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.16/28; prospective erouted; eroute owner: #0
 000 "westnet-eastnet-subnets/2x1":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
@@ -194,7 +194,7 @@ west #
 000 "westnet-eastnet-subnets/2x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-subnets/2x1":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-subnets/2x1":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet-subnets/2x1":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: 1, instantiated from: 0;
+000 "westnet-eastnet-subnets/2x1":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "westnet-eastnet-subnets/2x1":   aliases: westnet-eastnet-subnets
 000 "westnet-eastnet-subnets/2x2": 192.0.1.128/28===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.64/30; prospective erouted; eroute owner: #0
 000 "westnet-eastnet-subnets/2x2":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
