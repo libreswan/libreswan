@@ -1,0 +1,82 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add north-east-222
+002 added connection description "north-east-222"
+east #
+ ipsec auto --add road-east-222
+002 added connection description "road-east-222"
+east #
+ echo "initdone"
+initdone
+east #
+ # show the two transport mode tunnels
+
+
+# BUG: below should show two transport mode connections but one set of policies is missing
+
+
+
+east #
+ ../../pluto/bin/ipsec-look.sh
+east NOW
+XFRM state:
+src 192.1.2.254 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	encap type espinudp sport 1026 dport 4500 addr 0.0.0.0
+	sel src 192.1.2.254/32 dst 192.1.2.23/32 proto tcp dport 222 
+src 192.1.2.23 dst 192.1.2.254
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	encap type espinudp sport 4500 dport 1026 addr 0.0.0.0
+	sel src 192.1.2.23/32 dst 192.1.2.254/32 proto tcp sport 222 
+src 192.1.2.254 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+	sel src 192.1.2.254/32 dst 192.1.2.23/32 proto tcp dport 222 
+src 192.1.2.23 dst 192.1.2.254
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+	sel src 192.1.2.23/32 dst 192.1.2.254/32 proto tcp sport 222 
+XFRM policy:
+src 192.1.2.23/32 dst 192.1.2.254/32 proto tcp sport 222
+	dir out priority 1687487 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.1.2.254/32 dst 192.1.2.23/32 proto tcp dport 222
+	dir in priority 1687487 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east #
+ sleep 3
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

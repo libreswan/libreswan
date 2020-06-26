@@ -1,10 +1,6 @@
-Complex test of Transport mode through a NAT.
+Basic pluto test of transport mode through NAT, using IKEv1
 
-This is like nat-transport-02, but we arrange to have *TWO* clients behind
-the NAT.
+As ikev1-nat-transport-02 but now with two clients behind the same NAT
 
-A single transport mode SA is created between north and east, for port 3.
-
-On north, firewalling makes sure that one can only access port 3 via IPsec.
-Similarly for the "road" machine.
-
+NOTE: This shows a problem on east, which overwrites the 1st ip xfrm
+policy.

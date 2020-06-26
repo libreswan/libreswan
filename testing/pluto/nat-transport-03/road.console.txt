@@ -1,0 +1,53 @@
+/testing/guestbin/swan-prep
+road #
+ # confirm that the network is alive
+road #
+ ../../pluto/bin/wait-until-alive 192.1.2.23
+destination 192.1.2.23 is alive
+road #
+ ipsec start
+Redirecting to: [initsystem]
+road #
+ /testing/pluto/bin/wait-until-pluto-started
+road #
+ ipsec auto --add road-east-222
+002 added connection description "road-east-222"
+road #
+ echo done
+done
+road #
+ ipsec auto --up road-east-222
+002 "road-east-222" #1: initiating Main Mode
+1v1 "road-east-222" #1: STATE_MAIN_I1: sent MI1, expecting MR1
+1v1 "road-east-222" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+1v1 "road-east-222" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+002 "road-east-222" #1: Peer ID is ID_FQDN: '@east'
+003 "road-east-222" #1: authenticated using RSA with SHA-1
+004 "road-east-222" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+002 "road-east-222" #2: initiating Quick Mode RSASIG+ENCRYPT+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+1v1 "road-east-222" #2: STATE_QUICK_I1: sent QI1, expecting QR1
+004 "road-east-222" #2: STATE_QUICK_I2: sent QI2, IPsec SA established transport mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive}
+road #
+ # port 2 does NOT go over ipsec, IPsec traffic should remain 0
+road #
+ echo test | nc 192.1.2.23 2
+Ncat: Connection refused.
+road #
+ ipsec trafficstatus
+006 #2: "road-east-222", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+road #
+ # port 222 goes over ipsec, traffic counters should be non-zero
+road #
+ echo test | nc 192.1.2.23 222
+Ncat: Connection refused.
+road #
+ ipsec trafficstatus
+006 #2: "road-east-222", type=ESP, add_time=1234567890, inBytes=20, outBytes=40, id='@east'
+road #
+ echo done
+done
+road #
+ ../bin/check-for-core.sh
+road #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
