@@ -3983,11 +3983,13 @@ void show_one_connection(struct show *s,
 	}
 
 	show_comment(s,
-		"\"%s\"%s:   newest ISAKMP SA: #%lu; newest IPsec SA: #%lu;",
+		"\"%s\"%s:   newest ISAKMP SA: #%lu; newest IPsec SA: #%lu; conn serial: %lu, instantiated from: %lu;",
 		c->name,
 		instance,
 		c->newest_isakmp_sa,
-		c->newest_ipsec_sa);
+		c->newest_ipsec_sa,
+		c->serialno.co,
+		c->serial_from.co);
 
 	if (c->connalias != NULL) {
 		show_comment(s,

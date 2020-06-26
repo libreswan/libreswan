@@ -273,6 +273,7 @@ struct ephemeral_variables {
 
 struct connection {
 	co_serial_t serialno;
+	co_serial_t serial_from;
 	char *name;
 	enum ike_version ike_version;
 	char *foodgroup;
