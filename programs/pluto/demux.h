@@ -157,8 +157,6 @@ struct msg_digest {
 		bool redirected_from;
 		bool redirect_supported;
 		struct payload_digest *redirect;
-		bool nat_detection_source_ip;
-		bool nat_detection_destination_ip;
 		struct payload_digest *signature_hash_algorithms;
 		struct payload_digest *null_auth;
 		bool esp_tfc_padding_not_supported;

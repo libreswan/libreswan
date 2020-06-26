@@ -80,8 +80,7 @@ extern bool nat_traversal_enabled;
  */
 extern bool ikev1_nat_traversal_add_natd(pb_stream *outs,
 					 const struct msg_digest *md);
-extern void ikev2_natd_lookup(struct msg_digest *md,
-			      const ike_spi_t *ike_responder_spi);
+extern bool v2_nat_detected(struct ike_sa *ike, struct msg_digest *md);
 
 /**
  * NAT-OA
@@ -95,7 +94,7 @@ bool nat_traversal_add_natoa(pb_stream *outs,
 /*
  * move initiator endpoints (src, dst) to NAT ports.
  */
-void natify_initiator_endpoints(struct state *st, where_t where);
+bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where);
 void v1_maybe_natify_initiator_endpoints(struct state *st,
 					 where_t where);
 

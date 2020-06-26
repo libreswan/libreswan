@@ -954,11 +954,28 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 	ike->sa.st_seen_ppk = md->v2N.use_ppk;
 	ike->sa.st_seen_redirect_sup = (md->v2N.redirected_from ||
 					md->v2N.redirect_supported);
-	if (md->v2N.nat_detection_source_ip ||
-	    md->v2N.nat_detection_destination_ip) {
-		/* they used zero - our (the responder) SPI was unknown */
-		ikev2_natd_lookup(md, &zero_ike_spi);
+
+	/*
+	 * Responder: check v2N_NAT_DETECTION_DESTINATION_IP or/and
+	 * v2N_NAT_DETECTION_SOURCE_IP.
+	 *
+	 *   2.23.  NAT Traversal
+	 *
+	 *   The IKE initiator MUST check the NAT_DETECTION_SOURCE_IP
+	 *   or NAT_DETECTION_DESTINATION_IP payloads if present, and
+	 *   if they do not match the addresses in the outer packet,
+	 *   MUST tunnel all future IKE and ESP packets associated
+	 *   with this IKE SA over UDP port 4500.
+	 *
+	 * Since this is the responder, there's really not much to do.
+	 * It is the initiator that will switch to port 4500 (float
+	 * away) when necessary.
+	 */
+	if (v2_nat_detected(ike, md)) {
+		dbg("NAT: responder so initiator gets to switch ports");
+		/* should this check that a port is available? */
 	}
+
 	if (md->v2N.signature_hash_algorithms != NULL) {
 		if (!negotiate_hash_algo_from_notification(md->v2N.signature_hash_algorithms, &ike->sa))
 			return STF_FATAL;
@@ -1550,6 +1567,31 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 	}
 
 	/*
+	 * Initiator: check v2N_NAT_DETECTION_DESTINATION_IP or/and
+	 * v2N_NAT_DETECTION_SOURCE_IP.
+	 *
+	 *   2.23.  NAT Traversal
+	 *
+	 *   The IKE initiator MUST check the NAT_DETECTION_SOURCE_IP
+	 *   or NAT_DETECTION_DESTINATION_IP payloads if present, and
+	 *   if they do not match the addresses in the outer packet,
+	 *   MUST tunnel all future IKE and ESP packets associated
+	 *   with this IKE SA over UDP port 4500.
+	 *
+	 * When detected, float to the NAT port as needed (*ikeport
+	 * can't float but already supports NAT).  When the ports
+	 * can't support NAT, give up.
+	 */
+
+	if (v2_nat_detected(ike, md)) {
+		pexpect(ike->sa.hidden_variables.st_nat_traversal & NAT_T_DETECTED);
+		if (!v2_natify_initiator_endpoints(ike, HERE)) {
+			/* already logged */
+			return STF_FATAL;
+		}
+	}
+
+	/*
 	 * Initiate the calculation of g^xy.
 	 *
 	 * Form and pass in the full SPI[ir] that will eventually be
@@ -1804,31 +1846,6 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	 * with SPIr.
 	 */
 	rehash_state(&ike->sa, &md->hdr.isa_ike_responder_spi);
-
-	/*
-	 * Check v2N_NAT_DETECTION_DESTINATION_IP or/and
-	 * v2N_NAT_DETECTION_SOURCE_IP, and when detected float the
-	 * endpoints.
-	 *
-	 * 2.23.  NAT Traversal
-	 *
-	 * The IKE initiator MUST check the NAT_DETECTION_SOURCE_IP or
-	 * NAT_DETECTION_DESTINATION_IP payloads if present, and if
-	 * they do not match the addresses in the outer packet, MUST
-	 * tunnel all future IKE and ESP packets associated with this
-	 * IKE SA over UDP port 4500.
-	 */
-
-	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
-		if (ike->sa.st_interface->float_nat_initiator) {
-			ikev2_natd_lookup(md, &ike->sa.st_ike_spis.responder);
-			if (ike->sa.hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
-				natify_initiator_endpoints(&ike->sa, HERE);
-			}
-		} else {
-			dbg("TCP: ignoring v2N payload as interface doesn't float ports");
-		}
-	}
 
 	/*
 	 * If we and responder are willing to use a PPK, we need to

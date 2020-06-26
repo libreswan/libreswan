@@ -84,8 +84,6 @@ bool nat_traversal_enabled = TRUE; /* can get disabled if kernel lacks support *
 static deltatime_t nat_kap = DELTATIME_INIT(DEFAULT_KEEP_ALIVE_SECS);	/* keep-alive period */
 static bool nat_kap_event = FALSE;
 
-#define IKEV2_NATD_HASH_SIZE	SHA1_DIGEST_SIZE
-
 void init_nat_traversal(deltatime_t keep_alive_period)
 {
 	if (deltamillisecs(keep_alive_period) != 0)
@@ -840,6 +838,8 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
  * know the state and hence, know if there's any point in calling this
  * function.
  */
+static void v1_natify_initiator_endpoints(struct state *st, where_t where);
+
 void v1_maybe_natify_initiator_endpoints(struct state *st, where_t where)
 {
 	pexpect_st_local_endpoint(st);
@@ -855,7 +855,7 @@ void v1_maybe_natify_initiator_endpoints(struct state *st, where_t where)
 		dbg("NAT-T: #%lu in %s floating IKEv1 ports to PLUTO_NAT_PORT %d",
 		    st->st_serialno, st->st_state->short_name,
 		    pluto_nat_port);
-		natify_initiator_endpoints(st, where);
+		v1_natify_initiator_endpoints(st, where);
 		/*
 		 * Also update pending connections or they will be deleted if
 		 * uniqueids option is set.
@@ -878,55 +878,66 @@ void show_setup_natt(struct show *s)
 		     pluto_nat_port);
 }
 
-void ikev2_natd_lookup(struct msg_digest *md, const ike_spi_t *ike_responder_spi)
+bool v2_nat_detected(struct ike_sa *ike, struct msg_digest *md)
 {
-	struct state *st = md->st;
-	ike_spis_t ike_spis = {
-		.initiator = st->st_ike_spis.initiator,
-		.responder = *ike_responder_spi,
-	};
+	/* TODO: This use must be allowed even with USE_SHA1=false */
+	static const struct hash_desc *hasher = &ike_alg_hash_sha1;
 
-	passert(st != NULL);
+	passert(ike != NULL);
 	passert(md->iface != NULL);
 
+	/* must have both */
+	if (md->pbs[PBS_v2N_NAT_DETECTION_SOURCE_IP] == NULL ||
+	    md->pbs[PBS_v2N_NAT_DETECTION_DESTINATION_IP] == NULL) {
+		return false;
+	}
+	/* table of both */
+	const struct pbs_in *(detection_payloads[]) = {
+		md->pbs[PBS_v2N_NAT_DETECTION_DESTINATION_IP],
+		md->pbs[PBS_v2N_NAT_DETECTION_SOURCE_IP],
+	};
+
 	/*
-	 * First: one with my IP & port
-	 * TODO: This use must be allowed even with USE_SHA1=false
+	 * XXX: use the the IKE SPIs from the message header.
+	 *
+	 * The IKE_SA_INIT initiator doesn't know the responder's SPI
+	 * so will have sent hashes using a responder SPI of 0.
+	 *
+	 * On the other hand, the responder does no its own SPI and so
+	 * hashes against that.
 	 */
 
-	struct crypt_mac hash_local = natd_hash(&ike_alg_hash_sha1, &ike_spis,
+	/* First: one with my IP & port. */
+	struct crypt_mac hash_local = natd_hash(hasher, &md->hdr.isa_ike_spis,
 						&md->iface->local_endpoint);
-
 	/* Second: one with sender IP & port */
-
-	struct crypt_mac hash_remote = natd_hash(&ike_alg_hash_sha1, &ike_spis,
+	struct crypt_mac hash_remote = natd_hash(hasher, &md->hdr.isa_ike_spis,
 						 &md->sender);
 
 	bool found_local = false;
 	bool found_remote = false;
 
-	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
-		if (pbs_left(&p->pbs) != IKEV2_NATD_HASH_SIZE)
+	for (const struct pbs_in **p = detection_payloads;
+	     p < detection_payloads + elemsof(detection_payloads);
+	     p++) {
+		passert(*p != NULL);
+		shunk_t hash = pbs_in_left_as_shunk(*p);
+		/* redundant, also checked by hunk_eq() */
+		if (hash.len != hasher->hash_digest_size)
 			continue;
-
-		switch (p->payload.v2n.isan_type) {
-		case v2N_NAT_DETECTION_DESTINATION_IP:
-		case v2N_NAT_DETECTION_SOURCE_IP:
-			/* ??? do we know from the isan_type which of these to test? */
-			/* XXX: should this check pbs_left(), see other code */
-			if (memeq(p->pbs.cur, hash_local.ptr, hash_local.len))
-				found_local = true;
-			if (memeq(p->pbs.cur, hash_remote.ptr, hash_remote.len))
-				found_remote = true;
-			break;
-		default:
-			continue;
+		/* ??? do we know from the isan_type which of these to test? */
+		/* XXX: should this check pbs_left(), see other code */
+		if (hunk_eq(hash, hash_local)) {
+			found_local = true;
+		}
+		if (hunk_eq(hash, hash_remote)) {
+			found_remote = true;
 		}
 	}
 
-	natd_lookup_common(st, &md->sender, found_local, found_remote);
+	natd_lookup_common(&ike->sa, &md->sender, found_local, found_remote);
+	return (ike->sa.hidden_variables.st_nat_traversal & NAT_T_DETECTED);
 }
-
 
 /*
  * Update the initiator endpoints so that all further exchanges are
@@ -934,7 +945,7 @@ void ikev2_natd_lookup(struct msg_digest *md, const ike_spi_t *ike_responder_spi
  * :4500).
  */
 
-void natify_initiator_endpoints(struct state *st, where_t where)
+void v1_natify_initiator_endpoints(struct state *st, where_t where)
 {
 	/*
 	 * Float the local endpoint's port to :PLUTO_NAT_PORT (:4500)
@@ -978,4 +989,68 @@ void natify_initiator_endpoints(struct state *st, where_t where)
 	    pri_where(where));
 	st->st_remote_endpoint = set_endpoint_hport(&st->st_remote_endpoint,
 						    pluto_nat_port);
+}
+
+bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
+{
+	/*
+	 * Float the local port to :PLUTO_NAT_PORT (:4500).  This
+	 * means rebinding the interface.
+	 */
+	if (ike->sa.st_interface->esp_encapsulation_enabled) {
+		endpoint_buf b1;
+		dbg("NAT: #%lu not floating local port; interface %s supports encapsulated ESP "PRI_WHERE,
+		    ike->sa.st_serialno,
+		    str_endpoint(&ike->sa.st_interface->local_endpoint, &b1),
+		    pri_where(where));
+	} else if (ike->sa.st_interface->float_nat_initiator) {
+		/*
+		 * For IPv4, both :PLUTO_PORT and :PLUTO_NAT_PORT are
+		 * opened by server.c so the new endpoint using
+		 * :PLUTO_NAT_PORT should exist.  IPv6 nat isn't
+		 * supported.
+		 */
+		ip_endpoint new_local_endpoint = set_endpoint_hport(&ike->sa.st_interface->local_endpoint, pluto_nat_port);
+		struct iface_port *i = find_iface_port_by_local_endpoint(&new_local_endpoint);
+		if (i == NULL) {
+			endpoint_buf b2;
+			log_state(RC_LOG/*fatal!*/, &ike->sa,
+				  "NAT: can not float to %s as no such interface",
+				  str_endpoint(&new_local_endpoint, &b2));
+			return false; /* must enable NAT */
+		}
+		endpoint_buf b1, b2;
+		dbg("NAT: #%lu floating local port from %s to %s using pluto_nat_port "PRI_WHERE,
+		    ike->sa.st_serialno,
+		    str_endpoint(&ike->sa.st_interface->local_endpoint, &b1),
+		    str_endpoint(&new_local_endpoint, &b2),
+		    pri_where(where));
+		ike->sa.st_interface = i;
+	} else {
+		endpoint_buf b1;
+		log_state(RC_LOG/*fatal!*/, &ike->sa,
+			  "NAT: can not switch to NAT port and interface %s does not support NAT",
+			  str_endpoint(&ike->sa.st_interface->local_endpoint, &b1));
+		return false;
+	}
+
+	/*
+	 * Float the remote port to :PLUTO_NAT_PORT (:4500).
+	 */
+	if (ike->sa.st_connection->spd.that.raw.host.ikeport != 0) {
+		dbg("NAT: #%lu not floating remote port; hardwired to ikeport=%u "PRI_WHERE,
+		    ike->sa.st_serialno, ike->sa.st_connection->spd.that.raw.host.ikeport,
+		    pri_where(where));
+	} else if (endpoint_hport(&ike->sa.st_remote_endpoint) == pluto_nat_port) {
+		dbg("NAT: #%lu not floating remote port; already pointing at PLUTO_NAT_PORT %u "PRI_WHERE,
+		    ike->sa.st_serialno, pluto_nat_port, pri_where(where));
+	} else {
+		dbg("NAT: #%lu floating remote port from %d to %d using pluto_nat_port "PRI_WHERE,
+		    ike->sa.st_serialno, endpoint_hport(&ike->sa.st_remote_endpoint), pluto_nat_port,
+		    pri_where(where));
+		ike->sa.st_remote_endpoint = set_endpoint_hport(&ike->sa.st_remote_endpoint,
+								pluto_nat_port);
+	}
+
+	return true;
 }

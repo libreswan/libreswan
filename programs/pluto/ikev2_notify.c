@@ -104,10 +104,8 @@ bool decode_v2N_ike_sa_init_request(struct msg_digest *md)
 			break;
 
 		case v2N_NAT_DETECTION_SOURCE_IP:
-			md->v2N.nat_detection_source_ip = true;
-			break;
 		case v2N_NAT_DETECTION_DESTINATION_IP:
-			md->v2N.nat_detection_destination_ip = true;
+			/* handled elsewhere */
 			break;
 
 		/* These are not supposed to appear in IKE_INIT */
@@ -163,13 +161,8 @@ bool decode_v2N_ike_sa_init_response(struct msg_digest *md)
 			break;
 
 		case v2N_NAT_DETECTION_SOURCE_IP:
-			/* we do handle these further down */
-			md->v2N.nat_detection_source_ip = true;
-			break;
-
 		case v2N_NAT_DETECTION_DESTINATION_IP:
-			/* we do handle these further down */
-			md->v2N.nat_detection_destination_ip = true;
+			/* handled elsewhere */
 			break;
 
 		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
