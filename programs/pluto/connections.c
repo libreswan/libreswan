@@ -1,5 +1,4 @@
-/*
- * information about connections between hosts and clients
+/* information about connections between hosts and clients
  *
  * Copyright (C) 1998-2002,2010,2013,2018 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael Richardson <mcr@xelerance.com>
@@ -17,7 +16,7 @@
  * Copyright (C) 2013,2018 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2015-2020 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2016-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016-2020 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -3982,14 +3981,21 @@ void show_one_connection(struct show *s,
 		}
 	}
 
-	show_comment(s,
-		"\"%s\"%s:   newest ISAKMP SA: #%lu; newest IPsec SA: #%lu; conn serial: %lu, instantiated from: %lu;",
-		c->name,
-		instance,
-		c->newest_isakmp_sa,
-		c->newest_ipsec_sa,
-		c->serialno.co,
-		c->serial_from.co);
+	LSWBUF(buf) {
+		jam(buf, "\"%s\"%s:   newest ISAKMP SA: #%lu; newest IPsec SA: #%lu; conn serial: "PRI_CO"",
+		    c->name,
+		    instance,
+		    c->newest_isakmp_sa,
+		    c->newest_ipsec_sa,
+		    pri_co(c->serialno));
+		if (c->serial_from.co/*oops*/ != 0) {
+			jam(buf, ", instantiated from: "PRI_CO";", 
+			    pri_co(c->serial_from));
+		} else {
+			jam(buf, ";");
+		}
+		show_jambuf(s, buf);
+	}
 
 	if (c->connalias != NULL) {
 		show_comment(s,
