@@ -217,18 +217,13 @@ conn westnet-eastnet-drop
 	#auto=start
 
 conn westnet-eastnet-x509
-	also=westnet
+	also=westnet-ipv4
 	leftsourceip=192.0.1.254
-	also=eastnet
+	also=eastnet-ipv4
 	rightsourceip=192.0.2.254
 	also=west-east-x509
 
 # aliases for old test cases - ideally testcases stop using these two names
-conn eastnet
-	also=eastnet-ipv4
-
-conn westnet
-	also=westnet-ipv4
 
 conn eastnet-ipv4
 	rightsubnet=192.0.2.0/24
@@ -238,9 +233,6 @@ conn westnet-ipv4
 
 conn northnet-ipv4
         leftsubnet=192.0.3.0/24
-
-conn northnet
-      also=northnet-ipv4
 
 conn east-ipv4-pool-100
 	leftaddresspool=192.0.2.100-192.0.2.199
