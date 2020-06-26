@@ -1,11 +1,4 @@
-Unsupported alg pluto test:
-
 "westnet-eastnet": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24
 
 The policy has been adjusted to request NULL with SHA1 for  phase 2.
 
-When using KLIPS, this apparently crashes pluto. This is bug #890
-
-The parameter "null" is apparently not evaluated and libreswan tries to
-generate a key with length 0. This is not a valid length value. The error
-message is: "Trouble building pfkey message, error=22"
