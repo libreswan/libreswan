@@ -118,7 +118,7 @@ void show_separator(struct show *s)
 	}
 }
 
-void show_comment(struct show *s, const char *message, ...)
+void show_jambuf(struct show *s, jambuf_t *buf)
 {
 	switch (s->separator) {
 	case NO_SEPARATOR:
@@ -130,13 +130,19 @@ void show_comment(struct show *s, const char *message, ...)
 	default:
 		bad_case(s->separator);
 	}
-	WHACK_LOG(RC_COMMENT, s->whackfd, buf) {
+	jambuf_to_whack(buf, s->whackfd, RC_COMMENT);
+	s->separator = HAD_OUTPUT;
+}
+
+void show_comment(struct show *s, const char *message, ...)
+{
+	LSWBUF(buf) {
 		va_list args;
 		va_start(args, message);
 		jam_va_list(buf, message, args);
 		va_end(args);
+		show_jambuf(s, buf);
 	}
-	s->separator = HAD_OUTPUT;
 }
 
 static void show_system_security(struct show *s)

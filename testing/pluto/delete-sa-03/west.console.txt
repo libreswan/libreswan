@@ -29,7 +29,7 @@ west #
 000 "west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "west-east":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "west-east":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "west-east":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: 1, instantiated from: 0;
+000 "west-east":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "west-east-b": 198.51.100.1/32===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===198.51.100.2/32; unrouted; eroute owner: #0
 000 "west-east-b":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "west-east-b":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -44,7 +44,7 @@ west #
 000 "west-east-b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "west-east-b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "west-east-b":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "west-east-b":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: 2, instantiated from: 0;
+000 "west-east-b":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $2;
 000 "west-east-c": 198.51.100.3/32===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===198.51.100.4/32; unrouted; eroute owner: #0
 000 "west-east-c":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "west-east-c":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -59,7 +59,7 @@ west #
 000 "west-east-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "west-east-c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "west-east-c":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "west-east-c":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: 3, instantiated from: 0;
+000 "west-east-c":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $3;
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -103,7 +103,7 @@ west #
 000 "west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "west-east":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "west-east":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "west-east":   newest ISAKMP SA: #1; newest IPsec SA: #2; conn serial: 1, instantiated from: 0;
+000 "west-east":   newest ISAKMP SA: #1; newest IPsec SA: #2; conn serial: $1;
 000 "west-east":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
 000 "west-east":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 "west-east-b": 198.51.100.1/32===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===198.51.100.2/32; erouted; eroute owner: #3
@@ -120,7 +120,7 @@ west #
 000 "west-east-b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "west-east-b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "west-east-b":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "west-east-b":   newest ISAKMP SA: #0; newest IPsec SA: #3; conn serial: 2, instantiated from: 0;
+000 "west-east-b":   newest ISAKMP SA: #0; newest IPsec SA: #3; conn serial: $2;
 000 "west-east-b":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 "west-east-c": 198.51.100.3/32===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===198.51.100.4/32; erouted; eroute owner: #4
 000 "west-east-c":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
@@ -136,7 +136,7 @@ west #
 000 "west-east-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "west-east-c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "west-east-c":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "west-east-c":   newest ISAKMP SA: #0; newest IPsec SA: #4; conn serial: 3, instantiated from: 0;
+000 "west-east-c":   newest ISAKMP SA: #0; newest IPsec SA: #4; conn serial: $3;
 000 "west-east-c":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 #1: "west-east":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
 000 #2: "west-east":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
@@ -169,7 +169,7 @@ west #
 000 "west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "west-east":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "west-east":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "west-east":   newest ISAKMP SA: #1; newest IPsec SA: #0; conn serial: 1, instantiated from: 0;
+000 "west-east":   newest ISAKMP SA: #1; newest IPsec SA: #0; conn serial: $1;
 000 "west-east":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
 000 "west-east-b": 198.51.100.1/32===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===198.51.100.2/32; erouted; eroute owner: #3
 000 "west-east-b":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
@@ -185,7 +185,7 @@ west #
 000 "west-east-b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "west-east-b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "west-east-b":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "west-east-b":   newest ISAKMP SA: #0; newest IPsec SA: #3; conn serial: 2, instantiated from: 0;
+000 "west-east-b":   newest ISAKMP SA: #0; newest IPsec SA: #3; conn serial: $2;
 000 "west-east-b":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 "west-east-c": 198.51.100.3/32===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===198.51.100.4/32; erouted; eroute owner: #4
 000 "west-east-c":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
@@ -201,7 +201,7 @@ west #
 000 "west-east-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "west-east-c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "west-east-c":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "west-east-c":   newest ISAKMP SA: #0; newest IPsec SA: #4; conn serial: 3, instantiated from: 0;
+000 "west-east-c":   newest ISAKMP SA: #0; newest IPsec SA: #4; conn serial: $3;
 000 "west-east-c":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 #1: "west-east":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
 000 #3: "west-east-b":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
@@ -226,7 +226,7 @@ west #
 000 "west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "west-east":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "west-east":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "west-east":   newest ISAKMP SA: #1; newest IPsec SA: #0; conn serial: 1, instantiated from: 0;
+000 "west-east":   newest ISAKMP SA: #1; newest IPsec SA: #0; conn serial: $1;
 000 "west-east":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
 000 "west-east-b": 198.51.100.1/32===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===198.51.100.2/32; erouted; eroute owner: #3
 000 "west-east-b":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
@@ -242,7 +242,7 @@ west #
 000 "west-east-b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "west-east-b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "west-east-b":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "west-east-b":   newest ISAKMP SA: #0; newest IPsec SA: #3; conn serial: 2, instantiated from: 0;
+000 "west-east-b":   newest ISAKMP SA: #0; newest IPsec SA: #3; conn serial: $2;
 000 "west-east-b":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 "west-east-c": 198.51.100.3/32===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===198.51.100.4/32; erouted; eroute owner: #4
 000 "west-east-c":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
@@ -258,7 +258,7 @@ west #
 000 "west-east-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "west-east-c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "west-east-c":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "west-east-c":   newest ISAKMP SA: #0; newest IPsec SA: #4; conn serial: 3, instantiated from: 0;
+000 "west-east-c":   newest ISAKMP SA: #0; newest IPsec SA: #4; conn serial: $3;
 000 "west-east-c":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 #1: "west-east":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
 000 #3: "west-east-b":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
