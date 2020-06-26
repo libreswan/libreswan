@@ -1,8 +1,8 @@
-ipsec auto --up north-east-port3
-# port 2 does NOT go over ipsec, traffic should remain 0
+ipsec auto --up north-east-222
+# port 2 does NOT go over ipsec, IPsec traffic should remain 0
 echo test | nc 192.1.2.23 2
-ipsec whack --trafficstatus
-# port 3 goes over ipsec, traffic counters should be non-zero
-echo test | nc 192.1.2.23 3
-ipsec whack --trafficstatus
+ipsec trafficstatus
+# port 222 goes over ipsec, traffic counters should be non-zero
+echo test | nc 192.1.2.23 222
+ipsec trafficstatus
 echo done

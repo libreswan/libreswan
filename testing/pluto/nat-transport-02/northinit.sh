@@ -3,5 +3,5 @@
 ../../pluto/bin/wait-until-alive 192.1.2.23
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
-ipsec auto --add north-east-port3
+ipsec auto --add north-east-222
 echo done

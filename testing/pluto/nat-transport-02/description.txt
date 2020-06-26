@@ -1,10 +1,9 @@
-Basic pluto test of transport mode.
+Basic pluto test of transport mode through NAT, using IKEv1
 
 This time behind a NAT, (see transport-01)
 
-A single transport mode SA is created between north and east, for port 3.
-On north, firewalling makes sure that one can only access port 3 via IPsec.
+A single transport mode SA is created between north and east, for port 222.
 
-inetd is started on east, listening on port 2 and 3, spitting out some stuff.
-This is tested with 'telnet | wc'.
-
+Note packets sent to port 2 and port 222 expect a connection refused. It is
+enough to test packet flow (and on namespaces we dont have sshd running,
+and we don't really need to start a daemon now)
