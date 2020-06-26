@@ -180,12 +180,12 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	d->sighash_policy =
 		POL_SIGHASH_SHA2_256 | POL_SIGHASH_SHA2_384 | POL_SIGHASH_SHA2_512;
 
-	d->left.addr_family = AF_INET;
+	d->left.host_family = &ipv4_info;
 	d->left.addr = address_any(&ipv4_info);
 	d->left.nexttype = KH_NOTSET;
 	d->left.nexthop = address_any(&ipv4_info);
 
-	d->right.addr_family = AF_INET;
+	d->right.host_family = &ipv4_info;
 	d->right.addr = address_any(&ipv4_info);
 	d->right.nexttype = KH_NOTSET;
 	d->right.nexthop = address_any(&ipv4_info);
@@ -498,7 +498,7 @@ static bool validate_end(struct starter_conn *conn_st,
 	}
 
 	/* now that HOSTFAM has been pined down */
-	end->addr_family = hostfam->af;
+	end->host_family = hostfam;
 
 	if (end->strings_set[KSCF_VTI_IP]) {
 		const char *value = end->strings[KSCF_VTI_IP];

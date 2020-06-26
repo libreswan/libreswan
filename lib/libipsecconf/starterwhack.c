@@ -310,18 +310,18 @@ static void set_whack_end(char *lr,
 	case KH_DEFAULTROUTE:
 	case KH_IPHOSTNAME:
 		/* note: we always copy the name string below */
-		w->host_addr = address_any(aftoinfo(l->addr_family));
+		w->host_addr = address_any(l->host_family);
 		break;
 
 	case KH_OPPO:
 	case KH_GROUP:
 	case KH_OPPOGROUP:
 		/* policy should have been set to OPPO */
-		w->host_addr = address_any(aftoinfo(l->addr_family));
+		w->host_addr = address_any(l->host_family);
 		break;
 
 	case KH_ANY:
-		w->host_addr = address_any(aftoinfo(l->addr_family));
+		w->host_addr = address_any(l->host_family);
 		break;
 
 	default:
@@ -342,7 +342,7 @@ static void set_whack_end(char *lr,
 		 * but, get the family set up right
 		 * XXX the nexthop type has to get into the whack message!
 		 */
-		w->host_nexthop = address_any(address_type(&l->addr));
+		w->host_nexthop = address_any(l->host_family);
 		break;
 
 	default:
@@ -364,7 +364,7 @@ static void set_whack_end(char *lr,
 	if (l->has_client) {
 		w->client = l->subnet;
 	} else {
-		w->client = (aftoinfo(l->addr_family)->all_addresses);
+		w->client = l->host_family->all_addresses;
 	}
 
 	w->host_ikeport = l->options[KNCF_IKEPORT];
@@ -521,8 +521,8 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.whack_delete = TRUE;	/* always do replace for now */
 	msg.name = connection_name(conn);
 
-	msg.addr_family = conn->left.addr_family;
-	msg.tunnel_addr_family = conn->left.addr_family;
+	msg.addr_family = conn->left.host_family->af;
+	msg.tunnel_addr_family = conn->left.host_family->af;
 
 	if (conn->right.addrtype == KH_IPHOSTNAME)
 		msg.dnshostname = conn->right.strings[KSCF_IP];
@@ -717,10 +717,10 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 }
 
 static bool one_subnet_from_string(const struct starter_conn *conn,
-				char **psubnets,
-				int af,
-				ip_subnet *sn,
-				char *lr)
+				   char **psubnets,
+				   const struct ip_info *afi,
+				   ip_subnet *sn,
+				   char *lr)
 {
 	char *eln;
 	char *subnets = *psubnets;
@@ -743,7 +743,7 @@ static bool one_subnet_from_string(const struct starter_conn *conn,
 	while (*subnets != '\0' && !(isspace(*subnets) || *subnets == ','))
 		subnets++;
 
-	e = ttosubnet(eln, subnets - eln, af, '6', sn);
+	e = ttosubnet(eln, subnets - eln, afi->af, '6', sn);
 	if (e != NULL) {
 		starter_log(LOG_LEVEL_ERR,
 			"conn: \"%s\" warning '%s' is not a subnet declaration. (%ssubnets)",
@@ -803,8 +803,9 @@ static int starter_permutate_conns(int
 		lnet = conn->left.subnet;
 		lc = 0;
 	} else {
-		one_subnet_from_string(conn, &leftnets, conn->left.addr_family,
-				&lnet, "left");
+		one_subnet_from_string(conn, &leftnets,
+				       conn->left.host_family,
+				       &lnet, "left");
 		lc = 1;
 	}
 
@@ -813,8 +814,8 @@ static int starter_permutate_conns(int
 		rc = 0;
 	} else {
 		one_subnet_from_string(conn, &rightnets,
-				conn->right.addr_family, &rnet,
-				"right");
+				       conn->right.host_family,
+				       &rnet, "right");
 		rc = 1;
 	}
 
@@ -852,8 +853,8 @@ static int starter_permutate_conns(int
 		 */
 		rc++;
 		if (!one_subnet_from_string(conn, &rightnets,
-						conn->right.addr_family, &rnet,
-						"right")) {
+					    conn->right.host_family,
+					    &rnet, "right")) {
 			/* reset right, and advance left! */
 			rightnets = "";
 			if (conn->right.strings_set[KSCF_SUBNETS])
@@ -865,15 +866,15 @@ static int starter_permutate_conns(int
 				rc = 0;
 			} else {
 				one_subnet_from_string(conn, &rightnets,
-						conn->right.addr_family,
-						&rnet, "right");
+						       conn->right.host_family,
+						       &rnet, "right");
 				rc = 1;
 			}
 
 			/* left */
 			lc++;
 			if (!one_subnet_from_string(conn, &leftnets,
-							conn->left.addr_family,
+							conn->left.host_family,
 							&lnet, "left"))
 				break;
 		}

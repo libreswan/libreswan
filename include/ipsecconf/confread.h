@@ -57,7 +57,7 @@ typedef enum keyword_set int_set[KEY_NUMERIC_ROOF];
  */
 
 struct starter_end {
-	sa_family_t addr_family;
+	const struct ip_info *host_family;
 	enum keyword_host addrtype;
 	enum keyword_host nexttype;
 	ip_address addr;

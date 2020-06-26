@@ -339,6 +339,7 @@ const char *str_address_reversed(const ip_address *src,
 
 ip_address address_any(const struct ip_info *info)
 {
+	passert(info != NULL);
 	if (info == NULL) {
 		/*
 		 * XXX: Loudly reject AF_UNSPEC, but don't crash.

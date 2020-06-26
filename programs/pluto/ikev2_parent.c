@@ -5965,12 +5965,12 @@ void ikev2_addr_change(struct state *st)
 	struct starter_end this = {
 		.addrtype = KH_DEFAULTROUTE,
 		.nexttype = KH_DEFAULTROUTE,
-		.addr_family = endpoint_type(&st->st_remote_endpoint)->af,
+		.host_family = endpoint_type(&st->st_remote_endpoint),
 	};
 
 	struct starter_end that = {
 		.addrtype = KH_IPADDR,
-		.addr_family = endpoint_type(&st->st_remote_endpoint)->af,
+		.host_family = endpoint_type(&st->st_remote_endpoint),
 		.addr = st->st_remote_endpoint
 	};
 
