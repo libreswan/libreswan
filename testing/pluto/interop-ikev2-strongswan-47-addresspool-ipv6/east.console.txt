@@ -113,7 +113,7 @@ east #
 000 "rw-eastnet-ipv6":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "rw-eastnet-ipv6":   our idtype: ID_FQDN; our id=@east; their idtype: %none; their id=(none)
 000 "rw-eastnet-ipv6":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "rw-eastnet-ipv6":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "rw-eastnet-ipv6":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: 1, instantiated from: 0;
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
