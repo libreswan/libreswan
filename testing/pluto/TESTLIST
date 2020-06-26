@@ -854,6 +854,8 @@ kvmplutotest	ah-pluto-04		good
 kvmplutotest	ah-pluto-05		good
 kvmplutotest	ah-pluto-09		good
 kvmplutotest	ah-pluto-10		good
+kvmplutotest	ah-pluto-12		good
+kvmplutotest	ah-pluto-13		good
 
 kvmplutotest	interop-ikev1-strongswan-10-ah-initiator-sha256		good
 kvmplutotest	interop-ikev1-strongswan-11-ah-initiator-sha512		good
@@ -1160,9 +1162,6 @@ kvmplutotest	bad-nexthop-01		wip
 
 kvmplutotest	algo-ah-netkey-to-netkey-ikev1			good
 kvmplutotest	algo-ah-netkey-to-netkey-ikev2			good
-
-kvmplutotest	algo-esp-netkey-to-netkey-ikev1			good
-kvmplutotest	algo-esp-netkey-to-netkey-ikev2			good
 
 # TCP tests
 kvmplutotest	ikev2-tcp-01-eof				wip
