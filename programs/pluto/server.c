@@ -846,10 +846,6 @@ struct pluto_event *add_fd_read_event_handler(evutil_socket_t fd,
 	return e; /* compatible with pluto_event_new for the time being */
 }
 
-/*
- * XXX: Some of the callers save the struct pluto_event reference but
- * some do not.
- */
 struct evconnlistener *add_fd_accept_event_handler(struct iface_port *ifp,
 						   evconnlistener_cb cb)
 {
@@ -857,6 +853,14 @@ struct evconnlistener *add_fd_accept_event_handler(struct iface_port *ifp,
 	return evconnlistener_new(pluto_eb, cb,
 				  ifp, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_CLOSE_ON_EXEC,
 				  -1, ifp->fd);
+}
+
+void free_any_fd_accept_event_handler(struct evconnlistener **h)
+{
+	if (*h != NULL) {
+		evconnlistener_free(*h);
+		*h = NULL;
+	}
 }
 
 /*

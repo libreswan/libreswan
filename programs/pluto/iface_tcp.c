@@ -156,6 +156,7 @@ static void iketcp_cleanup(struct iface_port *ifp)
 	pexpect(ifp->pev == NULL);
 	pexpect(ifp->fd < 0);
 	pexpect(ifp->ip_dev == NULL);
+	free_any_fd_accept_event_handler(&ifp->tcp_accept_listener);
 	if (ifp->iketcp_timeout != NULL) {
 		dbg("TCP: cleaning up timeout");
 		event_del(ifp->iketcp_timeout);
