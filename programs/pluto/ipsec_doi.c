@@ -456,7 +456,15 @@ void initialize_new_state(struct state *st,
 			  int try)
 {
 	update_state_connection(st, c);
-	set_state_ike_endpoints(st, c);
+
+	/* reset our choice of interface */
+	c->interface = NULL;
+	(void)orient(c);
+	st->st_interface = c->interface;
+	passert(st->st_interface != NULL);
+	st->st_remote_endpoint = endpoint3(c->interface->protocol,
+					   &c->spd.that.host_addr,
+					   ip_hport(c->spd.that.host_port));
 
 	st->st_policy = policy & ~POLICY_IPSEC_MASK;        /* clear bits */
 	st->st_try = try;

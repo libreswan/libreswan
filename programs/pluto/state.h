@@ -901,9 +901,6 @@ extern void replace_states_by_peer(const ip_address *peer);
 extern void v1_delete_state_by_username(struct state *st, void *name);
 extern void delete_state_by_id_name(struct state *st, void *name);
 
-extern void set_state_ike_endpoints(struct state *st,
-				    struct connection *c);
-
 extern void delete_cryptographic_continuation(struct state *st);
 extern void delete_states_dead_interfaces(struct fd *whackfd);
 extern bool dpd_active_locally(const struct state *st);

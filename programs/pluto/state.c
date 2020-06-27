@@ -2799,21 +2799,6 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	return true;
 }
 
-void set_state_ike_endpoints(struct state *st,
-			     struct connection *c)
-{
-	/* reset our choice of interface */
-	c->interface = NULL;
-	(void)orient(c);
-	st->st_interface = c->interface;
-	passert(st->st_interface != NULL);
-	pexpect_st_local_endpoint(st);
-
-	st->st_remote_endpoint = endpoint3(c->interface->protocol,
-					   &c->spd.that.host_addr,
-					   ip_hport(c->spd.that.host_port));
-}
-
 /* seems to be a good spot for now */
 bool dpd_active_locally(const struct state *st)
 {
