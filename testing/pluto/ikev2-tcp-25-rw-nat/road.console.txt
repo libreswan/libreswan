@@ -20,11 +20,72 @@ road #
 002 "road-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "road-eastnet-ikev2" #1: authenticated using authby=secret
 002 "road-eastnet-ikev2" #2: negotiated connection [192.1.3.209-192.1.3.209:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "road-eastnet-ikev2" #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
+004 "road-eastnet-ikev2" #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP/NAT/TCP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
  ../../pluto/bin/ping-once.sh --up 192.0.2.254
 up
 road #
+ ../bin/ipsec-look.sh
+road NOW
+XFRM state:
+src 192.1.2.23 dst 192.1.3.209
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type 7 sport 4500 dport EPHEM addr 0.0.0.0
+src 192.1.3.209 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type 7 sport EPHEM dport 4500 addr 0.0.0.0
+XFRM policy:
+src 192.0.2.0/24 dst 192.1.3.209/32
+	dir fwd priority 2080718 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.1.3.209/32
+	dir in priority 2080718 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.0.2.0/24
+	dir out priority 2080718 ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.3.254 dev eth0
+192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+road #
  echo done
 done
+road #
+ ../bin/ipsec-look.sh
+road NOW
+XFRM state:
+XFRM policy:
+src 192.1.3.209/32 dst 192.0.2.0/24
+	dir out priority 2080718 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.3.254 dev eth0
+192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+road #
+ ipsec stop
+Redirecting to: [initsystem]
+road #
+ ../bin/check-for-core.sh
+road #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 
