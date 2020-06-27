@@ -2297,115 +2297,103 @@ fail:
 
 static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 {
-	/*
-	 * We need to delete AH, ESP, and IP in IP SPIs.
-	 * But if there is more than one, they have been grouped
-	 * so deleting any one will do.  So we just delete the
-	 * first one found.  It may or may not be the only one.
-	 */
+	/* Delete any AH, ESP, and IP in IP SPIs. */
+
 	struct connection *const c = st->st_connection;
 
-	struct {
-		const struct ip_protocol *proto;
-		struct ipsec_proto_info *info;
-	} protos[4];
-	int i = 0;
-	bool redirected = FALSE;
-	ip_address tmp_ip;
-
 	/*
-	 * If we are the initiator, were redirected and
-	 * now are trying to remove 'old' stuff, we
-	 * are going to temporary hack c->spd.that.host_addr,
-	 * because we changed it when we were redirected
-	 * and it has now the new address (but we need
-	 * the old one).
+	 * If we were redirected, we have a new address in c->spd.that.host_addr.
+	 * For purposes of this routine, we need to use the old address.
+	 * effective_that_host_address will be the address to use.
+	 * ??? apparently this only applies if we are the initiator.
 	 */
 
-	if (!sameaddr(&st->st_remote_endpoint, &c->spd.that.host_addr) &&
+	ip_address effective_that_host_addr = c->spd.that.host_addr;
+
+	if (!sameaddr(&st->st_remote_endpoint, &effective_that_host_addr) &&
 	    address_is_specified(&c->temp_vars.redirect_ip)) {
-		redirected = TRUE;
-		tmp_ip = c->spd.that.host_addr;
-		c->spd.that.host_addr = st->st_remote_endpoint;
+		effective_that_host_addr = st->st_remote_endpoint;
 	}
 
 	/* ??? CLANG 3.5 thinks that c might be NULL */
-	if (inbound && c->spd.eroute_owner == SOS_NOBODY) {
-		if (!raw_eroute(&c->spd.that.host_addr,
-				&c->spd.that.client,
-				&c->spd.this.host_addr,
-				&c->spd.this.client,
-				SPI_PASS, SPI_PASS,
-				c->ipsec_mode == ENCAPSULATION_MODE_TRANSPORT ?
-					&ip_protocol_esp : NULL,
-				c->spd.this.protocol,
-				c->ipsec_mode == ENCAPSULATION_MODE_TRANSPORT ?
-					ET_ESP : ET_UNSPEC,
-				null_proto_info,
-				deltatime(0),
-				calculate_sa_prio(c, FALSE),
-				&c->sa_marks,
-				0, /* xfrm_if_id. needed to tear down? */
-				ERO_DEL_INBOUND,
-				"delete inbound",
-				c->policy_label))
-		{
-			libreswan_log("raw_eroute in teardown_half_ipsec_sa() failed to delete inbound");
-		}
+	if (inbound && c->spd.eroute_owner == SOS_NOBODY &&
+	    !raw_eroute(&effective_that_host_addr,
+			&c->spd.that.client,
+			&c->spd.this.host_addr,
+			&c->spd.this.client,
+			SPI_PASS, SPI_PASS,
+			c->ipsec_mode == ENCAPSULATION_MODE_TRANSPORT ?
+				&ip_protocol_esp : NULL,
+			c->spd.this.protocol,
+			c->ipsec_mode == ENCAPSULATION_MODE_TRANSPORT ?
+				ET_ESP : ET_UNSPEC,
+			null_proto_info,
+			deltatime(0),
+			calculate_sa_prio(c, FALSE),
+			&c->sa_marks,
+			0, /* xfrm_if_id. needed to tear down? */
+			ERO_DEL_INBOUND,
+			"delete inbound",
+			c->policy_label))
+	{
+		libreswan_log("raw_eroute in teardown_half_ipsec_sa() failed to delete inbound");
 	}
 
-	if (kernel_ops->grp_sa == NULL) {
-		if (st->st_ah.present) {
-			protos[i].info = &st->st_ah;
-			protos[i].proto = &ip_protocol_ah;
-			i++;
-		}
+	/* collect each proto SA that needs deleting */
 
-		if (st->st_esp.present) {
-			protos[i].info = &st->st_esp;
-			protos[i].proto = &ip_protocol_esp;
-			i++;
-		}
+	struct {
+		const struct ip_protocol *proto;
+		const struct ipsec_proto_info *info;
+	} protos[4];	/* at most 3 entries + terminator */
+	int i = 0;
 
-		if (st->st_ipcomp.present) {
-			protos[i].info = &st->st_ipcomp;
-			protos[i].proto = &ip_protocol_comp;
-			i++;
-		}
-	} else if (st->st_ah.present) {
-		protos[i].info = &st->st_ah;
+	if (st->st_ah.present) {
 		protos[i].proto = &ip_protocol_ah;
+		protos[i].info = &st->st_ah;
 		i++;
-	} else if (st->st_esp.present) {
-		protos[i].info = &st->st_esp;
-		protos[i].proto = &ip_protocol_esp;
-		i++;
-	} else {
-		return TRUE;
 	}
-	protos[i].proto = 0;
 
+	if (st->st_esp.present) {
+		protos[i].proto = &ip_protocol_esp;
+		protos[i].info = &st->st_esp;
+		i++;
+	}
+
+	if (st->st_ipcomp.present) {
+		protos[i].proto = &ip_protocol_comp;
+		protos[i].info = &st->st_ipcomp;
+		i++;
+	}
+
+	/*
+	 * If the SAs have been grouped, deleting any one will do:
+	 * we just delete the first one found (protos[0]).
+	 */
+	if (kernel_ops->grp_sa != NULL && i > 0)
+		i = 1;
+
+	protos[i].proto = NULL;
+
+	/* delete each proto that needs deleting */
 	bool result = TRUE;
-	for (i = 0; protos[i].proto; i++) {
+
+	for (i = 0; protos[i].proto != NULL; i++) {
 		const struct ip_protocol *proto = protos[i].proto;
 		ipsec_spi_t spi;
 		const ip_address *src, *dst;
 
 		if (inbound) {
 			spi = protos[i].info->our_spi;
-			src = &c->spd.that.host_addr;
+			src = &effective_that_host_addr;
 			dst = &c->spd.this.host_addr;
 		} else {
 			spi = protos[i].info->attrs.spi;
 			src = &c->spd.this.host_addr;
-			dst = &c->spd.that.host_addr;
+			dst = &effective_that_host_addr;
 		}
 
 		result &= del_spi(spi, proto, src, dst);
 	}
-
-	if (redirected)
-		c->spd.that.host_addr = tmp_ip;
 
 	return result;
 }
