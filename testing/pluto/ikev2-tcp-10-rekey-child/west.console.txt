@@ -60,31 +60,7 @@ west #
  ipsec whack --trafficstatus
 006 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 west #
- # wait for rekey event
-west #
- sleep 5
-west #
- ipsec whack --rekey-ipsec --name 2
-002 rekeying IPsec SA state #2 of connection "westnet-eastnet-ikev2"
-1v2 "westnet-eastnet-ikev2" #3: STATE_V2_REKEY_CHILD_I1: STATE_V2_REKEY_CHILD_I1
-002 "westnet-eastnet-ikev2" #3: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
-002 "westnet-eastnet-ikev2" #3: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2" #3: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP/TCP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
-002 "westnet-eastnet-ikev2" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
-005 "westnet-eastnet-ikev2" #2: ESP traffic information: in=84B out=84B
-west #
- # rekey of IPsec SA means traffic counters should be 0
-west #
- ipsec whack --trafficstatus
-006 #3: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
-west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-up
-west #
- ipsec whack --trafficstatus
-006 #3: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
-west #
- ipsec look
+ ../bin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
@@ -121,6 +97,93 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
+west #
+ # wait for rekey event
+west #
+ sleep 5
+west #
+ ipsec whack --rekey-ipsec --name 2
+002 rekeying IPsec SA state #2 of connection "westnet-eastnet-ikev2"
+1v2 "westnet-eastnet-ikev2" #3: STATE_V2_REKEY_CHILD_I1: STATE_V2_REKEY_CHILD_I1
+002 "westnet-eastnet-ikev2" #3: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
+002 "westnet-eastnet-ikev2" #3: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "westnet-eastnet-ikev2" #3: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP/TCP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+002 "westnet-eastnet-ikev2" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
+005 "westnet-eastnet-ikev2" #2: ESP traffic information: in=84B out=84B
+west #
+ # rekey of IPsec SA means traffic counters should be 0
+west #
+ ipsec whack --trafficstatus
+006 #3: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+west #
+ ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec whack --trafficstatus
+006 #3: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
+west #
+ ../bin/ipsec-look.sh
+west NOW
+XFRM state:
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type 7 sport 4500 dport EPHEM addr 0.0.0.0
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type 7 sport EPHEM dport 4500 addr 0.0.0.0
+XFRM policy:
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority 2084814 ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir fwd priority 2084814 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir in priority 2084814 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west #
+ : done
+west #
+ ../bin/ipsec-look.sh
+west NOW
+XFRM state:
+XFRM policy:
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority 2084814 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west #
+ ipsec stop
+Redirecting to: [initsystem]
 west #
  ../bin/check-for-core.sh
 west #

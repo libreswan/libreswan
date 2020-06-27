@@ -1,4 +1,4 @@
-ipsec look
+../bin/ipsec-look.sh
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
