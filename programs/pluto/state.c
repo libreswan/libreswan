@@ -1152,6 +1152,22 @@ void delete_state(struct state *st)
 	 */
 	binlog_fake_state(st, STATE_UNDEFINED);
 
+	if (st->st_connection->newest_isakmp_sa == st->st_serialno) {
+		/*
+		 * XXX: only delete the TCP interface of the latest
+		 * IKE SA.  All others simply drop the interface.  For
+		 * others don't even look at *st->st_interface as it
+		 * may already be deleted.
+		 *
+		 * refcnt anyone?
+		 */
+		if (st->st_interface->protocol == &ip_protocol_tcp) {
+			dbg("TCP: freeing interface; release instead?");
+			struct iface_port **p = (void*)&st->st_interface; /* hack const */
+			free_any_iface_port(p);
+		}
+	}
+
 	/*
 	 * Unlink the connection which may in turn delete the
 	 * connection instance.  Needs to be done before the state is
@@ -1172,12 +1188,6 @@ void delete_state(struct state *st)
 	change_state(st, STATE_UNDEFINED);
 
 	release_any_whack(st, HERE, "deleting state");
-
-	if (st->st_interface->protocol == &ip_protocol_tcp && IS_IKE_SA(st)) {
-		dbg("TCP: freeing interface; release instead?");
-		struct iface_port **p = (void*)&st->st_interface; /* hack const */
-		free_any_iface_port(p);
-	}
 
 	/* from here on we are just freeing RAM */
 
