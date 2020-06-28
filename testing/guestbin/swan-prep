@@ -165,7 +165,9 @@ parser.add_argument('--hostname', '-H', action='store',
                     default='', help='The name of the host to prepare as')
 # we should get this from the testparams.sh file?
 parser.add_argument('--userland', '-u', action='store',
-                    default='libreswan', help='which userland to prepare')
+                    default='libreswan', help='which userland to prepare')w
+parser.add_argument('--strongswan-version', action='store',
+                    default='', help='strongswan version expect')
 parser.add_argument('--x509', '-x', action='store_true',
                     help='create X509 NSS file by importing test certs')
 exclusive_grp_dnsserver.add_argument('--dnssec', '-d', action='store_true',
@@ -370,8 +372,11 @@ if hostname != "nic":
 
         # check version and spew all over test output
         output = subprocess.getoutput("strongswan version")
-        if not "U5.8.4" in output:
-            print("strongswan 5.8.4 must be installed")
+        strongswan_version = "U5.8.4"
+        if args.strongswan_version:
+            strongswan_version = args.strongswan_version
+        if not strongswan_version in output:
+            print("strongswan %s must be installed", strongswan_version)
             print("")
             print(output)
 
