@@ -396,10 +396,23 @@ if hostname != "nic":
 
         # wipe the strongswan tree
         dst = "/etc/strongswan/"
-        if os.path.isdir(dst):
-            shutil.rmtree(dst)
-        for directory in ("", "ipsec.d/", "ipsec.d/aacerts/", "ipsec.d/ocspcerts/", "ipsec.d/cacerts/", "ipsec.d/private/", "ipsec.d/certs/"):
-            os.mkdir(os.path.join(dst, directory))
+        if args.namespace:
+            src = "%s%s" % (nsbasepath, dst)
+            if os.path.isdir(src): # from previous test run
+                shutil.rmtree(src)
+            if mount_bind(src, dst, mkdir_src=True, wipe_old_dst=True):
+                sys.exit(1)
+        else:
+            if os.path.isdir(dst):
+                shutil.rmtree(dst)
+                os.mkdir(dst)
+
+        for directory in ("ipsec.d/", "ipsec.d/aacerts/", "ipsec.d/ocspcerts/", "ipsec.d/cacerts/", "ipsec.d/private/", "ipsec.d/certs/"):
+            os.mkdir("%s%s" % (dst, directory))
+        strongswanconf = choose_config_file(hostname, testpath, "strongswan.conf", "%sstrongswan.conf" % (hostname))
+
+        if strongswanconf:
+            shutil.copy(strongswanconf, "/etc/strongswan/strongswan.conf")
 
         copy_config_file(hostname, testpath, "/etc/strongswan/strongswan.conf")
         copy_config_file(hostname, testpath, "/etc/strongswan/ipsec.conf")
