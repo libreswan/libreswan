@@ -19,7 +19,7 @@ function info() {
     fi
 }
 
-BRANCHES="master travis-fedora-rawhide travis-fedora-32 \
+BRANCHES="main travis-fedora-rawhide travis-fedora-32 \
 	  travis-fedora-31 travis-fedora-30 \
 	  travis-fedora-29 travis-fedora-28 \
 	  travis-centos-8 travis-centos-7 travis-centos-6 \
@@ -113,24 +113,24 @@ count_br()
 git_work()
 {
 (
-	git checkout master
+	git checkout main
 	HEAD_ID_START=`git rev-parse --short HEAD`
 	if [ "${FETCH_REMOTE}" = "yes" ]; then
 		git fetch origin
-		git reset --hard origin/master
+		git reset --hard origin/main
 	fi
 	HEAD_ID_END=$(git rev-parse --short HEAD)
 	if [ "${HEAD_ID_END}" = "${HEAD_ID_START}" ] ; then
 		echo "${TIME} IGNORE ${HEAD_ID_START} NOTHING NEW"
 		return 0
 	fi
-	git reset --hard origin/master
+	git reset --hard origin/main
 	echo "${TIME} start ${HEAD_ID_START} after ${HEAD_ID_END} ${COUNTER} branches"
 
 	for BR in ${BRANCHES}; do
 		LOG="${LOG} ${BR}"
 		git checkout ${BR} || git checkout -b ${BR}
-		git reset --hard master
+		git reset --hard main
 		git push --follow-tags github -f
 	done
 
