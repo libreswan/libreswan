@@ -19,7 +19,8 @@ function info() {
     fi
 }
 
-BRANCHES="master travis-fedora-rawhide travis-fedora-31 travis-fedora-30
+BRANCHES="master travis-fedora-rawhide travis-fedora-32 \
+	  travis-fedora-31 travis-fedora-30 \
 	  travis-fedora-29 travis-fedora-28 \
 	  travis-centos-8 travis-centos-7 travis-centos-6 \
 	  travis-ubuntu-focal travis-ubuntu-bionic travis-ubuntu-xenial \
