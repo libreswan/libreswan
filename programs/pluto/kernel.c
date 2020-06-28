@@ -2302,22 +2302,23 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 	struct connection *const c = st->st_connection;
 
 	/*
-	 * If we were redirected, we have a new address in c->spd.that.host_addr.
-	 * For purposes of this routine, we need to use the old address.
-	 * effective_that_host_address will be the address to use.
-	 * ??? apparently this only applies if we are the initiator.
+	 * If we have a new address in c->spd.that.host_addr,
+	 * we are the initiator, have been redirected,
+	 * and yet this routine must use the old address.
+	 *
+	 * We point effective_that_host_address to the appropriate address.
 	 */
 
-	ip_address effective_that_host_addr = c->spd.that.host_addr;
+	const ip_address *effective_that_host_addr = &c->spd.that.host_addr;
 
-	if (!sameaddr(&st->st_remote_endpoint, &effective_that_host_addr) &&
+	if (!sameaddr(&st->st_remote_endpoint, effective_that_host_addr) &&
 	    address_is_specified(&c->temp_vars.redirect_ip)) {
-		effective_that_host_addr = st->st_remote_endpoint;
+		effective_that_host_addr = &st->st_remote_endpoint;
 	}
 
 	/* ??? CLANG 3.5 thinks that c might be NULL */
 	if (inbound && c->spd.eroute_owner == SOS_NOBODY &&
-	    !raw_eroute(&effective_that_host_addr,
+	    !raw_eroute(effective_that_host_addr,
 			&c->spd.that.client,
 			&c->spd.this.host_addr,
 			&c->spd.this.client,
@@ -2384,12 +2385,12 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 
 		if (inbound) {
 			spi = protos[i].info->our_spi;
-			src = &effective_that_host_addr;
+			src = effective_that_host_addr;
 			dst = &c->spd.this.host_addr;
 		} else {
 			spi = protos[i].info->attrs.spi;
 			src = &c->spd.this.host_addr;
-			dst = &effective_that_host_addr;
+			dst = effective_that_host_addr;
 		}
 
 		result &= del_spi(spi, proto, src, dst);
