@@ -19,8 +19,9 @@
 
 #include "defs.h"
 #include "demux.h"      /* needs packet.h */
+#include "iface.h"
 
-struct msg_digest *alloc_md(const char *mdname)
+struct msg_digest *alloc_md(const struct iface_port *ifp, const ip_endpoint *sender, where_t where)
 {
 	/* convenient initializer:
 	 * - all pointers NULL
@@ -28,20 +29,19 @@ struct msg_digest *alloc_md(const char *mdname)
 	 * - .encrypted = FALSE
 	 */
 	static const struct msg_digest blank_md;
-	struct msg_digest *md = alloc_thing(struct msg_digest, mdname);
+	struct msg_digest *md = alloc_thing(struct msg_digest, where.func);
 	*md = blank_md;
-	init_ref(md);
+	ref_init(md, where);
+	md->iface = ifp;
+	md->sender = *sender;
 	return md;
 }
 
 struct msg_digest *clone_raw_md(struct msg_digest *md, const char *name)
 {
-	struct msg_digest *clone = alloc_md(name);
+	struct msg_digest *clone = alloc_md(md->iface, &md->sender, HERE);
 	clone->fake_clone = true;
 	clone->md_inception = threadtime_start();
-	/* raw_packet */
-	clone->iface = md->iface; /* copy reference */
-	clone->sender = md->sender; /* copy value */
 	/* packet_pbs ... */
 	size_t packet_size = pbs_room(&md->packet_pbs);
 	void *packet_bytes = clone_bytes(md->packet_pbs.start, packet_size, name);

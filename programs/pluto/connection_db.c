@@ -121,6 +121,7 @@ static void add_connection_to_db(struct connection *c)
 static struct connection *finish_connection(struct connection *c)
 {
 	static co_serial_t connection_serialno;
+	c->serial_from = c->serialno;
 	connection_serialno.co++;
 	c->serialno = connection_serialno;
 	add_connection_to_db(c);

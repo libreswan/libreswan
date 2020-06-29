@@ -16,7 +16,7 @@
 
 #include "err.h"
 
-#if defined(linux) && defined(NETKEY_SUPPORT) && defined(USE_XFRM_INTERFACE)
+#if defined(linux) && defined(XFRM_SUPPORT) && defined(USE_XFRM_INTERFACE)
 /* how to check defined(XFRMA_IF_ID) && defined(IFLA_XFRM_LINK)? those are enums */
 # define IS_XFRMI TRUE
 #else

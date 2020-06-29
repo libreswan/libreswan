@@ -65,12 +65,16 @@ extern void call_server(char *conffile);
 typedef void event_callback_routine(evutil_socket_t, const short, void *);
 void fire_timer_photon_torpedo(struct event **evp, event_callback_fn cb, void *arg,
 			       const deltatime_t delay);
+
 extern struct pluto_event *add_fd_read_event_handler(evutil_socket_t fd,
 						     event_callback_fn cb, void *arg,
 						     const char *name);
+extern void delete_pluto_event(struct pluto_event **evp);
+
 struct evconnlistener *add_fd_accept_event_handler(struct iface_port *ifp,
 						   evconnlistener_cb cb);
-extern void delete_pluto_event(struct pluto_event **evp);
+void free_any_fd_accept_event_handler(struct evconnlistener **h);
+
 extern void link_pluto_event_list(struct pluto_event *e);
 bool ev_before(struct pluto_event *pev, deltatime_t delay);
 extern void set_pluto_busy(bool busy);

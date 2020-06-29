@@ -14,7 +14,7 @@
  * for more details.
  */
 
-#if defined(linux) && defined(NETKEY_SUPPORT)
+#if defined(linux) && defined(XFRM_SUPPORT)
 /*
  * The socket buffer is used to queue netlink messages between sender and
  * receiver. The size of these buffers specifies the maximum size you will be

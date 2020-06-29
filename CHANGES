@@ -1,7 +1,7 @@
 
 See also https://libreswan.org/
 
-v3.33 (unreleased)
+v4.0 (unreleased)
 * KLIPS: Support for KLIPS completely removed [Paul]
 * pluto: Support for deprecated algos removed: serpent, twofish, cast [Paul]
 * pluto: Support for rereading configured certificates from NSS [Myungjin Lee]
@@ -14,6 +14,7 @@ v3.33 (unreleased)
 * building: Deprecate INC_ variables [Tuomo]
 * building: Remove all support for SERPENT, TWOFISH, CAST and RIPEMD [Paul]
 * building: Remove -DALLOW_MICROSOFT_BAD_PROPOSAL [Tuomo]
+* building: Rename master branch to main branch [Paul]
 
 v3.32 (May 11, 2020)
 * SECURITY: Fixes CVE-2020-1763 https://libreswan.org/security/CVE-2020-1763

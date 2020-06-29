@@ -25,7 +25,7 @@ east #
 000 "westnet-eastnet-ipv4-psk-ppk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-ipv4-psk-ppk":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "westnet-eastnet-ipv4-psk-ppk":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet-ipv4-psk-ppk":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-ipv4-psk-ppk":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 east #
  echo "initdone"
 initdone

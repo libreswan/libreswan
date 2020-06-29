@@ -23,7 +23,7 @@ east #
 000 "westnet-eastnet-esp-3des-alg":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-esp-3des-alg":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "westnet-eastnet-esp-3des-alg":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet-esp-3des-alg":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-esp-3des-alg":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "westnet-eastnet-esp-3des-alg":   ESP algorithms: 3DES_CBC-HMAC_SHA1_96
 east #
  echo "initdone"
@@ -60,21 +60,21 @@ src 192.1.2.23 dst 192.1.2.45
 	replay-window 0 flag af-unspec
 XFRM policy:
 src 192.0.1.0/24 dst 192.0.2.0/24
-	dir fwd priority 2084815 ptype main
+	dir fwd priority 2084814 ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto comp reqid REQID mode tunnel
 		level use
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 src 192.0.1.0/24 dst 192.0.2.0/24
-	dir in priority 2084815 ptype main
+	dir in priority 2084814 ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto comp reqid REQID mode tunnel
 		level use
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 src 192.0.2.0/24 dst 192.0.1.0/24
-	dir out priority 2084815 ptype main
+	dir out priority 2084814 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto comp reqid REQID mode tunnel
 	tmpl src 0.0.0.0 dst 0.0.0.0

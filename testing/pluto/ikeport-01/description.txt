@@ -1,9 +1,0 @@
-basic-pluto-01 on a different IKE port, using forced encaps to test the
-NAT ike port as well.
-
-Work In Progress: code seems to stil make some hidden assumptions
-
-"porttest" #1: ERROR: asynchronous network error report on eth1 (sport=999) for message to 192.1.2.23 port 500, complainant 192.1.2.23: Connection refused [errno 111, origin ICMP type 3 code 3 (not authenticated)]
-
-
-destination port should be 999 instead of 500

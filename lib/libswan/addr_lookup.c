@@ -35,12 +35,12 @@
 #else
 # include <netdb.h>
 #endif
+#include "ip_info.h"
 
-static void resolve_point_to_point_peer(
-	const char *interface,
-	sa_family_t family,
-	char peer[ADDRTOT_BUF],	/* result, if any */
-	bool verbose)
+static void resolve_point_to_point_peer(const char *interface,
+					const struct ip_info *family,
+					char *peer/*[ADDRTOT_BUF]*/,	/* result, if any */
+					bool verbose)
 {
 	struct ifaddrs *ifap;
 
@@ -54,7 +54,7 @@ static void resolve_point_to_point_peer(
 			streq(ifa->ifa_name, interface)) {
 			struct sockaddr *sa = ifa->ifa_ifu.ifu_dstaddr;
 
-			if (sa != NULL && sa->sa_family == family &&
+			if (sa != NULL && sa->sa_family == family->af &&
 				getnameinfo(sa,
 					sa->sa_family == AF_INET ?
 						sizeof(struct sockaddr_in) :
@@ -220,8 +220,8 @@ int resolve_defaultroute_one(struct starter_end *host,
 	int query_again = 0;
 
 	/* Fill netlink request */
-	netlink_query_init(msgbuf, host->addr_family);
-	if (host->nexttype == KH_IPADDR && peer->addr_family == AF_INET) {
+	netlink_query_init(msgbuf, host->host_family->af);
+	if (host->nexttype == KH_IPADDR && peer->host_family == &ipv4_info) {
 		/*
 		 * My nexthop (gateway) is specified.
 		 * We need to figure out our source IP to get there.
@@ -418,9 +418,8 @@ int resolve_defaultroute_one(struct starter_end *host,
 				 * Attempt to find r_gateway as the IP address
 				 * on the interface.
 				 */
-				resolve_point_to_point_peer(
-					r_interface, host->addr_family,
-					r_gateway, verbose);
+				resolve_point_to_point_peer(r_interface, host->host_family,
+							    r_gateway, verbose);
 			}
 			if (r_gateway[0] != '\0') {
 				err_t err = tnatoaddr(r_gateway, 0,

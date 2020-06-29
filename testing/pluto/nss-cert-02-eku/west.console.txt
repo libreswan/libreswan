@@ -30,7 +30,7 @@ west #
 000 "nss-cert":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "nss-cert":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=usage-client.testing.libreswan.org, E=user-usage-client@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 000 "nss-cert":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "nss-cert":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "nss-cert":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 west #
  ipsec whack --impair suppress-retransmits
 west #

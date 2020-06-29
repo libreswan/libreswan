@@ -96,9 +96,9 @@ west #
  #IKE sa will be on TUNNEL-A
 west #
  ipsec auto --status | grep ISAKMP
-000 "TUNNEL-A":   newest ISAKMP SA: #1; newest IPsec SA: #2;
-000 "TUNNEL-B":   newest ISAKMP SA: #0; newest IPsec SA: #3;
-000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4;
+000 "TUNNEL-A":   newest ISAKMP SA: #1; newest IPsec SA: #2; conn serial: $2;
+000 "TUNNEL-B":   newest ISAKMP SA: #0; newest IPsec SA: #3; conn serial: $3;
+000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4; conn serial: $1;
 000 #1: "TUNNEL-A":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_EXPIRE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
 west #
  sleep 60
@@ -106,9 +106,9 @@ west #
  #IKE sa will be on TUNNEL-B
 west #
  ipsec auto --status | grep ISAKMP
-000 "TUNNEL-A":   newest ISAKMP SA: #0; newest IPsec SA: #2;
-000 "TUNNEL-B":   newest ISAKMP SA: #5; newest IPsec SA: #3;
-000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4;
+000 "TUNNEL-A":   newest ISAKMP SA: #0; newest IPsec SA: #2; conn serial: $2;
+000 "TUNNEL-B":   newest ISAKMP SA: #5; newest IPsec SA: #3; conn serial: $3;
+000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4; conn serial: $1;
 000 #5: "TUNNEL-B":500 STATE_MAIN_R3 (sent MR3, ISAKMP SA established); EVENT_SA_EXPIRE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
 west #
  ipsec auto --down TUNNEL-B
@@ -135,7 +135,7 @@ west #
 000 "TUNNEL-A":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "TUNNEL-A":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 000 "TUNNEL-A":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "TUNNEL-A":   newest ISAKMP SA: #0; newest IPsec SA: #2;
+000 "TUNNEL-A":   newest ISAKMP SA: #0; newest IPsec SA: #2; conn serial: $2;
 000 "TUNNEL-A":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 "TUNNEL-B": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.244/32; prospective erouted; eroute owner: #0
 000 "TUNNEL-B":     oriented; my_ip=unset; their_ip=unset; mycert=west; peercert=east; my_updown=ipsec _updown;
@@ -152,7 +152,7 @@ west #
 000 "TUNNEL-B":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "TUNNEL-B":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 000 "TUNNEL-B":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "TUNNEL-B":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "TUNNEL-B":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $3;
 000 "TUNNEL-C": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.234/32; erouted; eroute owner: #4
 000 "TUNNEL-C":     oriented; my_ip=unset; their_ip=unset; mycert=west; my_updown=ipsec _updown;
 000 "TUNNEL-C":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -168,7 +168,7 @@ west #
 000 "TUNNEL-C":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "TUNNEL-C":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 000 "TUNNEL-C":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4;
+000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4; conn serial: $1;
 000 "TUNNEL-C":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 #2: "TUNNEL-A":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_v1_SA_REPLACE_IF_USED in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B! ESPmax=4194303B 
@@ -196,7 +196,7 @@ west #
 000 "TUNNEL-A":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "TUNNEL-A":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 000 "TUNNEL-A":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "TUNNEL-A":   newest ISAKMP SA: #0; newest IPsec SA: #2;
+000 "TUNNEL-A":   newest ISAKMP SA: #0; newest IPsec SA: #2; conn serial: $2;
 000 "TUNNEL-A":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 "TUNNEL-C": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.234/32; erouted; eroute owner: #4
 000 "TUNNEL-C":     oriented; my_ip=unset; their_ip=unset; mycert=west; my_updown=ipsec _updown;
@@ -213,7 +213,7 @@ west #
 000 "TUNNEL-C":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "TUNNEL-C":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 000 "TUNNEL-C":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4;
+000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4; conn serial: $1;
 000 "TUNNEL-C":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 #2: "TUNNEL-A":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_v1_SA_REPLACE_IF_USED in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B! ESPmax=4194303B 

@@ -2801,7 +2801,6 @@ static bool netlink_poke_ipsec_policy_hole(const struct iface_dev *ifd, int fd)
 const struct kernel_ops netkey_kernel_ops = {
 	.kern_name = "netkey",
 	.type = USE_NETKEY,
-	.inbound_eroute =  TRUE,
 	.scan_shunts = expire_bare_shunts,
 	.async_fdp = &nl_xfrm_fd,
 	.route_fdp = &nl_route_fd,

@@ -944,7 +944,12 @@ static bool record_outbound_fragments(const pb_stream *rbody,
 
 	unsigned int len = endpoint_type(&sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size;
 
-	if (sk->ike->sa.st_interface != NULL && sk->ike->sa.st_interface->add_ike_encapsulation_prefix)
+	/*
+	 * If we are doing NAT, so that the other end doesn't mistake
+	 * this message for ESP, each message needs a non-ESP_Marker
+	 * prefix.
+	 */
+	if (sk->ike->sa.st_interface != NULL && sk->ike->sa.st_interface->esp_encapsulation_enabled)
 		len -= NON_ESP_MARKER_SIZE;
 
 	len -= NSIZEOF_isakmp_hdr + NSIZEOF_ikev2_skf;
@@ -1039,8 +1044,14 @@ stf_status record_v2SK_message(pb_stream *msg,
 			       enum message_role message)
 {
 	size_t len = pbs_offset(msg);
+
+	/*
+	 * If we are doing NAT, so that the other end doesn't mistake
+	 * this message for ESP, each message needs a non-ESP_Marker
+	 * prefix.
+	 */
 	if (!pexpect(sk->ike->sa.st_interface != NULL) &&
-	    sk->ike->sa.st_interface->add_ike_encapsulation_prefix)
+	    sk->ike->sa.st_interface->esp_encapsulation_enabled)
 		len += NON_ESP_MARKER_SIZE;
 
 	/* IPv4 and IPv6 have different fragment sizes */

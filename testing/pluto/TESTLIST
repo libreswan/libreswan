@@ -189,6 +189,8 @@ kvmplutotest	ikev2-70-src-address-selection		wip
 kvmplutotest	ikev2-ikeport-01-rw-nat-global		good
 kvmplutotest	ikev2-ikeport-02-initiator		good
 kvmplutotest	ikev2-ikeport-03-responder		good
+kvmplutotest	ikev2-ikeport-04-rw-nat-initiator	good
+kvmplutotest	ikev2-ikeport-05-rw-nat-responder	good
 
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good
@@ -854,6 +856,8 @@ kvmplutotest	ah-pluto-04		good
 kvmplutotest	ah-pluto-05		good
 kvmplutotest	ah-pluto-09		good
 kvmplutotest	ah-pluto-10		good
+kvmplutotest	ah-pluto-12		good
+kvmplutotest	ah-pluto-13		good
 
 kvmplutotest	interop-ikev1-strongswan-10-ah-initiator-sha256		good
 kvmplutotest	interop-ikev1-strongswan-11-ah-initiator-sha512		good
@@ -1009,7 +1013,6 @@ kvmplutotest	replay-authip-01			good
 kvmplutotest	ikev1-l2tp-01				good
 kvmplutotest	ikev1-l2tp-02				good
 
-kvmplutotest	ikeport-01				wip
 kvmplutotest	listen-change-01			good
 
 #################################################################
@@ -1161,14 +1164,12 @@ kvmplutotest	bad-nexthop-01		wip
 kvmplutotest	algo-ah-netkey-to-netkey-ikev1			good
 kvmplutotest	algo-ah-netkey-to-netkey-ikev2			good
 
-kvmplutotest	algo-esp-netkey-to-netkey-ikev1			good
-kvmplutotest	algo-esp-netkey-to-netkey-ikev2			good
-
 # TCP tests
 kvmplutotest	ikev2-tcp-01-eof				wip
 kvmplutotest	ikev2-tcp-02-timeout				wip
 kvmplutotest	ikev2-tcp-03-basic-rawrsa-blocking		wip
 # this test spews a gigabyte of logs because of a busy-wait kernel bug
 kvmplutotest	ikev2-tcp-03-basic-rawrsa-nonblocking		skip
-kvmplutotest	ikev2-tcp-17-rekey-ipsec			wip
+kvmplutotest	ikev2-tcp-10-rekey-child			wip
+kvmplutotest	ikev2-tcp-10-rekey-ike				wip
 kvmplutotest	ikev2-tcp-25-rw-nat				wip

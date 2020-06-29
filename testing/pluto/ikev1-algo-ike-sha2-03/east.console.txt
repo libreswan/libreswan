@@ -23,7 +23,7 @@ east #
 000 "westnet-eastnet-sha2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-sha2":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "westnet-eastnet-sha2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet-sha2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-sha2":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "westnet-eastnet-sha2":   IKE algorithms: AES_CBC_128-HMAC_SHA2_256-MODP2048, AES_CBC_128-HMAC_SHA2_256-MODP1536
 east #
  echo "initdone"

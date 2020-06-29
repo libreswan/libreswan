@@ -51,7 +51,11 @@ connection from 192.1.2.45:EPHEM: TCP: accepting connection
 connection from 192.1.2.45:EPHEM: TCP: read from socket failed Errno 11: Resource temporarily unavailable
 connection from 192.1.2.45:EPHEM: TCP: timed out before first message received
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
+connection from 192.1.2.45:EPHEM: TCP: read from socket failed Errno 11: Resource temporarily unavailable
 connection from 192.1.2.45:EPHEM: TCP: timed out before first message received
+east #
+ ipsec stop
+Redirecting to: [initsystem]
 east #
  ../bin/check-for-core.sh
 east #

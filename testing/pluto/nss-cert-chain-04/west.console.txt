@@ -32,7 +32,7 @@ west #
 000 "road-chain-B":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "road-chain-B":   our idtype: ID_FQDN; our id=@west_chain_endcert.testing.libreswan.org; their idtype: ID_FQDN; their id=@east.testing.libreswan.org
 000 "road-chain-B":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "road-chain-B":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "road-chain-B":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 west #
  certutil -L -d sql:/etc/ipsec.d
 Certificate Nickname                                         Trust Attributes

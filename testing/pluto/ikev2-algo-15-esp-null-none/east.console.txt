@@ -26,7 +26,7 @@ east #
 000 "esp=null-none":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "esp=null-none":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "esp=null-none":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "esp=null-none":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "esp=null-none":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "esp=null-none":   IKE algorithms: AES_CBC_128-HMAC_SHA1-MODP2048
 000 "esp=null-none":   ESP algorithms: NULL-NONE
 east #

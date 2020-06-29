@@ -110,8 +110,14 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 		return FALSE;
 	}
 
+	/*
+	 * If we are doing NATT, so that the other end doesn't mistake
+	 * this message for ESP, each message needs a non-ESP_Marker
+	 * prefix.  natt_bonus is the size of the addition (0 if not
+	 * needed).
+	 */
 	natt_bonus = !just_a_keepalive &&
-				  interface->add_ike_encapsulation_prefix ?
+				  interface->esp_encapsulation_enabled ?
 				  NON_ESP_MARKER_SIZE : 0;
 
 	const uint8_t *ptr;

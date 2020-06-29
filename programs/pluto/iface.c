@@ -211,10 +211,10 @@ void free_any_iface_port(struct iface_port **ifp)
 
 struct iface_port *bind_iface_port(struct iface_dev *ifd, const struct iface_io *io,
 				   ip_port port,
-				   bool add_ike_encapsulation_prefix,
+				   bool esp_encapsulation_enabled,
 				   bool float_nat_initiator)
 {
-	int fd = io->bind_iface_port(ifd, port, add_ike_encapsulation_prefix);
+	int fd = io->bind_iface_port(ifd, port, esp_encapsulation_enabled);
 	if (fd < 0) {
 		/* already logged? */
 		return NULL;
@@ -225,7 +225,7 @@ struct iface_port *bind_iface_port(struct iface_dev *ifd, const struct iface_io 
 	ifp->fd = fd;
 	ifp->ip_dev = add_ref(ifd);
 	ifp->io = io;
-	ifp->add_ike_encapsulation_prefix = add_ike_encapsulation_prefix;
+	ifp->esp_encapsulation_enabled = esp_encapsulation_enabled;
 	ifp->float_nat_initiator = float_nat_initiator;
 	ifp->protocol = io->protocol;
 	ifp->local_endpoint = endpoint3(io->protocol,
@@ -259,7 +259,7 @@ static void add_new_ifaces(void)
 		 */
 
 		if (bind_iface_port(ifd, &udp_iface_io, ip_hport(pluto_port),
-				    false/*add_ike_encapsulation_prefix*/,
+				    false/*esp_encapsulation_enabled*/,
 				    true/*float_nat_initiator*/)  == NULL) {
 			ifd->ifd_change = IFD_DELETE;
 			continue;
@@ -281,22 +281,24 @@ static void add_new_ifaces(void)
 		 */
 		if (address_type(&ifd->id_address) == &ipv4_info) {
 			bind_iface_port(ifd, &udp_iface_io, ip_hport(pluto_nat_port),
-					true/*add_ike_encapsulation_prefix*/,
+					true/*esp_encapsulation_enabled*/,
 					true/*float_nat_initiator*/);
 		}
 
 		/*
 		 * An explicit {left,right}IKEPORT can't float away.
 		 *
-		 * An explicit {left,right}IKEPORT may end up talking
-		 * to port 500 which does not allow the IKE
-		 * encapsulation prefix, so don't add it.
+		 * An explicit {left,right}IKEPORT must enable
+		 * ESPINUDP so that it can tunnel NAT.  This means
+		 * that incomming packets must add the ESP=0 prefix,
+		 * which inturn means that it can't interop with port
+		 * 500 - that never sends the ESP=0 prefix.
 		 *
-		 * See comments in iface.h - this is backwards.
+		 * See comments in iface.h.
 		 */
 		if (pluto_tcpport != 0) {
 			bind_iface_port(ifd, &iketcp_iface_io, ip_hport(pluto_tcpport),
-					false/*add_ike_encapsulation_prefix*/,
+					true/*esp_encapsulation_enabled*/,
 					false/*float_nat_initiator*/);
 		}
 	}

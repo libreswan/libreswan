@@ -28,10 +28,10 @@ north #
 004 "north-dpd/0x2" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "north-dpd/0x1" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
 002 "north-dpd/0x2" #3: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
-1v1 "north-dpd/0x2" #3: STATE_QUICK_I1: sent QI1, expecting QR1
 1v1 "north-dpd/0x1" #2: STATE_QUICK_I1: sent QI1, expecting QR1
-004 "north-dpd/0x2" #3: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=active}
+1v1 "north-dpd/0x2" #3: STATE_QUICK_I1: sent QI1, expecting QR1
 004 "north-dpd/0x1" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=active}
+004 "north-dpd/0x2" #3: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=active}
 north #
  ipsec auto --status | grep northnet-eastnets
 north #
@@ -80,7 +80,7 @@ north #
 000 "north-dpd/0x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "north-dpd/0x1":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 000 "north-dpd/0x1":   dpd: action:restart; delay:3; timeout:10; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "north-dpd/0x1":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "north-dpd/0x1":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "north-dpd/0x1":   aliases: north-dpd
 000 "north-dpd/0x2": 192.0.3.0/24===192.1.3.33<192.1.3.33>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org]---192.1.3.254...192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.22.0/24; prospective erouted; eroute owner: #0
 000 "north-dpd/0x2":     oriented; my_ip=unset; their_ip=unset; mycert=north; peercert=east; my_updown=ipsec _updown;
@@ -97,12 +97,12 @@ north #
 000 "north-dpd/0x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "north-dpd/0x2":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 000 "north-dpd/0x2":   dpd: action:restart; delay:3; timeout:10; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "north-dpd/0x2":   newest ISAKMP SA: #1; newest IPsec SA: #0;
+000 "north-dpd/0x2":   newest ISAKMP SA: #1; newest IPsec SA: #0; conn serial: $2;
 000 "north-dpd/0x2":   aliases: north-dpd
 000 "north-dpd/0x2":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
-000 #5: "north-dpd/0x1":500 STATE_QUICK_I1 (sent QI1, expecting QR1); EVENT_RETRANSMIT in XXs; lastdpd=-1s(seq in:XXXXX out:YYYYY); idle;
-000 #1: "north-dpd/0x2":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; lastdpd=30s(seq in:XXXXX out:YYYYY); idle;
-000 #4: "north-dpd/0x2":500 STATE_QUICK_I1 (sent QI1, expecting QR1); EVENT_RETRANSMIT in XXs; lastdpd=-1s(seq in:XXXXX out:YYYYY); idle;
+000 #5: "north-dpd/0x1":500 STATE_QUICK_I1 (sent QI1, expecting QR1); EVENT_RETRANSMIT in XXs; lastdpd=-1s(seq in:0 out:0); idle;
+000 #1: "north-dpd/0x2":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; lastdpd=31s(seq in:XXXXX out:YYYYY); idle;
+000 #4: "north-dpd/0x2":500 STATE_QUICK_I1 (sent QI1, expecting QR1); EVENT_RETRANSMIT in XXs; lastdpd=-1s(seq in:0 out:0); idle;
 north #
  ip route del unreachable 192.1.2.23
 north #

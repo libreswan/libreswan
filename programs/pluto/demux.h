@@ -157,8 +157,6 @@ struct msg_digest {
 		bool redirected_from;
 		bool redirect_supported;
 		struct payload_digest *redirect;
-		bool nat_detection_source_ip;
-		bool nat_detection_destination_ip;
 		struct payload_digest *signature_hash_algorithms;
 		struct payload_digest *null_auth;
 		bool esp_tfc_padding_not_supported;
@@ -225,7 +223,9 @@ struct msg_digest {
 enum ike_version hdr_ike_version(const struct isakmp_hdr *hdr);
 enum message_role v2_msg_role(const struct msg_digest *md);
 
-extern struct msg_digest *alloc_md(const char *mdname);
+extern struct msg_digest *alloc_md(const struct iface_port *ifp,
+				   const ip_endpoint *sender,
+				   where_t where);
 struct msg_digest *md_addref(struct msg_digest *md, where_t where);
 void md_delref(struct msg_digest **mdp, where_t where);
 

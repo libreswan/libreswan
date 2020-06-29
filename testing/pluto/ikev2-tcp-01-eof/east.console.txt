@@ -53,6 +53,9 @@ connection from 192.1.2.45:EPHEM: TCP: 0 byte message flags EOF
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
 connection from 192.1.2.45:EPHEM: TCP: 0 byte message flags EOF
 east #
+ ipsec stop
+Redirecting to: [initsystem]
+east #
  ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

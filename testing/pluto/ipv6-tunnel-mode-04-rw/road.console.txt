@@ -48,7 +48,7 @@ road #
 000 "v6-tunnel-east-road":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "v6-tunnel-east-road":   our idtype: ID_FQDN; our id=@road; their idtype: ID_FQDN; their id=@east
 000 "v6-tunnel-east-road":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "v6-tunnel-east-road":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "v6-tunnel-east-road":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 road #
  ipsec whack --impair suppress-retransmits
 road #

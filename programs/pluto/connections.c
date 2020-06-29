@@ -1,5 +1,4 @@
-/*
- * information about connections between hosts and clients
+/* information about connections between hosts and clients
  *
  * Copyright (C) 1998-2002,2010,2013,2018 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael Richardson <mcr@xelerance.com>
@@ -17,7 +16,7 @@
  * Copyright (C) 2013,2018 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2015-2020 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2016-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016-2020 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -358,7 +357,8 @@ void delete_every_connection(void)
 		delete_connection(connections, TRUE);
 }
 
-static err_t default_end(struct end *e, ip_address *dflt_nexthop)
+static err_t default_end(const char *leftright, struct end *e,
+			 ip_address *dflt_nexthop, unsigned remote_port)
 {
 	err_t ugh = NULL;
 	const struct ip_info *afi = aftoinfo(addrtypeof(&e->host_addr));
@@ -376,6 +376,20 @@ static err_t default_end(struct end *e, ip_address *dflt_nexthop)
 	/* Default nexthop to other side. */
 	if (isanyaddr(&e->host_nexthop))
 		e->host_nexthop = *dflt_nexthop;
+
+	/*
+	 * XXX: When DST is the peer setting .host_port to PLUTO_PORT
+	 * (our port) is wrong.  IKE_UDP_PORT is the next best thing.
+	 *
+	 * But what if DST is THIS?  .host_port gets ignored?
+	 *
+	 * If one end has an ikeport, the other must use ikport or nat
+	 * port.
+	 */
+	e->host_port = (e->raw.host.ikeport ? e->raw.host.ikeport :
+			remote_port ? NAT_IKE_UDP_PORT :
+			IKE_UDP_PORT);
+	dbg("%s host_port %d", leftright, e->host_port);
 
 	/* Default client to subnet containing only self */
 	if (!e->has_client) {
@@ -818,14 +832,6 @@ static int extract_end(struct fd *whackfd,
 			   leftright, src->host_ikeport);
 		dst->raw.host.ikeport = 0;
 	}
-	/*
-	 * XXX: When DST is the peer setting .host_port to PLUTO_PORT
-	 * (our port) is wrong.  IKE_UDP_PORT is the next best thing.
-	 *
-	 * But what if DST is THIS?  .host_port gets ignored?
-	 */
-	dst->host_port = (dst->raw.host.ikeport ? dst->raw.host.ikeport : IKE_UDP_PORT);
-
 
 	/*
 	 * see if we can resolve the DNS name right now
@@ -1727,8 +1733,8 @@ static bool extract_connection(struct fd *whackfd,
 	if (c->spd.this.xauth_server || c->spd.that.xauth_server)
 		c->policy |= POLICY_XAUTH;
 
-	default_end(&c->spd.this, &c->spd.that.host_addr);
-	default_end(&c->spd.that, &c->spd.this.host_addr);
+	default_end("left", &c->spd.this, &c->spd.that.host_addr, c->spd.that.raw.host.ikeport);
+	default_end("right", &c->spd.that, &c->spd.this.host_addr, c->spd.this.raw.host.ikeport);
 
 	/*
 	 * If both left/rightauth is unset, fill it in with (preferred) symmetric policy
@@ -2049,14 +2055,14 @@ struct connection *instantiate(struct connection *c,
 	if (peer_addr != NULL) {
 		d->spd.that.host_addr = *peer_addr;
 	}
-	default_end(&d->spd.that, &d->spd.this.host_addr);
+	default_end("that", &d->spd.that, &d->spd.this.host_addr, d->spd.this.raw.host.ikeport);
 
 	/*
 	 * We cannot guess what our next_hop should be, but if it was
 	 * explicitly specified as 0.0.0.0, we set it to be peer.
 	 * (whack will not allow nexthop to be elided in RW case.)
 	 */
-	default_end(&d->spd.this, &d->spd.that.host_addr);
+	default_end("this", &d->spd.this, &d->spd.that.host_addr, d->spd.this.raw.host.ikeport);
 	d->spd.spd_next = NULL;
 
 	d->spd.reqid = c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid;
@@ -3975,12 +3981,21 @@ void show_one_connection(struct show *s,
 		}
 	}
 
-	show_comment(s,
-		"\"%s\"%s:   newest ISAKMP SA: #%lu; newest IPsec SA: #%lu;",
-		c->name,
-		instance,
-		c->newest_isakmp_sa,
-		c->newest_ipsec_sa);
+	LSWBUF(buf) {
+		jam(buf, "\"%s\"%s:   newest ISAKMP SA: #%lu; newest IPsec SA: #%lu; conn serial: "PRI_CO"",
+		    c->name,
+		    instance,
+		    c->newest_isakmp_sa,
+		    c->newest_ipsec_sa,
+		    pri_co(c->serialno));
+		if (c->serial_from.co/*oops*/ != 0) {
+			jam(buf, ", instantiated from: "PRI_CO";", 
+			    pri_co(c->serial_from));
+		} else {
+			jam(buf, ";");
+		}
+		show_jambuf(s, buf);
+	}
 
 	if (c->connalias != NULL) {
 		show_comment(s,

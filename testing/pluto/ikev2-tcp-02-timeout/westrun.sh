@@ -16,3 +16,4 @@ send 'IKETCP\x0\x0'
 send 'IKETCP\x0\xff'
 # open the TCP socket, send IKETCP<0xffff>
 send 'IKETCP\xff\xff'
+

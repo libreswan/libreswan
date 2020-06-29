@@ -57,7 +57,7 @@ struct prf_ikev2_ops {
 };
 
 extern const struct prf_ikev2_ops ike_alg_prf_ikev2_mac_ops;
-#ifdef USE_NSS_PRF
+#ifdef USE_NSS_KDF
 extern const struct prf_ikev2_ops ike_alg_prf_ikev2_nss_ops;
 #endif
 
