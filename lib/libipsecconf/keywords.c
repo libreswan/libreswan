@@ -607,9 +607,9 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "connalias",  kv_conn | kv_processed,  kt_appendstring,  KSCF_CONNALIAS, NULL, NULL, },
 
   /* attributes of the phase2 policy */
-  { "phase2alg",  kv_conn,  kt_string,  KSCF_ESP, NULL, NULL, },	/* synonyms: phase2alg, esp, ah */
-  { "esp",  kv_conn | kv_alias,  kt_string,  KSCF_ESP, NULL, NULL, },	/* synonyms: phase2alg, esp, ah */
-  { "ah",  kv_conn | kv_alias,  kt_string,  KSCF_ESP, NULL, NULL, },	/* synonyms: phase2alg, esp, ah */
+  { "esp",  kv_conn,  kt_string,  KSCF_ESP, NULL, NULL, },
+  { "ah",  kv_conn,  kt_string,  KSCF_ESP, NULL, NULL, },
+  { "phase2alg",  kv_conn | kv_alias,  kt_string,  KSCF_ESP, NULL, NULL, },	/* obsolete */
 
   { "phase2",  kv_conn | kv_policy,  kt_enum,  KNCF_PHASE2,  &kw_phase2types_list, NULL, },
 
