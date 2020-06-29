@@ -18,13 +18,14 @@ instance, "sha2_512" or "sha2_256-dh14".
 algoritm, for example <emphasis remap='I'>esp=aes_gcm256</emphasis> or
 <emphasis remap='I'>esp=aes_ccm</emphasis>. Note that the ike= syntax for aes_gcm
 does require the prf hashing algorithm which is not needed for esp=.
-The supported key sizes are 128, 192 and 256, which are specified similarly
-to plain aes, i.e. <emphasis remap='I'>esp=aes_gcm256</emphasis>. A
+The supported key sizes for aes_gcm are 128, 192 and 256, which are specified
+similarly to plain aes, i.e. <emphasis remap='I'>esp=aes_gcm256</emphasis>. A
 subscript of <emphasis remap='I'>_c</emphasis>, <emphasis remap='I'>_b</emphasis>
 or <emphasis remap='I'>_a</emphasis> can be used to refer to the different ICV
-variants where a means 8 bytes, b means 12 bytes and c means 16 bytes. The default
-when not using a subscript is the 16 byte ICV, the recommended value by RFC-4106.
-Therefore esp=aes_gcm256 is equivalent to phase2alg=aes_gcm_c256.
+variants where a means 8 bytes, b means 12 bytes and c means 16 bytes.
+The default when not using a subscript is the 16 byte ICV, the recommended
+value by RFC-4106 and RFC-8247.
+Therefore esp=aes_gcm256 is equivalent to esp=aes_gcm_c256.
 It is recommended to migrate to the _c versions (without specifying _c),
 as support for smaller ICV's might be removed in the near future.</para>
 
@@ -34,8 +35,8 @@ aes_ccm, camellia and chacha20_poly1305.</para>
 
 <para>Note that openswan and versions of libreswan up to 3.6 require manually
 adding the salt size to the key size. Therefore, to configure an older
-version of openswan or libreswan, use: "phase2alg=aes_ccm_c-280-null" to
-interop with a new libreswan using "phase2alg=aes_ccm256". For
+version of openswan or libreswan, use: "esp=aes_ccm_c-280-null" to
+interop with a new libreswan using "esp=aes_ccm256". For
 CCM, the 'keysize' needs to be increased by 24, resulted in valid keysizes
 of 152, 215 and 280. For GCM the 'keysize' needs to be increased by 32,
 resulting valid 'keysizes' of 160, 224 and 288.
