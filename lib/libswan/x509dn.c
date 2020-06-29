@@ -871,7 +871,7 @@ bool same_dn(chunk_t a, chunk_t b)
 
 /*
  * compare two distinguished names by comparing the individual RDNs.
- * A single '*' character designates a wildcard RDN in DN b.
+ * A single '*' character designates a wildcard RDN.
  * If wildcards is NULL, exact match is required.
  */
 bool match_dn(chunk_t a, chunk_t b, int *wildcards)
@@ -944,14 +944,14 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 		if (!hunk_eq(oid_a, oid_b))
 			return FALSE;
 
-		/* does rdn_b contain a wildcard? */
-		/* ??? this does not care whether types match.  Should it? */
-		if (wildcards != NULL &&
-		    value_content_b.len == 1 &&
-		    value_content_b.ptr[0] == '*') {
-			(*wildcards)++;
-			continue;
-		}
+		/* Does either RDN contain a wildcard? */
+ 		/* ??? this does not care whether types match.  Should it? */
+		if ((wildcards != NULL) &&
+		    ((value_content_a.len == 1 && *value_content_a.ptr == '*') ||
+		     (value_content_b.len == 1 && *value_content_b.ptr == '*'))) {
+ 			(*wildcards)++;
+ 			continue;
+ 		}
 
 		if (value_content_a.len != value_content_b.len)
 			return FALSE;	/* lengths must match */

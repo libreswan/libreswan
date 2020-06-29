@@ -786,16 +786,6 @@ bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd)
 	return TRUE;
 }
 
-/* Check that we can route (and eroute).  Diagnose if we cannot. */
-
-enum routability {
-	route_impossible,
-	route_easy,
-	route_nearconflict,
-	route_farconflict,
-	route_unnecessary
-};
-
 /*
  * handle co-terminal attempt of the "near" kind
  *
@@ -842,7 +832,7 @@ static enum routability note_nearconflict(
 /*
  * Note: this may mutate c
  */
-static enum routability could_route(struct connection *c, struct logger *logger)
+enum routability could_route(struct connection *c, struct logger *logger)
 {
 	dbg("could_route called for %s; kind=%s that.has_client=%s oppo=%s this.host_port=%u",
 	    c->name,

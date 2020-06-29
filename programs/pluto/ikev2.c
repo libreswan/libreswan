@@ -2746,6 +2746,18 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 				return FALSE;
 			}
 			duplicate_id(&c->spd.that.id, &peer_id);
+		} else if (c->spd.that.has_id_wildcards) {
+			/* 
+			 * The IKE Initiator is using a template instance connection;
+			 * in the user-specified connection configuration, the DN for
+			 * specifying the peer has one or more wildcards for RDN AVA
+			 * values.
+			 * Hence, replace the wildcarded DN with the actual peer DN.
+			 */
+			DBG_log("replacing wildcards for peer DN in connection \"%s\"", c->name);
+			passert(c->kind == CK_INSTANCE);
+			duplicate_id(&c->spd.that.id, &peer_id);
+			c->spd.that.has_id_wildcards = FALSE;
 		}
 	} else {
 		/* why should refine_host_connection() update this? We pulled it from their packet */
@@ -2847,13 +2859,44 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 				dbg("retrying ikev2_decode_peer_id_and_certs() with new conn");
 				return decode_peer_id_counted(ike, md, depth + 1);
 			} else if (must_switch) {
-					id_buf peer_str;
-					loglog(RC_LOG_SERIOUS, "Peer ID '%s' mismatched on first found connection and no better connection found",
-							      str_id(&peer_id, &peer_str));
-					return FALSE;
+				id_buf peer_str;
+				loglog(RC_LOG_SERIOUS, "Peer ID '%s' mismatched on first found connection and no better connection found",
+						str_id(&peer_id, &peer_str));
+				return FALSE;
+			} else if (c->kind == CK_TEMPLATE) {
+				/*
+				 * The IKE Responder is currently using a template connection
+				 * whose configuration matches the current IKE negotiation
+				 * parameters (e.g. the DN specifying the peer in the
+				 * configuration might contain one or more wildcards that
+				 * allow it to match the actual peer DN). For further
+				 * processing such as routing checks, however, a template
+				 * instance connection needs to be instantiated.
+				 */
+				char b1[CONN_INST_BUF];
+
+				struct connection *rw_conn = rw_instantiate(c,
+									    &c->spd.that.host_addr,
+									    NULL,
+									    &peer_id);
+				id_buf peer_id_buf;
+				char const *peer_id_str = str_id(&peer_id, &peer_id_buf);
+
+				libreswan_log("instantiated a Road Warrior connection \"%s\" from template \"%s\" using peer ID %s",
+					      fmt_conn_instance(rw_conn, b1),
+					      c->name,
+					      peer_id_str);
+				/*
+				 * Henceforth, use the template instance connection instead of the
+				 * template connection.
+				 */
+				c = rw_conn;
+				update_state_connection(md->st, c);
 			}
 
+
 			if (c->spd.that.has_id_wildcards) {
+				dbg("replacing wildcards in peer DN for connection \"%s\"", c->name);
 				duplicate_id(&c->spd.that.id, &peer_id);
 				c->spd.that.has_id_wildcards = FALSE;
 			} else if (fromcert) {

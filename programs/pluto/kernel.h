@@ -308,6 +308,16 @@ struct eroute_info {
 	struct eroute_info *next;
 };
 
+/* Check that we can route (and eroute).  Diagnose if we cannot. */
+
+enum routability {
+	route_impossible,
+	route_easy,
+	route_nearconflict,
+	route_farconflict,
+	route_unnecessary
+};
+
 /* bare (connectionless) shunt (eroute) table
  *
  * Bare shunts are those that don't "belong" to a connection.
@@ -357,6 +367,7 @@ extern void record_and_initiate_opportunistic(const ip_selector *our_client,
 extern void init_kernel(void);
 
 struct connection;      /* forward declaration of tag */
+extern enum routability could_route(struct connection *c, struct logger *logger);
 extern bool trap_connection(struct connection *c, struct fd *whackfd);
 extern void unroute_connection(struct connection *c);
 extern void migration_up(struct connection *c,  struct state *st);

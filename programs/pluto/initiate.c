@@ -345,17 +345,35 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 			return 0;
 		}
 
-		if (!(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
-			log_connection(RC_WILDCARD, whackfd, c,
-				       "cannot initiate connection with narrowing=no and (kind=%s)",
-				       enum_show(&connection_kind_names, c->kind));
-		} else {
-			log_connection(RC_WILDCARD, whackfd, c,
-				       "cannot initiate connection with ID wildcards (kind=%s)",
-				       enum_show(&connection_kind_names, c->kind));
-		}
-		pop_cur_connection(old);
-		return 0;
+		if(c->kind == CK_TEMPLATE &&
+			!c->spd.that.has_port_wildcard &&
+			c->spd.that.has_id_wildcards) {
+			/*
+			 * We are dealing with a connection that is marked as a template
+			 * _only_ because its user-specified configuration has wildcard(s)
+			 * in the peer DN. In other words, this template connection does
+			 * _not_ have any _other_ properties that makes it a template.
+			 * This means, we can use this template connection to initiate
+			 * an IKE negotiation because we have all the required information
+			 * to do so.
+			 * Therefore, don't do anything here and proceed with initiating
+			 * a connection.
+			 */
+			libreswan_log("allowing template connection \"%s\" with wildcarded peer DN to proceed",
+				      c->name);
+ 		} else {
+			if (!(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
+				log_connection(RC_WILDCARD, whackfd, c,
+					       "cannot initiate connection with narrowing=no and (kind=%s)",
+			       		       enum_show(&connection_kind_names, c->kind));
+			} else {
+				log_connection(RC_WILDCARD, whackfd, c,
+				       	       "cannot initiate connection with ID wildcards (kind=%s)",
+					       enum_show(&connection_kind_names, c->kind));
+			}
+			pop_cur_connection(old);
+			return 0;
+ 		}
 	}
 
 	if (isanyaddr(&c->spd.that.host_addr) && (c->policy & POLICY_IKEV2_ALLOW_NARROWING) ) {

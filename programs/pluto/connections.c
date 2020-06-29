@@ -2930,7 +2930,7 @@ struct connection *refine_host_connection(const struct state *st,
 	/* wcip stands for: wildcard Peer IP? */
 	for (bool wcpip = FALSE;; wcpip = TRUE) {
 		for (; d != NULL; d = d->hp_next) {
-			int wildcards;
+			int wildcards = 0;
 			bool matching_peer_id = match_id(peer_id,
 							&d->spd.that.id,
 							&wildcards);

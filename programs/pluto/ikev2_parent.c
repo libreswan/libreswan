@@ -528,6 +528,28 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 		}
 	}
 
+	if (c->kind == CK_TEMPLATE) {
+		/*
+		 * A template connection configuration triggered `pluto` to initiate an IKE negotiation.
+		 * Connection processing, however, requires a template instance; so instantiate that
+		 * template instance connection below.
+		 */
+		char b1[CONN_INST_BUF];
+
+		/*
+		 * The template most likely has wildcard(s) in its user-specified peer DN configuration.
+		 * Therefore, the new template instance will have a peer DN with wildcard(s) as well.
+		 * Once `pluto` learns the actual peer DN during the IKE_AUTH exchange, it (i.e `pluto`
+		 * will update the connection's peer DN information to the non-wildcarded value.
+		 */
+		struct connection *rw_conn = rw_instantiate(c, &c->spd.that.host_addr, NULL, NULL);
+		libreswan_log("instantiated a Road Warrior connection \"%s\" from template \"%s\" prior to sending IKE_SA_INIT Initiator Request",
+				fmt_conn_instance(rw_conn, b1),
+				c->name);
+		/* Henceforth, use the template instance instead of the template. */
+		c = rw_conn;
+	}
+
 	const struct finite_state *fs = finite_states[STATE_PARENT_I0];
 	pexpect(fs->nr_transitions == 1);
 	const struct state_v2_microcode *transition = &fs->v2_transitions[0];
@@ -1467,6 +1489,34 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 
 	if (!decode_v2N_ike_sa_init_response(md)) {
 		return STF_FATAL;
+	}
+
+	/*
+	 * At this point, IKE_SA_INIT exchange has completed.
+	 * Before initiating the IKE_AUTH exchange, which includes creating child SAs,
+	 * check if we, the IKE Initiator, can properly route. If we don't check this
+	 * now, we may end up doing a lot of work that needs to be torn down, when we
+	 * check the ability to route again later during the IKE_AUTH exchange processing.
+	 */
+	enum routability const rb = could_route(c, st->st_logger);
+	switch (rb) {
+	case route_easy:
+	case route_unnecessary:
+	case route_nearconflict:
+		libreswan_log("could_route OK for %s after receiving IKE_SA_INIT Responder Response", c->name);
+		break;
+
+	default:
+		loglog(RC_LOG_SERIOUS,
+		       "could_route failed for %s after receiving IKE_SA_INIT Responder Response",
+		       c->name);
+		/*
+		 * Notify the peer that IKE negotiation cannot continue.
+		 * Use a TEMPORARY_FAILURE notification since the routing issues
+		 * preventing further progress may be temporary and could therefore
+		 * get resolved later.
+		 */
+		return STF_FATAL + v2N_TEMPORARY_FAILURE;
 	}
 
 	/*
