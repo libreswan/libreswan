@@ -92,6 +92,7 @@
 #include "state_db.h"
 
 #include "nss_cert_reread.h"
+#include "send.h"			/* for impair: send_keepalive() */
 
 static struct state *find_impaired_state(unsigned biased_what, struct fd *whackfd)
 {
@@ -127,7 +128,7 @@ static void whack_impair_action(enum impair_action action, unsigned event,
 				unsigned biased_what, bool background, struct fd *whackfd)
 {
 	switch (action) {
-	case IMPAIR_UPDATE:
+	case CALL_IMPAIR_UPDATE:
 		/* err... */
 		break;
 	case CALL_GLOBAL_EVENT:
@@ -145,7 +146,7 @@ static void whack_impair_action(enum impair_action action, unsigned event,
 		call_state_event_inline(&logger, st, event);
 		break;
 	}
-	case INITIATE_v2_LIVENESS:
+	case CALL_INITIATE_v2_LIVENESS:
 	{
 		struct state *st = find_impaired_state(biased_what, whackfd);
 		if (st == NULL) {
@@ -163,7 +164,7 @@ static void whack_impair_action(enum impair_action action, unsigned event,
 		initiate_v2_liveness(&logger, ike);
 		break;
 	}
-	case INITIATE_v2_DELETE:
+	case CALL_INITIATE_v2_DELETE:
 	{
 		struct state *st = find_impaired_state(biased_what, whackfd);
 		if (st == NULL) {
@@ -175,7 +176,7 @@ static void whack_impair_action(enum impair_action action, unsigned event,
 		initiate_v2_delete(ike_sa(st, HERE), st);
 		break;
 	}
-	case INITIATE_v2_REKEY:
+	case CALL_INITIATE_v2_REKEY:
 	{
 		struct state *st = find_impaired_state(biased_what, whackfd);
 		if (st == NULL) {
@@ -185,6 +186,19 @@ static void whack_impair_action(enum impair_action action, unsigned event,
 		/* will log */
 		attach_logger(st, background, whackfd);
 		initiate_v2_rekey(ike_sa(st, HERE), st);
+		break;
+	}
+	case CALL_SEND_KEEPALIVE:
+	{
+		struct state *st = find_impaired_state(biased_what, whackfd);
+		if (st == NULL) {
+			/* already logged */
+			return;
+		}
+		/* will log */
+		struct logger logger = attach_logger(st, true/*background*/, whackfd);
+		log_message(RC_COMMENT, &logger, "sending keepalive");
+		send_keepalive(st, "inject keep-alive");
 		break;
 	}
 	}

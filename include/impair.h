@@ -159,10 +159,11 @@ enum impair_status {
 enum impair_status parse_impair(const char *optarg, struct whack_impair *whack_impair, bool enable, const char *progname);
 
 enum impair_action {
-	IMPAIR_UPDATE,
-	INITIATE_v2_DELETE,
-	INITIATE_v2_LIVENESS,
-	INITIATE_v2_REKEY,
+	CALL_IMPAIR_UPDATE,
+	CALL_INITIATE_v2_DELETE,
+	CALL_INITIATE_v2_LIVENESS,
+	CALL_INITIATE_v2_REKEY,
+	CALL_SEND_KEEPALIVE,
 	CALL_GLOBAL_EVENT,
 	CALL_STATE_EVENT,
 };

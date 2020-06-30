@@ -70,8 +70,8 @@ struct impairment {
 struct impairment impairments[] = {
 	{ .what = NULL, },
 
-#define A(WHAT, ACTION, PARAM, HELP, UNSIGNED_HELP, ...) { .what = WHAT, .action = ACTION, .param = PARAM, .help = HELP, .unsigned_help = UNSIGNED_HELP, ##__VA_ARGS__, }
-#define V(WHAT, VALUE, HELP, ...) { .what = WHAT, .action = IMPAIR_UPDATE, .value = &impair.VALUE, .help = HELP, .sizeof_value = sizeof(impair.VALUE), ##__VA_ARGS__, }
+#define A(WHAT, ACTION, PARAM, HELP, UNSIGNED_HELP, ...) { .what = WHAT, .action = CALL_##ACTION, .param = PARAM, .help = HELP, .unsigned_help = UNSIGNED_HELP, ##__VA_ARGS__, }
+#define V(WHAT, VALUE, HELP, ...) { .what = WHAT, .action = CALL_IMPAIR_UPDATE, .value = &impair.VALUE, .help = HELP, .sizeof_value = sizeof(impair.VALUE), ##__VA_ARGS__, }
 
 	V("add-unknown-payload-to-auth", add_unknown_payload_to_auth, "add a payload with an unknown type to AUTH"),
 	V("add-unknown-payload-to-auth-sk", add_unknown_payload_to_auth_sk, "add a payload with an unknown type to AUTH's SK payload"),
@@ -135,6 +135,8 @@ struct impairment impairments[] = {
 	A("initiate-v2-liveness", INITIATE_v2_LIVENESS, 0, "initiate an IKEv2 liveness exchange", "IKE SA"),
 	A("initiate-v2-delete", INITIATE_v2_DELETE, 0, "initiate an IKEv2 delete exchange", "SA"),
 	A("initiate-v2-rekey", INITIATE_v2_REKEY, 0, "initiate an IKEv2 rekey using the CREATE_CHILD_SA exchange", "SA"),
+
+	A("send-keepalive", SEND_KEEPALIVE, 0, "send a NAT keepalive packet", "SA"),
 
 #undef V
 #undef A
@@ -379,7 +381,7 @@ bool have_impairments(void)
 	/* is there anything enabled? */
 	for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 		const struct impairment *cr = &impairments[ci];
-		if (cr->action == IMPAIR_UPDATE &&
+		if (cr->action == CALL_IMPAIR_UPDATE &&
 		    value_of(cr) != 0) {
 			return true;
 		}
@@ -392,7 +394,7 @@ void jam_impairments(jambuf_t *buf, const char *sep)
 	const char *s = "";
 	for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 		const struct impairment *cr = &impairments[ci];
-		if (cr->action == IMPAIR_UPDATE &&
+		if (cr->action == CALL_IMPAIR_UPDATE &&
 		    value_of(cr) != 0) {
 			jam_string(buf, s); s = sep;
 			jam_impairment(buf, cr);
@@ -413,7 +415,7 @@ bool process_impair(const struct whack_impair *wc,
 	} else if (wc->what == IMPAIR_DISABLE) {
 		for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 			const struct impairment *cr = &impairments[ci];
-			if (cr->action == IMPAIR_UPDATE &&
+			if (cr->action == CALL_IMPAIR_UPDATE &&
 			    value_of(cr) != 0) {
 				dbg("%s: disabled", cr->what);
 				memset(cr->value, 0, cr->sizeof_value);
@@ -423,7 +425,7 @@ bool process_impair(const struct whack_impair *wc,
 	} else if (wc->what == IMPAIR_LIST) {
 		for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 			const struct impairment *cr = &impairments[ci];
-			if (cr->action == IMPAIR_UPDATE &&
+			if (cr->action == CALL_IMPAIR_UPDATE &&
 			    value_of(cr) != 0) {
 				LOG_MESSAGE(RC_COMMENT, logger, buf) {
 					jam_impairment(buf, cr);
@@ -438,7 +440,7 @@ bool process_impair(const struct whack_impair *wc,
 	}
 	const struct impairment *cr = &impairments[wc->what];
 	switch (cr->action) {
-	case IMPAIR_UPDATE:
+	case CALL_IMPAIR_UPDATE:
 		/* do not un-bias */
 		switch (cr->sizeof_value) {
 #define L(T) case sizeof(uint##T##_t): *(uint##T##_t*)cr->value = wc->how; break;
@@ -455,9 +457,10 @@ bool process_impair(const struct whack_impair *wc,
 			jam_impairment(buf, cr);
 		}
 		return true;
-	case INITIATE_v2_DELETE:
-	case INITIATE_v2_LIVENESS:
-	case INITIATE_v2_REKEY:
+	case CALL_INITIATE_v2_DELETE:
+	case CALL_INITIATE_v2_LIVENESS:
+	case CALL_INITIATE_v2_REKEY:
+	case CALL_SEND_KEEPALIVE:
 	case CALL_GLOBAL_EVENT:
 	case CALL_STATE_EVENT:
 		/* how is always biased */
