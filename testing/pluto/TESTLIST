@@ -100,6 +100,7 @@ kvmplutotest	libipsecconf-04				good
 kvmplutotest	libipsecconf-05-empty_option		wip
 kvmplutotest	libipsecconf-06-ikev2-hash-algo		good
 kvmplutotest	libipsecconf-07				good
+kvmplutotest	libipsecconf-08-system-crypto-policies	good
 
 #################################################################
 # Whack UI tests
@@ -211,7 +212,7 @@ kvmplutotest	ikev2-04-basic-x509-nsspw		good
 
 kvmplutotest	ikev2-10-2behind-nat			good
 kvmplutotest	ikev2-restart-eroute-01			wip
-
+kvmplutotest	ikev2-keyingtries-01			good
 
 # modp tests for checking if we deal with sending different KE's
 kvmplutotest	ikev2-algo-01-modp2048-initiator	good
