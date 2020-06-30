@@ -35,25 +35,24 @@ Certificate Nickname                                         Trust Attributes
 east #
  grep '^connection from' /tmp/pluto.log
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: timed out before first message received
+connection from 192.1.2.45:EPHEM: TCP: socket 17 timed out before first message received
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: problem reading IKETCP prefix - returned 1 bytes but expecting 6; closing socket
+connection from 192.1.2.45:EPHEM: TCP: problem reading IKETCP prefix from socket 17 - returned 1 bytes but expecting 6; closing socket
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: did not receive the IKE-in-TCP stream prefix; closing socket
+connection from 192.1.2.45:EPHEM: TCP: did not receive the IKE-in-TCP stream prefix ; closing socket
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: timed out before first message received
+connection from 192.1.2.45:EPHEM: TCP: socket 17 timed out before first message received
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: read from socket failed Errno 11: Resource temporarily unavailable
-connection from 192.1.2.45:EPHEM: TCP: timed out before first message received
+connection from 192.1.2.45:EPHEM: TCP: read from socket 17 failed Errno 11: Resource temporarily unavailable
+connection from 192.1.2.45:EPHEM: TCP: socket 17 timed out before first message received
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: read from socket failed Errno 22: Invalid argument
-connection from 192.1.2.45:EPHEM: TCP: read from socket failed Errno 11: Resource temporarily unavailable
+connection from 192.1.2.45:EPHEM: TCP: read from socket 17 failed Errno 22: Invalid argument
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: read from socket failed Errno 11: Resource temporarily unavailable
-connection from 192.1.2.45:EPHEM: TCP: timed out before first message received
+connection from 192.1.2.45:EPHEM: TCP: read from socket 17 failed Errno 11: Resource temporarily unavailable
+connection from 192.1.2.45:EPHEM: TCP: socket 17 timed out before first message received
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: read from socket failed Errno 11: Resource temporarily unavailable
-connection from 192.1.2.45:EPHEM: TCP: timed out before first message received
+connection from 192.1.2.45:EPHEM: TCP: read from socket 17 failed Errno 11: Resource temporarily unavailable
+connection from 192.1.2.45:EPHEM: TCP: socket 17 timed out before first message received
 east #
  ipsec stop
 Redirecting to: [initsystem]

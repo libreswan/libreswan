@@ -37,21 +37,21 @@ Certificate Nickname                                         Trust Attributes
 east #
  grep '^connection from' /tmp/pluto.log
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: problem reading IKETCP prefix - returned 0 bytes but expecting 6; closing socket
+connection from 192.1.2.45:EPHEM: TCP: problem reading IKETCP prefix from socket 17 - returned 0 bytes but expecting 6; closing socket
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: problem reading IKETCP prefix - returned 1 bytes but expecting 6; closing socket
+connection from 192.1.2.45:EPHEM: TCP: problem reading IKETCP prefix from socket 17 - returned 1 bytes but expecting 6; closing socket
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: did not receive the IKE-in-TCP stream prefix; closing socket
+connection from 192.1.2.45:EPHEM: TCP: did not receive the IKE-in-TCP stream prefix ; closing socket
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: 0 byte message flags EOF
+connection from 192.1.2.45:EPHEM: TCP: 0 byte message from socket 17 indicates EOF
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: 0 byte message flags EOF
+connection from 192.1.2.45:EPHEM: TCP: 0 byte message from socket 17 indicates EOF
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: read from socket failed Errno 22: Invalid argument
+connection from 192.1.2.45:EPHEM: TCP: read from socket 17 failed Errno 22: Invalid argument
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: 0 byte message flags EOF
+connection from 192.1.2.45:EPHEM: TCP: 0 byte message from socket 17 indicates EOF
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: 0 byte message flags EOF
+connection from 192.1.2.45:EPHEM: TCP: 0 byte message from socket 17 indicates EOF
 east #
  ipsec stop
 Redirecting to: [initsystem]
