@@ -52,7 +52,6 @@
 #include <event2/event.h>
 #include <event2/event_struct.h>
 #include <event2/thread.h>
-#include <event2/listener.h>
 
 #include "sysdep.h"
 #include "socketwrapper.h"
@@ -844,23 +843,6 @@ struct pluto_event *add_fd_read_event_handler(evutil_socket_t fd,
 	passert(e->ev != NULL);
 	passert(event_add(e->ev, NULL) >= 0);
 	return e; /* compatible with pluto_event_new for the time being */
-}
-
-struct evconnlistener *add_fd_accept_event_handler(struct iface_port *ifp,
-						   evconnlistener_cb cb)
-{
-	passert(in_main_thread());
-	return evconnlistener_new(pluto_eb, cb,
-				  ifp, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_CLOSE_ON_EXEC,
-				  -1, ifp->fd);
-}
-
-void free_any_fd_accept_event_handler(struct evconnlistener **h)
-{
-	if (*h != NULL) {
-		evconnlistener_free(*h);
-		*h = NULL;
-	}
 }
 
 /*

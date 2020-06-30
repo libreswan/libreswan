@@ -155,14 +155,14 @@ struct iface_port {
 	/* tcp port only */
 	struct evconnlistener *tcp_accept_listener;
 	/* tcp stream only */
+	struct event *iketcp_message_listener;
 	ip_endpoint iketcp_remote_endpoint;
 	bool iketcp_server;
 	enum iketcp_state {
 		IKETCP_OPEN = 1,
 		IKETCP_PREFIXED, /* received IKETCP */
-		IKETCP_RUNNING, /* received at least one packet */
-		IKETCP_STOPPING, /* half closed */
-		IKETCP_STOPPED, /* closed */
+		IKETCP_RUNNING,  /* received at least one packet */
+		IKETCP_STOPPED, /* waiting on state to close */
 	} iketcp_state;
 	struct event *iketcp_timeout;
 };
