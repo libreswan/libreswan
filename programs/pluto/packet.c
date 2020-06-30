@@ -2013,12 +2013,11 @@ bool pbs_in_struct(struct pbs_in *ins,
 				uint8_t byte = *cur;
 				if (byte != 0) {
 					/* We cannot zeroize it, it would break our hash calculation. */
-					log_message(RC_LOG, logger,
-						    "byte at offset %td (%td) of '%s'.'%s' is 0x%02"PRIx8" but should have been zero (ignored)",
-						    (cur - ins->cur),
-						    (cur - ins->start),
-						    sd->name, fp->name,
-						    byte);
+					dbg("byte at offset %td (%td) of '%s'.'%s' is 0x%02"PRIx8" but should have been zero (ignored)",
+					    (cur - ins->cur),
+					    (cur - ins->start),
+					    sd->name, fp->name,
+					    byte);
 				}
 				cur++;
 				*outp++ = '\0'; /* probably redundant */
