@@ -868,8 +868,11 @@ static void  set_migration_attr(const struct kernel_sa *sa,
 	m->new_saddr = xfrm_from_address(sa->src.new_address);
 	m->new_daddr = xfrm_from_address(sa->dst.new_address);
 
+	if (sa->mode == ENCAPSULATION_MODE_TUNNEL)
+		m->mode = XFRM_MODE_TUNNEL;
+	else
+		m->mode = XFRM_MODE_TRANSPORT;
 	m->proto = sa->proto->ipproto;
-	m->mode = XFRM_MODE_TUNNEL;  /* AA_201705 hard coded how to figure this out */
 	m->reqid = sa->reqid;
 	m->old_family = m->new_family = address_type(sa->src.address)->af;
 }
@@ -904,6 +907,12 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 		.reqid = reqid_esp(c->spd.reqid),
 		.encap_type = encap_type,
 	};
+
+	if (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
+		st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL)
+		sa.mode = ENCAPSULATION_MODE_TUNNEL;
+	else
+		sa.mode = ENCAPSULATION_MODE_TRANSPORT;
 
 	ip_endpoint new_endpoint;
 	uint16_t old_port;
