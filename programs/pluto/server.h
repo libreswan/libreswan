@@ -62,9 +62,14 @@ extern bool pluto_drop_oppo_null;
 extern void show_debug_status(struct show *s);
 extern void show_fips_status(struct show *s);
 extern void call_server(char *conffile);
+
 typedef void event_callback_routine(evutil_socket_t, const short, void *);
-void fire_timer_photon_torpedo(struct event **evp, event_callback_fn cb, void *arg,
+
+void fire_timer_photon_torpedo(struct event **evp,
+			       event_callback_fn cb, void *arg,
 			       const deltatime_t delay);
+void attach_fd_read_sensor(struct event **ev, evutil_socket_t fd,
+			   event_callback_fn cb, void *arg);
 
 extern struct pluto_event *add_fd_read_event_handler(evutil_socket_t fd,
 						     event_callback_fn cb, void *arg,

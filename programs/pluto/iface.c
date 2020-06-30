@@ -198,10 +198,7 @@ void free_ifaces(void)
 void free_any_iface_port(struct iface_port **ifp)
 {
 	/* generic stuff */
-	delete_pluto_event(&(*ifp)->pev);
-	if ((*ifp)->io->cleanup != NULL) {
-		(*ifp)->io->cleanup(*ifp);
-	}
+	(*ifp)->io->cleanup(*ifp);
 	release_iface_dev(&(*ifp)->ip_dev);
 	/* XXX: after cleanup so code can log FD */
 	close((*ifp)->fd);

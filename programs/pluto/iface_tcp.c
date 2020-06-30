@@ -658,14 +658,8 @@ stf_status create_tcp_interface(struct state *st)
 	interfaces = q;
 #endif
 
-	passert(ifp->iketcp_message_listener == NULL)
-	ifp->iketcp_message_listener = event_new(get_pluto_event_base(), fd,
-						 EV_READ|EV_PERSIST,
-						 iketcp_message_listener_cb,
-						 ifp);
-	passert(ifp->iketcp_message_listener != NULL);
-
-	passert(event_add(ifp->iketcp_message_listener, NULL) >= 0);
+	attach_fd_read_sensor(&ifp->iketcp_message_listener,
+			      fd, iketcp_message_listener_cb, ifp);
 
 	st->st_interface = ifp; /* TCP: leaks old st_interface? */
 	pstats_iketcp_started[ifp->iketcp_server]++;
@@ -709,16 +703,8 @@ void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 	/* set up a timeout to kill the socket when nothing happens */
 	fire_timer_photon_torpedo(&ifp->iketcp_timeout, iketcp_server_timeout,
 				  ifp, deltatime(5)); /* TCP: how much? */
-
-	passert(ifp->iketcp_message_listener == NULL);
-	ifp->iketcp_message_listener = event_new(get_pluto_event_base(),
-						 ifp->fd,
-						 EV_READ|EV_PERSIST,
-						 iketcp_message_listener_cb,
-						 ifp);
-	passert(ifp->iketcp_message_listener != NULL);
-
-	passert(event_add(ifp->iketcp_message_listener, NULL) >= 0);
+	attach_fd_read_sensor(&ifp->iketcp_message_listener, ifp->fd,
+			      iketcp_message_listener_cb, ifp);
 
 	pstats_iketcp_started[ifp->iketcp_server]++;
 }

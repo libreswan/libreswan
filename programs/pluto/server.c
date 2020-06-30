@@ -819,6 +819,17 @@ extern void schedule_callback(const char *name, so_serial_t serialno,
 				  deltatime(0)/*now*/);
 }
 
+void attach_fd_read_sensor(struct event **ev, evutil_socket_t fd,
+			   event_callback_fn cb, void *arg)
+{
+	passert(*ev == NULL);
+	*ev = event_new(get_pluto_event_base(), fd,
+			EV_READ|EV_PERSIST, cb, arg);
+	passert(*ev != NULL);
+	/* note call */
+	passert(event_add(*ev, NULL) >= 0);
+}
+
 /*
  * XXX: Some of the callers save the struct pluto_event reference but
  * some do not.
@@ -839,9 +850,7 @@ struct pluto_event *add_fd_read_event_handler(evutil_socket_t fd,
 	 * running, there can't be a race between the event being
 	 * added and the event firing.
 	 */
-	e->ev = event_new(pluto_eb, fd, EV_READ|EV_PERSIST, cb, arg);
-	passert(e->ev != NULL);
-	passert(event_add(e->ev, NULL) >= 0);
+	attach_fd_read_sensor(&e->ev, fd, cb, arg);
 	return e; /* compatible with pluto_event_new for the time being */
 }
 

@@ -152,7 +152,7 @@ struct iface_port {
 	 */
 	bool float_nat_initiator;
 	/* udp only */
-	struct pluto_event *pev;
+	struct event *udp_message_listener;
 	/* tcp port only */
 	struct evconnlistener *tcp_accept_listener;
 	/* tcp stream only */

@@ -387,10 +387,10 @@ static void handle_udp_packet_cb(evutil_socket_t unused_fd UNUSED,
 static void udp_listen(struct iface_port *ifp,
 		       struct logger *unused_logger UNUSED)
 {
-	delete_pluto_event(&ifp->pev);
-	ifp->pev = add_fd_read_event_handler(ifp->fd,
-					     handle_udp_packet_cb,
-					     ifp, "ethX");
+	if (ifp->udp_message_listener == NULL) {
+		attach_fd_read_sensor(&ifp->udp_message_listener, ifp->fd,
+				      handle_udp_packet_cb, ifp);
+	}
 }
 
 static int udp_bind_iface_port(struct iface_dev *ifd, ip_port port,
@@ -407,6 +407,12 @@ static int udp_bind_iface_port(struct iface_dev *ifd, ip_port port,
 	return fd;
 }
 
+static void udp_cleanup(struct iface_port *ifp)
+{
+	event_free(ifp->udp_message_listener);
+	ifp->udp_message_listener = NULL;
+}
+
 const struct iface_io udp_iface_io = {
 	.send_keepalive = true,
 	.protocol = &ip_protocol_udp,
@@ -414,6 +420,7 @@ const struct iface_io udp_iface_io = {
 	.write_packet = udp_write_packet,
 	.listen = udp_listen,
 	.bind_iface_port = udp_bind_iface_port,
+	.cleanup = udp_cleanup,
 };
 
 #ifdef MSG_ERRQUEUE
