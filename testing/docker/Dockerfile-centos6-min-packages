@@ -17,7 +17,7 @@ RUN yum install -y ElectricFence audit-libs-devel bind-utils bison \
  vim-enhanced wget xl2tpd xmlto yum-utils;
 # RUN yum-builddep -y libreswan
 RUN mkdir -p /home/build/libreswan
-RUN wget -O libreswan.spec https://raw.githubusercontent.com/libreswan/libreswan/master/packaging/rhel/6/libreswan.spec
+RUN wget -O libreswan.spec https://raw.githubusercontent.com/libreswan/libreswan/main/packaging/rhel/6/libreswan.spec
 RUN yum-builddep -y ./libreswan.spec
 VOLUME ["/home/build/libreswan:/home/build/libreswan"]
 RUN echo " DAEMON_COREFILE_LIMIT='unlimited'" >> /etc/sysconfig/pluto
