@@ -122,6 +122,7 @@ struct impair {
 	bool unknown_payload_critical;
 	bool allow_dns_insecure;
 	bool send_pkcs7_thingie;
+	bool send_nonzero_reserved;
 	bool ikev1_del_with_notify;
 	bool bad_ike_auth_xchg;
 	bool rekey_initiate_supernet;

@@ -1396,6 +1396,9 @@ static bool emit_proposal(pb_stream *sa_pbs,
 		.isap_spisize = (local_spi != NULL ? local_spi->len : 0),
 		.isap_numtrans = numtrans,
 	};
+	if (impair.send_nonzero_reserved) {
+		prop.isap_critical = ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
+	}
 
 	pb_stream proposal_pbs;
 	if (!out_struct(&prop, &ikev2_prop_desc, sa_pbs, &proposal_pbs)) {
