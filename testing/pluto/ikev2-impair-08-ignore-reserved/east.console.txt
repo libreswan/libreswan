@@ -1,0 +1,21 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
+east #
+ echo "initdone"
+initdone
+east #
+ hostname | grep east > /dev/null && grep "byte at offset" /tmp/pluto.log
+| byte at offset 1 (5) of 'IKEv2 Proposal Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 1 (5) of 'IKEv2 Proposal Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

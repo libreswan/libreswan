@@ -1,0 +1,5 @@
+Test that we properly ignore the Reserved fields of the IKEv2 Proposal Substructure Payload 
+
+We use an impair to set it to a bogus value and check that the connection still establishes
+
+
