@@ -305,15 +305,13 @@ kvmplutotest	ikev2-unknown-payload-02-auth-critical		good
 kvmplutotest	ikev2-unknown-payload-03-auth-sk		good
 kvmplutotest	ikev2-unknown-payload-03-auth-sk-critical	good
 kvmplutotest	ikev2-impair-04-corrupt-auth-sk-payload	good
-
 kvmplutotest	ikev1-impair-05-send-zero-ike-ke	good
 kvmplutotest	ikev2-impair-05-send-zero-ike-ke	good
-
 kvmplutotest	ikev1-impair-06-send-no-ike-ke		good
 kvmplutotest	ikev2-impair-06-send-no-ike-ke		good
-
 kvmplutotest	ikev1-impair-07-send-empty-ike-ke	good
 kvmplutotest	ikev2-impair-07-send-empty-ike-ke	good
+kvmplutotest	ikev2-impair-08-ignore-reserved		good
 
 kvmplutotest	impair-08-ikev1-key-length-attribute	good
 kvmplutotest	impair-08-ikev2-key-length-attribute	good
