@@ -70,6 +70,7 @@ KVM_UPGRADE_PACKAGES ?= \
     gdb \
     git \
     glibc-devel \
+    gnutls-utils \
     hping3 \
     htop \
     iftop \
@@ -110,6 +111,7 @@ KVM_UPGRADE_PACKAGES ?= \
     rpm-build \
     rsync \
     screen \
+    softhsm \
     strace \
     systemd-devel \
     tar \
