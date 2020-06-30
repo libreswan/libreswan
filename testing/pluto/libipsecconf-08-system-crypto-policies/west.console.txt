@@ -1,0 +1,92 @@
+/testing/guestbin/swan-prep
+west #
+ echo "initdone"
+initdone
+west #
+ ln -s PATH/share/crypto-policies/back-ends/DEFAULT/libreswan.config OUTPUT/west-add.conf
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add test
+002 added connection description "test"
+west #
+ ipsec status | grep algorithms:
+000 "test":   IKE algorithms: AES_GCM_16_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+MODP2048+MODP3072+MODP4096+MODP8192, CHACHA20_POLY1305-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+MODP2048+MODP3072+MODP4096+MODP8192, AES_CBC_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+MODP2048+MODP3072+MODP4096+MODP8192, AES_GCM_16_128-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+MODP2048+MODP3072+MODP4096+MODP8192, AES_CBC_128-HMAC_SHA2_256-DH19+DH20+DH21+MODP2048+MODP3072+MODP4096+MODP8192
+000 "test":   ESP algorithms: AES_GCM_16_256-NONE, CHACHA20_POLY1305-NONE, AES_CBC_256-HMAC_SHA2_512_256+HMAC_SHA1_96+HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_CBC_128-HMAC_SHA1_96+HMAC_SHA2_256_128
+west #
+ rm OUTPUT/west-add.conf
+west #
+ #
+west #
+ ln -s PATH/share/crypto-policies/back-ends/FIPS/libreswan.config OUTPUT/west-add.conf
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add test
+002 "test": terminating SAs using this connection
+002 added connection description "test"
+west #
+ ipsec status | grep algorithms:
+000 "test":   IKE algorithms: AES_GCM_16_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+MODP2048+MODP3072+MODP4096+MODP8192, AES_CBC_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+MODP2048+MODP3072+MODP4096+MODP8192, AES_GCM_16_128-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+MODP2048+MODP3072+MODP4096+MODP8192, AES_CBC_128-HMAC_SHA2_256-DH19+DH20+DH21+MODP2048+MODP3072+MODP4096+MODP8192
+000 "test":   ESP algorithms: AES_GCM_16_256-NONE, AES_CBC_256-HMAC_SHA2_512_256+HMAC_SHA1_96+HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_CBC_128-HMAC_SHA1_96+HMAC_SHA2_256_128
+west #
+ rm OUTPUT/west-add.conf
+west #
+ #
+west #
+ ln -s PATH/share/crypto-policies/back-ends/FUTURE/libreswan.config OUTPUT/west-add.conf
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add test
+002 "test": terminating SAs using this connection
+002 added connection description "test"
+west #
+ ipsec status | grep algorithms:
+000 "test":   IKE algorithms: AES_GCM_16_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+MODP3072+MODP4096+MODP8192, CHACHA20_POLY1305-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+MODP3072+MODP4096+MODP8192, AES_CBC_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+MODP3072+MODP4096+MODP8192
+000 "test":   ESP algorithms: AES_GCM_16_256-NONE, CHACHA20_POLY1305-NONE, AES_CBC_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+west #
+ rm OUTPUT/west-add.conf
+west #
+ #
+west #
+ ln -s PATH/share/crypto-policies/back-ends/LEGACY/libreswan.config OUTPUT/west-add.conf
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add test
+002 "test": terminating SAs using this connection
+002 added connection description "test"
+west #
+ ipsec status | grep algorithms:
+000 "test":   IKE algorithms: AES_GCM_16_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+MODP2048+MODP3072+MODP4096+MODP8192+MODP1536, CHACHA20_POLY1305-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+MODP2048+MODP3072+MODP4096+MODP8192+MODP1536, AES_CBC_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+MODP2048+MODP3072+MODP4096+MODP8192+MODP1536, AES_GCM_16_128-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+MODP2048+MODP3072+MODP4096+MODP8192+MODP1536, AES_CBC_128-HMAC_SHA2_256-DH19+DH20+DH21+MODP2048+MODP3072+MODP4096+MODP8192+MODP1536
+000 "test":   ESP algorithms: AES_GCM_16_256-NONE, CHACHA20_POLY1305-NONE, AES_CBC_256-HMAC_SHA2_512_256+HMAC_SHA1_96+HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_CBC_128-HMAC_SHA1_96+HMAC_SHA2_256_128
+west #
+ rm OUTPUT/west-add.conf
+west #
+ #
+west #
+ ln -s PATH/share/crypto-policies/back-ends/NEXT/libreswan.config OUTPUT/west-add.conf
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add test
+002 "test": terminating SAs using this connection
+002 added connection description "test"
+west #
+ ipsec status | grep algorithms:
+000 "test":   IKE algorithms: AES_GCM_16_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+MODP2048+MODP3072+MODP4096+MODP8192, CHACHA20_POLY1305-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+MODP2048+MODP3072+MODP4096+MODP8192, AES_CBC_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+MODP2048+MODP3072+MODP4096+MODP8192, AES_GCM_16_128-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+MODP2048+MODP3072+MODP4096+MODP8192, AES_CBC_128-HMAC_SHA2_256-DH19+DH20+DH21+MODP2048+MODP3072+MODP4096+MODP8192
+000 "test":   ESP algorithms: AES_GCM_16_256-NONE, CHACHA20_POLY1305-NONE, AES_CBC_256-HMAC_SHA2_512_256+HMAC_SHA1_96+HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_CBC_128-HMAC_SHA1_96+HMAC_SHA2_256_128
+west #
+ rm OUTPUT/west-add.conf
+west #
+ echo done
+done
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

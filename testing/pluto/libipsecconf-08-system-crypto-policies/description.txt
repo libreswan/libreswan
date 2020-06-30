@@ -1,0 +1,4 @@
+Test loading of the crypto policies.
+
+This test requires RHEL/CentOS/Fedora to run.
+

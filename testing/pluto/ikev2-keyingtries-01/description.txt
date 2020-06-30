@@ -1,0 +1,7 @@
+
+Testing that keyingtries={1,3,0} works as expected.
+
+To do that, we create a failing connection and watch it retry.
+
+note, OE is not tested here, and it forces a keyingtries=1
+
