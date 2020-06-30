@@ -1152,21 +1152,22 @@ void delete_state(struct state *st)
 	 */
 	binlog_fake_state(st, STATE_UNDEFINED);
 
-	if (st->st_connection->newest_isakmp_sa == st->st_serialno) {
+	/* XXX: hack to avoid reference counting iface_port. */
+	if (st->st_interface != NULL && IS_IKE_SA(st) &&
+	    st->st_serialno >= st->st_connection->newest_isakmp_sa) {
 		/*
-		 * XXX: only delete the TCP interface of the latest
-		 * IKE SA.  All others simply drop the interface.  For
-		 * others don't even look at *st->st_interface as it
-		 * may already be deleted.
-		 *
-		 * refcnt anyone?
+		 * XXX: don't try to delete the iface port of an old
+		 * TCP IKE SA.  It's replacement will have taken
+		 * ownership.  However, do delete a TCP IKE SA when it
+		 * looks like it is getting ready for a replace.
 		 */
 		if (st->st_interface->protocol == &ip_protocol_tcp) {
 			dbg("TCP: freeing interface; release instead?");
 			struct iface_port **p = (void*)&st->st_interface; /* hack const */
-			free_any_iface_port(p);
+			stop_iketcp_iface_port(p);
 		}
 	}
+	st->st_interface = NULL;
 
 	/*
 	 * Unlink the connection which may in turn delete the

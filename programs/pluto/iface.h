@@ -157,10 +157,17 @@ struct iface_port {
 	/* tcp stream only */
 	ip_endpoint iketcp_remote_endpoint;
 	bool iketcp_server;
-	enum iketcp_state { IKETCP_OPEN = 1, IKETCP_PREFIXED, IKETCP_RUNNING, } iketcp_state;
+	enum iketcp_state {
+		IKETCP_OPEN = 1,
+		IKETCP_PREFIXED, /* received IKETCP */
+		IKETCP_RUNNING, /* received at least one packet */
+		IKETCP_STOPPING, /* half closed */
+		IKETCP_STOPPED, /* closed */
+	} iketcp_state;
 	struct event *iketcp_timeout;
 };
 
+void stop_iketcp_iface_port(struct iface_port **ifp);
 void free_any_iface_port(struct iface_port **ifp);
 
 extern struct iface_port *interfaces;   /* public interfaces */

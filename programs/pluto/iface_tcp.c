@@ -344,6 +344,24 @@ const struct iface_io iketcp_iface_io = {
 	.bind_iface_port = iketcp_bind_iface_port,
 };
 
+static void stop_iketcp_iface_port_cb(struct state *unused_st UNUSED, void *context)
+{
+	struct iface_port *ifp = context;
+	free_any_iface_port(&ifp);
+}
+
+void stop_iketcp_iface_port(struct iface_port **ifpp)
+{
+	if ((*ifpp)->iketcp_state == IKETCP_STOPPING) {
+		(*ifpp)->iketcp_state = IKETCP_STOPPED;
+		schedule_callback("iketcp cleanup", SOS_NOBODY,
+				  stop_iketcp_iface_port_cb, *ifpp);
+	} else {
+		(*ifpp)->iketcp_state = IKETCP_STOPPING;
+	}
+	*ifpp = NULL;
+}
+
 static void iketcp_handle_packet_cb(evutil_socket_t unused_fd UNUSED,
 				    const short unused_event UNUSED,
 				    void *arg)
@@ -357,6 +375,7 @@ static void iketcp_handle_packet_cb(evutil_socket_t unused_fd UNUSED,
 		dbg("TCP: OPEN: reading IKETCP prefix");
 		const uint8_t iketcp[] = IKE_IN_TCP_PREFIX;
 		uint8_t buf[sizeof(iketcp)];
+
 		ssize_t len = read(ifp->fd, buf, sizeof(buf));
 		if (len < 0) {
 			/* too strict? */
@@ -364,13 +383,17 @@ static void iketcp_handle_packet_cb(evutil_socket_t unused_fd UNUSED,
 			log_message(RC_LOG, &logger,
 				    "TCP: problem reading IKETCP prefix "PRI_ERRNO,
 				    pri_errno(e));
-			free_any_iface_port(&ifp);
+			ifp->iketcp_state = IKETCP_STOPPING;
+			stop_iketcp_iface_port(&ifp);
 			return;
-		} else if (len != sizeof(buf)) {
+		}
+
+		if (len != sizeof(buf)) {
 			log_message(RC_LOG, &logger,
-				    "TCP: problem reading IKETCP prefix - returned %zd bytes but expecting %zu; connection closed",
+				    "TCP: problem reading IKETCP prefix - returned %zd bytes but expecting %zu; closing socket",
 				    len, sizeof(buf));
-			free_any_iface_port(&ifp);
+			ifp->iketcp_state = IKETCP_STOPPING;
+			stop_iketcp_iface_port(&ifp);
 			return;
 		}
 
@@ -378,8 +401,9 @@ static void iketcp_handle_packet_cb(evutil_socket_t unused_fd UNUSED,
 		if (!memeq(buf, iketcp, len)) {
 			/* discard this tcp connection */
 			log_message(RC_LOG, &logger,
-				    "TCP: did not receive the IKE-in-TCP stream prefix, closing socket");
-			free_any_iface_port(&ifp);
+				    "TCP: did not receive the IKE-in-TCP stream prefix; closing socket");
+			ifp->iketcp_state = IKETCP_STOPPING;
+			stop_iketcp_iface_port(&ifp);
 			return;
 		}
 
@@ -398,9 +422,10 @@ static void iketcp_handle_packet_cb(evutil_socket_t unused_fd UNUSED,
 				      "espintcp", sizeof("espintcp"))) {
 				int e = errno;
 				log_message(RC_LOG, &logger,
-					    "TCP: setsockopt(SOL_TCP, TCP_ULP, \"espintcp\") failed, closing socket "PRI_ERRNO,
+					    "TCP: setsockopt(SOL_TCP, TCP_ULP, \"espintcp\") failed; closing socket "PRI_ERRNO,
 					    pri_errno(e));
-				free_any_iface_port(&ifp);
+				ifp->iketcp_state = IKETCP_STOPPING;
+				stop_iketcp_iface_port(&ifp);
 				return;
 			}
 		}
@@ -424,42 +449,60 @@ static void iketcp_handle_packet_cb(evutil_socket_t unused_fd UNUSED,
 			event_free(ifp->iketcp_timeout);
 			ifp->iketcp_timeout = NULL;
 			ifp->iketcp_state = IKETCP_RUNNING;
+			return;
 			break;
 		case IFACE_IGNORE:
 			dbg("TCP: PREFIXED: first packet ignore");
-			break;
+			return;
 		case IFACE_EOF:
 		case IFACE_FATAL:
 			/* already logged */
-			free_any_iface_port(&ifp);
-			break;
-		default:
-			bad_case(0);
+			ifp->iketcp_state = IKETCP_STOPPING;
+			stop_iketcp_iface_port(&ifp);
+			return;
 		}
-		return;
+		bad_case(0);
 
 	case IKETCP_RUNNING:
 		dbg("TCP: RUNNING: trying to read a packet");
 		switch (handle_packet_cb(ifp)) {
 		case IFACE_OK:
 			dbg("TCP: RUNNING: packet read ok");
-			break;
+			return;
 		case IFACE_IGNORE:
-			dbg("TCP: RUNNING: packet ignored (why?)");
-			break;
+			dbg("TCP: PREFIXED: first packet ignore");
+			return;
 		case IFACE_EOF:
 		case IFACE_FATAL:
 			/* already logged */
-			free_any_iface_port(&ifp);
-			break;
-		default:
-			bad_case(0);
+			stop_iketcp_iface_port(&ifp);
+			return;
+		}
+		bad_case(0);
+
+	case IKETCP_STOPPING:
+	case IKETCP_STOPPED:
+	{
+		/*
+		 * The next event loop "poll" will dispatch an event
+		 * handler that closes the socket and deletes the
+		 * event; however, until then, the existing "poll"
+		 * needs to be drained.
+		 */
+		char bytes[10];
+		ssize_t size = read(ifp->fd, &bytes, sizeof(bytes));
+		if (size < 0) {
+			log_message(RC_LOG, &logger,
+				    "TCP: read from socket failed "PRI_ERRNO,
+				    pri_errno(errno));
+		} else {
+			dbg("TCP: STOPPING: drained %zd bytes", size);
 		}
 		return;
-
-	default:
-		bad_case(ifp->iketcp_state);
 	}
+	}
+	/* no default - all cases return - missing case error */
+	bad_case(ifp->iketcp_state);
 }
 
 /*
