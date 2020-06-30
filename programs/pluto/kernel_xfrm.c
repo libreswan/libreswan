@@ -798,68 +798,6 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	return ok;
 }
 
-static void netlink_sa_policy_to_id(struct xfrm_userpolicy_id *id,
-		struct xfrm_userpolicy_info *pol)
-{
-	id->sel = pol->sel;
-	id->index = pol->index;
-	id->dir =  pol->dir;
-}
-
-static bool netlink_get_sa_policy(const struct kernel_sa *sa,
-				  struct xfrm_userpolicy_id *id)
-{
-	struct {
-		struct nlmsghdr n;
-		struct xfrm_userpolicy_id id;
-	} req;
-	struct nlm_resp rsp;
-
-	zero(&req);
-	zero(&rsp);
-
-	req.n.nlmsg_flags = NLM_F_REQUEST;
-	req.n.nlmsg_type = XFRM_MSG_GETPOLICY;
-	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
-
-	req.id.dir = sa->nk_dir;	/* clang 6.0.0 thinks RHS is garbage or undefined */
-	req.id.sel.family = address_type(sa->src.address)->af;
-
-	/* .[sd]addr, .prefixlen_[sd], .[sd]port */
-	SELECTOR_TO_XFRM(sa->src.client, req.id.sel, s);
-	SELECTOR_TO_XFRM(sa->dst.client, req.id.sel, d);
-
-	/*
-	 * XXX: the other calls to CLIENT_TO_XFRM() also munge the
-	 * .[sd]port per ICMP, and set .[sd]port_mask.
-	 *
-	 * This code does not.
-	 *
-	 * Presumably this code, which is called from
-	 * netlink_migrate_sa(), and is handling MOBIKE only allows
-	 * addresses (no port, no rotocol).  Hence the default value
-	 * of .[sd]port_mask (0), is correct.
-	 */
-
-	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWPOLICY, &rsp, "Get policy",
-			      sa->text_said)) {
-		dbg(" netlink_get_sa_policy : policy died on us: %s, index=%d %s",
-		    enum_name(&netkey_sa_dir_names, req.id.dir),
-		    req.id.index, sa->text_said);
-		return FALSE;
-	} else if (rsp.n.nlmsg_len < NLMSG_LENGTH(sizeof(rsp.u.pol))) {
-		libreswan_log(" netlink_get_sa_policy: XFRM_MSG_GETPOLICY %s "
-				"returned message with length %zu < %zu "
-				"bytes; ignore message",
-				enum_name(&netkey_sa_dir_names, req.id.dir),
-				(size_t) rsp.n.nlmsg_len, sizeof(rsp.u.pol));
-				return FALSE;
-	}
-
-	netlink_sa_policy_to_id(id, &rsp.u.pol);
-	return TRUE;
-}
-
 static void  set_migration_attr(const struct kernel_sa *sa,
 		struct xfrm_user_migrate *m)
 {
@@ -1028,14 +966,14 @@ static bool migrate_xfrm_sa(const struct kernel_sa *sa)
 
 	zero(&req);
 
-	if (!netlink_get_sa_policy(sa, &req.id)) {
-		return FALSE;
-	}
-
+	req.id.dir = sa->nk_dir;
+	req.id.sel.family = address_type(sa->src.address)->af;
+	/* .[sd]addr, .prefixlen_[sd], .[sd]port */
+	SELECTOR_TO_XFRM(sa->src.client, req.id.sel, s);
+	SELECTOR_TO_XFRM(sa->dst.client, req.id.sel, d);
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 	req.n.nlmsg_type = XFRM_MSG_MIGRATE;
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
-
 
 	/* add attrs[XFRM_MSG_MIGRATE] */
 	{
