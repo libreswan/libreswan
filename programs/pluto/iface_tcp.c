@@ -354,6 +354,7 @@ static int iketcp_bind_iface_port(struct iface_dev *ifd, ip_port port,
 
 const struct iface_io iketcp_iface_io = {
 	.protocol = &ip_protocol_tcp,
+	.send_keepalive = false,
 	.read_packet = iketcp_read_packet,
 	.write_packet = iketcp_write_packet,
 	.cleanup = iketcp_cleanup,

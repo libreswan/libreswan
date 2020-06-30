@@ -46,6 +46,7 @@ enum iface_status {
 };
 
 struct iface_io {
+	bool send_keepalive;
 	const struct ip_protocol *protocol;
 	enum iface_status (*read_packet)(const struct iface_port *ifp,
 					 struct iface_packet *);

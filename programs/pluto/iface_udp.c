@@ -408,6 +408,7 @@ static int udp_bind_iface_port(struct iface_dev *ifd, ip_port port,
 }
 
 const struct iface_io udp_iface_io = {
+	.send_keepalive = true,
 	.protocol = &ip_protocol_udp,
 	.read_packet = udp_read_packet,
 	.write_packet = udp_write_packet,
