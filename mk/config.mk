@@ -710,6 +710,10 @@ endif
 # Parent  aae226c20dfd2189fb395f43269fe06cf1fb9cb1
 # Bug 1629663 NSS missing IKEv1 Quick Mode KDF prf r=kjacobs
 
+ifdef USE_NSS_PRF
+$(error ERROR: Deprecated USE_NSS_PRF variable set, use USE_NSS_KDF instead)
+endif
+
 USE_NSS_KDF ?= false
 ifeq ($(USE_NSS_KDF),true)
 USERLAND_CFLAGS += -DUSE_NSS_KDF
