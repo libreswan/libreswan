@@ -82,13 +82,12 @@ static void init_seccomp(uint32_t def_action, bool main)
 		LSW_SECCOMP_ADD(ctx, getcwd);
 		LSW_SECCOMP_ADD(ctx, getdents);
 		LSW_SECCOMP_ADD(ctx, getdents64);
-		LSW_SECCOMP_ADD(ctx, getdir);
 		LSW_SECCOMP_ADD(ctx, getegid);
 		LSW_SECCOMP_ADD(ctx, geteuid);
 		LSW_SECCOMP_ADD(ctx, getgid);
 		LSW_SECCOMP_ADD(ctx, getgroups);
 		LSW_SECCOMP_ADD(ctx, getpgrp);
-		LSW_SECCOMP_ADD(ctx, getpgip);
+		LSW_SECCOMP_ADD(ctx, getpgid);
 		LSW_SECCOMP_ADD(ctx, getpid);
 		LSW_SECCOMP_ADD(ctx, getppid);
 		LSW_SECCOMP_ADD(ctx, getrandom); /* for unbound */
@@ -116,6 +115,7 @@ static void init_seccomp(uint32_t def_action, bool main)
 		LSW_SECCOMP_ADD(ctx, recvmsg);
 		LSW_SECCOMP_ADD(ctx, select);
 		LSW_SECCOMP_ADD(ctx, sendmsg);
+		LSW_SECCOMP_ADD(ctx, send);
 		LSW_SECCOMP_ADD(ctx, set_robust_list);
 		LSW_SECCOMP_ADD(ctx, setsockopt);
 		LSW_SECCOMP_ADD(ctx, socket);
