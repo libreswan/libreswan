@@ -59,6 +59,7 @@ static void init_seccomp(uint32_t def_action, bool main)
 
 	/* needed for pluto and updown, not helpers */
 	if (main) {
+		LSW_SECCOMP_ADD(ctx, _llseek);
 		LSW_SECCOMP_ADD(ctx, accept);
 		LSW_SECCOMP_ADD(ctx, access);
 		LSW_SECCOMP_ADD(ctx, bind);
@@ -69,6 +70,7 @@ static void init_seccomp(uint32_t def_action, bool main)
 		LSW_SECCOMP_ADD(ctx, connect);
 		LSW_SECCOMP_ADD(ctx, dup);
 		LSW_SECCOMP_ADD(ctx, dup2);
+		LSW_SECCOMP_ADD(ctx, dup3);
 		LSW_SECCOMP_ADD(ctx, epoll_create);
 		LSW_SECCOMP_ADD(ctx, epoll_ctl);
 		LSW_SECCOMP_ADD(ctx, epoll_wait);
@@ -80,11 +82,13 @@ static void init_seccomp(uint32_t def_action, bool main)
 		LSW_SECCOMP_ADD(ctx, getcwd);
 		LSW_SECCOMP_ADD(ctx, getdents);
 		LSW_SECCOMP_ADD(ctx, getdents64);
+		LSW_SECCOMP_ADD(ctx, getdir);
 		LSW_SECCOMP_ADD(ctx, getegid);
 		LSW_SECCOMP_ADD(ctx, geteuid);
 		LSW_SECCOMP_ADD(ctx, getgid);
 		LSW_SECCOMP_ADD(ctx, getgroups);
 		LSW_SECCOMP_ADD(ctx, getpgrp);
+		LSW_SECCOMP_ADD(ctx, getpgip);
 		LSW_SECCOMP_ADD(ctx, getpid);
 		LSW_SECCOMP_ADD(ctx, getppid);
 		LSW_SECCOMP_ADD(ctx, getrandom); /* for unbound */
@@ -102,10 +106,12 @@ static void init_seccomp(uint32_t def_action, bool main)
 		LSW_SECCOMP_ADD(ctx, pipe);
 		LSW_SECCOMP_ADD(ctx, pipe2);
 		LSW_SECCOMP_ADD(ctx, poll);
+		LSW_SECCOMP_ADD(ctx, ppoll);
 		LSW_SECCOMP_ADD(ctx, prctl);
 		LSW_SECCOMP_ADD(ctx, pread64);
 		LSW_SECCOMP_ADD(ctx, prlimit64);
 		LSW_SECCOMP_ADD(ctx, readlink);
+		LSW_SECCOMP_ADD(ctx, readlinkat);
 		LSW_SECCOMP_ADD(ctx, recvfrom);
 		LSW_SECCOMP_ADD(ctx, recvmsg);
 		LSW_SECCOMP_ADD(ctx, select);
