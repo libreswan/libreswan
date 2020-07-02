@@ -88,7 +88,6 @@ static void init_seccomp(uint32_t def_action, bool main)
 		LSW_SECCOMP_ADD(ctx, getgroups);
 		LSW_SECCOMP_ADD(ctx, getpgrp);
 		LSW_SECCOMP_ADD(ctx, getpgid);
-		LSW_SECCOMP_ADD(ctx, getpid);
 		LSW_SECCOMP_ADD(ctx, getppid);
 		LSW_SECCOMP_ADD(ctx, getrandom); /* for unbound */
 		LSW_SECCOMP_ADD(ctx, getrlimit);
@@ -115,7 +114,6 @@ static void init_seccomp(uint32_t def_action, bool main)
 		LSW_SECCOMP_ADD(ctx, recvmsg);
 		LSW_SECCOMP_ADD(ctx, select);
 		LSW_SECCOMP_ADD(ctx, sendmsg);
-		LSW_SECCOMP_ADD(ctx, send);
 		LSW_SECCOMP_ADD(ctx, set_robust_list);
 		LSW_SECCOMP_ADD(ctx, setsockopt);
 		LSW_SECCOMP_ADD(ctx, socket);
@@ -132,6 +130,7 @@ static void init_seccomp(uint32_t def_action, bool main)
 	LSW_SECCOMP_ADD(ctx, arch_prctl);
 	LSW_SECCOMP_ADD(ctx, exit_group);
 	LSW_SECCOMP_ADD(ctx, exit);
+	LSW_SECCOMP_ADD(ctx, getpid);
 	LSW_SECCOMP_ADD(ctx, gettid);
 	LSW_SECCOMP_ADD(ctx, gettimeofday);
 	LSW_SECCOMP_ADD(ctx, fstat);
@@ -145,6 +144,7 @@ static void init_seccomp(uint32_t def_action, bool main)
 	LSW_SECCOMP_ADD(ctx, rt_sigprocmask);
 	LSW_SECCOMP_ADD(ctx, rt_sigreturn);
 	LSW_SECCOMP_ADD(ctx, sched_setparam);
+	LSW_SECCOMP_ADD(ctx, send);
 	LSW_SECCOMP_ADD(ctx, sendto);
 	LSW_SECCOMP_ADD(ctx, set_tid_address);
 	LSW_SECCOMP_ADD(ctx, sigaltstack);
