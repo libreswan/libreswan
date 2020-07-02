@@ -134,6 +134,7 @@ static void init_seccomp_addconn(uint32_t def_action)
 	LSW_SECCOMP_ADD(ctx, mprotect);
 	LSW_SECCOMP_ADD(ctx, open);
 	LSW_SECCOMP_ADD(ctx, openat);
+	LSW_SECCOMP_ADD(ctx, pipe2);
 	LSW_SECCOMP_ADD(ctx, poll);
 	LSW_SECCOMP_ADD(ctx, prctl);
 	LSW_SECCOMP_ADD(ctx, read);

@@ -66,7 +66,6 @@ static void init_seccomp(uint32_t def_action, bool main)
 		LSW_SECCOMP_ADD(ctx, brk);
 		LSW_SECCOMP_ADD(ctx, chdir);
 		LSW_SECCOMP_ADD(ctx, clone);
-		LSW_SECCOMP_ADD(ctx, close);
 		LSW_SECCOMP_ADD(ctx, connect);
 		LSW_SECCOMP_ADD(ctx, dup);
 		LSW_SECCOMP_ADD(ctx, dup2);
@@ -79,7 +78,6 @@ static void init_seccomp(uint32_t def_action, bool main)
 		LSW_SECCOMP_ADD(ctx, execve);
 		LSW_SECCOMP_ADD(ctx, faccessat);
 		LSW_SECCOMP_ADD(ctx, fadvise64);
-		LSW_SECCOMP_ADD(ctx, fcntl);
 		LSW_SECCOMP_ADD(ctx, getcwd);
 		LSW_SECCOMP_ADD(ctx, getdents);
 		LSW_SECCOMP_ADD(ctx, getdents64);
@@ -101,13 +99,11 @@ static void init_seccomp(uint32_t def_action, bool main)
 		LSW_SECCOMP_ADD(ctx, munmap);
 		LSW_SECCOMP_ADD(ctx, newfstatat);
 		LSW_SECCOMP_ADD(ctx, open);
-		LSW_SECCOMP_ADD(ctx, openat);
 		LSW_SECCOMP_ADD(ctx, pipe);
 		LSW_SECCOMP_ADD(ctx, pipe2);
 		LSW_SECCOMP_ADD(ctx, poll);
 		LSW_SECCOMP_ADD(ctx, ppoll);
 		LSW_SECCOMP_ADD(ctx, prctl);
-		LSW_SECCOMP_ADD(ctx, pread64);
 		LSW_SECCOMP_ADD(ctx, prlimit64);
 		LSW_SECCOMP_ADD(ctx, readlink);
 		LSW_SECCOMP_ADD(ctx, readlinkat);
@@ -129,11 +125,13 @@ static void init_seccomp(uint32_t def_action, bool main)
 	/* common to pluto and helpers */
 
 	LSW_SECCOMP_ADD(ctx, arch_prctl);
+	LSW_SECCOMP_ADD(ctx, close);
 	LSW_SECCOMP_ADD(ctx, exit_group);
 	LSW_SECCOMP_ADD(ctx, exit);
 	LSW_SECCOMP_ADD(ctx, getpid);
 	LSW_SECCOMP_ADD(ctx, gettid);
 	LSW_SECCOMP_ADD(ctx, gettimeofday);
+	LSW_SECCOMP_ADD(ctx, fcntl);
 	LSW_SECCOMP_ADD(ctx, fstat);
 	LSW_SECCOMP_ADD(ctx, futex);
 	LSW_SECCOMP_ADD(ctx, lseek);
@@ -141,6 +139,8 @@ static void init_seccomp(uint32_t def_action, bool main)
 	LSW_SECCOMP_ADD(ctx, mmap);
 	LSW_SECCOMP_ADD(ctx, mprotect);
 	LSW_SECCOMP_ADD(ctx, nanosleep);
+	LSW_SECCOMP_ADD(ctx, openat);
+	LSW_SECCOMP_ADD(ctx, pread64);
 	LSW_SECCOMP_ADD(ctx, rt_sigaction);
 	LSW_SECCOMP_ADD(ctx, rt_sigprocmask);
 	LSW_SECCOMP_ADD(ctx, rt_sigreturn);
