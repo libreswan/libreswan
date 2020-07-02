@@ -2423,12 +2423,15 @@ static void update_next_payload_chain(pb_stream *outs,
  * This routine returns TRUE iff it succeeds.
  */
 
-bool out_struct(const void *struct_ptr, struct_desc *sd,
-		pb_stream *outs, pb_stream *obj_pbs)
+bool pbs_out_struct(struct pbs_out *outs,
+		    const void *struct_ptr, size_t struct_size, struct_desc *sd,
+		    struct pbs_out *obj_pbs, struct logger *logger)
 {
 	err_t ugh = NULL;
 	const u_int8_t *inp = struct_ptr;
 	u_int8_t *cur = outs->cur;
+
+	passert(struct_size == 0 || struct_size >= sd->size);
 
 	if (DBGP(DBG_BASE)) {
 		DBG_prefix_print_struct(outs, "emit ", struct_ptr, sd, obj_pbs == NULL);
@@ -2563,7 +2566,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 								n & ISAKMP_ATTR_AF_MASK,
 								last_enum, n);
 						if (impair.emitting) {
-							libreswan_log("IMPAIR: emitting %s", ugh);
+							log_message(RC_LOG, logger, "IMPAIR: emitting %s", ugh);
 							ugh = NULL;
 						}
 					}
@@ -2641,8 +2644,16 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 	}
 
 	/* some failure got us here: report it */
-	loglog(RC_LOG_SERIOUS, "%s", ugh); /* ??? serious, but errno not relevant */
+	log_message(RC_LOG_SERIOUS, logger, "%s", ugh); /* ??? serious, but errno not relevant */
 	return FALSE;
+}
+
+bool out_struct(const void *struct_ptr, struct_desc *sd,
+		struct pbs_out *outs, struct pbs_out *obj_pbs)
+{
+	struct logger logger = cur_logger();
+	return pbs_out_struct(outs, struct_ptr, 0/*unknown*/, sd,
+			      obj_pbs, &logger);
 }
 
 bool ikev1_out_generic(struct_desc *sd,

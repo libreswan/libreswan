@@ -253,7 +253,10 @@ extern pb_stream open_out_pbs(const char *name, uint8_t *buffer,
 extern chunk_t same_out_pbs_as_chunk(pb_stream *pbs);
 extern chunk_t clone_out_pbs_as_chunk(pb_stream *pbs, const char *name);
 
-extern bool out_struct(const void *struct_ptr, struct_desc *sd,
+bool pbs_out_struct(struct pbs_out *outs,
+		    const void *struct_ptr, size_t struct_size, struct_desc *sd,
+		    struct pbs_out *obj_pbs, struct logger *logger) MUST_USE_RESULT;
+extern bool out_struct(const void *struct_ptr, struct_desc *sd, /* use pbs_out_struct() */
 		       pb_stream *outs, pb_stream *obj_pbs) MUST_USE_RESULT;
 extern pb_stream open_output_struct_pbs(pb_stream *outs, const void *struct_ptr,
 				 struct_desc *sd) MUST_USE_RESULT;
