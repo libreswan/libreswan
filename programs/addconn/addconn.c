@@ -111,6 +111,7 @@ static void init_seccomp_addconn(uint32_t def_action)
 	LSW_SECCOMP_ADD(ctx, close);
 	LSW_SECCOMP_ADD(ctx, connect);
 	LSW_SECCOMP_ADD(ctx, epoll_create);
+	LSW_SECCOMP_ADD(ctx, epoll_create1);
 	LSW_SECCOMP_ADD(ctx, epoll_ctl);
 	LSW_SECCOMP_ADD(ctx, epoll_wait);
 	LSW_SECCOMP_ADD(ctx, epoll_pwait);

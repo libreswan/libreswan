@@ -72,6 +72,7 @@ static void init_seccomp(uint32_t def_action, bool main)
 		LSW_SECCOMP_ADD(ctx, dup2);
 		LSW_SECCOMP_ADD(ctx, dup3);
 		LSW_SECCOMP_ADD(ctx, epoll_create);
+		LSW_SECCOMP_ADD(ctx, epoll_create1);
 		LSW_SECCOMP_ADD(ctx, epoll_ctl);
 		LSW_SECCOMP_ADD(ctx, epoll_wait);
 		LSW_SECCOMP_ADD(ctx, epoll_pwait);
