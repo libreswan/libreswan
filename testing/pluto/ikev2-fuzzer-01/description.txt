@@ -1,0 +1,3 @@
+Send fuzzed IKEv2 IKE_INIT message to a IKEv2 responder, west.
+The payload part of IKE_INIT message is fuzzed.
+The message length is set correctly to get past the parser easily.
