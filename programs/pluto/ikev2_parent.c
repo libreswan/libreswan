@@ -1903,7 +1903,8 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	{
 		shunk_t data;
-		ike->sa.st_v2_id_payload.header = build_v2_id_payload(&pc->spd.this, &data);
+		ike->sa.st_v2_id_payload.header = build_v2_id_payload(&pc->spd.this, &data,
+								      "my IDi", ike->sa.st_logger);
 		ike->sa.st_v2_id_payload.data = clone_hunk(data, "my IDi");
 	}
 
@@ -2122,11 +2123,6 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 
 	{
 		pb_stream i_id_pbs;
-
-		if (impair.send_nonzero_reserved_id) {
-			ike->sa.st_v2_id_payload.header.isai_res3 = ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
-		}
-
 		if (!out_struct(&ike->sa.st_v2_id_payload.header,
 				&ikev2_id_i_desc,
 				&sk.pbs,
@@ -2170,11 +2166,13 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 		case ID_NULL:
 		{
 			shunk_t id_b;
-			struct ikev2_id r_id = build_v2_id_payload(&pc->spd.that, &id_b);
+			struct ikev2_id r_id = build_v2_id_payload(&pc->spd.that, &id_b,
+								   "their IDr",
+								   ike->sa.st_logger);
 			pb_stream r_id_pbs;
 			if (!out_struct(&r_id, &ikev2_id_r_desc, &sk.pbs,
 				&r_id_pbs) ||
-			    !pbs_out_hunk(id_b, &r_id_pbs, "IDr"))
+			    !pbs_out_hunk(id_b, &r_id_pbs, "their IDr"))
 				return STF_INTERNAL_ERROR;
 
 			close_output_pbs(&r_id_pbs);
@@ -2870,8 +2868,10 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		ike->sa.st_v2_id_payload.data = empty_chunk;
 	} else {
 		shunk_t data;
-		ike->sa.st_v2_id_payload.header = build_v2_id_payload(&c->spd.this, &data);
-		ike->sa.st_v2_id_payload.data = clone_hunk(data, "my id");
+		ike->sa.st_v2_id_payload.header = build_v2_id_payload(&c->spd.this, &data,
+								      "my IDr",
+								      ike->sa.st_logger);
+		ike->sa.st_v2_id_payload.data = clone_hunk(data, "my IDr");
 	}
 
 	/* will be signed in auth payload */
