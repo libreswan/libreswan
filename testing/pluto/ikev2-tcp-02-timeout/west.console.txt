@@ -16,9 +16,6 @@ west #
 west #
  # iptables -X
 west #
-west #
-west #
-west #
  # does this block the ping response?
 west #
  # iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
