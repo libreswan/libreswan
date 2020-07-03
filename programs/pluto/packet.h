@@ -961,7 +961,8 @@ struct ikev2_id {
 	uint16_t isai_length;		/* Payload length */
 	uint8_t isai_type;		/* ID type */
 	uint8_t isai_res1;
-	uint16_t isai_res2;
+	uint8_t isai_res2;
+	uint8_t isai_res3;
 };
 extern struct_desc ikev2_id_i_desc;
 extern struct_desc ikev2_id_r_desc;

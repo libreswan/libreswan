@@ -1082,5 +1082,8 @@ struct ikev2_id build_v2_id_payload(const struct end *end, shunk_t *body)
 		.isai_type = id_to_payload(&end->id, &end->host_addr, body),
 		.isai_critical = build_ikev2_critical(false),
 	};
+	if (impair.send_nonzero_reserved_id) {
+		id_header.isai_res3 = ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
+	}
 	return id_header;
 }

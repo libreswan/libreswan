@@ -718,8 +718,9 @@ static field_desc isaattr_fields[] = {
 	{ ft_end, 0, NULL, NULL }
 };
 
-/* MODECFG */
-/* From draft-dukes-ike-mode-cfg
+/*
+ * MODECFG
+ * From draft-dukes-ike-mode-cfg
  * 3.2. Attribute Payload
  *                         1                   2                   3
  *     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -742,8 +743,9 @@ struct_desc isakmp_attr_desc = {
 	.pt = ISAKMP_NEXT_MCFG_ATTR,
 };
 
-/* ISAKMP NAT-Traversal NAT-D
- * layout from draft-ietf-ipsec-nat-t-ike-01.txt section 3.2
+/*
+ * ISAKMP NAT-Traversal NAT-D
+ * RFC 3947 https://tools.ietf.org/html/rfc3947
  *
  *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -766,14 +768,15 @@ struct_desc isakmp_nat_d_drafts = {
 	.pt = ISAKMP_NEXT_NATD_DRAFTS,
 };
 
-/* ISAKMP NAT-Traversal NAT-OA
- * layout from draft-ietf-ipsec-nat-t-ike-01.txt section 4.2
+/*
+ * ISAKMP NAT-Traversal NAT-OA
+ * RFC 3947 https://tools.ietf.org/html/rfc3947
  *
  *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * ! Next Payload  !   RESERVED    !         Payload Length        !
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * !   ID Type     !   RESERVED    !            RESERVED           !
+ * !   ID Type     !                   RESERVED                    !
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * !         IPv4 (4 octets) or IPv6 address (16 octets)           !
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
