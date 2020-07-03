@@ -1789,12 +1789,14 @@ static struct crypt_mac v2_hash_id_payload(const char *id_name, struct ike_sa *i
 	struct crypt_prf *id_ctx = crypt_prf_init_symkey(id_name, ike->sa.st_oakley.ta_prf,
 							 key_name, key);
 	/* skip PayloadHeader; hash: IDType | RESERVED */
-	crypt_prf_update_bytes(id_ctx, "IDType | RESERVED",
-			       &ike->sa.st_v2_id_payload.header.isai_type,
-			       sizeof(ike->sa.st_v2_id_payload.header) - NSIZEOF_isakmp_generic);
+	crypt_prf_update_bytes(id_ctx, "IDType", &ike->sa.st_v2_id_payload.header.isai_type,
+				sizeof(ike->sa.st_v2_id_payload.header.isai_type));
+        /* note that res1+res2 is 3 zero bytes */
+	crypt_prf_update_byte(id_ctx, "RESERVED 1", ike->sa.st_v2_id_payload.header.isai_res1);
+	crypt_prf_update_byte(id_ctx, "RESERVED 2", ike->sa.st_v2_id_payload.header.isai_res2);
+	crypt_prf_update_byte(id_ctx, "RESERVED 3", ike->sa.st_v2_id_payload.header.isai_res3);
 	/* hash: InitIDData */
-	crypt_prf_update_hunk(id_ctx, "InitIDData",
-			      ike->sa.st_v2_id_payload.data);
+	crypt_prf_update_hunk(id_ctx, "InitIDData", ike->sa.st_v2_id_payload.data);
 	return crypt_prf_final_mac(&id_ctx, NULL/*no-truncation*/);
 }
 
@@ -2120,6 +2122,11 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 
 	{
 		pb_stream i_id_pbs;
+
+		if (impair.send_nonzero_reserved_id) {
+			ike->sa.st_v2_id_payload.header.isai_res3 = ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
+		}
+
 		if (!out_struct(&ike->sa.st_v2_id_payload.header,
 				&ikev2_id_i_desc,
 				&sk.pbs,
