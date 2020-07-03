@@ -196,6 +196,9 @@ parser.add_argument('--nokeys', action='store_true',
                     help='do not provide any keys')
 parser.add_argument('--namespace', action='store_true',
         default='', help='Running inside name sapace')
+parser.add_argument('--no-eth0', action='store_true',
+        default=False, help='Disable eth0 check')
+
 args = parser.parse_args()
 
 if args.hostname:
@@ -221,11 +224,13 @@ if not args.namespace:
     if namespace:
         args.namespace = True
 
-o = subprocess.run(['ip' , '-o', 'link' , 'show', 'dev', 'eth0'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="ascii")
-ifname = o.stdout.split(' ')[1]
-if o.returncode:
-    print("can not find eht0? where are we %s\n%s" % i (o.output, o.stderr))
-    sys.exit(1)
+if not args.no_eth0:
+    o = subprocess.run(['ip' , '-o', 'link' , 'show', 'dev', 'eth0'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="ascii")
+    ifname = o.stdout.split(' ')[1]
+    if o.returncode:
+        print("can not find eht0. test guest expect eth0. --no-eth0 to disable this check\n%s\n%s" % i (o.output, o.stderr))
+        sys.exit(1)
+
 if re.match(r'eth0@if\d+', ifname):
     args.namespace = True
 
