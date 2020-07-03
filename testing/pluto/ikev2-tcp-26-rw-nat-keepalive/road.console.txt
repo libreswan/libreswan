@@ -25,6 +25,12 @@ road #
  ../../pluto/bin/ping-once.sh --up 192.0.2.254
 up
 road #
+ ipsec whack --impair send-keepalive:1
+000 "road-eastnet-ikev2" #1: sending keepalive
+road #
+ ../../pluto/bin/ping-once.sh --up 192.0.2.254
+up
+road #
  ../bin/ipsec-look.sh
 road NOW
 XFRM state:
