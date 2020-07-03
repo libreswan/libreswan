@@ -1,7 +1,7 @@
 # wait for the connection to come up
 ../../pluto/bin/wait-for.sh --match westnet-eastnet-auto -- ipsec whack --trafficstatus
 # ensure that clear text does not get through
-iptables -A INPUT -i eth1 -m policy --dir in --pol none -s 192.0.2.0/24 -j LOGDROP
+iptables -A INPUT -i eth1 -m policy --dir in --pol none -s 192.0.2.0/24 -j DROP
 iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 # We expect ping to be encrypted and work; we should see non-zero
 # traffic counters

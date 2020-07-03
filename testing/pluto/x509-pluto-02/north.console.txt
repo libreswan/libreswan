@@ -3,7 +3,7 @@ Preparing X.509 files
 north #
  # ensure that clear text does not get through
 north #
- iptables -I INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+ iptables -I INPUT -i eth1 -s 192.0.2.0/24 -j DROP
 north #
  iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 north #

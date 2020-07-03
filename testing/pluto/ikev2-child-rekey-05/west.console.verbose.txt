@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
 [   23.041427] ip6_tables: (C) 2000-2006 Netfilter Core Team
 [root@west ikev2-child-rekey]# # make sure that clear text does not get through
-[root@west ikev2-child-rekey]# iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+[root@west ikev2-child-rekey]# iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
 [root@west ikev2-child-rekey]# iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 [root@west ikev2-child-rekey]# ipsec start
 [   24.041849] sha512_ssse3: Neither AVX nor SSSE3 is available/usable.

@@ -2,7 +2,7 @@
 east #
  # block plaintext port 22
 east #
- #iptables -A INPUT -i eth1 -s 0.0.0.0/0 -p tcp --dport 22 -j LOGDROP
+ #iptables -A INPUT -i eth1 -s 0.0.0.0/0 -p tcp --dport 22 -j DROP
 east #
  #iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 east #

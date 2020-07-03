@@ -10,21 +10,18 @@ nic #
 nic #
  # make sure that we never acidentially let ESP through.
 nic #
- iptables -N LOGDROP
 nic #
- iptables -A LOGDROP -j LOG
 nic #
- iptables -A LOGDROP -j DROP
 nic #
- iptables -I FORWARD 1 --proto 50 -j LOGDROP
+ iptables -I FORWARD 1 --proto 50 -j DROP
 nic #
- #iptables -I FORWARD 2 --destination 192.0.2.0/24 -j LOGDROP
+ #iptables -I FORWARD 2 --destination 192.0.2.0/24 -j DROP
 nic #
- #iptables -I FORWARD 3 --source 192.0.2.0/24 -j LOGDROP
+ #iptables -I FORWARD 3 --source 192.0.2.0/24 -j DROP
 nic #
  # route
 nic #
- #iptables -I INPUT 1 --destination 192.0.2.0/24 -j LOGDROP
+ #iptables -I INPUT 1 --destination 192.0.2.0/24 -j DROP
 nic #
  # Display the table, so we know it is correct.
 nic #
@@ -44,10 +41,10 @@ Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
 Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
-LOGDROP    esp  --  0.0.0.0/0            0.0.0.0/0           
+DROP    esp  --  0.0.0.0/0            0.0.0.0/0           
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain LOGDROP (1 references)
+Chain DROP (1 references)
 target     prot opt source               destination         
 LOG        all  --  0.0.0.0/0            0.0.0.0/0            LOG flags 0 level 4
 DROP       all  --  0.0.0.0/0            0.0.0.0/0           

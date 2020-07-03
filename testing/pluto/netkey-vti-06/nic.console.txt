@@ -10,21 +10,21 @@ nic #
 nic #
  # make sure that we never acidentially let ESP through.
 nic #
- #ptables -N LOGDROP
+ #ptables -N DROP
 nic #
- #ptables -A LOGDROP -j LOG
+ #ptables -A DROP -j LOG
 nic #
- #ptables -A LOGDROP -j DROP
+ #ptables -A DROP -j DROP
 nic #
- #ptables -I FORWARD 1 --proto 50 -j LOGDROP
+ #ptables -I FORWARD 1 --proto 50 -j DROP
 nic #
- #ptables -I FORWARD 2 --destination 192.0.2.0/24 -j LOGDROP
+ #ptables -I FORWARD 2 --destination 192.0.2.0/24 -j DROP
 nic #
- #ptables -I FORWARD 3 --source 192.0.2.0/24 -j LOGDROP
+ #ptables -I FORWARD 3 --source 192.0.2.0/24 -j DROP
 nic #
  # route
 nic #
- #ptables -I INPUT 1 --destination 192.0.2.0/24 -j LOGDROP
+ #ptables -I INPUT 1 --destination 192.0.2.0/24 -j DROP
 nic #
  # Display the table, so we know it is correct.
 nic #

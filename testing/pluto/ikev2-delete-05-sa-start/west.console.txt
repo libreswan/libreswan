@@ -15,7 +15,7 @@ west #
 west #
  # ensure that clear text does not get through
 west #
- iptables -A INPUT -i eth1 -m policy --dir in --pol none -s 192.0.2.0/24 -j LOGDROP
+ iptables -A INPUT -i eth1 -m policy --dir in --pol none -s 192.0.2.0/24 -j DROP
 west #
  iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 west #

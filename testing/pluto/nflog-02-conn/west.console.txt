@@ -7,7 +7,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # ensure that clear text does not get through
 west #
- iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
 west #
  iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 west #
@@ -33,12 +33,12 @@ west #
 Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
 ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
-LOGDROP    all  --  192.0.2.0/24         0.0.0.0/0           
+DROP    all  --  192.0.2.0/24         0.0.0.0/0           
 Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain LOGDROP (1 references)
+Chain DROP (1 references)
 target     prot opt source               destination         
 LOG        all  --  0.0.0.0/0            0.0.0.0/0            LOG flags 0 level 4
 DROP       all  --  0.0.0.0/0            0.0.0.0/0           
@@ -57,13 +57,13 @@ Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
 NFLOG      all  --  192.0.2.0/24         192.0.1.0/24         policy match dir in pol ipsec nflog-prefix  westnet-eastnet-ikev2 nflog-group 50
 ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
-LOGDROP    all  --  192.0.2.0/24         0.0.0.0/0           
+DROP    all  --  192.0.2.0/24         0.0.0.0/0           
 Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
 NFLOG      all  --  192.0.1.0/24         192.0.2.0/24         policy match dir out pol ipsec nflog-prefix  westnet-eastnet-ikev2 nflog-group 50
-Chain LOGDROP (1 references)
+Chain DROP (1 references)
 target     prot opt source               destination         
 LOG        all  --  0.0.0.0/0            0.0.0.0/0            LOG flags 0 level 4
 DROP       all  --  0.0.0.0/0            0.0.0.0/0           
@@ -95,12 +95,12 @@ west #
 Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
 ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
-LOGDROP    all  --  192.0.2.0/24         0.0.0.0/0           
+DROP    all  --  192.0.2.0/24         0.0.0.0/0           
 Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain LOGDROP (1 references)
+Chain DROP (1 references)
 target     prot opt source               destination         
 LOG        all  --  0.0.0.0/0            0.0.0.0/0            LOG flags 0 level 4
 DROP       all  --  0.0.0.0/0            0.0.0.0/0           
@@ -150,12 +150,12 @@ west #
 Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
 ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
-LOGDROP    all  --  192.0.2.0/24         0.0.0.0/0           
+DROP    all  --  192.0.2.0/24         0.0.0.0/0           
 Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain LOGDROP (1 references)
+Chain DROP (1 references)
 target     prot opt source               destination         
 LOG        all  --  0.0.0.0/0            0.0.0.0/0            LOG flags 0 level 4
 DROP       all  --  0.0.0.0/0            0.0.0.0/0           

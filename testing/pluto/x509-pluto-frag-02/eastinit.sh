@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --x509
-iptables -I INPUT -p udp -m length --length 0x5dc:0xffff -j LOGDROP
+iptables -I INPUT -p udp -m length --length 0x5dc:0xffff -j DROP
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add x509

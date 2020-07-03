@@ -14,7 +14,7 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  # ensure that clear text does not get through
 west #
- ip6tables -A INPUT -i eth1 -s 2001:db8:0:2::254 -p ipv6-icmp --icmpv6-type echo-reply  -j LOGDROP
+ ip6tables -A INPUT -i eth1 -s 2001:db8:0:2::254 -p ipv6-icmp --icmpv6-type echo-reply  -j DROP
 west #
  ip6tables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 west #

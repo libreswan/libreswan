@@ -7,11 +7,8 @@ nohup dumpcap -i eth1 -w /tmp/west.pcap > OUTPUT/west.dumpcap &
 # make sure that clear text does not get through
 iptables -F
 iptables -X
-iptables -N LOGDROP
-iptables -A LOGDROP -j LOG
-iptables -A LOGDROP -j DROP
 # does this block the ping response?
-# iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+# iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
 iptables -A OUTPUT -o eth1 -p tcp --dport 4500 -j ACCEPT
 # confirm with a ping
 ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254

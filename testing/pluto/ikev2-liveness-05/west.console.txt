@@ -7,11 +7,11 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # ensure that clear text does not get through or go out
 west #
- iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
 west #
  iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 west #
- iptables -A OUTPUT -o eth1 -p icmp -j LOGDROP
+ iptables -A OUTPUT -o eth1 -p icmp -j DROP
 west #
  iptables -I OUTPUT -m policy --dir out --pol ipsec -j ACCEPT
 west #

@@ -14,7 +14,7 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 north #
  # ensure that clear text does not get through
 north #
- iptables -A INPUT -i eth1 -s 192.0.2.254/32 -j LOGDROP
+ iptables -A INPUT -i eth1 -s 192.0.2.254/32 -j DROP
 north #
  iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 north #

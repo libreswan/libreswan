@@ -16,17 +16,14 @@ west #
 west #
  # iptables -X
 west #
- # iptables -N LOGDROP
 west #
- # iptables -A LOGDROP -j LOG
 west #
- # iptables -A LOGDROP -j DROP
 west #
  # does this block the ping response?
 west #
  # iptables -A OUTPUT -o eth1 -p tcp --dport 4500 -j ACCEPT
 west #
- # iptables -A OUTPUT -o eth1 -s 192.0.2.0/24 -j LOGDROP
+ # iptables -A OUTPUT -o eth1 -s 192.0.2.0/24 -j DROP
 west #
  # confirm with a ping
 west #

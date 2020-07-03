@@ -6,7 +6,7 @@ west #
 west #
  # ensure that clear text does not get through
 west #
- ## iptables -A INPUT -i eth0 -s 192.1.2.23/32 -p icmp -j LOGDROP
+ ## iptables -A INPUT -i eth0 -s 192.1.2.23/32 -p icmp -j DROP
 west #
  ## iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 west #

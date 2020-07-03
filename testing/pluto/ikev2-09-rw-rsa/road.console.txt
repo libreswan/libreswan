@@ -2,7 +2,7 @@
 road #
  # ensure that clear text does not get through
 road #
- iptables -A INPUT -i eth0 -s 192.0.2.0/24 -j LOGDROP
+ iptables -A INPUT -i eth0 -s 192.0.2.0/24 -j DROP
 road #
  iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 road #

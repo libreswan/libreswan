@@ -2,8 +2,8 @@
 # confirm that the network is alive
 ../../pluto/bin/wait-until-alive 192.0.2.254
 # ensure that clear text does not get through
-iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
-iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
+iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
 iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 # confirm clear text does not get through
 ping -n -c 4 192.0.2.254
