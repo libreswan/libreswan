@@ -1,0 +1,9 @@
+Test that we properly ignore the Reserved fields of the IKEv2 Proposal ID payload
+
+We use an impair to set it to a bogus value and check that the connection still establishes
+
+The reason this is tested differently, is that these reserved fields are part of the input to
+the PRF for the AUTH payload. So if you ignore these fields in in_struct() because they should
+be zero anyway, the two endpoints will calculate a different hash for the AUTH payload and the
+IKE SA will fail to establish. This would happen on libreswan < 3.33 if the remote peer had
+such a bug of sending a bad ID reserved field.
