@@ -783,8 +783,7 @@ static field_desc isanat_oa_fields[] = {
 	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "ID type", &ike_idtype_names },
-	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_zig, 16 / BITS_PER_BYTE, "reserved", NULL },
+	{ ft_zig, 24 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -1049,7 +1048,7 @@ struct_desc ikev2_ke_desc = {
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *    ! Next Payload  !C!  RESERVED   !         Payload Length        !
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- *    !   ID Type     !                 RESERVED                      |
+ *    !   ID Type     !                "RESERVED"                     |
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *    !                                                               !
  *    ~                   Identification Data                         ~
@@ -1057,6 +1056,10 @@ struct_desc ikev2_ke_desc = {
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  *             Figure 11:  Identification Payload Format
+ *
+ * Because the ID payload's RESERVED field is included in the AUTH
+ * hash calculation it isn't really reserved (aka send zero, ignore on
+ * input).  Hence it is flagged as ft_raw and not ft_zig.
  */
 
 static field_desc ikev2id_fields[] = {
@@ -1064,8 +1067,7 @@ static field_desc ikev2id_fields[] = {
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "ID type", &ikev2_idtype_names },
-	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_zig, 16 / BITS_PER_BYTE, "reserved", NULL },
+	{ ft_raw, 24 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_end,  0, NULL, NULL },
 };
 
@@ -1119,8 +1121,7 @@ static field_desc ikev2cp_fields[] = {
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "ikev2_cfg_type", &ikev2_cp_type_names },
-	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_zig, 16 / BITS_PER_BYTE, "reserved", NULL },
+	{ ft_zig, 24 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_end,  0, NULL, NULL }
 };
 
@@ -1230,8 +1231,7 @@ static field_desc ikev2_auth_fields[] = {
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "auth method", &ikev2_auth_names },
-	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_zig, 16 / BITS_PER_BYTE, "reserved", NULL },
+	{ ft_zig, 24 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_end,  0, NULL, NULL }
 };
 
@@ -1391,8 +1391,7 @@ static field_desc ikev2ts_fields[] = {
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat,  8 / BITS_PER_BYTE, "number of TS", NULL },
-	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_zig, 16 / BITS_PER_BYTE, "reserved", NULL },
+	{ ft_zig, 24 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_end,  0, NULL, NULL }
 };
 struct_desc ikev2_ts_i_desc = {
@@ -1910,9 +1909,6 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 					fp->name,
 					bitnamesof(fp->desc, n),
 					n);
-				break;
-			case ft_zig:
-				/* ignore, don't go into bad case */
 				break;
 			default:
 				bad_case(fp->field_type);
@@ -2480,6 +2476,21 @@ bool pbs_out_struct(struct pbs_out *outs,
 				fp->name == NULL ? "<end>" : fp->name);
 #endif
 			switch (fp->field_type) {
+			case ft_zig: /* zero */
+			{
+				uint8_t byte;
+				if (impair.send_nonzero_reserved) {
+					byte = ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
+					log_message(RC_LOG, logger, "IMPAIR: setting zero/ignore field to 0x%02x", byte);
+				} else {
+					byte = 0;
+				}
+				memset(cur, byte, i);
+				inp += i;
+				cur += i;
+				break;
+			}
+
 			case ft_mnpc:
 				start_next_payload_chain(outs, sd, fp,
 							 inp, cur);
@@ -2532,7 +2543,6 @@ bool pbs_out_struct(struct pbs_out *outs,
 			case ft_af_enum:        /* Attribute Format + value from an enumeration */
 			case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
 			case ft_set:            /* bits representing set */
-			case ft_zig:		/* should be zero but if we zeroize, AUTH payload will fail */
 			{
 				uint32_t n;
 
@@ -2549,8 +2559,6 @@ bool pbs_out_struct(struct pbs_out *outs,
 				default:
 					bad_case(i);
 				}
-				if (!impair.send_nonzero_reserved && fp->field_type == ft_zig)
-					passert(n == 0);
 
 				switch (fp->field_type) {
 
