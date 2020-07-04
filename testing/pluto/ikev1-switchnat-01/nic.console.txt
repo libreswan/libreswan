@@ -14,9 +14,6 @@ nic #
 nic #
  # make sure that we never acidentially let ESP through.
 nic #
-nic #
-nic #
-nic #
  #
 nic #
  iptables -I FORWARD 1 --proto 50 -j DROP
@@ -46,18 +43,14 @@ nic #
  iptables -L -n
 Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
-DROP    all  --  0.0.0.0/0            192.0.2.0/24        
+DROP       all  --  0.0.0.0/0            192.0.2.0/24        
 Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
-DROP    esp  --  0.0.0.0/0            0.0.0.0/0           
-DROP    all  --  0.0.0.0/0            192.0.2.0/24        
-DROP    all  --  192.0.2.0/24         0.0.0.0/0           
+DROP       esp  --  0.0.0.0/0            0.0.0.0/0           
+DROP       all  --  0.0.0.0/0            192.0.2.0/24        
+DROP       all  --  192.0.2.0/24         0.0.0.0/0           
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain DROP (4 references)
-target     prot opt source               destination         
-LOG        all  --  0.0.0.0/0            0.0.0.0/0            LOG flags 0 level 4
-DROP       all  --  0.0.0.0/0            0.0.0.0/0           
 nic #
  echo "initdone"
 initdone

@@ -1,1 +1,33 @@
+set -x
+++ x=0
+++ test 0 -ne 0
+nic #
+ iptables -t nat -F
++ iptables -t nat -F
+++ x=0
+++ test 0 -ne 0
+nic #
+ iptables -F
++ iptables -F
+++ x=0
+++ test 0 -ne 0
+nic #
+ iptables -t nat -L
++ iptables -t nat -L
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+++ x=0
+++ test 0 -ne 0
+nic #
+ echo done
++ echo done
+done
+++ x=0
+++ test 0 -ne 0
 
