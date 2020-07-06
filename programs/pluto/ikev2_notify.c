@@ -166,12 +166,8 @@ bool decode_v2N_ike_auth_request(struct msg_digest *md)
 	     ntfy != NULL; ntfy = ntfy->next) {
 		switch (ntfy->payload.v2n.isan_type) {
 
-		case v2N_MOBIKE_SUPPORTED:
-			dbg("received v2N_MOBIKE_SUPPORTED");
-			md->v2N.mobike_supported = true;
-			break;
-
 		/* Child SA related NOTIFYs are processed later in ikev2_process_ts_and_rest() */
+		case v2N_MOBIKE_SUPPORTED:
 		case v2N_NULL_AUTH:
 		case v2N_NO_PPK_AUTH:
 		case v2N_USE_TRANSPORT_MODE:
@@ -201,20 +197,15 @@ bool decode_v2N_ike_auth_response(struct msg_digest *md)
 		case v2N_COOKIE:
 			dbg("Ignoring bogus COOKIE notify in IKE_AUTH rpely");
 			break;
-		case v2N_MOBIKE_SUPPORTED:
-			dbg("received v2N_MOBIKE_SUPPORTED");
-			md->v2N.mobike_supported = true;
-			break;
 		case v2N_REDIRECT:
 		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
 			dbg("received ESP_TFC_PADDING_NOT_SUPPORTED - disabling TFC");
 			md->v2N.esp_tfc_padding_not_supported = true;
 			break;
 		case v2N_USE_TRANSPORT_MODE:
-			/* handled elsewhere */
-			dbg("received v2N_USE_TRANSPORT_MODE in IKE_AUTH reply");
-			break;
+		case v2N_MOBIKE_SUPPORTED:
 		case v2N_PPK_IDENTITY:
+			/* handled elsewhere */
 			dbg("received %s notify",
 			    enum_name(&ikev2_notify_names,
 				      ntfy->payload.v2n.isan_type));

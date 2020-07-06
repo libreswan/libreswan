@@ -2717,7 +2717,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 			st->st_no_ppk_auth = no_ppk_auth;
 		}
 	}
-	if (md->v2N.mobike_supported) {
+	if (md->pbs[PBS_v2N_MOBIKE_SUPPORTED] != NULL) {
 		dbg("received v2N_MOBIKE_SUPPORTED %s",
 		    st->st_sent_mobike ?
 		    "and sent" : "while it did not sent");
@@ -3556,7 +3556,7 @@ stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct 
 		LOG_PEXPECT("decode notify failed, what should happen next");
 		return STF_FATAL;
 	}
-	if (md->v2N.mobike_supported) {
+	if (md->pbs[PBS_v2N_MOBIKE_SUPPORTED] != NULL) {
 		dbg("received v2N_MOBIKE_SUPPORTED %s",
 		    pst->st_sent_mobike ? "and sent" : "while it did not sent");
 		st->st_seen_mobike = pst->st_seen_mobike = true;

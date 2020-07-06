@@ -151,7 +151,6 @@ struct msg_digest {
 
 	struct {
 		bool esp_tfc_padding_not_supported;
-		bool mobike_supported;
 	} v2N;
 
 	/*
