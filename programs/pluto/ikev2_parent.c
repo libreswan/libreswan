@@ -2735,7 +2735,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 			return STF_FATAL;
 		}
 	}
-	st->st_seen_initialc = md->v2N.initial_contact;
+	st->st_seen_initialc = md->pbs[PBS_v2N_INITIAL_CONTACT] != NULL;
 
 	/*
 	 * If we found proper PPK ID and policy allows PPK, use that.

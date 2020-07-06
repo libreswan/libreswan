@@ -176,17 +176,14 @@ bool decode_v2N_ike_auth_request(struct msg_digest *md)
 			md->v2N.null_auth = ntfy;
 			break;
 
-		case v2N_INITIAL_CONTACT:
-			dbg("received v2N_INITIAL_CONTACT");
-			md->v2N.initial_contact = true;
-			break;
-
 		/* Child SA related NOTIFYs are processed later in ikev2_process_ts_and_rest() */
 		case v2N_NO_PPK_AUTH:
 		case v2N_USE_TRANSPORT_MODE:
 		case v2N_IPCOMP_SUPPORTED:
 		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
 		case v2N_PPK_IDENTITY:
+		case v2N_INITIAL_CONTACT:
+			/* handled elsewhere */
 			break;
 
 		default:
