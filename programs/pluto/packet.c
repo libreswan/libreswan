@@ -2203,14 +2203,15 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 			     obj_pbs, &logger);
 }
 
-bool in_raw(void *bytes, size_t len, pb_stream *ins, const char *name)
+bool pbs_in_raw(struct pbs_in *ins, void *bytes, size_t len,
+		const char *name, struct logger *logger)
 {
 	if (pbs_left(ins) < len) {
 		/* XXX: needs current logger embedded in pbs_in? */
-		loglog(RC_LOG_SERIOUS,
-		       "not enough bytes left to get %s from %s",
-		       name, ins->name);
-		return FALSE;
+		log_message(RC_LOG_SERIOUS, logger,
+			    "not enough bytes left to get %s from %s",
+			    name, ins->name);
+		return false;
 	} else {
 		if (bytes == NULL) {
 			if (DBGP(DBG_BASE)) {
@@ -2229,6 +2230,12 @@ bool in_raw(void *bytes, size_t len, pb_stream *ins, const char *name)
 		ins->cur += len;
 		return TRUE;
 	}
+}
+
+bool in_raw(void *bytes, size_t len, struct pbs_in *ins, const char *name)
+{
+	struct logger logger = cur_logger();
+	return pbs_in_raw(ins, bytes, len, name, &logger);
 }
 
 /*
