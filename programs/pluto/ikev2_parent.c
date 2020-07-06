@@ -145,36 +145,40 @@ static bool accept_v2_nonce(struct logger *logger, struct msg_digest *md,
 	return true;
 }
 
-static bool negotiate_hash_algo_from_notification(struct payload_digest *p, struct state *st)
+static bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
+						  struct ike_sa *ike)
 {
-	lset_t sighash_policy = st->st_connection->sighash_policy;
+	lset_t sighash_policy = ike->sa.st_connection->sighash_policy;
 
-	while (pbs_left(&p->pbs) > 0) {
+	struct pbs_in pbs = *payload_pbs;
+	while (pbs_left(&pbs) > 0) {
 
 		uint16_t nh_value;
 		passert(sizeof(nh_value) == RFC_7427_HASH_ALGORITHM_IDENTIFIER_SIZE);
-		if (!in_raw(&nh_value, sizeof(nh_value), &p->pbs,
-			    "hash algorithm identifier (network ordered)"))
+		if (!pbs_in_raw(&pbs, &nh_value, sizeof(nh_value),
+				"hash algorithm identifier (network ordered)",
+				ike->sa.st_logger)) {
 			return false;
+		}
 		uint16_t h_value = ntohs(nh_value);
 
 		switch (h_value)  {
 		/* We no longer support SHA1 (as per RFC 8247) */
 		case IKEv2_HASH_ALGORITHM_SHA2_256:
 			if (sighash_policy & POL_SIGHASH_SHA2_256) {
-				st->st_hash_negotiated |= NEGOTIATE_AUTH_HASH_SHA2_256;
+				ike->sa.st_hash_negotiated |= NEGOTIATE_AUTH_HASH_SHA2_256;
 				dbg("received HASH_ALGORITHM_SHA2_256 which is allowed by local policy");
 			}
 			break;
 		case IKEv2_HASH_ALGORITHM_SHA2_384:
 			if (sighash_policy & POL_SIGHASH_SHA2_384) {
-				st->st_hash_negotiated |= NEGOTIATE_AUTH_HASH_SHA2_384;
+				ike->sa.st_hash_negotiated |= NEGOTIATE_AUTH_HASH_SHA2_384;
 				dbg("received HASH_ALGORITHM_SHA2_384 which is allowed by local policy");
 			}
 			break;
 		case IKEv2_HASH_ALGORITHM_SHA2_512:
 			if (sighash_policy & POL_SIGHASH_SHA2_512) {
-				st->st_hash_negotiated |= NEGOTIATE_AUTH_HASH_SHA2_512;
+				ike->sa.st_hash_negotiated |= NEGOTIATE_AUTH_HASH_SHA2_512;
 				dbg("received HASH_ALGORITHM_SHA2_512 which is allowed by local policy");
 			}
 			break;
@@ -182,11 +186,11 @@ static bool negotiate_hash_algo_from_notification(struct payload_digest *p, stru
 			dbg("received and ignored IKEv2_HASH_ALGORITHM_SHA1 - it is no longer allowed as per RFC 8247");
 			break;
 		case IKEv2_HASH_ALGORITHM_IDENTITY:
-			/* st->st_hash_negotiated |= NEGOTIATE_HASH_ALGORITHM_IDENTITY; */
+			/* ike->sa.st_hash_negotiated |= NEGOTIATE_HASH_ALGORITHM_IDENTITY; */
 			dbg("received unsupported HASH_ALGORITHM_IDENTITY - ignored");
 			break;
 		default:
-			libreswan_log("Received and ignored unknown hash algorithm %d", h_value);
+			log_state(RC_LOG, &ike->sa, "received and ignored unknown hash algorithm %d", h_value);
 		}
 	}
 	return true;
@@ -976,9 +980,12 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 		/* should this check that a port is available? */
 	}
 
-	if (md->v2N.signature_hash_algorithms != NULL) {
-		if (!negotiate_hash_algo_from_notification(md->v2N.signature_hash_algorithms, &ike->sa))
+	if (md->pbs[PBS_v2N_SIGNATURE_HASH_ALGORITHMS] != NULL) {
+		if (impair.ignore_hash_notify_response) {
+			log_state(RC_LOG, &ike->sa, "IMPAIR: ignoring the hash notify in IKE_SA_INIT request");
+		} else if (!negotiate_hash_algo_from_notification(md->pbs[PBS_v2N_SIGNATURE_HASH_ALGORITHMS], ike)) {
 			return STF_FATAL;
+		}
 		ike->sa.st_seen_hashnotify = true;
 	}
 
@@ -1496,11 +1503,14 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 
 	ike->sa.st_seen_fragmentation_supported = md->pbs[PBS_v2N_IKEV2_FRAGMENTATION_SUPPORTED] != NULL;
 	ike->sa.st_seen_ppk = md->v2N.use_ppk;
-	if (md->v2N.signature_hash_algorithms != NULL) {
-		ike->sa.st_seen_hashnotify = TRUE;
-		if (!negotiate_hash_algo_from_notification(md->v2N.signature_hash_algorithms, st)) {
+	if (md->pbs[PBS_v2N_SIGNATURE_HASH_ALGORITHMS] != NULL) {
+		if (impair.ignore_hash_notify_request) {
+			log_state(RC_LOG, &ike->sa,
+				  "IMPAIR: ignoring the Signature hash notify in IKE_SA_INIT response");
+		} else if (!negotiate_hash_algo_from_notification(md->pbs[PBS_v2N_SIGNATURE_HASH_ALGORITHMS], ike)) {
 			return STF_FATAL;
 		}
+		ike->sa.st_seen_hashnotify = true;
 	}
 
 	/*

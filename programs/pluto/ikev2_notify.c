@@ -75,18 +75,6 @@ bool decode_v2N_ike_sa_init_request(struct msg_digest *md)
 			/* already handled earlier */
 			break;
 
-		case v2N_SIGNATURE_HASH_ALGORITHMS:
-			if (!impair.ignore_hash_notify_request) {
-				if (md->v2N.signature_hash_algorithms != NULL) {
-					dbg("ignoring duplicate Signature Hash Notify payload");
-				} else {
-					md->v2N.signature_hash_algorithms = ntfy;
-				}
-			} else {
-				libreswan_log("IMPAIR: ignoring the Signature hash notify in IKE_SA_INIT Request");
-			}
-			break;
-
 		case v2N_USE_PPK:
 			md->v2N.use_ppk = true;
 			break;
@@ -102,6 +90,7 @@ bool decode_v2N_ike_sa_init_request(struct msg_digest *md)
 		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
 		case v2N_NAT_DETECTION_SOURCE_IP:
 		case v2N_NAT_DETECTION_DESTINATION_IP:
+		case v2N_SIGNATURE_HASH_ALGORITHMS:
 			/* handled elsewhere */
 			break;
 
@@ -160,6 +149,7 @@ bool decode_v2N_ike_sa_init_response(struct msg_digest *md)
 		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
 		case v2N_NAT_DETECTION_SOURCE_IP:
 		case v2N_NAT_DETECTION_DESTINATION_IP:
+		case v2N_SIGNATURE_HASH_ALGORITHMS:
 			/* handled elsewhere */
 			break;
 
@@ -170,14 +160,6 @@ bool decode_v2N_ike_sa_init_response(struct msg_digest *md)
 		case v2N_REDIRECT:
 			dbg("received v2N_REDIRECT in IKE_SA_INIT reply");
 			md->v2N.redirect = ntfy;
-			break;
-
-		case v2N_SIGNATURE_HASH_ALGORITHMS:
-			if (!impair.ignore_hash_notify_response) {
-				md->v2N.signature_hash_algorithms = ntfy;
-			} else {
-				libreswan_log("IMPAIR: ignoring the hash notify in IKE_SA_INIT response");
-			}
 			break;
 
 		default:
