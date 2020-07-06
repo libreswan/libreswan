@@ -950,7 +950,7 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 	}
 
 	/* extract results */
-	ike->sa.st_seen_fragvid = md->v2N.fragmentation_supported;
+	ike->sa.st_seen_fragmentation_supported = md->pbs[PBS_v2N_IKEV2_FRAGMENTATION_SUPPORTED] != NULL;
 	ike->sa.st_seen_ppk = md->v2N.use_ppk;
 	ike->sa.st_seen_redirect_sup = (md->v2N.redirected_from ||
 					md->v2N.redirect_supported);
@@ -1491,9 +1491,10 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 	 * _before_ the code's committed to creating an SA.  Hack this
 	 * by resetting any flags that might be set.
 	 */
-	ike->sa.st_seen_fragvid = false;
+	ike->sa.st_seen_fragmentation_supported = false;
 	ike->sa.st_seen_ppk = false;
-	ike->sa.st_seen_fragvid = md->v2N.fragmentation_supported;
+
+	ike->sa.st_seen_fragmentation_supported = md->pbs[PBS_v2N_IKEV2_FRAGMENTATION_SUPPORTED] != NULL;
 	ike->sa.st_seen_ppk = md->v2N.use_ppk;
 	if (md->v2N.signature_hash_algorithms != NULL) {
 		ike->sa.st_seen_hashnotify = TRUE;

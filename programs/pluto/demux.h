@@ -150,7 +150,6 @@ struct msg_digest {
 	bool fake_dne;				/* created as part of fake_md() */
 
 	struct {
-		bool fragmentation_supported;
 		bool use_ppk;
 		struct payload_digest *no_ppk_auth;
 		struct payload_digest *ppk_identity;

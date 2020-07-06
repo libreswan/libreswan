@@ -899,7 +899,7 @@ static bool ikev2_check_fragment(struct msg_digest *md, struct state *st)
 		return FALSE;
 	}
 
-	if (!(st->st_seen_fragvid)) {
+	if (!(st->st_seen_fragmentation_supported)) {
 		dbg("discarding IKE encrypted fragment - remote never proposed fragmentation");
 		return FALSE;
 	}
@@ -964,7 +964,7 @@ static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 	struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
 	pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2SKF]->pbs;
 
-	if (!st->st_seen_fragvid) {
+	if (!st->st_seen_fragmentation_supported) {
 		dbg(" fragments claiming to be from peer while peer did not signal fragmentation support - dropped");
 		return FALSE;
 	}

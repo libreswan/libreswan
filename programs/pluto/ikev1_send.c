@@ -161,7 +161,7 @@ static bool should_fragment_v1_ike_msg(struct state *st, size_t len, bool resend
 	 *       ? ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6)
 	 * && ((  resending
 	 *        && (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW)
-	 *        && st->st_seen_fragvid)
+	 *        && st->st_seen_fragmentation_supported)
 	 *     || (st->st_connection->policy & POLICY_IKE_FRAG_FORCE)
 	 *     || st->st_seen_fragments))
 	 *
@@ -170,7 +170,7 @@ static bool should_fragment_v1_ike_msg(struct state *st, size_t len, bool resend
 	return len >= endpoint_type(&st->st_remote_endpoint)->ikev1_max_fragment_size &&
 	    (   (resending &&
 			(st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) &&
-			st->st_seen_fragvid) ||
+			st->st_seen_fragmentation_supported) ||
 		(st->st_connection->policy & POLICY_IKE_FRAG_FORCE) ||
 		st->st_seen_fragments   );
 }

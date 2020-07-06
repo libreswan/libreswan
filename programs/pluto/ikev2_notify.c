@@ -87,10 +87,6 @@ bool decode_v2N_ike_sa_init_request(struct msg_digest *md)
 			}
 			break;
 
-		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
-			md->v2N.fragmentation_supported = true;
-			break;
-
 		case v2N_USE_PPK:
 			md->v2N.use_ppk = true;
 			break;
@@ -103,6 +99,7 @@ bool decode_v2N_ike_sa_init_request(struct msg_digest *md)
 			md->v2N.redirect_supported = true;
 			break;
 
+		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
 		case v2N_NAT_DETECTION_SOURCE_IP:
 		case v2N_NAT_DETECTION_DESTINATION_IP:
 			/* handled elsewhere */
@@ -160,13 +157,10 @@ bool decode_v2N_ike_sa_init_response(struct msg_digest *md)
 				      ntfy->payload.v2n.isan_type));
 			break;
 
+		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
 		case v2N_NAT_DETECTION_SOURCE_IP:
 		case v2N_NAT_DETECTION_DESTINATION_IP:
 			/* handled elsewhere */
-			break;
-
-		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
-			md->v2N.fragmentation_supported = true;
 			break;
 
 		case v2N_USE_PPK:

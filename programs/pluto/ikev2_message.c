@@ -1057,7 +1057,7 @@ stf_status record_v2SK_message(pb_stream *msg,
 	/* IPv4 and IPv6 have different fragment sizes */
 	if (sk->ike->sa.st_interface->protocol == &ip_protocol_udp &&
 	    LIN(POLICY_IKE_FRAG_ALLOW, sk->ike->sa.st_connection->policy) &&
-	    sk->ike->sa.st_seen_fragvid &&
+	    sk->ike->sa.st_seen_fragmentation_supported &&
 	    len >= endpoint_type(&sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size) {
 		struct v2_outgoing_fragment **frags = &sk->ike->sa.st_v2_outgoing[message];
 		if (!record_outbound_fragments(msg, sk, what, frags)) {
