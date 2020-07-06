@@ -150,7 +150,6 @@ struct msg_digest {
 	bool fake_dne;				/* created as part of fake_md() */
 
 	struct {
-		struct payload_digest *null_auth;
 		bool esp_tfc_padding_not_supported;
 		bool mobike_supported;
 	} v2N;

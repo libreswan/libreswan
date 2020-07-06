@@ -2723,13 +2723,14 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		    "and sent" : "while it did not sent");
 		st->st_seen_mobike = true;
 	}
-	if (md->v2N.null_auth != NULL) {
-		pb_stream pbs = md->v2N.null_auth->pbs;
+	if (md->pbs[PBS_v2N_NULL_AUTH] != NULL) {
+		pb_stream pbs = *md->pbs[PBS_v2N_NULL_AUTH];
 		size_t len = pbs_left(&pbs);
 
 		dbg("received v2N_NULL_AUTH");
 		null_auth = alloc_chunk(len, "NULL_AUTH");
-		if (!in_raw(null_auth.ptr, len, &pbs, "NULL_AUTH extract")) {
+		if (!pbs_in_raw(&pbs, null_auth.ptr, len,
+				"NULL_AUTH extract", ike->sa.st_logger)) {
 			loglog(RC_LOG_SERIOUS, "Failed to extract %zd bytes of NULL_AUTH from Notify payload", len);
 			free_chunk_content(&null_auth);
 			return STF_FATAL;

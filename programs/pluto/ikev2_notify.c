@@ -171,12 +171,8 @@ bool decode_v2N_ike_auth_request(struct msg_digest *md)
 			md->v2N.mobike_supported = true;
 			break;
 
-		case v2N_NULL_AUTH:
-			dbg("received v2N_NULL_AUTH");
-			md->v2N.null_auth = ntfy;
-			break;
-
 		/* Child SA related NOTIFYs are processed later in ikev2_process_ts_and_rest() */
+		case v2N_NULL_AUTH:
 		case v2N_NO_PPK_AUTH:
 		case v2N_USE_TRANSPORT_MODE:
 		case v2N_IPCOMP_SUPPORTED:
