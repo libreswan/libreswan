@@ -155,7 +155,6 @@ struct msg_digest {
 		bool use_transport_mode;
 		bool mobike_supported;
 		bool initial_contact;
-		struct payload_digest *ipcomp_supported;
 	} v2N;
 
 	/*

@@ -3465,8 +3465,8 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 		}
 	}
 	st->st_seen_no_tfc = md->v2N.esp_tfc_padding_not_supported;
-	if (md->v2N.ipcomp_supported) {
-		pb_stream pbs = md->v2N.ipcomp_supported->pbs;
+	if (md->pbs[PBS_v2N_IPCOMP_SUPPORTED] != NULL) {
+		pb_stream pbs = *md->pbs[PBS_v2N_IPCOMP_SUPPORTED];
 		size_t len = pbs_left(&pbs);
 		struct ikev2_notify_ipcomp_data n_ipcomp;
 

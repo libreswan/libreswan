@@ -273,7 +273,6 @@ bool decode_v2N_ike_auth_child(struct msg_digest *md)
 			break;
 		case v2N_IPCOMP_SUPPORTED:
 			dbg("received v2N_IPCOMP_SUPPORTED");
-			md->v2N.ipcomp_supported = ntfy;
 			break;
 		default:
 			dbg("ignored received NOTIFY (%d): %s ",
