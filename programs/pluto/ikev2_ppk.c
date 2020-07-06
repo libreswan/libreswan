@@ -61,28 +61,30 @@ bool emit_unified_ppk_id(struct ppk_id_payload *payl, pb_stream *pbs)
 }
 
 /*
- * used by responder, for extracting PPK_ID from IKEv2 Notify
- * PPK_ID Payload, we store PPK_ID and its type in payl
+ * used by responder, for extracting PPK_ID from IKEv2 Notify PPK_ID
+ * Payload, we store PPK_ID and its type in payl
  */
-bool extract_ppk_id(pb_stream *pbs, struct ppk_id_payload *payl)
+bool extract_v2N_ppk_identity(const struct pbs_in *notify_pbs,
+			      struct ppk_id_payload *payl, struct ike_sa *ike)
 {
-	size_t len = pbs_left(pbs);
-	u_char dst[PPK_ID_MAXLEN];
+	struct pbs_in pbs = *notify_pbs;
+	size_t len = pbs_left(&pbs);
 	int idtype;
 
 	if (len > PPK_ID_MAXLEN) {
-		loglog(RC_LOG_SERIOUS, "PPK ID length is too big");
-		return FALSE;
+		log_state(RC_LOG_SERIOUS, &ike->sa, "PPK ID length is too big");
+		return false;
 	}
 	if (len <= 1) {
-		loglog(RC_LOG_SERIOUS, "PPK ID data must be at least 1 byte (received %zd bytes including ppk type byte)",
-			len);
-		return FALSE;
+		log_state(RC_LOG_SERIOUS, &ike->sa, "PPK ID data must be at least 1 byte (received %zd bytes including ppk type byte)",
+			  len);
+		return false;
 	}
 
-	if (!in_raw(dst, len, pbs, "Unified PPK_ID Payload")) {
-		loglog(RC_LOG_SERIOUS, "PPK ID data could not be read");
-		return FALSE;
+	uint8_t dst[PPK_ID_MAXLEN];
+	if (!pbs_in_raw(&pbs, dst, len, "Unified PPK_ID Payload", ike->sa.st_logger)) {
+		log_state(RC_LOG_SERIOUS, &ike->sa, "PPK ID data could not be read");
+		return false;
 	}
 
 	dbg("received PPK_ID type: %s", enum_name(&ikev2_ppk_id_type_names, dst[0]));
@@ -95,9 +97,9 @@ bool extract_ppk_id(pb_stream *pbs, struct ppk_id_payload *payl)
 
 	case PPK_ID_OPAQUE:
 	default:
-		loglog(RC_LOG_SERIOUS, "PPK_ID type %d (%s) not supported",
-			idtype, enum_name(&ikev2_ppk_id_type_names, idtype));
-		return FALSE;
+		log_state(RC_LOG_SERIOUS, &ike->sa, "PPK_ID type %d (%s) not supported",
+			  idtype, enum_name(&ikev2_ppk_id_type_names, idtype));
+		return false;
 	}
 
 	/* clone ppk id data without ppk id type byte */
@@ -106,7 +108,7 @@ bool extract_ppk_id(pb_stream *pbs, struct ppk_id_payload *payl)
 		DBG_dump_hunk("Extracted PPK_ID", payl->ppk_id);
 	}
 
-	return TRUE;
+	return true;
 }
 
 bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,

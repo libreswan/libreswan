@@ -26,7 +26,8 @@ struct ppk_id_payload {
 
 extern bool create_ppk_id_payload(chunk_t *ppk_id, struct ppk_id_payload *payl);
 extern bool emit_unified_ppk_id(struct ppk_id_payload *payl, pb_stream *pbs);
-extern bool extract_ppk_id(pb_stream *pbs, struct ppk_id_payload *payl);
+extern bool extract_v2N_ppk_identity(const struct pbs_in *pbs, struct ppk_id_payload *payl,
+				     struct ike_sa *ike);
 
 extern bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 				   const struct crypt_mac *id_hash,

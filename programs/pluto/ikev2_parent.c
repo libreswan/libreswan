@@ -955,7 +955,7 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 
 	/* extract results */
 	ike->sa.st_seen_fragmentation_supported = md->pbs[PBS_v2N_IKEV2_FRAGMENTATION_SUPPORTED] != NULL;
-	ike->sa.st_seen_ppk = md->v2N.use_ppk;
+	ike->sa.st_seen_ppk = md->pbs[PBS_v2N_USE_PPK] != NULL;
 	ike->sa.st_seen_redirect_sup = (md->v2N.redirected_from ||
 					md->v2N.redirect_supported);
 
@@ -1502,7 +1502,7 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 	ike->sa.st_seen_ppk = false;
 
 	ike->sa.st_seen_fragmentation_supported = md->pbs[PBS_v2N_IKEV2_FRAGMENTATION_SUPPORTED] != NULL;
-	ike->sa.st_seen_ppk = md->v2N.use_ppk;
+	ike->sa.st_seen_ppk = md->pbs[PBS_v2N_USE_PPK] != NULL;
 	if (md->pbs[PBS_v2N_SIGNATURE_HASH_ALGORITHMS] != NULL) {
 		if (impair.ignore_hash_notify_request) {
 			log_state(RC_LOG, &ike->sa,
@@ -2669,14 +2669,14 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 	}
 
 	/*
-	 * The NOTIFY payloads we receive in the IKE_AUTH request are either
-	 * related to the IKE SA, or the Child SA. Here we only process the
-	 * ones related to the IKE SA.
+	 * The NOTIFY payloads we receive in the IKE_AUTH request are
+	 * either related to the IKE SA, or the Child SA. Here we only
+	 * process the ones related to the IKE SA.
 	 */
-	if (md->v2N.ppk_identity != NULL) {
+	if (md->pbs[PBS_v2N_PPK_IDENTITY] != NULL) {
 		dbg("received PPK_IDENTITY");
 		struct ppk_id_payload payl;
-		if (!extract_ppk_id(&md->v2N.ppk_identity->pbs, &payl)) {
+		if (!extract_v2N_ppk_identity(md->pbs[PBS_v2N_PPK_IDENTITY], &payl, ike)) {
 			dbg("failed to extract PPK_ID from PPK_IDENTITY payload. Abort!");
 			return STF_FATAL;
 		}
@@ -2698,8 +2698,8 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 			libreswan_log("ignored received PPK_IDENTITY - connection does not require PPK or PPKID not found");
 		}
 	}
-	if (md->v2N.no_ppk_auth != NULL) {
-		pb_stream pbs = md->v2N.no_ppk_auth->pbs;
+	if (md->pbs[PBS_v2N_NO_PPK_AUTH] != NULL) {
+		pb_stream pbs = *md->pbs[PBS_v2N_NO_PPK_AUTH];
 		size_t len = pbs_left(&pbs);
 		dbg("received NO_PPK_AUTH");
 		if (LIN(POLICY_PPK_INSIST, policy)) {
@@ -3624,7 +3624,7 @@ static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *
 
 	passert(that_authby != AUTHBY_NEVER && that_authby != AUTHBY_UNSET);
 
-	if (md->v2N.ppk_identity != NULL) {
+	if (md->pbs[PBS_v2N_PPK_IDENTITY] != NULL) {
 		if (!LIN(POLICY_PPK_ALLOW, c->policy)) {
 			loglog(RC_LOG_SERIOUS, "Received PPK_IDENTITY but connection does not allow PPK");
 			return STF_FATAL;
@@ -3644,7 +3644,8 @@ static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *
 	 * the connection to continue without PPK by using our NO_PPK_AUTH
 	 * payload. We should revert our key material to NO_PPK versions.
 	 */
-	if (pst->st_seen_ppk && md->v2N.ppk_identity == NULL &&
+	if (ike->sa.st_seen_ppk &&
+	    md->pbs[PBS_v2N_PPK_IDENTITY] == NULL &&
 	    LIN(POLICY_PPK_ALLOW, c->policy)) {
 		/* discard the PPK based calculations */
 

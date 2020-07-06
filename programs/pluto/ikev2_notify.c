@@ -75,10 +75,6 @@ bool decode_v2N_ike_sa_init_request(struct msg_digest *md)
 			/* already handled earlier */
 			break;
 
-		case v2N_USE_PPK:
-			md->v2N.use_ppk = true;
-			break;
-
 		case v2N_REDIRECTED_FROM:	/* currently we don't check address in this payload */
 			md->v2N.redirected_from = true;
 			break;
@@ -87,6 +83,7 @@ bool decode_v2N_ike_sa_init_request(struct msg_digest *md)
 			md->v2N.redirect_supported = true;
 			break;
 
+		case v2N_USE_PPK:
 		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
 		case v2N_NAT_DETECTION_SOURCE_IP:
 		case v2N_NAT_DETECTION_DESTINATION_IP:
@@ -146,15 +143,12 @@ bool decode_v2N_ike_sa_init_response(struct msg_digest *md)
 				      ntfy->payload.v2n.isan_type));
 			break;
 
+		case v2N_USE_PPK:
 		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
 		case v2N_NAT_DETECTION_SOURCE_IP:
 		case v2N_NAT_DETECTION_DESTINATION_IP:
 		case v2N_SIGNATURE_HASH_ALGORITHMS:
 			/* handled elsewhere */
-			break;
-
-		case v2N_USE_PPK:
-			md->v2N.use_ppk = true;
 			break;
 
 		case v2N_REDIRECT:
@@ -182,24 +176,6 @@ bool decode_v2N_ike_auth_request(struct msg_digest *md)
 	     ntfy != NULL; ntfy = ntfy->next) {
 		switch (ntfy->payload.v2n.isan_type) {
 
-		case v2N_PPK_IDENTITY:
-			dbg("received PPK_IDENTITY");
-			if (md->v2N.ppk_identity != NULL) {
-				loglog(RC_LOG_SERIOUS, "only one PPK_IDENTITY payload may be present");
-				return false;
-			}
-			md->v2N.ppk_identity = ntfy;
-			break;
-
-		case v2N_NO_PPK_AUTH:
-			dbg("received NO_PPK_AUTH");
-			if (md->v2N.no_ppk_auth != NULL) {
-				loglog(RC_LOG_SERIOUS, "only one NO_PPK_AUTH payload may be present");
-				return false;
-			}
-			md->v2N.no_ppk_auth = ntfy;
-			break;
-
 		case v2N_MOBIKE_SUPPORTED:
 			dbg("received v2N_MOBIKE_SUPPORTED");
 			md->v2N.mobike_supported = true;
@@ -216,9 +192,11 @@ bool decode_v2N_ike_auth_request(struct msg_digest *md)
 			break;
 
 		/* Child SA related NOTIFYs are processed later in ikev2_process_ts_and_rest() */
+		case v2N_NO_PPK_AUTH:
 		case v2N_USE_TRANSPORT_MODE:
 		case v2N_IPCOMP_SUPPORTED:
 		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
+		case v2N_PPK_IDENTITY:
 			break;
 
 		default:
@@ -244,10 +222,6 @@ bool decode_v2N_ike_auth_response(struct msg_digest *md)
 			dbg("received v2N_MOBIKE_SUPPORTED");
 			md->v2N.mobike_supported = true;
 			break;
-		case v2N_PPK_IDENTITY:
-			dbg("received v2N_PPK_IDENTITY, responder used PPK");
-			md->v2N.ppk_identity = ntfy;
-			break;
 		case v2N_REDIRECT:
 			dbg("received v2N_REDIRECT in IKE_AUTH reply");
 			md->v2N.redirect = ntfy;
@@ -259,6 +233,11 @@ bool decode_v2N_ike_auth_response(struct msg_digest *md)
 		case v2N_USE_TRANSPORT_MODE:
 			dbg("received v2N_USE_TRANSPORT_MODE in IKE_AUTH reply");
 			md->v2N.use_transport_mode = true;
+			break;
+		case v2N_PPK_IDENTITY:
+			dbg("received %s notify",
+			    enum_name(&ikev2_notify_names,
+				      ntfy->payload.v2n.isan_type));
 			break;
 		default:
 			dbg("received %s notify - ignored",
