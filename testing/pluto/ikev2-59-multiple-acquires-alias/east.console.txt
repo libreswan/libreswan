@@ -33,7 +33,7 @@ east #
 000 "north-eastnets/0x1":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "north-eastnets/0x1":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "north-eastnets/0x1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "north-eastnets/0x1":   policy: RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
+000 "north-eastnets/0x1":   policy: RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
 000 "north-eastnets/0x1":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "north-eastnets/0x1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "north-eastnets/0x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
@@ -52,19 +52,16 @@ east #
 000 "north-eastnets/0x2":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "north-eastnets/0x2":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "north-eastnets/0x2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "north-eastnets/0x2":   policy: RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
+000 "north-eastnets/0x2":   policy: RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
 000 "north-eastnets/0x2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "north-eastnets/0x2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "north-eastnets/0x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "north-eastnets/0x2":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@north
 000 "north-eastnets/0x2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "north-eastnets/0x2":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "north-eastnets/0x2":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $2;
 000 "north-eastnets/0x2":   aliases: north-eastnets
 000 "north-eastnets/0x2":   IKE algorithms: AES_CBC_256-HMAC_SHA2_256-MODP2048
 000 "north-eastnets/0x2":   ESP algorithms: AES_CBC_128-HMAC_SHA2_512_256-MODP3072
-000 #1: "north-eastnets/0x2":500 STATE_PARENT_I1 (sent v2I1, expected v2R1); EVENT_RETRANSMIT in -1s; idle;
-000 #1: pending CHILD SA for "north-eastnets/0x1"
-000 #1: pending CHILD SA for "north-eastnets/0x2"
 east #
  echo "initdone"
 initdone
