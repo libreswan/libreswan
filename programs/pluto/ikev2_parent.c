@@ -3450,7 +3450,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 	}
 
 	/* check for Child SA related NOTIFY payloads */
-	if (md->v2N.use_transport_mode) {
+	if (md->pbs[PBS_v2N_USE_TRANSPORT_MODE] != NULL) {
 		if (c->policy & POLICY_TUNNEL) {
 			/* This means we did not send v2N_USE_TRANSPORT, however responder is sending it in now, seems incorrect */
 			dbg("Initiator policy is tunnel, responder sends v2N_USE_TRANSPORT_MODE notification in inR2, ignoring it");
@@ -3719,7 +3719,7 @@ static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *
 	}
 
 	/* AUTH is ok, we can trust the notify payloads */
-	if (md->v2N.use_transport_mode) { /* FIXME: use new RFC logic turning this into a request, not requirement */
+	if (md->pbs[PBS_v2N_USE_TRANSPORT_MODE] != NULL) { /* FIXME: use new RFC logic turning this into a request, not requirement */
 		if (LIN(POLICY_TUNNEL, st->st_connection->policy)) {
 			log_state(RC_LOG_SERIOUS, st, "local policy requires Tunnel Mode but peer requires required Transport Mode");
 			return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA; /* should just delete child */

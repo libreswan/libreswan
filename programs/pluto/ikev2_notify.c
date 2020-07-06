@@ -218,8 +218,8 @@ bool decode_v2N_ike_auth_response(struct msg_digest *md)
 			md->v2N.esp_tfc_padding_not_supported = true;
 			break;
 		case v2N_USE_TRANSPORT_MODE:
+			/* handled elsewhere */
 			dbg("received v2N_USE_TRANSPORT_MODE in IKE_AUTH reply");
-			md->v2N.use_transport_mode = true;
 			break;
 		case v2N_PPK_IDENTITY:
 			dbg("received %s notify",
@@ -265,7 +265,7 @@ bool decode_v2N_ike_auth_child(struct msg_digest *md)
 		/* check for Child SA related NOTIFY payloads */
 		switch (ntfy->payload.v2n.isan_type) {
 		case v2N_USE_TRANSPORT_MODE:
-			md->v2N.use_transport_mode = true;
+			/* handled elsewhere */
 			break;
 		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
 			dbg("received ESP_TFC_PADDING_NOT_SUPPORTED - disabling TFC");

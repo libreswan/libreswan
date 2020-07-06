@@ -152,7 +152,6 @@ struct msg_digest {
 	struct {
 		struct payload_digest *null_auth;
 		bool esp_tfc_padding_not_supported;
-		bool use_transport_mode;
 		bool mobike_supported;
 		bool initial_contact;
 	} v2N;
