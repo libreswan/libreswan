@@ -166,27 +166,16 @@ bool decode_v2N_ike_auth_request(struct msg_digest *md)
 	     ntfy != NULL; ntfy = ntfy->next) {
 		switch (ntfy->payload.v2n.isan_type) {
 
-		case v2N_MOBIKE_SUPPORTED:
-			dbg("received v2N_MOBIKE_SUPPORTED");
-			md->v2N.mobike_supported = true;
-			break;
-
-		case v2N_NULL_AUTH:
-			dbg("received v2N_NULL_AUTH");
-			md->v2N.null_auth = ntfy;
-			break;
-
-		case v2N_INITIAL_CONTACT:
-			dbg("received v2N_INITIAL_CONTACT");
-			md->v2N.initial_contact = true;
-			break;
-
 		/* Child SA related NOTIFYs are processed later in ikev2_process_ts_and_rest() */
+		case v2N_MOBIKE_SUPPORTED:
+		case v2N_NULL_AUTH:
 		case v2N_NO_PPK_AUTH:
 		case v2N_USE_TRANSPORT_MODE:
 		case v2N_IPCOMP_SUPPORTED:
 		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
 		case v2N_PPK_IDENTITY:
+		case v2N_INITIAL_CONTACT:
+			/* handled elsewhere */
 			break;
 
 		default:
@@ -208,20 +197,12 @@ bool decode_v2N_ike_auth_response(struct msg_digest *md)
 		case v2N_COOKIE:
 			dbg("Ignoring bogus COOKIE notify in IKE_AUTH rpely");
 			break;
-		case v2N_MOBIKE_SUPPORTED:
-			dbg("received v2N_MOBIKE_SUPPORTED");
-			md->v2N.mobike_supported = true;
-			break;
 		case v2N_REDIRECT:
 		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
-			dbg("received ESP_TFC_PADDING_NOT_SUPPORTED - disabling TFC");
-			md->v2N.esp_tfc_padding_not_supported = true;
-			break;
 		case v2N_USE_TRANSPORT_MODE:
-			dbg("received v2N_USE_TRANSPORT_MODE in IKE_AUTH reply");
-			md->v2N.use_transport_mode = true;
-			break;
+		case v2N_MOBIKE_SUPPORTED:
 		case v2N_PPK_IDENTITY:
+			/* handled elsewhere */
 			dbg("received %s notify",
 			    enum_name(&ikev2_notify_names,
 				      ntfy->payload.v2n.isan_type));
@@ -265,15 +246,11 @@ bool decode_v2N_ike_auth_child(struct msg_digest *md)
 		/* check for Child SA related NOTIFY payloads */
 		switch (ntfy->payload.v2n.isan_type) {
 		case v2N_USE_TRANSPORT_MODE:
-			md->v2N.use_transport_mode = true;
-			break;
 		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
-			dbg("received ESP_TFC_PADDING_NOT_SUPPORTED - disabling TFC");
-			md->v2N.esp_tfc_padding_not_supported = true;
+			/* handled elsewhere */
 			break;
 		case v2N_IPCOMP_SUPPORTED:
 			dbg("received v2N_IPCOMP_SUPPORTED");
-			md->v2N.ipcomp_supported = ntfy;
 			break;
 		default:
 			dbg("ignored received NOTIFY (%d): %s ",

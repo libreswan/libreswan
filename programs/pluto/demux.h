@@ -149,15 +149,6 @@ struct msg_digest {
 	bool fake_clone;			/* is this a fake (clone) message */
 	bool fake_dne;				/* created as part of fake_md() */
 
-	struct {
-		struct payload_digest *null_auth;
-		bool esp_tfc_padding_not_supported;
-		bool use_transport_mode;
-		bool mobike_supported;
-		bool initial_contact;
-		struct payload_digest *ipcomp_supported;
-	} v2N;
-
 	/*
 	 * Note that .pbs[] is indexed using either enum v1_pbs or
 	 * enum v2_pbs and not exchange type, v2_notification_t, ....

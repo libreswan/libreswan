@@ -2717,25 +2717,26 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 			st->st_no_ppk_auth = no_ppk_auth;
 		}
 	}
-	if (md->v2N.mobike_supported) {
+	if (md->pbs[PBS_v2N_MOBIKE_SUPPORTED] != NULL) {
 		dbg("received v2N_MOBIKE_SUPPORTED %s",
 		    st->st_sent_mobike ?
 		    "and sent" : "while it did not sent");
 		st->st_seen_mobike = true;
 	}
-	if (md->v2N.null_auth != NULL) {
-		pb_stream pbs = md->v2N.null_auth->pbs;
+	if (md->pbs[PBS_v2N_NULL_AUTH] != NULL) {
+		pb_stream pbs = *md->pbs[PBS_v2N_NULL_AUTH];
 		size_t len = pbs_left(&pbs);
 
 		dbg("received v2N_NULL_AUTH");
 		null_auth = alloc_chunk(len, "NULL_AUTH");
-		if (!in_raw(null_auth.ptr, len, &pbs, "NULL_AUTH extract")) {
+		if (!pbs_in_raw(&pbs, null_auth.ptr, len,
+				"NULL_AUTH extract", ike->sa.st_logger)) {
 			loglog(RC_LOG_SERIOUS, "Failed to extract %zd bytes of NULL_AUTH from Notify payload", len);
 			free_chunk_content(&null_auth);
 			return STF_FATAL;
 		}
 	}
-	st->st_seen_initialc = md->v2N.initial_contact;
+	st->st_seen_initialc = md->pbs[PBS_v2N_INITIAL_CONTACT] != NULL;
 
 	/*
 	 * If we found proper PPK ID and policy allows PPK, use that.
@@ -3450,7 +3451,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 	}
 
 	/* check for Child SA related NOTIFY payloads */
-	if (md->v2N.use_transport_mode) {
+	if (md->pbs[PBS_v2N_USE_TRANSPORT_MODE] != NULL) {
 		if (c->policy & POLICY_TUNNEL) {
 			/* This means we did not send v2N_USE_TRANSPORT, however responder is sending it in now, seems incorrect */
 			dbg("Initiator policy is tunnel, responder sends v2N_USE_TRANSPORT_MODE notification in inR2, ignoring it");
@@ -3464,9 +3465,9 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 			}
 		}
 	}
-	st->st_seen_no_tfc = md->v2N.esp_tfc_padding_not_supported;
-	if (md->v2N.ipcomp_supported) {
-		pb_stream pbs = md->v2N.ipcomp_supported->pbs;
+	st->st_seen_no_tfc = md->pbs[PBS_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL;
+	if (md->pbs[PBS_v2N_IPCOMP_SUPPORTED] != NULL) {
+		pb_stream pbs = *md->pbs[PBS_v2N_IPCOMP_SUPPORTED];
 		size_t len = pbs_left(&pbs);
 		struct ikev2_notify_ipcomp_data n_ipcomp;
 
@@ -3555,7 +3556,7 @@ stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct 
 		LOG_PEXPECT("decode notify failed, what should happen next");
 		return STF_FATAL;
 	}
-	if (md->v2N.mobike_supported) {
+	if (md->pbs[PBS_v2N_MOBIKE_SUPPORTED] != NULL) {
 		dbg("received v2N_MOBIKE_SUPPORTED %s",
 		    pst->st_sent_mobike ? "and sent" : "while it did not sent");
 		st->st_seen_mobike = pst->st_seen_mobike = true;
@@ -3579,7 +3580,7 @@ stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct 
 			}
 		}
 	}
-	st->st_seen_no_tfc = md->v2N.esp_tfc_padding_not_supported; /* Technically, this should be only on the child state */
+	st->st_seen_no_tfc = md->pbs[PBS_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL; /* Technically, this should be only on the child state */
 
 	/*
 	 * On the initiator, we can STF_FATAL on IKE SA errors, because no
@@ -3719,7 +3720,7 @@ static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *
 	}
 
 	/* AUTH is ok, we can trust the notify payloads */
-	if (md->v2N.use_transport_mode) { /* FIXME: use new RFC logic turning this into a request, not requirement */
+	if (md->pbs[PBS_v2N_USE_TRANSPORT_MODE] != NULL) { /* FIXME: use new RFC logic turning this into a request, not requirement */
 		if (LIN(POLICY_TUNNEL, st->st_connection->policy)) {
 			log_state(RC_LOG_SERIOUS, st, "local policy requires Tunnel Mode but peer requires required Transport Mode");
 			return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA; /* should just delete child */
