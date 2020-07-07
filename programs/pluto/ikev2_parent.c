@@ -3465,7 +3465,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 			}
 		}
 	}
-	st->st_seen_no_tfc = md->v2N.esp_tfc_padding_not_supported;
+	st->st_seen_no_tfc = md->pbs[PBS_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL;
 	if (md->pbs[PBS_v2N_IPCOMP_SUPPORTED] != NULL) {
 		pb_stream pbs = *md->pbs[PBS_v2N_IPCOMP_SUPPORTED];
 		size_t len = pbs_left(&pbs);
@@ -3580,7 +3580,7 @@ stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct 
 			}
 		}
 	}
-	st->st_seen_no_tfc = md->v2N.esp_tfc_padding_not_supported; /* Technically, this should be only on the child state */
+	st->st_seen_no_tfc = md->pbs[PBS_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL; /* Technically, this should be only on the child state */
 
 	/*
 	 * On the initiator, we can STF_FATAL on IKE SA errors, because no

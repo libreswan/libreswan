@@ -150,7 +150,6 @@ struct msg_digest {
 	bool fake_dne;				/* created as part of fake_md() */
 
 	struct {
-		bool esp_tfc_padding_not_supported;
 	} v2N;
 
 	/*
