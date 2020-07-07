@@ -150,9 +150,6 @@ struct msg_digest {
 	bool fake_dne;				/* created as part of fake_md() */
 
 	struct {
-		bool redirected_from;
-		bool redirect_supported;
-		struct payload_digest *redirect;
 		struct payload_digest *null_auth;
 		bool esp_tfc_padding_not_supported;
 		bool use_transport_mode;

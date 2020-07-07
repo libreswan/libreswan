@@ -68,10 +68,11 @@ extern bool emit_redirect_notification(
  * @return err_t NULL if everything went right,
  * 		 otherwise (non-NULL)  what went wrong
  */
-extern err_t parse_redirect_payload(pb_stream *input,
+extern err_t parse_redirect_payload(const struct pbs_in *pbs,
 				    const char *allowed_targets_list,
 				    const chunk_t *nonce,
-				    ip_address *redirect_ip /* result */);
+				    ip_address *redirect_ip /* result */,
+				    struct logger *logger);
 
 /*
  * Initiate via initiate_connection new IKE_SA_INIT exchange

@@ -76,13 +76,7 @@ bool decode_v2N_ike_sa_init_request(struct msg_digest *md)
 			break;
 
 		case v2N_REDIRECTED_FROM:	/* currently we don't check address in this payload */
-			md->v2N.redirected_from = true;
-			break;
-
 		case v2N_REDIRECT_SUPPORTED:
-			md->v2N.redirect_supported = true;
-			break;
-
 		case v2N_USE_PPK:
 		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
 		case v2N_NAT_DETECTION_SOURCE_IP:
@@ -148,12 +142,8 @@ bool decode_v2N_ike_sa_init_response(struct msg_digest *md)
 		case v2N_NAT_DETECTION_SOURCE_IP:
 		case v2N_NAT_DETECTION_DESTINATION_IP:
 		case v2N_SIGNATURE_HASH_ALGORITHMS:
-			/* handled elsewhere */
-			break;
-
 		case v2N_REDIRECT:
-			dbg("received v2N_REDIRECT in IKE_SA_INIT reply");
-			md->v2N.redirect = ntfy;
+			/* handled elsewhere */
 			break;
 
 		default:
@@ -223,9 +213,6 @@ bool decode_v2N_ike_auth_response(struct msg_digest *md)
 			md->v2N.mobike_supported = true;
 			break;
 		case v2N_REDIRECT:
-			dbg("received v2N_REDIRECT in IKE_AUTH reply");
-			md->v2N.redirect = ntfy;
-			break;
 		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
 			dbg("received ESP_TFC_PADDING_NOT_SUPPORTED - disabling TFC");
 			md->v2N.esp_tfc_padding_not_supported = true;

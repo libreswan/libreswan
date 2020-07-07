@@ -956,8 +956,8 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 	/* extract results */
 	ike->sa.st_seen_fragmentation_supported = md->pbs[PBS_v2N_IKEV2_FRAGMENTATION_SUPPORTED] != NULL;
 	ike->sa.st_seen_ppk = md->pbs[PBS_v2N_USE_PPK] != NULL;
-	ike->sa.st_seen_redirect_sup = (md->v2N.redirected_from ||
-					md->v2N.redirect_supported);
+	ike->sa.st_seen_redirect_sup = (md->pbs[PBS_v2N_REDIRECTED_FROM] != NULL ||
+					md->pbs[PBS_v2N_REDIRECT_SUPPORTED] != NULL);
 
 	/*
 	 * Responder: check v2N_NAT_DETECTION_DESTINATION_IP or/and
@@ -3560,16 +3560,17 @@ stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct 
 		    pst->st_sent_mobike ? "and sent" : "while it did not sent");
 		st->st_seen_mobike = pst->st_seen_mobike = true;
 	}
-	if (md->v2N.redirect != NULL) {
+	if (md->pbs[PBS_v2N_REDIRECT] != NULL) {
 		dbg("received v2N_REDIRECT in IKE_AUTH reply");
 		if (!LIN(POLICY_ACCEPT_REDIRECT_YES, st->st_connection->policy)) {
 			dbg("ignoring v2N_REDIRECT, we don't accept being redirected");
 		} else {
 			ip_address redirect_ip;
-			err_t err = parse_redirect_payload(&md->v2N.redirect->pbs,
+			err_t err = parse_redirect_payload(md->pbs[PBS_v2N_REDIRECT],
 							   st->st_connection->accept_redirect_to,
 							   NULL,
-							   &redirect_ip);
+							   &redirect_ip,
+							   ike->sa.st_logger);
 			if (err != NULL) {
 				dbg("warning: parsing of v2N_REDIRECT payload failed: %s", err);
 			} else {
@@ -3731,8 +3732,8 @@ static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *
 		}
 	}
 
-	if (md->v2N.redirect) {
-		st->st_redirected_in_auth = TRUE;
+	if (md->pbs[PBS_v2N_REDIRECT] != NULL) {
+		st->st_redirected_in_auth = true;
 		event_force(EVENT_v2_REDIRECT, st);
 		return STF_SUSPEND;
 	}
@@ -5007,7 +5008,8 @@ static void process_informational_notify_req(struct msg_digest *md, bool *redire
 			err_t e = parse_redirect_payload(&ntfy->pbs,
 							 st->st_connection->accept_redirect_to,
 							 NULL,
-							 &redirect_ip);
+							 &redirect_ip,
+							 ike->sa.st_logger);
 			if (e != NULL) {
 				loglog(RC_LOG_SERIOUS, "warning: parsing of v2N_REDIRECT payload failed: %s", e);
 			} else {

@@ -261,15 +261,19 @@ static bool allow_to_be_redirected(const char *allowed_targets_list, ip_address 
 	return false;
 }
 
-err_t parse_redirect_payload(pb_stream *input_pbs,
+err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 			     const char *allowed_targets_list,
 			     const chunk_t *nonce,
-			     ip_address *redirect_ip /* result */)
+			     ip_address *redirect_ip /* result */,
+			     struct logger *logger)
 {
+	struct pbs_in input_pbs = *notify_pbs;
 	struct ikev2_redirect_part gw_info;
 
-	if (!in_struct(&gw_info, &ikev2_redirect_desc, input_pbs, NULL))
+	if (!pbs_in_struct(&input_pbs, &gw_info, sizeof(gw_info),
+			   &ikev2_redirect_desc, NULL, logger)) {
 		return "received malformed REDIRECT payload";
+	}
 
 	const struct ip_info *af;
 
@@ -287,7 +291,7 @@ err_t parse_redirect_payload(pb_stream *input_pbs,
 		return "bad GW Ident Type";
 	}
 
-	/* in_raw() actual GW Identity */
+	/* pbs_in_raw() actual GW Identity */
 	if (af == NULL) {
 		/*
 		 * The FQDN string isn't NUL-terminated.
@@ -300,7 +304,8 @@ err_t parse_redirect_payload(pb_stream *input_pbs,
 		 */
 		unsigned char gw_str[0xFF];
 
-		if (!in_raw(&gw_str, gw_info.gw_identity_len, input_pbs, "GW Identity"))
+		if (!pbs_in_raw(&input_pbs, &gw_str, gw_info.gw_identity_len,
+				"GW Identity", logger))
 			return "error while extracting GW Identity from variable part of IKEv2_REDIRECT Notify payload";
 
 		err_t ugh = ttoaddr((char *) gw_str, gw_info.gw_identity_len,
@@ -312,7 +317,7 @@ err_t parse_redirect_payload(pb_stream *input_pbs,
 		if (gw_info.gw_identity_len < af->ip_size) {
 			return "transferred GW Identity Length is too small for an IP address";
 		}
-		if (!pbs_in_address(redirect_ip, af, input_pbs, "REDIRECT address")) {
+		if (!pbs_in_address(redirect_ip, af, &input_pbs, "REDIRECT address")) {
 			return "variable part of payload does not match transferred GW Identity Length";
 		}
 		address_buf b;
@@ -326,7 +331,7 @@ err_t parse_redirect_payload(pb_stream *input_pbs,
 	if (!allow_to_be_redirected(allowed_targets_list, redirect_ip))
 		return "received GW Identity is not listed in accept-redirect-to conn option";
 
-	size_t len = pbs_left(input_pbs);
+	size_t len = pbs_left(&input_pbs);
 
 	if (nonce == NULL) {
 		if (len > 0)
@@ -335,10 +340,10 @@ err_t parse_redirect_payload(pb_stream *input_pbs,
 			return NULL;
 	}
 
-	if (nonce->len != len || !memeq(nonce->ptr, input_pbs->cur, len)) {
+	if (nonce->len != len || !memeq(nonce->ptr, input_pbs.cur, len)) {
 		if (DBGP(DBG_BASE)) {
 			DBG_dump_hunk("expected nonce", *nonce);
-			DBG_dump("received nonce", input_pbs->cur, len);
+			DBG_dump("received nonce", input_pbs.cur, len);
 		}
 		return "received nonce does not match our expected nonce Ni (spoofed packet?)";
 	}
@@ -480,7 +485,8 @@ stf_status process_IKE_SA_INIT_v2N_REDIRECT_response(struct ike_sa *ike,
 	err_t err = parse_redirect_payload(&redirect_pbs,
 					   c->accept_redirect_to,
 					   &ike->sa.st_ni,
-					   &redirect_ip);
+					   &redirect_ip,
+					   ike->sa.st_logger);
 	if (err != NULL) {
 		log_state(RC_LOG_SERIOUS, &ike->sa,
 			  "warning: parsing of v2N_REDIRECT payload failed: %s", err);
