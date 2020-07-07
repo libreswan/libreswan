@@ -1,4 +1,4 @@
-ipsec whack --trafficstatus
+ipsec trafficstatus
 ../../pluto/bin/ipsec-look.sh
 : ==== cut ====
 ipsec auto --status
