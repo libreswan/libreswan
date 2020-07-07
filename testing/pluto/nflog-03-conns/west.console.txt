@@ -34,12 +34,12 @@ west #
 Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
 ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
-DROP    all  --  192.0.2.0/24         0.0.0.0/0           
+DROP       all  --  192.0.2.0/24         0.0.0.0/0           
 Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain DROP (1 references)
+Chain LOGDROP (0 references)
 target     prot opt source               destination         
 LOG        all  --  0.0.0.0/0            0.0.0.0/0            LOG flags 0 level 4
 DROP       all  --  0.0.0.0/0            0.0.0.0/0           
@@ -61,13 +61,13 @@ Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
 NFLOG      all  --  192.0.2.0/24         192.0.1.0/24         policy match dir in pol ipsec nflog-prefix  westnet-eastnet-nflog nflog-group 13
 ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
-DROP    all  --  192.0.2.0/24         0.0.0.0/0           
+DROP       all  --  192.0.2.0/24         0.0.0.0/0           
 Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
 NFLOG      all  --  192.0.1.0/24         192.0.2.0/24         policy match dir out pol ipsec nflog-prefix  westnet-eastnet-nflog nflog-group 13
-Chain DROP (1 references)
+Chain LOGDROP (0 references)
 target     prot opt source               destination         
 LOG        all  --  0.0.0.0/0            0.0.0.0/0            LOG flags 0 level 4
 DROP       all  --  0.0.0.0/0            0.0.0.0/0           
@@ -83,14 +83,14 @@ target     prot opt source               destination
 NFLOG      all  --  192.1.2.23           192.1.2.45           policy match dir in pol ipsec nflog-prefix  west-east-nflog nflog-group 50
 NFLOG      all  --  192.0.2.0/24         192.0.1.0/24         policy match dir in pol ipsec nflog-prefix  westnet-eastnet-nflog nflog-group 13
 ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
-DROP    all  --  192.0.2.0/24         0.0.0.0/0           
+DROP       all  --  192.0.2.0/24         0.0.0.0/0           
 Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
 NFLOG      all  --  192.1.2.45           192.1.2.23           policy match dir out pol ipsec nflog-prefix  west-east-nflog nflog-group 50
 NFLOG      all  --  192.0.1.0/24         192.0.2.0/24         policy match dir out pol ipsec nflog-prefix  westnet-eastnet-nflog nflog-group 13
-Chain DROP (1 references)
+Chain LOGDROP (0 references)
 target     prot opt source               destination         
 LOG        all  --  0.0.0.0/0            0.0.0.0/0            LOG flags 0 level 4
 DROP       all  --  0.0.0.0/0            0.0.0.0/0           
@@ -142,13 +142,13 @@ Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
 NFLOG      all  --  192.1.2.23           192.1.2.45           policy match dir in pol ipsec nflog-prefix  west-east-nflog nflog-group 50
 ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
-DROP    all  --  192.0.2.0/24         0.0.0.0/0           
+DROP       all  --  192.0.2.0/24         0.0.0.0/0           
 Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
 NFLOG      all  --  192.1.2.45           192.1.2.23           policy match dir out pol ipsec nflog-prefix  west-east-nflog nflog-group 50
-Chain DROP (1 references)
+Chain LOGDROP (0 references)
 target     prot opt source               destination         
 LOG        all  --  0.0.0.0/0            0.0.0.0/0            LOG flags 0 level 4
 DROP       all  --  0.0.0.0/0            0.0.0.0/0           
@@ -162,12 +162,12 @@ west #
 Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
 ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
-DROP    all  --  192.0.2.0/24         0.0.0.0/0           
+DROP       all  --  192.0.2.0/24         0.0.0.0/0           
 Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain DROP (1 references)
+Chain LOGDROP (0 references)
 target     prot opt source               destination         
 LOG        all  --  0.0.0.0/0            0.0.0.0/0            LOG flags 0 level 4
 DROP       all  --  0.0.0.0/0            0.0.0.0/0           
@@ -221,12 +221,12 @@ west #
 Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
 ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
-DROP    all  --  192.0.2.0/24         0.0.0.0/0           
+DROP       all  --  192.0.2.0/24         0.0.0.0/0           
 Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain DROP (1 references)
+Chain LOGDROP (0 references)
 target     prot opt source               destination         
 LOG        all  --  0.0.0.0/0            0.0.0.0/0            LOG flags 0 level 4
 DROP       all  --  0.0.0.0/0            0.0.0.0/0           
