@@ -1,0 +1,6 @@
+establish ESP tunneled TCP via a NAT; then send a 1 byte keep-alive
+
+Code shouldn't send keep-alives via TCP; but should-not isn't
+must-not.
+
+At one point the linux kernel treated this as an error.

@@ -1,9 +1,8 @@
 IKEv2 TCP with truncated initial packet + close
 
 West sends an incomplete IKETCP request and then closes the outgoing
-stream.  Pluto (east), or the kernel, is expected to detect this and
-close the TCP stream.  When this happens reading the ready socket
-returns 0 bytes (aka EOF).
+stream.  The responder's pluto (east) or the kernel, are then expected
+to detect this and shutdown their end of the TCP stream.
 
-Note that early kernels would instead returning EAGAIN (a good sign of
-this bug is a log file full of EAGAIN errors).
+Code detecting this needs to look for a 0-byte read (aka EOF) (early
+kernels would instead return EAGAIN leading to repeated reads).
