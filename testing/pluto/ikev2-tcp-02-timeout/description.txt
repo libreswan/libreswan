@@ -1,4 +1,5 @@
 IKEv2 TCP timeouts
 
-West initiates incomplete IKETCP SAs.  East (or the kernel) is
-expected to timeout and close the TCP stream.
+The initiator (west) sends part of an IKETCP request.  The responder's
+pluto (east) or kernel is then expected to timeout and close the
+stream.

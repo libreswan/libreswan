@@ -1,4 +1,4 @@
-TCP encapsulation with writes in blocking mode
+ESP encapsulation in TCP using blocking writes.
 
 Early kernels would fail non-blocking writes to the ESPINTCP socket.
 

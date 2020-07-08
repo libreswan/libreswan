@@ -1,2 +1,1 @@
-as ikev2-03-basic-rawrsa-using-TCP, but test rekey after 1 minute
-
+establish using TCP and then rekey the CHILD SA

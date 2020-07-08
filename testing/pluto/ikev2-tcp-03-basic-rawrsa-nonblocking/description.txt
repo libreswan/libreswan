@@ -1,6 +1,4 @@
-Basic TCP encapsulation with IKEv2.
-
-This test TCP uses non-blocking writes.
+Basic TCP encapsulation with IKEv2 using non-blocking writes.
 
 If this test fails but ikev2-tcp-03-basic-rawrsa-blocking passes then
 the kernel lacks the blocking fix.
