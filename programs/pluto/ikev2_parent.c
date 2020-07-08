@@ -949,11 +949,6 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 		return STF_FATAL;
 	}
 
-	if (!decode_v2N_ike_sa_init_request(md)) {
-		send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);
-		return STF_FATAL;
-	}
-
 	/* extract results */
 	ike->sa.st_seen_fragmentation_supported = md->pbs[PBS_v2N_IKEV2_FRAGMENTATION_SUPPORTED] != NULL;
 	ike->sa.st_seen_ppk = md->pbs[PBS_v2N_USE_PPK] != NULL;
@@ -1487,10 +1482,6 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 	if (c->newest_ipsec_sa > st->st_serialno) {
 		libreswan_log("state superseded by #%lu try=%lu, drop this negotiation",
 			      c->newest_ipsec_sa, st->st_try);
-		return STF_FATAL;
-	}
-
-	if (!decode_v2N_ike_sa_init_response(md)) {
 		return STF_FATAL;
 	}
 
@@ -2665,11 +2656,6 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 	bool found_ppk = FALSE;
 	chunk_t null_auth = EMPTY_CHUNK;
 
-	if (!decode_v2N_ike_auth_request(md)) {
-		/* send unprotected notify? */
-		return STF_FATAL;
-	}
-
 	/*
 	 * The NOTIFY payloads we receive in the IKE_AUTH request are
 	 * either related to the IKE SA, or the Child SA. Here we only
@@ -3556,11 +3542,6 @@ stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct 
 	struct state *st = &child->sa;
 	struct state *pst = &ike->sa;
 
-	/* Process NOTIFY payloads related to IKE SA */
-	if (!decode_v2N_ike_auth_response(md)) {
-		LOG_PEXPECT("decode notify failed, what should happen next");
-		return STF_FATAL;
-	}
 	if (md->pbs[PBS_v2N_MOBIKE_SUPPORTED] != NULL) {
 		dbg("received v2N_MOBIKE_SUPPORTED %s",
 		    pst->st_sent_mobike ? "and sent" : "while it did not sent");
