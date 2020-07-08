@@ -1,8 +1,8 @@
 sleep 2
 # both clients should be connected now
 ipsec whack --trafficstatus
-# send REDIRECT in informational to north
-ipsec whack --redirect --peer-ip 192.1.3.33 --gateway 192.1.2.45
-# give north time to be redirected
+# send REDIRECT in informational to all tunnels from connection east-any (north and road)
+ipsec whack --redirect --name east-any --gateway 192.1.2.45 
+# give them time to be redirected
 sleep 2
-# only road should be left connected to east. north has gone to west
+# both should be gone now

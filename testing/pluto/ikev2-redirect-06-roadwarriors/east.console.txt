@@ -22,19 +22,18 @@ east #
 006 #2: "east-any"[1] 192.1.3.209, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org', lease=192.0.2.101/32
 006 #4: "east-any"[2] 192.1.3.33, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org', lease=192.0.2.102/32
 east #
- # send REDIRECT in informational to north
+ # send REDIRECT in informational to all tunnels from connection east-any (north and road)
 east #
- ipsec whack --redirect --peer-ip 192.1.3.33 --gateway 192.1.2.45
-002 redirecting of peer 192.1.3.33 successful
+ ipsec whack --redirect --name east-any --gateway 192.1.2.45
+005 redirections sent for 2 tunnels of connection "east-any"
 east #
- # give north time to be redirected
+ # give them time to be redirected
 east #
  sleep 2
 east #
- # only road should be left connected to east. north has gone to west
+ # both should be gone now
 east #
  ipsec whack --trafficstatus
-006 #2: "east-any"[1] 192.1.3.209, type=ESP, add_time=1234567890, inBytes=672, outBytes=672, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org', lease=192.0.2.101/32
 east #
  ../bin/check-for-core.sh
 east #

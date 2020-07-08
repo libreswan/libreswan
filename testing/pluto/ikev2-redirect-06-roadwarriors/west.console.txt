@@ -17,7 +17,8 @@ west #
 initdone
 west #
  ipsec whack --trafficstatus
-006 #2: "east-any"[1] 192.1.3.33, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org', lease=192.0.2.101/32
+006 #3: "east-any"[2] 192.1.3.209, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org', lease=192.0.2.101/32
+006 #4: "east-any"[1] 192.1.3.33, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org', lease=192.0.2.102/32
 west #
  ../bin/check-for-core.sh
 west #
