@@ -1,0 +1,19 @@
+IKEv2 REDIRECT Mechanism - testing the 'load-balancing' feature of global-redirect
+option.
+
+Let east be 'load-balancer' server, with 3 redirect destination specified in
+global-redirect-to option. 1. and 3. redirect destinations are bogus one,
+while 2. is the west IP address.
+
+Let north and road simulate multiple road warriors by trying to connect
+to east multiple times (after each connection, delete it and add again,
+because not deleting it would mean that the server (remote) address will not
+be of east in new initiation, but of the server where peer was redirected).
+
+The order of connection initiation is:
+
+north	(should be redirected to 1. redirect destination)
+road	(should be redirected to 2. redirect destination - west - connection to west should succeed)
+north	(should be redirected to 3. redirect destination)
+road	(should be redirected to 1. redirect destination)
+north	(should be redirected to 2. redirect destination - west - connection to west should succeed)

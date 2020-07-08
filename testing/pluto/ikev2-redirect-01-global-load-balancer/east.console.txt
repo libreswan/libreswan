@@ -1,0 +1,28 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ ip route del 192.0.1.0/24
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add east-any
+002 added connection description "east-any"
+east #
+ echo initdone
+initdone
+east #
+ ipsec whack --trafficstatus
+east #
+ ipsec whack --shutdown
+east #
+ grep -e leak /tmp/pluto.log | grep -v -e '|'
+leak-detective enabled
+leak detective found no leaks
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
