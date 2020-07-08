@@ -141,12 +141,12 @@ static void free_pluto_main(void)
 	pfreeany(ocsp_uri);
 	pfreeany(ocsp_trust_name);
 	pfreeany(peerlog_basedir);
-	pfreeany(global_redirect_to);
 	pfreeany(curl_iface);
 	pfreeany(pluto_log_file);
 	pfreeany(pluto_dnssec_rootfile);
 	pfreeany(pluto_dnssec_trusted);
 	pfreeany(rundir);
+	free_global_redirect_dests();
 }
 
 /*
@@ -1184,12 +1184,10 @@ int main(int argc, char **argv)
 			if (ugh != NULL) {
 				break;
 			} else {
-				pfreeany(global_redirect_to);
-				global_redirect_to =
-					clone_str(optarg, "global_redirect_to");
+				set_global_redirect_dests(optarg);
 				libreswan_log(
 					"all IKE_SA_INIT requests will from now on be redirected to: %s\n",
-					 global_redirect_to);
+					 optarg);
 			}
 		}
 			continue;
@@ -1404,8 +1402,7 @@ int main(int argc, char **argv)
 			set_cfg_string(&virtual_private,
 				cfg->setup.strings[KSF_VIRTUALPRIVATE]);
 
-			set_cfg_string(&global_redirect_to,
-				cfg->setup.strings[KSF_GLOBAL_REDIRECT_TO]);
+			set_global_redirect_dests(cfg->setup.strings[KSF_GLOBAL_REDIRECT_TO]);
 
 			nhelpers = cfg->setup.options[KBF_NHELPERS];
 			secctx_attr_type = cfg->setup.options[KBF_SECCTX];
@@ -2055,7 +2052,7 @@ void show_setup_plutomain(struct show *s)
 	show_comment(s,
 		"global-redirect=%s, global-redirect-to=%s",
 		enum_name(&allow_global_redirect_names, global_redirect),
-		global_redirect_to != NULL ? global_redirect_to : "<unset>"
+		global_redirect_to()
 		);
 
 #ifdef HAVE_LABELED_IPSEC

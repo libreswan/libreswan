@@ -21,7 +21,19 @@
 #include "packet.h"
 
 extern enum allow_global_redirect global_redirect;
-extern char *global_redirect_to;
+
+extern const char *global_redirect_to(void);
+
+extern void free_global_redirect_dests(void);
+
+/*
+ * Initialize the static struct redirect_dests variable.
+ *
+ * @param grd_str comma-separated string containing the destinations
+ *  (a copy will be made so caller need not preserve the string).
+ *  If it is not specified in conf file, gdr_str will be NULL.
+ */
+extern void set_global_redirect_dests(const char *gdr_str);
 
 /*
  * Check whether we received v2N_REDIRECT_SUPPORTED (in IKE_SA_INIT request),
