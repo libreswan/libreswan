@@ -455,7 +455,7 @@ struct state {
 	struct ikev2_proposal *st_accepted_ike_proposal;
 	struct ikev2_proposal *st_accepted_esp_or_ah_proposal;
 
-	enum sa_role st_sa_role;			/* who initiated the SA */ 
+	enum sa_role st_sa_role;			/* who initiated the SA */
 
 	struct v2_msgid_wip st_v2_msgid_wip;		/* IKE and CHILD */
 	struct v2_msgid_windows st_v2_msgid_windows;	/* IKE */
@@ -869,8 +869,8 @@ struct child_sa *find_v2_child_sa_by_outbound_spi(struct ike_sa *ike,
 						  ipsec_spi_t outbound_spi);
 
 extern void find_states_and_redirect(const char *conn_name,
-				     ip_address remote_ip,
-				     char *redirect_gw);
+				     char *redirect_gw,
+				     struct fd *whackfd);
 
 extern struct state *find_v1_info_state(const ike_spis_t *ike_spis,
 					msgid_t msgid);

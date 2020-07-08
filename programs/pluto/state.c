@@ -1817,50 +1817,30 @@ struct child_sa *find_v2_child_sa_by_outbound_spi(struct ike_sa *ike,
  * Used for active redirect mechanism (RFC 5685)
  */
 void find_states_and_redirect(const char *conn_name,
-			      ip_address remote_ip,
-			      char *redirect_gw)
+			      char *redirect_gw,
+			      struct fd *whackfd)
 {
-	struct state *redirect_state = NULL;
-	ipstr_buf b;
+	int count = 0;
 
-	if (conn_name == NULL) {
-		dbg("FOR_EACH_STATE_... in %s", __func__);
-		struct state *st = NULL;
-		FOR_EACH_STATE_NEW2OLD(st) {
-			if (sameaddr(&st->st_remote_endpoint, &remote_ip) &&
-			    IS_CHILD_SA(st))
-			{
-				redirect_state = st;
-				/* we must clone it, because of pointer magic when free'ing it */
-				st->st_active_redirect_gw = clone_str(redirect_gw, "redirect_gw address state clone");
-				DBG_log("successfully found a state (#%lu) with remote ip address: %s",
-					st->st_serialno, sensitive_ipstr(&remote_ip, &b));
-				send_active_redirect_in_informational(st);
-			}
+	dbg("FOR_EACH_STATE_... in %s", __func__);
+	struct state *st = NULL;
+	FOR_EACH_STATE_NEW2OLD(st) {
+		if (streq(conn_name, st->st_connection->name) && IS_CHILD_SA(st))
+		{
+			count++;
+			st->st_active_redirect_gw = clone_str(redirect_gw, "redirect_gw address state clone");
+			DBG_log("successfully found a state (#%lu) with connection name \"%s\"",
+				st->st_serialno, conn_name);
+			send_active_redirect_in_informational(st);
 		}
+	}
 
-		if (redirect_state == NULL)
-			loglog(RC_LOG_SERIOUS, "no active tunnel with remote ip address %s",
-				sensitive_ipstr(&remote_ip, &b));
+	if (count == 0) {
+		whack_log(RC_INFORMATIONAL, whackfd, "no active tunnels found for connection \"%s\"",
+			conn_name);
 	} else {
-		dbg("FOR_EACH_STATE_... in %s", __func__);
-		struct state *st = NULL;
-		FOR_EACH_STATE_NEW2OLD(st) {
-			if (streq(conn_name, st->st_connection->name) &&
-			    IS_CHILD_SA(st))
-			{
-				redirect_state = st;
-				/* we must clone it, because of pointer magic when free'ing it */
-				st->st_active_redirect_gw = clone_str(redirect_gw, "redirect_gw address state clone");
-				DBG_log("successfully found a state (#%lu) with connection name \"%s\"",
-					st->st_serialno, conn_name);
-				send_active_redirect_in_informational(st);
-			}
-		}
-
-		if (redirect_state == NULL)
-			loglog(RC_LOG_SERIOUS, "no active tunnel for connection \"%s\"",
-				conn_name);
+		whack_log(RC_INFORMATIONAL, whackfd, "redirections sent for %d tunnels of connection \"%s\"",
+			  count, conn_name);
 	}
 	pfree(redirect_gw);
 }

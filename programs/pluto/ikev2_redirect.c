@@ -482,23 +482,20 @@ void send_active_redirect_in_informational(struct state *st)
 	struct ike_sa *ike = ike_sa(st, HERE);
 	stf_status e = record_v2_informational_request("active REDIRECT informational request",
 						       ike, st, add_redirect_payload);
-	if (e == STF_OK) {
-		send_recorded_v2_message(ike, "active REDIRECT informational request",
-					 MESSAGE_REQUEST);
-		/*
-		 * XXX: record 'n' send violates the RFC.  This code
-		 * should instead let success_v2_state_transition()
-		 * deal with things.
-		 */
-		dbg_v2_msgid(ike, st, "XXX: in %s hacking around record'n'send bypassing send queue",
-			     __func__);
-		v2_msgid_update_sent(ike, &ike->sa, NULL /* new exchange */, MESSAGE_REQUEST);
-		ipstr_buf b;
-		libreswan_log("redirecting of peer %s successful",
-				sensitive_ipstr(&st->st_remote_endpoint, &b));
-	} else {
-		libreswan_log("redirect not successful");
-	}
+	send_recorded_v2_message(ike, "active REDIRECT informational request",
+				 MESSAGE_REQUEST);
+	/*
+	 * XXX: record 'n' send violates the RFC.  This code
+	 * should instead let success_v2_state_transition()
+	 * deal with things.
+	 */
+	dbg_v2_msgid(ike, st, "XXX: in %s hacking around record'n'send bypassing send queue",
+		     __func__);
+	v2_msgid_update_sent(ike, &ike->sa, NULL /* new exchange */, MESSAGE_REQUEST);
+
+	ipstr_buf b;
+	dbg("redirection %ssent to peer %s", e == STF_OK ? "" : "not ",
+	    sensitive_ipstr(&st->st_remote_endpoint, &b));
 }
 
 stf_status process_IKE_SA_INIT_v2N_REDIRECT_response(struct ike_sa *ike,

@@ -154,7 +154,7 @@ static void help(void)
 		"rekey: whack (--rekey-ike | --rekey-ipsec) \\\n"
 		"	--name <connection_name> [--asynchronous] \\\n"
 		"\n"
-		"active redirect: whack --redirect [--name <connection_name> | --peer-ip <ip-address>] \\\n"
+		"active redirect: whack --redirect --name <connection_name> \\\n"
 		"	--gateway <ip-address>\n"
 		"\n"
 		"opportunistic initiation: whack [--tunnelipv4 | --tunnelipv6] \\\n"
@@ -305,7 +305,6 @@ enum option_enums {
 	OPT_REKEY_IPSEC,
 
 	OPT_ACTIVE_REDIRECT,
-	OPT_ACTIVE_REDIRECT_PEER,
 	OPT_ACTIVE_REDIRECT_GW,
 
 	OPT_DDOS_BUSY,
@@ -566,7 +565,6 @@ static const struct option long_opts[] = {
 	{ "ike-socket-errqueue-toggle", no_argument, NULL, OPT_IKE_MSGERR + OO },
 
 	{ "redirect", no_argument, NULL, OPT_ACTIVE_REDIRECT + OO },
-	{ "peer-ip", required_argument, NULL, OPT_ACTIVE_REDIRECT_PEER + OO },
 	{ "gateway", required_argument, NULL, OPT_ACTIVE_REDIRECT_GW + OO },
 
 	{ "ddos-busy", no_argument, NULL, OPT_DDOS_BUSY + OO },
@@ -1306,18 +1304,9 @@ int main(int argc, char **argv)
 			msg.active_redirect = TRUE;
 			continue;
 
-		case OPT_ACTIVE_REDIRECT_PEER:	/* --peer-ip */
-			if (!msg.active_redirect)
-				diag("missing --redirect before --peer-ip");
-			diagq(ttoaddr(optarg, 0, msg.addr_family,
-				      &msg.active_redirect_peer), optarg);
-			if (isanyaddr(&msg.active_redirect_peer)) {
-				diagq("peer address isn't valid",
-					optarg);
-			}
-			continue;
-
 		case OPT_ACTIVE_REDIRECT_GW:	/* --gateway */
+			if (!msg.active_redirect)
+				diag("missing --redirect before --gateway");
 			diagq(ttoaddr(optarg, 0, msg.addr_family,
 				      &msg.active_redirect_gw), optarg);
 			if (isanyaddr(&msg.active_redirect_gw)) {
@@ -2509,23 +2498,16 @@ int main(int argc, char **argv)
 
 	/* do the logic for --redirect command */
 	if (msg.active_redirect) {
-		bool redirect_peer_spec = address_is_specified(&msg.active_redirect_peer);
 		bool redirect_gw_spec = address_is_specified(&msg.active_redirect_gw);
 		msg.active_redirect = FALSE;	/* if we pass all the 'tests' we set it back to TRUE */
-		if (msg.name != NULL)
-			if (redirect_peer_spec)
-				diag("can not use both --name <connection_name> and --peer-ip <ip_address>");
-			else if (!redirect_gw_spec)
+		if (msg.name == NULL) {
+			diag("missing --name <connection_name>");
+		} else {
+			if (!redirect_gw_spec)
 				diag("missing --gateway <ip-address>");
 			else
 				msg.active_redirect = TRUE;
-		else
-			if (!redirect_peer_spec)
-				diag("missing [--name <connection_name> | --peer-ip <ip_address>]");
-			else if (!redirect_gw_spec)
-				diag("missing --gateway <ip-address>");
-			else
-				msg.active_redirect = TRUE;
+		}
 	}
 
 	if (msg.policy & POLICY_AGGRESSIVE) {

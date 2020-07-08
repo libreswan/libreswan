@@ -483,13 +483,8 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 		redirect_gw = clone_str(ipstr(&m->active_redirect_gw, &b),
 				"active redirect gw ip");
 
-		if (!isanyaddr(&m->active_redirect_peer)) {
-			/* if we are redirecting one specific peer */
-			find_states_and_redirect(NULL, m->active_redirect_peer, redirect_gw);
-		} else {
-			/* we are redirecting all peers of one connection */
-			find_states_and_redirect(m->name, m->active_redirect_peer, redirect_gw);
-		}
+		/* we are redirecting all peers of one connection */
+		find_states_and_redirect(m->name, redirect_gw, whackfd);
 	}
 
 	/* update any socket buffer size before calling listen */

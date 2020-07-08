@@ -354,7 +354,6 @@ struct whack_message {
 	char *accept_redirect_to;
 
 	bool active_redirect;
-	ip_address active_redirect_peer;
 	ip_address active_redirect_gw;
 
 	/* what metric to put on ipsec routes */
