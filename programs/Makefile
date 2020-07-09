@@ -38,7 +38,7 @@ SUBDIRS+=portexcludes
 endif
 
 ifeq ($(USE_XFRM),true)
-SUBDIRS+= _updown.netkey
+SUBDIRS+= _updown.xfrm
 endif
 ifeq ($(USE_BSDKAME),true)
 SUBDIRS+=_realsetup.bsd _updown.bsdkame
