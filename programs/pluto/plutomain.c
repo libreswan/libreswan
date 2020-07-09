@@ -533,11 +533,9 @@ static const struct option long_opts[] = {
 	{ "crlcheckinterval\0", required_argument, NULL, 'x' },
 	{ "uniqueids\0", no_argument, NULL, 'u' },
 	{ "no-dnssec\0", no_argument, NULL, 'R' },
-	{ "nokernel\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
-	{ "use-nostack\0",  no_argument, NULL, 'n' },
-	{ "use-none\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
 	{ "use-auto\0>use-netkey",  no_argument, NULL, 'K' },   /* redundant spelling (sort of) */
 	{ "usenetkey\0>use-netkey", no_argument, NULL, 'K' },	/* redundant spelling */
+	{ "use-xfrm\0", no_argument, NULL, 'K' },
 	{ "use-netkey\0", no_argument, NULL, 'K' },
 	{ "use-bsdkame\0",   no_argument, NULL, 'F' },
 	{ "interface\0<ifname|ifaddr>", required_argument, NULL, 'i' },
