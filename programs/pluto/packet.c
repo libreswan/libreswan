@@ -954,7 +954,7 @@ static field_desc ikev2trans_fields[] = {
 	{ ft_lss, 8 / BITS_PER_BYTE, "last transform", &ikev2_last_transform_desc },
 	{ ft_zig,  8 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "IKEv2 transform type", &ikev2_trans_type_names },
+	{ ft_loose_enum, 8 / BITS_PER_BYTE, "IKEv2 transform type", &ikev2_trans_type_names },
 	{ ft_zig,  8 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_loose_enum_enum, 16 / BITS_PER_BYTE, "IKEv2 transform ID", &v2_transform_ID_enums }, /* select enum based on transform type */
 	{ ft_end,  0, NULL, NULL }
@@ -1748,22 +1748,6 @@ shunk_t pbs_in_left_as_shunk(const pb_stream *pbs)
 	return shunk2(pbs->cur, pbs_left(pbs));
 }
 
-static err_t enum_enum_checker(
-	const char *struct_name,
-	const field_desc *fp,
-	uint32_t last_enum)
-{
-	enum_names *ed = enum_enum_table(fp->desc, last_enum);
-
-	if (ed == NULL) {
-		return builddiag("%s of %s has an unknown type: %" PRIu32 " (0x%" PRIx32 ")",
-				 fp->name, struct_name,
-				 last_enum,
-				 last_enum);
-	}
-	return NULL;
-}
-
 /*
  * print a natural number using the specified FMT, with the value in
  * network-byte-order appended.
@@ -1902,10 +1886,9 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 								   last_enum,
 								   n, &buf);
 				DBG_log("   %s: %s (0x%jx)",
-					fp->name,
-					name, n);
-			}
+					fp->name, name, n);
 				break;
+			}
 
 			case ft_set: /* bits representing set */
 				DBG_log("   %s: %s (0x%jx)",
@@ -2121,16 +2104,8 @@ bool pbs_in_struct(struct pbs_in *ins,
 				last_enum = n;
 				break;
 
-			case ft_loose_enum_enum:
-			{
-				/* value from an enumeration with partial name table based on previous enum */
-				err_t ugh = enum_enum_checker(sd->name, fp, last_enum);
-				if (ugh != NULL) {
-					log_message(RC_LOG, logger, "%s", ugh);
-					return false;
-				}
+			case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
 				break;
-			}
 
 			case ft_set:            /* bits representing set */
 				if (!testset(fp->desc, n)) {
@@ -2597,13 +2572,14 @@ bool pbs_out_struct(struct pbs_out *outs,
 								n,
 								n);
 					}
-				/* FALL THROUGH */
+					last_enum = n;
+					break;
+
 				case ft_loose_enum:     /* value from an enumeration with only some names known */
 					last_enum = n;
 					break;
 
 				case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
-					ugh = enum_enum_checker(sd->name, fp, last_enum);
 					break;
 
 				case ft_set:            /* bits representing set */

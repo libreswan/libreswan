@@ -494,18 +494,19 @@ static int process_transforms(pb_stream *prop_pbs, jambuf_t *remote_jam_buf,
 			return -(STF_FAIL + v2N_INVALID_SYNTAX); /* bail */
 		}
 
+		/* ignore unknown transform types.  */
+		if (remote_trans.isat_type == 0) {
+			return -(STF_FAIL + v2N_INVALID_SYNTAX);
+		}
+		if (remote_trans.isat_type >= IKEv2_TRANS_TYPE_ROOF) {
+			return 0; /* try next proposal */
+		}
+		enum ikev2_trans_type type = remote_trans.isat_type;
+
 		struct ikev2_transform remote_transform = {
 			.id = remote_trans.isat_transid,
 			.valid = TRUE,
 		};
-		enum ikev2_trans_type type = remote_trans.isat_type;
-		/* ignore unknown transform types.  */
-		if (type == 0) {
-			return -(STF_FAIL + v2N_INVALID_SYNTAX);
-		}
-		if (type >= IKEv2_TRANS_TYPE_ROOF) {
-			return 0; /* try next proposal */
-		}
 
 		/* followed by attributes */
 		while (pbs_left(&trans_pbs) != 0) {
@@ -578,8 +579,10 @@ static int process_transforms(pb_stream *prop_pbs, jambuf_t *remote_jam_buf,
 				 * type that match.  Limit the search to
 				 * transforms before the last match.
 				 */
+				passert(type < elemsof(local_proposal->transforms)); /* aka IKEv2_TRANS_TYPE_ROOF */
 				const struct ikev2_transforms *local_transforms = &local_proposal->transforms[type];
 				struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_propnum];
+				passert(type < elemsof(matching_local_proposal->matching_transform)); /* aka IKEv2_TRANS_TYPE_ROOF */
 				const struct ikev2_transform **matching_local_transform = &matching_local_proposal->matching_transform[type];
 				/*
 				 * The matching local transform always
@@ -1419,7 +1422,7 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 	unsigned add_impaired_transform = (proposal->protoid == IKEv2_SEC_PROTO_IKE ?
 					   impair.ikev2_add_ike_transform :
 					   impair.ikev2_add_child_transform);
-	if (add_impaired_transform > 0) {
+	if (propnum == 1 && add_impaired_transform > 0) {
 		trans_nr++;
 		if (proposal_pbs != NULL) {
 			bool is_last_transform = trans_nr == nr_trans;

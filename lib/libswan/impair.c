@@ -97,8 +97,9 @@ struct impairment impairments[] = {
 
 	V("ikev2-exclude-integ-none", ikev2_exclude_integ_none, "lets pluto exclude integrity 'none' in proposals"),
 	V("ikev2-include-integ-none", ikev2_include_integ_none, "lets pluto include integrity 'none' in proposals"),
-	V("ikev2-add-ike-transform", ikev2_add_ike_transform, "add an extra (possibly bogus) IKE transform", .unsigned_help = "transform type+id encoded as TYPE<<16|ID"),
-	V("ikev2-add-child-transform", ikev2_add_child_transform, "add an extra (possibly bogus) CHILD transform", .unsigned_help = "transform type+id encoded as TYPE<<16|ID"),
+
+	V("ikev2-add-ike-transform", ikev2_add_ike_transform, "add an extra (possibly bogus) transform to the first IKE proposal", .unsigned_help = "transform type+id encoded as TYPE<<16|ID"),
+	V("ikev2-add-child-transform", ikev2_add_child_transform, "add an extra (possibly bogus) transform to the first CHILD proposal", .unsigned_help = "transform type+id encoded as TYPE<<16|ID"),
 
 	V("jacob-two-two", jacob_two_two, "cause pluto to send all messages twice."),
 	V("ke-payload", ke_payload, "corrupt the outgoing KE payload", .unsigned_help = "use <unsigned> to byte-fill the KE payload", .how_keynum = &send_impairment_keywords),
