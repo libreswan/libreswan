@@ -1,0 +1,21 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ # ipsec whack --impair key-length-attribute:0
+east #
+ ipsec auto --add conf
+002 added connection description "conf"
+east #
+ echo "initdone"
+initdone
+east #
+ grep INVALID_KEY_INFORMATION /tmp/pluto.log
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

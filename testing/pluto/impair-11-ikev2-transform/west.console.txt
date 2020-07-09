@@ -1,0 +1,138 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ echo "initdone"
+initdone
+west #
+ # send AES_128; should work
+west #
+ ipsec whack --impair suppress-retransmits
+west #
+ ../../pluto/bin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
+002 added connection description "conf"
+1v2 "conf" #1: initiating IKEv2 IKE SA
+1v2 "conf" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "conf" #1: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+002 "conf" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "conf" #1: authenticated using authby=secret
+002 "conf" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "conf" #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "conf": terminating SAs using this connection
+002 "conf" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
+005 "conf" #2: ESP traffic information: in=84B out=84B
+002 "conf" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "conf": terminating SAs using this connection
+west #
+ ipsec whack --impair none
+west #
+ # add IKE transform type 6 id 0 unknown
+west #
+ ipsec whack --impair delete-on-retransmit
+west #
+ ipsec whack --impair ikev2-add-ike-transform:0x60000
+west #
+ ../../pluto/bin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
+002 added connection description "conf"
+1v2 "conf" #3: initiating IKEv2 IKE SA
+002 "conf" #3: IMPAIR: adding transform type 6?? (0x6) id 0?? (0x0)
+1v2 "conf" #3: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "conf" #3: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+002 "conf" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "conf" #3: authenticated using authby=secret
+002 "conf" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "conf" #4: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "conf": terminating SAs using this connection
+002 "conf" #4: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
+005 "conf" #4: ESP traffic information: in=84B out=84B
+002 "conf" #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "conf": terminating SAs using this connection
+west #
+ ipsec whack --impair none
+west #
+ # add IKE transform type 3 (PRF) id 0xff unknown
+west #
+ ipsec whack --impair delete-on-retransmit
+west #
+ ipsec whack --impair ikev2-add-ike-transform:0x3ffff
+west #
+ ../../pluto/bin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
+002 added connection description "conf"
+1v2 "conf" #5: initiating IKEv2 IKE SA
+002 "conf" #5: IMPAIR: adding transform type INTEG (0x3) id 65535?? (0xffff)
+1v2 "conf" #5: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "conf" #5: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+002 "conf" #6: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "conf" #5: authenticated using authby=secret
+002 "conf" #6: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "conf" #6: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "conf": terminating SAs using this connection
+002 "conf" #6: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
+005 "conf" #6: ESP traffic information: in=84B out=84B
+002 "conf" #5: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "conf": terminating SAs using this connection
+west #
+ ipsec whack --impair none
+west #
+ # add CHILD transform type 6 id 0 unknown
+west #
+ ipsec whack --impair delete-on-retransmit
+west #
+ ipsec whack --impair ikev2-add-child-transform:0x60000
+west #
+ ../../pluto/bin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
+002 added connection description "conf"
+1v2 "conf" #7: initiating IKEv2 IKE SA
+1v2 "conf" #7: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "conf" #7: IMPAIR: adding transform type 6?? (0x6) id 0?? (0x0)
+1v2 "conf" #7: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+002 "conf" #8: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "conf" #7: authenticated using authby=secret
+002 "conf" #8: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "conf" #8: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "conf": terminating SAs using this connection
+002 "conf" #8: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
+005 "conf" #8: ESP traffic information: in=84B out=84B
+002 "conf" #7: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "conf": terminating SAs using this connection
+west #
+ ipsec whack --impair none
+west #
+ # add CHILD transform type 3 (PRF) id 0xffff unknown
+west #
+ ipsec whack --impair delete-on-retransmit
+west #
+ ipsec whack --impair ikev2-add-child-transform:0x3ffff
+west #
+ ../../pluto/bin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
+002 added connection description "conf"
+1v2 "conf" #9: initiating IKEv2 IKE SA
+1v2 "conf" #9: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "conf" #9: IMPAIR: adding transform type INTEG (0x3) id 65535?? (0xffff)
+1v2 "conf" #9: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+002 "conf" #10: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "conf" #9: authenticated using authby=secret
+002 "conf" #10: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "conf" #10: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "conf": terminating SAs using this connection
+002 "conf" #10: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
+005 "conf" #10: ESP traffic information: in=84B out=84B
+002 "conf" #9: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "conf": terminating SAs using this connection
+west #
+ ipsec whack --impair none
+west #
+ grep INVALID_KEY_INFORMATION /tmp/pluto.log
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

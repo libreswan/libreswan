@@ -1,0 +1,5 @@
+IKEv2: add an unknown transform type/id
+
+unknown type causes the next proposal to be elected
+unknown id is ignored
+
