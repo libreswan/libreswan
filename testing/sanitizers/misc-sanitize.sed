@@ -33,3 +33,7 @@ s/^Protocol mismatch\.$/Invalid SSH identification string./g
 # timing info from the log
 s/last_contact=0->[0-9]*\.[0-9]*/last_contact=0->XX.XXX/g
 s/last_contact=[0-9]*\.[0-9]*/last_contact=XX.XXX/g
+# TCP sockets
+s/from socket [0-9]* /from socket XX /g
+s/IMPAIR: TCP: socket [0-9]* /IMPAIR: TCP: socket XX /g
+
