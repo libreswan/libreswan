@@ -538,16 +538,17 @@ endif
 #
 # Kernel support
 #
+# KLIPS is no longer supported
 # These are really set in mk/defaults/*.mk
-
-# support Linux kernel's NETLINK_XFRM (aka XFRM/NETKEY) (aka "native")
-USE_NETKEY ?= false
+#
+# support Linux kernel's XFRM (aka NETKEY)
+USE_XFRM ?= false
 # support BSD/KAME kernels (on *BSD and OSX)?
 USE_BSDKAME ?= false
 
 USE_XFRM_INTERFACE ?= true
 
-ifeq ($(USE_NETKEY),true)
+ifeq ($(USE_XFRM),true)
 USERLAND_CFLAGS += -DXFRM_SUPPORT
 ifeq ($(USE_XFRM_INTERFACE), true)
 USERLAND_CFLAGS += -DUSE_XFRM_INTERFACE
@@ -555,7 +556,7 @@ endif
 endif
 
 ifeq ($(USE_BSDKAME),true)
-USE_NETKEY ?= false
+USE_XFRM ?= false
 USERLAND_CFLAGS += -DBSD_KAME
 endif
 
@@ -692,6 +693,13 @@ endif
 USE_PRF_AES_XCBC ?= true
 ifeq ($(USE_PRF_AES_XCBC),true)
 USERLAND_CFLAGS += -DUSE_PRF_AES_XCBC
+endif
+
+ifeq ($(USE_NETKEY),true)
+$(error ERROR: Deprecated USE_NETKEY variable set, use USE_XFRM instead)
+endif
+ifeq ($(USE_KLIPS),true)
+$(error ERROR: Deprecated USE_KLIPS variable set, please migrate to USE_XFRM instead)
 endif
 
 # Use the NSS Key Derivation Function (KDF) instead of using the NSS

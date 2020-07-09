@@ -37,7 +37,7 @@ ifeq ($(USE_PORTEXCLUDES),true)
 SUBDIRS+=portexcludes
 endif
 
-ifeq ($(USE_NETKEY),true)
+ifeq ($(USE_XFRM),true)
 SUBDIRS+= _updown.netkey
 endif
 ifeq ($(USE_BSDKAME),true)

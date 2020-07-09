@@ -1,4 +1,4 @@
-USE_NETKEY = true
+USE_XFRM = true
 
 USERLAND_CFLAGS += -DTimeZoneOffset=timezone
 

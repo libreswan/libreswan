@@ -942,9 +942,9 @@ int main(int argc, char **argv)
 
 		case 'K':	/* --use-netkey */
 #ifdef XFRM_SUPPORT
-			kernel_ops = &netkey_kernel_ops;
+			kernel_ops = &xfrm_kernel_ops;
 #else
-			libreswan_log("--use-netkey not supported");
+			libreswan_log("--use-xfrm not supported");
 #endif
 			continue;
 
@@ -1374,14 +1374,17 @@ int main(int argc, char **argv)
 
 			if (!(protostack == NULL || *protostack == '\0')) {
 				if (streq(protostack, "auto") || streq(protostack, "native") ||
-					streq(protostack, "nokernel") || streq(protostack, "klips")) {
+					streq(protostack, "nokernel")) {
 
 					libreswan_log("the option protostack=%s is obsoleted, falling back to protostack=%s",
 						      protostack, kernel_ops->kern_name);
+				} else if (streq(protostack, "klips")) {
+					libreswan_log("protostack=klips is obsoleted, please migrate to protostack=xfrm");
+					exit_pluto(PLUTO_EXIT_KERNEL_FAIL);
 #ifdef XFRM_SUPPORT
-				} else if (streq(protostack, "netkey") ||
-					   streq(protostack, "native")) {
-					kernel_ops = &netkey_kernel_ops;
+				} else if (streq(protostack, "xfrm") ||
+					   streq(protostack, "netkey")) {
+					kernel_ops = &xfrm_kernel_ops;
 #endif
 #ifdef BSD_KAME
 				} else if (streq(protostack, "bsd") ||

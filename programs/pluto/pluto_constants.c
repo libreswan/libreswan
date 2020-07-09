@@ -47,13 +47,12 @@
  */
 
 static const char *const kern_interface_name[] = {
-	[USE_NATIVE] = "native",
-	[USE_NETKEY] = "netkey",
+	[USE_XFRM] = "netkey",
 	[USE_BSDKAME] = "bsdkame",
 };
 
 enum_names kern_interface_names = {
-	USE_NATIVE, USE_BSDKAME,
+	USE_XFRM, USE_BSDKAME,
 	ARRAY_REF(kern_interface_name),
 	"USE_", /* prefix */
 	NULL

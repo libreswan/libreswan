@@ -580,7 +580,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 
 	/*
 	 * Bug #1004 fix.
-	 * There really isn't "client" with NETKEY and transport mode
+	 * There really isn't "client" with XFRM and transport mode
 	 * so eroute must be done to natted, visible ip. If we don't hide
 	 * internal IP, communication doesn't work.
 	 */
@@ -626,10 +626,10 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	 * using protoport option. For example, icmp echo request
 	 * (type 8/code 0) needs to be encoded as 0x0800 in the port field
 	 * and can be specified as left/rightprotoport=icmp/2048. Now with
-	 * NETKEY, icmp type and code need to be passed as source and
+	 * XFRM, icmp type and code need to be passed as source and
 	 * destination ports, respectively. Therefore, this code extracts
 	 * upper 8 bits and lower 8 bits and puts into source and destination
-	 * ports before passing to NETKEY.
+	 * ports before passing to XFRM.
 	 */
 	if (transport_proto == IPPROTO_ICMP ||
 		transport_proto == IPPROTO_ICMPV6) {
@@ -1310,11 +1310,11 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		 * and code  using protoport option. For example,
 		 * icmp echo request (type 8/code 0) needs to be encoded as
 		 * 0x0800 in the port field and can be specified
-		 * as left/rightprotoport=icmp/2048. Now with NETKEY,
+		 * as left/rightprotoport=icmp/2048. Now with XFRM,
 		 * icmp type and code  need to be passed as source and
 		 * destination ports, respectively. Therefore, this code
 		 * extracts upper 8 bits and lower 8 bits and puts
-		 * into source and destination ports before passing to NETKEY.
+		 * into source and destination ports before passing to XFRM.
 		 */
 		if (IPPROTO_ICMP == sa->transport_proto ||
 			IPPROTO_ICMPV6 == sa->transport_proto) {
@@ -1409,14 +1409,14 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		const char *name = sa->integ->integ_netlink_xfrm_name;
 		if (name == NULL) {
 			loglog(RC_LOG_SERIOUS,
-				"NETKEY/XFRM: unknown authentication algorithm: %s",
+				"XFRM: unknown authentication algorithm: %s",
 				sa->integ->common.fqn);
 			return FALSE;
 		}
 
 		/*
 		 * According to RFC-4868 the hash should be nnn/2, so
-		 * 128 bits for SHA256 and 256 for SHA512. The XFRM/NETKEY
+		 * 128 bits for SHA256 and 256 for SHA512. The XFRM
 		 * kernel uses a default of 96, which was the value in
 		 * an earlier draft. The kernel then introduced a new struct
 		 * xfrm_algo_auth to  replace struct xfrm_algo to deal with
@@ -2409,7 +2409,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 					 * us to avoid double reporting.
 					 */
 					/* XXX: isn't this always true? */
-					if (kernel_ops->type == USE_NETKEY) {
+					if (kernel_ops->type == USE_XFRM) {
 						if (after) {
 							bad = TRUE;
 							break;
@@ -2433,7 +2433,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 			continue;
 
 		/* XXX: isn't this always true? */
-		if (kernel_ops->type == USE_NETKEY) {
+		if (kernel_ops->type == USE_XFRM) {
 			v = ifp;
 		}
 
@@ -2798,9 +2798,9 @@ static bool netlink_poke_ipsec_policy_hole(const struct iface_dev *ifd, int fd)
 	return true;
 }
 
-const struct kernel_ops netkey_kernel_ops = {
-	.kern_name = "netkey",
-	.type = USE_NETKEY,
+const struct kernel_ops xfrm_kernel_ops = {
+	.kern_name = "xfrm",
+	.type = USE_XFRM,
 	.scan_shunts = expire_bare_shunts,
 	.async_fdp = &nl_xfrm_fd,
 	.route_fdp = &nl_route_fd,

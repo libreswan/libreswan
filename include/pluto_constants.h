@@ -71,8 +71,7 @@ enum ike_version {
 #define DEFAULT_XFRM_IF_NAME "ipsec1"
 
 enum kernel_interface {
-	USE_NATIVE,
-	USE_NETKEY,
+	USE_XFRM,
 	USE_BSDKAME,
 };
 

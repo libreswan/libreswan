@@ -60,7 +60,7 @@ OBJS += nss_cert_load.o
 OBJS += certs.o
 OBJS += reqid.o
 
-ifeq ($(USE_NETKEY),true)
+ifeq ($(USE_XFRM),true)
 OBJS += addr_lookup.o
 OBJS += kernel_netlink_reply.o
 OBJS += kernel_netlink_query.o

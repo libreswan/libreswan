@@ -83,7 +83,7 @@ ifeq ($(USE_GLIBC_KERN_FLIP_HEADERS),true)
 USERLAND_CFLAGS += -DGLIBC_KERN_FLIP_HEADERS
 endif
 
-ifeq ($(USE_NETKEY),true)
+ifeq ($(USE_XFRM),true)
 OBJS += kernel_xfrm.o
 ifeq ($(USE_XFRM_INTERFACE),true)
 OBJS += kernel_xfrm_interface.o

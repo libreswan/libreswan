@@ -903,7 +903,7 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 		if (!compatible_overlapping_connections(c, ero)) {
 			/*
 			 * Another connection is already using the eroute.
-			 * TODO: NETKEY can do this? For now excempt OE only
+			 * TODO: XFRM can do this? For now excempt OE only
 			 */
 			if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 				connection_buf cib;
@@ -956,7 +956,7 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 		if (LDISJOINT(POLICY_OVERLAPIP, c->policy | ero->policy)) {
 			/*
 			 * another connection is already using the eroute,
-			 * TODO: NETKEY apparently can do this though
+			 * TODO: XFRM apparently can do this though
 			 */
 			connection_buf erob;
 			log_message(RC_LOG_SERIOUS, logger,
@@ -1351,7 +1351,7 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 	enum pluto_sadb_operations op = repl ? ERO_REPLACE : ERO_DELETE;
 
 	dbg("%s specific host-to-host bare shunt", repl ? "replacing" : "removing");
-	if (kernel_ops->type == USE_NETKEY && strstr(why, "IGNORE_ON_XFRM:") != NULL) {
+	if (kernel_ops->type == USE_XFRM && strstr(why, "IGNORE_ON_XFRM:") != NULL) {
 		dbg("skipping raw_eroute because IGNORE_ON_XFRM");
 		struct bare_shunt **bs_pp = bare_shunt_ptr(
 			&this_client,
@@ -1385,7 +1385,7 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 		    repl ? "replace" : "delete", transport_proto,
 		    (bs_pp == NULL) ? "failed" : "succeeded");
 
-		/* we can have proto mismatching acquires with netkey - this is a bad workaround */
+		/* we can have proto mismatching acquires with xfrm - this is a bad workaround */
 		/* ??? what is the nature of those mismatching acquires? */
 		/* passert(bs_pp != NULL); */
 		if (bs_pp == NULL) {
@@ -1829,7 +1829,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 */
 		if (new_ref_peer == IPSEC_SAREF_NULL && !inbound) {
 			new_ref_peer = said_next->ref;
-			if (kernel_ops->type != USE_NETKEY && new_ref_peer == IPSEC_SAREF_NULL)
+			if (kernel_ops->type != USE_XFRM && new_ref_peer == IPSEC_SAREF_NULL)
 				new_ref_peer = IPSEC_SAREF_NA;
 		}
 		if (!incoming_ref_set && inbound) {
@@ -1993,10 +1993,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * XXX: Assume SADB_ and ESP_ numbers match!  Clearly
 		 * setting .compalg is wrong, don't yet trust
 		 * lower-level code to be right.
-		 *
-		 * XXX: The lack of trust was wise.  Removing the
-		 * assign causes compress-pluto-netkey-klips-04 to
-		 * fail.
 		 */
 		said_next->encrypt = ta->ta_encrypt;
 		said_next->compalg = said_next->encrypt->common.id[IKEv1_ESP_ID];
@@ -2059,7 +2055,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 */
 		if (new_ref_peer == IPSEC_SAREF_NULL && !inbound) {
 			new_ref_peer = said_next->ref;
-			if (kernel_ops->type != USE_NETKEY && new_ref_peer == IPSEC_SAREF_NULL)
+			if (kernel_ops->type != USE_XFRM && new_ref_peer == IPSEC_SAREF_NULL)
 				new_ref_peer = IPSEC_SAREF_NA;
 		}
 		if (!incoming_ref_set && inbound) {
@@ -2142,7 +2138,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 */
 		if (new_ref_peer == IPSEC_SAREF_NULL && !inbound) {
 			new_ref_peer = said_next->ref;
-			if (kernel_ops->type != USE_NETKEY && new_ref_peer == IPSEC_SAREF_NULL)
+			if (kernel_ops->type != USE_XFRM && new_ref_peer == IPSEC_SAREF_NULL)
 				new_ref_peer = IPSEC_SAREF_NA;
 		}
 		if (!incoming_ref_set && inbound) {
@@ -2428,7 +2424,7 @@ static char kversion[256];
 
 const struct kernel_ops *kernel_ops =
 #ifdef XFRM_SUPPORT
-	&netkey_kernel_ops
+	&xfrm_kernel_ops
 #endif
 #ifdef BSD_KAME
 	&bsdkame_kernel_ops
@@ -2452,7 +2448,7 @@ void init_kernel(void)
 
 	switch (kernel_ops->type) {
 #if defined(XFRM_SUPPORT)
-	case USE_NETKEY:
+	case USE_XFRM:
 	{
 		struct stat buf;
 		if (stat("/proc/sys/net/core/xfrm_acq_expires", &buf) != 0) {
@@ -2512,7 +2508,7 @@ void init_kernel(void)
 
 	if (kernel_ops->process_queue != NULL) {
 		/*
-		 * AA_2015 this is untested code. only for non netkey ???
+		 * AA_2015 this is untested code. only for non xfrm ???
 		 * It seems in klips we should, besides kernel_process_msg,
 		 * call process_queue periodically.  Does the order
 		 * matter?
@@ -3077,7 +3073,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 bool migrate_ipsec_sa(struct state *st)
 {
 	switch (kernel_ops->type) {
-	case USE_NETKEY:
+	case USE_XFRM:
 		/* support ah? if(!st->st_esp.present && !st->st_ah.present)) */
 		if (!st->st_esp.present) {
 			libreswan_log("mobike SA migration only support ESP SA");
@@ -3118,7 +3114,7 @@ void delete_ipsec_sa(struct state *st)
 	}
 
 	switch (kernel_ops->type) {
-	case USE_NETKEY:
+	case USE_XFRM:
 		{
 			/*
 			 * If the state is the eroute owner, we must adjust
