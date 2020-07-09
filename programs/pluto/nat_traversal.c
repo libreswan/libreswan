@@ -869,14 +869,15 @@ void v1_maybe_natify_initiator_endpoints(struct state *st, where_t where)
 	 * If we're initiator and NAT-T is detected, we
 	 * need to change port (MAIN_I3, QUICK_I1 or AGGR_I2)
 	 */
+	/* XXX This code does not properly support non-default IKE ports! */
 	if ((st->st_state->kind == STATE_MAIN_I3 ||
 	     st->st_state->kind == STATE_QUICK_I1 ||
 	     st->st_state->kind == STATE_AGGR_I2) &&
 	    (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
-	    endpoint_hport(&st->st_interface->local_endpoint) != pluto_nat_port) {
+	    endpoint_hport(&st->st_interface->local_endpoint) != NAT_IKE_UDP_PORT) {
 		dbg("NAT-T: #%lu in %s floating IKEv1 ports to PLUTO_NAT_PORT %d",
 		    st->st_serialno, st->st_state->short_name,
-		    pluto_nat_port);
+		    NAT_IKE_UDP_PORT);
 		v1_natify_initiator_endpoints(st, where);
 		/*
 		 * Also update pending connections or they will be deleted if
@@ -897,7 +898,7 @@ void show_setup_natt(struct show *s)
 	show_comment(s, "nat-traversal=%s, keep-alive=%ld, nat-ikeport=%d",
 		     bool_str(nat_traversal_enabled),
 		     (long) deltasecs(nat_kap),
-		     pluto_nat_port);
+		     NAT_IKE_UDP_PORT);
 }
 
 bool v2_nat_detected(struct ike_sa *ike, struct msg_digest *md)
@@ -976,8 +977,8 @@ void v1_natify_initiator_endpoints(struct state *st, where_t where)
 	 */
 	pexpect_st_local_endpoint(st);
 	endpoint_buf b1, b2;
-	ip_endpoint new_local_endpoint = set_endpoint_hport(&st->st_interface->local_endpoint, pluto_nat_port);
-	dbg("NAT: #%lu floating local endpoint from %s to %s using pluto_nat_port "PRI_WHERE,
+	ip_endpoint new_local_endpoint = set_endpoint_hport(&st->st_interface->local_endpoint, NAT_IKE_UDP_PORT);
+	dbg("NAT: #%lu floating local endpoint from %s to %s using NAT_IKE_UDP_PORT "PRI_WHERE,
 	    st->st_serialno,
 	    str_endpoint(&st->st_interface->local_endpoint, &b1),
 	    str_endpoint(&new_local_endpoint, &b2),
@@ -1006,11 +1007,11 @@ void v1_natify_initiator_endpoints(struct state *st, where_t where)
 	/*
 	 * Float the remote port to :PLUTO_NAT_PORT (:4500)
 	 */
-	dbg("NAT-T: #%lu floating remote port from %d to %d using pluto_nat_port "PRI_WHERE,
-	    st->st_serialno, endpoint_hport(&st->st_remote_endpoint), pluto_nat_port,
+	dbg("NAT-T: #%lu floating remote port from %d to %d using NAT_IKE_UDP_PORT "PRI_WHERE,
+	    st->st_serialno, endpoint_hport(&st->st_remote_endpoint), NAT_IKE_UDP_PORT,
 	    pri_where(where));
 	st->st_remote_endpoint = set_endpoint_hport(&st->st_remote_endpoint,
-						    pluto_nat_port);
+						    NAT_IKE_UDP_PORT);
 }
 
 bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
@@ -1032,7 +1033,7 @@ bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 		 * :PLUTO_NAT_PORT should exist.  IPv6 nat isn't
 		 * supported.
 		 */
-		ip_endpoint new_local_endpoint = set_endpoint_hport(&ike->sa.st_interface->local_endpoint, pluto_nat_port);
+		ip_endpoint new_local_endpoint = set_endpoint_hport(&ike->sa.st_interface->local_endpoint, NAT_IKE_UDP_PORT);
 		struct iface_port *i = find_iface_port_by_local_endpoint(&new_local_endpoint);
 		if (i == NULL) {
 			endpoint_buf b2;
@@ -1042,7 +1043,7 @@ bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 			return false; /* must enable NAT */
 		}
 		endpoint_buf b1, b2;
-		dbg("NAT: #%lu floating local port from %s to %s using pluto_nat_port "PRI_WHERE,
+		dbg("NAT: #%lu floating local port from %s to %s using NAT_IKE_UDP_PORT "PRI_WHERE,
 		    ike->sa.st_serialno,
 		    str_endpoint(&ike->sa.st_interface->local_endpoint, &b1),
 		    str_endpoint(&new_local_endpoint, &b2),
@@ -1063,15 +1064,15 @@ bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 		dbg("NAT: #%lu not floating remote port; hardwired to ikeport=%u "PRI_WHERE,
 		    ike->sa.st_serialno, ike->sa.st_connection->spd.that.raw.host.ikeport,
 		    pri_where(where));
-	} else if (endpoint_hport(&ike->sa.st_remote_endpoint) == pluto_nat_port) {
+	} else if (endpoint_hport(&ike->sa.st_remote_endpoint) == NAT_IKE_UDP_PORT) {
 		dbg("NAT: #%lu not floating remote port; already pointing at PLUTO_NAT_PORT %u "PRI_WHERE,
-		    ike->sa.st_serialno, pluto_nat_port, pri_where(where));
+		    ike->sa.st_serialno, NAT_IKE_UDP_PORT, pri_where(where));
 	} else {
-		dbg("NAT: #%lu floating remote port from %d to %d using pluto_nat_port "PRI_WHERE,
-		    ike->sa.st_serialno, endpoint_hport(&ike->sa.st_remote_endpoint), pluto_nat_port,
+		dbg("NAT: #%lu floating remote port from %d to %d using NAT_IKE_UDP_PORT "PRI_WHERE,
+		    ike->sa.st_serialno, endpoint_hport(&ike->sa.st_remote_endpoint), NAT_IKE_UDP_PORT,
 		    pri_where(where));
 		ike->sa.st_remote_endpoint = set_endpoint_hport(&ike->sa.st_remote_endpoint,
-								pluto_nat_port);
+								NAT_IKE_UDP_PORT);
 	}
 
 	return true;

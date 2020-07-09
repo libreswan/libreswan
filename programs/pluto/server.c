@@ -184,6 +184,8 @@ void delete_ctl_socket(void)
 
 bool listening = FALSE;  /* should we pay attention to IKE messages? */
 bool pluto_drop_oppo_null = FALSE; /* drop opportunistic AUTH-NULL on first IKE msg? */
+bool pluto_listen_udp = TRUE;
+bool pluto_listen_tcp = FALSE;
 
 enum ddos_mode pluto_ddos_mode = DDOS_AUTO; /* default to auto-detect */
 #ifdef HAVE_SECCOMP

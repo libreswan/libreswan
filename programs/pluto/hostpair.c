@@ -269,11 +269,11 @@ void connect_to_host_pair(struct connection *c)
 			hp->magic = host_pair_magic;
 			hp->local = endpoint3(c->interface->protocol,
 					      &c->spd.this.host_addr,
-					      ip_hport(nat_traversal_enabled ? pluto_port
+					      ip_hport(nat_traversal_enabled ? IKE_UDP_PORT
 						       : c->spd.this.host_port));
 			hp->remote = endpoint3(c->interface->protocol,
 					       &c->spd.that.host_addr,
-					       ip_hport(nat_traversal_enabled ? pluto_port
+					       ip_hport(nat_traversal_enabled ? IKE_UDP_PORT
 							: c->spd.that.host_port));
 			hp->connections = NULL;
 			hp->pending = NULL;

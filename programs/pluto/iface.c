@@ -256,31 +256,34 @@ static void add_new_ifaces(void)
 		 * And, when NAT is detected, float away.
 		 */
 
-		if (bind_iface_port(ifd, &udp_iface_io, ip_hport(pluto_port),
-				    false/*esp_encapsulation_enabled*/,
-				    true/*float_nat_initiator*/)  == NULL) {
-			ifd->ifd_change = IFD_DELETE;
-			continue;
-		}
+		if (pluto_listen_udp)
+		{
+			if (bind_iface_port(ifd, &udp_iface_io, ip_hport(IKE_UDP_PORT),
+				    false /*esp_encapsulation_enabled*/,
+				    true /*float_nat_initiator*/)  == NULL) {
+				ifd->ifd_change = IFD_DELETE;
+				continue;
+			}
 
-		/*
-		 * From linux's xfrm: right now, we do not support
-		 * NAT-T on IPv6, because the kernel did not support
-		 * it, and gave an error it one tried to turn it on.
-		 *
-		 * From bsd's kame: right now, we do not support NAT-T
-		 * on IPv6, because the kernel did not support it, and
-		 * gave an error it one tried to turn it on.
-		 *
-		 * Who should we believe?
-		 *
-		 * Port 4500 can add the ESP encapsulation prefix.
-		 * Let it float to itself - code might rely on it?
-		 */
-		if (address_type(&ifd->id_address) == &ipv4_info) {
-			bind_iface_port(ifd, &udp_iface_io, ip_hport(pluto_nat_port),
-					true/*esp_encapsulation_enabled*/,
-					true/*float_nat_initiator*/);
+			/*
+			 * From linux's xfrm: right now, we do not support
+			 * NAT-T on IPv6, because the kernel did not support
+			 * it, and gave an error it one tried to turn it on.
+			 *
+			 * From bsd's kame: right now, we do not support NAT-T
+			 * on IPv6, because the kernel did not support it, and
+			 * gave an error it one tried to turn it on.
+			 *
+			 * Who should we believe?
+			 *
+			 * Port 4500 can add the ESP encapsulation prefix.
+			 * Let it float to itself - code might rely on it?
+			 */
+			if (address_type(&ifd->id_address) == &ipv4_info) {
+				bind_iface_port(ifd, &udp_iface_io, ip_hport(NAT_IKE_UDP_PORT),
+					true /*esp_encapsulation_enabled*/,
+					true /*float_nat_initiator*/);
+			}
 		}
 
 		/*
@@ -294,10 +297,10 @@ static void add_new_ifaces(void)
 		 *
 		 * See comments in iface.h.
 		 */
-		if (pluto_tcpport != 0) {
-			bind_iface_port(ifd, &iketcp_iface_io, ip_hport(pluto_tcpport),
-					true/*esp_encapsulation_enabled*/,
-					false/*float_nat_initiator*/);
+		if (pluto_listen_tcp) {
+			bind_iface_port(ifd, &iketcp_iface_io, ip_hport(NAT_IKE_UDP_PORT),
+					true /*esp_encapsulation_enabled*/,
+					false /*float_nat_initiator*/);
 		}
 	}
 }
@@ -347,7 +350,7 @@ static struct raw_iface *find_raw_ifaces4(void)
 	 */
 	{
 		ip_address any = address_any(&ipv4_info);
-		ip_endpoint any_ep = endpoint3(&ip_protocol_udp, &any, ip_hport(pluto_port));
+		ip_endpoint any_ep = endpoint3(&ip_protocol_udp, &any, ip_hport(IKE_UDP_PORT));
 		ip_sockaddr any_sa = sockaddr_from_endpoint(&any_ep);
 		if (bind(udp_sock, &any_sa.sa.sa, any_sa.len) < 0) {
 			endpoint_buf eb;
@@ -482,8 +485,9 @@ void show_ifaces_status(struct show *s)
 	show_separator(s); /* if needed */
 	for (struct iface_port *p = interfaces; p != NULL; p = p->next) {
 		endpoint_buf b;
-		show_comment(s, "interface %s %s",
+		show_comment(s, "interface %s %s %s",
 			     p->ip_dev->id_rname,
+			     p->protocol->name,
 			     str_endpoint(&p->local_endpoint, &b));
 	}
 }

@@ -49,6 +49,9 @@ extern void delete_ctl_socket(void);
 extern stf_status create_tcp_interface(struct state *st); /* TCP: terrible name? */
 
 extern bool listening;  /* should we pay attention to IKE messages? */
+extern bool pluto_listen_udp;
+extern bool pluto_listen_tcp;
+
 extern enum ddos_mode pluto_ddos_mode; /* auto-detect or manual? */
 extern unsigned int pluto_max_halfopen; /* Max allowed half-open IKE SA's before refusing */
 extern unsigned int pluto_ddos_threshold; /* Max incoming IKE before activating DCOOKIES */

@@ -465,7 +465,7 @@ static void jam_end_host(jambuf_t *buf, const struct end *this, lset_t policy)
 		jam(buf, "<%s>", this->host_addr_name);
 	}
 
-	if (this->raw.host.ikeport != 0 || this->host_port != pluto_port) {
+	if (this->raw.host.ikeport != 0 || this->host_port != IKE_UDP_PORT) {
 		/*
 		 * XXX: Part of the problem is that code is stomping
 		 * on the HOST_ADDR's port setting it to the CLIENT's

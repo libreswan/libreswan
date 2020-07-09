@@ -95,14 +95,6 @@
 bool uniqueIDs = FALSE;
 
 /*
- * Global variables: had to go somewhere, might as well be this file.
- */
-
-uint16_t pluto_port = IKE_UDP_PORT;	/* Pluto's port */
-uint16_t pluto_nat_port = NAT_IKE_UDP_PORT;	/* Pluto's NAT-T port */
-u_int16_t pluto_tcpport = 0; /* Pluto's TCP port */
-
-/*
  * default global NFLOG group - 0 means no logging
  * Note: variable is only used to display in ipsec status
  * actual work is done outside pluto, by ipsec --checknflog

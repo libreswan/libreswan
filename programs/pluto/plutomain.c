@@ -546,12 +546,11 @@ static const struct option long_opts[] = {
 	{ "curl-timeout\0<secs>", required_argument, NULL, 'I' },
 	{ "curl-timeout\0<secs>", required_argument, NULL, 'I' }, /* _ */
 	{ "listen\0<ifaddr>", required_argument, NULL, 'L' },
-	{ "ikeport\0<port-number>", required_argument, NULL, 'p' },
-	{ "tcpport\0<port-number>", required_argument, NULL, 'm' },
+	{ "listen-tcp\0", no_argument, NULL, 'm' },
+	{ "no-listen-udp\0", no_argument, NULL, 'p' },
 	{ "ike-socket-bufsize\0<buf-size>", required_argument, NULL, 'W' },
 	{ "ike-socket-no-errqueue\0", no_argument, NULL, '1' },
 	{ "nflog-all\0<group-number>", required_argument, NULL, 'G' },
-	{ "natikeport\0<port-number>", required_argument, NULL, 'q' },
 	{ "rundir\0<path>", required_argument, NULL, 'b' }, /* was ctlbase */
 	{ "ctlbase\0<path>", required_argument, NULL, 'b' }, /* backwards compatibility */
 	{ "secretsfile\0<secrets-file>", required_argument, NULL, 's' },
@@ -1070,23 +1069,6 @@ int main(int argc, char **argv)
 			}
 			continue;
 
-		/*
-		 * This option does not really work, as this is the "left"
-		 * site only, you also need --to --ikeport again later on
-		 * It will result in: yourport -> 500, still not bypassing
-		 * filters
-		 */
-		case 'p':	/* --ikeport <portnumber> */
-			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
-			if (ugh != NULL)
-				break;
-			if (u == 0) {
-				ugh = "must not be 0";
-				break;
-			}
-			pluto_port = u;
-			continue;
-
 		case '1':	/* --ike-socket-no-errqueue */
 			pluto_sock_errqueue = FALSE;
 			continue;
@@ -1102,26 +1084,12 @@ int main(int argc, char **argv)
 			pluto_sock_bufsize = u;
 			continue;
 
-		case 'q':	/* --natikeport <portnumber> */
-			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
-			if (ugh != NULL)
-				break;
-			if (u == 0) {
-				ugh = "must not be 0";
-				break;
-			}
-			pluto_nat_port = u;
+		case 'p':	/* --no-listen-udp */
+			pluto_listen_udp = FALSE;
 			continue;
 
-		case 'm':	/* --tcpport <portnumber> */
-			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
-			if (ugh != NULL)
-				break;
-			if (u == 0) {
-				ugh = "must not be 0";
-				break;
-			}
-			pluto_tcpport = u;
+		case 'm':	/* --listen-tcp */
+			pluto_listen_tcp = TRUE;
 			continue;
 
 		case 'b':	/* --rundir <path> */
@@ -1311,18 +1279,15 @@ int main(int argc, char **argv)
 			set_cfg_string(&pluto_listen,
 				cfg->setup.strings[KSF_LISTEN]);
 
-			/* --ikeport */
-			pluto_port = cfg->setup.options[KBF_IKEPORT];
-
-			/* --ike-socket-bufsize */
+			/* ike-socket-bufsize= */
 			pluto_sock_bufsize = cfg->setup.options[KBF_IKEBUF];
 			pluto_sock_errqueue = cfg->setup.options[KBF_IKE_ERRQUEUE];
 
-			/* --tcpport */
-			pluto_tcpport = cfg->setup.options[KBF_TCPPORT];
+			/* listen-tcp= / listen-udp= */
+			pluto_listen_tcp = cfg->setup.options[KBF_LISTEN_TCP];
+			pluto_listen_udp = cfg->setup.options[KBF_LISTEN_UDP];
 
-
-			/* --nflog-all */
+			/* nflog-all= */
 			/* only causes nflog nmber to show in ipsec status */
 			pluto_nflog_group = cfg->setup.options[KBF_NFLOG_ALL];
 
@@ -1330,27 +1295,27 @@ int main(int argc, char **argv)
 			pluto_xfrmlifetime = cfg->setup.options[KBF_XFRMLIFETIME];
 
 			/* no config option: rundir */
-			/* --secrets */
+			/* secretsfile= */
 			if (cfg->setup.strings[KSF_SECRETSFILE] &&
 			    *cfg->setup.strings[KSF_SECRETSFILE]) {
 				lsw_conf_secretsfile(cfg->setup.strings[KSF_SECRETSFILE]);
 			}
 			if (cfg->setup.strings[KSF_IPSECDIR] != NULL &&
 				*cfg->setup.strings[KSF_IPSECDIR] != 0) {
-				/* --ipsecdir */
+				/* ipsecdir= */
 				lsw_conf_confddir(cfg->setup.strings[KSF_IPSECDIR]);
 			}
 
 			if (cfg->setup.strings[KSF_NSSDIR] != NULL &&
 				*cfg->setup.strings[KSF_NSSDIR] != 0) {
-				/* --nssdir <path> */
+				/* nssdir= */
 				lsw_conf_nssdir(cfg->setup.strings[KSF_NSSDIR]);
 			}
 
-			/* --perpeerlog */
+			/* perpeerlog= */
 			log_to_perpeer = cfg->setup.options[KBF_PERPEERLOG];
 			if (log_to_perpeer) {
-				/* --perpeerlogbase */
+				/* perpeerlogbase= */
 				if (cfg->setup.strings[KSF_PERPEERDIR]) {
 					set_cfg_string(&peerlog_basedir,
 						cfg->setup.strings[KSF_PERPEERDIR]);
@@ -1375,7 +1340,7 @@ int main(int argc, char **argv)
 				coredir = clone_str(cfg->setup.strings[KSF_DUMPDIR],
 						"coredir via --config");
 			}
-			/* --vendorid */
+			/* vendorid= */
 			if (cfg->setup.strings[KSF_MYVENDORID]) {
 				pfree(pluto_vendorid);
 				pluto_vendorid = clone_str(cfg->setup.strings[KSF_MYVENDORID],
@@ -1395,8 +1360,6 @@ int main(int argc, char **argv)
 			}
 
 			pluto_nss_seedbits = cfg->setup.options[KBF_SEEDBITS];
-			pluto_nat_port =
-				cfg->setup.options[KBF_NATIKEPORT];
 			keep_alive = deltatime(cfg->setup.options[KBF_KEEPALIVE]);
 
 			set_cfg_string(&virtual_private,
@@ -2020,8 +1983,7 @@ void show_setup_plutomain(struct show *s)
 			(pluto_ddos_mode == DDOS_FORCE_BUSY) ? "busy" : "unlimited");
 
 	show_comment(s,
-		"ikeport=%d, ikebuf=%d, msg_errqueue=%s, strictcrlpolicy=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%d",
-		pluto_port,
+		"ikebuf=%d, msg_errqueue=%s, strictcrlpolicy=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%d",
 		pluto_sock_bufsize,
 		bool_str(pluto_sock_errqueue),
 		bool_str(crl_strict),

@@ -3055,17 +3055,17 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	if (st->hidden_variables.st_nat_traversal != LEMPTY &&
 	    id->isaid_doi_specific_a == IPPROTO_UDP &&
 	    (id->isaid_doi_specific_b == 0 ||
-	     id->isaid_doi_specific_b == pluto_nat_port)) {
+	     id->isaid_doi_specific_b == NAT_IKE_UDP_PORT)) {
 		dbg("protocol/port in Phase 1 ID Payload is %d/%d. accepted with port_floating NAT-T",
 		    id->isaid_doi_specific_a, id->isaid_doi_specific_b);
 	} else if (!(id->isaid_doi_specific_a == 0 &&
 		     id->isaid_doi_specific_b == 0) &&
 		   !(id->isaid_doi_specific_a == IPPROTO_UDP &&
-		     id->isaid_doi_specific_b == pluto_port))
+		     id->isaid_doi_specific_b == IKE_UDP_PORT))
 	{
 		log_state(RC_LOG_SERIOUS, st,
 			  "protocol/port in Phase 1 ID Payload MUST be 0/0 or %d/%d but are %d/%d (attempting to continue)",
-			  IPPROTO_UDP, pluto_port,
+			  IPPROTO_UDP, IKE_UDP_PORT,
 			  id->isaid_doi_specific_a,
 			  id->isaid_doi_specific_b);
 		/*

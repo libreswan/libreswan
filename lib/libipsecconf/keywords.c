@@ -415,20 +415,18 @@ const struct keyword_def ipsec_conf_keywords[] = {
 #endif
   { "ddos-ike-threshold",  kv_config,  kt_number,  KBF_DDOS_IKE_THRESHOLD, NULL, NULL, },
   { "max-halfopen-ike",  kv_config,  kt_number,  KBF_MAX_HALFOPEN_IKE, NULL, NULL, },
-  { "ikeport",  kv_config,  kt_number,  KBF_IKEPORT, NULL, NULL, },
   { "ike-socket-bufsize",  kv_config,  kt_number,  KBF_IKEBUF, NULL, NULL, },
   { "ike-socket-errqueue",  kv_config,  kt_bool,  KBF_IKE_ERRQUEUE, NULL, NULL, },
   { "nflog-all",  kv_config,  kt_number,  KBF_NFLOG_ALL, NULL, NULL, },
   { "xfrmlifetime",  kv_config,  kt_number,  KBF_XFRMLIFETIME, NULL, NULL, },
   { "virtual_private",  kv_config | kv_alias,  kt_string,  KSF_VIRTUALPRIVATE, NULL, NULL, },  /* obsolete _ */
   { "virtual-private",  kv_config,  kt_string,  KSF_VIRTUALPRIVATE, NULL, NULL, },
-  { "nat_ikeport",  kv_config | kv_alias,  kt_number,  KBF_NATIKEPORT, NULL, NULL, },  /* obsolete _ */
-  { "nat-ikeport",  kv_config,  kt_number,  KBF_NATIKEPORT, NULL, NULL, },
   { "seedbits",  kv_config,  kt_number,  KBF_SEEDBITS, NULL, NULL, },
   { "keep_alive",  kv_config | kv_alias,  kt_number,  KBF_KEEPALIVE, NULL, NULL, },  /* obsolete _ */
   { "keep-alive",  kv_config,  kt_number,  KBF_KEEPALIVE, NULL, NULL, },
 
-  { "listen-tcp", kv_config, kt_number, KBF_TCPPORT, NULL, NULL },
+  { "listen-tcp", kv_config, kt_bool, KBF_LISTEN_TCP, NULL, NULL },
+  { "listen-udp", kv_config, kt_bool, KBF_LISTEN_UDP, NULL, NULL },
 
   { "listen",  kv_config,  kt_string,  KSF_LISTEN, NULL, NULL, },
   { "protostack",  kv_config,  kt_string,  KSF_PROTOSTACK,  &kw_proto_stack, NULL, },
