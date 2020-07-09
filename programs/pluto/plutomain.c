@@ -1412,12 +1412,11 @@ int main(int argc, char **argv)
 			passert(kernel_ops != NULL);
 
 			if (!(protostack == NULL || *protostack == '\0')) {
-				if (streq(protostack, "auto")) {
-					libreswan_log("the option protostack=auto is obsoleted, falling back to protostack=%s",
-						kernel_ops->kern_name);
-				} else if (streq(protostack, "native")) {
-					libreswan_log("the option protostack=native is obsoleted, falling back to protostack=%s",
-						      kernel_ops->kern_name);
+				if (streq(protostack, "auto") || streq(protostack, "native") ||
+					streq(protostack, "nokernel") || streq(protostack, "klips")) {
+
+					libreswan_log("the option protostack=%s is obsoleted, falling back to protostack=%s",
+						      protostack, kernel_ops->kern_name);
 #ifdef XFRM_SUPPORT
 				} else if (streq(protostack, "netkey") ||
 					   streq(protostack, "native")) {
