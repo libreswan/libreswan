@@ -112,18 +112,23 @@ void free_ikev2_proposals(struct ikev2_proposals **proposals);
  * XXX: Should the CREATE CHILD SA proposals be stored in the state?
  */
 
-struct ikev2_proposals *get_v2_ike_proposals(struct connection *c, const char *why);
-struct ikev2_proposals *get_v2_ike_auth_child_proposals(struct connection *c, const char *why);
+struct ikev2_proposals *get_v2_ike_proposals(struct connection *c, const char *why,
+					     struct logger *logger);
+struct ikev2_proposals *get_v2_ike_auth_child_proposals(struct connection *c, const char *why,
+							struct logger *logger);
 struct ikev2_proposals *get_v2_create_child_proposals(struct connection *c, const char *why,
-						      const struct dh_desc *default_dh);
+						      const struct dh_desc *default_dh,
+						      struct logger *logger);
 
 bool ikev2_emit_sa_proposal(pb_stream *pbs,
 			    const struct ikev2_proposal *proposal,
-			    const chunk_t *local_spi);
+			    const chunk_t *local_spi,
+			    struct logger *logger);
 
 bool ikev2_emit_sa_proposals(pb_stream *outs,
 			     const struct ikev2_proposals *proposals,
-			     const chunk_t *local_spi);
+			     const chunk_t *local_spi,
+			     struct logger *logger);
 
 const struct dh_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals);
 
@@ -137,7 +142,8 @@ stf_status ikev2_process_sa_payload(const char *what,
 				    bool expect_accepted,
 				    bool opportunistic,
 				    struct ikev2_proposal **chosen,
-				    const struct ikev2_proposals *local_proposals);
+				    const struct ikev2_proposals *local_proposals,
+				    struct logger *logger);
 
 bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
 				  struct ipsec_proto_info *proto_info);

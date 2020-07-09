@@ -623,7 +623,7 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 	 * Grab the DH group from the first configured proposal and build KE.
 	 */
 	struct ikev2_proposals *ike_proposals =
-		get_v2_ike_proposals(c, "IKE SA initiator selecting KE");
+		get_v2_ike_proposals(c, "IKE SA initiator selecting KE", ike->sa.st_logger);
 	st->st_oakley.ta_dh = ikev2_proposals_first_dh(ike_proposals);
 	if (st->st_oakley.ta_dh == NULL) {
 		libreswan_log("proposals do not contain a valid DH");
@@ -742,9 +742,10 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	/* SA out */
 
 	struct ikev2_proposals *ike_proposals =
-		get_v2_ike_proposals(c, "IKE SA initiator emitting local proposals");
+		get_v2_ike_proposals(c, "IKE SA initiator emitting local proposals", ike->sa.st_logger);
 	if (!ikev2_emit_sa_proposals(&rbody, ike_proposals,
-				     (chunk_t*)NULL /* IKE - no CHILD SPI */)) {
+				     (chunk_t*)NULL /* IKE - no CHILD SPI */,
+				     ike->sa.st_logger)) {
 		return false;
 	}
 
@@ -888,7 +889,7 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 
 	/* Get the proposals ready.  */
 	struct ikev2_proposals *ike_proposals =
-		get_v2_ike_proposals(c, "IKE SA responder matching remote proposals");
+		get_v2_ike_proposals(c, "IKE SA responder matching remote proposals", ike->sa.st_logger);
 
 	/*
 	 * Select the proposal.
@@ -900,7 +901,7 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 						  /*expect_accepted*/ FALSE,
 						  LIN(POLICY_OPPORTUNISTIC, c->policy),
 						  &ike->sa.st_accepted_ike_proposal,
-						  ike_proposals);
+						  ike_proposals, ike->sa.st_logger);
 	if (ret != STF_OK) {
 		pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 		pexpect(ret > STF_FAIL);
@@ -1084,7 +1085,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 		 * part of the proposal.  Hence the NULL SPI.
 		 */
 		passert(st->st_accepted_ike_proposal != NULL);
-		if (!ikev2_emit_sa_proposal(&rbody, st->st_accepted_ike_proposal, NULL)) {
+		if (!ikev2_emit_sa_proposal(&rbody, st->st_accepted_ike_proposal, NULL, ike->sa.st_logger)) {
 			dbg("problem emitting accepted proposal");
 			return STF_INTERNAL_ERROR;
 		}
@@ -1275,7 +1276,7 @@ stf_status process_IKE_SA_INIT_v2N_INVALID_KE_PAYLOAD_response(struct ike_sa *ik
 	pstats(invalidke_recv_u, ike->sa.st_oakley.ta_dh->group);
 
 	struct ikev2_proposals *ike_proposals =
-		get_v2_ike_proposals(c, "IKE SA initiator validating remote's suggested KE");
+		get_v2_ike_proposals(c, "IKE SA initiator validating remote's suggested KE", ike->sa.st_logger);
 	if (!ikev2_proposals_include_modp(ike_proposals, sg.sg_group)) {
 		struct esb_buf esb;
 		log_state(RC_LOG, &ike->sa,
@@ -1549,7 +1550,7 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 		struct payload_digest *const sa_pd =
 			md->chain[ISAKMP_NEXT_v2SA];
 		struct ikev2_proposals *ike_proposals =
-			get_v2_ike_proposals(c, "IKE SA initiator accepting remote proposal");
+			get_v2_ike_proposals(c, "IKE SA initiator accepting remote proposal", ike->sa.st_logger);
 
 		stf_status ret = ikev2_process_sa_payload("IKE initiator (accepting)",
 							  &sa_pd->pbs,
@@ -1558,7 +1559,7 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 							  /*expect_accepted*/ TRUE,
 							  LIN(POLICY_OPPORTUNISTIC, c->policy),
 							  &st->st_accepted_ike_proposal,
-							  ike_proposals);
+							  ike_proposals, ike->sa.st_logger);
 		if (ret != STF_OK) {
 			dbg("ikev2_parse_parent_sa_body() failed in ikev2_parent_inR1outI2()");
 			return ret; /* initiator; no response */
@@ -2269,9 +2270,10 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	 * used.
 	 */
 	struct ikev2_proposals *child_proposals =
-		get_v2_ike_auth_child_proposals(cc, "IKE SA initiator emitting ESP/AH proposals");
+		get_v2_ike_auth_child_proposals(cc, "IKE SA initiator emitting ESP/AH proposals",
+						child->sa.st_logger);
 	if (!ikev2_emit_sa_proposals(&sk.pbs, child_proposals,
-				     &local_spi)) {
+				     &local_spi, ike->sa.st_logger)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -3267,13 +3269,16 @@ stf_status ikev2_process_child_sa_pl(struct ike_sa *ike, struct child_sa *child,
 		const struct dh_desc *default_dh = (c->policy & POLICY_PFS) != LEMPTY
 			? ike->sa.st_oakley.ta_dh
 			: &ike_alg_dh_none;
-		child_proposals = get_v2_create_child_proposals(c, what, default_dh);
+		child_proposals = get_v2_create_child_proposals(c, what, default_dh,
+								child->sa.st_logger);
 	} else if (expect_accepted_proposal) {
 		what = "IKE_AUTH initiator accepting remote ESP/AH proposal";
-		child_proposals = get_v2_ike_auth_child_proposals(c, what);
+		child_proposals = get_v2_ike_auth_child_proposals(c, what,
+								  child->sa.st_logger);
 	} else {
 		what = "IKE_AUTH responder matching remote ESP/AH proposals";
-		child_proposals = get_v2_ike_auth_child_proposals(c, what);
+		child_proposals = get_v2_ike_auth_child_proposals(c, what,
+								  child->sa.st_logger);
 	}
 
 	ret = ikev2_process_sa_payload(what,
@@ -3283,7 +3288,7 @@ stf_status ikev2_process_child_sa_pl(struct ike_sa *ike, struct child_sa *child,
 				       expect_accepted_proposal,
 				       LIN(POLICY_OPPORTUNISTIC, c->policy),
 				       &child->sa.st_accepted_esp_or_ah_proposal,
-				       child_proposals);
+				       child_proposals, child->sa.st_logger);
 
 	if (ret != STF_OK) {
 		LSWLOG_RC(RC_LOG_SERIOUS, buf) {
@@ -3999,7 +4004,8 @@ static stf_status ikev2_child_add_ipsec_payloads(struct child_sa *child,
 	 * the state.
 	 */
 	passert(cc->v2_create_child_proposals != NULL);
-	if (!ikev2_emit_sa_proposals(outpbs, cc->v2_create_child_proposals, &local_spi))
+	if (!ikev2_emit_sa_proposals(outpbs, cc->v2_create_child_proposals,
+				     &local_spi, child->sa.st_logger))
 		return STF_INTERNAL_ERROR;
 
 	/*
@@ -4090,7 +4096,7 @@ static stf_status ikev2_child_add_ike_payloads(struct child_sa *child,
 
 		/* send selected v2 IKE SA */
 		if (!ikev2_emit_sa_proposal(outpbs, st->st_accepted_ike_proposal,
-					    &local_spi)) {
+					    &local_spi, child->sa.st_logger)) {
 			dbg("problem emitting accepted ike proposal in CREATE_CHILD_SA");
 			return STF_INTERNAL_ERROR;
 		}
@@ -4103,10 +4109,12 @@ static stf_status ikev2_child_add_ike_payloads(struct child_sa *child,
 		chunk_t local_spi = THING_AS_CHUNK(st->st_ike_rekey_spis.initiator);
 
 		struct ikev2_proposals *ike_proposals =
-			get_v2_ike_proposals(c, "IKE SA initiating rekey");
+			get_v2_ike_proposals(c, "IKE SA initiating rekey",
+					     child->sa.st_logger);
 
 		/* send v2 IKE SAs*/
-		if (!ikev2_emit_sa_proposals(outpbs, ike_proposals, &local_spi))  {
+		if (!ikev2_emit_sa_proposals(outpbs, ike_proposals,
+					     &local_spi, child->sa.st_logger))  {
 			libreswan_log("outsa fail");
 			dbg("problem emitting connection ike proposals in CREATE_CHILD_SA");
 			return STF_INTERNAL_ERROR;
@@ -4163,7 +4171,8 @@ stf_status ikev2_child_ike_inR(struct ike_sa *ike,
 
 	/* Get the proposals ready.  */
 	struct ikev2_proposals *ike_proposals =
-		get_v2_ike_proposals(c, "IKE SA accept response to rekey");
+		get_v2_ike_proposals(c, "IKE SA accept response to rekey",
+				     child->sa.st_logger);
 
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	stf_status ret = ikev2_process_sa_payload("IKE initiator (accepting)",
@@ -4173,7 +4182,7 @@ stf_status ikev2_child_ike_inR(struct ike_sa *ike,
 						  /*expect_accepted*/ TRUE,
 						  LIN(POLICY_OPPORTUNISTIC, c->policy),
 						  &st->st_accepted_ike_proposal,
-						  ike_proposals);
+						  ike_proposals, child->sa.st_logger);
 	if (ret != STF_OK) {
 		dbg("failed to accept IKE SA, REKEY, response, in ikev2_child_ike_inR");
 		return ret; /* initiator; no response */
@@ -4602,7 +4611,7 @@ stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
 
 	/* Get the proposals ready.  */
 	struct ikev2_proposals *ike_proposals =
-		get_v2_ike_proposals(c, "IKE SA responding to rekey");
+		get_v2_ike_proposals(c, "IKE SA responding to rekey", ike->sa.st_logger);
 
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	stf_status ret = ikev2_process_sa_payload("IKE Rekey responder child",
@@ -4612,7 +4621,7 @@ stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
 						  /*expect_accepted*/ FALSE,
 						  LIN(POLICY_OPPORTUNISTIC, c->policy),
 						  &st->st_accepted_ike_proposal,
-						  ike_proposals);
+						  ike_proposals, child->sa.st_logger);
 	if (ret != STF_OK) {
 		pexpect(child->sa.st_sa_role == SA_RESPONDER);
 		pexpect(ret > STF_FAIL);
@@ -5723,7 +5732,8 @@ void ikev2_initiate_child_sa(struct pending *p)
 		struct ikev2_proposals *child_proposals =
 			get_v2_create_child_proposals(c,
 						      "ESP/AH initiator emitting proposals",
-						      default_dh);
+						      default_dh,
+						      child->sa.st_logger);
 		/* see ikev2_child_add_ipsec_payloads */
 		passert(c->v2_create_child_proposals != NULL);
 

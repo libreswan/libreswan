@@ -109,8 +109,8 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 		proto_info->our_spi = ikev2_child_sa_spi(&c->spd, c->policy);
 		chunk_t local_spi = THING_AS_CHUNK(proto_info->our_spi);
 		if (!ikev2_emit_sa_proposal(outpbs,
-					cst->st_accepted_esp_or_ah_proposal,
-					&local_spi)) {
+					    cst->st_accepted_esp_or_ah_proposal,
+					    &local_spi, child->sa.st_logger)) {
 			dbg("problem emitting accepted proposal");
 			return STF_INTERNAL_ERROR;
 		}
