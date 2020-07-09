@@ -110,6 +110,8 @@ struct impair {
 	bool ignore_hash_notify_response;
 	bool ikev2_exclude_integ_none;
 	bool ikev2_include_integ_none;
+	unsigned ikev2_add_ike_transform;
+	unsigned ikev2_add_child_transform;
 	bool replay_duplicates;
 	bool replay_forward;
 	bool replay_backward;

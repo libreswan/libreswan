@@ -1225,33 +1225,43 @@ stf_status ikev2_process_sa_payload(const char *what,
 	return status;
 }
 
-static bool emit_transform(pb_stream *r_proposal_pbs,
-			   enum ikev2_sec_proto_id protoid,
-			   enum ikev2_trans_type type, bool last,
-			   const struct ikev2_transform *transform,
-			   struct logger *logger)
+static bool emit_transform_header(struct pbs_out *proposal_pbs,
+				  enum ikev2_trans_type transform_type,
+				  unsigned transform_id,
+				  bool is_last_transform,
+				  struct pbs_out *transform_pbs,
+				  struct logger *logger)
 {
 	struct ikev2_trans trans = {
-		.isat_type = type,
-		.isat_transid = transform->id,
-		.isat_lt = last ? v2_TRANSFORM_LAST : v2_TRANSFORM_NON_LAST,
+		.isat_type = transform_type,
+		.isat_transid = transform_id,
+		.isat_lt = is_last_transform ? v2_TRANSFORM_LAST : v2_TRANSFORM_NON_LAST,
 	};
-	pb_stream trans_pbs;
-	if (!out_struct(&trans, &ikev2_trans_desc,
-			r_proposal_pbs, &trans_pbs)) {
+	if (!pbs_out_struct(proposal_pbs, &trans, sizeof(trans),
+			    &ikev2_trans_desc, transform_pbs, logger)) {
 		log_message(RC_LOG, logger, "out_struct() of transform failed");
-		return FALSE;
+		return false;
 	}
+	return true;
+}
+
+static bool emit_transform_attributes(struct pbs_out *transform_pbs,
+				      enum ikev2_sec_proto_id protoid,
+				      enum ikev2_trans_type transform_type,
+				      const struct ikev2_transform *transform,
+				      struct logger *logger)
+{
 	enum send_impairment impair_key_length_attribute =
 		(protoid == IKEv2_SEC_PROTO_IKE
 		 ? impair.ike_key_length_attribute
 		 : impair.child_key_length_attribute);
-	if (type != IKEv2_TRANS_TYPE_ENCR ||
+	if (transform_type != IKEv2_TRANS_TYPE_ENCR ||
 	    impair_key_length_attribute == SEND_NORMAL) {
 		/* XXX: should be >= 0; so that '0' can be sent? */
 		/* XXX: screw key-lengths for other types? */
 		if (transform->attr_keylen > 0) {
-			if (!v2_out_attr_fixed(IKEv2_KEY_LENGTH, transform->attr_keylen, &trans_pbs, logger)) {
+			if (!v2_out_attr_fixed(IKEv2_KEY_LENGTH, transform->attr_keylen,
+					       transform_pbs, logger)) {
 				return false;
 			}
 		}
@@ -1262,7 +1272,7 @@ static bool emit_transform(pb_stream *r_proposal_pbs,
 			break;
 		case SEND_EMPTY:
 			log_message(RC_LOG, logger, "IMPAIR: emitting variable-size key-length attribute with no key");
-			if (!v2_out_attr_variable(IKEv2_KEY_LENGTH, EMPTY_CHUNK, &trans_pbs)) {
+			if (!v2_out_attr_variable(IKEv2_KEY_LENGTH, EMPTY_CHUNK, transform_pbs)) {
 				return false;
 			}
 			break;
@@ -1273,7 +1283,8 @@ static bool emit_transform(pb_stream *r_proposal_pbs,
 			log_message(RC_LOG, logger, "IMPAIR: duplicating key-length attribute");
 			for (unsigned dup = 0; dup < 2; dup++) {
 				/* regardless of value */
-				if (!v2_out_attr_fixed(IKEv2_KEY_LENGTH, transform->attr_keylen, &trans_pbs, logger)) {
+				if (!v2_out_attr_fixed(IKEv2_KEY_LENGTH, transform->attr_keylen,
+						       transform_pbs, logger)) {
 					return false;
 				}
 			}
@@ -1281,18 +1292,38 @@ static bool emit_transform(pb_stream *r_proposal_pbs,
 		case SEND_ROOF:
 		default:
 		{
-			uint16_t keylen = impair_key_length_attribute - SEND_ROOF;
+			uint16_t keylen = impair_key_length_attribute - SEND_ROOF; /* remove bias */
 			log_message(RC_LOG, logger, "IMPAIR: emitting fixed-length key-length attribute with %u key",
 				      keylen);
-			if (!v2_out_attr_fixed(IKEv2_KEY_LENGTH, keylen, &trans_pbs, logger)) {
+			if (!v2_out_attr_fixed(IKEv2_KEY_LENGTH, keylen, transform_pbs, logger)) {
 				return false;
 			}
 			break;
 		}
 		}
 	}
-	close_output_pbs(&trans_pbs); /* set len */
-	return TRUE;
+	return true;
+}
+
+static bool emit_transform(struct pbs_out *proposal_pbs,
+			   enum ikev2_sec_proto_id protoid,
+			   enum ikev2_trans_type transform_type,
+			   bool last_transform,
+			   const struct ikev2_transform *transform,
+			   struct logger *logger)
+{
+	struct pbs_out transform_pbs;
+	if (!emit_transform_header(proposal_pbs, transform_type,
+				   transform->id, last_transform,
+				   &transform_pbs, logger)) {
+		return false;
+	}
+	if (!emit_transform_attributes(&transform_pbs, protoid,
+				       transform_type, transform, logger)) {
+		return false;
+	}
+	close_output_pbs(&transform_pbs); /* set len */
+	return true;
 }
 
 /*
@@ -1314,9 +1345,9 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 	 * excluded.
 	 */
 	int trans_nr = 0;
-	enum ikev2_trans_type type;
+	enum ikev2_trans_type transform_type;
 	const struct ikev2_transforms *transforms;
-	FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
+	FOR_EACH_TRANSFORMS_TYPE(transform_type, transforms, proposal) {
 		const struct ikev2_transform *transform;
 		FOR_EACH_TRANSFORM(transform, transforms) {
 			/*
@@ -1332,7 +1363,7 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 			 * behaviour - including or excluding
 			 * impair=none when it otherwise wouldn't.
 			 */
-			if (type == IKEv2_TRANS_TYPE_INTEG &&
+			if (transform_type == IKEv2_TRANS_TYPE_INTEG &&
 			    transform->id == IKEv2_AUTH_NONE) {
 				if (impair.ikev2_include_integ_none) {
 					log_message(RC_LOG, logger, "IMPAIR: proposal %d transform INTEG=NONE included when %s",
@@ -1355,7 +1386,7 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 			 * DH=MODP2048 is valid the below doesn't
 			 * handle it.
 			 */
-			if (type == IKEv2_TRANS_TYPE_DH &&
+			if (transform_type == IKEv2_TRANS_TYPE_DH &&
 			    transform->id == OAKLEY_GROUP_NONE) {
 				dbg("discarding DH=NONE");
 				continue;
@@ -1374,13 +1405,41 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 			}
 
 			trans_nr++;
-			bool last = trans_nr == nr_trans;
-			if (proposal_pbs != NULL &&
-			    !emit_transform(proposal_pbs, proposal->protoid,
-					    type, last, transform, logger))
-				return -1;
+			if (proposal_pbs != NULL) {
+				bool is_last_transform = trans_nr == nr_trans;
+				if (!emit_transform(proposal_pbs, proposal->protoid,
+						    transform_type, is_last_transform,
+						    transform, logger)) {
+					return -1;
+				}
+			}
 		}
 	}
+
+	unsigned add_impaired_transform = (proposal->protoid == IKEv2_SEC_PROTO_IKE ?
+					   impair.ikev2_add_ike_transform :
+					   impair.ikev2_add_child_transform);
+	if (add_impaired_transform > 0) {
+		trans_nr++;
+		if (proposal_pbs != NULL) {
+			bool is_last_transform = trans_nr == nr_trans;
+			unsigned type_id = add_impaired_transform - 1; /* unbias */
+			enum ikev2_trans_type transform_type = (type_id >> 16) & 0xff;
+			unsigned transform_id = (type_id & 0xffff);
+			struct esb_buf typeb, idb;
+			log_message(RC_LOG, logger, "IMPAIR: adding transform type %s (0x%x) id %s (0x%x)",
+				    enum_show_shortb(&ikev2_trans_type_names, transform_type, &typeb),
+				    transform_type,
+				    enum_enum_showb(&v2_transform_ID_enums, transform_type, transform_id, &idb),
+				    transform_id);
+			if (!emit_transform_header(proposal_pbs, transform_type, transform_id,
+						   is_last_transform,
+						   NULL/*no nested PBS*/, logger)) {
+				return -1;
+			}
+		}
+	}
+
 	return trans_nr;
 }
 

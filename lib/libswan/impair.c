@@ -94,8 +94,12 @@ struct impairment impairments[] = {
 	V("ike-key-length-attribute", ike_key_length_attribute, "corrupt the outgoing IKE proposal's key length attribute", .how_keynum = &send_impairment_keywords, .unsigned_help = "use <unsigned> as the key length"),
 	V("ike-responder-spi", ike_responder_spi, "corrupt the IKE responder SPI", .unsigned_help = "set SPI to <unsigned>"),
 	V("ikev1-del-with-notify", ikev1_del_with_notify, "causes pluto to send IKE Delete with additional bogus Notify payload"),
+
 	V("ikev2-exclude-integ-none", ikev2_exclude_integ_none, "lets pluto exclude integrity 'none' in proposals"),
 	V("ikev2-include-integ-none", ikev2_include_integ_none, "lets pluto include integrity 'none' in proposals"),
+	V("ikev2-add-ike-transform", ikev2_add_ike_transform, "add an extra (possibly bogus) IKE transform", .unsigned_help = "transform type+id encoded as TYPE<<16|ID"),
+	V("ikev2-add-child-transform", ikev2_add_child_transform, "add an extra (possibly bogus) CHILD transform", .unsigned_help = "transform type+id encoded as TYPE<<16|ID"),
+
 	V("jacob-two-two", jacob_two_two, "cause pluto to send all messages twice."),
 	V("ke-payload", ke_payload, "corrupt the outgoing KE payload", .unsigned_help = "use <unsigned> to byte-fill the KE payload", .how_keynum = &send_impairment_keywords),
 	V("log-rate-limit", log_rate_limit, "set the per-hour(?) cap on rate-limited log messages"),
