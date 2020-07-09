@@ -19,6 +19,7 @@ v4.0 (unreleased)
 * IKEv2: Don't use NAT-T port when no NAT DETECTION payloads received [Andrew]
 * IKEv2: Add support for multiple targets for whack --redirect [Vukasin]
 * IKEv2: Fix AUTH failure if ID payload reserved fields != 0 [Paul/Andrew/Hugh]
+* IKEv2: never respond to a delete(IKE SA) request with a delete request [Andrew]
 * building: Add NetBSD support [Andrew]
 * building: Remove support for SINGLE_CONF_DIR, EMIT_ISAKMP_SPI, [Paul]
             USE_KEYRR and TEST_INDECENT_PROPOSAL
