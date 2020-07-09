@@ -72,12 +72,12 @@ west #
  ipsec auto --status
 000 using kernel interface: netkey
 000  
-000 interface lo 127.0.0.1:4500
-000 interface lo 127.0.0.1:500
-000 interface eth0 192.0.1.254:4500
-000 interface eth0 192.0.1.254:500
-000 interface eth1 192.1.2.45:4500
-000 interface eth1 192.1.2.45:500
+000 interface UDP lo127.0.0.1:4500
+000 interface UDP lo127.0.0.1:500
+000 interface UDP eth0192.0.1.254:4500
+000 interface UDP eth0192.0.1.254:500
+000 interface UDP eth1192.1.2.45:4500
+000 interface UDP eth1192.1.2.45:500
 000  
 000 fips mode=disabled;
 000 SElinux=XXXXX
@@ -89,7 +89,7 @@ west #
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
 000 nhelpers=-1, uniqueids=yes, dnssec-enable=yes, perpeerlog=no, logappend=no, logip=yes, shuntlifetime=900s, xfrmlifetime=30s
 000 ddos-cookies-threshold=25000, ddos-max-halfopen=50000, ddos-mode=auto
-000 ikeport=500, ikebuf=0, msg_errqueue=yes, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
+000 ikebuf=0, msg_errqueue=yes, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
 000 ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2, ocsp-uri=<unset>
 000 ocsp-trust-name=<unset>
 000 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
