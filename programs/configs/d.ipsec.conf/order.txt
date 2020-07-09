@@ -107,11 +107,11 @@ d.ipsec.conf/protostack.xml
 d.ipsec.conf/interfaces.xml
 d.ipsec.conf/listen.xml
 d.ipsec.conf/ike-socket.xml
-d.ipsec.conf/ikeport.xml
+d.ipsec.conf/listen-udp.xml
+d.ipsec.conf/listen-tcp.xml
 d.ipsec.conf/nflog-all.xml
 d.ipsec.conf/nat_traversal.xml
 d.ipsec.conf/force_keepalive.xml
-d.ipsec.conf/nat-ikeport.xml
 d.ipsec.conf/keep-alive.xml
 d.ipsec.conf/virtual-private.xml
 d.ipsec.conf/myvendorid.xml

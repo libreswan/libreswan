@@ -1,0 +1,10 @@
+  <varlistentry>
+  <term><emphasis remap='B'>listen-tcp</emphasis></term>
+  <listitem>
+<para>Whether the pluto IKE daemon should listen on the (pseudo) standard TCP port
+<emphasis remap='B'>4500</emphasis>.  The value "no" is the current default, but this
+will be changed in the future to "yes". The TCP usage complies to RFC 8229 for IKE and
+ESP over TCP support. Connections can specify their own non-standard port using leftikeport=.
+</para>
+  </listitem>
+  </varlistentry>
