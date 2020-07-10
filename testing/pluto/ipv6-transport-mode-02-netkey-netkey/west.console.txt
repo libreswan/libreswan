@@ -39,7 +39,7 @@ west #
 002 added connection description "v6-transport"
 west #
  ipsec auto --status
-000 using kernel interface: netkey
+000 using kernel interface: xfrm
 000  
 000 interface UDP eth1[2001:db8:1:2::45]:500
 000 interface UDP eth0[2001:db8:0:1::254]:500

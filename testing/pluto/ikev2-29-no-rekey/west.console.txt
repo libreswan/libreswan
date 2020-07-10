@@ -67,7 +67,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec status
-000 using kernel interface: netkey
+000 using kernel interface: xfrm
 000  
 000 interface UDP lo 127.0.0.1:4500
 000 interface UDP lo 127.0.0.1:500
@@ -195,7 +195,7 @@ west #
  sleep 50
 west #
  ipsec status
-000 using kernel interface: netkey
+000 using kernel interface: xfrm
 000  
 000 interface UDP lo 127.0.0.1:4500
 000 interface UDP lo 127.0.0.1:500

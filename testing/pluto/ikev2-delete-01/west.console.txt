@@ -54,7 +54,7 @@ west #
 006 #2: "westnet-eastnet-ipv4-psk-ikev2", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 west #
  ipsec auto --status
-000 using kernel interface: netkey
+000 using kernel interface: xfrm
 000  
 000 interface UDP lo 127.0.0.1:4500
 000 interface UDP lo 127.0.0.1:500
@@ -181,7 +181,7 @@ west #
  sleep 2
 west #
  ipsec auto --status
-000 using kernel interface: netkey
+000 using kernel interface: xfrm
 000  
 000 interface UDP lo 127.0.0.1:4500
 000 interface UDP lo 127.0.0.1:500

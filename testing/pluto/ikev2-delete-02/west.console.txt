@@ -59,7 +59,7 @@ west #
 006 #2: "west-east-delete1", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
 west #
  ipsec auto --status
-000 using kernel interface: netkey
+000 using kernel interface: xfrm
 000  
 000 interface UDP lo 127.0.0.1:4500
 000 interface UDP lo 127.0.0.1:500
@@ -192,7 +192,7 @@ west #
  sleep 2
 west #
  ipsec auto --status
-000 using kernel interface: netkey
+000 using kernel interface: xfrm
 000  
 000 interface UDP lo 127.0.0.1:4500
 000 interface UDP lo 127.0.0.1:500
@@ -317,7 +317,7 @@ west #
  sleep 2
 west #
  ipsec auto --status
-000 using kernel interface: netkey
+000 using kernel interface: xfrm
 000  
 000 interface UDP lo 127.0.0.1:4500
 000 interface UDP lo 127.0.0.1:500

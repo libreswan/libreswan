@@ -11,7 +11,7 @@ east #
 002 added connection description "westnet-eastnet-ikev2"
 east #
  ipsec auto --status
-000 using kernel interface: netkey
+000 using kernel interface: xfrm
 000  
 000 interface UDP eth1 192.1.2.23:2500
 000 interface UDP lo 127.0.0.1:4500

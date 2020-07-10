@@ -24,7 +24,7 @@ road #
  sleep 3
 road #
  ipsec auto --status
-000 using kernel interface: netkey
+000 using kernel interface: xfrm
 000  
 000 interface UDP lo 127.0.0.1:4500
 000 interface UDP lo 127.0.0.1:500

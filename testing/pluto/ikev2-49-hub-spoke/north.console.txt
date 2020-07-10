@@ -20,7 +20,7 @@ north #
 004 "northnet-westnet-ipv4-psk" #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 north #
  ipsec auto --status
-000 using kernel interface: netkey
+000 using kernel interface: xfrm
 000  
 000 interface UDP lo 127.0.0.1:4500
 000 interface UDP lo 127.0.0.1:500
