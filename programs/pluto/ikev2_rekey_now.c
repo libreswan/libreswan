@@ -122,6 +122,11 @@ void rekey_now(const char *str, enum sa_type sa_type,
 	} else {
 		/* str is a state number - this overrides ike vs ipsec rekey command */
 		struct state *st = state_by_serialno(num);
+		if (st == NULL) {
+			log_global(RC_LOG, whackfd, "can't find SA #%d to rekey", num);
+			return;
+		}
+
 		struct connection *c = st->st_connection;
 		if (IS_IKE_SA(st)) {
 			connection_buf cb;
