@@ -15,12 +15,12 @@ east #
  ipsec status
 000 using kernel interface: netkey
 000  
-000 interface UDP lo127.0.0.1:4500
-000 interface UDP lo127.0.0.1:500
-000 interface UDP eth0192.0.2.254:4500
-000 interface UDP eth0192.0.2.254:500
-000 interface UDP eth1192.1.2.23:4500
-000 interface UDP eth1192.1.2.23:500
+000 interface UDP lo 127.0.0.1:4500
+000 interface UDP lo 127.0.0.1:500
+000 interface UDP eth0 192.0.2.254:4500
+000 interface UDP eth0 192.0.2.254:500
+000 interface UDP eth1 192.1.2.23:4500
+000 interface UDP eth1 192.1.2.23:500
 000  
 000 fips mode=disabled;
 000 SElinux=XXXXX

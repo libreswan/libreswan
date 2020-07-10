@@ -39,12 +39,12 @@ west #
 000 interface UDP eth1[2001:db8:1:2::45]:500
 000 interface UDP eth0[2001:db8:0:1::254]:500
 000 interface UDP lo[::1]:500
-000 interface UDP lo127.0.0.1:4500
-000 interface UDP lo127.0.0.1:500
-000 interface UDP eth0192.0.1.254:4500
-000 interface UDP eth0192.0.1.254:500
-000 interface UDP eth1192.1.2.45:4500
-000 interface UDP eth1192.1.2.45:500
+000 interface UDP lo 127.0.0.1:4500
+000 interface UDP lo 127.0.0.1:500
+000 interface UDP eth0 192.0.1.254:4500
+000 interface UDP eth0 192.0.1.254:500
+000 interface UDP eth1 192.1.2.45:4500
+000 interface UDP eth1 192.1.2.45:500
 000  
 000 fips mode=disabled;
 000 SElinux=XXXXX

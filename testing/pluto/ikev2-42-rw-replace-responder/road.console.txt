@@ -40,10 +40,10 @@ road #
  ipsec status
 000 using kernel interface: netkey
 000  
-000 interface UDP lo127.0.0.1:4500
-000 interface UDP lo127.0.0.1:500
-000 interface UDP eth0192.1.3.209:4500
-000 interface UDP eth0192.1.3.209:500
+000 interface UDP lo 127.0.0.1:4500
+000 interface UDP lo 127.0.0.1:500
+000 interface UDP eth0 192.1.3.209:4500
+000 interface UDP eth0 192.1.3.209:500
 000  
 000 fips mode=disabled;
 000 SElinux=XXXXX
@@ -195,10 +195,10 @@ road #
  ipsec status
 000 using kernel interface: netkey
 000  
-000 interface UDP lo127.0.0.1:4500
-000 interface UDP lo127.0.0.1:500
-000 interface UDP eth0192.1.3.209:4500
-000 interface UDP eth0192.1.3.209:500
+000 interface UDP lo 127.0.0.1:4500
+000 interface UDP lo 127.0.0.1:500
+000 interface UDP eth0 192.1.3.209:4500
+000 interface UDP eth0 192.1.3.209:500
 000  
 000 fips mode=disabled;
 000 SElinux=XXXXX
