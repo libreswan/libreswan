@@ -7,7 +7,7 @@ west #
 west #
  # see description.txt
 west #
- ! ipsec auto --add westnet-eastnet-ikev2
+ ipsec auto --add westnet-eastnet-ikev2
 003 failed to find certificate ckaid '<<CKAID#1>>' in the NSS database
 036 Failed to add connection "westnet-eastnet-ikev2" with invalid "right" certificate
 west #
@@ -17,5 +17,6 @@ west #
  ipsec auto --add westnet-eastnet-ikev2-ckaid
 002 added connection description "westnet-eastnet-ikev2-ckaid"
 west #
- 
+ echo done
+done
 
