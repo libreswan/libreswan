@@ -187,7 +187,6 @@ kvmplutotest	ikev2-67-parallel-sa			wip
 kvmplutotest	ikev2-67-esp-null-iperf			wip
 kvmplutotest	ikev2-70-src-address-selection		wip
 
-kvmplutotest	ikev2-ikeport-01-rw-nat-global		good
 kvmplutotest	ikev2-ikeport-02-initiator		good
 kvmplutotest	ikev2-ikeport-03-responder		good
 kvmplutotest	ikev2-ikeport-04-rw-nat-initiator	good
