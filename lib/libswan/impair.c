@@ -24,17 +24,21 @@
 #include "impair.h"
 #include "lswlog.h"
 
-static const struct keyword send_impairment_value[] = {
-#define S(E, H) [SEND_##E] = { .name = "SEND_" #E, .sname = #E, .value = SEND_##E, .details = H, }
-	S(NORMAL, "do not modify content"),
-	S(OMIT, "do not send content"),
-	S(EMPTY, "send zero length content"),
-	S(DUPLICATE, "duplicate content"),
+static const struct keyword impair_emit_value[] = {
+#define S(E, H) [IMPAIR_EMIT_##E] = {					\
+		.name = "IMPAIR_EMIT_" #E,				\
+		.sname = #E,						\
+		.value = IMPAIR_EMIT_##E,				\
+		.details = H,						\
+	}
+	S(OMIT, "do not emit content"),
+	S(EMPTY, "emit zero length content"),
+	S(DUPLICATE, "emit content twice"),
 #undef S
 };
 
-static const struct keywords send_impairment_keywords =
-	DIRECT_KEYWORDS("send impaired content", send_impairment_value);
+static const struct keywords impair_emit_keywords =
+	DIRECT_KEYWORDS("send impaired content", impair_emit_value);
 
 static const struct keyword exchange_impairment_value[] = {
 #define S(E, H) [E##_EXCHANGE] = { .name = "SEND_" #E, .sname = #E, .value = E##_EXCHANGE, .details = H, }
@@ -81,7 +85,8 @@ struct impairment impairments[] = {
 	V("bad-ikev2-auth-xchg", bad_ike_auth_xchg, "causes pluto to send IKE_AUTH replies with wrong exchange type"),
 	V("bust-mi2", bust_mi2, "make MI2 really large"),
 	V("bust-mr2", bust_mr2, "make MR2 really large"),
-	V("child-key-length-attribute", child_key_length_attribute, "corrupt the outgoing CHILD proposal's key length attribute", .how_keynum = &send_impairment_keywords, .unsigned_help = "use <unsigned> as the key length"),
+	V("child-key-length-attribute", child_key_length_attribute, "corrupt the outgoing CHILD proposal's key length attribute",
+	  .how_keynum = &impair_emit_keywords, .unsigned_help = "emit <unsigned> as the key length"),
 	V("corrupt-encrypted", corrupt_encrypted, "corrupts the encrypted packet so that the decryption fails"),
 	V("delete-on-retransmit", delete_on_retransmit, "causes pluto to fail on the first retransmit"),
 	V("drop-i2", drop_i2, "drop second initiator packet"),
@@ -91,7 +96,8 @@ struct impairment impairments[] = {
 	V("ignore-hash-notify", ignore_hash_notify_request, "causes pluto to ignore incoming hash notify from IKE_SA_INIT Request"),
 	V("ignore-hash-notify-resp", ignore_hash_notify_response, "causes pluto to ignore incoming hash notify from IKE_SA_INIT Response"),
 	V("ike-initiator-spi", ike_initiator_spi, "corrupt the IKE initiator SPI", .unsigned_help = "set SPI to <unsigned>"),
-	V("ike-key-length-attribute", ike_key_length_attribute, "corrupt the outgoing IKE proposal's key length attribute", .how_keynum = &send_impairment_keywords, .unsigned_help = "use <unsigned> as the key length"),
+	V("ike-key-length-attribute", ike_key_length_attribute, "corrupt the outgoing IKE proposal's key length attribute",
+	  .how_keynum = &impair_emit_keywords, .unsigned_help = "emit <unsigned> as the key length"),
 	V("ike-responder-spi", ike_responder_spi, "corrupt the IKE responder SPI", .unsigned_help = "set SPI to <unsigned>"),
 	V("ikev1-del-with-notify", ikev1_del_with_notify, "causes pluto to send IKE Delete with additional bogus Notify payload"),
 
@@ -102,7 +108,8 @@ struct impairment impairments[] = {
 	V("ikev2-add-child-transform", ikev2_add_child_transform, "add an extra (possibly bogus) transform to the first CHILD proposal", .unsigned_help = "transform type+id encoded as TYPE<<16|ID"),
 
 	V("jacob-two-two", jacob_two_two, "cause pluto to send all messages twice."),
-	V("ke-payload", ke_payload, "corrupt the outgoing KE payload", .unsigned_help = "use <unsigned> to byte-fill the KE payload", .how_keynum = &send_impairment_keywords),
+	V("ke-payload", ke_payload, "corrupt the outgoing KE payload",
+	  .how_keynum = &impair_emit_keywords, .unsigned_help = "emit the KE payload filled with <unsigned> bytes"),
 	V("log-rate-limit", log_rate_limit, "set the per-hour(?) cap on rate-limited log messages"),
 	V("major-version-bump", major_version_bump, "cause pluto to send an IKE major version that's higher then we support."),
 	V("minor-version-bump", minor_version_bump, "cause pluto to send an IKE minor version that's higher then we support."),
@@ -132,9 +139,13 @@ struct impairment impairments[] = {
 	V("suppress-retransmits", suppress_retransmits, "causes pluto to never send retransmits (wait the full timeout)"),
 	V("timeout-on-retransmit", timeout_on_retransmit, "causes pluto to 'retry' (switch protocol) on the first retransmit"),
 	V("unknown-payload-critical", unknown_payload_critical, "mark the unknown payload as critical"),
+
 	V("v1-hash-check", v1_hash_check, "disable check of incoming IKEv1 hash payload"),
-	V("v1-hash-exchange", v1_hash_exchange, "the outgoing exchange that should contain the corrupted HASH payload", .how_keynum = &exchange_impairment_keywords),
-	V("v1-hash-payload", v1_hash_payload, "corrupt the outgoing HASH payload", .how_keynum = &send_impairment_keywords, .unsigned_help = "fill the hash payload with <unsigned> bytes"),
+	V("v1-hash-exchange", v1_hash_exchange, "corrupt the HASH payload in the outgoing exchange",
+	  .how_keynum = &exchange_impairment_keywords),
+	V("v1-hash-payload", v1_hash_payload, "corrupt the emitted HASH payload",
+	  .how_keynum = &impair_emit_keywords, .unsigned_help = "emit the hash payload filled with <unsigned> bytes"),
+
 	V("tcp-use-blocking-write", tcp_use_blocking_write, "use a blocking write when sending TCP encapsulated IKE messages"),
 	V("tcp-skip-setsockopt-espintcp", tcp_skip_setsockopt_espintcp, "skip the required setsockopt(\"espintcp\") call"),
 

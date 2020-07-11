@@ -1254,12 +1254,12 @@ static bool emit_transform_attributes(struct pbs_out *transform_pbs,
 				      const struct ikev2_transform *transform,
 				      struct logger *logger)
 {
-	enum send_impairment impair_key_length_attribute =
+	enum impair_emit impair_key_length_attribute =
 		(protoid == IKEv2_SEC_PROTO_IKE
 		 ? impair.ike_key_length_attribute
 		 : impair.child_key_length_attribute);
 	if (transform_type != IKEv2_TRANS_TYPE_ENCR ||
-	    impair_key_length_attribute == SEND_NORMAL) {
+	    impair_key_length_attribute == IMPAIR_EMIT_NO) {
 		/* XXX: should be >= 0; so that '0' can be sent? */
 		/* XXX: screw key-lengths for other types? */
 		if (transform->attr_keylen > 0) {
@@ -1270,19 +1270,19 @@ static bool emit_transform_attributes(struct pbs_out *transform_pbs,
 		}
 	} else  {
 		switch (impair_key_length_attribute) {
-		case SEND_NORMAL:
+		case IMPAIR_EMIT_NO:
 			PASSERT_FAIL("%s", "should have been handled");
 			break;
-		case SEND_EMPTY:
+		case IMPAIR_EMIT_EMPTY:
 			log_message(RC_LOG, logger, "IMPAIR: emitting variable-size key-length attribute with no key");
 			if (!v2_out_attr_variable(IKEv2_KEY_LENGTH, EMPTY_CHUNK, transform_pbs)) {
 				return false;
 			}
 			break;
-		case SEND_OMIT:
+		case IMPAIR_EMIT_OMIT:
 			log_message(RC_LOG, logger, "IMPAIR: omitting fixed-size key-length attribute");
 			break;
-		case SEND_DUPLICATE:
+		case IMPAIR_EMIT_DUPLICATE:
 			log_message(RC_LOG, logger, "IMPAIR: duplicating key-length attribute");
 			for (unsigned dup = 0; dup < 2; dup++) {
 				/* regardless of value */
@@ -1292,10 +1292,10 @@ static bool emit_transform_attributes(struct pbs_out *transform_pbs,
 				}
 			}
 			break;
-		case SEND_ROOF:
+		case IMPAIR_EMIT_ROOF:
 		default:
 		{
-			uint16_t keylen = impair_key_length_attribute - SEND_ROOF; /* remove bias */
+			uint16_t keylen = impair_key_length_attribute - IMPAIR_EMIT_ROOF; /* remove bias */
 			log_message(RC_LOG, logger, "IMPAIR: emitting fixed-length key-length attribute with %u key",
 				      keylen);
 			if (!v2_out_attr_fixed(IKEv2_KEY_LENGTH, keylen, transform_pbs, logger)) {

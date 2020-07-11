@@ -28,12 +28,12 @@ struct logger;
  * Meddle with the contents of a payload.
  */
 
-enum send_impairment {
-	SEND_NORMAL = 0,
-	SEND_OMIT,
-	SEND_EMPTY,
-	SEND_DUPLICATE,
-	SEND_ROOF, /* >= ROOF -> <number> */
+enum impair_emit {
+	IMPAIR_EMIT_NO = 0,
+	IMPAIR_EMIT_OMIT,
+	IMPAIR_EMIT_EMPTY,
+	IMPAIR_EMIT_DUPLICATE,
+	IMPAIR_EMIT_ROOF, /* >= ROOF -> <number> */
 };
 
 /*
@@ -71,13 +71,13 @@ struct impair {
 	 * transform to screw with.
 	 */
 
-	enum send_impairment ke_payload;
-	enum send_impairment ike_key_length_attribute;
-	enum send_impairment child_key_length_attribute;
+	enum impair_emit ke_payload;
+	enum impair_emit ike_key_length_attribute;
+	enum impair_emit child_key_length_attribute;
 
 	unsigned log_rate_limit;
 
-	enum send_impairment v1_hash_payload;
+	enum impair_emit v1_hash_payload;
 	enum exchange_impairment v1_hash_exchange;
 	bool v1_hash_check;
 

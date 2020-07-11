@@ -57,7 +57,7 @@ struct v1_hash_fixup {
 	const uint8_t *body;
 	msgid_t msgid;
 	const char *what;
-	enum send_impairment impair;
+	enum impair_emit impair;
 	enum v1_hash_type hash_type;
 };
 

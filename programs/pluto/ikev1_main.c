@@ -810,21 +810,21 @@ stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 bool ikev1_justship_KE(struct logger *logger, chunk_t *g, pb_stream *outs)
 {
 	switch (impair.ke_payload) {
-	case SEND_NORMAL:
+	case IMPAIR_EMIT_NO:
 		return ikev1_out_generic_chunk(&isakmp_keyex_desc, outs, *g,
 					       "keyex value");
-	case SEND_OMIT:
+	case IMPAIR_EMIT_OMIT:
 		log_message(RC_LOG, logger, "IMPAIR: sending no KE (g^x) payload");
 		return true;
-	case SEND_EMPTY:
+	case IMPAIR_EMIT_EMPTY:
 		log_message(RC_LOG, logger, "IMPAIR: sending empty KE (g^x)");
 		return ikev1_out_generic_chunk(&isakmp_keyex_desc, outs,
 					       EMPTY_CHUNK, "empty KE");
-	case SEND_ROOF:
+	case IMPAIR_EMIT_ROOF:
 	default:
 	{
 		pb_stream z;
-		uint8_t byte = impair.ke_payload - SEND_ROOF;
+		uint8_t byte = impair.ke_payload - IMPAIR_EMIT_ROOF;
 		log_message(RC_LOG, logger, "IMPAIR: sending bogus KE (g^x) == %u value to break DH calculations", byte);
 		/* Only used to test sending/receiving bogus g^x */
 		return ikev1_out_generic(&isakmp_keyex_desc, outs, &z) &&

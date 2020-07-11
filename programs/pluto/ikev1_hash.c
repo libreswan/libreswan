@@ -32,8 +32,8 @@ bool emit_v1_HASH(enum v1_hash_type hash_type, const char *what,
 	fixup->what = what;
 	fixup->hash_type = hash_type;
 	fixup->impair = (impair.v1_hash_exchange == exchange
-			 ? impair.v1_hash_payload : SEND_NORMAL);
-	if (fixup->impair == SEND_OMIT) {
+			 ? impair.v1_hash_payload : IMPAIR_EMIT_NO);
+	if (fixup->impair == IMPAIR_EMIT_OMIT) {
 		libreswan_log("IMPAIR: omitting HASH payload for %s", what);
 		return true;
 	}
@@ -41,7 +41,7 @@ bool emit_v1_HASH(enum v1_hash_type hash_type, const char *what,
 	if (!ikev1_out_generic(&isakmp_hash_desc, rbody, &hash_pbs)) {
 		return false;
 	}
-	if (fixup->impair == SEND_EMPTY) {
+	if (fixup->impair == IMPAIR_EMIT_EMPTY) {
 		libreswan_log("IMPAIR: sending HASH payload with no data for %s", what);
 	} else {
 		/* reserve space for HASH data */
@@ -58,14 +58,14 @@ bool emit_v1_HASH(enum v1_hash_type hash_type, const char *what,
 void fixup_v1_HASH(struct state *st, const struct v1_hash_fixup *fixup,
 		   msgid_t msgid, const uint8_t *roof)
 {
-	if (fixup->impair >= SEND_ROOF) {
+	if (fixup->impair >= IMPAIR_EMIT_ROOF) {
 		libreswan_log("IMPAIR: setting HASH payload bytes to %02x",
-			      fixup->impair - SEND_ROOF);
+			      fixup->impair - IMPAIR_EMIT_ROOF);
 		/* chunk_fill()? */
-		memset(fixup->hash_data.ptr, fixup->impair - SEND_ROOF,
+		memset(fixup->hash_data.ptr, fixup->impair - IMPAIR_EMIT_ROOF,
 		       fixup->hash_data.len);
 		return;
-	} else if (fixup->impair != SEND_NORMAL) {
+	} else if (fixup->impair != IMPAIR_EMIT_NO) {
 		/* already logged above? */
 		return;
 	}
