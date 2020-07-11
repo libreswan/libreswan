@@ -811,14 +811,6 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	if (!ikev2_out_nat_v2n(&rbody, &ike->sa, &zero_ike_spi/*responder unknown*/))
 		return false;
 
-	/* something the other end won't like */
-
-	if (impair.add_unknown_payload_to_sa_init) {
-		if (!emit_v2UNKNOWN("IKE_SA_INIT request", &rbody)) {
-			return false;
-		}
-	}
-
 	/* From here on, only payloads left are Vendor IDs */
 	if (c->send_vendorid) {
 		if (!emit_v2V(pluto_vendorid, &rbody))
@@ -1167,12 +1159,6 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	}
 
 	/* something the other end won't like */
-
-	if (impair.add_unknown_payload_to_sa_init) {
-		if (!emit_v2UNKNOWN("IKE_SA_INIT reply", &rbody)) {
-			return STF_INTERNAL_ERROR;
-		}
-	}
 
 	/* send CERTREQ  */
 	if (send_certreq) {
@@ -2097,12 +2083,6 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (impair.add_unknown_payload_to_auth) {
-		if (!emit_v2UNKNOWN("IKE_AUTH request", &rbody)) {
-			return STF_INTERNAL_ERROR;
-		}
-	}
-
 	/* insert an Encryption payload header (SK) */
 
 	v2SK_payload_t sk = open_v2SK_payload(child->sa.st_logger, &rbody, ike_sa(pst, HERE));
@@ -2135,8 +2115,10 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 		close_output_pbs(&i_id_pbs);
 	}
 
-	if (impair.add_unknown_payload_to_auth_sk) {
-		if (!emit_v2UNKNOWN("IKE_AUTH's SK request", &sk.pbs)) {
+	if (impair.add_unknown_v2_payload_to_sk == ISAKMP_v2_IKE_AUTH) {
+		if (!emit_v2UNKNOWN("SK request",
+				    impair.add_unknown_v2_payload_to_sk,
+				    &sk.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -3086,12 +3068,6 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 					  md /* response */,
 					  ISAKMP_v2_IKE_AUTH);
 
-	if (impair.add_unknown_payload_to_auth) {
-		if (!emit_v2UNKNOWN("IKE_AUTH reply", &rbody)) {
-			return STF_INTERNAL_ERROR;
-		}
-	}
-
 	/* decide to send CERT payload before we generate IDr */
 	bool send_cert = ikev2_send_cert_decision(st);
 
@@ -3102,8 +3078,10 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (impair.add_unknown_payload_to_auth_sk) {
-		if (!emit_v2UNKNOWN("IKE_AUTH's SK reply", &sk.pbs)) {
+	if (impair.add_unknown_v2_payload_to_sk == ISAKMP_v2_IKE_AUTH) {
+		if (!emit_v2UNKNOWN("SK reply",
+				    impair.add_unknown_v2_payload_to_sk,
+				    &sk.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}

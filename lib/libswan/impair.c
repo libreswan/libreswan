@@ -82,9 +82,6 @@ struct impairment impairments[] = {
 #define A(WHAT, ACTION, PARAM, HELP, UNSIGNED_HELP, ...) { .what = WHAT, .action = CALL_##ACTION, .param = PARAM, .help = HELP, .unsigned_help = UNSIGNED_HELP, ##__VA_ARGS__, }
 #define V(WHAT, VALUE, HELP, ...) { .what = WHAT, .action = CALL_IMPAIR_UPDATE, .value = &impair.VALUE, .help = HELP, .sizeof_value = sizeof(impair.VALUE), ##__VA_ARGS__, }
 
-	V("add-unknown-payload-to-auth", add_unknown_payload_to_auth, "add a payload with an unknown type to AUTH"),
-	V("add-unknown-payload-to-auth-sk", add_unknown_payload_to_auth_sk, "add a payload with an unknown type to AUTH's SK payload"),
-	V("add-unknown-payload-to-sa-init", add_unknown_payload_to_sa_init, "add a payload with an unknown type to SA_INIT"),
 	V("allow-dns-insecure", allow_dns_insecure, "allow IPSECKEY lookups without DNSSEC protection"),
 	V("allow-null-none", allow_null_none, "cause pluto to allow esp=null-none and ah=none for testing"),
 	V("bad-ikev2-auth-xchg", bad_ike_auth_xchg, "causes pluto to send IKE_AUTH replies with wrong exchange type"),
@@ -158,6 +155,15 @@ struct impairment impairments[] = {
 	A("initiate-v2-rekey", INITIATE_v2_REKEY, 0, "initiate an IKEv2 rekey using the CREATE_CHILD_SA exchange", "SA"),
 
 	A("send-keepalive", SEND_KEEPALIVE, 0, "send a NAT keepalive packet", "SA"),
+
+	V("add-unknown-v2-payload-to", add_unknown_v2_payload_to,
+	  "impair the (unencrypted) part of the exchange",
+	  .how_enum_names = &ikev2_exchange_names),
+	V("add-unknown-v2-payload-to-sk", add_unknown_v2_payload_to_sk,
+	  "impair the encrypted part of the exchange",
+	  .how_enum_names = &ikev2_exchange_names),
+	V("unknown-v2-payload-critical", unknown_v2_payload_critical,
+	  "include the unknown payload in the encrypted SK payload"),
 
 #undef V
 #undef A

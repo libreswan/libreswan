@@ -92,12 +92,17 @@ void record_v2_message(struct ike_sa *ike,
  * Send a payload.
  */
 
-bool emit_v2UNKNOWN(const char *victim, struct pbs_out *outs)
+bool emit_v2UNKNOWN(const char *victim, enum isakmp_xchg_types exchange_type,
+		    struct pbs_out *outs)
 {
-	log_pbs_out(RC_LOG, outs, "IMPAIR: adding an unknown payload of type %d to %s",
-		    ikev2_unknown_payload_desc.pt, victim);
+	log_pbs_out(RC_LOG, outs,
+		    "IMPAIR: adding an unknown%s payload of type %d to %s %s",
+		    impair.unknown_v2_payload_critical ? " critical" : "",
+		    ikev2_unknown_payload_desc.pt,
+		    enum_short_name(&ikev2_exchange_names, exchange_type),
+		    victim);
 	struct ikev2_generic gen = {
-		.isag_critical = build_ikev2_critical(impair.unknown_payload_critical),
+		.isag_critical = build_ikev2_critical(impair.unknown_v2_payload_critical),
 	};
 	pb_stream pbs = open_output_struct_pbs(outs, &gen, &ikev2_unknown_payload_desc);
 	if (!pbs_ok(&pbs)) {

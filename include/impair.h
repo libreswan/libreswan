@@ -118,10 +118,7 @@ struct impair {
 	bool replay_encrypted;
 	bool corrupt_encrypted;
 	bool proposal_parser;
-	bool add_unknown_payload_to_sa_init;
-	bool add_unknown_payload_to_auth;
-	bool add_unknown_payload_to_auth_sk;
-	bool unknown_payload_critical;
+
 	bool allow_dns_insecure;
 	bool send_pkcs7_thingie;
 	bool send_nonzero_reserved;
@@ -135,6 +132,10 @@ struct impair {
 
 	bool tcp_use_blocking_write;
 	bool tcp_skip_setsockopt_espintcp;
+
+	unsigned add_unknown_v2_payload_to;
+	unsigned add_unknown_v2_payload_to_sk;
+	bool unknown_v2_payload_critical;
 
 	/*
 	 * add more here
