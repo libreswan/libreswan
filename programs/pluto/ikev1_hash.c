@@ -24,7 +24,7 @@
 #include "impair.h"
 
 bool emit_v1_HASH(enum v1_hash_type hash_type, const char *what,
-		  enum exchange_impairment exchange,
+		  enum impair_v1_exchange exchange,
 		  struct state *st, struct v1_hash_fixup *fixup,
 		  pb_stream *rbody)
 {

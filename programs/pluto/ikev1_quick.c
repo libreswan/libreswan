@@ -733,7 +733,8 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 
 	/* HASH(1) -- create and note space to be filled later */
 	struct v1_hash_fixup hash_fixup;
-	if (!emit_v1_HASH(V1_HASH_1, "outI1", QUICK_EXCHANGE,
+	if (!emit_v1_HASH(V1_HASH_1, "outI1",
+			  IMPAIR_v1_QUICK_EXCHANGE,
 			  st, &hash_fixup, &rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -1363,7 +1364,8 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 
 	struct v1_hash_fixup hash_fixup;
 	if (!emit_v1_HASH(V1_HASH_2, "quick inR1 outI2",
-			  QUICK_EXCHANGE, st, &hash_fixup, &rbody)) {
+			  IMPAIR_v1_QUICK_EXCHANGE,
+			  st, &hash_fixup, &rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -1695,7 +1697,7 @@ stf_status quick_inR1_outI2_tail(struct msg_digest *md,
 		}
 #else
 		if (!emit_v1_HASH(V1_HASH_3, "quick_inR1_outI2",
-				  QUICK_EXCHANGE, st, &hash_fixup, &rbody)) {
+				  IMPAIR_v1_QUICK_EXCHANGE, st, &hash_fixup, &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
 #endif

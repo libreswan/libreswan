@@ -40,9 +40,13 @@ static const struct keyword impair_emit_value[] = {
 static const struct keywords impair_emit_keywords =
 	DIRECT_KEYWORDS("send impaired content", impair_emit_value);
 
-static const struct keyword exchange_impairment_value[] = {
-#define S(E, H) [E##_EXCHANGE] = { .name = "SEND_" #E, .sname = #E, .value = E##_EXCHANGE, .details = H, }
-	S(NO, "do not modify exchanges"),
+static const struct keyword impair_v1_exchange_value[] = {
+#define S(E, H) [IMPAIR_v1_##E##_EXCHANGE] = {		\
+		.name = "IMPAIR_v1_" #E "_EXCHANGE",	\
+		.sname = #E,				\
+		.value = IMPAIR_v1_##E##_EXCHANGE,	\
+		.details = H,				\
+	}
 	S(QUICK, "modify IKEv1 QUICK exchanges"),
 	S(XAUTH, "modify IKEv1 XAUTH exchanges"),
 	S(NOTIFICATION, "modify notification (informational) exchanges"),
@@ -50,8 +54,8 @@ static const struct keyword exchange_impairment_value[] = {
 #undef S
 };
 
-static const struct keywords exchange_impairment_keywords =
-	DIRECT_KEYWORDS("impaire exchange content", exchange_impairment_value);
+static const struct keywords impair_v1_exchange_keywords =
+	DIRECT_KEYWORDS("impaire exchange content", impair_v1_exchange_value);
 
 struct impairment {
 	const char *what;
@@ -142,7 +146,7 @@ struct impairment impairments[] = {
 
 	V("v1-hash-check", v1_hash_check, "disable check of incoming IKEv1 hash payload"),
 	V("v1-hash-exchange", v1_hash_exchange, "corrupt the HASH payload in the outgoing exchange",
-	  .how_keynum = &exchange_impairment_keywords),
+	  .how_keynum = &impair_v1_exchange_keywords),
 	V("v1-hash-payload", v1_hash_payload, "corrupt the emitted HASH payload",
 	  .how_keynum = &impair_emit_keywords, .unsigned_help = "emit the hash payload filled with <unsigned> bytes"),
 

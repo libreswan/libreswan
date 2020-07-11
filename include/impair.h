@@ -40,12 +40,12 @@ enum impair_emit {
  * Meddle with a specific exchange.
  */
 
-enum exchange_impairment {
-	NO_EXCHANGE = 0,
-	NOTIFICATION_EXCHANGE,
-	QUICK_EXCHANGE,
-	XAUTH_EXCHANGE,
-	DELETE_EXCHANGE,
+enum impair_v1_exchange {
+	IMPAIR_v1_EXCHANGE_NO = 0,
+	IMPAIR_v1_NOTIFICATION_EXCHANGE,
+	IMPAIR_v1_QUICK_EXCHANGE,
+	IMPAIR_v1_XAUTH_EXCHANGE,
+	IMPAIR_v1_DELETE_EXCHANGE,
 };
 
 /*
@@ -78,7 +78,7 @@ struct impair {
 	unsigned log_rate_limit;
 
 	enum impair_emit v1_hash_payload;
-	enum exchange_impairment v1_hash_exchange;
+	enum impair_v1_exchange v1_hash_exchange;
 	bool v1_hash_check;
 
 	unsigned ike_initiator_spi;

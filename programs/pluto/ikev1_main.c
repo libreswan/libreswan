@@ -1818,7 +1818,7 @@ stf_status send_isakmp_notification(struct state *st,
 
 	struct v1_hash_fixup hash_fixup;
 	if (!emit_v1_HASH(V1_HASH_1, "notification",
-			  NOTIFICATION_EXCHANGE,
+			  IMPAIR_v1_NOTIFICATION_EXCHANGE,
 			  st, &hash_fixup, &rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -1993,7 +1993,7 @@ static void send_notification(struct logger *logger,
 	struct v1_hash_fixup hash_fixup;
 	if (encst != NULL) {
 		if (!emit_v1_HASH(V1_HASH_1, "send notification",
-				  NOTIFICATION_EXCHANGE,
+				  IMPAIR_v1_NOTIFICATION_EXCHANGE,
 				  encst, &hash_fixup, &r_hdr_pbs)) {
 			/* return STF_INTERNAL_ERROR; */
 			return;
@@ -2192,7 +2192,8 @@ void send_v1_delete(struct state *st)
 
 	/* HASH -- value to be filled later */
 	struct v1_hash_fixup hash_fixup;
-	if (!emit_v1_HASH(V1_HASH_1, "send delete", DELETE_EXCHANGE,
+	if (!emit_v1_HASH(V1_HASH_1, "send delete",
+			  IMPAIR_v1_DELETE_EXCHANGE,
 			  p1st, &hash_fixup, &r_hdr_pbs)) {
 		return /* STF_INTERNAL_ERROR */;
 	}
