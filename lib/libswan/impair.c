@@ -66,7 +66,8 @@ struct impairment {
 	 *
 	 * If NULL, HOW is assumed to be a boolean.
 	 */
-	const struct keywords *how_keynum;
+	const struct keywords *how_keywords;
+	const struct enum_names *how_enum_names;
 	const char *unsigned_help;
 	void *value;
 	/* size_t offsetof_value; */
@@ -90,7 +91,7 @@ struct impairment impairments[] = {
 	V("bust-mi2", bust_mi2, "make MI2 really large"),
 	V("bust-mr2", bust_mr2, "make MR2 really large"),
 	V("child-key-length-attribute", child_key_length_attribute, "corrupt the outgoing CHILD proposal's key length attribute",
-	  .how_keynum = &impair_emit_keywords, .unsigned_help = "emit <unsigned> as the key length"),
+	  .how_keywords = &impair_emit_keywords, .unsigned_help = "emit <unsigned> as the key length"),
 	V("corrupt-encrypted", corrupt_encrypted, "corrupts the encrypted packet so that the decryption fails"),
 	V("delete-on-retransmit", delete_on_retransmit, "causes pluto to fail on the first retransmit"),
 	V("drop-i2", drop_i2, "drop second initiator packet"),
@@ -101,7 +102,7 @@ struct impairment impairments[] = {
 	V("ignore-hash-notify-resp", ignore_hash_notify_response, "causes pluto to ignore incoming hash notify from IKE_SA_INIT Response"),
 	V("ike-initiator-spi", ike_initiator_spi, "corrupt the IKE initiator SPI", .unsigned_help = "set SPI to <unsigned>"),
 	V("ike-key-length-attribute", ike_key_length_attribute, "corrupt the outgoing IKE proposal's key length attribute",
-	  .how_keynum = &impair_emit_keywords, .unsigned_help = "emit <unsigned> as the key length"),
+	  .how_keywords = &impair_emit_keywords, .unsigned_help = "emit <unsigned> as the key length"),
 	V("ike-responder-spi", ike_responder_spi, "corrupt the IKE responder SPI", .unsigned_help = "set SPI to <unsigned>"),
 	V("ikev1-del-with-notify", ikev1_del_with_notify, "causes pluto to send IKE Delete with additional bogus Notify payload"),
 
@@ -113,7 +114,7 @@ struct impairment impairments[] = {
 
 	V("jacob-two-two", jacob_two_two, "cause pluto to send all messages twice."),
 	V("ke-payload", ke_payload, "corrupt the outgoing KE payload",
-	  .how_keynum = &impair_emit_keywords, .unsigned_help = "emit the KE payload filled with <unsigned> bytes"),
+	  .how_keywords = &impair_emit_keywords, .unsigned_help = "emit the KE payload filled with <unsigned> bytes"),
 	V("log-rate-limit", log_rate_limit, "set the per-hour(?) cap on rate-limited log messages"),
 	V("major-version-bump", major_version_bump, "cause pluto to send an IKE major version that's higher then we support."),
 	V("minor-version-bump", minor_version_bump, "cause pluto to send an IKE minor version that's higher then we support."),
@@ -142,13 +143,12 @@ struct impairment impairments[] = {
 	V("send-nonzero-reserved-id", send_nonzero_reserved_id, "send non-zero reserved fields in IKEv2 ID payload that is part of the AUTH hash calculation"),
 	V("suppress-retransmits", suppress_retransmits, "causes pluto to never send retransmits (wait the full timeout)"),
 	V("timeout-on-retransmit", timeout_on_retransmit, "causes pluto to 'retry' (switch protocol) on the first retransmit"),
-	V("unknown-payload-critical", unknown_payload_critical, "mark the unknown payload as critical"),
 
 	V("v1-hash-check", v1_hash_check, "disable check of incoming IKEv1 hash payload"),
 	V("v1-hash-exchange", v1_hash_exchange, "corrupt the HASH payload in the outgoing exchange",
-	  .how_keynum = &impair_v1_exchange_keywords),
+	  .how_keywords = &impair_v1_exchange_keywords),
 	V("v1-hash-payload", v1_hash_payload, "corrupt the emitted HASH payload",
-	  .how_keynum = &impair_emit_keywords, .unsigned_help = "emit the hash payload filled with <unsigned> bytes"),
+	  .how_keywords = &impair_emit_keywords, .unsigned_help = "emit the hash payload filled with <unsigned> bytes"),
 
 	V("tcp-use-blocking-write", tcp_use_blocking_write, "use a blocking write when sending TCP encapsulated IKE messages"),
 	V("tcp-skip-setsockopt-espintcp", tcp_skip_setsockopt_espintcp, "skip the required setsockopt(\"espintcp\") call"),
@@ -167,15 +167,29 @@ struct impairment impairments[] = {
 static void help(const char *prefix, const struct impairment *cr, FILE *file)
 {
 	fprintf(file, "%s%s: %s\n", prefix, cr->what, cr->help);
-	if (cr->how_keynum != NULL) {
-		const struct keywords *kw = cr->how_keynum;
+	if (cr->how_keywords != NULL) {
+		const struct keywords *kw = cr->how_keywords;
 		/* skip 0, always no */
 		for (unsigned ki = 1; ki < kw->nr_values; ki++) {
 			const struct keyword *kv = &kw->values[ki];
 			if (kv->details != NULL) {
-				fprintf(file, "%s  %s: %s\n",
+				fprintf(file, "%s    %s: %s\n",
 					prefix, kv->sname, kv->details);
 			}
+		}
+	}
+	if (cr->how_enum_names != NULL) {
+		bool first = true;
+		for (long e = next_enum(cr->how_enum_names, -1); e >= 0;
+		     e = next_enum(cr->how_enum_names, e)) {
+			if (first) {
+				fprintf(file, "%s    ", prefix);
+				first = false;
+			} else {
+				fprintf(file, ", ");
+			}
+			const char *sname = enum_short_name(cr->how_enum_names, e);
+			fprintf(file, "%s", sname);
 		}
 	}
 	if (cr->unsigned_help != NULL) {
@@ -199,7 +213,7 @@ static void help_impair(const char *prefix, FILE *file)
  */
 static unsigned parse_biased_unsigned(shunk_t string, const struct impairment *cr)
 {
-	unsigned bias = cr->how_keynum != NULL ? cr->how_keynum->nr_values : 1;
+	unsigned bias = cr->how_keywords != NULL ? cr->how_keywords->nr_values : 1;
 	uintmax_t u;
 	err_t err = shunk_to_uint(string, NULL, 0/*base*/, &u, UINTMAX_MAX - bias/*ceiling*/);
 	if (err == NULL) {
@@ -296,13 +310,22 @@ enum impair_status parse_impair(const char *optarg,
 	/*
 	 * For WHAT:HOW, lookup the keyword HOW.
 	 */
-	if (cr->how_keynum != NULL) {
+	if (cr->how_keywords != NULL) {
 		/* try the keyword. */
-		const struct keyword *kw = keyword_by_sname(cr->how_keynum, how);
+		const struct keyword *kw = keyword_by_sname(cr->how_keywords, how);
 		if (kw != NULL) {
 			*whack_impair = (struct whack_impair) {
 				.what = ci,
 				.how = kw->value,
+			};
+			return IMPAIR_OK;
+		}
+	} else if (cr->how_enum_names != NULL) {
+		long e = enum_match(cr->how_enum_names, how);
+		if (e >= 0) {
+			*whack_impair = (struct whack_impair) {
+				.what = ci,
+				.how = e,
 			};
 			return IMPAIR_OK;
 		}
@@ -372,12 +395,19 @@ static void jam_impairment(jambuf_t *buf,
 {
 	jam(buf, "%s:", cr->what);
 	unsigned value = value_of(cr);
-	if (cr->how_keynum != NULL) {
-		const struct keyword *kw = keyword_by_value(cr->how_keynum, value);
+	if (cr->how_keywords != NULL) {
+		const struct keyword *kw = keyword_by_value(cr->how_keywords, value);
 		if (kw != NULL) {
 			jam_string(buf, kw->sname);
-		} else if (value >= cr->how_keynum->nr_values) {
-			jam(buf, "%zu", value - cr->how_keynum->nr_values);
+		} else if (value >= cr->how_keywords->nr_values) {
+			jam(buf, "%zu", value - cr->how_keywords->nr_values);
+		} else {
+			jam(buf, "?%u?", value);
+		}
+	} else if (cr->how_enum_names != NULL) {
+		const char *sname = enum_short_name(cr->how_enum_names, value);
+		if (sname != NULL) {
+			jam_string(buf, sname);
 		} else {
 			jam(buf, "?%u?", value);
 		}
