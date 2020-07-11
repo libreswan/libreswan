@@ -158,6 +158,18 @@ struct msg_digest {
 	const struct pbs_in *pbs[PBS_v2_ROOF];
 
 	/*
+	 * The first IKEv2 error notification found in the payload
+	 * (error notifications are <16384), else v2N_NOTHING_WRONG
+	 * i.e., 0.
+	 *
+	 * Error notifications don't necessarially mean that things
+	 * have totally failed.  For instance, an IKE_AUTH response
+	 * can contain an error notification indicating that the CHILD
+	 * SA failed (but the IKE SA succeeded).
+	 */
+	v2_notification_t v2N_error;
+
+	/*
 	 * The packet PBS contains a message PBS and the message PBS
 	 * contains payloads one of which (for IKEv2) is the SK which
 	 * also contains payloads.

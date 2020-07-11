@@ -66,71 +66,56 @@ enum v2_pbs v2_notification_to_v2_pbs(v2_notification_t n)
 #undef C
 }
 
-/*
- * XXX:
- *
- * decode_v2N_ike_auth_child() is called late during an IKE_AUTH and
- * CREATE_CHILD_SA exchange.  If a payload containing an error
- * notification reaches the call then it is always rejected.
- * Presumably this a catch-all for unrecognized or unknown error
- * notifications in a response (requests don't contain errors?).
- *
- * decode_v2N_payload() is called much earlier - before the point
- * where an error definitively indicates failure.  For instance, an
- * IKE_AUTH response containing an error can indicate that the IKE SA
- * succeeded (and only that the CHILD SA failed).
- */
-
-bool decode_v2N_ike_auth_child(struct msg_digest *md)
-{
-	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
-	     ntfy != NULL; ntfy = ntfy->next) {
-		/*
-		 * https://tools.ietf.org/html/rfc7296#section-3.10.1
-		 *
-		 * Types in the range 0 - 16383 are intended for
-		 * reporting errors.  An implementation receiving a
-		 * Notify payload with one of these types that it does
-		 * not recognize in a response MUST assume that the
-		 * corresponding request has failed entirely.
-		 * Unrecognized error types in a request and status
-		 * types in a request or response MUST be ignored, and
-		 * they should be logged.
-		 *
-		 * No known error notify would allow us to continue,
-		 * so we can fail whether the error notify is known or
-		 * unknown.
-		 */
-		if (ntfy->payload.v2n.isan_type < v2N_INITIAL_CONTACT) {
-			loglog(RC_LOG_SERIOUS, "received ERROR NOTIFY (%d): %s ",
-			       ntfy->payload.v2n.isan_type,
-			       enum_name(&ikev2_notify_names, ntfy->payload.v2n.isan_type));
-			return false;
-		}
-	}
-	return true;
-}
-
 void decode_v2N_payload(struct logger *unused_logger UNUSED, struct msg_digest *md,
 			const struct payload_digest *notify)
 {
 	v2_notification_t n = notify->payload.v2n.isan_type;
-	const char *name = enum_name(&ikev2_notify_names, n);
+	const char *type;
+	if (n < 16384) {
+		type = "error";
+		/*
+		 * https://tools.ietf.org/html/rfc7296#section-3.10.1
+		 *
+		 *   Types in the range 0 - 16383 are intended for
+		 *   reporting errors.  An implementation receiving a
+		 *   Notify payload with one of these types that it
+		 *   does not recognize in a response MUST assume that
+		 *   the corresponding request has failed entirely.
+		 *   Unrecognized error types in a request and status
+		 *   types in a request or response MUST be ignored,
+		 *   and they should be logged.
+		 *
+		 * Record the first error; and complain when there are
+		 * more.
+		 */
+		if (md->v2N_error == v2N_NOTHING_WRONG) {
+			md->v2N_error = n;
+		} else {
+			/* XXX: is this allowed? */
+			dbg("message contains multiple error notifications: %d %d",
+			    md->v2N_error, n);
+		}
+	} else {
+		type = "status";
+	}
+
+	const char *name = enum_name(&ikev2_notify_names, n); /* might be NULL */
 	if (name == NULL) {
-		dbg("ignoring unrecognized %d notify", n);
+		dbg("%s notification %d is unknown", type, n);
 		return;
 	}
 	enum v2_pbs v2_pbs = v2_notification_to_v2_pbs(n);
 	if (v2_pbs == PBS_v2_INVALID) {
-		dbg("ignoring unsupported %s notify", name);
+		/* if it was supported there'd be space to save it */
+		dbg("%s notification %s is not supported", type, name);
 		return;
 	}
 	if (md->pbs[v2_pbs] != NULL) {
-		dbg("ignoring duplicate %s notify", name);
+		dbg("%s duplicate notification %s ignored", type, name);
 		return;
 	}
 	if (DBGP(DBG_TMI)) {
-		DBG_log("adding %s notify", name);
+		DBG_log("%s notification %s saved", type, name);
 	}
 	md->pbs[v2_pbs] = &notify->pbs;
 }

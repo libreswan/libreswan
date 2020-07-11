@@ -3436,8 +3436,26 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 	if (md->hdr.isa_xchg != ISAKMP_v2_CREATE_CHILD_SA)
 		RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(ike, child, md, TRUE));
 
-	/* examine notification payloads for Child SA properties */
-	if (!decode_v2N_ike_auth_child(md)) {
+	/*
+	 * examine notification payloads for Child SA errors
+	 * (presumably any error reaching this point is for the
+	 * child?).
+	 *
+	 * https://tools.ietf.org/html/rfc7296#section-3.10.1
+	 *
+	 *   Types in the range 0 - 16383 are intended for reporting
+	 *   errors.  An implementation receiving a Notify payload
+	 *   with one of these types that it does not recognize in a
+	 *   response MUST assume that the corresponding request has
+	 *   failed entirely.  Unrecognized error types in a request
+	 *   and status types in a request or response MUST be
+	 *   ignored, and they should be logged.
+	 */
+	if (md->v2N_error != v2N_NOTHING_WRONG) {
+		struct esb_buf esb;
+		log_state(RC_LOG_SERIOUS, &child->sa, "received ERROR NOTIFY (%d): %s ",
+			  md->v2N_error,
+			  enum_showb(&ikev2_notify_names, md->v2N_error, &esb));
 		return STF_FATAL;
 	}
 
