@@ -92,10 +92,10 @@ void record_v2_message(struct ike_sa *ike,
  * Send a payload.
  */
 
-bool emit_v2UNKNOWN(const char *victim, pb_stream *outs)
+bool emit_v2UNKNOWN(const char *victim, struct pbs_out *outs)
 {
-	libreswan_log("IMPAIR: adding an unknown payload of type %d to %s",
-		      ikev2_unknown_payload_desc.pt, victim);
+	log_pbs_out(RC_LOG, outs, "IMPAIR: adding an unknown payload of type %d to %s",
+		    ikev2_unknown_payload_desc.pt, victim);
 	struct ikev2_generic gen = {
 		.isag_critical = build_ikev2_critical(impair.unknown_payload_critical),
 	};
@@ -287,12 +287,12 @@ bool emit_v2N_signature_hash_algorithms(lset_t sighash_policy,
 
 struct response {
 	/* CONTAINS POINTERS; pass by ref */
-	pb_stream message;
-	pb_stream body;
+	struct pbs_out message;
+	struct pbs_out body;
 	enum payload_security security;
 	struct logger *logger;
 	v2SK_payload_t sk;
-	pb_stream *pbs; /* where to put message */
+	struct pbs_out *pbs; /* where to put message (POINTER!) */
 };
 
 static bool open_response(struct response *response,
@@ -303,7 +303,7 @@ static bool open_response(struct response *response,
 			  enum payload_security security)
 {
 	*response = (struct response) {
-		.message = open_out_pbs("message response", buf, sizeof_buf),
+		.message = open_pbs_out("message response", buf, sizeof_buf, logger),
 		.logger = logger,
 		.security = security,
 	};
@@ -487,6 +487,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 			       v2_notification_t ntype,
 			       const chunk_t *ndata)
 {
+	struct logger logger = MESSAGE_LOGGER(md);
 	passert(md != NULL); /* always a response */
 
 	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
@@ -501,11 +502,11 @@ void send_v2N_response_from_md(struct msg_digest *md,
 		    exchange_type);
 	}
 
-	log_md(RC_LOG, md,
-	       "responding to %s (%d) message (Message ID %u) with unencrypted notification %s",
-	       exchange_name, exchange_type,
-	       md->hdr.isa_msgid,
-	       notify_name);
+	log_message(RC_LOG, &logger,
+		    "responding to %s (%d) message (Message ID %u) with unencrypted notification %s",
+		    exchange_name, exchange_type,
+		    md->hdr.isa_msgid,
+		    notify_name);
 
 	/*
 	 * Normally an unencrypted response is only valid for
@@ -523,11 +524,11 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	}
 
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
-	pb_stream reply = open_out_pbs("unencrypted notification",
-				       buf, sizeof(buf));
-	pb_stream rbody = open_v2_message(&reply, NULL/*no state*/,
-					  md /* response */,
-					  exchange_type);
+	struct pbs_out reply = open_pbs_out("unencrypted notification",
+					    buf, sizeof(buf), &logger);
+	struct pbs_out rbody = open_v2_message(&reply, NULL/*no state*/,
+					       md /* response */,
+					       exchange_type);
 	if (!pbs_ok(&rbody)) {
 		LOG_PEXPECT("error building header for unencrypted %s %s notification with message ID %u",
 			    exchange_name, notify_name, md->hdr.isa_msgid);
@@ -574,8 +575,8 @@ stf_status record_v2_informational_request(const char *name,
 	 * don't use reply_buffer/reply_stream because it might be in
 	 * use.
 	 */
-	u_char buffer[MIN_OUTPUT_UDP_SIZE];	/* ??? large enough for any informational? */
-	pb_stream packet = open_out_pbs(name, buffer, sizeof(buffer));
+	uint8_t buffer[MIN_OUTPUT_UDP_SIZE];	/* ??? large enough for any informational? */
+	struct pbs_out packet = open_pbs_out(name, buffer, sizeof(buffer), sender->st_logger);
 	if (!pbs_ok(&packet)) {
 		return STF_INTERNAL_ERROR;
 	}

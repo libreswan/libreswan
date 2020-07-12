@@ -1709,11 +1709,13 @@ void init_out_pbs(pb_stream *pbs, uint8_t *start, size_t len, const char *name)
 	memset(start, 0xFA, len);	/* value likely to be unpleasant */
 }
 
-pb_stream open_out_pbs(const char *name, uint8_t *buffer, size_t sizeof_buffer)
+struct pbs_out open_pbs_out(const char *name, uint8_t *buffer, size_t sizeof_buffer,
+			    struct logger *logger)
 {
-	pb_stream out_pbs;
+	struct pbs_out out_pbs;
 	init_out_pbs(&out_pbs, buffer, sizeof_buffer, name);
-	dbg("Opening output PBS %s", name);
+	out_pbs.out_logger = logger;
+	dbg("opening output PBS %s", name);
 	return out_pbs;
 }
 
@@ -2863,4 +2865,15 @@ bool pbs_out_address(const ip_address *address, struct pbs_out *out_pbs, const c
 {
 	shunk_t as = address_as_shunk(address);
 	return out_raw(as.ptr, as.len, out_pbs, what);
+}
+
+void log_pbs_out(lset_t rc_flags, struct pbs_out *outs, const char *message, ...)
+{
+	va_list ap;
+	va_start(ap, message);
+	struct logger logger = (pexpect(outs != NULL) && outs->out_logger != NULL
+				? *outs->out_logger
+				: cur_logger());
+	log_va_list(rc_flags, &logger, message, ap);
+	va_end(ap);
 }

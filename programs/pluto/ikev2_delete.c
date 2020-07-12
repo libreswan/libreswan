@@ -35,11 +35,11 @@ bool record_v2_delete(struct ike_sa *ike, struct state *st)
 {
 	/* make sure HDR is at start of a clean buffer */
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
-	pb_stream packet = open_out_pbs("informational exchange delete request",
-					buf, sizeof(buf));
-	pb_stream rbody = open_v2_message(&packet, ike,
-					  NULL /* request */,
-					  ISAKMP_v2_INFORMATIONAL);
+	struct pbs_out packet = open_pbs_out("informational exchange delete request",
+					     buf, sizeof(buf), st->st_logger);
+	struct pbs_out rbody = open_v2_message(&packet, ike,
+					       NULL /* request */,
+					       ISAKMP_v2_INFORMATIONAL);
 	if (!pbs_ok(&packet)) {
 		return false;
 	}
