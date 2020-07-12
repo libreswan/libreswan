@@ -12,7 +12,7 @@ west #
 west #
  ipsec whack --impair suppress-retransmits # one packet
 west #
- ipsec whack --impair add-unknown-payload-to-auth-sk
+ ipsec whack --impair add-unknown-v2-payload-to-sk:IKE_AUTH
 west #
  : good
 west #
@@ -20,7 +20,7 @@ west #
 002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 IKE SA
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: adding an unknown payload of type 255 to IKE_AUTH's SK request
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: adding an unknown payload of type 255 to IKE_AUTH SK request
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 000 "westnet-eastnet-ipv4-psk-ikev2" #2: non-critical payload ignored because it contains an unknown or unexpected payload type (255??) at the outermost level
 002 "westnet-eastnet-ipv4-psk-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
@@ -40,15 +40,15 @@ west #
 west #
  ipsec whack --impair delete-on-retransmit
 west #
- ipsec whack --impair add-unknown-payload-to-auth-sk
+ ipsec whack --impair add-unknown-v2-payload-to-sk:IKE_AUTH
 west #
- ipsec whack --impair unknown-payload-critical
+ ipsec whack --impair unknown-v2-payload-critical
 west #
  ../bin/libreswan-up-down.sh westnet-eastnet-ipv4-psk-ikev2 -I 192.0.1.254 192.0.2.254
 002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #3: initiating IKEv2 IKE SA
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #3: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: adding an unknown payload of type 255 to IKE_AUTH's SK request
+002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: adding an unknown critical payload of type 255 to IKE_AUTH SK request
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: setting (should be off) critical payload bit
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #3: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: IKE SA authentication request rejected by peer: UNSUPPORTED_CRITICAL_PAYLOAD
