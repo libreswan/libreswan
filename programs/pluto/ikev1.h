@@ -158,4 +158,6 @@ extern ikev1_state_transition_fn quick_inI2;
 	(st)->st_v1_new_iv = (tmp); \
     }
 
+extern pb_stream reply_stream;
+
 #endif

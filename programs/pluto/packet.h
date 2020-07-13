@@ -1201,13 +1201,7 @@ extern struct_desc sec_ctx_desc;
  * Nasty evil global packet buffer.
  */
 
-extern pb_stream reply_stream;
 extern uint8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
-
-struct pbs_reply_backup {
-	pb_stream stream;
-	uint8_t *buffer;
-};
 
 /*
  * Utilities:

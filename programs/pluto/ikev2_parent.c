@@ -708,8 +708,9 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	struct connection *c = ike->sa.st_connection;
 
 	/* set up reply */
-	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		 "reply packet");
+	struct pbs_out reply_stream = open_pbs_out("reply packet",
+						   reply_buffer, sizeof(reply_buffer),
+						   ike->sa.st_logger);
 
 	if (impair.send_bogus_dcookie) {
 		/* add or mangle a dcookie so what we will send is bogus */
@@ -1053,8 +1054,9 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 							"saved first received packet");
 
 	/* make sure HDR is at start of a clean buffer */
-	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		     "reply packet");
+	struct pbs_out reply_stream = open_pbs_out("reply packet",
+						   reply_buffer, sizeof(reply_buffer),
+						   ike->sa.st_logger);
 
 	/* HDR out */
 	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st, HERE),
@@ -2071,8 +2073,9 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	/* beginning of data going out */
 
 	/* make sure HDR is at start of a clean buffer */
-	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		 "reply packet");
+	struct pbs_out reply_stream = open_pbs_out("reply packet",
+						   reply_buffer, sizeof(reply_buffer),
+						   ike->sa.st_logger);
 
 	/* HDR out */
 
@@ -3059,8 +3062,9 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 	}
 
 	/* make sure HDR is at start of a clean buffer */
-	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		 "reply packet");
+	struct pbs_out reply_stream = open_pbs_out("reply packet",
+						   reply_buffer, sizeof(reply_buffer),
+						   ike->sa.st_logger);
 
 	/* HDR out */
 
@@ -4766,7 +4770,9 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 
 	ikev2_log_parentSA(&child->sa);
 
-	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer), "reply packet");
+	struct pbs_out reply_stream = open_pbs_out("reply packet",
+						   reply_buffer, sizeof(reply_buffer),
+						   child->sa.st_logger);
 
 	/* HDR out Start assembling respone message */
 
@@ -5165,10 +5171,10 @@ static stf_status add_mobike_response_payloads(
  */
 
 stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
-						 struct child_sa *child,
+						 struct child_sa *null_child,
 						 struct msg_digest *md)
 {
-	pexpect(child == NULL);
+	pexpect(null_child == NULL);
 	int ndp = 0;	/* number Delete payloads for IPsec protocols */
 	bool del_ike = false;	/* any IKE SA Deletions? */
 	bool seen_and_parsed_redirect = FALSE;
@@ -5295,6 +5301,7 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 	 * screwed up.
 	 */
 
+	struct pbs_out reply_stream;
 	pb_stream rbody;
 	v2SK_payload_t sk;
 	zero(&rbody);
@@ -5302,9 +5309,10 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 
 	if (responding) {
 		/* make sure HDR is at start of a clean buffer */
-		init_out_pbs(&reply_stream, reply_buffer,
-			 sizeof(reply_buffer),
-			 "information exchange reply packet");
+		reply_stream = open_pbs_out("information exchange reply packet",
+					    reply_buffer, sizeof(reply_buffer),
+					    ike->sa.st_logger);
+
 
 		/* authenticated decrypted response - It's alive, alive! */
 		dbg("Received an INFORMATIONAL response, updating st_last_liveness, no pending_liveness");

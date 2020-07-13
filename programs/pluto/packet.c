@@ -2795,7 +2795,6 @@ pb_stream open_output_struct_pbs(pb_stream *outs, const void *struct_ptr,
  * buffers already.  Oops.
  */
 
-pb_stream reply_stream;
 uint8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
 
 /*

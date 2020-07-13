@@ -837,12 +837,11 @@ static bool record_outbound_fragment(struct logger *logger,
 				     unsigned int number, unsigned int total,
 				     const char *desc)
 {
-	pb_stream frag_stream;
-	unsigned char frag_buffer[PMAX(MIN_MAX_UDP_DATA_v4, MIN_MAX_UDP_DATA_v6)];
-
 	/* make sure HDR is at start of a clean buffer */
-	init_out_pbs(&frag_stream, frag_buffer, sizeof(frag_buffer),
-		     "reply frag packet");
+	unsigned char frag_buffer[PMAX(MIN_MAX_UDP_DATA_v4, MIN_MAX_UDP_DATA_v6)];
+	struct pbs_out frag_stream = open_pbs_out("reply frag packet",
+						  frag_buffer, sizeof(frag_buffer),
+						  logger);
 
 	/* HDR out */
 
