@@ -104,8 +104,8 @@ bool emit_v2UNKNOWN(const char *victim, enum isakmp_xchg_types exchange_type,
 	struct ikev2_generic gen = {
 		.isag_critical = build_ikev2_critical(impair.unknown_v2_payload_critical),
 	};
-	pb_stream pbs = open_output_struct_pbs(outs, &gen, &ikev2_unknown_payload_desc);
-	if (!pbs_ok(&pbs)) {
+	struct pbs_out pbs;
+	if (!pbs_out_struct(outs, &gen, sizeof(gen), &ikev2_unknown_payload_desc, &pbs)) {
 		return false;
 	}
 	close_output_pbs(&pbs);
@@ -123,9 +123,8 @@ bool emit_v2V(const char *string, pb_stream *outs)
 	struct ikev2_generic gen = {
 		.isag_np = 0,
 	};
-	pb_stream pbs = open_output_struct_pbs(outs, &gen,
-					       &ikev2_vendor_id_desc);
-	if (!pbs_ok(&pbs)) {
+	struct pbs_out pbs;
+	if (!pbs_out_struct(outs, &gen, sizeof(gen), &ikev2_vendor_id_desc, &pbs)) {
 		return false;
 	}
 	if (!out_raw(string, strlen(string), &pbs, string)) {

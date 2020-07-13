@@ -206,12 +206,13 @@ pb_stream open_v2_message(pb_stream *reply,
 		}
 	}
 
-	struct pbs_out rbody = open_output_struct_pbs(reply, &hdr, &isakmp_hdr_desc);
-
-	if (impair.add_unknown_v2_payload_to == exchange_type) {
-		if (!emit_v2UNKNOWN("request", exchange_type, &rbody)) {
-			dbg("oops; what to do next?");
-		}
+	struct pbs_out rbody;
+	if (!pbs_out_struct(reply, &hdr, sizeof(hdr), &isakmp_hdr_desc, &rbody)) {
+		return empty_pbs;
+	}
+	if (impair.add_unknown_v2_payload_to == exchange_type &&
+	    !emit_v2UNKNOWN("request", exchange_type, &rbody)) {
+		return empty_pbs;
 	}
 
 	return rbody;

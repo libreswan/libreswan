@@ -1241,7 +1241,7 @@ static bool emit_transform_header(struct pbs_out *proposal_pbs,
 		.isat_lt = is_last_transform ? v2_TRANSFORM_LAST : v2_TRANSFORM_NON_LAST,
 	};
 	if (!pbs_out_struct(proposal_pbs, &trans, sizeof(trans),
-			    &ikev2_trans_desc, transform_pbs, logger)) {
+			    &ikev2_trans_desc, transform_pbs)) {
 		log_message(RC_LOG, logger, "out_struct() of transform failed");
 		return false;
 	}
