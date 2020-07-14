@@ -2115,8 +2115,7 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
 	passert(md != NULL);
 
 	update_ike_endpoints(&fake_ike, md);
-	struct logger logger = MESSAGE_LOGGER(md);
-	send_notification(&logger, &fake_ike.sa, type, NULL, 0,
+	send_notification(md->md_logger, &fake_ike.sa, type, NULL, 0,
 			  md->hdr.isa_ike_initiator_spi.bytes, md->hdr.isa_ike_responder_spi.bytes,
 			  PROTO_ISAKMP);
 }

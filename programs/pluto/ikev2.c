@@ -1712,8 +1712,6 @@ void ikev2_process_packet(struct msg_digest *md)
 				return;
 			}
 
-			struct logger logger = MESSAGE_LOGGER(md);
-
 			/*
 			 * Always check for cookies!
 			 *
@@ -1731,7 +1729,7 @@ void ikev2_process_packet(struct msg_digest *md)
 			 * v2N_UNSUPPORTED_CRITICAL_PAYLOAD.
 			 */
 			pexpect(!md->message_payloads.parsed);
-			md->message_payloads = ikev2_decode_payloads(&logger, md,
+			md->message_payloads = ikev2_decode_payloads(md->md_logger, md,
 								     &md->message_pbs,
 								     md->hdr.isa_np);
 			if (md->message_payloads.n != v2N_NOTHING_WRONG) {
@@ -1788,7 +1786,7 @@ void ikev2_process_packet(struct msg_digest *md)
 			 */
 			const struct finite_state *start_state = finite_states[STATE_PARENT_R0];
 			const struct state_v2_microcode *transition =
-				find_v2_state_transition(&logger, start_state, md);
+				find_v2_state_transition(md->md_logger, start_state, md);
 			if (transition == NULL) {
 				/* already logged */
 				send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);

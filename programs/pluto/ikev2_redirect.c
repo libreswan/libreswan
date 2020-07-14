@@ -205,7 +205,7 @@ static chunk_t build_redirect_notification_data_str(const shunk_t dest,
 
 bool redirect_global(struct msg_digest *md)
 {
-	struct logger logger = MESSAGE_LOGGER(md);
+	struct logger *logger = md->md_logger;
 
 	/* if we don't support global redirection, no need to continue */
 	if (global_redirect == GLOBAL_REDIRECT_NO ||
@@ -246,10 +246,10 @@ bool redirect_global(struct msg_digest *md)
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
 	chunk_t data = build_redirect_notification_data_str(dest, &Ni,
 							    buf, sizeof(buf),
-							    &logger);
+							    logger);
 
 	if (data.len == 0) {
-		log_message(RC_LOG_SERIOUS, &logger,
+		log_message(RC_LOG_SERIOUS, logger,
 			    "failed to construct REDIRECT notification data");
 		return true;
 	}

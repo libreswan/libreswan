@@ -141,10 +141,10 @@ static enum iface_status read_message(const struct iface_port *ifp,
 void process_packet(struct msg_digest **mdp)
 {
 	struct msg_digest *md = *mdp;
-	struct logger logger = MESSAGE_LOGGER(md);
+	struct logger *logger = md->md_logger;
 
 	if (!pbs_in_struct(&md->packet_pbs, &md->hdr, sizeof(md->hdr),
-			   &isakmp_hdr_desc, &md->message_pbs, &logger)) {
+			   &isakmp_hdr_desc, &md->message_pbs, logger)) {
 		/*
 		 * The packet was very badly mangled. We can't be sure
 		 * of any content - not even to look for major version

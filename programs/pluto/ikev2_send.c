@@ -491,7 +491,6 @@ void send_v2N_response_from_md(struct msg_digest *md,
 			       v2_notification_t ntype,
 			       const chunk_t *ndata)
 {
-	struct logger logger = MESSAGE_LOGGER(md);
 	passert(md != NULL); /* always a response */
 
 	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
@@ -506,11 +505,11 @@ void send_v2N_response_from_md(struct msg_digest *md,
 		    exchange_type);
 	}
 
-	log_message(RC_LOG, &logger,
-		    "responding to %s (%d) message (Message ID %u) with unencrypted notification %s",
-		    exchange_name, exchange_type,
-		    md->hdr.isa_msgid,
-		    notify_name);
+	log_md(RC_LOG, md,
+	       "responding to %s (%d) message (Message ID %u) with unencrypted notification %s",
+	       exchange_name, exchange_type,
+	       md->hdr.isa_msgid,
+	       notify_name);
 
 	/*
 	 * Normally an unencrypted response is only valid for
@@ -529,7 +528,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
 	struct pbs_out reply = open_pbs_out("unencrypted notification",
-					    buf, sizeof(buf), &logger);
+					    buf, sizeof(buf), md->md_logger);
 	struct pbs_out rbody = open_v2_message(&reply, NULL/*no state*/,
 					       md /* response */,
 					       exchange_type);

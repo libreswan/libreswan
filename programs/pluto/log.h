@@ -103,6 +103,7 @@ extern const struct logger_object_vec logger_message_vec;
 extern const struct logger_object_vec logger_connection_vec;
 extern const struct logger_object_vec logger_state_vec;
 
+extern struct logger failsafe_logger;
 #define GLOBAL_LOGGER(WHACKFD) (struct logger)			\
 	{							\
 		.where = HERE,					\
@@ -116,13 +117,6 @@ extern const struct logger_object_vec logger_state_vec;
 		.global_whackfd = null_fd,			\
 		.object = FROM,					\
 		.object_vec = &logger_from_vec, 		\
-	}
-#define MESSAGE_LOGGER(MD) (struct logger)			\
-	{							\
-		.where = HERE,					\
-		.global_whackfd = null_fd,			\
-		.object = MD,					\
-		.object_vec = &logger_message_vec,		\
 	}
 #define CONNECTION_LOGGER(CONNECTION, WHACKFD) (struct logger)	\
 	{							\
@@ -140,6 +134,7 @@ extern const struct logger_object_vec logger_state_vec;
 		.object_vec = &logger_connection_vec,		\
 	}
 
+struct logger *alloc_logger(void *object, const struct logger_object_vec *vec, where_t where);
 struct logger *clone_logger(const struct logger *stack);
 void free_logger(struct logger **logp);
 
