@@ -4,7 +4,5 @@ roadwarriors.
 two road warriors, north and road connect to east, shortly after that they are
 redirected to west with --redirect whack command.
 
-Disclaimer: it can often happen that tests fails although it in fact did not fail.
-east is redirecting north and road almost concurrently and because of the delicate
-timing differences it can happen that one is redirected before the other one, leading
-to them connecting to west in 'wrong' order, causing inverted console logs and test fail.
+Because north and road are redirected at once, they can establish in different order,
+so we do some output massaging to that does not matter.

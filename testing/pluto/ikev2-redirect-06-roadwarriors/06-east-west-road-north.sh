@@ -1,4 +1,4 @@
-ipsec whack --trafficstatus
+ipsec whack --trafficstatus | sed -e "s/#./#X/" -e "s/\[[0-9]\]/[X]/" | sort
 : ==== cut ====
 ipsec auto --status
 ip xfrm state
