@@ -1032,25 +1032,26 @@ static struct best_score score_ends_iprange(enum fit fit,
 
 	return best_score;
 }
-struct connection * next_free_clone_slot(struct connection *r)
+
+static struct connection *clone_slot(struct connection *r, uint32_t sa_clone_id)
 {
-	uint32_t i;
 	struct connection *c;
 	char tmpconnname[256];
-	// AA_2020 works only alias explosion
 
-	for (i = 0; i <= (r->sa_clones); i++) {
-		snprintf(tmpconnname, sizeof(tmpconnname), "%s-%u", r->connalias, i);
-		DBG_log("AA_2020 %s %d conn_by_name('%s')  %u/%u\n", __func__, __LINE__, tmpconnname, i, r->sa_clones);
-		c = conn_by_name(tmpconnname, TRUE);
-		if (c->newest_ipsec_sa == SOS_NOBODY) {
-			DBG_log("AA_2020 %s %d use %s as clone conn %u/%u\n", __func__, __LINE__, r->name, i, r->sa_clones);
-			return c;
-		} else {
-			DBG_log("AA_2020 %s %d %s  %u/%u ignored\n", __func__, __LINE__, r->name, i, r->sa_clones);
-		}
+	snprintf(tmpconnname, sizeof(tmpconnname), "%s-%u", r->connalias, sa_clone_id);
+	dbg("AA_2020 %s %d conn_by_name('%s')  %u/%u\n", __func__, __LINE__, tmpconnname, sa_clone_id, r->sa_clones);
+	c = conn_by_name(tmpconnname, TRUE);
+	if (c == NULL) {
+		libreswan_log("no clone connection for cpu id %u", sa_clone_id);
+		return NULL;
 	}
-	libreswan_log("no free clone slot for connection %s clones %u", r->connalias, r->sa_clones);
+
+	if (c->newest_ipsec_sa == SOS_NOBODY) {
+		dbg("AA_2020 %s %d use %s as clone conn %u/%u", __func__, __LINE__, r->name, sa_clone_id, r->sa_clones);
+		return c;
+	}
+	dbg("AA_2020 %s %d %s no clone for %u/%u", __func__, __LINE__, r->name, sa_clone_id, r->sa_clones);
+
 	return NULL;
 }
 
@@ -1438,7 +1439,7 @@ bool v2_process_ts_request(struct child_sa *child,
 	}
 
 	if (c->sa_clones > 0) {
-		struct connection *free_clone = next_free_clone_slot(c);
+		struct connection *free_clone = clone_slot(c, child->sa.st_pcpu.sa_clone_id);
 		if (free_clone == NULL)  {
 			libreswan_log("AA_2020 %s %d no free clone connection for clonse = %u", __func__, __LINE__, c->sa_clones);
 			return false;

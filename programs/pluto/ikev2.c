@@ -2818,17 +2818,9 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 			str_id(&peer_id, &idbuf));
 	}
 
-	if (c->sa_clones != 0) {
-		DBG_log("AA_2020 %s %d found %s %u/%u", __func__, __LINE__, c->name, c->sa_clone_id, c->sa_clones);
-		/* this head connection with "conn-0". find a free slot */
-		if (c->sa_clones > 0) {
-			struct connection *r;
-			r = next_free_clone_slot(c);
-			c = r;
-			libreswan_log("AA_2020 IKE_INIT responder switched clone connection %u/%u from %u", r->sa_clone_id, c->sa_clones, c->sa_clone_id);
-		} else if (c->sa_clone_id > CLONE_SA_HEAD) {
-			libreswan_log("AA_2020 IKE_INIT responder matched wrong clone connection %u/%u expecting 0", c->sa_clone_id, c->sa_clones);
-		}
+	if (c->sa_clones != 0 && c->sa_clones > 0) {
+		libreswan_log("AA_2020 IKE_INIT responder matched wrong clone connection %u/%u expecting 0", c->sa_clone_id, c->sa_clones);
+		return FALSE;
 	}
 
 	return TRUE;
