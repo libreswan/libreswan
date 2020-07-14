@@ -57,6 +57,22 @@ static const struct keyword impair_v1_exchange_value[] = {
 static const struct keywords impair_v1_exchange_keywords =
 	DIRECT_KEYWORDS("impaire exchange content", impair_v1_exchange_value);
 
+/* transform */
+
+static const struct keyword impair_v2_transform_value[] = {
+#define S(S, E, H) [IMPAIR_v2_TRANSFORM_##E] = { .name = "IMPAIR_v2_TRANSFORM_"#E, .sname = S, .value = IMPAIR_v2_TRANSFORM_##E, .details = H, }
+	S("no", NO, "do not modify transform"),
+	S("allow-none", ALLOW_NONE, "allow TRANSFORM=NONE when part of a proposal"),
+	S("drop-none", DROP_NONE, "drop TRANSFORM=NONE even when part of a proposal"),
+	S("omit", OMIT, "omit transform from proposal"),
+#undef S
+};
+
+static const struct keywords impair_v2_transform_keywords =
+	DIRECT_KEYWORDS("transform impaired content", impair_v2_transform_value);
+
+/* */
+
 struct impairment {
 	const char *what;
 	const char *help;
@@ -103,8 +119,8 @@ struct impairment impairments[] = {
 	V("ike-responder-spi", ike_responder_spi, "corrupt the IKE responder SPI", .unsigned_help = "set SPI to <unsigned>"),
 	V("ikev1-del-with-notify", ikev1_del_with_notify, "causes pluto to send IKE Delete with additional bogus Notify payload"),
 
-	V("ikev2-exclude-integ-none", ikev2_exclude_integ_none, "lets pluto exclude integrity 'none' in proposals"),
-	V("ikev2-include-integ-none", ikev2_include_integ_none, "lets pluto include integrity 'none' in proposals"),
+	V("v2-proposal-integ", v2_proposal_integ, "integrity in proposals", .how_keywords = &impair_v2_transform_keywords),
+	V("v2-proposal-dh", v2_proposal_dh, "dh in proposals", .how_keywords = &impair_v2_transform_keywords),
 
 	V("ikev2-add-ike-transform", ikev2_add_ike_transform, "add an extra (possibly bogus) transform to the first IKE proposal", .unsigned_help = "transform type+id encoded as TYPE<<16|ID"),
 	V("ikev2-add-child-transform", ikev2_add_child_transform, "add an extra (possibly bogus) transform to the first CHILD proposal", .unsigned_help = "transform type+id encoded as TYPE<<16|ID"),

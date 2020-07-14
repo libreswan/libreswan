@@ -1336,10 +1336,11 @@ static bool emit_transform(struct pbs_out *proposal_pbs,
  * It's assumed the caller knows what they are doing.  For instance
  * passing the correct value/size in for the SPI.
  */
+
 static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 			   const struct ikev2_proposal *proposal,
 			   unsigned propnum,
-			   bool exclude_transform_none,
+			   bool allow_single_transform_none,
 			   struct logger *logger)
 {
 	const char *what = proposal_pbs != NULL ? "emitting proposal" : "counting transforms";
@@ -1352,60 +1353,99 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 	enum ikev2_trans_type transform_type;
 	const struct ikev2_transforms *transforms;
 	FOR_EACH_TRANSFORMS_TYPE(transform_type, transforms, proposal) {
+		/*
+		 * ...=NONE should be excluded when the only transform
+		 * being sent by the initiator.
+		 *
+		 * ...=NONE should be included when there are other
+		 * transforms vis DI=NONE + DN=MODP1024.
+		 *
+		 * ...=NONE should be included in the response when
+		 * the intiator sent NONE.
+		 */
+		bool multiple_transforms = (transforms->transform[0].valid &&
+					    transforms->transform[1].valid);
+		bool allow_transform_none = (multiple_transforms ||
+					     allow_single_transform_none);
 		const struct ikev2_transform *transform;
 		FOR_EACH_TRANSFORM(transform, transforms) {
-			/*
-			 * When pluto initiates with an AEAD proposal,
-			 * INTEG=NONE is excluded by default (as
-			 * recommended by the RFC).  However, when
-			 * pluto receives an AEAD proposal that
-			 * includes INTEG=NONE, it needs to include it
-			 * (as also recommended by the RFC?) in the
-			 * reply.
-			 *
-			 * The impair options then screw with this
-			 * behaviour - including or excluding
-			 * impair=none when it otherwise wouldn't.
-			 */
-			if (transform_type == IKEv2_TRANS_TYPE_INTEG &&
-			    transform->id == IKEv2_AUTH_NONE) {
-				if (impair.ikev2_include_integ_none) {
-					log_message(RC_LOG, logger, "IMPAIR: proposal %d transform INTEG=NONE included when %s",
-						    propnum, what);
-				} else if (impair.ikev2_exclude_integ_none) {
-					log_message(RC_LOG, logger, "IMPAIR: proposal %d transform INTEG=NONE excluded when %s",
-						    propnum, what);
-					continue;
-				} else if (exclude_transform_none) {
-					dbg("discarding INTEG=NONE");
-					continue;
-				}
+
+			struct esb_buf esb_type;
+			const char *transform_type_name =
+				enum_show_shortb(&ikev2_trans_type_names, transform_type, &esb_type);
+			struct esb_buf esb_id;
+			const char *transform_id_name =
+				enum_enum_show_shortb(&v2_transform_ID_enums,
+						      transform_type, transform->id, &esb_id);
+
+			enum impair_v2_transform impairment;
+			unsigned none;
+			switch (transform_type) {
+			case IKEv2_TRANS_TYPE_INTEG:
+				/*
+				 * When pluto initiates with an AEAD
+				 * proposal, since INTEG=NONE is
+				 * implied, that transform is excluded
+				 * by default (as recommended by the
+				 * RFC).
+				 *
+				 * When pluto receives and selects an
+				 * AEAD proposal that includes
+				 * INTEG=NONE it needs to include it
+				 * in the accepted proposal response
+				 * (as also recommended by the RFC?).
+				 */
+				impairment = impair.v2_proposal_integ;
+				none = IKEv2_AUTH_NONE; /* always zero */
+				break;
+			case IKEv2_TRANS_TYPE_DH:
+				/*
+				 * CHILD SA proposals are allowed to
+				 * include the transform DH=NONE to
+				 * indicate that there is no DH.  If
+				 * selected, the responder should then
+				 * also include it in the response.
+				 */
+				impairment = impair.v2_proposal_dh;
+				none = OAKLEY_GROUP_NONE; /* always zero */
+				break;
+			default:
+				impairment = IMPAIR_v2_TRANSFORM_NO;
+				none = -1; /* don't match */
+				break;
 			}
-			/*
-			 * Since DH=NONE is omitted, don't include
-			 * it in the count.
-			 *
-			 * XXX: This logic only works when there is a
-			 * single DH=NONE transform.  While DH=NONE +
-			 * DH=MODP2048 is valid the below doesn't
-			 * handle it.
-			 */
-			if (transform_type == IKEv2_TRANS_TYPE_DH &&
-			    transform->id == OAKLEY_GROUP_NONE) {
-				dbg("discarding DH=NONE");
-				continue;
-#if 0
-				if (impair.ikev2_include_dh_none) {
-					log_message(RC_LOG, logger, "IMPAIR: proposal %d transform DH=NONE included when %s",
-						      propnum, what);
-				} else if (impair.ikev2_exclude_dh_none) {
-					log_message(RC_LOG, logger, "IMPAIR: proposal %d transform DH=NONE excluded when %s",
-						      propnum, what);
-					continue;
-				} else if (exclude_transform_none) {
+
+			switch (impairment) {
+			case IMPAIR_v2_TRANSFORM_ALLOW_NONE:
+				if (transform->id == none) {
+					log_message(RC_LOG, logger, "IMPAIR: proposal %d transform %s=%s included when %s",
+						    propnum, transform_type_name, transform_id_name, what);
+				}
+				break;
+			case IMPAIR_v2_TRANSFORM_DROP_NONE:
+				if (transform->id == none) {
+					log_message(RC_LOG, logger, "IMPAIR: proposal %d transform %s=%s excluded when %s",
+						    propnum, transform_type_name, transform_id_name, what);
 					continue;
 				}
-#endif
+				break;
+			case IMPAIR_v2_TRANSFORM_OMIT:
+				log_message(RC_LOG, logger, "IMPAIR: proposal %d transform %s=%s excluded when %s",
+					    propnum, transform_type_name, transform_id_name, what);
+				continue;
+			case IMPAIR_v2_TRANSFORM_NO:
+				if (transform->id == none) {
+					dbg("%s %s=%s when %s (multiple %d; allow single %d)",
+					    allow_transform_none ? "allow" : "discard",
+					    transform_type_name, transform_id_name, what,
+					    multiple_transforms, allow_single_transform_none);
+					if (!allow_transform_none) {
+						continue;
+					}
+				}
+				break;
+			default:
+				bad_case(impairment);
 			}
 
 			trans_nr++;
@@ -1452,11 +1492,10 @@ static bool emit_proposal(struct pbs_out *sa_pbs,
 			  unsigned propnum,
 			  const chunk_t *local_spi,
 			  enum ikev2_last_proposal last_proposal,
-			  bool exclude_transform_none)
+			  bool allow_single_transform_none)
 {
 	int numtrans = walk_transforms(NULL, -1, proposal, propnum,
-				       exclude_transform_none,
-				       sa_pbs->out_logger);
+				       allow_single_transform_none, sa_pbs->out_logger);
 	if (numtrans < 0) {
 		return false;
 	}
@@ -1482,7 +1521,7 @@ static bool emit_proposal(struct pbs_out *sa_pbs,
 	}
 
 	if (walk_transforms(&proposal_pbs, numtrans, proposal, propnum,
-			    exclude_transform_none, sa_pbs->out_logger) < 0) {
+			    allow_single_transform_none, sa_pbs->out_logger) < 0) {
 		return false;
 	}
 
@@ -1507,11 +1546,15 @@ bool ikev2_emit_sa_proposals(struct pbs_out *pbs,
 	int propnum;
 	const struct ikev2_proposal *proposal;
 	FOR_EACH_V2_PROPOSAL(propnum, proposal, proposals) {
+		/*
+		 * Initiator doesn't normally send a single
+		 * tranform=NONE.
+		 */
 		if (!emit_proposal(&sa_pbs, proposal, propnum, local_spi,
 				   (propnum < proposals->roof - 1
 				    ? v2_PROPOSAL_NON_LAST
 				    : v2_PROPOSAL_LAST),
-				   true)) {
+				   false/*allow-single-transform=none*/)) {
 			return FALSE;
 		}
 	}
@@ -1536,8 +1579,13 @@ bool ikev2_emit_sa_proposal(pb_stream *pbs,
 		return FALSE;
 	}
 
+	/*
+	 * Responder will include TRANFORM=NONE if it was sent by the
+	 * initiator.
+	 */
 	if (!emit_proposal(&sa_pbs, proposal, proposal->propnum,
-			   local_spi, v2_PROPOSAL_LAST, false)) {
+			   local_spi, v2_PROPOSAL_LAST,
+			   true/*allow-single-tranform=NONE*/)) {
 		return FALSE;
 	}
 

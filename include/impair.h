@@ -49,6 +49,17 @@ enum impair_v1_exchange {
 };
 
 /*
+ * Meddle with an (IKEv2) transform.
+ */
+
+enum impair_v2_transform {
+	IMPAIR_v2_TRANSFORM_NO = 0,
+	IMPAIR_v2_TRANSFORM_ALLOW_NONE,
+	IMPAIR_v2_TRANSFORM_DROP_NONE,
+	IMPAIR_v2_TRANSFORM_OMIT,
+};
+
+/*
  * What can be impaired.
  *
  * See impair.c for documentation.
@@ -108,8 +119,8 @@ struct impair {
 	bool omit_hash_notify_request;
 	bool ignore_hash_notify_request;
 	bool ignore_hash_notify_response;
-	bool ikev2_exclude_integ_none;
-	bool ikev2_include_integ_none;
+	enum impair_v2_transform v2_proposal_integ;
+	enum impair_v2_transform v2_proposal_dh;
 	unsigned ikev2_add_ike_transform;
 	unsigned ikev2_add_child_transform;
 	bool replay_duplicates;
