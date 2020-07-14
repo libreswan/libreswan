@@ -764,7 +764,7 @@ bool ikev1_out_sa(pb_stream *outs,
 				 * OTOH, do completely override
 				 * key-lengths when so impaired.
 				 */
-				enum send_impairment impair_key_length_attribute =
+				enum impair_emit impair_key_length_attribute =
 					(oakley_mode ? impair.ike_key_length_attribute
 					 : impair.child_key_length_attribute);
 				long key_length_to_impair = -1;
@@ -792,9 +792,9 @@ bool ikev1_out_sa(pb_stream *outs,
 				 * put back a key-length?
 				 */
 				switch (impair_key_length_attribute) {
-				case SEND_NORMAL:
+				case IMPAIR_EMIT_NO:
 					break;
-				case SEND_EMPTY:
+				case IMPAIR_EMIT_EMPTY:
 					/*
 					 * XXX: how? IKEv2 sends a
 					 * long form packet of no
@@ -802,10 +802,10 @@ bool ikev1_out_sa(pb_stream *outs,
 					 */
 					libreswan_log("IMPAIR: key-length-attribute:empty not implemented");
 					break;
-				case SEND_OMIT:
+				case IMPAIR_EMIT_OMIT:
 					libreswan_log("IMPAIR: not sending key-length attribute");
 					break;
-				case SEND_DUPLICATE:
+				case IMPAIR_EMIT_DUPLICATE:
 					if (key_length_to_impair >= 0) {
 						libreswan_log("IMPAIR: duplicating key-length");
 						for (unsigned dup = 0; dup < 2; dup++) {
@@ -820,10 +820,10 @@ bool ikev1_out_sa(pb_stream *outs,
 						libreswan_log("IMPAIR: no key-length to duplicate");
 					}
 					break;
-				case SEND_ROOF:
+				case IMPAIR_EMIT_ROOF:
 				default:
 				{
-					unsigned keylen = impair_key_length_attribute - SEND_ROOF;
+					unsigned keylen = impair_key_length_attribute - IMPAIR_EMIT_ROOF;
 					libreswan_log("IMPAIR: sending key-length attribute value %u",
 						      keylen);
 					if (!out_attr(oakley_mode ? OAKLEY_KEY_LENGTH : KEY_LENGTH,

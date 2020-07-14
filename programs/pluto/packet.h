@@ -161,6 +161,22 @@ struct packet_byte_stream {
 	 * changed the names to avoid confusion).
 	 */
 	struct fixup last_substructure;
+
+	/*
+	 * XXX: IKEv2 and output only logger.
+	 *
+	 * IKEv2 uses on-stack pbs_out which should ensure the
+	 * lifetime of the logger pointer is LE the lifetime of the
+	 * logger.
+	 *
+	 * IKEv1 uses the global reply_stream which is a sure way to
+	 * break any lifetime guarentees
+	 *
+	 * The input stream logger starts out with MD but then
+	 * switches to a state so more complicated; and its lifetime
+	 * is that of MD.
+	 */
+	struct logger *out_logger;
 };
 
 typedef struct packet_byte_stream pb_stream;
@@ -234,6 +250,8 @@ bool pbs_in_raw(struct pbs_in *pbs, void *bytes, size_t len,
 
 #define pbs_out packet_byte_stream
 
+void log_pbs_out(lset_t rc_flags, struct pbs_out *outs, const char *message, ...) PRINTF_LIKE(3);
+
 /*
  * Initializers; point PBS at a pre-allocated (or static) buffer.
  *
@@ -244,8 +262,9 @@ bool pbs_in_raw(struct pbs_in *pbs, void *bytes, size_t len,
  */
 extern void init_out_pbs(pb_stream *pbs, uint8_t *start, size_t len,
 			 const char *name);
-extern pb_stream open_out_pbs(const char *name, uint8_t *buffer,
-			      size_t sizeof_buffer);
+extern struct pbs_out open_pbs_out(const char *name, uint8_t *buffer,
+				   size_t sizeof_buffer, struct logger *logger);
+extern void close_output_pbs(pb_stream *pbs);
 
 /*
  * Map/clone the current contents (i.e., everything written so far)
@@ -257,11 +276,9 @@ extern chunk_t clone_out_pbs_as_chunk(pb_stream *pbs, const char *name);
 
 bool pbs_out_struct(struct pbs_out *outs,
 		    const void *struct_ptr, size_t struct_size, struct_desc *sd,
-		    struct pbs_out *obj_pbs, struct logger *logger) MUST_USE_RESULT;
-extern bool out_struct(const void *struct_ptr, struct_desc *sd, /* use pbs_out_struct() */
-		       pb_stream *outs, pb_stream *obj_pbs) MUST_USE_RESULT;
-extern pb_stream open_output_struct_pbs(pb_stream *outs, const void *struct_ptr,
-				 struct_desc *sd) MUST_USE_RESULT;
+		    struct pbs_out *obj_pbs) MUST_USE_RESULT;
+#define out_struct(STRUCT_PTR, ST, OUTS, OBJ_PBS)  /* XXX: use pbs_out_struct(...SIZE...) */ \
+	pbs_out_struct((OUTS), (STRUCT_PTR), 0/*SIZE*/, (ST), (OBJ_PBS))
 
 extern bool ikev1_out_generic(struct_desc *sd,
 			      pb_stream *outs, pb_stream *obj_pbs) MUST_USE_RESULT;
@@ -280,9 +297,6 @@ extern bool out_raw(const void *bytes, size_t len, pb_stream *outs,
 		typeof(HUNK) hunk_ = HUNK; /* evaluate once */		\
 		out_raw(hunk_.ptr, hunk_.len, (OUTS), (NAME));		\
 	})
-
-extern void close_output_pbs(pb_stream *pbs);
-
 
 /* ISAKMP Header: for all messages
  * layout from RFC 2408 "ISAKMP" section 3.1
@@ -1185,13 +1199,7 @@ extern struct_desc sec_ctx_desc;
  * Nasty evil global packet buffer.
  */
 
-extern pb_stream reply_stream;
 extern uint8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
-
-struct pbs_reply_backup {
-	pb_stream stream;
-	uint8_t *buffer;
-};
 
 /*
  * Utilities:

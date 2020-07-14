@@ -563,14 +563,8 @@ static struct state *new_state(enum ike_version ike_version,
 	};
 	passert(next_so > SOS_FIRST);   /* overflow can't happen! */
 
-	/* fight "assignment of read-only location ‘st->st_logger->where" */
-	struct logger logger = {
-		.where = HERE, /* const */
-		.object = st,
-		.object_whackfd = dup_any(whackfd),
-		.object_vec = &logger_state_vec,
-	};
-	st->st_logger = clone_thing(logger, "state logger");
+	st->st_logger = alloc_logger(st, &logger_state_vec, HERE);
+	st->st_logger->object_whackfd = dup_any(whackfd);
 
 	st->hidden_variables.st_nat_oa = address_any(&ipv4_info);
 	st->hidden_variables.st_natd = address_any(&ipv4_info);

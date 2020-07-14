@@ -161,7 +161,8 @@ oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth)
 static bool emit_xauth_hash(const char *what, struct state *st,
 			    struct v1_hash_fixup *hash_fixup, pb_stream *out)
 {
-	return emit_v1_HASH(V1_HASH_1, what, XAUTH_EXCHANGE,
+	return emit_v1_HASH(V1_HASH_1, what,
+			    IMPAIR_v1_XAUTH_EXCHANGE,
 			    st, hash_fixup, out);
 }
 

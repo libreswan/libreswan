@@ -14,7 +14,7 @@ west #
 west #
  ipsec whack --impair suppress-retransmits # one packet
 west #
- ipsec whack --impair add-unknown-payload-to-sa-init
+ ipsec whack --impair add-unknown-v2-payload-to:IKE_SA_INIT
 west #
  : good
 west #
@@ -44,16 +44,17 @@ west #
 west #
  ipsec whack --impair delete-on-retransmit # one packet
 west #
- ipsec whack --impair add-unknown-payload-to-sa-init
+ ipsec whack --impair add-unknown-v2-payload-to:IKE_SA_INIT
 west #
- ipsec whack --impair unknown-payload-critical
+ ipsec whack --impair unknown-v2-payload-critical
 west #
  ../bin/libreswan-up-down.sh westnet-eastnet-ipv4-psk-ikev2 -I 192.0.1.254 192.0.2.254
 002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #3: initiating IKEv2 IKE SA
-002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: adding an unknown payload of type 255 to IKE_SA_INIT request
+002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: adding an unknown critical payload of type 255 to IKE_SA_INIT request
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: setting (should be off) critical payload bit
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #3: STATE_PARENT_I1: sent v2I1, expected v2R1
+000 "westnet-eastnet-ipv4-psk-ikev2" #3: non-critical payload ignored because it contains an unknown or unexpected payload type (255??) at the outermost level
 003 "westnet-eastnet-ipv4-psk-ikev2" #3: dropping unexpected IKE_SA_INIT message containing UNSUPPORTED_CRITICAL_PAYLOAD notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: retransmit so deleting SA
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: deleting state (STATE_PARENT_I1) and NOT sending notification

@@ -137,6 +137,7 @@ struct msg_digest {
 	const struct state_v2_microcode *svm;	/* (v2) microcode for initial state */
 	bool new_iv_set;			/* (v1) */
 	struct state *st;			/* current state object */
+	struct logger *md_logger;		/* logger for this MD */
 
 	threadtime_t md_inception;		/* when was this started */
 
@@ -156,6 +157,18 @@ struct msg_digest {
 	 * is very very sparse.
 	 */
 	const struct pbs_in *pbs[PBS_v2_ROOF];
+
+	/*
+	 * The first IKEv2 error notification found in the payload
+	 * (error notifications are <16384), else v2N_NOTHING_WRONG
+	 * i.e., 0.
+	 *
+	 * Error notifications don't necessarially mean that things
+	 * have totally failed.  For instance, an IKE_AUTH response
+	 * can contain an error notification indicating that the CHILD
+	 * SA failed (but the IKE SA succeeded).
+	 */
+	v2_notification_t v2N_error;
 
 	/*
 	 * The packet PBS contains a message PBS and the message PBS

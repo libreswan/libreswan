@@ -127,24 +127,16 @@ pb_stream open_v2_message(pb_stream *reply,
 	 * to flip MD's I bit, but since this is IKEv++, there may not
 	 * even be an I bit.
 	 */
-	if (ike != NULL) {
-		/* easy */
-		switch (ike->sa.st_sa_role) {
-		case SA_INITIATOR:
-			hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
-			break;
-		case SA_RESPONDER:
-			break;
-		default:
-			bad_case(ike->sa.st_sa_role);
-		}
+	enum sa_role sa_role = (ike != NULL ? ike->sa.st_sa_role : SA_RESPONDER);
+	if (sa_role == SA_INITIATOR) {
+		hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
 	}
 
 	/*
 	 * R (Response) flag
 	 *
-	 * If there's no MD, then this must be a new request -
-	 * R(Responder) flag clear.
+	 * If there's no MD, then this must be a new exchange request
+	 * - R(Responder) flag clear.
 	 *
 	 * If there is an MD, then this must be a response -
 	 * R(Responder) flag set.
@@ -155,7 +147,8 @@ pb_stream open_v2_message(pb_stream *reply,
 	 * Informational Messages outside of an IKE SA - where the
 	 * response is forced.
 	 */
-	if (md != NULL) {
+	enum message_role message_role = (md != NULL ? MESSAGE_RESPONSE : MESSAGE_REQUEST);
+	if (message_role == MESSAGE_RESPONSE) {
 		hdr.isa_flags |= ISAKMP_FLAGS_v2_MSG_R;
 	}
 
@@ -213,7 +206,16 @@ pb_stream open_v2_message(pb_stream *reply,
 		}
 	}
 
-	return open_output_struct_pbs(reply, &hdr, &isakmp_hdr_desc);
+	struct pbs_out rbody;
+	if (!pbs_out_struct(reply, &hdr, sizeof(hdr), &isakmp_hdr_desc, &rbody)) {
+		return empty_pbs;
+	}
+	if (impair.add_unknown_v2_payload_to == exchange_type &&
+	    !emit_v2UNKNOWN("request", exchange_type, &rbody)) {
+		return empty_pbs;
+	}
+
+	return rbody;
 }
 
 /*
@@ -836,12 +838,11 @@ static bool record_outbound_fragment(struct logger *logger,
 				     unsigned int number, unsigned int total,
 				     const char *desc)
 {
-	pb_stream frag_stream;
-	unsigned char frag_buffer[PMAX(MIN_MAX_UDP_DATA_v4, MIN_MAX_UDP_DATA_v6)];
-
 	/* make sure HDR is at start of a clean buffer */
-	init_out_pbs(&frag_stream, frag_buffer, sizeof(frag_buffer),
-		     "reply frag packet");
+	unsigned char frag_buffer[PMAX(MIN_MAX_UDP_DATA_v4, MIN_MAX_UDP_DATA_v6)];
+	struct pbs_out frag_stream = open_pbs_out("reply frag packet",
+						  frag_buffer, sizeof(frag_buffer),
+						  logger);
 
 	/* HDR out */
 

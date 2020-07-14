@@ -44,6 +44,12 @@
 #include "demux.h"	/* for struct msg_digest */
 #include "pending.h"
 
+struct logger failsafe_logger = {
+	.where = { .basename = "<global>", .func = "<global>", },
+	.object = NULL,
+	.object_vec = &logger_global_vec,
+};
+
 bool
 	log_to_stderr = TRUE,		/* should log go to stderr? */
 	log_to_syslog = TRUE,		/* should log go to syslog? */
@@ -679,17 +685,16 @@ static void rate_log_raw(const char *prefix,
 void rate_log(const struct msg_digest *md,
 	      const char *message, ...)
 {
-	struct logger logger = MESSAGE_LOGGER(md);
 	unsigned limit = log_limit();
 	va_list ap;
 	va_start(ap, message);
 	if (nr_rate_limited_logs < limit) {
-		rate_log_raw("", &logger, message, ap);
+		rate_log_raw("", md->md_logger, message, ap);
 	} else if (nr_rate_limited_logs == limit) {
-		rate_log_raw("", &logger, message, ap);
+		rate_log_raw("", md->md_logger, message, ap);
 		plog_global("rate limited log reached limit of %u entries", limit);
 	} else if (DBGP(DBG_BASE)) {
-		rate_log_raw(DEBUG_PREFIX, &logger, message, ap);
+		rate_log_raw(DEBUG_PREFIX, md->md_logger, message, ap);
 	}
 	va_end(ap);
 	nr_rate_limited_logs++;
@@ -914,6 +919,16 @@ static size_t jam_string_prefix(jambuf_t *buf, const void *object)
 	return jam_string(buf, string);
 }
 
+struct logger *alloc_logger(void *object, const struct logger_object_vec *vec, where_t where)
+{
+	struct logger logger = {
+		.object = object,
+		.object_vec = vec,
+		.where = where,
+	};
+	return clone_thing(logger, "logger");
+}
+
 struct logger *clone_logger(const struct logger *stack)
 {
 	/*
@@ -1018,12 +1033,13 @@ struct logger cur_logger(void)
 
 void log_md(lset_t rc_flags, const struct msg_digest *md, const char *msg, ...)
 {
+	struct logger *logger =
+		(pexpect(md != NULL) && pexpect(md->md_logger != NULL) && pexpect(in_main_thread()))
+		? md->md_logger
+		: &failsafe_logger;
 	va_list ap;
 	va_start(ap, msg);
-	struct logger logger = (pexpect(md != NULL) && pexpect(in_main_thread()))
-		? MESSAGE_LOGGER(md)
-		: GLOBAL_LOGGER(null_fd);
-	log_va_list(rc_flags, &logger, msg, ap);
+	log_va_list(rc_flags, logger, msg, ap);
 	va_end(ap);
 }
 
@@ -1034,7 +1050,7 @@ void log_connection(lset_t rc_flags, struct fd *whackfd,
 	va_start(ap, msg);
 	struct logger logger = (pexpect(c != NULL) && pexpect(in_main_thread()))
 		? CONNECTION_LOGGER(c, whackfd)
-		: GLOBAL_LOGGER(null_fd);
+		: failsafe_logger;
 	log_va_list(rc_flags, &logger, msg, ap);
 	va_end(ap);
 }
@@ -1045,7 +1061,7 @@ void log_pending(lset_t rc_flags, const struct pending *p, const char *msg, ...)
 	va_start(ap, msg);
 	struct logger logger = (pexpect(p != NULL) && pexpect(in_main_thread()))
 		? PENDING_LOGGER(p)
-		: GLOBAL_LOGGER(null_fd);
+		: failsafe_logger;
 	log_va_list(rc_flags, &logger, msg, ap);
 	va_end(ap);
 }
@@ -1068,8 +1084,7 @@ void log_state(lset_t rc_flags, const struct state *st,
 		log_va_list(rc_flags, &logger, msg, ap);
 	} else {
 		/* still get the message out */
-		struct logger logger = GLOBAL_LOGGER(null_fd);
-		log_va_list(rc_flags, &logger, msg, ap);
+		log_va_list(rc_flags, &failsafe_logger, msg, ap);
 
 	}
 	va_end(ap);

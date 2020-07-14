@@ -1137,8 +1137,10 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 			return STF_IGNORE;
 		default:
 		{
-			struct logger logger = st != NULL ? *(st->st_logger) : MESSAGE_LOGGER(md);
-			log_message(RC_LOG_SERIOUS, &logger,
+			struct logger *logger = (st != NULL ? st->st_logger :
+						 md != NULL ? md->md_logger :
+						 &failsafe_logger);
+			log_message(RC_LOG_SERIOUS, logger,
 				    "received and ignored notification payload: %s",
 				    enum_name(&ikev1_notify_names, n->isan_type));
 			return STF_IGNORE;
@@ -1147,8 +1149,10 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 	} else {
 		/* warn if we didn't find any Delete or Notify payload in packet */
 		if (md->chain[ISAKMP_NEXT_D] == NULL) {
-			struct logger logger = st != NULL ? *(st->st_logger) : MESSAGE_LOGGER(md);
-			log_message(RC_LOG_SERIOUS, &logger,
+			struct logger *logger = (st != NULL ? st->st_logger :
+						 md != NULL ? md->md_logger :
+						 &failsafe_logger);
+			log_message(RC_LOG_SERIOUS, logger,
 				    "received and ignored empty informational notification payload");
 		}
 		return STF_IGNORE;
@@ -3281,3 +3285,28 @@ void doi_log_cert_thinking(uint16_t auth,
 			DBG_log("Sending one or more authcerts");
 	}
 }
+/*
+ * Reply messages are built in this nasty evil global buffer.
+ *
+ * Only one packet can be built at a time.  That should be ok as
+ * packets are only built on the main thread and code and a packet is
+ * created using a single operation.
+ *
+ * In the good old days code would partially construct a packet,
+ * wonder off to do crypto and process other packets, and then assume
+ * things could be picked up where they were left off.  Code to make
+ * that work (saving restoring the buffer, re-initializing the buffer
+ * in strange places, ....) has all been removed.
+ *
+ * Something else that should go is global access to REPLY_STREAM.
+ * Instead all code should use open_reply_stream() and a reference
+ * with only local scope.  This should reduce the odds of code
+ * meddling in reply_stream on the sly.
+ *
+ * Another possibility is to move the buffer onto the stack.  However,
+ * the PBS is 64K and that isn't so good for small machines.  Then
+ * again the send.[hc] and demux[hc] code both allocate 64K stack
+ * buffers already.  Oops.
+ */
+
+pb_stream reply_stream;

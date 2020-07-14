@@ -648,7 +648,7 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 bool emit_v2KE(chunk_t *g, const struct dh_desc *group,
 	       pb_stream *outs)
 {
-	if (impair.ke_payload == SEND_OMIT) {
+	if (impair.ke_payload == IMPAIR_EMIT_OMIT) {
 		libreswan_log("IMPAIR: omitting KE payload");
 		return true;
 	}
@@ -662,14 +662,14 @@ bool emit_v2KE(chunk_t *g, const struct dh_desc *group,
 	if (!out_struct(&v2ke, &ikev2_ke_desc, outs, &kepbs))
 		return FALSE;
 
-	if (impair.ke_payload >= SEND_ROOF) {
-		uint8_t byte = impair.ke_payload - SEND_ROOF;
+	if (impair.ke_payload >= IMPAIR_EMIT_ROOF) {
+		uint8_t byte = impair.ke_payload - IMPAIR_EMIT_ROOF;
 		libreswan_log("IMPAIR: sending bogus KE (g^x) == %u value to break DH calculations",
 			      byte);
 		/* Only used to test sending/receiving bogus g^x */
 		if (!out_repeated_byte(byte, g->len, &kepbs, "ikev2 impair KE (g^x) == 0"))
 			return FALSE;
-	} else if (impair.ke_payload == SEND_EMPTY) {
+	} else if (impair.ke_payload == IMPAIR_EMIT_EMPTY) {
 		libreswan_log("IMPAIR: sending an empty KE value");
 		if (!out_zero(0, &kepbs, "ikev2 impair KE (g^x) == empty"))
 			return FALSE;
@@ -708,8 +708,9 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	struct connection *c = ike->sa.st_connection;
 
 	/* set up reply */
-	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		 "reply packet");
+	struct pbs_out reply_stream = open_pbs_out("reply packet",
+						   reply_buffer, sizeof(reply_buffer),
+						   ike->sa.st_logger);
 
 	if (impair.send_bogus_dcookie) {
 		/* add or mangle a dcookie so what we will send is bogus */
@@ -810,14 +811,6 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	/* Send NAT-T Notify payloads */
 	if (!ikev2_out_nat_v2n(&rbody, &ike->sa, &zero_ike_spi/*responder unknown*/))
 		return false;
-
-	/* something the other end won't like */
-
-	if (impair.add_unknown_payload_to_sa_init) {
-		if (!emit_v2UNKNOWN("IKE_SA_INIT request", &rbody)) {
-			return false;
-		}
-	}
 
 	/* From here on, only payloads left are Vendor IDs */
 	if (c->send_vendorid) {
@@ -949,11 +942,6 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 		return STF_FATAL;
 	}
 
-	if (!decode_v2N_ike_sa_init_request(md)) {
-		send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);
-		return STF_FATAL;
-	}
-
 	/* extract results */
 	ike->sa.st_seen_fragmentation_supported = md->pbs[PBS_v2N_IKEV2_FRAGMENTATION_SUPPORTED] != NULL;
 	ike->sa.st_seen_ppk = md->pbs[PBS_v2N_USE_PPK] != NULL;
@@ -1066,8 +1054,9 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 							"saved first received packet");
 
 	/* make sure HDR is at start of a clean buffer */
-	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		     "reply packet");
+	struct pbs_out reply_stream = open_pbs_out("reply packet",
+						   reply_buffer, sizeof(reply_buffer),
+						   ike->sa.st_logger);
 
 	/* HDR out */
 	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st, HERE),
@@ -1172,12 +1161,6 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	}
 
 	/* something the other end won't like */
-
-	if (impair.add_unknown_payload_to_sa_init) {
-		if (!emit_v2UNKNOWN("IKE_SA_INIT reply", &rbody)) {
-			return STF_INTERNAL_ERROR;
-		}
-	}
 
 	/* send CERTREQ  */
 	if (send_certreq) {
@@ -1487,10 +1470,6 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 	if (c->newest_ipsec_sa > st->st_serialno) {
 		libreswan_log("state superseded by #%lu try=%lu, drop this negotiation",
 			      c->newest_ipsec_sa, st->st_try);
-		return STF_FATAL;
-	}
-
-	if (!decode_v2N_ike_sa_init_response(md)) {
 		return STF_FATAL;
 	}
 
@@ -2094,8 +2073,9 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	/* beginning of data going out */
 
 	/* make sure HDR is at start of a clean buffer */
-	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		 "reply packet");
+	struct pbs_out reply_stream = open_pbs_out("reply packet",
+						   reply_buffer, sizeof(reply_buffer),
+						   ike->sa.st_logger);
 
 	/* HDR out */
 
@@ -2104,12 +2084,6 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 					  ISAKMP_v2_IKE_AUTH);
 	if (!pbs_ok(&rbody)) {
 		return STF_INTERNAL_ERROR;
-	}
-
-	if (impair.add_unknown_payload_to_auth) {
-		if (!emit_v2UNKNOWN("IKE_AUTH request", &rbody)) {
-			return STF_INTERNAL_ERROR;
-		}
 	}
 
 	/* insert an Encryption payload header (SK) */
@@ -2144,8 +2118,10 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 		close_output_pbs(&i_id_pbs);
 	}
 
-	if (impair.add_unknown_payload_to_auth_sk) {
-		if (!emit_v2UNKNOWN("IKE_AUTH's SK request", &sk.pbs)) {
+	if (impair.add_unknown_v2_payload_to_sk == ISAKMP_v2_IKE_AUTH) {
+		if (!emit_v2UNKNOWN("SK request",
+				    impair.add_unknown_v2_payload_to_sk,
+				    &sk.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -2665,11 +2641,6 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 	bool found_ppk = FALSE;
 	chunk_t null_auth = EMPTY_CHUNK;
 
-	if (!decode_v2N_ike_auth_request(md)) {
-		/* send unprotected notify? */
-		return STF_FATAL;
-	}
-
 	/*
 	 * The NOTIFY payloads we receive in the IKE_AUTH request are
 	 * either related to the IKE SA, or the Child SA. Here we only
@@ -3091,20 +3062,15 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 	}
 
 	/* make sure HDR is at start of a clean buffer */
-	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		 "reply packet");
+	struct pbs_out reply_stream = open_pbs_out("reply packet",
+						   reply_buffer, sizeof(reply_buffer),
+						   ike->sa.st_logger);
 
 	/* HDR out */
 
 	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st, HERE),
 					  md /* response */,
 					  ISAKMP_v2_IKE_AUTH);
-
-	if (impair.add_unknown_payload_to_auth) {
-		if (!emit_v2UNKNOWN("IKE_AUTH reply", &rbody)) {
-			return STF_INTERNAL_ERROR;
-		}
-	}
 
 	/* decide to send CERT payload before we generate IDr */
 	bool send_cert = ikev2_send_cert_decision(st);
@@ -3116,8 +3082,10 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (impair.add_unknown_payload_to_auth_sk) {
-		if (!emit_v2UNKNOWN("IKE_AUTH's SK reply", &sk.pbs)) {
+	if (impair.add_unknown_v2_payload_to_sk == ISAKMP_v2_IKE_AUTH) {
+		if (!emit_v2UNKNOWN("SK reply",
+				    impair.add_unknown_v2_payload_to_sk,
+				    &sk.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -3450,8 +3418,26 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 	if (md->hdr.isa_xchg != ISAKMP_v2_CREATE_CHILD_SA)
 		RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(ike, child, md, TRUE));
 
-	/* examine notification payloads for Child SA properties */
-	if (!decode_v2N_ike_auth_child(md)) {
+	/*
+	 * examine notification payloads for Child SA errors
+	 * (presumably any error reaching this point is for the
+	 * child?).
+	 *
+	 * https://tools.ietf.org/html/rfc7296#section-3.10.1
+	 *
+	 *   Types in the range 0 - 16383 are intended for reporting
+	 *   errors.  An implementation receiving a Notify payload
+	 *   with one of these types that it does not recognize in a
+	 *   response MUST assume that the corresponding request has
+	 *   failed entirely.  Unrecognized error types in a request
+	 *   and status types in a request or response MUST be
+	 *   ignored, and they should be logged.
+	 */
+	if (md->v2N_error != v2N_NOTHING_WRONG) {
+		struct esb_buf esb;
+		log_state(RC_LOG_SERIOUS, &child->sa, "received ERROR NOTIFY (%d): %s ",
+			  md->v2N_error,
+			  enum_showb(&ikev2_notify_names, md->v2N_error, &esb));
 		return STF_FATAL;
 	}
 
@@ -3556,11 +3542,6 @@ stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct 
 	struct state *st = &child->sa;
 	struct state *pst = &ike->sa;
 
-	/* Process NOTIFY payloads related to IKE SA */
-	if (!decode_v2N_ike_auth_response(md)) {
-		LOG_PEXPECT("decode notify failed, what should happen next");
-		return STF_FATAL;
-	}
 	if (md->pbs[PBS_v2N_MOBIKE_SUPPORTED] != NULL) {
 		dbg("received v2N_MOBIKE_SUPPORTED %s",
 		    pst->st_sent_mobike ? "and sent" : "while it did not sent");
@@ -4789,7 +4770,9 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 
 	ikev2_log_parentSA(&child->sa);
 
-	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer), "reply packet");
+	struct pbs_out reply_stream = open_pbs_out("reply packet",
+						   reply_buffer, sizeof(reply_buffer),
+						   child->sa.st_logger);
 
 	/* HDR out Start assembling respone message */
 
@@ -5188,10 +5171,10 @@ static stf_status add_mobike_response_payloads(
  */
 
 stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
-						 struct child_sa *child,
+						 struct child_sa *null_child,
 						 struct msg_digest *md)
 {
-	pexpect(child == NULL);
+	pexpect(null_child == NULL);
 	int ndp = 0;	/* number Delete payloads for IPsec protocols */
 	bool del_ike = false;	/* any IKE SA Deletions? */
 	bool seen_and_parsed_redirect = FALSE;
@@ -5318,6 +5301,7 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 	 * screwed up.
 	 */
 
+	struct pbs_out reply_stream;
 	pb_stream rbody;
 	v2SK_payload_t sk;
 	zero(&rbody);
@@ -5325,9 +5309,10 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 
 	if (responding) {
 		/* make sure HDR is at start of a clean buffer */
-		init_out_pbs(&reply_stream, reply_buffer,
-			 sizeof(reply_buffer),
-			 "information exchange reply packet");
+		reply_stream = open_pbs_out("information exchange reply packet",
+					    reply_buffer, sizeof(reply_buffer),
+					    ike->sa.st_logger);
+
 
 		/* authenticated decrypted response - It's alive, alive! */
 		dbg("Received an INFORMATIONAL response, updating st_last_liveness, no pending_liveness");

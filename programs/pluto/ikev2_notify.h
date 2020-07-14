@@ -28,11 +28,4 @@ void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
 
 enum v2_pbs v2_notification_to_v2_pbs(v2_notification_t);
 
-bool decode_v2N_ike_sa_init_request(struct msg_digest *md);
-bool decode_v2N_ike_sa_init_response(struct msg_digest *md);
-
-bool decode_v2N_ike_auth_request(struct msg_digest *md);
-bool decode_v2N_ike_auth_response(struct msg_digest *md);
-bool decode_v2N_ike_auth_child(struct msg_digest *md);
-
 #endif

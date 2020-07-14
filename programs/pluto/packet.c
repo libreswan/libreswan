@@ -1709,11 +1709,13 @@ void init_out_pbs(pb_stream *pbs, uint8_t *start, size_t len, const char *name)
 	memset(start, 0xFA, len);	/* value likely to be unpleasant */
 }
 
-pb_stream open_out_pbs(const char *name, uint8_t *buffer, size_t sizeof_buffer)
+struct pbs_out open_pbs_out(const char *name, uint8_t *buffer, size_t sizeof_buffer,
+			    struct logger *logger)
 {
-	pb_stream out_pbs;
+	struct pbs_out out_pbs;
 	init_out_pbs(&out_pbs, buffer, sizeof_buffer, name);
-	dbg("Opening output PBS %s", name);
+	out_pbs.out_logger = logger;
+	dbg("opening output PBS %s", name);
 	return out_pbs;
 }
 
@@ -2406,7 +2408,7 @@ static void update_next_payload_chain(pb_stream *outs,
 
 bool pbs_out_struct(struct pbs_out *outs,
 		    const void *struct_ptr, size_t struct_size, struct_desc *sd,
-		    struct pbs_out *obj_pbs, struct logger *logger)
+		    struct pbs_out *obj_pbs)
 {
 	err_t ugh = NULL;
 	const u_int8_t *inp = struct_ptr;
@@ -2427,10 +2429,11 @@ bool pbs_out_struct(struct pbs_out *outs,
 		uint32_t last_enum = 0;
 
 		/* new child stream for portion of payload after this struct */
-		pb_stream obj = {
+		struct pbs_out obj = {
 			.container = outs,
 			.desc = sd,
 			.name = sd->name,
+			.out_logger = outs->out_logger,
 
 			/* until a length field is discovered */
 			/* .lenfld = NULL, */
@@ -2466,7 +2469,7 @@ bool pbs_out_struct(struct pbs_out *outs,
 				uint8_t byte;
 				if (impair.send_nonzero_reserved) {
 					byte = ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
-					log_message(RC_LOG, logger, "IMPAIR: setting zero/ignore field to 0x%02x", byte);
+					log_pbs_out(RC_LOG, outs, "IMPAIR: setting zero/ignore field to 0x%02x", byte);
 				} else {
 					byte = 0;
 				}
@@ -2559,7 +2562,7 @@ bool pbs_out_struct(struct pbs_out *outs,
 								n & ISAKMP_ATTR_AF_MASK,
 								last_enum, n);
 						if (impair.emitting) {
-							log_message(RC_LOG, logger, "IMPAIR: emitting %s", ugh);
+							log_pbs_out(RC_LOG, outs, "IMPAIR: emitting %s", ugh);
 							ugh = NULL;
 						}
 					}
@@ -2638,16 +2641,8 @@ bool pbs_out_struct(struct pbs_out *outs,
 	}
 
 	/* some failure got us here: report it */
-	log_message(RC_LOG_SERIOUS, logger, "%s", ugh); /* ??? serious, but errno not relevant */
+	log_pbs_out(RC_LOG_SERIOUS, outs, "%s", ugh); /* ??? serious, but errno not relevant */
 	return FALSE;
-}
-
-bool out_struct(const void *struct_ptr, struct_desc *sd,
-		struct pbs_out *outs, struct pbs_out *obj_pbs)
-{
-	struct logger logger = cur_logger();
-	return pbs_out_struct(outs, struct_ptr, 0/*unknown*/, sd,
-			      obj_pbs, &logger);
 }
 
 bool ikev1_out_generic(struct_desc *sd,
@@ -2757,18 +2752,6 @@ bool out_zero(size_t len, pb_stream *outs, const char *name)
 	}
 }
 
-pb_stream open_output_struct_pbs(pb_stream *outs, const void *struct_ptr,
-				 struct_desc *sd)
-{
-	pb_stream obj_pbs;
-	if (out_struct(struct_ptr, sd, outs, &obj_pbs)) {
-		return obj_pbs;
-	} else {
-		return empty_pbs;
-	}
-}
-
-
 /*
  * Reply messages are built in this nasty evil global buffer.
  *
@@ -2793,7 +2776,6 @@ pb_stream open_output_struct_pbs(pb_stream *outs, const void *struct_ptr,
  * buffers already.  Oops.
  */
 
-pb_stream reply_stream;
 uint8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
 
 /*
@@ -2803,7 +2785,7 @@ uint8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
  * the last call's setting of the length wins.
  */
 
-void close_output_pbs(pb_stream *pbs)
+void close_output_pbs(struct pbs_out *pbs)
 {
 	if (pbs->lenfld != NULL) {
 		uint32_t len = pbs_offset(pbs);
@@ -2828,6 +2810,8 @@ void close_output_pbs(pb_stream *pbs)
 
 	if (pbs->container != NULL)
 		pbs->container->cur = pbs->cur; /* pass space utilization up */
+	/* don't log against a closed pbs */
+	pbs->out_logger = NULL;
 }
 
 bool pbs_in_address(ip_address *address, const struct ip_info *ipv,
@@ -2863,4 +2847,15 @@ bool pbs_out_address(const ip_address *address, struct pbs_out *out_pbs, const c
 {
 	shunk_t as = address_as_shunk(address);
 	return out_raw(as.ptr, as.len, out_pbs, what);
+}
+
+void log_pbs_out(lset_t rc_flags, struct pbs_out *outs, const char *message, ...)
+{
+	va_list ap;
+	va_start(ap, message);
+	struct logger logger = (pexpect(outs != NULL) && outs->out_logger != NULL
+				? *outs->out_logger
+				: cur_logger());
+	log_va_list(rc_flags, &logger, message, ap);
+	va_end(ap);
 }

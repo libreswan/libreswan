@@ -57,12 +57,12 @@ struct v1_hash_fixup {
 	const uint8_t *body;
 	msgid_t msgid;
 	const char *what;
-	enum send_impairment impair;
+	enum impair_emit impair;
 	enum v1_hash_type hash_type;
 };
 
 bool emit_v1_HASH(enum v1_hash_type type, const char *what,
-		  enum exchange_impairment exchange, struct state *st,
+		  enum impair_v1_exchange exchange, struct state *st,
 		  struct v1_hash_fixup *hash_fixup, pb_stream *out_pbs);
 
 void fixup_v1_HASH(struct state *st, const struct v1_hash_fixup *data,
