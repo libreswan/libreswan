@@ -45,9 +45,8 @@ static void encrypt(const char *name, chunk_t out, chunk_t in,
 					in.ptr, in.len);
 	if (status != SECSuccess) {
 		LSWLOG_PASSERT(buf) {
-			lswlogf(buf, "encryption %s failed: ",
-				name);
-			lswlog_nss_error(buf);
+			jam(buf, "encryption %s failed: ", name);
+			jam_nss_error(buf);
 		}
 	}
 }

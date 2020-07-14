@@ -35,8 +35,8 @@ static PK11SymKey *ephemeral_symkey(void)
 						      lsw_return_nss_password_file_info());
 		if (slot == NULL) {
 			LSWLOG_RC(RC_LOG_SERIOUS, buf) {
-				lswlogs(buf, "NSS: ephemeral slot error");
-				lswlog_nss_error(buf);
+				jam_string(buf, "NSS: ephemeral slot error");
+				jam_nss_error(buf);
 			}
 			return NULL;
 		}
@@ -98,7 +98,7 @@ void jam_symkey(jambuf_t *buf, const char *name, PK11SymKey *key)
 	} else {
 		jam(buf, "%s-key@%p (%zd-bytes, ",
 		    name, key, sizeof_symkey(key));
-		lswlog_nss_ckm(buf, PK11_GetMechanism(key));
+		jam_nss_ckm(buf, PK11_GetMechanism(key));
 		jam(buf, ")");
 	}
 }
@@ -130,17 +130,17 @@ PK11SymKey *crypt_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem
 {
 #define DBG_DERIVE(LOGGER)						\
 	LOGGER(buf) {							\
-		lswlog_nss_ckm(buf, derive);				\
-		lswlogs(buf, ":");					\
+		jam_nss_ckm(buf, derive);				\
+		jam_string(buf, ":");					\
 	}								\
 	LOGGER(buf) {							\
-		lswlogf(buf, SPACES"target: ");				\
-		lswlog_nss_ckm(buf, target_mechanism);			\
+		jam_string(buf, SPACES"target: ");			\
+		jam_nss_ckm(buf, target_mechanism);			\
 	}								\
 	if (flags != 0) {						\
 		LOGGER(buf) {						\
-			lswlogs(buf, SPACES"flags: ");			\
-			lswlog_nss_ckf(buf, flags);			\
+			jam_string(buf, SPACES"flags: ");			\
+			jam_nss_ckf(buf, flags);			\
 		}							\
 	}								\
 	if (key_size != 0) {						\
@@ -150,13 +150,13 @@ PK11SymKey *crypt_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem
 		}							\
 	}								\
 	LOGGER(buf) {							\
-		jam(buf, SPACES"base: ");				\
+		jam_string(buf, SPACES"base: ");			\
 		jam_symkey(buf, "base", base_key);			\
 	}								\
 	if (operation != CKA_DERIVE) {					\
 		LOGGER(buf) {						\
-			lswlogf(buf, SPACES"operation: ");		\
-			lswlog_nss_cka(buf, operation);			\
+			jam_string(buf, SPACES"operation: ");		\
+			jam_nss_cka(buf, operation);			\
 		}							\
 	}								\
 	if (params != NULL) {						\
@@ -176,15 +176,15 @@ PK11SymKey *crypt_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem
 
 	if (target_key == NULL) {
 		LSWLOG_PEXPECT_WHERE(where, buf) {
-			lswlogs(buf, "NSS: ");
-			lswlog_nss_ckm(buf, derive);
-			lswlogs(buf, " failed");
-			lswlog_nss_error(buf);
+			jam_string(buf, "NSS: ");
+			jam_nss_ckm(buf, derive);
+			jam_string(buf, " failed");
+			jam_nss_error(buf);
 		}
 		DBG_DERIVE(LSWLOG);
 	} else if (DBGP(DBG_CRYPT)) {
 		LSWLOG_DEBUG(buf) {
-			jam(buf, SPACES"result: newref ");
+			jam_string(buf, SPACES"result: newref ");
 			jam_symkey(buf, target_name, target_key);
 			jam(buf, PRI_WHERE, pri_where(where));
 		}
@@ -345,8 +345,8 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey)
 	}
 	if (DBGP(DBG_CRYPT)) {
 		LSWLOG_DEBUG(buf) {
-			lswlogs(buf, "wrapper: ");
-			lswlog_nss_secitem(buf, &wrapped_key);
+			jam_string(buf, "wrapper: ");
+			jam_nss_secitem(buf, &wrapped_key);
 		}
 	}
 

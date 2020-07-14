@@ -21,10 +21,10 @@
 #include "lswlog.h"
 #include "lswnss.h"
 
-size_t lswlog_nss_ckm(struct lswlog *buf, CK_MECHANISM_TYPE mechanism)
+size_t jam_nss_ckm(struct lswlog *buf, CK_MECHANISM_TYPE mechanism)
 {
 	switch (mechanism) {
-#define CASE(T) case T: return lswlogs(buf, #T + strlen("CKM_"))
+#define CASE(T) case T: return jam_string(buf, #T + strlen("CKM_"))
 
 		CASE(CKM_CONCATENATE_BASE_AND_DATA);
 		CASE(CKM_CONCATENATE_BASE_AND_KEY);
@@ -87,6 +87,6 @@ size_t lswlog_nss_ckm(struct lswlog *buf, CK_MECHANISM_TYPE mechanism)
 #undef CASE
 
 	default:
-		return lswlogf(buf, "CKM_%08lx", (long)mechanism);
+		return jam(buf, "CKM_%08lx", (long)mechanism);
 	}
 }

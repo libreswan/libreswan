@@ -65,8 +65,8 @@ struct crl_fetch_request *crl_fetch_request(SECItem *issuer_dn,
 	CERTCertificate *ca = CERT_FindCertByName(handle, issuer_dn);
 	if (ca == NULL) {
 		LSWLOG(buf) {
-			lswlogs(buf, "NSS error finding CA to add to fetch request: ");
-			lswlog_nss_error(buf);
+			jam_string(buf, "NSS error finding CA to add to fetch request: ");
+			jam_nss_error(buf);
 		}
 		return next;
 	}

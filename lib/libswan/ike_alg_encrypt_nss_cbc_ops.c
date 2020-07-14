@@ -56,9 +56,9 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 						symkey, secparam);
 	if (enccontext == NULL) {
 		LSWLOG_PASSERT(buf) {
-			lswlogf(buf, "NSS: %s: PKCS11 context creation failure",
-				alg->common.fqn);
-			lswlog_nss_error(buf);
+			jam(buf, "NSS: %s: PKCS11 context creation failure",
+			    alg->common.fqn);
+			jam_nss_error(buf);
 		}
 	}
 
@@ -70,9 +70,8 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 				     in_buf, in_buf_len);
 	if (rv != SECSuccess) {
 		LSWLOG_PASSERT(buf) {
-			lswlogf(buf, "NSS: %s: PKCS11 operation failure",
-				alg->common.fqn);
-			lswlog_nss_error(buf);
+			jam(buf, "NSS: %s: PKCS11 operation failure", alg->common.fqn);
+			jam_nss_error(buf);
 		}
 	}
 

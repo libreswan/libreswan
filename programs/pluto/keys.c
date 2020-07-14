@@ -246,8 +246,8 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 		}
 
 		LSWDBGP(DBG_CRYPT, buf) {
-			lswlogs(buf, "NSS RSA verify: decrypted sig: ");
-			lswlog_nss_secitem(buf, &decrypted_signature);
+			jam_string(buf, "NSS RSA verify: decrypted sig: ");
+			jam_nss_secitem(buf, &decrypted_signature);
 		}
 
 		/* hash at end? See above for length check */
@@ -881,8 +881,8 @@ static bool rsa_pubkey_ckaid_matches(struct pubkey *pubkey, char *buf, size_t bu
 		return FALSE;
 	}
 	LSWDBGP(DBG_BASE, buf) {
-		lswlogs(buf, "comparing ckaid with: ");
-		lswlog_nss_secitem(buf, pubkey_ckaid);
+		jam(buf, "comparing ckaid with: ");
+		jam_nss_secitem(buf, pubkey_ckaid);
 	}
 	bool eq = pubkey_ckaid->len == buflen &&
 		  memcmp(pubkey_ckaid->data, buf, buflen) == 0;

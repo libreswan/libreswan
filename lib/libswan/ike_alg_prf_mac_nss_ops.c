@@ -53,10 +53,10 @@ static struct prf_context *init(const struct prf_desc *prf_desc,
 							  key, &ignore);
 	if (context == NULL) {
 		LSWLOG(buf) {
-			lswlogf(buf, "NSS: %s create %s context from key %s(%p) failed",
-				name, prf_desc->common.fqn,
-				key_name, key);
-			lswlog_nss_error(buf);
+			jam(buf, "NSS: %s create %s context from key %s(%p) failed",
+			    name, prf_desc->common.fqn,
+			    key_name, key);
+			jam_nss_error(buf);
 		}
 		return NULL;
 	}

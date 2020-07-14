@@ -21,15 +21,15 @@
 #include "lswlog.h"
 #include "lswnss.h"
 
-size_t lswlog_nss_ckf(struct lswlog *buf, CK_FLAGS flags)
+size_t jam_nss_ckf(struct lswlog *buf, CK_FLAGS flags)
 {
 	const char *sep = "";
 	size_t size = 0;
 	/* nothing smart about this */
 #define FLAG(F) \
 	if (flags & F) {					\
-		size += lswlogs(buf, sep);			\
-		size += lswlogs(buf, #F + strlen("CKF_"));	\
+		size += jam_string(buf, sep);			\
+		size += jam_string(buf, #F + strlen("CKF_"));	\
 		sep = "+";					\
 		flags ^= F;					\
 	}
@@ -37,7 +37,7 @@ size_t lswlog_nss_ckf(struct lswlog *buf, CK_FLAGS flags)
 	FLAG(CKF_ENCRYPT);
 	FLAG(CKF_DECRYPT);
 	if (flags != 0) {
-		size += lswlogf(buf, "%sCKF_%08lx", sep, (long) flags);
+		size += jam(buf, "%sCKF_%08lx", sep, (long) flags);
 	}
 	return size;
 }

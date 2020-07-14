@@ -55,8 +55,8 @@ static void nss_ecp_calc_secret(const struct dh_desc *group,
 			     group->nss_oid, group->common.fqn);
 	}
 	LSWDBGP(DBG_CRYPT, buf) {
-		lswlogs(buf, "pk11_data->oid: ");
-		lswlog_nss_secitem(buf, &pk11_data->oid);
+		jam_string(buf, "pk11_data->oid: ");
+		jam_nss_secitem(buf, &pk11_data->oid);
 	}
 
 	/*
@@ -71,8 +71,8 @@ static void nss_ecp_calc_secret(const struct dh_desc *group,
 	pk11_param->data[1] = pk11_data->oid.len;
 	memcpy(pk11_param->data + 2, pk11_data->oid.data, pk11_data->oid.len);
 	LSWDBGP(DBG_CRYPT, buf) {
-		lswlogs(buf, "pk11_param");
-		lswlog_nss_secitem(buf, pk11_param);
+		jam_string(buf, "pk11_param");
+		jam_nss_secitem(buf, pk11_param);
 	}
 
 	*privk = SECKEY_CreateECPrivateKey(pk11_param, pubk,
@@ -82,18 +82,18 @@ static void nss_ecp_calc_secret(const struct dh_desc *group,
 
 	if (*pubk == NULL || *privk == NULL) {
 		LSWLOG_PASSERT(buf) {
-			lswlogs(buf, "NSS: DH ECP private key creation failed");
-			lswlog_nss_error(buf);
+			jam_string(buf, "NSS: DH ECP private key creation failed");
+			jam_nss_error(buf);
 		}
 	}
 
 	LSWDBGP(DBG_CRYPT, buf) {
-		lswlogf(buf, "public keyType %d size %d publicValue@%p %d bytes public key: ",
-			(*pubk)->keyType,
-			(*pubk)->u.ec.size,
-			(*pubk)->u.ec.publicValue.data,
-			(*pubk)->u.ec.publicValue.len);
-		lswlog_nss_secitem(buf, &(*pubk)->u.ec.publicValue);
+		jam(buf, "public keyType %d size %d publicValue@%p %d bytes public key: ",
+		    (*pubk)->keyType,
+		    (*pubk)->u.ec.size,
+		    (*pubk)->u.ec.publicValue.data,
+		    (*pubk)->u.ec.publicValue.len);
+		jam_nss_secitem(buf, &(*pubk)->u.ec.publicValue);
 	}
 
 #ifdef USE_DH31

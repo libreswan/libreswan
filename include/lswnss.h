@@ -54,13 +54,13 @@ char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg);
 PK11SlotInfo *lsw_nss_get_authenticated_slot(lsw_nss_buf_t err);
 
 /* _(SECERR: N (0xX): <error-string>) */
-size_t lswlog_nss_error(struct lswlog *log);
 void log_nss_error(lset_t rc_log, struct logger *logger, PRErrorCode pr_error,
 		   const char *message, ...) PRINTF_LIKE(4);
 
-size_t lswlog_nss_ckm(struct lswlog *buf, CK_MECHANISM_TYPE mechanism);
-size_t lswlog_nss_ckf(struct lswlog *buf, CK_FLAGS flags);
-size_t lswlog_nss_cka(struct lswlog *buf, CK_ATTRIBUTE_TYPE attribute);
-size_t lswlog_nss_secitem(struct lswlog *buf, const SECItem *secitem);
+size_t jam_nss_error(jambuf_t *log);
+size_t jam_nss_ckm(jambuf_t *buf, CK_MECHANISM_TYPE mechanism);
+size_t jam_nss_ckf(jambuf_t *buf, CK_FLAGS flags);
+size_t jam_nss_cka(jambuf_t *buf, CK_ATTRIBUTE_TYPE attribute);
+size_t jam_nss_secitem(jambuf_t *buf, const SECItem *secitem);
 
 #endif

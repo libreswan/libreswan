@@ -59,7 +59,7 @@ static bool prepare_nss_import(PK11SlotInfo **slot)
 	if (*slot == NULL) {
 		LSWDBGP(DBG_BASE, buf) {
 			jam(buf, "NSS: cert import calling PK11_GetInternalKeySlot() failed: ");
-			lswlog_nss_error(buf);
+			jam_nss_error(buf);
 		}
 		return FALSE;
 	}
@@ -394,8 +394,8 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 							PR_TRUE /* copyDER */);
 	if (cert == NULL) {
 		LSWDBGP(DBG_BASE, buf) {
-			lswlogs(buf, "NSS: decoding certs using CERT_ImportCerts() failed: ");
-			lswlog_nss_error(buf);
+			jam_string(buf, "NSS: decoding certs using CERT_ImportCerts() failed: ");
+			jam_nss_error(buf);
 		}
 		return;
 	}

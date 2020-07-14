@@ -80,8 +80,8 @@ const struct keyword *keyword_by_sname(const struct keywords *keywords,
  * logging short-cuts
  */
 
-size_t lswlog_keyname(struct lswlog *buf, const struct keywords *keywords, unsigned value);
-size_t lswlog_keysname(struct lswlog *buf, const struct keywords *keywords, unsigned value);
+size_t jam_keyword_name(struct lswlog *buf, const struct keywords *keywords, unsigned value);
+size_t jam_keyword_sname(struct lswlog *buf, const struct keywords *keywords, unsigned value);
 
 
 /*

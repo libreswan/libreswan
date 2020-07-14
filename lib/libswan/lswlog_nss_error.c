@@ -28,18 +28,18 @@
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=172051
  */
 
-size_t lswlog_nss_error(struct lswlog *buf)
+size_t jam_nss_error(struct lswlog *buf)
 {
 	size_t size = 0;
 	int error = PR_GetError(); /* at least 32-bits */
 	size += lswlogs(buf, " (");
 	/* the number */
 	if (IS_SEC_ERROR(error)) {
-		size += lswlogf(buf, "SECERR: %d (0x%x): ",
-				error - SEC_ERROR_BASE,
-				error - SEC_ERROR_BASE);
+		size += jam(buf, "SECERR: %d (0x%x): ",
+			    error - SEC_ERROR_BASE,
+			    error - SEC_ERROR_BASE);
 	} else {
-		size += lswlogf(buf, "NSS: %d (0x%x): ", error, error);
+		size += jam(buf, "NSS: %d (0x%x): ", error, error);
 	}
 
 	/*
@@ -49,7 +49,7 @@ size_t lswlog_nss_error(struct lswlog *buf)
 	 */
 	const char *text = PR_ErrorToString(error, PR_LANGUAGE_I_DEFAULT);
 	if (text != NULL) {
-		size += lswlogs(buf, text);
+		size += jam_string(buf, text);
 	} else {
 		/*
 		 * Try NSPR directly, is this redundant?  Sometimes
@@ -67,8 +67,8 @@ size_t lswlog_nss_error(struct lswlog *buf)
 		}
 	}
 	if (error == 0) {
-		size += lswlogs(buf, "; 0 indicates NSS lost the error code");
+		size += jam_string(buf, "; 0 indicates NSS lost the error code");
 	}
-	size += lswlogs(buf, ")");
+	size += jam_string(buf, ")");
 	return size;
 }

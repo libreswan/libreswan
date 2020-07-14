@@ -21,9 +21,9 @@
 #include "lswlog.h"
 #include "lswnss.h"
 
-static size_t lswlog_nss_secitemtype(struct lswlog *buf, SECItemType type)
+static size_t jam_nss_secitemtype(struct lswlog *buf, SECItemType type)
 {
-#define C(T) case T: return lswlogs(buf, #T)
+#define C(T) case T: return jam_string(buf, #T)
 	switch (type) {
 		C(siBuffer);
 		C(siClearDataBuffer);
@@ -42,17 +42,17 @@ static size_t lswlog_nss_secitemtype(struct lswlog *buf, SECItemType type)
 		C(siUTF8String);
 		C(siBMPString);
 	default:
-		return lswlogf(buf, "(SECItemType)%d", type);
+		return jam(buf, "(SECItemType)%d", type);
 	}
 }
 
-size_t lswlog_nss_secitem(struct lswlog *buf, const SECItem *secitem)
+size_t jam_nss_secitem(struct lswlog *buf, const SECItem *secitem)
 {
 	size_t size = 0;
 	if (secitem == NULL) {
-		size = lswlogs(buf, "(SECItem*)NULL");
+		size = jam_string(buf, "(SECItem*)NULL");
 	} else {
-		lswlog_nss_secitemtype(buf, secitem->type);
+		jam_nss_secitemtype(buf, secitem->type);
 		jam(buf, ": ");
 		jam_dump_bytes(buf, secitem->data, secitem->len);
 	}

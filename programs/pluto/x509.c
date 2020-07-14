@@ -311,8 +311,8 @@ generalName_t *gndp_from_nss_cert(CERTCertificate *cert)
 	if (CERT_FindCertExtension(cert, SEC_OID_X509_CRL_DIST_POINTS,
 						       &crlval) != SECSuccess) {
 		LSWDBGP(DBG_BASE, buf) {
-			jam(buf, "NSS: finding CRL distribution points using CERT_FindCertExtension() failed: ");
-			lswlog_nss_error(buf);
+			jam_string(buf, "NSS: finding CRL distribution points using CERT_FindCertExtension() failed: ");
+			jam_nss_error(buf);
 		}
 		return NULL;
 	}
@@ -322,7 +322,7 @@ generalName_t *gndp_from_nss_cert(CERTCertificate *cert)
 	if (dps == NULL) {
 		LSWDBGP(DBG_BASE, buf) {
 			jam(buf, "NSS: decoding CRL distribution points using CERT_DecodeCRLDistributionPoints() failed: ");
-			lswlog_nss_error(buf);
+			jam_nss_error(buf);
 		}
 		return NULL;
 	}
@@ -1196,7 +1196,7 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 				jam(buf, "NSS: locating CA cert \'");
 				jam_dn(buf, ca, jam_sanitized_bytes);
 				jam(buf, "\' for CERTREQ using CERT_FindCertByName() failed: ");
-				lswlog_nss_error(buf);
+				jam_nss_error(buf);
 			}
 		}
 	}
