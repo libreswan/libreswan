@@ -745,8 +745,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	struct ikev2_proposals *ike_proposals =
 		get_v2_ike_proposals(c, "IKE SA initiator emitting local proposals", ike->sa.st_logger);
 	if (!ikev2_emit_sa_proposals(&rbody, ike_proposals,
-				     (chunk_t*)NULL /* IKE - no CHILD SPI */,
-				     ike->sa.st_logger)) {
+				     (chunk_t*)NULL /* IKE - no CHILD SPI */)) {
 		return false;
 	}
 
@@ -1074,7 +1073,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 		 * part of the proposal.  Hence the NULL SPI.
 		 */
 		passert(st->st_accepted_ike_proposal != NULL);
-		if (!ikev2_emit_sa_proposal(&rbody, st->st_accepted_ike_proposal, NULL, ike->sa.st_logger)) {
+		if (!ikev2_emit_sa_proposal(&rbody, st->st_accepted_ike_proposal, NULL)) {
 			dbg("problem emitting accepted proposal");
 			return STF_INTERNAL_ERROR;
 		}
@@ -2248,8 +2247,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	struct ikev2_proposals *child_proposals =
 		get_v2_ike_auth_child_proposals(cc, "IKE SA initiator emitting ESP/AH proposals",
 						child->sa.st_logger);
-	if (!ikev2_emit_sa_proposals(&sk.pbs, child_proposals,
-				     &local_spi, ike->sa.st_logger)) {
+	if (!ikev2_emit_sa_proposals(&sk.pbs, child_proposals, &local_spi)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -3985,8 +3983,7 @@ static stf_status ikev2_child_add_ipsec_payloads(struct child_sa *child,
 	 * the state.
 	 */
 	passert(cc->v2_create_child_proposals != NULL);
-	if (!ikev2_emit_sa_proposals(outpbs, cc->v2_create_child_proposals,
-				     &local_spi, child->sa.st_logger))
+	if (!ikev2_emit_sa_proposals(outpbs, cc->v2_create_child_proposals, &local_spi))
 		return STF_INTERNAL_ERROR;
 
 	/*
@@ -4077,7 +4074,7 @@ static stf_status ikev2_child_add_ike_payloads(struct child_sa *child,
 
 		/* send selected v2 IKE SA */
 		if (!ikev2_emit_sa_proposal(outpbs, st->st_accepted_ike_proposal,
-					    &local_spi, child->sa.st_logger)) {
+					    &local_spi)) {
 			dbg("problem emitting accepted ike proposal in CREATE_CHILD_SA");
 			return STF_INTERNAL_ERROR;
 		}
@@ -4095,7 +4092,7 @@ static stf_status ikev2_child_add_ike_payloads(struct child_sa *child,
 
 		/* send v2 IKE SAs*/
 		if (!ikev2_emit_sa_proposals(outpbs, ike_proposals,
-					     &local_spi, child->sa.st_logger))  {
+					     &local_spi))  {
 			libreswan_log("outsa fail");
 			dbg("problem emitting connection ike proposals in CREATE_CHILD_SA");
 			return STF_INTERNAL_ERROR;

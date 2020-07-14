@@ -120,15 +120,13 @@ struct ikev2_proposals *get_v2_create_child_proposals(struct connection *c, cons
 						      const struct dh_desc *default_dh,
 						      struct logger *logger);
 
-bool ikev2_emit_sa_proposal(pb_stream *pbs,
+bool ikev2_emit_sa_proposal(struct pbs_out *pbs,
 			    const struct ikev2_proposal *proposal,
-			    const chunk_t *local_spi,
-			    struct logger *logger);
+			    const chunk_t *local_spi);
 
-bool ikev2_emit_sa_proposals(pb_stream *outs,
+bool ikev2_emit_sa_proposals(struct pbs_out *outs,
 			     const struct ikev2_proposals *proposals,
-			     const chunk_t *local_spi,
-			     struct logger *logger);
+			     const chunk_t *local_spi);
 
 const struct dh_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals);
 

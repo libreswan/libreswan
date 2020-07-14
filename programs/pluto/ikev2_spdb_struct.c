@@ -65,9 +65,8 @@
  * IKEv1 it was the value that determined this).
  */
 
-static bool v2_out_attr_fixed(enum ikev2_trans_attr_type type,
-			      unsigned long val, pb_stream *pbs,
-			      struct logger *logger)
+static bool v2_out_attr_fixed(struct pbs_out *pbs, enum ikev2_trans_attr_type type,
+			      unsigned long val)
 {
 	pexpect((val >> 16) == 0);
 	pexpect((type & ISAKMP_ATTR_AF_MASK) == 0);
@@ -77,14 +76,15 @@ static bool v2_out_attr_fixed(enum ikev2_trans_attr_type type,
 		.isatr_lv = val,
 	};
 	if (!out_struct(&attr, &ikev2_trans_attr_desc, pbs, NULL)) {
-		log_message(RC_LOG, logger, "%s() for attribute %d failed", __func__, type);
+		log_pbs_out(RC_LOG, pbs, "%s() for attribute %d failed", __func__, type);
 		return false;
 	}
 	return true;
 }
 
-static bool v2_out_attr_variable(enum ikev2_trans_attr_type type,
-				 chunk_t chunk, pb_stream *pbs)
+static bool v2_out_attr_variable(struct pbs_out *pbs,
+				 enum ikev2_trans_attr_type type,
+				 chunk_t chunk)
 {
 	pexpect((type & ISAKMP_ATTR_AF_MASK) == 0);
 	/* clear the short-form attribute format bit */
@@ -1232,8 +1232,7 @@ static bool emit_transform_header(struct pbs_out *proposal_pbs,
 				  enum ikev2_trans_type transform_type,
 				  unsigned transform_id,
 				  bool is_last_transform,
-				  struct pbs_out *transform_pbs,
-				  struct logger *logger)
+				  struct pbs_out *transform_pbs)
 {
 	struct ikev2_trans trans = {
 		.isat_type = transform_type,
@@ -1242,7 +1241,7 @@ static bool emit_transform_header(struct pbs_out *proposal_pbs,
 	};
 	if (!pbs_out_struct(proposal_pbs, &trans, sizeof(trans),
 			    &ikev2_trans_desc, transform_pbs)) {
-		log_message(RC_LOG, logger, "out_struct() of transform failed");
+		log_pbs_out(RC_LOG, proposal_pbs, "out_struct() of transform failed");
 		return false;
 	}
 	return true;
@@ -1251,8 +1250,7 @@ static bool emit_transform_header(struct pbs_out *proposal_pbs,
 static bool emit_transform_attributes(struct pbs_out *transform_pbs,
 				      enum ikev2_sec_proto_id protoid,
 				      enum ikev2_trans_type transform_type,
-				      const struct ikev2_transform *transform,
-				      struct logger *logger)
+				      const struct ikev2_transform *transform)
 {
 	enum impair_emit impair_key_length_attribute =
 		(protoid == IKEv2_SEC_PROTO_IKE
@@ -1263,8 +1261,8 @@ static bool emit_transform_attributes(struct pbs_out *transform_pbs,
 		/* XXX: should be >= 0; so that '0' can be sent? */
 		/* XXX: screw key-lengths for other types? */
 		if (transform->attr_keylen > 0) {
-			if (!v2_out_attr_fixed(IKEv2_KEY_LENGTH, transform->attr_keylen,
-					       transform_pbs, logger)) {
+			if (!v2_out_attr_fixed(transform_pbs, IKEv2_KEY_LENGTH,
+					       transform->attr_keylen)) {
 				return false;
 			}
 		}
@@ -1274,20 +1272,23 @@ static bool emit_transform_attributes(struct pbs_out *transform_pbs,
 			PASSERT_FAIL("%s", "should have been handled");
 			break;
 		case IMPAIR_EMIT_EMPTY:
-			log_message(RC_LOG, logger, "IMPAIR: emitting variable-size key-length attribute with no key");
-			if (!v2_out_attr_variable(IKEv2_KEY_LENGTH, EMPTY_CHUNK, transform_pbs)) {
+			log_pbs_out(RC_LOG, transform_pbs,
+				    "IMPAIR: emitting variable-size key-length attribute with no key");
+			if (!v2_out_attr_variable(transform_pbs, IKEv2_KEY_LENGTH, EMPTY_CHUNK)) {
 				return false;
 			}
 			break;
 		case IMPAIR_EMIT_OMIT:
-			log_message(RC_LOG, logger, "IMPAIR: omitting fixed-size key-length attribute");
+			log_pbs_out(RC_LOG, transform_pbs,
+				    "IMPAIR: omitting fixed-size key-length attribute");
 			break;
 		case IMPAIR_EMIT_DUPLICATE:
-			log_message(RC_LOG, logger, "IMPAIR: duplicating key-length attribute");
+			log_pbs_out(RC_LOG, transform_pbs,
+				    "IMPAIR: duplicating key-length attribute");
 			for (unsigned dup = 0; dup < 2; dup++) {
 				/* regardless of value */
-				if (!v2_out_attr_fixed(IKEv2_KEY_LENGTH, transform->attr_keylen,
-						       transform_pbs, logger)) {
+				if (!v2_out_attr_fixed(transform_pbs, IKEv2_KEY_LENGTH,
+						       transform->attr_keylen)) {
 					return false;
 				}
 			}
@@ -1296,9 +1297,10 @@ static bool emit_transform_attributes(struct pbs_out *transform_pbs,
 		default:
 		{
 			uint16_t keylen = impair_key_length_attribute - IMPAIR_EMIT_ROOF; /* remove bias */
-			log_message(RC_LOG, logger, "IMPAIR: emitting fixed-length key-length attribute with %u key",
-				      keylen);
-			if (!v2_out_attr_fixed(IKEv2_KEY_LENGTH, keylen, transform_pbs, logger)) {
+			log_pbs_out(RC_LOG, transform_pbs,
+				    "IMPAIR: emitting fixed-length key-length attribute with %u key",
+				    keylen);
+			if (!v2_out_attr_fixed(transform_pbs, IKEv2_KEY_LENGTH, keylen)) {
 				return false;
 			}
 			break;
@@ -1312,17 +1314,16 @@ static bool emit_transform(struct pbs_out *proposal_pbs,
 			   enum ikev2_sec_proto_id protoid,
 			   enum ikev2_trans_type transform_type,
 			   bool last_transform,
-			   const struct ikev2_transform *transform,
-			   struct logger *logger)
+			   const struct ikev2_transform *transform)
 {
 	struct pbs_out transform_pbs;
 	if (!emit_transform_header(proposal_pbs, transform_type,
 				   transform->id, last_transform,
-				   &transform_pbs, logger)) {
+				   &transform_pbs)) {
 		return false;
 	}
 	if (!emit_transform_attributes(&transform_pbs, protoid,
-				       transform_type, transform, logger)) {
+				       transform_type, transform)) {
 		return false;
 	}
 	close_output_pbs(&transform_pbs); /* set len */
@@ -1412,7 +1413,7 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 				bool is_last_transform = trans_nr == nr_trans;
 				if (!emit_transform(proposal_pbs, proposal->protoid,
 						    transform_type, is_last_transform,
-						    transform, logger)) {
+						    transform)) {
 					return -1;
 				}
 			}
@@ -1437,7 +1438,7 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 				    transform_id);
 			if (!emit_transform_header(proposal_pbs, transform_type, transform_id,
 						   is_last_transform,
-						   NULL/*no nested PBS*/, logger)) {
+						   NULL/*no nested PBS*/)) {
 				return -1;
 			}
 		}
@@ -1446,16 +1447,16 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 	return trans_nr;
 }
 
-static bool emit_proposal(pb_stream *sa_pbs,
+static bool emit_proposal(struct pbs_out *sa_pbs,
 			  const struct ikev2_proposal *proposal,
 			  unsigned propnum,
 			  const chunk_t *local_spi,
 			  enum ikev2_last_proposal last_proposal,
-			  bool exclude_transform_none,
-			  struct logger *logger)
+			  bool exclude_transform_none)
 {
 	int numtrans = walk_transforms(NULL, -1, proposal, propnum,
-				       exclude_transform_none, logger);
+				       exclude_transform_none,
+				       sa_pbs->out_logger);
 	if (numtrans < 0) {
 		return false;
 	}
@@ -1481,7 +1482,7 @@ static bool emit_proposal(pb_stream *sa_pbs,
 	}
 
 	if (walk_transforms(&proposal_pbs, numtrans, proposal, propnum,
-			    exclude_transform_none, logger) < 0) {
+			    exclude_transform_none, sa_pbs->out_logger) < 0) {
 		return false;
 	}
 
@@ -1489,10 +1490,9 @@ static bool emit_proposal(pb_stream *sa_pbs,
 	return true;
 }
 
-bool ikev2_emit_sa_proposals(pb_stream *pbs,
+bool ikev2_emit_sa_proposals(struct pbs_out *pbs,
 			     const struct ikev2_proposals *proposals,
-			     const chunk_t *local_spi,
-			     struct logger *logger)
+			     const chunk_t *local_spi)
 {
 	dbg("Emitting ikev2_proposals ...");
 
@@ -1511,7 +1511,7 @@ bool ikev2_emit_sa_proposals(pb_stream *pbs,
 				   (propnum < proposals->roof - 1
 				    ? v2_PROPOSAL_NON_LAST
 				    : v2_PROPOSAL_LAST),
-				   true, logger)) {
+				   true)) {
 			return FALSE;
 		}
 	}
@@ -1522,8 +1522,7 @@ bool ikev2_emit_sa_proposals(pb_stream *pbs,
 
 bool ikev2_emit_sa_proposal(pb_stream *pbs,
 			    const struct ikev2_proposal *proposal,
-			    const chunk_t *local_spi,
-			    struct logger *logger)
+			    const chunk_t *local_spi)
 {
 	dbg("emitting ikev2_proposal ...");
 	passert(pbs != NULL);
@@ -1538,7 +1537,7 @@ bool ikev2_emit_sa_proposal(pb_stream *pbs,
 	}
 
 	if (!emit_proposal(&sa_pbs, proposal, proposal->propnum,
-			   local_spi, v2_PROPOSAL_LAST, false, logger)) {
+			   local_spi, v2_PROPOSAL_LAST, false)) {
 		return FALSE;
 	}
 
