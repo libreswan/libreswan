@@ -95,14 +95,18 @@ void ipsecdoi_clone_initiate(struct fd *whack_sock,
 		char tmpconnname[256];
 		snprintf(tmpconnname, sizeof(tmpconnname), "%s-%u", c->connalias, sa_clone_id);
 
-		dbg("initiate clone sa %s for cpu id %u/%u (starting 0)",  tmpconnname, sa_clone_id, c->sa_clones);
 		struct connection *cc = conn_by_name(tmpconnname, TRUE);
 		if (cc == NULL) {
 
 			libreswan_log("can not find clone %s in connection list", tmpconnname);
 		} else {
-			ipsecdoi_initiate(whack_sock, cc, cc->policy, 1,
+			if (cc->newest_ipsec_sa == SOS_NOBODY)  {
+				dbg("initiate clone sa %s for cpu id %u/%u (starting 0)",  tmpconnname, sa_clone_id, c->sa_clones);
+				ipsecdoi_initiate(whack_sock, cc, cc->policy, 1,
 					SOS_NOBODY, inception, uctx);
+			} else {
+				dbg("ignore acquire for clone %s for cpu id %u/%u (starting 0) newest_ipsec_sa #%lu",  tmpconnname, sa_clone_id, c->sa_clones, cc->newest_ipsec_sa);
+			}
 
 		}
 
