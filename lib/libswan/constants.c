@@ -2413,13 +2413,27 @@ const char *enum_enum_name(enum_enum_names *een, unsigned long table,
 const char *enum_enum_showb(enum_enum_names *een, unsigned long table,
 			    unsigned long val, struct esb_buf *b)
 {
-	const char *name = enum_enum_name(een, table, val);
-
-	if (name != NULL) {
-		return name;
+	enum_names *en = enum_enum_table(een, table);
+	if (en == NULL) {
+		/* assume the log context implies the table name */
+		snprintf(b->buf, sizeof(b->buf), "%lu??", val);
+		return b->buf;
 	}
-	snprintf(b->buf, sizeof(b->buf), "%lu??", val);
-	return b->buf;
+
+	return enum_showb(en, val, b);
+}
+
+const char *enum_enum_show_shortb(enum_enum_names *een, unsigned long table,
+				  unsigned long val, struct esb_buf *b)
+{
+	enum_names *en = enum_enum_table(een, table);
+	if (en == NULL) {
+		/* assume the log context implies the table name */
+		snprintf(b->buf, sizeof(b->buf), "%lu??", val);
+		return b->buf;
+	}
+
+	return enum_show_shortb(en, val, b);
 }
 
 size_t jam_enum_enum(struct lswlog *buf, enum_enum_names *een,

@@ -286,6 +286,8 @@ const char *enum_enum_name(enum_enum_names *e, unsigned long table,
 			   unsigned long val);
 const char *enum_enum_showb(enum_enum_names *e, unsigned long table,
 			    unsigned long val, struct esb_buf *buf);
+const char *enum_enum_show_shortb(enum_enum_names *e, unsigned long table,
+				  unsigned long val, struct esb_buf *buf);
 
 size_t jam_enum_enum(struct lswlog *log, enum_enum_names *een,
 		     unsigned long table, unsigned long val);
