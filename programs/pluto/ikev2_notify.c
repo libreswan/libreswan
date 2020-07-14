@@ -38,6 +38,9 @@ enum v2_pbs v2_notification_to_v2_pbs(v2_notification_t n)
 #define C(N) case v2N_##N: return PBS_v2N_##N;
 	switch (n) {
 	C(REKEY_SA);
+	C(PCPU_I);
+	C(PCPU_R);
+	C(PCPU_ID);
 	C(NO_PPK_AUTH);
 	C(PPK_IDENTITY);
 	C(SIGNATURE_HASH_ALGORITHMS);
