@@ -2818,7 +2818,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 			str_id(&peer_id, &idbuf));
 	}
 
-	if (c->sa_clones != 0 && c->sa_clones > 0) {
+	if (c->sa_clones != 0 && c->sa_clone_id != 0) {
 		libreswan_log("AA_2020 IKE_INIT responder matched wrong clone connection %u/%u expecting 0", c->sa_clone_id, c->sa_clones);
 		return FALSE;
 	}
