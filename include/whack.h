@@ -353,8 +353,7 @@ struct whack_message {
 	char *redirect_to;
 	char *accept_redirect_to;
 
-	bool active_redirect;
-	ip_address active_redirect_gw;
+	char *active_redirect_dests;
 
 	/* what metric to put on ipsec routes */
 	int metric;

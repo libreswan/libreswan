@@ -476,15 +476,11 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 		add_connection(whackfd, m);
 	}
 
-	if (m->active_redirect) {
-		ipstr_buf b;
-		char *redirect_gw;
-
-		redirect_gw = clone_str(ipstr(&m->active_redirect_gw, &b),
-				"active redirect gw ip");
-
-		/* we are redirecting all peers of one connection */
-		find_states_and_redirect(m->name, redirect_gw, whackfd);
+	if (m->active_redirect_dests != NULL) {
+		/*
+		 * we are redirecting all peers of one or all connections
+		 */
+		find_states_and_redirect(m->name, m->active_redirect_dests, whackfd);
 	}
 
 	/* update any socket buffer size before calling listen */

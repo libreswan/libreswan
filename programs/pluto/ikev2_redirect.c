@@ -26,6 +26,7 @@
 #include "id.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
+#include "state_db.h"
 #include "packet.h"
 #include "demux.h"
 #include "ip_address.h"
@@ -46,6 +47,7 @@ struct redirect_dests {
 };
 
 static struct redirect_dests global_dests = { NULL, NULL };
+static struct redirect_dests active_dests = { NULL, NULL };
 
 const char *global_redirect_to(void)
 {
@@ -258,13 +260,12 @@ bool redirect_global(struct msg_digest *md)
 	return true;
 }
 
-bool emit_redirect_notification(const char *dest_str, struct pbs_out *pbs)
+bool emit_redirect_notification(const shunk_t dest_str, struct pbs_out *pbs)
 {
-	if (dest_str == NULL || *dest_str == '\0')
-		return false;
+	passert(dest_str.ptr != NULL);
 
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
-	chunk_t data = build_redirect_notification_data_str(shunk1(dest_str), NULL,
+	chunk_t data = build_redirect_notification_data_str(dest_str, NULL,
 							    buf, sizeof(buf),
 							    pbs->out_logger);
 
@@ -483,6 +484,42 @@ void initiate_redirect(struct state *st)
 	 */
 	if (st->st_redirected_in_auth)
 		del_spi_trick(st);
+}
+
+void find_states_and_redirect(const char *conn_name,
+			      char *ard_str,
+			      struct fd *whackfd)
+{
+	passert(ard_str != NULL);
+	set_redirect_dests(ard_str, &active_dests);
+
+	int cnt = 0;
+
+	dbg("FOR_EACH_STATE_... in %s", __func__);
+	struct state *st = NULL;
+	FOR_EACH_STATE_NEW2OLD(st) {
+		if (IS_CHILD_SA(st) && (conn_name == NULL || streq(conn_name, st->st_connection->name)))
+		{
+			shunk_t active_dest = get_redirect_dest(&active_dests);
+			st->st_active_redirect_gw = active_dest;
+			dbg("successfully found a state (#%lu) with connection name \"%s\"",
+				st->st_serialno, conn_name);
+			cnt++;
+			send_active_redirect_in_informational(st);
+		}
+	}
+
+	if (cnt == 0) {
+		whack_log(RC_INFORMATIONAL, whackfd, "no active tunnels found %s\"%s\"",
+			  conn_name != NULL ? "for connection " : "",
+			  conn_name != NULL ? conn_name : "");
+	} else {
+		whack_log(RC_INFORMATIONAL, whackfd,
+			  "redirections sent for %d tunnels %s\"%s\"",
+			  cnt, conn_name != NULL ? "of connection " : "",
+			  conn_name != NULL ? conn_name : "");
+	}
+	free_redirect_dests(&active_dests);
 }
 
 /* helper function for send_v2_informational_request() */

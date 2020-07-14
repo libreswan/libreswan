@@ -1280,7 +1280,6 @@ void delete_state(struct state *st)
 	pfreeany(st->st_seen_cfg_domains);
 	pfreeany(st->st_seen_cfg_banner);
 
-	pfreeany(st->st_active_redirect_gw);
 	free_chunk_content(&st->st_no_ppk_auth);
 
 	pfreeany(st->sec_ctx);
@@ -1795,40 +1794,6 @@ struct child_sa *find_v2_child_sa_by_outbound_spi(struct ike_sa *ike,
 					     &ike->sa.st_ike_spis,
 					     v2_spi_predicate, &filter, __func__);
 	return pexpect_child_sa(st);
-}
-
-/*
- * Find a state object(s) with specific conn name/remote ip
- * and send IKEv2 informational.
- * Used for active redirect mechanism (RFC 5685)
- */
-void find_states_and_redirect(const char *conn_name,
-			      char *redirect_gw,
-			      struct fd *whackfd)
-{
-	int count = 0;
-
-	dbg("FOR_EACH_STATE_... in %s", __func__);
-	struct state *st = NULL;
-	FOR_EACH_STATE_NEW2OLD(st) {
-		if (streq(conn_name, st->st_connection->name) && IS_CHILD_SA(st))
-		{
-			count++;
-			st->st_active_redirect_gw = clone_str(redirect_gw, "redirect_gw address state clone");
-			DBG_log("successfully found a state (#%lu) with connection name \"%s\"",
-				st->st_serialno, conn_name);
-			send_active_redirect_in_informational(st);
-		}
-	}
-
-	if (count == 0) {
-		whack_log(RC_INFORMATIONAL, whackfd, "no active tunnels found for connection \"%s\"",
-			conn_name);
-	} else {
-		whack_log(RC_INFORMATIONAL, whackfd, "redirections sent for %d tunnels of connection \"%s\"",
-			  count, conn_name);
-	}
-	pfree(redirect_gw);
 }
 
 /*

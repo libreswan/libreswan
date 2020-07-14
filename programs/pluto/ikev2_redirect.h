@@ -62,7 +62,7 @@ extern bool emit_redirected_from_notification(
  * @param pbs output stream
  */
 extern bool emit_redirect_notification(
-		const char *destination,
+		const shunk_t destination,
 		pb_stream *pbs);
 
 /*
@@ -90,6 +90,19 @@ extern err_t parse_redirect_payload(const struct pbs_in *pbs,
  * Initiate via initiate_connection new IKE_SA_INIT exchange
  */
 extern void initiate_redirect(struct state *st);
+
+/*
+ * Used for active redirect mechanism (RFC 5685)
+ *
+ * @param conn_name name of the connection whose peers should be
+ * 	  redirected. If it's NULL, that means redirect ALL active
+ * 	  peers on the machine.
+ * @param ard_str comma-separated string containing the destinations.
+ * @param whackfd whack file descriptor used for whack log
+ */
+extern void find_states_and_redirect(const char *conn_name,
+				     char *ard_str,
+				     struct fd *whackfd);
 
 /*
  * Send IKEv2 INFORMATIONAL exchange with REDIRECT payload.

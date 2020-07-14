@@ -473,7 +473,7 @@ struct state {
 	struct p_dns_req *ipseckey_dnsr;    /* ipseckey of that end */
 	struct p_dns_req *ipseckey_fwd_dnsr;/* validate IDi that IP in forward A/AAAA */
 
-	char *st_active_redirect_gw;	/* needed for sending of REDIRECT in informational */
+	shunk_t st_active_redirect_gw;	/* needed for sending of REDIRECT in informational */
 
 	/** end of IKEv2-only things **/
 
@@ -864,10 +864,6 @@ extern struct ike_sa *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initi
 struct child_sa *find_v2_child_sa_by_outbound_spi(struct ike_sa *ike,
 						  uint8_t protoid,
 						  ipsec_spi_t outbound_spi);
-
-extern void find_states_and_redirect(const char *conn_name,
-				     char *redirect_gw,
-				     struct fd *whackfd);
 
 extern struct state *find_v1_info_state(const ike_spis_t *ike_spis,
 					msgid_t msgid);

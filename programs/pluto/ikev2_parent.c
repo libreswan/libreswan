@@ -3102,7 +3102,7 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 	}
 
 	if (send_redirect) {
-		if (!emit_redirect_notification(c->redirect_to, &sk.pbs))
+		if (!emit_redirect_notification(shunk1(c->redirect_to), &sk.pbs))
 			return STF_INTERNAL_ERROR;
 
 		st->st_sent_redirect = TRUE;	/* mark that we have sent REDIRECT in IKE_AUTH */

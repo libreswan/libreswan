@@ -154,8 +154,7 @@ static void help(void)
 		"rekey: whack (--rekey-ike | --rekey-ipsec) \\\n"
 		"	--name <connection_name> [--asynchronous] \\\n"
 		"\n"
-		"active redirect: whack --redirect --name <connection_name> \\\n"
-		"	--gateway <ip-address>\n"
+		"active redirect: whack [--name <connection_name>] --redirect-to <ip-address(es)> \n"
 		"\n"
 		"opportunistic initiation: whack [--tunnelipv4 | --tunnelipv6] \\\n"
 		"	--oppohere <ip-address> --oppothere <ip-address> \\\n"
@@ -305,7 +304,6 @@ enum option_enums {
 	OPT_REKEY_IPSEC,
 
 	OPT_ACTIVE_REDIRECT,
-	OPT_ACTIVE_REDIRECT_GW,
 
 	OPT_DDOS_BUSY,
 	OPT_DDOS_UNLIMITED,
@@ -564,8 +562,7 @@ static const struct option long_opts[] = {
 	{ "ike-socket-bufsize", required_argument, NULL, OPT_IKEBUF + OO + NUMERIC_ARG},
 	{ "ike-socket-errqueue-toggle", no_argument, NULL, OPT_IKE_MSGERR + OO },
 
-	{ "redirect", no_argument, NULL, OPT_ACTIVE_REDIRECT + OO },
-	{ "gateway", required_argument, NULL, OPT_ACTIVE_REDIRECT_GW + OO },
+	{ "redirect-to", required_argument, NULL, OPT_ACTIVE_REDIRECT + OO },
 
 	{ "ddos-busy", no_argument, NULL, OPT_DDOS_BUSY + OO },
 	{ "ddos-unlimited", no_argument, NULL, OPT_DDOS_UNLIMITED + OO },
@@ -974,6 +971,8 @@ int main(int argc, char **argv)
 	msg.r_timeout = deltatime(RETRANSMIT_TIMEOUT_DEFAULT);
 	msg.r_interval = deltatime_ms(RETRANSMIT_INTERVAL_DEFAULT_MS);
 
+	msg.active_redirect_dests = NULL;
+
 	msg.addr_family = AF_INET;
 	msg.tunnel_addr_family = AF_INET;
 
@@ -1300,19 +1299,8 @@ int main(int argc, char **argv)
 			msg.whack_deleteuser = TRUE;
 			continue;
 
-		case OPT_ACTIVE_REDIRECT:	/* --redirect */
-			msg.active_redirect = TRUE;
-			continue;
-
-		case OPT_ACTIVE_REDIRECT_GW:	/* --gateway */
-			if (!msg.active_redirect)
-				diag("missing --redirect before --gateway");
-			diagq(ttoaddr(optarg, 0, msg.addr_family,
-				      &msg.active_redirect_gw), optarg);
-			if (isanyaddr(&msg.active_redirect_gw)) {
-				diagq("gateway address isn't valid",
-					optarg);
-			}
+		case OPT_ACTIVE_REDIRECT:	/* --redirect-to */
+			msg.active_redirect_dests = strdup(optarg);
 			continue;
 
 		case OPT_DDOS_BUSY:	/* --ddos-busy */
@@ -2482,7 +2470,7 @@ int main(int argc, char **argv)
 
 	if (!(msg.whack_connection || msg.whack_key ||
 	      msg.whack_delete ||msg.whack_deleteid || msg.whack_deletestate ||
-	      msg.whack_deleteuser || msg.active_redirect ||
+	      msg.whack_deleteuser || msg.active_redirect_dests != NULL ||
 	      msg.whack_initiate || msg.whack_oppo_initiate ||
 	      msg.whack_terminate ||
 	      msg.whack_route || msg.whack_unroute || msg.whack_listen ||
@@ -2495,20 +2483,6 @@ int main(int argc, char **argv)
 	      msg.whack_shutdown || msg.whack_purgeocsp || msg.whack_seccomp_crashtest || msg.whack_show_states ||
 	      msg.whack_rekey_ike || msg.whack_rekey_ipsec))
 		diag("no action specified; try --help for hints");
-
-	/* do the logic for --redirect command */
-	if (msg.active_redirect) {
-		bool redirect_gw_spec = address_is_specified(&msg.active_redirect_gw);
-		msg.active_redirect = FALSE;	/* if we pass all the 'tests' we set it back to TRUE */
-		if (msg.name == NULL) {
-			diag("missing --name <connection_name>");
-		} else {
-			if (!redirect_gw_spec)
-				diag("missing --gateway <ip-address>");
-			else
-				msg.active_redirect = TRUE;
-		}
-	}
 
 	if (msg.policy & POLICY_AGGRESSIVE) {
 		if (msg.ike == NULL)
