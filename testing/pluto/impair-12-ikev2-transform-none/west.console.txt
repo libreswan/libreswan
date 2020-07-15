@@ -21,9 +21,9 @@ Redirecting to: [initsystem]
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
- ipsec whack --impair no-ikev2-include-integ-none
+ # normal case, not sent
 west #
- ipsec whack --impair no-ikev2-exclude-integ-none
+ ipsec whack --impair v2-proposal-integ:no
 west #
  ../bin/libreswan-up-down.sh ike,esp=aes_gcm  -I 192.0.1.254 192.0.2.254
 002 added connection description "ike,esp=aes_gcm"
@@ -41,11 +41,9 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike,esp=aes_gcm" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike,esp=aes_gcm": terminating SAs using this connection
 west #
- #
+ # force its addition
 west #
- ipsec whack --impair ikev2-include-integ-none
-west #
- ipsec whack --impair no-ikev2-exclude-integ-none
+ ipsec whack --impair v2-proposal-integ:allow-none
 west #
  ../bin/libreswan-up-down.sh ike,esp=aes_gcm  -I 192.0.1.254 192.0.2.254
 002 added connection description "ike,esp=aes_gcm"
@@ -67,11 +65,9 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike,esp=aes_gcm" #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike,esp=aes_gcm": terminating SAs using this connection
 west #
- #
+ # force its exclusion
 west #
- ipsec whack --impair no-ikev2-include-integ-none
-west #
- ipsec whack --impair ikev2-exclude-integ-none
+ ipsec whack --impair v2-proposal-integ:drop-none
 west #
  ../bin/libreswan-up-down.sh ike,esp=aes_gcm  -I 192.0.1.254 192.0.2.254
 002 added connection description "ike,esp=aes_gcm"
@@ -92,6 +88,74 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 005 "ike,esp=aes_gcm" #6: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm" #5: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike,esp=aes_gcm": terminating SAs using this connection
+west #
+ ipsec whack --impair v2-proposal-integ:no
+west #
+ # normal case, not sent
+west #
+ ipsec whack --impair v2-proposal-dh:no
+west #
+ ../bin/libreswan-up-down.sh ike,esp=aes_gcm  -I 192.0.1.254 192.0.2.254
+002 added connection description "ike,esp=aes_gcm"
+1v2 "ike,esp=aes_gcm" #7: initiating IKEv2 IKE SA
+1v2 "ike,esp=aes_gcm" #7: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "ike,esp=aes_gcm" #7: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
+002 "ike,esp=aes_gcm" #8: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "ike,esp=aes_gcm" #7: authenticated using authby=secret
+002 "ike,esp=aes_gcm" #8: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "ike,esp=aes_gcm" #8: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "ike,esp=aes_gcm": terminating SAs using this connection
+002 "ike,esp=aes_gcm" #8: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
+005 "ike,esp=aes_gcm" #8: ESP traffic information: in=84B out=84B
+002 "ike,esp=aes_gcm" #7: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "ike,esp=aes_gcm": terminating SAs using this connection
+west #
+ # force its addition
+west #
+ ipsec whack --impair v2-proposal-dh:allow-none
+west #
+ ../bin/libreswan-up-down.sh ike,esp=aes_gcm  -I 192.0.1.254 192.0.2.254
+002 added connection description "ike,esp=aes_gcm"
+1v2 "ike,esp=aes_gcm" #9: initiating IKEv2 IKE SA
+1v2 "ike,esp=aes_gcm" #9: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "ike,esp=aes_gcm" #9: IMPAIR: proposal 1 transform DH=NONE included when counting transforms
+002 "ike,esp=aes_gcm" #9: IMPAIR: proposal 1 transform DH=NONE included when emitting proposal
+1v2 "ike,esp=aes_gcm" #9: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
+002 "ike,esp=aes_gcm" #10: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "ike,esp=aes_gcm" #9: authenticated using authby=secret
+002 "ike,esp=aes_gcm" #10: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "ike,esp=aes_gcm" #10: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "ike,esp=aes_gcm": terminating SAs using this connection
+002 "ike,esp=aes_gcm" #10: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
+005 "ike,esp=aes_gcm" #10: ESP traffic information: in=84B out=84B
+002 "ike,esp=aes_gcm" #9: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "ike,esp=aes_gcm": terminating SAs using this connection
+west #
+ # force its exclusion
+west #
+ ipsec whack --impair v2-proposal-dh:drop-none
+west #
+ ../bin/libreswan-up-down.sh ike,esp=aes_gcm  -I 192.0.1.254 192.0.2.254
+002 added connection description "ike,esp=aes_gcm"
+1v2 "ike,esp=aes_gcm" #11: initiating IKEv2 IKE SA
+1v2 "ike,esp=aes_gcm" #11: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "ike,esp=aes_gcm" #11: IMPAIR: proposal 1 transform DH=NONE excluded when counting transforms
+002 "ike,esp=aes_gcm" #11: IMPAIR: proposal 1 transform DH=NONE excluded when emitting proposal
+1v2 "ike,esp=aes_gcm" #11: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
+002 "ike,esp=aes_gcm" #12: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "ike,esp=aes_gcm" #11: authenticated using authby=secret
+002 "ike,esp=aes_gcm" #12: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "ike,esp=aes_gcm" #12: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "ike,esp=aes_gcm": terminating SAs using this connection
+002 "ike,esp=aes_gcm" #12: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
+005 "ike,esp=aes_gcm" #12: ESP traffic information: in=84B out=84B
+002 "ike,esp=aes_gcm" #11: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "ike,esp=aes_gcm": terminating SAs using this connection
+west #
+ ipsec whack --impair v2-proposal-integ:no
 west #
  ipsec stop
 Redirecting to: [initsystem]
@@ -115,6 +179,12 @@ west #
 | remote accepted the proposal 1:ESP:ENCR=AES_GCM_C_128;ESN=DISABLED[first-match]
 | remote accepted the proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;INTEG=NONE;DH=MODP2048[first-match]
 | remote accepted the proposal 1:ESP:ENCR=AES_GCM_C_128;INTEG=NONE;ESN=DISABLED[first-match]
+| remote accepted the proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
+| remote accepted the proposal 1:ESP:ENCR=AES_GCM_C_128;ESN=DISABLED[first-match]
+| remote accepted the proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
+| remote accepted the proposal 1:ESP:ENCR=AES_GCM_C_128;ESN=DISABLED[first-match]
+| remote accepted the proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
+| remote accepted the proposal 1:ESP:ENCR=AES_GCM_C_128;DH=NONE;ESN=DISABLED[first-match]
 | remote accepted the proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
 | remote accepted the proposal 1:ESP:ENCR=AES_GCM_C_128;ESN=DISABLED[first-match]
 west #

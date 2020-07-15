@@ -2,11 +2,11 @@
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec whack --impair allow-null-none
-ipsec whack --impair no-ikev2-exclude-integ-none
-ipsec whack --impair ikev2-include-integ-none
+# normally NONE is not emitted
+ipsec whack --impair v2-proposal-integ:allow-none
+ipsec whack --impair suppress-retransmits
 ipsec auto --add west-east
 ipsec auto --status | grep west-east
-ipsec whack --impair suppress-retransmits
 taskset 0x1 iperf3 -s -p 5001 & echo "$!"  > OUTPUT/$(hostname)-iperf3-5001.pid
 cd /var/tmp/
 # perf record -g -e cycles --call-graph dwarf & echo "$!"  > $(hostname)-perf.pid

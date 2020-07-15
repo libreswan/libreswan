@@ -1,0 +1,4 @@
+Basic pluto with IKEv2 with IKE and ESP INTEG either removed or forced to none
+
+Normally, INTEG=NONE is excluded.  However if received, the responder
+should return it.

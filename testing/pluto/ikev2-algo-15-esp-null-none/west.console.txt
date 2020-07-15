@@ -37,9 +37,7 @@ west #
 west #
  # include INTEG=NONE in the proposal
 west #
- ipsec whack --impair no-ikev2-exclude-integ-none
-west #
- ipsec whack --impair ikev2-include-integ-none
+ ipsec whack --impair v2-proposal-integ:allow-none
 west #
  ../bin/libreswan-up-down.sh esp=null-none -I 192.0.1.254 192.0.2.254
 002 added connection description "esp=null-none"
@@ -61,9 +59,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # exclude INTEG=NONE in the proposal
 west #
- ipsec whack --impair no-ikev2-include-integ-none
-west #
- ipsec whack --impair ikev2-exclude-integ-none
+ ipsec whack --impair v2-proposal-integ:drop-none
 west #
  ../bin/libreswan-up-down.sh esp=null-none -I 192.0.1.254 192.0.2.254
 002 added connection description "esp=null-none"
