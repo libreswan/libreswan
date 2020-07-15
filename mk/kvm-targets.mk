@@ -372,7 +372,7 @@ kvm-results:
 kvm-diffs:
 	$(KVMRESULTS) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS) $(if $(KVM_BASELINE),--baseline $(KVM_BASELINE)) --print diffs
 
-KVM_MODIFIED_TESTS = git status testing/pluto | awk '/(modified|deleted):/ { print $$2 }' | cut -d/ -f1-3 | sort -u
+KVM_MODIFIED_TESTS = git status testing/pluto/*/ | awk '/(modified|deleted|renamed):/ { print $$NF }' | cut -d/ -f1-3 | sort -u
 
 .PHONY: kvm-modified
 kvm-modified:
