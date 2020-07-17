@@ -20,6 +20,7 @@ import sys
 import subprocess
 import os
 import glob
+import time
 from pathlib import Path
 
 passed = []
@@ -48,6 +49,9 @@ def main():
     global nsrun
     global verbose
     global diff
+
+    start = time.time()
+
     nsrun = "%s/nsrun"% os.path.dirname(sys.argv[0])
     usage = "usage: namespace-runner.py [-j num] [---verbose] [--diff] testname1 testname2 ..."
     parser = optparse.OptionParser(usage=usage)
@@ -93,10 +97,14 @@ def main():
                     with open(f, 'r') as f:
                         print(f.read())
 
+    elapsed = time.time() - start
+    timestr = time.strftime("%H:%M:%S", time.gmtime(elapsed))
+
     print("\n\n\n-----------------------")
     print("total  tests: %d"%(len(passed) + len(failed)))
     print("passed tests: %d"%len(passed))
     print("failed tests: %d"%len(failed))
+    print("runtime: %s"%timestr)
     print("-----------------------")
     print("passed tests: %s"%" ".join(passed))
     print("-----------------------")
