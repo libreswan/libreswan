@@ -1619,10 +1619,9 @@ int main(int argc, char **argv)
 	init_constants();
 	init_pluto_constants();
 	pluto_init_log();
-	pluto_init_nss(oco->nssdir);
 
-	enum lsw_fips_mode pluto_fips_mode = lsw_get_fips_mode();
-	if (pluto_fips_mode == LSW_FIPS_ON) {
+	pluto_init_nss(oco->nssdir);
+	if (libreswan_fipsmode()) {
 		/*
 		 * clear out --debug-crypt if set
 		 *
@@ -1633,10 +1632,43 @@ int main(int argc, char **argv)
 			cur_debugging &= ~DBG_PRIVATE;
 			loglog(RC_LOG_SERIOUS, "FIPS mode: debug-private disabled as such logging is not allowed");
 		}
+		/*
+		 * clear out --debug-crypt if set
+		 *
+		 * impairs are also not allowed but cannot come in via
+		 * ipsec.conf, only whack
+		 */
+		if (cur_debugging & DBG_CRYPT) {
+			cur_debugging &= ~DBG_CRYPT;
+			loglog(RC_LOG_SERIOUS, "FIPS mode: debug-crypt disabled as such logging is not allowed");
+		}
 	}
+
+	/*
+	 * If impaired, force the mode change; and verify the
+	 * consequences.  Always run the tests as combinations such as
+	 * NSS in fips mode but as out of it could be bad.
+	 */
+
 	if (impair.force_fips) {
-		libreswan_log("Forcing FIPS checks to true to emulate FIPS mode");
+		libreswan_log("IMPAIR: forcing FIPS checks to true to emulate FIPS mode");
 		lsw_set_fips_mode(LSW_FIPS_ON);
+	}
+
+	bool nss_fips_mode = PK11_IsFIPS();
+	if (libreswan_fipsmode()) {
+		libreswan_log("FIPS mode enabled for pluto daemon");
+		if (nss_fips_mode) {
+			libreswan_log("NSS library is running in FIPS mode");
+		} else {
+			loglog(RC_LOG_SERIOUS, "ABORT: pluto in FIPS mode but NSS library is not");
+			exit_pluto(PLUTO_EXIT_FIPS_FAIL);
+		}
+	} else {
+		libreswan_log("FIPS mode disabled for pluto daemon");
+		if (nss_fips_mode) {
+			loglog(RC_LOG_SERIOUS, "Warning: NSS library is running in FIPS mode");
+		}
 	}
 
 	if (ocsp_enable) {
@@ -1649,44 +1681,6 @@ int main(int argc, char **argv)
 		} else {
 			libreswan_log("NSS OCSP started");
 		}
-	}
-
-	/*
-	 * Probe FIPS support.  Part #2 of #2.
-	 *
-	 * Now that NSS is initialized, need to verify it matches the
-	 * mode pluto is in.
-	 */
-	bool nss_fips_mode = PK11_IsFIPS();
-
-	/*
-	 * Now verify the consequences.  Always run the tests
-	 * as combinations such as NSS in fips mode but as out
-	 * of it could be bad.
-	 */
-	switch (pluto_fips_mode) {
-	case LSW_FIPS_UNKNOWN:
-		loglog(RC_LOG_SERIOUS, "ABORT: pluto FIPS mode could not be determined");
-		exit_pluto(PLUTO_EXIT_FIPS_FAIL);
-		break;
-	case LSW_FIPS_ON:
-		libreswan_log("FIPS mode enabled for pluto daemon");
-		if (nss_fips_mode) {
-			libreswan_log("NSS library is running in FIPS mode");
-		} else {
-			loglog(RC_LOG_SERIOUS, "ABORT: pluto in FIPS mode but NSS library is not");
-			exit_pluto(PLUTO_EXIT_FIPS_FAIL);
-		}
-		break;
-	case LSW_FIPS_OFF:
-		libreswan_log("FIPS mode disabled for pluto daemon");
-		if (nss_fips_mode) {
-			loglog(RC_LOG_SERIOUS, "Warning: NSS library is running in FIPS mode");
-		}
-		break;
-	case LSW_FIPS_UNSET:
-	default:
-		bad_case(pluto_fips_mode);
 	}
 
 #ifdef FIPS_CHECK

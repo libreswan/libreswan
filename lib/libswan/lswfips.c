@@ -25,8 +25,6 @@
 #include "lswnss.h"
 #include "lswfips.h"
 
-#define LSW_FIPS_DEFAULT LSW_FIPS_UNSET
-
 /*
  * Is the machine running in FIPS kernel mode (fips=1 kernel argument)
  * We no longer check this ourselves, but depend solely on NSS, as
@@ -61,32 +59,29 @@ static enum lsw_fips_mode lsw_fipsproduct(void)
 }
 #endif
 
-static enum lsw_fips_mode fips_mode = LSW_FIPS_DEFAULT;
+static enum lsw_fips_mode fips_mode = LSW_FIPS_UNKNOWN;
 
 /*
- * Should only be called directly by plutomain.c
+ * Only called by lsw_nss_setup().
  */
+
 enum lsw_fips_mode lsw_get_fips_mode(void)
 {
 	/*
-	 * Fips mode as set by the below.
-	 *
-	 * Otherwise determine value using fipsproduct and fips_system.
-	 * The problem here is that confread.c calls this (from
-	 * addconn) without first calling set_fipsmode.
-	 */
-	if (fips_mode > LSW_FIPS_UNSET) {
-		return fips_mode;
-	}
-
-	/*
-	 * NSS returns bogus results for the FIPS check if you did not open
-	 * a database. If the program/tool runs libswan code without a
-	 * config file (and so it doesn't know where any nss db lives),
-	 * that tool should call NSS_NoDB_Init("."); before using libswan
-	 * code. See algparse as an example.
+	 * NSS returns bogus results for the FIPS check if you did not
+	 * open a database. If the program/tool runs libswan code
+	 * without a config file (and so it doesn't know where any nss
+	 * db lives), that tool should call NSS_NoDB_Init("."); before
+	 * using libswan code. See lsw_nss_setup() for an example.
 	 */
 	passert(NSS_IsInitialized());
+
+	/*
+	 * Has FIPS mode been forced using set_fips_mode()?
+	 */
+	if (fips_mode > LSW_FIPS_UNKNOWN) {
+		return fips_mode;
+	}
 
 #ifdef FIPS_CHECK
 	enum lsw_fips_mode product = lsw_fipsproduct();
@@ -109,15 +104,14 @@ enum lsw_fips_mode lsw_get_fips_mode(void)
 }
 
 /*
- * Is the machine running in FIPS mode (fips product AND fips system (kernel) mode)
- * Only pluto needs to know UNKNOWN, so it can abort. Every other caller can
- * just check for fips mode using: if (libreswan_fipsmode())
+ * Is the machine running in FIPS mode (fips product AND fips system
+ * (kernel) mode) Only pluto needs to know UNKNOWN, so it can
+ * abort. Every other caller can just check for fips mode using: if
+ * (libreswan_fipsmode())
  */
 bool libreswan_fipsmode(void)
 {
-	if (fips_mode == LSW_FIPS_UNSET)
-		fips_mode = lsw_get_fips_mode();
-
+	pexpect(fips_mode != LSW_FIPS_UNKNOWN);
 	return fips_mode == LSW_FIPS_ON;
 }
 

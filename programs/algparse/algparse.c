@@ -513,8 +513,6 @@ static void usage(void)
 		"         default: no\n"
 		"    -fips | -fips=yes | -fips=no: force NSS's FIPS mode\n"
 		"         default: determined by system environment\n"
-		"    -d <dir> | -nssdir <dir>: directory containing crypto database\n"
-		"         default: '"IPSEC_NSSDIR"'\n"
 		"    -P <password> | -nsspw <password> | -password <password>:\n"
 		"        <password> to unlock crypto database\n"
 		"    -v --verbose: be more verbose\n"
@@ -586,13 +584,6 @@ int main(int argc, char *argv[])
 			ignore_parser_errors = true;
 		} else if (streq(arg, "impair")) {
 			impaired = true;
-		} else if (streq(arg, "d") || streq(arg, "nssdir")) {
-			char *nssdir = *++argp;
-			if (nssdir == NULL) {
-				fprintf(stderr, "missing nss directory\n");
-				exit(ERROR);
-			}
-			lsw_conf_nssdir(nssdir);
 		} else if (streq(arg, "P") || streq(arg, "nsspw") || streq(arg, "password")) {
 			char *nsspw = *++argp;
 			if (nsspw == NULL) {
@@ -606,25 +597,18 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	NSS_NoDB_Init("."); /* or else fips mode detection fails */
-	fips = libreswan_fipsmode();
-
 	/*
 	 * Need to ensure that NSS is initialized before calling
 	 * ike_alg_init().  Sanity checks and algorithm testing
 	 * require a working NSS.
-	 *
-	 * When testing the algorithms in FIPS mode (i.e., executing
-	 * crypto code) NSS needs to be pointed at a real FIPS mode
-	 * NSS directory.
 	 */
 	lsw_nss_buf_t err;
-	bool nss_ok = lsw_nss_setup((fips && test_algs) ? lsw_init_options()->nssdir : NULL,
-				    LSW_NSS_READONLY, lsw_nss_get_password, err);
+	bool nss_ok = lsw_nss_setup(NULL, LSW_NSS_READONLY, lsw_nss_get_password, err);
 	if (!nss_ok) {
 		fprintf(stderr, "unexpected %s\n", err);
 		exit(ERROR);
 	}
+	fips = libreswan_fipsmode();
 
 	/*
 	 * Only be verbose after NSS has started.  Otherwise fake and

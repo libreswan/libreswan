@@ -24,7 +24,6 @@
 #include <stdbool.h>	/* for bool */
 
 enum lsw_fips_mode {
-	LSW_FIPS_UNSET = 0,
 	LSW_FIPS_UNKNOWN,
 	LSW_FIPS_OFF,
 	LSW_FIPS_ON

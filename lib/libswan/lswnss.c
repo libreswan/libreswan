@@ -43,6 +43,7 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags,
 	PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 1);
 
 	libreswan_log("Initializing NSS");
+	enum lsw_fips_mode fips_mode;
 	if (configdir != NULL) {
 		const char sql[] = "sql:";
 		char *nssdir;
@@ -65,9 +66,11 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags,
 			pfree(nssdir);
 			return FALSE;
 		}
+		fips_mode = lsw_get_fips_mode();
 	} else {
 		NSS_NoDB_Init(".");
-		if (libreswan_fipsmode() && !PK11_IsFIPS()) {
+		fips_mode = lsw_get_fips_mode();
+		if (fips_mode == LSW_FIPS_ON && !PK11_IsFIPS()) {
 			SECMODModule *internal = SECMOD_GetInternalModule();
 			if (internal == NULL) {
 				snprintf(err, sizeof(lsw_nss_buf_t),
@@ -86,6 +89,12 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags,
 				return false;
 			}
 		}
+	}
+
+	if (fips_mode == LSW_FIPS_UNKNOWN) {
+		snprintf(err, sizeof(lsw_nss_buf_t),
+			 "ABORT: pluto FIPS mode could not be determined");
+		return false;
 	}
 
 	if (PK11_IsFIPS() && configdir != NULL && get_password == NULL) {
