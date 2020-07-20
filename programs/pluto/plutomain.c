@@ -416,16 +416,14 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf)
 	dbg("read %zu bytes from /dev/random for NSS PRNG", nbytes);
 }
 
-static void pluto_init_nss(char *nssdir)
+static void pluto_init_nss(const char *nssdir, struct logger *logger)
 {
 	SECStatus rv;
 
 	/* little lie, lsw_nss_setup doesn't have logging */
 	loglog(RC_LOG_SERIOUS, "NSS DB directory: sql:%s", nssdir);
 
-	lsw_nss_buf_t err;
-	if (!lsw_nss_setup(nssdir, LSW_NSS_READONLY, lsw_nss_get_password, err)) {
-		loglog(RC_LOG_SERIOUS, "%s", err);
+	if (!lsw_nss_setup(nssdir, LSW_NSS_READONLY, lsw_nss_get_password, logger)) {
 		loglog(RC_LOG_SERIOUS, "FATAL: NSS initialization failure");
 		exit_pluto(PLUTO_EXIT_NSS_FAIL);
 	}
@@ -1599,8 +1597,9 @@ int main(int argc, char **argv)
 	init_constants();
 	init_pluto_constants();
 	pluto_init_log(log_param);
+	struct logger logger = GLOBAL_LOGGER(null_fd);
 
-	pluto_init_nss(oco->nssdir);
+	pluto_init_nss(oco->nssdir, &logger);
 	if (libreswan_fipsmode()) {
 		/*
 		 * clear out --debug-crypt if set

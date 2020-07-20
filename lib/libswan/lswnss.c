@@ -29,7 +29,7 @@
 static unsigned flags;
 
 bool lsw_nss_setup(const char *configdir, unsigned setup_flags,
-		   PK11PasswordFunc get_password, lsw_nss_buf_t err)
+		   PK11PasswordFunc get_password, struct logger *logger)
 {
 	/*
 	 * save for cleanup
@@ -42,7 +42,7 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags,
 	 */
 	PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 1);
 
-	libreswan_log("Initializing NSS");
+	log_message(RC_LOG, logger, "Initializing NSS");
 	enum lsw_fips_mode fips_mode;
 	if (configdir != NULL) {
 		const char sql[] = "sql:";
@@ -54,53 +54,53 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags,
 			strcpy(nssdir, sql);
 			strcat(nssdir, configdir);
 		}
-		libreswan_log("Opening NSS database \"%s\" %s", nssdir,
-			      (flags & LSW_NSS_READONLY) ? "read-only" : "read-write");
+		log_message(RC_LOG, logger, "Opening NSS database \"%s\" %s", nssdir,
+			    (flags & LSW_NSS_READONLY) ? "read-only" : "read-write");
 		SECStatus rv = NSS_Initialize(nssdir, "", "", SECMOD_DB,
 					      (flags & LSW_NSS_READONLY) ? NSS_INIT_READONLY : 0);
 		if (rv != SECSuccess) {
-			snprintf(err, sizeof(lsw_nss_buf_t),
-				 "Initialization of NSS with %s database \"%s\" failed (%d)",
-				 (flags & LSW_NSS_READONLY) ? "read-only" : "read-write",
-				 nssdir, PR_GetError());
+			log_message(RC_LOG_SERIOUS|ERROR_STREAM, logger,
+				    "Initialization of NSS with %s database \"%s\" failed (%d)",
+				    (flags & LSW_NSS_READONLY) ? "read-only" : "read-write",
+				    nssdir, PR_GetError());
 			pfree(nssdir);
-			return FALSE;
+			return false;
 		}
-		fips_mode = lsw_get_fips_mode();
+		fips_mode = lsw_get_fips_mode(logger);
 	} else {
 		NSS_NoDB_Init(".");
-		fips_mode = lsw_get_fips_mode();
+		fips_mode = lsw_get_fips_mode(logger);
 		if (fips_mode == LSW_FIPS_ON && !PK11_IsFIPS()) {
 			SECMODModule *internal = SECMOD_GetInternalModule();
 			if (internal == NULL) {
-				snprintf(err, sizeof(lsw_nss_buf_t),
-					 "SECMOD_GetInternalModule() failed");
+				log_message(RC_LOG_SERIOUS|ERROR_STREAM, logger,
+					    "SECMOD_GetInternalModule() failed");
 				return false;
 			}
 			if (SECMOD_DeleteInternalModule(internal->commonName) != SECSuccess) {
-				snprintf(err, sizeof(lsw_nss_buf_t),
-					 "SECMOD_DeleteInternalModule(%s) failed",
-					 internal->commonName);
+				log_message(RC_LOG_SERIOUS|ERROR_STREAM, logger,
+					    "SECMOD_DeleteInternalModule(%s) failed",
+					    internal->commonName);
 				return false;
 			}
 			if (!PK11_IsFIPS()) {
-				snprintf(err, sizeof(lsw_nss_buf_t),
-					 "NSS FIPS mode toggle failed");
+				log_message(RC_LOG_SERIOUS|ERROR_STREAM, logger,
+					    "NSS FIPS mode toggle failed");
 				return false;
 			}
 		}
 	}
 
 	if (fips_mode == LSW_FIPS_UNKNOWN) {
-		snprintf(err, sizeof(lsw_nss_buf_t),
-			 "ABORT: pluto FIPS mode could not be determined");
+		log_message(RC_LOG_SERIOUS|ERROR_STREAM, logger,
+			    "ABORT: pluto FIPS mode could not be determined");
 		return false;
 	}
 
 	if (PK11_IsFIPS() && configdir != NULL && get_password == NULL) {
-		snprintf(err, sizeof(lsw_nss_buf_t),
-			 "in FIPS mode a password is required");
-		return FALSE;
+		log_message(RC_LOG_SERIOUS|ERROR_STREAM, logger,
+			    "in FIPS mode a password is required");
+		return false;
 	}
 
 	if (get_password != NULL) {
@@ -108,14 +108,15 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags,
 	}
 
 	if (configdir != NULL) {
-		PK11SlotInfo *slot = lsw_nss_get_authenticated_slot(err);
+		PK11SlotInfo *slot = lsw_nss_get_authenticated_slot(logger);
 		if (slot == NULL) {
-			return FALSE;
+			/* already logged */
+			return false;
 		}
 		PK11_FreeSlot(slot);
 	}
 
-	return TRUE;
+	return true;
 }
 
 void lsw_nss_shutdown(void)
@@ -127,11 +128,12 @@ void lsw_nss_shutdown(void)
 	}
 }
 
-PK11SlotInfo *lsw_nss_get_authenticated_slot(lsw_nss_buf_t err)
+PK11SlotInfo *lsw_nss_get_authenticated_slot(struct logger *logger)
 {
 	PK11SlotInfo *slot = PK11_GetInternalKeySlot();
 	if (slot == NULL) {
-		snprintf(err, sizeof(lsw_nss_buf_t), "no internal key slot");
+		log_message(RC_LOG_SERIOUS|ERROR_STREAM, logger,
+			    "no internal key slot");
 		return NULL;
 	}
 
@@ -140,7 +142,8 @@ PK11SlotInfo *lsw_nss_get_authenticated_slot(lsw_nss_buf_t err)
 						     lsw_return_nss_password_file_info());
 		if (status != SECSuccess) {
 			const char *token = PK11_GetTokenName(slot);
-			snprintf(err, sizeof(lsw_nss_buf_t), "authentication of \"%s\" failed", token);
+			log_message(RC_LOG_SERIOUS|ERROR_STREAM, logger,
+				    "authentication of \"%s\" failed", token);
 			PK11_FreeSlot(slot);
 			return NULL;
 		}

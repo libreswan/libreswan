@@ -345,21 +345,17 @@ static void fill_RSA_public_key(struct RSA_public_key *rsa, SECKEYPublicKey *pub
 
 static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval func,
 								   void *uservoid,
-								   lsw_nss_buf_t err)
+								   struct logger *logger)
 {
-	/*
-	 * So test for error with "if (err[0]) ..." works.
-	 */
-	err[0] = '\0';
-
-	PK11SlotInfo *slot = lsw_nss_get_authenticated_slot(err);
+	PK11SlotInfo *slot = lsw_nss_get_authenticated_slot(logger);
 	if (slot == NULL) {
+		/* already logged */
 		return NULL;
 	}
 
 	SECKEYPrivateKeyList *list = PK11_ListPrivateKeysInSlot(slot);
 	if (list == NULL) {
-		snprintf(err, sizeof(lsw_nss_buf_t), "no list");
+		log_message(RC_LOG_SERIOUS|ERROR_STREAM, logger, "no list");
 		PK11_FreeSlot(slot);
 		return NULL;
 	}
@@ -437,15 +433,15 @@ static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval f
 	SECKEY_DestroyPrivateKeyList(list);
 	PK11_FreeSlot(slot);
 
-	return result;
+	return result; /* could be NULL */
 }
 
 static struct private_key_stuff *foreach_secret(secret_eval func, void *uservoid)
 {
-	lsw_nss_buf_t err = {0};
-	struct private_key_stuff *pks = lsw_nss_foreach_private_key_stuff(func, uservoid, err);
-	if (err[0]) {
-		fprintf(stderr, "%s: %s\n", progname, err);
+	struct private_key_stuff *pks = lsw_nss_foreach_private_key_stuff(func, uservoid,
+									  &progname_logger);
+	if (pks == NULL) {
+		/* already logged any error */
 		return NULL;
 	}
 	return pks;
@@ -584,10 +580,8 @@ int main(int argc, char *argv[])
 	 * Set up for NSS - contains key pairs.
 	 */
 	int status = 0;
-	lsw_nss_buf_t err;
 	if (!lsw_nss_setup(oco->nssdir, LSW_NSS_READONLY,
-			   lsw_nss_get_password, err)) {
-		fprintf(stderr, "%s: %s\n", progname, err);
+			   lsw_nss_get_password, &progname_logger)) {
 		exit(1);
 	}
 

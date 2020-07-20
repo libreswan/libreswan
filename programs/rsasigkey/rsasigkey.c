@@ -274,15 +274,13 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
 	SECKEYPublicKey *pubkey = NULL;
 	realtime_t now = realnow();
 
-	lsw_nss_buf_t err;
-	if (!lsw_nss_setup(oco->nssdir, 0, lsw_nss_get_password, err)) {
-		fprintf(stderr, "%s: %s\n", progname, err);
+	if (!lsw_nss_setup(oco->nssdir, 0, lsw_nss_get_password, &progname_logger)) {
 		exit(1);
 	}
 
-	slot = lsw_nss_get_authenticated_slot(err);
+	slot = lsw_nss_get_authenticated_slot(&progname_logger);
 	if (slot == NULL) {
-		fprintf(stderr, "%s: %s\n", progname, err);
+		/* already logged */
 		lsw_nss_shutdown();
 		exit(1);
 	}

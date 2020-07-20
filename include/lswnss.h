@@ -37,10 +37,9 @@ enum lsw_nss_flags {
  * If something goes wrong, the error gets dumped into this null
  * terminated buffer.
  */
-typedef char lsw_nss_buf_t[100];
 
 bool lsw_nss_setup(const char *config_dir, unsigned flags,
-		   PK11PasswordFunc get_nss_password, lsw_nss_buf_t err);
+		   PK11PasswordFunc get_nss_password, struct logger *logger);
 void lsw_nss_shutdown(void);
 
 /*
@@ -51,7 +50,7 @@ void lsw_nss_shutdown(void);
 
 char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg);
 
-PK11SlotInfo *lsw_nss_get_authenticated_slot(lsw_nss_buf_t err);
+PK11SlotInfo *lsw_nss_get_authenticated_slot(struct logger *logger);
 
 /* _(SECERR: N (0xX): <error-string>) */
 void log_nss_error(lset_t rc_log, struct logger *logger, PRErrorCode pr_error,

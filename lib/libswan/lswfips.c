@@ -65,7 +65,7 @@ static enum lsw_fips_mode fips_mode = LSW_FIPS_UNKNOWN;
  * Only called by lsw_nss_setup().
  */
 
-enum lsw_fips_mode lsw_get_fips_mode(void)
+enum lsw_fips_mode lsw_get_fips_mode(struct logger *logger)
 {
 	/*
 	 * NSS returns bogus results for the FIPS check if you did not
@@ -96,10 +96,10 @@ enum lsw_fips_mode lsw_get_fips_mode(void)
 	if (product == LSW_FIPS_OFF && system == LSW_FIPS_ON)
 		fips_mode = LSW_FIPS_OFF;
 
-	libreswan_log("FIPS Product: %s", product == LSW_FIPS_UNKNOWN ? "UNKNOWN" : product == LSW_FIPS_ON ? "YES" : "NO");
-	libreswan_log("FIPS System: %s",  system == LSW_FIPS_UNKNOWN ? "UNKNOWN" :  system == LSW_FIPS_ON ? "YES" : "NO");
+	log_message(RC_LOG, logger, "FIPS Product: %s", product == LSW_FIPS_UNKNOWN ? "UNKNOWN" : product == LSW_FIPS_ON ? "YES" : "NO");
+	log_message(RC_LOG, logger, "FIPS System: %s",  system == LSW_FIPS_UNKNOWN ? "UNKNOWN" :  system == LSW_FIPS_ON ? "YES" : "NO");
 #endif
-	libreswan_log("FIPS Mode: %s", fips_mode == LSW_FIPS_ON ? "YES" : fips_mode == LSW_FIPS_OFF ? "NO" : "UNKNOWN");
+	log_message(RC_LOG, logger, "FIPS Mode: %s", fips_mode == LSW_FIPS_ON ? "YES" : fips_mode == LSW_FIPS_OFF ? "NO" : "UNKNOWN");
 	return fips_mode;
 }
 

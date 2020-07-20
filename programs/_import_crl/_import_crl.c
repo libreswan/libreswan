@@ -17,8 +17,6 @@
 
 #include <unistd.h>
 #include <libreswan.h>
-#include "lswconf.h"
-#include "lswnss.h"
 #include <prlong.h>
 #include <secder.h>
 #include <errno.h>
@@ -26,6 +24,12 @@
 #include <secerr.h>
 #include <cert.h>
 #include <certdb.h>
+
+#include "lswconf.h"
+#include "lswnss.h"
+#include "lswtool.h"
+#include "lswlog.h"		/* for progname_logger */
+
 #ifdef __clang__
 /*
  * clang complains about these from nss.h, gcc does not?
@@ -70,7 +74,8 @@ int main(int argc, char *argv[])
 	if (argc != 3)
 		exit(-1);
 
-	char *progname = argv[0];
+	tool_init_log(argv[0]);
+
 	url = argv[1];
 	lenstr = argv[2];
 
@@ -104,9 +109,7 @@ int main(int argc, char *argv[])
 		exit(-1);
 
 	const struct lsw_conf_options *oco = lsw_init_options();
-	lsw_nss_buf_t err;
-	if (!lsw_nss_setup(oco->nssdir, 0, lsw_nss_get_password, err)) {
-		fprintf(stderr, "%s: %s\n", progname, err);
+	if (!lsw_nss_setup(oco->nssdir, 0, lsw_nss_get_password, &progname_logger)) {
 		exit(1);
 	}
 

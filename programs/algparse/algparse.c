@@ -602,10 +602,9 @@ int main(int argc, char *argv[])
 	 * ike_alg_init().  Sanity checks and algorithm testing
 	 * require a working NSS.
 	 */
-	lsw_nss_buf_t err;
-	bool nss_ok = lsw_nss_setup(NULL, LSW_NSS_READONLY, lsw_nss_get_password, err);
+	bool nss_ok = lsw_nss_setup(NULL, LSW_NSS_READONLY, lsw_nss_get_password, &progname_logger);
 	if (!nss_ok) {
-		fprintf(stderr, "unexpected %s\n", err);
+		/* already logged */
 		exit(ERROR);
 	}
 	fips = libreswan_fipsmode();

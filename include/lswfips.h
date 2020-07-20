@@ -23,6 +23,8 @@
 
 #include <stdbool.h>	/* for bool */
 
+struct logger;
+
 enum lsw_fips_mode {
 	LSW_FIPS_UNKNOWN,
 	LSW_FIPS_OFF,
@@ -30,7 +32,7 @@ enum lsw_fips_mode {
 };
 
 extern void lsw_set_fips_mode(enum lsw_fips_mode fips);
-extern enum lsw_fips_mode lsw_get_fips_mode(void);
+extern enum lsw_fips_mode lsw_get_fips_mode(struct logger *logger);
 extern bool libreswan_fipsmode(void);
 
 #endif
