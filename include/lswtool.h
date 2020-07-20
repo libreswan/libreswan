@@ -6,3 +6,4 @@
  */
 extern const char *progname;
 extern void tool_init_log(const char *progname);
+extern struct logger tool_logger;
