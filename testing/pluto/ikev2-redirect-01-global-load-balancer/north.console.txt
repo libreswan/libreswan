@@ -21,9 +21,9 @@ north #
 1v2 "north-east" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "north-east" #1: initiating a redirect to new gateway (address: 192.1.2.44)
 1v2 "north-east" #2: initiating IKEv2 IKE SA
-1v2 "north-east" #2: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "north-east" #1: deleting state (STATE_IKESA_DEL) and NOT sending notification
 002 "north-east" #1: IMPAIR: skipping revival of connection that is supposed to remain up
+1v2 "north-east" #2: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "north-east" #2: IMPAIR: retransmit so deleting SA
 002 "north-east" #2: deleting state (STATE_PARENT_I1) and NOT sending notification
 002 "north-east" #2: IMPAIR: skipping revival of connection that is supposed to remain up
@@ -45,9 +45,9 @@ north #
 1v2 "north-east" #3: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "north-east" #3: initiating a redirect to new gateway (address: 192.1.2.46)
 1v2 "north-east" #4: initiating IKEv2 IKE SA
-1v2 "north-east" #4: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "north-east" #3: deleting state (STATE_IKESA_DEL) and NOT sending notification
 002 "north-east" #3: IMPAIR: skipping revival of connection that is supposed to remain up
+1v2 "north-east" #4: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "north-east" #4: IMPAIR: retransmit so deleting SA
 002 "north-east" #4: deleting state (STATE_PARENT_I1) and NOT sending notification
 002 "north-east" #4: IMPAIR: skipping revival of connection that is supposed to remain up
@@ -69,9 +69,9 @@ north #
 1v2 "north-east" #5: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "north-east" #5: initiating a redirect to new gateway (address: 192.1.2.45)
 1v2 "north-east" #6: initiating IKEv2 IKE SA
-1v2 "north-east" #6: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "north-east" #5: deleting state (STATE_IKESA_DEL) and NOT sending notification
 002 "north-east" #5: IMPAIR: skipping revival of connection that is supposed to remain up
+1v2 "north-east" #6: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "north-east" #6: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "north-east" #6: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 002 "north-east" #7: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
