@@ -442,6 +442,21 @@
 
       <arg choice="plain"><replaceable>whack</replaceable></arg>
 
+      <arg choice="opt">
+	--name
+	<replaceable>connection-name</replaceable>
+      </arg>
+
+      <arg choice="plain">--redirect-to
+      <replaceable>ip-address(es)</replaceable></arg>
+
+    </cmdsynopsis>
+    
+    <cmdsynopsis>
+      <command>ipsec</command>
+
+      <arg choice="plain"><replaceable>whack</replaceable></arg>
+
       <group choice="opt">
         <arg choice="opt">--tunnelipv4</arg>
 
@@ -2311,6 +2326,35 @@
             <option>--crash</option> brings our end down as well for all the
             known connections to the specified <emphasis
             remap="i">ip-address</emphasis></para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+
+      <para>Redirecting active clients can be done using IKEv2 redirect
+      mechanism.</para>
+
+      <variablelist remap="TP">
+        <varlistentry>
+          <term><option>--name</option>&nbsp;<emphasis
+          remap="i">connection_name</emphasis></term>
+
+	  <listitem>
+	    <para>Specifying this is optional. If not specified
+	    the mechanism will redirect all currently active peers.
+	    If specified, only the peers from connection <emphasis
+	    remap="i">connection_name</emphasis> will be redirected.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--redirect-to</option>&nbsp;<emphasis
+          remap="i">ip-address(es)</emphasis></term>
+
+	  <listitem>
+	    <para>A destination, or a list of destination, where
+	    the peers will be redirected.
+            </para>
           </listitem>
         </varlistentry>
       </variablelist>
