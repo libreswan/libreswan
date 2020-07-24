@@ -8,7 +8,6 @@ east #
 [x] PID
 east #
  ipsec start
-nohup: ignoring input and redirecting stderr to stdout
 Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started

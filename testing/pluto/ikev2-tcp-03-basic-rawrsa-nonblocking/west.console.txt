@@ -8,7 +8,6 @@ west #
 [x] PID
 west #
  # confirm that the network is alive
-nohup: ignoring input and redirecting stderr to stdout
 west #
  ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
