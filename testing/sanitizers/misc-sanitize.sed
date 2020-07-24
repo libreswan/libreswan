@@ -36,4 +36,5 @@ s/last_contact=[0-9]*\.[0-9]*/last_contact=XX.XXX/g
 # TCP sockets
 s/from socket [0-9]* /from socket XX /g
 s/IMPAIR: TCP: socket [0-9]* /IMPAIR: TCP: socket XX /g
-
+s/TCP: socket [0-9]* /TCP: socket XX /g
+/^nohup: ignoring input and redirecting stderr to stdout$/d
