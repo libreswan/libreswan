@@ -4,7 +4,8 @@
   </term>
   <listitem>
     <para>
-      The IKE port to listen on.
+      The UDP IKE port to listen on or send data to. This port cannot be 0 or 500. For
+      TCP, see <emphasis remap='B'>tcp-remoteport=</emphasis>
     </para>
   </listitem>
 </varlistentry>
