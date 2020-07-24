@@ -4850,7 +4850,6 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 	/* check N_REKEY_SA in the negotiation */
 	switch (child->sa.st_state->kind) {
 	case STATE_V2_REKEY_CHILD_R0:
-		ikev2_child_resp_clone_id(child, md);
 		if (!ikev2_rekey_child_resp(ike, child, md)) {
 			/* already logged; already recorded */
 			return STF_FAIL;
@@ -4865,6 +4864,7 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 		pexpect(child->sa.st_ipsec_pred != SOS_NOBODY);
 		break;
 	case STATE_V2_NEW_CHILD_R0:
+		ikev2_child_resp_clone_id(child, md);
 		/* state m/c created CHILD SA */
 		pexpect(child->sa.st_ipsec_pred == SOS_NOBODY);
 		if (!assign_child_responder_client(ike, child, md)) {
