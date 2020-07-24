@@ -4234,6 +4234,27 @@ static bool ikev2_rekey_child_req(struct child_sa *child,
 	return true;
 }
 
+static bool ikev2_child_resp_clone_id(struct child_sa *child, struct msg_digest *md)
+{
+	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+		switch (ntfy->payload.v2n.isan_type) {
+		case v2N_PCPU_ID:
+			if (!extract_u32_notify(&ntfy->pbs, "v2N_PCPU_ID", &child->sa.st_pcpu.sa_clone_id))
+				return true;
+			break;
+
+		default:
+			/* This is a HACK for clones 20200724
+			 * there is another pass of notify payloads
+			 * after this that will handle all other but
+			 * REKEY
+			 */
+			break;
+		}
+	}
+	return false;
+}
+
 static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 				   struct msg_digest *md)
 {
@@ -4829,6 +4850,7 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 	/* check N_REKEY_SA in the negotiation */
 	switch (child->sa.st_state->kind) {
 	case STATE_V2_REKEY_CHILD_R0:
+		ikev2_child_resp_clone_id(child, md);
 		if (!ikev2_rekey_child_resp(ike, child, md)) {
 			/* already logged; already recorded */
 			return STF_FAIL;
