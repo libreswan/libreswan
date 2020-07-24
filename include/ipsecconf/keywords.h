@@ -269,13 +269,8 @@ enum keyword_numeric_conn_field {
 	KNCF_VTI_ROUTING,	/* let updown do routing into VTI device */
 	KNCF_VTI_SHARED,	/* VTI device is shared - enable checks and disable cleanup */
 	KNCF_NIC_OFFLOAD,	/* xfrm offload to network device */
-
-	/*
-	 * TCP: these names match the whack.message field name, but
-	 * not the option.  All three should probably be consistent.
-	 */
-	KNCF_TCPONLY,		/* TCP: per connection? Description? */
-	KNCF_REMOTE_TCPPORT,	/* TCP: per connection? Description? */
+	KNCF_TCP,		/* TCP (yes/no/fallback) */
+	KNCF_REMOTE_TCPPORT,	/* TCP remote port - default 4500  */
 
 	KNCF_ROOF
 };

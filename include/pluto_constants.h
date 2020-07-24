@@ -785,6 +785,12 @@ enum esn_options {
 	ESN_EITHER = 3,
 };
 
+enum tcp_options {
+       IKE_TCP_NO = 1, /* default */
+       IKE_TCP_ONLY = 2,
+       IKE_TCP_FALLBACK = 3,
+};
+
 /* Policies for establishing an SA
  *
  * These are used to specify attributes (eg. encryption) and techniques

@@ -114,6 +114,7 @@ static void help(void)
 		"	[--allow-narrowing] \\\n"
 		"	[--ikefrag-allow | --ikefrag-force] [--no-ikepad] \\\n"
 		"	[--esn ] [--no-esn] [--decap-dscp] [--nopmtudisc] [--mobike] \\\n"
+		"	[--tcp ] [--no-udp] \\\n"
 #ifdef HAVE_NM
 		"	[--nm-configured] \\\n"
 #endif
@@ -449,6 +450,8 @@ enum option_enums {
 	CD_FAKE_STRONGSWAN,
 	CD_MOBIKE,
 	CD_IKE,
+	CD_IKE_TCP,
+	CD_IKE_NO_UDP,
 	CD_SEND_CA,
 	CD_PFSGROUP,
 	CD_REMOTEPEERTYPE,
@@ -791,6 +794,9 @@ static const struct option long_opts[] = {
 	PS("dns-match-id", DNS_MATCH_ID),
 #undef PS
 
+	{ "tcp", no_argument, NULL, CD_IKE_TCP + OO },
+	{ "no-udp", no_argument, NULL, CD_IKE_NO_UDP + OO },
+
 #ifdef HAVE_NM
 	{ "nm_configured", no_argument, NULL, CD_NMCONFIGURED + OO }, /* backwards compat */
 	{ "nm-configured", no_argument, NULL, CD_NMCONFIGURED + OO },
@@ -917,6 +923,8 @@ int main(int argc, char **argv)
 	const char *ugh;
 	int oppo_dport = 0;
 	bool ignore_errors = FALSE;
+	bool tcp = FALSE;
+	bool udp = TRUE;
 
 	/* check division of numbering space */
 	assert(OPTION_OFFSET + OPTION_ENUMS_LAST < NUMERIC_ARG);
@@ -978,6 +986,8 @@ int main(int argc, char **argv)
 
 	msg.right.updown = DEFAULT_UPDOWN;
 	msg.left.updown = DEFAULT_UPDOWN;
+
+	msg.iketcp = IKE_TCP_NO;
 
 	for (;;) {
 		int long_index;
@@ -1950,6 +1960,14 @@ int main(int argc, char **argv)
 			continue;
 #endif
 
+		case CD_IKE_TCP: /* --tcp */
+			tcp = TRUE;
+			continue;
+
+		case CD_IKE_NO_UDP: /* --no-udp */
+			udp = FALSE;
+			continue;
+
 #ifdef HAVE_LABELED_IPSEC
 		case CD_LABELED_IPSEC:	/* --labeledipsec */
 			msg.labeled_ipsec = TRUE;
@@ -2361,6 +2379,20 @@ int main(int argc, char **argv)
 		 * instead of "continue"
 		 */
 		diagq("unexpected argument", argv[optind]);
+	}
+
+	if (!tcp) {
+		if (!udp) {
+			diag("cannot specify --no-udp without --tcp");
+		} else {
+			 msg.iketcp = IKE_TCP_NO;
+		}
+	} else {
+		if (udp) {
+			msg.iketcp = IKE_TCP_FALLBACK;
+		} else {
+			msg.iketcp = IKE_TCP_ONLY;
+		}
 	}
 
 	/*

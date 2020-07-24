@@ -62,7 +62,19 @@ static const struct keyword_enum_value kw_negotiationshunt_values[] = {
 	{ "hold",        KNS_FAIL_DROP }, /* alias */
 };
 
+
 static const struct keyword_enum_values kw_negotiationshunt_list = VALUES_INITIALIZER(kw_negotiationshunt_values);
+
+/*
+ * Values for enable-tcp={no, yes, fallback}
+ */
+static const struct keyword_enum_value kw_tcp_values[] = {
+	{ "no", IKE_TCP_NO }, /* default */
+	{ "yes", IKE_TCP_ONLY },
+	{ "fallback", IKE_TCP_FALLBACK },
+};
+
+static const struct keyword_enum_values kw_tcp_list = VALUES_INITIALIZER(kw_tcp_values);
 
 /*
  * Values for keyexchange=
@@ -598,7 +610,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "failureshunt",  kv_conn,  kt_enum,  KNCF_FAILURESHUNT,  &kw_failureshunt_list, NULL, },
   { "negotiationshunt",  kv_conn,  kt_enum,  KNCF_NEGOTIATIONSHUNT,  &kw_negotiationshunt_list, NULL, },
 
-  { "tcponly",  kv_conn, kt_bool, KNCF_TCPONLY, NULL, NULL },
+  { "enable-tcp",  kv_conn, kt_enum, KNCF_TCP, &kw_tcp_list, NULL },
   { "tcp-remoteport",  kv_conn, kt_number, KNCF_REMOTE_TCPPORT, NULL, NULL },
 
   { "connalias",  kv_conn | kv_processed,  kt_appendstring,  KSCF_CONNALIAS, NULL, NULL, },

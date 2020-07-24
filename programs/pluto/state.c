@@ -2134,10 +2134,11 @@ void fmt_state(struct state *st, const monotime_t now,
 			  deltasecs(monotimediff(liveness->ev_time, now)));
 
 	snprintf(state_buf, state_buf_len,
-		 "#%lu: \"%s\"%s:%u %s (%s); %s in %jds%s%s%s%s; %s;",
+		 "#%lu: \"%s\"%s:%u%s %s (%s); %s in %jds%s%s%s%s; %s;",
 		 st->st_serialno,
 		 c->name, inst,
 		 endpoint_hport(&st->st_remote_endpoint),
+		 (st->st_interface->protocol == &ip_protocol_tcp) ? "(tcp)" : "",
 		 st->st_state->name,
 		 st->st_state->story,
 		 (liveness == NULL ? "none" :

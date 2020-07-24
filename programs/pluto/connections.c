@@ -1271,6 +1271,13 @@ static bool extract_connection(struct fd *whackfd,
 		}
 	}
 
+	if (wm->remote_tcpport == 0 || wm->remote_tcpport == 500) {
+		loglog(RC_FATAL,
+			"Failed to add connection \"%s\": tcp-remoteport cannot be 0 or 500",
+						wm->name);
+				return false;
+	}
+
 	/* we could complain about a lot more whack strings */
 	if (NEVER_NEGOTIATE(wm->policy)) {
 		if (wm->ike != NULL) {
@@ -1617,7 +1624,7 @@ static bool extract_connection(struct fd *whackfd,
 
 		/* RFC 8229 TCP encap*/
 		c->remote_tcpport = wm->remote_tcpport;
-		c->tcponly = wm->tcponly;
+		c->iketcp = wm->iketcp;
 
 		/*
 		 * parse mark and mask values form the mark/mask string
@@ -3854,11 +3861,13 @@ void show_one_connection(struct show *s,
 		c->sa_keying_tries);
 
 	show_comment(s,
-		  "\"%s\"%s:   retransmit-interval: %jdms; retransmit-timeout: %jds;",
+		  "\"%s\"%s:   retransmit-interval: %jdms; retransmit-timeout: %jds; iketcp:%s; iketcp-port:%d;",
 		  c->name,
 		  instance,
 		  deltamillisecs(c->r_interval),
-		  deltasecs(c->r_timeout));
+		  deltasecs(c->r_timeout),
+		  c->iketcp == IKE_TCP_NO ? "no" : c->iketcp == IKE_TCP_ONLY ? "yes" : "fallback",
+		  c->remote_tcpport);
 
 	show_comment(s,
 		  "\"%s\"%s:   initial-contact:%s; cisco-unity:%s; fake-strongswan:%s; send-vendorid:%s; send-no-esp-tfc:%s;",

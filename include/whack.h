@@ -198,8 +198,8 @@ struct whack_message {
 	/* Remote TCP port to use, 0 indicates no TCP */
 	int remote_tcpport;
 
-	/* use TCP from the start */
-	bool tcponly;
+	/* Allow TCP as fallback, only do TCP or only do UDP */
+	enum tcp_options iketcp;
 
 	/* Option to allow per-conn setting of sending of NAT-T keepalives - default is enabled  */
 	bool nat_keepalive;

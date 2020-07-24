@@ -352,7 +352,7 @@ bool pending_check_timeout(const struct connection *c)
 	return FALSE;
 }
 
-/* a Main Mode negotiation has been replaced; update any pending */
+/* a IKE SA negotiation has been replaced; update any pending */
 void update_pending(struct ike_sa *old_ike, struct ike_sa *new_ike)
 {
 	struct pending *p, **pp;
@@ -366,7 +366,7 @@ void update_pending(struct ike_sa *old_ike, struct ike_sa *new_ike)
 			p->ike = new_ike;
 }
 
-/* a Main Mode negotiation has failed; discard any pending */
+/* a IKE SA negotiation has failed; discard any pending */
 void flush_pending_by_state(struct ike_sa *ike)
 {
 	struct pending **pp, *p;

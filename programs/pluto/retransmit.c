@@ -22,6 +22,7 @@
 #include "deltatime.h"
 #include "server.h"
 #include "log.h"
+#include "iface.h"
 
 #define dbg_retransmit(ST, FMT, ...)				\
 	{							\
@@ -174,8 +175,8 @@ enum retransmit_status retransmit(struct state *st)
 		return DELETE_ON_RETRANSMIT;
 	}
 
-	if (st->st_connection->tcponly) {
-		libreswan_log("PAUL: retransmit skipped because tcponly");
+	if (st->st_interface->protocol == &ip_protocol_tcp) {
+		libreswan_log("TCP: retransmit skipped because TCP is handling retransmits");
 		return RETRANSMIT_NO;
 	}
 

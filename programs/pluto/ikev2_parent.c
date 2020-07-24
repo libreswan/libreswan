@@ -548,10 +548,8 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 	passert(st->st_sa_role == SA_INITIATOR);
 	st->st_try = try;
 
-	if ((try > 1 && c->remote_tcpport) || (c->tcponly && c->remote_tcpport)) {
-		/* TCP: this deserves a log?  */
-		/* TCP: does this belong in retransmit.[hc]?  */
-		dbg("TCP: forcing #%lu remote endpoint port to %d",
+	if ((c->iketcp == IKE_TCP_ONLY) || (try > 1 && c->iketcp != IKE_TCP_NO)) {
+		libreswan_log("TCP: forcing #%lu remote endpoint port to %d",
 		    st->st_serialno, c->remote_tcpport);
 		st->st_remote_endpoint = set_endpoint_hport(&st->st_remote_endpoint,
 							    c->remote_tcpport);

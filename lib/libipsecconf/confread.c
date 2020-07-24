@@ -136,8 +136,8 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	DOPT(KNCF_IKEV1_NATT, NATT_BOTH);
 	DOPT(KNCF_ENCAPS, yna_auto);
 
-	DOPT(KNCF_TCPONLY, FALSE);
-	DOPT(KNCF_REMOTE_TCPPORT, 0);
+	DOPT(KNCF_TCP, IKE_TCP_NO);
+	DOPT(KNCF_REMOTE_TCPPORT, NAT_IKE_UDP_PORT);
 
 	/* Network Manager support */
 #ifdef HAVE_NM
