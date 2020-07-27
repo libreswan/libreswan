@@ -19,7 +19,7 @@ east #
 000 "westnet-eastnet-0":   labeled_ipsec:no;
 000 "westnet-eastnet-0":   policy_label:unset;
 000 "westnet-eastnet-0":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 0;
-000 "westnet-eastnet-0":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "westnet-eastnet-0":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-0":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-0":   policy: PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-0":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
@@ -36,7 +36,7 @@ east #
 000 "westnet-eastnet-1":   labeled_ipsec:no;
 000 "westnet-eastnet-1":   policy_label:unset;
 000 "westnet-eastnet-1":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 1;
-000 "westnet-eastnet-1":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "westnet-eastnet-1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-1":   policy: PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
@@ -53,7 +53,7 @@ east #
 000 "westnet-eastnet-2":   labeled_ipsec:no;
 000 "westnet-eastnet-2":   policy_label:unset;
 000 "westnet-eastnet-2":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 2;
-000 "westnet-eastnet-2":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "westnet-eastnet-2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-2":   policy: PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
@@ -115,7 +115,7 @@ east #
 000 "westnet-eastnet-0":   labeled_ipsec:no;
 000 "westnet-eastnet-0":   policy_label:unset;
 000 "westnet-eastnet-0":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 0;
-000 "westnet-eastnet-0":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "westnet-eastnet-0":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-0":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-0":   policy: PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-0":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
@@ -134,7 +134,7 @@ east #
 000 "westnet-eastnet-1":   labeled_ipsec:no;
 000 "westnet-eastnet-1":   policy_label:unset;
 000 "westnet-eastnet-1":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 1;
-000 "westnet-eastnet-1":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "westnet-eastnet-1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-1":   policy: PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
@@ -152,7 +152,7 @@ east #
 000 "westnet-eastnet-2":   labeled_ipsec:no;
 000 "westnet-eastnet-2":   policy_label:unset;
 000 "westnet-eastnet-2":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 2;
-000 "westnet-eastnet-2":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "westnet-eastnet-2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-2":   policy: PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;

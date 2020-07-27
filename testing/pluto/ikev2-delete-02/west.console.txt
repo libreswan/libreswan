@@ -152,7 +152,7 @@ west #
 000 "west-east-delete1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
 000 "west-east-delete1":   policy_label:unset;
 000 "west-east-delete1":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "west-east-delete1":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "west-east-delete1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "west-east-delete1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
 000 "west-east-delete1":   v2-auth-hash-policy: none;
@@ -285,7 +285,7 @@ west #
 000 "west-east-delete1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
 000 "west-east-delete1":   policy_label:unset;
 000 "west-east-delete1":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "west-east-delete1":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "west-east-delete1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "west-east-delete1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
 000 "west-east-delete1":   v2-auth-hash-policy: none;
@@ -410,7 +410,7 @@ west #
 000 "west-east-delete1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
 000 "west-east-delete1":   policy_label:unset;
 000 "west-east-delete1":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "west-east-delete1":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "west-east-delete1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "west-east-delete1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
 000 "west-east-delete1":   v2-auth-hash-policy: none;
