@@ -1047,7 +1047,7 @@ static void lswlog_ike_alg_details(struct lswlog *buf, const struct ike_alg *alg
 		size_t cw = 20;	/* stab in dark */
 #endif
 		pexpect_ike_alg(alg, cw >= strlen(alg->fqn));
-		lswlogf(buf, "%-*s", (int) cw, alg->fqn);
+		jam(buf, "%-*s", (int) cw, alg->fqn);
 	}
 	/*
 	 * IKEv1: IKE ESP AH  IKEv2: IKE ESP AH
@@ -1121,7 +1121,7 @@ static void lswlog_ike_alg_details(struct lswlog *buf, const struct ike_alg *alg
 			if (*keyp == encr->keydeflen) {
 				jam_string(buf, "*");
 			}
-			lswlogf(buf, "%d", *keyp);
+			jam(buf, "%d", *keyp);
 			sep = ",";
 		}
 		jam_string(buf, encr->keylen_omitted ? "]" : "}");

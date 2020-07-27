@@ -285,11 +285,11 @@ bool ikev2_schedule_retry(struct state *st)
 		return false;
 	}
 	LSWLOG_RC(RC_COMMENT, buf) {
-		lswlogf(buf, "scheduling retry attempt %ld of ", try);
+		jam(buf, "scheduling retry attempt %ld of ", try);
 		if (try_limit == 0) {
 			jam_string(buf, "an unlimited number");
 		} else {
-			lswlogf(buf, "at most %ld", try_limit);
+			jam(buf, "at most %ld", try_limit);
 		}
 		if (fd_p(st->st_whack_sock)) {
 			jam_string(buf, ", but releasing whack");

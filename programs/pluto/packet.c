@@ -2676,7 +2676,7 @@ static bool space_for(size_t len, pb_stream *outs, const char *fmt, ...)
 	if (pbs_left(outs) == 0) {
 		/* should this be a DBGLOG? */
 		LSWLOG_RC(RC_LOG_SERIOUS, buf) {
-			lswlogf(buf, "%s is already full; discarding ", outs->name);
+			jam(buf, "%s is already full; discarding ", outs->name);
 			va_list ap;
 			va_start(ap, fmt);
 			jam_va_list(buf, fmt, ap);
@@ -2686,7 +2686,7 @@ static bool space_for(size_t len, pb_stream *outs, const char *fmt, ...)
 	} else if (pbs_left(outs) <= len) {
 		/* overflow at at left==1; left==0 for already overflowed */
 		LSWLOG_RC(RC_LOG_SERIOUS, buf) {
-			lswlogf(buf, "%s is full; unable to emit ", outs->name);
+			jam(buf, "%s is full; unable to emit ", outs->name);
 			va_list ap;
 			va_start(ap, fmt);
 			jam_va_list(buf, fmt, ap);
@@ -2702,7 +2702,7 @@ static bool space_for(size_t len, pb_stream *outs, const char *fmt, ...)
 			va_start(ap, fmt);
 			jam_va_list(buf, fmt, ap);
 			va_end(ap);
-			lswlogf(buf, " into %s", outs->name);
+			jam(buf, " into %s", outs->name);
 		}
 		return true;
 	}

@@ -645,24 +645,24 @@ void quick_outI1(struct fd *whack_sock,
 	}
 
 	LSWLOG(buf) {
-		lswlogf(buf, "initiating Quick Mode %s", prettypolicy(policy));
+		jam(buf, "initiating Quick Mode %s", prettypolicy(policy));
 		if (replacing != SOS_NOBODY) {
-			lswlogf(buf, " to replace #%lu", replacing);
+			jam(buf, " to replace #%lu", replacing);
 		}
-		lswlogf(buf, " {using isakmp#%lu msgid:%08" PRIx32 " proposal=",
+		jam(buf, " {using isakmp#%lu msgid:%08" PRIx32 " proposal=",
 			isakmp_sa->st_serialno, st->st_v1_msgid.id);
 		if (st->st_connection->child_proposals.p != NULL) {
 			fmt_proposals(buf, st->st_connection->child_proposals.p);
 		} else {
-			lswlogf(buf, "defaults");
+			jam(buf, "defaults");
 		}
-		lswlogf(buf, " pfsgroup=");
+		jam(buf, " pfsgroup=");
 		if ((policy & POLICY_PFS) != LEMPTY) {
 			jam_string(buf, st->st_pfs_group->common.fqn);
 		} else {
 			jam_string(buf, "no-pfs");
 		}
-		lswlogf(buf, "}");
+		jam(buf, "}");
 	}
 
 	/* save for post crypto logging */

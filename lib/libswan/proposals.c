@@ -383,7 +383,7 @@ void jam_proposal(struct lswlog *log,
 		jam_string(log, as); ps = "-"; as = "+";
 		jam_string(log, encrypt->common.fqn);
 		if (alg->enckeylen != 0) {
-			lswlogf(log, "_%d", alg->enckeylen);
+			jam(log, "_%d", alg->enckeylen);
 		}
 	}
 

@@ -474,14 +474,14 @@ static int score_narrow_protocol(const struct end *end,
 	}
 	LSWDBGP(DBG_BASE, buf) {
 		const struct traffic_selector *ts = &tss->ts[index];
-		lswlogf(buf, MATCH_PREFIX "match end->protocol=%s%d %s %s[%u].ipprotoid=%s%d: ",
+		jam(buf, MATCH_PREFIX "match end->protocol=%s%d %s %s[%u].ipprotoid=%s%d: ",
 			end->protocol == 0 ? "*" : "", end->protocol,
 			fit_string(fit),
 			which, index, ts->ipprotoid == 0 ? "*" : "", ts->ipprotoid);
 		if (f > 0) {
-			lswlogf(buf, "YES fitness %d", f);
+			jam(buf, "YES fitness %d", f);
 		} else {
-			lswlogf(buf, "NO");
+			jam(buf, "NO");
 		}
 	}
 	return f;
@@ -646,15 +646,15 @@ static int score_address_range(const struct end *end,
 		f = f << 1;
 
 	LSWDBGP(DBG_BASE, buf) {
-	    lswlogf(buf, MATCH_PREFIX "match address end->client=");
+	    jam(buf, MATCH_PREFIX "match address end->client=");
 	    jam_subnet(buf, &end->client);
 	    jam(buf, " %s %s[%u]net=", fit_string(fit), which, index);
 	    jam_range(buf, &ts->net);
 	    jam(buf, ": ");
 	    if (f > 0) {
-		    lswlogf(buf, "YES fitness %d", f);
+		    jam(buf, "YES fitness %d", f);
 	    } else {
-		    lswlogf(buf, "NO");
+		    jam(buf, "NO");
 	    }
 	}
 	return f;
@@ -1000,12 +1000,12 @@ bool v2_process_ts_request(struct child_sa *child,
 				continue;
 			}
 			LSWDBGP(DBG_BASE, buf) {
-				lswlogf(buf, "  investigating template \"%s\";",
+				jam(buf, "  investigating template \"%s\";",
 					t->name);
 				if (t->foodgroup != NULL) {
-					lswlogf(buf, " food-group=\"%s\"", t->foodgroup);
+					jam(buf, " food-group=\"%s\"", t->foodgroup);
 				}
-				lswlogf(buf, " policy=%s", prettypolicy(t->policy & CONNECTION_POLICIES));
+				jam(buf, " policy=%s", prettypolicy(t->policy & CONNECTION_POLICIES));
 			}
 
 			/*

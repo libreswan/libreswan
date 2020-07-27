@@ -132,7 +132,7 @@ static void log_processing(enum processing processing, bool current,
 			jam_connection(buf, c);
 		}
 		if (from != NULL) {
-			lswlogf(buf, " from ");
+			jam(buf, " from ");
 			jam_endpoint(buf, from);
 		}
 		if (!current) {

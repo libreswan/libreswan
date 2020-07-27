@@ -547,7 +547,7 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 		dbg("NAT-T: encaps is '%s'",
 		     c->encaps == yna_auto ? "auto" : bool_str(c->encaps == yna_yes));
 
-		lswlogf(buf, "%sESP%s%s%s%s=>0x%08" PRIx32 " <0x%08" PRIx32 "",
+		jam(buf, "%sESP%s%s%s%s=>0x%08" PRIx32 " <0x%08" PRIx32 "",
 			ini,
 			nat ? "/NAT" : "",
 			esn ? "/ESN" : "",
@@ -555,14 +555,14 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 			tcp ? "/TCP" : "",
 			ntohl(st->st_esp.attrs.spi),
 			ntohl(st->st_esp.our_spi));
-		lswlogf(buf, " xfrm=%s", st->st_esp.attrs.transattrs.ta_encrypt->common.fqn);
+		jam(buf, " xfrm=%s", st->st_esp.attrs.transattrs.ta_encrypt->common.fqn);
 		/* log keylen when it is required and/or "interesting" */
 		if (!st->st_esp.attrs.transattrs.ta_encrypt->keylen_omitted ||
 		    (st->st_esp.attrs.transattrs.enckeylen != 0 &&
 		     st->st_esp.attrs.transattrs.enckeylen != st->st_esp.attrs.transattrs.ta_encrypt->keydeflen)) {
-			lswlogf(buf, "_%u", st->st_esp.attrs.transattrs.enckeylen);
+			jam(buf, "_%u", st->st_esp.attrs.transattrs.enckeylen);
 		}
-		lswlogf(buf, "-%s", st->st_esp.attrs.transattrs.ta_integ->common.fqn);
+		jam(buf, "-%s", st->st_esp.attrs.transattrs.ta_integ->common.fqn);
 
 		if ((st->st_ike_version == IKEv2) && st->st_pfs_group != NULL)  {
 			jam_string(buf, "-");
@@ -573,7 +573,7 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 	}
 
 	if (st->st_ah.present) {
-		lswlogf(buf, "%sAH%s=>0x%08" PRIx32 " <0x%08" PRIx32 " xfrm=%s",
+		jam(buf, "%sAH%s=>0x%08" PRIx32 " <0x%08" PRIx32 " xfrm=%s",
 			ini,
 			st->st_ah.attrs.transattrs.esn_enabled ? "/ESN" : "",
 			ntohl(st->st_ah.attrs.spi),
@@ -584,7 +584,7 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 	}
 
 	if (st->st_ipcomp.present) {
-		lswlogf(buf, "%sIPCOMP=>0x%08" PRIx32 " <0x%08" PRIx32,
+		jam(buf, "%sIPCOMP=>0x%08" PRIx32 " <0x%08" PRIx32,
 			ini,
 			ntohl(st->st_ipcomp.attrs.spi),
 			ntohl(st->st_ipcomp.our_spi));
@@ -613,7 +613,7 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 		jam_string(buf, oa);
 	}
 
-	lswlogf(buf, (st->st_ike_version == IKEv1 && !st->hidden_variables.st_peer_supports_dpd) ? " DPD=unsupported" :
+	jam(buf, (st->st_ike_version == IKEv1 && !st->hidden_variables.st_peer_supports_dpd) ? " DPD=unsupported" :
 			dpd_active_locally(st) ? " DPD=active" : " DPD=passive");
 
 	if (st->st_xauth_username[0] != '\0') {
@@ -637,10 +637,10 @@ void lswlog_ike_sa_established(struct lswlog *buf, struct state *st)
 		jam_enum_short(buf, &oakley_auth_names, st->st_oakley.auth);
 	}
 
-	lswlogf(buf, " cipher=%s", st->st_oakley.ta_encrypt->common.fqn);
+	jam(buf, " cipher=%s", st->st_oakley.ta_encrypt->common.fqn);
 	if (st->st_oakley.enckeylen > 0) {
 		/* XXX: also check omit key? */
-		lswlogf(buf, "_%d", st->st_oakley.enckeylen);
+		jam(buf, "_%d", st->st_oakley.enckeylen);
 	}
 
 	/*
@@ -664,8 +664,8 @@ void lswlog_ike_sa_established(struct lswlog *buf, struct state *st)
 	}
 
 	if (st->st_ike_version == IKEv2) {
-		lswlogf(buf, " prf=%s", st->st_oakley.ta_prf->common.fqn);
+		jam(buf, " prf=%s", st->st_oakley.ta_prf->common.fqn);
 	}
 
-	lswlogf(buf, " group=%s}", st->st_oakley.ta_dh->common.fqn);
+	jam(buf, " group=%s}", st->st_oakley.ta_dh->common.fqn);
 }

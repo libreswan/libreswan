@@ -81,9 +81,9 @@ void threadtime_stop(const threadtime_t *start, long serialno, const char *fmt, 
 		LSWLOG_DEBUG(buf) {
 			if (serialno > 0) {
 				/* on thread so in background */
-				lswlogf(buf, "(#%lu) ", serialno);
+				jam(buf, "(#%lu) ", serialno);
 			}
-			lswlogf(buf, PRI_CPU_USAGE" in ",
+			jam(buf, PRI_CPU_USAGE" in ",
 				pri_cpu_usage(usage));
 			va_list ap;
 			va_start(ap, fmt);
@@ -143,7 +143,7 @@ static void DBG_missing(const statetime_t *start, threadtime_t now,
 			for (int i = 0; i < start->level; i++) {
 				jam_string(buf, INDENT INDENT);
 			}
-			lswlogf(buf, "#%lu "PRI_CPU_USAGE"",
+			jam(buf, "#%lu "PRI_CPU_USAGE"",
 				start->so, pri_cpu_usage(missing));
 		}
 	}
@@ -258,7 +258,7 @@ void statetime_stop(const statetime_t *start, const char *fmt, ...)
 			for (int i = 0; i < start->level; i++) {
 				jam_string(buf, INDENT INDENT);
 			}
-			lswlogf(buf, "#%lu "PRI_CPU_USAGE"",
+			jam(buf, "#%lu "PRI_CPU_USAGE"",
 				st->st_serialno,
 				pri_cpu_usage(usage));
 			jam(buf, " in ");

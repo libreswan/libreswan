@@ -341,7 +341,7 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);
 		va_end(ap);
-		lswlogf(buf, " (%d bytes)", (int)pbs_room(&md->packet_pbs));
+		jam(buf, " (%d bytes)", (int)pbs_room(&md->packet_pbs));
 	}
 	if (DBGP(DBG_BASE)) {
 		DBG_dump(NULL, md->packet_pbs.start, pbs_room(&md->packet_pbs));
@@ -351,7 +351,7 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 	md_delref(&md, HERE);
 
 	LSWLOG(buf) {
-		lswlogf(buf, "IMPAIR: stop processing ");
+		jam(buf, "IMPAIR: stop processing ");
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);

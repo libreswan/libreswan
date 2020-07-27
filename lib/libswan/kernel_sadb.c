@@ -55,11 +55,11 @@ void kernel_add_sadb_alg(int satype, int exttype, const struct sadb_alg *sadb_al
 	LSWDBGP(DBG_BASE, buf) {
 		jam_string(buf, __func__);
 		jam_string(buf, ":");
-		lswlogf(buf, " satype=%d(%s)", satype,
+		jam(buf, " satype=%d(%s)", satype,
 			satype == SADB_SATYPE_ESP ? "SADB_SATYPE_ESP"
 			: satype == SADB_SATYPE_AH ? "SADB_SATYPE_AH"
 			: "SADB_SATYPE_???");
-		lswlogf(buf, " exttype=%d(%s)", exttype,
+		jam(buf, " exttype=%d(%s)", exttype,
 			exttype == SADB_EXT_SUPPORTED_AUTH ? "SADB_EXT_SUPPORTED_AUTH"
 			: exttype == SADB_EXT_SUPPORTED_ENCRYPT ? "SADB_EXT_SUPPORTED_ENCRYPT"
 			: "SADB_EXT_SUPPORTED_???");
@@ -67,7 +67,7 @@ void kernel_add_sadb_alg(int satype, int exttype, const struct sadb_alg *sadb_al
 			integ != NULL ? integ->common.fqn
 			: encrypt != NULL ? encrypt->common.fqn
 			: "???");
-		lswlogf(buf, " alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d",
+		jam(buf, " alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d",
 			sadb_alg->sadb_alg_ivlen,
 			sadb_alg->sadb_alg_minbits,
 			sadb_alg->sadb_alg_maxbits);

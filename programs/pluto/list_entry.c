@@ -52,7 +52,7 @@ void jam_list_entry(struct lswlog *buf, const struct list_entry *entry)
 		jam(buf, "(null)");
 	} else {
 		if (entry->data == NULL) {
-			lswlogf(buf, "HEAD");
+			jam(buf, "HEAD");
 		} else {
 			entry->info->jam(buf, entry->data);
 		}
@@ -65,7 +65,7 @@ static void log_entry(const char *op, struct list_entry *entry)
 	passert(entry != NULL);
 	if (DBGP(DBG_TMI)) {
 		LSWLOG_DEBUG(buf) {
-			lswlogf(buf, "%s: %s ", entry->info->name, op);
+			jam(buf, "%s: %s ", entry->info->name, op);
 			jam_list_entry(buf, entry);
 		}
 	}
@@ -105,10 +105,10 @@ void insert_list_entry(struct list_head *list,
 	passert_entry(entry, entry->data != NULL);
 	if (DBGP(DBG_TMI)) {
 		LSWLOG_DEBUG(buf) {
-			lswlogf(buf, "%s: inserting ",
+			jam(buf, "%s: inserting ",
 				entry->info->name);
 			jam_list_entry(buf, entry);
-			lswlogf(buf, " into list ");
+			jam(buf, " into list ");
 			jam_list_entry(buf, &list->head);
 		}
 	}
@@ -124,10 +124,10 @@ void insert_list_entry(struct list_head *list,
 	/* list->newer = list->newer; */
 	if (DBGP(DBG_TMI)) {
 		LSWLOG_DEBUG(buf) {
-			lswlogf(buf, "%s: inserted  ",
+			jam(buf, "%s: inserted  ",
 				entry->info->name);
 			jam_list_entry(buf, entry);
-			lswlogf(buf, " into list ");
+			jam(buf, " into list ");
 			jam_list_entry(buf, &list->head);
 		}
 	}

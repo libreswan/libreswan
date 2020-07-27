@@ -412,7 +412,7 @@ void DBG_dump(const char *label, const void *p, size_t len);
 void lswbuf(struct lswlog *log)
 {
 	LSWBUF(buf) {
-		lswlogf(buf, "written to buf");
+		jam(buf, "written to buf");
 		lswlogl(log, buf); /* add to calling array */
 	}
 }
@@ -460,7 +460,7 @@ void lswbuf(struct lswlog *log)
 void lswlog_file(FILE f)
 {
 	LSWLOG_FILE(f, buf) {
-		lswlogf(buf, "written to file");
+		jam(buf, "written to file");
 	}
 }
 #endif

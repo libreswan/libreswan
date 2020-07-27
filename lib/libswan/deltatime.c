@@ -153,17 +153,17 @@ static size_t frac(struct lswlog *buf, intmax_t usec)
 		precision--;
 		usec = usec / 10;
 	}
-	return lswlogf(buf, ".%0*jd", precision, usec);
+	return jam(buf, ".%0*jd", precision, usec);
 }
 
 size_t jam_deltatime(jambuf_t *buf, deltatime_t d)
 {
 	size_t s = 0;
 	if (d.dt.tv_sec < 0) {
-		s += lswlogf(buf, "-");
+		s += jam(buf, "-");
 		d = negate_deltatime(d);
 	}
-	s += lswlogf(buf, "%jd", (intmax_t)d.dt.tv_sec);
+	s += jam(buf, "%jd", (intmax_t)d.dt.tv_sec);
 	if (d.dt.tv_usec != 0) {
 		frac(buf, d.dt.tv_usec);
 	}

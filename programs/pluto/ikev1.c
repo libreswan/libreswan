@@ -2806,7 +2806,7 @@ void complete_v1_state_transition(struct msg_digest *md, stf_status result)
 
 			/* tell whack and logs our progress */
 			LSWLOG_RC(w, buf) {
-				lswlogf(buf, "%s: %s", st->st_state->name,
+				jam(buf, "%s: %s", st->st_state->name,
 					st->st_state->story);
 				/* document SA details for admin's pleasure */
 				if (log_details != NULL) {

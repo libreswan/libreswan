@@ -2539,7 +2539,7 @@ stf_status ikev2_ike_sa_process_auth_request(struct ike_sa *ike,
 	 * XXX: move this into ikev2.c?
 	 */
 	LSWLOG(buf) {
-		lswlogf(buf, "processing decrypted ");
+		jam(buf, "processing decrypted ");
 		lswlog_msg_digest(buf, md);
 	}
 

@@ -633,7 +633,7 @@ static stf_status handle_helper_answer(struct state *st,
 	} else if (st == NULL) {
 		/* oops, the state disappeared! */
 		LSWLOG_PEXPECT(buf) {
-			lswlogf(buf, "work-order %u state #%lu disappeared!",
+			jam(buf, "work-order %u state #%lu disappeared!",
 				cn->pcrc_id, cn->pcrc_serialno);
 		}
 		h->cancelled_cb(&cn->pcrc_task);

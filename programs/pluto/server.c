@@ -1037,23 +1037,23 @@ static void addconn_exited(struct state *null_st UNUSED,
 
 static void log_status(struct lswlog *buf, int status)
 {
-	lswlogf(buf, " (");
+	jam(buf, " (");
 	if (WIFEXITED(status)) {
-		lswlogf(buf, "exited with status %u",
+		jam(buf, "exited with status %u",
 			WEXITSTATUS(status));
 	} else if (WIFSIGNALED(status)) {
-		lswlogf(buf, "terminated with signal %s (%d)",
+		jam(buf, "terminated with signal %s (%d)",
 			strsignal(WTERMSIG(status)),
 			WTERMSIG(status));
 	} else if (WIFSTOPPED(status)) {
 		/* should not happen */
-		lswlogf(buf, "stopped with signal %s (%d) but WUNTRACED not specified",
+		jam(buf, "stopped with signal %s (%d) but WUNTRACED not specified",
 			strsignal(WSTOPSIG(status)),
 			WSTOPSIG(status));
 	} else if (WIFCONTINUED(status)) {
-		lswlogf(buf, "continued");
+		jam(buf, "continued");
 	} else {
-		lswlogf(buf, "wait status %x not recognized!", status);
+		jam(buf, "wait status %x not recognized!", status);
 	}
 #ifdef WCOREDUMP
 	if (WCOREDUMP(status)) {
@@ -1082,7 +1082,7 @@ static void childhandler_cb(void)
 			return;
 		default:
 			LSWDBGP(DBG_BASE, buf) {
-				lswlogf(buf, "waitpid returned pid %d",
+				jam(buf, "waitpid returned pid %d",
 					child);
 				log_status(buf, status);
 			}
@@ -1097,7 +1097,7 @@ static void childhandler_cb(void)
 			}
 			if (pid_entry == NULL) {
 				LSWLOG(buf) {
-					lswlogf(buf, "waitpid return unknown child pid %d",
+					jam(buf, "waitpid return unknown child pid %d",
 						child);
 					log_status(buf, status);
 				}

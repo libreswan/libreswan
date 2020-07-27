@@ -68,7 +68,7 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 			pexpect(parser->error[0] == '\0');		\
 			FOR_EACH_PROPOSAL(proposals, proposal) {	\
 				LSWLOG_FILE(stdout, log) {		\
-					lswlogf(log, "\t");		\
+					jam(log, "\t");		\
 					fmt_proposal(log, proposal);	\
 				}					\
 			}						\

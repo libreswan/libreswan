@@ -93,7 +93,7 @@ void lswlog_errno_suffix(struct lswlog *buf, int e)
 
 void jam_cur_prefix(struct lswlog *buf)
 {
-	lswlogf(buf, "%s%s", progname, prog_suffix);
+	jam(buf, "%s%s", progname, prog_suffix);
 }
 
 void jambuf_to_logger(jambuf_t *buf, const struct logger *logger UNUSED, lset_t rc_flags)

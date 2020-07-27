@@ -220,15 +220,15 @@ enum retransmit_status retransmit(struct state *st)
 	    monotime_exceeds_limit ||
 	    deltatime_exceeds_limit) {
 		LSWLOG_RC(RC_NORETRANSMISSION, buf) {
-			lswlogf(buf, "%s: ", st->st_state->name);
+			jam(buf, "%s: ", st->st_state->name);
 			if (retransmit_count_exceeded) {
-				lswlogf(buf, "max number of retransmissions (%lu) reached after ",
+				jam(buf, "max number of retransmissions (%lu) reached after ",
 					nr_retransmits);
 				jam_deltatime(buf, waited);
 				jam_string(buf, " seconds");
 			} else {
 				jam_deltatime(buf, rt->timeout);
-				lswlogf(buf, " second timeout exceeded after %lu retransmits",
+				jam(buf, " second timeout exceeded after %lu retransmits",
 					nr_retransmits);
 			}
 			switch (st->st_state->kind) {
@@ -252,7 +252,7 @@ enum retransmit_status retransmit(struct state *st)
 				jam_string(buf, ".  No response (or no acceptable response) to our first IKEv2 message");
 				break;
 			default:
-				lswlogf(buf, ".  No response (or no acceptable response) to our %s message",
+				jam(buf, ".  No response (or no acceptable response) to our %s message",
 					enum_name(&ike_version_names, st->st_ike_version));
 				break;
 			}
@@ -265,7 +265,7 @@ enum retransmit_status retransmit(struct state *st)
 	rt->delays = deltatime_add(rt->delays, rt->delay);
 	event_schedule(EVENT_RETRANSMIT, rt->delay, st);
 	LSWLOG_RC(RC_RETRANSMISSION, buf) {
-		lswlogf(buf, "%s: retransmission; will wait ",
+		jam(buf, "%s: retransmission; will wait ",
 			st->st_state->name);
 		jam_deltatime(buf, rt->delay);
 		jam_string(buf, " seconds for response");
@@ -287,7 +287,7 @@ void suppress_retransmits(struct state *st)
 	event_delete(EVENT_RETRANSMIT, st);
 	event_schedule(EVENT_RETRANSMIT, rt->delay, st);
 	LSWLOG_RC(RC_RETRANSMISSION, buf) {
-		lswlogf(buf, "%s: suppressing retransmits; will wait ",
+		jam(buf, "%s: suppressing retransmits; will wait ",
 			st->st_state->name);
 		jam_deltatime(buf, rt->delay);
 		jam_string(buf, " seconds for retry");

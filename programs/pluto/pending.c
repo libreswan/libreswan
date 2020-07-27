@@ -426,7 +426,7 @@ void show_pending_phase2(struct show *s,
 				jam(buf, " for ");
 				jam_connection(buf, c);
 				if (p->replacing != SOS_NOBODY) {
-					lswlogf(buf, " replacing #%lu", p->replacing);
+					jam(buf, " replacing #%lu", p->replacing);
 				}
 			}
 		}

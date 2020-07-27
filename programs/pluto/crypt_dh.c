@@ -74,7 +74,7 @@ struct dh_secret {
 
 static void lswlog_dh_secret(struct lswlog *buf, struct dh_secret *secret)
 {
-	lswlogf(buf, "DH secret %s@%p: ",
+	jam(buf, "DH secret %s@%p: ",
 		secret->group->common.fqn, secret);
 }
 
@@ -119,7 +119,7 @@ PK11SymKey *calc_dh_shared(struct dh_secret *secret,
 	 */
 	LSWDBGP(DBG_CRYPT, buf) {
 		lswlog_dh_secret(buf, secret);
-		lswlogf(buf, "computed shared DH secret key@%p",
+		jam(buf, "computed shared DH secret key@%p",
 			dhshared);
 	}
 	DBG(DBG_CRYPT, DBG_symkey("dh-shared ", "g^ir", dhshared));
@@ -136,7 +136,7 @@ void transfer_dh_secret_to_state(const char *helper, struct dh_secret **secret,
 {
 	LSWDBGP(DBG_CRYPT, buf) {
 		lswlog_dh_secret(buf, *secret);
-		lswlogf(buf, "transferring ownership from helper %s to state #%lu",
+		jam(buf, "transferring ownership from helper %s to state #%lu",
 			helper, st->st_serialno);
 	}
 	pexpect(st->st_dh_secret == NULL);
@@ -149,7 +149,7 @@ void transfer_dh_secret_to_helper(struct state *st,
 {
 	LSWDBGP(DBG_CRYPT, buf) {
 		lswlog_dh_secret(buf, st->st_dh_secret);
-		lswlogf(buf, "transferring ownership from state #%lu to helper %s",
+		jam(buf, "transferring ownership from state #%lu to helper %s",
 			st->st_serialno, helper);
 	}
 	pexpect(*secret == NULL);

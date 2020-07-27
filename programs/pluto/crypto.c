@@ -99,7 +99,7 @@ void show_ike_alg_connection(struct show *s,
 				jam_string(buf, sep); sep = "-";
 				jam_string(buf, ta->ta_encrypt->common.fqn);
 				if (ta->enckeylen != 0) {
-					lswlogf(buf, "_%d", ta->enckeylen);
+					jam(buf, "_%d", ta->enckeylen);
 				}
 			}
 			if (ta->ta_prf != NULL) {
