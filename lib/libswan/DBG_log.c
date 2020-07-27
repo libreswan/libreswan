@@ -27,7 +27,7 @@ void DBG_log(const char *message, ...)
 	LSWLOG_DEBUG(buf) {
 		va_list args;
 		va_start(args, message);
-		lswlogvf(buf, message, args);
+		jam_va_list(buf, message, args);
 		va_end(args);
 	}
 }

@@ -339,7 +339,7 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 		lswlogs(buf, "IMPAIR: start processing ");
 		va_list ap;
 		va_start(ap, fmt);
-		lswlogvf(buf, fmt, ap);
+		jam_va_list(buf, fmt, ap);
 		va_end(ap);
 		lswlogf(buf, " (%d bytes)", (int)pbs_room(&md->packet_pbs));
 	}
@@ -354,7 +354,7 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 		lswlogf(buf, "IMPAIR: stop processing ");
 		va_list ap;
 		va_start(ap, fmt);
-		lswlogvf(buf, fmt, ap);
+		jam_va_list(buf, fmt, ap);
 		va_end(ap);
 	}
 

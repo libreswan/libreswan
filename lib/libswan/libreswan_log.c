@@ -24,7 +24,7 @@ int libreswan_log(const char *fmt, ...)
 	LSWLOG(buf) {
 		va_list ap;
 		va_start(ap, fmt);
-		lswlogvf(buf, fmt, ap);
+		jam_va_list(buf, fmt, ap);
 		va_end(ap);
 	}
 	return 0;

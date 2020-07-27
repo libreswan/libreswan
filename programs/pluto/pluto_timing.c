@@ -87,7 +87,7 @@ void threadtime_stop(const threadtime_t *start, long serialno, const char *fmt, 
 				pri_cpu_usage(usage));
 			va_list ap;
 			va_start(ap, fmt);
-			lswlogvf(buf, fmt, ap);
+			jam_va_list(buf, fmt, ap);
 			va_end(ap);
 		}
 	}
@@ -264,7 +264,7 @@ void statetime_stop(const statetime_t *start, const char *fmt, ...)
 			jam(buf, " in ");
 			va_list ap;
 			va_start(ap, fmt);
-			lswlogvf(buf, fmt, ap);
+			jam_va_list(buf, fmt, ap);
 			va_end(ap);
 		}
 	}

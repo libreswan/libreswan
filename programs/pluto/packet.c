@@ -2679,7 +2679,7 @@ static bool space_for(size_t len, pb_stream *outs, const char *fmt, ...)
 			lswlogf(buf, "%s is already full; discarding ", outs->name);
 			va_list ap;
 			va_start(ap, fmt);
-			lswlogvf(buf, fmt, ap);
+			jam_va_list(buf, fmt, ap);
 			va_end(ap);
 		}
 		return false;
@@ -2689,7 +2689,7 @@ static bool space_for(size_t len, pb_stream *outs, const char *fmt, ...)
 			lswlogf(buf, "%s is full; unable to emit ", outs->name);
 			va_list ap;
 			va_start(ap, fmt);
-			lswlogvf(buf, fmt, ap);
+			jam_va_list(buf, fmt, ap);
 			va_end(ap);
 		}
 		/* overflow the buffer */
@@ -2700,7 +2700,7 @@ static bool space_for(size_t len, pb_stream *outs, const char *fmt, ...)
 			lswlogs(buf, "emitting ");
 			va_list ap;
 			va_start(ap, fmt);
-			lswlogvf(buf, fmt, ap);
+			jam_va_list(buf, fmt, ap);
 			va_end(ap);
 			lswlogf(buf, " into %s", outs->name);
 		}
