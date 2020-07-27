@@ -85,7 +85,7 @@ size_t jam_keyword_name(struct lswlog *buf, const struct keywords *keywords, uns
 	if (keyword == NULL) {
 		return lswlogf(buf, "'%s %u'", keywords->name, value);
 	} else {
-		return lswlogs(buf, keyword->name);
+		return jam_string(buf, keyword->name);
 	}
 }
 
@@ -95,6 +95,6 @@ size_t jam_keyword_sname(struct lswlog *buf, const struct keywords *keywords, un
 	if (keyword == NULL) {
 		return lswlogf(buf, "'%s %u'", keywords->name, value);
 	} else {
-		return lswlogs(buf, keyword->sname);
+		return jam_string(buf, keyword->sname);
 	}
 }

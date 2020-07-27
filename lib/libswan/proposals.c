@@ -380,8 +380,8 @@ void jam_proposal(struct lswlog *log,
 	as = ps;
 	FOR_EACH_ALGORITHM(proposal, encrypt, alg) {
 		const struct encrypt_desc *encrypt = encrypt_desc(alg->desc);
-		lswlogs(log, as); ps = "-"; as = "+";
-		lswlogs(log, encrypt->common.fqn);
+		jam_string(log, as); ps = "-"; as = "+";
+		jam_string(log, encrypt->common.fqn);
 		if (alg->enckeylen != 0) {
 			lswlogf(log, "_%d", alg->enckeylen);
 		}
@@ -390,8 +390,8 @@ void jam_proposal(struct lswlog *log,
 	as = ps;
 	FOR_EACH_ALGORITHM(proposal, prf, alg) {
 		const struct prf_desc *prf = prf_desc(alg->desc);
-		lswlogs(log, as); ps = "-"; as = "+";
-		lswlogs(log, prf->common.fqn);
+		jam_string(log, as); ps = "-"; as = "+";
+		jam_string(log, prf->common.fqn);
 	}
 
 	bool print_integ = (impair.proposal_parser ||
@@ -414,16 +414,16 @@ void jam_proposal(struct lswlog *log,
 	if (print_integ) {
 		FOR_EACH_ALGORITHM(proposal, integ, alg) {
 			const struct integ_desc *integ = integ_desc(alg->desc);
-			lswlogs(log, as); ps = "-"; as = "+";
-			lswlogs(log, integ->common.fqn);
+			jam_string(log, as); ps = "-"; as = "+";
+			jam_string(log, integ->common.fqn);
 		}
 	}
 
 	as = ps;
 	FOR_EACH_ALGORITHM(proposal, dh, alg) {
 		const struct dh_desc *dh = dh_desc(alg->desc);
-		lswlogs(log, as); ps = "-"; as = "+";
-		lswlogs(log, dh->common.fqn);
+		jam_string(log, as); ps = "-"; as = "+";
+		jam_string(log, dh->common.fqn);
 	}
 }
 
@@ -431,7 +431,7 @@ void jam_proposals(struct lswlog *log, const struct proposals *proposals)
 {
 	const char *sep = "";
 	FOR_EACH_PROPOSAL(proposals, proposal) {
-		lswlogs(log, sep);
+		jam_string(log, sep);
 		fmt_proposal(log, proposal);
 		sep = ", ";
 	}

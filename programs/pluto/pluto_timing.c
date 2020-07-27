@@ -110,7 +110,7 @@ struct cpu_usage logtime_stop(const logtime_t *start, const char *fmt, ...)
 		LSWLOG_DEBUG(buf) {
 			/* update is indented by 2 indents */
 			for (int i = 0; i < start->level; i++) {
-				lswlogs(buf, INDENT INDENT);
+				jam_string(buf, INDENT INDENT);
 			}
 			jam_logger_prefix(buf, start->logger);
 			jam(buf, PRI_CPU_USAGE" in ",
@@ -141,7 +141,7 @@ static void DBG_missing(const statetime_t *start, threadtime_t now,
 	if (missing.thread_seconds > MISSING_FUDGE) {
 		LSWLOG_DEBUG(buf) {
 			for (int i = 0; i < start->level; i++) {
-				lswlogs(buf, INDENT INDENT);
+				jam_string(buf, INDENT INDENT);
 			}
 			lswlogf(buf, "#%lu "PRI_CPU_USAGE"",
 				start->so, pri_cpu_usage(missing));
@@ -256,7 +256,7 @@ void statetime_stop(const statetime_t *start, const char *fmt, ...)
 		LSWLOG_DEBUG(buf) {
 			/* update is indented by 2 indents */
 			for (int i = 0; i < start->level; i++) {
-				lswlogs(buf, INDENT INDENT);
+				jam_string(buf, INDENT INDENT);
 			}
 			lswlogf(buf, "#%lu "PRI_CPU_USAGE"",
 				st->st_serialno,

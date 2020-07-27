@@ -800,9 +800,9 @@ void init_ikev1(void)
 		if (DBGP(DBG_BASE)) {
 			if (from->nr_transitions == 0) {
 				LSWLOG_DEBUG(buf) {
-					lswlogs(buf, "  ");
+					jam_string(buf, "  ");
 					lswlog_finite_state(buf, from);
-					lswlogs(buf, ":");
+					jam_string(buf, ":");
 				}
 			}
 			DBG_log("    -> %s %s (%s)", to->short_name,

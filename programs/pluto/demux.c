@@ -336,7 +336,7 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 	struct msg_digest *md = clone_raw_md(orig, fmt /* good enough */);
 
 	LSWLOG(buf) {
-		lswlogs(buf, "IMPAIR: start processing ");
+		jam_string(buf, "IMPAIR: start processing ");
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);
@@ -572,8 +572,8 @@ void lswlog_msg_digest(struct lswlog *buf, const struct msg_digest *md)
 			    md->hdr.isa_xchg);
 	if (ike_version == IKEv2) {
 		switch (v2_msg_role(md)) {
-		case MESSAGE_REQUEST: lswlogs(buf, " request"); break;
-		case MESSAGE_RESPONSE: lswlogs(buf, " response"); break;
+		case MESSAGE_REQUEST: jam_string(buf, " request"); break;
+		case MESSAGE_RESPONSE: jam_string(buf, " response"); break;
 		case NO_MESSAGE: break;
 		}
 	}
@@ -581,7 +581,7 @@ void lswlog_msg_digest(struct lswlog *buf, const struct msg_digest *md)
 	const char *term = "";
 	for (unsigned d = 0; d < md->digest_roof; d++) {
 		const struct payload_digest *pd = &md->digest[d];
-		lswlogs(buf, sep);
+		jam_string(buf, sep);
 		if (ike_version == IKEv2 &&
 		    d+1 < md->digest_roof &&
 		    pd->payload_type == ISAKMP_NEXT_v2SK) {

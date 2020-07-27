@@ -2697,7 +2697,7 @@ static bool space_for(size_t len, pb_stream *outs, const char *fmt, ...)
 		return false;
 	} else {
 		LSWDBGP(DBG_BASE, buf) {
-			lswlogs(buf, "emitting ");
+			jam_string(buf, "emitting ");
 			va_list ap;
 			va_start(ap, fmt);
 			jam_va_list(buf, fmt, ap);

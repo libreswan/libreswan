@@ -19,7 +19,7 @@
 void lswlog_pexpect_prefix(struct lswlog *buf)
 {
 	jam_cur_prefix(buf);
-	lswlogs(buf, "EXPECTATION FAILED: ");
+	jam_string(buf, "EXPECTATION FAILED: ");
 }
 
 void lswlog_pexpect_suffix(struct lswlog *buf, where_t where)

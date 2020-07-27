@@ -53,8 +53,8 @@ void kernel_add_sadb_alg(int satype, int exttype, const struct sadb_alg *sadb_al
 	}
 
 	LSWDBGP(DBG_BASE, buf) {
-		lswlogs(buf, __func__);
-		lswlogs(buf, ":");
+		jam_string(buf, __func__);
+		jam_string(buf, ":");
 		lswlogf(buf, " satype=%d(%s)", satype,
 			satype == SADB_SATYPE_ESP ? "SADB_SATYPE_ESP"
 			: satype == SADB_SATYPE_AH ? "SADB_SATYPE_AH"
@@ -72,10 +72,10 @@ void kernel_add_sadb_alg(int satype, int exttype, const struct sadb_alg *sadb_al
 			sadb_alg->sadb_alg_minbits,
 			sadb_alg->sadb_alg_maxbits);
 		if (integ == NULL && encrypt == NULL) {
-			lswlogs(buf, ", not supported");
+			jam_string(buf, ", not supported");
 		}
 		if (!combo_ok) {
-			lswlogs(buf, ", invalid combo");
+			jam_string(buf, ", invalid combo");
 		}
 	}
 

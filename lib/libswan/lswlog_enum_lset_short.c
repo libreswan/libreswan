@@ -23,7 +23,7 @@ size_t jam_enum_lset_short(struct lswlog *buf, enum_names *en,
 
 	/* if nothing gets filled in, default to "none" rather than "" */
 	if (val == LEMPTY) {
-		return lswlogs(buf, "none");
+		return jam_string(buf, "none");
 	}
 
 	size_t size = 0;
@@ -32,7 +32,7 @@ size_t jam_enum_lset_short(struct lswlog *buf, enum_names *en,
 		lset_t bit = LELEM(e);
 
 		if (val & bit) {
-			size += lswlogs(buf, sep);
+			size += jam_string(buf, sep);
 			sep = separator;
 			size += jam_enum_short(buf, en, e);
 			val -= bit;

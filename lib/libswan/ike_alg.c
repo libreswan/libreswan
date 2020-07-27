@@ -1084,29 +1084,29 @@ static void lswlog_ike_alg_details(struct lswlog *buf, const struct ike_alg *alg
 	} else {
 		bad_case(0);
 	}
-	lswlogs(buf, "  IKEv1:");
-	lswlogs(buf, (v1_ike
-		      ? " IKE"
-		      : "    "));
-	lswlogs(buf, (v1_esp
-		      ? " ESP"
-		      : "    "));
-	lswlogs(buf, (v1_ah
-		      ? " AH"
-		      : "   "));
-	lswlogs(buf, "  IKEv2:");
-	lswlogs(buf, (v2_ike
-		      ? " IKE"
-		      : "    "));
-	lswlogs(buf, (v2_esp
-		      ? " ESP"
-		      : "    "));
-	lswlogs(buf, (v2_ah
-		      ? " AH"
-		      : "   "));
-	lswlogs(buf, (alg->fips
-		      ? "  FIPS"
-		      : "      "));
+	jam_string(buf, "  IKEv1:");
+	jam_string(buf, (v1_ike
+			 ? " IKE"
+			 : "    "));
+	jam_string(buf, (v1_esp
+			 ? " ESP"
+			 : "    "));
+	jam_string(buf, (v1_ah
+			 ? " AH"
+			 : "   "));
+	jam_string(buf, "  IKEv2:");
+	jam_string(buf, (v2_ike
+			 ? " IKE"
+			 : "    "));
+	jam_string(buf, (v2_esp
+			 ? " ESP"
+			 : "    "));
+	jam_string(buf, (v2_ah
+			 ? " AH"
+			 : "   "));
+	jam_string(buf, (alg->fips
+			 ? "  FIPS"
+			 : "      "));
 
 	/*
 	 * Concatenate [key,...] or {key,...} with default
@@ -1114,17 +1114,17 @@ static void lswlog_ike_alg_details(struct lswlog *buf, const struct ike_alg *alg
 	 */
 	if (alg->algo_type == IKE_ALG_ENCRYPT) {
 		const struct encrypt_desc *encr = encrypt_desc(alg);
-		lswlogs(buf, encr->keylen_omitted ? "  [" : "  {");
+		jam_string(buf, encr->keylen_omitted ? "  [" : "  {");
 		const char *sep = "";
 		for (const unsigned *keyp = encr->key_bit_lengths; *keyp; keyp++) {
-			lswlogs(buf, sep);
+			jam_string(buf, sep);
 			if (*keyp == encr->keydeflen) {
-				lswlogs(buf, "*");
+				jam_string(buf, "*");
 			}
 			lswlogf(buf, "%d", *keyp);
 			sep = ",";
 		}
-		lswlogs(buf, encr->keylen_omitted ? "]" : "}");
+		jam_string(buf, encr->keylen_omitted ? "]" : "}");
 		/* did fit */
 	}
 
@@ -1147,7 +1147,7 @@ static void lswlog_ike_alg_details(struct lswlog *buf, const struct ike_alg *alg
 void libreswan_log_ike_alg(const char *prefix, const struct ike_alg *alg)
 {
 	LSWLOG(buf) {
-		lswlogs(buf, prefix);
+		jam_string(buf, prefix);
 		lswlog_ike_alg_details(buf, alg);
 	}
 }

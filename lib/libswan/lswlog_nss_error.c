@@ -32,7 +32,7 @@ size_t jam_nss_error(struct lswlog *buf)
 {
 	size_t size = 0;
 	int error = PR_GetError(); /* at least 32-bits */
-	size += lswlogs(buf, " (");
+	size += jam_string(buf, " (");
 	/* the number */
 	if (IS_SEC_ERROR(error)) {
 		size += jam(buf, "SECERR: %d (0x%x): ",
@@ -60,10 +60,10 @@ size_t jam_nss_error(struct lswlog *buf)
 		if (length != 0) {
 			char *text = alloc_things(char, length, "error message");
 			PR_GetErrorText(text);
-			size += lswlogs(buf, text);
+			size += jam_string(buf, text);
 			pfree(text);
 		} else {
-			size += lswlogs(buf, "unknown error");
+			size += jam_string(buf, "unknown error");
 		}
 	}
 	if (error == 0) {

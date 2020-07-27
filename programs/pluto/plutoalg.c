@@ -164,7 +164,7 @@ static struct db_context *kernel_alg_db_new(struct child_proposals proposals,
 	if (proposals.p != NULL) {
 		FOR_EACH_PROPOSAL(proposals.p, proposal) {
 			LSWDBGP(DBG_BASE, buf) {
-				lswlogs(buf, "adding proposal: ");
+				jam_string(buf, "adding proposal: ");
 				fmt_proposal(buf, proposal);
 			}
 			if (!kernel_alg_db_add(ctx_new, proposal, policy, logit))

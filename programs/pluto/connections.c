@@ -1489,7 +1489,7 @@ static bool extract_connection(struct fd *whackfd,
 			/* from here on, error returns should alg_info_free(&c->ike_proposals->ai); */
 
 			LSWDBGP(DBG_BASE, buf) {
-				lswlogs(buf, "ike (phase1) algorithm values: ");
+				jam_string(buf, "ike (phase1) algorithm values: ");
 				fmt_proposals(buf, c->ike_proposals.p);
 			}
 		}
@@ -1547,7 +1547,7 @@ static bool extract_connection(struct fd *whackfd,
 			/* from here on, error returns should alg_info_free(&c->child_proposals->ai); */
 
 			LSWDBGP(DBG_BASE, buf) {
-				lswlogs(buf, "ESP/AH string values: ");
+				jam_string(buf, "ESP/AH string values: ");
 				fmt_proposals(buf, c->child_proposals.p);
 			};
 		}

@@ -2612,9 +2612,9 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					if (!encrypt_desc_is_aead(esp_attrs.transattrs.ta_encrypt) &&
 					    !ah_seen) {
 						LSWDBGP(DBG_BASE, buf) {
-							lswlogs(buf, "ESP from ");
+							jam_string(buf, "ESP from ");
 							jam_endpoint(buf, &c->spd.that.host_addr);
-							lswlogs(buf, " must either have AUTH or be combined with AH");
+							jam_string(buf, " must either have AUTH or be combined with AH");
 						}
 						continue; /* try another */
 					}

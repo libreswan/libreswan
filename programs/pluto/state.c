@@ -278,7 +278,7 @@ void revive_conns(struct fd *unused_whackfd UNUSED)
 void lswlog_finite_state(struct lswlog *buf, const struct finite_state *fs)
 {
 	if (fs == NULL) {
-		lswlogs(buf, "NULL-FINITE_STATE");
+		jam_string(buf, "NULL-FINITE_STATE");
 	} else {
 		jam(buf, "%s:", fs->short_name);
 		jam(buf, " category: ");

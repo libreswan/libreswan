@@ -559,13 +559,13 @@ void close_log(void)
 
 void lswlog_errno_prefix(struct lswlog *buf, const char *prefix)
 {
-	lswlogs(buf, prefix);
+	jam_string(buf, prefix);
 	jam_cur_prefix(buf);
 }
 
 void lswlog_errno_suffix(struct lswlog *buf, int e)
 {
-	lswlogs(buf, ".");
+	jam_string(buf, ".");
 	jam(buf, " "PRI_ERRNO, pri_errno(e));
 	lswlog_to_error_stream(buf);
 }
@@ -574,7 +574,7 @@ void exit_log(const char *message, ...)
 {
 	LSWBUF(buf) {
 		/* FATAL ERROR: <state...><message> */
-		lswlogs(buf, "FATAL ERROR: ");
+		jam_string(buf, "FATAL ERROR: ");
 		jam_cur_prefix(buf);
 		va_list args;
 		va_start(args, message);

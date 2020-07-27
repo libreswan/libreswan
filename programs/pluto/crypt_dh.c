@@ -95,7 +95,7 @@ struct dh_secret *calc_dh_secret(const struct dh_desc *group,
 	secret->pubk = pubk;
 	LSWDBGP(DBG_CRYPT, buf) {
 		lswlog_dh_secret(buf, secret);
-		lswlogs(buf, "created");
+		jam_string(buf, "created");
 	}
 	return secret;
 }
@@ -163,7 +163,7 @@ void free_dh_secret(struct dh_secret **secret)
 	if (*secret != NULL) {
 		LSWDBGP(DBG_CRYPT, buf) {
 			lswlog_dh_secret(buf, *secret);
-			lswlogs(buf, "destroyed");
+			jam_string(buf, "destroyed");
 		}
 		SECKEY_DestroyPublicKey((*secret)->pubk);
 		SECKEY_DestroyPrivateKey((*secret)->privk);

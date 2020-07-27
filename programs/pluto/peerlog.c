@@ -187,13 +187,13 @@ static void unlocked_open_peerlog(struct connection *c)
 				 1 /* deliberately over allocate */);
 		c->log_file_name = alloc_bytes(lf_len, "per-peer log file name");
 		jambuf_t buf = array_as_jambuf(c->log_file_name, lf_len);
-		lswlogs(&buf, peerlog_basedir);
-		lswlogs(&buf, "/");
+		jam_string(&buf, peerlog_basedir);
+		jam_string(&buf, "/");
 		jam_address_raw(&buf, &c->spd.that.host_addr, '/');
-		lswlogs(&buf, "/");
+		jam_string(&buf, "/");
 		jam_address_raw(&buf, &c->spd.that.host_addr,
 				0/*':' or '.'*/);
-		lswlogs(&buf, suffix);
+		jam_string(&buf, suffix);
 		/* remember, it was over allocated */
 		pexpect(lf_len > strlen(c->log_file_name) + 1);
 	}

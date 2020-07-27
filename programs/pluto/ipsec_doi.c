@@ -532,7 +532,7 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 	struct connection *const c = st->st_connection;
 	const char *ini = " {";
 
-	lswlogs(buf, c->policy & POLICY_TUNNEL ? " tunnel mode" : " transport mode");
+	jam_string(buf, c->policy & POLICY_TUNNEL ? " tunnel mode" : " transport mode");
 
 	if (st->st_esp.present) {
 		bool nat = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) != 0;
@@ -565,8 +565,8 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 		lswlogf(buf, "-%s", st->st_esp.attrs.transattrs.ta_integ->common.fqn);
 
 		if ((st->st_ike_version == IKEv2) && st->st_pfs_group != NULL)  {
-			lswlogs(buf, "-");
-			lswlogs(buf, st->st_pfs_group->common.fqn);
+			jam_string(buf, "-");
+			jam_string(buf, st->st_pfs_group->common.fqn);
 		}
 
 		ini = " ";
@@ -592,17 +592,17 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 		ini = " ";
 	}
 
-	lswlogs(buf, ini);
-	lswlogs(buf, "NATOA=");
+	jam_string(buf, ini);
+	jam_string(buf, "NATOA=");
 	/* XXX: can lswlog_ip() be used? */
 	ipstr_buf ipb;
-	lswlogs(buf, isanyaddr(&st->hidden_variables.st_nat_oa) ? "none" :
+	jam_string(buf, isanyaddr(&st->hidden_variables.st_nat_oa) ? "none" :
 		ipstr(&st->hidden_variables.st_nat_oa, &ipb));
 
-	lswlogs(buf, " NATD=");
+	jam_string(buf, " NATD=");
 
 	if (isanyaddr(&st->hidden_variables.st_natd)) {
-		lswlogs(buf, "none");
+		jam_string(buf, "none");
 	} else {
 		/* XXX: can lswlog_ip() be used?  need to check st_remoteport */
 		char oa[ADDRTOT_BUF + sizeof(":00000")];
@@ -610,18 +610,18 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 			 "%s:%d",
 			 sensitive_ipstr(&st->hidden_variables.st_natd, &ipb),
 			 endpoint_hport(&st->st_remote_endpoint));
-		lswlogs(buf, oa);
+		jam_string(buf, oa);
 	}
 
 	lswlogf(buf, (st->st_ike_version == IKEv1 && !st->hidden_variables.st_peer_supports_dpd) ? " DPD=unsupported" :
 			dpd_active_locally(st) ? " DPD=active" : " DPD=passive");
 
 	if (st->st_xauth_username[0] != '\0') {
-		lswlogs(buf, " username=");
-		lswlogs(buf, st->st_xauth_username);
+		jam_string(buf, " username=");
+		jam_string(buf, st->st_xauth_username);
 	}
 
-	lswlogs(buf, "}");
+	jam_string(buf, "}");
 }
 
 void lswlog_ike_sa_established(struct lswlog *buf, struct state *st)
@@ -630,7 +630,7 @@ void lswlog_ike_sa_established(struct lswlog *buf, struct state *st)
 	passert(st->st_oakley.ta_prf != NULL);
 	passert(st->st_oakley.ta_dh != NULL);
 
-	lswlogs(buf, " {auth=");
+	jam_string(buf, " {auth=");
 	if (st->st_ike_version == IKEv2) {
 		jam(buf, "IKEv2");
 	} else {
@@ -647,12 +647,12 @@ void lswlog_ike_sa_established(struct lswlog *buf, struct state *st)
 	 * Note: for IKEv1 and AEAD encrypters,
 	 * st->st_oakley.ta_integ is 'none'!
 	 */
-	lswlogs(buf, " integ=");
+	jam_string(buf, " integ=");
 	if (st->st_ike_version == IKEv2) {
 		if (st->st_oakley.ta_integ == &ike_alg_integ_none) {
-			lswlogs(buf, "n/a");
+			jam_string(buf, "n/a");
 		} else {
-			lswlogs(buf, st->st_oakley.ta_integ->common.fqn);
+			jam_string(buf, st->st_oakley.ta_integ->common.fqn);
 		}
 	} else {
 		/*
@@ -660,7 +660,7 @@ void lswlog_ike_sa_established(struct lswlog *buf, struct state *st)
 		 * (always?) NULL.  Display the PRF.  The choice and
 		 * behaviour are historic.
 		 */
-		lswlogs(buf, st->st_oakley.ta_prf->common.fqn);
+		jam_string(buf, st->st_oakley.ta_prf->common.fqn);
 	}
 
 	if (st->st_ike_version == IKEv2) {

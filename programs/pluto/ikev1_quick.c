@@ -658,9 +658,9 @@ void quick_outI1(struct fd *whack_sock,
 		}
 		lswlogf(buf, " pfsgroup=");
 		if ((policy & POLICY_PFS) != LEMPTY) {
-			lswlogs(buf, st->st_pfs_group->common.fqn);
+			jam_string(buf, st->st_pfs_group->common.fqn);
 		} else {
-			lswlogs(buf, "no-pfs");
+			jam_string(buf, "no-pfs");
 		}
 		lswlogf(buf, "}");
 	}

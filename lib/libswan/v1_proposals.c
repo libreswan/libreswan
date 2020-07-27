@@ -358,7 +358,7 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 				 struct proposals *proposals)
 {
 	LSWDBGP(DBG_PROPOSAL_PARSER, buf) {
-		lswlogs(buf, "algs:");
+		jam_string(buf, "algs:");
 		for (struct token *token = tokens; token->alg.ptr != NULL; token++) {
 			lswlogf(buf, " algs[%tu] = '"PRI_SHUNK"'",
 				token - tokens, pri_shunk(token->alg));

@@ -130,9 +130,9 @@ void start_retransmits(struct state *st)
 		 */
 		rt->delay = c->r_timeout;
 		LSWLOG(buf) {
-			lswlogs(buf, "IMPAIR: suppressing retransmits; scheduling timeout in ");
+			jam_string(buf, "IMPAIR: suppressing retransmits; scheduling timeout in ");
 			jam_deltatime(buf, rt->delay);
-			lswlogs(buf, " seconds");
+			jam_string(buf, " seconds");
 		}
 	}
 	rt->start = mononow();
@@ -225,7 +225,7 @@ enum retransmit_status retransmit(struct state *st)
 				lswlogf(buf, "max number of retransmissions (%lu) reached after ",
 					nr_retransmits);
 				jam_deltatime(buf, waited);
-				lswlogs(buf, " seconds");
+				jam_string(buf, " seconds");
 			} else {
 				jam_deltatime(buf, rt->timeout);
 				lswlogf(buf, " second timeout exceeded after %lu retransmits",
@@ -234,22 +234,22 @@ enum retransmit_status retransmit(struct state *st)
 			switch (st->st_state->kind) {
 			case STATE_MAIN_I3:
 			case STATE_AGGR_I2:
-				lswlogs(buf, ".  Possible authentication failure: no acceptable response to our first encrypted message");
+				jam_string(buf, ".  Possible authentication failure: no acceptable response to our first encrypted message");
 				break;
 			case STATE_MAIN_I1:
 			case STATE_AGGR_I1:
-				lswlogs(buf, ".  No response (or no acceptable response) to our first IKEv1 message");
+				jam_string(buf, ".  No response (or no acceptable response) to our first IKEv1 message");
 				break;
 			case STATE_QUICK_I1:
 				if (st->st_connection->newest_ipsec_sa == SOS_NOBODY) {
-					lswlogs(buf, ".  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal");
+					jam_string(buf, ".  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal");
 				}
 				break;
 			case STATE_PARENT_I2:
-				lswlogs(buf, ".  Possible authentication failure: no acceptable response to our first encrypted message");
+				jam_string(buf, ".  Possible authentication failure: no acceptable response to our first encrypted message");
 				break;
 			case STATE_PARENT_I1:
-				lswlogs(buf, ".  No response (or no acceptable response) to our first IKEv2 message");
+				jam_string(buf, ".  No response (or no acceptable response) to our first IKEv2 message");
 				break;
 			default:
 				lswlogf(buf, ".  No response (or no acceptable response) to our %s message",
@@ -268,7 +268,7 @@ enum retransmit_status retransmit(struct state *st)
 		lswlogf(buf, "%s: retransmission; will wait ",
 			st->st_state->name);
 		jam_deltatime(buf, rt->delay);
-		lswlogs(buf, " seconds for response");
+		jam_string(buf, " seconds for response");
 	}
 	return RETRANSMIT_YES;
 }
@@ -290,6 +290,6 @@ void suppress_retransmits(struct state *st)
 		lswlogf(buf, "%s: suppressing retransmits; will wait ",
 			st->st_state->name);
 		jam_deltatime(buf, rt->delay);
-		lswlogs(buf, " seconds for retry");
+		jam_string(buf, " seconds for retry");
 	}
 }

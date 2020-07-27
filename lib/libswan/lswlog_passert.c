@@ -21,7 +21,7 @@
 void lswlog_passert_prefix(struct lswlog *buf)
 {
 	jam_cur_prefix(buf);
-	lswlogs(buf, "ABORT: ASSERTION FAILED: ");
+	jam_string(buf, "ABORT: ASSERTION FAILED: ");
 }
 
 void lswlog_passert_suffix(struct lswlog *buf, where_t where)

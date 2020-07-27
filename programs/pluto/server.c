@@ -1057,10 +1057,10 @@ static void log_status(struct lswlog *buf, int status)
 	}
 #ifdef WCOREDUMP
 	if (WCOREDUMP(status)) {
-		lswlogs(buf, ", core dumped");
+		jam_string(buf, ", core dumped");
 	}
 #endif
-	lswlogs(buf, ")");
+	jam_string(buf, ")");
 }
 
 static void childhandler_cb(void)
@@ -1109,7 +1109,7 @@ static void childhandler_cb(void)
 				} else if (st == NULL) {
 					LSWDBGP(DBG_BASE, buf) {
 						jam_pid_entry(buf, pid_entry);
-						lswlogs(buf, " disappeared");
+						jam_string(buf, " disappeared");
 					}
 					pid_entry->callback(NULL, NULL,
 							    status, pid_entry->context);

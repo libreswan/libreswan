@@ -77,14 +77,14 @@ void tool_init_log(const char *name)
 
 void lswlog_errno_prefix(struct lswlog *buf, const char *prefix)
 {
-	lswlogs(buf, prefix);
-	lswlogs(buf, progname);
-	lswlogs(buf, prog_suffix);
+	jam_string(buf, prefix);
+	jam_string(buf, progname);
+	jam_string(buf, prog_suffix);
 }
 
 void lswlog_errno_suffix(struct lswlog *buf, int e)
 {
-	lswlogs(buf, ".");
+	jam_string(buf, ".");
 	jam(buf, " "PRI_ERRNO, pri_errno(e));
 	if (log_to_stderr) {
 		lswlog_to_file_stream(buf, stderr);
