@@ -79,7 +79,7 @@ const struct keyword *keyword_by_value(const struct keywords *keywords,
 	return keywords->by_value(keywords, value);
 }
 
-size_t jam_keyword_name(struct lswlog *buf, const struct keywords *keywords, unsigned value)
+size_t jam_keyword_name(struct jambuf *buf, const struct keywords *keywords, unsigned value)
 {
 	const struct keyword *keyword = keyword_by_value(keywords, value);
 	if (keyword == NULL) {
@@ -89,7 +89,7 @@ size_t jam_keyword_name(struct lswlog *buf, const struct keywords *keywords, uns
 	}
 }
 
-size_t jam_keyword_sname(struct lswlog *buf, const struct keywords *keywords, unsigned value)
+size_t jam_keyword_sname(struct jambuf *buf, const struct keywords *keywords, unsigned value)
 {
 	const struct keyword *keyword = keyword_by_value(keywords, value);
 	if (keyword == NULL) {

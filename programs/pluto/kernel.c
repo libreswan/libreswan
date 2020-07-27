@@ -372,7 +372,7 @@ ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel)
  * Truncates the result if it would be too long.
  */
 
-static void jam_clean_xauth_username(struct lswlog *buf, const char *src)
+static void jam_clean_xauth_username(struct jambuf *buf, const char *src)
 {
 	bool changed = false;
 	const char *dst = jambuf_cursor(buf);

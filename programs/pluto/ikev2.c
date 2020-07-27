@@ -3062,7 +3062,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 
 	dbg("announcing the state transition");
 	enum rc_type w;
-	void (*log_details)(struct lswlog *buf, struct state *st);
+	void (*log_details)(struct jambuf *buf, struct state *st);
 	struct state *log_st;
 	if (transition->state == transition->next_state) {
 		/*
@@ -3697,7 +3697,7 @@ void complete_v2_state_transition(struct state *st,
 	}
 }
 
-void jam_v2_stf_status(struct lswlog *buf, unsigned status)
+void jam_v2_stf_status(struct jambuf *buf, unsigned status)
 {
 	if (status <= STF_FAIL) {
 		jam_enum(buf, &stf_status_names, status);

@@ -75,14 +75,14 @@ void tool_init_log(const char *name)
 
 /* <prefix><PROGNAME>: <message>. Errno N: <errmess> */
 
-void lswlog_errno_prefix(struct lswlog *buf, const char *prefix)
+void lswlog_errno_prefix(struct jambuf *buf, const char *prefix)
 {
 	jam_string(buf, prefix);
 	jam_string(buf, progname);
 	jam_string(buf, prog_suffix);
 }
 
-void lswlog_errno_suffix(struct lswlog *buf, int e)
+void lswlog_errno_suffix(struct jambuf *buf, int e)
 {
 	jam_string(buf, ".");
 	jam(buf, " "PRI_ERRNO, pri_errno(e));
@@ -91,7 +91,7 @@ void lswlog_errno_suffix(struct lswlog *buf, int e)
 	}
 }
 
-void jam_cur_prefix(struct lswlog *buf)
+void jam_cur_prefix(struct jambuf *buf)
 {
 	jam(buf, "%s%s", progname, prog_suffix);
 }
@@ -132,12 +132,12 @@ void log_jambuf(lset_t rc_flags, struct fd *unused_object_fd UNUSED, jambuf_t *b
 	jambuf_to_logger(buf, NULL, rc_flags);
 }
 
-void lswlog_to_error_stream(struct lswlog *buf)
+void lswlog_to_error_stream(struct jambuf *buf)
 {
 	fprintf(stderr, "%s\n", buf->array);
 }
 
-void lswlog_to_default_streams(struct lswlog *buf, enum rc_type rc UNUSED)
+void lswlog_to_default_streams(struct jambuf *buf, enum rc_type rc UNUSED)
 {
 	if (log_to_stderr) {
 		fprintf(stderr, "%s\n", buf->array);

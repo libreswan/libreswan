@@ -23,7 +23,7 @@
 #include "ietf_constants.h"
 
 struct ike_alg;
-struct lswlog;
+struct jambuf;
 enum ike_alg_key;
 
 /*

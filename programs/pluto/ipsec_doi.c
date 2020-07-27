@@ -527,7 +527,7 @@ void send_delete(struct state *st)
 	}
 }
 
-void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
+void lswlog_child_sa_established(struct jambuf *buf, struct state *st)
 {
 	struct connection *const c = st->st_connection;
 	const char *ini = " {";
@@ -624,7 +624,7 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 	jam_string(buf, "}");
 }
 
-void lswlog_ike_sa_established(struct lswlog *buf, struct state *st)
+void lswlog_ike_sa_established(struct jambuf *buf, struct state *st)
 {
 	passert(st->st_oakley.ta_encrypt != NULL);
 	passert(st->st_oakley.ta_prf != NULL);

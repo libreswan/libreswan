@@ -21,7 +21,7 @@
 #include "lswlog.h"
 #include "lswnss.h"
 
-size_t jam_nss_ckm(struct lswlog *buf, CK_MECHANISM_TYPE mechanism)
+size_t jam_nss_ckm(struct jambuf *buf, CK_MECHANISM_TYPE mechanism)
 {
 	switch (mechanism) {
 #define CASE(T) case T: return jam_string(buf, #T + strlen("CKM_"))

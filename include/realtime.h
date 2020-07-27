@@ -25,7 +25,7 @@
 
 #include "deltatime.h"		/* for deltatime_t */
 
-struct lswlog;
+struct jambuf;
 
 /*
  * The time objects are wrapped so that dimensional analysis will be

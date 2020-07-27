@@ -277,7 +277,7 @@ extern void ikev2_record_newaddr(struct state *st, void *arg_ip);
 extern void ikev2_record_deladdr(struct state *st, void *arg_ip);
 extern void ikev2_addr_change(struct state *st);
 
-void jam_v2_stf_status(struct lswlog *buf, unsigned ret);
+void jam_v2_stf_status(struct jambuf *buf, unsigned ret);
 
 void v2_event_sa_rekey(struct state *st);
 void v2_event_sa_replace(struct state *st);

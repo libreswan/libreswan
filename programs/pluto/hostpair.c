@@ -76,7 +76,7 @@
 
 const char host_pair_magic[] = "host pair magic";
 
-static void jam_host_pair(struct lswlog *buf, const void *data)
+static void jam_host_pair(struct jambuf *buf, const void *data)
 {
 	const struct host_pair *hp = data;
 	passert(hp->magic == host_pair_magic);

@@ -22,7 +22,7 @@ const co_serial_t unset_co_serial;
 
 static struct hash_table connection_hash_tables[];
 
-static void jam_connection_serialno(struct lswlog *buf, const void *data)
+static void jam_connection_serialno(struct jambuf *buf, const void *data)
 {
 	if (data == NULL) {
 		jam(buf, PRI_CO, 0UL);

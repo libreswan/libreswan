@@ -1028,7 +1028,7 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 	}
 }
 
-static void lswlog_ike_alg_details(struct lswlog *buf, const struct ike_alg *alg)
+static void lswlog_ike_alg_details(struct jambuf *buf, const struct ike_alg *alg)
 {
 	/*
 	 * TYPE NAME:

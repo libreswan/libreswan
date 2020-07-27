@@ -21,7 +21,7 @@
 #include "lswlog.h"
 #include "lswnss.h"
 
-size_t jam_nss_ckf(struct lswlog *buf, CK_FLAGS flags)
+size_t jam_nss_ckf(struct jambuf *buf, CK_FLAGS flags)
 {
 	const char *sep = "";
 	size_t size = 0;

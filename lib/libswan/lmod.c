@@ -118,7 +118,7 @@ bool lmod_arg(lmod_t *mod, const struct lmod_info *info,
 	return ok;
 }
 
-size_t jam_lmod(struct lswlog *buf, enum_names *names,
+size_t jam_lmod(struct jambuf *buf, enum_names *names,
 		const char *separator, lmod_t mod)
 {
 	size_t s = 0;

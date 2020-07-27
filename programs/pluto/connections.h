@@ -531,8 +531,8 @@ extern char *fmt_conn_instance(const struct connection *c,
 			       char buf[CONN_INST_BUF]);
 
 /* publicly useful? */
-size_t jam_connection_instance(struct lswlog *buf, const struct connection *c);
-size_t jam_connection(struct lswlog *buf, const struct connection *c);
+size_t jam_connection_instance(struct jambuf *buf, const struct connection *c);
+size_t jam_connection(struct jambuf *buf, const struct connection *c);
 
 /*
  * XXX: Instead of str_connection(), which would require a buffer big

@@ -16,7 +16,7 @@
 
 #include "lswlog.h"
 
-size_t jam_enum_lset_short(struct lswlog *buf, enum_names *en,
+size_t jam_enum_lset_short(struct jambuf *buf, enum_names *en,
 			      const char *separator, lset_t val)
 {
 	unsigned int e;

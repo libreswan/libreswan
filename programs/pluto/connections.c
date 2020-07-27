@@ -2197,7 +2197,7 @@ size_t jam_connection_instance(jambuf_t *buf, const struct connection *c)
 	return s;
 }
 
-size_t jam_connection(struct lswlog *buf, const struct connection *c)
+size_t jam_connection(struct jambuf *buf, const struct connection *c)
 {
 	size_t s = 0;
 	s += jam(buf, "\"%s\"", c->name);

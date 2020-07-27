@@ -117,7 +117,7 @@ struct pluto_crypto_req_cont {
  * The work queue.  Accesses must be locked.
  */
 
-static void jam_backlog(struct lswlog *buf, const void *data)
+static void jam_backlog(struct jambuf *buf, const void *data)
 {
 	if (data == NULL) {
 		jam(buf, "no work-order");

@@ -131,7 +131,7 @@ enum rc_type {
  * The buffer's contents can be directed to various logging streams.
  */
 
-struct lswlog;
+struct jambuf;
 
 /*
  * The logging streams used by libreswan.
@@ -242,15 +242,15 @@ void jambuf_to_logger(jambuf_t *buf, const struct logger *logger, lset_t rc_flag
 
 void log_jambuf(lset_t rc_flags, struct fd *object_fd, jambuf_t *buf);
 
-size_t lswlog_to_file_stream(struct lswlog *buf, FILE *file);
+size_t lswlog_to_file_stream(struct jambuf *buf, FILE *file);
 
 /*
  * XXX: since the following all use the global CUR_STATE to get
  * OBJECT_FD, they can't be implemented using log_jambuf().
  */
 
-void lswlog_to_default_streams(struct lswlog *buf, enum rc_type rc);
-void lswlog_to_error_stream(struct lswlog *buf);
+void lswlog_to_default_streams(struct jambuf *buf, enum rc_type rc);
+void lswlog_to_error_stream(struct jambuf *buf);
 
 /*
  * Log to the default stream(s):
@@ -268,7 +268,7 @@ void lswlog_to_error_stream(struct lswlog *buf);
  * double log!  Hence LSWLOG_RC().
  */
 
-void jam_cur_prefix(struct lswlog *buf);
+void jam_cur_prefix(struct jambuf *buf);
 
 extern void loglog(enum rc_type, const char *fmt, ...) PRINTF_LIKE(2); /* use log_message() */
 
@@ -377,7 +377,7 @@ void DBG_dump(const char *label, const void *p, size_t len);
  * lswlog' buffer.
  *
  * BUF (a C variable name) is declared locally as a pointer to a
- * per-thread 'struct lswlog' buffer.
+ * per-thread 'struct jambuf' buffer.
  *
  * Implementation notes:
  *
@@ -409,7 +409,7 @@ void DBG_dump(const char *label, const void *p, size_t len);
  */
 
 #if 0
-void lswbuf(struct lswlog *log)
+void lswbuf(struct jambuf *log)
 {
 	LSWBUF(buf) {
 		jam(buf, "written to buf");
@@ -501,8 +501,8 @@ void lswlog_pexpect_example(void *p)
 
 void log_pexpect(where_t where, const char *message, ...) PRINTF_LIKE(2);
 
-void lswlog_pexpect_prefix(struct lswlog *buf);
-void lswlog_pexpect_suffix(struct lswlog *buf, where_t where);
+void lswlog_pexpect_prefix(struct jambuf *buf);
+void lswlog_pexpect_suffix(struct jambuf *buf, where_t where);
 
 #define LSWLOG_PEXPECT_WHERE(WHERE, BUF)		   \
 	LSWLOG_(true, BUF,				   \
@@ -523,8 +523,8 @@ void lswlog_pexpect_suffix(struct lswlog *buf, where_t where);
  * then call abort().
  */
 
-void lswlog_passert_prefix(struct lswlog *buf);
-void lswlog_passert_suffix(struct lswlog *buf, where_t where) NEVER_RETURNS;
+void lswlog_passert_prefix(struct jambuf *buf);
+void lswlog_passert_suffix(struct jambuf *buf, where_t where) NEVER_RETURNS;
 
 #define LSWLOG_PASSERT(BUF)				   \
 	LSWLOG_(true, BUF,				   \
@@ -560,8 +560,8 @@ void libreswan_bad_case(const char *expression, long value, where_t where) NEVER
  * merged.  XXX: should LSWLOG_ERROR() use a different prefix?
  */
 
-void lswlog_errno_prefix(struct lswlog *buf, const char *prefix);
-void lswlog_errno_suffix(struct lswlog *buf, int e);
+void lswlog_errno_prefix(struct jambuf *buf, const char *prefix);
+void lswlog_errno_suffix(struct jambuf *buf, int e);
 
 #define LSWLOG_ERROR(BUF)			\
 	LSWLOG_(true, BUF,			\

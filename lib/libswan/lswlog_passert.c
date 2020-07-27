@@ -18,13 +18,13 @@
 
 #include "lswlog.h"
 
-void lswlog_passert_prefix(struct lswlog *buf)
+void lswlog_passert_prefix(struct jambuf *buf)
 {
 	jam_cur_prefix(buf);
 	jam_string(buf, "ABORT: ASSERTION FAILED: ");
 }
 
-void lswlog_passert_suffix(struct lswlog *buf, where_t where)
+void lswlog_passert_suffix(struct jambuf *buf, where_t where)
 {
 	jam(buf, " "PRI_WHERE, pri_where(where));
 	lswlog_to_error_stream(buf);

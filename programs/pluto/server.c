@@ -945,7 +945,7 @@ struct pid_entry {
 	monotime_t start_time;
 };
 
-static void jam_pid_entry(struct lswlog *buf, const void *data)
+static void jam_pid_entry(struct jambuf *buf, const void *data)
 {
 	if (data == NULL) {
 		jam(buf, "NULL pid");
@@ -1035,7 +1035,7 @@ static void addconn_exited(struct state *null_st UNUSED,
 	addconn_child_pid = 0;
 }
 
-static void log_status(struct lswlog *buf, int status)
+static void log_status(struct jambuf *buf, int status)
 {
 	jam(buf, " (");
 	if (WIFEXITED(status)) {

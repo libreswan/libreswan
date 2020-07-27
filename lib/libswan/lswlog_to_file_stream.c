@@ -18,7 +18,7 @@
 
 #include "lswlog.h"
 
-size_t lswlog_to_file_stream(struct lswlog *buf, FILE *file)
+size_t lswlog_to_file_stream(struct jambuf *buf, FILE *file)
 {
 	jam_string(buf, "\n");
 	shunk_t out = jambuf_as_shunk(buf);

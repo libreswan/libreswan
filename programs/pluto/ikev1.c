@@ -2787,7 +2787,7 @@ void complete_v1_state_transition(struct msg_digest *md, stf_status result)
 		/* tell whack and log of progress */
 		{
 			enum rc_type w;
-			void (*log_details)(struct lswlog *buf, struct state *st);
+			void (*log_details)(struct jambuf *buf, struct state *st);
 
 			if (IS_IPSEC_SA_ESTABLISHED(st)) {
 				pstat_sa_established(st);

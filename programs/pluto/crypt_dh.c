@@ -72,7 +72,7 @@ struct dh_secret {
 	SECKEYPublicKey *pubk;
 };
 
-static void lswlog_dh_secret(struct lswlog *buf, struct dh_secret *secret)
+static void lswlog_dh_secret(struct jambuf *buf, struct dh_secret *secret)
 {
 	jam(buf, "DH secret %s@%p: ",
 		secret->group->common.fqn, secret);

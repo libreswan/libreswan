@@ -56,7 +56,7 @@ err_t atoid(const char *src, struct id *id);
  * JAM_BYTES to apply additional escaping.
  */
 
-void jam_id(struct lswlog *buf, const struct id *id, jam_bytes_fn *jam_bytes);
+void jam_id(struct jambuf *buf, const struct id *id, jam_bytes_fn *jam_bytes);
 
 typedef struct {
 	char buf[512];

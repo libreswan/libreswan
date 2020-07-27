@@ -25,7 +25,7 @@
 #include "err.h"
 #include "where.h"
 
-struct lswlog;
+struct jambuf;
 struct ip_info;
 
 extern bool log_ip; /* false -> redact (aka sanitize) ip addresses */
@@ -127,7 +127,7 @@ typedef struct {
 	char buf[(4+1)*8/*0000:...*/ + 1/*\0*/ + 1/*CANARY*/];
 } address_buf;
 
-size_t jam_address(struct lswlog *buf, const ip_address *src);
+size_t jam_address(struct jambuf *buf, const ip_address *src);
 const char *str_address(const ip_address *src, address_buf *dst);
 
 /*
@@ -145,9 +145,9 @@ typedef struct {
 	char buf[sizeof("4.0.0.0.3.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.2.0.0.0.1.0.0.0.IP6.ARPA.") + 1];
 }  address_reversed_buf;
 
-size_t jam_address_sensitive(struct lswlog *buf, const ip_address *src);
-size_t jam_address_reversed(struct lswlog *buf, const ip_address *src);
-size_t jam_address_raw(struct lswlog *buf, const ip_address *src, char sepc);
+size_t jam_address_sensitive(struct jambuf *buf, const ip_address *src);
+size_t jam_address_reversed(struct jambuf *buf, const ip_address *src);
+size_t jam_address_raw(struct jambuf *buf, const ip_address *src, char sepc);
 
 const char *str_address_sensitive(const ip_address *src, address_buf *dst);
 const char *str_address_reversed(const ip_address *src, address_reversed_buf *buf);

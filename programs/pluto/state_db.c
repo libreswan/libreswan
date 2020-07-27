@@ -23,7 +23,7 @@
 
 static struct hash_table state_hash_tables[];
 
-static void jam_state(struct lswlog *buf, const void *data)
+static void jam_state(struct jambuf *buf, const void *data)
 {
 	if (data == NULL) {
 		jam(buf, "#0");
@@ -250,7 +250,7 @@ static struct list_entry *state_ike_initiator_spi_entry(void *data)
 	return &st->st_hash_table_entries[STATE_IKE_INITIATOR_SPI_HASH_TABLE];
 }
 
-static void jam_state_ike_initiator_spi(struct lswlog *buf, const void *data)
+static void jam_state_ike_initiator_spi(struct jambuf *buf, const void *data)
 {
 	const struct state *st = data;
 	jam_state(buf, st);
@@ -317,7 +317,7 @@ static struct list_entry *state_ike_spis_entry(void *data)
 	return &st->st_hash_table_entries[STATE_IKE_SPIS_HASH_TABLE];
 }
 
-static void jam_state_ike_spis(struct lswlog *buf, const void *data)
+static void jam_state_ike_spis(struct jambuf *buf, const void *data)
 {
 	const struct state *st = data;
 	jam_state(buf, st);

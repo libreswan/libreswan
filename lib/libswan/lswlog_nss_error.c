@@ -28,7 +28,7 @@
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=172051
  */
 
-size_t jam_nss_error(struct lswlog *buf)
+size_t jam_nss_error(struct jambuf *buf)
 {
 	size_t size = 0;
 	int error = PR_GetError(); /* at least 32-bits */

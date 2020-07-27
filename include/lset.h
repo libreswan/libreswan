@@ -24,7 +24,7 @@
 #include <stdbool.h>
 
 struct enum_names;
-struct lswlog;
+struct jambuf;
 
 /*
  * set type with room for at least 64 elements for ALG opts (was 32 in
@@ -63,7 +63,7 @@ extern const char *bitnamesofb(const char *const table[],
 			       lset_t val,
 			       char *buf, size_t blen);
 
-size_t jam_enum_lset_short(struct lswlog *, const struct enum_names *sd,
+size_t jam_enum_lset_short(struct jambuf *, const struct enum_names *sd,
 			      const char *separator, lset_t val);
 
 #endif /* CONSTANTS_H */

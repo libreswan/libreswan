@@ -146,7 +146,7 @@ deltatime_t deltatime_from_timeval(struct timeval t)
  * Try to be smart by only printing the precision necessary.  For
  * instance 1, 0.5, ...
  */
-static size_t frac(struct lswlog *buf, intmax_t usec)
+static size_t frac(struct jambuf *buf, intmax_t usec)
 {
 	int precision = 6;
 	while (usec % 10 == 0 && precision > 1) {

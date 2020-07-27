@@ -74,7 +74,7 @@
  * overwritten with DOTS.
  */
 
-typedef struct lswlog {
+typedef struct jambuf {
 	char *array;
 	size_t total;
 	size_t roof;

@@ -21,7 +21,7 @@
 #include "lswlog.h"
 #include "lswnss.h"
 
-size_t jam_nss_cka(struct lswlog *buf, CK_ATTRIBUTE_TYPE attribute)
+size_t jam_nss_cka(struct jambuf *buf, CK_ATTRIBUTE_TYPE attribute)
 {
 	switch (attribute) {
 #define CASE(T) case T: return jam_string(buf, #T + strlen("CKA_"))

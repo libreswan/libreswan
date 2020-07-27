@@ -46,7 +46,7 @@
 		}							\
 	}
 
-void jam_list_entry(struct lswlog *buf, const struct list_entry *entry)
+void jam_list_entry(struct jambuf *buf, const struct list_entry *entry)
 {
 	if (entry == NULL) {
 		jam(buf, "(null)");

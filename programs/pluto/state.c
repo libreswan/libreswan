@@ -275,7 +275,7 @@ void revive_conns(struct fd *unused_whackfd UNUSED)
 
 /* end of revival mechanism */
 
-void lswlog_finite_state(struct lswlog *buf, const struct finite_state *fs)
+void lswlog_finite_state(struct jambuf *buf, const struct finite_state *fs)
 {
 	if (fs == NULL) {
 		jam_string(buf, "NULL-FINITE_STATE");

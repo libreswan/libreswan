@@ -21,7 +21,7 @@
 #include "lswlog.h"
 #include "lswnss.h"
 
-static size_t jam_nss_secitemtype(struct lswlog *buf, SECItemType type)
+static size_t jam_nss_secitemtype(struct jambuf *buf, SECItemType type)
 {
 #define C(T) case T: return jam_string(buf, #T)
 	switch (type) {
@@ -46,7 +46,7 @@ static size_t jam_nss_secitemtype(struct lswlog *buf, SECItemType type)
 	}
 }
 
-size_t jam_nss_secitem(struct lswlog *buf, const SECItem *secitem)
+size_t jam_nss_secitem(struct jambuf *buf, const SECItem *secitem)
 {
 	size_t size = 0;
 	if (secitem == NULL) {

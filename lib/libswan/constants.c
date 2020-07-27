@@ -2436,7 +2436,7 @@ const char *enum_enum_show_shortb(enum_enum_names *een, unsigned long table,
 	return enum_show_shortb(en, val, b);
 }
 
-size_t jam_enum_enum(struct lswlog *buf, enum_enum_names *een,
+size_t jam_enum_enum(struct jambuf *buf, enum_enum_names *een,
 		     unsigned long table, unsigned long val)
 {
 	enum_names *en = enum_enum_table(een, table);
@@ -2447,7 +2447,7 @@ size_t jam_enum_enum(struct lswlog *buf, enum_enum_names *een,
 	return jam_enum(buf, en, val);
 }
 
-size_t jam_enum_enum_short(struct lswlog *buf, enum_enum_names *een,
+size_t jam_enum_enum_short(struct jambuf *buf, enum_enum_names *een,
 			   unsigned long table, unsigned long val)
 {
 	enum_names *en = enum_enum_table(een, table);

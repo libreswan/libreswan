@@ -395,7 +395,7 @@ static void peerlog_raw(const char *prefix, char *message)
 	}
 }
 
-void jambuf_to_whack(struct lswlog *buf, const struct fd *whackfd, enum rc_type rc)
+void jambuf_to_whack(struct jambuf *buf, const struct fd *whackfd, enum rc_type rc)
 {
 	/*
 	 * XXX: use iovec as it's easier than trying to deal with
@@ -495,7 +495,7 @@ static void whack_raw(jambuf_t *buf, enum rc_type rc)
 	jambuf_to_whack(buf, whackfd, rc);
 }
 
-void jam_cur_prefix(struct lswlog *buf)
+void jam_cur_prefix(struct jambuf *buf)
 {
 	if (!in_main_thread()) {
 #if 0
@@ -516,7 +516,7 @@ void jam_cur_prefix(struct lswlog *buf)
 	jam_logger_prefix(buf, &logger);
 }
 
-static void log_raw(int severity, const char *prefix, struct lswlog *buf)
+static void log_raw(int severity, const char *prefix, struct jambuf *buf)
 {
 	stdlog_raw(prefix, buf->array);
 	syslog_raw(severity, prefix, buf->array);
@@ -524,7 +524,7 @@ static void log_raw(int severity, const char *prefix, struct lswlog *buf)
 	/* not whack */
 }
 
-void lswlog_to_error_stream(struct lswlog *buf)
+void lswlog_to_error_stream(struct jambuf *buf)
 {
 	log_raw(LOG_ERR, "", buf);
 	if (in_main_thread()) {
@@ -533,7 +533,7 @@ void lswlog_to_error_stream(struct lswlog *buf)
 	}
 }
 
-void lswlog_to_default_streams(struct lswlog *buf, enum rc_type rc)
+void lswlog_to_default_streams(struct jambuf *buf, enum rc_type rc)
 {
 	log_raw(LOG_WARNING, "", buf);
 	if (in_main_thread()) {
@@ -557,13 +557,13 @@ void close_log(void)
 
 /* <prefix><state#N...><message>. Errno %d: <strerror> */
 
-void lswlog_errno_prefix(struct lswlog *buf, const char *prefix)
+void lswlog_errno_prefix(struct jambuf *buf, const char *prefix)
 {
 	jam_string(buf, prefix);
 	jam_cur_prefix(buf);
 }
 
-void lswlog_errno_suffix(struct lswlog *buf, int e)
+void lswlog_errno_suffix(struct jambuf *buf, int e)
 {
 	jam_string(buf, ".");
 	jam(buf, " "PRI_ERRNO, pri_errno(e));

@@ -25,7 +25,7 @@
 #include "ip_port.h"
 #include "ip_protoport.h"
 
-struct lswlog;
+struct jambuf;
 struct ip_protocol;
 
 /*
@@ -99,9 +99,9 @@ typedef struct {
 } endpoint_buf;
 
 const char *str_endpoint(const ip_endpoint *, endpoint_buf *);
-size_t jam_endpoint(struct lswlog *, const ip_endpoint*);
+size_t jam_endpoint(struct jambuf *, const ip_endpoint*);
 const char *str_sensitive_endpoint(const ip_endpoint *, endpoint_buf *);
-size_t jam_sensitive_endpoint(struct lswlog *, const ip_endpoint*);
+size_t jam_sensitive_endpoint(struct jambuf *, const ip_endpoint*);
 
 /*
  * Logic

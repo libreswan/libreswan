@@ -89,7 +89,7 @@ static void jam_wip_sa(jambuf_t *buf, const char *who,
 	}
 }
 
-static void jam_v2_msgid(struct lswlog *buf,
+static void jam_v2_msgid(struct jambuf *buf,
 			 struct ike_sa *ike, struct state *wip_sa,
 			 const char *fmt, va_list ap)
 {
