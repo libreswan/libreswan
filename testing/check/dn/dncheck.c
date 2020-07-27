@@ -199,7 +199,7 @@ static void dn_check(void)
 #define CHECK_JAM_DN(OUT, NSS_COMPATIBLE)				\
 		{							\
 			dn_buf dnbuf = { "", };				\
-			jambuf_t dnjam = ARRAY_AS_JAMBUF(dnbuf.buf);	\
+			struct jambuf dnjam = ARRAY_AS_JAMBUF(dnbuf.buf);	\
 			jam_raw_dn(&dnjam, dn, jam_raw_bytes, NSS_COMPATIBLE); \
 			if (!streq(dnbuf.buf, OUT)) {			\
 				FAIL(" jam_raw_dn(NSS_COMPATIBLE=%s) returned '%s', expecting '%s'", \
@@ -237,7 +237,7 @@ static void dn_check(void)
 				     IN, err);				\
 			} else {					\
 				dn_buf adnbuf = { "", };		\
-				jambuf_t adnjam = ARRAY_AS_JAMBUF(adnbuf.buf); \
+				struct jambuf adnjam = ARRAY_AS_JAMBUF(adnbuf.buf); \
 				jam_raw_dn(&adnjam, adn, jam_raw_bytes, false); \
 				if (!streq(adnbuf.buf, t->out)) {	\
 					FAIL(" jam_dn(atodn('%s')) returned '%s', expecting '%s'", \

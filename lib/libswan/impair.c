@@ -412,7 +412,7 @@ static uintmax_t value_of(const struct impairment *cr)
 	}
 }
 
-static void jam_impairment(jambuf_t *buf,
+static void jam_impairment(struct jambuf *buf,
 			   const struct impairment *cr)
 {
 	jam(buf, "%s:", cr->what);
@@ -462,7 +462,7 @@ bool have_impairments(void)
 	return false;
 }
 
-void jam_impairments(jambuf_t *buf, const char *sep)
+void jam_impairments(struct jambuf *buf, const char *sep)
 {
 	const char *s = "";
 	for (unsigned ci = 1; ci < elemsof(impairments); ci++) {

@@ -61,7 +61,7 @@ typedef struct {
 } realtime_buf;
 
 const char *str_realtime(realtime_t r, bool utc, realtime_buf *buf);
-size_t jam_realtime(jambuf_t *buf, realtime_t r, bool utc);
+size_t jam_realtime(struct jambuf *buf, realtime_t r, bool utc);
 
 /*
  * math

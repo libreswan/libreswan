@@ -15,6 +15,8 @@
 
 #include <arpa/inet.h>		/* for ntohs() */
 
+#include "jambuf.h"
+
 #include "ip_port.h"
 
 ip_port unset_port; /* aka all ports? */
@@ -45,27 +47,27 @@ bool port_is_unset(ip_port port)
 	return port.hport == 0;
 }
 
-size_t jam_hport(jambuf_t *buf, ip_port port)
+size_t jam_hport(struct jambuf *buf, ip_port port)
 {
 	return jam(buf, PRI_HPORT, hport(port));
 
 }
 
-size_t jam_nport(jambuf_t *buf, ip_port port)
+size_t jam_nport(struct jambuf *buf, ip_port port)
 {
 	return jam(buf, PRI_NPORT, pri_nport(port));
 }
 
 const char *str_hport(ip_port port, port_buf *buf)
 {
-	jambuf_t jambuf = ARRAY_AS_JAMBUF(buf->buf);
+	struct jambuf jambuf = ARRAY_AS_JAMBUF(buf->buf);
 	jam_hport(&jambuf, port);
 	return buf->buf;
 }
 
 const char *str_nport(ip_port port, port_buf *buf)
 {
-	jambuf_t jambuf = ARRAY_AS_JAMBUF(buf->buf);
+	struct jambuf jambuf = ARRAY_AS_JAMBUF(buf->buf);
 	jam_nport(&jambuf, port);
 	return buf->buf;
 }

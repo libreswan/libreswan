@@ -22,8 +22,8 @@
 
 #include "chunk.h"
 #include "where.h"
-#include "jambuf.h"
 
+struct jambuf;
 struct ike_alg;
 struct hash_desc;
 struct encrypt_desc;
@@ -35,7 +35,7 @@ struct prf_desc;
  * The format is <PREFIX>: <NAME>-key@...
  */
 void DBG_symkey(const char *prefix, const char *name, PK11SymKey *key);
-void jam_symkey(jambuf_t *buf, const char *name, PK11SymKey *key);
+void jam_symkey(struct jambuf *buf, const char *name, PK11SymKey *key);
 
 /*
  * Add/delete references to a reference-countered PK11SymKey.

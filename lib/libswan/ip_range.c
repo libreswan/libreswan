@@ -206,7 +206,7 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 	return NULL;
 }
 
-void jam_range(jambuf_t *buf, const ip_range *range)
+void jam_range(struct jambuf *buf, const ip_range *range)
 {
 	jam_address(buf, &range->start);
 	if (range_type(range) == &ipv6_info && range->is_subnet) {
@@ -221,7 +221,7 @@ void jam_range(jambuf_t *buf, const ip_range *range)
 
 const char *str_range(const ip_range *range, range_buf *out)
 {
-	jambuf_t buf = ARRAY_AS_JAMBUF(out->buf);
+	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
 	jam_range(&buf, range);
 	return out->buf;
 }

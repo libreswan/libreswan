@@ -138,7 +138,7 @@ extern bool use_dns;
 			}						\
 			size_t ssize = strlen(s);			\
 			char js[sizeof(buf)];				\
-			jambuf_t jbuf = ARRAY_AS_JAMBUF(js);		\
+			struct jambuf jbuf = ARRAY_AS_JAMBUF(js);		\
 			size_t jsize = jam_##OP(&jbuf, __VA_ARGS__);	\
 			if (jsize != ssize) {				\
 				FAIL_IN("jam_"#OP"() returned %zu, expecting %zu", \

@@ -17,6 +17,8 @@
 
 #include <netdb.h>
 
+#include "jambuf.h"
+
 #include "ip_protoport.h"
 
 #include "constants.h"		/* for zero() */
@@ -145,7 +147,7 @@ err_t ttoprotoport(const char *src, ip_protoport *protoport)
 	return NULL;
 }
 
-size_t jam_protoport(jambuf_t *buf, const ip_protoport *protoport)
+size_t jam_protoport(struct jambuf *buf, const ip_protoport *protoport)
 {
 	size_t s = 0;
 	if (protoport->protocol == 0) {
@@ -164,7 +166,7 @@ size_t jam_protoport(jambuf_t *buf, const ip_protoport *protoport)
 
 const char *str_protoport(const ip_protoport *protoport, protoport_buf *buf)
 {
-	jambuf_t jambuf = ARRAY_AS_JAMBUF(buf->buf);
+	struct jambuf jambuf = ARRAY_AS_JAMBUF(buf->buf);
 	jam_protoport(&jambuf, protoport);
 	return buf->buf;
 }

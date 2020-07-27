@@ -153,7 +153,7 @@ bool endpoint_is_specified(const ip_endpoint *e)
  * cannot be used, while for UDP, the source port is optional
  * and a value of zero means no port.
  */
-static size_t format_endpoint(jambuf_t *buf, bool sensitive,
+static size_t format_endpoint(struct jambuf *buf, bool sensitive,
 			    const ip_endpoint *endpoint)
 {
 	/*
@@ -203,26 +203,26 @@ static size_t format_endpoint(jambuf_t *buf, bool sensitive,
 	return s;
 }
 
-size_t jam_endpoint(jambuf_t *buf, const ip_endpoint *endpoint)
+size_t jam_endpoint(struct jambuf *buf, const ip_endpoint *endpoint)
 {
 	return format_endpoint(buf, false, endpoint);
 }
 
 const char *str_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
 {
-	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
+	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
 	jam_endpoint(&buf, endpoint);
 	return dst->buf;
 }
 
-size_t jam_sensitive_endpoint(jambuf_t *buf, const ip_endpoint *endpoint)
+size_t jam_sensitive_endpoint(struct jambuf *buf, const ip_endpoint *endpoint)
 {
 	return format_endpoint(buf, !log_ip, endpoint);
 }
 
 const char *str_sensitive_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
 {
-	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
+	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
 	jam_sensitive_endpoint(&buf, endpoint);
 	return dst->buf;
 }

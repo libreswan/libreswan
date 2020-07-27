@@ -27,7 +27,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "jambuf.h"
+struct jambuf;
 
 typedef struct {
 	/* XXX: 0 is 0 (is this a good idea?); network ordered */
@@ -61,8 +61,8 @@ typedef struct {
 	char buf[sizeof("65535")+1/*canary*/];
 } port_buf;
 
-size_t jam_hport(jambuf_t *buf, ip_port port);
-size_t jam_nport(jambuf_t *buf, ip_port port);
+size_t jam_hport(struct jambuf *buf, ip_port port);
+size_t jam_nport(struct jambuf *buf, ip_port port);
 
 const char *str_hport(ip_port port, port_buf *buf);
 const char *str_nport(ip_port port, port_buf *buf);

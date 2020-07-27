@@ -162,7 +162,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	}
 
 	char audit_str[AUDIT_LOG_SIZE];
-	jambuf_t buf = ARRAY_AS_JAMBUF(audit_str);
+	struct jambuf buf = ARRAY_AS_JAMBUF(audit_str);
 	struct connection *const c = st->st_connection;
 	/* we need to free() this */
 	char *conn_encode = audit_encode_nv_string("conn-name", c->name, 0);

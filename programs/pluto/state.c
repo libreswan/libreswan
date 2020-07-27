@@ -1994,7 +1994,7 @@ void state_eroute_usage(const ip_subnet *ours, const ip_subnet *peers,
 }
 
 /* note: this mutates *st by calling get_sa_info */
-static void jam_state_traffic(jambuf_t *buf, struct state *st)
+static void jam_state_traffic(struct jambuf *buf, struct state *st)
 {
 	jam(buf, "#%lu: ", st->st_serialno);
 	const struct connection *c = st->st_connection;
@@ -2156,7 +2156,7 @@ void fmt_state(struct state *st, const monotime_t now,
 	if (IS_IPSEC_SA_ESTABLISHED(st)) {
 		char lastused[40];      /* should be plenty long enough */
 		char saids_buf[(1 + SATOT_BUF) * 6];
-		jambuf_t buf = ARRAY_AS_JAMBUF(saids_buf);
+		struct jambuf buf = ARRAY_AS_JAMBUF(saids_buf);
 
 #	define add_said(ADST, ASPI, APROTO)				\
 		{							\
@@ -3271,7 +3271,7 @@ void set_v2_transition(struct state *st, const struct state_v2_microcode *transi
 	st->st_v2_transition = transition;
 }
 
-static void jam_st(jambuf_t *buf, struct state *st)
+static void jam_st(struct jambuf *buf, struct state *st)
 {
 	if (st == NULL) {
 		jam(buf, "NULL");

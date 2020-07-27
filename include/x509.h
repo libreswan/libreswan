@@ -32,7 +32,7 @@
 #include "chunk.h"
 #include "err.h"
 #include "constants.h"
-#include "jambuf.h"
+#include "jambuf.h"		/* for typedef jam_bytes_fn */
 
 struct logger;
 struct pubkey_list;

@@ -191,7 +191,7 @@ struct state_v1_microcode {
 	enum v1_hash_type hash_type;
 };
 
-void jam_v1_transition(jambuf_t *buf, const struct state_v1_microcode *transition)
+void jam_v1_transition(struct jambuf *buf, const struct state_v1_microcode *transition)
 {
 	if (transition == NULL) {
 		jam(buf, "NULL");

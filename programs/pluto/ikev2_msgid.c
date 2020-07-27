@@ -28,7 +28,7 @@
  * Logging.
  */
 
-static const char *jam_prefix(jambuf_t *buf, struct ike_sa *ike, struct state *wip_sa)
+static const char *jam_prefix(struct jambuf *buf, struct ike_sa *ike, struct state *wip_sa)
 {
 	jam(buf, "Message ID: ");
 	const char *who;
@@ -45,7 +45,7 @@ static const char *jam_prefix(jambuf_t *buf, struct ike_sa *ike, struct state *w
 	return who;
 }
 
-static void jam_ike_window(jambuf_t *buf, const char *what,
+static void jam_ike_window(struct jambuf *buf, const char *what,
 			   const struct v2_msgid_window *old,
 			   const struct v2_msgid_window *new)
 {
@@ -65,7 +65,7 @@ static void jam_ike_window(jambuf_t *buf, const char *what,
 	}
 }
 
-static void jam_ike_windows(jambuf_t *buf,
+static void jam_ike_windows(struct jambuf *buf,
 			    const struct v2_msgid_windows *old,
 			    const struct v2_msgid_windows *new)
 {
@@ -75,7 +75,7 @@ static void jam_ike_windows(jambuf_t *buf,
 		       new != NULL ? &new->responder : NULL);
 }
 
-static void jam_wip_sa(jambuf_t *buf, const char *who,
+static void jam_wip_sa(struct jambuf *buf, const char *who,
 		       const struct v2_msgid_wip *old,
 		       const struct v2_msgid_wip *new)
 {

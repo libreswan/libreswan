@@ -38,7 +38,7 @@
 
 bool log_to_stderr = TRUE;	/* should log go to stderr? */
 
-static size_t jam_tool_prefix(jambuf_t *buf, const void *object UNUSED)
+static size_t jam_tool_prefix(struct jambuf *buf, const void *object UNUSED)
 {
 	return jam(buf, "%s: ", progname);
 }
@@ -96,7 +96,7 @@ void jam_cur_prefix(struct jambuf *buf)
 	jam(buf, "%s%s", progname, prog_suffix);
 }
 
-void jambuf_to_logger(jambuf_t *buf, const struct logger *logger UNUSED, lset_t rc_flags)
+void jambuf_to_logger(struct jambuf *buf, const struct logger *logger UNUSED, lset_t rc_flags)
 {
 	enum stream only = rc_flags & ~RC_MASK;
 	switch (only) {
@@ -127,7 +127,7 @@ void jambuf_to_logger(jambuf_t *buf, const struct logger *logger UNUSED, lset_t 
 	}
 }
 
-void log_jambuf(lset_t rc_flags, struct fd *unused_object_fd UNUSED, jambuf_t *buf)
+void log_jambuf(lset_t rc_flags, struct fd *unused_object_fd UNUSED, struct jambuf *buf)
 {
 	jambuf_to_logger(buf, NULL, rc_flags);
 }

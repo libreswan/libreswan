@@ -25,7 +25,8 @@
 
 #include "err.h"
 #include "chunk.h"
-#include "jambuf.h"
+
+struct jambuf;
 
 /*
  * For rationale behind *_t? Blame chunk_t.
@@ -50,7 +51,7 @@ typedef struct {
 	char buf[CKAID_SIZE * 2 + 1/*nul*/ + 1/*canary*/];
 } ckaid_buf;
 const char *str_ckaid(const ckaid_t *ckaid, ckaid_buf *buf);
-size_t jam_ckaid(jambuf_t *buf, const ckaid_t *ckaid);
+size_t jam_ckaid(struct jambuf *buf, const ckaid_t *ckaid);
 
 err_t form_ckaid_rsa(chunk_t modulus, ckaid_t *ckaid);
 err_t form_ckaid_ecdsa(chunk_t pub_value, ckaid_t *ckaid);

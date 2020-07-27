@@ -36,7 +36,7 @@ ip_said said3(const ip_address *address, ipsec_spi_t spi,
  * convert SA to text "ah507@1.2.3.4"
  */
 
-void jam_said(jambuf_t *buf, const ip_said *sa)
+void jam_said(struct jambuf *buf, const ip_said *sa)
 {
 	const struct ip_protocol *proto = sa->proto;
 	const char *pre = (proto == NULL ? "unk" : proto->prefix);
@@ -84,7 +84,7 @@ void jam_said(jambuf_t *buf, const ip_said *sa)
 
 const char *str_said(const ip_said *said, said_buf *buf)
 {
-	jambuf_t b = ARRAY_AS_JAMBUF(buf->buf);
+	struct jambuf b = ARRAY_AS_JAMBUF(buf->buf);
 	jam_said(&b, said);
 	return buf->buf;
 }

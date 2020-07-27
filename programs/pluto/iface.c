@@ -48,7 +48,7 @@ struct iface_port  *interfaces = NULL;  /* public interfaces */
  * The interfaces - eth0 ...
  */
 
-static void jam_iface_dev(jambuf_t *buf, const void *data)
+static void jam_iface_dev(struct jambuf *buf, const void *data)
 {
 	const struct iface_dev *ifd = data;
 	jam_string(buf, ifd->id_rname);

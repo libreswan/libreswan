@@ -17,14 +17,14 @@
 #ifndef IP_SELECTOR_H
 #define IP_SELECTOR_H
 
-#include "jambuf.h"
-
 #include "ip_address.h"
 #include "ip_endpoint.h"
 #include "ip_subnet.h"
 #include "ip_protoport.h"
 #include "ip_protocol.h"
 #include "ip_range.h"
+
+struct jambuf;
 
 /*
  * IKEv2 style traffic selectors can describe.
@@ -126,6 +126,6 @@ typedef struct {
 	char buf[sizeof(address_buf) + 4/*"/NNN"*/ + 6/*:65535*/];
 } selector_buf;
 const char *str_selector(const ip_selector *selector, selector_buf *out);
-void jam_selector(jambuf_t *buf, const ip_selector *selector);
+void jam_selector(struct jambuf *buf, const ip_selector *selector);
 
 #endif

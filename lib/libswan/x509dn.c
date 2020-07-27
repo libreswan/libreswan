@@ -289,7 +289,7 @@ int dn_count_wildcards(chunk_t dn)
  * using \<CHAR> for printable and \XX for non-printable.
  */
 
-static err_t format_dn(jambuf_t *buf, chunk_t dn,
+static err_t format_dn(struct jambuf *buf, chunk_t dn,
 		       jam_bytes_fn *jam_bytes, bool nss_compatible)
 {
 	chunk_t rdn;
@@ -554,7 +554,7 @@ static err_t format_dn(jambuf_t *buf, chunk_t dn,
  * into LDAP-style human-readable ASCII format
  */
 
-void jam_raw_dn(jambuf_t *buf, chunk_t dn, jam_bytes_fn *jam_bytes,
+void jam_raw_dn(struct jambuf *buf, chunk_t dn, jam_bytes_fn *jam_bytes,
 		bool nss_compatible)
 {
 	/* save start in case things screw up */
@@ -571,7 +571,7 @@ void jam_raw_dn(jambuf_t *buf, chunk_t dn, jam_bytes_fn *jam_bytes,
 	}
 }
 
-void jam_dn_or_null(jambuf_t *buf, chunk_t dn, const char *null_dn,
+void jam_dn_or_null(struct jambuf *buf, chunk_t dn, const char *null_dn,
 		    jam_bytes_fn *jam_bytes)
 {
 	if (dn.ptr == NULL) {
@@ -583,19 +583,19 @@ void jam_dn_or_null(jambuf_t *buf, chunk_t dn, const char *null_dn,
 
 const char *str_dn_or_null(chunk_t dn, const char *null_dn, dn_buf *dst)
 {
-	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
+	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
 	jam_dn_or_null(&buf, dn, null_dn, jam_sanitized_bytes);
 	return dst->buf;
 }
 
-void jam_dn(jambuf_t *buf, chunk_t dn, jam_bytes_fn *jam_bytes)
+void jam_dn(struct jambuf *buf, chunk_t dn, jam_bytes_fn *jam_bytes)
 {
 	jam_dn_or_null(buf, dn, "(empty)", jam_bytes);
 }
 
 const char *str_dn(chunk_t dn, dn_buf *dst)
 {
-	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
+	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
 	jam_dn(&buf, dn, jam_sanitized_bytes);
 	return dst->buf;
 }

@@ -15,6 +15,8 @@
 
 #include <arpa/inet.h>		/* for ntohs() */
 
+#include "jambuf.h"
+
 #include "ip_port_range.h"
 
 ip_port unset_port_range; /* aka all ports? */
@@ -33,7 +35,7 @@ bool port_range_is_unset(ip_port_range port_range)
 	return port_is_unset(port_range.lo) && port_is_unset(port_range.hi);
 }
 
-size_t jam_port_range(jambuf_t *buf, ip_port_range port_range)
+size_t jam_port_range(struct jambuf *buf, ip_port_range port_range)
 {
 	unsigned lo = hport(port_range.lo);
 	unsigned hi = hport(port_range.hi);
@@ -47,7 +49,7 @@ size_t jam_port_range(jambuf_t *buf, ip_port_range port_range)
 
 const char *str_port_range(ip_port_range port, port_range_buf *buf)
 {
-	jambuf_t jambuf = ARRAY_AS_JAMBUF(buf->buf);
+	struct jambuf jambuf = ARRAY_AS_JAMBUF(buf->buf);
 	jam_port_range(&jambuf, port);
 	return buf->buf;
 }

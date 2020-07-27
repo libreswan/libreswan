@@ -105,7 +105,7 @@ struct realtm utc_realtime(realtime_t t)
 /*
  *  Display a date either in local or UTC time
  */
-size_t jam_realtime(jambuf_t *buf, const realtime_t rtm, bool utc)
+size_t jam_realtime(struct jambuf *buf, const realtime_t rtm, bool utc)
 {
 	static const char *months[] = {
 		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -126,7 +126,7 @@ size_t jam_realtime(jambuf_t *buf, const realtime_t rtm, bool utc)
 
 const char *str_realtime(realtime_t r, bool utc, realtime_buf *buf)
 {
-	jambuf_t jambuf = ARRAY_AS_JAMBUF(buf->buf);
+	struct jambuf jambuf = ARRAY_AS_JAMBUF(buf->buf);
 	jam_realtime(&jambuf, r, utc);
 	return buf->buf;
 }

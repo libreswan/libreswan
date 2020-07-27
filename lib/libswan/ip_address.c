@@ -128,7 +128,7 @@ chunk_t address_as_chunk(ip_address *address)
  * Implement https://tools.ietf.org/html/rfc5952
  */
 
-static size_t jam_raw_ipv4_address(jambuf_t *buf, shunk_t a, char sepc)
+static size_t jam_raw_ipv4_address(struct jambuf *buf, shunk_t a, char sepc)
 {
 	const char seps[2] = { sepc == 0 ? '.' : sepc, 0, };
 	const char *sep = "";
@@ -141,7 +141,7 @@ static size_t jam_raw_ipv4_address(jambuf_t *buf, shunk_t a, char sepc)
 	return s;
 }
 
-static size_t jam_raw_ipv6_address(jambuf_t *buf, shunk_t a, char sepc,
+static size_t jam_raw_ipv6_address(struct jambuf *buf, shunk_t a, char sepc,
 				   shunk_t skip)
 {
 	const char seps[2] = { sepc == 0 ? ':' : sepc, 0, };
@@ -171,7 +171,7 @@ static size_t jam_raw_ipv6_address(jambuf_t *buf, shunk_t a, char sepc,
 	return s;
 }
 
-size_t jam_address_raw(jambuf_t *buf, const ip_address *address, char sepc)
+size_t jam_address_raw(struct jambuf *buf, const ip_address *address, char sepc)
 {
 	if (address == NULL) {
 		return jam(buf, "<none>");
@@ -225,7 +225,7 @@ static shunk_t zeros_to_skip(shunk_t a)
 	return zero;
 }
 
-static size_t format_address_cooked(jambuf_t *buf, bool sensitive,
+static size_t format_address_cooked(struct jambuf *buf, bool sensitive,
 				    const ip_address *address)
 {
 	/*
@@ -260,17 +260,17 @@ static size_t format_address_cooked(jambuf_t *buf, bool sensitive,
 	return s;
 }
 
-size_t jam_address(jambuf_t *buf, const ip_address *address)
+size_t jam_address(struct jambuf *buf, const ip_address *address)
 {
 	return format_address_cooked(buf, false, address);
 }
 
-size_t jam_address_sensitive(jambuf_t *buf, const ip_address *address)
+size_t jam_address_sensitive(struct jambuf *buf, const ip_address *address)
 {
 	return format_address_cooked(buf, !log_ip, address);
 }
 
-size_t jam_address_reversed(jambuf_t *buf, const ip_address *address)
+size_t jam_address_reversed(struct jambuf *buf, const ip_address *address)
 {
 	shunk_t bytes = address_as_shunk(address);
 	int type = addrtypeof(address);
@@ -308,7 +308,7 @@ size_t jam_address_reversed(jambuf_t *buf, const ip_address *address)
 const char *str_address_raw(const ip_address *src, char sep,
 			    address_buf *dst)
 {
-	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
+	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
 	jam_address_raw(&buf, src, sep);
 	return dst->buf;
 }
@@ -316,7 +316,7 @@ const char *str_address_raw(const ip_address *src, char sep,
 const char *str_address(const ip_address *src,
 			       address_buf *dst)
 {
-	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
+	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
 	jam_address(&buf, src);
 	return dst->buf;
 }
@@ -324,7 +324,7 @@ const char *str_address(const ip_address *src,
 const char *str_address_sensitive(const ip_address *src,
 				  address_buf *dst)
 {
-	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
+	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
 	jam_address_sensitive(&buf, src);
 	return dst->buf;
 }
@@ -332,7 +332,7 @@ const char *str_address_sensitive(const ip_address *src,
 const char *str_address_reversed(const ip_address *src,
 				 address_reversed_buf *dst)
 {
-	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
+	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
 	jam_address_reversed(&buf, src);
 	return dst->buf;
 }

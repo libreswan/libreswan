@@ -294,7 +294,7 @@ extern void exit_log(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
 void whack_log(enum rc_type rc, const struct fd *whackfd, const char *message, ...) PRINTF_LIKE(3);
 void whack_print(const struct fd *whackfd, const char *message, ...) PRINTF_LIKE(2);
 void whack_comment(const struct fd *whackfd, const char *message, ...) PRINTF_LIKE(2);
-void jambuf_to_whack(jambuf_t *buf, const struct fd *whackfd, enum rc_type rc);
+void jambuf_to_whack(struct jambuf *buf, const struct fd *whackfd, enum rc_type rc);
 
 #define WHACK_LOG(RC, WHACKFD, BUF)					\
 	LSWLOG_(true, BUF,						\

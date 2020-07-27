@@ -507,7 +507,7 @@ enum message_role v2_msg_role(const struct msg_digest *md)
 char *cisco_stringify(pb_stream *input_pbs, const char *attr_name)
 {
 	char strbuf[500]; /* Cisco maximum unknown - arbitrary choice */
-	jambuf_t buf = ARRAY_AS_JAMBUF(strbuf); /* let jambuf deal with overflow */
+	struct jambuf buf = ARRAY_AS_JAMBUF(strbuf); /* let jambuf deal with overflow */
 	shunk_t str = pbs_in_left_as_shunk(input_pbs);
 
 	/*

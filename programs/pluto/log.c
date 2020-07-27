@@ -471,7 +471,7 @@ bool whack_prompt_for(struct state *st, const char *prompt,
 	return true;
 }
 
-static void whack_raw(jambuf_t *buf, enum rc_type rc)
+static void whack_raw(struct jambuf *buf, enum rc_type rc)
 {
 	/*
 	 * Override more specific STATE WHACKFD with global whack.
@@ -716,7 +716,7 @@ void init_rate_log(void)
 }
 
 static void log_whacks(enum rc_type rc, const struct fd *global_whackfd,
-		       const struct fd *object_whackfd, jambuf_t *buf)
+		       const struct fd *object_whackfd, struct jambuf *buf)
 {
 	if (fd_p(object_whackfd)) {
 		jambuf_to_whack(buf, object_whackfd, rc);
@@ -727,7 +727,7 @@ static void log_whacks(enum rc_type rc, const struct fd *global_whackfd,
 	}
 }
 
-void jambuf_to_logger(jambuf_t *buf, const struct logger *logger, lset_t rc_flags)
+void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc_flags)
 {
 	enum rc_type rc = rc_flags & RC_MASK;
 	enum stream only = rc_flags & ~RC_MASK;
@@ -761,7 +761,7 @@ void jambuf_to_logger(jambuf_t *buf, const struct logger *logger, lset_t rc_flag
 	}
 }
 
-void log_jambuf(lset_t rc_flags, struct fd *object_whackfd, jambuf_t *buf)
+void log_jambuf(lset_t rc_flags, struct fd *object_whackfd, struct jambuf *buf)
 {
 	struct logger logger = {
 		.global_whackfd = in_main_thread() ? whack_log_fd/*GLOBAL*/ : null_fd,
@@ -780,7 +780,7 @@ static bool never_suppress_log(const void *object UNUSED)
 	return false;
 }
 
-static size_t jam_global_prefix(jambuf_t *unused_buf UNUSED,
+static size_t jam_global_prefix(struct jambuf *unused_buf UNUSED,
 			      const void *unused_object UNUSED)
 {
 	/* jam(buf, "") - nothing to add */
@@ -794,7 +794,7 @@ const struct logger_object_vec logger_global_vec = {
 	.free_object = false,
 };
 
-static size_t jam_from_prefix(jambuf_t *buf, const void *object)
+static size_t jam_from_prefix(struct jambuf *buf, const void *object)
 {
 	size_t s = 0;
 	if (!in_main_thread()) {
@@ -822,7 +822,7 @@ const struct logger_object_vec logger_from_vec = {
 	.free_object = false,
 };
 
-static size_t jam_message_prefix(jambuf_t *buf, const void *object)
+static size_t jam_message_prefix(struct jambuf *buf, const void *object)
 {
 	size_t s = 0;
 	if (!in_main_thread()) {
@@ -843,7 +843,7 @@ const struct logger_object_vec logger_message_vec = {
 	.free_object = false,
 };
 
-static size_t jam_connection_prefix(jambuf_t *buf, const void *object)
+static size_t jam_connection_prefix(struct jambuf *buf, const void *object)
 {
 	size_t s = 0;
 	if (!in_main_thread()) {
@@ -872,7 +872,7 @@ const struct logger_object_vec logger_connection_vec = {
 	.free_object = false,
 };
 
-static size_t jam_state_prefix(jambuf_t *buf, const void *object)
+static size_t jam_state_prefix(struct jambuf *buf, const void *object)
 {
 	size_t s = 0;
 	if (!in_main_thread()) {
@@ -913,7 +913,7 @@ const struct logger_object_vec logger_state_vec = {
 	.free_object = false,
 };
 
-static size_t jam_string_prefix(jambuf_t *buf, const void *object)
+static size_t jam_string_prefix(struct jambuf *buf, const void *object)
 {
 	const char *string = object;
 	return jam_string(buf, string);
@@ -937,7 +937,7 @@ struct logger *clone_logger(const struct logger *stack)
 	 * accessed on a helper thread.
 	 */
 	char prefix[LOG_WIDTH];
-	jambuf_t prefix_buf = ARRAY_AS_JAMBUF(prefix);
+	struct jambuf prefix_buf = ARRAY_AS_JAMBUF(prefix);
 	jam_logger_prefix(&prefix_buf, stack);
 	/*
 	 * choose a logger object vec with a hardwired suppress.

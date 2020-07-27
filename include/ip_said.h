@@ -21,8 +21,9 @@
 #include "err.h"
 #include "ip_endpoint.h"
 #include "libreswan.h"		/* for ipsec_spi_t */
-#include "jambuf.h"
 #include "ip_protocol.h"
+
+struct jambuf;
 
 /*
  * to identify an SA, we need
@@ -82,7 +83,7 @@ typedef struct {
 	char buf[5 + ULTOT_BUF + 1 + sizeof(address_buf)];
 } said_buf;
 
-void jam_said(jambuf_t *buf, const ip_said *said);
+void jam_said(struct jambuf *buf, const ip_said *said);
 const char *str_said(const ip_said *said, said_buf *buf);
 
 /*

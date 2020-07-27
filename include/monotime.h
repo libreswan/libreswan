@@ -74,6 +74,6 @@ typedef struct {
 } monotime_buf;
 
 const char *str_monotime(monotime_t d, monotime_buf *buf);
-size_t jam_monotime(jambuf_t *buf, monotime_t d);
+size_t jam_monotime(struct jambuf *buf, monotime_t d);
 
 #endif

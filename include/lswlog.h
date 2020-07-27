@@ -205,7 +205,7 @@ enum stream {
 struct logger_object_vec {
 	const char *name;
 	bool free_object;
-	size_t (*jam_object_prefix)(jambuf_t *buf, const void *object);
+	size_t (*jam_object_prefix)(struct jambuf *buf, const void *object);
 #define jam_logger_prefix(BUF, LOGGER) (LOGGER)->object_vec->jam_object_prefix(BUF, (LOGGER)->object)
 	/*
 	 * When opportunistic encryption or the initial responder, for
@@ -232,7 +232,7 @@ void log_message(lset_t rc_flags,
 void log_va_list(lset_t rc_flags, const struct logger *logger,
 		 const char *message, va_list ap);
 
-void jambuf_to_logger(jambuf_t *buf, const struct logger *logger, lset_t rc_flags);
+void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc_flags);
 
 #define LOG_MESSAGE(RC_FLAGS, LOGGER, BUF)				\
 	LSWLOG_(true, BUF,						\
@@ -240,7 +240,7 @@ void jambuf_to_logger(jambuf_t *buf, const struct logger *logger, lset_t rc_flag
 		jambuf_to_logger(BUF, (LOGGER), RC_FLAGS))
 
 
-void log_jambuf(lset_t rc_flags, struct fd *object_fd, jambuf_t *buf);
+void log_jambuf(lset_t rc_flags, struct fd *object_fd, struct jambuf *buf);
 
 size_t lswlog_to_file_stream(struct jambuf *buf, FILE *file);
 
@@ -425,7 +425,7 @@ void lswbuf(struct jambuf *log)
 		     *lswbuf_ = lswbuf;					\
 	     lswbuf_ != NULL; lswbuf_ = NULL)				\
 		/* create the jambuf */					\
-		for (jambuf_t jambuf = ARRAY_AS_JAMBUF(lswbuf),		\
+		for (struct jambuf jambuf = ARRAY_AS_JAMBUF(lswbuf),		\
 			     *BUF = &jambuf;				\
 		     BUF != NULL; BUF = NULL)
 #define LSWBUF_ LSWBUF

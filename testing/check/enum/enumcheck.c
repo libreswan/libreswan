@@ -58,7 +58,7 @@ static void test_enum(enum_names *enum_test, int i,
 
 	{
 		printf(PREFIX "jam_enum %d: ", i);
-		jambuf_t buf = ARRAY_AS_JAMBUF(scratch);
+		struct jambuf buf = ARRAY_AS_JAMBUF(scratch);
 		jam_enum(&buf, enum_test, i);
 		shunk_t s = jambuf_as_shunk(&buf);
 		printf(""PRI_SHUNK" ", pri_shunk(s));
@@ -122,7 +122,7 @@ static void test_enum(enum_names *enum_test, int i,
 
 	{
 		printf(PREFIX "jam_enum_short %d: ", i);
-		jambuf_t buf = ARRAY_AS_JAMBUF(scratch);
+		struct jambuf buf = ARRAY_AS_JAMBUF(scratch);
 		jam_enum_short(&buf, enum_test, i);
 		shunk_t s = jambuf_as_shunk(&buf);
 		printf(""PRI_SHUNK" ", pri_shunk(s));
@@ -236,7 +236,7 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 
 	{
 		printf(PREFIX "jam_enum_enum %lu %lu: ", table, val);
-		jambuf_t buf = ARRAY_AS_JAMBUF(scratch);
+		struct jambuf buf = ARRAY_AS_JAMBUF(scratch);
 		jam_enum_enum(&buf, een, table, val);
 		shunk_t s = jambuf_as_shunk(&buf);
 		printf(""PRI_SHUNK" ", pri_shunk(s));
@@ -255,7 +255,7 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 
 	{
 		printf(PREFIX "jam_enum_enum_short %lu %lu: ", table, val);
-		jambuf_t buf = ARRAY_AS_JAMBUF(scratch);
+		struct jambuf buf = ARRAY_AS_JAMBUF(scratch);
 		jam_enum_enum_short(&buf, een, table, val);
 		shunk_t s = jambuf_as_shunk(&buf);
 		printf(""PRI_SHUNK" ", pri_shunk(s));
@@ -276,7 +276,7 @@ static void test_enum_lset(const char *name, const enum_names *en, lset_t val)
 	printf("\t<<");
 	{
 		char scratch[100];
-		jambuf_t buf = ARRAY_AS_JAMBUF(scratch);
+		struct jambuf buf = ARRAY_AS_JAMBUF(scratch);
 		jam_enum_lset_short(&buf, en, "+", val);
 		printf(PRI_SHUNK, pri_shunk(jambuf_as_shunk(&buf)));
 	}

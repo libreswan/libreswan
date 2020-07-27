@@ -25,7 +25,7 @@ bool selector_is_unset(const ip_selector *selector)
 	return memeq(&unset_selector, selector, sizeof(unset_selector));
 }
 
-void jam_selector(jambuf_t *buf, const ip_subnet *subnet)
+void jam_selector(struct jambuf *buf, const ip_subnet *subnet)
 {
 	jam_address(buf, &subnet->addr); /* sensitive? */
 	jam(buf, "/%u", subnet->maskbits);
@@ -37,7 +37,7 @@ void jam_selector(jambuf_t *buf, const ip_subnet *subnet)
 
 const char *str_selector(const ip_selector *selector, selector_buf *out)
 {
-	jambuf_t buf = ARRAY_AS_JAMBUF(out->buf);
+	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
 	jam_selector(&buf, selector);
 	return out->buf;
 }

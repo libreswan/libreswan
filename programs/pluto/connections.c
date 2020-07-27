@@ -427,7 +427,7 @@ static err_t default_end(const char *leftright, struct end *e,
  * result (length excludes NUL at end).
  */
 
-static void jam_end_host(jambuf_t *buf, const struct end *this, lset_t policy)
+static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t policy)
 {
 	/* HOST */
 	bool dohost_name;
@@ -478,7 +478,7 @@ static void jam_end_host(jambuf_t *buf, const struct end *this, lset_t policy)
 	}
 }
 
-static void jam_end_client(jambuf_t *buf, const struct end *this,
+static void jam_end_client(struct jambuf *buf, const struct end *this,
 			   lset_t policy, bool is_left)
 {
 	/* [CLIENT===] */
@@ -510,7 +510,7 @@ static void jam_end_client(jambuf_t *buf, const struct end *this,
 	}
 }
 
-static void jam_end_protoport(jambuf_t *buf, const struct end *this)
+static void jam_end_protoport(struct jambuf *buf, const struct end *this)
 {
 	/* payload portocol and port */
 	if (this->has_port_wildcard) {
@@ -520,7 +520,7 @@ static void jam_end_protoport(jambuf_t *buf, const struct end *this)
 	}
 }
 
-static void jam_end_id(jambuf_t *buf, const struct end *this)
+static void jam_end_id(struct jambuf *buf, const struct end *this)
 {
 	/* id, if different from host */
 	bool open_paren = false;
@@ -574,7 +574,7 @@ static void jam_end_id(jambuf_t *buf, const struct end *this)
 	}
 }
 
-static void jam_end_nexthop(jambuf_t *buf, const struct end *this,
+static void jam_end_nexthop(struct jambuf *buf, const struct end *this,
 			    const struct end *that, bool filter_rnh, bool is_left)
 {
 	/* [---hop] */
@@ -591,7 +591,7 @@ static void jam_end_nexthop(jambuf_t *buf, const struct end *this,
 	}
 }
 
-static void jam_end(jambuf_t *buf,
+static void jam_end(struct jambuf *buf,
 		  const struct end *this,
 		    const struct end *that,
 		    bool is_left,
@@ -631,7 +631,7 @@ size_t format_end(char *buf,
 		  lset_t policy,
 		  bool filter_rnh)
 {
-	jambuf_t b = array_as_jambuf(buf, buf_len);
+	struct jambuf b = array_as_jambuf(buf, buf_len);
 	jam_end(&b, this, that, is_left, policy, filter_rnh);
 	return strlen(buf);
 }
@@ -2152,7 +2152,7 @@ void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF])
  * Opportunistic: [" " myclient "==="] " ..." peer ["===" peer_client] '\0'
  */
 
-static size_t jam_connection_client(jambuf_t *b,
+static size_t jam_connection_client(struct jambuf *b,
 				    const char *prefix, const char *suffix,
 				    const ip_subnet *client, const ip_address *gw)
 {
@@ -2171,7 +2171,7 @@ static size_t jam_connection_client(jambuf_t *b,
 	return s;
 }
 
-size_t jam_connection_instance(jambuf_t *buf, const struct connection *c)
+size_t jam_connection_instance(struct jambuf *buf, const struct connection *c)
 {
 	if (!pexpect(c->kind == CK_INSTANCE ||
 		     c->kind == CK_GOING_AWAY)) {
@@ -2209,7 +2209,7 @@ size_t jam_connection(struct jambuf *buf, const struct connection *c)
 
 const char *str_connection_instance(const struct connection *c, connection_buf *buf)
 {
-	jambuf_t p = ARRAY_AS_JAMBUF(buf->buf);
+	struct jambuf p = ARRAY_AS_JAMBUF(buf->buf);
 	if (c->kind == CK_INSTANCE) {
 		jam_connection_instance(&p, c);
 	}
@@ -2226,7 +2226,7 @@ const char *str_connection_instance(const struct connection *c, connection_buf *
 char *fmt_conn_instance(const struct connection *c, char buf[CONN_INST_BUF])
 {
 	/* not sizeof(buf), as BUF is an address */
-	jambuf_t p = array_as_jambuf(buf, CONN_INST_BUF);
+	struct jambuf p = array_as_jambuf(buf, CONN_INST_BUF);
 	if (c->kind == CK_INSTANCE) {
 		jam_connection_instance(&p, c);
 	}

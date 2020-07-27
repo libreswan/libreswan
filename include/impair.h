@@ -191,6 +191,6 @@ bool process_impair(const struct whack_impair *whack_impair,
 		    struct logger *logger);
 
 bool have_impairments(void);
-void jam_impairments(jambuf_t *buf, const char *sep);
+void jam_impairments(struct jambuf *buf, const char *sep);
 
 #endif

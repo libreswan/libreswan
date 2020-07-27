@@ -749,7 +749,7 @@ static void ipseckey_ub_cb(void* mydata, int rcode,
 	dnsr->cb(dnsr);
 }
 
-static err_t build_dns_name(jambuf_t *name_buf, const struct id *id)
+static err_t build_dns_name(struct jambuf *name_buf, const struct id *id)
 {
 	switch (id->kind) {
 	case ID_IPV4_ADDR:
@@ -799,7 +799,7 @@ static struct p_dns_req *qry_st_init(struct state *st,
 
 
 	char qname[SWAN_MAX_DOMAIN_LEN];
-	jambuf_t qbuf = ARRAY_AS_JAMBUF(qname);
+	struct jambuf qbuf = ARRAY_AS_JAMBUF(qname);
 	err_t err = build_dns_name(&qbuf, &id);
 	if (err != NULL) {
 		/* is there qtype to name lookup function */

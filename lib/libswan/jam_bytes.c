@@ -18,7 +18,7 @@
 
 #include "jambuf.h"
 
-size_t jam_hex_bytes(jambuf_t *buf, const void *ptr, size_t size)
+size_t jam_hex_bytes(struct jambuf *buf, const void *ptr, size_t size)
 {
 	size_t n = 0;
 	const uint8_t *bytes = ptr;
@@ -29,7 +29,7 @@ size_t jam_hex_bytes(jambuf_t *buf, const void *ptr, size_t size)
 	return n;
 }
 
-size_t jam_HEX_bytes(jambuf_t *buf, const void *ptr, size_t size)
+size_t jam_HEX_bytes(struct jambuf *buf, const void *ptr, size_t size)
 {
 	size_t n = 0;
 	const uint8_t *bytes = ptr;
@@ -48,7 +48,7 @@ size_t jam_HEX_bytes(jambuf_t *buf, const void *ptr, size_t size)
  * the same 'look' - make searching and grepping easier.
  */
 
-size_t jam_dump_bytes(jambuf_t *buf, const void *bytes, size_t size)
+size_t jam_dump_bytes(struct jambuf *buf, const void *bytes, size_t size)
 {
 	if (size == 0) {
 		return 0;
@@ -78,7 +78,7 @@ size_t jam_dump_bytes(jambuf_t *buf, const void *bytes, size_t size)
  * XXX: bonus points for anyone encoding \r \n ... correctly?
  */
 
-size_t jam_sanitized_bytes(jambuf_t *buf, const void *ptr, size_t size)
+size_t jam_sanitized_bytes(struct jambuf *buf, const void *ptr, size_t size)
 {
 	size_t n = 0;
 	const char *chars = ptr;
@@ -99,7 +99,7 @@ size_t jam_sanitized_bytes(jambuf_t *buf, const void *ptr, size_t size)
  * equivalent escape codes.
  */
 
-size_t jam_meta_escaped_bytes(jambuf_t *buf, const void *ptr, size_t size)
+size_t jam_meta_escaped_bytes(struct jambuf *buf, const void *ptr, size_t size)
 {
 	size_t n = 0;
 	const char *chars = ptr;

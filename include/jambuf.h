@@ -26,10 +26,10 @@
 #include "shunk.h"
 
 /*
- * jambuf_t provides a mechanism for accumulating formatted strings
- * into a string buffer, vis:
+ * struct jambuf provides a mechanism for accumulating formatted
+ * strings into a string buffer, vis:
  *
- *    jambuf_t buf = ...() -- see below
+ *    struct jambuf buf = ...() -- see below
  *    if (string != NULL)
  *      jam(&buf, " string: %s", string);
  *    if (i > 100)
@@ -74,28 +74,28 @@
  * overwritten with DOTS.
  */
 
-typedef struct jambuf {
+struct jambuf {
 	char *array;
 	size_t total;
 	size_t roof;
 	const char *dots;
-} jambuf_t;
+};
 
-bool jambuf_ok(jambuf_t *buf);
+bool jambuf_ok(struct jambuf *buf);
 
 /*
- * Wrap a character array up in a jambuf_t so that it can be used to
+ * Wrap a character array up in a struct jambuf so that it can be used to
  * accumulate strings.  Simplify the common use:
  *
  * typedef struct { char buf[SIZE]; } TYPE_buf;
  * const char *str_TYPE(TYPE_t *t, TYPE_buf *out) {
- *   jambuf_t buf = ARRAY_AS_JAMBUF(out->buf);
+ *   struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
  *   jam_...(&buf, ...);
  *   return out->buf;
  * }
  */
 
-jambuf_t array_as_jambuf(char *array, size_t sizeof_array);
+struct jambuf array_as_jambuf(char *array, size_t sizeof_array);
 #define ARRAY_AS_JAMBUF(ARRAY) array_as_jambuf((ARRAY), sizeof(ARRAY))
 
 /*
@@ -109,8 +109,8 @@ jambuf_t array_as_jambuf(char *array, size_t sizeof_array);
  * string will be jammed); *cursor is always '\0'.
  */
 
-shunk_t jambuf_as_shunk(jambuf_t *buf);
-const char *jambuf_cursor(jambuf_t *buf);
+shunk_t jambuf_as_shunk(struct jambuf *buf);
+const char *jambuf_cursor(struct jambuf *buf);
 
 /*
  * Assuming the jambuf is an array, save/restore the 'cursor'.
@@ -120,8 +120,8 @@ const char *jambuf_cursor(jambuf_t *buf);
  */
 
 typedef struct { size_t total; } jampos_t;
-jampos_t jambuf_get_pos(jambuf_t *buf);
-void jambuf_set_pos(jambuf_t *buf, const jampos_t *pos);
+jampos_t jambuf_get_pos(struct jambuf *buf);
+void jambuf_set_pos(struct jambuf *buf, const jampos_t *pos);
 
 /*
  * Routines for accumulating output in the jambuf buffer.
@@ -137,20 +137,20 @@ void jambuf_set_pos(jambuf_t *buf, const jampos_t *pos);
  * trying to pretty-print a table of values.
  */
 
-size_t jam_va_list(jambuf_t *buf, const char *format, va_list ap);
-size_t jam_raw_bytes(jambuf_t *buf, const void *bytes, size_t nr_bytes);
+size_t jam_va_list(struct jambuf *buf, const char *format, va_list ap);
+size_t jam_raw_bytes(struct jambuf *buf, const void *bytes, size_t nr_bytes);
 
 /* wrap above */
-size_t jam(jambuf_t *buf, const char *format, ...) PRINTF_LIKE(2);
-size_t jam_char(jambuf_t *buf, char c);
-size_t jam_string(jambuf_t *buf, const char *string);
-size_t jam_jambuf(jambuf_t *buf, jambuf_t *in);
+size_t jam(struct jambuf *buf, const char *format, ...) PRINTF_LIKE(2);
+size_t jam_char(struct jambuf *buf, char c);
+size_t jam_string(struct jambuf *buf, const char *string);
+size_t jam_jambuf(struct jambuf *buf, struct jambuf *in);
 
 /*
  * Jam a string of bytes formatted in some way.
  */
 
-typedef size_t (jam_bytes_fn)(jambuf_t *buf, const void *bytes, size_t size);
+typedef size_t (jam_bytes_fn)(struct jambuf *buf, const void *bytes, size_t size);
 
 /* bytes as hex ...  */
 

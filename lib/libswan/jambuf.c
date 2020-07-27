@@ -35,7 +35,7 @@
  * This is the one place where PASSERT() can't be used - it will
  * recursively end up back here!
  */
-static void assert_jambuf(jambuf_t *buf)
+static void assert_jambuf(struct jambuf *buf)
 {
 #define A(ASSERTION) if (!(ASSERTION)) abort()
 	A(buf->dots != NULL);
@@ -57,12 +57,12 @@ int (*jambuf_debugf)(const char *format, ...) = jambuf_debugf_nop;
  * Constructor
  */
 
-jambuf_t array_as_jambuf(char *array, size_t sizeof_array)
+struct jambuf array_as_jambuf(char *array, size_t sizeof_array)
 {
 	jambuf_debugf("%s(array=%p,sizeof_array=%zu)\n",
 		      __func__, array, sizeof_array);
 	/* pointers back at buf */
-	jambuf_t buf = {
+	struct jambuf buf = {
 		.array = array,
 		.total = 0,
 		.roof = sizeof_array - 1,
@@ -87,7 +87,7 @@ struct dest {
 	size_t size;
 };
 
-static struct dest dest(jambuf_t *buf)
+static struct dest dest(struct jambuf *buf)
 {
 	/*
 	 * Where will the next message be written?
@@ -114,7 +114,7 @@ static struct dest dest(jambuf_t *buf)
  * The output needs to be truncated, overwrite the end of the buffer
  * with DOTS.
  */
-static void truncate_buf(jambuf_t *buf)
+static void truncate_buf(struct jambuf *buf)
 {
 	jambuf_debugf("truncate_buf(.buf=%p)\n", buf);
 	jambuf_debugf("\tlength=%zu\n", buf->total);
@@ -142,7 +142,7 @@ static void truncate_buf(jambuf_t *buf)
  * trailing NUL, that should have been written to the buffer.
  */
 
-size_t jam_raw_bytes(jambuf_t *buf, const void *string, size_t n)
+size_t jam_raw_bytes(struct jambuf *buf, const void *string, size_t n)
 {
 	assert_jambuf(buf);
 	struct dest d = dest(buf);
@@ -172,7 +172,7 @@ size_t jam_raw_bytes(jambuf_t *buf, const void *string, size_t n)
 	return n;
 }
 
-size_t jam_va_list(jambuf_t *buf, const char *format, va_list ap)
+size_t jam_va_list(struct jambuf *buf, const char *format, va_list ap)
 {
 	assert_jambuf(buf);
 	struct dest d = dest(buf);
@@ -208,7 +208,7 @@ size_t jam_va_list(jambuf_t *buf, const char *format, va_list ap)
 	return n;
 }
 
-size_t jam(jambuf_t *buf, const char *format, ...)
+size_t jam(struct jambuf *buf, const char *format, ...)
 {
 	/* jam_va_list does assert */
 	va_list ap;
@@ -218,12 +218,12 @@ size_t jam(jambuf_t *buf, const char *format, ...)
 	return n;
 }
 
-size_t jam_char(jambuf_t *buf, char c)
+size_t jam_char(struct jambuf *buf, char c)
 {
 	return jam_raw_bytes(buf, &c, 1);
 }
 
-size_t jam_string(jambuf_t *buf, const char *string)
+size_t jam_string(struct jambuf *buf, const char *string)
 {
 	/*
 	 * Just in case a NULL ends up here.  This has the side effect
@@ -235,33 +235,33 @@ size_t jam_string(jambuf_t *buf, const char *string)
 	return jam_raw_bytes(buf, string, strlen(string));
 }
 
-size_t jam_jambuf(jambuf_t *buf, jambuf_t *jambuf)
+size_t jam_jambuf(struct jambuf *buf, struct jambuf *jambuf)
 {
 	shunk_t s = jambuf_as_shunk(jambuf);
 	return jam_raw_bytes(buf, s.ptr, s.len);
 }
 
-bool jambuf_ok(jambuf_t *buf)
+bool jambuf_ok(struct jambuf *buf)
 {
 	assert_jambuf(buf);
 	return buf->total < buf->roof;
 }
 
-const char *jambuf_cursor(jambuf_t *buf)
+const char *jambuf_cursor(struct jambuf *buf)
 {
 	assert_jambuf(buf);
 	struct dest d = dest(buf);
 	return d.cursor;
 }
 
-shunk_t jambuf_as_shunk(jambuf_t *buf)
+shunk_t jambuf_as_shunk(struct jambuf *buf)
 {
 	assert_jambuf(buf);
 	struct dest d = dest(buf);
 	return shunk2(buf->array, d.cursor - buf->array);
 }
 
-jampos_t jambuf_get_pos(jambuf_t *buf)
+jampos_t jambuf_get_pos(struct jambuf *buf)
 {
 	assert_jambuf(buf);
 	jampos_t pos = {
@@ -270,7 +270,7 @@ jampos_t jambuf_get_pos(jambuf_t *buf)
 	return pos;
 }
 
-void jambuf_set_pos(jambuf_t *buf, const jampos_t *pos)
+void jambuf_set_pos(struct jambuf *buf, const jampos_t *pos)
 {
 	assert_jambuf(buf);
 	if (pos->total >= buf->roof) {

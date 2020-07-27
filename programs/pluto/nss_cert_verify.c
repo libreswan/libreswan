@@ -675,7 +675,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 	 * can't match.
 	 */
 	char raw_id_buf[IDTOA_BUF];
-	jambuf_t raw_id_jambuf = ARRAY_AS_JAMBUF(raw_id_buf);
+	struct jambuf raw_id_jambuf = ARRAY_AS_JAMBUF(raw_id_buf);
 	jam_id(&raw_id_jambuf, id, jam_raw_bytes);
 	const char *raw_id = raw_id_buf;
 	if (id->kind == ID_FQDN) {

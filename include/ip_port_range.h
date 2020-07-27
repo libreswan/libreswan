@@ -45,7 +45,7 @@ typedef struct {
 	char buf[sizeof("65535-65535") + 1/*canary*/];
 } port_range_buf;
 
-size_t jam_port_range(jambuf_t *buf, ip_port_range port_range);
+size_t jam_port_range(struct jambuf *buf, ip_port_range port_range);
 const char *str_port_range(ip_port_range port_range, port_range_buf *buf);
 
 #endif

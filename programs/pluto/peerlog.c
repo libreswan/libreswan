@@ -186,7 +186,7 @@ static void unlocked_open_peerlog(struct connection *c)
 				 1 /* cookie */ +
 				 1 /* deliberately over allocate */);
 		c->log_file_name = alloc_bytes(lf_len, "per-peer log file name");
-		jambuf_t buf = array_as_jambuf(c->log_file_name, lf_len);
+		struct jambuf buf = array_as_jambuf(c->log_file_name, lf_len);
 		jam_string(&buf, peerlog_basedir);
 		jam_string(&buf, "/");
 		jam_address_raw(&buf, &c->spd.that.host_addr, '/');

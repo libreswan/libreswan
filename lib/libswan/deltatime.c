@@ -156,7 +156,7 @@ static size_t frac(struct jambuf *buf, intmax_t usec)
 	return jam(buf, ".%0*jd", precision, usec);
 }
 
-size_t jam_deltatime(jambuf_t *buf, deltatime_t d)
+size_t jam_deltatime(struct jambuf *buf, deltatime_t d)
 {
 	size_t s = 0;
 	if (d.dt.tv_sec < 0) {
@@ -172,7 +172,7 @@ size_t jam_deltatime(jambuf_t *buf, deltatime_t d)
 
 const char *str_deltatime(deltatime_t d, deltatime_buf *out)
 {
-	jambuf_t buf = ARRAY_AS_JAMBUF(out->buf);
+	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
 	jam_deltatime(&buf, d);
 	return out->buf;
 }

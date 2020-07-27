@@ -443,7 +443,7 @@ static void show_virtual_private_kind(struct show *s,
 {
 	if (private_net != NULL) {
 		char all[256] = "";  /* arbitrary limit */
-		jambuf_t buf = ARRAY_AS_JAMBUF(all);
+		struct jambuf buf = ARRAY_AS_JAMBUF(all);
 		int i;
 		for (i = 0; i < private_net_len; i++) {
 			jampos_t start = jambuf_get_pos(&buf);

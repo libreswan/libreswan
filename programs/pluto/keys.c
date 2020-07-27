@@ -320,7 +320,7 @@ struct tac_state {
 	err_t best_ugh; /* most successful failure */
 	int tried_cnt;  /* number of keys tried */
 	char tried[50]; /* keyids of tried public keys */
-	jambuf_t tn;
+	struct jambuf tn;
 };
 
 static bool take_a_crack(struct tac_state *s,

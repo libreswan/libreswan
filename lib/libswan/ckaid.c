@@ -61,14 +61,14 @@ bool ckaid_eq_nss(const ckaid_t *l, const SECItem *r)
 		memeq(l->ptr, r->data, r->len));
 }
 
-size_t jam_ckaid(jambuf_t *buf, const ckaid_t *ckaid)
+size_t jam_ckaid(struct jambuf *buf, const ckaid_t *ckaid)
 {
 	return jam_hex_bytes(buf, ckaid->ptr, ckaid->len);
 }
 
 const char *str_ckaid(const ckaid_t *ckaid, ckaid_buf *buf)
 {
-	jambuf_t jam = ARRAY_AS_JAMBUF(buf->buf);
+	struct jambuf jam = ARRAY_AS_JAMBUF(buf->buf);
 	jam_ckaid(&jam, ckaid);
 	return buf->buf;
 }

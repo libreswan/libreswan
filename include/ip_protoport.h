@@ -22,8 +22,9 @@
 #include <stdlib.h>
 
 #include "err.h"
-#include "jambuf.h"
 #include "ip_port.h"
+
+struct jambuf;
 
 typedef struct {
 	bool any_port;
@@ -46,7 +47,7 @@ typedef struct {
 	char buf[32+1+32+1+1];
 } protoport_buf;
 
-size_t jam_protoport(jambuf_t *buf, const ip_protoport *protoport);
+size_t jam_protoport(struct jambuf *buf, const ip_protoport *protoport);
 const char *str_protoport(const ip_protoport *protoport, protoport_buf *buf);
 
 #endif

@@ -2244,7 +2244,7 @@ const char *enum_short_name(enum_names *ed, unsigned long val)
 		strip_prefix(p, ed->en_prefix);
 }
 
-size_t jam_enum(jambuf_t *buf, enum_names *en, unsigned long val)
+size_t jam_enum(struct jambuf *buf, enum_names *en, unsigned long val)
 {
 	const char *name = enum_name(en, val);
 	if (name == NULL) {
@@ -2257,7 +2257,7 @@ size_t jam_enum(jambuf_t *buf, enum_names *en, unsigned long val)
 	return jam_string(buf, name);
 }
 
-size_t jam_enum_short(jambuf_t *buf, enum_names *en, unsigned long val)
+size_t jam_enum_short(struct jambuf *buf, enum_names *en, unsigned long val)
 {
 	const char *name = enum_short_name(en, val);
 	if (name == NULL) {

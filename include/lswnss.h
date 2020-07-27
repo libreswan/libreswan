@@ -57,10 +57,10 @@ PK11SlotInfo *lsw_nss_get_authenticated_slot(lsw_nss_buf_t err);
 void log_nss_error(lset_t rc_log, struct logger *logger, PRErrorCode pr_error,
 		   const char *message, ...) PRINTF_LIKE(4);
 
-size_t jam_nss_error(jambuf_t *log);
-size_t jam_nss_ckm(jambuf_t *buf, CK_MECHANISM_TYPE mechanism);
-size_t jam_nss_ckf(jambuf_t *buf, CK_FLAGS flags);
-size_t jam_nss_cka(jambuf_t *buf, CK_ATTRIBUTE_TYPE attribute);
-size_t jam_nss_secitem(jambuf_t *buf, const SECItem *secitem);
+size_t jam_nss_error(struct jambuf *log);
+size_t jam_nss_ckm(struct jambuf *buf, CK_MECHANISM_TYPE mechanism);
+size_t jam_nss_ckf(struct jambuf *buf, CK_FLAGS flags);
+size_t jam_nss_cka(struct jambuf *buf, CK_ATTRIBUTE_TYPE attribute);
+size_t jam_nss_secitem(struct jambuf *buf, const SECItem *secitem);
 
 #endif

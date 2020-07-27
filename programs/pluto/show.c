@@ -118,7 +118,7 @@ void show_separator(struct show *s)
 	}
 }
 
-void show_jambuf(struct show *s, jambuf_t *buf)
+void show_jambuf(struct show *s, struct jambuf *buf)
 {
 	switch (s->separator) {
 	case NO_SEPARATOR:

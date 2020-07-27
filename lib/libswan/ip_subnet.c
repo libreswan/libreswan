@@ -216,7 +216,7 @@ ip_address subnet_mask(const ip_subnet *src)
 			    src->maskbits);
 }
 
-size_t jam_subnet(jambuf_t *buf, const ip_subnet *subnet)
+size_t jam_subnet(struct jambuf *buf, const ip_subnet *subnet)
 {
 	size_t s = 0;
 	s += jam_address(buf, &subnet->addr); /* sensitive? */
@@ -226,7 +226,7 @@ size_t jam_subnet(jambuf_t *buf, const ip_subnet *subnet)
 
 const char *str_subnet(const ip_subnet *subnet, subnet_buf *out)
 {
-	jambuf_t buf = ARRAY_AS_JAMBUF(out->buf);
+	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
 	jam_subnet(&buf, subnet);
 	return out->buf;
 }

@@ -824,8 +824,8 @@ struct child_sa *new_v2_child_state(struct ike_sa *st, enum sa_type sa_type,
 void set_v1_transition(struct state *st, const struct state_v1_microcode *transition, where_t where);
 void set_v2_transition(struct state *st, const struct state_v2_microcode *transition, where_t where);
 void switch_md_st(struct msg_digest *md, struct state *st, where_t where);
-void jam_v1_transition(jambuf_t *buf, const struct state_v1_microcode *transition);
-void jam_v2_transition(jambuf_t *buf, const struct state_v2_microcode *transition);
+void jam_v1_transition(struct jambuf *buf, const struct state_v1_microcode *transition);
+void jam_v2_transition(struct jambuf *buf, const struct state_v2_microcode *transition);
 
 extern void init_states(void);
 extern void rehash_state(struct state *st,

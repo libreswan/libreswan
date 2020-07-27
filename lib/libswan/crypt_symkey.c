@@ -87,7 +87,7 @@ size_t sizeof_symkey(PK11SymKey *key)
 	}
 }
 
-void jam_symkey(jambuf_t *buf, const char *name, PK11SymKey *key)
+void jam_symkey(struct jambuf *buf, const char *name, PK11SymKey *key)
 {
 	if (key == NULL) {
 		/*

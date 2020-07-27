@@ -56,6 +56,6 @@ void show_separator(struct show *s);
  */
 
 void show_comment(struct show *s, const char *message, ...) PRINTF_LIKE(2);
-void show_jambuf(struct show *s, jambuf_t *jambuf);
+void show_jambuf(struct show *s, struct jambuf *jambuf);
 
 #endif

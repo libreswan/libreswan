@@ -24,7 +24,7 @@
 #include <stdint.h>		/* for intmax_t */
 #include <stdbool.h>		/* for bool */
 
-#include "jambuf.h"
+struct jambuf;
 
 /*
  * XXX: This value isn't typed so what is it really the max of?
@@ -93,6 +93,6 @@ typedef struct {
 } deltatime_buf;
 
 const char *str_deltatime(deltatime_t d, deltatime_buf *buf);
-size_t jam_deltatime(jambuf_t *buf, deltatime_t d);
+size_t jam_deltatime(struct jambuf *buf, deltatime_t d);
 
 #endif

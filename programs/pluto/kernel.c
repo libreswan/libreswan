@@ -398,7 +398,7 @@ static void jam_clean_xauth_username(struct jambuf *buf, const char *src)
  *
  * note: this mutates *st by calling get_sa_info().
  */
-static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
+static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 				 const struct spd_route *sr, struct state *st,
 				 bool inbytes, bool outbytes)
 {
@@ -619,7 +619,7 @@ bool fmt_common_shell_out(char *buf, size_t blen, const struct connection *c,
 	 */
 	bool outbytes = st != NULL && get_sa_info(st, false, NULL);
 	bool inbytes = st != NULL && get_sa_info(st, true, NULL);
-	jambuf_t jambuf = array_as_jambuf(buf, blen);
+	struct jambuf jambuf = array_as_jambuf(buf, blen);
 	jam_common_shell_out(&jambuf, c, sr, st, inbytes, outbytes);
 	return jambuf_ok(&jambuf);
 }
@@ -1112,7 +1112,7 @@ void set_text_said(char *text_said, const ip_address *dst,
 			ipsec_spi_t spi, const struct ip_protocol *sa_proto)
 {
 	ip_said said = said3(dst, spi, sa_proto);
-	jambuf_t jam = array_as_jambuf(text_said, SATOT_BUF);
+	struct jambuf jam = array_as_jambuf(text_said, SATOT_BUF);
 	jam_said(&jam, &said);
 }
 

@@ -271,7 +271,7 @@ struct ikev2_proposals {
 /*
  * Print <TRANSFORM> to the buffer.
  */
-static void jam_transform(jambuf_t *buf, enum ikev2_trans_type type,
+static void jam_transform(struct jambuf *buf, enum ikev2_trans_type type,
 			  const struct ikev2_transform *transform)
 {
 	jam_enum_enum_short(buf, &v2_transform_ID_enums,
@@ -286,14 +286,14 @@ static const char *trans_type_name(enum ikev2_trans_type type)
 	return enum_short_name(&ikev2_trans_type_names, type);
 }
 
-static void jam_trans_types(jambuf_t *buf, lset_t types)
+static void jam_trans_types(struct jambuf *buf, lset_t types)
 {
 	jam_enum_lset_short(buf, &ikev2_trans_type_names,
 			    "+", types);
 }
 
 /* <TRANSFORM-TYPE> "=" <TRANSFORM> */
-static void jam_type_transform(jambuf_t *buf, enum ikev2_trans_type type,
+static void jam_type_transform(struct jambuf *buf, enum ikev2_trans_type type,
 			       const struct ikev2_transform *transform)
 {
 	jam_string(buf, trans_type_name(type));
@@ -307,7 +307,7 @@ static const char *protoid_name(enum ikev2_sec_proto_id protoid)
 }
 
 /* <TRANSFORM> { "+" <TRANSFORM> }+ */
-static void jam_transforms(jambuf_t *buf, enum ikev2_trans_type type,
+static void jam_transforms(struct jambuf *buf, enum ikev2_trans_type type,
 			   const struct ikev2_transforms *transforms)
 {	char *sep = "";
 	const struct ikev2_transform *transform;
@@ -318,7 +318,7 @@ static void jam_transforms(jambuf_t *buf, enum ikev2_trans_type type,
 	};
 }
 
-static void jam_v2_proposal(jambuf_t *buf, int propnum,
+static void jam_v2_proposal(struct jambuf *buf, int propnum,
 			    const struct ikev2_proposal *proposal)
 {
 	if (propnum != 0) {
@@ -347,9 +347,9 @@ static void jam_v2_proposal(jambuf_t *buf, int propnum,
 	}
 }
 
-static void jam_chosen_proposal(jambuf_t *buf,
+static void jam_chosen_proposal(struct jambuf *buf,
 				struct ikev2_proposal *best_proposal,
-				jambuf_t *proposals)
+				struct jambuf *proposals)
 {
 	jam_string(buf, "proposal ");
 	jam_v2_proposal(buf, best_proposal->propnum, best_proposal);
@@ -366,7 +366,7 @@ void DBG_log_ikev2_proposal(const char *prefix,
 	}
 }
 
-static void jam_v2_proposals(jambuf_t *buf,
+static void jam_v2_proposals(struct jambuf *buf,
 			     const struct ikev2_proposals *proposals)
 {
 	passert(proposals->proposal[0].protoid == 0);
@@ -408,7 +408,7 @@ static void log_proposals(struct logger *logger, const char *prefix,
  * is accumulated in REMOTE_JAM_BUF.
  */
 
-static int process_transforms(pb_stream *prop_pbs, jambuf_t *remote_jam_buf,
+static int process_transforms(pb_stream *prop_pbs, struct jambuf *remote_jam_buf,
 			      unsigned remote_propnum, int num_remote_transforms,
 			      enum ikev2_sec_proto_id remote_protoid,
 			      const struct ikev2_proposals *local_proposals,
@@ -805,7 +805,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 				   bool expect_accepted,
 				   const struct ikev2_proposals *local_proposals,
 				   struct ikev2_proposal *best_proposal,
-				   jambuf_t *remote_jam_buf,
+				   struct jambuf *remote_jam_buf,
 				   struct logger *logger)
 {
 	/*

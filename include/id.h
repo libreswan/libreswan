@@ -21,7 +21,7 @@
 #include "chunk.h"
 #include "err.h"
 #include "ip_address.h"
-#include "jambuf.h"
+#include "jambuf.h"		/* for typedef jam_bytes_fn */
 
 struct id {
 	enum ike_id_type kind;
