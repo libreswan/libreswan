@@ -2021,7 +2021,7 @@ struct ikev2_proposals *get_v2_ike_proposals(struct connection *c, const char *w
 	FOR_EACH_PROPOSAL(proposals, ike_info) {
 		LSWDBGP(DBG_BASE, buf) {
 			jam_string(buf, "converting ike_info ");
-			fmt_proposal(buf, ike_info);
+			jam_proposal(buf, ike_info);
 			jam_string(buf, " to ikev2 ...");
 		}
 
@@ -2128,7 +2128,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct ikev2_proposals **c
 		FOR_EACH_PROPOSAL(c->child_proposals.p, esp_info) {
 			LSWDBGP(DBG_BASE, log) {
 				jam(log, "converting proposal ");
-				fmt_proposal(log, esp_info);
+				jam_proposal(log, esp_info);
 				jam(log, " to ikev2 ...");
 			}
 

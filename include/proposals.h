@@ -193,8 +193,6 @@ struct child_proposals {
 void jam_proposal(struct jambuf *log,
 		  const struct proposal *proposal);
 void jam_proposals(struct jambuf *log, const struct proposals *proposals);
-#define fmt_proposal jam_proposal /* XXX: TBD */
-#define fmt_proposals jam_proposals /* XXX: TBD */
 
 /*
  * Iterate through all the proposals and the proposal's algorithms.

@@ -1490,7 +1490,7 @@ static bool extract_connection(struct fd *whackfd,
 
 			LSWDBGP(DBG_BASE, buf) {
 				jam_string(buf, "ike (phase1) algorithm values: ");
-				fmt_proposals(buf, c->ike_proposals.p);
+				jam_proposals(buf, c->ike_proposals.p);
 			}
 		}
 
@@ -1548,7 +1548,7 @@ static bool extract_connection(struct fd *whackfd,
 
 			LSWDBGP(DBG_BASE, buf) {
 				jam_string(buf, "ESP/AH string values: ");
-				fmt_proposals(buf, c->child_proposals.p);
+				jam_proposals(buf, c->child_proposals.p);
 			};
 		}
 

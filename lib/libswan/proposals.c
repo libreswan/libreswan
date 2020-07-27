@@ -432,7 +432,7 @@ void jam_proposals(struct jambuf *log, const struct proposals *proposals)
 	const char *sep = "";
 	FOR_EACH_PROPOSAL(proposals, proposal) {
 		jam_string(log, sep);
-		fmt_proposal(log, proposal);
+		jam_proposal(log, proposal);
 		sep = ", ";
 	}
 }

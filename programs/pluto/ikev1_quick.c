@@ -652,7 +652,7 @@ void quick_outI1(struct fd *whack_sock,
 		jam(buf, " {using isakmp#%lu msgid:%08" PRIx32 " proposal=",
 			isakmp_sa->st_serialno, st->st_v1_msgid.id);
 		if (st->st_connection->child_proposals.p != NULL) {
-			fmt_proposals(buf, st->st_connection->child_proposals.p);
+			jam_proposals(buf, st->st_connection->child_proposals.p);
 		} else {
 			jam(buf, "defaults");
 		}

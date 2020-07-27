@@ -69,7 +69,7 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 			FOR_EACH_PROPOSAL(proposals, proposal) {	\
 				LSWLOG_FILE(stdout, log) {		\
 					jam(log, "\t");		\
-					fmt_proposal(log, proposal);	\
+					jam_proposal(log, proposal);	\
 				}					\
 			}						\
 			proposals_delref(&proposals);			\
