@@ -75,13 +75,6 @@ void tool_init_log(const char *name)
 
 /* <prefix><PROGNAME>: <message>. Errno N: <errmess> */
 
-void lswlog_errno_prefix(struct jambuf *buf, const char *prefix)
-{
-	jam_string(buf, prefix);
-	jam_string(buf, progname);
-	jam_string(buf, prog_suffix);
-}
-
 void lswlog_errno_suffix(struct jambuf *buf, int e)
 {
 	jam_string(buf, ".");

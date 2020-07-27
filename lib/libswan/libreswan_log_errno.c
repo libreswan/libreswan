@@ -22,7 +22,8 @@
 void libreswan_log_errno(int e, const char *fmt, ...)
 {
 	LSWBUF(buf) {
-		lswlog_errno_prefix(buf, "ERROR: ");
+		jam(buf, "ERROR: ");
+		jam_cur_prefix(buf);
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);

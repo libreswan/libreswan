@@ -22,7 +22,8 @@
 void libreswan_exit_log_errno(int e, const char *fmt, ...)
 {
 	LSWBUF(buf) {
-		lswlog_errno_prefix(buf, "FATAL ERROR: ");
+		jam(buf, "FATAL ERROR: ");
+		jam_cur_prefix(buf);
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);

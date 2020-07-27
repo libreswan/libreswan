@@ -560,7 +560,6 @@ void libreswan_bad_case(const char *expression, long value, where_t where) NEVER
  * merged.  XXX: should LSWLOG_ERROR() use a different prefix?
  */
 
-void lswlog_errno_prefix(struct jambuf *buf, const char *prefix);
 void lswlog_errno_suffix(struct jambuf *buf, int e);
 
 #endif /* _LSWLOG_H_ */

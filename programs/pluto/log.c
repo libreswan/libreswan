@@ -557,12 +557,6 @@ void close_log(void)
 
 /* <prefix><state#N...><message>. Errno %d: <strerror> */
 
-void lswlog_errno_prefix(struct jambuf *buf, const char *prefix)
-{
-	jam_string(buf, prefix);
-	jam_cur_prefix(buf);
-}
-
 void lswlog_errno_suffix(struct jambuf *buf, int e)
 {
 	jam_string(buf, ".");
