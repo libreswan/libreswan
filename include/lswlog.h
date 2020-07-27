@@ -548,18 +548,4 @@ void libreswan_bad_case(const char *expression, long value, where_t where) NEVER
 		}							\
 	}
 
-/*
- * Wrap <message> in a prefix and suffix where the suffix contains
- * errno and message.  Since calls may alter ERRNO, it needs to be
- * saved.
- *
- * XXX: Is error stream really the right place for this?
- *
- * LSWLOG_ERROR() sends an arbitrary message to the error stream (in
- * tools that's STDERR).  XXX: Should LSWLOG_ERRNO() and LSWERR() be
- * merged.  XXX: should LSWLOG_ERROR() use a different prefix?
- */
-
-void lswlog_errno_suffix(struct jambuf *buf, int e);
-
 #endif /* _LSWLOG_H_ */

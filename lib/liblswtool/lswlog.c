@@ -73,17 +73,6 @@ void tool_init_log(const char *name)
 		setbuf(stderr, NULL);
 }
 
-/* <prefix><PROGNAME>: <message>. Errno N: <errmess> */
-
-void lswlog_errno_suffix(struct jambuf *buf, int e)
-{
-	jam_string(buf, ".");
-	jam(buf, " "PRI_ERRNO, pri_errno(e));
-	if (log_to_stderr) {
-		lswlog_to_file_stream(buf, stderr);
-	}
-}
-
 void jam_cur_prefix(struct jambuf *buf)
 {
 	jam(buf, "%s%s", progname, prog_suffix);

@@ -22,12 +22,15 @@
 void libreswan_log_errno(int e, const char *fmt, ...)
 {
 	LSWBUF(buf) {
+		/* ERROR: <prefix>: <message>. Errno N: <errmess> */
 		jam(buf, "ERROR: ");
 		jam_cur_prefix(buf);
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);
 		va_end(ap);
-		lswlog_errno_suffix(buf, e);
+		jam_string(buf, ".");
+		jam(buf, " "PRI_ERRNO, pri_errno(e));
+		lswlog_to_error_stream(buf);
 	}
 }

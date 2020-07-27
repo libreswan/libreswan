@@ -555,19 +555,10 @@ void close_log(void)
 	peerlog_close();
 }
 
-/* <prefix><state#N...><message>. Errno %d: <strerror> */
-
-void lswlog_errno_suffix(struct jambuf *buf, int e)
-{
-	jam_string(buf, ".");
-	jam(buf, " "PRI_ERRNO, pri_errno(e));
-	lswlog_to_error_stream(buf);
-}
-
 void exit_log(const char *message, ...)
 {
 	LSWBUF(buf) {
-		/* FATAL ERROR: <state...><message> */
+		/* FATAL ERROR: <prefix><message> */
 		jam_string(buf, "FATAL ERROR: ");
 		jam_cur_prefix(buf);
 		va_list args;
