@@ -38,3 +38,4 @@ s/from socket [0-9]* /from socket XX /g
 s/IMPAIR: TCP: socket [0-9]* /IMPAIR: TCP: socket XX /g
 s/TCP: socket [0-9]* /TCP: socket XX /g
 /^nohup: ignoring input and redirecting stderr to stdout$/d
+s/encap type 7 sport/encap type espintcp sport/g
