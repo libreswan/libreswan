@@ -212,25 +212,26 @@ static void init_netlink_route_fd(void)
 	struct sockaddr_nl addr;
 
 	nl_route_fd = safe_socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+	if (nl_route_fd < 0) {
+		FATAL_ERRNO(errno, "socket()");
+	}
 
-	if (nl_route_fd < 0)
-		EXIT_LOG_ERRNO(errno, "socket() ");
+	if (fcntl(nl_route_fd, F_SETFD, FD_CLOEXEC) != 0) {
+		FATAL_ERRNO(errno, "fcntl(FD_CLOEXEC) for bcast NETLINK_ROUTE ");
+	}
 
-	if (fcntl(nl_route_fd, F_SETFD, FD_CLOEXEC) != 0)
-		EXIT_LOG_ERRNO(errno,
-				"fcntl(FD_CLOEXEC) for bcast NETLINK_ROUTE ");
-
-	if (fcntl(nl_route_fd, F_SETFL, O_NONBLOCK) != 0)
-		EXIT_LOG_ERRNO(errno,
-				"fcntl(O_NONBLOCK) for bcast NETLINK_ROUTE");
+	if (fcntl(nl_route_fd, F_SETFL, O_NONBLOCK) != 0) {
+		FATAL_ERRNO(errno, "fcntl(O_NONBLOCK) for bcast NETLINK_ROUTE");
+	}
 
 	addr.nl_family = AF_NETLINK;
 	addr.nl_pid = getpid();
 	addr.nl_groups = RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR |
 			 RTMGRP_IPV4_ROUTE | RTMGRP_IPV6_ROUTE | RTMGRP_LINK;
 	addr.nl_pad = 0; /* make coverity happy */
-	if (bind(nl_route_fd, (struct sockaddr *)&addr, sizeof(addr)) != 0)
-		EXIT_LOG_ERRNO(errno, "Failed to bind NETLINK_ROUTE bcast socket - Perhaps kernel was not compiled with CONFIG_XFRM");
+	if (bind(nl_route_fd, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
+		FATAL_ERRNO(errno, "Failed to bind NETLINK_ROUTE bcast socket - Perhaps kernel was not compiled with CONFIG_XFRM");
+	}
 
 }
 
@@ -245,32 +246,35 @@ static void init_netlink(void)
 
 	nl_send_fd = safe_socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
 
-	if (nl_send_fd < 0)
-		EXIT_LOG_ERRNO(errno, "socket() in init_netlink()");
+	if (nl_send_fd < 0) {
+		FATAL_ERRNO(errno, "socket() in init_netlink()");
+	}
 
-	if (fcntl(nl_send_fd, F_SETFD, FD_CLOEXEC) != 0)
-		EXIT_LOG_ERRNO(errno, "fcntl(FD_CLOEXEC) in init_netlink()");
+	if (fcntl(nl_send_fd, F_SETFD, FD_CLOEXEC) != 0) {
+		FATAL_ERRNO(errno, "fcntl(FD_CLOEXEC) in init_netlink()");
+	}
 
 	nl_xfrm_fd = safe_socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
+	if (nl_xfrm_fd < 0) {
+		FATAL_ERRNO(errno, "socket() for bcast in init_netlink()");
+	}
 
-	if (nl_xfrm_fd < 0)
-		EXIT_LOG_ERRNO(errno, "socket() for bcast in init_netlink()");
-
-	if (fcntl(nl_xfrm_fd, F_SETFD, FD_CLOEXEC) != 0)
-		EXIT_LOG_ERRNO(errno,
-			"fcntl(FD_CLOEXEC) for bcast in init_netlink()");
+	if (fcntl(nl_xfrm_fd, F_SETFD, FD_CLOEXEC) != 0) {
+		FATAL_ERRNO(errno, "fcntl(FD_CLOEXEC) for bcast in init_netlink()");
+	}
 
 
-	if (fcntl(nl_xfrm_fd, F_SETFL, O_NONBLOCK) != 0)
-		EXIT_LOG_ERRNO(errno,
-			"fcntl(O_NONBLOCK) for bcast in init_netlink()");
+	if (fcntl(nl_xfrm_fd, F_SETFL, O_NONBLOCK) != 0) {
+		FATAL_ERRNO(errno, "fcntl(O_NONBLOCK) for bcast in init_netlink()");
+	}
 
 	addr.nl_family = AF_NETLINK;
 	addr.nl_pid = getpid();
 	addr.nl_pad = 0; /* make coverity happy */
 	addr.nl_groups = XFRMGRP_ACQUIRE | XFRMGRP_EXPIRE;
-	if (bind(nl_xfrm_fd, (struct sockaddr *)&addr, sizeof(addr)) != 0)
-		EXIT_LOG_ERRNO(errno, "Failed to bind bcast socket in init_netlink() - Perhaps kernel was not compiled with CONFIG_XFRM");
+	if (bind(nl_xfrm_fd, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
+		FATAL_ERRNO(errno, "Failed to bind bcast socket in init_netlink() - Perhaps kernel was not compiled with CONFIG_XFRM");
+	}
 
 	init_netlink_route_fd();
 

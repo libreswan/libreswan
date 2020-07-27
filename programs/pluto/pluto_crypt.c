@@ -759,11 +759,11 @@ void start_crypto_helpers(int nhelpers)
 		 */
 		int exit_pipe[2];
 		if (pipe(exit_pipe) < 0) {
-			EXIT_LOG_ERRNO(errno, "problem creating helper exit pipe");
+			FATAL_ERRNO(errno, "problem creating helper exit pipe");
 		}
 		for (unsigned i = 0; i < elemsof(exit_pipe); i++) {
 			if (fcntl(exit_pipe[i], F_SETFD, FD_CLOEXEC) < 0) {
-				EXIT_LOG_ERRNO(errno, "problem setting FD_CLOEXE on helper exit pipe");
+				FATAL_ERRNO(errno, "problem setting FD_CLOEXE on helper exit pipe");
 			}
 			/* Only BSD has O_NOSIGPIPE */
 		}

@@ -28,8 +28,7 @@ static struct timespec thread_clock(void)
 	struct timespec now;
 	int e = clock_gettime(clock_id, &now);
 	if (e != 0) {
-		libreswan_exit_log_errno(e, "clock_gettime(%d,... failed in %s()",
-					 clock_id, __func__);
+		FATAL_ERRNO(e, "clock_gettime(%d,... failed in %s()", clock_id, __func__);
 	}
 	return now;
 }
@@ -40,8 +39,8 @@ static struct timespec wall_clock(void)
 	/* assume never suspended; CLOCK_BOOTTIME is linux specific */
 	int e = clock_gettime(CLOCK_MONOTONIC, &now);
 	if (e != 0) {
-		libreswan_exit_log_errno(e, "clock_gettime(CLOCK_MONOTONIC,...) failed in %s()",
-					 __func__);
+		FATAL_ERRNO(e, "clock_gettime(CLOCK_MONOTONIC,...) failed in %s()",
+			    __func__);
 	}
 	return now;
 }

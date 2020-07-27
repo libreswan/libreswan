@@ -1243,8 +1243,7 @@ void call_server(char *conffile)
 			 */
 			n = 0;
 # else
-			EXIT_LOG_ERRNO(errno,
-				       "readlink(\"/proc/self/exe\") failed in call_server()");
+			FATAL_ERRNO(errno, "readlink(\"/proc/self/exe\") failed in call_server()");
 # endif
 		}
 #else
@@ -1267,8 +1266,8 @@ void call_server(char *conffile)
 		strcpy(addconn_path_space + n, addconn_name);
 
 		if (access(addconn_path_space, X_OK) < 0)
-			EXIT_LOG_ERRNO(errno, "%s missing or not executable",
-				       addconn_path_space);
+			FATAL_ERRNO(errno, "%s missing or not executable",
+				    addconn_path_space);
 
 		char *newargv[] = { DISCARD_CONST(char *, "addconn"),
 				    DISCARD_CONST(char *, "--ctlsocket"),

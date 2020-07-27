@@ -300,7 +300,6 @@ extern int libreswan_log(const char *fmt, ...) PRINTF_LIKE(1);
 
 void libreswan_exit(enum pluto_exit_code rc) NEVER_RETURNS;
 void libreswan_log_errno(int e, const char *message, ...) PRINTF_LIKE(2);
-void libreswan_exit_log_errno(int e, const char *message, ...) PRINTF_LIKE(2) NEVER_RETURNS;
 
 #define log_errno(LOGGER, ERRNO, FMT, ...)				\
 	{								\
@@ -315,12 +314,14 @@ void libreswan_exit_log_errno(int e, const char *message, ...) PRINTF_LIKE(2) NE
 		libreswan_log_errno(log_errno, __VA_ARGS__);		\
 	}
 
-#define EXIT_LOG_ERRNO(ERRNO, ...) {					\
-		int exit_log_errno = ERRNO; /* save value across va args */ \
-		libreswan_exit_log_errno(exit_log_errno, __VA_ARGS__);	\
-	}
 
 void fatal(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
+
+#define FATAL_ERRNO(ERRNO, MESSAGE, ...)				\
+	{								\
+		int log_errno = ERRNO; /* save value across va args */	\
+		fatal(MESSAGE". "PRI_ERRNO, ##__VA_ARGS__, pri_errno(log_errno)); \
+	}
 
 /*
  * E must have been saved!  Assume it is used as "... "PRI_ERRNO.

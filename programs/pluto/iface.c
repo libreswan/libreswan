@@ -321,7 +321,6 @@ static struct raw_iface *find_raw_ifaces4(void)
 	struct ifconf ifconf;
 	struct ifreq *buf = NULL;	/* for list of interfaces -- arbitrary limit */
 	struct raw_iface *rifaces = NULL;
-	int udp_sock = safe_socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);        /* Get a UDP socket */
 	static const int on = TRUE;     /* by-reference parameter; constant, we hope */
 
 	/*
@@ -331,10 +330,14 @@ static struct raw_iface *find_raw_ifaces4(void)
 	 */
 	static int num = 64;
 
-	/* get list of interfaces with assigned IPv4 addresses from system */
+        /* Get a UDP socket */
 
-	if (udp_sock == -1)
-		EXIT_LOG_ERRNO(errno, "socket() failed in find_raw_ifaces4()");
+	int udp_sock = safe_socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (udp_sock == -1) {
+		FATAL_ERRNO(errno, "socket() failed in find_raw_ifaces4()");
+	}
+
+	/* get list of interfaces with assigned IPv4 addresses from system */
 
 	/*
 	 * Without SO_REUSEADDR, bind() of udp_sock will cause
@@ -342,7 +345,7 @@ static struct raw_iface *find_raw_ifaces4(void)
 	 */
 	if (setsockopt(udp_sock, SOL_SOCKET, SO_REUSEADDR,
 		       (const void *)&on, sizeof(on)) < 0) {
-		EXIT_LOG_ERRNO(errno, "setsockopt(SO_REUSEADDR) in find_raw_ifaces4()");
+		FATAL_ERRNO(errno, "setsockopt(SO_REUSEADDR) in find_raw_ifaces4()");
 	}
 
 	/*
@@ -354,8 +357,8 @@ static struct raw_iface *find_raw_ifaces4(void)
 		ip_sockaddr any_sa = sockaddr_from_endpoint(&any_ep);
 		if (bind(udp_sock, &any_sa.sa.sa, any_sa.len) < 0) {
 			endpoint_buf eb;
-			EXIT_LOG_ERRNO(errno, "bind(%s) failed in %s()",
-				       str_endpoint(&any_ep, &eb), __func__);
+			FATAL_ERRNO(errno, "bind(%s) failed in %s()",
+				    str_endpoint(&any_ep, &eb), __func__);
 		}
 	}
 
@@ -368,17 +371,15 @@ static struct raw_iface *find_raw_ifaces4(void)
 
 		if (tmpbuf == NULL) {
 			free(buf);
-			EXIT_LOG_ERRNO(errno,
-				       "realloc of %d in find_raw_ifaces4()",
-				       ifconf.ifc_len);
+			FATAL_ERRNO(errno, "realloc of %d in find_raw_ifaces4()",
+				    ifconf.ifc_len);
 		}
 		buf = tmpbuf;
 		memset(buf, 0xDF, ifconf.ifc_len);	/* stomp */
 		ifconf.ifc_buf = (void *) buf;
 
 		if (ioctl(udp_sock, SIOCGIFCONF, &ifconf) == -1) {
-			EXIT_LOG_ERRNO(errno,
-				       "ioctl(SIOCGIFCONF) in find_raw_ifaces4()");
+			FATAL_ERRNO(errno, "ioctl(SIOCGIFCONF) in find_raw_ifaces4()");
 		}
 
 		/* if we got back less than we asked for, we have them all */

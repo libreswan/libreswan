@@ -49,8 +49,8 @@ monotime_t mononow(void)
 	struct timespec t;
 	int e = clock_gettime(monotime_clockid(), &t);
 	if (e != 0) {
-		libreswan_exit_log_errno(e, "clock_gettime(%d,...) in mononow() failed",
-					 monotime_clockid());
+		FATAL_ERRNO(e, "clock_gettime(%d,...) in mononow() failed",
+			    monotime_clockid());
 	}
 	/* OK */
 	return (monotime_t) {

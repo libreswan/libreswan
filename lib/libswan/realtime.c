@@ -61,8 +61,8 @@ realtime_t realnow(void)
 	struct timespec ts;
 	int e = clock_gettime(realtime_clockid(), &ts);
 	if (e != 0) {
-		libreswan_exit_log_errno(e, "clock_gettime(%d,...) call in realnow() failed",
-					 realtime_clockid());
+		FATAL_ERRNO(e, "clock_gettime(%d,...) call in realnow() failed",
+			    realtime_clockid());
 	}
 	realtime_t t = {
 		.rt = {
