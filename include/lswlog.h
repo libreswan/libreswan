@@ -563,9 +563,4 @@ void libreswan_bad_case(const char *expression, long value, where_t where) NEVER
 void lswlog_errno_prefix(struct jambuf *buf, const char *prefix);
 void lswlog_errno_suffix(struct jambuf *buf, int e);
 
-#define LSWLOG_ERROR(BUF)			\
-	LSWLOG_(true, BUF,			\
-		jam_cur_prefix(BUF),		\
-		lswlog_to_error_stream(buf))
-
 #endif /* _LSWLOG_H_ */
