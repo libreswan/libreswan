@@ -268,8 +268,6 @@ void rate_log(const struct msg_digest *md,
 extern void pluto_init_log(void);
 void init_rate_log(void);
 extern void close_log(void);
-extern void exit_log(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
-
 
 /*
  * Whack only logging.

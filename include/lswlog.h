@@ -320,6 +320,8 @@ void libreswan_exit_log_errno(int e, const char *message, ...) PRINTF_LIKE(2) NE
 		libreswan_exit_log_errno(exit_log_errno, __VA_ARGS__);	\
 	}
 
+void fatal(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
+
 /*
  * E must have been saved!  Assume it is used as "... "PRI_ERRNO.
  *

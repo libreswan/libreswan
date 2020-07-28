@@ -84,8 +84,9 @@ int send_crl_to_import(u_char *der, size_t len, const char *url)
 	arg[0] = clone_str("/usr/local/libexec/ipsec/_import_crl", "crl helper");
 #endif
 
-	if ((size_t)n > sizeof(crl_path_space) - sizeof(crl_name))
-		exit_log("path to %s is too long", crl_name);
+	if ((size_t)n > sizeof(crl_path_space) - sizeof(crl_name)) {
+		fatal("path to %s is too long", crl_name);
+	}
 
 	while (n > 0 && crl_path_space[n - 1] != '/')
 		n--;

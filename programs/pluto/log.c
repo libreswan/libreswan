@@ -555,21 +555,6 @@ void close_log(void)
 	peerlog_close();
 }
 
-void exit_log(const char *message, ...)
-{
-	LSWBUF(buf) {
-		/* FATAL ERROR: <prefix><message> */
-		jam_string(buf, "FATAL ERROR: ");
-		jam_cur_prefix(buf);
-		va_list args;
-		va_start(args, message);
-		jam_va_list(buf, message, args);
-		va_end(args);
-		lswlog_to_error_stream(buf);
-	}
-	exit_pluto(PLUTO_EXIT_FAIL);
-}
-
 void libreswan_exit(enum pluto_exit_code rc)
 {
 	exit_pluto(rc);

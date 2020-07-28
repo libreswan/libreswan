@@ -1260,9 +1260,9 @@ void call_server(char *conffile)
 		while (n > 0 && addconn_path_space[n - 1] != '/')
 			n--;
 
-		if ((size_t)n >
-		    sizeof(addconn_path_space) - sizeof(addconn_name))
-			exit_log("path to %s is too long", addconn_name);
+		if ((size_t)n > sizeof(addconn_path_space) - sizeof(addconn_name)) {
+			fatal("path to %s is too long", addconn_name);
+		}
 
 		strcpy(addconn_path_space + n, addconn_name);
 
