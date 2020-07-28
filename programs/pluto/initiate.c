@@ -481,13 +481,11 @@ void initiate_connections_by_name(const char *name, const char *remote_host,
 	struct connection *c = conn_by_name(name, false/*!strict*/);
 	if (c != NULL) {
 		if (!initiate_connection(c, remote_host, whackfd, background))
-			loglog_global(RC_FATAL, whackfd,
-				      "failed to initiate %s",
-				      c->name);
+			log_global(RC_FATAL, whackfd, "failed to initiate %s", c->name);
 		return;
 	}
 
-	loglog_global(RC_COMMENT, whackfd, "initiating all conns with alias='%s'", name);
+	log_global(RC_COMMENT, whackfd, "initiating all conns with alias='%s'", name);
 	struct initiate_stuff is = {
 		.background = background,
 		.remote_host = remote_host,
@@ -495,8 +493,7 @@ void initiate_connections_by_name(const char *name, const char *remote_host,
 	int count = foreach_connection_by_alias(name, whackfd, initiate_a_connection, &is);
 
 	if (count == 0) {
-		loglog_global(RC_UNKNOWN_NAME, whackfd,
-			      "no connection named \"%s\"", name);
+		log_global(RC_UNKNOWN_NAME, whackfd, "no connection named \"%s\"", name);
 	}
 }
 

@@ -150,9 +150,6 @@ void free_logger(struct logger **logp);
 
 /*
  * Log with no context.
- *
- * plog_global() pluto-log only; loglog_global() pluto and whack (if
- * attached).
  */
 
 #define log_global(RC, WHACKFD, MESSAGE, ...)				\
@@ -163,7 +160,6 @@ void free_logger(struct logger **logp);
 	}
 
 #define plog_global(MESSAGE, ...) log_global(LOG_STREAM, null_fd, MESSAGE, ##__VA_ARGS__)
-#define loglog_global log_global
 
 /*
  * The message digest.

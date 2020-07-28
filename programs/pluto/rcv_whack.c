@@ -441,8 +441,8 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 			state_with_serialno(m->whack_deletestateno);
 
 		if (st == NULL) {
-			loglog_global(RC_UNKNOWN_NAME, whackfd, "no state #%lu to delete",
-				      m->whack_deletestateno);
+			log_global(RC_UNKNOWN_NAME, whackfd, "no state #%lu to delete",
+				   m->whack_deletestateno);
 		} else {
 			set_cur_state(st);
 			/* needs an abstraction */
