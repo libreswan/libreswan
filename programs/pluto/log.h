@@ -36,11 +36,23 @@ struct show;
 /* moved common code to library file */
 #include "passert.h"
 
-extern bool
-	log_with_timestamp,     /* prefix timestamp */
-	log_append,
-	log_to_audit;
+struct log_param {
+	bool log_with_timestamp;	/* testsuite requires no timestamps */
+};
 
+/* start with this before parsing options */
+extern const struct log_param default_log_param;
+
+/*
+ * Log 'cur' directly (without setting it first).
+ */
+
+extern void pluto_init_log(struct log_param);
+void init_rate_log(void);
+extern void close_log(void);
+
+extern bool log_to_audit;
+extern bool log_append;
 extern bool log_to_syslog;          /* should log go to syslog? */
 extern char *pluto_log_file;
 extern char *pluto_stats_binary;
@@ -260,14 +272,6 @@ void log_state(lset_t rc_flags, const struct state *st,
  */
 void rate_log(const struct msg_digest *md,
 	      const char *message, ...) PRINTF_LIKE(2);
-
-/*
- * Log 'cur' directly (without setting it first).
- */
-
-extern void pluto_init_log(void);
-void init_rate_log(void);
-extern void close_log(void);
 
 /*
  * Whack only logging.

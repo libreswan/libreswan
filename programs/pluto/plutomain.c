@@ -676,6 +676,8 @@ extern int EF_PROTECT_FREE;
 
 int main(int argc, char **argv)
 {
+	struct log_param log_param = default_log_param;
+
 	/*
 	 * Some options should to be processed before the first
 	 * malloc() call, so scan for them here.
@@ -880,7 +882,7 @@ int main(int argc, char **argv)
 #endif  /* USE_DNSSEC */
 
 		case 't':	/* --log-no-time */
-			log_with_timestamp = FALSE;
+			log_param.log_with_timestamp = FALSE;
 			continue;
 
 		case '7':	/* --log-no-append */
@@ -1183,7 +1185,7 @@ int main(int argc, char **argv)
 		case '5':	/* --selftest */
 			selftest_only = TRUE;
 			log_to_stderr_desired = TRUE;
-			log_with_timestamp = FALSE;
+			log_param.log_with_timestamp = FALSE;
 			fork_desired = FALSE;
 			continue;
 
@@ -1212,8 +1214,7 @@ int main(int argc, char **argv)
 			if (pluto_log_file != NULL)
 				log_to_syslog = FALSE;
 			/* plutofork= no longer supported via config file */
-			log_with_timestamp =
-				cfg->setup.options[KBF_LOGTIME];
+			log_param.log_with_timestamp = cfg->setup.options[KBF_LOGTIME];
 			log_append = cfg->setup.options[KBF_LOGAPPEND];
 			log_ip = cfg->setup.options[KBF_LOGIP];
 			log_to_audit = cfg->setup.options[KBF_AUDIT_LOG];
@@ -1432,25 +1433,6 @@ int main(int argc, char **argv)
 		case OPT_IMPAIR:
 		{
 			struct whack_impair impairment;
-			/*
-			 * XXX: logging here is weird:
-			 *
-			 * parse_impair() directly calls fprintf() and
-			 * STDOUT / STDERR.  This seems reasonable
-			 * since the output is intended for the
-			 * command line user (and the process hasn't
-			 * deteached and logging has yet to be
-			 * redirected).
-			 *
-			 * process_impair() tries to use the global
-			 * logger but that result in a strange date
-			 * prefix.  The 'logger' could be pointed at
-			 * STDOUT / STDERR; however suspect the
-			 * problem is in the code emitting the log
-			 * record.  Since logging isn't re-directed it
-			 * should be producing command-line user
-			 * friendly output.
-			 */
 			switch (parse_impair(optarg, &impairment, true, pluto_name)) {
 			case IMPAIR_OK:
 			{
@@ -1618,7 +1600,7 @@ int main(int argc, char **argv)
 
 	init_constants();
 	init_pluto_constants();
-	pluto_init_log();
+	pluto_init_log(log_param);
 
 	pluto_init_nss(oco->nssdir);
 	if (libreswan_fipsmode()) {

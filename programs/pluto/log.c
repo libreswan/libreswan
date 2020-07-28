@@ -50,10 +50,17 @@ struct logger failsafe_logger = {
 	.object_vec = &logger_global_vec,
 };
 
+const struct log_param default_log_param = {
+	.log_with_timestamp = true,	/* but testsuite requires no timestamps */
+};
+
+static struct log_param log_param = {
+	.log_with_timestamp = false,	/* initial logger to stderr requires no timestamp */
+};
+
 bool
 	log_to_stderr = TRUE,		/* should log go to stderr? */
 	log_to_syslog = TRUE,		/* should log go to syslog? */
-	log_with_timestamp = TRUE,	/* testsuite requires no timestamps */
 	log_append = TRUE,
 	log_to_audit = FALSE;
 
@@ -332,8 +339,10 @@ extern void log_pop_from(ip_address old_from, where_t where)
  * Initialization.
  */
 
-void pluto_init_log(void)
+void pluto_init_log(struct log_param param)
 {
+	log_param = param;
+
 	if (log_to_stderr)
 		setbuf(stderr, NULL);
 
@@ -371,7 +380,7 @@ static void stdlog_raw(const char *prefix, char *message)
 	if (log_to_stderr || pluto_log_fp != NULL) {
 		FILE *out = log_to_stderr ? stderr : pluto_log_fp;
 
-		if (log_with_timestamp) {
+		if (log_param.log_with_timestamp) {
 			char now[34] = "";
 			struct realtm t = local_realtime(realnow());
 			strftime(now, sizeof(now), "%b %e %T", &t.tm);
