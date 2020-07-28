@@ -171,7 +171,8 @@ enum impair_status {
 	IMPAIR_ERROR,
 };
 
-enum impair_status parse_impair(const char *optarg, struct whack_impair *whack_impair, bool enable, const char *progname);
+enum impair_status parse_impair(const char *optarg, struct whack_impair *whack_impair,
+				bool enable, struct logger *logger);
 
 enum impair_action {
 	CALL_IMPAIR_UPDATE,

@@ -239,6 +239,16 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 		jam_logger_prefix(BUF, LOGGER),				\
 		jambuf_to_logger(BUF, (LOGGER), RC_FLAGS))
 
+/*
+ * Initial (and tool) logger - it writes everything with PROGNAME:
+ * (aka progname_logger.object) prefix.
+ */
+
+extern struct logger progname_logger;
+
+/*
+ * XXX: log_jambuf() doesn't take a logger parameter.
+ */
 
 void log_jambuf(lset_t rc_flags, struct fd *object_fd, struct jambuf *buf);
 

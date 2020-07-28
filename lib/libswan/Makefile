@@ -56,6 +56,7 @@ OBJS += constants.o \
 	lsw_passert_fail.o \
 	alg_byname.o
 
+OBJS += progname_logger.o
 OBJS += nss_cert_load.o
 OBJS += certs.o
 OBJS += reqid.o

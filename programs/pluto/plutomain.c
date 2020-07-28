@@ -720,6 +720,7 @@ int main(int argc, char **argv)
 	bool log_to_file_desired = FALSE;
 
 	pluto_name = argv[0];
+	progname_logger.object = argv[0];
 
 	conffile = clone_str(IPSEC_CONF, "conffile in main()");
 	coredir = clone_str(DEFAULT_RUNDIR, "coredir in main()");
@@ -1433,13 +1434,10 @@ int main(int argc, char **argv)
 		case OPT_IMPAIR:
 		{
 			struct whack_impair impairment;
-			switch (parse_impair(optarg, &impairment, true, pluto_name)) {
+			switch (parse_impair(optarg, &impairment, true, &progname_logger)) {
 			case IMPAIR_OK:
 			{
-				/* see note above */
-				struct logger global_logger = GLOBAL_LOGGER(null_fd);
-				if (!process_impair(&impairment, NULL, true, null_fd,
-						    &global_logger)) {
+				if (!process_impair(&impairment, NULL, true, null_fd, &progname_logger)) {
 					fprintf(stderr, "%s: impair option '%s' is not valid from the command line\n",
 						pluto_name, optarg);
 					exit(1);

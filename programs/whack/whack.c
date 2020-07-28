@@ -2317,7 +2317,8 @@ int main(int argc, char **argv)
 			bool enable = (c == DBGOPT_IMPAIR);
 			realloc_things(msg.impairments, msg.nr_impairments,
 				       msg.nr_impairments+1, "impairments");
-			switch (parse_impair(optarg, &msg.impairments[msg.nr_impairments], enable, progname)) {
+			switch (parse_impair(optarg, &msg.impairments[msg.nr_impairments],
+					     enable, &progname_logger)) {
 			case IMPAIR_OK:
 				break;
 			case IMPAIR_HELP:

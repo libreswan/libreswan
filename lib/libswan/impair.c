@@ -251,7 +251,7 @@ static unsigned parse_biased_unsigned(shunk_t string, const struct impairment *c
 enum impair_status parse_impair(const char *optarg,
 				struct whack_impair *whack_impair,
 				bool enable /* --impair ... vs --no-impair ...*/,
-				const char *progname)
+				struct logger *logger)
 {
 	if (streq(optarg, "help")) {
 		help_impair("", stdout);
@@ -294,8 +294,9 @@ enum impair_status parse_impair(const char *optarg,
 		}
 	}
 	if (cr == NULL) {
-		fprintf(stderr, "%s: unrecognized impair option '"PRI_SHUNK"'\n",
-			progname, pri_shunk(what));
+		log_message(ERROR_STREAM, logger,
+			    "unrecognized impair option '"PRI_SHUNK"'\n",
+			    pri_shunk(what));
 		return IMPAIR_ERROR;
 	}
 
@@ -313,8 +314,9 @@ enum impair_status parse_impair(const char *optarg,
 	 * instance: --no-impair no-foo:bar.
 	 */
 	if ((!enable + what_no + (how.ptr != NULL)) > 1) {
-		fprintf(stderr, "%s overly negative --%simpair %s",
-			progname, enable ? "" : "no-", optarg);
+		log_message(ERROR_STREAM, logger,
+			    "overly negative --%simpair %s",
+			    enable ? "" : "no-", optarg);
 		return IMPAIR_ERROR;
 	}
 
@@ -389,8 +391,9 @@ enum impair_status parse_impair(const char *optarg,
 		}
 	}
 
-fprintf(stderr, "%s: ignoring impair option '"PRI_SHUNK"' with unrecognized parameter '"PRI_SHUNK"' (%s)",
-	progname, pri_shunk(what), pri_shunk(how), optarg);
+	log_message(ERROR_STREAM, logger,
+		    "ignoring impair option '"PRI_SHUNK"' with unrecognized parameter '"PRI_SHUNK"' (%s)",
+		    pri_shunk(what), pri_shunk(how), optarg);
 	return IMPAIR_ERROR;
 }
 

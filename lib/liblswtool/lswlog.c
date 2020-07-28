@@ -38,36 +38,12 @@
 
 bool log_to_stderr = TRUE;	/* should log go to stderr? */
 
-static size_t jam_tool_prefix(struct jambuf *buf, const void *object UNUSED)
-{
-	return jam(buf, "%s: ", progname);
-}
-
-static bool suppress_tool_log(const void *object UNUSED)
-{
-	return false;
-}
-
-struct logger_object_vec tool_object_vec = {
-	.name = "tool",
-	.jam_object_prefix = jam_tool_prefix,
-	.suppress_object_log = suppress_tool_log,
-};
-
-struct logger tool_logger = {
-	.object_vec = &tool_object_vec,
-};
-
 const char *progname;
-
-static const char *prog_suffix = "";
 
 void tool_init_log(const char *name)
 {
 	const char *last_slash = strrchr(name, '/');
-
-	progname = last_slash == NULL ? name : last_slash + 1;
-	prog_suffix = ": ";
+	progname_logger.object = progname = last_slash == NULL ? name : last_slash + 1;
 
 	if (log_to_stderr)
 		setbuf(stderr, NULL);
@@ -75,7 +51,7 @@ void tool_init_log(const char *name)
 
 void jam_cur_prefix(struct jambuf *buf)
 {
-	jam(buf, "%s%s", progname, prog_suffix);
+	jam_logger_prefix(buf, &progname_logger);
 }
 
 void jambuf_to_logger(struct jambuf *buf, const struct logger *logger UNUSED, lset_t rc_flags)
