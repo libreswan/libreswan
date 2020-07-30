@@ -254,7 +254,7 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
         cf = False
         if 'kuCritical' in cnstr:
             cf = True
-        if ku_str is not '' and ku_str[0] == ',':
+        if ku_str != '' and ku_str[0] == ',':
             ku_str = ku_str[1:]
         add_ext(cert, 'keyUsage', cf, ku_str)
 
@@ -289,7 +289,7 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
         cf = False
         if 'ekuCritical' in cnstr:
             cf = True
-        if eku_str is not '' and eku_str[0] == ',':
+        if eku_str != '' and eku_str[0] == ',':
             eku_str = eku_str[1:]
         add_ext(cert, 'extendedKeyUsage', cf, eku_str)
 
@@ -726,7 +726,7 @@ def create_ec_certs():
     for name in ['east', 'west', 'north', 'road']:
         print("- creating %s-ec"% name)
         #create end certs
-        if name is 'west':
+        if name == 'west':
             pexpect.run('openssl ecparam -out keys/' + name +
                     '-ec.key -name secp256r1 -genkey -noout')
         else:
@@ -805,7 +805,7 @@ def create_mainec_certs():
     for name in ['east', 'west', 'north', 'road']:
         print("- creating %s-mainec"% name)
         #create end certs; west is secp256r1
-        if name is 'west':
+        if name == 'west':
             alg = "secp256r1"
         else:
             alg = "secp384r1"
