@@ -198,7 +198,7 @@ static void show_system_security(struct show *s)
 void show_global_status(struct show *s)
 {
 	show_globalstate_status(s);
-	show_pluto_stats(s->whackfd);
+	show_pluto_stats(s);
 }
 
 void show_status(struct show *s)

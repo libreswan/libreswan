@@ -314,7 +314,7 @@ void pstat_sa_established(struct state *st)
  * Output.
  */
 
-static void whack_pluto_stat(const struct fd *whackfd, const struct pluto_stat *stat)
+static void whack_pluto_stat(struct show *s, const struct pluto_stat *stat)
 {
 	unsigned long other = stat->count[stat->roof - stat->floor];
 	for (unsigned long e = stat->floor; e < stat->roof; e++) {
@@ -322,14 +322,13 @@ static void whack_pluto_stat(const struct fd *whackfd, const struct pluto_stat *
 		unsigned long count = stat->count[e - stat->floor];
 		/* not logging "UNUSED" */
 		if (nm != NULL && strstr(nm, "UNUSED") == NULL) {
-			whack_print(whackfd, "total.%s.%s=%lu",
-				    stat->what, nm, count);
+			show_raw(s, "total.%s.%s=%lu",
+				 stat->what, nm, count);
 		} else {
 			other += count;
 		}
 	}
-	whack_print(whackfd, "total.%s.other=%lu",
-		    stat->what, other);
+	show_raw(s, "total.%s.other=%lu", stat->what, other);
 }
 
 static void clear_pluto_stat(const struct pluto_stat *stat)
@@ -340,7 +339,7 @@ static void clear_pluto_stat(const struct pluto_stat *stat)
 /*
  * Some arrays start at 1, some start at 0, some start at ...
  */
-static void enum_stats(const struct fd *whackfd, enum_names *names, unsigned long start,
+static void enum_stats(struct show *s, enum_names *names, unsigned long start,
 		       unsigned long elemsof_count,
 		       const char *what, unsigned long count[])
 {
@@ -351,13 +350,13 @@ static void enum_stats(const struct fd *whackfd, enum_names *names, unsigned lon
 		 */
 		const char *name = enum_short_name(names, e);
 		if (name != NULL && strstr(name, "UNUSED") == NULL) {
-			whack_print(whackfd, "total.%s.%s=%lu",
-				    what, name, count[e]);
+			show_raw(s, "total.%s.%s=%lu",
+				 what, name, count[e]);
 		}
 	}
 }
 #define ENUM_STATS(NAMES, START, WHAT, COUNT)	\
-	enum_stats(whackfd, NAMES, START, elemsof(COUNT), WHAT, COUNT)
+	enum_stats(s, NAMES, START, elemsof(COUNT), WHAT, COUNT)
 
 #define IKE_ALG_STATS(WHAT, TYPE, ID, COUNT)				\
 	for (const struct TYPE##_desc **algp = next_##TYPE##_desc(NULL); \
@@ -365,45 +364,45 @@ static void enum_stats(const struct fd *whackfd, enum_names *names, unsigned lon
 		const struct TYPE##_desc *alg = *algp;			\
 		long id = alg->common.id[ID];				\
 		if (id >= 0 && id < (ssize_t) elemsof(COUNT)) {		\
-			whack_print(whackfd, "total.%s.%s=%lu",		\
-				    WHAT, alg->common.fqn,		\
-				    COUNT[id]);				\
+			show_raw(s, "total.%s.%s=%lu",			\
+				 WHAT, alg->common.fqn,			\
+				 COUNT[id]);				\
 		}							\
 	}
 
-void show_pluto_stats(const struct fd *whackfd)
+void show_pluto_stats(struct show *s)
 {
-	whack_print(whackfd, "total.ipsec.type.all=%lu", pstats_ipsec_sa);
-	whack_print(whackfd, "total.ipsec.type.esp=%lu", pstats_ipsec_esp);
-	whack_print(whackfd, "total.ipsec.type.ah=%lu", pstats_ipsec_ah);
-	whack_print(whackfd, "total.ipsec.type.ipcomp=%lu", pstats_ipsec_ipcomp);
-	whack_print(whackfd, "total.ipsec.type.esn=%lu", pstats_ipsec_esn);
-	whack_print(whackfd, "total.ipsec.type.tfc=%lu", pstats_ipsec_tfc);
-	whack_print(whackfd, "total.ipsec.type.encap=%lu", pstats_ipsec_encap_yes);
-	whack_print(whackfd, "total.ipsec.type.non_encap=%lu", pstats_ipsec_encap_no);
+	show_raw(s, "total.ipsec.type.all=%lu", pstats_ipsec_sa);
+	show_raw(s, "total.ipsec.type.esp=%lu", pstats_ipsec_esp);
+	show_raw(s, "total.ipsec.type.ah=%lu", pstats_ipsec_ah);
+	show_raw(s, "total.ipsec.type.ipcomp=%lu", pstats_ipsec_ipcomp);
+	show_raw(s, "total.ipsec.type.esn=%lu", pstats_ipsec_esn);
+	show_raw(s, "total.ipsec.type.tfc=%lu", pstats_ipsec_tfc);
+	show_raw(s, "total.ipsec.type.encap=%lu", pstats_ipsec_encap_yes);
+	show_raw(s, "total.ipsec.type.non_encap=%lu", pstats_ipsec_encap_no);
 	/*
 	 * Total counts only total of traffic by terminated IPsec SA's.
 	 * Should we call get_sa_info() for bytes of active IPsec SA's?
 	 */
-	whack_print(whackfd, "total.ipsec.traffic.in=%" PRIu64, pstats_ipsec_in_bytes);
-	whack_print(whackfd, "total.ipsec.traffic.out=%" PRIu64, pstats_ipsec_out_bytes);
+	show_raw(s, "total.ipsec.traffic.in=%" PRIu64, pstats_ipsec_in_bytes);
+	show_raw(s, "total.ipsec.traffic.out=%" PRIu64, pstats_ipsec_out_bytes);
 
 	/* old */
-	whack_print(whackfd, "total.ike.ikev2.established=%lu", pstats_ikev2_sa);
-	whack_print(whackfd, "total.ike.ikev2.failed=%lu", pstats_ikev2_fail);
-	whack_print(whackfd, "total.ike.ikev2.completed=%lu", pstats_ikev2_completed);
-	whack_print(whackfd, "total.ike.ikev1.established=%lu", pstats_ikev1_sa);
-	whack_print(whackfd, "total.ike.ikev1.failed=%lu", pstats_ikev1_fail);
-	whack_print(whackfd, "total.ike.ikev1.completed=%lu", pstats_ikev1_completed);
+	show_raw(s, "total.ike.ikev2.established=%lu", pstats_ikev2_sa);
+	show_raw(s, "total.ike.ikev2.failed=%lu", pstats_ikev2_fail);
+	show_raw(s, "total.ike.ikev2.completed=%lu", pstats_ikev2_completed);
+	show_raw(s, "total.ike.ikev1.established=%lu", pstats_ikev1_sa);
+	show_raw(s, "total.ike.ikev1.failed=%lu", pstats_ikev1_fail);
+	show_raw(s, "total.ike.ikev1.completed=%lu", pstats_ikev1_completed);
 
 	/* new */
 	for (enum ike_version v = IKE_VERSION_FLOOR; v < IKE_VERSION_ROOF; v++) {
 		for (enum sa_type t = SA_TYPE_FLOOR; t < SA_TYPE_ROOF; t++) {
 			const char *name = pstats_sa_names[v][t];
 			pexpect(name != NULL);
-			whack_print(whackfd, "total.%s.started=%lu",
+			show_raw(s, "total.%s.started=%lu",
 				    name, pstats_sa_started[v][t]);
-			whack_print(whackfd, "total.%s.established=%lu",
+			show_raw(s, "total.%s.established=%lu",
 				    name, pstats_sa_established[v][t]);
 			unsigned long finished = 0;
 			for (enum delete_reason r = DELETE_REASON_FLOOR; r < DELETE_REASON_ROOF; r++) {
@@ -412,31 +411,31 @@ void show_pluto_stats(const struct fd *whackfd)
 				unsigned long count = pstats_sa_finished[v][t][r];
 				finished += count;
 				if (count > 0) {
-					whack_print(whackfd, "total.%s.finished.%s=%lu",
+					show_raw(s, "total.%s.finished.%s=%lu",
 						    name, reason, count);
 				}
 			}
-			whack_print(whackfd, "total.%s.finished=%lu",
+			show_raw(s, "total.%s.finished=%lu",
 				    name, finished);
 		}
 	}
 
-	whack_print(whackfd, "total.ike.dpd.sent=%lu", pstats_ike_dpd_sent);
-	whack_print(whackfd, "total.ike.dpd.recv=%lu", pstats_ike_dpd_recv);
-	whack_print(whackfd, "total.ike.dpd.replied=%lu", pstats_ike_dpd_replied);
-	whack_print(whackfd, "total.ike.traffic.in=%lu", pstats_ike_in_bytes);
-	whack_print(whackfd, "total.ike.traffic.out=%lu", pstats_ike_out_bytes);
+	show_raw(s, "total.ike.dpd.sent=%lu", pstats_ike_dpd_sent);
+	show_raw(s, "total.ike.dpd.recv=%lu", pstats_ike_dpd_recv);
+	show_raw(s, "total.ike.dpd.replied=%lu", pstats_ike_dpd_replied);
+	show_raw(s, "total.ike.traffic.in=%lu", pstats_ike_in_bytes);
+	show_raw(s, "total.ike.traffic.out=%lu", pstats_ike_out_bytes);
 
-	whack_print(whackfd, "total.xauth.started=%lu", pstats_xauth_started);
-	whack_print(whackfd, "total.xauth.stopped=%lu", pstats_xauth_stopped);
-	whack_print(whackfd, "total.xauth.aborted=%lu", pstats_xauth_aborted);
+	show_raw(s, "total.xauth.started=%lu", pstats_xauth_started);
+	show_raw(s, "total.xauth.stopped=%lu", pstats_xauth_stopped);
+	show_raw(s, "total.xauth.aborted=%lu", pstats_xauth_aborted);
 
-	whack_print(whackfd, "total.iketcp.client.started=%lu", pstats_iketcp_started[false]);
-	whack_print(whackfd, "total.iketcp.client.stopped=%lu", pstats_iketcp_stopped[false]);
-	whack_print(whackfd, "total.iketcp.client.aborted=%lu", pstats_iketcp_aborted[false]);
-	whack_print(whackfd, "total.iketcp.server.started=%lu", pstats_iketcp_started[true]);
-	whack_print(whackfd, "total.iketcp.server.stopped=%lu", pstats_iketcp_stopped[true]);
-	whack_print(whackfd, "total.iketcp.server.aborted=%lu", pstats_iketcp_aborted[true]);
+	show_raw(s, "total.iketcp.client.started=%lu", pstats_iketcp_started[false]);
+	show_raw(s, "total.iketcp.client.stopped=%lu", pstats_iketcp_stopped[false]);
+	show_raw(s, "total.iketcp.client.aborted=%lu", pstats_iketcp_aborted[false]);
+	show_raw(s, "total.iketcp.server.started=%lu", pstats_iketcp_started[true]);
+	show_raw(s, "total.iketcp.server.stopped=%lu", pstats_iketcp_stopped[true]);
+	show_raw(s, "total.iketcp.server.aborted=%lu", pstats_iketcp_aborted[true]);
 
 	ENUM_STATS(&oakley_enc_names, OAKLEY_3DES_CBC, "ikev1.encr", pstats_ikev1_encr);
 	ENUM_STATS(&oakley_hash_names, OAKLEY_MD5, "ikev1.integ", pstats_ikev1_integ);
@@ -453,9 +452,8 @@ void show_pluto_stats(const struct fd *whackfd)
 
 #if 0
 	/* ??? THIS IS BROKEN (hint: array is wrong size (10)) */
-	for (unsigned long e = STF_IGNORE; e <= STF_FAIL; e++)
-	{
-		whack_print(whackfd, "total.pluto.stf.%s=%lu",
+	for (unsigned long e = STF_IGNORE; e <= STF_FAIL; e++) {
+		show_raw(s, "total.pluto.stf.%s=%lu",
 			    enum_name(&stfstatus_name, e),
 			    pstats_ike_stf[e]);
 	}
@@ -469,10 +467,10 @@ void show_pluto_stats(const struct fd *whackfd)
 	ENUM_STATS(&ikev1_notify_names, 1, "ikev1.sent.notifies.error", pstats_ikev1_sent_notifies_e);
 	ENUM_STATS(&ikev1_notify_names, 1, "ikev1.recv.notifies.error", pstats_ikev1_recv_notifies_e);
 
-	whack_pluto_stat(whackfd, &pstats_ikev2_sent_notifies_e);
-	whack_pluto_stat(whackfd, &pstats_ikev2_recv_notifies_e);
-	whack_pluto_stat(whackfd, &pstats_ikev2_sent_notifies_s);
-	whack_pluto_stat(whackfd, &pstats_ikev2_recv_notifies_s);
+	whack_pluto_stat(s, &pstats_ikev2_sent_notifies_e);
+	whack_pluto_stat(s, &pstats_ikev2_recv_notifies_e);
+	whack_pluto_stat(s, &pstats_ikev2_sent_notifies_s);
+	whack_pluto_stat(s, &pstats_ikev2_recv_notifies_s);
 }
 
 void clear_pluto_stats(void)

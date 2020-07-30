@@ -2970,34 +2970,29 @@ bool drop_new_exchanges(void)
 
 void show_globalstate_status(struct show *s)
 {
-	struct fd *whackfd = show_fd(s);
 	unsigned shunts = shunt_count();
 
-	whack_print(whackfd, "config.setup.ike.ddos_threshold=%u", pluto_ddos_threshold);
-	whack_print(whackfd, "config.setup.ike.max_halfopen=%u", pluto_max_halfopen);
+	show_raw(s, "config.setup.ike.ddos_threshold=%u", pluto_ddos_threshold);
+	show_raw(s, "config.setup.ike.max_halfopen=%u", pluto_max_halfopen);
 
 	/* technically shunts are not a struct state's - but makes it easier to group */
-	whack_print(whackfd, "current.states.all="PRI_CAT, shunts + total_sa());
-	whack_print(whackfd, "current.states.ipsec="PRI_CAT, cat_count[CAT_ESTABLISHED_CHILD_SA]);
-	whack_print(whackfd, "current.states.ike="PRI_CAT, total_ike_sa());
-	whack_print(whackfd, "current.states.shunts=%u", shunts);
-	whack_print(whackfd, "current.states.iketype.anonymous="PRI_CAT,
-			  cat_count_ike_sa[CAT_ANONYMOUS]);
-	whack_print(whackfd, "current.states.iketype.authenticated="PRI_CAT,
-			  cat_count_ike_sa[CAT_AUTHENTICATED]);
-	whack_print(whackfd, "current.states.iketype.halfopen="PRI_CAT,
-			  cat_count[CAT_HALF_OPEN_IKE_SA]);
-	whack_print(whackfd, "current.states.iketype.open="PRI_CAT,
-			  cat_count[CAT_OPEN_IKE_SA]);
-	for (enum state_kind s = STATE_IKEv1_FLOOR; s < STATE_IKEv1_ROOF; s++) {
-		const struct finite_state *ss = finite_states[s];
-		whack_print(whackfd, "current.states.enumerate.%s="PRI_CAT,
-			    ss->name, state_count[s]);
+	show_raw(s, "current.states.all="PRI_CAT, shunts + total_sa());
+	show_raw(s, "current.states.ipsec="PRI_CAT, cat_count[CAT_ESTABLISHED_CHILD_SA]);
+	show_raw(s, "current.states.ike="PRI_CAT, total_ike_sa());
+	show_raw(s, "current.states.shunts=%u", shunts);
+	show_raw(s, "current.states.iketype.anonymous="PRI_CAT, cat_count_ike_sa[CAT_ANONYMOUS]);
+	show_raw(s, "current.states.iketype.authenticated="PRI_CAT, cat_count_ike_sa[CAT_AUTHENTICATED]);
+	show_raw(s, "current.states.iketype.halfopen="PRI_CAT, cat_count[CAT_HALF_OPEN_IKE_SA]);
+	show_raw(s, "current.states.iketype.open="PRI_CAT, cat_count[CAT_OPEN_IKE_SA]);
+	for (enum state_kind sk = STATE_IKEv1_FLOOR; sk < STATE_IKEv1_ROOF; sk++) {
+		const struct finite_state *fs = finite_states[sk];
+		show_raw(s, "current.states.enumerate.%s="PRI_CAT,
+			 fs->name, state_count[sk]);
 	}
-	for (enum state_kind s = STATE_IKEv2_FLOOR; s < STATE_IKEv2_ROOF; s++) {
-		const struct finite_state *ss = finite_states[s];
-		whack_print(whackfd, "current.states.enumerate.%s="PRI_CAT,
-			    ss->name, state_count[s]);
+	for (enum state_kind sk = STATE_IKEv2_FLOOR; sk < STATE_IKEv2_ROOF; sk++) {
+		const struct finite_state *fs = finite_states[sk];
+		show_raw(s, "current.states.enumerate.%s="PRI_CAT,
+			 fs->name, state_count[sk]);
 	}
 }
 
