@@ -2410,7 +2410,6 @@ bool pbs_out_struct(struct pbs_out *outs,
 		    const void *struct_ptr, size_t struct_size, struct_desc *sd,
 		    struct pbs_out *obj_pbs)
 {
-	err_t ugh = NULL;
 	const u_int8_t *inp = struct_ptr;
 	u_int8_t *cur = outs->cur;
 
@@ -2421,228 +2420,230 @@ bool pbs_out_struct(struct pbs_out *outs,
 	}
 
 	if (outs->roof - cur < (ptrdiff_t)sd->size) {
-		ugh = builddiag(
-			"not enough room left in output packet to place %s",
-			sd->name);
-	} else {
-		bool immediate = FALSE;
-		uint32_t last_enum = 0;
+		log_pbs_out(RC_LOG_SERIOUS, outs, "not enough room left in output packet to place %s",
+			    sd->name);
+		return false;
+	}
 
-		/* new child stream for portion of payload after this struct */
-		struct pbs_out obj = {
-			.container = outs,
-			.desc = sd,
-			.name = sd->name,
-			.out_logger = outs->out_logger,
 
-			/* until a length field is discovered */
-			/* .lenfld = NULL, */
-			/* .lenfld_desc = NULL, */
+	bool immediate = FALSE;
+	uint32_t last_enum = 0;
 
-			/* until an ft_mnpc field is discovered */
-			/* message.previous_np = {0}, */
+	/* new child stream for portion of payload after this struct */
+	struct pbs_out obj = {
+		.container = outs,
+		.desc = sd,
+		.name = sd->name,
+		.out_logger = outs->out_logger,
 
-			/* until an ft_lss is discovered */
-			/* .last_substructure = {0}, */
-		};
+		/* until a length field is discovered */
+		/* .lenfld = NULL, */
+		/* .lenfld_desc = NULL, */
 
-		for (field_desc *fp = sd->fields; ugh == NULL; fp++) {
-			size_t i = fp->size;
+		/* until an ft_mnpc field is discovered */
+		/* message.previous_np = {0}, */
 
-			/* make sure that there is space for the next structure element */
-			passert(outs->roof - cur >= (ptrdiff_t)i);
+		/* until an ft_lss is discovered */
+		/* .last_substructure = {0}, */
+	};
 
-			/* verify that the spot is correct in the offset */
-			passert(cur - outs->cur <= (ptrdiff_t)(sd->size - i));
+	for (field_desc *fp = sd->fields; ; fp++) {
+		size_t i = fp->size;
 
-			/* verify that we are at the right place in the input structure */
-			passert(inp - (cur - outs->cur) == struct_ptr);
+		/* make sure that there is space for the next structure element */
+		passert(outs->roof - cur >= (ptrdiff_t)i);
 
-#if 0
-			DBG_log("out_struct: %d %s",
-				(int) (cur - outs->cur),
-				fp->name == NULL ? "<end>" : fp->name);
-#endif
-			switch (fp->field_type) {
-			case ft_zig: /* zero */
-			{
-				uint8_t byte;
-				if (impair.send_nonzero_reserved) {
-					byte = ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
-					log_pbs_out(RC_LOG, outs, "IMPAIR: setting zero/ignore field to 0x%02x", byte);
-				} else {
-					byte = 0;
-				}
-				memset(cur, byte, i);
+		/* verify that the spot is correct in the offset */
+		passert(cur - outs->cur <= (ptrdiff_t)(sd->size - i));
+
+		/* verify that we are at the right place in the input structure */
+		passert(inp - (cur - outs->cur) == struct_ptr);
+
+		DBGF(DBG_TMI, "out_struct: %d %s",
+		     (int) (cur - outs->cur),
+		     fp->name == NULL ? "<end>" : fp->name);
+
+		switch (fp->field_type) {
+		case ft_zig: /* zero */
+		{
+			uint8_t byte;
+			if (impair.send_nonzero_reserved) {
+				byte = ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
+				log_pbs_out(RC_LOG, outs, "IMPAIR: setting zero/ignore field to 0x%02x", byte);
+			} else {
+				byte = 0;
+			}
+			memset(cur, byte, i);
+			inp += i;
+			cur += i;
+			break;
+		}
+
+		case ft_mnpc:
+			start_next_payload_chain(outs, sd, fp,
+						 inp, cur);
+			last_enum = ISAKMP_NEXT_NONE;
+			inp += fp->size;
+			cur += fp->size;
+			break;
+
+		case ft_pnpc:
+			update_next_payload_chain(outs, sd, fp,
+						  inp, cur);
+			last_enum = ISAKMP_NEXT_NONE;
+			inp += fp->size;
+			cur += fp->size;
+			break;
+
+		case ft_lss:
+			update_last_substructure(outs, sd, fp,
+						 inp, cur);
+			last_enum = ISAKMP_NEXT_NONE;
+			inp += fp->size;
+			cur += fp->size;
+			break;
+
+		case ft_len:            /* length of this struct and any following crud */
+		case ft_lv:             /* length/value field of attribute */
+			if (!immediate) {
+				/* We can't check the length because it must
+				 * be filled in after variable part is supplied.
+				 * We do record where this is so that it can be
+				 * filled in by a subsequent close_output_pbs().
+				 */
+				passert(obj.lenfld == NULL);    /* only one ft_len allowed */
+				obj.lenfld = cur;
+				obj.lenfld_desc = fp;
+
+				/* fill with crap so failure to overwrite will be noticed */
+				memset(cur, 0xFA, i);
+
 				inp += i;
 				cur += i;
 				break;
 			}
+			/* immediate form is just like a number */
+			/* FALL THROUGH */
+		case ft_nat:            /* natural number (may be 0) */
+		case ft_enum:           /* value from an enumeration */
+		case ft_loose_enum:     /* value from an enumeration with only some names known */
+		case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
+		case ft_af_enum:        /* Attribute Format + value from an enumeration */
+		case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
+		case ft_set:            /* bits representing set */
+		{
+			uint32_t n;
 
-			case ft_mnpc:
-				start_next_payload_chain(outs, sd, fp,
-							 inp, cur);
-				last_enum = ISAKMP_NEXT_NONE;
-				inp += fp->size;
-				cur += fp->size;
+			switch (i) {
+			case 8 / BITS_PER_BYTE:
+				n = *(const uint8_t *)inp;
 				break;
-
-			case ft_pnpc:
-				update_next_payload_chain(outs, sd, fp,
-							  inp, cur);
-				last_enum = ISAKMP_NEXT_NONE;
-				inp += fp->size;
-				cur += fp->size;
+			case 16 / BITS_PER_BYTE:
+				n = *(const uint16_t *)inp;
 				break;
-
-			case ft_lss:
-				update_last_substructure(outs, sd, fp,
-							 inp, cur);
-				last_enum = ISAKMP_NEXT_NONE;
-				inp += fp->size;
-				cur += fp->size;
+			case 32 / BITS_PER_BYTE:
+				n = *(const uint32_t *)inp;
 				break;
-
-			case ft_len:            /* length of this struct and any following crud */
-			case ft_lv:             /* length/value field of attribute */
-				if (!immediate) {
-					/* We can't check the length because it must
-					 * be filled in after variable part is supplied.
-					 * We do record where this is so that it can be
-					 * filled in by a subsequent close_output_pbs().
-					 */
-					passert(obj.lenfld == NULL);    /* only one ft_len allowed */
-					obj.lenfld = cur;
-					obj.lenfld_desc = fp;
-
-					/* fill with crap so failure to overwrite will be noticed */
-					memset(cur, 0xFA, i);
-
-					inp += i;
-					cur += i;
-					break;
-				}
-				/* immediate form is just like a number */
-				/* FALL THROUGH */
-			case ft_nat:            /* natural number (may be 0) */
-			case ft_enum:           /* value from an enumeration */
-			case ft_loose_enum:     /* value from an enumeration with only some names known */
-			case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
-			case ft_af_enum:        /* Attribute Format + value from an enumeration */
-			case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
-			case ft_set:            /* bits representing set */
-			{
-				uint32_t n;
-
-				switch (i) {
-				case 8 / BITS_PER_BYTE:
-					n = *(const uint8_t *)inp;
-					break;
-				case 16 / BITS_PER_BYTE:
-					n = *(const uint16_t *)inp;
-					break;
-				case 32 / BITS_PER_BYTE:
-					n = *(const uint32_t *)inp;
-					break;
-				default:
-					bad_case(i);
-				}
-
-				switch (fp->field_type) {
-
-				case ft_af_loose_enum: /* Attribute Format + value from an enumeration */
-				case ft_af_enum: /* Attribute Format + value from an enumeration */
-					immediate = ((n & ISAKMP_ATTR_AF_MASK) ==
-						     ISAKMP_ATTR_AF_TV);
-					last_enum = n & ~ISAKMP_ATTR_AF_MASK;
-					if (fp->field_type == ft_af_enum &&
-					    enum_name(fp->desc, n) == NULL) {
-						ugh = builddiag("%s of %s has an unknown value: 0x%x+%" PRIu32 " (0x%" PRIx32 ")",
-								fp->name, sd->name,
-								n & ISAKMP_ATTR_AF_MASK,
-								last_enum, n);
-						if (impair.emitting) {
-							log_pbs_out(RC_LOG, outs, "IMPAIR: emitting %s", ugh);
-							ugh = NULL;
-						}
-					}
-					break;
-
-				case ft_enum:   /* value from an enumeration */
-					if (enum_name(fp->desc, n) == NULL) {
-						ugh = builddiag("%s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
-								fp->name, sd->name,
-								n,
-								n);
-					}
-					last_enum = n;
-					break;
-
-				case ft_loose_enum:     /* value from an enumeration with only some names known */
-					last_enum = n;
-					break;
-
-				case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
-					break;
-
-				case ft_set:            /* bits representing set */
-					if (!testset(fp->desc, n)) {
-						ugh = builddiag("bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
-								fp->name, sd->name,
-								bitnamesof(fp->desc, n),
-								n);
-					}
-					break;
-
-				default:
-					break;
-				}
-
-				/* emit i low-order bytes of n in network order */
-				while (i-- != 0) {
-					cur[i] = (uint8_t)n;
-					n >>= BITS_PER_BYTE;
-				}
-				inp += fp->size;
-				cur += fp->size;
-				break;
+			default:
+				bad_case(i);
 			}
 
-			case ft_raw: /* bytes to be left in network-order */
-				for (; i != 0; i--)
-					*cur++ = *inp++;
+			switch (fp->field_type) {
+
+			case ft_af_loose_enum: /* Attribute Format + value from an enumeration */
+			case ft_af_enum: /* Attribute Format + value from an enumeration */
+				immediate = ((n & ISAKMP_ATTR_AF_MASK) ==
+					     ISAKMP_ATTR_AF_TV);
+				last_enum = n & ~ISAKMP_ATTR_AF_MASK;
+				if (fp->field_type == ft_af_enum &&
+				    enum_name(fp->desc, n) == NULL) {
+						log_pbs_out(impair.emitting ? RC_LOG : RC_LOG_SERIOUS,
+							    outs, "%s%s of %s has an unknown value: 0x%x+%" PRIu32 " (0x%" PRIx32 ")",
+							    impair.emitting ? "IMPAIR: emitting " : "",
+							    fp->name, sd->name,
+							    n & ISAKMP_ATTR_AF_MASK,
+							    last_enum, n);
+						if (!impair.emitting) {
+							return false;
+						}
+				}
 				break;
 
-			case ft_end: /* end of field list */
-				passert(cur == outs->cur + sd->size);
-
-				obj.start = outs->cur;
-				obj.cur = cur;
-				obj.roof = outs->roof; /* limit of possible */
-				/* obj.lenfld* and obj.previous_np* already set */
-
-				if (obj_pbs == NULL) {
-					close_output_pbs(&obj); /* fill in length field, if any */
-				} else {
-					/* We set outs->cur to outs->roof so that
-					 * any attempt to output something into outs
-					 * before obj is closed will trigger an error.
-					 */
-					outs->cur = outs->roof;
-
-					*obj_pbs = obj;
+			case ft_enum:   /* value from an enumeration */
+				if (enum_name(fp->desc, n) == NULL) {
+					log_pbs_out(RC_LOG_SERIOUS, outs,
+						    "%s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
+						    fp->name, sd->name,
+						    n, n);
+					return false;
 				}
-				return TRUE;
+				last_enum = n;
+				break;
+
+			case ft_loose_enum:     /* value from an enumeration with only some names known */
+				last_enum = n;
+				break;
+
+			case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
+				break;
+
+			case ft_set:            /* bits representing set */
+				if (!testset(fp->desc, n)) {
+					log_pbs_out(RC_LOG_SERIOUS, outs,
+						    "bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
+						    fp->name, sd->name,
+						    bitnamesof(fp->desc, n),
+						    n);
+					return false;
+				}
+				break;
 
 			default:
-				bad_case(fp->field_type);
+				break;
 			}
+
+			/* emit i low-order bytes of n in network order */
+			while (i-- != 0) {
+				cur[i] = (uint8_t)n;
+				n >>= BITS_PER_BYTE;
+			}
+			inp += fp->size;
+			cur += fp->size;
+			break;
+		}
+
+		case ft_raw: /* bytes to be left in network-order */
+			for (; i != 0; i--)
+				*cur++ = *inp++;
+			break;
+
+		case ft_end: /* end of field list */
+			passert(cur == outs->cur + sd->size);
+
+			obj.start = outs->cur;
+			obj.cur = cur;
+			obj.roof = outs->roof; /* limit of possible */
+			/* obj.lenfld* and obj.previous_np* already set */
+
+			if (obj_pbs == NULL) {
+				close_output_pbs(&obj); /* fill in length field, if any */
+			} else {
+				/* We set outs->cur to outs->roof so that
+				 * any attempt to output something into outs
+				 * before obj is closed will trigger an error.
+				 */
+				outs->cur = outs->roof;
+
+				*obj_pbs = obj;
+			}
+			return true;
+
+		default:
+			bad_case(fp->field_type);
 		}
 	}
 
-	/* some failure got us here: report it */
-	log_pbs_out(RC_LOG_SERIOUS, outs, "%s", ugh); /* ??? serious, but errno not relevant */
-	return FALSE;
+	/* never reached!?! */
 }
 
 bool ikev1_out_generic(struct_desc *sd,
