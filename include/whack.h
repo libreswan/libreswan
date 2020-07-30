@@ -402,7 +402,7 @@ struct whackpacker {
 };
 
 extern err_t pack_whack_msg(struct whackpacker *wp);
-extern err_t unpack_whack_msg(struct whackpacker *wp);
+extern bool unpack_whack_msg(struct whackpacker *wp, struct logger *logger);
 extern void clear_end(struct whack_end *e);
 
 extern size_t whack_get_secret(char *buf, size_t bufsize);

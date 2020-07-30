@@ -304,8 +304,9 @@ static void key_add_request(const struct whack_message *msg)
 /*
  * handle a whack message.
  */
-static bool whack_process(struct fd *whackfd, const struct whack_message *const m)
+static bool whack_process(const struct whack_message *const m, struct logger *whack_logger)
 {
+	struct fd *whackfd = whack_logger->global_whackfd;
 	/*
 	 * May be needed in future:
 	 * const struct lsw_conf_options *oco = lsw_init_options();
@@ -727,7 +728,7 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 	return false; /* don't shut down */
 }
 
-static bool whack_handle(struct fd *whackfd);
+static bool whack_handle(struct logger *whack_logger);
 
 void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
 		     void *arg UNUSED)
@@ -740,7 +741,8 @@ void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
 			return;
 		}
 		whack_log_fd = whackfd;
-		bool shutdown = whack_handle(whackfd);
+		struct logger whack_logger[1] = { GLOBAL_LOGGER(whackfd), };
+		bool shutdown = whack_handle(whack_logger);
 		whack_log_fd = null_fd;
 		if (shutdown) {
 			/*
@@ -764,7 +766,7 @@ void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
 /*
  * Handle a whack request.
  */
-static bool whack_handle(struct fd *whackfd)
+static bool whack_handle(struct logger *whack_logger)
 {
 	/*
 	 * properly initialize msg - needed because short reads are
@@ -772,7 +774,7 @@ static bool whack_handle(struct fd *whackfd)
 	 */
 	struct whack_message msg = { .magic = 0, };
 
-	ssize_t n = fd_read(whackfd, &msg, sizeof(msg), HERE);
+	ssize_t n = fd_read(whack_logger->global_whackfd, &msg, sizeof(msg), HERE);
 	if (n <= 0) {
 		LOG_ERRNO(errno, "read() failed in whack_handle()");
 		return false; /* don't shutdown */
@@ -784,22 +786,23 @@ static bool whack_handle(struct fd *whackfd)
 	{
 		if ((size_t)n < offsetof(struct whack_message,
 					 whack_shutdown) + sizeof(msg.whack_shutdown)) {
-			loglog(RC_BADWHACKMESSAGE, "ignoring runt message from whack: got %zd bytes", n);
+			log_message(RC_BADWHACKMESSAGE, whack_logger,
+				    "ignoring runt message from whack: got %zd bytes", n);
 			return false; /* don't shutdown */
 		}
 
 		if (msg.magic != WHACK_MAGIC) {
 
 			if (msg.whack_shutdown) {
-				libreswan_log("shutting down%s",
-				    (msg.magic != WHACK_BASIC_MAGIC) ?  " despite whacky magic" : "");
+				log_message(RC_LOG, whack_logger, "shutting down%s",
+					    (msg.magic != WHACK_BASIC_MAGIC) ?  " despite whacky magic" : "");
 				return true; /* force shutting down */
 			}
 
 			if (msg.magic == WHACK_BASIC_MAGIC) {
 				/* Only basic commands.  Simpler inter-version compatibility. */
 				if (msg.whack_status) {
-					struct show *s = new_show(whackfd);
+					struct show *s = new_show(whack_logger->global_whackfd);
 					show_status(s);
 					free_show(&s);
 				}
@@ -807,8 +810,9 @@ static bool whack_handle(struct fd *whackfd)
 				return false; /* don't shutdown */
 			}
 
-			loglog(RC_BADWHACKMESSAGE, "ignoring message from whack with bad magic %d; should be %d; Mismatched versions of userland tools.",
-			       msg.magic, WHACK_MAGIC);
+			log_message(RC_BADWHACKMESSAGE, whack_logger,
+				    "ignoring message from whack with bad magic %d; should be %d; Mismatched versions of userland tools.",
+				    msg.magic, WHACK_MAGIC);
 			return false; /* bail (but don't shutdown) */
 		}
 	}
@@ -819,12 +823,11 @@ static bool whack_handle(struct fd *whackfd)
 		.str_next = msg.string,
 		.str_roof = (unsigned char *)&msg + n,
 	};
-	const char *ugh = unpack_whack_msg(&wp);
-	if (ugh != NULL) {
-		if (*ugh != '\0')
-			loglog(RC_BADWHACKMESSAGE, "%s", ugh);
+
+	if (!unpack_whack_msg(&wp, whack_logger)) {
+		/* already logged */
 		return false; /* don't shutdown */
 	}
 
-	return whack_process(whackfd, &msg);
+	return whack_process(&msg, whack_logger);
 }
