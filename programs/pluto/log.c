@@ -597,22 +597,6 @@ void whack_log(enum rc_type rc, const struct fd *whackfd, const char *message, .
 	}
 }
 
-void whack_print(const struct fd *whackfd, const char *message, ...)
-{
-	pexpect(fd_p(whackfd));
-	pexpect(in_main_thread());
-	pexpect(cur_state == NULL);
-	pexpect(cur_connection == NULL);
-	pexpect(endpoint_type(&cur_from) == NULL);
-	LSWBUF(buf) {
-		va_list args;
-		va_start(args, message);
-		jam_va_list(buf, message, args);
-		va_end(args);
-		jambuf_to_whack(buf, whackfd, RC_PRINT);
-	}
-}
-
 void whack_comment(const struct fd *whackfd, const char *message, ...)
 {
 	pexpect(fd_p(whackfd));

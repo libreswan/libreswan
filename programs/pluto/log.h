@@ -280,17 +280,12 @@ void rate_log(const struct msg_digest *md,
  * name).  If that's really really needed then use
  * log_*(WHACK_STREAM,...) above.
  *
- * whack_print() output completely suppresses the 'NNN ' prefix.  It
- * also requires a valid whackfd.  It should only be used by raw-print
- * commands, namely 'show global-stats'.
- *
  * whack_comment() output includes the '000 ' prefix (RC_COMMENT).  It
  * also requires a valid whackfd.  It should only be used by show
  * commands.
  */
 
 void whack_log(enum rc_type rc, const struct fd *whackfd, const char *message, ...) PRINTF_LIKE(3);
-void whack_print(const struct fd *whackfd, const char *message, ...) PRINTF_LIKE(2);
 void whack_comment(const struct fd *whackfd, const char *message, ...) PRINTF_LIKE(2);
 void jambuf_to_whack(struct jambuf *buf, const struct fd *whackfd, enum rc_type rc);
 
