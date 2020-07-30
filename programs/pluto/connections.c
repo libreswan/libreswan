@@ -2649,38 +2649,36 @@ struct connection *route_owner(struct connection *c,
 		}
 	}
 
-	if (DBGP(DBG_BASE)) {
+	LSWDBGP(DBG_BASE, buf) {
 		connection_buf cib;
-		err_t m = builddiag("route owner of \"%s\"%s %s:",
-				    pri_connection(c, &cib),
-				    enum_name(&routing_story, cur_spd->routing));
+		jam(buf, "route owner of \"%s\"%s %s: ",
+		    pri_connection(c, &cib),
+		    enum_name(&routing_story, cur_spd->routing));
 
 		if (!routed(best_routing)) {
-			m = builddiag("%s NULL", m);
+			jam(buf, "NULL");
 		} else if (best_ro == c) {
-			m = builddiag("%s self", m);
+			jam(buf, "self");
 		} else {
 			connection_buf cib;
-			m = builddiag("%s "PRI_CONNECTION" %s", m,
-				      pri_connection(best_ro, &cib),
-				      enum_name(&routing_story, best_routing));
+			jam(buf, ""PRI_CONNECTION" %s",
+			    pri_connection(best_ro, &cib),
+			    enum_name(&routing_story, best_routing));
 		}
 
 		if (erop != NULL) {
-			m = builddiag("%s; eroute owner:", m);
+			jam(buf, "; eroute owner: ");
 			if (!erouted(best_ero->spd.routing)) {
-				m = builddiag("%s NULL", m);
+				jam(buf, "NULL");
 			} else if (best_ero == c) {
-				m = builddiag("%s self", m);
+				jam(buf, "self");
 			} else {
 				connection_buf cib;
-				m = builddiag("%s "PRI_CONNECTION" %s", m,
-					      pri_connection(best_ero, &cib),
-					      enum_name(&routing_story, best_ero->spd.routing));
+				jam(buf, ""PRI_CONNECTION" %s",
+				    pri_connection(best_ero, &cib),
+				    enum_name(&routing_story, best_ero->spd.routing));
 			}
 		}
-
-		DBG_log("%s", m);
 	}
 
 	if (erop != NULL)
