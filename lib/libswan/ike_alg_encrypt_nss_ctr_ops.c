@@ -92,12 +92,8 @@ static void do_nss_ctr(const struct encrypt_desc *alg UNUSED,
 	uint32_t new_counter = old_counter + increment;
 	DBG(DBG_CRYPT, DBG_log("do_aes_ctr: counter-block updated from 0x%" PRIx32 " to 0x%" PRIx32 " for %zd bytes",
 			       old_counter, new_counter, buf_len));
-	if (new_counter < old_counter) {
-		/* Wrap ... */
-		loglog(RC_LOG_SERIOUS,
-		       "do_aes_ctr: counter wrapped");
-		/* what next??? */
-	}
+	/* Wrap ... */
+	passert(new_counter >= old_counter);
 	*counter = htonl(new_counter);
 
 	DBG(DBG_CRYPT, DBG_log("do_aes_ctr: exit"));
