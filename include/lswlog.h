@@ -33,19 +33,7 @@
 #include "fd.h"			/* for null_fd */
 #include "impair.h"
 
-/* Build up a diagnostic in a static buffer -- NOT RE-ENTRANT.
- * Although this would be a generally useful function, it is very
- * hard to come up with a discipline that prevents different uses
- * from interfering.  It is intended that by limiting it to building
- * diagnostics, we will avoid this problem.
- * Juggling is performed to allow an argument to be a previous
- * result: the new string may safely depend on the old one.  This
- * restriction is not checked in any way: violators will produce
- * confusing results (without crashing!).
- */
 #define LOG_WIDTH	((size_t)1024)	/* roof of number of chars in log line */
-
-extern err_t builddiag(const char *fmt, ...) PRINTF_LIKE(1);	/* NOT RE-ENTRANT */
 
 extern bool log_to_stderr;          /* should log go to stderr? */
 
