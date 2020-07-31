@@ -27,16 +27,35 @@
 #include "lswcdefs.h"		/* for NEVER_RETURNS PRINTF_LIKE() */
 #include "where.h"
 
+struct logger;
+
 /* our versions of assert: log result */
 
-extern void lsw_passert_fail(where_t where, const char *fmt, ...)
+/* prefered; can log with prefix to whack from a thread */
+extern void log_passert(struct logger *logger, where_t where, const char *fmt, ...)
+	NEVER_RETURNS
+	PRINTF_LIKE(3);
+#define PASSERT(LOGGER, ASSERTION)					\
+	{								\
+		/* wrapping ASSERTION in parens suppresses -Wparen */	\
+		bool assertion__ = ASSERTION; /* no parens */		\
+		if (!assertion__) {					\
+			where_t here = HERE;				\
+			log_passert(LOGGER, here, "%s", #ASSERTION);	\
+		}							\
+	}
+
+/* older; don't work correctly on a thread */
+
+extern void lsw_passert_fail(where_t where, const char *fmt, ...) /* TBD: use log_passert() */
 	NEVER_RETURNS
 	PRINTF_LIKE(2);
 
-#define PASSERT_FAIL(FMT, ...)					\
+#define PASSERT_FAIL(FMT, ...) /* TBD: use log_pexpect() */	\
 	lsw_passert_fail(HERE, FMT,##__VA_ARGS__)
 
-#define passert(ASSERTION) {						\
+#define passert(ASSERTION) /* TBD: use PASSERT(LOGGER, ...) */		\
+	{								\
 		/* wrapping ASSERTION in parens suppresses -Wparen */	\
 		bool assertion__ = ASSERTION; /* no parens */		\
 		if (!assertion__) {					\
@@ -45,7 +64,8 @@ extern void lsw_passert_fail(where_t where, const char *fmt, ...)
 	}
 
 /* evaluate x exactly once; assert that err_t result is NULL; */
-#define happy(x) {					\
+#define happy(x) /* TBD: use ??? */			\
+	{						\
 		err_t ugh = x;				\
 		if (ugh != NULL) {			\
 			PASSERT_FAIL("%s", ugh);	\

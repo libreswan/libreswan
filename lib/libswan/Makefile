@@ -53,9 +53,9 @@ OBJS += constants.o \
 	secitem_chunk.o \
 	base64_pubkey.o \
 	lswnss.o \
-	lsw_passert_fail.o \
 	alg_byname.o
 
+OBJS += passert.o
 OBJS += progname_logger.o
 OBJS += nss_cert_load.o
 OBJS += certs.o
@@ -145,7 +145,6 @@ OBJS += lswlog_nss_secitem.o
 OBJS += lswlog_enum_lset_short.o
 OBJS += lswlog_to_file_stream.o
 OBJS += lswlog_pexpect.o
-OBJS += lswlog_passert.o
 
 # Crypto code:
 
