@@ -1670,7 +1670,7 @@ int main(int argc, char **argv)
 	} else {
 		loglog(RC_LOG_SERIOUS, "FIPS HMAC integrity verification self-test FAILED");
 	}
-	if (pluto_fips_mode == LSW_FIPS_ON && !fips_files) {
+	if (libreswan_fipsmode() && !fips_files) {
 		exit_pluto(PLUTO_EXIT_FIPS_FAIL);
 	}
 #else
