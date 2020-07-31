@@ -3,6 +3,7 @@ See also https://libreswan.org/
 
 v4.0 (unreleased)
 * KLIPS: Support for KLIPS completely removed [Paul]
+* FIPS: Remove DH 23/24 from FIPS allowed list as per SP 800 56A Rev 3 [Paul]
 * pluto: Support for deprecated algos removed: serpent, twofish, cast [Paul]
 * pluto: Support for rereading configured certificates from NSS [Myungjin Lee]
 * pluto: plutodebug= keywords are now: base,cpu-sage,crypt,tmi,private [Andrew]
