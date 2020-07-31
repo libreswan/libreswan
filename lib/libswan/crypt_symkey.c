@@ -26,19 +26,18 @@
 
 static PK11SymKey *ephemeral_symkey(void)
 {
-	static bool tried = false;
+	/* XXX: not thread safe */
 	static PK11SymKey *ephemeral_key = NULL;
-	if (!tried) {
-		tried = true;
+	if (ephemeral_key == NULL) {
 		/* get a secret key */
 		PK11SlotInfo *slot = PK11_GetBestSlot(CKM_AES_KEY_GEN,
 						      lsw_return_nss_password_file_info());
 		if (slot == NULL) {
-			LSWLOG_RC(RC_LOG_SERIOUS, buf) {
-				jam_string(buf, "NSS: ephemeral slot error");
-				jam_nss_error(buf);
-			}
-			return NULL;
+			char error[LOG_WIDTH];
+			struct jambuf buf[1] = { ARRAY_AS_JAMBUF(error), };
+			jam(buf, "NSS: ephemeral slot error");
+			jam_nss_error(buf);
+			fatal("%s", error);
 		}
 		ephemeral_key = PK11_KeyGen(slot, CKM_AES_KEY_GEN,
 					    NULL, 128/8, NULL);
@@ -298,10 +297,6 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey)
 
 	/* get a secret key */
 	PK11SymKey *ephemeral_key = ephemeral_symkey();
-	if (ephemeral_key == NULL) {
-		loglog(RC_LOG_SERIOUS, "%s NSS: ephemeral error", name);
-		return EMPTY_CHUNK;
-	}
 
 	/*
 	 * Ensure that the source key shares a slot with the
