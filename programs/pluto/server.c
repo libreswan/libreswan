@@ -125,30 +125,41 @@ struct sockaddr_un ctl_addr = {
  * It is important that the socket is created before the original
  * Pluto process returns.
  */
-err_t init_ctl_socket(void)
-{
-	err_t failed = NULL;
 
+bool init_ctl_socket(struct logger *logger)
+{
 	delete_ctl_socket();    /* preventative medicine */
 	ctl_fd = safe_socket(AF_UNIX, SOCK_STREAM, 0);
 	if (ctl_fd == -1) {
-		failed = "create";
-	} else if (fcntl(ctl_fd, F_SETFD, FD_CLOEXEC) == -1) {
-		failed = "fcntl FD+CLOEXEC";
-	} else {
-		/* to keep control socket secure, use umask */
+		log_message(ERROR_STREAM, logger,
+			    "FATAL ERROR: could not create control socket "PRI_ERRNO,
+			    pri_errno(errno));
+		return false;
+	}
+
+	if (fcntl(ctl_fd, F_SETFD, FD_CLOEXEC) == -1) {
+		log_message(ERROR_STREAM, logger,
+			    "FATAL ERROR: could not fcntl FD+CLOEXEC control socket "PRI_ERRNO,
+			    pri_errno(errno));
+		return false;
+	}
+
+	/* to keep control socket secure, use umask */
 #ifdef PLUTO_GROUP_CTL
-		mode_t ou = umask(~(S_IRWXU | S_IRWXG));
+	mode_t ou = umask(~(S_IRWXU | S_IRWXG));
 #else
-		mode_t ou = umask(~S_IRWXU);
+	mode_t ou = umask(~S_IRWXU);
 #endif
 
-		if (bind(ctl_fd, (struct sockaddr *)&ctl_addr,
-			 offsetof(struct sockaddr_un, sun_path) +
-				strlen(ctl_addr.sun_path)) < 0)
-			failed = "bind";
-		umask(ou);
+	if (bind(ctl_fd, (struct sockaddr *)&ctl_addr,
+		 offsetof(struct sockaddr_un, sun_path) +
+		 strlen(ctl_addr.sun_path)) < 0) {
+		log_message(ERROR_STREAM, logger,
+			    "FATAL ERROR: could not bind control socket "PRI_ERRNO,
+			    pri_errno(errno));
+		return false;
 	}
+	umask(ou);
 
 #ifdef PLUTO_GROUP_CTL
 	{
@@ -156,24 +167,26 @@ err_t init_ctl_socket(void)
 
 		if (g != NULL) {
 			if (fchown(ctl_fd, -1, g->gr_gid) != 0) {
-				loglog(RC_LOG_SERIOUS,
-				       "Cannot chgrp ctl fd(%d) to gid=%d: %s",
-				       ctl_fd, g->gr_gid, strerror(errno));
+				log_message(RC_LOG_SERIOUS, logger,
+					    "cannot chgrp ctl fd(%d) to gid=%d: %s",
+					    ctl_fd, g->gr_gid, strerror(errno));
 			}
 		}
 	}
 #endif
 
-	/* 5 is a haphazardly chosen limit for the backlog.
+	/*
+	 * 5 (five) is a haphazardly chosen limit for the backlog.
 	 * Rumour has it that this is the max on BSD systems.
 	 */
-	if (failed == NULL && listen(ctl_fd, 5) < 0)
-		failed = "listen() on";
+	if (listen(ctl_fd, 5) < 0) {
+		log_message(ERROR_STREAM, logger,
+			    "FATAL ERROR: could not listen on control socket "PRI_ERRNO,
+			    pri_errno(errno));
+		return false;
+	}
 
-	return failed == NULL ? NULL : builddiag(
-		"could not %s control socket: %d %s",
-		failed, errno,
-		strerror(errno));
+	return true;
 }
 
 void delete_ctl_socket(void)

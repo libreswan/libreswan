@@ -1504,10 +1504,8 @@ int main(int argc, char **argv)
 	 * place to do this is before the daemon fork.
 	 */
 	if (!selftest_only) {
-		err_t ugh = init_ctl_socket();
-
-		if (ugh != NULL) {
-			fprintf(stderr, "pluto: FATAL: %s", ugh);
+		if (!init_ctl_socket(&progname_logger)) {
+			/* already logged */
 			exit_pluto(PLUTO_EXIT_SOCKET_FAIL);
 		}
 	}

@@ -43,7 +43,7 @@ extern struct sockaddr_un ctl_addr;     /* address of control (whack) socket */
 extern int info_fd;                     /* file descriptor of control (info) socket */
 extern struct sockaddr_un info_addr;    /* address of control (info) socket */
 
-extern err_t init_ctl_socket(void);
+bool init_ctl_socket(struct logger *logger);
 extern void delete_ctl_socket(void);
 
 extern stf_status create_tcp_interface(struct state *st); /* TCP: terrible name? */
