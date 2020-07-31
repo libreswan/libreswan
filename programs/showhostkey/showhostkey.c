@@ -61,7 +61,7 @@
 #include <prinit.h>
 
 char usage[] =
-	"Usage: showhostkey [ --verbose ]\n"
+	"Usage: showhostkey [ --verbose ] [ --debug ]\n"
 	"        { --version | --dump | --list | --left | --right |\n"
 	"                --ipseckey [ --precedence <precedence> ] \n"
 	"                [ --gateway <gateway> ] }\n"
@@ -74,10 +74,11 @@ char usage[] =
  * XXX: Can fix old options later.
  */
 enum opt {
-	OPT_CONFIGDIR,
+	OPT_CONFIGDIR = 256,
 	OPT_DUMP,
 	OPT_PASSWORD,
 	OPT_CKAID,
+	OPT_DEBUG,
 };
 
 struct option opts[] = {
@@ -85,6 +86,7 @@ struct option opts[] = {
 	{ "left",       no_argument,            NULL,   'l', },
 	{ "right",      no_argument,            NULL,   'r', },
 	{ "dump",       no_argument,            NULL,   OPT_DUMP, },
+	{ "debug",      no_argument,            NULL,   OPT_DEBUG, },
 	{ "list",       no_argument,            NULL,   'L', },
 	{ "ipseckey",   no_argument,            NULL,   'K', },
 	{ "gateway",    required_argument,      NULL,   'g', },
@@ -537,6 +539,10 @@ int main(int argc, char *argv[])
 			log_to_stderr = TRUE;
 			break;
 
+		case OPT_DEBUG:
+			cur_debugging = -1;
+			break;
+
 		case 'V':
 			fprintf(stdout, "%s\n", ipsec_version_string());
 			exit(0);
@@ -574,7 +580,7 @@ int main(int argc, char *argv[])
 	 * processed, and really are "constant".
 	 */
 	const struct lsw_conf_options *oco = lsw_init_options();
-	libreswan_log("using nss directory \"%s\"\n", oco->nssdir);
+	log_message(RC_LOG, &progname_logger, "using nss directory \"%s\"", oco->nssdir);
 
 	/*
 	 * Set up for NSS - contains key pairs.

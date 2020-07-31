@@ -225,11 +225,11 @@ int main(int argc, char *argv[])
 	}
 
 	if (!use_acvp && cavp == NULL) {
-		libreswan_log("Guessing test type ...");
+		fprintf(stderr, "Guessing test type ...");
 	}
 
 	if (use_acvp) {
-		libreswan_log("Using CMVP");
+		fprintf(stderr, "Using CMVP");
 	} else if (*argp == NULL) {
 		fprintf(stderr, "missing test file\n");
 		exit(1);

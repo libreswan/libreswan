@@ -80,12 +80,18 @@
 #define F4	65537
 
 char usage[] =
-	"rsasigkey [--verbose] [--seeddev <device>] [--nssdir <dir>]\n"
+	"rsasigkey [--verbose] [ --debug ] [--seeddev <device>] [--nssdir <dir>]\n"
 	"        [--password <password>] [--hostname host] [--seedbits bits] [<keybits>]";
+
+enum opt {
+	OPT_DEBUG = 256,
+};
+
 struct option opts[] = {
 	{ "rounds",     1,      NULL,   'p', },	/* obsoleted */
 	{ "noopt",      0,      NULL,   'n', }, /* obsoleted */
 	{ "configdir",  1,      NULL,   'c', }, /* obsoleted */
+	{ "debug",      0,      NULL,   OPT_DEBUG, },
 	{ "verbose",    0,      NULL,   'v', },
 	{ "seeddev",    1,      NULL,   'S', },
 	{ "random",     1,      NULL,   'r', }, /* compat alias for seeddev */
@@ -151,8 +157,13 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "%s: --noopt and --rounds options have been obsoleted - ignored\n",
 				progname);
 			break;
+
 		case 'v':       /* verbose description */
 			log_to_stderr = TRUE;
+			break;
+
+		case OPT_DEBUG:
+			cur_debugging = -1;
 			break;
 
 		case 'r':
@@ -327,7 +338,7 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
 		hex_ckaid);
 
 	/* and the output */
-	libreswan_log("output...\n");  /* deliberate extra newline */
+	log_message(RC_LOG, &progname_logger, "output...");
 	printf("\t# RSA %d bits   %s   %s", nbits, outputhostname,
 		ctime(&now.rt.tv_sec));
 	/* ctime provides \n */
@@ -379,8 +390,8 @@ void lsw_random(size_t nbytes, unsigned char *buf)
 	}
 
 	ndone = 0;
-	libreswan_log("getting %d random seed bytes for NSS from %s...\n",
-		      (int) nbytes * BITS_PER_BYTE, device);
+	log_message(RC_LOG, &progname_logger, "getting %d random seed bytes for NSS from %s...\n",
+		    (int) nbytes * BITS_PER_BYTE, device);
 	while (ndone < nbytes) {
 		got = read(dev, buf + ndone, nbytes - ndone);
 		if (got < 0) {
