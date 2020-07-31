@@ -396,9 +396,10 @@ static bool load_setup(struct starter_config *cfg,
  */
 
 static bool validate_end(struct starter_conn *conn_st,
-			struct starter_end *end,
-			const char *leftright,
-			starter_errors_t *perrl)
+			 struct starter_end *end,
+			 const char *leftright,
+			 starter_errors_t *perrl,
+			 struct logger *logger)
 {
 	err_t er = NULL;
 	bool err = FALSE;
@@ -549,11 +550,11 @@ static bool validate_end(struct starter_conn *conn_st,
 					    "Calling unbound_resolve() for %snexthop value",
 					    leftright);
 				if (!unbound_resolve(value,
-						strlen(value), AF_INET,
-						&end->nexthop) &&
+						     strlen(value), AF_INET,
+						     &end->nexthop, logger) &&
 				    !unbound_resolve(value,
 						strlen(value), AF_INET6,
-						&end->nexthop))
+						     &end->nexthop, logger))
 					ERR_FOUND("bad value for %snexthop=%s\n",
 						leftright, value);
 #else
@@ -632,11 +633,11 @@ static bool validate_end(struct starter_conn *conn_st,
 				    "Calling unbound_resolve() for %ssourceip value",
 				    leftright);
 			if (!unbound_resolve(value,
-					strlen(value), AF_INET,
-					&end->sourceip) &&
+					     strlen(value), AF_INET,
+					     &end->sourceip, logger) &&
 			    !unbound_resolve(value,
-					strlen(value), AF_INET6,
-					&end->sourceip))
+					     strlen(value), AF_INET6,
+					     &end->sourceip, logger))
 				ERR_FOUND("bad value for %ssourceip=%s\n",
 					  leftright, value);
 #else
@@ -992,13 +993,13 @@ static void move_comment_list(struct starter_comments_list *to,
 	}
 }
 
-static bool load_conn(
-		     struct starter_conn *conn,
-		     const struct config_parsed *cfgp,
-		     struct section_list *sl,
-		     bool alsoprocessing,
-		     bool defaultconn,
-		     starter_errors_t *perrl)
+static bool load_conn(struct starter_conn *conn,
+		      const struct config_parsed *cfgp,
+		      struct section_list *sl,
+		      bool alsoprocessing,
+		      bool defaultconn,
+		      starter_errors_t *perrl,
+		      struct logger *logger)
 {
 	bool err;
 
@@ -1507,8 +1508,8 @@ static bool load_conn(
 			POLICY_IKE_FRAG_ALLOW | POLICY_IKE_FRAG_FORCE);
 	}
 
-	err |= validate_end(conn, &conn->left, "left", perrl);
-	err |= validate_end(conn, &conn->right, "right", perrl);
+	err |= validate_end(conn, &conn->left, "left", perrl, logger);
+	err |= validate_end(conn, &conn->right, "right", perrl, logger);
 
 	/*
 	 * TODO:
@@ -1606,17 +1607,18 @@ static struct starter_conn *alloc_add_conn(struct starter_config *cfg, const cha
 }
 
 static bool init_load_conn(struct starter_config *cfg,
-		   const struct config_parsed *cfgp,
-		   struct section_list *sconn,
-		   bool defaultconn,
-		   starter_errors_t *perrl)
+			   const struct config_parsed *cfgp,
+			   struct section_list *sconn,
+			   bool defaultconn,
+			   starter_errors_t *perrl,
+			   struct logger *logger)
 {
 	starter_log(LOG_LEVEL_DEBUG, "Loading conn %s", sconn->name);
 
 	struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
 
 	bool connerr = load_conn(conn, cfgp, sconn, TRUE,
-				defaultconn, perrl);
+				 defaultconn, perrl, logger);
 
 	if (connerr) {
 		starter_log(LOG_LEVEL_INFO, "while loading '%s': %s",
@@ -1631,7 +1633,8 @@ static bool init_load_conn(struct starter_config *cfg,
 struct starter_config *confread_load(const char *file,
 				     starter_errors_t *perrl,
 				     const char *ctlsocket,
-				     bool setuponly)
+				     bool setuponly,
+				     struct logger *logger)
 {
 	bool err = FALSE;
 
@@ -1669,8 +1672,9 @@ struct starter_config *confread_load(const char *file,
 	if (!setuponly) {
 #ifdef USE_DNSSEC
 		unbound_sync_init(cfg->setup.options[KBF_DO_DNSSEC],
-				cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE],
-				cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS]);
+				  cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE],
+				  cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS],
+				  logger);
 #endif
 
 		/*
@@ -1683,9 +1687,9 @@ struct starter_config *confread_load(const char *file,
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Loading default conn");
 				err |= load_conn(&cfg->conn_default,
-						 cfgp, sconn, FALSE,
-						/*default conn*/ TRUE,
-						 perrl);
+						 cfgp, sconn, false,
+						 true/*default conn*/,
+						 perrl, logger);
 			}
 		}
 
@@ -1696,8 +1700,8 @@ struct starter_config *confread_load(const char *file,
 		     sconn = sconn->link.tqe_next) {
 			if (!streq(sconn->name, "%default"))
 				err |= init_load_conn(cfg, cfgp, sconn,
-						 FALSE,
-						 perrl);
+						      false/*default conn*/,
+						      perrl, logger);
 		}
 	}
 

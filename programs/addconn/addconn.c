@@ -70,10 +70,10 @@ static char *environlize(const char *str)
 static void resolve_defaultroute(struct starter_conn *conn UNUSED)
 {
 #ifdef XFRM_SUPPORT
-	if (resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0) == 1)
-		resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0);
-	if (resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0) == 1)
-		resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0);
+	if (resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0, &progname_logger) == 1)
+		resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0, &progname_logger);
+	if (resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0, &progname_logger) == 1)
+		resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0, &progname_logger);
 #else /* !defined(XFRM_SUPPORT) */
 	/* What kind of result are we seeking? */
 	bool seeking_src = (conn->left.addrtype == KH_DEFAULTROUTE ||
@@ -383,7 +383,8 @@ int main(int argc, char *argv[])
 	{
 		starter_errors_t errl = { NULL };
 
-		cfg = confread_load(configfile, &errl, ctlsocket, configsetup);
+		cfg = confread_load(configfile, &errl, ctlsocket, configsetup,
+				    &progname_logger);
 
 		if (cfg == NULL) {
 			fprintf(stderr, "cannot load config '%s': %s\n",
@@ -419,8 +420,9 @@ int main(int argc, char *argv[])
 
 #ifdef USE_DNSSEC
 	unbound_sync_init(cfg->setup.options[KBF_DO_DNSSEC],
-		cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE],
-		cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS]);
+			  cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE],
+			  cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS],
+			  &progname_logger);
 #endif
 
 	if (autoall) {

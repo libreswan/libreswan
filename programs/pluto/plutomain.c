@@ -336,12 +336,12 @@ static void delete_lock(void)
 int verbose = 0;
 
 /* Read config file. exit() on error. */
-static struct starter_config *read_cfg_file(char *configfile)
+static struct starter_config *read_cfg_file(char *configfile, struct logger *logger)
 {
 	struct starter_config *cfg = NULL;
 	starter_errors_t errl = { NULL };
 
-	cfg = confread_load(configfile, &errl, NULL /* ctl_addr.sun_path? */, TRUE);
+	cfg = confread_load(configfile, &errl, NULL /* ctl_addr.sun_path? */, true, logger);
 	if (cfg == NULL) {
 		/*
 		 * note: incovation_fail never returns so we will have
@@ -1201,7 +1201,7 @@ int main(int argc, char **argv)
 			 */
 			pfree(conffile);
 			conffile = clone_str(optarg, "conffile via getopt");
-			struct starter_config *cfg = read_cfg_file(conffile);
+			struct starter_config *cfg = read_cfg_file(conffile, &progname_logger);
 
 			/* leak */
 			set_cfg_string(&pluto_log_file,
@@ -1792,7 +1792,8 @@ int main(int argc, char **argv)
 
 #ifdef USE_DNSSEC
 	if (!unbound_event_init(get_pluto_event_base(), do_dnssec,
-		pluto_dnssec_rootfile, pluto_dnssec_trusted)) {
+				pluto_dnssec_rootfile, pluto_dnssec_trusted,
+				&logger)) {
 			exit_pluto(PLUTO_EXIT_UNBOUND_FAIL);
 	}
 #endif

@@ -32,9 +32,8 @@
 #include "addr_lookup.h"
 #ifdef USE_DNSSEC
 # include "dnssec.h"
-#else
-# include <netdb.h>
 #endif
+#include <netdb.h>
 #include "ip_info.h"
 
 static void resolve_point_to_point_peer(const char *interface,
@@ -194,7 +193,8 @@ static ssize_t netlink_query(char **pmsgbuf, size_t bufsize)
  *  1: please call again: more to do
  */
 int resolve_defaultroute_one(struct starter_end *host,
-				struct starter_end *peer, bool verbose)
+			     struct starter_end *peer, bool verbose,
+			     struct logger *logger)
 {
 	/*
 	 * "left="         == host->addrtype and host->addr
@@ -248,12 +248,14 @@ int resolve_defaultroute_one(struct starter_end *host,
 			if (er != NULL) {
 				/* not numeric, so resolve it */
 				if (!unbound_resolve(peer->strings[KSCF_IP],
-							0, AF_INET,
-							&peer->addr)) {
+						     0, AF_INET,
+						     &peer->addr,
+						     logger)) {
 					if (!unbound_resolve(
 							peer->strings[KSCF_IP],
 							0, AF_INET6,
-							&peer->addr)) {
+							&peer->addr,
+							logger)) {
 						pfree(msgbuf);
 						return -1;
 					}

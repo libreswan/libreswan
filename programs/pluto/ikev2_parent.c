@@ -5990,7 +5990,7 @@ void ikev2_addr_change(struct state *st)
 	 * mobike need two lookups. one for the gateway and
 	 * the one for the source address
 	 */
-	switch (resolve_defaultroute_one(&this, &that, TRUE)) {
+	switch (resolve_defaultroute_one(&this, &that, true, st->st_logger)) {
 	case 0:	/* success */
 		/* cannot happen */
 		/* ??? original code treated this as failure */
@@ -6007,7 +6007,7 @@ void ikev2_addr_change(struct state *st)
 	}
 
 	case 1: /* please call again: more to do */
-		switch (resolve_defaultroute_one(&this, &that, TRUE)) {
+		switch (resolve_defaultroute_one(&this, &that, true, st->st_logger)) {
 		case 1: /* please call again: more to do */
 			/* cannot happen */
 			/* ??? original code treated this as failure */
