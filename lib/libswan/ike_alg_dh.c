@@ -237,6 +237,7 @@ const struct dh_desc ike_alg_dh_dh22 = {
 			[IKEv1_ESP_ID] = OAKLEY_GROUP_DH22,
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_DH22,
 		},
+		.fips = FALSE, /* SP 800-56A rev 3 */
 	},
 	.group = OAKLEY_GROUP_DH22,
 	.gen = MODP_GENERATOR_DH22,
@@ -257,7 +258,7 @@ const struct dh_desc ike_alg_dh_dh23 = {
 			[IKEv1_ESP_ID] = OAKLEY_GROUP_DH23,
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_DH23,
 		},
-		.fips = TRUE,
+		.fips = FALSE, /* SP 800-56A rev 3 */
 	},
 	.group = OAKLEY_GROUP_DH23,
 	.gen = MODP_GENERATOR_DH23,
@@ -278,7 +279,7 @@ const struct dh_desc ike_alg_dh_dh24 = {
 			[IKEv1_ESP_ID] = OAKLEY_GROUP_DH24,
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_DH24,
 		},
-		.fips = TRUE,
+		.fips = FALSE, /* SP 800-56A rev 3 */
 	},
 	.group = OAKLEY_GROUP_DH24,
 	.gen = MODP_GENERATOR_DH24,
