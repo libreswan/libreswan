@@ -43,17 +43,17 @@ static enum lsw_fips_mode lsw_fips_system(void)
  * yes (1), no (0), unknown(-1)
  */
 #ifdef FIPS_CHECK
-static enum lsw_fips_mode lsw_fipsproduct(void)
+static enum lsw_fips_mode lsw_fips_product(struct logger *logger)
 {
 	if (access(FIPSPRODUCTCHECK, F_OK) != 0) {
 		if (errno == ENOENT || errno == ENOTDIR) {
 			return LSW_FIPS_OFF;
-		} else {
-			loglog(RC_LOG_SERIOUS,
-				"FIPS ABORT: FIPS product check failed to determine status for %s: %d: %s",
-				FIPSPRODUCTCHECK, errno, strerror(errno));
-			return LSW_FIPS_UNKNOWN;
 		}
+
+		log_message(RC_LOG_SERIOUS, logger,
+			    "FIPS ABORT: FIPS product check failed to determine status for %s "PRI_ERRNO,
+			    FIPSPRODUCTCHECK, pri_errno(errno));
+		return LSW_FIPS_UNKNOWN;
 	}
 	return LSW_FIPS_ON;
 }
@@ -84,7 +84,7 @@ enum lsw_fips_mode lsw_get_fips_mode(struct logger *logger)
 	}
 
 #ifdef FIPS_CHECK
-	enum lsw_fips_mode product = lsw_fipsproduct();
+	enum lsw_fips_mode product = lsw_fips_product(logger);
 #endif
 	enum lsw_fips_mode system = lsw_fips_system();
 
