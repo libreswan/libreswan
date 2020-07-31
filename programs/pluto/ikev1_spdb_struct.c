@@ -1080,8 +1080,8 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 
 	/* DOI */
 	if (sa->isasa_doi != ISAKMP_DOI_IPSEC) {
-		loglog(RC_LOG_SERIOUS, "Unknown/unsupported DOI %s",
-		       enum_show(&doi_names, sa->isasa_doi));
+		log_state(RC_LOG_SERIOUS, st, "Unknown/unsupported DOI %s",
+			    enum_show(&doi_names, sa->isasa_doi));
 		/* XXX Could send notification back */
 		return DOI_NOT_SUPPORTED;	/* reject whole SA */
 	}
@@ -1093,8 +1093,8 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 		return SITUATION_NOT_SUPPORTED;	/* reject whole SA */
 
 	if (ipsecdoisit != SIT_IDENTITY_ONLY) {
-		loglog(RC_LOG_SERIOUS, "unsupported IPsec DOI situation (%s)",
-		       bitnamesof(sit_bit_names, ipsecdoisit));
+		log_state(RC_LOG_SERIOUS, st, "unsupported IPsec DOI situation (%s)",
+			  bitnamesof(sit_bit_names, ipsecdoisit));
 		/* XXX Could send notification back */
 		return SITUATION_NOT_SUPPORTED;	/* reject whole SA */
 	}
@@ -1113,16 +1113,16 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 	}
 
 	if (proposal.isap_pnp != ISAKMP_NEXT_NONE) {
-		loglog(RC_LOG_SERIOUS,
-		       "Proposal Payload must be alone in Oakley SA; found %s following Proposal",
-		       enum_show(&ikev1_payload_names, proposal.isap_pnp));
+		log_state(RC_LOG_SERIOUS, st,
+			  "Proposal Payload must be alone in Oakley SA; found %s following Proposal",
+			  enum_show(&ikev1_payload_names, proposal.isap_pnp));
 		return PAYLOAD_MALFORMED;	/* reject whole SA */
 	}
 
 	if (proposal.isap_protoid != PROTO_ISAKMP) {
-		loglog(RC_LOG_SERIOUS,
-		       "unexpected Protocol ID (%s) found in Oakley Proposal",
-		       enum_show(&ikev1_protocol_names, proposal.isap_protoid));
+		log_state(RC_LOG_SERIOUS, st,
+			  "unexpected Protocol ID (%s) found in Oakley Proposal",
+			  enum_show(&ikev1_protocol_names, proposal.isap_protoid));
 		return INVALID_PROTOCOL_ID;	/* reject whole SA */
 	}
 
@@ -1153,21 +1153,21 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 	} else if (proposal.isap_spisize <= MAX_ISAKMP_SPI_SIZE) {
 		u_char junk_spi[MAX_ISAKMP_SPI_SIZE];
 
-		if (!in_raw(junk_spi, proposal.isap_spisize, &proposal_pbs,
-			    "Oakley SPI")) {
+		if (!pbs_in_raw(&proposal_pbs, junk_spi, proposal.isap_spisize,
+				"Oakley SPI", st->st_logger)) {
 			return PAYLOAD_MALFORMED;	/* reject whole SA */
 		}
 	} else {
-		loglog(RC_LOG_SERIOUS,
-		       "invalid SPI size (%u) in Oakley Proposal",
-		       (unsigned)proposal.isap_spisize);
+		log_state(RC_LOG_SERIOUS, st,
+			  "invalid SPI size (%u) in Oakley Proposal",
+			  (unsigned)proposal.isap_spisize);
 		return INVALID_SPI;	/* reject whole SA */
 	}
 
 	if (selection && proposal.isap_notrans != 1) {
-		loglog(RC_LOG_SERIOUS,
-		       "a single Transform is required in a selecting Oakley Proposal; found %u",
-		       (unsigned)proposal.isap_notrans);
+		log_state(RC_LOG_SERIOUS, st,
+			  "a single Transform is required in a selecting Oakley Proposal; found %u",
+			  (unsigned)proposal.isap_notrans);
 		return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 	}
 
@@ -1178,8 +1178,8 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 
 	for (;;) {
 		if (no_trans_left == 0) {
-			loglog(RC_LOG_SERIOUS,
-			       "number of Transform Payloads disagrees with Oakley Proposal Payload");
+			log_state(RC_LOG_SERIOUS, st,
+				  "number of Transform Payloads disagrees with Oakley Proposal Payload");
 			return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 		}
 
@@ -1200,17 +1200,17 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 
 		if (trans.isat_transnum <= last_transnum) {
 			/* picky, picky, picky */
-			loglog(RC_LOG_SERIOUS,
-				"Transform Numbers are not monotonically increasing in Oakley Proposal");
+			log_state(RC_LOG_SERIOUS, st,
+				  "Transform Numbers are not monotonically increasing in Oakley Proposal");
 			return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 		}
 		last_transnum = trans.isat_transnum;
 
 		if (trans.isat_transid != KEY_IKE) {
-			loglog(RC_LOG_SERIOUS,
-			       "expected KEY_IKE but found %s in Oakley Transform",
-			       enum_show(&isakmp_transformid_names,
-					 trans.isat_transid));
+			log_state(RC_LOG_SERIOUS, st,
+				  "expected KEY_IKE but found %s in Oakley Transform",
+				  enum_show(&isakmp_transformid_names,
+					    trans.isat_transid));
 			return INVALID_TRANSFORM_ID;	/* reject whole SA */
 		}
 
@@ -1219,17 +1219,26 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 
 		/* process all the attributes that make up the transform */
 
-		lset_t seen_attrs = LEMPTY,
-		       seen_durations = LEMPTY;
-		err_t ugh = NULL;       /* set to diagnostic when attr problem detected */
+		lset_t seen_attrs = LEMPTY;
+		lset_t seen_durations = LEMPTY;
+		bool ok = true;
+#define UGH(FMT, ...)							\
+		{							\
+			ok = false;					\
+			log_state(RC_LOG_SERIOUS, st,			\
+				  FMT".  Attribute %s",			\
+				  ##__VA_ARGS__,			\
+				  enum_show(&oakley_attr_names, a.isaat_af_type)); \
+		}
 
 		while (pbs_left(&trans_pbs) >= isakmp_oakley_attribute_desc.size) {
 			struct isakmp_attribute a;
 			pb_stream attr_pbs;
 			uint32_t val; /* room for larger values */
 
-			if (!in_struct(&a, &isakmp_oakley_attribute_desc,
-				       &trans_pbs, &attr_pbs)) {
+			if (!pbs_in_struct(&trans_pbs, &a, sizeof(a),
+					   &isakmp_oakley_attribute_desc,
+					   &attr_pbs, st->st_logger)) {
 				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 
@@ -1238,11 +1247,11 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 
 			if (LHAS(seen_attrs, a.isaat_af_type &
 				 ISAKMP_ATTR_RTYPE_MASK)) {
-				loglog(RC_LOG_SERIOUS,
-				       "repeated %s attribute in Oakley Transform %u",
-				       enum_show(&oakley_attr_names,
-						 a.isaat_af_type),
-				       trans.isat_transnum);
+				log_state(RC_LOG_SERIOUS, st,
+					  "repeated %s attribute in Oakley Transform %u",
+					  enum_show(&oakley_attr_names,
+						    a.isaat_af_type),
+					  trans.isat_transnum);
 				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 
@@ -1274,9 +1283,8 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 			{
 				const struct encrypt_desc *encrypter = ikev1_get_ike_encrypt_desc(val);
 				if (encrypter == NULL) {
-					ugh = builddiag("%s is not supported",
-							enum_show(&oakley_enc_names,
-								  val));
+					UGH("%s is not supported",
+					    enum_show(&oakley_enc_names, val));
 					break;
 				}
 				ta.ta_encrypt = encrypter;
@@ -1287,9 +1295,8 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 			case OAKLEY_HASH_ALGORITHM | ISAKMP_ATTR_AF_TV:
 				ta.ta_prf = ikev1_get_ike_prf_desc(val);
 				if (ta.ta_prf == NULL) {
-					ugh = builddiag("%s is not supported",
-							enum_show(&oakley_hash_names,
-								  val));
+					UGH("%s is not supported",
+					    enum_show(&oakley_hash_names, val));
 				}
 				break;
 
@@ -1302,9 +1309,8 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 				switch (val) {
 				case XAUTHInitPreShared:
 					if (!xauth_init) {
-						ugh = builddiag(
-							"policy does not allow Extended Authentication (XAUTH) of initiator (we are %s)",
-							role);
+						UGH("policy does not allow Extended Authentication (XAUTH) of initiator (we are %s)",
+						    role);
 						break;
 					}
 					ta.doing_xauth = TRUE;
@@ -1312,9 +1318,8 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 
 				case XAUTHRespPreShared:
 					if (!xauth_resp) {
-						ugh = builddiag(
-							"policy does not allow Extended Authentication (XAUTH) of responder (we are %s)",
-							role);
+						UGH("policy does not allow Extended Authentication (XAUTH) of responder (we are %s)",
+						    role);
 						break;
 					}
 					ta.doing_xauth = TRUE;
@@ -1322,21 +1327,19 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 
 				case OAKLEY_PRESHARED_KEY:
 					if (xauth_init) {
-						ugh = builddiag(
-							"policy mandates Extended Authentication (XAUTH) with PSK of initiator (we are %s)",
-							role);
+						UGH("policy mandates Extended Authentication (XAUTH) with PSK of initiator (we are %s)",
+						    role);
 						break;
 					}
 					if (xauth_resp) {
-						ugh = builddiag(
-							"policy mandates Extended Authentication (XAUTH) with PSK of responder (we are %s)",
-							role);
+						UGH("policy mandates Extended Authentication (XAUTH) with PSK of responder (we are %s)",
+						    role);
 						break;
 					}
 psk_common:
 
 					if ((iap & POLICY_PSK) == LEMPTY) {
-						ugh = "policy does not allow OAKLEY_PRESHARED_KEY authentication";
+						UGH("policy does not allow OAKLEY_PRESHARED_KEY authentication");
 					} else {
 						/* check that we can find a proper preshared secret */
 						pss = get_psk(c, st->st_logger);
@@ -1346,12 +1349,11 @@ psk_common:
 							id_buf mid;
 							id_buf hid;
 
-							ugh = builddiag(
-								"Can't authenticate: no preshared key found for `%s' and `%s'",
-								str_id(&c->spd.this.id, &mid),
-								remote_id_was_instantiated(c) ?
-									"%any" :
-									str_id(&c->spd.that.id, &hid));
+							UGH("Can't authenticate: no preshared key found for `%s' and `%s'",
+							    str_id(&c->spd.this.id, &mid),
+							    remote_id_was_instantiated(c) ?
+							    "%any" :
+							    str_id(&c->spd.that.id, &hid));
 						} else {
 							DBG(DBG_PRIVATE, DBG_dump_hunk("User PSK:", *pss));
 						}
@@ -1361,9 +1363,8 @@ psk_common:
 
 				case XAUTHInitRSA:
 					if (!xauth_init) {
-						ugh = builddiag(
-							"policy does not allow Extended Authentication (XAUTH) with RSA of initiator (we are %s)",
-							role);
+						UGH("policy does not allow Extended Authentication (XAUTH) with RSA of initiator (we are %s)",
+						    role);
 						break;
 					}
 					ta.doing_xauth = TRUE;
@@ -1371,9 +1372,8 @@ psk_common:
 
 				case XAUTHRespRSA:
 					if (!xauth_resp) {
-						ugh = builddiag(
-							"policy does not allow Extended Authentication (XAUTH) with RSA of responder (we are %s)",
-							role);
+						UGH("policy does not allow Extended Authentication (XAUTH) with RSA of responder (we are %s)",
+						    role);
 						break;
 					}
 					ta.doing_xauth = TRUE;
@@ -1381,21 +1381,19 @@ psk_common:
 
 				case OAKLEY_RSA_SIG:
 					if (xauth_init) {
-						ugh = builddiag(
-							"policy mandates Extended Authentication (XAUTH) with RSA of initiator (we are %s)",
-							role);
+						UGH("policy mandates Extended Authentication (XAUTH) with RSA of initiator (we are %s)",
+						    role);
 						break;
 					}
 					if (xauth_resp) {
-						ugh = builddiag(
-							"policy mandates Extended Authentication (XAUTH) with RSA of responder (we are %s)",
-							role);
+						UGH("policy mandates Extended Authentication (XAUTH) with RSA of responder (we are %s)",
+						    role);
 						break;
 					}
 rsasig_common:
 					/* Accept if policy specifies RSASIG or is default */
 					if ((iap & POLICY_RSASIG) == LEMPTY) {
-						ugh = "policy does not allow OAKLEY_RSA_SIG authentication";
+						UGH("policy does not allow OAKLEY_RSA_SIG authentication");
 					} else {
 						/* We'd like to check
 						 * that we can find a
@@ -1419,10 +1417,8 @@ rsasig_common:
 					break;
 
 				default:
-					ugh = builddiag(
-						"Pluto does not support %s authentication",
-						enum_show(&oakley_auth_names,
-							  val));
+					UGH("Pluto does not support %s authentication",
+					    enum_show(&oakley_auth_names, val));
 					break;
 				}
 			}
@@ -1431,9 +1427,7 @@ rsasig_common:
 			case OAKLEY_GROUP_DESCRIPTION | ISAKMP_ATTR_AF_TV:
 				ta.ta_dh = ikev1_get_ike_dh_desc(val);
 				if (ta.ta_dh == NULL) {
-					ugh = builddiag(
-						"OAKLEY_GROUP %d not supported",
-						val);
+					UGH("OAKLEY_GROUP %d not supported", val);
 					break;
 				}
 				break;
@@ -1443,19 +1437,17 @@ rsasig_common:
 				case OAKLEY_LIFE_SECONDS:
 				case OAKLEY_LIFE_KILOBYTES:
 					if (LHAS(seen_durations, val)) {
-						loglog(RC_LOG_SERIOUS,
-						       "attribute OAKLEY_LIFE_TYPE value %s repeated",
-						       enum_show(&oakley_lifetime_names,
-								 val));
+						log_state(RC_LOG_SERIOUS, st,
+							  "attribute OAKLEY_LIFE_TYPE value %s repeated",
+							  enum_show(&oakley_lifetime_names, val));
 						return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 					}
 					seen_durations |= LELEM(val);
 					life_type = val;
 					break;
 				default:
-					ugh = builddiag("unknown value %s",
-							enum_show(&oakley_lifetime_names,
-								  val));
+					UGH("unknown value %s",
+					    enum_show(&oakley_lifetime_names, val));
 					break;
 				}
 				break;
@@ -1465,7 +1457,7 @@ rsasig_common:
 				/* FALL THROUGH */
 			case OAKLEY_LIFE_DURATION | ISAKMP_ATTR_AF_TV:
 				if (!LHAS(seen_attrs, OAKLEY_LIFE_TYPE)) {
-					ugh = "OAKLEY_LIFE_DURATION attribute not preceded by OAKLEY_LIFE_TYPE attribute";
+					UGH("OAKLEY_LIFE_DURATION attribute not preceded by OAKLEY_LIFE_TYPE attribute");
 					break;
 				}
 				seen_attrs &=
@@ -1474,10 +1466,10 @@ rsasig_common:
 
 				switch (life_type) {
 				case OAKLEY_LIFE_SECONDS:
-					if (val > IKE_SA_LIFETIME_MAXIMUM)
-					{
-						libreswan_log("warning: peer requested IKE lifetime of %" PRIu32 " seconds which we capped at our limit of %d seconds",
-							val, IKE_SA_LIFETIME_MAXIMUM);
+					if (val > IKE_SA_LIFETIME_MAXIMUM) {
+						log_state(RC_LOG, st,
+							  "warning: peer requested IKE lifetime of %" PRIu32 " seconds which we capped at our limit of %d seconds",
+							  val, IKE_SA_LIFETIME_MAXIMUM);
 						val = IKE_SA_LIFETIME_MAXIMUM;
 					}
 					ta.life_seconds = deltatime(val);
@@ -1492,12 +1484,12 @@ rsasig_common:
 
 			case OAKLEY_KEY_LENGTH | ISAKMP_ATTR_AF_TV:
 				if (!LHAS(seen_attrs, OAKLEY_ENCRYPTION_ALGORITHM)) {
-					ugh = "OAKLEY_KEY_LENGTH attribute not preceded by OAKLEY_ENCRYPTION_ALGORITHM attribute";
+					UGH("OAKLEY_KEY_LENGTH attribute not preceded by OAKLEY_ENCRYPTION_ALGORITHM attribute");
 					break;
 				}
 				/* because the encrypt algorithm wasn't valid? */
 				if (ta.ta_encrypt == NULL) {
-					ugh = "NULL encrypter with seen OAKLEY_ENCRYPTION_ALGORITHM";
+					UGH("NULL encrypter with seen OAKLEY_ENCRYPTION_ALGORITHM");
 					break;
 				}
 				/*
@@ -1505,7 +1497,7 @@ rsasig_common:
 				 * with specified ike_proposals.
 				 */
 				if (!encrypt_has_key_bit_length(ta.ta_encrypt, val)) {
-					ugh = "peer proposed key_len not valid for encrypt algo setup specified";
+					UGH("peer proposed key_len not valid for encrypt algo setup specified");
 					break;
 				}
 
@@ -1513,15 +1505,11 @@ rsasig_common:
 				break;
 
 			default:
-				ugh = "unsupported OAKLEY attribute";
+				UGH("unsupported OAKLEY attribute");
 				break;
 			}
 
-			if (ugh != NULL) {
-				loglog(RC_LOG_SERIOUS, "%s.  Attribute %s",
-				       ugh,
-				       enum_show(&oakley_attr_names,
-						 a.isaat_af_type));
+			if (!ok) {
 				break;
 			}
 		}
@@ -1533,9 +1521,7 @@ rsasig_common:
 		 * to reject this transform and to move on to next (if any).
 		 */
 
-		do {
-			if (ugh != NULL)
-				break;	/* reject transform */
+		while (ok) {
 
 			if ((st->st_policy & POLICY_PSK) &&
 			    pss != &empty_chunk &&
@@ -1545,19 +1531,20 @@ rsasig_common:
 
 				if (pss->len < key_size_min) {
 					if (libreswan_fipsmode()) {
-						loglog(RC_LOG_SERIOUS,
-							"FIPS Error: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
-							st->st_connection->name,
-							pss->len,
-							ta.ta_prf->common.fqn,
-							key_size_min);
+						log_state(RC_LOG_SERIOUS, st,
+							  "FIPS Error: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
+							  st->st_connection->name,
+							  pss->len,
+							  ta.ta_prf->common.fqn,
+							  key_size_min);
 						break;	/* reject transform */
 					} else {
-						libreswan_log("WARNING: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
-							st->st_connection->name,
-							pss->len,
-							ta.ta_prf->common.fqn,
-							key_size_min);
+						log_state(RC_LOG, st,
+							  "WARNING: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
+							  st->st_connection->name,
+							  pss->len,
+							  ta.ta_prf->common.fqn,
+							  key_size_min);
 					}
 				}
 			}
@@ -1583,11 +1570,10 @@ rsasig_common:
 					 LELEM(OAKLEY_GROUP_DESCRIPTION));
 
 				if (missing) {
-					loglog(RC_LOG_SERIOUS,
-					       "missing mandatory attribute(s) %s in Oakley Transform %u",
-					       bitnamesof(oakley_attr_bit_names,
-							  missing),
-					       trans.isat_transnum);
+					log_state(RC_LOG_SERIOUS, st,
+						  "missing mandatory attribute(s) %s in Oakley Transform %u",
+						  bitnamesof(oakley_attr_bit_names, missing),
+						  trans.isat_transnum);
 					return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 				}
 			}
@@ -1639,7 +1625,7 @@ rsasig_common:
 			/* copy over the results */
 			st->st_oakley = ta;
 			return NOTHING_WRONG;	/* accept SA */
-		} while (FALSE);
+		}
 
 		/* transform rejected: on to next transform */
 
@@ -1647,20 +1633,20 @@ rsasig_common:
 
 		if (trans.isat_tnp == ISAKMP_NEXT_NONE) {
 			if (no_trans_left != 0) {
-				loglog(RC_LOG_SERIOUS,
-				       "number of Transform Payloads disagrees with Oakley Proposal Payload");
+				log_state(RC_LOG_SERIOUS, st,
+					  "number of Transform Payloads disagrees with Oakley Proposal Payload");
 				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 			break;
 		}
 		if (trans.isat_tnp != ISAKMP_NEXT_T) {
-			loglog(RC_LOG_SERIOUS,
-			       "unexpected %s payload in Oakley Proposal",
-			       enum_show(&ikev1_payload_names, proposal.isap_pnp));
+			log_state(RC_LOG_SERIOUS, st,
+				  "unexpected %s payload in Oakley Proposal",
+				  enum_show(&ikev1_payload_names, proposal.isap_pnp));
 			return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 		}
 	}
-	loglog(RC_LOG_SERIOUS, "no acceptable Oakley Transform");
+	log_state(RC_LOG_SERIOUS, st, "no acceptable Oakley Transform");
 	return NO_PROPOSAL_CHOSEN;	/* reject whole SA */
 }
 
