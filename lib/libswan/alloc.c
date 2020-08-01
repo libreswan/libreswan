@@ -163,7 +163,7 @@ void pfree(void *ptr)
 	}
 }
 
-void report_leaks(void)
+void report_leaks(struct logger *logger)
 {
 	union mhdr *p,
 		*pprev = NULL;
@@ -185,11 +185,11 @@ void report_leaks(void)
 			/* filter out one-time leaks we prefer to not fix */
 			if (strstr(pprev->i.name, "(ignore)") == NULL) {
 				if (n != 1)
-					libreswan_log("leak: %lu * %s, item size: %lu",
-						n, pprev->i.name, pprev->i.size);
+					log_message(RC_LOG, logger, "leak: %lu * %s, item size: %lu",
+						    n, pprev->i.name, pprev->i.size);
 				else
-					libreswan_log("leak: %s, item size: %lu",
-						pprev->i.name, pprev->i.size);
+					log_message(RC_LOG, logger, "leak: %s, item size: %lu",
+						    pprev->i.name, pprev->i.size);
 				numleaks += n;
 				total += pprev->i.size;
 				n = 0;
@@ -200,11 +200,12 @@ void report_leaks(void)
 	}
 	pthread_mutex_unlock(&leak_detective_mutex);
 
-	if (numleaks != 0)
-		libreswan_log("leak detective found %lu leaks, total size %lu",
-			numleaks, total);
-	else
-		libreswan_log("leak detective found no leaks");
+	if (numleaks != 0) {
+		log_message(RC_LOG, logger, "leak detective found %lu leaks, total size %lu",
+			    numleaks, total);
+	} else {
+		log_message(RC_LOG, logger, "leak detective found no leaks");
+	}
 }
 
 static void *zalloc(size_t size)

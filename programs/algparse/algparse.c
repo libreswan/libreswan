@@ -647,7 +647,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	report_leaks();
+	report_leaks(&progname_logger);
 
 	lsw_nss_shutdown();
 

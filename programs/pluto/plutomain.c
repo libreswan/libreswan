@@ -1815,8 +1815,10 @@ volatile bool exiting_pluto = false;
  */
 void exit_pluto(enum pluto_exit_code status)
 {
-	/* now whack; right? */
+	/* now whack; right? XXX: yes, but why? */
 	struct fd *whackfd = null_fd;
+	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
+
 	/*
 	 * Tell the world, well actually all the threads, that pluto
 	 * is exiting and they should quit.  Even if pthread_cancel()
@@ -1894,8 +1896,9 @@ void exit_pluto(enum pluto_exit_code status)
 #endif
 
 	/* report memory leaks now, after all free_* calls */
-	if (leak_detective)
-		report_leaks();
+	if (leak_detective) {
+		report_leaks(logger);
+	}
 	close_log();	/* close the logfiles */
 #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_EXIT, status);

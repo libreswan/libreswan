@@ -8,6 +8,7 @@
 #include "lswtool.h"
 #include "jambuf.h"
 #include "passert.h"
+#include "lswlog.h"	/* for progname_logger */
 
 #define PREFIX "         "
 
@@ -364,6 +365,6 @@ int main(int argc UNUSED, char *argv[])
 	test_enum_lset("debug", &debug_names, DBG_CRYPT|DBG_CPU_USAGE);
 	printf("\n");
 
-	report_leaks();
+	report_leaks(&progname_logger);
 	exit(errors > 0 ? 1 : 0);
 }
