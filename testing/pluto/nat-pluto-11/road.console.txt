@@ -16,7 +16,7 @@ road #
  echo "initdone"
 initdone
 road #
- # Should show "ESP" and not "ESP/NAT"
+ # Should show "ESP" and not "ESPinUDP"
 road #
  ipsec whack --name road-eastnet-nonat --initiate
 002 "road-eastnet-nonat" #1: initiating Main Mode

@@ -36,7 +36,7 @@ road #
 004 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev1" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet-ipv4-psk-ikev1" #2: STATE_QUICK_I1: sent QI1, expecting QR1
-004 "westnet-eastnet-ipv4-psk-ikev1" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive username=use3}
+004 "westnet-eastnet-ipv4-psk-ikev1" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive username=use3}
 road #
  ping -n -c 2 -I 192.0.2.1 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.0.2.1 : 56(84) bytes of data.
@@ -90,7 +90,7 @@ road #
 004 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev1" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet-ipv4-psk-ikev1" #2: STATE_QUICK_I1: sent QI1, expecting QR1
-004 "westnet-eastnet-ipv4-psk-ikev1" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive username=use3}
+004 "westnet-eastnet-ipv4-psk-ikev1" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive username=use3}
 road #
  # should not fail to ping
 road #

@@ -30,7 +30,7 @@ north #
 004 "north-east" #1: STATE_MAIN_I4: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "north-east" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
 1v1 "north-east" #2: STATE_QUICK_I1: sent QI1, expecting QR1
-004 "north-east" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive username=use1}
+004 "north-east" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive username=use1}
 north #
  ../../pluto/bin/ping-once.sh --up -I 192.0.2.101 192.0.2.254
 up
