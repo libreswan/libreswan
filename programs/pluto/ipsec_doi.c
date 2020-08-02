@@ -547,12 +547,11 @@ void lswlog_child_sa_established(struct jambuf *buf, struct state *st)
 		dbg("NAT-T: encaps is '%s'",
 		     c->encaps == yna_auto ? "auto" : bool_str(c->encaps == yna_yes));
 
-		jam(buf, "%sESP%s%s%s%s=>0x%08" PRIx32 " <0x%08" PRIx32 "",
+		jam(buf, "%sESP%s%s%s=>0x%08" PRIx32 " <0x%08" PRIx32 "",
 			ini,
-			nat ? "/NAT" : "",
+			nat ? (tcp ? "inTCP" : "inUDP") : "",
 			esn ? "/ESN" : "",
 			tfc ? "/TFC" : "",
-			tcp ? "/TCP" : "",
 			ntohl(st->st_esp.attrs.spi),
 			ntohl(st->st_esp.our_spi));
 		jam(buf, " xfrm=%s", st->st_esp.attrs.transattrs.ta_encrypt->common.fqn);
