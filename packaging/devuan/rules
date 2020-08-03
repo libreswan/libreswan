@@ -1,0 +1,66 @@
+#!/usr/bin/make -f
+
+include /usr/share/dpkg/default.mk
+
+%:
+	dh $@ 
+
+# this should track the definition of USERCOMPILE in mk/userland-cflags.mk:43
+# but without -fstack-protector-all for arches that lack stack-protector
+ifneq (,$(filter $(DEB_HOST_ARCH), hppa alpha))
+export USERCOMPILE = -fexceptions -fno-strict-aliasing -fPIE -DPIE
+endif
+
+ifeq ($(DEB_HOST_ARCH_OS),linux)
+  ENABLE_SELINUX = USE_LABELED_IPSEC=true USE_LINUX_AUDIT=true
+  ENABLE_LIBCAP_NG = USE_LIBCAP_NG=true
+else
+  ENABLE_SELINUX = USE_LABELED_IPSEC=false USE_LINUX_AUDIT=false
+  ENABLE_LIBCAP_NG = USE_LIBCAP_NG=false
+endif
+
+# Distribution & Release sepcfic config option.
+DISTRO_CONF =
+DISTRO_CONF += $(shell grep -qE 'jessie|stretch|xenial' /etc/os-release && echo USE_DNSSEC=false)
+DISTRO_CONF += $(shell grep -qE 'jessie|xenial' /etc/os-release && echo USE_GLIBC_KERN_FLIP_HEADERS=true)
+DISTRO_CONF += $(shell grep -qE 'bionic|cosmic|jessie|stretch|xenial' /etc/os-release && echo USE_NSS_IPSEC_PROFILE=false)
+DISTRO_CONF += $(shell grep -qE 'jessie|stretch|xenial' /etc/os-release && echo USE_NSS_AVA_COPY=true)
+DISTRO_CONF += $(shell grep -qE 'jessie|stretch' /etc/os-release && echo USE_DH31=false)
+DISTRO_CONF += $(shell grep -qE 'cosmic|jessie|xenial' /etc/os-release && echo USE_XFRM_INTERFACE=false)
+DISTRO_CONF += $(shell grep -qE 'bionic|stretch' /etc/os-release && echo USE_XFRM_INTERFACE_IFLA_HEADER=true)
+DISTRO_CONF += $(shell grep -qE 'jessie|stretch|xenial' /etc/os-release && echo 'WERROR_CFLAGS="-Werror -Wno-missing-field-initializers -Wno-error=address"')
+
+override_dh_auto_build:
+	dh_auto_build -- programs \
+		ARCH=$(DEB_HOST_ARCH) \
+		IPSECVERSION=$(DEB_VERSION_UPSTREAM_REVISION) \
+		PREFIX=/usr \
+		FINALLIBEXECDIR=/usr/libexec/ipsec \
+		FINALNSSDIR=/var/lib/ipsec/nss \
+		USE_LDAP=true \
+		USE_FIPSCHECK=false \
+		$(ENABLE_LIBCAP_NG) \
+		$(ENABLE_SELINUX) \
+		DEFAULT_DNSSEC_ROOTKEY_FILE=/usr/share/dns/root.key \
+		$(DISTRO_CONF)
+
+override_dh_auto_install-arch:
+	# Add here commands to install the package into debian/libreswan
+	$(MAKE) install \
+		ARCH=$(DEB_HOST_ARCH) \
+		IPSECVERSION=$(DEB_VERSION_UPSTREAM_REVISION) \
+		PREFIX=/usr \
+		FINALLIBEXECDIR=/usr/libexec/ipsec \
+		FINALNSSDIR=/var/lib/ipsec/nss \
+		USE_LDAP=true \
+		USE_FIPSCHECK=false \
+		$(ENABLE_LIBCAP_NG) \
+		$(ENABLE_SELINUX) \
+		DESTDIR=$(CURDIR)/debian/libreswan \
+		$(DISTRO_CONF)
+
+override_dh_auto_test:
+	 echo "Skip dh_auto_test"
+
+override_dh_strip:
+	dh_strip --dbg-package=libreswan-dbg

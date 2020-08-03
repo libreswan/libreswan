@@ -186,7 +186,11 @@ showobjdir:
 .PHONY: deb-prepare
 DEBIPSECBASEVERSION=$(shell make -s showdebversion)
 deb-prepare:
-	cp -r packaging/debian .
+	if [ -f /etc/devuan_version ]; then \
+		cp -r packaging/devuan debian; \
+	else \
+		cp -r packaging/debian .; \
+	fi
 	cat debian/changelog
 	grep "IPSECBASEVERSION" debian/changelog && \
 		sed -i "s/@IPSECBASEVERSION@/$(DEBIPSECBASEVERSION)/g" debian/changelog || \

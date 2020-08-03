@@ -1,0 +1,12 @@
+pluto.*: deleting state
+pluto.*: forgetting secrets
+pluto.*: shutting down
+pluto.*: \|
+pluto.*:   .* bytes loaded
+pluto.*:   including X\.509 patch
+pluto.*: Loading my X\.509 certificate
+pluto.*: Starting pluto
+pluto.*: adding interface
+pluto.*: listening for IKE messages
+pluto.*: loading secrets
+pluto.*: regenerating DH private secret
