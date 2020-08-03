@@ -37,10 +37,10 @@ road #
 003 "road-eastnet-psk" #1: IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's
 003 "road-eastnet-psk" #1: multiple DH groups in aggressive mode can cause interop failure
 003 "road-eastnet-psk" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
-002 "road-eastnet-psk" #1: initiating Aggressive Mode
+002 "road-eastnet-psk" #1: initiating IKEv1 Aggressive Mode connection
 003 "road-eastnet-psk" #1: multiple DH groups in aggressive mode can cause interop failure
 003 "road-eastnet-psk" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
-1v1 "road-eastnet-psk" #1: STATE_AGGR_I1: sent AI1, expecting AR1
+1v1 "road-eastnet-psk" #1: sent Aggressive Mode request
 002 "road-eastnet-psk" #1: Peer ID is ID_FQDN: '@east'
 002 "road-eastnet-psk" #1: Peer ID is ID_FQDN: '@east'
 003 "road-eastnet-psk" #1: received Hash Payload does not match computed value

@@ -17,11 +17,11 @@ initdone
 north #
  ipsec auto --up northnet-eastnet
 003 "northnet-eastnet" #1: IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's
-002 "northnet-eastnet" #1: initiating Aggressive Mode
-1v1 "northnet-eastnet" #1: STATE_AGGR_I1: sent AI1, expecting AR1
+002 "northnet-eastnet" #1: initiating IKEv1 Aggressive Mode connection
+1v1 "northnet-eastnet" #1: sent Aggressive Mode request
 002 "northnet-eastnet" #1: Peer ID is ID_FQDN: '@east'
 002 "northnet-eastnet" #1: Peer ID is ID_FQDN: '@east'
-004 "northnet-eastnet" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+004 "northnet-eastnet" #1: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "northnet-eastnet" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
 1v1 "northnet-eastnet" #2: sent Quick Mode request
 004 "northnet-eastnet" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}

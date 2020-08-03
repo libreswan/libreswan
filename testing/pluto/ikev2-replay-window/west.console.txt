@@ -27,7 +27,7 @@ west #
 initdone
 west #
  ipsec auto --up westnet-eastnet-default
-1v2 "westnet-eastnet-default" #1: initiating IKEv2 IKE SA
+1v2 "westnet-eastnet-default" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-default" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-default" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "westnet-eastnet-default" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
@@ -51,7 +51,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --up westnet-eastnet-zero
-1v2 "westnet-eastnet-zero" #1: initiating IKEv2 IKE SA
+1v2 "westnet-eastnet-zero" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-zero" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-zero" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "westnet-eastnet-zero" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
@@ -77,7 +77,7 @@ west #
  # there is a kernel bug in deplaying "new style" replay-window?
 west #
  ipsec auto --up westnet-eastnet-64
-1v2 "westnet-eastnet-64" #1: initiating IKEv2 IKE SA
+1v2 "westnet-eastnet-64" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-64" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-64" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "westnet-eastnet-64" #2: IKEv2 mode peer ID is ID_FQDN: '@east'

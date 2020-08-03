@@ -19,9 +19,9 @@ west #
  # this should succeed
 west #
  ipsec auto --up san
-002 "san" #1: initiating Aggressive Mode
+002 "san" #1: initiating IKEv1 Aggressive Mode connection
 002 "san" #1: I am sending a certificate request
-1v1 "san" #1: STATE_AGGR_I1: sent AI1, expecting AR1
+1v1 "san" #1: sent Aggressive Mode request
 002 "san" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 002 "san" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 003 "san" #1: ID_DER_ASN1_DN 'E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA' does not match expected 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=NOTeast.testing.libreswan.org, E=user-east@testing.libreswan.org'

@@ -30,7 +30,7 @@ west #
 west #
  ../bin/libreswan-up-down.sh ike=chacha20poly1305-sha2-dh19 -I 192.0.1.254 192.0.2.254
 002 added connection description "ike=chacha20poly1305-sha2-dh19"
-1v2 "ike=chacha20poly1305-sha2-dh19" #1: initiating IKEv2 IKE SA
+1v2 "ike=chacha20poly1305-sha2-dh19" #1: initiating IKEv2 connection
 1v2 "ike=chacha20poly1305-sha2-dh19" #1: sent IKE_SA_INIT request
 1v2 "ike=chacha20poly1305-sha2-dh19" #1: sent IKE_AUTH request {auth=IKEv2 cipher=CHACHA20_POLY1305_256 integ=n/a prf=HMAC_SHA2_256 group=DH19}
 002 "ike=chacha20poly1305-sha2-dh19" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
@@ -46,7 +46,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  ../bin/libreswan-up-down.sh ike=aes128-sha2-dh19 -I 192.0.1.254 192.0.2.254
 002 added connection description "ike=aes128-sha2-dh19"
-1v2 "ike=aes128-sha2-dh19" #3: initiating IKEv2 IKE SA
+1v2 "ike=aes128-sha2-dh19" #3: initiating IKEv2 connection
 1v2 "ike=aes128-sha2-dh19" #3: sent IKE_SA_INIT request
 1v2 "ike=aes128-sha2-dh19" #3: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH19}
 002 "ike=aes128-sha2-dh19" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
@@ -62,7 +62,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  ../bin/libreswan-up-down.sh ike=aes128-sha2-dh20 -I 192.0.1.254 192.0.2.254
 002 added connection description "ike=aes128-sha2-dh20"
-1v2 "ike=aes128-sha2-dh20" #5: initiating IKEv2 IKE SA
+1v2 "ike=aes128-sha2-dh20" #5: initiating IKEv2 connection
 1v2 "ike=aes128-sha2-dh20" #5: sent IKE_SA_INIT request
 1v2 "ike=aes128-sha2-dh20" #5: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH20}
 002 "ike=aes128-sha2-dh20" #6: IKEv2 mode peer ID is ID_FQDN: '@east'
@@ -78,7 +78,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  ../bin/libreswan-up-down.sh ike=aes128-sha2-dh21 -I 192.0.1.254 192.0.2.254
 002 added connection description "ike=aes128-sha2-dh21"
-1v2 "ike=aes128-sha2-dh21" #7: initiating IKEv2 IKE SA
+1v2 "ike=aes128-sha2-dh21" #7: initiating IKEv2 connection
 1v2 "ike=aes128-sha2-dh21" #7: sent IKE_SA_INIT request
 1v2 "ike=aes128-sha2-dh21" #7: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH21}
 002 "ike=aes128-sha2-dh21" #8: IKEv2 mode peer ID is ID_FQDN: '@east'
@@ -94,7 +94,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  ../bin/libreswan-up-down.sh ike=aes128-sha1-dh19 -I 192.0.1.254 192.0.2.254
 002 added connection description "ike=aes128-sha1-dh19"
-1v2 "ike=aes128-sha1-dh19" #9: initiating IKEv2 IKE SA
+1v2 "ike=aes128-sha1-dh19" #9: initiating IKEv2 connection
 1v2 "ike=aes128-sha1-dh19" #9: sent IKE_SA_INIT request
 1v2 "ike=aes128-sha1-dh19" #9: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH19}
 002 "ike=aes128-sha1-dh19" #10: IKEv2 mode peer ID is ID_FQDN: '@east'
@@ -110,7 +110,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  ../bin/libreswan-up-down.sh ike=aes128-sha1-dh20 -I 192.0.1.254 192.0.2.254
 002 added connection description "ike=aes128-sha1-dh20"
-1v2 "ike=aes128-sha1-dh20" #11: initiating IKEv2 IKE SA
+1v2 "ike=aes128-sha1-dh20" #11: initiating IKEv2 connection
 1v2 "ike=aes128-sha1-dh20" #11: sent IKE_SA_INIT request
 1v2 "ike=aes128-sha1-dh20" #11: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH20}
 002 "ike=aes128-sha1-dh20" #12: IKEv2 mode peer ID is ID_FQDN: '@east'
@@ -126,7 +126,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  ../bin/libreswan-up-down.sh ike=aes128-sha1-dh21 -I 192.0.1.254 192.0.2.254
 002 added connection description "ike=aes128-sha1-dh21"
-1v2 "ike=aes128-sha1-dh21" #13: initiating IKEv2 IKE SA
+1v2 "ike=aes128-sha1-dh21" #13: initiating IKEv2 connection
 1v2 "ike=aes128-sha1-dh21" #13: sent IKE_SA_INIT request
 1v2 "ike=aes128-sha1-dh21" #13: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH21}
 002 "ike=aes128-sha1-dh21" #14: IKEv2 mode peer ID is ID_FQDN: '@east'
@@ -142,7 +142,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  ../bin/libreswan-up-down.sh ike=aes_ctr128-sha1-dh21 -I 192.0.1.254 192.0.2.254
 002 added connection description "ike=aes_ctr128-sha1-dh21"
-1v2 "ike=aes_ctr128-sha1-dh21" #15: initiating IKEv2 IKE SA
+1v2 "ike=aes_ctr128-sha1-dh21" #15: initiating IKEv2 connection
 1v2 "ike=aes_ctr128-sha1-dh21" #15: sent IKE_SA_INIT request
 1v2 "ike=aes_ctr128-sha1-dh21" #15: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CTR_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH21}
 002 "ike=aes_ctr128-sha1-dh21" #16: IKEv2 mode peer ID is ID_FQDN: '@east'
@@ -158,7 +158,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  ../bin/libreswan-up-down.sh ike=3des-sha2-modp2048 -I 192.0.1.254 192.0.2.254
 002 added connection description "ike=3des-sha2-modp2048"
-1v2 "ike=3des-sha2-modp2048" #17: initiating IKEv2 IKE SA
+1v2 "ike=3des-sha2-modp2048" #17: initiating IKEv2 connection
 1v2 "ike=3des-sha2-modp2048" #17: sent IKE_SA_INIT request
 1v2 "ike=3des-sha2-modp2048" #17: sent IKE_AUTH request {auth=IKEv2 cipher=3DES_CBC_192 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP2048}
 002 "ike=3des-sha2-modp2048" #18: IKEv2 mode peer ID is ID_FQDN: '@east'
@@ -174,7 +174,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  ../bin/libreswan-up-down.sh ike=aes128-aes_xcbc-modp2048 -I 192.0.1.254 192.0.2.254
 002 added connection description "ike=aes128-aes_xcbc-modp2048"
-1v2 "ike=aes128-aes_xcbc-modp2048" #19: initiating IKEv2 IKE SA
+1v2 "ike=aes128-aes_xcbc-modp2048" #19: initiating IKEv2 connection
 1v2 "ike=aes128-aes_xcbc-modp2048" #19: sent IKE_SA_INIT request
 1v2 "ike=aes128-aes_xcbc-modp2048" #19: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=AES_XCBC_96 prf=AES_XCBC group=MODP2048}
 002 "ike=aes128-aes_xcbc-modp2048" #20: IKEv2 mode peer ID is ID_FQDN: '@east'

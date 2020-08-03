@@ -28,7 +28,7 @@ west #
 initdone
 west #
  ipsec auto --up westnet-eastnet-ikev2
-1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 IKE SA
+1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_MD5_96 prf=HMAC_MD5 group=MODP1536}
 002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'

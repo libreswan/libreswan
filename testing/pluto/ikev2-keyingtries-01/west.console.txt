@@ -24,7 +24,7 @@ west #
  # keyingtries=1, 3s
 west #
  ipsec auto --up westnet-eastnet-k1
-1v2 "westnet-eastnet-k1" #1: initiating IKEv2 IKE SA
+1v2 "westnet-eastnet-k1" #1: initiating IKEv2 connection
 002 "westnet-eastnet-k1" #1: IMPAIR: omitting KE payload
 1v2 "westnet-eastnet-k1" #1: sent IKE_SA_INIT request
 003 "westnet-eastnet-k1" #1: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
@@ -42,7 +42,7 @@ west #
  # keyingtries=3, 9s
 west #
  ipsec auto --up westnet-eastnet-k3
-1v2 "westnet-eastnet-k3" #2: initiating IKEv2 IKE SA
+1v2 "westnet-eastnet-k3" #2: initiating IKEv2 connection
 002 "westnet-eastnet-k3" #2: IMPAIR: omitting KE payload
 1v2 "westnet-eastnet-k3" #2: sent IKE_SA_INIT request
 003 "westnet-eastnet-k3" #2: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
@@ -59,7 +59,7 @@ west #
  # keyingtries=0 (default, forever)
 west #
  ipsec auto --up westnet-eastnet
-1v2 "westnet-eastnet" #5: initiating IKEv2 IKE SA
+1v2 "westnet-eastnet" #5: initiating IKEv2 connection
 002 "westnet-eastnet" #5: IMPAIR: omitting KE payload
 1v2 "westnet-eastnet" #5: sent IKE_SA_INIT request
 003 "westnet-eastnet" #5: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni

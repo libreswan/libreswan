@@ -35,9 +35,9 @@ west #
 002 "westnet-eastnet-ikev1" #1: Peer ID is ID_FQDN: '@east'
 004 "westnet-eastnet-ikev1" #1: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
 002 "westnet-eastnet-ikev1" #1: XAUTH: Answering XAUTH challenge with user='use3'
-004 "westnet-eastnet-ikev1" #1: STATE_XAUTH_I1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+004 "westnet-eastnet-ikev1" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
 002 "westnet-eastnet-ikev1" #1: XAUTH: Successfully Authenticated
-004 "westnet-eastnet-ikev1" #1: STATE_XAUTH_I1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+004 "westnet-eastnet-ikev1" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
 002 "westnet-eastnet-ikev1" #1: modecfg: Sending IP request (MODECFG_I1)
 005 "westnet-eastnet-ikev1" #1: Received IPv4 address: 192.0.1.254/32
 004 "westnet-eastnet-ikev1" #1: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}

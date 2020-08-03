@@ -38,7 +38,7 @@ west #
  # expected to fail
 west #
  ipsec auto --up nss-cert-chain
-1v2 "nss-cert-chain" #1: initiating IKEv2 IKE SA
+1v2 "nss-cert-chain" #1: initiating IKEv2 connection
 1v2 "nss-cert-chain" #1: sent IKE_SA_INIT request
 1v2 "nss-cert-chain" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "nss-cert-chain" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED

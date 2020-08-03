@@ -15,14 +15,14 @@ north #
 initdone
 north #
  ipsec auto --up north-east
-002 "north-east" #1: initiating Aggressive Mode
+002 "north-east" #1: initiating IKEv1 Aggressive Mode connection
 002 "north-east" #1: I am sending a certificate request
-1v1 "north-east" #1: STATE_AGGR_I1: sent AI1, expecting AR1
+1v1 "north-east" #1: sent Aggressive Mode request
 002 "north-east" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 002 "north-east" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 003 "north-east" #1: authenticated using RSA with SHA-1
 002 "north-east" #1: I am sending my cert
-004 "north-east" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+004 "north-east" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
 002 "north-east" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
 1v1 "north-east" #2: sent Quick Mode request
 004 "north-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
@@ -52,14 +52,14 @@ north #
 002 added connection description "north-east"
 north #
  ipsec auto --up north-east
-002 "north-east" #1: initiating Aggressive Mode
+002 "north-east" #1: initiating IKEv1 Aggressive Mode connection
 002 "north-east" #1: I am sending a certificate request
-1v1 "north-east" #1: STATE_AGGR_I1: sent AI1, expecting AR1
+1v1 "north-east" #1: sent Aggressive Mode request
 002 "north-east" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 002 "north-east" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 003 "north-east" #1: authenticated using RSA with SHA-1
 002 "north-east" #1: I am sending my cert
-004 "north-east" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+004 "north-east" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
 002 "north-east" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
 1v1 "north-east" #2: sent Quick Mode request
 004 "north-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}

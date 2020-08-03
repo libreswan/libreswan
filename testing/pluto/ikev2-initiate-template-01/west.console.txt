@@ -39,7 +39,7 @@ west #
 west #
  ipsec auto --remote-host 192.1.2.23 --up westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2": instantiated connection "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 with remote IP set to 192.1.2.23
-1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: initiating IKEv2 IKE SA
+1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: IKEv2 mode peer ID is ID_FQDN: '@east'

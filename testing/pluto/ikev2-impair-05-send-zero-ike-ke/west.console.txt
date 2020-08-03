@@ -24,7 +24,7 @@ west #
  # should fail with syntax-error response
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 IKE SA
+1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: sending bogus KE (g^x) == 0 value to break DH calculations
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request
 207 "westnet-eastnet-ipv4-psk-ikev2" #1: state transition 'Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH' failed with v2N_INVALID_SYNTAX
@@ -42,7 +42,7 @@ west #
  # should fail fail with syntax error
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #2: initiating IKEv2 IKE SA
+1v2 "westnet-eastnet-ipv4-psk-ikev2" #2: initiating IKEv2 connection
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #2: sent IKE_SA_INIT request
 207 "westnet-eastnet-ipv4-psk-ikev2" #2: state transition 'Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH' failed with v2N_INVALID_SYNTAX
 002 "westnet-eastnet-ipv4-psk-ikev2" #2: deleting state (STATE_PARENT_I1) and NOT sending notification

@@ -15,13 +15,13 @@ road #
 003 "road-eastnet-psk" #1: IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's
 003 "road-eastnet-psk" #1: multiple DH groups in aggressive mode can cause interop failure
 003 "road-eastnet-psk" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
-002 "road-eastnet-psk" #1: initiating Aggressive Mode
+002 "road-eastnet-psk" #1: initiating IKEv1 Aggressive Mode connection
 003 "road-eastnet-psk" #1: multiple DH groups in aggressive mode can cause interop failure
 003 "road-eastnet-psk" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
-1v1 "road-eastnet-psk" #1: STATE_AGGR_I1: sent AI1, expecting AR1
+1v1 "road-eastnet-psk" #1: sent Aggressive Mode request
 002 "road-eastnet-psk" #1: Peer ID is ID_FQDN: '@east'
 002 "road-eastnet-psk" #1: Peer ID is ID_FQDN: '@east'
-004 "road-eastnet-psk" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
+004 "road-eastnet-psk" #1: IKE SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
 002 "road-eastnet-psk" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
 1v1 "road-eastnet-psk" #2: sent Quick Mode request
 004 "road-eastnet-psk" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}

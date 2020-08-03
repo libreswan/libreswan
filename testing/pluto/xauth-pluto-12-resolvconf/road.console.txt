@@ -27,9 +27,9 @@ road #
 041 "modecfg-road-eastnet-psk" #1: modecfg-road-eastnet-psk prompt for Username:
 040 "modecfg-road-eastnet-psk" #1: modecfg-road-eastnet-psk prompt for Password:
 002 "modecfg-road-eastnet-psk" #1: XAUTH: Answering XAUTH challenge with user='use3'
-004 "modecfg-road-eastnet-psk" #1: STATE_XAUTH_I1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
+004 "modecfg-road-eastnet-psk" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
 002 "modecfg-road-eastnet-psk" #1: XAUTH: Successfully Authenticated
-004 "modecfg-road-eastnet-psk" #1: STATE_XAUTH_I1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
+004 "modecfg-road-eastnet-psk" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
 002 "modecfg-road-eastnet-psk" #1: modecfg: Sending IP request (MODECFG_I1)
 005 "modecfg-road-eastnet-psk" #1: Received IPv4 address: 192.0.2.209/32
 005 "modecfg-road-eastnet-psk" #1: Received DNS server 1.2.3.4

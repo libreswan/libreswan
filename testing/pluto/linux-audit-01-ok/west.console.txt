@@ -43,12 +43,12 @@ west #
 002 "ikev1" #1: deleting state (STATE_MAIN_I4) and sending notification
 west #
  ipsec auto --up ikev1-aggr
-002 "ikev1-aggr" #3: initiating Aggressive Mode
-1v1 "ikev1-aggr" #3: STATE_AGGR_I1: sent AI1, expecting AR1
+002 "ikev1-aggr" #3: initiating IKEv1 Aggressive Mode connection
+1v1 "ikev1-aggr" #3: sent Aggressive Mode request
 002 "ikev1-aggr" #3: Peer ID is ID_FQDN: '@east-v1'
 002 "ikev1-aggr" #3: Peer ID is ID_FQDN: '@east-v1'
 003 "ikev1-aggr" #3: authenticated using RSA with SHA-1
-004 "ikev1-aggr" #3: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
+004 "ikev1-aggr" #3: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
 002 "ikev1-aggr" #4: initiating Quick Mode RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+AGGRESSIVE+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
 1v1 "ikev1-aggr" #4: sent Quick Mode request
 004 "ikev1-aggr" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP NATOA=none NATD=none DPD=passive}
@@ -61,7 +61,7 @@ west #
 002 "ikev1-aggr" #3: deleting state (STATE_AGGR_I2) and sending notification
 west #
  ipsec auto --up ikev2
-1v2 "ikev2" #5: initiating IKEv2 IKE SA
+1v2 "ikev2" #5: initiating IKEv2 connection
 1v2 "ikev2" #5: sent IKE_SA_INIT request
 1v2 "ikev2" #5: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "ikev2" #6: IKEv2 mode peer ID is ID_FQDN: '@east-v2'

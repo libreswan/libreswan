@@ -26,7 +26,7 @@ initdone
 west #
  ../bin/libreswan-up-down.sh ah=md5 -I 192.0.1.254 192.0.2.254
 002 added connection description "ah=md5"
-1v2 "ah=md5" #1: initiating IKEv2 IKE SA
+1v2 "ah=md5" #1: initiating IKEv2 connection
 1v2 "ah=md5" #1: sent IKE_SA_INIT request
 1v2 "ah=md5" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 002 "ah=md5" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
@@ -42,7 +42,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  ../bin/libreswan-up-down.sh ah=sha1 -I 192.0.1.254 192.0.2.254
 002 added connection description "ah=sha1"
-1v2 "ah=sha1" #3: initiating IKEv2 IKE SA
+1v2 "ah=sha1" #3: initiating IKEv2 connection
 1v2 "ah=sha1" #3: sent IKE_SA_INIT request
 1v2 "ah=sha1" #3: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 002 "ah=sha1" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
@@ -62,7 +62,7 @@ west #
 002 added connection description "ah=sha1"
 west #
  ipsec auto --up ah=sha1
-1v2 "ah=sha1" #5: initiating IKEv2 IKE SA
+1v2 "ah=sha1" #5: initiating IKEv2 connection
 1v2 "ah=sha1" #5: sent IKE_SA_INIT request
 1v2 "ah=sha1" #5: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 002 "ah=sha1" #6: IKEv2 mode peer ID is ID_FQDN: '@east'

@@ -16,7 +16,7 @@ west #
 west #
  ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 added connection description "aes128"
-1v2 "aes128" #1: initiating IKEv2 IKE SA
+1v2 "aes128" #1: initiating IKEv2 connection
 1v2 "aes128" #1: sent IKE_SA_INIT request
 002 "aes128" #1: IMPAIR: retransmit so deleting SA
 002 "aes128" #1: deleting state (STATE_PARENT_I1) and NOT sending notification

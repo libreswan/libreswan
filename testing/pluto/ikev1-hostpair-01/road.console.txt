@@ -28,9 +28,9 @@ road #
 041 "westnet-eastnet-ipv4-psk-ikev1" #1: westnet-eastnet-ipv4-psk-ikev1 prompt for Username:
 040 "westnet-eastnet-ipv4-psk-ikev1" #1: westnet-eastnet-ipv4-psk-ikev1 prompt for Password:
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: XAUTH: Answering XAUTH challenge with user='use3'
-004 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_XAUTH_I1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+004 "westnet-eastnet-ipv4-psk-ikev1" #1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: XAUTH: Successfully Authenticated
-004 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_XAUTH_I1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+004 "westnet-eastnet-ipv4-psk-ikev1" #1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: Received IP address 192.0.2.1/32
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: setting ip source address to 192.0.2.1/32
 004 "westnet-eastnet-ipv4-psk-ikev1" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
@@ -82,9 +82,9 @@ road #
 041 "westnet-eastnet-ipv4-psk-ikev1" #1: westnet-eastnet-ipv4-psk-ikev1 prompt for Username:
 040 "westnet-eastnet-ipv4-psk-ikev1" #1: westnet-eastnet-ipv4-psk-ikev1 prompt for Password:
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: XAUTH: Answering XAUTH challenge with user='use3'
-004 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_XAUTH_I1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+004 "westnet-eastnet-ipv4-psk-ikev1" #1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: XAUTH: Successfully Authenticated
-004 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_XAUTH_I1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+004 "westnet-eastnet-ipv4-psk-ikev1" #1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: Received IP address 192.0.2.1/32
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: setting ip source address to 192.0.2.1/32
 004 "westnet-eastnet-ipv4-psk-ikev1" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}

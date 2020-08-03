@@ -46,12 +46,12 @@ west #
 002 "ikev1-ipsec-fail" #1: deleting state (STATE_MAIN_I4) and sending notification
 west #
  ipsec auto --up ikev1-aggr-ipsec-fail #retransmits
-002 "ikev1-aggr-ipsec-fail" #4: initiating Aggressive Mode
-1v1 "ikev1-aggr-ipsec-fail" #4: STATE_AGGR_I1: sent AI1, expecting AR1
+002 "ikev1-aggr-ipsec-fail" #4: initiating IKEv1 Aggressive Mode connection
+1v1 "ikev1-aggr-ipsec-fail" #4: sent Aggressive Mode request
 002 "ikev1-aggr-ipsec-fail" #4: Peer ID is ID_FQDN: '@east-v1'
 002 "ikev1-aggr-ipsec-fail" #4: Peer ID is ID_FQDN: '@east-v1'
 003 "ikev1-aggr-ipsec-fail" #4: authenticated using RSA with SHA-1
-004 "ikev1-aggr-ipsec-fail" #4: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
+004 "ikev1-aggr-ipsec-fail" #4: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
 002 "ikev1-aggr-ipsec-fail" #5: initiating Quick Mode RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+AGGRESSIVE+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
 1v1 "ikev1-aggr-ipsec-fail" #5: sent Quick Mode request
 010 "ikev1-aggr-ipsec-fail" #5: STATE_QUICK_I1: retransmission; will wait 0.5 seconds for response
@@ -65,7 +65,7 @@ west #
 002 "ikev1-aggr-ipsec-fail" #4: deleting state (STATE_AGGR_I2) and sending notification
 west #
  ipsec auto --up ikev2-ipsec-fail
-1v2 "ikev2-ipsec-fail" #7: initiating IKEv2 IKE SA
+1v2 "ikev2-ipsec-fail" #7: initiating IKEv2 connection
 1v2 "ikev2-ipsec-fail" #7: sent IKE_SA_INIT request
 1v2 "ikev2-ipsec-fail" #7: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "ikev2-ipsec-fail" #8: IKE_AUTH response contained the error notification TS_UNACCEPTABLE
