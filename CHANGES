@@ -38,6 +38,7 @@ v4.0 (unreleased)
 * packaging: Debian switched to using /usr/libexec/ [dkg]
 * testing: Support Fedora32, Ubuntu, improved namespaces support [Paul/Others]
 * testing: Work around kernel ICMP Acquire bug [Paul]
+* documentation: friendler ipsec cmd output [Paul]
 
 v3.32 (May 11, 2020)
 * SECURITY: Fixes CVE-2020-1763 https://libreswan.org/security/CVE-2020-1763
