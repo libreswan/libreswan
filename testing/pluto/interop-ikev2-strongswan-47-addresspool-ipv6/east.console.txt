@@ -6,7 +6,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add rw-eastnet-ipv6
-002 added connection description "rw-eastnet-ipv6"
+002 added IKEv2 connection "rw-eastnet-ipv6"
 east #
  ipsec auto --status
 000 using kernel interface: xfrm

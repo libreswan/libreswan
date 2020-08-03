@@ -11,7 +11,7 @@ road #
  ipsec whack --impair revival
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
-002 added connection description "westnet-eastnet-ipv4-psk-ikev1"
+002 added IKEv1 connection "westnet-eastnet-ipv4-psk-ikev1"
 road #
  echo "initdone"
 initdone
@@ -59,7 +59,7 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev1": terminating SAs using this connection
 002 "westnet-eastnet-ipv4-psk-ikev1" #2: deleting state (STATE_QUICK_I2) and NOT sending notification
 005 "westnet-eastnet-ipv4-psk-ikev1" #2: ESP traffic information: in=168B out=168B XAUTHuser=use3
-002 added connection description "westnet-eastnet-ipv4-psk-ikev1"
+002 added IKEv1 connection "westnet-eastnet-ipv4-psk-ikev1"
 road #
  ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --initiate --name westnet-eastnet-ipv4-psk-ikev1
 002 "westnet-eastnet-ipv4-psk-ikev1" #3: initiating IKEv1 Main Mode connection
@@ -90,7 +90,7 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev1" #4: deleting state (STATE_QUICK_I2) and NOT sending notification
 005 "westnet-eastnet-ipv4-psk-ikev1" #4: ESP traffic information: in=0B out=0B XAUTHuser=use3
 002 "westnet-eastnet-ipv4-psk-ikev1" #3: deleting state (STATE_MAIN_I4) and NOT sending notification
-002 added connection description "westnet-eastnet-ipv4-psk-ikev1"
+002 added IKEv1 connection "westnet-eastnet-ipv4-psk-ikev1"
 road #
  ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --initiate --name westnet-eastnet-ipv4-psk-ikev1
 002 "westnet-eastnet-ipv4-psk-ikev1" #5: initiating IKEv1 Main Mode connection
@@ -121,7 +121,7 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev1" #6: deleting state (STATE_QUICK_I2) and NOT sending notification
 005 "westnet-eastnet-ipv4-psk-ikev1" #6: ESP traffic information: in=0B out=0B XAUTHuser=use3
 002 "westnet-eastnet-ipv4-psk-ikev1" #5: deleting state (STATE_MAIN_I4) and NOT sending notification
-002 added connection description "westnet-eastnet-ipv4-psk-ikev1"
+002 added IKEv1 connection "westnet-eastnet-ipv4-psk-ikev1"
 road #
  ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --initiate --name westnet-eastnet-ipv4-psk-ikev1
 002 "westnet-eastnet-ipv4-psk-ikev1" #7: initiating IKEv1 Main Mode connection

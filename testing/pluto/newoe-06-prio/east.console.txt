@@ -10,7 +10,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add road-east-ikev2
-002 added connection description "road-east-ikev2"
+002 added IKEv1 connection "road-east-ikev2"
 east #
  # give OE policies time to load
 east #

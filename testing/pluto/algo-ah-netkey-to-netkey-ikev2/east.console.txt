@@ -10,7 +10,7 @@ proto=authenticate algs= sha1
 check that the stack is netkey
 	protostack=netkey
 Redirecting to: [initsystem]
-002 added connection description "westnet-eastnet-algo"
+002 added IKEv2 connection "westnet-eastnet-algo"
 000 using kernel interface: xfrm
 000  
 000 interface lo UDP 127.0.0.1:4500

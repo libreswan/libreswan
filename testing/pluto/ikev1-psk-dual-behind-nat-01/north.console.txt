@@ -8,7 +8,7 @@ north #
  ../bin/block-non-ipsec.sh
 north #
  ipsec auto --add north-east
-002 added connection description "north-east"
+002 added IKEv1 connection "north-east"
 north #
  ipsec whack --impair suppress-retransmits
 north #

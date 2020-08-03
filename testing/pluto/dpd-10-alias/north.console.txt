@@ -7,8 +7,8 @@ north #
  /testing/pluto/bin/wait-until-pluto-started
 north #
  ipsec auto --add north-dpd
-002 added connection description "north-dpd/0x1"
-002 added connection description "north-dpd/0x2"
+002 added IKEv1 connection "north-dpd/0x1"
+002 added IKEv1 connection "north-dpd/0x2"
 north #
  echo "initdone"
 initdone

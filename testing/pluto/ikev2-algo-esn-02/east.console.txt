@@ -6,7 +6,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add replay
-002 added connection description "replay"
+002 added IKEv2 connection "replay"
 east #
  echo "initdone"
 initdone

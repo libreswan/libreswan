@@ -26,13 +26,13 @@ west #
  ipsec whack --debug-all --impair suppress-retransmits
 west #
  ipsec auto --add westnet-eastnet-a
-002 added connection description "westnet-eastnet-a"
+002 added IKEv2 connection "westnet-eastnet-a"
 west #
  ipsec auto --add westnet-eastnet-b
-002 added connection description "westnet-eastnet-b"
+002 added IKEv2 connection "westnet-eastnet-b"
 west #
  ipsec auto --add westnet-eastnet-c
-002 added connection description "westnet-eastnet-c"
+002 added IKEv2 connection "westnet-eastnet-c"
 west #
  echo "initdone"
 initdone

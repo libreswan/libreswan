@@ -6,10 +6,10 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add west-east
-002 added connection description "west-east"
+002 added IKEv2 connection "west-east"
 east #
  ipsec auto --add pass-222
-002 added connection description "pass-222"
+002 added IKEv2 connection "pass-222"
 east #
  ipsec auto --route pass-222
 east #

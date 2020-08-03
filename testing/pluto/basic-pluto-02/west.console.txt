@@ -23,7 +23,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-all
-002 added connection description "westnet-all"
+002 added IKEv1 connection "westnet-all"
 west #
  ip route list
 default via 192.1.2.254 dev eth1
@@ -37,18 +37,18 @@ default via 192.1.2.254 dev eth1
 192.168.1.16/28 via 192.1.2.45 dev eth1
 west #
  for i in `seq 1 12`; do ipsec auto --add orient$i; done
-002 added connection description "orient1"
-002 added connection description "orient2"
-002 added connection description "orient3"
-002 added connection description "orient4"
-002 added connection description "orient5"
-002 added connection description "orient6"
-002 added connection description "orient7"
-002 added connection description "orient8"
-002 added connection description "orient9"
-002 added connection description "orient10"
-002 added connection description "orient11"
-002 added connection description "orient12"
+002 added IKEv1 connection "orient1"
+002 added IKEv1 connection "orient2"
+002 added IKEv1 connection "orient3"
+002 added IKEv1 connection "orient4"
+002 added IKEv1 connection "orient5"
+002 added IKEv1 connection "orient6"
+002 added IKEv1 connection "orient7"
+002 added IKEv1 connection "orient8"
+002 added IKEv1 connection "orient9"
+002 added IKEv1 connection "orient10"
+002 added IKEv1 connection "orient11"
+002 added IKEv1 connection "orient12"
 west #
  ipsec auto --status |grep orient |grep "eroute owner"
 000 "orient1": 192.1.2.45---192.1.2.254...%any; unrouted; eroute owner: #0
@@ -112,7 +112,7 @@ west #
 002 "westnet-all" #2: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-all" #2: ESP traffic information: in=336B out=336B
 002 "westnet-all" #1: deleting state (STATE_MAIN_I4) and sending notification
-002 added connection description "westnet-all"
+002 added IKEv1 connection "westnet-all"
 west #
  ipsec auto --status |grep westnet
 000 "westnet-all": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===0.0.0.0/0; unrouted; eroute owner: #0

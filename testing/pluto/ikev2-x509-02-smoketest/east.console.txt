@@ -13,7 +13,7 @@ east #
  ipsec whack --impair revival
 east #
  ipsec auto --add san
-002 added connection description "san"
+002 added IKEv2 connection "san"
 east #
  echo "initdone"
 initdone

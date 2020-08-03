@@ -25,7 +25,7 @@ west #
  ipsec whack --impair suppress-retransmits
 west #
  ipsec auto --add westnet-eastnet-ikev2
-002 added connection description "westnet-eastnet-ikev2"
+002 added IKEv2 connection "westnet-eastnet-ikev2"
 west #
  ipsec status | grep westnet-eastnet-ikev2 | grep policy: | grep -v modecfg
 000 "westnet-eastnet-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO;

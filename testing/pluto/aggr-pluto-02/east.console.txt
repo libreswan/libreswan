@@ -6,7 +6,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-aggr
-002 added connection description "westnet-eastnet-aggr"
+002 added IKEv1 connection "westnet-eastnet-aggr"
 east #
  ipsec auto --status | grep westnet-eastnet-aggr
 000 "westnet-eastnet-aggr": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0

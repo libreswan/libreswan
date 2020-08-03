@@ -117,7 +117,7 @@ west #
  # test for rhbz#1572620
 west #
  ipsec auto --add mytunnel
-002 added connection description "mytunnel"
+002 added IKEv1 connection "mytunnel"
 west #
  # will fail
 west #

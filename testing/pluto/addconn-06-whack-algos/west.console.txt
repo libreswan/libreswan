@@ -11,16 +11,16 @@ west #
  # first conn is already loaded, do the second one now
 west #
  ipsec whack --name whack----rsasig --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel --rsasig --encrypt --ikev2-allow --ipv4 --to --host 5.6.7.8
-002 added connection description "whack----rsasig"
+002 added IKEv2 connection "whack----rsasig"
 west #
  ipsec whack --name whack-----ecdsa --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel --ecdsa --encrypt --ikev2-allow --ipv4 --to --host 5.6.7.8
-002 added connection description "whack-----ecdsa"
+002 added IKEv2 connection "whack-----ecdsa"
 west #
  ipsec whack --name whack--defaults --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel --encrypt --ikev2-allow --ipv4 --to --host 5.6.7.8
-002 added connection description "whack--defaults"
+002 added IKEv2 connection "whack--defaults"
 west #
  ipsec whack --name whack--ikev2-default --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel --encrypt --ipv4 --to --host 5.6.7.8
-002 added connection description "whack--ikev2-default"
+002 added IKEv2 connection "whack--ikev2-default"
 west #
  ipsec status | grep "policy:" | grep rsasig | grep TUNNEL
 000 "parser---rsasig":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
@@ -50,7 +50,7 @@ west #
 IKEV2_ALLOW
 IKEV2_ALLOW
 west #
- echo done
-done
+ ../bin/check-for-core.sh
 west #
- 
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

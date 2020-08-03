@@ -6,17 +6,17 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add west-east-passthrough-a
-002 added connection description "west-east-passthrough-a"
+002 added IKEv1 connection "west-east-passthrough-a"
 east #
  ipsec auto --add west-east-passthrough-b
-002 added connection description "west-east-passthrough-b"
+002 added IKEv1 connection "west-east-passthrough-b"
 east #
  ipsec auto --route west-east-passthrough-a
 east #
  ipsec auto --route west-east-passthrough-b
 east #
  ipsec auto --add west-east
-002 added connection description "west-east"
+002 added IKEv1 connection "west-east"
 east #
  nc -4 -l 192.1.2.23 222 &
 [B] PID

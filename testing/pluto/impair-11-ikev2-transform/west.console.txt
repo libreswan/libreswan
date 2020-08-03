@@ -13,7 +13,7 @@ west #
  ipsec whack --impair suppress-retransmits
 west #
  ../../pluto/bin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
-002 added connection description "conf"
+002 added IKEv2 connection "conf"
 1v2 "conf" #1: initiating IKEv2 connection
 1v2 "conf" #1: sent IKE_SA_INIT request
 1v2 "conf" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
@@ -37,7 +37,7 @@ west #
  ipsec whack --impair ikev2-add-ike-transform:0x60000
 west #
  ../../pluto/bin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
-002 added connection description "conf"
+002 added IKEv2 connection "conf"
 1v2 "conf" #3: initiating IKEv2 connection
 002 "conf" #3: IMPAIR: adding transform type 6?? (0x6) id 0?? (0x0)
 1v2 "conf" #3: sent IKE_SA_INIT request
@@ -62,7 +62,7 @@ west #
  ipsec whack --impair ikev2-add-ike-transform:0x3ffff
 west #
  ../../pluto/bin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
-002 added connection description "conf"
+002 added IKEv2 connection "conf"
 1v2 "conf" #5: initiating IKEv2 connection
 002 "conf" #5: IMPAIR: adding transform type INTEG (0x3) id 65535?? (0xffff)
 1v2 "conf" #5: sent IKE_SA_INIT request
@@ -87,7 +87,7 @@ west #
  ipsec whack --impair ikev2-add-child-transform:0x60000
 west #
  ../../pluto/bin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
-002 added connection description "conf"
+002 added IKEv2 connection "conf"
 1v2 "conf" #7: initiating IKEv2 connection
 1v2 "conf" #7: sent IKE_SA_INIT request
 002 "conf" #7: IMPAIR: adding transform type 6?? (0x6) id 0?? (0x0)
@@ -112,7 +112,7 @@ west #
  ipsec whack --impair ikev2-add-child-transform:0x3ffff
 west #
  ../../pluto/bin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
-002 added connection description "conf"
+002 added IKEv2 connection "conf"
 1v2 "conf" #9: initiating IKEv2 connection
 1v2 "conf" #9: sent IKE_SA_INIT request
 002 "conf" #9: IMPAIR: adding transform type INTEG (0x3) id 65535?? (0xffff)

@@ -18,7 +18,7 @@ east #
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
  ipsec auto --add ikev2-westnet-eastnet-x509-cr
-002 added connection description "ikev2-westnet-eastnet-x509-cr"
+002 added IKEv2 connection "ikev2-westnet-eastnet-x509-cr"
 east #
  echo "initdone"
 initdone

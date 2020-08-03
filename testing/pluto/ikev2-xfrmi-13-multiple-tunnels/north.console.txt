@@ -12,16 +12,16 @@ north #
  /testing/pluto/bin/wait-until-pluto-started
 north #
  ipsec auto --add north-east-21
-002 added connection description "north-east-21"
+002 added IKEv2 connection "north-east-21"
 north #
  ipsec auto --add north-east-22
-002 added connection description "north-east-22"
+002 added IKEv2 connection "north-east-22"
 north #
  ipsec auto --add north-east-23
-002 added connection description "north-east-23"
+002 added IKEv2 connection "north-east-23"
 north #
  ipsec auto --add north-east-24
-002 added connection description "north-east-24"
+002 added IKEv2 connection "north-east-24"
 north #
  echo "initdone"
 initdone

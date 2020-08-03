@@ -9,7 +9,7 @@ east #
 east #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection
-002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
+002 added IKEv2 connection "westnet-eastnet-ipv4-psk-ikev2"
 east #
  echo "initdone"
 initdone

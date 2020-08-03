@@ -12,7 +12,7 @@ road #
  ipsec whack --impair revival
 road #
  ipsec auto --add road
-002 added connection description "road"
+002 added IKEv2 connection "road"
 road #
  echo "initdone"
 initdone

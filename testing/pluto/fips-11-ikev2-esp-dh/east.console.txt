@@ -10,10 +10,10 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add ikev2-base
-002 added connection description "ikev2-base"
+002 added IKEv2 connection "ikev2-base"
 east #
  ipsec auto --add ikev2-esp=aes-sha1-modp4096
-002 added connection description "ikev2-esp=aes-sha1-modp4096"
+002 added IKEv2 connection "ikev2-esp=aes-sha1-modp4096"
 east #
  echo "initdone"
 initdone

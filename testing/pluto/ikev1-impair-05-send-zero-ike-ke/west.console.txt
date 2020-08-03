@@ -6,7 +6,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk
-002 added connection description "westnet-eastnet-ipv4-psk"
+002 added IKEv1 connection "westnet-eastnet-ipv4-psk"
 west #
  echo "initdone"
 initdone
@@ -37,7 +37,7 @@ west #
  ipsec auto --add westnet-eastnet-ipv4-psk
 002 "westnet-eastnet-ipv4-psk": terminating SAs using this connection
 002 "westnet-eastnet-ipv4-psk" #2: deleting state (STATE_MAIN_I2) and NOT sending notification
-002 added connection description "westnet-eastnet-ipv4-psk"
+002 added IKEv1 connection "westnet-eastnet-ipv4-psk"
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk
 002 "westnet-eastnet-ipv4-psk" #3: initiating IKEv1 Main Mode connection

@@ -14,8 +14,8 @@ north #
 initdone
 north #
  ipsec auto --start northnet-eastnets
-002 added connection description "northnet-eastnets/0x1"
-002 added connection description "northnet-eastnets/0x2"
+002 added IKEv2 connection "northnet-eastnets/0x1"
+002 added IKEv2 connection "northnet-eastnets/0x2"
 000 initiating all conns with alias='northnet-eastnets'
 1v2 "northnet-eastnets/0x2" #1: initiating IKEv2 connection
 000 "northnet-eastnets/0x1": queuing pending IPsec SA negotiating with 192.1.2.23 IKE SA #1 "northnet-eastnets/0x2"

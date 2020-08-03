@@ -8,7 +8,7 @@ west #
  ipsec whack --impair send-bogus-dcookie
 west #
  ipsec auto --add westnet-eastnet-ikev2
-002 added connection description "westnet-eastnet-ikev2"
+002 added IKEv2 connection "westnet-eastnet-ikev2"
 west #
  echo "initdone"
 initdone

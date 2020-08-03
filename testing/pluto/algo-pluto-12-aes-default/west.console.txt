@@ -16,7 +16,7 @@ west #
 initdone
 west #
  ipsec auto --add westnet-eastnet-aes-default
-002 added connection description "westnet-eastnet-aes-default"
+002 added IKEv1 connection "westnet-eastnet-aes-default"
 west #
  ipsec auto --up westnet-eastnet-aes-default
 002 "westnet-eastnet-aes-default" #1: initiating IKEv1 Main Mode connection
@@ -39,7 +39,7 @@ west #
  #
 west #
  ipsec auto --add westnet-eastnet-aes-128
-002 added connection description "westnet-eastnet-aes-128"
+002 added IKEv1 connection "westnet-eastnet-aes-128"
 west #
  ipsec auto --up westnet-eastnet-aes-128
 002 "westnet-eastnet-aes-128" #3: initiating IKEv1 Main Mode connection
@@ -62,7 +62,7 @@ west #
  #
 west #
  ipsec auto --add westnet-eastnet-aes-256
-002 added connection description "westnet-eastnet-aes-256"
+002 added IKEv1 connection "westnet-eastnet-aes-256"
 west #
  ipsec auto --up westnet-eastnet-aes-256
 002 "westnet-eastnet-aes-256" #5: initiating IKEv1 Main Mode connection
@@ -85,7 +85,7 @@ west #
  #
 west #
  ipsec auto --add westnet-eastnet-aes-mix-1
-002 added connection description "westnet-eastnet-aes-mix-1"
+002 added IKEv1 connection "westnet-eastnet-aes-mix-1"
 west #
  ipsec auto --up westnet-eastnet-aes-mix-1
 002 "westnet-eastnet-aes-mix-1" #7: initiating IKEv1 Main Mode connection
@@ -108,7 +108,7 @@ west #
  #
 west #
  ipsec auto --add westnet-eastnet-aes-mix-2
-002 added connection description "westnet-eastnet-aes-mix-2"
+002 added IKEv1 connection "westnet-eastnet-aes-mix-2"
 west #
  ipsec auto --up westnet-eastnet-aes-mix-2
 002 "westnet-eastnet-aes-mix-2" #9: initiating IKEv1 Main Mode connection

@@ -15,15 +15,15 @@ east #
 east #
  ipsec auto --add test1
 002 "test1": terminating SAs using this connection
-002 added connection description "test1"
+002 added IKEv1 connection "test1"
 east #
  ipsec auto --add test2
 002 "test2": terminating SAs using this connection
-002 added connection description "test2"
+002 added IKEv1 connection "test2"
 east #
  ipsec auto --add test3
 002 "test3": terminating SAs using this connection
-002 added connection description "test3"
+002 added IKEv1 connection "test3"
 east #
  ipsec auto --ready
 002 listening for IKE messages

@@ -29,7 +29,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add west-east-delete1
-002 added connection description "west-east-delete1"
+002 added IKEv2 connection "west-east-delete1"
 west #
  ipsec whack --impair suppress-retransmits
 west #

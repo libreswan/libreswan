@@ -8,7 +8,7 @@ road #
  ipsec whack --impair suppress-retransmits
 road #
  ipsec auto --add road-eastnet-forceencaps
-002 added connection description "road-eastnet-forceencaps"
+002 added IKEv2 connection "road-eastnet-forceencaps"
 road #
  ipsec status |grep encaps:
 000 "road-eastnet-forceencaps":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:yes; nat_keepalive:yes; ikev1_natt:both

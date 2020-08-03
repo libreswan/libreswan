@@ -6,10 +6,10 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-port666
-002 added connection description "westnet-eastnet-port666"
+002 added IKEv1 connection "westnet-eastnet-port666"
 west #
  ipsec auto --add westnet-eastnet-port667
-002 added connection description "westnet-eastnet-port667"
+002 added IKEv1 connection "westnet-eastnet-port667"
 west #
  ipsec whack --impair suppress-retransmits
 west #

@@ -6,13 +6,13 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add west-east
-002 added connection description "west-east"
+002 added IKEv1 connection "west-east"
 east #
  ipsec auto --add west-east-b
-002 added connection description "west-east-b"
+002 added IKEv1 connection "west-east-b"
 east #
  ipsec auto --add west-east-c
-002 added connection description "west-east-c"
+002 added IKEv1 connection "west-east-c"
 east #
  ipsec auto --status | grep west-
 000 "west-east": 192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]; unrouted; eroute owner: #0

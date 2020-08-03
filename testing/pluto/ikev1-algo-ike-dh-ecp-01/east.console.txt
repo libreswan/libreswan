@@ -6,7 +6,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ikev1
-002 added connection description "westnet-eastnet-ikev1"
+002 added IKEv1 connection "westnet-eastnet-ikev1"
 east #
  echo "initdone"
 initdone

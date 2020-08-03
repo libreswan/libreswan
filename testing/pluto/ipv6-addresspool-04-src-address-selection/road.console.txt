@@ -79,7 +79,7 @@ conn: "road" redirect-to=<unset>
 conn: "road" accept-redirect-to=<unset>
 conn: "road" esp=<unset>
 conn: "road" ike=<unset>
-002 added connection description "road"
+002 added IKEv1 connection "road"
 road #
  echo "initdone"
 initdone

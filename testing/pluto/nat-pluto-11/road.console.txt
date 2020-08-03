@@ -6,7 +6,7 @@ road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
  ipsec auto --add road-eastnet-nonat
-002 added connection description "road-eastnet-nonat"
+002 added IKEv1 connection "road-eastnet-nonat"
 road #
  # should show encaps no, natt payloads none
 road #

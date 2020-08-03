@@ -19,7 +19,7 @@ east #
  # other is loaded in another test case, ikev2-x509-17-multicert-03
 east #
  ipsec auto --add main
-002 added connection description "main"
+002 added IKEv2 connection "main"
 east #
  echo "initdone"
 initdone

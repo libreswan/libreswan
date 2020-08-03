@@ -11,7 +11,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add ipv4-psk-ikev2-transport
-002 added connection description "ipv4-psk-ikev2-transport"
+002 added IKEv2 connection "ipv4-psk-ikev2-transport"
 west #
  ipsec auto --status | grep ipv4-psk-ikev2-transport
 000 "ipv4-psk-ikev2-transport": 192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]; unrouted; eroute owner: #0

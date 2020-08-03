@@ -20,7 +20,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-4in6
-002 added connection description "westnet-eastnet-4in6"
+002 added IKEv1 connection "westnet-eastnet-4in6"
 west #
  ipsec status | grep westnet-eastnet-4in6
 000 "westnet-eastnet-4in6": 192.0.1.0/24===2001:db8:1:2::45<2001:db8:1:2::45>[@west]...2001:db8:1:2::23<2001:db8:1:2::23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0

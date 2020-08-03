@@ -12,4 +12,7 @@ echo ""
 ipsec status | grep "hash-policy:" | grep defaults
 echo ""
 ipsec status | grep "TUNNEL" | grep ikev2-default | sed "s/^.*\(IKEV._ALLOW\).*$/\1/"
-echo done
+../bin/check-for-core.sh
+if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+: ==== end ====
+

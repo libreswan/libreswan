@@ -40,7 +40,7 @@ west #
  ipsec whack --impair v2-proposal-integ:allow-none
 west #
  ../bin/libreswan-up-down.sh esp=null-none -I 192.0.1.254 192.0.2.254
-002 added connection description "esp=null-none"
+002 added IKEv2 connection "esp=null-none"
 1v2 "esp=null-none" #1: initiating IKEv2 connection
 1v2 "esp=null-none" #1: sent IKE_SA_INIT request
 002 "esp=null-none" #1: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
@@ -62,7 +62,7 @@ west #
  ipsec whack --impair v2-proposal-integ:drop-none
 west #
  ../bin/libreswan-up-down.sh esp=null-none -I 192.0.1.254 192.0.2.254
-002 added connection description "esp=null-none"
+002 added IKEv2 connection "esp=null-none"
 1v2 "esp=null-none" #3: initiating IKEv2 connection
 1v2 "esp=null-none" #3: sent IKE_SA_INIT request
 002 "esp=null-none" #3: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms

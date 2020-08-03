@@ -7,7 +7,7 @@ road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
  ipsec auto --add road-east
-002 added connection description "road-east"
+002 added IKEv2 connection "road-east"
 road #
  # we cannot have --impair retransmit, because for some reason
 road #
@@ -68,7 +68,7 @@ road #
 1. road connection delete done
 road #
  ipsec auto --add road-east
-002 added connection description "road-east"
+002 added IKEv2 connection "road-east"
 road #
  ipsec whack --impair delete-on-retransmit
 road #

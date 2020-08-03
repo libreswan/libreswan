@@ -12,10 +12,10 @@ west #
 036 Failed to add connection "westnet-eastnet-ikev2" with invalid "right" certificate
 west #
  ipsec auto --add westnet-eastnet-ipv4
-002 added connection description "westnet-eastnet-ipv4"
+002 added IKEv2 connection "westnet-eastnet-ipv4"
 west #
  ipsec auto --add westnet-eastnet-ikev2-ckaid
-002 added connection description "westnet-eastnet-ikev2-ckaid"
+002 added IKEv2 connection "westnet-eastnet-ikev2-ckaid"
 west #
  echo done
 done

@@ -8,7 +8,7 @@ east #
  # ipsec whack --impair key-length-attribute:0
 east #
  ipsec auto --add conf
-002 added connection description "conf"
+002 added IKEv2 connection "conf"
 east #
  echo "initdone"
 initdone

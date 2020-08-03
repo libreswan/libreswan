@@ -9,10 +9,10 @@ west #
 initdone
 west #
  ipsec auto --add first
-002 added connection description "first"
+002 added IKEv1 connection "first"
 west #
  ipsec auto --add second
-002 added connection description "second"
+002 added IKEv1 connection "second"
 west #
  # conn second should inherit the conn %default values with 3des-md5
 west #
@@ -31,7 +31,7 @@ west #
  # this one should work as %fromcert means for the CERT received with IKE
 west #
  ipsec auto --add cert-allow
-002 added connection description "cert-allow"
+002 added IKEv1 connection "cert-allow"
 west #
  echo done
 done

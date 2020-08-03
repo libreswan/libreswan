@@ -9,11 +9,11 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet
-002 added connection description "westnet-eastnet"
+002 added IKEv1 connection "westnet-eastnet"
 east #
  ipsec auto --add distraction
 002 bad left CA string 'Something bogus': unknown OID in ID_DER_ASN1_DN (ignored)
-002 added connection description "distraction"
+002 added IKEv1 connection "distraction"
 east #
  ipsec auto --status | grep westnet-eastnet
 000 "westnet-eastnet": 192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.45...%any; unrouted; eroute owner: #0

@@ -11,7 +11,7 @@ west #
  ipsec whack --impair send-pkcs7-thingie
 west #
  ipsec auto --add westnet-eastnet-x509
-002 added connection description "westnet-eastnet-x509"
+002 added IKEv1 connection "westnet-eastnet-x509"
 west #
  ipsec whack --impair suppress-retransmits
 west #

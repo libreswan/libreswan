@@ -6,7 +6,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add ipv4-psk-ikev2-transport
-002 added connection description "ipv4-psk-ikev2-transport"
+002 added IKEv1 connection "ipv4-psk-ikev2-transport"
 east #
  echo "initdone"
 initdone

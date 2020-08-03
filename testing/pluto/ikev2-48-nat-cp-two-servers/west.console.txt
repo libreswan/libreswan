@@ -7,7 +7,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add rw-westnet-pool-x509-ipv4
-002 added connection description "rw-westnet-pool-x509-ipv4"
+002 added IKEv2 connection "rw-westnet-pool-x509-ipv4"
 west #
  echo "initdone"
 initdone

@@ -23,13 +23,13 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add TUNNEL-C
-002 added connection description "TUNNEL-C"
+002 added IKEv1 connection "TUNNEL-C"
 west #
  ipsec auto --add TUNNEL-A
-002 added connection description "TUNNEL-A"
+002 added IKEv1 connection "TUNNEL-A"
 west #
  ipsec auto --add TUNNEL-B
-002 added connection description "TUNNEL-B"
+002 added IKEv1 connection "TUNNEL-B"
 west #
  ipsec whack --impair suppress-retransmits
 west #

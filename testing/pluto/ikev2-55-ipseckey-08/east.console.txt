@@ -6,7 +6,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add east-any
-002 added connection description "east-any"
+002 added IKEv2 connection "east-any"
 east #
  ipsec auto --status | grep east-any
 000 "east-any": 192.1.2.23<192.1.2.23>...%any; unrouted; eroute owner: #0

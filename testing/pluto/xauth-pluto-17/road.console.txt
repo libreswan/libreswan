@@ -6,14 +6,14 @@ road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
  ipsec auto --add xauth-road-eastnet-psk
-002 added connection description "xauth-road-eastnet-psk"
+002 added IKEv1 connection "xauth-road-eastnet-psk"
 road #
  echo "initdone"
 initdone
 road #
  ipsec auto --add xauth-road-eastnet-psk
 002 "xauth-road-eastnet-psk": terminating SAs using this connection
-002 added connection description "xauth-road-eastnet-psk"
+002 added IKEv1 connection "xauth-road-eastnet-psk"
 road #
  ipsec whack --xauthname 'use2' --xauthpass 'use1pass' --name xauth-road-eastnet-psk --initiate
 003 "xauth-road-eastnet-psk" #1: IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's

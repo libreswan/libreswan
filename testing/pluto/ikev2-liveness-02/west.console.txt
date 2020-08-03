@@ -22,7 +22,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
+002 added IKEv2 connection "westnet-eastnet-ipv4-psk-ikev2"
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -56,7 +56,7 @@ west #
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and NOT sending notification
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
+002 added IKEv2 connection "westnet-eastnet-ipv4-psk-ikev2"
 west #
  ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down

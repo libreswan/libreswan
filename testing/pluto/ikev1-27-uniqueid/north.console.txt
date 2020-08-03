@@ -7,7 +7,7 @@ north #
  /testing/pluto/bin/wait-until-pluto-started
 north #
  ipsec auto --add road-eastnet-ikev2
-002 added connection description "road-eastnet-ikev2"
+002 added IKEv1 connection "road-eastnet-ikev2"
 north #
  ipsec whack --impair suppress-retransmits
 north #
@@ -51,7 +51,7 @@ north #
  ipsec whack --impair suppress-retransmits
 north #
  ipsec auto --add road-eastnet-ikev2
-002 added connection description "road-eastnet-ikev2"
+002 added IKEv1 connection "road-eastnet-ikev2"
 north #
  ipsec auto --up road-eastnet-ikev2
 002 "road-eastnet-ikev2" #1: initiating IKEv1 Main Mode connection

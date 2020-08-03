@@ -19,7 +19,7 @@ testing sha1
 + authenticate-ikev2-sha1
 +
 + ipsec whack --name authenticate-ikev2-sha1 --ikev2-allow --psk --esp sha1 --authenticate --pfs --no-esn --id @west --host 192.1.2.45 --nexthop 192.1.2.23 --client 192.0.1.0/24 --to --id @east --host 192.1.2.23 --nexthop=192.1.2.45 --client 192.0.2.0/24
-002 added connection description "authenticate-ikev2-sha1"
+002 added IKEv2 connection "authenticate-ikev2-sha1"
 +
 1v2 "authenticate-ikev2-sha1" #1: initiating IKEv2 connection
 1v2 "authenticate-ikev2-sha1" #1: sent IKE_SA_INIT request

@@ -12,7 +12,7 @@ road #
 /testing/pluto/bin/wait-until-pluto-started
 road #
 ipsec auto --add road-eastnet-nonat
-002 added connection description "road-eastnet-nonat"
+002 added IKEv2 connection "road-eastnet-nonat"
 road #
 ipsec auto --status
 000 using kernel interface: xfrm

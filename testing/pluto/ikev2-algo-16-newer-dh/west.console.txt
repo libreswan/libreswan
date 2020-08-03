@@ -18,34 +18,34 @@ west #
  # temp
 west #
  ipsec auto --add westnet-eastnet-ikev2-modp1536
-002 added connection description "westnet-eastnet-ikev2-modp1536"
+002 added IKEv2 connection "westnet-eastnet-ikev2-modp1536"
 west #
  ipsec auto --add westnet-eastnet-ikev2-modp2048
-002 added connection description "westnet-eastnet-ikev2-modp2048"
+002 added IKEv2 connection "westnet-eastnet-ikev2-modp2048"
 west #
  ipsec auto --add westnet-eastnet-ikev2-modp3072
-002 added connection description "westnet-eastnet-ikev2-modp3072"
+002 added IKEv2 connection "westnet-eastnet-ikev2-modp3072"
 west #
  ipsec auto --add westnet-eastnet-ikev2-modp4096
-002 added connection description "westnet-eastnet-ikev2-modp4096"
+002 added IKEv2 connection "westnet-eastnet-ikev2-modp4096"
 west #
  ipsec auto --add westnet-eastnet-ikev2-modp8192
-002 added connection description "westnet-eastnet-ikev2-modp8192"
+002 added IKEv2 connection "westnet-eastnet-ikev2-modp8192"
 west #
  ipsec auto --add westnet-eastnet-ikev2-dh19
-002 added connection description "westnet-eastnet-ikev2-dh19"
+002 added IKEv2 connection "westnet-eastnet-ikev2-dh19"
 west #
  ipsec auto --add westnet-eastnet-ikev2-dh20
-002 added connection description "westnet-eastnet-ikev2-dh20"
+002 added IKEv2 connection "westnet-eastnet-ikev2-dh20"
 west #
  ipsec auto --add westnet-eastnet-ikev2-dh21
-002 added connection description "westnet-eastnet-ikev2-dh21"
+002 added IKEv2 connection "westnet-eastnet-ikev2-dh21"
 west #
  ipsec auto --add westnet-eastnet-ikev2-dh31
-002 added connection description "westnet-eastnet-ikev2-dh31"
+002 added IKEv2 connection "westnet-eastnet-ikev2-dh31"
 west #
  ipsec auto --add westnet-eastnet-ikev2-dh20-fallback
-002 added connection description "westnet-eastnet-ikev2-dh20-fallback"
+002 added IKEv2 connection "westnet-eastnet-ikev2-dh20-fallback"
 west #
  ipsec auto --up westnet-eastnet-ikev2-modp2048
 1v2 "westnet-eastnet-ikev2-modp2048" #1: initiating IKEv2 connection

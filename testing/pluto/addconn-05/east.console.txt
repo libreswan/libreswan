@@ -28,7 +28,7 @@ conn: "east" redirect-to=<unset>
 conn: "east" accept-redirect-to=<unset>
 conn: "east" esp=<unset>
 conn: "east" ike=<unset>
-002 added connection description "east"
+002 added IKEv2 connection "east"
 east #
  echo "initdone"
 initdone

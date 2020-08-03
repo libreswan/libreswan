@@ -7,7 +7,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add rw-east-pool-x509-ipv4
-002 added connection description "rw-east-pool-x509-ipv4"
+002 added IKEv2 connection "rw-east-pool-x509-ipv4"
 east #
  echo "initdone"
 initdone

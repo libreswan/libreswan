@@ -16,7 +16,7 @@ west #
 initdone
 west #
  ipsec auto --add westnet-eastnet-propnum
-002 added connection description "westnet-eastnet-propnum"
+002 added IKEv2 connection "westnet-eastnet-propnum"
 west #
  ipsec auto --up westnet-eastnet-propnum
 1v2 "westnet-eastnet-propnum" #1: initiating IKEv2 connection

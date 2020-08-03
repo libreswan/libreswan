@@ -22,7 +22,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add netkey
-002 added connection description "netkey"
+002 added IKEv1 connection "netkey"
 west #
  ipsec auto --status | grep DECAP_DSCP
 000 "netkey":   policy: RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+DECAP_DSCP+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;

@@ -11,13 +11,13 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add TUNNEL-A
-002 added connection description "TUNNEL-A"
+002 added IKEv1 connection "TUNNEL-A"
 east #
  ipsec auto --add TUNNEL-B
-002 added connection description "TUNNEL-B"
+002 added IKEv1 connection "TUNNEL-B"
 east #
  ipsec auto --add TUNNEL-C
-002 added connection description "TUNNEL-C"
+002 added IKEv1 connection "TUNNEL-C"
 east #
  echo "initdone"
 initdone
