@@ -120,6 +120,12 @@ return_distro() {
 	fi
     fi
 
+    if [ -f /etc/devuan_version ]; then
+	VER="$(cat /etc/devuan_version | sed 's/^\([0-9]\.[0-9]\).*$/\1/')"
+	echo "devuan/${VER}"
+	return
+    fi
+
     if [ -f /etc/debian_version ]; then
 	VER="$(cat /etc/debian_version | sed 's/^\([0-9]\.[0-9]\).*$/\1/')"
 	echo "debian/${VER}"
