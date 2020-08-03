@@ -42,8 +42,8 @@ west #
 initdone
 west #
  ipsec auto --up westnet-eastnet-ikev2 #retransmits
-002 "westnet-eastnet-ikev2" #1: initiating Main Mode
-1v1 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: sent MI1, expecting MR1
+002 "westnet-eastnet-ikev2" #1: initiating IKEv1 Main Mode connection
+1v1 "westnet-eastnet-ikev2" #1: sent Main Mode request
 010 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 15 seconds for response
 010 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 30 seconds for response
 031 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: 60 second timeout exceeded after 2 retransmits.  No response (or no acceptable response) to our first IKEv1 message

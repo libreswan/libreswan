@@ -18,16 +18,16 @@ west #
 initdone
 west #
  ipsec auto --up west-east
-002 "west-east" #1: initiating Main Mode
-1v1 "west-east" #1: STATE_MAIN_I1: sent MI1, expecting MR1
-1v1 "west-east" #1: STATE_MAIN_I2: sent MI2, expecting MR2
-1v1 "west-east" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+002 "west-east" #1: initiating IKEv1 Main Mode connection
+1v1 "west-east" #1: sent Main Mode request
+1v1 "west-east" #1: sent Main Mode I2
+1v1 "west-east" #1: sent Main Mode I3
 002 "west-east" #1: Peer ID is ID_FQDN: '@east'
 003 "west-east" #1: authenticated using RSA with SHA-1
-004 "west-east" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+004 "west-east" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "west-east" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
-1v1 "west-east" #2: STATE_QUICK_I1: sent QI1, expecting QR1
-004 "west-east" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+1v1 "west-east" #2: sent Quick Mode request
+004 "west-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ip addr add 192.1.2.66/24 dev eth1
 west #
@@ -47,16 +47,16 @@ west #
 002 loaded private key for keyid: PKK_RSA:AQOm9dY/4
 west #
  ipsec auto --up float-east #retransmits
-002 "float-east" #3: initiating Main Mode
-1v1 "float-east" #3: STATE_MAIN_I1: sent MI1, expecting MR1
-1v1 "float-east" #3: STATE_MAIN_I2: sent MI2, expecting MR2
-1v1 "float-east" #3: STATE_MAIN_I3: sent MI3, expecting MR3
+002 "float-east" #3: initiating IKEv1 Main Mode connection
+1v1 "float-east" #3: sent Main Mode request
+1v1 "float-east" #3: sent Main Mode I2
+1v1 "float-east" #3: sent Main Mode I3
 002 "float-east" #3: Peer ID is ID_FQDN: '@east'
 003 "float-east" #3: authenticated using RSA with SHA-1
-004 "float-east" #3: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+004 "float-east" #3: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "float-east" #4: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
-1v1 "float-east" #4: STATE_QUICK_I1: sent QI1, expecting QR1
-004 "float-east" #4: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+1v1 "float-east" #4: sent Quick Mode request
+004 "float-east" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ip addr del 192.1.2.66/24 dev eth1
 west #
@@ -79,8 +79,8 @@ west #
 002 loaded private key for keyid: PKK_RSA:AQOm9dY/4
 west #
  ipsec auto --up west-float #retransmits
-002 "west-float" #5: initiating Main Mode
-1v1 "west-float" #5: STATE_MAIN_I1: sent MI1, expecting MR1
+002 "west-float" #5: initiating IKEv1 Main Mode connection
+1v1 "west-float" #5: sent Main Mode request
 010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 15 seconds for response
 010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 30 seconds for response
 031 "west-float" #5: STATE_MAIN_I1: 60 second timeout exceeded after 2 retransmits.  No response (or no acceptable response) to our first IKEv1 message

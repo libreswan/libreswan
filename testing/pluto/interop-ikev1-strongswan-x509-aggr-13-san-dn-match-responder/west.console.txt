@@ -32,8 +32,8 @@ west #
 002 "san" #1: I am sending my cert
 004 "san" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP1536}
 002 "san" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
-1v1 "san" #2: STATE_QUICK_I1: sent QI1, expecting QR1
-004 "san" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+1v1 "san" #2: sent Quick Mode request
+004 "san" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  echo "done"
 done

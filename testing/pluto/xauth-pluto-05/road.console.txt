@@ -56,10 +56,10 @@ road #
 004 "modecfg-road-eastnet-psk" #1: STATE_XAUTH_I1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
 002 "modecfg-road-eastnet-psk" #1: Received IP address 10.9.2.209/32
 002 "modecfg-road-eastnet-psk" #1: setting ip source address to 10.9.2.209/32
-004 "modecfg-road-eastnet-psk" #1: STATE_MAIN_I4: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
+004 "modecfg-road-eastnet-psk" #1: IKE SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
 002 "modecfg-road-eastnet-psk" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+AGGRESSIVE+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
-1v1 "modecfg-road-eastnet-psk" #2: STATE_QUICK_I1: sent QI1, expecting QR1
-004 "modecfg-road-eastnet-psk" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive username=use3}
+1v1 "modecfg-road-eastnet-psk" #2: sent Quick Mode request
+004 "modecfg-road-eastnet-psk" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive username=use3}
 road #
  ipsec whack --trafficstatus
 006 #2: "modecfg-road-eastnet-psk", username=use3, type=ESP, add_time=1234567890, inBytes=0, outBytes=0

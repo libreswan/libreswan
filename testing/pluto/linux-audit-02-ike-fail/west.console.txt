@@ -28,8 +28,8 @@ west #
  # ike fail tests
 west #
  ipsec auto --up ikev1-failtest #retransmits
-002 "ikev1-failtest" #1: initiating Main Mode
-1v1 "ikev1-failtest" #1: STATE_MAIN_I1: sent MI1, expecting MR1
+002 "ikev1-failtest" #1: initiating IKEv1 Main Mode connection
+1v1 "ikev1-failtest" #1: sent Main Mode request
 003 "ikev1-failtest" #1: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
 003 "ikev1-failtest" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
 010 "ikev1-failtest" #1: STATE_MAIN_I1: retransmission; will wait 0.5 seconds for response

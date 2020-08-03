@@ -15,23 +15,23 @@ initdone
 north #
  ipsec auto --up north-dpd
 000 initiating all conns with alias='north-dpd'
-002 "north-dpd/0x2" #1: initiating Main Mode
-1v1 "north-dpd/0x2" #1: STATE_MAIN_I1: sent MI1, expecting MR1
+002 "north-dpd/0x2" #1: initiating IKEv1 Main Mode connection
+1v1 "north-dpd/0x2" #1: sent Main Mode request
 000 "north-dpd/0x1": queuing pending IPsec SA negotiating with 192.1.2.23 IKE SA #1 "north-dpd/0x2"
-1v1 "north-dpd/0x2" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+1v1 "north-dpd/0x2" #1: sent Main Mode I2
 002 "north-dpd/0x2" #1: I am sending my cert
 002 "north-dpd/0x2" #1: I am sending a certificate request
-1v1 "north-dpd/0x2" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+1v1 "north-dpd/0x2" #1: sent Main Mode I3
 002 "north-dpd/0x2" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 002 "north-dpd/0x2" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 003 "north-dpd/0x2" #1: authenticated using RSA with SHA-1
-004 "north-dpd/0x2" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+004 "north-dpd/0x2" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "north-dpd/0x1" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
 002 "north-dpd/0x2" #3: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
-1v1 "north-dpd/0x1" #2: STATE_QUICK_I1: sent QI1, expecting QR1
-1v1 "north-dpd/0x2" #3: STATE_QUICK_I1: sent QI1, expecting QR1
-004 "north-dpd/0x1" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=active}
-004 "north-dpd/0x2" #3: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=active}
+1v1 "north-dpd/0x1" #2: sent Quick Mode request
+1v1 "north-dpd/0x2" #3: sent Quick Mode request
+004 "north-dpd/0x1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=active}
+004 "north-dpd/0x2" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=active}
 north #
  ipsec auto --status | grep northnet-eastnets
 north #

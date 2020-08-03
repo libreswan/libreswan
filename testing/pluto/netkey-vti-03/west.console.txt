@@ -39,15 +39,15 @@ west #
 initdone
 west #
  ipsec auto --up westnet-eastnet-vti-01
-002 "westnet-eastnet-vti-01" #1: initiating Main Mode
-1v1 "westnet-eastnet-vti-01" #1: STATE_MAIN_I1: sent MI1, expecting MR1
-1v1 "westnet-eastnet-vti-01" #1: STATE_MAIN_I2: sent MI2, expecting MR2
-1v1 "westnet-eastnet-vti-01" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+002 "westnet-eastnet-vti-01" #1: initiating IKEv1 Main Mode connection
+1v1 "westnet-eastnet-vti-01" #1: sent Main Mode request
+1v1 "westnet-eastnet-vti-01" #1: sent Main Mode I2
+1v1 "westnet-eastnet-vti-01" #1: sent Main Mode I3
 002 "westnet-eastnet-vti-01" #1: Peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-vti-01" #1: authenticated using RSA with SHA-1
-004 "westnet-eastnet-vti-01" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+004 "westnet-eastnet-vti-01" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-vti-01" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
-1v1 "westnet-eastnet-vti-01" #2: STATE_QUICK_I1: sent QI1, expecting QR1
+1v1 "westnet-eastnet-vti-01" #2: sent Quick Mode request
 002 "westnet-eastnet-vti-01" #2: up-client output: net.ipv4.conf.ipsec0.disable_policy = 1
 002 "westnet-eastnet-vti-01" #2: up-client output: net.ipv4.conf.ipsec0.rp_filter = 0
 002 "westnet-eastnet-vti-01" #2: up-client output: net.ipv4.conf.ipsec0.forwarding = 1
@@ -56,18 +56,18 @@ west #
 002 "westnet-eastnet-vti-01" #2: prepare-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit key 2
 002 "westnet-eastnet-vti-01" #2: prepare-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 2
 002 "westnet-eastnet-vti-01" #2: route-client output: done ip route
-004 "westnet-eastnet-vti-01" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-vti-01" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --up westnet-eastnet-vti-02
-002 "westnet-eastnet-vti-02" #3: initiating Main Mode
-1v1 "westnet-eastnet-vti-02" #3: STATE_MAIN_I1: sent MI1, expecting MR1
-1v1 "westnet-eastnet-vti-02" #3: STATE_MAIN_I2: sent MI2, expecting MR2
-1v1 "westnet-eastnet-vti-02" #3: STATE_MAIN_I3: sent MI3, expecting MR3
+002 "westnet-eastnet-vti-02" #3: initiating IKEv1 Main Mode connection
+1v1 "westnet-eastnet-vti-02" #3: sent Main Mode request
+1v1 "westnet-eastnet-vti-02" #3: sent Main Mode I2
+1v1 "westnet-eastnet-vti-02" #3: sent Main Mode I3
 002 "westnet-eastnet-vti-02" #3: Peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-vti-02" #3: authenticated using RSA with SHA-1
-004 "westnet-eastnet-vti-02" #3: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+004 "westnet-eastnet-vti-02" #3: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-vti-02" #4: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
-1v1 "westnet-eastnet-vti-02" #4: STATE_QUICK_I1: sent QI1, expecting QR1
+1v1 "westnet-eastnet-vti-02" #4: sent Quick Mode request
 002 "westnet-eastnet-vti-02" #4: up-client output: vti interface "ipsec0" already exists with conflicting setting
 002 "westnet-eastnet-vti-02" #4: up-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit key 2
 002 "westnet-eastnet-vti-02" #4: up-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 2
@@ -77,7 +77,7 @@ west #
 002 "westnet-eastnet-vti-02" #4: prepare-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 2
 002 "westnet-eastnet-vti-02" #4: route-client output: RTNETLINK answers: File exists
 002 "westnet-eastnet-vti-02" #4: route-client output: done ip route
-004 "westnet-eastnet-vti-02" #4: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-vti-02" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  # our two ranges should orute into the vti device
 west #

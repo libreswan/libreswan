@@ -14,8 +14,8 @@ west #
 west #
  ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 added connection description "aes128"
-002 "aes128" #1: initiating Main Mode
-1v1 "aes128" #1: STATE_MAIN_I1: sent MI1, expecting MR1
+002 "aes128" #1: initiating IKEv1 Main Mode connection
+1v1 "aes128" #1: sent Main Mode request
 003 "aes128" #1: ignoring informational payload INVALID_COOKIE, msgid=00000000, length=12
 003 "aes128" #1: received and ignored notification payload: INVALID_COOKIE
 002 "aes128" #1: IMPAIR: retransmit so deleting SA

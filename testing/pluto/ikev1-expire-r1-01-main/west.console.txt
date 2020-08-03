@@ -20,8 +20,8 @@ west #
  ipsec whack --impair delete-on-retransmit
 west #
  ipsec auto --up westnet-eastnet
-002 "westnet-eastnet" #1: initiating Main Mode
-1v1 "westnet-eastnet" #1: STATE_MAIN_I1: sent MI1, expecting MR1
+002 "westnet-eastnet" #1: initiating IKEv1 Main Mode connection
+1v1 "westnet-eastnet" #1: sent Main Mode request
 002 "westnet-eastnet" #1: IMPAIR: retransmit so deleting SA
 002 "westnet-eastnet" #1: deleting state (STATE_MAIN_I1) and NOT sending notification
 002 "westnet-eastnet" #1: IMPAIR: skipping revival of connection that is supposed to remain up
