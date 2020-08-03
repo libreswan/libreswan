@@ -20,13 +20,13 @@ initdone
 road #
  ipsec auto --up road-east
 1v2 "road-east" #1: initiating IKEv2 IKE SA
-1v2 "road-east" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "road-east" #1: sent IKE_SA_INIT request
 002 "road-east" #1: initiating a redirect to new gateway (address: 192.1.2.45)
 1v2 "road-east" #2: initiating IKEv2 IKE SA
 002 "road-east" #1: deleting state (STATE_IKESA_DEL) and NOT sending notification
 002 "road-east" #1: IMPAIR: skipping revival of connection that is supposed to remain up
-1v2 "road-east" #2: STATE_PARENT_I1: sent v2I1, expected v2R1
-1v2 "road-east" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+1v2 "road-east" #2: sent IKE_SA_INIT request
+1v2 "road-east" #2: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "road-east" #2: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 002 "road-east" #3: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 003 "road-east" #2: authenticated using RSA with SHA2_512
@@ -35,7 +35,7 @@ road #
 002 "road-east" #3: received INTERNAL_IP4_DNS 5.6.7.8
 002 "road-east" #3: up-client output: updating resolvconf
 002 "road-east" #3: negotiated connection [192.0.2.101-192.0.2.101:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0]
-004 "road-east" #3: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "road-east" #3: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 road #
  echo "1. road connection add+up done"
 1. road connection add+up done
@@ -74,12 +74,12 @@ road #
 road #
  ipsec auto --up road-east
 1v2 "road-east" #4: initiating IKEv2 IKE SA
-1v2 "road-east" #4: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "road-east" #4: sent IKE_SA_INIT request
 002 "road-east" #4: initiating a redirect to new gateway (address: 192.1.2.44)
 1v2 "road-east" #5: initiating IKEv2 IKE SA
 002 "road-east" #4: deleting state (STATE_IKESA_DEL) and NOT sending notification
 002 "road-east" #4: IMPAIR: skipping revival of connection that is supposed to remain up
-1v2 "road-east" #5: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "road-east" #5: sent IKE_SA_INIT request
 002 "road-east" #5: IMPAIR: retransmit so deleting SA
 002 "road-east" #5: deleting state (STATE_PARENT_I1) and NOT sending notification
 002 "road-east" #5: IMPAIR: skipping revival of connection that is supposed to remain up

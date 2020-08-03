@@ -23,15 +23,15 @@ PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  ipsec auto --up road-east-x509-ipv4
-1v2 "road-east-x509-ipv4"[1] 192.1.2.23 #1: initiating IKEv2 IKE SA
-1v2 "road-east-x509-ipv4"[1] 192.1.2.23 #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-1v2 "road-east-x509-ipv4"[1] 192.1.2.23 #1: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+1v2 "road-east-x509-ipv4"[1] 192.1.2.23 #1: initiating IKEv2 connection
+1v2 "road-east-x509-ipv4"[1] 192.1.2.23 #1: sent IKE_SA_INIT request
+1v2 "road-east-x509-ipv4"[1] 192.1.2.23 #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "road-east-x509-ipv4"[1] 192.1.2.23 #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 002 "road-east-x509-ipv4"[1] 192.1.2.23 #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 003 "road-east-x509-ipv4"[1] 192.1.2.23 #1: authenticated using RSA with SHA2_512
 002 "road-east-x509-ipv4"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.100
 002 "road-east-x509-ipv4"[1] 192.1.2.23 #2: negotiated connection [192.0.2.100-192.0.2.100:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0]
-004 "road-east-x509-ipv4"[1] 192.1.2.23 #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
+004 "road-east-x509-ipv4"[1] 192.1.2.23 #2: IKE and IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
  ping -q -n -c 4 -I 192.0.2.100 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.0.2.100 : 56(84) bytes of data.

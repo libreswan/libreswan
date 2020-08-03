@@ -19,13 +19,13 @@ west #
 002 added connection description "westnet-eastnet-aes-default"
 west #
  ipsec auto --up westnet-eastnet-aes-default
-1v2 "westnet-eastnet-aes-default" #1: initiating IKEv2 IKE SA
-1v2 "westnet-eastnet-aes-default" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-1v2 "westnet-eastnet-aes-default" #1: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+1v2 "westnet-eastnet-aes-default" #1: initiating IKEv2 connection
+1v2 "westnet-eastnet-aes-default" #1: sent IKE_SA_INIT request
+1v2 "westnet-eastnet-aes-default" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 002 "westnet-eastnet-aes-default" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-aes-default" #1: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-aes-default" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-aes-default" #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-aes-default" #2: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-aes-default
 002 "westnet-eastnet-aes-default": terminating SAs using this connection
@@ -39,13 +39,13 @@ west #
 002 added connection description "westnet-eastnet-aes-128"
 west #
  ipsec auto --up westnet-eastnet-aes-128
-1v2 "westnet-eastnet-aes-128" #3: initiating IKEv2 IKE SA
-1v2 "westnet-eastnet-aes-128" #3: STATE_PARENT_I1: sent v2I1, expected v2R1
-1v2 "westnet-eastnet-aes-128" #3: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+1v2 "westnet-eastnet-aes-128" #3: initiating IKEv2 connection
+1v2 "westnet-eastnet-aes-128" #3: sent IKE_SA_INIT request
+1v2 "westnet-eastnet-aes-128" #3: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 002 "westnet-eastnet-aes-128" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-aes-128" #3: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-aes-128" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-aes-128" #4: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-aes-128" #4: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-aes-128
 002 "westnet-eastnet-aes-128": terminating SAs using this connection
@@ -59,13 +59,13 @@ west #
 002 added connection description "westnet-eastnet-aes-256"
 west #
  ipsec auto --up westnet-eastnet-aes-256
-1v2 "westnet-eastnet-aes-256" #5: initiating IKEv2 IKE SA
-1v2 "westnet-eastnet-aes-256" #5: STATE_PARENT_I1: sent v2I1, expected v2R1
-1v2 "westnet-eastnet-aes-256" #5: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+1v2 "westnet-eastnet-aes-256" #5: initiating IKEv2 connection
+1v2 "westnet-eastnet-aes-256" #5: sent IKE_SA_INIT request
+1v2 "westnet-eastnet-aes-256" #5: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 002 "westnet-eastnet-aes-256" #6: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-aes-256" #5: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-aes-256" #6: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-aes-256" #6: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-aes-256" #6: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-aes-256
 002 "westnet-eastnet-aes-256": terminating SAs using this connection
@@ -79,13 +79,13 @@ west #
 002 added connection description "westnet-eastnet-aes-mix-1"
 west #
  ipsec auto --up westnet-eastnet-aes-mix-1
-1v2 "westnet-eastnet-aes-mix-1" #7: initiating IKEv2 IKE SA
-1v2 "westnet-eastnet-aes-mix-1" #7: STATE_PARENT_I1: sent v2I1, expected v2R1
-1v2 "westnet-eastnet-aes-mix-1" #7: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+1v2 "westnet-eastnet-aes-mix-1" #7: initiating IKEv2 connection
+1v2 "westnet-eastnet-aes-mix-1" #7: sent IKE_SA_INIT request
+1v2 "westnet-eastnet-aes-mix-1" #7: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 002 "westnet-eastnet-aes-mix-1" #8: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-aes-mix-1" #7: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-aes-mix-1" #8: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-aes-mix-1" #8: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-aes-mix-1" #8: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete  westnet-eastnet-aes-mix-1
 002 "westnet-eastnet-aes-mix-1": terminating SAs using this connection
@@ -99,13 +99,13 @@ west #
 002 added connection description "westnet-eastnet-aes-mix-2"
 west #
  ipsec auto --up westnet-eastnet-aes-mix-2
-1v2 "westnet-eastnet-aes-mix-2" #9: initiating IKEv2 IKE SA
-1v2 "westnet-eastnet-aes-mix-2" #9: STATE_PARENT_I1: sent v2I1, expected v2R1
-1v2 "westnet-eastnet-aes-mix-2" #9: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+1v2 "westnet-eastnet-aes-mix-2" #9: initiating IKEv2 connection
+1v2 "westnet-eastnet-aes-mix-2" #9: sent IKE_SA_INIT request
+1v2 "westnet-eastnet-aes-mix-2" #9: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 002 "westnet-eastnet-aes-mix-2" #10: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-aes-mix-2" #9: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-aes-mix-2" #10: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-aes-mix-2" #10: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-aes-mix-2" #10: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete  westnet-eastnet-aes-mix-2
 002 "westnet-eastnet-aes-mix-2": terminating SAs using this connection

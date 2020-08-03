@@ -24,25 +24,25 @@ west #
 west #
  ipsec auto --up west-east
 000 initiating all conns with alias='west-east'
-1v2 "west-east/4x0" #1: initiating IKEv2 IKE SA
+1v2 "west-east/4x0" #1: initiating IKEv2 connection
 000 "west-east/3x0": queuing pending IPsec SA negotiating with 192.1.2.23 IKE SA #1 "west-east/4x0"
 000 "west-east/2x0": queuing pending IPsec SA negotiating with 192.1.2.23 IKE SA #1 "west-east/4x0"
 000 "west-east/1x0": queuing pending IPsec SA negotiating with 192.1.2.23 IKE SA #1 "west-east/4x0"
-1v2 "west-east/4x0" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-1v2 "west-east/4x0" #1: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+1v2 "west-east/4x0" #1: sent IKE_SA_INIT request
+1v2 "west-east/4x0" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "west-east/1x0" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "west-east/4x0" #1: authenticated using authby=secret
 002 "west-east/1x0" #2: negotiated connection [192.0.1.254-192.0.1.254:0-65535 0] -> [192.0.2.254-192.0.2.254:0-65535 0]
-004 "west-east/1x0" #2: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
-1v2 "west-east/2x0" #3: STATE_V2_NEW_CHILD_I1: sent IPsec Child req wait response
+004 "west-east/1x0" #2: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+1v2 "west-east/2x0" #3: sent IPsec Child req wait response
 002 "west-east/2x0" #3: negotiated connection [192.0.1.253-192.0.1.253:0-65535 0] -> [192.0.2.254-192.0.2.254:0-65535 0]
-004 "west-east/2x0" #3: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
-1v2 "west-east/3x0" #4: STATE_V2_NEW_CHILD_I1: sent IPsec Child req wait response
+004 "west-east/2x0" #3: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+1v2 "west-east/3x0" #4: sent IPsec Child req wait response
 002 "west-east/3x0" #4: negotiated connection [192.0.1.252-192.0.1.252:0-65535 0] -> [192.0.2.254-192.0.2.254:0-65535 0]
-004 "west-east/3x0" #4: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
-1v2 "west-east/4x0" #5: STATE_V2_NEW_CHILD_I1: sent IPsec Child req wait response
+004 "west-east/3x0" #4: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+1v2 "west-east/4x0" #5: sent IPsec Child req wait response
 002 "west-east/4x0" #5: negotiated connection [192.0.1.251-192.0.1.251:0-65535 0] -> [192.0.2.254-192.0.2.254:0-65535 0]
-004 "west-east/4x0" #5: STATE_V2_ESTABLISHED_CHILD_SA: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "west-east/4x0" #5: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  # CHILD #2->#6
 west #
