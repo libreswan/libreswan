@@ -1271,7 +1271,7 @@ static bool extract_connection(struct fd *whackfd,
 		}
 	}
 
-	if (wm->remote_tcpport == 0 || wm->remote_tcpport == 500) {
+	if (wm->iketcp != IKE_TCP_NO && (wm->remote_tcpport == 0 || wm->remote_tcpport == 500)) {
 		loglog(RC_FATAL,
 			"Failed to add connection \"%s\": tcp-remoteport cannot be 0 or 500",
 						wm->name);
