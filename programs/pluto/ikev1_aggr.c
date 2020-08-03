@@ -1030,11 +1030,11 @@ void aggr_outI1(struct fd *whack_sock,
 			    uctx, true/*part of initiate*/);
 
 	if (predecessor == NULL) {
-		libreswan_log("initiating Aggressive Mode");
+		libreswan_log("initiating IKEv1 Aggressive Mode connection");
 	} else {
 		update_pending(pexpect_ike_sa(predecessor), pexpect_ike_sa(st));
 		libreswan_log(
-			"initiating Aggressive Mode #%lu to replace #%lu",
+			"initiating IKEv1 Aggressive Mode connection #%lu to replace #%lu",
 			st->st_serialno, predecessor->st_serialno);
 	}
 
@@ -1179,7 +1179,7 @@ static stf_status aggr_outI1_tail(struct state *st,
 	start_retransmits(st);
 
 	loglog(RC_NEW_V1_STATE + st->st_state->kind,
-	       "%s: %s", st->st_state->name, st->st_state->story);
+	       "%s", st->st_state->story);
 	reset_cur_state();
 	return STF_IGNORE;
 }

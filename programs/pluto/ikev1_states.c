@@ -44,21 +44,24 @@ struct finite_state v1_states[] = {
 	 * IKE SA.
 	 */
 
-	S(STATE_AGGR_R0, "expecting AI1", CAT_HALF_OPEN_IKE_SA),
-	S(STATE_AGGR_I1, "sent AI1, expecting AR1", CAT_HALF_OPEN_IKE_SA),
-	S(STATE_MAIN_R0, "expecting MI1", CAT_HALF_OPEN_IKE_SA),
-	S(STATE_MAIN_I1, "sent MI1, expecting MR1", CAT_HALF_OPEN_IKE_SA),
+	S(STATE_AGGR_R0, "expecting Aggressive Mode request", CAT_HALF_OPEN_IKE_SA),
+	S(STATE_AGGR_I1, "sent Aggressive Mode request", CAT_HALF_OPEN_IKE_SA),
+	S(STATE_MAIN_R0, "expecting Main Mode request", CAT_HALF_OPEN_IKE_SA),
+	S(STATE_MAIN_I1, "sent Main Mode request", CAT_HALF_OPEN_IKE_SA),
 
 	/*
 	 * All IKEv1 MAIN modes except the first (half-open) and last
 	 * ones are not authenticated.
+	 *
+	 * These exchanges don't have any userfriendly name, like we used
+	 * elsewhere (request, response, confirmation)
 	 */
 
-	S(STATE_MAIN_R1, "sent MR1, expecting MI2", CAT_OPEN_IKE_SA),
-	S(STATE_MAIN_R2, "sent MR2, expecting MI3", CAT_OPEN_IKE_SA),
-	S(STATE_MAIN_I2, "sent MI2, expecting MR2", CAT_OPEN_IKE_SA),
-	S(STATE_MAIN_I3, "sent MI3, expecting MR3", CAT_OPEN_IKE_SA),
-	S(STATE_AGGR_R1, "sent AR1, expecting AI2", CAT_OPEN_IKE_SA),
+	S(STATE_MAIN_R1, "sent Main Mode R1", CAT_OPEN_IKE_SA),
+	S(STATE_MAIN_R2, "sent Main Mode R2", CAT_OPEN_IKE_SA),
+	S(STATE_MAIN_I2, "sent Main Mode I2", CAT_OPEN_IKE_SA),
+	S(STATE_MAIN_I3, "sent Main Mode I3", CAT_OPEN_IKE_SA),
+	S(STATE_AGGR_R1, "sent Aggressive Mode response, expecting confirmation", CAT_OPEN_IKE_SA),
 
 	/*
 	 * IKEv1 established states.
@@ -67,39 +70,45 @@ struct finite_state v1_states[] = {
 	 * after the connection is established and authenticated.
 	 */
 
-	S(STATE_MAIN_I4, "ISAKMP SA established", CAT_ESTABLISHED_IKE_SA),
-	S(STATE_MAIN_R3, "sent MR3, ISAKMP SA established", CAT_ESTABLISHED_IKE_SA),
-	S(STATE_AGGR_I2, "sent AI2, ISAKMP SA established", CAT_ESTABLISHED_IKE_SA),
-	S(STATE_AGGR_R2, "ISAKMP SA established", CAT_ESTABLISHED_IKE_SA),
+	S(STATE_MAIN_I4, "IKE SA established", CAT_ESTABLISHED_IKE_SA),
+	S(STATE_MAIN_R3, "IKE SA established", CAT_ESTABLISHED_IKE_SA),
+	S(STATE_AGGR_I2, "IKE SA established", CAT_ESTABLISHED_IKE_SA),
+	S(STATE_AGGR_R2, "IKE SA established", CAT_ESTABLISHED_IKE_SA),
 	S(STATE_XAUTH_I0, "XAUTH client - possibly awaiting CFG_request", CAT_ESTABLISHED_IKE_SA),
 	S(STATE_XAUTH_I1, "XAUTH client - possibly awaiting CFG_set", CAT_ESTABLISHED_IKE_SA),
 	S(STATE_XAUTH_R0, "XAUTH responder - optional CFG exchange", CAT_ESTABLISHED_IKE_SA),
 	S(STATE_XAUTH_R1, "XAUTH status sent, expecting Ack", CAT_ESTABLISHED_IKE_SA),
 
 	/*
-	 * IKEv1: QUICK is for child connections children.  Probably
-	 * won't occur as a parent?
+	 * IKEv1: QUICK is for child connections children.
+	 *        Initiator                        Responder
+	 *       -----------                      -----------
+	 *        HDR*, HASH(1), SA, Ni
+	 *          [, KE ] [, IDci, IDcr ] -->
+	 *                                  <--    HDR*, HASH(2), SA, Nr
+	 *                                               [, KE ] [, IDci, IDcr ]
+	 *        HDR*, HASH(3)             -->
 	 */
 
-	/* this is not established yet? */
-	S(STATE_QUICK_I1, "sent QI1, expecting QR1", CAT_ESTABLISHED_CHILD_SA),
-	S(STATE_QUICK_I2, "sent QI2, IPsec SA established", CAT_ESTABLISHED_CHILD_SA),
+	/* this is not established yet */
+	S(STATE_QUICK_I1, "sent Quick Mode request", CAT_ESTABLISHED_CHILD_SA),
+	S(STATE_QUICK_I2, "IPsec SA established", CAT_ESTABLISHED_CHILD_SA),
 	/* shouldn't we cat_ignore this? */
-	S(STATE_QUICK_R0, "expecting QI1", CAT_ESTABLISHED_CHILD_SA),
-	S(STATE_QUICK_R1, "sent QR1, inbound IPsec SA installed, expecting QI2", CAT_ESTABLISHED_CHILD_SA),
+	S(STATE_QUICK_R0, "expecting Quick Mode request", CAT_ESTABLISHED_CHILD_SA),
+	S(STATE_QUICK_R1, "sent Quick Mode reply, inbound IPsec SA installed, expecting confirmation", CAT_ESTABLISHED_CHILD_SA),
 	S(STATE_QUICK_R2, "IPsec SA established", CAT_ESTABLISHED_CHILD_SA),
 
 	/*
 	 * IKEv1: Post established negotiation.
 	 */
 
-	S(STATE_MODE_CFG_I1, "ModeCfg initiator - awaiting CFG_reply", CAT_ESTABLISHED_IKE_SA),
-	S(STATE_MODE_CFG_R1, "ModeCfg Set sent, expecting Ack", CAT_ESTABLISHED_IKE_SA),
-	S(STATE_MODE_CFG_R2, "ModeCfg R2", CAT_ESTABLISHED_IKE_SA),
+	S(STATE_MODE_CFG_I1, "sent ModeCfg request", CAT_ESTABLISHED_IKE_SA),
+	S(STATE_MODE_CFG_R1, "sent ModeCfg reply, expecting Ack", CAT_ESTABLISHED_IKE_SA),
+	S(STATE_MODE_CFG_R2, "received ModeCfg Ack", CAT_ESTABLISHED_IKE_SA),
 
-	S(STATE_INFO, "got Informational Message in clear", CAT_INFORMATIONAL),
-	S(STATE_INFO_PROTECTED, "got encrypted Informational Message", CAT_INFORMATIONAL),
-	S(STATE_MODE_CFG_R0, "ModeCfg Reply sent", CAT_INFORMATIONAL),
+	S(STATE_INFO, "received unencrypted Informational Exchange message", CAT_INFORMATIONAL),
+	S(STATE_INFO_PROTECTED, "received encrypted Informational Exchange message", CAT_INFORMATIONAL),
+	S(STATE_MODE_CFG_R0, "received ModeCfg request, reply sent", CAT_INFORMATIONAL),
 
 #undef S
 };

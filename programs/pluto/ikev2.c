@@ -3118,8 +3118,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	if ((transition->flags & SMF2_SUPPRESS_SUCCESS_LOG) ||
 	    (c != NULL && (c->policy & POLICY_OPPORTUNISTIC))) {
 		LSWDBGP(DBG_BASE, buf) {
-			jam(buf, "%s: %s", st->st_state->name,
-				st->st_state->story);
+			jam(buf, "%s", st->st_state->story);
 			/* document SA details for admin's pleasure */
 			if (log_details != NULL) {
 				log_details(buf, st);
@@ -3127,8 +3126,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		}
 	} else {
 		LOG_MESSAGE(w, log_st->st_logger, buf) {
-			jam(buf, "%s: %s", st->st_state->name,
-			    st->st_state->story);
+			jam(buf, "%s", st->st_state->story);
 			/* document SA details for admin's pleasure */
 			if (log_details != NULL) {
 				log_details(buf, st);

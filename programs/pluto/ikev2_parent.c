@@ -594,7 +594,7 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 				   predecessor->st_establishing_sa),
 		    predecessor->st_state->name);
 		log_state(logger | (RC_NEW_V2_STATE + STATE_PARENT_I1), &ike->sa,
-			  "initiating IKEv2 IKE SA to replace #%lu",
+			  "initiating IKEv2 connection to replace #%lu",
 			  predecessor->st_serialno);
 		if (IS_V2_ESTABLISHED(predecessor->st_state)) {
 			if (IS_CHILD_SA(st))
@@ -605,7 +605,7 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 		update_pending(ike_sa(predecessor, HERE), pexpect_ike_sa(st));
 	} else {
 		log_state(logger | (RC_NEW_V2_STATE + STATE_PARENT_I1), &ike->sa,
-			  "initiating IKEv2 IKE SA");
+			  "initiating IKEv2 connection");
 	}
 
 	if (IS_LIBUNBOUND && id_ipseckey_allowed(st, IKEv2_AUTH_RESERVED)) {

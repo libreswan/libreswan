@@ -69,16 +69,16 @@ struct finite_state v2_states[] = {
 	 * IKE SA.
 	 */
 
-	S(STATE_PARENT_I1, "sent v2I1, expected v2R1", CAT_HALF_OPEN_IKE_SA),
-	S(STATE_PARENT_R0, "processing SA_INIT request", CAT_HALF_OPEN_IKE_SA),
-	S(STATE_PARENT_R1, "received v2I1, sent v2R1", CAT_HALF_OPEN_IKE_SA),
+	S(STATE_PARENT_I1, "sent IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA),
+	S(STATE_PARENT_R0, "processing IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA),
+	S(STATE_PARENT_R1, "sent IKE_SA_INIT reply", CAT_HALF_OPEN_IKE_SA),
 
 	/*
 	 * All IKEv1 MAIN modes except the first (half-open) and last
 	 * ones are not authenticated.
 	 */
 
-	S(STATE_PARENT_I2, "sent v2I2, expected v2R2", CAT_OPEN_IKE_SA),
+	S(STATE_PARENT_I2, "sent IKE_AUTH request", CAT_OPEN_IKE_SA),
 
 	/* IKE exchange can also create a child */
 
@@ -105,7 +105,7 @@ struct finite_state v2_states[] = {
 	 */
 
 	V2(STATE_V2_ESTABLISHED_IKE_SA, "established IKE SA", CAT_ESTABLISHED_IKE_SA),
-	V2(STATE_V2_ESTABLISHED_CHILD_SA, "IPsec SA established", CAT_ESTABLISHED_CHILD_SA),
+	V2(STATE_V2_ESTABLISHED_CHILD_SA, "IKE and IPsec SA established", CAT_ESTABLISHED_CHILD_SA),
 
 	/* ??? better story needed for these */
 	S(STATE_IKESA_DEL, "STATE_IKESA_DEL", CAT_ESTABLISHED_IKE_SA),

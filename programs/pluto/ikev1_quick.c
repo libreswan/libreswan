@@ -821,11 +821,11 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 
 	if (st->st_ipsec_pred == SOS_NOBODY) {
 		loglog(RC_NEW_V1_STATE + st->st_state->kind,
-		       "%s: %s", st->st_state->name, st->st_state->story);
+		       "%s", st->st_state->story);
 	} else {
 		loglog(RC_NEW_V1_STATE + st->st_state->kind,
-		       "%s: %s, to replace #%lu",
-		       st->st_state->name, st->st_state->story,
+		       "%s, to replace #%lu",
+		       st->st_state->story,
 		       st->st_ipsec_pred);
 		st->st_ipsec_pred = SOS_NOBODY;
 	}
