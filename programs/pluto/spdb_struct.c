@@ -22,7 +22,6 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "lswlog.h"
 
 #include "defs.h"
 #include "id.h"
@@ -87,6 +86,7 @@ static struct ike_proposals v1_default_ike_proposals(struct logger *logger)
 		.check_pfs_vs_dh = false,
 		.alg_is_ok = ike_alg_is_ike,
 		.logger = logger,
+		.logger_rc_flags = ALL_STREAMS|RC_LOG,
 	};
 	struct proposal_parser *parser = ike_proposal_parser(&policy);
 	struct ike_proposals defaults = { .p = proposals_from_str(parser, NULL), };
