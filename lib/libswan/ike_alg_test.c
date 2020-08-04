@@ -25,10 +25,10 @@
 
 #define TEST(TESTER, ALG, TESTS)					\
 	if (!ike_alg_is_valid(&(ALG).common)) {				\
-		libreswan_log("skipping tests for disabled %s algorithm", \
+		loglog(RC_LOG, "skipping tests for disabled %s algorithm", \
 			      (ALG).common.fqn);			\
 	} else {							\
-		libreswan_log("testing %s:", (ALG).common.fqn);		\
+		loglog(RC_LOG, "testing %s:", (ALG).common.fqn);		\
 		passert(TESTER(&ALG, TESTS));				\
 	}
 

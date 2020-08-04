@@ -73,7 +73,7 @@ int endpoint_hport(const ip_endpoint *endpoint)
 	const struct ip_info *afi = endpoint_type(endpoint);
 	if (afi == NULL) {
 		/* not asserting, who knows what nonsense a user can generate */
-		libreswan_log("%s has unspecified type", __func__);
+		loglog(RC_LOG, "%s has unspecified type", __func__);
 		return -1;
 	}
 	return endpoint->hport;
@@ -84,7 +84,7 @@ ip_port endpoint_port(const ip_endpoint *endpoint)
 	const struct ip_info *afi = endpoint_type(endpoint);
 	if (afi == NULL) {
 		/* not asserting, who knows what nonsense a user can generate */
-		libreswan_log("%s has unspecified type", __func__);
+		loglog(RC_LOG, "%s has unspecified type", __func__);
 		return unset_port;
 	}
 	return ip_hport(endpoint->hport);
@@ -95,7 +95,7 @@ ip_endpoint set_endpoint_hport(const ip_endpoint *endpoint, int hport)
 	const struct ip_info *afi = endpoint_type(endpoint);
 	if (afi == NULL) {
 		/* not asserting, who knows what nonsense a user can generate */
-		libreswan_log("endpoint has unspecified type");
+		loglog(RC_LOG, "endpoint has unspecified type");
 		return unset_endpoint;
 	}
 #ifdef ENDPOINT_TYPE

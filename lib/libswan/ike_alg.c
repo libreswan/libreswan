@@ -1020,7 +1020,7 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 	 * If FIPS, scream about.  This way grepping for FIPS shows up
 	 * more information.
 	 */
-	libreswan_log("%s%s algorithms:",
+	loglog(RC_LOG, "%s%s algorithms:",
 		      libreswan_fipsmode() ? "FIPS " : "",
 		      type->Name);
 	FOR_EACH_IKE_ALGP(type, algp) {
@@ -1166,7 +1166,7 @@ static void strip_nonfips(const struct ike_alg_type *type)
 		 * Check FIPS before trying to run any tests.
 		 */
 		if (!alg->fips) {
-			libreswan_log("%s algorithm %s disabled; not FIPS compliant",
+			loglog(RC_LOG, "%s algorithm %s disabled; not FIPS compliant",
 				      type->Name, alg->fqn);
 			continue;
 		}

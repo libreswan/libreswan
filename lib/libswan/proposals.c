@@ -570,7 +570,7 @@ bool impair_proposal_errors(struct proposal_parser *parser)
 {
 	pexpect(parser->error[0] != '\0');
 	if (impair.proposal_parser) {
-		libreswan_log("IMPAIR: ignoring proposal error: %s",
+		loglog(RC_LOG, "IMPAIR: ignoring proposal error: %s",
 			      parser->error);
 		parser->error[0] = '\0';
 		return true;

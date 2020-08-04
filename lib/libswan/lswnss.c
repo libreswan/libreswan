@@ -170,12 +170,12 @@ char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg UNUSED)
 	 */
 	const char *token = PK11_GetTokenName(slot);
 	if (token == NULL) {
-		libreswan_log("NSS Password slot has no token name");
+		loglog(RC_LOG, "NSS Password slot has no token name");
 		return NULL;
 	}
 
 	if (PK11_ProtectedAuthenticationPath(slot)) {
-		libreswan_log("NSS Password for token \"%s\" failed, slot has protected authentication path",
+		loglog(RC_LOG, "NSS Password for token \"%s\" failed, slot has protected authentication path",
 			      token);
 		return NULL;
 	}
@@ -187,7 +187,7 @@ char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg UNUSED)
 	 */
 	if (oco->nsspassword != NULL) {
 		char *password = PORT_Strdup(oco->nsspassword);
-		libreswan_log("NSS Password for token \"%s\" with length %zu passed to NSS",
+		loglog(RC_LOG, "NSS Password for token \"%s\" with length %zu passed to NSS",
 			      token, strlen(password));
 		return password;
 	}
@@ -199,7 +199,7 @@ char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg UNUSED)
 	const int max_password_file_size = 4096;
 	char *passwords = PORT_ZAlloc(max_password_file_size);
 	if (passwords == NULL) {
-		libreswan_log("NSS Password file \"%s\" for token \"%s\" could not be loaded, NSS memory allocate failed",
+		loglog(RC_LOG, "NSS Password file \"%s\" for token \"%s\" could not be loaded, NSS memory allocate failed",
 			      oco->nsspassword_file, token);
 		return NULL;
 	}
@@ -212,7 +212,7 @@ char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg UNUSED)
 	{
 		PRFileDesc *fd = PR_Open(oco->nsspassword_file, PR_RDONLY, 0);
 		if (fd == NULL) {
-			libreswan_log("NSS Password file \"%s\" for token \"%s\" could not be opened for reading",
+			loglog(RC_LOG, "NSS Password file \"%s\" for token \"%s\" could not be opened for reading",
 				      oco->nsspassword_file, token);
 			PORT_Free(passwords);
 			return NULL;
@@ -238,7 +238,7 @@ char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg UNUSED)
 			i++;
 
 		if (i == passwords_len) {
-			libreswan_log("NSS Password file \"%s\" for token \"%s\" ends with a partial line (ignored)",
+			loglog(RC_LOG, "NSS Password file \"%s\" for token \"%s\" ends with a partial line (ignored)",
 				      oco->nsspassword_file, token);
 			break;	/* no match found */
 		}
@@ -256,7 +256,7 @@ char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg UNUSED)
 		    p[toklen] == ':') {
 			/* we have a winner! */
 			p = PORT_Strdup(&p[toklen + 1]);
-			libreswan_log("NSS Password from file \"%s\" for token \"%s\" with length %zu passed to NSS",
+			loglog(RC_LOG, "NSS Password from file \"%s\" for token \"%s\" with length %zu passed to NSS",
 				      oco->nsspassword_file, token, PORT_Strlen(p));
 			PORT_Free(passwords);
 			return p;
@@ -264,7 +264,7 @@ char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg UNUSED)
 	}
 
 	/* no match found in password file */
-	libreswan_log("NSS Password file \"%s\" does not contain token \"%s\"",
+	loglog(RC_LOG, "NSS Password file \"%s\" does not contain token \"%s\"",
 		      oco->nsspassword_file, token);
 	PORT_Free(passwords);
 	return NULL;

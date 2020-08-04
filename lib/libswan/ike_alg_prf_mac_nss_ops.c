@@ -66,7 +66,7 @@ static struct prf_context *init(const struct prf_desc *prf_desc,
 
 	SECStatus rc = PK11_DigestBegin(context);
 	if (rc) {
-		libreswan_log("NSS: %s digest begin failed for %s (%x)\n",
+		loglog(RC_LOG, "NSS: %s digest begin failed for %s (%x)\n",
 			      name, prf_desc->common.fqn, rc);
 		PK11_DestroyContext(context, PR_TRUE);
 		return NULL;

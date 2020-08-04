@@ -141,7 +141,7 @@ void lsw_conf_confddir(const char *confddir)
 	subst(&global_oco.confddir, confddir, "override ipsec.d");
 	lsw_conf_calculate();
 
-	libreswan_log("adjusting ipsec.d to %s", global_oco.confddir);
+	loglog(RC_LOG, "adjusting ipsec.d to %s", global_oco.confddir);
 }
 
 void lsw_conf_nssdir(const char *nssdir)
@@ -150,7 +150,7 @@ void lsw_conf_nssdir(const char *nssdir)
 	subst(&global_oco.nssdir, nssdir, "override nssdir");
 	lsw_conf_calculate();
 
-	libreswan_log("adjusting nssdir to %s", global_oco.nssdir);
+	loglog(RC_LOG, "adjusting nssdir to %s", global_oco.nssdir);
 }
 
 void lsw_conf_secretsfile(const char *secretsfile)
@@ -190,7 +190,7 @@ int libreswan_selinux(void)
 	n = fread((void *)selinux_flag, 1, 1, fd);
 	fclose(fd);
 	if (n != 1) {
-		libreswan_log("SElinux: could not read 1 byte from the selinux enforce file");
+		loglog(RC_LOG, "SElinux: could not read 1 byte from the selinux enforce file");
 		return 2;
 	}
 	if (selinux_flag[0] == '1')

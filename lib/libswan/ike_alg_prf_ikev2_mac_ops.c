@@ -110,7 +110,7 @@ static PK11SymKey *ike_sa_skeyseed(const struct prf_desc *prf_desc,
 						     key_name, key);
 	free_chunk_content(&key);
 	if (prf == NULL) {
-		libreswan_log("failed to create IKEv2 PRF for computing SKEYSEED = prf(Ni | Nr, g^ir)");
+		loglog(RC_LOG, "failed to create IKEv2 PRF for computing SKEYSEED = prf(Ni | Nr, g^ir)");
 		return NULL;
 	}
 	/* seed = g^ir */
@@ -131,7 +131,7 @@ static PK11SymKey *ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 	struct crypt_prf *prf = crypt_prf_init_symkey("ike sa rekey skeyseed", prf_desc,
 						      "SK_d (old)", SK_d_old);
 	if (prf == NULL) {
-		libreswan_log("failed to create IKEv2 PRF for computing SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr)");
+		loglog(RC_LOG, "failed to create IKEv2 PRF for computing SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr)");
 		return NULL;
 	}
 

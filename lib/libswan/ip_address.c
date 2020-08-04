@@ -18,7 +18,7 @@
 
 #include "jambuf.h"
 #include "ip_address.h"
-#include "lswlog.h"		/* for libreswan_log() */
+#include "lswlog.h"		/* for loglog(RC_LOG, ) */
 #include "ip_info.h"
 
 const ip_address unset_address; /* all zeros */

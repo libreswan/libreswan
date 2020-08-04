@@ -562,7 +562,7 @@ void jam_raw_dn(struct jambuf *buf, chunk_t dn, jam_bytes_fn *jam_bytes,
 	err_t ugh = format_dn(buf, dn, jam_bytes, nss_compatible);
 	if (ugh != NULL) {
 		/* error: print DN as hex string */
-		libreswan_log("error in DN parsing: %s", ugh);
+		loglog(RC_LOG, "error in DN parsing: %s", ugh);
 		DBG_dump_hunk("Bad DN:", dn);
 		/* reset the buffer */
 		jambuf_set_pos(buf, &pos);
@@ -1004,7 +1004,7 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 			/* ??? for some reason we think a failure with wildcards is worth logging */
 			dn_buf abuf;
 			dn_buf bbuf;
-			libreswan_log("while comparing A='%s'<=>'%s'=B with a wildcard count of %d, %s had too few RDNs",
+			loglog(RC_LOG, "while comparing A='%s'<=>'%s'=B with a wildcard count of %d, %s had too few RDNs",
 				      str_dn(a, &abuf), str_dn(b, &bbuf), *wildcards,
 				      (more_a ? "B" : "A"));
 		}

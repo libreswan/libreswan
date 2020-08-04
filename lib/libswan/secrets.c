@@ -1280,7 +1280,7 @@ static void process_secret(struct secret **psecrets,
 			ugh = "WARNING: The :RSA secrets entries for X.509 certificates are no longer needed";
 		}
 		if (ugh == NULL) {
-			libreswan_log("loaded private key for keyid: %s:%s",
+			loglog(RC_LOG, "loaded private key for keyid: %s:%s",
 				enum_name(&pkk_names, s->pks.kind),
 				s->pks.u.RSA_private_key.pub.keyid);
 		} else {
@@ -1485,7 +1485,7 @@ static void lsw_process_secrets_file(struct secret **psecrets,
 		/* for each file... */
 		for (fnp = globbuf.gl_pathv; fnp != NULL && *fnp != NULL; fnp++) {
 			if (lexopen(&pos, *fnp, FALSE)) {
-				libreswan_log("loading secrets from \"%s\"", *fnp);
+				loglog(RC_LOG, "loading secrets from \"%s\"", *fnp);
 				(void) flushline(
 					"file starts with indentation (continuation notation)");
 				lsw_process_secret_records(psecrets);
@@ -1505,7 +1505,7 @@ static void lsw_process_secrets_file(struct secret **psecrets,
 		break;
 
 	case GLOB_NOMATCH:
-		libreswan_log("no secrets filename matched \"%s\"", file_pat);
+		loglog(RC_LOG, "no secrets filename matched \"%s\"", file_pat);
 		break;
 
 	default:
@@ -1523,7 +1523,7 @@ void lsw_free_preshared_secrets(struct secret **psecrets)
 	if (*psecrets != NULL) {
 		struct secret *s, *ns;
 
-		libreswan_log("forgetting secrets");
+		loglog(RC_LOG, "forgetting secrets");
 
 		for (s = *psecrets; s != NULL; s = ns) {
 			struct id_list *i, *ni;
