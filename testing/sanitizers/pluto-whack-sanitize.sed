@@ -17,6 +17,7 @@ s, remaining life [0-9][0-9\.]*s, remaining life XXs,
 s,\(003 .* received Vendor ID payload \[Libreswan \).*,\1,
 /WARNING: calc_dh_shared(): for OAKLEY_GROUP_MODP/d
 s/add_time=[0-9]*,/add_time=1234567890,/
+s/, age=[^,]*,/, age=XXX,/
 s/SN: 0x[a-f0-9]*/SN: 0xXX/
 
 s/start processing duplicate packet ([0-9]* bytes)/start processing duplicate packet (xxx bytes)/
