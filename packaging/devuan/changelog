@@ -1,4 +1,4 @@
-libreswan (@IPSECBASEVERSION@-1) UNRELEASED; urgency=low
+libreswan (@IPSECBASEVERSION@-1) unstable; urgency=low
 
   * Release @IPSECBASEVERSION@-1
 
