@@ -67,6 +67,8 @@ def compile_prompt(logger, username=None, hostname=None):
               r'(?P<' + DOLLAR_GROUP + r'>'  + (dollar or DOLLAR_PATTERN)  + r')' +
               r' ')
     logger.debug("prompt '%s'", prompt)
+    #prompt= r'.*#'
+    print(type(prompt))
     return re.compile(prompt)
 
 
@@ -210,8 +212,12 @@ class Remote:
 
     def expect(self, expect, timeout=TIMEOUT, searchwindowsize=-1):
         timer = timing.Lapsed()
-        match = self.child.expect(expect, timeout=timeout,
+        print('\n'*10)
+        print(expect)
+        print(type(expect),'\n\n')
+        match = self.child.expect(expect, timeout=TIMEOUT,
                                   searchwindowsize=searchwindowsize)
+        print(match)
         self.logger.debug("%s matched after %s", ascii(expect[match]), timer)
         return match
 

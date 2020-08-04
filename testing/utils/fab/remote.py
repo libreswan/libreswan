@@ -30,7 +30,7 @@ LOGIN_PROMPT = "login: $"
 LOGIN_PROMPT_TIMEOUT = 120
 
 PASSWORD = "swan"
-PASSWORD_PROMPT = "Password: $"
+PASSWORD_PROMPT = "Password: ?$"
 PASSWORD_PROMPT_TIMEOUT = 5
 
 def mounts(domain):
@@ -171,6 +171,7 @@ def login(domain, console, login=LOGIN, password=PASSWORD):
     console.sendline("")
 
     # try to login
+    print("Remote .py.....",domain, console, login, password,timeout)
     return _login(domain, console, login=login, password=password,
                   lapsed_time=lapsed_time, timeout=timeout)
 
@@ -297,6 +298,7 @@ def _reboot_to_login_prompt(domain, console):
 
 
 def boot_to_login_prompt(domain, console):
+    print('boot to login prompt', console,type(console))
 
     if console:
         return _reboot_to_login_prompt(domain, console)
@@ -309,6 +311,7 @@ def boot_to_login_prompt(domain, console):
 def boot_and_login(domain, console, login=LOGIN, password=PASSWORD):
 
     console = boot_to_login_prompt(domain, console)
+    print("boot and login function ",console,type(console))
     if not console:
         domain.logger.error("domain not running")
         return None
