@@ -43,7 +43,7 @@ west #
 002 "westnet-eastnet-ikev2"[1] 192.1.2.23 #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2"[1] 192.1.2.23 #1: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-ikev2"[1] 192.1.2.23 #2: negotiated connection [192.0.1.0-192.0.1.255:1234-1234 17] -> [192.0.2.0-192.0.2.255:1234-1234 17]
-004 "westnet-eastnet-ikev2"[1] 192.1.2.23 #2: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2"[1] 192.1.2.23 #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  # ideally trafficstatus would show IPsec SA like eroute did
 west #

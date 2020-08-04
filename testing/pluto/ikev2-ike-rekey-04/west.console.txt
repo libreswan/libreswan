@@ -46,17 +46,17 @@ west #
 002 "westnet-eastnet-ikev2a" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2a" #1: authenticated using authby=secret
 002 "westnet-eastnet-ikev2a" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2a" #2: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=active}
+004 "westnet-eastnet-ikev2a" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=active}
 west #
  ipsec auto --up westnet-eastnet-ikev2b
 1v2 "westnet-eastnet-ikev2b" #3: sent IPsec Child req wait response
 002 "westnet-eastnet-ikev2b" #3: negotiated connection [192.0.100.0-192.0.100.255:0-65535 0] -> [192.0.200.0-192.0.200.255:0-65535 0]
-004 "westnet-eastnet-ikev2b" #3: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=active}
+004 "westnet-eastnet-ikev2b" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=active}
 west #
  ipsec auto --up westnet-eastnet-ikev2c
 1v2 "westnet-eastnet-ikev2c" #4: sent IPsec Child req wait response
 002 "westnet-eastnet-ikev2c" #4: negotiated connection [192.0.101.0-192.0.101.255:0-65535 0] -> [192.0.201.0-192.0.201.255:0-65535 0]
-004 "westnet-eastnet-ikev2c" #4: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=active}
+004 "westnet-eastnet-ikev2c" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=active}
 west #
  # expect: ike #1 IPsec #2 #3 #4
 west #

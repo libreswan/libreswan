@@ -21,7 +21,7 @@ west #
 002 "one" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "one" #1: authenticated using authby=secret
 002 "one" #2: negotiated connection [192.0.1.0-192.0.1.255:80-80 6] -> [192.0.2.0-192.0.2.255:0-65535 6]
-004 "one" #2: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+004 "one" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  sleep 10
 west #
@@ -31,7 +31,7 @@ west #
  ipsec auto --up two
 1v2 "two" #4: sent IPsec Child req wait response
 002 "two" #4: negotiated connection [192.0.11.0-192.0.11.255:0-65535 6] -> [192.0.22.0-192.0.22.255:88-88 6]
-004 "two" #4: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96-MODP2048 NATOA=none NATD=none DPD=passive}
+004 "two" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96-MODP2048 NATOA=none NATD=none DPD=passive}
 west #
  sleep 10
 west #

@@ -25,10 +25,10 @@ north #
 002 "northnet-eastnet/0x1" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "northnet-eastnet/0x1" #1: authenticated using authby=secret
 002 "northnet-eastnet/0x1" #2: negotiated connection [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "northnet-eastnet/0x1" #2: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "northnet-eastnet/0x1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 1v2 "northnet-eastnet/0x2" #3: sent IPsec Child req wait response
 002 "northnet-eastnet/0x2" #3: negotiated connection [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "northnet-eastnet/0x2" #3: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+004 "northnet-eastnet/0x2" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
 north #
  taskset 0x1 ping -n -c 2 -I 192.0.3.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.3.254 : 56(84) bytes of data.

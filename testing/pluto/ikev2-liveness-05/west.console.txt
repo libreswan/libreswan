@@ -35,7 +35,7 @@ west #
 002 "westnet-eastnet-ikev2"[1] 192.1.2.23 #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2"[1] 192.1.2.23 #1: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-ikev2"[1] 192.1.2.23 #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2"[1] 192.1.2.23 #2: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=active}
+004 "westnet-eastnet-ikev2"[1] 192.1.2.23 #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=active}
 west #
  ping -q -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.

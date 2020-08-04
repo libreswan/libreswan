@@ -67,7 +67,7 @@ west #
 002 "ikev2" #6: IKEv2 mode peer ID is ID_FQDN: '@east-v2'
 003 "ikev2" #5: authenticated using RSA with SHA2_512
 002 "ikev2" #6: negotiated connection [10.0.1.0-10.0.1.255:0-65535 0] -> [10.0.2.0-10.0.2.255:0-65535 0]
-004 "ikev2" #6: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "ikev2" #6: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete ikev2
 002 "ikev2": terminating SAs using this connection

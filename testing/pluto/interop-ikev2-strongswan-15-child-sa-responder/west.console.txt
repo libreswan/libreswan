@@ -40,7 +40,7 @@ west #
 002 "westnet-eastnet-ikev2a" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2a" #1: authenticated using authby=secret
 002 "westnet-eastnet-ikev2a" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2a" #2: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2a" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 NATOA=none NATD=none DPD=passive}
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -55,7 +55,7 @@ west #
  ipsec auto --up westnet-eastnet-ikev2b
 1v2 "westnet-eastnet-ikev2b" #3: sent IPsec Child req wait response
 002 "westnet-eastnet-ikev2b" #3: negotiated connection [192.0.100.0-192.0.100.255:0-65535 0] -> [192.0.200.0-192.0.200.255:0-65535 0]
-004 "westnet-eastnet-ikev2b" #3: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2b" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 NATOA=none NATD=none DPD=passive}
 west #
  ping -n -c 4 -I 192.0.100.254 192.0.200.254
 PING 192.0.200.254 (192.0.200.254) from 192.0.100.254 : 56(84) bytes of data.
@@ -70,7 +70,7 @@ west #
  ipsec auto --up westnet-eastnet-ikev2c
 1v2 "westnet-eastnet-ikev2c" #4: sent IPsec Child req wait response
 002 "westnet-eastnet-ikev2c" #4: negotiated connection [192.0.101.0-192.0.101.255:0-65535 0] -> [192.0.201.0-192.0.201.255:0-65535 0]
-004 "westnet-eastnet-ikev2c" #4: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2c" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 NATOA=none NATD=none DPD=passive}
 west #
  ipsec whack --trafficstatus
 006 #2: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
@@ -137,11 +137,11 @@ west #
 000 "westnet-eastnet-ikev2c":   ESP algorithms: AES_CBC_128-HMAC_SHA2_512_256
 000 "westnet-eastnet-ikev2c":   ESP algorithm newest: AES_CBC_128-HMAC_SHA2_512_256; pfsgroup=<N/A>
 000 #1: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
-000 #2: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_CHILD_SA (IKE and IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #2: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #2: "westnet-eastnet-ikev2a" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B! ESPmax=0B 
-000 #3: "westnet-eastnet-ikev2b":500 STATE_V2_ESTABLISHED_CHILD_SA (IKE and IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #3: "westnet-eastnet-ikev2b":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #3: "westnet-eastnet-ikev2b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B! ESPmax=0B 
-000 #4: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (IKE and IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #4: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #4: "westnet-eastnet-ikev2c" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B! ESPmax=0B 
 west #
  echo done

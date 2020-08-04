@@ -20,7 +20,7 @@ road #
 003 "road"[1] 192.1.2.23 #1: authenticated using RSA with SHA2_512
 002 "road"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.101
 002 "road"[1] 192.1.2.23 #2: negotiated connection [192.0.2.101-192.0.2.101:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0]
-004 "road"[1] 192.1.2.23 #2: IKE and IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
+004 "road"[1] 192.1.2.23 #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
  ../../pluto/bin/ping-once.sh --up -I 192.0.2.101 192.0.2.254
 up

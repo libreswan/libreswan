@@ -32,7 +32,7 @@ west #
 002 "west-east" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "west-east" #1: authenticated using RSA with SHA2_512
 002 "west-east" #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
-004 "west-east" #2: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=active}
+004 "west-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=active}
 west #
  # use the tunnel
 west #
@@ -97,7 +97,7 @@ west #
  ipsec auto --up west-east
 1v2 "west-east" #3: sent IPsec Child req wait response
 002 "west-east" #3: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
-004 "west-east" #3: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=active}
+004 "west-east" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=active}
 west #
  sleep 1
 west #

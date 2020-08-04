@@ -33,7 +33,7 @@ west #
 003 "west" #1: authenticated using authby=secret
 002 "west" #2: route-client output: leftsubet == rightsubnet = 0.0.0.0/0 can not add route
 002 "west" #2: negotiated connection [0.0.0.0-255.255.255.255:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0]
-004 "west" #2: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "west" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  # route is not installed both letfsubnet=rightsubnet
 west #

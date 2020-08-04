@@ -33,7 +33,7 @@ west #
 1v2 "test1" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "test1" #1: authenticated using authby=secret
 002 "test1" #2: negotiated connection [172.29.1.1-172.29.1.1:0-65535 0] -> [172.29.1.2-172.29.1.2:0-65535 0]
-004 "test1" #2: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "test1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ip addr add 172.29.1.3/24 dev test0
 west #

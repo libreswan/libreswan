@@ -54,7 +54,7 @@ west #
 002 "westnet-eastnet-ikev2-modp2048" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2-modp2048" #1: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-ikev2-modp2048" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2-modp2048" #2: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2-modp2048" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-ikev2-modp2048
 002 "westnet-eastnet-ikev2-modp2048": terminating SAs using this connection
@@ -69,7 +69,7 @@ west #
 002 "westnet-eastnet-ikev2-modp3072" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2-modp3072" #3: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-ikev2-modp3072" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2-modp3072" #4: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2-modp3072" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-ikev2-modp3072
 002 "westnet-eastnet-ikev2-modp3072": terminating SAs using this connection
@@ -84,7 +84,7 @@ west #
 002 "westnet-eastnet-ikev2-modp4096" #6: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2-modp4096" #5: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-ikev2-modp4096" #6: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2-modp4096" #6: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2-modp4096" #6: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-ikev2-modp4096
 002 "westnet-eastnet-ikev2-modp4096": terminating SAs using this connection
@@ -99,7 +99,7 @@ west #
 002 "westnet-eastnet-ikev2-modp8192" #8: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2-modp8192" #7: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-ikev2-modp8192" #8: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2-modp8192" #8: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2-modp8192" #8: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-ikev2-modp8192
 002 "westnet-eastnet-ikev2-modp8192": terminating SAs using this connection
@@ -114,7 +114,7 @@ west #
 002 "westnet-eastnet-ikev2-dh19" #10: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2-dh19" #9: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-ikev2-dh19" #10: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2-dh19" #10: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2-dh19" #10: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-ikev2-dh19
 002 "westnet-eastnet-ikev2-dh19": terminating SAs using this connection
@@ -129,7 +129,7 @@ west #
 002 "westnet-eastnet-ikev2-dh20" #12: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2-dh20" #11: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-ikev2-dh20" #12: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2-dh20" #12: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2-dh20" #12: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-ikev2-dh20
 002 "westnet-eastnet-ikev2-dh20": terminating SAs using this connection
@@ -144,7 +144,7 @@ west #
 002 "westnet-eastnet-ikev2-dh21" #14: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2-dh21" #13: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-ikev2-dh21" #14: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2-dh21" #14: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2-dh21" #14: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-ikev2-dh21
 002 "westnet-eastnet-ikev2-dh21": terminating SAs using this connection
@@ -159,7 +159,7 @@ west #
 002 "westnet-eastnet-ikev2-dh31" #16: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2-dh31" #15: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-ikev2-dh31" #16: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2-dh31" #16: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2-dh31" #16: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-ikev2-dh31
 002 "westnet-eastnet-ikev2-dh31": terminating SAs using this connection

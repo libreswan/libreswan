@@ -34,7 +34,7 @@ west #
 002 "westnet-eastnet-esp-null-md5" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-esp-null-md5" #1: authenticated using authby=secret
 002 "westnet-eastnet-esp-null-md5" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-esp-null-md5" #2: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=NULL-HMAC_MD5_96 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-esp-null-md5" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=NULL-HMAC_MD5_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet-esp-null-md5": terminating SAs using this connection
 002 "westnet-eastnet-esp-null-md5" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
@@ -50,7 +50,7 @@ west #
 002 "westnet-eastnet-esp-null-sha1" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-esp-null-sha1" #3: authenticated using authby=secret
 002 "westnet-eastnet-esp-null-sha1" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-esp-null-sha1" #4: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=NULL-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-esp-null-sha1" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=NULL-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet-esp-null-sha1": terminating SAs using this connection
 002 "westnet-eastnet-esp-null-sha1" #4: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
