@@ -275,9 +275,6 @@ extern void loglog(enum rc_type, const char *fmt, ...) PRINTF_LIKE(2); /* use lo
 		jam_cur_prefix(BUF),					\
 		lswlog_to_default_streams(BUF, RC))
 
-/* signature needs to match printf() */
-extern int libreswan_log(const char *fmt, ...) PRINTF_LIKE(1);
-
 #define LSWLOG(BUF) LSWLOG_RC(RC_LOG, BUF)
 
 /*
@@ -542,7 +539,7 @@ void libreswan_bad_case(const char *expression, long value, where_t where) NEVER
 		if (impair.BEHAVIOUR) {					\
 			bool assertion_ = ASSERTION;			\
 			if (!assertion_) {				\
-				libreswan_log("IMPAIR: assertion '%s' failed", #ASSERTION); \
+				loglog(RC_LOG, "IMPAIR: assertion '%s' failed", #ASSERTION); \
 			}						\
 		} else {						\
 			passert(ASSERTION);				\

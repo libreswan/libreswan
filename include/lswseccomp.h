@@ -46,8 +46,8 @@
 				LOG_ERRNO(-rc, "seccomp_rule_add() failed for system call '%s'", \
 					  #NAME);			\
 			} else {					\
-				libreswan_log("seccomp_rule_add() failed for system call '%s' with unexpected error %d", \
-					      #NAME, rc);		\
+				loglog(RC_LOG, "seccomp_rule_add() failed for system call '%s' with unexpected error %d", \
+				       #NAME, rc);			\
 			}						\
 			seccomp_release(CTX); /* XXX: needed? */	\
 			libreswan_exit(LSW_SECCOMP_EXIT_FAIL);		\
