@@ -393,9 +393,10 @@ bool ikev1_out_sa(pb_stream *outs,
 		 * Aggr-Mode - Max transforms == 2 - Multiple
 		 * transforms, 1 DH group
 		 */
-		revised_sadb = oakley_alg_makedb(st->st_connection->ike_proposals,
-						 auth_method,
-						 aggressive_mode);
+		revised_sadb = v1_ike_alg_make_sadb(st->st_connection->ike_proposals,
+						    auth_method,
+						    aggressive_mode,
+						    st->st_logger);
 	} else {
 		revised_sadb = kernel_alg_makedb(st->st_connection->policy,
 						 st->st_connection->child_proposals,
@@ -1683,8 +1684,9 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 		 * Max transforms == 2 - Multiple transforms, 1 DH
 		 * group
 		 */
-		revised_sadb = oakley_alg_makedb(c->ike_proposals,
-						 auth_method, TRUE);
+		revised_sadb = v1_ike_alg_make_sadb(c->ike_proposals,
+						    auth_method, TRUE,
+						    st->st_logger);
 	}
 
 	if (revised_sadb == NULL)

@@ -37,6 +37,7 @@ struct proposal;
 struct proposals;
 struct proposal_policy;
 struct proposal_parser;
+enum stream;
 
 /*
  * XXX: needs to be merged with IKE_ALG_TYPE.
@@ -79,9 +80,10 @@ struct proposal_policy {
 	 */
 	bool (*alg_is_ok)(const struct ike_alg *alg);
 	/*
-	 * Print a warning.  Signature needs to match libreswan_log.
+	 * logging context
 	 */
-	int (*warning)(const char *fmt, ...) PRINTF_LIKE(1);
+	struct logger *logger;
+	lset_t logger_rc_flags;
 };
 
 /*

@@ -1460,6 +1460,8 @@ static bool extract_connection(struct fd *whackfd,
 
 		/* IKE cipher suites */
 
+		struct logger logger = cur_logger();
+
 		if (!LIN(POLICY_AUTH_NEVER, wm->policy) &&
 		    (wm->ike != NULL || c->ike_version == IKEv2)) {
 			const struct proposal_policy proposal_policy = {
@@ -1468,7 +1470,8 @@ static bool extract_connection(struct fd *whackfd,
 				.alg_is_ok = ike_alg_is_ike,
 				.pfs = LIN(POLICY_PFS, wm->policy),
 				.check_pfs_vs_dh = false,
-				.warning = libreswan_log,
+				.logger_rc_flags = ALL_STREAMS|RC_LOG,
+				.logger = &logger,
 				/* let defaults stumble on regardless */
 				.ignore_parser_errors = (wm->ike == NULL),
 			};
@@ -1515,7 +1518,8 @@ static bool extract_connection(struct fd *whackfd,
 				.alg_is_ok = kernel_alg_is_ok,
 				.pfs = LIN(POLICY_PFS, wm->policy),
 				.check_pfs_vs_dh = true,
-				.warning = libreswan_log,
+				.logger_rc_flags = ALL_STREAMS|RC_LOG,
+				.logger = &logger,
 				/* let defaults stumble on regardless */
 				.ignore_parser_errors = (wm->esp == NULL),
 			};

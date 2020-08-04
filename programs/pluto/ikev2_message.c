@@ -30,11 +30,11 @@
 
 #include "defs.h"
 
+#include "log.h"
 #include "ikev2_message.h"
 #include "server.h"
 #include "state.h"
 #include "connections.h"
-#include "lswlog.h"
 #include "ike_alg.h"
 #include "ike_alg_encrypt_ops.h"	/* XXX: oops */
 #include "pluto_stats.h"
@@ -46,7 +46,6 @@
 #include "iface.h"
 #include "ip_protocol.h"
 #include "ikev2_send.h"
-#include "log.h"
 
 /*
  * Determine the IKE version we will use for the IKE packet

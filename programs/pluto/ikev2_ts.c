@@ -24,6 +24,8 @@
  */
 
 #include "defs.h"
+
+#include "log.h"
 #include "ikev2_ts.h"
 #include "connections.h"	/* for struct end */
 #include "demux.h"
@@ -31,7 +33,6 @@
 #include "hostpair.h"
 #include "ip_info.h"
 #include "ip_selector.h"
-#include "log.h"
 
 /*
  * While the RFC seems to suggest that the traffic selectors come in

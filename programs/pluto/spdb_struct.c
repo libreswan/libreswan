@@ -80,13 +80,13 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 					enum ikev1_auth_method auth_method,
 					bool single_dh);
 
-static struct ike_proposals ikev1_default_ike_info(void)
+static struct ike_proposals v1_default_ike_proposals(struct logger *logger)
 {
-	static const struct proposal_policy policy = {
+	const struct proposal_policy policy = {
 		.version = IKEv1,
 		.check_pfs_vs_dh = false,
 		.alg_is_ok = ike_alg_is_ike,
-		.warning = libreswan_log,
+		.logger = logger,
 	};
 	struct proposal_parser *parser = ike_proposal_parser(&policy);
 	struct ike_proposals defaults = { .p = proposals_from_str(parser, NULL), };
@@ -98,9 +98,9 @@ static struct ike_proposals ikev1_default_ike_info(void)
 	return defaults;
 }
 
-struct db_sa *oakley_alg_makedb(const struct ike_proposals ike_proposals,
-				enum ikev1_auth_method auth_method,
-				bool single_dh)
+struct db_sa *v1_ike_alg_make_sadb(const struct ike_proposals ike_proposals,
+				   enum ikev1_auth_method auth_method,
+				   bool single_dh, struct logger *logger)
 {
 	/*
 	 * start by copying the proposal that would have been picked by
@@ -109,7 +109,7 @@ struct db_sa *oakley_alg_makedb(const struct ike_proposals ike_proposals,
 
 	if (ike_proposals.p == NULL) {
 		dbg("no specific IKE algorithms specified - using defaults");
-		struct ike_proposals default_info = ikev1_default_ike_info();
+		struct ike_proposals default_info = v1_default_ike_proposals(logger);
 		struct db_sa *new_db = oakley_alg_mergedb(default_info,
 							  auth_method,
 							  single_dh);

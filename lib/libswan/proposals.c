@@ -355,8 +355,9 @@ void append_algorithm(struct proposal_parser *parser,
 		    (alg->algo_type != IKE_ALG_ENCRYPT ||
 		     ((*end)->enckeylen == 0 ||
 		      enckeylen == (*end)->enckeylen))) {
-			parser->policy->warning("discarding duplicate algorithm '%s'",
-						alg->fqn);
+			log_message(parser->policy->logger_rc_flags, parser->policy->logger,
+				    "discarding duplicate algorithm '%s'",
+				    alg->fqn);
 			return;
 		}
 		end = &(*end)->next;
@@ -490,12 +491,13 @@ static bool proposals_pfs_vs_dh_check(struct proposal_parser *parser,
 				dh = proposal->algorithms[PROPOSAL_dh]->desc;
 			}
 			if (dh == &ike_alg_dh_none.common) {
-				parser->policy->warning("ignoring redundant %s DH algorithm NONE as PFS policy is disabled",
-							parser->protocol->name);
+				log_message(parser->policy->logger_rc_flags, parser->policy->logger,
+					    "ignoring redundant %s DH algorithm NONE as PFS policy is disabled",
+					    parser->protocol->name);
 			} else if (dh != NULL) {
-				parser->policy->warning("ignoring %s DH algorithm %s as PFS policy is disabled",
-							parser->protocol->name,
-							dh->fqn);
+				log_message(parser->policy->logger_rc_flags, parser->policy->logger,
+					    "ignoring %s DH algorithm %s as PFS policy is disabled",
+					    parser->protocol->name, dh->fqn);
 			}
 			free_algorithms(proposal, PROPOSAL_dh);
 		}
@@ -570,8 +572,10 @@ bool impair_proposal_errors(struct proposal_parser *parser)
 {
 	pexpect(parser->error[0] != '\0');
 	if (impair.proposal_parser) {
-		loglog(RC_LOG, "IMPAIR: ignoring proposal error: %s",
-			      parser->error);
+		log_message(parser->policy->logger_rc_flags,
+			    parser->policy->logger,
+			    "IMPAIR: ignoring proposal error: %s",
+			    parser->error);
 		parser->error[0] = '\0';
 		return true;
 	} else {

@@ -32,7 +32,8 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 			.parser_version = parser_version,		\
 			.alg_is_ok = OK,				\
 			.pfs = pfs,					\
-			.warning = warning,				\
+			.logger_rc_flags = ERROR_STREAM|RC_LOG,		\
+			.logger = &progname_logger,			\
 			.check_pfs_vs_dh = CHECK,			\
 			.ignore_parser_errors = ignore_parser_errors,	\
 		};							\
@@ -98,20 +99,6 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 		free_proposal_parser(&parser);				\
 		fflush(NULL);						\
 	}
-
-/*
- * Dump warnings to stdout.
- */
-static int warning(const char *fmt, ...)
-{
-	printf("\tWARNING: ");
-	va_list ap;
-	va_start(ap, fmt);
-	vprintf(fmt, ap);
-	va_end(ap);
-	printf("\n");
-	return 0;
-}
 
 /*
  * Kernel not available so fake it.

@@ -27,18 +27,17 @@
 
 #include "defs.h"
 
+#include "log.h"
 #include "send.h"
 #include "ikev2_send.h"
 #include "ikev2_message.h"
 #include "server.h"
 #include "state.h"
 #include "connections.h"
-#include "lswlog.h"
 #include "ike_alg.h"
 #include "pluto_stats.h"
 #include "demux.h"	/* for struct msg_digest */
 #include "rnd.h"
-#include "log.h"
 
 bool send_recorded_v2_message(struct ike_sa *ike,
 			      const char *where,
