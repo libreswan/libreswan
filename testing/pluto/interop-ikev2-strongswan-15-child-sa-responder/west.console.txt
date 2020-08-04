@@ -93,7 +93,7 @@ west #
 000 "westnet-eastnet-ikev2a":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-ikev2a":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-ikev2a":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet-ikev2a":   newest ISAKMP SA: #1; newest IPsec SA: #2;
+000 "westnet-eastnet-ikev2a":   newest ISAKMP SA: #1; newest IPsec SA: #2; conn serial: $1;
 000 "westnet-eastnet-ikev2a":   IKE algorithms: 3DES_CBC-HMAC_MD5-MODP2048
 000 "westnet-eastnet-ikev2a":   IKEv2 algorithm newest: 3DES_CBC_192-HMAC_MD5-MODP2048
 000 "westnet-eastnet-ikev2a":   ESP algorithms: AES_CBC_128-HMAC_SHA2_512_256
@@ -113,7 +113,7 @@ west #
 000 "westnet-eastnet-ikev2b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-ikev2b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-ikev2b":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet-ikev2b":   newest ISAKMP SA: #0; newest IPsec SA: #3;
+000 "westnet-eastnet-ikev2b":   newest ISAKMP SA: #0; newest IPsec SA: #3; conn serial: $2;
 000 "westnet-eastnet-ikev2b":   IKE algorithms: 3DES_CBC-HMAC_MD5-MODP2048
 000 "westnet-eastnet-ikev2b":   ESP algorithms: AES_CBC_128-HMAC_SHA2_512_256
 000 "westnet-eastnet-ikev2b":   ESP algorithm newest: AES_CBC_128-HMAC_SHA2_512_256; pfsgroup=<N/A>
@@ -132,16 +132,16 @@ west #
 000 "westnet-eastnet-ikev2c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-ikev2c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-ikev2c":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet-ikev2c":   newest ISAKMP SA: #0; newest IPsec SA: #4;
+000 "westnet-eastnet-ikev2c":   newest ISAKMP SA: #0; newest IPsec SA: #4; conn serial: $3;
 000 "westnet-eastnet-ikev2c":   IKE algorithms: 3DES_CBC-HMAC_MD5-MODP2048
 000 "westnet-eastnet-ikev2c":   ESP algorithms: AES_CBC_128-HMAC_SHA2_512_256
 000 "westnet-eastnet-ikev2c":   ESP algorithm newest: AES_CBC_128-HMAC_SHA2_512_256; pfsgroup=<N/A>
 000 #1: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
-000 #2: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #2: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_CHILD_SA (IKE and IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #2: "westnet-eastnet-ikev2a" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B! ESPmax=0B 
-000 #3: "westnet-eastnet-ikev2b":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #3: "westnet-eastnet-ikev2b":500 STATE_V2_ESTABLISHED_CHILD_SA (IKE and IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #3: "westnet-eastnet-ikev2b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B! ESPmax=0B 
-000 #4: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #4: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (IKE and IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #4: "westnet-eastnet-ikev2c" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B! ESPmax=0B 
 west #
  echo done

@@ -50,7 +50,7 @@ west #
  # does not work on 3.29 for now leave it timer based rekey
 west #
  ipsec whack --rekey-ipsec --name westnet-eastnet
-1v2 "westnet-eastnet" #3: STATE_V2_REKEY_CHILD_I1: STATE_V2_REKEY_CHILD_I1
+1v2 "westnet-eastnet" #3: STATE_V2_REKEY_CHILD_I1
 002 "westnet-eastnet" #3: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 002 "westnet-eastnet" #3: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet" #3: IKE and IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_512_256-MODP2048 NATOA=none NATD=none DPD=passive}
@@ -83,13 +83,13 @@ west #
 000 "westnet-eastnet":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet":   newest ISAKMP SA: #1; newest IPsec SA: #3;
+000 "westnet-eastnet":   newest ISAKMP SA: #1; newest IPsec SA: #3; conn serial: $1;
 000 "westnet-eastnet":   IKE algorithms: AES_CBC_256-HMAC_SHA2_512-MODP2048
 000 "westnet-eastnet":   IKEv2 algorithm newest: AES_CBC_256-HMAC_SHA2_512-MODP2048
 000 "westnet-eastnet":   ESP algorithms: AES_CBC_256-HMAC_SHA2_512_256-MODP2048
 000 "westnet-eastnet":   ESP algorithm newest: AES_CBC_256-HMAC_SHA2_512_256; pfsgroup=MODP2048
 000 #1: "westnet-eastnet":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
-000 #3: "westnet-eastnet":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #3: "westnet-eastnet":500 STATE_V2_ESTABLISHED_CHILD_SA (IKE and IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #3: "westnet-eastnet" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B! ESPmax=0B 
 west #
  # give time to strongswan to expire old one
