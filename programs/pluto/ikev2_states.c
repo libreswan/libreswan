@@ -105,7 +105,8 @@ struct finite_state v2_states[] = {
 	 */
 
 	V2(STATE_V2_ESTABLISHED_IKE_SA, "established IKE SA", CAT_ESTABLISHED_IKE_SA),
-	V2(STATE_V2_ESTABLISHED_CHILD_SA, "IKE and IPsec SA established", CAT_ESTABLISHED_CHILD_SA),
+	/* this message is used for both initial exchanges and rekeys */
+	V2(STATE_V2_ESTABLISHED_CHILD_SA, "IPsec SA established", CAT_ESTABLISHED_CHILD_SA),
 
 	/* ??? better story needed for these */
 	S(STATE_IKESA_DEL, "STATE_IKESA_DEL", CAT_ESTABLISHED_IKE_SA),
