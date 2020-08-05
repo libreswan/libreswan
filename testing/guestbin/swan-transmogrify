@@ -45,11 +45,13 @@ subprocess.getstatusoutput("rm -f /var/tmp/%s" % (myname))
 subprocess.getstatusoutput("echo %s > /var/tmp/%s.ran" % (myname, myname))
 
 (status, eth0) = subprocess.getstatusoutput("cat /sys/class/net/eth0/address")
+print("eth0", status, eth0)
 maclist = None
 if status:
     # may be this host was never initialized.
     (status, maclist) = subprocess.getstatusoutput(
         "cat /sys/class/net/ens*/address")
+    print("ens*", maclist)
     eth0 = None
 else:
     maclist = eth0
@@ -62,7 +64,9 @@ hostname = None
 for h in list(macs.keys()):
     mac = macs[h]
     for m in maclist.split():
+        print(h, mac, "in", m, "?")
         if mac in m:
+            print("yes")
             hostname = h
             is_docker = False
             is_kvm = True
@@ -139,7 +143,7 @@ if GUESTOS == "redhat":
     if os.path.isdir("/testing/baseconfigs/%s" % hostname):
         if os.path.isfile("/etc/sysconfig/network-scripts/README.libreswan"):
             # this system need systemd-network files
-            ifaces = glob.glob("/testing/baseconfigs/%s/etc/systemd/network/*" % hostname)
+            ifaces = glob.glob("/testing/baseconfigs/all/etc/systemd/network/*")
             dst = "/etc/systemd/network"
             routes = []
             # F30 and later we use this
