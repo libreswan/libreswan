@@ -220,3 +220,15 @@ bool selector_address_eq(const ip_selector *l, const ip_selector *r)
 {
 	return subnetishost(l) && subnetishost(r) && sameaddr(&l->addr, &r->addr);
 }
+
+void pexpect_selector(const ip_selector *s, const char *t, where_t where)
+{
+	if (s != NULL || s->addr.version != 0) {
+		if (s->is_subnet == true ||
+		    s->is_selector == false) {
+			address_buf b;
+			dbg("EXPECTATION FAILED: %s is not a selector; "PRI_SUBNET" "PRI_WHERE,
+			    t, pri_subnet(s, &b), pri_where(where));
+		}
+	}
+}

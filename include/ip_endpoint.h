@@ -60,22 +60,8 @@ typedef struct {
 typedef ip_address ip_endpoint;
 #endif
 
-#define pendpoint(E)							\
-	{								\
-		if ((E) != NULL && (E)->version != 0) {			\
-			/* i.e., is set */				\
-			if ((E)->is_endpoint == false ||		\
-			    (E)->is_address == true ||			\
-			    (E)->hport == 0 ||				\
-			    (E)->ipproto == 0) {			\
-				address_buf b_;				\
-				where_t here_ = HERE;			\
-				dbg("EXPECTATION FAILED: %s is not an endpoint; "PRI_ADDRESS" "PRI_WHERE, \
-				    #E, pri_address(E, &b_),		\
-				    pri_where(here_));			\
-			}						\
-		}							\
-	}
+void pexpect_endpoint(const ip_endpoint *e, const char *t, where_t where);
+#define pendpoint(E) pexpect_endpoint(E, #E, HERE)
 
 /*
  * Constructors.

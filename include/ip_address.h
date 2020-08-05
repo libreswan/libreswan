@@ -79,22 +79,8 @@ typedef struct {
 		bool_str((A)->is_address),				\
 		bool_str((A)->is_endpoint)
 
-#define paddress(A)							\
-	{								\
-		if ((A) != NULL && (A)->version != 0) {			\
-			/* i.e., is-set */				\
-			if ((A)->is_address == false ||			\
-			    (A)->is_endpoint == true ||			\
-			    (A)->hport != 0 ||				\
-			    (A)->ipproto != 0) {			\
-				address_buf b_;				\
-				where_t here_ = HERE;			\
-				dbg("EXPECTATION FAILED: %s is not an address; "PRI_ADDRESS" "PRI_WHERE, \
-				    #A, pri_address(A, &b_),		\
-				    pri_where(here_));			\
-			}						\
-		}							\
-	}
+void pexpect_address(const ip_address *a, const char *t, where_t where);
+#define paddress(A) pexpect_address(A, #A, HERE)
 
 ip_address strip_endpoint(const ip_address *address, where_t where);
 

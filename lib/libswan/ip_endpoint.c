@@ -243,3 +243,19 @@ bool endpoint_eq(const ip_endpoint l, ip_endpoint r)
 	}
 	return false;
 }
+
+void pexpect_endpoint(const ip_endpoint *e, const char *s, where_t where)
+{
+	if (e != NULL && e->version != 0) {
+		/* i.e., is set */
+		if (e->is_endpoint == false ||
+		    e->is_address == true ||
+		    e->hport == 0 ||
+		    e->ipproto == 0) {
+			address_buf b;
+			dbg("EXPECTATION FAILED: %s is not an endpoint; "PRI_ADDRESS" "PRI_WHERE,
+			    s, pri_address(e, &b),
+			    pri_where(where));
+		}
+	}
+}

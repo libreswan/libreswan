@@ -75,19 +75,8 @@ typedef struct {
 		bool_str((S)->is_subnet),				\
 		bool_str((S)->is_selector)
 
-#define psubnet(S)							\
-	{								\
-		if ((S) != NULL && (S)->addr.version != 0) {		\
-			if ((S)->is_subnet == false ||			\
-			    (S)->is_selector == true) {			\
-				address_buf b_;				\
-				where_t here_ = HERE;			\
-				dbg("EXPECTATION FAILED: %s is not a subnet; "PRI_SUBNET" "PRI_WHERE, \
-				    #S, pri_subnet(S, &b_),		\
-				    pri_where(here_));			\
-			}						\
-		}							\
-	}
+void pexpect_subnet(const ip_subnet *s, const char *t, where_t where);
+#define psubnet(S) pexpect_subnet(S, #S, HERE)
 
 /*
  * Constructors

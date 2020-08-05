@@ -63,19 +63,8 @@ typedef ip_subnet ip_selector;
 
 #endif
 
-#define pselector(S)							\
-	{								\
-		if ((S) != NULL || (S)->addr.version != 0) {		\
-			if ((S)->is_subnet == true ||			\
-			    (S)->is_selector == false) {		\
-				address_buf b_;				\
-				where_t here_ = HERE;			\
-				dbg("EXPECTATION FAILED: %s is not a selector; "PRI_SUBNET" "PRI_WHERE, \
-				    #S, pri_subnet(S, &b_),		\
-				    pri_where(here_));			\
-			}						\
-		}							\
-	}
+void pexpect_selector(const ip_selector *s, const char *t, where_t where);
+#define pselector(S) pexpect_selector(S, #S, HERE)
 
 ip_selector selector_from_address(const ip_address *address,
 				  const ip_protoport *protoport);

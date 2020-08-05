@@ -469,3 +469,19 @@ ip_address address_blit(ip_address address,
 
 	return address;
 }
+
+void pexpect_address(const ip_address *a, const char *s, where_t where)
+{
+	if (a != NULL && a->version != 0) {
+		/* i.e., is-set */
+		if (a->is_address == false ||
+		    a->is_endpoint == true ||
+		    a->hport != 0 ||
+		    a->ipproto != 0) {
+			address_buf b;
+			dbg("EXPECTATION FAILED: %s is not an address; "PRI_ADDRESS" "PRI_WHERE,
+			    s, pri_address(a, &b),
+			    pri_where(where));
+		}
+	}
+}

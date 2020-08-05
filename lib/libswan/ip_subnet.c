@@ -230,3 +230,16 @@ const char *str_subnet(const ip_subnet *subnet, subnet_buf *out)
 	jam_subnet(&buf, subnet);
 	return out->buf;
 }
+
+void pexpect_subnet(const ip_subnet *s, const char *t, where_t where)
+{
+	if (s != NULL && s->addr.version != 0) {
+		if (s->is_subnet == false ||
+		    s->is_selector == true) {
+			address_buf b;
+			dbg("EXPECTATION FAILED: %s is not a subnet; "PRI_SUBNET" "PRI_WHERE,
+			    t, pri_subnet(s, &b),
+			    pri_where(where));
+		}
+	}
+}
