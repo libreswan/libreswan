@@ -52,7 +52,6 @@
 #include "state.h"
 #include "connections.h"
 #include "pluto_crypt.h"
-#include "lswlog.h"
 #include "log.h"
 #include "timer.h"
 #include "ike_alg.h"

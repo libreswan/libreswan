@@ -16,7 +16,6 @@
  */
 
 
-#include "lswlog.h"
 
 #include "defs.h"
 

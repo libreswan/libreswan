@@ -15,13 +15,15 @@
  *
  */
 
-#include "lswlog.h"
 #include "x509.h"
 #include "nss_err.h"
 #include "nss_ocsp.h"
 /* NSS needs */
 #include <secerr.h>
 #include <ocsp.h>
+
+#include "defs.h"		/* for so_serial_t */
+#include "log.h"
 
 /* note: returning FALSE here means pluto die! */
 bool init_nss_ocsp(const char *responder_url, const char *trust_cert_name,

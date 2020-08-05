@@ -33,7 +33,7 @@
 
 #include "send.h"
 
-#include "lswlog.h"
+#include "log.h"
 #include "state.h"
 #include "server.h"
 #include "demux.h"

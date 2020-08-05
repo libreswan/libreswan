@@ -20,9 +20,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "constants.h"
+
+#include "defs.h"		/* for so_serial_t */
+#include "log.h"
 #include "timer.h"
 #include "pluto_sd.h"
-#include "lswlog.h"
 
 void pluto_sd_init(void)
 {

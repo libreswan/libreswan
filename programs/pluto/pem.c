@@ -41,13 +41,15 @@
 #include "sysdep.h"
 #include "constants.h"
 #include "lswalloc.h"
-#include "lswlog.h"
 #include "pem.h"
 
 #include <pk11pub.h>
 #include <prmem.h>
 #include <prerror.h>
 #include "lswconf.h"
+
+#include "defs.h"		/* for so_serial_t */
+#include "log.h"
 
 /*
  * check the presence of a pattern in a character string

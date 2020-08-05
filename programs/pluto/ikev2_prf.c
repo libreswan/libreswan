@@ -23,7 +23,6 @@
 
 #include "ike_alg.h"
 #include "ike_alg_prf_ikev2_ops.h"
-#include "lswlog.h"
 
 #include "ikev2_prf.h"
 

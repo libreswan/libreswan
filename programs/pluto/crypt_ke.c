@@ -43,7 +43,6 @@
 #include "rnd.h"
 #include "state.h"
 #include "pluto_crypt.h"
-#include "lswlog.h"
 #include "log.h"
 
 #include <nss.h>

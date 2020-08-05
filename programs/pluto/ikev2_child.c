@@ -30,7 +30,6 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "lswlog.h"
 
 #include "defs.h"
 #include "id.h"

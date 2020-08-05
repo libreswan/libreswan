@@ -32,7 +32,7 @@
 #include <security/pam_appl.h> /* needed for pam_handle_t */
 
 #include "defs.h"
-#include "lswlog.h"
+#include "log.h"
 #include "pam_conv.h"
 
 /* BEWARE: This code is multi-threaded.

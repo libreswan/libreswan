@@ -49,7 +49,6 @@
 #include "sysdep.h"
 #include "lswconf.h"
 #include "constants.h"
-#include "lswlog.h"
 
 #include "defs.h"
 #include "state.h"

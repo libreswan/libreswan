@@ -16,7 +16,6 @@
 #include <stdlib.h>
 #include "constants.h"
 #include "lswalloc.h"
-#include "lswlog.h"
 
 #include "ike_alg.h"
 #include "test_buffer.h"
@@ -27,6 +26,9 @@
 #include "lswfips.h"
 #include "pk11pub.h"
 #include "crypt_symkey.h"
+
+#include "defs.h"		/* for so_serial_t */
+#include "log.h"
 
 /*
  * Ref: https://tools.ietf.org/html/rfc3686 Test Vectors

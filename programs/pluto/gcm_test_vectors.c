@@ -16,7 +16,6 @@
 #include <stdlib.h>
 #include "constants.h"
 #include "lswalloc.h"
-#include "lswlog.h"
 #include "lswfips.h"
 
 #include "ike_alg.h"
@@ -27,6 +26,9 @@
 #include "nss.h"
 #include "pk11pub.h"
 #include "crypt_symkey.h"
+
+#include "defs.h"		/* for so_serial_t */
+#include "log.h"
 
 /*
  * Ref: http://csrc.nist.gov/groups/STM/cavp/documents/mac/gcmtestvectors.zip

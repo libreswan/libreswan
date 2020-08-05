@@ -31,7 +31,6 @@
 #include <syslog.h>
 
 #include "defs.h"
-#include "lswlog.h"
 #include "log.h"
 #include "peerlog.h"
 #include "state_db.h"

@@ -24,7 +24,6 @@
 #include <string.h>
 
 #include "constants.h"
-#include "lswlog.h"
 #include "lswalloc.h"
 #include "impair.h"
 #include "ip_info.h"		/* used by pbs_in_address() */

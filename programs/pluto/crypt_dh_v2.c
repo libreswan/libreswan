@@ -25,14 +25,14 @@
  *
  */
 
-#include "defs.h"
-#include "lswlog.h"
 #include "ike_alg.h"
+#include "crypt_symkey.h"
 
+#include "defs.h"
+#include "log.h"
 #include "pluto_crypt.h"
 #include "ikev2_prf.h"
 #include "crypt_dh.h"
-#include "crypt_symkey.h"
 #include "state.h"
 
 void cancelled_dh_v2(struct pcr_dh_v2 *dh)

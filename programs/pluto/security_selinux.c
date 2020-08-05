@@ -15,7 +15,9 @@
  */
 
 #include "security_selinux.h"
-#include "lswlog.h"
+
+#include "defs.h"		/* for so_serial_t */
+#include "log.h"
 
 static int selinux_ready = 0;
 

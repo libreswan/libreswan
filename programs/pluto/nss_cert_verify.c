@@ -29,7 +29,6 @@
 #include "sysdep.h"
 #include "lswnss.h"
 #include "constants.h"
-#include "lswlog.h"
 #include "x509.h"
 #include "nss_cert_verify.h"
 #include "lswfips.h" /* for libreswan_fipsmode() */

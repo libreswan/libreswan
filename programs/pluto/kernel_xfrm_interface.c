@@ -37,7 +37,6 @@
 
 #include "lswalloc.h"
 #include "netlink_attrib.h"
-#include "lswlog.h"
 #include "connections.h"
 #include "server.h" /* for struct iface_port */
 #include "kernel_xfrm_interface.h"

@@ -24,8 +24,6 @@
  *
  */
 
-#include "defs.h"
-#include "lswlog.h"
 #include "ike_alg.h"
 
 #include "pluto_crypt.h"
@@ -34,6 +32,10 @@
 #include "crypt_symkey.h"
 #include "crypt_hash.h"
 #include "keys.h"
+
+#include "defs.h"
+
+#include "log.h"
 #include "state.h"
 
 void cancelled_v1_dh(struct pcr_v1_dh *dh)

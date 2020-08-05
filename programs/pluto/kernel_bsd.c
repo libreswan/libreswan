@@ -38,7 +38,6 @@
 #include "sysdep.h"
 #include "socketwrapper.h"
 #include "constants.h"
-#include "lswlog.h"
 #include "ip_info.h"
 
 #include "defs.h"

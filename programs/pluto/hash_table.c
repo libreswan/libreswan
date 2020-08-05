@@ -15,7 +15,6 @@
 
 #include <stdint.h>
 
-#include "lswlog.h"
 
 #include "defs.h"
 #include "hash_table.h"

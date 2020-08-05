@@ -14,7 +14,6 @@
  *
  */
 
-#include "lswlog.h"
 #include "defs.h"
 #include "state.h"
 #include "demux.h"

@@ -16,9 +16,9 @@
 
 #include <stdint.h>
 
-#include "lswlog.h"
 #include "passert.h"
 #include "defs.h"
+#include "log.h"
 #include "hash_table.h"
 
 #define passert_entry(ENTRY, ASSERTION)					\

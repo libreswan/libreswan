@@ -14,11 +14,10 @@
  */
 
 #include "defs.h"
-
+#include "log.h"
 #include "state_db.h"
 #include "state.h"
 #include "connections.h"
-#include "lswlog.h"
 #include "hash_table.h"
 
 static struct hash_table state_hash_tables[];

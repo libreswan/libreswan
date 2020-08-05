@@ -14,17 +14,17 @@
 
 #include <stdlib.h>
 
-#include "defs.h"
 #include "constants.h"
 #include "lswalloc.h"
-#include "lswlog.h"
-
 #include "nss.h"
 #include "pk11pub.h"
 
 #include "crypt_symkey.h"
 #include "test_buffer.h"
 #include "ike_alg.h"
+
+#include "defs.h"		/* for so_serial_t */
+#include "log.h"
 
 static chunk_t zalloc_chunk(size_t length, const char *name)
 {

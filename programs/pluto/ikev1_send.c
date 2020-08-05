@@ -26,11 +26,10 @@
  */
 
 #include "defs.h"
-
 #include "send.h"
+#include "log.h"
 #include "ikev1_send.h"
 #include "state.h"
-#include "lswlog.h"
 #include "server.h"
 #include "connections.h"
 #include "ip_info.h"

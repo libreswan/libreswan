@@ -43,7 +43,6 @@
 #include "constants.h"
 #include "enum_names.h"
 #include "defs.h"
-#include "lswlog.h"
 #include "log.h"
 #include "state.h"
 #include "connections.h"

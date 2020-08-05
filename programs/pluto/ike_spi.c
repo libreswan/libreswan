@@ -15,10 +15,10 @@
  * for more details.
  */
 
-#include "lswlog.h"
 #include "ike_alg_hash.h"
 
 #include "defs.h"	/* for all_zero */
+#include "log.h"
 #include "state.h"	/* for ike_sa */
 #include "ike_spi.h"
 #include "rnd.h"

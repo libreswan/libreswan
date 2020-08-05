@@ -19,15 +19,16 @@
  *
  */
 
-#include "rnd.h"
 #include <pk11pub.h>
-#include "defs.h"
+
+#include "rnd.h"
 #include "lswnss.h"
-#include "lswlog.h"
 #include "ike_spi.h"		/* for refresh_ike_spi_secret() */
 #include "ikev2_cookie.h"	/* for refresh_v2_cookie_secret() */
 
+#include "defs.h"
 #include "server.h"
+#include "log.h"
 
 /* A true random number generator (we hope)
  *

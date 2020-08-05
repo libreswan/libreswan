@@ -24,7 +24,6 @@
 #include <unistd.h>
 
 #include "constants.h"		/* for dup_any()!?! ... */
-#include "lswlog.h"
 
 #include "defs.h"
 #include "state.h"

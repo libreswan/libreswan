@@ -14,14 +14,16 @@
  *
  */
 
-#include "ikev1_hash.h"
-
-#include "state.h"
-#include "crypt_prf.h"
 #include "ike_alg.h"
-#include "lswlog.h"
+#include "crypt_prf.h"
+
+#include "defs.h"		/* for so_serial_t */
+#include "log.h"
+#include "state.h"
 #include "demux.h"
 #include "impair.h"
+#include "ikev1_hash.h"
+
 
 bool emit_v1_HASH(enum v1_hash_type hash_type, const char *what,
 		  enum impair_v1_exchange exchange,

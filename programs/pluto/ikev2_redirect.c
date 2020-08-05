@@ -19,7 +19,6 @@
 #include <unistd.h>
 
 
-#include "lswlog.h"
 #include "constants.h"
 #include "defs.h"
 

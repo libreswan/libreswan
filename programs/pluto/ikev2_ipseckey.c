@@ -27,7 +27,6 @@
 #include <ldns/rr.h>
 #include <unbound.h>
 #include "unbound-event.h"
-#include "lswlog.h"
 #include "defs.h"
 #include "log.h"
 #include "constants.h"	/* for demux.h */

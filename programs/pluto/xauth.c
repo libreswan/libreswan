@@ -18,7 +18,6 @@
 #include <signal.h>		/* for kill() and signals in general */
 
 #include "constants.h"
-#include "lswlog.h"
 #include "defs.h"
 #include "log.h"
 #include "xauth.h"

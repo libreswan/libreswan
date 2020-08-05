@@ -21,7 +21,6 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include "lswlog.h"
 #include <sys/wait.h>		/* for WIFEXITED() et.al. */
 #include <cert.h>
 
