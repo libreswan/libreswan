@@ -21,6 +21,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include <nss.h>		/* for NSS_IsInitialized() */
+
 #include "lswlog.h"
 #include "lswnss.h"
 #include "lswfips.h"

@@ -16,7 +16,6 @@
 
 #include "constants.h"
 #include "lswalloc.h"
-#include "nss.h"
 #include "pk11pub.h"
 
 #include "crypt_symkey.h"

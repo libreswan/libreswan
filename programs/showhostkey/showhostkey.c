@@ -55,7 +55,6 @@
 #include "lswnss.h"
 #include "lswtool.h"
 
-#include <nss.h>
 #include <keyhi.h>
 #include <prerror.h>
 #include <prinit.h>

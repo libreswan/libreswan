@@ -21,7 +21,6 @@
 #ifndef _CRYPTO_H
 #define _CRYPTO_H
 
-#include <nss.h>
 #include <pk11pub.h>
 
 extern void init_crypto(void);

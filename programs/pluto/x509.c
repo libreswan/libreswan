@@ -77,7 +77,6 @@
 
 /* NSS */
 #include <prtime.h>
-#include <nss.h>
 #include <keyhi.h>
 #include <cert.h>
 #include <certdb.h>

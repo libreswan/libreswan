@@ -15,7 +15,6 @@
  */
 
 #include <nspr.h>
-#include <nss.h>
 #include <pk11pub.h>
 #include <secmod.h>
 #include <keyhi.h>

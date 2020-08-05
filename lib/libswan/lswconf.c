@@ -29,7 +29,6 @@
 #include <errno.h>
 
 #include <string.h>
-#include <nss.h>
 #include <nspr.h>
 #include <pk11pub.h>
 

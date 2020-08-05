@@ -20,7 +20,6 @@
  * for more details.
  */
 
-#include <nss.h>
 
 #include "lswalloc.h"
 #include "lswlog.h"

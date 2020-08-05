@@ -16,7 +16,6 @@
 #include <stdint.h>
 
 #include "nspr.h"
-#include "nss.h"
 #include "pk11pub.h"
 #include "keyhi.h"
 

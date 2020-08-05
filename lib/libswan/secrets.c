@@ -42,7 +42,6 @@
 #define GLOB_ABORTED GLOB_ABEND        /* fix for old versions */
 #endif
 
-#include <nss.h>
 #include <pk11pub.h>
 #include <prerror.h>
 #include <cert.h>

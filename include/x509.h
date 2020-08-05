@@ -25,7 +25,6 @@
 #ifndef _X509_H
 #define _X509_H
 
-#include <nss.h>
 #include <cert.h>
 
 #include "deltatime.h"

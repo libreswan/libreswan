@@ -22,7 +22,6 @@
 #ifndef _SECRETS_H
 #define _SECRETS_H
 
-#include <nss.h>
 #include <pk11pub.h>
 
 #include "lswcdefs.h"

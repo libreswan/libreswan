@@ -45,7 +45,6 @@
 #include "pluto_crypt.h"
 #include "log.h"
 
-#include <nss.h>
 #include <nspr.h>
 #include <prerror.h>
 #include <pk11pub.h>

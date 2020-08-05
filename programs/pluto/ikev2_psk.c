@@ -52,7 +52,6 @@
 #include "crypt_symkey.h"
 #include "lswfips.h"
 #include "ikev2_prf.h"
-#include <nss.h>
 #include <pk11pub.h>
 
 static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,

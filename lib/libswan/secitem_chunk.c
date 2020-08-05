@@ -15,7 +15,6 @@
  */
 
 #include "lswalloc.h"
-#include "nss.h"
 #include "jambuf.h"
 #include "secrets.h"
 

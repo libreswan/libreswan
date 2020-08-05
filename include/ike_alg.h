@@ -17,7 +17,6 @@
 #define _IKE_ALG_H
 
 #include <stdbool.h>	/* for bool */
-#include <nss.h>
 #include <pk11pub.h>
 #include "shunk.h"
 #include "ietf_constants.h"

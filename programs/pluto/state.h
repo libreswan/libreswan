@@ -42,7 +42,6 @@
 #include "fd.h"
 #include "crypt_mac.h"
 
-#include <nss.h>
 #include <pk11pub.h>
 #include <x509.h>
 

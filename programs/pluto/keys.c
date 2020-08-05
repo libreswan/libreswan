@@ -58,7 +58,6 @@
 #include <prmem.h>
 #include <keyhi.h>
 #include <keythi.h>
-#include <nss.h>
 #include <pk11pub.h>
 #include <seccomon.h>
 #include <secerr.h>

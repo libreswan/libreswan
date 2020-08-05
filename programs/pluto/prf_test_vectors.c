@@ -24,7 +24,6 @@
 #include "ike_alg_test_prf.h"
 
 #include "lswfips.h"
-#include "nss.h"
 #include "pk11pub.h"
 #include "crypt_prf.h"
 #include "crypt_symkey.h"

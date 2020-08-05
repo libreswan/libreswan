@@ -20,7 +20,6 @@
 #include <prlong.h>
 #include <secder.h>
 #include <errno.h>
-#include <nss.h>
 #include <secerr.h>
 #include <cert.h>
 #include <certdb.h>
