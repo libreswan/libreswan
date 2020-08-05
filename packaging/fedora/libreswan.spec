@@ -54,6 +54,7 @@ BuildRequires: libseccomp-devel
 BuildRequires: libselinux-devel
 BuildRequires: nspr-devel
 BuildRequires: nss-devel >= %{nss_version}
+BuildRequires: nss-tools >= %{nss_version}
 BuildRequires: openldap-devel
 BuildRequires: pam-devel
 BuildRequires: pkgconfig
