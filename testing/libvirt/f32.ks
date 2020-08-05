@@ -78,18 +78,21 @@ part / --asprimary --grow
 selinux --permissive
 /usr/bin/sed -i -e 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/selinux/config
 
-# Configure swanbase's network.  Once the domain is transmogrified
-# (and hostname changes) eth0.network will be overwritten. The kernel
-# parameters net.ifnames=0 biosdevname=0 forces eth0 et.al. to be
-# used.
-# once dracut can create the filre remove this this hack
-# https://github.com/dracutdevs/dracut/issues/670
+# Add a default network configuration for swanbase.
 
-cat > /etc/systemd/network/eth0.network << EOF
+# Since systemd-networkd matches .network files in lexographical
+# order, this zzz.*.network file is only matched when all else fails.
+
+# During transmogrification, more specific .network files are
+# installed.  The kernel boot parameters net.ifnames=0 and
+# biosdevname=0 (set way above) force the eth0 names.
+
+cat > /etc/systemd/network/zzz.eth0.network << EOF
 [Match]
 Name=eth0
 Host=swanbase
 [Network]
+Description=fallback for when no other interface matches
 DHCP=yes
 EOF
 
@@ -130,11 +133,14 @@ EOD
 
 for mount in testing source pool ; do
 
-    what=${mount}
-    condition_host="# "
     case ${mount} in
-    source) what=swansource;;
-    pool) condition_host=;;
+    source) what=swansource ;;
+    *)      what=${mount} ;;
+    esac
+
+    case ${mount} in
+    pool) condition_host= ;;
+    *)    condition_host="# " ;;
     esac
 
     cat <<EOF >/etc/systemd/system/${mount}.mount
