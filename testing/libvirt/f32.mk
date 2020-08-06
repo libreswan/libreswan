@@ -57,8 +57,8 @@ KVM_INSTALL_PACKAGES ?= \
 KVM_UPGRADE_PACKAGES ?= \
     ElectricFence \
     audit-libs-devel \
-    bind-utils	\
-    /usr/sbin/dnssec-signzone \
+    bind-utils \
+    bind-dnssec-utils \
     bison \
     conntrack-tools \
     curl-devel \
@@ -83,7 +83,7 @@ KVM_UPGRADE_PACKAGES ?= \
     libcap-ng-devel \
     libfaketime \
     libevent-devel \
-    libseccomp-devel \
+    libseccomp-devel-2.4.2-3.fc32.x86_64 \
     libselinux-devel \
     linux-firmware \
     lsof \
@@ -126,7 +126,6 @@ KVM_UPGRADE_PACKAGES ?= \
     wireshark-cli \
     xmlto \
     $(KVM_STRONGSWAN_PACKAGES) \
-    libfaketime \
 
 
 KVM_DEBUGINFO = \
