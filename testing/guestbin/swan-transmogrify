@@ -130,9 +130,6 @@ if os.path.isfile(hostname_file):
 
 if GUESTOS == "redhat":
 
-    # default to F28 setup
-    network_service  = "network.service"
-
     # these files are needed for systemd-networkd too
     fnames = glob.glob("/testing/baseconfigs/all/etc/sysconfig/*")
     for fname in fnames:
@@ -140,21 +137,16 @@ if GUESTOS == "redhat":
             dst="/etc/sysconfig/%s" % os.path.basename(fname)
             copy_if_diff(fname, dst)
 
-    if os.path.isdir("/testing/baseconfigs/%s" % hostname):
-        if os.path.isfile("/etc/sysconfig/network-scripts/README.libreswan"):
-            # this system need systemd-network files
-            ifaces = glob.glob("/testing/baseconfigs/all/etc/systemd/network/*")
-            dst = "/etc/systemd/network"
-            routes = []
-            # F30 and later we use this
-            network_service  = "systemd-networkd"
-        else:
-            src = "/testing/baseconfigs/%s/etc/sysconfig/network" % hostname
-            dst = "/etc/sysconfig/network"
-            copy_if_diff(src, dst)
-            ifaces = glob.glob("/testing/baseconfigs/%s/etc/sysconfig/network-scripts/ifcfg*" % hostname)
-            routes = glob.glob("/testing/baseconfigs/%s/etc/sysconfig/network-scripts/route*" % hostname)
-            dst = "/etc/sysconfig/network-scripts/"
+    if os.path.isfile("/etc/sysconfig/network-scripts/README.libreswan"):
+        print("systemd - no network files to copy")
+    elif os.path.isdir("/testing/baseconfigs/%s" % hostname):
+        print("sysconfg - and files to copy")
+        src = "/testing/baseconfigs/%s/etc/sysconfig/network" % hostname
+        dst = "/etc/sysconfig/network"
+        copy_if_diff(src, dst)
+        ifaces = glob.glob("/testing/baseconfigs/%s/etc/sysconfig/network-scripts/ifcfg*" % hostname)
+        routes = glob.glob("/testing/baseconfigs/%s/etc/sysconfig/network-scripts/route*" % hostname)
+        dst = "/etc/sysconfig/network-scripts/"
 
         for entry in (ifaces + routes):
             dst_local = dst + '/' + os.path.basename(entry)
@@ -172,9 +164,11 @@ if GUESTOS == "redhat":
     output += "\n" + \
         subprocess.getoutput("chcon -R --reference /var/log /testing/pluto")
 
-    if os.path.isdir("/testing/baseconfigs/%s" % hostname):
+    if os.path.isfile("/etc/sysconfig/network-scripts/README.libreswan"):
+        print("systemd - no network to restart")
+    elif os.path.isdir("/testing/baseconfigs/%s" % hostname):
         if os.path.isfile("/usr/bin/systemctl"):
-            output += "\n" + subprocess.getoutput("systemctl restart %s" % network_service)
+            output += "\n" + subprocess.getoutput("systemctl restart network.service")
         else:
            output += "\n" + subprocess.getoutput("service network restart")
 

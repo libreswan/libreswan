@@ -737,6 +737,14 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted: \
 	$(SNAPSHOT) kickstarted $(basename $@).qcow2
 	touch $@
 
+.PHONY: kvm-downgrade
+kvm-downgrade: kvm-uninstall
+	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
+	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified
+	: loose any upgrade changes
+	$(SNAPSHOT_REVERT) kickstarted $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
+	$(MAKE) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted
+
 $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted
 	$(MAKE) $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok
 	: update all packages
@@ -758,14 +766,21 @@ kvm-upgrade: kvm-uninstall
 	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
 	$(MAKE) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
 
-.PHONY: kvm-downgrade
-kvm-downgrade: kvm-uninstall
-	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
-	: loose any upgrade changes
-	$(SNAPSHOT_REVERT) kickstarted $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
+$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
+	$(MAKE) $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok
+	$(KVMSH) $(KVM_BASE_DOMAIN) sh /testing/libvirt/$(KVM_GUEST_OS)-transmogrify.sh
+	$(MAKE) kvm-shutdown-base-domain
+	: snapshot upgrade so that next upgrade can be incremental
+	$(SNAPSHOT) transmogrified $(basename $@).qcow2
+	touch $@
 
-.PHONY: install-kvm-domain-$(KVM_BASE_DOMAIN)
-install-kvm-domain-$(KVM_BASE_DOMAIN): $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
+# run, or re-run transmogrify from scratch
+
+.PHONY: kvm-transmogrify
+kvm-transmogrify: kvm-uninstall
+	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified
+	$(SNAPSHOT_REVERT) upgraded $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
+	$(MAKE) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified
 
 #
 # Create the local disk images
@@ -1219,9 +1234,6 @@ Domains and networks:
 
   Domains:
 
-    kvm-install-base-domain (kvm-uninstall-base-domain)
-        - (un)install the base domain
-        - install dependencies: base gateway
     kvm-install-build-domain (kvm-uninstall-build-domain)
         - (un)install this directory's build domain
         - install dependencies: local gateway; test networks
@@ -1234,14 +1246,90 @@ Domains and networks:
 
   Networks:
 
-    kvm-install-gateway (kvm-uninstall-gateway)
-        - (un)install the NATting base gateway used by the base
-          and build domains
-	- uninstall dependencies: base domain
     kvm-install-test-networks (kvm-uninstall-test-networks)
         - (un)install the test networks used by this
           directory's test domains
         - uninstall dependencies: test domains
+
+Manually building and modifing the base domain and network:
+
+  Normally kvm-install et.al, below, are sufficient.  However ....
+
+  The first step in setting up the test environment is creating the
+  base domain.  The make targets below can be used to step through the
+  process of constructing the base domain.  At anytime kvmsh-base can
+  be used to log into that domain.
+
+    kvmsh-base
+
+      log into the base domain (if necessary, kickstart it); this will
+      not trigger an upgrade or transmogrify
+
+    kvm-downgrade
+
+      revert everything back to the kickstarted base domain; no extra
+      packages will have been upgraded and no transmogrification will
+      have been performed
+
+      if the base domain doesn't exist it will be created
+
+    kvm-upgrade
+
+      perform an incremental install/upgrade any packages needed by
+      libreswan; to force a complete re-install of all packages, first
+      kvm-downgrade
+
+      to keep kickstart (which is something of a black box) as simple
+      as possible, and to make re-running / debugging the upgrade
+      process easier, this step is not embedded in kickstart.
+
+    kvm-transmogrify
+
+      install all the configuration files so that the domain will
+      automatically transmogrify from the base domain to a test domain
+      during boot
+
+  also:
+
+    kvm-install-base-domain
+    kvm-uninstall-base-domain
+
+      all the above
+
+    kvm-install-gateway
+    kvm-uninstall-gateway
+
+      just create the base domain's gateway
+
+      note that uninstalling the gateway also uninstalls the base
+      domain (since it depends on the gateway)
+
+Running 'git bisect' to find a regression:
+
+  First find or create test (don't commit it) that detects the
+  regression.  If the test is new don't commit it - this way the test
+  sticks around as commits are checked out.
+
+  Next, as per normal, establish the bounds of the bisect:
+
+    git bisect start
+    git bisect good ...
+    git bisect bad ...
+
+  Finally use the kvm-bisect and KVM_TESTS to build and run each
+  commit:
+
+    git bisect run make kvm-bisect KVM_TESTS=test/that/changed
+
+  The kvm-bisect target is roughly equivalent to:
+
+    make kvm-install || exit 125
+    make kvm-test KVM_TESTS=...
+    make kvm-diffs KVM_TESTS=...
+
+  where <<exit 125>> is git magic for result unknown; and (unlike
+  kvm-test) kvm-diffs exits with a non-zero status code when things
+  fail.
 
 Standard targets and operations:
 
@@ -1256,20 +1344,12 @@ Standard targets and operations:
 	- delete test build
         - delete test results
         - delete test networks
-    kvm-upgrade:
-        - upgrade the base domain with the latest packages
-    kvm-downgrade:
-        - remove any upgraded packages in the base domain
     kvm-demolish: wipe out a directory
         - also delete the base domain
 
-    Note that kvm-upgrade immediately upgrades the base domain while
-    kvm-purge, kvm-downgrade, and kvm-demolish leave the upgrade to the next
-    kvm-install.
-
   Manipulating and accessing (logging into) domains:
 
-    kvmsh-base kvmsh-build
+    kvmsh-build
     kvmsh-HOST ($(filter-out build, $(KVM_TEST_HOSTS)))
         - use 'virsh console' to login to the given domain
 	- for HOST login to the first domain vis $(addprefix $(KVM_FIRST_PREFIX), HOST)
@@ -1335,14 +1415,6 @@ Standard targets and operations:
     kvm-modified-results
     kvm-modified-diffs
                       - list/check/examine any tests with modified files
-
-  To run 'git bisect':
-
-    git bisect start; git bisect good ...; gid bisect bad ...; then
-    git bisect run make kvm-bisect KVM_TESTS=test/that/changed
-                      - kvm-bisect is roughly equivalent to:
-                             make kvm-install || exit 125
-                             make kvm-test kvm-diffs KVM_TESTS=...
 
   To print make variables:
 
