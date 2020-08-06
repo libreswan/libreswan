@@ -104,6 +104,43 @@ KVM_CONNECTION ?= qemu:///system
 
 VIRSH = sudo virsh --connect $(KVM_CONNECTION)
 
+#
+# manipulate QEMU snapshots
+#
+
+QEMU_IMG ?= sudo qemu-img
+SNAPSHOT_REVERT ?= snapshot_revert() 						\
+	{									\
+		snapshot=$$1 ;							\
+		disk=$$2 ;							\
+		if $(QEMU_IMG) snapshot -l $${disk} | grep $${snapshot} ; then	\
+			$(QEMU_IMG) snapshot -a $${snapshot} $${disk} ;		\
+		fi ;								\
+	} ;									\
+	snapshot_revert
+SNAPSHOT_DELETE ?= snapshot_delete() 						\
+	{									\
+		snapshot=$$1 ;							\
+		disk=$$2 ;							\
+		if $(QEMU_IMG) snapshot -l $${disk} | grep $${snapshot} ; then	\
+			$(QEMU_IMG) snapshot -d $${shapshot} $${disk} ;		\
+		fi ;								\
+	} ;									\
+	snapshot_delete
+# Create a new snapshot. If there's already a snapshot by that name,
+# replace it.
+SNAPSHOT ?= snapshot()								\
+	{									\
+		snapshot=$$1 ;							\
+		disk=$$2 ;							\
+		if $(QEMU_IMG) snapshot -l $${disk} 2>/dev/null | grep $${snapshot} ; then \
+			$(QEMU_IMG) snapshot -d $${shapshot} $${disk} ;		\
+		fi ;								\
+		$(QEMU_IMG) snapshot -c $${snapshot} $${disk} ;			\
+	} ;									\
+	snapshot
+
+
 VIRT_INSTALL ?= sudo virt-install --connect $(KVM_CONNECTION) --check path_in_use=off
 VIRT_CPU ?= --cpu host-passthrough
 VIRT_DISK_SIZE_GB ?=8
@@ -665,16 +702,16 @@ endef
 # To avoid unintended re-builds triggered by things like a git branch
 # switch, this target is order-only dependent on its sources.
 #
-# The create the domain rule's target is .ks - moved into place
-# right at the very end.  That way the problem of a virt-install crash
-# leaving the disk-image in an incomplete state is avoided.
+# The create the domain rule's target is .kickstarted - moved into
+# place right at the very end.  That way the problem of a virt-install
+# crash leaving the disk-image in an incomplete state is avoided.
 #
-# The .upgraded target then depends on the .ks target.  This way an
-# upgrade can be triggered without needing to rebuild the entire base
-# domain.
+# The .upgraded target then depends on the .kickstarted target.  This
+# way an upgrade can be triggered without needing to re-create the
+# entire base domain.
 
-.PRECIOUS: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks
-$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks: \
+.PRECIOUS: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted
+$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted: \
 		| \
 		$(KVM_POOLDIR)/$(KVM_ISO) \
 		$(KVM_KICKSTART_FILE) \
@@ -696,10 +733,13 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks: \
 		--initrd-inject=$(KVM_KICKSTART_FILE) \
 		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(notdir $(KVM_KICKSTART_FILE)) console=tty0 console=ttyS0,115200 net.ifnames=0 biosdevname=0"
 	: the reboot message from virt-install can be ignored
+	: snapshot the disk
+	$(SNAPSHOT) kickstarted $(basename $@).qcow2
 	touch $@
 
-$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks
+$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted
 	$(MAKE) $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok
+	: update all packages
 	$(if $(KVM_PACKAGE_INSTALL), $(if $(KVM_INSTALL_PACKAGES), \
 		$(KVMSH) $(KVM_BASE_DOMAIN) $(KVM_PACKAGE_INSTALL) $(KVM_INSTALL_PACKAGES)))
 	$(if $(KVM_PACKAGE_UPGRADE), $(if $(KVM_UPGRADE_PACKAGES), \
@@ -709,7 +749,20 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks
 	$(if $(KVM_DEBUGINFO_INSTALL), $(if $(KVM_DEBUGINFO), \
 		$(KVMSH) $(KVM_BASE_DOMAIN) $(KVM_DEBUGINFO_INSTALL) $(KVM_DEBUGINFO)))
 	$(MAKE) kvm-shutdown-base-domain
+	: snapshot upgrade so that next upgrade can be incremental
+	$(SNAPSHOT) upgraded $(basename $@).qcow2
 	touch $@
+
+.PHONY: kvm-upgrade
+kvm-upgrade: kvm-uninstall
+	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
+	$(MAKE) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
+
+.PHONY: kvm-downgrade
+kvm-downgrade: kvm-uninstall
+	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
+	: loose any upgrade changes
+	$(SNAPSHOT_REVERT) kickstarted $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
 
 .PHONY: install-kvm-domain-$(KVM_BASE_DOMAIN)
 install-kvm-domain-$(KVM_BASE_DOMAIN): $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
@@ -854,7 +907,7 @@ define uninstall-kvm-domain-DOMAIN
 	$$(call destroy-kvm-domain,$(1))
 	rm -f $(2)/$(1).xml
 	rm -f $(2)/$(1).upgraded
-	rm -f $(2)/$(1).ks
+	rm -f $(2)/$(1).kickstarted
 	rm -f $(2)/$(1).qcow2
 	rm -f $(2)/$(1).img
 endef
@@ -936,11 +989,6 @@ kvm-clean: kvm-test-clean
 kvm-uninstall: kvm-uninstall-test-domains
 kvm-uninstall: kvm-uninstall-build-domain
 
-.PHONY: kvm-upgrade
-kvm-upgrade: kvm-uninstall
-	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
-	$(MAKE) kvm-install-base-domain
-
 .PHONY: kvm-purge
 kvm-purge: kvm-clean
 kvm-purge: kvm-uninstall
@@ -1013,8 +1061,9 @@ define kvmsh-DOMAIN
 	$$(KVMSH) $$(KVMSH_FLAGS) $(1) $(KVMSH_COMMAND)
 endef
 
+# the base domain only requires the raw image; not upgraded
 $(foreach domain, $(KVM_BASE_DOMAIN), \
-	$(eval $(call kvmsh-DOMAIN,$(domain),$$(KVM_POOLDIR)/$$(KVM_BASE_DOMAIN).ks)))
+	$(eval $(call kvmsh-DOMAIN,$(domain),$$(KVM_POOLDIR)/$$(KVM_BASE_DOMAIN).kickstarted)))
 
 $(foreach domain,  $(KVM_LOCAL_DOMAINS), \
 	$(eval $(call kvmsh-DOMAIN,$(domain),$$(KVM_LOCALDIR)/$(domain).xml)))
@@ -1201,18 +1250,21 @@ Standard targets and operations:
 
     kvm-uninstall: force clean test and build domains
         - delete test domains
-        - delete build
-    kvm-upgrade: force OS upgrade
-        - also flag base domain as needing upgrade
-    kvm-purge: clean up a directory
-        - also delete test networks
-        - also delete test results
-        - also delete test build
+        - delete test build
+    kvm-purge:
+        - delete test domains
+	- delete test build
+        - delete test results
+        - delete test networks
+    kvm-upgrade:
+        - upgrade the base domain with the latest packages
+    kvm-downgrade:
+        - remove any upgraded packages in the base domain
     kvm-demolish: wipe out a directory
         - also delete the base domain
 
     Note that kvm-upgrade immediately upgrades the base domain while
-    kvm-purge and kvm-demolish leave the upgrade to the next
+    kvm-purge, kvm-downgrade, and kvm-demolish leave the upgrade to the next
     kvm-install.
 
   Manipulating and accessing (logging into) domains:
