@@ -85,7 +85,11 @@ if not hostname:
 # we seem to have found our identity
 
 # install files common to all GUESTOS types
-output += "\n" + subprocess.getoutput("hostname %s" % hostname)
+if os.path.isfile("/etc/sysconfig/network-scripts/README.libreswan"):
+    print("systemd - skipping hostname")
+else:
+    output += "\n" + subprocess.getoutput("hostname %s" % hostname)
+
 # fixup /etc/sysctl.conf
 sysctl = "/testing/baseconfigs/%s/etc/sysctl.conf" % hostname
 if not os.path.isfile(sysctl):
@@ -124,9 +128,13 @@ output += "\n" + \
     subprocess.getoutput("cp /testing/baseconfigs/all/root/.ssh/* /root/.ssh/")
 output += "\n" + subprocess.getoutput("chmod 600 /etc/ssh/*key* /root/.ssh/*")
 
-hostname_file = "/testing/baseconfigs/%s/etc/hostname" % hostname
-if os.path.isfile(hostname_file):
-    shutil.copyfile(hostname_file, "/etc/hostname")
+
+if os.path.isfile("/etc/sysconfig/network-scripts/README.libreswan"):
+    print("systemd - skipping hostname")
+else:
+    hostname_file = "/testing/baseconfigs/%s/etc/hostname" % hostname
+    if os.path.isfile(hostname_file):
+        shutil.copyfile(hostname_file, "/etc/hostname")
 
 if GUESTOS == "redhat":
 

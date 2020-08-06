@@ -36,6 +36,35 @@ cat <<EOF >> /etc/hosts
 EOF
 
 
+# set the hostname
+
+rm -f /etc/hostname # hostnamectl set-hostname ""
+cat <<EOF > /etc/systemd/system/hostnamer.service
+[Unit]
+  Description=Figure out who we are
+  ConditionFileNotEmpty=|!/etc/hostname
+  After=systemd-networkd-wait-online.service
+  Before=network.target
+[Service]
+  Type=oneshot
+  ExecStart=/usr/local/sbin/hostnamer.sh
+[Install]
+  WantedBy=multi-user.target
+EOF
+systemctl enable hostnamer.service
+
+cat <<EOF > /usr/local/sbin/hostnamer.sh
+#!/bin/sh
+ip=\$(ip address show dev eth0 | awk '\$1 == "inet" { print gensub("/[0-9]*", "", 1, \$2)}')
+echo ip: \${ip}
+hostname=\$(awk '\$1 == IP { print \$2 }' IP=\${ip} /etc/hosts)
+echo hostname: \${hostname}
+hostnamectl set-hostname \${hostname}
+hostnamectl status
+EOF
+chmod a+x /usr/local/sbin/hostnamer.sh
+
+
 # default paths
 
 cat <<EOF > /etc/profile.d/swanpath.sh
