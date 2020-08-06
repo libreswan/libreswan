@@ -813,7 +813,7 @@ endef
 KVM_BASE_DISK_CLONES = $(addsuffix .qcow2, $(addprefix $(KVM_LOCALDIR)/, $(KVM_BASE_DOMAIN_CLONES)))
 $(KVM_BASE_DISK_CLONES): \
 		| \
-		$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded \
+		$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified \
 		$(KVM_LOCALDIR)
 	$(MAKE) kvm-shutdown-base-domain
 	: copy-base-disk $@
@@ -859,7 +859,7 @@ $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml: \
 		$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok \
 		| \
 		$(KVM_BASE_GATEWAY_FILE) \
-		$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded \
+		$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified \
 		$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2
 	: build-domain $@
 	$(call destroy-kvm-domain,$(KVM_BUILD_DOMAIN))
@@ -922,6 +922,7 @@ define uninstall-kvm-domain-DOMAIN
 	$$(call destroy-kvm-domain,$(1))
 	rm -f $(2)/$(1).xml
 	rm -f $(2)/$(1).upgraded
+	rm -f $(2)/$(1).transmogrified
 	rm -f $(2)/$(1).kickstarted
 	rm -f $(2)/$(1).qcow2
 	rm -f $(2)/$(1).img
