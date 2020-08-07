@@ -8,23 +8,19 @@ if test -z "${hostname}"; then
 fi
 
 # fixup /etc/sysctl.conf
+
 for sysctl in "/testing/baseconfigs/${hostname}/etc/sysctl.conf" "/testing/baseconfigs/all/etc/sysctl.conf" ; do
     if test -r ${sysctl} ; then break ; fi
 done
-cp -v ${sysctl} /etc/sysctl.conf
+cp -av ${sysctl} /etc/sysctl.conf
 sysctl -q -p
 
 # and resolv.conf
+
 resolv="/testing/baseconfigs/${hostname}/etc/resolv.conf"
 if test -r "${resolv}" ; then
-    cp -v "${resolv}" /etc/resolv.conf
+    cp -av "${resolv}" /etc/resolv.conf
 fi
-
-# and bind config - can be run on all hosts (to prevent network DNS
-# packets) as well as on nic
-
-mkdir -p /etc/bind
-cp -av /testing/baseconfigs/all/etc/bind/* /etc/bind/
 
 if test "${hostname}" = "nic" ; then
     cp -av /testing/baseconfigs/nic/etc/unbound /etc/
@@ -32,35 +28,14 @@ if test "${hostname}" = "nic" ; then
     cp -av /testing/baseconfigs/nic/etc/systemd/system/unbound.service /etc/systemd/system/
 fi
 
-# ssh
-
-mkdir -p /etc/ssh
-chown 755 /etc/ssh
-mkdir -p /root/.ssh
-chown 700 /root/.ssh
-cp -v /testing/baseconfigs/all/etc/ssh/*key* /etc/ssh/
-cp -v /testing/baseconfigs/all/root/.ssh/* /root/.ssh/
-chmod 600 /etc/ssh/*key* /root/.ssh/*
-restorecon -R /root/.ssh
-
-# these files are needed for systemd-networkd too
-for fname in /testing/baseconfigs/all/etc/sysconfig/* ; do
-    if test -f "${fname}"; then
-	cp -v "${fname}" /etc/sysconfig/
-    fi
-done
-
 # SElinux fixup
 chcon -R --reference /var/log /testing/pluto
 restorecon -R /etc
 
-# get rid of damn cp/mv/rm aliases for root
-
-sed -i 's/^alias rm/# alias rm/g' /root/.bashrc
-sed -i 's/^alias cp/# alias cp/g' /root/.bashrc
-sed -i 's/^alias mv/# alias mv/g' /root/.bashrc
 
 # and some custom ipsec* files, but not directories
+
+# XXX: this at least partially duplicates swan-prep?
 
 if test -d /etc/ipsec.d -a ! -d /etc/ipsec.d.stock ; then
     mv -v /etc/ipsec.d /etc/ipsec.d.stock
@@ -86,5 +61,3 @@ restorecon -R /etc/
 if test hostname = "nic"; then
     setenforce 0
 fi
-
-sys.exit()

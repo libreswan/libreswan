@@ -114,3 +114,38 @@ systemctl enable sshd-shutdown.service
 
 echo " * soft core unlimited" >> /etc/security/limits.conf
 echo " DAEMON_COREFILE_LIMIT='unlimited'" >> /etc/sysconfig/pluto
+
+
+# and bind config - can be run on all hosts (to prevent network DNS
+# packets) as well as on nic
+
+mkdir -p /etc/bind
+cp -av /testing/baseconfigs/all/etc/bind/* /etc/bind/
+
+
+# ssh
+
+mkdir -p /etc/ssh
+chown 755 /etc/ssh
+mkdir -p /root/.ssh
+chown 700 /root/.ssh
+cp -v /testing/baseconfigs/all/etc/ssh/*key* /etc/ssh/
+cp -v /testing/baseconfigs/all/root/.ssh/* /root/.ssh/
+chmod 600 /etc/ssh/*key* /root/.ssh/*
+restorecon -R /root/.ssh
+
+
+# get rid of damn cp/mv/rm aliases for root
+
+sed -i 's/^alias rm/# alias rm/g' /root/.bashrc
+sed -i 's/^alias cp/# alias cp/g' /root/.bashrc
+sed -i 's/^alias mv/# alias mv/g' /root/.bashrc
+
+
+# these files are needed for systemd-networkd too
+
+for fname in /testing/baseconfigs/all/etc/sysconfig/* ; do
+    if test -f "${fname}"; then
+	cp -v "${fname}" /etc/sysconfig/
+    fi
+done
