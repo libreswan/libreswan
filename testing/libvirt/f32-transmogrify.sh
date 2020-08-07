@@ -132,3 +132,16 @@ for fname in /testing/baseconfigs/all/etc/sysconfig/* ; do
 	cp -av "${fname}" /etc/sysconfig/
     fi
 done
+
+
+title unbound -- for nic
+
+cp -av /testing/baseconfigs/all/etc/unbound /etc/
+cp -av /testing/baseconfigs/all/etc/systemd/system/unbound.service /etc/systemd/system/
+restorecon -R /etc/unbound
+
+
+title nsd -- for nic
+cp -av /testing/baseconfigs/all/etc/nsd /etc/
+restorecon -R /etc/nsd
+

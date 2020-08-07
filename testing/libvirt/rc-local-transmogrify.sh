@@ -30,12 +30,6 @@ if test -r "${resolv}" ; then
     cp -av "${resolv}" /etc/resolv.conf
 fi
 
-if test "${hostname}" = "nic" ; then
-    cp -av /testing/baseconfigs/nic/etc/unbound /etc/
-    cp -av /testing/baseconfigs/nic/etc/nsd /etc/
-    cp -av /testing/baseconfigs/nic/etc/systemd/system/unbound.service /etc/systemd/system/
-fi
-
 # SElinux fixup
 chcon -R --reference /var/log /testing/pluto
 restorecon -R /etc
