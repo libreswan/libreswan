@@ -6,20 +6,8 @@ cp -v /testing/baseconfigs/all/etc/systemd/network/* /etc/systemd/network
 
 
 # /etc/rc.d/rc.local
-cat <<EOF > /etc/rc.d/rc.local
-#!/bin/sh
-exec > /tmp/rc.local.txt 2>&1
-ls /sys
-ls /proc
-SELINUX=\$(getenforce)
-echo "getenforce \$SELINUX" > /tmp/rc.local.txt
-setenforce Permissive
-/testing/libvirt/rc-local-transmogrify.sh
-echo "restore SELINUX to \$SELINUX"
-setenforce \$SELINUX
-hostname |grep -q swanbase || rm /etc/rc.d/rc.local
-EOF
-chmod 755 /etc/rc.d/rc.local
+cp /testing/libvirt/rc-local-transmogrify.sh /etc/rc.d/rc.local
+chmod a+x /etc/rc.d/rc.local
 
 
 # /etc/hosts
