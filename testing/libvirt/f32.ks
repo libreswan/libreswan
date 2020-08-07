@@ -1,5 +1,11 @@
 # Minimal Kickstart file for fedora
 
+# Limit things to: basic network configuration; 9pfs mounts; setting
+# the password; et.al.
+
+# Everything interesting, such as installing packages, configuring and
+# transmogrifying, happens after the domain is rebooted.
+
 install
 text
 reboot
@@ -60,15 +66,6 @@ part / --asprimary --grow
 
 %post
 
-# Everything interesting happens after the domain is rebooted.  Namely
-# upgrade / install missing packages; and transmogrify the
-# configuration.
-
-#
-# Configure eth0 so that it comes up after a reboot
-#
-# How come this machine still uses legacy names?
-
 # Without this systemd-networkd fails to start with:
 #
 #   systemd-networkd.service: Failed to set up mount namespacing: Permission denied
@@ -85,7 +82,8 @@ selinux --permissive
 
 # During transmogrification, more specific .network files are
 # installed.  The kernel boot parameters net.ifnames=0 and
-# biosdevname=0 (set way above) force the eth0 names.
+# biosdevname=0 (set way above) force the eth0 names (keeping test
+# output happy).
 
 cat > /etc/systemd/network/zzz.eth0.network << EOF
 [Match]
@@ -114,17 +112,14 @@ Do not add files here.  networkig is handled by systemd-networkd
 networkctl
 EOF
 
-rpm -qa > /var/tmp/rpm-qa-darcut-fedora.log
-
 cat << EOD >> /etc/issue
 
 The root password is "swan"
 EOD
 
-#
+
 # Mount /testing, /source, and /pool (swanbase only) using 9p (will
 # be available after a reboot).
-#
 
 # load 9p modules in time for auto mounts
 cat << EOD > /etc/modules-load.d/9pnet_virtio.conf
@@ -160,91 +155,16 @@ EOF
     systemctl enable ${mount}.mount
 done
 
-
-cat << EOD >> /etc/rc.d/rc.local
-#!/bin/sh
-SELINUX=\$(getenforce)
-echo "getenforce \$SELINUX" > /tmp/rc.local.txt
-setenforce Permissive
-/testing/guestbin/swan-transmogrify 2>&1 >> /tmp/rc.local.txt || echo "ERROR swan-transmogrify" >> /tmp/rc.local.txt
-echo "restore SELINUX to \$SELINUX"
-setenforce \$SELINUX
-hostname |grep -q swanbase || rm /etc/rc.d/rc.local
-EOD
-
-chmod 755 /etc/rc.d/rc.local
-
-cat << EOD > /etc/profile.d/swanpath.sh
-# add swan test binaries to path
-
-case ":${PATH:-}:" in
-    *:/testing/guestbin:*) ;;
-    *) PATH="/testing/guestbin${PATH:+:$PATH}" ;;
-esac
-# too often various login/sudo/ssh methods don't have /usr/local/sbin
-case ":${PATH:-}:" in
-    *:/usr/local/sbin:*) ;;
-    *) PATH="/usr/local/sbin${PATH:+:$PATH}" ;;
-esac
-export GIT_PS1_SHOWDIRTYSTATE=true
-alias git-log-p='git log --pretty=format:"%h %ad%x09%an%x09%s" --date=short'
-export EDITOR=vim
-EOD
-
-cat << EOD > /etc/modules-load.d/virtio-rng.conf
-# load virtio RNG device to get entropy from the host
-# Note it should also be loaded on the host
-virtio-rng
-EOD
-
-cat << EOD > /etc/systemd/system/sshd-shutdown.service
-# work around for broken systemd/sshd interaction in fedora 20 causes VM hangs
-[Unit]
-Description=kill all sshd sessions
-Requires=mutil-user.target
-
-[Service]
-ExecStart=/usr/bin/killall sshd
-Type=oneshot
-
-[Install]
-WantedBy=shutdown.target reboot.target poweroff.target
-EOD
-
 systemctl enable systemd-networkd
 systemctl enable systemd-networkd-wait-online
 systemctl enable iptables.service
 systemctl enable ip6tables.service
-systemctl enable sshd-shutdown.service
-
-#ensure we can get coredumps
-echo " * soft core unlimited" >> /etc/security/limits.conf
-echo " DAEMON_COREFILE_LIMIT='unlimited'" >> /etc/sysconfig/pluto
-ln -s /testing/guestbin/swan-prep /usr/bin/swan-prep
-ln -s /testing/guestbin/swan-build /usr/bin/swan-build
-ln -s /testing/guestbin/swan-install /usr/bin/swan-install
-ln -s /testing/guestbin/swan-update /usr/bin/swan-update
-ln -s /testing/guestbin/swan-run /usr/bin/swan-run
 
 # > F27 and later to support X509 Certificates, signed with SHA1
 /usr/bin/update-crypto-policies --set LEGACY
 
-# add easy names so we can jump from vm to vm
-cat << EOD >> /etc/hosts
-
-192.0.1.254 west
-192.0.2.254 east
-192.0.3.254 north
-192.1.3.209 road
-192.1.2.254 nic
-EOD
-
-# enable password root logins (f32 disables these per default)
-echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
-
 # blacklist NetworkManager since it conflits with systemd-networkd
 sed -i $'s/enabled=1/enabled=1\\\nexclude=NetworkManager*/g' /etc/yum.repos.d/fedora.repo
 sed -i $'s/enabled=1/enabled=1\\\nexclude=NetworkManager*/g' /etc/yum.repos.d/fedora-updates.repo
-
 
 %end
