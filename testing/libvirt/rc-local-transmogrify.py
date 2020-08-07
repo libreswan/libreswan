@@ -223,8 +223,5 @@ if GUESTOS == "redhat":
 if hostname == "nic":
     output += "\n" + subprocess.getoutput("setenforce 0")
 
-if len(sys.argv) > 1:
-    print(output.strip())
+print(output)
 sys.exit()
-
-sys.exit("ERROR: Failed to find our swan hostname based on the mac of eth0")
