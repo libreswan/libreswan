@@ -123,13 +123,13 @@ SNAPSHOT_DELETE ?= snapshot_delete() 						\
 		snapshot=$$1 ;							\
 		disk=$$2 ;							\
 		if $(QEMU_IMG) snapshot -l $${disk} | grep $${snapshot} ; then	\
-			$(QEMU_IMG) snapshot -d $${shapshot} $${disk} ;		\
+			$(QEMU_IMG) snapshot -d $${snapshot} $${disk} ;		\
 		fi ;								\
 	} ;									\
 	snapshot_delete
 # Create a new snapshot. If there's already a snapshot by that name,
 # replace it.
-SNAPSHOT ?= snapshot()								\
+SNAPSHOT_TAKE ?= snapshot()							\
 	{									\
 		snapshot=$$1 ;							\
 		disk=$$2 ;							\
@@ -734,13 +734,12 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted: \
 		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(notdir $(KVM_KICKSTART_FILE)) console=tty0 console=ttyS0,115200 net.ifnames=0 biosdevname=0"
 	: the reboot message from virt-install can be ignored
 	: snapshot the disk
-	$(SNAPSHOT) kickstarted $(basename $@).qcow2
+	$(SNAPSHOT_TAKE) kickstarted $(basename $@).qcow2
 	touch $@
 
 .PHONY: kvm-downgrade
 kvm-downgrade: kvm-uninstall
 	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
-	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified
 	: loose any upgrade changes
 	$(SNAPSHOT_REVERT) kickstarted $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
 	$(MAKE) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted
@@ -758,7 +757,8 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ki
 		$(KVMSH) $(KVM_BASE_DOMAIN) $(KVM_DEBUGINFO_INSTALL) $(KVM_DEBUGINFO)))
 	$(MAKE) kvm-shutdown-base-domain
 	: snapshot upgrade so that next upgrade can be incremental
-	$(SNAPSHOT) upgraded $(basename $@).qcow2
+	$(SNAPSHOT_DELETE) upgraded $(basename $@).qcow2
+	$(SNAPSHOT_TAKE) upgraded $(basename $@).qcow2
 	touch $@
 
 .PHONY: kvm-upgrade
@@ -770,11 +770,12 @@ kvm-upgrade: kvm-uninstall
 
 $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
 	$(MAKE) $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok
-	$(SNAPSHOT_REVERT) upgraded $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
+	$(SNAPSHOT_REVERT) upgraded $(basename $@).qcow2
+	$(SNAPSHOT_DELETE) transmogrified $(basename $@).qcow2
 	$(KVMSH) $(KVM_BASE_DOMAIN) sh /testing/libvirt/$(KVM_GUEST_OS)-transmogrify.sh
 	$(MAKE) kvm-shutdown-base-domain
 	: snapshot upgrade so that next upgrade can be incremental
-	$(SNAPSHOT) transmogrified $(basename $@).qcow2
+	$(SNAPSHOT_TAKE) transmogrified $(basename $@).qcow2
 	touch $@
 
 .PHONY: kvm-transmogrify
