@@ -766,20 +766,20 @@ kvm-upgrade: kvm-uninstall
 	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
 	$(MAKE) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
 
+# run, or re-run transmogrify from scratch
+
 $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
 	$(MAKE) $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok
+	$(SNAPSHOT_REVERT) upgraded $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
 	$(KVMSH) $(KVM_BASE_DOMAIN) sh /testing/libvirt/$(KVM_GUEST_OS)-transmogrify.sh
 	$(MAKE) kvm-shutdown-base-domain
 	: snapshot upgrade so that next upgrade can be incremental
 	$(SNAPSHOT) transmogrified $(basename $@).qcow2
 	touch $@
 
-# run, or re-run transmogrify from scratch
-
 .PHONY: kvm-transmogrify
-kvm-transmogrify: kvm-uninstall
+kvm-transmogrify: kvm-uninstall-local-domains
 	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified
-	$(SNAPSHOT_REVERT) upgraded $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
 	$(MAKE) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified
 
 #
@@ -996,14 +996,15 @@ $(eval $(call kvm-hosts-domains,shutdown))
 # domains.
 
 .PHONY: kvm-clean
-kvm-clean: kvm-shutdown
+kvm-clean: kvm-uninstall-local-domains
 kvm-clean: kvm-keys-clean
 kvm-clean: kvm-test-clean
 	rm -rf $(KVM_OBJDIR)
+	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified
 
 .PHONY: kvm-uninstall
-kvm-uninstall: kvm-uninstall-test-domains
-kvm-uninstall: kvm-uninstall-build-domain
+kvm-uninstall: kvm-uninstall-local-domains
+	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified
 
 .PHONY: kvm-purge
 kvm-purge: kvm-clean
@@ -1332,6 +1333,45 @@ Running 'git bisect' to find a regression:
   kvm-test) kvm-diffs exits with a non-zero status code when things
   fail.
 
+
+Working on a specific test:
+
+  There are two ways to select a single or group of tests.  First, by
+  specifying KVM_TESTS vis:
+
+    make kvm-test KVM_TESTS=testing/pluto/basic-pluto-*
+
+  Second with the following targets which will only modify tests that
+  have been modified / added but not committed:
+
+    kvm-modified
+
+      list the tests that have been modified or added; all the below
+      commands will operate on this list
+
+    kvm-modified-check
+
+       run the modified tests
+
+    kvm-modified-recheck
+
+       re-run the modified tests (skipping tests that have passed)
+
+    kvm-modified-results
+
+       list the results for just the modified tests
+
+    kvm-modified-diffs
+
+       show the test result diffs for the modified tests
+
+Misc
+
+  To print make variables:
+
+    print-kvm-prefixes    print prefixes being used
+
+
 Standard targets and operations:
 
   Delete the installed KVMs and networks so that the next kvm-install
@@ -1369,22 +1409,20 @@ Standard targets and operations:
 
   To set things up for a test run:
 
-    kvm-install: install (or update) libreswan on the test domains
-	- cheats by building/installing using the local build domain
-          ($(KVM_BUILD_DOMAIN)) and then cloning it to create the test domains
-	- if necessary, creates the local build domain ($(KVM_BUILD_DOMAIN))
-          from the local base domain ($(KVM_BASE_DOMAIN))
-	- if necessary, creates and upgrade the local base domain
-	  ($(KVM_BASE_DOMAIN))
+    kvm-install:
 
-    kvm-uninstall: uninstall libreswan from the the test domains
-	- cheats by deleting the build and test domains
+      build / install (or update) everything needed for a test run
 
-    kvm-clean: cleans the directory forcing 'kvm-install' to perform a 'clean' build
-	- deletes the test domains
-	- deletes the build domain ($(KVM_BUILD_DOMAIN))
-	- deletes the test keys so the next kvm-check builds fresh keys
-	- deletes the test results from the previous test run
+    kvm-uninstall:
+
+      uninstall libreswan from the the test domains (cheats by
+      deleting the build and test domains); doesn't touch the build
+      directory
+
+    kvm-clean:
+
+      cleans the directory of both the build and any test domains;
+      force a transmogrification
 
   To run the testsuite against libreswan installed on the test domains
   (see "make kvm-install" above):
@@ -1410,16 +1448,6 @@ Standard targets and operations:
                         compare against KVM_BASELINE when defined
     kvm-diffs         - list the tests and their differences
                         compare against KVM_BASELINE when defined
-    kvm-modified
-    kvm-modified-check
-    kvm-modified-recheck
-    kvm-modified-results
-    kvm-modified-diffs
-                      - list/check/examine any tests with modified files
-
-  To print make variables:
-
-    print-kvm-prefixes    print prefixes being used
 
 endef
 
