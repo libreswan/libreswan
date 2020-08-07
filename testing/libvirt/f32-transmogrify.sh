@@ -14,7 +14,7 @@ ls /proc
 SELINUX=\$(getenforce)
 echo "getenforce \$SELINUX" > /tmp/rc.local.txt
 setenforce Permissive
-/testing/guestbin/swan-transmogrify
+/testing/libvirt/rc-local-transmogrify.py
 echo "restore SELINUX to \$SELINUX"
 setenforce \$SELINUX
 hostname |grep -q swanbase || rm /etc/rc.d/rc.local
@@ -47,22 +47,11 @@ cat <<EOF > /etc/systemd/system/hostnamer.service
   Before=network.target
 [Service]
   Type=oneshot
-  ExecStart=/usr/local/sbin/hostnamer.sh
+  ExecStart=/testing/libvirt/hostnamer.sh
 [Install]
   WantedBy=multi-user.target
 EOF
 systemctl enable hostnamer.service
-
-cat <<EOF > /usr/local/sbin/hostnamer.sh
-#!/bin/sh
-ip=\$(ip address show dev eth0 | awk '\$1 == "inet" { print gensub("/[0-9]*", "", 1, \$2)}')
-echo ip: \${ip}
-hostname=\$(awk '\$1 == IP { print \$2 }' IP=\${ip} /etc/hosts)
-echo hostname: \${hostname}
-hostnamectl set-hostname \${hostname}
-hostnamectl status
-EOF
-chmod a+x /usr/local/sbin/hostnamer.sh
 
 
 # default paths

@@ -1,0 +1,230 @@
+#!/usr/bin/env python3
+
+# run from rc.local by the testing VMs
+import sys
+import os
+import subprocess
+import glob
+import shutil
+
+# return True if different
+def copy_if_diff(src, dst):
+    cmd = "diff %s %s" % (src, dst)
+    (status, output)  = subprocess.getstatusoutput(cmd)
+    if status:
+        shutil.copyfile(src, dst)
+        return status
+
+    return False
+
+# under KVM the guests  use the known MAC address.
+# Use it to figure out who we are
+# we use the eth0 table from baseconfigs/net*sh
+macs = {}
+macs['nic'] = "12:00:00:de:ad:ba"
+macs['beet'] = "12:00:00:de:76:ba"
+macs['carrot'] = "12:00:00:de:76:bb"
+macs['east'] = "12:00:00:dc:bc:ff"
+macs['west'] = "12:00:00:ab:cd:ff"
+macs['north'] = "12:00:00:de:cd:49"
+macs['pole'] = "12:00:00:de:cd:01"
+macs['road'] = "12:00:00:ab:cd:02"
+macs['sunrise'] = "12:00:00:dc:bc:01"
+macs['sunset'] = "12:00:00:ab:cd:01"
+# conflicts with north
+#macs['japan'] = "12:00:00:ab:cd:02"
+
+if os.path.isfile("/etc/redhat-release"):
+    GUESTOS = "redhat"
+elif os.path.isfile("/etc/debian_version"):
+    GUESTOS = "debian"
+
+
+myname = os.path.basename(sys.argv[0])
+subprocess.getstatusoutput("rm -f /var/tmp/%s" % (myname))
+subprocess.getstatusoutput("echo %s > /var/tmp/%s.ran" % (myname, myname))
+
+(status, eth0) = subprocess.getstatusoutput("cat /sys/class/net/eth0/address")
+print("eth0", status, eth0)
+maclist = None
+if status:
+    # may be this host was never initialized.
+    (status, maclist) = subprocess.getstatusoutput(
+        "cat /sys/class/net/ens*/address")
+    print("ens*", maclist)
+    eth0 = None
+else:
+    maclist = eth0
+
+output = ""
+is_docker = None
+is_kvm = None
+
+hostname = None
+for h in list(macs.keys()):
+    mac = macs[h]
+    for m in maclist.split():
+        print(h, mac, "in", m, "?")
+        if mac in m:
+            print("yes")
+            hostname = h
+            is_docker = False
+            is_kvm = True
+
+if not is_kvm:
+    # on docker the hostname is already set. Use hostname to identify ourself
+    hostname = subprocess.getoutput("hostname -s")
+    print(("this is a docker instance hostname %s" % hostname))
+    is_docker = True
+
+if not hostname:
+    sys.exit(
+        "ERROR: Failed to find our swan hostname based on the mac match knownlist ")
+
+# print "we are %s"%hostname
+# we seem to have found our identity
+
+# install files common to all GUESTOS types
+if os.path.isfile("/etc/sysconfig/network-scripts/README.libreswan"):
+    print("systemd - skipping hostname")
+else:
+    output += "\n" + subprocess.getoutput("hostname %s" % hostname)
+
+# fixup /etc/sysctl.conf
+sysctl = "/testing/baseconfigs/%s/etc/sysctl.conf" % hostname
+if not os.path.isfile(sysctl):
+    sysctl = "/testing/baseconfigs/all/etc/sysctl.conf"
+shutil.copyfile(sysctl, "/etc/sysctl.conf")
+output += "\n" + subprocess.getoutput("sysctl -q -p")
+
+# and resolv.conf
+resolv = "/testing/baseconfigs/%s/etc/resolv.conf" % hostname
+if os.path.isfile(resolv):
+    shutil.copyfile(resolv, "/etc/resolv.conf")
+
+# and bind config - can be run on all hosts (to prevent network DNS
+# packets) as well as on nic
+if not os.path.isdir("/etc/bind"):
+    os.mkdir("/etc/bind")
+output += "\n" + \
+    subprocess.getoutput("cp -a /testing/baseconfigs/all/etc/bind/* /etc/bind/")
+
+if hostname == "nic":
+    output += "\n" + \
+        subprocess.getoutput("cp -a /testing/baseconfigs/nic/etc/unbound /etc/")
+    output += "\n" + \
+        subprocess.getoutput("cp -a /testing/baseconfigs/nic/etc/nsd /etc/")
+    output += "\n" + \
+        subprocess.getoutput("cp -a /testing/baseconfigs/nic/etc/systemd/system/unbound.service /etc/systemd/system/")
+
+
+if not os.path.isdir("/etc/ssh"):
+    os.makedirs("/etc/ssh", 0o755)
+if not os.path.isdir("/root/.ssh"):
+    os.makedirs("/root/.ssh", 0o700)
+output += "\n" + \
+    subprocess.getoutput("cp /testing/baseconfigs/all/etc/ssh/*key* /etc/ssh/")
+output += "\n" + \
+    subprocess.getoutput("cp /testing/baseconfigs/all/root/.ssh/* /root/.ssh/")
+output += "\n" + subprocess.getoutput("chmod 600 /etc/ssh/*key* /root/.ssh/*")
+
+
+if os.path.isfile("/etc/sysconfig/network-scripts/README.libreswan"):
+    print("systemd - skipping hostname")
+else:
+    hostname_file = "/testing/baseconfigs/%s/etc/hostname" % hostname
+    if os.path.isfile(hostname_file):
+        shutil.copyfile(hostname_file, "/etc/hostname")
+
+if GUESTOS == "redhat":
+
+    # these files are needed for systemd-networkd too
+    fnames = glob.glob("/testing/baseconfigs/all/etc/sysconfig/*")
+    for fname in fnames:
+        if os.path.isfile(fname):
+            dst="/etc/sysconfig/%s" % os.path.basename(fname)
+            copy_if_diff(fname, dst)
+
+    if os.path.isfile("/etc/sysconfig/network-scripts/README.libreswan"):
+        print("systemd - no network files to copy")
+    elif os.path.isdir("/testing/baseconfigs/%s" % hostname):
+        print("sysconfg - and files to copy")
+        src = "/testing/baseconfigs/%s/etc/sysconfig/network" % hostname
+        dst = "/etc/sysconfig/network"
+        copy_if_diff(src, dst)
+        ifaces = glob.glob("/testing/baseconfigs/%s/etc/sysconfig/network-scripts/ifcfg*" % hostname)
+        routes = glob.glob("/testing/baseconfigs/%s/etc/sysconfig/network-scripts/route*" % hostname)
+        dst = "/etc/sysconfig/network-scripts/"
+
+        for entry in (ifaces + routes):
+            dst_local = dst + '/' + os.path.basename(entry)
+            copy_if_diff(entry, dst_local)
+
+            if is_docker:
+                iffile = os.path.basename(entry)
+                cmd = "sed -i /HWADDR/d /etc/sysconfig/network-scripts/%s" % (
+                    iffile)
+                print(("cmd %s" % cmd))
+                subprocess.getoutput(cmd)
+
+    # SElinux fixup
+    output += "\n" + subprocess.getoutput("restorecon -R /etc/ /root/.ssh")
+    output += "\n" + \
+        subprocess.getoutput("chcon -R --reference /var/log /testing/pluto")
+
+    if os.path.isfile("/etc/sysconfig/network-scripts/README.libreswan"):
+        print("systemd - no network to restart")
+    elif os.path.isdir("/testing/baseconfigs/%s" % hostname):
+        if os.path.isfile("/usr/bin/systemctl"):
+            output += "\n" + subprocess.getoutput("systemctl restart network.service")
+        else:
+           output += "\n" + subprocess.getoutput("service network restart")
+
+    # get rid of damn cp/mv/rm aliases for root
+
+    if not "# alias" in open("/root/.bashrc", "r").read():
+        output += "\n" + \
+            subprocess.getoutput("sed -i 's/alias rm/# alias rm/g' /root/.bashrc")
+        output += "\n" + \
+            subprocess.getoutput("sed -i 's/alias cp/# alias cp/g' /root/.bashrc")
+        output += "\n" + \
+            subprocess.getoutput("sed -i 's/alias mv/# alias mv/g' /root/.bashrc")
+
+elif GUESTOS == "debian":
+    shutil.copyfile("/testing/baseconfigs/%s/etc/network/interfaces" %
+                    hostname, "/etc/network/interfaces")
+    output += "\n" + subprocess.getoutput("/etc/init.d/networking restart")
+
+# and some custom ipsec* files, but not directories
+if os.path.isdir("/etc/ipsec.d"):
+    if not os.path.isdir("/etc/ipsec.d.stock"):
+        os.rename("/etc/ipsec.d", "/etc/ipsec.d.stock")
+    else:
+        shutil.rmtree("/etc/ipsec.d")
+shutil.copytree("/testing/baseconfigs/all/etc/ipsec.d", "/etc/ipsec.d",
+                ignore=shutil.ignore_patterns("ipsec.conf.common"))
+# copytree is not ideal to add to existing dir
+output += "\n" + \
+    subprocess.getoutput(
+        "cp -a /testing/baseconfigs/%s/etc/ipsec.* /etc/" % hostname)
+
+# fixup the nss files that are root-only on a real host, but are world-read
+# in our repository so the qemu user can still read it to copy it
+if os.path.isfile("/etc/ipsec.d/pkcs11.txt"):
+    os.chmod("/etc/ipsec.d/pkcs11.txt", 0o600)
+for dbfile in glob.glob("/etc/ipsec.d/*.db"):
+    os.chmod(dbfile, 0o600)
+
+# SElinux fixup
+if GUESTOS == "redhat":
+    output += "\n" + subprocess.getoutput("restorecon -R /etc/")
+
+# selinux does not like our /testing include files
+if hostname == "nic":
+    output += "\n" + subprocess.getoutput("setenforce 0")
+
+if len(sys.argv) > 1:
+    print(output.strip())
+sys.exit()
+
+sys.exit("ERROR: Failed to find our swan hostname based on the mac of eth0")
