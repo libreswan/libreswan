@@ -14,7 +14,7 @@ ls /proc
 SELINUX=\$(getenforce)
 echo "getenforce \$SELINUX" > /tmp/rc.local.txt
 setenforce Permissive
-/testing/libvirt/rc-local-transmogrify.py
+/testing/libvirt/rc-local-transmogrify.sh
 echo "restore SELINUX to \$SELINUX"
 setenforce \$SELINUX
 hostname |grep -q swanbase || rm /etc/rc.d/rc.local
