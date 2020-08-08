@@ -999,9 +999,8 @@ $(eval $(call kvm-hosts-domains,shutdown))
 .PHONY: kvm-clean
 kvm-clean: kvm-uninstall-local-domains
 kvm-clean: kvm-keys-clean
-kvm-clean: kvm-test-clean
+kvm-clean: kvm-test-clean kvm-uninstall
 	rm -rf $(KVM_OBJDIR)
-	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified
 
 .PHONY: kvm-uninstall
 kvm-uninstall: kvm-uninstall-local-domains
@@ -1418,12 +1417,12 @@ Standard targets and operations:
 
       uninstall libreswan from the the test domains (cheats by
       deleting the build and test domains); doesn't touch the build
-      directory
+      directory or test results
 
     kvm-clean:
 
-      cleans the directory of both the build and any test domains;
-      force a transmogrification
+      cleans the directory of the build, test results, and test
+      domains ready for a new run
 
   To run the testsuite against libreswan installed on the test domains
   (see "make kvm-install" above):
