@@ -43,9 +43,10 @@ if test -f /etc/ipsec.d/pkcs11.txt; then
     chmod 600 /etc/ipsec.d/pkcs11.txt
 fi
 chmod 600 /etc/ipsec.d/*.db
+restorecon -R /etc/ipsec.*
+
 
 # SElinux fixup
-restorecon -R /etc/
 
 echo restore SELINUX to ${SELINUX}
 setenforce ${SELINUX}

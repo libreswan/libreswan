@@ -5,15 +5,18 @@ title()
     printf "\n\n$*\n\n"
 }
 
+
 title systemd-networkd
 
 cp -v /testing/baseconfigs/all/etc/systemd/network/* /etc/systemd/network
+restorecon -R /etc/systemd/network
 
 
 title /etc/rc.d/rc.local
 
 cp -v /testing/libvirt/rc-local-transmogrify.sh /etc/rc.d/rc.local
 chmod -v a+x /etc/rc.d/rc.local
+restorecon -R /etc/rc.d/rc.local
 
 
 title /etc/hosts
@@ -27,12 +30,14 @@ cat <<EOF >> /etc/hosts
 192.1.3.209 road
 192.1.2.254 nic
 EOF
+restorecon -R /etc/rc.d/rc.local
 
 
 title hostnamer
 
 rm -f /etc/hostname # hostnamectl set-hostname ""
 cp -av /testing/libvirt/hostnamer.service /etc/systemd/system/
+restorecon -R /etc/systemd/system
 systemctl enable hostnamer.service
 
 
@@ -53,6 +58,7 @@ export GIT_PS1_SHOWDIRTYSTATE=true
 alias git-log-p='git log --pretty=format:"%h %ad%x09%an%x09%s" --date=short'
 export EDITOR=vim
 EOF
+restorecon -R /etc/profile.d/swanpath.sh
 
 
 title /usr/bin/swan-...
@@ -62,6 +68,7 @@ ln -vs /testing/guestbin/swan-build /usr/bin/swan-build
 ln -vs /testing/guestbin/swan-install /usr/bin/swan-install
 ln -vs /testing/guestbin/swan-update /usr/bin/swan-update
 ln -vs /testing/guestbin/swan-run /usr/bin/swan-run
+restorecon -R /usr/bin/swan-*
 
 
 title enable entropy
@@ -71,6 +78,7 @@ cat <<EOF > /etc/modules-load.d/virtio-rng.conf
 # Note it should also be loaded on the host
 virtio-rng
 EOF
+restorecon -R /etc/modules-load.d/virtio-rng.conf
 
 
 title ssh shutdown-workaround
@@ -87,6 +95,7 @@ cat <<EOF > /etc/systemd/system/sshd-shutdown.service
 [Install]
   WantedBy=shutdown.target reboot.target poweroff.target
 EOF
+restorecon -R /etc/systemd/system/sshd-shutdown.service
 systemctl enable sshd-shutdown.service
 
 
@@ -94,6 +103,7 @@ title ensure we can get coredumps
 
 echo " * soft core unlimited" >> /etc/security/limits.conf
 echo " DAEMON_COREFILE_LIMIT='unlimited'" >> /etc/sysconfig/pluto
+restorecon -R /etc/security/limits.conf /etc/sysconfig/pluto
 
 
 title bind
@@ -102,6 +112,7 @@ title bind
 # packets) as well as on nic
 mkdir -p /etc/bind
 cp -av /testing/baseconfigs/all/etc/bind/* /etc/bind/
+restorecon -R /etc/bind
 
 
 title ssh
@@ -132,6 +143,7 @@ for fname in /testing/baseconfigs/all/etc/sysconfig/* ; do
 	cp -av "${fname}" /etc/sysconfig/
     fi
 done
+restorecon -R /etc/sysconfig/
 
 
 title unbound -- for nic
