@@ -142,6 +142,13 @@ restorecon -R /etc/unbound
 
 
 title nsd -- for nic
+
 cp -av /testing/baseconfigs/all/etc/nsd /etc/
 restorecon -R /etc/nsd
 
+
+title fixup /etc/sysctl.conf
+
+cp -av /testing/baseconfigs/all/etc/sysctl.conf /etc/
+sysctl -q -p
+restorecon -R /etc/sysctl.conf

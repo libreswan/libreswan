@@ -15,14 +15,6 @@ if test -z "${hostname}"; then
     exit 1
 fi
 
-# fixup /etc/sysctl.conf
-
-for sysctl in "/testing/baseconfigs/${hostname}/etc/sysctl.conf" "/testing/baseconfigs/all/etc/sysctl.conf" ; do
-    if test -r ${sysctl} ; then break ; fi
-done
-cp -av ${sysctl} /etc/sysctl.conf
-sysctl -q -p
-
 # and resolv.conf
 
 resolv="/testing/baseconfigs/${hostname}/etc/resolv.conf"
