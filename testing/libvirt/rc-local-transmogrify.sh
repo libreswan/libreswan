@@ -10,14 +10,6 @@ if test -z "${hostname}"; then
     exit 1
 fi
 
-# and resolv.conf
-
-resolv="/testing/baseconfigs/${hostname}/etc/resolv.conf"
-if test -r "${resolv}" ; then
-    cp -av "${resolv}" /etc/resolv.conf
-fi
-
-
 # and some custom ipsec* files, but not directories
 
 # XXX: this at least partially duplicates swan-prep?
