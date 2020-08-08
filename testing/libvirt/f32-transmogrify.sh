@@ -74,24 +74,6 @@ EOF
 restorecon -R /etc/modules-load.d/virtio-rng.conf
 
 
-title ssh shutdown-workaround
-
-# work around for broken systemd/sshd interaction in fedora 20 causes VM hangs
-cat <<EOF > /etc/systemd/system/sshd-shutdown.service
-# work around for broken systemd/sshd interaction in fedora 20 causes VM hangs
-[Unit]
-  Description=kill all sshd sessions
-  Requires=mutil-user.target
-[Service]
-  ExecStart=/usr/bin/killall sshd
-  Type=oneshot
-[Install]
-  WantedBy=shutdown.target reboot.target poweroff.target
-EOF
-restorecon -R /etc/systemd/system/sshd-shutdown.service
-systemctl enable sshd-shutdown.service
-
-
 title ensure we can get coredumps
 
 echo " * soft core unlimited" >> /etc/security/limits.conf
