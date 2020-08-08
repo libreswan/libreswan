@@ -66,11 +66,18 @@ part / --asprimary --grow
 
 %post
 
-# Without this systemd-networkd fails to start with:
+# This first appeared in f28; but with f32 still seems to be needed:
+#
+# The original f28 comment was: Without this systemd-networkd fails to
+# start with:
 #
 #   systemd-networkd.service: Failed to set up mount namespacing: Permission denied
 #   systemd-networkd.service: Failed at step NAMESPACE spawning /usr/lib/systemd/systemd-networkd: Permission denied
 #   systemd[1]: systemd-networkd.service: Main process exited, code=exited, status=226/NAMESPACE
+#
+# On f32, it isn't possible to log into the base domain (use <<make
+# kvm-demolish kvmsh-base>>) - after the password prompt things hang
+# for a bit then re-prompt the username.
 
 selinux --permissive
 /usr/bin/sed -i -e 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/selinux/config

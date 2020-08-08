@@ -3,11 +3,6 @@
 exec > /tmp/rc.local.txt 2>&1
 set -x
 
-SELINUX=$(getenforce)
-echo getenforce: ${SELINUX}
-setenforce Permissive
-
-
 hostname=$(hostname)
 echo hostname: ${hostname}
 if test -z "${hostname}"; then
@@ -45,11 +40,6 @@ fi
 chmod 600 /etc/ipsec.d/*.db
 restorecon -R /etc/ipsec.*
 
-
-# SElinux fixup
-
-echo restore SELINUX to ${SELINUX}
-setenforce ${SELINUX}
 
 if test ${hostname} != swanbase; then
     rm -vf /etc/rc.d/rc.local
