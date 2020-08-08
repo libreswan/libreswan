@@ -83,7 +83,7 @@ KVM_UPGRADE_PACKAGES ?= \
     libcap-ng-devel \
     libfaketime \
     libevent-devel \
-    libseccomp-devel-2.4.2-3.fc32.x86_64 \
+    libseccomp-devel \
     libselinux-devel \
     linux-firmware \
     lsof \
