@@ -152,3 +152,9 @@ title fixup /etc/sysctl.conf
 cp -av /testing/baseconfigs/all/etc/sysctl.conf /etc/
 sysctl -q -p
 restorecon -R /etc/sysctl.conf
+
+
+title finally ... SElinux fixup with errors in /tmp/chcon.log
+
+chcon -R --reference /var/log /testing/pluto > /tmp/chcon.log 2>&1 || true
+

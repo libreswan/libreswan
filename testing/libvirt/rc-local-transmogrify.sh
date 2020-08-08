@@ -22,10 +22,6 @@ if test -r "${resolv}" ; then
     cp -av "${resolv}" /etc/resolv.conf
 fi
 
-# SElinux fixup
-chcon -R --reference /var/log /testing/pluto
-restorecon -R /etc
-
 
 # and some custom ipsec* files, but not directories
 
