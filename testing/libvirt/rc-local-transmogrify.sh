@@ -3,7 +3,7 @@
 exec > /tmp/rc.local.txt 2>&1
 set -x
 
-SELINUX=\$(getenforce)
+SELINUX=$(getenforce)
 echo getenforce: ${SELINUX}
 setenforce Permissive
 
