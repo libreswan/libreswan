@@ -12,13 +12,6 @@ cp -v /testing/baseconfigs/all/etc/systemd/network/* /etc/systemd/network
 restorecon -R /etc/systemd/network
 
 
-title /etc/rc.d/rc.local
-
-cp -v /testing/libvirt/rc-local-transmogrify.sh /etc/rc.d/rc.local
-chmod -v a+x /etc/rc.d/rc.local
-restorecon -R /etc/rc.d/rc.local
-
-
 title /etc/hosts
 
 # add easy names so we can jump from vm to vm and map from IP address
