@@ -55,12 +55,8 @@ part / --asprimary --grow
 -firewalld
 -at
 -sendmail
-# ntp
--crony
 # cron
 -cronie
-# System Security Services Daemon (i.e., real PAM)
--sssd
 # eye candy
 -plymouth
 

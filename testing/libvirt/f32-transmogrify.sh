@@ -5,6 +5,17 @@ title()
     printf "\n\n$*\n\n"
 }
 
+run()
+{
+    title "$@"
+    "$@"
+}
+
+
+title limit kernel installs
+# https://ask.fedoraproject.org/t/old-kernels-removal/7026/2
+sudo sed -i 's/installonly_limit=3/installonly_limit=2/' /etc/dnf/dnf.conf
+
 
 title systemd-networkd
 
@@ -23,7 +34,6 @@ cat <<EOF >> /etc/hosts
 192.1.3.209 road
 192.1.2.254 nic
 EOF
-restorecon -R /etc/rc.d/rc.local
 
 
 title hostnamer
@@ -141,7 +151,22 @@ sysctl -q -p
 restorecon -R /etc/sysctl.conf
 
 
+# clobber some anoying services
+
+# System Security Services Daemon (i.e., real PAM)
+run systemctl disable sssd.service
+run systemctl disable chronyd.service #NTP
+run systemctl mask systemd-user-sessions.service
+run systemctl mask modprobe@drm.service
+run systemctl mask dev-mqueue.mount
+run systemctl mask dev-hugepages.mount
+run systemctl mask systemd-vconsole-setup.service
+run systemctl mask sys-kernel-tracing.mount
+run systemctl mask sys-kernel-debug.mount
+run systemctl mask systemd-repart.service
+run systemctl mask systemd-homed.service
+
+
 title finally ... SElinux fixup with errors in /tmp/chcon.log
 
 chcon -R --reference /var/log /testing/pluto > /tmp/chcon.log 2>&1 || true
-
