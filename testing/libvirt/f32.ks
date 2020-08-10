@@ -61,6 +61,8 @@ part / --asprimary --grow
 -cronie
 # System Security Services Daemon (i.e., real PAM)
 -sssd
+# eye candy
+-plymouth
 
 %end
 
