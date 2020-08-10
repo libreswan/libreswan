@@ -738,7 +738,7 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted: \
 	touch $@
 
 .PHONY: kvm-downgrade
-kvm-downgrade: kvm-uninstall
+kvm-downgrade: kvm-uninstall kvm-shutdown
 	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
 	: loose any upgrade changes
 	$(SNAPSHOT_REVERT) kickstarted $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
@@ -746,6 +746,9 @@ kvm-downgrade: kvm-uninstall
 
 $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted
 	$(MAKE) $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok
+	: drop transmogrification but keep upgrades
+	$(MAKE) kvm-shutdown-base-domain
+	$(SNAPSHOT_REVERT) upgraded $(basename $@).qcow2
 	: update all packages
 	$(if $(KVM_PACKAGE_INSTALL), $(if $(KVM_INSTALL_PACKAGES), \
 		$(KVMSH) $(KVM_BASE_DOMAIN) $(KVM_PACKAGE_INSTALL) $(KVM_INSTALL_PACKAGES)))
@@ -770,9 +773,13 @@ kvm-upgrade: kvm-uninstall
 
 $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
 	$(MAKE) $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok
+	: revert to pre-transmogrification
+	$(MAKE) kvm-shutdown-base-domain
 	$(SNAPSHOT_REVERT) upgraded $(basename $@).qcow2
 	$(SNAPSHOT_DELETE) transmogrified $(basename $@).qcow2
+	: transmogrify
 	$(KVMSH) $(KVM_BASE_DOMAIN) sh /testing/libvirt/$(KVM_GUEST_OS)-transmogrify.sh
+	: re-snapshot
 	$(MAKE) kvm-shutdown-base-domain
 	: snapshot upgrade so that next upgrade can be incremental
 	$(SNAPSHOT_TAKE) transmogrified $(basename $@).qcow2
