@@ -156,7 +156,7 @@ restorecon -R /etc/sysctl.conf
 # System Security Services Daemon (i.e., real PAM)
 run systemctl disable sssd.service
 run systemctl disable chronyd.service #NTP
-run systemctl mask systemd-user-sessions.service
+# run systemctl mask systemd-user-sessions.service # doesn't work
 run systemctl mask modprobe@drm.service
 run systemctl mask dev-mqueue.mount
 run systemctl mask dev-hugepages.mount
@@ -165,6 +165,8 @@ run systemctl mask sys-kernel-tracing.mount
 run systemctl mask sys-kernel-debug.mount
 run systemctl mask systemd-repart.service
 run systemctl mask systemd-homed.service
+run systemctl mask user@0.service
+run systemctl mask user-runtime-dir@0.service
 
 
 title finally ... SElinux fixup with errors in /tmp/chcon.log
