@@ -22,10 +22,23 @@
  */
 
 struct show;
+enum rc_type;
 
 struct show *new_show(struct fd *whackfd);
 void free_show(struct show **s);
 struct fd *show_fd(struct show *s);
+
+/*
+ * output primitives: access the internal jambuf; show the contents of
+ * a jambuf.
+ */
+
+struct jambuf *show_jambuf(struct show *s);
+void jambuf_to_show(struct jambuf *jambuf, struct show *s, enum rc_type rc);
+#define SHOW_JAMBUF(RC, S, BUF)				\
+	for (struct jambuf *BUF = show_jambuf(s);	\
+	     BUF != NULL;				\
+	     jambuf_to_show(BUF, S, RC), BUF = NULL)
 
 /*
  * Flag that the next line needs to be preceded by a separator (aka
@@ -56,6 +69,5 @@ void show_separator(struct show *s);
  */
 
 void show_comment(struct show *s, const char *message, ...) PRINTF_LIKE(2);
-void show_jambuf(struct show *s, struct jambuf *jambuf);
 
 #endif

@@ -55,6 +55,11 @@ struct show {
 	 * Should the next output be preceded by a blank line?
 	 */
 	enum separation { NO_SEPARATOR = 1, HAD_OUTPUT, SEPARATE_NEXT_OUTPUT, } separator;
+	/*
+	 * Where to build the messages.
+	 */
+	char scratch_array[LOG_WIDTH];
+	struct jambuf scratch_jambuf;
 };
 
 struct show *new_show(struct fd *whackfd)
@@ -66,6 +71,15 @@ struct show *new_show(struct fd *whackfd)
 	return clone_thing(s, "on show");
 }
 
+static void blank_line(struct show *s)
+{
+	/* XXX: must not use s->jambuf */
+	char blank_buf[sizeof(" "/*\0*/) + 1/*canary*/ + 1/*why-not*/];
+	struct jambuf buf = ARRAY_AS_JAMBUF(blank_buf);
+	jam_string(&buf, " ");
+ 	jambuf_to_whack(&buf, s->whackfd, RC_COMMENT);
+}
+
 void free_show(struct show **sp)
 {
 	{
@@ -75,7 +89,7 @@ void free_show(struct show **sp)
 		case HAD_OUTPUT:
 			break;
 		case SEPARATE_NEXT_OUTPUT:
-			whack_comment(s->whackfd, " ");
+			blank_line(s);
 			break;
 		default:
 			bad_case(s->separator);
@@ -93,7 +107,7 @@ struct fd *show_fd(struct show *s)
 	case HAD_OUTPUT:
 		break;
 	case SEPARATE_NEXT_OUTPUT:
-		whack_comment(s->whackfd, " ");
+		blank_line(s);
 		break;
 	default:
 		bad_case(s->separator);
@@ -117,31 +131,40 @@ void show_separator(struct show *s)
 	}
 }
 
-void show_jambuf(struct show *s, struct jambuf *buf)
+struct jambuf *show_jambuf(struct show *s)
+{
+	s->scratch_jambuf = ARRAY_AS_JAMBUF(s->scratch_array);
+	return &s->scratch_jambuf;
+}
+
+void jambuf_to_show(struct jambuf *buf, struct show *s, enum rc_type rc)
 {
 	switch (s->separator) {
 	case NO_SEPARATOR:
 	case HAD_OUTPUT:
 		break;
 	case SEPARATE_NEXT_OUTPUT:
-		whack_comment(s->whackfd, " ");
+		blank_line(s);
 		break;
 	default:
 		bad_case(s->separator);
 	}
-	jambuf_to_whack(buf, s->whackfd, RC_COMMENT);
+	pexpect(rc == RC_PRINT ||
+		rc == RC_COMMENT ||
+		rc == RC_INFORMATIONAL_TRAFFIC/*show_state_traffic()*/ ||
+		rc == RC_UNKNOWN_NAME/*show_traffic_status()*/);
+	jambuf_to_whack(buf, s->whackfd, rc);
 	s->separator = HAD_OUTPUT;
 }
 
 void show_comment(struct show *s, const char *message, ...)
 {
-	LSWBUF(buf) {
-		va_list args;
-		va_start(args, message);
-		jam_va_list(buf, message, args);
-		va_end(args);
-		show_jambuf(s, buf);
-	}
+	struct jambuf *buf = show_jambuf(s);
+	va_list args;
+	va_start(args, message);
+	jam_va_list(buf, message, args);
+	va_end(args);
+	jambuf_to_show(buf, s, RC_COMMENT);
 }
 
 static void show_system_security(struct show *s)

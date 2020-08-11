@@ -3993,7 +3993,7 @@ void show_one_connection(struct show *s,
 		}
 	}
 
-	LSWBUF(buf) {
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		jam(buf, "\"%s\"%s:   newest ISAKMP SA: #%lu; newest IPsec SA: #%lu; conn serial: "PRI_CO"",
 		    c->name,
 		    instance,
@@ -4001,20 +4001,18 @@ void show_one_connection(struct show *s,
 		    c->newest_ipsec_sa,
 		    pri_co(c->serialno));
 		if (c->serial_from.co/*oops*/ != 0) {
-			jam(buf, ", instantiated from: "PRI_CO";", 
+			jam(buf, ", instantiated from: "PRI_CO";",
 			    pri_co(c->serial_from));
 		} else {
 			jam(buf, ";");
 		}
-		show_jambuf(s, buf);
 	}
 
 	if (c->connalias != NULL) {
-		show_comment(s,
-			"\"%s\"%s:   aliases: %s",
-			c->name,
-			instance,
-			c->connalias);
+		show_comment(s, "\"%s\"%s:   aliases: %s",
+			     c->name,
+			     instance,
+			     c->connalias);
 	}
 
 	show_ike_alg_connection(s, c, instance);
