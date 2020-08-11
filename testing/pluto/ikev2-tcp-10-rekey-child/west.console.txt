@@ -104,7 +104,7 @@ west #
 west #
  ipsec whack --rekey-ipsec --name 2
 002 rekeying IPsec SA state #2 of connection "westnet-eastnet-ikev2"
-1v2 "westnet-eastnet-ikev2" #3: STATE_V2_REKEY_CHILD_I1: STATE_V2_REKEY_CHILD_I1
+1v2 "westnet-eastnet-ikev2" #3: sent CREATE_CHILD_SA request to rekey IPsec SA
 002 "westnet-eastnet-ikev2" #3: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 002 "westnet-eastnet-ikev2" #3: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ikev2" #3: IPsec SA established tunnel mode {ESP/TCP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
