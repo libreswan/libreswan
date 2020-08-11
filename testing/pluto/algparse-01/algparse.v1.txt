@@ -5,21 +5,21 @@ algparse -v1 'esp='
 algparse -v1 'esp=aes'
 	AES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=aes;modp2048'
-	WARNING: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=aes-sha1'
 	AES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=aes-sha1'
 	AES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=aes-sha1-modp2048'
-	WARNING: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=aes-128-sha1'
 	AES_CBC_128-HMAC_SHA1_96
 algparse -v1 'esp=aes-128-sha1'
 	AES_CBC_128-HMAC_SHA1_96
 algparse -v1 'esp=aes-128-sha1-modp2048'
-	WARNING: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
 	AES_CBC_128-HMAC_SHA1_96
 algparse -v1 'esp=aes-128'
 	AES_CBC_128-HMAC_SHA1_96
@@ -28,10 +28,10 @@ algparse -v1 'esp=aes_gcm_a-128-null'
 algparse -v1 'esp=3des-sha1;modp1024'
 	ERROR: ESP DH algorithm 'modp1024' is not supported
 algparse -v1 'esp=3des-sha1;modp1536'
-	WARNING: ignoring ESP DH algorithm MODP1536 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP1536 as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=3des-sha1;modp2048'
-	WARNING: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=3des-sha1;dh21'
 	ERROR: ESP DH algorithm 'dh21' is not supported by IKEv1
@@ -196,28 +196,28 @@ algparse -v1 'esp=aes_ctr192'
 algparse -v1 'esp=aes_ctr256'
 	AES_CTR_256-HMAC_SHA1_96
 algparse -v1 'esp=camellia_cbc_256-hmac_sha2_512_256;modp8192'
-	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
 	CAMELLIA_CBC_256-HMAC_SHA2_512_256
 algparse -v1 'esp=null_auth_aes_gmac_256-null;modp8192'
-	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
 	NULL_AUTH_AES_GMAC_256-NONE
 algparse -v1 'esp=3des-sha1;modp8192'
-	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=3des-sha1-modp8192'
-	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=aes-sha1,3des-sha1;modp8192'
-	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=aes-sha1-modp8192,3des-sha1-modp8192'
-	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192'
-	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=aes;none'
 	ERROR: ESP DH algorithm 'none' is not supported by IKEv1
@@ -284,36 +284,36 @@ algparse -v1 'esp=aes_gcm-123456789012345'
 algparse -v1 'esp=3des-sha1;dh22'
 	ERROR: ESP DH algorithm 'dh22' is not supported
 algparse -v1 'esp=3des-sha1;modp8192,3des-sha2'
-	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -v1 'esp=3des-sha1-modp8192,3des-sha2'
-	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -v1 'esp=3des-sha1-modp8192,3des-sha2-modp8192'
-	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -v1 'esp=3des-sha1-modp8192,3des-sha2;modp8192'
-	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -v1 'esp=3des-sha1;modp8192,3des-sha2-modp8192'
-	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -v1 'esp=3des-sha1;modp8192,3des-sha2;modp8192'
-	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -v1 'esp=3des-sha1-modp8192,3des-sha2-modp2048'
-	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-	WARNING: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -v1 'ah'
@@ -325,7 +325,7 @@ algparse -v1 'ah=md5'
 algparse -v1 'ah=sha'
 	HMAC_SHA1_96
 algparse -v1 'ah=sha;modp2048'
-	WARNING: ignoring AH DH algorithm MODP2048 as PFS policy is disabled
+algparse: ignoring AH DH algorithm MODP2048 as PFS policy is disabled
 	HMAC_SHA1_96
 algparse -v1 'ah=sha1'
 	HMAC_SHA1_96
@@ -350,7 +350,7 @@ algparse -v1 'ah=sha2-none'
 algparse -v1 'ah=sha2;none'
 	ERROR: AH DH algorithm 'none' is not supported by IKEv1
 algparse -v1 'ah=sha1-modp8192,sha1-modp8192,sha1-modp8192'
-	WARNING: ignoring AH DH algorithm MODP8192 as PFS policy is disabled
+algparse: ignoring AH DH algorithm MODP8192 as PFS policy is disabled
 	HMAC_SHA1_96
 algparse -v1 'ah=aes-sha1'
 	ERROR: AH integrity algorithm 'aes' is not recognized
