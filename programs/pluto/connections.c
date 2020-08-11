@@ -1898,13 +1898,23 @@ static bool extract_connection(struct fd *whackfd,
 	return true;
 }
 
+/* slightly different names compared to pluto_constants.c */
+static const char *const policy_shunt_names[4] = {
+	"trap[should not happen]",
+	"passthrough",
+	"drop",
+	"reject",
+};
+
 void add_connection(struct fd *whackfd, const struct whack_message *wm)
 {
 	struct connection *c = alloc_connection(HERE);
 	if (extract_connection(whackfd, wm, c)) {
 		/* log all about this connection */
 		libreswan_log("added %s connection \"%s\"",
-		LIN(POLICY_IKEV2_ALLOW, c->policy) ? "IKEv2" : "IKEv1",	 c->name);
+		NEVER_NEGOTIATE(c->policy) ?
+			policy_shunt_names[(c->policy & POLICY_SHUNT_MASK) >> POLICY_SHUNT_SHIFT] :
+			LIN(POLICY_IKEV2_ALLOW, c->policy) ? "IKEv2" : "IKEv1",	 c->name);
 		dbg("ike_life: %jd; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s%s",
 		    deltasecs(c->sa_ike_life_seconds),
 		    deltasecs(c->sa_ipsec_life_seconds),
