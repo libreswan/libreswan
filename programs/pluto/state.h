@@ -928,6 +928,6 @@ extern bool uniqueIDs;  /* --uniqueids? */
 extern void IKE_SA_established(const struct ike_sa *ike);
 extern void revive_conns(struct fd *whackfd);
 
-void list_state_events(const struct fd *whackfd, monotime_t now);
+void list_state_events(struct show *s, monotime_t now);
 
 #endif /* _STATE_H */

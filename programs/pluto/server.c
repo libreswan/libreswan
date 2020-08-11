@@ -362,8 +362,7 @@ static void free_global_timers(void)
 	}
 }
 
-static void list_global_timers(const struct fd *whackfd,
-			       monotime_t now)
+static void list_global_timers(struct show *s, monotime_t now)
 {
 	for (unsigned u = 0; u < elemsof(global_timers); u++) {
 		struct global_timer_desc *gt = &global_timers[u];
@@ -378,11 +377,10 @@ static void list_global_timers(const struct fd *whackfd,
 			const char *what = (event_get_events(&gt->ev) & EV_PERSIST) ? "periodic" : "one-shot";
 			deltatime_t delay = monotimediff(due, now);
 			deltatime_buf delay_buf;
-			whack_comment(whackfd,
-				  "global %s timer %s is scheduled for %jd (in %s seconds)",
-				  what, gt->name,
-				  monosecs(due), /* XXX: useful? */
-				  str_deltatime(delay, &delay_buf));
+			show_comment(s, "global %s timer %s is scheduled for %jd (in %s seconds)",
+				     what, gt->name,
+				     monosecs(due), /* XXX: useful? */
+				     str_deltatime(delay, &delay_buf));
 		}
 	}
 }
@@ -452,13 +450,13 @@ static void free_signal_handlers(void)
 	}
 }
 
-static void list_signal_handlers(const struct fd *whackfd)
+static void list_signal_handlers(struct show *s)
 {
 	for (unsigned i = 0; i < elemsof(signal_handlers); i++) {
 		struct signal_handler *se = &signal_handlers[i];
 		if (event_initialized(&se->ev) &&
 		    event_pending(&se->ev, EV_SIGNAL, NULL) > 0) {
-			whack_comment(whackfd, "signal event handler %s", se->name);
+			show_comment(s, "signal event handler %s", se->name);
 		}
 	}
 }
@@ -872,31 +870,28 @@ struct pluto_event *add_fd_read_event_handler(evutil_socket_t fd,
 /*
  * dump list of events to whacklog
  */
-void timer_list(const struct fd *whackfd)
+void list_timers(struct show *s, monotime_t now)
 {
-	monotime_t nw = mononow();
+	show_comment(s, "it is now: %jd seconds since monotonic epoch",
+		     monosecs(now));
 
-	whack_comment(whackfd,
-		  "it is now: %jd seconds since monotonic epoch",
-		  monosecs(nw));
-
-	list_global_timers(whackfd, nw);
-	list_signal_handlers(whackfd);
+	list_global_timers(s, now);
+	list_signal_handlers(s);
 
 	for (struct pluto_event *ev = pluto_events_head;
 	     ev != NULL; ev = ev->next) {
 		pexpect(ev->ev_state == NULL);
-		char buf[256] = "not timer based";
-
-		if (ev->ev_type != EVENT_NULL) {
-			snprintf(buf, sizeof(buf), "schd: %jd (in %jds)",
-				 monosecs(ev->ev_time),
-				 deltasecs(monotimediff(ev->ev_time, nw)));
+		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+			show_comment(s, "event %s is ", ev->ev_name);
+			if (ev->ev_type != EVENT_NULL) {
+				jam(buf, "schd: %jd (in %jds)",
+				    monosecs(ev->ev_time),
+				    deltasecs(monotimediff(ev->ev_time, now)));
+			} else {
+				jam(buf, "not timer based");
+			}
 		}
-		whack_comment(whackfd, "event %s is %s", ev->ev_name, buf);
 	}
-
-	list_state_events(whackfd, nw);
 }
 
 void show_debug_status(struct show *s)

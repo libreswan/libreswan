@@ -26,6 +26,7 @@
 struct state;   /* forward declaration */
 struct fd;
 struct logger;
+struct show;
 
 struct pluto_event {
 	enum event_type ev_type;        /* Event type if time based */
@@ -49,7 +50,7 @@ void call_state_event_inline(struct logger *logger, struct state *st,
 			     enum event_type type);
 void call_global_event_inline(enum global_timer type, struct fd *whackfd);
 
-extern void timer_list(const struct fd *whackfd);
+extern void list_timers(struct show *s, monotime_t now);
 extern char *revive_conn;
 
 /*

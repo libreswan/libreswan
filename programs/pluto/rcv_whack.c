@@ -306,6 +306,7 @@ static void key_add_request(const struct whack_message *msg)
  */
 static bool whack_process(const struct whack_message *const m, struct logger *whack_logger)
 {
+	const monotime_t now = mononow();
 	struct fd *whackfd = whack_logger->global_whackfd;
 	/*
 	 * May be needed in future:
@@ -552,8 +553,12 @@ static bool whack_process(const struct whack_message *const m, struct logger *wh
 #endif
 	}
 
-	if (m->whack_list & LIST_EVENTS)
-		timer_list(whackfd);
+	if (m->whack_list & LIST_EVENTS) {
+		struct show *s = new_show(whackfd); /* must free */
+		list_timers(s, now);
+		list_state_events(s, now);
+		free_show(&s);
+	}
 
 	if (m->whack_key) {
 		/* add a public key */

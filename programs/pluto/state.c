@@ -3204,12 +3204,12 @@ void IKE_SA_established(const struct ike_sa *ike)
 	c->newest_isakmp_sa = ike->sa.st_serialno;
 }
 
-static void whack_log_state_event(const struct fd *whackfd, struct state *st,
-				  struct pluto_event *pe, monotime_t now)
+static void list_state_event(struct show *s, struct state *st,
+			     struct pluto_event *pe, monotime_t now)
 {
 	if (pe != NULL) {
 		pexpect(st == pe->ev_state);
-		WHACK_LOG(RC_LOG, whackfd, buf) {
+		SHOW_JAMBUF(RC_COMMENT, s, buf) {
 			jam(buf, "event %s is ", pe->ev_name);
 			if (pe->ev_type == EVENT_NULL) {
 				jam(buf, "not timer based");
@@ -3230,17 +3230,17 @@ static void whack_log_state_event(const struct fd *whackfd, struct state *st,
 	}
 }
 
-void list_state_events(const struct fd *whackfd, monotime_t now)
+void list_state_events(struct show *s, monotime_t now)
 {
 	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st = NULL;
 	FOR_EACH_STATE_OLD2NEW(st) {
-		whack_log_state_event(whackfd, st, st->st_event, now);
-		whack_log_state_event(whackfd, st, st->st_liveness_event, now);
-		whack_log_state_event(whackfd, st, st->st_rel_whack_event, now);
-		whack_log_state_event(whackfd, st, st->st_send_xauth_event, now);
-		whack_log_state_event(whackfd, st, st->st_addr_change_event, now);
-		whack_log_state_event(whackfd, st, st->st_dpd_event, now);
+		list_state_event(s, st, st->st_event, now);
+		list_state_event(s, st, st->st_liveness_event, now);
+		list_state_event(s, st, st->st_rel_whack_event, now);
+		list_state_event(s, st, st->st_send_xauth_event, now);
+		list_state_event(s, st, st->st_addr_change_event, now);
+		list_state_event(s, st, st->st_dpd_event, now);
 	}
 }
 
