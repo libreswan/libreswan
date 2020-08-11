@@ -1,0 +1,38 @@
+#!/bin/sh
+
+if test $# = 0; then
+    cat <<EOF
+Usage:
+   $0 sh <domain>
+   $0 test [<test> ...]
+   $0 diffs [<test> ...]
+   $0 results [<test> ...]
+EOF
+    exit 1
+fi
+
+op=$1; shift
+
+case $op in
+    sh )
+	exec make kvmsh-"$*"
+	;;
+    test )
+	if test $# -eq 0 ; then
+	    set testing/pluto
+	fi
+	exec make kvm-test KVM_TESTS="$*"
+	;;
+    diff|diffs )
+	if test $# -eq 0 ; then
+	    set testing/pluto
+	fi
+	exec make kvm-diffs KVM_TESTS="$*"
+	;;
+    result|results )
+	if test $# -eq 0 ; then
+	    set testing/pluto
+	fi
+	exec make kvm-results KVM_TESTS="$*"
+	;;
+esac
