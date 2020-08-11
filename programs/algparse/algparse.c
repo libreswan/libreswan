@@ -589,7 +589,7 @@ int main(int argc, char *argv[])
 	 * ike_alg_init().  Sanity checks and algorithm testing
 	 * require a working NSS.
 	 */
-	bool nss_ok = lsw_nss_setup(NULL, LSW_NSS_READONLY, lsw_nss_get_password, &progname_logger);
+	bool nss_ok = lsw_nss_setup(NULL, LSW_NSS_READONLY, &progname_logger);
 	if (!nss_ok) {
 		/* already logged */
 		exit(ERROR);

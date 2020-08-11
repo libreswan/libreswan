@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* start NSS so crypto works while args are being parsed */
-	if (!lsw_nss_setup(NULL, 0, NULL, &progname_logger)) {
+	if (!lsw_nss_setup(NULL, 0, &progname_logger)) {
 		return 1;
 	}
 

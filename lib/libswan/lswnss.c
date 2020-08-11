@@ -25,10 +25,11 @@
 #include "lswlog.h"
 #include "lswfips.h"
 
+static char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg);
+
 static unsigned flags;
 
-bool lsw_nss_setup(const char *configdir, unsigned setup_flags,
-		   PK11PasswordFunc get_password, struct logger *logger)
+bool lsw_nss_setup(const char *configdir, unsigned setup_flags, struct logger *logger)
 {
 	/*
 	 * save for cleanup
@@ -96,15 +97,7 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags,
 		return false;
 	}
 
-	if (PK11_IsFIPS() && configdir != NULL && get_password == NULL) {
-		log_message(RC_LOG_SERIOUS|ERROR_STREAM, logger,
-			    "in FIPS mode a password is required");
-		return false;
-	}
-
-	if (get_password != NULL) {
-		PK11_SetPasswordFunc(get_password);
-	}
+	PK11_SetPasswordFunc(lsw_nss_get_password);
 
 	if (configdir != NULL) {
 		PK11SlotInfo *slot = lsw_nss_get_authenticated_slot(logger);
@@ -150,7 +143,7 @@ PK11SlotInfo *lsw_nss_get_authenticated_slot(struct logger *logger)
 	return slot;
 }
 
-char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg UNUSED)
+static char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg UNUSED)
 {
 	if (retry) {
 		/* nothing changed */

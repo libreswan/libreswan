@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
 		exit(-1);
 
 	const struct lsw_conf_options *oco = lsw_init_options();
-	if (!lsw_nss_setup(oco->nssdir, 0, lsw_nss_get_password, &progname_logger)) {
+	if (!lsw_nss_setup(oco->nssdir, 0, &progname_logger)) {
 		exit(1);
 	}
 

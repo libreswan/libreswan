@@ -38,8 +38,7 @@ enum lsw_nss_flags {
  * terminated buffer.
  */
 
-bool lsw_nss_setup(const char *config_dir, unsigned flags,
-		   PK11PasswordFunc get_nss_password, struct logger *logger);
+bool lsw_nss_setup(const char *config_dir, unsigned flags, struct logger *logger);
 void lsw_nss_shutdown(void);
 
 /*
@@ -47,8 +46,6 @@ void lsw_nss_shutdown(void);
  * useful.
  */
 #define lsw_return_nss_password_file_info() NULL
-
-char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg);
 
 PK11SlotInfo *lsw_nss_get_authenticated_slot(struct logger *logger);
 

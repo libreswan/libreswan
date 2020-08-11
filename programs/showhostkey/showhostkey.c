@@ -585,8 +585,7 @@ int main(int argc, char *argv[])
 	 * Set up for NSS - contains key pairs.
 	 */
 	int status = 0;
-	if (!lsw_nss_setup(oco->nssdir, LSW_NSS_READONLY,
-			   lsw_nss_get_password, &progname_logger)) {
+	if (!lsw_nss_setup(oco->nssdir, LSW_NSS_READONLY, &progname_logger)) {
 		exit(1);
 	}
 

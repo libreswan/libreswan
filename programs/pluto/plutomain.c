@@ -423,7 +423,7 @@ static void pluto_init_nss(const char *nssdir, struct logger *logger)
 	/* little lie, lsw_nss_setup doesn't have logging */
 	loglog(RC_LOG_SERIOUS, "NSS DB directory: sql:%s", nssdir);
 
-	if (!lsw_nss_setup(nssdir, LSW_NSS_READONLY, lsw_nss_get_password, logger)) {
+	if (!lsw_nss_setup(nssdir, LSW_NSS_READONLY, logger)) {
 		loglog(RC_LOG_SERIOUS, "FATAL: NSS initialization failure");
 		exit_pluto(PLUTO_EXIT_NSS_FAIL);
 	}

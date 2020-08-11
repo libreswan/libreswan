@@ -284,7 +284,7 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
 	SECKEYPublicKey *pubkey = NULL;
 	realtime_t now = realnow();
 
-	if (!lsw_nss_setup(oco->nssdir, 0, lsw_nss_get_password, &progname_logger)) {
+	if (!lsw_nss_setup(oco->nssdir, 0, &progname_logger)) {
 		exit(1);
 	}
 
