@@ -294,11 +294,6 @@ void whack_print(const struct fd *whackfd, const char *message, ...) PRINTF_LIKE
 void whack_comment(const struct fd *whackfd, const char *message, ...) PRINTF_LIKE(2);
 void jambuf_to_whack(struct jambuf *buf, const struct fd *whackfd, enum rc_type rc);
 
-#define WHACK_LOG(RC, WHACKFD, BUF)					\
-	LSWLOG_(true, BUF,						\
-		/*NO-PREFIX*/,						\
-		jambuf_to_whack(BUF, WHACKFD, RC))
-
 extern void show_status(struct show *s);
 extern void show_setup_plutomain(struct show *s);
 extern void show_setup_natt(struct show *s);
