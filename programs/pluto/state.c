@@ -2431,8 +2431,14 @@ void show_traffic_status(struct show *s, const char *name)
 								show_newest_state_traffic,
 								s);
 			if (count == 0) {
-				whack_log(RC_UNKNOWN_NAME, show_fd(s),
-					  "no such connection or aliased connection named \"%s\"", name);
+				/*
+				 * XXX: don't bother implementing
+				 * show_rc(...) - this is the only
+				 * place where it would be useful.
+				 */
+				SHOW_JAMBUF(RC_UNKNOWN_NAME, s, buf) {
+					jam(buf, "no such connection or aliased connection named \"%s\"", name);
+				}
 			}
 		}
 	}

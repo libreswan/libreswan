@@ -26,7 +26,6 @@ enum rc_type;
 
 struct show *new_show(struct fd *whackfd);
 void free_show(struct show **s);
-struct fd *show_fd(struct show *s);
 
 /*
  * output primitives: access the internal jambuf; show the contents of

@@ -99,23 +99,6 @@ void free_show(struct show **sp)
 	*sp = NULL;
 }
 
-struct fd *show_fd(struct show *s)
-{
-	/* assume this is to for some whack log call */
-	switch (s->separator) {
-	case NO_SEPARATOR:
-	case HAD_OUTPUT:
-		break;
-	case SEPARATE_NEXT_OUTPUT:
-		blank_line(s);
-		break;
-	default:
-		bad_case(s->separator);
-	}
-	s->separator = HAD_OUTPUT;
-	return s->whackfd;
-}
-
 void show_separator(struct show *s)
 {
 	switch (s->separator) {
