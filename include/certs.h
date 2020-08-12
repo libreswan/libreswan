@@ -41,6 +41,8 @@
 #include <cert.h> /* NSS */
 #include "x509.h"
 
+struct show;
+
 /* advance warning of imminent expiry of
  * cacerts, public keys, and crls
  * unused: OCSP_CERT_WARNING_INTERVAL	(30 * secs_per_day)
@@ -63,7 +65,7 @@ typedef struct {
 
 const char *cert_nickname(const cert_t *cert);
 
-extern void list_certs(const struct fd *whackfd);
+extern void list_certs(struct show *s);
 
 /*
  * Maintain a list of certificates.

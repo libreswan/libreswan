@@ -1478,8 +1478,7 @@ static int certsntoa(CERTCertificate *cert, char *dst, size_t dstlen)
 			'x', dst, dstlen);
 }
 
-static void cert_detail_to_whacklog(const struct fd *whackfd,
-				    CERTCertificate *cert)
+static void cert_detail_to_whacklog(struct show *s, CERTCertificate *cert)
 {
 	bool is_CA = CERT_IsCACert(cert, NULL);
 	bool is_root = cert->isRoot;
@@ -1496,43 +1495,43 @@ static void cert_detail_to_whacklog(const struct fd *whackfd,
 	KeyType pub_k_t = SECKEY_GetPublicKeyType(pub_k);
 
 
-	whack_comment(whackfd, " ");
+	show_comment(s, " ");
 
-	whack_comment(whackfd, "%s%s certificate \"%s\" - SN: %s",
-		is_root ? "Root " : "",
-		is_CA ? "CA" : "End",
-		cert->nickname, print_sn);
+	show_comment(s, "%s%s certificate \"%s\" - SN: %s",
+		     is_root ? "Root " : "",
+		     is_CA ? "CA" : "End",
+		     cert->nickname, print_sn);
 
 	{
 		dn_buf sbuf;
-
-		whack_comment(whackfd, "  subject: %s",
-			dntoasi(&sbuf, cert->derSubject));
+		show_comment(s, "  subject: %s",
+			     dntoasi(&sbuf, cert->derSubject));
 	}
 
 	{
 		dn_buf ibuf;
-
-		whack_comment(whackfd, "  issuer: %s",
-			dntoasi(&ibuf, cert->derIssuer));
+		show_comment(s, "  issuer: %s",
+			     dntoasi(&ibuf, cert->derIssuer));
 	}
 
 	{
 		char before[256];
-		if (cert_detail_notbefore_to_str(before, sizeof(before), cert))
-			whack_comment(whackfd, "  not before: %s", before);
+		if (cert_detail_notbefore_to_str(before, sizeof(before), cert)) {
+			show_comment(s, "  not before: %s", before);
+		}
 	}
 
 	{
 		char after[256];
-		if (cert_detail_notafter_to_str(after, sizeof(after), cert))
-			whack_comment(whackfd, "  not after: %s", after);
+		if (cert_detail_notafter_to_str(after, sizeof(after), cert)) {
+			show_comment(s, "  not after: %s", after);
+		}
 	}
 
-	whack_comment(whackfd, "  %d bit%s%s",
-		SECKEY_PublicKeyStrengthInBits(pub_k),
-		pub_k_t == rsaKey ? " RSA" : "(other)",
-		has_priv ? ": has private key" : "");
+	show_comment(s, "  %d bit%s%s",
+		     SECKEY_PublicKeyStrengthInBits(pub_k),
+		     pub_k_t == rsaKey ? " RSA" : "(other)",
+		     has_priv ? ": has private key" : "");
 }
 
 typedef enum {
@@ -1627,7 +1626,7 @@ CERTCertList *get_all_certificates(void)
 	return PK11_ListCertsInSlot(slot);
 }
 
-static void cert_detail_list(const struct fd *whackfd, show_cert_t type)
+static void cert_detail_list(struct show *s, show_cert_t type)
 {
 	char *tstr;
 
@@ -1642,8 +1641,8 @@ static void cert_detail_list(const struct fd *whackfd, show_cert_t type)
 		bad_case(type);
 	}
 
-	whack_comment(whackfd, " ");
-	whack_comment(whackfd, "List of X.509 %s Certificates:", tstr);
+	show_comment(s, " ");
+	show_comment(s, "List of X.509 %s Certificates:", tstr);
 
 	CERTCertList *certs = get_all_certificates();
 
@@ -1653,7 +1652,7 @@ static void cert_detail_list(const struct fd *whackfd, show_cert_t type)
 	for (CERTCertListNode *node = CERT_LIST_HEAD(certs);
 	     !CERT_LIST_END(node, certs); node = CERT_LIST_NEXT(node)) {
 		if (is_cert_of_type(node->cert, type))
-			cert_detail_to_whacklog(whackfd, node->cert);
+			cert_detail_to_whacklog(s, node->cert);
 	}
 
 	CERT_DestroyCertList(certs);
@@ -1664,9 +1663,9 @@ void list_crls(const struct fd *whackfd)
 	crl_detail_list(whackfd);
 }
 
-void list_certs(const struct fd *whackfd)
+void list_certs(struct show *s)
 {
-	cert_detail_list(whackfd, CERT_TYPE_END);
+	cert_detail_list(s, CERT_TYPE_END);
 }
 
 /*
@@ -1679,9 +1678,9 @@ const char *cert_nickname(const cert_t *cert)
 			cert->u.nss_cert->nickname : NULL;
 }
 
-void list_authcerts(const struct fd *whackfd)
+void list_authcerts(struct show *s)
 {
-	cert_detail_list(whackfd, CERT_TYPE_CA);
+	cert_detail_list(s, CERT_TYPE_CA);
 }
 
 void clear_ocsp_cache(void)

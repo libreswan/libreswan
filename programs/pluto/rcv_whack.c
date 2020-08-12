@@ -546,11 +546,17 @@ static bool whack_process(const struct whack_message *const m, struct logger *wh
 		free_show(&s);
 	}
 
-	if (m->whack_list & LIST_CERTS)
-		list_certs(whackfd);
+	if (m->whack_list & LIST_CERTS) {
+		struct show *s = new_show(whackfd); /* must free */
+		list_certs(s);
+		free_show(&s);
+	}
 
-	if (m->whack_list & LIST_CACERTS)
-		list_authcerts(whackfd);
+	if (m->whack_list & LIST_CACERTS) {
+		struct show *s = new_show(whackfd); /* must free */
+		list_authcerts(s);
+		free_show(&s);
+	}
 
 	if (m->whack_list & LIST_CRLS) {
 		list_crls(whackfd);
