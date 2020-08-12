@@ -66,8 +66,15 @@ void show_separator(struct show *s);
 /*
  * If necessary show the separator (aka blank line), and then show the
  * message.  Suppress further separation.
+ *
+ * "comment" comes from RC_COMMENT, better name?
  */
 
 void show_comment(struct show *s, const char *message, ...) PRINTF_LIKE(2);
+
+/*
+ * A raw line (no prefix).
+ */
+void show_raw(struct show *s, const char *message, ...) PRINTF_LIKE(2);
 
 #endif

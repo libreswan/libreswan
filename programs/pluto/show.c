@@ -167,6 +167,16 @@ void show_comment(struct show *s, const char *message, ...)
 	jambuf_to_show(buf, s, RC_COMMENT);
 }
 
+void show_raw(struct show *s, const char *message, ...)
+{
+	struct jambuf *buf = show_jambuf(s);
+	va_list args;
+	va_start(args, message);
+	jam_va_list(buf, message, args);
+	va_end(args);
+	jambuf_to_show(buf, s, RC_PRINT);
+}
+
 static void show_system_security(struct show *s)
 {
 	int selinux = libreswan_selinux();
