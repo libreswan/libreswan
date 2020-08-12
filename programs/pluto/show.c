@@ -50,7 +50,7 @@ struct show {
 	/*
 	 * where to send the output
 	 */
-	struct fd *whackfd;
+	struct logger *logger;
 	/*
 	 * Should the next output be preceded by a blank line?
 	 */
@@ -62,11 +62,11 @@ struct show {
 	struct jambuf scratch_jambuf;
 };
 
-struct show *new_show(struct fd *whackfd)
+struct show *alloc_show(struct logger *logger)
 {
 	struct show s = {
 		.separator = NO_SEPARATOR,
-		.whackfd = whackfd,
+		.logger = logger,
 	};
 	return clone_thing(s, "on show");
 }
@@ -77,7 +77,7 @@ static void blank_line(struct show *s)
 	char blank_buf[sizeof(" "/*\0*/) + 1/*canary*/ + 1/*why-not*/];
 	struct jambuf buf = ARRAY_AS_JAMBUF(blank_buf);
 	jam_string(&buf, " ");
- 	jambuf_to_whack(&buf, s->whackfd, RC_COMMENT);
+	jambuf_to_logger(&buf, s->logger, RC_COMMENT|WHACK_STREAM);
 }
 
 void free_show(struct show **sp)
@@ -120,6 +120,11 @@ struct jambuf *show_jambuf(struct show *s)
 	return &s->scratch_jambuf;
 }
 
+struct logger *show_logger(struct show *s)
+{
+	return s->logger;
+}
+
 void jambuf_to_show(struct jambuf *buf, struct show *s, enum rc_type rc)
 {
 	switch (s->separator) {
@@ -136,7 +141,7 @@ void jambuf_to_show(struct jambuf *buf, struct show *s, enum rc_type rc)
 		rc == RC_COMMENT ||
 		rc == RC_INFORMATIONAL_TRAFFIC/*show_state_traffic()*/ ||
 		rc == RC_UNKNOWN_NAME/*show_traffic_status()*/);
-	jambuf_to_whack(buf, s->whackfd, rc);
+	jambuf_to_logger(buf, s->logger, rc|WHACK_STREAM);
 	s->separator = HAD_OUTPUT;
 }
 

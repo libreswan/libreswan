@@ -304,13 +304,27 @@ static void key_add_request(const struct whack_message *msg)
 /*
  * handle a whack message.
  */
-static bool whack_process(const struct whack_message *const m, struct logger *whack_logger)
+static bool whack_process(const struct whack_message *const m, struct show *s)
 {
 	const monotime_t now = mononow();
-	struct fd *whackfd = whack_logger->global_whackfd;
+
+	/*
+	 * XXX: keep code below compiling.
+	 *
+	 * Suspect logging code should either:
+	 *
+	 * => use log_message() (or log_show() wrapper?) so failing
+	 * whack requests leave a breadcrumb in the main whack log.
+	 *
+	 * => use show_*() because the good output is for whack
+	 */
+	struct fd *whackfd = show_logger(s)->global_whackfd;
+
 	/*
 	 * May be needed in future:
 	 * const struct lsw_conf_options *oco = lsw_init_options();
+	 *
+	 * XXX: why?
 	 */
 	if (m->whack_options) {
 		switch (m->opt_set) {
@@ -519,10 +533,8 @@ static bool whack_process(const struct whack_message *const m, struct logger *wh
 		load_preshared_secrets();
 
 	if (m->whack_list & LIST_PUBKEYS) {
-		struct show *s = new_show(whackfd); /* must free */
 		list_public_keys(s, m->whack_utc,
 				 m->whack_check_pub_keys);
-		free_show(&s);
 	}
 
 	if (m->whack_purgeocsp)
@@ -541,21 +553,15 @@ static bool whack_process(const struct whack_message *const m, struct logger *wh
 	}
 
 	if (m->whack_list & LIST_PSKS) {
-		struct show *s = new_show(whackfd); /* must free */
 		list_psks(s);
-		free_show(&s);
 	}
 
 	if (m->whack_list & LIST_CERTS) {
-		struct show *s = new_show(whackfd); /* must free */
 		list_certs(s);
-		free_show(&s);
 	}
 
 	if (m->whack_list & LIST_CACERTS) {
-		struct show *s = new_show(whackfd); /* must free */
 		list_authcerts(s);
-		free_show(&s);
 	}
 
 	if (m->whack_list & LIST_CRLS) {
@@ -566,10 +572,8 @@ static bool whack_process(const struct whack_message *const m, struct logger *wh
 	}
 
 	if (m->whack_list & LIST_EVENTS) {
-		struct show *s = new_show(whackfd); /* must free */
 		list_timers(s, now);
 		list_state_events(s, now);
-		free_show(&s);
 	}
 
 	if (m->whack_key) {
@@ -653,36 +657,39 @@ static bool whack_process(const struct whack_message *const m, struct logger *wh
 		terminate_connection(m->name, true, whackfd);
 	}
 
-	{
-		struct show *s = new_show(whackfd); /* must free */
+	if (m->whack_status) {
+		show_status(s);
+	}
 
-		if (m->whack_status)
-			show_status(s);
+	if (m->whack_global_status) {
+		show_global_status(s);
+	}
 
-		if (m->whack_global_status)
-			show_global_status(s);
+	if (m->whack_clear_stats) {
+		clear_pluto_stats();
+	}
 
-		if (m->whack_clear_stats)
-			clear_pluto_stats();
+	if (m->whack_traffic_status) {
+		show_traffic_status(s, m->name);
+	}
 
-		if (m->whack_traffic_status)
-			show_traffic_status(s, m->name);
+	if (m->whack_shunt_status) {
+		show_shunt_status(s);
+	}
 
-		if (m->whack_shunt_status)
-			show_shunt_status(s);
+	if (m->whack_fips_status) {
+		show_fips_status(s);
+	}
 
-		if (m->whack_fips_status)
-			show_fips_status(s);
+	if (m->whack_brief_status) {
+		show_brief_status(s);
+	}
+	if (m->whack_addresspool_status) {
+		show_addresspool_status(s);
+	}
 
-		if (m->whack_brief_status)
-			show_brief_status(s);
-		if (m->whack_addresspool_status)
-			show_addresspool_status(s);
-
-		if (m->whack_show_states)
-			show_states(s);
-
-		free_show(&s);
+	if (m->whack_show_states) {
+		show_states(s);
 	}
 
 #ifdef HAVE_SECCOMP
@@ -745,7 +752,7 @@ static bool whack_process(const struct whack_message *const m, struct logger *wh
 	return false; /* don't shut down */
 }
 
-static bool whack_handle(struct logger *whack_logger);
+static bool whack_handle(struct fd *whackfd, struct logger *whack_logger);
 
 void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
 		     void *arg UNUSED)
@@ -757,10 +764,12 @@ void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
 			/* already logged */
 			return;
 		}
+
 		whack_log_fd = whackfd;
 		struct logger whack_logger[1] = { GLOBAL_LOGGER(whackfd), };
-		bool shutdown = whack_handle(whack_logger);
+		bool shutdown = whack_handle(whackfd, whack_logger);
 		whack_log_fd = null_fd;
+
 		if (shutdown) {
 			/*
 			 * Leak the whack FD, when pluto finally exits
@@ -783,7 +792,7 @@ void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
 /*
  * Handle a whack request.
  */
-static bool whack_handle(struct logger *whack_logger)
+static bool whack_handle(struct fd *whackfd, struct logger *whack_logger)
 {
 	/*
 	 * properly initialize msg - needed because short reads are
@@ -791,47 +800,45 @@ static bool whack_handle(struct logger *whack_logger)
 	 */
 	struct whack_message msg = { .magic = 0, };
 
-	ssize_t n = fd_read(whack_logger->global_whackfd, &msg, sizeof(msg), HERE);
+	ssize_t n = fd_read(whackfd, &msg, sizeof(msg), HERE);
 	if (n <= 0) {
 		LOG_ERRNO(errno, "read() failed in whack_handle()");
 		return false; /* don't shutdown */
 	}
 
-	/* DBG_log("msg %d size=%u", ++msgnum, n); */
+	static uintmax_t msgnum;
+	DBGF(DBG_TMI, "whack message %ju; size=%zd", msgnum++, n);
 
 	/* sanity check message */
-	{
-		if ((size_t)n < offsetof(struct whack_message,
-					 whack_shutdown) + sizeof(msg.whack_shutdown)) {
-			log_message(RC_BADWHACKMESSAGE, whack_logger,
-				    "ignoring runt message from whack: got %zd bytes", n);
+	if ((size_t)n < offsetof(struct whack_message, whack_shutdown) + sizeof(msg.whack_shutdown)) {
+		log_message(RC_BADWHACKMESSAGE, whack_logger,
+			    "ignoring runt message from whack: got %zd bytes", n);
+		return false; /* don't shutdown */
+	}
+
+	if (msg.magic != WHACK_MAGIC) {
+
+		if (msg.whack_shutdown) {
+			log_message(RC_LOG, whack_logger, "shutting down%s",
+				    (msg.magic != WHACK_BASIC_MAGIC) ?  " despite whacky magic" : "");
+			return true; /* force shutting down */
+		}
+
+		if (msg.magic == WHACK_BASIC_MAGIC) {
+			/* Only basic commands.  Simpler inter-version compatibility. */
+			if (msg.whack_status) {
+				struct show *s = alloc_show(whack_logger);
+				show_status(s);
+				free_show(&s);
+			}
+			/* bail early, but without complaint */
 			return false; /* don't shutdown */
 		}
 
-		if (msg.magic != WHACK_MAGIC) {
-
-			if (msg.whack_shutdown) {
-				log_message(RC_LOG, whack_logger, "shutting down%s",
-					    (msg.magic != WHACK_BASIC_MAGIC) ?  " despite whacky magic" : "");
-				return true; /* force shutting down */
-			}
-
-			if (msg.magic == WHACK_BASIC_MAGIC) {
-				/* Only basic commands.  Simpler inter-version compatibility. */
-				if (msg.whack_status) {
-					struct show *s = new_show(whack_logger->global_whackfd);
-					show_status(s);
-					free_show(&s);
-				}
-				/* bail early, but without complaint */
-				return false; /* don't shutdown */
-			}
-
-			log_message(RC_BADWHACKMESSAGE, whack_logger,
-				    "ignoring message from whack with bad magic %d; should be %d; Mismatched versions of userland tools.",
-				    msg.magic, WHACK_MAGIC);
-			return false; /* bail (but don't shutdown) */
-		}
+		log_message(RC_BADWHACKMESSAGE, whack_logger,
+			    "ignoring message from whack with bad magic %d; should be %d; Mismatched versions of userland tools.",
+			    msg.magic, WHACK_MAGIC);
+		return false; /* bail (but don't shutdown) */
 	}
 
 	struct whackpacker wp = {
@@ -846,5 +853,8 @@ static bool whack_handle(struct logger *whack_logger)
 		return false; /* don't shutdown */
 	}
 
-	return whack_process(&msg, whack_logger);
+	struct show *s = alloc_show(whack_logger);
+	bool shutdown = whack_process(&msg, s);
+	free_show(&s);
+	return shutdown;
 }

@@ -24,8 +24,10 @@
 struct show;
 enum rc_type;
 
-struct show *new_show(struct fd *whackfd);
+struct show *alloc_show(struct logger *logger);
 void free_show(struct show **s);
+/* underlying global logger formed by alloc_show() */
+struct logger *show_logger(struct show *s);
 
 /*
  * output primitives: access the internal jambuf; show the contents of
