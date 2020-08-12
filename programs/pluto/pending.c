@@ -420,7 +420,7 @@ void show_pending_phase2(struct show *s,
 	for (p = *pp; p != NULL; p = p->next) {
 		if (p->ike == ike) {
 			/* connection-name state-number [replacing state-number] */
-			WHACK_LOG(RC_COMMENT, show_fd(s), buf) {
+			SHOW_JAMBUF(RC_COMMENT, s, buf) {
 				jam(buf, "#%lu: pending ", p->ike->sa.st_serialno);
 				jam_string(buf, (ike->sa.st_ike_version == IKEv2) ? "CHILD SA" : "Phase 2");
 				jam(buf, " for ");

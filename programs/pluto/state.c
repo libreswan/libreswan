@@ -2055,7 +2055,7 @@ static void show_state_traffic(struct show *s,
 		return; /* ignore non established states */
 
 	/* whack-log-global - no prefix */
-	WHACK_LOG(rc, show_fd(s), buf) {
+	SHOW_JAMBUF(rc, s, buf) {
 		/* note: this mutates *st by calling get_sa_info */
 		jam_state_traffic(buf, st);
 	}

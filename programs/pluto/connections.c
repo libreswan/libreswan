@@ -3996,7 +3996,7 @@ void show_one_connection(struct show *s,
 		);
 
 	if (!lmod_empty(c->extra_debugging)) {
-		WHACK_LOG(RC_COMMENT, show_fd(s), buf) {
+		SHOW_JAMBUF(RC_COMMENT, s, buf) {
 			jam(buf, "\"%s\"%s:   debug: ",
 			    c->name, instance);
 			jam_lmod(buf, &debug_names, "+", c->extra_debugging);

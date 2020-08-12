@@ -280,7 +280,7 @@ void show_kernel_alg_connection(struct show *s,
 	 */
 	if (c->child_proposals.p != NULL &&
 	    !default_proposals(c->child_proposals.p)) {
-		WHACK_LOG(RC_COMMENT, show_fd(s), buf) {
+		SHOW_JAMBUF(RC_COMMENT, s, buf) {
 			/*
 			 * If DH (PFS) was specified in the esp= or
 			 * ah= line then the below will display it

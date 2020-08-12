@@ -896,7 +896,7 @@ void list_timers(struct show *s, monotime_t now)
 
 void show_debug_status(struct show *s)
 {
-	WHACK_LOG(RC_COMMENT, show_fd(s), buf) {
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		jam(buf, "debug:");
 		if (cur_debugging & DBG_MASK) {
 			jam(buf, " ");
