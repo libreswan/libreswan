@@ -2697,7 +2697,7 @@ int main(int argc, char **argv)
 				exit(RC_WHACK_PROBLEM);
 #endif
 			}
-			if (s == RC_PRINT) {
+			if (s == RC_RAW) {
 				ls = lpe + 1; /* skip NNN_ */
 			}
 
@@ -2712,7 +2712,7 @@ int main(int argc, char **argv)
 			switch (s) {
 			/* these logs are informational only */
 			case RC_COMMENT:
-			case RC_PRINT:
+			case RC_RAW:
 			case RC_INFORMATIONAL:
 			case RC_INFORMATIONAL_TRAFFIC:
 			case RC_LOG:

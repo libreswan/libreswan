@@ -132,7 +132,7 @@ void jambuf_to_show(struct jambuf *buf, struct show *s, enum rc_type rc)
 	default:
 		bad_case(s->separator);
 	}
-	pexpect(rc == RC_PRINT ||
+	pexpect(rc == RC_RAW ||
 		rc == RC_COMMENT ||
 		rc == RC_INFORMATIONAL_TRAFFIC/*show_state_traffic()*/ ||
 		rc == RC_UNKNOWN_NAME/*show_traffic_status()*/);
@@ -157,7 +157,7 @@ void show_raw(struct show *s, const char *message, ...)
 	va_start(args, message);
 	jam_va_list(buf, message, args);
 	va_end(args);
-	jambuf_to_show(buf, s, RC_PRINT);
+	jambuf_to_show(buf, s, RC_RAW);
 }
 
 static void show_system_security(struct show *s)
