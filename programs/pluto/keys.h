@@ -53,7 +53,7 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 
 extern bool has_private_key(cert_t cert);
 extern void list_public_keys(struct show *s, bool utc, bool check_pub_keys);
-extern void list_psks(struct fd *whackfd);
+extern void list_psks(struct show *s);
 
 extern const chunk_t *get_psk(const struct connection *c,
 			      struct logger *logger);

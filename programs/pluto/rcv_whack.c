@@ -540,8 +540,11 @@ static bool whack_process(const struct whack_message *const m, struct logger *wh
 		reread_cert_connections(whackfd);
 	}
 
-	if (m->whack_list & LIST_PSKS)
-		list_psks(whackfd);
+	if (m->whack_list & LIST_PSKS) {
+		struct show *s = new_show(whackfd); /* must free */
+		list_psks(s);
+		free_show(&s);
+	}
 
 	if (m->whack_list & LIST_CERTS)
 		list_certs(whackfd);

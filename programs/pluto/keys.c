@@ -86,7 +86,7 @@ static int print_secrets(struct secret *secret,
 			 struct private_key_stuff *pks UNUSED,
 			 void *uservoid)
 {
-	struct fd *whackfd = uservoid;
+	struct show *s = uservoid;
 
 	const char *kind;
 	switch (pks->kind) {
@@ -108,8 +108,8 @@ static int print_secrets(struct secret *secret,
 
 	struct id_list *ids = lsw_get_idlist(secret);
 
-	int indent;
-	WHACK_LOG(RC_COMMENT, whackfd, buf) {
+	int indent = 0;
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		indent = jam(buf, "%5d:", pks->line);
 		jam(buf, " %s ", kind);
 		if (ids == NULL) {
@@ -128,7 +128,7 @@ static int print_secrets(struct secret *secret,
 
 	const ckaid_t *ckaid = secret_ckaid(secret); /* may be NULL */
 	if (ckaid != NULL) {
-		WHACK_LOG(RC_COMMENT, whackfd, buf) {
+		SHOW_JAMBUF(RC_COMMENT, s, buf) {
 			jam(buf, "%*s ckaid: ", indent, "");
 			jam_ckaid(buf, ckaid);
 		}
@@ -138,14 +138,14 @@ static int print_secrets(struct secret *secret,
 	return 1;
 }
 
-void list_psks(struct fd *whackfd)
+void list_psks(struct show *s)
 {
 	const struct lsw_conf_options *oco = lsw_init_options();
-	whack_comment(whackfd, " ");
-	whack_comment(whackfd, "List of Pre-shared secrets (from %s)",
-		  oco->secretsfile);
-	whack_comment(whackfd, " ");
-	lsw_foreach_secret(pluto_secrets, print_secrets, whackfd);
+	show_comment(s, " "); /* show_separator(s); */
+	show_comment(s, "List of Pre-shared secrets (from %s)",
+		     oco->secretsfile);
+	show_comment(s, " "); /* show_separator(s); */
+	lsw_foreach_secret(pluto_secrets, print_secrets, s);
 }
 
 err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
