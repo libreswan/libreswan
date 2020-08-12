@@ -421,12 +421,13 @@ static void pluto_init_nss(const char *nssdir, struct logger *logger)
 	SECStatus rv;
 
 	/* little lie, lsw_nss_setup doesn't have logging */
-	loglog(RC_LOG_SERIOUS, "NSS DB directory: sql:%s", nssdir);
+	log_message(RC_LOG_SERIOUS, logger, "NSS DB directory: sql:%s", nssdir);
 
 	if (!lsw_nss_setup(nssdir, LSW_NSS_READONLY, logger)) {
-		loglog(RC_LOG_SERIOUS, "FATAL: NSS initialization failure");
+		log_message(RC_LOG_SERIOUS, logger, "FATAL: NSS initialization failure");
 		exit_pluto(PLUTO_EXIT_NSS_FAIL);
 	}
+	log_message(RC_LOG, logger, "NSS crypto library initialized");
 
 	/*
 	 * This exists purely to make the BSI happy.
@@ -438,12 +439,11 @@ static void pluto_init_nss(const char *nssdir, struct logger *logger)
 
 		get_bsi_random(seedbytes, buf); /* much TLA, very blocking */
 		rv = PK11_RandomUpdate(buf, seedbytes);
-		libreswan_log("seeded %d bytes into the NSS PRNG", seedbytes);
+		log_message(RC_LOG, logger, "seeded %d bytes into the NSS PRNG", seedbytes);
 		passert(rv == SECSuccess);
 		messupn(buf, seedbytes);
 		pfree(buf);
 	}
-	libreswan_log("NSS crypto library initialized");
 }
 
 /* 0 is special and default: do not check crls dynamically */
