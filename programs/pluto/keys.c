@@ -784,14 +784,29 @@ err_t add_ipseckey(const struct id *id,
 /*
  *  list all public keys in the chained list
  */
-void list_public_keys(struct fd *whackfd, bool utc, bool check_pub_keys)
+void list_public_keys(struct show *s, bool utc, bool check_pub_keys)
 {
 	struct pubkey_list *p = pluto_pubkeys;
 
 	if (!check_pub_keys) {
-		whack_comment(whackfd, " ");
-		whack_comment(whackfd, "List of Public Keys:");
-		whack_comment(whackfd, " ");
+		/*
+		 * XXX: when there are no keys, the tests expect the
+		 * title with blank lines either side. Using the
+		 * current show_separator() would suppress that.  But
+		 * should this change, or should show_separator()
+		 * change to always wrap output in blank lines?
+		 */
+#if 0
+		show_separator(s);
+#else
+		show_comment(s, " ");
+#endif
+		show_comment(s, "List of Public Keys:");
+#if 0
+		show_separator(s);
+#else
+		show_comment(s, " ");
+#endif
 	}
 
 	while (p != NULL) {
@@ -807,7 +822,7 @@ void list_public_keys(struct fd *whackfd, bool utc, bool check_pub_keys)
 
 			if (!check_pub_keys ||
 			    !startswith(check_expiry_msg, "ok")) {
-				WHACK_LOG(RC_COMMENT, whackfd, buf) {
+				SHOW_JAMBUF(RC_COMMENT, s, buf) {
 					jam_realtime(buf, key->installed_time, utc);
 					jam(buf, ", ");
 					switch (key->type->alg) {
@@ -833,16 +848,15 @@ void list_public_keys(struct fd *whackfd, bool utc, bool check_pub_keys)
 				/* XXX could be ikev2_idtype_names */
 				id_buf idb;
 
-				whack_comment(whackfd, "       %s '%s'",
-					enum_show(&ike_idtype_names,
-						    key->id.kind),
-					str_id(&key->id, &idb));
+				show_comment(s, "       %s '%s'",
+					     enum_show(&ike_idtype_names,
+						       key->id.kind),
+					     str_id(&key->id, &idb));
 
 				if (key->issuer.len > 0) {
 					dn_buf b;
-					whack_comment(whackfd,
-						  "       Issuer '%s'",
-						  str_dn(key->issuer, &b));
+					show_comment(s, "       Issuer '%s'",
+						     str_dn(key->issuer, &b));
 				}
 			}
 			break;

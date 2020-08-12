@@ -39,6 +39,7 @@ struct crypt_mac;
 struct packet_byte_stream;
 struct private_key_stuff;
 struct hash_desc;
+struct show;
 
 extern err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 				      const struct crypt_mac *hash,
@@ -51,8 +52,7 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 							   struct logger *logger);
 
 extern bool has_private_key(cert_t cert);
-extern void list_public_keys(struct fd *whackfd, bool utc,
-			     bool check_pub_keys);
+extern void list_public_keys(struct show *s, bool utc, bool check_pub_keys);
 extern void list_psks(struct fd *whackfd);
 
 extern const chunk_t *get_psk(const struct connection *c,

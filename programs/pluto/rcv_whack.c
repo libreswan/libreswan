@@ -518,9 +518,12 @@ static bool whack_process(const struct whack_message *const m, struct logger *wh
 	if (m->whack_reread & REREAD_SECRETS)
 		load_preshared_secrets();
 
-	if (m->whack_list & LIST_PUBKEYS)
-		list_public_keys(whackfd, m->whack_utc,
+	if (m->whack_list & LIST_PUBKEYS) {
+		struct show *s = new_show(whackfd); /* must free */
+		list_public_keys(s, m->whack_utc,
 				 m->whack_check_pub_keys);
+		free_show(&s);
+	}
 
 	if (m->whack_purgeocsp)
 		clear_ocsp_cache();
