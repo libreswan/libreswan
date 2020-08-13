@@ -151,7 +151,8 @@ void list_psks(struct show *s)
 err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 			       const struct crypt_mac *expected_hash,
 			       const uint8_t *sig_val, size_t sig_len,
-			       const struct hash_desc *hash_algo)
+			       const struct hash_desc *hash_algo,
+			       struct logger *logger)
 {
 	SECStatus retVal;
 	if (DBGP(DBG_BASE)) {
@@ -238,7 +239,7 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 
 		if (PK11_VerifyRecover(publicKey, &encrypted_signature,
 				       &decrypted_signature,
-				       lsw_return_nss_password_file_info()) != SECSuccess) {
+				       lsw_nss_get_password_context(logger)) != SECSuccess) {
 			dbg("NSS RSA verify: decrypting signature is failed");
 			SECKEY_DestroyPublicKey(publicKey);
 			return "13""NSS error: Not able to decrypt";
@@ -283,7 +284,7 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 		if (PK11_VerifyWithMechanism(publicKey, CKM_RSA_PKCS_PSS,
 					     &hash_mech_item, &encrypted_signature,
 					     &expected_hash_item,
-					     lsw_return_nss_password_file_info()) != SECSuccess) {
+					     lsw_nss_get_password_context(logger)) != SECSuccess) {
 			dbg("NSS RSA verify: decrypting signature is failed");
 			SECKEY_DestroyPublicKey(publicKey);
 			return "13""NSS error: Not able to decrypt";

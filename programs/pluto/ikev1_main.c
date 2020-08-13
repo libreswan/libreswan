@@ -368,7 +368,8 @@ static err_t try_RSA_signature_v1(const struct crypt_mac *hash,
 	}
 
 	err_t ugh = RSA_signature_verify_nss(k, hash, sig_val,
-					sig_len, 0 /* for ikev2 only */);
+					     sig_len, 0 /* for ikev2 only */,
+					     st->st_logger);
 	if (ugh != NULL)
 		return ugh;
 

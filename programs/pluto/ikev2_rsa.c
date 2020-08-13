@@ -161,7 +161,7 @@ static err_t try_RSA_signature_v2(const struct crypt_mac *hash,
 	}
 
 	err_t ugh = RSA_signature_verify_nss(k, hash, sig_val, sig_len,
-					     hash_algo);
+					     hash_algo, st->st_logger);
 	if (ugh != NULL)
 		return ugh;
 
