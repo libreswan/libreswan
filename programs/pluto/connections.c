@@ -97,7 +97,7 @@ struct connection *connections = NULL;
 #define MINIMUM_IPSEC_SA_RANDOM_MARK 65536
 static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 
-static bool idr_wildmatch(const struct end *this, const struct id *b);
+static bool idr_wildmatch(const struct end *this, const struct id *b, struct logger *logger);
 
 /*
  * Find a connection by name.
@@ -2866,7 +2866,7 @@ struct connection *refine_host_connection(const struct state *st,
 			/* peer ID matches current connection -- check for "you Tarzan, me Jane" */
 			if (!initiator && tarzan_id != NULL) {
 				/* ??? pexpect(c->spd.spd_next == NULL); */
-				if (idr_wildmatch(&c->spd.this, tarzan_id)) {
+				if (idr_wildmatch(&c->spd.this, tarzan_id, st->st_logger)) {
 					dbg("the remote specified our ID in its IDr payload");
 					return c;
 				} else {
@@ -3006,14 +3006,13 @@ struct connection *refine_host_connection(const struct state *st,
 				    str_id(&d->spd.this.id, &usb),
 				    enum_show(&ike_idtype_names, d->spd.this.id.kind));
 				/* ??? pexpect(d->spd.spd_next == NULL); */
-				if (!idr_wildmatch(&d->spd.this, tarzan_id)) {
+				if (!idr_wildmatch(&d->spd.this, tarzan_id, st->st_logger)) {
 					dbg("peer IDr payload does not match our expected ID, this connection will not do");
 					continue;
 				}
 			} else {
 				dbg("no IDr payload received from peer");
 			}
-
 
 			/* ignore group connections */
 			if (d->policy & POLICY_GROUP) {
@@ -4262,7 +4261,7 @@ void liveness_action(struct connection *c, enum ike_version ike_version)
  * This is to support certificates with SAN using wildcard, eg SAN
  * contains DNS:*.vpnservice.com where our leftid=*.vpnservice.com
  */
-static bool idr_wildmatch(const struct end *this, const struct id *idr)
+static bool idr_wildmatch(const struct end *this, const struct id *idr, struct logger *logger)
 {
 	/* check if received IDr is a valid SAN of our cert */
 	/* cert_VerifySubjectAltName, if called, will [debug]log any errors */
@@ -4270,7 +4269,7 @@ static bool idr_wildmatch(const struct end *this, const struct id *idr)
 	/* ??? if cert matches we don't actually do any further ID matching, wildcard or not */
 	if (this->cert.ty != CERT_NONE &&
 	    (idr->kind == ID_FQDN || idr->kind == ID_DER_ASN1_DN) &&
-	    cert_VerifySubjectAltName(this->cert.u.nss_cert, idr))
+	    cert_VerifySubjectAltName(this->cert.u.nss_cert, idr, logger))
 		return true;
 
 	const struct id *wild = &this->id;

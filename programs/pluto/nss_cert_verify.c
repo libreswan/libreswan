@@ -354,7 +354,8 @@ static bool crl_update_check(CERTCertDBHandle *handle,
  */
 static void add_decoded_cert(CERTCertDBHandle *handle,
 			     struct certs **certs,
-			     SECItem der_cert)
+			     SECItem der_cert,
+			     struct logger *logger)
 {
 	/*
 	 * Reject root certificates.
@@ -411,9 +412,10 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 		passert(pk != NULL);
 		if (pk->keyType == rsaKey &&
 			((pk->u.rsa.modulus.len * BITS_PER_BYTE) < FIPS_MIN_RSA_KEY_SIZE)) {
-			libreswan_log("FIPS: Rejecting peer cert with key size %d under %d",
-					pk->u.rsa.modulus.len * BITS_PER_BYTE,
-					FIPS_MIN_RSA_KEY_SIZE);
+			log_message(RC_LOG, logger,
+				    "FIPS: Rejecting peer cert with key size %d under %d",
+				    pk->u.rsa.modulus.len * BITS_PER_BYTE,
+				    FIPS_MIN_RSA_KEY_SIZE);
 			SECKEY_DestroyPublicKey(pk);
 			CERT_DestroyCertificate(cert);
 			return;
@@ -439,7 +441,8 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
  */
 static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 					  enum ike_version ike_version,
-					  struct payload_digest *cert_payloads)
+					  struct payload_digest *cert_payloads,
+					  struct logger *logger)
 {
 	struct certs *certs = NULL;
 	/* accumulate the known certificates */
@@ -460,8 +463,9 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 			bad_case(ike_version);
 		}
 		if (cert_name == NULL) {
-			loglog(RC_LOG_SERIOUS, "ignoring certificate with unknown type %d",
-			       cert_type);
+			log_message(RC_LOG_SERIOUS, logger,
+				    "ignoring certificate with unknown type %d",
+				    cert_type);
 			continue;
 		}
 
@@ -477,30 +481,33 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 
 		switch (cert_type) {
 		case CERT_X509_SIGNATURE:
-			add_decoded_cert(handle, &certs, payload);
+			add_decoded_cert(handle, &certs, payload, logger);
 			break;
 		case CERT_PKCS7_WRAPPED_X509:
 		{
 			SEC_PKCS7ContentInfo *contents = SEC_PKCS7DecodeItem(&payload, NULL, NULL, NULL, NULL,
 									     NULL, NULL, NULL);
 			if (contents == NULL) {
-				loglog(RC_LOG_SERIOUS, "Wrapped PKCS7 certificate payload could not be decoded");
+				log_message(RC_LOG_SERIOUS, logger,
+					    "Wrapped PKCS7 certificate payload could not be decoded");
 				continue;
 			}
 			if (!SEC_PKCS7ContainsCertsOrCrls(contents)) {
-				loglog(RC_LOG_SERIOUS, "Wrapped PKCS7 certificate payload did not contain any certificates");
+				log_message(RC_LOG_SERIOUS, logger,
+					    "Wrapped PKCS7 certificate payload did not contain any certificates");
 				SEC_PKCS7DestroyContentInfo(contents);
 				continue;
 			}
 			for (SECItem **cert_list = SEC_PKCS7GetCertificateList(contents);
 			     *cert_list; cert_list++) {
-				add_decoded_cert(handle, &certs, **cert_list);
+				add_decoded_cert(handle, &certs, **cert_list, logger);
 			}
 			SEC_PKCS7DestroyContentInfo(contents);
 			break;
 		}
 		default:
-			loglog(RC_LOG_SERIOUS, "ignoring %s certificate payload", cert_name);
+			log_message(RC_LOG_SERIOUS, logger,
+				    "ignoring %s certificate payload", cert_name);
 			break;
 		}
 	}
@@ -563,7 +570,7 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 	 */
 	logtime_t decode_time = logtime_start(logger);
 	result.cert_chain = decode_cert_payloads(handle, ike_version,
-						 cert_payloads);
+						 cert_payloads, logger);
 	logtime_stop(&decode_time, "%s() calling decode_cert_payloads()", __func__);
 	if (result.cert_chain == NULL) {
 		return result;
@@ -621,10 +628,11 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 }
 
 bool cert_VerifySubjectAltName(const CERTCertificate *cert,
-			       const struct id *id)
+			       const struct id *id, struct logger *logger)
 {
 	if (id->kind == ID_DER_ASN1_DN) {
-		loglog(RC_LOG_SERIOUS, "cert_VerifySubjectAltName() should not be called for ID_DER_ASN1_DN");
+		log_message(RC_LOG_SERIOUS, logger,
+			    "cert_VerifySubjectAltName() should not be called for ID_DER_ASN1_DN");
 		return true;
 	}
 
@@ -636,9 +644,10 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 					      &subAltName);
 	if (rv != SECSuccess) {
 		id_buf name;
-		loglog(RC_LOG_SERIOUS, "certificate contains no subjectAltName extension to match %s '%s'",
-		       enum_name(&ike_idtype_names, id->kind),
-		       str_id(id, &name));
+		log_message(RC_LOG_SERIOUS, logger,
+			    "certificate contains no subjectAltName extension to match %s '%s'",
+			    enum_name(&ike_idtype_names, id->kind),
+			    str_id(id, &name));
 		return false;
 	}
 
@@ -651,9 +660,10 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 	CERTGeneralName *nameList = CERT_DecodeAltNameExtension(arena, &subAltName);
 	if (nameList == NULL) {
 		id_buf name;
-		loglog(RC_LOG_SERIOUS, "certificate subjectAltName extension failed to decode while looking for %s '%s'",
-		       enum_name(&ike_idtype_names, id->kind),
-		       str_id(id, &name));
+		log_message(RC_LOG_SERIOUS, logger,
+			    "certificate subjectAltName extension failed to decode while looking for %s '%s'",
+			    enum_name(&ike_idtype_names, id->kind),
+			    str_id(id, &name));
 		/* XXX: is nss error set? */
 		PORT_FreeArena(arena, PR_FALSE);
 		return false;

@@ -667,7 +667,8 @@ bool find_fetch_dn(SECItem *dn, struct connection *c,
  * We only deal with the head and it must be an endpoint cert.
  */
 bool match_certs_id(const struct certs *certs,
-		struct id *peer_id /*ID_FROMCERT => updated*/)
+		    struct id *peer_id /*ID_FROMCERT => updated*/,
+		    struct logger *logger)
 {
 	CERTCertificate *end_cert = certs->cert;
 
@@ -685,7 +686,7 @@ bool match_certs_id(const struct certs *certs,
 	{
 		/* simple match */
 		/* this logs errors; no need for duplication */
-		return cert_VerifySubjectAltName(end_cert, peer_id);
+		return cert_VerifySubjectAltName(end_cert, peer_id, logger);
 	}
 
 	case ID_FROMCERT:
@@ -735,8 +736,9 @@ bool match_certs_id(const struct certs *certs,
 			 * all about certificates.
 			 */
 			id_buf idb;
-			loglog(RC_LOG_SERIOUS, "ID_DER_ASN1_DN '%s' does not match expected '%s'",
-			       end_cert->subjectName, str_id(peer_id, &idb));
+			log_message(RC_LOG_SERIOUS, logger,
+				    "ID_DER_ASN1_DN '%s' does not match expected '%s'",
+				    end_cert->subjectName, str_id(peer_id, &idb));
 		} else if (DBGP(DBG_BASE)) {
 			id_buf idb;
 			DBG_log("ID_DER_ASN1_DN '%s' matched our ID '%s'",
@@ -747,8 +749,9 @@ bool match_certs_id(const struct certs *certs,
 	}
 
 	default:
-		loglog(RC_LOG_SERIOUS, "unhandled ID type %s; cannot match peer's certificate with expected peer ID",
-		       enum_show(&ike_idtype_names, peer_id->kind));
+		log_message(RC_LOG_SERIOUS, logger,
+			    "unhandled ID type %s; cannot match peer's certificate with expected peer ID",
+			    enum_show(&ike_idtype_names, peer_id->kind));
 		return false;
 	}
 }
@@ -921,8 +924,8 @@ bool v1_verify_certs(struct msg_digest *md)
 	if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
 		dbg("SAN ID matching skipped due to policy (require-id-on-certificate=no)");
 	} else {
-		if (!match_certs_id(certs, &c->spd.that.id /*ID_FROMCERT => updated*/)) {
-			libreswan_log("Peer CERT payload SubjectAltName does not match peer ID for this connection");
+		if (!match_certs_id(certs, &c->spd.that.id /*ID_FROMCERT => updated*/, st->st_logger)) {
+			log_state(RC_LOG, st, "Peer CERT payload SubjectAltName does not match peer ID for this connection");
 			return false;
 		}
 		dbg("SAN ID matched, updating that.cert");

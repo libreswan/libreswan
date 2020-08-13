@@ -2700,18 +2700,19 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 	if (!ike->sa.st_peer_alt_id &&
 		ike->sa.st_remote_certs.verified != NULL) {
 		if (match_certs_id(ike->sa.st_remote_certs.verified,
-				   &c->spd.that.id /*ID_FROMCERT => updated*/)) {
+				   &c->spd.that.id /*ID_FROMCERT => updated*/,
+				   ike->sa.st_logger)) {
 			dbg("X509: CERT and ID matches current connection");
 			ike->sa.st_peer_alt_id = true;
 		} else {
-			libreswan_log("Peer CERT payload SubjectAltName does not match peer ID for this connection");
+			log_state(RC_LOG, &ike->sa, "Peer CERT payload SubjectAltName does not match peer ID for this connection");
 			if (!LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
-				libreswan_log("X509: connection failed due to unmatched IKE ID in certificate SAN");
+				log_state(RC_LOG, &ike->sa, "X509: connection failed due to unmatched IKE ID in certificate SAN");
 				if (initiator)
 					return FALSE; /* cannot switch but switching required */
 				must_switch = TRUE;
 			} else {
-				libreswan_log("X509: connection allows unmatched IKE ID and certificate SAN");
+				log_state(RC_LOG, &ike->sa, "X509: connection allows unmatched IKE ID and certificate SAN");
 			}
 		}
 	}
