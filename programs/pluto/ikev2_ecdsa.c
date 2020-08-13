@@ -158,7 +158,7 @@ static err_t try_ECDSA_signature_v2(const struct crypt_mac *hash,
 	};
 
 	if (PK11_Verify(publicKey, raw_signature, &hash_item,
-			lsw_return_nss_password_file_info()) != SECSuccess) {
+			lsw_nss_get_password_context(st->st_logger)) != SECSuccess) {
 		LSWLOG(buf) {
 			jam_string(buf, "NSS: verifying AUTH hash using PK11_Verify() failed:");
 			jam_nss_error(buf);
