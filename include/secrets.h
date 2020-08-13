@@ -256,8 +256,8 @@ extern void install_public_key(struct pubkey *pk, struct pubkey_list **head);
 
 extern void free_public_key(struct pubkey *pk);
 
-extern void lsw_load_preshared_secrets(struct secret **psecrets,
-				       const char *secrets_file);
+extern void lsw_load_preshared_secrets(struct secret **psecrets, const char *secrets_file,
+				       struct logger *logger);
 extern void lsw_free_preshared_secrets(struct secret **psecrets);
 
 extern bool lsw_has_private_rawkey(const struct secret *secrets, const struct pubkey *pk);
@@ -273,7 +273,7 @@ extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 
 extern struct secret *lsw_get_ppk_by_id(struct secret *secrets, chunk_t ppk_id);
 
-extern err_t lsw_add_secret(struct secret **secrets, CERTCertificate *cert);
+extern err_t lsw_add_secret(struct secret **secrets, CERTCertificate *cert, struct logger *logger);
 
 /* these do not clone */
 chunk_t same_secitem_as_chunk(SECItem si);

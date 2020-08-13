@@ -253,19 +253,21 @@ static int whack_unroute_connection(struct connection *c,
 
 static void do_whacklisten(struct fd *whackfd)
 {
+	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
 	fflush(stderr);
 	fflush(stdout);
 	peerlog_close();    /* close any open per-peer logs */
 #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_RELOADING, SD_REPORT_NO_STATUS);
 #endif
-	log_global(RC_LOG, whackfd, "listening for IKE messages");
+	log_message(RC_LOG|LOG_STREAM/*not-whack*/, logger,
+		    "listening for IKE messages");
 	listening = true;
 	find_ifaces(true /* remove dead interfaces */, whackfd);
 #ifdef USE_XFRM_INTERFACE
 	stale_xfrmi_interfaces();
 #endif
-	load_preshared_secrets();
+	load_preshared_secrets(logger);
 	load_groups(whackfd);
 #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_READY, SD_REPORT_NO_STATUS);
@@ -530,7 +532,7 @@ static bool whack_process(const struct whack_message *const m, struct show *s)
 	}
 
 	if (m->whack_reread & REREAD_SECRETS)
-		load_preshared_secrets();
+		load_preshared_secrets(show_logger(s));
 
 	if (m->whack_list & LIST_PUBKEYS) {
 		list_public_keys(s, m->whack_utc,

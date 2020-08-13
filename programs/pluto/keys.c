@@ -71,10 +71,10 @@
 
 static struct secret *pluto_secrets = NULL;
 
-void load_preshared_secrets(void)
+void load_preshared_secrets(struct logger *logger)
 {
 	const struct lsw_conf_options *oco = lsw_init_options();
-	lsw_load_preshared_secrets(&pluto_secrets, oco->secretsfile);
+	lsw_load_preshared_secrets(&pluto_secrets, oco->secretsfile, logger);
 }
 
 void free_preshared_secrets(void)
@@ -539,7 +539,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 			dbg("private key for cert %s not found in local cache; loading from NSS DB",
 			    nickname);
 
-			err_t err = load_nss_cert_secret(c->spd.this.cert.u.nss_cert);
+			err_t err = load_nss_cert_secret(c->spd.this.cert.u.nss_cert, logger);
 			if (err != NULL) {
 				/* ??? should this be logged? */
 				dbg("private key for cert %s not found in NSS DB (%s)",
@@ -868,10 +868,10 @@ void list_public_keys(struct show *s, bool utc, bool check_pub_keys)
 	}
 }
 
-err_t load_nss_cert_secret(CERTCertificate *cert)
+err_t load_nss_cert_secret(CERTCertificate *cert, struct logger *logger)
 {
 	threadtime_t start = threadtime_start();
-	err_t err = lsw_add_secret(&pluto_secrets, cert);
+	err_t err = lsw_add_secret(&pluto_secrets, cert, logger);
 	threadtime_stop(&start, SOS_NOBODY, "%s() loading private key %s", __func__,
 			cert->nickname);
 	return err;

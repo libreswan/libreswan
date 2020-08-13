@@ -145,8 +145,8 @@ static const struct fld RSA_private_field[] = {
 	},
 };
 
-static void lsw_process_secrets_file(struct secret **psecrets,
-				const char *file_pat);
+static void lsw_process_secrets_file(struct secret **psecrets, const char *file_pat,
+				     struct logger *logger);
 
 struct secret {
 	struct secret  *next;
@@ -1077,7 +1077,7 @@ static SECKEYPrivateKey *copy_private_key(SECKEYPrivateKey *private_key)
  * - the caller gets to free this up (which is still easier than try
  * to do it here).
  */
-static err_t lsw_process_rsa_secret(struct private_key_stuff *pks)
+static err_t lsw_process_rsa_secret(struct private_key_stuff *pks, struct logger *logger)
 {
 	struct RSA_private_key *rsak = &pks->u.RSA_private_key;
 	passert(tokeq("{"));
@@ -1181,14 +1181,14 @@ static err_t lsw_process_rsa_secret(struct private_key_stuff *pks)
 
 	SECItem nss_ckaid = same_ckaid_as_secitem(&rsak->pub.ckaid);
 	SECKEYPrivateKey *private_key = PK11_FindKeyByKeyID(slot, &nss_ckaid,
-							    lsw_return_nss_password_file_info());
+							    lsw_nss_get_password_context(logger));
 	if (private_key == NULL) {
 		dbg("NSS: can't find the private key using the NSS CKAID");
 		CERTCertificate *cert = get_cert_by_ckaid_from_nss(&rsak->pub.ckaid);
 		if (cert == NULL) {
 			return "can't find the private key matching the NSS CKAID";
 		}
-		private_key = PK11_FindKeyByAnyCert(cert, lsw_return_nss_password_file_info());
+		private_key = PK11_FindKeyByAnyCert(cert, lsw_nss_get_password_context(logger));
 		CERT_DestroyCertificate(cert);
 		if (private_key == NULL) {
 			return "can't find the private key (the certificate found using NSS CKAID has no matching private key)";
@@ -1247,8 +1247,8 @@ static void add_secret(struct secret **slist,
 	unlock_certs_and_keys(story);
 }
 
-static void process_secret(struct secret **psecrets,
-			struct secret *s)
+static void process_secret(struct secret **psecrets, struct secret *s,
+			   struct logger *logger)
 {
 	err_t ugh = NULL;
 
@@ -1273,7 +1273,7 @@ static void process_secret(struct secret **psecrets,
 			ugh = "ERROR: bad RSA key syntax";
 		} else if (tokeq("{")) {
 			/* raw RSA key in NSS */
-			ugh = lsw_process_rsa_secret(&s->pks);
+			ugh = lsw_process_rsa_secret(&s->pks, logger);
 		} else {
 			/* RSA key in certificate in NSS */
 			ugh = "WARNING: The :RSA secrets entries for X.509 certificates are no longer needed";
@@ -1316,7 +1316,7 @@ static void process_secret(struct secret **psecrets,
 	}
 }
 
-static void lsw_process_secret_records(struct secret **psecrets)
+static void lsw_process_secret_records(struct secret **psecrets, struct logger *logger)
 {
 	/* const struct secret *secret = *psecrets; */
 
@@ -1376,9 +1376,8 @@ static void lsw_process_secret_records(struct secret **psecrets)
 			 */
 			memcpy(p, flp->tok, flp->cur - flp->tok + 1);
 			(void) shift();	/* move to Record Boundary, we hope */
-			if (flushline("ignoring malformed INCLUDE -- expected Record Boundary after filename"))
-			{
-				lsw_process_secrets_file(psecrets, fn);
+			if (flushline("ignoring malformed INCLUDE -- expected Record Boundary after filename")) {
+				lsw_process_secrets_file(psecrets, fn, logger);
 				flp->tok = NULL;	/* redundant? */
 			}
 		} else {
@@ -1398,7 +1397,7 @@ static void lsw_process_secret_records(struct secret **psecrets)
 				if (tokeq(":")) {
 					/* found key part */
 					(void) shift();	/* eat ":" */
-					process_secret(psecrets, s);
+					process_secret(psecrets, s, logger);
 					break;
 				}
 
@@ -1459,8 +1458,8 @@ static int globugh_secrets(const char *epath, int eerrno)
 	return 1;	/* stop glob */
 }
 
-static void lsw_process_secrets_file(struct secret **psecrets,
-				const char *file_pat)
+static void lsw_process_secrets_file(struct secret **psecrets, const char *file_pat,
+				     struct logger *logger)
 {
 	struct file_lex_position pos;
 	char **fnp;
@@ -1487,7 +1486,7 @@ static void lsw_process_secrets_file(struct secret **psecrets,
 				loglog(RC_LOG, "loading secrets from \"%s\"", *fnp);
 				(void) flushline(
 					"file starts with indentation (continuation notation)");
-				lsw_process_secret_records(psecrets);
+				lsw_process_secret_records(psecrets, logger);
 				lexclose();
 			}
 		}
@@ -1560,11 +1559,11 @@ void lsw_free_preshared_secrets(struct secret **psecrets)
 	unlock_certs_and_keys("free_preshared_secrets");
 }
 
-void lsw_load_preshared_secrets(struct secret **psecrets,
-				const char *secrets_file)
+void lsw_load_preshared_secrets(struct secret **psecrets, const char *secrets_file,
+				struct logger *logger)
 {
 	lsw_free_preshared_secrets(psecrets);
-	(void) lsw_process_secrets_file(psecrets, secrets_file);
+	(void) lsw_process_secrets_file(psecrets, secrets_file, logger);
 }
 
 struct pubkey *reference_key(struct pubkey *pk)
@@ -1696,7 +1695,7 @@ void delete_public_keys(struct pubkey_list **head,
 
 static err_t add_pubkey_secret_5(struct secret **secrets, const struct pubkey_type *type,
 				 SECKEYPublicKey *pubk, SECItem *ckaid_nss,
-				 CERTCertificate *cert)
+				 CERTCertificate *cert, struct logger *logger)
 {
 	struct secret *s = alloc_thing(struct secret, "pubkey secret");
 	s->pks.pubkey_type = type;
@@ -1706,8 +1705,7 @@ static err_t add_pubkey_secret_5(struct secret **secrets, const struct pubkey_ty
 	/* make an unpacked copy of the private key */
 
 	SECKEYPrivateKey *private_key =
-		PK11_FindKeyByAnyCert(cert,
-				      lsw_return_nss_password_file_info());
+		PK11_FindKeyByAnyCert(cert, lsw_nss_get_password_context(logger));
 	if (private_key == NULL)
 		return "NSS: cert private key not found";
 
@@ -1742,7 +1740,7 @@ static const struct pubkey_type *pubkey_type_nss(SECKEYPublicKey *pubk)
 }
 
 static err_t add_pubkey_secret(struct secret **secrets, CERTCertificate *cert,
-			       SECKEYPublicKey *pubk)
+			       SECKEYPublicKey *pubk, struct logger *logger)
 {
 	/* XXX: see also nss_cert_key_kind(cert) */
 	const struct pubkey_type *type = pubkey_type_nss(pubk);
@@ -1756,8 +1754,7 @@ static err_t add_pubkey_secret(struct secret **secrets, CERTCertificate *cert,
 	 * there's no private key.
 	 */
 	SECItem *ckaid_nss =
-		PK11_GetLowLevelKeyIDForCert(NULL, cert,
-					     lsw_return_nss_password_file_info()); /* MUST FREE */
+		PK11_GetLowLevelKeyIDForCert(NULL, cert, lsw_nss_get_password_context(logger)); /* MUST FREE */
 
 	if (ckaid_nss == NULL) {
 		return "NSS: key ID not found";
@@ -1776,12 +1773,12 @@ static err_t add_pubkey_secret(struct secret **secrets, CERTCertificate *cert,
 
 	dbg("adding %s secret for certificate: %s", type->name, cert->nickname);
 
-	err_t err = add_pubkey_secret_5(secrets, type, pubk, ckaid_nss, cert);
+	err_t err = add_pubkey_secret_5(secrets, type, pubk, ckaid_nss, cert, logger);
 	SECITEM_FreeItem(ckaid_nss, PR_TRUE);
 	return err;
 }
 
-err_t lsw_add_secret(struct secret **secrets, CERTCertificate *cert)
+err_t lsw_add_secret(struct secret **secrets, CERTCertificate *cert, struct logger *logger)
 {
 	if (cert == NULL) {
 		return "NSS cert not found";
@@ -1793,7 +1790,7 @@ err_t lsw_add_secret(struct secret **secrets, CERTCertificate *cert)
 		return "NSS: could not determine certificate kind; SECKEY_ExtractPublicKey() failed";
 	}
 
-	err_t err = add_pubkey_secret(secrets, cert, pubk);
+	err_t err = add_pubkey_secret(secrets, cert, pubk, logger);
 	SECKEY_DestroyPublicKey(pubk);
 	return err;
 }
@@ -1810,7 +1807,7 @@ static struct pubkey *allocate_pubkey_nss_3(CERTCertificate *cert,
 	}
 
 	SECItem *ckaid_nss = PK11_GetLowLevelKeyIDForCert(NULL, cert,
-							  lsw_return_nss_password_file_info()); /* must free */
+							  lsw_nss_get_password_context(logger)); /* must free */
 	if (ckaid_nss == NULL) {
 		/* someone deleted CERT from the NSS DB */
 		log_message(RC_LOG, logger,

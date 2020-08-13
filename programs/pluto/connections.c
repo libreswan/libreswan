@@ -1068,7 +1068,7 @@ bool load_end_cert_and_preload_secret(struct fd *whackfd,
 	 * get_psk.
 	 */
 	dbg("preload cert/secret for connection: %s", cert->nickname);
-	err_t ugh = load_nss_cert_secret(cert);
+	err_t ugh = load_nss_cert_secret(cert, logger);
 	if (ugh != NULL) {
 		dbg("warning: no secret key loaded for %s certificate with %s %s: %s",
 		    which, cert_source, pubkey, ugh);
