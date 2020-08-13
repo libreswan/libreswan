@@ -549,7 +549,7 @@ void lswlog_child_sa_established(struct jambuf *buf, struct state *st)
 
 		jam(buf, "%sESP%s%s%s=>0x%08" PRIx32 " <0x%08" PRIx32 "",
 			ini,
-			nat ? (tcp ? "inTCP" : "inUDP") : "",
+			tcp ? "inTCP" : nat ? "inUDP" : "",
 			esn ? "/ESN" : "",
 			tfc ? "/TFC" : "",
 			ntohl(st->st_esp.attrs.spi),
