@@ -1184,7 +1184,7 @@ static err_t lsw_process_rsa_secret(struct private_key_stuff *pks, struct logger
 							    lsw_nss_get_password_context(logger));
 	if (private_key == NULL) {
 		dbg("NSS: can't find the private key using the NSS CKAID");
-		CERTCertificate *cert = get_cert_by_ckaid_from_nss(&rsak->pub.ckaid);
+		CERTCertificate *cert = get_cert_by_ckaid_from_nss(&rsak->pub.ckaid, logger);
 		if (cert == NULL) {
 			return "can't find the private key matching the NSS CKAID";
 		}

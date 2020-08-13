@@ -952,7 +952,7 @@ bool load_end_cert_and_preload_secret(struct fd *whackfd,
 	case WHACK_PUBKEY_CERTIFICATE_NICKNAME:
 	{
 		cert_source = "nickname";
-		cert = get_cert_by_nickname_from_nss(pubkey);
+		cert = get_cert_by_nickname_from_nss(pubkey, logger);
 		if (cert == NULL) {
 			log_message(RC_LOG_SERIOUS, logger,
 				    "failed to find certificate named '%s' in the NSS database",
@@ -984,7 +984,7 @@ bool load_end_cert_and_preload_secret(struct fd *whackfd,
 			log_message(RC_LOG, logger, "invalid hex CKAID '%s': %s", pubkey, err);
 			return false;
 		}
-		cert = get_cert_by_ckaid_from_nss(&ckaid);
+		cert = get_cert_by_ckaid_from_nss(&ckaid, logger);
 		if (cert == NULL) {
 			log_message(RC_LOG_SERIOUS, logger,
 				    "failed to find certificate ckaid '%s' in the NSS database",

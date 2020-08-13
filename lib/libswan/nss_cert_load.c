@@ -20,16 +20,18 @@
 
 #include "nss_cert_load.h"
 
-CERTCertificate *get_cert_by_nickname_from_nss(const char *nickname)
+CERTCertificate *get_cert_by_nickname_from_nss(const char *nickname,
+					       struct logger *logger)
 {
 	return nickname == NULL ? NULL :
 		PK11_FindCertFromNickname(nickname,
-			lsw_return_nss_password_file_info());
+					  lsw_nss_get_password_context(logger));
 }
 
 struct ckaid_match_arg {
 	SECItem ckaid;
 	CERTCertificate *cert;
+	struct logger *logger;
 };
 
 static SECStatus ckaid_match(CERTCertificate *cert, SECItem *ignore1 UNUSED, void *arg)
@@ -39,7 +41,7 @@ static SECStatus ckaid_match(CERTCertificate *cert, SECItem *ignore1 UNUSED, voi
 		return SECSuccess;
 	}
 	SECItem *ckaid = PK11_GetLowLevelKeyIDForCert(NULL, cert,
-						      lsw_return_nss_password_file_info());
+						      lsw_nss_get_password_context(ckaid_match_arg->logger));
 	if (ckaid == NULL) {
 		dbg("GetLowLevelID for cert %s failed", cert->nickname);
 		return SECSuccess;
@@ -53,13 +55,14 @@ static SECStatus ckaid_match(CERTCertificate *cert, SECItem *ignore1 UNUSED, voi
 	return SECSuccess;
 }
 
-CERTCertificate *get_cert_by_ckaid_from_nss(const ckaid_t *ckaid)
+CERTCertificate *get_cert_by_ckaid_from_nss(const ckaid_t *ckaid, struct logger *logger)
 {
 	struct ckaid_match_arg ckaid_match_arg = {
 		.cert = NULL,
 		.ckaid = same_ckaid_as_secitem(ckaid),
+		.logger = logger,
 	};
 	PK11_TraverseSlotCerts(ckaid_match, &ckaid_match_arg,
-			       lsw_return_nss_password_file_info());
+			       lsw_nss_get_password_context(logger));
 	return ckaid_match_arg.cert;
 }

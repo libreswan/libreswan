@@ -22,7 +22,7 @@
 #include <libreswan.h>
 #include <secrets.h>
 
-extern CERTCertificate *get_cert_by_nickname_from_nss(const char *nickname);
-extern CERTCertificate *get_cert_by_ckaid_from_nss(const ckaid_t *ckaid);
+extern CERTCertificate *get_cert_by_nickname_from_nss(const char *nickname, struct logger *logger);
+extern CERTCertificate *get_cert_by_ckaid_from_nss(const ckaid_t *ckaid, struct logger *logger);
 
 #endif /* _NSS_CERT_LOAD_H */
