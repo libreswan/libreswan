@@ -42,11 +42,12 @@ bool lsw_nss_setup(const char *config_dir, unsigned flags, struct logger *logger
 void lsw_nss_shutdown(void);
 
 /*
- * Just in case, at some point passing a parameter becomes somehow
- * useful.
+ * Any code that could call back into lsw_nss_get_password() needs to
+ * pass in a context parameter - the logger is it.  Otherwize the
+ * password code can't log!
+ *
+ * Just a wrapper but type checked.
  */
-#define lsw_return_nss_password_file_info() NULL
-/* type checked wrapper */
 #define lsw_nss_get_password_context(LOGGER) ({ struct logger *l_ = LOGGER; l_; })
 
 PK11SlotInfo *lsw_nss_get_authenticated_slot(struct logger *logger);
