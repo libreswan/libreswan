@@ -991,10 +991,16 @@ $(eval $(call kvm-hosts-domains,shutdown))
 #
 # Get rid of (almost) everything
 #
-# After a purge, there should be an upgrade.  Force this by deleting
-# the .upgraded file.
-#
 # XXX: don't depend on targets that trigger a KVM build.
+#
+# After kvm-purge, kvm-install should perform an upgrade and
+# transmogrify.  Force this by deleting the .upgraded file.
+#
+# After kvm-uninstall, kvm-install should rebuild the local domains
+# (but not do anything requiring network access or taking lots of
+# time; hence no upgrade or transmogrify).
+#
+# After kvm-clean, kvm-install should rebuild/install pluto.
 #
 # For kvm-uninstall, instead of trying to uninstall libreswan from the
 # $(KVM_BUILD_DOMAIN_CLONES), delete both $(KVM_BUILD_DOMAIN_CLONES) and
@@ -1003,19 +1009,19 @@ $(eval $(call kvm-hosts-domains,shutdown))
 # on 'make uninstall') the next test run also gets entirely new
 # domains.
 
-.PHONY: kvm-clean
-kvm-clean: kvm-uninstall-local-domains
-kvm-clean: kvm-keys-clean
-kvm-clean: kvm-test-clean kvm-uninstall
-	rm -rf $(KVM_OBJDIR)
-
 .PHONY: kvm-uninstall
 kvm-uninstall: kvm-uninstall-local-domains
-	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified
+
+.PHONY: kvm-clean
+kvm-clean: kvm-uninstall
+kvm-clean: kvm-keys-clean
+kvm-clean: kvm-test-clean
+kvm-clean:
+	rm -rf $(KVM_OBJDIR)
 
 .PHONY: kvm-purge
 kvm-purge: kvm-clean
-kvm-purge: kvm-uninstall
+kvm-purge: kvm-uninstall-local-domains
 kvm-purge: kvm-uninstall-test-networks
 	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
 
