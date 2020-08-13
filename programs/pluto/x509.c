@@ -1408,19 +1408,18 @@ stf_status ikev2_send_cert(const struct state *st, pb_stream *outpbs)
 	return STF_OK;
 }
 
-static bool cert_has_private_key(CERTCertificate *cert)
+static bool cert_has_private_key(CERTCertificate *cert, struct logger *logger)
 {
 	if (cert == NULL)
-		return FALSE;
+		return false;
 
-	SECKEYPrivateKey *k = PK11_FindKeyByAnyCert(cert,
-			lsw_return_nss_password_file_info());
+	SECKEYPrivateKey *k = PK11_FindKeyByAnyCert(cert, lsw_nss_get_password_context(logger));
 
 	if (k == NULL)
-		return FALSE;
+		return false;
 
 	SECKEY_DestroyPrivateKey(k);
-	return TRUE;
+	return true;
 }
 
 static bool cert_time_to_str(char *buf, size_t buflen,
@@ -1487,7 +1486,7 @@ static void cert_detail_to_whacklog(struct show *s, CERTCertificate *cert)
 	char sn[128];
 	char *print_sn = certsntoa(cert, sn, sizeof(sn)) != 0 ? sn : "(NULL)";
 
-	bool has_priv = cert_has_private_key(cert);
+	bool has_priv = cert_has_private_key(cert, show_logger(s));
 
 	if (!pexpect(pub_k != NULL))
 		return;
