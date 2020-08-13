@@ -1249,9 +1249,16 @@ static bool extract_connection(struct fd *whackfd,
 		loglog(RC_FATAL, "MOBIKE requires ikev2");
 		return false;
 	}
+
 	if (wm->policy & POLICY_IKEV2_ALLOW_NARROWING &&
 	    c->ike_version == IKEv1) {
 		loglog(RC_FATAL, "narrowing=yes requires ikev2");
+		return false;
+	}
+
+	if (wm->iketcp != IKE_TCP_NO &&
+	    c->ike_version != IKEv2) {
+		loglog(RC_FATAL, "enable-tcp= requires ikev2");
 		return false;
 	}
 
@@ -1285,6 +1292,9 @@ static bool extract_connection(struct fd *whackfd,
 		}
 		if (wm->esp != NULL) {
 			loglog(RC_INFORMATIONAL, "Ignored esp= option for type=passthrough connection");
+		}
+		if (wm->iketcp != IKE_TCP_NO) {
+			loglog(RC_INFORMATIONAL, "Ignored enable-tcp= option for type=passthrough connection");
 		}
 		if (wm->left.authby != AUTHBY_UNSET || wm->right.authby != AUTHBY_UNSET) {
 			loglog(RC_FATAL, "Failed to add connection \"%s\": leftauth= / rightauth= options are invalid for type=passthrough connection",
@@ -1407,6 +1417,8 @@ static bool extract_connection(struct fd *whackfd,
 		/* cleanup inherited default */
 		c->policy &= ~(POLICY_IKEV1_ALLOW|POLICY_IKEV2_ALLOW);
 		c->ike_version = 0;
+		c->iketcp = IKE_TCP_NO;
+		c->remote_tcpport = 0;
 	}
 
 	if (libreswan_fipsmode()) {
@@ -3879,7 +3891,8 @@ void show_one_connection(struct show *s,
 		  instance,
 		  deltamillisecs(c->r_interval),
 		  deltasecs(c->r_timeout),
-		  c->iketcp == IKE_TCP_NO ? "no" : c->iketcp == IKE_TCP_ONLY ? "yes" : "fallback",
+		  c->iketcp == IKE_TCP_NO ? "no" : c->iketcp == IKE_TCP_ONLY ? "yes" :
+			c->iketcp == IKE_TCP_FALLBACK ? "fallback" : "<BAD VALUE>",
 		  c->remote_tcpport);
 
 	show_comment(s,
