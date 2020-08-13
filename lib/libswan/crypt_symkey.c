@@ -24,29 +24,26 @@
 
 #define SPACES "    "
 
-static PK11SymKey *ephemeral_symkey(void)
+static PK11SymKey *ephemeral_symkey;
+
+void init_crypt_symkey(struct logger *logger)
 {
-	/* XXX: not thread safe */
-	static PK11SymKey *ephemeral_key = NULL;
-	if (ephemeral_key == NULL) {
-		/* get a secret key */
-		PK11SlotInfo *slot = PK11_GetBestSlot(CKM_AES_KEY_GEN,
-						      lsw_return_nss_password_file_info());
-		if (slot == NULL) {
-			char error[LOG_WIDTH];
-			struct jambuf buf[1] = { ARRAY_AS_JAMBUF(error), };
-			jam(buf, "NSS: ephemeral slot error");
-			jam_nss_error(buf);
-			fatal("%s", error);
-		}
-		ephemeral_key = PK11_KeyGen(slot, CKM_AES_KEY_GEN,
-					    NULL, 128/8, NULL);
-		PK11_FreeSlot(slot); /* reference counted */
+	/* get a secret key */
+	PK11SlotInfo *slot = PK11_GetBestSlot(CKM_AES_KEY_GEN,
+					      lsw_nss_get_password_context(logger));
+	if (slot == NULL) {
+		char error[LOG_WIDTH];
+		struct jambuf buf[1] = { ARRAY_AS_JAMBUF(error), };
+		jam(buf, "NSS: ephemeral slot error");
+		jam_nss_error(buf);
+		fatal("%s", error);
 	}
+	ephemeral_symkey = PK11_KeyGen(slot, CKM_AES_KEY_GEN,
+				       NULL, 128/8, NULL);
+	PK11_FreeSlot(slot); /* reference counted */
 	if (DBGP(DBG_CRYPT)) {
-		DBG_symkey(SPACES, "ephemeral", ephemeral_key);
+		DBG_symkey(SPACES, "ephemeral", ephemeral_symkey);
 	}
-	return ephemeral_key;
 }
 
 void release_symkey(const char *prefix, const char *name,
@@ -296,7 +293,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey)
 	}
 
 	/* get a secret key */
-	PK11SymKey *ephemeral_key = ephemeral_symkey();
+	PK11SymKey *ephemeral_key = ephemeral_symkey;
 
 	/*
 	 * Ensure that the source key shares a slot with the
@@ -389,7 +386,7 @@ PK11SymKey *symkey_from_bytes(const char *name, const uint8_t *bytes, size_t siz
 		return NULL;
 	}
 
-	PK11SymKey *scratch = ephemeral_symkey();
+	PK11SymKey *scratch = ephemeral_symkey;
 	PK11SymKey *tmp = merge_symkey_bytes(name, scratch, bytes, sizeof_bytes,
 					     CKM_CONCATENATE_DATA_AND_BASE,
 					     CKM_EXTRACT_KEY_FROM_KEY);
@@ -412,7 +409,7 @@ PK11SymKey *encrypt_key_from_bytes(const char *name,
 				   const uint8_t *bytes, size_t sizeof_bytes,
 				   where_t where)
 {
-	PK11SymKey *scratch = ephemeral_symkey();
+	PK11SymKey *scratch = ephemeral_symkey;
 	PK11SymKey *tmp = merge_symkey_bytes(name, scratch, bytes, sizeof_bytes,
 					     CKM_CONCATENATE_DATA_AND_BASE,
 					     CKM_EXTRACT_KEY_FROM_KEY);
@@ -429,7 +426,7 @@ PK11SymKey *prf_key_from_bytes(const char *name, const struct prf_desc *prf,
 			       const uint8_t *bytes, size_t sizeof_bytes,
 			       where_t where)
 {
-	PK11SymKey *scratch = ephemeral_symkey();
+	PK11SymKey *scratch = ephemeral_symkey;
 	PK11SymKey *tmp = merge_symkey_bytes(name, scratch, bytes, sizeof_bytes,
 					     CKM_CONCATENATE_DATA_AND_BASE,
 					     CKM_EXTRACT_KEY_FROM_KEY);

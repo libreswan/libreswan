@@ -68,6 +68,7 @@
 #include "hostpair.h"		/* for init_host_pair() */
 #include "ikev1.h"		/* for init_ikev1() */
 #include "ikev2.h"		/* for init_ikev2() */
+#include "crypt_symkey.h"	/* for init_crypt_symkey() */
 #include "crl_queue.h"		/* for free_crl_queue() */
 #include "iface.h"
 
@@ -1620,6 +1621,8 @@ int main(int argc, char **argv)
 			loglog(RC_LOG_SERIOUS, "FIPS mode: debug-crypt disabled as such logging is not allowed");
 		}
 	}
+
+	init_crypt_symkey(&logger);
 
 	/*
 	 * If impaired, force the mode change; and verify the

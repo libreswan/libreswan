@@ -29,6 +29,8 @@ struct hash_desc;
 struct encrypt_desc;
 struct prf_desc;
 
+void init_crypt_symkey(struct logger *logger);
+
 /*
  * Log some information on a SYMKEY.
  *
