@@ -46,6 +46,8 @@ void lsw_nss_shutdown(void);
  * useful.
  */
 #define lsw_return_nss_password_file_info() NULL
+/* type checked wrapper */
+#define lsw_nss_get_password_context(LOGGER) ({ struct logger *l_ = LOGGER; l_; })
 
 PK11SlotInfo *lsw_nss_get_authenticated_slot(struct logger *logger);
 

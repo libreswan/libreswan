@@ -131,7 +131,7 @@ PK11SlotInfo *lsw_nss_get_authenticated_slot(struct logger *logger)
 
 	if (PK11_IsFIPS() || PK11_NeedLogin(slot)) {
 		SECStatus status = PK11_Authenticate(slot, PR_FALSE,
-						     lsw_return_nss_password_file_info());
+						     lsw_nss_get_password_context(logger));
 		if (status != SECSuccess) {
 			const char *token = PK11_GetTokenName(slot);
 			log_message(RC_LOG_SERIOUS|ERROR_STREAM, logger,
