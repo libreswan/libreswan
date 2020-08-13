@@ -302,7 +302,7 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
 				       &rsaparams, &pubkey,
 				       PR_TRUE,
 				       PK11_IsFIPS() ? PR_TRUE : PR_FALSE,
-				       lsw_return_nss_password_file_info());
+				       lsw_nss_get_password_context(&progname_logger));
 	/* inTheToken, isSensitive, passwordCallbackFunction */
 	if (privkey == NULL) {
 		fprintf(stderr,
