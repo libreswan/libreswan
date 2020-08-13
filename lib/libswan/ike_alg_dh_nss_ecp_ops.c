@@ -40,7 +40,8 @@
 static void nss_ecp_calc_secret(const struct dh_desc *group,
 				SECKEYPrivateKey **privk,
 				SECKEYPublicKey **pubk,
-				uint8_t *ke, size_t sizeof_ke)
+				uint8_t *ke, size_t sizeof_ke,
+				struct logger *logger)
 {
 	passert(sizeof_ke == group->bytes);
 	/*
@@ -75,7 +76,7 @@ static void nss_ecp_calc_secret(const struct dh_desc *group,
 	}
 
 	*privk = SECKEY_CreateECPrivateKey(pk11_param, pubk,
-					   lsw_return_nss_password_file_info());
+					   lsw_nss_get_password_context(logger));
 
 	SECITEM_FreeItem(pk11_param, PR_TRUE);
 
@@ -118,7 +119,8 @@ static void nss_ecp_calc_secret(const struct dh_desc *group,
 static PK11SymKey *nss_ecp_calc_shared(const struct dh_desc *group,
 				       SECKEYPrivateKey *local_privk,
 				       const SECKEYPublicKey *local_pubk,
-				       uint8_t *remote_ke, size_t sizeof_remote_ke)
+				       uint8_t *remote_ke, size_t sizeof_remote_ke,
+				       struct logger *logger)
 {
 	SECKEYPublicKey remote_pubk = {
 		.keyType = ecKey,
@@ -178,7 +180,7 @@ static PK11SymKey *nss_ecp_calc_shared(const struct dh_desc *group,
 						 /* key size */ 0,
 						 /* KDF */ CKD_NULL,
 						 /* shared data */ NULL,
-						 /* ctx */ lsw_return_nss_password_file_info());
+						 /* ctx */ lsw_nss_get_password_context(logger));
 	DBG(DBG_CRYPT, DBG_symkey("g_ir ", "temp", temp));
 
 	/*

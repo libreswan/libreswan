@@ -326,7 +326,7 @@ static void pluto_do_crypto_op(struct pluto_crypto_req_cont *cn, int helpernum)
 			     cn->pcrc_id, cn->pcrc_name, cn->pcrc_handler->name);
 }
 
-static void pcr_compute(struct logger *logger_unused UNUSED,
+static void pcr_compute(struct logger *logger,
 			struct crypto_task *task,
 			int unused_helpernum UNUSED)
 {
@@ -336,7 +336,7 @@ static void pcr_compute(struct logger *logger_unused UNUSED,
 	/* now we have the entire request in the buffer, process it */
 	switch (r->pcr_type) {
 	case pcr_build_ke_and_nonce:
-		calc_ke(&r->pcr_d.kn);
+		calc_ke(&r->pcr_d.kn, logger);
 		calc_nonce(&r->pcr_d.kn);
 		break;
 
@@ -345,15 +345,15 @@ static void pcr_compute(struct logger *logger_unused UNUSED,
 		break;
 
 	case pcr_compute_dh_iv:
-		calc_dh_iv(&r->pcr_d.v1_dh);
+		calc_dh_iv(&r->pcr_d.v1_dh, logger);
 		break;
 
 	case pcr_compute_dh:
-		calc_dh(&r->pcr_d.v1_dh);
+		calc_dh(&r->pcr_d.v1_dh, logger);
 		break;
 
 	case pcr_compute_dh_v2:
-		calc_dh_v2(r);
+		calc_dh_v2(r, logger);
 		break;
 
 	case pcr_crypto:

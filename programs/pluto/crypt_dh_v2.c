@@ -338,7 +338,7 @@ static void calc_skeyseed_v2(struct pcr_dh_v2 *sk,
 
 /* NOTE: if NSS refuses to calculate DH, skr->shared == NULL */
 /* MUST BE THREAD-SAFE */
-void calc_dh_v2(struct pluto_crypto_req *r)
+void calc_dh_v2(struct pluto_crypto_req *r, struct logger *logger)
 {
 	struct pcr_dh_v2 *const sk = &r->pcr_d.dh_v2;
 
@@ -352,7 +352,7 @@ void calc_dh_v2(struct pluto_crypto_req *r)
 
 	DBG(DBG_CRYPT, DBG_dump_hunk("peer's g: ", remote_ke));
 
-	sk->shared = calc_dh_shared(sk->secret, remote_ke);
+	sk->shared = calc_dh_shared(sk->secret, remote_ke, logger);
 	if (sk->shared == NULL) {
 		return; /* something went wrong */
 	}

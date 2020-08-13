@@ -352,7 +352,7 @@ extern void request_nonce(const char *name,
 			  struct state *st,
 			  crypto_req_cont_func *callback);
 
-extern void calc_ke(struct pcr_kenonce *kn);
+extern void calc_ke(struct pcr_kenonce *kn, struct logger *logger);
 
 extern void calc_nonce(struct pcr_kenonce *kn);
 
@@ -380,8 +380,8 @@ extern void finish_dh_secret(struct state *st,
 			     struct pluto_crypto_req *r);
 
 /* internal */
-extern void calc_dh(struct pcr_v1_dh *dh);
-extern void calc_dh_iv(struct pcr_v1_dh *dh);
+extern void calc_dh(struct pcr_v1_dh *dh, struct logger *logger);
+extern void calc_dh_iv(struct pcr_v1_dh *dh, struct logger *logger);
 extern void cancelled_v1_dh(struct pcr_v1_dh *dh);
 
 /*
@@ -400,7 +400,7 @@ extern bool finish_dh_v2(struct state *st,
 			 struct pluto_crypto_req *r, bool only_shared);
 
 /* internal */
-extern void calc_dh_v2(struct pluto_crypto_req *r);
+extern void calc_dh_v2(struct pluto_crypto_req *r, struct logger *logger);
 extern void cancelled_dh_v2(struct pcr_dh_v2 *dh);
 
 /*

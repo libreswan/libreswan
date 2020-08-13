@@ -55,11 +55,11 @@
 #include "crypt_dh.h"
 
 /* MUST BE THREAD-SAFE */
-void calc_ke(struct pcr_kenonce *kn)
+void calc_ke(struct pcr_kenonce *kn, struct logger *logger)
 {
 	const struct dh_desc *group = kn->group;
 
-	kn->secret = calc_dh_secret(kn->group, &kn->gi);
+	kn->secret = calc_dh_secret(kn->group, &kn->gi, logger);
 
 	DBG(DBG_CRYPT,
 	    DBG_log("NSS: Local DH %s secret (pointer): %p",

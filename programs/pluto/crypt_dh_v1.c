@@ -158,7 +158,7 @@ void start_dh_v1_secret(crypto_req_cont_func fn, const char *name,
 
 /* NOTE: if NSS refuses to calculate DH, skr->shared == NULL */
 /* MUST BE THREAD-SAFE */
-void calc_dh(struct pcr_v1_dh *dh)
+void calc_dh(struct pcr_v1_dh *dh, struct logger *logger)
 {
 	const struct dh_desc *group = dh->oakley_group;
 	passert(group != NULL);
@@ -168,7 +168,7 @@ void calc_dh(struct pcr_v1_dh *dh)
 	setchunk_from_wire(g, dh, dh->role == SA_RESPONDER ? &dh->gi : &dh->gr);
 	DBG(DBG_CRYPT, DBG_dump_hunk("peer's g: ", g));
 
-	dh->shared = calc_dh_shared(dh->secret, g);
+	dh->shared = calc_dh_shared(dh->secret, g, logger);
 }
 
 void finish_dh_secret(struct state *st,
@@ -275,7 +275,7 @@ static void calc_skeyids_iv(struct pcr_v1_dh *skq,
 }
 
 /* MUST BE THREAD-SAFE */
-void calc_dh_iv(struct pcr_v1_dh *dh)
+void calc_dh_iv(struct pcr_v1_dh *dh, struct logger *logger)
 {
 	const struct dh_desc *group = dh->oakley_group;
 	passert(group != NULL);
@@ -291,7 +291,7 @@ void calc_dh_iv(struct pcr_v1_dh *dh)
 
 	DBG(DBG_CRYPT, DBG_dump_hunk("peer's g: ", g));
 
-	dh->shared = calc_dh_shared(dh->secret, g);
+	dh->shared = calc_dh_shared(dh->secret, g, logger);
 
 	if (dh->shared != NULL) {
 		/* okay, so now calculate IV */

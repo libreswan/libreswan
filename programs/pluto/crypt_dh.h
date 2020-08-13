@@ -35,6 +35,7 @@
 struct dh_desc;
 struct state;
 struct msg_digest;
+struct logger;
 
 /*
  * The DH secret (opaque, but we all know it is implemented using
@@ -42,11 +43,11 @@ struct msg_digest;
  */
 struct dh_secret;
 
-struct dh_secret *calc_dh_secret(const struct dh_desc *group,
-				 chunk_t *ke);
+struct dh_secret *calc_dh_secret(const struct dh_desc *group, chunk_t *ke,
+				 struct logger *logger);
 
-PK11SymKey *calc_dh_shared(struct dh_secret *secret,
-			   chunk_t remote_ke);
+PK11SymKey *calc_dh_shared(struct dh_secret *secret, chunk_t remote_ke,
+			   struct logger *logger);
 
 void transfer_dh_secret_to_state(const char *helper, struct dh_secret **secret,
 				 struct state *st);

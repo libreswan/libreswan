@@ -15,6 +15,8 @@
 #ifndef IKE_ALG_DH_OPS_H
 #define IKE_ALG_DH_OPS_H
 
+struct logger;
+
 struct dh_ops {
 	const char *backend;
 
@@ -37,11 +39,13 @@ struct dh_ops {
 	void (*calc_secret)(const struct dh_desc *group,
 			    SECKEYPrivateKey **local_privk,
 			    SECKEYPublicKey **locak_pubk,
-			    uint8_t *ke, size_t sizeof_ke);
+			    uint8_t *ke, size_t sizeof_ke,
+			    struct logger *logger);
 	PK11SymKey *(*calc_shared)(const struct dh_desc *group,
 				   SECKEYPrivateKey *local_privk,
 				   const SECKEYPublicKey *local_pubk,
-				   uint8_t *remote_ke, size_t sizeof_remote_ke);
+				   uint8_t *remote_ke, size_t sizeof_remote_ke,
+				   struct logger *logger);
 };
 
 extern const struct dh_ops ike_alg_dh_nss_ecp_ops;

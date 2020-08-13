@@ -76,14 +76,15 @@ static void lswlog_dh_secret(struct jambuf *buf, struct dh_secret *secret)
 		secret->group->common.fqn, secret);
 }
 
-struct dh_secret *calc_dh_secret(const struct dh_desc *group,
-				 chunk_t *local_ke)
+struct dh_secret *calc_dh_secret(const struct dh_desc *group, chunk_t *local_ke,
+				 struct logger *logger)
 {
 	chunk_t ke = alloc_chunk(group->bytes, "local ke");
 	SECKEYPrivateKey *privk;
 	SECKEYPublicKey *pubk;
 	group->dh_ops->calc_secret(group, &privk, &pubk,
-				      ke.ptr, ke.len);
+				   ke.ptr, ke.len,
+				   logger);
 	passert(privk != NULL);
 	passert(pubk != NULL);
 	*local_ke = ke;
@@ -104,14 +105,16 @@ struct dh_secret *calc_dh_secret(const struct dh_desc *group,
  * If there is something that upsets NSS (what?) we will return NULL.
  */
 /* MUST BE THREAD-SAFE */
-PK11SymKey *calc_dh_shared(struct dh_secret *secret,
-			   chunk_t remote_ke)
+PK11SymKey *calc_dh_shared(struct dh_secret *secret, chunk_t remote_ke,
+			   struct logger *logger)
 {
 	PK11SymKey *dhshared =
 		secret->group->dh_ops->calc_shared(secret->group,
 						   secret->privk,
 						   secret->pubk,
-						   remote_ke.ptr, remote_ke.len);
+						   remote_ke.ptr,
+						   remote_ke.len,
+						   logger);
 	/*
 	 * The IKEv2 documentation, even for ECP, refers to "g^ir".
 	 */
@@ -177,12 +180,13 @@ struct crypto_task {
 	dh_cb *cb;
 };
 
-static void compute_dh(struct logger *logger_unused UNUSED,
+static void compute_dh(struct logger *logger,
 		       struct crypto_task *task,
 		       int thread_unused UNUSED)
 {
 	task->shared_secret = calc_dh_shared(task->local_secret,
-					     task->remote_ke);
+					     task->remote_ke,
+					     logger);
 }
 
 static void cancel_dh(struct crypto_task **task)
