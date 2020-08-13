@@ -447,8 +447,10 @@ static void fetch_crls(void)
  * Similarly, if check_crls() is called more frequently than
  * fetch_crls() can process, redundant fetches will be merged.
  */
-void check_crls(struct fd *unused_whackfd UNUSED)
+void check_crls(struct fd *whackfd)
 {
+	struct logger logger = GLOBAL_LOGGER(whackfd);
+
 	schedule_oneshot_timer(EVENT_CHECK_CRLS, crl_check_interval);
 	struct crl_fetch_request *requests = NULL;
 
@@ -503,7 +505,7 @@ void check_crls(struct fd *unused_whackfd UNUSED)
 	 * Iterate all X.509 certificates in database. This is needed to
 	 * process middle and end certificates.
 	 */
-	CERTCertList *certs = get_all_certificates();
+	CERTCertList *certs = get_all_certificates(&logger);
 
 	if (certs != NULL) {
 		for (CERTCertListNode *node = CERT_LIST_HEAD(certs);

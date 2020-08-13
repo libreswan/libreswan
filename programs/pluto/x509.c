@@ -1609,20 +1609,13 @@ static void crl_detail_list(const struct fd *whackfd)
 	PORT_FreeArena(crl_list->arena, PR_FALSE);
 }
 
-CERTCertList *get_all_certificates(void)
+CERTCertList *get_all_certificates(struct logger *logger)
 {
-	PK11SlotInfo *slot = PK11_GetInternalKeySlot();
-
-	if (slot == NULL)
+	PK11SlotInfo *slot = lsw_nss_get_authenticated_slot(logger);
+	if (slot == NULL) {
+		/* already logged */
 		return NULL;
-
-	if (PK11_NeedLogin(slot)) {
-		SECStatus rv = PK11_Authenticate(
-			slot, PR_TRUE, lsw_return_nss_password_file_info());
-		if (rv != SECSuccess)
-			return NULL;
 	}
-
 	return PK11_ListCertsInSlot(slot);
 }
 
@@ -1644,7 +1637,7 @@ static void cert_detail_list(struct show *s, show_cert_t type)
 	show_comment(s, " ");
 	show_comment(s, "List of X.509 %s Certificates:", tstr);
 
-	CERTCertList *certs = get_all_certificates();
+	CERTCertList *certs = get_all_certificates(show_logger(s));
 
 	if (certs == NULL)
 		return;

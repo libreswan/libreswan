@@ -96,7 +96,7 @@ extern bool add_pubkey_from_nss_cert(struct pubkey_list **pubkey_db,
 				     CERTCertificate *cert,
 				     struct logger *logger);
 extern bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen);
-extern CERTCertList *get_all_certificates(void);
+extern CERTCertList *get_all_certificates(struct logger *logger);
 
 /*
  * Formatting.
