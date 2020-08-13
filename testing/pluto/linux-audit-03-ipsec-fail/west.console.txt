@@ -14,7 +14,7 @@ west #
 002 added IKEv1 connection "ikev1-aggr-ipsec-fail"
 west #
  ipsec auto --add ikev2-ipsec-fail
-002 added IKEv1 connection "ikev2-ipsec-fail"
+002 added IKEv2 connection "ikev2-ipsec-fail"
 west #
  #ipsec whack --impair delete-on-retransmit
 west #

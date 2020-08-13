@@ -14,12 +14,12 @@ road #
  sleep 5
 road #
  ipsec auto --add passthrough-in
-002 added IKEv1 connection "passthrough-in"
+002 added passthrough connection "passthrough-in"
 road #
  ipsec auto --route passthrough-in
 road #
  ipsec auto --add passthrough-out
-002 added IKEv1 connection "passthrough-out"
+002 added passthrough connection "passthrough-out"
 road #
  ipsec auto --route passthrough-out
 road #

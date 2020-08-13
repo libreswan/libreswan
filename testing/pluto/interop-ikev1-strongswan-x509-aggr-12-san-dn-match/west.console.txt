@@ -15,7 +15,7 @@ west #
 west #
  strongswan up san | grep -v libcurl
 sending cert request for "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
-initiating IKEv1 Aggressive Mode connection IKE_SA san[1] to 192.1.2.23
+initiating Aggressive Mode IKE_SA san[1] to 192.1.2.23
 generating AGGRESSIVE request 0 [ SA KE No ID CERTREQ V V V V V ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)

@@ -18,7 +18,7 @@ west #
 002 added IKEv1 connection "ikev1-aggr"
 west #
  ipsec auto --add ikev2
-002 added IKEv1 connection "ikev2"
+002 added IKEv2 connection "ikev2"
 west #
  echo "initdone"
 initdone

@@ -77,9 +77,9 @@ road #
 1v2 "road-east" #4: sent IKE_SA_INIT request
 002 "road-east" #4: initiating a redirect to new gateway (address: 192.1.2.44)
 1v2 "road-east" #5: initiating IKEv2 connection
+1v2 "road-east" #5: sent IKE_SA_INIT request
 002 "road-east" #4: deleting state (STATE_IKESA_DEL) and NOT sending notification
 002 "road-east" #4: IMPAIR: skipping revival of connection that is supposed to remain up
-1v2 "road-east" #5: sent IKE_SA_INIT request
 002 "road-east" #5: IMPAIR: retransmit so deleting SA
 002 "road-east" #5: deleting state (STATE_PARENT_I1) and NOT sending notification
 002 "road-east" #5: IMPAIR: skipping revival of connection that is supposed to remain up

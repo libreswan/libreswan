@@ -25,7 +25,7 @@ west #
 002 added IKEv1 connection "westnet-eastnet"
 west #
  ipsec auto --add westnet-eastnet-passthrough
-002 added IKEv1 connection "westnet-eastnet-passthrough"
+002 added passthrough connection "westnet-eastnet-passthrough"
 west #
  ipsec auto --route westnet-eastnet-passthrough
 west #

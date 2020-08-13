@@ -32,10 +32,10 @@ west #
 002 added IKEv1 connection "west-east"
 west #
  ipsec auto --add west-east-passthrough-a
-002 added IKEv1 connection "west-east-passthrough-a"
+002 added passthrough connection "west-east-passthrough-a"
 west #
  ipsec auto --add west-east-passthrough-b
-002 added IKEv1 connection "west-east-passthrough-b"
+002 added passthrough connection "west-east-passthrough-b"
 west #
  ipsec auto --route west-east-passthrough-a
 west #

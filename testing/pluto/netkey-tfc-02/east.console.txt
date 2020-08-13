@@ -6,7 +6,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add tfc
-002 added IKEv1 connection "tfc"
+002 added IKEv2 connection "tfc"
 east #
  echo "initdone"
 initdone

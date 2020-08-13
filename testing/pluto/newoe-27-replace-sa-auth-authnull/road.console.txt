@@ -10,7 +10,7 @@ road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
  ipsec auto --add authenticated
-002 added IKEv1 connection "authenticated"
+002 added IKEv2 connection "authenticated"
 road #
  # ensure for tests acquires expire before our failureshunt=2m
 road #
@@ -142,7 +142,7 @@ road #
  sleep 5
 road #
  ipsec status |grep STATE_
-000 #3: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23:500 STATE_PARENT_I2 (sent v2I2, expected v2R2); EVENT_SA_REPLACE in XXs; idle;
+000 #3: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23:500 STATE_PARENT_I2 (sent IKE_AUTH request); EVENT_SA_REPLACE in XXs; idle;
 road #
  ipsec whack --trafficstatus
 road #
@@ -164,7 +164,7 @@ road #
  # additional 'authenticated' partial state lingers
 road #
  ipsec status | grep STATE_
-000 #3: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23:500 STATE_PARENT_I2 (sent v2I2, expected v2R2); EVENT_SA_REPLACE in XXs; idle;
+000 #3: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23:500 STATE_PARENT_I2 (sent IKE_AUTH request); EVENT_SA_REPLACE in XXs; idle;
 road #
  ../bin/check-for-core.sh
 road #

@@ -22,7 +22,7 @@ west #
 initdone
 west #
  strongswan up westnet-eastnet-ikev1
-initiating IKEv1 Main Mode connection IKE_SA westnet-eastnet-ikev1[1] to 192.1.2.23
+initiating Main Mode IKE_SA westnet-eastnet-ikev1[1] to 192.1.2.23
 generating ID_PROT request 0 [ SA V V V V V ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)

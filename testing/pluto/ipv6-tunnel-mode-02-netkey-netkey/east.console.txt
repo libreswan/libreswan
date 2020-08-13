@@ -11,9 +11,9 @@ east #
  ipsec auto --status
 000 using kernel interface: xfrm
 000  
-000 interface UDP eth1[2001:db8:1:2::23]:500
-000 interface UDP eth0[2001:db8:0:2::254]:500
-000 interface UDP lo[::1]:500
+000 interface eth1 UDP [2001:db8:1:2::23]:500
+000 interface eth0 UDP [2001:db8:0:2::254]:500
+000 interface lo UDP [::1]:500
 000 interface lo UDP 127.0.0.1:4500
 000 interface lo UDP 127.0.0.1:500
 000 interface eth0 UDP 192.0.2.254:4500

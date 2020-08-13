@@ -24,10 +24,10 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-vti-01
-002 added IKEv1 connection "westnet-eastnet-vti-01"
+002 added IKEv2 connection "westnet-eastnet-vti-01"
 west #
  ipsec auto --add westnet-eastnet-vti-02
-002 added IKEv1 connection "westnet-eastnet-vti-02"
+002 added IKEv2 connection "westnet-eastnet-vti-02"
 west #
  # remove the regular route for 192.0.2.0/24
 west #
@@ -54,7 +54,7 @@ west #
 004 "westnet-eastnet-vti-01" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --up westnet-eastnet-vti-02
-1v2 "westnet-eastnet-vti-02" #3: sent IPsec Child req wait response
+1v2 "westnet-eastnet-vti-02" #3: sent CREATE_CHILD_SA request for new IPsec SA
 002 "westnet-eastnet-vti-02" #3: up-client output: vti interface "ipsec0" already exists with conflicting setting
 002 "westnet-eastnet-vti-02" #3: up-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
 002 "westnet-eastnet-vti-02" #3: up-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21

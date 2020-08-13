@@ -6,7 +6,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ikev2
-002 added IKEv1 connection "westnet-eastnet-ikev2"
+002 added IKEv2 connection "westnet-eastnet-ikev2"
 east #
  echo "initdone"
 initdone
@@ -43,10 +43,6 @@ Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain DROP (0 references)
-target     prot opt source               destination         
-LOG        all  --  0.0.0.0/0            0.0.0.0/0            LOG flags 0 level 4
-DROP       all  --  0.0.0.0/0            0.0.0.0/0           
 east #
  ../bin/check-for-core.sh
 east #

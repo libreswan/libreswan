@@ -16,7 +16,7 @@ road #
  echo "initdone"
 initdone
 road #
- # Should show "ESP" and not "ESPinUDP"
+ # Should show "ESP" and not "ESP/NAT"
 road #
  ipsec whack --name road-eastnet-nonat --initiate
 002 "road-eastnet-nonat" #1: initiating IKEv1 Main Mode connection
