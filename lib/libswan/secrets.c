@@ -902,7 +902,7 @@ static err_t lsw_process_psk_secret(chunk_t *psk, struct logger *logger)
 			log_message(RC_LOG_SERIOUS, logger, "WARNING: using a weak secret (PSK)");
 		}
 		*psk = clone_bytes_as_chunk(flp->tok + 1, len, "PSK");
-		(void) shift();
+		shift(flp);
 	} else {
 		char buf[RSA_MAX_ENCODING_BYTES];	/*
 							 * limit on size of
@@ -923,7 +923,7 @@ static err_t lsw_process_psk_secret(chunk_t *psk, struct logger *logger)
 					flp->tok);
 		} else {
 			*psk = clone_bytes_as_chunk(buf, sz, "PSK");
-			(void) shift();
+			shift(flp);
 		}
 	}
 
@@ -941,7 +941,7 @@ static err_t lsw_process_xauth_secret(chunk_t *xauth)
 	if (*flp->tok == '"' || *flp->tok == '\'') {
 		*xauth = clone_bytes_as_chunk(flp->tok + 1, flp->cur - flp->tok  - 2,
 					      "XAUTH");
-		(void) shift();
+		shift(flp);
 	} else {
 		char buf[RSA_MAX_ENCODING_BYTES];	/*
 							 * limit on size of
@@ -962,7 +962,7 @@ static err_t lsw_process_xauth_secret(chunk_t *xauth)
 					flp->tok);
 		} else {
 			*xauth = clone_bytes_as_chunk(buf, sz, "XAUTH");
-			(void) shift();
+			shift(flp);
 		}
 	}
 
@@ -986,7 +986,7 @@ static err_t lsw_process_ppk_static_secret(chunk_t *ppk, chunk_t *ppk_id)
 		return ugh;
 	}
 
-	if (!shift()) {
+	if (!shift(flp)) {
 		ugh = "No PPK found. PPK should be specified after PPK ID";
 		free_chunk_content(ppk_id);
 		return ugh;
@@ -996,7 +996,7 @@ static err_t lsw_process_ppk_static_secret(chunk_t *ppk, chunk_t *ppk_id)
 		size_t len = flp->cur - flp->tok - 2;
 
 		*ppk = clone_bytes_as_chunk(flp->tok + 1, len, "PPK");
-		(void) shift();
+		shift(flp);
 	} else {
 		char buf[RSA_MAX_ENCODING_BYTES];	/*
 							 * limit on size of
@@ -1018,7 +1018,7 @@ static err_t lsw_process_ppk_static_secret(chunk_t *ppk, chunk_t *ppk_id)
 			free_chunk_content(ppk_id);
 		} else {
 			*ppk = clone_bytes_as_chunk(buf, sz, "PPK");
-			(void) shift();
+			shift(flp);
 		}
 	}
 
@@ -1082,7 +1082,7 @@ static err_t lsw_process_rsa_secret(struct private_key_stuff *pks, struct logger
 	struct RSA_private_key *rsak = &pks->u.RSA_private_key;
 	passert(tokeq("{"));
 	while (1) {
-		if (!shift()) {
+		if (!shift(flp)) {
 			return "premature end of RSA key";
 		}
 		if (tokeq("}")) {
@@ -1102,12 +1102,12 @@ static err_t lsw_process_rsa_secret(struct private_key_stuff *pks, struct logger
 		if (p == NULL) {
 			return builddiag("RSA keyword '%s' not recognised", flp->tok);
 		}
-		if (!shift()) {
+		if (!shift(flp)) {
 			return "premature end of RSA key";
 		}
 
 		/* skip optional ':' */
-		if (tokeq(":") && !shift()) {
+		if (tokeq(":") && !shift(flp)) {
 			return "premature end of RSA key";
 		}
 
@@ -1139,7 +1139,7 @@ static err_t lsw_process_rsa_secret(struct private_key_stuff *pks, struct logger
 		}
 	}
 	passert(tokeq("}"));
-	if (shift()) {
+	if (shift(flp)) {
 		return "malformed end of RSA private key -- unexpected token after '}'";
 	}
 
@@ -1255,12 +1255,12 @@ static void process_secret(struct secret **psecrets, struct secret *s,
 	if (tokeqword("psk")) {
 		s->pks.kind = PKK_PSK;
 		/* preshared key: quoted string or ttodata format */
-		ugh = !shift() ? "ERROR: unexpected end of record in PSK" :
+		ugh = !shift(flp) ? "ERROR: unexpected end of record in PSK" :
 			lsw_process_psk_secret(&s->pks.u.preshared_secret, logger);
 	} else if (tokeqword("xauth")) {
 		/* xauth key: quoted string or ttodata format */
 		s->pks.kind = PKK_XAUTH;
-		ugh = !shift() ? "ERROR: unexpected end of record in PSK" :
+		ugh = !shift(flp) ? "ERROR: unexpected end of record in PSK" :
 			lsw_process_xauth_secret(&s->pks.u.preshared_secret);
 	} else if (tokeqword("rsa")) {
 		/*
@@ -1269,7 +1269,7 @@ static void process_secret(struct secret **psecrets, struct secret *s,
 		 */
 		s->pks.kind = PKK_RSA;
 		s->pks.pubkey_type = &pubkey_type_rsa;
-		if (!shift()) {
+		if (!shift(flp)) {
 			ugh = "ERROR: bad RSA key syntax";
 		} else if (tokeq("{")) {
 			/* raw RSA key in NSS */
@@ -1288,7 +1288,7 @@ static void process_secret(struct secret **psecrets, struct secret *s,
 		}
 	} else if (tokeqword("ppks")) {
 		s->pks.kind = PKK_PPK;
-		ugh = !shift() ? "ERROR: unexpected end of record in static PPK" :
+		ugh = !shift(flp) ? "ERROR: unexpected end of record in static PPK" :
 			lsw_process_ppk_static_secret(&s->pks.ppk, &s->pks.ppk_id);
 	} else if (tokeqword("pin")) {
 		ugh = "ERROR: keyword 'pin' obsoleted, please use NSS for smartcard support";
@@ -1327,7 +1327,7 @@ static void lsw_process_secret_records(struct secret **psecrets, struct logger *
 			break;
 
 		flp->bdry = B_none;	/* eat the Record Boundary */
-		(void)shift();	/* get real first token */
+		shift(flp);	/* get real first token */
 
 		if (tokeqword("include")) {
 			/* an include directive */
@@ -1338,7 +1338,7 @@ static void lsw_process_secret_records(struct secret **psecrets, struct logger *
 			char *p = fn;
 			char *end_prefix = strrchr(flp->filename, '/');
 
-			if (!shift()) {
+			if (!shift(flp)) {
 				log_message(RC_LOG_SERIOUS, logger,
 					    "\"%s\" line %d: unexpected end of include directive",
 					    flp->filename, flp->lino);
@@ -1375,7 +1375,7 @@ static void lsw_process_secret_records(struct secret **psecrets, struct logger *
 			 * Rewrite as a memcpy in the hope of calming it.
 			 */
 			memcpy(p, flp->tok, flp->cur - flp->tok + 1);
-			(void) shift();	/* move to Record Boundary, we hope */
+			shift(flp);	/* move to Record Boundary, we hope */
 			if (flushline(flp, "ignoring malformed INCLUDE -- expected Record Boundary after filename")) {
 				lsw_process_secrets_file(psecrets, fn, logger);
 				flp->tok = NULL;	/* redundant? */
@@ -1396,7 +1396,7 @@ static void lsw_process_secret_records(struct secret **psecrets, struct logger *
 
 				if (tokeq(":")) {
 					/* found key part */
-					(void) shift();	/* eat ":" */
+					shift(flp);	/* eat ":" */
 					process_secret(psecrets, s, logger);
 					break;
 				}
@@ -1439,7 +1439,7 @@ static void lsw_process_secret_records(struct secret **psecrets, struct logger *
 					    s, enum_name(&pkk_names, s->pks.kind),
 					    str_id(&id, &b));
 				}
-				if (!shift()) {
+				if (!shift(flp)) {
 					/* unexpected Record Boundary or EOF */
 					log_message(RC_LOG_SERIOUS, logger,
 						    "\"%s\" line %d: unexpected end of id list",

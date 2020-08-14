@@ -127,8 +127,8 @@ static void read_foodgroup(struct fg_groups *g, struct logger *logger)
 
 		/* force advance to first token */
 		flp->bdry = B_none;     /* eat the Record Boundary */
-		(void)shift();          /* get real first token */
-		if (flp->bdry != B_none) {
+		/* get real first token */
+		if (!shift(flp)) {
 			/* blank line or comment */
 			continue;
 		}
@@ -173,8 +173,7 @@ static void read_foodgroup(struct fg_groups *g, struct logger *logger)
 		unsigned dport = 0;
 
 		/* check for: [protocol sport dport] */
-		(void)shift();
-		if (flp->bdry == B_none) {
+		if (shift(flp)) {
 			err_t err;
 			/* protocol */
 			err = ttoipproto(flp->tok, &proto);
@@ -190,9 +189,8 @@ static void read_foodgroup(struct fg_groups *g, struct logger *logger)
 					flp->tok, IPPROTO_ESP, IPPROTO_AH);
 				break;
 			}
-			(void)shift();
 			/* source port */
-			if (flp->bdry != B_none) {
+			if (!shift(flp)) {
 				log_flp(RC_LOG_SERIOUS, flp,
 					"missing source_port: either only specify CIDR, or specify CIDR protocol source_port dest_port");
 				break;
@@ -204,9 +202,8 @@ static void read_foodgroup(struct fg_groups *g, struct logger *logger)
 					flp->tok, err);
 				break;
 			}
-			(void)shift();
 			/* dest port */
-			if (flp->bdry != B_none) {
+			if (!shift(flp)) {
 				log_flp(RC_LOG_SERIOUS, flp,
 					"missing dest_port: either only specify CIDR, or specify CIDR protocol source_port dest_port");
 				break;
@@ -218,9 +215,8 @@ static void read_foodgroup(struct fg_groups *g, struct logger *logger)
 					flp->tok, err);
 				break;
 			}
-			shift();
 			/* more stuff? */
-			if (flp->bdry == B_none) {
+			if (shift(flp)) {
 				log_flp(RC_LOG_SERIOUS, flp,
 					"garbage '%s' at end of line: either only specify CIDR, or specify CIDR protocol source_port dest_port",
 					flp->tok);

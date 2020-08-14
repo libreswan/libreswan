@@ -63,11 +63,10 @@ bool lexopen(struct file_lex_position *new_flp, const char *name,
 	new_flp->cur = new_flp->buffer;	/* nothing loaded yet */
 	new_flp->under = *new_flp->cur = '\0';
 	new_flp->logger = logger;
+	shift(new_flp);	/* prime tok */
 
 	/* push new head */
 	flp = new_flp;
-
-	shift();	/* prime tok */
 	return true;
 }
 
@@ -96,9 +95,9 @@ void lexclose(void)
 /*
  * shift - load next token into tok
  *
- * @return bool True if successful
+ * @return bool True if successful (i.e., there is a token)
  */
-bool shift(void)
+bool shift(struct file_lex_position *flp)
 {
 	char *p = flp->cur;
 	char *sor = NULL;	/* start of record for any new lines */
@@ -121,18 +120,18 @@ bool shift(void)
 				flp->bdry = B_file;
 				flp->tok = flp->cur = NULL;
 				DBGF(DBG_TMI, "lex shift: file(eof)");
-				return false;
-			} else {
-				/* strip trailing whitespace, including \n */
-				for (p = flp->buffer + strlen(flp->buffer);
-					p > flp->buffer && isspace(p[-1]);
-					p--)
-					;
-				*p = '\0';
-
-				flp->lino++;
-				sor = p = flp->buffer;
+				return false; /* no token */
 			}
+
+			/* strip trailing whitespace, including \n */
+			for (p = flp->buffer + strlen(flp->buffer);
+			     p > flp->buffer && isspace(p[-1]);
+			     p--)
+				;
+			*p = '\0';
+
+			flp->lino++;
+			sor = p = flp->buffer;
 			break;	/* try again for a token */
 
 		case ' ':	/* whitespace */
@@ -165,7 +164,7 @@ bool shift(void)
 				*p = '\0';
 				flp->cur = p;
 				DBGF(DBG_TMI, "lex shift: '%s'", flp->tok);
-				return true;
+				return true; /* token */
 			}
 		/* FALL THROUGH */
 		default:
@@ -204,19 +203,22 @@ bool shift(void)
 				*p = '\0';
 				flp->cur = p;
 				DBGF(DBG_TMI, "lex shift: '%s'", flp->tok);
-				return true;
+				return true; /* token */
 			}
 
 			/*
-			 * we have a start-of-record:
+			 * we have an end-of-line aka start-of-record:
 			 * return it, deferring "real" token
+			 *
+			 * Caller will clear .bdry so shift() can read
+			 * the new line and return the next token.
 			 */
 			flp->bdry = B_record;
 			flp->tok = NULL;
 			flp->under = *p;
 			flp->cur = p;
 			DBGF(DBG_TMI, "lex shift: record(new line)");
-			return false;
+			return false; /* no token */
 		}
 	}
 }
@@ -241,7 +243,7 @@ bool flushline(struct file_lex_position *flp, const char *message)
 	}
 	do {
 		DBGF(DBG_TMI, "lex flushline: discarding '%s'", flp->tok);
-	} while (shift());
+	} while (shift(flp));
 	return false;
 }
 

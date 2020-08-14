@@ -36,8 +36,8 @@ extern void lexclose(void);
 #define tokeq(s) (streq(flp->tok, (s)))
 #define tokeqword(s) strcaseeq(flp->tok, (s))
 
-extern bool shift(void);
-extern bool flushline(struct file_lex_position *flp, const char *m);
+extern bool shift(struct file_lex_position *flp);
+extern bool flushline(struct file_lex_position *flp, const char *message);
 
 void log_flp(lset_t rc_flags, struct file_lex_position *flp,
 	     const char *message, ...) PRINTF_LIKE(3);
