@@ -63,7 +63,7 @@ extern chunk_t *get_ppk(const struct connection *c, chunk_t **ppk_id,
 extern const chunk_t *get_ppk_by_id(const chunk_t *ppk_id);
 
 extern void load_preshared_secrets(struct logger *logger);
-extern void free_preshared_secrets(void);
+extern void free_preshared_secrets(struct logger *logger);
 extern err_t load_nss_cert_secret(CERTCertificate *cert, struct logger *logger);
 
 extern struct secret *lsw_get_xauthsecret(char *xauthname);

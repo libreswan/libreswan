@@ -77,9 +77,9 @@ void load_preshared_secrets(struct logger *logger)
 	lsw_load_preshared_secrets(&pluto_secrets, oco->secretsfile, logger);
 }
 
-void free_preshared_secrets(void)
+void free_preshared_secrets(struct logger *logger)
 {
-	lsw_free_preshared_secrets(&pluto_secrets);
+	lsw_free_preshared_secrets(&pluto_secrets, logger);
 }
 
 static int print_secrets(struct secret *secret,

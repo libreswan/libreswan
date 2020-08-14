@@ -258,7 +258,7 @@ extern void free_public_key(struct pubkey *pk);
 
 extern void lsw_load_preshared_secrets(struct secret **psecrets, const char *secrets_file,
 				       struct logger *logger);
-extern void lsw_free_preshared_secrets(struct secret **psecrets);
+extern void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *logger);
 
 extern bool lsw_has_private_rawkey(const struct secret *secrets, const struct pubkey *pk);
 

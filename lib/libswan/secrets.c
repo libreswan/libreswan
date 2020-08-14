@@ -891,7 +891,7 @@ bool lsw_has_private_rawkey(const struct secret *secrets, const struct pubkey *p
  */
 
 /* parse PSK from file */
-static err_t lsw_process_psk_secret(chunk_t *psk)
+static err_t lsw_process_psk_secret(chunk_t *psk, struct logger *logger)
 {
 	err_t ugh = NULL;
 
@@ -899,7 +899,7 @@ static err_t lsw_process_psk_secret(chunk_t *psk)
 		size_t len = flp->cur - flp->tok  - 2;
 
 		if (len < 8) {
-			loglog(RC_LOG_SERIOUS, "WARNING: using a weak secret (PSK)");
+			log_message(RC_LOG_SERIOUS, logger, "WARNING: using a weak secret (PSK)");
 		}
 		*psk = clone_bytes_as_chunk(flp->tok + 1, len, "PSK");
 		(void) shift();
@@ -1256,7 +1256,7 @@ static void process_secret(struct secret **psecrets, struct secret *s,
 		s->pks.kind = PKK_PSK;
 		/* preshared key: quoted string or ttodata format */
 		ugh = !shift() ? "ERROR: unexpected end of record in PSK" :
-			lsw_process_psk_secret(&s->pks.u.preshared_secret);
+			lsw_process_psk_secret(&s->pks.u.preshared_secret, logger);
 	} else if (tokeqword("xauth")) {
 		/* xauth key: quoted string or ttodata format */
 		s->pks.kind = PKK_XAUTH;
@@ -1279,9 +1279,9 @@ static void process_secret(struct secret **psecrets, struct secret *s,
 			ugh = "WARNING: The :RSA secrets entries for X.509 certificates are no longer needed";
 		}
 		if (ugh == NULL) {
-			loglog(RC_LOG, "loaded private key for keyid: %s:%s",
-				enum_name(&pkk_names, s->pks.kind),
-				s->pks.u.RSA_private_key.pub.keyid);
+			log_message(RC_LOG, logger, "loaded private key for keyid: %s:%s",
+				    enum_name(&pkk_names, s->pks.kind),
+				    s->pks.u.RSA_private_key.pub.keyid);
 		} else {
 			dbg("cleaning up mess left in raw rsa key");
 			s->pks.pubkey_type->free_secret_content(&s->pks);
@@ -1297,7 +1297,7 @@ static void process_secret(struct secret **psecrets, struct secret *s,
 	}
 
 	if (ugh != NULL) {
-		loglog(RC_LOG_SERIOUS, "\"%s\" line %d: %s",
+		log_message(RC_LOG_SERIOUS, logger, "\"%s\" line %d: %s",
 			flp->filename, flp->lino, ugh);
 		/* free id's that should have been allocated */
 		if (s->ids != NULL) {
@@ -1339,9 +1339,9 @@ static void lsw_process_secret_records(struct secret **psecrets, struct logger *
 			char *end_prefix = strrchr(flp->filename, '/');
 
 			if (!shift()) {
-				loglog(RC_LOG_SERIOUS,
-					"\"%s\" line %d: unexpected end of include directive",
-					flp->filename, flp->lino);
+				log_message(RC_LOG_SERIOUS, logger,
+					    "\"%s\" line %d: unexpected end of include directive",
+					    flp->filename, flp->lino);
 				continue;	/* abandon this record */
 			}
 
@@ -1363,9 +1363,9 @@ static void lsw_process_secret_records(struct secret **psecrets, struct logger *
 				p += pl;
 			}
 			if (flp->cur - flp->tok >= &fn[sizeof(fn)] - p) {
-				loglog(RC_LOG_SERIOUS,
-					"\"%s\" line %d: include pathname too long",
-					flp->filename, flp->lino);
+				log_message(RC_LOG_SERIOUS, logger,
+					    "\"%s\" line %d: include pathname too long",
+					    flp->filename, flp->lino);
 				continue;	/* abandon this record */
 			}
 			/*
@@ -1421,11 +1421,11 @@ static void lsw_process_secret_records(struct secret **psecrets, struct logger *
 				}
 
 				if (ugh != NULL) {
-					loglog(RC_LOG_SERIOUS,
-						"ERROR \"%s\" line %d: index \"%s\" %s",
-						flp->filename,
-						flp->lino, flp->tok,
-						ugh);
+					log_message(RC_LOG_SERIOUS, logger,
+						    "ERROR \"%s\" line %d: index \"%s\" %s",
+						    flp->filename,
+						    flp->lino, flp->tok,
+						    ugh);
 				} else {
 					struct id_list *i = alloc_thing(
 						struct id_list,
@@ -1441,9 +1441,9 @@ static void lsw_process_secret_records(struct secret **psecrets, struct logger *
 				}
 				if (!shift()) {
 					/* unexpected Record Boundary or EOF */
-					loglog(RC_LOG_SERIOUS,
-						"\"%s\" line %d: unexpected end of id list",
-						flp->filename, flp->lino);
+					log_message(RC_LOG_SERIOUS, logger,
+						    "\"%s\" line %d: unexpected end of id list",
+						    flp->filename, flp->lino);
 					pfree(s);
 					break;
 				}
@@ -1468,9 +1468,9 @@ static void lsw_process_secrets_file(struct secret **psecrets, const char *file_
 	pos.depth = flp == NULL ? 0 : flp->depth + 1;
 
 	if (pos.depth > 10) {
-		loglog(RC_LOG_SERIOUS,
-			"preshared secrets file \"%s\" nested too deeply",
-			file_pat);
+		log_message(RC_LOG_SERIOUS, logger,
+			    "preshared secrets file \"%s\" nested too deeply",
+			    file_pat);
 		return;
 	}
 
@@ -1483,9 +1483,8 @@ static void lsw_process_secrets_file(struct secret **psecrets, const char *file_
 		/* for each file... */
 		for (fnp = globbuf.gl_pathv; fnp != NULL && *fnp != NULL; fnp++) {
 			if (lexopen(&pos, *fnp, FALSE)) {
-				loglog(RC_LOG, "loading secrets from \"%s\"", *fnp);
-				(void) flushline(
-					"file starts with indentation (continuation notation)");
+				log_message(RC_LOG, logger, "loading secrets from \"%s\"", *fnp);
+				(void) flushline("file starts with indentation (continuation notation)");
 				lsw_process_secret_records(psecrets, logger);
 				lexclose();
 			}
@@ -1493,9 +1492,9 @@ static void lsw_process_secrets_file(struct secret **psecrets, const char *file_
 		break;
 
 	case GLOB_NOSPACE:
-		loglog(RC_LOG_SERIOUS,
-			"out of space processing secrets filename \"%s\"",
-			file_pat);
+		log_message(RC_LOG_SERIOUS, logger,
+			    "out of space processing secrets filename \"%s\"",
+			    file_pat);
 		break;
 
 	case GLOB_ABORTED:
@@ -1503,25 +1502,25 @@ static void lsw_process_secrets_file(struct secret **psecrets, const char *file_
 		break;
 
 	case GLOB_NOMATCH:
-		loglog(RC_LOG, "no secrets filename matched \"%s\"", file_pat);
+		log_message(RC_LOG, logger, "no secrets filename matched \"%s\"", file_pat);
 		break;
 
 	default:
-		loglog(RC_LOG_SERIOUS, "unknown glob error %d", r);
+		log_message(RC_LOG_SERIOUS, logger, "unknown glob error %d", r);
 		break;
 	}
 
 	globfree(&globbuf);
 }
 
-void lsw_free_preshared_secrets(struct secret **psecrets)
+void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *logger)
 {
 	lock_certs_and_keys("free_preshared_secrets");
 
 	if (*psecrets != NULL) {
 		struct secret *s, *ns;
 
-		loglog(RC_LOG, "forgetting secrets");
+		log_message(RC_LOG, logger, "forgetting secrets");
 
 		for (s = *psecrets; s != NULL; s = ns) {
 			struct id_list *i, *ni;
@@ -1562,7 +1561,7 @@ void lsw_free_preshared_secrets(struct secret **psecrets)
 void lsw_load_preshared_secrets(struct secret **psecrets, const char *secrets_file,
 				struct logger *logger)
 {
-	lsw_free_preshared_secrets(psecrets);
+	lsw_free_preshared_secrets(psecrets, logger);
 	(void) lsw_process_secrets_file(psecrets, secrets_file, logger);
 }
 

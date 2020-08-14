@@ -1818,7 +1818,7 @@ volatile bool exiting_pluto = false;
  */
 void exit_pluto(enum pluto_exit_code status)
 {
-	/* now whack; right? XXX: yes, but why? */
+	/* no whack; right? XXX: yes, but why? */
 	struct fd *whackfd = null_fd;
 	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
 
@@ -1855,7 +1855,7 @@ void exit_pluto(enum pluto_exit_code status)
 	stop_crypto_helpers();
 
 	free_root_certs(whackfd);
-	free_preshared_secrets();
+	free_preshared_secrets(logger);
 	free_remembered_public_keys();
 	delete_every_connection();
 
