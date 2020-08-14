@@ -167,7 +167,7 @@ void show_raw(struct show *s, const char *message, ...)
 
 static void show_system_security(struct show *s)
 {
-	int selinux = libreswan_selinux();
+	int selinux = libreswan_selinux(show_logger(s));
 	bool fips = libreswan_fipsmode();
 
 	show_separator(s);

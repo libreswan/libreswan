@@ -193,7 +193,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'c':       /* obsoleted by --nssdir|-d */
 		case 'd':       /* -d is used for nssdirdir with nss tools */
-			lsw_conf_nssdir(optarg);
+			lsw_conf_nssdir(optarg, &progname_logger);
 			break;
 		case 'P':       /* token authentication password */
 			lsw_conf_nsspassword(optarg);

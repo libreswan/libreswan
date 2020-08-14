@@ -718,8 +718,12 @@ int main(int argc, char **argv)
 	bool log_to_stderr_desired = FALSE;
 	bool log_to_file_desired = FALSE;
 
+	/*
+	 * Start with the program name logger.
+	 */
 	pluto_name = argv[0];
 	progname_logger.object = argv[0];
+	struct logger *logger = &progname_logger;
 
 	conffile = clone_str(IPSEC_CONF, "conffile in main()");
 	coredir = clone_str(DEFAULT_RUNDIR, "coredir in main()");
@@ -1121,11 +1125,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'f':	/* --ipsecdir <ipsec-dir> */
-			lsw_conf_confddir(optarg);
+			lsw_conf_confddir(optarg, logger);
 			continue;
 
 		case 'd':	/* --nssdir <path> */
-			lsw_conf_nssdir(optarg);
+			lsw_conf_nssdir(optarg, logger);
 			continue;
 
 		case 'N':	/* --debug-none */
@@ -1202,7 +1206,7 @@ int main(int argc, char **argv)
 			 */
 			pfree(conffile);
 			conffile = clone_str(optarg, "conffile via getopt");
-			struct starter_config *cfg = read_cfg_file(conffile, &progname_logger);
+			struct starter_config *cfg = read_cfg_file(conffile, logger);
 
 			/* leak */
 			set_cfg_string(&pluto_log_file,
@@ -1302,13 +1306,13 @@ int main(int argc, char **argv)
 			if (cfg->setup.strings[KSF_IPSECDIR] != NULL &&
 				*cfg->setup.strings[KSF_IPSECDIR] != 0) {
 				/* ipsecdir= */
-				lsw_conf_confddir(cfg->setup.strings[KSF_IPSECDIR]);
+				lsw_conf_confddir(cfg->setup.strings[KSF_IPSECDIR], logger);
 			}
 
 			if (cfg->setup.strings[KSF_NSSDIR] != NULL &&
 				*cfg->setup.strings[KSF_NSSDIR] != 0) {
 				/* nssdir= */
-				lsw_conf_nssdir(cfg->setup.strings[KSF_NSSDIR]);
+				lsw_conf_nssdir(cfg->setup.strings[KSF_NSSDIR], logger);
 			}
 
 			/* perpeerlog= */
@@ -1433,10 +1437,10 @@ int main(int argc, char **argv)
 		case OPT_IMPAIR:
 		{
 			struct whack_impair impairment;
-			switch (parse_impair(optarg, &impairment, true, &progname_logger)) {
+			switch (parse_impair(optarg, &impairment, true, logger)) {
 			case IMPAIR_OK:
 			{
-				if (!process_impair(&impairment, NULL, true, null_fd, &progname_logger)) {
+				if (!process_impair(&impairment, NULL, true, null_fd, logger)) {
 					fprintf(stderr, "%s: impair option '%s' is not valid from the command line\n",
 						pluto_name, optarg);
 					exit(1);
@@ -1505,7 +1509,7 @@ int main(int argc, char **argv)
 	 * place to do this is before the daemon fork.
 	 */
 	if (!selftest_only) {
-		if (!init_ctl_socket(&progname_logger)) {
+		if (!init_ctl_socket(logger)) {
 			/* already logged */
 			exit_pluto(PLUTO_EXIT_SOCKET_FAIL);
 		}
@@ -1595,10 +1599,15 @@ int main(int argc, char **argv)
 
 	init_constants();
 	init_pluto_constants();
-	pluto_init_log(log_param);
-	struct logger logger = GLOBAL_LOGGER(null_fd);
 
-	pluto_init_nss(oco->nssdir, &logger);
+	/*
+	 * Initialize logging then switch to the real logger.
+	 */
+	pluto_init_log(log_param);
+	struct logger global_logger = GLOBAL_LOGGER(null_fd);
+	logger = &global_logger;
+
+	pluto_init_nss(oco->nssdir, logger);
 	if (libreswan_fipsmode()) {
 		/*
 		 * clear out --debug-crypt if set
@@ -1622,7 +1631,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	init_crypt_symkey(&logger);
+	init_crypt_symkey(logger);
 
 	/*
 	 * If impaired, force the mode change; and verify the
@@ -1796,7 +1805,7 @@ int main(int argc, char **argv)
 #ifdef USE_DNSSEC
 	if (!unbound_event_init(get_pluto_event_base(), do_dnssec,
 				pluto_dnssec_rootfile, pluto_dnssec_trusted,
-				&logger)) {
+				logger)) {
 			exit_pluto(PLUTO_EXIT_UNBOUND_FAIL);
 	}
 #endif

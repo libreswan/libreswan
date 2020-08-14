@@ -23,6 +23,7 @@
 #include <secerr.h>
 #include <cert.h>
 #include <certdb.h>
+#include <nss.h>		/* for NSS_Shutdown() */
 
 #include "lswconf.h"
 #include "lswnss.h"

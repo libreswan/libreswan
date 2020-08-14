@@ -18,6 +18,7 @@
 #include <pk11pub.h>
 #include <secmod.h>
 #include <keyhi.h>
+#include <nss.h>	/* for NSS_Initialize() */
 
 #include "lswconf.h"
 #include "lswnss.h"

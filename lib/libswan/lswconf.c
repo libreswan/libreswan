@@ -134,22 +134,22 @@ void lsw_conf_rootdir(const char *root_dir)
 	lsw_conf_calculate();
 }
 
-void lsw_conf_confddir(const char *confddir)
+void lsw_conf_confddir(const char *confddir, struct logger *logger)
 {
 	lsw_conf_setdefault();
 	subst(&global_oco.confddir, confddir, "override ipsec.d");
 	lsw_conf_calculate();
 
-	loglog(RC_LOG, "adjusting ipsec.d to %s", global_oco.confddir);
+	log_message(RC_LOG, logger, "adjusting ipsec.d to %s", global_oco.confddir);
 }
 
-void lsw_conf_nssdir(const char *nssdir)
+void lsw_conf_nssdir(const char *nssdir, struct logger *logger)
 {
 	lsw_conf_setdefault();
 	subst(&global_oco.nssdir, nssdir, "override nssdir");
 	lsw_conf_calculate();
 
-	loglog(RC_LOG, "adjusting nssdir to %s", global_oco.nssdir);
+	log_message(RC_LOG, logger, "adjusting nssdir to %s", global_oco.nssdir);
 }
 
 void lsw_conf_secretsfile(const char *secretsfile)
@@ -171,7 +171,7 @@ void lsw_conf_nsspassword(const char *nsspassword)
  * 1 enabled
  * 2 indeterminate
  */
-int libreswan_selinux(void)
+int libreswan_selinux(struct logger *logger)
 {
 	char selinux_flag[1];
 	int n;
@@ -189,7 +189,7 @@ int libreswan_selinux(void)
 	n = fread((void *)selinux_flag, 1, 1, fd);
 	fclose(fd);
 	if (n != 1) {
-		loglog(RC_LOG, "SElinux: could not read 1 byte from the selinux enforce file");
+		log_message(RC_LOG, logger, "SElinux: could not read 1 byte from the selinux enforce file");
 		return 2;
 	}
 	if (selinux_flag[0] == '1')

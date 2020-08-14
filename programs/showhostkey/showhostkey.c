@@ -523,7 +523,7 @@ int main(int argc, char *argv[])
 
 		case OPT_CONFIGDIR:	/* Obsoletd by --nssdir|-d */
 		case 'd':
-			lsw_conf_nssdir(optarg);
+			lsw_conf_nssdir(optarg, &progname_logger);
 			break;
 
 		case OPT_PASSWORD:
