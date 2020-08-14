@@ -71,15 +71,16 @@ static void bsdkame_init_pfkey(void)
 	TAILQ_INIT(&pfkey_iq);
 
 	pfkeyfd = pfkey_open();
-	if (pfkeyfd < 0)
-		EXIT_LOG_ERRNO(errno, "socket() in init_pfkeyfd()");
+	if (pfkeyfd < 0) {
+		FATAL_ERRNO(errno, "socket() in init_pfkeyfd()");
+	}
 
 	dbg("listening for PF_KEY_V2 on file descriptor %d", pfkeyfd);
 
 	/* probe to see if it is alive */
 	if (pfkey_send_register(pfkeyfd, SADB_SATYPE_UNSPEC) < 0 ||
 	    pfkey_recv_register(pfkeyfd) < 0) {
-		EXIT_LOG_ERRNO(errno, "pfkey probe failed");
+		FATAL_ERRNO(errno, "pfkey probe failed");
 	}
 }
 
