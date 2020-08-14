@@ -100,9 +100,8 @@ static int subnetcmp(const ip_subnet *a, const ip_subnet *b)
 	return r;
 }
 
-static void read_foodgroup(struct fg_groups *g, struct fd *whackfd)
+static void read_foodgroup(struct fg_groups *g, struct logger *logger)
 {
-	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
 	const char *fgn = g->connection->name;
 	const ip_subnet *lsn = &g->connection->spd.this.client;
 	const struct lsw_conf_options *oco = lsw_init_options();
@@ -123,13 +122,14 @@ static void read_foodgroup(struct fg_groups *g, struct fd *whackfd)
 		return;
 	}
 
-	log_global(RC_LOG, whackfd, "loading group \"%s\"", fg_path);
+	log_message(RC_LOG, logger, "loading group \"%s\"", fg_path);
 	while (flp->bdry == B_record) {
 
 		/* force advance to first token */
 		flp->bdry = B_none;     /* eat the Record Boundary */
 		(void)shift();          /* get real first token */
 		if (flp->bdry != B_none) {
+			/* blank line or comment */
 			continue;
 		}
 
@@ -140,9 +140,9 @@ static void read_foodgroup(struct fg_groups *g, struct fd *whackfd)
 			ip_address t;
 			err_t err = numeric_to_address(shunk1(flp->tok), NULL, &t);
 			if (err != NULL) {
-				log_global(RC_LOG_SERIOUS, whackfd,
-					   "\"%s\" line %d ignored, '%s' is not an address: %s",
-					   flp->filename, flp->lino, flp->tok, err);
+				log_flp(RC_LOG_SERIOUS, flp,
+					"ignored, '%s' is not an address: %s",
+					flp->tok, err);
 				flushline(flp, NULL/*shh*/);
 				continue;
 			}
@@ -151,9 +151,9 @@ static void read_foodgroup(struct fg_groups *g, struct fd *whackfd)
 			const struct ip_info *afi = strchr(flp->tok, ':') == NULL ? &ipv4_info : &ipv6_info;
 			err_t err = ttosubnet(flp->tok, 0, afi->af, 'x', &sn);
 			if (err != NULL) {
-				log_global(RC_LOG_SERIOUS, whackfd,
-					   "\"%s\" line %d ignored, '%s' is not a subnet: %s",
-					   flp->filename, flp->lino, flp->tok, err);
+				log_flp(RC_LOG_SERIOUS, flp,
+					"ignored, '%s' is not a subnet: %s",
+					flp->tok, err);
 				flushline(flp, NULL/*shh*/);
 				continue;
 			}
@@ -161,9 +161,9 @@ static void read_foodgroup(struct fg_groups *g, struct fd *whackfd)
 
 		const struct ip_info *type = subnet_type(&sn);
 		if (type == NULL) {
-			log_global(RC_LOG_SERIOUS, whackfd,
-				   "\"%s\" line %d ignored, unsupported Address Family \"%s\"",
-				   flp->filename, flp->lino, flp->tok);
+			log_flp(RC_LOG_SERIOUS, flp,
+				"ignored, unsupported Address Family \"%s\"",
+				flp->tok);
 			flushline(flp, NULL/*shh*/);
 			continue;
 		}
@@ -171,7 +171,6 @@ static void read_foodgroup(struct fg_groups *g, struct fd *whackfd)
 		unsigned proto = 0;
 		unsigned sport = 0;
 		unsigned dport = 0;
-		int line = flp->lino;
 
 		/* check for: [protocol sport dport] */
 		(void)shift();
@@ -180,53 +179,51 @@ static void read_foodgroup(struct fg_groups *g, struct fd *whackfd)
 			/* protocol */
 			err = ttoipproto(flp->tok, &proto);
 			if (err != NULL) {
-				log_global(RC_LOG_SERIOUS, whackfd,
-					   "\"%s\" line %d: protocol '%s' invalid: %s",
-					   flp->filename, line, flp->tok, err);
+				log_flp(RC_LOG_SERIOUS, flp,
+					"protocol '%s' invalid: %s",
+					flp->tok, err);
 				break;
 			}
 			if (proto == 0 || proto == IPPROTO_ESP || proto == IPPROTO_AH) {
-				log_global(RC_LOG_SERIOUS, whackfd,
-					   "\"%s\" line %d: invalid protocol '%s' - mistakenly defined to be 0 or %u(esp) or %u(ah)",
-					   flp->filename, line, flp->tok, IPPROTO_ESP, IPPROTO_AH);
+				log_flp(RC_LOG_SERIOUS, flp,
+					"invalid protocol '%s' - mistakenly defined to be 0 or %u(esp) or %u(ah)",
+					flp->tok, IPPROTO_ESP, IPPROTO_AH);
 				break;
 			}
 			(void)shift();
 			/* source port */
 			if (flp->bdry != B_none) {
-				log_global(RC_LOG_SERIOUS, whackfd,
-					   "\"%s\" line %d: missing source_port: either only specify CIDR, or specify CIDR protocol source_port dest_port",
-					   flp->filename, line);
+				log_flp(RC_LOG_SERIOUS, flp,
+					"missing source_port: either only specify CIDR, or specify CIDR protocol source_port dest_port");
 				break;
 			}
 			err = ttoport(flp->tok, &sport);
 			if (err != NULL) {
-				log_global(RC_LOG_SERIOUS, whackfd,
-					   "\"%s\" line %d: source port '%s' invalid: %s",
-					   flp->filename, line, flp->tok, err);
+				log_flp(RC_LOG_SERIOUS, flp,
+					"source port '%s' invalid: %s",
+					flp->tok, err);
 				break;
 			}
 			(void)shift();
 			/* dest port */
 			if (flp->bdry != B_none) {
-				log_global(RC_LOG_SERIOUS, whackfd,
-					   "\"%s\" line %d: missing dest_port: either only specify CIDR, or specify CIDR protocol source_port dest_port",
-					   flp->filename, line);
+				log_flp(RC_LOG_SERIOUS, flp,
+					"missing dest_port: either only specify CIDR, or specify CIDR protocol source_port dest_port");
 				break;
 			}
 			err = ttoport(flp->tok, &dport);
 			if (err != NULL) {
-				log_global(RC_LOG_SERIOUS, whackfd,
-					   "\"%s\" line %d: destination port '%s' invalid: %s",
-					   flp->filename, line, flp->tok, err);
+				log_flp(RC_LOG_SERIOUS, flp,
+					"destination port '%s' invalid: %s",
+					flp->tok, err);
 				break;
 			}
 			shift();
 			/* more stuff? */
 			if (flp->bdry == B_none) {
-				log_global(RC_LOG_SERIOUS, whackfd,
-					   "\"%s\" line %d: garbage '%s' at end of line: either only specify CIDR, or specify CIDR protocol source_port dest_port",
-					   flp->filename, line, flp->tok);
+				log_flp(RC_LOG_SERIOUS, flp,
+					"garbage '%s' at end of line: either only specify CIDR, or specify CIDR protocol source_port dest_port",
+					flp->tok);
 				break;
 			}
 		}
@@ -261,14 +258,12 @@ static void read_foodgroup(struct fg_groups *g, struct fd *whackfd)
 		if (r == 0) {
 			subnet_buf source;
 			subnet_buf dest;
-			log_global(RC_LOG_SERIOUS, whackfd,
-				   "\"%s\" line %d: subnet \"%s\", proto %d, sport %d dport %d, source %s, already \"%s\"",
-				   flp->filename,
-				   flp->lino,
-				   str_subnet(&sn, &dest),
-				   proto, sport, dport,
-				   str_subnet(lsn, &source),
-				   (*pp)->group->connection->name);
+			log_flp(RC_LOG_SERIOUS, flp,
+				"subnet \"%s\", proto %d, sport %d dport %d, source %s, already \"%s\"",
+				str_subnet(&sn, &dest),
+				proto, sport, dport,
+				str_subnet(lsn, &source),
+				(*pp)->group->connection->name);
 		} else {
 			struct fg_targets *f = alloc_thing(struct fg_targets,
 							   "fg_target");
@@ -283,9 +278,7 @@ static void read_foodgroup(struct fg_groups *g, struct fd *whackfd)
 		}
 	}
 	if (flp->bdry != B_file) {
-		log_global(RC_LOG_SERIOUS, whackfd,
-			   "\"%s\" line %d: rest of file ignored",
-			   flp->filename, flp->lino);
+		log_flp(RC_LOG_SERIOUS, flp, "rest of file ignored");
 	}
 	lexclose();
 }
@@ -303,15 +296,14 @@ static void free_targets(void)
 
 void load_groups(struct fd *whackfd)
 {
+	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
 	passert(new_targets == NULL);
 
 	/* for each group, add config file targets into new_targets */
-	{
-		struct fg_groups *g;
-
-		for (g = groups; g != NULL; g = g->next)
-			if (oriented(*g->connection))
-				read_foodgroup(g, whackfd);
+	for (struct fg_groups *g = groups; g != NULL; g = g->next) {
+		if (oriented(*g->connection)) {
+			read_foodgroup(g, logger);
+		}
 	}
 
 	/* dump new_targets */
