@@ -1001,14 +1001,13 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 	/* both DNs must have same number of RDNs */
 	if (more_a || more_b) {
 		if (wildcards != NULL && *wildcards != 0) {
-			/* ??? for some reason we think a failure with wildcards is worth logging */
 			dn_buf abuf;
 			dn_buf bbuf;
-			loglog(RC_LOG, "while comparing A='%s'<=>'%s'=B with a wildcard count of %d, %s had too few RDNs",
-				      str_dn(a, &abuf), str_dn(b, &bbuf), *wildcards,
-				      (more_a ? "B" : "A"));
+			dbg("while comparing A='%s'<=>'%s'=B with a wildcard count of %d, %s had too few RDNs",
+			    str_dn(a, &abuf), str_dn(b, &bbuf), *wildcards,
+			    (more_a ? "B" : "A"));
 		}
-		return FALSE;
+		return false;
 	}
 
 	/* the two DNs match! */
