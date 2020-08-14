@@ -562,13 +562,22 @@ void jam_raw_dn(struct jambuf *buf, chunk_t dn, jam_bytes_fn *jam_bytes,
 	err_t ugh = format_dn(buf, dn, jam_bytes, nss_compatible);
 	if (ugh != NULL) {
 		/* error: print DN as hex string */
-		loglog(RC_LOG, "error in DN parsing: %s", ugh);
-		DBG_dump_hunk("Bad DN:", dn);
+		if (DBGP(DBG_BASE)) {
+			dbg("error in DN parsing: %s", ugh);
+			DBG_dump_hunk("Bad DN:", dn);
+		}
 		/* reset the buffer */
 		jambuf_set_pos(buf, &pos);
 		jam(buf, "0x");
 		jam_HEX_bytes(buf, dn.ptr, dn.len);
 	}
+}
+
+err_t parse_dn(chunk_t dn)
+{
+	dn_buf dnb;
+	struct jambuf buf = ARRAY_AS_JAMBUF(dnb.buf);
+	return format_dn(&buf, dn, jam_raw_bytes, true/*nss_compatible*/);
 }
 
 void jam_dn_or_null(struct jambuf *buf, chunk_t dn, const char *null_dn,

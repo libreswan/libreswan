@@ -135,5 +135,6 @@ void jam_dn_or_null(struct jambuf *buf, chunk_t dn, const char *null_dn,
 void jam_dn(struct jambuf *buf, chunk_t dn, jam_bytes_fn *jam_bytes);
 void jam_raw_dn(struct jambuf *buf, chunk_t dn, jam_bytes_fn *jam_bytes,
 		bool nss_compatible);
+err_t parse_dn(chunk_t dn);
 
 #endif /* _X509_H */
