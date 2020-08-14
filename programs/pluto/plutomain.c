@@ -1777,8 +1777,8 @@ int main(int argc, char **argv)
 	init_states();
 	init_connections();
 	init_host_pair();
-	init_ike_alg();
-	test_ike_alg();
+	init_ike_alg(logger);
+	test_ike_alg(logger);
 
 	if (selftest_only) {
 		/*

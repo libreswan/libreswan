@@ -255,7 +255,7 @@ int main(int argc, char *argv[])
 	setbuf(stdout, NULL);
 
 	log_to_stderr = verbose;
-	init_ike_alg();
+	init_ike_alg(&progname_logger);
 
 	if (use_acvp) {
 		passert(cavp != NULL);

@@ -24,6 +24,7 @@
 struct ike_alg;
 struct jambuf;
 enum ike_alg_key;
+struct logger;
 
 /*
  * More meaningful passert.
@@ -670,8 +671,8 @@ struct integ_desc {
 
 extern bool encrypt_desc_is_aead(const struct encrypt_desc *enc_desc);
 
-void init_ike_alg(void);
-void test_ike_alg(void);
+void init_ike_alg(struct logger *logger);
+void test_ike_alg(struct logger *logger);
 
 /*
  * Iterate over all enabled algorithms.

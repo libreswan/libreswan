@@ -602,7 +602,7 @@ int main(int argc, char *argv[])
 	 */
 	log_to_stderr = verbose;
 
-	init_ike_alg();
+	init_ike_alg(&progname_logger);
 
 	/*
 	 * Only enabling debugging and impairing after things have
@@ -616,7 +616,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (test_algs) {
-		test_ike_alg();
+		test_ike_alg(&progname_logger);
 	}
 
 	if (*argp) {

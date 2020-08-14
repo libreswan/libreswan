@@ -896,7 +896,8 @@ static void check_enum_name(const char *what,
  * Verify an algorithm table, pruning anything that isn't supported.
  */
 
-static void check_algorithm_table(const struct ike_alg_type *type)
+static void check_algorithm_table(const struct ike_alg_type *type,
+				  struct logger *logger)
 {
 	/*
 	 * Sanity check the raw algorithm table.
@@ -1020,9 +1021,9 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 	 * If FIPS, scream about.  This way grepping for FIPS shows up
 	 * more information.
 	 */
-	loglog(RC_LOG, "%s%s algorithms:",
-		      libreswan_fipsmode() ? "FIPS " : "",
-		      type->Name);
+	log_message(RC_LOG, logger, "%s%s algorithms:",
+		    libreswan_fipsmode() ? "FIPS " : "",
+		    type->Name);
 	FOR_EACH_IKE_ALGP(type, algp) {
 		libreswan_log_ike_alg("  ", *algp);
 	}
@@ -1157,7 +1158,7 @@ void libreswan_log_ike_alg(const char *prefix, const struct ike_alg *alg)
  *
  * This prevents checks being performed on algorithms that are.
  */
-static void strip_nonfips(const struct ike_alg_type *type)
+static void strip_nonfips(const struct ike_alg_type *type, struct logger *logger)
 {
 	const struct ike_alg **end = type->algorithms->start;
 	FOR_EACH_IKE_ALGP(type, algp) {
@@ -1166,8 +1167,9 @@ static void strip_nonfips(const struct ike_alg_type *type)
 		 * Check FIPS before trying to run any tests.
 		 */
 		if (!alg->fips) {
-			loglog(RC_LOG, "%s algorithm %s disabled; not FIPS compliant",
-				      type->Name, alg->fqn);
+			log_message(RC_LOG, logger,
+				    "%s algorithm %s disabled; not FIPS compliant",
+				    type->Name, alg->fqn);
 			continue;
 		}
 		*end++ = alg;
@@ -1175,7 +1177,7 @@ static void strip_nonfips(const struct ike_alg_type *type)
 	type->algorithms->end = end;
 }
 
-void init_ike_alg(void)
+void init_ike_alg(struct logger *logger)
 {
 	bool fips = libreswan_fipsmode();
 
@@ -1186,7 +1188,7 @@ void init_ike_alg(void)
 	 */
 	if (fips) {
 		FOR_EACH_IKE_ALG_TYPEP(typep) {
-			strip_nonfips(*typep);
+			strip_nonfips(*typep, logger);
 		}
 	}
 
@@ -1194,6 +1196,6 @@ void init_ike_alg(void)
 	 * Now verify what is left.
 	 */
 	FOR_EACH_IKE_ALG_TYPEP(typep) {
-		check_algorithm_table(*typep);
+		check_algorithm_table(*typep, logger);
 	}
 }
