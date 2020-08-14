@@ -127,7 +127,7 @@ DESTDIR ?=
 PREFIX ?= /usr/local
 
 # Compatibility with old INC_USRLOCAL which was changed to PREFIX.
-# We will overwrite PREFIX with INC_USRLOCAL untill libreswan 4.2
+# We will overwrite PREFIX with INC_USRLOCAL until libreswan 4.2
 ifdef INC_USRLOCAL
 PREFIX = $(INC_USRLOCAL)
 $(warning Warning: Overriding PREFIX with deprecated variable INC_USRLOCAL)
@@ -161,7 +161,7 @@ endif
 MANDIR ?= $(DESTDIR)$(FINALMANDIR)
 
 # Compatibility with old MANTREE which was changed to MANDIR.
-# We will overwrite MANDIR with MANTREE untill libreswan 4.2
+# We will overwrite MANDIR with MANTREE until libreswan 4.2
 ifdef MANTREE
 MANDIR = $(MANTREE)
 $(warning Warning: Overriding MANDIR with deprecated variable MANTREE)
@@ -196,7 +196,7 @@ NSSDIR ?= $(DESTDIR)$(FINALNSSDIR)
 FINALPPKDIR ?= $(FINALCONFDDIR)
 PPKDIR ?= $(DESTDIR)$(FINALPPKDIR)
 
-# We will overwrite FINALDOCDIR with INC_DOCDIR untill libreswan 4.2
+# We will overwrite FINALDOCDIR with INC_DOCDIR until libreswan 4.2
 ifdef INC_DOCDIR
 FINALDOCDIR = $(PREFIX}/$(INC_DOCDIR)/libreswan
 $(warning Warning: Overriding FINALDOCDIR with deprecated INC_DOCDIR variable)
@@ -230,12 +230,12 @@ DOCKER_PLUTONOFORK ?= --nofork
 INITDDIRS ?= /etc/rc.d/init.d /etc/init.d
 INITDDIR_DEFAULT ?= /etc/init.d
 
-# We will overwrite INITDDIRS with INC_RCDIRS untill libreswan 4.2
+# We will overwrite INITDDIRS with INC_RCDIRS until libreswan 4.2
 ifdef INC_RCDIRS
 INITDDIRS = $(INC_RCDIRS)
 $(warning Warning: Overriding INITDDIRS with deprecated variable INC_RCDIRS)
 endif
-# We will overwrite INITDDIR_DEFAULT with INC_RCDEFAULT untill libreswan 4.2
+# We will overwrite INITDDIR_DEFAULT with INC_RCDEFAULT until libreswan 4.2
 ifdef INC_RCDEFAULT
 INITDDIR_DEFAULT = $(INC_RCDEFAULT)
 $(warning Warning: Overriding INITDDIR_DEFAULT with deprecated variable INC_RCDEFAULT)
