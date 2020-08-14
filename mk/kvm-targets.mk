@@ -1406,7 +1406,8 @@ Standard targets and operations:
     kvmsh-build
     kvmsh-HOST ($(filter-out build, $(KVM_TEST_HOSTS)))
         - use 'virsh console' to login to the given domain
-	- for HOST login to the first domain vis $(addprefix $(KVM_FIRST_PREFIX), HOST)
+	- for HOST login to the first domain vis:
+          $(addprefix $(KVM_FIRST_PREFIX), HOST)
         - if necessary, create and boot the host
     $(addprefix kvmsh-, $(KVM_LOCAL_DOMAINS))
         - login to the specific domain
