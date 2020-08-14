@@ -143,7 +143,7 @@ static void read_foodgroup(struct fg_groups *g, struct fd *whackfd)
 				log_global(RC_LOG_SERIOUS, whackfd,
 					   "\"%s\" line %d ignored, '%s' is not an address: %s",
 					   flp->filename, flp->lino, flp->tok, err);
-				flushline(NULL/*shh*/);
+				flushline(flp, NULL/*shh*/);
 				continue;
 			}
 			sn = subnet_from_address(&t);
@@ -154,7 +154,7 @@ static void read_foodgroup(struct fg_groups *g, struct fd *whackfd)
 				log_global(RC_LOG_SERIOUS, whackfd,
 					   "\"%s\" line %d ignored, '%s' is not a subnet: %s",
 					   flp->filename, flp->lino, flp->tok, err);
-				flushline(NULL/*shh*/);
+				flushline(flp, NULL/*shh*/);
 				continue;
 			}
 		}
@@ -164,7 +164,7 @@ static void read_foodgroup(struct fg_groups *g, struct fd *whackfd)
 			log_global(RC_LOG_SERIOUS, whackfd,
 				   "\"%s\" line %d ignored, unsupported Address Family \"%s\"",
 				   flp->filename, flp->lino, flp->tok);
-			flushline(NULL);
+			flushline(flp, NULL/*shh*/);
 			continue;
 		}
 

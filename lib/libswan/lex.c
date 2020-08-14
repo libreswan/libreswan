@@ -227,7 +227,7 @@ bool shift(void)
  * @param m string
  * @return bool True if everything is ok
  */
-bool flushline(const char *message)
+bool flushline(struct file_lex_position *flp, const char *message)
 {
 	if (flp->bdry != B_none) {
 		DBGF(DBG_TMI, "lex flushline: already on eof or record boundary");

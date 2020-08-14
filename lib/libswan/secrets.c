@@ -1310,7 +1310,7 @@ static void process_secret(struct secret **psecrets, struct secret *s,
 		}
 		/* finally free s */
 		pfree(s);
-	} else if (flushline("expected record boundary in key")) {
+	} else if (flushline(flp, "expected record boundary in key")) {
 		/* gauntlet has been run: install new secret */
 		add_secret(psecrets, s, "process_secret");
 	}
@@ -1322,7 +1322,7 @@ static void lsw_process_secret_records(struct secret **psecrets, struct logger *
 
 	/* read records from ipsec.secrets and load them into our table */
 	for (;; ) {
-		(void)flushline(NULL);	/* silently ditch leftovers, if any */
+		flushline(flp, NULL);	/* silently ditch leftovers, if any */
 		if (flp->bdry == B_file)
 			break;
 
@@ -1376,7 +1376,7 @@ static void lsw_process_secret_records(struct secret **psecrets, struct logger *
 			 */
 			memcpy(p, flp->tok, flp->cur - flp->tok + 1);
 			(void) shift();	/* move to Record Boundary, we hope */
-			if (flushline("ignoring malformed INCLUDE -- expected Record Boundary after filename")) {
+			if (flushline(flp, "ignoring malformed INCLUDE -- expected Record Boundary after filename")) {
 				lsw_process_secrets_file(psecrets, fn, logger);
 				flp->tok = NULL;	/* redundant? */
 			}
@@ -1484,7 +1484,7 @@ static void lsw_process_secrets_file(struct secret **psecrets, const char *file_
 		for (fnp = globbuf.gl_pathv; fnp != NULL && *fnp != NULL; fnp++) {
 			if (lexopen(&pos, *fnp, false, logger)) {
 				log_message(RC_LOG, logger, "loading secrets from \"%s\"", *fnp);
-				(void) flushline("file starts with indentation (continuation notation)");
+				flushline(flp, "file starts with indentation (continuation notation)");
 				lsw_process_secret_records(psecrets, logger);
 				lexclose();
 			}
