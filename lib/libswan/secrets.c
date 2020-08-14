@@ -1482,7 +1482,7 @@ static void lsw_process_secrets_file(struct secret **psecrets, const char *file_
 		/* success */
 		/* for each file... */
 		for (fnp = globbuf.gl_pathv; fnp != NULL && *fnp != NULL; fnp++) {
-			if (lexopen(&pos, *fnp, FALSE)) {
+			if (lexopen(&pos, *fnp, false, logger)) {
 				log_message(RC_LOG, logger, "loading secrets from \"%s\"", *fnp);
 				(void) flushline("file starts with indentation (continuation notation)");
 				lsw_process_secret_records(psecrets, logger);

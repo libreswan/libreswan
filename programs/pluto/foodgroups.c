@@ -102,6 +102,7 @@ static int subnetcmp(const ip_subnet *a, const ip_subnet *b)
 
 static void read_foodgroup(struct fg_groups *g, struct fd *whackfd)
 {
+	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
 	const char *fgn = g->connection->name;
 	const ip_subnet *lsn = &g->connection->spd.this.client;
 	const struct lsw_conf_options *oco = lsw_init_options();
@@ -116,7 +117,7 @@ static void read_foodgroup(struct fg_groups *g, struct fd *whackfd)
 
 	/* danger, global buffer */
 	snprintf(fg_path, fg_path_space, "%s/%s", oco->policies_dir, fgn);
-	if (!lexopen(&flp_space, fg_path, TRUE)) {
+	if (!lexopen(&flp_space, fg_path, true, logger)) {
 		char cwd[PATH_MAX];
 		dbg("no group file \"%s\" (pwd:%s)", fg_path, getcwd(cwd, sizeof(cwd)));
 		return;

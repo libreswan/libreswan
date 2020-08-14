@@ -24,12 +24,13 @@ struct file_lex_position {
 	char under;				/* except in shift(): character originally at *cur */
 	char *tok;
 	struct file_lex_position *previous;
+	struct logger *logger;			/* where to send errors */
 };
 
 extern struct file_lex_position *flp;
 
 extern bool lexopen(struct file_lex_position *new_flp, const char *name,
-		    bool optional);
+		    bool optional, struct logger *logger);
 extern void lexclose(void);
 
 #define tokeq(s) (streq(flp->tok, (s)))
@@ -37,3 +38,6 @@ extern void lexclose(void);
 
 extern bool shift(void);
 extern bool flushline(const char *m);
+
+void log_flp(lset_t rc_flags, struct file_lex_position *flp,
+	     const char *message, ...) PRINTF_LIKE(3);
