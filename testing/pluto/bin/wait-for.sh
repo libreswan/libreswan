@@ -56,7 +56,7 @@ while test "$#" -gt 1; do
 	* ) break ;;
     esac
 done
-if test "${regex}" == ""; then
+if test "${regex}" = ""; then
     echo "missing --match <regex> or --no-match <regex>" 1>&2
     exit 1
 fi
