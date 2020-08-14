@@ -24,7 +24,7 @@
 
 #include "lswlog.h"
 
-int nl_send_query(struct nlmsghdr *req, int protocol)
+int nl_send_query(struct nlmsghdr *req, int protocol, struct logger *logger)
 {
 	size_t len;
 	ssize_t r;
@@ -50,9 +50,9 @@ int nl_send_query(struct nlmsghdr *req, int protocol)
 		close(nl_fd);
 		return -2;
 	} else if ((size_t)r != len) {
-		loglog(RC_LOG_SERIOUS,
-			"ERROR: netlink write() message truncated: %zd instead of %zu",
-			r, len);
+		log_message(RC_LOG_SERIOUS, logger,
+			    "ERROR: netlink write() message truncated: %zd instead of %zu",
+			    r, len);
 		close(nl_fd);
 		return -3;
 	}

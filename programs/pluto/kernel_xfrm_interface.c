@@ -81,9 +81,10 @@ static int xfrm_interface_support;
 static bool stale_checked;
 static uint32_t xfrm_interface_id = IPSEC1_XFRM_IF_ID; /* XFRMA_IF_ID && XFRMA_SET_MARK */
 
-static bool nl_query_small_resp(struct nlmsghdr *req, int protocol, struct nlm_resp *rsp)
+static bool nl_query_small_resp(struct nlmsghdr *req, int protocol, struct nlm_resp *rsp,
+				struct logger *logger)
 {
-	int nl_fd = nl_send_query(req, protocol);
+	int nl_fd = nl_send_query(req, protocol, logger);
 	if (nl_fd < 0)
 		return true;
 
@@ -179,7 +180,7 @@ bool ip_link_set_up(const char *if_name, struct logger *logger)
 	}
 
 	struct nlm_resp nl_rsp;
-	if (nl_query_small_resp(&req.n, NETLINK_ROUTE, &nl_rsp)) {
+	if (nl_query_small_resp(&req.n, NETLINK_ROUTE, &nl_rsp, logger)) {
 		log_message(RC_FATAL, logger, "ERROR:ip_link_set_up() netlink query dev %s", if_name);
 
 	} else {
@@ -203,7 +204,7 @@ static bool ip_link_del(const char *if_name, struct logger *logger)
 	}
 
 	struct nlm_resp nl_rsp;
-	if (nl_query_small_resp(&req.n, NETLINK_ROUTE, &nl_rsp)) {
+	if (nl_query_small_resp(&req.n, NETLINK_ROUTE, &nl_rsp, logger)) {
 		log_message(RC_FATAL, logger,
 			    "ERROR: ip_link_del() deleting xfrmi interface %s failed", if_name);
 
@@ -232,7 +233,7 @@ static bool ip_link_add_xfrmi(const char *if_name, const char *dev_name, const u
 	}
 
 	struct nlm_resp nl_rsp;
-	if (nl_query_small_resp(&req.n, NETLINK_ROUTE, &nl_rsp)) {
+	if (nl_query_small_resp(&req.n, NETLINK_ROUTE, &nl_rsp, logger)) {
 		log_message(RC_FATAL, logger,
 			    "ERROR: nl_query_small_resp() netlink query failed");
 
@@ -425,7 +426,7 @@ static void process_nlmsgs(char *msgbuf,  ssize_t len, struct ifinfo_response *i
 	}
 }
 
-static bool find_xfrmi_interface(char *if_name, uint32_t xfrm_if_id)
+static bool find_xfrmi_interface(char *if_name, uint32_t xfrm_if_id, struct logger *logger)
 {
 	if (if_name != NULL) {
 		/* this is name based check first to do a simple check */
@@ -436,10 +437,10 @@ static bool find_xfrmi_interface(char *if_name, uint32_t xfrm_if_id)
 	struct nl_ifinfomsg_req req = init_nl_ifi(RTM_GETLINK,
 			(NLM_F_REQUEST | NLM_F_DUMP));
 
-	int nl_fd = nl_send_query(&req.n, NETLINK_ROUTE);
+	int nl_fd = nl_send_query(&req.n, NETLINK_ROUTE, logger);
 
 	if (nl_fd < 0) {
-		loglog(RC_LOG_SERIOUS, "ERROR write to netlink socket failed");
+		log_message(RC_LOG_SERIOUS, logger, "ERROR write to netlink socket failed");
 		return true;
 	}
 
@@ -448,7 +449,7 @@ static bool find_xfrmi_interface(char *if_name, uint32_t xfrm_if_id)
 	ssize_t len = netlink_read_reply(nl_fd,  &resp_msgbuf,
 			IFINFO_REPLY_BUFFER_SIZE, 0, getpid());
 	if (len < 0) {
-		loglog(RC_LOG_SERIOUS, "ERROR find_any_xfrmi_interface() received %d", nl_fd);
+		log_message(RC_LOG_SERIOUS, logger, "ERROR find_any_xfrmi_interface() received %d", nl_fd);
 		close(nl_fd);
 		return true;
 	}
@@ -481,10 +482,10 @@ static bool find_xfrmi_interface(char *if_name, uint32_t xfrm_if_id)
 	return true;
 }
 
-static bool find_any_xfrmi_interface(void)
+static bool find_any_xfrmi_interface(struct logger *logger)
 {
 
-	if (find_xfrmi_interface(NULL, 0)) {
+	if (find_xfrmi_interface(NULL, 0, logger)) {
 		dbg("%s no xfrmi interface found", __func__);
 		return true;
 	}
@@ -494,7 +495,7 @@ static bool find_any_xfrmi_interface(void)
 static err_t ipsec1_support_test(const char *if_name, const char *dev_name,
 				 struct logger *logger)
 {
-	if (!find_any_xfrmi_interface())
+	if (!find_any_xfrmi_interface(logger))
 		return NULL; /* success there is already xfrmi interefaces */
 
 	dbg("create and delete an xfrmi interrace '%s@%s' to test xfrmi support",
@@ -662,7 +663,7 @@ bool add_xfrmi(struct connection *c, struct logger *logger)
 			return true;
 		c->xfrmi->pluto_added = true;
 	} else { /* device exist match name, type xfrmi, and xfrm_if_id */
-		if (find_xfrmi_interface(c->xfrmi->name, c->xfrmi->if_id)) {
+		if (find_xfrmi_interface(c->xfrmi->name, c->xfrmi->if_id, logger)) {
 			/* found wrong device abort adding */
 			log_message(RC_LOG_SERIOUS, logger,
 				    "ERROR device %s exist and do not match expected type xfrm or xfrm_if_id %u. check 'ip -d link show dev %s'", c->xfrmi->name, c->xfrmi->if_id, c->xfrmi->name);
