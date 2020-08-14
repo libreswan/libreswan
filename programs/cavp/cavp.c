@@ -21,6 +21,7 @@
 #include "lswnss.h"
 #include "lswlog.h"
 #include "ike_alg.h"
+#include "crypt_symkey.h"		/* for init_crypt_symkey() */
 
 #include "cavp.h"
 #include "cavps.h"
@@ -158,6 +159,7 @@ int main(int argc, char *argv[])
 	if (!lsw_nss_setup(NULL, 0, &progname_logger)) {
 		return 1;
 	}
+	init_crypt_symkey(&progname_logger);
 
 	for (; *argp != NULL; argp++) {
 		const char *arg = *argp;
