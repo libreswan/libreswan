@@ -126,32 +126,35 @@ static struct nl_ifinfomsg_req init_nl_ifi(uint16_t type, uint16_t flags)
 }
 
 static bool link_add_nl_msg(const char *if_name,
-		const char *dev_name, const uint32_t if_id,
-		struct nl_ifinfomsg_req *req)
+			    const char *dev_name, const uint32_t if_id,
+			    struct nl_ifinfomsg_req *req,
+			    struct logger *logger)
 {
 
 	char link_type[] = "xfrm";
 	*req = init_nl_ifi(RTM_NEWLINK, NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL);
 
-	nl_addattrstrz(&req->n, req->maxlen, IFLA_IFNAME, if_name);
+	nl_addattrstrz(&req->n, req->maxlen, IFLA_IFNAME, if_name, logger);
 
 	struct rtattr *linkinfo;
-	linkinfo = nl_addattr_nest(&req->n, req->maxlen, IFLA_LINKINFO);
+	linkinfo = nl_addattr_nest(&req->n, req->maxlen, IFLA_LINKINFO, logger);
 	nl_addattr_l(&req->n, req->maxlen, IFLA_INFO_KIND, link_type,
-			strlen(link_type));
+		     strlen(link_type), logger);
 
-	struct rtattr *xfrm_link = nl_addattr_nest(&req->n, req->maxlen, IFLA_INFO_DATA);
+	struct rtattr *xfrm_link = nl_addattr_nest(&req->n, req->maxlen,
+						   IFLA_INFO_DATA, logger);
 	/*
 	 * IFLA_XFRM_IF_ID was added to mainline kernel 4.19 linux/if_link.h
 	 * with older kernel headers 'make USE_XFRM_INTERFACE_IFLA_HEADER=true'
 	 */
-	nl_addattr32(&req->n, 1024, IFLA_XFRM_IF_ID, if_id);
+	nl_addattr32(&req->n, 1024, IFLA_XFRM_IF_ID, if_id, logger);
 
 	if (dev_name != NULL) {
 		uint32_t dev_link_id; /* e.g link id of the interface, eth0 */
 		dev_link_id = if_nametoindex(dev_name);
 		if (dev_link_id != 0) {
-			nl_addattr32(&req->n, 1024, IFLA_XFRM_LINK, dev_link_id);
+			nl_addattr32(&req->n, 1024, IFLA_XFRM_LINK,
+				     dev_link_id, logger);
 		} else {
 			LOG_ERRNO(errno, "Can not find interface index for device %s",
 					dev_name);
@@ -220,13 +223,13 @@ static bool ip_link_del(const char *if_name, struct logger *logger)
 	return false;
 }
 
-static bool ip_link_add_xfrmi(const char *if_name, const char *dev_name, const uint32_t if_id,
-			      struct logger *logger)
+static bool ip_link_add_xfrmi(const char *if_name, const char *dev_name,
+			      const uint32_t if_id, struct logger *logger)
 {
 	dbg("add xfrm interface %s@%s id=%u", if_name, dev_name, if_id);
 	struct nl_ifinfomsg_req req;
 	zero(&req);
-	if (link_add_nl_msg(if_name, dev_name, if_id, &req)) {
+	if (link_add_nl_msg(if_name, dev_name, if_id, &req, logger)) {
 		log_message(RC_FATAL, logger,
 			    "ERROR: nl_query_small_resp() creating netlink message failed");
 		return true;

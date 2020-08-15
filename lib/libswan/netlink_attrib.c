@@ -30,15 +30,16 @@
 	((struct rtattr *) (((void *) (nmsg)) + NLMSG_ALIGN((nmsg)->nlmsg_len)))
 
 bool nl_addattr_l(struct nlmsghdr *n, const unsigned short maxlen,
-		const unsigned short type, const void *data, int alen)
+		  const unsigned short type, const void *data, int alen,
+		  struct logger *logger)
 {
 	unsigned short len = RTA_LENGTH(alen);
 	struct rtattr *rta;
 
 	if (NLMSG_ALIGN(n->nlmsg_len) + RTA_ALIGN(len) > maxlen) {
-		loglog(RC_LOG_SERIOUS,
-				"ERROR: addattr_l: message exceeded bound %hu / %hu",
-				n->nlmsg_len, maxlen);
+		log_message(RC_LOG_SERIOUS, logger,
+			    "ERROR: addattr_l: message exceeded bound %hu / %hu",
+			    n->nlmsg_len, maxlen);
 	}
 	rta = NLMSG_TAIL(n);
 	rta->rta_type = type;
@@ -49,11 +50,11 @@ bool nl_addattr_l(struct nlmsghdr *n, const unsigned short maxlen,
 	return NULL;
 }
 
-struct rtattr *nl_addattr_nest(struct nlmsghdr *n, int maxlen, int type)
+struct rtattr *nl_addattr_nest(struct nlmsghdr *n, int maxlen, int type, struct logger *logger)
 {
 	struct rtattr *nest = NLMSG_TAIL(n);
 
-	nl_addattr_l(n, maxlen, type, NULL, 0);
+	nl_addattr_l(n, maxlen, type, NULL, 0, logger);
 	return nest;
 }
 
@@ -63,12 +64,14 @@ bool nl_addattr_nest_end(struct nlmsghdr *n, struct rtattr *nest)
 	return n->nlmsg_len;
 }
 
-bool nl_addattrstrz(struct nlmsghdr *n, int maxlen, int type, const char *str)
+bool nl_addattrstrz(struct nlmsghdr *n, int maxlen, int type,
+		    const char *str, struct logger *logger)
 {
-	return nl_addattr_l(n, maxlen, type, str, strlen(str)+1);
+	return nl_addattr_l(n, maxlen, type, str, strlen(str)+1, logger);
 }
 
-bool nl_addattr32(struct nlmsghdr *n, int maxlen, int type, const uint32_t data)
+bool nl_addattr32(struct nlmsghdr *n, int maxlen, int type,
+		  const uint32_t data, struct logger *logger)
 {
-	return nl_addattr_l(n, maxlen, type, &data, sizeof(uint32_t));
+	return nl_addattr_l(n, maxlen, type, &data, sizeof(uint32_t), logger);
 }
