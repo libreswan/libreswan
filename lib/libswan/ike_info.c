@@ -43,7 +43,7 @@ static bool ike_proposal_ok(struct proposal_parser *parser,
 	 * Check that the ALG_INFO spec is implemented.
 	 */
 
-	impaired_passert(proposal_parser,
+	impaired_passert(proposal_parser, parser->policy->logger,
 			 next_algorithm(proposal, PROPOSAL_encrypt, NULL) != NULL);
 	FOR_EACH_ALGORITHM(proposal, encrypt, alg) {
 		const struct encrypt_desc *encrypt = encrypt_desc(alg->desc);
@@ -54,14 +54,14 @@ static bool ike_proposal_ok(struct proposal_parser *parser,
 						   alg->enckeylen));
 	}
 
-	impaired_passert(proposal_parser,
+	impaired_passert(proposal_parser, parser->policy->logger,
 			 next_algorithm(proposal, PROPOSAL_prf, NULL) != NULL);
 	FOR_EACH_ALGORITHM(proposal, prf, alg) {
 		const struct prf_desc *prf = prf_desc(alg->desc);
 		passert(ike_alg_is_ike(&prf->common));
 	}
 
-	impaired_passert(proposal_parser,
+	impaired_passert(proposal_parser, parser->policy->logger,
 			 next_algorithm(proposal, PROPOSAL_integ, NULL) != NULL);
 	FOR_EACH_ALGORITHM(proposal, integ, alg) {
 		const struct integ_desc *integ = integ_desc(alg->desc);
@@ -69,7 +69,7 @@ static bool ike_proposal_ok(struct proposal_parser *parser,
 			ike_alg_is_ike(&integ->common));
 	}
 
-	impaired_passert(proposal_parser,
+	impaired_passert(proposal_parser, parser->policy->logger,
 			 next_algorithm(proposal, PROPOSAL_dh, NULL) != NULL);
 	FOR_EACH_ALGORITHM(proposal, dh, alg) {
 		const struct dh_desc *dh = dh_desc(alg->desc);

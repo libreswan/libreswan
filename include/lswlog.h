@@ -535,11 +535,14 @@ void libreswan_bad_case(const char *expression, long value, where_t where) NEVER
 
 #define bad_case(N)	libreswan_bad_case(#N, (N), HERE)
 
-#define impaired_passert(BEHAVIOUR, ASSERTION) {			\
+#define impaired_passert(BEHAVIOUR, LOGGER, ASSERTION)			\
+	{								\
 		if (impair.BEHAVIOUR) {					\
 			bool assertion_ = ASSERTION;			\
 			if (!assertion_) {				\
-				loglog(RC_LOG, "IMPAIR: assertion '%s' failed", #ASSERTION); \
+				log_message(RC_LOG, LOGGER,		\
+					    "IMPAIR: assertion '%s' failed", \
+					    #ASSERTION);		\
 			}						\
 		} else {						\
 			passert(ASSERTION);				\

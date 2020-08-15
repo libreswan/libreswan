@@ -42,11 +42,11 @@ static bool esp_proposal_ok(struct proposal_parser *parser,
 		}
 	}
 
-	impaired_passert(proposal_parser,
+	impaired_passert(proposal_parser, parser->policy->logger,
 			 next_algorithm(proposal, PROPOSAL_encrypt, NULL) != NULL);
-	impaired_passert(proposal_parser,
+	impaired_passert(proposal_parser, parser->policy->logger,
 			 next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL);
-	impaired_passert(proposal_parser,
+	impaired_passert(proposal_parser, parser->policy->logger,
 			 next_algorithm(proposal, PROPOSAL_integ, NULL) != NULL);
 	return true;
 }

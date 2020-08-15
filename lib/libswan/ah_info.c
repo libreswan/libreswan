@@ -32,11 +32,11 @@
 static bool ah_proposal_ok(struct proposal_parser *parser,
 			   const struct proposal *proposal)
 {
-	impaired_passert(proposal_parser,
+	impaired_passert(proposal_parser, parser->policy->logger,
 			 next_algorithm(proposal, PROPOSAL_encrypt, NULL) == NULL);
-	impaired_passert(proposal_parser,
+	impaired_passert(proposal_parser, parser->policy->logger,
 			 next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL);
-	impaired_passert(proposal_parser,
+	impaired_passert(proposal_parser, parser->policy->logger,
 			 next_algorithm(proposal, PROPOSAL_integ, NULL) != NULL);
 
 	/* ah=null is invalid */
