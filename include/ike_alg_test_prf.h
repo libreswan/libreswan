@@ -25,4 +25,5 @@ extern const struct prf_test_vector aes_xcbc_prf_tests[];
 extern const struct prf_test_vector hmac_md5_prf_tests[];
 
 bool test_prf_vectors(const struct prf_desc *desc,
-		      const struct prf_test_vector *tests);
+		      const struct prf_test_vector *tests,
+		      struct logger *logger);

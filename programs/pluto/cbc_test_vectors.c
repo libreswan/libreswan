@@ -148,12 +148,14 @@ static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
 					    sym_key, iv.ptr, encrypt);
 
 	if (!verify_hunk(op, expected, tmp)) {
-		DBG(DBG_CRYPT, DBG_log("test_cbc_op: %s: %s: output does not match", description, op));
+		DBGF(DBG_CRYPT, "test_cbc_op: %s: %s: output does not match",
+		     description, op);
 		ok = FALSE;
 	}
 	if (!verify_bytes("updated CBC IV", iv.ptr, iv.len,
 			  expected_iv.ptr + expected_iv.len - iv.len, iv.len)) {
-		DBG(DBG_CRYPT, DBG_log("test_cbc_op: %s: %s: IV does not match", description, op));
+		DBGF(DBG_CRYPT, "test_cbc_op: %s: %s: IV does not match",
+		     description, op);
 		ok = FALSE;
 	}
 
@@ -173,7 +175,6 @@ static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
 static bool test_cbc_vector(const struct encrypt_desc *encrypt_desc,
 			    const struct cbc_test_vector *test)
 {
-	libreswan_log("  %s", test->description);
 	bool ok = TRUE;
 
 	PK11SymKey *sym_key = decode_to_key(encrypt_desc, test->key);
@@ -193,17 +194,19 @@ static bool test_cbc_vector(const struct encrypt_desc *encrypt_desc,
 	/* Clean up.  */
 	release_symkey(__func__, "sym_key", &sym_key);
 
-	DBG(DBG_CRYPT, DBG_log("test_ctr_vector: %s %s",
-			       test->description, ok ? "passed" : "failed"));
+	DBGF(DBG_CRYPT, "test_ctr_vector: %s %s",
+	     test->description, ok ? "passed" : "failed");
 	return ok;
 }
 
 bool test_cbc_vectors(const struct encrypt_desc *desc,
-		      const struct cbc_test_vector *tests)
+		      const struct cbc_test_vector *tests,
+		      struct logger *logger)
 {
 	bool ok = TRUE;
 	const struct cbc_test_vector *test;
 	for (test = tests; test->description != NULL; test++) {
+		log_message(RC_LOG, logger, "  %s", test->description);
 		if (!test_cbc_vector(desc, test)) {
 			ok = FALSE;
 		}

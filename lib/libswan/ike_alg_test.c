@@ -31,7 +31,7 @@
 	} else {							\
 		log_message(RC_LOG, logger,				\
 			    "testing %s:", (ALG).common.fqn);		\
-		passert(TESTER(&ALG, TESTS));				\
+		passert(TESTER(&ALG, TESTS, logger));				\
 	}
 
 void test_ike_alg(struct logger *logger)

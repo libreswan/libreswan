@@ -26,4 +26,5 @@ struct ctr_test_vector {
 extern const struct ctr_test_vector *const aes_ctr_tests;
 
 bool test_ctr_vectors(const struct encrypt_desc *encrypt_desc,
-		      const struct ctr_test_vector *tests);
+		      const struct ctr_test_vector *tests,
+		      struct logger *logger);

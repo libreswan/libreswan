@@ -160,8 +160,6 @@ const struct prf_test_vector hmac_md5_prf_tests[] = {
 static bool test_prf_vector(const struct prf_desc *prf,
 			    const struct prf_test_vector *test)
 {
-	libreswan_log("  %s", test->description);
-
 	chunk_t chunk_key = decode_to_chunk(__func__, test->key);
 	passert(chunk_key.len == test->key_size);
 	chunk_t chunk_message = (test->message != NULL)
@@ -175,7 +173,9 @@ static bool test_prf_vector(const struct prf_desc *prf,
 							  "key", chunk_key);
 	crypt_prf_update_hunk(chunk_prf, "message", chunk_message);
 	struct crypt_mac chunk_output = crypt_prf_final_mac(&chunk_prf, NULL);
-	DBG(DBG_CRYPT, DBG_dump_hunk("chunk output", chunk_output));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump_hunk("chunk output", chunk_output);
+	}
 	bool ok = verify_hunk(test->description, prf_output, chunk_output);
 
 	/* symkey interface */
@@ -186,7 +186,9 @@ static bool test_prf_vector(const struct prf_desc *prf,
 						       chunk_message);
 	crypt_prf_update_symkey(symkey_prf, "symkey message", symkey_message);
 	PK11SymKey *symkey_output = crypt_prf_final_symkey(&symkey_prf);
-	DBG(DBG_CRYPT, DBG_symkey("output", "symkey", symkey_output));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_symkey("output", "symkey", symkey_output);
+	}
 	ok = verify_symkey(test->description, prf_output, symkey_output);
 	DBGF(DBG_CRYPT, "%s: %s %s", __func__, test->description, ok ? "passed" : "failed");
 	release_symkey(__func__, "symkey", &symkey_output);
@@ -203,11 +205,13 @@ static bool test_prf_vector(const struct prf_desc *prf,
 }
 
 bool test_prf_vectors(const struct prf_desc *desc,
-		      const struct prf_test_vector *tests)
+		      const struct prf_test_vector *tests,
+		      struct logger *logger)
 {
 	bool ok = TRUE;
 	for (const struct prf_test_vector *test = tests;
 	     test->description != NULL; test++) {
+		log_message(RC_LOG, logger, "  %s", test->description);
 		if (!test_prf_vector(desc, test)) {
 			ok = FALSE;
 		}
