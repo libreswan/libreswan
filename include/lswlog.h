@@ -259,16 +259,9 @@ void lswlog_to_error_stream(struct jambuf *buf);
  *
  * There are two variants, the first specify the RC (prefix sent to
  * whack), while the second default RC to RC_LOG.
- *
- * XXX: even though the the name loglog() gives the impression that
- * it, and not libreswan_log(), needs to be used when double logging
- * (i.e., to both 'syslog' and whack), it does not - both functions
- * double log!  Hence LSWLOG_RC().
  */
 
 void jam_cur_prefix(struct jambuf *buf);
-
-extern void loglog(enum rc_type, const char *fmt, ...) PRINTF_LIKE(2); /* use log_message() */
 
 #define LSWLOG_RC(RC, BUF)						\
 	LSWLOG_(true, BUF,						\

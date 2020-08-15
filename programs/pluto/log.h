@@ -319,6 +319,7 @@ extern void linux_audit_init(int do_audit);
 # endif
 #endif
 
+extern void loglog(enum rc_type, const char *fmt, ...) PRINTF_LIKE(2); /* use log_message() */
 #define libreswan_log(MESSAGE, ...) loglog(RC_LOG, MESSAGE, ##__VA_ARGS__) /* XXX: TBD: use log_message() */
 
 #endif /* _PLUTO_LOG_H */

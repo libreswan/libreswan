@@ -127,8 +127,6 @@ OBJS += fatal.o
 OBJS += libreswan_log_errno.o
 OBJS += libreswan_bad_case.o
 
-OBJS += loglog.o
-
 OBJS += log_pexpect.o
 
 OBJS += jambuf.o

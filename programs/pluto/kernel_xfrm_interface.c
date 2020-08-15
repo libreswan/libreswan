@@ -43,6 +43,7 @@
 #include "kernel_netlink_reply.h"
 #include "kernel_netlink_query.h"
 #include "iface.h"
+#include "log.h"
 
 #define IPSEC1_XFRM_IF_ID (1U)
 #define IFINFO_REPLY_BUFFER_SIZE (32768 + NL_BUFMARGIN)
