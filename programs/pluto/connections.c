@@ -771,16 +771,16 @@ static int extract_end(struct fd *whackfd,
 				dst->ca = EMPTY_CHUNK;
 			} else {
 				dst->ca = clone_hunk(dst->ca, "ca string");
+				/* now try converting it back; isn't failing this a bug? */
+				ugh = parse_dn(dst->ca);
+				if (ugh != NULL) {
+					log_global(RC_LOG, whackfd,
+						   "error parsing %s CA converted to DN: %s",
+						   leftright, ugh);
+					DBG_dump_hunk(NULL, dst->ca);
+				}
 			}
 
-			/* now try converting it back; isn't failing this a bug? */
-			ugh = parse_dn(dst->ca);
-			if (ugh != NULL) {
-				log_global(RC_LOG, whackfd,
-					   "error parsing %s CA converted to DN: %s",
-					   leftright, ugh);
-				DBG_dump_hunk(NULL, dst->ca);
-			}
 		}
 	}
 
