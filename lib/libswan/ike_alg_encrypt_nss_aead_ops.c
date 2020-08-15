@@ -33,7 +33,8 @@ static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 			     uint8_t *aad, size_t aad_size,
 			     uint8_t *text_and_tag,
 			     size_t text_size, size_t tag_size,
-			     PK11SymKey *sym_key, bool enc)
+			     PK11SymKey *sym_key, bool enc,
+			     struct logger *logger)
 {
 	/* See pk11aeadtest.c */
 	bool ok = true;
@@ -73,7 +74,7 @@ static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 					    text_and_tag_size,
 					    text_and_tag, text_size);
 		if (rv != SECSuccess) {
-			LSWLOG(buf) {
+			LOG_MESSAGE(RC_LOG, logger, buf) {
 				jam(buf, "NSS: AEAD encryption using %s_%u and PK11_Encrypt() failed",
 				    alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_PER_BYTE);
 				jam_nss_error(buf);
@@ -81,7 +82,7 @@ static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 			ok = false;
 		} else if (out_len != text_and_tag_size) {
 			/* should this be a pexpect fail? */
-			LSWLOG_RC(RC_LOG_SERIOUS, buf) {
+			LOG_MESSAGE(RC_LOG_SERIOUS, logger, buf) {
 				jam(buf, "NSS: AEAD encryption using %s_%u and PK11_Encrypt() failed (output length of %u not the expected %zd)",
 				    alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_PER_BYTE,
 				    out_len, text_and_tag_size);
@@ -94,7 +95,7 @@ static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 					    out_buf, &out_len, text_and_tag_size,
 					    text_and_tag, text_and_tag_size);
 		if (rv != SECSuccess) {
-			LSWLOG(buf) {
+			LOG_MESSAGE(RC_LOG, logger, buf) {
 				jam(buf, "NSS: AEAD decryption using %s_%u and PK11_Decrypt() failed",
 				    alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_PER_BYTE);
 				jam_nss_error(buf);
@@ -102,7 +103,7 @@ static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 			ok = false;
 		} else if (out_len != text_size) {
 			/* should this be a pexpect fail? */
-			LSWLOG_RC(RC_LOG_SERIOUS, buf) {
+			LOG_MESSAGE(RC_LOG_SERIOUS, logger, buf) {
 				jam(buf, "NSS: AEAD decryption using %s_%u and PK11_Decrypt() failed (output length of %u not the expected %zd)",
 				    alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_PER_BYTE,
 				    out_len, text_size);

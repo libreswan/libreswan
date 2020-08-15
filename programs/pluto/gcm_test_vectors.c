@@ -78,7 +78,8 @@ static const struct gcm_test_vector aes_gcm_test_vectors[] = {
 const struct gcm_test_vector *const aes_gcm_tests = aes_gcm_test_vectors;
 
 static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
-			    const struct gcm_test_vector *test)
+			    const struct gcm_test_vector *test,
+			    struct logger *logger)
 {
 	const size_t salt_size = encrypt_desc->salt_size;
 
@@ -124,7 +125,8 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 							aad.ptr, aad.len, \
 							text_and_tag.ptr, \
 							len, tag.len,	\
-							sym_key, enc) || \
+							sym_key, enc,	\
+							logger) ||	\
 		    !verify_bytes("output ciphertext", to.ptr, to.len,	\
 				  text_and_tag.ptr, to.len) ||		\
 		    !verify_bytes("TAG", tag.ptr, tag.len,		\
@@ -168,7 +170,7 @@ bool test_gcm_vectors(const struct encrypt_desc *desc,
 	const struct gcm_test_vector *test;
 	for (test = tests; test->key != NULL; test++) {
 		log_message(RC_LOG, logger, "  %s", test->description);
-		if (!test_gcm_vector(desc, test)) {
+		if (!test_gcm_vector(desc, test, logger)) {
 			ok = FALSE;
 		}
 	}

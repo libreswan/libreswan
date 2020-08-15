@@ -428,7 +428,7 @@ stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 			      wire_iv_start, wire_iv_size,
 			      aad_start, aad_size,
 			      enc_start, enc_size, integ_size,
-			      cipherkey, TRUE)) {
+			      cipherkey, true, sk->logger)) {
 			return STF_FAIL;
 		}
 		DBG(DBG_CRYPT,
@@ -594,7 +594,7 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 			      wire_iv_start, wire_iv_size,
 			      aad_start, aad_size,
 			      enc_start, enc_size, integ_size,
-			      cipherkey, FALSE)) {
+			      cipherkey, false, ike->sa.st_logger)) {
 			return false;
 		}
 		DBG(DBG_CRYPT,

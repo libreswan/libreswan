@@ -22,6 +22,7 @@
 #include "ike_alg_encrypt.h"
 #include "ike_alg_encrypt_ops.h"
 #include "crypt_symkey.h"
+#include "lswlog.h"
 
 #include "cavp.h"
 #include "cavp_entry.h"
@@ -198,7 +199,8 @@ static void gcm_run_test(void)
 			  text_and_tag.ptr,
 			  ct.len, tag.len,
 			  gcm_key,
-			  FALSE/*encrypt*/);
+			  false/*encrypt*/,
+			  &progname_logger);
 	if (result) {
 		/* plain text */
 		chunk_t pt = {
