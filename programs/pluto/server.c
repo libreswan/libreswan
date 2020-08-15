@@ -1210,6 +1210,8 @@ void init_server(void)
  */
 void call_server(char *conffile)
 {
+	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
+
 	init_hash_table(&pids_hash_table);
 
 	/*
@@ -1310,7 +1312,7 @@ void call_server(char *conffile)
 	/* parent continues */
 
 #ifdef HAVE_SECCOMP
-	init_seccomp_main();
+	init_seccomp_main(logger);
 #else
 	libreswan_log("seccomp security not supported");
 #endif

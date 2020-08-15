@@ -19,7 +19,7 @@
 
 extern enum seccomp_mode pluto_seccomp_mode;
 
-void init_seccomp_main(void);
-void init_seccomp_cryptohelper(int helpernum);
+void init_seccomp_main(struct logger *logger);
+void init_seccomp_cryptohelper(int helpernum, struct logger *logger);
 
 #endif

@@ -89,7 +89,7 @@ static void resolve_defaultroute(struct starter_conn *conn UNUSED)
 }
 
 #ifdef HAVE_SECCOMP
-static void init_seccomp_addconn(uint32_t def_action)
+static void init_seccomp_addconn(uint32_t def_action, struct logger *logger)
 {
 	scmp_filter_ctx ctx = seccomp_init(def_action);
 	if (ctx == NULL) {
@@ -102,62 +102,62 @@ static void init_seccomp_addconn(uint32_t def_action)
 	 * here MUST also appear in the syscall list for "main" inside
 	 * pluto
 	 */
-	LSW_SECCOMP_ADD(ctx, access);
-	LSW_SECCOMP_ADD(ctx, arch_prctl);
-	LSW_SECCOMP_ADD(ctx, brk);
-	LSW_SECCOMP_ADD(ctx, bind);
-	LSW_SECCOMP_ADD(ctx, clone);
-	LSW_SECCOMP_ADD(ctx, clock_gettime);
-	LSW_SECCOMP_ADD(ctx, close);
-	LSW_SECCOMP_ADD(ctx, connect);
-	LSW_SECCOMP_ADD(ctx, epoll_create);
-	LSW_SECCOMP_ADD(ctx, epoll_create1);
-	LSW_SECCOMP_ADD(ctx, epoll_ctl);
-	LSW_SECCOMP_ADD(ctx, epoll_wait);
-	LSW_SECCOMP_ADD(ctx, epoll_pwait);
-	LSW_SECCOMP_ADD(ctx, exit_group);
-	LSW_SECCOMP_ADD(ctx, fcntl);
-	LSW_SECCOMP_ADD(ctx, fstat);
-	LSW_SECCOMP_ADD(ctx, futex);
-	LSW_SECCOMP_ADD(ctx, getdents);
-	LSW_SECCOMP_ADD(ctx, getegid);
-	LSW_SECCOMP_ADD(ctx, getpid);
-	LSW_SECCOMP_ADD(ctx, getrlimit);
-	LSW_SECCOMP_ADD(ctx, geteuid);
-	LSW_SECCOMP_ADD(ctx, getgid);
-	LSW_SECCOMP_ADD(ctx, getrandom);
-	LSW_SECCOMP_ADD(ctx, getuid);
-	LSW_SECCOMP_ADD(ctx, ioctl);
-	LSW_SECCOMP_ADD(ctx, mmap);
-	LSW_SECCOMP_ADD(ctx, lseek);
-	LSW_SECCOMP_ADD(ctx, munmap);
-	LSW_SECCOMP_ADD(ctx, mprotect);
-	LSW_SECCOMP_ADD(ctx, open);
-	LSW_SECCOMP_ADD(ctx, openat);
-	LSW_SECCOMP_ADD(ctx, pipe2);
-	LSW_SECCOMP_ADD(ctx, poll);
-	LSW_SECCOMP_ADD(ctx, prctl);
-	LSW_SECCOMP_ADD(ctx, read);
-	LSW_SECCOMP_ADD(ctx, readlink);
-	LSW_SECCOMP_ADD(ctx, recvfrom);
-	LSW_SECCOMP_ADD(ctx, rt_sigaction);
-	LSW_SECCOMP_ADD(ctx, rt_sigprocmask);
-	LSW_SECCOMP_ADD(ctx, sendto);
-	LSW_SECCOMP_ADD(ctx, setsockopt);
-	LSW_SECCOMP_ADD(ctx, set_robust_list);
-	LSW_SECCOMP_ADD(ctx, set_tid_address);
-	LSW_SECCOMP_ADD(ctx, sigreturn);
-	LSW_SECCOMP_ADD(ctx, socket);
-	LSW_SECCOMP_ADD(ctx, socketcall);
-	LSW_SECCOMP_ADD(ctx, socketpair);
-	LSW_SECCOMP_ADD(ctx, stat);
-	LSW_SECCOMP_ADD(ctx, statfs);
-	LSW_SECCOMP_ADD(ctx, uname);
-	LSW_SECCOMP_ADD(ctx, waitpid);
-	LSW_SECCOMP_ADD(ctx, write);
+	LSW_SECCOMP_ADD(access);
+	LSW_SECCOMP_ADD(arch_prctl);
+	LSW_SECCOMP_ADD(brk);
+	LSW_SECCOMP_ADD(bind);
+	LSW_SECCOMP_ADD(clone);
+	LSW_SECCOMP_ADD(clock_gettime);
+	LSW_SECCOMP_ADD(close);
+	LSW_SECCOMP_ADD(connect);
+	LSW_SECCOMP_ADD(epoll_create);
+	LSW_SECCOMP_ADD(epoll_create1);
+	LSW_SECCOMP_ADD(epoll_ctl);
+	LSW_SECCOMP_ADD(epoll_wait);
+	LSW_SECCOMP_ADD(epoll_pwait);
+	LSW_SECCOMP_ADD(exit_group);
+	LSW_SECCOMP_ADD(fcntl);
+	LSW_SECCOMP_ADD(fstat);
+	LSW_SECCOMP_ADD(futex);
+	LSW_SECCOMP_ADD(getdents);
+	LSW_SECCOMP_ADD(getegid);
+	LSW_SECCOMP_ADD(getpid);
+	LSW_SECCOMP_ADD(getrlimit);
+	LSW_SECCOMP_ADD(geteuid);
+	LSW_SECCOMP_ADD(getgid);
+	LSW_SECCOMP_ADD(getrandom);
+	LSW_SECCOMP_ADD(getuid);
+	LSW_SECCOMP_ADD(ioctl);
+	LSW_SECCOMP_ADD(mmap);
+	LSW_SECCOMP_ADD(lseek);
+	LSW_SECCOMP_ADD(munmap);
+	LSW_SECCOMP_ADD(mprotect);
+	LSW_SECCOMP_ADD(open);
+	LSW_SECCOMP_ADD(openat);
+	LSW_SECCOMP_ADD(pipe2);
+	LSW_SECCOMP_ADD(poll);
+	LSW_SECCOMP_ADD(prctl);
+	LSW_SECCOMP_ADD(read);
+	LSW_SECCOMP_ADD(readlink);
+	LSW_SECCOMP_ADD(recvfrom);
+	LSW_SECCOMP_ADD(rt_sigaction);
+	LSW_SECCOMP_ADD(rt_sigprocmask);
+	LSW_SECCOMP_ADD(sendto);
+	LSW_SECCOMP_ADD(setsockopt);
+	LSW_SECCOMP_ADD(set_robust_list);
+	LSW_SECCOMP_ADD(set_tid_address);
+	LSW_SECCOMP_ADD(sigreturn);
+	LSW_SECCOMP_ADD(socket);
+	LSW_SECCOMP_ADD(socketcall);
+	LSW_SECCOMP_ADD(socketpair);
+	LSW_SECCOMP_ADD(stat);
+	LSW_SECCOMP_ADD(statfs);
+	LSW_SECCOMP_ADD(uname);
+	LSW_SECCOMP_ADD(waitpid);
+	LSW_SECCOMP_ADD(write);
 
 #ifdef USE_EFENCE
-	LSW_SECCOMP_ADD(ctx, madvise);
+	LSW_SECCOMP_ADD(madvise);
 #endif
 
 	int rc = seccomp_load(ctx);
@@ -406,10 +406,10 @@ int main(int argc, char *argv[])
 #ifdef HAVE_SECCOMP
 	switch (cfg->setup.options[KBF_SECCOMP]) {
 		case SECCOMP_ENABLED:
-		init_seccomp_addconn(SCMP_ACT_KILL);
+			init_seccomp_addconn(SCMP_ACT_KILL, &progname_logger);
 		break;
 	case SECCOMP_TOLERANT:
-		init_seccomp_addconn(SCMP_ACT_ERRNO(EACCES));
+		init_seccomp_addconn(SCMP_ACT_ERRNO(EACCES), &progname_logger);
 		break;
 	case SECCOMP_DISABLED:
 		break;

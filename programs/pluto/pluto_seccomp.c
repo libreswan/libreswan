@@ -29,7 +29,7 @@
 
 /* helper rules must be a sub-set of main rules */
 
-static void init_seccomp(uint32_t def_action, bool main)
+static void init_seccomp(uint32_t def_action, bool main, struct logger *logger)
 {
 	scmp_filter_ctx ctx = seccomp_init(def_action);
 	if (ctx == NULL) {
@@ -52,109 +52,109 @@ static void init_seccomp(uint32_t def_action, bool main)
 	 *    0.41    0.230820           6     37788      2877 open
 	 *    [...]
 	 */
-	LSW_SECCOMP_ADD(ctx, read);
+	LSW_SECCOMP_ADD(read);
 	if (main) {
-		LSW_SECCOMP_ADD(ctx, wait4);
+		LSW_SECCOMP_ADD(wait4);
 	}
 
 	/* needed for pluto and updown, not helpers */
 	if (main) {
-		LSW_SECCOMP_ADD(ctx, _llseek);
-		LSW_SECCOMP_ADD(ctx, accept);
-		LSW_SECCOMP_ADD(ctx, access);
-		LSW_SECCOMP_ADD(ctx, bind);
-		LSW_SECCOMP_ADD(ctx, brk);
-		LSW_SECCOMP_ADD(ctx, chdir);
-		LSW_SECCOMP_ADD(ctx, clone);
-		LSW_SECCOMP_ADD(ctx, connect);
-		LSW_SECCOMP_ADD(ctx, dup);
-		LSW_SECCOMP_ADD(ctx, dup2);
-		LSW_SECCOMP_ADD(ctx, dup3);
-		LSW_SECCOMP_ADD(ctx, epoll_create);
-		LSW_SECCOMP_ADD(ctx, epoll_create1);
-		LSW_SECCOMP_ADD(ctx, epoll_ctl);
-		LSW_SECCOMP_ADD(ctx, epoll_wait);
-		LSW_SECCOMP_ADD(ctx, epoll_pwait);
-		LSW_SECCOMP_ADD(ctx, execve);
-		LSW_SECCOMP_ADD(ctx, faccessat);
-		LSW_SECCOMP_ADD(ctx, fadvise64);
-		LSW_SECCOMP_ADD(ctx, getcwd);
-		LSW_SECCOMP_ADD(ctx, getdents);
-		LSW_SECCOMP_ADD(ctx, getdents64);
-		LSW_SECCOMP_ADD(ctx, getegid);
-		LSW_SECCOMP_ADD(ctx, geteuid);
-		LSW_SECCOMP_ADD(ctx, getgid);
-		LSW_SECCOMP_ADD(ctx, getgroups);
-		LSW_SECCOMP_ADD(ctx, getpgrp);
-		LSW_SECCOMP_ADD(ctx, getpgid);
-		LSW_SECCOMP_ADD(ctx, getppid);
-		LSW_SECCOMP_ADD(ctx, getrandom); /* for unbound */
-		LSW_SECCOMP_ADD(ctx, getrlimit);
-		LSW_SECCOMP_ADD(ctx, getsockname);
-		LSW_SECCOMP_ADD(ctx, getsockopt);
-		LSW_SECCOMP_ADD(ctx, getuid);
-		LSW_SECCOMP_ADD(ctx, ioctl);
-		LSW_SECCOMP_ADD(ctx, lstat);
-		LSW_SECCOMP_ADD(ctx, mkdir);
-		LSW_SECCOMP_ADD(ctx, munmap);
-		LSW_SECCOMP_ADD(ctx, newfstatat);
-		LSW_SECCOMP_ADD(ctx, open);
-		LSW_SECCOMP_ADD(ctx, pipe);
-		LSW_SECCOMP_ADD(ctx, pipe2);
-		LSW_SECCOMP_ADD(ctx, poll);
-		LSW_SECCOMP_ADD(ctx, ppoll);
-		LSW_SECCOMP_ADD(ctx, prctl);
-		LSW_SECCOMP_ADD(ctx, prlimit64);
-		LSW_SECCOMP_ADD(ctx, readlink);
-		LSW_SECCOMP_ADD(ctx, readlinkat);
-		LSW_SECCOMP_ADD(ctx, recvfrom);
-		LSW_SECCOMP_ADD(ctx, recvmsg);
-		LSW_SECCOMP_ADD(ctx, select);
-		LSW_SECCOMP_ADD(ctx, sendmsg);
-		LSW_SECCOMP_ADD(ctx, set_robust_list);
-		LSW_SECCOMP_ADD(ctx, setsockopt);
-		LSW_SECCOMP_ADD(ctx, socket);
-		LSW_SECCOMP_ADD(ctx, socketcall);
-		LSW_SECCOMP_ADD(ctx, socketpair);
-		LSW_SECCOMP_ADD(ctx, sysinfo);
-		LSW_SECCOMP_ADD(ctx, uname);
-		LSW_SECCOMP_ADD(ctx, unlink);
-		LSW_SECCOMP_ADD(ctx, unlinkat);
+		LSW_SECCOMP_ADD(_llseek);
+		LSW_SECCOMP_ADD(accept);
+		LSW_SECCOMP_ADD(access);
+		LSW_SECCOMP_ADD(bind);
+		LSW_SECCOMP_ADD(brk);
+		LSW_SECCOMP_ADD(chdir);
+		LSW_SECCOMP_ADD(clone);
+		LSW_SECCOMP_ADD(connect);
+		LSW_SECCOMP_ADD(dup);
+		LSW_SECCOMP_ADD(dup2);
+		LSW_SECCOMP_ADD(dup3);
+		LSW_SECCOMP_ADD(epoll_create);
+		LSW_SECCOMP_ADD(epoll_create1);
+		LSW_SECCOMP_ADD(epoll_ctl);
+		LSW_SECCOMP_ADD(epoll_wait);
+		LSW_SECCOMP_ADD(epoll_pwait);
+		LSW_SECCOMP_ADD(execve);
+		LSW_SECCOMP_ADD(faccessat);
+		LSW_SECCOMP_ADD(fadvise64);
+		LSW_SECCOMP_ADD(getcwd);
+		LSW_SECCOMP_ADD(getdents);
+		LSW_SECCOMP_ADD(getdents64);
+		LSW_SECCOMP_ADD(getegid);
+		LSW_SECCOMP_ADD(geteuid);
+		LSW_SECCOMP_ADD(getgid);
+		LSW_SECCOMP_ADD(getgroups);
+		LSW_SECCOMP_ADD(getpgrp);
+		LSW_SECCOMP_ADD(getpgid);
+		LSW_SECCOMP_ADD(getppid);
+		LSW_SECCOMP_ADD(getrandom); /* for unbound */
+		LSW_SECCOMP_ADD(getrlimit);
+		LSW_SECCOMP_ADD(getsockname);
+		LSW_SECCOMP_ADD(getsockopt);
+		LSW_SECCOMP_ADD(getuid);
+		LSW_SECCOMP_ADD(ioctl);
+		LSW_SECCOMP_ADD(lstat);
+		LSW_SECCOMP_ADD(mkdir);
+		LSW_SECCOMP_ADD(munmap);
+		LSW_SECCOMP_ADD(newfstatat);
+		LSW_SECCOMP_ADD(open);
+		LSW_SECCOMP_ADD(pipe);
+		LSW_SECCOMP_ADD(pipe2);
+		LSW_SECCOMP_ADD(poll);
+		LSW_SECCOMP_ADD(ppoll);
+		LSW_SECCOMP_ADD(prctl);
+		LSW_SECCOMP_ADD(prlimit64);
+		LSW_SECCOMP_ADD(readlink);
+		LSW_SECCOMP_ADD(readlinkat);
+		LSW_SECCOMP_ADD(recvfrom);
+		LSW_SECCOMP_ADD(recvmsg);
+		LSW_SECCOMP_ADD(select);
+		LSW_SECCOMP_ADD(sendmsg);
+		LSW_SECCOMP_ADD(set_robust_list);
+		LSW_SECCOMP_ADD(setsockopt);
+		LSW_SECCOMP_ADD(socket);
+		LSW_SECCOMP_ADD(socketcall);
+		LSW_SECCOMP_ADD(socketpair);
+		LSW_SECCOMP_ADD(sysinfo);
+		LSW_SECCOMP_ADD(uname);
+		LSW_SECCOMP_ADD(unlink);
+		LSW_SECCOMP_ADD(unlinkat);
 	}
 
 	/* common to pluto and helpers */
 
-	LSW_SECCOMP_ADD(ctx, arch_prctl);
-	LSW_SECCOMP_ADD(ctx, close);
-	LSW_SECCOMP_ADD(ctx, exit_group);
-	LSW_SECCOMP_ADD(ctx, exit);
-	LSW_SECCOMP_ADD(ctx, getpid);
-	LSW_SECCOMP_ADD(ctx, gettid);
-	LSW_SECCOMP_ADD(ctx, gettimeofday);
-	LSW_SECCOMP_ADD(ctx, fcntl);
-	LSW_SECCOMP_ADD(ctx, fstat);
-	LSW_SECCOMP_ADD(ctx, futex);
-	LSW_SECCOMP_ADD(ctx, lseek);
-	LSW_SECCOMP_ADD(ctx, madvise);
-	LSW_SECCOMP_ADD(ctx, mmap);
-	LSW_SECCOMP_ADD(ctx, mprotect);
-	LSW_SECCOMP_ADD(ctx, nanosleep);
-	LSW_SECCOMP_ADD(ctx, openat);
-	LSW_SECCOMP_ADD(ctx, pread64);
-	LSW_SECCOMP_ADD(ctx, rt_sigaction);
-	LSW_SECCOMP_ADD(ctx, rt_sigprocmask);
-	LSW_SECCOMP_ADD(ctx, rt_sigreturn);
-	LSW_SECCOMP_ADD(ctx, sched_setparam);
-	LSW_SECCOMP_ADD(ctx, send);
-	LSW_SECCOMP_ADD(ctx, sendto);
-	LSW_SECCOMP_ADD(ctx, set_tid_address);
-	LSW_SECCOMP_ADD(ctx, sigaltstack);
-	LSW_SECCOMP_ADD(ctx, sigreturn);
-	LSW_SECCOMP_ADD(ctx, stat);
-	LSW_SECCOMP_ADD(ctx, statfs);
-	LSW_SECCOMP_ADD(ctx, clock_gettime);
-	LSW_SECCOMP_ADD(ctx, waitpid);
-	LSW_SECCOMP_ADD(ctx, write);
+	LSW_SECCOMP_ADD(arch_prctl);
+	LSW_SECCOMP_ADD(close);
+	LSW_SECCOMP_ADD(exit_group);
+	LSW_SECCOMP_ADD(exit);
+	LSW_SECCOMP_ADD(getpid);
+	LSW_SECCOMP_ADD(gettid);
+	LSW_SECCOMP_ADD(gettimeofday);
+	LSW_SECCOMP_ADD(fcntl);
+	LSW_SECCOMP_ADD(fstat);
+	LSW_SECCOMP_ADD(futex);
+	LSW_SECCOMP_ADD(lseek);
+	LSW_SECCOMP_ADD(madvise);
+	LSW_SECCOMP_ADD(mmap);
+	LSW_SECCOMP_ADD(mprotect);
+	LSW_SECCOMP_ADD(nanosleep);
+	LSW_SECCOMP_ADD(openat);
+	LSW_SECCOMP_ADD(pread64);
+	LSW_SECCOMP_ADD(rt_sigaction);
+	LSW_SECCOMP_ADD(rt_sigprocmask);
+	LSW_SECCOMP_ADD(rt_sigreturn);
+	LSW_SECCOMP_ADD(sched_setparam);
+	LSW_SECCOMP_ADD(send);
+	LSW_SECCOMP_ADD(sendto);
+	LSW_SECCOMP_ADD(set_tid_address);
+	LSW_SECCOMP_ADD(sigaltstack);
+	LSW_SECCOMP_ADD(sigreturn);
+	LSW_SECCOMP_ADD(stat);
+	LSW_SECCOMP_ADD(statfs);
+	LSW_SECCOMP_ADD(clock_gettime);
+	LSW_SECCOMP_ADD(waitpid);
+	LSW_SECCOMP_ADD(write);
 
 	int rc = seccomp_load(ctx);
 	if (rc < 0) {
@@ -164,15 +164,15 @@ static void init_seccomp(uint32_t def_action, bool main)
 	}
 }
 
-void init_seccomp_main(void)
+void init_seccomp_main(struct logger *logger)
 {
 	switch (pluto_seccomp_mode) {
 	case SECCOMP_ENABLED:
-		init_seccomp(SCMP_ACT_KILL, true);
+		init_seccomp(SCMP_ACT_KILL, true, logger);
 		plog_global("seccomp security enabled in strict mode");
 		break;
 	case SECCOMP_TOLERANT:
-		init_seccomp(SCMP_ACT_TRAP, true);
+		init_seccomp(SCMP_ACT_TRAP, true, logger);
 		plog_global("seccomp security enabled in tolerant mode");
 		break;
 	case SECCOMP_DISABLED:
@@ -184,15 +184,15 @@ void init_seccomp_main(void)
 
 }
 
-void init_seccomp_cryptohelper(int helpernum)
+void init_seccomp_cryptohelper(int helpernum, struct logger *logger)
 {
 	switch (pluto_seccomp_mode) {
 	case SECCOMP_ENABLED:
-		init_seccomp(SCMP_ACT_KILL, false);
+		init_seccomp(SCMP_ACT_KILL, false, logger);
 		plog_global("seccomp security enabled in strict mode for crypto helper %d", helpernum);
 		break;
 	case SECCOMP_TOLERANT:
-		init_seccomp(SCMP_ACT_TRAP, false);
+		init_seccomp(SCMP_ACT_TRAP, false, logger);
 		plog_global("seccomp security enabled in tolerant mode for crypto helper %d", helpernum);
 		break;
 	case SECCOMP_DISABLED:
