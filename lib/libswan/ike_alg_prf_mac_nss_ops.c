@@ -52,7 +52,7 @@ static struct prf_context *init(const struct prf_desc *prf_desc,
 							  CKA_SIGN,
 							  key, &ignore);
 	if (context == NULL) {
-		LSWLOG(buf) {
+		LSWLOG_PEXPECT(buf) {
 			jam(buf, "NSS: %s create %s context from key %s(%p) failed",
 			    name, prf_desc->common.fqn,
 			    key_name, key);
