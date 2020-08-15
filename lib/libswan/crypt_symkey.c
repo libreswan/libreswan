@@ -306,10 +306,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey)
 		PK11SlotInfo *slot = PK11_GetSlotFromKey(ephemeral_key);
 		slot_key = PK11_MoveSymKey(slot, CKA_UNWRAP, 0, 0, symkey);
 		PK11_FreeSlot(slot); /* reference counted */
-		if (slot_key == NULL) {
-			loglog(RC_LOG_SERIOUS, "%s NSS: slot error", name);
-			return EMPTY_CHUNK;
-		}
+		passert(slot_key != NULL);
 	}
 	if (DBGP(DBG_CRYPT)) {
 	    if (slot_key == symkey) {
@@ -328,13 +325,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey)
 	DBGF(DBG_CRYPT, "sizeof bytes %d", wrapped_key.len);
 	status = PK11_WrapSymKey(CKM_AES_ECB, NULL, ephemeral_key, slot_key,
 				 &wrapped_key);
-	if (status != SECSuccess) {
-		loglog(RC_LOG_SERIOUS, "%s NSS: containment error (%d)",
-		       name, status);
-		pfreeany(wrapped_key.data);
-		release_symkey(name, "slot-key", &slot_key);
-		return EMPTY_CHUNK;
-	}
+	passert(status == SECSuccess);
 	if (DBGP(DBG_CRYPT)) {
 		LSWLOG_DEBUG(buf) {
 			jam_string(buf, "wrapper: ");
@@ -349,11 +340,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey)
 			      wrapped_key.data, wrapped_key.len);
 	pfreeany(wrapped_key.data);
 	release_symkey(name, "slot-key", &slot_key);
-	if (status != SECSuccess) {
-		loglog(RC_LOG_SERIOUS, "%s NSS: error calculating contents (%d)",
-		       name, status);
-		return EMPTY_CHUNK;
-	}
+	passert(status == SECSuccess);
 	passert(out_len >= sizeof_bytes);
 
 	if (DBGP(DBG_CRYPT)) {

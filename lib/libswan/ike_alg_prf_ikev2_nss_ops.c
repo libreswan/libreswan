@@ -182,9 +182,8 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
 				PASSERT_FAIL("FIPS: failure creating %s PRF context for digesting PSK",
 					     prf_desc->common.fqn);
 			}
-			loglog(RC_LOG_SERIOUS,
-			       "failure creating %s PRF context for digesting PSK",
-			       prf_desc->common.fqn);
+			log_pexpect(HERE, "failure creating %s PRF context for digesting PSK",
+				    prf_desc->common.fqn);
 			return empty_mac;
 		}
 
