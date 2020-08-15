@@ -263,13 +263,6 @@ void lswlog_to_error_stream(struct jambuf *buf);
 
 void jam_cur_prefix(struct jambuf *buf);
 
-#define LSWLOG_RC(RC, BUF)						\
-	LSWLOG_(true, BUF,						\
-		jam_cur_prefix(BUF),					\
-		lswlog_to_default_streams(BUF, RC))
-
-#define LSWLOG(BUF) LSWLOG_RC(RC_LOG, BUF)
-
 /*
  * Wrap <message> in a prefix and suffix where the suffix contains
  * errno and message.
