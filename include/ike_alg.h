@@ -795,10 +795,4 @@ const struct integ_desc *ikev1_get_kernel_integ_desc(enum ikev1_auth_attribute);
 const struct encrypt_desc *encrypt_desc_by_sadb_ealg_id(unsigned id);
 const struct integ_desc *integ_desc_by_sadb_aalg_id(unsigned id);
 
-/*
- * Pretty print the algorithm to the standard log.  The logged line is
- * very wide.
- */
-void libreswan_log_ike_alg(const char *prefix, const struct ike_alg *alg);
-
 #endif /* _IKE_ALG_H */

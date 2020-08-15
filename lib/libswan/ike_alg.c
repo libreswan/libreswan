@@ -47,13 +47,7 @@
 #include "ike_alg_dh.h"
 #include "ike_alg_dh_ops.h"
 
-/*==========================================================
-*
-*       IKE algo list handling
-*
-*       - registration
-des*       - lookup
-*=========================================================*/
+static void lswlog_ike_alg_details(struct jambuf *buf, const struct ike_alg *alg);
 
 #define FOR_EACH_IKE_ALGP(TYPE,A)					\
 	for (const struct ike_alg **(A) = (TYPE)->algorithms->start;	\
@@ -1025,7 +1019,10 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 		    libreswan_fipsmode() ? "FIPS " : "",
 		    type->Name);
 	FOR_EACH_IKE_ALGP(type, algp) {
-		libreswan_log_ike_alg("  ", *algp);
+		LOG_MESSAGE(RC_LOG, logger, buf) {
+			jam_string(buf, "  ");
+			lswlog_ike_alg_details(buf, *algp);
+		}
 	}
 }
 
@@ -1142,14 +1139,6 @@ static void lswlog_ike_alg_details(struct jambuf *buf, const struct ike_alg *alg
 				sep = ", ";
 			}
 		}
-	}
-}
-
-void libreswan_log_ike_alg(const char *prefix, const struct ike_alg *alg)
-{
-	LSWLOG(buf) {
-		jam_string(buf, prefix);
-		lswlog_ike_alg_details(buf, alg);
 	}
 }
 
