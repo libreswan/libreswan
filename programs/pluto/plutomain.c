@@ -1768,7 +1768,7 @@ int main(int argc, char **argv)
 	init_rate_log();
 	init_nat_traversal(keep_alive);
 
-	init_virtual_ip(virtual_private);
+	init_virtual_ip(virtual_private, logger);
 	/* obsoleted by nss code: init_rnd_pool(); */
 	init_root_certs();
 	init_secret();

@@ -74,7 +74,8 @@ static int private_net_excl_len = 0;
 static bool read_subnet(const char *src, size_t len,
 			ip_subnet *dst,
 			ip_subnet *dstexcl,
-			bool *isincl)
+			bool *isincl,
+			struct logger *logger)
 {
 	int af = AF_UNSPEC;	/* AF_UNSPEC means "guess from form" */
 	const char *p = src;	/* cursor */
@@ -96,7 +97,7 @@ static bool read_subnet(const char *src, size_t len,
 		*isincl = incl = !eat(p, "!");
 
 	err_t ugh = ttosubnet(p, len - (p - src), af, 'x',
-				incl ? dst : dstexcl);
+			      incl ? dst : dstexcl, logger);
 	if (ugh != NULL) {
 		loglog(RC_LOG_SERIOUS, "virtual-private entry is not a proper subnet: %s", ugh);
 		return FALSE;
@@ -120,7 +121,8 @@ void free_virtual_ip(void)
  *
  * @param private_list String (contents of virtual-private= from ipsec.conf)
  */
-void init_virtual_ip(const char *private_list)
+void init_virtual_ip(const char *private_list,
+		     struct logger *logger)
 {
 	free_virtual_ip();
 
@@ -137,7 +139,7 @@ void init_virtual_ip(const char *private_list)
 		bool incl = FALSE;
 		ip_subnet sub;	/* sink: value never used */
 
-		if (read_subnet(str, next - str, &sub, &sub, &incl)) {
+		if (read_subnet(str, next - str, &sub, &sub, &incl, logger)) {
 			if (incl)
 				private_net_incl_len++;
 			else
@@ -173,9 +175,9 @@ void init_virtual_ip(const char *private_list)
 
 			bool incl = FALSE;
 			if (read_subnet(str, next - str,
-					 &(private_net_incl[i_incl]),
-					 &(private_net_excl[i_excl]),
-					 &incl)) {
+					&(private_net_incl[i_incl]),
+					&(private_net_excl[i_excl]),
+					&incl, logger)) {
 				if (incl)
 					i_incl++;
 				else
@@ -213,7 +215,8 @@ void init_virtual_ip(const char *private_list)
  * @param string (virtual_private= from ipsec.conf)
  * @return virtual_t
  */
-struct virtual_t *create_virtual(const struct connection *c, const char *string)
+struct virtual_t *create_virtual(const struct connection *c,
+				 const char *string, struct logger *logger)
 {
 
 	if (string == NULL || string[0] == '\0')
@@ -254,7 +257,8 @@ struct virtual_t *create_virtual(const struct connection *c, const char *string)
 			flags |= F_VIRTUAL_PRIVATE;
 		} else if (eat(str, "%all")) {
 			flags |= F_VIRTUAL_ALL;
-		} else if (read_subnet(str, len, &sub, NULL, NULL)) {
+		} else if (read_subnet(str, len, &sub, NULL,
+				       NULL, logger)) {
 			n_net++;
 			if (first_net == NULL)
 				first_net = str;
@@ -292,7 +296,7 @@ struct virtual_t *create_virtual(const struct connection *c, const char *string)
 			if (next == NULL)
 				next = str + strlen(str);
 			if (read_subnet(str, next - str, &(v->net[i]), NULL,
-					 NULL))
+					NULL, logger))
 				i++;
 			str = *next == '\0' ? NULL : next + 1;
 		}

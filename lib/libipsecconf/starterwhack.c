@@ -725,7 +725,7 @@ static bool one_subnet_from_string(const struct starter_conn *conn,
 				   char **psubnets,
 				   const struct ip_info *afi,
 				   ip_subnet *sn,
-				   char *lr)
+				   char *lr, struct logger *logger)
 {
 	char *eln;
 	char *subnets = *psubnets;
@@ -748,7 +748,7 @@ static bool one_subnet_from_string(const struct starter_conn *conn,
 	while (*subnets != '\0' && !(isspace(*subnets) || *subnets == ','))
 		subnets++;
 
-	e = ttosubnet(eln, subnets - eln, afi->af, '6', sn);
+	e = ttosubnet(eln, subnets - eln, afi->af, '6', sn, logger);
 	if (e != NULL) {
 		starter_log(LOG_LEVEL_ERR,
 			"conn: \"%s\" warning '%s' is not a subnet declaration. (%ssubnets)",
@@ -774,10 +774,11 @@ static bool one_subnet_from_string(const struct starter_conn *conn,
  *
  */
 static int starter_permutate_conns(int
-			(*operation)(struct starter_config *cfg,
-				const struct starter_conn *conn),
-			struct starter_config *cfg,
-			const struct starter_conn *conn)
+				   (*operation)(struct starter_config *cfg,
+						const struct starter_conn *conn),
+				   struct starter_config *cfg,
+				   const struct starter_conn *conn,
+				   struct logger *logger)
 {
 	struct starter_conn sc;
 	int lc, rc;
@@ -810,7 +811,7 @@ static int starter_permutate_conns(int
 	} else {
 		one_subnet_from_string(conn, &leftnets,
 				       conn->left.host_family,
-				       &lnet, "left");
+				       &lnet, "left", logger);
 		lc = 1;
 	}
 
@@ -820,7 +821,7 @@ static int starter_permutate_conns(int
 	} else {
 		one_subnet_from_string(conn, &rightnets,
 				       conn->right.host_family,
-				       &rnet, "right");
+				       &rnet, "right", logger);
 		rc = 1;
 	}
 
@@ -859,7 +860,7 @@ static int starter_permutate_conns(int
 		rc++;
 		if (!one_subnet_from_string(conn, &rightnets,
 					    conn->right.host_family,
-					    &rnet, "right")) {
+					    &rnet, "right", logger)) {
 			/* reset right, and advance left! */
 			rightnets = "";
 			if (conn->right.strings_set[KSCF_SUBNETS])
@@ -872,15 +873,15 @@ static int starter_permutate_conns(int
 			} else {
 				one_subnet_from_string(conn, &rightnets,
 						       conn->right.host_family,
-						       &rnet, "right");
+						       &rnet, "right", logger);
 				rc = 1;
 			}
 
 			/* left */
 			lc++;
 			if (!one_subnet_from_string(conn, &leftnets,
-							conn->left.host_family,
-							&lnet, "left"))
+						    conn->left.host_family,
+						    &lnet, "left", logger))
 				break;
 		}
 	}
@@ -889,7 +890,8 @@ static int starter_permutate_conns(int
 }
 
 int starter_whack_add_conn(struct starter_config *cfg,
-			const struct starter_conn *conn)
+			   const struct starter_conn *conn,
+			   struct logger *logger)
 {
 	/* basic case, nothing special to synthize! */
 	if (!conn->left.strings_set[KSCF_SUBNETS] &&
@@ -897,7 +899,7 @@ int starter_whack_add_conn(struct starter_config *cfg,
 		return starter_whack_basic_add_conn(cfg, conn);
 
 	return starter_permutate_conns(starter_whack_basic_add_conn,
-				cfg, conn);
+				       cfg, conn, logger);
 }
 
 static int starter_whack_basic_route_conn(struct starter_config *cfg,
@@ -912,7 +914,8 @@ static int starter_whack_basic_route_conn(struct starter_config *cfg,
 }
 
 int starter_whack_route_conn(struct starter_config *cfg,
-			struct starter_conn *conn)
+			     struct starter_conn *conn,
+			     struct logger *logger)
 {
 	/* basic case, nothing special to synthize! */
 	if (!conn->left.strings_set[KSCF_SUBNETS] &&
@@ -920,7 +923,7 @@ int starter_whack_route_conn(struct starter_config *cfg,
 		return starter_whack_basic_route_conn(cfg, conn);
 
 	return starter_permutate_conns(starter_whack_basic_route_conn,
-				cfg, conn);
+				       cfg, conn, logger);
 }
 
 int starter_whack_initiate_conn(struct starter_config *cfg,

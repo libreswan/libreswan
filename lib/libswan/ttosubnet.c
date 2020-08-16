@@ -28,12 +28,12 @@
  * ttosubnet - convert text "addr/mask" to address and mask
  * Mask can be integer bit count.
  */
-err_t ttosubnet(src, srclen, af, clash, dst)
-const char *src;
-size_t srclen;	/* 0 means "apply strlen" */
-int af;	/* AF_INET or AF_INET6 */
-int clash;  /* '0' zero host-part bits, 'x' die on them, '6' die on IPv6 and warn on IPv4 */
-ip_subnet *dst;
+err_t ttosubnet(const char *src,
+		size_t srclen,	/* 0 means "apply strlen" */
+		int af,	/* AF_INET or AF_INET6 */
+		int clash,  /* '0' zero host-part bits, 'x' die on them, '6' die on IPv6 and warn on IPv4 */
+		ip_subnet *dst,
+		struct logger *logger)
 {
 	const char *slash;
 	const char *colon;
@@ -132,5 +132,5 @@ ip_subnet *dst;
 	} else {
 		return "masks are not permitted for IPv6 addresses";
 	}
-	return initsubnet(&addrtmp, i, clash, dst);
+	return initsubnet(&addrtmp, i, clash, dst, logger);
 }

@@ -1638,7 +1638,8 @@ int main(int argc, char **argv)
 			} else {
 				diagq(ttosubnet(optarg, 0,
 						msg.tunnel_addr_family,
-						'6', &msg.right.client),
+						'6', &msg.right.client,
+						&progname_logger),
 					optarg);
 				msg.right.has_client = TRUE;
 			}
@@ -2132,7 +2133,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_ADDRESSPOOL:	/* --addresspool */
-			ttorange(optarg, NULL, &msg.right.pool_range);
+			ttorange(optarg, NULL, &msg.right.pool_range, &progname_logger);
 			continue;
 
 		case CD_MODECFGDNS:	/* --modecfgdns */

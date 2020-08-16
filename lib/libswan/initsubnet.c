@@ -21,13 +21,14 @@
  * initsubnet - initialize ip_subnet from address and count
  *
  * The only hard part is checking for host-part bits turned on.
+ *
+ * Return NULL for success, else string literal.
  */
-err_t	/* NULL for success, else string literal */
-initsubnet(addr, maskbits, clash, dst)
-const ip_address * addr;
-int maskbits;
-int clash;	/* '0' zero host-part bits, 'x' die on them */
-ip_subnet *dst;
+err_t initsubnet(const ip_address *addr,
+		 int maskbits,
+		 int clash,	/* '0' zero host-part bits, 'x' die on them */
+		 ip_subnet *dst,
+		 struct logger *logger)
 {
 	unsigned char *p;
 	int n;
@@ -51,6 +52,7 @@ ip_subnet *dst;
 		die = 1;
 		break;
 	case '6':
+		pexpect(logger != NULL);
 		if (address_type(addr) == &ipv6_info)
 			die = 1;
 		warn = 1;
@@ -88,7 +90,7 @@ ip_subnet *dst;
 	dst->maskbits = maskbits;
 
 	if (warning) {
-		LSWLOG(buf) {
+		LOG_MESSAGE(RC_LOG, logger, buf) {
 			jam(buf, "WARNING:improper subnet mask, host-part bits on input ");
 			jam_address(buf, addr);
 			jam(buf, "/%d ", maskbits);

@@ -149,7 +149,7 @@ static void read_foodgroup(struct fg_groups *g, struct logger *logger)
 			sn = subnet_from_address(&t);
 		} else {
 			const struct ip_info *afi = strchr(flp->tok, ':') == NULL ? &ipv4_info : &ipv6_info;
-			err_t err = ttosubnet(flp->tok, 0, afi->af, 'x', &sn);
+			err_t err = ttosubnet(flp->tok, 0, afi->af, 'x', &sn, logger);
 			if (err != NULL) {
 				log_flp(RC_LOG_SERIOUS, flp,
 					"ignored, '%s' is not a subnet: %s",

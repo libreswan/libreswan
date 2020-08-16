@@ -447,7 +447,7 @@ int main(int argc, char *argv[])
 				if (verbose > 0)
 					printf(" %s", conn->name);
 				resolve_defaultroute(conn);
-				starter_whack_add_conn(cfg, conn);
+				starter_whack_add_conn(cfg, conn, &progname_logger);
 			}
 		}
 
@@ -466,7 +466,8 @@ int main(int argc, char *argv[])
 				if (verbose > 0)
 					printf(" %s", conn->name);
 				if (conn->desired_state == STARTUP_ONDEMAND)
-					starter_whack_route_conn(cfg, conn);
+					starter_whack_route_conn(cfg, conn,
+								 &progname_logger);
 			}
 		}
 
@@ -543,8 +544,8 @@ int main(int argc, char *argv[])
 						conn->name);
 				} else {
 					resolve_defaultroute(conn);
-					exit_status = starter_whack_add_conn(
-						cfg, conn);
+					exit_status = starter_whack_add_conn(cfg, conn,
+									     &progname_logger);
 					conn->state = STATE_ADDED;
 				}
 			}

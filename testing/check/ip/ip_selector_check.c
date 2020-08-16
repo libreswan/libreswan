@@ -20,6 +20,7 @@
 #include "constants.h"		/* for streq() */
 #include "ipcheck.h"
 #include "ip_selector.h"	/* should be in ip_selector_check.c */
+#include "lswlog.h"
 
 struct selector {
 	int family;
@@ -141,7 +142,8 @@ static err_t to_subnet_selector(const struct selector *s,
 	}
 
 	ip_subnet subnet;
-	err_t err = ttosubnet(s->addresses, 0, SA_FAMILY(s->family), '6', &subnet);
+	err_t err = ttosubnet(s->addresses, 0, SA_FAMILY(s->family), '6',
+			      &subnet, &progname_logger);
 	if (err != NULL) {
 		return err;
 	}
@@ -194,7 +196,7 @@ static err_t to_range_selector(const struct selector *s,
 	}
 
 	ip_range range;
-	err_t err = ttorange(s->addresses, IP_TYPE(s->family), &range);
+	err_t err = ttorange(s->addresses, IP_TYPE(s->family), &range, &progname_logger);
 	if (err != NULL) {
 		return err;
 	}
@@ -229,7 +231,7 @@ static err_t to_subnet_port_selector(const struct selector *s,
 	}
 
 	/* hack */
-	return ttosubnet(s->addresses, 0, SA_FAMILY(s->family), '6', selector);
+	return ttosubnet(s->addresses, 0, SA_FAMILY(s->family), '6', selector, &progname_logger);
 }
 
 static void check_selector_from_subnet_port(void)

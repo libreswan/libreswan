@@ -849,8 +849,9 @@ static stf_status xauth_send_status(struct state *st, int status)
 }
 
 static bool add_xauth_addresspool(struct connection *c,
-		const char *userid,
-		const char *addresspool)
+				  const char *userid,
+				  const char *addresspool,
+				  struct logger *logger)
 {
 	/* set user defined ip address or pool */
 	bool ret = FALSE;
@@ -866,11 +867,11 @@ static bool add_xauth_addresspool(struct connection *c,
 			addresspool, addresspool);
 		dbg("XAUTH: adding single ip addresspool entry %s for the conn %s user=%s",
 		    single_addresspool, c->name, userid);
-		er = ttorange(single_addresspool, &ipv4_info, &pool_range);
+		er = ttorange(single_addresspool, &ipv4_info, &pool_range, logger);
 	} else {
 		dbg("XAUTH: adding addresspool entry %s for the conn %s user %s",
 		    addresspool, c->name, userid);
-		er = ttorange(addresspool, &ipv4_info, &pool_range);
+		er = ttorange(addresspool, &ipv4_info, &pool_range, logger);
 	}
 	if (er != NULL) {
 		libreswan_log("XAUTH IP address %s is not valid %s user=%s",
@@ -1029,7 +1030,8 @@ static bool do_file_authentication(struct state *st, const char *name,
 					/* ??? failure to add addresspool seems like a funny failure */
 					/* ??? should we then keep trying other entries? */
 					if (!add_xauth_addresspool(c, userid,
-								addresspool)) {
+								   addresspool,
+								   st->st_logger)) {
 						win = FALSE;
 						continue;	/* try other entries */
 					}

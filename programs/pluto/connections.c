@@ -1901,10 +1901,12 @@ static bool extract_connection(struct fd *whackfd,
 		 * or rightprotoport=17/%any
 		 * passert(isanyaddr(&c->spd.that.host_addr));
 		 */
+		struct logger logger = GLOBAL_LOGGER(whackfd);
 		c->spd.that.virt = create_virtual(c,
-						wm->left.virt != NULL ?
-						wm->left.virt :
-						wm->right.virt);
+						  wm->left.virt != NULL ?
+						  wm->left.virt :
+						  wm->right.virt,
+						  &logger);
 		if (c->spd.that.virt != NULL)
 			c->spd.that.has_client = TRUE;
 	}

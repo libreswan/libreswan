@@ -18,11 +18,14 @@
 
 struct starter_conn;
 struct starter_config;
+struct logger;
 
 int starter_whack_add_conn(struct starter_config *cfg,
-			   const struct starter_conn *conn);
+			   const struct starter_conn *conn,
+			   struct logger *logger);
 int starter_whack_route_conn(struct starter_config *cfg,
-			     struct starter_conn *conn);
+			     struct starter_conn *conn,
+			     struct logger *logger);
 int starter_whack_initiate_conn(struct starter_config *cfg,
 				struct starter_conn *conn);
 extern int starter_whack_listen(struct starter_config *cfg);

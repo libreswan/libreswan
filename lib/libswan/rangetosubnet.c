@@ -83,5 +83,5 @@ ip_subnet *dst;
 	if (i != 0)
 		return "invalid subnet";
 
-	return initsubnet(from, nnet, 'x', dst);
+	return initsubnet(from, nnet, 'x', dst, NULL);
 }

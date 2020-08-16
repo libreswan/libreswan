@@ -160,7 +160,8 @@ static err_t extract_ends(const char *src, const struct ip_info *afi, ip_range *
  * ttorange - convert text v4 "addr1-addr2" to address_start address_end
  *            v6 allows "subnet/mask" to address_start address_end
  */
-err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
+err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst,
+	       struct logger *logger)
 {
 	err_t er = NULL;
 
@@ -168,7 +169,7 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 	ip_range tmp = *dst; /* clear it */
 
 	ip_subnet v6_subnet;
-	er = ttosubnet(src, 0, AF_INET6, '6', &v6_subnet);
+	er = ttosubnet(src, 0, AF_INET6, '6', &v6_subnet, logger);
 	if (er == NULL) {
 		if (v6_subnet.addr.hport != 0)
 			return "port must be zero for IPv6 addresspool";

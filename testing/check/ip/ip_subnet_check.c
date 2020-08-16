@@ -21,6 +21,7 @@
 #include "ipcheck.h"
 #include "ip_subnet.h"
 #include "ip_selector.h"	/* should be in ip_selector_check.c */
+#include "lswlog.h"
 
 static void check_str_subnet(void)
 {
@@ -104,7 +105,7 @@ static void check_str_subnet(void)
 		sa_family_t af = SA_FAMILY(t->family);
 
 		ip_subnet s;
-		oops = ttosubnet(t->in, 0, af, '6', &s);
+		oops = ttosubnet(t->in, 0, af, '6', &s, &progname_logger);
 		if (oops != NULL && t->out == NULL) {
 			/* Error was expected, do nothing */
 			continue;
@@ -158,7 +159,7 @@ static void check_str_subnet_port(void)
 		sa_family_t af = SA_FAMILY(t->family);
 
 		ip_subnet s;
-		oops = ttosubnet(t->in, 0, af, '6', &s);
+		oops = ttosubnet(t->in, 0, af, '6', &s, &progname_logger);
 		if (oops != NULL && t->out == NULL) {
 			/* Error was expected, do nothing */
 			continue;
@@ -209,7 +210,7 @@ static void check_subnet_mask(void)
 		sa_family_t af = SA_FAMILY(t->family);
 
 		ip_subnet s;
-		err_t oops = ttosubnet(t->in, 0, af, '6', &s);
+		err_t oops = ttosubnet(t->in, 0, af, '6', &s, &progname_logger);
 		if (oops != NULL) {
 			FAIL_IN("ttosubnet() failed: %s", oops);
 		}
@@ -259,7 +260,7 @@ static void check_subnet_prefix(void)
 		sa_family_t af = SA_FAMILY(t->family);
 
 		ip_subnet s;
-		err_t oops = ttosubnet(t->in, 0, af, '6', &s);
+		err_t oops = ttosubnet(t->in, 0, af, '6', &s, &progname_logger);
 		if (oops != NULL) {
 			FAIL_IN("ttosubnet() failed: %s", oops);
 		}
@@ -398,7 +399,7 @@ static void check_subnet_contains(void)
 		ip_subnet s = unset_subnet;
 		if (t->family != 0) {
 			sa_family_t af = SA_FAMILY(t->family);
-			err_t oops = ttosubnet(t->in, 0, af, '6', &s);
+			err_t oops = ttosubnet(t->in, 0, af, '6', &s, &progname_logger);
 			if (oops != NULL) {
 				FAIL(OUT, "ttosubnet() failed: %s", oops);
 			}

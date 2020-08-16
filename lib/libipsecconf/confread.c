@@ -525,7 +525,8 @@ static bool validate_end(struct starter_conn *conn_st,
 			end->virt = clone_str(value, "validate_end item");
 		} else {
 			end->has_client = TRUE;
-			er = ttosubnet(value, 0, AF_UNSPEC, '0', &end->subnet);
+			er = ttosubnet(value, 0, AF_UNSPEC, '0',
+				       &end->subnet, logger);
 		}
 		if (er != NULL)
 			ERR_FOUND("bad subnet %ssubnet=%s [%s]", leftright,
@@ -713,7 +714,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			    "connection's %saddresspool set to: %s",
 			    leftright, end->strings[KSCF_ADDRESSPOOL] );
 
-		er = ttorange(addresspool, NULL, &end->pool_range);
+		er = ttorange(addresspool, NULL, &end->pool_range, logger);
 		if (er != NULL)
 			ERR_FOUND("bad %saddresspool=%s [%s]", leftright,
 					addresspool, er);

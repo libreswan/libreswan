@@ -33,7 +33,8 @@ ip_range range(const ip_address *start, const ip_address *end);
 
 ip_range range_from_subnet(const ip_subnet *subnet);
 
-extern err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst);
+extern err_t ttorange(const char *src, const struct ip_info *afi,
+		      ip_range *dst, struct logger *logger);
 
 /*
  * Formatting
