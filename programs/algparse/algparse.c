@@ -7,7 +7,7 @@
 #include "lswnss.h"
 #include "lswfips.h"
 #include "lswconf.h"
-
+#include "crypt_symkey.h"		/* for init_crypt_symkey() */
 #include "ike_alg.h"
 #include "proposals.h"
 
@@ -589,11 +589,11 @@ int main(int argc, char *argv[])
 	 * ike_alg_init().  Sanity checks and algorithm testing
 	 * require a working NSS.
 	 */
-	bool nss_ok = lsw_nss_setup(NULL, LSW_NSS_READONLY, &progname_logger);
-	if (!nss_ok) {
+	if (!lsw_nss_setup(NULL, LSW_NSS_READONLY, &progname_logger)) {
 		/* already logged */
 		exit(ERROR);
 	}
+	init_crypt_symkey(&progname_logger);
 	fips = libreswan_fipsmode();
 
 	/*
