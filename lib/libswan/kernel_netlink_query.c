@@ -31,12 +31,12 @@ int nl_send_query(struct nlmsghdr *req, int protocol, struct logger *logger)
 	int nl_fd = socket(AF_NETLINK, SOCK_DGRAM, protocol);
 
 	if (nl_fd < 0) {
-		LOG_ERRNO(errno, "socket() in nl_send_query() protocol %d", protocol);
+		log_errno(logger, errno, "socket() in nl_send_query() protocol %d", protocol);
 		return nl_fd;
 	}
 
 	if (fcntl(nl_fd, F_SETFL, O_NONBLOCK) != 0) {
-		LOG_ERRNO(errno, "fcntl(O_NONBLOCK) in nl_send_query() protocol %d", protocol);
+		log_errno(logger, errno, "fcntl(O_NONBLOCK) in nl_send_query() protocol %d", protocol);
 		close(nl_fd);
 		return -1;
 	}
@@ -46,7 +46,7 @@ int nl_send_query(struct nlmsghdr *req, int protocol, struct logger *logger)
 		r = write(nl_fd, req, len);
 	} while (r < 0 && errno == EINTR);
 	if (r < 0) {
-		LOG_ERRNO(errno, "netlink nl_send_query() write");
+		log_errno(logger, errno, "netlink nl_send_query() write");
 		close(nl_fd);
 		return -2;
 	} else if ((size_t)r != len) {
