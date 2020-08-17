@@ -43,7 +43,8 @@
 					  SCMP_SYS(NAME), 0);		\
 		if (rc != 0) {						\
 			if (rc < 0) {					\
-				LOG_ERRNO(-rc, "seccomp_rule_add() failed for system call '%s'", \
+				log_errno(logger, -rc,			\
+					  "seccomp_rule_add() failed for system call '%s'", \
 					  #NAME);			\
 			} else {					\
 				log_message(RC_LOG, logger, "seccomp_rule_add() failed for system call '%s' with unexpected error %d", \
