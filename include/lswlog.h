@@ -245,7 +245,6 @@ void log_jambuf(lset_t rc_flags, struct fd *object_fd, struct jambuf *buf);
  * OBJECT_FD, they can't be implemented using log_jambuf().
  */
 
-void lswlog_to_default_streams(struct jambuf *buf, enum rc_type rc);
 void lswlog_to_error_stream(struct jambuf *buf);
 
 /*

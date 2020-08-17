@@ -94,10 +94,3 @@ void lswlog_to_error_stream(struct jambuf *buf)
 {
 	fprintf(stderr, "%s\n", buf->array);
 }
-
-void lswlog_to_default_streams(struct jambuf *buf, enum rc_type rc UNUSED)
-{
-	if (log_to_stderr) {
-		fprintf(stderr, "%s\n", buf->array);
-	}
-}
