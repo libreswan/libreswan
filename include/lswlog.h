@@ -240,8 +240,6 @@ extern struct logger progname_logger;
 
 void log_jambuf(lset_t rc_flags, struct fd *object_fd, struct jambuf *buf);
 
-size_t lswlog_to_file_stream(struct jambuf *buf, FILE *file);
-
 /*
  * XXX: since the following all use the global CUR_STATE to get
  * OBJECT_FD, they can't be implemented using log_jambuf().
@@ -432,27 +430,6 @@ void lswbuf(struct jambuf *log)
 	for (bool lswlog_p = PREDICATE; lswlog_p; lswlog_p = false)	\
 		LSWBUF_(BUF)						\
 			for (PREFIX; lswlog_p; lswlog_p = false, SUFFIX)
-
-/*
- * Write a line of output to the FILE stream as a single block;
- * includes an implicit new-line.
- *
- * For instance:
- */
-
-#if 0
-void lswlog_file(FILE f)
-{
-	LSWLOG_FILE(f, buf) {
-		jam(buf, "written to file");
-	}
-}
-#endif
-
-#define LSWLOG_FILE(FILE, BUF)						\
-	LSWLOG_(true, BUF,						\
-		,							\
-		lswlog_to_file_stream(BUF, FILE))
 
 /*
  * Log an expectation failure message to the error streams.  That is

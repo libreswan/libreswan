@@ -140,7 +140,6 @@ OBJS += lswlog_nss_ckf.o
 OBJS += lswlog_nss_cka.o
 OBJS += lswlog_nss_secitem.o
 OBJS += lswlog_enum_lset_short.o
-OBJS += lswlog_to_file_stream.o
 OBJS += lswlog_pexpect.o
 
 # Crypto code:

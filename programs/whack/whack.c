@@ -2292,7 +2292,7 @@ int main(int argc, char **argv)
 				fprintf(stderr, "debug options (* included in 'all'):\n");
 				for (long e = next_enum(&debug_names, -1);
 				     e != -1; e = next_enum(&debug_names, e)) {
-					LSWLOG_FILE(stdout, buf) {
+					LSWBUF(buf) {
 						if (LELEM(e) & DBG_ALL) {
 							jam(buf, " *");
 						} else {
@@ -2304,6 +2304,8 @@ int main(int argc, char **argv)
 							jam(buf, ": ");
 							jam_string(buf, help);
 						}
+						fprintf(stderr, PRI_SHUNK"\n",
+							pri_shunk(jambuf_as_shunk(buf)));
 					}
 				}
 				exit(1);

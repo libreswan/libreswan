@@ -153,11 +153,12 @@ static void confwrite_int(FILE *out,
 				unsigned long val = options[k->field];
 
 				if (val != 0) {
-					LSWLOG_FILE(out, buf) {
-						jam(buf, "\t%s%s=\"", side, k->keyname);
+					LSWBUF(buf) {
 						jam_enum_lset_short(buf, k->info->names,
 								    ",", val);
-						jam(buf, "\"");
+						fprintf(out, "\t%s%s=\""PRI_SHUNK"\"\n",
+							side, k->keyname,
+							pri_shunk(jambuf_as_shunk(buf)));
 					}
 				}
 			}
