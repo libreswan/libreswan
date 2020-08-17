@@ -21,7 +21,7 @@
 
 void libreswan_log_errno(int e, const char *fmt, ...)
 {
-	LSWBUF(buf) {
+	JAMBUF(buf) {
 		/* ERROR: <prefix>: <message>. Errno N: <errmess> */
 		jam(buf, "ERROR: ");
 		jam_cur_prefix(buf);

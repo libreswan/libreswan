@@ -21,7 +21,7 @@
 
 void fatal(const char *fmt, ...)
 {
-	LSWBUF(buf) {
+	JAMBUF(buf) {
 		/* FATAL ERROR: <cur-prefix><message> */
 		jam(buf, "FATAL ERROR: ");
 		jam_cur_prefix(buf);

@@ -454,7 +454,7 @@ bool whack_prompt_for(struct state *st, const char *prompt,
 	 * the state prefix; and second explicitly.  Only reason is so
 	 * that tests are happy.
 	 */
-	LSWBUF(buf) {
+	JAMBUF(buf) {
 		/* XXX: one of these is redundant */
 		jam_logger_prefix(buf, st->st_logger);
 		jam(buf, "%s ", st->st_connection->name);
@@ -586,7 +586,7 @@ void whack_log(enum rc_type rc, const struct fd *whackfd, const char *message, .
 		return;
 	}
 
-	LSWBUF(buf) {
+	JAMBUF(buf) {
 		/* no-prefix: RC added by jambuf_to_whack() */
 		va_list args;
 		va_start(args, message);
@@ -603,7 +603,7 @@ void whack_comment(const struct fd *whackfd, const char *message, ...)
 	pexpect(cur_state == NULL);
 	pexpect(cur_connection == NULL);
 	pexpect(endpoint_type(&cur_from) == NULL);
-	LSWBUF(buf) {
+	JAMBUF(buf) {
 		va_list args;
 		va_start(args, message);
 		jam_va_list(buf, message, args);
@@ -637,7 +637,7 @@ static void rate_log_raw(const char *prefix,
 			 const char *message,
 			 va_list ap)
 {
-	LSWBUF(buf) {
+	JAMBUF(buf) {
 		jam_string(buf, prefix);
 		jam_logger_prefix(buf, logger);
 		jam_va_list(buf, message, ap);

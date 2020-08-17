@@ -1151,7 +1151,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 	 * Must be freed by this function.
 	 */
 	stf_status status = STF_FAIL;	/* initialized just to silence gcc -Og */
-	LSWBUF(remote_jam_buf) {
+	JAMBUF(remote_jam_buf) {
 		int matching_local_propnum = ikev2_process_proposals(sa_payload,
 								     expect_ike, expect_spi,
 								     expect_accepted,

@@ -153,7 +153,7 @@ static void confwrite_int(FILE *out,
 				unsigned long val = options[k->field];
 
 				if (val != 0) {
-					LSWBUF(buf) {
+					JAMBUF(buf) {
 						jam_enum_lset_short(buf, k->info->names,
 								    ",", val);
 						fprintf(out, "\t%s%s=\""PRI_SHUNK"\"\n",

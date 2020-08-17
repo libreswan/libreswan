@@ -33,7 +33,7 @@ void lswlog_passert_suffix(struct jambuf *buf, where_t where)
 
 void lsw_passert_fail(where_t where, const char *fmt, ...)
 {
-	LSWBUF(buf) {
+	JAMBUF(buf) {
 		lswlog_passert_prefix(buf);
 		va_list ap;
 		va_start(ap, fmt);

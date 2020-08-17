@@ -2292,7 +2292,7 @@ int main(int argc, char **argv)
 				fprintf(stderr, "debug options (* included in 'all'):\n");
 				for (long e = next_enum(&debug_names, -1);
 				     e != -1; e = next_enum(&debug_names, e)) {
-					LSWBUF(buf) {
+					JAMBUF(buf) {
 						if (LELEM(e) & DBG_ALL) {
 							jam(buf, " *");
 						} else {

@@ -98,6 +98,16 @@ bool jambuf_ok(struct jambuf *buf);
 struct jambuf array_as_jambuf(char *array, size_t sizeof_array);
 #define ARRAY_AS_JAMBUF(ARRAY) array_as_jambuf((ARRAY), sizeof(ARRAY))
 
+/* primitive to construct a JAMBUF on the stack.  */
+#define JAMBUF(BUF)							\
+	/* create the buffer */						\
+	for (char lswbuf[LOG_WIDTH], *lswbuf_ = lswbuf;			\
+	     lswbuf_ != NULL; lswbuf_ = NULL)				\
+		/* create the jambuf */					\
+		for (struct jambuf jambuf = ARRAY_AS_JAMBUF(lswbuf),	\
+			     *BUF = &jambuf;				\
+		     BUF != NULL; BUF = NULL)
+
 /*
  * Assuming the jambuf is an array, poke around in the jambuf's
  * internal buffer.

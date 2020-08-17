@@ -68,7 +68,7 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 		if (proposals != NULL) {				\
 			pexpect(parser->error[0] == '\0');		\
 			FOR_EACH_PROPOSAL(proposals, proposal) {	\
-				LSWBUF(buf) {				\
+				JAMBUF(buf) {				\
 					jam(buf, "\t");			\
 					jam_proposal(buf, proposal);	\
 					fprintf(stdout, PRI_SHUNK"\n",	\

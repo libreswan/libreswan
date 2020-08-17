@@ -78,7 +78,7 @@ ssize_t fd_sendmsg(const struct fd *fd, const struct msghdr *msg,
 		 * to whack.  Fake up the failure and only send to the
 		 * log stream.
 		 */
-		LSWBUF(buf) {
+		JAMBUF(buf) {
 			jam(buf, "EXPECTATION FAILED:");
 			if (fd == NULL) {
 				jam(buf, " fd should not be NULL");
@@ -104,7 +104,7 @@ ssize_t fd_sendmsg(const struct fd *fd, const struct msghdr *msg,
 		 * to whack.  Fake up the failure and only send to the
 		 * log stream.
 		 */
-		LSWBUF(buf) {
+		JAMBUF(buf) {
 			jam(buf, "EXPECTATION FAILED: fd is not magic "PRI_WHERE"",
 			    pri_where(where));
 			jambuf_to_logger(buf, logger, LOG_STREAM);

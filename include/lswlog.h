@@ -400,18 +400,6 @@ void lswbuf(struct jambuf *log)
 }
 #endif
 
-/* primitive to construct an LSWBUF on the stack.  */
-#define LSWBUF(BUF)							\
-	/* create the buffer */						\
-	for (char lswbuf[LOG_WIDTH],					\
-		     *lswbuf_ = lswbuf;					\
-	     lswbuf_ != NULL; lswbuf_ = NULL)				\
-		/* create the jambuf */					\
-		for (struct jambuf jambuf = ARRAY_AS_JAMBUF(lswbuf),		\
-			     *BUF = &jambuf;				\
-		     BUF != NULL; BUF = NULL)
-#define LSWBUF_ LSWBUF
-
 /*
  * Template for constructing logging output intended for a logger
  * stream.
@@ -428,7 +416,7 @@ void lswbuf(struct jambuf *log)
 
 #define LSWLOG_(PREDICATE, BUF, PREFIX, SUFFIX)				\
 	for (bool lswlog_p = PREDICATE; lswlog_p; lswlog_p = false)	\
-		LSWBUF_(BUF)						\
+		JAMBUF(BUF)						\
 			for (PREFIX; lswlog_p; lswlog_p = false, SUFFIX)
 
 /*

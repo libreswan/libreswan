@@ -26,7 +26,7 @@ void log_va_list(lset_t rc_flags, const struct logger *logger,
 		dbg("EXPECTATION FAILED: logger is NULL "PRI_WHERE, pri_where(HERE));
 		enum rc_type rc = rc_flags & RC_MASK;
 		enum stream stream = rc_flags & ~RC_MASK;
-		LSWBUF(buf) {
+		JAMBUF(buf) {
 			jam_cur_prefix(buf);
 			jam_va_list(buf, message, ap);
 			switch (stream) {
