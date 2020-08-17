@@ -23,20 +23,10 @@ void log_va_list(lset_t rc_flags, const struct logger *logger,
 {
 	if (logger == NULL) {
 		/* should not happen; but */
-		dbg("EXPECTATION FAILED: logger is NULL "PRI_WHERE, pri_where(HERE));
-		enum rc_type rc = rc_flags & RC_MASK;
-		enum stream stream = rc_flags & ~RC_MASK;
 		JAMBUF(buf) {
-			jam_cur_prefix(buf);
+			jam(buf, "[EXPECTATION FAILED: logger != NULL] ");
 			jam_va_list(buf, message, ap);
-			switch (stream) {
-			default:
-				lswlog_to_default_streams(buf, rc);
-				break;
-			case ERROR_STREAM:
-				lswlog_to_error_stream(buf);
-				break;
-			}
+			lswlog_to_error_stream(buf);
 		}
 	} else {
 		LOG_MESSAGE(rc_flags, logger, buf) {
