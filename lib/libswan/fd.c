@@ -110,20 +110,20 @@ ssize_t fd_sendmsg(const struct fd *fd, const struct msghdr *msg,
 	return sendmsg(fd->fd, msg, flags);
 }
 
-struct fd *fd_accept(int socket, where_t where)
+struct fd *fd_accept(int socket, where_t where, struct logger *logger)
 {
 	struct sockaddr_un addr;
 	socklen_t addrlen = sizeof(addr);
 
 	int fd = accept(socket, (struct sockaddr *)&addr, &addrlen);
 	if (fd < 0) {
-		LOG_ERRNO(errno, "accept() failed in "PRI_WHERE"",
+		log_errno(logger, errno, "accept() failed in "PRI_WHERE"",
 			  pri_where(where));
 		return NULL;
 	}
 
 	if (fcntl(fd, F_SETFD, FD_CLOEXEC) < 0) {
-		LOG_ERRNO(errno, "failed to set CLOEXEC in "PRI_WHERE"",
+		log_errno(logger, errno, "failed to set CLOEXEC in "PRI_WHERE"",
 			  pri_where(where));
 		close(fd);
 		return NULL;

@@ -30,6 +30,7 @@
 #include "where.h"
 
 struct msghdr;
+struct logger;
 
 /* opaque and reference counted */
 struct fd;
@@ -39,7 +40,7 @@ struct fd;
  */
 #define null_fd ((struct fd *) NULL)
 
-struct fd *fd_accept(int socket, where_t where);
+struct fd *fd_accept(int socket, where_t where, struct logger *logger);
 
 #define dup_any(FD) dup_any_fd((FD), HERE)
 struct fd *dup_any_fd(struct fd *fd, where_t where);

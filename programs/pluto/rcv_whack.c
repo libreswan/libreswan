@@ -761,7 +761,8 @@ void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
 {
 	threadtime_t start = threadtime_start();
 	{
-		struct fd *whackfd = fd_accept(fd, HERE);
+		struct logger global_logger = GLOBAL_LOGGER(null_fd); /*no whack*/
+		struct fd *whackfd = fd_accept(fd, HERE, &global_logger);
 		if (whackfd == NULL) {
 			/* already logged */
 			return;
