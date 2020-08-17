@@ -435,7 +435,8 @@ void jambuf_to_whack(struct jambuf *buf, const struct fd *whackfd, enum rc_type 
 	};
 
 	/* write to whack socket, but suppress possible SIGPIPE */
-	if (fd_sendmsg(whackfd, &msg, MSG_NOSIGNAL, HERE) < 0) {
+	struct logger global_logger = GLOBAL_LOGGER(null_fd); /*not-whack*/
+	if (fd_sendmsg(whackfd, &msg, MSG_NOSIGNAL, HERE, &global_logger) < 0) {
 		stdlog_raw("whack: ", "write to whack socket failed");
 	}
 }

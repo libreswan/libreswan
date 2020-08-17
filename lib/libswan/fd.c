@@ -69,12 +69,14 @@ void fd_leak(struct fd **fd, where_t where)
 }
 
 ssize_t fd_sendmsg(const struct fd *fd, const struct msghdr *msg,
-		   int flags, where_t where)
+		   int flags, where_t where, struct logger *logger)
 {
 	if (fd == NULL || fd->magic != FD_MAGIC) {
 		/*
-		 * XXX: passert() / pexpect() / ... would be recursive
-		 * - they write to whack using fd_sendsmg(), fake it.
+		 * XXX: passert() / pexpect() would be recursive -
+		 * they will call this function when trying to write
+		 * to whack.  Fake up the failure and only send to the
+		 * log stream.
 		 */
 		LSWBUF(buf) {
 			jam(buf, "EXPECTATION FAILED:");
@@ -91,19 +93,21 @@ ssize_t fd_sendmsg(const struct fd *fd, const struct msghdr *msg,
 				struct iovec *iov = &msg->msg_iov[i];
 				jam_sanitized_bytes(buf, iov->iov_base, iov->iov_len);
 			}
-			log_jambuf(LOG_STREAM, null_fd, buf);
+			jambuf_to_logger(buf, logger, LOG_STREAM);
 		}
 		return -1;
 	}
 	if (fd->magic != FD_MAGIC) {
 		/*
-		 * XXX: passert() / pexpect() / ... would be recursive
-		 * - they write to whack using fd_sendmsg(), fake it.
+		 * XXX: passert() / pexpect() would be recursive -
+		 * they will call this function when trying to write
+		 * to whack.  Fake up the failure and only send to the
+		 * log stream.
 		 */
 		LSWBUF(buf) {
 			jam(buf, "EXPECTATION FAILED: fd is not magic "PRI_WHERE"",
 			    pri_where(where));
-			log_jambuf(LOG_STREAM, null_fd, buf);
+			jambuf_to_logger(buf, logger, LOG_STREAM);
 		}
 		return -1;
 	}
