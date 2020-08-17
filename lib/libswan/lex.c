@@ -44,10 +44,9 @@ bool lexopen(struct file_lex_position *new_flp, const char *name,
 	     bool optional, struct logger *logger)
 {
 	FILE *f = fopen(name, "r");
-
 	if (f == NULL) {
 		if (!optional || errno != ENOENT) {
-			LOG_ERRNO(errno, "could not open \"%s\"", name);
+			log_errno(logger, errno, "could not open \"%s\"", name);
 		} else {
 			DBGF(DBG_TMI, "lex open: %s: "PRI_ERRNO, name, pri_errno(errno));
 		}
