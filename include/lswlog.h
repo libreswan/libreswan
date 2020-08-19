@@ -293,12 +293,12 @@ void log_error(struct logger *logger, const char *message, ...) PRINTF_LIKE(2);
  * XXX: Notice how "FATAL ERROR: " comes before <prefix>:
  *   FATAL ERROR: <prefix><message...>
  */
-void log_fatal(struct logger *logger, const char *message, ...) PRINTF_LIKE(2) NEVER_RETURNS;
-#define log_fatal_errno(LOGGER, ERRNO, FMT, ...)			\
+void fatal(struct logger *logger, const char *message, ...) PRINTF_LIKE(2) NEVER_RETURNS;
+#define fatal_errno(LOGGER, ERRNO, FMT, ...)				\
 	{								\
 		int e_ = ERRNO; /* save value across va args */		\
-		log_fatal(LOGGER, FMT". "PRI_ERRNO,			\
-			  ##__VA_ARGS__, pri_errno(e_));		\
+		fatal(LOGGER, FMT". "PRI_ERRNO,				\
+		      ##__VA_ARGS__, pri_errno(e_));			\
 	}
 
 /*

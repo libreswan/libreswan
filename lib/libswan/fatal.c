@@ -19,7 +19,7 @@
 
 #include "lswlog.h"
 
-void log_fatal(struct logger *logger, const char *fmt, ...)
+void fatal(struct logger *logger, const char *fmt, ...)
 {
 	JAMBUF(buf) {
 		/* XXX: notice how <prefix> sits in the middle :-( */

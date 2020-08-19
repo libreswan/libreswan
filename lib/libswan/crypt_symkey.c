@@ -36,7 +36,7 @@ void init_crypt_symkey(struct logger *logger)
 		struct jambuf buf[1] = { ARRAY_AS_JAMBUF(error), };
 		jam(buf, "NSS: ephemeral slot error");
 		jam_nss_error(buf);
-		log_fatal(logger, "%s", error);
+		fatal(logger, "%s", error);
 	}
 	ephemeral_symkey = PK11_KeyGen(slot, CKM_AES_KEY_GEN,
 				       NULL, 128/8, NULL);
