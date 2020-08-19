@@ -49,8 +49,14 @@ monotime_t mononow(void)
 	struct timespec t;
 	int e = clock_gettime(monotime_clockid(), &t);
 	if (e != 0) {
-		fatal("clock_gettime(%d,...) in mononow() failed. "PRI_ERRNO,
-		      monotime_clockid(), pri_errno(e));
+		/*
+		 * This code assumes clock_gettime() always succeeds -
+		 * if it were expected to fail then there'd either be
+		 * a logger and/or a way to return the failure to the
+		 * caller.
+		 */
+		PASSERT_FAIL("clock_gettime(%d,...) in mononow() failed. "PRI_ERRNO,
+			     monotime_clockid(), pri_errno(e));
 	}
 	/* OK */
 	return (monotime_t) {
