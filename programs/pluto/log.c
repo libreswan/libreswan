@@ -642,7 +642,7 @@ static void rate_log_raw(const char *prefix,
 		jam_string(buf, prefix);
 		jam_logger_prefix(buf, logger);
 		jam_va_list(buf, message, ap);
-		log_jambuf(LOG_STREAM, null_fd, buf);
+		jambuf_to_logger(buf, logger, LOG_STREAM);
 	}
 }
 
