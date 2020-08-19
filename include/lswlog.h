@@ -286,6 +286,8 @@ void libreswan_log_errno(int e, const char *message, ...) PRINTF_LIKE(2);
 			    ##__VA_ARGS__, pri_errno(errno_));		\
 	}
 
+/* FATAL ERROR: <prefix><message...> <- note order */
+void log_fatal(struct logger *logger, const char *message, ...) PRINTF_LIKE(2) NEVER_RETURNS;
 void fatal(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
 
 #define FATAL_ERRNO(ERRNO, MESSAGE, ...)				\

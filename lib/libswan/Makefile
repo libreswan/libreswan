@@ -124,6 +124,7 @@ OBJS += DBG_dump.o
 OBJS += DBG_log.o
 
 OBJS += fatal.o
+OBJS += log_fatal.o
 OBJS += libreswan_log_errno.o
 OBJS += libreswan_bad_case.o
 
