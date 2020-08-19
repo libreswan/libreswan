@@ -276,7 +276,6 @@ void jam_cur_prefix(struct jambuf *buf);
  */
 
 void libreswan_exit(enum pluto_exit_code rc) NEVER_RETURNS;
-void libreswan_log_errno(int e, const char *message, ...) PRINTF_LIKE(2);
 
 #define log_errno(LOGGER, ERRNO, FMT, ...)				\
 	{								\

@@ -332,9 +332,19 @@ void jambuf_to_default_streams(struct jambuf *buf, enum rc_type rc);
 			    jam_cur_prefix(BUF),			\
 			    jambuf_to_default_streams(BUF, RC_LOG))
 
-#define LOG_ERRNO(ERRNO, ...) {						\
-		int log_errno = ERRNO; /* save value across va args */	\
-		libreswan_log_errno(log_errno, __VA_ARGS__);		\
+#define LOG_ERRNO(ERRNO, MESSAGE, ...)					\
+	{								\
+		int e_ = ERRNO; /* save value across va args */		\
+		/* XXX: notice how ERROR comes before <prefix> */	\
+		/* ERROR: <prefix>: <message>. Errno N: <errmess> */	\
+		JAMBUF(buf) {						\
+			jam(buf, "ERROR: ");				\
+			jam_cur_prefix(buf);				\
+			jam(buf, MESSAGE, ##__VA_ARGS__);		\
+			jam_string(buf, ".");				\
+			jam(buf, " "PRI_ERRNO, pri_errno(e_));		\
+			jambuf_to_error_stream(buf);			\
+		}							\
 	}
 
 #define FATAL_ERRNO(ERRNO, MESSAGE, ...)				\
