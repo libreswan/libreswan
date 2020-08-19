@@ -332,4 +332,9 @@ void jambuf_to_default_streams(struct jambuf *buf, enum rc_type rc);
 			    jam_cur_prefix(BUF),			\
 			    jambuf_to_default_streams(BUF, RC_LOG))
 
+#define LOG_ERRNO(ERRNO, ...) {						\
+		int log_errno = ERRNO; /* save value across va args */	\
+		libreswan_log_errno(log_errno, __VA_ARGS__);		\
+	}
+
 #endif /* _PLUTO_LOG_H */

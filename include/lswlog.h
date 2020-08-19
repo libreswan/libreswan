@@ -286,12 +286,6 @@ void libreswan_log_errno(int e, const char *message, ...) PRINTF_LIKE(2);
 			    ##__VA_ARGS__, pri_errno(errno_));		\
 	}
 
-#define LOG_ERRNO(ERRNO, ...) {						\
-		int log_errno = ERRNO; /* save value across va args */	\
-		libreswan_log_errno(log_errno, __VA_ARGS__);		\
-	}
-
-
 void fatal(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
 
 #define FATAL_ERRNO(ERRNO, MESSAGE, ...)				\
