@@ -337,4 +337,10 @@ void jambuf_to_default_streams(struct jambuf *buf, enum rc_type rc);
 		libreswan_log_errno(log_errno, __VA_ARGS__);		\
 	}
 
+#define FATAL_ERRNO(ERRNO, MESSAGE, ...)				\
+	{								\
+		int log_errno = ERRNO; /* save value across va args */	\
+		fatal(MESSAGE". "PRI_ERRNO, ##__VA_ARGS__, pri_errno(log_errno)); \
+	}
+
 #endif /* _PLUTO_LOG_H */

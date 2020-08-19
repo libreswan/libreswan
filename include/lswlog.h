@@ -290,12 +290,6 @@ void libreswan_log_errno(int e, const char *message, ...) PRINTF_LIKE(2);
 void log_fatal(struct logger *logger, const char *message, ...) PRINTF_LIKE(2) NEVER_RETURNS;
 void fatal(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
 
-#define FATAL_ERRNO(ERRNO, MESSAGE, ...)				\
-	{								\
-		int log_errno = ERRNO; /* save value across va args */	\
-		fatal(MESSAGE". "PRI_ERRNO, ##__VA_ARGS__, pri_errno(log_errno)); \
-	}
-
 /*
  * E must have been saved!  Assume it is used as "... "PRI_ERRNO.
  *
