@@ -22,9 +22,10 @@
 void log_fatal(struct logger *logger, const char *fmt, ...)
 {
 	JAMBUF(buf) {
-		/* FATAL ERROR: <cur-prefix><message> */
+		/* XXX: notice how <prefix> sits in the middle :-( */
+		/* FATAL ERROR: <prefix><message> */
 		jam(buf, "FATAL ERROR: ");
-		jam_cur_prefix(buf);
+		jam_logger_prefix(buf, logger);
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);
