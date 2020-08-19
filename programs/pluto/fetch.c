@@ -371,7 +371,7 @@ static err_t fetch_asn1_blob(chunk_t url, chunk_t *blob)
 }
 
 /* Note: insert_crl_nss frees *blob */
-static bool insert_crl_nss(chunk_t *blob, const chunk_t crl_uri)
+static bool insert_crl_nss(chunk_t *blob, const chunk_t crl_uri, struct logger *logger)
 {
 	/* for CRL use the name passed to helper for the uri */
 	bool ret = FALSE;
@@ -380,12 +380,12 @@ static bool insert_crl_nss(chunk_t *blob, const chunk_t crl_uri)
 		dbg("no CRL URI available");
 	} else {
 		char *uri_str = clone_hunk_as_string(crl_uri, "NUL-terminated URI");
-		int r = send_crl_to_import(blob->ptr, blob->len, uri_str);
+		int r = send_crl_to_import(blob->ptr, blob->len, uri_str, logger);
 		if (r == -1) {
-			libreswan_log("_import_crl internal error");
+			log_message(RC_LOG, logger, "_import_crl internal error");
 		} else if (r != 0) {
-			libreswan_log("NSS CRL import error: %s",
-				      nss_err_str((PRInt32)r));
+			log_message(RC_LOG, logger, "NSS CRL import error: %s",
+				    nss_err_str((PRInt32)r));
 		} else {
 			dbg("CRL imported");
 			ret = TRUE;
@@ -400,7 +400,7 @@ static bool insert_crl_nss(chunk_t *blob, const chunk_t crl_uri)
 /*
  * try to fetch the crls defined by the fetch requests
  */
-static void fetch_crls(void)
+static void fetch_crls(struct logger *logger)
 {
 	lock_crl_fetch_list("fetch_crls");
 
@@ -423,7 +423,7 @@ static void fetch_crls(void)
 
 			if (ugh != NULL) {
 				dbg("fetch failed:  %s", ugh);
-			} else if (insert_crl_nss(&blob, gn->name)) {
+			} else if (insert_crl_nss(&blob, gn->name, logger)) {
 				dbg("we have a valid crl");
 				/* delete fetch request */
 				*reqp = req->next;	/* remove from list */
@@ -523,8 +523,10 @@ static void merge_crl_fetch_request(struct crl_fetch_request *);
 
 static void *fetch_thread(void *arg UNUSED)
 {
-	dbg("fetch thread started");
+	/* XXX: on thread so no whack */
+	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
 
+	dbg("fetch thread started");
 	while (true) {
 		dbg("fetching crl requests (may block)");
 		struct crl_fetch_request *requests = get_crl_fetch_requests();
@@ -556,7 +558,7 @@ static void *fetch_thread(void *arg UNUSED)
 		 *
 		 * Old requests then get processed at the end.
 		 */
-		fetch_crls();
+		fetch_crls(logger);
 	}
 	dbg("shutting down crl fetch thread");
 	return NULL;

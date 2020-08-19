@@ -37,7 +37,7 @@ static const char crl_name[] = "_import_crl";
 /*
  * Calls the _import_crl process to add a CRL to the NSS db.
  */
-int send_crl_to_import(u_char *der, size_t len, const char *url)
+int send_crl_to_import(u_char *der, size_t len, const char *url, struct logger *logger)
 {
 	CERTSignedCrl *crl = NULL;
 	CERTCertificate *cacert = NULL;
@@ -83,7 +83,7 @@ int send_crl_to_import(u_char *der, size_t len, const char *url)
 #endif
 
 	if ((size_t)n > sizeof(crl_path_space) - sizeof(crl_name)) {
-		fatal("path to %s is too long", crl_name);
+		log_fatal(logger, "path to %s is too long", crl_name);
 	}
 
 	while (n > 0 && crl_path_space[n - 1] != '/')
