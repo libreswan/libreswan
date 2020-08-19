@@ -349,8 +349,17 @@ void jambuf_to_default_streams(struct jambuf *buf, enum rc_type rc);
 
 #define FATAL_ERRNO(ERRNO, MESSAGE, ...)				\
 	{								\
-		int log_errno = ERRNO; /* save value across va args */	\
-		fatal(MESSAGE". "PRI_ERRNO, ##__VA_ARGS__, pri_errno(log_errno)); \
+		int e_ = ERRNO; /* save value across va args */		\
+		/* XXX: notice how FATAL_ERROR: is before <cur-prefix> */ \
+		/* FATAL ERROR: <cur-prefix><message> */		\
+		JAMBUF(buf) {						\
+			jam(buf, "FATAL ERROR: ");			\
+			jam_cur_prefix(buf);				\
+			jam(buf, MESSAGE". "PRI_ERRNO,			\
+			    ##__VA_ARGS__, pri_errno(e_));		\
+			jambuf_to_error_stream(buf);			\
+		}							\
+		libreswan_exit(PLUTO_EXIT_FAIL);			\
 	}
 
 #endif /* _PLUTO_LOG_H */

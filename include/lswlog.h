@@ -287,7 +287,6 @@ void libreswan_exit(enum pluto_exit_code rc) NEVER_RETURNS;
 
 /* FATAL ERROR: <prefix><message...> <- note order */
 void log_fatal(struct logger *logger, const char *message, ...) PRINTF_LIKE(2) NEVER_RETURNS;
-void fatal(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
 
 /*
  * E must have been saved!  Assume it is used as "... "PRI_ERRNO.
