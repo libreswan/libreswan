@@ -1270,7 +1270,7 @@ void call_server(char *conffile)
 			n--;
 
 		if ((size_t)n > sizeof(addconn_path_space) - sizeof(addconn_name)) {
-			fatal("path to %s is too long", addconn_name);
+			log_fatal(logger, "path to %s is too long", addconn_name);
 		}
 
 		strcpy(addconn_path_space + n, addconn_name);
