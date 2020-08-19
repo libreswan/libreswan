@@ -277,16 +277,29 @@ void jam_cur_prefix(struct jambuf *buf);
 
 void libreswan_exit(enum pluto_exit_code rc) NEVER_RETURNS;
 
+/*
+ * XXX: Notice how "ERROR: " comes before <prefix>:
+ *   ERROR: <prefix><message...>
+ */
+void log_error(struct logger *logger, const char *message, ...) PRINTF_LIKE(2);
 #define log_errno(LOGGER, ERRNO, FMT, ...)				\
 	{								\
-		int errno_ = ERRNO; /* save value across va args */	\
-		log_message(ERROR_STREAM|RC_LOG_SERIOUS, LOGGER,	\
-			    "ERROR: "FMT" "PRI_ERRNO,			\
-			    ##__VA_ARGS__, pri_errno(errno_));		\
+		int e_ = ERRNO; /* save value across va args */		\
+		log_error(LOGGER, FMT". "PRI_ERRNO,			\
+			  ##__VA_ARGS__, pri_errno(e_));		\
 	}
 
-/* FATAL ERROR: <prefix><message...> <- note order */
+/*
+ * XXX: Notice how "FATAL ERROR: " comes before <prefix>:
+ *   FATAL ERROR: <prefix><message...>
+ */
 void log_fatal(struct logger *logger, const char *message, ...) PRINTF_LIKE(2) NEVER_RETURNS;
+#define log_fatal_errno(LOGGER, ERRNO, FMT, ...)			\
+	{								\
+		int e_ = ERRNO; /* save value across va args */		\
+		log_fatal(LOGGER, FMT". "PRI_ERRNO,			\
+			  ##__VA_ARGS__, pri_errno(e_));		\
+	}
 
 /*
  * E must have been saved!  Assume it is used as "... "PRI_ERRNO.
@@ -295,7 +308,6 @@ void log_fatal(struct logger *logger, const char *message, ...) PRINTF_LIKE(2) N
  */
 #define PRI_ERRNO "Errno %d: %s"
 #define pri_errno(E) (E), strerror(E)
-
 
 /*
  * Log debug messages to the main log stream, but not the WHACK log
