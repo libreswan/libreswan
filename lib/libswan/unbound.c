@@ -50,7 +50,7 @@ void unbound_ctx_free(void)
 
 static int globugh_ta(const char *epath, int eerrno)
 {
-	LOG_ERRNO(eerrno, "problem with trusted anchor file \"%s\"", epath);
+	libreswan_log_errno(eerrno, "problem with trusted anchor file \"%s\"", epath);
 	return 1;	/* stop glob */
 }
 
