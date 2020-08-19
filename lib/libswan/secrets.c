@@ -37,10 +37,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>	/* missing from <resolv.h> on old systems */
-#include <glob.h>
-#ifndef GLOB_ABORTED
-#define GLOB_ABORTED GLOB_ABEND        /* fix for old versions */
-#endif
 
 #include <pk11pub.h>
 #include <prerror.h>
@@ -48,6 +44,7 @@
 #include <cryptohi.h>
 #include <keyhi.h>
 
+#include "lswglob.h"
 #include "sysdep.h"
 #include "lswlog.h"
 #include "constants.h"
@@ -1452,18 +1449,10 @@ static void lsw_process_secret_records(struct secret **psecrets, struct logger *
 	}
 }
 
-static int globugh_secrets(const char *epath, int eerrno)
-{
-	libreswan_log_errno(eerrno, "problem with secrets file \"%s\"", epath);
-	return 1;	/* stop glob */
-}
-
 static void lsw_process_secrets_file(struct secret **psecrets, const char *file_pat,
 				     struct logger *logger)
 {
 	struct file_lex_position pos;
-	char **fnp;
-	glob_t globbuf;
 
 	pos.depth = flp == NULL ? 0 : flp->depth + 1;
 
@@ -1475,13 +1464,14 @@ static void lsw_process_secrets_file(struct secret **psecrets, const char *file_
 	}
 
 	/* do globbing */
-	int r = glob(file_pat, GLOB_ERR, globugh_secrets, &globbuf);
+	glob_t globbuf;
+	int r = lswglob(file_pat, &globbuf, "secrets", logger);
 
 	switch (r) {
 	case 0:
 		/* success */
 		/* for each file... */
-		for (fnp = globbuf.gl_pathv; fnp != NULL && *fnp != NULL; fnp++) {
+		for (char **fnp = globbuf.gl_pathv; fnp != NULL && *fnp != NULL; fnp++) {
 			if (lexopen(&pos, *fnp, false, logger)) {
 				log_message(RC_LOG, logger, "loading secrets from \"%s\"", *fnp);
 				flushline(flp, "file starts with indentation (continuation notation)");

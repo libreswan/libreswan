@@ -130,6 +130,8 @@ OBJS += libreswan_bad_case.o
 
 OBJS += log_pexpect.o
 
+OBJS += lswglob.o
+
 OBJS += jambuf.o
 OBJS += jam_bytes.o
 OBJS += log_message.o

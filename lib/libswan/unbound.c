@@ -29,11 +29,11 @@
 #include <sys/stat.h>
 #include <arpa/inet.h>
 #include <errno.h>
-#include <glob.h>
 #include <event2/event.h>
 #include <unbound.h>	/* from unbound devel */
 #include <unbound-event.h> /* from unbound devel */
 
+#include "lswglob.h"
 #include "dnssec.h"
 #include "constants.h"
 #include "lswlog.h"
@@ -46,12 +46,6 @@ void unbound_ctx_free(void)
 		ub_ctx_delete(dns_ctx);
 		dns_ctx = NULL;
 	}
-}
-
-static int globugh_ta(const char *epath, int eerrno)
-{
-	libreswan_log_errno(eerrno, "problem with trusted anchor file \"%s\"", epath);
-	return 1;	/* stop glob */
 }
 
 static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char *trusted,
@@ -158,12 +152,11 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 		dbg("no additional dnssec trust anchors defined via dnssec-trusted= option");
 	} else {
 		glob_t globbuf;
-		char **fnp;
-		int r = glob(trusted, GLOB_ERR, globugh_ta, &globbuf);
+		int r = lswglob(trusted, &globbuf, "trusted anchor", logger);
 
 		switch (r) {
 		case 0:	/* success */
-			for (fnp = globbuf.gl_pathv; fnp != NULL && *fnp != NULL; fnp++) {
+			for (char **fnp = globbuf.gl_pathv; fnp != NULL && *fnp != NULL; fnp++) {
 				ugh = ub_ctx_add_ta_file(dns_ctx, *fnp);
 				if (ugh != 0) {
 					log_message(RC_LOG_SERIOUS, logger,
