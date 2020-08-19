@@ -26,7 +26,7 @@ void log_va_list(lset_t rc_flags, const struct logger *logger,
 		JAMBUF(buf) {
 			jam(buf, "[EXPECTATION FAILED: logger != NULL] ");
 			jam_va_list(buf, message, ap);
-			lswlog_to_error_stream(buf);
+			jambuf_to_error_stream(buf);
 		}
 	} else {
 		LOG_MESSAGE(rc_flags, logger, buf) {

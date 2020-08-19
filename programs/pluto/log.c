@@ -532,7 +532,7 @@ static void log_raw(int severity, const char *prefix, struct jambuf *buf)
 	/* not whack */
 }
 
-void lswlog_to_error_stream(struct jambuf *buf)
+void jambuf_to_error_stream(struct jambuf *buf)
 {
 	log_raw(LOG_ERR, "", buf);
 	if (in_main_thread()) {
@@ -541,7 +541,12 @@ void lswlog_to_error_stream(struct jambuf *buf)
 	}
 }
 
-void lswlog_to_default_streams(struct jambuf *buf, enum rc_type rc)
+void jambuf_to_debug_stream(struct jambuf *buf)
+{
+	log_raw(LOG_DEBUG, DEBUG_PREFIX, buf);
+}
+
+void jambuf_to_default_streams(struct jambuf *buf, enum rc_type rc)
 {
 	log_raw(LOG_WARNING, "", buf);
 	if (in_main_thread()) {
@@ -723,15 +728,6 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 	default:
 		bad_case(only);
 	}
-}
-
-void log_jambuf(lset_t rc_flags, struct fd *object_whackfd, struct jambuf *buf)
-{
-	struct logger logger = {
-		.global_whackfd = in_main_thread() ? whack_log_fd/*GLOBAL*/ : null_fd,
-		.object_whackfd = object_whackfd,
-	};
-	jambuf_to_logger(buf, &logger, rc_flags);
 }
 
 static bool always_suppress_log(const void *object UNUSED)

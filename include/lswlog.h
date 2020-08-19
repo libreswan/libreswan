@@ -235,17 +235,16 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 extern struct logger progname_logger;
 
 /*
- * XXX: log_jambuf() doesn't take a logger parameter.
+ * Fallback for debug and panic cases where making a logger available
+ * is a pain (for instance deep inside code that shouldn't panic).
+ *
+ * XXX: Currently the error code, when the main thread, writes to
+ * whack when available.  Long term it may not (it can't work when on
+ * a thread).
  */
 
-void log_jambuf(lset_t rc_flags, struct fd *object_fd, struct jambuf *buf);
-
-/*
- * XXX: since the following all use the global CUR_STATE to get
- * OBJECT_FD, they can't be implemented using log_jambuf().
- */
-
-void lswlog_to_error_stream(struct jambuf *buf);
+void jambuf_to_error_stream(struct jambuf *buf);
+void jambuf_to_debug_stream(struct jambuf *buf);
 
 /*
  * Log to the default stream(s):
@@ -344,13 +343,12 @@ void DBG_dump(const char *label, const void *p, size_t len);
 	}
 #define DBG_dump_thing(LABEL, THING) DBG_dump(LABEL, &(THING), sizeof(THING))
 
-#define LSWDBG_(PREDICATE, BUF)						\
-	LSWLOG_(PREDICATE, BUF,						\
-		/*no-prefix*/,						\
-		log_jambuf(DEBUG_STREAM, null_fd, BUF))
-
-#define LSWDBGP(DEBUG, BUF) LSWDBG_(DBGP(DEBUG), BUF)
-#define LSWLOG_DEBUG(BUF) LSWDBG_(true, BUF)
+#define LSWDBGP(DEBUG, BUF) LSWLOG_(DBGP(DEBUG), BUF,			\
+				    /*no-prefix*/,			\
+				    jambuf_to_debug_stream(BUF))
+#define LSWLOG_DEBUG(BUF) LSWLOG_(true, BUF,				\
+				  /*no-prefix*/,			\
+				  jambuf_to_debug_stream(BUF))
 
 /*
  * Code wrappers that cover up the details of allocating,

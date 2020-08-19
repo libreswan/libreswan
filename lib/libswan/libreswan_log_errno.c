@@ -31,6 +31,6 @@ void libreswan_log_errno(int e, const char *fmt, ...)
 		va_end(ap);
 		jam_string(buf, ".");
 		jam(buf, " "PRI_ERRNO, pri_errno(e));
-		lswlog_to_error_stream(buf);
+		jambuf_to_error_stream(buf);
 	}
 }

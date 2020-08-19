@@ -322,13 +322,14 @@ extern void linux_audit_init(int do_audit);
 extern void loglog(enum rc_type, const char *fmt, ...) PRINTF_LIKE(2); /* use log_message() */
 #define libreswan_log(MESSAGE, ...) loglog(RC_LOG, MESSAGE, ##__VA_ARGS__) /* XXX: TBD: use log_message() */
 
-void lswlog_to_default_streams(struct jambuf *buf, enum rc_type rc);
+void jambuf_to_default_streams(struct jambuf *buf, enum rc_type rc);
 
-#define LSWLOG_RC(RC, BUF)						\
-	LSWLOG_(true, BUF,						\
-		jam_cur_prefix(BUF),					\
-		lswlog_to_default_streams(BUF, RC))
+#define LSWLOG_RC(RC, BUF) LSWLOG_(true, BUF,				\
+				   jam_cur_prefix(BUF),			\
+				   jambuf_to_default_streams(BUF, RC))
 
-#define LSWLOG(BUF) LSWLOG_RC(RC_LOG, BUF)
+#define LSWLOG(BUF) LSWLOG_(true, BUF,					\
+			    jam_cur_prefix(BUF),			\
+			    jambuf_to_default_streams(BUF, RC_LOG))
 
 #endif /* _PLUTO_LOG_H */

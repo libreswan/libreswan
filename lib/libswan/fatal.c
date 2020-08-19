@@ -29,7 +29,7 @@ void fatal(const char *fmt, ...)
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);
 		va_end(ap);
-		lswlog_to_error_stream(buf);
+		jambuf_to_error_stream(buf);
 	}
 	libreswan_exit(PLUTO_EXIT_FAIL);
 }

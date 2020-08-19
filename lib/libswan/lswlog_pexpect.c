@@ -25,5 +25,5 @@ void lswlog_pexpect_prefix(struct jambuf *buf)
 void lswlog_pexpect_suffix(struct jambuf *buf, where_t where)
 {
 	jam(buf, " "PRI_WHERE, pri_where(where));
-	lswlog_to_error_stream(buf);
+	jambuf_to_error_stream(buf);
 }
