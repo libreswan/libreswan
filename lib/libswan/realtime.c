@@ -61,8 +61,8 @@ realtime_t realnow(void)
 	struct timespec ts;
 	int e = clock_gettime(realtime_clockid(), &ts);
 	if (e != 0) {
-		FATAL_ERRNO(e, "clock_gettime(%d,...) call in realnow() failed",
-			    realtime_clockid());
+		fatal("clock_gettime(%d,...) call in realnow() failed. "PRI_ERRNO,
+		      realtime_clockid(), pri_errno(e));
 	}
 	realtime_t t = {
 		.rt = {
