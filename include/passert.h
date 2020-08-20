@@ -32,16 +32,15 @@ struct logger;
 /* our versions of assert: log result */
 
 /* prefered; can log with prefix to whack from a thread */
-extern void log_passert(struct logger *logger, where_t where, const char *fmt, ...)
-	NEVER_RETURNS
-	PRINTF_LIKE(3);
+extern void passert_fail(struct logger *logger, where_t where,
+			 const char *message, ...) NEVER_RETURNS PRINTF_LIKE(3);
 #define PASSERT(LOGGER, ASSERTION)					\
 	{								\
 		/* wrapping ASSERTION in parens suppresses -Wparen */	\
 		bool assertion__ = ASSERTION; /* no parens */		\
 		if (!assertion__) {					\
 			where_t here = HERE;				\
-			log_passert(LOGGER, here, "%s", #ASSERTION);	\
+			passert_fail(LOGGER, here, "%s", #ASSERTION);	\
 		}							\
 	}
 

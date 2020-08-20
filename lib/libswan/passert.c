@@ -45,15 +45,17 @@ void lsw_passert_fail(where_t where, const char *fmt, ...)
 	abort();
 }
 
-void log_passert(struct logger *logger, where_t where, const char *fmt, ...)
+void passert_fail(struct logger *logger, where_t where, const char *fmt, ...)
 {
-	LOG_MESSAGE(ERROR_STREAM|RC_LOG_SERIOUS, logger, buf) {
+	JAMBUF(buf) {
 		jam_string(buf, "ABORT: ASSERTION FAILED: ");
+		jam_logger_prefix(buf, logger);
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);
 		va_end(ap);
 		jam(buf, " "PRI_WHERE, pri_where(where));
+		jambuf_to_logger(buf, logger, ERROR_STREAM|RC_LOG_SERIOUS);
 	}
 	abort();
 }

@@ -445,6 +445,8 @@ void lswlog_pexpect_example(void *p)
 		assertion__; /* result */				\
 	})
 
+void pexpect_fail(struct logger *logger, where_t where, const char *message, ...) PRINTF_LIKE(3);
+
 void log_pexpect(where_t where, const char *message, ...) PRINTF_LIKE(2);
 
 void lswlog_pexpect_prefix(struct jambuf *buf);
