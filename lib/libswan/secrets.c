@@ -297,7 +297,7 @@ static struct hash_signature RSA_sign_hash(const struct private_key_stuff *pks,
 		SECStatus s = PK11_Sign(pks->private_key, &signature, &data);
 		if (s != SECSuccess) {
 			/* PR_GetError() returns the thread-local error */
-			log_nss_error(RC_LOG_SERIOUS, logger, PR_GetError(),
+			log_nss_error(RC_LOG_SERIOUS, logger,
 				      "RSA sign function failed");
 			return (struct hash_signature) { .len = 0, };
 		}
@@ -319,7 +319,7 @@ static struct hash_signature RSA_sign_hash(const struct private_key_stuff *pks,
 						     &mech_item, &signature, &data);
 		if (s != SECSuccess) {
 			/* PR_GetError() returns the thread-local error */
-			log_nss_error(RC_LOG_SERIOUS, logger, PR_GetError(),
+			log_nss_error(RC_LOG_SERIOUS, logger,
 				      "RSA DSS sign function failed");
 			return (struct hash_signature) { .len = 0, };
 		}
@@ -456,7 +456,7 @@ static struct hash_signature ECDSA_sign_hash(const struct private_key_stuff *pks
 	DBG(DBG_CRYPT, DBG_dump("sig_from_nss", raw_signature.data, raw_signature.len));
 	if (s != SECSuccess) {
 		/* PR_GetError() returns the thread-local error */
-		log_nss_error(RC_LOG_SERIOUS, logger, PR_GetError(),
+		log_nss_error(RC_LOG_SERIOUS, logger,
 			      "ECDSA sign function failed");
 		return (struct hash_signature) { .len = 0, };
 	}
@@ -465,7 +465,7 @@ static struct hash_signature ECDSA_sign_hash(const struct private_key_stuff *pks
 	if (DSAU_EncodeDerSigWithLen(&encoded_signature, &raw_signature,
 				     raw_signature.len) != SECSuccess) {
 		/* PR_GetError() returns the thread-local error */
-		log_nss_error(RC_LOG, logger, PR_GetError(),
+		log_nss_error(RC_LOG, logger,
 			      "NSS: constructing DER encoded ECDSA signature using DSAU_EncodeDerSigWithLen() failed:");
 		return (struct hash_signature) { .len = 0, };
 	}

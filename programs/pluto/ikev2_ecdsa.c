@@ -63,10 +63,8 @@ static err_t try_ECDSA_signature_v2(const struct crypt_mac *hash,
 {
 	PRArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 	if (arena == NULL) {
-		LSWLOG(buf) {
-			jam_string(buf, "NSS: allocating ECDSA arena using PORT_NewArena() failed: ");
-			jam_nss_error(buf);
-		}
+		log_nss_error(RC_LOG, st->st_logger,
+			      "allocating ECDSA arena using PORT_NewArena() failed");
 		return "10" "NSS error: Not enough memory to create arena";
 	}
 
@@ -80,10 +78,8 @@ static err_t try_ECDSA_signature_v2(const struct crypt_mac *hash,
 		PORT_ArenaZAlloc(arena, sizeof(SECKEYPublicKey));
 	if (publicKey == NULL) {
 		PORT_FreeArena(arena, PR_FALSE);
-		LSWLOG(buf) {
-			jam_string(buf, "NSS: allocating ECDSA public key using PORT_ArenaZAlloc() failed:");
-			jam_nss_error(buf);
-		}
+		log_nss_error(RC_LOG, st->st_logger,
+			      "allocating ECDSA public key using PORT_ArenaZAlloc() failed");
 		return "11" "NSS error: Not enough memory to create publicKey";
 	}
 	publicKey->arena = arena;
@@ -94,10 +90,8 @@ static err_t try_ECDSA_signature_v2(const struct crypt_mac *hash,
 	/* copy k's public key value into the arena / publicKey */
 	SECItem k_pub = same_chunk_as_secitem(k->pub, siBuffer);
 	if (SECITEM_CopyItem(arena, &publicKey->u.ec.publicValue, &k_pub) != SECSuccess) {
-		LSWLOG(buf) {
-			jam_string(buf, "NSS: constructing ECDSA public value using SECITEM_CopyItem() failed:");
-			jam_nss_error(buf);
-		}
+		log_nss_error(RC_LOG, st->st_logger,
+			      "constructing ECDSA public value using SECITEM_CopyItem() failed");
 		PORT_FreeArena(arena, PR_FALSE);
 		return "10" "NSS error: copy failed";
 	}
@@ -107,10 +101,8 @@ static err_t try_ECDSA_signature_v2(const struct crypt_mac *hash,
 	if (SECITEM_CopyItem(arena,
 			     &publicKey->u.ec.DEREncodedParams,
 			     &k_ecParams) != SECSuccess) {
-		LSWLOG(buf) {
-			jam_string(buf, "NSS: construction of ecParams using SECITEM_CopyItem() failed:");
-			jam_nss_error(buf);
-		}
+		log_nss_error(RC_LOG, st->st_logger,
+			      "construction of ecParams using SECITEM_CopyItem() failed");
 		PORT_FreeArena(arena, PR_FALSE);
 		return "1" "NSS error: Not able to copy modulus or exponent or both while forming SECKEYPublicKey structure";
 	}
@@ -132,10 +124,8 @@ static err_t try_ECDSA_signature_v2(const struct crypt_mac *hash,
 	SECItem *raw_signature = DSAU_DecodeDerSigToLen(&der_signature,
 							SECKEY_SignatureLen(publicKey));
 	if (raw_signature == NULL) {
-		LSWLOG(buf) {
-			jam_string(buf, "NSS: unpacking DER encoded ECDSA signature using DSAU_DecodeDerSigToLen() failed:");
-			jam_nss_error(buf);
-		}
+		log_nss_error(RC_LOG, st->st_logger,
+			      "unpacking DER encoded ECDSA signature using DSAU_DecodeDerSigToLen() failed:");
 		PORT_FreeArena(arena, PR_FALSE);
 		return "1" "Decode failed";
 	}
@@ -159,10 +149,8 @@ static err_t try_ECDSA_signature_v2(const struct crypt_mac *hash,
 
 	if (PK11_Verify(publicKey, raw_signature, &hash_item,
 			lsw_nss_get_password_context(st->st_logger)) != SECSuccess) {
-		LSWLOG(buf) {
-			jam_string(buf, "NSS: verifying AUTH hash using PK11_Verify() failed:");
-			jam_nss_error(buf);
-		}
+		log_nss_error(RC_LOG, st->st_logger,
+			      "verifying AUTH hash using PK11_Verify() failed:");
 		PORT_FreeArena(arena, PR_FALSE);
 		SECITEM_FreeItem(raw_signature, PR_TRUE);
 		return "1" "NSS error: Not able to verify";

@@ -72,7 +72,7 @@ void get_rnd_bytes(void *buffer, size_t length)
 	SECStatus rv = PK11_GenerateRandom(buffer, length);
 	if (rv != SECSuccess) {
 		LSWLOG_PASSERT(buf) {
-			jam_string(buf, "NSS RNG failed");
+			jam_string(buf, "NSS RNG failed: ");
 			jam_nss_error(buf);
 		}
 	}

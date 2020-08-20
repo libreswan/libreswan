@@ -81,10 +81,8 @@ static void nss_ecp_calc_secret(const struct dh_desc *group,
 	SECITEM_FreeItem(pk11_param, PR_TRUE);
 
 	if (*pubk == NULL || *privk == NULL) {
-		LSWLOG_PASSERT(buf) {
-			jam_string(buf, "NSS: DH ECP private key creation failed");
-			jam_nss_error(buf);
-		}
+		passert_nss_error(logger, HERE,
+				  "DH ECP private key creation failed");
 	}
 
 	LSWDBGP(DBG_CRYPT, buf) {

@@ -74,20 +74,16 @@ static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 					    text_and_tag_size,
 					    text_and_tag, text_size);
 		if (rv != SECSuccess) {
-			LOG_MESSAGE(RC_LOG, logger, buf) {
-				jam(buf, "NSS: AEAD encryption using %s_%u and PK11_Encrypt() failed",
-				    alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_PER_BYTE);
-				jam_nss_error(buf);
-			}
+			log_nss_error(RC_LOG, logger,
+				      "AEAD encryption using %s_%u and PK11_Encrypt() failed",
+				      alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_PER_BYTE);
 			ok = false;
 		} else if (out_len != text_and_tag_size) {
 			/* should this be a pexpect fail? */
-			LOG_MESSAGE(RC_LOG_SERIOUS, logger, buf) {
-				jam(buf, "NSS: AEAD encryption using %s_%u and PK11_Encrypt() failed (output length of %u not the expected %zd)",
-				    alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_PER_BYTE,
-				    out_len, text_and_tag_size);
-				jam_nss_error(buf);
-			}
+			log_nss_error(RC_LOG_SERIOUS, logger,
+				      "AEAD encryption using %s_%u and PK11_Encrypt() failed (output length of %u not the expected %zd)",
+				      alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_PER_BYTE,
+				      out_len, text_and_tag_size);
 			ok = false;
 		}
 	} else {
@@ -95,20 +91,16 @@ static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 					    out_buf, &out_len, text_and_tag_size,
 					    text_and_tag, text_and_tag_size);
 		if (rv != SECSuccess) {
-			LOG_MESSAGE(RC_LOG, logger, buf) {
-				jam(buf, "NSS: AEAD decryption using %s_%u and PK11_Decrypt() failed",
-				    alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_PER_BYTE);
-				jam_nss_error(buf);
-			}
+			log_nss_error(RC_LOG, logger,
+				      "NSS: AEAD decryption using %s_%u and PK11_Decrypt() failed",
+				      alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_PER_BYTE);
 			ok = false;
 		} else if (out_len != text_size) {
 			/* should this be a pexpect fail? */
-			LOG_MESSAGE(RC_LOG_SERIOUS, logger, buf) {
-				jam(buf, "NSS: AEAD decryption using %s_%u and PK11_Decrypt() failed (output length of %u not the expected %zd)",
-				    alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_PER_BYTE,
-				    out_len, text_size);
-				jam_nss_error(buf);
-			}
+			log_nss_error(RC_LOG_SERIOUS, logger,
+				      "AEAD decryption using %s_%u and PK11_Decrypt() failed (output length of %u not the expected %zd)",
+				      alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_PER_BYTE,
+				      out_len, text_size);
 			ok = false;
 		}
 	}

@@ -70,10 +70,8 @@ static void nss_modp_calc_secret(const struct dh_desc *group,
 		*privk = SECKEY_CreateDHPrivateKey(&dh_params, pubk,
 						   lsw_nss_get_password_context(logger));
 		if (*pubk == NULL || *privk == NULL) {
-			LSWLOG_PASSERT(buf) {
-				jam_string(buf, "NSS: DH MODP private key creation failed");
-				jam_nss_error(buf);
-			}
+			passert_nss_error(logger, HERE,
+					  "DH MODP private key creation failed");
 		}
 	} while (group->bytes != (*pubk)->u.dh.publicValue.len);
 

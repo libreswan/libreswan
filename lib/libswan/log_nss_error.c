@@ -27,41 +27,59 @@
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=172051
  */
 
+static void jam_va_nss_error(struct jambuf *buf, const char *message, va_list ap)
+{
+	jam(buf, "NSS: ");
+	jam_va_list(buf, message, ap);
+	va_end(ap);
+	jam(buf, ": ");
+	jam_nss_error(buf);
+}
+
 void log_nss_error(lset_t rc_flags, struct logger *logger,
-		   PRErrorCode error, const char *message, ...)
+		   const char *message, ...)
 {
 	LOG_MESSAGE(rc_flags, logger, buf) {
-		jam(buf, "NSS: ");
-		/* text */
 		va_list ap;
 		va_start(ap, message);
-		jam_va_list(buf, message, ap);
+		jam_va_nss_error(buf, message, ap);
 		va_end(ap);
-		jam(buf, ": ");
-		if (error != 0) {
-			/* error, numeric */
-			if (IS_SEC_ERROR(error)) {
-				jam(buf, "SECERR: %ld (0x%lx): ",
-				    (long)(error - SEC_ERROR_BASE),
-				    (long)(error - SEC_ERROR_BASE));
-			} else {
-				jam(buf, "Error: %ld (0x%lx): ",
-				    (long)error,
-				    (long)error);
-			}
-			/*
-			 * NSPR should contain string tables for all known
-			 * error classes.  Query that first.  Should this
-			 * specify the english language?
-			 */
-			const char *text = PR_ErrorToString(error, PR_LANGUAGE_I_DEFAULT);
-			if (text != NULL) {
-				jam_string(buf, text);
-			} else {
-				jam(buf, "unknown error");
-			}
-		} else {
-			jam(buf, " error code not saved by NSS");
-		}
 	}
+}
+
+void passert_nss_error(struct logger *logger, where_t where,
+		       const char *message, ...)
+{
+	char scratch[LOG_WIDTH];
+	struct jambuf buf[1] = { ARRAY_AS_JAMBUF(scratch), };
+	va_list ap;
+	va_start(ap, message);
+	jam_va_nss_error(buf, message, ap);
+	va_end(ap);
+	/* XXX: double copy */
+	passert_fail(logger, where, PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
+}
+
+void pexpect_nss_error(struct logger *logger, where_t where,
+		       const char *message, ...)
+{
+	char scratch[LOG_WIDTH];
+	struct jambuf buf[1] = { ARRAY_AS_JAMBUF(scratch), };
+	va_list ap;
+	va_start(ap, message);
+	jam_va_nss_error(buf, message, ap);
+	va_end(ap);
+	/* XXX: double copy */
+	pexpect_fail(logger, where, PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
+}
+
+void DBG_nss_error(struct logger *logger, const char *message, ...)
+{
+	char scratch[LOG_WIDTH];
+	struct jambuf buf[1] = { ARRAY_AS_JAMBUF(scratch), };
+	va_list ap;
+	va_start(ap, message);
+	jam_va_nss_error(buf, message, ap);
+	va_end(ap);
+	jambuf_to_logger(buf, logger, DEBUG_STREAM);
 }

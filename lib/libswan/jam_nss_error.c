@@ -32,43 +32,43 @@ size_t jam_nss_error(struct jambuf *buf)
 {
 	size_t size = 0;
 	int error = PR_GetError(); /* at least 32-bits */
-	size += jam_string(buf, " (");
-	/* the number */
-	if (IS_SEC_ERROR(error)) {
-		size += jam(buf, "SECERR: %d (0x%x): ",
-			    error - SEC_ERROR_BASE,
-			    error - SEC_ERROR_BASE);
-	} else {
-		size += jam(buf, "NSS: %d (0x%x): ", error, error);
-	}
+	if (error != 0) {
 
-	/*
-	 * NSPR should contain string tables for all known error
-	 * classes.  Query that first.  Should this specify the
-	 * english language?
-	 */
-	const char *text = PR_ErrorToString(error, PR_LANGUAGE_I_DEFAULT);
-	if (text != NULL) {
-		size += jam_string(buf, text);
-	} else {
-		/*
-		 * Try NSPR directly, is this redundant?  Sometimes
-		 * NSS forgets to set the actual error and this
-		 * handles that case.
-		 */
-		PRInt32 length = PR_GetErrorTextLength();
-		if (length != 0) {
-			char *text = alloc_things(char, length, "error message");
-			PR_GetErrorText(text);
-			size += jam_string(buf, text);
-			pfree(text);
+		/* the number */
+		if (IS_SEC_ERROR(error)) {
+			size += jam(buf, "SEC_ERROR %d (0x%x): ",
+				    error - SEC_ERROR_BASE,
+				    error - SEC_ERROR_BASE);
 		} else {
-			size += jam_string(buf, "unknown error");
+			size += jam(buf, "NSS %d (0x%x): ", error, error);
 		}
+
+		/*
+		 * NSPR should contain string tables for all known
+		 * error classes.  Query that first.  Should this
+		 * specify the english language?
+		 */
+		const char *text = PR_ErrorToString(error, PR_LANGUAGE_I_DEFAULT);
+		if (text != NULL) {
+			size += jam_string(buf, text);
+		} else {
+			/*
+			 * Try NSPR directly, is this redundant?
+			 * Sometimes NSS forgets to set the actual
+			 * error and this handles that case?
+			 */
+			PRInt32 length = PR_GetErrorTextLength();
+			if (length != 0) {
+				char *text = alloc_things(char, length, "error message");
+				PR_GetErrorText(text);
+				size += jam_string(buf, text);
+				pfree(text);
+			} else {
+				size += jam_string(buf, "unknown error");
+			}
+		}
+	} else {
+		size += jam_string(buf, "error code not saved by NSS");
 	}
-	if (error == 0) {
-		size += jam_string(buf, "; 0 indicates NSS lost the error code");
-	}
-	size += jam_string(buf, ")");
 	return size;
 }

@@ -393,10 +393,7 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 							PR_FALSE /*isperm*/,
 							PR_TRUE /* copyDER */);
 	if (cert == NULL) {
-		LSWDBGP(DBG_BASE, buf) {
-			jam_string(buf, "NSS: decoding certs using CERT_ImportCerts() failed: ");
-			jam_nss_error(buf);
-		}
+		dbg_nss_error(logger, "NSS: decoding certs using CERT_ImportCerts() failed");
 		return;
 	}
 	dbg("decoded cert: %s", cert->subjectName);

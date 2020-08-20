@@ -34,7 +34,7 @@ void init_crypt_symkey(struct logger *logger)
 	if (slot == NULL) {
 		char error[LOG_WIDTH];
 		struct jambuf buf[1] = { ARRAY_AS_JAMBUF(error), };
-		jam(buf, "NSS: ephemeral slot error");
+		jam(buf, "NSS: ephemeral slot error: ");
 		jam_nss_error(buf);
 		fatal(logger, "%s", error);
 	}
@@ -174,7 +174,7 @@ PK11SymKey *crypt_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem
 		LSWLOG_PEXPECT_WHERE(where, buf) {
 			jam_string(buf, "NSS: ");
 			jam_nss_ckm(buf, derive);
-			jam_string(buf, " failed");
+			jam_string(buf, " failed: ");
 			jam_nss_error(buf);
 		}
 		DBG_DERIVE();

@@ -52,11 +52,27 @@ void lsw_nss_shutdown(void);
 
 PK11SlotInfo *lsw_nss_get_authenticated_slot(struct logger *logger);
 
-/* _(SECERR: N (0xX): <error-string>) */
-void log_nss_error(lset_t rc_log, struct logger *logger, PRErrorCode pr_error,
-		   const char *message, ...) PRINTF_LIKE(4);
-
+/*
+ * XXX: these get the error using the thread-local PR_GetError() which
+ * should always be set.
+ */
+/* SECERR: N (0xX): <error-string> */
 size_t jam_nss_error(struct jambuf *log);
+/* NSS: <message...>: SECERR: N (0xX): <error-string> */
+void log_nss_error(lset_t rc_log, struct logger *logger,
+		   const char *message, ...) PRINTF_LIKE(3);
+void passert_nss_error(struct logger *logger, where_t where,
+		       const char *message, ...) PRINTF_LIKE(3) NEVER_RETURNS;
+void pexpect_nss_error(struct logger *logger, where_t where,
+		       const char *message, ...) PRINTF_LIKE(3);
+void DBG_nss_error(struct logger *logger, const char *message, ...) PRINTF_LIKE(2);
+#define dbg_nss_error(LOGGER, MESSAGE, ...)				\
+	{								\
+		if (DBGP(DBG_BASE)) {					\
+			DBG_nss_error(LOGGER, MESSAGE, ##__VA_ARGS__);	\
+		}							\
+	}
+
 size_t jam_nss_ckm(struct jambuf *buf, CK_MECHANISM_TYPE mechanism);
 size_t jam_nss_ckf(struct jambuf *buf, CK_FLAGS flags);
 size_t jam_nss_cka(struct jambuf *buf, CK_ATTRIBUTE_TYPE attribute);
