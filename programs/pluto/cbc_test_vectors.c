@@ -127,7 +127,8 @@ static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
 			const char *description, int encrypt,
 			PK11SymKey *sym_key, const char *encoded_iv,
 			const char *input_name, const char *input,
-			const char *output_name, const char *output)
+			const char *output_name, const char *output,
+			struct logger *logger)
 {
 	const char *op = encrypt ? "encrypt" : "decrypt";
 	bool ok = TRUE;
@@ -145,7 +146,8 @@ static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
 
 	/* do_crypt modifies the data and IV in place.  */
 	encrypt_desc->encrypt_ops->do_crypt(encrypt_desc, tmp.ptr, tmp.len,
-					    sym_key, iv.ptr, encrypt);
+					    sym_key, iv.ptr, encrypt,
+					    logger);
 
 	if (!verify_hunk(op, expected, tmp)) {
 		DBGF(DBG_CRYPT, "test_cbc_op: %s: %s: output does not match",
@@ -173,7 +175,8 @@ static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
  */
 
 static bool test_cbc_vector(const struct encrypt_desc *encrypt_desc,
-			    const struct cbc_test_vector *test)
+			    const struct cbc_test_vector *test,
+			    struct logger *logger)
 {
 	bool ok = TRUE;
 
@@ -181,13 +184,15 @@ static bool test_cbc_vector(const struct encrypt_desc *encrypt_desc,
 	if (!test_cbc_op(encrypt_desc, test->description, 1,
 			 sym_key, test->iv,
 			 "plaintext: ", test->plaintext,
-			 "ciphertext: ", test->ciphertext)) {
+			 "ciphertext: ", test->ciphertext,
+			 logger)) {
 		ok = FALSE;
 	}
 	if (!test_cbc_op(encrypt_desc, test->description, 0,
 			 sym_key, test->iv,
 			 "cipertext: ", test->ciphertext,
-			 "plaintext: ", test->plaintext)) {
+			 "plaintext: ", test->plaintext,
+			 logger)) {
 		ok = FALSE;
 	}
 
@@ -207,7 +212,7 @@ bool test_cbc_vectors(const struct encrypt_desc *desc,
 	const struct cbc_test_vector *test;
 	for (test = tests; test->description != NULL; test++) {
 		log_message(RC_LOG, logger, "  %s", test->description);
-		if (!test_cbc_vector(desc, test)) {
+		if (!test_cbc_vector(desc, test, logger)) {
 			ok = FALSE;
 		}
 	}

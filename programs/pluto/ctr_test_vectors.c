@@ -158,7 +158,8 @@ static bool test_ctr_op(const struct encrypt_desc *encrypt_desc,
 			PK11SymKey *sym_key,
 			const char *encoded_cb, const char *output_cb,
 			const char *input_name, const char *input,
-			const char *output_name, const char *output)
+			const char *output_name, const char *output,
+			struct logger *logger)
 {
 	const char *op = encrypt ? "encrypt" : "decrypt";
 
@@ -170,7 +171,7 @@ static bool test_ctr_op(const struct encrypt_desc *encrypt_desc,
 
 	/* do_crypt modifies the data and IV in place.  */
 	encrypt_desc->encrypt_ops->do_crypt(encrypt_desc, tmp.ptr, tmp.len,
-					    sym_key, cb.ptr, encrypt);
+					    sym_key, cb.ptr, encrypt, logger);
 	if (!verify_hunk(op, expected_output, tmp)) {
 		DBGF(DBG_CRYPT, "test_ctr_op: %s: %s: output does not match",
 		     description, op);
@@ -191,7 +192,8 @@ static bool test_ctr_op(const struct encrypt_desc *encrypt_desc,
 }
 
 static bool test_ctr_vector(const struct encrypt_desc *encrypt_desc,
-			    const struct ctr_test_vector *test)
+			    const struct ctr_test_vector *test,
+			    struct logger *logger)
 {
 	bool ok = TRUE;
 
@@ -199,13 +201,15 @@ static bool test_ctr_vector(const struct encrypt_desc *encrypt_desc,
 	if (!test_ctr_op(encrypt_desc, test->description, 1, sym_key,
 			 test->cb, test->output_cb,
 			 "Plaintext", test->plaintext,
-			 "Ciphertext", test->ciphertext)) {
+			 "Ciphertext", test->ciphertext,
+			 logger)) {
 		ok = FALSE;
 	}
 	if (!test_ctr_op(encrypt_desc, test->description, 0, sym_key,
 			 test->cb, test->output_cb,
 			 "Ciphertext", test->ciphertext,
-			 "Plaintext", test->plaintext)) {
+			 "Plaintext", test->plaintext,
+			 logger)) {
 		ok = FALSE;
 	}
 
@@ -225,7 +229,7 @@ bool test_ctr_vectors(const struct encrypt_desc *desc,
 	const struct ctr_test_vector *test;
 	for (test = tests; test->description != NULL; test++) {
 		log_message(RC_LOG, logger, "  %s", test->description);
-		if (!test_ctr_vector(desc, test)) {
+		if (!test_ctr_vector(desc, test, logger)) {
 			ok = FALSE;
 		}
 	}

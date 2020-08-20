@@ -1979,7 +1979,8 @@ void process_packet_tail(struct msg_digest *md)
 		e->encrypt_ops->do_crypt(e, md->message_pbs.cur,
 					 pbs_left(&md->message_pbs),
 					 st->st_enc_key_nss,
-					 st->st_v1_new_iv.ptr, FALSE);
+					 st->st_v1_new_iv.ptr, FALSE,
+					 st->st_logger);
 		if (DBGP(DBG_CRYPT)) {
 			DBG_dump_hunk("IV after:", st->st_v1_new_iv);
 			DBG_log("decrypted payload (starts at offset %td):",

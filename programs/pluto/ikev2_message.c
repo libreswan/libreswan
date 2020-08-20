@@ -451,7 +451,8 @@ stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 			->do_crypt(ike->sa.st_oakley.ta_encrypt,
 				   enc_start, enc_size,
 				   cipherkey,
-				   enc_iv, TRUE);
+				   enc_iv, TRUE,
+				   sk->logger);
 
 		DBG(DBG_CRYPT,
 		    DBG_dump("data after encryption:", enc_start, enc_size));
@@ -631,7 +632,8 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 			->do_crypt(ike->sa.st_oakley.ta_encrypt,
 				   enc_start, enc_size,
 				   cipherkey,
-				   enc_iv, FALSE);
+				   enc_iv, FALSE,
+				   ike->sa.st_logger);
 		DBG(DBG_CRYPT,
 		    DBG_dump("payload after decryption:", enc_start, enc_size));
 	}

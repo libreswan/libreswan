@@ -31,12 +31,14 @@
 
 static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 			    uint8_t *in_buf, size_t in_buf_len, PK11SymKey *symkey,
-			    uint8_t *iv, bool enc)
+			    uint8_t *iv, bool enc,
+			    struct logger *logger)
 {
 	DBG(DBG_CRYPT, DBG_log("NSS ike_alg_nss_cbc: %s - enter", alg->common.fqn));
 
 	if (symkey == NULL) {
-		PASSERT_FAIL("%s - NSS derived enc key in NULL",
+		passert_fail(logger, HERE,
+			     "%s - NSS derived enc key in NULL",
 			     alg->common.fqn);
 	}
 
@@ -46,7 +48,8 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 	ivitem.len = alg->enc_blocksize;
 	SECItem *secparam = PK11_ParamFromIV(alg->nss.mechanism, &ivitem);
 	if (secparam == NULL) {
-		PASSERT_FAIL("%s - Failure to set up PKCS11 param (err %d)",
+		passert_fail(logger, HERE,
+			     "%s - Failure to set up PKCS11 param (err %d)",
 			     alg->common.fqn, PR_GetError());
 	}
 
@@ -55,11 +58,9 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 						enc ? CKA_ENCRYPT : CKA_DECRYPT,
 						symkey, secparam);
 	if (enccontext == NULL) {
-		LSWLOG_PASSERT(buf) {
-			jam(buf, "NSS: %s: PKCS11 context creation failure: ",
-			    alg->common.fqn);
-			jam_nss_error(buf);
-		}
+		passert_nss_error(logger, HERE,
+				  "%s: PKCS11 context creation failure",
+				  alg->common.fqn);
 	}
 
 	/* Output buffer for transformed data.  */
@@ -69,10 +70,8 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 	SECStatus rv = PK11_CipherOp(enccontext, out_buf, &out_buf_len, in_buf_len,
 				     in_buf, in_buf_len);
 	if (rv != SECSuccess) {
-		LSWLOG_PASSERT(buf) {
-			jam(buf, "NSS: %s: PKCS11 operation failure: ", alg->common.fqn);
-			jam_nss_error(buf);
-		}
+		passert_nss_error(logger, HERE,
+				  "%s: PKCS11 operation failure", alg->common.fqn);
 	}
 
 	PK11_DestroyContext(enccontext, PR_TRUE);

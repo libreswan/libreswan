@@ -36,7 +36,8 @@ struct encrypt_ops {
 			       size_t datasize,
 			       PK11SymKey *key,
 			       uint8_t *iv,
-			       bool enc);
+			       bool enc,
+			       struct logger *logger);
 
 	/*
 	 * Perform Authenticated Encryption with Associated Data

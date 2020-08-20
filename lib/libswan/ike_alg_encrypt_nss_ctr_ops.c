@@ -33,17 +33,19 @@
 #include <prerror.h>
 #include <blapit.h>
 
+#include "lswnss.h"
 #include "ike_alg_encrypt_ops.h"
 
 static void do_nss_ctr(const struct encrypt_desc *alg UNUSED,
 		       uint8_t *buf, size_t buf_len, PK11SymKey *sym_key,
-		       uint8_t *counter_block, bool encrypt)
+		       uint8_t *counter_block, bool encrypt,
+		       struct logger *logger)
 {
 	DBG(DBG_CRYPT, DBG_log("do_aes_ctr: enter"));
 
 	passert(sym_key);
 	if (sym_key == NULL) {
-		PASSERT_FAIL("%s", "NSS derived enc key in NULL");
+		passert_fail(logger, HERE, "%s", "NSS derived enc key in NULL");
 	}
 
 	CK_AES_CTR_PARAMS counter_param;
@@ -63,14 +65,14 @@ static void do_nss_ctr(const struct encrypt_desc *alg UNUSED,
 					    out_buf, &out_len, buf_len,
 					    buf, buf_len);
 		if (rv != SECSuccess) {
-			PASSERT_FAIL("PK11_Encrypt failure (err %d)", PR_GetError());
+			passert_nss_error(logger, HERE, "PK11_Encrypt failure");
 		}
 	} else {
 		SECStatus rv = PK11_Decrypt(sym_key, CKM_AES_CTR, &param,
 					    out_buf, &out_len, buf_len,
 					    buf, buf_len);
 		if (rv != SECSuccess) {
-			PASSERT_FAIL("PK11_Decrypt failure (err %d)", PR_GetError());
+			passert_nss_error(logger, HERE, "PK11_Decrypt failure");
 		}
 	}
 

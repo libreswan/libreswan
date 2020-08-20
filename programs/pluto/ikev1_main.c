@@ -460,7 +460,8 @@ bool ikev1_encrypt_message(pb_stream *pbs, struct state *st)
 
 	e->encrypt_ops->do_crypt(e, enc_start, enc_len,
 				 st->st_enc_key_nss,
-				 st->st_v1_new_iv.ptr, TRUE);
+				 st->st_v1_new_iv.ptr, TRUE,
+				 st->st_logger);
 
 	update_iv(st);
 	if (DBGP(DBG_CRYPT)) {
