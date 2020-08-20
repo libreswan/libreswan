@@ -457,10 +457,6 @@ void lswlog_pexpect_suffix(struct jambuf *buf, where_t where);
 		lswlog_pexpect_prefix(BUF),		   \
 		lswlog_pexpect_suffix(BUF, WHERE))
 
-#define PEXPECT_LOG(FMT, ...)			\
-	log_pexpect(HERE, FMT,##__VA_ARGS__)
-
-
 /* for a switch statement */
 
 void libreswan_bad_case(const char *expression, long value, where_t where) NEVER_RETURNS;

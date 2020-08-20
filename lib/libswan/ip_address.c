@@ -351,7 +351,7 @@ ip_address address_any(const struct ip_info *info)
 		 * AF_UNSPEC, then call that function
 		 * address_unspecified().
 		 */
-		PEXPECT_LOG("AF_UNSPEC unexpected");
+		log_pexpect(HERE, "AF_UNSPEC unexpected");
 		return unset_address;
 	} else {
 		return info->any_address;
