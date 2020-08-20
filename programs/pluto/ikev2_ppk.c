@@ -140,8 +140,9 @@ bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 
 		shunk_t h = hash_algo->hash_asn1_blob_rsa;
 		if (h.len == 0) {
-			LOG_PEXPECT("negotiated hash algorithm %s has no RSA ASN1 blob",
-				    hash_algo->common.fqn);
+			pexpect_fail(ike->sa.st_logger, HERE,
+				     "negotiated hash algorithm %s has no RSA ASN1 blob",
+				     hash_algo->common.fqn);
 			return false;
 		}
 

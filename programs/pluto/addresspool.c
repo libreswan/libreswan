@@ -774,8 +774,9 @@ void show_addresspool_status(struct show *s)
 	show_separator(s);
 #define CHECK(A, B)							\
 	if ((A) != (B)) {						\
-		LOG_PEXPECT("" #A " (%u) does not match " #B " (%u)",	\
-			    A, B);					\
+		pexpect_fail(show_logger(s), HERE,			\
+			     "" #A " (%u) does not match " #B " (%u)",	\
+			     A, B);					\
 	}
 	for (struct ip_pool *pool = pluto_pools;
 	     pool != NULL; pool = pool->next) {

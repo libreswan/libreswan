@@ -66,8 +66,9 @@ void xauth_pam_abort(struct state *st)
 	struct xauth *xauth = st->st_xauth;
 
 	if (xauth == NULL) {
-		PEXPECT_LOG("PAM: #%lu: main-process: no process to abort (already aborted?)",
-			    st->st_serialno);
+		pexpect_fail(st->st_logger, HERE,
+			     "PAM: #%lu: main-process: no process to abort (already aborted?)",
+			     st->st_serialno);
 	} else {
 		st->st_xauth = NULL; /* aborted */
 		pstats_xauth_aborted++;

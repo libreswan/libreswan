@@ -3321,11 +3321,12 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 
 		case EVENT_NULL:
 			/*
-			 * Is there really no case where we want to set no  timer?
-			 * more likely an accident?
+			 * Is there really no case where we want to
+			 * set no timer?  more likely an accident?
 			 */
-			LOG_PEXPECT("V2 microcode entry (%s) has unspecified timeout_event",
-				    transition->story);
+			pexpect_fail(st->st_logger, HERE,
+				     "V2 microcode entry (%s) has unspecified timeout_event",
+				     transition->story);
 			break;
 
 		case EVENT_v2_REDIRECT:
@@ -3452,11 +3453,12 @@ void complete_v2_state_transition(struct state *st,
 	 */
 	if (md != NULL && md->st != NULL && md->st != st) {
 		/* can't happen, must match */
-		LOG_PEXPECT("MD.ST contains the unknown %s SA #%lu; expecting the %s SA #%lu",
-			    IS_CHILD_SA(md->st) ? "CHILD" : "IKE",
-			    md->st->st_serialno,
-			    IS_CHILD_SA(st) ? "CHILD" : "IKE",
-			    st->st_serialno);
+		pexpect_fail(st->st_logger, HERE,
+			     "MD.ST contains the unknown %s SA #%lu; expecting the %s SA #%lu",
+			     IS_CHILD_SA(md->st) ? "CHILD" : "IKE",
+			     md->st->st_serialno,
+			     IS_CHILD_SA(st) ? "CHILD" : "IKE",
+			     st->st_serialno);
 		return;
 	}
 

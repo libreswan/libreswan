@@ -332,7 +332,8 @@ static bool open_response(struct response *response,
 	case ENCRYPTED_PAYLOAD:
 		/* never encrypt an IKE_SA_INIT exchange */
 		if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) {
-			LOG_PEXPECT("exchange type IKE_SA_INIT is invalid for encrypted notification");
+			pexpect_fail(response->logger, HERE,
+				     "exchange type IKE_SA_INIT is invalid for encrypted notification");
 			return false;
 		}
 		/* check things are at least protected */
@@ -422,12 +423,14 @@ static bool emit_v2N_spi_response(struct response *response,
 		 * the SPI field of the notification is set to match
 		 * the SPI of the Child SA.
 		*/
-		LOG_PEXPECT("trying to send unimplemented %s notification",
-			    notify_name);
+		pexpect_fail(response->logger, HERE,
+			     "trying to send unimplemented %s notification",
+			     notify_name);
 		return false;
 	case v2N_REKEY_SA:
-		LOG_PEXPECT("%s notification cannot be part of a response",
-			    notify_name);
+		pexpect_fail(response->logger, HERE,
+			     "%s notification cannot be part of a response",
+			     notify_name);
 		return false;
 	default:
 		break;
@@ -532,16 +535,18 @@ void send_v2N_response_from_md(struct msg_digest *md,
 					       md /* response */,
 					       exchange_type);
 	if (!pbs_ok(&rbody)) {
-		LOG_PEXPECT("error building header for unencrypted %s %s notification with message ID %u",
-			    exchange_name, notify_name, md->hdr.isa_msgid);
+		pexpect_fail(md->md_logger, HERE,
+			     "error building header for unencrypted %s %s notification with message ID %u",
+			     exchange_name, notify_name, md->hdr.isa_msgid);
 		return;
 	}
 
 	/* build and add v2N payload to the packet */
 	chunk_t nhunk = ndata == NULL ? empty_chunk : *ndata;
 	if (!emit_v2N_hunk(ntype, nhunk, &rbody)) {
-		LOG_PEXPECT("error building unencrypted %s %s notification with message ID %u",
-			    exchange_name, notify_name, md->hdr.isa_msgid);
+		pexpect_fail(md->md_logger, HERE,
+			     "error building unencrypted %s %s notification with message ID %u",
+			     exchange_name, notify_name, md->hdr.isa_msgid);
 		return;
 	}
 

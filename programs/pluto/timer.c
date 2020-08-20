@@ -167,15 +167,17 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 
 		struct pluto_event **evp = state_event(st, type);
 		if (evp == NULL) {
-			LOG_PEXPECT("#%lu has no .st_event field for %s",
-				    st->st_serialno, enum_name(&timer_event_names, type));
+			pexpect_fail(st->st_logger, HERE,
+				     "#%lu has no .st_event field for %s",
+				     st->st_serialno, enum_name(&timer_event_names, type));
 			return;
 		}
 		if (*evp != ev) {
-			LOG_PEXPECT("#%lu .st_event is %p but should be %s-pe@%p",
-				    st->st_serialno, *evp,
-				    enum_name(&timer_event_names, (*evp)->ev_type),
-				    ev);
+			pexpect_fail(st->st_logger, HERE,
+				     "#%lu .st_event is %p but should be %s-pe@%p",
+				     st->st_serialno, *evp,
+				     enum_name(&timer_event_names, (*evp)->ev_type),
+				     ev);
 			return;
 		}
 		delete_pluto_event(evp);
@@ -495,16 +497,18 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 
 	struct pluto_event **evp = state_event(st, type);
 	if (evp == NULL) {
-		LOG_PEXPECT("#%lu has no .st_*event field for %s",
-			    st->st_serialno,
-			    enum_name(&timer_event_names, type));
+		pexpect_fail(st->st_logger, HERE,
+			     "#%lu has no .st_*event field for %s",
+			     st->st_serialno,
+			     enum_name(&timer_event_names, type));
 		return;
 	}
 	if (*evp != NULL) {
 		/* help debugging by stumbling on */
-		LOG_PEXPECT("#%lu already has a scheduled %s; forcing replacement",
-			    st->st_serialno,
-			    enum_name(&timer_event_names, type));
+		pexpect_fail(st->st_logger, HERE,
+			     "#%lu already has a scheduled %s; forcing replacement",
+			     st->st_serialno,
+			     enum_name(&timer_event_names, type));
 		delete_pluto_event(evp);
 	}
 
@@ -531,8 +535,9 @@ void event_delete(enum event_type type, struct state *st)
 {
 	struct pluto_event **evp = state_event(st, type);
 	if (evp == NULL) {
-		LOG_PEXPECT("#%lu has no .st_event field for %s",
-			    st->st_serialno, enum_name(&timer_event_names, type));
+		pexpect_fail(st->st_logger, HERE,
+			     "#%lu has no .st_event field for %s",
+			     st->st_serialno, enum_name(&timer_event_names, type));
 		return;
 	}
 	if (*evp != NULL) {

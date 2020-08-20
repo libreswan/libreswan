@@ -2283,22 +2283,23 @@ static void close_last_substructure(pb_stream *pbs)
  * Next Payload Chain
  */
 
-static void start_next_payload_chain(pb_stream *message,
+static void start_next_payload_chain(struct pbs_out *outs,
 				     struct_desc *sd, field_desc *fp,
 				     const uint8_t *inp, uint8_t *cur)
 {
 	passert(fp->size == 1);
 	dbg("next payload chain: saving message location '%s'.'%s'",
 	     sd->name, fp->name);
-	message->next_payload_chain.loc = cur;
-	message->next_payload_chain.sd = sd;
-	message->next_payload_chain.fp = fp;
+	outs->next_payload_chain.loc = cur;
+	outs->next_payload_chain.sd = sd;
+	outs->next_payload_chain.fp = fp;
 	uint8_t n = *inp;
 	if (n != ISAKMP_NEXT_NONE) {
 		struct esb_buf npb;
-		LOG_PEXPECT("next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
-			    sd->name, fp->name, n,
-			    enum_showb(fp->desc, n, &npb));
+		pexpect_fail(outs->out_logger, HERE,
+			     "next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
+			     sd->name, fp->name, n,
+			     enum_showb(fp->desc, n, &npb));
 		n = ISAKMP_NEXT_NONE;
 	}
 	*cur = n;
@@ -2364,9 +2365,10 @@ static void update_next_payload_chain(pb_stream *outs,
 		     enum_showb(fp->desc, n, &npb));
 	} else if (n != ISAKMP_NEXT_NONE) {
 		struct esb_buf npb;
-		LOG_PEXPECT("next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
-			    sd->name, fp->name, n,
-			    enum_showb(fp->desc, n, &npb));
+		pexpect_fail(outs->out_logger, HERE,
+			     "next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
+			     sd->name, fp->name, n,
+			     enum_showb(fp->desc, n, &npb));
 		n = ISAKMP_NEXT_NONE;
 	}
 	*cur = n;

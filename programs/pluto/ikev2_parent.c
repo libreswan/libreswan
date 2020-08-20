@@ -3836,7 +3836,8 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 	}
 
 	if (rekey_sa_payload == NULL) {
-		LOG_PEXPECT("rekey child can't find its rekey_sa payload");
+		pexpect_fail(child->sa.st_logger, HERE,
+			     "rekey child can't find its rekey_sa payload");
 		return STF_INTERNAL_ERROR;
 	}
 
