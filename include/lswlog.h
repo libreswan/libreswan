@@ -466,14 +466,6 @@ void lswlog_pexpect_suffix(struct jambuf *buf, where_t where);
 	log_pexpect(HERE, FMT,##__VA_ARGS__)
 
 
-/*
- * Log an assertion failure to the main log, and the whack log; and
- * then call abort().
- */
-
-void lswlog_passert_prefix(struct jambuf *buf);
-void lswlog_passert_suffix(struct jambuf *buf, where_t where) NEVER_RETURNS;
-
 /* for a switch statement */
 
 void libreswan_bad_case(const char *expression, long value, where_t where) NEVER_RETURNS;

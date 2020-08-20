@@ -17,31 +17,18 @@
 #include "passert.h"
 #include "lswlog.h"
 
-void lswlog_passert_prefix(struct jambuf *buf)
-{
-	jam_cur_prefix(buf);
-	jam_string(buf, "ABORT: ASSERTION FAILED: ");
-}
-
-void lswlog_passert_suffix(struct jambuf *buf, where_t where)
-{
-	jam(buf, " "PRI_WHERE, pri_where(where));
-	jambuf_to_error_stream(buf);
-	/* this needs to panic */
-	abort();
-}
-
 void lsw_passert_fail(where_t where, const char *fmt, ...)
 {
 	JAMBUF(buf) {
-		lswlog_passert_prefix(buf);
+		jam_string(buf, "ABORT: ASSERTION FAILED: ");
+		jam_cur_prefix(buf); /* XXX: grrr */
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);
 		va_end(ap);
-		lswlog_passert_suffix(buf, where);
+		jam(buf, " "PRI_WHERE, pri_where(where));
+		jambuf_to_error_stream(buf); /* XXX: grrr */
 	}
-	/* above will panic but compiler doesn't know this */
 	abort();
 }
 
