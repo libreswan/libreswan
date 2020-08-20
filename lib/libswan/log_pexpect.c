@@ -21,10 +21,12 @@
 
 void log_pexpect(where_t where, const char *message, ...)
 {
-	LSWLOG_PEXPECT_WHERE(where, buf) {
+	JAMBUF(buf) {
+		lswlog_pexpect_prefix(buf);
 		va_list args;
 		va_start(args, message);
 		jam_va_list(buf, message, args);
 		va_end(args);
+		lswlog_pexpect_suffix(buf, where);
 	}
 }

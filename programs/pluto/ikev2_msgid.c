@@ -116,11 +116,13 @@ void dbg_v2_msgid(struct ike_sa *ike, struct state *wip_sa,
 void fail_v2_msgid(where_t where, struct ike_sa *ike, struct state *wip_sa,
 		   const char *fmt, ...)
 {
-	LSWLOG_PEXPECT_WHERE(where, buf) {
+	JAMBUF(buf) {
 		va_list ap;
 		va_start(ap, fmt);
 		jam_v2_msgid(buf, ike, wip_sa, fmt, ap);
 		va_end(ap);
+		/* XXX: hack - double copy */
+		pexpect_fail(ike->sa.st_logger, where, PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
 	}
 }
 

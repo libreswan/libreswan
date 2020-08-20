@@ -171,11 +171,13 @@ PK11SymKey *crypt_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem
 						      operation, key_size, flags);
 
 	if (target_key == NULL) {
-		LSWLOG_PEXPECT_WHERE(where, buf) {
+		JAMBUF(buf) {
 			jam_string(buf, "NSS: ");
 			jam_nss_ckm(buf, derive);
 			jam_string(buf, " failed: ");
 			jam_nss_error(buf);
+			/* XXX: hack - double copy */
+			log_pexpect(HERE, PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
 		}
 		DBG_DERIVE();
 	} else if (DBGP(DBG_CRYPT)) {
