@@ -19,6 +19,20 @@
 
 #include "lswlog.h"
 
+void log_pexpect(where_t where, const char *message, ...)
+{
+	JAMBUF(buf) {
+		jam_string(buf, "EXPECTATION FAILED: ");
+		jam_cur_prefix(buf); /* XXX: grrr */
+		va_list args;
+		va_start(args, message);
+		jam_va_list(buf, message, args);
+		va_end(args);
+		jam(buf, " "PRI_WHERE, pri_where(where));
+		jambuf_to_error_stream(buf); /* XXX: grrr */
+	}
+}
+
 void pexpect_fail(struct logger *logger, where_t where, const char *message, ...)
 {
 	JAMBUF(buf) {

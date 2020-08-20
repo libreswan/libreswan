@@ -128,8 +128,6 @@ OBJS += log_error.o
 OBJS += fatal.o
 OBJS += libreswan_bad_case.o
 
-OBJS += log_pexpect.o
-
 OBJS += lswglob.o
 
 OBJS += jambuf.o
@@ -144,7 +142,6 @@ OBJS += jam_nss_cka.o
 OBJS += jam_nss_secitem.o
 
 OBJS += lswlog_enum_lset_short.o
-OBJS += lswlog_pexpect.o
 
 # Crypto code:
 

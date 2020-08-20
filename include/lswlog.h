@@ -449,9 +449,6 @@ void pexpect_fail(struct logger *logger, where_t where, const char *message, ...
 
 void log_pexpect(where_t where, const char *message, ...) PRINTF_LIKE(2);
 
-void lswlog_pexpect_prefix(struct jambuf *buf);
-void lswlog_pexpect_suffix(struct jambuf *buf, where_t where);
-
 /* for a switch statement */
 
 void libreswan_bad_case(const char *expression, long value, where_t where) NEVER_RETURNS;
