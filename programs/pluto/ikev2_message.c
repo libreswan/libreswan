@@ -315,8 +315,9 @@ bool close_v2SK_payload(v2SK_payload_t *sk)
 			     ? sk->ike->sa.st_oakley.ta_encrypt->aead_tag_size
 			     : sk->ike->sa.st_oakley.ta_integ->integ_output_size);
 	if (integ_size == 0) {
-		PEXPECT_LOG("error initializing integrity checksum for encrypted %s payload",
-			    sk->pbs.container->name);
+		pexpect_fail(sk->logger, HERE,
+			     "error initializing integrity checksum for encrypted %s payload",
+			     sk->pbs.container->name);
 		return false;
 	}
 	sk->integrity = chunk2(sk->pbs.cur, integ_size);
@@ -496,9 +497,10 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 {
 	if (!ike->sa.hidden_variables.st_skeyid_calculated) {
 		endpoint_buf b;
-		PEXPECT_LOG("received encrypted packet from %s  but no exponents for state #%lu to decrypt it",
-			    str_endpoint(&md->sender, &b),
-			    ike->sa.st_serialno);
+		pexpect_fail(ike->sa.st_logger, HERE,
+			     "received encrypted packet from %s  but no exponents for state #%lu to decrypt it",
+			     str_endpoint(&md->sender, &b),
+			     ike->sa.st_serialno);
 		return false;
 	}
 
@@ -690,8 +692,9 @@ static bool ikev2_reassemble_fragments(struct state *st,
 				       struct msg_digest *md)
 {
 	if (md->chain[ISAKMP_NEXT_v2SK] != NULL) {
-		PEXPECT_LOG("state #%lu has both SK ans SKF payloads",
-			    st->st_serialno);
+		pexpect_fail(st->st_logger, HERE,
+			     "state #%lu has both SK ans SKF payloads",
+			     st->st_serialno);
 		return false;
 	}
 

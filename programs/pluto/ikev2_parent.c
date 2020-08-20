@@ -3786,8 +3786,9 @@ static bool ikev2_rekey_child_req(struct child_sa *child,
 		*rekey_spi = rst->st_ah.our_spi;
 		*rekey_protoid = PROTO_IPSEC_AH;
 	} else {
-		PEXPECT_LOG("CHILD SA to rekey #%lu is not ESP/AH",
-			    child->sa.st_ipsec_pred);
+		pexpect_fail(child->sa.st_logger, HERE,
+			     "CHILD SA to rekey #%lu is not ESP/AH",
+			     child->sa.st_ipsec_pred);
 		return false;
 	}
 
@@ -4226,8 +4227,9 @@ static void ikev2_child_ike_inR_continue(struct state *st,
 
 	/* and a parent? */
 	if (ike == NULL) {
-		PEXPECT_LOG("sponsoring child state #%lu has no parent state #%lu",
-			    st->st_serialno, st->st_clonedfrom);
+		pexpect_fail(st->st_logger, HERE,
+			     "sponsoring child state #%lu has no parent state #%lu",
+			     st->st_serialno, st->st_clonedfrom);
 		/* XXX: release what? */
 		return;
 	}
@@ -4340,8 +4342,9 @@ static stf_status ikev2_child_inR_continue(struct state *st,
 
 	/* and a parent? */
 	if (ike == NULL) {
-		PEXPECT_LOG("sponsoring child state #%lu has no parent state #%lu",
-			    st->st_serialno, st->st_clonedfrom);
+		pexpect_fail(st->st_logger, HERE,
+			     "sponsoring child state #%lu has no parent state #%lu",
+			     st->st_serialno, st->st_clonedfrom);
 		/* XXX: release what? */
 		return STF_FATAL;
 	}
@@ -4495,8 +4498,9 @@ static void ikev2_child_inIoutR_continue(struct state *st,
 
 	/* and a parent? */
 	if (ike == NULL) {
-		PEXPECT_LOG("sponsoring child state #%lu has no parent state #%lu",
-			    st->st_serialno, st->st_clonedfrom);
+		pexpect_fail(st->st_logger, HERE,
+			     "sponsoring child state #%lu has no parent state #%lu",
+			     st->st_serialno, st->st_clonedfrom);
 		/* XXX: release what? */
 		return;
 	}
@@ -4541,8 +4545,9 @@ static stf_status ikev2_child_inIoutR_continue_continue(struct state *st,
 
 	/* didn't loose parent? */
 	if (ike == NULL) {
-		PEXPECT_LOG("sponsoring child state #%lu has no parent state #%lu",
-			    st->st_serialno, st->st_clonedfrom);
+		pexpect_fail(st->st_logger, HERE,
+			     "sponsoring child state #%lu has no parent state #%lu",
+			     st->st_serialno, st->st_clonedfrom);
 		/* XXX: release child? */
 		return STF_FATAL;
 	}
@@ -4679,8 +4684,9 @@ static void ikev2_child_ike_inIoutR_continue(struct state *st,
 
 	/* and a parent? */
 	if (ike == NULL) {
-		PEXPECT_LOG("sponsoring child state #%lu has no parent state #%lu",
-			    st->st_serialno, st->st_clonedfrom);
+		pexpect_fail(st->st_logger, HERE,
+			     "sponsoring child state #%lu has no parent state #%lu",
+			     st->st_serialno, st->st_clonedfrom);
 		/* XXX: release what? */
 		return;
 	}
@@ -4724,8 +4730,9 @@ static void ikev2_child_ike_inIoutR_continue_continue(struct state *st,
 
 	/* didn't loose parent? */
 	if (ike == NULL) {
-		PEXPECT_LOG("sponsoring child state #%lu has no parent state #%lu",
-			    st->st_serialno, st->st_clonedfrom);
+		pexpect_fail(st->st_logger, HERE,
+			     "sponsoring child state #%lu has no parent state #%lu",
+			     st->st_serialno, st->st_clonedfrom);
 		/* XXX: release child? */
 		return;
 	}
@@ -5805,8 +5812,9 @@ static void ikev2_child_outI_continue(struct state *st,
 
 	/* and a parent? */
 	if (ike == NULL) {
-		PEXPECT_LOG("sponsoring child state #%lu has no parent state #%lu",
-			    st->st_serialno, st->st_clonedfrom);
+		pexpect_fail(st->st_logger, HERE,
+			     "sponsoring child state #%lu has no parent state #%lu",
+			     st->st_serialno, st->st_clonedfrom);
 		/* XXX: release child? */
 		return;
 	}
@@ -6071,8 +6079,9 @@ static bool expire_ike_because_child_not_used(struct state *st)
 	}
 
 	if (c->spd.that.has_lease) {
-		PEXPECT_LOG("#%lu has lease; should not be trying to replace",
-			    st->st_serialno);
+		pexpect_fail(st->st_logger, HERE,
+			     "#%lu has lease; should not be trying to replace",
+			     st->st_serialno);
 		return true;
 	}
 
@@ -6083,8 +6092,9 @@ static bool expire_ike_because_child_not_used(struct state *st)
 		ike = pexpect_ike_sa(st);
 		cst = state_with_serialno(c->newest_ipsec_sa);
 		if (cst == NULL) {
-			PEXPECT_LOG("can't check usage as IKE SA #%lu has no newest child",
-				    ike->sa.st_serialno);
+			pexpect_fail(st->st_logger, HERE,
+				     "can't check usage as IKE SA #%lu has no newest child",
+				     ike->sa.st_serialno);
 			return true;
 		}
 	} else {
@@ -6192,8 +6202,9 @@ void v2_event_sa_rekey(struct state *st)
 	so_serial_t newer_sa = get_newer_sa_from_connection(st);
 	if (newer_sa != SOS_NOBODY) {
 		/* implies a double re-key? */
-		PEXPECT_LOG("not replacing stale %s SA #%lu; as already got a newer #%lu",
-			    satype, st->st_serialno, newer_sa);
+		pexpect_fail(st->st_logger, HERE,
+			     "not replacing stale %s SA #%lu; as already got a newer #%lu",
+			     satype, st->st_serialno, newer_sa);
 		event_force(EVENT_SA_EXPIRE, st);
 		return;
 	}

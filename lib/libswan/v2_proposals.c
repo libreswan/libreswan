@@ -357,7 +357,8 @@ static bool parse_proposal(struct proposal_parser *parser,
 				return true;
 			}
 			if (!impair.proposal_parser) {
-				PEXPECT_LOG("all encryption algorithms skipped");
+				pexpect_fail(parser->policy->logger, HERE,
+					     "all encryption algorithms skipped");
 				free_proposal(&proposal);
 				return false;
 			}

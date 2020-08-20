@@ -408,24 +408,30 @@ static void update_state_stats(struct state *st,
 		}
 
 		if (category_states != count_states) {
-			PEXPECT_LOG("category states: "PRI_CAT" != count states: "PRI_CAT,
-				    category_states, count_states);
+			/* not really ST's fault? */
+			pexpect_fail(st->st_logger, HERE,
+				     "category states: "PRI_CAT" != count states: "PRI_CAT,
+				     category_states, count_states);
 		}
 
 		if (cat_count[CAT_ESTABLISHED_IKE_SA] !=
 		    (cat_count_ike_sa[CAT_AUTHENTICATED] + cat_count_ike_sa[CAT_ANONYMOUS])) {
-			PEXPECT_LOG("established IKE SA: "PRI_CAT" != authenticated: "PRI_CAT" + anoynmous: "PRI_CAT,
-				    cat_count[CAT_ESTABLISHED_IKE_SA],
-				    cat_count_ike_sa[CAT_AUTHENTICATED],
-				    cat_count_ike_sa[CAT_ANONYMOUS]);
+			/* not really ST's fault? */
+			pexpect_fail(st->st_logger, HERE,
+				     "established IKE SA: "PRI_CAT" != authenticated: "PRI_CAT" + anoynmous: "PRI_CAT,
+				     cat_count[CAT_ESTABLISHED_IKE_SA],
+				     cat_count_ike_sa[CAT_AUTHENTICATED],
+				     cat_count_ike_sa[CAT_ANONYMOUS]);
 		}
 
 		if (cat_count[CAT_ESTABLISHED_CHILD_SA] !=
 		    (cat_count_child_sa[CAT_AUTHENTICATED] + cat_count_child_sa[CAT_ANONYMOUS])) {
-			PEXPECT_LOG("established CHILD SA: "PRI_CAT" != authenticated: "PRI_CAT" + anoynmous: "PRI_CAT,
-				    cat_count[CAT_ESTABLISHED_CHILD_SA],
-				    cat_count_child_sa[CAT_AUTHENTICATED],
-				    cat_count_child_sa[CAT_ANONYMOUS]);
+			/* not really ST's fault? */
+			pexpect_fail(st->st_logger, HERE,
+				     "established CHILD SA: "PRI_CAT" != authenticated: "PRI_CAT" + anoynmous: "PRI_CAT,
+				     cat_count[CAT_ESTABLISHED_CHILD_SA],
+				     cat_count_child_sa[CAT_AUTHENTICATED],
+				     cat_count_child_sa[CAT_ANONYMOUS]);
 		}
 	}
 }
@@ -512,7 +518,8 @@ struct ike_sa *pexpect_ike_sa(struct state *st)
 		return NULL;
 	}
 	if (!IS_IKE_SA(st)) {
-		PEXPECT_LOG("state #%lu is not an IKE SA", st->st_serialno);
+		pexpect_fail(st->st_logger, HERE,
+			     "state #%lu is not an IKE SA", st->st_serialno);
 		return NULL; /* kaboom */
 	}
 	return (struct ike_sa*) st;
@@ -525,7 +532,8 @@ struct child_sa *pexpect_child_sa(struct state *st)
 	}
 	if (!IS_CHILD_SA(st)) {
 		/* In IKEv2 a re-keying IKE SA starts life as a child */
-		PEXPECT_LOG("state #%lu is not a CHILD", st->st_serialno);
+		pexpect_fail(st->st_logger, HERE,
+			     "state #%lu is not a CHILD", st->st_serialno);
 		return NULL; /* kaboom */
 	}
 	return (struct child_sa*) st;
@@ -2731,7 +2739,8 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 
 	delete_oriented_hp(c); /* hp list may have changed */
 	if (!orient(c)) {
-		PEXPECT_LOG("%s after mobike failed", "orient");
+		pexpect_fail(ike->sa.st_logger, HERE,
+			     "%s after mobike failed", "orient");
 	}
 	/* assumption: orientation has not changed */
 	connect_to_host_pair(c); /* re-create hp listing */

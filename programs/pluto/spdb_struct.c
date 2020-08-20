@@ -91,8 +91,9 @@ static struct ike_proposals v1_default_ike_proposals(struct logger *logger)
 	struct proposal_parser *parser = ike_proposal_parser(&policy);
 	struct ike_proposals defaults = { .p = proposals_from_str(parser, NULL), };
 	if (defaults.p == NULL) {
-		PEXPECT_LOG("Invalid IKEv1 default algorithms: %s",
-			    parser->error);
+		pexpect_fail(logger, HERE,
+			     "Invalid IKEv1 default algorithms: %s",
+			     parser->error);
 	}
 	free_proposal_parser(&parser);
 	return defaults;
