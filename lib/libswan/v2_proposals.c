@@ -434,9 +434,8 @@ bool v2_proposals_parse_str(struct proposal_parser *parser,
 			    struct proposals *proposals,
 			    shunk_t input)
 {
-	DBG(DBG_PROPOSAL_PARSER,
-	    DBG_log("parsing '"PRI_SHUNK"' for %s",
-		    pri_shunk(input), parser->protocol->name));
+	DBGF(DBG_PROPOSAL_PARSER, "parsing '"PRI_SHUNK"' for %s",
+	     pri_shunk(input), parser->protocol->name);
 
 	if (input.len == 0) {
 		/* XXX: hack to keep testsuite happy */

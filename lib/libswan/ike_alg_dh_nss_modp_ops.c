@@ -39,8 +39,10 @@ static void nss_modp_calc_secret(const struct dh_desc *group,
 	chunk_t prime = chunk_from_hex(group->modp, group->modp);
 	chunk_t base = chunk_from_hex(group->gen, group->gen);
 
-	DBG(DBG_CRYPT, DBG_dump_hunk("NSS: Value of Prime:", prime));
-	DBG(DBG_CRYPT, DBG_dump_hunk("NSS: Value of base:", base));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump_hunk("NSS: Value of Prime:", prime);
+		DBG_dump_hunk("NSS: Value of base:", base);
+	}
 
 	SECKEYDHParams dh_params = {
 		.prime = {
@@ -60,10 +62,9 @@ static void nss_modp_calc_secret(const struct dh_desc *group,
 	*privk = NULL;
 	do {
 		if (*privk != NULL) {
-			DBG(DBG_CRYPT,
-			    DBG_log("NSS: re-generating dh keys (pubkey %d did not match %zu)",
-				    (*pubk)->u.dh.publicValue.len,
-				    group->bytes));
+			DBGF(DBG_CRYPT, "NSS: re-generating dh keys (pubkey %d did not match %zu)",
+			     (*pubk)->u.dh.publicValue.len,
+			     group->bytes);
 			SECKEY_DestroyPrivateKey(*privk);
 			SECKEY_DestroyPublicKey(*pubk);
 		}
@@ -88,8 +89,7 @@ static PK11SymKey *nss_modp_calc_shared(const struct dh_desc *group,
 					size_t sizeof_remote_ke,
 					struct logger *logger)
 {
-	DBG(DBG_CRYPT,
-		DBG_log("Started DH shared-secret computation in NSS:"));
+	DBGF(DBG_CRYPT, "Started DH shared-secret computation in NSS:");
 
 	/*
 	 * See NSS's SSL code for how this gets constructed on the
@@ -116,7 +116,9 @@ static PK11SymKey *nss_modp_calc_shared(const struct dh_desc *group,
 					  CKM_CONCATENATE_DATA_AND_BASE,
 					  CKA_DERIVE, group->bytes,
 					  lsw_nss_get_password_context(logger));
-	DBG(DBG_CRYPT, DBG_symkey("newref ", "g_ir", g_ir));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_symkey("newref ", "g_ir", g_ir);
+	}
 
 	return g_ir;
 }

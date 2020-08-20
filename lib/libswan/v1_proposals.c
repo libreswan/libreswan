@@ -83,17 +83,14 @@ static bool add_alg_defaults(struct proposal_parser *parser,
 		const struct ike_alg *alg = *default_alg;
 		if (!alg_byname_ok(parser, alg,
 				   shunk1(alg->fqn))) {
-			DBG(DBG_PROPOSAL_PARSER,
-			    DBG_log("skipping default %s",
-				    parser->error));
+			DBGF(DBG_PROPOSAL_PARSER, "skipping default %s",
+			     parser->error);
 			parser->error[0] = '\0';
 			continue;
 		}
 		/* add it */
-		DBG(DBG_PROPOSAL_PARSER,
-		    DBG_log("adding default %s %s",
-			    ike_alg_type_name(type),
-			    alg->fqn));
+		DBGF(DBG_PROPOSAL_PARSER, "adding default %s %s",
+		     ike_alg_type_name(type), alg->fqn);
 		struct v1_proposal merged_proposal = merge_alg_default(*proposal,
 									 *default_alg);
 		if (!add_proposal_defaults(parser, defaults,
@@ -357,11 +354,13 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 				 struct token *tokens, struct v1_proposal proposal,
 				 struct proposals *proposals)
 {
-	LSWDBGP(DBG_PROPOSAL_PARSER, buf) {
-		jam_string(buf, "algs:");
-		for (struct token *token = tokens; token->alg.ptr != NULL; token++) {
-			jam(buf, " algs[%tu] = '"PRI_SHUNK"'",
-				token - tokens, pri_shunk(token->alg));
+	if (DBGP(DBG_PROPOSAL_PARSER)) {
+		LOG_MESSAGE(DEBUG_STREAM, parser->policy->logger, buf) {
+			jam_string(buf, "algs:");
+			for (struct token *token = tokens; token->alg.ptr != NULL; token++) {
+				jam(buf, " algs[%tu] = '"PRI_SHUNK"'",
+				    token - tokens, pri_shunk(token->alg));
+			}
 		}
 	}
 
@@ -480,9 +479,8 @@ bool v1_proposals_parse_str(struct proposal_parser *parser,
 			    struct proposals *proposals,
 			    shunk_t alg_str)
 {
-	DBG(DBG_PROPOSAL_PARSER,
-	    DBG_log("parsing '"PRI_SHUNK"' for %s",
-		    pri_shunk(alg_str), parser->protocol->name));
+	DBGF(DBG_PROPOSAL_PARSER, "parsing '"PRI_SHUNK"' for %s",
+	     pri_shunk(alg_str), parser->protocol->name);
 
 	if (alg_str.len == 0) {
 		/* XXX: hack to keep testsuite happy */

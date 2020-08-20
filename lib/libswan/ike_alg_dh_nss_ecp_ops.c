@@ -48,15 +48,17 @@ static void nss_ecp_calc_secret(const struct dh_desc *group,
 	 * Get the PK11 formatted EC parameters (stored in static
 	 * data) from NSS.
 	 */
-	DBG(DBG_CRYPT, DBG_log("oid %d %x", group->nss_oid, group->nss_oid));
+	DBGF(DBG_CRYPT, "oid %d %x", group->nss_oid, group->nss_oid);
 	SECOidData *pk11_data = SECOID_FindOIDByTag(group->nss_oid);
 	if (pk11_data == NULL) {
 		passert_fail(logger, HERE, "lookup of OID %d for EC group %s parameters failed",
 			     group->nss_oid, group->common.fqn);
 	}
-	LSWDBGP(DBG_CRYPT, buf) {
-		jam_string(buf, "pk11_data->oid: ");
-		jam_nss_secitem(buf, &pk11_data->oid);
+	if (DBGP(DBG_CRYPT)) {
+		LOG_MESSAGE(DEBUG_STREAM, logger, buf) {
+			jam_string(buf, "pk11_data->oid: ");
+			jam_nss_secitem(buf, &pk11_data->oid);
+		}
 	}
 
 	/*
@@ -70,9 +72,11 @@ static void nss_ecp_calc_secret(const struct dh_desc *group,
 	pk11_param->data[0] = SEC_ASN1_OBJECT_ID;
 	pk11_param->data[1] = pk11_data->oid.len;
 	memcpy(pk11_param->data + 2, pk11_data->oid.data, pk11_data->oid.len);
-	LSWDBGP(DBG_CRYPT, buf) {
-		jam_string(buf, "pk11_param");
-		jam_nss_secitem(buf, pk11_param);
+	if (DBGP(DBG_CRYPT)) {
+		LOG_MESSAGE(DEBUG_STREAM, logger, buf) {
+			jam_string(buf, "pk11_param");
+			jam_nss_secitem(buf, pk11_param);
+		}
 	}
 
 	*privk = SECKEY_CreateECPrivateKey(pk11_param, pubk,
@@ -85,13 +89,15 @@ static void nss_ecp_calc_secret(const struct dh_desc *group,
 				  "DH ECP private key creation failed");
 	}
 
-	LSWDBGP(DBG_CRYPT, buf) {
-		jam(buf, "public keyType %d size %d publicValue@%p %d bytes public key: ",
-		    (*pubk)->keyType,
-		    (*pubk)->u.ec.size,
-		    (*pubk)->u.ec.publicValue.data,
-		    (*pubk)->u.ec.publicValue.len);
-		jam_nss_secitem(buf, &(*pubk)->u.ec.publicValue);
+	if (DBGP(DBG_CRYPT)) {
+		LOG_MESSAGE(DEBUG_STREAM, logger, buf) {
+			jam(buf, "public keyType %d size %d publicValue@%p %d bytes public key: ",
+			    (*pubk)->keyType,
+			    (*pubk)->u.ec.size,
+			    (*pubk)->u.ec.publicValue.data,
+			    (*pubk)->u.ec.publicValue.len);
+			jam_nss_secitem(buf, &(*pubk)->u.ec.publicValue);
+		}
 	}
 
 #ifdef USE_DH31
@@ -179,7 +185,9 @@ static PK11SymKey *nss_ecp_calc_shared(const struct dh_desc *group,
 						 /* KDF */ CKD_NULL,
 						 /* shared data */ NULL,
 						 /* ctx */ lsw_nss_get_password_context(logger));
-	DBG(DBG_CRYPT, DBG_symkey("g_ir ", "temp", temp));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_symkey("g_ir ", "temp", temp);
+	}
 
 	/*
 	 * The key returned above doesn't play well with PK11_Derive()
@@ -188,9 +196,8 @@ static PK11SymKey *nss_ecp_calc_shared(const struct dh_desc *group,
 	 * returning a copy of the key.
 	 */
 	PK11SymKey *g_ir = key_from_symkey_bytes(temp, 0, sizeof_symkey(temp), HERE);
-	DBG(DBG_CRYPT,
-	    DBG_log("NSS: extracted-key@%p from ECDH temp-key@%p (CKM_CONCATENATE_BASE_AND_KEY hack)",
-		    g_ir, temp));
+	DBGF(DBG_CRYPT, "NSS: extracted-key@%p from ECDH temp-key@%p (CKM_CONCATENATE_BASE_AND_KEY hack)",
+	     g_ir, temp);
 
 	release_symkey(__func__, "temp", &temp);
 	SECITEM_FreeItem(&remote_pubk.u.ec.publicValue, PR_FALSE);

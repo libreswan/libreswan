@@ -213,19 +213,17 @@ static const struct ike_alg *lookup_by_id(const struct ike_alg_type *type,
 	FOR_EACH_IKE_ALGP(type, algp) {
 		const struct ike_alg *alg = *algp;
 		if (alg->id[key] == id) {
-			DBG(debug,
-			    const char *name = enum_short_name(type->enum_names[key], id);
-			    DBG_log("%s ike_alg_lookup_by_id id: %s=%u, found %s\n",
-				    type->name,
-				    name ? name : "???",
-				    id, alg->fqn));
+			const char *name = enum_short_name(type->enum_names[key], id);
+			DBGF(debug, "%s ike_alg_lookup_by_id id: %s=%u, found %s\n",
+			     type->name,
+			     name ? name : "???",
+			     id, alg->fqn);
 			return alg;
 		}
  	}
-	DBG(debug,
-	    const char *name = enum_short_name(type->enum_names[key], id);
-	    DBG_log("%s ike_alg_lookup_by_id id: %s=%u, not found\n",
-		    type->name, name ? name : "???", id));
+	const char *name = enum_short_name(type->enum_names[key], id);
+	DBGF(debug, "%s ike_alg_lookup_by_id id: %s=%u, not found\n",
+	     type->name, name ? name : "???", id);
 	return NULL;
 }
 
@@ -878,12 +876,11 @@ static void check_enum_name(const char *what,
 				     alg->fqn, what);
 		}
 		const char *enum_name = enum_short_name(enum_names, id);
-		DBG(DBG_CRYPT,
-		    DBG_log("%s id: %d enum name: %s",
-			    what, id, enum_name));
+		DBGF(DBG_CRYPT, "%s id: %d enum name: %s",
+		     what, id, enum_name);
 		pexpect_ike_alg_has_name(logger, HERE, alg, enum_name, "enum table name");
 	} else {
-		DBG(DBG_CRYPT, DBG_log("%s id: %d enum name: N/A", what, id));
+		DBGF(DBG_CRYPT, "%s id: %d enum name: N/A", what, id);
 	}
 }
 
@@ -903,7 +900,7 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 	passert(type->Name != NULL);
 	passert(strcasecmp(type->name, type->Name) == 0);
 
-	DBG(DBG_CRYPT, DBG_log("%s algorithm assertion checks", type->name));
+	DBGF(DBG_CRYPT, "%s algorithm assertion checks", type->name);
 	FOR_EACH_IKE_ALGP(type, algp) {
 		const struct ike_alg *alg = *algp;
 
