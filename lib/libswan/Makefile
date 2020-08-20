@@ -137,11 +137,12 @@ OBJS += jam_bytes.o
 OBJS += log_message.o
 OBJS += log_va_list.o
 OBJS += log_nss_error.o
-OBJS += lswlog_nss_error.o
-OBJS += lswlog_nss_ckm.o
-OBJS += lswlog_nss_ckf.o
-OBJS += lswlog_nss_cka.o
-OBJS += lswlog_nss_secitem.o
+OBJS += jam_nss_error.o
+OBJS += jam_nss_ckm.o
+OBJS += jam_nss_ckf.o
+OBJS += jam_nss_cka.o
+OBJS += jam_nss_secitem.o
+
 OBJS += lswlog_enum_lset_short.o
 OBJS += lswlog_pexpect.o
 
