@@ -80,12 +80,12 @@ static void final_bytes(struct hash_context **hashp,
 	*hashp = NULL;
 }
 
-static void nss_hash_check(const struct hash_desc *hash)
+static void nss_hash_check(const struct hash_desc *hash, struct logger *logger)
 {
 	const struct ike_alg *alg = &hash->common;
 	// pexpect_ike_alg(alg, hash->common.nss_mechanism == 0);
-	pexpect_ike_alg(alg, hash->nss.oid_tag > 0);
-	pexpect_ike_alg(alg, hash->nss.derivation_mechanism > 0);
+	pexpect_ike_alg(logger, alg, hash->nss.oid_tag > 0);
+	pexpect_ike_alg(logger, alg, hash->nss.derivation_mechanism > 0);
 }
 
 const struct hash_ops ike_alg_hash_nss_ops = {

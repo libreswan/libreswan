@@ -114,7 +114,8 @@ static PK11SymKey *ike_sa_skeyseed(const struct prf_desc *prf_desc,
 						    logger);
 	free_chunk_content(&key);
 	if (prf == NULL) {
-		log_pexpect(HERE, "failed to create IKEv2 PRF for computing SKEYSEED = prf(Ni | Nr, g^ir)");
+		pexpect_fail(logger, HERE,
+			     "failed to create IKEv2 PRF for computing SKEYSEED = prf(Ni | Nr, g^ir)");
 		return NULL;
 	}
 	/* seed = g^ir */
@@ -137,7 +138,8 @@ static PK11SymKey *ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 						      "SK_d (old)", SK_d_old,
 						      logger);
 	if (prf == NULL) {
-		log_pexpect(HERE, "failed to create IKEv2 PRF for computing SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr)");
+		pexpect_fail(logger, HERE,
+			     "failed to create IKEv2 PRF for computing SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr)");
 		return NULL;
 	}
 
@@ -222,11 +224,12 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
 					    prf_desc, "shared secret", pss, logger);
 		if (prf == NULL) {
 			if (libreswan_fipsmode()) {
-				PASSERT_FAIL("FIPS: failure creating %s PRF context for digesting PSK",
+				passert_fail(logger, HERE,
+					     "FIPS: failure creating %s PRF context for digesting PSK",
 					     prf_desc->common.fqn);
 			}
-			log_pexpect(HERE, "failure creating %s PRF context for digesting PSK",
-				    prf_desc->common.fqn);
+			pexpect_fail(logger, HERE, "failure creating %s PRF context for digesting PSK",
+				     prf_desc->common.fqn);
 			return empty_mac;
 		}
 

@@ -107,10 +107,10 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 	DBG(DBG_CRYPT, DBG_log("NSS ike_alg_nss_cbc: %s - exit", alg->common.fqn));
 }
 
-static void nss_cbc_check(const struct encrypt_desc *encrypt)
+static void nss_cbc_check(const struct encrypt_desc *encrypt, struct logger *logger)
 {
 	const struct ike_alg *alg = &encrypt->common;
-	pexpect_ike_alg(alg, encrypt->nss.mechanism > 0);
+	pexpect_ike_alg(logger, alg, encrypt->nss.mechanism > 0);
 }
 
 const struct encrypt_ops ike_alg_encrypt_nss_cbc_ops = {

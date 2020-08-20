@@ -23,7 +23,7 @@ struct dh_ops {
 	/*
 	 * Delegate responsibility for checking OPS specific fields.
 	 */
-	void (*const check)(const struct dh_desc *alg);
+	void (*const check)(const struct dh_desc *alg, struct logger *logger);
 
 	/*
 	 * Create the local secret and KE for remote.

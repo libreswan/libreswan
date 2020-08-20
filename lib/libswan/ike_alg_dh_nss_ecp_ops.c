@@ -51,7 +51,7 @@ static void nss_ecp_calc_secret(const struct dh_desc *group,
 	DBG(DBG_CRYPT, DBG_log("oid %d %x", group->nss_oid, group->nss_oid));
 	SECOidData *pk11_data = SECOID_FindOIDByTag(group->nss_oid);
 	if (pk11_data == NULL) {
-		PASSERT_FAIL("Lookup of OID %d for EC group %s parameters failed",
+		passert_fail(logger, HERE, "lookup of OID %d for EC group %s parameters failed",
 			     group->nss_oid, group->common.fqn);
 	}
 	LSWDBGP(DBG_CRYPT, buf) {
@@ -198,10 +198,10 @@ static PK11SymKey *nss_ecp_calc_shared(const struct dh_desc *group,
 	return g_ir;
 }
 
-static void nss_ecp_check(const struct dh_desc *dhmke)
+static void nss_ecp_check(const struct dh_desc *dhmke, struct logger *logger)
 {
 	const struct ike_alg *alg = &dhmke->common;
-	pexpect_ike_alg(alg, dhmke->nss_oid > 0);
+	pexpect_ike_alg(logger, alg, dhmke->nss_oid > 0);
 }
 
 const struct dh_ops ike_alg_dh_nss_ecp_ops = {

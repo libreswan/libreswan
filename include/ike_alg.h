@@ -39,41 +39,41 @@ struct logger;
 			((ALG)->fqn != NULL ? (ALG)->fqn		\
 			 : "NULL")
 
-#define pexpect_ike_alg(ALG, ASSERTION)					\
+#define pexpect_ike_alg(LOGGER, ALG, ASSERTION)				\
 	{								\
 		/* wrapping ASSERTION in parens suppresses -Wparen */	\
 		bool assertion__ = ASSERTION; /* no paren */		\
 		if (!assertion__) {					\
-			log_pexpect(HERE,				\
-				    PRI_IKE_ALG" fails: " #ASSERTION,	\
-				    pri_ike_alg(ALG));			\
+			pexpect_fail(LOGGER, HERE,			\
+				     PRI_IKE_ALG" fails: " #ASSERTION,	\
+				     pri_ike_alg(ALG));			\
 		}							\
 	}
 
-#define pexpect_ike_alg_streq(ALG, LHS, RHS)				\
+#define pexpect_ike_alg_streq(LOGGER, ALG, LHS, RHS)			\
 	{								\
 		/* wrapping ASSERTION in parens suppresses -Wparen */	\
 		const char *lhs = LHS;					\
 		const char *rhs = RHS;					\
 		if (lhs == NULL || rhs == NULL || !streq(LHS, RHS)) {	\
-			log_pexpect(HERE,				\
-				    PRI_IKE_ALG" fails: %s != %s (%s != %s)", \
-				    pri_ike_alg(ALG),			\
-				    lhs, rhs, #LHS, #RHS);		\
+			pexpect_fail(LOGGER, HERE,			\
+				     PRI_IKE_ALG" fails: %s != %s (%s != %s)", \
+				     pri_ike_alg(ALG),			\
+				     lhs, rhs, #LHS, #RHS);		\
 		}							\
 	}
 
-#define pexpect_ike_alg_strcaseeq(ALG, LHS, RHS)			\
+#define pexpect_ike_alg_strcaseeq(LOGGER, ALG, LHS, RHS)		\
 	{								\
 		/* wrapping ASSERTION in parens suppresses -Wparen */	\
 		const char *lhs = LHS;					\
 		const char *rhs = RHS;					\
 		if (lhs == NULL || rhs == NULL || !strcaseeq(LHS, RHS)) { \
-			log_pexpect(HERE,				\
-				    PRI_IKE_ALG" fails: %s != %s (%s != %s)", \
-				    pri_ike_alg(ALG),			\
-				    ike_alg_type_name((ALG)->algo_type), \
-				    (ALG)->fqn, lhs, rhs, #RHS, #LHS);	\
+			pexpect_fail(LOGGER, HERE,			\
+				     PRI_IKE_ALG" fails: %s != %s (%s != %s)", \
+				     pri_ike_alg(ALG),			\
+				     ike_alg_type_name((ALG)->algo_type), \
+				     (ALG)->fqn, lhs, rhs, #RHS, #LHS);	\
 		}							\
 	}
 

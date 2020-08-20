@@ -23,7 +23,7 @@ struct prf_mac_ops {
 	/*
 	 * Delegate responsibility for checking OPS specific fields.
 	 */
-	void (*const check)(const struct prf_desc *alg);
+	void (*const check)(const struct prf_desc *alg, struct logger *logger);
 
 	struct prf_context *(*init_symkey)(const struct prf_desc *prf_desc,
 					   const char *name,

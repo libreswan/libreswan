@@ -66,8 +66,8 @@ static struct prf_context *init(const struct prf_desc *prf_desc,
 
 	SECStatus rc = PK11_DigestBegin(context);
 	if (rc) {
-		log_pexpect(HERE, "NSS: %s digest begin failed for %s (%x)\n",
-			    name, prf_desc->common.fqn, rc);
+		pexpect_nss_error(logger, HERE, "%s digest begin failed for %s (%x)\n",
+				  name, prf_desc->common.fqn, rc);
 		PK11_DestroyContext(context, PR_TRUE);
 		return NULL;
 	}
@@ -178,10 +178,10 @@ static PK11SymKey *final_symkey(struct prf_context **prf)
 	return final;
 }
 
-static void nss_prf_check(const struct prf_desc *prf)
+static void nss_prf_check(const struct prf_desc *prf, struct logger *logger)
 {
 	const struct ike_alg *alg = &prf->common;
-	pexpect_ike_alg(alg, prf->nss.mechanism > 0);
+	pexpect_ike_alg(logger, alg, prf->nss.mechanism > 0);
 }
 
 const struct prf_mac_ops ike_alg_prf_mac_nss_ops = {

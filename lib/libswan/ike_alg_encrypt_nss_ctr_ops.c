@@ -101,7 +101,7 @@ static void do_nss_ctr(const struct encrypt_desc *alg UNUSED,
 	DBG(DBG_CRYPT, DBG_log("do_aes_ctr: exit"));
 }
 
-static void nss_ctr_check(const struct encrypt_desc *alg UNUSED)
+static void nss_ctr_check(const struct encrypt_desc *alg UNUSED, struct logger *unused_logger UNUSED)
 {
 }
 

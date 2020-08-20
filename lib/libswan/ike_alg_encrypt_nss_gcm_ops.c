@@ -114,9 +114,10 @@ static bool ike_alg_nss_gcm(const struct encrypt_desc *alg,
 	return ok;
 }
 
-static void nss_gcm_check(const struct encrypt_desc *encrypt) {
+static void nss_gcm_check(const struct encrypt_desc *encrypt, struct logger *logger)
+{
 	const struct ike_alg *alg = &encrypt->common;
-	pexpect_ike_alg(alg, encrypt->nss.mechanism > 0);
+	pexpect_ike_alg(logger, alg, encrypt->nss.mechanism > 0);
 }
 
 const struct encrypt_ops ike_alg_encrypt_nss_gcm_ops = {

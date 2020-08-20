@@ -24,7 +24,7 @@ struct encrypt_ops {
 	/*
 	 * Delegate responsibility for checking OPS specific fields.
 	 */
-	void (*const check)(const struct encrypt_desc *alg);
+	void (*const check)(const struct encrypt_desc *alg, struct logger *logger);
 
 	/*
 	 * Perform simple encryption.

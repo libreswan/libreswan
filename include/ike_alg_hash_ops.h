@@ -26,7 +26,7 @@ struct hash_ops {
 	/*
 	 * Delegate responsibility for checking OPS specific fields.
 	 */
-	void (*const check)(const struct hash_desc *alg);
+	void (*const check)(const struct hash_desc *alg, struct logger *logger);
 
 	struct hash_context *(*init)(const struct hash_desc *hash_desc,
 				     const char *name);
