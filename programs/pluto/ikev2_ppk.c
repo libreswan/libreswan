@@ -182,9 +182,11 @@ bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 
 /* in X_no_ppk keys are stored keys that go into PRF, and we store result in sk_X */
 
-static void ppk_recalc_one(PK11SymKey **sk /* updated */, PK11SymKey *ppk_key, const struct prf_desc *prf_desc, const char *name)
+static void ppk_recalc_one(PK11SymKey **sk /* updated */, PK11SymKey *ppk_key,
+			   const struct prf_desc *prf_desc, const char *name,
+			   struct logger *logger)
 {
-	PK11SymKey *t = ikev2_prfplus(prf_desc, ppk_key, *sk, prf_desc->prf_key_size);
+	PK11SymKey *t = ikev2_prfplus(prf_desc, ppk_key, *sk, prf_desc->prf_key_size, logger);
 	release_symkey(__func__, name, sk);
 	*sk = t;
 	DBG(DBG_PRIVATE, {
@@ -195,9 +197,10 @@ static void ppk_recalc_one(PK11SymKey **sk /* updated */, PK11SymKey *ppk_key, c
 }
 
 void ppk_recalculate(const chunk_t *ppk, const struct prf_desc *prf_desc,
-			PK11SymKey **sk_d,	/* updated */
-			PK11SymKey **sk_pi,	/* updated */
-			PK11SymKey **sk_pr)	/* updated */
+		     PK11SymKey **sk_d,	/* updated */
+		     PK11SymKey **sk_pi,	/* updated */
+		     PK11SymKey **sk_pr,	/* updated */
+		     struct logger *logger)
 {
 	PK11SymKey *ppk_key = symkey_from_hunk("PPK Keying material", *ppk);
 
@@ -208,9 +211,9 @@ void ppk_recalculate(const chunk_t *ppk, const struct prf_desc *prf_desc,
 
 	DBGF(DBG_PRIVATE, "PPK recalculating SK_d, SK_pi, SK_pr");
 
-	ppk_recalc_one(sk_d, ppk_key, prf_desc, "sk_d");
-	ppk_recalc_one(sk_pi, ppk_key, prf_desc, "sk_pi");
-	ppk_recalc_one(sk_pr, ppk_key, prf_desc, "sk_pr");
+	ppk_recalc_one(sk_d, ppk_key, prf_desc, "sk_d", logger);
+	ppk_recalc_one(sk_pi, ppk_key, prf_desc, "sk_pi", logger);
+	ppk_recalc_one(sk_pr, ppk_key, prf_desc, "sk_pr", logger);
 
 	release_symkey(__func__, "PPK chunk", &ppk_key);
 }

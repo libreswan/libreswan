@@ -20,6 +20,7 @@
 
 #include "ikev1_prf.h"
 #include "crypt_symkey.h"
+#include "lswlog.h"
 
 #include "cavp.h"
 #include "cavp_entry.h"
@@ -94,7 +95,8 @@ static void ikev1_dsa_run_test(void)
 		return;
 	}
 	const struct prf_desc *prf = prf_entry->prf;
-	PK11SymKey *skeyid = ikev1_signature_skeyid(prf, ni, nr, g_xy);
+	PK11SymKey *skeyid = ikev1_signature_skeyid(prf, ni, nr, g_xy,
+						    &progname_logger);
 	cavp_ikev1_skeyid_alphabet(prf, g_xy, cky_i, cky_r, skeyid);
 	release_symkey(__func__, "skeyid", &skeyid);
 }

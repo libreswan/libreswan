@@ -89,7 +89,8 @@ static struct crypt_prf *wrap(const struct prf_desc *prf_desc,
 
 struct crypt_prf *crypt_prf_init_bytes(const char *name,
 				       const struct prf_desc *prf_desc,
-				       const char *key_name, const void *key, size_t key_size)
+				       const char *key_name, const void *key, size_t key_size,
+				       struct logger *logger)
 {
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("%s PRF %s init %s-chunk@%p (length %zd)",
@@ -99,12 +100,14 @@ struct crypt_prf *crypt_prf_init_bytes(const char *name,
 	}
 	return wrap(prf_desc, name,
 		    prf_desc->prf_mac_ops->init_bytes(prf_desc, name,
-						      key_name, key, key_size));
+						      key_name, key, key_size,
+						      logger));
 }
 
 struct crypt_prf *crypt_prf_init_symkey(const char *name,
 					const struct prf_desc *prf_desc,
-					const char *key_name, PK11SymKey *key)
+					const char *key_name, PK11SymKey *key,
+					struct logger *logger)
 {
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("%s PRF %s init %s-key@%p (size %zd)",
@@ -114,7 +117,8 @@ struct crypt_prf *crypt_prf_init_symkey(const char *name,
 	}
 	return wrap(prf_desc, name,
 		    prf_desc->prf_mac_ops->init_symkey(prf_desc, name,
-						   key_name, key));
+						       key_name, key,
+						       logger));
 }
 
 /*

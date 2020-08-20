@@ -32,6 +32,7 @@ struct prf_context {
 	const char *name;
 	const struct prf_desc *desc;
 	PK11Context *context;
+	struct logger *logger;
 };
 
 /*
@@ -40,7 +41,8 @@ struct prf_context {
 
 static struct prf_context *init(const struct prf_desc *prf_desc,
 				const char *name,
-				const char *key_name, PK11SymKey *key)
+				const char *key_name, PK11SymKey *key,
+				struct logger *logger)
 
 {
 	passert(prf_desc->nss.mechanism > 0);
@@ -75,18 +77,19 @@ static struct prf_context *init(const struct prf_desc *prf_desc,
 	     name, prf_desc->common.fqn,
 	     context, key_name, key);
 
-	struct prf_context *prf = alloc_thing(struct prf_context, name);
-	*prf = (struct prf_context) {
+	struct prf_context prf = {
 		.name = name,
 		.desc = prf_desc,
 		.context = context,
+		.logger = logger,
 	};
-	return prf;
+	return clone_thing(prf, name);
 }
 
 static struct prf_context *init_symkey(const struct prf_desc *prf_desc,
 				       const char *name,
-				       const char *key_name, PK11SymKey *key)
+				       const char *key_name, PK11SymKey *key,
+				       struct logger *logger)
 {
 	/*
 	 * Need a key of the correct type.
@@ -96,8 +99,7 @@ static struct prf_context *init_symkey(const struct prf_desc *prf_desc,
 	PK11SymKey *clone = prf_key_from_symkey_bytes("clone", prf_desc,
 						      0, sizeof_symkey(key),
 						      key, HERE);
-	struct prf_context *prf = init(prf_desc, name,
-				       key_name, clone);
+	struct prf_context *prf = init(prf_desc, name, key_name, clone, logger);
 	release_symkey(name, "clone", &clone);
 	return prf;
 }
@@ -105,7 +107,8 @@ static struct prf_context *init_symkey(const struct prf_desc *prf_desc,
 static struct prf_context *init_bytes(const struct prf_desc *prf_desc,
 				      const char *name,
 				      const char *key_name,
-				      const uint8_t *key, size_t sizeof_key)
+				      const uint8_t *key, size_t sizeof_key,
+				      struct logger *logger)
 {
 	/*
 	 * Need a key of the correct type.
@@ -114,8 +117,7 @@ static struct prf_context *init_bytes(const struct prf_desc *prf_desc,
 	 */
 	PK11SymKey *clone = prf_key_from_bytes(key_name, prf_desc,
 					       key, sizeof_key, HERE);
-	struct prf_context *prf = init(prf_desc, name,
-				       key_name, clone);
+	struct prf_context *prf = init(prf_desc, name, key_name, clone, logger);
 	release_symkey(name, "clone", &clone);
 	return prf ;
 }

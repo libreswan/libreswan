@@ -34,6 +34,7 @@ extern bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 				   chunk_t *no_ppk_auth /* output */);
 
 extern void ppk_recalculate(const chunk_t *ppk, const struct prf_desc *prf,
-				PK11SymKey **sk_d,	/* updated */
-				PK11SymKey **sk_pi,	/* updated */
-				PK11SymKey **sk_pr);	/* updated */
+			    PK11SymKey **sk_d,	/* updated */
+			    PK11SymKey **sk_pi,	/* updated */
+			    PK11SymKey **sk_pr,	/* updated */
+			    struct logger *logger);

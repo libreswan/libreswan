@@ -15,6 +15,8 @@
 #ifndef IKE_ALG_PRF_MAC_OPS_H
 #define IKE_ALG_PRF_MAC_OPS_H
 
+struct logger;
+
 struct prf_mac_ops {
 	const char *backend;
 
@@ -25,11 +27,13 @@ struct prf_mac_ops {
 
 	struct prf_context *(*init_symkey)(const struct prf_desc *prf_desc,
 					   const char *name,
-					   const char *key_name, PK11SymKey *key);
+					   const char *key_name, PK11SymKey *key,
+					   struct logger *logger);
 	struct prf_context *(*init_bytes)(const struct prf_desc *prf_desc,
 					  const char *name,
 					  const char *key_name,
-					  const uint8_t *bytes, size_t sizeof_bytes);
+					  const uint8_t *bytes, size_t sizeof_bytes,
+					  struct logger *logger);
 	void (*digest_symkey)(struct prf_context *prf,
 			      const char *name, PK11SymKey *symkey);
 	void (*digest_bytes)(struct prf_context *prf,

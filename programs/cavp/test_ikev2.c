@@ -20,6 +20,7 @@
 
 #include "crypt_symkey.h"
 #include "ikev2_prf.h"
+#include "lswlog.h"
 
 #include "cavp.h"
 #include "cavp_entry.h"
@@ -35,9 +36,8 @@ static void cavp_acvp_ikev2(const struct prf_desc *prf,
 			    signed long nr_child_sa_dkm_bytes)
 {
 	/* SKEYSEED = prf(Ni | Nr, g^ir) */
-	PK11SymKey *skeyseed = ikev2_ike_sa_skeyseed(prf,
-						     ni, nr,
-						     g_ir);
+	PK11SymKey *skeyseed = ikev2_ike_sa_skeyseed(prf, ni, nr, g_ir,
+						     &progname_logger);
 	print_symkey("SKEYSEED", "sKeySeed", skeyseed, 0);
 	if (skeyseed == NULL) {
 		print_line("failure in SKEYSEED = prf(Ni | Nr, g^ir)");
@@ -47,26 +47,30 @@ static void cavp_acvp_ikev2(const struct prf_desc *prf,
 	/* prf+(SKEYSEED, Ni | Nr | SPIi | SPIr) */
 	PK11SymKey *dkm = ikev2_ike_sa_keymat(prf, skeyseed,
 					      ni, nr, spi_ir,
-					      nr_ike_sa_dkm_bytes);
+					      nr_ike_sa_dkm_bytes,
+					      &progname_logger);
 	print_symkey("DKM", "derivedKeyingMaterial", dkm, nr_ike_sa_dkm_bytes);
 
 	/* prf+(SK_d, Ni | Nr) */
 	PK11SymKey *SK_d = key_from_symkey_bytes(dkm, 0, prf->prf_key_size, HERE);
 	PK11SymKey *child_sa_dkm = ikev2_child_sa_keymat(prf, SK_d, NULL,
-							 ni, nr, nr_child_sa_dkm_bytes);
+							 ni, nr, nr_child_sa_dkm_bytes,
+							 &progname_logger);
 	print_symkey("DKM(Child SA)", "derivedKeyingMaterialChild",
 		     child_sa_dkm, nr_child_sa_dkm_bytes);
 
 	/* prf+(SK_d, g^ir (new) | Ni | Nr) */
 	PK11SymKey *child_sa_dkm_dh = ikev2_child_sa_keymat(prf, SK_d,
 							    g_ir_new, ni, nr,
-							    nr_child_sa_dkm_bytes);
+							    nr_child_sa_dkm_bytes,
+							    &progname_logger);
 	print_symkey("DKM(Child SA D-H)", "derivedKeyingMaterialDh",
 		     child_sa_dkm_dh, nr_child_sa_dkm_bytes);
 
 	/* SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr) */
 	PK11SymKey *skeyseed_rekey = ikev2_ike_sa_rekey_skeyseed(prf, SK_d, g_ir_new,
-								 ni, nr);
+								 ni, nr,
+								 &progname_logger);
 	print_symkey("SKEYSEED(Rekey)", "sKeySeedReKey",
 		     skeyseed_rekey, 0);
 	if (skeyseed_rekey == NULL) {

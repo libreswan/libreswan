@@ -191,8 +191,8 @@ static void calc_skeyids_iv(struct pcr_v1_dh *skq,
 			    PK11SymKey **skeyid_a_out,	/* output */
 			    PK11SymKey **skeyid_e_out,	/* output */
 			    struct crypt_mac *new_iv,	/* output */
-			    PK11SymKey **enc_key_out	/* output */
-			    )
+			    PK11SymKey **enc_key_out,	/* output */
+			    struct logger *logger)
 {
 	oakley_auth_t auth = skq->auth;
 	const struct prf_desc *prf_desc = skq->prf;
@@ -222,12 +222,12 @@ static void calc_skeyids_iv(struct pcr_v1_dh *skq,
 
 			setchunk_from_wire(pss, skq, &skq->pss);
 			skeyid = ikev1_pre_shared_key_skeyid(prf_desc, pss,
-							     ni, nr);
+							     ni, nr, logger);
 		}
 		break;
 
 	case OAKLEY_RSA_SIG:
-		skeyid = ikev1_signature_skeyid(prf_desc, ni, nr, shared);
+		skeyid = ikev1_signature_skeyid(prf_desc, ni, nr, shared, logger);
 		break;
 
 	/* Not implemented */
@@ -243,14 +243,18 @@ static void calc_skeyids_iv(struct pcr_v1_dh *skq,
 
 	/* generate SKEYID_* from SKEYID */
 	PK11SymKey *skeyid_d = ikev1_skeyid_d(prf_desc, skeyid, shared,
-					      icookie, rcookie);
+					      icookie, rcookie,
+					      logger);
 	PK11SymKey *skeyid_a = ikev1_skeyid_a(prf_desc, skeyid, skeyid_d,
-					      shared, icookie, rcookie);
+					      shared, icookie, rcookie,
+					      logger);
 	PK11SymKey *skeyid_e = ikev1_skeyid_e(prf_desc, skeyid, skeyid_a,
-					      shared, icookie, rcookie);
+					      shared, icookie, rcookie,
+					      logger);
 
 	PK11SymKey *enc_key = ikev1_appendix_b_keymat_e(prf_desc, encrypter,
-							skeyid_e, keysize);
+							skeyid_e, keysize,
+							logger);
 
 	*skeyid_out = skeyid;
 	*skeyid_d_out = skeyid_d;
@@ -304,7 +308,7 @@ void calc_dh_iv(struct pcr_v1_dh *dh, struct logger *logger)
 			&dh->skeyid_a,	/* output */
 			&dh->skeyid_e,	/* output */
 			&dh->new_iv,	/* output */
-			&dh->enc_key	/* output */
-			);
+				&dh->enc_key,	/* output */
+			logger);
 	}
 }

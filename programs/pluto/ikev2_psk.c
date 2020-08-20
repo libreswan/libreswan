@@ -185,7 +185,8 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 	 * AUTH = prf(prf(Shared Secret, "Key Pad for IKEv2"), <msg octets>)
 	 */
 	passert(idhash->len == ike->sa.st_oakley.ta_prf->prf_output_size);
-	return ikev2_psk_auth(ike->sa.st_oakley.ta_prf, *pss, firstpacket, *nonce, idhash);
+	return ikev2_psk_auth(ike->sa.st_oakley.ta_prf, *pss, firstpacket, *nonce, idhash,
+			      ike->sa.st_logger);
 }
 
 bool ikev2_emit_psk_auth(enum keyword_authby authby,

@@ -14,10 +14,12 @@
  * for more details.
  */
 
+#include "crypt_symkey.h"
+#include "lswlog.h"
+
 #include "test_ikev1.h"
 #include "cavp_print.h"
 #include "ikev1_prf.h"
-#include "crypt_symkey.h"
 
 void cavp_ikev1_skeyid_alphabet(const struct prf_desc *prf,
 				PK11SymKey *g_xy,
@@ -26,15 +28,18 @@ void cavp_ikev1_skeyid_alphabet(const struct prf_desc *prf,
 {
 	print_symkey("SKEYID", "sKeyId", skeyid, 0);
 	PK11SymKey *skeyid_d = ikev1_skeyid_d(prf, skeyid,
-					      g_xy, cky_i, cky_r);
+					      g_xy, cky_i, cky_r,
+					      &progname_logger);
 	print_symkey("SKEYID_d", "sKeyIdD", skeyid_d, 0);
 
 	PK11SymKey *skeyid_a = ikev1_skeyid_a(prf, skeyid, skeyid_d,
-					      g_xy, cky_i, cky_r);
+					      g_xy, cky_i, cky_r,
+					      &progname_logger);
 	print_symkey("SKEYID_a", "sKeyIdA", skeyid_a, 0);
 
 	PK11SymKey *skeyid_e = ikev1_skeyid_e(prf, skeyid, skeyid_a,
-					      g_xy, cky_i, cky_r);
+					      g_xy, cky_i, cky_r,
+					      &progname_logger);
 	print_symkey("SKEYID_e", "sKeyIdE", skeyid_e, 0);
 
 	release_symkey(__func__, "skeyid_d", &skeyid_d);

@@ -28,6 +28,7 @@ struct prf_context {
 	/* intermediate values */
 	PK11SymKey *key;
 	PK11SymKey *inner;
+	struct logger *logger;
 };
 
 static void prf_update(struct prf_context *prf);
@@ -37,22 +38,23 @@ static void prf_update(struct prf_context *prf);
  */
 
 static struct prf_context *prf_init(const struct prf_desc *prf_desc,
-				    const char *name)
+				    const char *name, struct logger *logger)
 {
-	struct prf_context *prf = alloc_thing(struct prf_context, name);
-	*prf = (struct prf_context) {
+	struct prf_context prf = {
 		.name = name,
 		.desc = prf_desc,
+		.logger = logger,
 	};
-	return prf;
+	return clone_thing(prf, name);
 }
 
 static struct prf_context *init_bytes(const struct prf_desc *prf_desc,
 				      const char *name,
 				      const char *key_name UNUSED,
-				      const uint8_t *key, size_t sizeof_key)
+				      const uint8_t *key, size_t sizeof_key,
+				      struct logger *logger)
 {
-	struct prf_context *prf = prf_init(prf_desc, name);
+	struct prf_context *prf = prf_init(prf_desc, name, logger);
 	/* XXX: use an untyped key */
 	prf->key = symkey_from_bytes(name, key, sizeof_key);
 	prf_update(prf);
@@ -61,9 +63,10 @@ static struct prf_context *init_bytes(const struct prf_desc *prf_desc,
 
 static struct prf_context *init_symkey(const struct prf_desc *prf_desc,
 				       const char *name,
-				       const char *key_name UNUSED, PK11SymKey *key)
+				       const char *key_name UNUSED, PK11SymKey *key,
+				       struct logger *logger)
 {
-	struct prf_context *prf = prf_init(prf_desc, name);
+	struct prf_context *prf = prf_init(prf_desc, name, logger);
 	prf->key = reference_symkey(name, "key", key);
 	prf_update(prf);
 	return prf;

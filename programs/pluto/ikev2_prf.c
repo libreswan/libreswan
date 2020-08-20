@@ -35,11 +35,12 @@
  */
 
 PK11SymKey *ikev2_prfplus(const struct prf_desc *prf_desc,
-			PK11SymKey *key,
-			PK11SymKey *seed,
-			size_t required_keymat)
+			  PK11SymKey *key,
+			  PK11SymKey *seed,
+			  size_t required_keymat,
+			  struct logger *logger)
 {
-	return prf_desc->prf_ikev2_ops->prfplus(prf_desc, key, seed, required_keymat);
+	return prf_desc->prf_ikev2_ops->prfplus(prf_desc, key, seed, required_keymat, logger);
 }
 
 /*
@@ -49,9 +50,11 @@ PK11SymKey *ikev2_prfplus(const struct prf_desc *prf_desc,
  */
 PK11SymKey *ikev2_ike_sa_skeyseed(const struct prf_desc *prf_desc,
 				  const chunk_t Ni, const chunk_t Nr,
-				  PK11SymKey *dh_secret)
+				  PK11SymKey *dh_secret,
+				  struct logger *logger)
 {
-	return prf_desc->prf_ikev2_ops->ike_sa_skeyseed(prf_desc, Ni, Nr, dh_secret);
+	return prf_desc->prf_ikev2_ops->ike_sa_skeyseed(prf_desc, Ni, Nr,
+							dh_secret, logger);
 }
 
 /*
@@ -60,9 +63,12 @@ PK11SymKey *ikev2_ike_sa_skeyseed(const struct prf_desc *prf_desc,
 PK11SymKey *ikev2_ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 					PK11SymKey *SK_d_old,
 					PK11SymKey *new_dh_secret,
-					const chunk_t Ni, const chunk_t Nr)
+					const chunk_t Ni, const chunk_t Nr,
+					struct logger *logger)
 {
-	return prf_desc->prf_ikev2_ops->ike_sa_rekey_skeyseed(prf_desc, SK_d_old, new_dh_secret, Ni, Nr);
+	return prf_desc->prf_ikev2_ops->ike_sa_rekey_skeyseed(prf_desc, SK_d_old,
+							      new_dh_secret,
+							      Ni, Nr, logger);
 }
 
 /*
@@ -72,12 +78,14 @@ PK11SymKey *ikev2_ike_sa_keymat(const struct prf_desc *prf_desc,
 				PK11SymKey *skeyseed,
 				const chunk_t Ni, const chunk_t Nr,
 				const ike_spis_t *SPIir,
-				size_t required_bytes)
+				size_t required_bytes,
+				struct logger *logger)
 {
 	return prf_desc->prf_ikev2_ops->ike_sa_keymat(prf_desc, skeyseed, Ni, Nr,
 						      THING_AS_SHUNK(SPIir->initiator),
 						      THING_AS_SHUNK(SPIir->responder),
-						      required_bytes);
+						      required_bytes,
+						      logger);
 }
 
 /*
@@ -87,14 +95,19 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 				  PK11SymKey *SK_d,
 				  PK11SymKey *new_dh_secret,
 				  const chunk_t Ni, const chunk_t Nr,
-				  size_t required_bytes)
+				  size_t required_bytes,
+				  struct logger *logger)
 {
-	return prf_desc->prf_ikev2_ops->child_sa_keymat(prf_desc, SK_d, new_dh_secret, Ni, Nr, required_bytes);
+	return prf_desc->prf_ikev2_ops->child_sa_keymat(prf_desc, SK_d, new_dh_secret,
+							Ni, Nr, required_bytes,
+							logger);
 }
 
 struct crypt_mac ikev2_psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
 				chunk_t first_packet, chunk_t nonce,
-				const struct crypt_mac *id_hash)
+				const struct crypt_mac *id_hash,
+				struct logger *logger)
 {
-	return prf_desc->prf_ikev2_ops->psk_auth(prf_desc, pss, first_packet, nonce, id_hash);
+	return prf_desc->prf_ikev2_ops->psk_auth(prf_desc, pss, first_packet,
+						 nonce, id_hash, logger);
 }

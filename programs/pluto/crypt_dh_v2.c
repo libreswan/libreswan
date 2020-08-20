@@ -181,7 +181,8 @@ static void calc_skeyseed_v2(struct pcr_dh_v2 *sk,
 			     chunk_t *initiator_salt_out,
 			     chunk_t *responder_salt_out,
 			     chunk_t *chunk_SK_pi_out,
-			     chunk_t *chunk_SK_pr_out)
+			     chunk_t *chunk_SK_pr_out,
+			     struct logger *logger)
 {
 	DBG(DBG_CRYPT, DBG_log("NSS: Started key computation"));
 
@@ -217,11 +218,13 @@ static void calc_skeyseed_v2(struct pcr_dh_v2 *sk,
 
 	if (sk->skey_d_old == NULL) {
 	/* generate SKEYSEED from key=(Ni|Nr), hash of shared */
-		skeyseed_k = ikev2_ike_sa_skeyseed(sk->prf, ni, nr, shared);
+		skeyseed_k = ikev2_ike_sa_skeyseed(sk->prf, ni, nr, shared,
+						   logger);
 	}  else {
 		skeyseed_k = ikev2_ike_sa_rekey_skeyseed(sk->old_prf,
-					sk->skey_d_old,
-					shared, ni, nr);
+							 sk->skey_d_old,
+							 shared, ni, nr,
+							 logger);
 		release_symkey(__func__, "parent-SK_d", &sk->skey_d_old);
 	}
 
@@ -242,7 +245,7 @@ static void calc_skeyseed_v2(struct pcr_dh_v2 *sk,
 	size_t total_keysize = skd_bytes + 2*skp_bytes + 2*key_size + 2*salt_size + 2*integ_size;
 	PK11SymKey *finalkey = ikev2_ike_sa_keymat(sk->prf, skeyseed_k,
 						   ni, nr, &sk->ike_spis,
-						   total_keysize);
+						   total_keysize, logger);
 	release_symkey(__func__, "skeyseed_k", &skeyseed_k);
 
 	size_t next_byte = 0;
@@ -373,5 +376,6 @@ void calc_dh_v2(struct pluto_crypto_req *r, struct logger *logger)
 			 &sk->skey_initiator_salt, /* output */
 			 &sk->skey_responder_salt, /* output */
 			 &sk->skey_chunk_SK_pi, /* output */
-			 &sk->skey_chunk_SK_pr); /* output */
+			 &sk->skey_chunk_SK_pr, /* output */
+			 logger);
 }

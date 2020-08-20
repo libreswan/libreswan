@@ -73,7 +73,8 @@ void fixup_v1_HASH(struct state *st, const struct v1_hash_fixup *fixup,
 	}
 	struct crypt_prf *hash =
 		crypt_prf_init_symkey("HASH(1)", st->st_oakley.ta_prf,
-				      "SKEYID_a", st->st_skeyid_a_nss);
+				      "SKEYID_a", st->st_skeyid_a_nss,
+				      st->st_logger);
 	/* msgid */
 	passert(sizeof(msgid_t) == sizeof(uint32_t));
 	msgid_t raw_msgid = htonl(msgid);

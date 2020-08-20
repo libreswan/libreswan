@@ -158,7 +158,8 @@ const struct prf_test_vector hmac_md5_prf_tests[] = {
 };
 
 static bool test_prf_vector(const struct prf_desc *prf,
-			    const struct prf_test_vector *test)
+			    const struct prf_test_vector *test,
+			    struct logger *logger)
 {
 	chunk_t chunk_key = decode_to_chunk(__func__, test->key);
 	passert(chunk_key.len == test->key_size);
@@ -170,7 +171,8 @@ static bool test_prf_vector(const struct prf_desc *prf,
 
 	/* chunk interface */
 	struct crypt_prf *chunk_prf = crypt_prf_init_hunk("PRF chunk interface", prf,
-							  "key", chunk_key);
+							  "key", chunk_key,
+							  logger);
 	crypt_prf_update_hunk(chunk_prf, "message", chunk_message);
 	struct crypt_mac chunk_output = crypt_prf_final_mac(&chunk_prf, NULL);
 	if (DBGP(DBG_CRYPT)) {
@@ -181,7 +183,8 @@ static bool test_prf_vector(const struct prf_desc *prf,
 	/* symkey interface */
 	PK11SymKey *symkey_key = symkey_from_hunk("key symkey", chunk_key);
 	struct crypt_prf *symkey_prf = crypt_prf_init_symkey("PRF symkey interface", prf,
-							     "key symkey", symkey_key);
+							     "key symkey", symkey_key,
+							     logger);
 	PK11SymKey *symkey_message = symkey_from_hunk("message symkey",
 						       chunk_message);
 	crypt_prf_update_symkey(symkey_prf, "symkey message", symkey_message);
@@ -212,7 +215,7 @@ bool test_prf_vectors(const struct prf_desc *desc,
 	for (const struct prf_test_vector *test = tests;
 	     test->description != NULL; test++) {
 		log_message(RC_LOG, logger, "  %s", test->description);
-		if (!test_prf_vector(desc, test)) {
+		if (!test_prf_vector(desc, test, logger)) {
 			ok = FALSE;
 		}
 	}

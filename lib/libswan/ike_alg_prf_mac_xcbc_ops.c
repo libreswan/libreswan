@@ -34,6 +34,7 @@ struct prf_context {
 	const struct prf_desc *desc;
 	PK11SymKey *key;
 	chunk_t bytes;
+	struct logger *logger;
 };
 
 static void encrypt(const char *name, chunk_t out, chunk_t in,
@@ -179,7 +180,8 @@ static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 
 static struct prf_context *nss_xcbc_init_symkey(const struct prf_desc *prf_desc,
 						const char *name,
-						const char *key_name, PK11SymKey *draft_key)
+						const char *key_name, PK11SymKey *draft_key,
+						struct logger *logger)
 {
 	/*
 	 * Need to turn the key into something of the right size.
@@ -227,19 +229,20 @@ static struct prf_context *nss_xcbc_init_symkey(const struct prf_desc *prf_desc,
 						0, prf_desc->prf_key_size,
 						draft_key, HERE);
 	}
-	struct prf_context *prf = alloc_thing(struct prf_context, "prf context");
-	*prf = (struct prf_context) {
+	struct prf_context prf = {
 		.key = key,
 		.name = name,
 		.desc = prf_desc,
+		.logger = logger,
 	};
-	return prf;
+	return clone_thing(prf, name);
 }
 
 static struct prf_context *nss_xcbc_init_bytes(const struct prf_desc *prf_desc,
 					       const char *name,
 					       const char *key_name,
-					       const uint8_t *key, size_t sizeof_key)
+					       const uint8_t *key, size_t sizeof_key,
+					       struct logger *logger)
 {
 	/*
 	 * Need a key of the correct type.
@@ -248,7 +251,8 @@ static struct prf_context *nss_xcbc_init_bytes(const struct prf_desc *prf_desc,
 	 */
 	PK11SymKey *clone = symkey_from_bytes(key_name, key, sizeof_key);
 	struct prf_context *context = nss_xcbc_init_symkey(prf_desc, name,
-							   key_name, clone);
+							   key_name, clone,
+							   logger);
 	release_symkey(name, "clone", &clone);
 	return context;
 }

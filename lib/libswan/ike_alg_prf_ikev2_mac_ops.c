@@ -36,7 +36,8 @@
 static PK11SymKey *prfplus(const struct prf_desc *prf_desc,
 			   PK11SymKey *key,
 			   PK11SymKey *seed,
-			   size_t required_keymat)
+			   size_t required_keymat,
+			   struct logger *logger)
 {
 	uint8_t count = 1;
 
@@ -44,7 +45,8 @@ static PK11SymKey *prfplus(const struct prf_desc *prf_desc,
 	PK11SymKey *result;
 	{
 		struct crypt_prf *prf = crypt_prf_init_symkey("prf+0", prf_desc,
-							      "key", key);
+							      "key", key,
+							      logger);
 		crypt_prf_update_symkey(prf, "seed", seed);
 		crypt_prf_update_byte(prf, "1++", count++);
 		result = crypt_prf_final_symkey(&prf);
@@ -55,7 +57,7 @@ static PK11SymKey *prfplus(const struct prf_desc *prf_desc,
 	while (sizeof_symkey(result) < required_keymat) {
 		/* Tn = prf(KEY, Tn-1|SEED|n) */
 		struct crypt_prf *prf = crypt_prf_init_symkey("prf+N", prf_desc,
-							      "key", key);
+							      "key", key, logger);
 		crypt_prf_update_symkey(prf, "old_t", old_t);
 		crypt_prf_update_symkey(prf, "seed", seed);
 		crypt_prf_update_byte(prf, "N++", count++);
@@ -74,8 +76,9 @@ static PK11SymKey *prfplus(const struct prf_desc *prf_desc,
  *
  */
 static PK11SymKey *ike_sa_skeyseed(const struct prf_desc *prf_desc,
-						 const chunk_t Ni, const chunk_t Nr,
-						 PK11SymKey *dh_secret)
+				   const chunk_t Ni, const chunk_t Nr,
+				   PK11SymKey *dh_secret,
+				   struct logger *logger)
 {
 	/*
 	 * 2.14.  Generating Keying Material for the IKE SA
@@ -106,8 +109,9 @@ static PK11SymKey *ike_sa_skeyseed(const struct prf_desc *prf_desc,
 		break;
 	}
 	struct crypt_prf *prf = crypt_prf_init_hunk("SKEYSEED = prf(Ni | Nr, g^ir)",
-						     prf_desc,
-						     key_name, key);
+						    prf_desc,
+						    key_name, key,
+						    logger);
 	free_chunk_content(&key);
 	if (prf == NULL) {
 		log_pexpect(HERE, "failed to create IKEv2 PRF for computing SKEYSEED = prf(Ni | Nr, g^ir)");
@@ -125,11 +129,13 @@ static PK11SymKey *ike_sa_skeyseed(const struct prf_desc *prf_desc,
 static PK11SymKey *ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 					PK11SymKey *SK_d_old,
 					PK11SymKey *new_dh_secret,
-					const chunk_t Ni, const chunk_t Nr)
+					const chunk_t Ni, const chunk_t Nr,
+					 struct logger *logger)
 {
 	/* key = SK_d (old) */
 	struct crypt_prf *prf = crypt_prf_init_symkey("ike sa rekey skeyseed", prf_desc,
-						      "SK_d (old)", SK_d_old);
+						      "SK_d (old)", SK_d_old,
+						      logger);
 	if (prf == NULL) {
 		log_pexpect(HERE, "failed to create IKEv2 PRF for computing SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr)");
 		return NULL;
@@ -150,7 +156,8 @@ static PK11SymKey *ike_sa_keymat(const struct prf_desc *prf_desc,
 				 PK11SymKey *skeyseed,
 				 const chunk_t Ni, const chunk_t Nr,
 				 shunk_t SPIi, shunk_t SPIr,
-				 size_t required_bytes)
+				 size_t required_bytes,
+				 struct logger *logger)
 {
 	PK11SymKey *data = symkey_from_hunk("data=Ni", Ni);
 	append_symkey_hunk("data+=Nr", &data, Nr);
@@ -158,7 +165,8 @@ static PK11SymKey *ike_sa_keymat(const struct prf_desc *prf_desc,
 	append_symkey_hunk("data+=SPIr", &data, SPIr);
 	PK11SymKey *result = prfplus(prf_desc,
 				     skeyseed, data,
-				     required_bytes);
+				     required_bytes,
+				     logger);
 	release_symkey(__func__, "data", &data);
 	return result;
 }
@@ -167,10 +175,11 @@ static PK11SymKey *ike_sa_keymat(const struct prf_desc *prf_desc,
  * Compute: prf+(SK_d, [ g^ir (new) | ] Ni | Nr)
  */
 static PK11SymKey *child_sa_keymat(const struct prf_desc *prf_desc,
-				  PK11SymKey *SK_d,
-				  PK11SymKey *new_dh_secret,
-				  const chunk_t Ni, const chunk_t Nr,
-				  size_t required_bytes)
+				   PK11SymKey *SK_d,
+				   PK11SymKey *new_dh_secret,
+				   const chunk_t Ni, const chunk_t Nr,
+				   size_t required_bytes,
+				   struct logger *logger)
 {
 	if (required_bytes == 0) {
 		/*
@@ -193,14 +202,16 @@ static PK11SymKey *child_sa_keymat(const struct prf_desc *prf_desc,
 	}
 	PK11SymKey *result = prfplus(prf_desc,
 				     SK_d, data,
-				     required_bytes);
+				     required_bytes,
+				     logger);
 	release_symkey(__func__, "data", &data);
 	return result;
 }
 
 static struct crypt_mac psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
 				 chunk_t first_packet, chunk_t nonce,
-				 const struct crypt_mac *id_hash)
+				 const struct crypt_mac *id_hash,
+				 struct logger *logger)
 {
 	/* calculate inner prf */
 	PK11SymKey *prf_psk;
@@ -208,7 +219,7 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
 	{
 		struct crypt_prf *prf =
 			crypt_prf_init_hunk("<prf-psk> = prf(<psk>,\"Key Pad for IKEv2\")",
-					     prf_desc, "shared secret", pss);
+					    prf_desc, "shared secret", pss, logger);
 		if (prf == NULL) {
 			if (libreswan_fipsmode()) {
 				PASSERT_FAIL("FIPS: failure creating %s PRF context for digesting PSK",
@@ -232,7 +243,7 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
 	{
 		struct crypt_prf *prf =
 			crypt_prf_init_symkey("<signed-octets> = prf(<prf-psk>, <msg octets>)",
-					      prf_desc, "<prf-psk>", prf_psk);
+					      prf_desc, "<prf-psk>", prf_psk, logger);
 		/*
 		 * For the responder, the octets to be signed start
 		 * with the first octet of the first SPI in the header

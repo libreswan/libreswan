@@ -29,10 +29,11 @@
 PK11SymKey *ikev1_signature_skeyid(const struct prf_desc *prf_desc,
 				   const chunk_t Ni,
 				   const chunk_t Nr,
-				   /*const*/ PK11SymKey *dh_secret /* NSS doesn't do const */)
+				   /*const*/ PK11SymKey *dh_secret /* NSS doesn't do const */,
+				   struct logger *logger)
 {
 
-	return prf_desc->prf_ikev1_ops->signature_skeyid(prf_desc, Ni, Nr, dh_secret);
+	return prf_desc->prf_ikev1_ops->signature_skeyid(prf_desc, Ni, Nr, dh_secret, logger);
 }
 
 /*
@@ -40,9 +41,10 @@ PK11SymKey *ikev1_signature_skeyid(const struct prf_desc *prf_desc,
  */
 PK11SymKey *ikev1_pre_shared_key_skeyid(const struct prf_desc *prf_desc,
 					chunk_t pre_shared_key,
-					chunk_t Ni, chunk_t Nr)
+					chunk_t Ni, chunk_t Nr,
+					struct logger *logger)
 {
-	return prf_desc->prf_ikev1_ops->pre_shared_key_skeyid(prf_desc, pre_shared_key, Ni, Nr);
+	return prf_desc->prf_ikev1_ops->pre_shared_key_skeyid(prf_desc, pre_shared_key, Ni, Nr, logger);
 }
 
 /*
@@ -51,9 +53,10 @@ PK11SymKey *ikev1_pre_shared_key_skeyid(const struct prf_desc *prf_desc,
 PK11SymKey *ikev1_skeyid_d(const struct prf_desc *prf_desc,
 			   PK11SymKey *skeyid,
 			   PK11SymKey *dh_secret,
-			   chunk_t cky_i, chunk_t cky_r)
+			   chunk_t cky_i, chunk_t cky_r,
+			   struct logger *logger)
 {
-	return prf_desc->prf_ikev1_ops->skeyid_d(prf_desc, skeyid, dh_secret, cky_i, cky_r);
+	return prf_desc->prf_ikev1_ops->skeyid_d(prf_desc, skeyid, dh_secret, cky_i, cky_r, logger);
 }
 
 /*
@@ -62,9 +65,10 @@ PK11SymKey *ikev1_skeyid_d(const struct prf_desc *prf_desc,
 PK11SymKey *ikev1_skeyid_a(const struct prf_desc *prf_desc,
 			   PK11SymKey *skeyid,
 			   PK11SymKey *skeyid_d, PK11SymKey *dh_secret,
-			   chunk_t cky_i, chunk_t cky_r)
+			   chunk_t cky_i, chunk_t cky_r,
+			   struct logger *logger)
 {
-	return prf_desc->prf_ikev1_ops->skeyid_a(prf_desc, skeyid, skeyid_d, dh_secret, cky_i, cky_r);
+	return prf_desc->prf_ikev1_ops->skeyid_a(prf_desc, skeyid, skeyid_d, dh_secret, cky_i, cky_r, logger);
 }
 
 /*
@@ -73,17 +77,20 @@ PK11SymKey *ikev1_skeyid_a(const struct prf_desc *prf_desc,
 PK11SymKey *ikev1_skeyid_e(const struct prf_desc *prf_desc,
 			   PK11SymKey *skeyid,
 			   PK11SymKey *skeyid_a, PK11SymKey *dh_secret,
-			   chunk_t cky_i, chunk_t cky_r)
+			   chunk_t cky_i, chunk_t cky_r,
+			   struct logger *logger)
 {
-	return prf_desc->prf_ikev1_ops->skeyid_e(prf_desc, skeyid, skeyid_a, dh_secret, cky_i, cky_r);
+	return prf_desc->prf_ikev1_ops->skeyid_e(prf_desc, skeyid, skeyid_a, dh_secret, cky_i, cky_r, logger);
 }
 
 PK11SymKey *ikev1_appendix_b_keymat_e(const struct prf_desc *prf_desc,
 				      const struct encrypt_desc *encrypter,
 				      PK11SymKey *skeyid_e,
-				      unsigned required_keymat)
+				      unsigned required_keymat,
+				      struct logger *logger)
 {
-	return prf_desc->prf_ikev1_ops->appendix_b_keymat_e(prf_desc, encrypter, skeyid_e, required_keymat);
+	return prf_desc->prf_ikev1_ops->appendix_b_keymat_e(prf_desc, encrypter, skeyid_e,
+							    required_keymat, logger);
 }
 
 chunk_t ikev1_section_5_keymat(const struct prf_desc *prf,
@@ -92,9 +99,11 @@ chunk_t ikev1_section_5_keymat(const struct prf_desc *prf,
 			       uint8_t protocol,
 			       shunk_t SPI,
 			       chunk_t Ni_b, chunk_t Nr_b,
-			       unsigned required_keymat)
+			       unsigned required_keymat,
+			       struct logger *logger)
 {
 	return prf->prf_ikev1_ops->section_5_keymat(prf, SKEYID_d,
 						    g_xy, protocol, SPI,
-						    Ni_b, Nr_b, required_keymat);
+						    Ni_b, Nr_b, required_keymat,
+						    logger);
 }

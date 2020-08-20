@@ -32,22 +32,26 @@ struct prf_desc;
  */
 PK11SymKey *ikev2_prfplus(const struct prf_desc *prf_desc,
 			  PK11SymKey *key, PK11SymKey *seed,
-			  size_t required_keymat);
+			  size_t required_keymat,
+			  struct logger *logger);
 
 PK11SymKey *ikev2_ike_sa_skeyseed(const struct prf_desc *prf_desc,
 				  const chunk_t Ni, const chunk_t Nr,
-				  PK11SymKey *dh_secret);
+				  PK11SymKey *dh_secret,
+				  struct logger *logger);
 
 PK11SymKey *ikev2_ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 					PK11SymKey *old_SK_d,
 					PK11SymKey *new_dh_secret,
-					const chunk_t Ni, const chunk_t Nr);
+					const chunk_t Ni, const chunk_t Nr,
+					struct logger *logger);
 
 PK11SymKey *ikev2_ike_sa_keymat(const struct prf_desc *prf_desc,
 				PK11SymKey *skeyseed,
 				const chunk_t Ni, const chunk_t Nr,
 				const ike_spis_t *ike_spis,
-				size_t required_bytes);
+				size_t required_bytes,
+				struct logger *logger);
 
 /*
  * Child SA
@@ -56,7 +60,8 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 				  PK11SymKey *SK_d,
 				  PK11SymKey *new_dh_secret,
 				  const chunk_t Ni, const chunk_t Nr,
-				  size_t required_bytes);
+				  size_t required_bytes,
+				  struct logger *logger);
 
 /*
  * Authentication.
@@ -64,6 +69,7 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 
 struct crypt_mac ikev2_psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
 				chunk_t first_packet, chunk_t nonce,
-				const struct crypt_mac *id_hash);
+				const struct crypt_mac *id_hash,
+				struct logger *logger);
 
 #endif

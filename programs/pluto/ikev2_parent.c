@@ -1775,7 +1775,7 @@ static struct crypt_mac v2_hash_id_payload(const char *id_name, struct ike_sa *i
 	 * MACedIDForR = prf(SK_pr, RestOfInitIDPayload)
 	 */
 	struct crypt_prf *id_ctx = crypt_prf_init_symkey(id_name, ike->sa.st_oakley.ta_prf,
-							 key_name, key);
+							 key_name, key, ike->sa.st_logger);
 	/* skip PayloadHeader; hash: IDType | RESERVED */
 	crypt_prf_update_bytes(id_ctx, "IDType", &ike->sa.st_v2_id_payload.header.isai_type,
 				sizeof(ike->sa.st_v2_id_payload.header.isai_type));
@@ -1798,7 +1798,7 @@ static struct crypt_mac v2_id_hash(struct ike_sa *ike, const char *why,
 	id_start += NSIZEOF_isakmp_generic;
 	id_size -= NSIZEOF_isakmp_generic;
 	struct crypt_prf *id_ctx = crypt_prf_init_symkey(why, ike->sa.st_oakley.ta_prf,
-							 key_name, key);
+							 key_name, key, ike->sa.st_logger);
 	crypt_prf_update_bytes(id_ctx, id_name, id_start, id_size);
 	return crypt_prf_final_mac(&id_ctx, NULL/*no-truncation*/);
 }
@@ -1862,9 +1862,10 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			ike->sa.st_sk_pr_no_ppk = reference_symkey(__func__, "sk_pr_no_ppk", ike->sa.st_skey_pr_nss);
 
 			ppk_recalculate(ppk, ike->sa.st_oakley.ta_prf,
-						&ike->sa.st_skey_d_nss,
-						&ike->sa.st_skey_pi_nss,
-						&ike->sa.st_skey_pr_nss);
+					&ike->sa.st_skey_d_nss,
+					&ike->sa.st_skey_pi_nss,
+					&ike->sa.st_skey_pr_nss,
+					ike->sa.st_logger);
 			libreswan_log("PPK AUTH calculated as initiator");
 		} else {
 			if (pc->policy & POLICY_PPK_INSIST) {
@@ -2660,7 +2661,8 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 			ppk_recalculate(ppk, st->st_oakley.ta_prf,
 					&st->st_skey_d_nss,
 					&st->st_skey_pi_nss,
-					&st->st_skey_pr_nss);
+					&st->st_skey_pr_nss,
+					st->st_logger);
 			st->st_ppk_used = TRUE;
 			libreswan_log("PPK AUTH calculated as responder");
 		} else {

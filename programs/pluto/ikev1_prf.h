@@ -34,11 +34,13 @@ struct encrypt_desc;
  */
 PK11SymKey *ikev1_signature_skeyid(const struct prf_desc *prf_desc,
 				   const chunk_t Ni_b, const chunk_t Nr_b,
-				   PK11SymKey *dh_secret);
+				   PK11SymKey *dh_secret,
+				   struct logger *logger);
 
 PK11SymKey *ikev1_pre_shared_key_skeyid(const struct prf_desc *prf_desc,
 					chunk_t pre_shared_key,
-					chunk_t Ni_b, chunk_t Nr_b);
+					chunk_t Ni_b, chunk_t Nr_b,
+					struct logger *logger);
 
 /*
  * Authenticated keying material.
@@ -49,22 +51,26 @@ PK11SymKey *ikev1_pre_shared_key_skeyid(const struct prf_desc *prf_desc,
 PK11SymKey *ikev1_skeyid_d(const struct prf_desc *prf_desc,
 			   PK11SymKey *skeyid,
 			   PK11SymKey *dh_secret,
-			   chunk_t cky_i, chunk_t cky_r);
+			   chunk_t cky_i, chunk_t cky_r,
+			   struct logger *logger);
 
 PK11SymKey *ikev1_skeyid_a(const struct prf_desc *prf_desc,
 			   PK11SymKey *skeyid,
 			   PK11SymKey *skeyid_d, PK11SymKey *dh_secret,
-			   chunk_t cky_i, chunk_t cky_r);
+			   chunk_t cky_i, chunk_t cky_r,
+			   struct logger *logger);
 
 PK11SymKey *ikev1_skeyid_e(const struct prf_desc *prf_desc,
 			   PK11SymKey *skeyid,
 			   PK11SymKey *skeyid_a, PK11SymKey *dh_secret,
-			   chunk_t cky_i, chunk_t cky_r);
+			   chunk_t cky_i, chunk_t cky_r,
+			   struct logger *logger);
 
 PK11SymKey *ikev1_appendix_b_keymat_e(const struct prf_desc *prf_desc,
 				      const struct encrypt_desc *encrypter,
 				      PK11SymKey *skeyid_e,
-				      unsigned required_keymat);
+				      unsigned required_keymat,
+				      struct logger *logger);
 
 chunk_t ikev1_section_5_keymat(const struct prf_desc *prf,
 			       PK11SymKey *SKEYID_d,
@@ -72,6 +78,7 @@ chunk_t ikev1_section_5_keymat(const struct prf_desc *prf,
 			       uint8_t protocol,
 			       shunk_t SPI,
 			       chunk_t NI_b, chunk_t Nr_b,
-			       unsigned required_keymat);
+			       unsigned required_keymat,
+			       struct logger *logger);
 
 #endif

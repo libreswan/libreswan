@@ -459,7 +459,7 @@ stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 
 		/* okay, authenticate from beginning of IV */
 		struct crypt_prf *ctx = crypt_prf_init_symkey("integ", ike->sa.st_oakley.ta_integ->prf,
-							      "authkey", authkey);
+							      "authkey", authkey, sk->logger);
 		crypt_prf_update_bytes(ctx, "message", auth_start, integ_start - auth_start);
 		passert(integ_size == ike->sa.st_oakley.ta_integ->integ_output_size);
 		struct crypt_mac mac = crypt_prf_final_mac(&ctx, ike->sa.st_oakley.ta_integ);
@@ -606,7 +606,7 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 		 * the truncated digest.
 		 */
 		struct crypt_prf *ctx = crypt_prf_init_symkey("auth", ike->sa.st_oakley.ta_integ->prf,
-							      "authkey", authkey);
+							      "authkey", authkey, ike->sa.st_logger);
 		crypt_prf_update_bytes(ctx, "message", auth_start, integ_start - auth_start);
 		struct crypt_mac td = crypt_prf_final_mac(&ctx, ike->sa.st_oakley.ta_integ);
 

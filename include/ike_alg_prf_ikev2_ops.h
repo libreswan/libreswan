@@ -20,6 +20,8 @@
 #include "shunk.h"
 #include "crypt_mac.h"
 
+struct logger;
+
 struct prf_ikev2_ops {
 	const char *backend;
 
@@ -28,32 +30,38 @@ struct prf_ikev2_ops {
 	 */
 	PK11SymKey *(*prfplus)(const struct prf_desc *prf_desc,
 			       PK11SymKey *key, PK11SymKey *seed,
-			       size_t required_keymat);
+			       size_t required_keymat,
+			       struct logger *logger);
 	/* SKEYSEED = prf(Ni | Nr, g^ir) */
 	PK11SymKey *(*ike_sa_skeyseed)(const struct prf_desc *prf_desc,
 				       const chunk_t Ni, const chunk_t Nr,
-				       PK11SymKey *dh_secret);
+				       PK11SymKey *dh_secret,
+				       struct logger *logger);
 	/* SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr) */
 	PK11SymKey *(*ike_sa_rekey_skeyseed)(const struct prf_desc *prf_desc,
 					     PK11SymKey *old_SK_d,
 					     PK11SymKey *new_dh_secret,
-					     const chunk_t Ni, const chunk_t Nr);
+					     const chunk_t Ni, const chunk_t Nr,
+					     struct logger *logger);
 	/* KEYMAT = prf+ (SKEYSEED, Ni | Nr | SPIi | SPIr) */
 	PK11SymKey *(*ike_sa_keymat)(const struct prf_desc *prf_desc,
 				     PK11SymKey *skeyseed,
 				     const chunk_t Ni, const chunk_t Nr,
 				     const shunk_t SPIi, const shunk_t SPIr,
-				     size_t required_bytes);
+				     size_t required_bytes,
+				     struct logger *logger);
 	/* KEYMAT = prf+(SK_d, [ g^ir (new) | ] Ni | Nr) */
 	PK11SymKey *(*child_sa_keymat)(const struct prf_desc *prf_desc,
 				       PK11SymKey *SK_d,
 				       PK11SymKey *new_dh_secret,
 				       const chunk_t Ni, const chunk_t Nr,
-				       size_t required_bytes);
+				       size_t required_bytes,
+				       struct logger *logger);
 	/* AUTH = prf( prf(Shared Secret, "Key Pad for IKEv2"), <{Initiator,Responder}SignedOctets>) */
 	struct crypt_mac (*psk_auth)(const struct prf_desc *prf_desc, chunk_t pss,
 				     chunk_t first_packet, chunk_t nonce,
-				     const struct crypt_mac *id_hash);
+				     const struct crypt_mac *id_hash,
+				     struct logger *logger);
 };
 
 extern const struct prf_ikev2_ops ike_alg_prf_ikev2_mac_ops;

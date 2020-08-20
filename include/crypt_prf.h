@@ -54,13 +54,15 @@ size_t crypt_prf_fips_key_size_floor(void);
  */
 struct crypt_prf *crypt_prf_init_symkey(const char *prf_name,
 					const struct prf_desc *prf_desc,
-					const char *key_name, PK11SymKey *key);
+					const char *key_name, PK11SymKey *key,
+					struct logger *logger);
 
 struct crypt_prf *crypt_prf_init_bytes(const char *prf_name,
 				       const struct prf_desc *prf_desc,
-				       const char *key_name, const void *key, size_t sizeof_key);
-#define crypt_prf_init_hunk(PRF_NAME, PRF, KEY_NAME, KEY) \
-	crypt_prf_init_bytes(PRF_NAME, PRF, KEY_NAME, (KEY).ptr, (KEY).len)
+				       const char *key_name, const void *key, size_t sizeof_key,
+				       struct logger *logger);
+#define crypt_prf_init_hunk(PRF_NAME, PRF, KEY_NAME, KEY, LOGGER)	\
+	crypt_prf_init_bytes(PRF_NAME, PRF, KEY_NAME, (KEY).ptr, (KEY).len, LOGGER)
 
 /*
  * Call these to accumulate the seed/data/text.

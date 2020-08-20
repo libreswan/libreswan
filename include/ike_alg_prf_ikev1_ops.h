@@ -18,6 +18,8 @@
 
 #include "chunk.h"
 
+struct logger;
+
 struct prf_ikev1_ops {
 	const char *backend;
 
@@ -38,10 +40,12 @@ struct prf_ikev1_ops {
 	 */
 	PK11SymKey *(*signature_skeyid)(const struct prf_desc *prf_desc,
 					const chunk_t Ni_b, const chunk_t Nr_b,
-					PK11SymKey *dh_secret);
+					PK11SymKey *dh_secret,
+					struct logger *logger);
 	PK11SymKey *(*pre_shared_key_skeyid)(const struct prf_desc *prf_desc,
 					     chunk_t pre_shared_key,
-					     chunk_t Ni_b, chunk_t Nr_b);
+					     chunk_t Ni_b, chunk_t Nr_b,
+					     struct logger *logger);
 
 	/*
 	 * SKEYID_d is the keying material used to derive keys for
@@ -66,7 +70,8 @@ struct prf_ikev1_ops {
 	PK11SymKey *(*skeyid_d)(const struct prf_desc *prf_desc,
 				PK11SymKey *skeyid,
 				PK11SymKey *dh_secret,
-				chunk_t cky_i, chunk_t cky_r);
+				chunk_t cky_i, chunk_t cky_r,
+				struct logger *logger);
 
 	/*
 	 * SKEYID_a is the keying material used by the ISAKMP SA to
@@ -81,7 +86,8 @@ struct prf_ikev1_ops {
 	PK11SymKey *(*skeyid_a)(const struct prf_desc *prf_desc,
 				PK11SymKey *skeyid,
 				PK11SymKey *skeyid_d, PK11SymKey *dh_secret,
-				chunk_t cky_i, chunk_t cky_r);
+				chunk_t cky_i, chunk_t cky_r,
+				struct logger *logger);
 
 	/*
 	 * SKEYID_e is the keying material used by the ISAKMP SA to
@@ -97,7 +103,8 @@ struct prf_ikev1_ops {
 	PK11SymKey *(*skeyid_e)(const struct prf_desc *prf_desc,
 				PK11SymKey *skeyid,
 				PK11SymKey *skeyid_a, PK11SymKey *dh_secret,
-				chunk_t cky_i, chunk_t cky_r);
+				chunk_t cky_i, chunk_t cky_r,
+				struct logger *logger);
 
 	/*
 	 * Appendix B - IKE (ISAKMP) SA keys
@@ -124,7 +131,8 @@ struct prf_ikev1_ops {
 	PK11SymKey *(*appendix_b_keymat_e)(const struct prf_desc *prf_desc,
 					   const struct encrypt_desc *encrypter,
 					   PK11SymKey *skeyid_e,
-					   unsigned required_keymat);
+					   unsigned required_keymat,
+					   struct logger *logger);
 
 	/*
 	 * Setion 5.5 - CHILD (IPSEC) SA keys & Quick Mode
@@ -163,7 +171,8 @@ struct prf_ikev1_ops {
 				    uint8_t protocol,
 				    shunk_t SPI,
 				    chunk_t NI_b, chunk_t Nr_b,
-				    unsigned required_keymat);
+				    unsigned required_keymat,
+				    struct logger *logger);
 };
 
 extern const struct prf_ikev1_ops ike_alg_prf_ikev1_mac_ops;

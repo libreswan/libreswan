@@ -285,7 +285,8 @@ struct crypt_mac main_mode_hash(struct state *st,
 {
 	struct crypt_prf *ctx = crypt_prf_init_symkey("main mode",
 						      st->st_oakley.ta_prf,
-						      "skeyid", st->st_skeyid_nss);
+						      "skeyid", st->st_skeyid_nss,
+						      st->st_logger);
 	main_mode_hash_body(st, role, idpl, ctx);
 	return crypt_prf_final_mac(&ctx, NULL);
 }

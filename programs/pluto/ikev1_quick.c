@@ -322,7 +322,8 @@ static void compute_proto_keymat(struct state *st,
 						protoid,
 						THING_AS_SHUNK(pi->our_spi),
 						st->st_ni, st->st_nr,
-						needed_len).ptr;
+						needed_len,
+						st->st_logger).ptr;
 
 	pfreeany(pi->peer_keymat);
 	pi->peer_keymat = ikev1_section_5_keymat(st->st_oakley.ta_prf,
@@ -331,7 +332,8 @@ static void compute_proto_keymat(struct state *st,
 						 protoid,
 						 THING_AS_SHUNK(pi->attrs.spi),
 						 st->st_ni, st->st_nr,
-						 needed_len).ptr;
+						 needed_len,
+						 st->st_logger).ptr;
 
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("%s KEYMAT", satypename);
