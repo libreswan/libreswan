@@ -128,7 +128,8 @@ bool ikev2_emit_sa_proposals(struct pbs_out *outs,
 			     const struct ikev2_proposals *proposals,
 			     const chunk_t *local_spi);
 
-const struct dh_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals);
+const struct dh_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals,
+					       struct logger *logger);
 
 bool ikev2_proposals_include_modp(const struct ikev2_proposals *proposals,
 				  oakley_group_t modp);
@@ -144,10 +145,11 @@ stf_status ikev2_process_sa_payload(const char *what,
 				    struct logger *logger);
 
 bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
-				  struct ipsec_proto_info *proto_info);
+				  struct ipsec_proto_info *proto_info,
+				  struct logger *logger);
 
 bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *chosen,
-				   struct trans_attrs *ta_out);
+				   struct trans_attrs *ta_out, struct logger *logger);
 
 struct ipsec_proto_info *ikev2_child_sa_proto_info(struct child_sa *child, lset_t policy);
 

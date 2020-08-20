@@ -1168,7 +1168,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 			 * Dump the proposals so far.  The detailed
 			 * error reason will have already been logged.
 			 */
-			LSWLOG(buf) {
+			LOG_MESSAGE(RC_LOG, logger, buf) {
 				jam_string(buf, "partial list of remote proposals: ");
 				jam_jambuf(buf, remote_jam_buf);
 			}
@@ -1176,13 +1176,13 @@ stf_status ikev2_process_sa_payload(const char *what,
 		} else if (matching_local_propnum == 0) {
 			/* no luck */
 			if (expect_accepted) {
-				LSWLOG(buf) {
+				LOG_MESSAGE(RC_LOG, logger, buf) {
 					jam_string(buf, "remote accepted the invalid proposal ");
 					jam_jambuf(buf, remote_jam_buf);
 				}
 				status = STF_FAIL;
 			} else {
-				LSWLOG(buf) {
+				LOG_MESSAGE(RC_LOG, logger, buf) {
 					jam_string(buf, "no local proposal matches remote proposals ");
 					jam_jambuf(buf, remote_jam_buf);
 				}
@@ -1203,7 +1203,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 								    remote_jam_buf);
 					}
 				} else {
-					LSWLOG(buf) {
+					LOG_MESSAGE(RC_LOG, logger, buf) {
 						jam_chosen_proposal(buf, best_proposal,
 								    remote_jam_buf);
 					}
@@ -1594,7 +1594,7 @@ bool ikev2_emit_sa_proposal(pb_stream *pbs,
 }
 
 bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
-				   struct trans_attrs *ta_out)
+				   struct trans_attrs *ta_out, struct logger *logger)
 {
 	dbg("converting proposal to internal trans attrs");
 
@@ -1626,10 +1626,11 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 					ikev2_get_encrypt_desc(transform->id);
 				if (encrypt == NULL) {
 					struct esb_buf buf;
-					PEXPECT_LOG("accepted IKEv2 proposal contains unexpected ENCRYPT %s",
-						    enum_showb(&ikev2_trans_type_encr_names,
-							       transform->id, &buf));
-					return FALSE;
+					pexpect_fail(logger, HERE,
+						     "accepted IKEv2 proposal contains unexpected ENCRYPT %s",
+						     enum_showb(&ikev2_trans_type_encr_names,
+								transform->id, &buf));
+					return false;
 				}
 				ta.ta_encrypt = encrypt;
 				ta.enckeylen = (transform->attr_keylen > 0
@@ -1647,10 +1648,11 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 					 * succeed.
 					 */
 					struct esb_buf buf;
-					PEXPECT_LOG("accepted IKEv2 proposal contains unexpected PRF %s",
-						    enum_showb(&ikev2_trans_type_prf_names,
-							       transform->id, &buf));
-					return FALSE;
+					pexpect_fail(logger, HERE,
+						     "accepted IKEv2 proposal contains unexpected PRF %s",
+						     enum_showb(&ikev2_trans_type_prf_names,
+								transform->id, &buf));
+					return false;
 				}
 				ta.ta_prf = prf;
 				break;
@@ -1666,10 +1668,11 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 					 * succeed.
 					 */
 					struct esb_buf buf;
-					PEXPECT_LOG("accepted IKEv2 proposal contains unexpected INTEG %s",
-						    enum_showb(&ikev2_trans_type_integ_names,
-							       transform->id, &buf));
-					return FALSE;
+					pexpect_fail(logger, HERE,
+						     "accepted IKEv2 proposal contains unexpected INTEG %s",
+						     enum_showb(&ikev2_trans_type_integ_names,
+								transform->id, &buf));
+					return false;
 				}
 				ta.ta_integ = integ;
 				break;
@@ -1686,10 +1689,11 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 					 * likely really bad.
 					 */
 					struct esb_buf buf;
-					PEXPECT_LOG("accepted IKEv2 proposal contains unexpected DH %s",
-						    enum_showb(&oakley_group_names,
-							       transform->id, &buf));
-					return FALSE;
+					pexpect_fail(logger, HERE,
+						     "accepted IKEv2 proposal contains unexpected DH %s",
+						     enum_showb(&oakley_group_names,
+								transform->id, &buf));
+					return false;
 				}
 				ta.ta_dh = group;
 				break;
@@ -1704,15 +1708,17 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 					break;
 				default:
 					ta.esn_enabled = FALSE;
-					PEXPECT_LOG("accepted IKEv2 proposal contains unexpected ESN %d",
-						    transform->id);
-					return FALSE;
+					pexpect_fail(logger, HERE,
+						     "accepted IKEv2 proposal contains unexpected ESN %d",
+						     transform->id);
+					return false;
 				}
 				break;
 			default:
-				PEXPECT_LOG("accepted IKEv2 proposal contains unexpected trans type %d",
+				pexpect_fail(logger, HERE,
+					     "accepted IKEv2 proposal contains unexpected trans type %d",
 					     type);
-				return FALSE;
+				return false;
 			}
 		}
 	}
@@ -1722,7 +1728,8 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 }
 
 bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
-				  struct ipsec_proto_info *proto_info)
+				  struct ipsec_proto_info *proto_info,
+				  struct logger *logger)
 {
 	/*
 	 * Start with ZERO for everything.
@@ -1735,7 +1742,7 @@ bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
 	 * Use generic code to convert everything.
 	 */
 	struct trans_attrs ta;
-	if (!ikev2_proposal_to_trans_attrs(proposal, &ta)) {
+	if (!ikev2_proposal_to_trans_attrs(proposal, &ta, logger)) {
 		return FALSE;
 	}
 
@@ -1806,23 +1813,23 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 {
 	const char *protocol = enum_short_name(&ikev2_proposal_protocol_id_names, proposal->protoid);
 	if (proposal->protoid == 0 || protocol == NULL) {
-		PEXPECT_LOG("%s", "IKEv2 ENCRYPT transform protocol unknown");
-		return FALSE;
+		pexpect_fail(logger, HERE, "%s", "IKEv2 ENCRYPT transform protocol unknown");
+		return false;
 	}
 	if (encrypt == NULL) {
-		PEXPECT_LOG("IKEv2 %s ENCRYPT transform has no encrypt algorithm", protocol);
-		return FALSE;
+		pexpect_fail(logger, HERE, "IKEv2 %s ENCRYPT transform has no encrypt algorithm", protocol);
+		return false;
 	}
 	if (encrypt->common.id[IKEv2_ALG_ID] == 0) {
-		loglog(RC_LOG_SERIOUS,
-		       "IKEv2 %s %s ENCRYPT transform is not supported",
-		       protocol, encrypt->common.fqn);
-		return FALSE;
+		log_message(RC_LOG_SERIOUS, logger,
+			    "IKEv2 %s %s ENCRYPT transform is not supported",
+			    protocol, encrypt->common.fqn);
+		return false;
 	}
 	if (keylen > 0 && !encrypt_has_key_bit_length(encrypt, keylen)) {
-		PEXPECT_LOG("IKEv2 %s %s ENCRYPT transform has an invalid key length of %u",
-			    protocol, encrypt->common.fqn, keylen);
-		return FALSE;
+		pexpect_fail(logger, HERE, "IKEv2 %s %s ENCRYPT transform has an invalid key length of %u",
+			     protocol, encrypt->common.fqn, keylen);
+		return false;
 	}
 
 	if (keylen > 0) {
@@ -2260,7 +2267,8 @@ ipsec_spi_t ikev2_child_sa_spi(const struct spd_route *spd_route, lset_t policy)
 /*
  * Return the first valid DH proposal that is supported.
  */
-const struct dh_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals)
+const struct dh_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals,
+					       struct logger *logger)
 {
 	int propnum;
 	const struct ikev2_proposal *proposal;
@@ -2278,7 +2286,8 @@ const struct dh_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *pro
 				 * rather than crash, continue looking
 				 * for a valid group.
 				 */
-				PEXPECT_LOG("proposals include unsupported group %d", groupnum);
+				pexpect_fail(logger, HERE,
+					     "proposals include unsupported group %d", groupnum);
 			} else if (group == &ike_alg_dh_none) {
 				dbg("ignoring DH=none when looking for first DH");
 			} else {

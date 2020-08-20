@@ -622,7 +622,7 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 	 */
 	struct ikev2_proposals *ike_proposals =
 		get_v2_ike_proposals(c, "IKE SA initiator selecting KE", ike->sa.st_logger);
-	st->st_oakley.ta_dh = ikev2_proposals_first_dh(ike_proposals);
+	st->st_oakley.ta_dh = ikev2_proposals_first_dh(ike_proposals, ike->sa.st_logger);
 	if (st->st_oakley.ta_dh == NULL) {
 		libreswan_log("proposals do not contain a valid DH");
 		delete_state(st); /* pops state? */
@@ -912,7 +912,7 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 	 * ...), drop everything.
 	 */
 	if (!ikev2_proposal_to_trans_attrs(ike->sa.st_accepted_ike_proposal,
-					   &ike->sa.st_oakley)) {
+					   &ike->sa.st_oakley, ike->sa.st_logger)) {
 		loglog(RC_LOG_SERIOUS, "IKE responder accepted an unsupported algorithm");
 		/* STF_INTERNAL_ERROR doesn't delete ST */
 		return STF_FATAL;
@@ -1542,7 +1542,7 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 		}
 
 		if (!ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal,
-						   &st->st_oakley)) {
+						   &st->st_oakley, ike->sa.st_logger)) {
 			loglog(RC_LOG_SERIOUS, "IKE initiator proposed an unsupported algorithm");
 			free_ikev2_proposal(&st->st_accepted_ike_proposal);
 			passert(st->st_accepted_ike_proposal == NULL);
@@ -3276,7 +3276,8 @@ stf_status ikev2_process_child_sa_pl(struct ike_sa *ike, struct child_sa *child,
 	if (DBGP(DBG_BASE)) {
 		DBG_log_ikev2_proposal(what, child->sa.st_accepted_esp_or_ah_proposal);
 	}
-	if (!ikev2_proposal_to_proto_info(child->sa.st_accepted_esp_or_ah_proposal, proto_info)) {
+	if (!ikev2_proposal_to_proto_info(child->sa.st_accepted_esp_or_ah_proposal, proto_info,
+					  child->sa.st_logger)) {
 		loglog(RC_LOG_SERIOUS, "%s proposed/accepted a proposal we don't actually support!", what);
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 	}
@@ -4173,7 +4174,7 @@ stf_status ikev2_child_ike_inR(struct ike_sa *ike,
 				       st->st_accepted_ike_proposal);
 	}
 	if (!ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal,
-					   &st->st_oakley)) {
+					   &st->st_oakley, st->st_logger)) {
 		loglog(RC_LOG_SERIOUS, "IKE responder accepted an unsupported algorithm");
 		/* free early return items */
 		free_ikev2_proposal(&st->st_accepted_ike_proposal);
@@ -4620,7 +4621,7 @@ stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
 	}
 
 	if (!ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal,
-					   &st->st_oakley)) {
+					   &st->st_oakley, st->st_logger)) {
 		loglog(RC_LOG_SERIOUS, "IKE responder accepted an unsupported algorithm");
 		/*
 		 * XXX; where is 'st' freed?  Should the code instead
@@ -5727,7 +5728,7 @@ void ikev2_initiate_child_sa(struct pending *p)
 		/* see ikev2_child_add_ipsec_payloads */
 		passert(c->v2_create_child_proposals != NULL);
 
-		child->sa.st_pfs_group = ikev2_proposals_first_dh(child_proposals);
+		child->sa.st_pfs_group = ikev2_proposals_first_dh(child_proposals, child->sa.st_logger);
 
 		dbg("#%lu schedule %s IPsec SA %s%s using IKE# %lu pfs=%s",
 		    child->sa.st_serialno,

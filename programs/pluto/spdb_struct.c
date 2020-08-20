@@ -77,7 +77,7 @@ static struct db_sa oakley_empty = { AD_SAp(oakley_props_empty) };
 
 static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 					enum ikev1_auth_method auth_method,
-					bool single_dh);
+					bool single_dh, struct logger *logger);
 
 static struct ike_proposals v1_default_ike_proposals(struct logger *logger)
 {
@@ -113,17 +113,18 @@ struct db_sa *v1_ike_alg_make_sadb(const struct ike_proposals ike_proposals,
 		struct ike_proposals default_info = v1_default_ike_proposals(logger);
 		struct db_sa *new_db = oakley_alg_mergedb(default_info,
 							  auth_method,
-							  single_dh);
+							  single_dh,
+							  logger);
 		proposals_delref(&default_info.p);
 		return new_db;
 	} else {
-		return oakley_alg_mergedb(ike_proposals, auth_method, single_dh);
+		return oakley_alg_mergedb(ike_proposals, auth_method, single_dh, logger);
 	}
 }
 
 struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 				 enum ikev1_auth_method auth_method,
-				 bool single_dh)
+				 bool single_dh, struct logger *logger)
 {
 	passert(ike_proposals.p != NULL);
 
@@ -164,9 +165,10 @@ struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 
 		const struct encrypt_desc *enc_desc = algs.encrypt;
 		if (eklen != 0 && !encrypt_has_key_bit_length(enc_desc, eklen)) {
-			PEXPECT_LOG("IKEv1 proposal with ENCRYPT%s (specified) keylen:%d, not valid, should have been dropped",
-				    enc_desc->common.fqn,
-				    eklen);
+			pexpect_fail(logger, HERE,
+				     "IKEv1 proposal with ENCRYPT%s (specified) keylen:%d, not valid, should have been dropped",
+				     enc_desc->common.fqn,
+				     eklen);
 			continue;
 		}
 
