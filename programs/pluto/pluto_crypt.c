@@ -633,10 +633,9 @@ static stf_status handle_helper_answer(struct state *st,
 		status = STF_SKIP_COMPLETE_STATE_TRANSITION;
 	} else if (st == NULL) {
 		/* oops, the state disappeared! */
-		LSWLOG_PEXPECT(buf) {
-			jam(buf, "work-order %u state #%lu disappeared!",
-				cn->pcrc_id, cn->pcrc_serialno);
-		}
+		log_pexpect(/*NO_STATE*/ HERE,
+			    "work-order %u state #%lu disappeared!",
+			    cn->pcrc_id, cn->pcrc_serialno);
 		h->cancelled_cb(&cn->pcrc_task);
 		pexpect(cn->pcrc_task == NULL); /* did your job */
 		status = STF_SKIP_COMPLETE_STATE_TRANSITION;

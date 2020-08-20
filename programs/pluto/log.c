@@ -582,12 +582,14 @@ void libreswan_exit(enum pluto_exit_code rc)
 void whack_log(enum rc_type rc, const struct fd *whackfd, const char *message, ...)
 {
 	if (!in_main_thread()) {
-		LSWLOG_PEXPECT(buf) {
-			jam(buf, "whack_log() must be called from the main thread: ");
+		/* still get the message out */
+		JAMBUF(buf) {
+			jam(buf, "[EXPECTATION FAILED: whack_log() on main thread]: ");
 			va_list args;
 			va_start(args, message);
 			jam_va_list(buf, message, args);
 			va_end(args);
+			log_raw(LOG_ERR, "", buf);
 		}
 		return;
 	}
