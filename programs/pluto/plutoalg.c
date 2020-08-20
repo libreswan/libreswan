@@ -134,7 +134,8 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
  *	malloced pointer (this quirk allows easier spdb.c change)
  */
 static struct db_context *kernel_alg_db_new(struct child_proposals proposals,
-					    lset_t policy, bool logit)
+					    lset_t policy, bool logit,
+					    struct logger *logger)
 {
 	unsigned int trans_cnt = 0;
 	int protoid = PROTO_RESERVED;
@@ -171,7 +172,7 @@ static struct db_context *kernel_alg_db_new(struct child_proposals proposals,
 				success = FALSE;	/* ??? should we break? */
 		}
 	} else {
-		PEXPECT_LOG("%s", "proposals should be non-NULL");
+		pexpect_fail(logger, HERE, "%s", "proposals should be non-NULL");
 	}
 
 	if (!success) {
@@ -329,7 +330,7 @@ void show_kernel_alg_connection(struct show *s,
 
 struct db_sa *kernel_alg_makedb(lset_t policy,
 				struct child_proposals proposals,
-				bool logit)
+				bool logit, struct logger *logger)
 {
 	if (proposals.p == NULL) {
 		struct db_sa *sadb;
@@ -346,17 +347,17 @@ struct db_sa *kernel_alg_makedb(lset_t policy,
 		return sadb;
 	}
 
-	struct db_context *dbnew = kernel_alg_db_new(proposals, policy, logit);
+	struct db_context *dbnew = kernel_alg_db_new(proposals, policy, logit, logger);
 
 	if (dbnew == NULL) {
-		libreswan_log("failed to translate esp_info to proposal, returning empty");
+		log_message(RC_LOG, logger, "failed to translate esp_info to proposal, returning empty");
 		return NULL;
 	}
 
 	struct db_prop *p = db_prop_get(dbnew);
 
 	if (p == NULL) {
-		libreswan_log("failed to get proposal from context, returning empty");
+		log_message(RC_LOG, logger, "failed to get proposal from context, returning empty");
 		db_destroy(dbnew);
 		return NULL;
 	}

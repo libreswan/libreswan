@@ -177,6 +177,6 @@ extern struct db_sa *v1_ike_alg_make_sadb(const struct ike_proposals proposals,
 
 extern struct db_sa *kernel_alg_makedb(lset_t policy,
 				       const struct child_proposals proposals,
-				       bool logit);
+				       bool logit, struct logger *logger);
 
 #endif /*  _SPDB_H_ */

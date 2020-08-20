@@ -750,6 +750,7 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 
 void init_ikev1(void)
 {
+	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
 	dbg("checking IKEv1 state table");
 
 	/*
@@ -826,8 +827,8 @@ void init_ikev1(void)
 		from->nr_transitions++;
 
 		if (t->message == NULL) {
-			PEXPECT_LOG("transition %s -> %s missing .message",
-				    from->short_name, to->short_name);
+			pexpect_fail(logger, HERE, "transition %s -> %s missing .message",
+				     from->short_name, to->short_name);
 		}
 
 		/*
@@ -869,14 +870,16 @@ void init_ikev1(void)
 			 * require integrity via the HASH payload.
 			 */
 			if (!(t->req_payloads & LELEM(ISAKMP_NEXT_HASH))) {
-				PEXPECT_LOG("transition %s -> %s (%s) missing HASH payload",
-					    from->short_name, to->short_name,
-					    t->message);
+				pexpect_fail(logger, HERE,
+					     "transition %s -> %s (%s) missing HASH payload",
+					     from->short_name, to->short_name,
+					     t->message);
 			}
 			if (t->hash_type == V1_HASH_NONE) {
-				PEXPECT_LOG("transition %s -> %s (%s) missing HASH protection",
-					    from->short_name, to->short_name,
-					    t->message);
+				pexpect_fail(logger, HERE,
+					     "transition %s -> %s (%s) missing HASH protection",
+					     from->short_name, to->short_name,
+					     t->message);
 			}
 		}
 	}

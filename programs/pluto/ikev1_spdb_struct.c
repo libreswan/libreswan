@@ -210,7 +210,8 @@ static bool out_attr(int type,
  */
 
 static bool ikev1_verify_esp(const struct connection *c,
-			     const struct trans_attrs *ta)
+			     const struct trans_attrs *ta,
+			     struct logger *logger)
 {
 	if (!(c->policy & POLICY_ENCRYPT)) {
 		dbg("ignoring ESP proposal as POLICY_ENCRYPT unset");
@@ -289,13 +290,13 @@ static bool ikev1_verify_esp(const struct connection *c,
 	 * know?
 	 */
 	if (ta->ta_prf != NULL) {
-		PEXPECT_LOG("ESP IPsec Transform refused: contains unexpected PRF %s",
-			    ta->ta_prf->common.fqn);
+		pexpect_fail(logger, HERE, "ESP IPsec Transform refused: contains unexpected PRF %s",
+			     ta->ta_prf->common.fqn);
 		return false;
 	}
 	if (ta->ta_dh != NULL) {
-		PEXPECT_LOG("ESP IPsec Transform refused: contains unexpected DH %s",
-			    ta->ta_dh->common.fqn);
+		pexpect_fail(logger, HERE, "ESP IPsec Transform refused: contains unexpected DH %s",
+			     ta->ta_dh->common.fqn);
 		return false;
 	}
 
@@ -319,29 +320,31 @@ static bool ikev1_verify_esp(const struct connection *c,
 }
 
 static bool ikev1_verify_ah(const struct connection *c,
-			    const struct trans_attrs *ta)
+			    const struct trans_attrs *ta,
+			    struct logger *logger)
 {
 	if (!(c->policy & POLICY_AUTHENTICATE)) {
 		dbg("ignoring AH proposal as POLICY_AUTHENTICATE unset");
 		return false;       /* try another */
 	}
 	if (ta->ta_encrypt != NULL) {
-		PEXPECT_LOG("AH IPsec Transform refused: contains unexpected encryption %s",
-			    ta->ta_encrypt->common.fqn);
+		pexpect_fail(logger, HERE,
+			     "AH IPsec Transform refused: contains unexpected encryption %s",
+			     ta->ta_encrypt->common.fqn);
 		return false;
 	}
 	if (ta->ta_prf != NULL) {
-		PEXPECT_LOG("AH IPsec Transform refused: contains unexpected PRF %s",
-			    ta->ta_prf->common.fqn);
+		pexpect_fail(logger, HERE, "AH IPsec Transform refused: contains unexpected PRF %s",
+			     ta->ta_prf->common.fqn);
 		return false;
 	}
 	if (ta->ta_integ == NULL) {
-		libreswan_log("AH IPsec Transform refused: missing integrity algorithm");
+		pexpect_fail(logger, HERE, "AH IPsec Transform refused: missing integrity algorithm");
 		return false;
 	}
 	if (ta->ta_dh != NULL) {
-		PEXPECT_LOG("AH IPsec Transform refused: contains unexpected DH %s",
-			    ta->ta_dh->common.fqn);
+		pexpect_fail(logger, HERE, "AH IPsec Transform refused: contains unexpected DH %s",
+			     ta->ta_dh->common.fqn);
 		return false;
 	}
 	if (c->child_proposals.p == NULL) {
@@ -399,7 +402,7 @@ bool ikev1_out_sa(pb_stream *outs,
 	} else {
 		revised_sadb = kernel_alg_makedb(st->st_connection->policy,
 						 st->st_connection->child_proposals,
-						 TRUE);
+						 true, st->st_logger);
 
 		/* add IPcomp proposal if policy asks for it */
 
@@ -963,25 +966,26 @@ lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */)
 }
 
 static bool ikev1_verify_ike(const struct trans_attrs *ta,
-			     struct ike_proposals ike_proposals)
+			     struct ike_proposals ike_proposals,
+			     struct logger *logger)
 {
 	if (ta->ta_encrypt == NULL) {
-		loglog(RC_LOG_SERIOUS,
-		       "OAKLEY proposal refused: missing encryption");
+		log_message(RC_LOG_SERIOUS, logger,
+			    "OAKLEY proposal refused: missing encryption");
 		return false;
 	}
 	if (ta->ta_prf == NULL) {
-		loglog(RC_LOG_SERIOUS,
-		       "OAKLEY proposal refused: missing PRF");
+		log_message(RC_LOG_SERIOUS, logger,
+			    "OAKLEY proposal refused: missing PRF");
 		return false;
 	}
 	if (ta->ta_integ != NULL) {
-		PEXPECT_LOG("OAKLEY proposal refused: contains unexpected integrity %s",
-			    ta->ta_prf->common.fqn);
+		pexpect_fail(logger, HERE, "OAKLEY proposal refused: contains unexpected integrity %s",
+			     ta->ta_prf->common.fqn);
 		return false;
 	}
 	if (ta->ta_dh == NULL) {
-		loglog(RC_LOG_SERIOUS, "OAKLEY proposal refused: missing DH");
+		log_message(RC_LOG_SERIOUS, logger, "OAKLEY proposal refused: missing DH");
 		return false;
 	}
 	if (ike_proposals.p == NULL) {
@@ -1552,7 +1556,7 @@ rsasig_common:
 			/*
 			 * ML: at last check for allowed transforms in ike_proposals
 			 */
-			if (!ikev1_verify_ike(&ta, c->ike_proposals)) {
+			if (!ikev1_verify_ike(&ta, c->ike_proposals, st->st_logger)) {
 				/*
 				 * already logged; UGH acts as a skip
 				 * rest of checks flag
@@ -2552,7 +2556,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				continue; /* we didn't find a nice one */
 
 			/* Check AH proposal with configuration */
-			if (!ikev1_verify_ah(c, &ah_attrs.transattrs)) {
+			if (!ikev1_verify_ah(c, &ah_attrs.transattrs, st->st_logger)) {
 				continue;
 			}
 			ah_attrs.spi = ah_spi;
@@ -2585,7 +2589,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				/*
 				 * check for allowed transforms in alg_info_esp
 				 */
-				if (!ikev1_verify_esp(c, &esp_attrs.transattrs)) {
+				if (!ikev1_verify_esp(c, &esp_attrs.transattrs, st->st_logger)) {
 					continue;       /* try another */
 				}
 
