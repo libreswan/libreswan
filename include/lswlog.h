@@ -474,11 +474,6 @@ void lswlog_pexpect_suffix(struct jambuf *buf, where_t where);
 void lswlog_passert_prefix(struct jambuf *buf);
 void lswlog_passert_suffix(struct jambuf *buf, where_t where) NEVER_RETURNS;
 
-#define LSWLOG_PASSERT(BUF)				   \
-	LSWLOG_(true, BUF,				   \
-		lswlog_passert_prefix(BUF),		   \
-		lswlog_passert_suffix(BUF, HERE))
-
 /* for a switch statement */
 
 void libreswan_bad_case(const char *expression, long value, where_t where) NEVER_RETURNS;

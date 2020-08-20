@@ -71,10 +71,9 @@ void get_rnd_bytes(void *buffer, size_t length)
 {
 	SECStatus rv = PK11_GenerateRandom(buffer, length);
 	if (rv != SECSuccess) {
-		LSWLOG_PASSERT(buf) {
-			jam_string(buf, "NSS RNG failed: ");
-			jam_nss_error(buf);
-		}
+		/* XXX: hack */
+		struct logger logger = GLOBAL_LOGGER(null_fd);
+		passert_nss_error(&logger, HERE, "RNG failed");
 	}
 }
 
