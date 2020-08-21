@@ -324,13 +324,15 @@ extern void loglog(enum rc_type, const char *fmt, ...) PRINTF_LIKE(2); /* use lo
 
 void jambuf_to_default_streams(struct jambuf *buf, enum rc_type rc);
 
-#define LSWLOG_RC(RC, BUF) LSWLOG_(true, BUF,				\
-				   jam_cur_prefix(BUF),			\
-				   jambuf_to_default_streams(BUF, RC))
+#define LSWLOG_RC(RC, BUF)						\
+	JAMBUF(BUF)							\
+		for (jam_cur_prefix(BUF); BUF != NULL;			\
+		     jambuf_to_default_streams(BUF, RC), BUF = NULL)
 
-#define LSWLOG(BUF) LSWLOG_(true, BUF,					\
-			    jam_cur_prefix(BUF),			\
-			    jambuf_to_default_streams(BUF, RC_LOG))
+#define LSWLOG(BUF)							\
+	JAMBUF(BUF)							\
+		for (jam_cur_prefix(BUF); BUF != NULL;			\
+		     jambuf_to_default_streams(BUF, RC_LOG), BUF = NULL)
 
 #define LOG_ERRNO(ERRNO, MESSAGE, ...)					\
 	{								\

@@ -223,9 +223,9 @@ void log_va_list(lset_t rc_flags, const struct logger *logger,
 void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc_flags);
 
 #define LOG_MESSAGE(RC_FLAGS, LOGGER, BUF)				\
-	LSWLOG_(true, BUF,						\
-		jam_logger_prefix(BUF, LOGGER),				\
-		jambuf_to_logger(BUF, (LOGGER), RC_FLAGS))
+	JAMBUF(BUF)							\
+		for (jam_logger_prefix(BUF, LOGGER); BUF != NULL;	\
+		     jambuf_to_logger(BUF, (LOGGER), RC_FLAGS), BUF = NULL)
 
 /*
  * Initial (and tool) logger - it writes everything with PROGNAME:
@@ -343,12 +343,18 @@ void DBG_dump(const char *label, const void *p, size_t len);
 	}
 #define DBG_dump_thing(LABEL, THING) DBG_dump(LABEL, &(THING), sizeof(THING))
 
-#define LSWDBGP(DEBUG, BUF) LSWLOG_(DBGP(DEBUG), BUF,			\
-				    /*no-prefix*/,			\
-				    jambuf_to_debug_stream(BUF))
-#define LSWLOG_DEBUG(BUF) LSWLOG_(true, BUF,				\
-				  /*no-prefix*/,			\
-				  jambuf_to_debug_stream(BUF))
+#define LSWDBGP(DEBUG, BUF)						\
+	for (bool lswlog_p = DBGP(DEBUG); lswlog_p; lswlog_p = false)	\
+		JAMBUF(BUF)						\
+			/* no-prefix */					\
+			for (; BUF != NULL;				\
+			     jambuf_to_debug_stream(BUF), BUF = NULL)
+
+#define LSWLOG_DEBUG(BUF)					\
+	JAMBUF(BUF)						\
+		/* no-prefix */					\
+		for (; BUF != NULL;				\
+		     jambuf_to_debug_stream(BUF), BUF = NULL)
 
 /*
  * Code wrappers that cover up the details of allocating,
@@ -396,25 +402,6 @@ void lswbuf(struct jambuf *log)
 	}
 }
 #endif
-
-/*
- * Template for constructing logging output intended for a logger
- * stream.
- *
- * The code is equivlaent to:
- *
- *   if (PREDICATE) {
- *     LSWBUF(BUF) {
- *       PREFIX;
- *          BLOCK;
- *       SUFFIX;
- *    }
- */
-
-#define LSWLOG_(PREDICATE, BUF, PREFIX, SUFFIX)				\
-	for (bool lswlog_p = PREDICATE; lswlog_p; lswlog_p = false)	\
-		JAMBUF(BUF)						\
-			for (PREFIX; lswlog_p; lswlog_p = false, SUFFIX)
 
 /*
  * Log an expectation failure message to the error streams.  That is
