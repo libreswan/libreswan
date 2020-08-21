@@ -336,7 +336,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey,
 				 &wrapped_key);
 	passert(status == SECSuccess);
 	if (DBGP(DBG_CRYPT)) {
-		LSWLOG_DEBUG(buf) {
+		LOG_MESSAGE(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, "wrapper: ");
 			jam_nss_secitem(buf, &wrapped_key);
 		}

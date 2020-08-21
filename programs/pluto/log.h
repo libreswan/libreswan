@@ -364,4 +364,10 @@ void jambuf_to_default_streams(struct jambuf *buf, enum rc_type rc);
 		libreswan_exit(PLUTO_EXIT_FAIL);			\
 	}
 
+#define LSWLOG_DEBUG(BUF)					\
+	JAMBUF(BUF)						\
+		/* no-prefix */					\
+		for (; BUF != NULL;				\
+		     jambuf_to_debug_stream(BUF), BUF = NULL)
+
 #endif /* _PLUTO_LOG_H */

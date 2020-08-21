@@ -350,12 +350,6 @@ void DBG_dump(const char *label, const void *p, size_t len);
 			for (; BUF != NULL;				\
 			     jambuf_to_debug_stream(BUF), BUF = NULL)
 
-#define LSWLOG_DEBUG(BUF)					\
-	JAMBUF(BUF)						\
-		/* no-prefix */					\
-		for (; BUF != NULL;				\
-		     jambuf_to_debug_stream(BUF), BUF = NULL)
-
 /*
  * Code wrappers that cover up the details of allocating,
  * initializing, de-allocating (and possibly logging) a 'struct
