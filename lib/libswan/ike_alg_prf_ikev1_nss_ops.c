@@ -32,7 +32,8 @@
 static PK11SymKey *signature_skeyid(const struct prf_desc *prf_desc,
 				    const chunk_t Ni,
 				    const chunk_t Nr,
-				    /*const*/ PK11SymKey *dh_secret /* NSS doesn't do const */)
+				    /*const*/ PK11SymKey *dh_secret /* NSS doesn't do const */,
+				    struct logger *unused_logger UNUSED)
 {
 	CK_NSS_IKE_PRF_DERIVE_PARAMS ike_prf_params = {
 		.prfMechanism = prf_desc->nss.mechanism,
@@ -58,7 +59,8 @@ static PK11SymKey *signature_skeyid(const struct prf_desc *prf_desc,
  */
 static PK11SymKey *pre_shared_key_skeyid(const struct prf_desc *prf_desc,
 					 chunk_t pre_shared_key,
-					 chunk_t Ni, chunk_t Nr)
+					 chunk_t Ni, chunk_t Nr,
+					 struct logger *unused_logger UNUSED)
 {
 	PK11SymKey *psk = prf_key_from_hunk("psk", prf_desc, pre_shared_key);
 	PK11SymKey *skeyid;
@@ -93,7 +95,8 @@ static PK11SymKey *pre_shared_key_skeyid(const struct prf_desc *prf_desc,
 static PK11SymKey *skeyid_d(const struct prf_desc *prf_desc,
 			    PK11SymKey *skeyid,
 			    PK11SymKey *dh_secret,
-			    chunk_t cky_i, chunk_t cky_r)
+			    chunk_t cky_i, chunk_t cky_r,
+			    struct logger *unused_logger UNUSED)
 {
 	CK_NSS_IKE1_PRF_DERIVE_PARAMS ike1_prf_params = {
 		.prfMechanism = prf_desc->nss.mechanism,
@@ -121,7 +124,8 @@ static PK11SymKey *skeyid_d(const struct prf_desc *prf_desc,
 static PK11SymKey *skeyid_a(const struct prf_desc *prf_desc,
 			    PK11SymKey *skeyid,
 			    PK11SymKey *skeyid_d, PK11SymKey *dh_secret,
-			    chunk_t cky_i, chunk_t cky_r)
+			    chunk_t cky_i, chunk_t cky_r,
+			    struct logger *unused_logger UNUSED)
 {
 	CK_NSS_IKE1_PRF_DERIVE_PARAMS ike1_prf_params = {
 		.prfMechanism = prf_desc->nss.mechanism,
@@ -150,7 +154,8 @@ static PK11SymKey *skeyid_a(const struct prf_desc *prf_desc,
 static PK11SymKey *skeyid_e(const struct prf_desc *prf_desc,
 			    PK11SymKey *skeyid,
 			    PK11SymKey *skeyid_a, PK11SymKey *dh_secret,
-			    chunk_t cky_i, chunk_t cky_r)
+			    chunk_t cky_i, chunk_t cky_r,
+			    struct logger *unused_logger UNUSED)
 {
 	CK_NSS_IKE1_PRF_DERIVE_PARAMS ike1_prf_params = {
 		.prfMechanism = prf_desc->nss.mechanism,
@@ -176,7 +181,8 @@ static PK11SymKey *skeyid_e(const struct prf_desc *prf_desc,
 static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf,
 				       const struct encrypt_desc *encrypter,
 				       PK11SymKey *skeyid_e,
-				       unsigned required_keymat)
+				       unsigned required_keymat,
+				       struct logger *unused_logger UNUSED)
 {
 
 	/*
@@ -209,7 +215,8 @@ static chunk_t section_5_keymat(const struct prf_desc *prf,
 				uint8_t protocol,
 				shunk_t SPI,
 				chunk_t Ni_b, chunk_t Nr_b,
-				unsigned required_keymat)
+				unsigned required_keymat,
+				struct logger *unused_logger UNUSED)
 {
 	/*
 	 * XXX: this requires:
