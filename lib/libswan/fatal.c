@@ -30,7 +30,7 @@ void fatal(struct logger *logger, const char *fmt, ...)
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);
 		va_end(ap);
-		jambuf_to_logger(buf, logger, ERROR_STREAM|RC_LOG_SERIOUS);
+		jambuf_to_logger(buf, logger, ERROR_FLAGS);
 	}
 	libreswan_exit(PLUTO_EXIT_FAIL);
 }

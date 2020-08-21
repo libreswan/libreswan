@@ -56,7 +56,7 @@ void jam_cur_prefix(struct jambuf *buf)
 
 void jambuf_to_logger(struct jambuf *buf, const struct logger *logger UNUSED, lset_t rc_flags)
 {
-	enum stream only = rc_flags & ~RC_MASK;
+	enum stream only = rc_flags & STREAM_MASK;
 	switch (only) {
 	case DEBUG_STREAM:
 		jambuf_to_debug_stream(buf);

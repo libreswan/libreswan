@@ -43,6 +43,6 @@ void pexpect_fail(struct logger *logger, where_t where, const char *message, ...
 		jam_va_list(buf, message, ap);
 		va_end(ap);
 		jam(buf, " "PRI_WHERE, pri_where(where));
-		jambuf_to_logger(buf, logger, ERROR_STREAM|RC_LOG_SERIOUS);
+		jambuf_to_logger(buf, logger, ERROR_FLAGS);
 	}
 }

@@ -701,7 +701,7 @@ static void log_whacks(enum rc_type rc, const struct fd *global_whackfd,
 void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc_flags)
 {
 	enum rc_type rc = rc_flags & RC_MASK;
-	enum stream only = rc_flags & ~RC_MASK;
+	enum stream only = rc_flags & STREAM_MASK;
 	switch (only) {
 	case DEBUG_STREAM:
 		log_raw(LOG_DEBUG, DEBUG_PREFIX, buf);

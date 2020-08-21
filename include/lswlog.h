@@ -165,14 +165,18 @@ enum stream {
 	 * and and the log files.
 	 */
 	/* Mask the whack RC; max value is 64435+200 */
-	RC_MASK		= 0x0fffff,
-	/*                                 Severity     Whack Prefix */
-	ALL_STREAMS     = 0x000000,	/* LOG_WARNING   yes         */
-	LOG_STREAM	= 0x100000,	/* LOG_WARNING   no          */
-	DEBUG_STREAM	= 0x200000,	/* LOG_DEBUG     no    "| "  */
-	WHACK_STREAM	= 0x300000,	/*    N/A        yes         */
-	ERROR_STREAM	= 0x400000,	/* LOG_ERR       no          */
-	NO_STREAM	= 0xf00000,	/* n/a */
+	RC_MASK      = 0x0fffff,
+	STREAM_MASK  = 0xf00000,
+	/*                         syslog()           Prefixes    */
+	/*                         Severity  Whack  Object  Debug */
+	ALL_STREAMS  = 0x000000, /* WARNING   yes    yes          */
+	LOG_STREAM   = 0x100000, /* WARNING   no     yes          */
+	DEBUG_STREAM = 0x200000, /*  DEBUG    no     <*>     "| " */
+	WHACK_STREAM = 0x300000, /*   N/A     yes    yes          */
+	ERROR_STREAM = 0x400000, /*   ERR     no     yes          */
+	NO_STREAM    = 0xf00000, /*   N/A     N/A                 */
+	/* <1> when enabled */
+#define ERROR_FLAGS (ERROR_STREAM|RC_LOG_SERIOUS)
 };
 
 /*
@@ -195,6 +199,13 @@ struct logger_object_vec {
 	bool free_object;
 	size_t (*jam_object_prefix)(struct jambuf *buf, const void *object);
 #define jam_logger_prefix(BUF, LOGGER) (LOGGER)->object_vec->jam_object_prefix(BUF, (LOGGER)->object)
+#define jam_logger_prefix_rc(BUF, LOGGER, RC_FLAGS)			\
+	({								\
+		if (((RC_FLAGS) & STREAM_MASK) != DEBUG_STREAM ||	\
+		    DBGP(DBG_ADD_PREFIX)) {				\
+			jam_logger_prefix(BUF, LOGGER);			\
+		}							\
+	})
 	/*
 	 * When opportunistic encryption or the initial responder, for
 	 * instance, some logging is suppressed.
@@ -224,7 +235,8 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 
 #define LOG_JAMBUF(RC_FLAGS, LOGGER, BUF)				\
 	JAMBUF(BUF)							\
-		for (jam_logger_prefix(BUF, LOGGER); BUF != NULL;	\
+		for (jam_logger_prefix_rc(BUF, LOGGER, RC_FLAGS);	\
+		     BUF != NULL;					\
 		     jambuf_to_logger(BUF, (LOGGER), RC_FLAGS), BUF = NULL)
 
 /*
