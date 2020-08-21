@@ -52,30 +52,33 @@ void kernel_add_sadb_alg(int satype, int exttype, const struct sadb_alg *sadb_al
 		break;
 	}
 
-	LSWDBGP(DBG_BASE, buf) {
-		jam_string(buf, __func__);
-		jam_string(buf, ":");
-		jam(buf, " satype=%d(%s)", satype,
-			satype == SADB_SATYPE_ESP ? "SADB_SATYPE_ESP"
-			: satype == SADB_SATYPE_AH ? "SADB_SATYPE_AH"
-			: "SADB_SATYPE_???");
-		jam(buf, " exttype=%d(%s)", exttype,
-			exttype == SADB_EXT_SUPPORTED_AUTH ? "SADB_EXT_SUPPORTED_AUTH"
-			: exttype == SADB_EXT_SUPPORTED_ENCRYPT ? "SADB_EXT_SUPPORTED_ENCRYPT"
-			: "SADB_EXT_SUPPORTED_???");
-		DBG_log(" alg_id=%d(%s)", alg_id,
-			integ != NULL ? integ->common.fqn
-			: encrypt != NULL ? encrypt->common.fqn
-			: "???");
-		jam(buf, " alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d",
-			sadb_alg->sadb_alg_ivlen,
-			sadb_alg->sadb_alg_minbits,
-			sadb_alg->sadb_alg_maxbits);
-		if (integ == NULL && encrypt == NULL) {
-			jam_string(buf, ", not supported");
-		}
-		if (!combo_ok) {
-			jam_string(buf, ", invalid combo");
+	if (DBGP(DBG_BASE)) {
+		JAMBUF(buf) {
+			jam_string(buf, __func__);
+			jam_string(buf, ":");
+			jam(buf, " satype=%d(%s)", satype,
+			    satype == SADB_SATYPE_ESP ? "SADB_SATYPE_ESP"
+			    : satype == SADB_SATYPE_AH ? "SADB_SATYPE_AH"
+			    : "SADB_SATYPE_???");
+			jam(buf, " exttype=%d(%s)", exttype,
+			    exttype == SADB_EXT_SUPPORTED_AUTH ? "SADB_EXT_SUPPORTED_AUTH"
+			    : exttype == SADB_EXT_SUPPORTED_ENCRYPT ? "SADB_EXT_SUPPORTED_ENCRYPT"
+			    : "SADB_EXT_SUPPORTED_???");
+			DBG_log(" alg_id=%d(%s)", alg_id,
+				integ != NULL ? integ->common.fqn
+				: encrypt != NULL ? encrypt->common.fqn
+				: "???");
+			jam(buf, " alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d",
+			    sadb_alg->sadb_alg_ivlen,
+			    sadb_alg->sadb_alg_minbits,
+			    sadb_alg->sadb_alg_maxbits);
+			if (integ == NULL && encrypt == NULL) {
+				jam_string(buf, ", not supported");
+			}
+			if (!combo_ok) {
+				jam_string(buf, ", invalid combo");
+			}
+			jambuf_to_debug_stream(buf);
 		}
 	}
 

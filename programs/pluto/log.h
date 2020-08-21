@@ -370,4 +370,11 @@ void jambuf_to_default_streams(struct jambuf *buf, enum rc_type rc);
 		for (; BUF != NULL;				\
 		     jambuf_to_debug_stream(BUF), BUF = NULL)
 
+#define LSWDBGP(DEBUG, BUF)						\
+	for (bool lswlog_p = DBGP(DEBUG); lswlog_p; lswlog_p = false)	\
+		JAMBUF(BUF)						\
+			/* no-prefix */					\
+			for (; BUF != NULL;				\
+			     jambuf_to_debug_stream(BUF), BUF = NULL)
+
 #endif /* _PLUTO_LOG_H */

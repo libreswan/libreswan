@@ -343,13 +343,6 @@ void DBG_dump(const char *label, const void *p, size_t len);
 	}
 #define DBG_dump_thing(LABEL, THING) DBG_dump(LABEL, &(THING), sizeof(THING))
 
-#define LSWDBGP(DEBUG, BUF)						\
-	for (bool lswlog_p = DBGP(DEBUG); lswlog_p; lswlog_p = false)	\
-		JAMBUF(BUF)						\
-			/* no-prefix */					\
-			for (; BUF != NULL;				\
-			     jambuf_to_debug_stream(BUF), BUF = NULL)
-
 /*
  * Code wrappers that cover up the details of allocating,
  * initializing, de-allocating (and possibly logging) a 'struct
