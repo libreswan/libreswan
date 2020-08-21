@@ -101,7 +101,7 @@ void jam_symkey(struct jambuf *buf, const char *name, PK11SymKey *key)
 
 void DBG_symkey(struct logger *logger, const char *prefix, const char *name, PK11SymKey *key)
 {
-	LOG_MESSAGE(DEBUG_STREAM, logger, buf) {
+	LOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 		jam(buf, "%s: ", prefix);
 		jam_symkey(buf, name, key);
 	}
@@ -126,38 +126,38 @@ PK11SymKey *crypt_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem
 			 where_t where, struct logger *logger)
 {
 #define DBG_DERIVE()							\
-	LOG_MESSAGE(DEBUG_STREAM, logger, buf) {			\
+	LOG_JAMBUF(DEBUG_STREAM, logger, buf) {				\
 		jam_nss_ckm(buf, derive);				\
 		jam_string(buf, ":");					\
 	}								\
-	LOG_MESSAGE(DEBUG_STREAM, logger, buf) {			\
+	LOG_JAMBUF(DEBUG_STREAM, logger, buf) {				\
 		jam_string(buf, SPACES"target: ");			\
 		jam_nss_ckm(buf, target_mechanism);			\
 	}								\
 	if (flags != 0) {						\
-		LOG_MESSAGE(DEBUG_STREAM, logger, buf) {		\
+		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {			\
 			jam_string(buf, SPACES"flags: ");		\
 			jam_nss_ckf(buf, flags);			\
 		}							\
 	}								\
 	if (key_size != 0) {						\
-		LOG_MESSAGE(DEBUG_STREAM, logger, buf) {		\
+		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {			\
 			jam(buf, SPACES "key_size: %d-bytes",		\
 			    key_size);					\
 		}							\
 	}								\
-	LOG_MESSAGE(DEBUG_STREAM, logger, buf) {			\
+	LOG_JAMBUF(DEBUG_STREAM, logger, buf) {				\
 		jam_string(buf, SPACES"base: ");			\
 		jam_symkey(buf, "base", base_key);			\
 	}								\
 	if (operation != CKA_DERIVE) {					\
-		LOG_MESSAGE(DEBUG_STREAM, logger, buf) {		\
+		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {			\
 			jam_string(buf, SPACES"operation: ");		\
 			jam_nss_cka(buf, operation);			\
 		}							\
 	}								\
 	if (params != NULL) {						\
-		LOG_MESSAGE(DEBUG_STREAM, logger, buf) {		\
+		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {			\
 			jam(buf, SPACES "params: %d-bytes@%p",		\
 			    params->len, params->data);			\
 		}							\
@@ -182,7 +182,7 @@ PK11SymKey *crypt_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem
 		}
 		DBG_DERIVE();
 	} else if (DBGP(DBG_CRYPT)) {
-		LOG_MESSAGE(DEBUG_STREAM, logger, buf) {
+		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, SPACES"result: newref ");
 			jam_symkey(buf, target_name, target_key);
 			jam(buf, PRI_WHERE, pri_where(where));
@@ -336,7 +336,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey,
 				 &wrapped_key);
 	passert(status == SECSuccess);
 	if (DBGP(DBG_CRYPT)) {
-		LOG_MESSAGE(DEBUG_STREAM, logger, buf) {
+		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, "wrapper: ");
 			jam_nss_secitem(buf, &wrapped_key);
 		}

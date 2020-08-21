@@ -55,7 +55,7 @@ static void nss_ecp_calc_secret(const struct dh_desc *group,
 			     group->nss_oid, group->common.fqn);
 	}
 	if (DBGP(DBG_CRYPT)) {
-		LOG_MESSAGE(DEBUG_STREAM, logger, buf) {
+		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, "pk11_data->oid: ");
 			jam_nss_secitem(buf, &pk11_data->oid);
 		}
@@ -73,7 +73,7 @@ static void nss_ecp_calc_secret(const struct dh_desc *group,
 	pk11_param->data[1] = pk11_data->oid.len;
 	memcpy(pk11_param->data + 2, pk11_data->oid.data, pk11_data->oid.len);
 	if (DBGP(DBG_CRYPT)) {
-		LOG_MESSAGE(DEBUG_STREAM, logger, buf) {
+		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, "pk11_param");
 			jam_nss_secitem(buf, pk11_param);
 		}
@@ -90,7 +90,7 @@ static void nss_ecp_calc_secret(const struct dh_desc *group,
 	}
 
 	if (DBGP(DBG_CRYPT)) {
-		LOG_MESSAGE(DEBUG_STREAM, logger, buf) {
+		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam(buf, "public keyType %d size %d publicValue@%p %d bytes public key: ",
 			    (*pubk)->keyType,
 			    (*pubk)->u.ec.size,

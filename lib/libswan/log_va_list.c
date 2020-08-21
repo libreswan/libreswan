@@ -29,7 +29,7 @@ void log_va_list(lset_t rc_flags, const struct logger *logger,
 			jambuf_to_error_stream(buf);
 		}
 	} else {
-		LOG_MESSAGE(rc_flags, logger, buf) {
+		LOG_JAMBUF(rc_flags, logger, buf) {
 			jam_va_list(buf, message, ap);
 		}
 	}

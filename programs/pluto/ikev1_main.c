@@ -1930,7 +1930,7 @@ static void send_notification(struct logger *logger,
 		}
 
 		if (sndst->st_v1_iv.len != 0) {
-			LOG_MESSAGE(RC_LOG, logger, buf) {
+			LOG_JAMBUF(RC_LOG, logger, buf) {
 				jam(buf, "payload malformed.  IV: ");
 				jam_dump_bytes(buf, sndst->st_v1_iv.ptr,
 					       sndst->st_v1_iv.len);

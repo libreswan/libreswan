@@ -248,7 +248,7 @@ bool flushline(struct file_lex_position *flp, const char *message)
 
 void log_flp(lset_t rc_flags, struct file_lex_position *flp, const char *message, ...)
 {
-	LOG_MESSAGE(rc_flags, flp->logger, buf) {
+	LOG_JAMBUF(rc_flags, flp->logger, buf) {
 		jam(buf, "\"%s\" line %d: ", flp->filename, flp->lino);
 		va_list ap;
 		va_start(ap, message);

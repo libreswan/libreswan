@@ -355,7 +355,7 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 				 struct proposals *proposals)
 {
 	if (DBGP(DBG_PROPOSAL_PARSER)) {
-		LOG_MESSAGE(DEBUG_STREAM, parser->policy->logger, buf) {
+		LOG_JAMBUF(DEBUG_STREAM, parser->policy->logger, buf) {
 			jam_string(buf, "algs:");
 			for (struct token *token = tokens; token->alg.ptr != NULL; token++) {
 				jam(buf, " algs[%tu] = '"PRI_SHUNK"'",

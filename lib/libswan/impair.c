@@ -503,7 +503,7 @@ bool process_impair(const struct whack_impair *wc,
 			const struct impairment *cr = &impairments[ci];
 			if (cr->action == CALL_IMPAIR_UPDATE &&
 			    value_of(cr) != 0) {
-				LOG_MESSAGE(RC_COMMENT, logger, buf) {
+				LOG_JAMBUF(RC_COMMENT, logger, buf) {
 					jam_impairment(buf, cr);
 				}
 			}
@@ -529,7 +529,7 @@ bool process_impair(const struct whack_impair *wc,
 			bad_case(cr->sizeof_value);
 		}
 		/* log the update */
-		LOG_MESSAGE(DEBUG_STREAM, logger, buf) {
+		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_impairment(buf, cr);
 		}
 		return true;

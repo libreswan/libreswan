@@ -222,7 +222,7 @@ void log_va_list(lset_t rc_flags, const struct logger *logger,
 
 void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc_flags);
 
-#define LOG_MESSAGE(RC_FLAGS, LOGGER, BUF)				\
+#define LOG_JAMBUF(RC_FLAGS, LOGGER, BUF)				\
 	JAMBUF(BUF)							\
 		for (jam_logger_prefix(BUF, LOGGER); BUF != NULL;	\
 		     jambuf_to_logger(BUF, (LOGGER), RC_FLAGS), BUF = NULL)

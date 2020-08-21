@@ -386,7 +386,7 @@ static void log_proposals(struct logger *logger, const char *prefix,
 	int propnum;
 	const struct ikev2_proposal *proposal;
 	FOR_EACH_V2_PROPOSAL(propnum, proposal, proposals) {
-		LOG_MESSAGE(RC_LOG|LOG_STREAM, logger, buf) {
+		LOG_JAMBUF(RC_LOG|LOG_STREAM, logger, buf) {
 			jam_string(buf, prefix);
 			jam_v2_proposal(buf, propnum, proposal);
 		}
@@ -1168,7 +1168,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 			 * Dump the proposals so far.  The detailed
 			 * error reason will have already been logged.
 			 */
-			LOG_MESSAGE(RC_LOG, logger, buf) {
+			LOG_JAMBUF(RC_LOG, logger, buf) {
 				jam_string(buf, "partial list of remote proposals: ");
 				jam_jambuf(buf, remote_jam_buf);
 			}
@@ -1176,13 +1176,13 @@ stf_status ikev2_process_sa_payload(const char *what,
 		} else if (matching_local_propnum == 0) {
 			/* no luck */
 			if (expect_accepted) {
-				LOG_MESSAGE(RC_LOG, logger, buf) {
+				LOG_JAMBUF(RC_LOG, logger, buf) {
 					jam_string(buf, "remote accepted the invalid proposal ");
 					jam_jambuf(buf, remote_jam_buf);
 				}
 				status = STF_FAIL;
 			} else {
-				LOG_MESSAGE(RC_LOG, logger, buf) {
+				LOG_JAMBUF(RC_LOG, logger, buf) {
 					jam_string(buf, "no local proposal matches remote proposals ");
 					jam_jambuf(buf, remote_jam_buf);
 				}
@@ -1203,7 +1203,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 								    remote_jam_buf);
 					}
 				} else {
-					LOG_MESSAGE(RC_LOG, logger, buf) {
+					LOG_JAMBUF(RC_LOG, logger, buf) {
 						jam_chosen_proposal(buf, best_proposal,
 								    remote_jam_buf);
 					}

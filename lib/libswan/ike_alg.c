@@ -1031,7 +1031,7 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 	}
 
 	FOR_EACH_IKE_ALGP(type, algp) {
-		LOG_MESSAGE(RC_LOG, logger, buf) {
+		LOG_JAMBUF(RC_LOG, logger, buf) {
 			jam_string(buf, "  ");
 			jam_ike_alg_details(buf, *algp, cw);
 		}

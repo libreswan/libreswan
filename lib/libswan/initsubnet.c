@@ -90,7 +90,7 @@ err_t initsubnet(const ip_address *addr,
 	dst->maskbits = maskbits;
 
 	if (warning) {
-		LOG_MESSAGE(RC_LOG, logger, buf) {
+		LOG_JAMBUF(RC_LOG, logger, buf) {
 			jam(buf, "WARNING:improper subnet mask, host-part bits on input ");
 			jam_address(buf, addr);
 			jam(buf, "/%d ", maskbits);

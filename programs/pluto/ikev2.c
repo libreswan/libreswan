@@ -3130,7 +3130,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 			}
 		}
 	} else {
-		LOG_MESSAGE(w, log_st->st_logger, buf) {
+		LOG_JAMBUF(w, log_st->st_logger, buf) {
 			jam(buf, "%s", st->st_state->story);
 			/* document SA details for admin's pleasure */
 			if (log_details != NULL) {

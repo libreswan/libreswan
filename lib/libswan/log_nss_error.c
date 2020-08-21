@@ -39,7 +39,7 @@ static void jam_va_nss_error(struct jambuf *buf, const char *message, va_list ap
 void log_nss_error(lset_t rc_flags, struct logger *logger,
 		   const char *message, ...)
 {
-	LOG_MESSAGE(rc_flags, logger, buf) {
+	LOG_JAMBUF(rc_flags, logger, buf) {
 		va_list ap;
 		va_start(ap, message);
 		jam_va_nss_error(buf, message, ap);
