@@ -28,9 +28,11 @@ struct crypt_hash {
 	struct hash_context *context;
 	const char *name;
 	const struct hash_desc *desc;
+	struct logger *logger;
 };
 
-struct crypt_hash *crypt_hash_init(const char *name, const struct hash_desc *hash_desc)
+struct crypt_hash *crypt_hash_init(const char *name, const struct hash_desc *hash_desc,
+				   struct logger *logger)
 {
 	DBGF(DBG_CRYPT, "%s hash %s init",
 	     name, hash_desc->common.fqn);
@@ -39,13 +41,13 @@ struct crypt_hash *crypt_hash_init(const char *name, const struct hash_desc *has
 	if (context == NULL) {
 		return NULL;
 	}
-	struct crypt_hash *hash = alloc_thing(struct crypt_hash, name);
-	*hash = (struct crypt_hash) {
+	struct crypt_hash hash = {
 		.context = context,
 		.name = name,
 		.desc = hash_desc,
+		.logger = logger,
 	};
-	return hash;
+	return clone_thing(hash, name);
 }
 
 void crypt_hash_digest_symkey(struct crypt_hash *hash,
@@ -55,7 +57,7 @@ void crypt_hash_digest_symkey(struct crypt_hash *hash,
 		DBG_log("%s hash %s digest %s-key@%p (size %zu)",
 			hash->name, hash->desc->common.fqn,
 			name, symkey, sizeof_symkey(symkey));
-		DBG_symkey(hash->name, name, symkey);
+		DBG_symkey(hash->logger, hash->name, name, symkey);
 	}
 	hash->desc->hash_ops->digest_symkey(hash->context, name, symkey);
 }
@@ -120,14 +122,15 @@ struct crypt_mac crypt_hash_final_mac(struct crypt_hash **hashp)
 }
 
 PK11SymKey *crypt_hash_symkey(const char *name, const struct hash_desc *hash_desc,
-			      const char *symkey_name, PK11SymKey *symkey)
+			      const char *symkey_name, PK11SymKey *symkey,
+			      struct logger *logger)
 {
 	DBGF(DBG_CRYPT, "%s hash %s %s-key@%p (size %zu)",
 	     name, hash_desc->common.fqn,
 	     symkey_name, symkey, sizeof_symkey(symkey));
-	struct crypt_hash *hash = crypt_hash_init(name, hash_desc);
+	struct crypt_hash *hash = crypt_hash_init(name, hash_desc, logger);
 	crypt_hash_digest_symkey(hash, symkey_name, symkey);
 	struct crypt_mac out = crypt_hash_final_mac(&hash);
-	PK11SymKey *key = symkey_from_hunk(name, out);
+	PK11SymKey *key = symkey_from_hunk(name, out, logger);
 	return key;
 }

@@ -56,10 +56,11 @@ chunk_t decode_to_chunk(const char *prefix, const char *original)
 	return chunk;
 }
 
-PK11SymKey *decode_hex_to_symkey(const char *prefix, const char *string)
+PK11SymKey *decode_hex_to_symkey(const char *prefix, const char *string,
+				 struct logger *logger)
 {
 	chunk_t chunk = chunk_from_hex(string, prefix);
-	PK11SymKey *symkey = symkey_from_hunk(prefix, chunk);
+	PK11SymKey *symkey = symkey_from_hunk(prefix, chunk, logger);
 	free_chunk_content(&chunk);
 	return symkey;
 }
@@ -95,14 +96,15 @@ bool verify_bytes(const char *desc,
 }
 
 /* verify that expected is the same as actual */
-bool verify_symkey(const char *desc, chunk_t expected, PK11SymKey *actual)
+bool verify_symkey(const char *desc, chunk_t expected, PK11SymKey *actual,
+		   struct logger *logger)
 {
 	if (expected.len != sizeof_symkey(actual)) {
 		DBGF(DBG_CRYPT, "%s: expected length %zd but got %zd",
 		     desc, expected.len, sizeof_symkey(actual));
 		return FALSE;
 	}
-	chunk_t chunk = chunk_from_symkey(desc, actual);
+	chunk_t chunk = chunk_from_symkey(desc, actual, logger);
 	bool ok = verify_hunk(desc, expected, chunk);
 	free_chunk_content(&chunk);
 	return ok;
@@ -112,10 +114,10 @@ bool verify_symkey(const char *desc, chunk_t expected, PK11SymKey *actual)
  * Turn the raw key into SymKey.
  */
 PK11SymKey *decode_to_key(const struct encrypt_desc *encrypt_desc,
-			  const char *encoded_key)
+			  const char *encoded_key, struct logger *logger)
 {
 	chunk_t raw_key = decode_to_chunk("raw_key", encoded_key);
-	PK11SymKey *symkey = encrypt_key_from_hunk("symkey", encrypt_desc, raw_key);
+	PK11SymKey *symkey = encrypt_key_from_hunk("symkey", encrypt_desc, raw_key, logger);
 	free_chunk_content(&raw_key);
 	return symkey;
 }

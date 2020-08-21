@@ -85,7 +85,7 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 
 	bool ok = TRUE;
 
-	PK11SymKey *sym_key = decode_to_key(encrypt_desc, test->key);
+	PK11SymKey *sym_key = decode_to_key(encrypt_desc, test->key, logger);
 
 	chunk_t salted_iv = decode_to_chunk("salted IV", test->salted_iv);
 	passert(salted_iv.len == encrypt_desc->wire_iv_size + salt_size);

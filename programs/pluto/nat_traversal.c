@@ -98,7 +98,8 @@ void init_nat_traversal(deltatime_t keep_alive_period)
 
 static struct crypt_mac natd_hash(const struct hash_desc *hasher,
 				  const ike_spis_t *spis,
-				  const ip_endpoint *endpoint)
+				  const ip_endpoint *endpoint,
+				  struct logger *logger)
 {
 	/* only responder's IKE SPI can be zero */
 	if (ike_spi_is_zero(&spis->initiator)) {
@@ -117,7 +118,7 @@ static struct crypt_mac natd_hash(const struct hash_desc *hasher,
 	 *
 	 * All values in network order
 	 */
-	struct crypt_hash *ctx = crypt_hash_init("NATD", hasher);
+	struct crypt_hash *ctx = crypt_hash_init("NATD", hasher, logger);
 
 	crypt_hash_digest_thing(ctx, "IKE SPIi", spis->initiator);
 	crypt_hash_digest_thing(ctx, "IKE SPIr", spis->responder);
@@ -184,14 +185,16 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 
 	/* First: one with local (source) IP & port */
 
-	hb = natd_hash(&ike_alg_hash_sha1, ike_spis, local_endpoint);
+	hb = natd_hash(&ike_alg_hash_sha1, ike_spis, local_endpoint,
+		       outs->out_logger);
 	if (!emit_v2N_hunk(v2N_NAT_DETECTION_SOURCE_IP, hb, outs)) {
 		return false;
 	}
 
 	/* Second: one with remote (destination) IP & port */
 
-	hb = natd_hash(&ike_alg_hash_sha1, ike_spis, remote_endpoint);
+	hb = natd_hash(&ike_alg_hash_sha1, ike_spis, remote_endpoint,
+		       outs->out_logger);
 	if (!emit_v2N_hunk(v2N_NAT_DETECTION_DESTINATION_IP, hb, outs)) {
 		return false;
 	}
@@ -365,12 +368,13 @@ static void ikev1_natd_lookup(struct msg_digest *md)
 	/* First: one with my IP & port */
 
 	struct crypt_mac hash_local = natd_hash(hasher, &st->st_ike_spis,
-						&md->iface->local_endpoint);
+						&md->iface->local_endpoint,
+						st->st_logger);
 
 	/* Second: one with sender IP & port */
 
 	struct crypt_mac hash_remote = natd_hash(hasher, &st->st_ike_spis,
-						 &md->sender);
+						 &md->sender, st->st_logger);
 
 	if (DBGP(DBG_BASE)) {
 		DBG_dump_hunk("expected NAT-D(local):", hash_local);
@@ -436,7 +440,8 @@ bool ikev1_nat_traversal_add_natd(pb_stream *outs,
 	struct crypt_mac hash;
 
 	hash = natd_hash(st->st_oakley.ta_prf->hasher,
-			 &ike_spis, &remote_endpoint);
+			 &ike_spis, &remote_endpoint,
+			 st->st_logger);
 	if (!ikev1_out_generic_raw(pd, outs, hash.ptr, hash.len,
 				   "NAT-D"))
 		return FALSE;
@@ -446,7 +451,8 @@ bool ikev1_nat_traversal_add_natd(pb_stream *outs,
 	const ip_endpoint local_endpoint = set_endpoint_hport(&md->iface->local_endpoint,
 							      local_port);
 	hash = natd_hash(st->st_oakley.ta_prf->hasher,
-			 &ike_spis, &local_endpoint);
+			 &ike_spis, &local_endpoint,
+			 st->st_logger);
 	return ikev1_out_generic_raw(pd, outs, hash.ptr, hash.len,
 				     "NAT-D");
 }
@@ -931,10 +937,11 @@ bool v2_nat_detected(struct ike_sa *ike, struct msg_digest *md)
 
 	/* First: one with my IP & port. */
 	struct crypt_mac hash_local = natd_hash(hasher, &md->hdr.isa_ike_spis,
-						&md->iface->local_endpoint);
+						&md->iface->local_endpoint,
+						ike->sa.st_logger);
 	/* Second: one with sender IP & port */
 	struct crypt_mac hash_remote = natd_hash(hasher, &md->hdr.isa_ike_spis,
-						 &md->sender);
+						 &md->sender, ike->sa.st_logger);
 
 	bool found_local = false;
 	bool found_remote = false;

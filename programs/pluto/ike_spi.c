@@ -81,7 +81,7 @@ ike_spi_t ike_initiator_spi(void)
  * it will prevent an attacker from depleting our random pool
  * or entropy.
  */
-ike_spi_t ike_responder_spi(const ip_address *addr)
+ike_spi_t ike_responder_spi(const ip_address *addr, struct logger *logger)
 {
 	if (impair.ike_responder_spi > 0) {
 		/* 1-biased so that 0 is "disable" */
@@ -97,7 +97,8 @@ ike_spi_t ike_responder_spi(const ip_address *addr)
 		static uint32_t counter = 0; /* STATIC */
 
 		struct crypt_hash *ctx = crypt_hash_init("IKE SPIr",
-							 &ike_alg_hash_sha2_256);
+							 &ike_alg_hash_sha2_256,
+							 logger);
 
 		crypt_hash_digest_thing(ctx, "addr", *addr);
 		crypt_hash_digest_thing(ctx, "sod", ike_spi_secret);

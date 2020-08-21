@@ -16,6 +16,7 @@
 #include "test_buffer.h"
 #include "crypt_symkey.h"
 #include "cavp_entry.h"
+#include "lswlog.h"
 
 void op_entry(const struct cavp_entry *entry,
 	      const char *value UNUSED)
@@ -39,7 +40,8 @@ void op_symkey(const struct cavp_entry *entry,
 {
 	release_symkey(__func__, "entry", entry->symkey);
 	chunk_t chunk = chunk_from_hex(value, entry->key);
-	*(entry->symkey) = symkey_from_hunk("symkey", chunk);
+	*(entry->symkey) = symkey_from_hunk("symkey", chunk,
+					    &progname_logger);
 	free_chunk_content(&chunk);
 }
 

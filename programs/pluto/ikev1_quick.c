@@ -559,7 +559,8 @@ void init_phase2_iv(struct state *st, const msgid_t *msgid)
 		DBG_dump_hunk("current Phase 1 IV:", st->st_v1_iv);
 	}
 
-	struct crypt_hash *ctx = crypt_hash_init("Phase 2 IV", h);
+	struct crypt_hash *ctx = crypt_hash_init("Phase 2 IV", h,
+						 st->st_logger);
 	crypt_hash_digest_hunk(ctx, "PH1_IV", st->st_v1_ph1_iv);
 	passert(*msgid != 0);
 	passert(sizeof(msgid_t) == sizeof(uint32_t));

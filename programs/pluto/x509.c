@@ -1085,14 +1085,15 @@ static chunk_t ikev2_hash_ca_keys(x509cert_t *ca_chain)
 #endif
 
 /* instead of ikev2_hash_ca_keys use this for now. A single key hash. */
-static chunk_t ikev2_hash_nss_cert_key(CERTCertificate *cert)
+static chunk_t ikev2_hash_nss_cert_key(CERTCertificate *cert,
+				       struct logger *logger)
 {
 	unsigned char sighash[SHA1_DIGEST_SIZE];
 	zero(&sighash);
 
 /* TODO: This should use SHA1 even if USE_SHA1 is disabled for IKE/IPsec */
 	struct crypt_hash *ctx = crypt_hash_init("SHA-1 of Certificate Public Key",
-						 &ike_alg_hash_sha1);
+						 &ike_alg_hash_sha1, logger);
 	crypt_hash_digest_bytes(ctx, "pubkey",
 				cert->derPublicKey.data,
 				cert->derPublicKey.len);
@@ -1185,7 +1186,8 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 			 * CA's public key. This function currently only uses a single CA
 			 * and should support more in the future
 			 * */
-			chunk_t cr_full_hash = ikev2_hash_nss_cert_key(cacert);
+			chunk_t cr_full_hash = ikev2_hash_nss_cert_key(cacert,
+								       outs->out_logger);
 
 			if (!pbs_out_hunk(cr_full_hash, &cr_pbs, "CA cert public key hash")) {
 				free_chunk_content(&cr_full_hash);

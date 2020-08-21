@@ -56,7 +56,7 @@ static struct prf_context *init_bytes(const struct prf_desc *prf_desc,
 {
 	struct prf_context *prf = prf_init(prf_desc, name, logger);
 	/* XXX: use an untyped key */
-	prf->key = symkey_from_bytes(name, key, sizeof_key);
+	prf->key = symkey_from_bytes(name, key, sizeof_key, logger);
 	prf_update(prf);
 	return prf;
 }
@@ -89,7 +89,8 @@ static void prf_update(struct prf_context *prf)
 		 */
 		PK11SymKey *new = crypt_hash_symkey("prf hash to size:",
 						    prf->desc->hasher,
-						    "raw key", prf->key);
+						    "raw key", prf->key,
+						    prf->logger);
 		release_symkey(prf->name, "key", &prf->key);
 		prf->key = new;
 	} else if (sizeof_symkey(prf->key) < prf->desc->hasher->hash_block_size) {
@@ -99,7 +100,8 @@ static void prf_update(struct prf_context *prf)
 		 */
 		static /*const*/ unsigned char z[MAX_HMAC_BLOCKSIZE] = { 0 };
 		append_symkey_bytes("trimed key", &prf->key, z,
-				    prf->desc->hasher->hash_block_size - sizeof_symkey(prf->key));
+				    prf->desc->hasher->hash_block_size - sizeof_symkey(prf->key),
+				    prf->logger);
 	}
 	passert(prf->key != NULL);
 
@@ -108,7 +110,7 @@ static void prf_update(struct prf_context *prf)
 	unsigned char ip[MAX_HMAC_BLOCKSIZE];
 	memset(ip, HMAC_IPAD, prf->desc->hasher->hash_block_size);
 	chunk_t hmac_ipad = { ip, prf->desc->hasher->hash_block_size };
-	prf->inner = xor_symkey_chunk(prf->key, hmac_ipad);
+	prf->inner = xor_symkey_chunk(prf->key, hmac_ipad, prf->logger);
 }
 
 /*
@@ -119,14 +121,15 @@ static void digest_symkey(struct prf_context *prf, const char *name UNUSED,
 			  PK11SymKey *update)
 {
 	passert(digest_symkey == prf->desc->prf_mac_ops->digest_symkey);
-	append_symkey_symkey(&(prf->inner), update);
+	append_symkey_symkey(&(prf->inner), update, prf->logger);
 }
 
 static void digest_bytes(struct prf_context *prf, const char *name,
 			 const uint8_t *bytes, size_t sizeof_bytes)
 {
 	passert(digest_bytes == prf->desc->prf_mac_ops->digest_bytes);
-	append_symkey_bytes(name, &(prf->inner), bytes, sizeof_bytes);
+	append_symkey_bytes(name, &(prf->inner), bytes, sizeof_bytes,
+			    prf->logger);
 }
 
 /*
@@ -139,7 +142,8 @@ static PK11SymKey *compute_outer(struct prf_context *prf)
 	/* run that through hasher */
 	PK11SymKey *hashed_inner = crypt_hash_symkey("PRF HMAC inner hash",
 						     prf->desc->hasher,
-						     "inner", prf->inner);
+						     "inner", prf->inner,
+						     prf->logger);
 	release_symkey(prf->name, "inner", &prf->inner);
 
 	/* Input to outer hash: (key^OPAD)|hashed_inner.  */
@@ -147,8 +151,8 @@ static PK11SymKey *compute_outer(struct prf_context *prf)
 	unsigned char op[MAX_HMAC_BLOCKSIZE];
 	memset(op, HMAC_OPAD, prf->desc->hasher->hash_block_size);
 	chunk_t hmac_opad = { op, prf->desc->hasher->hash_block_size };
-	PK11SymKey *outer = xor_symkey_chunk(prf->key, hmac_opad);
-	append_symkey_symkey(&outer, hashed_inner);
+	PK11SymKey *outer = xor_symkey_chunk(prf->key, hmac_opad, prf->logger);
+	append_symkey_symkey(&outer, hashed_inner, prf->logger);
 	release_symkey(prf->name, "hashed-inner", &hashed_inner);
 	release_symkey(prf->name, "key", &prf->key);
 
@@ -162,10 +166,11 @@ static PK11SymKey *final_symkey(struct prf_context **prfp)
 	/* Finally hash that */
 	PK11SymKey *hashed_outer = crypt_hash_symkey("PRF HMAC outer hash",
 						     (*prfp)->desc->hasher,
-						     "outer", outer);
+						     "outer", outer,
+						     (*prfp)->logger);
 	release_symkey((*prfp)->name, "outer", &outer);
 	if (DBGP(DBG_CRYPT)) {
-		DBG_symkey("    ", " hashed-outer", hashed_outer);
+		DBG_symkey((*prfp)->logger, "    ", " hashed-outer", hashed_outer);
 	}
 	pfree(*prfp);
 	*prfp = NULL;
@@ -179,7 +184,8 @@ static void final_bytes(struct prf_context **prfp,
 	PK11SymKey *outer = compute_outer(*prfp);
 	/* Finally hash that */
 	struct crypt_hash *hash = crypt_hash_init("PRF HMAC outer hash",
-						  (*prfp)->desc->hasher);
+						  (*prfp)->desc->hasher,
+						  (*prfp)->logger);
 	crypt_hash_digest_symkey(hash, "outer", outer);
 	crypt_hash_final_bytes(&hash, bytes, sizeof_bytes);
 	release_symkey((*prfp)->name, "outer", &outer);

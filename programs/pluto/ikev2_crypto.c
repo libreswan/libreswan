@@ -124,13 +124,17 @@ void ikev2_derive_child_keys(struct child_sa *child)
 						   st->st_nr,
 						   ipi->keymat_len * 2,
 						   st->st_logger);
-	PK11SymKey *ikey = key_from_symkey_bytes(keymat, 0, ipi->keymat_len, HERE);
-	ikeymat = chunk_from_symkey("initiator to responder keys", ikey);
+	PK11SymKey *ikey = key_from_symkey_bytes(keymat, 0, ipi->keymat_len,
+						 HERE, st->st_logger);
+	ikeymat = chunk_from_symkey("initiator to responder keys", ikey,
+				    st->st_logger);
 	release_symkey(__func__, "ikey", &ikey);
 
 	PK11SymKey *rkey = key_from_symkey_bytes(keymat, ipi->keymat_len,
-						 ipi->keymat_len, HERE);
-	rkeymat = chunk_from_symkey("responder to initiator keys:", rkey);
+						 ipi->keymat_len,
+						 HERE, st->st_logger);
+	rkeymat = chunk_from_symkey("responder to initiator keys:", rkey,
+				    st->st_logger);
 	release_symkey(__func__, "rkey", &rkey);
 
 	release_symkey(__func__, "keymat", &keymat);

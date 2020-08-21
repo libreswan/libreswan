@@ -36,7 +36,8 @@ static PK11SymKey *prfplus_key_data(const char *target_name,
 				    PK11SymKey *key,
 				    PK11SymKey *seed_key,
 				    chunk_t    seed_data,
-				    size_t required_keymat)
+				    size_t required_keymat,
+				    struct logger *logger)
 {
 	CK_NSS_IKE_PRF_PLUS_DERIVE_PARAMS ike_prf_plus_params = {
 		.pSeedData = seed_data.ptr,
@@ -56,16 +57,18 @@ static PK11SymKey *prfplus_key_data(const char *target_name,
 
         return crypt_derive(key, CKM_NSS_IKE_PRF_PLUS_DERIVE, &params,
 			    target_name, CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE,
-			    /*keysize*/required_keymat, /*flags*/0, HERE);
+			    /*keysize*/required_keymat, /*flags*/0,
+			    HERE, logger);
 }
 
 static PK11SymKey *prfplus(const struct prf_desc *prf_desc,
 			   PK11SymKey *key,
 			   PK11SymKey *seed,
 			   size_t required_keymat,
-			   struct logger *unused_logger UNUSED)
+			   struct logger *logger)
 {
-	return prfplus_key_data("prfplus", prf_desc, key, seed, empty_chunk, required_keymat);
+	return prfplus_key_data("prfplus", prf_desc, key, seed, empty_chunk,
+				required_keymat, logger);
 }
 
 /*
@@ -74,7 +77,7 @@ static PK11SymKey *prfplus(const struct prf_desc *prf_desc,
 static PK11SymKey *ike_sa_skeyseed(const struct prf_desc *prf_desc,
 				   const chunk_t Ni, const chunk_t Nr,
 				   PK11SymKey *dh_secret,
-				   struct logger *unused_logger UNUSED)
+				   struct logger *logger)
 {
 	int is_aes_prf = 0;
 	switch (prf_desc->common.id[IKEv2_ALG_ID]) {
@@ -99,7 +102,8 @@ static PK11SymKey *ike_sa_skeyseed(const struct prf_desc *prf_desc,
 
 	return crypt_derive(dh_secret, CKM_NSS_IKE_PRF_DERIVE, &params,
 			    "skeyseed", CKM_NSS_IKE_PRF_PLUS_DERIVE, CKA_DERIVE,
-			    /*keysize*/0, /*flags*/0, HERE);
+			    /*keysize*/0, /*flags*/0,
+			    HERE, logger);
 }
 
 /*
@@ -109,7 +113,7 @@ static PK11SymKey *ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 					 PK11SymKey *SK_d_old,
 					 PK11SymKey *new_dh_secret,
 					 const chunk_t Ni, const chunk_t Nr,
-					 struct logger *unused_logger UNUSED)
+					 struct logger *logger)
 {
 	CK_NSS_IKE_PRF_DERIVE_PARAMS ike_prf_params = {
 		.prfMechanism = prf_desc->nss.mechanism,
@@ -128,7 +132,8 @@ static PK11SymKey *ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 
 	return crypt_derive(SK_d_old, CKM_NSS_IKE_PRF_DERIVE, &params,
 			    "skeyseed", CKM_NSS_IKE_PRF_PLUS_DERIVE, CKA_DERIVE,
-			    /*key-size*/0, /*flags*/0, HERE);
+			    /*key-size*/0, /*flags*/0,
+			    HERE, logger);
 }
 
 /*
@@ -139,14 +144,15 @@ static PK11SymKey *ike_sa_keymat(const struct prf_desc *prf_desc,
 				 const chunk_t Ni, const chunk_t Nr,
 				 shunk_t SPIi, shunk_t SPIr,
 				 size_t required_bytes,
-				 struct logger *unused_logger UNUSED)
+				 struct logger *logger)
 {
 	PK11SymKey *prf_plus;
 
 	chunk_t seed_data = clone_chunk_chunk(Ni, Nr, "seed_data = Ni || Nr");
 	append_chunk_hunk("seed_data = Nir || SPIi", &seed_data, SPIi);
 	append_chunk_hunk("seed_data = Nir || SPIir", &seed_data, SPIr);
-	prf_plus = prfplus_key_data("keymat", prf_desc, skeyseed, NULL, seed_data, required_bytes);
+	prf_plus = prfplus_key_data("keymat", prf_desc, skeyseed, NULL, seed_data,
+				    required_bytes, logger);
 	free_chunk_content(&seed_data);
 	return prf_plus;
 }
@@ -159,13 +165,14 @@ static PK11SymKey *child_sa_keymat(const struct prf_desc *prf_desc,
 				   PK11SymKey *new_dh_secret,
 				   const chunk_t Ni, const chunk_t Nr,
 				   size_t required_bytes,
-				   struct logger *unused_logger UNUSED)
+				   struct logger *logger)
 {
 	chunk_t seed_data;
 	PK11SymKey *prf_plus;
 
 	seed_data = clone_chunk_chunk(Ni, Nr, "seed_data = Ni || Nr");
-	prf_plus = prfplus_key_data("keymat", prf_desc, SK_d, new_dh_secret, seed_data, required_bytes);
+	prf_plus = prfplus_key_data("keymat", prf_desc, SK_d, new_dh_secret, seed_data,
+				    required_bytes, logger);
 	free_chunk_content(&seed_data);
 	return prf_plus;
 }
@@ -180,7 +187,7 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
 	{
 		static const char psk_key_pad_str[] = "Key Pad for IKEv2";  /* RFC 4306  2:15 */
 		CK_MECHANISM_TYPE prf_mech = prf_desc->nss.mechanism;
-		PK11SymKey *pss_key = prf_key_from_hunk("pss", prf_desc, pss);
+		PK11SymKey *pss_key = prf_key_from_hunk("pss", prf_desc, pss, logger);
 		if (pss_key == NULL) {
 			if (libreswan_fipsmode()) {
 				passert_fail(logger, HERE, "FIPS: failure creating %s PRF context for digesting PSK",
@@ -206,7 +213,8 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
 		};
 		prf_psk = crypt_derive(pss_key, CKM_NSS_IKE_PRF_DERIVE, &params,
 				       "prf(Shared Secret, \"Key Pad for IKEv2\")", prf_mech,
-				       CKA_SIGN, 0/*key-size*/, 0/*flags*/, HERE);
+				       CKA_SIGN, 0/*key-size*/, 0/*flags*/,
+				       HERE, logger);
 		release_symkey("psk pss_key", "pss_key", &pss_key);
 	}
 

@@ -62,7 +62,7 @@ static PK11SymKey *prfplus(const struct prf_desc *prf_desc,
 		crypt_prf_update_symkey(prf, "seed", seed);
 		crypt_prf_update_byte(prf, "N++", count++);
 		PK11SymKey *new_t = crypt_prf_final_symkey(&prf);
-		append_symkey_symkey(&result, new_t);
+		append_symkey_symkey(&result, new_t, logger);
 		release_symkey(__func__, "old_t[N]", &old_t);
 		old_t = new_t;
 	}
@@ -161,10 +161,10 @@ static PK11SymKey *ike_sa_keymat(const struct prf_desc *prf_desc,
 				 size_t required_bytes,
 				 struct logger *logger)
 {
-	PK11SymKey *data = symkey_from_hunk("data=Ni", Ni);
-	append_symkey_hunk("data+=Nr", &data, Nr);
-	append_symkey_hunk("data+=SPIi", &data, SPIi);
-	append_symkey_hunk("data+=SPIr", &data, SPIr);
+	PK11SymKey *data = symkey_from_hunk("data=Ni", Ni, logger);
+	append_symkey_hunk("data+=Nr", &data, Nr, logger);
+	append_symkey_hunk("data+=SPIi", &data, SPIi, logger);
+	append_symkey_hunk("data+=SPIr", &data, SPIr, logger);
 	PK11SymKey *result = prfplus(prf_desc,
 				     skeyseed, data,
 				     required_bytes,
@@ -194,13 +194,13 @@ static PK11SymKey *child_sa_keymat(const struct prf_desc *prf_desc,
 	}
 	PK11SymKey *data;
 	if (new_dh_secret == NULL) {
-		data = symkey_from_hunk("data=Ni", Ni);
-		append_symkey_hunk("data+=Nr", &data, Nr);
+		data = symkey_from_hunk("data=Ni", Ni, logger);
+		append_symkey_hunk("data+=Nr", &data, Nr, logger);
 	} else {
 		/* make a local "readonly copy" and manipulate that */
 		data = reference_symkey("prf", "data", new_dh_secret);
-		append_symkey_hunk("data+=Ni", &data, Ni);
-		append_symkey_hunk("data+=Nr", &data, Nr);
+		append_symkey_hunk("data+=Ni", &data, Ni, logger);
+		append_symkey_hunk("data+=Nr", &data, Nr, logger);
 	}
 	PK11SymKey *result = prfplus(prf_desc,
 				     SK_d, data,

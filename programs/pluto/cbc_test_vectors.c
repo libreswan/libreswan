@@ -180,7 +180,7 @@ static bool test_cbc_vector(const struct encrypt_desc *encrypt_desc,
 {
 	bool ok = TRUE;
 
-	PK11SymKey *sym_key = decode_to_key(encrypt_desc, test->key);
+	PK11SymKey *sym_key = decode_to_key(encrypt_desc, test->key, logger);
 	if (!test_cbc_op(encrypt_desc, test->description, 1,
 			 sym_key, test->iv,
 			 "plaintext: ", test->plaintext,

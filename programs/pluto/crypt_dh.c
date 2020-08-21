@@ -123,7 +123,7 @@ PK11SymKey *calc_dh_shared(struct dh_secret *secret, chunk_t remote_ke,
 		jam(buf, "computed shared DH secret key@%p",
 			dhshared);
 	}
-	DBG(DBG_CRYPT, DBG_symkey("dh-shared ", "g^ir", dhshared));
+	DBG(DBG_CRYPT, DBG_symkey(logger, "dh-shared ", "g^ir", dhshared));
 	return dhshared;
 }
 

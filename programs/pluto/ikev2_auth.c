@@ -85,7 +85,8 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 		DBG_dump_hunk("idhash", *idhash);
 	}
 
-	struct crypt_hash *ctx = crypt_hash_init("sighash", hasher);
+	struct crypt_hash *ctx = crypt_hash_init("sighash", hasher,
+						 ike->sa.st_logger);
 	crypt_hash_digest_hunk(ctx, "first packet", firstpacket);
 	crypt_hash_digest_hunk(ctx, "nonce", *nonce);
 	/* we took the PRF(SK_d,ID[ir]'), so length is prf hash length */

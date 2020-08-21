@@ -187,7 +187,8 @@ static void gcm_run_test(void)
 	}
 	PK11SymKey *gcm_key = encrypt_key_from_symkey_bytes("GCM key", gcm_alg,
 							    0, sizeof_symkey(key),
-							    key, HERE);
+							    key,
+							    HERE, &progname_logger);
 
 	chunk_t text_and_tag = clone_chunk_chunk(ct, tag, "text-and-tag");
 

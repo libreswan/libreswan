@@ -28,7 +28,8 @@ struct crypt_hash;
  * Initialization.
  */
 struct crypt_hash *crypt_hash_init(const char *hash_name,
-				   const struct hash_desc *hash_desc);
+				   const struct hash_desc *hash_desc,
+				   struct logger *logger);
 
 /*
  * Digest the body
@@ -69,6 +70,7 @@ struct crypt_mac crypt_hash_final_mac(struct crypt_hash **hashp);
  */
 PK11SymKey *crypt_hash_symkey(const char *hash_name,
 			      const struct hash_desc *hash_desc,
-			      const char *symkey_name, PK11SymKey *symkey);
+			      const char *symkey_name, PK11SymKey *symkey,
+			      struct logger *logger);
 
 #endif

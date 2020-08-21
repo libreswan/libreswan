@@ -36,7 +36,7 @@ void init_crypt_symkey(struct logger *logger);
  *
  * The format is <PREFIX>: <NAME>-key@...
  */
-void DBG_symkey(const char *prefix, const char *name, PK11SymKey *key);
+void DBG_symkey(struct logger *logger, const char *prefix, const char *name, PK11SymKey *key);
 void jam_symkey(struct jambuf *buf, const char *name, PK11SymKey *key);
 
 /*
@@ -60,28 +60,33 @@ size_t sizeof_symkey(PK11SymKey *key);
  *
  * Use this to chain a series of concat operations.
  */
-void append_symkey_symkey(PK11SymKey **lhs, PK11SymKey *rhs);
+void append_symkey_symkey(PK11SymKey **lhs, PK11SymKey *rhs,
+			  struct logger *logger);
 
 void append_symkey_bytes(const char *result,
 			 PK11SymKey **lhs,
-			 const void *rhs, size_t sizeof_rhs);
-#define append_symkey_hunk(NAME, LHS, RHS)			\
-	append_symkey_bytes(NAME, LHS, (RHS).ptr, (RHS).len)
+			 const void *rhs, size_t sizeof_rhs,
+			 struct logger *logger);
+#define append_symkey_hunk(NAME, LHS, RHS, LOGGER)			\
+	append_symkey_bytes(NAME, LHS, (RHS).ptr, (RHS).len, LOGGER)
 
 void prepend_bytes_to_symkey(const char *result,
-			    const void *lhs, size_t sizeof_lhs,
-			    PK11SymKey **rhs);
+			     const void *lhs, size_t sizeof_lhs,
+			     PK11SymKey **rhs,
+			     struct logger *logger);
 #define prepend_hunk_to_symkey(NAME, LHS, RHS)			\
 	append_bytes_symkey(NAME, (LHS).ptr, (LHS).len, RHS)
 
-void append_symkey_byte(PK11SymKey **lhs, uint8_t rhs);
+void append_symkey_byte(PK11SymKey **lhs, uint8_t rhs,
+			struct logger *logger);
 
 void append_chunk_bytes(const char *name, chunk_t *lhs, const void *rhs,
 			size_t sizeof_rhs);
 #define append_chunk_hunk(NAME, LHS, RHS)			\
 	append_chunk_bytes(NAME, LHS, (RHS).ptr, (RHS).len)
 
-void append_chunk_symkey(const char *name, chunk_t *lhs, PK11SymKey *rhs);
+void append_chunk_symkey(const char *name, chunk_t *lhs, PK11SymKey *rhs,
+			 struct logger *logger);
 
 /*
  * Extract SIZEOF_SYMKEY bytes of keying material as an ALG key (i.e.,
@@ -96,7 +101,7 @@ PK11SymKey *prf_key_from_symkey_bytes(const char *name,
 				      const struct prf_desc *prf,
 				      size_t symkey_start_byte, size_t sizeof_symkey,
 				      PK11SymKey *source_key,
-				      where_t where);
+				      where_t where, struct logger *logger);
 
 /*
  * Extract SIZEOF_SYMKEY bytes of keying material as an ALG key (i.e.,
@@ -111,7 +116,7 @@ PK11SymKey *encrypt_key_from_symkey_bytes(const char *name,
 					  const struct encrypt_desc *encrypt,
 					  size_t symkey_start_byte, size_t sizeof_symkey,
 					  PK11SymKey *source_key,
-					  where_t where);
+					  where_t where, struct logger *logger);
 
 /*
  * Extract wire material from a symkey.
@@ -119,8 +124,8 @@ PK11SymKey *encrypt_key_from_symkey_bytes(const char *name,
  * Used to avoid interface issues with NSS.  If ALG is null then the
  * key has a generic mechanism type.
  */
-chunk_t chunk_from_symkey(const char *prefix,
-			  PK11SymKey *symkey);
+chunk_t chunk_from_symkey(const char *prefix, PK11SymKey *symkey,
+			  struct logger *logger);
 chunk_t chunk_from_symkey_bytes(const char *prefix,
 				PK11SymKey *symkey,
 				size_t chunk_start, size_t sizeof_chunk);
@@ -131,25 +136,26 @@ chunk_t chunk_from_symkey_bytes(const char *prefix,
  * Used to avoid interface issues with NSS.
  */
 PK11SymKey *symkey_from_bytes(const char *name,
-			      const uint8_t *bytes, size_t sizeof_bytes);
-#define symkey_from_hunk(NAME, HUNK)			\
-	symkey_from_bytes(NAME, (HUNK).ptr, (HUNK).len)
+			      const uint8_t *bytes, size_t sizeof_bytes,
+			      struct logger *logger);
+#define symkey_from_hunk(NAME, HUNK, LOGGER)		\
+	symkey_from_bytes(NAME, (HUNK).ptr, (HUNK).len, LOGGER)
 
 PK11SymKey *encrypt_key_from_bytes(const char *name,
 				   const struct encrypt_desc *encrypt,
 				   const uint8_t *bytes, size_t sizeof_bytes,
-				   where_t where);
+				   where_t where, struct logger *logger);
 /* XXX: can't pass HERE aka '{,}' to macros */
-#define encrypt_key_from_hunk(NAME, ENCRYPT, HUNK)			\
-	encrypt_key_from_bytes(NAME, ENCRYPT, (HUNK).ptr, (HUNK).len, HERE)
+#define encrypt_key_from_hunk(NAME, ENCRYPT, HUNK, LOGGER)		\
+	encrypt_key_from_bytes(NAME, ENCRYPT, (HUNK).ptr, (HUNK).len, HERE, LOGGER)
 
 PK11SymKey *prf_key_from_bytes(const char *name,
 			       const struct prf_desc *prf,
 			       const uint8_t *bytes, size_t sizeof_bytes,
-			       where_t where);
+			       where_t where, struct logger *logger);
 /* XXX: can't pass HERE aka '{,}' to macros */
-#define prf_key_from_hunk(NAME, PRF, HUNK)				\
-	prf_key_from_bytes(NAME, PRF, (HUNK).ptr, (HUNK).len, HERE)
+#define prf_key_from_hunk(NAME, PRF, HUNK, LOGGER)			\
+	prf_key_from_bytes(NAME, PRF, (HUNK).ptr, (HUNK).len, HERE, LOGGER)
 
 /*
  * Extract SIZEOF_KEY bytes of keying material as a KEY.
@@ -161,12 +167,13 @@ PK11SymKey *prf_key_from_bytes(const char *name,
  */
 PK11SymKey *key_from_symkey_bytes(PK11SymKey *source_key,
 				  size_t next_byte, size_t sizeof_key,
-				  where_t where);
+				  where_t where, struct logger *logger);
 
 /*
  * XOR a symkey with a chunk.
  */
-PK11SymKey *xor_symkey_chunk(PK11SymKey *lhs, chunk_t rhs);
+PK11SymKey *xor_symkey_chunk(PK11SymKey *lhs, chunk_t rhs,
+			     struct logger *logger);
 
 /*
  * Generic operation.
@@ -174,6 +181,7 @@ PK11SymKey *xor_symkey_chunk(PK11SymKey *lhs, chunk_t rhs);
 PK11SymKey *crypt_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem *params,
 			 const char *target_name, CK_MECHANISM_TYPE target_mechanism,
 			 CK_ATTRIBUTE_TYPE operation,
-			 int key_size, CK_FLAGS flags, where_t where);
+			 int key_size, CK_FLAGS flags, where_t where,
+			 struct logger *logger);
 
 #endif

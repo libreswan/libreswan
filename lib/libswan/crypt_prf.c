@@ -67,10 +67,12 @@ struct crypt_prf {
 	struct prf_context *context;
 	const char *name;
 	const struct prf_desc *desc;
+	struct logger *logger;
 };
 
 static struct crypt_prf *wrap(const struct prf_desc *prf_desc,
 			      const char *name,
+			      struct logger *logger,
 			      struct prf_context *context)
 {
 	struct crypt_prf *prf = NULL;
@@ -80,6 +82,7 @@ static struct crypt_prf *wrap(const struct prf_desc *prf_desc,
 			.context = context,
 			.name = name,
 			.desc = prf_desc,
+			.logger = logger,
 		};
 	}
 	DBGF(DBG_CRYPT, "%s PRF %s crypt-prf@%p",
@@ -98,7 +101,7 @@ struct crypt_prf *crypt_prf_init_bytes(const char *name,
 			key_name, key, key_size);
 		DBG_dump(NULL, key, key_size);
 	}
-	return wrap(prf_desc, name,
+	return wrap(prf_desc, name, logger,
 		    prf_desc->prf_mac_ops->init_bytes(prf_desc, name,
 						      key_name, key, key_size,
 						      logger));
@@ -113,9 +116,9 @@ struct crypt_prf *crypt_prf_init_symkey(const char *name,
 		DBG_log("%s PRF %s init %s-key@%p (size %zd)",
 			name, prf_desc->common.fqn,
 			key_name, key, sizeof_symkey(key));
-		DBG_symkey(name, key_name, key);
+		DBG_symkey(logger, name, key_name, key);
 	}
-	return wrap(prf_desc, name,
+	return wrap(prf_desc, name, logger,
 		    prf_desc->prf_mac_ops->init_symkey(prf_desc, name,
 						       key_name, key,
 						       logger));
@@ -132,7 +135,7 @@ void crypt_prf_update_symkey(struct crypt_prf *prf,
 		DBG_log("%s PRF %s update %s-key@%p (size %zd)",
 			prf->name, prf->desc->common.fqn,
 			name, update, sizeof_symkey(update));
-		DBG_symkey(prf->name, name, update);
+		DBG_symkey(prf->logger, prf->name, name, update);
 	}
 	prf->desc->prf_mac_ops->digest_symkey(prf->context, name, update);
 }
@@ -169,7 +172,7 @@ PK11SymKey *crypt_prf_final_symkey(struct crypt_prf **prfp)
 		DBG_log("%s PRF %s final-key@%p (size %zu)",
 			(*prfp)->name, (*prfp)->desc->common.fqn,
 			tmp, sizeof_symkey(tmp));
-		DBG_symkey((*prfp)->name, "key", tmp);
+		DBG_symkey((*prfp)->logger, (*prfp)->name, "key", tmp);
 	}
 	pfree(*prfp);
 	*prfp = prf = NULL;

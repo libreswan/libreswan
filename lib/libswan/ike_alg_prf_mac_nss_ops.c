@@ -96,7 +96,7 @@ static struct prf_context *init_symkey(const struct prf_desc *prf_desc,
 	 */
 	PK11SymKey *clone = prf_key_from_symkey_bytes("clone", prf_desc,
 						      0, sizeof_symkey(key),
-						      key, HERE);
+						      key, HERE, logger);
 	struct prf_context *prf = init(prf_desc, name, key_name, clone, logger);
 	release_symkey(name, "clone", &clone);
 	return prf;
@@ -114,7 +114,7 @@ static struct prf_context *init_bytes(const struct prf_desc *prf_desc,
 	 * This key has both the mechanism and flags set.
 	 */
 	PK11SymKey *clone = prf_key_from_bytes(key_name, prf_desc,
-					       key, sizeof_key, HERE);
+					       key, sizeof_key, HERE, logger);
 	struct prf_context *prf = init(prf_desc, name, key_name, clone, logger);
 	release_symkey(name, "clone", &clone);
 	return prf ;
@@ -136,7 +136,8 @@ static void digest_symkey(struct prf_context *prf,
 	SECStatus rc = PK11_DigestKey(prf->context, symkey);
 	fprintf(stderr, "symkey update %x\n", rc);
 #endif
-	chunk_t chunk = chunk_from_symkey("nss hmac digest hack", symkey);
+	chunk_t chunk = chunk_from_symkey("nss hmac digest hack", symkey,
+					  prf->logger);
 	SECStatus rc = PK11_DigestOp(prf->context, chunk.ptr, chunk.len);
 	free_chunk_content(&chunk);
 	passert(rc == SECSuccess);
@@ -172,7 +173,8 @@ static PK11SymKey *final_symkey(struct prf_context **prf)
 	size_t sizeof_bytes = (*prf)->desc->prf_output_size;
 	uint8_t *bytes = alloc_things(uint8_t, sizeof_bytes, "bytes");
 	final(*prf, bytes, sizeof_bytes);
-	PK11SymKey *final = symkey_from_bytes("final", bytes, sizeof_bytes);
+	PK11SymKey *final = symkey_from_bytes("final", bytes, sizeof_bytes,
+					      (*prf)->logger);
 	pfree(bytes);
 	pfree(*prf); *prf = NULL;
 	return final;

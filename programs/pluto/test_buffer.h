@@ -19,10 +19,11 @@
 #include "chunk.h"
 
 chunk_t decode_to_chunk(const char *prefix, const char *string);
-PK11SymKey *decode_hex_to_symkey(const char *prefix, const char *string);
+PK11SymKey *decode_hex_to_symkey(const char *prefix, const char *string,
+				 struct logger *logger);
 
-bool verify_symkey(const char *desc,
-		   chunk_t expected, PK11SymKey *actual);
+bool verify_symkey(const char *desc, chunk_t expected, PK11SymKey *actual,
+		   struct logger *logger);
 
 bool verify_bytes(const char *desc,
 		  const void *expected, size_t expected_size,
@@ -38,4 +39,5 @@ bool verify_bytes(const char *desc,
 
 struct encrypt_desc;
 
-PK11SymKey *decode_to_key(const struct encrypt_desc *encrypt_desc, const char *string);
+PK11SymKey *decode_to_key(const struct encrypt_desc *encrypt_desc, const char *string,
+			  struct logger *logger);

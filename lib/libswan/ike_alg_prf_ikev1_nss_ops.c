@@ -33,7 +33,7 @@ static PK11SymKey *signature_skeyid(const struct prf_desc *prf_desc,
 				    const chunk_t Ni,
 				    const chunk_t Nr,
 				    /*const*/ PK11SymKey *dh_secret /* NSS doesn't do const */,
-				    struct logger *unused_logger UNUSED)
+				    struct logger *logger)
 {
 	CK_NSS_IKE_PRF_DERIVE_PARAMS ike_prf_params = {
 		.prfMechanism = prf_desc->nss.mechanism,
@@ -51,7 +51,8 @@ static PK11SymKey *signature_skeyid(const struct prf_desc *prf_desc,
 
         return crypt_derive(dh_secret, CKM_NSS_IKE_PRF_DERIVE, &params,
 			    "skeyid", CKM_NSS_IKE1_PRF_DERIVE, CKA_DERIVE,
-			    /*key,flags*/ 0, 0, HERE);
+			    /*key,flags*/ 0, 0,
+			    HERE, logger);
 }
 
 /*
@@ -60,9 +61,9 @@ static PK11SymKey *signature_skeyid(const struct prf_desc *prf_desc,
 static PK11SymKey *pre_shared_key_skeyid(const struct prf_desc *prf_desc,
 					 chunk_t pre_shared_key,
 					 chunk_t Ni, chunk_t Nr,
-					 struct logger *unused_logger UNUSED)
+					 struct logger *logger)
 {
-	PK11SymKey *psk = prf_key_from_hunk("psk", prf_desc, pre_shared_key);
+	PK11SymKey *psk = prf_key_from_hunk("psk", prf_desc, pre_shared_key, logger);
 	PK11SymKey *skeyid;
 	if (psk == NULL) {
 		return NULL;
@@ -84,7 +85,8 @@ static PK11SymKey *pre_shared_key_skeyid(const struct prf_desc *prf_desc,
 
 	skeyid = crypt_derive(psk, CKM_NSS_IKE_PRF_DERIVE, &params,
 			      "skeyid", CKM_NSS_IKE1_PRF_DERIVE, CKA_DERIVE,
-			      /*key_size*/0, /*flags*/0, HERE);
+			      /*key_size*/0, /*flags*/0,
+			      HERE, logger);
 	release_symkey("SKEYID psk", "psk", &psk);
 	return skeyid;
 }
@@ -96,7 +98,7 @@ static PK11SymKey *skeyid_d(const struct prf_desc *prf_desc,
 			    PK11SymKey *skeyid,
 			    PK11SymKey *dh_secret,
 			    chunk_t cky_i, chunk_t cky_r,
-			    struct logger *unused_logger UNUSED)
+			    struct logger *logger)
 {
 	CK_NSS_IKE1_PRF_DERIVE_PARAMS ike1_prf_params = {
 		.prfMechanism = prf_desc->nss.mechanism,
@@ -115,7 +117,8 @@ static PK11SymKey *skeyid_d(const struct prf_desc *prf_desc,
 
 	return crypt_derive(skeyid, CKM_NSS_IKE1_PRF_DERIVE, &params,
 			    "skeyid_d", CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE,
-			    /*key-size*/0, /*flags*/0, HERE);
+			    /*key-size*/0, /*flags*/0,
+			    HERE, logger);
 }
 
 /*
@@ -125,7 +128,7 @@ static PK11SymKey *skeyid_a(const struct prf_desc *prf_desc,
 			    PK11SymKey *skeyid,
 			    PK11SymKey *skeyid_d, PK11SymKey *dh_secret,
 			    chunk_t cky_i, chunk_t cky_r,
-			    struct logger *unused_logger UNUSED)
+			    struct logger *logger)
 {
 	CK_NSS_IKE1_PRF_DERIVE_PARAMS ike1_prf_params = {
 		.prfMechanism = prf_desc->nss.mechanism,
@@ -145,7 +148,8 @@ static PK11SymKey *skeyid_a(const struct prf_desc *prf_desc,
 
 	return crypt_derive(skeyid, CKM_NSS_IKE1_PRF_DERIVE, &params,
 			    "skeyid_a", CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE,
-			    /*key-size*/0, /*flags*/0, HERE);
+			    /*key-size*/0, /*flags*/0,
+			    HERE, logger);
 }
 
 /*
@@ -155,7 +159,7 @@ static PK11SymKey *skeyid_e(const struct prf_desc *prf_desc,
 			    PK11SymKey *skeyid,
 			    PK11SymKey *skeyid_a, PK11SymKey *dh_secret,
 			    chunk_t cky_i, chunk_t cky_r,
-			    struct logger *unused_logger UNUSED)
+			    struct logger *logger)
 {
 	CK_NSS_IKE1_PRF_DERIVE_PARAMS ike1_prf_params = {
 		.prfMechanism = prf_desc->nss.mechanism,
@@ -175,14 +179,15 @@ static PK11SymKey *skeyid_e(const struct prf_desc *prf_desc,
 
 	return crypt_derive(skeyid, CKM_NSS_IKE1_PRF_DERIVE, &params,
 			    "skeyid_e", CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE,
-			    /*key-size*/0, /*flags*/0, HERE);
+			    /*key-size*/0, /*flags*/0,
+			    HERE, logger);
 }
 
 static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf,
 				       const struct encrypt_desc *encrypter,
 				       PK11SymKey *skeyid_e,
 				       unsigned required_keymat,
-				       struct logger *unused_logger UNUSED)
+				       struct logger *logger)
 {
 
 	/*
@@ -206,7 +211,8 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf,
 
 	return crypt_derive(skeyid_e, CKM_NSS_IKE1_APP_B_PRF_DERIVE,
 			    &params, "keymat_e", target, CKA_ENCRYPT,
-			    /*key-size*/required_keymat, /*flags*/CKF_DECRYPT|CKF_ENCRYPT, HERE);
+			    /*key-size*/required_keymat, /*flags*/CKF_DECRYPT|CKF_ENCRYPT,
+			    HERE, logger);
 }
 
 static chunk_t section_5_keymat(const struct prf_desc *prf,
@@ -216,7 +222,7 @@ static chunk_t section_5_keymat(const struct prf_desc *prf,
 				shunk_t SPI,
 				chunk_t Ni_b, chunk_t Nr_b,
 				unsigned required_keymat,
-				struct logger *unused_logger UNUSED)
+				struct logger *logger)
 {
 	/*
 	 * XXX: this requires:
@@ -281,8 +287,9 @@ static chunk_t section_5_keymat(const struct prf_desc *prf,
 				       "section_5_keymat", CKM_EXTRACT_KEY_FROM_KEY,
 				       CKA_ENCRYPT,
 				       /*key-size*/required_keymat,
-				       /*flags*/CKF_DECRYPT|CKF_ENCRYPT, HERE);
-	chunk_t keymat = chunk_from_symkey("section 5 keymat", key);
+				       /*flags*/CKF_DECRYPT|CKF_ENCRYPT,
+				       HERE, logger);
+	chunk_t keymat = chunk_from_symkey("section 5 keymat", key, logger);
 	release_symkey("section 5 keymat", "keymat", &key);
 	pfree(extra);
 	return keymat;

@@ -594,6 +594,7 @@ static const char hexdig[] = "0123456789abcdef";
  */
 void init_vendorid(void)
 {
+	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
 	struct vid_struct *vid;
 
 	for (vid = vid_tab; vid->id != VID_none; vid++) {
@@ -614,7 +615,8 @@ void init_vendorid(void)
 
 			/* TODO: This use must allowed even with USE_MD5=false */
 			struct crypt_hash *ctx = crypt_hash_init("vendor id",
-								 &ike_alg_hash_md5);
+								 &ike_alg_hash_md5,
+								 logger);
 			crypt_hash_digest_bytes(ctx, "data", d, strlen(vid->data));
 			crypt_hash_final_bytes(&ctx, vidm, MD5_DIGEST_SIZE);
 			vid->vid_len = MD5_DIGEST_SIZE;
@@ -627,7 +629,8 @@ void init_vendorid(void)
 			vid->vid = vidm;
 
 			struct crypt_hash *ctx = crypt_hash_init("vendor id",
-								 &ike_alg_hash_md5);
+								 &ike_alg_hash_md5,
+								 logger);
 			crypt_hash_digest_bytes(ctx, "data", vid->data, strlen(vid->data));
 			crypt_hash_final_bytes(&ctx, hash, MD5_DIGEST_SIZE);
 

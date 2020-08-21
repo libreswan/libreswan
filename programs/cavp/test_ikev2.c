@@ -52,7 +52,8 @@ static void cavp_acvp_ikev2(const struct prf_desc *prf,
 	print_symkey("DKM", "derivedKeyingMaterial", dkm, nr_ike_sa_dkm_bytes);
 
 	/* prf+(SK_d, Ni | Nr) */
-	PK11SymKey *SK_d = key_from_symkey_bytes(dkm, 0, prf->prf_key_size, HERE);
+	PK11SymKey *SK_d = key_from_symkey_bytes(dkm, 0, prf->prf_key_size,
+						 HERE, &progname_logger);
 	PK11SymKey *child_sa_dkm = ikev2_child_sa_keymat(prf, SK_d, NULL,
 							 ni, nr, nr_child_sa_dkm_bytes,
 							 &progname_logger);

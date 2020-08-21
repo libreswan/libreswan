@@ -594,7 +594,7 @@ struct ike_sa *new_v1_istate(struct fd *whackfd)
 struct ike_sa *new_v1_rstate(struct msg_digest *md)
 {
 	struct state *st = new_state(IKEv1, md->hdr.isa_ike_spis.initiator,
-				     ike_responder_spi(&md->sender),
+				     ike_responder_spi(&md->sender, md->md_logger),
 				     IKE_SA, null_fd);
 	struct ike_sa *ike = pexpect_ike_sa(st);
 	update_ike_endpoints(ike, md);

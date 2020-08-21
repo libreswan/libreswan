@@ -1825,7 +1825,8 @@ void ikev2_process_packet(struct msg_digest *md)
 			 */
 			struct ike_sa *ike = new_v2_ike_state(transition, SA_RESPONDER,
 							      md->hdr.isa_ike_spis.initiator,
-							      ike_responder_spi(&md->sender),
+							      ike_responder_spi(&md->sender,
+										md->md_logger),
 							      c, policy, 0, null_fd);
 
 			statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
@@ -2929,13 +2930,15 @@ void ikev2_log_parentSA(const struct state *st)
 				 st->st_oakley.enckeylen);
 
 		/* v2 IKE authentication key for initiator (256 bit bound) */
-		chunk_t ai = chunk_from_symkey("ai", st->st_skey_ai_nss);
+		chunk_t ai = chunk_from_symkey("ai", st->st_skey_ai_nss,
+					       st->st_logger);
 		char tai[3 + 2 * BYTES_FOR_BITS(256)] = "";
 		(void)datatot(ai.ptr, ai.len, 'x', tai, sizeof(tai));
 		free_chunk_content(&ai);
 
 		/* v2 IKE encryption key for initiator (256 bit bound) */
-		chunk_t ei = chunk_from_symkey("ei", st->st_skey_ei_nss);
+		chunk_t ei = chunk_from_symkey("ei", st->st_skey_ei_nss,
+					       st->st_logger);
 		char tei[3 + 2 * BYTES_FOR_BITS(256)] = "";
 		(void)datatot(ei.ptr, ei.len, 'x', tei, sizeof(tei));
 		free_chunk_content(&ei);
@@ -2946,13 +2949,15 @@ void ikev2_log_parentSA(const struct state *st)
 			encalgo, tekl, tei);
 
 		/* v2 IKE authentication key for responder (256 bit bound) */
-		chunk_t ar = chunk_from_symkey("ar", st->st_skey_ar_nss);
+		chunk_t ar = chunk_from_symkey("ar", st->st_skey_ar_nss,
+					       st->st_logger);
 		char tar[3 + 2 * BYTES_FOR_BITS(256)] = "";
 		(void)datatot(ar.ptr, ar.len, 'x', tar, sizeof(tar));
 		free_chunk_content(&ar);
 
 		/* v2 IKE encryption key for responder (256 bit bound) */
-		chunk_t er = chunk_from_symkey("er", st->st_skey_er_nss);
+		chunk_t er = chunk_from_symkey("er", st->st_skey_er_nss,
+					       st->st_logger);
 		char ter[3 + 2 * BYTES_FOR_BITS(256)] = "";
 		(void)datatot(er.ptr, er.len, 'x', ter, sizeof(ter));
 		free_chunk_content(&er);

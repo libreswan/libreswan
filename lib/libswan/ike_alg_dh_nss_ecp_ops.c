@@ -186,7 +186,7 @@ static PK11SymKey *nss_ecp_calc_shared(const struct dh_desc *group,
 						 /* shared data */ NULL,
 						 /* ctx */ lsw_nss_get_password_context(logger));
 	if (DBGP(DBG_CRYPT)) {
-		DBG_symkey("g_ir ", "temp", temp);
+		DBG_symkey(logger, "g_ir ", "temp", temp);
 	}
 
 	/*
@@ -195,7 +195,7 @@ static PK11SymKey *nss_ecp_calc_shared(const struct dh_desc *group,
 	 * CKM_CONCATENATE_BASE_AND_KEY - work around this by
 	 * returning a copy of the key.
 	 */
-	PK11SymKey *g_ir = key_from_symkey_bytes(temp, 0, sizeof_symkey(temp), HERE);
+	PK11SymKey *g_ir = key_from_symkey_bytes(temp, 0, sizeof_symkey(temp), HERE, logger);
 	DBGF(DBG_CRYPT, "NSS: extracted-key@%p from ECDH temp-key@%p (CKM_CONCATENATE_BASE_AND_KEY hack)",
 	     g_ir, temp);
 

@@ -117,7 +117,7 @@ static PK11SymKey *nss_modp_calc_shared(const struct dh_desc *group,
 					  CKA_DERIVE, group->bytes,
 					  lsw_nss_get_password_context(logger));
 	if (DBGP(DBG_CRYPT)) {
-		DBG_symkey("newref ", "g_ir", g_ir);
+		DBG_symkey(logger, "newref ", "g_ir", g_ir);
 	}
 
 	return g_ir;

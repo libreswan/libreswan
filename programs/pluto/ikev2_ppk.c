@@ -191,7 +191,7 @@ static void ppk_recalc_one(PK11SymKey **sk /* updated */, PK11SymKey *ppk_key,
 	release_symkey(__func__, name, sk);
 	*sk = t;
 	DBG(DBG_PRIVATE, {
-		chunk_t chunk_sk = chunk_from_symkey("sk_chunk", *sk);
+		chunk_t chunk_sk = chunk_from_symkey("sk_chunk", *sk, logger);
 		DBG_dump_hunk(name, chunk_sk);
 		free_chunk_content(&chunk_sk);
 	});
@@ -203,7 +203,7 @@ void ppk_recalculate(const chunk_t *ppk, const struct prf_desc *prf_desc,
 		     PK11SymKey **sk_pr,	/* updated */
 		     struct logger *logger)
 {
-	PK11SymKey *ppk_key = symkey_from_hunk("PPK Keying material", *ppk);
+	PK11SymKey *ppk_key = symkey_from_hunk("PPK Keying material", *ppk, logger);
 
 	DBG(DBG_CRYPT, {
 		DBG_log("Starting to recalculate SK_d, SK_pi, SK_pr");
