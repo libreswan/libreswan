@@ -505,7 +505,6 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 	case NO_MESSAGE:
 		dbg("Message ID: IKE #%lu skipping update_recv as MD is fake",
 		    ike->sa.st_serialno);
-		msgid = -1;
 		return;
 	default:
 		bad_case(receiving);
