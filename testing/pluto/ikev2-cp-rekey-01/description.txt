@@ -1,3 +1,4 @@
 Test IKEv2 with addresspool and DNS CP payloads
 
-Do an --up, followed by another --up that should cause a proper child rekey.
+Do an --up, followed by another --up that should cause a proper child rekey (or a 2nd /replaced)
+IPsec SA - but not a failure.
