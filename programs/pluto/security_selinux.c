@@ -30,13 +30,13 @@ void init_avc(void)
 		libreswan_log("selinux support is enabled.");
 	}
 
-	if (avc_init("libreswan", NULL, NULL, NULL, NULL) == 0)
+	if (avc_open(NULL, 0) == 0)
 		selinux_ready = 1;
 	else
 		libreswan_log("selinux: could not initialize avc.");
 }
 
-int within_range(security_context_t sl, security_context_t range)
+int within_range(char *sl, security_context_t range)
 {
 	int rtn = 1;
 	security_id_t slsid;
@@ -62,7 +62,6 @@ int within_range(security_context_t sl, security_context_t range)
 	rtn = avc_context_to_sid(range, &rangesid);
 	if (rtn != 0) {
 		dbg("within_range: Unable to retrieve sid for range context (%s)", range);
-		sidput(slsid);
 		return 0;
 	}
 
@@ -74,8 +73,6 @@ int within_range(security_context_t sl, security_context_t range)
 	rtn = avc_has_perm(slsid, rangesid, tclass, av, NULL, &avd);
 	if (rtn != 0) {
 		dbg("within_range: The sl (%s) is not within range of (%s)", sl, range);
-		sidput(slsid);
-		sidput(rangesid);
 		return 0;
 	}
 	dbg("within_range: The sl (%s) is within range of (%s)", sl, range);
