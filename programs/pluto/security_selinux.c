@@ -36,7 +36,7 @@ void init_avc(void)
 		libreswan_log("selinux: could not initialize avc.");
 }
 
-int within_range(char *sl, security_context_t range)
+int within_range(char *sl, char *range)
 {
 	int rtn = 1;
 	security_id_t slsid;
