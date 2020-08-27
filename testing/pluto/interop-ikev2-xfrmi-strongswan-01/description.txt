@@ -1,0 +1,2 @@
+A routed subnet-to-subnet tunnel using xfrmi interface.
+Because this test is subnet-to-subnet and the other end is not inside the

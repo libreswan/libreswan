@@ -1,0 +1,1 @@
+A routed subnet-to-subnet tunnel using xfrmi interface with if_id 0

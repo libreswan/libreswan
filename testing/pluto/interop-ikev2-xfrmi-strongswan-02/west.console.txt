@@ -2,9 +2,9 @@
 west #
  ../../pluto/bin/strongswan-start.sh
 west #
- ip link set down dev ipsec2 2> /dev/null > /dev/null
+ ip link set down dev ipsec0 2> /dev/null > /dev/null
 west #
- ip link del ipsec2 2> /dev/null > /dev/null
+ ip link del ipsec0 2> /dev/null > /dev/null
 west #
  ip rule del pref 220 2> /dev/null > /dev/null
 west #
@@ -12,7 +12,7 @@ west #
 west #
  ip route del 192.1.2.0/24 dev eth0 table 220 2> /dev/null > /dev/null
 west #
- ip link add ipsec2 type xfrm if_id 2 dev eth0
+ ip link add ipsec0 type xfrm if_id 2 dev eth0
 west #
  swanctl  --load-conns
 loaded connection 'west'
@@ -55,12 +55,10 @@ src 192.0.1.0/24 dst 192.0.2.0/24
 src 192.0.2.0/24 dst 192.0.1.0/24 
 	dir fwd priority 375423 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
 	if_id 0x2
 src 192.0.2.0/24 dst 192.0.1.0/24 
 	dir in priority 375423 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
 	if_id 0x2
 src 192.1.2.0/24 dst 192.1.2.0/24 
 	dir fwd priority 175423 ptype main 
@@ -77,19 +75,13 @@ src 192.0.1.0/24 dst 192.0.1.0/24
 west #
  ip xfrm state
 src 192.1.2.45 dst 192.1.2.23
-	replay-window 0 flag af-unspec
-	auth-trunc hmac(sha256) 0xHASHKEY 128
-	enc cbc(aes) 0xENCKEY
 	if_id 0x2
 src 192.1.2.23 dst 192.1.2.45
-	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha256) 0xHASHKEY 128
-	enc cbc(aes) 0xENCKEY
 	if_id 0x2
 west #
- ip link set up dev ipsec2
+ ip link set up dev ipsec0
 west #
- ip route add 192.0.2.0/24 dev ipsec2
+ ip route add 192.0.2.0/24 dev ipsec0
 west #
  ping -w 4 -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -101,8 +93,8 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
- ip -s link show ipsec2
-X: ipsec2@eth0: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+ ip -s link show ipsec0
+X: ipsec0@eth0: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX: bytes  packets  errors  dropped overrun mcast   
     336        4        0       0       0       0       
     TX: bytes  packets  errors  dropped carrier collsns 
@@ -116,7 +108,7 @@ west #
  ip route
 default via 192.1.2.254 dev eth1
 192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
-192.0.2.0/24 dev ipsec2 scope link
+192.0.2.0/24 dev ipsec0 scope link
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
 west #
  ip route show table 220
