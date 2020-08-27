@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 		srv_sock_path = argv[1];
 
 	{
-		security_context_t ctx;
+		char *ctx;
 		int rc = getcon(&ctx);
 
 		fprintf(stderr, "-> running as %s\n",
@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
 		struct sockaddr_in6 *const cli_sock_6addr = (struct sockaddr_in6 *)&cli_sock_saddr;
 		socklen_t cli_sock_addr_len;
 		char cli_sock_addr_str[INET6_ADDRSTRLEN + 1];
-		security_context_t ctx;
+		char *ctx;
 		char *ctx_str;
 
 		//fflush(stdout);

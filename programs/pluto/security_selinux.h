@@ -20,6 +20,6 @@
 #include <selinux/context.h>
 
 void init_avc(void);
-int within_range(security_context_t sl, security_context_t range);
+int within_range(char *sl, security_context_t range);
 
 #endif /* _SECURITY_SELINUX_H */
