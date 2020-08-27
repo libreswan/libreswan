@@ -56,8 +56,7 @@
 #include "nat_traversal.h"
 
 
-#ifndef USE_LABELED_IPSEC
-
+#ifndef HAVE_LABELED_IPSEC
 static bool parse_secctx_attr(pb_stream *pbs UNUSED, struct state *st UNUSED)
 {
 	/*
