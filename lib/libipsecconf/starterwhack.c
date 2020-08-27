@@ -657,7 +657,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
-	if (conn->options_set[KSCF_POLICY_LABEL]) {
+	if (conn->strings_set[KSCF_POLICY_LABEL]) {
 		msg.policy_label = conn->policy_label;
 		starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" policy_label=%s",
 			conn->name, msg.policy_label);
