@@ -11,6 +11,7 @@ v4.0 (unreleased)
 * pluto: ddos cookies-threshold and max-halfopen output was swapped [John Mah]
 * pluto: Fix leased IP address leak [Andrew/Paul]
 * pluto: Fix displaying PLUTO_BYTES_ counters [Paul]
+* pluto: Replace/remove deprecated libselinux functions [Eduardo Barretto]
 * seccomp: Update syscall allowlist for pluto and addconn [Paul]
 * whack: Support for ipsec whack --rereadcerts [Paul]
 * show: Fixup for python3 version of ipaddress module [Paul]
