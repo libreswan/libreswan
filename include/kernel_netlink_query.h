@@ -15,4 +15,4 @@
 
 struct logger;
 
-int nl_send_query(struct nlmsghdr *req, int protocol, struct logger *logger);
+int nl_send_query(const struct nlmsghdr *req, int protocol, struct logger *logger);

@@ -29,49 +29,40 @@
 #define NLMSG_TAIL(nmsg) \
 	((struct rtattr *) (((void *) (nmsg)) + NLMSG_ALIGN((nmsg)->nlmsg_len)))
 
-bool nl_addattr_l(struct nlmsghdr *n, const unsigned short maxlen,
-		  const unsigned short type, const void *data, int alen,
-		  struct logger *logger)
+void nl_addattr_l(struct nlmsghdr *n, const unsigned short maxlen,
+		  const unsigned short type, const void *data, int alen)
 {
 	unsigned short len = RTA_LENGTH(alen);
-	struct rtattr *rta;
 
-	if (NLMSG_ALIGN(n->nlmsg_len) + RTA_ALIGN(len) > maxlen) {
-		log_message(RC_LOG_SERIOUS, logger,
-			    "ERROR: addattr_l: message exceeded bound %hu / %hu",
-			    n->nlmsg_len, maxlen);
-	}
-	rta = NLMSG_TAIL(n);
+	passert(NLMSG_ALIGN(n->nlmsg_len) + RTA_ALIGN(len) <= maxlen);
+
+	struct rtattr *rta = NLMSG_TAIL(n);
+
 	rta->rta_type = type;
 	rta->rta_len = len;
-	if (alen)
-		memcpy(RTA_DATA(rta), data, alen);
+	memcpy(RTA_DATA(rta), data, alen);
 	n->nlmsg_len = NLMSG_ALIGN(n->nlmsg_len) + RTA_ALIGN(len);
-	return NULL;
 }
 
-struct rtattr *nl_addattr_nest(struct nlmsghdr *n, int maxlen, int type, struct logger *logger)
+struct rtattr *nl_addattr_nest(struct nlmsghdr *n, int maxlen, int type)
 {
 	struct rtattr *nest = NLMSG_TAIL(n);
 
-	nl_addattr_l(n, maxlen, type, NULL, 0, logger);
+	nl_addattr_l(n, maxlen, type, NULL, 0);
 	return nest;
 }
 
-bool nl_addattr_nest_end(struct nlmsghdr *n, struct rtattr *nest)
+void nl_addattr_nest_end(struct nlmsghdr *n, struct rtattr *nest)
 {
 	nest->rta_len = (void *)NLMSG_TAIL(n) - (void *)nest;
-	return n->nlmsg_len;
 }
 
-bool nl_addattrstrz(struct nlmsghdr *n, int maxlen, int type,
-		    const char *str, struct logger *logger)
+void nl_addattrstrz(struct nlmsghdr *n, int maxlen, int type, const char *str)
 {
-	return nl_addattr_l(n, maxlen, type, str, strlen(str)+1, logger);
+	nl_addattr_l(n, maxlen, type, str, strlen(str)+1);
 }
 
-bool nl_addattr32(struct nlmsghdr *n, int maxlen, int type,
-		  const uint32_t data, struct logger *logger)
+void nl_addattr32(struct nlmsghdr *n, int maxlen, int type, const uint32_t data)
 {
-	return nl_addattr_l(n, maxlen, type, &data, sizeof(uint32_t), logger);
+	nl_addattr_l(n, maxlen, type, &data, sizeof(uint32_t));
 }

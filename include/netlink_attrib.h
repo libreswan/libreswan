@@ -25,15 +25,13 @@ struct nlm_resp {
         } u;
 };
 
-bool nl_addattr_l(struct nlmsghdr *n, const unsigned short maxlen,
-		  const unsigned short type, const void *data, int alen,
-		  struct logger *logger);
+void nl_addattr_l(struct nlmsghdr *n, const unsigned short maxlen,
+                const unsigned short type, const void *data, int alen);
 struct rtattr *nl_addattr_nest(struct nlmsghdr *n, int maxlen,
-			       int type, struct logger *logger);
-bool nl_addattr_nest_end(struct nlmsghdr *n, struct rtattr *nest);
-bool nl_addattrstrz(struct nlmsghdr *n, int maxlen, int type,
-		    const char *str, struct logger *logger);
-bool nl_addattr32(struct nlmsghdr *n, int maxlen, int type,
-		  const uint32_t data, struct logger *logger);
+			       int type);
+void nl_addattr_nest_end(struct nlmsghdr *n, struct rtattr *nest);
+void nl_addattrstrz(struct nlmsghdr *n, int maxlen, int type,
+		const char *str);
+void nl_addattr32(struct nlmsghdr *n, int maxlen, int type, const uint32_t data);
 
 #endif

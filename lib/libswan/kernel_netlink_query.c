@@ -24,15 +24,14 @@
 
 #include "lswlog.h"
 
-int nl_send_query(struct nlmsghdr *req, int protocol, struct logger *logger)
+/* returns a file descriptor on success; -1 on error */
+int nl_send_query(const struct nlmsghdr *req, int protocol, struct logger *logger)
 {
-	size_t len;
-	ssize_t r;
 	int nl_fd = socket(AF_NETLINK, SOCK_DGRAM, protocol);
 
 	if (nl_fd < 0) {
 		log_errno(logger, errno, "socket() in nl_send_query() protocol %d", protocol);
-		return nl_fd;
+		return nl_fd;	/* -1 */
 	}
 
 	if (fcntl(nl_fd, F_SETFL, O_NONBLOCK) != 0) {
@@ -41,20 +40,21 @@ int nl_send_query(struct nlmsghdr *req, int protocol, struct logger *logger)
 		return -1;
 	}
 
-	len = req->nlmsg_len;
+	size_t len = req->nlmsg_len;
+	ssize_t r;
 	do {
 		r = write(nl_fd, req, len);
 	} while (r < 0 && errno == EINTR);
 	if (r < 0) {
 		log_errno(logger, errno, "netlink nl_send_query() write");
 		close(nl_fd);
-		return -2;
+		return -1;
 	} else if ((size_t)r != len) {
 		log_message(RC_LOG_SERIOUS, logger,
 			    "ERROR: netlink write() message truncated: %zd instead of %zu",
 			    r, len);
 		close(nl_fd);
-		return -3;
+		return -1;
 	}
 
 	return nl_fd;
