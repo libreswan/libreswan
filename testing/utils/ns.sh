@@ -263,7 +263,7 @@ host_tweaks ()
 	     	ipsec _stackmanager start
 		if [ -z "$(ipsec version | grep netkey)" ]; then
 			#echo "abort ttempt to load netkey stack failed"
-			echo "can not find netkey stack"
+			echo "cannot find netkey stack"
 			echo "ipsec _stackmanager start ; may help"
 			exit 1
 		fi

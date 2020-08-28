@@ -1545,7 +1545,7 @@ struct_desc ikev2_skf_desc = {
  */
 static field_desc ikev2redirect_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "GW Identity type", &ikev2_redirect_gw_names },
-	{ ft_nat,  8 / BITS_PER_BYTE, "GW Identity length", NULL },	/* this can not be ft_len,
+	{ ft_nat,  8 / BITS_PER_BYTE, "GW Identity length", NULL },	/* this cannot be ft_len,
 									   because of the Nonce Data */
 	{ ft_end,  0, NULL, NULL }
 };

@@ -1039,7 +1039,7 @@ bool v2_process_ts_request(struct child_sa *child,
 				break;
 			case POLICY_IKEV2_ALLOW_NARROWING:
 				if (!LIN(POLICY_IKEV2_ALLOW_NARROWING, t->policy)) {
-					dbg("    skipping; can not narrow");
+					dbg("    skipping; cannot narrow");
 					continue;
 				}
 				break;

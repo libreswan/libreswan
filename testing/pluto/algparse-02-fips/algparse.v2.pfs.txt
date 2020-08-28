@@ -382,4 +382,4 @@ algparse -fips -v2 -pfs 'ike=aes_gcm+aes_gcm-sha1-none-modp2048'
 algparse: discarding duplicate algorithm 'AES_GCM_16'
 	ERROR: 'modp2048' unexpected
 algparse -fips -v2 -pfs 'ike=aes+aes_gcm'
-	ERROR: AEAD and non-AEAD IKE encryption algorithm can not be combined
+	ERROR: AEAD and non-AEAD IKE encryption algorithm cannot be combined

@@ -106,7 +106,7 @@ def wipe_old(dst):
         elif os.path.isdir(dst):
             shutil.rmtree(dst)
         # else: #no existing file
-        #   print("can not wipe unknown type %s" % dst)
+        #   print("cannot wipe unknown type %s" % dst)
 
 def shell(command, out=False):
     """Run command as a sub-process and report failures"""
@@ -230,7 +230,7 @@ if not args.no_eth0:
     o = subprocess.run(['ip' , '-o', 'link' , 'show', 'dev', 'eth0'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="ascii")
     ifname = o.stdout.split(' ')[1]
     if o.returncode:
-        print("can not find eht0. test guest expect eth0. --no-eth0 to disable this check\n%s\n%s" % i (o.output, o.stderr))
+        print("cannot find eht0. test guest expect eth0. --no-eth0 to disable this check\n%s\n%s" % i (o.output, o.stderr))
         sys.exit(1)
 
 if re.match(r'eth0@if\d+', ifname):

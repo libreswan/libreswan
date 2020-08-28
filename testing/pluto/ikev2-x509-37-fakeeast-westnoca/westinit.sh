@@ -2,7 +2,7 @@
 
 # import real west+mainca
 pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/pkcs12/mainca/west.p12
-# delete real main CA so can not validate
+# delete real main CA so cannot validate
 certutil -D -d sql:/etc/ipsec.d -n "Libreswan test CA for mainca - Libreswan"
 
 # confirm that the network is alive

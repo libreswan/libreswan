@@ -104,7 +104,7 @@ systemctl enable systemd-networkd-wait-online.service
 systemctl disable systemd-resolved
 
 # F28-F31 dracut leaves network config files there. remove it to be safe
-# Drcut can not use systemd-networkd or create an initial configuration yet.
+# Drcut cannot use systemd-networkd or create an initial configuration yet.
 # https://github.com/dracutdevs/dracut/issues/670
 rm -fr /etc/sysconfig/network-scripts/i*
 

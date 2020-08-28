@@ -752,14 +752,14 @@ class scantests:
 
         if not self.read_testlist(self.trpath):
             logging.info(
-                "can not read %s/TESTLIST will try other locations", self.trpath)
+                "cannot read %s/TESTLIST will try other locations", self.trpath)
             if self.args.resanitize or self.args.scancwd:
                 # we need the TESTLIST in the self.trpath
                 return True
             if not self.read_testlist(self.npath):
                 if not self.read_testlist('./'):
                     logging.error(
-                        "skip this dir %s . can not read %s/TESTLIST , %s/TESTLIST , ./TESTLIST abort", trpath, trpath, self.npath)
+                        "skip this dir %s . cannot read %s/TESTLIST , %s/TESTLIST , ./TESTLIST abort", trpath, trpath, self.npath)
                     return True
 
         if self.nopath and self.args.resanitize:
@@ -847,7 +847,7 @@ class scantests:
                 x = json.loads(line)
             except TypeError:
                 logging.error(
-                    "TypeError can not convert '%s' to json", line)
+                    "TypeError cannot convert '%s' to json", line)
                 continue
             if not "result" in x:
                 continue
@@ -1200,7 +1200,7 @@ def get_results(r):
             x = json.loads(line)
         except TypeError:
             logging.error(
-                "TypeError can not convert '%s' to json", line)
+                "TypeError cannot convert '%s' to json", line)
             continue
         if "result" in x and "testname" in x:
             return x
@@ -1509,7 +1509,7 @@ def re_write_result(sanity):
 
     output_file = "OUTPUT/RESULT"
     if not os.path.exists(output_file):
-        logging.debug("can not rewrite %s missing", output_file)
+        logging.debug("cannot rewrite %s missing", output_file)
         return
     logging.debug("read result %s", output_file)
 
@@ -2451,7 +2451,7 @@ def check_host_netkey_stack():
         if v_line.split()[3] != '(netkey)':
             # give up
             logging.error(
-                "ABORT no netkey stack found. can not run docker test, %s", v_line)
+                "ABORT no netkey stack found. cannot run docker test, %s", v_line)
             return True
 
 

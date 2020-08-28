@@ -1177,7 +1177,7 @@ static bool extract_connection(struct fd *whackfd,
 	if ((wm->policy & POLICY_TUNNEL) == LEMPTY) {
 		if (wm->sa_tfcpad != 0) {
 			loglog(RC_FATAL,
-				"Failed to add connection \"%s\", connection with type=transport can not specify tfc=",
+				"Failed to add connection \"%s\", connection with type=transport cannot specify tfc=",
 				wm->name);
 			return false;
 		}

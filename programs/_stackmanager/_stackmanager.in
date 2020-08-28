@@ -141,7 +141,7 @@ startnetkey() {
 	    echo ${xfrmlifetime} >/proc/sys/net/core/xfrm_acq_expires
 	fi
     else
-	echo "WARNING: can not change /proc/sys/net/core/xfrm_acq_expires from ${xcur} to ${xfrmlifetime}" >&2
+	echo "WARNING: cannot change /proc/sys/net/core/xfrm_acq_expires from ${xcur} to ${xfrmlifetime}" >&2
     fi
 
     # Fail on error in loading XFRM IPsec stack

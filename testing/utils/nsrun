@@ -836,14 +836,14 @@ class scantests:
 
         if not self.read_testlist(self.trpath):
             logger.info(
-                "can not read %s/TESTLIST will try other locations", self.trpath)
+                "cannot read %s/TESTLIST will try other locations", self.trpath)
             if self.args.resanitize or self.args.scancwd:
                 # we need the TESTLIST in the self.trpath
                 return True
             if not self.read_testlist(self.npath):
                 if not self.read_testlist('./'):
                     logger.error(
-                        "skip this dir %s . can not read %s/TESTLIST , %s/TESTLIST , ./TESTLIST abort", trpath, trpath, self.npath)
+                        "skip this dir %s . cannot read %s/TESTLIST , %s/TESTLIST , ./TESTLIST abort", trpath, trpath, self.npath)
                     return True
 
         if self.nopath and self.args.resanitize:
@@ -931,7 +931,7 @@ class scantests:
                 x = json.loads(line)
             except TypeError:
                 logger.error(
-                    "TypeError can not convert '%s' to json", line)
+                    "TypeError cannot convert '%s' to json", line)
                 continue
             if not "result" in x:
                 continue
@@ -1302,7 +1302,7 @@ def get_results(r):
             x = json.loads(line)
         except TypeError:
             logger.error(
-                "TypeError can not convert '%s' to json", line)
+                "TypeError cannot convert '%s' to json", line)
             continue
         if "result" in x and "testname" in x:
             return x
@@ -1664,7 +1664,7 @@ def rm_fr_mkdir(dst, mode=None, ignore=None):
             shutil.rmtree(dst)  # should I wrap this try?
         except PermissionError as e:
             logger.info(
-                "PermissionError can not remove directory '%s'\n %s", dst, e)
+                "PermissionError cannot remove directory '%s'\n %s", dst, e)
             return True
     try:
         mode_str = ''
@@ -1726,7 +1726,7 @@ def re_write_result(sanity):
 
     output_file = "OUTPUT/RESULT"
     if not os.path.exists(output_file):
-        logger.debug("can not rewrite %s missing", output_file)
+        logger.debug("cannot rewrite %s missing", output_file)
         return
     logger.debug("read result %s", output_file)
 
@@ -2887,7 +2887,7 @@ def ns_isdir(dst):
         logger.debug("found directory '%s'" % dst)
         return True
 
-    logger.debug("can not find directory '%s'", dst)
+    logger.debug("cannot find directory '%s'", dst)
     return False
 
 
@@ -3059,7 +3059,7 @@ def ns_run_script_subprocess(console, host, script, timeout=120, testname=None):
 
     logger.debug("run on %s %s", host, script)
     if not os.path.exists(script):
-        logger.error("can not find the script %s", script)
+        logger.error("cannot find the script %s", script)
         return True
 
     console_out = "OUTPUT/%s.console.verbose.txt" % host
@@ -3294,7 +3294,7 @@ def check_host_netkey_stack():
         if v_line.split()[3] != '(netkey)':
             # give up
             logger.error(
-                "ABORT no netkey stack found. can not run docker test, %s", v_line)
+                "ABORT no netkey stack found. cannot run docker test, %s", v_line)
             return True
 
 
@@ -3765,7 +3765,7 @@ class Test():
         elif cwd:
             self.name = os.path.basename(cwd)
         else:
-            logger.error("ABORT can not figure test directoy")
+            logger.error("ABORT cannot figure test directoy")
             return
 
 
@@ -3838,7 +3838,7 @@ class Test():
     def run_script_pexpect(self, console, host, script, timeout=120):
 
         if not os.path.exists(script):
-            logger.error("can not find the script %s", script)
+            logger.error("cannot find the script %s", script)
             return True
 
         status = console.run("export PATH=$PATH:/usr/local/sbin/", timeout=2)
@@ -3855,7 +3855,7 @@ class Test():
                     try:
                         status = console.run(line, timeout=timeout)
                         if status:
-                            # Can not abort some commands are expected to fail.
+                            # Cannot abort some commands are expected to fail.
                             # leave a cut/tuc marker in verbose to cleanup
                             logger.warning(
                                 "WARNING %s line %s exit status %d", script, line, status)
@@ -3896,7 +3896,7 @@ class TestListRun():
             os.chdir(self.tdir)
         except:
             logger.info(
-                "ABORT testrun can not change to %s directory", self.tdir)
+                "ABORT testrun cannot change to %s directory", self.tdir)
             return
 
         if not os.path.exists(args.testlist):
@@ -3911,7 +3911,7 @@ class TestListRun():
                 logger.info("removing existing %s" % self.s)
                 os.unlink(self.s)
             except:
-                logger.info("ABORT can not remove %s" % self.s)
+                logger.info("ABORT cannot remove %s" % self.s)
                 self.is_testlist = False
 
         rsync_file(args.testlist, "%s/TESTLIST" % self.odir)

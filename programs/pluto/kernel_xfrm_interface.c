@@ -178,7 +178,7 @@ static bool link_add_nl_msg(const char *if_name,
 		uint32_t dev_link_id; /* e.g link id of the interface, eth0 */
 		dev_link_id = if_nametoindex(dev_name);
 		if (dev_link_id == 0) {
-			LOG_ERRNO(errno, "Can not find interface index for device %s",
+			LOG_ERRNO(errno, "Cannot find interface index for device %s",
 					dev_name);
 			return true;
 		}
@@ -202,7 +202,7 @@ static bool ip_link_set_up(const char *if_name, struct logger *logger)
 	req.i.ifi_index = if_nametoindex(if_name);
 	if (req.i.ifi_index == 0) {
 		log_errno(logger, errno,
-			  "link_set_up_nl() can not find index of xfrm interface %s",
+			  "link_set_up_nl() cannot find index of xfrm interface %s",
 			  if_name);
 		return true;
 	}
@@ -232,7 +232,7 @@ static bool ip_link_del(const char *if_name, struct logger *logger)
 	struct nl_ifinfomsg_req req = init_nl_ifi(RTM_DELLINK, NLM_F_REQUEST);
 	req.i.ifi_index = if_nametoindex(if_name);
 	if (req.i.ifi_index == 0) {
-		log_errno(logger, errno, "ip_link_del() can not find index of interface %s",
+		log_errno(logger, errno, "ip_link_del() cannot find index of interface %s",
 			  if_name);
 		return true;
 	}
@@ -301,7 +301,7 @@ static bool dev_exist_check(const char *dev_name, bool quiet)
 
 	if (if_id == 0) {
 		if (!quiet)
-			LOG_ERRNO(errno, "FATAL can not find device %s",
+			LOG_ERRNO(errno, "FATAL cannot find device %s",
 					dev_name);
 		return true;
 	}
@@ -611,14 +611,14 @@ err_t xfrm_iface_supported(struct logger *logger)
 				  "FATAL unexpected error in xfrm_iface_supported() while checking device %s",
 				  if_name);
 			xfrm_interface_support = -1;
-			err = "can not decide xfrmi support. assumed no.";
+			err = "cannot decide xfrmi support. assumed no.";
 		} else {
 			/*
 			 * may be more extensive checks?
 			 * such if it is a xfrmi device or something else
 			 */
 			log_message(RC_LOG_SERIOUS, logger,
-				    "conflict %s already exist can not support xfrm-interface. May be leftover from previous pluto?",
+				    "conflict %s already exist cannot support xfrm-interface. May be leftover from previous pluto?",
 				    if_name);
 			xfrm_interface_support = -1;
 			err = "device name conflict in xfrm_iface_supported()";
@@ -747,7 +747,7 @@ static void free_xfrmi(struct pluto_xfrmi *xfrmi, struct logger *logger)
 			} else {
 
 				log_message(RC_LOG, logger,
-					    "can not delete ipsec-interface=%s if_id=%u, not created by pluto", xfrmi->name, xfrmi->if_id);
+					    "cannot delete ipsec-interface=%s if_id=%u, not created by pluto", xfrmi->name, xfrmi->if_id);
 			}
 			pfreeany(xfrmi->name);
 			pfreeany(xfrmi);

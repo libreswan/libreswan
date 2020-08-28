@@ -74,7 +74,7 @@ west #
 002 "west" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "west" #2: ESP traffic information: in=168B out=168B
 002 "west" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
-002 "west": can not delete ipsec-interface=ipsec17 if_id=17, not created by pluto
+002 "west": cannot delete ipsec-interface=ipsec17 if_id=17, not created by pluto
 west #
  ip -d link show ipsec17
 X: ipsec17@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
