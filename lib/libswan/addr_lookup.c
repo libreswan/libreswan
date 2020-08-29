@@ -262,6 +262,8 @@ int resolve_defaultroute_one(struct starter_end *host,
 				}
 			}
 #else
+			(void)logger /* UNUSED */;
+
 			err_t er = ttoaddr(peer->strings[KSCF_IP], 0,
 				AF_UNSPEC, &peer->addr);
 			if (er != NULL) {
