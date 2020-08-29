@@ -1,0 +1,37 @@
+# note swan-prep does not yet supprt iked
+# note swan-prep does not yet supprtoes not yet supprt iked
+openbsde #
+ #/testing/guestbin/swan-prep
+#/testing/guestbin/swan-prep
+openbsde #
+ cp openbsde.conf /etc/iked.conf
+cp openbsde.conf /etc/iked.conf
+openbsde #
+ chmod 600 /etc/iked.conf
+chmod 600 /etc/iked.conf
+openbsde #
+ /sbin/iked
+/sbin/iked
+openbsde #
+ echo "initdone"
+echo "initdone"
+initdone
+openbsde #
+ # check output on openbsd end
+# check output on openbsd end
+openbsde #
+ test -f /sbin/ipsecctl && ipsecctl -s all | sort
+test -f /sbin/ipsecctl && ipsecctl -cctl && ipsecctl -s all | sort
+FLOWS:
+SAD:
+esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI auth hmac-sha2-256 enc aes-256
+esp tunnel from 192.1.2.45 to 192.1.2.23 spi 0xSPISPI auth hmac-sha2-256 enc aes-256
+flow esp in from 192.0.1.0/24 to 192.0.2.0/24 peer 192.1.2.45 srcid FQDN/east dstid FQDN/west type require
+flow esp out from 192.0.2.0/24 to 192.0.1.0/24 peer 192.1.2.45 srcid FQDN/east dstid FQDN/west type require
+openbsde #
+ ../bin/check-for-core.sh
+../bin/check-for-core.sh
+openbsde #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+if [ -f /sbin/ausearch ]; then auseaarch ]; then ausearch -r -m avc -ts recent ; fi
+
