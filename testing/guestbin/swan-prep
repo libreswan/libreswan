@@ -165,7 +165,7 @@ parser.add_argument('--hostname', '-H', action='store',
                     default='', help='The name of the host to prepare as')
 # we should get this from the testparams.sh file?
 parser.add_argument('--userland', '-u', action='store',
-                    default='libreswan', help='which userland to prepare')w
+                    default='libreswan', help='which userland to prepare')
 parser.add_argument('--strongswan-version', action='store',
                     default='', help='strongswan version expect')
 parser.add_argument('--x509', '-x', action='store_true',
