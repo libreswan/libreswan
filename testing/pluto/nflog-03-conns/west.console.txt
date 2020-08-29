@@ -39,10 +39,6 @@ Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain LOGDROP (0 references)
-target     prot opt source               destination         
-LOG        all  --  0.0.0.0/0            0.0.0.0/0            LOG flags 0 level 4
-DROP       all  --  0.0.0.0/0            0.0.0.0/0           
 west #
  ipsec auto --up westnet-eastnet-nflog
 002 "westnet-eastnet-nflog" #1: initiating IKEv1 Main Mode connection
@@ -67,10 +63,6 @@ target     prot opt source               destination
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
 NFLOG      all  --  192.0.1.0/24         192.0.2.0/24         policy match dir out pol ipsec nflog-prefix  westnet-eastnet-nflog nflog-group 13
-Chain LOGDROP (0 references)
-target     prot opt source               destination         
-LOG        all  --  0.0.0.0/0            0.0.0.0/0            LOG flags 0 level 4
-DROP       all  --  0.0.0.0/0            0.0.0.0/0           
 west #
  ipsec auto --up west-east-nflog
 002 "west-east-nflog" #3: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
@@ -90,10 +82,6 @@ Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
 NFLOG      all  --  192.1.2.45           192.1.2.23           policy match dir out pol ipsec nflog-prefix  west-east-nflog nflog-group 50
 NFLOG      all  --  192.0.1.0/24         192.0.2.0/24         policy match dir out pol ipsec nflog-prefix  westnet-eastnet-nflog nflog-group 13
-Chain LOGDROP (0 references)
-target     prot opt source               destination         
-LOG        all  --  0.0.0.0/0            0.0.0.0/0            LOG flags 0 level 4
-DROP       all  --  0.0.0.0/0            0.0.0.0/0           
 west #
  rm -fr /tmp/nflog-50.pcap
 west #
@@ -148,10 +136,6 @@ target     prot opt source               destination
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
 NFLOG      all  --  192.1.2.45           192.1.2.23           policy match dir out pol ipsec nflog-prefix  west-east-nflog nflog-group 50
-Chain LOGDROP (0 references)
-target     prot opt source               destination         
-LOG        all  --  0.0.0.0/0            0.0.0.0/0            LOG flags 0 level 4
-DROP       all  --  0.0.0.0/0            0.0.0.0/0           
 west #
  ipsec auto --down west-east-nflog
 002 "west-east-nflog": terminating SAs using this connection
@@ -167,10 +151,6 @@ Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain LOGDROP (0 references)
-target     prot opt source               destination         
-LOG        all  --  0.0.0.0/0            0.0.0.0/0            LOG flags 0 level 4
-DROP       all  --  0.0.0.0/0            0.0.0.0/0           
 west #
  cp  /tmp/nflog-50.pcap OUTPUT/nflog-50.pcap
 west #
@@ -226,10 +206,6 @@ Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain LOGDROP (0 references)
-target     prot opt source               destination         
-LOG        all  --  0.0.0.0/0            0.0.0.0/0            LOG flags 0 level 4
-DROP       all  --  0.0.0.0/0            0.0.0.0/0           
 west #
  ../bin/check-for-core.sh
 west #

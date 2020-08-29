@@ -21,9 +21,9 @@ north #
 1v2 "north-east" #1: sent IKE_SA_INIT request
 002 "north-east" #1: initiating a redirect to new gateway (address: 192.1.2.44)
 1v2 "north-east" #2: initiating IKEv2 connection
+1v2 "north-east" #2: sent IKE_SA_INIT request
 002 "north-east" #1: deleting state (STATE_IKESA_DEL) and NOT sending notification
 002 "north-east" #1: IMPAIR: skipping revival of connection that is supposed to remain up
-1v2 "north-east" #2: sent IKE_SA_INIT request
 002 "north-east" #2: IMPAIR: retransmit so deleting SA
 002 "north-east" #2: deleting state (STATE_PARENT_I1) and NOT sending notification
 002 "north-east" #2: IMPAIR: skipping revival of connection that is supposed to remain up

@@ -1,5 +1,8 @@
 /testing/guestbin/swan-prep --userland strongswan
 west #
+ ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+west #
  ../../pluto/bin/strongswan-start.sh
 west #
  ip link set down dev ipsec2 2> /dev/null > /dev/null

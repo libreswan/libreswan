@@ -22,7 +22,7 @@ east #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 006 #2: "road-east-ikev2", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@road'
 east #
- # this should show IPsec state for "road-east-ikev2" and not an OE group
+ # this should show IKE and IPsec state for "road-east-ikev2" and not an OE group
 east #
  ipsec status | grep road-east | sed 's/"road-east-ikev2".*/"road-east-ikev2" --- cut ---/' | grep "#"
 000 #1: "road-east-ikev2" --- cut ---

@@ -39,10 +39,10 @@ west #
 1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request
 002 "westnet-eastnet-ikev2" #1: IMPAIR: TCP: socket XX switching off NONBLOCK before write
-002 "westnet-eastnet-ikev2" #1: IMPAIR: TCP: socket XX restoring flags 0400004002 after write
+002 "westnet-eastnet-ikev2" #1: IMPAIR: TCP: socket XX restoring flags 04002 after write
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "westnet-eastnet-ikev2" #2: IMPAIR: TCP: socket XX switching off NONBLOCK before write
-002 "westnet-eastnet-ikev2" #2: IMPAIR: TCP: socket XX restoring flags 0400004002 after write
+002 "westnet-eastnet-ikev2" #2: IMPAIR: TCP: socket XX restoring flags 04002 after write
 002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2" #1: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-ikev2" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
@@ -52,10 +52,10 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet-ikev2" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "westnet-eastnet-ikev2" #2: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet-ikev2" #2: IMPAIR: TCP: socket XX switching off NONBLOCK before write
-002 "westnet-eastnet-ikev2" #2: IMPAIR: TCP: socket XX restoring flags 0400004002 after write
+002 "westnet-eastnet-ikev2" #2: IMPAIR: TCP: socket XX restoring flags 04002 after write
 002 "westnet-eastnet-ikev2" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "westnet-eastnet-ikev2" #1: IMPAIR: TCP: socket XX switching off NONBLOCK before write
-002 "westnet-eastnet-ikev2" #1: IMPAIR: TCP: socket XX restoring flags 0400004002 after write
+002 "westnet-eastnet-ikev2" #1: IMPAIR: TCP: socket XX restoring flags 04002 after write
 002 "westnet-eastnet-ikev2": terminating SAs using this connection
 west #
  ipsec look

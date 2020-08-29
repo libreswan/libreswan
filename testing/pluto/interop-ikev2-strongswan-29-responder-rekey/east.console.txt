@@ -24,7 +24,7 @@ east #
 000 "westnet-eastnet-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-ikev2":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "westnet-eastnet-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet-ikev2":   newest ISAKMP SA: #4; newest IPsec SA: #2;
+000 "westnet-eastnet-ikev2":   newest ISAKMP SA: #4; newest IPsec SA: #2; conn serial: $1;
 000 "westnet-eastnet-ikev2":   IKE algorithms: AES_CBC_256-HMAC_SHA2_512-MODP2048
 000 "westnet-eastnet-ikev2":   IKEv2 algorithm newest: AES_CBC_256-HMAC_SHA2_512-MODP2048
 000 "westnet-eastnet-ikev2":   ESP algorithms: AES_CBC_256-HMAC_SHA2_512_256-MODP2048

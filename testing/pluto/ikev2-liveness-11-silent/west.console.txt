@@ -95,7 +95,7 @@ west #
  # force a rekey
 west #
  ipsec auto --up west-east
-1v2 "west-east" #3: sent IPsec Child req wait response
+1v2 "west-east" #3: sent CREATE_CHILD_SA request for new IPsec SA
 002 "west-east" #3: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 004 "west-east" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=active}
 west #
