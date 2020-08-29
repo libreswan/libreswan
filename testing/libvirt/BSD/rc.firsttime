@@ -1,0 +1,46 @@
+#!/bin/sh
+set -o errexit
+echo "==> Running rc.firsttime...."
+#Changing Hostnames and assigning IP's
+echo '==>> Changing hostnames <<=='
+mac = $(ifconfig vio0 | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
+#For East machine
+if [[ $mac == '12:00:00:64:64:23' ]]
+then
+    echo "EAST MACHINE"
+    echo 'inet 192.1.2.23 255.255.255.0 NONE' > /etc/hostname.vio0
+    echo 'inet6 2001:db8:1:2::23 64' >> /etc/hostname.vio0
+    echo 'up' >> /etc/hostname.vio0
+    echo 'inet 192.0.2.254 255.255.255.0 NONE' > /etc/hostname.vio1
+    echo 'openbsde' > /etc/myname
+    echo '192.1.2.254' > /etc/mygate
+    echo 'nameserver 192.1.2.254' >> /etc/resolv.conf
+    echo 'Done Setting up Network'
+fi
+#For West machine
+if [[ $mac == '12:00:00:64:64:45' ]]
+then
+    echo "WEST MACHINE"
+    echo 'inet 192.1.2.45 255.255.255.0 NONE' > /etc/hostname.vio0
+    echo 'inet6 2001:db8:1:2::45 64' >> /etc/hostname.vio0
+    echo 'up' >> /etc/hostname.vio0
+    echo 'inet 192.0.1.254 255.255.255.0 NONE' > /etc/hostname.vio1
+    echo 'openbsdw' > /etc/myname
+    echo '192.1.2.254' > /etc/mygate
+    echo 'nameserver 192.1.2.254' >> /etc/resolv.conf
+    echo 'Done Setting up Network'
+fi
+#From https://www.reddit.com/r/openbsd/comments/7n27xn/setting_static_ip_in_openbsd/
+pkill dhclient
+#Restarting to apply netowork changes
+sh /etc/netstart
+#Changing the prompt
+echo "PS1='[\u@\h \W$(x=$? ; test $x -ne 0 && echo " $x")]\$ '" >> /etc/profile
+echo "export PS1" >> /etc/profile
+echo "==> Prompt Updated <=="
+echo "==> Writing NFS entires to /etc/fstab <=="
+mkdir /testing
+echo "192.1.2.253:@@TESTINGDIR@@ /testing nfs rw,tcp 0 0" >> /etc/fstab
+echo "==> Mounting /testing directory <=="
+mount /testing
+echo "==> rc.firsttime ran succesfully <=="

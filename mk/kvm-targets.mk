@@ -27,8 +27,9 @@
 # Pull in all its defaults so that they override everything below.
 
 KVM_GUEST_OS ?= f32
+KVM_GUEST_OS_BSD?= openbsd67
 include testing/libvirt/$(KVM_GUEST_OS).mk
-
+include testing/libvirt/BSD/$(KVM_GUEST_OS_BSD).mk
 
 #
 # where things live and what gets created
@@ -174,10 +175,13 @@ VIRT_INSTALL_COMMAND = \
 KVM_BASE_HOST = swan$(KVM_GUEST_OS)base
 
 KVM_BUILD_HOST = build
-KVM_BUILD_HOST_CLONES = $(filter-out $(KVM_BASIC_HOSTS), $(KVM_TEST_HOSTS))
+KVM_BUILD_HOST_CLONES = $(filter-out $(KVM_BASIC_HOSTS), $(KVM_LINUX_HOSTS))
 
-KVM_TEST_HOSTS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
+KVM_LIBVIRT_HOSTS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
+KVM_OPENBSD_HOSTS = $(filter openbsd%, $(KVM_LIBVIRT_HOSTS))
+KVM_LINUX_HOSTS = $(filter-out openbsd%, $(KVM_LIBVIRT_HOSTS))
 KVM_BASIC_HOSTS = nic
+KVM_TEST_HOSTS ?= $(KVM_LINUX_HOSTS) $(KVM_BASIC_HOSTS)
 
 KVM_LOCAL_HOSTS = $(sort $(KVM_BUILD_HOST) $(KVM_TEST_HOSTS))
 
@@ -194,6 +198,8 @@ KVM_BASIC_DOMAINS = $(call add-kvm-prefixes, $(KVM_BASIC_HOSTS))
 
 KVM_BUILD_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_BUILD_HOST))
 KVM_BUILD_DOMAIN_CLONES = $(call add-kvm-prefixes, $(KVM_BUILD_HOST_CLONES))
+
+KVM_OPENBSD_DOMAIN_CLONES = $(call add-kvm-prefixes, $(KVM_OPENBSD_HOSTS))
 
 KVM_TEST_DOMAINS = $(call add-kvm-prefixes, $(KVM_TEST_HOSTS))
 
@@ -843,6 +849,15 @@ $(KVM_BUILD_DISK_CLONES): \
 	$(call shadow-kvm-disk,$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2,$@.tmp)
 	mv $@.tmp $@
 
+KVM_OPENBSD_DISK_CLONES = $(addsuffix .qcow2, $(addprefix $(KVM_LOCALDIR)/, $(KVM_OPENBSD_DOMAIN_CLONES)))
+$(KVM_OPENBSD_DISK_CLONES): \
+		| \
+		$(KVM_LOCALDIR)/$(KVM_BSD_BASE_NAME).qcow2 \
+		$(KVM_LOCALDIR)
+	: copy-build-disk $@
+	$(call shadow-kvm-disk,$(KVM_LOCALDIR)/$(KVM_BSD_BASE_NAME).qcow2,$@.tmp)
+	mv $@.tmp $@
+
 #
 # Create the local domains
 #
@@ -1067,6 +1082,35 @@ kvm-install: $(foreach domain, $(KVM_BUILD_DOMAIN_CLONES), uninstall-kvm-domain-
 	$(MAKE) kvm-$(KVM_BUILD_DOMAIN)-install
 	$(MAKE) $(foreach domain, $(KVM_BUILD_DOMAIN_CLONES) $(KVM_BASIC_DOMAINS), install-kvm-domain-$(domain))
 	$(MAKE) kvm-keys
+
+define kvm-base-openbsd
+	$(call destroy-kvm-domain,$(KVM_BSD_BASE_NAME))
+	sed -e "s:@@TESTINGDIR@@:$(KVM_TESTINGDIR):" $(KVM_TESTINGDIR)/libvirt/BSD/rc.firsttime > $(KVM_POOLDIR)/rc.firsttime
+	sed -e "s:@@TESTINGDIR@@:$(KVM_TESTINGDIR):" $(KVM_TESTINGDIR)/libvirt/BSD/nfs.sh > $(KVM_POOLDIR)/nfs.sh
+	sh $(KVM_POOLDIR)/nfs.sh
+	cp $(KVM_TESTINGDIR)/libvirt/BSD/*.conf $(KVM_POOLDIR)/
+	sudo env -i growisofs -M "$(KVM_POOLDIR)/install67.iso" -l -R -graft-points /install.conf="$(KVM_POOLDIR)/install.conf" /etc/boot.conf="$(KVM_POOLDIR)/boot.conf" /rc.firsttime="$(KVM_POOLDIR)/rc.firsttime"
+	$(KVM_PYTHON) $(KVM_TESTINGDIR)/utils/openbsdinstall.py $(KVM_BSD_BASE_NAME) \
+	"sudo virt-install --name=$(KVM_BSD_BASE_NAME) --virt-type=kvm --memory=2048,maxmemory=2048 \
+    	--vcpus=1,maxvcpus=1 --cpu host --os-variant=$(VIRT_BSD_VARIANT) \
+    	--cdrom=$(KVM_POOLDIR)/install67.iso \
+		--disk path=$(KVM_POOLDIR)/$(KVM_BSD_BASE_NAME).qcow2,size=4,bus=virtio,format=qcow2 \
+    	--graphics none --serial pty --check path_in_use=off"
+endef
+$(KVM_POOLDIR)/$(KVM_BSD_ISO):| $(KVM_POOLDIR)
+	wget --output-document $@.tmp --no-clobber -- $(KVM_ISO_URL_BSD)
+	mv $@.tmp $@
+
+.PHONY: kvm-uninstall-openbsd
+kvm-uninstall-openbsd:
+	$(call destroy-kvm-domain,$(KVM_BSD_BASE_NAME))
+	rm -f $(KVM_LOCALDIR)/$(KVM_BSD_BASE_NAME).qcow2
+.PHONY: kvm-openbsd
+kvm-openbsd: $(KVM_LOCALDIR)/$(KVM_BSD_BASE_NAME).qcow2
+$(KVM_LOCALDIR)/$(KVM_BSD_BASE_NAME).qcow2: $(KVM_TESTINGDIR)/utils/openbsdinstall.py $(KVM_POOLDIR)/$(KVM_BSD_ISO)
+	$(make kvm-uninstall-openbsd)
+	$(call kvm-base-openbsd)
+	
 
 .PHONY: kvm-bisect
 kvm-bisect:

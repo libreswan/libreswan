@@ -44,16 +44,19 @@ def host_script_tuples(directory):
 
     # Form a subset of HOST_NAMES based on the names found in the
     # scripts.
+    east_variant = "east"
     host_names = set()
     for host_name in HOST_NAMES:
         for script in scripts:
             if re.search(host_name, script):
                 host_names.add(host_name)
+                if host_name == "openbsde":
+                    east_variant = "openbsde"
 
-    # init scripts: nic, east, then rest
+    # init scripts: nic, east or openbsde, then rest
     init_scripts = []
     _add_script(init_scripts, scripts, "nicinit.sh", ["nic"])
-    _add_script(init_scripts, scripts, "eastinit.sh", ["east"])
+    _add_script(init_scripts, scripts, "%ssinit.sh"%east_variant, [east_variant])
     for host_name in sorted(host_names):
         _add_script(init_scripts, scripts, host_name + "init.sh", [host_name])
 
