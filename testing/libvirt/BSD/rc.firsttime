@@ -3,7 +3,7 @@ set -o errexit
 echo "==> Running rc.firsttime...."
 #Changing Hostnames and assigning IP's
 echo '==>> Changing hostnames <<=='
-mac = $(ifconfig vio0 | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
+mac=$(ifconfig vio0 | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
 #For East machine
 if [[ $mac == '12:00:00:64:64:23' ]]
 then
