@@ -171,8 +171,7 @@ static bool link_add_nl_msg(const char *if_name,
 	 * IFLA_XFRM_IF_ID was added to mainline kernel 4.19 linux/if_link.h
 	 * with older kernel headers 'make USE_XFRM_INTERFACE_IFLA_HEADER=true'
 	 */
-	/* ??? what is the magic number 1024? */
-	nl_addattr32(&req->n, 1024, IFLA_XFRM_IF_ID, if_id);
+	nl_addattr32(&req->n, sizeof(req->data), IFLA_XFRM_IF_ID, if_id);
 
 	if (dev_name != NULL) {
 		uint32_t dev_link_id; /* e.g link id of the interface, eth0 */
@@ -182,8 +181,7 @@ static bool link_add_nl_msg(const char *if_name,
 					dev_name);
 			return true;
 		}
-		/* ??? what is the magic number 1024? */
-		nl_addattr32(&req->n, 1024, IFLA_XFRM_LINK, dev_link_id);
+		nl_addattr32(&req->n, sizeof(req->data), IFLA_XFRM_LINK, dev_link_id);
 	}
 
 	nl_addattr_nest_end(&req->n, xfrm_link);
