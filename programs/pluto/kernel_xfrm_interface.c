@@ -92,10 +92,9 @@ static uint32_t xfrm_interface_id = IPSEC1_XFRM_IF_ID; /* XFRMA_IF_ID && XFRMA_S
  *	return: nl_rsp.u.e.error (some kind of negative errno eg.  -ENOPROTOOPT)
  * - anything else (OK): 0
  */
-static int nl_query_small_resp(const struct nlmsghdr *req, int protocol,
-				struct logger *logger)
+static int nl_query_small_resp(const struct nlmsghdr *req, struct logger *logger)
 {
-	int nl_fd = nl_send_query(req, protocol, logger);
+	int nl_fd = nl_send_query(req, NETLINK_ROUTE, logger);
 	if (nl_fd < 0)
 		return errno;
 
@@ -205,7 +204,7 @@ static bool ip_link_set_up(const char *if_name, struct logger *logger)
 		return true;
 	}
 
-	int r = nl_query_small_resp(&req.n, NETLINK_ROUTE, logger);
+	int r = nl_query_small_resp(&req.n, logger);
 	if (r > 0) {
 		log_message(RC_FATAL, logger,
 			"ERROR %d: ip_link_set_up() netlink query dev %s",
@@ -235,7 +234,7 @@ static bool ip_link_del(const char *if_name, struct logger *logger)
 		return true;
 	}
 
-	int r = nl_query_small_resp(&req.n, NETLINK_ROUTE, logger);
+	int r = nl_query_small_resp(&req.n, logger);
 	if (r > 0) {
 		log_message(RC_FATAL, logger,
 			    "ERROR: ip_link_del() deleting xfrmi interface %s failed %d",
@@ -267,7 +266,7 @@ static bool ip_link_add_xfrmi(const char *if_name, const char *dev_name,
 		return true;
 	}
 
-	int r = nl_query_small_resp(&req.n, NETLINK_ROUTE, logger);
+	int r = nl_query_small_resp(&req.n, logger);
 	if (r > 0) {
 		log_message(RC_FATAL, logger,
 			    "ERROR: nl_query_small_resp() netlink query failed %d",
