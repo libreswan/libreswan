@@ -94,7 +94,7 @@ def main():
     # XXX: while checking for an UNTESTED test should be very cheap
     # (does OUTPUT/ exist?) it isn't.  Currently it triggers a full
     # post-mortem analysis.
-    skip.add_arguments(parser, skip.skip.untested)
+    skip.add_arguments(parser, skip.Skip.UNTESTED)
     ignore.add_arguments(parser)
     publish.add_arguments(parser)
 

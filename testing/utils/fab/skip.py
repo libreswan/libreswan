@@ -15,18 +15,19 @@
 from fab import argutil
 from fab import post
 
-class skip(argutil.List):
-    passed = post.Resolution.PASSED
-    failed = post.Resolution.FAILED
-    unresolved = post.Resolution.UNRESOLVED
-    untested = post.Resolution.UNTESTED
-    unsupported = post.Resolution.UNSUPPORTED
+# a list/set of resolutions
+class Skip(argutil.List):
+    PASSED = post.Resolution.PASSED
+    FAILED = post.Resolution.FAILED
+    UNRESOLVED = post.Resolution.UNRESOLVED
+    UNTESTED = post.Resolution.UNTESTED
+    UNSUPPORTED = post.Resolution.UNSUPPORTED
 
 def add_arguments(parser, *defaults):
     group = parser.add_argument_group("Skip arguments")
     group.add_argument("--skip", action="store",
-                       default=skip(*defaults),
-                       type=skip, metavar=str(skip),
+                       default=Skip(*defaults),
+                       type=Skip, metavar=str(Skip),
                        help="comma separated list of previous test results to skip; default: '%(default)s'")
 
 def log_arguments(logger, args):
@@ -34,7 +35,6 @@ def log_arguments(logger, args):
     logger.info("  skip: %s", args.skip)
 
 def result(logger, args, result):
-    for skip in args.skip:
-        if result.resolution == skip:
-            return skip
+    if result.resolution in args.skip:
+        return result.resolution
     return None
