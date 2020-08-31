@@ -1097,11 +1097,11 @@ define kvm-base-openbsd
 	cp $(KVM_TESTINGDIR)/libvirt/BSD/*.conf $(KVM_POOLDIR)/
 	sudo env -i growisofs -M "$(KVM_POOLDIR)/install67.iso" -l -R -graft-points /install.conf="$(KVM_POOLDIR)/install.conf" /etc/boot.conf="$(KVM_POOLDIR)/boot.conf" /rc.firsttime="$(KVM_POOLDIR)/rc.firsttime"
 	$(KVM_PYTHON) $(KVM_TESTINGDIR)/utils/openbsdinstall.py $(KVM_BSD_BASE_NAME) \
-	"sudo virt-install --name=$(KVM_BSD_BASE_NAME) --virt-type=kvm --memory=2048,maxmemory=2048 \
-    	--vcpus=1,maxvcpus=1 --cpu host --os-variant=$(VIRT_BSD_VARIANT) \
-    	--cdrom=$(KVM_POOLDIR)/install67.iso \
+		"sudo virt-install --name=$(KVM_BSD_BASE_NAME) --virt-type=kvm --memory=2048,maxmemory=2048 \
+		--vcpus=1,maxvcpus=1 --cpu host --os-variant=$(VIRT_BSD_VARIANT) \
+		--cdrom=$(KVM_POOLDIR)/install67.iso \
 		--disk path=$(KVM_POOLDIR)/$(KVM_BSD_BASE_NAME).qcow2,size=4,bus=virtio,format=qcow2 \
-    	--graphics none --serial pty --check path_in_use=off"
+		--graphics none --serial pty --check path_in_use=off"
 endef
 $(KVM_POOLDIR)/$(KVM_BSD_ISO):| $(KVM_POOLDIR)
 	wget --output-document $@.tmp --no-clobber -- $(KVM_ISO_URL_BSD)
@@ -1116,7 +1116,6 @@ kvm-openbsd: $(KVM_LOCALDIR)/$(KVM_BSD_BASE_NAME).qcow2
 $(KVM_LOCALDIR)/$(KVM_BSD_BASE_NAME).qcow2: $(KVM_TESTINGDIR)/utils/openbsdinstall.py $(KVM_POOLDIR)/$(KVM_BSD_ISO)
 	$(make kvm-uninstall-openbsd)
 	$(call kvm-base-openbsd)
-	
 
 .PHONY: kvm-bisect
 kvm-bisect:
