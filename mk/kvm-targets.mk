@@ -48,6 +48,24 @@ KVM_WORKERS ?= 1
 KVM_GROUP ?= qemu
 #KVM_PYTHON ?= PYTHONPATH=/home/python/pexpect:/home/python/ptyprocess /home/python/v3.8/bin/python3
 KVM_PIDFILE ?= kvmrunner.pid
+KVM_UID ?= $(shell id -u)
+KVM_GID ?= $(shell id -g $(KVM_GROUP))
+
+# The alternative is qemu:///session and it doesn't require root.
+# However, it has never been used, and the python tools all assume
+# qemu://system. Finally, it comes with a warning: QEMU usermode
+# session is not the virt-manager default.  It is likely that any
+# pre-existing QEMU/KVM guests will not be available.  Networking
+# options are very limited.
+
+KVM_CONNECTION ?= qemu:///system
+
+VIRSH = sudo virsh --connect $(KVM_CONNECTION)
+
+
+#
+# Makeflags passed to the KVM build
+#
 
 # Should these live in the OS.mk file?
 KVM_USE_EFENCE ?= true
@@ -68,13 +86,6 @@ KVM_MAKEFLAGS ?= \
 	USE_NSS_KDF=$(KVM_USE_NSS_KDF) \
 	USE_FIPSCHECK=$(KVM_USE_FIPSCHECK)
 
-KVM_UID ?= $(shell id -u)
-KVM_GID ?= $(shell id -g $(KVM_GROUP))
-
-# targets for dumping the above
-.PHONY: print-kvm-prefixes
-print-kvm-prefixes: ; @echo "$(KVM_PREFIXES)"
-
 
 #
 # Generate local names using prefixes
@@ -87,23 +98,10 @@ add-kvm-prefixes = \
 		$(addprefix $(call strip-prefix,$(prefix)),$(1)))
 KVM_FIRST_PREFIX = $(call strip-prefix,$(firstword $(KVM_PREFIXES)))
 
+# targets for dumping the above
+.PHONY: print-kvm-prefixes
+print-kvm-prefixes: ; @echo "$(KVM_PREFIXES)"
 
-# To avoid the problem where the host has no "default" KVM network
-# (there's a rumour that libreswan's main testing machine has this
-# problem) define a dedicated swandefault gateway.
-
-KVM_GATEWAY ?= swandefault
-
-# The alternative is qemu:///session and it doesn't require root.
-# However, it has never been used, and the python tools all assume
-# qemu://system. Finally, it comes with a warning: QEMU usermode
-# session is not the virt-manager default.  It is likely that any
-# pre-existing QEMU/KVM guests will not be available.  Networking
-# options are very limited.
-
-KVM_CONNECTION ?= qemu:///system
-
-VIRSH = sudo virsh --connect $(KVM_CONNECTION)
 
 #
 # manipulate QEMU snapshots
@@ -168,6 +166,14 @@ VIRT_INSTALL_COMMAND = \
 	$(VIRT_POOLDIR) \
 	--noreboot
 
+
+# To avoid the problem where the host has no "default" KVM network
+# (there's a rumour that libreswan's main testing machine has this
+# problem) define a dedicated swandefault gateway.
+
+KVM_GATEWAY ?= swandefault
+
+
 #
 # Hosts
 #
@@ -186,6 +192,7 @@ KVM_TEST_HOSTS ?= $(KVM_LINUX_HOSTS) $(KVM_BASIC_HOSTS)
 KVM_LOCAL_HOSTS = $(sort $(KVM_BUILD_HOST) $(KVM_TEST_HOSTS))
 
 KVM_HOSTS = $(KVM_BASE_HOST) $(KVM_LOCAL_HOSTS)
+
 
 #
 # Domains
@@ -1224,32 +1231,44 @@ Configuration:
 
     $(call kvm-var-value,KVM_SOURCEDIR)
     $(call kvm-var-value,KVM_TESTINGDIR)
-    $(call kvm-var-value,KVM_PREFIXES)
-    $(call kvm-var-value,KVM_WORKERS)
-    $(call kvm-var-value,KVM_GROUP)
-    $(call kvm-var-value,KVM_UID)
-    $(call kvm-var-value,KVM_GID)
-    $(call kvm-var-value,KVM_CONNECTION)
-    $(call kvm-var-value,KVM_MAKEFLAGS)
-    $(call kvm-var-value,KVM_POOLDIR)$(if $(wildcard $(KVM_POOLDIR)),, [MISSING])
-	default directory for storing VM files
     $(call kvm-var-value,KVM_POOLDIR)$(if $(wildcard $(KVM_POOLDIR)),, [MISSING])
 	directory for storing the shared base VM;
 	should be relatively permanent storage
     $(call kvm-var-value,KVM_LOCALDIR)$(if $(wildcard $(KVM_LOCALDIR)),, [MISSING])
 	directory for storing the VMs local to this build tree;
 	can be temporary storage (for instance /tmp)
+    $(call kvm-var-value,KVM_PREFIXES)
+    $(call kvm-var-value,KVM_WORKERS)
+    $(call kvm-var-value,KVM_GROUP)
+    $(call kvm-var-value,KVM_PIDFILE)
+    $(call kvm-var-value,KVM_UID)
+    $(call kvm-var-value,KVM_GID)
+    $(call kvm-var-value,KVM_CONNECTION)
+    $(call kvm-var-value,KVM_VIRSH)
+    $(call kvm-var-value,KVM_MAKEFLAGS)
     $(call kvm-var-value,KVM_GATEWAY)
 	the shared NATting gateway;
 	used by the base domain along with any local domains
 	when internet access is required
     $(call kvm-var-value,KVM_GUEST_OS)
     $(call kvm-var-value,KVM_KICKSTART_FILE)
-    $(call kvm-var-value,KVM_GATEWAY)
+
+    $(call kvm-var-value,KVM_LIBVIRT_HOSTS)
+    $(call kvm-var-value,KVM_OPENBSD_HOSTS)
+    $(call kvm-var-value,KVM_LINUX_HOSTS)
+    $(call kvm-var-value,KVM_BASIC_HOSTS)
+
     $(call kvm-var-value,KVM_BASE_HOST)
     $(call kvm-var-value,KVM_BASE_DOMAIN)
+    $(call kvm-var-value,KVM_BASE_DOMAIN_CLONES)
+
     $(call kvm-var-value,KVM_BUILD_HOST)
+    $(call kvm-var-value,KVM_BUILD_HOST_CLONES)
     $(call kvm-var-value,KVM_BUILD_DOMAIN)
+    $(call kvm-var-value,KVM_BUILD_DOMAIN_CLONES)
+
+    $(call kvm-var-value,KVM_OPENBSD_DOMAIN_CLONES)
+
     $(call kvm-var-value,KVM_TEST_SUBNETS)
     $(call kvm-var-value,KVM_TEST_NETWORKS)
     $(call kvm-var-value,KVM_TEST_NETWORK_FILES)
