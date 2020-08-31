@@ -62,17 +62,17 @@ KVSHORTUTIL=${MAKEUTILS}/kernelversion-short
 
 SUBDIRS?=lib programs initsystems testing
 
-TAGSFILES=$(wildcard include/*.h lib/lib*/*.[ch] programs/*/*.[ch] linux/include/*.h linux/include/libreswan/*.h linux/net/ipsec/*.[ch])
+TAGSFILES = $(wildcard include/*.h include/*/*.h lib/lib*/*.[ch] programs/*/*.[ch] testing/check/*/*.[ch])
 
-tags:	$(TAGSFILES)
-	@LC_ALL=C ctags $(CTAGSFLAGS) ${TAGSFILES}
+tags: $(TAGSFILES)
+	LC_ALL=C ctags $(CTAGSFLAGS) ${TAGSFILES}
 
 cscope:
-	@ls ${TAGSFILES} > cscope.files
-	@cscope -b
+	ls ${TAGSFILES} > cscope.files
+	cscope -b
 
-TAGS:	$(TAGSFILES)
-	@LC_ALL=C etags $(ETAGSFLAGS) ${TAGSFILES}
+TAGS: $(TAGSFILES)
+	LC_ALL=C etags $(ETAGSFLAGS) ${TAGSFILES}
 
 .PHONY: dummy
 dummy:
@@ -109,18 +109,15 @@ local-clean-base:
 # $(OBJDIR), "distclean" does not depend on it.  If it did, "make
 # distclean" would have the quirky behaviour of first creating
 # $(OBJDIR) only to then delete it.
+
 .PHONY: distclean
 distclean: clean-kvm-keys
 	rm -f $(RPMTMPDIR) $(RPMDEST) out.*
 	rm -rf testing/pluto/*/OUTPUT*
 	rm -rf OBJ.* $(OBJDIR)
 	rm -rf BACKUP
-
-
-# set up for build
-buildready:
-	rm -f dtrmakefile cvs.datemark
-	# obsolete cd doc ; $(MAKE) -s
+	rm -f tags TAGS cscope
+	rm -f cscope.files
 
 rpm:
 	@if [ -d .git ]; then \
