@@ -103,10 +103,6 @@ def main():
     logutil.config(args, sys.stderr)
     logger = logutil.getLogger("kvmresults")
 
-    # The option -vvvvvvv is a short circuit for these; make
-    # re-ordering easy by using V as a counter.
-    v = 0
-
     if args.dump_args:
         logger.info("Arguments:")
         logger.info("  Stats: %s", args.stats)
