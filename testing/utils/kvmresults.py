@@ -212,7 +212,8 @@ def results(logger, tests, baseline, args, result_stats):
             if args.update:
                 result.save()
             if args.skip:
-                if skip.result(logger, args, result):
+                if printer.Print.result in args.print \
+                and skip.result(logger, args, result):
                     result_stats.add_skipped(result)
                     continue
             result_stats.add_result(result)
