@@ -32,6 +32,8 @@ class MetaList(type):
             # good enough for now
             if name.startswith("__"):
                 continue
+            if not isinstance(value, str):
+                continue
             members[value] = value
         result._members_ = members
         result._metavar_ = "{" + ",".join(sorted(members)) + "},..."
