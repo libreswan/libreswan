@@ -1,0 +1,7 @@
+Basic pluto with IKEv2 using PSK on the initiator (west), and on the responder.
+
+This tests for namespace use without configuration include files, but also works when run under kvm
+
+Test extended to also test for PLUTO_BYTES_IN and PLUTO_BYTES_OUT are passed in to updown script.
+This was a regression in libreswan 3.30 - 3.32
+
