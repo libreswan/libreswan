@@ -65,7 +65,7 @@ def main():
 
     # how to parse --print directory,saved-directory,...?
     parser.add_argument("--print", action="store",
-                        default=printer.Print(printer.Print.path, printer.Print.result, printer.Print.issues),
+                        default=printer.Print(printer.Print.PATH, printer.Print.RESULT, printer.Print.ISSUES),
                         type=printer.Print, metavar=str(printer.Print),
                         help="comman separate list of attributes to print for each test; default: '%(default)s'")
 
@@ -212,7 +212,7 @@ def results(logger, tests, baseline, args, result_stats):
             if args.update:
                 result.save()
             if args.skip:
-                if printer.Print.result in args.print \
+                if printer.Print.RESULT in args.print \
                 and skip.result(logger, args, result):
                     result_stats.add_skipped(result)
                     continue
