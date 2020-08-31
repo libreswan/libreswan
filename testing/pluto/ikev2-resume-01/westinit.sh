@@ -9,5 +9,5 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-ipsec whack --impair suppress-retransmits --impair revival
+ipsec whack --impair suppress-retransmits --impair send-no-delete --impair revival
 echo "initdone"
