@@ -42,14 +42,10 @@ class Print(argutil.List):
     runtime = "runtime"
     diffs = "diffs"
     issues = "errors"                      # for historic reasons
-    expected_result = "expected-result"    # test_status
-    host_names = "host-names"              # test_host_names
-    kind = "kind"                          # test_kind
     output_directory = "output-directory"
     path = "path"
     result = "result"
     saved_output_directory = "saved-output-directory"
-    scripts = "scripts"                    # test_scripts
     testing_directory = "testing-directory"
     baseline_directory = "baseline-directory"
     baseline_output_directory = "baseline-output-directory"
@@ -122,12 +118,12 @@ def build_result(logger, result, baseline, args, what_to_print, b):
                       or result.test.directory))
         elif p is Print.test_directory:
             b.add(p, result.test.directory)
-        elif p is Print.test_status or p is Print.expected_result:
+        elif p is Print.test_status:
             b.add(p, result.test.status)
-        elif p is Print.test_host_names or p is Print.host_names:
+        elif p is Print.test_host_names:
             b.add(p, result.test.host_names,
                   string=lambda host_names, sep: sep + ",".join(host_names))
-        elif p is Print.test_kind or p is Print.kind:
+        elif p is Print.test_kind:
             b.add(p, result.test.kind)
         elif p is Print.test_name:
             b.add(p, result.test.name)
@@ -141,7 +137,7 @@ def build_result(logger, result, baseline, args, what_to_print, b):
             b.add(p, result.test.testing_directory())
         elif p is Print.saved_output_directory:
             b.add(p, result.test.saved_output_directory)
-        elif p is Print.test_scripts or p is Print.scripts:
+        elif p is Print.test_scripts:
             b.add(p, [{ "host": h, "script": s} for h, s in result.test.host_script_tuples],
                   string=lambda scripts, sep: sep + ",".join([script["host"] + ":" + script["script"] for script in scripts]))
         elif p is Print.baseline_directory:
