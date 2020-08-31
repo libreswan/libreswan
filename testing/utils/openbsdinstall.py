@@ -53,7 +53,7 @@ es(child,'# ','install -af /install.conf')
 #This is to check if all the installation files got copied(because it's slow on some systems)
 while(child.expect([".*install has been successfully completed!", pexpect.EOF, pexpect.TIMEOUT],timeout=10)!=0):
         continue
-#To copy rc.girsttime file in the right directory
+#To copy rc.firsttime file in the right directory
 es(child,'.*bsd-base# ','mv rc.firsttime /mnt/etc/',100)
 #to enable iked
 es(child,'.*bsd-base# ','echo "iked_flags=YES" >> /mnt/etc/rc.conf.local')
