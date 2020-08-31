@@ -5404,7 +5404,7 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 
 			switch (v2del->isad_protoid) {
 			case PROTO_ISAKMP:
-				PASSERT_FAIL("%s", "unexpected IKE delete");
+				passert_fail(ike->sa.st_logger, HERE, "unexpected IKE delete");
 
 			case PROTO_IPSEC_AH: /* Child SAs */
 			case PROTO_IPSEC_ESP: /* Child SAs */

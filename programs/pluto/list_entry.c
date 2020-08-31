@@ -23,7 +23,7 @@
 
 #define passert_entry(ENTRY, ASSERTION)					\
 	{								\
-		bool a_ = ASSERTION;					\
+		bool a_ = ASSERTION; /* evaluate once */		\
 		if (!a_) {						\
 			JAMBUF(buf) {					\
 				jam(buf, "%s: ",			\
@@ -39,7 +39,7 @@
 
 #define passert_info(INFO, ASSERTION)					\
 	{								\
-		bool a_ = ASSERTION;					\
+		bool a_ = ASSERTION; /* evaluate once */		\
 		if (!a_) {						\
 			JAMBUF(buf) {					\
 				jam(buf, "%s: %s",			\
