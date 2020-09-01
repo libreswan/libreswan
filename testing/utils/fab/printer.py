@@ -28,31 +28,27 @@ from fab import jsonutil
 
 class Print(argutil.List):
     # tests
-    test_directory = "test-directory"
-    test_host_names = "test-host-names"
-    test_kind = "test-kind"
-    test_name = "test-name"
-    test_scripts = "test-scripts"
-    test_status = "test-status"
+    TEST_DIRECTORY = "test-directory"
+    TEST_HOST_NAMES = "test-host-names"
+    TEST_KIND = "test-kind"
+    TEST_NAME = "test-name"
+    TEST_SCRIPTS = "test-scripts"
+    TEST_STATUS = "test-status"
     # results
-    start_time = "start-time"
-    stop_time = "stop-time"
-    boot_time = "boot-time"
-    script_time = "script-time"
-    runtime = "runtime"
-    diffs = "diffs"
-    issues = "errors"                      # for historic reasons
-    expected_result = "expected-result"    # test_status
-    host_names = "host-names"              # test_host_names
-    kind = "kind"                          # test_kind
-    output_directory = "output-directory"
-    path = "path"
-    result = "result"
-    saved_output_directory = "saved-output-directory"
-    scripts = "scripts"                    # test_scripts
-    testing_directory = "testing-directory"
-    baseline_directory = "baseline-directory"
-    baseline_output_directory = "baseline-output-directory"
+    START_TIME = "start-time"
+    STOP_TIME = "stop-time"
+    BOOT_TIME = "boot-time"
+    SCRIPT_TIME = "script-time"
+    RUNTIME = "runtime"
+    DIFFS = "diffs"
+    ISSUES = "errors"                      # for historic reasons
+    OUTPUT_DIRECTORY = "output-directory"
+    PATH = "path"
+    RESULT = "result"
+    SAVED_OUTPUT_DIRECTORY = "saved-output-directory"
+    TESTING_DIRECTORY = "testing-directory"
+    BASELINE_DIRECTORY = "baseline-directory"
+    BASELINE_OUTPUT_DIRECTORY = "baseline-output-directory"
 
 
 class JsonBuilder:
@@ -112,7 +108,7 @@ def build_result(logger, result, baseline, args, what_to_print, b):
     # Print the test's name/path
 
     for p in what_to_print:
-        if p is Print.path:
+        if p is Print.PATH:
             # When the path given on the command line explicitly
             # specifies a test's output directory (found in
             # RESULT.TEST.SAVED_OUTPUT_DIRECTORY), print that; otherwise
@@ -120,52 +116,52 @@ def build_result(logger, result, baseline, args, what_to_print, b):
             b.add(p, (result.test.saved_output_directory
                       and result.test.saved_output_directory
                       or result.test.directory))
-        elif p is Print.test_directory:
+        elif p is Print.TEST_DIRECTORY:
             b.add(p, result.test.directory)
-        elif p is Print.test_status or p is Print.expected_result:
+        elif p is Print.TEST_STATUS:
             b.add(p, result.test.status)
-        elif p is Print.test_host_names or p is Print.host_names:
+        elif p is Print.TEST_HOST_NAMES:
             b.add(p, result.test.host_names,
                   string=lambda host_names, sep: sep + ",".join(host_names))
-        elif p is Print.test_kind or p is Print.kind:
+        elif p is Print.TEST_KIND:
             b.add(p, result.test.kind)
-        elif p is Print.test_name:
+        elif p is Print.TEST_NAME:
             b.add(p, result.test.name)
-        elif p is Print.output_directory:
+        elif p is Print.OUTPUT_DIRECTORY:
             b.add(p, result.test.output_directory)
-        elif p is Print.result:
+        elif p is Print.RESULT:
             b.add(p, result)
-        elif p is Print.issues:
+        elif p is Print.ISSUES:
             b.add(p, result.issues)
-        elif p is Print.testing_directory:
+        elif p is Print.TESTING_DIRECTORY:
             b.add(p, result.test.testing_directory())
-        elif p is Print.saved_output_directory:
+        elif p is Print.SAVED_OUTPUT_DIRECTORY:
             b.add(p, result.test.saved_output_directory)
-        elif p is Print.test_scripts or p is Print.scripts:
+        elif p is Print.TEST_SCRIPTS:
             b.add(p, [{ "host": h, "script": s} for h, s in result.test.host_script_tuples],
                   string=lambda scripts, sep: sep + ",".join([script["host"] + ":" + script["script"] for script in scripts]))
-        elif p is Print.baseline_directory:
+        elif p is Print.BASELINE_DIRECTORY:
             b.add(p, baseline and result.test.name in baseline and baseline[result.test.name].directory or None)
-        elif p is Print.baseline_output_directory:
+        elif p is Print.BASELINE_OUTPUT_DIRECTORY:
             b.add(p, baseline and result.test.name in baseline and baseline[result.test.name].output_directory or None)
-        elif p is Print.start_time:
+        elif p is Print.START_TIME:
             b.add(p, result.start_time())
-        elif p is Print.stop_time:
+        elif p is Print.STOP_TIME:
             b.add(p, result.stop_time())
-        elif p is Print.runtime:
+        elif p is Print.RUNTIME:
             b.add(p, result.runtime())
-        elif p is Print.boot_time:
+        elif p is Print.BOOT_TIME:
             b.add(p, result.boot_time())
-        elif p is Print.script_time:
+        elif p is Print.SCRIPT_TIME:
             b.add(p, result.script_time())
-        elif p is Print.diffs:
+        elif p is Print.DIFFS:
             continue # see below
         else:
             raise Exception("unhandled print option %s" % p)
 
-    if Print.diffs in what_to_print:
+    if Print.DIFFS in what_to_print:
         for domain in result.diffs:
-            b.add(Print.diffs, domain,
+            b.add(Print.DIFFS, domain,
                   result.diffs[domain],
                   string=(lambda diff, sep: diff
                           and (sep and "\n" or "") + b"\n".join(diff).decode()

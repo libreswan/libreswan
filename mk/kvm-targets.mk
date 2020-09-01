@@ -108,36 +108,37 @@ print-kvm-prefixes: ; @echo "$(KVM_PREFIXES)"
 #
 
 QEMU_IMG ?= sudo qemu-img
-SNAPSHOT_REVERT ?= snapshot_revert() 						\
+SNAPSHOT_REVERT ?= 								\
+	snapshot_revert() 							\
 	{									\
 		snapshot=$$1 ;							\
 		disk=$$2 ;							\
-		if $(QEMU_IMG) snapshot -l $${disk} | grep $${snapshot} ; then	\
-			$(QEMU_IMG) snapshot -a $${snapshot} $${disk} ;		\
-		fi ;								\
+		$(QEMU_IMG) snapshot -l $${disk} |				\
+		grep $${snapshot} |						\
+		tail -1 |							\
+		while read n s ignore; do					\
+			echo "$${s}: reverting to snapshot $${n}" ;		\
+			$(QEMU_IMG) snapshot -a $${s} $${disk} ;		\
+		done ;								\
 	} ;									\
 	snapshot_revert
-SNAPSHOT_DELETE ?= snapshot_delete() 						\
+
+# Take a new snapshot; delete any old snapshots.
+SNAPSHOT_TAKE ?=								\
+	snapshot_take()								\
 	{									\
 		snapshot=$$1 ;							\
 		disk=$$2 ;							\
-		if $(QEMU_IMG) snapshot -l $${disk} | grep $${snapshot} ; then	\
-			$(QEMU_IMG) snapshot -d $${snapshot} $${disk} ;		\
-		fi ;								\
-	} ;									\
-	snapshot_delete
-# Create a new snapshot. If there's already a snapshot by that name,
-# replace it.
-SNAPSHOT_TAKE ?= snapshot()							\
-	{									\
-		snapshot=$$1 ;							\
-		disk=$$2 ;							\
-		if $(QEMU_IMG) snapshot -l $${disk} 2>/dev/null | grep $${snapshot} ; then \
-			$(QEMU_IMG) snapshot -d $${shapshot} $${disk} ;		\
-		fi ;								\
+		$(QEMU_IMG) snapshot -l $${disk} |				\
+		grep $${snapshot} |						\
+		while read n s ignore ; do					\
+			echo "$${s}: deleting snapshot $${n}" ;			\
+			$(QEMU_IMG) snapshot -d $${s} $${disk} ;		\
+		done ;								\
+		echo "$${snapshot}: new snapshot created" ;			\
 		$(QEMU_IMG) snapshot -c $${snapshot} $${disk} ;			\
 	} ;									\
-	snapshot
+	snapshot_take
 
 
 VIRT_INSTALL ?= sudo virt-install --connect $(KVM_CONNECTION) --check path_in_use=off
@@ -753,7 +754,7 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted: \
 .PHONY: kvm-downgrade
 kvm-downgrade: kvm-uninstall kvm-shutdown
 	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
-	: loose any upgrade changes
+	: to back to the original image - looses upgrade and transmogrify
 	$(SNAPSHOT_REVERT) kickstarted $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
 	$(MAKE) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted
 
@@ -761,6 +762,7 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ki
 	$(MAKE) $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok
 	: drop transmogrification but keep upgrades
 	$(MAKE) kvm-shutdown-base-domain
+	: to back to the upgrade snapshot - looses transmogrify
 	$(SNAPSHOT_REVERT) upgraded $(basename $@).qcow2
 	: update all packages
 	$(if $(KVM_PACKAGE_INSTALL), $(if $(KVM_INSTALL_PACKAGES), \
@@ -772,8 +774,7 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ki
 	$(if $(KVM_DEBUGINFO_INSTALL), $(if $(KVM_DEBUGINFO), \
 		$(KVMSH) $(KVM_BASE_DOMAIN) $(KVM_DEBUGINFO_INSTALL) $(KVM_DEBUGINFO)))
 	$(MAKE) kvm-shutdown-base-domain
-	: snapshot upgrade so that next upgrade can be incremental
-	$(SNAPSHOT_DELETE) upgraded $(basename $@).qcow2
+	: take snapshot so that next upgrade is incremental
 	$(SNAPSHOT_TAKE) upgraded $(basename $@).qcow2
 	touch $@
 
@@ -786,10 +787,9 @@ kvm-upgrade: kvm-uninstall
 
 $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
 	$(MAKE) $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok
-	: revert to pre-transmogrification
 	$(MAKE) kvm-shutdown-base-domain
+	: to back to the upgrade snapshot - looses transmogrify
 	$(SNAPSHOT_REVERT) upgraded $(basename $@).qcow2
-	$(SNAPSHOT_DELETE) transmogrified $(basename $@).qcow2
 	: transmogrify
 	$(KVMSH) $(KVM_BASE_DOMAIN) sh /testing/libvirt/$(KVM_GUEST_OS)-transmogrify.sh
 	: re-snapshot
@@ -1097,11 +1097,11 @@ define kvm-base-openbsd
 	cp $(KVM_TESTINGDIR)/libvirt/BSD/*.conf $(KVM_POOLDIR)/
 	sudo env -i growisofs -M "$(KVM_POOLDIR)/install67.iso" -l -R -graft-points /install.conf="$(KVM_POOLDIR)/install.conf" /etc/boot.conf="$(KVM_POOLDIR)/boot.conf" /rc.firsttime="$(KVM_POOLDIR)/rc.firsttime"
 	$(KVM_PYTHON) $(KVM_TESTINGDIR)/utils/openbsdinstall.py $(KVM_BSD_BASE_NAME) \
-	"sudo virt-install --name=$(KVM_BSD_BASE_NAME) --virt-type=kvm --memory=2048,maxmemory=2048 \
-    	--vcpus=1,maxvcpus=1 --cpu host --os-variant=$(VIRT_BSD_VARIANT) \
-    	--cdrom=$(KVM_POOLDIR)/install67.iso \
+		"sudo virt-install --name=$(KVM_BSD_BASE_NAME) --virt-type=kvm --memory=2048,maxmemory=2048 \
+		--vcpus=1,maxvcpus=1 --cpu host --os-variant=$(VIRT_BSD_VARIANT) \
+		--cdrom=$(KVM_POOLDIR)/install67.iso \
 		--disk path=$(KVM_POOLDIR)/$(KVM_BSD_BASE_NAME).qcow2,size=4,bus=virtio,format=qcow2 \
-    	--graphics none --serial pty --check path_in_use=off"
+		--graphics none --serial pty --check path_in_use=off"
 endef
 $(KVM_POOLDIR)/$(KVM_BSD_ISO):| $(KVM_POOLDIR)
 	wget --output-document $@.tmp --no-clobber -- $(KVM_ISO_URL_BSD)
@@ -1116,7 +1116,6 @@ kvm-openbsd: $(KVM_LOCALDIR)/$(KVM_BSD_BASE_NAME).qcow2
 $(KVM_LOCALDIR)/$(KVM_BSD_BASE_NAME).qcow2: $(KVM_TESTINGDIR)/utils/openbsdinstall.py $(KVM_POOLDIR)/$(KVM_BSD_ISO)
 	$(make kvm-uninstall-openbsd)
 	$(call kvm-base-openbsd)
-	
 
 .PHONY: kvm-bisect
 kvm-bisect:

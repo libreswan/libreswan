@@ -52,17 +52,17 @@ def log_arguments(logger, args):
     logger.info("  publish-hash: '%s'", args.publish_hash)
 
 
-results_to_print = printer.Print(printer.Print.test_name,
-                                 printer.Print.test_kind,
-                                 printer.Print.test_status,
-                                 printer.Print.test_host_names,
-                                 printer.Print.start_time,
-                                 printer.Print.stop_time,
-                                 printer.Print.result,
-                                 printer.Print.issues,
-                                 printer.Print.runtime,
-                                 printer.Print.boot_time,
-                                 printer.Print.script_time)
+results_to_print = printer.Print(printer.Print.TEST_NAME,
+                                 printer.Print.TEST_KIND,
+                                 printer.Print.TEST_STATUS,
+                                 printer.Print.TEST_HOST_NAMES,
+                                 printer.Print.START_TIME,
+                                 printer.Print.STOP_TIME,
+                                 printer.Print.RESULT,
+                                 printer.Print.ISSUES,
+                                 printer.Print.RUNTIME,
+                                 printer.Print.BOOT_TIME,
+                                 printer.Print.SCRIPT_TIME)
 
 JSON_RESULTS = []
 JSON_SUMMARY = { }

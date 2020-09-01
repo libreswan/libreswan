@@ -2147,7 +2147,7 @@ bool pbs_in_struct(struct pbs_in *ins,
 			break;
 
 		case ft_end: /* end of field list */
-			PASSERT_FAIL("should not be here");
+			passert_fail(logger, HERE, "should not be here");
 
 		default:
 			bad_case(fp->field_type);

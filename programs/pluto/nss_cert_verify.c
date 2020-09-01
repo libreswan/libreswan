@@ -581,8 +581,7 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 	}
 	if (CERT_IsCACert(end_cert, NULL)) {
 		/* utter screwup */
-		/* XXX: log_pexpect()? */
-		log_message(RC_LOG, logger, "INTERNAL ERROR: end cert is a root certificate!");
+		pexpect_fail(logger, HERE, "end cert is a root certificate!");
 		release_certs(&result.cert_chain);
 		result.harmless = false;
 		return result;
