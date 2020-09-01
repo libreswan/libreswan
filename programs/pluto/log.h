@@ -114,8 +114,16 @@ extern const struct logger_object_vec logger_from_vec;
 extern const struct logger_object_vec logger_message_vec;
 extern const struct logger_object_vec logger_connection_vec;
 extern const struct logger_object_vec logger_state_vec;
+extern const struct logger_object_vec logger_string_vec;
 
 extern struct logger failsafe_logger;
+#define STRING_LOGGER(PREFIX) (struct logger)			\
+	{							\
+		.where = HERE,					\
+		.global_whackfd = null_fd,			\
+		.object = PREFIX,				\
+		.object_vec = &logger_string_vec,		\
+	}
 #define GLOBAL_LOGGER(WHACKFD) (struct logger)			\
 	{							\
 		.where = HERE,					\

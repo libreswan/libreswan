@@ -881,6 +881,13 @@ static size_t jam_string_prefix(struct jambuf *buf, const void *object)
 	return jam_string(buf, string);
 }
 
+const struct logger_object_vec logger_string_vec = {
+	.name = "string(never-suppress)",
+	.suppress_object_log = never_suppress_log,
+	.jam_object_prefix = jam_string_prefix,
+	.free_object = true,
+};
+
 struct logger *alloc_logger(void *object, const struct logger_object_vec *vec, where_t where)
 {
 	struct logger logger = {
@@ -914,13 +921,7 @@ struct logger *clone_logger(const struct logger *stack)
 		};
 		object_vec = &always_suppress_vec;
 	} else {
-		static const struct logger_object_vec never_suppress_vec = {
-			.name = "string(never-suppress)",
-			.suppress_object_log = never_suppress_log,
-			.jam_object_prefix = jam_string_prefix,
-			.free_object = true,
-		};
-		object_vec = &never_suppress_vec;
+		object_vec = &logger_string_vec;
 	}
 	/* construct the clone */
 	struct logger heap = {
