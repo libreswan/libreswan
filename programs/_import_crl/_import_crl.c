@@ -28,7 +28,6 @@
 #include "lswconf.h"
 #include "lswnss.h"
 #include "lswtool.h"
-#include "lswlog.h"		/* for progname_logger */
 
 #ifdef __clang__
 /*
@@ -74,7 +73,7 @@ int main(int argc, char *argv[])
 	if (argc != 3)
 		exit(-1);
 
-	tool_init_log(argv[0]);
+	struct logger *logger = tool_init_log(argv[0]);
 
 	url = argv[1];
 	lenstr = argv[2];
@@ -109,7 +108,7 @@ int main(int argc, char *argv[])
 		exit(-1);
 
 	const struct lsw_conf_options *oco = lsw_init_options();
-	if (!lsw_nss_setup(oco->nssdir, 0, &progname_logger)) {
+	if (!lsw_nss_setup(oco->nssdir, 0, logger)) {
 		exit(1);
 	}
 

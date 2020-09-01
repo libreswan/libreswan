@@ -21,9 +21,8 @@
 #include "ipcheck.h"
 #include "ip_subnet.h"
 #include "ip_selector.h"	/* should be in ip_selector_check.c */
-#include "lswlog.h"
 
-static void check_str_subnet(void)
+static void check_str_subnet(struct logger *logger)
 {
 	static const struct test {
 		int family;
@@ -105,7 +104,7 @@ static void check_str_subnet(void)
 		sa_family_t af = SA_FAMILY(t->family);
 
 		ip_subnet s;
-		oops = ttosubnet(t->in, 0, af, '6', &s, &progname_logger);
+		oops = ttosubnet(t->in, 0, af, '6', &s, logger);
 		if (oops != NULL && t->out == NULL) {
 			/* Error was expected, do nothing */
 			continue;
@@ -128,7 +127,7 @@ static void check_str_subnet(void)
 	}
 }
 
-static void check_str_subnet_port(void)
+static void check_str_subnet_port(struct logger *logger)
 {
 	/*
 	 * XXX: can't yet do invalid ports.
@@ -159,7 +158,7 @@ static void check_str_subnet_port(void)
 		sa_family_t af = SA_FAMILY(t->family);
 
 		ip_subnet s;
-		oops = ttosubnet(t->in, 0, af, '6', &s, &progname_logger);
+		oops = ttosubnet(t->in, 0, af, '6', &s, logger);
 		if (oops != NULL && t->out == NULL) {
 			/* Error was expected, do nothing */
 			continue;
@@ -182,7 +181,7 @@ static void check_str_subnet_port(void)
 	}
 }
 
-static void check_subnet_mask(void)
+static void check_subnet_mask(struct logger *logger)
 {
 	static const struct test {
 		int family;
@@ -210,7 +209,7 @@ static void check_subnet_mask(void)
 		sa_family_t af = SA_FAMILY(t->family);
 
 		ip_subnet s;
-		err_t oops = ttosubnet(t->in, 0, af, '6', &s, &progname_logger);
+		err_t oops = ttosubnet(t->in, 0, af, '6', &s, logger);
 		if (oops != NULL) {
 			FAIL_IN("ttosubnet() failed: %s", oops);
 		}
@@ -230,7 +229,7 @@ static void check_subnet_mask(void)
 	}
 }
 
-static void check_subnet_prefix(void)
+static void check_subnet_prefix(struct logger *logger)
 {
 	static const struct test {
 		int family;
@@ -260,7 +259,7 @@ static void check_subnet_prefix(void)
 		sa_family_t af = SA_FAMILY(t->family);
 
 		ip_subnet s;
-		err_t oops = ttosubnet(t->in, 0, af, '6', &s, &progname_logger);
+		err_t oops = ttosubnet(t->in, 0, af, '6', &s, logger);
 		if (oops != NULL) {
 			FAIL_IN("ttosubnet() failed: %s", oops);
 		}
@@ -355,7 +354,7 @@ static void check_cidr_to_subnet(void)
 	}
 }
 
-static void check_subnet_contains(void)
+static void check_subnet_contains(struct logger *logger)
 {
 	static const struct test {
 		int family;
@@ -399,7 +398,7 @@ static void check_subnet_contains(void)
 		ip_subnet s = unset_subnet;
 		if (t->family != 0) {
 			sa_family_t af = SA_FAMILY(t->family);
-			err_t oops = ttosubnet(t->in, 0, af, '6', &s, &progname_logger);
+			err_t oops = ttosubnet(t->in, 0, af, '6', &s, logger);
 			if (oops != NULL) {
 				FAIL(OUT, "ttosubnet() failed: %s", oops);
 			}
@@ -568,13 +567,13 @@ static void check_address_mask_to_subnet(void)
 #undef OUT
 }
 
-void ip_subnet_check(void)
+void ip_subnet_check(struct logger *logger)
 {
-	check_str_subnet();
-	check_str_subnet_port();
-	check_subnet_prefix();
-	check_subnet_mask();
-	check_subnet_contains();
+	check_str_subnet(logger);
+	check_str_subnet_port(logger);
+	check_subnet_prefix(logger);
+	check_subnet_mask(logger);
+	check_subnet_contains(logger);
 	check_subnet_from_address();
 	check_address_mask_to_subnet();
 	check_cidr_to_subnet();

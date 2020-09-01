@@ -24,7 +24,6 @@
 
 #include "crypt_symkey.h"
 #include "crypt_prf.h"
-#include "lswlog.h"
 
 #include "cavp.h"
 #include "cavp_entry.h"
@@ -102,7 +101,7 @@ static struct cavp_entry data[] = {
 	{ .key = NULL, },
 };
 
-static void hmac_run_test(void)
+static void hmac_run_test(struct logger *logger)
 {
 	print_number("Count", NULL, count);
 	print_number("Klen", NULL, key.len);
@@ -114,7 +113,7 @@ static void hmac_run_test(void)
 	}
 	struct crypt_prf *prf = crypt_prf_init_hunk("run", prf_alg,
 						    "key", key,
-						    &progname_logger);
+						    logger);
 	crypt_prf_update_hunk(prf, "msg", msg);
 	chunk_t bytes = alloc_chunk(prf_alg->prf_output_size, "bytes");
 	crypt_prf_final_bytes(&prf, bytes.ptr, bytes.len);

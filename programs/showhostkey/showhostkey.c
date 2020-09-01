@@ -437,10 +437,9 @@ static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval f
 	return result; /* could be NULL */
 }
 
-static struct private_key_stuff *foreach_secret(secret_eval func, void *uservoid)
+static struct private_key_stuff *foreach_secret(secret_eval func, void *uservoid, struct logger *logger)
 {
-	struct private_key_stuff *pks = lsw_nss_foreach_private_key_stuff(func, uservoid,
-									  &progname_logger);
+	struct private_key_stuff *pks = lsw_nss_foreach_private_key_stuff(func, uservoid, logger);
 	if (pks == NULL) {
 		/* already logged any error */
 		return NULL;
@@ -451,7 +450,7 @@ static struct private_key_stuff *foreach_secret(secret_eval func, void *uservoid
 int main(int argc, char *argv[])
 {
 	log_to_stderr = FALSE;
-	tool_init_log("ipsec showhostkey");
+	struct logger *logger = tool_init_log("ipsec showhostkey");
 
 	int opt;
 	bool left_flg = FALSE;
@@ -523,7 +522,7 @@ int main(int argc, char *argv[])
 
 		case OPT_CONFIGDIR:	/* Obsoletd by --nssdir|-d */
 		case 'd':
-			lsw_conf_nssdir(optarg, &progname_logger);
+			lsw_conf_nssdir(optarg, logger);
 			break;
 
 		case OPT_PASSWORD:
@@ -579,25 +578,25 @@ int main(int argc, char *argv[])
 	 * processed, and really are "constant".
 	 */
 	const struct lsw_conf_options *oco = lsw_init_options();
-	log_message(RC_LOG, &progname_logger, "using nss directory \"%s\"", oco->nssdir);
+	log_message(RC_LOG, logger, "using nss directory \"%s\"", oco->nssdir);
 
 	/*
 	 * Set up for NSS - contains key pairs.
 	 */
 	int status = 0;
-	if (!lsw_nss_setup(oco->nssdir, LSW_NSS_READONLY, &progname_logger)) {
+	if (!lsw_nss_setup(oco->nssdir, LSW_NSS_READONLY, logger)) {
 		exit(1);
 	}
 
 	/* options that apply to entire files */
 	if (dump_flg) {
 		/* dumps private key info too */
-		foreach_secret(dump_key, NULL);
+		foreach_secret(dump_key, NULL, logger);
 		goto out;
 	}
 
 	if (list_flg) {
-		foreach_secret(list_key, NULL);
+		foreach_secret(list_key, NULL, logger);
 		goto out;
 	}
 
@@ -606,13 +605,13 @@ int main(int argc, char *argv[])
 		if (log_to_stderr)
 			printf("%s picking by rsaid=%s\n",
 			       ipseckey_flg ? ";" : "\t#", rsaid);
-		pks = foreach_secret(pick_by_rsaid, rsaid);
+		pks = foreach_secret(pick_by_rsaid, rsaid, logger);
 	} else if (ckaid != NULL) {
 		if (log_to_stderr) {
 			printf("%s picking by ckaid=%s\n",
 			       ipseckey_flg ? ";" : "\t#", ckaid);
 		}
-		pks = foreach_secret(pick_by_ckaid, ckaid);
+		pks = foreach_secret(pick_by_ckaid, ckaid, logger);
 	} else {
 		fprintf(stderr, "%s: nothing to do\n", progname);
 		status = 1;

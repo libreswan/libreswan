@@ -15,10 +15,10 @@
  */
 
 #include "lswalloc.h"
-#include "lswlog.h"
 #include "ike_alg.h"
 #include "ike_alg_hash.h"
 #include "ike_alg_hash_ops.h"
+#include "passert.h"
 
 #include "crypt_symkey.h"
 #include "ikev2_prf.h"
@@ -88,7 +88,7 @@ static struct cavp_entry msg_data[] = {
 	{ .key = NULL, },
 };
 
-static void msg_run_test(void)
+static void msg_run_test(struct logger *logger_unused UNUSED)
 {
 	print_number("Len", NULL, len);
 	/* byte aligned */
@@ -128,7 +128,7 @@ static struct cavp_entry monte_data[] = {
 	{ .key = NULL, },
 };
 
-static void monte_run_test(void)
+static void monte_run_test(struct logger *logger_unused UNUSED)
 {
 	print_chunk("Seed", NULL, seed, 0);
 	chunk_t MDi_3 = alloc_chunk(seed.len, "MDi_3");

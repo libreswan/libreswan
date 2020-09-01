@@ -33,7 +33,7 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 			.alg_is_ok = OK,				\
 			.pfs = pfs,					\
 			.logger_rc_flags = ERROR_STREAM|RC_LOG,		\
-			.logger = &progname_logger,			\
+			.logger = logger,				\
 			.check_pfs_vs_dh = CHECK,			\
 			.ignore_parser_errors = ignore_parser_errors,	\
 		};							\
@@ -116,22 +116,25 @@ static bool kernel_alg_is_ok(const struct ike_alg *alg)
 	}
 }
 
-static void esp(enum expect expected, const char *algstr)
+#define esp(EXPECTED, ALGSTR) test_esp(EXPECTED, ALGSTR, logger)
+static void test_esp(enum expect expected, const char *algstr, struct logger *logger)
 {
 	CHECK(true, esp, kernel_alg_is_ok);
 }
 
-static void ah(enum expect expected, const char *algstr)
+#define ah(EXPECTED, ALGSTR) test_ah(EXPECTED, ALGSTR, logger)
+static void test_ah(enum expect expected, const char *algstr, struct logger *logger)
 {
 	CHECK(true, ah, kernel_alg_is_ok);
 }
 
-static void ike(enum expect expected, const char *algstr)
+#define ike(EXPECTED, ALGSTR) test_ike(EXPECTED, ALGSTR, logger)
+static void test_ike(enum expect expected, const char *algstr, struct logger *logger)
 {
 	CHECK(false, ike, ike_alg_is_ike);
 }
 
-typedef void (protocol_t)(enum expect expected, const char *);
+typedef void (protocol_t)(enum expect expected, const char *, struct logger *logger);
 
 struct protocol {
 	const char *name;
@@ -139,33 +142,33 @@ struct protocol {
 };
 
 const struct protocol protocols[] = {
-	{ "ike", ike, },
-	{ "ah", ah, },
-	{ "esp", esp, },
+	{ "ike", test_ike, },
+	{ "ah", test_ah, },
+	{ "esp", test_esp, },
 };
 
-static void all(const char *algstr)
+static void all(const char *algstr, struct logger *logger)
 {
 	for (const struct protocol *protocol = protocols;
 	     protocol < protocols + elemsof(protocols);
 	     protocol++) {
-		protocol->parser(COUNT, algstr);
+		protocol->parser(COUNT, algstr, logger);
 	}
 }
 
-static void test_proposal(const char *arg)
+static void test_proposal(const char *arg, struct logger *logger)
 {
 	const char *eq = strchr(arg, '=');
 	for (const struct protocol *protocol = protocols;
 	     protocol < protocols + elemsof(protocols);
 	     protocol++) {
 		if (streq(arg, protocol->name)) {
-			protocol->parser(COUNT, NULL);
+			protocol->parser(COUNT, NULL, logger);
 			return;
 		}
 		if (startswith(arg, protocol->name) &&
 		    arg + strlen(protocol->name) == eq) {
-			protocol->parser(COUNT, eq + 1);
+			protocol->parser(COUNT, eq + 1, logger);
 			return;
 		}
 	}
@@ -173,10 +176,10 @@ static void test_proposal(const char *arg)
 		fprintf(stderr, "unrecognized PROTOCOL in '%s'", arg);
 		exit(1);
 	}
-	all(arg);
+	all(arg, logger);
 }
 
-static void test(void)
+static void test(struct logger *logger)
 {
 	/*
 	 * esp=
@@ -524,7 +527,7 @@ static void usage(void)
 int main(int argc, char *argv[])
 {
 	log_to_stderr = false;
-	tool_init_log(argv[0]);
+	struct logger *logger = tool_init_log(argv[0]);
 
 	if (argc == 1) {
 		usage();
@@ -591,11 +594,11 @@ int main(int argc, char *argv[])
 	 * ike_alg_init().  Sanity checks and algorithm testing
 	 * require a working NSS.
 	 */
-	if (!lsw_nss_setup(NULL, LSW_NSS_READONLY, &progname_logger)) {
+	if (!lsw_nss_setup(NULL, LSW_NSS_READONLY, logger)) {
 		/* already logged */
 		exit(ERROR);
 	}
-	init_crypt_symkey(&progname_logger);
+	init_crypt_symkey(logger);
 	fips = libreswan_fipsmode();
 
 	/*
@@ -604,7 +607,7 @@ int main(int argc, char *argv[])
 	 */
 	log_to_stderr = verbose;
 
-	init_ike_alg(&progname_logger);
+	init_ike_alg(logger);
 
 	/*
 	 * Only enabling debugging and impairing after things have
@@ -618,7 +621,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (test_algs) {
-		test_ike_alg(&progname_logger);
+		test_ike_alg(logger);
 	}
 
 	if (*argp) {
@@ -627,16 +630,16 @@ int main(int argc, char *argv[])
 			exit(ERROR);
 		}
 		for (; *argp != NULL; argp++) {
-			test_proposal(*argp);
+			test_proposal(*argp, logger);
 		}
 	} else if (test_proposals) {
-		test();
+		test(logger);
 		if (failures > 0) {
 			fprintf(stderr, "%d FAILURES\n", failures);
 		}
 	}
 
-	report_leaks(&progname_logger);
+	report_leaks(logger);
 
 	lsw_nss_shutdown();
 

@@ -20,14 +20,16 @@
 #include "ip_info.h"
 #include "where.h"
 
+struct logger;
+
 extern void ip_address_check(void);
 extern void ip_endpoint_check(void);
-extern void ip_range_check(void);
-extern void ip_subnet_check(void);
+extern void ip_range_check(struct logger *logger);
+extern void ip_subnet_check(struct logger *logger);
 extern void ip_said_check(void);
 extern void ip_info_check(void);
 extern void ip_protoport_check(void);
-extern void ip_selector_check(void);
+extern void ip_selector_check(struct logger *logger);
 extern void ip_sockaddr_check(void);
 extern void ip_port_check(void);
 extern void ip_port_range_check(void);

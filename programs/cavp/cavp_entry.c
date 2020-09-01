@@ -16,16 +16,17 @@
 #include "test_buffer.h"
 #include "crypt_symkey.h"
 #include "cavp_entry.h"
-#include "lswlog.h"
 
 void op_entry(const struct cavp_entry *entry,
-	      const char *value UNUSED)
+	      const char *value_unused UNUSED,
+	      struct logger *logger_unused UNUSED)
 {
 	*(entry->entry) = entry;
 }
 
 void op_chunk(const struct cavp_entry *entry,
-	      const char *value)
+	      const char *value,
+	      struct logger *logger_unused UNUSED)
 {
 	if (entry->chunk == NULL) {
 		fprintf(stderr, "missing chunk for '%s'\n", entry->key);
@@ -36,29 +37,32 @@ void op_chunk(const struct cavp_entry *entry,
 }
 
 void op_symkey(const struct cavp_entry *entry,
-	       const char *value)
+	       const char *value,
+	       struct logger *logger)
 {
 	release_symkey(__func__, "entry", entry->symkey);
 	chunk_t chunk = chunk_from_hex(value, entry->key);
-	*(entry->symkey) = symkey_from_hunk("symkey", chunk,
-					    &progname_logger);
+	*(entry->symkey) = symkey_from_hunk("symkey", chunk, logger);
 	free_chunk_content(&chunk);
 }
 
 void op_signed_long(const struct cavp_entry *entry,
-		    const char *value)
+		    const char *value,
+		    struct logger *logger_unused UNUSED)
 {
 	*(entry->signed_long) = strtol(value, NULL, 10);
 }
 
 void op_unsigned_long(const struct cavp_entry *entry,
-		      const char *value)
+		      const char *value,
+		      struct logger *logger_unused UNUSED)
 {
 	*(entry->unsigned_long) = strtoul(value, NULL, 10);
 }
 
 void op_ignore(const struct cavp_entry *entry UNUSED,
-	       const char *value UNUSED)
+	       const char *value_unused UNUSED,
+	       struct logger *logger_unused UNUSED)
 {
 }
 

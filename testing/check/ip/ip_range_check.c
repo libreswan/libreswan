@@ -21,7 +21,6 @@
 #include "ip_range.h"
 #include "ip_subnet.h"
 #include "ipcheck.h"
-#include "lswlog.h"
 
 static void check_rangetosubnet(void)
 {
@@ -160,7 +159,7 @@ static void check_iprange_bits(void)
 	}
 }
 
-static void check_ttorange__to__str_range(void)
+static void check_ttorange__to__str_range(struct logger *logger)
 {
 	static const struct test {
 		int family;
@@ -234,7 +233,7 @@ static void check_ttorange__to__str_range(void)
 		const char *oops = NULL;
 
 		ip_range r;
-		oops = ttorange(t->in, IP_TYPE(t->family), &r, &progname_logger);
+		oops = ttorange(t->in, IP_TYPE(t->family), &r, logger);
 		if (oops != NULL && t->out == NULL) {
 			/* Error was expected, do nothing */
 			continue;
@@ -265,7 +264,7 @@ static void check_ttorange__to__str_range(void)
 	}
 }
 
-static void check_range_from_subnet(void)
+static void check_range_from_subnet(struct logger *logger)
 {
 	static const struct test {
 		int family;
@@ -297,7 +296,7 @@ static void check_range_from_subnet(void)
 		sa_family_t af = SA_FAMILY(t->family);
 
 		ip_subnet s;
-		oops = ttosubnet(t->in, 0, af, '6', &s, &progname_logger);
+		oops = ttosubnet(t->in, 0, af, '6', &s, logger);
 		if (oops != NULL) {
 			FAIL_IN("ttosubnet() failed: %s", oops);
 		}
@@ -390,11 +389,11 @@ static void check_range_is(void)
 	}
 }
 
-void ip_range_check(void)
+void ip_range_check(struct logger *logger)
 {
 	check_rangetosubnet();
 	check_iprange_bits();
-	check_ttorange__to__str_range();
-	check_range_from_subnet();
+	check_ttorange__to__str_range(logger);
+	check_range_from_subnet(logger);
 	check_range_is();
 }

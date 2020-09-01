@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+struct logger;
 extern bool cavp_print_json;
 
 void config_number(const char *prefix, int number);
@@ -25,7 +26,7 @@ void config_key(const char *key);
 void fprint_chunk(FILE *, const char *prefix, const char *json,
 		  chunk_t chunk, size_t binlen);
 void fprint_symkey(FILE *, const char *prefix, const char *json,
-		   PK11SymKey *key, size_t binlen);
+		   PK11SymKey *key, size_t binlen, struct logger *logger);
 void fprint_number(FILE *, const char *prefix, const char *json,
 		   int number);
 void fprint_line(FILE *, const char *line);
@@ -35,7 +36,8 @@ void fprint_end(FILE *);
 void print_chunk(const char *prefix, const char *json,
 		 chunk_t chunk, size_t binlen);
 void print_symkey(const char *prefix, const char *json,
-		 PK11SymKey *key, size_t binlen);
+		  PK11SymKey *key, size_t binlen,
+		  struct logger *logger);
 void print_number(const char *prefix, const char *json,
 		  int number);
 void print_line(const char *line);

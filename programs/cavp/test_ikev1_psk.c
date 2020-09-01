@@ -20,7 +20,6 @@
 
 #include "ikev1_prf.h"
 #include "crypt_symkey.h"
-#include "lswlog.h"
 
 #include "cavp.h"
 #include "cavp_entry.h"
@@ -85,14 +84,14 @@ static void ikev1_psk_print_config(void)
 	config_number("pre-shared-key length", psk_length);
 }
 
-static void ikev1_psk_run_test(void)
+static void ikev1_psk_run_test(struct logger *logger)
 {
 	print_number("COUNT", ACVP_TCID, count);
 	print_chunk("CKY_I", NULL, cky_i, 0);
 	print_chunk("CKY_R", NULL, cky_r, 0);
 	print_chunk("Ni", NULL, ni, 0);
 	print_chunk("Nr", NULL, nr, 0);
-	print_symkey("g^xy", NULL, g_xy, 0);
+	print_symkey("g^xy", NULL, g_xy, 0, logger);
 	print_chunk("pre-shared-key", NULL, psk, 0);
 	if (prf_entry->prf == NULL) {
 		/* not supported, ignore */
@@ -101,8 +100,8 @@ static void ikev1_psk_run_test(void)
 		return;
 	}
 	const struct prf_desc *prf = prf_entry->prf;
-	PK11SymKey *skeyid = ikev1_pre_shared_key_skeyid(prf, psk, ni, nr, &progname_logger);
-	cavp_ikev1_skeyid_alphabet(prf, g_xy, cky_i, cky_r, skeyid);
+	PK11SymKey *skeyid = ikev1_pre_shared_key_skeyid(prf, psk, ni, nr, logger);
+	cavp_ikev1_skeyid_alphabet(prf, g_xy, cky_i, cky_r, skeyid, logger);
 	release_symkey(__func__, "skeyid", &skeyid);
 }
 

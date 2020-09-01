@@ -67,13 +67,13 @@ static char *environlize(const char *str)
  * XXX: why not let pluto resolve all this like it is already doing?
  * because of MOBIKE.
  */
-static void resolve_defaultroute(struct starter_conn *conn UNUSED)
+static void resolve_defaultroute(struct starter_conn *conn UNUSED, struct logger *logger)
 {
 #ifdef XFRM_SUPPORT
-	if (resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0, &progname_logger) == 1)
-		resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0, &progname_logger);
-	if (resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0, &progname_logger) == 1)
-		resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0, &progname_logger);
+	if (resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0, logger) == 1)
+		resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0, logger);
+	if (resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0, logger) == 1)
+		resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0, logger);
 #else /* !defined(XFRM_SUPPORT) */
 	/* What kind of result are we seeking? */
 	bool seeking_src = (conn->left.addrtype == KH_DEFAULTROUTE ||
@@ -217,7 +217,7 @@ static const struct option longopts[] =
 
 int main(int argc, char *argv[])
 {
-	tool_init_log(argv[0]);
+	struct logger *logger = tool_init_log(argv[0]);
 
 	int opt;
 	bool autoall = FALSE;
@@ -383,8 +383,7 @@ int main(int argc, char *argv[])
 	{
 		starter_errors_t errl = { NULL };
 
-		cfg = confread_load(configfile, &errl, ctlsocket, configsetup,
-				    &progname_logger);
+		cfg = confread_load(configfile, &errl, ctlsocket, configsetup, logger);
 
 		if (cfg == NULL) {
 			fprintf(stderr, "cannot load config '%s': %s\n",
@@ -406,10 +405,10 @@ int main(int argc, char *argv[])
 #ifdef HAVE_SECCOMP
 	switch (cfg->setup.options[KBF_SECCOMP]) {
 		case SECCOMP_ENABLED:
-			init_seccomp_addconn(SCMP_ACT_KILL, &progname_logger);
+			init_seccomp_addconn(SCMP_ACT_KILL, logger);
 		break;
 	case SECCOMP_TOLERANT:
-		init_seccomp_addconn(SCMP_ACT_ERRNO(EACCES), &progname_logger);
+		init_seccomp_addconn(SCMP_ACT_ERRNO(EACCES), logger);
 		break;
 	case SECCOMP_DISABLED:
 		break;
@@ -422,7 +421,7 @@ int main(int argc, char *argv[])
 	unbound_sync_init(cfg->setup.options[KBF_DO_DNSSEC],
 			  cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE],
 			  cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS],
-			  &progname_logger);
+			  logger);
 #endif
 
 	if (autoall) {
@@ -446,8 +445,8 @@ int main(int argc, char *argv[])
 			{
 				if (verbose > 0)
 					printf(" %s", conn->name);
-				resolve_defaultroute(conn);
-				starter_whack_add_conn(cfg, conn, &progname_logger);
+				resolve_defaultroute(conn, logger);
+				starter_whack_add_conn(cfg, conn, logger);
 			}
 		}
 
@@ -466,8 +465,7 @@ int main(int argc, char *argv[])
 				if (verbose > 0)
 					printf(" %s", conn->name);
 				if (conn->desired_state == STARTUP_ONDEMAND)
-					starter_whack_route_conn(cfg, conn,
-								 &progname_logger);
+					starter_whack_route_conn(cfg, conn, logger);
 			}
 		}
 
@@ -543,9 +541,8 @@ int main(int argc, char *argv[])
 						p1, p2, p3,
 						conn->name);
 				} else {
-					resolve_defaultroute(conn);
-					exit_status = starter_whack_add_conn(cfg, conn,
-									     &progname_logger);
+					resolve_defaultroute(conn, logger);
+					exit_status = starter_whack_add_conn(cfg, conn, logger);
 					conn->state = STATE_ADDED;
 				}
 			}

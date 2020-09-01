@@ -107,8 +107,8 @@ int nrounds = 30;               /* rounds of prime checking; 25 is good */
 char outputhostname[NS_MAXDNAME];  /* hostname for output */
 
 /* forwards */
-void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco);
-void lsw_random(size_t nbytes, unsigned char *buf);
+void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco, struct logger *logger);
+void lsw_random(size_t nbytes, unsigned char *buf, struct logger *logger);
 static const char *conv(const unsigned char *bits, size_t nbytes, int format);
 
 /*
@@ -124,13 +124,13 @@ static const char *conv(const unsigned char *bits, size_t nbytes, int format);
  * value, it is recommended to specify at least 460 bits (for FIPS) or 440
  * bits (for BSI).
  */
-static void UpdateNSS_RNG(int seedbits)
+static void UpdateNSS_RNG(int seedbits, struct logger *logger)
 {
 	SECStatus rv;
 	int seedbytes = BYTES_FOR_BITS(seedbits);
 	unsigned char *buf = alloc_bytes(seedbytes, "TLA seedmix");
 
-	lsw_random(seedbytes, buf);
+	lsw_random(seedbytes, buf, logger);
 	rv = PK11_RandomUpdate(buf, seedbytes);
 	assert(rv == SECSuccess);
 	messupn(buf, seedbytes);
@@ -143,7 +143,7 @@ static void UpdateNSS_RNG(int seedbits)
 int main(int argc, char *argv[])
 {
 	log_to_stderr = FALSE;
-	tool_init_log("ipsec rsasigkey");
+	struct logger *logger = tool_init_log("ipsec rsasigkey");
 
 	int opt;
 	int nbits = 0;
@@ -193,7 +193,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'c':       /* obsoleted by --nssdir|-d */
 		case 'd':       /* -d is used for nssdirdir with nss tools */
-			lsw_conf_nssdir(optarg, &progname_logger);
+			lsw_conf_nssdir(optarg, logger);
 			break;
 		case 'P':       /* token authentication password */
 			lsw_conf_nsspassword(optarg);
@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
 	 * processed, and really are "constant".
 	 */
 	const struct lsw_conf_options *oco = lsw_init_options();
-	rsasigkey(nbits, seedbits, oco);
+	rsasigkey(nbits, seedbits, oco, logger);
 	exit(0);
 }
 
@@ -276,7 +276,7 @@ int main(int argc, char *argv[])
  *
  * e is fixed at F4.
  */
-void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
+void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco, struct logger *logger)
 {
 	PK11RSAGenParams rsaparams = { nbits, (long) F4 };
 	PK11SlotInfo *slot = NULL;
@@ -284,11 +284,11 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
 	SECKEYPublicKey *pubkey = NULL;
 	realtime_t now = realnow();
 
-	if (!lsw_nss_setup(oco->nssdir, 0, &progname_logger)) {
+	if (!lsw_nss_setup(oco->nssdir, 0, logger)) {
 		exit(1);
 	}
 
-	slot = lsw_nss_get_authenticated_slot(&progname_logger);
+	slot = lsw_nss_get_authenticated_slot(logger);
 	if (slot == NULL) {
 		/* already logged */
 		lsw_nss_shutdown();
@@ -296,13 +296,13 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
 	}
 
 	/* Do some random-number initialization. */
-	UpdateNSS_RNG(seedbits);
+	UpdateNSS_RNG(seedbits, logger);
 	privkey = PK11_GenerateKeyPair(slot,
 				       CKM_RSA_PKCS_KEY_PAIR_GEN,
 				       &rsaparams, &pubkey,
 				       PR_TRUE,
 				       PK11_IsFIPS() ? PR_TRUE : PR_FALSE,
-				       lsw_nss_get_password_context(&progname_logger));
+				       lsw_nss_get_password_context(logger));
 	/* inTheToken, isSensitive, passwordCallbackFunction */
 	if (privkey == NULL) {
 		fprintf(stderr,
@@ -337,7 +337,7 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
 		hex_ckaid);
 
 	/* and the output */
-	log_message(RC_LOG, &progname_logger, "output...");
+	log_message(RC_LOG, logger, "output...");
 	printf("\t# RSA %d bits   %s   %s", nbits, outputhostname,
 		ctime(&now.rt.tv_sec));
 	/* ctime provides \n */
@@ -375,7 +375,7 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
  * lsw_random - get some random bytes from /dev/random (or wherever)
  * NOTE: This is only used for additional seeding of the NSS RNG
  */
-void lsw_random(size_t nbytes, unsigned char *buf)
+void lsw_random(size_t nbytes, unsigned char *buf, struct logger *logger)
 {
 	size_t ndone;
 	int dev;
@@ -389,7 +389,7 @@ void lsw_random(size_t nbytes, unsigned char *buf)
 	}
 
 	ndone = 0;
-	log_message(RC_LOG, &progname_logger, "getting %d random seed bytes for NSS from %s...\n",
+	log_message(RC_LOG, logger, "getting %d random seed bytes for NSS from %s...\n",
 		    (int) nbytes * BITS_PER_BYTE, device);
 	while (ndone < nbytes) {
 		got = read(dev, buf + ndone, nbytes - ndone);

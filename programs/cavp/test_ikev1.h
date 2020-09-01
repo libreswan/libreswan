@@ -22,4 +22,5 @@ struct prf_desc;
 void cavp_ikev1_skeyid_alphabet(const struct prf_desc *prf,
 				PK11SymKey *g_xy,
 				chunk_t cky_i, chunk_t cky_r,
-				PK11SymKey *skeyid);
+				PK11SymKey *skeyid,
+				struct logger *logger);

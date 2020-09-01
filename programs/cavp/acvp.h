@@ -16,8 +16,10 @@
 #include <stdbool.h>
 
 struct cavp;
+struct logger;
 
-bool acvp_option(const struct cavp *cavp, const char *arg, const char *param);
+bool acvp_option(const struct cavp *cavp, const char *arg,
+		 const char *param, struct logger *logger);
 
 #define ACVP_TCID "tcId"
 #define ACVP_DKM_OPTION "derivedKeyingMaterialLength"

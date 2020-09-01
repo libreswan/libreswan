@@ -896,7 +896,7 @@ static void send_reply(int sock, char *buf, ssize_t len)
 
 int main(int argc, char **argv)
 {
-	tool_init_log(argv[0]);
+	struct logger *logger = tool_init_log(argv[0]);
 
 	struct whack_message msg;
 	struct whackpacker wp;
@@ -1639,7 +1639,7 @@ int main(int argc, char **argv)
 				diagq(ttosubnet(optarg, 0,
 						msg.tunnel_addr_family,
 						'6', &msg.right.client,
-						&progname_logger),
+						logger),
 					optarg);
 				msg.right.has_client = TRUE;
 			}
@@ -2133,7 +2133,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_ADDRESSPOOL:	/* --addresspool */
-			ttorange(optarg, NULL, &msg.right.pool_range, &progname_logger);
+			ttorange(optarg, NULL, &msg.right.pool_range, logger);
 			continue;
 
 		case CD_MODECFGDNS:	/* --modecfgdns */
@@ -2323,7 +2323,7 @@ int main(int argc, char **argv)
 			realloc_things(msg.impairments, msg.nr_impairments,
 				       msg.nr_impairments+1, "impairments");
 			switch (parse_impair(optarg, &msg.impairments[msg.nr_impairments],
-					     enable, &progname_logger)) {
+					     enable, logger)) {
 			case IMPAIR_OK:
 				break;
 			case IMPAIR_HELP:

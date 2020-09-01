@@ -8,7 +8,6 @@
 #include "lswtool.h"
 #include "jambuf.h"
 #include "passert.h"
-#include "lswlog.h"	/* for progname_logger */
 
 #define PREFIX "         "
 
@@ -286,7 +285,7 @@ static void test_enum_lset(const char *name, const enum_names *en, lset_t val)
 
 int main(int argc UNUSED, char *argv[])
 {
-	tool_init_log(argv[0]);
+	struct logger *logger = tool_init_log(argv[0]);
 
 	/* don't hold back */
 	setbuf(stdout, NULL);
@@ -365,6 +364,6 @@ int main(int argc UNUSED, char *argv[])
 	test_enum_lset("debug", &debug_names, DBG_CRYPT|DBG_CPU_USAGE);
 	printf("\n");
 
-	report_leaks(&progname_logger);
+	report_leaks(logger);
 	exit(errors > 0 ? 1 : 0);
 }
