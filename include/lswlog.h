@@ -240,13 +240,6 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 		     jambuf_to_logger(BUF, (LOGGER), RC_FLAGS), BUF = NULL)
 
 /*
- * Initial (and tool) logger - it writes everything with PROGNAME:
- * (aka progname_logger.object) prefix.
- */
-
-extern struct logger progname_logger;
-
-/*
  * Fallback for debug and panic cases where making a logger available
  * is a pain (for instance deep inside code that shouldn't panic).
  *

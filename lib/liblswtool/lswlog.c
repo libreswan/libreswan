@@ -36,9 +36,34 @@
 #include "lswtool.h"
 #include "lswlog.h"
 
-bool log_to_stderr = TRUE;	/* should log go to stderr? */
+bool log_to_stderr = true;	/* should log go to stderr? */
 
 const char *progname;
+
+static size_t jam_progname_prefix(struct jambuf *buf, const void *object UNUSED)
+{
+	const char *progname = object;
+	if (progname != NULL) {
+		return jam(buf, "%s: ", progname);
+	}
+	return 0;
+}
+
+static bool suppress_progname_log(const void *object UNUSED)
+{
+	return false;
+}
+
+const struct logger_object_vec progname_object_vec = {
+	.name = "tool",
+	.jam_object_prefix = jam_progname_prefix,
+	.suppress_object_log = suppress_progname_log,
+};
+
+static struct logger progname_logger = {
+	.object_vec = &progname_object_vec,
+	.object = NULL, /* progname */
+};
 
 struct logger *tool_init_log(const char *name)
 {

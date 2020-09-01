@@ -57,7 +57,6 @@ OBJS += constants.o \
 
 OBJS += passert.o
 OBJS += pexpect.o
-OBJS += progname_logger.o
 OBJS += nss_cert_load.o
 OBJS += certs.o
 OBJS += reqid.o
