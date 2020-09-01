@@ -40,13 +40,15 @@ bool log_to_stderr = TRUE;	/* should log go to stderr? */
 
 const char *progname;
 
-void tool_init_log(const char *name)
+struct logger *tool_init_log(const char *name)
 {
 	const char *last_slash = strrchr(name, '/');
 	progname_logger.object = progname = last_slash == NULL ? name : last_slash + 1;
 
-	if (log_to_stderr)
+	if (log_to_stderr) {
 		setbuf(stderr, NULL);
+	}
+	return &progname_logger;
 }
 
 void jam_cur_prefix(struct jambuf *buf)
