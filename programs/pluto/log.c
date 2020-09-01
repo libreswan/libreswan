@@ -79,23 +79,19 @@ struct fd *whack_log_fd = NULL;      /* only set during whack_handle() */
 /*
  * Context for logging.
  *
- * CUR_FROM, CUR_CONNECTION and CUR_STATE work something like a stack.
- * lswlog_log_prefix() will use the first of CUR_STATE, CUR_CONNECTION
- * and CUR_FROM when looking for the context to use with a prefix.
- * Operations then "push" and "pop" (or clear all) contexts.
+ * CUR_CONNECTION and CUR_STATE work something like a stack.
+ * cur_logger() will use the first of CUR_STATE or CUR_CONNECTION when
+ * looking for the context to use with a prefix.  Operations then
+ * "push" and "pop" (or clear all) contexts.
  *
  * For instance, setting CUR_STATE will hide CUR_CONNECTION, and
  * resetting CUR_STATE will re-expose CUR_CONNECTION.
- *
- * Surely it would be easier to explicitly specify the context with
- * something like LSWLOG_RC_STATE()?
  *
  * Global variables: must be carefully adjusted at transaction
  * boundaries!
  */
 static struct state *cur_state = NULL;                 /* current state, for diagnostics */
 static struct connection *cur_connection = NULL;       /* current connection, for diagnostics */
-static ip_address cur_from;				/* source of current current message */
 
 /*
  * if any debugging is on, make sure that we log the connection we are
@@ -174,11 +170,6 @@ void log_reset_globals(where_t where)
 		log_processing(RESET, true, NULL, cur_connection, NULL, where);
 		cur_connection = NULL;
 	}
-	if (endpoint_type(&cur_from) != NULL) {
-		/* peer's IP address */
-		log_processing(RESET, true, NULL, NULL, &cur_from, where);
-		zero(&cur_from);
-	}
 }
 
 void log_pexpect_reset_globals(where_t where)
@@ -192,12 +183,6 @@ void log_pexpect_reset_globals(where_t where)
 		log_pexpect(where, "processing: unexpected cur_connection %s should be NULL",
 			    cur_connection->name);
 		cur_connection = NULL;
-	}
-	if (endpoint_type(&cur_from) != NULL) {
-		endpoint_buf buf;
-		log_pexpect(where, "processing: unexpected cur_from %s should be NULL",
-			    str_sensitive_endpoint(&cur_from, &buf));
-		zero(&cur_from);
 	}
 }
 
@@ -302,37 +287,6 @@ void log_pop_state(so_serial_t serialno, where_t where)
 			       NULL, cur_connection, NULL, where);
 	}
 }
-
-extern ip_address log_push_from(ip_address new_from, where_t where)
-{
-	bool current = (cur_state == NULL && cur_connection == NULL);
-	ip_address old_from = cur_from;
-	if (endpoint_type(&old_from) != NULL) {
-		log_processing(SUSPEND, current,
-			       NULL, NULL, &old_from, where);
-	}
-	cur_from = new_from;
-	if (endpoint_type(&cur_from) != NULL) {
-		log_processing(START, current,
-			       NULL, NULL, &cur_from, where);
-	}
-	return old_from;
-}
-
-extern void log_pop_from(ip_address old_from, where_t where)
-{
-	bool current = (cur_state == NULL && cur_connection == NULL);
-	if (endpoint_type(&cur_from) != NULL) {
-		log_processing(STOP, current,
-			       NULL, NULL, &cur_from, where);
-	}
-	if (endpoint_type(&old_from) != NULL) {
-		log_processing(RESUME, current,
-			       NULL, NULL, &old_from, where);
-	}
-	cur_from = old_from;
-}
-
 
 /*
  * Initialization.
@@ -515,8 +469,7 @@ void jam_cur_prefix(struct jambuf *buf)
 
 	struct logger logger = cur_logger();
 	if (DBGP(DBG_BASE)) {
-		if (logger.object_vec == &logger_from_vec ||
-		    logger.object_vec == &logger_connection_vec) {
+		if (logger.object_vec == &logger_connection_vec) {
 			jam(buf, "LOGGING EXPECATATION FAILED: using cur_%s: ",
 			    logger.object_vec->name);
 		}
@@ -610,7 +563,6 @@ void whack_comment(const struct fd *whackfd, const char *message, ...)
 	pexpect(in_main_thread());
 	pexpect(cur_state == NULL);
 	pexpect(cur_connection == NULL);
-	pexpect(endpoint_type(&cur_from) == NULL);
 	JAMBUF(buf) {
 		va_list args;
 		va_start(args, message);
@@ -976,10 +928,6 @@ struct logger cur_logger(void)
 
 	if (cur_connection != NULL) {
 		return CONNECTION_LOGGER(cur_connection, whack_log_fd);
-	}
-
-	if (endpoint_type(&cur_from) != NULL) {
-		return FROM_LOGGER(&cur_from);
 	}
 
 	return GLOBAL_LOGGER(whack_log_fd);

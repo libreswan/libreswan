@@ -101,12 +101,6 @@ bool is_cur_connection(const struct connection *c);
 #define set_cur_state(ST) push_cur_state(ST)
 #define reset_cur_state() pop_cur_state(SOS_NOBODY)
 
-extern ip_address log_push_from(ip_address new_from, where_t where);
-extern void log_pop_from(ip_address old_from, where_t where);
-
-#define push_cur_from(NEW) log_push_from(NEW, HERE)
-#define pop_cur_from(OLD) log_pop_from(OLD, HERE)
-
 struct logger cur_logger(void);
 
 extern const struct logger_object_vec logger_global_vec;

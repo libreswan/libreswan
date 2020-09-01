@@ -270,9 +270,7 @@ void process_packet(struct msg_digest **mdp)
  */
 static void process_md(struct msg_digest **mdp)
 {
-	ip_address old_from = push_cur_from((*mdp)->sender);
 	process_packet(mdp);
-	pop_cur_from(old_from);
 	reset_cur_state();
 	reset_cur_connection();
 }
