@@ -19,7 +19,7 @@ west #
  # this one should fail to load
 west #
  ipsec auto --add subnet6-bad
-036 Failed to load connection "subnet6-bad": subnets must have the same address family
+036 failed to add connection "subnet6-bad": subnets must have the same address family
 west #
  ../bin/check-for-core.sh
 west #
