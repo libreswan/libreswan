@@ -10,7 +10,7 @@ west #
  ipsec whack --impair suppress-retransmits
 west #
  ipsec auto --add named
-000 failed to convert 'right.libreswan.org' at load time: not a numeric IPv4 address and name lookup failed (no validation performed)
+000 connection "named": failed to convert 'right.libreswan.org' at load time: not a numeric IPv4 address and name lookup failed (no validation performed)
 002 added IKEv2 connection "named"
 west #
  ipsec status | grep "===" # should show %dns for pending resolve
