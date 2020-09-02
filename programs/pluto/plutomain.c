@@ -216,6 +216,11 @@ static const char compile_time_interop_options[] = ""
 #endif
 #ifdef HAVE_LABELED_IPSEC
 	" LABELED_IPSEC"
+#ifdef HAVE_OLD_SELINUX
+	" (OLD_SELINUX)"
+#else
+	" (SELINUX)"
+#endif
 #endif
 #ifdef HAVE_SECCOMP
 	" SECCOMP"
@@ -1796,7 +1801,7 @@ int main(int argc, char **argv)
 	start_crl_fetch_helper();
 #endif
 #ifdef HAVE_LABELED_IPSEC
-	init_avc();
+	init_selinux();
 #endif
 #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd_init();

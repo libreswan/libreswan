@@ -1,5 +1,6 @@
 /* Libreswan Selinux APIs
  * Copyright (C) 2011 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2020 Richard Haines <richard_c_haines@btinternet.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,10 +17,18 @@
 #define _SECURITY_SELINUX_H
 
 #include <selinux/selinux.h>
+
+#ifdef HAVE_OLD_SELINUX
 #include <selinux/avc.h>
 #include <selinux/context.h>
+#endif
 
-void init_avc(void);
-int within_range(char *sl, char *range);
+void init_selinux(void);
+
+#ifdef HAVE_OLD_SELINUX
+int within_range(security_context_t sl, security_context_t range);
+#else
+int within_range(const char *sl, const char *range);
+#endif
 
 #endif /* _SECURITY_SELINUX_H */

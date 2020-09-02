@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2001, 2002  Henry Spencer.
 # Copyright (C) 2003-2006   Xelerance Corporation
-# Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+# Copyright (C) 2012-2020 Paul Wouters <paul@libreswan.org>
 # Copyright (C) 2015,2017-2018 Andrew Cagney
 # Copyright (C) 2015-2019 Tuomo Soini <tis@foobar.fi>
 #
@@ -398,6 +398,12 @@ FIPSPRODUCTCHECK ?= /etc/system-fips
 # Enable Labeled IPsec Functionality (requires SElinux)
 USE_LABELED_IPSEC ?= false
 
+ifeq ($(USE_LABELED_IPSEC),true)
+# Use when having an old version of libselinux  < 2.1.9 that uses avc_*
+# This is required for RHEL6 / CentOS6
+USE_OLD_SELINUX ?= false
+endif
+
 # Enable seccomp support (whitelist allows syscalls)
 USE_SECCOMP ?= false
 
@@ -575,6 +581,9 @@ endif
 
 ifeq ($(USE_LABELED_IPSEC),true)
 USERLAND_CFLAGS += -DHAVE_LABELED_IPSEC
+ifeq ($(USE_OLD_SELINUX),true)
+USERLAND_CFLAGS += -DHAVE_OLD_SELINUX
+endif
 endif
 
 ifeq ($(USE_SECCOMP),true)

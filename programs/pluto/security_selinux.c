@@ -1,6 +1,7 @@
 /* selinux routines
  * Copyright (C) 2011 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2020 Richard Haines <richard_c_haines@btinternet.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -14,29 +15,34 @@
  *
  */
 
+#ifndef HAVE_LABELED_IPSEC
+#error this file should only be compiled when labeled ipsec support is enabled
+#endif
+
+#include <errno.h>
 #include "security_selinux.h"
 
 #include "defs.h"		/* for so_serial_t */
 #include "log.h"
 
-static int selinux_ready = 0;
-
-void init_avc(void)
+void init_selinux(void)
 {
 	if (!is_selinux_enabled()) {
 		libreswan_log("selinux support is NOT enabled.");
-		return;
 	} else {
-		libreswan_log("selinux support is enabled.");
+#ifdef HAVE_OLD_SELINUX
+		if (avc_init("libreswan", NULL, NULL, NULL, NULL) != 0) {
+			libreswan_log("selinux: could not initialize avc");
+			exit_pluto(PLUTO_EXIT_SELINUX_FAIL);
+		}
+#endif
+		libreswan_log("SELinux support is enabled in %s mode.",
+			security_getenforce() ? "ENFORCING" : "PERMISSIVE");
 	}
-
-	if (avc_open(NULL, 0) == 0)
-		selinux_ready = 1;
-	else
-		libreswan_log("selinux: could not initialize avc.");
 }
 
-int within_range(char *sl, char *range)
+#ifdef HAVE_OLD_SELINUX
+int within_range(security_context_t sl, security_context_t range)
 {
 	int rtn = 1;
 	security_id_t slsid;
@@ -45,23 +51,17 @@ int within_range(char *sl, char *range)
 	security_class_t tclass;
 	access_vector_t av;
 
-	if (!selinux_ready) {
-		/* mls may not be enabled */
-		dbg("selinux check failed");
-		return 0;
-	}
-
 	/*
 	 * * Get the sids for the sl and range contexts
 	 */
 	rtn = avc_context_to_sid(sl, &slsid);
 	if (rtn != 0) {
-		dbg("within_range: Unable to retrieve sid for sl context (%s)", sl);
+		libreswan_log("selinux within_range: Unable to retrieve sid for sl context (%s)", sl);
 		return 0;
 	}
 	rtn = avc_context_to_sid(range, &rangesid);
 	if (rtn != 0) {
-		dbg("within_range: Unable to retrieve sid for range context (%s)", range);
+		libreswan_log("selinux within_range: Unable to retrieve sid for range context (%s)", range);
 		return 0;
 	}
 
@@ -72,9 +72,28 @@ int within_range(char *sl, char *range)
 	av = string_to_av_perm(tclass, "polmatch");
 	rtn = avc_has_perm(slsid, rangesid, tclass, av, NULL, &avd);
 	if (rtn != 0) {
-		dbg("within_range: The sl (%s) is not within range of (%s)", sl, range);
+		libreswan_log("selinux within_range: The sl (%s) is not within range of (%s)", sl, range);
 		return 0;
 	}
-	dbg("within_range: The sl (%s) is within range of (%s)", sl, range);
+	dbg("selinux within_range: The sl (%s) is within range of (%s)", sl, range);
 	return 1;
 }
+#else
+int within_range(const char *sl, const char *range)
+{
+	int rtn;
+	/*
+	 * Check access permission for sl (connection policy label from SAD)
+	 * and range (connection flow label from SPD but initially the
+	 * conn policy-label= entry of the ipsec.conf(5) configuration file).
+	 */
+	rtn = selinux_check_access(sl, range, "association", "polmatch", NULL);
+	if (rtn != 0) {
+		libreswan_log("selinux within_range: sl (%s) - range (%s) error: %s\n",
+			sl, range, strerror(errno));
+		return 0;
+	}
+	dbg("selinux within_range: Permission granted sl (%s) - range (%s)", sl, range);
+	return 1;
+}
+#endif

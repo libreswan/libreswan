@@ -1055,6 +1055,7 @@ enum pluto_exit_code {
 	PLUTO_EXIT_SECCOMP_FAIL = 8,
 	PLUTO_EXIT_UNBOUND_FAIL = 9,
 	PLUTO_EXIT_LOCK_FAIL = 10, /* historic value */
+	PLUTO_EXIT_SELINUX_FAIL = 11,
 };
 
 #define SWAN_MAX_DOMAIN_LEN 256 /* includes nul termination */
