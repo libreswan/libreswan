@@ -41,6 +41,7 @@
 #include <arpa/inet.h>
 #include <resolv.h>
 #include <errno.h>
+#include <limits.h>
 
 #include "sysdep.h"
 #include "constants.h"
