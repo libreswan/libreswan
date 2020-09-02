@@ -2848,11 +2848,10 @@ bool pbs_out_address(const ip_address *address, struct pbs_out *out_pbs, const c
 
 void log_pbs_out(lset_t rc_flags, struct pbs_out *outs, const char *message, ...)
 {
-	va_list ap;
-	va_start(ap, message);
-	struct logger logger = (pexpect(outs != NULL) && outs->out_logger != NULL
-				? *outs->out_logger
-				: cur_logger());
-	log_va_list(rc_flags, &logger, message, ap);
-	va_end(ap);
+	if (pexpect(outs != NULL) && pexpect(outs->out_logger != NULL)) {
+		va_list ap;
+		va_start(ap, message);
+		log_va_list(rc_flags, outs->out_logger, message, ap);
+		va_end(ap);
+	}
 }
