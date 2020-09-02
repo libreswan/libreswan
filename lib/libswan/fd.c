@@ -68,50 +68,18 @@ void fd_leak(struct fd **fd, where_t where)
 	ref_delete(fd, free_fd, where);
 }
 
-ssize_t fd_sendmsg(const struct fd *fd, const struct msghdr *msg,
-		   int flags, where_t where, struct logger *logger)
+ssize_t fd_sendmsg(const struct fd *fd, const struct msghdr *msg, int flags)
 {
 	if (fd == NULL || fd->magic != FD_MAGIC) {
 		/*
 		 * XXX: passert() / pexpect() would be recursive -
 		 * they will call this function when trying to write
-		 * to whack.  Fake up the failure and only send to the
-		 * log stream.
+		 * to whack.
 		 */
-		JAMBUF(buf) {
-			jam(buf, "EXPECTATION FAILED:");
-			if (fd == NULL) {
-				jam(buf, " fd should not be NULL");
-			} else {
-				jam(buf, " fd magic is %ux, should be %ux",
-				    fd->magic, FD_MAGIC);
-			}
-			jam(buf, " "PRI_WHERE"", pri_where(where));
-			/* XXX: on BSD msg_iovlen is an INT */
-			for (unsigned i = 0; i < (unsigned)msg->msg_iovlen; i++) {
-				jam(buf, "; ");
-				struct iovec *iov = &msg->msg_iov[i];
-				jam_sanitized_bytes(buf, iov->iov_base, iov->iov_len);
-			}
-			jambuf_to_logger(buf, logger, LOG_STREAM);
-		}
-		return -1;
+		return -EFAULT;
 	}
-	if (fd->magic != FD_MAGIC) {
-		/*
-		 * XXX: passert() / pexpect() would be recursive -
-		 * they will call this function when trying to write
-		 * to whack.  Fake up the failure and only send to the
-		 * log stream.
-		 */
-		JAMBUF(buf) {
-			jam(buf, "EXPECTATION FAILED: fd is not magic "PRI_WHERE"",
-			    pri_where(where));
-			jambuf_to_logger(buf, logger, LOG_STREAM);
-		}
-		return -1;
-	}
-	return sendmsg(fd->fd, msg, flags);
+	ssize_t s = sendmsg(fd->fd, msg, flags);
+	return s < 0 ? -errno : s;
 }
 
 struct fd *fd_accept(int socket, where_t where, struct logger *logger)
@@ -142,17 +110,13 @@ struct fd *fd_accept(int socket, where_t where, struct logger *logger)
 	return fdt;
 }
 
-ssize_t fd_read(const struct fd *fd, void *buf, size_t nbytes, where_t where)
+ssize_t fd_read(const struct fd *fd, void *buf, size_t nbytes)
 {
-	if (fd == NULL) {
-		log_pexpect(where, "null "PRI_FD"", pri_fd(fd));
-		return -1;
+	if (fd == NULL || fd->magic != FD_MAGIC) {
+		return -EFAULT;
 	}
-	if (fd->magic != FD_MAGIC) {
-		log_pexpect(where, "wrong magic for "PRI_FD"", pri_fd(fd));
-		return -1;
-	}
-	return read(fd->fd, buf, nbytes);
+	ssize_t s = read(fd->fd, buf, nbytes);
+	return s < 0 ? -errno : s;
 }
 
 bool fd_p(const struct fd *fd)
