@@ -328,16 +328,15 @@ void pluto_init_log(struct log_param param)
  * The compiler will likely inline these.
  */
 
-static void stdlog_raw(const char *prefix, char *message)
+static void stdlog_raw(const char *prefix, char *message, const struct realtm *t)
 {
 	if (log_to_stderr || pluto_log_fp != NULL) {
 		FILE *out = log_to_stderr ? stderr : pluto_log_fp;
 
 		if (log_param.log_with_timestamp) {
 			char now[34] = "";
-			struct realtm t = local_realtime(realnow());
-			strftime(now, sizeof(now), "%b %e %T", &t.tm);
-			fprintf(out, "%s.%06ld: %s%s\n", now, t.microsec, prefix, message);
+			strftime(now, sizeof(now), "%b %e %T", &t->tm);
+			fprintf(out, "%s.%06ld: %s%s\n", now, t->microsec, prefix, message);
 		} else {
 			fprintf(out, "%s%s\n", prefix, message);
 		}
@@ -350,10 +349,10 @@ static void syslog_raw(int severity, const char *prefix, char *message)
 		syslog(severity, "%s%s", prefix, message);
 }
 
-static void peerlog_raw(const char *prefix, char *message)
+static void peerlog_raw(const char *prefix, char *message, const struct realtm *t)
 {
 	if (log_to_perpeer) {
-		peerlog(cur_connection, prefix, message);
+		peerlog(cur_connection, prefix, message, t);
 	}
 }
 
@@ -391,7 +390,8 @@ void jambuf_to_whack(struct jambuf *buf, const struct fd *whackfd, enum rc_type 
 	/* write to whack socket, but suppress possible SIGPIPE */
 	struct logger global_logger = GLOBAL_LOGGER(null_fd); /*not-whack*/
 	if (fd_sendmsg(whackfd, &msg, MSG_NOSIGNAL, HERE, &global_logger) < 0) {
-		stdlog_raw("whack: ", "write to whack socket failed");
+		struct realtm t = local_realtime(realnow());
+		stdlog_raw("whack: ", "write to whack socket failed", &t);
 	}
 }
 
@@ -479,9 +479,11 @@ void jam_cur_prefix(struct jambuf *buf)
 
 static void log_raw(int severity, const char *prefix, struct jambuf *buf)
 {
-	stdlog_raw(prefix, buf->array);
+	/* assume there's a logging prefix; normally there is */
+	struct realtm t = local_realtime(realnow());
+	stdlog_raw(prefix, buf->array, &t);
 	syslog_raw(severity, prefix, buf->array);
-	peerlog_raw(prefix, buf->array);
+	peerlog_raw(prefix, buf->array, &t);
 	/* not whack */
 }
 
