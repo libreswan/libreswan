@@ -260,8 +260,7 @@ static void do_whacklisten(struct fd *whackfd)
 #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_RELOADING, SD_REPORT_NO_STATUS);
 #endif
-	log_message(RC_LOG|LOG_STREAM/*not-whack*/, logger,
-		    "listening for IKE messages");
+	log_message(RC_LOG, logger, "listening for IKE messages");
 	listening = true;
 	find_ifaces(true /* remove dead interfaces */, whackfd);
 #ifdef USE_XFRM_INTERFACE
