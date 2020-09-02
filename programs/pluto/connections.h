@@ -601,8 +601,7 @@ extern uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt);
 
 so_serial_t get_newer_sa_from_connection(struct state *st);
 
-extern bool load_end_cert_and_preload_secret(struct fd *whackfd,
-					     const char *which, const char *pubkey,
+extern bool load_end_cert_and_preload_secret(struct fd *whackfd, const char *pubkey,
 					     enum whack_pubkey_type pubkey_type,
 					     struct end *dst_end);
 extern void reread_cert_connections(struct fd *whackfd);

@@ -32,8 +32,7 @@ static bool nss_reread_cert(struct fd *whackfd, struct end *dst, const char *con
 	}
 
 	pubkey_type = WHACK_PUBKEY_CERTIFICATE_NICKNAME;
-	if (!load_end_cert_and_preload_secret(whackfd, dst->leftright,
-					      nickname, pubkey_type, dst)) {
+	if (!load_end_cert_and_preload_secret(whackfd, nickname, pubkey_type, dst)) {
 		log_global(RC_BADID, whackfd, "connection '%s' rereading certificate failed for nickname '%s'",
 				connstr, nickname);
 		return false;

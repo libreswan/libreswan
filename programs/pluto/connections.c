@@ -785,7 +785,7 @@ static int extract_end(struct fd *whackfd,
 		}
 	}
 
-	if (!load_end_cert_and_preload_secret(whackfd, leftright/*side*/, src->pubkey,
+	if (!load_end_cert_and_preload_secret(whackfd, src->pubkey,
 					      src->pubkey_type, dst)) {
 		return -1;
 	}
@@ -948,8 +948,7 @@ static bool check_connection_end(const struct whack_end *this,
 	return TRUE; /* happy */
 }
 
-bool load_end_cert_and_preload_secret(struct fd *whackfd,
-				      const char *which, const char *pubkey,
+bool load_end_cert_and_preload_secret(struct fd *whackfd, const char *pubkey,
 				      enum whack_pubkey_type pubkey_type,
 				      struct end *dst_end)
 {
@@ -1048,12 +1047,12 @@ bool load_end_cert_and_preload_secret(struct fd *whackfd,
 			secCertTimeValid) {
 		log_message(RC_LOG_SERIOUS, logger,
 			    "%s certificate \'%s\' is expired or not yet valid",
-			    which, pubkey);
+			    dst_end->leftright, pubkey);
 		CERT_DestroyCertificate(cert);
 		return false;
 	}
 
-	dbg("loading %s certificate \'%s\' pubkey", which, pubkey);
+	dbg("loading %s certificate \'%s\' pubkey", dst_end->leftright, pubkey);
 	if (!add_pubkey_from_nss_cert(&pluto_pubkeys, &dst_end->id, cert, logger)) {
 		CERT_DestroyCertificate(cert);
 		return false;
@@ -1082,7 +1081,7 @@ bool load_end_cert_and_preload_secret(struct fd *whackfd,
 	err_t ugh = load_nss_cert_secret(cert, logger);
 	if (ugh != NULL) {
 		dbg("warning: no secret key loaded for %s certificate with %s %s: %s",
-		    which, cert_source, pubkey, ugh);
+		    dst_end->leftright, cert_source, pubkey, ugh);
 	}
 	return true;
 }
