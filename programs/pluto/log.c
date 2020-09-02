@@ -351,7 +351,12 @@ static void syslog_raw(int severity, const char *prefix, char *message)
 
 static void peerlog_raw(const char *prefix, char *message, const struct realtm *t)
 {
-	if (log_to_perpeer) {
+	/*
+	 * XXX: broken: peerlog() should work from a helper thread but
+	 * that likely means adding an FD or a the peer address to the
+	 * logging context.
+	 */
+	if (log_to_perpeer && in_main_thread()) {
 		peerlog(cur_connection, prefix, message, t);
 	}
 }
