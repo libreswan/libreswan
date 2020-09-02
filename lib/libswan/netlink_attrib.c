@@ -57,7 +57,7 @@ void nl_addattr_nest_end(struct nlmsghdr *n, struct rtattr *nest)
 	nest->rta_len = (void *)NLMSG_TAIL(n) - (void *)nest;
 }
 
-void nl_addattrstrz(struct nlmsghdr *n, int maxlen, int type, const char *str)
+void nl_addattrstrz(struct nlmsghdr *n, int maxlen, int type, const char *str /*non-NULL*/)
 {
 	nl_addattr_l(n, maxlen, type, str, strlen(str)+1);
 }
