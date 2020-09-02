@@ -1164,16 +1164,16 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 /*
  * create output HDR as replica of input HDR - IKEv1 only; return the body
  */
-void ikev1_init_out_pbs_echo_hdr(struct msg_digest *md, bool enc,
-				 pb_stream *output_stream, uint8_t *output_buffer,
-				 size_t sizeof_output_buffer,
-				 pb_stream *rbody)
+void ikev1_init_pbs_out_from_md_hdr(struct msg_digest *md, bool enc,
+				    struct pbs_out *output_stream, uint8_t *output_buffer,
+				    size_t sizeof_output_buffer,
+				    struct pbs_out *rbody,
+				    struct logger *logger)
 {
 	struct isakmp_hdr hdr = md->hdr; /* mostly same as incoming header */
 
 	/* make sure we start with a clean buffer */
-	init_out_pbs(output_stream, output_buffer, sizeof_output_buffer,
-		     "reply packet");
+	*output_stream = open_pbs_out("reply packet", output_buffer, sizeof_output_buffer, logger);
 
 	hdr.isa_flags = 0; /* zero all flags */
 	if (enc)

@@ -344,8 +344,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 
 	/* done parsing; initialize crypto  */
 
-	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		 "reply packet");
+	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), st->st_logger);
 
 	/* HDR out */
 	pb_stream rbody;
@@ -685,8 +684,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 	/**************** build output packet: HDR, HASH_I/SIG_I **************/
 
 	/* make sure HDR is at start of a clean buffer */
-	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		 "reply packet");
+	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), st->st_logger);
 	pb_stream rbody;
 
 	/* HDR out */
@@ -755,9 +753,8 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 		shunk_t id_b;
 		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->spd.this, &id_b);
 
-		pb_stream id_pbs;
-		u_char idbuf[1024]; /* fits all possible identity payloads? */
-		init_out_pbs(&id_pbs, idbuf, sizeof(idbuf), "identity payload");
+		uint8_t idbuf[1024]; /* fits all possible identity payloads? */
+		struct pbs_out id_pbs = open_pbs_out("identity payload", idbuf, sizeof(idbuf), st->st_logger);
 		pb_stream r_id_pbs;
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&id_pbs, &r_id_pbs) ||
@@ -854,7 +851,6 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 {
 	struct connection *c = st->st_connection;
-	u_char idbuf[1024];	/* ??? enough room for reconstructed peer ID payload? */
 	struct payload_digest id_pd;
 
 	ikev1_natd_init(st, md);
@@ -863,13 +859,13 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	{
 		dbg("next payload chain: creating a fake payload for hashing identity");
 
-		pb_stream pbs;
 		pb_stream id_pbs;
 
 		shunk_t id_b;
 		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->spd.that, &id_b);
 
-		init_out_pbs(&pbs, idbuf, sizeof(idbuf), "identity payload");
+		uint8_t idbuf[1024];	/* ??? enough room for reconstructed peer ID payload? */
+		struct pbs_out pbs = open_pbs_out("identity payload", idbuf, sizeof(idbuf), st->st_logger);
 
 		/* interop ID for SoftRemote & maybe others ? */
 		id_hd.isaiid_protoid = st->st_peeridentity_protocol;
@@ -1087,8 +1083,7 @@ static stf_status aggr_outI1_tail(struct state *st,
 	dbg("aggr_outI1_tail for #%lu", st->st_serialno);
 
 	/* make sure HDR is at start of a clean buffer */
-	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		     "reply packet");
+	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), st->st_logger);
 
 	/* HDR out */
 	pb_stream rbody;

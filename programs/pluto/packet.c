@@ -1702,17 +1702,12 @@ void init_pbs(pb_stream *pbs, uint8_t *start, size_t len, const char *name)
 	};
 }
 
-void init_out_pbs(pb_stream *pbs, uint8_t *start, size_t len, const char *name)
-{
-	init_pbs(pbs, start, len, name);
-	memset(start, 0xFA, len);	/* value likely to be unpleasant */
-}
-
 struct pbs_out open_pbs_out(const char *name, uint8_t *buffer, size_t sizeof_buffer,
 			    struct logger *logger)
 {
 	struct pbs_out out_pbs;
-	init_out_pbs(&out_pbs, buffer, sizeof_buffer, name);
+	init_pbs(&out_pbs, buffer, sizeof_buffer, name);
+	memset(buffer, 0xFA, sizeof_buffer);	/* value likely to be unpleasant */
 	out_pbs.out_logger = logger;
 	dbg("opening output PBS %s", name);
 	return out_pbs;

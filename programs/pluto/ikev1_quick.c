@@ -713,8 +713,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 	}
 
 	/* set up reply */
-	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		 "reply packet");
+	reply_stream = open_pbs_out("reply packet",reply_buffer, sizeof(reply_buffer), st->st_logger);
 
 	/* HDR* out */
 	{
@@ -1360,10 +1359,10 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 	 */
 
 	/* HDR* out */
-	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(md, TRUE,
-				    &reply_stream, reply_buffer, sizeof(reply_buffer),
-				    &rbody);
+	struct pbs_out rbody;
+	ikev1_init_pbs_out_from_md_hdr(md, TRUE,
+				       &reply_stream, reply_buffer, sizeof(reply_buffer),
+				       &rbody, st->st_logger);
 
 	struct v1_hash_fixup hash_fixup;
 	if (!emit_v1_HASH(V1_HASH_2, "quick inR1 outI2",
@@ -1566,10 +1565,10 @@ stf_status quick_inR1_outI2_tail(struct msg_digest *md,
 	struct state *st = md->st;
 	struct connection *c = st->st_connection;
 
-	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(md, TRUE,
-				    &reply_stream, reply_buffer, sizeof(reply_buffer),
-				    &rbody);
+	struct pbs_out rbody;
+	ikev1_init_pbs_out_from_md_hdr(md, TRUE,
+				       &reply_stream, reply_buffer, sizeof(reply_buffer),
+				       &rbody, st->st_logger);
 
 	if (st->st_pfs_group != NULL && r != NULL)
 		finish_dh_secret(st, r);

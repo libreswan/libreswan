@@ -255,16 +255,11 @@ void log_pbs_out(lset_t rc_flags, struct pbs_out *outs, const char *message, ...
 /*
  * Initializers; point PBS at a pre-allocated (or static) buffer.
  *
- * init_out_pbs(): Same as init_pbs() except it scribbles on the
- * buffer to prevent leakage.  Should be totally redundant.
- *
  * XXX: should the buffer instead be allocated as part of the PBS?
  */
-extern void init_out_pbs(pb_stream *pbs, uint8_t *start, size_t len,
-			 const char *name);
 extern struct pbs_out open_pbs_out(const char *name, uint8_t *buffer,
 				   size_t sizeof_buffer, struct logger *logger);
-extern void close_output_pbs(pb_stream *pbs);
+extern void close_output_pbs(struct pbs_out *pbs);
 
 /*
  * Map/clone the current contents (i.e., everything written so far)

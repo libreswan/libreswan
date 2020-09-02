@@ -458,14 +458,13 @@ static stf_status modecfg_resp(struct state *st,
  */
 static stf_status modecfg_send_set(struct state *st)
 {
-	pb_stream reply, rbody;
-	unsigned char buf[256];
-
 	/* set up reply */
-	init_out_pbs(&reply, buf, sizeof(buf), "ModecfgR1");
+	uint8_t buf[256];
+	struct pbs_out reply = open_pbs_out("ModecfgR1", buf, sizeof(buf), st->st_logger);
 
 	change_state(st, STATE_MODE_CFG_R1);
 	/* HDR out */
+	struct pbs_out rbody;
 	{
 		struct isakmp_hdr hdr = {
 			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
@@ -545,13 +544,11 @@ stf_status modecfg_start_set(struct state *st)
  */
 stf_status xauth_send_request(struct state *st)
 {
-	pb_stream reply;
-	pb_stream rbody;
-	unsigned char buf[256];
 	const enum state_kind p_state = st->st_state->kind;
 
 	/* set up reply */
-	init_out_pbs(&reply, buf, sizeof(buf), "xauth_buf");
+	uint8_t buf[256];
+	struct pbs_out reply = open_pbs_out("xauth_buf", buf, sizeof(buf), st->st_logger);
 
 	libreswan_log("XAUTH: Sending Username/Password request (%s->XAUTH_R0)",
 		      st->st_state->short_name);
@@ -561,6 +558,7 @@ stf_status xauth_send_request(struct state *st)
 	change_state(st, STATE_XAUTH_R0);
 
 	/* HDR out */
+	struct pbs_out rbody;
 	{
 		struct isakmp_hdr hdr = {
 			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
@@ -662,12 +660,9 @@ stf_status xauth_send_request(struct state *st)
  */
 stf_status modecfg_send_request(struct state *st)
 {
-	pb_stream reply;
-	pb_stream rbody;
-	unsigned char buf[256];
-
 	/* set up reply */
-	init_out_pbs(&reply, buf, sizeof(buf), "xauth_buf");
+	uint8_t buf[256];
+	struct pbs_out reply = open_pbs_out("xauth_buf", buf, sizeof(buf), st->st_logger);
 
 	libreswan_log("modecfg: Sending IP request (MODECFG_I1)");
 
@@ -676,6 +671,7 @@ stf_status modecfg_send_request(struct state *st)
 	change_state(st, STATE_MODE_CFG_I1);
 
 	/* HDR out */
+	struct pbs_out rbody;
 	{
 		struct isakmp_hdr hdr = {
 			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
@@ -766,17 +762,15 @@ stf_status modecfg_send_request(struct state *st)
 /* IN AN AUTH THREAD */
 static stf_status xauth_send_status(struct state *st, int status)
 {
-	pb_stream reply;
-	pb_stream rbody;
-	unsigned char buf[256];
-
 	/* set up reply */
-	init_out_pbs(&reply, buf, sizeof(buf), "xauth_buf");
+	uint8_t buf[256];
+	struct pbs_out reply = open_pbs_out("xauth_buf", buf, sizeof(buf), st->st_logger);
 
 	/* pick a new message id */
 	st->st_v1_msgid.phase15 = generate_msgid(st);
 
 	/* HDR out */
+	struct pbs_out rbody;
 	{
 		struct isakmp_hdr hdr = {
 			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
@@ -1395,10 +1389,10 @@ stf_status xauth_inR1(struct state *st, struct msg_digest *md UNUSED)
  */
 stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 {
-	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(md, TRUE,
-				    &reply_stream, reply_buffer, sizeof(reply_buffer),
-				    &rbody);
+	struct pbs_out rbody;
+	ikev1_init_pbs_out_from_md_hdr(md, TRUE,
+				       &reply_stream, reply_buffer, sizeof(reply_buffer),
+				       &rbody, st->st_logger);
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
@@ -1594,10 +1588,10 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
  */
 stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 {
-	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(md, TRUE,
-				    &reply_stream, reply_buffer, sizeof(reply_buffer),
-				    &rbody);
+	struct pbs_out rbody;
+	ikev1_init_pbs_out_from_md_hdr(md, TRUE,
+				       &reply_stream, reply_buffer, sizeof(reply_buffer),
+				       &rbody, st->st_logger);
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
@@ -2080,10 +2074,10 @@ static stf_status xauth_client_resp(struct state *st,
  */
 stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 {
-	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(md, TRUE,
-				    &reply_stream, reply_buffer, sizeof(reply_buffer),
-				    &rbody);
+	struct pbs_out rbody;
+	ikev1_init_pbs_out_from_md_hdr(md, TRUE,
+				       &reply_stream, reply_buffer, sizeof(reply_buffer),
+				       &rbody, st->st_logger);
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
@@ -2338,10 +2332,10 @@ static stf_status xauth_client_ackstatus(struct state *st,
  */
 stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 {
-	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(md, TRUE,
-				    &reply_stream, reply_buffer, sizeof(reply_buffer),
-				    &rbody);
+	struct pbs_out rbody;
+	ikev1_init_pbs_out_from_md_hdr(md, TRUE,
+				       &reply_stream, reply_buffer, sizeof(reply_buffer),
+				       &rbody, st->st_logger);
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;

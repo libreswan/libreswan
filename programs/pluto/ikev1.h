@@ -16,10 +16,10 @@ extern void init_ikev1(void);
 
 const struct dh_desc *ikev1_quick_pfs(const struct child_proposals proposals);
 
-void ikev1_init_out_pbs_echo_hdr(struct msg_digest *md, bool enc,
-				 pb_stream *output_stream, uint8_t *output_buffer,
-				 size_t sizeof_output_buffer,
-				 pb_stream *rbody);
+void ikev1_init_pbs_out_from_md_hdr(struct msg_digest *md, bool enc,
+				    struct pbs_out *output_stream,
+				    uint8_t *output_buffer, size_t sizeof_output_buffer,
+				    struct pbs_out *rbody, struct logger *logger);
 
 extern void complete_v1_state_transition(struct msg_digest *md,
 					 stf_status result);

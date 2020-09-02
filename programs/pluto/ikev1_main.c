@@ -137,8 +137,7 @@ void main_outI1(struct fd *whack_sock,
 	}
 
 	/* set up reply */
-	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		"reply packet");
+	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), st->st_logger);
 
 	/* HDR out */
 	pb_stream rbody;
@@ -695,9 +694,8 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 	 * We can't leave this to comm_handle() because we must
 	 * fill in the cookie.
 	 */
-	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		"reply packet");
-	pb_stream rbody;
+	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), st->st_logger);
+	struct pbs_out rbody;
 	{
 		struct isakmp_hdr hdr = md->hdr;
 
@@ -863,10 +861,10 @@ static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
 	 * We can't leave this to comm_handle() because the isa_np
 	 * depends on the type of Auth (eventually).
 	 */
-	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(md, FALSE,
-				    &reply_stream, reply_buffer, sizeof(reply_buffer),
-				    &rbody);
+	struct pbs_out rbody;
+	ikev1_init_pbs_out_from_md_hdr(md, FALSE,
+				       &reply_stream, reply_buffer, sizeof(reply_buffer),
+				       &rbody, st->st_logger);
 
 	/* KE out */
 	if (!ikev1_ship_KE(st, r, &st->st_gi, &rbody))
@@ -1021,10 +1019,10 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 		st->st_connection->spd.that.ca.ptr != NULL;
 
 	/* HDR out */
-	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(md, FALSE,
-				    &reply_stream, reply_buffer, sizeof(reply_buffer),
-				    &rbody);
+	struct pbs_out rbody;
+	ikev1_init_pbs_out_from_md_hdr(md, FALSE,
+				       &reply_stream, reply_buffer, sizeof(reply_buffer),
+				       &rbody, st->st_logger);
 
 	/* KE out */
 	passert(ikev1_ship_KE(st, r, &st->st_gr, &rbody));
@@ -1377,10 +1375,10 @@ static void main_inR2_outI3_continue(struct state *st,
 
 	passert(md != NULL);	/* ??? how would this fail? */
 
-	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(md, TRUE,
-				    &reply_stream, reply_buffer, sizeof(reply_buffer),
-				    &rbody);
+	struct pbs_out rbody;
+	ikev1_init_pbs_out_from_md_hdr(md, TRUE,
+				       &reply_stream, reply_buffer, sizeof(reply_buffer),
+				       &rbody, st->st_logger);
 	stf_status e = main_inR2_outI3_continue_tail(md, &rbody, r);
 	complete_v1_state_transition(md, e);
 }
@@ -1587,10 +1585,10 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	 * If auth were PKE_AUTH or RPKE_AUTH, ISAKMP_NEXT_HASH would
 	 * be first payload.
 	 */
-	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(md, TRUE,
-				    &reply_stream, reply_buffer, sizeof(reply_buffer),
-				    &rbody);
+	struct pbs_out rbody;
+	ikev1_init_pbs_out_from_md_hdr(md, TRUE,
+				       &reply_stream, reply_buffer, sizeof(reply_buffer),
+				       &rbody, st->st_logger);
 
 	enum next_payload_types_ikev1 auth_payload = st->st_oakley.auth == OAKLEY_PRESHARED_KEY ?
 		ISAKMP_NEXT_HASH : ISAKMP_NEXT_SIG;
@@ -1801,8 +1799,7 @@ stf_status send_isakmp_notification(struct state *st,
 
 	msgid = generate_msgid(st);
 
-	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		"ISAKMP notify");
+	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), st->st_logger);
 
 	/* HDR* */
 	{
@@ -1893,12 +1890,6 @@ static void send_notification(struct logger *logger,
 			      msgid_t msgid, u_char *icookie, u_char *rcookie,
 			      u_char protoid)
 {
-	/* buffer in which to marshal our notification.
-	 * We don't use reply_buffer/reply_stream because they might be in use.
-	 */
-	u_char buffer[1024];	/* ??? large enough for any notification? */
-	pb_stream pbs;
-
 	pb_stream r_hdr_pbs;
 	static monotime_t last_malformed = MONOTIME_EPOCH;
 	monotime_t n = mononow();
@@ -1973,7 +1964,8 @@ static void send_notification(struct logger *logger,
 			    str_endpoint(&sndst->st_remote_endpoint, &b));
 	}
 
-	init_out_pbs(&pbs, buffer, sizeof(buffer), "notification msg");
+	uint8_t buffer[1024];	/* ??? large enough for any notification? */
+	struct pbs_out pbs = open_pbs_out("notification msg", buffer, sizeof(buffer), logger);
 
 	/* HDR* */
 	{
@@ -2132,12 +2124,6 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
  */
 void send_v1_delete(struct state *st)
 {
-	/* buffer in which to marshal our deletion notification.
-	 * We don't use reply_buffer/reply_stream because they might be in use.
-	 */
-	u_char buffer[8192];	/* ??? large enough for any deletion notification? */
-	pb_stream reply_pbs;
-
 	pb_stream r_hdr_pbs;
 	msgid_t msgid;
 	struct state *p1st;
@@ -2175,7 +2161,8 @@ void send_v1_delete(struct state *st)
 
 	msgid = generate_msgid(p1st);
 
-	init_out_pbs(&reply_pbs, buffer, sizeof(buffer), "delete msg");
+	uint8_t buffer[8192];	/* ??? large enough for any deletion notification? */
+	struct pbs_out reply_pbs = open_pbs_out("delete msg", buffer, sizeof(buffer), st->st_logger);
 
 	/* HDR* */
 	{
