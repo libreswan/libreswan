@@ -802,9 +802,9 @@ static bool whack_handle(struct fd *whackfd, struct logger *whack_logger)
 	 */
 	struct whack_message msg = { .magic = 0, };
 
-	ssize_t n = fd_read(whackfd, &msg, sizeof(msg), HERE);
+	ssize_t n = fd_read(whackfd, &msg, sizeof(msg));
 	if (n <= 0) {
-		LOG_ERRNO(errno, "read() failed in whack_handle()");
+		LOG_ERRNO(-(int)n, "read() failed in whack_handle()");
 		return false; /* don't shutdown */
 	}
 

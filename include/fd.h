@@ -50,10 +50,9 @@ void close_any_fd(struct fd **fd, where_t where);
 
 void fd_leak(struct fd **fd, where_t where);
 
-ssize_t fd_sendmsg(const struct fd *fd, const struct msghdr *msg,
-		   int flags, where_t where, struct logger *logger);
-ssize_t fd_read(const struct fd *fd, void *buf, size_t nbytes,
-		where_t where);
+/* return nr-bytes, or -ERRNO */
+ssize_t fd_sendmsg(const struct fd *fd, const struct msghdr *msg, int flags);
+ssize_t fd_read(const struct fd *fd, void *buf, size_t nbytes);
 
 /*
  * Is FD valid (as in something non-negative)?

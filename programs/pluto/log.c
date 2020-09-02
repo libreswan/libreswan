@@ -43,6 +43,8 @@
 #include "demux.h"	/* for struct msg_digest */
 #include "pending.h"
 
+static void log_raw(int severity, const char *prefix, struct jambuf *buf);
+
 struct logger failsafe_logger = {
 	.where = { .basename = "<global>", .func = "<global>", },
 	.object = NULL,
@@ -393,10 +395,14 @@ void jambuf_to_whack(struct jambuf *buf, const struct fd *whackfd, enum rc_type 
 	};
 
 	/* write to whack socket, but suppress possible SIGPIPE */
-	struct logger global_logger = GLOBAL_LOGGER(null_fd); /*not-whack*/
-	if (fd_sendmsg(whackfd, &msg, MSG_NOSIGNAL, HERE, &global_logger) < 0) {
-		struct realtm t = local_realtime(realnow());
-		stdlog_raw("whack: ", "write to whack socket failed", &t);
+	ssize_t s = fd_sendmsg(whackfd, &msg, MSG_NOSIGNAL);
+	if (s < 0) {
+		/* probably the other end hit cntrl-c */
+		JAMBUF(buf) {
+			jam(buf, "whack error: "PRI_ERRNO, pri_errno(-(int)s));
+			/* not whack */
+			log_raw(LOG_WARNING, "", buf);
+		}
 	}
 }
 
@@ -423,10 +429,10 @@ bool whack_prompt_for(struct state *st, const char *prompt,
 				echo ? RC_USERPROMPT : RC_ENTERSECRET);
 	}
 
-	ssize_t n = fd_read(st->st_whack_sock, ansbuf, ansbuf_len, HERE);
-	if (n == -1) {
-		log_state(RC_LOG_SERIOUS, st, "read(whackfd) failed: %s",
-			  strerror(errno));
+	ssize_t n = fd_read(st->st_whack_sock, ansbuf, ansbuf_len);
+	if (n < 0) {
+		log_state(RC_LOG_SERIOUS, st, "read(whackfd) failed: "PRI_ERRNO,
+			  pri_errno(-(int)n));
 		return false;
 	}
 
