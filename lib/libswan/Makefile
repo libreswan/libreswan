@@ -55,6 +55,7 @@ OBJS += constants.o \
 	lswnss.o \
 	alg_byname.o
 
+OBJS += diag.o
 OBJS += passert.o
 OBJS += pexpect.o
 OBJS += nss_cert_load.o
