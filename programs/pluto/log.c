@@ -472,14 +472,23 @@ void jam_cur_prefix(struct jambuf *buf)
 		return;
 	}
 
-	struct logger logger = cur_logger();
-	if (DBGP(DBG_BASE)) {
-		if (logger.object_vec == &logger_connection_vec) {
-			jam(buf, "LOGGING EXPECATATION FAILED: using cur_%s: ",
-			    logger.object_vec->name);
-		}
+	if (cur_state != NULL) {
+		struct logger logger = *(cur_state->st_logger);
+		logger.global_whackfd = whack_log_fd;
+		jam_logger_prefix(buf, &logger);
+		return;
 	}
-	jam_logger_prefix(buf, &logger);
+
+	if (cur_connection != NULL) {
+		struct logger logger = CONNECTION_LOGGER(cur_connection, whack_log_fd);
+		if (DBGP(DBG_BASE)) {
+			jam(buf, "[EXPECATATION FAILED: using cur_connection]: ");
+		}
+		jam_logger_prefix(buf, &logger);
+		return;
+	}
+
+	return;
 }
 
 static void log_raw(int severity, const char *prefix, struct jambuf *buf)
