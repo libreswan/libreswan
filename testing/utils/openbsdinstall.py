@@ -32,31 +32,33 @@ try:
     child = pexpect.spawnu(str(sys.argv[2]),encoding='utf-8')
     child.expect('boot>')
 except:
-    print("==> Error Conecting to the Shell <==")
+    print("==> Error Creating the OpenBSD-base machine <==")
     print(child.before)
     print('==> Exiting the program...!')
     sys.exit(0)
 child.logfile = sys.stdout
-#sleep for 10 seconds approx so that all those initial boot log loads - Optional
+#sleep for 10 seconds so that all those initial boot log loads
 time.sleep(10)
 #REGx for Installation prompt
 #To enter Shell mode
 es(child,'.*hell?','S')
-#Mounting of drive where install.conf file is present
+#Mounting of drive where install.conf file is located
 es(child,'# ','mount /dev/cd0c /mnt')
 #Copying of install.conf file
 es(child,'# ','cp /mnt/install.conf /')
+#Copying of rc.firsttime file
 es(child,'#','cp /mnt/rc.firsttime /')
+#Unmounting the drive
 es(child,'# ','umount /mnt')
-#Installing by taking deafult params from install.conf file
+#Installing by taking answers from install.conf file
 es(child,'# ','install -af /install.conf')
-#This is to check if all the installation files got copied(because it's slow on some systems)
+#This is to check if all the installation files got copied(it's slow on some systems)
 while(child.expect([".*install has been successfully completed!", pexpect.EOF, pexpect.TIMEOUT],timeout=10)!=0):
         continue
-#To copy rc.girsttime file in the right directory
+#Copy rc.firsttime file to the right directory
 es(child,'.*bsd-base# ','mv rc.firsttime /mnt/etc/',100)
-#to enable iked
-es(child,'.*bsd-base# ','echo "iked_flags=YES" >> /mnt/etc/rc.conf.local')
+#Start iked daemon by default on boot
+es(child,'.*bsd-base# ','echo \'iked_flags=\"\"\' >> /mnt/etc/rc.conf.local')
 print('====> Shutting Down Base Domain <====')
 #To shutdown the base domain
 es(child,'.*bsd-base# ','halt -p\n')

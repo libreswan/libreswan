@@ -56,7 +56,7 @@ def host_script_tuples(directory):
     # init scripts: nic, east or openbsde, then rest
     init_scripts = []
     _add_script(init_scripts, scripts, "nicinit.sh", ["nic"])
-    _add_script(init_scripts, scripts, "%ssinit.sh"%east_variant, [east_variant])
+    _add_script(init_scripts, scripts, "%sinit.sh"%east_variant, [east_variant])
     for host_name in sorted(host_names):
         _add_script(init_scripts, scripts, host_name + "init.sh", [host_name])
 

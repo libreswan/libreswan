@@ -48,6 +48,10 @@ You can load this machine definition into libvirt using:
       <source network='192_0_2'/>
       <model type='virtio'/>
     </interface>
+    <interface type='network'>
+      <source network='swandefault'/>
+      <model type='virtio'/>
+    </interface>
     <serial type='pty'>
       <target type='isa-serial' port='0'>
         <model name='isa-serial'/>
