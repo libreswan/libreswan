@@ -12,6 +12,7 @@ v4.0 (unreleased)
 * pluto: Fix leased IP address leak [Andrew/Paul]
 * pluto: Fix displaying PLUTO_BYTES_ counters [Paul]
 * pluto: Replace/remove deprecated libselinux functions [Eduardo Barretto]
+* pluto: Update selinux calls for Labeled IPsec support [Richard Haines]
 * seccomp: Update syscall allowlist for pluto and addconn [Paul]
 * whack: Support for ipsec whack --rereadcerts [Paul]
 * show: Fixup for python3 version of ipaddress module [Paul]
@@ -25,6 +26,7 @@ v4.0 (unreleased)
 * IKEv2: A delete(IKE SA) request should not trigger a delete request [Andrew]
 * IKEv2: Ignore, not abort when receiving unknown type transforms [Andrew]
 * IKEv2: Don't switch NAT port on receiving non-NAT notify payloads [Andrew]
+* libipsecconf: Fix config handling of policy-label [bauen1]
 * building: Add NetBSD support [Andrew]
 * building: Remove support for SINGLE_CONF_DIR, EMIT_ISAKMP_SPI, [Paul]
             USE_KEYRR and TEST_INDECENT_PROPOSAL
@@ -35,6 +37,7 @@ v4.0 (unreleased)
 * building: The define USE_NSS_PRF was renamed to USE_NSS_KDF [Tuomo]
 * building: Rename master branch to main branch [Paul]
 * building: Fix finding ipsec command in non-standard bin dirs [Tuomo]
+* building: Introduce USE_OLD_SELINUX to support libselinux < 2.1.9 [Paul]
 * packaging: Debian: remove runtime dependency on systemd [Stephen Kitt]
 * packaging: Debian switched to using /usr/libexec/ [dkg]
 * testing: Support Fedora32, Ubuntu, improved namespaces support [Paul/Others]
