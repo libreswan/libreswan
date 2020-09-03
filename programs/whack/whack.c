@@ -110,7 +110,7 @@ static void help(void)
 		"	[--mtu <mtu>] \\\n"
 		"	[--priority <prio>] [--reqid <reqid>] \\\n"
 		"	[--tfc <size>] [--send-no-esp-tfc] \\\n"
-		"	[--ikev1-allow | --ikev2-allow] \\\n"
+		"	[--ikev1 | --ikev2] \\\n"
 		"	[--allow-narrowing] \\\n"
 		"	[--ikefrag-allow | --ikefrag-force] [--no-ikepad] \\\n"
 		"	[--esn ] [--no-esn] [--decap-dscp] [--nopmtudisc] [--mobike] \\\n"
@@ -774,9 +774,11 @@ static const struct option long_opts[] = {
 	{ "rsa-sha2_512", no_argument, NULL, ALGO_RSA_SHA2_512 + OO },
 
 
-	PS("ikev1-allow", IKEV1_ALLOW),
-	PS("ikev2-allow", IKEV2_ALLOW),
-	PS("ikev2-propose", IKEV2_ALLOW), /* map onto allow */
+	PS("ikev1", IKEV1_ALLOW),
+	PS("ikev1-allow", IKEV1_ALLOW), /* obsolete name */
+	PS("ikev2", IKEV2_ALLOW),
+	PS("ikev2-allow", IKEV2_ALLOW), /* obsolete name */
+	PS("ikev2-propose", IKEV2_ALLOW), /* obsolete, map onto allow */
 
 	PS("allow-narrowing", IKEV2_ALLOW_NARROWING),
 #ifdef XAUTH_HAVE_PAM
@@ -1705,9 +1707,9 @@ int main(int argc, char **argv)
 		/* --overlapip */
 		case CDP_SINGLETON + POLICY_OVERLAPIP_IX:
 
-		/* --ikev1-allow */
+		/* --ikev1 */
 		case CDP_SINGLETON + POLICY_IKEV1_ALLOW_IX:
-		/* --ikev2-allow (now also --ikev2-propose) */
+		/* --ikev2 (now also --ikev2-propose) */
 		case CDP_SINGLETON + POLICY_IKEV2_ALLOW_IX:
 
 		/* --allow-narrowing */
@@ -2345,7 +2347,7 @@ int main(int argc, char **argv)
 
 	if (msg.policy & POLICY_IKEV2_ALLOW) {
 		if (msg.policy & POLICY_IKEV1_ALLOW) {
-			diag("connection can no longer have --ikev1-allow and --ikev2-allow");
+			diag("connection can no longer have --ikev1 and --ikev2");
 		}
 	} else if (!(msg.policy & POLICY_IKEV1_ALLOW)) {
 		/* no ike version specified, default to IKEv2 */
@@ -2354,7 +2356,7 @@ int main(int argc, char **argv)
 
 	if (msg.policy & POLICY_IKEV1_ALLOW) {
 		if (msg.policy & POLICY_ECDSA)
-			diag("connection cannot specify --ecdsa and --ikev1-allow");
+			diag("connection cannot specify --ecdsa and --ikev1");
 		/* delete any inherited sighash_poliyc from --rsasig including sha2 */
 		msg.sighash_policy = LEMPTY;
 	} else {
