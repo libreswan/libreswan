@@ -9,7 +9,7 @@ east #
 002 added IKEv2 connection "west-east"
 east #
  ipsec auto --add pass-222
-002 added IKEv2 connection "pass-222"
+002 added passthrough connection "pass-222"
 east #
  ipsec auto --route pass-222
 east #

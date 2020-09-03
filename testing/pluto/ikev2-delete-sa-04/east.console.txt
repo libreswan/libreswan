@@ -17,7 +17,7 @@ east #
  # only on east, pluto should be attempting to connect to west because it has auto=start
 east #
  ipsec status |grep STATE_
-000 #4: "west-east-auto":500 STATE_PARENT_I1 (sent v2I1, expected v2R1); EVENT_RETRANSMIT in XXs; idle;
+000 #4: "west-east-auto":500 STATE_PARENT_I1 (sent IKE_SA_INIT request); EVENT_RETRANSMIT in XXs; idle;
 east #
  # confirm the revive conn code triggered
 east #

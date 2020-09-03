@@ -120,7 +120,6 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev1": terminating SAs using this connection
 002 "westnet-eastnet-ipv4-psk-ikev1" #6: deleting state (STATE_QUICK_I2) and NOT sending notification
 005 "westnet-eastnet-ipv4-psk-ikev1" #6: ESP traffic information: in=0B out=0B XAUTHuser=use3
-002 "westnet-eastnet-ipv4-psk-ikev1" #5: deleting state (STATE_MAIN_I4) and NOT sending notification
 002 added IKEv1 connection "westnet-eastnet-ipv4-psk-ikev1"
 road #
  ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --initiate --name westnet-eastnet-ipv4-psk-ikev1
@@ -164,7 +163,7 @@ road #
 done
 road #
  ipsec status | grep STATE_
-000 #8: "westnet-eastnet-ipv4-psk-ikev1":4500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#7; idle;
+000 #8: "westnet-eastnet-ipv4-psk-ikev1":4500 STATE_QUICK_I2 (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#7; idle;
 road #
  ip xfrm policy
 src 192.0.2.1/32 dst 192.1.2.23/32 

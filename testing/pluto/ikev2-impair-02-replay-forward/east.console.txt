@@ -76,7 +76,7 @@ IMPAIR: start processing replay forward: packet 4 of 4 (69 bytes)
 "westnet-eastnet" #1: received Delete SA payload: delete IPsec State #2 now
 "westnet-eastnet" #2: deleting other state #2 (STATE_V2_ESTABLISHED_CHILD_SA) and NOT sending notification
 "westnet-eastnet" #2: ESP traffic information: in=336B out=336B
-"westnet-eastnet" #1: STATE_V2_ESTABLISHED_IKE_SA: established IKE SA
+"westnet-eastnet" #1: established IKE SA
 IMPAIR: stop processing replay forward: packet 4 of 4
 IMPAIR: start processing replay forward: packet 1 of 5 (842 bytes)
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message

@@ -9,7 +9,7 @@ west #
 002 added IKEv2 connection "west-east"
 west #
  ipsec auto --add pass-222
-002 added IKEv2 connection "pass-222"
+002 added passthrough connection "pass-222"
 west #
  echo "initdone"
 initdone

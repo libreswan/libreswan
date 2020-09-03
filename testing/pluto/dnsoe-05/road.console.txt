@@ -34,6 +34,8 @@ road #
  ipsec whack --oppohere 192.1.3.209 --oppothere 192.1.2.66
 002 initiate on demand from 192.1.3.209:0 to 192.1.2.66:0 proto=0 because: whack
 1v2 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.66 #1: initiating IKEv2 connection
+003 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.66 #2: an RSA Sig check failed '3NSS error: Not able to decrypt' with *AQDDDDDDD [preloaded keys]
+003 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.66 #2: an RSA Sig check failed '3NSS error: Not able to decrypt' with *AQCCCCCCC [preloaded keys]
 003 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.66 #1: authenticated using RSA with SHA2_512
 002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.66 #2: negotiated connection [192.1.3.209-192.1.3.209:0-65535 0] -> [192.1.2.66-192.1.2.66:0-65535 0]
 road #

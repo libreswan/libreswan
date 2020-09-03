@@ -51,12 +51,12 @@ west #
  # The whack should release the socket on receiving NO_PROPOSAL_CHOSEN
 west #
  ipsec auto --up westnet-eastnet-ikev2b
-1v2 "westnet-eastnet-ikev2b" #3: sent IPsec Child req wait response
+1v2 "westnet-eastnet-ikev2b" #3: sent CREATE_CHILD_SA request for new IPsec SA
 003 "westnet-eastnet-ikev2b" #3: dropping unexpected CREATE_CHILD_SA message containing TS_UNACCEPTABLE notification; message payloads: SK; encrypted payloads: N; missing payloads: SA,Ni,TSi,TSr
 036 "westnet-eastnet-ikev2b" #3: encountered fatal error in state STATE_V2_NEW_CHILD_I1
 west #
  ipsec auto --up westnet-eastnet-ikev2c
-1v2 "westnet-eastnet-ikev2c" #4: sent IPsec Child req wait response
+1v2 "westnet-eastnet-ikev2c" #4: sent CREATE_CHILD_SA request for new IPsec SA
 003 "westnet-eastnet-ikev2c" #4: dropping unexpected CREATE_CHILD_SA message containing TS_UNACCEPTABLE notification; message payloads: SK; encrypted payloads: N; missing payloads: SA,Ni,TSi,TSr
 036 "westnet-eastnet-ikev2c" #4: encountered fatal error in state STATE_V2_NEW_CHILD_I1
 west #
@@ -88,7 +88,7 @@ west #
 000 "westnet-eastnet-ikev2b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-ikev2b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-ikev2b":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet-ikev2b":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "westnet-eastnet-ikev2b":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $2;
 000 "westnet-eastnet-ikev2c": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.201.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-ikev2c":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-ikev2c":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -104,7 +104,7 @@ west #
 000 "westnet-eastnet-ikev2c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-ikev2c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-ikev2c":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet-ikev2c":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "westnet-eastnet-ikev2c":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $3;
 west #
  echo done
 done

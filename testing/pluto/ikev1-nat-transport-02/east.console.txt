@@ -5,14 +5,8 @@ Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec auto --add north-east-port3
-002 added IKEv1 connection "north-east-port3"
-east #
- nc -4 -l 192.1.2.23 2 &
-[B] PID
-east #
- nc -4 -l 192.1.2.23 3 &
-[B] PID
+ ipsec auto --add north-east-222
+002 added IKEv1 connection "north-east-222"
 east #
  echo "initdone"
 initdone

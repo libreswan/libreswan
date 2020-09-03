@@ -129,7 +129,7 @@ road #
 000 "westnet-eastnet-ipv4-psk-ikev2"[1]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-ipv4-psk-ikev2"[1]:   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 000 "westnet-eastnet-ipv4-psk-ikev2"[1]:   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet-ipv4-psk-ikev2"[1]:   newest ISAKMP SA: #1; newest IPsec SA: #2;
+000 "westnet-eastnet-ipv4-psk-ikev2"[1]:   newest ISAKMP SA: #1; newest IPsec SA: #2; conn serial: $2, instantiated from: $1;
 000 "westnet-eastnet-ipv4-psk-ikev2"[1]:   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048
 000 "westnet-eastnet-ipv4-psk-ikev2"[1]:   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
 000 #1: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23:4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
