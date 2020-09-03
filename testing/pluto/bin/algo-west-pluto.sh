@@ -31,7 +31,7 @@ for alg in ${algs} ; do
     echo +
 
     ( set -x ; ipsec whack --name ${name} \
-		     --${version}-allow \
+		     --${version} \
 		     --psk \
 		     --esp ${alg} \
 		     --${proto} \
