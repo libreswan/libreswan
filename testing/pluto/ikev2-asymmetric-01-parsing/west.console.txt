@@ -12,13 +12,13 @@ west #
 west #
  # whack testing
 west #
- ipsec whack --name testmanual1 --encrypt --ikev2-allow --ipv4 --host 1.2.3.4 --authby=psk --to --host 2.3.4.5 --authby=rsasig
+ ipsec whack --name testmanual1 --encrypt --ikev2 --ipv4 --host 1.2.3.4 --authby=psk --to --host 2.3.4.5 --authby=rsasig
 002 added IKEv2 connection "testmanual1"
 west #
- ipsec whack --name testmanual2 --encrypt --ikev2-allow --ipv4 --host 1.2.3.5 --authby=null --to --host 2.3.4.6 --authby=rsasig
+ ipsec whack --name testmanual2 --encrypt --ikev2 --ipv4 --host 1.2.3.5 --authby=null --to --host 2.3.4.6 --authby=rsasig
 002 added IKEv2 connection "testmanual2"
 west #
- ipsec whack --name testmanual3 --psk --encrypt --ikev2-allow --ipv4 --host 1.2.3.6 --authby=psk --to --host 2.3.4.7 --authby=psk
+ ipsec whack --name testmanual3 --psk --encrypt --ikev2 --ipv4 --host 1.2.3.6 --authby=psk --to --host 2.3.4.7 --authby=psk
 002 added IKEv2 connection "testmanual3"
 west #
  # parser testing
@@ -124,10 +124,10 @@ all remaining tests should fail
 west #
  # whack testing
 west #
- ipsec whack --name failtestmanual1 --ikev2-allow --ipv4 --host 1.2.3.5 --authby=null --to --host 2.3.4.6 --authby=rsasig
+ ipsec whack --name failtestmanual1 --ikev2 --ipv4 --host 1.2.3.5 --authby=null --to --host 2.3.4.6 --authby=rsasig
 036 failed to add connection "failtestmanual1": non-shunt connection must have AH or ESP
 west #
- ipsec whack --name failtestmanual2 --ikev1-allow --encrypt --ipv4 --host 1.2.3.5 --authby=null --to --host 2.3.4.6 --authby=rsasig
+ ipsec whack --name failtestmanual2 --ikev1 --encrypt --ipv4 --host 1.2.3.5 --authby=null --to --host 2.3.4.6 --authby=rsasig
 036 failed to add connection "failtestmanual2": leftauth= and rightauth= require ikev2
 west #
  # parser testing

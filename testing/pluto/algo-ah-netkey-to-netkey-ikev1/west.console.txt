@@ -18,7 +18,7 @@ testing sha1
 +
 + authenticate-ikev1-sha1
 +
-+ ipsec whack --name authenticate-ikev1-sha1 --ikev1-allow --psk --esp sha1 --authenticate --pfs --no-esn --id @west --host 192.1.2.45 --nexthop 192.1.2.23 --client 192.0.1.0/24 --to --id @east --host 192.1.2.23 --nexthop=192.1.2.45 --client 192.0.2.0/24
++ ipsec whack --name authenticate-ikev1-sha1 --ikev1 --psk --esp sha1 --authenticate --pfs --no-esn --id @west --host 192.1.2.45 --nexthop 192.1.2.23 --client 192.0.1.0/24 --to --id @east --host 192.1.2.23 --nexthop=192.1.2.45 --client 192.0.2.0/24
 002 added IKEv1 connection "authenticate-ikev1-sha1"
 +
 002 "authenticate-ikev1-sha1" #1: initiating IKEv1 Main Mode connection
