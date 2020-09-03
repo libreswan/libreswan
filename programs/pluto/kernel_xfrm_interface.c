@@ -84,21 +84,19 @@ static int xfrm_interface_support = 0;
 static bool stale_checked;
 static uint32_t xfrm_interface_id = IPSEC1_XFRM_IF_ID; /* XFRMA_IF_ID && XFRMA_SET_MARK */
 
-/*
- * return value indicates failure mode, if any:
- * - send query failed or recvfrom failed (excluding EAGAIN)
- *	return: errno
- * - recvfrom got an error packet nlm_rsp->n.nlmsg_type == NLMSG_ERROR
- *	return: nl_rsp.u.e.error (some kind of negative errno eg.  -ENOPROTOOPT)
- * - anything else (OK): 0
- */
-static int nl_query_small_resp(const struct nlmsghdr *req, struct logger *logger)
+/* ??? true means failure! */
+static bool nl_query_small_resp(const struct nlmsghdr *req,
+			       const char *context,
+			       const char *if_name,
+			       struct logger *logger)
 {
 	int nl_fd = nl_send_query(req, NETLINK_ROUTE, logger);
-	if (nl_fd < 0)
-		return errno;
+	if (nl_fd < 0) {
+		/* errno already logged (without context, unfortunately) */
+		return true;
+	}
 
-	int ret = 0;	/* default to OK */
+	bool unhappy = false;
 	struct sockaddr_nl addr;
 	socklen_t alen = sizeof(addr);
 	struct nlm_resp rsp;
@@ -107,31 +105,31 @@ static int nl_query_small_resp(const struct nlmsghdr *req, struct logger *logger
 
 	if (r < 0) {
 		if (errno == EAGAIN) {
-			/* this seems to be benign.  Possibly no return is expected */
-			dbg("xfrmi go EAGAIN Resource Currently not available ignore?? %s", __func__);
-			/* ret == 0: happy, happy */
+			/* ??? this treatment looks suspect */
+			dbg("xfrmi got EAGAIN (Resource Currently not available); ignore?? nl_query_small_resp() for %s() dev %s",
+				context, if_name);
+			/* pretend all is well */
 		} else {
-			ret = errno;
-			passert(ret > 0);
-			LOG_ERRNO(ret, "in nl_query_small_resp() reading");
+			LOG_ERRNO(errno, "in nl_query_small_resp() for %s() dev %s", context, if_name);
+			passert(errno > 0);
+			unhappy = true;
 		}
-	} else if (r == 0) {
-		/* nothing happened.  Probably benign. */
-		/* ret == 0: happy, happy */
 	} else if (r < (ssize_t)sizeof(struct nlmsghdr)) {
-		/* a runt packet. Odd. ??? Pretend it didn't happen */
-		/* ret == 0: happy, happy */
+		/* ??? this treatment looks suspect */
+		/* a runt packet. Odd. */
+		/* pretend all is well */
 	} else if (rsp.n.nlmsg_type == NLMSG_ERROR) {
-		/* the packet an error packet */
-		ret = rsp.u.e.error;	/* negative errno? */
-		passert(ret < 0);
+		/* The packet is an error packet: rsp.u.e.error is a negative errno value */
+		passert(rsp.u.e.error < 0);
+		LOG_ERRNO(-rsp.u.e.error, "NLMSG_ERROR in nl_query_small_resp() for %s() dev %s", context, if_name);
+		unhappy = true;
 	} else {
-		/* an ordinary messge: ignore! ??? Why can we ignore this? */
-		/* ret == 0: happy, happy */
+		/* ??? this treatment looks suspect */
+		/* an ordinary message: ignore! */
 	}
 
 	close(nl_fd);
-	return ret;
+	return unhappy;
 }
 
 static struct nl_ifinfomsg_req init_nl_ifi(uint16_t type, uint16_t flags)
@@ -153,13 +151,13 @@ static bool link_add_nl_msg(const char *if_name /*non-NULL*/,
 			    const uint32_t if_id,
 			    struct nl_ifinfomsg_req *req)
 {
-	static const char link_type[] = "xfrm";
 	*req = init_nl_ifi(RTM_NEWLINK, NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL);
 
 	nl_addattrstrz(&req->n, req->maxlen, IFLA_IFNAME, if_name);
 
-	struct rtattr *linkinfo;
-	linkinfo = nl_addattr_nest(&req->n, req->maxlen, IFLA_LINKINFO);
+	struct rtattr *linkinfo = nl_addattr_nest(&req->n, req->maxlen, IFLA_LINKINFO);
+
+	static const char link_type[] = "xfrm";
 	nl_addattr_l(&req->n, req->maxlen, IFLA_INFO_KIND, link_type,
 		     strlen(link_type));
 
@@ -172,8 +170,8 @@ static bool link_add_nl_msg(const char *if_name /*non-NULL*/,
 	nl_addattr32(&req->n, sizeof(req->data), IFLA_XFRM_IF_ID, if_id);
 
 	if (dev_name != NULL) {
-		uint32_t dev_link_id; /* e.g link id of the interface, eth0 */
-		dev_link_id = if_nametoindex(dev_name);
+		/* e.g link id of the interface, eth0 */
+		uint32_t dev_link_id = if_nametoindex(dev_name);
 		if (dev_link_id == 0) {
 			LOG_ERRNO(errno, "Cannot find interface index for device %s",
 					dev_name);
@@ -203,23 +201,7 @@ static bool ip_link_set_up(const char *if_name, struct logger *logger)
 		return true;
 	}
 
-	int r = nl_query_small_resp(&req.n, logger);
-	if (r > 0) {
-		log_message(RC_FATAL, logger,
-			"ERROR %d: ip_link_set_up() netlink query dev %s",
-			r, if_name);
-		return true;
-	}
-
-	/* netlink query succeeded. check NL response */
-	if (r < 0) {
-		log_message(RC_INFORMATIONAL, logger,
-			"deleting interface %s failed %d",
-			if_name, r);
-		return true;
-	}
-
-	return false;
+	return nl_query_small_resp(&req.n, "ip_link_set_up", if_name, logger);
 }
 
 /* ??? true means failure! */
@@ -233,23 +215,7 @@ static bool ip_link_del(const char *if_name, struct logger *logger)
 		return true;
 	}
 
-	int r = nl_query_small_resp(&req.n, logger);
-	if (r > 0) {
-		log_message(RC_FATAL, logger,
-			    "ERROR: ip_link_del() deleting xfrmi interface %s failed %d",
-			    if_name, r);
-		return true;
-	}
-
-	/* netlink query succeeded. Lets check NL response */
-	if (r < 0) {
-		log_message(RC_INFORMATIONAL, logger,
-			    "WARNING: ip_link_del() deleting interface %s failed %d",
-			    if_name, r);
-		return true;
-	}
-
-	return false;
+	return nl_query_small_resp(&req.n, "ip_link_del", if_name, logger);
 }
 
 /* ??? true means failure! */
@@ -267,29 +233,7 @@ static bool ip_link_add_xfrmi(const char *if_name /*non-NULL*/,
 		return true;
 	}
 
-	int r = nl_query_small_resp(&req.n, logger);
-	if (r > 0) {
-		log_message(RC_FATAL, logger,
-			    "ERROR: nl_query_small_resp() netlink query failed %d",
-			    r);
-		return true;
-	}
-
-	/* netlink query succeeded. Check NL response. */
-
-	if (r < 0) {
-		if (r == -ENOPROTOOPT) {
-			log_message(RC_FATAL, logger,
-				    "CONFIG_XFRM_INTERFACE fail got ENOPROTOOPT");
-		} else {
-			log_message(RC_FATAL, logger,
-				    "CONFIG_XFRM_INTERFACE fail got %d",
-				    r);
-		}
-		return true;
-	}
-
-	return false;
+	return nl_query_small_resp(&req.n, "ip_kink_add_xfrmi", if_name, logger);
 }
 
 /* ??? true means failure! */
