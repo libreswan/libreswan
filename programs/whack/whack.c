@@ -2355,8 +2355,8 @@ int main(int argc, char **argv)
 	if (msg.policy & POLICY_IKEV1_ALLOW) {
 		if (msg.policy & POLICY_ECDSA)
 			diag("connection cannot specify --ecdsa and --ikev1-allow");
-		if (msg.sighash_policy != LEMPTY)
-			diag("connection cannot specify --ikev1-allow and --ecdsa-sha2 or --rsa-sha2");
+		/* delete any inherited sighash_poliyc from --rsasig including sha2 */
+		msg.sighash_policy = LEMPTY;
 	} else {
 		if (msg.policy & POLICY_AGGRESSIVE)
 			diag("connection cannot specify --ikev2 and --aggressive");
