@@ -21,6 +21,7 @@ static inline cert_t backup_cert(struct end *dst)
 /* Reread a certificate from the NSS database */
 static bool nss_reread_cert(struct fd *whackfd, struct end *dst, const char *connstr)
 {
+	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
 	const char *nickname;
 	enum whack_pubkey_type pubkey_type;
 
@@ -32,9 +33,11 @@ static bool nss_reread_cert(struct fd *whackfd, struct end *dst, const char *con
 	}
 
 	pubkey_type = WHACK_PUBKEY_CERTIFICATE_NICKNAME;
-	if (!load_end_cert_and_preload_secret(whackfd, nickname, pubkey_type, dst)) {
-		log_global(RC_BADID, whackfd, "connection '%s' rereading certificate failed for nickname '%s'",
-				connstr, nickname);
+	diag_t diag = load_end_cert_and_preload_secret(nickname, pubkey_type, dst, logger);
+	if (diag != NULL) {
+		log_diag(RC_BADID, logger, &diag,
+			 "connection '%s' rereading certificate failed for nickname '%s': ",
+			 connstr, nickname);
 		return false;
 	}
 

@@ -731,8 +731,7 @@ static void unshare_connection(struct connection *c)
 		reference_xfrmi(c);
 }
 
-static int extract_end(struct fd *whackfd,
-		       const char *connection_name,
+static int extract_end(const char *connection_name,
 		       struct end *dst,
 		       const struct whack_end *src,
 		       const char *leftright,
@@ -788,8 +787,10 @@ static int extract_end(struct fd *whackfd,
 		}
 	}
 
-	if (!load_end_cert_and_preload_secret(whackfd, src->pubkey,
-					      src->pubkey_type, dst)) {
+	diag_t diag = load_end_cert_and_preload_secret(src->pubkey, src->pubkey_type, dst, logger);
+	if (diag != NULL) {
+		log_diag(RC_FATAL, logger, &diag, "failed to add connection \"%s\": ",
+			 connection_name);
 		return -1;
 	}
 
@@ -952,11 +953,11 @@ static bool check_connection_end(const struct whack_end *this,
 	return TRUE; /* happy */
 }
 
-bool load_end_cert_and_preload_secret(struct fd *whackfd, const char *pubkey,
-				      enum whack_pubkey_type pubkey_type,
-				      struct end *dst_end)
+diag_t load_end_cert_and_preload_secret(const char *pubkey,
+					enum whack_pubkey_type pubkey_type,
+					struct end *dst_end,
+					struct logger *logger)
 {
-	struct logger logger[] = { GLOBAL_LOGGER(whackfd), };
 	dst_end->cert.ty = CERT_NONE;
 	dst_end->cert.u.nss_cert = NULL;
 
@@ -968,10 +969,8 @@ bool load_end_cert_and_preload_secret(struct fd *whackfd, const char *pubkey,
 		cert_source = "nickname";
 		cert = get_cert_by_nickname_from_nss(pubkey, logger);
 		if (cert == NULL) {
-			log_message(RC_LOG_SERIOUS, logger,
-				    "failed to find certificate named '%s' in the NSS database",
-				    pubkey);
-			return false;
+			return diag("%s certificate '%s' not found in the NSS database",
+				    dst_end->leftright, pubkey);
 		}
 		break;
 	}
@@ -989,32 +988,31 @@ bool load_end_cert_and_preload_secret(struct fd *whackfd, const char *pubkey,
 			 * so that a search will re-find it.
 			 */
 			dst_end->id = key->id;
-			return true;
+			return NULL;
 		}
 		ckaid_t ckaid;
 		err_t err = string_to_ckaid(pubkey, &ckaid);
 		if (err != NULL) {
 			/* should have been rejected by whack? */
-			log_message(RC_LOG, logger, "invalid hex CKAID '%s': %s", pubkey, err);
-			return false;
+			/* XXX: don't trust whack */
+			return diag("%s certificate CKAID '%s' invalid: %s",
+				    dst_end->leftright, pubkey, err);
 		}
 		cert = get_cert_by_ckaid_from_nss(&ckaid, logger);
 		if (cert == NULL) {
-			log_message(RC_LOG_SERIOUS, logger,
-				    "failed to find certificate ckaid '%s' in the NSS database",
-				    pubkey);
-			return false;
+			return diag("%s certificate matching CKAID '%s' not found in the NSS database",
+				    dst_end->leftright, pubkey);
 		}
 		break;
 	}
 	case WHACK_PUBKEY_NONE:
 		pexpect(pubkey == NULL);
-		return true;
+		return NULL;
 	default:
 		log_message(RC_LOG_SERIOUS, logger,
 			    "warning: unknown pubkey '%s' of type %d", pubkey, pubkey_type);
 		/* recoverable screwup? */
-		return true;
+		return NULL;
 	}
 
 	passert(cert != NULL);
@@ -1031,13 +1029,12 @@ bool load_end_cert_and_preload_secret(struct fd *whackfd, const char *pubkey,
 		passert(pk != NULL);
 		if (pk->keyType == rsaKey &&
 		    ((pk->u.rsa.modulus.len * BITS_PER_BYTE) < FIPS_MIN_RSA_KEY_SIZE)) {
-			log_message(RC_FATAL, logger,
-				    "FIPS: Rejecting cert with key size %d which is under %d",
-				    pk->u.rsa.modulus.len * BITS_PER_BYTE,
-				    FIPS_MIN_RSA_KEY_SIZE);
 			SECKEY_DestroyPublicKey(pk);
 			CERT_DestroyCertificate(cert);
-			return false;
+			return diag("FIPS: rejecting %s certificate '%s' with key size %d which is under %d",
+				    dst_end->leftright, pubkey,
+				    pk->u.rsa.modulus.len * BITS_PER_BYTE,
+				    FIPS_MIN_RSA_KEY_SIZE);
 		}
 		/* TODO FORCE MINIMUM SIZE ECDSA KEY */
 		SECKEY_DestroyPublicKey(pk);
@@ -1049,17 +1046,17 @@ bool load_end_cert_and_preload_secret(struct fd *whackfd, const char *pubkey,
 	/* check validity of cert */
 	if (CERT_CheckCertValidTimes(cert, PR_Now(), FALSE) !=
 			secCertTimeValid) {
-		log_message(RC_LOG_SERIOUS, logger,
-			    "%s certificate \'%s\' is expired or not yet valid",
-			    dst_end->leftright, pubkey);
 		CERT_DestroyCertificate(cert);
-		return false;
+		return diag("%s certificate '%s' is expired or not yet valid",
+			    dst_end->leftright, pubkey);
 	}
 
 	dbg("loading %s certificate \'%s\' pubkey", dst_end->leftright, pubkey);
 	if (!add_pubkey_from_nss_cert(&pluto_pubkeys, &dst_end->id, cert, logger)) {
 		CERT_DestroyCertificate(cert);
-		return false;
+		/* XXX: push diag_t into add_pubkey_from_nss_cert()? */
+		return diag("%s certificate \'%s\' pubkey could not be loaded",
+			    dst_end->leftright, pubkey);
 	}
 
 	dst_end->cert.ty = CERT_X509_SIGNATURE;
@@ -1087,7 +1084,7 @@ bool load_end_cert_and_preload_secret(struct fd *whackfd, const char *pubkey,
 		dbg("warning: no secret key loaded for %s certificate with %s %s: %s",
 		    dst_end->leftright, cert_source, pubkey, ugh);
 	}
-	return true;
+	return NULL;
 }
 
 /* only used by add_connection() */
@@ -1155,8 +1152,7 @@ static void mark_parse(const char *cnm, /*const*/ char *wmmark, struct sa_mark *
  * was freshy allocated so no duplication should be needed (or at
  * least shouldn't be) (look for strange free() vs delref() sequence).
  */
-static bool extract_connection(struct fd *whackfd,
-			       const struct whack_message *wm,
+static bool extract_connection(const struct whack_message *wm,
 			       struct connection *c,
 			       struct logger *logger/*global*/)
 {
@@ -1746,18 +1742,12 @@ static bool extract_connection(struct fd *whackfd,
 	 * orient() set up .local and .remote pointers or indexes
 	 * accordingly?
 	 */
-	int same_leftca = extract_end(whackfd, wm->name, &c->spd.this, &wm->left, "left", logger);
+	int same_leftca = extract_end(wm->name, &c->spd.this, &wm->left, "left", logger);
 	if (same_leftca < 0) {
-		log_message(RC_FATAL, logger,
-			    "failed to add connection \"%s\": invalid \"left\" certificate",
-			    c->name);
 		return false;
 	}
-	int same_rightca = extract_end(whackfd, wm->name, &c->spd.that, &wm->right, "right", logger);
+	int same_rightca = extract_end(wm->name, &c->spd.that, &wm->right, "right", logger);
 	if (same_rightca < 0) {
-		log_message(RC_FATAL, logger,
-			    "failed to add connection \"%s\": invalid \"right\" certificate",
-			    c->name);
 		return false;
 	}
 
@@ -1961,7 +1951,7 @@ void add_connection(struct fd *whackfd, const struct whack_message *wm)
 {
 	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
 	struct connection *c = alloc_connection(HERE);
-	if (extract_connection(whackfd, wm, c, logger)) {
+	if (extract_connection(wm, c, logger)) {
 		/* log all about this connection */
 		libreswan_log("added %s connection \"%s\"",
 		NEVER_NEGOTIATE(c->policy) ?

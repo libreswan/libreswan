@@ -34,6 +34,7 @@
 #include "proposals.h"
 #include "connection_db.h"		/* for co_serial_t */
 #include "hash_table.h"
+#include "diag.h"
 
 /* There are two kinds of connections:
  * - ISAKMP connections, between hosts (for IKE communication)
@@ -601,9 +602,9 @@ extern uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt);
 
 so_serial_t get_newer_sa_from_connection(struct state *st);
 
-extern bool load_end_cert_and_preload_secret(struct fd *whackfd, const char *pubkey,
-					     enum whack_pubkey_type pubkey_type,
-					     struct end *dst_end);
+diag_t load_end_cert_and_preload_secret(const char *pubkey,
+					enum whack_pubkey_type pubkey_type,
+					struct end *dst_end, struct logger *logger);
 extern void reread_cert_connections(struct fd *whackfd);
 
 #endif
