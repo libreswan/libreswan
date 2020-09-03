@@ -1,7 +1,7 @@
 algparse -fips -v1 'esp'
 	AES_CBC-HMAC_SHA1_96
 algparse -fips -v1 'esp='
-	ERROR: String ended with invalid char, just after ""
+	ERROR: ESP proposal is empty
 algparse -fips -v1 'esp=aes'
 	AES_CBC-HMAC_SHA1_96
 algparse -fips -v1 'esp=aes;modp2048'
@@ -228,21 +228,21 @@ algparse -fips -v1 'esp=aes-sha1-none'
 algparse -fips -v1 'esp=aes-sha1;none'
 	ERROR: ESP DH algorithm 'none' is not supported by IKEv1
 algparse -fips -v1 'esp=3des168-sha1'
-	ERROR: 3DES does not take variable key lengths
+	ERROR: ESP encryption algorithm 3DES_CBC does not allow a key lengths
 algparse -fips -v1 'esp=3des-null'
-	ERROR: non-AEAD ESP encryption algorithm '3DES_CBC' cannot have 'NONE' as the integrity algorithm
+	ERROR: non-AEAD ESP encryption algorithm 3DES_CBC cannot have 'NONE' as the integrity algorithm
 algparse -fips -v1 'esp=aes128-null'
-	ERROR: non-AEAD ESP encryption algorithm 'AES_CBC' cannot have 'NONE' as the integrity algorithm
+	ERROR: non-AEAD ESP encryption algorithm AES_CBC cannot have 'NONE' as the integrity algorithm
 algparse -fips -v1 'esp=aes224-sha1'
-	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256
+	ERROR: ESP encryption algorithm AES_CBC with key length 224 invalid; valid key lengths: 128, 192, 256
 algparse -fips -v1 'esp=aes-224-sha1'
-	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256
+	ERROR: ESP encryption algorithm AES_CBC with key length 224 invalid; valid key lengths: 128, 192, 256
 algparse -fips -v1 'esp=aes0-sha1'
-	ERROR: encryption key length is zero
+	ERROR: ESP encryption key length is zero
 algparse -fips -v1 'esp=aes-0-sha1'
-	ERROR: encryption key length is zero
+	ERROR: ESP encryption key length is zero
 algparse -fips -v1 'esp=aes512-sha1'
-	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256
+	ERROR: ESP encryption algorithm AES_CBC with key length 512 invalid; valid key lengths: 128, 192, 256
 algparse -fips -v1 'esp=aes-sha1555'
 	ERROR: ESP integrity algorithm 'sha1555' is not recognized
 algparse -fips -v1 'esp=camellia666-sha1'
@@ -252,7 +252,7 @@ algparse -fips -v1 'esp=blowfish'
 algparse -fips -v1 'esp=des-sha1'
 	ERROR: ESP encryption algorithm 'des' is not supported
 algparse -fips -v1 'esp=aes_ctr666'
-	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256
+	ERROR: ESP encryption algorithm AES_CTR with key length 666 invalid; valid key lengths: 128, 192, 256
 algparse -fips -v1 'esp=aes128-sha2_128'
 	ERROR: ESP integrity algorithm 'sha2_128' is not recognized
 algparse -fips -v1 'esp=aes256-sha2_256-4096'
@@ -274,11 +274,11 @@ algparse -fips -v1 'esp=aes_gcm-md5'
 algparse -fips -v1 'esp=mars'
 	ERROR: ESP encryption algorithm 'mars' is not supported
 algparse -fips -v1 'esp=aes_gcm-16'
-	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256
+	ERROR: ESP encryption algorithm AES_GCM_16 with key length 16 invalid; valid key lengths: 128, 192, 256
 algparse -fips -v1 'esp=aes_gcm-0'
-	ERROR: encryption key length is zero
+	ERROR: ESP encryption key length is zero
 algparse -fips -v1 'esp=aes_gcm-123456789012345'
-	ERROR: encryption key length '123456789012345' WAY too big
+	ERROR: ESP encryption algorithm 'aes_gcm-123456789012345' key length WAY too big
 algparse -fips -v1 'esp=3des-sha1;dh22'
 	ERROR: ESP DH algorithm 'dh22' is not supported
 algparse -fips -v1 'esp=3des-sha1;modp8192,3des-sha2'
@@ -317,7 +317,7 @@ algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
 algparse -fips -v1 'ah'
 	HMAC_SHA1_96
 algparse -fips -v1 'ah='
-	ERROR: String ended with invalid char, just after ""
+	ERROR: AH proposal is empty
 algparse -fips -v1 'ah=md5'
 	ERROR: AH integrity algorithm 'md5' is not recognized
 algparse -fips -v1 'ah=sha'
@@ -376,7 +376,7 @@ algparse -fips -v1 'ike'
 	3DES_CBC-HMAC_SHA2_512-MODP2048
 	3DES_CBC-HMAC_SHA1-MODP2048
 algparse -fips -v1 'ike='
-	ERROR: String ended with invalid char, just after ""
+	ERROR: IKE proposal is empty
 algparse -fips -v1 'ike=3des-sha1'
 	3DES_CBC-HMAC_SHA1-MODP2048
 algparse -fips -v1 'ike=3des-sha1'

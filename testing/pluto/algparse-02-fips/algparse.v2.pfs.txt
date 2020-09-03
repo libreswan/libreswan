@@ -4,7 +4,7 @@ algparse -fips -v2 -pfs 'esp'
 	AES_CBC_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 	AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 -pfs 'esp='
-	ERROR: String ended with invalid char, just after ""
+	ERROR: ESP proposal is empty
 algparse -fips -v2 -pfs 'esp=aes'
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 -pfs 'esp=aes;modp2048'
@@ -220,21 +220,21 @@ algparse -fips -v2 -pfs 'esp=aes-sha1-none'
 algparse -fips -v2 -pfs 'esp=aes-sha1;none'
 	AES_CBC-HMAC_SHA1_96-NONE
 algparse -fips -v2 -pfs 'esp=3des168-sha1'
-	ERROR: 3DES does not take variable key lengths
+	ERROR: ESP encryption algorithm 3DES_CBC does not allow a key lengths
 algparse -fips -v2 -pfs 'esp=3des-null'
-	ERROR: non-AEAD ESP encryption algorithm '3DES_CBC' cannot have 'NONE' as the integrity algorithm
+	ERROR: non-AEAD ESP encryption algorithm 3DES_CBC cannot have 'NONE' as the integrity algorithm
 algparse -fips -v2 -pfs 'esp=aes128-null'
-	ERROR: non-AEAD ESP encryption algorithm 'AES_CBC' cannot have 'NONE' as the integrity algorithm
+	ERROR: non-AEAD ESP encryption algorithm AES_CBC cannot have 'NONE' as the integrity algorithm
 algparse -fips -v2 -pfs 'esp=aes224-sha1'
-	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256
+	ERROR: ESP encryption algorithm AES_CBC with key length 224 invalid; valid key lengths: 128, 192, 256
 algparse -fips -v2 -pfs 'esp=aes-224-sha1'
-	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256
+	ERROR: ESP encryption algorithm AES_CBC with key length 224 invalid; valid key lengths: 128, 192, 256
 algparse -fips -v2 -pfs 'esp=aes0-sha1'
-	ERROR: encryption key length is zero
+	ERROR: ESP encryption key length is zero
 algparse -fips -v2 -pfs 'esp=aes-0-sha1'
-	ERROR: encryption key length is zero
+	ERROR: ESP encryption key length is zero
 algparse -fips -v2 -pfs 'esp=aes512-sha1'
-	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256
+	ERROR: ESP encryption algorithm AES_CBC with key length 512 invalid; valid key lengths: 128, 192, 256
 algparse -fips -v2 -pfs 'esp=aes-sha1555'
 	ERROR: ESP integrity algorithm 'sha1555' is not recognized
 algparse -fips -v2 -pfs 'esp=camellia666-sha1'
@@ -244,7 +244,7 @@ algparse -fips -v2 -pfs 'esp=blowfish'
 algparse -fips -v2 -pfs 'esp=des-sha1'
 	ERROR: ESP encryption algorithm 'des' is not supported
 algparse -fips -v2 -pfs 'esp=aes_ctr666'
-	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256
+	ERROR: ESP encryption algorithm AES_CTR with key length 666 invalid; valid key lengths: 128, 192, 256
 algparse -fips -v2 -pfs 'esp=aes128-sha2_128'
 	ERROR: ESP integrity algorithm 'sha2_128' is not recognized
 algparse -fips -v2 -pfs 'esp=aes256-sha2_256-4096'
@@ -266,11 +266,11 @@ algparse -fips -v2 -pfs 'esp=aes_gcm-md5'
 algparse -fips -v2 -pfs 'esp=mars'
 	ERROR: ESP encryption algorithm 'mars' is not supported
 algparse -fips -v2 -pfs 'esp=aes_gcm-16'
-	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256
+	ERROR: ESP encryption algorithm AES_GCM_16 with key length 16 invalid; valid key lengths: 128, 192, 256
 algparse -fips -v2 -pfs 'esp=aes_gcm-0'
-	ERROR: encryption key length is zero
+	ERROR: ESP encryption key length is zero
 algparse -fips -v2 -pfs 'esp=aes_gcm-123456789012345'
-	ERROR: encryption key length '123456789012345' WAY too big
+	ERROR: ESP encryption algorithm 'aes_gcm-123456789012345' key length WAY too big
 algparse -fips -v2 -pfs 'esp=3des-sha1;dh22'
 	ERROR: ESP DH algorithm 'dh22' is not supported
 algparse -fips -v2 -pfs 'esp=3des-sha1;modp8192,3des-sha2'
@@ -296,7 +296,7 @@ algparse -fips -v2 -pfs 'ah'
 	HMAC_SHA2_256_128
 	HMAC_SHA1_96
 algparse -fips -v2 -pfs 'ah='
-	ERROR: String ended with invalid char, just after ""
+	ERROR: AH proposal is empty
 algparse -fips -v2 -pfs 'ah=md5'
 	ERROR: AH integrity algorithm 'md5' is not recognized
 algparse -fips -v2 -pfs 'ah=sha'
@@ -351,7 +351,7 @@ algparse -fips -v2 -pfs 'ike'
 	AES_CBC_256-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
 	AES_CBC_128-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
 algparse -fips -v2 -pfs 'ike='
-	ERROR: String ended with invalid char, just after ""
+	ERROR: IKE proposal is empty
 algparse -fips -v2 -pfs 'ike=3des-sha1'
 	3DES_CBC-HMAC_SHA1-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
 algparse -fips -v2 -pfs 'ike=3des-sha1'
@@ -377,9 +377,9 @@ algparse -fips -v2 -pfs 'ike=3des-id2'
 algparse -fips -v2 -pfs 'ike=aes_ccm'
 	ERROR: IKE encryption algorithm 'aes_ccm' is not supported
 algparse -fips -v2 -pfs 'ike=aes_gcm-sha1-none-modp2048'
-	ERROR: 'modp2048' unexpected
+	ERROR: IKE proposal contains unexpected 'modp2048'
 algparse -fips -v2 -pfs 'ike=aes_gcm+aes_gcm-sha1-none-modp2048'
-algparse: discarding duplicate algorithm 'AES_GCM_16'
-	ERROR: 'modp2048' unexpected
+algparse: discarding duplicate IKE encryption algorithm AES_GCM_16
+	ERROR: IKE proposal contains unexpected 'modp2048'
 algparse -fips -v2 -pfs 'ike=aes+aes_gcm'
 	ERROR: AEAD and non-AEAD IKE encryption algorithm cannot be combined
