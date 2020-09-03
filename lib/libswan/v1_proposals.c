@@ -202,7 +202,7 @@ static bool add_proposal_defaults(struct proposal_parser *parser,
 			}
 		}
 		if (merged_proposal.integ == NULL) {
-			proposal_error(parser, "%s integrity derived from PRF '%s' is not supported",
+			proposal_error(parser, "%s integrity derived from PRF %s is not supported",
 				       proposal->protocol->name,
 				       proposal->prf->common.fqn);
 			return false;
@@ -235,28 +235,6 @@ static bool merge_default_proposals(struct proposal_parser *parser,
 				     proposals, proposal);
 }
 
-static int parse_eklen(struct proposal_parser *parser, shunk_t buf)
-{
-	/* convert -<eklen> if present */
-	char *end = NULL;
-	long eklen = strtol(buf.ptr, &end, 10);
-	if (buf.ptr + buf.len != end) {
-		proposal_error(parser, "encryption key length '"PRI_SHUNK"' contains a non-numeric character",
-			       pri_shunk(buf));
-		return 0;
-	}
-	if (eklen >= INT_MAX) {
-		proposal_error(parser, "encryption key length '"PRI_SHUNK"' WAY too big",
-			       pri_shunk(buf));
-		return 0;
-	}
-	if (eklen == 0) {
-		proposal_error(parser, "encryption key length is zero");
-		return 0;
-	}
-	return eklen;
-}
-
 /*
  * Try to parse any of <ealg>-<ekeylen>, <ealg>_<ekeylen>,
  * <ealg><ekeylen>, or <ealg>.  Strings like aes_gcm_16 and
@@ -276,8 +254,10 @@ static bool parse_encrypt(struct proposal_parser *parser,
 	shunk_t ealg = (*tokens)[0].alg;
 	shunk_t eklen = (*tokens)[1].alg;
 	if (eklen.len > 0 && hunk_char_isdigit(eklen, 0)) {
+		/* print "<ealg>-<eklen>" in errors */
+		shunk_t print = shunk2(ealg.ptr, eklen.ptr + eklen.len - ealg.ptr);
 		/* assume <ealg>-<eklen> */
-		int enckeylen = parse_eklen(parser, eklen);
+		int enckeylen = parse_proposal_eklen(parser, print, eklen);
 		if (enckeylen <= 0) {
 			passert(parser->error[0] != '\0');
 			return false;
@@ -322,7 +302,7 @@ static bool parse_encrypt(struct proposal_parser *parser,
 		}
 		/* try to convert */
 		shunk_t eklen = shunk_slice(ealg, end, ealg.len);
-		int enckeylen = parse_eklen(parser, eklen);
+		int enckeylen = parse_proposal_eklen(parser, print_name, eklen);
 		if (enckeylen <= 0) {
 			passert(parser->error[0] != '\0');
 			return false;
@@ -463,7 +443,8 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 	}
 
 	if (tokens->alg.ptr != NULL) {
-		proposal_error(parser, "'"PRI_SHUNK"' unexpected",
+		proposal_error(parser, "%s proposals contain unexpected '"PRI_SHUNK"'",
+			       parser->protocol->name,
 			       pri_shunk(tokens[0].alg));
 		return false;
 	}
@@ -484,7 +465,7 @@ bool v1_proposals_parse_str(struct proposal_parser *parser,
 
 	if (alg_str.len == 0) {
 		/* XXX: hack to keep testsuite happy */
-		proposal_error(parser, "String ended with invalid char, just after \"\"");
+		proposal_error(parser, "%s proposal is empty", parser->protocol->name);
 		return false;
 	}
 
@@ -501,7 +482,8 @@ bool v1_proposals_parse_str(struct proposal_parser *parser,
 		do {
 			if (token + 1 >= tokens+elemsof(tokens)) {
 				/* space for NULL? */
-				proposal_error(parser, "proposal too long");
+				proposal_error(parser, "%s proposal is too long",
+					       parser->protocol->name);
 				return false;
 			}
 			/* find the next alg */

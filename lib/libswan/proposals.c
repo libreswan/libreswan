@@ -3,7 +3,7 @@
  * Author: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
  *
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2020 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -133,7 +133,7 @@ bool proposal_aead_none_ok(struct proposal_parser *parser,
 		 * At least one of the integrity algorithms wasn't
 		 * NONE.  For instance, esp=aes_gcm-sha1" is invalid.
 		 */
-		proposal_error(parser, "AEAD %s encryption algorithm '%s' must have 'NONE' as the integrity algorithm",
+		proposal_error(parser, "AEAD %s encryption algorithm %s must have 'NONE' as the integrity algorithm",
 			       proposal->protocol->name,
 			       encrypt->fqn);
 		return false;
@@ -147,7 +147,7 @@ bool proposal_aead_none_ok(struct proposal_parser *parser,
 		 * algorithm was NONE.  For instance,
 		 * esp=aes_cbc-none" is invalid.
 		 */
-		proposal_error(parser, "non-AEAD %s encryption algorithm '%s' cannot have 'NONE' as the integrity algorithm",
+		proposal_error(parser, "non-AEAD %s encryption algorithm %s cannot have 'NONE' as the integrity algorithm",
 			       proposal->protocol->name,
 			       encrypt->fqn);
 		return false;
@@ -356,8 +356,8 @@ void append_algorithm(struct proposal_parser *parser,
 		     ((*end)->enckeylen == 0 ||
 		      enckeylen == (*end)->enckeylen))) {
 			log_message(parser->policy->logger_rc_flags, parser->policy->logger,
-				    "discarding duplicate algorithm '%s'",
-				    alg->fqn);
+				    "discarding duplicate %s %s algorithm %s",
+				    parser->protocol->name, ike_alg_type_name(alg->algo_type), alg->fqn);
 			return;
 		}
 		end = &(*end)->next;
@@ -366,8 +366,9 @@ void append_algorithm(struct proposal_parser *parser,
 		.desc = alg,
 		.enckeylen = enckeylen,
 	};
-	DBGF(DBG_PROPOSAL_PARSER, "appending %s algorithm %s[_%d]",
-	     ike_alg_type_name(alg->algo_type), alg->fqn, enckeylen);
+	DBGF(DBG_PROPOSAL_PARSER, "appending %s %s algorithm %s[_%d]",
+	     parser->protocol->name, ike_alg_type_name(alg->algo_type), alg->fqn,
+	     enckeylen);
 	*end = clone_thing(new_algorithm, "alg");
 }
 
@@ -621,4 +622,30 @@ struct proposals *proposals_from_str(struct proposal_parser *parser,
 bool default_proposals(struct proposals *proposals)
 {
 	return proposals == NULL || proposals->defaulted;
+}
+
+
+int parse_proposal_eklen(struct proposal_parser *parser, shunk_t print, shunk_t buf)
+{
+	/* convert -<eklen> if present */
+	char *end = NULL;
+	long eklen = strtol(buf.ptr, &end, 10);
+	if (buf.ptr + buf.len != end) {
+		proposal_error(parser, "%s encryption algorithm '"PRI_SHUNK"' key length contains a non-numeric character",
+			       parser->protocol->name,
+			       pri_shunk(print));
+		return 0;
+	}
+	if (eklen >= INT_MAX) {
+		proposal_error(parser, "%s encryption algorithm '"PRI_SHUNK"' key length WAY too big",
+			       parser->protocol->name,
+			       pri_shunk(print));
+		return 0;
+	}
+	if (eklen == 0) {
+		proposal_error(parser, "%s encryption key length is zero",
+			       parser->protocol->name);
+		return 0;
+	}
+	return eklen;
 }

@@ -271,4 +271,10 @@ struct v1_proposal {
 
 struct v1_proposal v1_proposal(const struct proposal *proposal);
 
+/*
+ * INTERNAL
+ */
+
+int parse_proposal_eklen(struct proposal_parser *parser, shunk_t print, shunk_t buf);
+
 #endif /* PROPOSALS_H */
