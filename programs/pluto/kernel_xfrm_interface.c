@@ -131,7 +131,7 @@ static int nl_query_small_resp(const struct nlmsghdr *req, struct logger *logger
 	}
 
 	close(nl_fd);
-	return false;
+	return ret;
 }
 
 static struct nl_ifinfomsg_req init_nl_ifi(uint16_t type, uint16_t flags)
