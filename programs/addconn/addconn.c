@@ -83,8 +83,7 @@ static void resolve_defaultroute(struct starter_conn *conn UNUSED, struct logger
 	if (!seeking_src && !seeking_gateway)
 		return;	/* this end already figured out */
 
-	fprintf(stderr, "addcon: without XFRM/NETKEY, cannot resolve_defaultroute()\n");
-	exit(7);	/* random code */
+	fatal(logger, "addcon: without XFRM/NETKEY, cannot resolve_defaultroute()");
 #endif
 }
 
