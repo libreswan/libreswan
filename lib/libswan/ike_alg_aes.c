@@ -31,7 +31,7 @@
 #include "ike_alg_encrypt_ops.h"
 #include "ike_alg_integ.h"
 #include "ike_alg_prf.h"
-#include "sadb.h"
+#include "lsw-pfkeyv2.h"	/* for SADB_*ALG_* */
 
 const struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 	.common = {

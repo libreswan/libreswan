@@ -31,7 +31,7 @@
 #include "ike_alg_prf_mac_ops.h"
 #include "ike_alg_prf_ikev1_ops.h"
 #include "ike_alg_prf_ikev2_ops.h"
-#include "sadb.h"
+#include "lsw-pfkeyv2.h"	/* for SADB_*ALG_* */
 
 static const uint8_t asn1_blob_ecdsa_sha1[] = { LEN_ECDSA_SHA1_BLOB, ECDSA_SHA1_BLOB };
 

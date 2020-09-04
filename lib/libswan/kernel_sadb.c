@@ -23,6 +23,7 @@
 #include "kernel_sadb.h"
 #include "kernel_alg.h"
 #include "ike_alg.h"
+#include "lsw-pfkeyv2.h"
 
 /* used by kernel_netlink.c and kernel_bsdkame.c */
 void kernel_add_sadb_alg(int satype, int exttype, const struct sadb_alg *sadb_alg)

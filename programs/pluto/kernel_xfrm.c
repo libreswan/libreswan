@@ -69,6 +69,7 @@
 # include "libreswan.h"
 # include "linux/xfrm.h" /* local (if configured) or system copy */
 #endif
+#include "lsw-pfkeyv2.h"	/* for SADB_X_CALG_DEFLATE et.al., grrr */
 
 #include "sysdep.h"
 #include "socketwrapper.h"
@@ -85,7 +86,6 @@
 #include "log.h"
 #include "whack.h"	/* for RC_LOG_SERIOUS */
 #include "kernel_alg.h"
-
 #include "ike_alg.h"
 #include "ike_alg_integ.h"
 #include "ike_alg_encrypt.h"

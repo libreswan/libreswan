@@ -18,6 +18,8 @@
  *
  */
 
+#include <pkcs11t.h>
+
 #include "constants.h"		/* for BYTES_FOR_BITS() */
 #include "ietf_constants.h"
 #include "ike_alg.h"
@@ -28,8 +30,7 @@
 #include "ike_alg_prf_mac_ops.h"
 #include "ike_alg_prf_ikev1_ops.h"
 #include "ike_alg_prf_ikev2_ops.h"
-#include "sadb.h"
-#include <pkcs11t.h>
+#include "lsw-pfkeyv2.h"	/* for SADB_*ALG_* */
 
 /* SHA-2 256 */
 

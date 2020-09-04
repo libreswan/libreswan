@@ -49,6 +49,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
+#include "lsw-pfkeyv2.h"	/* for SADB_X_CALG_DEFLATE et.al., grrr */
 
 #include "defs.h"
 #include "rnd.h"
@@ -67,7 +68,6 @@
 #include "server.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 #include "keys.h"
-
 #include "ike_alg.h"
 #include "ike_alg_encrypt.h"
 #include "ike_alg_integ.h"

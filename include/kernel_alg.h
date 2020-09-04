@@ -51,8 +51,6 @@
  *
  */
 
-#include "sadb.h"
-
 struct ike_alg; /* forward declaration */
 
 struct alg_info;	/* forward declaration */
