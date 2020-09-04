@@ -23,16 +23,14 @@
 #include <stddef.h>
 #include <sys/types.h>
 
-#include "constants.h"
-#include "klips-crypto/aes_cbc.h"
-#include "lswlog.h"
-#include "ike_alg.h"
-
 #include <pk11pub.h>
 #include <prmem.h>
 #include <prerror.h>
 #include <blapit.h>
 
+#include "constants.h"
+#include "lswlog.h"
+#include "ike_alg.h"
 #include "lswnss.h"
 #include "ike_alg_encrypt_ops.h"
 
