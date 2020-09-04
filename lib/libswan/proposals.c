@@ -624,8 +624,12 @@ bool default_proposals(struct proposals *proposals)
 	return proposals == NULL || proposals->defaulted;
 }
 
+/*
+ * Try to parse any of <ealg>-<ekeylen>, <ealg>_<ekeylen>,
+ * <ealg><ekeylen>, or <ealg> using some look-ahead.
+ */
 
-int parse_proposal_eklen(struct proposal_parser *parser, shunk_t print, shunk_t buf)
+static int parse_proposal_eklen(struct proposal_parser *parser, shunk_t print, shunk_t buf)
 {
 	/* convert -<eklen> if present */
 	char *end = NULL;
@@ -648,4 +652,176 @@ int parse_proposal_eklen(struct proposal_parser *parser, shunk_t print, shunk_t 
 		return 0;
 	}
 	return eklen;
+}
+
+bool proposal_parse_encrypt(struct proposal_parser *parser,
+			    struct proposal_tokenizer *tokens,
+			    const struct ike_alg **encrypt,
+			    int *encrypt_keylen)
+{
+	if (tokens->this.len == 0) {
+		return false;
+	}
+
+	/*
+	 * Does it match <ealg>-<eklen>?
+	 *
+	 * Use the tokens NEXT lookahead to check <eklen> first.  If
+	 * it starts with a digit then just assume <ealg>-<ealg> and
+	 * error out if it is not so.
+	 */
+	if (tokens->this_term == '-' &&
+	    tokens->next.len > 0 &&
+	    hunk_char_isdigit(tokens->next, 0)) {
+		/* assume <ealg>-<eklen> */
+		shunk_t ealg = tokens->this;
+		shunk_t eklen = tokens->next;
+		/* print "<ealg>-<eklen>" in errors */
+		shunk_t print = shunk2(ealg.ptr, eklen.ptr + eklen.len - ealg.ptr);
+		int enckeylen = parse_proposal_eklen(parser, print, eklen);
+		if (enckeylen <= 0) {
+			pexpect(parser->error[0] != '\0');
+			return false;
+		}
+		const struct ike_alg *alg = encrypt_alg_byname(parser, ealg,
+							       enckeylen, print);
+		if (alg == NULL) {
+			DBGF(DBG_PROPOSAL_PARSER, "<ealg>byname('"PRI_SHUNK"') with <eklen>='"PRI_SHUNK"' failed: %s",
+			     pri_shunk(ealg), pri_shunk(eklen), parser->error);
+			return false;
+		}
+		/* consume <ealg>-<eklen> */
+		proposal_next_token(tokens);
+		proposal_next_token(tokens);
+		// append_algorithm(parser, proposal, alg, enckeylen);
+		*encrypt = alg; *encrypt_keylen = enckeylen;
+		return true;
+	}
+
+	/*
+	 * Does it match <ealg> (without any _<eklen> suffix?)
+	 */
+	const shunk_t print = tokens->this;
+	shunk_t ealg = tokens->this;
+	const struct ike_alg *alg = encrypt_alg_byname(parser, ealg,
+						       0/*enckeylen*/, print);
+	if (alg != NULL) {
+		/* consume <ealg> */
+		proposal_next_token(tokens);
+		// append_algorithm(parser, proposal, alg, 0/*enckeylen*/);
+		*encrypt = alg; *encrypt_keylen = 0;
+		return true;
+	}
+	/* buffer still contains error from <ealg> lookup */
+	pexpect(parser->error[0] != '\0');
+
+
+	/*
+	 * See if there's a trailing <eklen> in <ealg>.  If there
+	 * isn't then the lookup error above can be returned.
+	 */
+	size_t end = ealg.len;
+	while (end > 0 && hunk_char_isdigit(ealg, end-1)) {
+		end--;
+	}
+	if (end == ealg.len) {
+		/*
+		 * no trailing <eklen> digits and <ealg> was rejected
+		 * by above); error still contains message from not
+		 * finding just <ealg>.
+		 */
+		passert(parser->error[0] != '\0');
+		return false; // warning_or_false(parser, "encryption", print);
+	}
+
+	/*
+	 * Try parsing the <eklen> found in <ealg>.  For something
+	 * like aes_gcm_16, above lookup should have found the
+	 * algorithm so isn't a problem here.
+	 */
+	shunk_t eklen = shunk_slice(ealg, end, ealg.len);
+	int enckeylen = parse_proposal_eklen(parser, print, eklen);
+	if (enckeylen <= 0) {
+		pexpect(parser->error[0] != '\0');
+		return false;
+	}
+
+	/*
+	 * The <eklen> in <ealg><eklen> or <ealg>_<eklen> parsed; trim
+	 * <eklen> from <ealg> and then try the lookup.
+	 */
+	ealg = shunk_slice(ealg, 0, end);
+	if (hunk_char_ischar(ealg, ealg.len-1, "_")) {
+		ealg = shunk_slice(ealg, 0, end-1);
+	}
+	parser->error[0] = '\0'; /* zap old error */
+	alg = encrypt_alg_byname(parser, ealg, enckeylen, print);
+	if (alg == NULL) {
+		pexpect(parser->error[0] != '\0');
+		return false; // warning_or_false(parser, "encryption", print);
+	}
+
+	/* consume <ealg> */
+	proposal_next_token(tokens);
+	// append_algorithm(parser, proposal, alg, enckeylen);
+	*encrypt = alg; *encrypt_keylen = enckeylen;
+	return true;
+}
+
+struct proposal_tokenizer proposal_first_token(shunk_t input, const char *delims)
+{
+	struct proposal_tokenizer token = {
+		.input = input,
+		.delims = delims,
+	};
+	/* parse next */
+	proposal_next_token(&token);
+	/* next<-this; parse next */
+	proposal_next_token(&token);
+	return token;
+}
+
+void proposal_next_token(struct proposal_tokenizer *tokens)
+{
+	/* shuffle terminators */
+	tokens->prev_term = tokens->this_term;
+	tokens->this_term = tokens->next_term;
+	/* shuffle tokens */
+	tokens->this = tokens->next;
+	tokens->next = shunk_token(&tokens->input, &tokens->next_term, tokens->delims);
+	if (DBGP(DBG_PROPOSAL_PARSER)) {
+		JAMBUF(buf) {
+			jam(buf, "token: ");
+			if (tokens->prev_term != '\0') {
+				jam(buf, "'%c'", tokens->prev_term);
+			} else {
+				jam(buf, "''");
+			}
+			jam(buf, " ");
+			if (tokens->this.ptr == NULL) {
+				jam(buf, "<null>");
+			} else {
+				jam(buf, "\""PRI_SHUNK"\"", pri_shunk(tokens->this));
+			}
+			jam(buf, " ");
+			if (tokens->this_term != '\0') {
+				jam(buf, "'%c'", tokens->this_term);
+			} else {
+				jam(buf, "''");
+			}
+			jam(buf, " ");
+			if (tokens->this.ptr == NULL) {
+				jam(buf, "<null>");
+			} else {
+				jam(buf, "\""PRI_SHUNK"\"", pri_shunk(tokens->this));
+			}
+			jam(buf, " ");
+			if (tokens->next_term != '\0') {
+				jam(buf, "'%c'", tokens->next_term);
+			} else {
+				jam(buf, "''");
+			}
+			jambuf_to_debug_stream(buf); /* XXX: grrr */
+		}
+	}
 }
