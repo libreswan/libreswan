@@ -47,7 +47,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 			      const struct proposal *proposal,
 			      lset_t policy, bool logit)
 {
-	int ealg_i = SADB_EALG_NONE;
+	enum ipsec_cipher_algo ealg_i = ESP_reserved;
 
 	struct v1_proposal algs = v1_proposal(proposal);
 	if (policy & POLICY_ENCRYPT) {
