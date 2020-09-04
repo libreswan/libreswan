@@ -56,7 +56,6 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-#include "kernel_xfrm_kameipsec.h"
 #include <linux/rtnetlink.h>
 #include <linux/if_addr.h>
 #include <linux/if_link.h>
@@ -108,6 +107,14 @@ static int nl_route_fd = NULL_FD; /* listen to NETLINK_ROUTE broadcast */
 static int kernel_mobike_supprt ; /* kernel xfrm_migrate_support */
 
 #define NE(x) { x, #x }	/* Name Entry -- shorthand for sparse_names */
+
+enum {
+	IPSEC_POLICY_DISCARD    = 0,
+	IPSEC_POLICY_NONE       = 1,
+	IPSEC_POLICY_IPSEC      = 2,
+	IPSEC_POLICY_ENTRUST    = 3,
+	IPSEC_POLICY_BYPASS     = 4
+};
 
 static sparse_names xfrm_type_names = {
 	NE(NLMSG_NOOP),
