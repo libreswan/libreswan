@@ -155,9 +155,10 @@ static bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_p
 
 		uint16_t nh_value;
 		passert(sizeof(nh_value) == RFC_7427_HASH_ALGORITHM_IDENTIFIER_SIZE);
-		if (!pbs_in_raw(&pbs, &nh_value, sizeof(nh_value),
-				"hash algorithm identifier (network ordered)",
-				ike->sa.st_logger)) {
+		diag_t d = pbs_in_raw(&pbs, &nh_value, sizeof(nh_value),
+				      "hash algorithm identifier (network ordered)");
+		if (d != NULL) {
+			log_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 			return false;
 		}
 		uint16_t h_value = ntohs(nh_value);
@@ -2700,9 +2701,10 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 
 		dbg("received v2N_NULL_AUTH");
 		null_auth = alloc_chunk(len, "NULL_AUTH");
-		if (!pbs_in_raw(&pbs, null_auth.ptr, len,
-				"NULL_AUTH extract", ike->sa.st_logger)) {
-			loglog(RC_LOG_SERIOUS, "Failed to extract %zd bytes of NULL_AUTH from Notify payload", len);
+		diag_t d = pbs_in_raw(&pbs, null_auth.ptr, len, "NULL_AUTH extract");
+		if (d != NULL) {
+			log_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d,
+				 "failed to extract %zd bytes of NULL_AUTH from Notify payload: ", len);
 			free_chunk_content(&null_auth);
 			return STF_FATAL;
 		}

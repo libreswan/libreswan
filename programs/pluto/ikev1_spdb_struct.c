@@ -1155,9 +1155,9 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 		/* empty (0) SPI -- fine */
 	} else if (proposal.isap_spisize <= MAX_ISAKMP_SPI_SIZE) {
 		u_char junk_spi[MAX_ISAKMP_SPI_SIZE];
-
-		if (!pbs_in_raw(&proposal_pbs, junk_spi, proposal.isap_spisize,
-				"Oakley SPI", st->st_logger)) {
+		diag_t d = pbs_in_raw(&proposal_pbs, junk_spi, proposal.isap_spisize, "Oakley SPI");
+		if (d != NULL) {
+			log_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
 			return PAYLOAD_MALFORMED;	/* reject whole SA */
 		}
 	} else {
@@ -1239,9 +1239,10 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 			pb_stream attr_pbs;
 			uint32_t val; /* room for larger values */
 
-			if (!pbs_in_struct(&trans_pbs, &a, sizeof(a),
-					   &isakmp_oakley_attribute_desc,
-					   &attr_pbs, st->st_logger)) {
+			diag_t d = pbs_in_struct(&trans_pbs, &isakmp_oakley_attribute_desc,
+						 &a, sizeof(a), &attr_pbs);
+			if (d != NULL) {
+				log_diag(RC_LOG_SERIOUS, st->st_logger, &d, "invalid transform: ");
 				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 

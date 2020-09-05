@@ -94,6 +94,7 @@ void record_v2_message(struct ike_sa *ike,
 bool emit_v2UNKNOWN(const char *victim, enum isakmp_xchg_types exchange_type,
 		    struct pbs_out *outs)
 {
+	diag_t d;
 	log_pbs_out(RC_LOG, outs,
 		    "IMPAIR: adding an unknown%s payload of type %d to %s %s",
 		    impair.unknown_v2_payload_critical ? " critical" : "",
@@ -104,7 +105,9 @@ bool emit_v2UNKNOWN(const char *victim, enum isakmp_xchg_types exchange_type,
 		.isag_critical = build_ikev2_critical(impair.unknown_v2_payload_critical),
 	};
 	struct pbs_out pbs;
-	if (!pbs_out_struct(outs, &gen, sizeof(gen), &ikev2_unknown_payload_desc, &pbs)) {
+	d = pbs_out_struct(outs, &ikev2_unknown_payload_desc, &gen, sizeof(gen), &pbs);
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
 		return false;
 	}
 	close_output_pbs(&pbs);
@@ -119,11 +122,14 @@ bool emit_v2UNKNOWN(const char *victim, enum isakmp_xchg_types exchange_type,
  */
 bool emit_v2V(const char *string, pb_stream *outs)
 {
+	diag_t d;
 	struct ikev2_generic gen = {
 		.isag_np = 0,
 	};
 	struct pbs_out pbs;
-	if (!pbs_out_struct(outs, &gen, sizeof(gen), &ikev2_vendor_id_desc, &pbs)) {
+	d = pbs_out_struct(outs, &ikev2_vendor_id_desc, &gen, sizeof(gen), &pbs);
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
 		return false;
 	}
 	if (!out_raw(string, strlen(string), &pbs, string)) {

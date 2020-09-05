@@ -206,7 +206,9 @@ pb_stream open_v2_message(pb_stream *reply,
 	}
 
 	struct pbs_out rbody;
-	if (!pbs_out_struct(reply, &hdr, sizeof(hdr), &isakmp_hdr_desc, &rbody)) {
+	diag_t d = pbs_out_struct(reply, &isakmp_hdr_desc, &hdr, sizeof(hdr), &rbody);
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 		return empty_pbs;
 	}
 	if (impair.add_unknown_v2_payload_to == exchange_type &&

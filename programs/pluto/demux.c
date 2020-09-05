@@ -140,16 +140,17 @@ static enum iface_status read_message(const struct iface_port *ifp,
 void process_packet(struct msg_digest **mdp)
 {
 	struct msg_digest *md = *mdp;
-	struct logger *logger = md->md_logger;
 
-	if (!pbs_in_struct(&md->packet_pbs, &md->hdr, sizeof(md->hdr),
-			   &isakmp_hdr_desc, &md->message_pbs, logger)) {
+	diag_t d = pbs_in_struct(&md->packet_pbs, &isakmp_hdr_desc,
+				 &md->hdr, sizeof(md->hdr), &md->message_pbs);
+	if (d != NULL) {
 		/*
 		 * The packet was very badly mangled. We can't be sure
 		 * of any content - not even to look for major version
 		 * number!  So we'll just drop it.
 		 */
-		log_md(RC_LOG, md, "received packet with mangled IKE header - dropped");
+		log_diag(RC_LOG, md->md_logger, &d,
+			 "dropping packet with mangled IKE header: ");
 		return;
 	}
 

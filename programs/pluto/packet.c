@@ -1957,17 +1957,15 @@ static void DBG_prefix_print_struct(const pb_stream *pbs,
  * This routine returns TRUE iff it succeeds.
  */
 
-bool pbs_in_struct(struct pbs_in *ins,
-		   void *struct_ptr, size_t struct_size, struct_desc *sd,
-		   struct pbs_in *obj_pbs, struct logger *logger)
+diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
+		     void *struct_ptr, size_t struct_size,
+		     struct pbs_in *obj_pbs)
 {
 	uint8_t *cur = ins->cur;
 	if (cur + sd->size > ins->roof) {
-		log_message(RC_LOG, logger,
-			    "not enough room in input packet for %s (remain=%li, sd->size=%zu)",
+		return diag("not enough room in input packet for %s (remain=%li, sd->size=%zu)",
 			    sd->name, (long int)(ins->roof - cur),
 			    sd->size);
-		return false;
 	}
 
 	uint8_t *roof = cur + sd->size; /* may be changed by a length field */
@@ -2039,21 +2037,13 @@ bool pbs_in_struct(struct pbs_in *ins,
 					n + sd->size;
 
 				if (len < sd->size) {
-					log_message(RC_LOG, logger,
-						    "%zd-byte %s of %s is smaller than minimum",
-						    len,
-						    fp->name,
-						    sd->name);
-					return false;
+					return diag("%zd-byte %s of %s is smaller than minimum",
+						    len, fp->name, sd->name);
 				}
 
 				if (pbs_left(ins) < len) {
-					log_message(RC_LOG, logger,
-						    "%zd-byte %s of %s is larger than can fit",
-						    len,
-						    fp->name,
-						    sd->name);
-					return false;
+					return diag("%zd-byte %s of %s is larger than can fit",
+						    len, fp->name, sd->name);
 				}
 
 				roof = ins->cur + len;
@@ -2073,22 +2063,18 @@ bool pbs_in_struct(struct pbs_in *ins,
 				 */
 				if (fp->field_type == ft_af_enum &&
 				    enum_name(fp->desc, n) == NULL) {
-					log_message(RC_LOG, logger,
-						    "%s of %s has an unknown value: %s%ju (0x%jx)",
+					return diag("%s of %s has an unknown value: %s%ju (0x%jx)",
 						    fp->name, sd->name,
 						    immediate ? "AF+" : "",
 						    last_enum, n);
-					return false;
 				}
 				break;
 
 			case ft_enum:   /* value from an enumeration */
 				if (enum_name(fp->desc, n) == NULL) {
-					log_message(RC_LOG, logger,
-						    "%s of %s has an unknown value: %ju (0x%jx)",
+					return diag("%s of %s has an unknown value: %ju (0x%jx)",
 						    fp->name, sd->name,
 						    n, n);
-					return false;
 				}
 				last_enum = n;
 				break;
@@ -2105,12 +2091,10 @@ bool pbs_in_struct(struct pbs_in *ins,
 
 			case ft_set:            /* bits representing set */
 				if (!testset(fp->desc, n)) {
-					log_message(RC_LOG, logger,
-						    "bitset %s of %s has unknown member(s): %s (0x%ju)",
+					return diag("bitset %s of %s has unknown member(s): %s (0x%ju)",
 						    fp->name, sd->name,
 						    bitnamesof(fp->desc, n),
 						    n);
-					return false;
 				}
 				break;
 
@@ -2142,7 +2126,7 @@ bool pbs_in_struct(struct pbs_in *ins,
 			break;
 
 		case ft_end: /* end of field list */
-			passert_fail(logger, HERE, "should not be here");
+			lsw_passert_fail(HERE, "should not be here");
 
 		default:
 			bad_case(fp->field_type);
@@ -2163,26 +2147,28 @@ bool pbs_in_struct(struct pbs_in *ins,
 					struct_ptr, sd,
 					true);
 	}
-	return true;
+	return NULL;
 }
 
 bool in_struct(void *struct_ptr, struct_desc *sd,
 	       struct pbs_in *ins, struct pbs_in *obj_pbs)
 {
 	struct logger logger = cur_logger();
-	return pbs_in_struct(ins, struct_ptr, 0, sd,
-			     obj_pbs, &logger);
+	diag_t d = pbs_in_struct(ins, sd, struct_ptr, 0/*no-size-check*/, obj_pbs);
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, &logger, &d, "%s", "");
+		return false;
+	}
+
+	return true;
 }
 
-bool pbs_in_raw(struct pbs_in *ins, void *bytes, size_t len,
-		const char *name, struct logger *logger)
+diag_t pbs_in_raw(struct pbs_in *ins, void *bytes, size_t len, const char *name)
 {
 	if (pbs_left(ins) < len) {
 		/* XXX: needs current logger embedded in pbs_in? */
-		log_message(RC_LOG_SERIOUS, logger,
-			    "not enough bytes left to get %s from %s",
+		return diag("not enough bytes left to get %s from %s",
 			    name, ins->name);
-		return false;
 	} else {
 		if (bytes == NULL) {
 			if (DBGP(DBG_BASE)) {
@@ -2199,14 +2185,20 @@ bool pbs_in_raw(struct pbs_in *ins, void *bytes, size_t len,
 			}
 		}
 		ins->cur += len;
-		return TRUE;
+		return NULL;
 	}
 }
 
 bool in_raw(void *bytes, size_t len, struct pbs_in *ins, const char *name)
 {
 	struct logger logger = cur_logger();
-	return pbs_in_raw(ins, bytes, len, name, &logger);
+	diag_t d = pbs_in_raw(ins, bytes, len, name);
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, &logger, &d, "%s", "");
+		return false;
+	}
+
+	return true;
 }
 
 /*
@@ -2402,9 +2394,9 @@ static void update_next_payload_chain(pb_stream *outs,
  * This routine returns TRUE iff it succeeds.
  */
 
-bool pbs_out_struct(struct pbs_out *outs,
-		    const void *struct_ptr, size_t struct_size, struct_desc *sd,
-		    struct pbs_out *obj_pbs)
+diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
+		      const void *struct_ptr, size_t struct_size,
+		      struct pbs_out *obj_pbs)
 {
 	const u_int8_t *inp = struct_ptr;
 	u_int8_t *cur = outs->cur;
@@ -2416,9 +2408,7 @@ bool pbs_out_struct(struct pbs_out *outs,
 	}
 
 	if (outs->roof - cur < (ptrdiff_t)sd->size) {
-		log_pbs_out(RC_LOG_SERIOUS, outs, "not enough room left in output packet to place %s",
-			    sd->name);
-		return false;
+		return diag("not enough room left in output packet to place %s", sd->name);
 	}
 
 
@@ -2553,25 +2543,19 @@ bool pbs_out_struct(struct pbs_out *outs,
 				last_enum = n & ~ISAKMP_ATTR_AF_MASK;
 				if (fp->field_type == ft_af_enum &&
 				    enum_name(fp->desc, n) == NULL) {
-						log_pbs_out(impair.emitting ? RC_LOG : RC_LOG_SERIOUS,
-							    outs, "%s%s of %s has an unknown value: 0x%x+%" PRIu32 " (0x%" PRIx32 ")",
-							    impair.emitting ? "IMPAIR: emitting " : "",
-							    fp->name, sd->name,
-							    n & ISAKMP_ATTR_AF_MASK,
-							    last_enum, n);
-						if (!impair.emitting) {
-							return false;
-						}
+#define MSG "%s of %s has an unknown value: 0x%x+%" PRIu32 " (0x%" PRIx32 ")", fp->name, sd->name, n & ISAKMP_ATTR_AF_MASK, last_enum, n
+					if (!impair.emitting) {
+						return diag(MSG);
+					}
+					log_pbs_out(RC_LOG, outs, "IMPAIR: "MSG);
 				}
 				break;
 
 			case ft_enum:   /* value from an enumeration */
 				if (enum_name(fp->desc, n) == NULL) {
-					log_pbs_out(RC_LOG_SERIOUS, outs,
-						    "%s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
+					return diag("%s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
 						    fp->name, sd->name,
 						    n, n);
-					return false;
 				}
 				last_enum = n;
 				break;
@@ -2585,12 +2569,10 @@ bool pbs_out_struct(struct pbs_out *outs,
 
 			case ft_set:            /* bits representing set */
 				if (!testset(fp->desc, n)) {
-					log_pbs_out(RC_LOG_SERIOUS, outs,
-						    "bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
+					return diag("bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
 						    fp->name, sd->name,
 						    bitnamesof(fp->desc, n),
 						    n);
-					return false;
 				}
 				break;
 
@@ -2632,7 +2614,7 @@ bool pbs_out_struct(struct pbs_out *outs,
 
 				*obj_pbs = obj;
 			}
-			return true;
+			return NULL;
 
 		default:
 			bad_case(fp->field_type);
@@ -2640,6 +2622,18 @@ bool pbs_out_struct(struct pbs_out *outs,
 	}
 
 	/* never reached!?! */
+}
+
+bool out_struct(const void *struct_ptr, struct_desc *sd,
+		struct pbs_out *outs, struct pbs_out *obj_pbs)
+{
+	diag_t d = pbs_out_struct(outs, sd, struct_ptr, 0, obj_pbs);
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+		return false;
+	}
+
+	return true;
 }
 
 bool ikev1_out_generic(struct_desc *sd,

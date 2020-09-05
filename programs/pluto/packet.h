@@ -28,6 +28,7 @@
 #include "chunk.h"
 #include "shunk.h"
 #include "ip_address.h"
+#include "diag.h"
 
 struct ip_info;
 struct logger;
@@ -234,15 +235,16 @@ extern shunk_t pbs_in_as_shunk(pb_stream *pbs);
  */
 extern shunk_t pbs_in_left_as_shunk(const pb_stream *pbs);
 
+diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
+		     void *struct_ptr, size_t struct_size,
+		     struct pbs_in *obj_pbs) MUST_USE_RESULT;
+diag_t pbs_in_raw(struct pbs_in *pbs, void *bytes, size_t len,
+		  const char *name) MUST_USE_RESULT;
+
 extern bool in_struct(void *struct_ptr, struct_desc *sd,
 		      pb_stream *ins, pb_stream *obj_pbs) MUST_USE_RESULT;
-bool pbs_in_struct(struct pbs_in *ins,
-		   void *struct_ptr, size_t struct_size, struct_desc *sd,
-		   struct pbs_in *obj_pbs, struct logger *logger) MUST_USE_RESULT;
-
-extern bool in_raw(void *bytes, size_t len, pb_stream *ins, const char *name) MUST_USE_RESULT; /* XXX: use pbs_in_raw() */
-bool pbs_in_raw(struct pbs_in *pbs, void *bytes, size_t len,
-		const char *name, struct logger *logger) MUST_USE_RESULT;
+extern bool in_raw(void *bytes, size_t len, pb_stream *ins,
+		   const char *name) MUST_USE_RESULT; /* XXX: use pbs_in_raw() */
 
 /*
  * Output PBS
@@ -269,11 +271,12 @@ extern void close_output_pbs(struct pbs_out *pbs);
 extern chunk_t same_out_pbs_as_chunk(pb_stream *pbs);
 extern chunk_t clone_out_pbs_as_chunk(pb_stream *pbs, const char *name);
 
-bool pbs_out_struct(struct pbs_out *outs,
-		    const void *struct_ptr, size_t struct_size, struct_desc *sd,
-		    struct pbs_out *obj_pbs) MUST_USE_RESULT;
-#define out_struct(STRUCT_PTR, ST, OUTS, OBJ_PBS)  /* XXX: use pbs_out_struct(...SIZE...) */ \
-	pbs_out_struct((OUTS), (STRUCT_PTR), 0/*SIZE*/, (ST), (OBJ_PBS))
+diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
+		      const void *struct_ptr, size_t struct_size,
+		      struct pbs_out *obj_pbs) MUST_USE_RESULT;
+
+bool out_struct(const void *struct_ptr, struct_desc *sd,
+		struct pbs_out *outs, struct pbs_out *obj_pbs) MUST_USE_RESULT;
 
 extern bool ikev1_out_generic(struct_desc *sd,
 			      pb_stream *outs, pb_stream *obj_pbs) MUST_USE_RESULT;

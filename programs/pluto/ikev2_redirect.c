@@ -325,8 +325,10 @@ err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 	struct pbs_in input_pbs = *notify_pbs;
 	struct ikev2_redirect_part gw_info;
 
-	if (!pbs_in_struct(&input_pbs, &gw_info, sizeof(gw_info),
-			   &ikev2_redirect_desc, NULL, logger)) {
+	diag_t d = pbs_in_struct(&input_pbs, &ikev2_redirect_desc,
+				 &gw_info, sizeof(gw_info), NULL);
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
 		return "received malformed REDIRECT payload";
 	}
 
@@ -359,9 +361,11 @@ err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 		 */
 		unsigned char gw_str[0xFF];
 
-		if (!pbs_in_raw(&input_pbs, &gw_str, gw_info.gw_identity_len,
-				"GW Identity", logger))
+		diag_t d = pbs_in_raw(&input_pbs, &gw_str, gw_info.gw_identity_len, "GW Identity");
+		if (d != NULL) {
+			log_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
 			return "error while extracting GW Identity from variable part of IKEv2_REDIRECT Notify payload";
+		}
 
 		err_t ugh = ttoaddr((char *) gw_str, gw_info.gw_identity_len,
 					AF_UNSPEC, redirect_ip);

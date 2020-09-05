@@ -81,8 +81,10 @@ bool extract_v2N_ppk_identity(const struct pbs_in *notify_pbs,
 	}
 
 	uint8_t dst[PPK_ID_MAXLEN];
-	if (!pbs_in_raw(&pbs, dst, len, "Unified PPK_ID Payload", ike->sa.st_logger)) {
-		log_state(RC_LOG_SERIOUS, &ike->sa, "PPK ID data could not be read");
+	diag_t d = pbs_in_raw(&pbs, dst, len, "Unified PPK_ID Payload");
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d,
+			 "PPK ID data could not be read: ");
 		return false;
 	}
 
