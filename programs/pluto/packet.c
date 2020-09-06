@@ -2547,7 +2547,7 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 					if (!impair.emitting) {
 						return diag(MSG);
 					}
-					log_pbs_out(RC_LOG, outs, "IMPAIR: "MSG);
+					log_pbs_out(RC_LOG, outs, "IMPAIR: emitting "MSG);
 				}
 				break;
 
