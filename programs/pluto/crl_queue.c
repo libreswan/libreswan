@@ -47,7 +47,8 @@ static generalName_t *deep_clone_general_names(generalName_t *orig)
 
 struct crl_fetch_request *crl_fetch_request(SECItem *issuer_dn,
 					    generalName_t *end_dps,
-					    struct crl_fetch_request *next)
+					    struct crl_fetch_request *next,
+					    struct logger *logger)
 {
 	if (!pexpect(issuer_dn != NULL)) {
 		return next;
@@ -65,7 +66,7 @@ struct crl_fetch_request *crl_fetch_request(SECItem *issuer_dn,
 	passert(handle != NULL);
 	CERTCertificate *ca = CERT_FindCertByName(handle, issuer_dn);
 	if (ca == NULL) {
-		LSWLOG(buf) {
+		LOG_JAMBUF(RC_LOG, logger, buf) {
 			jam_string(buf, "NSS error finding CA to add to fetch request: ");
 			jam_nss_error(buf);
 		}

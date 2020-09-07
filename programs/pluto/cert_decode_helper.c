@@ -130,7 +130,8 @@ static stf_status cert_decode_completed(struct state *st,
 		 */
 		SECItem fdn = { siBuffer, NULL, 0 };
 		if (find_fetch_dn(&fdn, ike->sa.st_connection, NULL)) {
-			add_crl_fetch_requests(crl_fetch_request(&fdn, NULL, NULL));
+			add_crl_fetch_requests(crl_fetch_request(&fdn, NULL,
+								 NULL, ike->sa.st_logger));
 		}
 		pexpect((*task)->verified.cert_chain == NULL);
 		pexpect((*task)->verified.pubkey_db == NULL);

@@ -866,7 +866,8 @@ bool v1_decode_certs(struct msg_digest *md)
 			 */
 			SECItem fdn = { siBuffer, NULL, 0 };
 			if (find_fetch_dn(&fdn, c, NULL)) {
-				add_crl_fetch_requests(crl_fetch_request(&fdn, NULL, NULL));
+				add_crl_fetch_requests(crl_fetch_request(&fdn, NULL,
+									 NULL, st->st_logger));
 			}
 		}
 #endif

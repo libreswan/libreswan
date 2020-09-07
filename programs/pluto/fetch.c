@@ -449,7 +449,7 @@ static void fetch_crls(struct logger *logger)
  */
 void check_crls(struct fd *whackfd)
 {
-	struct logger logger = GLOBAL_LOGGER(whackfd);
+	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
 
 	schedule_oneshot_timer(EVENT_CHECK_CRLS, crl_check_interval);
 	struct crl_fetch_request *requests = NULL;
@@ -473,7 +473,8 @@ void check_crls(struct fd *whackfd)
 			SECItem *issuer = &n->crl->crl.derName;
 
 			if (n->crl->url == NULL) {
-				requests = crl_fetch_request(issuer, NULL, requests);
+				requests = crl_fetch_request(issuer, NULL,
+							     requests, logger);
 			} else {
 				generalName_t end_dp = {
 					.kind = GN_URI,
@@ -484,7 +485,7 @@ void check_crls(struct fd *whackfd)
 					.next = NULL
 				};
 				requests = crl_fetch_request(issuer, &end_dp,
-							     requests);
+							     requests, logger);
 			}
 		}
 	}
@@ -497,7 +498,8 @@ void check_crls(struct fd *whackfd)
 		struct pubkey *key = pkl->key;
 		if (key != NULL) {
 			SECItem issuer = same_chunk_as_dercert_secitem(key->issuer);
-			requests = crl_fetch_request(&issuer, NULL, requests);
+			requests = crl_fetch_request(&issuer, NULL,
+						     requests, logger);
 		}
 	}
 
@@ -505,14 +507,14 @@ void check_crls(struct fd *whackfd)
 	 * Iterate all X.509 certificates in database. This is needed to
 	 * process middle and end certificates.
 	 */
-	CERTCertList *certs = get_all_certificates(&logger);
+	CERTCertList *certs = get_all_certificates(logger);
 
 	if (certs != NULL) {
 		for (CERTCertListNode *node = CERT_LIST_HEAD(certs);
 		     !CERT_LIST_END(node, certs);
 		     node = CERT_LIST_NEXT(node)) {
 			requests = crl_fetch_request(&node->cert->derSubject,
-						     NULL, requests);
+						     NULL, requests, logger);
 		}
 		CERT_DestroyCertList(certs);
 	}

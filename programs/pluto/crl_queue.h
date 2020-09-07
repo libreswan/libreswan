@@ -32,7 +32,8 @@ struct crl_fetch_request {
 };
 
 struct crl_fetch_request *crl_fetch_request(SECItem *issuer, generalName_t *end_dp,
-					    struct crl_fetch_request *next);
+					    struct crl_fetch_request *next,
+					    struct logger *logger);
 void free_crl_fetch_requests(struct crl_fetch_request **request);
 
 void add_crl_fetch_requests(struct crl_fetch_request *requests);
