@@ -23,7 +23,7 @@
 #include "demux.h"
 #include "impair.h"
 #include "ikev1_hash.h"
-#include "ikev1_message.h"
+
 
 bool emit_v1_HASH(enum v1_hash_type hash_type, const char *what,
 		  enum impair_v1_exchange exchange,

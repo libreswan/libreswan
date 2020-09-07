@@ -73,12 +73,10 @@ bool record_v2_delete(struct ike_sa *ike, struct state *st)
 
 		/* Emit values of spi to be sent to the peer */
 		if (IS_CHILD_SA(st)) {
-			diag_t d = pbs_out_raw(&del_pbs, &st->st_esp.our_spi,
-					       sizeof(ipsec_spi_t), "local spis");
-			if (d != NULL) {
-				log_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
+			if (!out_raw((u_char *)&st->st_esp.our_spi,
+				     sizeof(ipsec_spi_t), &del_pbs,
+				     "local spis"))
 				return false;
-			}
 		}
 
 		close_output_pbs(&del_pbs);

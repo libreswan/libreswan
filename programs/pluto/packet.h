@@ -285,25 +285,15 @@ extern bool ikev1_out_generic_raw(struct_desc *sd,
 				  const char *name) MUST_USE_RESULT;
 #define ikev1_out_generic_chunk(sd, outs, ch, name) \
 	ikev1_out_generic_raw((sd), (outs), (ch).ptr, (ch).len, (name))
+extern bool out_zero(size_t len, pb_stream *outs, const char *name) MUST_USE_RESULT;
+extern bool out_repeated_byte(uint8_t, size_t len, pb_stream *outs, const char *name) MUST_USE_RESULT;
 
-diag_t pbs_out_zero(struct pbs_out *outs, size_t len,
+extern bool out_raw(const void *bytes, size_t len, pb_stream *outs,
 		    const char *name) MUST_USE_RESULT;
-
-diag_t pbs_out_repeated_byte(struct pbs_out *pbs, uint8_t, size_t len,
-			     const char *name) MUST_USE_RESULT;
-
-diag_t pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len,
-		   const char *name) MUST_USE_RESULT;
-
 #define pbs_out_hunk(HUNK, OUTS, NAME)					\
 	({								\
 		typeof(HUNK) hunk_ = HUNK; /* evaluate once */		\
-		struct pbs_out *outs_ = OUTS;				\
-		diag_t d_ = pbs_out_raw(outs_, hunk_.ptr, hunk_.len, (NAME)); \
-		if (d_ != NULL) {					\
-			log_diag(RC_LOG_SERIOUS, outs_->out_logger, &d_, "%s", ""); \
-		}							\
-		d_ == NULL;						\
+		out_raw(hunk_.ptr, hunk_.len, (OUTS), (NAME));		\
 	})
 
 /* ISAKMP Header: for all messages

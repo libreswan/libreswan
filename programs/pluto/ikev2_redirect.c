@@ -149,15 +149,9 @@ static chunk_t build_redirect_notification_data_common(enum gw_identity_type gwi
 	struct pbs_out gwid_pbs = open_pbs_out("gwid_pbs",
 					       buf, sizeof_buf,
 					       logger);
-	if (!out_struct(&gwi, &ikev2_redirect_desc, &gwid_pbs, NULL)) {
-		return empty_chunk;
-	}
-	diag_t d = pbs_out_raw(&gwid_pbs, id.ptr, id.len , "redirect ID");
-	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
-		return empty_chunk;
-	}
-	if (nonce == NULL || pbs_out_hunk(*nonce, &gwid_pbs, "nonce in redirect notify"))
+	if (out_struct(&gwi, &ikev2_redirect_desc, &gwid_pbs, NULL) &&
+	    out_raw(id.ptr, id.len , &gwid_pbs, "redirect ID") &&
+	    (nonce == NULL || pbs_out_hunk(*nonce, &gwid_pbs, "nonce in redirect notify")))
 	{
 		close_output_pbs(&gwid_pbs);
 		return same_out_pbs_as_chunk(&gwid_pbs);

@@ -132,9 +132,7 @@ bool emit_v2V(const char *string, pb_stream *outs)
 		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
 		return false;
 	}
-	d = pbs_out_raw(&pbs, string, strlen(string), string);
-	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+	if (!out_raw(string, strlen(string), &pbs, string)) {
 		return false;
 	}
 	close_output_pbs(&pbs);
@@ -200,16 +198,11 @@ bool emit_v2Nsa_pl(v2_notification_t ntype,
 		.isan_type = ntype,
 	};
 
-	struct pbs_out pls;
+	pb_stream pls;
 
-	if (!out_struct(&n, &ikev2_notify_desc, outs, &pls))
+	if (!out_struct(&n, &ikev2_notify_desc, outs, &pls) ||
+	    (spi != NULL && !out_raw(spi, sizeof(*spi), &pls, "SPI"))) {
 		return false;
-	if (spi != NULL) {
-		diag_t d = pbs_out_raw(&pls, spi, sizeof(*spi), "SPI");
-		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
-			return false;
-		}
 	}
 
 	if (payload_pbs == NULL)
@@ -237,13 +230,9 @@ bool emit_v2N_bytes(v2_notification_t ntype,
 		return false;
 	}
 
-	/* for some reason pbs_out_raw() doesn't like size==0 */
-	if (size > 0) {
-		diag_t d = pbs_out_raw(&pl, bytes, size, "Notify data");
-		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
-			return false;
-		}
+	/* for some reason out_raw() doesn't like size==0 */
+	if (size > 0 && !out_raw(bytes, size, &pl, "Notify data")) {
+		return false;
 	}
 
 	close_output_pbs(&pl);
@@ -271,10 +260,8 @@ bool emit_v2N_signature_hash_algorithms(lset_t sighash_policy,
 	if (sighash_policy & POLICY) {					\
 		uint16_t hash_id = htons(ID);				\
 		passert(sizeof(hash_id) == RFC_7427_HASH_ALGORITHM_IDENTIFIER_SIZE); \
-		diag_t d = pbs_out_raw(&n_pbs, &hash_id, sizeof(hash_id), \
-				       "hash algorithm identifier "#ID);\
-		if (d != NULL) {					\
-			log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", ""); \
+		if (!out_raw(&hash_id, sizeof(hash_id), &n_pbs,		\
+			     "hash algorithm identifier "#ID)) {	\
 			return false;					\
 		}							\
 	}
