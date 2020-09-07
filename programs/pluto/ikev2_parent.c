@@ -663,15 +663,21 @@ bool emit_v2KE(chunk_t *g, const struct dh_desc *group,
 
 	if (impair.ke_payload >= IMPAIR_EMIT_ROOF) {
 		uint8_t byte = impair.ke_payload - IMPAIR_EMIT_ROOF;
-		libreswan_log("IMPAIR: sending bogus KE (g^x) == %u value to break DH calculations",
-			      byte);
+		log_message(RC_LOG, outs->out_logger,
+			    "IMPAIR: sending bogus KE (g^x) == %u value to break DH calculations", byte);
 		/* Only used to test sending/receiving bogus g^x */
-		if (!out_repeated_byte(byte, g->len, &kepbs, "ikev2 impair KE (g^x) == 0"))
-			return FALSE;
+		diag_t d = pbs_out_repeated_byte(&kepbs, byte, g->len, "ikev2 impair KE (g^x) == 0");
+		if (d != NULL) {
+			log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+			return false;
+		}
 	} else if (impair.ke_payload == IMPAIR_EMIT_EMPTY) {
-		libreswan_log("IMPAIR: sending an empty KE value");
-		if (!out_zero(0, &kepbs, "ikev2 impair KE (g^x) == empty"))
-			return FALSE;
+		log_message(RC_LOG, outs->out_logger, "IMPAIR: sending an empty KE value");
+		diag_t d = pbs_out_zero(&kepbs, 0, "ikev2 impair KE (g^x) == empty");
+		if (d != NULL) {
+			log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+			return false;
+		}
 	} else {
 		if (!pbs_out_hunk(*g, &kepbs, "ikev2 g^x"))
 			return FALSE;
@@ -1649,8 +1655,11 @@ static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
 
 	if (attr.len == INTERNAL_IP6_ADDRESS_SIZE) { /* IPv6 address add prefix */
 		uint8_t ipv6_prefix_len = INTERNL_IP6_PREFIX_LEN;
-		if (!out_raw(&ipv6_prefix_len, sizeof(uint8_t), &a_pbs, "INTERNL_IP6_PREFIX_LEN"))
+		diag_t d = pbs_out_raw(&a_pbs, &ipv6_prefix_len, sizeof(uint8_t), "INTERNL_IP6_PREFIX_LEN");
+		if (d != NULL) {
+			log_diag(RC_LOG_SERIOUS, outpbs->out_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
+		}
 	}
 
 	close_output_pbs(&a_pbs);
@@ -1671,8 +1680,11 @@ static stf_status ikev2_ship_cp_attr_str(uint16_t type, char *str,
 		return STF_INTERNAL_ERROR;
 
 	if (attr.len > 0) {
-		if (!out_raw(str, attr.len, &a_pbs, story))
+		diag_t d = pbs_out_raw(&a_pbs, str, attr.len, story);
+		if (d != NULL) {
+			log_diag(RC_LOG_SERIOUS, outpbs->out_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
+		}
 	}
 
 	close_output_pbs(&a_pbs);
@@ -5495,12 +5507,16 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 					if (!out_struct(&v2del_tmp,
 							&ikev2_delete_desc,
 							&sk.pbs,
-							&del_pbs) ||
-					    !out_raw(spi_buf,
-							j * sizeof(spi_buf[0]),
-							&del_pbs,
-							"local SPIs"))
+							&del_pbs))
+						return false;
+					diag_t d = pbs_out_raw(&del_pbs,
+							       spi_buf,
+							       j * sizeof(spi_buf[0]),
+							       "local SPIs");
+					if (d != NULL) {
+						log_diag(RC_LOG_SERIOUS, sk.logger, &d, "%s", "");
 						return STF_INTERNAL_ERROR;
+					}
 
 					close_output_pbs(&del_pbs);
 				}

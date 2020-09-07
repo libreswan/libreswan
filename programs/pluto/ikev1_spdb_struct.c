@@ -51,7 +51,7 @@
 #include "db_ops.h"
 #include "lswfips.h" /* for libreswan_fipsmode */
 #include "crypt_prf.h"
-
+#include "ikev1_message.h"
 #include "ip_endpoint.h"
 #include "nat_traversal.h"
 

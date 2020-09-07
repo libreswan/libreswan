@@ -81,6 +81,7 @@
 #include "ip_address.h"
 #include "ip_info.h"
 #include "ikev1_hash.h"
+#include "ikev1_message.h"
 
 #include <blapit.h>
 
