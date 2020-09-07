@@ -2661,31 +2661,35 @@ bool ikev1_out_generic_raw(struct_desc *sd,
 	return TRUE;
 }
 
-static bool space_for(size_t len, pb_stream *outs, const char *fmt, ...) PRINTF_LIKE(3);
-static bool space_for(size_t len, pb_stream *outs, const char *fmt, ...)
+static diag_t space_for(size_t len, pb_stream *outs, const char *fmt, ...) PRINTF_LIKE(3) MUST_USE_RESULT;
+static diag_t space_for(size_t len, pb_stream *outs, const char *fmt, ...)
 {
 	if (pbs_left(outs) == 0) {
 		/* should this be a DBGLOG? */
-		LSWLOG_RC(RC_LOG_SERIOUS, buf) {
+		diag_t d;
+		JAMBUF(buf) {
 			jam(buf, "%s is already full; discarding ", outs->name);
 			va_list ap;
 			va_start(ap, fmt);
 			jam_va_list(buf, fmt, ap);
 			va_end(ap);
+			d = diag(PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
 		}
-		return false;
+		return d;
 	} else if (pbs_left(outs) <= len) {
 		/* overflow at at left==1; left==0 for already overflowed */
-		LSWLOG_RC(RC_LOG_SERIOUS, buf) {
+		diag_t d;
+		JAMBUF(buf) {
 			jam(buf, "%s is full; unable to emit ", outs->name);
 			va_list ap;
 			va_start(ap, fmt);
 			jam_va_list(buf, fmt, ap);
 			va_end(ap);
+			d = diag(PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
 		}
 		/* overflow the buffer */
 		outs->cur += pbs_left(outs);
-		return false;
+		return d;
 	} else {
 		LSWDBGP(DBG_BASE, buf) {
 			jam_string(buf, "emitting ");
@@ -2695,52 +2699,88 @@ static bool space_for(size_t len, pb_stream *outs, const char *fmt, ...)
 			va_end(ap);
 			jam(buf, " into %s", outs->name);
 		}
-		return true;
+		return NULL;
 	}
+}
+
+diag_t pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len, const char *name)
+{
+	diag_t d = space_for(len, outs, "%zu raw bytes of %s", len, name);
+	if (d != NULL) {
+		return d;
+	}
+
+	if (DBGP(DBG_BASE)) {
+		if (len > 16) { /* arbitrary */
+			DBG_log("%s:", name);
+			DBG_dump(NULL, bytes, len);
+		} else {
+			LSWLOG_DEBUG(buf) {
+				jam(buf, "%s: ", name);
+				jam_dump_bytes(buf, bytes, len);
+			}
+		}
+	}
+	memcpy(outs->cur, bytes, len);
+	outs->cur += len;
+	return NULL;
 }
 
 bool out_raw(const void *bytes, size_t len, pb_stream *outs, const char *name)
 {
-	if (space_for(len, outs, "%zu raw bytes of %s", len, name)) {
-		if (DBGP(DBG_BASE)) {
-			if (len > 16) { /* arbitrary */
-				DBG_log("%s:", name);
-				DBG_dump(NULL, bytes, len);
-			} else {
-				LSWLOG_DEBUG(buf) {
-					jam(buf, "%s: ", name);
-					jam_dump_bytes(buf, bytes, len);
-				}
-			}
-		}
-		memcpy(outs->cur, bytes, len);
-		outs->cur += len;
-		return true;
-	} else {
+	diag_t d = pbs_out_raw(outs, bytes, len, name);
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
 		return false;
 	}
+
+	return true;
+}
+
+diag_t pbs_out_repeated_byte(struct pbs_out *outs, uint8_t byte, size_t len, const char *name)
+{
+	diag_t d = space_for(len, outs, "%zu 0x%02x repeated bytes of %s", len, byte, name);
+	if (d != NULL) {
+		return d;
+	}
+
+	memset(outs->cur, byte, len);
+	outs->cur += len;
+	return NULL;
 }
 
 bool out_repeated_byte(uint8_t byte, size_t len, pb_stream *outs, const char *name)
 {
-	if (space_for(len, outs, "%zu 0x%02x repeated bytes of %s", len, byte, name)) {
-		memset(outs->cur, byte, len);
-		outs->cur += len;
-		return true;
-	} else {
+	diag_t d = pbs_out_repeated_byte(outs, byte, len, name);
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
 		return false;
 	}
+
+	return true;
+}
+
+diag_t pbs_out_zero(struct pbs_out *outs, size_t len, const char *name)
+{
+	diag_t d = space_for(len, outs, "%zu zero bytes of %s", len, name);
+	if (d != NULL) {
+		return d;
+	}
+
+	memset(outs->cur, 0, len);
+	outs->cur += len;
+	return NULL;
 }
 
 bool out_zero(size_t len, pb_stream *outs, const char *name)
 {
-	if (space_for(len, outs, "%zu zero bytes of %s", len, name)) {
-		memset(outs->cur, 0, len);
-		outs->cur += len;
-		return true;
-	} else {
+	diag_t d = pbs_out_zero(outs, len, name);
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
 		return false;
 	}
+
+	return true;
 }
 
 /*
