@@ -78,6 +78,7 @@
 #include "ip_info.h"
 #include "ikev1_hash.h"
 #include "impair.h"
+#include "ikev1_message.h"
 
 /* forward declarations */
 static stf_status xauth_client_ackstatus(struct state *st,

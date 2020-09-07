@@ -230,7 +230,9 @@ static bool emit_v2SK_iv(v2SK_payload_t *sk)
 	/* compute location/size */
 	sk->iv = chunk2(sk->pbs.cur, sk->ike->sa.st_oakley.ta_encrypt->wire_iv_size);
 	/* make space */
-	if (!out_zero(sk->iv.len, &sk->pbs, "IV")) {
+	diag_t d = pbs_out_zero(&sk->pbs, sk->iv.len, "IV");
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, sk->logger, &d, "%s", "");
 		return false;
 	}
 	/* scribble on it */
@@ -304,9 +306,11 @@ bool close_v2SK_payload(v2SK_payload_t *sk)
 	dbg("adding %zd bytes of padding (including 1 byte padding-length)",
 	    padding);
 	for (unsigned i = 0; i < padding; i++) {
-		if (!out_repeated_byte(i, 1, &sk->pbs, "padding and length")) {
-			libreswan_log("error initializing padding for encrypted %s payload",
-				      sk->pbs.container->name);
+		diag_t d = pbs_out_repeated_byte(&sk->pbs, i, 1, "padding and length");
+		if (d != NULL) {
+			log_diag(RC_LOG_SERIOUS, sk->logger, &d,
+				 "error initializing padding for encrypted %s payload: ",
+				 sk->pbs.container->name);
 			return false;
 		}
 	}
@@ -323,7 +327,9 @@ bool close_v2SK_payload(v2SK_payload_t *sk)
 		return false;
 	}
 	sk->integrity = chunk2(sk->pbs.cur, integ_size);
-	if (!out_zero(integ_size, &sk->pbs, "length of truncated HMAC/KEY")) {
+	diag_t d = pbs_out_zero(&sk->pbs, integ_size, "length of truncated HMAC/KEY");
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, sk->logger, &d, "%s", "");
 		return false;
 	}
 

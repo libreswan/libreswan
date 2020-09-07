@@ -2653,9 +2653,14 @@ bool ikev1_out_generic_raw(struct_desc *sd,
 {
 	pb_stream pbs;
 
-	if (!ikev1_out_generic(sd, outs, &pbs) ||
-	    !out_raw(bytes, len, &pbs, name))
-		return FALSE;
+	if (!ikev1_out_generic(sd, outs, &pbs)) {
+		return false;
+	}
+	diag_t d = pbs_out_raw(&pbs, bytes, len, name);
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+		return false;
+	}
 
 	close_output_pbs(&pbs);
 	return TRUE;
@@ -2726,17 +2731,6 @@ diag_t pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len, const ch
 	return NULL;
 }
 
-bool out_raw(const void *bytes, size_t len, pb_stream *outs, const char *name)
-{
-	diag_t d = pbs_out_raw(outs, bytes, len, name);
-	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
-		return false;
-	}
-
-	return true;
-}
-
 diag_t pbs_out_repeated_byte(struct pbs_out *outs, uint8_t byte, size_t len, const char *name)
 {
 	diag_t d = space_for(len, outs, "%zu 0x%02x repeated bytes of %s", len, byte, name);
@@ -2749,17 +2743,6 @@ diag_t pbs_out_repeated_byte(struct pbs_out *outs, uint8_t byte, size_t len, con
 	return NULL;
 }
 
-bool out_repeated_byte(uint8_t byte, size_t len, pb_stream *outs, const char *name)
-{
-	diag_t d = pbs_out_repeated_byte(outs, byte, len, name);
-	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
-		return false;
-	}
-
-	return true;
-}
-
 diag_t pbs_out_zero(struct pbs_out *outs, size_t len, const char *name)
 {
 	diag_t d = space_for(len, outs, "%zu zero bytes of %s", len, name);
@@ -2768,17 +2751,6 @@ diag_t pbs_out_zero(struct pbs_out *outs, size_t len, const char *name)
 	}
 
 	return NULL;
-}
-
-bool out_zero(size_t len, pb_stream *outs, const char *name)
-{
-	diag_t d = pbs_out_zero(outs, len, name);
-	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
-		return false;
-	}
-
-	return true;
 }
 
 /*
@@ -2875,7 +2847,13 @@ bool pbs_in_address(ip_address *address, const struct ip_info *ipv,
 bool pbs_out_address(const ip_address *address, struct pbs_out *out_pbs, const char *what)
 {
 	shunk_t as = address_as_shunk(address);
-	return out_raw(as.ptr, as.len, out_pbs, what);
+	diag_t d = pbs_out_raw(out_pbs, as.ptr, as.len, what);
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, out_pbs->out_logger, &d, "%s", "");
+		return false;
+	}
+
+	return true;
 }
 
 void log_pbs_out(lset_t rc_flags, struct pbs_out *outs, const char *message, ...)
