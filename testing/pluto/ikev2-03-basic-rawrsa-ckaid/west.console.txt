@@ -7,14 +7,20 @@ west #
 west #
  # see description.txt
 west #
- ipsec auto --add westnet-eastnet-ikev2
-036 failed to add connection "westnet-eastnet-ikev2": right certificate matching CKAID '<<CKAID#1>>' not found in the NSS database
+ # should find east's pubkey using ckaid and leftrsasigkey
 west #
- ipsec auto --add westnet-eastnet-ipv4
-002 added IKEv2 connection "westnet-eastnet-ipv4"
+ ipsec auto --add east-ckaid-rsasigkey
+036 failed to add connection "east-ckaid-rsasigkey": right certificate matching CKAID '<<CKAID#2>>' not found in the NSS database
 west #
- ipsec auto --add westnet-eastnet-ikev2-ckaid
-002 added IKEv2 connection "westnet-eastnet-ikev2-ckaid"
+ # force east/west rsasigkey load using @east/@west
+west #
+ ipsec auto --add east-rsasigkey
+002 added IKEv2 connection "east-rsasigkey"
+west #
+ # now east's pubkey using ckaid is found
+west #
+ ipsec auto --add east-ckaid
+002 added IKEv2 connection "east-ckaid"
 west #
  echo done
 done
