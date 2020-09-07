@@ -786,7 +786,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 		current = CERT_GetNextGeneralName(current);
 	} while (current != nameList);
 
-	LSWLOG_RC(RC_LOG_SERIOUS, buf) {
+	LOG_JAMBUF(RC_LOG_SERIOUS, logger, buf) {
 		jam(buf, "certificate subjectAltName extension does not match ");
 		jam_enum(buf, &ike_idtype_names, id->kind);
 		jam(buf, " '");

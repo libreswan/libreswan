@@ -2808,7 +2808,7 @@ void complete_v1_state_transition(struct msg_digest *md, stf_status result)
 			passert(st->st_state->kind < STATE_IKEv1_ROOF);
 
 			/* tell whack and logs our progress */
-			LSWLOG_RC(w, buf) {
+			LOG_JAMBUF(w, st->st_logger, buf) {
 				jam(buf, "%s", st->st_state->story);
 				/* document SA details for admin's pleasure */
 				if (log_details != NULL) {

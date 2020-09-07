@@ -3259,7 +3259,7 @@ stf_status ikev2_process_child_sa_pl(struct ike_sa *ike, struct child_sa *child,
 				       child_proposals, child->sa.st_logger);
 
 	if (ret != STF_OK) {
-		LSWLOG_RC(RC_LOG_SERIOUS, buf) {
+		LOG_JAMBUF(RC_LOG_SERIOUS, child->sa.st_logger, buf) {
 			jam_string(buf, what);
 			jam(buf, " failed, responder SA processing returned ");
 			jam_v2_stf_status(buf, ret);

@@ -1025,10 +1025,12 @@ void log_state(lset_t rc_flags, const struct state *st,
 
 void loglog(enum rc_type rc, const char *fmt, ...)
 {
-	LSWLOG_RC(rc, buf) {
+	JAMBUF(buf) {
+		jam_cur_prefix(buf);
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);
 		va_end(ap);
+		jambuf_to_default_streams(buf, rc);
 	}
 }

@@ -219,7 +219,7 @@ enum retransmit_status retransmit(struct state *st)
 	if (retransmit_count_exceeded ||
 	    monotime_exceeds_limit ||
 	    deltatime_exceeds_limit) {
-		LSWLOG_RC(RC_NORETRANSMISSION, buf) {
+		LOG_JAMBUF(RC_NORETRANSMISSION, st->st_logger, buf) {
 			jam(buf, "%s: ", st->st_state->name);
 			if (retransmit_count_exceeded) {
 				jam(buf, "max number of retransmissions (%lu) reached after ",
@@ -264,7 +264,7 @@ enum retransmit_status retransmit(struct state *st)
 	rt->nr_retransmits++;
 	rt->delays = deltatime_add(rt->delays, rt->delay);
 	event_schedule(EVENT_RETRANSMIT, rt->delay, st);
-	LSWLOG_RC(RC_RETRANSMISSION, buf) {
+	LOG_JAMBUF(RC_RETRANSMISSION, st->st_logger, buf) {
 		jam(buf, "%s: retransmission; will wait ",
 			st->st_state->name);
 		jam_deltatime(buf, rt->delay);
@@ -286,7 +286,7 @@ void suppress_retransmits(struct state *st)
 	rt->delays = deltatime_add(rt->delays, rt->delay);
 	event_delete(EVENT_RETRANSMIT, st);
 	event_schedule(EVENT_RETRANSMIT, rt->delay, st);
-	LSWLOG_RC(RC_RETRANSMISSION, buf) {
+	LOG_JAMBUF(RC_RETRANSMISSION, st->st_logger, buf) {
 		jam(buf, "%s: suppressing retransmits; will wait ",
 			st->st_state->name);
 		jam_deltatime(buf, rt->delay);
