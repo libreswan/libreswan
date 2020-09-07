@@ -389,7 +389,7 @@ static void list_global_timers(struct show *s, monotime_t now)
  * Global signal events.
  */
 
-typedef void (signal_handler_cb)(void);
+typedef void (signal_handler_cb)(struct logger *logger);
 
 struct signal_handler {
 	struct event ev;
@@ -420,10 +420,11 @@ static void signal_handler_handler(evutil_socket_t fd UNUSED,
 {
 	passert(in_main_thread());
 	passert(event & EV_SIGNAL);
+	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
 	struct signal_handler *se = arg;
 	dbg("processing signal %s", se->name);
 	threadtime_t start = threadtime_start();
-	se->cb();
+	se->cb(logger);
 	threadtime_stop(&start, SOS_NOBODY, "signal handler %s", se->name);
 }
 
@@ -918,23 +919,23 @@ void show_fips_status(struct show *s)
 		impair.force_fips ? "enabled [forced]" : "enabled");
 }
 
-static void huphandler_cb(void)
+static void huphandler_cb(struct logger *logger)
 {
 	/* logging is probably not signal handling / threa safe */
-	libreswan_log("Pluto ignores SIGHUP -- perhaps you want \"whack --listen\"");
+	log_message(RC_LOG, logger, "Pluto ignores SIGHUP -- perhaps you want \"whack --listen\"");
 }
 
-static void termhandler_cb(void)
+static void termhandler_cb(struct logger *logger_unused UNUSED)
 {
 	exit_pluto(PLUTO_EXIT_OK);
 }
 
 #ifdef HAVE_SECCOMP
-static void syshandler_cb(void)
+static void syshandler_cb(struct logger *logger)
 {
-	loglog(RC_LOG_SERIOUS, "pluto received SIGSYS - possible SECCOMP violation!");
+	log_message(RC_LOG_SERIOUS, logger, "pluto received SIGSYS - possible SECCOMP violation!");
 	if (pluto_seccomp_mode == SECCOMP_ENABLED) {
-		loglog(RC_LOG_SERIOUS, "seccomp=enabled mandates daemon restart");
+		log_message(RC_LOG_SERIOUS, logger, "seccomp=enabled mandates daemon restart");
 		exit_pluto(PLUTO_EXIT_SECCOMP_FAIL);
 	}
 }
@@ -1043,7 +1044,7 @@ static void addconn_exited(struct state *null_st UNUSED,
 	addconn_child_pid = 0;
 }
 
-static void log_status(struct jambuf *buf, int status)
+static void jam_status(struct jambuf *buf, int status)
 {
 	jam(buf, " (");
 	if (WIFEXITED(status)) {
@@ -1071,7 +1072,7 @@ static void log_status(struct jambuf *buf, int status)
 	jam_string(buf, ")");
 }
 
-static void childhandler_cb(void)
+static void childhandler_cb(struct logger *logger)
 {
 	while (true) {
 		int status;
@@ -1082,7 +1083,7 @@ static void childhandler_cb(void)
 			if (errno == ECHILD) {
 				dbg("waitpid returned ECHILD (no child processes left)");
 			} else {
-				LOG_ERRNO(errno, "waitpid unexpectedly failed");
+				log_errno(logger, errno, "waitpid unexpectedly failed");
 			}
 			return;
 		case 0: /* nothing to do */
@@ -1092,7 +1093,7 @@ static void childhandler_cb(void)
 			LSWDBGP(DBG_BASE, buf) {
 				jam(buf, "waitpid returned pid %d",
 					child);
-				log_status(buf, status);
+				jam_status(buf, status);
 			}
 			struct pid_entry *pid_entry = NULL;
 			hash_t hash = pid_hasher(&child);
@@ -1104,10 +1105,10 @@ static void childhandler_cb(void)
 				}
 			}
 			if (pid_entry == NULL) {
-				LSWLOG(buf) {
+				LOG_JAMBUF(RC_LOG, logger, buf) {
 					jam(buf, "waitpid return unknown child pid %d",
 						child);
-					log_status(buf, status);
+					jam_status(buf, status);
 				}
 			} else {
 				struct state *st = state_with_serialno(pid_entry->serialno);
