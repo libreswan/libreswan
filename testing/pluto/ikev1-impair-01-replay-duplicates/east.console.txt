@@ -34,24 +34,24 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
  sed -n -e '/IMPAIR: start processing duplicate packet/,/IMPAIR: stop processing duplicate packet/ { /^[^|]/ p }' /tmp/pluto.log
-IMPAIR: start processing duplicate packet (xxx bytes)
+packet from 192.1.2.45:500: IMPAIR: start processing duplicate packet (xxx bytes)
 "westnet-eastnet" #1: retransmitting in response to duplicate packet; already STATE_MAIN_R1
-IMPAIR: stop processing duplicate packet
-IMPAIR: start processing duplicate packet (xxx bytes)
+packet from 192.1.2.45:500: IMPAIR: stop processing duplicate packet
+packet from 192.1.2.45:500: IMPAIR: start processing duplicate packet (xxx bytes)
 "westnet-eastnet" #1: discarding packet received during asynchronous work (DNS or crypto) in STATE_MAIN_R1
-IMPAIR: stop processing duplicate packet
-IMPAIR: start processing duplicate packet (xxx bytes)
+packet from 192.1.2.45:500: IMPAIR: stop processing duplicate packet
+packet from 192.1.2.45:500: IMPAIR: start processing duplicate packet (xxx bytes)
 "westnet-eastnet" #1: retransmitting in response to duplicate packet; already STATE_MAIN_R3
-IMPAIR: stop processing duplicate packet
-IMPAIR: start processing duplicate packet (xxx bytes)
+packet from 192.1.2.45:500: IMPAIR: stop processing duplicate packet
+packet from 192.1.2.45:500: IMPAIR: start processing duplicate packet (xxx bytes)
 "westnet-eastnet" #2: discarding packet received during asynchronous work (DNS or crypto) in STATE_QUICK_R0
-IMPAIR: stop processing duplicate packet
-IMPAIR: start processing duplicate packet (xxx bytes)
-IMPAIR: stop processing duplicate packet
-IMPAIR: start processing duplicate packet (xxx bytes)
-IMPAIR: stop processing duplicate packet
-IMPAIR: start processing duplicate packet (xxx bytes)
-IMPAIR: stop processing duplicate packet
+packet from 192.1.2.45:500: IMPAIR: stop processing duplicate packet
+packet from 192.1.2.45:500: IMPAIR: start processing duplicate packet (xxx bytes)
+packet from 192.1.2.45:500: IMPAIR: stop processing duplicate packet
+packet from 192.1.2.45:500: IMPAIR: start processing duplicate packet (xxx bytes)
+packet from 192.1.2.45:500: IMPAIR: stop processing duplicate packet
+packet from 192.1.2.45:500: IMPAIR: start processing duplicate packet (xxx bytes)
+packet from 192.1.2.45:500: IMPAIR: stop processing duplicate packet
 east #
  ../bin/check-for-core.sh
 east #

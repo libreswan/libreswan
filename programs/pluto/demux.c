@@ -333,7 +333,7 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 	pexpect_reset_globals();
 	struct msg_digest *md = clone_raw_md(orig, fmt /* good enough */);
 
-	LSWLOG(buf) {
+	LOG_JAMBUF(RC_LOG, md->md_logger, buf) {
 		jam_string(buf, "IMPAIR: start processing ");
 		va_list ap;
 		va_start(ap, fmt);
@@ -346,9 +346,8 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 	}
 
 	process_md(&md);
-	md_delref(&md, HERE);
 
-	LSWLOG(buf) {
+	LOG_JAMBUF(RC_LOG, md->md_logger, buf) {
 		jam(buf, "IMPAIR: stop processing ");
 		va_list ap;
 		va_start(ap, fmt);
@@ -356,6 +355,7 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 		va_end(ap);
 	}
 
+	md_delref(&md, HERE);
 	pexpect(md == NULL);
 	pexpect_reset_globals();
 }
