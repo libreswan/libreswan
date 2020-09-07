@@ -1218,6 +1218,6 @@ extern uint8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
 bool pbs_in_address(ip_address *address, const struct ip_info *af,
 		    struct pbs_in *input_pbs,
 		    const char *WHAT) MUST_USE_RESULT;
-bool pbs_out_address(const ip_address *address, struct pbs_out *output_pbs, const char *what);
+diag_t pbs_out_address(struct pbs_out *output_pbs, const ip_address *address, const char *what);
 
 #endif /* _PACKET_H */

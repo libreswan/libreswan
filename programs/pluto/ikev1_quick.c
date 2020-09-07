@@ -164,13 +164,17 @@ static bool emit_subnet_id(const ip_subnet *net,
 		return FALSE;
 
 	ip_address tp = subnet_prefix(net);
-	if (!pbs_out_address(&tp, &id_pbs, "client network")) {
+	diag_t d = pbs_out_address(&id_pbs, &tp, "client network");
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
 		return false;
 	}
 
 	if (!usehost) {
 		ip_address tm = subnet_mask(net);
-		if (!pbs_out_address(&tm, &id_pbs, "client mask")) {
+		diag_t d = pbs_out_address(&id_pbs, &tm, "client mask");
+		if (d != NULL) {
+			log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
 			return false;
 		}
 	}

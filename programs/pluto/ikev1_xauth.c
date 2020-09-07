@@ -205,15 +205,23 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 
 	switch (attr_type) {
 	case INTERNAL_IP4_ADDRESS:
-		if (!pbs_out_address(ia, &attrval, "IP_addr")) {
+	{
+		diag_t d = pbs_out_address(&attrval, ia, "IP_addr");
+		if (d != NULL) {
+			log_diag(RC_LOG_SERIOUS, attrval.out_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 		break;
+	}
 
 	case INTERNAL_IP4_SUBNET:
-		if (!pbs_out_address(&c->spd.this.client.addr, &attrval, "IP4_subnet")) {
+	{
+		diag_t d = pbs_out_address(&attrval, &c->spd.this.client.addr, "IP4_subnet");
+		if (d != NULL) {
+			log_diag(RC_LOG_SERIOUS, attrval.out_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
+	}
 		/* FALL THROUGH */
 	case INTERNAL_IP4_NETMASK:
 	{
@@ -244,7 +252,9 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 				return STF_INTERNAL_ERROR;
 			}
 			/* emit attribute's value */
-			if (!pbs_out_address(&dnsip, &attrval, "IP4_dns")) {
+			diag_t d = pbs_out_address(&attrval, &dnsip, "IP4_dns");
+			if (d != NULL) {
+				log_diag(RC_LOG_SERIOUS, attrval.out_logger, &d, "%s", "");
 				return STF_INTERNAL_ERROR;
 			}
 

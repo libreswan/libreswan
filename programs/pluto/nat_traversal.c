@@ -546,9 +546,14 @@ static bool emit_one_natoa(pb_stream *outs,
 		.isanoa_idtype = addrtypeof(ip) == AF_INET ?
 			ID_IPV4_ADDR : ID_IPV6_ADDR,
 	};
-	if (!out_struct(&natoa, pd, outs, &pbs) ||
-	    !pbs_out_address(ip, &pbs, nm))
-		return FALSE;
+	if (!out_struct(&natoa, pd, outs, &pbs)) {
+		return false;
+	}
+	diag_t d = pbs_out_address(&pbs, ip, nm);
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+		return false;
+	}
 
 	address_buf ab;
 	dbg("NAT-OAi (S): %s", str_address(ip, &ab));

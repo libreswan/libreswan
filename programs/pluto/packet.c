@@ -2874,10 +2874,10 @@ bool pbs_in_address(ip_address *address, const struct ip_info *ipv,
 	}
 }
 
-bool pbs_out_address(const ip_address *address, struct pbs_out *out_pbs, const char *what)
+diag_t pbs_out_address(struct pbs_out *out_pbs, const ip_address *address, const char *what)
 {
 	shunk_t as = address_as_shunk(address);
-	return out_raw(as.ptr, as.len, out_pbs, what);
+	return pbs_out_raw(out_pbs, as.ptr, as.len, what);
 }
 
 void log_pbs_out(lset_t rc_flags, struct pbs_out *outs, const char *message, ...)
