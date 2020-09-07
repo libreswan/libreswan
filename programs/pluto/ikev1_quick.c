@@ -652,7 +652,7 @@ void quick_outI1(struct fd *whack_sock,
 			st->st_pfs_group = isakmp_sa->st_oakley.ta_dh;
 	}
 
-	LSWLOG(buf) {
+	LOG_JAMBUF(RC_LOG, st->st_logger, buf) {
 		jam(buf, "initiating Quick Mode %s", prettypolicy(policy));
 		if (replacing != SOS_NOBODY) {
 			jam(buf, " to replace #%lu", replacing);

@@ -129,11 +129,9 @@ void start_retransmits(struct state *st)
 		 * network is assumed to be reliable).
 		 */
 		rt->delay = c->r_timeout;
-		LSWLOG(buf) {
-			jam_string(buf, "IMPAIR: suppressing retransmits; scheduling timeout in ");
-			jam_deltatime(buf, rt->delay);
-			jam_string(buf, " seconds");
-		}
+		deltatime_buf db;
+		log_state(RC_LOG, st, "IMPAIR: suppressing retransmits; scheduling timeout in %s seconds",
+			  str_deltatime(rt->delay, &db));
 	}
 	rt->start = mononow();
 	rt->delays = rt->delay;

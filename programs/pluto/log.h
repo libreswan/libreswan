@@ -326,11 +326,6 @@ extern void loglog(enum rc_type, const char *fmt, ...) PRINTF_LIKE(2); /* use lo
 
 void jambuf_to_default_streams(struct jambuf *buf, enum rc_type rc);
 
-#define LSWLOG(BUF)							\
-	JAMBUF(BUF)							\
-		for (jam_cur_prefix(BUF); BUF != NULL;			\
-		     jambuf_to_default_streams(BUF, RC_LOG), BUF = NULL)
-
 #define LOG_ERRNO(ERRNO, MESSAGE, ...)					\
 	{								\
 		int e_ = ERRNO; /* save value across va args */		\

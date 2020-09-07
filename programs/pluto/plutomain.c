@@ -1758,7 +1758,7 @@ int main(int argc, char **argv)
 	 * Log impair-* functions that were enabled
 	 */
 	if (have_impairments()) {
-		LSWLOG(buf) {
+		LOG_JAMBUF(RC_LOG, logger, buf) {
 			jam(buf, "Warning: impairments enabled: ");
 			jam_impairments(buf, "+");
 		}
