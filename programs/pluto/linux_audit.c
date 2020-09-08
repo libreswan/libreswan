@@ -44,7 +44,6 @@
 
 #include "defs.h"
 #include "log.h"
-#include "peerlog.h"
 #include "server.h"
 #include "state.h"
 #include "id.h"

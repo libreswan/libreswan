@@ -2889,12 +2889,13 @@ bool ikev2_decode_peer_id(struct msg_digest *md)
 }
 
 /*
- * This logs to the main log (including peerlog!) the authentication
- * and encryption keys for an IKEv2 SA.  This is done in a format that
- * is compatible with tcpdump 4.0's -E option.
+ * This logs to the main log the authentication and encryption keys
+ * for an IKEv2 SA.  This is done in a format that is compatible with
+ * tcpdump 4.0's -E option.
  *
- * The peerlog will be perfect.  The syslog will require that a cut
- * command is used to remove the initial text.
+ * The log message will require that a cut command is used to remove
+ * the initial text.
+ *
  * DANGER: this intentionally leaks cryptographic secrets.
  */
 void ikev2_log_parentSA(const struct state *st)

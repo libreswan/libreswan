@@ -187,7 +187,6 @@ OBJS += foodgroups.o log.o state.o plutomain.o plutoalg.o server.o
 OBJS += iface.o
 OBJS += iface_udp.o
 OBJS += iface_tcp.o
-OBJS += peerlog.o
 OBJS += hash_table.o list_entry.o
 OBJS += timer.o hostpair.o
 OBJS += retry.o

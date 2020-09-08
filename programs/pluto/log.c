@@ -32,7 +32,6 @@
 
 #include "defs.h"
 #include "log.h"
-#include "peerlog.h"
 #include "state_db.h"
 #include "connections.h"
 #include "state.h"
@@ -321,8 +320,6 @@ void pluto_init_log(struct log_param param)
 	if (log_to_syslog)
 		openlog("pluto", LOG_CONS | LOG_NDELAY | LOG_PID,
 			LOG_AUTHPRIV);
-
-	peerlog_init();
 }
 
 /*
@@ -349,18 +346,6 @@ static void syslog_raw(int severity, const char *prefix, char *message)
 {
 	if (log_to_syslog)
 		syslog(severity, "%s%s", prefix, message);
-}
-
-static void peerlog_raw(const char *prefix, char *message, const struct realtm *t)
-{
-	/*
-	 * XXX: broken: peerlog() should work from a helper thread but
-	 * that likely means adding an FD or a the peer address to the
-	 * logging context.
-	 */
-	if (log_to_perpeer && in_main_thread()) {
-		peerlog(cur_connection, prefix, message, t);
-	}
 }
 
 void jambuf_to_whack(struct jambuf *buf, const struct fd *whackfd, enum rc_type rc)
@@ -503,7 +488,6 @@ static void log_raw(int severity, const char *prefix, struct jambuf *buf)
 	struct realtm t = local_realtime(realnow());
 	stdlog_raw(prefix, buf->array, &t);
 	syslog_raw(severity, prefix, buf->array);
-	peerlog_raw(prefix, buf->array, &t);
 	/* not whack */
 }
 
@@ -539,8 +523,6 @@ void close_log(void)
 		(void)fclose(pluto_log_fp);
 		pluto_log_fp = NULL;
 	}
-
-	peerlog_close();
 }
 
 void libreswan_exit(enum pluto_exit_code rc)

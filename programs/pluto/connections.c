@@ -64,7 +64,6 @@
 #include "server.h"
 #include "kernel.h" /* needs connections.h */
 #include "log.h"
-#include "peerlog.h"
 #include "keys.h"
 #include "whack.h"
 #include "spdb.h"
@@ -232,9 +231,6 @@ static void discard_connection(struct connection *c,
 
 	if (IS_XFRMI && c->xfrmi != NULL)
 		unreference_xfrmi(c, connection_logger);
-
-	/* free up any logging resources */
-	perpeer_logfree(c);
 
 	/* find and delete c from connections list */
 	/* XXX: if in list, remove_list_entry(c->ac_next); */

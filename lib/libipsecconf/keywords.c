@@ -393,8 +393,8 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "nssdir", kv_config, kt_dirname, KSF_NSSDIR, NULL, NULL, },
   { "secretsfile",  kv_config,  kt_dirname,  KSF_SECRETSFILE, NULL, NULL, },
   { "statsbin",  kv_config,  kt_dirname,  KSF_STATSBINARY, NULL, NULL, },
-  { "perpeerlog",  kv_config,  kt_bool,  KBF_PERPEERLOG, NULL, NULL, },
-  { "perpeerlogdir",  kv_config,  kt_dirname,  KSF_PERPEERDIR, NULL, NULL, },
+  { "perpeerlog",  kv_config,  kt_bool,  KBF_PERPEERLOG, NULL, NULL, },  /* obsolete */
+  { "perpeerlogdir",  kv_config,  kt_dirname,  KSF_PERPEERDIR, NULL, NULL, },  /* obsolete */
   { "uniqueids",  kv_config,  kt_bool,  KBF_UNIQUEIDS, NULL, NULL, },
   { "shuntlifetime",  kv_config,  kt_time,  KBF_SHUNTLIFETIME, NULL, NULL, },
   { "global-redirect", kv_config, kt_string, KSF_GLOBAL_REDIRECT, NULL, NULL },

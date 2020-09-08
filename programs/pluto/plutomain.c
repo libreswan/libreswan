@@ -48,7 +48,6 @@
 #include "server.h"
 #include "kernel.h"	/* needs connections.h */
 #include "log.h"
-#include "peerlog.h"
 #include "keys.h"
 #include "secrets.h"    /* for free_remembered_public_keys() */
 #include "rnd.h"
@@ -141,7 +140,6 @@ static void free_pluto_main(void)
 	pfree(pluto_vendorid);
 	pfreeany(ocsp_uri);
 	pfreeany(ocsp_trust_name);
-	pfreeany(peerlog_basedir);
 	pfreeany(curl_iface);
 	pfreeany(pluto_log_file);
 	pfreeany(pluto_dnssec_rootfile);
@@ -556,8 +554,8 @@ static const struct option long_opts[] = {
 	{ "rundir\0<path>", required_argument, NULL, 'b' }, /* was ctlbase */
 	{ "ctlbase\0<path>", required_argument, NULL, 'b' }, /* backwards compatibility */
 	{ "secretsfile\0<secrets-file>", required_argument, NULL, 's' },
-	{ "perpeerlogbase\0<path>", required_argument, NULL, 'P' },
-	{ "perpeerlog\0", no_argument, NULL, 'l' },
+	{ "perpeerlogbase\0<path>", required_argument, NULL, 'P' },  /* obsolete */
+	{ "perpeerlog\0", no_argument, NULL, 'l' },  /* obsolete */
 	{ "global-redirect\0", required_argument, NULL, 'Q'},
 	{ "global-redirect-to\0", required_argument, NULL, 'y'},
 	{ "coredir\0>dumpdir", required_argument, NULL, 'C' },	/* redundant spelling */
@@ -1146,11 +1144,13 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'P':	/* --perpeerlogbase */
-			peerlog_basedir = clone_str(optarg, "peerlog_basedir");
+			log_message(RC_LOG|ERROR_STREAM, logger,
+				    "ignoring --perperrlogbase, no longer supported");
 			continue;
 
 		case 'l':	/* --perpeerlog */
-			log_to_perpeer = TRUE;
+			log_message(RC_LOG|ERROR_STREAM, logger,
+				    "ignoring --perperrlogbase, no longer supported");
 			continue;
 
 		case 'y':	/* --global-redirect-to */
@@ -1318,18 +1318,6 @@ int main(int argc, char **argv)
 				*cfg->setup.strings[KSF_NSSDIR] != 0) {
 				/* nssdir= */
 				lsw_conf_nssdir(cfg->setup.strings[KSF_NSSDIR], logger);
-			}
-
-			/* perpeerlog= */
-			log_to_perpeer = cfg->setup.options[KBF_PERPEERLOG];
-			if (log_to_perpeer) {
-				/* perpeerlogbase= */
-				if (cfg->setup.strings[KSF_PERPEERDIR]) {
-					set_cfg_string(&peerlog_basedir,
-						cfg->setup.strings[KSF_PERPEERDIR]);
-				} else {
-					peerlog_basedir = clone_str("/var/log/pluto/", "perpeer_logdir");
-				}
 			}
 
 			if (cfg->setup.strings[KSF_CURLIFACE]) {
@@ -1957,11 +1945,10 @@ void show_setup_plutomain(struct show *s)
 	show_comment(s,
 		"nhelpers=%d, uniqueids=%s, "
 		"dnssec-enable=%s, "
-		"perpeerlog=%s, logappend=%s, logip=%s, shuntlifetime=%jds, xfrmlifetime=%jds",
+		"logappend=%s, logip=%s, shuntlifetime=%jds, xfrmlifetime=%jds",
 		nhelpers,
 		bool_str(uniqueIDs),
 		bool_str(do_dnssec),
-		log_to_perpeer ? peerlog_basedir : "no",
 		bool_str(log_append),
 		bool_str(log_ip),
 		deltasecs(pluto_shunt_lifetime),
