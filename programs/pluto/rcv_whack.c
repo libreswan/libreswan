@@ -57,7 +57,6 @@
 #include "kernel.h"             /* needs connections.h */
 #include "rcv_whack.h"
 #include "log.h"
-#include "peerlog.h"
 #include "lswfips.h"
 #include "keys.h"
 #include "secrets.h"
@@ -256,7 +255,6 @@ static void do_whacklisten(struct fd *whackfd)
 	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
 	fflush(stderr);
 	fflush(stdout);
-	peerlog_close();    /* close any open per-peer logs */
 #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_RELOADING, SD_REPORT_NO_STATUS);
 #endif

@@ -60,8 +60,6 @@
       <arg choice="opt">--secretsfile <replaceable>secrets-file</replaceable></arg>
       <arg choice="opt">--nhelpers <replaceable>number</replaceable></arg>
       <arg choice="opt">--seedbits <replaceable>numbits</replaceable></arg>
-      <arg choice="opt">--perpeerlog</arg>
-      <arg choice="opt">--perpeerlogbase <replaceable>dirname</replaceable></arg>
       <arg choice="opt">--ipsecdir <replaceable>dirname</replaceable></arg>
       <arg choice="opt">--nssdir <replaceable>dirname</replaceable></arg>
       <arg choice="opt">--coredir <replaceable>dirname</replaceable></arg>
@@ -1024,14 +1022,6 @@
 
       <para>Alternatively, <option>--logfile</option> can be used to send all logging
       information to a specific file.</para>
-
-      <para>If the <option>--perpeerlog</option> option is given, then pluto
-      will open a log file per connection. By default, this is in
-      /var/log/pluto/peer, in a subdirectory formed by turning all dot (.)
-      [IPv4] or colon (:) [IPv6] into slashes (/).</para>
-
-      <para>The base directory can be changed with the
-      <option>--perpeerlogbase</option>.</para>
 
       <para>Once <emphasis remap="B">pluto</emphasis> is started, it waits for
       requests from <emphasis remap="B">whack</emphasis>.</para>
