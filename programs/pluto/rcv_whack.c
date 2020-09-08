@@ -207,8 +207,6 @@ static int whack_route_connection(struct connection *c,
 				  struct fd *whackfd,
 				  void *unused_arg UNUSED)
 {
-	struct connection *old = push_cur_connection(c);
-
 	if (!oriented(*c)) {
 		/* XXX: why whack only? */
 		log_connection(RC_ORIENT|WHACK_STREAM, whackfd, c,
@@ -219,7 +217,6 @@ static int whack_route_connection(struct connection *c,
 		/* XXX: why whack only? */
 		log_connection(RC_ROUTE|WHACK_STREAM, whackfd, c, "could not route");
 	}
-	pop_cur_connection(old);
 	return 1;
 }
 
@@ -231,7 +228,6 @@ static int whack_unroute_connection(struct connection *c,
 	int fail = 0;
 
 	passert(c != NULL);
-	set_cur_connection(c);
 
 	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		if (sr->routing >= RT_ROUTED_TUNNEL)
@@ -246,7 +242,6 @@ static int whack_unroute_connection(struct connection *c,
 		unroute_connection(c);
 	}
 
-	reset_cur_connection();
 	return 1;
 }
 

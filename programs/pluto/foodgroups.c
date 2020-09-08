@@ -418,11 +418,9 @@ void route_group(struct fd *whackfd, struct connection *c)
 					 * Shouldn't this leave a
 					 * breadcrumb in the log file?
 					 */
-					struct connection *old = push_cur_connection(ci); /* for trap_connection() */
 					if (!trap_connection(ci, whackfd))
 						log_connection(WHACK_STREAM|RC_ROUTE, whackfd, c,
 							       "could not route");
-					pop_cur_connection(old);
 				}
 			}
 		}
@@ -441,9 +439,7 @@ void unroute_group(struct connection *c)
 			struct connection *ci = conn_by_name(t->name, false/*!strict*/);
 
 			if (ci != NULL) {
-				set_cur_connection(ci);
 				unroute_connection(ci);
-				set_cur_connection(c);
 			}
 		}
 	}

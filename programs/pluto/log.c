@@ -92,7 +92,6 @@ struct fd *whack_log_fd = NULL;      /* only set during whack_handle() */
  * boundaries!
  */
 static struct state *cur_state = NULL;                 /* current state, for diagnostics */
-static struct connection *cur_connection = NULL;       /* current connection, for diagnostics */
 
 /*
  * if any debugging is on, make sure that we log the connection we are
@@ -167,10 +166,6 @@ void log_reset_globals(where_t where)
 		log_processing(RESET, true, cur_state, NULL, NULL, where);
 		cur_state = NULL;
 	}
-	if (cur_connection != NULL) {
-		log_processing(RESET, true, NULL, cur_connection, NULL, where);
-		cur_connection = NULL;
-	}
 }
 
 void log_pexpect_reset_globals(where_t where)
@@ -180,63 +175,6 @@ void log_pexpect_reset_globals(where_t where)
 			    cur_state->st_serialno);
 		cur_state = NULL;
 	}
-	if (cur_connection != NULL) {
-		log_pexpect(where, "processing: unexpected cur_connection %s should be NULL",
-			    cur_connection->name);
-		cur_connection = NULL;
-	}
-}
-
-struct connection *log_push_connection(struct connection *new_connection,
-				       where_t where)
-{
-	bool current = (cur_state == NULL); /* not hidden by state? */
-	struct connection *old_connection = cur_connection;
-
-	if (old_connection != NULL &&
-	    old_connection != new_connection) {
-		log_processing(SUSPEND, current,
-			       NULL, old_connection, NULL, where);
-	}
-
-	cur_connection = new_connection;
-
-	if (new_connection == NULL) {
-		dbg("start processing: connection NULL "PRI_WHERE,
-		    pri_where(where));
-	} else if (old_connection == new_connection) {
-		log_processing(RESTART, current,
-			       NULL, new_connection, NULL, where);
-	} else {
-		log_processing(START, current,
-			       NULL, new_connection, NULL, where);
-	}
-
-	return old_connection;
-}
-
-void log_pop_connection(struct connection *c, where_t where)
-{
-	bool current = (cur_state == NULL); /* not hidden by state? */
-	if (cur_connection != NULL) {
-		log_processing(STOP, current /* current? */,
-			       NULL, cur_connection, NULL, where);
-	} else {
-		dbg("processing: STOP connection NULL "PRI_WHERE,
-		    pri_where(where));
-	}
-
-	cur_connection = c;
-
-	if (cur_connection != NULL) {
-		log_processing(RESUME, current /* current? */,
-			       NULL, cur_connection, NULL, where);
-	}
-}
-
-bool is_cur_connection(const struct connection *c)
-{
-	return cur_connection == c;
 }
 
 so_serial_t log_push_state(struct state *new_state, where_t where)
@@ -248,9 +186,6 @@ so_serial_t log_push_state(struct state *new_state, where_t where)
 			log_processing(SUSPEND, true /* must be current */,
 				       cur_state, NULL, NULL, where);
 		}
-	} else if (cur_connection != NULL && new_state != NULL) {
-		log_processing(SUSPEND, true /* current for now */,
-			       NULL, cur_connection, NULL, where);
 	}
 
 	cur_state = new_state;
@@ -283,9 +218,6 @@ void log_pop_state(so_serial_t serialno, where_t where)
 	if (cur_state != NULL) {
 		log_processing(RESUME, true, /* must be current */
 			       cur_state, NULL, NULL, where);
-	} else if (cur_connection != NULL) {
-		log_processing(RESUME, true, /* now current */
-			       NULL, cur_connection, NULL, where);
 	}
 }
 
@@ -470,15 +402,6 @@ void jam_cur_prefix(struct jambuf *buf)
 		return;
 	}
 
-	if (cur_connection != NULL) {
-		struct logger logger = CONNECTION_LOGGER(cur_connection, whack_log_fd);
-		if (DBGP(DBG_BASE)) {
-			jam(buf, "[EXPECATATION FAILED: using cur_connection]: ");
-		}
-		jam_logger_prefix(buf, &logger);
-		return;
-	}
-
 	return;
 }
 
@@ -566,7 +489,6 @@ void whack_comment(const struct fd *whackfd, const char *message, ...)
 	pexpect(fd_p(whackfd));
 	pexpect(in_main_thread());
 	pexpect(cur_state == NULL);
-	pexpect(cur_connection == NULL);
 	JAMBUF(buf) {
 		va_list args;
 		va_start(args, message);
@@ -928,10 +850,6 @@ struct logger cur_logger(void)
 		struct logger logger = *(cur_state->st_logger);
 		logger.global_whackfd = whack_log_fd;
 		return logger;
-	}
-
-	if (cur_connection != NULL) {
-		return CONNECTION_LOGGER(cur_connection, whack_log_fd);
 	}
 
 	return GLOBAL_LOGGER(whack_log_fd);

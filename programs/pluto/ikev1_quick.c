@@ -1176,7 +1176,6 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 		 */
 		if (st->st_connection != c) {
 			update_state_connection(st, c);
-			set_cur_connection(c);
 		}
 
 		st->st_try = 0; /* not our job to try again from start */

@@ -286,7 +286,6 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 			 struct fd *whackfd, bool background)
 {
 	threadtime_t inception  = threadtime_start();
-	struct connection *old = push_cur_connection(c);
 
 	/* If whack supplied a remote IP, fill it in if we can */
 	if (remote_host != NULL && isanyaddr(&c->spd.that.host_addr)) {
@@ -297,7 +296,6 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 		if (c->kind != CK_TEMPLATE) {
 			log_connection(RC_NOPEERIP, whackfd, c,
 				       "cannot instantiate non-template connection to a supplied remote IP address");
-			pop_cur_connection(old);
 			return 0;
 		}
 
@@ -311,8 +309,6 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 			       pri_connection(d, &cb), remote_host);
 		/* flip cur_connection */
 		c = d;
-		pop_cur_connection(old);
-		old = push_cur_connection(c);
 		/* now proceed as normal */
 	}
 
@@ -323,14 +319,12 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 			       "we cannot identify ourselves with either end of this connection.  %s or %s are not usable",
 			       ipstr(&c->spd.this.host_addr, &a),
 			       ipstr(&c->spd.that.host_addr, &b));
-		pop_cur_connection(old);
 		return 0;
 	}
 
 	if (NEVER_NEGOTIATE(c->policy)) {
 		log_connection(RC_INITSHUNT, whackfd, c,
 			       "cannot initiate an authby=never connection");
-		pop_cur_connection(old);
 		return 0;
 	}
 
@@ -343,14 +337,12 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 							 c->kind));
 				dbg("connection '%s' +POLICY_UP", c->name);
 				c->policy |= POLICY_UP;
-				reset_cur_connection();
 				return 1;
 			} else {
 				log_connection(RC_NOPEERIP, whackfd, c,
 					       "cannot initiate connection without knowing peer IP address (kind=%s)",
 					       enum_show(&connection_kind_names, c->kind));
 			}
-			pop_cur_connection(old);
 			return 0;
 		}
 
@@ -363,7 +355,6 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 				       "cannot initiate connection with ID wildcards (kind=%s)",
 				       enum_show(&connection_kind_names, c->kind));
 		}
-		pop_cur_connection(old);
 		return 0;
 	}
 
@@ -375,7 +366,6 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 				       bool_str((c->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY));
 			dbg("connection '%s' +POLICY_UP", c->name);
 			c->policy |= POLICY_UP;
-			pop_cur_connection(old);
 			return 1;
 		} else {
 			log_connection(RC_NOPEERIP, whackfd, c,
@@ -383,7 +373,6 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 				       enum_show(&connection_kind_names,
 						 c->kind),
 				       bool_str((c->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY));
-			pop_cur_connection(old);
 			return 0;
 		}
 	}
@@ -403,8 +392,6 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 #endif
 		/* flip cur_connection */
 		c = d;
-		pop_cur_connection(old);
-		old = push_cur_connection(c);
 	}
 
 	/* We will only request an IPsec SA if policy isn't empty
@@ -453,7 +440,6 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 		if (c->child_proposals.p != NULL && phase2_sa == NULL) {
 			log_message(WHACK_STREAM | RC_LOG_SERIOUS, logger,
 				    "cannot initiate: no acceptable kernel algorithms loaded");
-			pop_cur_connection(old);
 			return 0;
 		}
 		free_sa(&phase2_sa);
@@ -463,7 +449,6 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 	c->policy |= POLICY_UP;
 	ipsecdoi_initiate(background ? null_fd : whackfd,
 			  c, c->policy, 1, SOS_NOBODY, &inception, NULL);
-	pop_cur_connection(old);
 	return 1;
 }
 

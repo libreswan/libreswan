@@ -187,10 +187,6 @@ static void discard_connection(struct connection *c,
 void delete_connection(struct connection *c, bool relations)
 {
 	struct fd *whackfd = whack_log_fd;
-	struct connection *old_cur_connection = push_cur_connection(c);
-	if (old_cur_connection == c) {
-		old_cur_connection = NULL;
-	}
 
 	/*
 	 * Must be careful to avoid circularity:
@@ -211,7 +207,6 @@ void delete_connection(struct connection *c, bool relations)
 		}
 	}
 	release_connection(c, relations, whackfd); /* won't delete c */
-	pop_cur_connection(old_cur_connection);
 	/* make a copy of the logger so it works even after the delete */
 	struct logger tmp = CONNECTION_LOGGER(c, whack_log_fd);
 	struct logger *connection_logger = clone_logger(&tmp); /* must-free */
@@ -4172,15 +4167,6 @@ void update_state_connection(struct state *st, struct connection *c)
 		st->st_peer_alt_id = FALSE; /* must be rechecked against new 'that' */
 		rehash_state_connection(st);
 		if (old != NULL) {
-			/*
-			 * Hack to see cur_connection needs to be
-			 * updated.  If nothing else, it will log a
-			 * suspend then resume.
-			 */
-			if (is_cur_connection(old)) {
-				pop_cur_connection(NULL);
-				push_cur_connection(c);
-			}
 			connection_discard(old);
 		}
 	}

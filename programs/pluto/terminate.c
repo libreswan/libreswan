@@ -65,7 +65,6 @@
 static int terminate_a_connection(struct connection *c, struct fd *whackfd,
 				  void *unused_arg UNUSED)
 {
-	set_cur_connection(c);
 	log_connection(RC_LOG, whackfd, c,
 		       "terminating SAs using this connection");
 	dbg("connection '%s' -POLICY_UP", c->name);
@@ -87,8 +86,6 @@ static int terminate_a_connection(struct connection *c, struct fd *whackfd,
 		dbg("connection not shared - terminating IKE and IPsec SA");
 		delete_states_by_connection(c, false, whackfd);
 	}
-
-	reset_cur_connection();
 
 	return 1;
 }

@@ -2418,7 +2418,6 @@ bool accept_delete(struct msg_digest *md,
 				}
 
 				struct connection *rc = dst->st_connection;
-				struct connection *oldc = push_cur_connection(rc);
 
 				if (nat_traversal_enabled && dst->st_connection->ikev1_natt != NATT_NONE) {
 					nat_traversal_change_port_lookup(md, dst);
@@ -2460,10 +2459,7 @@ bool accept_delete(struct msg_digest *md,
 									    null_fd/*no-whack?*/);
 						md->st = NULL;
 					}
-					reset_cur_connection();
 				}
-				/* reset connection */
-				pop_cur_connection(oldc);
 			}
 		}
 	}

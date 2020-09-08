@@ -273,7 +273,6 @@ static void process_md(struct msg_digest **mdp)
 {
 	process_packet(mdp);
 	reset_cur_state();
-	reset_cur_connection();
 }
 
 /* wrapper for read_packet and process_packet

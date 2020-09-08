@@ -83,21 +83,12 @@ extern void log_reset_globals(where_t where);
 extern void log_pexpect_reset_globals(where_t where);
 #define pexpect_reset_globals() log_pexpect_reset_globals(HERE)
 
-struct connection *log_push_connection(struct connection *c, where_t where);
-void log_pop_connection(struct connection *c, where_t where);
-
-#define push_cur_connection(C) log_push_connection(C, HERE)
-#define pop_cur_connection(C) log_pop_connection(C, HERE)
-
 so_serial_t log_push_state(struct state *st, where_t where);
 void log_pop_state(so_serial_t serialno, where_t where);
 
 #define push_cur_state(ST) log_push_state(ST, HERE)
 #define pop_cur_state(ST) log_pop_state(ST, HERE)
 
-#define set_cur_connection(C) push_cur_connection(C)
-#define reset_cur_connection() pop_cur_connection(NULL)
-bool is_cur_connection(const struct connection *c);
 #define set_cur_state(ST) push_cur_state(ST)
 #define reset_cur_state() pop_cur_state(SOS_NOBODY)
 
