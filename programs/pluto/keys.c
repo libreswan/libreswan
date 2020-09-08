@@ -598,8 +598,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	    str_id(that_id, &that_buf),
 	    enum_name(&pkk_names, kind));
 
-	return lsw_find_secret_by_id(pluto_secrets,
-				     kind,
+	return lsw_find_secret_by_id(pluto_secrets, kind,
 				     this_id, that_id, asym);
 }
 
@@ -713,16 +712,20 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 							   const struct pubkey_type *type,
 							   struct logger *logger)
 {
-	struct secret *s = lsw_get_secret(c, type->private_key_kind, TRUE, logger);
+	dbg("looking for connection %s's %s private key",
+	    c->name, type->name);
+	struct secret *s = lsw_get_secret(c, type->private_key_kind, true, logger);
 	if (s == NULL) {
-		dbg("no %s private key Found", type->name);
+		dbg("connection %s's %s private key not found",
+		    c->name, type->name);
 		return NULL;
 	}
 
 	const struct private_key_stuff *pks = lsw_get_pks(s);
 	passert(pks != NULL);
 
-	dbg("%s private key found", type->name);
+	dbg("connection %s's %s private key found",
+	    c->name, type->name);
 	return pks;
 }
 
