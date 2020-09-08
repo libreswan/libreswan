@@ -395,14 +395,14 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 				log_state(RC_LOG, &ike->sa,
 					  "no acceptable ECDSA/RSA-PSS ASN.1 signature hash proposal included for %s in %s",
 					  enum_name(&keyword_authby_names, that_authby), context);
-				DBG(DBG_BASE, {
+				if (DBGP(DBG_BASE)) {
 					size_t dl = min(pbs_left(pbs),
-						(size_t) (ASN1_LEN_ALGO_IDENTIFIER +
-							PMAX(ASN1_SHA1_ECDSA_SIZE,
-							PMAX(ASN1_SHA2_RSA_PSS_SIZE,
-								ASN1_SHA2_ECDSA_SIZE))));
+							(size_t) (ASN1_LEN_ALGO_IDENTIFIER +
+								  PMAX(ASN1_SHA1_ECDSA_SIZE,
+								       PMAX(ASN1_SHA2_RSA_PSS_SIZE,
+									    ASN1_SHA2_ECDSA_SIZE))));
 					DBG_dump("offered blob", pbs->cur, dl);
-					})
+				}
 				return FALSE;	/* none recognized */
 			}
 
