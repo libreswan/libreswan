@@ -356,9 +356,18 @@ bool same_id(const struct id *a, const struct id *b)
 	case ID_FROMCERT:
 		dbg("same_id() received ID_FROMCERT - unexpected");
 		/* FALLTHROUGH */
-	case ID_DER_ASN1_DN:
-		return same_dn(a->name, b->name);
-
+	case ID_DER_ASN1_DN: {
+		/*
+		 * Look for either:
+		 *  - an identical DN match
+		 *    OR
+		 *  - a DN match where a wildcard can be used for an entire
+		 *    RDN attribute value; you can have multiple RDNs where each
+		 *    has a wildcard for its attribute value.
+		 */
+		int wildcards = 0;
+		return match_dn(a->name, b->name, &wildcards);
+	}
 	case ID_KEY_ID:
 		return hunk_eq(a->name, b->name);
 
@@ -425,6 +434,23 @@ void duplicate_id(struct id *dst, const struct id *src)
 	*dst = clone_id(src, "copy of id");
 }
 
+/**
+ * is_wildcard_ava_value() checks if the value of an
+ * Attribute Value Assertion (AVA) is a wildcard.
+ *
+ * @return	True if the AVA value is a wildcard.
+ * @param ava	The Attribute Value Assertion whose value is checked.
+ */
+static inline bool is_wildcard_ava_value(CERTAVA const* const ava) {
+	SECItem *const val = CERT_DecodeAVAValue(&ava->value);
+	if (val == NULL) {
+		return FALSE;
+	}
+	bool const is_wildcard = (val->len == 1) && (val->data[0] == '*');
+	SECITEM_FreeItem(val, PR_TRUE);
+	return is_wildcard;
+}
+
 static bool match_rdn(const CERTRDN *const rdn_a, const CERTRDN *const rdn_b, bool *const has_wild)
 {
 	if (rdn_a == NULL || rdn_b == NULL)
@@ -445,20 +471,15 @@ static bool match_rdn(const CERTRDN *const rdn_a, const CERTRDN *const rdn_b, bo
 			CERTAVA *const ava_a = *avas_a;
 
 			if (CERT_GetAVATag(ava_a) == tag_b) {
-				SECItem *val_b = CERT_DecodeAVAValue(&ava_b->value);
-
-				/* XXX Can CERT_DecodeAVAValue() return NULL? No man page :( */
-				if (val_b != NULL) {
-					if (has_wild != NULL &&
-					    val_b->len == 1 &&
-					    val_b->data[0] == '*') {
-						*has_wild = TRUE;
-						matched++;
-						SECITEM_FreeItem(val_b, PR_TRUE);
-						break;
-					}
-					SECITEM_FreeItem(val_b, PR_TRUE);
+				/* Check if the current AVA value for either RDN has a wildcard. */
+				if ((has_wild != NULL) &&
+					(is_wildcard_ava_value(ava_a) || is_wildcard_ava_value(ava_b))) {
+					*has_wild = TRUE;
+					matched++;
+					break;
 				}
+
+				/* Neither AVA from the two RDNs had a wildcard, so compare them directly. */
 				if (CERT_CompareAVA(ava_a, ava_b) == SECEqual) {
 					matched++;
 					break;
