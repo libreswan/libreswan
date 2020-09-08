@@ -140,8 +140,6 @@ rm -rf %{buildroot}/usr/share/doc/libreswan
 rm -rf %{buildroot}%{_libexecdir}/ipsec/*check
 
 install -d -m 0755 %{buildroot}%{_rundir}/pluto
-# used when setting --perpeerlog without --perpeerlogbase
-install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
 # replace with rhel[56] specific version
 install -m 0755 initsystems/sysvinit/init.rhel \
