@@ -166,7 +166,9 @@ void calc_dh(struct pcr_v1_dh *dh, struct logger *logger)
 	/* now calculate the (g^x)(g^y) */
 	chunk_t g;
 	setchunk_from_wire(g, dh, dh->role == SA_RESPONDER ? &dh->gi : &dh->gr);
-	DBG(DBG_CRYPT, DBG_dump_hunk("peer's g: ", g));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump_hunk("peer's g: ", g);
+	}
 
 	dh->shared = calc_dh_shared(dh->secret, g, logger);
 }
@@ -262,15 +264,15 @@ static void calc_skeyids_iv(struct pcr_v1_dh *skq,
 	*skeyid_e_out = skeyid_e;
 	*enc_key_out = enc_key;
 
-	DBG(DBG_CRYPT, DBG_log("NSS: pointers skeyid_d %p,  skeyid_a %p,  skeyid_e %p,  enc_key %p",
-			       skeyid_d, skeyid_a, skeyid_e, enc_key));
+	DBGF(DBG_CRYPT, "NSS: pointers skeyid_d %p,  skeyid_a %p,  skeyid_e %p,  enc_key %p",
+	     skeyid_d, skeyid_a, skeyid_e, enc_key);
 
 	/* generate IV */
 	{
-		DBG(DBG_CRYPT, {
-			    DBG_dump_hunk("DH_i:", gi);
-			    DBG_dump_hunk("DH_r:", gr);
-		    });
+		if (DBGP(DBG_CRYPT)) {
+			DBG_dump_hunk("DH_i:", gi);
+			DBG_dump_hunk("DH_r:", gr);
+		}
 		struct crypt_hash *ctx = crypt_hash_init("new IV", hasher, logger);
 		crypt_hash_digest_hunk(ctx, "GI", gi);
 		crypt_hash_digest_hunk(ctx, "GR", gr);
@@ -293,7 +295,9 @@ void calc_dh_iv(struct pcr_v1_dh *dh, struct logger *logger)
 	setchunk_from_wire(g, dh,
 		dh->role == SA_RESPONDER ? &dh->gi : &dh->gr);
 
-	DBG(DBG_CRYPT, DBG_dump_hunk("peer's g: ", g));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump_hunk("peer's g: ", g);
+	}
 
 	dh->shared = calc_dh_shared(dh->secret, g, logger);
 

@@ -43,8 +43,8 @@ static chunk_t zalloc_chunk(size_t length, const char *name)
  */
 chunk_t decode_to_chunk(const char *prefix, const char *original)
 {
-	DBG(DBG_CRYPT, DBG_log("decode_to_chunk: %s: input \"%s\"",
-			       prefix, original));
+	DBGF(DBG_CRYPT, "decode_to_chunk: %s: input \"%s\"",
+	     prefix, original);
 	chunk_t chunk;
 	if (startswith(original, "0x")) {
 		chunk = chunk_from_hex(original + strlen("0x"), original);
@@ -52,7 +52,9 @@ chunk_t decode_to_chunk(const char *prefix, const char *original)
 		chunk = zalloc_chunk(strlen(original), original);
 		memcpy(chunk.ptr, original, chunk.len);
 	}
-	DBG(DBG_CRYPT, DBG_dump_hunk("decode_to_chunk: output: ", chunk));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump_hunk("decode_to_chunk: output: ", chunk);
+	}
 	return chunk;
 }
 
@@ -74,9 +76,8 @@ bool verify_bytes(const char *desc,
 		  const void *actual, size_t actual_size)
 {
 	if (expected_size != actual_size) {
-		DBG(DBG_CRYPT,
-		    DBG_log("verify_chunk: %s: expected length %zd but got %zd",
-			    desc, expected_size, actual_size));
+		DBGF(DBG_CRYPT, "verify_chunk: %s: expected length %zd but got %zd",
+		     desc, expected_size, actual_size);
 		return false;
 	}
 
@@ -86,12 +87,12 @@ bool verify_bytes(const char *desc,
 		uint8_t a = ((const uint8_t*)actual)[i];
 		if (e != a) {
 			/* Caller should issue the real log message.  */
-			DBG(DBG_CRYPT, DBG_log("verify_chunk_data: %s: bytes at %zd differ, expected %02x found %02x",
-					       desc, i, e, a));
+			DBGF(DBG_CRYPT, "verify_chunk_data: %s: bytes at %zd differ, expected %02x found %02x",
+			     desc, i, e, a);
 			return false;
 		}
 	}
-	DBG(DBG_CRYPT, DBG_log("verify_chunk_data: %s: ok", desc));
+	DBGF(DBG_CRYPT, "verify_chunk_data: %s: ok", desc);
 	return true;
 }
 

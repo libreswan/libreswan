@@ -184,8 +184,8 @@ void form_keyid(chunk_t e, chunk_t n, char *keyid, unsigned *keysize)
 		 * - but wouldn't that be redundant?  The direct n==n
 		 * test would pick up the difference.
 		 */
-		DBG(DBG_CRYPT, DBG_log("XXX: adjusted modulus length %zu->%zu",
-				       n.len, n.len - 1));
+		DBGF(DBG_CRYPT, "XXX: adjusted modulus length %zu->%zu",
+		     n.len, n.len - 1);
 		n.ptr++;
 		n.len--;
 	}
@@ -432,7 +432,7 @@ static struct hash_signature ECDSA_sign_hash(const struct private_key_stuff *pks
 		return (struct hash_signature) { .len = 0, };
 	}
 
-	DBG(DBG_CRYPT, DBG_log("ECDSA_sign_hash: Started using NSS"));
+	DBGF(DBG_CRYPT, "ECDSA_sign_hash: Started using NSS");
 
 	/* point HASH to sign at HASH_VAL */
 	SECItem hash_to_sign = {
@@ -453,7 +453,9 @@ static struct hash_signature ECDSA_sign_hash(const struct private_key_stuff *pks
 
 	/* create the raw signature */
 	SECStatus s = PK11_Sign(pks->private_key, &raw_signature, &hash_to_sign);
-	DBG(DBG_CRYPT, DBG_dump("sig_from_nss", raw_signature.data, raw_signature.len));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump("sig_from_nss", raw_signature.data, raw_signature.len);
+	}
 	if (s != SECSuccess) {
 		/* PR_GetError() returns the thread-local error */
 		log_nss_error(RC_LOG_SERIOUS, logger,
@@ -476,7 +478,7 @@ static struct hash_signature ECDSA_sign_hash(const struct private_key_stuff *pks
 	memcpy(signature.ptr, encoded_signature.data, encoded_signature.len);
 	SECITEM_FreeItem(&encoded_signature, PR_FALSE);
 
-	DBG(DBG_CRYPT, DBG_log("ECDSA_sign_hash: Ended using NSS"));
+	DBGF(DBG_CRYPT, "ECDSA_sign_hash: Ended using NSS");
 	return signature;
 }
 
@@ -1622,23 +1624,15 @@ bool same_RSA_public_key(const struct RSA_public_key *a,
 	 * redundant?  The direct n==n test would pick up the
 	 * difference.
 	 */
-	DBG(DBG_CRYPT,
+	if (DBGP(DBG_CRYPT)) {
 	    if (a->k != b->k && hunk_eq(a->e, b->e)) {
 		    DBG_log("XXX: different modulus k (%u vs %u) modulus (%zu vs %zu) caused a mismatch",
 			    a->k, b->k, a->n.len, b->n.len);
-	    });
-
-	DBG(DBG_CRYPT,
-		DBG_log("k did %smatch", (a->k == b->k) ? "" : "NOT ");
-		);
-	DBG(DBG_CRYPT,
-	    DBG_log("n did %smatch",
-		    hunk_eq(a->n, b->n) ? "" : "NOT ");
-		);
-	DBG(DBG_CRYPT,
-		DBG_log("e did %smatch",
-			hunk_eq(a->e, b->e) ? "" : "NOT ");
-		);
+	    };
+	    DBG_log("k did %smatch", (a->k == b->k) ? "" : "NOT ");
+	    DBG_log("n did %smatch", hunk_eq(a->n, b->n) ? "" : "NOT ");
+	    DBG_log("e did %smatch", hunk_eq(a->e, b->e) ? "" : "NOT ");
+	}
 
 	return a == b ||
 		(a->k == b->k &&

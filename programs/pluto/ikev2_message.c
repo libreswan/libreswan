@@ -352,15 +352,15 @@ static void construct_enc_iv(const char *name,
 			     u_char *wire_iv, chunk_t salt,
 			     const struct encrypt_desc *encrypter)
 {
-	DBG(DBG_CRYPT, DBG_log("construct_enc_iv: %s: salt-size=%zd wire-IV-size=%zd block-size %zd",
-			       name, encrypter->salt_size, encrypter->wire_iv_size,
-			       encrypter->enc_blocksize));
+	DBGF(DBG_CRYPT, "construct_enc_iv: %s: salt-size=%zd wire-IV-size=%zd block-size %zd",
+	     name, encrypter->salt_size, encrypter->wire_iv_size,
+	     encrypter->enc_blocksize);
 	passert(salt.len == encrypter->salt_size);
 	passert(encrypter->enc_blocksize <= MAX_CBC_BLOCK_SIZE);
 	passert(encrypter->enc_blocksize >= encrypter->salt_size + encrypter->wire_iv_size);
 	size_t counter_size = encrypter->enc_blocksize - encrypter->salt_size - encrypter->wire_iv_size;
-	DBG(DBG_CRYPT, DBG_log("construct_enc_iv: %s: computed counter-size=%zd",
-			       name, counter_size));
+	DBGF(DBG_CRYPT, "construct_enc_iv: %s: computed counter-size=%zd",
+	     name, counter_size);
 
 	memcpy(enc_iv, salt.ptr, salt.len);
 	memcpy(enc_iv + salt.len, wire_iv, encrypter->wire_iv_size);
@@ -369,7 +369,9 @@ static void construct_enc_iv(const char *name,
 		       counter_size - 1);
 		enc_iv[encrypter->enc_blocksize - 1] = 1;
 	}
-	DBG(DBG_CRYPT, DBG_dump(name, enc_iv, encrypter->enc_blocksize));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump(name, enc_iv, encrypter->enc_blocksize);
+	}
 }
 
 
@@ -421,7 +423,8 @@ stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 		unsigned char *aad_start = auth_start;
 		size_t aad_size = enc_start - aad_start - wire_iv_size;
 
-		DBG(DBG_CRYPT,
+		/* now, encrypt */
+		if (DBGP(DBG_CRYPT)) {
 		    DBG_dump_hunk("Salt before authenticated encryption:", salt);
 		    DBG_dump("IV before authenticated encryption:",
 			     wire_iv_start, wire_iv_size);
@@ -430,7 +433,8 @@ stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 		    DBG_dump("data before authenticated encryption:",
 			     enc_start, enc_size);
 		    DBG_dump("integ before authenticated encryption:",
-			     integ_start, integ_size));
+			     integ_start, integ_size);
+		}
 		if (!ike->sa.st_oakley.ta_encrypt->encrypt_ops
 		    ->do_aead(ike->sa.st_oakley.ta_encrypt,
 			      salt.ptr, salt.len,
@@ -440,11 +444,13 @@ stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 			      cipherkey, true, sk->logger)) {
 			return STF_FAIL;
 		}
-		DBG(DBG_CRYPT,
+		if (DBGP(DBG_CRYPT)) {
 		    DBG_dump("data after authenticated encryption:",
 			     enc_start, enc_size);
 		    DBG_dump("integ after authenticated encryption:",
-			     integ_start, integ_size));
+			     integ_start, integ_size);
+		}
+
 	} else {
 		/* note: no iv is longer than MAX_CBC_BLOCK_SIZE */
 		unsigned char enc_iv[MAX_CBC_BLOCK_SIZE];
@@ -452,19 +458,20 @@ stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 				 wire_iv_start, salt,
 				 ike->sa.st_oakley.ta_encrypt);
 
-		DBG(DBG_CRYPT,
-		    DBG_dump("data before encryption:", enc_start, enc_size));
-
 		/* now, encrypt */
+		if (DBGP(DBG_CRYPT)) {
+			DBG_dump("data before encryption:", enc_start, enc_size);
+		}
 		ike->sa.st_oakley.ta_encrypt->encrypt_ops
 			->do_crypt(ike->sa.st_oakley.ta_encrypt,
 				   enc_start, enc_size,
 				   cipherkey,
 				   enc_iv, TRUE,
 				   sk->logger);
+		if (DBGP(DBG_CRYPT)) {
+			DBG_dump("data after encryption:", enc_start, enc_size);
+		}
 
-		DBG(DBG_CRYPT,
-		    DBG_dump("data after encryption:", enc_start, enc_size));
 		/* note: saved_iv's updated value is discarded */
 
 		/* okay, authenticate from beginning of IV */
@@ -475,11 +482,11 @@ stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 		struct crypt_mac mac = crypt_prf_final_mac(&ctx, ike->sa.st_oakley.ta_integ);
 		memcpy_hunk(integ_start, mac, integ_size);
 
-		DBG(DBG_CRYPT, {
-			    DBG_dump("data being hmac:", auth_start,
-				     integ_start - auth_start);
-			    DBG_dump("out calculated auth:", integ_start, integ_size);
-		    });
+		if (DBGP(DBG_CRYPT)) {
+			DBG_dump("data being hmac:", auth_start,
+				 integ_start - auth_start);
+			DBG_dump("out calculated auth:", integ_start, integ_size);
+		}
 	}
 
 	return STF_OK;
@@ -589,16 +596,18 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 		unsigned char *aad_start = auth_start;
 		size_t aad_size = enc_start - auth_start - wire_iv_size;
 
-		DBG(DBG_CRYPT,
-		    DBG_dump_hunk("Salt before authenticated decryption:", salt);
-		    DBG_dump("IV before authenticated decryption:",
-			     wire_iv_start, wire_iv_size);
-		    DBG_dump("AAD before authenticated decryption:",
-			     aad_start, aad_size);
-		    DBG_dump("data before authenticated decryption:",
-			     enc_start, enc_size);
-		    DBG_dump("integ before authenticated decryption:",
-			     integ_start, integ_size));
+		/* decrypt */
+		if (DBGP(DBG_CRYPT)) {
+			DBG_dump_hunk("Salt before authenticated decryption:", salt);
+			DBG_dump("IV before authenticated decryption:",
+				 wire_iv_start, wire_iv_size);
+			DBG_dump("AAD before authenticated decryption:",
+				 aad_start, aad_size);
+			DBG_dump("data before authenticated decryption:",
+				 enc_start, enc_size);
+			DBG_dump("integ before authenticated decryption:",
+				 integ_start, integ_size);
+		}
 		if (!ike->sa.st_oakley.ta_encrypt->encrypt_ops
 		    ->do_aead(ike->sa.st_oakley.ta_encrypt,
 			      salt.ptr, salt.len,
@@ -608,9 +617,11 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 			      cipherkey, false, ike->sa.st_logger)) {
 			return false;
 		}
-		DBG(DBG_CRYPT,
-		    DBG_dump("data after authenticated decryption:",
-			     enc_start, enc_size + integ_size));
+		if (DBGP(DBG_CRYPT)) {
+			DBG_dump("data after authenticated decryption:",
+				 enc_start, enc_size + integ_size);
+		}
+
 	} else {
 		/*
 		 * check authenticator.  The last INTEG_SIZE bytes are
@@ -628,24 +639,25 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 
 		dbg("authenticator matched");
 
-		/* decrypt */
-
 		/* note: no iv is longer than MAX_CBC_BLOCK_SIZE */
 		unsigned char enc_iv[MAX_CBC_BLOCK_SIZE];
 		construct_enc_iv("decryption IV/starting-variable", enc_iv,
 				 wire_iv_start, salt,
 				 ike->sa.st_oakley.ta_encrypt);
 
-		DBG(DBG_CRYPT,
-		    DBG_dump("payload before decryption:", enc_start, enc_size));
+		/* decrypt */
+		if (DBGP(DBG_CRYPT)) {
+			DBG_dump("payload before decryption:", enc_start, enc_size);
+		}
 		ike->sa.st_oakley.ta_encrypt->encrypt_ops
 			->do_crypt(ike->sa.st_oakley.ta_encrypt,
 				   enc_start, enc_size,
 				   cipherkey,
 				   enc_iv, FALSE,
 				   ike->sa.st_logger);
-		DBG(DBG_CRYPT,
-		    DBG_dump("payload after decryption:", enc_start, enc_size));
+		if (DBGP(DBG_CRYPT)) {
+			DBG_dump("payload after decryption:", enc_start, enc_size);
+		}
 	}
 
 	/*
@@ -669,16 +681,14 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 	if (pad_to_blocksize) {
 		if (padlen > enc_blocksize) {
 			/* probably racoon */
-			DBG(DBG_CRYPT,
-			    DBG_log("payload contains %zu blocks of extra padding (padding-length: %d (octet 0x%2x), encryption block-size: %zu)",
-				    (padlen - 1) / enc_blocksize,
-				    padlen, padlen - 1, enc_blocksize));
+			DBGF(DBG_CRYPT, "payload contains %zu blocks of extra padding (padding-length: %d (octet 0x%2x), encryption block-size: %zu)",
+			     (padlen - 1) / enc_blocksize,
+			     padlen, padlen - 1, enc_blocksize);
 		}
 	} else {
 		if (padlen > 1) {
-			DBG(DBG_CRYPT,
-			    DBG_log("payload contains %u octets of extra padding (padding-length: %u (octet 0x%2x))",
-				    padlen - 1, padlen, padlen - 1));
+			DBGF(DBG_CRYPT, "payload contains %u octets of extra padding (padding-length: %u (octet 0x%2x))",
+			     padlen - 1, padlen, padlen - 1);
 		}
 	}
 
@@ -686,7 +696,7 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 	 * Don't check the contents of the pad octets; racoon, for
 	 * instance, sets them to random values.
 	 */
-	DBG(DBG_CRYPT, DBG_log("stripping %u octets as pad", padlen));
+	DBGF(DBG_CRYPT, "stripping %u octets as pad", padlen);
 	*chunk = chunk2(enc_start, enc_size - padlen);
 
 	return true;

@@ -184,7 +184,7 @@ static void calc_skeyseed_v2(struct pcr_dh_v2 *sk,
 			     chunk_t *chunk_SK_pr_out,
 			     struct logger *logger)
 {
-	DBG(DBG_CRYPT, DBG_log("NSS: Started key computation"));
+	DBGF(DBG_CRYPT, "NSS: Started key computation");
 
 	PK11SymKey
 		*skeyseed_k,
@@ -315,8 +315,7 @@ static void calc_skeyseed_v2(struct pcr_dh_v2 *sk,
 	/* store copy of SK_pr_k for later use in authnull */
 	chunk_SK_pr = chunk_from_symkey("chunk_SK_pr", SK_pr_k, logger);
 
-	DBG(DBG_CRYPT,
-	    DBG_log("NSS ikev2: finished computing individual keys for IKEv2 SA"));
+	DBGF(DBG_CRYPT, "NSS ikev2: finished computing individual keys for IKEv2 SA");
 	release_symkey(__func__, "finalkey", &finalkey);
 
 	passert(*SK_d_out == NULL);
@@ -339,7 +338,7 @@ static void calc_skeyseed_v2(struct pcr_dh_v2 *sk,
 	*chunk_SK_pi_out = chunk_SK_pi;
 	*chunk_SK_pr_out = chunk_SK_pr;
 
-	DBG(DBG_CRYPT, {
+	if (DBGP(DBG_CRYPT)) {
 		/* ??? this won't fire count-pointers.awk; should it? */
 		DBG_log("calc_skeyseed_v2 pointers: shared-key@%p, SK_d-key@%p, SK_ai-key@%p, SK_ar-key@%p, SK_ei-key@%p, SK_er-key@%p, SK_pi-key@%p, SK_pr-key@%p",
 			shared, SK_d_k, SK_ai_k, SK_ar_k, SK_ei_k, SK_er_k, SK_pi_k, SK_pr_k);
@@ -347,7 +346,7 @@ static void calc_skeyseed_v2(struct pcr_dh_v2 *sk,
 		DBG_dump_hunk("calc_skeyseed_v2 responder salt", responder_salt);
 		DBG_dump_hunk("calc_skeyseed_v2 SK_pi", chunk_SK_pi);
 		DBG_dump_hunk("calc_skeyseed_v2 SK_pr", chunk_SK_pr);
-	});
+	}
 }
 
 /* NOTE: if NSS refuses to calculate DH, skr->shared == NULL */
@@ -364,7 +363,9 @@ void calc_dh_v2(struct pluto_crypto_req *r, struct logger *logger)
 	chunk_t remote_ke;
 	setchunk_from_wire(remote_ke, sk, sk->role == SA_RESPONDER ? &sk->gi : &sk->gr);
 
-	DBG(DBG_CRYPT, DBG_dump_hunk("peer's g: ", remote_ke));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump_hunk("peer's g: ", remote_ke);
+	}
 
 	sk->shared = calc_dh_shared(sk->secret, remote_ke, logger);
 	if (sk->shared == NULL) {

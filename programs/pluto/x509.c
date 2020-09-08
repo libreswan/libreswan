@@ -1071,16 +1071,19 @@ static chunk_t ikev2_hash_ca_keys(x509cert_t *ca_chain)
 		SHA1Update(&ctx_sha1, ca->signature.ptr, ca->signature.len);
 		SHA1Final(sighash, &ctx_sha1);
 
-		DBG(DBG_CRYPT, DBG_dump("SHA-1 of CA signature",
-							sighash,
-							SHA1_DIGEST_SIZE));
+		if (DBGP(DBG_CRYPT)) {
+			DBG_dump("SHA-1 of CA signature",
+				 sighash, SHA1_DIGEST_SIZE);
+		}
 
 		memcpy(combined_hash + sz, sighash, SHA1_DIGEST_SIZE);
 		sz += SHA1_DIGEST_SIZE;
 	}
 	passert(sz <= sizeof(combined_hash));
 	result = clone_bytes_as_chunk(combined_hash, sz, "combined CERTREQ hash");
-	DBG(DBG_CRYPT, DBG_dump_hunk("Combined CERTREQ hashes", result));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump_hunk("Combined CERTREQ hashes", result);
+	}
 	return result;
 }
 #endif

@@ -175,10 +175,11 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 
 	passert(pss->len != 0);
 
-	DBG(DBG_CRYPT,
+	if (DBGP(DBG_CRYPT)) {
 	    DBG_dump_hunk("inputs to hash1 (first packet)", firstpacket);
 	    DBG_dump_hunk(nonce_name, *nonce);
-	    DBG_dump_hunk("idhash", *idhash));
+	    DBG_dump_hunk("idhash", *idhash);
+	}
 
 	/*
 	 * RFC 4306 2.15:
@@ -200,8 +201,9 @@ bool ikev2_emit_psk_auth(enum keyword_authby authby,
 		return false;
 	}
 
-	DBG(DBG_CRYPT,
-	    DBG_dump_hunk("PSK auth octets", signed_octets));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump_hunk("PSK auth octets", signed_octets);
+	}
 
 	bool ok = pbs_out_hunk(signed_octets, a_pbs, "PSK auth");
 	return ok;
@@ -221,7 +223,9 @@ bool ikev2_create_psk_auth(enum keyword_authby authby,
 
 	const char *chunk_n = (authby == AUTHBY_PSK) ? "NO_PPK_AUTH chunk" : "NULL_AUTH chunk";
 	*additional_auth = clone_hunk(signed_octets, chunk_n);
-	DBG(DBG_CRYPT, DBG_dump_hunk(chunk_n, *additional_auth));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump_hunk(chunk_n, *additional_auth);
+	}
 
 	return true;
 }
@@ -249,9 +253,10 @@ bool ikev2_verify_psk_auth(enum keyword_authby authby,
 		return false;
 	}
 
-	DBG(DBG_CRYPT,
+	if (DBGP(DBG_CRYPT)) {
 	    DBG_dump_hunk("Received PSK auth octets", sig);
-	    DBG_dump_hunk("Calculated PSK auth octets", calc_hash));
+	    DBG_dump_hunk("Calculated PSK auth octets", calc_hash);
+	}
 	bool ok = hunk_eq(sig, calc_hash);
 	if (ok) {
 		log_state(RC_LOG_SERIOUS, &ike->sa,

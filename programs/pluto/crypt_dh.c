@@ -70,7 +70,7 @@ struct dh_secret {
 	SECKEYPublicKey *pubk;
 };
 
-static void lswlog_dh_secret(struct jambuf *buf, struct dh_secret *secret)
+static void jam_dh_secret(struct jambuf *buf, struct dh_secret *secret)
 {
 	jam(buf, "DH secret %s@%p: ",
 		secret->group->common.fqn, secret);
@@ -93,7 +93,7 @@ struct dh_secret *calc_dh_secret(const struct dh_desc *group, chunk_t *local_ke,
 	secret->privk = privk;
 	secret->pubk = pubk;
 	LSWDBGP(DBG_CRYPT, buf) {
-		lswlog_dh_secret(buf, secret);
+		jam_dh_secret(buf, secret);
 		jam_string(buf, "created");
 	}
 	return secret;
@@ -118,12 +118,14 @@ PK11SymKey *calc_dh_shared(struct dh_secret *secret, chunk_t remote_ke,
 	/*
 	 * The IKEv2 documentation, even for ECP, refers to "g^ir".
 	 */
-	LSWDBGP(DBG_CRYPT, buf) {
-		lswlog_dh_secret(buf, secret);
-		jam(buf, "computed shared DH secret key@%p",
-			dhshared);
+	if (DBGP(DBG_CRYPT)) {
+		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam_dh_secret(buf, secret);
+			jam(buf, "computed shared DH secret key@%p",
+			    dhshared);
+		}
+		DBG_symkey(logger, "dh-shared ", "g^ir", dhshared);
 	}
-	DBG(DBG_CRYPT, DBG_symkey(logger, "dh-shared ", "g^ir", dhshared));
 	return dhshared;
 }
 
@@ -136,7 +138,7 @@ void transfer_dh_secret_to_state(const char *helper, struct dh_secret **secret,
 				 struct state *st)
 {
 	LSWDBGP(DBG_CRYPT, buf) {
-		lswlog_dh_secret(buf, *secret);
+		jam_dh_secret(buf, *secret);
 		jam(buf, "transferring ownership from helper %s to state #%lu",
 			helper, st->st_serialno);
 	}
@@ -149,7 +151,7 @@ void transfer_dh_secret_to_helper(struct state *st,
 				  const char *helper, struct dh_secret **secret)
 {
 	LSWDBGP(DBG_CRYPT, buf) {
-		lswlog_dh_secret(buf, st->st_dh_secret);
+		jam_dh_secret(buf, st->st_dh_secret);
 		jam(buf, "transferring ownership from state #%lu to helper %s",
 			st->st_serialno, helper);
 	}
@@ -163,7 +165,7 @@ void free_dh_secret(struct dh_secret **secret)
 	pexpect(*secret != NULL);
 	if (*secret != NULL) {
 		LSWDBGP(DBG_CRYPT, buf) {
-			lswlog_dh_secret(buf, *secret);
+			jam_dh_secret(buf, *secret);
 			jam_string(buf, "destroyed");
 		}
 		SECKEY_DestroyPublicKey((*secret)->pubk);

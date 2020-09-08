@@ -112,8 +112,9 @@ bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
 	passert(RSA_MIN_OCTETS <= sz && 4 + signed_len < sz &&
 		sz <= RSA_MAX_OCTETS);
 
-	DBG(DBG_CRYPT,
-	    DBG_dump("v2rsa octets", signed_octets, signed_len));
+	if (DBGP(DBG_CRYPT)) {
+	    DBG_dump("v2rsa octets", signed_octets, signed_len);
+	}
 
 	{
 		/* now generate signature blob */

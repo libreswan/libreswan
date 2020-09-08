@@ -642,7 +642,7 @@ const chunk_t *get_psk(const struct connection *c,
 		       struct logger *logger)
 {
 	if (c->policy & POLICY_AUTH_NULL) {
-		DBG(DBG_CRYPT, DBG_log("Mutual AUTH_NULL secret - returning empty_chunk"));
+		DBGF(DBG_CRYPT, "Mutual AUTH_NULL secret - returning empty_chunk");
 		return &empty_chunk;
 	}
 
