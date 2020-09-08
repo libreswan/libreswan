@@ -1021,10 +1021,9 @@ static bool do_file_authentication(struct state *st, const char *name,
 			cp = crypt(password, passwdhash);
 			win = cp != NULL && streq(cp, passwdhash);
 
-			DBG(DBG_PRIVATE,
-				DBG_log("XAUTH: %s user(%s:%s) pass %s vs %s",
-					win ? "success" : "failure",
-					userid, connectionname, cp, passwdhash));
+			DBGF(DBG_CRYPT, "XAUTH: %s user(%s:%s) pass %s vs %s",
+			     win ? "success" : "failure",
+			     userid, connectionname, cp, passwdhash);
 
 			libreswan_log("XAUTH: %s user(%s:%s) ",
 				win ? "success" : "failure",

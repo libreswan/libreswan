@@ -1348,8 +1348,7 @@ psk_common:
 						/* check that we can find a proper preshared secret */
 						pss = get_psk(c, st->st_logger);
 
-						if (pss == NULL)
-						{
+						if (pss == NULL) {
 							id_buf mid;
 							id_buf hid;
 
@@ -1358,8 +1357,8 @@ psk_common:
 							    remote_id_was_instantiated(c) ?
 							    "%any" :
 							    str_id(&c->spd.that.id, &hid));
-						} else {
-							DBG(DBG_PRIVATE, DBG_dump_hunk("User PSK:", *pss));
+						} else if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
+							DBG_dump_hunk("User PSK:", *pss);
 						}
 						ta.auth = OAKLEY_PRESHARED_KEY;
 					}

@@ -2899,8 +2899,7 @@ bool ikev2_decode_peer_id(struct msg_digest *md)
  */
 void ikev2_log_parentSA(const struct state *st)
 {
-	DBG(DBG_PRIVATE,
-	{
+	if (DBGP(DBG_PRIVATE)) {
 		if (st->st_oakley.ta_integ == NULL ||
 		    st->st_oakley.ta_encrypt == NULL)
 			return;
@@ -2967,7 +2966,6 @@ void ikev2_log_parentSA(const struct state *st)
 			authalgo, tar,
 			encalgo, tekl, ter);
 	}
-	);
 }
 
 void log_ipsec_sa_established(const char *m, const struct state *st)

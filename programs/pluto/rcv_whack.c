@@ -333,7 +333,12 @@ static bool whack_process(const struct whack_message *const m, struct show *s)
 			if (libreswan_fipsmode()) {
 				if (lmod_is_set(m->debugging, DBG_PRIVATE)) {
 					whack_log(RC_FATAL, whackfd,
-						  "FIPS: --debug-private is not allowed in FIPS mode, aborted");
+						  "FIPS: --debug private is not allowed in FIPS mode, aborted");
+					return false; /*don't shutdown*/
+				}
+				if (lmod_is_set(m->debugging, DBG_CRYPT)) {
+					whack_log(RC_FATAL, whackfd,
+						  "FIPS: --debug crypt is not allowed in FIPS mode, aborted");
 					return false; /*don't shutdown*/
 				}
 			}

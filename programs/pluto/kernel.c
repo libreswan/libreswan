@@ -2011,12 +2011,12 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->natt_oa = &natt_oa;
 		said_next->text_said = text_esp;
 
-		DBG(DBG_PRIVATE, {
+		if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
 			DBG_dump("ESP enckey:",  said_next->enckey,
-				said_next->enckeylen);
+				 said_next->enckeylen);
 			DBG_dump("ESP authkey:", said_next->authkey,
-				said_next->authkeylen);
-		});
+				 said_next->authkeylen);
+		}
 
 		if (inbound) {
 			/*
@@ -2105,10 +2105,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			said_next->esn = TRUE;
 		}
 
-		DBG(DBG_PRIVATE, {
+		if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
 			DBG_dump("AH authkey:", said_next->authkey,
-				said_next->authkeylen);
-			});
+				 said_next->authkeylen);
+		}
 
 		if (inbound) {
 			/*

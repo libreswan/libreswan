@@ -1129,10 +1129,14 @@ static err_t lsw_process_rsa_secret(struct private_key_stuff *pks, struct logger
 		/* dispose of the data */
 		if (p->offset >= 0) {
 			dbg("saving %s", p->name);
-			DBG(DBG_PRIVATE, DBG_dump(p->name, bv, bvlen));
+			if (DBGP(DBG_CRYPT)) {
+				DBG_dump(p->name, bv, bvlen);
+			}
 			chunk_t *n = (chunk_t*) ((char *)rsak + p->offset);
 			*n = clone_bytes_as_chunk(bv, bvlen, p->name);
-			DBG(DBG_PRIVATE, DBG_dump_hunk(p->name, *n));
+			if (DBGP(DBG_CRYPT)) {
+				DBG_dump_hunk(p->name, *n);
+			}
 		} else {
 			dbg("ignoring %s", p->name);
 		}

@@ -51,8 +51,9 @@ static v2_cookie_t v2_cookie_secret;
 void refresh_v2_cookie_secret(void)
 {
 	get_rnd_bytes(&v2_cookie_secret, sizeof(v2_cookie_secret));
-	DBG(DBG_PRIVATE,
-	    DBG_dump_thing("v2_cookie_secret", v2_cookie_secret));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump_thing("v2_cookie_secret", v2_cookie_secret);
+	}
 }
 
 /*

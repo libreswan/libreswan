@@ -197,11 +197,11 @@ static void ppk_recalc_one(PK11SymKey **sk /* updated */, PK11SymKey *ppk_key,
 	PK11SymKey *t = ikev2_prfplus(prf_desc, ppk_key, *sk, prf_desc->prf_key_size, logger);
 	release_symkey(__func__, name, sk);
 	*sk = t;
-	DBG(DBG_PRIVATE, {
+	if (DBGP(DBG_CRYPT)) {
 		chunk_t chunk_sk = chunk_from_symkey("sk_chunk", *sk, logger);
 		DBG_dump_hunk(name, chunk_sk);
 		free_chunk_content(&chunk_sk);
-	});
+	}
 }
 
 void ppk_recalculate(const chunk_t *ppk, const struct prf_desc *prf_desc,
@@ -216,8 +216,6 @@ void ppk_recalculate(const chunk_t *ppk, const struct prf_desc *prf_desc,
 		DBG_log("Starting to recalculate SK_d, SK_pi, SK_pr");
 		DBG_dump_hunk("PPK:", *ppk);
 	}
-
-	DBGF(DBG_PRIVATE, "PPK recalculating SK_d, SK_pi, SK_pr");
 
 	ppk_recalc_one(sk_d, ppk_key, prf_desc, "sk_d", logger);
 	ppk_recalc_one(sk_pi, ppk_key, prf_desc, "sk_pi", logger);

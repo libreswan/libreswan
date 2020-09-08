@@ -133,7 +133,9 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 			      ike->sa.st_connection->name);
 			return empty_mac;
 		}
-		DBG(DBG_PRIVATE, DBG_dump_hunk("User PSK:", *pss));
+		if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
+			DBG_dump_hunk("User PSK:", *pss);
+		}
 		const size_t key_size_min = crypt_prf_fips_key_size_min(ike->sa.st_oakley.ta_prf);
 		if (pss->len < key_size_min) {
 			if (libreswan_fipsmode()) {
@@ -170,7 +172,9 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 		passert(ike->sa.hidden_variables.st_skeyid_calculated);
 
 		pss = nullauth_pss;
-		DBG(DBG_PRIVATE, DBG_dump_hunk("AUTH_NULL PSK:", *pss));
+		if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
+			DBG_dump_hunk("AUTH_NULL PSK:", *pss);
+		}
 	}
 
 	passert(pss->len != 0);

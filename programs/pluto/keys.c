@@ -651,9 +651,9 @@ const chunk_t *get_psk(const struct connection *c,
 		s == NULL ? NULL : &lsw_get_pks(s)->u.preshared_secret;
 
 	if (psk != NULL) {
-		DBG(DBG_PRIVATE, {
+		if (DBGP(DBG_CRYPT)) {
 			DBG_dump_hunk("PreShared Key", *psk);
-		});
+		}
 	} else {
 		dbg("no PreShared Key Found");
 	}
@@ -675,11 +675,11 @@ chunk_t *get_ppk(const struct connection *c, chunk_t **ppk_id,
 
 	struct private_key_stuff *pks = lsw_get_pks(s);
 	*ppk_id = &pks->ppk_id;
-	DBG(DBG_PRIVATE, {
+	if (DBGP(DBG_CRYPT)) {
 		DBG_log("Found PPK");
 		DBG_dump_hunk("PPK_ID:", **ppk_id);
 		DBG_dump_hunk("PPK:", pks->ppk);
-		});
+	}
 	return &pks->ppk;
 }
 
@@ -693,10 +693,10 @@ const chunk_t *get_ppk_by_id(const chunk_t *ppk_id)
 
 	if (s != NULL) {
 		const struct private_key_stuff *pks = lsw_get_pks(s);
-		DBG(DBG_PRIVATE, {
+		if (DBGP(DBG_CRYPT)) {
 			DBG_dump_hunk("Found PPK:", pks->ppk);
 			DBG_dump_hunk("with PPK_ID:", *ppk_id);
-		});
+		}
 		return &pks->ppk;
 	}
 	dbg("No PPK found with given PPK_ID");
