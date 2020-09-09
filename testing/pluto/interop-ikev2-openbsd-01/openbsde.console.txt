@@ -10,15 +10,16 @@ openbsde #
  chmod 600 /etc/iked.conf
 chmod 600 /etc/iked.conf
 openbsde #
- /sbin/iked
-/sbin/iked
+ /sbin/iked -dvvv > /tmp/iked.log 2>&1 &
+/sbin/iked -dvvv > /tmp/iked.log 2>& /tmp/iked.log 2>&1 &
+[x] PID
 openbsde #
  echo "initdone"
 echo "initdone"
 initdone
 openbsde #
- # check output on openbsd end
-# check output on openbsd end
+ if [ -f /tmp/iked.log ]; then cp /tmp/iked.log OUTPUT/openbsde.iked.log ; fi
+if [ -f /tmp/iked.log ]; then cp /tmlog ]; then cp /tmp/iked.log OUTPUT/openbsde.iked.log ; fi
 openbsde #
  test -f /sbin/ipsecctl && ipsecctl -s all | sort
 test -f /sbin/ipsecctl && ipsecctl -cctl && ipsecctl -s all | sort
