@@ -817,10 +817,10 @@ void proposal_next_token(struct proposal_tokenizer *tokens)
 				jam(buf, "''");
 			}
 			jam(buf, " ");
-			if (tokens->this.ptr == NULL) {
+			if (tokens->next.ptr == NULL) {
 				jam(buf, "<null>");
 			} else {
-				jam(buf, "\""PRI_SHUNK"\"", pri_shunk(tokens->this));
+				jam(buf, "\""PRI_SHUNK"\"", pri_shunk(tokens->next));
 			}
 			jam(buf, " ");
 			if (tokens->next_term != '\0') {
