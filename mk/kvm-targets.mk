@@ -188,7 +188,7 @@ KVM_LIBVIRT_HOSTS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
 KVM_OPENBSD_HOSTS = $(filter openbsd%, $(KVM_LIBVIRT_HOSTS))
 KVM_LINUX_HOSTS = $(filter-out $(KVM_BASIC_HOSTS), $(filter-out openbsd%, $(KVM_LIBVIRT_HOSTS)))
 KVM_BASIC_HOSTS = nic
-KVM_TEST_HOSTS ?= $(KVM_LINUX_HOSTS) $(KVM_BASIC_HOSTS)
+KVM_TEST_HOSTS ?= $(KVM_LINUX_HOSTS) $(KVM_BASIC_HOSTS) $(KVM_OPENBSD_HOSTS)
 
 KVM_LOCAL_HOSTS = $(sort $(KVM_BUILD_HOST) $(KVM_TEST_HOSTS))
 
@@ -958,7 +958,7 @@ define uninstall-kvm-domain-DOMAIN
 	rm -f $(2)/$(1).img
 endef
 
-$(foreach domain, $(KVM_BASE_DOMAIN), \
+$(foreach domain, $(KVM_BASE_DOMAIN) $(KVM_BSD_BASE_NAME), \
 	$(eval $(call uninstall-kvm-domain-DOMAIN,$(domain),$(KVM_POOLDIR))))
 $(foreach domain, $(KVM_BUILD_DOMAIN) $(KVM_TEST_DOMAINS), \
 	$(eval $(call uninstall-kvm-domain-DOMAIN,$(domain),$(KVM_LOCALDIR))))
@@ -1108,9 +1108,7 @@ $(KVM_POOLDIR)/$(KVM_BSD_ISO):| $(KVM_POOLDIR)
 	mv $@.tmp $@
 
 .PHONY: kvm-uninstall-openbsd
-kvm-uninstall-openbsd:
-	$(call destroy-kvm-domain,$(KVM_BSD_BASE_NAME))
-	rm -f $(KVM_LOCALDIR)/$(KVM_BSD_BASE_NAME).qcow2
+kvm-uninstall-openbsd: $(foreach domain, $(KVM_BSD_BASE_NAME) $(KVM_OPENBSD_DOMAIN_CLONES), uninstall-kvm-domain-${domain})
 .PHONY: kvm-openbsd
 kvm-openbsd: $(KVM_LOCALDIR)/$(KVM_BSD_BASE_NAME).qcow2
 $(KVM_LOCALDIR)/$(KVM_BSD_BASE_NAME).qcow2: $(KVM_TESTINGDIR)/utils/openbsdinstall.py $(KVM_POOLDIR)/$(KVM_BSD_ISO)
