@@ -902,7 +902,7 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 		if (!compatible_overlapping_connections(c, ero)) {
 			/*
 			 * Another connection is already using the eroute.
-			 * TODO: XFRM can do this? For now excempt OE only
+			 * TODO: XFRM supports this. For now, only allow this for OE
 			 */
 			if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 				connection_buf cib;
