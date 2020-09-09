@@ -1,0 +1,21 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add eastnet-westnet-ikev2
+002 added IKEv2 connection "eastnet-westnet-ikev2"
+east #
+ ipsec whack --impair suppress-retransmits
+east #
+ echo "initdone"
+initdone
+east #
+ if [ -f /tmp/iked.log ]; then cp /tmp/iked.log OUTPUT/openbsdw.iked.log ; fi
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
