@@ -464,6 +464,7 @@ static void test(struct logger *logger)
 	ike(true, "3des;dh21");
 	ike(true, "3des-sha1;dh21");
 	ike(true, "3des-sha1-ecp_521");
+	ike(ike_version == IKEv2, "3des+aes");
 	ike(ike_version == IKEv2, "aes_gcm");
 	ike(true, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
 	ike(false, "aes;none");
@@ -473,6 +474,14 @@ static void test(struct logger *logger)
 	ike(impaired, "aes_gcm-sha1-none-modp2048");
 	ike(impaired, "aes_gcm+aes_gcm-sha1-none-modp2048");
 	ike(false, "aes+aes_gcm"); /* mixing AEAD and NORM encryption */
+	/* syntax */
+	ike(false, "-"); /* empty algorithm */
+	ike(false, "aes-"); /* empty algorithm */
+	ike(false, "aes-;"); /* empty algorithm */
+	ike(false, "aes;"); /* empty algorithm */
+	ike(false, "+"); /* empty algorithm */
+	ike(false, "+aes"); /* empty algorithm */
+	ike(false, "aes+"); /* empty algorithm */
 }
 
 static void usage(void)

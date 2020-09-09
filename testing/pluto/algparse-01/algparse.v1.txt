@@ -401,6 +401,8 @@ algparse -v1 'ike=3des-sha1;dh21'
 	3DES_CBC-HMAC_SHA1-DH21
 algparse -v1 'ike=3des-sha1-ecp_521'
 	3DES_CBC-HMAC_SHA1-DH21
+algparse -v1 'ike=3des+aes'
+	ERROR: IKE encryption algorithm '3des+aes' is not recognized
 algparse -v1 'ike=aes_gcm'
 	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
 algparse -v1 'ike=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192'
@@ -419,3 +421,17 @@ algparse -v1 'ike=aes_gcm+aes_gcm-sha1-none-modp2048'
 	ERROR: IKE encryption algorithm 'aes_gcm+aes_gcm' is not recognized
 algparse -v1 'ike=aes+aes_gcm'
 	ERROR: IKE encryption algorithm 'aes+aes_gcm' is not recognized
+algparse -v1 'ike=-'
+	ERROR: IKE encryption algorithm is empty
+algparse -v1 'ike=aes-'
+	ERROR: IKE PRF algorithm '' is not recognized
+algparse -v1 'ike=aes-;'
+	ERROR: IKE PRF algorithm '' is not recognized
+algparse -v1 'ike=aes;'
+	ERROR: IKE DH algorithm '' is not recognized
+algparse -v1 'ike=+'
+	ERROR: IKE encryption algorithm '+' is not recognized
+algparse -v1 'ike=+aes'
+	ERROR: IKE encryption algorithm '+aes' is not recognized
+algparse -v1 'ike=aes+'
+	ERROR: IKE encryption algorithm 'aes+' is not recognized
