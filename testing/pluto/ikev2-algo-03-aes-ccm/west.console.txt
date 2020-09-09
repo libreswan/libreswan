@@ -26,7 +26,7 @@ west #
  # first should fail to load
 west #
  ipsec auto --add badkeysize-shouldnotload
-036 failed to add connection "badkeysize-shouldnotload": invalid ESP algorithm 'AES_GCM' key length - key size must be 128 (default), 192 or 256
+036 failed to add connection "badkeysize-shouldnotload": ESP encryption algorithm AES_CCM_8 with key length 152 invalid; valid key lengths: 128, 192, 256
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2-ccm-a
 002 added IKEv2 connection "westnet-eastnet-ipv4-psk-ikev2-ccm-a"
