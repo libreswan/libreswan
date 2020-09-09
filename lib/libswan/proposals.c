@@ -662,6 +662,8 @@ bool proposal_parse_encrypt(struct proposal_parser *parser,
 			    int *encrypt_keylen)
 {
 	if (tokens->this.len == 0) {
+		proposal_error(parser, "%s encryption algorithm is empty",
+			       parser->protocol->name);
 		return false;
 	}
 

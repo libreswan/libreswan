@@ -136,7 +136,9 @@ static bool parse_alg(struct proposal_parser *parser,
 {
 	passert(parser->diag == NULL);
 	if (token.len == 0) {
-		/* will error at end */
+		proposal_error(parser, "%s %s algorithm is empty",
+			       parser->protocol->name,
+			       ike_alg_type_name(alg_type));
 		return false;
 	}
 	const struct ike_alg *alg = alg_byname(parser, alg_type, token,
@@ -148,14 +150,18 @@ static bool parse_alg(struct proposal_parser *parser,
 	return true;
 }
 
-static bool parse_proposal(struct proposal_parser *parser,
-			   struct proposals *proposals, shunk_t input)
+enum proposal_status {
+	PROPOSAL_OK = 1,
+	PROPOSAL_IGNORE,
+	PROPOSAL_ERROR,
+};
+
+static enum proposal_status parse_proposal(struct proposal_parser *parser,
+					   struct proposal *proposal, shunk_t input)
 {
 	if (DBGP(DBG_PROPOSAL_PARSER)) {
 		DBG_log("proposal: '"PRI_SHUNK"'", pri_shunk(input));
 	}
-
-	struct proposal *proposal = alloc_proposal(parser);
 
 	struct proposal_tokenizer tokens = proposal_first_token(input, "-;+");
 
@@ -184,52 +190,60 @@ static bool parse_proposal(struct proposal_parser *parser,
 		const struct ike_alg *encrypt;
 		int encrypt_keylen;
 		if (!proposal_parse_encrypt(parser, &tokens, &encrypt, &encrypt_keylen)) {
-			free_proposal(&proposal);
-			return false;
+			passert(parser->diag != NULL);
+			return PROPOSAL_ERROR;
 		}
-		pfree_diag(&parser->diag);
+		passert(parser->diag == NULL);
 		append_algorithm(parser, proposal, encrypt, encrypt_keylen);
 		/* further encryption algorithm tokens are optional */
-		while (tokens.prev_term == '+' &&
-		       proposal_parse_encrypt(parser, &tokens, &encrypt, &encrypt_keylen)) {
-			pfree_diag(&parser->diag);
+		while (tokens.prev_term == '+') {
+			if (!proposal_parse_encrypt(parser, &tokens, &encrypt, &encrypt_keylen)) {
+				passert(parser->diag != NULL);
+				return PROPOSAL_ERROR;
+			}
+			passert(parser->diag == NULL);
 			append_algorithm(parser, proposal, encrypt, encrypt_keylen);
 		}
-		/* deal with all encryption algorithm tokens being skipped */
+		/* deal with all encryption algorithm tokens being discarded */
 		if (next_algorithm(proposal, PROPOSAL_encrypt, NULL) == NULL) {
 			if (parser->policy->ignore_parser_errors) {
 				DBGF(DBG_PROPOSAL_PARSER, "all encryption algorithms skipped; stumbling on");
-				free_proposal(&proposal);
-				return true;
+				passert(parser->diag == NULL);
+				return PROPOSAL_IGNORE;
 			}
 			if (!impair.proposal_parser) {
 				pexpect_fail(parser->policy->logger, HERE,
 					     "all encryption algorithms skipped");
-				free_proposal(&proposal);
-				return false;
+				proposal_error(parser, "all encryption algorithms discarded");
+				passert(parser->diag != NULL);
+				return PROPOSAL_ERROR;
 			}
 		}
 	}
 
-#define PARSE_ALG(STOP, ALG)						\
-	passert(parser->diag == NULL);					\
-	if (tokens.prev_term != STOP &&					\
-	    parser->protocol->ALG &&					\
-	    parse_alg(parser, proposal,	&ike_alg_##ALG,	tokens.this)) { \
-		passert(parser->diag == NULL);				\
+	/* THIS MACRO CAN RETURN */
+#define PARSE_ALG(ALG)							\
+	if (tokens.this.ptr != NULL &&					\
+	    (parser->protocol->ALG || impair.proposal_parser)) {	\
+		if (!parse_alg(parser, proposal,			\
+			       &ike_alg_##ALG, tokens.this)) {		\
+			passert(parser->diag != NULL);			\
+			return PROPOSAL_ERROR;				\
+		}							\
 		proposal_next_token(&tokens);				\
-		while (tokens.prev_term == '+' &&			\
-		       parse_alg(parser, proposal,			\
-				 &ike_alg_##ALG, tokens.this)) {	\
-			passert(parser->diag == NULL);			\
+		while (tokens.prev_term == '+') {			\
+			if (!parse_alg(parser, proposal,		\
+				       &ike_alg_##ALG, tokens.this)) {	\
+				passert(parser->diag != NULL);		\
+				return PROPOSAL_ERROR;			\
+			}						\
 			proposal_next_token(&tokens);			\
 		}							\
 	}
 
-	PARSE_ALG(';', prf);
-	if (parser->diag != NULL) {
-		DBGF(DBG_PROPOSAL_PARSER, "return PRF error: %s", str_diag(parser->diag));
-		return false;
+	/* expect PRF when not reached ;DH */
+	if (tokens.prev_term != ';') {
+		PARSE_ALG(prf);
 	}
 
 	/*
@@ -244,39 +258,33 @@ static bool parse_proposal(struct proposal_parser *parser,
 	 * using sha1 as integrity.  ike-aes_gcm-none-sha1 would
 	 * clarify this but that makes for a fun parse.
 	 */
-	if (!parser->protocol->prf || impair.proposal_parser) {
-		PARSE_ALG(';', integ);
-		if (parser->diag != NULL) {
-			DBGF(DBG_PROPOSAL_PARSER, "return PRF error: %s", str_diag(parser->diag));
-			return false;
-		}
+	if (tokens.prev_term != ';' &&
+	    (parser->protocol->integ || impair.proposal_parser) &&
+	    (!parser->protocol->prf || impair.proposal_parser)) {
+		PARSE_ALG(integ);
 	}
 
-	PARSE_ALG('\0', dh);
-	if (parser->diag != NULL) {
-		DBGF(DBG_PROPOSAL_PARSER, "return PRF error: %s", str_diag(parser->diag));
-		return false;
-	}
+	PARSE_ALG(dh);
 
+	/* end of token stream? */
 	if (tokens.this.ptr != NULL) {
 		proposal_error(parser, "%s proposal contains unexpected '"PRI_SHUNK"'",
 			       parser->protocol->name,
 			       pri_shunk(tokens.this));
-		free_proposal(&proposal);
-		return false;
+		passert(parser->diag != NULL);
+		return PROPOSAL_ERROR;
 	}
 	if (!impair.proposal_parser &&
 	    !merge_defaults(parser, proposal)) {
-		free_proposal(&proposal);
-		return false;
+		passert(parser->diag != NULL);
+		return PROPOSAL_ERROR;
 	}
 	/* back end? */
 	if (!parser->protocol->proposal_ok(parser, proposal)) {
-		free_proposal(&proposal);
-		return false;
+		passert(parser->diag != NULL);
+		return PROPOSAL_ERROR;
 	}
-	append_proposal(proposals, &proposal);
-	return true;
+	return PROPOSAL_OK;
 }
 
 bool v2_proposals_parse_str(struct proposal_parser *parser,
@@ -295,12 +303,22 @@ bool v2_proposals_parse_str(struct proposal_parser *parser,
 
 	do {
 		/* find the next proposal */
-		shunk_t proposal = shunk_token(&input, NULL, ",");
-		if (!parse_proposal(parser, proposals, proposal)) {
+		shunk_t raw_proposal = shunk_token(&input, NULL, ",");
+		struct proposal *proposal = alloc_proposal(parser);
+		switch (parse_proposal(parser, proposal, raw_proposal)) {
+		case PROPOSAL_ERROR:
 			passert(parser->diag != NULL);
+			free_proposal(&proposal);
 			return false;
+		case PROPOSAL_IGNORE:
+			passert(parser->diag == NULL);
+			free_proposal(&proposal);
+			break;
+		case PROPOSAL_OK:
+			passert(parser->diag == NULL);
+			append_proposal(proposals, &proposal);
+			break;
 		}
-		passert(parser->diag == NULL);
 	} while (input.len > 0);
 	return true;
 }
