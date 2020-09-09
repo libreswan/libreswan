@@ -34,7 +34,7 @@
 static bool warning_or_false(struct proposal_parser *parser,
 			     const char *what, shunk_t print)
 {
-	pexpect(parser->error[0] != '\0');
+	passert(parser->diag != NULL);
 	bool result;
 	if (parser->policy->ignore_parser_errors) {
 		/*
@@ -80,7 +80,7 @@ static void merge_algorithms(struct proposal_parser *parser,
 static bool merge_defaults(struct proposal_parser *parser,
 			   struct proposal *proposal)
 {
-	pexpect(parser->policy->version < elemsof(parser->protocol->defaults));
+	passert(parser->policy->version < elemsof(parser->protocol->defaults));
 	const struct proposal_defaults *defaults =
 		parser->protocol->defaults[parser->policy->version];
 	merge_algorithms(parser, proposal, PROPOSAL_encrypt, defaults->encrypt);
@@ -134,6 +134,7 @@ static bool parse_alg(struct proposal_parser *parser,
 		      const struct ike_alg_type *alg_type,
 		      shunk_t token)
 {
+	passert(parser->diag == NULL);
 	if (token.len == 0) {
 		/* will error at end */
 		return false;
@@ -154,7 +155,6 @@ static bool parse_proposal(struct proposal_parser *parser,
 		DBG_log("proposal: '"PRI_SHUNK"'", pri_shunk(input));
 	}
 
-	char error[sizeof(parser->error)] = "";
 	struct proposal *proposal = alloc_proposal(parser);
 
 	struct proposal_tokenizer tokens = proposal_first_token(input, "-;+");
@@ -187,12 +187,12 @@ static bool parse_proposal(struct proposal_parser *parser,
 			free_proposal(&proposal);
 			return false;
 		}
-		error[0] = parser->error[0] = '\0';
+		pfree_diag(&parser->diag);
 		append_algorithm(parser, proposal, encrypt, encrypt_keylen);
 		/* further encryption algorithm tokens are optional */
 		while (tokens.prev_term == '+' &&
 		       proposal_parse_encrypt(parser, &tokens, &encrypt, &encrypt_keylen)) {
-			error[0] = parser->error[0] = '\0';
+			pfree_diag(&parser->diag);
 			append_algorithm(parser, proposal, encrypt, encrypt_keylen);
 		}
 		/* deal with all encryption algorithm tokens being skipped */
@@ -212,24 +212,26 @@ static bool parse_proposal(struct proposal_parser *parser,
 	}
 
 #define PARSE_ALG(STOP, ALG)						\
-	if (error[0] == '\0' && parser->error[0] != '\0') {		\
-		strcpy(error, parser->error);				\
-		DBGF(DBG_PROPOSAL_PARSER, "saved first error: %s", error); \
-	}								\
-	if (tokens.prev_term != STOP &&				\
+	passert(parser->diag == NULL);					\
+	if (tokens.prev_term != STOP &&					\
 	    parser->protocol->ALG &&					\
 	    parse_alg(parser, proposal,	&ike_alg_##ALG,	tokens.this)) { \
-		error[0] = parser->error[0] = '\0';			\
+		passert(parser->diag == NULL);				\
 		proposal_next_token(&tokens);				\
 		while (tokens.prev_term == '+' &&			\
 		       parse_alg(parser, proposal,			\
 				 &ike_alg_##ALG, tokens.this)) {	\
-			error[0] = parser->error[0] = '\0';		\
+			passert(parser->diag == NULL);			\
 			proposal_next_token(&tokens);			\
 		}							\
 	}
 
 	PARSE_ALG(';', prf);
+	if (parser->diag != NULL) {
+		DBGF(DBG_PROPOSAL_PARSER, "return PRF error: %s", str_diag(parser->diag));
+		return false;
+	}
+
 	/*
 	 * By default, don't allow ike=...-<prf>-<integ>-... but do
 	 * allow esp=...-<integ>.  In the case of IKE, when integrity
@@ -244,19 +246,18 @@ static bool parse_proposal(struct proposal_parser *parser,
 	 */
 	if (!parser->protocol->prf || impair.proposal_parser) {
 		PARSE_ALG(';', integ);
+		if (parser->diag != NULL) {
+			DBGF(DBG_PROPOSAL_PARSER, "return PRF error: %s", str_diag(parser->diag));
+			return false;
+		}
 	}
+
 	PARSE_ALG('\0', dh);
-	if (error[0] != '\0') {
-		DBGF(DBG_PROPOSAL_PARSER, "return first error: %s", error);
-		free_proposal(&proposal);
-		strcpy(parser->error, error);
+	if (parser->diag != NULL) {
+		DBGF(DBG_PROPOSAL_PARSER, "return PRF error: %s", str_diag(parser->diag));
 		return false;
 	}
-	if (parser->error[0] != '\0') {
-		DBGF(DBG_PROPOSAL_PARSER, "return last error: %s", parser->error);
-		free_proposal(&proposal);
-		return false;
-	}
+
 	if (tokens.this.ptr != NULL) {
 		proposal_error(parser, "%s proposal contains unexpected '"PRI_SHUNK"'",
 			       parser->protocol->name,
@@ -296,9 +297,10 @@ bool v2_proposals_parse_str(struct proposal_parser *parser,
 		/* find the next proposal */
 		shunk_t proposal = shunk_token(&input, NULL, ",");
 		if (!parse_proposal(parser, proposals, proposal)) {
-			pexpect(parser->error[0] != '\0');
+			passert(parser->diag != NULL);
 			return false;
 		}
+		passert(parser->diag == NULL);
 	} while (input.len > 0);
 	return true;
 }

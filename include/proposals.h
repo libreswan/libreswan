@@ -29,6 +29,7 @@
 #include "constants.h"
 #include "ike_alg.h"
 #include "shunk.h"
+#include "diag.h"
 
 struct jambuf;
 struct alg_info;
@@ -57,8 +58,7 @@ struct proposal_parser {
 	const struct proposal_protocol *protocol;
 	const struct proposal_param *param;
 	const struct proposal_policy *policy;
-	/* need to eliminate hardwired size */
-	char error[200];
+	diag_t diag;
 };
 
 /*

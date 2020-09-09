@@ -66,7 +66,7 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 		struct proposals *proposals =				\
 			proposals_from_str(parser, algstr);		\
 		if (proposals != NULL) {				\
-			pexpect(parser->error[0] == '\0');		\
+			pexpect(parser->diag == NULL);			\
 			FOR_EACH_PROPOSAL(proposals, proposal) {	\
 				JAMBUF(buf) {				\
 					jam(buf, "\t");			\
@@ -85,8 +85,8 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 					algstr == NULL ? "" : algstr);	\
 			}						\
 		} else {						\
-			pexpect(parser->error[0]);			\
-			printf("\tERROR: %s\n", parser->error);		\
+			pexpect(parser->diag != NULL);			\
+			printf("\tERROR: %s\n", str_diag(parser->diag)); \
 			if (expected == PASS) {				\
 				failures++;				\
 				fprintf(stderr,				\

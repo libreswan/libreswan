@@ -93,7 +93,7 @@ static struct ike_proposals v1_default_ike_proposals(struct logger *logger)
 	if (defaults.p == NULL) {
 		pexpect_fail(logger, HERE,
 			     "Invalid IKEv1 default algorithms: %s",
-			     parser->error);
+			     str_diag(parser->diag));
 	}
 	free_proposal_parser(&parser);
 	return defaults;

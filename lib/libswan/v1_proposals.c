@@ -84,8 +84,8 @@ static bool add_alg_defaults(struct proposal_parser *parser,
 		if (!alg_byname_ok(parser, alg,
 				   shunk1(alg->fqn))) {
 			DBGF(DBG_PROPOSAL_PARSER, "skipping default %s",
-			     parser->error);
-			parser->error[0] = '\0';
+			     str_diag(parser->diag));
+			pfree_diag(&parser->diag);
 			continue;
 		}
 		/* add it */
@@ -95,7 +95,7 @@ static bool add_alg_defaults(struct proposal_parser *parser,
 									 *default_alg);
 		if (!add_proposal_defaults(parser, defaults,
 					   proposals, &merged_proposal)) {
-			passert(parser->error[0] != '\0');
+			passert(parser->diag != NULL);
 			return false;
 		}
 	}
@@ -251,9 +251,9 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 		if (!proposal_parse_encrypt(parser, tokens, &encrypt, &encrypt_keylen)) {
 			if (impair.proposal_parser) {
 				/* ignore the lookup and stumble on */
-				parser->error[0] = '\0';
+				pfree_diag(&parser->diag);
 			} else {
-				passert(parser->error[0] != '\0');
+				passert(parser->diag != NULL);
 				return false;
 			}
 		}
@@ -275,13 +275,13 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 		if (prf.ptr != NULL && integ.ptr != NULL) {
 			lookup_prf = (alg_byname(parser, IKE_ALG_INTEG, integ, integ)
 				      != NULL);
-			parser->error[0] = '\0';
+			pfree_diag(&parser->diag);
 		}
 	}
 	if (lookup_prf && tokens->this.ptr != NULL && tokens->prev_term != ';') {
 		shunk_t prf = tokens[0].this;
 		proposal.prf = prf_desc(alg_byname(parser, IKE_ALG_PRF, prf, prf));
-		if (parser->error[0] != '\0') {
+		if (parser->diag != NULL) {
 			return false;
 		}
 		proposal_next_token(tokens);
@@ -306,14 +306,14 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 	if (lookup_integ && tokens->this.ptr != NULL && tokens->prev_term != ';') {
 		shunk_t integ = tokens[0].this;
 		proposal.integ = integ_desc(alg_byname(parser, IKE_ALG_INTEG, integ, integ));
-		if (parser->error[0] != '\0') {
+		if (parser->diag != NULL) {
 			if (tokens->next.ptr != NULL) {
 				/*
 				 * This alg should have been
 				 * integrity, since the next would be
 				 * DH; error applies.
 				 */
-				passert(parser->error[0] != '\0');
+				passert(parser->diag != NULL);
 				return false;
 			}
 			if (tokens->next.ptr == NULL &&
@@ -322,11 +322,11 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 				 * Only one arg, integrity is preferred
 				 * to DH (and no PRF); error applies.
 				 */
-				passert(parser->error[0] != '\0');
+				passert(parser->diag != NULL);
 				return false;
 			}
 			/* let DH try */
-			parser->error[0] = '\0';
+			pfree_diag(&parser->diag);
 		} else {
 			proposal_next_token(tokens);
 		}
@@ -336,7 +336,7 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 	if (lookup_dh && tokens->this.ptr != NULL) {
 		shunk_t dh = tokens[0].this;
 		proposal.dh = dh_desc(alg_byname(parser, IKE_ALG_DH, dh, dh));
-		if (parser->error[0] != '\0') {
+		if (parser->diag != NULL) {
 			return false;
 		}
 		proposal_next_token(tokens);
@@ -379,7 +379,7 @@ bool v1_proposals_parse_str(struct proposal_parser *parser,
 			.protocol = parser->protocol,
 		};
 		if (!parser_proposals_add(parser, &tokens, proposal, proposals)) {
-			passert(parser->error[0] != '\0');
+			passert(parser->diag != NULL);
 			return false;
 		}
 	} while (prop_ptr.len > 0);

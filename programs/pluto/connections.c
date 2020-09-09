@@ -1511,10 +1511,9 @@ static bool extract_connection(const struct whack_message *wm,
 			c->ike_proposals.p = proposals_from_str(parser, wm->ike);
 
 			if (c->ike_proposals.p == NULL) {
-				pexpect(parser->error[0]); /* something */
-				log_message(RC_FATAL, logger,
-					    "failed to add connection \"%s\": %s",
-					    wm->name, parser->error);
+				pexpect(parser->diag != NULL); /* something */
+				log_diag(RC_FATAL, logger, &parser->diag,
+					 "failed to add connection \"%s\": ", wm->name);
 				free_proposal_parser(&parser);
 				/* caller will free C */
 				return false;
@@ -1571,9 +1570,9 @@ static bool extract_connection(const struct whack_message *wm,
 			struct proposal_parser *parser = fn(&proposal_policy);
 			c->child_proposals.p = proposals_from_str(parser, wm->esp);
 			if (c->child_proposals.p == NULL) {
-				log_message(RC_FATAL, logger,
-					    "failed to add connection \"%s\": %s",
-					    wm->name, parser->error);
+				pexpect(parser->diag != NULL);
+				log_diag(RC_FATAL, logger, &parser->diag,
+					 "failed to add connection \"%s\": ", wm->name);
 				free_proposal_parser(&parser);
 				/* caller will free C */
 				return false;

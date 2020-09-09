@@ -16,6 +16,8 @@
 #ifndef DIAG_H
 #define DIAG_H
 
+#include <stdarg.h>
+
 #include "lswcdefs.h"
 #include "lset.h"
 
@@ -25,6 +27,7 @@ struct logger;
 typedef struct diag *diag_t;
 
 diag_t diag(const char *message, ...) PRINTF_LIKE(1) MUST_USE_RESULT;
+diag_t diag_va_list(const char *fmt, va_list ap) MUST_USE_RESULT;
 
 void log_diag(lset_t rc_flags, struct logger *logger, diag_t *diag,
 	      const char *fmt, ...) PRINTF_LIKE(4);
@@ -33,6 +36,7 @@ const char *str_diag(diag_t diag);
 
 size_t jam_diag(struct jambuf *buf, diag_t *diag);
 
+diag_t clone_diag(struct diag *diag);
 void pfree_diag(struct diag **diag);
 
 #endif

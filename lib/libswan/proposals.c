@@ -53,12 +53,13 @@ struct proposal_parser *alloc_proposal_parser(const struct proposal_policy *poli
 	struct proposal_parser *parser = alloc_thing(struct proposal_parser, "parser");
 	parser->policy = policy;
 	parser->protocol = protocol;
-	parser->error[0] = '\0';
+	parser->diag = NULL;
 	return parser;
 }
 
 void free_proposal_parser(struct proposal_parser **parser)
 {
+	pfree_diag(&(*parser)->diag);
 	pfree(*parser);
 	*parser = NULL;
 }
@@ -565,19 +566,19 @@ void proposal_error(struct proposal_parser *parser, const char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
-	vsnprintf(parser->error, sizeof(parser->error), fmt, ap);
+	passert(parser->diag == NULL);
+	parser->diag = diag_va_list(fmt, ap);
 	va_end(ap);
 }
 
 bool impair_proposal_errors(struct proposal_parser *parser)
 {
-	pexpect(parser->error[0] != '\0');
+	passert(parser->diag != NULL);
 	if (impair.proposal_parser) {
-		log_message(parser->policy->logger_rc_flags,
-			    parser->policy->logger,
-			    "IMPAIR: ignoring proposal error: %s",
-			    parser->error);
-		parser->error[0] = '\0';
+		log_diag(parser->policy->logger_rc_flags,
+			 parser->policy->logger,
+			 &parser->diag,
+			 "IMPAIR: ignoring proposal error: ");
 		return true;
 	} else {
 		return false;
@@ -612,7 +613,7 @@ struct proposals *proposals_from_str(struct proposal_parser *parser,
 	}
 	if (parser->policy->check_pfs_vs_dh &&
 	    !proposals_pfs_vs_dh_check(parser, proposals)) {
-		pexpect(parser->error[0] != '\0');
+		passert(parser->diag != NULL);
 		proposals_delref(&proposals);
 		return NULL;
 	}
@@ -631,6 +632,7 @@ bool default_proposals(struct proposals *proposals)
 
 static int parse_proposal_eklen(struct proposal_parser *parser, shunk_t print, shunk_t buf)
 {
+	passert(parser->diag == NULL);
 	/* convert -<eklen> if present */
 	char *end = NULL;
 	long eklen = strtol(buf.ptr, &end, 10);
@@ -680,14 +682,15 @@ bool proposal_parse_encrypt(struct proposal_parser *parser,
 		shunk_t print = shunk2(ealg.ptr, eklen.ptr + eklen.len - ealg.ptr);
 		int enckeylen = parse_proposal_eklen(parser, print, eklen);
 		if (enckeylen <= 0) {
-			pexpect(parser->error[0] != '\0');
+			passert(parser->diag != NULL);
 			return false;
 		}
 		const struct ike_alg *alg = encrypt_alg_byname(parser, ealg,
 							       enckeylen, print);
 		if (alg == NULL) {
-			DBGF(DBG_PROPOSAL_PARSER, "<ealg>byname('"PRI_SHUNK"') with <eklen>='"PRI_SHUNK"' failed: %s",
-			     pri_shunk(ealg), pri_shunk(eklen), parser->error);
+			DBGF(DBG_PROPOSAL_PARSER,
+			     "<ealg>byname('"PRI_SHUNK"') with <eklen>='"PRI_SHUNK"' failed: %s",
+			     pri_shunk(ealg), pri_shunk(eklen), str_diag(parser->diag));
 			return false;
 		}
 		/* consume <ealg>-<eklen> */
@@ -712,9 +715,9 @@ bool proposal_parse_encrypt(struct proposal_parser *parser,
 		*encrypt = alg; *encrypt_keylen = 0;
 		return true;
 	}
-	/* buffer still contains error from <ealg> lookup */
-	pexpect(parser->error[0] != '\0');
 
+	/* buffer still contains error from <ealg> lookup */
+	passert(parser->diag != NULL);
 
 	/*
 	 * See if there's a trailing <eklen> in <ealg>.  If there
@@ -730,9 +733,13 @@ bool proposal_parse_encrypt(struct proposal_parser *parser,
 		 * by above); error still contains message from not
 		 * finding just <ealg>.
 		 */
-		passert(parser->error[0] != '\0');
+		passert(parser->diag != NULL);
 		return false; // warning_or_false(parser, "encryption", print);
 	}
+
+	/* buffer still contains error from <ealg> lookup */
+	passert(parser->diag != NULL);
+	pfree_diag(&parser->diag);
 
 	/*
 	 * Try parsing the <eklen> found in <ealg>.  For something
@@ -742,7 +749,7 @@ bool proposal_parse_encrypt(struct proposal_parser *parser,
 	shunk_t eklen = shunk_slice(ealg, end, ealg.len);
 	int enckeylen = parse_proposal_eklen(parser, print, eklen);
 	if (enckeylen <= 0) {
-		pexpect(parser->error[0] != '\0');
+		passert(parser->diag != NULL);
 		return false;
 	}
 
@@ -754,10 +761,10 @@ bool proposal_parse_encrypt(struct proposal_parser *parser,
 	if (hunk_char_ischar(ealg, ealg.len-1, "_")) {
 		ealg = shunk_slice(ealg, 0, end-1);
 	}
-	parser->error[0] = '\0'; /* zap old error */
+	pfree_diag(&parser->diag); /* zap old error */
 	alg = encrypt_alg_byname(parser, ealg, enckeylen, print);
 	if (alg == NULL) {
-		pexpect(parser->error[0] != '\0');
+		passert(parser->diag != NULL);
 		return false; // warning_or_false(parser, "encryption", print);
 	}
 

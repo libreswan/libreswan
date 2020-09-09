@@ -26,12 +26,12 @@ struct diag {
 	char message[1]; /* buffer overflow hack */
 };
 
-diag_t diag(const char *fmt, ...)
+diag_t diag_va_list(const char *fmt, va_list master_ap)
 {
 	int length;
 	{
 		va_list ap;
-		va_start(ap, fmt);
+		va_copy(ap, master_ap);
 		length = vsnprintf(NULL, 0, fmt, ap);
 		va_end(ap);
 	}
@@ -40,22 +40,40 @@ diag_t diag(const char *fmt, ...)
 	char *buf = alloc_things(char, length, fmt);
 	{
 		va_list ap;
-		va_start(ap, fmt);
+		va_copy(ap, master_ap);
 		vsnprintf(buf, length, fmt, ap);
 		va_end(ap);
 	}
 	return (diag_t)buf;
 }
 
+diag_t diag(const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	diag_t d = diag_va_list(fmt, ap);
+	va_end(ap);
+	return d;
+}
+
+diag_t clone_diag(diag_t diag)
+{
+	/* clone_str() clones NULL as NULL */
+	return (diag_t) clone_str((char*)diag, "diag clone");
+}
+
 const char *str_diag(diag_t diag)
 {
+	/* let caller deal with mess */
 	return (char*)diag;
 }
 
 void pfree_diag(diag_t *diag)
 {
-	pfree(*diag);
-	*diag = NULL;
+	if (*diag != NULL) {
+		pfree(*diag);
+		*diag = NULL;
+	}
 }
 
 size_t jam_diag(struct jambuf *buf, diag_t *diag)

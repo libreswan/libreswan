@@ -89,6 +89,7 @@ const struct ike_alg *alg_byname(struct proposal_parser *parser,
 				 const struct ike_alg_type *type,
 				 shunk_t name, shunk_t print_name)
 {
+	passert(parser->diag == NULL);
 	const struct proposal_protocol *protocol = parser->protocol;
 	const struct ike_alg *alg = ike_alg_byname(type, name);
 	if (alg == NULL) {
@@ -106,9 +107,9 @@ const struct ike_alg *alg_byname(struct proposal_parser *parser,
 				       protocol->name, ike_alg_type_name(type),
 				       pri_shunk(print_name));
 		}
-		passert(parser->error[0] != '\0');
+		passert(parser->diag != NULL);
 		DBGF(DBG_PROPOSAL_PARSER, "ike_alg_byname() failed: %s",
-		     parser->error);
+		     str_diag(parser->diag));
 		return NULL;
 	}
 
@@ -116,9 +117,9 @@ const struct ike_alg *alg_byname(struct proposal_parser *parser,
 	 * Does it pass muster?
 	 */
 	if (!alg_byname_ok(parser, alg, print_name)) {
-		passert(parser->error[0] != '\0');
+		passert(parser->diag != NULL);
 		DBGF(DBG_PROPOSAL_PARSER, "alg_byname_ok() failed: %s",
-		     parser->error);
+		     str_diag(parser->diag));
 		return NULL;
 	}
 
