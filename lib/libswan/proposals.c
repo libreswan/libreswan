@@ -344,25 +344,18 @@ void append_algorithm(struct proposal_parser *parser,
 		      const struct ike_alg *alg,
 		      int enckeylen)
 {
+	if (alg == NULL) {
+		DBGF(DBG_PROPOSAL_PARSER, "no algorithm to append");
+		return;
+	}
 	enum proposal_algorithm algorithm = ike_to_proposal_algorithm(alg);
 	passert(algorithm < elemsof(proposal->algorithms));
+	/* find end */
 	struct algorithm **end = &proposal->algorithms[algorithm];
-	/* find end, and check for duplicates */
 	while ((*end) != NULL) {
-		/*
-		 * enckeylen=0 acts as a wildcard
-		 */
-		if (alg == (*end)->desc &&
-		    (alg->algo_type != IKE_ALG_ENCRYPT ||
-		     ((*end)->enckeylen == 0 ||
-		      enckeylen == (*end)->enckeylen))) {
-			log_message(parser->policy->logger_rc_flags, parser->policy->logger,
-				    "discarding duplicate %s %s algorithm %s",
-				    parser->protocol->name, ike_alg_type_name(alg->algo_type), alg->fqn);
-			return;
-		}
 		end = &(*end)->next;
 	}
+	/* append */
 	struct algorithm new_algorithm = {
 		.desc = alg,
 		.enckeylen = enckeylen,
@@ -371,6 +364,49 @@ void append_algorithm(struct proposal_parser *parser,
 	     parser->protocol->name, ike_alg_type_name(alg->algo_type), alg->fqn,
 	     enckeylen);
 	*end = clone_thing(new_algorithm, "alg");
+}
+
+void remove_duplicate_algorithms(struct proposal_parser *parser,
+				 struct proposal *proposal,
+				 enum proposal_algorithm algorithm)
+{
+	passert(algorithm < elemsof(proposal->algorithms));
+	/* XXX: not efficient */
+	for (struct algorithm *alg = proposal->algorithms[algorithm];
+	     alg != NULL; alg = alg->next) {
+		struct algorithm **dup = &alg->next;
+		while ((*dup) != NULL) {
+			/*
+			 * Since enckeylen=0 is a wildcard there's no
+			 * point following it enckeylen=128 say; OTOH
+			 * enckeylen=128 then enckeylen=0 is ok as
+			 * latter picks up 192 and 256.
+			 */
+			if (alg->desc == (*dup)->desc &&
+			    (alg->desc->algo_type != IKE_ALG_ENCRYPT ||
+			     alg->enckeylen == 0 ||
+			     alg->enckeylen == (*dup)->enckeylen)) {
+				struct algorithm *dead = (*dup);
+				if (impair.proposal_parser) {
+					log_message(parser->policy->logger_rc_flags, parser->policy->logger,
+						    "IMPAIR: ignoring duplicate algorithms");
+					return;
+				}
+				LOG_JAMBUF(parser->policy->logger_rc_flags, parser->policy->logger, buf) {
+					jam(buf, "discarding duplicate %s %s algorithm %s",
+					    parser->protocol->name, ike_alg_type_name(dead->desc->algo_type),
+					    dead->desc->fqn);
+					if (dead->enckeylen != 0) {
+						jam(buf, "_%d", dead->enckeylen);
+					}
+				}
+				(*dup) = (*dup)->next; /* remove */
+				pfree(dead);
+			} else {
+				dup = &(*dup)->next; /* advance */
+			}
+		}
+	}
 }
 
 void jam_proposal(struct jambuf *log,

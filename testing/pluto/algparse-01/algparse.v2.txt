@@ -437,11 +437,11 @@ algparse: discarding duplicate IKE PRF algorithm HMAC_SHA1
 algparse: discarding duplicate IKE DH algorithm MODP8192
 	AES_CBC+3DES_CBC-HMAC_SHA1+HMAC_SHA2_256-MODP8192+MODP4096
 algparse -v2 'ike=aes+aes128+aes256'
-algparse: discarding duplicate IKE encryption algorithm AES_CBC
-algparse: discarding duplicate IKE encryption algorithm AES_CBC
+algparse: discarding duplicate IKE encryption algorithm AES_CBC_128
+algparse: discarding duplicate IKE encryption algorithm AES_CBC_256
 	AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
 algparse -v2 'ike=aes128+aes+aes256'
-algparse: discarding duplicate IKE encryption algorithm AES_CBC
+algparse: discarding duplicate IKE encryption algorithm AES_CBC_256
 	AES_CBC_128+AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
 algparse -v2 'ike=aes128+aes256+aes'
 	AES_CBC_128+AES_CBC_256+AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31

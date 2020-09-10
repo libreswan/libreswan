@@ -219,6 +219,7 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 				return PROPOSAL_ERROR;
 			}
 		}
+		remove_duplicate_algorithms(parser, proposal, PROPOSAL_encrypt);
 	}
 
 	/* THIS MACRO CAN RETURN */
@@ -239,6 +240,7 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 			}						\
 			proposal_next_token(&tokens);			\
 		}							\
+		remove_duplicate_algorithms(parser, proposal, PROPOSAL_##ALG); \
 	}
 
 	/* expect PRF when not reached ;DH */

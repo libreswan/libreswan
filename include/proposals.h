@@ -173,6 +173,9 @@ void free_algorithms(struct proposal *proposal, enum proposal_algorithm algorith
 void append_proposal(struct proposals *proposals, struct proposal **proposal);
 void append_algorithm(struct proposal_parser *parser, struct proposal *proposal,
 		      const struct ike_alg *alg, int enckeylen);
+void remove_duplicate_algorithms(struct proposal_parser *parser,
+				 struct proposal *proposal,
+				 enum proposal_algorithm algorithm);
 
 struct proposal_parser *alloc_proposal_parser(const struct proposal_policy *policy,
 					      const struct proposal_protocol *protocol);
