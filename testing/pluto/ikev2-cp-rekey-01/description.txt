@@ -2,3 +2,14 @@ Test IKEv2 with addresspool and DNS CP payloads
 
 Do an --up, followed by another --up that should cause a proper child rekey (or a 2nd /replaced)
 IPsec SA - but not a failure.
+
+This shows a few bugs:
+
+1) On initiator, why did we not include a CP request for the IPsec SA rekey ?
+2) On receiving CREATE_CHILD_SA without having send a CP request, why do we
+   reject a reply with no CP reply?
+3) Why does the initiator send multiple proposals? We MUST only use the same
+   crypto parameters as the IPsec SA that is currently in use is using. Anything
+   else is not allowed.
+4) Is the responder and the initiator verifying the chosen proposal is identical
+   (other than in theory the CP IP address, but for us it is always the same) 
