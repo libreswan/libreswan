@@ -319,6 +319,6 @@ bool v2_proposals_parse_str(struct proposal_parser *parser,
 			append_proposal(proposals, &proposal);
 			break;
 		}
-	} while (input.len > 0);
+	} while (input.ptr != NULL);
 	return true;
 }

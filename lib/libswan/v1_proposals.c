@@ -382,6 +382,6 @@ bool v1_proposals_parse_str(struct proposal_parser *parser,
 			passert(parser->diag != NULL);
 			return false;
 		}
-	} while (prop_ptr.len > 0);
+	} while (prop_ptr.ptr != NULL);
 	return true;
 }
