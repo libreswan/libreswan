@@ -222,51 +222,137 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 		remove_duplicate_algorithms(parser, proposal, PROPOSAL_encrypt);
 	}
 
-	/* THIS MACRO CAN RETURN */
-#define PARSE_ALG(ALG)							\
-	if (tokens.this.ptr != NULL &&					\
-	    (parser->protocol->ALG || impair.proposal_parser)) {	\
-		if (!parse_alg(parser, proposal,			\
-			       &ike_alg_##ALG, tokens.this)) {		\
-			passert(parser->diag != NULL);			\
-			return PROPOSAL_ERROR;				\
-		}							\
-		proposal_next_token(&tokens);				\
-		while (tokens.prev_term == '+') {			\
-			if (!parse_alg(parser, proposal,		\
-				       &ike_alg_##ALG, tokens.this)) {	\
-				passert(parser->diag != NULL);		\
-				return PROPOSAL_ERROR;			\
-			}						\
-			proposal_next_token(&tokens);			\
+	/* Error left in parser->diag */
+#define PARSE_ALG(TOKENS, ALG)						\
+	passert(parser->diag == NULL); /* so far so good */		\
+	DBGF(DBG_PROPOSAL_PARSER, "parsing "#ALG":");			\
+	if (parse_alg(parser, proposal,					\
+		      &ike_alg_##ALG, TOKENS.this)) {			\
+		passert(parser->diag == NULL);				\
+		proposal_next_token(&TOKENS);				\
+		while (TOKENS.prev_term == '+' &&			\
+		       parse_alg(parser, proposal,			\
+				 &ike_alg_##ALG, TOKENS.this)) {	\
+			passert(parser->diag == NULL);			\
+			proposal_next_token(&TOKENS);			\
 		}							\
 		remove_duplicate_algorithms(parser, proposal, PROPOSAL_##ALG); \
 	}
 
-	/* expect PRF when not reached ;DH */
-	if (tokens.prev_term != ';') {
-		PARSE_ALG(prf);
+	/*
+	 * Try to parse:
+	 *
+	 *     <encr>-<PRF>...
+	 *
+	 * If it succeeds, assume the proposal is <encr>-<prf>-<dh>
+	 * and not <encr>-<integ>-<prf>-<dh>.  The merge code will
+	 * fill <integ> in with either NONE (AEAD) or the <prf>s
+	 * converted to integ.
+	 *
+	 * If it fails, code below will try <encr>-<integ>-<prf>.
+	 *
+	 * This means, to specify integrity, the full integrity
+	 * algorithm name is needed.  This means that
+	 * aes_gcm-none-sha1-dh21 is easy but anything else is a pain.
+	 * Hopefully this is ok as specifying integrity different to
+	 * the PRF isn't something to encourage.
+	 */
+	diag_t prf_diag = NULL; /* must free or transfer */
+	if (parser->protocol->prf &&
+	    tokens.this.ptr != NULL /*more*/ &&
+	    tokens.prev_term != ';' /*!DH*/) {
+		/* not impaired */
+		struct proposal_tokenizer prf_tokens = tokens;
+		PARSE_ALG(prf_tokens, prf);
+		if (parser->diag == NULL) {
+			/* advance */
+			DBGF(DBG_PROPOSAL_PARSER, "<encr>-<PRF> succeeded, advancing tokens");
+			tokens = prf_tokens;
+			remove_duplicate_algorithms(parser, proposal, PROPOSAL_prf);
+		} else {
+			/* toss the result, but save the error */
+			DBGF(DBG_PROPOSAL_PARSER,
+			     "<encr>-<PRF> failed, saving error '%s' and tossing result",
+			     str_diag(parser->diag));
+			free_algorithms(proposal, PROPOSAL_prf);
+			prf_diag = parser->diag;
+			parser->diag = NULL;
+		}
 	}
 
 	/*
-	 * By default, don't allow ike=...-<prf>-<integ>-... but do
-	 * allow esp=...-<integ>.  In the case of IKE, when integrity
-	 * is required, it is filled in using the PRF.
+	 * Parse:
 	 *
-	 * XXX: The parser and output isn't consistent in that for ESP
-	 * it parses <encry>-<integ> but for IKE it parses
-	 * <encr>-<prf>.  This seems to lead to confusion when
-	 * printing proposals - ike=aes_gcm-sha1 gets mis-read as as
-	 * using sha1 as integrity.  ike-aes_gcm-none-sha1 would
-	 * clarify this but that makes for a fun parse.
+	 *    <encr>-<INTEG>... (if above fails)
+	 *    <INTEG>...
 	 */
-	if (tokens.prev_term != ';' &&
-	    (parser->protocol->integ || impair.proposal_parser) &&
-	    (!parser->protocol->prf || impair.proposal_parser)) {
-		PARSE_ALG(integ);
+	if ((parser->protocol->integ || impair.proposal_parser) &&
+	    tokens.this.ptr != NULL /*more*/ &&
+	    tokens.prev_term != ';' /*!DH*/ &&
+	    /* <encr>-<PRF> either failed or wasn't needed */
+	    next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL) {
+		PARSE_ALG(tokens, integ);
+		if (parser->diag != NULL) {
+			if (prf_diag != NULL) {
+				DBGF(DBG_PROPOSAL_PARSER,
+				     "<encr>-<PRF> and <encr>-<INTEG> failed, returning earlier PRF error '%s' and discarding INTEG error '%s')",
+				     str_diag(prf_diag), str_diag(parser->diag));
+				pfree_diag(&parser->diag);
+				parser->diag = prf_diag;
+				return PROPOSAL_ERROR;
+			} else {
+				DBGF(DBG_PROPOSAL_PARSER,
+				     "<INTEG> or <encr>-<INTEG> failed '%s')",
+				     str_diag(parser->diag));
+				pexpect(prf_diag == NULL);
+				pfree_diag(&prf_diag);
+				return PROPOSAL_ERROR;
+			}
+		}
+		remove_duplicate_algorithms(parser, proposal, PROPOSAL_integ);
+	}
+	pfree_diag(&prf_diag); /* when INTEG ok but PRF failed */
+
+	/*
+	 * Parse:
+	 *
+	 *    <encr>-<integ>-<PRF>...
+	 *
+	 * But only when <encr>-<PRF> didn't succeed.
+	 */
+	if ((parser->protocol->prf || impair.proposal_parser) &&
+	    tokens.this.ptr != NULL /*more*/ &&
+	    tokens.prev_term != ';' /*!DH*/ &&
+	    /* above parsed integrity */
+	    next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL) {
+		PARSE_ALG(tokens, prf);
+		if (parser->diag != NULL) {
+			DBGF(DBG_PROPOSAL_PARSER, "<encr>-<integ>-<PRF> failed '%s'", str_diag(parser->diag));
+			return PROPOSAL_ERROR;
+		}
+		remove_duplicate_algorithms(parser, proposal, PROPOSAL_prf);
 	}
 
-	PARSE_ALG(dh);
+	/*
+	 * Parse:
+	 *
+	 *    ...;<DH>
+	 *    <encr>-<prf>-<DH> (IKE)
+	 *    <encr>-<integ>-<prf>-<DH> (IKE)
+	 *    <encr>-<integ>-<DH> (ESP)
+	 *    <integ>-<DH> (AH)
+	 *
+	 * But only when <encr>-<PRF> didn't succeed.
+	 */
+	if ((parser->protocol->dh || impair.proposal_parser) &&
+	    tokens.this.ptr != NULL /*more*/) {
+		PARSE_ALG(tokens, dh);
+		if (parser->diag != NULL) {
+			DBGF(DBG_PROPOSAL_PARSER, "...<dh> failed '%s'", str_diag(parser->diag));
+			return PROPOSAL_ERROR;
+		}
+		remove_duplicate_algorithms(parser, proposal, PROPOSAL_dh);
+	}
 
 	/* end of token stream? */
 	if (tokens.this.ptr != NULL) {
