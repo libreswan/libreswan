@@ -378,10 +378,21 @@ algparse -fips -v1 -pfs 'ike=aes_ccm'
 	ERROR: IKE encryption algorithm 'aes_ccm' is not supported by IKEv1
 algparse -fips -v1 -pfs 'ike=aes_gcm-sha1-none-modp2048'
 	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
-algparse -fips -v1 -pfs 'ike=aes_gcm+aes_gcm-sha1-none-modp2048'
-	ERROR: IKE encryption algorithm 'aes_gcm+aes_gcm' is not recognized
 algparse -fips -v1 -pfs 'ike=aes+aes_gcm'
 	ERROR: IKE encryption algorithm 'aes+aes_gcm' is not recognized
+algparse -fips -v1 -pfs 'ike=aes+aes-sha1+sha1-modp8192+modp8192'
+	ERROR: IKE encryption algorithm 'aes+aes' is not recognized
+algparse -fips -v1 -pfs 'ike=3des+aes+aes-sha2+sha1+sha1-modp4096+modp8192+modp8192'
+	ERROR: IKE encryption algorithm '3des+aes+aes' is not recognized
+algparse -fips -v1 -pfs 'ike=aes+3des+aes-sha1+sha2+sha1-modp8192+modp4096+modp8192'
+	ERROR: IKE encryption algorithm 'aes+3des+aes' is not recognized
+algparse -fips -v1 -pfs 'ike=aes+aes+3des-sha1+sha1+sha2-modp8192+modp8192+modp4096'
+	ERROR: IKE encryption algorithm 'aes+aes+3des' is not recognized
+algparse -fips -v1 -pfs 'ike=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192'
+	AES_CBC-HMAC_SHA1-MODP8192
+algparse -fips -v1 -pfs 'ike=aes-sha1-modp8192,aes-sha2-modp8192,aes-sha1-modp8192'
+	AES_CBC-HMAC_SHA1-MODP8192
+	AES_CBC-HMAC_SHA2_256-MODP8192
 algparse -fips -v1 -pfs 'ike=,'
 	ERROR: IKE encryption algorithm is empty
 algparse -fips -v1 -pfs 'ike=aes,'

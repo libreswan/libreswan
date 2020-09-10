@@ -380,11 +380,33 @@ algparse -v2 -pfs 'ike=aes_ccm'
 	ERROR: IKE encryption algorithm 'aes_ccm' is not supported
 algparse -v2 -pfs 'ike=aes_gcm-sha1-none-modp2048'
 	ERROR: IKE proposal contains unexpected 'modp2048'
-algparse -v2 -pfs 'ike=aes_gcm+aes_gcm-sha1-none-modp2048'
-algparse: discarding duplicate IKE encryption algorithm AES_GCM_16
-	ERROR: IKE proposal contains unexpected 'modp2048'
 algparse -v2 -pfs 'ike=aes+aes_gcm'
 	ERROR: AEAD and non-AEAD IKE encryption algorithm cannot be combined
+algparse -v2 -pfs 'ike=aes+aes-sha1+sha1-modp8192+modp8192'
+algparse: discarding duplicate IKE encryption algorithm AES_CBC
+algparse: discarding duplicate IKE PRF algorithm HMAC_SHA1
+algparse: discarding duplicate IKE DH algorithm MODP8192
+	AES_CBC-HMAC_SHA1-MODP8192
+algparse -v2 -pfs 'ike=3des+aes+aes-sha2+sha1+sha1-modp4096+modp8192+modp8192'
+algparse: discarding duplicate IKE encryption algorithm AES_CBC
+algparse: discarding duplicate IKE PRF algorithm HMAC_SHA1
+algparse: discarding duplicate IKE DH algorithm MODP8192
+	3DES_CBC+AES_CBC-HMAC_SHA2_256+HMAC_SHA1-MODP4096+MODP8192
+algparse -v2 -pfs 'ike=aes+3des+aes-sha1+sha2+sha1-modp8192+modp4096+modp8192'
+algparse: discarding duplicate IKE encryption algorithm AES_CBC
+algparse: discarding duplicate IKE PRF algorithm HMAC_SHA1
+algparse: discarding duplicate IKE DH algorithm MODP8192
+	AES_CBC+3DES_CBC-HMAC_SHA1+HMAC_SHA2_256-MODP8192+MODP4096
+algparse -v2 -pfs 'ike=aes+aes+3des-sha1+sha1+sha2-modp8192+modp8192+modp4096'
+algparse: discarding duplicate IKE encryption algorithm AES_CBC
+algparse: discarding duplicate IKE PRF algorithm HMAC_SHA1
+algparse: discarding duplicate IKE DH algorithm MODP8192
+	AES_CBC+3DES_CBC-HMAC_SHA1+HMAC_SHA2_256-MODP8192+MODP4096
+algparse -v2 -pfs 'ike=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192'
+	AES_CBC-HMAC_SHA1-MODP8192
+algparse -v2 -pfs 'ike=aes-sha1-modp8192,aes-sha2-modp8192,aes-sha1-modp8192'
+	AES_CBC-HMAC_SHA1-MODP8192
+	AES_CBC-HMAC_SHA2_256-MODP8192
 algparse -v2 -pfs 'ike=,'
 	ERROR: IKE encryption algorithm is empty
 algparse -v2 -pfs 'ike=aes,'
