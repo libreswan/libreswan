@@ -474,14 +474,28 @@ static void test(struct logger *logger)
 	ike(impaired, "aes_gcm-sha1-none-modp2048");
 	ike(impaired, "aes_gcm+aes_gcm-sha1-none-modp2048");
 	ike(false, "aes+aes_gcm"); /* mixing AEAD and NORM encryption */
+
+
 	/* syntax */
+
+	ike(false, ","); /* empty algorithm */
+	ike(false, "aes,"); /* empty algorithm */
+	ike(false, "aes,,aes"); /* empty algorithm */
+	ike(false, ",aes"); /* empty algorithm */
+
 	ike(false, "-"); /* empty algorithm */
-	ike(false, "aes-"); /* empty algorithm */
-	ike(false, "aes-;"); /* empty algorithm */
-	ike(false, "aes;"); /* empty algorithm */
 	ike(false, "+"); /* empty algorithm */
-	ike(false, "+aes"); /* empty algorithm */
+	ike(false, ";"); /* empty algorithm */
+
+	ike(false, "aes-"); /* empty algorithm */
 	ike(false, "aes+"); /* empty algorithm */
+	ike(false, "aes;"); /* empty algorithm */
+	ike(false, "-aes"); /* empty algorithm */
+	ike(false, "+aes"); /* empty algorithm */
+	ike(false, ";aes"); /* empty algorithm */
+	ike(false, "aes+-"); /* empty algorithm */
+	ike(false, "aes+;"); /* empty algorithm */
+	ike(false, "aes++"); /* empty algorithm */
 }
 
 static void usage(void)

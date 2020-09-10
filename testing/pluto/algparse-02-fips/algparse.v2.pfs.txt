@@ -385,17 +385,35 @@ algparse: discarding duplicate IKE encryption algorithm AES_GCM_16
 	ERROR: IKE proposal contains unexpected 'modp2048'
 algparse -fips -v2 -pfs 'ike=aes+aes_gcm'
 	ERROR: AEAD and non-AEAD IKE encryption algorithm cannot be combined
+algparse -fips -v2 -pfs 'ike=,'
+	ERROR: IKE encryption algorithm is empty
+algparse -fips -v2 -pfs 'ike=aes,'
+	ERROR: IKE encryption algorithm is empty
+algparse -fips -v2 -pfs 'ike=aes,,aes'
+	ERROR: IKE encryption algorithm is empty
+algparse -fips -v2 -pfs 'ike=,aes'
+	ERROR: IKE encryption algorithm is empty
 algparse -fips -v2 -pfs 'ike=-'
+	ERROR: IKE encryption algorithm is empty
+algparse -fips -v2 -pfs 'ike=+'
+	ERROR: IKE encryption algorithm is empty
+algparse -fips -v2 -pfs 'ike=;'
 	ERROR: IKE encryption algorithm is empty
 algparse -fips -v2 -pfs 'ike=aes-'
 	ERROR: IKE PRF algorithm is empty
-algparse -fips -v2 -pfs 'ike=aes-;'
-	ERROR: IKE PRF algorithm is empty
+algparse -fips -v2 -pfs 'ike=aes+'
+	ERROR: IKE encryption algorithm is empty
 algparse -fips -v2 -pfs 'ike=aes;'
 	ERROR: IKE DH algorithm is empty
-algparse -fips -v2 -pfs 'ike=+'
+algparse -fips -v2 -pfs 'ike=-aes'
 	ERROR: IKE encryption algorithm is empty
 algparse -fips -v2 -pfs 'ike=+aes'
 	ERROR: IKE encryption algorithm is empty
-algparse -fips -v2 -pfs 'ike=aes+'
+algparse -fips -v2 -pfs 'ike=;aes'
+	ERROR: IKE encryption algorithm is empty
+algparse -fips -v2 -pfs 'ike=aes+-'
+	ERROR: IKE encryption algorithm is empty
+algparse -fips -v2 -pfs 'ike=aes+;'
+	ERROR: IKE encryption algorithm is empty
+algparse -fips -v2 -pfs 'ike=aes++'
 	ERROR: IKE encryption algorithm is empty
