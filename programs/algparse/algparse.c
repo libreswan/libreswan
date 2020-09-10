@@ -470,6 +470,14 @@ static void test(struct logger *logger)
 	ike(false, "3des-id2"); /* should be rejected; idXXX removed */
 	ike(false, "aes_ccm"); /* ESP/AH only */
 
+	/* quads */
+
+	ike(false, "aes-sha1-sha2-ecp_521");
+	ike(false, "aes-sha2-sha2;ecp_521");
+	/* fqn */
+	ike(ike_version == IKEv2, "aes-sha1_96-sha2-ecp_521");
+	ike(ike_version == IKEv2, "aes-sha1_96-sha2;ecp_521");
+
 	/* toss duplicates */
 
 	ike(ike_version == IKEv2, "aes+aes-sha1+sha1-modp8192+modp8192");
@@ -491,16 +499,14 @@ static void test(struct logger *logger)
 	ike(ike_version == IKEv2, "aes_gcm-sha2");
 	ike(ike_version == IKEv2, "aes_gcm-sha2-modp2048");
 	ike(ike_version == IKEv2, "aes_gcm-sha2;modp2048");
-	ike(false/*ike_version == IKEv2*/, "aes_gcm-modp2048"); /* ';' required - PRF */
+	ike(false, "aes_gcm-modp2048"); /* ';' required - PRF */
 	ike(ike_version == IKEv2, "aes_gcm;modp2048");
-#if 0
 	ike(ike_version == IKEv2, "aes_gcm-none");
 	ike(ike_version == IKEv2, "aes_gcm-none-sha2");
 	ike(ike_version == IKEv2, "aes_gcm-none-sha2-modp2048");
 	ike(ike_version == IKEv2, "aes_gcm-none-sha2;modp2048");
-	ike(ike_version == IKEv2, "aes_gcm-none-modp2048");  /* ';' required - INTEG */
+	ike(false, "aes_gcm-none-modp2048");  /* ';' required - INTEG */
 	ike(ike_version == IKEv2, "aes_gcm-none;modp2048");
-#endif
 	ike(false, "aes_gcm-sha1-none-modp2048"); /* old syntax */
 	ike(false, "aes_gcm-sha1-none;modp2048"); /* old syntax */
 	ike(false, "aes+aes_gcm"); /* mixing AEAD and NORM encryption */
