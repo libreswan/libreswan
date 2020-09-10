@@ -477,10 +477,16 @@ static void test(struct logger *logger)
 	ike(ike_version == IKEv2, "3des+aes+aes-sha2+sha1+sha1-modp4096+modp8192+modp8192");
 	ike(ike_version == IKEv2, "aes+3des+aes-sha1+sha2+sha1-modp8192+modp4096+modp8192");
 	ike(ike_version == IKEv2, "aes+aes+3des-sha1+sha1+sha2-modp8192+modp8192+modp4096");
+	/* keys */
+	ike(ike_version == IKEv2, "aes+aes128+aes256"); /* toss 128/256 */
+	ike(ike_version == IKEv2, "aes128+aes+aes256"); /* toss 256 */
+	ike(ike_version == IKEv2, "aes128+aes256+aes");
+	/* proposals */
 	ike(true, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192");
 	ike(true, "aes-sha1-modp8192,aes-sha2-modp8192,aes-sha1-modp8192"); /* almost middle */
 
 	/* aead */
+
 	ike(ike_version == IKEv2, "aes_gcm");
 	ike(ike_version == IKEv2, "aes_gcm-sha2");
 	ike(ike_version == IKEv2, "aes_gcm-sha2-modp2048");

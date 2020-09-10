@@ -419,6 +419,12 @@ algparse -v1 'ike=aes+3des+aes-sha1+sha2+sha1-modp8192+modp4096+modp8192'
 	ERROR: IKE encryption algorithm 'aes+3des+aes' is not recognized
 algparse -v1 'ike=aes+aes+3des-sha1+sha1+sha2-modp8192+modp8192+modp4096'
 	ERROR: IKE encryption algorithm 'aes+aes+3des' is not recognized
+algparse -v1 'ike=aes+aes128+aes256'
+	ERROR: IKE encryption algorithm 'aes+aes128+aes256' is not recognized
+algparse -v1 'ike=aes128+aes+aes256'
+	ERROR: IKE encryption algorithm 'aes128+aes+aes256' is not recognized
+algparse -v1 'ike=aes128+aes256+aes'
+	ERROR: IKE encryption algorithm 'aes128+aes256+aes' is not recognized
 algparse -v1 'ike=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192'
 	AES_CBC-HMAC_SHA1-MODP8192
 algparse -v1 'ike=aes-sha1-modp8192,aes-sha2-modp8192,aes-sha1-modp8192'
