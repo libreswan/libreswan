@@ -427,19 +427,14 @@ void jam_proposal(struct jambuf *log,
 	}
 
 	as = ps;
-	FOR_EACH_ALGORITHM(proposal, prf, alg) {
-		const struct prf_desc *prf = prf_desc(alg->desc);
-		jam_string(log, as); ps = "-"; as = "+";
-		jam_string(log, prf->common.fqn);
-	}
-
+	/* ESP, or AEAD */
 	bool print_integ = (impair.proposal_parser ||
 			    /* no PRF */
 			    next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL ||
-			    /* AEAD should have NONE */
+			    /* AEAD when not NONE */
 			    (proposal_encrypt_aead(proposal) && !proposal_integ_none(proposal)));
+	/* non-AEAD when PRF and INTEG don't match */
 	if (!print_integ && proposal_encrypt_norm(proposal)) {
-		/* non-AEAD should have matching PRF and INTEG */
 		for (struct algorithm *integ = next_algorithm(proposal, PROPOSAL_integ, NULL),
 			     *prf = next_algorithm(proposal, PROPOSAL_prf, NULL);
 		     !print_integ && (integ != NULL || prf != NULL);
@@ -449,13 +444,19 @@ void jam_proposal(struct jambuf *log,
 				       &integ_desc(integ->desc)->prf->common != prf->desc);
 		}
 	}
-	as = ps;
 	if (print_integ) {
 		FOR_EACH_ALGORITHM(proposal, integ, alg) {
 			const struct integ_desc *integ = integ_desc(alg->desc);
 			jam_string(log, as); ps = "-"; as = "+";
 			jam_string(log, integ->common.fqn);
 		}
+	}
+
+	as = ps;
+	FOR_EACH_ALGORITHM(proposal, prf, alg) {
+		const struct prf_desc *prf = prf_desc(alg->desc);
+		jam_string(log, as); ps = "-"; as = "+";
+		jam_string(log, prf->common.fqn);
 	}
 
 	as = ps;
