@@ -4436,6 +4436,13 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 			/* already logged; already recorded */
 			return STF_FAIL;
 		}
+		if (!child_rekey_responder_ts_verify(child, md)) {
+			record_v2N_response(ike->sa.st_logger, ike, md,
+				v2N_TS_UNACCEPTABLE, NULL/*no data*/,
+					ENCRYPTED_PAYLOAD);
+			return STF_FAIL;
+               }
+
 		pexpect(child->sa.st_ipsec_pred != SOS_NOBODY);
 		break;
 	case STATE_V2_NEW_CHILD_R0:
@@ -4852,20 +4859,6 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 			jam_v2_stf_status(buf, ret);
 		}
 		return ret; /* abort building the response message */
-	}
-
-	/*
-	 * RFC 7296 https://tools.ietf.org/html/rfc7296#section-2.8
-	 * "when rekeying, the new Child SA SHOULD NOT have different Traffic
-	 *  Selectors and algorithms than the old one."
-	 */
-	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0) {
-		if (!child_rekey_ts_verify(child, request_md)) {
-			/* logged; but not recorded */
-			record_v2N_response(child->sa.st_logger, ike, request_md, v2N_TS_UNACCEPTABLE,
-					    NULL, ENCRYPTED_PAYLOAD);
-			return STF_FAIL;
-		}
 	}
 
 	/* note: pst: parent; md->st: child */

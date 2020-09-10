@@ -56,25 +56,6 @@ enum fit {
 };
 
 
-static bool ts_in_tslist(struct traffic_selectors *haystack,
-			struct traffic_selector *needle)
-{
-	for (unsigned int i = 0; i < haystack->nr; i++) {
-		struct traffic_selector hay = haystack->ts[i];
-
-		if (needle->ts_type == hay.ts_type &&
-			needle->ipprotoid == hay.ipprotoid &&
-			needle->startport == hay.startport &&
-			needle->endport == hay.endport &&
-			sameaddr(&needle->net.start, &hay.net.start) &&
-			sameaddr(&needle->net.end, &hay.net.end))
-                        {
-				return TRUE;
-                        }
-	}
-	return FALSE;
-}
-
 static const char *fit_string(enum fit fit)
 {
 	switch (fit) {
@@ -1252,36 +1233,51 @@ bool v2_process_ts_response(struct child_sa *child,
  * "when rekeying, the new Child SA SHOULD NOT have different Traffic
  *  Selectors and algorithms than the old one."
  *
+ * However, when narrowed down, the original TSi/TSr is wider than the
+ * returned narrowed TSi/TSr. Windows 10 is known to use the original
+ * and not the narrowed TSi/TSr.
+ *
+ * RFC 7296 #1.3.3 "The Traffic Selectors for traffic to be sent
+ * on that SA are specified in the TS payloads in the response,
+ * which may be a subset of what the initiator of the Child SA proposed."
+ *
+ * However, the rekey initiator, when it is the original initiator of
+ * the Child SA, may request a super set. And responder should
+ * respond with same set as initially negotiated, ie RFC 7296 #2.8
+ *
+ * See RFC 7296 Section 1.7. for the above change.
+ * Significant Differences between RFC 4306 and RFC 5996
+ *
  * We already matched the right connection by the SPI of v2N_REKEY_SA
  */
-bool child_rekey_ts_verify(struct child_sa *child, struct msg_digest *md)
+bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *md)
 {
-	if (!pexpect(child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 ||
-		     child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I1)) {
+	if (!pexpect(child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0))
 		return false;
-	}
 
+	const struct connection *c = child->sa.st_connection;
 	struct traffic_selectors their_tsis = { .nr = 0, };
 	struct traffic_selectors their_tsrs = { .nr = 0, };
-	enum message_role md_role = v2_msg_role(md);
 
 	if (!v2_parse_tss(md, &their_tsis, &their_tsrs)) {
 		log_state(RC_LOG_SERIOUS, &child->sa, "received malformed TSi/TSr payload(s)");
 		return false;
 	}
 
-	struct traffic_selector ts_this = ikev2_end_to_ts(&child->sa.st_connection->spd.this);
-	struct traffic_selector ts_that = ikev2_end_to_ts(&child->sa.st_connection->spd.that);
+	const struct ends ends = {
+		.i = &c->spd.that,
+		.r = &c->spd.this,
+	};
 
-	if (!ts_in_tslist(&their_tsis, (md_role == MESSAGE_REQUEST) ? &ts_that : &ts_this)) {
-		log_state(RC_LOG_SERIOUS, &child->sa,
-			  "received TSi payload does not contain existing IPsec SA traffic Selectors");
+	enum fit fitness = END_NARROWER_THAN_TS;
+
+	struct best_score score = score_ends(fitness, c, &ends, &their_tsis,
+			&their_tsrs);
+
+	if (!score.ok) {
+		loglog(RC_LOG_SERIOUS, "Rekey: received Traffic Selectors does not contain existing IPsec SA Traffic Selectors");
 		return false;
 	}
 
-	if (!ts_in_tslist(&their_tsrs, (md_role == MESSAGE_REQUEST) ? &ts_this : &ts_that)) {
-		log_state(RC_LOG_SERIOUS, &child->sa, "received TSr payload(s) does not contain existing IPsec SA Traffic Selectors");
-		return false;
-	}
 	return true;
 }
