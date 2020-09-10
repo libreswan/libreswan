@@ -16,6 +16,7 @@ v4.0 (unreleased)
 * seccomp: Update syscall allowlist for pluto and addconn [Paul]
 * whack: Support for ipsec whack --rereadcerts [Paul]
 * show: Fixup for python3 version of ipaddress module [Paul]
+* IKEv2: Fix Windows 10 rekey being rejected [Antony/Paul]
 * IKEv2: EXPERIMENTAL: Support for RFC 8229 IKE/ESP over TCP [Andrew]
    new keywords: listen-tcp=yes|no, tcponly=yes|no, tcp-remoteport=
 * IKEv2: Support for leftikeport= / rightikeport= [Andrew/Paul]
