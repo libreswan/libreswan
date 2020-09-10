@@ -472,9 +472,17 @@ static void test(struct logger *logger)
 	ike(false, "3des-id2"); /* should be rejected; idXXX removed */
 	ike(false, "aes_ccm"); /* ESP/AH only */
 	ike(impaired, "aes_gcm-sha1-none-modp2048");
-	ike(impaired, "aes_gcm+aes_gcm-sha1-none-modp2048");
 	ike(false, "aes+aes_gcm"); /* mixing AEAD and NORM encryption */
 
+	/* toss duplicates */
+
+	ike(ike_version == IKEv2, "aes+aes-sha1+sha1-modp8192+modp8192");
+	/* cycle through 3des-sha2-modp4096 */
+	ike(ike_version == IKEv2, "3des+aes+aes-sha2+sha1+sha1-modp4096+modp8192+modp8192");
+	ike(ike_version == IKEv2, "aes+3des+aes-sha1+sha2+sha1-modp8192+modp4096+modp8192");
+	ike(ike_version == IKEv2, "aes+aes+3des-sha1+sha1+sha2-modp8192+modp8192+modp4096");
+	ike(true, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192");
+	ike(true, "aes-sha1-modp8192,aes-sha2-modp8192,aes-sha1-modp8192"); /* almost middle */
 
 	/* syntax */
 
