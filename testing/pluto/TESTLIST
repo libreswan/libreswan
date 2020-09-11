@@ -1182,3 +1182,4 @@ kvmplutotest	ikev2-tcp-26-rw-nat-keepalive			wip
 
 # OpenBSD interop
 kvmplutotest	interop-ikev2-openbsd-01		good
+kvmplutotest	interop-ikev2-openbsd-02		good
