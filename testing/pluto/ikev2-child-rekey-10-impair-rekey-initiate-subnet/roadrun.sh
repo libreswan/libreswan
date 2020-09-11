@@ -5,7 +5,5 @@ ipsec auto --up road-east-x509-ipv4
 ipsec whack --trafficstatus
 ipsec whack --impair rekey-initiate-subnet
 ipsec whack --rekey-ipsec --name road-east-x509-ipv4 --async
-echo "sleep 40 seconds"
+echo "sleep 40 seconds to let rekey happen and fail"
 sleep 40
-../../pluto/bin/ping-once.sh --down -I 192.0.2.100 192.1.2.23
-echo done
