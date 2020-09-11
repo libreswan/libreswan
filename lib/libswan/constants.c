@@ -6,6 +6,7 @@
  * Copyright (C) 2016-2017 Andrew Cagney
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -435,11 +436,11 @@ static const char *const exchange_name_ikev2[] = {
 	"ISAKMP_v2_CREATE_CHILD_SA",
 	"ISAKMP_v2_INFORMATIONAL",
 	"ISAKMP_v2_IKE_SESSION_RESUME", /* RFC 5753 */
-#if 0	/* we don't recognize these yet */
 	"ISAKMP_v2_GSA_AUTH", /* draft-yeung-g-ikev2 */
 	"ISAKMP_v2_GSA_REGISTRATION", /* draft-yeung-g-ikev2 */
 	"ISAKMP_v2_GSA_REKEY", /* draft-yeung-g-ikev2 */
-#endif
+	"ISAKMP_v2_UNASSIGNED_42", /* avoid hole in enum */
+	"ISAKMP_v2_IKE_INTERMEDIATE",
 };
 
 static const char *const exchange_name_private_use[] = {
@@ -473,7 +474,7 @@ enum_names ikev1_exchange_names = {
 
 enum_names ikev2_exchange_names = {
 	ISAKMP_v2_IKE_SA_INIT,
-	ISAKMP_v2_IKE_SESSION_RESUME,
+	ISAKMP_v2_IKE_INTERMEDIATE,
 	ARRAY_REF(exchange_name_ikev2),
 	"ISAKMP_v2_", /* prefix */
 	&exchange_names_private_use
@@ -1761,11 +1762,12 @@ static const char *const ikev2_notify_name_16384[] = {
 	"v2N_USE_PPK", /* 16435 */
 	"v2N_PPK_IDENTITY",
 	"v2N_NO_PPK_AUTH",
+	"v2N_INTERMEDIATE_EXCHANGE_SUPPORTED" /* 16438*/,
 };
 
 static enum_names ikev2_notify_names_16384 = {
 	v2N_INITIAL_CONTACT,
-	v2N_NO_PPK_AUTH,
+	v2N_INTERMEDIATE_EXCHANGE_SUPPORTED,
 	ARRAY_REF(ikev2_notify_name_16384),
 	"v2N_", /* prefix */
 	&ikev2_notify_names_private

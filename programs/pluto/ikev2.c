@@ -14,6 +14,7 @@
  * Copyright (C) 2015-2019 Andrew Cagney
  * Copyright (C) 2016-2018 Antony Antony <appu@phenome.org>
  * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
+ * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -285,7 +286,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	 *      [IDr,] AUTH, SAi2,
 	 *      TSi, TSr}      -->
 	 */
-	{ .story      = "Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH",
+	{ .story      = "Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH or IKE_INTERMEDIATE",
 	  .state      = STATE_PARENT_I1,
 	  .next_state = STATE_PARENT_I2,
 	  .send       = MESSAGE_REQUEST,
@@ -294,6 +295,18 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .processor  = ikev2_parent_inR1outI2,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
+	  .timeout_event = EVENT_RETRANSMIT, },
+
+	{ .story      = "Initiator: process IKE_INTERMEDIATE reply, initiate IKE_AUTH or IKE_INTERMEDIATE",
+	  .state      = STATE_PARENT_I2,
+	  .next_state = STATE_PARENT_I2,
+	  .flags = MESSAGE_RESPONSE,
+	  .send = MESSAGE_REQUEST,
+	  .req_clear_payloads = P(SK),
+	  .opt_clear_payloads = LEMPTY,
+	  .processor  = ikev2_parent_inR1outI2,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .recv_type  = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
 	/* STATE_PARENT_I2: R2 -->
@@ -383,6 +396,32 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .processor  = ikev2_ike_sa_process_auth_request_no_skeyid,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_IKE_AUTH,
+	  .timeout_event = EVENT_SA_REPLACE, },
+
+	{ .story      = "Responder: process IKE_INTERMEDIATE request (no SKEYSEED)",
+	  .state      = STATE_PARENT_R1,
+	  .next_state = STATE_PARENT_R1,
+	  .flags = MESSAGE_REQUEST | SMF2_NO_SKEYSEED,
+	  .send = MESSAGE_RESPONSE,
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = LEMPTY,
+	  .opt_enc_payloads = LEMPTY,
+	  .processor  = ikev2_ike_sa_process_intermediate_request_no_skeyid,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .recv_type  = ISAKMP_v2_IKE_INTERMEDIATE,
+	  .timeout_event = EVENT_SA_REPLACE, },
+
+	{ .story      = "Responder: process IKE_INTERMEDIATE request (with SKEYSEED)",
+	  .state      = STATE_PARENT_R1,
+	  .next_state = STATE_PARENT_R1,
+	  .flags = MESSAGE_REQUEST,
+	  .send = MESSAGE_RESPONSE,
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = LEMPTY,
+	  .opt_enc_payloads = LEMPTY,
+	  .processor  = ikev2_ike_sa_process_auth_request,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .recv_type  = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .timeout_event = EVENT_SA_REPLACE, },
 	/*
 	 * XXX: Danger! This state transition mashes the IKE SA's
@@ -3081,6 +3120,11 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		log_st = st;
 		/* log our success and trigger detach */
 		w = RC_SUCCESS;
+	} else if (transition->state == STATE_PARENT_I1 &&
+		transition->next_state == STATE_PARENT_I2) {
+		log_details = lswlog_ike_sa_established;
+		log_st = &ike->sa;
+		w = RC_NEW_V2_STATE + st->st_state->kind;
 	} else if (st->st_state->kind == STATE_PARENT_I2) {
 		/*
 		 * Hack around md->st being forced to the CHILD_SA

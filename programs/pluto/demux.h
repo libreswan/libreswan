@@ -6,6 +6,7 @@
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
  * Copyright (C) 2018-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
+ * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -110,6 +111,7 @@ enum v2_pbs {
 	PBS_v2N_INVALID_KE_PAYLOAD,
 	PBS_v2N_INVALID_MAJOR_VERSION,
 	PBS_v2N_TS_UNACCEPTABLE,
+	PBS_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED,
 
 	PBS_v2_ROOF,
 };

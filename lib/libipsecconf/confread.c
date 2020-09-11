@@ -15,6 +15,7 @@
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017-2018 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
+ * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1245,6 +1246,7 @@ static bool load_conn(struct starter_conn *conn,
 	KW_POLICY_FLAG(KNCF_MSDH_DOWNGRADE, POLICY_MSDH_DOWNGRADE);
 	KW_POLICY_FLAG(KNCF_DNS_MATCH_ID, POLICY_DNS_MATCH_ID);
 	KW_POLICY_FLAG(KNCF_SHA2_TRUNCBUG, POLICY_SHA2_TRUNCBUG);
+	KW_POLICY_FLAG(KNCF_INTERMEDIATE, POLICY_INTERMEDIATE);
 
 	if (conn->options_set[KNCF_SAN_ON_CERT]) {
 		if (!conn->options[KNCF_SAN_ON_CERT])

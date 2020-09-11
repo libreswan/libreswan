@@ -6,6 +6,7 @@
  * Copyright (C) 2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2017-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2018 Sahana Prasad <sahana.prasad07@gmail.com>
+ * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
  */
 
 #ifndef IKEV2_H
@@ -57,6 +58,7 @@ extern ikev2_state_transition_fn ikev2_child_inIoutR;
 extern ikev2_state_transition_fn ikev2_parent_inI1outR1;
 extern ikev2_state_transition_fn ikev2_auth_initiator_process_failure_notification;
 extern ikev2_state_transition_fn ikev2_auth_initiator_process_unknown_notification;
+extern ikev2_state_transition_fn ikev2_ike_sa_process_intermediate_request_no_skeyid;
 extern ikev2_state_transition_fn ikev2_ike_sa_process_auth_request_no_skeyid;
 extern ikev2_state_transition_fn ikev2_ike_sa_process_auth_request;
 extern ikev2_state_transition_fn ikev2_parent_inR1outI2;

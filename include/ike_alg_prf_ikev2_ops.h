@@ -1,6 +1,7 @@
 /* IKEv1 PRF specific operations, for libreswan
  *
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -61,7 +62,7 @@ struct prf_ikev2_ops {
 	struct crypt_mac (*psk_auth)(const struct prf_desc *prf_desc, chunk_t pss,
 				     chunk_t first_packet, chunk_t nonce,
 				     const struct crypt_mac *id_hash,
-				     struct logger *logger);
+				     struct logger *logger, bool use_intermediate, chunk_t intermediate_packet);
 };
 
 extern const struct prf_ikev2_ops ike_alg_prf_ikev2_mac_ops;

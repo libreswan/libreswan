@@ -17,6 +17,7 @@
  * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2019 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -463,7 +464,8 @@ enum option_enums {
 	CD_XAUTHFAIL,
 	CD_NIC_OFFLOAD,
 	CD_ESP,
-#   define CD_LAST CD_ESP	/* last connection description */
+	CD_INTERMEDIATE,
+#   define CD_LAST CD_INTERMEDIATE	/* last connection description */
 
 /*
  * Algorithm options (just because CD_ was full)
@@ -649,6 +651,7 @@ static const struct option long_opts[] = {
 
 #define PS(o, p)	{ o, no_argument, NULL, CDP_SINGLETON + POLICY_##p##_IX + OO }
 	PS("psk", PSK),
+	PS("intermediate", INTERMEDIATE),
 	/* These require more complicated settings now, done below
 	 * PS("rsasig", RSASIG),
 	 * PS("ecdsa", ECDSA),
@@ -1717,6 +1720,9 @@ int main(int argc, char **argv)
 
 		/* --mobike */
 		case CDP_SINGLETON + POLICY_MOBIKE_IX:
+
+		/* --intermediate */
+		case CDP_SINGLETON + POLICY_INTERMEDIATE_IX:
 
 		/* --ikefrag-allow */
 		case CDP_SINGLETON + POLICY_IKE_FRAG_ALLOW_IX:

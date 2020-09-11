@@ -8,6 +8,7 @@
  * Copyright (C) 2013-2019 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2014-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -153,6 +154,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
 		case v2N_COOKIE:
 		case v2N_USE_PPK:
+		case v2N_INTERMEDIATE_EXCHANGE_SUPPORTED:
 			dbg("received %s which is not valid for current exchange",
 			    enum_name(&ikev2_notify_names, ntfy->payload.v2n.isan_type));
 			break;

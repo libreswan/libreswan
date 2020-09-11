@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -70,6 +71,7 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 struct crypt_mac ikev2_psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
 				chunk_t first_packet, chunk_t nonce,
 				const struct crypt_mac *id_hash,
-				struct logger *logger);
+				struct logger *logger,
+				bool use_intermediate, chunk_t intermediate_packet);
 
 #endif

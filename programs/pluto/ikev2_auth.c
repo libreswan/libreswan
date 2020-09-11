@@ -8,6 +8,7 @@
  * Copyright (C) 2013-2019 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2018 Sahana Prasad <sahana.prasad07@gmail.com>
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -48,16 +49,27 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 {
 	enum sa_role role;
 	chunk_t firstpacket;
+	chunk_t intermediate_auth;
 	switch (from_the_perspective_of) {
 	case LOCAL_PERSPECTIVE:
 		firstpacket = ike->sa.st_firstpacket_me;
 		role = ike->sa.st_sa_role;
+		if (ike->sa.st_intermediate_used) {
+			intermediate_auth = clone_hunk(ike->sa.st_intermediate_packet_me, "IntAuth_*_I");
+			intermediate_auth = clone_chunk_chunk(intermediate_auth, ike->sa.st_intermediate_packet_peer,
+									"IntAuth_*_I_A | IntAuth_*_R");
+		}
 		break;
 	case REMOTE_PERSPECTIVE:
 		firstpacket = ike->sa.st_firstpacket_peer;
 		role = (ike->sa.st_sa_role == SA_INITIATOR ? SA_RESPONDER :
 			ike->sa.st_sa_role == SA_RESPONDER ? SA_INITIATOR :
 			0);
+		if (ike->sa.st_intermediate_used) {
+			intermediate_auth = clone_hunk(ike->sa.st_intermediate_packet_peer, "IntAuth_*_I");
+			intermediate_auth = clone_chunk_chunk(intermediate_auth, ike->sa.st_intermediate_packet_me,
+									"IntAuth_*_I_A | IntAuth_*_R");
+		}
 		break;
 	default: bad_case(from_the_perspective_of);
 	}
@@ -83,6 +95,9 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 		DBG_dump_hunk("inputs to hash1 (first packet)", firstpacket);
 		DBG_dump_hunk(nonce_name, *nonce);
 		DBG_dump_hunk("idhash", *idhash);
+		if (ike->sa.st_intermediate_used) {
+			DBG_dump_hunk("IntAuth", intermediate_auth);
+		}
 	}
 
 	struct crypt_hash *ctx = crypt_hash_init("sighash", hasher,
@@ -92,6 +107,9 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 	/* we took the PRF(SK_d,ID[ir]'), so length is prf hash length */
 	passert(idhash->len == ike->sa.st_oakley.ta_prf->prf_output_size);
 	crypt_hash_digest_hunk(ctx, "IDHASH", *idhash);
+	if (ike->sa.st_intermediate_used) {
+		crypt_hash_digest_hunk(ctx, "IntAuth", intermediate_auth);
+	}
 	return crypt_hash_final_mac(&ctx);
 }
 

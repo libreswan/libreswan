@@ -12,6 +12,7 @@
  * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
+ * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -796,7 +797,9 @@ enum isakmp_xchg_types {
 	ISAKMP_v2_GSA_AUTH = 39, /* draft-yeung-g-ikev2 */
 	ISAKMP_v2_GSA_REGISTRATION = 40, /* draft-yeung-g-ikev2 */
 	ISAKMP_v2_GSA_REKEY = 41, /* draft-yeung-g-ikev2 */
-	/* 42 - 239 Unassigned */
+	ISAKMP_v2_UNASSIGNED_42 = 42, /* avoid hole in enum */
+	ISAKMP_v2_IKE_INTERMEDIATE = 43, /* draft-ietf-ipsecme-ikev2-intermediate */
+	/* 42, 44 - 239 Unassigned */
 	/* 240 - 255 Private Use */
 
 	/* libreswan private use */
@@ -814,6 +817,15 @@ enum isakmp_xchg_types {
 #define ISAKMP_FLAGS_RESERVED_BIT6 (1 << 6) /* RESERVED */
 #define ISAKMP_FLAGS_RESERVED_BIT7 (1 << 7) /* RESERVED */
 extern const char *const isakmp_flag_names[];
+
+/* IKEv2 header field sizes and offsets from the start of the header */
+#define ADJ_LENGTH_SIZE 4
+#define ADJ_LENGTH_OFFSET 24
+#define EXCH_TYPE_OFFSET 18
+
+/* SK payload header field sizes */
+#define SK_HEADER_SIZE 4
+#define ADJ_PAYLOAD_LENGTH_SIZE 2
 
 /* Situation definition for IPsec DOI */
 extern const char *const sit_bit_names[];
@@ -1573,6 +1585,7 @@ typedef enum {
 	v2N_USE_PPK = 16435, /* draft-ietf-ipsecme-qr-ikev2 */
 	v2N_PPK_IDENTITY = 16436, /* draft-ietf-ipsecme-qr-ikev2 */
 	v2N_NO_PPK_AUTH = 16437, /* draft-ietf-ipsecme-qr-ikev2 */
+	v2N_INTERMEDIATE_EXCHANGE_SUPPORTED = 16438, /* draft-ietf-ipsecme-ikev2-intermediate-04 */
 
 	v2N_STATUS_PSTATS_ROOF, /* used to cap status statistics array */
 

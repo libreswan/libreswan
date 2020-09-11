@@ -12,6 +12,7 @@
  * Copyright (C) 2013-2016 Antony Antony <antony@phenome.org>
  * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
+ * Copyright (C) 2020, Yulia Kuzovkova <ukuzovkova@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -240,6 +241,7 @@ enum keyword_numeric_conn_field {
 	KNCF_ENCAPS,
 	KNCF_IKEv2,
 	KNCF_PPK,
+	KNCF_INTERMEDIATE,	/* enable support for Intermediate Exchange */
 	KNCF_ESN,
 	KNCF_DECAP_DSCP,
 	KNCF_NOPMTUDISC,
