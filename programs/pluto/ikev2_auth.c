@@ -49,15 +49,22 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 {
 	enum sa_role role;
 	chunk_t firstpacket;
-	chunk_t intermediate_auth;
+	/*
+	 * NOTE: intermediate_auth is only initialized to quiet GCC.
+	 * It doesn't understand that all uses and references are
+	 * guarded indentically, with ike->sa.st_intermediate_used.
+	 * Using a local copy ike->sa.st_intermediate_used doesn't help.
+	 * DHR 2020 Sept 12; GCC 10.2.1
+	 */
+	chunk_t intermediate_auth = EMPTY_CHUNK;
 	switch (from_the_perspective_of) {
 	case LOCAL_PERSPECTIVE:
 		firstpacket = ike->sa.st_firstpacket_me;
 		role = ike->sa.st_sa_role;
 		if (ike->sa.st_intermediate_used) {
-			intermediate_auth = clone_hunk(ike->sa.st_intermediate_packet_me, "IntAuth_*_I");
-			intermediate_auth = clone_chunk_chunk(intermediate_auth, ike->sa.st_intermediate_packet_peer,
-									"IntAuth_*_I_A | IntAuth_*_R");
+			intermediate_auth = clone_chunk_chunk(ike->sa.st_intermediate_packet_me,
+							      ike->sa.st_intermediate_packet_peer,
+							      "IntAuth_*_I_A | IntAuth_*_R");
 		}
 		break;
 	case REMOTE_PERSPECTIVE:
@@ -66,12 +73,13 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 			ike->sa.st_sa_role == SA_RESPONDER ? SA_INITIATOR :
 			0);
 		if (ike->sa.st_intermediate_used) {
-			intermediate_auth = clone_hunk(ike->sa.st_intermediate_packet_peer, "IntAuth_*_I");
-			intermediate_auth = clone_chunk_chunk(intermediate_auth, ike->sa.st_intermediate_packet_me,
-									"IntAuth_*_I_A | IntAuth_*_R");
+			intermediate_auth = clone_chunk_chunk(ike->sa.st_intermediate_packet_peer,
+							      ike->sa.st_intermediate_packet_me,
+							      "IntAuth_*_I_A | IntAuth_*_R");
 		}
 		break;
-	default: bad_case(from_the_perspective_of);
+	default:
+		bad_case(from_the_perspective_of);
 	}
 
 	const chunk_t *nonce;
