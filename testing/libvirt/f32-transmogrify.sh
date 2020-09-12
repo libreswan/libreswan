@@ -112,6 +112,7 @@ chmod -v 600 /etc/ssh/*key* /root/.ssh/*
 # enable password root logins (f32 disables these per default)
 echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
 echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config
+echo "MaxAuthTries 32" >> /etc/ssh/sshd_config
 restorecon -R /root/.ssh /etc/ssh
 
 
