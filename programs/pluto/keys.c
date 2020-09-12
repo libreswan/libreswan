@@ -510,54 +510,8 @@ stf_status check_signature_gen(struct state *st,
  */
 static struct secret *lsw_get_secret(const struct connection *c,
 				     enum PrivateKeyKind kind,
-				     bool asym, struct logger *logger)
+				     bool asym, struct logger *logger UNUSED)
 {
-	/* is there a certificate assigned to this connection? */
-	if ((kind == PKK_ECDSA || kind == PKK_RSA) &&
-	    c->spd.this.cert.ty == CERT_X509_SIGNATURE &&
-	    c->spd.this.cert.u.nss_cert != NULL) {
-
-		id_buf this_buf, that_buf;
-		dbg("%s() using certificate for %s->%s of kind %s",
-		    __func__,
-		    str_id(&c->spd.this.id, &this_buf),
-		    str_id(&c->spd.that.id, &that_buf),
-		    enum_name(&pkk_names, kind));
-
-		dbg("allocating public key using connection's certificate; only to throw it a way");
-		/* from here on: must free my_public_key */
-		struct pubkey *my_public_key = allocate_pubkey_nss(c->spd.this.cert.u.nss_cert, logger);
-		if (my_public_key == NULL) {
-			loglog(RC_LOG_SERIOUS, "private key not found (certificate missing from NSS DB or token locked?)");
-			return NULL;
-		}
-
-		dbg("finding secret using public key");
-		struct secret *best = lsw_find_secret_by_public_key(pluto_secrets,
-								    my_public_key);
-		if (best == NULL) {
-			const char *nickname = cert_nickname(&c->spd.this.cert);
-			dbg("private key for cert %s not found in local cache; loading from NSS DB",
-			    nickname);
-
-			err_t err = load_nss_cert_secret(c->spd.this.cert.u.nss_cert, logger);
-			if (err != NULL) {
-				/* ??? should this be logged? */
-				dbg("private key for cert %s not found in NSS DB (%s)",
-				    nickname, err);
-			} else {
-				best = lsw_find_secret_by_public_key(pluto_secrets,
-								     my_public_key);
-			}
-		}
-		/*
-		 * If we don't find the right keytype (RSA, ECDSA, etc)
-		 * then best will end up as NULL
-		 */
-		free_public_key(my_public_key);
-		return best;
-	}
-
 	/* under certain conditions, override that_id to %ANYADDR */
 
 	struct id rw_id;
@@ -712,6 +666,83 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 							   const struct pubkey_type *type,
 							   struct logger *logger)
 {
+	/* is there a certificate assigned to this connection? */
+	if (pexpect(type == &pubkey_type_ecdsa || type == &pubkey_type_rsa) &&
+	    c->spd.this.cert.ty == CERT_X509_SIGNATURE &&
+	    c->spd.this.cert.u.nss_cert != NULL) {
+		struct secret *best;
+		const char *nickname = cert_nickname(&c->spd.this.cert);
+
+		id_buf this_buf, that_buf;
+		dbg("%s() using  %s certificate for %s->%s of kind %s",
+		    __func__, nickname,
+		    str_id(&c->spd.this.id, &this_buf),
+		    str_id(&c->spd.that.id, &that_buf),
+		    type->name);
+
+		/*
+		 * Extract the cert's CKAID and TYPE.
+		 *
+		 * XXX: this is pretty crude; the cert type should
+		 * have abstracted this.
+		 */
+		ckaid_t cert_ckaid; /* copy */
+		const struct pubkey_type *cert_type;
+		{
+			dbg("allocating public key using connection's certificate; only to throw it a way");
+			/* from here on: must free cert_pubkey */
+			struct pubkey *cert_pubkey = allocate_pubkey_nss(c->spd.this.cert.u.nss_cert, logger);
+			if (cert_pubkey == NULL) {
+				log_message(RC_LOG_SERIOUS, logger,
+					    "private key not found (certificate missing from NSS DB or token locked?)");
+				return NULL;
+			}
+			cert_ckaid = *pubkey_ckaid(cert_pubkey);
+			cert_type = cert_pubkey->type;
+			free_public_key(cert_pubkey);
+		}
+
+		ckaid_buf ckb;
+		dbg("searching for secret matching cert %s's pubkey CKAID %s:%s in secrets cache",
+		    nickname, cert_type->name, str_ckaid(&cert_ckaid, &ckb));
+		best = find_secret_by_pubkey_ckaid(pluto_secrets, cert_type, &cert_ckaid);
+		if (best != NULL) {
+			dbg("found secret");
+			dbg("connection %s's %s private key found using cert",
+			    c->name, type->name);
+			return lsw_get_pks(best);
+		}
+
+		dbg("private key for cert %s not found in local cache; trying the NSS DB",
+		    nickname);
+
+		/* XXX: why not return value here? */
+		err_t err = load_nss_cert_secret(c->spd.this.cert.u.nss_cert, logger);
+		if (err != NULL) {
+			/* ??? should this be logged? */
+			dbg("private key for cert %s not found in NSS DB: %s",
+			    nickname, err);
+			return NULL;
+		}
+
+		dbg("re-searching for secret matching cert %s's pubkey CKAID %s:%s in secrets cache",
+		    nickname, cert_type->name, str_ckaid(&cert_ckaid, &ckb));
+		best = find_secret_by_pubkey_ckaid(pluto_secrets, cert_type, &cert_ckaid);
+		if (best == NULL) {
+			dbg("private key for cert %s not found in NSS DB: re-search failed",
+			    nickname);
+			return NULL;
+		}
+
+		/*
+		 * If we don't find the right keytype (RSA, ECDSA,
+		 * etc) then best will end up as NULL
+		 */
+		dbg("connection %s's %s private key found in NSS DB using cert",
+		    c->name, type->name);
+		return lsw_get_pks(best);
+	}
+
 	dbg("looking for connection %s's %s private key",
 	    c->name, type->name);
 	struct secret *s = lsw_get_secret(c, type->private_key_kind, true, logger);

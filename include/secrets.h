@@ -262,8 +262,9 @@ extern void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *
 
 extern bool lsw_has_private_rawkey(const struct secret *secrets, const struct pubkey *pk);
 
-extern struct secret *lsw_find_secret_by_public_key(struct secret *secrets,
-						    const struct pubkey *my_public_key);
+struct secret *find_secret_by_pubkey_ckaid(struct secret *secrets,
+					   const struct pubkey_type *type,
+					   const ckaid_t *pubkey_ckaid);
 
 extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					    enum PrivateKeyKind kind,

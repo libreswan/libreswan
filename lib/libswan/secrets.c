@@ -632,15 +632,14 @@ static struct secret *find_pubkey_secret_by_ckaid(struct secret *secrets,
 	return NULL;
 }
 
-struct secret *lsw_find_secret_by_public_key(struct secret *secrets,
-					     const struct pubkey *public_key)
+struct secret *find_secret_by_pubkey_ckaid(struct secret *secrets,
+					   const struct pubkey_type *type,
+					   const ckaid_t *pubkey_ckaid)
 {
-	dbg("searching for secret matching public key %s:%s",
-	    public_key->type->name, pubkey_keyid(public_key));
-	SECItem nss_ckaid = same_ckaid_as_secitem(pubkey_ckaid(public_key));
-	return find_pubkey_secret_by_ckaid(secrets, public_key->type,
-					   &nss_ckaid);
+	SECItem ckaid_secitem = same_ckaid_as_secitem(pubkey_ckaid);
+	return find_pubkey_secret_by_ckaid(secrets, type, &ckaid_secitem);
 }
+
 
 struct secret *lsw_find_secret_by_id(struct secret *secrets,
 				     enum PrivateKeyKind kind,
