@@ -489,6 +489,7 @@ total.ikev2.sent.notifies.status.PUZZLE=0
 total.ikev2.sent.notifies.status.USE_PPK=0
 total.ikev2.sent.notifies.status.PPK_IDENTITY=0
 total.ikev2.sent.notifies.status.NO_PPK_AUTH=0
+total.ikev2.sent.notifies.status.INTERMEDIATE_EXCHANGE_SUPPORTED=0
 total.ikev2.sent.notifies.status.other=0
 total.ikev2.recv.notifies.status.INITIAL_CONTACT=0
 total.ikev2.recv.notifies.status.SET_WINDOW_SIZE=0
@@ -544,6 +545,7 @@ total.ikev2.recv.notifies.status.PUZZLE=0
 total.ikev2.recv.notifies.status.USE_PPK=0
 total.ikev2.recv.notifies.status.PPK_IDENTITY=0
 total.ikev2.recv.notifies.status.NO_PPK_AUTH=0
+total.ikev2.recv.notifies.status.INTERMEDIATE_EXCHANGE_SUPPORTED=0
 total.ikev2.recv.notifies.status.other=0
 west #
  
