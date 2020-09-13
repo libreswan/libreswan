@@ -717,7 +717,10 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 		    nickname);
 
 		/* XXX: why not return value here? */
-		err_t err = load_nss_cert_secret(c->spd.this.cert.u.nss_cert, logger);
+		threadtime_t time_add_secret = threadtime_start();
+		err_t err = lsw_add_secret(&pluto_secrets, c->spd.this.cert.u.nss_cert, logger);
+		threadtime_stop(&time_add_secret, SOS_NOBODY, "%s() loading private key %s", __func__,
+				nickname);
 		if (err != NULL) {
 			/* ??? should this be logged? */
 			dbg("private key for cert %s not found in NSS DB: %s",
