@@ -1996,8 +1996,8 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	 */
 	if (LIN(POLICY_PPK_ALLOW, pc->policy) && ike->sa.st_seen_ppk) {
 		chunk_t *ppk_id;
-		chunk_t *ppk = get_ppk(ike->sa.st_connection, &ppk_id,
-				       ike->sa.st_logger);
+		chunk_t *ppk = get_connection_ppk(ike->sa.st_connection, &ppk_id,
+						 ike->sa.st_logger);
 
 		if (ppk != NULL) {
 			dbg("found PPK and PPK_ID for our connection");
@@ -2439,8 +2439,8 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	 */
 	if (pst->st_seen_ppk) {
 		chunk_t *ppk_id;
-		get_ppk(ike->sa.st_connection, &ppk_id,
-			ike->sa.st_logger);
+		get_connection_ppk(ike->sa.st_connection, &ppk_id,
+				   ike->sa.st_logger);
 		struct ppk_id_payload ppk_id_p = { .type = 0, };
 		create_ppk_id_payload(ppk_id, &ppk_id_p);
 		if (DBGP(DBG_BASE)) {

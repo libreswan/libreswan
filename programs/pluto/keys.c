@@ -592,8 +592,8 @@ static bool has_private_rawkey(struct pubkey *pk)
  * Note: the result is not to be freed by the caller.
  * Note2: this seems to be called for connections using RSA too?
  */
-const chunk_t *get_psk(const struct connection *c,
-		       struct logger *logger)
+const chunk_t *get_connection_psk(const struct connection *c,
+				  struct logger *logger)
 {
 	if (c->policy & POLICY_AUTH_NULL) {
 		DBGF(DBG_CRYPT, "Mutual AUTH_NULL secret - returning empty_chunk");
@@ -617,8 +617,8 @@ const chunk_t *get_psk(const struct connection *c,
 
 /* Return ppk and store ppk_id in *ppk_id */
 
-chunk_t *get_ppk(const struct connection *c, chunk_t **ppk_id,
-		 struct logger *logger)
+chunk_t *get_connection_ppk(const struct connection *c, chunk_t **ppk_id,
+			    struct logger *logger)
 {
 	struct secret *s = lsw_get_secret(c, PKK_PPK, FALSE, logger);
 

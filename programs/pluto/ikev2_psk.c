@@ -149,7 +149,7 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 	const chunk_t *pss;
 
 	if (authby != AUTHBY_NULL) {
-		pss = get_psk(c, ike->sa.st_logger);
+		pss = get_connection_psk(c, ike->sa.st_logger);
 		if (pss == NULL) {
 			loglog(RC_LOG_SERIOUS,"No matching PSK found for connection: %s",
 			      ike->sa.st_connection->name);

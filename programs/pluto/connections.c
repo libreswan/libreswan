@@ -2905,7 +2905,7 @@ struct connection *refine_host_connection(const struct state *st,
 	{
 		switch (this_authby) {
 		case AUTHBY_PSK:
-			psk = get_psk(c, st->st_logger);
+			psk = get_connection_psk(c, st->st_logger);
 			/*
 			 * It should be virtually impossible to fail to find
 			 * PSK: we just used it to decode the current message!
@@ -3123,7 +3123,7 @@ struct connection *refine_host_connection(const struct state *st,
 
 			if (this_authby == AUTHBY_PSK) {
 				/* secret must match the one we already used */
-				const chunk_t *dpsk = get_psk(d, st->st_logger);
+				const chunk_t *dpsk = get_connection_psk(d, st->st_logger);
 
 				/*
 				 * We can change PSK mid-way in IKEv2 or aggressive mode.
