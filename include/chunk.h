@@ -43,7 +43,6 @@ typedef struct /*chunk*/ {
 	size_t len;
 } chunk_t;
 
-chunk_t chunk1(char *ptr);
 chunk_t chunk2(void *ptr, size_t len);
 
 /*

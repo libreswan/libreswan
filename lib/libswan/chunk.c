@@ -27,11 +27,6 @@
  */
 const chunk_t empty_chunk = { .ptr = NULL, .len = 0 };
 
-chunk_t chunk1(char *ptr)
-{
-	return (chunk_t) { .ptr = (void*) ptr, .len = strlen(ptr), };
-}
-
 chunk_t chunk2(void *ptr, size_t len)
 {
 	return (chunk_t) { .ptr = ptr, .len = len, };
