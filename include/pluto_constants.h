@@ -548,14 +548,14 @@ enum state_kind {
 #define STATE_IKE_ROOF (STATE_IKEv2_ROOF+1)	/* not a state! */
 
 /*
- * From whos perspective is the operation being performed.
+ * Perspective from which the operation is being performed.
  *
  * For instance, is the hash being computed from the LOCAL or REMOTE
  * perspective?
  */
 
 enum perspective {
-	NO_PERSPECTIVE,
+	NO_PERSPECTIVE,	/* invalid */
 	LOCAL_PERSPECTIVE,
 	REMOTE_PERSPECTIVE,
 };
