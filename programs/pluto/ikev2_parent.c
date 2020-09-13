@@ -1062,8 +1062,9 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	 * "trim padding (not actually legit)".
 	 */
 	/* record first packet for later checking of signature */
+	free_chunk_content(&st->st_firstpacket_peer);
 	st->st_firstpacket_peer = clone_out_pbs_as_chunk(&md->message_pbs,
-							"saved first received packet");
+							"saved first received packet in inI1outR1_continue_tail");
 
 	/* make sure HDR is at start of a clean buffer */
 	struct pbs_out reply_stream = open_pbs_out("reply packet",
@@ -1581,8 +1582,10 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 				return STF_FAIL;
 			}
 		}
+		free_chunk_content(&st->st_firstpacket_peer);
 		st->st_firstpacket_peer = clone_out_pbs_as_chunk(&md->message_pbs,
-							 "saved first received packet");
+						"saved first received packet in inR1outI2");
+
 	} else {
 		dbg("No KE payload in INTERMEDIATE RESPONSE, not calculating keys, going to AUTH by completing state transition");
 	}
@@ -2215,9 +2218,10 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	 * "trim padding (not actually legit)".
 	 */
 	/* record first packet for later checking of signature */
-	if (!(md->hdr.isa_xchg == ISAKMP_v2_IKE_INTERMEDIATE)){
+	if (md->hdr.isa_xchg != ISAKMP_v2_IKE_INTERMEDIATE){
+		free_chunk_content(&pst->st_firstpacket_peer);
 		pst->st_firstpacket_peer = clone_out_pbs_as_chunk(&md->message_pbs,
-								"saved first received packet");
+								"saved first received non-intermediate packet");
 	}
 	/* beginning of data going out */
 
