@@ -56,15 +56,15 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 	 * Using a local copy ike->sa.st_intermediate_used doesn't help.
 	 * DHR 2020 Sept 12; GCC 10.2.1
 	 */
-	chunk_t intermediate_auth = EMPTY_CHUNK;
+	chunk_t ia1 = NULL_HUNK;
+	chunk_t ia2 = NULL_HUNK;
 	switch (from_the_perspective_of) {
 	case LOCAL_PERSPECTIVE:
 		firstpacket = ike->sa.st_firstpacket_me;
 		role = ike->sa.st_sa_role;
 		if (ike->sa.st_intermediate_used) {
-			intermediate_auth = clone_chunk_chunk(ike->sa.st_intermediate_packet_me,
-							      ike->sa.st_intermediate_packet_peer,
-							      "IntAuth_*_I_A | IntAuth_*_R");
+			ia1 = ike->sa.st_intermediate_packet_me;
+			ia2 = ike->sa.st_intermediate_packet_peer;
 		}
 		break;
 	case REMOTE_PERSPECTIVE:
@@ -73,9 +73,8 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 			ike->sa.st_sa_role == SA_RESPONDER ? SA_INITIATOR :
 			0);
 		if (ike->sa.st_intermediate_used) {
-			intermediate_auth = clone_chunk_chunk(ike->sa.st_intermediate_packet_peer,
-							      ike->sa.st_intermediate_packet_me,
-							      "IntAuth_*_I_A | IntAuth_*_R");
+			ia1 = ike->sa.st_intermediate_packet_peer;
+			ia2 = ike->sa.st_intermediate_packet_me;
 		}
 		break;
 	default:
@@ -104,7 +103,8 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 		DBG_dump_hunk(nonce_name, *nonce);
 		DBG_dump_hunk("idhash", *idhash);
 		if (ike->sa.st_intermediate_used) {
-			DBG_dump_hunk("IntAuth", intermediate_auth);
+			DBG_dump_hunk("IntAuth_*_I_A", ia1);
+			DBG_dump_hunk("IntAuth_*_R_A", ia2);
 		}
 	}
 
@@ -116,7 +116,8 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 	passert(idhash->len == ike->sa.st_oakley.ta_prf->prf_output_size);
 	crypt_hash_digest_hunk(ctx, "IDHASH", *idhash);
 	if (ike->sa.st_intermediate_used) {
-		crypt_hash_digest_hunk(ctx, "IntAuth", intermediate_auth);
+		crypt_hash_digest_hunk(ctx, "IntAuth_*_I_A", ia1);
+		crypt_hash_digest_hunk(ctx, "IntAuth_*_R_A", ia2);
 	}
 	return crypt_hash_final_mac(&ctx);
 }
