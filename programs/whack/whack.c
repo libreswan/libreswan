@@ -397,9 +397,8 @@ enum option_enums {
 	END_VTIIP,
 	END_AUTHBY,
 	END_UPDOWN,
-	END_TUNDEV,
 
-#define END_LAST  END_TUNDEV	/* last end description*/
+#define END_LAST  END_UPDOWN	/* last end description*/
 
 /* Connection Description options -- segregated */
 
@@ -641,7 +640,6 @@ static const struct option long_opts[] = {
 	{ "vtiip",  required_argument, NULL, END_VTIIP + OO },
 	{ "authby",  required_argument, NULL, END_AUTHBY + OO },
 	{ "updown", required_argument, NULL, END_UPDOWN + OO },
-	{ "tundev", required_argument, NULL, END_TUNDEV + OO + NUMERIC_ARG },
 
 	/* options for a connection description */
 
@@ -1663,10 +1661,6 @@ int main(int argc, char **argv)
 
 		case END_UPDOWN:	/* --updown <updown> */
 			msg.right.updown = optarg;
-			continue;
-
-		case END_TUNDEV:	/* --tundev <mast#> */
-			msg.right.tundev = opt_whole;
 			continue;
 
 		case CD_TO:	/* --to */

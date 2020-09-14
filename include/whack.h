@@ -115,7 +115,6 @@ struct whack_end {
 	bool modecfg_server;	/* for MODECFG */
 	bool modecfg_client;
 	bool cat;		/* IPv4 Client Address Translation */
-	unsigned int tundev;
 	enum certpolicy sendcert;
 	bool send_ca;
 	enum ike_cert_type certtype;
