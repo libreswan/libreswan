@@ -530,8 +530,7 @@ stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 		uint8_t *adj_len_start = intermediate_auth.ptr + ADJ_LENGTH_OFFSET;
 		uint32_t adj_len = (enc_start - auth_start - wire_iv_size) + (sk_data.len);
 		DBG(DBG_CRYPT, DBG_log("adjusted length: %u", adj_len));
-		adj_len = ((adj_len << 8) & 0xFF00FF00) | ((adj_len >> 8) & 0xFF00FF); /* adjust endianness */
-		adj_len = (adj_len << 16) | (adj_len >> 16);
+		adj_len = htonl(adj_len);	/* network order */
 		memcpy(adj_len_start, &adj_len, sizeof(uint8_t) * ADJ_LENGTH_SIZE);
 		/*
 		 * If P(SK) not empty, append its decrypted contents IntAuth_*_A | IntAuth_*_P
@@ -794,8 +793,7 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 		uint8_t *adj_len_start = intermediate_auth.ptr + ADJ_LENGTH_OFFSET;
 		uint32_t adj_len = (enc_start - auth_start - wire_iv_size) + (enc_size - padlen);
 		DBG(DBG_CRYPT, DBG_log("adjusted length: %u", adj_len));
-		adj_len = ((adj_len << 8) & 0xFF00FF00) | ((adj_len >> 8) & 0xFF00FF); /* adjust endianness */
-		adj_len = (adj_len << 16) | (adj_len >> 16);
+		adj_len = htonl(adj_len);	/* network order */
 		memcpy(adj_len_start, &adj_len, sizeof(uint8_t) * ADJ_LENGTH_SIZE);
 		/*
 		 * If P(SK) not empty, append its decrypted contents IntAuth_*_A | IntAuth_*_P
