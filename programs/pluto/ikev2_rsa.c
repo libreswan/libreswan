@@ -150,7 +150,7 @@ static err_t try_RSA_signature_v2(const struct crypt_mac *hash,
 				  struct state *st,
 				  const struct hash_desc *hash_algo)
 {
-	const u_char *sig_val = sig_pbs->cur;
+	const uint8_t *sig_val = sig_pbs->cur;
 	size_t sig_len = pbs_left(sig_pbs);
 	const struct RSA_public_key *k = &kr->u.rsa;
 

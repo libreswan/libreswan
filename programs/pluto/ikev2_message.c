@@ -349,8 +349,8 @@ bool close_v2SK_payload(v2SK_payload_t *sk)
  * note: no iv is longer than MAX_CBC_BLOCK_SIZE
  */
 static void construct_enc_iv(const char *name,
-			     u_char enc_iv[],
-			     u_char *wire_iv, chunk_t salt,
+			     uint8_t enc_iv[],
+			     uint8_t *wire_iv, chunk_t salt,
 			     const struct encrypt_desc *encrypter)
 {
 	DBGF(DBG_CRYPT, "construct_enc_iv: %s: salt-size=%zd wire-IV-size=%zd block-size %zd",
@@ -578,7 +578,7 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 		return false;
 	}
 
-	u_char *wire_iv_start = chunk->ptr + iv;
+	uint8_t *wire_iv_start = chunk->ptr + iv;
 	size_t wire_iv_size = ike->sa.st_oakley.ta_encrypt->wire_iv_size;
 	size_t integ_size = (encrypt_desc_is_aead(ike->sa.st_oakley.ta_encrypt)
 			     ? ike->sa.st_oakley.ta_encrypt->aead_tag_size
@@ -591,16 +591,16 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 	 * - at least one padding-length byte
 	 * - truncated integrity digest / tag
 	 */
-	u_char *payload_end = chunk->ptr + chunk->len;
+	uint8_t *payload_end = chunk->ptr + chunk->len;
 	if (payload_end < (wire_iv_start + wire_iv_size + 1 + integ_size)) {
 		libreswan_log("encrypted payload impossibly short (%tu)",
 			      payload_end - wire_iv_start);
 		return false;
 	}
 
-	u_char *auth_start = chunk->ptr;
-	u_char *enc_start = wire_iv_start + wire_iv_size;
-	u_char *integ_start = payload_end - integ_size;
+	uint8_t *auth_start = chunk->ptr;
+	uint8_t *enc_start = wire_iv_start + wire_iv_size;
+	uint8_t *integ_start = payload_end - integ_size;
 	size_t enc_size = integ_start - enc_start;
 	uint8_t exchange_type = *(auth_start + EXCH_TYPE_OFFSET);
 

@@ -125,7 +125,7 @@ static void eat_whitespace(chunk_t *src)
  */
 static bool extract_token(chunk_t *token, char termination, chunk_t *src)
 {
-	u_char *eot = memchr(src->ptr, termination, src->len);
+	uint8_t *eot = memchr(src->ptr, termination, src->len);
 
 	/* initialize empty token */
 	*token = EMPTY_CHUNK;

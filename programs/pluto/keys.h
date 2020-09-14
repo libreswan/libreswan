@@ -43,7 +43,7 @@ struct show;
 
 extern err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 				      const struct crypt_mac *hash,
-				      const u_char *sig_val, size_t sig_len,
+				      const uint8_t *sig_val, size_t sig_len,
 				      const struct hash_desc *hash_algo,
 				      struct logger *logger);
 

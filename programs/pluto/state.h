@@ -154,8 +154,8 @@ struct ipsec_proto_info {
 	struct ipsec_trans_attrs attrs; /* info on remote */
 	ipsec_spi_t our_spi;
 	uint16_t keymat_len;           /* same for both */
-	u_char *our_keymat;
-	u_char *peer_keymat;
+	uint8_t *our_keymat;
+	uint8_t *peer_keymat;
 	uint64_t our_bytes;
 	uint64_t peer_bytes;
 	monotime_t our_lastused;

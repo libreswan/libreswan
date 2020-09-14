@@ -399,8 +399,8 @@ kdebug_sadb_address(struct sadb_ext *ext)
 
 	printf("sadb_address{ proto=%u prefixlen=%u reserved=0x%02x%02x }\n",
 	    addr->sadb_address_proto, addr->sadb_address_prefixlen,
-	    ((u_char *)(void *)&addr->sadb_address_reserved)[0],
-	    ((u_char *)(void *)&addr->sadb_address_reserved)[1]);
+	    ((uint8_t *)(void *)&addr->sadb_address_reserved)[0],
+	    ((uint8_t *)(void *)&addr->sadb_address_reserved)[1]);
 
 	kdebug_sockaddr((void *)((caddr_t)(void *)ext + sizeof(*addr)));
 
@@ -602,10 +602,10 @@ kdebug_sadb_x_kmaddress(struct sadb_ext *ext)
 	len = (PFKEY_UNUNIT64(kma->sadb_x_kmaddress_len) - sizeof(*kma));
 
 	printf("sadb_x_kmaddress{ reserved=0x%02x%02x%02x%02x }\n",
-	       ((u_char *)(void *)&kma->sadb_x_kmaddress_reserved)[0],
-	       ((u_char *)(void *)&kma->sadb_x_kmaddress_reserved)[1],
-	       ((u_char *)(void *)&kma->sadb_x_kmaddress_reserved)[2],
-	       ((u_char *)(void *)&kma->sadb_x_kmaddress_reserved)[3]);
+	       ((uint8_t *)(void *)&kma->sadb_x_kmaddress_reserved)[0],
+	       ((uint8_t *)(void *)&kma->sadb_x_kmaddress_reserved)[1],
+	       ((uint8_t *)(void *)&kma->sadb_x_kmaddress_reserved)[2],
+	       ((uint8_t *)(void *)&kma->sadb_x_kmaddress_reserved)[3]);
 
 	sa = (struct sockaddr *)(kma + 1);
 	if (len < sizeof(struct sockaddr) || (sa_len = sysdep_sa_len(sa)) > len)
@@ -830,7 +830,7 @@ kdebug_mbuf(struct mbuf *m0)
 				printf("\n");
 			if (i % 4 == 0)
 				printf(" ");
-			printf("%02x", mtod(m, u_char *)[i]);
+			printf("%02x", mtod(m, uint8_t *)[i]);
 			j++;
 		}
 		printf("\n");

@@ -281,7 +281,7 @@ static struct hash_signature RSA_sign_hash(const struct private_key_stuff *pks,
 	SECItem data = {
 		.type = siBuffer,
 		.len = hash_len,
-		.data = DISCARD_CONST(u_char *, hash_val),
+		.data = DISCARD_CONST(uint8_t *, hash_val),
 	};
 
 	struct hash_signature sig = { .len = PK11_SignatureLen(pks->private_key), };

@@ -105,7 +105,7 @@ ike_spi_t ike_responder_spi(const ip_address *addr, struct logger *logger)
 		counter++;
 		crypt_hash_digest_thing(ctx, "counter", counter);
 
-		u_char buffer[SHA2_256_DIGEST_SIZE];
+		uint8_t buffer[SHA2_256_DIGEST_SIZE];
 		crypt_hash_final_bytes(&ctx, buffer, SHA2_256_DIGEST_SIZE);
 		/* cookie size is smaller than hash output size */
 		passert(IKE_SA_SPI_SIZE <= SHA2_256_DIGEST_SIZE);

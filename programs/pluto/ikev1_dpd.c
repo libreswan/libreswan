@@ -278,7 +278,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 
 	if (p1st->st_dpd_seqno == 0) {
 		/* Get a non-zero random value that has room to grow */
-		get_rnd_bytes((u_char *)&p1st->st_dpd_seqno,
+		get_rnd_bytes((uint8_t *)&p1st->st_dpd_seqno,
 			      sizeof(p1st->st_dpd_seqno));
 		p1st->st_dpd_seqno &= 0x7fff;
 		p1st->st_dpd_seqno++;

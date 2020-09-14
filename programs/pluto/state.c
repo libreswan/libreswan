@@ -2564,7 +2564,7 @@ startover:
 ipsec_spi_t uniquify_peer_cpi(ipsec_spi_t cpi, const struct state *st, int tries)
 {
 	/* cpi is in network order so first two bytes are the high order ones */
-	get_rnd_bytes((u_char *)&cpi, 2);
+	get_rnd_bytes((uint8_t *)&cpi, 2);
 
 	/*
 	 * Make sure that the result is unique.

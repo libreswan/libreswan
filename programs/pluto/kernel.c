@@ -311,11 +311,11 @@ ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
 
 		spi++;
 		while (spi < IPSEC_DOI_SPI_OUR_MIN || spi == ntohl(avoid))
-			get_rnd_bytes((u_char *)&spi, sizeof(spi));
+			get_rnd_bytes((uint8_t *)&spi, sizeof(spi));
 
 		if (DBGP(DBG_BASE)) {
 			ipsec_spi_t spi_net = htonl(spi);
-			DBG_dump("generate SPI:", (u_char *)&spi_net,
+			DBG_dump("generate SPI:", (uint8_t *)&spi_net,
 				 sizeof(spi_net));
 		}
 
@@ -349,7 +349,7 @@ ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel)
 
 		while (!(IPCOMP_FIRST_NEGOTIATED <= first_busy_cpi &&
 				first_busy_cpi < IPCOMP_LAST_NEGOTIATED)) {
-			get_rnd_bytes((u_char *)&first_busy_cpi,
+			get_rnd_bytes((uint8_t *)&first_busy_cpi,
 				sizeof(first_busy_cpi));
 			latest_cpi = first_busy_cpi;
 		}
@@ -1845,7 +1845,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	if (st->st_esp.present) {
 		ipsec_spi_t esp_spi =
 			inbound ? st->st_esp.our_spi : st->st_esp.attrs.spi;
-		u_char *esp_dst_keymat =
+		uint8_t *esp_dst_keymat =
 			inbound ? st->st_esp.our_keymat : st->st_esp.
 			peer_keymat;
 		const struct trans_attrs *ta = &st->st_esp.attrs.transattrs;
@@ -2071,7 +2071,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	if (st->st_ah.present) {
 		ipsec_spi_t ah_spi =
 			inbound ? st->st_ah.our_spi : st->st_ah.attrs.spi;
-		u_char *ah_dst_keymat =
+		uint8_t *ah_dst_keymat =
 			inbound ? st->st_ah.our_keymat : st->st_ah.peer_keymat;
 
 		const struct integ_desc *integ = st->st_ah.attrs.transattrs.ta_integ;

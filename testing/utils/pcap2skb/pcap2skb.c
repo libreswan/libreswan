@@ -11,9 +11,9 @@
 
 static int packnum = 0;
 
-void pcap_skbuff(u_char *user,
+void pcap_skbuff(uint8_t *user,
 		 const struct pcap_pkthdr *h,
-		 const u_char *bytes)
+		 const uint8_t *bytes)
 {
 	FILE *out = (FILE *)user;
 	char line[81];
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 			exit(10);
 		}
 
-		pcap_dispatch(pc, -1, pcap_skbuff, (u_char *)out);
+		pcap_dispatch(pc, -1, pcap_skbuff, (uint8_t *)out);
 		pcap_close(pc);
 	}
 

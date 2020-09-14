@@ -38,8 +38,8 @@ static err_t rsa_pubkey_to_rfc_resource_record(chunk_t exponent, chunk_t modulus
 	 * just allocate 3 extra bytes.
 	 */
 	size_t rrlen = exponent.len + modulus.len + 3;
-	u_char *buf = alloc_bytes(rrlen, "buffer for rfc3110");
-	u_char *p = buf;
+	uint8_t *buf = alloc_bytes(rrlen, "buffer for rfc3110");
+	uint8_t *p = buf;
 
 	if (exponent.len <= 255) {
 		*p++ = exponent.len;
@@ -104,8 +104,8 @@ static err_t rfc_resource_record_to_rsa_pubkey(chunk_t rr, chunk_t *e, chunk_t *
 	/*
 	 * Does the exponent fall off the end of the resource record?
 	 */
-	u_char *const exponent_end = exponent.ptr + exponent.len;
-	u_char *const rr_end = rr.ptr + rr.len;
+	uint8_t *const exponent_end = exponent.ptr + exponent.len;
+	uint8_t *const rr_end = rr.ptr + rr.len;
 	if (exponent_end > rr_end) {
 		return "truncated RSA public key resource record exponent";
 	}

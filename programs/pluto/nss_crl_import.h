@@ -19,6 +19,6 @@
 
 struct logger;
 
-extern int send_crl_to_import(u_char *der, size_t len, const char *url, struct logger *logger);
+extern int send_crl_to_import(uint8_t *der, size_t len, const char *url, struct logger *logger);
 
 #endif /* _NSS_CRL_IMPORT */

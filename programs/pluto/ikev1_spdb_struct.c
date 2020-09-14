@@ -613,7 +613,7 @@ bool ikev1_out_sa(pb_stream *outs,
 					 * CPI is stored in network low order end of an
 					 * ipsec_spi_t.  So we start a couple of bytes in.
 					 */
-					if (!out_raw((u_char *)&st->st_ipcomp.our_spi +
+					if (!out_raw((uint8_t *)&st->st_ipcomp.our_spi +
 						     IPSEC_DOI_SPI_SIZE -
 						     IPCOMP_CPI_SIZE,
 						     IPCOMP_CPI_SIZE,
@@ -633,7 +633,7 @@ bool ikev1_out_sa(pb_stream *outs,
 									 tunnel_mode);
 						*spi_generated = TRUE;
 					}
-					if (!out_raw((u_char *)spi_ptr,
+					if (!out_raw((uint8_t *)spi_ptr,
 						     IPSEC_DOI_SPI_SIZE,
 						     &proposal_pbs, "SPI"))
 						goto fail;
@@ -908,7 +908,7 @@ lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */)
 		return LEMPTY;
 
 	if (proposal.isap_spisize > 0) {
-		u_char junk_spi[MAX_ISAKMP_SPI_SIZE];
+		uint8_t junk_spi[MAX_ISAKMP_SPI_SIZE];
 
 		if (!in_raw(junk_spi, proposal.isap_spisize, &proposal_pbs,
 			    "Oakley SPI"))
@@ -1154,7 +1154,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 	if (proposal.isap_spisize == 0) {
 		/* empty (0) SPI -- fine */
 	} else if (proposal.isap_spisize <= MAX_ISAKMP_SPI_SIZE) {
-		u_char junk_spi[MAX_ISAKMP_SPI_SIZE];
+		uint8_t junk_spi[MAX_ISAKMP_SPI_SIZE];
 		diag_t d = pbs_in_raw(&proposal_pbs, junk_spi, proposal.isap_spisize, "Oakley SPI");
 		if (d != NULL) {
 			log_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
@@ -1217,7 +1217,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 			return INVALID_TRANSFORM_ID;	/* reject whole SA */
 		}
 
-		u_char *attr_start = trans_pbs.cur;
+		uint8_t *attr_start = trans_pbs.cur;
 		size_t attr_len = pbs_left(&trans_pbs);
 
 		/* process all the attributes that make up the transform */
@@ -2204,7 +2204,7 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 		 * but we'll ignore that.
 		 */
 		pi->our_spi = get_my_cpi(sr, tunnel_mode);
-		passert(out_raw((u_char *) &pi->our_spi +
+		passert(out_raw((uint8_t *) &pi->our_spi +
 				IPSEC_DOI_SPI_SIZE - IPCOMP_CPI_SIZE,
 				IPCOMP_CPI_SIZE,
 				&r_proposal_pbs, "CPI"));
@@ -2215,7 +2215,7 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 					    sr,
 					    tunnel_mode);
 		/* XXX should check for errors */
-		passert(out_raw((u_char *) &pi->our_spi, IPSEC_DOI_SPI_SIZE,
+		passert(out_raw((uint8_t *) &pi->our_spi, IPSEC_DOI_SPI_SIZE,
 				&r_proposal_pbs, "SPI"));
 	}
 
@@ -2354,7 +2354,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				 * ipsec_spi_t.  So we start a couple of bytes in.
 				 */
 				zero(&next_spi);
-				if (!in_raw((u_char *)&next_spi +
+				if (!in_raw((uint8_t *)&next_spi +
 					    IPSEC_DOI_SPI_SIZE -
 					    IPCOMP_CPI_SIZE,
 					    IPCOMP_CPI_SIZE,
@@ -2402,7 +2402,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					return INVALID_SPI;	/* reject whole SA */
 				}
 
-				if (!in_raw((u_char *)&next_spi,
+				if (!in_raw((uint8_t *)&next_spi,
 					    sizeof(next_spi),
 					    &next_proposal_pbs, "SPI"))
 					return INVALID_SPI;	/* reject whole SA */

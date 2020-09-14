@@ -479,7 +479,7 @@ void check_crls(struct fd *whackfd)
 				generalName_t end_dp = {
 					.kind = GN_URI,
 					.name = {
-						.ptr = (u_char *)n->crl->url,
+						.ptr = (uint8_t *)n->crl->url,
 						.len = strlen(n->crl->url)
 					},
 					.next = NULL

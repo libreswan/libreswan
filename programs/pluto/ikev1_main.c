@@ -163,7 +163,7 @@ void main_outI1(struct fd *whack_sock,
 
 	/* SA out */
 	{
-		u_char *sa_start = rbody.cur;
+		uint8_t *sa_start = rbody.cur;
 
 		if (!ikev1_out_sa(&rbody, IKEv1_oakley_sadb(policy, c),
 				  st, TRUE, FALSE)) {
@@ -357,7 +357,7 @@ static err_t try_RSA_signature_v1(const struct crypt_mac *hash,
 				struct state *st,
 				const struct hash_desc *hash_algo_unused UNUSED /* for ikev2 only */)
 {
-	const u_char *sig_val = sig_pbs->cur;
+	const uint8_t *sig_val = sig_pbs->cur;
 	size_t sig_len = pbs_left(sig_pbs);
 	const struct RSA_public_key *k = &kr->u.rsa;
 
@@ -1887,8 +1887,8 @@ static void send_notification(struct logger *logger,
 			      struct state *sndst /*possibly fake*/,
 			      notification_t type,
 			      struct state *encst,
-			      msgid_t msgid, u_char *icookie, u_char *rcookie,
-			      u_char protoid)
+			      msgid_t msgid, uint8_t *icookie, uint8_t *rcookie,
+			      uint8_t protoid)
 {
 	pb_stream r_hdr_pbs;
 	static monotime_t last_malformed = MONOTIME_EPOCH;
