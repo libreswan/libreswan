@@ -1714,7 +1714,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 
 	IKE_SA_established(pexpect_ike_sa(st));
 #ifdef USE_XFRM_INTERFACE
-	if (c->xfrmi != NULL && c->xfrmi->if_id != yn_no)
+	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
 		if (add_xfrmi(c, st->st_logger))
 			return STF_FATAL;
 #endif
@@ -1769,7 +1769,7 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 
 	IKE_SA_established(pexpect_ike_sa(st));
 #ifdef USE_XFRM_INTERFACE
-	if (c->xfrmi != NULL && c->xfrmi->if_id != yn_no)
+	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
 		if (add_xfrmi(c, st->st_logger))
 			return STF_FATAL;
 #endif

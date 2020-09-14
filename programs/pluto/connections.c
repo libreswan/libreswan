@@ -1695,10 +1695,11 @@ static bool extract_connection(const struct whack_message *wm,
 		c->vti_routing = wm->vti_routing;
 		c->vti_shared = wm->vti_shared;
 #ifdef USE_XFRM_INTERFACE
-		if (wm->xfrm_if_id != yn_no) {
+		if (wm->xfrm_if_id != UINT32_MAX) {
 			err_t err = xfrm_iface_supported(logger);
 			if (err == NULL) {
-				if (setup_xfrm_interface(c, wm->xfrm_if_id))
+				if (!setup_xfrm_interface(c, wm->xfrm_if_id == 0 ?
+					PLUTO_XFRMI_REMAP_IF_ID_ZERO : wm->xfrm_if_id ))
 					return false;
 			} else {
 				log_message(RC_FATAL, logger,

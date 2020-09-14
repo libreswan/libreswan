@@ -116,11 +116,12 @@ static const struct keyword_enum_values kw_ynf_list = VALUES_INITIALIZER(kw_ynf_
 
 #ifdef USE_XFRM_INTERFACE
 /* Values for no/yes, used by ipsec-interface */
-static const struct keyword_enum_value kw_yn_values[] = {
-	{ "yes",	yn_yes },
-	{ "no",		yn_no },
+static const struct keyword_enum_value kw_yndev_values[] = {
+	{ "yes",	1 /* ipsec1 */ },
+	{ "no",		UINT32_MAX /* disabled */},
+	/* any specified number becomes ipsecXXXX */
 };
-static const struct keyword_enum_values kw_yn_list = VALUES_INITIALIZER(kw_yn_values);
+static const struct keyword_enum_values kw_yndev_list = VALUES_INITIALIZER(kw_yndev_values);
 #endif
 
 /* Values for yes/no/auto, used by encapsulation and nic-offload */
@@ -590,7 +591,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "vti-routing",  kv_conn,  kt_bool,  KNCF_VTI_ROUTING, NULL, NULL, },
   { "vti-shared",  kv_conn,  kt_bool,  KNCF_VTI_SHARED, NULL, NULL, },
 #ifdef USE_XFRM_INTERFACE
-  { "ipsec-interface", kv_conn, kt_loose_enum, KNCF_XFRM_IF_ID, &kw_yn_list, NULL, },
+  { "ipsec-interface", kv_conn, kt_loose_enum, KNCF_XFRM_IF_ID, &kw_yndev_list, NULL, },
 #endif
 
   { "modecfgwins1",  kv_conn,  kt_obsolete,  KNCF_WARNIGNORE, NULL, NULL, },

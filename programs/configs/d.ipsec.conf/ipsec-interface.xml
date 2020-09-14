@@ -30,6 +30,12 @@ the existing init system or via networking tools such as systemd-networkd and Ne
 _updown script handles certain Linux specific interfaces settings required for proper functioning,
 such as forwarding and routing rules for IPsec traffic.
 </para>
+<para>
+The ipsec-interface=0 will create an interface with the same name as the old KLIPS interface, ipsec0.
+This interface name should only be used when required for migration from KLIPS to XFRM interfaces.
+Since XFRM IF_ID and marking cannot use 0, this is mapped to 16384. This means that the
+devices ipsec0 and ipsec16384 cannot both be in use.
+</para>
 </listitem>
 </varlistentry>
 

@@ -309,7 +309,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 		ike->sa.st_connection->newest_isakmp_sa = ike->sa.st_serialno;
 	} else {
 #ifdef USE_XFRM_INTERFACE
-		if (c->xfrmi != NULL && c->xfrmi->if_id != yn_no)
+		if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
 			if (add_xfrmi(c, child->sa.st_logger))
 				return STF_FATAL;
 #endif

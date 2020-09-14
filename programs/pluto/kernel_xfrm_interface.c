@@ -520,7 +520,9 @@ static err_t ipsec1_support_test(const char *if_name /*non-NULL*/,
 static char *fmt_xfrmi_ifname(uint32_t if_id)
 {
 	char *if_name = alloc_things(char, IFNAMSIZ, "xfrmi name");
-	int n  = snprintf(if_name, IFNAMSIZ, XFRMI_DEV_FORMAT, if_id);
+	/* remap if_id PLUTO_XFRMI_REMAP_IF_ID_ZERO to ipsec0 as special case */
+	int n  = snprintf(if_name, IFNAMSIZ, XFRMI_DEV_FORMAT,
+		 if_id == PLUTO_XFRMI_REMAP_IF_ID_ZERO ? 0  : if_id);
 	passert(n < IFNAMSIZ);
 	return if_name;
 }
@@ -600,7 +602,7 @@ static void new_pluto_xfrmi(uint32_t if_id, bool shared, char *name, struct conn
 	c->xfrmi->shared = shared;
 }
 
-/* ??? true means failure! */
+/* false means error - but it cannot fail right now? */
 static bool init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
 {
 	c->xfrmi = find_pluto_xfrmi_interface(if_id);
@@ -619,14 +621,16 @@ static bool init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
 		reference_xfrmi(c);
 	}
 
-	return false;
+	return true;
 }
 
-/* ??? true may mean failure! Not obvious, not documented. */
+/* false means error */
 bool setup_xfrm_interface(struct connection *c, uint32_t xfrm_if_id)
 {
-	if (xfrm_if_id == yn_no)
-		return true;
+	if (xfrm_if_id == 0) {
+		dbg("remap ipsec0");
+		xfrm_if_id = PLUTO_XFRMI_REMAP_IF_ID_ZERO;
+	}
 
 	bool shared = true;
 
@@ -640,6 +644,7 @@ bool setup_xfrm_interface(struct connection *c, uint32_t xfrm_if_id)
 		return false;
 	*/
 
+	/* always success for now */
 	return init_pluto_xfrmi(c, xfrm_if_id, shared);
 }
 

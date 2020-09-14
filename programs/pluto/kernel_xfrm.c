@@ -742,8 +742,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 				req.n.nlmsg_len += mark_attr->rta_len;
 			}
 		}
-               if (xfrm_if_id > 0) {
 #ifdef USE_XFRM_INTERFACE
+               if (xfrm_if_id != 0) {
 			struct rtattr *attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 			dbg("%s netlink: XFRMA_IF_ID  %" PRIu32 " req.n.nlmsg_type=%" PRIu32,
 			    __func__, xfrm_if_id, req.n.nlmsg_type);
@@ -758,8 +758,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			attr->rta_len = RTA_LENGTH(sizeof(uint32_t));
 			memcpy(RTA_DATA(attr), &xfrm_if_id, sizeof(uint32_t));
 			req.n.nlmsg_len += attr->rta_len;
-#endif
 	       }
+#endif
 
 	}
 
@@ -1556,8 +1556,8 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 
-	if (sa->xfrm_if_id > 0) {
 #ifdef USE_XFRM_INTERFACE
+	if (sa->xfrm_if_id != 0) {
 		dbg("%s netlink: XFRMA_IF_ID %" PRIu32 " req.n.nlmsg_type=%" PRIu32,
 		    __func__, sa->xfrm_if_id, req.n.nlmsg_type);
 		attr->rta_type = XFRMA_IF_ID;
@@ -1572,8 +1572,8 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		memcpy(RTA_DATA(attr), &sa->xfrm_if_id, sizeof(uint32_t));
 		req.n.nlmsg_len += attr->rta_len;
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
-#endif
 	}
+#endif
 
 	if (sa->nic_offload_dev) {
 		struct xfrm_user_offload xuo = {

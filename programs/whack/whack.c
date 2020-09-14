@@ -139,7 +139,7 @@ static void help(void)
 		"	[--nflog-group <groupnum>] \\\n"
 		"	[--conn-mark <mark/mask>] [--conn-mark-in <mark/mask>] \\\n"
 		"	[--conn-mark-out <mark/mask>] \\\n"
-		"	[--vti-iface <iface> ] [--vti-routing] [--vti-shared] \\\n"
+		"	[--vti-iface <iface> ] [--vti-routing] [--vti-shared] [--ipsec-interface <num>] \\\n"
 		"	[--initiateontraffic | --pass | --drop | --reject] \\\n"
 		"	[--failnone | --failpass | --faildrop | --failreject] \\\n"
 		"	[--negopass ] \\\n"
@@ -421,6 +421,7 @@ enum option_enums {
 	CD_VTI_IFACE,
 	CD_VTI_ROUTING,
 	CD_VTI_SHARED,
+	CD_IPSEC_IFACE,
 	CD_TUNNELIPV4,
 	CD_TUNNELIPV6,
 	CD_CONNIPV4,
@@ -741,6 +742,7 @@ static const struct option long_opts[] = {
 	{ "vti-iface", required_argument, NULL, CD_VTI_IFACE + OO },
 	{ "vti-routing", no_argument, NULL, CD_VTI_ROUTING + OO },
 	{ "vti-shared", no_argument, NULL, CD_VTI_SHARED + OO },
+	{ "ipsec-interface", required_argument, NULL, CD_IPSEC_IFACE + OO + NUMERIC_ARG },
 	{ "sendcert", required_argument, NULL, END_SENDCERT + OO },
 	{ "sendca", required_argument, NULL, CD_SEND_CA + OO },
 	{ "ipv4", no_argument, NULL, CD_CONNIPV4 + OO },
@@ -990,6 +992,8 @@ int main(int argc, char **argv)
 
 	msg.iketcp = IKE_TCP_NO;
 	msg.remote_tcpport = NAT_IKE_UDP_PORT;
+
+	msg.xfrm_if_id = UINT32_MAX;
 
 	for (;;) {
 		int long_index;
@@ -2170,6 +2174,10 @@ int main(int argc, char **argv)
 			continue;
 		case CD_VTI_SHARED:	/* --vti-shared */
 			msg.vti_shared = TRUE;
+			continue;
+
+		case CD_IPSEC_IFACE:      /* --ipsec-interface */
+			msg.xfrm_if_id = opt_whole;
 			continue;
 
 		case CD_XAUTHBY:	/* --xauthby */

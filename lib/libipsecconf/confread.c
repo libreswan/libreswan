@@ -166,7 +166,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	DOPT(KNCF_CLIENTADDRFAMILY, AF_UNSPEC);
 
 	DOPT(KNCF_AUTO, STARTUP_IGNORE);
-	DOPT(KNCF_XFRM_IF_ID, yn_no);
+	DOPT(KNCF_XFRM_IF_ID, UINT32_MAX);
 
 # undef DOPT
 
@@ -190,6 +190,8 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	d->right.addr = address_any(&ipv4_info);
 	d->right.nexttype = KH_NOTSET;
 	d->right.nexthop = address_any(&ipv4_info);
+
+	d->xfrm_if_id = UINT32_MAX;
 
 	/* default is NOT to look in DNS */
 	d->left.key_from_DNS_on_demand = FALSE;
