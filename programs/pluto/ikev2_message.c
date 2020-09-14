@@ -415,8 +415,8 @@ stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 
 	/* size of plain or cipher text.  */
 	size_t enc_size = integ_start - enc_start;
-	chunk_t intermediate_auth;
-	chunk_t sk_data;
+	chunk_t intermediate_auth = NULL_HUNK;
+	chunk_t sk_data = NULL_HUNK;
 
 	/* encrypt and authenticate the block */
 	if (encrypt_desc_is_aead(ike->sa.st_oakley.ta_encrypt)) {
@@ -433,6 +433,10 @@ stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 
 		if (exchange_type == ISAKMP_v2_IKE_INTERMEDIATE) {
 			/* save contents of IntAuth_*_A in a chunk */
+			/*
+			 * ??? do these need to be copies?
+			 * Are these chunks of memory mutated before the copy is used?
+			 */
 			intermediate_auth = clone_bytes_as_chunk(aad_start, aad_size, "IntAuth_*_A");
 			sk_data = clone_hunk(sk->cleartext, "IntAuth_*_P");
 		}
@@ -456,6 +460,8 @@ stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 			      aad_start, aad_size,
 			      enc_start, enc_size, integ_size,
 			      cipherkey, true, sk->logger)) {
+			free_chunk_content(&intermediate_auth);
+			free_chunk_content(&sk_data);
 			return STF_FAIL;
 		}
 		if (DBGP(DBG_CRYPT)) {
@@ -531,7 +537,9 @@ stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 		 * If P(SK) not empty, append its decrypted contents IntAuth_*_A | IntAuth_*_P
 		 */
 		if (sk_data.len > 0) {
-			intermediate_auth = clone_chunk_chunk(intermediate_auth, sk_data, "IntAuth_*_A | IntAuth_*_P");
+			chunk_t both = clone_chunk_chunk(intermediate_auth, sk_data, "IntAuth_*_A | IntAuth_*_P");
+			free_chunk_content(&intermediate_auth);
+			intermediate_auth = both;
 		}
 		struct crypt_prf *prf = crypt_prf_init_symkey("prf(IntAuth_*_A [| IntAuth_*_P])", ike->sa.st_oakley.ta_prf,
 							 "SK_p", intermediatekey, ike->sa.st_logger);
@@ -539,6 +547,8 @@ stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 		struct crypt_mac int_mac = crypt_prf_final_mac(&prf, NULL/*no-truncation*/);
 		ike->sa.st_intermediate_packet_me = clone_hunk(int_mac, "IntAuth");
 	}
+	free_chunk_content(&intermediate_auth);
+	free_chunk_content(&sk_data);
 	return STF_OK;
 }
 
@@ -639,7 +649,7 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 		bad_case(ike->sa.st_sa_role);
 	}
 
-	chunk_t intermediate_auth;
+	chunk_t intermediate_auth = NULL_HUNK;
 	/* authenticate and decrypt the block. */
 	if (encrypt_desc_is_aead(ike->sa.st_oakley.ta_encrypt)) {
 		/*
@@ -653,6 +663,8 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 
 		if (exchange_type == ISAKMP_v2_IKE_INTERMEDIATE) {
 			/* save contents of IntAuth_*_A in a chunk */
+			/* ??? does this need to be a copy? */
+			/* ??? if so, does sk_data need to be a copy? */
 			intermediate_auth = clone_bytes_as_chunk(aad_start, aad_size, "IntAuth_*_A");
 		}
 
@@ -675,6 +687,7 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 			      aad_start, aad_size,
 			      enc_start, enc_size, integ_size,
 			      cipherkey, false, ike->sa.st_logger)) {
+			free_chunk_content(&intermediate_auth);
 			return false;
 		}
 		if (DBGP(DBG_CRYPT)) {
@@ -736,6 +749,7 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 	if (padlen > enc_size) {
 		libreswan_log("discarding invalid packet: padding-length %u (octet 0x%02x) is larger than %zu octet payload length",
 			      padlen, padlen - 1, enc_size);
+		free_chunk_content(&intermediate_auth);
 		return false;
 	}
 	if (pad_to_blocksize) {
@@ -787,8 +801,11 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 		 * If P(SK) not empty, append its decrypted contents IntAuth_*_A | IntAuth_*_P
 		 */
 		if (enc_size - padlen > 0) {
-			chunk_t sk_data = clone_bytes_as_chunk(enc_start, enc_size - padlen, "IntAuth_*_P");
-			intermediate_auth = clone_chunk_chunk(intermediate_auth, sk_data, "IntAuth_*_A | IntAuth_*_P");
+			chunk_t both = clone_chunk_chunk(intermediate_auth,
+							 chunk2(enc_start, enc_size - padlen),
+							 "IntAuth_*_A | IntAuth_*_P");
+			free_chunk_content(&intermediate_auth);
+			intermediate_auth = both;
 		}
 
 		struct crypt_prf *prf = crypt_prf_init_symkey("prf(IntAuth_*_A [| IntAuth_*_P])", ike->sa.st_oakley.ta_prf,
@@ -797,6 +814,7 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 		struct crypt_mac mac = crypt_prf_final_mac(&prf, NULL/*no-truncation*/);
 		ike->sa.st_intermediate_packet_peer = clone_hunk(mac, "IntAuth");
 	}
+	free_chunk_content(&intermediate_auth);
 	return true;
 }
 
