@@ -2,7 +2,9 @@ A routed host-to-host aka /32-to-/32 tunnel using xfrmi interface on road.
 
 xfrmi need CONFIG_XFRM_INTERFACE=y in the kernel.
 
-road will have device ipsec1
+This also tests the normally unused ipsec0 device.
+
+road will have device ipsec0
 ip rule show
 ip route show table 50
-ip -s link show ipsec1
+ip -s link show ipsec0
