@@ -731,6 +731,7 @@ ifdef USE_NSS_PRF
 $(error ERROR: Deprecated USE_NSS_PRF variable set, use USE_NSS_KDF instead)
 endif
 
+# This is required for FIPS, but required a very recent version of nss
 USE_NSS_KDF ?= false
 ifeq ($(USE_NSS_KDF),true)
 USERLAND_CFLAGS += -DUSE_NSS_KDF
