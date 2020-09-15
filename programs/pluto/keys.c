@@ -580,12 +580,6 @@ struct secret *lsw_get_xauthsecret(char *xauthname)
 	return best;
 }
 
-/* check the existence of an RSA private key matching an RSA public */
-static bool has_private_rawkey(struct pubkey *pk)
-{
-	return lsw_has_private_rawkey(pluto_secrets, pk);
-}
-
 /*
  * find the appropriate preshared key (see get_secret).
  * Failure is indicated by a NULL pointer.
@@ -829,7 +823,7 @@ void list_public_keys(struct show *s, bool utc, bool check_pub_keys)
 						bad_case(key->type->alg);
 					}
 					jam(buf, " (%s private key), until ",
-					    (has_private_rawkey(key) ? "has" : "no"));
+					    (lsw_has_private_rawkey(pluto_secrets, key) ? "has" : "no"));
 					jam_realtime(buf, key->until_time, utc);
 					jam(buf, " %s", check_expiry_msg);
 				}
