@@ -3631,8 +3631,10 @@ static stf_status ikev2_process_cp_respnse(struct msg_digest *md)
 	struct state *st = md->st;
 	struct connection *c = st->st_connection;
 
-	if (st->st_state->kind == STATE_V2_REKEY_CHILD_I1)
-		return STF_OK; /* CP response is  not allowed in a REKEY response */
+	/* IP parameters on rekey MUST be identical, so CP payloads not needed */
+	if (st->st_state->kind == STATE_V2_REKEY_CHILD_I1 ||
+		st->st_state->kind == STATE_V2_NEW_CHILD_I1)
+			return STF_OK; /* CP is not required in an IPsec  REKEY exchange */
 
 	if (need_configuration_payload(c, st->hidden_variables.st_nat_traversal)) {
 		if (md->chain[ISAKMP_NEXT_v2CP] == NULL) {
