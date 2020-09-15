@@ -6,3 +6,23 @@ road will have device ipsec1
 ip rule show
 ip route show table 50
 ip -s link show ipsec1
+
+
+this fais because on east:
+
+"road-east" #2: responding to Quick Mode proposal {msgid:572a1f15}
+"road-east" #2:     us: 192.1.2.23<192.1.2.23>[@east]
+"road-east" #2:   them: 192.1.3.209<192.1.3.209>[@road]
+"road-east" #2: sent Quick Mode reply, inbound IPsec SA installed, expecting confirmation tunnel mode {ESP=>0x37955993 <0x921cd94c xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+"road-east" #2: STATE_QUICK_R1: retransmission; will wait 15 seconds for response
+"road-east" #2: STATE_QUICK_R1: retransmission; will wait 30 seconds for response
+"road-east" #2: STATE_QUICK_R1: 60 second timeout exceeded after 2 retransmits.  No response (or no acceptable response) to our IKEv1 message
+"road-east" #2: deleting state (STATE_QUICK_R1) aged 60.067739s and sending notification
+"road-east" #2: ESP traffic information: in=648B out=0B
+
+
+Now on west, it received the answer, setup the full IPsec SA, and then sends the confirming IKE
+packet which is lost because the tunnel is in place.
+
+This is specific to a host-to-host scenario.
+
