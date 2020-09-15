@@ -1070,7 +1070,7 @@ diag_t load_end_cert_and_preload_secret(const char *pubkey,
 	 * get_psk.
 	 */
 	dbg("preload cert/secret for connection: %s", cert->nickname);
-	err_t ugh = load_nss_cert_secret(cert, logger);
+	err_t ugh = load_nss_cert_secret(&dst_end->cert, logger);
 	if (ugh != NULL) {
 		dbg("warning: no secret key loaded for %s certificate with %s %s: %s",
 		    dst_end->leftright, cert_source, pubkey, ugh);

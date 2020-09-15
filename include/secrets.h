@@ -38,6 +38,7 @@ struct pubkey;		/* forward */
 union pubkey_content;	/* forward */
 struct pubkey_type;	/* forward */
 struct hash_desc;
+struct cert;
 
 struct RSA_public_key {
 	char keyid[KEYID_BUF];	/* see ipsec_keyblobtoid(3) */
@@ -274,7 +275,8 @@ extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 
 extern struct secret *lsw_get_ppk_by_id(struct secret *secrets, chunk_t ppk_id);
 
-extern err_t lsw_add_secret(struct secret **secrets, CERTCertificate *cert, struct logger *logger);
+err_t find_or_load_cert_private_key(struct secret **secrets, const struct cert *cert,
+				    const struct private_key_stuff **pks, struct logger *logger);
 
 /* these do not clone */
 chunk_t same_secitem_as_chunk(SECItem si);

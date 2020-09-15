@@ -55,7 +55,7 @@ struct show;
 /* certificate access structure
  * currently X.509 certificates are supported
  */
-typedef struct {
+typedef struct cert {
 	enum ike_cert_type ty;
 	union {
 		/* some day we may support more */

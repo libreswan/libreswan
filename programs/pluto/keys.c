@@ -670,7 +670,6 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 	if (pexpect(type == &pubkey_type_ecdsa || type == &pubkey_type_rsa) &&
 	    c->spd.this.cert.ty == CERT_X509_SIGNATURE &&
 	    c->spd.this.cert.u.nss_cert != NULL) {
-		struct secret *best;
 		const char *nickname = cert_nickname(&c->spd.this.cert);
 
 		id_buf this_buf, that_buf;
@@ -680,58 +679,10 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 		    str_id(&c->spd.that.id, &that_buf),
 		    type->name);
 
-		/*
-		 * Extract the cert's CKAID and TYPE.
-		 *
-		 * XXX: this is pretty crude; the cert type should
-		 * have abstracted this.
-		 */
-		ckaid_t cert_ckaid; /* copy */
-		const struct pubkey_type *cert_type;
-		{
-			dbg("allocating public key using connection's certificate; only to throw it a way");
-			/* from here on: must free cert_pubkey */
-			struct pubkey *cert_pubkey = allocate_pubkey_nss(c->spd.this.cert.u.nss_cert, logger);
-			if (cert_pubkey == NULL) {
-				log_message(RC_LOG_SERIOUS, logger,
-					    "private key not found (certificate missing from NSS DB or token locked?)");
-				return NULL;
-			}
-			cert_ckaid = *pubkey_ckaid(cert_pubkey);
-			cert_type = cert_pubkey->type;
-			free_public_key(cert_pubkey);
-		}
-
-		ckaid_buf ckb;
-		dbg("searching for secret matching cert %s's pubkey CKAID %s:%s in secrets cache",
-		    nickname, cert_type->name, str_ckaid(&cert_ckaid, &ckb));
-		best = find_secret_by_pubkey_ckaid(pluto_secrets, cert_type, &cert_ckaid);
-		if (best != NULL) {
-			dbg("found secret");
-			dbg("connection %s's %s private key found using cert",
-			    c->name, type->name);
-			return lsw_get_pks(best);
-		}
-
-		dbg("private key for cert %s not found in local cache; trying the NSS DB",
-		    nickname);
-
-		/* XXX: why not return value here? */
-		threadtime_t time_add_secret = threadtime_start();
-		err_t err = lsw_add_secret(&pluto_secrets, c->spd.this.cert.u.nss_cert, logger);
-		threadtime_stop(&time_add_secret, SOS_NOBODY, "%s() loading private key %s", __func__,
-				nickname);
+		const struct private_key_stuff *pks = NULL;
+		err_t err = find_or_load_cert_private_key(&pluto_secrets, &c->spd.this.cert,
+							  &pks, logger);
 		if (err != NULL) {
-			/* ??? should this be logged? */
-			dbg("private key for cert %s not found in NSS DB: %s",
-			    nickname, err);
-			return NULL;
-		}
-
-		dbg("re-searching for secret matching cert %s's pubkey CKAID %s:%s in secrets cache",
-		    nickname, cert_type->name, str_ckaid(&cert_ckaid, &ckb));
-		best = find_secret_by_pubkey_ckaid(pluto_secrets, cert_type, &cert_ckaid);
-		if (best == NULL) {
 			dbg("private key for cert %s not found in NSS DB: re-search failed",
 			    nickname);
 			return NULL;
@@ -743,7 +694,7 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 		 */
 		dbg("connection %s's %s private key found in NSS DB using cert",
 		    c->name, type->name);
-		return lsw_get_pks(best);
+		return pks;
 	}
 
 	dbg("looking for connection %s's %s private key",
@@ -906,12 +857,13 @@ void list_public_keys(struct show *s, bool utc, bool check_pub_keys)
 	}
 }
 
-err_t load_nss_cert_secret(CERTCertificate *cert, struct logger *logger)
+err_t load_nss_cert_secret(const struct cert *cert, struct logger *logger)
 {
 	threadtime_t start = threadtime_start();
-	err_t err = lsw_add_secret(&pluto_secrets, cert, logger);
+	const struct private_key_stuff *pks;
+	err_t err = find_or_load_cert_private_key(&pluto_secrets, cert, &pks, logger);
 	threadtime_stop(&start, SOS_NOBODY, "%s() loading private key %s", __func__,
-			cert->nickname);
+			cert->u.nss_cert->nickname);
 	return err;
 }
 
