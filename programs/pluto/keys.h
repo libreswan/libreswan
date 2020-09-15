@@ -71,7 +71,7 @@ extern struct secret *lsw_get_xauthsecret(char *xauthname);
 /* keys from ipsec.conf */
 extern struct pubkey_list *pluto_pubkeys;
 
-struct pubkey *get_pubkey_with_matching_ckaid(const char *ckaid);
+const struct pubkey *find_pubkey_by_ckaid(const char *ckaid);
 
 typedef err_t (try_signature_fn) (const struct crypt_mac *hash,
 				  const struct packet_byte_stream *sig_pbs,

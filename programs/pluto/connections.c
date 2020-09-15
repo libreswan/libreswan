@@ -972,7 +972,7 @@ diag_t load_end_cert_and_preload_secret(const char *pubkey,
 		 * specified using an earlier rsasigkey=.
 		 */
 		cert_source = "CKAID";
-		struct pubkey *key = get_pubkey_with_matching_ckaid(pubkey);
+		const struct pubkey *key = find_pubkey_by_ckaid(pubkey);
 		if (key != NULL) {
 			/*
 			 * Convert the CKAID into the corresponding ID

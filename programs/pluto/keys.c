@@ -861,64 +861,16 @@ err_t load_nss_cert_secret(const struct cert *cert, struct logger *logger)
 	return err;
 }
 
-static bool rsa_pubkey_ckaid_matches(struct pubkey *pubkey, char *buf, size_t buflen)
+const struct pubkey *find_pubkey_by_ckaid(const char *ckaid)
 {
-	if (pubkey->u.rsa.n.ptr == NULL) {
-		dbg("RSA pubkey with NULL modulus");
-		return FALSE;
-	}
-	SECItem modulus = {
-		.type = siBuffer,
-		.len = pubkey->u.rsa.n.len,
-		.data = pubkey->u.rsa.n.ptr,
-	};
-	SECItem *pubkey_ckaid = PK11_MakeIDFromPubKey(&modulus);
-	if (pubkey_ckaid == NULL) {
-		dbg("RSA pubkey incomputable CKAID");
-		return FALSE;
-	}
-	LSWDBGP(DBG_BASE, buf) {
-		jam(buf, "comparing ckaid with: ");
-		jam_nss_secitem(buf, pubkey_ckaid);
-	}
-	bool eq = pubkey_ckaid->len == buflen &&
-		  memcmp(pubkey_ckaid->data, buf, buflen) == 0;
-	SECITEM_FreeItem(pubkey_ckaid, PR_TRUE);
-	return eq;
-}
-
-struct pubkey *get_pubkey_with_matching_ckaid(const char *ckaid)
-{
-	/* convert hex string ckaid to binary bin */
-	size_t binlen = (strlen(ckaid) + 1) / 2;
-	char *bin = alloc_bytes(binlen, "ckaid");
-	const char *ugh = ttodata(ckaid, 0, 16, bin, binlen, &binlen);
-	if (ugh != NULL) {
-		pfree(bin);
-		/* should have been rejected by whack? */
-		libreswan_log("invalid hex CKAID '%s': %s", ckaid, ugh);
-		return NULL;
-	}
-	if (DBGP(DBG_BASE)) {
-		DBG_dump("looking for pubkey with CKAID that matches", bin, binlen);
-	}
-
-	struct pubkey_list *p;
-	for (p = pluto_pubkeys; p != NULL; p = p->next) {
+	for (struct pubkey_list *p = pluto_pubkeys; p != NULL; p = p->next) {
 		DBG_log("looking at a PUBKEY");
 		struct pubkey *key = p->key;
-		switch (key->type->alg) {
-		case PUBKEY_ALG_RSA: {
-			if (rsa_pubkey_ckaid_matches(key, bin, binlen)) {
-				dbg("ckaid matching pubkey");
-				pfree(bin);
-				return key;
-			}
-		}
-		default:
-			break;
+		const ckaid_t *key_ckaid = pubkey_ckaid(key);
+		if (ckaid_starts_with(key_ckaid, ckaid)) {
+			dbg("ckaid matching pubkey");
+			return key;
 		}
 	}
-	pfree(bin);
 	return NULL;
 }
