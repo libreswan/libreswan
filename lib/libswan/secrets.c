@@ -215,7 +215,7 @@ static void RSA_free_pubkey_content(union pubkey_content *u)
 	RSA_free_public_content(&u->rsa);
 }
 
-static void extract_RSA_public_key(struct RSA_public_key *pub,
+static void RSA_extract_public_key(struct RSA_public_key *pub,
 				   SECKEYPublicKey *pubk,
 				   SECItem *cert_ckaid)
 {
@@ -231,15 +231,15 @@ static void RSA_extract_pubkey_content(union pubkey_content *pkc,
 				       SECKEYPublicKey *pubkey_nss,
 				       SECItem *ckaid_nss)
 {
-	extract_RSA_public_key(&pkc->rsa, pubkey_nss, ckaid_nss);
+	RSA_extract_public_key(&pkc->rsa, pubkey_nss, ckaid_nss);
 }
 
-static void RSA_extract_private_key_stuff(struct private_key_stuff *pks,
+static void RSA_extract_private_key_pubkey_content(struct private_key_stuff *pks,
 					  SECKEYPublicKey *pubkey_nss,
 					  SECItem *ckaid_nss)
 {
 	struct RSA_private_key *rsak = &pks->u.RSA_private_key;
-	extract_RSA_public_key(&rsak->pub, pubkey_nss, ckaid_nss);
+	RSA_extract_public_key(&rsak->pub, pubkey_nss, ckaid_nss);
 }
 
 static void RSA_free_secret_content(struct private_key_stuff *pks)
@@ -337,7 +337,7 @@ const struct pubkey_type pubkey_type_rsa = {
 	.free_pubkey_content = RSA_free_pubkey_content,
 	.unpack_pubkey_content = RSA_unpack_pubkey_content,
 	.extract_pubkey_content = RSA_extract_pubkey_content,
-	.extract_private_key_stuff = RSA_extract_private_key_stuff,
+	.extract_private_key_pubkey_content = RSA_extract_private_key_pubkey_content,
 	.free_secret_content = RSA_free_secret_content,
 	.secret_sane = RSA_secret_sane,
 	.sign_hash = RSA_sign_hash,
@@ -366,7 +366,7 @@ static void ECDSA_free_pubkey_content(union pubkey_content *u)
 	ECDSA_free_public_content(&u->ecdsa);
 }
 
-static void extract_ECDSA_public_key(struct ECDSA_public_key *pub,
+static void ECDSA_extract_public_key(struct ECDSA_public_key *pub,
 				     SECKEYPublicKey *pubkey_nss,
 				     SECItem *ckaid_nss)
 {
@@ -393,15 +393,15 @@ static void ECDSA_extract_pubkey_content(union pubkey_content *pkc,
 					 SECKEYPublicKey *pubkey_nss,
 					 SECItem *ckaid_nss)
 {
-	extract_ECDSA_public_key(&pkc->ecdsa, pubkey_nss, ckaid_nss);
+	ECDSA_extract_public_key(&pkc->ecdsa, pubkey_nss, ckaid_nss);
 }
 
-static void ECDSA_extract_private_key_stuff(struct private_key_stuff *pks,
+static void ECDSA_extract_private_key_pubkey_content(struct private_key_stuff *pks,
 					    SECKEYPublicKey *pubkey_nss,
 					    SECItem *ckaid_nss)
 {
 	struct ECDSA_private_key *ecdsak = &pks->u.ECDSA_private_key;
-	extract_ECDSA_public_key(&ecdsak->pub, pubkey_nss, ckaid_nss);
+	ECDSA_extract_public_key(&ecdsak->pub, pubkey_nss, ckaid_nss);
 }
 
 static void ECDSA_free_secret_content(struct private_key_stuff *pks)
@@ -489,7 +489,7 @@ const struct pubkey_type pubkey_type_ecdsa = {
 	.private_key_kind = PKK_ECDSA,
 	.unpack_pubkey_content = ECDSA_unpack_pubkey_content,
 	.free_pubkey_content = ECDSA_free_pubkey_content,
-	.extract_private_key_stuff = ECDSA_extract_private_key_stuff,
+	.extract_private_key_pubkey_content = ECDSA_extract_private_key_pubkey_content,
 	.free_secret_content = ECDSA_free_secret_content,
 	.secret_sane = ECDSA_secret_sane,
 	.sign_hash = ECDSA_sign_hash,
@@ -1703,7 +1703,7 @@ static err_t add_private_key(struct secret **secrets, const struct private_key_s
 	s->pks.line = 0;
 	/* make an unpacked copy of the private key */
 	s->pks.private_key = copy_private_key(private_key);
-	type->extract_private_key_stuff(&s->pks, pubk, ckaid_nss);
+	type->extract_private_key_pubkey_content(&s->pks, pubk, ckaid_nss);
 
 	err_t err = type->secret_sane(&s->pks);
 	if (err != NULL) {

@@ -177,9 +177,9 @@ struct pubkey_type {
 	void (*extract_pubkey_content)(union pubkey_content *pkc,
 				       SECKEYPublicKey *pubkey_nss,
 				       SECItem *ckaid_nss);
-	void (*extract_private_key_stuff)(struct private_key_stuff *pks,
-					  SECKEYPublicKey *pubk,
-					  SECItem *cert_ckaid);
+	void (*extract_private_key_pubkey_content)(struct private_key_stuff *pks,
+						   SECKEYPublicKey *pubk,
+						   SECItem *cert_ckaid);
 	void (*free_secret_content)(struct private_key_stuff *pks);
 	err_t (*secret_sane)(struct private_key_stuff *pks);
 	struct hash_signature (*sign_hash)(const struct private_key_stuff *pks,
