@@ -967,32 +967,24 @@ diag_t load_end_cert_and_preload_secret(const char *pubkey,
 	}
 	case WHACK_PUBKEY_CKAID:
 	{
-		/*
-		 * Perhaps it is already loaded?  Or perhaps it was
-		 * specified using an earlier rsasigkey=.
-		 */
 		cert_source = "CKAID";
-		const struct pubkey *key = find_pubkey_by_ckaid(pubkey);
-		if (key != NULL) {
-			/*
-			 * Convert the CKAID into the corresponding ID
-			 * so that a search will re-find it.
-			 */
-			dst_end->id = key->id;
-			return NULL;
-		}
 		ckaid_t ckaid;
 		err_t err = string_to_ckaid(pubkey, &ckaid);
 		if (err != NULL) {
 			/* should have been rejected by whack? */
 			/* XXX: don't trust whack */
-			return diag("%s certificate CKAID '%s' invalid: %s",
+			return diag("%s CKAID '%s' invalid: %s",
 				    dst_end->leftright, pubkey, err);
 		}
+		/*
+		 * See if there's a certificate matching the CKAID, if
+		 * not assume things will later find the private key.
+		 */
 		cert = get_cert_by_ckaid_from_nss(&ckaid, logger);
 		if (cert == NULL) {
-			return diag("%s certificate matching CKAID '%s' not found in the NSS database",
-				    dst_end->leftright, pubkey);
+			dbg("%s CKAID '%s' did not match a certificate in the NSS database",
+			    dst_end->leftright, pubkey);
+			return NULL;
 		}
 		break;
 	}
