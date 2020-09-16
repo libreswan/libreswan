@@ -35,6 +35,7 @@
 #include "connection_db.h"		/* for co_serial_t */
 #include "hash_table.h"
 #include "diag.h"
+#include "ckaid.h"
 
 /* There are two kinds of connections:
  * - ISAKMP connections, between hosts (for IKE communication)
@@ -205,6 +206,7 @@ struct end {
 
 	enum certpolicy sendcert;	/* whether or not to send the certificate */
 	cert_t cert;			/* end certificate */
+	ckaid_t *ckaid;
 	chunk_t ca;			/* CA distinguished name of the end certificate's issuer */
 
 	struct virtual_t *virt;

@@ -163,6 +163,7 @@ static void delete_end(struct end *e)
 	pfreeany(e->host_addr_name);
 	pfreeany(e->xauth_password);
 	pfreeany(e->xauth_username);
+	pfreeany(e->ckaid);
 }
 
 static void delete_sr(struct spd_route *sr)
@@ -980,6 +981,7 @@ diag_t load_end_cert_and_preload_secret(const char *pubkey,
 		 * See if there's a certificate matching the CKAID, if
 		 * not assume things will later find the private key.
 		 */
+		dst_end->ckaid = clone_thing(ckaid, "end ckaid");
 		cert = get_cert_by_ckaid_from_nss(&ckaid, logger);
 		if (cert == NULL) {
 			dbg("%s CKAID '%s' did not match a certificate in the NSS database",
