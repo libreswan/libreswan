@@ -1717,10 +1717,10 @@ static err_t add_private_key(struct secret **secrets, const struct private_key_s
 	return NULL;
 }
 
-static err_t find_or_load_cert_private_key_3(struct secret **secrets, CERTCertificate *cert,
-					     const struct private_key_stuff **pks, struct logger *logger,
-					     SECKEYPublicKey *pubk, SECItem *ckaid_nss,
-					     const struct pubkey_type *type)
+static err_t find_or_load_private_key_by_cert_3(struct secret **secrets, CERTCertificate *cert,
+						const struct private_key_stuff **pks, struct logger *logger,
+						SECKEYPublicKey *pubk, SECItem *ckaid_nss,
+						const struct pubkey_type *type)
 {
 
 	SECKEYPrivateKey *private_key = PK11_FindKeyByAnyCert(cert, lsw_nss_get_password_context(logger));
@@ -1733,9 +1733,9 @@ static err_t find_or_load_cert_private_key_3(struct secret **secrets, CERTCertif
 	return err;
 }
 
-static err_t find_or_load_cert_private_key_2(struct secret **secrets, CERTCertificate *cert,
-					     const struct private_key_stuff **pks, struct logger *logger,
-					     SECKEYPublicKey *pubk, SECItem *ckaid_nss)
+static err_t find_or_load_private_key_by_cert_2(struct secret **secrets, CERTCertificate *cert,
+						const struct private_key_stuff **pks, struct logger *logger,
+						SECKEYPublicKey *pubk, SECItem *ckaid_nss)
 {
 
 	/* XXX: see also nss_cert_key_kind(cert) */
@@ -1752,15 +1752,15 @@ static err_t find_or_load_cert_private_key_2(struct secret **secrets, CERTCertif
 	}
 
 	dbg("adding %s secret for certificate: %s", type->name, cert->nickname);
-	err_t err = find_or_load_cert_private_key_3(secrets, cert, pks, logger,
-						    /* extracted fields */
-						    pubk, ckaid_nss, type);
+	err_t err = find_or_load_private_key_by_cert_3(secrets, cert, pks, logger,
+						       /* extracted fields */
+						       pubk, ckaid_nss, type);
 	return err;
 }
 
-static err_t find_or_load_cert_private_key_1(struct secret **secrets, CERTCertificate *cert,
-					     const struct private_key_stuff **pks, struct logger *logger,
-					     SECKEYPublicKey *pubk)
+static err_t find_or_load_private_key_by_cert_1(struct secret **secrets, CERTCertificate *cert,
+						const struct private_key_stuff **pks, struct logger *logger,
+						SECKEYPublicKey *pubk)
 {
 	/*
 	 * Getting a SECItem ptr from PK11_GetLowLevelKeyID doesn't
@@ -1773,15 +1773,15 @@ static err_t find_or_load_cert_private_key_1(struct secret **secrets, CERTCertif
 		return "NSS: key ID not found";
 	}
 
-	err_t err = find_or_load_cert_private_key_2(secrets, cert, pks, logger,
-						    /* extracted fields */
-						    pubk, ckaid_nss);
+	err_t err = find_or_load_private_key_by_cert_2(secrets, cert, pks, logger,
+						       /* extracted fields */
+						       pubk, ckaid_nss);
 	SECITEM_FreeItem(ckaid_nss, PR_TRUE);
 	return err;
 }
 
-err_t find_or_load_cert_private_key(struct secret **secrets, const struct cert *cert,
-				    const struct private_key_stuff **pks, struct logger *logger)
+err_t find_or_load_private_key_by_cert(struct secret **secrets, const struct cert *cert,
+				       const struct private_key_stuff **pks, struct logger *logger)
 {
 	if (cert == NULL || cert->u.nss_cert == NULL) {
 		return "NSS cert not found";
@@ -1793,9 +1793,9 @@ err_t find_or_load_cert_private_key(struct secret **secrets, const struct cert *
 		return "NSS: could not determine certificate kind; SECKEY_ExtractPublicKey() failed";
 	}
 
-	err_t err = find_or_load_cert_private_key_1(secrets, cert->u.nss_cert, pks, logger,
-						    /* extracted fields */
-						    pubk);
+	err_t err = find_or_load_private_key_by_cert_1(secrets, cert->u.nss_cert, pks, logger,
+						       /* extracted fields */
+						       pubk);
 	SECKEY_DestroyPublicKey(pubk);
 	return err;
 }

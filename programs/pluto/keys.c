@@ -661,23 +661,22 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 							   struct logger *logger)
 {
 	/* is there a certificate assigned to this connection? */
-	if (pexpect(type == &pubkey_type_ecdsa || type == &pubkey_type_rsa) &&
-	    c->spd.this.cert.ty == CERT_X509_SIGNATURE &&
+	if (c->spd.this.cert.ty == CERT_X509_SIGNATURE &&
 	    c->spd.this.cert.u.nss_cert != NULL) {
 		const char *nickname = cert_nickname(&c->spd.this.cert);
 
 		id_buf this_buf, that_buf;
-		dbg("%s() using  %s certificate for %s->%s of kind %s",
+		dbg("%s() using certificate %s to find private key for %s->%s of kind %s",
 		    __func__, nickname,
 		    str_id(&c->spd.this.id, &this_buf),
 		    str_id(&c->spd.that.id, &that_buf),
 		    type->name);
 
 		const struct private_key_stuff *pks = NULL;
-		err_t err = find_or_load_cert_private_key(&pluto_secrets, &c->spd.this.cert,
-							  &pks, logger);
+		err_t err = find_or_load_private_key_by_cert(&pluto_secrets, &c->spd.this.cert,
+							     &pks, logger);
 		if (err != NULL) {
-			dbg("private key for cert %s not found in NSS DB: re-search failed",
+			dbg("private key for certificate %s not found in NSS DB",
 			    nickname);
 			return NULL;
 		}
@@ -855,7 +854,7 @@ err_t load_nss_cert_secret(const struct cert *cert, struct logger *logger)
 {
 	threadtime_t start = threadtime_start();
 	const struct private_key_stuff *pks;
-	err_t err = find_or_load_cert_private_key(&pluto_secrets, cert, &pks, logger);
+	err_t err = find_or_load_private_key_by_cert(&pluto_secrets, cert, &pks, logger);
 	threadtime_stop(&start, SOS_NOBODY, "%s() loading private key %s", __func__,
 			cert->u.nss_cert->nickname);
 	return err;
