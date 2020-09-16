@@ -277,6 +277,8 @@ extern struct secret *lsw_get_ppk_by_id(struct secret *secrets, chunk_t ppk_id);
 
 err_t find_or_load_private_key_by_cert(struct secret **secrets, const struct cert *cert,
 				       const struct private_key_stuff **pks, struct logger *logger);
+err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *ckaid,
+					const struct private_key_stuff **pks, struct logger *logger);
 
 /* these do not clone */
 chunk_t same_secitem_as_chunk(SECItem si);

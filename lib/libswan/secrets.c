@@ -1693,6 +1693,19 @@ static const struct pubkey_type *pubkey_type_nss(SECKEYPublicKey *pubk)
 	}
 }
 
+static const struct pubkey_type *private_key_type_nss(SECKEYPrivateKey *private_key)
+{
+	KeyType key_type = SECKEY_GetPrivateKeyType(private_key);
+	switch (key_type) {
+	case rsaKey:
+		return &pubkey_type_rsa;
+	case ecKey:
+		return &pubkey_type_ecdsa;
+	default:
+		return NULL;
+	}
+}
+
 static err_t add_private_key(struct secret **secrets, const struct private_key_stuff **pks,
 			     SECKEYPublicKey *pubk, SECItem *ckaid_nss,
 			     const struct pubkey_type *type, SECKEYPrivateKey *private_key)
@@ -1797,6 +1810,60 @@ err_t find_or_load_private_key_by_cert(struct secret **secrets, const struct cer
 						       /* extracted fields */
 						       pubk);
 	SECKEY_DestroyPublicKey(pubk);
+	return err;
+}
+
+static err_t find_or_load_private_key_by_ckaid_1(struct secret **secrets,
+						 const struct private_key_stuff **pks,
+						 SECItem *ckaid_nss, SECKEYPrivateKey *private_key)
+{
+	const struct pubkey_type *type = private_key_type_nss(private_key);
+	if (type == NULL) {
+		return "NSS private key not supported (unknown type)";
+	}
+
+	SECKEYPublicKey *pubk = SECKEY_ConvertToPublicKey(private_key); /* must free */
+	if (pubk == NULL) {
+		return "NSS private key has no public key";
+	}
+
+	err_t err = add_private_key(secrets, pks, pubk, ckaid_nss, type, private_key);
+	SECKEY_DestroyPublicKey(pubk);
+	return err;
+}
+
+err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *ckaid,
+					const struct private_key_stuff **pks, struct logger *logger)
+{
+	passert(ckaid != NULL);
+
+	SECItem ckaid_nss = same_ckaid_as_secitem(ckaid);
+	struct secret *s = find_secret_by_pubkey_ckaid_1(*secrets, NULL, &ckaid_nss);
+	if (s != NULL) {
+		dbg("secrets entry for ckaid already exists");
+		*pks = &s->pks;
+		return NULL;
+	}
+
+	PK11SlotInfo *slot = PK11_GetInternalKeySlot();
+	if (!pexpect(slot != NULL)) {
+		return "NSS: has no internal slot ....";
+	}
+
+	/* must free */
+	SECKEYPrivateKey *private_key = PK11_FindKeyByKeyID(slot, &ckaid_nss,
+							    lsw_nss_get_password_context(logger));
+	if (private_key == NULL) {
+		/*
+		 * XXX: The code loading ipsec.secrets also tries to
+		 * use the CKAID to find the certificate, and then
+		 * uses that to find the private key?  Why?
+		 */
+		return "can't find the private key matching the NSS CKAID";
+	}
+
+	err_t err = find_or_load_private_key_by_ckaid_1(secrets, pks, &ckaid_nss, private_key);
+	SECKEY_DestroyPrivateKey(private_key);
 	return err;
 }
 

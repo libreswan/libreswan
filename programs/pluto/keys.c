@@ -690,6 +690,37 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 		return pks;
 	}
 
+	/* is there a CKAID assigned to this connection? */
+	if (c->spd.this.ckaid != NULL) {
+		ckaid_buf ckb;
+		id_buf this_buf, that_buf;
+		dbg("%s() using CKAID %s to find private key for %s->%s of kind %s",
+		    __func__, str_ckaid(c->spd.this.ckaid, &ckb),
+		    str_id(&c->spd.this.id, &this_buf),
+		    str_id(&c->spd.that.id, &that_buf),
+		    type->name);
+
+		const struct private_key_stuff *pks;
+		err_t err = find_or_load_private_key_by_ckaid(&pluto_secrets, c->spd.this.ckaid,
+							      &pks, logger);
+		if (err != NULL) {
+			ckaid_buf ckb;
+			log_message(RC_LOG_SERIOUS, logger,
+				    "private key matching CKAID '%s' not found: %s",
+				    str_ckaid(c->spd.this.ckaid, &ckb), err);
+			return NULL;
+		}
+
+
+		/*
+		 * If we don't find the right keytype (RSA, ECDSA,
+		 * etc) then best will end up as NULL
+		 */
+		dbg("connection %s's %s private key found in NSS DB using CKAID",
+		    c->name, type->name);
+		return pks;
+	}
+
 	dbg("looking for connection %s's %s private key",
 	    c->name, type->name);
 	struct secret *s = lsw_get_secret(c, type->private_key_kind, true, logger);
