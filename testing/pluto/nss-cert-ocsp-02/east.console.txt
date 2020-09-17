@@ -34,7 +34,7 @@ east #
  echo "initdone"
 initdone
 east #
- grep -i "certificate revoked" /tmp/pluto.log
+ grep -i -e "^[^|].*certificate revoked" /tmp/pluto.log
 "nss-cert-ocsp" #1: certificate revoked!
 east #
  ipsec stop

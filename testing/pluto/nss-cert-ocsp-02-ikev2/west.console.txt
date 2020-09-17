@@ -47,7 +47,7 @@ done
 west #
  # this test should log that west's certificate is revoked
 west #
- grep -i "certificate revoked" /tmp/pluto.log
+ grep -i -e "^[^|].*certificate revoked" /tmp/pluto.log
 west #
  ipsec stop
 Redirecting to: [initsystem]
