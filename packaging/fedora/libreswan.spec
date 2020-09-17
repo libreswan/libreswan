@@ -3,7 +3,7 @@
 %global with_efence 0
 %global with_development 0
 %global with_cavstests 1
-%global nss_version 3.41
+%global nss_version 3.52
 %global unbound_version 1.6.6
 # Libreswan config options
 %global libreswan_config \\\
