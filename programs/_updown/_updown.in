@@ -1,4 +1,4 @@
-#! /bin/sh
+#!@SHELL_BINARY@
 # iproute2 version, default updown script
 #
 # Copyright (C) 2003-2004 Nigel Metheringham

@@ -1,4 +1,4 @@
-#! /bin/sh
+#!@SHELL_BINARY@
 # user interface to automatic keying and Pluto in general
 # Copyright (C) 1998, 1999, 2000  Henry Spencer.
 # Copyright (C) 2014-2017 Paul Wouters <pwouters@redhat.com>

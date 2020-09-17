@@ -1,4 +1,4 @@
-#! /bin/sh
+#!@SHELL_BINARY@
 # dump assorted information of use in debugging
 # Copyright (C) 1998, 1999  Henry Spencer.
 # Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>

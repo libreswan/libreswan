@@ -1,4 +1,4 @@
-#! /bin/sh
+#!@SHELL_BINARY@
 #
 # default letsencrypt script for OE utilities
 #
