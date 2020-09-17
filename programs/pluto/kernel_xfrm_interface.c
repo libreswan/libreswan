@@ -496,14 +496,17 @@ static err_t ipsec1_support_test(const char *if_name /*non-NULL*/,
 			LOG_ERRNO(errno, "FATAL cannot find device %s", if_name);
 
 			/*
-			 * failed. assume kernel support is not enabled.
-			 * ip link add ipsec1 type xfrm xfrmi-id 6 dev eth0
-			 * can be quiet when kernel has no CONFIG_XFRM_INTERFACE=no
+			 * failed to create xfrmi device.
+			 * assume kernel support is not enabled.
+			 * build kernel with CONFIG_XFRM_INTERFACE=y
+			 * to diagnose:
+			 * 'ip link add ipsec1 type xfrm if_id 1 dev lo'
+			 * 'ip -d link show dev ipsec1'
 			 */
 			xfrm_interface_support = -1;
 			return "missing CONFIG_XFRM_INTERFACE support in kernel";
 		}
-		dbg("xfrmi supported success creating %s@%s",
+		dbg("xfrmi supported success creating %s@%s and delete it",
 				if_name, dev_name);
 		ip_link_del(if_name, logger); /* ignore return value??? */
 		xfrm_interface_support = 1; /* success */
