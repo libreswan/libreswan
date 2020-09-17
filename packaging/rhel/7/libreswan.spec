@@ -10,6 +10,7 @@
 # For RHEL7 we need USE_NSS_KDF=false
 # Note that this means libreswan needs its own FIPS certification
 %global libreswan_config \\\
+    SHELL_BINARY=/usr/bin/sh \\\
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
     FINALMANDIR=%{_mandir} \\\
     PREFIX=%{_prefix} \\\
