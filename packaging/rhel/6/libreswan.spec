@@ -29,6 +29,7 @@
     USE_SECCOMP=false \\\
     USE_XAUTHPAM=true \\\
     USE_XFRM_INTERFACE_IFLA_HEADER=true \\\
+    USE_NSS_KDF=false \\\
 %{nil}
 
 #global prever rc1
