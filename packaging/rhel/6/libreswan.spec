@@ -201,8 +201,6 @@ fi
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/policies
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
-%attr(0700,root,root) %dir %{_localstatedir}/log/pluto
-%attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
 %attr(0755,root,root) %dir %{_rundir}/pluto
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/pam.d/pluto
 %{_sbindir}/ipsec
