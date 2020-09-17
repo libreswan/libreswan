@@ -240,17 +240,6 @@ extern void form_keyid(chunk_t e, chunk_t n, char *keyid, unsigned *keysize);
 extern struct pubkey *reference_key(struct pubkey *pk);
 extern void unreference_key(struct pubkey **pkp);
 
-extern err_t add_public_key(const struct id *id,
-			    enum dns_auth_level dns_auth_level,
-			    const struct pubkey_type *type,
-			    const chunk_t *key,
-			    struct pubkey_list **head);
-extern err_t add_ipseckey(const struct id *id,
-			  enum dns_auth_level dns_auth_level,
-			  const struct pubkey_type *type, uint32_t ttl,
-			  uint32_t ttl_used, const chunk_t *key,
-			  struct pubkey_list **head);
-
 extern bool same_RSA_public_key(const struct RSA_public_key *a,
 				const struct RSA_public_key *b);
 extern void install_public_key(struct pubkey *pk, struct pubkey_list **head);

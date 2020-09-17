@@ -85,4 +85,16 @@ extern stf_status check_signature_gen(struct state *st,
 				      const struct pubkey_type *type,
 				      try_signature_fn *try_signature);
 
+extern err_t add_public_key(const struct id *id,
+			    enum dns_auth_level dns_auth_level,
+			    const struct pubkey_type *type,
+			    const chunk_t *key,
+			    struct pubkey_list **head);
+
+extern err_t add_ipseckey(const struct id *id,
+			  enum dns_auth_level dns_auth_level,
+			  const struct pubkey_type *type, uint32_t ttl,
+			  uint32_t ttl_used, const chunk_t *key,
+			  struct pubkey_list **head);
+
 #endif /* _KEYS_H */
