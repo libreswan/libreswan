@@ -4,9 +4,11 @@
 %global with_development 0
 %global with_cavstests 1
 # minimum version for support for rhbz#1651314
-%global nss_version 3.39.0-1.4
+%global nss_version 3.44.0-8
 %global unbound_version 1.6.6
-# Libreswan config options
+# Libreswan config options. With these settings, libreswan
+# does not require its own FIPS validation. Only the system
+# and NSS needs to be FIPS validated.
 %global libreswan_config \\\
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
     FINALMANDIR=%{_mandir} \\\
