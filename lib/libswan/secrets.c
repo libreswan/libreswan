@@ -1644,6 +1644,11 @@ bool same_RSA_public_key(const struct RSA_public_key *a,
 		 hunk_eq(a->e, b->e));
 }
 
+/*
+ * XXX: this gets called, via replace_public_key() with a PK that is
+ * still pointing into a cert.  Hence the "how screwed up is this?"
+ * :-(
+ */
 void install_public_key(struct pubkey *pk, struct pubkey_list **head)
 {
 	struct pubkey_list *p =
@@ -1686,6 +1691,48 @@ void replace_public_key(struct pubkey_list **pubkey_db,
 	/* ??? clang 3.5 thinks pk might be NULL */
 	delete_public_keys(pubkey_db, &pk->id, pk->type);
 	install_public_key(pk, pubkey_db);
+}
+
+static struct pubkey *alloc_public_key(const struct id *id, /* ASKK */
+				       enum dns_auth_level dns_auth_level,
+				       const struct pubkey_type *type,
+				       realtime_t install_time, realtime_t until_time,
+				       uint32_t ttl,
+				       const union pubkey_content *pkc)
+{
+	struct pubkey pk = {
+		.u = *pkc,
+		.id = clone_id(id, "public key id"),
+		.dns_auth_level = dns_auth_level,
+		.type = type,
+		.installed_time = install_time,
+		.until_time = until_time,
+		.dns_ttl = ttl,
+		.issuer = EMPTY_CHUNK,	/* raw keys have no issuer */
+	};
+	return clone_thing(pk, "raw public key");
+}
+
+err_t add_public_key(const struct id *id, /* ASKK */
+		     enum dns_auth_level dns_auth_level,
+		     const struct pubkey_type *type,
+		     realtime_t install_time, realtime_t until_time,
+		     uint32_t ttl,
+		     const chunk_t *key,
+		     struct pubkey_list **head)
+{
+	/* first: algorithm-specific decoding of key chunk */
+	union pubkey_content pkc;
+	err_t err = type->unpack_pubkey_content(&pkc, *key);
+	if (err != NULL) {
+		return err;
+	}
+
+	struct pubkey *pk = alloc_public_key(id, dns_auth_level, type,
+					     install_time, until_time, ttl,
+					     &pkc);
+	install_public_key(pk, head);
+	return NULL;
 }
 
 static const struct pubkey_type *pubkey_type_nss(SECKEYPublicKey *pubk)

@@ -751,49 +751,6 @@ void free_remembered_public_keys(void)
 	free_public_keys(&pluto_pubkeys);
 }
 
-err_t add_public_key(const struct id *id, /* ASKK */
-		     enum dns_auth_level dns_auth_level,
-		     const struct pubkey_type *type,
-		     const chunk_t *key,
-		     struct pubkey_list **head)
-{
-	struct pubkey *pk = alloc_thing(struct pubkey, "pubkey");
-
-	/* first: algorithm-specific decoding of key chunk */
-	type->unpack_pubkey_content(&pk->u, *key);
-	pk->id = clone_id(id, "public key id");
-	pk->dns_auth_level = dns_auth_level;
-	pk->type = type;
-	pk->until_time = realtime_epoch;
-	pk->issuer = EMPTY_CHUNK;
-
-	install_public_key(pk, head);
-	return NULL;
-}
-
-err_t add_ipseckey(const struct id *id,
-		   enum dns_auth_level dns_auth_level,
-		   const struct pubkey_type *type,
-		   uint32_t ttl, uint32_t ttl_used,
-		   const chunk_t *key,
-		   struct pubkey_list **head)
-{
-	struct pubkey *pk = alloc_thing(struct pubkey, "ipseckey publickey");
-
-	/* first: algorithm-specific decoding of key chunk */
-	type->unpack_pubkey_content(&pk->u, *key);
-	pk->dns_ttl = ttl;
-	pk->installed_time = realnow();
-	pk->until_time = realtimesum(pk->installed_time, deltatime(ttl_used));
-	pk->id = clone_id(id, "ipsec keyid");
-	pk->dns_auth_level = dns_auth_level;
-	pk->type = type;
-	pk->issuer = EMPTY_CHUNK; /* ipseckey has no issuer */
-
-	install_public_key(pk, head);
-	return NULL;
-}
-
 /*
  *  list all public keys in the chained list
  */
