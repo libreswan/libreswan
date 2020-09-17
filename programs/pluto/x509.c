@@ -460,14 +460,6 @@ static void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn
 	*gn_out = pgn_list;
 }
 
-static void replace_public_key(struct pubkey_list **pubkey_db,
-			       struct pubkey *pk)
-{
-	/* ??? clang 3.5 thinks pk might be NULL */
-	delete_public_keys(pubkey_db, &pk->id, pk->type);
-	install_public_key(pk, pubkey_db);
-}
-
 static struct pubkey *create_cert_pubkey(const struct id *id,
 					 CERTCertificate *cert,
 					 struct logger *logger)

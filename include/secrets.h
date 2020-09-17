@@ -232,9 +232,10 @@ extern struct pubkey_list *pubkeys;	/* keys from ipsec.conf */
 extern struct pubkey_list *free_public_keyentry(struct pubkey_list *p);
 extern void free_public_keys(struct pubkey_list **keys);
 extern void free_remembered_public_keys(void);
-extern void delete_public_keys(struct pubkey_list **head,
-			       const struct id *id,
-			       const struct pubkey_type *type);
+void replace_public_key(struct pubkey_list **pubkey_db, struct pubkey *pk);
+void delete_public_keys(struct pubkey_list **head,
+			const struct id *id,
+			const struct pubkey_type *type);
 extern void form_keyid(chunk_t e, chunk_t n, char *keyid, unsigned *keysize);
 
 extern struct pubkey *reference_key(struct pubkey *pk);
