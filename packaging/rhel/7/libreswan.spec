@@ -7,6 +7,8 @@
 %global with_dnssec 0
 %global nss_version 3.36.0-7.1
 # Libreswan config options
+# For RHEL7 we need USE_NSS_KDF=false
+# Note that this means libreswan needs its own FIPS certification
 %global libreswan_config \\\
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
     FINALMANDIR=%{_mandir} \\\
@@ -24,7 +26,7 @@
     USE_SECCOMP=true \\\
     USE_XAUTHPAM=true \\\
     USE_XFRM_INTERFACE_IFLA_HEADER=true \\\
-    USE_NSS_PRF=true \\\
+    USE_NSS_KDF=false \\\
 %{nil}
 #global prever rc1
 
