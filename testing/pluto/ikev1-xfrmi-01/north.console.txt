@@ -34,7 +34,7 @@ north #
 north #
  # comments bellow are to understand/explore the basics : what is going on
 north #
- # ip link add ipsec1 type xfrm xfrmi-id 1 dev eth0
+ # ip link add ipsec1 type xfrm if_id 1 dev eth0
 north #
  # ip link set ipsec1 up
 north #
