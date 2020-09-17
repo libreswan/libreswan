@@ -120,32 +120,43 @@ def shell(command, out=False):
         print(output)
     return output
 
+def choose_config_file(hostname, testpath, config_absdir, config_file):
+    if os.path.isabs(config_absdir):
+        config_dir = config_absdir[1:] # drop slash
+    else:
+        config_dir = config_absdir
+    # extension contains the dot
+    (config_base, extension) = os.path.splitext(config_file)
+    paths = []
+    # local test directory: Allow both HOSTNAMECONFIG.FILE and
+    # HOSTNAME.CONFIG_FILE.  So file names can switch to latter.
+    paths.append(os.path.join(testpath, hostname + "." + config_file))
+    paths.append(os.path.join(testpath, hostname + config_file))
+    paths.append(os.path.join(testpath, hostname + extension))
+    paths.append(os.path.join(testpath, config_file))
+    # baseconfigs; prefer host
+    if userland in ("libreswan", "openswan"):
+        # not BSD?
+        paths.append(os.path.join("/testing/baseconfigs", hostname, config_dir, config_file))
+        paths.append(os.path.join("/testing/baseconfigs/all/", config_dir, config_file))
+    # BSD?
 
-def choose_conf_file(hostname, testpath, commonconf, hostconf, userland):
+    for path in paths:
+        if os.path.isfile(path):
+            return path
 
-    commonconf_path = "%s/%s" % (testpath, commonconf)
-    hostconf_path = "%s/%s" % (testpath, hostconf)
+    # dump all the fields
+    return None
 
-    conffile = commonconf
-
-    if os.path.isfile(commonconf_path):
-        if os.path.isfile(hostconf_path):
-            print("conflicting files %s %s ignore both" % (commonconf, hostconf))
-            conffile = None
-    elif os.path.isfile(hostconf_path):
-        conffile = hostconf_path
-    elif userland in ("libreswan", "openswan"):
-        conffile = "/testing/baseconfigs/%s/etc/%s" % (hostname, commonconf)
-        if not os.path.isfile(conffile):
-            print("ERROR no configuration file found %s " % conffile)
-            conffile = None
-    elif userland in ("strongswan"):
-        conffile = "/testing/baseconfigs/all/etc/strongswan/%s" % (commonconf)
-        if not os.path.isfile(conffile):
-            conffile = None
-
-    return conffile
-
+def copy_config_file(hostname, testpath, config_path, optional=False):
+    (config_absdir, config_file) = os.path.split(config_path)
+    src = choose_config_file(hostname, testpath, config_absdir, config_file)
+    if src:
+        if not os.path.isdir(config_absdir):
+            os.mkdir(config_absdir)
+        shutil.copy(src, config_path)
+    elif not optional:
+        print("ERROR: %s's %s not found" % (hostname, config_path))
 
 # prevent double installs from going unnoticed
 if os.path.isfile("/usr/libexec/ipsec/pluto"):
@@ -269,7 +280,7 @@ if hostname != "nic":
         mount_bind(daemonlogfile, tmplink, touch_src_file=True)
     else :
         os.symlink(daemonlogfile, tmplink)
-   
+
 if args.userland:
     if not args.userland in ("libreswan", "strongswan", "openswan"):
         sys.exit("swan-prep: unknown userland type '%s'" % args.userland)
@@ -318,10 +329,6 @@ fp = open("/proc/sys/kernel/core_pattern", "w")
 fp.write(pattern)
 fp.close()
 
-if userland == "libreswan" or userland == "openswan" or userland == "strongswan":
-    # copy in base configs
-    prefix = ""
-
 if hostname != "nic":
 
     ipsec_d_dir = "strongswan/" if userland == "strongswan" else "ipsec.d"
@@ -346,6 +353,7 @@ if hostname != "nic":
             sys.exit(1)
 
     if args.userland in ("libreswan", "openswan"):
+
         # this brings in the nss *.db files that are path-specific -
         # they have pathnames hardcoded inside the file
         # shutil.copytree("/testing/baseconfigs/%s/etc/ipsec.d"%hostname,
@@ -353,7 +361,7 @@ if hostname != "nic":
         # for basic testing.
         distutils.dir_util.copy_tree("/testing/baseconfigs/%s/etc/ipsec.d" % hostname, "/etc/ipsec.d/")
         # fill in any missing dirs
-        for dir in ("/etc/%sipsec.d" % prefix, "/etc/%sipsec.d/policies" % prefix, "/etc/%sipsec.d/cacerts" % prefix, "/etc/%sipsec.d/crls" % prefix, "/etc/%sipsec.d/certs" % prefix, "/etc/%sipsec.d/private" % prefix):
+        for dir in ("/etc/ipsec.d", "/etc/ipsec.d/policies", "/etc/ipsec.d/cacerts", "/etc/ipsec.d/crls", "/etc/ipsec.d/certs", "/etc/ipsec.d/private"):
             if not os.path.isdir(dir):
                 os.mkdir(dir)
                 if "private" in dir:
@@ -367,6 +375,9 @@ if hostname != "nic":
             dbfiles = glob.glob("/etc/ipsec.d/*db")
             for dbfile in dbfiles:
                 os.chown(dbfile, 0, 0)
+
+        copy_config_file(hostname, testpath, "/etc/ipsec.conf")
+        copy_config_file(hostname, testpath, "/etc/ipsec.secrets")
 
     elif args.userland == "strongswan":
 
@@ -384,37 +395,21 @@ if hostname != "nic":
         subprocess.getoutput("setenforce 0")
 
         # wipe the strongswan tree
-        prefix = "strongswan/"
         dst = "/etc/strongswan/"
         if os.path.isdir(dst):
             shutil.rmtree(dst)
         for directory in ("", "ipsec.d/", "ipsec.d/aacerts/", "ipsec.d/ocspcerts/", "ipsec.d/cacerts/", "ipsec.d/private/", "ipsec.d/certs/"):
-            os.mkdir("%s%s" % (dst, directory))
+            os.mkdir(os.path.join(dst, directory))
 
-        strongswanconf = choose_conf_file(hostname, testpath, "strongswan.conf", "%sstrongswan.conf" % (hostname), args.userland)
-        if strongswanconf:
-            shutil.copy(strongswanconf, "/etc/strongswan/strongswan.conf")
-
-        swanctlconf = choose_conf_file(hostname, testpath, "swanctl.conf", "%sswanctl.conf" % (hostname), args.userland)
-        if swanctlconf:
-            dst = '/etc/strongswan/swanctl'
-            if not os.path.isdir(dst):
-                os.mkdir(dst)
-            shutil.copy(swanctlconf, "%s/swanctl.conf" % (dst))
+        copy_config_file(hostname, testpath, "/etc/strongswan/strongswan.conf")
+        copy_config_file(hostname, testpath, "/etc/strongswan/ipsec.conf")
+        copy_config_file(hostname, testpath, "/etc/strongswan/ipsec.secrets")
+        copy_config_file(hostname, testpath, "/etc/strongswan/swanctl/swanctl.conf", optional=True)
 
     # test specific files
     xl2tpdconf = "%s/%s.xl2tpd.conf" % (testpath, hostname)
     pppoptions = "%s/%s.ppp-options.xl2tpd" % (testpath, hostname)
     chapfile = "%s/chap-secrets" % testpath
-
-    ipsecconf = choose_conf_file(hostname, testpath, "ipsec.conf", "%s.conf" % (hostname), args.userland)
-    ipsecsecrets = choose_conf_file(hostname, testpath, "ipsec.secrets", "%s.secrets" % (hostname), args.userland)
-
-    dstconf = "/etc/%sipsec.conf" % (prefix)
-    dstsecrets = "/etc/%sipsec.secrets" % (prefix)
-
-    lsw_cp_file(ipsecconf, dstconf, nsbasepath=nsbasepath)
-    lsw_cp_file(ipsecsecrets, dstsecrets, mode=0o666, nsbasepath=nsbasepath)
 
     if os.path.isfile(xl2tpdconf):
         lsw_cp_file(xl2tpdconf, "/etc/xl2tpd/xl2tpd.conf", nsbasepath=nsbasepath)
