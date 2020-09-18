@@ -376,6 +376,19 @@ static void set_whack_end(char *lr,
 	if (l->ckaid != NULL) {
 		w->ckaid = l->ckaid;
 	}
+	if (l->rsakey1_type == PUBKEY_PREEXCHANGED) {
+		/*
+		 * Only send over raw (prexchanged) rsapubkeys (i.e.,
+		 * not %cert et.a.)
+		 *
+		 * XXX: but what is with the two rsakeys?  Whack seems
+		 * to be willing to send pluto two raw pubkeys under
+		 * the same ID.  Just assume that the first key should
+		 * be used for the CKAID.
+		 */
+		passert(l->rsakey1 != NULL);
+		w->rsasigkey = l->rsakey1;
+	}
 	w->ca = l->ca;
 	if (l->options_set[KNCF_SENDCERT])
 		w->sendcert = l->options[KNCF_SENDCERT];

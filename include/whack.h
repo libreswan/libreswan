@@ -83,6 +83,7 @@ struct whack_end {
 	 */
 	char *cert;
 	char *ckaid;
+	char *rsasigkey;
 
 	enum keyword_authby authby;
 

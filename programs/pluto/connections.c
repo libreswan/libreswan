@@ -795,6 +795,12 @@ static int extract_end(const char *connection_name,
 				    dst->leftright, src->cert,
 				    dst->leftright, src->cert);
 		}
+		if (src->rsasigkey != NULL) {
+			log_message(RC_LOG, logger,
+				    "warning: ignoring %s rsasigkey '%s' and using %s certificate '%s'",
+				    dst->leftright, src->cert,
+				    dst->leftright, src->cert);
+		}
 		cert = get_cert_by_nickname_from_nss(src->cert, logger);
 		if (cert == NULL) {
 			log_message(RC_FATAL, logger,
@@ -802,6 +808,37 @@ static int extract_end(const char *connection_name,
 				    dst->leftright, src->cert);
 			return -1; /* fatal */
 		}
+	} else if (src->rsasigkey != NULL) {
+		if (src->ckaid != NULL) {
+			log_message(RC_LOG, logger,
+				    "warning: ignoring %s ckaid '%s' and using %s rsasigkey",
+				    dst->leftright, src->ckaid, dst->leftright);
+		}
+		/*
+		 * XXX: hack: whack will load the rsasigkey in a
+		 * second message, this code just extracts the ckaid.
+		 */
+		const struct pubkey_type *type = &pubkey_type_rsa;
+		/* XXX: lifted from starter_whack_add_pubkey() */
+		char err_buf[TTODATAV_BUF];
+		char keyspace[1024 + 4];
+		size_t keylen;
+		err_t err = ttodatav(src->rsasigkey, 0, 0,
+				     keyspace, sizeof(keyspace), &keylen,
+				     err_buf, sizeof(err_buf), 0);
+		union pubkey_content pkc;
+		err = type->unpack_pubkey_content(&pkc, chunk2(keyspace, keylen));
+		if (err != NULL) {
+			log_message(RC_FATAL, logger, "%s raw public key invalid: %s",
+				    dst->leftright, err);
+			return -1;
+		}
+		const ckaid_t *ckaid = type->ckaid_from_pubkey_content(&pkc);
+		ckaid_buf ckb;
+		dbg("saving %s CKAID %s extracted from raw %s public key",
+		    dst->leftright, str_ckaid(ckaid, &ckb), type->name);
+		dst->ckaid = clone_const_thing(*ckaid, "raw pubkey's ckaid");
+		type->free_pubkey_content(&pkc);
 	} else if (src->ckaid != NULL) {
 		ckaid_t ckaid;
 		err_t err = string_to_ckaid(src->ckaid, &ckaid);
