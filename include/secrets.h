@@ -30,6 +30,7 @@
 #include "err.h"
 #include "realtime.h"
 #include "ckaid.h"
+#include "diag.h"
 
 struct logger;
 struct state;	/* forward declaration */
@@ -232,6 +233,13 @@ extern struct pubkey_list *pubkeys;	/* keys from ipsec.conf */
 extern struct pubkey_list *free_public_keyentry(struct pubkey_list *p);
 extern void free_public_keys(struct pubkey_list **keys);
 extern void free_remembered_public_keys(void);
+err_t add_public_key(const struct id *id, /* ASKK */
+		     enum dns_auth_level dns_auth_level,
+		     const struct pubkey_type *type,
+		     realtime_t install_time, realtime_t until_time,
+		     uint32_t ttl,
+		     const chunk_t *key,
+		     struct pubkey_list **head);
 void replace_public_key(struct pubkey_list **pubkey_db, struct pubkey *pk);
 void delete_public_keys(struct pubkey_list **head,
 			const struct id *id,
@@ -276,6 +284,8 @@ SECItem same_chunk_as_secitem(chunk_t chunk, SECItemType type);
 
 chunk_t clone_secitem_as_chunk(SECItem si, const char *name);
 
-struct pubkey *allocate_pubkey_nss(CERTCertificate *cert, struct logger *logger);
+diag_t create_pubkey_from_cert(const struct id *id,
+			       CERTCertificate *cert, struct pubkey **pk,
+			       struct logger *logger) MUST_USE_RESULT;
 
 #endif /* _SECRETS_H */

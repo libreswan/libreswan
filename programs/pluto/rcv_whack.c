@@ -285,6 +285,8 @@ static void key_add_request(const struct whack_message *msg)
 		DBG_dump_hunk("add pubkey", msg->keyval);
 		ugh = add_public_key(&keyid, PUBKEY_LOCAL,
 				     pubkey_alg_type(msg->pubkey_alg),
+				     /*install_time*/realnow(), /*until_time*/realtime_epoch,
+				     /*ttl*/0,
 				     &msg->keyval, &pluto_pubkeys);
 		if (ugh != NULL) {
 			loglog(RC_LOG_SERIOUS, "%s", ugh);

@@ -1644,20 +1644,14 @@ bool same_RSA_public_key(const struct RSA_public_key *a,
 		 hunk_eq(a->e, b->e));
 }
 
+/*
+ * XXX: this gets called, via replace_public_key() with a PK that is
+ * still pointing into a cert.  Hence the "how screwed up is this?"
+ * :-(
+ */
 void install_public_key(struct pubkey *pk, struct pubkey_list **head)
 {
-	struct pubkey_list *p =
-		alloc_thing(struct pubkey_list, "pubkey entry");
-
-	/* XXX: how screwed up is this? */
-	pk->id = clone_id(&pk->id, "install public key id");
-
-	/* copy issuer dn; XXX: how screwed up is this? */
-	pk->issuer = clone_hunk(pk->issuer, "install public key issuer");
-
-	/* store the time the public key was installed */
-	pk->installed_time = realnow();
-
+	struct pubkey_list *p = alloc_thing(struct pubkey_list, "pubkey entry");
 	/* install new key at front */
 	p->key = reference_key(pk);
 	p->next = *head;
@@ -1686,6 +1680,48 @@ void replace_public_key(struct pubkey_list **pubkey_db,
 	/* ??? clang 3.5 thinks pk might be NULL */
 	delete_public_keys(pubkey_db, &pk->id, pk->type);
 	install_public_key(pk, pubkey_db);
+}
+
+static struct pubkey *alloc_public_key(const struct id *id, /* ASKK */
+				       enum dns_auth_level dns_auth_level,
+				       const struct pubkey_type *type,
+				       realtime_t install_time, realtime_t until_time,
+				       uint32_t ttl,
+				       const union pubkey_content *pkc)
+{
+	struct pubkey pk = {
+		.u = *pkc,
+		.id = clone_id(id, "public key id"),
+		.dns_auth_level = dns_auth_level,
+		.type = type,
+		.installed_time = install_time,
+		.until_time = until_time,
+		.dns_ttl = ttl,
+		.issuer = EMPTY_CHUNK,	/* raw keys have no issuer */
+	};
+	return clone_thing(pk, "raw public key");
+}
+
+err_t add_public_key(const struct id *id, /* ASKK */
+		     enum dns_auth_level dns_auth_level,
+		     const struct pubkey_type *type,
+		     realtime_t install_time, realtime_t until_time,
+		     uint32_t ttl,
+		     const chunk_t *key,
+		     struct pubkey_list **head)
+{
+	/* first: algorithm-specific decoding of key chunk */
+	union pubkey_content pkc;
+	err_t err = type->unpack_pubkey_content(&pkc, *key);
+	if (err != NULL) {
+		return err;
+	}
+
+	struct pubkey *pk = alloc_public_key(id, dns_auth_level, type,
+					     install_time, until_time, ttl,
+					     &pkc);
+	install_public_key(pk, head);
+	return NULL;
 }
 
 static const struct pubkey_type *pubkey_type_nss(SECKEYPublicKey *pubk)
@@ -1875,51 +1911,63 @@ err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *
 	return err;
 }
 
-static struct pubkey *allocate_pubkey_nss_3(CERTCertificate *cert,
-					    SECKEYPublicKey *pubkey_nss,
-					    struct logger *logger)
+static diag_t create_pubkey_from_cert_1(const struct id *id,
+					CERTCertificate *cert,
+					SECKEYPublicKey *pubkey_nss,
+					struct pubkey **pk,
+					struct logger *logger)
 {
 	const struct pubkey_type *type = pubkey_type_nss(pubkey_nss);
 	if (type == NULL) {
-		log_message(RC_LOG, logger,
-			    "NSS: certificate key kind is unknown; not creating pubkey");
-		return NULL;
+		return diag("NSS: certificate key kind is unknown; not creating pubkey");
 	}
 
 	SECItem *ckaid_nss = PK11_GetLowLevelKeyIDForCert(NULL, cert,
 							  lsw_nss_get_password_context(logger)); /* must free */
 	if (ckaid_nss == NULL) {
 		/* someone deleted CERT from the NSS DB */
-		log_message(RC_LOG, logger,
-			    "NSS: could not extract CKAID from RSA certificate '%s'",
+		return diag("NSS: could not extract CKAID from RSA certificate '%s'",
 			    cert->nickname);
-		return NULL;
 	}
 
-	struct pubkey *pk = alloc_thing(struct pubkey, "RSA pubkey");
-	pk->type = type;
-	pk->id = empty_id;
-	pk->issuer = empty_chunk;
-	type->extract_pubkey_content(&pk->u, pubkey_nss, ckaid_nss);
+	union pubkey_content pkc;
+	type->extract_pubkey_content(&pkc, pubkey_nss, ckaid_nss);
+
+	realtime_t install_time = realnow();
+	realtime_t until_time;
+	PRTime not_before, not_after;
+	if (CERT_GetCertTimes(cert, &not_before, &not_after) != SECSuccess) {
+		until_time = realtime(-1);
+	} else {
+		until_time = realtime(not_after / PR_USEC_PER_SEC);
+	}
+	*pk = alloc_public_key(id, /*dns_auth_level*/0/*default*/,
+			       type, install_time, until_time,
+			       /*ttl*/0, &pkc);
+	(*pk)->issuer = clone_secitem_as_chunk(cert->derIssuer, "der");
 	SECITEM_FreeItem(ckaid_nss, PR_TRUE);
-	return pk;
+	return NULL;
 }
 
-struct pubkey *allocate_pubkey_nss(CERTCertificate *cert, struct logger *logger)
+diag_t create_pubkey_from_cert(const struct id *id,
+			       CERTCertificate *cert, struct pubkey **pk, struct logger *logger)
 {
 	if (!pexpect(cert != NULL)) {
 		return NULL;
 	}
 
+	/*
+	 * Try to convert CERT to an internal PUBKEY object.  If
+	 * someone, in parallel, deletes the underlying cert from the
+	 * NSS DB, then this will fail.
+	 */
 	SECKEYPublicKey *pubkey_nss = SECKEY_ExtractPublicKey(&cert->subjectPublicKeyInfo); /* must free */
 	if (pubkey_nss == NULL) {
-		log_message(RC_LOG, logger,
-			    "NSS: could not extract public key from certificate '%s'",
+		return diag("NSS: could not extract public key from certificate '%s'",
 			    cert->nickname);
-		return NULL;
 	}
 
-	struct pubkey *pubkey = allocate_pubkey_nss_3(cert, pubkey_nss, logger);
+	diag_t d = create_pubkey_from_cert_1(id, cert, pubkey_nss, pk, logger);
 	SECKEY_DestroyPublicKey(pubkey_nss);
-	return pubkey;
+	return d;
 }
