@@ -779,44 +779,53 @@ static int extract_end(const char *connection_name,
 		}
 	}
 
+	/*
+	 * Try to find the cert / private key.
+	 *
+	 * XXX: Be lazy and simply warn about combinations such as
+	 * cert+ckaid.
+	 *
+	 * Should this instead cross check?
+	 */
 	CERTCertificate *cert = NULL;
-	switch (src->pubkey_type) {
-	case WHACK_PUBKEY_CERTIFICATE_NICKNAME:
-	{
-		cert = get_cert_by_nickname_from_nss(src->pubkey, logger);
+	if (src->cert != NULL) {
+		if (src->ckaid != NULL) {
+			log_message(RC_LOG, logger,
+				    "warning: ignoring %s ckaid '%s' and using %s certificate '%s'",
+				    dst->leftright, src->cert,
+				    dst->leftright, src->cert);
+		}
+		cert = get_cert_by_nickname_from_nss(src->cert, logger);
 		if (cert == NULL) {
 			log_message(RC_FATAL, logger,
 				    "%s certificate '%s' not found in the NSS database",
-				    dst->leftright, src->pubkey);
+				    dst->leftright, src->cert);
 			return -1; /* fatal */
 		}
-		break;
-	}
-	case WHACK_PUBKEY_CKAID:
-	{
+	} else if (src->ckaid != NULL) {
 		ckaid_t ckaid;
-		err_t err = string_to_ckaid(src->pubkey, &ckaid);
+		err_t err = string_to_ckaid(src->ckaid, &ckaid);
 		if (err != NULL) {
 			/* should have been rejected by whack? */
 			/* XXX: don't trust whack */
 			log_message(RC_FATAL, logger, "%s CKAID '%s' invalid: %s",
-				    dst->leftright, src->pubkey, err);
+				    dst->leftright, src->ckaid, err);
 			return -1; /* fatal */
 		}
+		/*
+		 * Always save the CKAID so lazy load of the private
+		 * key will work.
+		 */
+		dst->ckaid = clone_thing(ckaid, "end ckaid");
 		/*
 		 * See if there's a certificate matching the CKAID, if
 		 * not assume things will later find the private key.
 		 */
-		dst->ckaid = clone_thing(ckaid, "end ckaid");
 		cert = get_cert_by_ckaid_from_nss(&ckaid, logger);
 		if (cert == NULL) {
 			dbg("%s CKAID '%s' did not match a certificate in the NSS database",
-			    dst->leftright, src->pubkey);
+			    dst->leftright, src->ckaid);
 		}
-		break;
-	}
-	default:
-		break;
 	}
 
 	if (cert != NULL) {

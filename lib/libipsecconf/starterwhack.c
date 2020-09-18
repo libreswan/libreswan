@@ -371,12 +371,10 @@ static void set_whack_end(char *lr,
 	w->protoport = l->protoport;
 
 	if (l->certx != NULL) {
-		w->pubkey = l->certx;
-		w->pubkey_type = WHACK_PUBKEY_CERTIFICATE_NICKNAME;
+		w->cert = l->certx;
 	}
 	if (l->ckaid != NULL) {
-		w->pubkey = l->ckaid;
-		w->pubkey_type = WHACK_PUBKEY_CKAID;
+		w->ckaid = l->ckaid;
 	}
 	w->ca = l->ca;
 	if (l->options_set[KNCF_SENDCERT])

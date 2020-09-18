@@ -1565,20 +1565,18 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_CERT:	/* --cert <path> */
-			if (msg.right.pubkey != NULL)
+			if (msg.right.ckaid != NULL)
 				diag("only one --cert <nickname> or --ckaid <ckaid> allowed");
-			msg.right.pubkey = optarg;	/* decoded by Pluto */
-			msg.right.pubkey_type = WHACK_PUBKEY_CERTIFICATE_NICKNAME;
+			msg.right.cert = optarg;	/* decoded by Pluto */
 			continue;
 
 		case END_CKAID:	/* --ckaid <ckaid> */
-			if (msg.right.pubkey != NULL)
+			if (msg.right.cert != NULL)
 				diag("only one --cert <nickname> or --ckaid <ckaid> allowed");
 			/* try parsing it; the error isn't the most specific */
 			const char *ugh = ttodata(optarg, 0, 16, NULL, 0, NULL);
 			diagq(ugh, optarg);
-			msg.right.pubkey = optarg;	/* decoded by Pluto */
-			msg.right.pubkey_type = WHACK_PUBKEY_CKAID;
+			msg.right.ckaid = optarg;	/* decoded by Pluto */
 			continue;
 
 		case END_CA:	/* --ca <distinguished name> */

@@ -67,27 +67,22 @@
 #define WHACK_BASIC_MAGIC (((((('w' << 8) + 'h') << 8) + 'k') << 8) + 25)
 #define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 48)
 
-/*
- * Where, if any, is the pubkey coming from.
- *
- * This goes across the wire so re-ordering this means bumping whack's
- * version number.
- */
-enum whack_pubkey_type {
-	WHACK_PUBKEY_NONE = 0,	/* must be zero (to make it default) */
-	WHACK_PUBKEY_CERTIFICATE_NICKNAME,
-	WHACK_PUBKEY_CKAID,
-};
-
 /* struct whack_end is a lot like connection.h's struct end
  * It differs because it is going to be shipped down a socket
  * and because whack is a separate program from pluto.
  */
 struct whack_end {
 	char *id;	/* id string (if any) -- decoded by pluto */
-	char *pubkey;	/* PUBKEY_TYPE string (if any) -- decoded by pluto  */
 	char *ca;	/* distinguished name string (if any) -- parsed by pluto */
 	char *groups;	/* access control groups (if any) -- parsed by pluto */
+
+	/*
+	 * Where, if anywhere, is the public/private key coming from?
+	 * Pass everything over and let pluto decide what if anything
+	 * conflict.
+	 */
+	char *cert;
+	char *ckaid;
 
 	enum keyword_authby authby;
 
@@ -105,7 +100,6 @@ struct whack_end {
 	bool has_client;
 
 	bool key_from_DNS_on_demand;
-	enum whack_pubkey_type pubkey_type;
 	char *updown;		/* string */
 	char *virt;
 	ip_range pool_range;	/* store start of v4 addresspool */
