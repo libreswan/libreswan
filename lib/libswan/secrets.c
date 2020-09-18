@@ -627,9 +627,12 @@ static struct secret *find_secret_by_pubkey_ckaid_1(struct secret *secrets,
 		    (pks->kind == PKK_RSA ? pks->u.RSA_private_key.pub.keyid :
 		     pks->kind == PKK_ECDSA ? pks->u.ECDSA_private_key.pub.keyid :
 		     "N/A"));
-		if (s->pks.pubkey_type == type) {
-			const ckaid_t *s_ckaid = secret_ckaid(s);
-			if (ckaid_eq_nss(s_ckaid, pubkey_ckaid)) {
+		if (type == NULL/*wildcard*/ ||
+		    s->pks.pubkey_type == type) {
+			/* only public/private key pairs have a CKAID */
+			const ckaid_t *sckaid = secret_ckaid(s);
+			if (sckaid != NULL &&
+			    ckaid_eq_nss(sckaid, pubkey_ckaid)) {
 				dbg("matched");
 				return s;
 			}
