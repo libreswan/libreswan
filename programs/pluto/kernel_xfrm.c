@@ -82,6 +82,7 @@
 #include "nat_traversal.h"
 #include "state.h"
 #include "kernel_xfrm.h"
+#include "netlink_attrib.h"
 #include "log.h"
 #include "whack.h"	/* for RC_LOG_SERIOUS */
 #include "kernel_alg.h"
@@ -319,17 +320,6 @@ static void init_netlink(void)
 		}
 	}
 }
-
-struct nlm_resp {
-	struct nlmsghdr n;
-	union {
-		struct nlmsgerr e;
-		struct xfrm_userpolicy_info pol;	/* netlink_policy_expire */
-		struct xfrm_usersa_info sa;	/* netlink_get_spi */
-		struct xfrm_usersa_info info;	/* netlink_get_sa */
-		char data[MAX_NETLINK_DATA_SIZE];
-	} u;
-};
 
 /*
  * send_netlink_msg
@@ -728,7 +718,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		{
 			struct sa_mark sa_mark = (dir == XFRM_POLICY_IN) ? sa_marks->in : sa_marks->out;
 
-			if (sa_mark.val != 0 && sa_mark.mask != 0) {
+			if (sa_mark.val != 0 && sa_mark.mask != 0 && xfrm_if_id == 0) {
 				struct xfrm_mark xfrm_mark;
 				struct rtattr* mark_attr;
 
@@ -742,26 +732,23 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 				req.n.nlmsg_len += mark_attr->rta_len;
 			}
 		}
-
-		if (xfrm_if_id != 0) {
 #ifdef USE_XFRM_INTERFACE
-			struct rtattr *attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
-			dbg("%s netlink: XFRMA_IF_ID  %" PRIu32 " req.n.nlmsg_type=%" PRIu32,
+		if (xfrm_if_id != 0) {
+			dbg("%s netlink: XFRMA_IF_ID %" PRIu32 " req.n.nlmsg_type=%" PRIu32,
 			    __func__, xfrm_if_id, req.n.nlmsg_type);
-			attr->rta_type = XFRMA_IF_ID;
-			attr->rta_len = RTA_LENGTH(sizeof(uint32_t));
-			memcpy(RTA_DATA(attr), &xfrm_if_id, sizeof(uint32_t));
-			req.n.nlmsg_len += attr->rta_len;
-
-			/* XFRMA_SET_MARK =  XFRMA_IF_ID/0xffffffff */
-			attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
-			attr->rta_type = XFRMA_SET_MARK;
-			attr->rta_len = RTA_LENGTH(sizeof(uint32_t));
-			memcpy(RTA_DATA(attr), &xfrm_if_id, sizeof(uint32_t));
-			req.n.nlmsg_len += attr->rta_len;
+			nl_addattr32(&req.n, sizeof(req.data), XFRMA_IF_ID, xfrm_if_id);
+			if (sa_marks->out.val == 0 && sa_marks->out.mask == 0) {
+				/* XFRMA_SET_MARK = XFRMA_IF_ID */
+				nl_addattr32(&req.n, sizeof(req.data), XFRMA_SET_MARK, xfrm_if_id);
+			} else {
+				/* manually configured mark-out=mark/mask */
+				nl_addattr32(&req.n, sizeof(req.data),
+					     XFRMA_SET_MARK, sa_marks->out.val);
+				nl_addattr32(&req.n, sizeof(req.data),
+					     XFRMA_SET_MARK_MASK, sa_marks->out.mask);
+			}
+		}
 #endif
-	       }
-
 	}
 
 	if (policy_label != NULL) {
@@ -808,7 +795,6 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		ok &= netlink_policy(&req.n, enoent_ok, text_said);
 		break;
 	}
-
 	return ok;
 }
 
@@ -871,7 +857,6 @@ static bool netlink_get_sa_policy(const struct kernel_sa *sa,
 	}
 
 	netlink_sa_policy_to_id(id, &rsp.u.pol);
-
 	return TRUE;
 }
 
@@ -1561,18 +1546,16 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	if (sa->xfrm_if_id != 0) {
 		dbg("%s netlink: XFRMA_IF_ID %" PRIu32 " req.n.nlmsg_type=%" PRIu32,
 		    __func__, sa->xfrm_if_id, req.n.nlmsg_type);
-		attr->rta_type = XFRMA_IF_ID;
-		attr->rta_len = RTA_LENGTH(sizeof(uint32_t));
-		memcpy(RTA_DATA(attr), &sa->xfrm_if_id, sizeof(uint32_t));
-		req.n.nlmsg_len += attr->rta_len;
-		attr = (struct rtattr *)((char *)attr + attr->rta_len);
-
-		/* XFRMA_SET_MARK =  XFRMA_IF_ID/0xffffffff */
-		attr->rta_type = XFRMA_SET_MARK;
-		attr->rta_len = RTA_LENGTH(sizeof(uint32_t));
-		memcpy(RTA_DATA(attr), &sa->xfrm_if_id, sizeof(uint32_t));
-		req.n.nlmsg_len += attr->rta_len;
-		attr = (struct rtattr *)((char *)attr + attr->rta_len);
+		nl_addattr32(&req.n, sizeof(req.data), XFRMA_IF_ID, sa->xfrm_if_id);
+		if (sa->mark_set.val != 0 || sa->mark_set.mask != 0) {
+			/* manually configured mark-out=mark/mask */
+			nl_addattr32(&req.n, sizeof(req.data), XFRMA_SET_MARK, sa->mark_set.val);
+			nl_addattr32(&req.n, sizeof(req.data), XFRMA_SET_MARK_MASK, sa->mark_set.mask);
+		} else {
+			/* XFRMA_SET_MARK = XFRMA_IF_ID */
+			nl_addattr32(&req.n, sizeof(req.data), XFRMA_SET_MARK, sa->xfrm_if_id);
+		}
+		attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 	}
 #endif
 

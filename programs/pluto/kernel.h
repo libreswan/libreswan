@@ -172,6 +172,7 @@ struct kernel_sa {
 	struct xfrm_user_sec_ctx_ike *sec_ctx;
 	const char *nic_offload_dev;
 	uint32_t xfrm_if_id;
+	struct sa_mark mark_set; /* config keyword mark-out */
 
 	deltatime_t sa_lifetime; /* number of seconds until SA expires */
 };

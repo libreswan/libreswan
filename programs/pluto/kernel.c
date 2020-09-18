@@ -565,14 +565,18 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 		jam(buf, "CONNMARK_IN=%" PRIu32 "/%#08" PRIx32 " ",
 		    c->sa_marks.in.val, c->sa_marks.in.mask);
 	}
-	if (c->sa_marks.out.val != 0) {
+	if (c->sa_marks.out.val != 0 && c->xfrmi == NULL) {
 		jam(buf, "CONNMARK_OUT=%" PRIu32 "/%#08" PRIx32 " ",
 		    c->sa_marks.out.val, c->sa_marks.out.mask);
 	}
-	if (c->xfrmi != NULL && c->xfrmi->if_id > 0) {
-		if (addrinsubnet(&sr->that.host_addr, &sr->that.client)) {
+	if (c->xfrmi != NULL) {
+		if (c->sa_marks.out.val != 0) {
+			/* user configured XFRMI_SET_MARK (a.k.a. output mark) add it */
+			jam(buf, "PLUTO_XFRMI_FWMARK='%" PRIu32 "/%#08" PRIx32 "' ",
+				c->sa_marks.out.val, c->sa_marks.out.mask);
+		} else if (addrinsubnet(&sr->that.host_addr, &sr->that.client)) {
 			jam(buf, "PLUTO_XFRMI_FWMARK='%" PRIu32 "/0xffffffff' ",
-					c->xfrmi->if_id);
+				c->xfrmi->if_id);
 		} else {
 			address_buf bpeer;
 			subnet_buf peerclient_str;
@@ -1940,8 +1944,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->replay_window = c->sa_replay_window;
 		dbg("setting IPsec SA replay-window to %d", c->sa_replay_window);
 
-		if (c->xfrmi != NULL)
+		if (c->xfrmi != NULL) {
 			said_next->xfrm_if_id = c->xfrmi->if_id;
+			if (c->sa_marks.out.val != 0 || c->sa_marks.out.mask != 0)
+				said_next->mark_set = c->sa_marks.out;
+		}
 
 		if (!inbound && c->sa_tfcpad != 0 && !st->st_seen_no_tfc) {
 			dbg("Enabling TFC at %d bytes (up to PMTU)", c->sa_tfcpad);
