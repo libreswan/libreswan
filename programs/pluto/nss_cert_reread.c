@@ -22,18 +22,23 @@ static inline cert_t backup_cert(struct end *dst)
 static bool nss_reread_cert(struct fd *whackfd, struct end *dst, const char *connstr)
 {
 	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
-	const char *nickname;
-	enum whack_pubkey_type pubkey_type;
-
-	nickname = cert_nickname(&dst->cert);
+	const char *nickname = cert_nickname(&dst->cert);
 	if (nickname == NULL) {
-		log_global(RC_BADID, whackfd, "connection '%s' certificate cannot reread due to unknown nickname",
-				connstr);
+		log_message(RC_BADID, logger,
+			    "connection '%s' certificate cannot reread due to unknown nickname",
+			    connstr);
 		return false;
 	}
 
-	pubkey_type = WHACK_PUBKEY_CERTIFICATE_NICKNAME;
-	diag_t diag = load_end_cert_and_preload_secret(nickname, pubkey_type, dst, logger);
+	CERTCertificate *cert = get_cert_by_nickname_from_nss(nickname, logger);
+	if (cert == NULL) {
+		log_message(RC_LOG, logger,
+			    "%s certificate '%s' not found in the NSS database",
+			    dst->leftright, nickname);
+		return false;
+	}
+
+	diag_t diag = add_end_cert_and_preload_secret(cert, dst, logger);
 	if (diag != NULL) {
 		log_diag(RC_BADID, logger, &diag,
 			 "connection '%s' rereading certificate failed for nickname '%s': ",

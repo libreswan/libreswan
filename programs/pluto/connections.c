@@ -779,11 +779,54 @@ static int extract_end(const char *connection_name,
 		}
 	}
 
-	diag_t diag = load_end_cert_and_preload_secret(src->pubkey, src->pubkey_type, dst, logger);
-	if (diag != NULL) {
-		log_diag(RC_FATAL, logger, &diag, "failed to add connection \"%s\": ",
-			 connection_name);
-		return -1;
+	CERTCertificate *cert = NULL;
+	switch (src->pubkey_type) {
+	case WHACK_PUBKEY_CERTIFICATE_NICKNAME:
+	{
+		cert = get_cert_by_nickname_from_nss(src->pubkey, logger);
+		if (cert == NULL) {
+			log_message(RC_FATAL, logger,
+				    "%s certificate '%s' not found in the NSS database",
+				    dst->leftright, src->pubkey);
+			return -1; /* fatal */
+		}
+		break;
+	}
+	case WHACK_PUBKEY_CKAID:
+	{
+		ckaid_t ckaid;
+		err_t err = string_to_ckaid(src->pubkey, &ckaid);
+		if (err != NULL) {
+			/* should have been rejected by whack? */
+			/* XXX: don't trust whack */
+			log_message(RC_FATAL, logger, "%s CKAID '%s' invalid: %s",
+				    dst->leftright, src->pubkey, err);
+			return -1; /* fatal */
+		}
+		/*
+		 * See if there's a certificate matching the CKAID, if
+		 * not assume things will later find the private key.
+		 */
+		dst->ckaid = clone_thing(ckaid, "end ckaid");
+		cert = get_cert_by_ckaid_from_nss(&ckaid, logger);
+		if (cert == NULL) {
+			dbg("%s CKAID '%s' did not match a certificate in the NSS database",
+			    dst->leftright, src->pubkey);
+		}
+		break;
+	}
+	default:
+		break;
+	}
+
+	if (cert != NULL) {
+		diag_t diag = add_end_cert_and_preload_secret(cert, dst, logger);
+		if (diag != NULL) {
+			log_diag(RC_FATAL, logger, &diag, "failed to add connection \"%s\": ",
+				 connection_name);
+			CERT_DestroyCertificate(cert);
+			return -1;
+		}
 	}
 
 	/* does id have wildcards? */
@@ -945,62 +988,14 @@ static bool check_connection_end(const struct whack_end *this,
 	return TRUE; /* happy */
 }
 
-diag_t load_end_cert_and_preload_secret(const char *pubkey,
-					enum whack_pubkey_type pubkey_type,
-					struct end *dst_end,
-					struct logger *logger)
+diag_t add_end_cert_and_preload_secret(CERTCertificate *cert,
+				       struct end *dst_end,
+				       struct logger *logger)
 {
+	passert(cert != NULL);
 	dst_end->cert.ty = CERT_NONE;
 	dst_end->cert.u.nss_cert = NULL;
-
-	CERTCertificate *cert = NULL;
-	const char *cert_source = NULL;;
-	switch (pubkey_type) {
-	case WHACK_PUBKEY_CERTIFICATE_NICKNAME:
-	{
-		cert_source = "nickname";
-		cert = get_cert_by_nickname_from_nss(pubkey, logger);
-		if (cert == NULL) {
-			return diag("%s certificate '%s' not found in the NSS database",
-				    dst_end->leftright, pubkey);
-		}
-		break;
-	}
-	case WHACK_PUBKEY_CKAID:
-	{
-		cert_source = "CKAID";
-		ckaid_t ckaid;
-		err_t err = string_to_ckaid(pubkey, &ckaid);
-		if (err != NULL) {
-			/* should have been rejected by whack? */
-			/* XXX: don't trust whack */
-			return diag("%s CKAID '%s' invalid: %s",
-				    dst_end->leftright, pubkey, err);
-		}
-		/*
-		 * See if there's a certificate matching the CKAID, if
-		 * not assume things will later find the private key.
-		 */
-		dst_end->ckaid = clone_thing(ckaid, "end ckaid");
-		cert = get_cert_by_ckaid_from_nss(&ckaid, logger);
-		if (cert == NULL) {
-			dbg("%s CKAID '%s' did not match a certificate in the NSS database",
-			    dst_end->leftright, pubkey);
-			return NULL;
-		}
-		break;
-	}
-	case WHACK_PUBKEY_NONE:
-		pexpect(pubkey == NULL);
-		return NULL;
-	default:
-		log_message(RC_LOG_SERIOUS, logger,
-			    "warning: unknown pubkey '%s' of type %d", pubkey, pubkey_type);
-		/* recoverable screwup? */
-		return NULL;
-	}
-
-	passert(cert != NULL);
+	const char *nickname = cert->nickname;
 
 	/*
 	 * A copy of this code lives in nss_cert_verify.c :/
@@ -1015,9 +1010,8 @@ diag_t load_end_cert_and_preload_secret(const char *pubkey,
 		if (pk->keyType == rsaKey &&
 		    ((pk->u.rsa.modulus.len * BITS_PER_BYTE) < FIPS_MIN_RSA_KEY_SIZE)) {
 			SECKEY_DestroyPublicKey(pk);
-			CERT_DestroyCertificate(cert);
 			return diag("FIPS: rejecting %s certificate '%s' with key size %d which is under %d",
-				    dst_end->leftright, pubkey,
+				    dst_end->leftright, nickname,
 				    pk->u.rsa.modulus.len * BITS_PER_BYTE,
 				    FIPS_MIN_RSA_KEY_SIZE);
 		}
@@ -1031,17 +1025,15 @@ diag_t load_end_cert_and_preload_secret(const char *pubkey,
 	/* check validity of cert */
 	if (CERT_CheckCertValidTimes(cert, PR_Now(), FALSE) !=
 			secCertTimeValid) {
-		CERT_DestroyCertificate(cert);
 		return diag("%s certificate '%s' is expired or not yet valid",
-			    dst_end->leftright, pubkey);
+			    dst_end->leftright, nickname);
 	}
 
-	dbg("loading %s certificate \'%s\' pubkey", dst_end->leftright, pubkey);
+	dbg("loading %s certificate \'%s\' pubkey", dst_end->leftright, nickname);
 	if (!add_pubkey_from_nss_cert(&pluto_pubkeys, &dst_end->id, cert, logger)) {
-		CERT_DestroyCertificate(cert);
 		/* XXX: push diag_t into add_pubkey_from_nss_cert()? */
 		return diag("%s certificate \'%s\' pubkey could not be loaded",
-			    dst_end->leftright, pubkey);
+			    dst_end->leftright, nickname);
 	}
 
 	dst_end->cert.ty = CERT_X509_SIGNATURE;
@@ -1066,8 +1058,8 @@ diag_t load_end_cert_and_preload_secret(const char *pubkey,
 	dbg("preload cert/secret for connection: %s", cert->nickname);
 	err_t ugh = load_nss_cert_secret(&dst_end->cert, logger);
 	if (ugh != NULL) {
-		dbg("warning: no secret key loaded for %s certificate with %s %s: %s",
-		    dst_end->leftright, cert_source, pubkey, ugh);
+		dbg("warning: no secret key loaded for %s certificate  %s: %s",
+		    dst_end->leftright, nickname, ugh);
 	}
 	return NULL;
 }
