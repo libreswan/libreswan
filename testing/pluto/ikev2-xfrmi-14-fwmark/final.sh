@@ -1,4 +1,7 @@
 ipsec whack --trafficstatus
+# this will succeed on west and north and errror on easth
+hostname | grep west > /dev/null && ip -s link show dev gre1
+hostname | grep north > /dev/null && ip -s link show dev gre1
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
