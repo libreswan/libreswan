@@ -1,12 +1,14 @@
 /testing/guestbin/swan-prep
 east #
+ rm /etc/ipsec.secrets
+east #
  ipsec start
 Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet-ikev2
-002 added IKEv2 connection "westnet-eastnet-ikev2"
+ ipsec auto --add west-rsasigkey-east-ckaid
+002 added IKEv2 connection "west-rsasigkey-east-ckaid"
 east #
  ipsec auto --status
 000 using kernel interface: xfrm
@@ -39,7 +41,7 @@ east #
 000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
 000 virtual-private (%priv):
 000 - allowed subnets: 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12
-000 - excluded subnets: 192.0.2.0/24, 2001:db8::/48
+000 - excluded subnets: 192.0.1.0/24, 2001:db8:0:1::/64
 000  
 000 Kernel algorithms supported:
 000  
@@ -97,22 +99,22 @@ east #
 000  
 000 Connection list:
 000  
-000 "westnet-eastnet-ikev2": 192.0.2.0/24===192.1.2.23<192.1.2.23>...192.1.2.45<192.1.2.45>===192.0.1.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet-ikev2":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
-000 "westnet-eastnet-ikev2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "westnet-eastnet-ikev2":   our auth:rsasig, their auth:rsasig
-000 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "westnet-eastnet-ikev2":   policy_label:unset;
-000 "westnet-eastnet-ikev2":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "westnet-eastnet-ikev2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "westnet-eastnet-ikev2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-ikev2":   policy: RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
-000 "westnet-eastnet-ikev2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-000 "westnet-eastnet-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "westnet-eastnet-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "westnet-eastnet-ikev2":   our idtype: ID_IPV4_ADDR; our id=192.1.2.23; their idtype: ID_IPV4_ADDR; their id=192.1.2.45
-000 "westnet-eastnet-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "west-rsasigkey-east-ckaid": 192.0.2.0/24===192.1.2.23<192.1.2.23>...192.1.2.45<192.1.2.45>===192.0.1.0/24; unrouted; eroute owner: #0
+000 "west-rsasigkey-east-ckaid":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "west-rsasigkey-east-ckaid":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "west-rsasigkey-east-ckaid":   our auth:rsasig, their auth:rsasig
+000 "west-rsasigkey-east-ckaid":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
+000 "west-rsasigkey-east-ckaid":   policy_label:unset;
+000 "west-rsasigkey-east-ckaid":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "west-rsasigkey-east-ckaid":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+000 "west-rsasigkey-east-ckaid":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "west-rsasigkey-east-ckaid":   policy: RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
+000 "west-rsasigkey-east-ckaid":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+000 "west-rsasigkey-east-ckaid":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "west-rsasigkey-east-ckaid":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "west-rsasigkey-east-ckaid":   our idtype: ID_IPV4_ADDR; our id=192.1.2.23; their idtype: ID_IPV4_ADDR; their id=192.1.2.45
+000 "west-rsasigkey-east-ckaid":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
+000 "west-rsasigkey-east-ckaid":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
