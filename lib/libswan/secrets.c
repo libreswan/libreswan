@@ -330,6 +330,11 @@ static struct hash_signature RSA_sign_hash(const struct private_key_stuff *pks,
 	return sig;
 }
 
+static const ckaid_t *RSA_ckaid_from_pubkey_content(const union pubkey_content *pkc)
+{
+	return &pkc->rsa.ckaid;
+}
+
 const struct pubkey_type pubkey_type_rsa = {
 	.alg = PUBKEY_ALG_RSA,
 	.name = "RSA",
@@ -341,6 +346,7 @@ const struct pubkey_type pubkey_type_rsa = {
 	.free_secret_content = RSA_free_secret_content,
 	.secret_sane = RSA_secret_sane,
 	.sign_hash = RSA_sign_hash,
+	.ckaid_from_pubkey_content = RSA_ckaid_from_pubkey_content,
 };
 
 static err_t ECDSA_unpack_pubkey_content(union pubkey_content *u, chunk_t pubkey)
@@ -483,6 +489,11 @@ static struct hash_signature ECDSA_sign_hash(const struct private_key_stuff *pks
 	return signature;
 }
 
+static const ckaid_t *ECDSA_ckaid_from_pubkey_content(const union pubkey_content *pkc)
+{
+	return &pkc->ecdsa.ckaid;
+}
+
 const struct pubkey_type pubkey_type_ecdsa = {
 	.alg = PUBKEY_ALG_ECDSA,
 	.name = "ECDSA",
@@ -494,6 +505,7 @@ const struct pubkey_type pubkey_type_ecdsa = {
 	.secret_sane = ECDSA_secret_sane,
 	.sign_hash = ECDSA_sign_hash,
 	.extract_pubkey_content = ECDSA_extract_pubkey_content,
+	.ckaid_from_pubkey_content = ECDSA_ckaid_from_pubkey_content,
 };
 
 const struct pubkey_type *pubkey_alg_type(enum pubkey_alg alg)
@@ -528,14 +540,7 @@ const char *pubkey_keyid(const struct pubkey *pk)
 
 const ckaid_t *pubkey_ckaid(const struct pubkey *pk)
 {
-	switch (pk->type->alg) {
-	case PUBKEY_ALG_RSA:
-		return &pk->u.rsa.ckaid;
-	case PUBKEY_ALG_ECDSA:
-		return &pk->u.ecdsa.ckaid;
-	default:
-		bad_case(pk->type->alg);
-	}
+	return pk->type->ckaid_from_pubkey_content(&pk->u);
 }
 
 const ckaid_t *secret_ckaid(const struct secret *secret)

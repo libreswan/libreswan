@@ -187,6 +187,7 @@ struct pubkey_type {
 					   const uint8_t *hash_octets, size_t hash_len,
 					   const struct hash_desc *hash_algo,
 					   struct logger *logger);
+	const ckaid_t *(*ckaid_from_pubkey_content)(const union pubkey_content *pkc);
 };
 
 extern const struct pubkey_type pubkey_type_rsa;
