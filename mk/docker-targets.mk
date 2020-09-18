@@ -84,10 +84,12 @@ ifeq ($(DISTRO), centos)
 		LOCAL_MAKE_FLAGS += USE_DNSSEC=$(D_USE_DNSSEC)
 		LOCAL_MAKE_FLAGS += USE_NSS_IPSEC_PROFILE=$(D_USE_NSS_IPSEC_PROFILE)
 		LOCAL_MAKE_FLAGS += USE_XFRM_INTERFACE_IFLA_HEADER=true
+		LOCAL_MAKE_FLAGS += USE_NSS_KDF=false
 	endif
 
 	ifeq ($(DISTRO_REL), 7)
 		LOCAL_MAKE_FLAGS += USE_XFRM_INTERFACE_IFLA_HEADER=true
+		LOCAL_MAKE_FLAGS += USE_NSS_KDF=false
 	endif
 
 	ifeq ($(DISTRO_REL), 8)
@@ -98,6 +100,18 @@ ifeq ($(DISTRO), centos)
 endif
 
 ifeq ($(DISTRO), fedora)
+	ifeq ($(DISTRO_REL), 28)
+		LOCAL_MAKE_FLAGS += USE_NSS_KDF=false
+	endif
+
+	ifeq ($(DISTRO_REL), 29)
+		LOCAL_MAKE_FLAGS += USE_NSS_KDF=false
+	endif
+
+	ifeq ($(DISTRO_REL), 30)
+		LOCAL_MAKE_FLAGS += USE_NSS_KDF=false
+	endif
+
 	ifeq ($(DISTRO_REL), rawhide)
 		# TWEAKS += rawhide-remove-dnf-update
 		TWEAKS += dnf-nogpgcheck

@@ -29,6 +29,8 @@ DISTRO_CONF += $(shell grep -qE 'jessie|stretch' /etc/os-release && echo USE_DH3
 DISTRO_CONF += $(shell grep -qE 'cosmic|jessie|xenial' /etc/os-release && echo USE_XFRM_INTERFACE=false)
 DISTRO_CONF += $(shell grep -qE 'bionic|stretch' /etc/os-release && echo USE_XFRM_INTERFACE_IFLA_HEADER=true)
 DISTRO_CONF += $(shell grep -qE 'jessie|stretch|xenial' /etc/os-release && echo 'WERROR_CFLAGS="-Werror -Wno-missing-field-initializers -Wno-error=address"')
+DISTRO_CONF += $(shell grep -qE 'jessie|stretch|buster' /etc/os-release && USE_NSS_KDF=false)
+DISTRO_CONF += $(shell grep -qE 'xenial|bionic|cosmic|focal' /etc/os-release && USE_NSS_KDF=false)
 
 override_dh_auto_build:
 	dh_auto_build -- programs \
