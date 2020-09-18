@@ -110,16 +110,6 @@ static const char *dntoasi(dn_buf *dst, SECItem si)
 	return str_dn(same_secitem_as_chunk(si), dst);
 }
 
-static realtime_t get_nss_cert_notafter(CERTCertificate *cert)
-{
-	PRTime notBefore, notAfter;
-
-	if (CERT_GetCertTimes(cert, &notBefore, &notAfter) != SECSuccess)
-		return realtime(-1);
-	else
-		return realtime(notAfter / PR_USEC_PER_SEC);
-}
-
 /*
  * does our CA match one of the requested CAs?
  */
@@ -460,34 +450,15 @@ static void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn
 	*gn_out = pgn_list;
 }
 
-static struct pubkey *create_cert_pubkey(const struct id *id,
-					 CERTCertificate *cert,
-					 struct logger *logger)
-{
-	/*
-	 * Try to convert CERT to an internal PUBKEY object.  If
-	 * someone, in parallel, deletes the underlying cert from the
-	 * NSS DB, then this will fail.
-	 */
-	struct pubkey *pk = allocate_pubkey_nss(cert, logger);
-	if (pk == NULL) {
-		dbg("failed to allocate/extract pubkey from cert '%s'", cert->nickname);
-		return NULL;
-	}
-	pk->id = *id;
-	pk->until_time = get_nss_cert_notafter(cert);
-	pk->issuer = same_secitem_as_chunk(cert->derIssuer);
-	return pk;
-}
-
-static struct pubkey *create_cert_subjectdn_pubkey(CERTCertificate *cert,
-						   struct logger *logger)
+static diag_t create_cert_subjectdn_pubkey(CERTCertificate *cert,
+					   struct pubkey **pk,
+					   struct logger *logger)
 {
 	struct id id = {
 		.kind = ID_DER_ASN1_DN,
 		.name = same_secitem_as_chunk(cert->derSubject),
 	};
-	return create_cert_pubkey(&id, cert, logger);
+	return create_pubkey_from_cert(&id, cert, pk, logger);
 }
 
 static void add_cert_san_pubkeys(struct pubkey_list **pubkey_db,
@@ -504,8 +475,11 @@ static void add_cert_san_pubkeys(struct pubkey_list **pubkey_db,
 
 		gntoid(&id, gn);
 		if (id.kind != ID_NONE) {
-			struct pubkey *pk = create_cert_pubkey(&id, cert, logger);
-			if (pk != NULL) {
+			struct pubkey *pk;
+			diag_t d = create_pubkey_from_cert(&id, cert, &pk, logger);
+			if (d != NULL) {
+				log_diag(RC_LOG, logger, &d, "%s", "");
+			} else {
 				replace_public_key(pubkey_db, pk);
 			}
 		}
@@ -527,8 +501,10 @@ bool add_pubkey_from_nss_cert(struct pubkey_list **pubkey_db,
 			      const struct id *keyid, CERTCertificate *cert,
 			      struct logger *logger)
 {
-	struct pubkey *pk = create_cert_subjectdn_pubkey(cert, logger);
-	if (pk == NULL) {
+	struct pubkey *pk = NULL;
+	diag_t d = create_cert_subjectdn_pubkey(cert, &pk, logger);
+	if (d != NULL) {
+		log_diag(RC_LOG, logger, &d, "%s", "");
 		dbg("failed to create subjectdn_pubkey from cert");
 		return false;
 	}
@@ -538,10 +514,12 @@ bool add_pubkey_from_nss_cert(struct pubkey_list **pubkey_db,
 
 	if (keyid != NULL && keyid->kind != ID_DER_ASN1_DN &&
 			     keyid->kind != ID_NONE &&
-			     keyid->kind != ID_FROMCERT)
-	{
-		struct pubkey *pk2 = create_cert_pubkey(keyid, cert, logger);
-		if (pk2 != NULL) {
+			     keyid->kind != ID_FROMCERT) {
+		struct pubkey *pk2 = NULL;
+		diag_t d = create_pubkey_from_cert(keyid, cert, &pk2, logger);
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
+		} else {
 			replace_public_key(pubkey_db, pk2);
 		}
 	}

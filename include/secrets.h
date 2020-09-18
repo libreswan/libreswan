@@ -30,6 +30,7 @@
 #include "err.h"
 #include "realtime.h"
 #include "ckaid.h"
+#include "diag.h"
 
 struct logger;
 struct state;	/* forward declaration */
@@ -283,6 +284,8 @@ SECItem same_chunk_as_secitem(chunk_t chunk, SECItemType type);
 
 chunk_t clone_secitem_as_chunk(SECItem si, const char *name);
 
-struct pubkey *allocate_pubkey_nss(CERTCertificate *cert, struct logger *logger);
+diag_t create_pubkey_from_cert(const struct id *id,
+			       CERTCertificate *cert, struct pubkey **pk,
+			       struct logger *logger) MUST_USE_RESULT;
 
 #endif /* _SECRETS_H */
