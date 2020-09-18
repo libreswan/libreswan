@@ -17,6 +17,7 @@ v4.0 (unreleased)
 * pluto: Remove unused per peer logging [Andrew]
 * pluto: Cleanup logging code for minimal logging support [Andrew]
 * pluto: Cleanup netlink / XFRM code [Hugh]
+* pluto: xfrmi used mark-out for XFRMA_SET_MARK [Antony/Wolfgang]
 * pluto: Support for ipsec0 interface to help migrate from KLIPS to XFRM [Paul]
 * pluto: Fix logging some IKE messages to proper IKE SA state [Andrew]
 * pluto: remove global ikeport/nat-ikeport, add listen-udp/listen-tcp [Paul]
