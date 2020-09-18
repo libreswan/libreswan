@@ -401,9 +401,7 @@ kvmplutotest	ikev2-x509-32-id-any			good
 kvmplutotest	ikev2-x509-33-id-notany			good
 kvmplutotest	ikev2-x509-34-id-notany-responder	good
 kvmplutotest	ikev2-x509-35-id-any-responder		good
-
 kvmplutotest	ikev2-x509-36-leftrightauth		good
-
 kvmplutotest	ikev2-x509-37-fakeeast-westrsa		good
 kvmplutotest	ikev2-x509-37-fakeeast-westnoca		good
 kvmplutotest	ikev2-x509-37-fakeeast-westecca		good
@@ -425,7 +423,7 @@ kvmplutotest	ikev2-hostpair-01			good
 kvmplutotest	ikev2-hostpair-02			good
 kvmplutotest	ikev2-hostpair-03-initial-contact	good
 
-kvmplutotest	pluto-ipcmp-01	good
+kvmplutotest	pluto-ipcmp-01				good
 
 kvmplutotest	ikev2-38-psk-65bytes			good
 kvmplutotest	ikev2-39-psk-64bytes 			good
@@ -447,18 +445,18 @@ kvmplutotest	netkey-tfc-01				good
 kvmplutotest	netkey-tfc-02				good
 kvmplutotest	netkey-tfc-03				good
 
-kvmplutotest 	ikev2-xfrmi-01				good
-kvmplutotest 	ikev2-xfrmi-02				good
-kvmplutotest 	ikev2-xfrmi-02-responder		wip
-kvmplutotest 	ikev2-xfrmi-03				good
-kvmplutotest 	ikev2-xfrmi-04				good
-kvmplutotest 	ikev2-xfrmi-05-remote-access-client	good
-kvmplutotest 	ikev2-xfrmi-06				good
-kvmplutotest 	ikev2-xfrmi-07				good
-kvmplutotest 	ikev2-xfrmi-08				good
-kvmplutotest 	ikev2-xfrmi-09-systemd-networkd 	good
-kvmplutotest 	ikev2-xfrmi-10				good
-kvmplutotest 	ikev2-xfrmi-11-default-manual-route	good
+kvmplutotest	ikev2-xfrmi-01				good
+kvmplutotest	ikev2-xfrmi-02				good
+kvmplutotest	ikev2-xfrmi-02-responder		wip
+kvmplutotest	ikev2-xfrmi-03				good
+kvmplutotest	ikev2-xfrmi-04				good
+kvmplutotest	ikev2-xfrmi-05-remote-access-client	good
+kvmplutotest	ikev2-xfrmi-06				good
+kvmplutotest	ikev2-xfrmi-07				good
+kvmplutotest	ikev2-xfrmi-08				good
+kvmplutotest	ikev2-xfrmi-09-systemd-networkd 	good
+kvmplutotest	ikev2-xfrmi-10				good
+kvmplutotest	ikev2-xfrmi-11-default-manual-route	good
 kvmplutotest	ikev2-xfrmi-11-vti-default-route	good
 kvmplutotest	ikev2-xfrmi-11-default-route		good
 kvmplutotest	ikev2-xfrmi-12-two-default-routes	good
