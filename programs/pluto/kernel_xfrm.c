@@ -742,8 +742,9 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 				req.n.nlmsg_len += mark_attr->rta_len;
 			}
 		}
+
+		if (xfrm_if_id != 0) {
 #ifdef USE_XFRM_INTERFACE
-               if (xfrm_if_id != 0) {
 			struct rtattr *attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 			dbg("%s netlink: XFRMA_IF_ID  %" PRIu32 " req.n.nlmsg_type=%" PRIu32,
 			    __func__, xfrm_if_id, req.n.nlmsg_type);
