@@ -759,8 +759,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			attr->rta_len = RTA_LENGTH(sizeof(uint32_t));
 			memcpy(RTA_DATA(attr), &xfrm_if_id, sizeof(uint32_t));
 			req.n.nlmsg_len += attr->rta_len;
-	       }
 #endif
+	       }
 
 	}
 
