@@ -100,18 +100,6 @@ ifeq ($(DISTRO), centos)
 endif
 
 ifeq ($(DISTRO), fedora)
-	ifeq ($(DISTRO_REL), 28)
-		LOCAL_MAKE_FLAGS += USE_NSS_KDF=false
-	endif
-
-	ifeq ($(DISTRO_REL), 29)
-		LOCAL_MAKE_FLAGS += USE_NSS_KDF=false
-	endif
-
-	ifeq ($(DISTRO_REL), 30)
-		LOCAL_MAKE_FLAGS += USE_NSS_KDF=false
-	endif
-
 	ifeq ($(DISTRO_REL), rawhide)
 		# TWEAKS += rawhide-remove-dnf-update
 		TWEAKS += dnf-nogpgcheck
