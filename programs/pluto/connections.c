@@ -664,6 +664,9 @@ void unshare_connection_end(struct end *e)
 	e->xauth_username = clone_str(e->xauth_username, "xauth username");
 	e->xauth_password = clone_str(e->xauth_password, "xauth password");
 	e->host_addr_name = clone_str(e->host_addr_name, "host ip");
+	if (e->ckaid != NULL) {
+		e->ckaid = clone_thing(*e->ckaid, "ckaid");
+	}
 }
 
 /*
