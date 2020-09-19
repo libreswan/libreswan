@@ -85,6 +85,7 @@ ifeq ($(DISTRO), centos)
 		LOCAL_MAKE_FLAGS += USE_NSS_IPSEC_PROFILE=$(D_USE_NSS_IPSEC_PROFILE)
 		LOCAL_MAKE_FLAGS += USE_XFRM_INTERFACE_IFLA_HEADER=true
 		LOCAL_MAKE_FLAGS += USE_NSS_KDF=false
+		LOCAL_MAKE_FLAGS += WERROR_CFLAGS='-Werror -Wfatal-errors -Wno-missing-field-initializers'
 	endif
 
 	ifeq ($(DISTRO_REL), 7)
