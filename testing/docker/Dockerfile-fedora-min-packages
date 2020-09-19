@@ -23,6 +23,8 @@ RUN dnf install -y dnf-plugins-core git iproute openssh-server openssh-clients \
 RUN dnf install -y @development || dnf install -y @development-tools
 # F28 and later to support X509 Certificates, signed with SHA1
 RUN ls -l /usr/bin/update-crypto-policies && /usr/bin/update-crypto-policies --set LEGACY || true
+# F33 does does not have directory by default.
+RUN /etc/sysconfig/network-scripts/
 RUN echo "Do not add files here.  networkig is handled by systemd-networkd in\n/etc/systemd/nework\networkctl" > /etc/sysconfig/network-scripts/README.libreswan
 RUN ls
 RUN cd /home/build/libreswan; ls; make SUDO_CMD= install-rpm-build-dep && cd /
