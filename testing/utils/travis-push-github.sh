@@ -24,7 +24,6 @@ BRANCHES="main travis-fedora-rawhide travis-fedora-32 \
 	  travis-fedora-29 travis-fedora-28 \
 	  travis-centos-8 travis-centos-7 travis-centos-6 \
 	  travis-ubuntu-focal travis-ubuntu-bionic travis-ubuntu-xenial \
-	  travis-ubuntu-eon travis-ubuntu-disco travis-ubuntu-cosmic \
 	  travis-debian-experimental travis-debian-sid travis-debian-bullseye \
 	  travis-debian-buster travis-debian-stretch travis-debian-jessie"
 
@@ -120,13 +119,11 @@ git_work()
 		git reset --hard origin/main
 	fi
 	HEAD_ID_END=$(git rev-parse --short HEAD)
-	if [ "${HEAD_ID_END}" = "${HEAD_ID_START}" ] ; then
+	if [ "${HEAD_ID_END}" = "${HEAD_ID_START}" -a "${FETCH_REMOTE}" = "yes" ] ; then
 		echo "${TIME} IGNORE ${HEAD_ID_START} NOTHING NEW"
 		return 0
 	fi
-	git reset --hard origin/main
 	echo "${TIME} start ${HEAD_ID_START} after ${HEAD_ID_END} ${COUNTER} branches"
-
 	for BR in ${BRANCHES}; do
 		LOG="${LOG} ${BR}"
 		git checkout ${BR} || git checkout -b ${BR}
