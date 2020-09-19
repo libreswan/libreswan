@@ -840,7 +840,7 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 	}
 
 	struct kernel_sa sa = {
-		.nk_dir = dir,
+		.xfrm_dir = dir,
 		.proto = proto,
 		.reqid = reqid_esp(c->spd.reqid),
 		.encap_type = encap_type,
@@ -966,7 +966,7 @@ static bool migrate_xfrm_sa(const struct kernel_sa *sa)
 
 	zero(&req);
 
-	req.id.dir = sa->nk_dir;
+	req.id.dir = sa->xfrm_dir;
 	req.id.sel.family = address_type(sa->src.address)->af;
 	/* .[sd]addr, .prefixlen_[sd], .[sd]port */
 	SELECTOR_TO_XFRM(sa->src.client, req.id.sel, s);
