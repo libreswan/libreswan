@@ -281,7 +281,8 @@ v2SK_payload_t open_v2SK_payload(struct logger *logger,
 
 	sk.cleartext.ptr = sk.pbs.cur;
 	passert(sk.iv.ptr <= sk.cleartext.ptr);
-	passert(sk.pbs.container->name == container->name);
+	/* XXX: coverity thinks .container (set to E by out_struct() above) can be NULL. */
+	passert(sk.pbs.container != NULL && sk.pbs.container->name == container->name);
 
 	return sk;
 }
