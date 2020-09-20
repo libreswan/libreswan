@@ -1,6 +1,12 @@
-This tests the IKEv1 Notify/Delete message. If east receives the notification,
-it will delete the IPsec SA and traffic will flow cleartext. If not, it will
-block the cleartext and this test will fail.
+This tests the IKEv1 Notify/Delete message and using whack to load raw keys
 
-There is no real reason this test still uses "whack" directly - it was left as an
-example and test for direct whack usage.
+THIS TEST USES IPSEC.SECRETS CONTAINING RSA:{} TO FIND THE PRIVATE KEY.
+
+If east receives the notification, it will delete the IPsec SA and
+traffic will flow cleartext. If not, it will block the cleartext and
+this test will fail.
+
+There is no real reason this test still uses "whack" directly - it was
+left as an example and test for direct whack usage.
+
+It also serves as an example
