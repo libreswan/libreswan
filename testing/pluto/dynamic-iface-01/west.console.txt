@@ -44,7 +44,7 @@ west #
 002 "west-float": terminating SAs using this connection
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
-002 loaded private key for keyid: PKK_RSA:AQOm9dY/4
+002 no secrets filename matched "/etc/ipsec.d/*.secrets"
 west #
  ipsec auto --up float-east #retransmits
 002 "float-east" #3: initiating IKEv1 Main Mode connection
@@ -76,7 +76,7 @@ west #
 002 "float-east": terminating SAs using this connection
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
-002 loaded private key for keyid: PKK_RSA:AQOm9dY/4
+002 no secrets filename matched "/etc/ipsec.d/*.secrets"
 west #
  ipsec auto --up west-float #retransmits
 002 "west-float" #5: initiating IKEv1 Main Mode connection
