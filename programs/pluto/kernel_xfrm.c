@@ -979,6 +979,7 @@ static bool migrate_xfrm_sa(const struct kernel_sa *sa)
 	{
 		struct xfrm_user_migrate migrate;
 
+		zero(&migrate);
 		attr =  (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 		attr->rta_type = XFRMA_MIGRATE;
 		attr->rta_len = sizeof(migrate);
