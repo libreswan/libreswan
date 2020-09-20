@@ -223,7 +223,7 @@ bool selector_address_eq(const ip_selector *l, const ip_selector *r)
 
 void pexpect_selector(const ip_selector *s, const char *t, where_t where)
 {
-	if (s != NULL || s->addr.version != 0) {
+	if (s != NULL && s->addr.version != 0) { /* non-zero */
 		if (s->is_subnet == true ||
 		    s->is_selector == false) {
 			address_buf b;
