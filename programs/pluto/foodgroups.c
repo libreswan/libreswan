@@ -100,13 +100,12 @@ static int subnetcmp(const ip_subnet *a, const ip_subnet *b)
 	return r;
 }
 
-static void read_foodgroup(struct fg_groups *g, struct logger *logger)
+static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g)
 {
 	const char *fgn = g->connection->name;
 	const ip_subnet *lsn = &g->connection->spd.this.client;
 	const struct lsw_conf_options *oco = lsw_init_options();
 	size_t plen = strlen(oco->policies_dir) + 2 + strlen(fgn) + 1;
-	struct file_lex_position flp_space;
 
 	if (plen > fg_path_space) {
 		pfreeany(fg_path);
@@ -116,13 +115,15 @@ static void read_foodgroup(struct fg_groups *g, struct logger *logger)
 
 	/* danger, global buffer */
 	snprintf(fg_path, fg_path_space, "%s/%s", oco->policies_dir, fgn);
-	if (!lexopen(&flp_space, fg_path, true, logger)) {
+	struct file_lex_position *flp;
+	if (!lexopen(&flp, fg_path, true, oflp)) {
 		char cwd[PATH_MAX];
 		dbg("no group file \"%s\" (pwd:%s)", fg_path, getcwd(cwd, sizeof(cwd)));
 		return;
 	}
 
-	log_message(RC_LOG, logger, "loading group \"%s\"", fg_path);
+	log_message(RC_LOG, flp->logger,
+		    "loading group \"%s\"", fg_path);
 	while (flp->bdry == B_record) {
 
 		/* force advance to first token */
@@ -140,20 +141,20 @@ static void read_foodgroup(struct fg_groups *g, struct logger *logger)
 			ip_address t;
 			err_t err = numeric_to_address(shunk1(flp->tok), NULL, &t);
 			if (err != NULL) {
-				log_flp(RC_LOG_SERIOUS, flp,
-					"ignored, '%s' is not an address: %s",
-					flp->tok, err);
+				log_message(RC_LOG_SERIOUS, flp->logger,
+					    "ignored, '%s' is not an address: %s",
+					    flp->tok, err);
 				flushline(flp, NULL/*shh*/);
 				continue;
 			}
 			sn = subnet_from_address(&t);
 		} else {
 			const struct ip_info *afi = strchr(flp->tok, ':') == NULL ? &ipv4_info : &ipv6_info;
-			err_t err = ttosubnet(flp->tok, 0, afi->af, 'x', &sn, logger);
+			err_t err = ttosubnet(flp->tok, 0, afi->af, 'x', &sn, flp->logger);
 			if (err != NULL) {
-				log_flp(RC_LOG_SERIOUS, flp,
-					"ignored, '%s' is not a subnet: %s",
-					flp->tok, err);
+				log_message(RC_LOG_SERIOUS, flp->logger,
+					    "ignored, '%s' is not a subnet: %s",
+					    flp->tok, err);
 				flushline(flp, NULL/*shh*/);
 				continue;
 			}
@@ -161,9 +162,9 @@ static void read_foodgroup(struct fg_groups *g, struct logger *logger)
 
 		const struct ip_info *type = subnet_type(&sn);
 		if (type == NULL) {
-			log_flp(RC_LOG_SERIOUS, flp,
-				"ignored, unsupported Address Family \"%s\"",
-				flp->tok);
+			log_message(RC_LOG_SERIOUS, flp->logger,
+				    "ignored, unsupported Address Family \"%s\"",
+				    flp->tok);
 			flushline(flp, NULL/*shh*/);
 			continue;
 		}
@@ -178,48 +179,48 @@ static void read_foodgroup(struct fg_groups *g, struct logger *logger)
 			/* protocol */
 			err = ttoipproto(flp->tok, &proto);
 			if (err != NULL) {
-				log_flp(RC_LOG_SERIOUS, flp,
-					"protocol '%s' invalid: %s",
-					flp->tok, err);
+				log_message(RC_LOG_SERIOUS, flp->logger,
+					    "protocol '%s' invalid: %s",
+					    flp->tok, err);
 				break;
 			}
 			if (proto == 0 || proto == IPPROTO_ESP || proto == IPPROTO_AH) {
-				log_flp(RC_LOG_SERIOUS, flp,
-					"invalid protocol '%s' - mistakenly defined to be 0 or %u(esp) or %u(ah)",
-					flp->tok, IPPROTO_ESP, IPPROTO_AH);
+				log_message(RC_LOG_SERIOUS, flp->logger,
+					    "invalid protocol '%s' - mistakenly defined to be 0 or %u(esp) or %u(ah)",
+					    flp->tok, IPPROTO_ESP, IPPROTO_AH);
 				break;
 			}
 			/* source port */
 			if (!shift(flp)) {
-				log_flp(RC_LOG_SERIOUS, flp,
-					"missing source_port: either only specify CIDR, or specify CIDR protocol source_port dest_port");
+				log_message(RC_LOG_SERIOUS, flp->logger,
+					    "missing source_port: either only specify CIDR, or specify CIDR protocol source_port dest_port");
 				break;
 			}
 			err = ttoport(flp->tok, &sport);
 			if (err != NULL) {
-				log_flp(RC_LOG_SERIOUS, flp,
-					"source port '%s' invalid: %s",
-					flp->tok, err);
+				log_message(RC_LOG_SERIOUS, flp->logger,
+					    "source port '%s' invalid: %s",
+					    flp->tok, err);
 				break;
 			}
 			/* dest port */
 			if (!shift(flp)) {
-				log_flp(RC_LOG_SERIOUS, flp,
-					"missing dest_port: either only specify CIDR, or specify CIDR protocol source_port dest_port");
+				log_message(RC_LOG_SERIOUS, flp->logger,
+					    "missing dest_port: either only specify CIDR, or specify CIDR protocol source_port dest_port");
 				break;
 			}
 			err = ttoport(flp->tok, &dport);
 			if (err != NULL) {
-				log_flp(RC_LOG_SERIOUS, flp,
-					"destination port '%s' invalid: %s",
-					flp->tok, err);
+				log_message(RC_LOG_SERIOUS, flp->logger,
+					    "destination port '%s' invalid: %s",
+					    flp->tok, err);
 				break;
 			}
 			/* more stuff? */
 			if (shift(flp)) {
-				log_flp(RC_LOG_SERIOUS, flp,
-					"garbage '%s' at end of line: either only specify CIDR, or specify CIDR protocol source_port dest_port",
-					flp->tok);
+				log_message(RC_LOG_SERIOUS, flp->logger,
+					    "garbage '%s' at end of line: either only specify CIDR, or specify CIDR protocol source_port dest_port",
+					    flp->tok);
 				break;
 			}
 		}
@@ -254,12 +255,12 @@ static void read_foodgroup(struct fg_groups *g, struct logger *logger)
 		if (r == 0) {
 			subnet_buf source;
 			subnet_buf dest;
-			log_flp(RC_LOG_SERIOUS, flp,
-				"subnet \"%s\", proto %d, sport %d dport %d, source %s, already \"%s\"",
-				str_subnet(&sn, &dest),
-				proto, sport, dport,
-				str_subnet(lsn, &source),
-				(*pp)->group->connection->name);
+			log_message(RC_LOG_SERIOUS, flp->logger,
+				    "subnet \"%s\", proto %d, sport %d dport %d, source %s, already \"%s\"",
+				    str_subnet(&sn, &dest),
+				    proto, sport, dport,
+				    str_subnet(lsn, &source),
+				    (*pp)->group->connection->name);
 		} else {
 			struct fg_targets *f = alloc_thing(struct fg_targets,
 							   "fg_target");
@@ -274,9 +275,9 @@ static void read_foodgroup(struct fg_groups *g, struct logger *logger)
 		}
 	}
 	if (flp->bdry != B_file) {
-		log_flp(RC_LOG_SERIOUS, flp, "rest of file ignored");
+		log_message(RC_LOG_SERIOUS, flp->logger, "rest of file ignored");
 	}
-	lexclose();
+	lexclose(&flp);
 }
 
 static void free_targets(void)
@@ -298,7 +299,10 @@ void load_groups(struct fd *whackfd)
 	/* for each group, add config file targets into new_targets */
 	for (struct fg_groups *g = groups; g != NULL; g = g->next) {
 		if (oriented(*g->connection)) {
-			read_foodgroup(g, logger);
+			struct file_lex_position flp = {
+				.logger = logger,
+			};
+			read_foodgroup(&flp, g);
 		}
 	}
 

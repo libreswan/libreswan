@@ -143,8 +143,8 @@ static const struct fld RSA_private_field[] = {
 	},
 };
 
-static void lsw_process_secrets_file(struct secret **psecrets, const char *file_pat,
-				     struct logger *logger);
+static void process_secrets_file(struct file_lex_position *flp,
+				 struct secret **psecrets, const char *file_pat);
 
 struct secret {
 	struct secret  *next;
@@ -898,15 +898,16 @@ bool lsw_has_private_rawkey(const struct secret *secrets, const struct pubkey *p
  */
 
 /* parse PSK from file */
-static err_t lsw_process_psk_secret(chunk_t *psk, struct logger *logger)
+static err_t process_psk_secret(struct file_lex_position *flp, chunk_t *psk)
 {
 	err_t ugh = NULL;
 
-	if (*flp->tok == '"' || *flp->tok == '\'') {
+	if (flp->tok[0] == '"' || flp->tok[0] == '\'') {
 		size_t len = flp->cur - flp->tok  - 2;
 
 		if (len < 8) {
-			log_message(RC_LOG_SERIOUS, logger, "WARNING: using a weak secret (PSK)");
+			log_message(RC_LOG_SERIOUS, flp->logger,
+				    "WARNING: using a weak secret (PSK)");
 		}
 		*psk = clone_bytes_as_chunk(flp->tok + 1, len, "PSK");
 		shift(flp);
@@ -941,12 +942,12 @@ static err_t lsw_process_psk_secret(chunk_t *psk, struct logger *logger)
 }
 
 /* parse XAUTH secret from file */
-static err_t lsw_process_xauth_secret(chunk_t *xauth)
+static err_t process_xauth_secret(struct file_lex_position *flp, chunk_t *xauth)
 {
 	err_t ugh = NULL;
 
-	if (*flp->tok == '"' || *flp->tok == '\'') {
-		*xauth = clone_bytes_as_chunk(flp->tok + 1, flp->cur - flp->tok  - 2,
+	if (flp->tok[0] == '"' || flp->tok[0] == '\'') {
+		*xauth = clone_bytes_as_chunk(flp->tok + 1, flp->cur - flp->tok - 2,
 					      "XAUTH");
 		shift(flp);
 	} else {
@@ -980,11 +981,12 @@ static err_t lsw_process_xauth_secret(chunk_t *xauth)
 }
 
 /* parse static PPK  */
-static err_t lsw_process_ppk_static_secret(chunk_t *ppk, chunk_t *ppk_id)
+static err_t process_ppk_static_secret(struct file_lex_position *flp,
+				       chunk_t *ppk, chunk_t *ppk_id)
 {
 	err_t ugh = NULL;
 
-	if (*flp->tok == '"' || *flp->tok == '\'') {
+	if (flp->tok[0] == '"' || flp->tok[0] == '\'') {
 		size_t len = flp->cur - flp->tok - 2;
 
 		*ppk_id = clone_bytes_as_chunk(flp->tok + 1, len, "PPK ID");
@@ -1084,7 +1086,8 @@ static SECKEYPrivateKey *copy_private_key(SECKEYPrivateKey *private_key)
  * - the caller gets to free this up (which is still easier than try
  * to do it here).
  */
-static err_t lsw_process_rsa_secret(struct private_key_stuff *pks, struct logger *logger)
+static err_t process_rsa_secret(struct file_lex_position *flp,
+				struct private_key_stuff *pks)
 {
 	struct RSA_private_key *rsak = &pks->u.RSA_private_key;
 	passert(tokeq("{"));
@@ -1192,14 +1195,15 @@ static err_t lsw_process_rsa_secret(struct private_key_stuff *pks, struct logger
 
 	SECItem nss_ckaid = same_ckaid_as_secitem(&rsak->pub.ckaid);
 	SECKEYPrivateKey *private_key = PK11_FindKeyByKeyID(slot, &nss_ckaid,
-							    lsw_nss_get_password_context(logger));
+							    lsw_nss_get_password_context(flp->logger));
 	if (private_key == NULL) {
 		dbg("NSS: can't find the private key using the NSS CKAID");
-		CERTCertificate *cert = get_cert_by_ckaid_from_nss(&rsak->pub.ckaid, logger);
+		CERTCertificate *cert = get_cert_by_ckaid_from_nss(&rsak->pub.ckaid,
+								   flp->logger);
 		if (cert == NULL) {
 			return "can't find the private key matching the NSS CKAID";
 		}
-		private_key = PK11_FindKeyByAnyCert(cert, lsw_nss_get_password_context(logger));
+		private_key = PK11_FindKeyByAnyCert(cert, lsw_nss_get_password_context(flp->logger));
 		CERT_DestroyCertificate(cert);
 		if (private_key == NULL) {
 			return "can't find the private key (the certificate found using NSS CKAID has no matching private key)";
@@ -1258,8 +1262,8 @@ static void add_secret(struct secret **slist,
 	unlock_certs_and_keys(story);
 }
 
-static void process_secret(struct secret **psecrets, struct secret *s,
-			   struct logger *logger)
+static void process_secret(struct file_lex_position *flp,
+			   struct secret **psecrets, struct secret *s)
 {
 	err_t ugh = NULL;
 
@@ -1267,12 +1271,12 @@ static void process_secret(struct secret **psecrets, struct secret *s,
 		s->pks.kind = PKK_PSK;
 		/* preshared key: quoted string or ttodata format */
 		ugh = !shift(flp) ? "ERROR: unexpected end of record in PSK" :
-			lsw_process_psk_secret(&s->pks.u.preshared_secret, logger);
+			process_psk_secret(flp, &s->pks.u.preshared_secret);
 	} else if (tokeqword("xauth")) {
 		/* xauth key: quoted string or ttodata format */
 		s->pks.kind = PKK_XAUTH;
 		ugh = !shift(flp) ? "ERROR: unexpected end of record in PSK" :
-			lsw_process_xauth_secret(&s->pks.u.preshared_secret);
+			process_xauth_secret(flp, &s->pks.u.preshared_secret);
 	} else if (tokeqword("rsa")) {
 		/*
 		 * RSA key: the fun begins.
@@ -1284,13 +1288,14 @@ static void process_secret(struct secret **psecrets, struct secret *s,
 			ugh = "ERROR: bad RSA key syntax";
 		} else if (tokeq("{")) {
 			/* raw RSA key in NSS */
-			ugh = lsw_process_rsa_secret(&s->pks, logger);
+			ugh = process_rsa_secret(flp, &s->pks);
 		} else {
 			/* RSA key in certificate in NSS */
 			ugh = "WARNING: The :RSA secrets entries for X.509 certificates are no longer needed";
 		}
 		if (ugh == NULL) {
-			log_message(RC_LOG, logger, "loaded private key for keyid: %s:%s",
+			log_message(RC_LOG, flp->logger,
+				    "loaded private key for keyid: %s:%s",
 				    enum_name(&pkk_names, s->pks.kind),
 				    s->pks.u.RSA_private_key.pub.keyid);
 		} else {
@@ -1300,7 +1305,7 @@ static void process_secret(struct secret **psecrets, struct secret *s,
 	} else if (tokeqword("ppks")) {
 		s->pks.kind = PKK_PPK;
 		ugh = !shift(flp) ? "ERROR: unexpected end of record in static PPK" :
-			lsw_process_ppk_static_secret(&s->pks.ppk, &s->pks.ppk_id);
+			process_ppk_static_secret(flp, &s->pks.ppk, &s->pks.ppk_id);
 	} else if (tokeqword("pin")) {
 		ugh = "ERROR: keyword 'pin' obsoleted, please use NSS for smartcard support";
 	} else {
@@ -1308,8 +1313,9 @@ static void process_secret(struct secret **psecrets, struct secret *s,
 	}
 
 	if (ugh != NULL) {
-		log_message(RC_LOG_SERIOUS, logger, "\"%s\" line %d: %s",
-			flp->filename, flp->lino, ugh);
+		log_message(RC_LOG_SERIOUS, flp->logger,
+			    "\"%s\" line %d: %s",
+			    flp->filename, flp->lino, ugh);
 		/* free id's that should have been allocated */
 		if (s->ids != NULL) {
 			struct id_list *i, *ni;
@@ -1327,7 +1333,8 @@ static void process_secret(struct secret **psecrets, struct secret *s,
 	}
 }
 
-static void lsw_process_secret_records(struct secret **psecrets, struct logger *logger)
+static void process_secret_records(struct file_lex_position *flp,
+				   struct secret **psecrets)
 {
 	/* const struct secret *secret = *psecrets; */
 
@@ -1350,7 +1357,7 @@ static void lsw_process_secret_records(struct secret **psecrets, struct logger *
 			char *end_prefix = strrchr(flp->filename, '/');
 
 			if (!shift(flp)) {
-				log_message(RC_LOG_SERIOUS, logger,
+				log_message(RC_LOG_SERIOUS, flp->logger,
 					    "\"%s\" line %d: unexpected end of include directive",
 					    flp->filename, flp->lino);
 				continue;	/* abandon this record */
@@ -1374,7 +1381,7 @@ static void lsw_process_secret_records(struct secret **psecrets, struct logger *
 				p += pl;
 			}
 			if (flp->cur - flp->tok >= &fn[sizeof(fn)] - p) {
-				log_message(RC_LOG_SERIOUS, logger,
+				log_message(RC_LOG_SERIOUS, flp->logger,
 					    "\"%s\" line %d: include pathname too long",
 					    flp->filename, flp->lino);
 				continue;	/* abandon this record */
@@ -1388,7 +1395,7 @@ static void lsw_process_secret_records(struct secret **psecrets, struct logger *
 			memcpy(p, flp->tok, flp->cur - flp->tok + 1);
 			shift(flp);	/* move to Record Boundary, we hope */
 			if (flushline(flp, "ignoring malformed INCLUDE -- expected Record Boundary after filename")) {
-				lsw_process_secrets_file(psecrets, fn, logger);
+				process_secrets_file(flp, psecrets, fn);
 				flp->tok = NULL;	/* redundant? */
 			}
 		} else {
@@ -1408,7 +1415,7 @@ static void lsw_process_secret_records(struct secret **psecrets, struct logger *
 				if (tokeq(":")) {
 					/* found key part */
 					shift(flp);	/* eat ":" */
-					process_secret(psecrets, s, logger);
+					process_secret(flp, psecrets, s);
 					break;
 				}
 
@@ -1432,7 +1439,7 @@ static void lsw_process_secret_records(struct secret **psecrets, struct logger *
 				}
 
 				if (ugh != NULL) {
-					log_message(RC_LOG_SERIOUS, logger,
+					log_message(RC_LOG_SERIOUS, flp->logger,
 						    "ERROR \"%s\" line %d: index \"%s\" %s",
 						    flp->filename,
 						    flp->lino, flp->tok,
@@ -1452,7 +1459,7 @@ static void lsw_process_secret_records(struct secret **psecrets, struct logger *
 				}
 				if (!shift(flp)) {
 					/* unexpected Record Boundary or EOF */
-					log_message(RC_LOG_SERIOUS, logger,
+					log_message(RC_LOG_SERIOUS, flp->logger,
 						    "\"%s\" line %d: unexpected end of id list",
 						    flp->filename, flp->lino);
 					pfree(s);
@@ -1463,15 +1470,11 @@ static void lsw_process_secret_records(struct secret **psecrets, struct logger *
 	}
 }
 
-static void lsw_process_secrets_file(struct secret **psecrets, const char *file_pat,
-				     struct logger *logger)
+static void process_secrets_file(struct file_lex_position *oflp,
+				 struct secret **psecrets, const char *file_pat)
 {
-	struct file_lex_position pos;
-
-	pos.depth = flp == NULL ? 0 : flp->depth + 1;
-
-	if (pos.depth > 10) {
-		log_message(RC_LOG_SERIOUS, logger,
+	if (oflp->depth > 10) {
+		log_message(RC_LOG_SERIOUS, oflp->logger,
 			    "preshared secrets file \"%s\" nested too deeply",
 			    file_pat);
 		return;
@@ -1479,24 +1482,26 @@ static void lsw_process_secrets_file(struct secret **psecrets, const char *file_
 
 	/* do globbing */
 	glob_t globbuf;
-	int r = lswglob(file_pat, &globbuf, "secrets", logger);
+	int r = lswglob(file_pat, &globbuf, "secrets", oflp->logger);
 
 	switch (r) {
 	case 0:
 		/* success */
 		/* for each file... */
 		for (char **fnp = globbuf.gl_pathv; fnp != NULL && *fnp != NULL; fnp++) {
-			if (lexopen(&pos, *fnp, false, logger)) {
-				log_message(RC_LOG, logger, "loading secrets from \"%s\"", *fnp);
+			struct file_lex_position *flp = NULL;
+			if (lexopen(&flp, *fnp, false, oflp)) {
+				log_message(RC_LOG, flp->logger,
+					    "loading secrets from \"%s\"", *fnp);
 				flushline(flp, "file starts with indentation (continuation notation)");
-				lsw_process_secret_records(psecrets, logger);
-				lexclose();
+				process_secret_records(flp, psecrets);
+				lexclose(&flp);
 			}
 		}
 		break;
 
 	case GLOB_NOSPACE:
-		log_message(RC_LOG_SERIOUS, logger,
+		log_message(RC_LOG_SERIOUS, oflp->logger,
 			    "out of space processing secrets filename \"%s\"",
 			    file_pat);
 		break;
@@ -1506,11 +1511,13 @@ static void lsw_process_secrets_file(struct secret **psecrets, const char *file_
 		break;
 
 	case GLOB_NOMATCH:
-		log_message(RC_LOG, logger, "no secrets filename matched \"%s\"", file_pat);
+		log_message(RC_LOG, oflp->logger,
+			    "no secrets filename matched \"%s\"", file_pat);
 		break;
 
 	default:
-		log_message(RC_LOG_SERIOUS, logger, "unknown glob error %d", r);
+		log_message(RC_LOG_SERIOUS, oflp->logger,
+			    "unknown glob error %d", r);
 		break;
 	}
 
@@ -1566,7 +1573,11 @@ void lsw_load_preshared_secrets(struct secret **psecrets, const char *secrets_fi
 				struct logger *logger)
 {
 	lsw_free_preshared_secrets(psecrets, logger);
-	(void) lsw_process_secrets_file(psecrets, secrets_file, logger);
+	struct file_lex_position flp = {
+		.logger = logger,
+		.depth = 0,
+	};
+	process_secrets_file(&flp, psecrets, secrets_file);
 }
 
 struct pubkey *reference_key(struct pubkey *pk)

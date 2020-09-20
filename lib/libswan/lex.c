@@ -26,8 +26,7 @@
 #include "lswlog.h"
 #include "lex.h"
 #include "lswlog.h"
-
-struct file_lex_position *flp = NULL;
+#include "lswalloc.h"
 
 /*
  * Open a file for lexical processing.
@@ -40,13 +39,13 @@ struct file_lex_position *flp = NULL;
  * @param bool optional
  * @return bool True if successful
  */
-bool lexopen(struct file_lex_position *new_flp, const char *name,
-	     bool optional, struct logger *logger)
+bool lexopen(struct file_lex_position **flp, const char *name,
+	     bool optional, const struct file_lex_position *oflp)
 {
 	FILE *f = fopen(name, "r");
 	if (f == NULL) {
 		if (!optional || errno != ENOENT) {
-			log_errno(logger, errno, "could not open \"%s\"", name);
+			log_errno(oflp->logger, errno, "could not open \"%s\"", name);
 		} else {
 			DBGF(DBG_TMI, "lex open: %s: "PRI_ERRNO, name, pri_errno(errno));
 		}
@@ -54,30 +53,30 @@ bool lexopen(struct file_lex_position *new_flp, const char *name,
 	}
 
 	DBGF(DBG_TMI, "lex open: %s", name);
-	new_flp->previous = flp;
+	struct file_lex_position *new_flp = alloc_thing(struct file_lex_position, name);
+	new_flp->depth = oflp->depth + 1;
 	new_flp->filename = name;
 	new_flp->fp = f;
 	new_flp->lino = 0;
 	new_flp->bdry = B_none;
 	new_flp->cur = new_flp->buffer;	/* nothing loaded yet */
 	new_flp->under = *new_flp->cur = '\0';
-	new_flp->logger = logger;
+	new_flp->logger = oflp->logger;
 	shift(new_flp);	/* prime tok */
-
-	/* push new head */
-	flp = new_flp;
+	*flp = new_flp;
 	return true;
 }
 
 /*
  * Close filehandle
  */
-void lexclose(void)
+void lexclose(struct file_lex_position **flp)
 {
 	DBGF(DBG_TMI, "lex close:");
-	fclose(flp->fp);
+	fclose((*flp)->fp);
 	/* pop head */
-	flp = flp->previous;
+	pfree(*flp);
+	*flp = NULL;
 }
 
 /*
@@ -149,7 +148,8 @@ bool shift(struct file_lex_position *flp)
 				flp->tok = p;
 				p = strchr(p + 1, *p);
 				if (p == NULL) {
-					log_flp(RC_LOG_SERIOUS, flp, "unterminated string");
+					log_message(RC_LOG_SERIOUS, flp->logger,
+						    "unterminated string");
 					p = flp->tok + strlen(flp->tok);
 				} else {
 					p++;	/* include delimiter in token */
@@ -238,21 +238,10 @@ bool flushline(struct file_lex_position *flp, const char *message)
 	/* discard tokens until boundary reached */
 	DBGF(DBG_TMI, "lex flushline: need to flush tokens");
 	if (message != NULL) {
-		log_flp(RC_LOG_SERIOUS, flp, "%s", message);
+		log_message(RC_LOG_SERIOUS, flp->logger, "%s", message);
 	}
 	do {
 		DBGF(DBG_TMI, "lex flushline: discarding '%s'", flp->tok);
 	} while (shift(flp));
 	return false;
-}
-
-void log_flp(lset_t rc_flags, struct file_lex_position *flp, const char *message, ...)
-{
-	LOG_JAMBUF(rc_flags, flp->logger, buf) {
-		jam(buf, "\"%s\" line %d: ", flp->filename, flp->lino);
-		va_list ap;
-		va_start(ap, message);
-		jam_va_list(buf, message, ap);
-		va_end(ap);
-	}
 }

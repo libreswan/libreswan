@@ -23,21 +23,15 @@ struct file_lex_position {
 	char *cur;				/* cursor */
 	char under;				/* except in shift(): character originally at *cur */
 	char *tok;
-	struct file_lex_position *previous;
 	struct logger *logger;			/* where to send errors */
 };
 
-extern struct file_lex_position *flp;
-
-extern bool lexopen(struct file_lex_position *new_flp, const char *name,
-		    bool optional, struct logger *logger);
-extern void lexclose(void);
+extern bool lexopen(struct file_lex_position **flp, const char *name,
+		    bool optional, const struct file_lex_position *oflp);
+extern void lexclose(struct file_lex_position **flp);
 
 #define tokeq(s) (streq(flp->tok, (s)))
 #define tokeqword(s) strcaseeq(flp->tok, (s))
 
 extern bool shift(struct file_lex_position *flp);
 extern bool flushline(struct file_lex_position *flp, const char *message);
-
-void log_flp(lset_t rc_flags, struct file_lex_position *flp,
-	     const char *message, ...) PRINTF_LIKE(3);
