@@ -48,7 +48,7 @@ typedef struct {
 	 * This is in network order (but is manipulated like an int.
 	 *
 	 * XXX: Does this mean it is the SPI that the remote end
-	 * expects to see on its incomming packets?
+	 * expects to see on its incoming packets?
 	 */
 #               define  SPI_PASS        256     /* magic values... */
 #               define  SPI_DROP        257     /* ...for use... */

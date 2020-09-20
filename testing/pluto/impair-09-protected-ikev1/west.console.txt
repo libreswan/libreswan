@@ -63,7 +63,7 @@ west #
 west #
  ipsec whack --impair v1-hash-exchange:quick
 west #
- # HASH payload omited - should fail
+ # HASH payload omitted - should fail
 west #
  ipsec whack --impair v1-hash-payload:omit
 west #
@@ -133,7 +133,7 @@ west #
 west #
  ipsec whack --impair v1-hash-exchange:delete
 west #
- # HASH payload omited - should fail
+ # HASH payload omitted - should fail
 west #
  ipsec whack --impair v1-hash-payload:omit
 west #
@@ -221,7 +221,7 @@ west #
 west #
  ipsec whack --impair v1-hash-exchange:xauth
 west #
- # HASH payload omited - should fail
+ # HASH payload omitted - should fail
 west #
  ipsec whack --impair v1-hash-payload:omit
 west #
@@ -303,7 +303,7 @@ west #
 west #
  ipsec whack --impair v1-hash-exchange:notification
 west #
- # HASH payload omited - should fail
+ # HASH payload omitted - should fail
 west #
  ipsec whack --impair v1-hash-payload:omit
 west #

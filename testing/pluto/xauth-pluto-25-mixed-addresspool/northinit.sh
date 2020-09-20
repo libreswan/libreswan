@@ -4,7 +4,7 @@ ipsec start
 ../bin/block-non-ipsec.sh
 ipsec auto --add north-east
 ipsec whack --xauthname 'xnorth' --xauthpass 'use1pass' --name north-east --initiate
-# note - initiating during "init" when multple hosts/namespaces are starting up is unwise - race conditions
+# note - initiating during "init" when multiple hosts/namespaces are starting up is unwise - race conditions
 # let east startup and load conns
 sleep 10
 ping -q -n -c 4 -w 4 -I 192.0.2.201  192.0.2.254

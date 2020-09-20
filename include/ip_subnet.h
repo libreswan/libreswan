@@ -28,7 +28,7 @@
  * #1 addresses i.e., NETWORK_PREFIX|HOST_IDENTIFIER / MASK
  * #2 subnets i.e., NETWORK_PREFIX|0 / MASK
  *
- * OK, so far so good, they are kind of eqivalent.
+ * OK, so far so good, they are kind of equivalent.
  *
  * #3 selectors i.e., NETWORK_PREFIX | 0 / MASK : PORT
  *
@@ -88,7 +88,7 @@ ip_subnet subnet_from_address(const ip_address *address);
 err_t address_mask_to_subnet(const ip_address *address, const ip_address *mask,
 			     ip_subnet *subnet);
 
-/* convert CIDR addresss/mask to subnet */
+/* convert CIDR address/mask to subnet */
 err_t text_cidr_to_subnet(shunk_t cidr, const struct ip_info *afi, ip_subnet *subnet);
 
 /*

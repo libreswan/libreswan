@@ -217,7 +217,7 @@ int ike_alg_enum_match(const struct ike_alg_type *type, enum ike_alg_key key,
  *
  * (1) The linux centric header libreswan/pfkeyv2 tries to define the
  *     enum sadb_ealg with the names K_SADB[_X]_AALG_... but the code
- *     is broken - it doesn't accomodate missing algorithms (more
+ *     is broken - it doesn't accommodate missing algorithms (more
  *     generally, the header defines all sorts of stuff that conflicts
  *     with <net/pfkeyv2.h>)
  *
@@ -411,7 +411,7 @@ struct encrypt_desc {
 	 * XXX: The linux centric header libreswan/pfkeyv2 tries to
 	 * define "enum sadb_ealg" with the names
 	 * K_SADB[_X]_EALG_... but the code is broken - it doesn't
-	 * accomodate missing algorithms.  Hence it is not used here.
+	 * accommodate missing algorithms.  Hence it is not used here.
 	 */
 	unsigned encrypt_sadb_ealg_id;
 
@@ -621,7 +621,7 @@ struct integ_desc {
 	 *
 	 * The linux centric header libreswan/pfkeyv2 tries to define
 	 * "enum sadb_aalg" with the names K_SADB[_X]_AALG_... but the
-	 * code is broken - it doesn't accomodate missing algorithms.
+	 * code is broken - it doesn't accommodate missing algorithms.
 	 * Hence it is not used here.
 	 */
 	unsigned integ_sadb_aalg_id;

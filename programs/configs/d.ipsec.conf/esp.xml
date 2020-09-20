@@ -15,7 +15,7 @@ PFSgroup last, e.g. "aes128+aes256-sha2_512+sha2_256-dh14+dh19".
 instance, "sha2_512" or "sha2_256-dh14".
 </para>
 <para>AEAD algorithms such as AES-GCM and AES-CCM don't require separate hashing
-algoritm, for example <emphasis remap='I'>esp=aes_gcm256</emphasis> or
+algorithm, for example <emphasis remap='I'>esp=aes_gcm256</emphasis> or
 <emphasis remap='I'>esp=aes_ccm</emphasis>. Note that the ike= syntax for aes_gcm
 does require the prf hashing algorithm which is not needed for esp=.
 The supported key sizes for aes_gcm are 128, 192 and 256, which are specified

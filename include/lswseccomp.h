@@ -23,7 +23,7 @@
 
 #include <seccomp.h>
 
-#include "lswlog.h"		/* for libreswan_exit() et.al. refered to by macro */
+#include "lswlog.h"		/* for libreswan_exit() et.al. referred to by macro */
 
 /*
  * Add system call NAME to seccomp.

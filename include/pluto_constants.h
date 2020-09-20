@@ -1080,7 +1080,7 @@ extern void init_pluto_constants(void);
 #define PLUTO_SPD_OPPO_ANON_MAX	(4u * (1u << 20) - 1u)
 
 /*
- * Maximum data (inluding IKE HDR) allowed in a packet.
+ * Maximum data (including IKE HDR) allowed in a packet.
  *
  * v1 fragmentation is non-IETF magic voodoo we need to consider for interop:
  * - www.cisco.com/en/US/docs/ios/sec_secure_connectivity/configuration/guide/sec_fragment_ike_pack.html

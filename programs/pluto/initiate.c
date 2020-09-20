@@ -229,7 +229,7 @@ bool orient(struct connection *c)
 				 * XXX: if an interface has two
 				 * addresses vis <<ip addr add
 				 * 192.1.2.23/24 dev eth1>> this log
-				 * line doesn't differnetiate.
+				 * line doesn't differentiate.
 				 */
 				connection_buf cib;
 				address_buf cb, ifpb;

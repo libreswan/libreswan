@@ -31,7 +31,7 @@ struct logger;
 
 /* our versions of assert: log result */
 
-/* prefered; can log with prefix to whack from a thread */
+/* preferred; can log with prefix to whack from a thread */
 extern void passert_fail(struct logger *logger, where_t where,
 			 const char *message, ...) NEVER_RETURNS PRINTF_LIKE(3);
 #define PASSERT(LOGGER, ASSERTION)					\

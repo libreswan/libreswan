@@ -88,7 +88,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
- # hash algorithm notication should be received
+ # hash algorithm notification should be received
 west #
  grep SIGNATURE_HASH_ALGO /tmp/charon.log | cut -f 2 -d "]"
  received SIGNATURE_HASH_ALGORITHMS notify

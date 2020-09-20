@@ -41,7 +41,7 @@ enum {
 };
 
 /*
- * This file was split into internal contants (Libreswan/pluto related),
+ * This file was split into internal constants (Libreswan/pluto related),
  * and external constants (defined by IETF, etc.)
  *
  * Constants that are kernel/IPsec related are in appropriate

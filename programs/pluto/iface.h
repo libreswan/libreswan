@@ -140,7 +140,7 @@ struct iface_port {
 	 * to a random port:
 	 * - to be able to work with NAT esp encap needs to be enabled and that
 	 * in turn means all incoming messages must have the ESP=0 prefix
-	 * - trying to negotiate to port 500 will fail - the incomming message
+	 * - trying to negotiate to port 500 will fail - the incoming message
 	 * will be missing the ESP=0 prefix
 	 */
 	bool esp_encapsulation_enabled;

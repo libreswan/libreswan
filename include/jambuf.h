@@ -65,7 +65,7 @@
  *
  *   TOTAL < ROOF => ARRAY[TOTAL] == '\0'
  *
- * When TOTAL>=ROOF, overflow has occured and no futher characters are
+ * When TOTAL>=ROOF, overflow has occured and no further characters are
  * written.
  *
  * When TOTAL==ROOF-1 the buffer is full.  Technically there is still

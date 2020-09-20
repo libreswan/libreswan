@@ -26,7 +26,7 @@
 #include <stdint.h>	/* uint8_t */
 
 #include "hunk.h"
-#include "lswalloc.h"	/* for freeanychunk() refering to pfree() which can go away */
+#include "lswalloc.h"	/* for freeanychunk() referring to pfree() which can go away */
 
 /*
  * chunk is a simple pointer-and-size abstraction
@@ -49,7 +49,7 @@ chunk_t chunk2(void *ptr, size_t len);
  * Convert writeable THING to a writeable CHUNK.  When compiled with
  * GCC (at least) and THING is read-only, a warning will be generated.
  *
- * This works because GCC doesn't like implictly converting a 'const'
+ * This works because GCC doesn't like implicitly converting a 'const'
  * &THING actual parameter to the non-const 'void*' formal parameter.
  * Using an explicit cast (such as in a static initializer) suppresses
  * this warning.

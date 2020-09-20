@@ -3636,7 +3636,7 @@ void complete_v2_state_transition(struct state *st,
 		 * so this is performed as a separate transition?
 		 */
 		delete_ike_family(ike, PROBABLY_SEND_DELETE);
-		/* get out of here -- everthing is invalid */
+		/* get out of here -- everything is invalid */
 		return;
 
 	case STF_FATAL:

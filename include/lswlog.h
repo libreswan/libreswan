@@ -1,4 +1,4 @@
-/* logging declaratons
+/* logging declarations
  *
  * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2004 Michael Richardson <mcr@xelerance.com>

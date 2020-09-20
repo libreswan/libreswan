@@ -39,7 +39,7 @@
  * is an array (hence comment above about .data being a better
  * choice).
  *
- * To avoid repeated evaluation of fuctions, the macros below first
+ * To avoid repeated evaluation of functions, the macros below first
  * make a copy of the hunk being manipulated.  For structures such as
  * ckaid_t where that will copy the buffer contents, it is assumed
  * that the compiler will see that things are constant and eliminate

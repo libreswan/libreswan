@@ -89,7 +89,7 @@ shunk_t shunk_slice(shunk_t s, size_t start, size_t stop);
 shunk_t shunk_token(shunk_t *input, char *delim, const char *delims);
 
 /*
- * Return the sequence of charcters in ACCEPT, update INPUT.
+ * Return the sequence of characters in ACCEPT, update INPUT.
  *
  * When input is exhausted the NULL_SHUNK is returned (rather than the
  * EMPTY_SHUNK).

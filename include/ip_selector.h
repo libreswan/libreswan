@@ -32,7 +32,7 @@ struct jambuf;
  *    LO_ADDRESS..HI_ADDRESS : LO_PORT..HI_PORT
  *
  * However, this is currently implemented using a subnet which,
- * bizarely, can describe:
+ * bizarrely, can describe:
  *
  *    NETWORK_PREFIX | 0 / MASK : PORT
  *
