@@ -998,6 +998,7 @@ static bool record_outbound_fragment(struct logger *logger,
 
 	v2SK_payload_t skf = {
 		.ike = ike,
+		.logger = logger,
 		.payload = {
 		    .ptr = rbody.cur,
 		    .len = 0 /* computed at end; set here to silence GCC 4.8.5 */
