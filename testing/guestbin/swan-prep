@@ -636,9 +636,9 @@ if args.nsd or args.dnssec:
             print("failed to mount_bind src=%s dst %s" % (src, dst))
             sys.exit(1)
 
-    src = '/testing/baseconfigs/nic/etc/nsd'
-    dst = '/etc/'
-    rsync_ap(src, dst);
+        src = '/testing/baseconfigs/all/etc/nsd'
+        dst = '/etc/'
+        rsync_ap(src, dst);
 
     if args.dnssec:
         # nsd listen on port 5353 and unbound listen on port 53
@@ -671,10 +671,9 @@ if args.nsd or args.dnssec:
             if mount_bind(src, dst, mkdir_src=True, wipe_old_dst=True):
                 print("failed to mount_bind src=%s dst %s" % (src, dst))
                 sys.exit(1)
-
-        src = '/testing/baseconfigs/nic/etc/unbound'
-        dst = '/etc/'
-        rsync_ap(src, dst);
+            src = '/testing/baseconfigs/all/etc/unbound'
+            dst = '/etc/'
+            rsync_ap(src, dst);
 
         if args.namespace:
             cmd = "../../pluto/bin/unbound-start.sh restart"
