@@ -807,8 +807,8 @@ static int extract_end(const char *connection_name,
 		cert = get_cert_by_nickname_from_nss(src->cert, logger);
 		if (cert == NULL) {
 			log_message(RC_FATAL, logger,
-				    "%s certificate '%s' not found in the NSS database",
-				    dst->leftright, src->cert);
+				    "failed to add connection \"%s\": %s certificate '%s' not found in the NSS database",
+				    connection_name, dst->leftright, src->cert);
 			return -1; /* fatal */
 		}
 	} else if (src->rsasigkey != NULL) {
@@ -832,8 +832,9 @@ static int extract_end(const char *connection_name,
 		union pubkey_content pkc;
 		err = type->unpack_pubkey_content(&pkc, chunk2(keyspace, keylen));
 		if (err != NULL) {
-			log_message(RC_FATAL, logger, "%s raw public key invalid: %s",
-				    dst->leftright, err);
+			log_message(RC_FATAL, logger,
+				    "failed to add connection \"%s\": %s raw public key invalid: %s",
+				    connection_name, dst->leftright, err);
 			return -1;
 		}
 		const ckaid_t *ckaid = type->ckaid_from_pubkey_content(&pkc);
@@ -848,8 +849,9 @@ static int extract_end(const char *connection_name,
 		if (err != NULL) {
 			/* should have been rejected by whack? */
 			/* XXX: don't trust whack */
-			log_message(RC_FATAL, logger, "%s CKAID '%s' invalid: %s",
-				    dst->leftright, src->ckaid, err);
+			log_message(RC_FATAL, logger,
+				    "failed to add connection \"%s\": %s CKAID '%s' invalid: %s",
+				    connection_name, dst->leftright, src->ckaid, err);
 			return -1; /* fatal */
 		}
 		/*
