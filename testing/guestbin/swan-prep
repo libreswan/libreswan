@@ -135,10 +135,11 @@ def choose_config_file(hostname, testpath, config_absdir, config_file):
     paths.append(os.path.join(testpath, hostname + extension))
     paths.append(os.path.join(testpath, config_file))
     # baseconfigs; prefer host
-    if userland in ("libreswan", "openswan"):
+    if userland in ("libreswan", "openswan",  "strongswan"):
         # not BSD?
         paths.append(os.path.join("/testing/baseconfigs", hostname, config_dir, config_file))
         paths.append(os.path.join("/testing/baseconfigs/all/", config_dir, config_file))
+
     # BSD?
 
     for path in paths:
@@ -409,11 +410,6 @@ if hostname != "nic":
 
         for directory in ("ipsec.d/", "ipsec.d/aacerts/", "ipsec.d/ocspcerts/", "ipsec.d/cacerts/", "ipsec.d/private/", "ipsec.d/certs/"):
             os.mkdir("%s%s" % (dst, directory))
-        strongswanconf = choose_config_file(hostname, testpath, "strongswan.conf", "%sstrongswan.conf" % (hostname))
-
-        if strongswanconf:
-            shutil.copy(strongswanconf, "/etc/strongswan/strongswan.conf")
-
         copy_config_file(hostname, testpath, "/etc/strongswan/strongswan.conf")
         copy_config_file(hostname, testpath, "/etc/strongswan/ipsec.conf")
         copy_config_file(hostname, testpath, "/etc/strongswan/ipsec.secrets")
