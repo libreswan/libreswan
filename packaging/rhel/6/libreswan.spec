@@ -14,8 +14,8 @@
     FINALRUNDIR=%{_rundir}/pluto \\\
     FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \\\
     FINALINITDDIR=%{_initrddir} \\\
-    PREFIX=%{_prefix} \\\
     INITSYSTEM=sysvinit \\\
+    PREFIX=%{_prefix} \\\
     PYTHON_BINARY=%{__python} \\\
     USE_DNSSEC=%{USE_DNSSEC} \\\
     USE_FIPSCHECK=true \\\
@@ -26,10 +26,11 @@
     USE_LINUX_AUDIT=true \\\
     USE_NM=true \\\
     USE_NSS_IPSEC_PROFILE=false \\\
+    USE_NSS_KDF=false \\\
+    USE_OLD_SELINUX=true \\\
     USE_SECCOMP=false \\\
     USE_XAUTHPAM=true \\\
     USE_XFRM_INTERFACE_IFLA_HEADER=true \\\
-    USE_NSS_KDF=false \\\
 %{nil}
 
 #global prever rc1
