@@ -15,12 +15,13 @@ RUN find /etc/systemd/system \
          -not -name '*systemd-user-sessions*' \
          -exec rm \{} \;
 RUN systemctl set-default multi-user.target
-# for debian
+# Debian
 # CMD ["/lib/systemd/systemd"]
 # Ubuntu
 CMD ["/sbin/init"]
-RUN mkdir -p /home/build/
-COPY . /home/build/libreswan
+# next two lines are only for docker podman use --volume to mount
+# RUN mkdir -p /home/build/
+# COPY . /home/build/libreswan
 # NO v6 magic interfearnce yet.
 RUN echo "precedence ::ffff:0:0/96  100" >> /etc/gai.conf
 RUN echo "net.ipv6.conf.all.disable_ipv6=1" >> /etc/sysctl.conf
