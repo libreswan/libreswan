@@ -187,6 +187,8 @@ kvmplutotest	ikev2-64-same-route-twice		wip
 kvmplutotest	ikev2-67-parallel-sa			wip
 kvmplutotest	ikev2-67-esp-null-iperf			wip
 kvmplutotest	ikev2-70-src-address-selection		wip
+kvmplutotest	ikev2-71-cp-resolve-name		wip
+kvmplutotest 	ikev2-72-cp-resolve-both		wip
 
 kvmplutotest	ikev2-ikeport-02-initiator		good
 kvmplutotest	ikev2-ikeport-03-responder		good
