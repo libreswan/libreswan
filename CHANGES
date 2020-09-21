@@ -3,8 +3,13 @@ See also https://libreswan.org/
 
 v4.0 (unreleased)
 * KLIPS: Support for KLIPS completely removed [Paul]
-* FIPS: Remove DH 23/24 from FIPS allowed list as per SP 800 56A Rev 3 [Paul]
 * pluto: Removed support for deprecated algos: serpent, twofish, cast [Paul]
+* IKEv2: EXPERIMENTAL: Support for RFC 8229 IKE/ESP over TCP [Andrew]
+   new per-conn keywords: listen-tcp=yes|no, tcponly=yes|no, tcp-remoteport=
+* IKEv2: Support for leftikeport= / rightikeport= [Andrew/Paul]
+* IKEv2: EXPERIMENTAL: Support for INTERMEDIATE Exchange [Yulia Kuzovkova/GSoC]
+   new keyword: intermediate=yes
+* FIPS: Remove DH 23/24 from FIPS allowed list as per SP 800 56A Rev 3 [Paul]
 * pluto: Support for rereading configured certificates from NSS [Myungjin Lee]
 * pluto: plutodebug= keywords are now: base,cpu-usage,crypt,tmi,private [Andrew]
 * pluto: find_pluto_xfrmi_interface() would only check first interface [Paul]
@@ -28,11 +33,6 @@ v4.0 (unreleased)
 * whack: clear inherited defaults for IKEv2 from IKEv1 connections [Paul]
 * show: Fixup for python3 version of ipaddress module [Paul]
 * IKEv2: Fix Windows 10 rekey being rejected [Antony/Paul]
-* IKEv2: EXPERIMENTAL: Support for INTERMEDIATE Exchange [Yulia Kuzovkova/GSoC]
-   new keyword: intermediate=yes
-* IKEv2: EXPERIMENTAL: Support for RFC 8229 IKE/ESP over TCP [Andrew]
-   new per-conn keywords: listen-tcp=yes|no, tcponly=yes|no, tcp-remoteport=
-* IKEv2: Support for leftikeport= / rightikeport= [Andrew/Paul]
 * IKEv2: Remove duplicaes from proposals using "+" [Andrew]
 * IKEv2: CERTREQ payload was not sent for authby=ecdsa [Paul]
 * IKEv2: Decode notify payloads into the message digest [Andrew]
