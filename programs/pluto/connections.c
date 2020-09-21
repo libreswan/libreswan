@@ -933,6 +933,8 @@ static int extract_end(const char *connection_name,
 			    connection_name, leftright, src->host_ikeport);
 		dst->raw.host.ikeport = 0;
 	}
+	if (dst->host_port ==0)
+		dst->host_port = (dst->raw.host.ikeport ? dst->raw.host.ikeport : IKE_UDP_PORT);
 
 	/*
 	 * see if we can resolve the DNS name right now
