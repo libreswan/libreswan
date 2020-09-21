@@ -604,7 +604,7 @@ extern uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt);
 
 so_serial_t get_newer_sa_from_connection(struct state *st);
 
-diag_t add_end_cert_and_preload_secret(CERTCertificate *, struct end *dst_end, struct logger *logger);
+diag_t add_end_cert_and_preload_private_key(CERTCertificate *, struct end *dst_end, struct logger *logger);
 extern void reread_cert_connections(struct fd *whackfd);
 
 #endif

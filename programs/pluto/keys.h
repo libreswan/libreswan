@@ -29,6 +29,7 @@
 #include "x509.h"
 #include "certs.h"
 #include "err.h"
+#include "ckaid.h"
 
 struct connection;
 struct RSA_private_key;
@@ -64,7 +65,8 @@ extern const chunk_t *get_ppk_by_id(const chunk_t *ppk_id);
 
 extern void load_preshared_secrets(struct logger *logger);
 extern void free_preshared_secrets(struct logger *logger);
-extern err_t load_nss_cert_secret(const struct cert *cert, struct logger *logger);
+err_t preload_private_key_by_cert(const struct cert *cert, struct logger *logger);
+err_t preload_private_key_by_ckaid(const ckaid_t *ckaid, struct logger *logger);
 
 extern struct secret *lsw_get_xauthsecret(char *xauthname);
 

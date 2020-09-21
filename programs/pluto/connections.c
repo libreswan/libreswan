@@ -871,7 +871,7 @@ static int extract_end(const char *connection_name,
 	}
 
 	if (cert != NULL) {
-		diag_t diag = add_end_cert_and_preload_secret(cert, dst, logger);
+		diag_t diag = add_end_cert_and_preload_private_key(cert, dst, logger);
 		if (diag != NULL) {
 			log_diag(RC_FATAL, logger, &diag, "failed to add connection \"%s\": ",
 				 connection_name);
@@ -1039,9 +1039,9 @@ static bool check_connection_end(const struct whack_end *this,
 	return TRUE; /* happy */
 }
 
-diag_t add_end_cert_and_preload_secret(CERTCertificate *cert,
-				       struct end *dst_end,
-				       struct logger *logger)
+diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
+					    struct end *dst_end,
+					    struct logger *logger)
 {
 	passert(cert != NULL);
 	dst_end->cert.ty = CERT_NONE;
@@ -1107,7 +1107,7 @@ diag_t add_end_cert_and_preload_secret(CERTCertificate *cert,
 	 * get_psk.
 	 */
 	dbg("preload cert/secret for connection: %s", cert->nickname);
-	err_t ugh = load_nss_cert_secret(&dst_end->cert, logger);
+	err_t ugh = preload_private_key_by_cert(&dst_end->cert, logger);
 	if (ugh != NULL) {
 		dbg("warning: no secret key loaded for %s certificate  %s: %s",
 		    dst_end->leftright, nickname, ugh);
