@@ -290,20 +290,31 @@ static void key_add_request_1(const struct id *keyid, const struct pubkey_type *
 				    logger, "delete keyid %s", msg->keyid);
 		}
 		delete_public_keys(&pluto_pubkeys, keyid, type);
+		/* XXX: what about private keys; suspect not easy as not 1:1? */
 	}
 
 	if (msg->keyval.len != 0) {
-			/* XXX: this gets called by "add" so be silent */
+		/* XXX: this gets called by "add" so be silent */
 		log_message(LOG_STREAM/*not-whack*/, logger,
 			    "add keyid %s", msg->keyid);
 		DBG_dump_hunk(NULL, msg->keyval);
+
+		/* add the public key */
+		const union pubkey_content *pkc = NULL;
 		err_t ugh = add_public_key(keyid, PUBKEY_LOCAL, type,
 					   /*install_time*/realnow(),
 					   /*until_time*/realtime_epoch,
 					   /*ttl*/0,
-					   &msg->keyval, &pluto_pubkeys);
+					   &msg->keyval, &pkc, &pluto_pubkeys);
 		if (ugh != NULL) {
 			log_message(RC_LOG_SERIOUS, logger, "%s", ugh);
+			return;
+		}
+
+		/* try to pre-load the private key */
+		err_t err = preload_private_key_by_ckaid(type->ckaid_from_pubkey_content(pkc), logger);
+		if (err != NULL) {
+			dbg("no private key: %s", err);
 		}
 	}
 }
