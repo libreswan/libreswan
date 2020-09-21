@@ -266,34 +266,74 @@ static void do_whacklisten(struct fd *whackfd)
 #endif
 }
 
-static void key_add_request(const struct whack_message *msg)
+/*
+ * Handle: whack --keyid <id> [--addkey] [--pubkeyrsa <key>]\n"
+ *
+ * whack --keyid <id>
+ *     delete <id> key
+ * whack --keyid <id> --pubkeyrsa ...
+ *     replace <id> key
+ * whack --keyid <id> --addkey --pubkeyrsa ...
+ *     add <id> key (keeping old)
+ * whack --keyid <id> --addkey
+ * whack --keyid <id> --addkey --pubkeyrsa ...
+ *     invalid as keyval.len is 0
+ */
+static void key_add_request_1(const struct id *keyid, const struct pubkey_type *type,
+			      const struct whack_message *msg, struct logger *logger)
 {
-	plog_global("add keyid %s", msg->keyid);
-	struct id keyid;
-	err_t ugh = atoid(msg->keyid, &keyid);
+	/* no --addkey, delete any preexisting keys */
+	if (!msg->whack_addkey) {
+		if (msg->keyval.len == 0) {
+			/* XXX: this gets called by "add" so be silent */
+			log_message(LOG_STREAM/*not-whack*/,
+				    logger, "delete keyid %s", msg->keyid);
+		}
+		delete_public_keys(&pluto_pubkeys, keyid, type);
+	}
 
-	if (ugh != NULL) {
-		loglog(RC_BADID, "bad --keyid \"%s\": %s", msg->keyid, ugh);
+	if (msg->keyval.len != 0) {
+			/* XXX: this gets called by "add" so be silent */
+		log_message(LOG_STREAM/*not-whack*/, logger,
+			    "add keyid %s", msg->keyid);
+		DBG_dump_hunk(NULL, msg->keyval);
+		err_t ugh = add_public_key(keyid, PUBKEY_LOCAL, type,
+					   /*install_time*/realnow(),
+					   /*until_time*/realtime_epoch,
+					   /*ttl*/0,
+					   &msg->keyval, &pluto_pubkeys);
+		if (ugh != NULL) {
+			log_message(RC_LOG_SERIOUS, logger, "%s", ugh);
+		}
+	}
+}
+
+static void key_add_request(const struct whack_message *msg, struct logger *logger)
+{
+	/* a key always requires a type */
+	const struct pubkey_type *type = pubkey_alg_type(msg->pubkey_alg);
+	if (type == NULL && msg->keyval.len != 0) {
+		log_message(RC_LOG_SERIOUS, logger,
+			    "INTERNAL ERROR: key with unknown type %d from whack",
+			    msg->pubkey_alg);
 		return;
 	}
 
-	if (!msg->whack_addkey)
-		delete_public_keys(&pluto_pubkeys, &keyid,
-				   pubkey_alg_type(msg->pubkey_alg));
-
-	if (msg->keyval.len != 0) {
-		DBG_dump_hunk("add pubkey", msg->keyval);
-		ugh = add_public_key(&keyid, PUBKEY_LOCAL,
-				     pubkey_alg_type(msg->pubkey_alg),
-				     /*install_time*/realnow(), /*until_time*/realtime_epoch,
-				     /*ttl*/0,
-				     &msg->keyval, &pluto_pubkeys);
-		if (ugh != NULL) {
-			loglog(RC_LOG_SERIOUS, "%s", ugh);
-		}
-	} else {
-		loglog(RC_LOG_SERIOUS, "error: Key without keylength from whack not added to key list (needs DNS lookup?)");
+	/* --addkey always requires a key */
+	if (msg->whack_addkey && msg->keyval.len == 0) {
+		log_message(RC_LOG_SERIOUS, logger,
+			    "error: key to add is empty (needs DNS lookup?)");
+		return;
 	}
+
+	struct id keyid;
+	err_t ugh = atoid(msg->keyid, &keyid); /* must free */
+	if (ugh != NULL) {
+		log_message(RC_BADID, logger, "bad --keyid \"%s\": %s", msg->keyid, ugh);
+		return;
+	}
+
+	key_add_request_1(&keyid, type, msg, logger);
 	free_id_content(&keyid);
 }
 
@@ -579,7 +619,7 @@ static bool whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_key) {
 		/* add a public key */
-		key_add_request(m);
+		key_add_request(m, show_logger(s));
 	}
 
 	if (m->whack_route) {
