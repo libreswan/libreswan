@@ -5,8 +5,7 @@
 # with moving targets.
 
 # avoid systemd so this works in namespaces
-#/bin/systemctl start strongswan.service
-mkdir -p /run/strongswan
+# /bin/systemctl start strongswan.service
 /usr/sbin/strongswan start > /dev/null 2>&1
 
 seconds=0
