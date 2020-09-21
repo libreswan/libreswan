@@ -132,8 +132,14 @@ def choose_config_file(hostname, testpath, config_absdir, config_file):
     # HOSTNAME.CONFIG_FILE.  So file names can switch to latter.
     paths.append(os.path.join(testpath, hostname + "." + config_file))
     paths.append(os.path.join(testpath, hostname + config_file))
-    paths.append(os.path.join(testpath, hostname + extension))
-    paths.append(os.path.join(testpath, config_file))
+    ext = os.path.join(testpath, hostname + extension)
+    hconf = os.path.join(testpath, config_file)
+    if os.path.isfile(ext) and os.path.isfile(hconf):
+        print("conflicting files %s %s ignore both" % (ext, hconf))
+        return None
+    paths.append(os.path.join(ext))
+    paths.append(os.path.join(hconf))
+
     # baseconfigs; prefer host
     if userland in ("libreswan", "openswan",  "strongswan"):
         # not BSD?
