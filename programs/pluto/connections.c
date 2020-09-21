@@ -351,7 +351,7 @@ void delete_every_connection(void)
 }
 
 static err_t default_end(const char *leftright, struct end *e,
-			 ip_address *dflt_nexthop, unsigned remote_port)
+			 ip_address *dflt_nexthop, unsigned peer_ikeport)
 {
 	err_t ugh = NULL;
 	const struct ip_info *afi = aftoinfo(addrtypeof(&e->host_addr));
@@ -371,16 +371,11 @@ static err_t default_end(const char *leftright, struct end *e,
 		e->host_nexthop = *dflt_nexthop;
 
 	/*
-	 * XXX: When DST is the peer setting .host_port to PLUTO_PORT
-	 * (our port) is wrong.  IKE_UDP_PORT is the next best thing.
-	 *
-	 * But what if DST is THIS?  .host_port gets ignored?
-	 *
-	 * If one end has an ikeport, the other must use ikport or nat
-	 * port.
+	 * If one end has an ikeport, the other must either use
+	 * IKEPORT or NAT port - messages must be prefixed.
 	 */
 	e->host_port = (e->raw.host.ikeport ? e->raw.host.ikeport :
-			remote_port ? NAT_IKE_UDP_PORT :
+			peer_ikeport ? NAT_IKE_UDP_PORT :
 			IKE_UDP_PORT);
 	dbg("%s host_port %d", leftright, e->host_port);
 
