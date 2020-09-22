@@ -9,7 +9,7 @@ You can load this machine definition into libvirt using:
   <currentMemory unit='KiB'>393216</currentMemory>
   <vcpu>1</vcpu>
   <os>
-    <type arch='x86_64' machine='pc-q35-4.2'>hvm</type>
+    <type arch='x86_64'>hvm</type>
     <boot dev='hd'/>
   </os>
   <features>
