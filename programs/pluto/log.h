@@ -102,10 +102,10 @@ extern const struct logger_object_vec logger_state_vec;
 extern const struct logger_object_vec logger_string_vec;
 
 extern struct logger failsafe_logger;
-#define STRING_LOGGER(PREFIX) (struct logger)			\
+#define STRING_LOGGER(PREFIX, WHACKFD) (struct logger)		\
 	{							\
 		.where = HERE,					\
-		.global_whackfd = null_fd,			\
+		.global_whackfd = WHACKFD,			\
 		.object = PREFIX,				\
 		.object_vec = &logger_string_vec,		\
 	}
