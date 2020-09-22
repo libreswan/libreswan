@@ -374,6 +374,14 @@ algparse -fips -v2 -pfs 'ike=3des-id2'
 	ERROR: IKE PRF algorithm 'id2' is not recognized
 algparse -fips -v2 -pfs 'ike=aes_ccm'
 	ERROR: IKE encryption algorithm 'aes_ccm' is not supported
+algparse -fips -v2 -pfs 'ike=aes-sha1-sha2-ecp_521'
+	ERROR: IKE DH algorithm 'sha2' is not recognized
+algparse -fips -v2 -pfs 'ike=aes-sha2-sha2;ecp_521'
+	ERROR: IKE DH algorithm 'sha2' is not recognized
+algparse -fips -v2 -pfs 'ike=aes-sha1_96-sha2-ecp_521'
+	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
+algparse -fips -v2 -pfs 'ike=aes-sha1_96-sha2;ecp_521'
+	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
 algparse -fips -v2 -pfs 'ike=aes+aes-sha1+sha1-modp8192+modp8192'
 algparse: discarding duplicate IKE encryption algorithm AES_CBC
 algparse: discarding duplicate IKE PRF algorithm HMAC_SHA1
@@ -419,6 +427,18 @@ algparse -fips -v2 -pfs 'ike=aes_gcm-sha2;modp2048'
 algparse -fips -v2 -pfs 'ike=aes_gcm-modp2048'
 	ERROR: IKE PRF algorithm 'modp2048' is not recognized
 algparse -fips -v2 -pfs 'ike=aes_gcm;modp2048'
+	AES_GCM_16-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048
+algparse -fips -v2 -pfs 'ike=aes_gcm-none'
+	AES_GCM_16-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
+algparse -fips -v2 -pfs 'ike=aes_gcm-none-sha2'
+	AES_GCM_16-HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
+algparse -fips -v2 -pfs 'ike=aes_gcm-none-sha2-modp2048'
+	AES_GCM_16-HMAC_SHA2_256-MODP2048
+algparse -fips -v2 -pfs 'ike=aes_gcm-none-sha2;modp2048'
+	AES_GCM_16-HMAC_SHA2_256-MODP2048
+algparse -fips -v2 -pfs 'ike=aes_gcm-none-modp2048'
+	ERROR: IKE PRF algorithm 'modp2048' is not recognized
+algparse -fips -v2 -pfs 'ike=aes_gcm-none;modp2048'
 	AES_GCM_16-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048
 algparse -fips -v2 -pfs 'ike=aes_gcm-sha1-none-modp2048'
 	ERROR: IKE proposal contains unexpected 'modp2048'

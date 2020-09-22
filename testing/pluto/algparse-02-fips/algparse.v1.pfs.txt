@@ -372,6 +372,14 @@ algparse -fips -v1 -pfs 'ike=3des-id2'
 	ERROR: IKE PRF algorithm 'id2' is not recognized
 algparse -fips -v1 -pfs 'ike=aes_ccm'
 	ERROR: IKE encryption algorithm 'aes_ccm' is not supported by IKEv1
+algparse -fips -v1 -pfs 'ike=aes-sha1-sha2-ecp_521'
+	ERROR: IKE DH algorithm 'sha2' is not recognized
+algparse -fips -v1 -pfs 'ike=aes-sha2-sha2;ecp_521'
+	ERROR: IKE DH algorithm 'sha2' is not recognized
+algparse -fips -v1 -pfs 'ike=aes-sha1_96-sha2-ecp_521'
+	ERROR: IKE PRF algorithm 'sha1_96' is not recognized
+algparse -fips -v1 -pfs 'ike=aes-sha1_96-sha2;ecp_521'
+	ERROR: IKE PRF algorithm 'sha1_96' is not recognized
 algparse -fips -v1 -pfs 'ike=aes+aes-sha1+sha1-modp8192+modp8192'
 	ERROR: IKE encryption algorithm 'aes+aes' is not recognized
 algparse -fips -v1 -pfs 'ike=3des+aes+aes-sha2+sha1+sha1-modp4096+modp8192+modp8192'
@@ -402,6 +410,18 @@ algparse -fips -v1 -pfs 'ike=aes_gcm-sha2;modp2048'
 algparse -fips -v1 -pfs 'ike=aes_gcm-modp2048'
 	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
 algparse -fips -v1 -pfs 'ike=aes_gcm;modp2048'
+	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+algparse -fips -v1 -pfs 'ike=aes_gcm-none'
+	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+algparse -fips -v1 -pfs 'ike=aes_gcm-none-sha2'
+	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+algparse -fips -v1 -pfs 'ike=aes_gcm-none-sha2-modp2048'
+	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+algparse -fips -v1 -pfs 'ike=aes_gcm-none-sha2;modp2048'
+	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+algparse -fips -v1 -pfs 'ike=aes_gcm-none-modp2048'
+	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+algparse -fips -v1 -pfs 'ike=aes_gcm-none;modp2048'
 	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
 algparse -fips -v1 -pfs 'ike=aes_gcm-sha1-none-modp2048'
 	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
