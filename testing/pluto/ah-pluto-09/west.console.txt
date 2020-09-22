@@ -6,7 +6,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ah
-036 failed to add connection "westnet-eastnet-ah": AH integrity algorithm 'des' is not recognized
+036 connection "westnet-eastnet-ah": failed to add connection: AH integrity algorithm 'des' is not recognized
 west #
  echo "initdone"
 initdone
