@@ -783,7 +783,6 @@ static int extract_end(struct end *dst,
 	 *
 	 * Should this instead cross check?
 	 */
-	CERTCertificate *cert = NULL;
 	if (src->cert != NULL) {
 		if (src->ckaid != NULL) {
 			log_message(RC_LOG, logger,
@@ -797,12 +796,18 @@ static int extract_end(struct end *dst,
 				    dst->leftright, src->cert,
 				    dst->leftright, src->cert);
 		}
-		cert = get_cert_by_nickname_from_nss(src->cert, logger);
+		CERTCertificate *cert = cert = get_cert_by_nickname_from_nss(src->cert, logger);
 		if (cert == NULL) {
 			log_message(RC_FATAL, logger,
 				    "failed to add connection: %s certificate '%s' not found in the NSS database",
 				    dst->leftright, src->cert);
 			return -1; /* fatal */
+		}
+		diag_t diag = add_end_cert_and_preload_private_key(cert, dst, logger);
+		if (diag != NULL) {
+			log_diag(RC_FATAL, logger, &diag, "failed to add connection: ");
+			CERT_DestroyCertificate(cert);
+			return -1;
 		}
 	} else if (src->rsasigkey != NULL) {
 		if (src->ckaid != NULL) {
@@ -836,6 +841,18 @@ static int extract_end(struct end *dst,
 		    dst->leftright, str_ckaid(ckaid, &ckb), type->name);
 		dst->ckaid = clone_const_thing(*ckaid, "raw pubkey's ckaid");
 		type->free_pubkey_content(&pkc);
+		/* try to pre-load the private key */
+		bool load_needed;
+		err = preload_private_key_by_ckaid(type->ckaid_from_pubkey_content(&pkc),
+						   &load_needed, logger);
+		if (err != NULL) {
+			dbg("no preloaded private key matching CKAID: %s", err);
+		} else if (load_needed) {
+			ckaid_buf ckb;
+			log_message(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
+				    "loaded private key matching %s CKAID %s",
+				    dst->leftright, str_ckaid(ckaid, &ckb));
+		}
 	} else if (src->ckaid != NULL) {
 		ckaid_t ckaid;
 		err_t err = string_to_ckaid(src->ckaid, &ckaid);
@@ -856,19 +873,27 @@ static int extract_end(struct end *dst,
 		 * See if there's a certificate matching the CKAID, if
 		 * not assume things will later find the private key.
 		 */
-		cert = get_cert_by_ckaid_from_nss(&ckaid, logger);
-		if (cert == NULL) {
+		CERTCertificate *cert = get_cert_by_ckaid_from_nss(&ckaid, logger);
+		if (cert != NULL) {
+			diag_t diag = add_end_cert_and_preload_private_key(cert, dst, logger);
+			if (diag != NULL) {
+				log_diag(RC_FATAL, logger, &diag, "failed to add connection: ");
+				CERT_DestroyCertificate(cert);
+				return -1;
+			}
+		} else {
 			dbg("%s CKAID '%s' did not match a certificate in the NSS database",
 			    dst->leftright, src->ckaid);
-		}
-	}
-
-	if (cert != NULL) {
-		diag_t diag = add_end_cert_and_preload_private_key(cert, dst, logger);
-		if (diag != NULL) {
-			log_diag(RC_FATAL, logger, &diag, "failed to add connection: ");
-			CERT_DestroyCertificate(cert);
-			return -1;
+			/* try to pre-load the private key */
+			bool load_needed;
+			err_t err = preload_private_key_by_ckaid(&ckaid, &load_needed, logger);
+			if (err != NULL) {
+				dbg("no preloaded private key matching CKAID: %s", err);
+			} else {
+				log_message(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
+					    "loaded private key matching %s CKAID %s",
+					    dst->leftright, src->ckaid);
+			}
 		}
 	}
 
