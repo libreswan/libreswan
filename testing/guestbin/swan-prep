@@ -236,14 +236,6 @@ if not os.path.isdir(testpath):
 
 testname = os.path.basename(testpath)
 
-namespace = ''
-
-#this does not work:)
-if not args.namespace:
-    namespace = os.getenv('SWAN_TEST_NS')
-    if namespace:
-        args.namespace = True
-
 if not args.no_eth0:
     o = subprocess.run(['ip' , '-o', 'link' , 'show', 'dev', 'eth0'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="ascii")
     ifname = o.stdout.split(' ')[1]
@@ -251,8 +243,12 @@ if not args.no_eth0:
         print("cannot find eht0. test guest expect eth0. --no-eth0 to disable this check\n%s\n%s" % i (o.output, o.stderr))
         sys.exit(1)
 
-if re.match(r'eth0@if\d+', ifname):
-    args.namespace = True
+if not args.namespace:
+    o = subprocess.run(['ip', 'netns', 'identify'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="ascii")
+    namespace = o.stdout
+    namespace_expect = hostname + '-' + testname
+    if re.search(namespace_expect, namespace):
+        args.namespace = True
 
 if args.namespace:
     nsbasepath="%s/NS/%s" % (testpath, hostname) #will create testpath/NS/hostname/*
