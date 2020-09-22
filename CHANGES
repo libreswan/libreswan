@@ -43,6 +43,7 @@ v4.0 (unreleased)
 * IKEv2: A delete(IKE SA) request should not trigger a delete request [Andrew]
 * IKEv2: Ignore, not abort when receiving unknown type transforms [Andrew]
 * IKEv2: Don't switch NAT port on receiving non-NAT notify payloads [Andrew]
+* IKEv1: Prevent crashing in Quick Mode on unused NAT payload [Daniel Wendler]
 * libipsecconf: Fix config handling of policy-label [bauen1]
 * libipsecconf: promote ah= / esp= as desired keywords over phase2alg= [Paul]
 * building: Add NetBSD support [Andrew]
