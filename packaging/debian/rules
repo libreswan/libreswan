@@ -5,7 +5,7 @@ include /usr/share/dpkg/default.mk
 %:
 	dh $@ --with systemd
 
-# this should track the definition of USERCOMPILE in mk/userland-cflags.mk:43
+# this should track the definition of USERCOMPILE in mk/userland.mk:46
 # but without -fstack-protector-all for arches that lack stack-protector
 ifneq (,$(filter $(DEB_HOST_ARCH), hppa alpha))
 export USERCOMPILE = -fexceptions -fno-strict-aliasing -fPIE -DPIE
@@ -38,6 +38,7 @@ override_dh_auto_build:
 		PREFIX=/usr \
 		FINALLIBEXECDIR=/usr/libexec/ipsec \
 		FINALNSSDIR=/var/lib/ipsec/nss \
+		FINALMANDIR=/usr/share/man \
 		USE_LDAP=true \
 		USE_FIPSCHECK=false \
 		$(ENABLE_LIBCAP_NG) \
@@ -53,6 +54,7 @@ override_dh_auto_install-arch:
 		PREFIX=/usr \
 		FINALLIBEXECDIR=/usr/libexec/ipsec \
 		FINALNSSDIR=/var/lib/ipsec/nss \
+		FINALMANDIR=/usr/share/man \
 		USE_LDAP=true \
 		USE_FIPSCHECK=false \
 		$(ENABLE_LIBCAP_NG) \
