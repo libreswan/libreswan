@@ -31,6 +31,7 @@ endif
 #(info LINUX_VARIANT_VERSION=$(LINUX_VARIANT_VERSION))
 
 ifeq ($(LINUX_VARIANT),debian)
+  DEFAULT_DNSSEC_ROOTKEY_FILE?=/usr/share/dns/root.key
   ifndef VERSION_CODENAME
     ifneq ($(wildcard /etc/os-release),)
       VERSION_CODENAME:=$(shell sed -n -e 's/^VERSION_CODENAME=//p' /etc/os-release)
@@ -53,6 +54,7 @@ ifeq ($(LINUX_VARIANT),debian)
 endif
 
 ifeq ($(LINUX_VARIANT),ubuntu)
+  DEFAULT_DNSSEC_ROOTKEY_FILE?=/usr/share/dns/root.key
   VERSION_CODENAME:=$(shell sed -n -e 's/^VERSION_CODENAME=//p' /etc/os-release)
 
   ifeq ($(VERSION_CODENAME),focal)
