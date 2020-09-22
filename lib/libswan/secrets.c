@@ -1812,7 +1812,8 @@ static err_t find_or_load_private_key_by_cert_3(struct secret **secrets, CERTCer
 }
 
 static err_t find_or_load_private_key_by_cert_2(struct secret **secrets, CERTCertificate *cert,
-						const struct private_key_stuff **pks, struct logger *logger,
+						const struct private_key_stuff **pks, bool *load_needed,
+						struct logger *logger,
 						SECKEYPublicKey *pubk, SECItem *ckaid_nss)
 {
 
@@ -1826,10 +1827,12 @@ static err_t find_or_load_private_key_by_cert_2(struct secret **secrets, CERTCer
 	if (s != NULL) {
 		dbg("secrets entry for certificate already exists: %s", cert->nickname);
 		*pks = &s->pks;
+		*load_needed = false;
 		return NULL;
 	}
 
 	dbg("adding %s secret for certificate: %s", type->name, cert->nickname);
+	*load_needed = true;
 	err_t err = find_or_load_private_key_by_cert_3(secrets, cert, pks, logger,
 						       /* extracted fields */
 						       pubk, ckaid_nss, type);
@@ -1837,7 +1840,8 @@ static err_t find_or_load_private_key_by_cert_2(struct secret **secrets, CERTCer
 }
 
 static err_t find_or_load_private_key_by_cert_1(struct secret **secrets, CERTCertificate *cert,
-						const struct private_key_stuff **pks, struct logger *logger,
+						const struct private_key_stuff **pks, bool *load_needed,
+						struct logger *logger,
 						SECKEYPublicKey *pubk)
 {
 	/*
@@ -1851,7 +1855,7 @@ static err_t find_or_load_private_key_by_cert_1(struct secret **secrets, CERTCer
 		return "NSS: key ID not found";
 	}
 
-	err_t err = find_or_load_private_key_by_cert_2(secrets, cert, pks, logger,
+	err_t err = find_or_load_private_key_by_cert_2(secrets, cert, pks, load_needed, logger,
 						       /* extracted fields */
 						       pubk, ckaid_nss);
 	SECITEM_FreeItem(ckaid_nss, PR_TRUE);
@@ -1859,8 +1863,11 @@ static err_t find_or_load_private_key_by_cert_1(struct secret **secrets, CERTCer
 }
 
 err_t find_or_load_private_key_by_cert(struct secret **secrets, const struct cert *cert,
-				       const struct private_key_stuff **pks, struct logger *logger)
+				       const struct private_key_stuff **pks, bool *load_needed,
+				       struct logger *logger)
 {
+	*load_needed = false;
+
 	if (cert == NULL || cert->u.nss_cert == NULL) {
 		return "NSS cert not found";
 	}
@@ -1871,7 +1878,7 @@ err_t find_or_load_private_key_by_cert(struct secret **secrets, const struct cer
 		return "NSS: could not determine certificate kind; SECKEY_ExtractPublicKey() failed";
 	}
 
-	err_t err = find_or_load_private_key_by_cert_1(secrets, cert->u.nss_cert, pks, logger,
+	err_t err = find_or_load_private_key_by_cert_1(secrets, cert->u.nss_cert, pks, load_needed, logger,
 						       /* extracted fields */
 						       pubk);
 	SECKEY_DestroyPublicKey(pubk);
@@ -1898,8 +1905,10 @@ static err_t find_or_load_private_key_by_ckaid_1(struct secret **secrets,
 }
 
 err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *ckaid,
-					const struct private_key_stuff **pks, struct logger *logger)
+					const struct private_key_stuff **pks, bool *load_needed,
+					struct logger *logger)
 {
+	*load_needed = false;
 	passert(ckaid != NULL);
 
 	SECItem ckaid_nss = same_ckaid_as_secitem(ckaid);
@@ -1907,9 +1916,11 @@ err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *
 	if (s != NULL) {
 		dbg("secrets entry for ckaid already exists");
 		*pks = &s->pks;
+		*load_needed = false;
 		return NULL;
 	}
 
+	*load_needed = true;
 	PK11SlotInfo *slot = PK11_GetInternalKeySlot();
 	if (!pexpect(slot != NULL)) {
 		return "NSS: has no internal slot ....";
@@ -1927,6 +1938,8 @@ err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *
 		return "can't find the private key matching the NSS CKAID";
 	}
 
+	ckaid_buf ckb;
+	dbg("loaded private key matching CKAID %s", str_ckaid(ckaid, &ckb));
 	err_t err = find_or_load_private_key_by_ckaid_1(secrets, pks, &ckaid_nss, private_key);
 	SECKEY_DestroyPrivateKey(private_key);
 	return err;

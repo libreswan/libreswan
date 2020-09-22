@@ -312,9 +312,16 @@ static void key_add_request_1(const struct id *keyid, const struct pubkey_type *
 		}
 
 		/* try to pre-load the private key */
-		err_t err = preload_private_key_by_ckaid(type->ckaid_from_pubkey_content(pkc), logger);
+		bool load_needed;
+		const ckaid_t *ckaid = type->ckaid_from_pubkey_content(pkc);
+		err_t err = preload_private_key_by_ckaid(ckaid, &load_needed, logger);
 		if (err != NULL) {
 			dbg("no private key: %s", err);
+		} else if (load_needed) {
+			ckaid_buf ckb;
+			log_message(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
+				    "loaded private key matching CKAID %s",
+				    str_ckaid(ckaid, &ckb));
 		}
 	}
 }

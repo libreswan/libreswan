@@ -275,10 +275,13 @@ extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 
 extern struct secret *lsw_get_ppk_by_id(struct secret *secrets, chunk_t ppk_id);
 
+/* err_t!=NULL -> neither found nor loaded; loaded->just pulled in */
 err_t find_or_load_private_key_by_cert(struct secret **secrets, const struct cert *cert,
-				       const struct private_key_stuff **pks, struct logger *logger);
+				       const struct private_key_stuff **pks, bool *load_needed,
+				       struct logger *logger);
 err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *ckaid,
-					const struct private_key_stuff **pks, struct logger *logger);
+					const struct private_key_stuff **pks, bool *load_needed,
+					struct logger *logger);
 
 /* these do not clone */
 chunk_t same_secitem_as_chunk(SECItem si);

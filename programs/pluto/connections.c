@@ -1101,10 +1101,15 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	 * get_psk.
 	 */
 	dbg("preload cert/secret for connection: %s", cert->nickname);
-	err_t ugh = preload_private_key_by_cert(&dst_end->cert, logger);
+	bool load_needed;
+	err_t ugh = preload_private_key_by_cert(&dst_end->cert, &load_needed, logger);
 	if (ugh != NULL) {
 		dbg("warning: no secret key loaded for %s certificate  %s: %s",
 		    dst_end->leftright, nickname, ugh);
+	} else if (load_needed) {
+		log_message(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
+			    "loaded private key matching %s certificate %s",
+			    dst_end->leftright, nickname);
 	}
 	return NULL;
 }

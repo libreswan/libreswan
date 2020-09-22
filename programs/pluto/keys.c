@@ -673,12 +673,24 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 		    type->name);
 
 		const struct private_key_stuff *pks = NULL;
+		bool load_needed;
 		err_t err = find_or_load_private_key_by_cert(&pluto_secrets, &c->spd.this.cert,
-							     &pks, logger);
+							     &pks, &load_needed, logger);
 		if (err != NULL) {
 			dbg("private key for certificate %s not found in NSS DB",
 			    nickname);
 			return NULL;
+		} else if (load_needed) {
+			/*
+			 * XXX: the private key that was pre-loaded
+			 * during "whack add" may have been deleted
+			 * because all secrets were thrown away.
+			 *
+			 * The real problem is that the connection
+			 * lacks a counted reference to the private
+			 * key.
+			 */
+			log_message(RC_LOG, logger, "reloading private key load for certificate %s", nickname);
 		}
 
 		/*
@@ -701,14 +713,28 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 		    type->name);
 
 		const struct private_key_stuff *pks;
+		bool load_needed;
 		err_t err = find_or_load_private_key_by_ckaid(&pluto_secrets, c->spd.this.ckaid,
-							      &pks, logger);
+							      &pks, &load_needed, logger);
 		if (err != NULL) {
 			ckaid_buf ckb;
 			log_message(RC_LOG_SERIOUS, logger,
 				    "private key matching CKAID '%s' not found: %s",
 				    str_ckaid(c->spd.this.ckaid, &ckb), err);
 			return NULL;
+		} else if (load_needed) {
+			/*
+			 * XXX: the private key that was pre-loaded
+			 * during "whack add" may have been deleted
+			 * because all secrets were thrown away.
+			 *
+			 * The real problem is that the connection
+			 * lacks a counted reference to the private
+			 * key.
+			 */
+			ckaid_buf ckb;
+			log_message(RC_LOG, logger, "reloading private key for ckaid %s",
+				    str_ckaid(c->spd.this.ckaid, &ckb));
 		}
 
 
@@ -838,21 +864,23 @@ void list_public_keys(struct show *s, bool utc, bool check_pub_keys)
 	}
 }
 
-err_t preload_private_key_by_cert(const struct cert *cert, struct logger *logger)
+err_t preload_private_key_by_cert(const struct cert *cert, bool *load_needed, struct logger *logger)
 {
 	threadtime_t start = threadtime_start();
 	const struct private_key_stuff *pks;
-	err_t err = find_or_load_private_key_by_cert(&pluto_secrets, cert, &pks, logger);
+	err_t err = find_or_load_private_key_by_cert(&pluto_secrets, cert,
+						     &pks, load_needed, logger);
 	threadtime_stop(&start, SOS_NOBODY, "%s() loading private key %s", __func__,
 			cert->u.nss_cert->nickname);
 	return err;
 }
 
-err_t preload_private_key_by_ckaid(const ckaid_t *ckaid, struct logger *logger)
+err_t preload_private_key_by_ckaid(const ckaid_t *ckaid, bool *load_needed, struct logger *logger)
 {
 	threadtime_t start = threadtime_start();
 	const struct private_key_stuff *pks;
-	err_t err = find_or_load_private_key_by_ckaid(&pluto_secrets, ckaid, &pks, logger);
+	err_t err = find_or_load_private_key_by_ckaid(&pluto_secrets, ckaid,
+						      &pks, load_needed, logger);
 	threadtime_stop(&start, SOS_NOBODY, "%s() loading private key using CKAID", __func__);
 	return err;
 }
