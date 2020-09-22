@@ -357,6 +357,10 @@ void update_pending(struct ike_sa *old_ike, struct ike_sa *new_ike)
 {
 	struct pending *p, **pp;
 
+	pexpect(old_ike != NULL);
+	if (old_ike == NULL)
+		return;
+
 	pp = host_pair_first_pending(old_ike->sa.st_connection);
 	if (pp == NULL)
 		return;
