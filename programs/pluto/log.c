@@ -813,6 +813,33 @@ struct logger *clone_logger(const struct logger *stack)
 	return clone_thing(heap, "heap logger");
 }
 
+struct logger *string_logger(struct fd *whackfd, where_t where, const char *fmt, ...)
+{
+	/*
+	 * Convert the dynamicically generated OBJECT prefix into an
+	 * unchanging string.  This way the prefix can be safely
+	 * accessed on a helper thread.
+	 */
+	char prefix[LOG_WIDTH];
+	{
+		struct jambuf prefix_buf = ARRAY_AS_JAMBUF(prefix);
+		va_list ap;
+		va_start(ap, fmt);
+		jam_va_list(&prefix_buf, fmt, ap);
+		va_end(ap);
+	}
+	/* construct the clone */
+	struct logger logger = {
+		.global_whackfd = dup_any(whackfd),
+		.object_whackfd = null_fd,
+		.where = where,
+		.object_vec = &logger_string_vec,
+		.object = clone_str(prefix, "string logger prefix"),
+	};
+	/* and clone it */
+	return clone_thing(logger, "string logger");
+}
+
 void free_logger(struct logger **logp)
 {
 	close_any(&(*logp)->global_whackfd);

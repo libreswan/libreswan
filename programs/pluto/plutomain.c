@@ -725,8 +725,7 @@ int main(int argc, char **argv)
 	 * Start with the program name logger.
 	 */
 	pluto_name = argv[0];
-	struct logger progname_logger = STRING_LOGGER(argv[0], null_fd);
-	struct logger *logger = &progname_logger;
+	struct logger *logger = string_logger(null_fd, HERE, "%s", pluto_name);
 
 	conffile = clone_str(IPSEC_CONF, "conffile in main()");
 	coredir = clone_str(DEFAULT_RUNDIR, "coredir in main()");
