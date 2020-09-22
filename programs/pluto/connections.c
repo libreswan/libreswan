@@ -721,11 +721,10 @@ static void unshare_connection(struct connection *c)
 		reference_xfrmi(c);
 }
 
-static int extract_end(const char *connection_name,
-		       struct end *dst,
+static int extract_end(struct end *dst,
 		       const struct whack_end *src,
 		       const char *leftright,
-		       struct logger *logger)
+		       struct logger *logger/*connection "..."*/)
 {
 	dst->leftright = leftright;
 
@@ -742,8 +741,7 @@ static int extract_end(const char *connection_name,
 		err_t ugh = atoid(src->id, &dst->id);
 		if (ugh != NULL) {
 			log_message(RC_BADID, logger,
-				    "connection \"%s\": bad %s --id: %s (ignored)",
-				    connection_name, leftright, ugh);
+				    "bad %s --id: %s (ignored)", leftright, ugh);
 		}
 	}
 
@@ -759,8 +757,8 @@ static int extract_end(const char *connection_name,
 			ugh = atodn(src->ca, &dst->ca); /* static result! */
 			if (ugh != NULL) {
 				log_message(RC_LOG, logger,
-					    "connection \"%s\": bad %s CA string '%s': %s (ignored)",
-					    connection_name, leftright, src->ca, ugh);
+					    "bad %s CA string '%s': %s (ignored)",
+					    leftright, src->ca, ugh);
 				dst->ca = EMPTY_CHUNK;
 			} else {
 				dst->ca = clone_hunk(dst->ca, "ca string");
@@ -768,8 +766,8 @@ static int extract_end(const char *connection_name,
 				ugh = parse_dn(dst->ca);
 				if (ugh != NULL) {
 					log_message(RC_LOG, logger,
-						    "connection \"%s\": error parsing %s CA converted to DN: %s",
-						    connection_name, leftright, ugh);
+						    "error parsing %s CA converted to DN: %s",
+						    leftright, ugh);
 					DBG_dump_hunk(NULL, dst->ca);
 				}
 			}
@@ -802,8 +800,8 @@ static int extract_end(const char *connection_name,
 		cert = get_cert_by_nickname_from_nss(src->cert, logger);
 		if (cert == NULL) {
 			log_message(RC_FATAL, logger,
-				    "failed to add connection \"%s\": %s certificate '%s' not found in the NSS database",
-				    connection_name, dst->leftright, src->cert);
+				    "failed to add connection: %s certificate '%s' not found in the NSS database",
+				    dst->leftright, src->cert);
 			return -1; /* fatal */
 		}
 	} else if (src->rsasigkey != NULL) {
@@ -828,8 +826,8 @@ static int extract_end(const char *connection_name,
 		err = type->unpack_pubkey_content(&pkc, chunk2(keyspace, keylen));
 		if (err != NULL) {
 			log_message(RC_FATAL, logger,
-				    "failed to add connection \"%s\": %s raw public key invalid: %s",
-				    connection_name, dst->leftright, err);
+				    "failed to add connection: %s raw public key invalid: %s",
+				    dst->leftright, err);
 			return -1;
 		}
 		const ckaid_t *ckaid = type->ckaid_from_pubkey_content(&pkc);
@@ -845,8 +843,8 @@ static int extract_end(const char *connection_name,
 			/* should have been rejected by whack? */
 			/* XXX: don't trust whack */
 			log_message(RC_FATAL, logger,
-				    "failed to add connection \"%s\": %s CKAID '%s' invalid: %s",
-				    connection_name, dst->leftright, src->ckaid, err);
+				    "failed to add connection: %s CKAID '%s' invalid: %s",
+				    dst->leftright, src->ckaid, err);
 			return -1; /* fatal */
 		}
 		/*
@@ -868,8 +866,7 @@ static int extract_end(const char *connection_name,
 	if (cert != NULL) {
 		diag_t diag = add_end_cert_and_preload_private_key(cert, dst, logger);
 		if (diag != NULL) {
-			log_diag(RC_FATAL, logger, &diag, "failed to add connection \"%s\": ",
-				 connection_name);
+			log_diag(RC_FATAL, logger, &diag, "failed to add connection: ");
 			CERT_DestroyCertificate(cert);
 			return -1;
 		}
@@ -924,8 +921,8 @@ static int extract_end(const char *connection_name,
 	dst->raw.host.ikeport = src->host_ikeport;
 	if (src->host_ikeport > 65535) {
 		log_message(RC_BADID, logger,
-			    "connection \"%s\": %sikeport=%u must be between 1..65535, ignored",
-			    connection_name, leftright, src->host_ikeport);
+			    "%sikeport=%u must be between 1..65535, ignored",
+			    leftright, src->host_ikeport);
 		dst->raw.host.ikeport = 0;
 	}
 	if (dst->host_port ==0)
@@ -944,8 +941,8 @@ static int extract_end(const char *connection_name,
 					     &dst->host_addr);
 		if (er != NULL) {
 			log_message(RC_COMMENT, logger,
-				    "connection \"%s\": failed to convert '%s' at load time: %s",
-				    connection_name, dst->host_addr_name, er);
+				    "failed to convert '%s' at load time: %s",
+				    dst->host_addr_name, er);
 		}
 		break;
 	}
@@ -1113,7 +1110,10 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 }
 
 /* only used by add_connection() */
-static void mark_parse(const char *cnm, /*const*/ char *wmmark, struct sa_mark *sa_mark) {
+static void mark_parse(/*const*/ char *wmmark,
+		       struct sa_mark *sa_mark,
+		       struct logger *logger/*connection "...":*/)
+{
 	/*const*/ char *val_end;
 
 	sa_mark->unique = FALSE;
@@ -1129,9 +1129,9 @@ static void mark_parse(const char *cnm, /*const*/ char *wmmark, struct sa_mark *
 		    (*val_end != '\0' && *val_end != '/'))
 		{
 			/* ??? should be detected and reported by confread and whack */
-			loglog(RC_LOG_SERIOUS,
-				"connection \"%s\": bad mark value \"%s\"",
-				cnm, wmmark);
+			/* XXX: don't trust whack */
+			log_message(RC_LOG_SERIOUS, logger,
+				    "bad mark value \"%s\"", wmmark);
 		} else {
 			sa_mark->val = v;
 		}
@@ -1143,18 +1143,19 @@ static void mark_parse(const char *cnm, /*const*/ char *wmmark, struct sa_mark *
 		unsigned long v = strtoul(val_end+1, &mask_end, 0);
 		if (errno != 0 || v > 0xffffffff || *mask_end != '\0') {
 			/* ??? should be detected and reported by confread and whack */
-			loglog(RC_LOG_SERIOUS,
-				"connection \"%s\": bad mark mask \"%s\"",
-				cnm, mask_end);
+			/* XXX: don't trust whack */
+			log_message(RC_LOG_SERIOUS, logger,
+				   "bad mark mask \"%s\"", mask_end);
 		} else {
 			sa_mark->mask = v;
 		}
 	}
 	if ((sa_mark->val & ~sa_mark->mask) != 0) {
 		/* ??? should be detected and reported by confread and whack */
-		loglog(RC_LOG_SERIOUS,
-			"connection \"%s\": mark value %#08" PRIx32 " has bits outside mask %#08" PRIx32,
-			cnm, sa_mark->val, sa_mark->mask);
+		/* XXX: don't trust whack */
+		log_message(RC_LOG_SERIOUS, logger,
+			    "mark value %#08" PRIx32 " has bits outside mask %#08" PRIx32,
+			    sa_mark->val, sa_mark->mask);
 	}
 }
 
@@ -1179,7 +1180,7 @@ static void mark_parse(const char *cnm, /*const*/ char *wmmark, struct sa_mark *
  */
 static bool extract_connection(const struct whack_message *wm,
 			       struct connection *c,
-			       struct logger *logger/*global*/)
+			       struct logger *logger/*connection "..": */)
 {
 	/*
 	 * Give the connection a name early so that all error paths
@@ -1196,30 +1197,26 @@ static bool extract_connection(const struct whack_message *wm,
 
 	if ((wm->policy & POLICY_COMPRESS) && !can_do_IPcomp) {
 		log_message(RC_FATAL, logger,
-			    "failed to add connection \"%s\" with compress because kernel is not configured to do IPCOMP",
-			    wm->name);
+			    "failed to add connection with compress because kernel is not configured to do IPCOMP");
 		return false;
 	}
 
 	if ((wm->policy & POLICY_TUNNEL) == LEMPTY) {
 		if (wm->sa_tfcpad != 0) {
 			log_message(RC_FATAL, logger,
-				    "failed to add connection \"%s\": connection with type=transport cannot specify tfc=",
-				    wm->name);
+				    "failed to add connection: connection with type=transport cannot specify tfc=");
 			return false;
 		}
 		if (wm->vti_iface != NULL) {
 			log_message(RC_FATAL, logger,
-				    "failed to add connection \"%s\": VTI requires tunnel mode but connection specifies type=transport",
-				    wm->name);
+				    "failed to add connection: VTI requires tunnel mode but connection specifies type=transport");
 			return false;
 		}
 	}
 	if (LIN(POLICY_AUTHENTICATE, wm->policy)) {
 		if (wm->sa_tfcpad != 0) {
 			log_message(RC_FATAL, logger,
-				    "failed to add connection \"%s\": connection with phase2=ah cannot specify tfc=",
-				    wm->name);
+				    "failed to add connection: connection with phase2=ah cannot specify tfc=");
 			return false;
 		}
 	}
@@ -1227,16 +1224,14 @@ static bool extract_connection(const struct whack_message *wm,
 	if (LIN(POLICY_AUTH_NEVER, wm->policy)) {
 		if ((wm->policy & POLICY_SHUNT_MASK) == POLICY_SHUNT_TRAP) {
 			log_message(RC_FATAL, logger,
-				    "failed to add connection \"%s\": connection with authby=never must specify shunt type via type=",
-				    wm->name);
+				    "failed to add connection: connection with authby=never must specify shunt type via type=");
 			return false;
 		}
 	}
 	if ((wm->policy & POLICY_SHUNT_MASK) != POLICY_SHUNT_TRAP) {
 		if ((wm->policy & (POLICY_ID_AUTH_MASK & ~POLICY_AUTH_NEVER)) != LEMPTY) {
 			log_message(RC_FATAL, logger,
-				    "failed to add connection \"%s\": shunt connection cannot have authentication method other then authby=never",
-				    wm->name);
+				    "failed to add connection: shunt connection cannot have authentication method other then authby=never");
 			return false;
 		}
 	} else {
@@ -1244,15 +1239,13 @@ static bool extract_connection(const struct whack_message *wm,
 		case LEMPTY:
 			if (!LIN(POLICY_AUTH_NEVER, wm->policy)) {
 				log_message(RC_FATAL, logger,
-					    "failed to add connection \"%s\": non-shunt connection must have AH or ESP",
-					    wm->name);
+					    "failed to add connection: non-shunt connection must have AH or ESP");
 				return false;
 			}
 			break;
 		case POLICY_AUTHENTICATE | POLICY_ENCRYPT:
 			log_message(RC_FATAL, logger,
-				    "failed to add connection \"%s\": non-shunt connection must not specify both AH and ESP",
-				    wm->name);
+				    "failed to add connection: non-shunt connection must not specify both AH and ESP");
 			return false;
 		}
 	}
@@ -1269,64 +1262,58 @@ static bool extract_connection(const struct whack_message *wm,
 		break;
 	default:
 		log_message(RC_FATAL, logger,
-			    "failed to add connection \"%s\": connection can only be IKEv1 or IKEv2",
-			    wm->name);
+			    "failed to add connection: connection can only be IKEv1 or IKEv2");
 		return false;
 	}
 
 	if (wm->policy & POLICY_OPPORTUNISTIC &&
 	    c->ike_version == IKEv1) {
 		log_message(RC_FATAL, logger,
-			    "failed to add connection \"%s\": opportunistic connection MUST have IKEv2",
-			    wm->name);
+			    "failed to add connection: opportunistic connection MUST have IKEv2");
 		return false;
 	}
 
 	if (wm->policy & POLICY_MOBIKE &&
 	    c->ike_version == IKEv1) {
 		log_message(RC_FATAL, logger,
-			    "failed to add connection \"%s\": MOBIKE requires IKEv2",
-			    wm->name);
+			    "failed to add connection: MOBIKE requires IKEv2");
 		return false;
 	}
 
 	if (wm->policy & POLICY_IKEV2_ALLOW_NARROWING &&
 	    c->ike_version == IKEv1) {
 		log_message(RC_FATAL, logger,
-			    "failed to add connection \"%s\": narrowing=yes requires IKEv2",
-			    wm->name);
+			    "failed to add connection: narrowing=yes requires IKEv2");
 		return false;
 	}
 
 	if (wm->iketcp != IKE_TCP_NO &&
 	    c->ike_version != IKEv2) {
 		log_message(RC_FATAL, logger,
-			    "failed to add connection \"%s\": enable-tcp= requires IKEv2",
-			    wm->name);
+			    "failed to add connection: enable-tcp= requires IKEv2");
 		return false;
 	}
 
 	if (wm->policy & POLICY_MOBIKE) {
 		if (kernel_ops->migrate_sa_check == NULL) {
 			log_message(RC_FATAL, logger,
-				    "failed to add connection \"%s\": MOBIKE not supported by %s interface",
-				    wm->name, kernel_ops->kern_name);
+				    "failed to add connection: MOBIKE not supported by %s interface",
+				    kernel_ops->kern_name);
 			return false;
 		}
 		/* probe the interface */
 		err_t err = kernel_ops->migrate_sa_check();
 		if (err != NULL) {
 			log_message(RC_FATAL, logger,
-				    "failed to add connection \"%s\": MOBIKE kernel support missing for %s interface: %s",
-				    wm->name, kernel_ops->kern_name, err);
+				    "failed to add connection: MOBIKE kernel support missing for %s interface: %s",
+				    kernel_ops->kern_name, err);
 			return false;
 		}
 	}
 
 	if (wm->iketcp != IKE_TCP_NO && (wm->remote_tcpport == 0 || wm->remote_tcpport == 500)) {
 		log_message(RC_FATAL, logger,
-			    "failed to add connection \"%s\": tcp-remoteport cannot be 0 or 500",
-			    wm->name);
+			    "failed to add connection: tcp-remoteport cannot be 0 or 500");
 		return false;
 	}
 
@@ -1334,23 +1321,19 @@ static bool extract_connection(const struct whack_message *wm,
 	if (NEVER_NEGOTIATE(wm->policy)) {
 		if (wm->ike != NULL) {
 			log_message(RC_INFORMATIONAL, logger,
-				    "connection \"%s\": ignored ike= option for type=passthrough connection",
-				    wm->name);
+				    "ignored ike= option for type=passthrough connection");
 		}
 		if (wm->esp != NULL) {
 			log_message(RC_INFORMATIONAL, logger,
-				    "connection \"%s\": ignored esp= option for type=passthrough connection",
-				    wm->name);
+				    "ignored esp= option for type=passthrough connection");
 		}
 		if (wm->iketcp != IKE_TCP_NO) {
 			log_message(RC_INFORMATIONAL, logger,
-				    "connection \"%s\": ignored enable-tcp= option for type=passthrough connection",
-				    wm->name);
+				    "ignored enable-tcp= option for type=passthrough connection");
 		}
 		if (wm->left.authby != AUTHBY_UNSET || wm->right.authby != AUTHBY_UNSET) {
 			log_message(RC_FATAL, logger,
-				    "failed to add connection \"%s\": leftauth= / rightauth= options are invalid for type=passthrough connection",
-				    wm->name);
+				    "failed to add connection: leftauth= / rightauth= options are invalid for type=passthrough connection");
 			return false;
 		}
 	} else {
@@ -1358,14 +1341,12 @@ static bool extract_connection(const struct whack_message *wm,
 		if (wm->left.authby != AUTHBY_UNSET || wm->right.authby != AUTHBY_UNSET) {
 			if (c->ike_version == IKEv1) {
 				log_message(RC_FATAL, logger,
-					    "failed to add connection \"%s\": leftauth= and rightauth= require ikev2",
-					    wm->name);
+					    "failed to add connection: leftauth= and rightauth= require ikev2");
 				return false;
 			}
 			if (wm->left.authby == AUTHBY_UNSET || wm->right.authby == AUTHBY_UNSET) {
 				log_message(RC_FATAL, logger,
-					    "failed to add connection \"%s\": leftauth= and rightauth= must both be set or both be unset",
-					    wm->name);
+					    "failed to add connection: leftauth= and rightauth= must both be set or both be unset");
 				return false;
 			}
 			/* ensure no conflicts of set left/rightauth with (set or unset) authby= */
@@ -1398,8 +1379,7 @@ static bool extract_connection(const struct whack_message *wm,
 				}
 				if (conflict != NULL) {
 					log_message(RC_FATAL, logger,
-						    "failed to add connection \"%s\": leftauth=%s and rightauth=%s conflict with authby=%s, %s",
-						    wm->name,
+						    "failed to add connection: leftauth=%s and rightauth=%s conflict with authby=%s, %s",
 						    enum_name(&keyword_authby_names, wm->left.authby),
 						    enum_name(&keyword_authby_names, wm->right.authby),
 						    prettypolicy(wm->policy & POLICY_ID_AUTH_MASK),
@@ -1410,8 +1390,7 @@ static bool extract_connection(const struct whack_message *wm,
 				if ((wm->left.authby == AUTHBY_PSK && wm->right.authby == AUTHBY_NULL) ||
 				    (wm->left.authby == AUTHBY_NULL && wm->right.authby == AUTHBY_PSK)) {
 					log_message(RC_FATAL, logger,
-						    "failed to add connection \"%s\": cannot mix PSK and NULL authentication (leftauth=%s and rightauth=%s)",
-						    wm->name,
+						    "failed to add connection: cannot mix PSK and NULL authentication (leftauth=%s and rightauth=%s)",
 						    enum_name(&keyword_authby_names, wm->left.authby),
 						    enum_name(&keyword_authby_names, wm->right.authby));
 					return false;
@@ -1423,8 +1402,7 @@ static bool extract_connection(const struct whack_message *wm,
 	if (protoport_has_any_port(&wm->right.protoport) &&
 	    protoport_has_any_port(&wm->left.protoport)) {
 		log_message(RC_FATAL, logger,
-			    "failed to add connection \"%s\": cannot have protoport with %%any on both sides",
-			    wm->name);
+			    "failed to add connection: cannot have protoport with %%any on both sides");
 		return false;
 	}
 
@@ -1432,15 +1410,13 @@ static bool extract_connection(const struct whack_message *wm,
 	    !check_connection_end(&wm->left, &wm->right, wm)) {
 		/* XXX: shouldn't check_connection_end() log the error? */
 		log_message(RC_FATAL, logger,
-			    "failed to add connection \"%s\": attempt to load incomplete connection",
-			    wm->name);
+			    "failed to add connection: attempt to load incomplete connection");
 		return false;
 	}
 
 	if (subnet_type(&wm->left.client) != subnet_type(&wm->right.client)) {
 		log_message(RC_FATAL, logger,
-			    "failed to add connection \"%s\": subnets must have the same address family",
-			    wm->name);
+			    "failed to add connection: subnets must have the same address family");
 		return false;
 	}
 
@@ -1478,15 +1454,13 @@ static bool extract_connection(const struct whack_message *wm,
 		if (c->policy & POLICY_NEGO_PASS) {
 			c->policy &= ~POLICY_NEGO_PASS;
 			log_message(RC_LOG_SERIOUS, logger,
-				    "connection \"%s\": FIPS: ignored negotiationshunt=passthrough - packets MUST be blocked in FIPS mode",
-				    wm->name);
+				    "FIPS: ignored negotiationshunt=passthrough - packets MUST be blocked in FIPS mode");
 		}
 		if ((c->policy & POLICY_FAIL_MASK) == POLICY_FAIL_PASS) {
 			c->policy &= ~POLICY_FAIL_MASK;
 			c->policy |= POLICY_FAIL_NONE;
 			log_message(RC_LOG_SERIOUS, logger,
-				    "connection \"%s\": FIPS: ignored failureshunt=passthrough - packets MUST be blocked in FIPS mode",
-				    wm->name);
+				    "FIPS: ignored failureshunt=passthrough - packets MUST be blocked in FIPS mode");
 		}
 	}
 
@@ -1547,7 +1521,7 @@ static bool extract_connection(const struct whack_message *wm,
 			if (c->ike_proposals.p == NULL) {
 				pexpect(parser->diag != NULL); /* something */
 				log_diag(RC_FATAL, logger, &parser->diag,
-					 "failed to add connection \"%s\": ", wm->name);
+					 "failed to add connection: ");
 				free_proposal_parser(&parser);
 				/* caller will free C */
 				return false;
@@ -1606,7 +1580,7 @@ static bool extract_connection(const struct whack_message *wm,
 			if (c->child_proposals.p == NULL) {
 				pexpect(parser->diag != NULL);
 				log_diag(RC_FATAL, logger, &parser->diag,
-					 "failed to add connection \"%s\": ", wm->name);
+					 "failed to add connection: ");
 				free_proposal_parser(&parser);
 				/* caller will free C */
 				return false;
@@ -1635,8 +1609,7 @@ static bool extract_connection(const struct whack_message *wm,
 			deltatime_t new_rkm = deltatimescale(1, 2, c->sa_ipsec_life_seconds);
 
 			log_message(RC_LOG, logger,
-				    "connection \"%s\": rekeymargin (%jds) >= salifetime (%jds); reducing rekeymargin to %jds seconds",
-				    wm->name,
+				    "rekeymargin (%jds) >= salifetime (%jds); reducing rekeymargin to %jds seconds",
 				    deltasecs(c->sa_rekey_margin),
 				    deltasecs(c->sa_ipsec_life_seconds),
 				    deltasecs(new_rkm));
@@ -1651,14 +1624,14 @@ static bool extract_connection(const struct whack_message *wm,
 
 			if (deltasecs(c->sa_ike_life_seconds) > max_ike) {
 				log_message(RC_LOG_SERIOUS, logger,
-					    "connection \"%s\": IKE lifetime limited to the maximum allowed %jds",
-					    wm->name, (intmax_t) max_ike);
+					    "IKE lifetime limited to the maximum allowed %jds",
+					    (intmax_t) max_ike);
 				c->sa_ike_life_seconds = deltatime(max_ike);
 			}
 			if (deltasecs(c->sa_ipsec_life_seconds) > max_ipsec) {
 				log_message(RC_LOG_SERIOUS, logger,
-					    "connection \"%s\": IPsec lifetime limited to the maximum allowed %jds",
-					    wm->name, (intmax_t) max_ipsec);
+					    "IPsec lifetime limited to the maximum allowed %jds",
+					    (intmax_t) max_ipsec);
 				c->sa_ipsec_life_seconds = deltatime(max_ipsec);
 			}
 		}
@@ -1712,18 +1685,17 @@ static bool extract_connection(const struct whack_message *wm,
 
 		/* mark-in= and mark-out= overwrite mark= */
 		if (wm->conn_mark_both != NULL) {
-			mark_parse(wm->name, wm->conn_mark_both, &c->sa_marks.in);
-			mark_parse(wm->name, wm->conn_mark_both, &c->sa_marks.out);
+			mark_parse(wm->conn_mark_both, &c->sa_marks.in, logger);
+			mark_parse(wm->conn_mark_both, &c->sa_marks.out, logger);
 			if (wm->conn_mark_in != NULL || wm->conn_mark_out != NULL) {
 				log_message(RC_LOG_SERIOUS, logger,
-					    "connection \"%s\": conflicting mark specifications",
-					    wm->name);
+					    "conflicting mark specifications");
 			}
 		}
 		if (wm->conn_mark_in != NULL)
-			mark_parse(wm->name, wm->conn_mark_in, &c->sa_marks.in);
+			mark_parse(wm->conn_mark_in, &c->sa_marks.in, logger);
 		if (wm->conn_mark_out != NULL)
-			mark_parse(wm->name, wm->conn_mark_out, &c->sa_marks.out);
+			mark_parse(wm->conn_mark_out, &c->sa_marks.out, logger);
 
 		c->vti_iface = clone_str(wm->vti_iface, "connection vti_iface");
 		c->vti_routing = wm->vti_routing;
@@ -1737,8 +1709,8 @@ static bool extract_connection(const struct whack_message *wm,
 					return false;
 			} else {
 				log_message(RC_FATAL, logger,
-					    "failed to add connection \"%s\": ipsec-interface=%u not supported. %s",
-					    wm->name, wm->xfrm_if_id, err);
+					    "failed to add connection: ipsec-interface=%u not supported. %s",
+					    wm->xfrm_if_id, err);
 				return false;
 			}
 		}
@@ -1767,11 +1739,11 @@ static bool extract_connection(const struct whack_message *wm,
 	 * orient() set up .local and .remote pointers or indexes
 	 * accordingly?
 	 */
-	int same_leftca = extract_end(wm->name, &c->spd.this, &wm->left, "left", logger);
+	int same_leftca = extract_end(&c->spd.this, &wm->left, "left", logger);
 	if (same_leftca < 0) {
 		return false;
 	}
-	int same_rightca = extract_end(wm->name, &c->spd.that, &wm->right, "right", logger);
+	int same_rightca = extract_end(&c->spd.that, &wm->right, "right", logger);
 	if (same_rightca < 0) {
 		return false;
 	}
@@ -1895,8 +1867,7 @@ static bool extract_connection(const struct whack_message *wm,
 		if (c->sa_keying_tries == 0) {
 			c->sa_keying_tries = 1;
 			log_message(RC_LOG, logger,
-				    "connection \"%s\": the connection is Opportunistic, but used keyingtries=0. The specified value was changed to 1",
-				    wm->name);
+				    "the connection is Opportunistic, but used keyingtries=0. The specified value was changed to 1");
 		}
 	}
 
@@ -1974,7 +1945,8 @@ static const char *const policy_shunt_names[4] = {
 
 void add_connection(struct fd *whackfd, const struct whack_message *wm)
 {
-	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
+	struct logger *logger = string_logger(whackfd, HERE,
+					      "connection \"%s\": ", wm->name); /*must-free*/
 	struct connection *c = alloc_connection(HERE);
 	if (extract_connection(wm, c, logger)) {
 		/* log all about this connection */
@@ -2001,6 +1973,7 @@ void add_connection(struct fd *whackfd, const struct whack_message *wm)
 		 */
 		discard_connection(c, false/*not-valid*/, logger);
 	}
+	free_logger(&logger);
 }
 
 /*
