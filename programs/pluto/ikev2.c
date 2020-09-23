@@ -2172,8 +2172,8 @@ static void hack_error_transition(struct state *st, struct msg_digest *md)
 		 * down; would adding an extra transition that always
 		 * matches be better?
 		 */
-		pexpect(state->nr_transitions == 5);
-		transition = &state->v2_transitions[3];
+		pexpect(state->nr_transitions == 6);
+		transition = &state->v2_transitions[4];
 		pexpect(transition->state == STATE_PARENT_I2);
 		pexpect(transition->next_state == STATE_V2_ESTABLISHED_CHILD_SA);
 		break;
