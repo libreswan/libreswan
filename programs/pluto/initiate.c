@@ -143,10 +143,7 @@ static bool orient_new_iface_port(struct connection *c, struct fd *whackfd, bool
 		dbg("could not create new interface");
 		return false;
 	}
-	endpoint_buf b;
-	log_global(RC_LOG, whackfd, "adding interface %s %s",
-		   ifp->ip_dev->id_rname,
-		   str_endpoint(&ifp->local_endpoint, &b));
+	/* already logged */
 	c->interface = ifp;
 	if (!this) {
 		dbg("swapping to that; new interface");
