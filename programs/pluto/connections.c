@@ -350,49 +350,55 @@ void delete_every_connection(void)
 		delete_connection(connections, TRUE);
 }
 
-static void default_end(const char *leftright, struct end *e,
-			ip_address *dflt_nexthop, unsigned peer_ikeport)
+static void update_ends_from_this_host_addr(struct end *this, struct end *that)
 {
-	const struct ip_info *afi = address_type(&e->host_addr);
+	const struct ip_info *afi = address_type(&this->host_addr);
 	if (afi == NULL) {
-		dbg("%s.host_addr's address family is unknown; skipping default_end()", e->leftright);
+		dbg("%s.host_addr's address family is unknown; skipping default_end()",
+		    this->leftright);
 		return;
 	}
+	dbg("updating connection from %s.host_addr", this->leftright);
 
 	/* Default ID to IP (but only if not NO_IP -- WildCard) */
-	if (e->id.kind == ID_NONE && endpoint_is_specified(&e->host_addr)) {
-		e->id.kind = afi->id_addr;
-		e->id.ip_addr = e->host_addr;
-		e->has_id_wildcards = FALSE;
+	if (this->id.kind == ID_NONE && endpoint_is_specified(&this->host_addr)) {
+		this->id.kind = afi->id_addr;
+		this->id.ip_addr = this->host_addr;
+		this->has_id_wildcards = FALSE;
 	}
 
-	/* Default nexthop to other side. */
-	if (isanyaddr(&e->host_nexthop))
-		e->host_nexthop = *dflt_nexthop;
+	/* propogate this HOST_ADDR to that. */
+	if (isanyaddr(&that->host_nexthop)) {
+		that->host_nexthop = this->host_addr;
+		address_buf ab;
+		dbg("%s host_nexthop %s",
+		    that->leftright, str_address(&that->host_nexthop, &ab));
+	}
 
 	/*
-	 * If one end has an ikeport, the other must either use
-	 * IKEPORT or NAT port - messages must be prefixed.
+	 * If THAT has an IKEPORT (which means messages are ESP=0
+	 * prefixed), then THIS must send from either IKEPORT or the
+	 * NAT port (and also ESP=0 prefix messages).
 	 */
-	e->host_port = (e->raw.host.ikeport ? e->raw.host.ikeport :
-			peer_ikeport ? NAT_IKE_UDP_PORT :
-			IKE_UDP_PORT);
-	dbg("%s host_port %d", leftright, e->host_port);
+	this->host_port = (this->raw.host.ikeport != 0 ? this->raw.host.ikeport :
+			   that->raw.host.ikeport != 0 ? NAT_IKE_UDP_PORT :
+			   IKE_UDP_PORT);
+	dbg("%s host_port %d", this->leftright, this->host_port);
 
 	/* Default client to subnet containing only self */
-	if (!e->has_client) {
+	if (!this->has_client) {
 		/*
 		 * Default client to a subnet containing only self.
 		 *
 		 * For instance, the config file omitted subnet, but
 		 * specified protoport; merge that.
 		 */
-		e->client = selector_from_address(&e->host_addr, &e->raw.client.protoport);
+		this->client = selector_from_address(&this->host_addr, &this->raw.client.protoport);
 	}
 
-	if (e->sendcert == 0) {
+	if (this->sendcert == 0) {
 		/* uninitialized (ugly hack) */
-		e->sendcert = CERT_SENDIFASKED;
+		this->sendcert = CERT_SENDIFASKED;
 	}
 }
 
@@ -1812,8 +1818,8 @@ static bool extract_connection(const struct whack_message *wm,
 	if (c->spd.this.xauth_server || c->spd.that.xauth_server)
 		c->policy |= POLICY_XAUTH;
 
-	default_end("left", &c->spd.this, &c->spd.that.host_addr, c->spd.that.raw.host.ikeport);
-	default_end("right", &c->spd.that, &c->spd.this.host_addr, c->spd.this.raw.host.ikeport);
+	update_ends_from_this_host_addr(&c->spd.this, &c->spd.that);
+	update_ends_from_this_host_addr(&c->spd.that, &c->spd.this);
 
 	/*
 	 * If both left/rightauth is unset, fill it in with (preferred) symmetric policy
@@ -2149,14 +2155,14 @@ struct connection *instantiate(struct connection *c,
 	if (peer_addr != NULL) {
 		d->spd.that.host_addr = *peer_addr;
 	}
-	default_end("that", &d->spd.that, &d->spd.this.host_addr, d->spd.this.raw.host.ikeport);
+	update_ends_from_this_host_addr(&d->spd.that, &d->spd.this);
 
 	/*
 	 * We cannot guess what our next_hop should be, but if it was
 	 * explicitly specified as 0.0.0.0, we set it to be peer.
 	 * (whack will not allow nexthop to be elided in RW case.)
 	 */
-	default_end("this", &d->spd.this, &d->spd.that.host_addr, d->spd.that.raw.host.ikeport);
+	update_ends_from_this_host_addr(&d->spd.this, &d->spd.that);
 	d->spd.spd_next = NULL;
 
 	d->spd.reqid = c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid;
