@@ -922,7 +922,8 @@ kvmplutotest	interop-ikev2-strongswan-47-addresspool-ipv6	good
 kvmplutotest	ipv6-addresspool-01-ikev2		good
 kvmplutotest	ipv6-addresspool-02-ikev2		good
 kvmplutotest	ipv6-addresspool-02-3-clients-ikev2	good
-kvmplutotest	ipv6-addresspool-04-src-address-selection wip
+kvmplutotest	ipv6-addresspool-04-src-address-selection good
+kvmplutotest 	ipv6-addresspool-05-dual-stack		wip
 
 
 
