@@ -14,7 +14,7 @@ road #
  ip -6 route
 2001:db8:1:3::/64 dev eth0 proto kernel metric 256 pref medium
 fe80::/64 dev eth0 proto kernel metric 256 pref medium
-default via 2001:db8:1:3::254 dev eth0 metric 1024 pref medium
+default via 2001:db8:1:3::254 dev eth0
 road #
  ipsec start
 Redirecting to: [initsystem]
