@@ -2133,27 +2133,38 @@ static void ike_process_packet(struct msg_digest *md, struct ike_sa *ike)
  * packet was ok, so it can be 'failed'.
  *
  * This is largely astetic.  It could use the first transition but
- * often a later transition.  Perhaps the last transition since,
- * presuably, that is the most generic?
+ * often a later transition reads better.  Perhaps the last transition
+ * since, presumably, that is the most generic?
  */
 
-static void hack_error_transition(struct state *st)
+static void hack_error_transition(struct state *st, struct msg_digest *md)
 {
+	passert(md != NULL);
 	const struct state_v2_microcode *transition;
 	const struct finite_state *state = st->st_state;
 	switch (state->kind) {
 	case STATE_PARENT_R1:
 		/*
-		 * Responding to IKE_AUTH request: it is the second
-		 * state because the first is the NOSKEYSEED
-		 * transition.  Once SKEYSEED is off-loaded and
-		 * STATE_PARENT_I1 has only one transition, this is no
-		 * longer a hack.
+		 * Responding to either an IKE_INTERMEDIATE or
+		 * IKE_AUTH request: look for the NOSKEYSEED
+		 * transitions (and prefer IKE_AUTH).
+		 *
+		 * Once SKEYSEED is off-loaded and STATE_PARENT_I1 has
+		 * only one (ok, two) transition, this is no longer a
+		 * hack.
 		 */
-		pexpect(state->nr_transitions == 2);
-		transition = &state->v2_transitions[1];
-		pexpect(transition->state == STATE_PARENT_R1 &&
-			transition->next_state == STATE_V2_ESTABLISHED_CHILD_SA);
+		pexpect(state->nr_transitions == 4);
+		if (md->hdr.isa_xchg == ISAKMP_v2_IKE_INTERMEDIATE) {
+			transition = &state->v2_transitions[2];
+			pexpect(transition->recv_type == ISAKMP_v2_IKE_INTERMEDIATE);
+			pexpect(transition->next_state == STATE_PARENT_R1);
+		} else {
+			transition = &state->v2_transitions[3];
+			pexpect(transition->recv_type == ISAKMP_v2_IKE_AUTH);
+			pexpect(transition->next_state == STATE_V2_ESTABLISHED_CHILD_SA);
+		}
+		pexpect((transition->flags & SMF2_NO_SKEYSEED) == 0);
+		pexpect(transition->state == STATE_PARENT_R1);
 		break;
 	case STATE_PARENT_I2:
 		/*
@@ -2163,12 +2174,12 @@ static void hack_error_transition(struct state *st)
 		 */
 		pexpect(state->nr_transitions == 5);
 		transition = &state->v2_transitions[3];
-		pexpect(transition->state == STATE_PARENT_I2 &&
-			transition->next_state == STATE_V2_ESTABLISHED_CHILD_SA);
+		pexpect(transition->state == STATE_PARENT_I2);
+		pexpect(transition->next_state == STATE_V2_ESTABLISHED_CHILD_SA);
 		break;
 	default:
 		if (/*pexpect*/(state->nr_transitions > 0)) {
-			transition = &state->v2_transitions[state->nr_transitions-1];
+			transition = &state->v2_transitions[state->nr_transitions - 1];
 		} else {
 			static const struct state_v2_microcode undefined_transition = {
 				.story = "suspect message",
@@ -2397,7 +2408,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				 * been run so it can be
 				 * 'failed'.
 				 */
-				hack_error_transition(st);
+				hack_error_transition(st, md);
 				switch (v2_msg_role(md)) {
 				case MESSAGE_REQUEST:
 					/*
@@ -2509,7 +2520,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * that would have been run so it can
 			 * be 'failed'.
 			 */
-			hack_error_transition(st);
+			hack_error_transition(st, md);
 			switch (v2_msg_role(md)) {
 			case MESSAGE_REQUEST:
 				/*
