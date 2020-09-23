@@ -981,6 +981,8 @@ kvmplutotest	interop-ikev2-strongswan-41-responder-digsig-rsa-pss-256	good
 kvmplutotest	interop-ikev2-strongswan-42-initiator-digsig-rsa-pss-384	good
 kvmplutotest	interop-ikev2-strongswan-43-initiator-digsig-rsa-pss-multi-hash	good
 kvmplutotest	interop-ikev2-strongswan-44-responder-digsig-rsa-pss-multi-hash	good
+# bug in strongswan causes this test to fail ?
+kvmplutotest	interop-ikev2-strongswan-48-chacha20poly1305-ikeesp wip
 
 # Fails on purpose - shows strongswan issue
 kvmplutotest	interop-ikev2-strongswan-36-initiator-sha1-sha2-rsa_pss-no	wip
