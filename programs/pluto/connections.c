@@ -355,7 +355,8 @@ static void default_end(const char *leftright, struct end *e,
 {
 	const struct ip_info *afi = address_type(&e->host_addr);
 	if (afi == NULL) {
-		dbg("%s.host_addr's address family is unknown", e->leftright);
+		dbg("%s.host_addr's address family is unknown; skipping default_end()", e->leftright);
+		return;
 	}
 
 	/* Default ID to IP (but only if not NO_IP -- WildCard) */
