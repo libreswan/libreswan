@@ -27,6 +27,7 @@ v4.0 (unreleased)
 * pluto: Fix logging some IKE messages to proper IKE SA state [Andrew]
 * pluto: remove global ikeport/nat-ikeport, add listen-udp/listen-tcp [Paul]
 * pluto: connections now have serial numbers which are logged [Paul/Andrew]
+* pluto: pluto chooses wrong raw RSA key (github#352) [Andrew]
 * seccomp: Update syscall allowlist for pluto and addconn [Paul]
 * whack: Support for ipsec whack --rereadcerts [Paul]
 * whack: rename --ikev1-allow and --ikev2-allow to --ikev1 and --ikev2 [Paul]
