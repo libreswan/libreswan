@@ -354,7 +354,7 @@ static bool load_setup(struct starter_config *cfg,
 			break;
 
 		case kt_bitstring:
-		case kt_rsakey:
+		case kt_rsasigkey:
 		case kt_ipaddr:
 		case kt_subnet:
 		case kt_range:
@@ -597,22 +597,21 @@ static bool validate_end(struct starter_conn *conn_st,
 		}
 	}
 
-	if (end->options_set[KSCF_RSAKEY1]) {
-		end->rsakey1_type = end->options[KSCF_RSAKEY1];
+	if (end->options_set[KSCF_RSASIGKEY]) {
+		end->rsasigkey_type = end->options[KSCF_RSASIGKEY];
 
-		switch (end->options[KSCF_RSAKEY1]) {
+		switch (end->options[KSCF_RSASIGKEY]) {
 		case PUBKEY_DNSONDEMAND:
 			end->key_from_DNS_on_demand = TRUE;
 			break;
 
 		default:
 			end->key_from_DNS_on_demand = FALSE;
-			/* validate the KSCF_RSAKEY1/RSAKEY2 */
-			if (end->strings[KSCF_RSAKEY1] != NULL) {
-				char *value = end->strings[KSCF_RSAKEY1];
-
-				pfreeany(end->rsakey1);
-				end->rsakey1 = clone_str(value, "end->rsakey1");
+			/* validate the KSCF_RSASIGKEY1/RSASIGKEY2 */
+			if (end->strings[KSCF_RSASIGKEY] != NULL) {
+				char *value = end->strings[KSCF_RSASIGKEY];
+				pfreeany(end->rsasigkey);
+				end->rsasigkey = clone_str(value, "end->rsasigkey");
 			}
 		}
 	}
@@ -884,7 +883,7 @@ static bool translate_conn(struct starter_conn *conn,
 			(*set_strings)[field] = TRUE;
 			break;
 
-		case kt_rsakey:
+		case kt_rsasigkey:
 		case kt_loose_enum:
 			assert(field <= KSCF_last_loose);
 
@@ -1572,7 +1571,7 @@ static void copy_conn_default(struct starter_conn *conn,
 
 	STR_FIELD_END(iface);
 	STR_FIELD_END(id);
-	STR_FIELD_END(rsakey1);
+	STR_FIELD_END(rsasigkey);
 	STR_FIELD_END(virt);
 	STR_FIELD_END(certx);
 	STR_FIELD_END(ckaid);
@@ -1749,7 +1748,7 @@ static void confread_free_conn(struct starter_conn *conn)
 
 	STR_FIELD_END(iface);
 	STR_FIELD_END(id);
-	STR_FIELD_END(rsakey1);
+	STR_FIELD_END(rsasigkey);
 	STR_FIELD_END(virt);
 	STR_FIELD_END(certx);
 	STR_FIELD_END(ckaid);

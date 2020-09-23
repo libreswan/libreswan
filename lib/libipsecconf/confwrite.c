@@ -83,7 +83,7 @@ static void confwrite_int(FILE *out,
 		case kt_appendlist:
 		case kt_filename:
 		case kt_dirname:
-		case kt_rsakey:
+		case kt_rsasigkey:
 
 		case kt_percent:
 		case kt_ipaddr:
@@ -221,7 +221,7 @@ static void confwrite_str(FILE *out,
 			}
 			break;
 
-		case kt_rsakey:
+		case kt_rsasigkey:
 		case kt_ipaddr:
 		case kt_range:
 		case kt_subnet:
@@ -349,8 +349,8 @@ static void confwrite_side(FILE *out,
 			str_subnet(&end->ifaceip, &as));
 	}
 
-	if (end->rsakey1 != NULL && end->rsakey1[0] != '\0')
-		fprintf(out, "\t%srsasigkey=%s\n", side, end->rsakey1);
+	if (end->rsasigkey != NULL && end->rsasigkey[0] != '\0')
+		fprintf(out, "\t%srsasigkey=%s\n", side, end->rsasigkey);
 
 	if (protoport_is_set(&end->protoport)) {
 		protoport_buf buf;

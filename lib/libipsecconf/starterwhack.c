@@ -376,18 +376,18 @@ static void set_whack_end(char *lr,
 	if (l->ckaid != NULL) {
 		w->ckaid = l->ckaid;
 	}
-	if (l->rsakey1_type == PUBKEY_PREEXCHANGED) {
+	if (l->rsasigkey_type == PUBKEY_PREEXCHANGED) {
 		/*
 		 * Only send over raw (prexchanged) rsapubkeys (i.e.,
 		 * not %cert et.a.)
 		 *
-		 * XXX: but what is with the two rsakeys?  Whack seems
+		 * XXX: but what is with the two rsasigkeys?  Whack seems
 		 * to be willing to send pluto two raw pubkeys under
 		 * the same ID.  Just assume that the first key should
 		 * be used for the CKAID.
 		 */
-		passert(l->rsakey1 != NULL);
-		w->rsasigkey = l->rsakey1;
+		passert(l->rsasigkey != NULL);
+		w->rsasigkey = l->rsasigkey;
 	}
 	w->ca = l->ca;
 	if (l->options_set[KNCF_SENDCERT])
@@ -435,10 +435,10 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 
 	msg.whack_key = TRUE;
 	msg.pubkey_alg = PUBKEY_ALG_RSA;
-	if (end->id && end->rsakey1) {
+	if (end->id && end->rsasigkey) {
 		msg.keyid = end->id;
 
-		switch (end->rsakey1_type) {
+		switch (end->rsasigkey_type) {
 		case PUBKEY_DNSONDEMAND:
 			starter_log(LOG_LEVEL_DEBUG,
 				"conn %s/%s has key from DNS",
@@ -455,19 +455,19 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 			break;
 
 		case PUBKEY_PREEXCHANGED:
-			err = ttodatav(end->rsakey1, 0, 0, keyspace,
+			err = ttodatav(end->rsasigkey, 0, 0, keyspace,
 				sizeof(keyspace),
 				&msg.keyval.len,
 				err_buf, sizeof(err_buf), 0);
 			if (err) {
 				starter_log(LOG_LEVEL_ERR,
-					"conn %s/%s: rsakey malformed [%s]",
+					"conn %s/%s: rsasigkey malformed [%s]",
 					connection_name(conn), lr, err);
 				return 1;
 			} else {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "\tsending %s %srsasigkey=%s",
-					    connection_name(conn), lr, end->rsakey1);
+					    connection_name(conn), lr, end->rsasigkey);
 				msg.keyval.ptr = (unsigned char *)keyspace;
 				ret = send_whack_msg(&msg, cfg->ctlsocket);
 			}
@@ -685,12 +685,12 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	if (r != 0)
 		return r;
 
-	if (conn->left.rsakey1 != NULL) {
+	if (conn->left.rsasigkey != NULL) {
 		r = starter_whack_add_pubkey(cfg, conn, &conn->left,  "left");
 		if (r != 0)
 			return r;
 	}
-	if (conn->right.rsakey1 != NULL) {
+	if (conn->right.rsasigkey != NULL) {
 		r = starter_whack_add_pubkey(cfg, conn, &conn->right,  "right");
 		if (r != 0)
 			return r;

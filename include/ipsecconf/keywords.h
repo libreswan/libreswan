@@ -128,7 +128,7 @@ enum keyword_numeric_config_field {
 enum keyword_string_conn_field {
 	KSCF_IP,	/* loose_enum */ /* left/right */
 	KSCF_NEXTHOP,	/* loose_enum */ /* left/right */
-	KSCF_RSAKEY1,	/* loose_enum */ /* left/right */
+	KSCF_RSASIGKEY,	/* loose_enum */ /* left/right */
 	KSCF_XFRM_IF_ID,
 		KSCF_last_loose = KSCF_XFRM_IF_ID,
 
@@ -181,7 +181,7 @@ enum keyword_string_conn_field {
 enum keyword_numeric_conn_field {
 	KNCF_IP		= KSCF_IP,	/* loose_enum */ /* left/right */
 	KNCF_NEXTHOP	= KSCF_NEXTHOP,	/* loose_enum */ /* left/right */
-	KNCF_RSAKEY1	= KSCF_RSAKEY1,	/* loose_enum */ /* left/right */
+	KNCF_RSASIGKEY	= KSCF_RSASIGKEY,	/* loose_enum */ /* left/right */
 	KNCF_XFRM_IF_ID =  KSCF_XFRM_IF_ID,
 
 	KNCF_XAUTHSERVER,	/* left/right */
@@ -357,7 +357,7 @@ enum keyword_type {
 	kt_list,                /* a set of values from a set of key words */
 	kt_lset,		/* a set of values from an enum name */
 	kt_loose_enum,          /* either a string, or a %-prefixed enum */
-	kt_rsakey,              /* a key, or set of values */
+	kt_rsasigkey,           /* a public key, or set of values */
 	kt_number,              /* an integer */
 	kt_time,                /* a number representing time */
 	kt_percent,             /* a number representing percentage */
