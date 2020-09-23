@@ -725,7 +725,7 @@ int main(int argc, char **argv)
 	 * Start with the program name logger.
 	 */
 	pluto_name = argv[0];
-	struct logger *logger = string_logger(null_fd, HERE, "%s", pluto_name);
+	struct logger *logger = string_logger(null_fd, HERE, "%s", pluto_name); /* must free */
 
 	conffile = clone_str(IPSEC_CONF, "conffile in main()");
 	coredir = clone_str(DEFAULT_RUNDIR, "coredir in main()");
@@ -1597,6 +1597,7 @@ int main(int argc, char **argv)
 	 */
 	pluto_init_log(log_param);
 	struct logger global_logger = GLOBAL_LOGGER(null_fd);
+	free_logger(&logger);
 	logger = &global_logger;
 
 	pluto_init_nss(oco->nssdir, logger);
