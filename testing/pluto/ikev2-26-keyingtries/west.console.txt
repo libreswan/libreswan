@@ -48,13 +48,15 @@ west #
  # if no STATE_s show up, this test failed
 west #
  ipsec status |grep STATE_  || echo "test failed, all states went away"
-000 #3: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_PARENT_I1 (sent IKE_SA_INIT request); EVENT_RETRANSMIT in XXs; idle;
+000 #3: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_PARENT_I2 (sent IKE_AUTH request); EVENT_SA_REPLACE in XXs; idle;
+000 #4: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_PARENT_I2 (sent IKE_AUTH request); EVENT_RETRANSMIT in XXs; idle;
 west #
  # only one pending CHILD SA event should show up
 west #
  ipsec status |egrep "STATE_|pending"
-000 #3: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_PARENT_I1 (sent IKE_SA_INIT request); EVENT_RETRANSMIT in XXs; idle;
+000 #3: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_PARENT_I2 (sent IKE_AUTH request); EVENT_SA_REPLACE in XXs; idle;
 000 #3: pending CHILD SA for "westnet-eastnet-ipv4-psk-ikev2"
+000 #4: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_PARENT_I2 (sent IKE_AUTH request); EVENT_RETRANSMIT in XXs; idle;
 west #
  echo done
 done
