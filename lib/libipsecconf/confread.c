@@ -599,7 +599,6 @@ static bool validate_end(struct starter_conn *conn_st,
 
 	if (end->options_set[KSCF_RSAKEY1]) {
 		end->rsakey1_type = end->options[KSCF_RSAKEY1];
-		end->rsakey2_type = end->options[KSCF_RSAKEY2];
 
 		switch (end->options[KSCF_RSAKEY1]) {
 		case PUBKEY_DNSONDEMAND:
@@ -614,12 +613,6 @@ static bool validate_end(struct starter_conn *conn_st,
 
 				pfreeany(end->rsakey1);
 				end->rsakey1 = clone_str(value, "end->rsakey1");
-			}
-			if (end->strings[KSCF_RSAKEY2] != NULL) {
-				char *value = end->strings[KSCF_RSAKEY2];
-
-				pfreeany(end->rsakey2);
-				end->rsakey2 = clone_str(value, "end->rsakey2");
 			}
 		}
 	}
@@ -1580,7 +1573,6 @@ static void copy_conn_default(struct starter_conn *conn,
 	STR_FIELD_END(iface);
 	STR_FIELD_END(id);
 	STR_FIELD_END(rsakey1);
-	STR_FIELD_END(rsakey2);
 	STR_FIELD_END(virt);
 	STR_FIELD_END(certx);
 	STR_FIELD_END(ckaid);
@@ -1758,7 +1750,6 @@ static void confread_free_conn(struct starter_conn *conn)
 	STR_FIELD_END(iface);
 	STR_FIELD_END(id);
 	STR_FIELD_END(rsakey1);
-	STR_FIELD_END(rsakey2);
 	STR_FIELD_END(virt);
 	STR_FIELD_END(certx);
 	STR_FIELD_END(ckaid);

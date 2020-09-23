@@ -129,7 +129,6 @@ enum keyword_string_conn_field {
 	KSCF_IP,	/* loose_enum */ /* left/right */
 	KSCF_NEXTHOP,	/* loose_enum */ /* left/right */
 	KSCF_RSAKEY1,	/* loose_enum */ /* left/right */
-	KSCF_RSAKEY2,	/* loose_enum */ /* left/right */
 	KSCF_XFRM_IF_ID,
 		KSCF_last_loose = KSCF_XFRM_IF_ID,
 
@@ -183,7 +182,6 @@ enum keyword_numeric_conn_field {
 	KNCF_IP		= KSCF_IP,	/* loose_enum */ /* left/right */
 	KNCF_NEXTHOP	= KSCF_NEXTHOP,	/* loose_enum */ /* left/right */
 	KNCF_RSAKEY1	= KSCF_RSAKEY1,	/* loose_enum */ /* left/right */
-	KNCF_RSAKEY2	= KSCF_RSAKEY2,	/* loose_enum */ /* left/right */
 	KNCF_XFRM_IF_ID =  KSCF_XFRM_IF_ID,
 
 	KNCF_XAUTHSERVER,	/* left/right */

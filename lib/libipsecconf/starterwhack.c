@@ -477,39 +477,6 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 	if (ret < 0)
 		return ret;
 
-	init_whack_msg(&msg);
-
-	msg.whack_key = TRUE;
-	msg.pubkey_alg = PUBKEY_ALG_RSA;
-	if (end->id && end->rsakey2) {
-		/* printf("addkey2: %s\n", lr); */
-
-		msg.keyid = end->id;
-		switch (end->rsakey2_type) {
-		case PUBKEY_NOTSET:
-		case PUBKEY_DNSONDEMAND:
-		case PUBKEY_CERTIFICATE:
-			break;
-
-		case PUBKEY_PREEXCHANGED:
-			err = ttodatav(end->rsakey2, 0, 0, keyspace,
-				sizeof(keyspace),
-				&msg.keyval.len,
-				err_buf, sizeof(err_buf), 0);
-			if (err) {
-				starter_log(LOG_LEVEL_ERR,
-					"conn %s/%s: rsakey malformed [%s]",
-					connection_name(conn), lr, err);
-				return 1;
-			} else {
-				starter_log(LOG_LEVEL_DEBUG,
-					    "\tsending %s %srsasigkey2=%s",
-					    connection_name(conn), lr, end->rsakey1);
-				msg.keyval.ptr = (unsigned char *)keyspace;
-				return send_whack_msg(&msg, cfg->ctlsocket);
-			}
-		}
-	}
 	return 0;
 }
 
@@ -718,12 +685,12 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	if (r != 0)
 		return r;
 
-	if (conn->left.rsakey1 != NULL || conn->left.rsakey2 != NULL) {
+	if (conn->left.rsakey1 != NULL) {
 		r = starter_whack_add_pubkey(cfg, conn, &conn->left,  "left");
 		if (r != 0)
 			return r;
 	}
-	if (conn->right.rsakey1 != NULL || conn->right.rsakey2 != NULL) {
+	if (conn->right.rsakey1 != NULL) {
 		r = starter_whack_add_pubkey(cfg, conn, &conn->right,  "right");
 		if (r != 0)
 			return r;

@@ -485,7 +485,6 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "updown",  kv_conn | kv_leftright,  kt_filename,  KSCF_UPDOWN, NULL, NULL, },
   { "id",  kv_conn | kv_leftright,  kt_idtype,  KSCF_ID, NULL, NULL, },
   { "rsasigkey",  kv_conn | kv_leftright,  kt_rsakey,  KSCF_RSAKEY1,  &kw_rsasigkey_list, NULL, },
-  { "rsasigkey2",  kv_conn | kv_leftright,  kt_rsakey,  KSCF_RSAKEY2,  &kw_rsasigkey_list, NULL, },
   { "cert",  kv_conn | kv_leftright,  kt_filename,  KSCF_CERT, NULL, NULL, },
   { "ckaid",  kv_conn | kv_leftright,  kt_string,  KSCF_CKAID, NULL, NULL, },
   { "sendcert",  kv_conn | kv_leftright,  kt_enum,  KNCF_SENDCERT,  &kw_sendcert_list, NULL, },
