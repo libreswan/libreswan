@@ -2156,7 +2156,7 @@ struct connection *instantiate(struct connection *c,
 	 * explicitly specified as 0.0.0.0, we set it to be peer.
 	 * (whack will not allow nexthop to be elided in RW case.)
 	 */
-	default_end("this", &d->spd.this, &d->spd.that.host_addr, d->spd.this.raw.host.ikeport);
+	default_end("this", &d->spd.this, &d->spd.that.host_addr, d->spd.that.raw.host.ikeport);
 	d->spd.spd_next = NULL;
 
 	d->spd.reqid = c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid;
