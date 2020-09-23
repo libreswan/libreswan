@@ -22,7 +22,6 @@ west #
 west #
  ipsec auto --add westnet-eastnet-ikev2
 002 adding UDP interface eth1 192.1.2.45:2500
-002 adding interface eth1 192.1.2.45:2500
 002 added IKEv2 connection "westnet-eastnet-ikev2"
 west #
  ipsec auto --status | grep westnet-eastnet-ikev2
