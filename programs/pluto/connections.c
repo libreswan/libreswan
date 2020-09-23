@@ -350,7 +350,7 @@ void delete_every_connection(void)
 		delete_connection(connections, TRUE);
 }
 
-static void update_ends_from_this_host_addr(struct end *this, struct end *that)
+void update_ends_from_this_host_addr(struct end *this, struct end *that)
 {
 	const struct ip_info *afi = address_type(&this->host_addr);
 	if (afi == NULL) {
@@ -976,8 +976,6 @@ static int extract_end(struct end *dst,
 			    leftright, src->host_ikeport);
 		dst->raw.host.ikeport = 0;
 	}
-	if (dst->host_port ==0)
-		dst->host_port = (dst->raw.host.ikeport ? dst->raw.host.ikeport : IKE_UDP_PORT);
 
 	/*
 	 * see if we can resolve the DNS name right now

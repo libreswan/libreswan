@@ -1141,17 +1141,7 @@ static void connection_check_ddns1(struct connection *c)
 	    c->dnshostname, sensitive_ipstr(&c->spd.that.host_addr, &old),
 	    sensitive_ipstr(&new_addr, &new));
 	c->spd.that.host_addr = new_addr;
-
-	/* a small bit of code from default_end to fixup the end point */
-	/* default nexthop to other side */
-	if (isanyaddr(&c->spd.this.host_nexthop))
-		c->spd.this.host_nexthop = c->spd.that.host_addr;
-
-	/* default client to subnet containing only self */
-	if (!c->spd.that.has_client) {
-		/* XXX: this uses ADDRESS:PORT */
-		endtosubnet(&c->spd.that.host_addr, &c->spd.that.client, HERE);
-	}
+	update_ends_from_this_host_addr(&c->spd.that, &c->spd.this);
 
 	/*
 	 * reduce the work we do by updating all connections waiting for this
