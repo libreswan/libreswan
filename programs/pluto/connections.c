@@ -350,14 +350,13 @@ void delete_every_connection(void)
 		delete_connection(connections, TRUE);
 }
 
-static err_t default_end(const char *leftright, struct end *e,
-			 ip_address *dflt_nexthop, unsigned peer_ikeport)
+static void default_end(const char *leftright, struct end *e,
+			ip_address *dflt_nexthop, unsigned peer_ikeport)
 {
-	err_t ugh = NULL;
-	const struct ip_info *afi = aftoinfo(addrtypeof(&e->host_addr));
-
-	if (afi == NULL)
-		return "unknown address family in default_end";
+	const struct ip_info *afi = address_type(&e->host_addr);
+	if (afi == NULL) {
+		dbg("%s.host_addr's address family is unknown", e->leftright);
+	}
 
 	/* Default ID to IP (but only if not NO_IP -- WildCard) */
 	if (e->id.kind == ID_NONE && endpoint_is_specified(&e->host_addr)) {
@@ -394,8 +393,6 @@ static err_t default_end(const char *leftright, struct end *e,
 		/* uninitialized (ugly hack) */
 		e->sendcert = CERT_SENDIFASKED;
 	}
-
-	return ugh;
 }
 
 /*
