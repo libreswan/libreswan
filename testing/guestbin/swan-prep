@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 #
 # This script is run by a VM host (eg "west") to prepare itself for testing
-# It should be passed a testname as its only argument
 
 import os
 import sys
@@ -67,7 +66,6 @@ def mount_bind(src, dst, mode=None, touch_src_file=False, mkdir_src=False, wipe_
         return True
 
     cmd = ['/bin/mount', '--bind',  src, dst]
-
     o = subprocess.run(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
                         encoding='utf-8')
     if o.returncode:
@@ -251,7 +249,7 @@ if not args.namespace:
         args.namespace = True
 
 if args.namespace:
-    nsbasepath="%s/NS/%s" % (testpath, hostname) #will create testpath/NS/hostname/*
+    nsbasepath ="%s/NS/%s" % (testpath, hostname) #will create testpath/NS/hostname/*
     if not os.path.isdir(nsbasepath):
         os.makedirs(nsbasepath)
 else:
