@@ -242,30 +242,25 @@ int resolve_defaultroute_one(struct starter_end *host,
 		 * and gateway IP to get there.
 		 */
 		if (peer->addrtype == KH_IPHOSTNAME) {
+			int af = (peer->host_family == &ipv4_info) ?
+					AF_INET : AF_INET6;
 #ifdef USE_DNSSEC
 			err_t er = ttoaddr_num(peer->strings[KSCF_IP], 0,
 				AF_UNSPEC, &peer->addr);
 			if (er != NULL) {
 				/* not numeric, so resolve it */
 				if (!unbound_resolve(peer->strings[KSCF_IP],
-						     0, AF_INET,
-						     &peer->addr,
+						     0, af, &peer->addr,
 						     logger)) {
-					if (!unbound_resolve(
-							peer->strings[KSCF_IP],
-							0, AF_INET6,
-							&peer->addr,
-							logger)) {
 						pfree(msgbuf);
 						return -1;
-					}
 				}
 			}
 #else
 			(void)logger /* UNUSED */;
 
 			err_t er = ttoaddr(peer->strings[KSCF_IP], 0,
-				AF_UNSPEC, &peer->addr);
+				af, &peer->addr);
 			if (er != NULL) {
 				pfree(msgbuf);
 				return -1;
