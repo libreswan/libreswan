@@ -16,6 +16,6 @@ sleep 10
 strongswan status
 ip xfrm state
 ip xfrm policy
-ping -W 1 -q -n -c 2 -I 192.1.33.222 192.0.2.254
+ping -W 1 -q -n -c 2 -I 192.0.3.10 192.0.2.254
 grep "requesting address change using MOBIKE" /tmp/charon.log | sed "s/^.*road/road/"
 echo done
