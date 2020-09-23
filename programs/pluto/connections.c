@@ -846,12 +846,14 @@ static int extract_end(struct end *dst,
 		err = preload_private_key_by_ckaid(type->ckaid_from_pubkey_content(&pkc),
 						   &load_needed, logger);
 		if (err != NULL) {
-			dbg("no preloaded private key matching CKAID: %s", err);
+			ckaid_buf ckb;
+			dbg("no private key matching %s CKAID %s: %s",
+			    dst->leftright, str_ckaid(dst->ckaid, &ckb), err);
 		} else if (load_needed) {
 			ckaid_buf ckb;
 			log_message(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
 				    "loaded private key matching %s CKAID %s",
-				    dst->leftright, str_ckaid(ckaid, &ckb));
+				    dst->leftright, str_ckaid(dst->ckaid, &ckb));
 		}
 	} else if (src->ckaid != NULL) {
 		ckaid_t ckaid;
@@ -888,11 +890,14 @@ static int extract_end(struct end *dst,
 			bool load_needed;
 			err_t err = preload_private_key_by_ckaid(&ckaid, &load_needed, logger);
 			if (err != NULL) {
-				dbg("no preloaded private key matching CKAID: %s", err);
+				ckaid_buf ckb;
+				dbg("no private key matching %s CKAID %s: %s",
+				    dst->leftright, str_ckaid(dst->ckaid, &ckb), err);
 			} else {
+				ckaid_buf ckb;
 				log_message(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
 					    "loaded private key matching %s CKAID %s",
-					    dst->leftright, src->ckaid);
+					    dst->leftright, str_ckaid(dst->ckaid, &ckb));
 			}
 		}
 	}
@@ -1129,11 +1134,11 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	bool load_needed;
 	err_t ugh = preload_private_key_by_cert(&dst_end->cert, &load_needed, logger);
 	if (ugh != NULL) {
-		dbg("warning: no secret key loaded for %s certificate  %s: %s",
+		dbg("no private key matching %s certificate %s: %s",
 		    dst_end->leftright, nickname, ugh);
 	} else if (load_needed) {
 		log_message(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
-			    "loaded private key matching %s certificate %s",
+			    "loaded private key matching %s certificate '%s'",
 			    dst_end->leftright, nickname);
 	}
 	return NULL;

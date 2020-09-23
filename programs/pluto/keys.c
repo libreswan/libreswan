@@ -690,7 +690,9 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 			 * lacks a counted reference to the private
 			 * key.
 			 */
-			log_message(RC_LOG, logger, "reloading private key load for certificate %s", nickname);
+			log_message(RC_LOG|LOG_STREAM/*not-whack-grrr*/, logger,
+				    "reloaded private key matching %s certificate '%s'",
+				    c->spd.this.leftright, nickname);
 		}
 
 		/*
@@ -733,8 +735,9 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 			 * key.
 			 */
 			ckaid_buf ckb;
-			log_message(RC_LOG, logger, "reloading private key for ckaid %s",
-				    str_ckaid(c->spd.this.ckaid, &ckb));
+			log_message(RC_LOG|LOG_STREAM/*not-whack-grr*/, logger,
+				    "reloaded private key matching %s CKAID %s",
+				    c->spd.this.leftright, str_ckaid(c->spd.this.ckaid, &ckb));
 		}
 
 
