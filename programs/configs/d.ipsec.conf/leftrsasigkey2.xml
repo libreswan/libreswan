@@ -1,7 +1,0 @@
-  <varlistentry>
-  <term><emphasis remap='B'>leftrsasigkey2</emphasis></term>
-  <listitem>
-<para>if present, a second public key.
-Either key can authenticate the signature, allowing for key rollover.</para>
-  </listitem>
-  </varlistentry>
