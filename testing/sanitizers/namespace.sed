@@ -14,4 +14,4 @@ s/qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000/state UNKNOWN
 #s/ brd 192.1.3.255 scope /scope /
 s/ brd [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\} scope/ scope/
 s/^\(default .*\) metric 1024 pref medium/\1/g
-/dev lo proto kernel/d
+/^::1 dev lo proto kernel metric 256 pref medium/d
