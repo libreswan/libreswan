@@ -817,7 +817,7 @@ static int extract_end(struct end *dst,
 				    dst->leftright, src->cert,
 				    dst->leftright, src->cert);
 		}
-		CERTCertificate *cert = cert = get_cert_by_nickname_from_nss(src->cert, logger);
+		CERTCertificate *cert = get_cert_by_nickname_from_nss(src->cert, logger);
 		if (cert == NULL) {
 			log_message(RC_FATAL, logger,
 				    "failed to add connection: %s certificate '%s' not found in the NSS database",
