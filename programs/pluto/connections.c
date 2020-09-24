@@ -358,6 +358,13 @@ static void update_ends_from_this_host_addr(struct end *this, struct end *that)
 		    this->leftright);
 		return;
 	}
+
+	if (address_is_any(&this->host_addr)) {
+		dbg("%s.host_addr's is %%any; skipping default_end()",
+		    this->leftright);
+		return;
+	}
+
 	dbg("updating connection from %s.host_addr", this->leftright);
 
 	/* Default ID to IP (but only if not NO_IP -- WildCard) */
