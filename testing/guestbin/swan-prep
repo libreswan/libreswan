@@ -78,7 +78,6 @@ def lsw_cp_file(src, dst, mode=None, nsbasepath=''):
     if args.namespace:
         ns_dst="%s/%s" %(nsbasepath, dst) #copy to local NS/hostname/<path> then mount
         shutil.copy(src, ns_dst)
-        
         if mode:
             os.chmod(ns_dst, mode)
         mount_bind(ns_dst, dst)
@@ -118,9 +117,10 @@ def shell(command, out=False):
         print(output)
     return output
 
-def choose_config_file(hostname, testpath, config_absdir, config_file):
+def choose_config_file(hostname, testpath, config_path):
+    (config_absdir, config_file) = os.path.split(config_path)
     if os.path.isabs(config_absdir):
-        config_dir = config_absdir[1:] # drop slash
+        config_dir = config_absdir[1:] # drop slash; better?
     else:
         config_dir = config_absdir
     # extension contains the dot
@@ -153,13 +153,17 @@ def choose_config_file(hostname, testpath, config_absdir, config_file):
     # dump all the fields
     return None
 
-def copy_config_file(hostname, testpath, config_path, optional=False):
-    (config_absdir, config_file) = os.path.split(config_path)
-    src = choose_config_file(hostname, testpath, config_absdir, config_file)
+def copy_config_file(hostname, testpath, config_path, optional=False, nsprefix=""):
+    src = choose_config_file(hostname, testpath, config_path)
     if src:
-        if not os.path.isdir(config_absdir):
-            os.mkdir(config_absdir)
-        shutil.copy(src, config_path)
+        # config_absdir has a leading / so below is always valid
+        dst = nsprefix + config_path
+        dstdir = os.path.dirname(dst)
+        if not os.path.isdir(dstdir):
+            os.mkdir(dstdir)
+        shutil.copy(src, dst)
+        if nsprefix: # non-None and non-Empty
+            mount_bind(dst, config_path);
     elif not optional:
         print("ERROR: %s's %s not found" % (hostname, config_path))
 
@@ -292,7 +296,7 @@ else:
 # print "swan-prep running on %s for test %s with userland
 # %s"%(hostname,testname,userland)
 
-# wipe any old configs in /etc/ipsec.*
+# wipe or unmount any old configs in /etc/ipsec.*
 wipe_old("/etc/ipsec.conf")
 wipe_old("/etc/ipsec.secrets")
 wipe_old("/etc/ipsec.d")
@@ -377,8 +381,8 @@ if hostname != "nic":
             for dbfile in dbfiles:
                 os.chown(dbfile, 0, 0)
 
-        copy_config_file(hostname, testpath, "/etc/ipsec.conf")
-        copy_config_file(hostname, testpath, "/etc/ipsec.secrets")
+        copy_config_file(hostname, testpath, "/etc/ipsec.conf", nsprefix=nsbasepath)
+        copy_config_file(hostname, testpath, "/etc/ipsec.secrets", nsprefix=nsbasepath)
 
     elif args.userland == "strongswan":
 
