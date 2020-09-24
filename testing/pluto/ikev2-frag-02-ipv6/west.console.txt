@@ -80,7 +80,6 @@ default via 192.1.2.254 dev eth1
 192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
 192.0.2.0/24 via 192.1.2.23 dev eth1
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
-::1 dev lo proto kernel metric 256
 2001:db8:0:1::/64 dev eth0 proto kernel metric 256
 2001:db8:0:2::/64 via 2001:db8:1:2::23 dev eth1
 2001:db8:1:2::/64 dev eth1 proto kernel metric 256
