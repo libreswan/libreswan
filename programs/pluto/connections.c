@@ -430,7 +430,9 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 {
 	/* HOST */
 	bool dohost_name;
+	bool dohost_port;
 	if (isanyaddr(&this->host_addr)) {
+		dohost_port = false;
 		if (this->host_type == KH_IPHOSTNAME) {
 			dohost_name = true;
 			jam_string(buf, "%dns");
@@ -453,9 +455,11 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 		}
 	} else if (is_virtual_end(this)) {
 		dohost_name = false;
+		dohost_port = false;
 		jam_string(buf, "%virtual");
 	} else {
 		dohost_name = true;
+		dohost_port = true;
 		jam_address_sensitive(buf, &this->host_addr);
 	}
 
@@ -464,7 +468,13 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 		jam(buf, "<%s>", this->host_addr_name);
 	}
 
-	if (this->raw.host.ikeport != 0 || this->host_port != IKE_UDP_PORT) {
+	/*
+	 * XXX: only print anomalies: when the host address is
+	 * "non-zero", a non-IKE_UDP_PORT; and when zero, any non-zero
+	 * port.
+	 */
+	if (dohost_port ? (this->raw.host.ikeport != 0 || this->host_port != IKE_UDP_PORT) :
+	    this->host_port != 0) {
 		/*
 		 * XXX: Part of the problem is that code is stomping
 		 * on the HOST_ADDR's port setting it to the CLIENT's
