@@ -230,7 +230,7 @@ void unbound_sync_init(bool do_dnssec, const char *rootfile,
 /*
  * synchronous blocking resolving - simple replacement of ttoaddr()
  * src_len == 0 means "apply strlen"
- * af == AF_UNSPEC means "try both families"
+ * af == AF_UNSPEC means default to AF_INET(A/IPv4)
  */
 bool unbound_resolve(char *src, size_t srclen, int af, ip_address *ipaddr, struct logger *logger)
 {
