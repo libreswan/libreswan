@@ -22,9 +22,6 @@ OBJS += $(WHACKLIB)
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
 
-# reach into pluto for now.
-CFLAGS += -I$(top_srcdir)/programs/pluto
-
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
 else

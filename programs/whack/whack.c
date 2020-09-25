@@ -53,7 +53,6 @@
 #include "socketwrapper.h"
 #include "constants.h"
 #include "lswlog.h"
-#include "defs.h"
 #include "whack.h"
 #include "ip_address.h"
 #include "ip_info.h"
