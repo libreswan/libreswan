@@ -2182,6 +2182,9 @@ struct connection *instantiate(struct connection *c,
 
 	d->spd.reqid = c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid;
 
+	/* since both ends updated; presumably already oriented? */
+	set_policy_prio(d);
+
 	/* set internal fields */
 	d->ac_next = connections;
 	connections = d;
