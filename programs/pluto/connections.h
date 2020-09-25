@@ -153,10 +153,7 @@
 typedef uint32_t policy_prio_t;
 #define BOTTOM_PRIO   ((policy_prio_t)0)        /* smaller than any real prio */
 
-#define set_policy_prio(c) { (c)->policy_prio = \
-		  ((policy_prio_t)(c)->spd.this.client.maskbits << 17) \
-		| ((policy_prio_t)(c)->spd.that.client.maskbits << 8) \
-		|  (policy_prio_t)1; }
+void set_policy_prio(struct connection *c);
 
 typedef struct {
 	char buf[3 + 1 + 3 + 1 + 10 + 1];	/* (10 is to silence GCC) */

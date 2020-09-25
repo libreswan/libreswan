@@ -2259,6 +2259,13 @@ const char *str_policy_prio(policy_prio_t pp, policy_prio_buf *buf)
 	return buf->buf;
 }
 
+void set_policy_prio(struct connection *c)
+{
+	c->policy_prio = (((policy_prio_t)c->spd.this.client.maskbits << 17) |
+			  ((policy_prio_t)c->spd.that.client.maskbits << 8) |
+			  ((policy_prio_t)1));
+}
+
 /*
  * Format any information needed to identify an instance of a connection.
  * Fills any needed information into buf which MUST be big enough.
