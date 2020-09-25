@@ -2407,7 +2407,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 					peer_port == sr->that.port))
 			{
 				policy_prio_t prio =
-					8 * (c->prio +
+					8 * (c->policy_prio +
 					     (c->kind == CK_INSTANCE)) +
 					2 * (sr->this.port == our_port) +
 					2 * (sr->that.port == peer_port) +
@@ -3637,7 +3637,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 			 * - given that, the shortest CA pathlength is preferred
 			 */
 			policy_prio_t prio =
-				PRIO_WEIGHT * (d->prio + routed(sr->routing)) +
+				PRIO_WEIGHT * (d->policy_prio + routed(sr->routing)) +
 				WILD_WEIGHT * (MAX_WILDCARDS - wildcards) +
 				PATH_WEIGHT * (MAX_CA_PATH_LEN - pathlen);
 
@@ -3803,7 +3803,8 @@ int connection_compare(const struct connection *ca,
 		ca->instance_serial > cb-> instance_serial ? 1 : 0;
 
 	default:
-		return ca->prio < cb->prio ? -1 : ca->prio > cb->prio ? 1 : 0;
+		return (ca->policy_prio < cb->policy_prio ? -1 :
+			ca->policy_prio > cb->policy_prio ? 1 : 0);
 	}
 }
 
@@ -4036,7 +4037,7 @@ void show_one_connection(struct show *s,
 	show_comment(s,
 		  "\"%s\"%s:   conn_prio: %s; interface: %s; metric: %u; mtu: %s; sa_prio:%s; sa_tfc:%s;",
 		     c->name, instance,
-		     str_policy_prio(c->prio, &prio),
+		     str_policy_prio(c->policy_prio, &prio),
 		     ifn,
 		     c->metric,
 		     mtustr, sapriostr, satfcstr);

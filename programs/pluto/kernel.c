@@ -831,7 +831,7 @@ static enum routability note_nearconflict(
 	 * set the priority of the new eroute owner to be higher
 	 * than that of the current eroute owner
 	 */
-	inside->prio = outside->prio + 1;
+	inside->policy_prio = outside->policy_prio + 1;
 
 	loglog(RC_LOG_SERIOUS,
 		"conflict on eroute (%s), switching eroute to %s and linking %s",

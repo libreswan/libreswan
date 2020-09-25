@@ -153,7 +153,7 @@
 typedef uint32_t policy_prio_t;
 #define BOTTOM_PRIO   ((policy_prio_t)0)        /* smaller than any real prio */
 
-#define set_policy_prio(c) { (c)->prio = \
+#define set_policy_prio(c) { (c)->policy_prio = \
 		  ((policy_prio_t)(c)->spd.this.client.maskbits << 17) \
 		| ((policy_prio_t)(c)->spd.that.client.maskbits << 8) \
 		|  (policy_prio_t)1; }
@@ -355,7 +355,7 @@ struct connection {
 	/* internal fields: */
 
 	unsigned long instance_serial;
-	policy_prio_t prio;
+	policy_prio_t policy_prio;
 	bool instance_initiation_ok;		/* this is an instance of a policy that mandates initiate */
 	enum connection_kind kind;
 	const struct iface_port *interface;	/* filled in iff oriented */
