@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep
 east #
- rm /etc/ipsec.secrets
+ :> /etc/ipsec.secrets
 east #
  ipsec start
 Redirecting to: [initsystem]

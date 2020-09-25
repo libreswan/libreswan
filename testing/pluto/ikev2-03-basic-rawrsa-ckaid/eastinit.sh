@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep
-rm /etc/ipsec.secrets
+:> /etc/ipsec.secrets
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add west-rsasigkey-east-ckaid
