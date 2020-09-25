@@ -113,6 +113,8 @@ static void swap_ends(struct connection *c)
 			bad_case(sr->this.authby);
 		}
 	}
+	/* re-compute the base policy priority using the swapped left/right */
+	set_policy_prio(c);
 }
 
 static bool orient_new_iface_port(struct connection *c, struct fd *whackfd, bool this)
@@ -186,6 +188,7 @@ bool orient(struct connection *c)
 	}
 
 	dbg("orienting %s", c->name);
+	set_policy_prio(c); /* for updates */
 	bool swap = false;
 	for (const struct iface_port *ifp = interfaces; ifp != NULL; ifp = ifp->next) {
 
