@@ -158,8 +158,11 @@ typedef uint32_t policy_prio_t;
 		| ((policy_prio_t)(c)->spd.that.client.maskbits << 8) \
 		|  (policy_prio_t)1; }
 
-#define POLICY_PRIO_BUF (3 + 1 + 3 + 1 + 10)	/* (10 is to silence GCC) */
-extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
+typedef struct {
+	char buf[3 + 1 + 3 + 1 + 10 + 1];	/* (10 is to silence GCC) */
+} policy_prio_buf;
+size_t jam_policy_prio(struct jambuf *buf, policy_prio_t pp);
+const char *str_policy_prio(policy_prio_t pp, policy_prio_buf *buf);
 
 struct virtual_t;	/* opaque type */
 

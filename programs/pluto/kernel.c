@@ -138,9 +138,7 @@ static void log_bare_shunt(lset_t rc_flags, const char *op, const struct bare_sh
 	said_buf sat;
 	selector_buf ourb;
 	selector_buf peerb;
-
-	char prio[POLICY_PRIO_BUF];
-	fmt_policy_prio(bs->policy_prio, prio);
+	policy_prio_buf prio;
 
 	log_global(rc_flags, null_fd,
 		   "%s bare shunt %p %s --%d--> %s => %s %s    %s",
@@ -149,7 +147,8 @@ static void log_bare_shunt(lset_t rc_flags, const char *op, const struct bare_sh
 		   bs->transport_proto,
 		   str_selector(&bs->peer_client, &peerb),
 		   str_said(&bs->said, &sat),
-		   prio, bs->why);
+		   str_policy_prio(bs->policy_prio, &prio),
+		   bs->why);
 }
 
 static void dbg_bare_shunt(const char *op, const struct bare_shunt *bs)
@@ -1178,16 +1177,15 @@ void show_shunt_status(struct show *s)
 		selector_buf ourb;
 		selector_buf peerb;
 		said_buf sat;
-
-		char prio[POLICY_PRIO_BUF];
-		fmt_policy_prio(bs->policy_prio, prio);
+		policy_prio_buf prio;
 
 		show_comment(s, "%s -%d-> %s => %s %s    %s",
 			     str_selector(&(bs)->our_client, &ourb),
 			     bs->transport_proto,
 			     str_selector(&(bs)->peer_client, &peerb),
 			     str_said(&(bs)->said, &sat),
-			     prio, bs->why);
+			     str_policy_prio(bs->policy_prio, &prio),
+			     bs->why);
 	}
 }
 

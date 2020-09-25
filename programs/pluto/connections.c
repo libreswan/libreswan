@@ -2242,15 +2242,21 @@ struct connection *rw_instantiate(struct connection *c,
 }
 
 /* priority formatting */
-void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF])
+size_t jam_policy_prio(struct jambuf *buf, policy_prio_t pp)
 {
 	if (pp == BOTTOM_PRIO) {
-		snprintf(buf, POLICY_PRIO_BUF, "0");
-	} else {
-		snprintf(buf, POLICY_PRIO_BUF, "%" PRIu32 ",%" PRIu32,
-			pp >> 17,
-			(pp & ~(~(policy_prio_t)0 << 17)) >> 8);
+		return jam_string(buf, "0");
 	}
+
+	return jam(buf, "%" PRIu32 ",%" PRIu32,
+		   pp >> 17, (pp & ~(~(policy_prio_t)0 << 17)) >> 8);
+}
+
+const char *str_policy_prio(policy_prio_t pp, policy_prio_buf *buf)
+{
+	struct jambuf jb = ARRAY_AS_JAMBUF(buf->buf);
+	jam_policy_prio(&jb, pp);
+	return buf->buf;
 }
 
 /*
@@ -3909,7 +3915,6 @@ void show_one_connection(struct show *s,
 	const char *ifn;
 	char ifnstr[2 *  IFNAMSIZ + 2];  /* id_rname@id_vname\0 */
 	char instance[32];
-	char prio[POLICY_PRIO_BUF];
 	char mtustr[8];
 	char sapriostr[13];
 	char satfcstr[13];
@@ -4027,15 +4032,14 @@ void show_one_connection(struct show *s,
 	else
 		strcpy(satfcstr, "none");
 
-	fmt_policy_prio(c->prio, prio);
+	policy_prio_buf prio;
 	show_comment(s,
 		  "\"%s\"%s:   conn_prio: %s; interface: %s; metric: %u; mtu: %s; sa_prio:%s; sa_tfc:%s;",
-		  c->name, instance,
-		  prio,
-		  ifn,
-		  c->metric,
-		  mtustr, sapriostr, satfcstr
-	);
+		     c->name, instance,
+		     str_policy_prio(c->prio, &prio),
+		     ifn,
+		     c->metric,
+		     mtustr, sapriostr, satfcstr);
 
 	if (c->nflog_group != 0)
 		snprintf(nflogstr, sizeof(nflogstr), "%d", c->nflog_group);
