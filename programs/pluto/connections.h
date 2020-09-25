@@ -30,12 +30,31 @@
 #ifndef CONNECTIONS_H
 #define CONNECTIONS_H
 
+#include <sys/queue.h>
+
 #include "fd.h"
+#include "id.h"    /* for struct id */
+#include "lmod.h"
+#include "err.h"
+#include "ip_endpoint.h"
+#include "ip_selector.h"
+#include "ip_protoport.h"
+
+#include "defs.h"
 #include "proposals.h"
 #include "connection_db.h"		/* for co_serial_t */
 #include "hash_table.h"
 #include "diag.h"
 #include "ckaid.h"
+/*
+ * Note that we include this even if not X509, because we do not want
+ * the structures to change lots.
+ */
+#include "x509.h"
+#include "certs.h"
+#include "reqid.h"
+#include "state.h"
+#include "whack.h"
 
 /* There are two kinds of connections:
  * - ISAKMP connections, between hosts (for IKE communication)
@@ -141,23 +160,6 @@ typedef uint32_t policy_prio_t;
 
 #define POLICY_PRIO_BUF (3 + 1 + 3 + 1 + 10)	/* (10 is to silence GCC) */
 extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
-
-/* Note that we include this even if not X509, because we do not want the
- * structures to change lots.
- */
-#include "x509.h"
-#include "certs.h"
-#include "defs.h"
-#include <sys/queue.h>
-#include "id.h"    /* for struct id */
-#include "lmod.h"
-#include "reqid.h"
-#include "err.h"
-#include "state.h"
-#include "ip_endpoint.h"
-#include "ip_selector.h"
-#include "ip_protoport.h"
-#include "whack.h"
 
 struct virtual_t;	/* opaque type */
 
