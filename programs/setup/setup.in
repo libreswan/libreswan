@@ -228,6 +228,11 @@ case "$1" in
 		echo "Redirecting to: /etc/rc.d/pluto onerestart"
 		exec /etc/rc.d/pluto onerestart
 		;;
+	    namespaces )
+		echo "Redirecting to: namespaces"
+		ipsec whack --shutdown
+		exec ipsec pluto --config @FINALSYSCONFDIR@/ipsec.conf --leak-detective
+		;;
 	    "" )
 		echo "Redirecting to: [stop start manually]"
 		${0} stop
