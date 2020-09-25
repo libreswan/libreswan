@@ -81,50 +81,6 @@ If the argument is <emphasis remap='I'>@IPSEC_CONFDDIR@</emphasis><filename>/nss
 the password comes from that file; otherwise argument is the password.
 </para>
 
-<para>The <option>--hostname</option> option specifies what host name to use in the first line
-of the output (see below); the default is what
-<citerefentry><refentrytitle>gethostname</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-returns.</para>
-
-<para> The output format looks like this (with long numbers trimmed down for clarity):
-<literallayout remap='.nf'>
-
-	# RSA 3744 bits   road.toad.com   Mon Apr 17 22:20:35 2017
-	# for signatures only, UNSAFE FOR ENCRYPTION
-	#ckaid=a953473e6014dd4e08eb051e4679dc39be160fea
-	#pubkey=0sBAEAA...sKbTzwE=
-	Modulus: 0xb84ae7d...b0a6d3cf01
-	PublicExponent: 0x010001
-
-</literallayout> <!-- .fi -->
-The first (comment) line, indicating the nature and date of the key, and
-giving a host name, is used by
-<citerefentry><refentrytitle>ipsec_showhostkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-when generating some forms of key output.</para>
-
-<para>The commented-out <option>pubkey=</option> line contains the public key,
-the public exponent and the modulus combined in approximately RFC 2537 format
-(the one deviation is that the combined value is given with a
-<emphasis remap='I'>0s</emphasis> prefix, rather than in unadorned base-64),
-suitable for use in the <filename>ipsec.conf</filename> file.</para>
-
-<para>The <option>Modulus</option>, <option>PublicExponent</option> and <option>PrivateExponent</option>
-lines give the basic signing and verification data.</para>
-
-<para>The <option>Prime1</option> and <option>Prime2</option> lines give the
-primes themselves (aka <emphasis remap='I'>p</emphasis> and <emphasis remap='I'>q</emphasis>),
-largest first. The <option>Exponent1</option> and <option>Exponent2</option>
-lines give the private exponent mod <emphasis remap='I'>p-1</emphasis> and
-<emphasis remap='I'>q-1</emphasis> respectively. The <option>Coefficient</option>
-line gives the Chinese Remainder Theorem coefficient, which is the inverse of
-<emphasis remap='I'>q</emphasis>, mod <emphasis remap='I'>p</emphasis>. These
-additional numbers (which must all be kept as secret as the private
-exponent) are precomputed aids to rapid signature generation.  When NSS
-is used, these values are not available outside the NSS security database
-(software token or hardware token) and are instead filled in with the CKA_ID.
-</para>
-<para>No attempt is made to break long lines.</para>
-
 <para> The US patent on the RSA algorithm expired 20 Sept 2000.</para>
 
 </refsect1>
@@ -132,13 +88,10 @@ is used, these values are not available outside the NSS security database
 <refsect1 id='examples'><title>EXAMPLES</title>
 <variablelist remap='TP'>
  <varlistentry>
-  <term><emphasis remap='B'>ipsec rsasigkey --verbose 4096 >mykey.txt</emphasis></term>
+  <term><emphasis remap='B'>ipsec rsasigkey --verbose 4096 </emphasis></term>
   <listitem>
-   <para>generates a 4096-bit signature key  and  puts  it  in  the  file <filename>mykey.txt</filename>,
-    with running commentary on standard error.  The file contents can be inserted verbatim into  a  suitable  entry  in  the
-    <filename>ipsec.secrets</filename> file (see
-    <citerefentry><refentrytitle>ipsec_secrets</refentrytitle><manvolnum>5</manvolnum></citerefentry>),
-    and the public key can then be extracted and edited into the <filename>ipsec.conf</filename> (see
+   <para>generates a 4096-bit signature key  and stores this key in the NSS database.
+    The public key can then be extracted and edited into the <filename>ipsec.conf</filename> (see
     <citerefentry><refentrytitle>ipsec_showhostkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>).
    </para>
   </listitem>
