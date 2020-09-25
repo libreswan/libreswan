@@ -626,12 +626,6 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 			       const struct id *id, struct logger *logger)
 {
-	if (id->kind == ID_DER_ASN1_DN) {
-		log_message(RC_LOG_SERIOUS, logger,
-			    "cert_VerifySubjectAltName() should not be called for ID_DER_ASN1_DN");
-		return true;
-	}
-
 	/*
 	 * Get a handle on the certificate's subject alt name.
 	 */
