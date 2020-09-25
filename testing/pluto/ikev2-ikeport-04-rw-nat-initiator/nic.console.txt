@@ -14,23 +14,15 @@ nic #
 nic #
  #
 nic #
- iptables -I FORWARD 1 --proto 50 -j LOGDROP
-iptables v1.8.4 (legacy): Couldn't load target `LOGDROP':No such file or directory
-Try `iptables -h' or 'iptables --help' for more information.
+ iptables -I FORWARD 1 --proto 50 -j DROP
 nic #
- iptables -I FORWARD 2 --destination 192.0.2.0/24 -j LOGDROP
-iptables v1.8.4 (legacy): Couldn't load target `LOGDROP':No such file or directory
-Try `iptables -h' or 'iptables --help' for more information.
+ iptables -I FORWARD 2 --destination 192.0.2.0/24 -j DROP
 nic #
- iptables -I FORWARD 3 --source 192.0.2.0/24 -j LOGDROP
-iptables v1.8.4 (legacy): Couldn't load target `LOGDROP':No such file or directory
-Try `iptables -h' or 'iptables --help' for more information.
+ iptables -I FORWARD 3 --source 192.0.2.0/24 -j DROP
 nic #
  # route
 nic #
- iptables -I INPUT 1 --destination 192.0.2.0/24 -j LOGDROP
-iptables v1.8.4 (legacy): Couldn't load target `LOGDROP':No such file or directory
-Try `iptables -h' or 'iptables --help' for more information.
+ iptables -I INPUT 1 --destination 192.0.2.0/24 -j DROP
 nic #
  # Display the table, so we know it is correct.
 nic #
@@ -50,8 +42,12 @@ nic #
  iptables -L -n
 Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
+DROP       all  --  0.0.0.0/0            192.0.2.0/24        
 Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
+DROP       esp  --  0.0.0.0/0            0.0.0.0/0           
+DROP       all  --  0.0.0.0/0            192.0.2.0/24        
+DROP       all  --  192.0.2.0/24         0.0.0.0/0           
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
 nic #
