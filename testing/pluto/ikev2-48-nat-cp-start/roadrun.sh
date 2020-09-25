@@ -1,4 +1,4 @@
-sleep 4
+sleep 10
 ip -4 route
 # ipsec will configure 192.0.2.1 on eth0
 ip addr show  dev eth0
