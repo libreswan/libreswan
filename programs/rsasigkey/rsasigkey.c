@@ -8,7 +8,7 @@
  * Copyright (C) 2012-2017 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2016 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2019-2020 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -37,7 +37,7 @@
 #include <getopt.h>
 #include <libreswan.h>
 #include "lswalloc.h"
-#include "secrets.h"
+//#include "secrets.h"
 
 #include <prerror.h>
 #include <prinit.h>
@@ -80,21 +80,16 @@
 
 char usage[] =
 	"rsasigkey [--verbose] [ --debug ] [--seeddev <device>] [--nssdir <dir>]\n"
-	"        [--password <password>] [--hostname host] [--seedbits bits] [<keybits>]";
+	"        [--password <password>] [--seedbits bits] [<keybits>]";
 
 enum opt {
 	OPT_DEBUG = 256,
 };
 
 struct option opts[] = {
-	{ "rounds",     1,      NULL,   'p', },	/* obsoleted */
-	{ "noopt",      0,      NULL,   'n', }, /* obsoleted */
-	{ "configdir",  1,      NULL,   'c', }, /* obsoleted */
 	{ "debug",      0,      NULL,   OPT_DEBUG, },
 	{ "verbose",    0,      NULL,   'v', },
 	{ "seeddev",    1,      NULL,   'S', },
-	{ "random",     1,      NULL,   'r', }, /* compat alias for seeddev */
-	{ "hostname",   1,      NULL,   'H', },
 	{ "help",       0,      NULL,   'h', },
 	{ "version",    0,      NULL,   'V', },
 	{ "nssdir",     1,      NULL,   'd', }, /* nss-tools use -d */
@@ -104,7 +99,6 @@ struct option opts[] = {
 };
 char *device = DEVICE;          /* where to get randomness */
 int nrounds = 30;               /* rounds of prime checking; 25 is good */
-char outputhostname[NS_MAXDNAME];  /* hostname for output */
 
 /* forwards */
 void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco, struct logger *logger);
@@ -137,9 +131,6 @@ static void UpdateNSS_RNG(int seedbits, struct logger *logger)
 	pfree(buf);
 }
 
-/*
-   - main - mostly argument parsing
- */
 int main(int argc, char *argv[])
 {
 	log_to_stderr = FALSE;
@@ -151,12 +142,6 @@ int main(int argc, char *argv[])
 
 	while ((opt = getopt_long(argc, argv, "", opts, NULL)) != EOF)
 		switch (opt) {
-		case 'n':
-		case 'p':
-			fprintf(stderr, "%s: --noopt and --rounds options have been obsoleted - ignored\n",
-				progname);
-			break;
-
 		case 'v':       /* verbose description */
 			log_to_stderr = TRUE;
 			break;
@@ -165,24 +150,10 @@ int main(int argc, char *argv[])
 			cur_debugging = -1;
 			break;
 
-		case 'r':
-			fprintf(stderr, "%s: Warning: --random is obsoleted for --seeddev. It no longer specifies the random device used for obtaining random key material",
-				progname);
-			/* FALLTHROUGH */
 		case 'S':       /* nonstandard random device for seed */
 			device = optarg;
 			break;
 
-		case 'H':       /* set hostname for output */
-			{
-				size_t full_len = strlen(optarg);
-				bool oflow = sizeof(outputhostname) - 1 < full_len;
-				size_t copy_len = oflow ? sizeof(outputhostname) - 1 : full_len;
-
-				memcpy(outputhostname, optarg, copy_len);
-				outputhostname[copy_len] = '\0';
-			}
-			break;
 		case 'h':       /* help */
 			printf("Usage:\t%s\n", usage);
 			exit(0);
@@ -191,7 +162,6 @@ int main(int argc, char *argv[])
 			printf("%s %s\n", progname, ipsec_version_code());
 			exit(0);
 			break;
-		case 'c':       /* obsoleted by --nssdir|-d */
 		case 'd':       /* -d is used for nssdirdir with nss tools */
 			lsw_conf_nssdir(optarg, logger);
 			break;
@@ -213,15 +183,6 @@ int main(int argc, char *argv[])
 			printf("Usage:\t%s\n", usage);
 			exit(2);
 		}
-
-	if (outputhostname[0] == '\0') {
-		if (gethostname(outputhostname, sizeof(outputhostname)) < 0) {
-			fprintf(stderr, "%s: gethostname failed (%s)\n",
-				progname,
-				strerror(errno));
-			exit(1);
-		}
-	}
 
 	/*
 	 * RSA-PSS requires keysize to be a multiple of 8 bits
@@ -282,7 +243,6 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco, stru
 	PK11SlotInfo *slot = NULL;
 	SECKEYPrivateKey *privkey = NULL;
 	SECKEYPublicKey *pubkey = NULL;
-	realtime_t now = realnow();
 
 	if (!lsw_nss_setup(oco->nssdir, 0, logger)) {
 		exit(1);
@@ -311,15 +271,6 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco, stru
 		return;
 	}
 
-	chunk_t public_modulus = {
-		.ptr = pubkey->u.rsa.modulus.data,
-		.len = pubkey->u.rsa.modulus.len,
-	};
-	chunk_t public_exponent = {
-		.ptr = pubkey->u.rsa.publicExponent.data,
-		.len = pubkey->u.rsa.publicExponent.len,
-	};
-
 	char *hex_ckaid;
 	{
 		SECItem *ckaid = PK11_GetLowLevelKeyIDForPrivateKey(privkey);
@@ -331,35 +282,11 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco, stru
 		SECITEM_FreeItem(ckaid, PR_TRUE);
 	}
 
-	/*privkey->wincx = &pwdata;*/
 	PORT_Assert(pubkey != NULL);
 	fprintf(stderr, "Generated RSA key pair with CKAID %s was stored in the NSS database\n",
 		hex_ckaid);
-
-	/* and the output */
-	log_message(RC_LOG, logger, "output...");
-	printf("\t# RSA %d bits   %s   %s", nbits, outputhostname,
-		ctime(&now.rt.tv_sec));
-	/* ctime provides \n */
-	printf("\t# for signatures only, UNSAFE FOR ENCRYPTION\n");
-
-	printf("\t#ckaid=%s\n", hex_ckaid);
-
-	/* RFC2537/RFC3110-ish format */
-	{
-		char *base64 = NULL;
-		err_t err = rsa_pubkey_to_base64(public_exponent, public_modulus, &base64);
-		if (err) {
-			fprintf(stderr, "%s: unexpected error encoding RSA public key '%s'\n",
-				progname, err);
-			exit(1);
-		}
-		printf("\t#pubkey=%s\n", base64);
-		pfree(base64);
-	}
-
-	printf("\tModulus: 0x%s\n", conv(public_modulus.ptr, public_modulus.len, 16));
-	printf("\tPublicExponent: 0x%s\n", conv(public_exponent.ptr, public_exponent.len, 16));
+	fprintf(stderr, "The public key can be displayed using: ipsec showhostkey --left --ckaid %s\n",
+		hex_ckaid);
 
 	if (hex_ckaid != NULL)
 		free(hex_ckaid);
