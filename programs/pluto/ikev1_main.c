@@ -306,6 +306,8 @@ struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 		get_connection_private_key(c, &pubkey_type_rsa,
 					   logger);
 	if (pks == NULL) {
+		log_message(RC_LOG_SERIOUS, logger,
+			    "unable to locate my private key for RSA Signature");
 		return (struct hash_signature) { .len = 0, }; /* failure: no key to use */
 	}
 
@@ -1316,8 +1318,7 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 			passert(sizeof(sig.ptr/*array*/) >= RSA_MAX_OCTETS);
 			sig = v1_sign_hash_RSA(c, &hash, st->st_logger);
 			if (sig.len == 0) {
-				log_state(RC_LOG_SERIOUS, st,
-					  "unable to locate my private key for RSA Signature");
+				/* already logged */
 				return STF_FAIL + AUTHENTICATION_FAILED;
 			}
 
@@ -1668,8 +1669,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 			passert(sizeof(sig.ptr/*array*/) >= RSA_MAX_OCTETS);
 			sig = v1_sign_hash_RSA(c, &hash, st->st_logger);
 			if (sig.len == 0) {
-				log_state(RC_LOG_SERIOUS, st,
-					  "unable to locate my private key for RSA Signature");
+				/* already logged */
 				return STF_FAIL + AUTHENTICATION_FAILED;
 			}
 

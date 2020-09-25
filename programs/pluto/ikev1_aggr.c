@@ -475,8 +475,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 			struct hash_signature sig = v1_sign_hash_RSA(c, &hash,
 								     st->st_logger);
 			if (sig.len == 0) {
-				log_state(RC_LOG_SERIOUS, st,
-					  "unable to locate my private key for RSA Signature");
+				/* already logged */
 				return STF_FAIL + AUTHENTICATION_FAILED;
 			}
 
@@ -776,8 +775,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 			struct hash_signature sig = v1_sign_hash_RSA(st->st_connection, &hash,
 								     st->st_logger);
 			if (sig.len == 0) {
-				log_state(RC_LOG_SERIOUS, st,
-					  "unable to locate my private key for RSA Signature");
+				/* already logged */
 				return STF_FAIL + AUTHENTICATION_FAILED;
 			}
 
