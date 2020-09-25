@@ -3,7 +3,7 @@
 # generate new key for this host
 #
 # Copyright (C) 2001, 2002  Henry Spencer.
-# Copyright (C) 2014 Paul Wouters <pwouters@redhat.com>
+# Copyright (C) 2014-2020 Paul Wouters <pwouters@redhat.com>
 # Copyright (C) 2014, 2016 Tuomo Soini <tis@foobar.fi>
 # Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
 #
@@ -19,14 +19,13 @@
 #
 
 me="ipsec newhostkey"
-usage="Usage: $me [--output filename] [--seeddev device] [--bits n] \\
+usage="Usage: $me [--seeddev device] [--bits n] \\
     [--quiet] [--hostname host] [--nssdir @IPSEC_NSSDIR@] [--password password] "
 
 bits=
 verbose=
 host=
 seeddev="--seeddev /dev/random"
-output=
 nssdir="@IPSEC_NSSDIR@"
 password=
 while [ $# != 0 ] ; do
@@ -38,14 +37,6 @@ while [ $# != 0 ] ; do
 	--quiet)
 	    verbose=
 	    ;;
-	--hostname)
-	    host="--hostname ${2}"
-	    shift
-	    ;;
-	--output)
-	    output="${2}"
-	    shift
-	    ;;
 	--verbose)
 	    verbose="--verbose"
 	    ;;
@@ -53,18 +44,8 @@ while [ $# != 0 ] ; do
 	    echo "${me} $IPSEC_VERSION"
 	    exit 0
 	    ;;
-	--random)
-	    echo "${me} warning: --random is obsoleted, using --seeddev" >&2
-	    seeddev="--seeddev ${2}"
-	    shift
-	    ;;
 	--seeddev)
 	    seeddev="--seeddev ${2}"
-	    shift
-	    ;;
-	--configdir)
-	    echo "${me} warning: --configdir is obsoleted, use --nssdir" >&2
-	    nssdir="${2}"
 	    shift
 	    ;;
 	--nssdir)
@@ -94,15 +75,6 @@ while [ $# != 0 ] ; do
     shift
 done
 
-if [ -n "${output}" -a -d "${output}" ]; then
-    echo "ERROR: output file should be a secrets file, not a directory"
-    exit 255
-fi
-
-if [ -n "${output}" -a -s "${output}" ]; then
-    printf "%s: WARNING: file \"%s\" exists, appending to it\n" "${0}" "${output}" >&2
-fi
-
 if [ ! -d ${nssdir} ]; then
     echo "No such directory: ${nssdir}"
     exit 255
@@ -120,30 +92,4 @@ key=$(ipsec rsasigkey ${verbose} ${seeddev} --nssdir ${nssdir} ${password} ${hos
 RETVAL=$?
 if [ ${RETVAL} -ne 0 ]; then
     exit ${RETVAL}
-fi
-
-out()
-(
-    echo ': RSA	{'
-    printf "%s\n" "${key}"
-    echo '	}'
-    echo '# do not change the indenting of that "}"'
-)
-
-# Write out the #ckaid= and #pubkey= lines
-# echo "${key}" | sed -n 's/.*#\([a-z]*)=/\1/p'
-
-if [ -n "${output}" ]; then
-    umask 077
-    TEMPFILE=$(mktemp ${output}.XXXXXXX)
-    RETVAL=$?
-    if [ ${RETVAL} -gt 0 ]; then
-	echo "${me}: error creating temporary file, aborting" >&2
-	exit ${RETVAL}
-    fi
-    if [ -f ${output} ]; then
-       cat ${output} >> ${TEMPFILE}
-    fi
-    out >> ${TEMPFILE}
-    mv ${TEMPFILE} ${output}
 fi

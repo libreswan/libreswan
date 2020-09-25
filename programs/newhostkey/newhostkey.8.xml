@@ -30,8 +30,6 @@
     <arg choice='opt'>--password <replaceable>password</replaceable></arg>
     <arg choice='opt'>--bits <replaceable>bits</replaceable></arg>
     <arg choice='opt'>--seeddev <replaceable>device</replaceable></arg>
-    <arg choice='opt'>--hostname <replaceable>hostname</replaceable></arg>
-    <arg choice='opt'>--output <replaceable>filename</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -51,22 +49,6 @@
     <title>Output Options</title>
 
     <variablelist>
-
-      <varlistentry>
-	<term><option>--output</option>&nbsp;<replaceable>filename</replaceable></term>
-	<listitem>
-	  <para>The <option>--output</option> option specifies an
-	  <emphasis remap='I'>ipsec.secrets</emphasis> formatted file
-	  (see
-	  <citerefentry><refentrytitle>ipsec.secrets</refentrytitle><manvolnum>5</manvolnum></citerefentry>).
-	  to store the public key information.  If the file does not
-	  exist, it is created under umask <emphasis
-	  remap='B'>077</emphasis>.  If the file already exists and is
-	  non-empty, a warning message about that is written to
-	  standard error, and the output is appended to the
-	  file.</para>
-	</listitem>
-      </varlistentry>
 
       <varlistentry>
 	<term><option>--quiet</option></term>
@@ -114,16 +96,6 @@
 	</listitem>
       </varlistentry>
 
-      <varlistentry>
-	<term><option>--hostname</option>&nbsp;<replaceable>hostname</replaceable></term>
-	<listitem>
-	  <para>The <option>--hostname</option> option is passed
-	  through to <emphasis remap='I'>rsasigkey</emphasis> to tell
-	  it what host name to label the output with (via its
-	  <option>--hostname</option> option).</para>
-	</listitem>
-      </varlistentry>
-
     </variablelist>
   </refsect2>
 </refsect1>
@@ -156,9 +128,6 @@ and the prime-number searches can also take unpredictable (and potentially large
 amounts of CPU time.
 See <citerefentry><refentrytitle>ipsec_rsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>
 .</para>
-
-<para>A higher-level tool that could handle the clerical details of changing
-to a new key would be helpful.</para>
 
 </refsect1>
 </refentry>
