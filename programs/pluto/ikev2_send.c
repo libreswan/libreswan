@@ -49,6 +49,11 @@ bool send_recorded_v2_message(struct ike_sa *ike,
 		llog_sa(RC_LOG, ike, "cannot send packet - interface vanished!");
 		return false;
 	}
+
+#ifdef USE_XFRM_INTERFACE
+	ike_set_out_mark(ike->sa.st_connection, &ike->sa.st_remote_endpoint);
+#endif
+
 	if (frags == NULL) {
 		llog_sa(RC_LOG, ike, "no %s message to send", where);
 		return false;

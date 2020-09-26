@@ -54,7 +54,7 @@ static bool nat_traversal_espinudp(const struct iface_endpoint *ifp,
 {
 	const char *fam = endpoint_type(&ifp->local_endpoint)->ip_name;
 	ldbg(logger, "NAT-Traversal: Trying sockopt style NAT-T");
- 
+
 	/*
 	 * The SOL (aka socket level) is really the the protocol
 	 * number which, for UDP, is always 17.  Linux provides a
@@ -250,10 +250,30 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 	return md;
 }
 
+#ifdef USE_XFRM_INTERFACE
+static uint32_t set_mark_out(const struct logger *logger, uint32_t mark, int fd)
+{
+	uint32_t old_mark;
+
+	socklen_t len = sizeof(old_mark);
+
+	if (getsockopt(fd, SOL_SOCKET, SO_MARK, &old_mark, &len) < 0) {
+		llog_errno(RC_LOG, logger, errno, "getsockopt(SO_MSRK) in set_mark_out()");
+		return 0;
+	}
+
+	if (setsockopt(fd, SOL_SOCKET, SO_MARK,
+				(const void *)&mark, sizeof(mark)) < 0)
+		llog_errno(RC_LOG, logger, errno, "setsockopt(SO_MSRK) new in set_mark_out()");
+
+	return old_mark;
+}
+#endif
+
 static ssize_t udp_write_packet(const struct iface_endpoint *ifp,
 				const void *ptr, size_t len,
 				const ip_endpoint *remote_endpoint,
-				struct logger *logger /*possibly*/UNUSED)
+				struct logger *logger)
 {
 #ifdef MSG_ERRQUEUE
 	if (pluto_sock_errqueue) {
@@ -262,7 +282,21 @@ static ssize_t udp_write_packet(const struct iface_endpoint *ifp,
 #endif
 
 	ip_sockaddr remote_sa = sockaddr_from_endpoint(*remote_endpoint);
-	return sendto(ifp->fd, ptr, len, 0, &remote_sa.sa.sa, remote_sa.len);
+
+#ifdef USE_XFRM_INTERFACE
+	uint32_t old_mark = 0;
+	if (remote_endpoint->mark_out > 0)
+		old_mark = set_mark_out(logger, remote_endpoint->mark_out, ifp->fd);
+#endif
+
+	ssize_t ret = sendto(ifp->fd, ptr, len, 0, &remote_sa.sa.sa, remote_sa.len);
+
+#ifdef USE_XFRM_INTERFACE
+	if (remote_endpoint->mark_out > 0)
+		set_mark_out(logger, old_mark, ifp->fd);
+#endif
+
+	return ret;
 };
 
 static void udp_listen(struct iface_endpoint *ifp,

@@ -784,3 +784,32 @@ void unreference_xfrmi(struct connection *c)
 		     xfrmi->name, xfrmi->if_id);
 	}
 }
+
+void ike_set_out_mark(const struct connection *c, ip_endpoint *ike_remote);
+void ike_set_out_mark(const struct connection *c, ip_endpoint *ike_remote)
+{
+	bool set_mark = false;
+	const struct spds *spds = &c->child.spds;
+
+	if (c->xfrmi == NULL || c->xfrmi->if_id == 0)
+		return;
+
+	FOR_EACH_ITEM(spd, spds) {
+		if (address_in_selector_range(spd->remote->host->addr, spd->remote->client))
+			set_mark = true;
+	}
+	if (!set_mark)
+		return; /* spds are outside ike remote end point */
+
+
+	uint32_t mark_out;
+	if (c->sa_marks.out.val != 0)
+		mark_out = c->sa_marks.out.val;
+	else
+		mark_out = c->xfrmi->if_id;
+
+	if (ike_remote->mark_out != 0)
+		passert(ike_remote->mark_out == mark_out);
+
+	ike_remote->mark_out = mark_out;
+}

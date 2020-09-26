@@ -51,6 +51,8 @@ typedef struct {
 	 * interpreted as a wild card so isn't allowed.
 	 */
 	int hport;
+	/* For IKE sending socket. With xfrm interface and IKE endpoint is within remote TS*/
+	uint32_t mark_out;
 } ip_endpoint;
 
 #define PRI_ENDPOINT "<endpoint-%s:IPv%d,%s["PRI_IP_BYTES"]:%u>"

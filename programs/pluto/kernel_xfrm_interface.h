@@ -21,6 +21,7 @@
 
 #include "err.h"
 #include "refcnt.h"
+#include "ip_endpoint.h"
 
 #if defined(linux) && defined(KERNEL_XFRM) && defined(USE_XFRM_INTERFACE)
 /* how to check defined(XFRMA_IF_ID) && defined(IFLA_XFRM_LINK)? those are enums */
