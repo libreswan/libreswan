@@ -1,4 +1,4 @@
-A routed host-to-host aka /32-to-/32 tunnel using xfrmi interface on road.
+A routed host-to-host a.k.a. /32-to-/32 tunnel using xfrmi interface on road.
 
 xfrmi need CONFIG_XFRM_INTERFACE=y in the kernel.
 

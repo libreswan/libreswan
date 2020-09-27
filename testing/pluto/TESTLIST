@@ -468,6 +468,7 @@ kvmplutotest	ikev2-xfrmi-13-multiple-tunnels		good
 kvmplutotest	ikev2-xfrmi-14-fwmark			wip
 kvmplutotest	ikev1-xfrmi-01				good
 kvmplutotest	ikev1-xfrmi-02				wip
+kvmplutotest	ikev1-xfrmi-02-tcpdump			wip
 kvmplutotest	ikev1-xfrmi-02-aggr			wip
 kvmplutotest	ikev1-xfrmi-04				good
 kvmplutotest	ikev1-xfrmi-04-aggr			good
