@@ -72,11 +72,11 @@ done
 
 function set_file_names()
 {
-	out_dir=/tmp
+	tmp_dir=/tmp
 	testname=$(basename ${PWD})
-	out_file="${host}-${testname}.pcap"
-	out_path="${out_dir}/${out_file}"
-	pid_file="${out_dir}/${host}-${testname}.pid"
+	out_file="${host}.${testname}.pcap"
+	out_path="${tmp_dir}/${out_file}"
+	pid_path="${tmp_dir}/${host}.${testname}.pid"
 }
 
 function start_tcpudmp()
@@ -85,19 +85,19 @@ function start_tcpudmp()
 	# call stop if there are any previous runawy tcpdump
 	sync_wait=${sync_wait_start}
 	stop_tcpudmp
-	rm -fr ${out_file}
-	rm -fr ${pid_file}
-	tcpdump -s 0 -i ${interface} -w ${out_file} 2>/dev/null > /dev/null & echo $! > ${pid_file}
+	rm -fr ${out_path}
+	rm -fr ${pid_path}
+	tcpdump -s 0 -i ${interface} -w ${out_path} 2>/dev/null > /dev/null & echo $! > ${pid_path}
 }
 
 function stop_tcpudmp()
 {
 	set_file_names
-	pid=$(cat ${pid_file} 2>/dev/null) || true
+	pid=$(cat ${pid_path} 2>/dev/null) || true
 	kill -TERM -p ${pid} 2>/dev/null > /dev/null || true
 	# for tcpudump output to write and sync
 	sleep ${sync_wait}; sync;
-	rm -fr ${pid_file}
+	rm -fr ${pid_path}
 }
 
 if [ "${host}" != "${this_host}" ]; then
