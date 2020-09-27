@@ -3179,7 +3179,6 @@ def setup_single_test(args, cwd=None):
     if args.testname:
         os.chdir(cwd)
 
-
 def do_single_test(args=None, test=None, tlr=None):
 
     s = ''
@@ -3750,6 +3749,15 @@ class Test():
             if not tlr and self.type == "dockerplutotest" or self.type == "nsplutotest":
                 if check_host_netkey_stack():
                     return True
+            if self.type == "nsplutotest":
+                # possible recursion ?? abort
+                cmd = "ip netns identify"
+                namespace = subprocess.getoutput(cmd)
+                namespace = namespace.strip()
+                for host in HOST_NAMES:
+                    if re.search(host, namespace):
+                        print("ABORT: namespace recurison namespace %s match a testhost %s" % (namespace, host))
+                        sys.exit(1)
 
         self.vm = vm(self.type)
 
@@ -4292,7 +4300,6 @@ def main():
 
 HOST_NAMES = list(DEFAULTCONFIG['swanhosts'])
 HOST_NAMES.extend(DEFAULTCONFIG['regualrhosts'])
-
 
 def _scripts(directory):
     """Returns a set of *.sh scripts found in DIRECTORY"""
