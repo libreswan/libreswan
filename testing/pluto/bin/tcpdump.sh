@@ -28,7 +28,7 @@ Stop and read tcpdump output to the console
 EOF
 }
 
-if test $# -lt 2; then
+if test $# -lt 1; then
 	usage
 	exit 1
 fi
