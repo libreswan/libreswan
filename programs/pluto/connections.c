@@ -431,7 +431,8 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 	/* HOST */
 	bool dohost_name;
 	bool dohost_port;
-	if (isanyaddr(&this->host_addr)) {
+	if (!address_is_set(&this->host_addr) ||
+	    address_eq_any(&this->host_addr)) {
 		dohost_port = false;
 		if (this->host_type == KH_IPHOSTNAME) {
 			dohost_name = true;
@@ -490,8 +491,8 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 static void jam_end_client(struct jambuf *buf, const struct end *this,
 			   lset_t policy, bool is_left)
 {
-	/* [CLIENT===] */
-	if (this->has_client) {
+	/* [CLIENT===] or [===CLIENT] */
+	if (this->has_client && subnet_is_set(&this->client)) {
 		bool boring = (subnet_contains_all_addresses(&this->client) &&
 			       (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC)));
 
