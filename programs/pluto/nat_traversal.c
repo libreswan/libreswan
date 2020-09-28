@@ -847,7 +847,7 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 		 * Since IKEv1 allows orphans - parent deleted but
 		 * children live on.
 		 */
-		if (!endpoint_eq(md->sender, st->st_remote_endpoint)) {
+		if (!endpoint_eq(&md->sender, &st->st_remote_endpoint)) {
 			struct new_mapp_nfo nfo = {
 				.clonedfrom = (st->st_clonedfrom != SOS_NOBODY ? st->st_clonedfrom : st->st_serialno),
 				.new_remote_endpoint = md->sender,
@@ -1011,7 +1011,7 @@ void v1_natify_initiator_endpoints(struct state *st, where_t where)
 	/*
 	 * If not already ...
 	 */
-	if (!endpoint_eq(new_local_endpoint, st->st_interface->local_endpoint)) {
+	if (!endpoint_eq(&new_local_endpoint, &st->st_interface->local_endpoint)) {
 		/*
 		 * For IPv4, both :PLUTO_PORT and :PLUTO_NAT_PORT are
 		 * opened by server.c so the new endpoint using

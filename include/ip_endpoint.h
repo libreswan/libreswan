@@ -93,7 +93,7 @@ size_t jam_sensitive_endpoint(struct jambuf *, const ip_endpoint*);
  * Logic
  */
 
-bool endpoint_eq(const ip_endpoint l, ip_endpoint r);
+bool endpoint_eq(const ip_endpoint *l, const ip_endpoint *r);
 
 /*
  * Magic values.

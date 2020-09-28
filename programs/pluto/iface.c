@@ -493,7 +493,7 @@ void find_ifaces(bool rm_dead, struct logger *logger)
 struct iface_port *find_iface_port_by_local_endpoint(ip_endpoint *local_endpoint)
 {
 	for (struct iface_port *p = interfaces; p != NULL; p = p->next) {
-		if (endpoint_eq(*local_endpoint, p->local_endpoint)) {
+		if (endpoint_eq(local_endpoint, &p->local_endpoint)) {
 			return p;
 		}
 	}

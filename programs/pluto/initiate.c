@@ -178,7 +178,7 @@ static bool end_matches_port(const struct end *end, const struct end *other,
 				other->raw.host.ikeport ? NAT_IKE_UDP_PORT :
 				IKE_UDP_PORT);
 	ip_endpoint host_end = endpoint3(ifp->protocol, &host_addr, port);
-	return endpoint_eq(host_end, ifp->local_endpoint);
+	return endpoint_eq(&host_end, &ifp->local_endpoint);
 }
 
 bool orient(struct connection *c)

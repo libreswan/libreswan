@@ -2725,7 +2725,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	dbg("#%lu pst=#%lu %s", child->sa.st_serialno,
 	    ike->sa.st_serialno, buf);
 
-	if (endpoint_eq(old_endpoint, new_endpoint)) {
+	if (endpoint_eq(&old_endpoint, &new_endpoint)) {
 		if (md_role == MESSAGE_REQUEST) {
 			/* on responder NAT could hide end-to-end change */
 			endpoint_buf b;
