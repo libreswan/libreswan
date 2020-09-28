@@ -407,7 +407,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			return false;
 		}
 		/* i.e., "zero" */
-		if (address_is_any(&temp_address)) {
+		if (address_eq_any(&temp_address)) {
 			ipstr_buf b;
 			loglog(RC_LOG_SERIOUS,
 			       "%s ID payload %s is invalid (%s) in Quick I1",

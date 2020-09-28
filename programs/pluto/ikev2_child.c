@@ -355,7 +355,7 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st,
 	}
 
 	/* i.e. all zeros */
-	if (address_is_any(&ip)) {
+	if (address_eq_any(&ip)) {
 		address_buf ip_str;
 		libreswan_log("ERROR INTERNAL_IP%d_DNS %s is invalid",
 			      af->ip_version, ipstr(&ip, &ip_str));
@@ -392,7 +392,7 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 	 * There should be one more byte in the pbs, 17th byte is prefix length.
 	 */
 
-	if (address_is_any(&ip)) {
+	if (address_eq_any(&ip)) {
 		ipstr_buf ip_str;
 		libreswan_log("ERROR INTERNAL_IP%d_ADDRESS %s is invalid",
 			      af->ip_version, ipstr(&ip, &ip_str));

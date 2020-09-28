@@ -161,10 +161,12 @@ const struct ip_info *address_type(const ip_address *address);
 
 bool address_is_set(const ip_address *address);
 /* subset of is_set */
-bool address_is_any(const ip_address *address);
 bool address_is_specified(const ip_address *address);
-/* implies specified */
-bool address_is_loopback(const ip_address *address);
+
+/* are two is_set() addresses identical? */
+bool address_eq(const ip_address *address, const ip_address *another);
+bool address_eq_loopback(const ip_address *address);
+bool address_eq_any(const ip_address *address);
 
 /* AF={INET,INET6}, ADDR = 0; aka %any? */
 ip_address address_any(const struct ip_info *info);

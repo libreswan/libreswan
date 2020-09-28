@@ -24,9 +24,9 @@
  * (presumably zeroed) ip_address structure to be 'any'.
  *
  * XXX: callers seem to be using this as a proxy for
- * address_is_invalid() (i.e., not updated).
+ * address_eq_unset() (i.e., not updated).
  */
 bool isanyaddr(const ip_address * src)
 {
-	return address_is_set(src) ? address_is_any(src) : true;
+	return address_is_set(src) ? address_eq_any(src) : true;
 }

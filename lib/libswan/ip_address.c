@@ -363,17 +363,6 @@ bool address_is_set(const ip_address *address)
 	return address_type(address) != NULL;
 }
 
-bool address_is_any(const ip_address *address)
-{
-	const struct ip_info *type = address_type(address);
-	if (type == NULL) {
-		return false;
-	}
-	shunk_t addr = address_as_shunk(address);
-	shunk_t any = address_as_shunk(&type->any_address);
-	return hunk_eq(addr, any);
-}
-
 bool address_is_specified(const ip_address *address)
 {
 	const struct ip_info *type = address_type(address);
@@ -385,15 +374,38 @@ bool address_is_specified(const ip_address *address)
 	return !hunk_eq(addr, any);
 }
 
-bool address_is_loopback(const ip_address *address)
+bool address_eq(const ip_address *l, const ip_address *r)
+{
+	const struct ip_info *lt = address_type(l);
+	const struct ip_info *rt = address_type(r);
+	if (lt == NULL || rt == NULL) {
+		/* AF_UNSPEC/NULL are never equal; think NaN */
+		return false;
+	}
+	if (lt != rt) {
+		return false;
+	}
+	shunk_t ls = address_as_shunk(l);
+	shunk_t rs = address_as_shunk(r);
+	return hunk_eq(ls, rs);
+}
+
+bool address_eq_loopback(const ip_address *address)
 {
 	const struct ip_info *type = address_type(address);
 	if (type == NULL) {
 		return false;
 	}
-	shunk_t addr = address_as_shunk(address);
-	shunk_t loopback = address_as_shunk(&type->loopback_address);
-	return hunk_eq(addr, loopback);
+	return address_eq(address, &type->loopback_address);
+}
+
+bool address_eq_any(const ip_address *address)
+{
+	const struct ip_info *type = address_type(address);
+	if (type == NULL) {
+		return false;
+	}
+	return address_eq(address, &type->any_address);
 }
 
 /*

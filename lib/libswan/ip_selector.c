@@ -184,7 +184,7 @@ bool selector_in_selector(const ip_selector *l, const ip_selector *r)
 		/* port wildcards */
 		(r->addr.hport == 0 || l->addr.hport == r->addr.hport) &&
 		/* exclude any(zero), other than for any/0 */
-		(address_is_any(&r->addr) ? r->maskbits == 0 : r->maskbits > 0) &&
+		(address_eq_any(&r->addr) ? r->maskbits == 0 : r->maskbits > 0) &&
 		/* address < range */
 		addrinsubnet(&l->addr, r) &&
 		/* more maskbits => more address & smaller subnet */

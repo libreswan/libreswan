@@ -105,23 +105,23 @@ extern bool use_dns;
 		CHECK_TYPE(PRINT, address_type(ADDRESS));		\
 		/* aka address_type(ADDRESS) == NULL; */		\
 		bool set = address_is_set(ADDRESS);			\
-		if (set != t->set) {				\
+		if (set != t->set) {					\
 			FAIL(PRINT, " address_is_set() returned %s; expected %s", \
-			     bool_str(set), bool_str(t->set));	\
-		}							\
-		bool any = address_is_any(ADDRESS);			\
-		if (any != t->any) {					\
-			FAIL(PRINT, " address_is_any() returned %s; expected %s", \
-			     bool_str(any), bool_str(t->any));		\
+			     bool_str(set), bool_str(t->set));		\
 		}							\
 		bool specified = address_is_specified(ADDRESS);		\
 		if (specified != t->specified) {			\
 			FAIL(PRINT, " address_is_specified() returned %s; expected %s", \
 			     bool_str(specified), bool_str(t->specified)); \
 		}							\
-		bool loopback = address_is_loopback(ADDRESS);		\
+		bool any = address_eq_any(ADDRESS);			\
+		if (any != t->any) {					\
+			FAIL(PRINT, " address_eq_any() returned %s; expected %s", \
+			     bool_str(any), bool_str(t->any));		\
+		}							\
+		bool loopback = address_eq_loopback(ADDRESS);		\
 		if (loopback != t->loopback) {				\
-			FAIL(PRINT, " address_is_loopback() returned %s; expected %s", \
+			FAIL(PRINT, " address_eq_loopback() returned %s; expected %s", \
 			     bool_str(loopback), bool_str(t->loopback)); \
 		}							\
 	}
