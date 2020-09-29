@@ -42,11 +42,6 @@
 
 #include <errno.h>
 
-/* Food group config files are found in directory fg_path */
-
-static char *fg_path = NULL;
-static size_t fg_path_space = 0;
-
 /* Groups is a list of connections that are policy groups.
  * The list is updated as group connections are added and deleted.
  */
@@ -79,9 +74,6 @@ struct fg_targets {
 
 static struct fg_targets *targets = NULL;
 
-static struct fg_targets *new_targets;
-
-
 /* subnetcmp compares the two ip_subnet values a and b.
  * It returns -1, 0, or +1 if a is, respectively,
  * less than, equal to, or greater than b.
@@ -100,30 +92,23 @@ static int subnetcmp(const ip_subnet *a, const ip_subnet *b)
 	return r;
 }
 
-static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g)
+static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
+			   struct fg_targets **new_targets)
 {
 	const char *fgn = g->connection->name;
 	const ip_subnet *lsn = &g->connection->spd.this.client;
 	const struct lsw_conf_options *oco = lsw_init_options();
-	size_t plen = strlen(oco->policies_dir) + 2 + strlen(fgn) + 1;
+	char *fg_path = alloc_printf("%s/%s", oco->policies_dir, fgn); /* must free */
 
-	if (plen > fg_path_space) {
-		pfreeany(fg_path);
-		fg_path_space = plen + 10;
-		fg_path = alloc_bytes(fg_path_space, "policy group path");
-	}
-
-	/* danger, global buffer */
-	snprintf(fg_path, fg_path_space, "%s/%s", oco->policies_dir, fgn);
 	struct file_lex_position *flp;
 	if (!lexopen(&flp, fg_path, true, oflp)) {
 		char cwd[PATH_MAX];
 		dbg("no group file \"%s\" (pwd:%s)", fg_path, getcwd(cwd, sizeof(cwd)));
 		return;
 	}
+	pfreeany(fg_path);
 
-	log_message(RC_LOG, flp->logger,
-		    "loading group \"%s\"", fg_path);
+	log_message(RC_LOG, flp->logger, "loading group \"%s\"", flp->filename);
 	while (flp->bdry == B_record) {
 
 		/* force advance to first token */
@@ -231,7 +216,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g)
 		struct fg_targets **pp;
 		int r;
 
-		for (pp = &new_targets;;
+		for (pp = new_targets;;
 		     pp = &(*pp)->next) {
 			if (*pp == NULL) {
 				r = -1; /* end of list is infinite */
@@ -270,7 +255,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g)
 			f->proto = proto;
 			f->sport = sport;
 			f->dport = dport;
-			f->name = NULL;
+			f->name = NULL; /* filled in below */
 			*pp = f;
 		}
 	}
@@ -299,7 +284,7 @@ static void pfree_targets(void)
 void load_groups(struct fd *whackfd)
 {
 	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
-	passert(new_targets == NULL);
+	struct fg_targets *new_targets = NULL;
 
 	/* for each group, add config file targets into new_targets */
 	for (struct fg_groups *g = groups; g != NULL; g = g->next) {
@@ -307,7 +292,7 @@ void load_groups(struct fd *whackfd)
 			struct file_lex_position flp = {
 				.logger = logger,
 			};
-			read_foodgroup(&flp, g);
+			read_foodgroup(&flp, g, &new_targets);
 		}
 	}
 
