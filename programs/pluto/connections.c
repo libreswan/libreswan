@@ -2039,31 +2039,29 @@ char *add_group_instance(struct fd *whackfd,
 
 	/*
 	 * Manufacture a unique name for this template.
-	 * If the name gets truncated, that will manifest itself
-	 * in a duplicated name and thus be rejected.
 	 */
-	char namebuf[100];	/* presumed large enough */
+	char *namebuf; /* must free */
 
-	{
-		subnet_buf targetbuf;
-		str_subnet(target, &targetbuf);
+	subnet_buf targetbuf;
+	str_subnet(target, &targetbuf);
 
-		if (proto == 0) {
-			snprintf(namebuf, sizeof(namebuf), "%s#%s", group->name, targetbuf.buf);
-		} else {
-			snprintf(namebuf, sizeof(namebuf), "%s#%s-(%d--%d--%d)", group->name,
-				targetbuf.buf, sport, proto, dport);
-		}
+	if (proto == 0) {
+		namebuf = alloc_printf("%s#%s", group->name, targetbuf.buf);
+	} else {
+		namebuf = alloc_printf("%s#%s-(%d--%d--%d)", group->name,
+				       targetbuf.buf, sport, proto, dport);
 	}
 
 	if (conn_by_name(namebuf, false/*!strict*/) != NULL) {
-		loglog(RC_DUPNAME,
-			"group name + target yields duplicate name \"%s\"",
-			namebuf);
+		log_connection(RC_DUPNAME, whackfd, group,
+			       "group name + target yields duplicate name \"%s\"",
+			       namebuf);
+		pfreeany(namebuf);
 		return NULL;
 	} else {
 		struct connection *t = clone_connection(namebuf, group, HERE);
 		passert(namebuf != t->name); /* see clone_connection() */
+		pfreeany(namebuf);
 		t->foodgroup = clone_str(t->name, "cloned from groupname"); /* not set in group template */
 
 		/* suppress virt before unsharing */
