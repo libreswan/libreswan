@@ -2058,62 +2058,62 @@ char *add_group_instance(struct fd *whackfd,
 			       namebuf);
 		pfreeany(namebuf);
 		return NULL;
-	} else {
-		struct connection *t = clone_connection(namebuf, group, HERE);
-		passert(namebuf != t->name); /* see clone_connection() */
-		pfreeany(namebuf);
-		t->foodgroup = clone_str(t->name, "cloned from groupname"); /* not set in group template */
-
-		/* suppress virt before unsharing */
-		passert(t->spd.this.virt == NULL);
-
-		pexpect(t->spd.spd_next == NULL);	/* we only handle top spd */
-
-		if (t->spd.that.virt != NULL) {
-			DBG_log("virtual_ip not supported in group instance; ignored");
-			t->spd.that.virt = NULL;
-		}
-
-		unshare_connection(t);
-
-		t->spd.that.client = *target;
-		if (proto != 0) {
-			/* if foodgroup entry specifies protoport, override protoport= settings */
-			t->spd.this.protocol = proto;
-			t->spd.that.protocol = proto;
-			t->spd.this.port = sport;
-			t->spd.that.port = dport;
-		}
-		t->policy &= ~(POLICY_GROUP | POLICY_GROUTED);
-		t->policy |= POLICY_GROUPINSTANCE; /* mark as group instance for later */
-		t->kind = isanyaddr(&t->spd.that.host_addr) &&
-			!NEVER_NEGOTIATE(t->policy) ?
-			CK_TEMPLATE : CK_INSTANCE;
-
-		/* reset log file info */
-		t->log_file_name = NULL;
-		t->log_file = NULL;
-		t->log_file_err = FALSE;
-
-		t->spd.reqid = group->sa_reqid == 0 ?
-			gen_reqid() : group->sa_reqid;
-
-		/* add to connections list */
-		t->ac_next = connections;
-		connections = t;
-
-		/* same host_pair as parent: stick after parent on list */
-		/* t->hp_next = group->hp_next; */	/* done by clone_thing */
-		group->hp_next = t;
-
-		/* route if group is routed */
-		if (group->policy & POLICY_GROUTED) {
-			if (!trap_connection(t, whackfd))
-				whack_log(RC_ROUTE, whackfd,
-					  "could not route");
-		}
-		return clone_str(t->name, "group instance name");
 	}
+
+	struct connection *t = clone_connection(namebuf, group, HERE);
+	passert(namebuf != t->name); /* see clone_connection() */
+	pfreeany(namebuf);
+	t->foodgroup = clone_str(t->name, "cloned from groupname"); /* not set in group template */
+
+	/* suppress virt before unsharing */
+	passert(t->spd.this.virt == NULL);
+
+	pexpect(t->spd.spd_next == NULL);	/* we only handle top spd */
+
+	if (t->spd.that.virt != NULL) {
+		DBG_log("virtual_ip not supported in group instance; ignored");
+		t->spd.that.virt = NULL;
+	}
+
+	unshare_connection(t);
+
+	t->spd.that.client = *target;
+	if (proto != 0) {
+		/* if foodgroup entry specifies protoport, override protoport= settings */
+		t->spd.this.protocol = proto;
+		t->spd.that.protocol = proto;
+		t->spd.this.port = sport;
+		t->spd.that.port = dport;
+	}
+	t->policy &= ~(POLICY_GROUP | POLICY_GROUTED);
+	t->policy |= POLICY_GROUPINSTANCE; /* mark as group instance for later */
+	t->kind = isanyaddr(&t->spd.that.host_addr) &&
+		!NEVER_NEGOTIATE(t->policy) ?
+		CK_TEMPLATE : CK_INSTANCE;
+
+	/* reset log file info */
+	t->log_file_name = NULL;
+	t->log_file = NULL;
+	t->log_file_err = FALSE;
+
+	t->spd.reqid = group->sa_reqid == 0 ?
+		gen_reqid() : group->sa_reqid;
+
+	/* add to connections list */
+	t->ac_next = connections;
+	connections = t;
+
+	/* same host_pair as parent: stick after parent on list */
+	/* t->hp_next = group->hp_next; */	/* done by clone_thing */
+	group->hp_next = t;
+
+	/* route if group is routed */
+	if (group->policy & POLICY_GROUTED) {
+		if (!trap_connection(t, whackfd))
+			whack_log(RC_ROUTE, whackfd,
+				  "could not route");
+	}
+	return clone_str(t->name, "group instance name");
 }
 
 /* An old target has disappeared for a group: delete instance. */
