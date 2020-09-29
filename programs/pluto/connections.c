@@ -2063,7 +2063,7 @@ char *add_group_instance(struct fd *whackfd,
 	struct connection *t = clone_connection(namebuf, group, HERE);
 	passert(namebuf != t->name); /* see clone_connection() */
 	pfreeany(namebuf);
-	t->foodgroup = clone_str(t->name, "cloned from groupname"); /* not set in group template */
+	t->foodgroup = t->name; /* XXX: DANGER: unshare_connection() will clone this */
 
 	/* suppress virt before unsharing */
 	passert(t->spd.this.virt == NULL);
@@ -2076,6 +2076,7 @@ char *add_group_instance(struct fd *whackfd,
 	}
 
 	unshare_connection(t);
+	passert(t->foodgroup != t->name); /* XXX: see DANGER above */
 
 	t->spd.that.client = *target;
 	if (proto != 0) {
