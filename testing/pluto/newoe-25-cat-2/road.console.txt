@@ -13,15 +13,10 @@ road #
 road #
  ipsec whack --impair suppress-retransmits
 road #
- ipsec auto --add road-east
-conn 'road-east': not found (tried aliases)
-road #
- ipsec auto --add road-west
-conn 'road-west': not found (tried aliases)
-road #
  # give OE a chance to load conns
 road #
- sleep 3
+ ../../pluto/bin/wait-for.sh --match 'loaded 9' -- ipsec auto --status
+000 Total IPsec connections: loaded 9, active 0
 road #
  ipsec auto --status
 000 using kernel interface: xfrm
@@ -122,7 +117,7 @@ road #
 000 "block":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 000 "block":   our idtype: ID_IPV4_ADDR; our id=192.1.3.209; their idtype: %none; their id=(none)
 000 "block":   dpd: action:disabled; delay:0; timeout:0; nat-t: encaps:no; nat_keepalive:no; ikev1_natt:both
-000 "block":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $5;
+000 "block":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $9;
 000 "clear": 192.1.3.209---192.1.3.254...%group; unrouted; eroute owner: #0
 000 "clear":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "clear":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -152,7 +147,7 @@ road #
 000 "clear#192.1.2.253/32":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 000 "clear#192.1.2.253/32":   our idtype: ID_IPV4_ADDR; our id=192.1.3.209; their idtype: %none; their id=(none)
 000 "clear#192.1.2.253/32":   dpd: action:disabled; delay:0; timeout:0; nat-t: encaps:no; nat_keepalive:no; ikev1_natt:both
-000 "clear#192.1.2.253/32":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $8, instantiated from: $1;
+000 "clear#192.1.2.253/32":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $7, instantiated from: $1;
 000 "clear#192.1.3.253/32": 192.1.3.209---192.1.3.254...%any; prospective erouted; eroute owner: #0
 000 "clear#192.1.3.253/32":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "clear#192.1.3.253/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -167,7 +162,7 @@ road #
 000 "clear#192.1.3.253/32":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 000 "clear#192.1.3.253/32":   our idtype: ID_IPV4_ADDR; our id=192.1.3.209; their idtype: %none; their id=(none)
 000 "clear#192.1.3.253/32":   dpd: action:disabled; delay:0; timeout:0; nat-t: encaps:no; nat_keepalive:no; ikev1_natt:both
-000 "clear#192.1.3.253/32":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $7, instantiated from: $1;
+000 "clear#192.1.3.253/32":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $6, instantiated from: $1;
 000 "clear#192.1.3.254/32": 192.1.3.209---192.1.3.254...%any; prospective erouted; eroute owner: #0
 000 "clear#192.1.3.254/32":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "clear#192.1.3.254/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -182,7 +177,7 @@ road #
 000 "clear#192.1.3.254/32":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 000 "clear#192.1.3.254/32":   our idtype: ID_IPV4_ADDR; our id=192.1.3.209; their idtype: %none; their id=(none)
 000 "clear#192.1.3.254/32":   dpd: action:disabled; delay:0; timeout:0; nat-t: encaps:no; nat_keepalive:no; ikev1_natt:both
-000 "clear#192.1.3.254/32":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $6, instantiated from: $1;
+000 "clear#192.1.3.254/32":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $5, instantiated from: $1;
 000 "clear-or-private": 192.1.3.209[ID_NULL,+MC+CAT+S=C]---192.1.3.254...%opportunisticgroup[ID_NULL,MS+S=C]; unrouted; eroute owner: #0
 000 "clear-or-private":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "clear-or-private":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -246,7 +241,7 @@ road #
 000 "private-or-clear#192.1.2.0/24":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "private-or-clear#192.1.2.0/24":   our idtype: ID_NULL; our id=ID_NULL; their idtype: ID_NULL; their id=ID_NULL
 000 "private-or-clear#192.1.2.0/24":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "private-or-clear#192.1.2.0/24":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $9, instantiated from: $3;
+000 "private-or-clear#192.1.2.0/24":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $8, instantiated from: $3;
 000  
 000 Total IPsec connections: loaded 9, active 0
 000  
@@ -259,8 +254,6 @@ road #
 road #
  echo "initdone"
 initdone
-road #
- sleep 5
 road #
  ipsec whack --trafficstatus
 road #
@@ -304,45 +297,44 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 road #
- # ping should succeed through tunnel
+ # bring up first tunnel
 road #
- ping -n -c 4 -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 3 received, 25% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../pluto/bin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
+down
 road #
- ping -n -c 4 -I 192.1.3.209 192.1.2.45
-PING 192.1.2.45 (192.1.2.45) from 192.1.3.209 : 56(84) bytes of data.
-64 bytes from 192.1.2.45: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.45: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.45: icmp_seq=4 ttl=64 time=0.XXX ms
---- 192.1.2.45 ping statistics ---
-4 packets transmitted, 3 received, 25% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../pluto/bin/wait-for.sh --match '192.1.2.23' -- ipsec whack --trafficstatus
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='ID_NULL', lease=10.0.10.1/32
+road #
+ ../../pluto/bin/ping-once.sh --up   -I 192.1.3.209 192.1.2.23
+up
 road #
  ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL', lease=10.0.10.1/32
-006 #4: "private-or-clear#192.1.2.0/24"[2] 10.0.10.1/32=== ...192.1.2.45, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL', lease=10.0.10.1/32
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL', lease=10.0.10.1/32
+road #
+ # bring up second tunnel
+road #
+ ../../pluto/bin/ping-once.sh --down -I 192.1.3.209 192.1.2.45
+down
+road #
+ ../../pluto/bin/wait-for.sh --match '192.1.2.45' -- ipsec whack --trafficstatus
+006 #4: "private-or-clear#192.1.2.0/24"[2] 10.0.10.1/32=== ...192.1.2.45, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='ID_NULL', lease=10.0.10.1/32
+road #
+ ../../pluto/bin/ping-once.sh --up   -I 192.1.3.209 192.1.2.45
+up
+road #
+ ipsec whack --trafficstatus
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL', lease=10.0.10.1/32
+006 #4: "private-or-clear#192.1.2.0/24"[2] 10.0.10.1/32=== ...192.1.2.45, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL', lease=10.0.10.1/32
 road #
  echo done
 done
 road #
- ping -n -c 4 10.0.10.1
-PING 10.0.10.1 (10.0.10.1) 56(84) bytes of data.
-From 192.1.3.254 icmp_seq=1 Destination Net Unreachable
-From 192.1.3.254 icmp_seq=2 Destination Net Unreachable
-From 192.1.3.254 icmp_seq=3 Destination Net Unreachable
-From 192.1.3.254 icmp_seq=4 Destination Net Unreachable
---- 10.0.10.1 ping statistics ---
-4 packets transmitted, 0 received, +4 errors, 100% packet loss, time XXXX
+ ../../pluto/bin/ping-once.sh --down 10.0.10.1
+down
 road #
  ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=588, outBytes=588, id='ID_NULL', lease=10.0.10.1/32
-006 #4: "private-or-clear#192.1.2.0/24"[2] 10.0.10.1/32=== ...192.1.2.45, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL', lease=10.0.10.1/32
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL', lease=10.0.10.1/32
+006 #4: "private-or-clear#192.1.2.0/24"[2] 10.0.10.1/32=== ...192.1.2.45, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL', lease=10.0.10.1/32
 road #
  iptables -t nat -L -n
 Chain PREROUTING (policy ACCEPT)
@@ -453,6 +445,11 @@ default via 192.1.3.254 dev eth0
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
+road #
+ ipsec stop
+Redirecting to: [initsystem]
+road #
+ grep "^leak" /tmp/pluto.log
 road #
  ../bin/check-for-core.sh
 road #

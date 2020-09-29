@@ -5,9 +5,7 @@ echo "192.1.2.0/24"  >> /etc/ipsec.d/policies/private-or-clear
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec whack --impair suppress-retransmits
-ipsec auto --add road-east
-ipsec auto --add road-west
 # give OE a chance to load conns
-sleep 3
+../../pluto/bin/wait-for.sh --match 'loaded 9' -- ipsec auto --status
 ipsec auto --status
 echo "initdone"
