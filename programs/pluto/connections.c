@@ -438,7 +438,7 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 	/* HOST */
 	bool dohost_name;
 	bool dohost_port;
-	if (!address_is_set(&this->host_addr) ||
+	if (address_is_unset(&this->host_addr) ||
 	    address_eq_any(&this->host_addr)) {
 		dohost_port = false;
 		if (this->host_type == KH_IPHOSTNAME) {

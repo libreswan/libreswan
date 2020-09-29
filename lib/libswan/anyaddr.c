@@ -28,5 +28,5 @@
  */
 bool isanyaddr(const ip_address * src)
 {
-	return address_is_set(src) ? address_eq_any(src) : true;
+	return address_is_unset(src) ? true : address_eq_any(src);
 }

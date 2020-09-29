@@ -267,24 +267,24 @@ static void check_address_is(void)
 	static const struct test {
 		int family;
 		const char *in;
-		bool set;
+		bool unset;
 		bool any;
 		bool specified;
 		bool loopback;
 	} tests[] = {
-		{ 0, "<invalid>",		.set = false, },
-		{ 4, "0.0.0.0",			.set = true, .any = true, },
-		{ 6, "::",			.set = true, .any = true, },
-		{ 4, "1.2.3.4",			.set = true, .specified = true, },
-		{ 6, "1:12:3:14:5:16:7:18",	.set = true, .specified = true, },
-		{ 4, "127.0.0.1",		.set = true, .specified = true, .loopback = true, },
-		{ 6, "::1",			.set = true, .specified = true, .loopback = true, },
+		{ 0, "<invalid>",		.unset = true, },
+		{ 4, "0.0.0.0",			.any = true, },
+		{ 6, "::",			.any = true, },
+		{ 4, "1.2.3.4",			.specified = true, },
+		{ 6, "1:12:3:14:5:16:7:18",	.specified = true, },
+		{ 4, "127.0.0.1",		.specified = true, .loopback = true, },
+		{ 6, "::1",			.specified = true, .loopback = true, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT_IN(stdout, "-> set: %s, any: %s, specified: %s",
-			 bool_str(t->set), bool_str(t->any), bool_str(t->specified));
+		PRINT_IN(stdout, "-> unset: %s, any: %s, specified: %s",
+			 bool_str(t->unset), bool_str(t->any), bool_str(t->specified));
 
 		/* convert it *to* internal format */
 		ip_address a;

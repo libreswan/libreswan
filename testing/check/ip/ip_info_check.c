@@ -36,16 +36,16 @@ static void check_ip_info_address(void)
 	static const struct test {
 		int family;
 		const ip_address *address;
-		bool set;
+		bool unset;
 		bool any;
 		bool specified;
 		bool loopback;
 	} tests[] = {
-		{ 0, &unset_address,              .set = false, },
-		{ 4, &ipv4_info.any_address,      .set = true, .any = true },
-		{ 6, &ipv6_info.any_address,      .set = true, .any = true },
-		{ 4, &ipv4_info.loopback_address, .set = true, .specified = true, .loopback = true, },
-		{ 6, &ipv6_info.loopback_address, .set = true, .specified = true, .loopback = true, },
+		{ 0, &unset_address,              .unset = true, },
+		{ 4, &ipv4_info.any_address,      .any = true },
+		{ 6, &ipv6_info.any_address,      .any = true },
+		{ 4, &ipv4_info.loopback_address, .specified = true, .loopback = true, },
+		{ 6, &ipv6_info.loopback_address, .specified = true, .loopback = true, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
@@ -61,15 +61,15 @@ static void check_ip_info_endpoint(void)
 	static const struct test {
 		int family;
 		const ip_endpoint *endpoint;
-		bool set;
+		bool unset;
 		bool any;
 		bool specified;
 		bool loopback;
 		int hport;
 	} tests[] = {
-		{ 0, &unset_endpoint,         .set = false, .hport = -1, },
-		{ 4, &ipv4_info.any_endpoint, .set = true, .any = true },
-		{ 6, &ipv6_info.any_endpoint, .set = true, .any = true },
+		{ 0, &unset_endpoint,         .unset = true, .hport = -1, },
+		{ 4, &ipv4_info.any_endpoint, .any = true },
+		{ 6, &ipv6_info.any_endpoint, .any = true },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
@@ -82,7 +82,7 @@ static void check_ip_info_endpoint(void)
 		ip_address a = endpoint_address(&e);
 		CHECK_ADDRESS(PRINT_INFO, &a);
 
-		if (t->set) {
+		if (!t->unset) {
 			int hport = endpoint_hport(&e);
 			if (hport != t->hport) {
 				FAIL(PRINT_INFO, " endpoint_port() returned %d, expecting %d",

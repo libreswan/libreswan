@@ -358,9 +358,9 @@ ip_address address_any(const struct ip_info *info)
 	}
 }
 
-bool address_is_set(const ip_address *address)
+bool address_is_unset(const ip_address *address)
 {
-	return address_type(address) != NULL;
+	return address_type(address) == NULL;
 }
 
 bool address_is_specified(const ip_address *address)

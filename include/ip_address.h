@@ -156,10 +156,10 @@ const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b);
  */
 
 extern const ip_address unset_address;
+bool address_is_unset(const ip_address *address);
 
 const struct ip_info *address_type(const ip_address *address);
 
-bool address_is_set(const ip_address *address);
 /* subset of is_set */
 bool address_is_specified(const ip_address *address);
 

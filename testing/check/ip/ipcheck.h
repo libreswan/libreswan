@@ -104,10 +104,10 @@ extern bool use_dns;
 	{								\
 		CHECK_TYPE(PRINT, address_type(ADDRESS));		\
 		/* aka address_type(ADDRESS) == NULL; */		\
-		bool set = address_is_set(ADDRESS);			\
-		if (set != t->set) {					\
-			FAIL(PRINT, " address_is_set() returned %s; expected %s", \
-			     bool_str(set), bool_str(t->set));		\
+		bool unset = address_is_unset(ADDRESS);			\
+		if (unset != t->unset) {					\
+			FAIL(PRINT, " address_is_unset() returned %s; expected %s", \
+			     bool_str(unset), bool_str(t->unset));		\
 		}							\
 		bool specified = address_is_specified(ADDRESS);		\
 		if (specified != t->specified) {			\

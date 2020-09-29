@@ -122,7 +122,7 @@ static bool orient_new_iface_port(struct connection *c, struct fd *whackfd, bool
 	if (end->raw.host.ikeport == 0) {
 		return false;
 	}
-	if (!address_is_set(&end->host_addr)) {
+	if (address_is_unset(&end->host_addr)) {
 		return false;
 	}
 	struct iface_dev *dev = find_iface_dev_by_address(&end->host_addr);
