@@ -15,7 +15,7 @@
 #define MAX_TOK_LEN 2048	/* includes terminal '\0' */
 struct file_lex_position {
 	int depth;		/* how deeply we are nested */
-	const char *filename;
+	char *filename;
 	FILE *fp;
 	enum { B_none, B_record, B_file } bdry;	/* current boundary */
 	int lino;				/* line number in file */

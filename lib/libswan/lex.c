@@ -55,7 +55,7 @@ bool lexopen(struct file_lex_position **flp, const char *name,
 	DBGF(DBG_TMI, "lex open: %s", name);
 	struct file_lex_position *new_flp = alloc_thing(struct file_lex_position, name);
 	new_flp->depth = oflp->depth + 1;
-	new_flp->filename = name;
+	new_flp->filename = clone_str(name, "lexopen filename");
 	new_flp->fp = f;
 	new_flp->lino = 0;
 	new_flp->bdry = B_none;
@@ -74,7 +74,7 @@ void lexclose(struct file_lex_position **flp)
 {
 	DBGF(DBG_TMI, "lex close:");
 	fclose((*flp)->fp);
-	/* pop head */
+	pfreeany((*flp)->filename);
 	pfree(*flp);
 	*flp = NULL;
 }
