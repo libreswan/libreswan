@@ -450,6 +450,8 @@ road #
 Redirecting to: [initsystem]
 road #
  grep "^leak" /tmp/pluto.log
+leak-detective enabled
+leak detective found no leaks
 road #
  ../bin/check-for-core.sh
 road #

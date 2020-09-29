@@ -143,6 +143,7 @@ Redirecting to: [initsystem]
 west #
  grep "^leak" /tmp/pluto.log
 leak-detective enabled
+leak detective found no leaks
 west #
  ../bin/check-for-core.sh
 west #

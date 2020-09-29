@@ -28,6 +28,8 @@ east #
 Redirecting to: [initsystem]
 east #
  grep "^leak" /tmp/pluto.log
+leak-detective enabled
+leak detective found no leaks
 east #
  ../bin/check-for-core.sh
 east #
