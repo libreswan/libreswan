@@ -462,12 +462,12 @@ extern void delete_connection(struct connection *c, bool relations);
 extern void delete_connections_by_name(const char *name, bool strict,
 				       struct fd *whack);
 extern void delete_every_connection(void);
-extern char *add_group_instance(struct fd *whack,
-				struct connection *group,
-				const ip_subnet *target,
-				uint8_t proto,
-				uint16_t sport,
-				uint16_t dport);
+struct connection *add_group_instance(struct fd *whack,
+				      struct connection *group,
+				      const ip_subnet *target,
+				      uint8_t proto,
+				      uint16_t sport,
+				      uint16_t dport);
 
 extern void remove_group_instance(const struct connection *group,
 				  const char *name);

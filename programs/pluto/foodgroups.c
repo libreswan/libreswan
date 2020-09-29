@@ -272,15 +272,6 @@ static void pfree_target(struct fg_targets **target)
 	*target = NULL;
 }
 
-static void pfree_targets(void)
-{
-	while (targets != NULL) {
-		struct fg_targets *t = targets;
-		targets = t->next;
-		pfree_target(&t);
-	}
-}
-
 void load_groups(struct fd *whackfd)
 {
 	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
@@ -296,31 +287,54 @@ void load_groups(struct fd *whackfd)
 		}
 	}
 
-	/* dump new_targets */
-	if (DBG_BASE) {
-		for (struct fg_targets *t = new_targets; t != NULL; t = t->next) {
+	if (DBGP(DBG_BASE)) {
+		/* dump old food groups */
+		DBG_log("old food groups:");
+		for (struct fg_targets *t = targets; t != NULL; t = t->next) {
 			selector_buf asource;
 			selector_buf atarget;
-			DBG_log("%s->%s %d sport %d dport %d %s",
+			DBG_log("  %s->%s %d sport %d dport %d %s",
 				str_selector(&t->group->connection->spd.this.client, &asource),
 				str_selector(&t->subnet, &atarget),
 				t->proto, t->sport, t->dport,
 				t->group->connection->name);
 		}
-	    }
+		/* dump new food groups */
+		DBG_log("new food groups:");
+		for (struct fg_targets *t = new_targets; t != NULL; t = t->next) {
+			selector_buf asource;
+			selector_buf atarget;
+			DBG_log("  %s->%s %d sport %d dport %d %s",
+				str_selector(&t->group->connection->spd.this.client, &asource),
+				str_selector(&t->subnet, &atarget),
+				t->proto, t->sport, t->dport,
+				t->group->connection->name);
+		}
+	}
 
-	/* determine and deal with differences between targets and new_targets.
-	 * structured like a merge.
+	/*
+	 * determine and deal with differences between targets and
+	 * new_targets.  Structured like a merge of old into new.
 	 */
 	{
-		struct fg_targets *op = targets,
-		*np = new_targets;
+		struct fg_targets **opp = &targets;
+		struct fg_targets **npp = &new_targets;
 
-		while (op != NULL && np != NULL) {
-			int r = subnetcmp(
-				&op->group->connection->spd.this.client,
-				&np->group->connection->spd.this.client);
+		while ((*opp) != NULL || (*npp) != NULL) {
+			struct fg_targets *op = *opp;
+			struct fg_targets *np = *npp;
 
+			/* select next: -1:old; 0:merge; +1:new? */
+			int r = 0;
+			if (op == NULL) {
+				r = 1; /* no more old; next is new */
+			}
+			if (np == NULL) {
+				r = -1; /* no more new; next is old */
+			}
+			if (r == 0)
+				r = subnetcmp(&op->group->connection->spd.this.client,
+					      &np->group->connection->spd.this.client);
 			if (r == 0)
 				r = subnetcmp(&op->subnet, &np->subnet);
 			if (r == 0)
@@ -332,42 +346,46 @@ void load_groups(struct fd *whackfd)
 
 			if (r == 0 && op->group == np->group) {
 				/* unchanged -- steal name & skip over */
+				passert(np->name == NULL);
 				np->name = op->name;
 				op->name = NULL;
-				op = op->next;
-				np = np->next;
+				/* free old; advance new */
+				*opp = op->next;
+				pfree_target(&op);
+				npp = &np->next;
 			} else {
-				/* note: following cases overlap! */
+				/* note: r>=0 || r<= 0: following cases overlap! */
 				if (r <= 0) {
-					remove_group_instance(
-						op->group->connection,
-						op->name);
-					op = op->next;
+					remove_group_instance(op->group->connection,
+							      op->name);
+					/* free old */
+					*opp = op->next;
+					pfree_target(&op);
 				}
 				if (r >= 0) {
-					np->name = add_group_instance(
-						whackfd,
-						np->group->connection,
-						&np->subnet, np->proto,
-						np->sport, np->dport);
-					np = np->next;
+					struct connection *ng = add_group_instance(whackfd,
+										   np->group->connection,
+										   &np->subnet, np->proto,
+										   np->sport, np->dport);
+					if (ng != NULL) {
+						passert(np->name == NULL);
+						np->name = clone_str(ng->name, "group instance name");
+						/* advance new */
+						npp = &np->next;
+					} else {
+						/* XXX: is this really a pexpect()? */
+						dbg("add group instance failed");
+						/* free new; advance new */
+						*npp = np->next;
+						pfree_target(&np);
+					}
 				}
 			}
 		}
-		for (; op != NULL; op = op->next)
-			remove_group_instance(op->group->connection, op->name);
-
-		for (; np != NULL; np = np->next) {
-			np->name = add_group_instance(whackfd,
-						      np->group->connection,
-						      &np->subnet, np->proto,
-						      np->sport, np->dport);
-		}
 
 		/* update: new_targets replaces targets */
-		pfree_targets();
+		passert(targets == NULL);
 		targets = new_targets;
-		new_targets = NULL;
 	}
 }
 

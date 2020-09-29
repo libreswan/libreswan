@@ -2030,9 +2030,9 @@ void add_connection(struct fd *whackfd, const struct whack_message *wm)
  * Returns name of new connection.  NULL on failure (duplicated name).
  * Caller is responsible for pfreeing name.
  */
-char *add_group_instance(struct fd *whackfd,
-			 struct connection *group, const ip_subnet *target,
-			 uint8_t proto , uint16_t sport , uint16_t dport)
+struct connection *add_group_instance(struct fd *whackfd,
+				      struct connection *group, const ip_subnet *target,
+				      uint8_t proto , uint16_t sport , uint16_t dport)
 {
 	passert(group->kind == CK_GROUP);
 	passert(oriented(*group));
@@ -2114,7 +2114,7 @@ char *add_group_instance(struct fd *whackfd,
 			whack_log(RC_ROUTE, whackfd,
 				  "could not route");
 	}
-	return clone_str(t->name, "group instance name");
+	return t;
 }
 
 /* An old target has disappeared for a group: delete instance. */
