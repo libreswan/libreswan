@@ -280,14 +280,19 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g)
 	lexclose(&flp);
 }
 
-static void free_targets(void)
+static void pfree_target(struct fg_targets **target)
+{
+	pfreeany((*target)->name);
+	pfree((*target));
+	*target = NULL;
+}
+
+static void pfree_targets(void)
 {
 	while (targets != NULL) {
 		struct fg_targets *t = targets;
-
 		targets = t->next;
-		pfreeany(t->name);
-		pfree(t);
+		pfree_target(&t);
 	}
 }
 
@@ -375,7 +380,7 @@ void load_groups(struct fd *whackfd)
 		}
 
 		/* update: new_targets replaces targets */
-		free_targets();
+		pfree_targets();
 		targets = new_targets;
 		new_targets = NULL;
 	}
@@ -475,7 +480,7 @@ void delete_group(const struct connection *c)
 				*pp = t->next;
 				remove_group_instance(t->group->connection,
 						      t->name);
-				pfree(t);
+				pfree_target(&t);
 				/* pp is ready for next iteration */
 			} else {
 				/* advance PP */
