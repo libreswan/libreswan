@@ -26,25 +26,9 @@ struct diag {
 	char message[1]; /* buffer overflow hack */
 };
 
-diag_t diag_va_list(const char *fmt, va_list master_ap)
+diag_t diag_va_list(const char *fmt, va_list ap)
 {
-	int length;
-	{
-		va_list ap;
-		va_copy(ap, master_ap);
-		length = vsnprintf(NULL, 0, fmt, ap);
-		va_end(ap);
-	}
-	passert(length >= 0);
-	length++; /* space for '\0' */
-	char *buf = alloc_things(char, length, fmt);
-	{
-		va_list ap;
-		va_copy(ap, master_ap);
-		vsnprintf(buf, length, fmt, ap);
-		va_end(ap);
-	}
-	return (diag_t)buf;
+	return (diag_t)alloc_vprintf(fmt, ap);
 }
 
 diag_t diag(const char *fmt, ...)

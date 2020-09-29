@@ -40,7 +40,6 @@ LIB = libswan.a
 OBJS += x509dn.o asn1.o oid.o
 
 OBJS += constants.o \
-	alloc.o \
 	id.o initaddr.o initsubnet.o \
         keyblobtoid.o \
 	lex.o \
@@ -54,6 +53,9 @@ OBJS += constants.o \
 	base64_pubkey.o \
 	lswnss.o \
 	alg_byname.o
+
+OBJS += alloc.o
+OBJS += alloc_printf.o
 
 OBJS += diag.o
 OBJS += passert.o
