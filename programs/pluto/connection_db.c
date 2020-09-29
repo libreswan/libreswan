@@ -105,7 +105,7 @@ static struct hash_table connection_hash_tables[] = {
 
 static void add_connection_to_db(struct connection *c)
 {
-	dbg("Connection DB: adding connection "PRI_CO"", pri_co(c->serialno));
+	dbg("Connection DB: adding connection \"%s\" "PRI_CO"", c->name, pri_co(c->serialno));
 	passert(c->serialno.co != 0);
 
 	/* serial NR list, entries are only added */
@@ -118,26 +118,27 @@ static void add_connection_to_db(struct connection *c)
 	}
 }
 
-static struct connection *finish_connection(struct connection *c)
+static struct connection *finish_connection(struct connection *c, const char *name)
 {
 	static co_serial_t connection_serialno;
 	c->serial_from = c->serialno;
 	connection_serialno.co++;
 	c->serialno = connection_serialno;
+	c->name = clone_str(name, __func__);
 	add_connection_to_db(c);
 	return c;
 }
 
-struct connection *alloc_connection(where_t where)
+struct connection *alloc_connection(const char *name, where_t where)
 {
 	struct connection *c = alloc_thing(struct connection, where.func);
-	return finish_connection(c);
+	return finish_connection(c, name);
 }
 
-struct connection *clone_connection(struct connection *t, where_t where)
+struct connection *clone_connection(const char *name, struct connection *t, where_t where)
 {
 	struct connection *c = clone_thing(*t, where.func);
-	return finish_connection(c);
+	return finish_connection(c, name);
 }
 
 void remove_connection_from_db(struct connection *c)

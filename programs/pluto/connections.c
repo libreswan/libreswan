@@ -701,8 +701,6 @@ void unshare_connection_end(struct end *e)
  */
 static void unshare_connection(struct connection *c)
 {
-	c->name = clone_str(c->name, "connection name");
-
 	c->foodgroup = clone_str(c->foodgroup, "connection foodgroup");
 
 	c->modecfg_dns = clone_str(c->modecfg_dns,
@@ -1237,12 +1235,7 @@ static bool extract_connection(const struct whack_message *wm,
 			       struct connection *c,
 			       struct logger *logger/*connection "..": */)
 {
-	/*
-	 * Give the connection a name early so that all error paths
-	 * have something to log.
-	 */
-	c->name = clone_str(wm->name, "connection name");
-
+	passert(c->name != NULL); /* see alloc_connection() */
 	if (conn_by_name(wm->name, false/*!strict*/) != NULL) {
 		log_message(RC_DUPNAME, logger,
 			    "attempt to redefine connection \"%s\"",
@@ -2002,7 +1995,7 @@ void add_connection(struct fd *whackfd, const struct whack_message *wm)
 {
 	struct logger *logger = string_logger(whackfd, HERE,
 					      "connection \"%s\": ", wm->name); /*must-free*/
-	struct connection *c = alloc_connection(HERE);
+	struct connection *c = alloc_connection(wm->name, HERE);
 	if (extract_connection(wm, c, logger)) {
 		/* log all about this connection */
 		libreswan_log("added %s connection \"%s\"",
@@ -2069,10 +2062,9 @@ char *add_group_instance(struct fd *whackfd,
 			namebuf);
 		return NULL;
 	} else {
-		struct connection *t = clone_connection(group, HERE);
-
+		struct connection *t = clone_connection(namebuf, group, HERE);
+		passert(namebuf != t->name); /* see clone_connection() */
 		t->foodgroup = clone_str(t->name, "cloned from groupname"); /* not set in group template */
-		t->name = namebuf;	/* trick: unsharing will clone this for us */
 
 		/* suppress virt before unsharing */
 		passert(t->spd.this.virt == NULL);
@@ -2155,7 +2147,8 @@ struct connection *instantiate(struct connection *c,
 	passert(c->spd.spd_next == NULL);
 
 	c->instance_serial++;
-	struct connection *d = clone_connection(c, HERE);
+	struct connection *d = clone_connection(c->name, c, HERE);
+	passert(c->name != d->name); /* see clone_connection() */
 	if (peer_id != NULL) {
 		int wildcards;	/* value ignored */
 
