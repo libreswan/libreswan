@@ -22,15 +22,15 @@ NSS_VERSION =
 # KVM_KERNEL_ARCH ? = x86_64
 # KVM_KERNEL_VERSION ?= 5.8.0-0.rc1.1.fc33.$(KERNEL_ARCH).rpm
 
-#KVM_KERNEL_VERSION ?=
-#KVM_KERNEL_PACKAGES ?= \
-#    kernel$(KVM_KERNEL_VERSION) \
-#    kernel-core$(KVM_KERNEL_VERSION) \
-#    kernel-modules$(KVM_KERNEL_VERSION) \
-#    kernel-devel$(KVM_KERNEL_VERSION) \
-#    kernel-headers$(KVM_KERNEL_VERSION) \
-#    kernel-modules-extra$(KVM_KERNEL_VERSION) \
-#    xl2tpd
+KVM_KERNEL_VERSION ?=
+KVM_KERNEL_PACKAGES ?= \
+    kernel$(KVM_KERNEL_VERSION) \
+    kernel-core$(KVM_KERNEL_VERSION) \
+    kernel-modules$(KVM_KERNEL_VERSION) \
+    kernel-devel$(KVM_KERNEL_VERSION) \
+    kernel-headers$(KVM_KERNEL_VERSION) \
+    kernel-modules-extra$(KVM_KERNEL_VERSION) \
+    xl2tpd
 
 #    kernel-debuginfo-$(RPM_KERNEL_VERSION)
 #    kernel-debuginfo-common-$(KERNEL_ARCH)-$(RPM_KERNEL_VERSION)
