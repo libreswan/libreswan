@@ -365,15 +365,15 @@ static void pcr_compute(struct logger *logger,
 /* IN A HELPER THREAD */
 static void *pluto_crypto_helper_thread(void *arg)
 {
+	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
 	struct pluto_crypto_worker *w = arg;
 
 	dbg("starting up helper thread %d", w->pcw_helpernum);
 
 #ifdef HAVE_SECCOMP
-	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
 	init_seccomp_cryptohelper(w->pcw_helpernum, logger);
 #else
-	libreswan_log("seccomp security for crypto helper not supported");
+	log_message(RC_LOG, logger, "seccomp security for crypto helper not supported");
 #endif
 
 	/* OS X does not have pthread_setschedprio */
