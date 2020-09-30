@@ -137,7 +137,7 @@ PK11SymKey *calc_dh_shared(struct dh_secret *secret, chunk_t remote_ke,
 void transfer_dh_secret_to_state(const char *helper, struct dh_secret **secret,
 				 struct state *st)
 {
-	LSWDBGP(DBG_CRYPT, buf) {
+	LSWDBGP(DBG_BASE, buf) {
 		jam_dh_secret(buf, *secret);
 		jam(buf, "transferring ownership from helper %s to state #%lu",
 			helper, st->st_serialno);
@@ -150,7 +150,7 @@ void transfer_dh_secret_to_state(const char *helper, struct dh_secret **secret,
 void transfer_dh_secret_to_helper(struct state *st,
 				  const char *helper, struct dh_secret **secret)
 {
-	LSWDBGP(DBG_CRYPT, buf) {
+	LSWDBGP(DBG_BASE, buf) {
 		jam_dh_secret(buf, st->st_dh_secret);
 		jam(buf, "transferring ownership from state #%lu to helper %s",
 			st->st_serialno, helper);
