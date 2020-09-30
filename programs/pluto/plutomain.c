@@ -513,21 +513,14 @@ static const struct option long_opts[] = {
 	{ "log-no-append\0", no_argument, NULL, '7' },
 	{ "log-no-ip\0", no_argument, NULL, '<' },
 	{ "log-no-audit\0", no_argument, NULL, 'a' },
-	{ "force_busy\0_", no_argument, NULL, 'D' },	/* _ */
 	{ "force-busy\0", no_argument, NULL, 'D' },
 	{ "force-unlimited\0", no_argument, NULL, 'U' },
 	{ "crl-strict\0", no_argument, NULL, 'r' },
-	{ "crl_strict\0", no_argument, NULL, 'r' }, /* _ */
 	{ "ocsp-strict\0", no_argument, NULL, 'o' },
-	{ "ocsp_strict\0", no_argument, NULL, 'o' }, /* _ */
 	{ "ocsp-enable\0", no_argument, NULL, 'O' },
-	{ "ocsp_enable\0", no_argument, NULL, 'O' }, /* _ */
 	{ "ocsp-uri\0", required_argument, NULL, 'Y' },
-	{ "ocsp_uri\0", required_argument, NULL, 'Y' }, /* _ */
 	{ "ocsp-timeout\0", required_argument, NULL, 'T' },
-	{ "ocsp_timeout\0", required_argument, NULL, 'T' }, /* _ */
 	{ "ocsp-trustname\0", required_argument, NULL, 'J' },
-	{ "ocsp_trustname\0", required_argument, NULL, 'J' }, /* _ */
 	{ "ocsp-cache-size\0", required_argument, NULL, 'E' },
 	{ "ocsp-cache-min-age\0", required_argument, NULL, 'G' },
 	{ "ocsp-cache-max-age\0", required_argument, NULL, 'H' },
@@ -535,16 +528,11 @@ static const struct option long_opts[] = {
 	{ "crlcheckinterval\0", required_argument, NULL, 'x' },
 	{ "uniqueids\0", no_argument, NULL, 'u' },
 	{ "no-dnssec\0", no_argument, NULL, 'R' },
-	{ "use-auto\0>use-netkey",  no_argument, NULL, 'K' },   /* redundant spelling (sort of) */
-	{ "usenetkey\0>use-netkey", no_argument, NULL, 'K' },	/* redundant spelling */
 	{ "use-xfrm\0", no_argument, NULL, 'K' },
-	{ "use-netkey\0", no_argument, NULL, 'K' },
 	{ "use-bsdkame\0",   no_argument, NULL, 'F' },
 	{ "interface\0<ifname|ifaddr>", required_argument, NULL, 'i' },
 	{ "curl-iface\0<ifname|ifaddr>", required_argument, NULL, 'Z' },
-	{ "curl_iface\0<ifname|ifaddr>", required_argument, NULL, 'Z' }, /* _ */
 	{ "curl-timeout\0<secs>", required_argument, NULL, 'I' },
-	{ "curl-timeout\0<secs>", required_argument, NULL, 'I' }, /* _ */
 	{ "listen\0<ifaddr>", required_argument, NULL, 'L' },
 	{ "listen-tcp\0", no_argument, NULL, 'm' },
 	{ "no-listen-udp\0", no_argument, NULL, 'p' },
@@ -552,33 +540,22 @@ static const struct option long_opts[] = {
 	{ "ike-socket-no-errqueue\0", no_argument, NULL, '1' },
 	{ "nflog-all\0<group-number>", required_argument, NULL, 'G' },
 	{ "rundir\0<path>", required_argument, NULL, 'b' }, /* was ctlbase */
-	{ "ctlbase\0<path>", required_argument, NULL, 'b' }, /* backwards compatibility */
 	{ "secretsfile\0<secrets-file>", required_argument, NULL, 's' },
-	{ "perpeerlogbase\0<path>", required_argument, NULL, 'P' },  /* obsolete */
-	{ "perpeerlog\0", no_argument, NULL, 'l' },  /* obsolete */
 	{ "global-redirect\0", required_argument, NULL, 'Q'},
 	{ "global-redirect-to\0", required_argument, NULL, 'y'},
 	{ "coredir\0>dumpdir", required_argument, NULL, 'C' },	/* redundant spelling */
 	{ "dumpdir\0<dirname>", required_argument, NULL, 'C' },
 	{ "statsbin\0<filename>", required_argument, NULL, 'S' },
 	{ "ipsecdir\0<ipsec-dir>", required_argument, NULL, 'f' },
-	{ "ipsec_dir\0>ipsecdir", required_argument, NULL, 'f' },	/* redundant spelling; _ */
 	{ "foodgroupsdir\0>ipsecdir", required_argument, NULL, 'f' },	/* redundant spelling */
 	{ "nssdir\0<path>", required_argument, NULL, 'd' },	/* nss-tools use -d */
-	{ "nat_traversal\0!", no_argument, NULL, 'h' },	/* obsolete; _ */
-	{ "keep_alive\0_", required_argument, NULL, '2' },	/* _ */
 	{ "keep-alive\0<delay_secs>", required_argument, NULL, '2' },
-	{ "force_keepalive\0!", no_argument, NULL, 'h' },	/* obsolete; _ */
-	{ "disable_port_floating\0!", no_argument, NULL, 'h' },	/* obsolete; _ */
-	{ "virtual_private\0_", required_argument, NULL, '6' },	/* _ */
 	{ "virtual-private\0<network_list>", required_argument, NULL, '6' },
 	{ "nhelpers\0<number>", required_argument, NULL, 'j' },
 	{ "expire-shunt-interval\0<secs>", required_argument, NULL, '9' },
 	{ "seedbits\0<number>", required_argument, NULL, 'c' },
 	/* really an attribute type, not a value */
-	{ "secctx_attr_value\0_", required_argument, NULL, 'w' },	/* obsolete name; _ */
-	{ "secctx-attr-value\0<number>", required_argument, NULL, 'w' },	/* obsolete name */
-	{ "secctx-attr-type\0<number>", required_argument, NULL, 'w' },
+	{ "ikev1-secctx-attr-type\0<number>", required_argument, NULL, 'w' },
 #ifdef HAVE_SECCOMP
 	{ "seccomp-enabled\0", no_argument, NULL, '3' },
 	{ "seccomp-tolerant\0", no_argument, NULL, '4' },
@@ -987,7 +964,7 @@ int main(int argc, char **argv)
 			curl_timeout = u;
 			continue;
 
-		case 'r':	/* --strictcrlpolicy */
+		case 'r':	/* --crl-strict */
 			crl_strict = TRUE;
 			continue;
 
@@ -1140,16 +1117,6 @@ int main(int argc, char **argv)
 
 		case 'A':	/* --debug-all */
 			cur_debugging = DBG_ALL;
-			continue;
-
-		case 'P':	/* --perpeerlogbase */
-			log_message(RC_LOG|ERROR_STREAM, logger,
-				    "ignoring --perperrlogbase, no longer supported");
-			continue;
-
-		case 'l':	/* --perpeerlog */
-			log_message(RC_LOG|ERROR_STREAM, logger,
-				    "ignoring --perperrlogbase, no longer supported");
 			continue;
 
 		case 'y':	/* --global-redirect-to */
@@ -1963,7 +1930,7 @@ void show_setup_plutomain(struct show *s)
 			(pluto_ddos_mode == DDOS_FORCE_BUSY) ? "busy" : "unlimited");
 
 	show_comment(s,
-		"ikebuf=%d, msg_errqueue=%s, strictcrlpolicy=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%d",
+		"ikebuf=%d, msg_errqueue=%s, crl-strict=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%d",
 		pluto_sock_bufsize,
 		bool_str(pluto_sock_errqueue),
 		bool_str(crl_strict),

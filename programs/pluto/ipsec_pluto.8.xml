@@ -50,7 +50,7 @@
       <arg choice="opt">--virtual-private <replaceable>network_list</replaceable></arg>
       <arg choice="opt">--keep-alive <replaceable>delay_sec</replaceable></arg>
       <arg choice="opt">--force-busy</arg>
-      <arg choice="opt">--strictcrlpolicy</arg>
+      <arg choice="opt">--crl-strict</arg>
       <arg choice="opt">--crlcheckinterval</arg>
       <arg choice="opt">--interface <replaceable>interfacename</replaceable></arg>
       <arg choice="opt">--listen <replaceable>ipaddr</replaceable></arg>
@@ -968,7 +968,7 @@
       The first attempt to update a CRL is started at <emphasis
       remap="I">2*crlcheckinterval</emphasis> before the next update time.
       Pluto logs a warning if no valid CRL was loaded or obtained for a
-      connection. If <option>--strictcrlpolicy</option> is given, the
+      connection. If <option>--crl-strict</option> is given, the
       connection will be rejected until a valid CRL has been loaded.
       </para>
 
