@@ -203,8 +203,6 @@ struct pluto_crypto_worker {
 	bool pcw_dead;
 };
 
-static void init_crypto_helper(struct pluto_crypto_worker *w, int n);
-
 /* may be NULL if we are to do all the work ourselves */
 static struct pluto_crypto_worker *pc_workers = NULL;
 
@@ -383,7 +381,7 @@ static void pcr_compute(struct logger *logger,
 static void *pluto_crypto_helper_thread(void *arg)
 {
 	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
-	struct pluto_crypto_worker *w = arg;
+	const struct pluto_crypto_worker *w = arg;
 
 	dbg("starting helper thread %d", w->pcw_helpernum);
 
@@ -672,30 +670,10 @@ stf_status pcr_completed(struct state *st,
 }
 
 /*
- * initialize a helper.
- */
-static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
-{
-	int thread_status;
-
-	w->pcw_helpernum = n;
-
-	thread_status = pthread_create(&w->pcw_pid, NULL,
-				       pluto_crypto_helper_thread, (void *)w);
-	if (thread_status != 0) {
-		loglog(RC_LOG_SERIOUS, "failed to start child thread for helper %d, error = %d",
-		       n, thread_status);
-		w->pcw_dead = TRUE;
-	} else {
-		libreswan_log("started thread for helper %d", n);
-	}
-}
-
-/*
  * Initialize helper debug delay value from environment variable.
  * This function is NOT thread safe (getenv).
  */
-static void init_crypto_helper_delay(void)
+static void init_crypto_helper_delay(struct logger *logger)
 {
 	const char *envdelay;
 	unsigned long delay;
@@ -707,8 +685,9 @@ static void init_crypto_helper_delay(void)
 
 	error = ttoulb(envdelay, 0, 0, secs_per_hour, &delay);
 	if (error != NULL)
-		libreswan_log("$PLUTO_CRYPTO_HELPER_DELAY malformed: %s",
-			error);
+		log_message(RC_LOG, logger,
+			    "$PLUTO_CRYPTO_HELPER_DELAY malformed: %s",
+			    error);
 	else
 		crypto_helper_delay = (int)delay;
 }
@@ -721,14 +700,12 @@ static void init_crypto_helper_delay(void)
  * more requests than average.
  *
  */
-void start_crypto_helpers(int nhelpers)
+void start_crypto_helpers(int nhelpers, struct logger *logger)
 {
-	int i;
-
 	pc_workers = NULL;
 	nr_helpers_started = 0;
 
-	init_crypto_helper_delay();
+	init_crypto_helper_delay(logger);
 
 	/* find out how many CPUs there are, if nhelpers is -1 */
 	/* if nhelpers == 0, then we do all the work ourselves */
@@ -745,7 +722,7 @@ void start_crypto_helpers(int nhelpers)
 		len = sizeof(numcpu);
 		ncpu_online = sysctl(mib, 2, &numcpu, &len, NULL, 0);
 #endif
-		libreswan_log("%d CPU cores online", ncpu_online);
+		log_message(RC_LOG, logger, "%d CPU cores online", ncpu_online);
 		if (ncpu_online < 4)
 			nhelpers = ncpu_online;
 		else
@@ -753,7 +730,7 @@ void start_crypto_helpers(int nhelpers)
 	}
 
 	if (nhelpers > 0) {
-		libreswan_log("starting up %d helpers", nhelpers);
+		log_message(RC_LOG, logger, "starting up %d helper threads", nhelpers);
 
 		/*
 		 * Set up a pipe for shutting down the threads.
@@ -776,15 +753,26 @@ void start_crypto_helpers(int nhelpers)
 		 * the threads have been created so that shutdown code
 		 * only tries to run when there really are threads.
 		 */
-		pc_workers = alloc_bytes(sizeof(*pc_workers) * nhelpers,
-					 "pluto helpers (ignore)");
-		for (i = 0; i < nhelpers; i++) {
-			init_crypto_helper(&pc_workers[i], i);
+		pc_workers = alloc_things(struct pluto_crypto_worker, nhelpers,
+					  "pluto helpers (ignore)");
+		for (int n = 0; n < nhelpers; n++) {
+			struct pluto_crypto_worker *w = &pc_workers[n];
+			w->pcw_helpernum = n + 1; /* i.e., not 0 */
+			int thread_status = pthread_create(&w->pcw_pid, NULL,
+							   pluto_crypto_helper_thread, (void *)w);
+			if (thread_status != 0) {
+				log_message(RC_LOG_SERIOUS, logger,
+					    "failed to start child thread for helper %d, error = %d",
+					    n, thread_status);
+				w->pcw_dead = true;
+			} else {
+				log_message(RC_LOG, logger, "started thread for helper %d", n);
+			}
 		}
 		nr_helpers_started = nhelpers;
 	} else {
-		libreswan_log(
-			"no helpers will be started; all cryptographic operations will be done inline");
+		log_message(RC_LOG, logger,
+			    "no helpers will be started; all cryptographic operations will be done inline");
 	}
 }
 
@@ -796,7 +784,7 @@ void start_crypto_helpers(int nhelpers)
  * and a specific thread join may block waiting for the wrong thread.
  */
 
-void stop_crypto_helpers(void)
+void stop_crypto_helpers(struct logger *logger)
 {
 	if (nr_helpers_started > 0) {
 		unsigned remaining = nr_helpers_started;
@@ -809,14 +797,14 @@ void stop_crypto_helpers(void)
 			struct pluto_crypto_worker *w = NULL;
 			if (read(helper_exited.recv, &w, sizeof(w)) < 0 ||
 			    w == NULL/*er!!!*/) {
-				LOG_ERRNO(errno, "error reading helper exit pipe");
+				log_errno(logger, errno, "error reading helper exit pipe");
 				/* give up; too much risk of a hang */
 				return;
 			}
 			dbg("helper thread %d exited", w->pcw_helpernum);
 			remaining--;
 		} while (remaining > 0);
-		plog_global("%d helper threads shutdown", nr_helpers_started);
+		log_message(RC_LOG, logger, "%d helper threads shutdown", nr_helpers_started);
 	} else {
 		dbg("no helper threads to shutdown");
 	}

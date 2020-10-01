@@ -1749,7 +1749,7 @@ int main(int argc, char **argv)
 		exit(PLUTO_EXIT_OK);
 	}
 
-	start_crypto_helpers(nhelpers);
+	start_crypto_helpers(nhelpers, logger);
 	init_kernel();
 	init_vendorid();
 #if defined(LIBCURL) || defined(LIBLDAP)
@@ -1821,7 +1821,7 @@ void exit_pluto(enum pluto_exit_code status)
 	 * code to be changed so that helper tasks can be "cancelled"
 	 * after the've completed?
 	 */
-	stop_crypto_helpers();
+	stop_crypto_helpers(logger);
 
 	free_root_certs(whackfd);
 	free_preshared_secrets(logger);
