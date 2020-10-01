@@ -127,9 +127,11 @@ def main():
         baseline = testsuite.load(logger, logutil.DEBUG, args,
                                   testsuite_directory=args.baseline,
                                   error_level=logutil.DEBUG)
-        if not baseline:
-            # Perhaps the baseline just contains output, magic up the
-            # corresponding testsuite directory.
+        if not baseline and os.path.isdir(args.baseline):
+            # Perhaps, AKA BACKUP/YYYY-MM-DDD-..., the baseline
+            # directory only contains a copy of the output.  Magic up
+            # a baseline by combining the output with the tests in
+            # ARGS.TESTING_DIRECTORY.
             baseline_directory = os.path.join(args.testing_directory, "pluto")
             baseline = testsuite.load(logger, logutil.DEBUG, args,
                                       testsuite_directory=baseline_directory,
