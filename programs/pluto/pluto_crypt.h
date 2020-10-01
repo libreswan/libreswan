@@ -55,7 +55,7 @@ struct logger;
  * probably never will :-(
  */
 
-struct crypto_task;
+struct crypto_task; /*struct job*/
 
 typedef void crypto_compute_fn(struct logger *logger,
 			       struct crypto_task *task,
@@ -89,8 +89,6 @@ enum pluto_crypto_requests {
 	pcr_compute_dh,		/* calculate (g^x)(g^y) for Phase 2 PFS */
 	pcr_compute_dh_v2,	/* perform IKEv2 SA calculation, create SKEYSEED */
 };
-
-typedef unsigned int pcr_req_id;
 
 /* wire_chunk: a chunk-like representation that is relocatable.
  *
