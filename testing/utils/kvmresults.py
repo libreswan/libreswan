@@ -231,7 +231,8 @@ def results(logger, tests, baseline, args, result_stats):
             publish.test_output_files(logger, args, result)
             publish.json_result(logger, args, result)
 
-            if baseline and post.Issues.CRASHED.isdisjoint(result.issues):
+            if baseline and test in baseline \
+               and not result.issues.crashed():
                 # Since there is a baseline and the test didn't crash
                 # limit what is printed to just those where the
                 # baseline's result is different.

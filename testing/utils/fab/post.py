@@ -105,8 +105,6 @@ class Issues:
 
     TIMEOUT = "timeout"
 
-    CRASHED = {ASSERTION, EXPECTATION, CORE, SEGFAULT, GPFAULT}
-
     ISCNTRL = "iscntrl"
 
     OUTPUT_MISSING = "output-missing"
@@ -174,6 +172,10 @@ class Issues:
         if not host in self._issue_hosts[issue]:
             self._issue_hosts[issue].append(host)
         self._logger.debug("host %s has issue %s", host, issue)
+
+    def crashed(self):
+        return {Issues.ASSERTION, Issues.EXPECTATION, Issues.CORE, Issues.SEGFAULT, Issues.GPFAULT}.isdisjoint(self);
+
 
 
 def _strip(s):
