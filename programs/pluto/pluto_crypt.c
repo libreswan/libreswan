@@ -448,8 +448,8 @@ static void *pluto_crypto_helper_thread(void *arg)
 				handle_helper_answer, cn);
 	}
 	dbg("shutting down helper thread %d", w->pcw_helpernum);
-	if (write(helper_exited.send, &w, sizeof(w)) != sizeof(w)) {
-		LOG_ERRNO(errno, "problem writing to helper exit pipe");
+	if (write(helper_exited.send, &w->pcw_helpernum, sizeof(w->pcw_helpernum)) != sizeof(w->pcw_helpernum)) {
+		log_errno(logger, errno, "problem writing to helper exit pipe");
 	}
 	return NULL;
 }
@@ -794,14 +794,14 @@ void stop_crypto_helpers(struct logger *logger)
 			pthread_cond_signal(&backlog_cond);
 			pthread_mutex_unlock(&backlog_mutex);
 			/* wait for one to die; add timeout? */
-			struct pluto_crypto_worker *w = NULL;
-			if (read(helper_exited.recv, &w, sizeof(w)) < 0 ||
-			    w == NULL/*er!!!*/) {
+			int w = 0;
+			if (read(helper_exited.recv, &w, sizeof(w)) != sizeof(w) ||
+			    w == 0 /*err*/) {
 				log_errno(logger, errno, "error reading helper exit pipe");
 				/* give up; too much risk of a hang */
 				return;
 			}
-			dbg("helper thread %d exited", w->pcw_helpernum);
+			dbg("helper thread %d exited", w);
 			remaining--;
 		} while (remaining > 0);
 		log_message(RC_LOG, logger, "%d helper threads shutdown", nr_helpers_started);
