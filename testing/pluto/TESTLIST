@@ -487,6 +487,7 @@ kvmplutotest	ikev2-frag-03-retrans			good
 kvmplutotest	ikev2-frag-04-nofrag			wip
 
 kvmplutotest	dynamic-iface-01			good
+kvmplutotest	removed-iface-01			good
 
 kvmplutotest	ikev1-replay-window			good
 kvmplutotest	ikev2-replay-window			good
