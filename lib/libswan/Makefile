@@ -79,7 +79,6 @@ OBJS += kernel_alg.o
 OBJS += kernel_sadb.o
 OBJS += role.o
 
-OBJS += addrtot.o
 OBJS += addrtypeof.o
 OBJS += anyaddr.o
 OBJS += datatot.o

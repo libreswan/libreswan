@@ -99,5 +99,6 @@ ip_address said_address(const ip_said *said);
 
 extern err_t ttosa(const char *src, size_t srclen, ip_said *dst);
 #define SATOT_BUF       sizeof(said_buf)
+#define SAMIGTOT_BUF    (16 + SATOT_BUF + ADDRTOT_BUF)
 
 #endif

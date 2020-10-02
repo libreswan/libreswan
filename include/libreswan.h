@@ -81,8 +81,6 @@ extern err_t ttoulb(const char *src, size_t srclen, int format,
 extern size_t ultot(unsigned long src, int format, char *buf, size_t buflen);
 #define ULTOT_BUF       (22 + 1)  /* holds 64 bits in octal */
 
-extern size_t sin_addrtot(const void *sin, int format, char *dst, size_t dstlen);
-#define SAMIGTOT_BUF    (16 + SATOT_BUF + ADDRTOT_BUF)
 extern err_t ttodata(const char *src, size_t srclen, int base, char *buf,
 	      size_t buflen, size_t *needed);
 extern err_t ttodatav(const char *src, size_t srclen, int base,
