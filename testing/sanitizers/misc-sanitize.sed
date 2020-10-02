@@ -41,3 +41,6 @@ s/TCP: socket [0-9]* /TCP: socket XX /g
 s/encap type 7 sport/encap type espintcp sport/g
 s/unbound-control.[0-9]*:[0-9]*./unbound-control[XXXXXX:X] /g 
 s/ping: connect: Network is unreachable/connect: Network is unreachable/g
+# softhsm - pkcs-uri ephemerals
+s/serial=[^;]*;token=libreswan/serial=XXXXXXXX;token=libreswan/g
+s/and is reassigned to slot .*$/and is reassigned to slot XXXXX/g
