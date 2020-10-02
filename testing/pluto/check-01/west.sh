@@ -19,6 +19,7 @@ ipsec jambufcheck > /dev/null || echo failed
 ipsec timecheck > /dev/null || echo failed
 ipsec hunkcheck > /dev/null || echo failed
 ipsec dncheck > /dev/null || echo failed
+ipsec keyidcheck > /dev/null || echo failed
 
 # Need to disable DNS tests
 ipsec ipcheck --nodns > /dev/null || echo failed

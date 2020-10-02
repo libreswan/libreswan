@@ -33,6 +33,8 @@ west #
 west #
  ipsec dncheck > /dev/null || echo failed
 west #
+ ipsec keyidcheck > /dev/null || echo failed
+west #
  # Need to disable DNS tests
 west #
  ipsec ipcheck --nodns > /dev/null || echo failed
