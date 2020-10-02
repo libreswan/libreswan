@@ -58,20 +58,20 @@ size_t keyblobtoid(const uint8_t *src, size_t srclen,
  * keyblobtoid().
  */
 size_t splitkeytoid(const uint8_t *e, size_t elen,
-		    const void *m, size_t mlen,
+		    const uint8_t *m, size_t mlen,
 		    char *dst /* need not be valid if dstlen is 0 */,
 		    size_t dstlen)
 {
 	uint8_t buf[KEYID_BUF];	/* ample room */
-	uint8_t *bufend = buf + sizeof(buf);
-	uint8_t *p;
-
-	p = buf;
+	uint8_t *const bufend = buf + sizeof(buf);
+	uint8_t *p = buf;
 
 	/* start with length of e; assume that it fits */
 	if (elen <= 255) {
+		/* one byte */
 		*p++ = elen;
-	} else if ((elen & ~0xffff) == 0) {
+	} else if (elen <= 0xffff) {
+		/* two bytes */
 		*p++ = 0;
 		*p++ = (elen >> 8) & 0xff;
 		*p++ = elen & 0xff;
@@ -80,21 +80,15 @@ size_t splitkeytoid(const uint8_t *e, size_t elen,
 	}
 
 	/* append as much of e as fits */
-	{
-		size_t n = bufend - p;
-		if (elen < n)
-			n = elen;
-		memcpy(p, e, n);
-		p += n;
+	while (elen > 0 && p < bufend) {
+		*p++ = *e++;
+		elen--;
 	}
 
 	/* append as much of m as fits */
-	{
-		size_t n = bufend - p;
-		if (mlen < n)
-			n = mlen;
-		memcpy(p, m, n);
-		p += n;
+	while (mlen > 0 && p < bufend) {
+		*p++ = *m++;
+		mlen--;
 	}
 
 	return keyblobtoid(buf, p - buf, dst, dstlen);

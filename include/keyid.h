@@ -21,7 +21,8 @@
 
 #define KEYID_BUF       10      /* up to 9 text digits plus NUL */
 
-size_t splitkeytoid(const uint8_t *e, size_t elen, const void *m, size_t mlen,
+size_t splitkeytoid(const uint8_t *e, size_t elen,
+		    const uint8_t *m, size_t mlen,
 		    char *dst /* need not be valid if dstlen is 0 */,
 		    size_t dstlen);
 size_t keyblobtoid(const uint8_t *src, size_t srclen,
