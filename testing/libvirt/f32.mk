@@ -61,6 +61,7 @@ KVM_UPGRADE_PACKAGES ?= \
     bind-dnssec-utils \
     bison \
     conntrack-tools \
+    crypto-policies-scripts \
     curl-devel \
     elfutils-libelf-devel \
     fipscheck-devel \
@@ -101,6 +102,7 @@ KVM_UPGRADE_PACKAGES ?= \
     nss-softokn-freebl$(NSS_VERSION) \
     ocspd \
     openldap-devel \
+    p11-kit-trust \
     pam-devel \
     patch \
     perf \
