@@ -132,3 +132,5 @@ s/ FLOWLBL=[0-9]* / FLOWLBL=XXXXX /g
 s/ qlen 1000$//
 /^type=PROCTITLE.*$/d
 /^\[ 00.00\] IN=.*$/d
+/^\[ 00.00\] gre: GRE over .*$/d
+/^\[ 00.00\] ip_gre: GRE .*$/d
