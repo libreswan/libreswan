@@ -41,7 +41,6 @@ OBJS += x509dn.o asn1.o oid.o
 
 OBJS += constants.o \
 	id.o initaddr.o initsubnet.o \
-        keyblobtoid.o \
 	lex.o \
 	lswconf.o \
 	lswfips.o \
@@ -63,6 +62,7 @@ OBJS += pexpect.o
 OBJS += nss_cert_load.o
 OBJS += certs.o
 OBJS += reqid.o
+OBJS += keyid.o
 
 ifeq ($(USE_XFRM),true)
 OBJS += addr_lookup.o

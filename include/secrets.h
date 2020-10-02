@@ -31,6 +31,7 @@
 #include "realtime.h"
 #include "ckaid.h"
 #include "diag.h"
+#include "keyid.h"
 
 struct logger;
 struct state;	/* forward declaration */

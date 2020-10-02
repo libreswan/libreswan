@@ -92,12 +92,6 @@ extern err_t ttodatav(const char *src, size_t srclen, int base,
 
 extern size_t datatot(const unsigned char *src, size_t srclen, int format,
 	       char *buf, size_t buflen);
-extern size_t keyblobtoid(const unsigned char *src, size_t srclen, char *dst,
-		   size_t dstlen);
-extern size_t splitkeytoid(const unsigned char *e, size_t elen,
-		    const unsigned char *m,
-		    size_t mlen, char *dst, size_t dstlen);
-#define KEYID_BUF       10      /* up to 9 text digits plus NUL */
 
 /* odds and ends */
 extern const char *ipsec_version_code(void);
