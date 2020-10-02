@@ -26,28 +26,6 @@ void regress(void);
 
 static int st;
 
-static void check_keyblobtoid(void)
-{
-	char buf[100];
-	char b64nine[] = "AQOF8tZ2m";
-	uint8_t hexblob[] = "\x01\x03\x85\xf2\xd6\x76\x9b\x03\x59\xb6\x21\x52";
-	size_t n = keyblobtoid(hexblob, sizeof(hexblob) - 1,
-			       buf, sizeof(buf));
-	/* not strlen(b64nine)! */
-	if (n != sizeof(b64nine)) {
-		fprintf(stderr, "%s: keyblobtoid returned %zu not %zu\n",
-			__func__, n, sizeof(b64nine));
-		st += 1;
-		return;
-	}
-	if (!streq(buf, b64nine)) {
-		fprintf(stderr, "%s: keyblobtoid generated `%s' not `%s'\n",
-			__func__, buf, b64nine);
-		st += 1;
-		return;
-	}
-}
-
 static void check_keyblob_to_keyid(void)
 {
 	keyid_t buf;
@@ -63,29 +41,6 @@ static void check_keyblob_to_keyid(void)
 	if (!streq(str_keyid(buf), b64nine)) {
 		fprintf(stderr, "%s: keyblobtoid generated `%s' not `%s'\n",
 			__func__, str_keyid(buf), b64nine);
-		st += 1;
-		return;
-	}
-}
-
-static void check_splitkeytoid(void)
-{
-	char buf[100];
-	char b64nine[] = "AQOF8tZ2m";
-	uint8_t hexe[] = "\x03";
-	uint8_t hexm[] = "\x85\xf2\xd6\x76\x9b\x03\x59\xb6\x21\x52\xef\x85";
-	size_t n = splitkeytoid(hexe, sizeof(hexe) - 1, hexm, sizeof(hexm) - 1,
-				buf, sizeof(buf));
-	/* not strlen(b64nine)! */
-	if (n != sizeof(b64nine)) {
-		fprintf(stderr, "%s: splitkeytoid returned %zu not %zu\n",
-			__func__, n, sizeof(b64nine));
-		st += 1;
-		return;
-	}
-	if (!streq(buf, b64nine)) {
-		fprintf(stderr, "%s: splitkeytoid generated `%s' not `%s'\n",
-			__func__, buf, b64nine);
 		st += 1;
 		return;
 	}
@@ -114,8 +69,6 @@ static void check_splitkey_to_keyid(void)
 
 int main()
 {
-	check_keyblobtoid();
-	check_splitkeytoid();
 	check_keyblob_to_keyid();
 	check_splitkey_to_keyid();
 
