@@ -35,36 +35,45 @@ static void check_jambuf(const char *expect, bool ok, ...)
 		/* 10 characters + NUL + SENTINEL */
 		char array[12] = "abcdefghijkl";
 		struct jambuf buf = ARRAY_AS_JAMBUF(array);
-#define FAIL(FMT, ...) {						\
+#define FAIL(FMT, ...)							\
+		{							\
 			fprintf(stderr, "%s: %s '%s' ", __func__, op, expect); \
 			fprintf(stderr, FMT,##__VA_ARGS__);		\
 			fprintf(stderr, "\n");				\
 			fails++;					\
+			return;						\
+		}
+
+		/*
+		 * XXX: because coverity can't see ARRAY_AS_JAMBUF()
+		 * setting ARRAY[-2]=NUL and ARRAY[-1]=SENTINEL it
+		 * complains that the ARRAY is overrun.
+		 *
+		 * This hopefully drops a hint.
+		 */
+		if (array[sizeof(array)-2] != '\0') {
+			FAIL("array[-2] != NUL");
 		}
 		/*
 		 * Buffer initialized ok?
 		 */
 		if (!jambuf_ok(&buf)) {
 			FAIL("jambuf_ok() failed at start");
-			return;
 		}
 		if (array[0] != '\0') {
 			FAIL("array[0] is 0x%x but should be NUL at start\n",
 			     array[0]);
-			return;
 		}
 		const char *pos = jambuf_cursor(&buf);
 		if (pos != array) {
 			FAIL("jambuf_cursor() is %p but should be %p (aka array) at start",
 			     pos, array);
-			return;
 		}
 		shunk_t shunk = jambuf_as_shunk(&buf);
 		if ((const char *)shunk.ptr != array ||
 		    shunk.len != 0) {
 			FAIL("jambuf_as_shunk() is "PRI_SHUNK" but should be %p/0 (aka array) at start",
 			     pri_shunk(shunk), array);
-			return;
 		}
 		/*
 		 * Concat va_list.
