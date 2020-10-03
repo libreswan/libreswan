@@ -2695,7 +2695,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 		if (md_role == MESSAGE_REQUEST) {
 			/* on responder NAT could hide end-to-end change */
 			endpoint_buf b;
-			libreswan_log("MOBIKE success no change to kernel SA same IP address ad port  %s",
+			libreswan_log("MOBIKE success no change to kernel SA same IP address and port  %s",
 				      str_sensitive_endpoint(&old_endpoint, &b));
 
 			return true;
