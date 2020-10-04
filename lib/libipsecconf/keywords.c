@@ -254,8 +254,8 @@ static const struct keyword_enum_values kw_rsasigkey_list = VALUES_INITIALIZER(k
  * Values for protostack=
  */
 static const struct keyword_enum_value kw_proto_stack_list[] = {
-	{ "netkey",       USE_XFRM },
-	{ "xfrm",         USE_XFRM }, /* alias */
+	{ "netkey",       USE_XFRM }, /* alias */
+	{ "xfrm",         USE_XFRM },
 	{ "bsd",          USE_BSDKAME },
 	{ "kame",         USE_BSDKAME },
 	{ "bsdkame",      USE_BSDKAME },
@@ -371,6 +371,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "syslog",  kv_config,  kt_string,  KSF_SYSLOG, NULL, NULL, },
   { "plutodebug",  kv_config,  kt_lset,  KBF_PLUTODEBUG, NULL, &debug_lmod_info, },
   { "logfile",  kv_config,  kt_filename,  KSF_LOGFILE, NULL, NULL, },
+  { "plutostderrlog",  kv_config,  kt_filename,  KSF_LOGFILE, NULL, NULL, }, /* obsolete name, but very common :/ */
   { "logtime",  kv_config,  kt_bool,  KBF_LOGTIME, NULL, NULL, },
   { "logappend",  kv_config,  kt_bool,  KBF_LOGAPPEND, NULL, NULL, },
   { "logip",  kv_config,  kt_bool,  KBF_LOGIP, NULL, NULL, },
@@ -414,6 +415,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "nflog-all",  kv_config,  kt_number,  KBF_NFLOG_ALL, NULL, NULL, },
   { "xfrmlifetime",  kv_config,  kt_number,  KBF_XFRMLIFETIME, NULL, NULL, },
   { "virtual-private",  kv_config,  kt_string,  KSF_VIRTUALPRIVATE, NULL, NULL, },
+  { "virtual_private",  kv_config,  kt_string,  KSF_VIRTUALPRIVATE, NULL, NULL, }, /* obsolete variant, very common */
   { "seedbits",  kv_config,  kt_number,  KBF_SEEDBITS, NULL, NULL, },
   { "keep-alive",  kv_config,  kt_number,  KBF_KEEPALIVE, NULL, NULL, },
 
