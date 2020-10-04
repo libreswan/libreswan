@@ -113,7 +113,6 @@ KVM_UPGRADE_PACKAGES ?= \
     rpm-build \
     rsync \
     screen \
-    softhsm \
     strace \
     systemd-devel \
     tar \
