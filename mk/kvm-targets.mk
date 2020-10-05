@@ -775,8 +775,10 @@ kvm-downgrade:
 	$(SNAPSHOT_DELETE) upgraded $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
 	$(SNAPSHOT_REVERT) transmogrified $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
 	$(SNAPSHOT_REVERT) kickstarted $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
-	: set things up so that next make triggers everything
-	$(MAKE) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted
+	: remove all targets so that next make triggers everything
+	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
+	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmgorified
+	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).xml
 
 $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted
 	: update all packages
