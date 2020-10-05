@@ -124,6 +124,22 @@ SNAPSHOT_REVERT ?= 								\
 	snapshot_revert
 
 # Take a new snapshot; delete any old snapshots.
+SNAPSHOT_DELETE ?=								\
+	snapshot_delete()							\
+	{									\
+		snapshot=$$1 ;							\
+		disk=$$2 ;							\
+		echo "$${disk}: deleting all '$$snapshot' snapshots" ;		\
+		$(QEMU_IMG) snapshot -l $${disk} |				\
+		grep $${snapshot} |						\
+		while read n s ignore ; do					\
+			echo "$${disk}: deleting '$${snapshot}' snapshot $${n}" ; \
+			$(QEMU_IMG) snapshot -d $${s} $${disk} ;		\
+		done ;								\
+	} ;									\
+	snapshot_delete
+
+# Take a new snapshot; delete any old snapshots.
 SNAPSHOT_TAKE ?=								\
 	snapshot_take()								\
 	{									\
@@ -752,18 +768,17 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted: \
 	touch $@
 
 .PHONY: kvm-downgrade
-kvm-downgrade: kvm-uninstall kvm-shutdown
-	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
-	: to back to the original image - looses upgrade and transmogrify
+kvm-downgrade:
+	$(MAKE) $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok
+	$(MAKE) kvm-uninstall kvm-shutdown
+	: go back to the raw fresh kickstarted image
+	$(SNAPSHOT_DELETE) upgraded $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
+	$(SNAPSHOT_REVERT) transmogrified $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
 	$(SNAPSHOT_REVERT) kickstarted $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
+	: set things up so that next make triggers everything
 	$(MAKE) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted
 
 $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted
-	$(MAKE) $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok
-	: drop transmogrification but keep upgrades
-	$(MAKE) kvm-shutdown-base-domain
-	: to back to the upgrade snapshot - looses transmogrify
-	$(SNAPSHOT_REVERT) upgraded $(basename $@).qcow2
 	: update all packages
 	$(if $(KVM_PACKAGE_INSTALL), $(if $(KVM_INSTALL_PACKAGES), \
 		$(KVMSH) $(KVM_BASE_DOMAIN) $(KVM_PACKAGE_INSTALL) $(KVM_INSTALL_PACKAGES)))
@@ -779,27 +794,34 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ki
 	touch $@
 
 .PHONY: kvm-upgrade
-kvm-upgrade: kvm-uninstall
+kvm-upgrade:
+	$(MAKE) $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok
+	$(MAKE) kvm-uninstall kvm-shutdown-base-domain
+	: drop transmogrification but keep upgrades
+	$(SNAPSHOT_DELETE) transmogrified $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
+	$(SNAPSHOT_REVERT) upgraded $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
+	: force an upgrade
 	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
 	$(MAKE) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
 
 # run, or re-run transmogrify from scratch
 
 $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
-	$(MAKE) $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok
-	$(MAKE) kvm-shutdown-base-domain
-	: to back to the upgrade snapshot - looses transmogrify
-	$(SNAPSHOT_REVERT) upgraded $(basename $@).qcow2
 	: transmogrify
 	$(KVMSH) $(KVM_BASE_DOMAIN) sh /testing/libvirt/$(KVM_GUEST_OS)-transmogrify.sh
-	: re-snapshot
+	: snapshot transmogrify result
 	$(MAKE) kvm-shutdown-base-domain
-	: snapshot upgrade so that next upgrade can be incremental
 	$(SNAPSHOT_TAKE) transmogrified $(basename $@).qcow2
 	touch $@
 
 .PHONY: kvm-transmogrify
-kvm-transmogrify: kvm-uninstall-local-domains
+kvm-transmogrify:
+	$(MAKE) $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok
+	$(MAKE) kvm-uninstall-local-domains kvm-shutdown-base-domain
+	: to back to the upgrade snapshot - looses transmogrify
+	$(SNAPSHOT_DELETE) transmogrified $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
+	$(SNAPSHOT_REVERT) upgraded $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
+	: force a fresh transmogrify
 	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified
 	$(MAKE) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified
 
