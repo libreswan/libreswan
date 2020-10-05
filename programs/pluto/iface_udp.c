@@ -21,7 +21,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
 #include <sys/types.h>
@@ -260,6 +259,12 @@ static enum iface_status udp_read_packet(const struct iface_port *ifp,
 	}
 #endif
 
+	/*
+	 * COVERITY reports an overflow because FROM.LEN (aka
+	 * sizeof(FROM.SA)) > sizeof(from.sa.sa).  That's the point.
+	 * The FROM.SA union is big enough to hold sockaddr,
+	 * sockaddr_in and sockaddr_in6.
+	 */
 	ip_sockaddr from = {
 		.len = sizeof(from.sa),
 	};
