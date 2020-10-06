@@ -331,20 +331,19 @@ static bool take_a_crack(struct tac_state *s,
 	err_t ugh = (s->try_signature)(s->hash, s->sig_pbs,
 				       kr, s->st, s->hash_algo);
 
-	const char *key_id_str = pubkey_keyid(kr);
+	const keyid_t *key_id_str = pubkey_keyid(kr);
 
 	if (ugh == NULL) {
 		dbg("an %s Sig check passed with *%s [%s]",
-		    kr->type->name, key_id_str, story);
+		    kr->type->name, str_keyid(*key_id_str), story);
 		return true;
 	} else {
 		loglog(RC_LOG_SERIOUS, "an %s Sig check failed '%s' with *%s [%s]",
-		    kr->type->name, ugh + 1, key_id_str, story);
+		       kr->type->name, ugh + 1, str_keyid(*key_id_str), story);
 		if (s->best_ugh == NULL || s->best_ugh[0] < ugh[0])
 			s->best_ugh = ugh;
 		if (ugh[0] > '0') {
-		    jam_string(&s->tn, " *");
-		    jam_string(&s->tn, key_id_str);
+			jam(&s->tn, " *%s", str_keyid(*key_id_str));
 		}
 		return false;
 	}
@@ -826,14 +825,14 @@ void list_public_keys(struct show *s, bool utc, bool check_pub_keys)
 					jam(buf, ", ");
 					switch (key->type->alg) {
 					case PUBKEY_ALG_RSA:
-						jam(buf, "%4d RSA Key %s",
+						jam(buf, "%4d RSA Key *%s",
 						    8 * key->u.rsa.k,
-						    key->u.rsa.keyid);
+						    str_keyid(key->u.rsa.keyid));
 						break;
 					case PUBKEY_ALG_ECDSA:
-						jam(buf, "%4d ECDSA Key %s",
+						jam(buf, "%4d ECDSA Key *%s",
 						    8 * key->u.ecdsa.k,
-						    key->u.ecdsa.keyid);
+						    str_keyid(key->u.ecdsa.keyid));
 						break;
 					default:
 						bad_case(key->type->alg);

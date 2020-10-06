@@ -165,7 +165,7 @@ struct id_list *lsw_get_idlist(const struct secret *s)
 /*
  * forms the keyid from the public exponent e and modulus n
  */
-void form_keyid(chunk_t e, chunk_t n, char *keyid, unsigned *keysize)
+void form_keyid(chunk_t e, chunk_t n, keyid_t *keyid, unsigned *keysize)
 {
 	/* eliminate leading zero byte in modulus from ASN.1 coding */
 	if (*n.ptr == 0x00) {
@@ -192,8 +192,8 @@ void form_keyid(chunk_t e, chunk_t n, char *keyid, unsigned *keysize)
 	}
 
 	/* form the Libreswan keyid */
-	keyid[0] = '\0';	/* in case of splitkeytoid failure */
-	splitkeytoid(e.ptr, e.len, n.ptr, n.len, keyid, KEYID_BUF);
+	err_t err = splitkey_to_keyid(e.ptr, e.len, n.ptr, n.len, keyid);
+	passert(err == NULL);
 
 	/* return the RSA modulus size in octets */
 	*keysize = n.len;
@@ -224,7 +224,7 @@ static void RSA_extract_public_key(struct RSA_public_key *pub,
 	pub->n = clone_bytes_as_chunk(pubk->u.rsa.modulus.data,
 					   pubk->u.rsa.modulus.len, "n");
 	pub->ckaid = ckaid_from_secitem(cert_ckaid);
-	form_keyid(pub->e, pub->n, pub->keyid, &pub->k);
+	form_keyid(pub->e, pub->n, &pub->keyid, &pub->k);
 }
 
 static void RSA_extract_pubkey_content(union pubkey_content *pkc,
@@ -381,15 +381,13 @@ static void ECDSA_extract_public_key(struct ECDSA_public_key *pub,
 	pub->k = pubkey_nss->u.ec.publicValue.len;
 	pub->ckaid = ckaid_from_secitem(ckaid_nss);
 	/* keyid */
-	char keyid[KEYID_BUF] = "";
-	memcpy(keyid, pubkey_nss->u.ec.publicValue.data, KEYID_BUF-1);
-	if (DBGP(DBG_BASE)) {
-		DBG_dump("keyid", keyid, KEYID_BUF-1);
-	}
-	keyblobtoid((const unsigned char *)keyid, KEYID_BUF,
-		    pub->keyid, KEYID_BUF);
+	err_t e = keyblob_to_keyid(pubkey_nss->u.ec.publicValue.data,
+				   pubkey_nss->u.ec.publicValue.len, &pub->keyid);
+	passert(e == NULL);
+
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("k %u", pub->k);
+		DBG_log("keyid *%s", str_keyid(pub->keyid));
 		DBG_dump_hunk("pub", pub->pub);
 		DBG_dump_hunk("ecParams", pub->ecParams);
 	}
@@ -526,13 +524,13 @@ const struct pubkey_type *pubkey_alg_type(enum pubkey_alg alg)
  * struct pubkey proper (we can but dream).
  */
 
-const char *pubkey_keyid(const struct pubkey *pk)
+const keyid_t *pubkey_keyid(const struct pubkey *pk)
 {
 	switch (pk->type->alg) {
 	case PUBKEY_ALG_RSA:
-		return pk->u.rsa.keyid;
+		return &pk->u.rsa.keyid;
 	case PUBKEY_ALG_ECDSA:
-		return pk->u.ecdsa.keyid;
+		return &pk->u.ecdsa.keyid;
 	default:
 		bad_case(pk->type->alg);
 	}
@@ -559,15 +557,15 @@ const ckaid_t *secret_ckaid(const struct secret *secret)
 	}
 }
 
-const char *secret_keyid(const struct secret *secret)
+const keyid_t *secret_keyid(const struct secret *secret)
 {
 
 	if (secret->pks.pubkey_type != NULL) {
 		switch (secret->pks.pubkey_type->alg) {
 		case PUBKEY_ALG_RSA:
-			return secret->pks.u.RSA_private_key.pub.keyid;
+			return &secret->pks.u.RSA_private_key.pub.keyid;
 		case PUBKEY_ALG_ECDSA:
-			return secret->pks.u.ECDSA_private_key.pub.keyid;
+			return &secret->pks.u.ECDSA_private_key.pub.keyid;
 		default:
 			bad_case(secret->pks.pubkey_type->alg);
 		}
@@ -624,9 +622,9 @@ static struct secret *find_secret_by_pubkey_ckaid_1(struct secret *secrets,
 		const struct private_key_stuff *pks = &s->pks;
 		dbg("trying secret %s:%s",
 		    enum_name(&pkk_names, pks->kind),
-		    (pks->kind == PKK_RSA ? pks->u.RSA_private_key.pub.keyid :
-		     pks->kind == PKK_ECDSA ? pks->u.ECDSA_private_key.pub.keyid :
-		     "N/A"));
+		    str_keyid(pks->kind == PKK_RSA ? pks->u.RSA_private_key.pub.keyid :
+			      pks->kind == PKK_ECDSA ? pks->u.ECDSA_private_key.pub.keyid :
+			      empty_keyid));
 		if (type == NULL/*wildcard*/ ||
 		    s->pks.pubkey_type == type) {
 			/* only public/private key pairs have a CKAID */
@@ -1172,11 +1170,14 @@ static err_t process_rsa_secret(struct file_lex_position *flp,
 	}
 
 	rsak->pub.k = rsak->pub.n.len;
-	rsak->pub.keyid[0] = '\0';	/* in case of failure */
+	rsak->pub.keyid = empty_keyid;	/* in case of failure */
 	if (rsak->pub.e.len > 0 || rsak->pub.n.len >0) {
-		splitkeytoid(rsak->pub.e.ptr, rsak->pub.e.len,
-			     rsak->pub.n.ptr, rsak->pub.n.len,
-			     rsak->pub.keyid, sizeof(rsak->pub.keyid));
+		err_t e = splitkey_to_keyid(rsak->pub.e.ptr, rsak->pub.e.len,
+					    rsak->pub.n.ptr, rsak->pub.n.len,
+					    &rsak->pub.keyid);
+		if (e != NULL) {
+			return e;
+		}
 	}
 
 	/* Finally, the CKAID */
@@ -1297,7 +1298,7 @@ static void process_secret(struct file_lex_position *flp,
 			log_message(RC_LOG, flp->logger,
 				    "loaded private key for keyid: %s:%s",
 				    enum_name(&pkk_names, s->pks.kind),
-				    s->pks.u.RSA_private_key.pub.keyid);
+				    str_keyid(s->pks.u.RSA_private_key.pub.keyid));
 		} else {
 			dbg("cleaning up mess left in raw rsa key");
 			s->pks.pubkey_type->free_secret_content(&s->pks);

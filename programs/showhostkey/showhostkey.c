@@ -134,8 +134,8 @@ static void print(struct private_key_stuff *pks,
 	// only old/obsolete secrets entries use this
 	case PKK_RSA: {
 		printf("RSA");
-		char *keyid = pks->u.RSA_private_key.pub.keyid;
-		printf(" keyid: %s", keyid[0] ? keyid : "<missing-pubkey>");
+		keyid_t keyid = pks->u.RSA_private_key.pub.keyid;
+		printf(" keyid: *%s", str_keyid(keyid)[0] ? str_keyid(keyid) : "<missing-pubkey>");
 		if (id) {
 			printf(" id: %s", idb);
 		}
@@ -209,7 +209,7 @@ static int pick_by_rsaid(struct secret *secret UNUSED,
 {
 	char *rsaid = (char *)uservoid;
 
-	if (pks->kind == PKK_RSA && streq(pks->u.RSA_private_key.pub.keyid, rsaid)) {
+	if (pks->kind == PKK_RSA && streq(pks->u.RSA_private_key.pub.keyid.keyid, rsaid)) {
 		/* stop */
 		return 0;
 	} else {
@@ -317,7 +317,7 @@ static int show_confkey(struct private_key_stuff *pks,
 	}
 
 	printf("\t# rsakey %s\n",
-	       pks->u.RSA_private_key.pub.keyid);
+	       pks->u.RSA_private_key.pub.keyid.keyid);
 	printf("\t%srsasigkey=%s\n", side,
 	       base64);
 	pfree(base64);
@@ -341,7 +341,7 @@ static void fill_RSA_public_key(struct RSA_public_key *rsa, SECKEYPublicKey *pub
 	passert(SECKEY_GetPublicKeyType(pubkey) == rsaKey);
 	rsa->e = clone_secitem_as_chunk(pubkey->u.rsa.publicExponent, "e");
 	rsa->n = clone_secitem_as_chunk(pubkey->u.rsa.modulus, "n");
-	form_keyid(rsa->e, rsa->n, rsa->keyid, &rsa->k);
+	form_keyid(rsa->e, rsa->n, &rsa->keyid, &rsa->k);
 }
 
 static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval func,

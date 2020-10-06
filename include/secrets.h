@@ -43,7 +43,7 @@ struct hash_desc;
 struct cert;
 
 struct RSA_public_key {
-	char keyid[KEYID_BUF];	/* see ipsec_keyblobtoid(3) */
+	keyid_t keyid;	/* see ipsec_keyblobtoid(3) */
 
 	/*
 	 * The "adjusted" length of modulus n in octets:
@@ -89,7 +89,7 @@ struct RSA_private_key {
 };
 
 struct ECDSA_public_key {
-	char keyid[KEYID_BUF];
+	keyid_t keyid;
 	unsigned int k;
 	chunk_t ecParams;
 	chunk_t pub; /* publicValue */
@@ -218,12 +218,12 @@ struct pubkey {
  * All pointers are references into the underlying PK structure.
  */
 
-const char *pubkey_keyid(const struct pubkey *pk);
 const ckaid_t *pubkey_ckaid(const struct pubkey *pk);
+const keyid_t *pubkey_keyid(const struct pubkey *pk);
 unsigned pubkey_size(const struct pubkey *pk);
 
 const ckaid_t *secret_ckaid(const struct secret *);
-const char *secret_keyid(const struct secret *);
+const keyid_t *secret_keyid(const struct secret *);
 
 struct pubkey_list {
 	struct pubkey *key;
@@ -247,7 +247,7 @@ void replace_public_key(struct pubkey_list **pubkey_db, struct pubkey *pk);
 void delete_public_keys(struct pubkey_list **head,
 			const struct id *id,
 			const struct pubkey_type *type);
-extern void form_keyid(chunk_t e, chunk_t n, char *keyid, unsigned *keysize);
+extern void form_keyid(chunk_t e, chunk_t n, keyid_t *keyid, unsigned *keysize);
 
 extern struct pubkey *reference_key(struct pubkey *pk);
 extern void unreference_key(struct pubkey **pkp);
