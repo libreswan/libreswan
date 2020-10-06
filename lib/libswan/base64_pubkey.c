@@ -215,28 +215,25 @@ err_t unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
 
 err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa, const chunk_t *pubkey)
 {
-	/* ??? can this be cloned later, after form_ckaid_ecdsa has succeeded? */
-	ecdsa->pub = clone_hunk(*pubkey, "public value");
+	err_t e;
 
-	ckaid_t ckaid;
-	err_t err = form_ckaid_ecdsa(ecdsa->pub, &ckaid);
-	if (err != NULL) {
-		free_chunk_content(&ecdsa->pub);
-		return err;
+	e = form_ckaid_ecdsa(*pubkey, &ecdsa->ckaid);
+	if (e != NULL) {
+		return e;
 	}
 
-	memcpy(ecdsa->keyid, pubkey->ptr, KEYID_BUF-1);
-	ecdsa->keyid[KEYID_BUF-1] = '\0';
+	int n = keyblobtoid(pubkey->ptr, pubkey->len, ecdsa->keyid, sizeof(ecdsa->keyid));
+	if (n == 0) {
+		return "problem creating key-id from ECDSA public";
+	}
 
+	ecdsa->pub = clone_hunk(*pubkey, "public value");
 	ecdsa->k = pubkey->len;
-	ecdsa->ckaid = ckaid;
-
-	/* generate the CKAID */ /* ??? really? Not done above? */
 
 	if (DBGP(DBG_BASE)) {
 		/* pubkey information isn't DBG_PRIVATE */
 		DBG_log("keyid: *%s", ecdsa->keyid);
-		DBG_log("  key size: *%s", ecdsa->keyid);
+		DBG_log("  k: %d", ecdsa->k);
 		DBG_dump_hunk("  pub", ecdsa->pub);
 		DBG_dump_hunk("  CKAID", ecdsa->ckaid);
 	}
