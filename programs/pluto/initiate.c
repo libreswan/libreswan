@@ -119,7 +119,6 @@ static void swap_ends(struct connection *c)
 
 static bool orient_new_iface_port(struct connection *c, struct fd *whackfd, bool this)
 {
-	struct logger logger[1] = { CONNECTION_LOGGER(c, whackfd), };
 	struct end *end = (this ? &c->spd.this : &c->spd.that);
 	if (end->raw.host.ikeport == 0) {
 		return false;
@@ -137,7 +136,10 @@ static bool orient_new_iface_port(struct connection *c, struct fd *whackfd, bool
 	 * A custom IKEPORT should not float away to port 4500.  For
 	 * now leave ADD_IKE_ENCAPSULATION_PREFIX clear so it can talk
 	 * to port 500.  Perhaps it doesn't belong in iface?
+	 *
+	 * XXX: should this log globally or against the connection?
 	 */
+	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
 	struct iface_port *ifp = bind_iface_port(dev, &udp_iface_io,
 						 ip_hport(end->raw.host.ikeport),
 						 true/*esp_encapsulation_enabled*/,
