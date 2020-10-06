@@ -182,6 +182,7 @@ void listen_on_iface_port(struct iface_port *ifp, struct logger *logger);
 struct iface_port *bind_iface_port(struct iface_dev *ifd, const struct iface_io *io,
 				   ip_port port,
 				   bool esp_encapsulation_enabled,
-				   bool float_nat_initiator);
+				   bool float_nat_initiator,
+				   struct logger *logger);
 
 #endif

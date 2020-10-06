@@ -119,6 +119,7 @@ static void swap_ends(struct connection *c)
 
 static bool orient_new_iface_port(struct connection *c, struct fd *whackfd, bool this)
 {
+	struct logger logger[1] = { CONNECTION_LOGGER(c, whackfd), };
 	struct end *end = (this ? &c->spd.this : &c->spd.that);
 	if (end->raw.host.ikeport == 0) {
 		return false;
@@ -140,7 +141,8 @@ static bool orient_new_iface_port(struct connection *c, struct fd *whackfd, bool
 	struct iface_port *ifp = bind_iface_port(dev, &udp_iface_io,
 						 ip_hport(end->raw.host.ikeport),
 						 true/*esp_encapsulation_enabled*/,
-						 false/*float_nat_initiator*/);
+						 false/*float_nat_initiator*/,
+						 logger);
 	if (ifp == NULL) {
 		dbg("could not create new interface");
 		return false;
@@ -152,8 +154,7 @@ static bool orient_new_iface_port(struct connection *c, struct fd *whackfd, bool
 		swap_ends(c);
 	}
 	if (listening) {
-		struct logger logger = CONNECTION_LOGGER(c, whackfd);
-		listen_on_iface_port(ifp, &logger);
+		listen_on_iface_port(ifp, logger);
 	}
 	return true;
 }
