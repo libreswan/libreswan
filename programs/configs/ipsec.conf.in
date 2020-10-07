@@ -1,25 +1,33 @@
-# @FINALCONFDIR@/ipsec.conf - Libreswan IPsec configuration file
+# @FINALCONFDIR@/ipsec.conf - Libreswan 4.0 configuration file
 #
 # see 'man ipsec.conf' and 'man pluto' for more information
 #
 # For example configurations and documentation, see https://libreswan.org/wiki/
 
 config setup
-	# Normally, pluto logs via syslog.
-	#logfile=/var/log/pluto.log
+	# If logfile= is unset, syslog is used to send log messages too.
+	# Note that on busy VPN servers, the amount of logging can trigger
+	# syslogd (or journald) to rate limit messages.
+	logfile=/var/log/pluto.log
 	#
-	# Do not enable debug options to debug configuration issues!
-	#
-	# plutodebug="control parsing"
-	# plutodebug="all crypt"
+	# Debugging should only be used to find bugs, not configuration issues!
+	# "base" regular debug, "tmi" is excessive (!) and "private" will log
+	# senstive key material (not available in FIPS mode). The "cpu-usage"
+	# value logs timing information and should not be used with other
+	# debug options as it will defeat getting accurate timing information.
+	# plutodebug="base"
+	# plutodebug="tmi"
 	plutodebug=none
+	# Some machines use a DNS resolver on localhost with broken DNSSEC support.
+	# This can be tested using the command: dig +dnssec DNSnameOfRemoveServer
+	# If that fails but omitting '+dnssec' works, the system's resolver is
+	# broken and you might need to disable DNSSEC.
+	# dnssec-enable=no
 	#
-	# NAT-TRAVERSAL support
-	# exclude networks used on server side by adding %v4:!a.b.c.0/24
-	# It seems that T-Mobile in the US and Rogers/Fido in Canada are
-	# using 25/8 as "private" address space on their wireless networks.
-	# This range has never been announced via BGP (at least up to 2015)
-	virtual_private=%v4:10.0.0.0/8,%v4:192.168.0.0/16,%v4:172.16.0.0/12,%v4:25.0.0.0/8,%v4:100.64.0.0/10,%v6:fd00::/8,%v6:fe80::/10
+	# To enable IKE and IPsec over TCP for VPN server. Requires at least Linux
+	# 5.7 kernel. For TCP support as a VPN client, specify tcp-remote-port=4500
+	# in the client conn section.
+	# listen-tcp=yes
 
 # if it exists, include system wide crypto-policy defaults
 # include /etc/crypto-policies/back-ends/libreswan.config
