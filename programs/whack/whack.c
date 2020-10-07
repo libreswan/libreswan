@@ -760,7 +760,7 @@ static const struct option long_opts[] = {
 	{ "ikealg", required_argument, NULL, CD_IKE + OO },
 	{ "pfsgroup", required_argument, NULL, CD_PFSGROUP + OO },
 	{ "esp", required_argument, NULL, CD_ESP + OO },
-	{ "remote_peer_type", required_argument, NULL, CD_REMOTEPEERTYPE + OO },
+	{ "remote-peer-type", required_argument, NULL, CD_REMOTEPEERTYPE + OO },
 	{ "nic-offload", required_argument, NULL, CD_NIC_OFFLOAD + OO},
 
 	{ "rsasig", no_argument, NULL, ALGO_RSASIG + OO },
