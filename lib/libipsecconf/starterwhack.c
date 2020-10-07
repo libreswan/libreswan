@@ -271,14 +271,9 @@ static int send_whack_msg(struct whack_message *msg, char *ctlsocket)
 	return ret;
 }
 
-static void init_whack_msg(struct whack_message *msg)
-{
-	/* properly initializes pointers to NULL */
-	static const struct whack_message zwm;
-
-	*msg = zwm;
-	msg->magic = WHACK_MAGIC;
-}
+static const struct whack_message empty_whack_message = {
+	.magic = WHACK_MAGIC,
+};
 
 /* NOT RE-ENTRANT: uses a static buffer */
 static char *connection_name(const struct starter_conn *conn)
@@ -426,14 +421,10 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 	const char *err;
 	char err_buf[TTODATAV_BUF];
 	char keyspace[1024 + 4];
-	struct whack_message msg;
-	int ret;
+	int ret = 0;
 
-	ret = 0;
-
-	init_whack_msg(&msg);
-
-	msg.whack_key = TRUE;
+	struct whack_message msg = empty_whack_message;
+	msg.whack_key = true;
 	msg.pubkey_alg = PUBKEY_ALG_RSA;
 	if (end->id && end->rsasigkey) {
 		msg.keyid = end->id;
@@ -490,13 +481,9 @@ static void conn_log_val(const struct starter_conn *conn,
 static int starter_whack_basic_add_conn(struct starter_config *cfg,
 					const struct starter_conn *conn)
 {
-	struct whack_message msg;
-	int r;
-
-	init_whack_msg(&msg);
-
-	msg.whack_connection = TRUE;
-	msg.whack_delete = TRUE;	/* always do replace for now */
+	struct whack_message msg = empty_whack_message;
+	msg.whack_connection = true;
+	msg.whack_delete = true;	/* always do replace for now */
 	msg.name = connection_name(conn);
 
 	msg.addr_family = conn->left.host_family->af;
@@ -681,7 +668,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.ike = conn->ike_crypto;
 	conn_log_val(conn, "ike", msg.ike);
 
-	r = send_whack_msg(&msg, cfg->ctlsocket);
+	int r = send_whack_msg(&msg, cfg->ctlsocket);
 	if (r != 0)
 		return r;
 
@@ -883,10 +870,8 @@ int starter_whack_add_conn(struct starter_config *cfg,
 static int starter_whack_basic_route_conn(struct starter_config *cfg,
 					const struct starter_conn *conn)
 {
-	struct whack_message msg;
-
-	init_whack_msg(&msg);
-	msg.whack_route = TRUE;
+	struct whack_message msg = empty_whack_message;
+	msg.whack_route = true;
 	msg.name = connection_name(conn);
 	return send_whack_msg(&msg, cfg->ctlsocket);
 }
@@ -907,20 +892,16 @@ int starter_whack_route_conn(struct starter_config *cfg,
 int starter_whack_initiate_conn(struct starter_config *cfg,
 				struct starter_conn *conn)
 {
-	struct whack_message msg;
-
-	init_whack_msg(&msg);
-	msg.whack_initiate = TRUE;
-	msg.whack_async = TRUE;
+	struct whack_message msg = empty_whack_message;
+	msg.whack_initiate = true;
+	msg.whack_async = true;
 	msg.name = connection_name(conn);
 	return send_whack_msg(&msg, cfg->ctlsocket);
 }
 
 int starter_whack_listen(struct starter_config *cfg)
 {
-	struct whack_message msg;
-
-	init_whack_msg(&msg);
-	msg.whack_listen = TRUE;
+	struct whack_message msg = empty_whack_message;
+	msg.whack_listen = true;
 	return send_whack_msg(&msg, cfg->ctlsocket);
 }
