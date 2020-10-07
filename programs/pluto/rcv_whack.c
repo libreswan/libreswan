@@ -453,6 +453,7 @@ static bool whack_process(const struct whack_message *const m, struct show *s)
 	}
 
 	if (m->whack_rekey_ike) {
+		dbg("whack: rekey_ike '%s'", m->name == NULL ? "NULL" : m->name);
 		if (m->name == NULL) {
 			/* leave bread crumb */
 			log_global(RC_FATAL, whackfd,
@@ -464,6 +465,7 @@ static bool whack_process(const struct whack_message *const m, struct show *s)
 	}
 
 	if (m->whack_rekey_ipsec) {
+		dbg("whack: rekey_ipsec '%s'", m->name == NULL ? "NULL" : m->name);
 		if (m->name == NULL) {
 			/* leave bread crumb */
 			log_global(RC_FATAL, whackfd,
@@ -479,6 +481,7 @@ static bool whack_process(const struct whack_message *const m, struct show *s)
 	 * delete will silently ignore the lack of the connection.
 	 */
 	if (m->whack_delete) {
+		dbg("whack: delete '%s'", m->name == NULL ? "NULL" : m->name);
 		if (m->name == NULL) {
 			whack_log(RC_FATAL, whackfd,
 				  "received whack command to delete a connection, but did not receive the connection name - ignored");
@@ -489,6 +492,7 @@ static bool whack_process(const struct whack_message *const m, struct show *s)
 	}
 
 	if (m->whack_deleteuser) {
+		dbg("whack: deleteuser '%s'", m->name == NULL ? "NULL" : m->name);
 		if (m->name == NULL ) {
 			whack_log(RC_FATAL, whackfd,
 				  "received whack command to delete a connection by username, but did not receive the username - ignored");
@@ -501,6 +505,7 @@ static bool whack_process(const struct whack_message *const m, struct show *s)
 	}
 
 	if (m->whack_deleteid) {
+		dbg("whack: deleteid '%s'", m->name == NULL ? "NULL" : m->name);
 		if (m->name == NULL ) {
 			whack_log(RC_FATAL, whackfd,
 				  "received whack command to delete a connection by id, but did not receive the id - ignored");
@@ -512,6 +517,7 @@ static bool whack_process(const struct whack_message *const m, struct show *s)
 	}
 
 	if (m->whack_deletestate) {
+		dbg("whack: deletestate #%lu", m->whack_deletestateno);
 		struct state *st =
 			state_with_serialno(m->whack_deletestateno);
 
@@ -544,14 +550,19 @@ static bool whack_process(const struct whack_message *const m, struct show *s)
 		}
 	}
 
-	if (m->whack_crash)
+	if (m->whack_crash) {
+		address_buf pb;
+		dbg("whack: crash %s", str_address(&m->whack_crash_peer, &pb));
 		delete_states_by_peer(whackfd, &m->whack_crash_peer);
+	}
 
 	if (m->whack_connection) {
+		dbg("whack: connection '%s'", m->name == NULL ? "NULL" : m->name);
 		add_connection(whackfd, m);
 	}
 
 	if (m->active_redirect_dests != NULL) {
+		dbg("whack: active_redirect_dests '%s'", m->name == NULL ? "NULL" : m->name);
 		/*
 		 * we are redirecting all peers of one or all connections
 		 */
@@ -560,70 +571,91 @@ static bool whack_process(const struct whack_message *const m, struct show *s)
 
 	/* update any socket buffer size before calling listen */
 	if (m->ike_buf_size != 0) {
+		dbg("whack: ike_buf_size %zu", m->ike_buf_size);
 		pluto_sock_bufsize = m->ike_buf_size;
 		libreswan_log("Set IKE socket buffer to %d", pluto_sock_bufsize);
 	}
 
 	/* update MSG_ERRQUEUE setting before size before calling listen */
 	if (m->ike_sock_err_toggle) {
+		dbg("whack: ike_sock_err_toggle !%s", bool_str(pluto_sock_errqueue));
 		pluto_sock_errqueue = !pluto_sock_errqueue;
 		libreswan_log("%s IKE socket MSG_ERRQUEUEs",
 			pluto_sock_errqueue ? "Enabling" : "Disabling");
 	}
 
 	/* process "listen" before any operation that could require it */
-	if (m->whack_listen)
+	if (m->whack_listen) {
+		dbg("whack: listen");
 		do_whacklisten(whackfd);
+	}
 
 	if (m->whack_unlisten) {
+		dbg("whack: unlisten");
 		libreswan_log("no longer listening for IKE messages");
 		listening = FALSE;
 	}
 
-	if (m->whack_ddos != DDOS_undefined)
+	if (m->whack_ddos != DDOS_undefined) {
+		dbg("whack: ddos %d", m->whack_ddos);
 		set_whack_pluto_ddos(m->whack_ddos);
+	}
 
 	if (m->whack_ddns) {
+		dbg("whack: ddns %d", m->whack_ddns);
 		libreswan_log("updating pending dns lookups");
 		connection_check_ddns(whackfd);
 	}
 
-	if (m->whack_reread & REREAD_SECRETS)
+	if (m->whack_reread & REREAD_SECRETS) {
+		dbg("whack: ddns");
 		load_preshared_secrets(show_logger(s));
+	}
 
 	if (m->whack_list & LIST_PUBKEYS) {
+		dbg("whack: list");
 		list_public_keys(s, m->whack_utc,
 				 m->whack_check_pub_keys);
 	}
 
-	if (m->whack_purgeocsp)
+	if (m->whack_purgeocsp) {
+		dbg("whack: purgeocsp");
 		clear_ocsp_cache();
+	}
 
-	if (m->whack_reread & REREAD_CRLS)
+	if (m->whack_reread & REREAD_CRLS) {
 		loglog(RC_LOG_SERIOUS, "ipsec whack: rereadcrls command obsoleted did you mean ipsec whack --fetchcrls");
+	}
 
 #if defined(LIBCURL) || defined(LIBLDAP)
-	if (m->whack_reread & REREAD_FETCH)
+	if (m->whack_reread & REREAD_FETCH) {
+		dbg("whack: reread & FETCH");
 		add_crl_fetch_requests(NULL);
+	}
 #endif
 
 	if (m->whack_reread & REREAD_CERTS) {
+		dbg("whack: reread & CERTS");
 		reread_cert_connections(whackfd);
 	}
 
 	if (m->whack_list & LIST_PSKS) {
+		dbg("whack: list & PSKS");
 		list_psks(s);
 	}
 
 	if (m->whack_list & LIST_CERTS) {
+		dbg("whack: list & CERTS");
 		list_certs(s);
 	}
 
 	if (m->whack_list & LIST_CACERTS) {
+		dbg("whack: list & CACERTS");
 		list_authcerts(s);
 	}
 
 	if (m->whack_list & LIST_CRLS) {
+		dbg("whack: list & CRLS");
 		list_crls(whackfd);
 #if defined(LIBCURL) || defined(LIBLDAP)
 		list_crl_fetch_requests(whackfd, m->whack_utc);
@@ -631,16 +663,19 @@ static bool whack_process(const struct whack_message *const m, struct show *s)
 	}
 
 	if (m->whack_list & LIST_EVENTS) {
+		dbg("whack: list & EVENTS");
 		list_timers(s, now);
 		list_state_events(s, now);
 	}
 
 	if (m->whack_key) {
+		dbg("whack: key");
 		/* add a public key */
 		key_add_request(m, show_logger(s));
 	}
 
 	if (m->whack_route) {
+		dbg("whack: route");
 		if (!listening) {
 			whack_log(RC_DEAF, whackfd,
 				  "need --listen before --route");
@@ -660,6 +695,7 @@ static bool whack_process(const struct whack_message *const m, struct show *s)
 	}
 
 	if (m->whack_unroute) {
+		dbg("whack: unroute");
 		passert(m->name != NULL);
 
 		struct connection *c = conn_by_name(m->name, true/*strict*/);
@@ -675,6 +711,7 @@ static bool whack_process(const struct whack_message *const m, struct show *s)
 	}
 
 	if (m->whack_initiate) {
+		dbg("whack: initiate");
 		if (!listening) {
 			whack_log(RC_DEAF, whackfd,
 				  "need --listen before --initiate");
@@ -700,6 +737,7 @@ static bool whack_process(const struct whack_message *const m, struct show *s)
 	}
 
 	if (m->whack_oppo_initiate) {
+		dbg("whack: oppo_initiate");
 		if (!listening) {
 			whack_log(RC_DEAF, whackfd,
 				  "need --listen before opportunistic initiation");
@@ -712,47 +750,58 @@ static bool whack_process(const struct whack_message *const m, struct show *s)
 	}
 
 	if (m->whack_terminate) {
+		dbg("whack: terminate");
 		passert(m->name != NULL);
 		terminate_connection(m->name, true, whackfd);
 	}
 
 	if (m->whack_status) {
+		dbg("whack: status");
 		show_status(s);
 	}
 
 	if (m->whack_global_status) {
+		dbg("whack: global_status");
 		show_global_status(s);
 	}
 
 	if (m->whack_clear_stats) {
+		dbg("whack: clear_stats");
 		clear_pluto_stats();
 	}
 
 	if (m->whack_traffic_status) {
+		dbg("whack: traffic_status");
 		show_traffic_status(s, m->name);
 	}
 
 	if (m->whack_shunt_status) {
+		dbg("whack: shunt_status");
 		show_shunt_status(s);
 	}
 
 	if (m->whack_fips_status) {
+		dbg("whack: fips_status");
 		show_fips_status(s);
 	}
 
 	if (m->whack_brief_status) {
+		dbg("whack: brief_status");
 		show_brief_status(s);
 	}
 	if (m->whack_addresspool_status) {
+		dbg("whack: addresspool_status");
 		show_addresspool_status(s);
 	}
 
 	if (m->whack_show_states) {
+		dbg("whack: show_states");
 		show_states(s);
 	}
 
 #ifdef HAVE_SECCOMP
 	if (m->whack_seccomp_crashtest) {
+		dbg("whack: seccomp_crashtest");
 		/*
 		 * This is a SECCOMP test, it CAN KILL pluto if successful!
 		 *
