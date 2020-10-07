@@ -381,6 +381,7 @@ static bool whack_process(const struct whack_message *const m, struct show *s)
 	 * XXX: why?
 	 */
 	if (m->whack_options) {
+		dbg("whack: options (impair|debug)");
 		switch (m->opt_set) {
 		case WHACK_ADJUSTOPTIONS:
 			if (libreswan_fipsmode()) {
