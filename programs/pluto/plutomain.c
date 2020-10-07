@@ -609,7 +609,7 @@ static void usage(void)
 			cw = strlen(chunk);
 
 			if (force_nl || lw + cw + 2 >= sizeof(line)) {
-				fprintf(stderr, "%s\n", line);
+				fprintf(stdout, "%s\n", line);
 				line[0] = '\t';
 				lw = 1;
 			} else {
@@ -621,9 +621,9 @@ static void usage(void)
 		}
 	}
 
-	fprintf(stderr, "%s\n", line);
+	fprintf(stdout, "%s\n", line);
 
-	fprintf(stderr, "Libreswan %s\n", ipsec_version_code());
+	fprintf(stdout, "Libreswan %s\n", ipsec_version_code());
 	/* not exit_pluto because we are not initialized yet */
 	exit(0);
 }
