@@ -222,7 +222,8 @@ err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa, const chunk_t *pub
 		return e;
 	}
 
-	int n = keyblobtoid(pubkey->ptr, pubkey->len, ecdsa->keyid, sizeof(ecdsa->keyid));
+	/* use the ckaid since that digested the entire pubkey */
+	int n = keyblobtoid(ecdsa->ckaid.ptr, ecdsa->ckaid.len, ecdsa->keyid, sizeof(ecdsa->keyid));
 	if (n == 0) {
 		return "problem creating key-id from ECDSA public";
 	}
