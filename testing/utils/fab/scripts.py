@@ -37,50 +37,58 @@ def _add_script(run, scripts, script, host_names):
         for host_name in host_names:
             run.append((host_name, script))
 
-def host_script_tuples(directory):
+def host_script_tuples(directory, logger):
     """Return a [] list of(host, script) tuples to run"""
 
     scripts = _scripts(directory)
+    logger.debug("raw script files: %s", scripts);
 
     # Form a subset of HOST_NAMES based on the names found in the
     # scripts.
-    east_variant = "east"
     host_names = set()
     for host_name in HOST_NAMES:
         for script in scripts:
             if re.search(host_name, script):
                 host_names.add(host_name)
-                if host_name == "openbsde":
-                    east_variant = "openbsde"
+    logger.debug("script host names: %s", host_names)
 
-    # init scripts: nic, east or openbsde, then rest
+    # Compatiblity hack: form a list of scripts matching <host>init.sh
+    # and within that force "nic" then "east" to be on the front of
+    # the list.  These will be run first.
     init_scripts = []
     _add_script(init_scripts, scripts, "nicinit.sh", ["nic"])
-    _add_script(init_scripts, scripts, "%sinit.sh"%east_variant, [east_variant])
+    _add_script(init_scripts, scripts, "eastinit.sh", ["east"])
     for host_name in sorted(host_names):
         _add_script(init_scripts, scripts, host_name + "init.sh", [host_name])
+    logger.debug("init scripts: %s", init_scripts)
 
-    # run scripts
+    # Compatiblity hack: form a list of scripts matching <host>run.sh.
+    # These will be run second.
     run_scripts = []
     for host_name in sorted(host_names):
         _add_script(run_scripts, scripts, host_name + "run.sh", [host_name])
+    logger.debug("run scripts: %s", run_scripts)
 
-    # strip out the final script
+    # Compatiblity hack: form a list of scripts matching <host>run.sh.
+    # These will be run last.
     final_scripts = []
     _add_script(final_scripts, scripts, "final.sh", sorted(host_names))
+    logger.debug("final scripts: %s", final_scripts)
 
     # What's left are ordered scripts.  Preserve the order that the
     # host names appear in the file name.  For instance, the script
     # 99-west-east.sh would be run on west then east.
-    extra_scripts = []
+    ordered_scripts = []
     for script in sorted(scripts):
         for host_name in re.findall("|".join(host_names), script):
-            extra_scripts.append((host_name, script))
+            ordered_scripts.append((host_name, script))
+    logger.debug("ordered scripts: %s", ordered_scripts)
 
-    # append the final scripts
+    # Form the list if scripts to run.  Per above: init, run, ordered,
+    # final.
     all_scripts = []
     all_scripts.extend(init_scripts)
     all_scripts.extend(run_scripts)
-    all_scripts.extend(extra_scripts)
+    all_scripts.extend(ordered_scripts)
     all_scripts.extend(final_scripts)
     return all_scripts

@@ -88,7 +88,7 @@ class Test:
 
         # Get an ordered list of (host,script) pairs of all the
         # scripts that need to be run.
-        self.host_script_tuples = scripts.host_script_tuples(self.directory)
+        self.host_script_tuples = scripts.host_script_tuples(self.directory, self.logger)
 
         # Just assume any host mentioned in scripts needs to run.
         host_names = set()
