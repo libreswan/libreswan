@@ -15,6 +15,19 @@
 import os
 import re
 
+from fab import argutil
+
+class Scripts(list):
+    def __str__(self):
+        return ",".join(str(script))
+
+class Script:
+    def __init__(self, host_name, path):
+        self.host_name = host_name
+        self.path = path
+    def __str__(self):
+        return self.host_name + ":" + self.path
+
 from fab.hosts import HOST_NAMES
 
 def _scripts(directory):
@@ -35,10 +48,10 @@ def _add_script(run, scripts, script, host_names):
     if script in scripts:
         scripts.remove(script)
         for host_name in host_names:
-            run.append((host_name, script))
+            run.append(Script(host_name, script))
 
-def host_script_tuples(directory, logger):
-    """Return a [] list of(host, script) tuples to run"""
+def host_scripts(directory, logger):
+    """Return a list of (host, script, silent-but-deadly) tuples to run"""
 
     scripts = _scripts(directory)
     logger.debug("raw script files: %s", scripts);
@@ -50,7 +63,8 @@ def host_script_tuples(directory, logger):
         for script in scripts:
             if re.search(host_name, script):
                 host_names.add(host_name)
-    logger.debug("script host names: %s", host_names)
+    host_names = sorted(host_names)
+    logger.debug("script sorted host names: %s", host_names)
 
     # Compatiblity hack: form a list of scripts matching <host>init.sh
     # and within that force "nic" then "east" to be on the front of
@@ -58,21 +72,21 @@ def host_script_tuples(directory, logger):
     init_scripts = []
     _add_script(init_scripts, scripts, "nicinit.sh", ["nic"])
     _add_script(init_scripts, scripts, "eastinit.sh", ["east"])
-    for host_name in sorted(host_names):
+    for host_name in host_names:
         _add_script(init_scripts, scripts, host_name + "init.sh", [host_name])
     logger.debug("init scripts: %s", init_scripts)
 
     # Compatiblity hack: form a list of scripts matching <host>run.sh.
     # These will be run second.
     run_scripts = []
-    for host_name in sorted(host_names):
+    for host_name in host_names:
         _add_script(run_scripts, scripts, host_name + "run.sh", [host_name])
     logger.debug("run scripts: %s", run_scripts)
 
-    # Compatiblity hack: form a list of scripts matching <host>run.sh.
-    # These will be run last.
+    # Part compatiblity hack, part new behaviour: form a list of
+    # scripts matching <host>final.sh.  These will be run last.
     final_scripts = []
-    _add_script(final_scripts, scripts, "final.sh", sorted(host_names))
+    _add_script(final_scripts, scripts, "final.sh", host_names)
     logger.debug("final scripts: %s", final_scripts)
 
     # What's left are ordered scripts.  Preserve the order that the
@@ -81,7 +95,7 @@ def host_script_tuples(directory, logger):
     ordered_scripts = []
     for script in sorted(scripts):
         for host_name in re.findall("|".join(host_names), script):
-            ordered_scripts.append((host_name, script))
+            ordered_scripts.append(Script(host_name, script))
     logger.debug("ordered scripts: %s", ordered_scripts)
 
     # Form the list if scripts to run.  Per above: init, run, ordered,

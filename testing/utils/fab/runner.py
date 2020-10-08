@@ -398,9 +398,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                         return
 
                 # Run the scripts directly
-                with logger.time("running scripts %s",
-                                 " ".join(("%s:%s" % (host, script))
-                                          for host, script in test.host_script_tuples)) as test_script_time:
+                with logger.time("running scripts %s", test.host_scripts) as test_script_time:
                     with tcpdump.Dump(logger, domain_prefix, test.output_directory,
                                       [test_domain.domain for test_domain in test_domains.values()],
                                       enable=args.tcpdump):
@@ -413,27 +411,27 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                                                       test_domain.domain.host_name + ".console.verbose.txt")
                                 test_domain.console.output(open(output, "w"))
 
-                            for host, script in test.host_script_tuples:
-                                if args.stop_at == script:
+                            for script in test.host_scripts:
+                                if args.stop_at == script.path:
                                     logger.error("stopping test run at (before executing) script %s", script)
                                     break
-                                test_domain = test_domains[host]
+                                test_domain = test_domains[script.host_name]
                                 try:
-                                    test_domain.read_file_run(script)
+                                    test_domain.read_file_run(script.path)
                                 except pexpect.TIMEOUT as e:
                                     # A test ending with a timeout
                                     # gets treated as a FAIL.  A
                                     # timeout while running a test
                                     # script is a sign that a command
                                     # hung.
-                                    post_timeout = "%s %s:%s" % (post.TIMEOUT, host, script)
+                                    post_timeout = "%s %s" % (post.TIMEOUT, script)
                                     logger.warning("*** %s ***" % post_timeout)
                                     test_domain.console.child.logfile.write("%s %s %s" % (post.LHS, post_timeout, post.RHS))
                                     break
                                 except BaseException as e:
                                     # if there is an exception, write
                                     # it to the console
-                                    test_domain.console.child.logfile.write("\n%s %s %s:%s %rhs\n%s" % (post.LHS, post.EXCEPTION, host, script, post.RHS, str(e)))
+                                    test_domain.console.child.logfile.write("\n%s %s %s %rhs\n%s" % (post.LHS, post.EXCEPTION, script, post.RHS, str(e)))
                                     raise
 
                             for test_domain in test_domains.values():
