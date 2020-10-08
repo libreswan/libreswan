@@ -19,7 +19,8 @@ from fab import argutil
 
 class Scripts(list):
     def __str__(self):
-        return ",".join(str(script))
+        # string is used by --print test-scripts (it has no spaces)
+        return ",".join(str(script) for script in self)
 
 class Script:
     def __init__(self, host_name, path):
@@ -69,7 +70,7 @@ def host_scripts(directory, logger):
     # Compatiblity hack: form a list of scripts matching <host>init.sh
     # and within that force "nic" then "east" to be on the front of
     # the list.  These will be run first.
-    init_scripts = []
+    init_scripts = Scripts()
     _add_script(init_scripts, scripts, "nicinit.sh", ["nic"])
     _add_script(init_scripts, scripts, "eastinit.sh", ["east"])
     for host_name in host_names:
@@ -78,21 +79,21 @@ def host_scripts(directory, logger):
 
     # Compatiblity hack: form a list of scripts matching <host>run.sh.
     # These will be run second.
-    run_scripts = []
+    run_scripts = Scripts()
     for host_name in host_names:
         _add_script(run_scripts, scripts, host_name + "run.sh", [host_name])
     logger.debug("run scripts: %s", run_scripts)
 
     # Part compatiblity hack, part new behaviour: form a list of
     # scripts matching <host>final.sh.  These will be run last.
-    final_scripts = []
+    final_scripts = Scripts()
     _add_script(final_scripts, scripts, "final.sh", host_names)
     logger.debug("final scripts: %s", final_scripts)
 
     # What's left are ordered scripts.  Preserve the order that the
     # host names appear in the file name.  For instance, the script
     # 99-west-east.sh would be run on west then east.
-    ordered_scripts = []
+    ordered_scripts = Scripts()
     for script in sorted(scripts):
         for host_name in re.findall("|".join(host_names), script):
             ordered_scripts.append(Script(host_name, script))
@@ -100,7 +101,7 @@ def host_scripts(directory, logger):
 
     # Form the list if scripts to run.  Per above: init, run, ordered,
     # final.
-    all_scripts = []
+    all_scripts = Scripts()
     all_scripts.extend(init_scripts)
     all_scripts.extend(run_scripts)
     all_scripts.extend(ordered_scripts)
