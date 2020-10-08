@@ -82,6 +82,10 @@ def main():
         logger.error("test or testsuite directory invalid: %s", args.directories)
         return 1
 
+    if len(tests) == 1 and args.run_post_mortem is None:
+        logger.warning("skipping post-mortem.sh as only one test; use --run-post-mortem true to override this")
+        args.run_post_mortem = False
+
     test_stats = stats.Tests()
     result_stats = stats.Results()
 

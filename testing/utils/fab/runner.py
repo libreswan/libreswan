@@ -47,6 +47,8 @@ def add_arguments(parser):
                        help="stop the test at (before executing) the specified script")
     group.add_argument("--tcpdump", action="store_true",
                        help="enable experimental TCPDUMP support")
+    group.add_argument("--run-post-mortem", default=None, action="store_true",
+                       help="run the post-mortem script; by default, when there is only one test, the script post-mortem.sh is skipped")
 
     # Default to BACKUP under the current directory.  Name is
     # arbitrary, chosen for its hopefully unique first letter
@@ -61,9 +63,9 @@ def log_arguments(logger, args):
     logger.info("  workers: %s", args.workers)
     logger.info("  prefix: %s", args.prefix)
     logger.info("  parallel: %s", args.parallel)
-    logger.info("  stop-at: %s", args.stop_at)
     logger.info("  tcpdump: %s", args.tcpdump)
     logger.info("  backup-directory: %s", args.backup_directory)
+    logger.info("  run-post-mortem: %s", args.run_post_mortem)
 
 
 TEST_TIMEOUT = 120
@@ -412,9 +414,6 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                                 test_domain.console.output(open(output, "w"))
 
                             for script in test.host_scripts:
-                                if args.stop_at == script.path:
-                                    logger.error("stopping test run at (before executing) script %s", script)
-                                    break
                                 test_domain = test_domains[script.host_name]
                                 try:
                                     test_domain.read_file_run(script.path)
@@ -433,6 +432,19 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                                     # it to the console
                                     test_domain.console.child.logfile.write("\n%s %s %s %rhs\n%s" % (post.LHS, post.EXCEPTION, script, post.RHS, str(e)))
                                     raise
+
+                            if args.run_post_mortem is False:
+                                logger.warning("+++ skipping script post-mortem.sh +++")
+                            else: # None or True
+                                for host_name in test.host_names:
+                                    test_domain = test_domains[host_name]
+                                    test_domain.console.child.logfile.write("%s post-mortem %s" % (post.LHS, post.LHS))
+                                    logger.info("running post-mortem.sh on %s", host_name)
+                                    status = test_domain.console.run("../bin/post-mortem.sh")
+                                    if status:
+                                        logger.error("post-mortem.sh failed on %s with status %s", host_name, status)
+                                    else:
+                                        test_domain.console.child.logfile.write("%s post-mortem %s" % (post.RHS, post.RHS))
 
                             for test_domain in test_domains.values():
                                 test_domain.console.child.logfile.write(post.DONE)
