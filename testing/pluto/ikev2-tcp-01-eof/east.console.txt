@@ -46,7 +46,7 @@ connection from 192.1.2.45:EPHEM: TCP: 0 byte message from socket XX indicates E
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
 connection from 192.1.2.45:EPHEM: TCP: 0 byte message from socket XX indicates EOF
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: 0 byte message from socket XX indicates EOF
+connection from 192.1.2.45:EPHEM: TCP: read from socket XX failed Errno 22: Invalid argument
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
 connection from 192.1.2.45:EPHEM: TCP: 0 byte message from socket XX indicates EOF
 connection from 192.1.2.45:EPHEM: TCP: accepting connection

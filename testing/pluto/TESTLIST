@@ -1184,16 +1184,15 @@ kvmplutotest	algo-ah-netkey-to-netkey-ikev2			good
 # TCP tests
 kvmplutotest	ikev2-tcp-00-yes				good
 kvmplutotest	ikev2-tcp-00-fallback				good
-kvmplutotest	ikev2-tcp-01-eof				wip
+kvmplutotest	ikev2-tcp-01-eof				good
 kvmplutotest	ikev2-tcp-02-timeout				wip
 kvmplutotest	ikev2-tcp-03-basic-rawrsa-blocking		good
+kvmplutotest	ikev2-tcp-03-basic-rawrsa-nonblocking		good
 kvmplutotest	ikev2-tcp-04-ikeport				wip
-# this test spews a gigabyte of logs because of a busy-wait kernel bug on unfixed kernels
-kvmplutotest	ikev2-tcp-03-basic-rawrsa-nonblocking		wip
 kvmplutotest	ikev2-tcp-10-rekey-child			good
 kvmplutotest	ikev2-tcp-10-rekey-ike				good
 kvmplutotest	ikev2-tcp-25-rw-nat				good
-kvmplutotest	ikev2-tcp-26-rw-nat-keepalive			wip
+kvmplutotest	ikev2-tcp-26-rw-nat-keepalive			good
 
 # OpenBSD interop
 kvmplutotest	interop-ikev2-openbsd-01		skiptest

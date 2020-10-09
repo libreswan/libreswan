@@ -44,21 +44,13 @@ connection from 192.1.2.45:EPHEM: TCP: accepting connection
 connection from 192.1.2.45:EPHEM: TCP: socket XX timed out before first message received
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
 connection from 192.1.2.45:EPHEM: TCP: read from socket XX failed Errno 11: Resource temporarily unavailable
-connection from 192.1.2.45:EPHEM: TCP: read from socket XX failed Errno 11: Resource temporarily unavailable
-connection from 192.1.2.45:EPHEM: TCP: read from socket XX failed Errno 11: Resource temporarily unavailable
 connection from 192.1.2.45:EPHEM: TCP: socket XX timed out before first message received
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: read from socket XX failed Errno 11: Resource temporarily unavailable
-connection from 192.1.2.45:EPHEM: TCP: read from socket XX failed Errno 11: Resource temporarily unavailable
-connection from 192.1.2.45:EPHEM: TCP: read from socket XX failed Errno 11: Resource temporarily unavailable
 connection from 192.1.2.45:EPHEM: TCP: read from socket XX failed Errno 22: Invalid argument
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
 connection from 192.1.2.45:EPHEM: TCP: read from socket XX failed Errno 11: Resource temporarily unavailable
-connection from 192.1.2.45:EPHEM: TCP: read from socket XX failed Errno 11: Resource temporarily unavailable
 connection from 192.1.2.45:EPHEM: TCP: socket XX timed out before first message received
 connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: read from socket XX failed Errno 11: Resource temporarily unavailable
-connection from 192.1.2.45:EPHEM: TCP: read from socket XX failed Errno 11: Resource temporarily unavailable
 connection from 192.1.2.45:EPHEM: TCP: read from socket XX failed Errno 11: Resource temporarily unavailable
 connection from 192.1.2.45:EPHEM: TCP: socket XX timed out before first message received
 east #
