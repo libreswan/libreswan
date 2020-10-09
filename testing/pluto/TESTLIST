@@ -1196,7 +1196,8 @@ kvmplutotest	ikev2-tcp-25-rw-nat				good
 kvmplutotest	ikev2-tcp-26-rw-nat-keepalive			wip
 
 # OpenBSD interop
-kvmplutotest	interop-ikev2-openbsd-01		good
+kvmplutotest	interop-ikev2-openbsd-01		skiptest
+kvmplutotest	interop-ikev2-openbsd-02		skiptest
 
 # Intermediary Exchange
 kvmplutotest	ikev2-intermediate-01-rsa-sha1		good
