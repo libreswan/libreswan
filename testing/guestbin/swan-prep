@@ -111,7 +111,7 @@ def shell(command, out=False):
         print(output)
     return output
 
-def choose_config_file(hostname, testpath, config_path):
+def choose_config_file(hostname, testpath, config_path, strict):
     (config_absdir, config_file) = os.path.split(config_path)
     if os.path.isabs(config_absdir):
         config_dir = config_absdir[1:] # drop slash; better?
@@ -119,35 +119,43 @@ def choose_config_file(hostname, testpath, config_path):
         config_dir = config_absdir
     # extension contains the dot
     (config_base, extension) = os.path.splitext(config_file)
-    paths = []
-    # local test directory: Allow both HOSTNAMECONFIG.FILE and
-    # HOSTNAME.CONFIG_FILE.  So file names can switch to latter.
-    paths.append(os.path.join(testpath, hostname + "." + config_file))
-    ext = os.path.join(testpath, hostname + extension)
-    hconf = os.path.join(testpath, config_file)
-    if os.path.isfile(ext) and os.path.isfile(hconf):
-        print("conflicting files %s %s ignore both" % (ext, hconf))
-        return None
-    paths.append(os.path.join(ext))
-    paths.append(os.path.join(hconf))
 
-    # baseconfigs; prefer host
+    # pass 1: look in the test directory, reject ambigious files.
+    # When exact, don't match HOSTNAME.EXTENSION.
+    paths = []
+    paths.append((False, os.path.join(testpath, hostname + "." + config_file)))
+    paths.append((True, os.path.join(testpath, hostname + extension)))
+    paths.append((None, os.path.join(testpath, config_file)))
+    path = None
+    for fuzzy, p in paths:
+        if os.path.isfile(p):
+            if strict is True and fuzzy is True:
+                # strict so ignore fuzzy match
+                continue
+            if strict is False and fuzzy is False:
+                # non-strict should not match HOSTNAME.CONFIG_FILE
+                sys.exit("config file %s conficts with %s" % (p, hostname + extension))
+            if path:
+                sys.exit("conflicting files %s %s in test directory" % (p, path))
+            path = p
+    if path:
+        return path
+
+    # pass 2: look in base configs
     if userland in ("libreswan", "openswan",  "strongswan"):
-        # not BSD?
+        # what about BSD?
+        paths = []
         paths.append(os.path.join("/testing/baseconfigs", hostname, config_dir, config_file))
         paths.append(os.path.join("/testing/baseconfigs/all/", config_dir, config_file))
+        for path in paths:
+            if os.path.isfile(path):
+                return path
 
-    # BSD?
-
-    for path in paths:
-        if os.path.isfile(path):
-            return path
-
-    # dump all the fields
+    # dump all the paths?
     return None
 
-def copy_config_file(hostname, testpath, config_path, optional=False, nsprefix=""):
-    src = choose_config_file(hostname, testpath, config_path)
+def copy_config_file(hostname, testpath, config_path, strict=False, optional=False, nsprefix=""):
+    src = choose_config_file(hostname, testpath, config_path, strict)
     if src:
         # config_absdir has a leading / so below is always valid
         dst = nsprefix + config_path
@@ -401,10 +409,10 @@ if hostname != "nic":
 
         for directory in ("ipsec.d/", "ipsec.d/aacerts/", "ipsec.d/ocspcerts/", "ipsec.d/cacerts/", "ipsec.d/private/", "ipsec.d/certs/"):
             os.mkdir("%s%s" % (dst, directory))
-        copy_config_file(hostname, testpath, "/etc/strongswan/strongswan.conf")
+        copy_config_file(hostname, testpath, "/etc/strongswan/strongswan.conf", strict=True)
         copy_config_file(hostname, testpath, "/etc/strongswan/ipsec.conf")
         copy_config_file(hostname, testpath, "/etc/strongswan/ipsec.secrets")
-        copy_config_file(hostname, testpath, "/etc/strongswan/swanctl/swanctl.conf", optional=True)
+        copy_config_file(hostname, testpath, "/etc/strongswan/swanctl/swanctl.conf", strict=True, optional=True)
 
     # test specific files
     xl2tpdconf = "%s/%s.xl2tpd.conf" % (testpath, hostname)
