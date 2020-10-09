@@ -340,10 +340,8 @@ fp.close()
 
 if hostname != "nic":
 
-    ipsec_d_dir = "strongswan/" if userland == "strongswan" else "ipsec.d"
-
-    src = "%s/etc/%s" % (nsbasepath, ipsec_d_dir)
-    dst = "/etc/%s" % (ipsec_d_dir)
+    dst = "/etc/strongswan/" if userland == "strongswan" else "/etc/ipsec.d/"
+    src = "%s%s" % (nsbasepath, dst)
     if args.namespace :
         if mount_bind(src, dst, mkdir_src=True,  wipe_old_dst=True):
             sys.exit(1)
@@ -408,7 +406,7 @@ if hostname != "nic":
         subprocess.getoutput("setenforce 0")
 
         for directory in ("ipsec.d/", "ipsec.d/aacerts/", "ipsec.d/ocspcerts/", "ipsec.d/cacerts/", "ipsec.d/private/", "ipsec.d/certs/"):
-            os.mkdir("%s%s" % (dst, directory))
+            os.mkdir(os.path.join("/etc/strongswan", directory))
         copy_config_file(hostname, testpath, "/etc/strongswan/strongswan.conf", strict=True)
         copy_config_file(hostname, testpath, "/etc/strongswan/ipsec.conf")
         copy_config_file(hostname, testpath, "/etc/strongswan/ipsec.secrets")
