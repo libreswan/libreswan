@@ -572,7 +572,7 @@ static bool whack_process(const struct whack_message *const m, struct show *s)
 
 	/* update any socket buffer size before calling listen */
 	if (m->ike_buf_size != 0) {
-		dbg("whack: ike_buf_size %zu", m->ike_buf_size);
+		dbg("whack: ike_buf_size %lu", m->ike_buf_size);
 		pluto_sock_bufsize = m->ike_buf_size;
 		libreswan_log("Set IKE socket buffer to %d", pluto_sock_bufsize);
 	}
