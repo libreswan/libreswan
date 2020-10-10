@@ -10,12 +10,13 @@
 # For RHEL7 we need USE_NSS_KDF=false and USE_FIPSCHECK=true
 # Note that this means libreswan needs its own FIPS certification
 %global libreswan_config \\\
-    SHELL_BINARY=/usr/bin/sh \\\
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
     FINALMANDIR=%{_mandir} \\\
-    PREFIX=%{_prefix} \\\
+    FINALNSSDIR=%{_sysconfdir}/ipsec.d \\\
     INITSYSTEM=systemd \\\
+    PREFIX=%{_prefix} \\\
     PYTHON_BINARY=%{__python} \\\
+    SHELL_BINARY=/bin/sh \\\
     USE_DNSSEC=%{USE_DNSSEC} \\\
     USE_FIPSCHECK=true \\\
     USE_LABELED_IPSEC=true \\\
@@ -24,10 +25,10 @@
     USE_LIBCURL=true \\\
     USE_NM=true \\\
     USE_NSS_IPSEC_PROFILE=true \\\
+    USE_NSS_KDF=false \\\
     USE_SECCOMP=true \\\
     USE_XAUTHPAM=true \\\
     USE_XFRM_INTERFACE_IFLA_HEADER=true \\\
-    USE_NSS_KDF=false \\\
 %{nil}
 #global prever rc1
 

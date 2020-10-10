@@ -9,11 +9,12 @@
 %{!?_rundir:%global _rundir %{_localstatedir}/run}
 # Libreswan config options
 %global libreswan_config \\\
+    FINALINITDDIR=%{_initrddir} \\\
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
     FINALMANDIR=%{_mandir} \\\
+    FINALNSSDIR=%{_sysconfdir}/ipsec.d \\\
     FINALRUNDIR=%{_rundir}/pluto \\\
     FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \\\
-    FINALINITDDIR=%{_initrddir} \\\
     INITSYSTEM=sysvinit \\\
     PREFIX=%{_prefix} \\\
     PYTHON_BINARY=%{__python} \\\

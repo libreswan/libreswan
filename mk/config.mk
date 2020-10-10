@@ -187,11 +187,6 @@ SYSCONFDIR ?= $(DESTDIR)$(FINALSYSCONFDIR)
 FINALCONFDDIR ?= $(FINALCONFDIR)/ipsec.d
 CONFDDIR ?= $(DESTDIR)$(FINALCONFDDIR)
 
-FINALNSSDIR ?= /etc/ipsec.d
-# Debian uses /var/lib/ipsec/nss
-#FINALNSSDIR ?= /var/lib/ipsec/nss
-NSSDIR ?= $(DESTDIR)$(FINALNSSDIR)
-
 # where dynamic PPKs go, for now
 FINALPPKDIR ?= $(FINALCONFDDIR)
 PPKDIR ?= $(DESTDIR)$(FINALPPKDIR)
@@ -216,6 +211,13 @@ FINALVARDIR ?= /var
 VARDIR ?= $(DESTDIR)$(FINALVARDIR)
 FINALLOGDIR ?= $(FINALVARDIR)/log
 LOGDIR ?= $(DESTDIR)$(FINALLOGDIR)
+
+# Where nss databases go
+FINALNSSDIR ?= $(FINALVARDIR)/lib/ipsec/nss
+# RHEL/CentOS <= 8 and Fedora <= 32 uses /etc/ipsec.d
+#FINALNSSDIR ?= /etc/ipsec.d
+NSSDIR ?= $(DESTDIR)$(FINALNSSDIR)
+
 
 # Note: this variable gets passed in, as in "make INITSYSTEM=systemd"
 INITSYSTEM ?= $(shell $(top_srcdir)/packaging/utils/lswan_detect.sh init)

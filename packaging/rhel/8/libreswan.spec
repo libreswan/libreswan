@@ -10,14 +10,15 @@
 # does not require its own FIPS validation. Only the system
 # and NSS needs to be FIPS validated.
 %global libreswan_config \\\
-    SHELL_BINARY=/usr/bin/sh \\\
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
     FINALMANDIR=%{_mandir} \\\
-    PREFIX=%{_prefix} \\\
+    FINALNSSDIR=%{_sysconfdir}/ipsec.d \\\
     INITSYSTEM=systemd \\\
-    NSS_REQ_AVA_COPY=false \\\
     NSS_HAS_IPSEC_PROFILE=true \\\
+    NSS_REQ_AVA_COPY=false \\\
+    PREFIX=%{_prefix} \\\
     PYTHON_BINARY=%{__python3} \\\
+    SHELL_BINARY=%{_bindir}/sh \\\
     USE_DNSSEC=true \\\
     USE_FIPSCHECK=false \\\
     USE_LABELED_IPSEC=true \\\
@@ -26,9 +27,9 @@
     USE_LIBCURL=true \\\
     USE_LINUX_AUDIT=true \\\
     USE_NM=true \\\
+    USE_NSS_KDF=true \\\
     USE_SECCOMP=true \\\
     USE_XAUTHPAM=true \\\
-    USE_NSS_KDF=true \\\
 %{nil}
 
 #global prever rc1
