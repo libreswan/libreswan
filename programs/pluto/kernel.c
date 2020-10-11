@@ -2201,6 +2201,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		}
 
 		dbg("%s() before proto %d", __func__, proto_info[0].proto);
+		/* ??? setting .proto to 0, an invalid value.  See /usr/include/linux/in.h. */
 		proto_info[i].proto = 0;
 
 		/*
@@ -2210,7 +2211,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		if (mode == ENCAPSULATION_MODE_TUNNEL) {
 			proto_info[0].mode =
 				ENCAPSULATION_MODE_TUNNEL;
-			for (i = 1; proto_info[i].proto; i++)
+			for (i = 1; proto_info[i].proto != 0; i++)
 				proto_info[i].mode =
 					ENCAPSULATION_MODE_TRANSPORT;
 		}
