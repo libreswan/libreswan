@@ -844,6 +844,8 @@ static int extract_end(struct end *dst,
 		char err_buf[TTODATAV_BUF];
 		char keyspace[1024 + 4];
 		size_t keylen;
+
+		/* ??? this value of err isn't used */
 		err_t err = ttodatav(src->rsasigkey, 0, 0,
 				     keyspace, sizeof(keyspace), &keylen,
 				     err_buf, sizeof(err_buf), 0);
