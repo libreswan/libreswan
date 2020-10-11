@@ -71,12 +71,11 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 				  pb_stream *outpbs,
 				  enum isakmp_xchg_types isa_xchg)
 {
-	struct connection *c = md->st->st_connection;
 	struct state *cst = &child->sa;	/* child state */
 
 	/* switch to child */
 	pexpect(md->st == &child->sa);
-	c = cst->st_connection;
+	struct connection *c = cst->st_connection;
 
 	if (c->spd.that.has_lease &&
 	    md->chain[ISAKMP_NEXT_v2CP] != NULL &&
