@@ -1971,7 +1971,6 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 	uint8_t *roof = cur + sd->size; /* may be changed by a length field */
 	uint8_t *outp = struct_ptr;
 	bool immediate = FALSE;
-	uintmax_t last_enum = 0;
 
 	passert(struct_size == 0 || struct_size >= sd->size);
 
@@ -2054,7 +2053,6 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 			case ft_af_enum: /* Attribute Format + value from an enumeration */
 				immediate = ((n & ISAKMP_ATTR_AF_MASK) ==
 					     ISAKMP_ATTR_AF_TV);
-				last_enum = n & ~ISAKMP_ATTR_AF_MASK;
 				/*
 				 * Lookup fp->desc using N and
 				 * not LAST_ENUM.  Only when N
@@ -2066,7 +2064,7 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 					return diag("%s of %s has an unknown value: %s%ju (0x%jx)",
 						    fp->name, sd->name,
 						    immediate ? "AF+" : "",
-						    last_enum, n);
+						    n & ~ISAKMP_ATTR_AF_MASK, n);
 				}
 				break;
 
@@ -2076,14 +2074,12 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 						    fp->name, sd->name,
 						    n, n);
 				}
-				last_enum = n;
 				break;
 
 			case ft_loose_enum:     /* value from an enumeration with only some names known */
 			case ft_mnpc:
 			case ft_pnpc:
 			case ft_lss:
-				last_enum = n;
 				break;
 
 			case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
@@ -2413,7 +2409,6 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 
 
 	bool immediate = FALSE;
-	uint32_t last_enum = 0;
 
 	/* new child stream for portion of payload after this struct */
 	struct pbs_out obj = {
@@ -2468,7 +2463,6 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 		case ft_mnpc:
 			start_next_payload_chain(outs, sd, fp,
 						 inp, cur);
-			last_enum = ISAKMP_NEXT_NONE;
 			inp += fp->size;
 			cur += fp->size;
 			break;
@@ -2476,7 +2470,6 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 		case ft_pnpc:
 			update_next_payload_chain(outs, sd, fp,
 						  inp, cur);
-			last_enum = ISAKMP_NEXT_NONE;
 			inp += fp->size;
 			cur += fp->size;
 			break;
@@ -2484,7 +2477,6 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 		case ft_lss:
 			update_last_substructure(outs, sd, fp,
 						 inp, cur);
-			last_enum = ISAKMP_NEXT_NONE;
 			inp += fp->size;
 			cur += fp->size;
 			break;
@@ -2540,10 +2532,9 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 			case ft_af_enum: /* Attribute Format + value from an enumeration */
 				immediate = ((n & ISAKMP_ATTR_AF_MASK) ==
 					     ISAKMP_ATTR_AF_TV);
-				last_enum = n & ~ISAKMP_ATTR_AF_MASK;
 				if (fp->field_type == ft_af_enum &&
 				    enum_name(fp->desc, n) == NULL) {
-#define MSG "%s of %s has an unknown value: 0x%x+%" PRIu32 " (0x%" PRIx32 ")", fp->name, sd->name, n & ISAKMP_ATTR_AF_MASK, last_enum, n
+#define MSG "%s of %s has an unknown value: 0x%x+%" PRIu32 " (0x%" PRIx32 ")", fp->name, sd->name, n & ISAKMP_ATTR_AF_MASK, n & ~ISAKMP_ATTR_AF_MASK, n
 					if (!impair.emitting) {
 						return diag(MSG);
 					}
@@ -2557,11 +2548,9 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 						    fp->name, sd->name,
 						    n, n);
 				}
-				last_enum = n;
 				break;
 
 			case ft_loose_enum:     /* value from an enumeration with only some names known */
-				last_enum = n;
 				break;
 
 			case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
