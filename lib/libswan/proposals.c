@@ -412,21 +412,22 @@ void remove_duplicate_algorithms(struct proposal_parser *parser,
 void jam_proposal(struct jambuf *log,
 		  const struct proposal *proposal)
 {
-	const char *ps = "";
-
-	const char *as = "";
+	const char *ps = "";	/* proposal separator */
+	const char *as;	/* attribute separator (within a proposal) */
+#	define startprop() { as = ps; }
+#	define jamsep() { jam_string(log, as); ps = "-"; as = "+"; }
 
 	as = ps;
 	FOR_EACH_ALGORITHM(proposal, encrypt, alg) {
 		const struct encrypt_desc *encrypt = encrypt_desc(alg->desc);
-		jam_string(log, as); ps = "-"; as = "+";
+		jamsep();
 		jam_string(log, encrypt->common.fqn);
 		if (alg->enckeylen != 0) {
 			jam(log, "_%d", alg->enckeylen);
 		}
 	}
 
-	as = ps;
+	startprop();
 	/* ESP, or AEAD */
 	bool print_integ = (impair.proposal_parser ||
 			    /* no PRF */
@@ -447,24 +448,27 @@ void jam_proposal(struct jambuf *log,
 	if (print_integ) {
 		FOR_EACH_ALGORITHM(proposal, integ, alg) {
 			const struct integ_desc *integ = integ_desc(alg->desc);
-			jam_string(log, as); ps = "-"; as = "+";
+			jamsep();
 			jam_string(log, integ->common.fqn);
 		}
 	}
 
-	as = ps;
+	startprop();
 	FOR_EACH_ALGORITHM(proposal, prf, alg) {
 		const struct prf_desc *prf = prf_desc(alg->desc);
-		jam_string(log, as); ps = "-"; as = "+";
+		jamsep();
 		jam_string(log, prf->common.fqn);
 	}
 
-	as = ps;
+	startprop();
 	FOR_EACH_ALGORITHM(proposal, dh, alg) {
 		const struct dh_desc *dh = dh_desc(alg->desc);
-		jam_string(log, as); ps = "-"; as = "+";
+		jamsep();
 		jam_string(log, dh->common.fqn);
 	}
+
+#	undef startprop
+#	undef jamsep
 }
 
 void jam_proposals(struct jambuf *log, const struct proposals *proposals)
