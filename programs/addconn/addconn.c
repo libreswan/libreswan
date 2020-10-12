@@ -235,7 +235,7 @@ int main(int argc, char *argv[])
 	const char *varprefix = "";
 	int exit_status = 0;
 	struct starter_conn *conn = NULL;
-	const char *ctlsocket = NULL;
+	char *ctlsocket = NULL;
 
 #if 0
 	/* efence settings */
@@ -325,14 +325,16 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	if (ctlsocket == NULL)
+		ctlsocket = clone_str(DEFAULT_CTL_SOCKET, "default ctlsocket");
+
 	if (autoall) {
 		/* pluto forks us, we might have to wait on it to create the socket */
 		struct stat sb;
 		int ws = 5; /* somewhat arbitrary */
 
 		while (ws > 0) {
-			int ret = stat(ctlsocket == NULL ? DEFAULT_CTL_SOCKET :
-				ctlsocket, &sb);
+			int ret = stat(ctlsocket, &sb);
 
 			if (ret == -1) {
 				sleep(1);
@@ -357,20 +359,8 @@ int main(int argc, char *argv[])
 		yydebug = 1;
 	}
 
-	char *confdir = IPSEC_CONFDIR;
-
-	if (configfile == NULL) {
-		/* ??? see code clone in programs/readwriteconf/readwriteconf.c */
-		configfile = alloc_bytes(strlen(confdir) +
-					 sizeof("/ipsec.conf"),
-					 "conf file");
-
-		/* calculate default value for configfile */
-		strcpy(configfile, confdir);	/* safe: see allocation above */
-		if (configfile[0] != '\0' && configfile[strlen(configfile) - 1] != '/')
-			strcat(configfile, "/");	/* safe: see allocation above */
-		strcat(configfile, "ipsec.conf");	/* safe: see allocation above */
-	}
+	if (configfile == NULL)
+		configfile = clone_str(IPSEC_CONF, "default ipsec.conf file");
 
 	if (verbose > 0)
 		printf("opening file: %s\n", configfile);
@@ -695,6 +685,8 @@ int main(int argc, char *argv[])
 #ifdef USE_DNSSEC
 	unbound_ctx_free();
 #endif
+	pfreeany(ctlsocket);
+	pfreeany(configfile);
 	/*
 	 * Only RC_ codes between RC_EXIT_FLOOR (RC_DUPNAME) and
 	 * RC_EXIT_ROOF (RC_NEW_V1_STATE) are errors Some starter code
