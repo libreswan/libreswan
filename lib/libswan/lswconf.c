@@ -140,7 +140,8 @@ void lsw_conf_confddir(const char *confddir, struct logger *logger)
 	subst(&global_oco.confddir, confddir, "override ipsec.d");
 	lsw_conf_calculate();
 
-	log_message(RC_LOG, logger, "adjusting ipsec.d to %s", global_oco.confddir);
+	if (!streq(global_oco.confddir, IPSEC_CONFDDIR))
+		log_message(RC_LOG, logger, "adjusting ipsec.d to %s", global_oco.confddir);
 }
 
 void lsw_conf_nssdir(const char *nssdir, struct logger *logger)
@@ -149,7 +150,8 @@ void lsw_conf_nssdir(const char *nssdir, struct logger *logger)
 	subst(&global_oco.nssdir, nssdir, "override nssdir");
 	lsw_conf_calculate();
 
-	log_message(RC_LOG, logger, "adjusting nssdir to %s", global_oco.nssdir);
+	if (!streq(global_oco.confddir, IPSEC_NSSDIR))
+		log_message(RC_LOG, logger, "adjusting nssdir to %s", global_oco.nssdir);
 }
 
 void lsw_conf_secretsfile(const char *secretsfile)
