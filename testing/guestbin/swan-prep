@@ -89,6 +89,13 @@ def lsw_cp_file(src, dst, mode=None, nsbasepath=''):
             os.chmod(dst, mode)
     return
 
+def umount(dst):
+    if os.path.isdir(dst) or os.path.isfile(dst):
+        subprocess.getoutput("/bin/umount %s" % dst)
+    else:
+        if os.path.islink(dst):
+            os.unlink(dst)
+
 def wipe_old(dst):
     if args.namespace and (os.path.isdir(dst) or os.path.isfile(dst)):
         umount(dst)
