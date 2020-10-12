@@ -1,8 +1,0 @@
-  <varlistentry>
-  <term><emphasis remap='B'>force-busy</emphasis></term>
-  <listitem>
-<para>This option has been obsoleted, please see
-<emphasis remap='I'>ddos-mode</emphasis>.
-</para>
-  </listitem>
-  </varlistentry>

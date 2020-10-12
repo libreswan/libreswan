@@ -111,16 +111,12 @@ d.ipsec.conf/ike-socket.xml
 d.ipsec.conf/listen-udp.xml
 d.ipsec.conf/listen-tcp.xml
 d.ipsec.conf/nflog-all.xml
-d.ipsec.conf/nat_traversal.xml
-d.ipsec.conf/force_keepalive.xml
 d.ipsec.conf/keep-alive.xml
 d.ipsec.conf/virtual-private.xml
 d.ipsec.conf/myvendorid.xml
-d.ipsec.conf/oe.xml
 d.ipsec.conf/nhelpers.xml
 d.ipsec.conf/seedbits.xml
 d.ipsec.conf/secctx-attr-type.xml
-d.ipsec.conf/plutofork.xml
 d.ipsec.conf/crlcheckinterval.xml
 d.ipsec.conf/crl-strict.xml
 d.ipsec.conf/curl-iface.xml
@@ -134,7 +130,6 @@ d.ipsec.conf/logappend.xml
 d.ipsec.conf/logip.xml
 d.ipsec.conf/audit-log.xml
 d.ipsec.conf/logtime.xml
-d.ipsec.conf/force-busy.xml
 d.ipsec.conf/ddos-mode.xml
 d.ipsec.conf/ddos-ike-threshold.xml
 d.ipsec.conf/global-redirect.xml
@@ -146,8 +141,6 @@ d.ipsec.conf/statsbin.xml
 d.ipsec.conf/ipsecdir.xml
 d.ipsec.conf/nssdir.xml
 d.ipsec.conf/secretsfile.xml
-d.ipsec.conf/perpeerlog.xml
-d.ipsec.conf/perpeerlogdir.xml
 d.ipsec.conf/seccomp.xml
 d.ipsec.conf/dnssec.xml
 d.ipsec.conf/configsectionsend.xml
