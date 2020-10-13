@@ -328,6 +328,7 @@ static void key_add_request_1(const struct id *keyid, const struct pubkey_type *
 
 static void key_add_request(const struct whack_message *msg, struct logger *logger)
 {
+	/* ??? when can type be NULL?  It confuses coverity. */
 	/* a key always requires a type */
 	const struct pubkey_type *type = pubkey_alg_type(msg->pubkey_alg);
 	if (type == NULL && msg->keyval.len != 0) {
