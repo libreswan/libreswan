@@ -522,8 +522,8 @@ stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 		uint8_t *adj_payload_len_start = intermediate_auth.ptr + intermediate_auth.len - ADJ_PAYLOAD_LENGTH_SIZE;
 		uint16_t adj_payload_len = sk_data.len + SK_HEADER_SIZE;
 		DBG(DBG_CRYPT, DBG_log("adjusted payload length: %u", adj_payload_len));
-		adj_payload_len = (adj_payload_len << 8) | (adj_payload_len >> 8); /* adjust endianness */
-		memcpy(adj_payload_len_start, &adj_payload_len, sizeof(uint8_t) * ADJ_PAYLOAD_LENGTH_SIZE);
+		uint16_t adj_payload_len_no = htons(adj_payload_len);
+		memcpy(adj_payload_len_start, &adj_payload_len_no, sizeof(adj_payload_len_no));
 		/*
 		 * Set the Adjusted Length field to the sum of length of IntAuth_*_A and
 		 * IntAuth_*_P
@@ -531,8 +531,8 @@ stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 		uint8_t *adj_len_start = intermediate_auth.ptr + ADJ_LENGTH_OFFSET;
 		uint32_t adj_len = (enc_start - auth_start - wire_iv_size) + (sk_data.len);
 		DBG(DBG_CRYPT, DBG_log("adjusted length: %u", adj_len));
-		adj_len = htonl(adj_len);	/* network order */
-		memcpy(adj_len_start, &adj_len, sizeof(uint8_t) * ADJ_LENGTH_SIZE);
+		uint32_t adj_len_no = htonl(adj_len);	/* network order */
+		memcpy(adj_len_start, &adj_len_no, sizeof(adj_len_no));
 		/*
 		 * If P(SK) not empty, append its decrypted contents IntAuth_*_A | IntAuth_*_P
 		 */
@@ -785,8 +785,8 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 		uint8_t *adj_payload_len_start = intermediate_auth.ptr + intermediate_auth.len - ADJ_PAYLOAD_LENGTH_SIZE;
 		uint16_t adj_payload_len = enc_size - padlen + SK_HEADER_SIZE;
 		DBG(DBG_CRYPT, DBG_log("adjusted payload length: %u", adj_payload_len));
-		adj_payload_len = (adj_payload_len << 8) | (adj_payload_len >> 8); /* adjust endianness */
-		memcpy(adj_payload_len_start, &adj_payload_len, sizeof(uint8_t) * ADJ_PAYLOAD_LENGTH_SIZE);
+		uint16_t adj_payload_len_no = htons(adj_payload_len);
+		memcpy(adj_payload_len_start, &adj_payload_len_no, sizeof(adj_payload_len_no));
 		/*
 		 * Set the Adjusted Length field to the sum of length of IntAuth_*_A and
 		 * IntAuth_*_P
@@ -794,8 +794,8 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 		uint8_t *adj_len_start = intermediate_auth.ptr + ADJ_LENGTH_OFFSET;
 		uint32_t adj_len = (enc_start - auth_start - wire_iv_size) + (enc_size - padlen);
 		DBG(DBG_CRYPT, DBG_log("adjusted length: %u", adj_len));
-		adj_len = htonl(adj_len);	/* network order */
-		memcpy(adj_len_start, &adj_len, sizeof(uint8_t) * ADJ_LENGTH_SIZE);
+		uint32_t adj_len_no = htonl(adj_len);	/* network order */
+		memcpy(adj_len_start, &adj_len_no, sizeof(adj_len_no));
 		/*
 		 * If P(SK) not empty, append its decrypted contents IntAuth_*_A | IntAuth_*_P
 		 */
