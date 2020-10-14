@@ -204,6 +204,10 @@ release:
 	packaging/utils/makerelease
 
 local-install:
+	@if test ! -d $(NSSDIR) ; then \
+		mkdir -p $(NSSDIR) ; \
+		chmod 0700 $(NSSDIR) ; \
+	fi
 	@if test -z "$(DESTDIR)" -a -x /usr/sbin/selinuxenabled -a $(SBINDIR) != "$(DESTDIR)/usr/sbin" ; then \
 	if /usr/sbin/selinuxenabled ; then  \
 		echo -e "\n************************** WARNING ***********************************" ; \
