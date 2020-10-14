@@ -114,7 +114,7 @@ west #
 1v2 "ike=aes128-sha1-dh20" #11: sent IKE_SA_INIT request
 1v2 "ike=aes128-sha1-dh20" #11: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH20}
 002 "ike=aes128-sha1-dh20" #12: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "ike=aes128-sha1-dh20" #12: authenticated using authby=secret
+003 "ike=aes128-sha1-dh20" #11: authenticated using authby=secret
 002 "ike=aes128-sha1-dh20" #12: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ike=aes128-sha1-dh20" #12: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -130,7 +130,7 @@ west #
 1v2 "ike=aes128-sha1-dh21" #13: sent IKE_SA_INIT request
 1v2 "ike=aes128-sha1-dh21" #13: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH21}
 002 "ike=aes128-sha1-dh21" #14: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "ike=aes128-sha1-dh21" #14: authenticated using authby=secret
+003 "ike=aes128-sha1-dh21" #13: authenticated using authby=secret
 002 "ike=aes128-sha1-dh21" #14: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ike=aes128-sha1-dh21" #14: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -162,7 +162,7 @@ west #
 1v2 "ike=3des-sha2-modp2048" #17: sent IKE_SA_INIT request
 1v2 "ike=3des-sha2-modp2048" #17: sent IKE_AUTH request {auth=IKEv2 cipher=3DES_CBC_192 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP2048}
 002 "ike=3des-sha2-modp2048" #18: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "ike=3des-sha2-modp2048" #18: authenticated using authby=secret
+003 "ike=3des-sha2-modp2048" #17: authenticated using authby=secret
 002 "ike=3des-sha2-modp2048" #18: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ike=3des-sha2-modp2048" #18: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -201,6 +201,7 @@ NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
 default via 192.1.2.254 dev eth1
 192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes

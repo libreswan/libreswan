@@ -1,8 +1,6 @@
 /testing/guestbin/swan-prep
 west #
  ip tunnel add test0 mode gre local 192.1.2.45 remote 192.1.2.23
-[ 00.00] gre: GRE over IPv4 demultiplexor driver
-[ 00.00] ip_gre: GRE over IPv4 tunneling driver
 west #
  ip addr add 172.29.1.1/24 dev test0
 west #

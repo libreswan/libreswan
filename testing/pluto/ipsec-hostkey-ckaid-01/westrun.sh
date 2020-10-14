@@ -1,7 +1,5 @@
 /testing/guestbin/swan-prep --nokeys
 rm -f /tmp/newhostkey.txt
-ipsec newhostkey --output /tmp/newhostkey.txt
-grep pubkey= /tmp/newhostkey.txt
+ckaid=$(ipsec newhostkey 2>&1 | grep "showhostkey" | sed "s/^.*ckaid //")
 ipsec showhostkey --list
-ckaid=$(ipsec showhostkey --list | sed -e 's/.*ckaid: //')
 ipsec showhostkey --left --ckaid "$ckaid"

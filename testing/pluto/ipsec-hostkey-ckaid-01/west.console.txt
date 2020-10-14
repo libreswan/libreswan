@@ -3,18 +3,12 @@ Creating empty NSS database
 west #
  rm -f /tmp/newhostkey.txt
 west #
- ipsec newhostkey --output /tmp/newhostkey.txt
-Generated RSA key pair with CKAID <<CKAID#1>> was stored in the NSS database
-west #
- grep pubkey= /tmp/newhostkey.txt
-	#pubkey=<<PUBKEY#1>>
+ ckaid=$(ipsec newhostkey 2>&1 | grep "showhostkey" | sed "s/^.*ckaid //")
 west #
  ipsec showhostkey --list
 < 1> RSA keyid: <<KEYID#1>> ckaid: <<CKAID#1>>
 west #
- ckaid=$(ipsec showhostkey --list | sed -e 's/.*ckaid: //')
-west #
  ipsec showhostkey --left --ckaid "$ckaid"
 	# rsakey <<KEYID#1>>
-	leftrsasigkey=<<PUBKEY#1>>
+	leftrsasigkey=<<RSASIGKEY#1>>
 

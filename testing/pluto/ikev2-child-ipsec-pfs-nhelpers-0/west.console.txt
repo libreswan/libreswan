@@ -70,7 +70,7 @@ west #
 done
 west #
  grep "done inline" /tmp/pluto.log
-no crypto helpers will be started; all cryptographic operations will be done inline
+no helpers will be started; all cryptographic operations will be done inline
 west #
  ../bin/check-for-core.sh
 west #

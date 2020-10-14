@@ -6,6 +6,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add named
+002 adding UDP interface eth1 192.1.2.23:443
 002 added IKEv2 connection "named"
 east #
  echo "initdone"
