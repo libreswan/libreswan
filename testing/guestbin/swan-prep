@@ -39,7 +39,7 @@ def rsync_ap(srs, dst, timer=20):
     except subprocess.CalledProcessError as e:
          print ("EXCEPTION ? cwd %s , %s %s" % (os.getcwd(), cmd, e.output))
 
-def mount_bind(src, dst, mode=None, touch_src_file=False, mkdir_src=False, wipe_old_dst=False):
+def mount_bind(src, dst, mode=None, touch_src_file=False, mkdir_src=False, wipe_old_dst=False, fatal=True):
 
     if touch_src_file and mkdir_src:
         print("conflicting options touch_src_file and mkdir_src");
@@ -65,6 +65,8 @@ def mount_bind(src, dst, mode=None, touch_src_file=False, mkdir_src=False, wipe_
             mode_str = "mode 0o%o" % mode
         print("mount_bind unknown action src=%s dst=%s %s"
                  % (src, dst, mode_str))
+        if fatal:
+            sys.exit(1)
         return True
 
     cmd = ['/bin/mount', '--bind',  src, dst]
@@ -72,8 +74,17 @@ def mount_bind(src, dst, mode=None, touch_src_file=False, mkdir_src=False, wipe_
                         encoding='utf-8')
     if o.returncode:
         print("mount_bind failed %s" % cmd)
+        if fatal:
+            sys.exit(1)
 
     return o.returncode
+
+def lsw_init_dir(src, dst):
+    if args.namespace:
+        return mount_bind(src, dst, mkdir_src=True,  wipe_old_dst=True, fatal=True)
+    else:
+        os.makedirs(dst, exist_ok=True)
+    return
 
 def lsw_cp_file(src, dst, mode=None, nsbasepath=''):
 
@@ -90,15 +101,23 @@ def lsw_cp_file(src, dst, mode=None, nsbasepath=''):
     return
 
 def umount(dst):
-    if os.path.isdir(dst) or os.path.isfile(dst):
-        subprocess.getoutput("/bin/umount %s" % dst)
-    else:
-        if os.path.islink(dst):
-            os.unlink(dst)
+   if os.path.islink(dst):
+        os.unlink(dst)
+   else:
+        cmd = "umount %s" % dst
+        subprocess.run(cmd, shell=True, capture_output=True, encoding="ascii",
+                        check=True)
+
+def umount_all(dst):
+    o = subprocess.run("mount", shell=True, capture_output=True, encoding="ascii", check=True)
+    for line in o.stdout.splitlines():
+        mdst = line.split(' ')[2]
+        if mdst == dst:
+            umount(dst)
 
 def wipe_old(dst):
-    if args.namespace and (os.path.isdir(dst) or os.path.isfile(dst)):
-        umount(dst)
+    if args.namespace:
+        umount_all(dst)
     elif os.path.islink(dst) or os.path.isfile(dst):
         os.unlink(dst)
     elif os.path.isdir(dst):
@@ -160,6 +179,14 @@ def choose_config_file(hostname, testpath, config_path, strict):
 
     # dump all the paths?
     return None
+
+def get_configsetup(key=None):
+    # without --config /dev/null most tests would pass.
+    # However, the test that follows a test with broken config will fail
+    # And during a testrun the worker that hit error may not recover.
+    cmd = '$(ipsec addconn --configsetup --config /dev/null | grep ' + key + ') && echo $' + key
+    o = subprocess.run(cmd, shell=True, capture_output=True, encoding="ascii", check=True,)
+    return o.stdout.strip().replace("'", '')
 
 def copy_config_file(hostname, testpath, config_path, strict=False, optional=False, nsprefix=""):
     src = choose_config_file(hostname, testpath, config_path, strict)
@@ -256,11 +283,19 @@ if not args.no_eth0:
         sys.exit(1)
 
 if not args.namespace:
-    o = subprocess.run(['ip', 'netns', 'identify'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="ascii")
+    o = subprocess.run('ip netns identify', shell=True, capture_output=True, encoding="ascii", check=True,)
     namespace = o.stdout
     namespace_expect = hostname + '-' + testname
     if re.search(hostname, namespace):
         args.namespace = True
+
+resolve_conf = "/etc/resolv.conf"
+etc_hosts = "/etc/hosts"
+
+nssdir = get_configsetup("nssdir")
+ipsecdir = get_configsetup("ipsecdir")
+configfile = get_configsetup("configfile")
+secretsfile = get_configsetup("secretsfile")
 
 if args.namespace:
     nsbasepath ="%s/NS/%s" % (testpath, hostname) #will create testpath/NS/hostname/*
@@ -286,7 +321,7 @@ if hostname != "nic":
         dname = "iked"
 
     daemonlogfile = "%s/%s.%s.log" % (outputdir, hostname, dname)
-    tmplink = "/tmp/%s.log" % dname 
+    tmplink = "/tmp/%s.log" % dname
     wipe_old(tmplink)
 
     Path(daemonlogfile).touch(mode=0o777)
@@ -306,11 +341,18 @@ else:
 # print "swan-prep running on %s for test %s with userland
 # %s"%(hostname,testname,userland)
 
-# wipe or unmount any old configs in /etc/ipsec.*
-wipe_old("/etc/ipsec.conf")
-wipe_old("/etc/ipsec.secrets")
-wipe_old("/etc/ipsec.d")
+# wipe or unmount any old configs
+# do not clean pid files or files opened by pluto, charon .. yet.
+wipe_old(configfile)
+wipe_old(secretsfile)
+wipe_old(nssdir)
+if nssdir != ipsecdir:
+    wipe_old(ipsecdir)
 wipe_old("/etc/strongswan")
+
+if args.namespace:
+    wipe_old(resolve_conf)
+    wipe_old(etc_hosts)
 
 # if using systemd, ensure we don't restart pluto on crash
 if os.path.isfile("/lib/systemd/system/ipsec.service") and not args.namespace:
@@ -346,29 +388,22 @@ fp.write(pattern)
 fp.close()
 
 if hostname != "nic":
-
-    dst = "/etc/strongswan/" if userland == "strongswan" else "/etc/ipsec.d/"
+    dst = "/etc/strongswan/" if userland == "strongswan" else ipsecdir
     src = "%s%s" % (nsbasepath, dst)
-    if args.namespace :
-        if mount_bind(src, dst, mkdir_src=True,  wipe_old_dst=True):
-            sys.exit(1)
-    else:
-        os.mkdir(dst)
-
-    if args.namespace:
-        if os.path.isdir("/var/lib/ipsec/nss"):
-            dst = "/var/lib/ipsec/nss"
-            if mount_bind(src, dst, mkdir_src=True,  wipe_old_dst=True):
-                sys.exit(1)
+    lsw_init_dir(src, dst)
 
     if args.userland in ("libreswan", "openswan"):
         dst = "/run/pluto"
+        if nssdir and ipsecdir != nssdir:
+            src = "%s%s" % (nsbasepath, nssdir)
+            lsw_init_dir(src, nssdir)
     elif args.userland in ("strongswan"):
         dst="/run/strongswan"
+    elif args.namespace:
+        print("Unknown run directory fatal in namespace")
+        sys.exit(1)
     src = "%s%s" % (nsbasepath, dst)
-    if args.namespace :
-        if mount_bind(src, dst, mkdir_src=True, wipe_old_dst=False):
-            sys.exit(1)
+    lsw_init_dir(src, dst)
 
     if args.userland in ("libreswan", "openswan"):
 
@@ -377,9 +412,9 @@ if hostname != "nic":
         # shutil.copytree("/testing/baseconfigs/%s/etc/ipsec.d"%hostname,
         # "/etc/").  This default database contains a default key-pair
         # for basic testing.
-        distutils.dir_util.copy_tree("/testing/baseconfigs/%s/etc/ipsec.d" % hostname, "/etc/ipsec.d/")
+        distutils.dir_util.copy_tree("/testing/baseconfigs/%s/etc/ipsec.d" % hostname, nssdir)
         # fill in any missing dirs
-        for dir in ("/etc/ipsec.d", "/etc/ipsec.d/policies", "/etc/ipsec.d/cacerts", "/etc/ipsec.d/crls", "/etc/ipsec.d/certs", "/etc/ipsec.d/private"):
+        for dir in ("/etc/ipsec.d/policies", "/etc/ipsec.d/cacerts", "/etc/ipsec.d/crls", "/etc/ipsec.d/certs", "/etc/ipsec.d/private"):
             if not os.path.isdir(dir):
                 os.mkdir(dir)
                 if "private" in dir:
@@ -390,7 +425,7 @@ if hostname != "nic":
                     os.unlink(oldfile)
 
         if not args.namespace:
-            dbfiles = glob.glob("/etc/ipsec.d/*db")
+            dbfiles = glob.glob(nssdir + "/*db")
             for dbfile in dbfiles:
                 os.chown(dbfile, 0, 0)
 
@@ -438,7 +473,7 @@ if hostname != "nic":
         resolv = "/testing/baseconfigs/%s/etc/resolv.conf" % hostname
     else:
         resolv = "/testing/baseconfigs/all/etc/resolv.conf"
-    dst = "/etc/resolv.conf"
+    dst = resolve_conf
     if not args.namespace and os.path.islink(dst): # on fedora 22 it is link frist remove the link
         os.unlink(dst)
     lsw_cp_file(resolv, "/etc/resolv.conf", nsbasepath=nsbasepath)
@@ -468,7 +503,7 @@ if userland in ("libreswan", "openswan"):
         with open("/run/pluto/nsspw", "w") as f:
             f.write(dbpassword)
             f.write("\n")
-        with open("/etc/ipsec.d/nsspassword", "w") as f:
+        with open(nssdir + "/nsspassword", "w") as f:
             if args.nsspw:
                 f.write("NSS Certificate DB:" + dbpassword + "\n")
             if args.fips:
@@ -483,21 +518,21 @@ if userland in ("libreswan", "openswan"):
             print("Preparing X.509 files")
         else:
             print("Creating empty NSS database")
-        oldfiles = glob.glob("/etc/ipsec.d/*db")
+        oldfiles = glob.glob(nssdir + "/*db")
         for oldfile in oldfiles:
             os.unlink(oldfile)
-        shell("/usr/bin/certutil -N --empty-password -d sql:/etc/ipsec.d")
+        shell("/usr/bin/certutil -N --empty-password -d sql:" + ipsecdir)
 
     # If needed set a password (this will upgrade any existing
     # database database)
     if args.nsspw or args.fips:
         with open("/tmp/pw", "w") as f:
             f.write("\n")
-        shell("/usr/bin/certutil -W -f /tmp/pw -@ /run/pluto/nsspw -d sql:/etc/ipsec.d", out=True)
+        shell("/usr/bin/certutil -W -f /tmp/pw -@ /run/pluto/nsspw -d sql:" + ipsecdir, out=True)
 
     # Switch on fips in the NSS db
     if args.fips:
-        shell("/usr/bin/modutil -dbdir sql:/etc/ipsec.d -fips true -force", out=True)
+        shell("/usr/bin/modutil -dbdir sql:" + nssdir + " -fips true -force", out=True)
 
     # this section is getting rough. could use a nice refactoring
     if args.x509:
@@ -533,46 +568,46 @@ if userland in ("libreswan", "openswan"):
             # 'u,u,u' will be end cert trusts that are p12 imported (with privkey)
 
             # mainca and nic import
-            shell("/usr/bin/certutil -A -n %s -t 'CT,,' -d sql:/etc/ipsec.d/ -a -i /testing/x509/cacerts/%s.crt%s" %
-                  (root, root, util_pw))
-            shell("/usr/bin/certutil -A -n nic -t 'P,,' -d sql:/etc/ipsec.d/ -a -i /testing/x509/certs/nic.crt%s" % util_pw)
+            shell("/usr/bin/certutil -A -n %s -t 'CT,,' -d sql:%s -a -i /testing/x509/cacerts%s.crt%s" %
+                  (nssdir, root, root, util_pw))
+            shell("/usr/bin/certutil -A -n nic -t 'P,,' -d sql:%s -a -i /testing/x509/certs/nic.crt%s" % (nssdir, util_pw))
 
             # install ee
-            shell("/usr/bin/pk12util -i /testing/x509/pkcs12/%s.p12 -d sql:/etc/ipsec.d %s%s" %
-                  (ee, pw, p12cmd_pw))
+            shell("/usr/bin/pk12util -i /testing/x509/pkcs12/%s.p12 -d sql:%s %s%s" %
+                (ee, nssdir, pw, p12cmd_pw))
 
             # install intermediates
             for i in range(1, icanum + 1):
                 acrt = ica_p + str(i)
-                shell("/usr/bin/certutil -A -n %s -t ',,' -d sql:/etc/ipsec.d/ -a -i /testing/x509/certs/%s.crt%s" %
-                      (acrt, acrt, util_pw))
+                shell("/usr/bin/certutil -A -n %s -t ',,' -d sql:%d -a -i /testing/x509/certs/%s.crt%s" %
+                    (acrt, nssdir, acrt, util_pw))
             if args.revoked:
-                shell("/usr/bin/pk12util -i /testing/x509/pkcs12/%s_revoked.p12 -d /etc/ipsec.d %s%s" %
-                      (hostname + "_chain", pw, p12cmd_pw))
+                shell("/usr/bin/pk12util -i /testing/x509/pkcs12/%s_revoked.p12 -d %s s%s" %
+                      (hostname + "_chain", nssdir, pw, p12cmd_pw))
 
         else:
-            shell("/usr/bin/pk12util -i /testing/x509/pkcs12/%s/%s.p12 -d sql:/etc/ipsec.d %s%s" %
-                  (ca, p12, pw, p12cmd_pw))
+            shell("/usr/bin/pk12util -i /testing/x509/pkcs12/%s/%s.p12 -d sql:%s %s%s" %
+                (ca, p12, nssdir, pw, p12cmd_pw))
             # install all other public certs
             # libreswanhost = os.getenv("LIBRESWANHOSTS") #kvmsetu.sh is not
             # sourced
 
             if args.revoked:
                 shell(
-                    "/usr/bin/pk12util -i /testing/x509/pkcs12/mainca/revoked.p12 -d sql:/etc/ipsec.d %s%s" % (pw, p12cmd_pw))
+                    "/usr/bin/pk12util -i /testing/x509/pkcs12/mainca/revoked.p12 -d sql:%s %s%s" % (nssdir, pw, p12cmd_pw))
 
             if args.signedbyother:
                 shell(
-                    "/usr/bin/pk12util -i /testing/x509/pkcs12/otherca/signedbyother.p12 -d sql:/etc/ipsec.d %s%s" % (pw, p12cmd_pw))
+                    "/usr/bin/pk12util -i /testing/x509/pkcs12/otherca/signedbyother.p12 -d sql:%s %s%s" % (nssdir, pw, p12cmd_pw))
 
             # fix trust import from p12
             # is pw needed?
-            shell("/usr/bin/certutil -M -n 'Libreswan test CA for mainca - Libreswan' -d sql:/etc/ipsec.d/ -t 'CT,,'%s" % (util_pw))
+            shell("/usr/bin/certutil -M -n 'Libreswan test CA for mainca - Libreswan' -d sql:%s -t 'CT,,'%s" % (nssdir, util_pw))
 
             for certname in ("west", "east", "road", "north", "hashsha1", "west-ec", "east-ec", "nic"):
                 if not hostname in certname:
-                    shell("/usr/bin/certutil -A -n %s -t 'P,,' -d sql:/etc/ipsec.d -a -i /testing/x509/certs/%s.crt%s" %
-                          (certname, certname, util_pw))
+                    shell("/usr/bin/certutil -A -n %s -t 'P,,' -d sql:%s -a -i /testing/x509/certs/%s.crt%s" %
+                          (certname, nssdir, certname, util_pw))
 
 # Don't enable FIPS mode until after NSS DBS are created.  See:
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1531267
@@ -591,13 +626,12 @@ if userland == "strongswan" and args.x509:
         key = hostname
 
     shutil.copy("/testing/x509/cacerts/%s.crt" %
-                ca, "/etc/strongswan/ipsec.d/cacerts/")
-    shutil.copy("/testing/x509/keys/%s.key" %
-                key, "/etc/strongswan/ipsec.d/private/")
+                ca, nssdir + "/cacerts/")
+    shutil.copy("/testing/x509/keys/%s.key" % nssdir + "/private/")
 
     for certname in ("west", "east", "road", "north", "hashsha1", "west-ec", "east-ec"):
         shutil.copy("/testing/x509/certs/%s.crt" %
-                    certname, "/etc/strongswan/ipsec.d/certs/")
+                    certname, "/certs/")
 if args.namespace:
     # good idea for namespace. KVM sysctl.conf get copid.
     subprocess.getoutput("sysctl -p /testing/baseconfigs/all/etc/sysctl.conf")
@@ -609,7 +643,7 @@ if hostname != "nic" and not args.ipv:
 if args.ipv6:
     subprocess.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=0")
     subprocess.getoutput("sysctl net.ipv6.conf.default.disable_ipv6=0")
- 
+
     if not args.namespace: # AA_201902 check if this works inside ns
         if os.path.isfile("/usr/bin/systemctl"):
             subprocess.getoutput("systemctl restart systemd-networkd")
@@ -617,22 +651,14 @@ if args.ipv6:
             subprocess.getoutput("service network restart")
 
 if args.nsd or args.dnssec:
-
     if args.namespace:
         dst = "/etc/nsd"
         src = "%s%s" % (nsbasepath, dst)
-
-        if mount_bind(src, dst, mkdir_src=True, wipe_old_dst=True):
-            sys.exit(1)
+        lsw_init_dir(src, dst)
 
         dst ="/run/nsd"
         src = "%s%s" % (nsbasepath, dst)
-        if mount_bind(src, dst, mkdir_src=True, wipe_old_dst=True):
-            sys.exit(1)
-
-        if mount_bind(src, dst, mkdir_src=True, wipe_old_dst=True):
-            print("failed to mount_bind src=%s dst %s" % (src, dst))
-            sys.exit(1)
+        lsw_init_dir(src, dst)
 
         src = '/testing/baseconfigs/all/etc/nsd'
         dst = '/etc/'
@@ -709,7 +735,7 @@ if not args.namespace and hostname != "nic": # inside namespace this would kill 
         if os.path.isfile("/usr/sbin/restorecon") and selinux == 'Enforcing':
             subprocess.getoutput("restorecon -Rv /etc/ipsec.* /var/lib/ipsec /usr/local/libexec/ipsec /usr/local/sbin/ipsec")
 
-for pidfile in ("/var/run/pluto/pluto.pid", "/var/run/strongswan/charon.pid", "/var/run/charon.pid", "/var/run/spmd.pid", "/var/run/starter.charon.pid"):
+for pidfile in ("/run/pluto/pluto.pid", "/run/strongswan/charon.pid", "/run/spmd.pid", ):
     if os.path.isfile(pidfile):
         os.unlink(pidfile)
 
