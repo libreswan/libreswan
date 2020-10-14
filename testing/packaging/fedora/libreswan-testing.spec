@@ -36,7 +36,7 @@
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is replaced in make target
-Version: 3.30
+Version: 4.0
 Release: %{rel}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
