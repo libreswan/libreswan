@@ -413,6 +413,8 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                                                       test_domain.domain.host_name + ".console.verbose.txt")
                                 test_domain.console.output(open(output, "w"))
 
+                            # If a script times out, don't try to run
+                            # post-mortem.sh.
                             host_timed_out = None
 
                             for script in test.host_scripts:
@@ -439,7 +441,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                             if args.run_post_mortem is False:
                                 logger.warning("+++ skipping script post-mortem.sh -- disabled +++")
                             elif host_timed_out:
-                                logger.warning("+++ skipping script post-mortem.sh -- %s timed out +++" % (timed_out))
+                                logger.warning("+++ skipping script post-mortem.sh -- %s timed out +++" % (host_timed_out))
                             else: # None or True
                                 script = "../bin/post-mortem.sh"
                                 for host_name in test.host_names:
