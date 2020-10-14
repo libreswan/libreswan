@@ -15,6 +15,7 @@
     FINALINITDDIR=%{_initddir} \\\
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
     FINALMANDIR=%{_mandir} \\\
+    FINALNSSDIR=%{_sysconfdir}/ipsec.d \\\
     FINALRUNDIR=%{_rundir}/pluto \\\
     INITSYSTEM=%{initsystem} \\\
     IPSECVERSION=%{IPSECVERSION} \\\
