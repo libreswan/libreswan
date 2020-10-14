@@ -2,3 +2,5 @@ Test the non-standard -nssdir option
 Port from downstream redhat test
 
 Added test for Using exponent F4 not 3 for raw keys
+Removed test for exponent because we cannot see that anymore because
+we no longer generate the :RSA secret entries with the exponent listed.
