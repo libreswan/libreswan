@@ -413,6 +413,8 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                                                       test_domain.domain.host_name + ".console.verbose.txt")
                                 test_domain.console.output(open(output, "w"))
 
+                            host_timed_out = None
+
                             for script in test.host_scripts:
                                 test_domain = test_domains[script.host_name]
                                 try:
@@ -426,6 +428,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                                     post_timeout = "%s %s" % (post.TIMEOUT, script)
                                     logger.warning("*** %s ***" % post_timeout)
                                     test_domain.console.child.logfile.write("%s %s %s" % (post.LHS, post_timeout, post.RHS))
+                                    host_timed_out = script.host_name
                                     break
                                 except BaseException as e:
                                     # if there is an exception, write
@@ -434,17 +437,34 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                                     raise
 
                             if args.run_post_mortem is False:
-                                logger.warning("+++ skipping script post-mortem.sh +++")
+                                logger.warning("+++ skipping script post-mortem.sh -- disabled +++")
+                            elif host_timed_out:
+                                logger.warning("+++ skipping script post-mortem.sh -- %s timed out +++" % (timed_out))
                             else: # None or True
+                                script = "../bin/post-mortem.sh"
                                 for host_name in test.host_names:
                                     test_domain = test_domains[host_name]
                                     test_domain.console.child.logfile.write("%s post-mortem %s" % (post.LHS, post.LHS))
-                                    logger.info("running post-mortem.sh on %s", host_name)
-                                    status = test_domain.console.run("../bin/post-mortem.sh")
-                                    if status:
-                                        logger.error("post-mortem.sh failed on %s with status %s", host_name, status)
-                                    else:
-                                        test_domain.console.child.logfile.write("%s post-mortem %s" % (post.RHS, post.RHS))
+                                    logger.info("running %s on %s", script, host_name)
+                                    try:
+                                        status = test_domain.console.run(script)
+                                        if status:
+                                            logger.error("%s failed on %s with status %s", script, host_name, status)
+                                        else:
+                                            test_domain.console.child.logfile.write("%s post-mortem %s" % (post.RHS, post.RHS))
+                                    except pexpect.TIMEOUT as e:
+                                        # A post-mortem ending with a
+                                        # timeout gets treated as a
+                                        # FAIL.
+                                        post_timeout = "%s %s" % (post.TIMEOUT, script)
+                                        logger.warning("*** %s ***" % post_timeout)
+                                        test_domain.console.child.logfile.write("%s %s %s" % (post.LHS, post_timeout, post.RHS))
+                                        continue # always teardown
+                                    except BaseException as e:
+                                        # if there is an exception, write
+                                        # it to the console
+                                        test_domain.console.child.logfile.write("\n%s %s %s %rhs\n%s" % (post.LHS, post.EXCEPTION, script, post.RHS, str(e)))
+                                        raise
 
                             for test_domain in test_domains.values():
                                 test_domain.console.child.logfile.write(post.DONE)
