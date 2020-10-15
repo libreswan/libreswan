@@ -13,8 +13,8 @@ INITSYSTEMFILES = pluto
 # XXX: Hack to suppress the man page.  Should one be added?
 PROGRAM_MANPAGE=
 
-local: $(INITSYSTEMFILES)
-local-install: $(INITSYSTEMFILES)
+local-base: $(INITSYSTEMFILES)
+local-install-base: $(INITSYSTEMFILES)
 	@$(call foreach-file, $(INITSYSTEMFILES),  $(INITSYSTEMDIR), \
 		if test ! -f $$destdir/$$file ; then \
 			echo $$src '->' $$destdir/$$file ; \
@@ -44,9 +44,7 @@ local-install: $(INITSYSTEMFILES)
 		;; \
 	esac
 
-list-local-base: local-list-base
-.PHONY: local-list-base
-local-list-base:
+list-local-base:
 	@$(call foreach-file, $(INITSYSTEMFILES), $(INITSYSTEMDIR), \
 		echo $$destdir/$$file ; \
 	)
@@ -54,8 +52,9 @@ local-list-base:
 		echo $$destdir/$$file ; \
 	)
 
-ifdef top_srcdir
-include $(top_srcdir)/mk/program.mk
-else
-include ../../mk/program.mk
+ifndef top_srcdir
+include ../mk/dirs.mk
 endif
+include $(top_srcdir)/config.mk
+include $(top_srcdir)/targets.mk
+include $(top_srcdir)/rules.mk

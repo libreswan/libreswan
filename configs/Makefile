@@ -24,22 +24,19 @@ CONFFILES += ipsec.secrets
 CONFDSUBDIR = policies
 CONFDSUBDIRFILES = clear clear-or-private private-or-clear private block portexcludes.conf
 
-ifdef top_srcdir
-include $(top_srcdir)/mk/program.mk
-else
-include ../mk/program.mk
+ifndef top_srcdir
+include ../mk/dirs.mk
 endif
+include $(top_srcdir)/mk/config.mk
+include $(top_srcdir)/mk/targets.mk
+include $(top_srcdir)/mk/rules.mk
 
 local-base: $(CONFFILES) $(CONFDSUBDIRFILES)
 
-.PHONY: clean-configs
-local-clean-base: clean-configs
-clean-configs:
+local-clean-base:
 	rm -f $(foreach file, $(CONFFILES) $(CONFDSUBDIRFILES), $(builddir)/$(file))
 
-.PHONY: install-configs
-local-install-base: install-configs
-install-configs: $(CONFFILES) $(CONFDSUBDIRFILES)
+local-install-base: $(CONFFILES) $(CONFDSUBDIRFILES)
 	@set -eu ; $(foreach file, $(CONFFILES), \
 		src=$(builddir)/$(file) ; \
 		dst=$(CONFDIR)/$(file) ; \
@@ -96,9 +93,7 @@ ifeq ($(USE_XAUTHPAM),true)
 	fi
 endif
 
-.PHONY: list-configs
-list-local-base: list-configs
-list-configs:
+list-local-base:
 	@set -eu ; $(foreach file, $(CONFFILES), \
 		echo $(CONFDIR)/$(file) ; \
 	)
