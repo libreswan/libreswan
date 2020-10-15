@@ -30,6 +30,55 @@ else
 include ../mk/program.mk
 endif
 
+local-base: $(CONFFILES) $(CONFDSUBDIRFILES)
+
+.PHONY: clean-configs
+local-clean-base: clean-configs
+clean-configs:
+	rm -f $(foreach file, $(CONFFILES) $(CONFDSUBDIRFILES), $(builddir)/$(file))
+
+.PHONY: install-configs
+local-install-base: install-configs
+install-configs: $(CONFFILES) $(CONFDSUBDIRFILES)
+	@set -eu ; $(foreach file, $(CONFFILES), \
+		src=$(builddir)/$(file) ; \
+		dst=$(CONFDIR)/$(file) ; \
+		if [ ! -f $${dst} ]; then \
+			echo $${src} '->' $${dst} ; \
+			mkdir -p $(CONFDIR) ; \
+			$(INSTALL) $(INSTCONFFLAGS) $($(file).INSTFLAGS) $${src} $${dst} ; \
+		fi ; \
+	)
+	@set -eu ; $(foreach file, $(CONFFILES), \
+		src=$(builddir)/$(file) ; \
+		dst=$(EXAMPLECONFDIR)/$(file)-sample ; \
+		echo $${src} '->' $${dst} ; \
+		mkdir -p $(EXAMPLECONFDIR) ; \
+		$(INSTALL) $(INSTCONFFLAGS) $${src} $${dst} ; \
+	)
+	@set -eu ; $(foreach file, $(CONFFILES), \
+		src=$(builddir)/$(file) ; \
+		dst=$(CONFDDIR)/$(CONFDSUBDIR)/$(file) ; \
+		if [ ! -f $${src} ]; then \
+			echo $${src} '->' $${dst} ; \
+			mkdir -p $$destdir ; \
+			$(INSTALL) $(INSTCONFFLAGS) $${src} $${dst} ; \
+		fi ; \
+	)
+
+.PHONY: list-configs
+list-local-base: list-configs
+list-configs:
+	@set -eu ; $(foreach file, $(CONFFILES), \
+		echo $(CONFDIR)/$(file) ; \
+	)
+	@set -eu ; $(foreach file, $(CONFFILES), \
+		echo $(EXAMPLECONFDIR)/$(file)-sample ; \
+	)
+	@set -eu ; $(foreach file, $(CONFDSUBDIRFILES), \
+		echo $(CONFDDIR)/$(CONFDSUBDIR)/$${file} ; \
+	)
+
 # Since man page is generated, override the default rule for
 # generating $(buildir)/$(MANPAGE).tmp from $(MANPAGE).xml
 

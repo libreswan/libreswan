@@ -28,18 +28,10 @@ ifndef PROGRAMDIR
 PROGRAMDIR=${LIBEXECDIR}
 endif
 
-ifndef CONFDSUBDIR
-CONFDSUBDIR=.
-endif
-
-# the list of stuff to be built for "make programs"
-CONFIGLIST=$(CONFFILES) $(CONFDSUBDIRFILES)
-PROGRAMSLIST=${PROGRAM} $(CONFIGLIST)
-
-local-base: $(PROGRAMSLIST)
+local-base: $(PROGRAM)
 
 local-clean-base:
-	rm -f $(builddir)/*.o $(foreach p,$(PROGRAMSLIST), $(builddir)/$(p))
+	rm -f $(builddir)/*.o $(foreach p,$(PROGRAM), $(builddir)/$(p))
 
 src-file = $(firstword $(wildcard $(srcdir)/$(1) $(builddir)/$(1)))
 
@@ -56,37 +48,9 @@ local-install-base:
 		mkdir -p $$destdir ; \
 		$(INSTALL) $(INSTBINFLAGS) $$src $$destdir/$$file ; \
 	)
-	@set -eu ; $(foreach file, $(CONFFILES), \
-		if [ ! -f $(CONFDIR)/$(file) ]; then \
-			echo $(call src-file,$(file)) '->' $(CONFDIR)/$(file) ; \
-			mkdir -p $(CONFDIR) ; \
-			$(INSTALL) $(INSTCONFFLAGS) $($(file).INSTFLAGS) $(call src-file,$(file)) $(CONFDIR)/$(file) ; \
-		fi ; \
-	)
-	@$(call foreach-file, $(CONFFILES), $(CONFDIR), \
-		echo $$src '->' $(EXAMPLECONFDIR)/$$file-sample ; \
-		mkdir -p $(EXAMPLECONFDIR) ; \
-		$(INSTALL) $(INSTCONFFLAGS) $$src $(EXAMPLECONFDIR)/$$file-sample ; \
-	)
-	@$(call foreach-file, $(CONFDSUBDIRFILES), $(CONFDDIR)/$(CONFDSUBDIR), \
-		if [ ! -f $$destdir/$$file ]; then \
-			echo $$src '->' $$destdir/$$file ; \
-			mkdir -p $$destdir ; \
-			$(INSTALL) $(INSTCONFFLAGS) $$src $$destdir/$$file ; \
-		fi ; \
-	)
 
 list-local-base:
 	@$(call foreach-file, $(PROGRAM), $(PROGRAMDIR), \
-		echo $$destdir/$$file ; \
-	)
-	@$(call foreach-file, $(CONFFILES), $(CONFDIR), \
-		echo $$destdir/$$file ; \
-	)
-	@$(call foreach-file, $(CONFFILES), $(CONFDIR), \
-		echo $(EXAMPLECONFDIR)/$$file-sample ; \
-	)
-	@$(call foreach-file,  $(CONFDSUBDIRFILES), $(CONFDDIR)/$(CONFDSUBDIR), \
 		echo $$destdir/$$file ; \
 	)
 
