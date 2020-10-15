@@ -88,7 +88,7 @@ ifneq ($(strip(${REGRESSRESULTS})),)
 endif
 	@echo "======== End of make check target. ========"
 
-include ${LIBRESWANSRCDIR}/mk/subdirs.mk
+include ${LIBRESWANSRCDIR}/mk/targets.mk
 
 # directories visited by all recursion
 

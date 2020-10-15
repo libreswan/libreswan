@@ -57,4 +57,4 @@ SUBDIRS += _realsetup.bsd
 SUBDIRS += _updown.bsdkame
 endif
 
-include $(top_srcdir)/mk/subdirs.mk
+include $(top_srcdir)/mk/targets.mk

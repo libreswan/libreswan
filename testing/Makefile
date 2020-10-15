@@ -18,4 +18,4 @@ SUBDIRS += check
 ifndef top_srcdir
 include ../mk/dirs.mk
 endif
-include $(top_srcdir)/mk/subdirs.mk
+include $(top_srcdir)/mk/targets.mk

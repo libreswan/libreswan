@@ -27,4 +27,4 @@ ifeq ($(USE_BSDKAME),true)
 SUBDIRS+=libbsdpfkey
 endif
 
-include $(top_srcdir)/mk/subdirs.mk
+include $(top_srcdir)/mk/targets.mk

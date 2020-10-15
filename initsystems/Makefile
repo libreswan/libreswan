@@ -24,4 +24,4 @@ ifneq ($(INITSYSTEM),)
 SUBDIRS += $(INITSYSTEM)
 endif
 
-include $(top_srcdir)/mk/subdirs.mk
+include $(top_srcdir)/mk/targets.mk

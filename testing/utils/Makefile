@@ -20,4 +20,4 @@ include $(top_srcdir)/Makefile.inc
 
 SUBDIRS=pcap2skb
 
-include $(top_srcdir)/mk/subdirs.mk
+include $(top_srcdir)/mk/targets.mk
