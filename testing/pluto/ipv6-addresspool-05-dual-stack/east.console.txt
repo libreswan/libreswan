@@ -11,4 +11,8 @@ east #
 east #
  echo "initdone"
 initdone
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 
