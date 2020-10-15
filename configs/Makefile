@@ -65,6 +65,36 @@ install-configs: $(CONFFILES) $(CONFDSUBDIRFILES)
 			$(INSTALL) $(INSTCONFFLAGS) $${src} $${dst} ; \
 		fi ; \
 	)
+	@if test ! -d $(NSSDIR) ; then \
+		mkdir -p $(NSSDIR) ; \
+		chmod 0700 $(NSSDIR) ; \
+	fi
+	@if test -z "$(DESTDIR)" -a -x /usr/sbin/selinuxenabled -a $(SBINDIR) != "$(DESTDIR)/usr/sbin" ; then \
+	if /usr/sbin/selinuxenabled ; then  \
+		echo -e "\n************************** WARNING ***********************************" ; \
+		echo "SElinux is present on this system and the prefix path is not /usr." ; \
+		echo "This can cause software failures if selinux is running in Enforcing mode"; \
+		echo -e "unless selinux policies are updated manually to allow this.\n" ; \
+		echo "The following commands fix a common issue of /usr/local/ being mislabeled"; \
+		echo "    restorecon /usr/local/sbin -Rv"; \
+		echo "    restorecon /usr/local/libexec/ipsec -Rv"; \
+		if test -x /usr/sbin/getenforce ; then \
+			echo -e "\nSElinux is currently running in `/usr/sbin/getenforce` mode" ; \
+		fi ; \
+		echo -e "**********************************************************************\n" ; \
+	fi \
+	fi
+ifeq ($(USE_XAUTHPAM),true)
+	@if test ! -f $(DESTDIR)/etc/pam.d/pluto ; then \
+		mkdir -p $(DESTDIR)/etc/pam.d/ ; \
+		$(INSTALL) $(INSTCONFFLAGS) pam.d/pluto $(DESTDIR)/etc/pam.d/pluto ; \
+	else \
+		echo -e "\n************************** WARNING ***********************************" ; \
+		echo "We are not installing a new copy of the pam.d/pluto file, as one" ; \
+		echo "was already present.  You may wish to update it yourself if desired." ; \
+		echo -e "**********************************************************************\n" ; \
+	fi
+endif
 
 .PHONY: list-configs
 list-local-base: list-configs

@@ -1,0 +1,15 @@
+# Direction	Proto	Source 	Dest	Prio
+#
+# Exclude ssh incoming and outgoing from IPsec encryption for ipv4 and ipv6
+#both		tcp	any	22	1023
+#
+# Exclude outgoing HTTPS from IPsec encryption for ipv4 and ipv6
+#out		tcp	any	443	1023
+#
+# Exclude incoming SMTP for ipv4 for ipv4
+#in		tcp	any4	25	1023
+# Exclude incoming SMTP for ipv4 from 10.0.0.0/8 only
+#in		tcp	10.0.0.0/8	25	1023
+#
+# All udp port 666 should go in the clear within 10/8
+#both	udp	10.0.0.0/8	10.0.0.0/8@666	1023
