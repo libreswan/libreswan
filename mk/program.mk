@@ -64,27 +64,6 @@ ifdef OBJS
 $(PROGRAM): $(OBJS) $(srcdir)/Makefile
 	cd $(builddir) && $(CC) $(USERLAND_CFLAGS) $(USERLAND_INCLUDES) $(CFLAGS)  -o $@ $(OBJS) $(USERLAND_LDFLAGS) $(LDFAGS)
 
-include $(top_srcdir)/mk/depend.mk
-
-else
-
-define transform_script
-	@echo  'IN' $< '->' $(builddir)/$@
-	${TRANSFORM_VARIABLES} < $< > $(builddir)/$@.tmp
-	@if [ -x $< ]; then chmod +x $(builddir)/$@.tmp; fi
-	@if [ "${PROGRAM}" = $* ]; then chmod +x $(builddir)/$@.tmp; fi
-	mv $(builddir)/$@.tmp $(builddir)/$@
-endef
-
-%: %.sh $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver | $(builddir)
-	$(transform_script)
-
-%: %.in $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver | $(builddir)
-	$(transform_script)
-
-%: %.pl $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver | $(builddir)
-	$(transform_script)
-
 endif
 
-include $(top_srcdir)/mk/builddir.mk
+include $(top_srcdir)/mk/rules.mk

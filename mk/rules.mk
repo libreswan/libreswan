@@ -1,21 +1,44 @@
-# Libreswan Makefile dependencies and rules
-#
-# Copyright (C) 2015 Andrew Cagney
-#
-# This program is free software; you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by the
-# Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-# for more details.
+# generic make rules for libreswan
 
-# list of files requiring dependency generation
-ifndef OBJS
-$(error define OBJS)
-endif
+# Targets needing the builddir should add:
+#
+#     | $(builddir)
+#
+# as a soft/order-only dependency.
+
+$(builddir):
+	mkdir -p $(builddir)
+
+# script transforms
+
+# Some Makefiles use $(buildir)/SCRIPT as the target while others use
+# just SCRIPT.  Accomodate both.
+
+define transform_script
+	@echo  'IN' $< '->' $(builddir)/$@
+	${TRANSFORM_VARIABLES} < $< > $(builddir)/$*.tmp
+	@if [ -x $< ]; then chmod +x $(builddir)/$*.tmp; fi
+	@if [ "${PROGRAM}" = $* ]; then chmod +x $(builddir)/$*.tmp; fi
+	mv $(builddir)/$*.tmp $(builddir)/$*
+endef
+
+%: %.sh $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver | $(builddir)
+	$(transform_script)
+
+%: %.in $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver | $(builddir)
+	$(transform_script)
+
+%: %.pl $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver | $(builddir)
+	$(transform_script)
+
+$(builddir)/%: %.sh $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver | $(builddir)
+	$(transform_script)
+
+$(builddir)/%: %.in $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver | $(builddir)
+	$(transform_script)
+
+$(builddir)/%: %.pl $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver | $(builddir)
+	$(transform_script)
 
 # In addition to compiling the .c file to .o, generate a dependency
 # file.  Force all output to the build directory.  $(basename
@@ -28,7 +51,9 @@ endif
 # -MT: the target (otherwise $(builddir)/$(notdir $@) is used
 # -MF: where to write the dependency
 
-.c.o:
+ifdef OBJS
+
+.c.o: | $(builddir)
 	$(CC) $(USERLAND_CFLAGS) \
 		$(USERLAND_INCLUDES) \
 		-DHERE_BASENAME=\"$(notdir $<)\" $(CFLAGS) \
@@ -40,6 +65,9 @@ endif
 # Assume each source file has its own generated dependency file that
 # is updated whenever the corresponding output is updated.  Given
 # these files, create an include file that includes them.
+#
+# Use := so it is evaluated immediately, using the context from
+# parsing this file (and ot later).
 
 mk.depend.file := $(lastword $(MAKEFILE_LIST))
 mk.depend.dependencies.file := $(builddir)/Makefile.depend.mk
@@ -61,3 +89,5 @@ mk.depend.clean:
 	rm -f $(builddir)/*.d
 
 -include $(mk.depend.dependencies.file)
+
+endif
