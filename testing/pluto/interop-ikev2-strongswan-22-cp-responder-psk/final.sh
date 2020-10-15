@@ -5,4 +5,3 @@ if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongs
 : ==== tuc ====
 ../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-: ==== end ====

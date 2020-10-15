@@ -5,4 +5,3 @@ hostname | grep east > /dev/null && grep "negotiated connection" /tmp/pluto.log
 hostname | grep east > /dev/null && grep IKEv2_AUTH_ /tmp/pluto.log
 ../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-: ==== end ====

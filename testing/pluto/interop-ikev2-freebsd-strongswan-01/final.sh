@@ -3,4 +3,3 @@ if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then ipsec s
 if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then setkey -D; setkey -DP; fi
 ../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-: ==== end ====

@@ -5,4 +5,3 @@ sleep 2
 ps -ax | grep pluto
 ../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-: ==== end ====

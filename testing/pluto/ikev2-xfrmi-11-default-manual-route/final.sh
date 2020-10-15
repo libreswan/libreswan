@@ -3,4 +3,3 @@ ipsec whack --trafficstatus
 ipsec auto --status
 ../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-: ==== end ====

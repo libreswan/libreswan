@@ -8,4 +8,3 @@ hostname | grep road && (ip addr show dev eth0 | grep 192.1.3.209 || ip addr add
 : ==== tuc ====
 ../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-: ==== end ====

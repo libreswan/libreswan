@@ -6,4 +6,3 @@ hostname | grep east > /dev/null && ping -c2 192.0.2.102
 ipsec whack --trafficstatus
 ../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-: ==== end ====
