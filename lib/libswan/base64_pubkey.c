@@ -194,7 +194,11 @@ err_t unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
 		return ckerr;
 	}
 
-	keyblobtoid(pubkey->ptr, pubkey->len, rsa->keyid, sizeof(rsa->keyid));
+	err_t e = keyblob_to_keyid(pubkey->ptr, pubkey->len, &rsa->keyid);
+	if (e != NULL) {
+		return e;
+	}
+
 	rsa->k = modulus.len;
 	rsa->e = clone_hunk(exponent, "e");
 	rsa->n = clone_hunk(modulus, "n");
@@ -204,7 +208,7 @@ err_t unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
 
 	if (DBGP(DBG_BASE)) {
 		/* pubkey information isn't DBG_PRIVATE */
-		DBG_log("keyid: *%s", rsa->keyid);
+		DBG_log("keyid: *%s", str_keyid(rsa->keyid));
 		DBG_dump_hunk("  n", rsa->n);
 		DBG_dump_hunk("  e", rsa->e);
 		DBG_dump_hunk("  CKAID", rsa->ckaid);
@@ -223,9 +227,9 @@ err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa, const chunk_t *pub
 	}
 
 	/* use the ckaid since that digested the entire pubkey */
-	int n = keyblobtoid(ecdsa->ckaid.ptr, ecdsa->ckaid.len, ecdsa->keyid, sizeof(ecdsa->keyid));
-	if (n == 0) {
-		return "problem creating key-id from ECDSA public";
+	e = keyblob_to_keyid(ecdsa->ckaid.ptr, ecdsa->ckaid.len, &ecdsa->keyid);
+	if (e != NULL) {
+		return e;
 	}
 
 	ecdsa->pub = clone_hunk(*pubkey, "public value");
@@ -233,7 +237,7 @@ err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa, const chunk_t *pub
 
 	if (DBGP(DBG_BASE)) {
 		/* pubkey information isn't DBG_PRIVATE */
-		DBG_log("keyid: *%s", ecdsa->keyid);
+		DBG_log("keyid: *%s", str_keyid(ecdsa->keyid));
 		DBG_log("  k: %d", ecdsa->k);
 		DBG_dump_hunk("  pub", ecdsa->pub);
 		DBG_dump_hunk("  CKAID", ecdsa->ckaid);

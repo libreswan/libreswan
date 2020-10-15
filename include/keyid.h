@@ -19,14 +19,18 @@
 #include <stddef.h>	/* for size_t */
 #include <stdint.h>
 
-#define KEYID_BUF       10      /* up to 9 text digits plus NUL */
+#include "err.h"
+#include "lswcdefs.h"
 
-size_t splitkeytoid(const uint8_t *e, size_t elen,
-		    const uint8_t *m, size_t mlen,
-		    char *dst /* need not be valid if dstlen is 0 */,
-		    size_t dstlen);
-size_t keyblobtoid(const uint8_t *src, size_t srclen,
-		   char *dst /* need not be valid if dstlen is 0 */,
-		   size_t dstlen);
+typedef struct { char keyid[10/* up to 9 text digits + NUL */]; } keyid_t;
+
+extern const keyid_t empty_keyid;
+
+#define str_keyid(KEYID) (KEYID).keyid
+
+err_t splitkey_to_keyid(const uint8_t *e, size_t elen, const uint8_t *m, size_t mlen,
+			keyid_t *dst) MUST_USE_RESULT;
+err_t keyblob_to_keyid(const uint8_t *src, size_t srclen,
+		       keyid_t *dst) MUST_USE_RESULT;
 
 #endif
