@@ -13,7 +13,12 @@ bt
 EOF
 }
 
-ls ${DIR}/core* 2>/dev/null | while read core ; do
+ok=true
+
+for core in ${DIR}/core* ; do
+    test -r "${core}" || continue
+
+    ok=false
 
     echo
 
@@ -50,3 +55,5 @@ ls ${DIR}/core* 2>/dev/null | while read core ; do
 
     mv -f $core OUTPUT/
 done
+
+${ok}
