@@ -37,6 +37,7 @@ SUBDIRS += look
 SUBDIRS += newhostkey
 SUBDIRS += rsasigkey
 SUBDIRS += setup
+SUBDIRS += showhostkey
 SUBDIRS += newhostkey
 SUBDIRS += readwriteconf
 SUBDIRS += _import_crl
