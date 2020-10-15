@@ -53,8 +53,8 @@ list-local-base:
 	)
 
 ifndef top_srcdir
-include ../mk/dirs.mk
+include ../../mk/dirs.mk
 endif
-include $(top_srcdir)/config.mk
-include $(top_srcdir)/targets.mk
-include $(top_srcdir)/rules.mk
+include $(top_srcdir)/mk/config.mk
+include $(top_srcdir)/mk/targets.mk
+include $(top_srcdir)/mk/rules.mk
