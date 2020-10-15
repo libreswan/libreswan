@@ -21,8 +21,6 @@ ipsec.secrets.INSTFLAGS = -m 0600
 CONFFILES += ipsec.conf
 CONFFILES += ipsec.secrets
 
-EXCONFILES=ipsec.win2k.conf
-
 CONFDSUBDIR = policies
 CONFDSUBDIRFILES = clear clear-or-private private-or-clear private block portexcludes.conf
 

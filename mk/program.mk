@@ -68,10 +68,6 @@ local-install-base:
 		mkdir -p $(EXAMPLECONFDIR) ; \
 		$(INSTALL) $(INSTCONFFLAGS) $$src $(EXAMPLECONFDIR)/$$file-sample ; \
 	)
-	@$(call foreach-file, $(EXCONFFILES), $(EXAMPLECONFDIR), \
-		echo $$src '->' $$destdir/$$file-sample ; \
-		$(INSTALL) $(INSTCONFFLAGS) $$src $$destdir/$$file-sample ; \
-	)
 	@$(call foreach-file, $(CONFDSUBDIRFILES), $(CONFDDIR)/$(CONFDSUBDIR), \
 		if [ ! -f $$destdir/$$file ]; then \
 			echo $$src '->' $$destdir/$$file ; \
@@ -89,9 +85,6 @@ list-local-base:
 	)
 	@$(call foreach-file, $(CONFFILES), $(CONFDIR), \
 		echo $(EXAMPLECONFDIR)/$$file-sample ; \
-	)
-	@$(call foreach-file, $(EXCONFFILES), $(EXAMPLECONFDIR), \
-		echo $$destdir/$$file-sample ; \
 	)
 	@$(call foreach-file,  $(CONFDSUBDIRFILES), $(CONFDDIR)/$(CONFDSUBDIR), \
 		echo $$destdir/$$file ; \
