@@ -23,7 +23,6 @@ SUBDIRS=
 SUBDIRS += pluto
 SUBDIRS += whack
 SUBDIRS += addconn
-SUBDIRS += configs
 SUBDIRS += _plutorun
 SUBDIRS += _stackmanager
 SUBDIRS += _secretcensor

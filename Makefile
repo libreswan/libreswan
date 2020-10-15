@@ -60,7 +60,7 @@ ERRCHECK=${MAKEUTILS}/errcheck
 KVUTIL=${MAKEUTILS}/kernelversion
 KVSHORTUTIL=${MAKEUTILS}/kernelversion-short
 
-SUBDIRS?=lib programs initsystems testing
+SUBDIRS?=lib programs initsystems testing configs
 
 TAGSFILES = $(wildcard include/*.h include/*/*.h lib/lib*/*.[ch] programs/*/*.[ch] testing/check/*/*.[ch])
 

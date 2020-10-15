@@ -29,7 +29,7 @@ CONFDSUBDIRFILES = clear clear-or-private private-or-clear private block portexc
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
 else
-include ../../mk/program.mk
+include ../mk/program.mk
 endif
 
 # Since man page is generated, override the default rule for
