@@ -283,9 +283,6 @@ INSTBINFLAGS ?= -b
 INSTMANFLAGS ?= -m 0644
 INSTCONFFLAGS ?= -m 0644
 
-# flags for bison, overrode in packages/default/foo
-BISONOSFLAGS ?=
-
 # must be before all uses; invoking is expensive called once
 PKG_CONFIG ?= pkg-config
 

@@ -16,10 +16,6 @@ include $(top_srcdir)/mk/version.mk
 include $(top_srcdir)/mk/targets.mk
 include $(top_srcdir)/mk/manpages.mk
 
-LEX=flex
-BISON=bison
-RM=rm
-
 ifneq ($(LD_LIBRARY_PATH),)
 LDFLAGS+=-L$(LD_LIBRARY_PATH)
 endif

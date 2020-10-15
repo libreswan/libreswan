@@ -7,8 +7,6 @@ USERLAND_CFLAGS += -Dlinux
 
 PORTDEFINE=-DSCANDIR_HAS_CONST
 
-BISONOSFLAGS=-g --verbose
-
 # Detect linux variants and releases.
 
 # So that the sub-shell is invoked only once, ":=" is used.  This in

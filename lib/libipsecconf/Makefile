@@ -91,6 +91,7 @@ ifeq ($(USE_YACC),true)
 BISON=yacc -b parser
 else
 BISON=bison
+BISONOSFLAGS=-g --verbose
 endif
 
 $(builddir)/%.tab.h $(builddir)/%.tab.c: %.y
@@ -104,4 +105,4 @@ $(builddir)/%.tab.h $(builddir)/%.tab.c: %.y
 clean: parser-clean
 .PHONY: parser-clean
 parser-clean:
-	cd $(builddir) && $(RM) -f *.tab.[cdho] *.dot *.output lex.yy.[cdho] *tmp
+	cd $(builddir) && rm -f *.tab.[cdho] *.dot *.output lex.yy.[cdho] *tmp
