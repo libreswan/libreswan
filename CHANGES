@@ -4,7 +4,7 @@ See also https://libreswan.org/
 v4.0 (October 14, 2020)
 * KLIPS: Support for KLIPS completely removed [Paul]
 * pluto: Removed support for deprecated algos: serpent, twofish, cast [Paul]
-* IKEv2: EXPERIMENTAL: Support for RFC 8229 IKE/ESP over TCP [Andrew]
+* IKEv2: EXPERIMENTAL: Support for RFC 8229 IKE/ESP over TCP [Andrew/Mayank Totale]
          New per-conn keywords: listen-tcp=yes|no, tcponly=yes|no, tcp-remoteport=
          Requires: Linux kernel >= 5.8
 * IKEv2: Support for leftikeport= / rightikeport= [Andrew/Paul]
