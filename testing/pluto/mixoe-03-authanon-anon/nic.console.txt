@@ -9,4 +9,5 @@ nic #
  ../bin/check-for-core.sh
 nic #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+nic #
+ 

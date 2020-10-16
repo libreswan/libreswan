@@ -11,4 +11,5 @@ west #
  ipsec showhostkey --left --ckaid "$ckaid"
 	# rsakey <<KEYID#1>>
 	leftrsasigkey=<<RSASIGKEY#1>>
-
+west #
+ 

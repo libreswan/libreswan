@@ -80,4 +80,5 @@ east #
 
 [ broken from here ]
 
-036 connection "westnet-eastnet-ikev2": failed to add connection: right certificate 'pkcs11:model=SoftHSM%20v2;manufacturer=SoftHSM%20project;serial=ac1fd4cd56cd7d47;token=libreswan;id=%01;object=eastCert;type=cert' not found in the NSS database
+east #
+ 

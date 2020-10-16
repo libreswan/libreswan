@@ -50,4 +50,5 @@ initdone
 west #
  ipsec auto --up westnet-eastnet-ikev2
 
-FIXME
+west #
+ 

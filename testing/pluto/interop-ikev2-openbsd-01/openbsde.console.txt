@@ -35,4 +35,5 @@ openbsde #
 openbsde #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 if [ -f /sbin/ausearch ]; then auseaarch ]; then ausearch -r -m avc -ts recent ; fi
-
+openbsde #
+ 
