@@ -1923,6 +1923,7 @@ enum_names ikev2_delete_protocol_id_names = {
 static const char *const ikev2_protocol_id_notify_name[] = {
 #define E(V) [V] = #V
 	E(IKEv2_SEC_PROTO_NONE),
+	E(IKEv2_SEC_PROTO_IKE),
 	E(IKEv2_SEC_PROTO_AH),
 	E(IKEv2_SEC_PROTO_ESP),
 #undef E
