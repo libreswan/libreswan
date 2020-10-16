@@ -1918,7 +1918,7 @@ enum_names ikev2_delete_protocol_id_names = {
 	.en_prefix = "IKEv2_SEC_PROTO_", /* prefix */
 };
 
-/* notify payload allows NONE=0, (NO IKE,) AH=2, ESP=3 */
+/* notify payload allows NONE=0, IKE=1 AH=2, ESP=3 */
 
 static const char *const ikev2_protocol_id_notify_name[] = {
 #define E(V) [V] = #V
