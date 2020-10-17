@@ -3164,6 +3164,13 @@ IETF registry enum_names:
          short_name 0: NONE OK
          jam_enum_short 0: NONE OK
          match NONE [short]: OK
+    1 -> IKEv2_SEC_PROTO_IKE
+         jam_enum 1: IKEv2_SEC_PROTO_IKE OK
+         search IKEv2_SEC_PROTO_IKE: OK
+         match IKEv2_SEC_PROTO_IKE: OK
+         short_name 1: IKE OK
+         jam_enum_short 1: IKE OK
+         match IKE [short]: OK
     2 -> IKEv2_SEC_PROTO_AH
          jam_enum 2: IKEv2_SEC_PROTO_AH OK
          search IKEv2_SEC_PROTO_AH: OK
