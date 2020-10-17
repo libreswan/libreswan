@@ -292,10 +292,11 @@ if not args.namespace:
 resolve_conf = "/etc/resolv.conf"
 etc_hosts = "/etc/hosts"
 
-nssdir = get_configsetup("nssdir")
-ipsecdir = get_configsetup("ipsecdir")
-configfile = get_configsetup("configfile")
-secretsfile = get_configsetup("secretsfile")
+if hostname != "nic":
+    nssdir = get_configsetup("nssdir")
+    ipsecdir = get_configsetup("ipsecdir")
+    configfile = get_configsetup("configfile")
+    secretsfile = get_configsetup("secretsfile")
 
 if args.namespace:
     nsbasepath ="%s/NS/%s" % (testpath, hostname) #will create testpath/NS/hostname/*
@@ -341,14 +342,15 @@ else:
 # print "swan-prep running on %s for test %s with userland
 # %s"%(hostname,testname,userland)
 
-# wipe or unmount any old configs
-# do not clean pid files or files opened by pluto, charon .. yet.
-wipe_old(configfile)
-wipe_old(secretsfile)
-wipe_old(nssdir)
-if nssdir != ipsecdir:
-    wipe_old(ipsecdir)
-wipe_old("/etc/strongswan")
+if hostname != "nic":
+    # wipe or unmount any old configs
+    # do not clean pid files or files opened by pluto, charon .. yet.
+    wipe_old(configfile)
+    wipe_old(secretsfile)
+    wipe_old(nssdir)
+    if nssdir != ipsecdir:
+        wipe_old(ipsecdir)
+    wipe_old("/etc/strongswan")
 
 if args.namespace:
     wipe_old(resolve_conf)
