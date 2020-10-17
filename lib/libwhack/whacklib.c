@@ -182,7 +182,7 @@ static bool unpack_string(struct whackpacker *wp, char **p, const char *what)
 
 	unsigned char *s = (wp->str_next == end ? NULL : wp->str_next);
 
-	DBGF(DBG_TMI, "%s: '%s' is %zu bytes", __func__, what, end - wp->str_next);
+	DBGF(DBG_TMI, "%s: '%s' is %ld bytes", __func__, what, (long int)(end - wp->str_next));
 
 	*p = (char *)s;
 	wp->str_next = end + 1;
