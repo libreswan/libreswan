@@ -569,7 +569,7 @@ if userland in ("libreswan", "openswan"):
 
             # mainca and nic import
             shell("/usr/bin/certutil -A -n %s -t 'CT,,' -d sql:%s -a -i /testing/x509/cacerts/%s.crt%s" %
-                  (root, nssdir root, util_pw))
+                  (root, nssdir, root, util_pw))
             shell("/usr/bin/certutil -A -n nic -t 'P,,' -d sql:%s -a -i /testing/x509/certs/nic.crt%s" % (nssdir, util_pw))
 
             # install ee
