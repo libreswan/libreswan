@@ -1918,7 +1918,14 @@ enum_names ikev2_delete_protocol_id_names = {
 	.en_prefix = "IKEv2_SEC_PROTO_", /* prefix */
 };
 
-/* notify payload allows NONE=0, IKE=1 AH=2, ESP=3 */
+/*
+ * Notify payload allows NONE=0, [IKE=1,] AH=2, ESP=3
+ * https://tools.ietf.org/html/rfc7296#section-3.10
+ * Technically 1 is not valid but is sent by by Cisco,
+ * and the RFC states we should accept and ignore it:
+ * "If the SPI field is empty, this field MUST be
+ *  sent as zero and MUST be ignored on receipt."
+ */
 
 static const char *const ikev2_protocol_id_notify_name[] = {
 #define E(V) [V] = #V
