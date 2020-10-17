@@ -274,26 +274,46 @@ static void do_whacklisten(struct fd *whackfd)
  * whack --keyid <id> --pubkeyrsa ...
  *     replace <id> key
  * whack --keyid <id> --addkey --pubkeyrsa ...
- *     add <id> key (keeping old)
+ *     add <id> key (keeping any old key)
  * whack --keyid <id> --addkey
- * whack --keyid <id> --addkey --pubkeyrsa ...
- *     invalid as keyval.len is 0
+ *     invalid as public key is missing (keyval.len is 0)
  */
-static void key_add_request_1(const struct id *keyid, const struct pubkey_type *type,
-			      const struct whack_message *msg, struct logger *logger)
+static void key_add_request(const struct whack_message *msg, struct logger *logger)
 {
-	/* no --addkey, delete any preexisting keys */
+	/* A (public) key requires a (key) type and a type requires a key */
+
+	const struct pubkey_type *type = pubkey_alg_type(msg->pubkey_alg);
+	bool given_key = type != NULL;	/* were we given a key by the whack command? */
+
+	passert(given_key == (msg->keyval.len != 0));
+
+	/* --addkey always requires a key */
+	if (msg->whack_addkey && !given_key) {
+		log_message(RC_LOG_SERIOUS, logger,
+			    "error: key to add is empty (needs DNS lookup?)");
+		return;
+	}
+
+	struct id keyid;
+	err_t ugh = atoid(msg->keyid, &keyid); /* must free keyid */
+	if (ugh != NULL) {
+		log_message(RC_BADID, logger, "bad --keyid \"%s\": %s", msg->keyid, ugh);
+		return;
+	}
+
+	/* if no --addkey: delete any preexisting keys */
 	if (!msg->whack_addkey) {
-		if (msg->keyval.len == 0) {
+		if (!given_key) {
 			/* XXX: this gets called by "add" so be silent */
 			log_message(LOG_STREAM/*not-whack*/,
 				    logger, "delete keyid %s", msg->keyid);
 		}
-		delete_public_keys(&pluto_pubkeys, keyid, type);
+		delete_public_keys(&pluto_pubkeys, &keyid, type);
 		/* XXX: what about private keys; suspect not easy as not 1:1? */
 	}
 
-	if (msg->keyval.len != 0) {
+	/* if a key was given: add it */
+	if (given_key) {
 		/* XXX: this gets called by "add" so be silent */
 		log_message(LOG_STREAM/*not-whack*/, logger,
 			    "add keyid %s", msg->keyid);
@@ -301,13 +321,14 @@ static void key_add_request_1(const struct id *keyid, const struct pubkey_type *
 
 		/* add the public key */
 		const union pubkey_content *pkc = NULL;
-		err_t ugh = add_public_key(keyid, PUBKEY_LOCAL, type,
+		err_t ugh = add_public_key(&keyid, PUBKEY_LOCAL, type,
 					   /*install_time*/realnow(),
 					   /*until_time*/realtime_epoch,
 					   /*ttl*/0,
 					   &msg->keyval, &pkc, &pluto_pubkeys);
 		if (ugh != NULL) {
 			log_message(RC_LOG_SERIOUS, logger, "%s", ugh);
+			free_id_content(&keyid);
 			return;
 		}
 
@@ -324,35 +345,6 @@ static void key_add_request_1(const struct id *keyid, const struct pubkey_type *
 				    str_ckaid(ckaid, &ckb));
 		}
 	}
-}
-
-static void key_add_request(const struct whack_message *msg, struct logger *logger)
-{
-	/* ??? when can type be NULL?  It confuses coverity. */
-	/* a key always requires a type */
-	const struct pubkey_type *type = pubkey_alg_type(msg->pubkey_alg);
-	if (type == NULL && msg->keyval.len != 0) {
-		log_message(RC_LOG_SERIOUS, logger,
-			    "INTERNAL ERROR: key with unknown type %d from whack",
-			    msg->pubkey_alg);
-		return;
-	}
-
-	/* --addkey always requires a key */
-	if (msg->whack_addkey && msg->keyval.len == 0) {
-		log_message(RC_LOG_SERIOUS, logger,
-			    "error: key to add is empty (needs DNS lookup?)");
-		return;
-	}
-
-	struct id keyid;
-	err_t ugh = atoid(msg->keyid, &keyid); /* must free */
-	if (ugh != NULL) {
-		log_message(RC_BADID, logger, "bad --keyid \"%s\": %s", msg->keyid, ugh);
-		return;
-	}
-
-	key_add_request_1(&keyid, type, msg, logger);
 	free_id_content(&keyid);
 }
 
