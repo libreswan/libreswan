@@ -1,6 +1,11 @@
 
 See also https://libreswan.org/
 
+v4.1 (October 18, 2020)
+* IKEv2: Fix Notify protocol ID interop with Cisco introduced in 4.0 [Antony]
+* addconn: Fix resolving with %defaultroute plus peer with A + AAAA [Antony]
+* building: minor cleanups [Andrew/Tuomo]
+
 v4.0 (October 14, 2020)
 * KLIPS: Support for KLIPS completely removed [Paul]
 * pluto: Removed support for deprecated algos: serpent, twofish, cast [Paul]
