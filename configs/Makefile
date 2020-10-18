@@ -37,6 +37,14 @@ local-clean-base:
 	rm -f $(foreach file, $(CONFFILES) $(CONFDSUBDIRFILES), $(builddir)/$(file))
 
 local-install-base: $(CONFFILES) $(CONFDSUBDIRFILES)
+	@if test ! -d $(CONFDDIR) ; then \
+		mkdir -p $(CONFDDIR) ; \
+		chmod 0700 $(CONFDDIR) ; \
+	fi
+	@if test ! -d $(CONFDDIR)/$(CONFDSUBDIR) ; then \
+		mkdir -p $(CONFDDIR)/$(CONFDSUBDIR) ; \
+		chmod 0700 $(CONFDDIR)/$(CONFDSUBDIR) ; \
+	fi
 	@set -eu ; $(foreach file, $(CONFFILES), \
 		src=$(builddir)/$(file) ; \
 		dst=$(CONFDIR)/$(file) ; \
@@ -53,12 +61,11 @@ local-install-base: $(CONFFILES) $(CONFDSUBDIRFILES)
 		mkdir -p $(EXAMPLECONFDIR) ; \
 		$(INSTALL) $(INSTCONFFLAGS) $${src} $${dst} ; \
 	)
-	@set -eu ; $(foreach file, $(CONFFILES), \
+	@set -eu ; $(foreach file, $(CONFDSUBDIRFILES), \
 		src=$(builddir)/$(file) ; \
 		dst=$(CONFDDIR)/$(CONFDSUBDIR)/$(file) ; \
-		if [ ! -f $${src} ]; then \
+		if [ ! -f $${dst} ]; then \
 			echo $${src} '->' $${dst} ; \
-			mkdir -p $$destdir ; \
 			$(INSTALL) $(INSTCONFFLAGS) $${src} $${dst} ; \
 		fi ; \
 	)
