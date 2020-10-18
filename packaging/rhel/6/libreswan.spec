@@ -38,7 +38,7 @@
 
 Name: libreswan
 Summary: Internet Key Exchange (IKEv1 and IKEv2) implementation for IPsec
-Version: 4.0
+Version: 4.1
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
@@ -216,5 +216,5 @@ fi
 %{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
 
 %changelog
-* Wed Oct 14 2020 Team Libreswan <team@libreswan.org> - 4.0-1
+* Sun Oct 18 2020 Team Libreswan <team@libreswan.org> - 4.1-1
 - Automated build from release tar ball

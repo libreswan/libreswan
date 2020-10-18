@@ -36,7 +36,7 @@
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is replaced in make target
-Version: 4.0
+Version: 4.1
 Release: %{rel}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
@@ -187,6 +187,6 @@ export NSS_DISABLE_HW_GCM=1
 %{_mandir}/*/*
 
 %changelog
-* Wed Aug  9 2017 Team Libreswan <team@libreswan.org> - @IPSECBASEVERSION@
+* Sun Oct 18 2020 Team Libreswan <team@libreswan.org> - 4.1-1
 - Automated build for testing from git tree.
 - All compile time options are set in Makefile.inc.local not here.
