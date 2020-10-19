@@ -1341,7 +1341,7 @@ void call_server(char *conffile)
 
 	int r = event_base_loop(pluto_eb, 0);
 	pexpect(r >= 0);
-	event_loop_exited(r);
+	server_stopped(r);
 }
 
 void stop_server(void)

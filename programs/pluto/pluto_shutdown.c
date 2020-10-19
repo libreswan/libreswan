@@ -180,18 +180,6 @@ void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status)
 	pluto_sd(PLUTO_SD_STOPPING, exit_code);
  #endif
 
-	stop_server();
-}
-
-void event_loop_exited(int r)
-{
-	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
-
-	dbg("event loop exited: %s",
-	    r < 0 ? "an error occured" :
-	    r > 0 ? "no pending or active events" :
-	    "success");
-
 	/*
 	 * Wait for the crypto-helper threads to notice EXITING_PLUTO
 	 * and exit (if necessary, wake any sleeping helpers from
@@ -208,7 +196,28 @@ void event_loop_exited(int r)
 	 * code to be changed so that helper tasks can be "cancelled"
 	 * after the've completed?
 	 */
-	stop_crypto_helpers(logger);
+	stop_helper_threads();
+	/*
+	 * helper_threads_stopped_callback() is called once both all
+	 * helper-threads have exited, and all helper-thread events
+	 * lurking in the event-queue have been processed).
+	 */
+}
+
+void helper_threads_stopped_callback(struct state *st UNUSED, void *context UNUSED)
+{
+	stop_server();
+	/*
+	 * server_stopped() is called once the event-loop exits.
+	 */
+}
+
+void server_stopped(int r)
+{
+	dbg("event loop exited: %s",
+	    r < 0 ? "an error occured" :
+	    r > 0 ? "no pending or active events" :
+	    "success");
 
 	exit_tail();
 }

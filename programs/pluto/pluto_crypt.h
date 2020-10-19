@@ -330,10 +330,11 @@ extern struct pluto_crypto_req_cont *new_pcrc(crypto_req_cont_func fn,
 					      const char *name);
 
 extern void start_crypto_helpers(int nhelpers, struct logger *logger);
-extern void stop_crypto_helpers(struct logger *logger);
-
 extern void send_crypto_helper_request(struct state *st,
 				       struct pluto_crypto_req_cont *cn);
+
+void stop_helper_threads(void);
+void helper_threads_stopped_callback(struct state *st, void *context); /* see pluto_shutdown.c */
 
 /* actual helper functions */
 

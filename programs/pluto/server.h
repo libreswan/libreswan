@@ -67,6 +67,7 @@ extern void show_debug_status(struct show *s);
 extern void show_fips_status(struct show *s);
 extern void call_server(char *conffile);
 extern void stop_server(void);
+extern void server_stopped(int r); /* see pluto_shutdown.c */
 
 typedef void event_callback_routine(evutil_socket_t, const short, void *);
 

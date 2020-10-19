@@ -53,7 +53,6 @@ extern volatile bool exiting_pluto;
  */
 
 void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status);
-void event_loop_exited(int r) NEVER_RETURNS;
 
 /*
  * Exit pluto immediately.

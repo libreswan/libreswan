@@ -21,6 +21,7 @@
 
 #include "defs.h"
 #include "log.h"
+#include "pluto_shutdown.h"
 
 #define LSW_SECCOMP_EXIT_FAIL PLUTO_EXIT_SECCOMP_FAIL
 #include "lswseccomp.h"
