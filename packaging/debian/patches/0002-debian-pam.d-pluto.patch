@@ -6,13 +6,13 @@ debian: fix /etc/pam.d/pluto to work with debian
     
 Signed-off-by: Tuomo Soini <tis@foobar.fi>
 ---
- pam.d/pluto | 27 +++++++++++----------------
+ configs/pam.d/pluto | 27 +++++++++++----------------
  1 file changed, 11 insertions(+), 16 deletions(-)
 
-diff --git a/pam.d/pluto b/pam.d/pluto
+diff --git a/configs/pam.d/pluto b/configs/pam.d/pluto
 index 3855385..bb9b22c 100644
---- a/pam.d/pluto
-+++ b/pam.d/pluto
+--- a/configs/pam.d/pluto
++++ b/configs/pam.d/pluto
 @@ -1,16 +1,11 @@
 -#%PAM-1.0
 -# Regular System auth
