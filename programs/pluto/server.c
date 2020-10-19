@@ -776,42 +776,51 @@ struct callback_event {
 static void callback_handler(evutil_socket_t fd UNUSED,
 			     short events UNUSED, void *arg)
 {
-	struct callback_event *e = (struct callback_event *)arg;
 	/*
-	 * At one point, .event was was being set after the event was
-	 * enabled.  With multiple threads this resulted in a race
-	 * where the event ran before .event was set.  The pexpect()
-	 * followed by the passert() demonstrated this - the pexpect()
-	 * failed yet the passert() passed.
+	 * Extract all needed fields so that all event-loop memory can
+	 * be freed _before_ making callback.
+	 *
+	 * At one point, the .event field was only being set after the
+	 * event was enabled.  With multiple threads this resulted in
+	 * a race where the event ran before .event was set.
 	 */
-	pexpect(e->event != NULL);
-	if (e->serialno == SOS_NOBODY) {
-		dbg("processing callback %s", e->name);
-		threadtime_t start = threadtime_start();
-		e->callback(NULL, e->context);
-		threadtime_stop(&start, SOS_NOBODY, "callback %s", e->name);
+	callback_cb *callback;
+	void *context;
+	so_serial_t serialno;
+	const char *name;
+	struct state *st;
+	{
+		struct callback_event *e = (struct callback_event *)arg;
+		passert(e->event != NULL);
+		callback = e->callback;
+		name = e->name;
+		serialno = e->serialno;
+		context = e->context;
+		event_free(e->event);
+		pfree(e);
+	}
+
+	if (serialno == SOS_NOBODY) {
+		dbg("processing callback %s", name);
+		st = NULL;
 	} else {
 		/*
 		 * XXX: Don't confuse this and the "resume" code paths
 		 * - this does not unsuspend MD, "resume" does.
 		 */
-		dbg("processing callback %s for #%lu", e->name, e->serialno);
-		struct state *st = state_with_serialno(e->serialno);
-		if (st == NULL) {
-			threadtime_t start = threadtime_start();
-			e->callback(NULL, e->context);
-			threadtime_stop(&start, e->serialno, "callback %s", e->name);
-		} else {
-			so_serial_t old_state = push_cur_state(st);
-			statetime_t start = statetime_start(st);
-			e->callback(st, e->context);
-			statetime_stop(&start, "callback %s", e->name);
-			pop_cur_state(old_state);
-		}
+		dbg("processing callback %s for #%lu", name, serialno);
+		st = state_with_serialno(serialno);
 	}
-	passert(e->event != NULL);
-	event_free(e->event);
-	pfree(e);
+
+	threadtime_t start = threadtime_start();
+	if (st != NULL) {
+		push_cur_state(st);
+	}
+	callback(st, context);
+	if (st != NULL) {
+		pop_cur_state(SOS_NOBODY);
+	}
+	threadtime_stop(&start, SOS_NOBODY, "callback %s", name);
 }
 
 extern void schedule_callback(const char *name, so_serial_t serialno,
