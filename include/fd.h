@@ -48,7 +48,7 @@ struct fd *dup_any_fd(struct fd *fd, where_t where);
 #define close_any(FD) close_any_fd((FD), HERE)
 void close_any_fd(struct fd **fd, where_t where);
 
-void fd_leak(struct fd **fd, where_t where);
+void fd_leak(struct fd *fd, where_t where);
 
 /* return nr-bytes, or -ERRNO */
 ssize_t fd_sendmsg(const struct fd *fd, const struct msghdr *msg, int flags);

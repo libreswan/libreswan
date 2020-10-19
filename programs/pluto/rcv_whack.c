@@ -883,12 +883,22 @@ void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
 			 * which means that the entire exit process is
 			 * radio silent.
 			 */
-			fd_leak(&whackfd, HERE);
-			/* XXX: shutdown the event loop */
-			exit_pluto(PLUTO_EXIT_OK);
-		} else {
+			fd_leak(whackfd, HERE);
+			/*
+			 * Close whackfd before calling exit_pluto().
+			 * Stops check-for-leaks thinking that FD was
+			 * leaked.
+			 */
 			close_any(&whackfd);
+			/*
+			 * Calls exit(), eventloop is still
+			 * technically running.
+			 */
+			exit_pluto(PLUTO_EXIT_OK);	/* NO-RETURN */
 		}
+
+		close_any(&whackfd);
+
 	}
 	threadtime_stop(&start, SOS_NOBODY, "whack");
 }
