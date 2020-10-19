@@ -234,7 +234,6 @@ extern struct pubkey_list *pubkeys;	/* keys from ipsec.conf */
 
 extern struct pubkey_list *free_public_keyentry(struct pubkey_list *p);
 extern void free_public_keys(struct pubkey_list **keys);
-extern void free_remembered_public_keys(void);
 err_t add_public_key(const struct id *id, /* ASKK */
 		     enum dns_auth_level dns_auth_level,
 		     const struct pubkey_type *type,

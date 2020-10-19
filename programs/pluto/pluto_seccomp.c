@@ -26,6 +26,7 @@
 #include "lswseccomp.h"
 
 #include "pluto_seccomp.h"
+#include "pluto_shutdown.h"		/* for exit_pluto() */
 
 /* helper rules must be a sub-set of main rules */
 

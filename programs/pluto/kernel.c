@@ -82,6 +82,7 @@
 #include "ip_selector.h"
 #include "ip_encap.h"
 #include "show.h"
+#include "pluto_shutdown.h"		/* for exit_pluto() */
 
 bool can_do_IPcomp = TRUE;  /* can system actually perform IPCOMP? */
 

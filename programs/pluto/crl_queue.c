@@ -24,6 +24,8 @@
 #include "realtime.h"
 #include "defs.h"		/* for exiting_pluto */
 #include "log.h"
+#include "pluto_shutdown.h"		/* for exiting_pluto */
+
 
 static pthread_mutex_t crl_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t crl_queue_cond = PTHREAD_COND_INITIALIZER;

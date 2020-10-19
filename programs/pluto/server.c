@@ -77,6 +77,7 @@
 #include "ikev2.h"		/* for complete_v2_state_transition() */
 #include "state_db.h"
 #include "iface.h"
+#include "pluto_shutdown.h"		/* for exit_pluto() */
 
 #ifdef USE_XFRM_INTERFACE
 #include "kernel_xfrm_interface.h"

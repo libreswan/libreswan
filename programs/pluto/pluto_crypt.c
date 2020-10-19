@@ -55,6 +55,7 @@
 #include "crypt_dh.h"
 #include "ikev1_prf.h"
 #include "state_db.h"
+#include "pluto_shutdown.h"		/* for exiting_pluto */
 
 #include "ikev1.h"	/* for complete_v1_state_transition() */
 #include "ikev2.h"	/* for complete_v2_state_transition() */

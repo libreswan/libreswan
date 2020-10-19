@@ -46,6 +46,7 @@
 #include "keys.h"
 #include "crl_queue.h"
 #include "server.h"
+#include "pluto_shutdown.h"		/* for exiting_pluto */
 
 #define FETCH_CMD_TIMEOUT       5       /* seconds */
 

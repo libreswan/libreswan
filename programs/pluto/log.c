@@ -41,6 +41,7 @@
 #include "impair.h"
 #include "demux.h"	/* for struct msg_digest */
 #include "pending.h"
+#include "pluto_shutdown.h"		/* for exit_pluto() */
 
 static void log_raw(int severity, const char *prefix, struct jambuf *buf);
 

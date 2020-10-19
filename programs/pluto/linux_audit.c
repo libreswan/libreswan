@@ -60,6 +60,7 @@
 /* for show_virtual_private: */
 #include "virtual.h"	/* needs connections.h */
 #include "crypto.h"
+#include "pluto_shutdown.h"		/* for exit_pluto() */
 
 #include "ip_address.h" /* for jam_address */
 
