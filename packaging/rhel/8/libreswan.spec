@@ -101,12 +101,6 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 %prep
 %setup -q -n libreswan-%{version}%{?prever}
 
-# replace unsupported KLIPS README
-echo "KLIPS is not supported with RHEL8" > README.KLIPS
-
-# linking to freebl is not needed
-sed -i "s/-lfreebl //" mk/config.mk
-
 # enable crypto-policies support
 sed -i "s:#[ ]*include \(.*\)\(/crypto-policies/back-ends/libreswan.config\)$:include \1\2:" configs/ipsec.conf.in
 

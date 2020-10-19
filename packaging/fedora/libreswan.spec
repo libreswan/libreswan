@@ -99,8 +99,6 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 %setup -q -n libreswan-%{version}%{?prever}
 # enable crypto-policies support
 sed -i "s:#[ ]*include \(.*\)\(/crypto-policies/back-ends/libreswan.config\)$:include \1\2:" configs/ipsec.conf.in
-# linking to freebl is no longer needed
-sed -i "s/-lfreebl //" mk/config.mk
 
 %build
 make %{?_smp_mflags} \
