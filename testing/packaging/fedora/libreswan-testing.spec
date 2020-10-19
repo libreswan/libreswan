@@ -86,7 +86,7 @@ This package contains the daemons and userland tools for setting up Libreswan.
 
 %prep
 %setup -q -n libreswan-%{version}%{?prever}
-sed -i "s:#[ ]*include \(.*\)\(/crypto-policies/back-ends/libreswan.config\)$:include \1\2:" programs/configs/ipsec.conf.in
+sed -i "s:#[ ]*include \(.*\)\(/crypto-policies/back-ends/libreswan.config\)$:include \1\2:" configs/ipsec.conf.in
 
 %build
 make %{?_smp_mflags} \

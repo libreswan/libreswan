@@ -108,7 +108,7 @@ echo "KLIPS is not supported with RHEL8" > README.KLIPS
 sed -i "s/-lfreebl //" mk/config.mk
 
 # enable crypto-policies support
-sed -i "s:#[ ]*include \(.*\)\(/crypto-policies/back-ends/libreswan.config\)$:include \1\2:" programs/configs/ipsec.conf.in
+sed -i "s:#[ ]*include \(.*\)\(/crypto-policies/back-ends/libreswan.config\)$:include \1\2:" configs/ipsec.conf.in
 
 
 %build
