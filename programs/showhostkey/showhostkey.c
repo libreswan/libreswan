@@ -324,27 +324,6 @@ static int show_confkey(struct private_key_stuff *pks,
 	return 0;
 }
 
-/*
- * XXX: this code is broken:
- *
- * - it duplicates stuff in secrets.c
- *
- * - it doesn't support ECDSA
- *
- * - it doesn't pass a secret into the iterator
- *
- * Why not load the secret properly?
- */
-
-static void fill_RSA_public_key(struct RSA_public_key *rsa, keyid_t *keyid, size_t *size,
-				SECKEYPublicKey *pubkey)
-{
-	passert(SECKEY_GetPublicKeyType(pubkey) == rsaKey);
-	rsa->e = clone_secitem_as_chunk(pubkey->u.rsa.publicExponent, "e");
-	rsa->n = clone_secitem_as_chunk(pubkey->u.rsa.modulus, "n");
-	form_keyid(rsa->e, rsa->n, keyid, size);
-}
-
 static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval func,
 								   void *uservoid,
 								   struct logger *logger)
@@ -371,33 +350,45 @@ static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval f
 	     !PRIVKEY_LIST_END(node, list);
 	     node = PRIVKEY_LIST_NEXT(node)) {
 
-		if (SECKEY_GetPrivateKeyType(node->key) != rsaKey) {
-			/* only rsa for now */
+		SECKEYPrivateKey *private_key = node->key;
+
+		/*
+		 * XXX: this code has a lot in common with secrets.c
+		 * which also creates private-key-stuff.
+		 */
+
+		/* XXX: see also private_key_type_nss(pubk); */
+		const struct pubkey_type *type;
+		switch (SECKEY_GetPrivateKeyType(private_key)) {
+		case rsaKey:
+			type = &pubkey_type_rsa;
+			break;
+		case ecKey:
+			type = &pubkey_type_ecdsa;
+			break;
+		default:
+			continue;
+		}
+
+		SECItem *ckaid_nss = PK11_GetLowLevelKeyIDForPrivateKey(node->key); /* must free */
+		if (ckaid_nss == NULL) {
+			continue;
+		}
+
+		SECKEYPublicKey *pubk = SECKEY_ConvertToPublicKey(node->key);
+		if (pubk == NULL) {
 			continue;
 		}
 
 		struct private_key_stuff pks = {
-			.kind = PKK_RSA,
+			.pubkey_type = type,
+			.kind = type->private_key_kind,
+			.line = 0,
+			.private_key = SECKEY_CopyPrivateKey(private_key), /* add reference */
 		};
 
-		{
-			SECItem *nss_ckaid
-				= PK11_GetLowLevelKeyIDForPrivateKey(node->key);
-			if (nss_ckaid == NULL) {
-				// fprintf(stderr, "ckaid not found\n");
-				continue;
-			}
-			pks.ckaid = ckaid_from_secitem(nss_ckaid);
-			SECITEM_FreeItem(nss_ckaid, PR_TRUE);
-		}
-
-		{
-			SECKEYPublicKey *pubkey = SECKEY_ConvertToPublicKey(node->key);
-			if (pubkey != NULL) {
-				fill_RSA_public_key(&pks.u.RSA_private_key.pub, &pks.keyid, &pks.size, pubkey);
-				SECKEY_DestroyPublicKey(pubkey);
-			}
-		}
+		type->extract_private_key_pubkey_content(&pks, &pks.keyid, &pks.ckaid, &pks.size,
+							 pubk, ckaid_nss);
 
 		/*
 		 * Only count private keys that get processed.
@@ -423,8 +414,7 @@ static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval f
 			break;
 		}
 
-		free_chunk_content(&pks.u.RSA_private_key.pub.e);
-		free_chunk_content(&pks.u.RSA_private_key.pub.n);
+		type->free_secret_content(&pks);
 
 		if (ret < 0) {
 			break;
