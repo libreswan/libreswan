@@ -48,11 +48,12 @@
 #include "crl_queue.h"		/* for free_crl_queue() */
 #include "iface.h"		/* for free_ifaces() */
 #include "kernel.h"		/* for kernel_ops.shutdown() */
-#include "virtual.h"		/* free_virtual_ip() */
-#include "server.h"		/* free_server() */
+#include "virtual.h"		/* for free_virtual_ip() */
+#include "server.h"		/* for free_server() */
 #ifdef USE_DNSSEC
 #include "dnssec.h"		/* for unbound_ctx_free() */
 #endif
+#include "demux.h"		/* for free_demux() */
 
 volatile bool exiting_pluto = false;
 
@@ -141,6 +142,7 @@ void exit_pluto(enum pluto_exit_code status)
 	delete_lock();	/* delete any lock files */
 	free_virtual_ip();	/* virtual_private= */
 	free_server(); /* no libevent evnts beyond this point */
+	free_demux();
 	free_pluto_main();	/* our static chars */
 
 #ifdef USE_DNSSEC

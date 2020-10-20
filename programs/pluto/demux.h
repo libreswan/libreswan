@@ -243,4 +243,6 @@ extern void lswlog_msg_digest(struct jambuf *log, const struct msg_digest *md);
  */
 #define release_any_md(MDP) md_delref(MDP, HERE)
 
+void free_demux(void);
+
 #endif /* _DEMUX_H */

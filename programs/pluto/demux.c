@@ -426,6 +426,14 @@ static bool impair_incoming(struct msg_digest *md)
 	return impaired;
 }
 
+void free_demux(void)
+{
+	struct replay_entry *e = NULL;
+	FOR_EACH_LIST_ENTRY_NEW2OLD(&replay_packets, e) {
+		md_delref(&e->md, HERE);
+	}
+}
+
 static callback_cb handle_md_event; /* type assertion */
 static void handle_md_event(struct state *st, void *context)
 {
