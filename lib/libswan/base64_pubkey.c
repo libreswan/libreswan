@@ -178,7 +178,9 @@ err_t pack_RSA_public_key(const struct RSA_public_key *rsa, chunk_t *rr)
 }
 #endif
 
-err_t unpack_RSA_public_key(struct RSA_public_key *rsa, keyid_t *keyid, const chunk_t *pubkey)
+err_t unpack_RSA_public_key(struct RSA_public_key *rsa,
+			    keyid_t *keyid, ckaid_t *ckaid,
+			    const chunk_t *pubkey)
 {
 	/* unpack */
 	chunk_t exponent;
@@ -188,8 +190,7 @@ err_t unpack_RSA_public_key(struct RSA_public_key *rsa, keyid_t *keyid, const ch
 		return rrerr;
 	}
 
-	ckaid_t ckaid;
-	err_t ckerr = form_ckaid_rsa(modulus, &ckaid);
+	err_t ckerr = form_ckaid_rsa(modulus, ckaid);
 	if (ckerr != NULL) {
 		return ckerr;
 	}
@@ -202,7 +203,6 @@ err_t unpack_RSA_public_key(struct RSA_public_key *rsa, keyid_t *keyid, const ch
 	rsa->k = modulus.len;
 	rsa->e = clone_hunk(exponent, "e");
 	rsa->n = clone_hunk(modulus, "n");
-	rsa->ckaid = ckaid;
 
 	/* generate the CKAID */
 
@@ -211,23 +211,25 @@ err_t unpack_RSA_public_key(struct RSA_public_key *rsa, keyid_t *keyid, const ch
 		DBG_log("keyid: *%s", str_keyid(*keyid));
 		DBG_dump_hunk("  n", rsa->n);
 		DBG_dump_hunk("  e", rsa->e);
-		DBG_dump_hunk("  CKAID", rsa->ckaid);
+		DBG_dump_hunk("  CKAID", *ckaid);
 	}
 
 	return NULL;
 }
 
-err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa, keyid_t *keyid, const chunk_t *pubkey)
+err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa,
+			      keyid_t *keyid, ckaid_t *ckaid,
+			      const chunk_t *pubkey)
 {
 	err_t e;
 
-	e = form_ckaid_ecdsa(*pubkey, &ecdsa->ckaid);
+	e = form_ckaid_ecdsa(*pubkey, ckaid);
 	if (e != NULL) {
 		return e;
 	}
 
 	/* use the ckaid since that digested the entire pubkey */
-	e = keyblob_to_keyid(ecdsa->ckaid.ptr, ecdsa->ckaid.len, keyid);
+	e = keyblob_to_keyid(ckaid->ptr, ckaid->len, keyid);
 	if (e != NULL) {
 		return e;
 	}
@@ -240,7 +242,7 @@ err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa, keyid_t *keyid, co
 		DBG_log("keyid: *%s", str_keyid(*keyid));
 		DBG_log("  k: %d", ecdsa->k);
 		DBG_dump_hunk("  pub", ecdsa->pub);
-		DBG_dump_hunk("  CKAID", ecdsa->ckaid);
+		DBG_dump_hunk("  CKAID", *ckaid);
 	}
 
        return NULL;

@@ -140,7 +140,7 @@ static void print(struct private_key_stuff *pks,
 			printf(" id: %s", idb);
 		}
 		ckaid_buf cb;
-		ckaid_t *ckaid = &pks->u.RSA_private_key.pub.ckaid;
+		ckaid_t *ckaid = &pks->ckaid;
 		printf(" ckaid: %s\n", str_ckaid(ckaid, &cb));
 		break;
 	}
@@ -223,7 +223,7 @@ static int pick_by_ckaid(struct secret *secret UNUSED,
 			 void *uservoid)
 {
 	char *start = (char *)uservoid;
-	if (pks->kind == PKK_RSA && ckaid_starts_with(&pks->u.RSA_private_key.pub.ckaid, start)) {
+	if (pks->kind == PKK_RSA && ckaid_starts_with(&pks->ckaid, start)) {
 		/* stop */
 		return 0;
 	} else {
@@ -386,7 +386,7 @@ static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval f
 				// fprintf(stderr, "ckaid not found\n");
 				continue;
 			}
-			pks.u.RSA_private_key.pub.ckaid = ckaid_from_secitem(nss_ckaid);
+			pks.ckaid = ckaid_from_secitem(nss_ckaid);
 			SECITEM_FreeItem(nss_ckaid, PR_TRUE);
 		}
 

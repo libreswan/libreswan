@@ -199,9 +199,11 @@ void form_keyid(chunk_t e, chunk_t n, keyid_t *keyid, unsigned *keysize)
 	*keysize = n.len;
 }
 
-static err_t RSA_unpack_pubkey_content(union pubkey_content *u, keyid_t *keyid, chunk_t pubkey)
+static err_t RSA_unpack_pubkey_content(union pubkey_content *u,
+				       keyid_t *keyid, ckaid_t *ckaid,
+				       chunk_t pubkey)
 {
-	return unpack_RSA_public_key(&u->rsa, keyid, &pubkey);
+	return unpack_RSA_public_key(&u->rsa, keyid, ckaid, &pubkey);
 }
 
 static void RSA_free_public_content(struct RSA_public_key *rsa)
@@ -216,7 +218,7 @@ static void RSA_free_pubkey_content(union pubkey_content *u)
 }
 
 static void RSA_extract_public_key(struct RSA_public_key *pub,
-				   keyid_t *keyid,
+				   keyid_t *keyid, ckaid_t *ckaid,
 				   SECKEYPublicKey *pubk,
 				   SECItem *cert_ckaid)
 {
@@ -224,25 +226,25 @@ static void RSA_extract_public_key(struct RSA_public_key *pub,
 					   pubk->u.rsa.publicExponent.len, "e");
 	pub->n = clone_bytes_as_chunk(pubk->u.rsa.modulus.data,
 					   pubk->u.rsa.modulus.len, "n");
-	pub->ckaid = ckaid_from_secitem(cert_ckaid);
+	*ckaid = ckaid_from_secitem(cert_ckaid);
 	form_keyid(pub->e, pub->n, keyid, &pub->k);
 }
 
 static void RSA_extract_pubkey_content(union pubkey_content *pkc,
-				       keyid_t *keyid,
+				       keyid_t *keyid, ckaid_t *ckaid,
 				       SECKEYPublicKey *pubkey_nss,
 				       SECItem *ckaid_nss)
 {
-	RSA_extract_public_key(&pkc->rsa, keyid, pubkey_nss, ckaid_nss);
+	RSA_extract_public_key(&pkc->rsa, keyid, ckaid, pubkey_nss, ckaid_nss);
 }
 
 static void RSA_extract_private_key_pubkey_content(struct private_key_stuff *pks,
-						   keyid_t *keyid,
+						   keyid_t *keyid, ckaid_t *ckaid,
 						   SECKEYPublicKey *pubkey_nss,
 						   SECItem *ckaid_nss)
 {
 	struct RSA_private_key *rsak = &pks->u.RSA_private_key;
-	RSA_extract_public_key(&rsak->pub, keyid, pubkey_nss, ckaid_nss);
+	RSA_extract_public_key(&rsak->pub, keyid, ckaid, pubkey_nss, ckaid_nss);
 }
 
 static void RSA_free_secret_content(struct private_key_stuff *pks)
@@ -333,11 +335,6 @@ static struct hash_signature RSA_sign_hash(const struct private_key_stuff *pks,
 	return sig;
 }
 
-static const ckaid_t *RSA_ckaid_from_pubkey_content(const union pubkey_content *pkc)
-{
-	return &pkc->rsa.ckaid;
-}
-
 const struct pubkey_type pubkey_type_rsa = {
 	.alg = PUBKEY_ALG_RSA,
 	.name = "RSA",
@@ -349,12 +346,13 @@ const struct pubkey_type pubkey_type_rsa = {
 	.free_secret_content = RSA_free_secret_content,
 	.secret_sane = RSA_secret_sane,
 	.sign_hash = RSA_sign_hash,
-	.ckaid_from_pubkey_content = RSA_ckaid_from_pubkey_content,
 };
 
-static err_t ECDSA_unpack_pubkey_content(union pubkey_content *u, keyid_t *keyid, chunk_t pubkey)
+static err_t ECDSA_unpack_pubkey_content(union pubkey_content *u,
+					 keyid_t *keyid, ckaid_t *ckaid,
+					 chunk_t pubkey)
 {
-	return unpack_ECDSA_public_key(&u->ecdsa, keyid, &pubkey);
+	return unpack_ECDSA_public_key(&u->ecdsa, keyid, ckaid, &pubkey);
 }
 
 static void ECDSA_free_public_content(struct ECDSA_public_key *ecdsa)
@@ -375,14 +373,15 @@ static void ECDSA_free_pubkey_content(union pubkey_content *u)
 	ECDSA_free_public_content(&u->ecdsa);
 }
 
-static void ECDSA_extract_public_key(struct ECDSA_public_key *pub, keyid_t *keyid,
+static void ECDSA_extract_public_key(struct ECDSA_public_key *pub,
+				     keyid_t *keyid, ckaid_t *ckaid,
 				     SECKEYPublicKey *pubkey_nss,
 				     SECItem *ckaid_nss)
 {
 	pub->pub = clone_secitem_as_chunk(pubkey_nss->u.ec.publicValue, "ECDSA pub");
 	pub->ecParams = clone_secitem_as_chunk(pubkey_nss->u.ec.DEREncodedParams, "ECDSA ecParams");
 	pub->k = pubkey_nss->u.ec.publicValue.len;
-	pub->ckaid = ckaid_from_secitem(ckaid_nss);
+	*ckaid = ckaid_from_secitem(ckaid_nss);
 	/* keyid */
 	err_t e = keyblob_to_keyid(pubkey_nss->u.ec.publicValue.data,
 				   pubkey_nss->u.ec.publicValue.len, keyid);
@@ -397,20 +396,20 @@ static void ECDSA_extract_public_key(struct ECDSA_public_key *pub, keyid_t *keyi
 }
 
 static void ECDSA_extract_pubkey_content(union pubkey_content *pkc,
-					 keyid_t *keyid,
+					 keyid_t *keyid, ckaid_t *ckaid,
 					 SECKEYPublicKey *pubkey_nss,
 					 SECItem *ckaid_nss)
 {
-	ECDSA_extract_public_key(&pkc->ecdsa, keyid, pubkey_nss, ckaid_nss);
+	ECDSA_extract_public_key(&pkc->ecdsa, keyid, ckaid, pubkey_nss, ckaid_nss);
 }
 
 static void ECDSA_extract_private_key_pubkey_content(struct private_key_stuff *pks,
-						     keyid_t *keyid,
+						     keyid_t *keyid, ckaid_t *ckaid,
 						     SECKEYPublicKey *pubkey_nss,
 						     SECItem *ckaid_nss)
 {
 	struct ECDSA_private_key *ecdsak = &pks->u.ECDSA_private_key;
-	ECDSA_extract_public_key(&ecdsak->pub, keyid, pubkey_nss, ckaid_nss);
+	ECDSA_extract_public_key(&ecdsak->pub, keyid, ckaid, pubkey_nss, ckaid_nss);
 }
 
 static void ECDSA_free_secret_content(struct private_key_stuff *pks)
@@ -492,11 +491,6 @@ static struct hash_signature ECDSA_sign_hash(const struct private_key_stuff *pks
 	return signature;
 }
 
-static const ckaid_t *ECDSA_ckaid_from_pubkey_content(const union pubkey_content *pkc)
-{
-	return &pkc->ecdsa.ckaid;
-}
-
 const struct pubkey_type pubkey_type_ecdsa = {
 	.alg = PUBKEY_ALG_ECDSA,
 	.name = "ECDSA",
@@ -508,7 +502,6 @@ const struct pubkey_type pubkey_type_ecdsa = {
 	.secret_sane = ECDSA_secret_sane,
 	.sign_hash = ECDSA_sign_hash,
 	.extract_pubkey_content = ECDSA_extract_pubkey_content,
-	.ckaid_from_pubkey_content = ECDSA_ckaid_from_pubkey_content,
 };
 
 const struct pubkey_type *pubkey_alg_type(enum pubkey_alg alg)
@@ -542,20 +535,13 @@ const keyid_t *pubkey_keyid(const struct pubkey *pk)
 
 const ckaid_t *pubkey_ckaid(const struct pubkey *pk)
 {
-	return pk->type->ckaid_from_pubkey_content(&pk->u);
+	return &pk->ckaid;
 }
 
 const ckaid_t *secret_ckaid(const struct secret *secret)
 {
 	if (secret->pks.pubkey_type != NULL) {
-		switch (secret->pks.pubkey_type->alg) {
-		case PUBKEY_ALG_RSA:
-			return &secret->pks.u.RSA_private_key.pub.ckaid;
-		case PUBKEY_ALG_ECDSA:
-			return &secret->pks.u.ECDSA_private_key.pub.ckaid;
-		default:
-			bad_case(secret->pks.pubkey_type->alg);
-		}
+		return &secret->pks.ckaid;
 	} else {
 		return NULL;
 	}
@@ -1182,7 +1168,7 @@ static err_t process_rsa_secret(struct file_lex_position *flp,
 	}
 
 	/* Finally, the CKAID */
-	err_t err = form_ckaid_rsa(rsak->pub.n, &rsak->pub.ckaid);
+	err_t err = form_ckaid_rsa(rsak->pub.n, &pks->ckaid);
 	if (err) {
 		/* let caller recover from mess */
 		return err;
@@ -1195,12 +1181,12 @@ static err_t process_rsa_secret(struct file_lex_position *flp,
 		return "NSS: has no internal slot ....";
 	}
 
-	SECItem nss_ckaid = same_ckaid_as_secitem(&rsak->pub.ckaid);
+	SECItem nss_ckaid = same_ckaid_as_secitem(&pks->ckaid);
 	SECKEYPrivateKey *private_key = PK11_FindKeyByKeyID(slot, &nss_ckaid,
 							    lsw_nss_get_password_context(flp->logger));
 	if (private_key == NULL) {
 		dbg("NSS: can't find the private key using the NSS CKAID");
-		CERTCertificate *cert = get_cert_by_ckaid_from_nss(&rsak->pub.ckaid,
+		CERTCertificate *cert = get_cert_by_ckaid_from_nss(&pks->ckaid,
 								   flp->logger);
 		if (cert == NULL) {
 			return "can't find the private key matching the NSS CKAID";
@@ -1709,7 +1695,7 @@ static struct pubkey *alloc_public_key(const struct id *id, /* ASKK */
 				       realtime_t install_time, realtime_t until_time,
 				       uint32_t ttl,
 				       const union pubkey_content *pkc,
-				       const keyid_t *keyid)
+				       const keyid_t *keyid, const ckaid_t *ckaid)
 {
 	struct pubkey pk = {
 		.u = *pkc,
@@ -1721,6 +1707,7 @@ static struct pubkey *alloc_public_key(const struct id *id, /* ASKK */
 		.dns_ttl = ttl,
 		.issuer = EMPTY_CHUNK,	/* raw keys have no issuer */
 		.keyid = *keyid,
+		.ckaid = *ckaid,
 	};
 	return clone_thing(pk, "raw public key");
 }
@@ -1737,14 +1724,15 @@ err_t add_public_key(const struct id *id, /* ASKK */
 	/* first: algorithm-specific decoding of key chunk */
 	union pubkey_content scratch_pkc;
 	keyid_t keyid;
-	err_t err = type->unpack_pubkey_content(&scratch_pkc, &keyid, *key);
+	ckaid_t ckaid;
+	err_t err = type->unpack_pubkey_content(&scratch_pkc, &keyid, &ckaid, *key);
 	if (err != NULL) {
 		return err;
 	}
 
 	*pubkey = alloc_public_key(id, dns_auth_level, type,
 				   install_time, until_time, ttl,
-				   &scratch_pkc, &keyid);
+				   &scratch_pkc, &keyid, &ckaid);
 	install_public_key(*pubkey, head);
 	return NULL;
 }
@@ -1785,7 +1773,7 @@ static err_t add_private_key(struct secret **secrets, const struct private_key_s
 	s->pks.line = 0;
 	/* make an unpacked copy of the private key */
 	s->pks.private_key = copy_private_key(private_key);
-	type->extract_private_key_pubkey_content(&s->pks, &s->pks.keyid,
+	type->extract_private_key_pubkey_content(&s->pks, &s->pks.keyid, &s->pks.ckaid,
 						 pubk, ckaid_nss);
 
 	err_t err = type->secret_sane(&s->pks);
@@ -1971,7 +1959,8 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 
 	union pubkey_content pkc;
 	keyid_t keyid;
-	type->extract_pubkey_content(&pkc, &keyid, pubkey_nss, ckaid_nss);
+	ckaid_t ckaid;
+	type->extract_pubkey_content(&pkc, &keyid, &ckaid, pubkey_nss, ckaid_nss);
 
 	realtime_t install_time = realnow();
 	realtime_t until_time;
@@ -1983,7 +1972,7 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 	}
 	*pk = alloc_public_key(id, /*dns_auth_level*/0/*default*/,
 			       type, install_time, until_time,
-			       /*ttl*/0, &pkc, &keyid);
+			       /*ttl*/0, &pkc, &keyid, &ckaid);
 	(*pk)->issuer = clone_secitem_as_chunk(cert->derIssuer, "der");
 	SECITEM_FreeItem(ckaid_nss, PR_TRUE);
 	return NULL;

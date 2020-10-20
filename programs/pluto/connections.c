@@ -851,23 +851,22 @@ static int extract_end(struct end *dst,
 				     err_buf, sizeof(err_buf), 0);
 		union pubkey_content pkc;
 		keyid_t pubkey;
-		err = type->unpack_pubkey_content(&pkc, &pubkey, chunk2(keyspace, keylen));
+		ckaid_t ckaid;
+		err = type->unpack_pubkey_content(&pkc, &pubkey, &ckaid, chunk2(keyspace, keylen));
 		if (err != NULL) {
 			log_message(RC_FATAL, logger,
 				    "failed to add connection: %s raw public key invalid: %s",
 				    dst->leftright, err);
 			return -1;
 		}
-		const ckaid_t *ckaid = type->ckaid_from_pubkey_content(&pkc);
 		ckaid_buf ckb;
 		dbg("saving %s CKAID %s extracted from raw %s public key",
-		    dst->leftright, str_ckaid(ckaid, &ckb), type->name);
-		dst->ckaid = clone_const_thing(*ckaid, "raw pubkey's ckaid");
+		    dst->leftright, str_ckaid(&ckaid, &ckb), type->name);
+		dst->ckaid = clone_const_thing(ckaid, "raw pubkey's ckaid");
 		type->free_pubkey_content(&pkc);
 		/* try to pre-load the private key */
 		bool load_needed;
-		err = preload_private_key_by_ckaid(type->ckaid_from_pubkey_content(&pkc),
-						   &load_needed, logger);
+		err = preload_private_key_by_ckaid(&ckaid, &load_needed, logger);
 		if (err != NULL) {
 			ckaid_buf ckb;
 			dbg("no private key matching %s CKAID %s: %s",

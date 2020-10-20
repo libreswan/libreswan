@@ -59,24 +59,6 @@ struct RSA_public_key {
 	 * difference.
 	 */
 	unsigned k;
-
-	/*
-	 * NSS's(?) idea of a unique ID for a public private key pair.
-	 * For RSA it is something like the SHA1 of the modulus.  It
-	 * replaces KEYID.
-	 *
-	 * This is the value returned by
-	 * PK11_GetLowLevelKeyIDForCert() or
-	 * PK11_GetLowLevelKeyIDForPrivateKey() (see
-	 * form_ckaid_nss()), or computed by brute force from the
-	 * modulus (see form_ckaid_rsa()).
-	 *
-	 * XXX: When support for ECC is added this may need to be
-	 * moved to "pubkey"; or ECC will need its own value.  Think
-	 * of moving it here from RSA_private_key as a first step.
-	 */
-	ckaid_t ckaid;
-
 	/* public: */
 	chunk_t n;	/* modulus: p * q */
 	chunk_t e;	/* exponent: relatively prime to (p-1) * (q-1) [probably small] */
@@ -90,7 +72,6 @@ struct ECDSA_public_key {
 	unsigned int k;
 	chunk_t ecParams;
 	chunk_t pub; /* publicValue */
-	ckaid_t ckaid;
 };
 
 struct ECDSA_private_key {
@@ -103,8 +84,12 @@ struct ECDSA_private_key {
 
 err_t rsa_pubkey_to_base64(chunk_t exponent, chunk_t modulus, char **rr);
 
-err_t unpack_RSA_public_key(struct RSA_public_key *rsa, keyid_t *keyid, const chunk_t *pubkey);
-err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa, keyid_t *keyid, const chunk_t *pubkey); /* ASKK */
+err_t unpack_RSA_public_key(struct RSA_public_key *rsa,
+			    keyid_t *keyid, ckaid_t *ckaid,
+			    const chunk_t *pubkey);
+err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa,
+			      keyid_t *keyid, ckaid_t *ckaid,
+			      const chunk_t *pubkey);
 
 struct private_key_stuff {
 	enum PrivateKeyKind kind;
@@ -127,6 +112,19 @@ struct private_key_stuff {
 	const struct pubkey_type *pubkey_type;
 	SECKEYPrivateKey *private_key;
 	keyid_t keyid;
+
+	/*
+	 * NSS's(?) idea of a unique ID for a public private key pair.
+	 * For RSA it is something like the SHA1 of the modulus.  It
+	 * replaces KEYID.
+	 *
+	 * This is the value returned by
+	 * PK11_GetLowLevelKeyIDForCert() or
+	 * PK11_GetLowLevelKeyIDForPrivateKey() (see
+	 * form_ckaid_nss()), or computed by brute force from the
+	 * modulus (see form_ckaid_rsa()).
+	 */
+	ckaid_t ckaid;
 };
 
 extern struct private_key_stuff *lsw_get_pks(struct secret *s);
@@ -165,10 +163,14 @@ struct pubkey_type {
 	enum pubkey_alg alg;
 	enum PrivateKeyKind private_key_kind;
 	void (*free_pubkey_content)(union pubkey_content *pkc);
-	err_t (*unpack_pubkey_content)(union pubkey_content *pkc, keyid_t *keyid, chunk_t key);
-	void (*extract_pubkey_content)(union pubkey_content *pkc, keyid_t *keyid,
+	err_t (*unpack_pubkey_content)(union pubkey_content *pkc,
+				       keyid_t *keyid, ckaid_t *ckaid,
+				       chunk_t key);
+	void (*extract_pubkey_content)(union pubkey_content *pkc,
+				       keyid_t *keyid, ckaid_t *ckaid,
 				       SECKEYPublicKey *pubkey_nss, SECItem *ckaid_nss);
-	void (*extract_private_key_pubkey_content)(struct private_key_stuff *pks, keyid_t *keyid,
+	void (*extract_private_key_pubkey_content)(struct private_key_stuff *pks,
+						   keyid_t *keyid, ckaid_t *ckaid,
 						   SECKEYPublicKey *pubk, SECItem *cert_ckaid);
 	void (*free_secret_content)(struct private_key_stuff *pks);
 	err_t (*secret_sane)(struct private_key_stuff *pks);
@@ -176,7 +178,6 @@ struct pubkey_type {
 					   const uint8_t *hash_octets, size_t hash_len,
 					   const struct hash_desc *hash_algo,
 					   struct logger *logger);
-	const ckaid_t *(*ckaid_from_pubkey_content)(const union pubkey_content *pkc);
 };
 
 extern const struct pubkey_type pubkey_type_rsa;
@@ -189,6 +190,7 @@ struct pubkey {
 	unsigned refcnt; /* reference counted! */
 	struct id id;
 	keyid_t keyid;	/* see ipsec_keyblobtoid(3) */
+	ckaid_t ckaid;
 	enum dns_auth_level dns_auth_level;
 	realtime_t installed_time;
 	realtime_t until_time;
