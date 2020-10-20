@@ -1731,7 +1731,7 @@ err_t add_public_key(const struct id *id, /* ASKK */
 		     realtime_t install_time, realtime_t until_time,
 		     uint32_t ttl,
 		     const chunk_t *key,
-		     const union pubkey_content **pkc,
+		     struct pubkey **pubkey,
 		     struct pubkey_list **head)
 {
 	/* first: algorithm-specific decoding of key chunk */
@@ -1742,11 +1742,10 @@ err_t add_public_key(const struct id *id, /* ASKK */
 		return err;
 	}
 
-	struct pubkey *pk = alloc_public_key(id, dns_auth_level, type,
-					     install_time, until_time, ttl,
-					     &scratch_pkc, &keyid);
-	install_public_key(pk, head);
-	*pkc = &pk->u;
+	*pubkey = alloc_public_key(id, dns_auth_level, type,
+				   install_time, until_time, ttl,
+				   &scratch_pkc, &keyid);
+	install_public_key(*pubkey, head);
 	return NULL;
 }
 

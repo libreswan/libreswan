@@ -229,7 +229,7 @@ err_t add_public_key(const struct id *id, /* ASKK */
 		     realtime_t install_time, realtime_t until_time,
 		     uint32_t ttl,
 		     const chunk_t *key,
-		     const union pubkey_content **pkc,
+		     struct pubkey **pubkey,
 		     struct pubkey_list **head);
 void replace_public_key(struct pubkey_list **pubkey_db, struct pubkey *pk);
 void delete_public_keys(struct pubkey_list **head,

@@ -321,12 +321,12 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 		DBG_dump_hunk(NULL, msg->keyval);
 
 		/* add the public key */
-		const union pubkey_content *pkc = NULL;
+		struct pubkey *pubkey = NULL;
 		err_t ugh = add_public_key(&keyid, PUBKEY_LOCAL, type,
 					   /*install_time*/realnow(),
 					   /*until_time*/realtime_epoch,
 					   /*ttl*/0,
-					   &msg->keyval, &pkc, &pluto_pubkeys);
+					   &msg->keyval, &pubkey, &pluto_pubkeys);
 		if (ugh != NULL) {
 			log_message(RC_LOG_SERIOUS, logger, "%s", ugh);
 			free_id_content(&keyid);
@@ -335,7 +335,7 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 
 		/* try to pre-load the private key */
 		bool load_needed;
-		const ckaid_t *ckaid = type->ckaid_from_pubkey_content(pkc);
+		const ckaid_t *ckaid = pubkey_ckaid(pubkey);
 		err_t err = preload_private_key_by_ckaid(ckaid, &load_needed, logger);
 		if (err != NULL) {
 			dbg("no private key: %s", err);
