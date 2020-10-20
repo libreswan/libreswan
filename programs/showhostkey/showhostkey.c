@@ -135,7 +135,7 @@ static void print(struct private_key_stuff *pks,
 	case PKK_RSA: {
 		printf("RSA");
 		keyid_t keyid = pks->keyid;
-		printf(" keyid: *%s", str_keyid(keyid)[0] ? str_keyid(keyid) : "<missing-pubkey>");
+		printf(" keyid: %s", str_keyid(keyid)[0] ? str_keyid(keyid) : "<missing-pubkey>");
 		if (id) {
 			printf(" id: %s", idb);
 		}
