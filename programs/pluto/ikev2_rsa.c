@@ -77,8 +77,7 @@ bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
 	}
 
 	/* XXX: merge ikev2_calculate_{rsa,ecdsa}_hash()? */
-	const struct RSA_private_key *k = &pks->u.RSA_private_key;
-	unsigned int sz = k->pub.k;
+	unsigned int sz = pks->size;
 
 	struct crypt_mac hash = v2_calculate_sighash(ike, idhash, hash_algo,
 						     LOCAL_PERSPECTIVE);
@@ -158,8 +157,8 @@ static err_t try_RSA_signature_v2(const struct crypt_mac *hash,
 		return "1" "no key available"; /* failure: no key to use */
 
 	/* decrypt the signature -- reversing RSA_sign_hash */
-	if (sig_len != k->k) {
-		loglog(RC_LOG_SERIOUS, "sig length %zu does not match pubkey length %d", sig_len, k->k);
+	if (sig_len != kr->size) {
+		loglog(RC_LOG_SERIOUS, "sig length %zu does not match pubkey length %zd", sig_len, kr->size);
 		return "1" "SIG length does not match public key length";
 	}
 

@@ -852,7 +852,9 @@ static int extract_end(struct end *dst,
 		union pubkey_content pkc;
 		keyid_t pubkey;
 		ckaid_t ckaid;
-		err = type->unpack_pubkey_content(&pkc, &pubkey, &ckaid, chunk2(keyspace, keylen));
+		size_t size;
+		err = type->unpack_pubkey_content(&pkc, &pubkey, &ckaid, &size,
+						  chunk2(keyspace, keylen));
 		if (err != NULL) {
 			log_message(RC_FATAL, logger,
 				    "failed to add connection: %s raw public key invalid: %s",

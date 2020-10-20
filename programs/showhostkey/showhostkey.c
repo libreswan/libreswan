@@ -336,12 +336,13 @@ static int show_confkey(struct private_key_stuff *pks,
  * Why not load the secret properly?
  */
 
-static void fill_RSA_public_key(struct RSA_public_key *rsa, keyid_t *keyid, SECKEYPublicKey *pubkey)
+static void fill_RSA_public_key(struct RSA_public_key *rsa, keyid_t *keyid, size_t *size,
+				SECKEYPublicKey *pubkey)
 {
 	passert(SECKEY_GetPublicKeyType(pubkey) == rsaKey);
 	rsa->e = clone_secitem_as_chunk(pubkey->u.rsa.publicExponent, "e");
 	rsa->n = clone_secitem_as_chunk(pubkey->u.rsa.modulus, "n");
-	form_keyid(rsa->e, rsa->n, keyid, &rsa->k);
+	form_keyid(rsa->e, rsa->n, keyid, size);
 }
 
 static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval func,
@@ -393,7 +394,7 @@ static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval f
 		{
 			SECKEYPublicKey *pubkey = SECKEY_ConvertToPublicKey(node->key);
 			if (pubkey != NULL) {
-				fill_RSA_public_key(&pks.u.RSA_private_key.pub, &pks.keyid, pubkey);
+				fill_RSA_public_key(&pks.u.RSA_private_key.pub, &pks.keyid, &pks.size, pubkey);
 				SECKEY_DestroyPublicKey(pubkey);
 			}
 		}

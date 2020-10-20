@@ -311,10 +311,7 @@ struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 		return (struct hash_signature) { .len = 0, }; /* failure: no key to use */
 	}
 
-	/* XXX: merge sign_hash_{RSA,ECDSA}()? */
-	const struct RSA_private_key *k = &pks->u.RSA_private_key;
-
-	size_t sz = k->pub.k;
+	size_t sz = pks->size;
 	struct hash_signature sig;
 	passert(RSA_MIN_OCTETS <= sz &&
 		4 + hash->len < sz &&
@@ -364,7 +361,7 @@ static err_t try_RSA_signature_v1(const struct crypt_mac *hash,
 	const struct RSA_public_key *k = &kr->u.rsa;
 
 	/* decrypt the signature -- reversing RSA_sign_hash */
-	if (sig_len != k->k) {
+	if (sig_len != kr->size) {
 		/* XXX notification: INVALID_KEY_INFORMATION */
 		return "1" "SIG length does not match public key length";
 	}

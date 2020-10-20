@@ -179,7 +179,7 @@ err_t pack_RSA_public_key(const struct RSA_public_key *rsa, chunk_t *rr)
 #endif
 
 err_t unpack_RSA_public_key(struct RSA_public_key *rsa,
-			    keyid_t *keyid, ckaid_t *ckaid,
+			    keyid_t *keyid, ckaid_t *ckaid, size_t *size,
 			    const chunk_t *pubkey)
 {
 	/* unpack */
@@ -200,7 +200,7 @@ err_t unpack_RSA_public_key(struct RSA_public_key *rsa,
 		return e;
 	}
 
-	rsa->k = modulus.len;
+	*size = modulus.len;
 	rsa->e = clone_hunk(exponent, "e");
 	rsa->n = clone_hunk(modulus, "n");
 
@@ -209,6 +209,7 @@ err_t unpack_RSA_public_key(struct RSA_public_key *rsa,
 	if (DBGP(DBG_BASE)) {
 		/* pubkey information isn't DBG_PRIVATE */
 		DBG_log("keyid: *%s", str_keyid(*keyid));
+		DBG_log("  size: %ju", *size);
 		DBG_dump_hunk("  n", rsa->n);
 		DBG_dump_hunk("  e", rsa->e);
 		DBG_dump_hunk("  CKAID", *ckaid);
@@ -218,7 +219,7 @@ err_t unpack_RSA_public_key(struct RSA_public_key *rsa,
 }
 
 err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa,
-			      keyid_t *keyid, ckaid_t *ckaid,
+			      keyid_t *keyid, ckaid_t *ckaid, size_t *size,
 			      const chunk_t *pubkey)
 {
 	err_t e;
@@ -234,13 +235,13 @@ err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa,
 		return e;
 	}
 
+	*size = pubkey->len;
 	ecdsa->pub = clone_hunk(*pubkey, "public value");
-	ecdsa->k = pubkey->len;
 
 	if (DBGP(DBG_BASE)) {
 		/* pubkey information isn't DBG_PRIVATE */
 		DBG_log("keyid: *%s", str_keyid(*keyid));
-		DBG_log("  k: %d", ecdsa->k);
+		DBG_log("  size: %ju", *size);
 		DBG_dump_hunk("  pub", ecdsa->pub);
 		DBG_dump_hunk("  CKAID", *ckaid);
 	}

@@ -43,22 +43,6 @@ struct hash_desc;
 struct cert;
 
 struct RSA_public_key {
-	/*
-	 * The "adjusted" length of modulus n in octets:
-	 * [RSA_MIN_OCTETS, RSA_MAX_OCTETS].
-	 *
-	 * According to form_keyid() this is the modulus length less
-	 * any leading byte added by DER encoding.
-	 *
-	 * The adjusted length is used in sign_hash() as the signature
-	 * length - wouldn't PK11_SignatureLen be better?
-	 *
-	 * The adjusted length is used in same_RSA_public_key() as
-	 * part of comparing two keys - but wouldn't that be
-	 * redundant?  The direct n==n test would pick up the
-	 * difference.
-	 */
-	unsigned k;
 	/* public: */
 	chunk_t n;	/* modulus: p * q */
 	chunk_t e;	/* exponent: relatively prime to (p-1) * (q-1) [probably small] */
@@ -69,7 +53,6 @@ struct RSA_private_key {
 };
 
 struct ECDSA_public_key {
-	unsigned int k;
 	chunk_t ecParams;
 	chunk_t pub; /* publicValue */
 };
@@ -85,10 +68,10 @@ struct ECDSA_private_key {
 err_t rsa_pubkey_to_base64(chunk_t exponent, chunk_t modulus, char **rr);
 
 err_t unpack_RSA_public_key(struct RSA_public_key *rsa,
-			    keyid_t *keyid, ckaid_t *ckaid,
+			    keyid_t *keyid, ckaid_t *ckaid, size_t *size,
 			    const chunk_t *pubkey);
 err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa,
-			      keyid_t *keyid, ckaid_t *ckaid,
+			      keyid_t *keyid, ckaid_t *ckaid, size_t *size,
 			      const chunk_t *pubkey);
 
 struct private_key_stuff {
@@ -111,6 +94,7 @@ struct private_key_stuff {
 	/* for PKI */
 	const struct pubkey_type *pubkey_type;
 	SECKEYPrivateKey *private_key;
+	size_t size;
 	keyid_t keyid;
 
 	/*
@@ -164,13 +148,13 @@ struct pubkey_type {
 	enum PrivateKeyKind private_key_kind;
 	void (*free_pubkey_content)(union pubkey_content *pkc);
 	err_t (*unpack_pubkey_content)(union pubkey_content *pkc,
-				       keyid_t *keyid, ckaid_t *ckaid,
+				       keyid_t *keyid, ckaid_t *ckaid, size_t *size,
 				       chunk_t key);
 	void (*extract_pubkey_content)(union pubkey_content *pkc,
-				       keyid_t *keyid, ckaid_t *ckaid,
+				       keyid_t *keyid, ckaid_t *ckaid, size_t *size,
 				       SECKEYPublicKey *pubkey_nss, SECItem *ckaid_nss);
 	void (*extract_private_key_pubkey_content)(struct private_key_stuff *pks,
-						   keyid_t *keyid, ckaid_t *ckaid,
+						   keyid_t *keyid, ckaid_t *ckaid, size_t *size,
 						   SECKEYPublicKey *pubk, SECItem *cert_ckaid);
 	void (*free_secret_content)(struct private_key_stuff *pks);
 	err_t (*secret_sane)(struct private_key_stuff *pks);
@@ -191,6 +175,7 @@ struct pubkey {
 	struct id id;
 	keyid_t keyid;	/* see ipsec_keyblobtoid(3) */
 	ckaid_t ckaid;
+	size_t size;
 	enum dns_auth_level dns_auth_level;
 	realtime_t installed_time;
 	realtime_t until_time;
@@ -237,7 +222,7 @@ void replace_public_key(struct pubkey_list **pubkey_db, struct pubkey *pk);
 void delete_public_keys(struct pubkey_list **head,
 			const struct id *id,
 			const struct pubkey_type *type);
-extern void form_keyid(chunk_t e, chunk_t n, keyid_t *keyid, unsigned *keysize);
+extern void form_keyid(chunk_t e, chunk_t n, keyid_t *keyid, size_t *keysize); /*XXX: make static? */
 
 extern struct pubkey *reference_key(struct pubkey *pk);
 extern void unreference_key(struct pubkey **pkp);

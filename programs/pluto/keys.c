@@ -823,15 +823,16 @@ void list_public_keys(struct show *s, bool utc, bool check_pub_keys)
 				SHOW_JAMBUF(RC_COMMENT, s, buf) {
 					jam_realtime(buf, key->installed_time, utc);
 					jam(buf, ", ");
+					/* XXX: drop switch */
 					switch (key->type->alg) {
 					case PUBKEY_ALG_RSA:
-						jam(buf, "%4d RSA Key *%s",
-						    8 * key->u.rsa.k,
+						jam(buf, "%4zd RSA Key *%s",
+						    8 * key->size,
 						    str_keyid(key->keyid));
 						break;
 					case PUBKEY_ALG_ECDSA:
-						jam(buf, "%4d ECDSA Key *%s",
-						    8 * key->u.ecdsa.k,
+						jam(buf, "%4zd ECDSA Key *%s",
+						    8 * key->size,
 						    str_keyid(key->keyid));
 						break;
 					default:
