@@ -112,14 +112,6 @@ err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa, const chunk_t *pub
 struct private_key_stuff {
 	enum PrivateKeyKind kind;
 	/*
-	 * Was this allocated on the heap and hence, should it be
-	 * freed (along with all members)?
-	 *
-	 * The old secrets file stuff passes around a pointer to a
-	 * cached structure so it shouldn't be freed.
-	 */
-	bool on_heap;
-	/*
 	 * This replaced "int lsw_secretlineno()", which assumes only
 	 * one file (no includes) and isn't applicable to NSS.  For
 	 * NSS it's the entry number.

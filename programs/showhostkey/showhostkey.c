@@ -377,7 +377,6 @@ static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval f
 
 		struct private_key_stuff pks = {
 			.kind = PKK_RSA,
-			.on_heap = TRUE,
 		};
 
 		{
