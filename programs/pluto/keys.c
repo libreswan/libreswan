@@ -827,12 +827,12 @@ void list_public_keys(struct show *s, bool utc, bool check_pub_keys)
 					case PUBKEY_ALG_RSA:
 						jam(buf, "%4d RSA Key *%s",
 						    8 * key->u.rsa.k,
-						    str_keyid(key->u.rsa.keyid));
+						    str_keyid(key->keyid));
 						break;
 					case PUBKEY_ALG_ECDSA:
 						jam(buf, "%4d ECDSA Key *%s",
 						    8 * key->u.ecdsa.k,
-						    str_keyid(key->u.ecdsa.keyid));
+						    str_keyid(key->keyid));
 						break;
 					default:
 						bad_case(key->type->alg);

@@ -43,8 +43,6 @@ struct hash_desc;
 struct cert;
 
 struct RSA_public_key {
-	keyid_t keyid;	/* see ipsec_keyblobtoid(3) */
-
 	/*
 	 * The "adjusted" length of modulus n in octets:
 	 * [RSA_MIN_OCTETS, RSA_MAX_OCTETS].
@@ -89,7 +87,6 @@ struct RSA_private_key {
 };
 
 struct ECDSA_public_key {
-	keyid_t keyid;
 	unsigned int k;
 	chunk_t ecParams;
 	chunk_t pub; /* publicValue */
@@ -106,8 +103,8 @@ struct ECDSA_private_key {
 
 err_t rsa_pubkey_to_base64(chunk_t exponent, chunk_t modulus, char **rr);
 
-err_t unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey);
-err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa, const chunk_t *pubkey); /* ASKK */
+err_t unpack_RSA_public_key(struct RSA_public_key *rsa, keyid_t *keyid, const chunk_t *pubkey);
+err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa, keyid_t *keyid, const chunk_t *pubkey); /* ASKK */
 
 struct private_key_stuff {
 	enum PrivateKeyKind kind;
@@ -129,6 +126,7 @@ struct private_key_stuff {
 	/* for PKI */
 	const struct pubkey_type *pubkey_type;
 	SECKEYPrivateKey *private_key;
+	keyid_t keyid;
 };
 
 extern struct private_key_stuff *lsw_get_pks(struct secret *s);
@@ -167,13 +165,11 @@ struct pubkey_type {
 	enum pubkey_alg alg;
 	enum PrivateKeyKind private_key_kind;
 	void (*free_pubkey_content)(union pubkey_content *pkc);
-	err_t (*unpack_pubkey_content)(union pubkey_content *pkc, chunk_t key);
-	void (*extract_pubkey_content)(union pubkey_content *pkc,
-				       SECKEYPublicKey *pubkey_nss,
-				       SECItem *ckaid_nss);
-	void (*extract_private_key_pubkey_content)(struct private_key_stuff *pks,
-						   SECKEYPublicKey *pubk,
-						   SECItem *cert_ckaid);
+	err_t (*unpack_pubkey_content)(union pubkey_content *pkc, keyid_t *keyid, chunk_t key);
+	void (*extract_pubkey_content)(union pubkey_content *pkc, keyid_t *keyid,
+				       SECKEYPublicKey *pubkey_nss, SECItem *ckaid_nss);
+	void (*extract_private_key_pubkey_content)(struct private_key_stuff *pks, keyid_t *keyid,
+						   SECKEYPublicKey *pubk, SECItem *cert_ckaid);
 	void (*free_secret_content)(struct private_key_stuff *pks);
 	err_t (*secret_sane)(struct private_key_stuff *pks);
 	struct hash_signature (*sign_hash)(const struct private_key_stuff *pks,
@@ -190,8 +186,9 @@ const struct pubkey_type *pubkey_alg_type(enum pubkey_alg alg);
 
 /* public key machinery */
 struct pubkey {
-	struct id id;
 	unsigned refcnt; /* reference counted! */
+	struct id id;
+	keyid_t keyid;	/* see ipsec_keyblobtoid(3) */
 	enum dns_auth_level dns_auth_level;
 	realtime_t installed_time;
 	realtime_t until_time;
