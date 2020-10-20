@@ -809,59 +809,36 @@ void list_public_keys(struct show *s, bool utc, bool check_pub_keys)
 
 	while (p != NULL) {
 		struct pubkey *key = p->key;
-
-		switch (key->type->alg) {
-		case PUBKEY_ALG_RSA:
-		case PUBKEY_ALG_ECDSA:
-		{
-			const char *check_expiry_msg = check_expiry(key->until_time,
-							PUBKEY_WARNING_INTERVAL,
-							TRUE);
-
-			if (!check_pub_keys ||
-			    !startswith(check_expiry_msg, "ok")) {
-				SHOW_JAMBUF(RC_COMMENT, s, buf) {
-					jam_realtime(buf, key->installed_time, utc);
-					jam(buf, ", ");
-					/* XXX: drop switch */
-					switch (key->type->alg) {
-					case PUBKEY_ALG_RSA:
-						jam(buf, "%4zd RSA Key *%s",
-						    8 * key->size,
-						    str_keyid(key->keyid));
-						break;
-					case PUBKEY_ALG_ECDSA:
-						jam(buf, "%4zd ECDSA Key *%s",
-						    8 * key->size,
-						    str_keyid(key->keyid));
-						break;
-					default:
-						bad_case(key->type->alg);
-					}
-					jam(buf, " (%s private key), until ",
-					    (lsw_has_private_rawkey(pluto_secrets, key) ? "has" : "no"));
-					jam_realtime(buf, key->until_time, utc);
-					jam(buf, " %s", check_expiry_msg);
-				}
-
-				/* XXX could be ikev2_idtype_names */
-				id_buf idb;
-
-				show_comment(s, "       %s '%s'",
-					     enum_show(&ike_idtype_names,
-						       key->id.kind),
-					     str_id(&key->id, &idb));
-
-				if (key->issuer.len > 0) {
-					dn_buf b;
-					show_comment(s, "       Issuer '%s'",
-						     str_dn(key->issuer, &b));
-				}
+		const char *check_expiry_msg = check_expiry(key->until_time,
+							    PUBKEY_WARNING_INTERVAL,
+							    TRUE);
+		if (!check_pub_keys ||
+		    !startswith(check_expiry_msg, "ok")) {
+			SHOW_JAMBUF(RC_COMMENT, s, buf) {
+				jam_realtime(buf, key->installed_time, utc);
+				jam(buf, ", ");
+				jam(buf, "%4zd %s Key %s",
+				    8 * key->size,
+				    key->type->name,
+				    str_keyid(key->keyid));
+				jam(buf, " (%s private key), until ",
+				    (lsw_has_private_rawkey(pluto_secrets, key) ? "has" : "no"));
+				jam_realtime(buf, key->until_time, utc);
+				jam(buf, " %s", check_expiry_msg);
 			}
-			break;
-		}
-		default:
-			dbg("ignoring key with unsupported alg %d", key->type->alg);
+
+			/* XXX could be ikev2_idtype_names */
+			id_buf idb;
+			show_comment(s, "       %s '%s'",
+				     enum_show(&ike_idtype_names,
+					       key->id.kind),
+				     str_id(&key->id, &idb));
+
+			if (key->issuer.len > 0) {
+				dn_buf b;
+				show_comment(s, "       Issuer '%s'",
+					     str_dn(key->issuer, &b));
+			}
 		}
 		p = p->next;
 	}
