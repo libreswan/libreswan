@@ -265,7 +265,7 @@ void connect_to_host_pair(struct connection *c)
 		if (hp == NULL) {
 			/* no suitable host_pair -- build one */
 			hp = alloc_thing(struct host_pair, "host_pair");
-			dbg("new hp@%p", hp);
+			dbg_alloc("hp", hp, HERE);
 			hp->magic = host_pair_magic;
 			hp->local = endpoint3(c->interface->protocol,
 					      &c->spd.this.host_addr,
@@ -350,7 +350,7 @@ void delete_oriented_hp(struct connection *c)
 		/* ??? must deal with this! */
 		passert(hp->pending == NULL);
 		remove_host_pair(hp);
-		dbg("free hp@%p", hp);
+		dbg_free("hp", hp, HERE);
 		pfree(hp);
 	}
 }
@@ -444,7 +444,7 @@ void update_host_pairs(struct connection *c)
 	if (hp->connections == NULL) {
 		passert(hp->pending == NULL); /* ??? must deal with this! */
 		del_hash_table_entry(&host_pairs, hp);
-		dbg("free hp@%p", hp);
+		dbg_free("hp", hp, HERE);
 		pfree(hp);
 	}
 }
