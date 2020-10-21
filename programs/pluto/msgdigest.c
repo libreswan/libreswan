@@ -37,15 +37,15 @@ struct msg_digest *alloc_md(const struct iface_port *ifp, const ip_endpoint *sen
 	return md;
 }
 
-struct msg_digest *clone_raw_md(struct msg_digest *md, const char *name)
+struct msg_digest *clone_raw_md(struct msg_digest *md, where_t where)
 {
-	struct msg_digest *clone = alloc_md(md->iface, &md->sender, HERE);
+	struct msg_digest *clone = alloc_md(md->iface, &md->sender, where);
 	clone->fake_clone = true;
 	clone->md_inception = threadtime_start();
 	/* packet_pbs ... */
 	size_t packet_size = pbs_room(&md->packet_pbs);
-	void *packet_bytes = clone_bytes(md->packet_pbs.start, packet_size, name);
-	init_pbs(&clone->packet_pbs, packet_bytes, packet_size, name);
+	void *packet_bytes = clone_bytes(md->packet_pbs.start, packet_size, "clone md");
+	init_pbs(&clone->packet_pbs, packet_bytes, packet_size, "clone md");
 	return clone;
 }
 
@@ -54,8 +54,7 @@ struct msg_digest *md_addref(struct msg_digest *md, where_t where)
 	return ref_add(md, where);
 }
 
-static void free_mdp(struct msg_digest **mdp,
-		     where_t where)
+static void free_mdp(struct msg_digest **mdp, where_t where)
 {
 	free_chunk_content(&(*mdp)->raw_packet);
 	free_logger(&(*mdp)->md_logger, where);
