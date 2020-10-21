@@ -774,7 +774,9 @@ struct logger *alloc_logger(void *object, const struct logger_object_vec *vec, w
 		.object_vec = vec,
 		.where = where,
 	};
-	return clone_thing(logger, "logger");
+	struct logger *l = clone_thing(logger, "logger");
+	dbg_alloc("alloc logger", l, where);
+	return l;
 }
 
 struct logger *clone_logger(const struct logger *stack)
@@ -811,7 +813,9 @@ struct logger *clone_logger(const struct logger *stack)
 		.object = clone_str(prefix, "heap logger prefix"),
 	};
 	/* and clone it */
-	return clone_thing(heap, "heap logger");
+	struct logger *l = clone_thing(heap, "heap logger");
+	dbg_alloc("clone logger", l, HERE);
+	return l;
 }
 
 struct logger *string_logger(struct fd *whackfd, where_t where, const char *fmt, ...)
@@ -838,11 +842,14 @@ struct logger *string_logger(struct fd *whackfd, where_t where, const char *fmt,
 		.object = clone_str(prefix, "string logger prefix"),
 	};
 	/* and clone it */
-	return clone_thing(logger, "string logger");
+	struct logger *l = clone_thing(logger, "string logger");
+	dbg_alloc("string logger", l, where);
+	return l;
 }
 
-void free_logger(struct logger **logp)
+void free_logger(struct logger **logp, where_t where)
 {
+	dbg_free("logger", *logp, where);
 	close_any(&(*logp)->global_whackfd);
 	close_any(&(*logp)->object_whackfd);
 	/*

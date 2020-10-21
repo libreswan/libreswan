@@ -1290,7 +1290,7 @@ void delete_state(struct state *st)
 	free_chunk_content(&st->st_no_ppk_auth);
 
 	pfreeany(st->sec_ctx);
-	free_logger(&st->st_logger);
+	free_logger(&st->st_logger, HERE);
 	messup(st);
 	pfree(st);
 }

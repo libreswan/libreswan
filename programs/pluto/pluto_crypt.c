@@ -598,7 +598,7 @@ void delete_cryptographic_continuation(struct state *st)
 			cn->pcrc_handler->cancelled_cb(&cn->pcrc_task);
 			pexpect(cn->pcrc_task == NULL); /* did their job */
 			/* free the heap space */
-			free_logger(&cn->logger);
+			free_logger(&cn->logger, HERE);
 			pfree(cn);
 		}
 	}
@@ -652,7 +652,7 @@ static stf_status handle_helper_answer(struct state *st,
 	}
 	pexpect(cn->pcrc_task == NULL); /* cross check - re-check */
 	/* now free up the continuation */
-	free_logger(&cn->logger);
+	free_logger(&cn->logger, HERE);
 	pfree(cn);
 	return status;
 }

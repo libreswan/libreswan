@@ -1564,7 +1564,12 @@ int main(int argc, char **argv)
 	 */
 	pluto_init_log(log_param);
 	struct logger global_logger = GLOBAL_LOGGER(null_fd);
-	free_logger(&logger);
+	/*
+	 * The string_logger() dbg_alloc() message went down a rabit
+	 * hole (aka the console) so fake one up here.
+	 */
+	dbg_alloc("logger", logger, HERE);
+	free_logger(&logger, HERE);
 	logger = &global_logger;
 
 	pluto_init_nss(oco->nssdir, logger);
