@@ -1,0 +1,20 @@
+Scaffolding test case for testing VPN system roles
+
+east and west use an include directory from OUTPUT/
+for *.conf and *.secrets. These files are generated
+by the System Role component. This ensures the test
+is as identical as possible to a real deployment,
+with the exception that this test uses ipsec.conf
+and ipsec.secrets that include from OUTPUT/hostname-ipsec.d/
+where as in production this is done against /etc/ipsec.d
+
+This example creates an west-east.conf file and a
+west-east.secrets file for each.
+
+In this case the connection is loaded with auto=ondemand
+and the test sends a ping to trigger and test for the tunnel.
+
+This test should work on namespaces as well as KVM/qemu.
+
+NOTE: if renaming this test, also rename the include links
+in the west/east configuration files.
