@@ -120,4 +120,8 @@ bool refcnt_delete(const char *what, const void *pointer,
 		ref_replace(O, NEW, FREE, here_);			\
 	}
 
+/* for code wanting to use refcnt for normal allocs */
+void dbg_alloc(const char *what, const void *pointer, where_t where);
+void dbg_free(const char *what, const void *pointer, where_t where);
+
 #endif
