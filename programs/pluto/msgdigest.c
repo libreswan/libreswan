@@ -42,7 +42,6 @@ struct msg_digest *clone_raw_md(struct msg_digest *md, const char *name)
 	struct msg_digest *clone = alloc_md(md->iface, &md->sender, HERE);
 	clone->fake_clone = true;
 	clone->md_inception = threadtime_start();
-	clone->md_logger = alloc_logger(md, &logger_message_vec, HERE);
 	/* packet_pbs ... */
 	size_t packet_size = pbs_room(&md->packet_pbs);
 	void *packet_bytes = clone_bytes(md->packet_pbs.start, packet_size, name);
