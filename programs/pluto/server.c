@@ -202,6 +202,8 @@ bool pluto_listen_udp = TRUE;
 bool pluto_listen_tcp = FALSE;
 
 enum ddos_mode pluto_ddos_mode = DDOS_AUTO; /* default to auto-detect */
+enum global_ikev1_policy pluto_ikev1_pol = GLOBAL_IKEv1_ACCEPT;
+
 #ifdef HAVE_SECCOMP
 enum seccomp_mode pluto_seccomp_mode = SECCOMP_DISABLED;
 #endif

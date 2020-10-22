@@ -358,11 +358,19 @@ static const struct keyword_enum_value kw_ocsp_method_values[] = {
 };
 static const struct keyword_enum_values kw_ocsp_method_list = VALUES_INITIALIZER(kw_ocsp_method_values);
 
+static const struct keyword_enum_value kw_global_ikev1_values[] = {
+	{ "accept",      GLOBAL_IKEv1_ACCEPT },
+	{ "reject",     GLOBAL_IKEv1_REJECT },
+	{ "drop",     GLOBAL_IKEv1_DROP },
+};
+static const struct keyword_enum_values kw_global_ikev1_list = VALUES_INITIALIZER(kw_global_ikev1_values);
+
 /* MASTER KEYWORD LIST
  * Note: this table is terminated by an entry with keyname == NULL.
  */
 
 const struct keyword_def ipsec_conf_keywords[] = {
+  { "ikev1-policy",  kv_config,  kt_enum,  KBF_GLOBAL_IKEv1,  &kw_global_ikev1_list, NULL, },
   { "interfaces",  kv_config,  kt_string,  KSF_INTERFACES, NULL, NULL, },
   { "curl-iface",  kv_config,  kt_string,  KSF_CURLIFACE, NULL, NULL, },
   { "curl-timeout",  kv_config,  kt_time,  KBF_CURLTIMEOUT, NULL, NULL, },

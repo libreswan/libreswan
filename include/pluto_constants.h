@@ -133,6 +133,12 @@ enum keyword_ocsp_method {
 	OCSP_METHOD_POST = 1, /* only POST */
 };
 
+enum global_ikev1_policy {
+	GLOBAL_IKEv1_ACCEPT = 0,
+	GLOBAL_IKEv1_REJECT = 1,
+	GLOBAL_IKEv1_DROP = 2,
+};
+
 /* corresponding name table is sd_action_names */
 enum sd_actions {
 	PLUTO_SD_EXIT = 1,

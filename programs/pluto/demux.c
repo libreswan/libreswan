@@ -180,6 +180,16 @@ void process_packet(struct msg_digest **mdp)
 		return;
 
 	case ISAKMP_MAJOR_VERSION: /* IKEv1 */
+		if (pluto_ikev1_pol == GLOBAL_IKEv1_DROP) {
+			log_md(RC_LOG, md, "ignoring IKEv1 packet as policy is set to silently drop all IKEv1 packets");
+			return;
+		}
+		if (pluto_ikev1_pol == GLOBAL_IKEv1_REJECT) {
+			log_md(RC_LOG, md, "rejecting IKEv1 packet as policy is set to reject all IKEv1 packets");
+			send_notification_from_md(md, INVALID_MAJOR_VERSION);
+			return;
+		}
+
 		if (vmin > ISAKMP_MINOR_VERSION) {
 			/* RFC2408 3.1 ISAKMP Header Format:
 			 *

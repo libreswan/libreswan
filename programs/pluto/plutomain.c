@@ -556,6 +556,8 @@ static const struct option long_opts[] = {
 	{ "seedbits\0<number>", required_argument, NULL, 'c' },
 	/* really an attribute type, not a value */
 	{ "ikev1-secctx-attr-type\0<number>", required_argument, NULL, 'w' },
+	{ "ikev1-reject\0", no_argument, NULL, 'k' },
+	{ "ikev1-drop\0", no_argument, NULL, 'l' },
 #ifdef HAVE_SECCOMP
 	{ "seccomp-enabled\0", no_argument, NULL, '3' },
 	{ "seccomp-tolerant\0", no_argument, NULL, '4' },
@@ -837,6 +839,13 @@ int main(int argc, char **argv)
 			secctx_attr_type = u;
 			continue;
 #endif
+		case 'k':	/* --ikev1-reject */
+			pluto_ikev1_pol = GLOBAL_IKEv1_REJECT;
+			continue;
+
+		case 'l':	/* --ikev1-drop */
+			pluto_ikev1_pol = GLOBAL_IKEv1_DROP;
+			continue;
 
 		case '0':	/* --nofork*/
 			fork_desired = FALSE;
@@ -1195,6 +1204,7 @@ int main(int argc, char **argv)
 			log_to_audit = cfg->setup.options[KBF_AUDIT_LOG];
 			pluto_drop_oppo_null = cfg->setup.options[KBF_DROP_OPPO_NULL];
 			pluto_ddos_mode = cfg->setup.options[KBF_DDOS_MODE];
+			pluto_ikev1_pol = cfg->setup.options[KBF_GLOBAL_IKEv1];
 #ifdef HAVE_SECCOMP
 			pluto_seccomp_mode = cfg->setup.options[KBF_SECCOMP];
 #endif
@@ -1824,11 +1834,13 @@ void show_setup_plutomain(struct show *s)
 	);
 
 	show_comment(s,
-		"ddos-cookies-threshold=%d, ddos-max-halfopen=%d, ddos-mode=%s",
+		"ddos-cookies-threshold=%d, ddos-max-halfopen=%d, ddos-mode=%s, ikev1-policy=%s",
 		pluto_ddos_threshold,
 		pluto_max_halfopen,
 		(pluto_ddos_mode == DDOS_AUTO) ? "auto" :
-			(pluto_ddos_mode == DDOS_FORCE_BUSY) ? "busy" : "unlimited");
+			(pluto_ddos_mode == DDOS_FORCE_BUSY) ? "busy" : "unlimited",
+		pluto_ikev1_pol == GLOBAL_IKEv1_ACCEPT ? "accept" :
+			pluto_ikev1_pol == GLOBAL_IKEv1_REJECT ? "reject" : "drop");
 
 	show_comment(s,
 		"ikebuf=%d, msg_errqueue=%s, crl-strict=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%d",
