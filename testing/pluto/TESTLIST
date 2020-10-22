@@ -1201,3 +1201,6 @@ kvmplutotest	ikev2-intermediate-02-psk		good
 
 # VPN System Roles - skip automated testing for now
 kvmplutotest	ikev2-systemrole-01			skiptest
+
+kvmplutotest	ikev1-policy-01-drop			good
+kvmplutotest	ikev1-policy-02-reject			good
