@@ -57,6 +57,8 @@ stf_status record_v2SK_message(struct pbs_out *msg,
 
 uint8_t build_ikev2_critical(bool impair);
 
+bool ikev2_collect_fragment(struct msg_digest *md, struct state *st);
+
 bool ikev2_decrypt_msg(struct state *st, struct msg_digest *md);
 
 struct ikev2_id build_v2_id_payload(const struct end *end, shunk_t *body,

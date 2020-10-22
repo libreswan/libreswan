@@ -821,6 +821,124 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
  * Since the fragmented packet is intended for ST (either an IKE or
  * CHILD SA), ST contains the fragments.
  */
+
+static bool ikev2_check_fragment(struct msg_digest *md, struct state *st)
+{
+	struct v2_incomming_fragments **frags = &st->st_v2_incomming[v2_msg_role(md)];
+	struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
+
+	/* ??? CLANG 3.5 thinks st might be NULL */
+	if (!(st->st_connection->policy & POLICY_IKE_FRAG_ALLOW)) {
+		dbg("discarding IKE encrypted fragment - fragmentation not allowed by local policy (ike_frag=no)");
+		return FALSE;
+	}
+
+	if (!(st->st_seen_fragmentation_supported)) {
+		dbg("discarding IKE encrypted fragment - remote never proposed fragmentation");
+		return FALSE;
+	}
+
+	dbg("received IKE encrypted fragment number '%u', total number '%u', next payload '%u'",
+	    skf->isaskf_number, skf->isaskf_total, skf->isaskf_np);
+
+	/*
+	 * Sanity check:
+	 * fragment number must be 1 or greater (not 0)
+	 * fragment number must be no greater than the total number of fragments
+	 * total number of fragments must be no more than MAX_IKE_FRAGMENTS
+	 * first fragment's next payload must not be ISAKMP_NEXT_v2NONE.
+	 * later fragments' next payload must be ISAKMP_NEXT_v2NONE.
+	 */
+	if (!(skf->isaskf_number != 0 &&
+	      skf->isaskf_number <= skf->isaskf_total &&
+	      skf->isaskf_total <= MAX_IKE_FRAGMENTS &&
+	      (skf->isaskf_number == 1) != (skf->isaskf_np == ISAKMP_NEXT_v2NONE)))
+	{
+		dbg("ignoring invalid IKE encrypted fragment");
+		return FALSE;
+	}
+
+	if (*frags == NULL) {
+		/* first fragment, so must be good */
+		return TRUE;
+	}
+
+	if (skf->isaskf_total != (*frags)->total) {
+		/*
+		 * total number of fragments changed.
+		 * Either this fragment is wrong or all the
+		 * stored fragments are wrong or superseded.
+		 * The only reason the other end would have
+		 * started over with a different number of fragments
+		 * is because it decided to ratchet down the packet size
+		 * (and thus increase total).
+		 * OK: skf->isaskf_total > i->total
+		 * Bad: skf->isaskf_total < i->total
+		 */
+		if (skf->isaskf_total > (*frags)->total) {
+			dbg("discarding saved fragments because this fragment has larger total");
+			free_v2_incomming_fragments(frags);
+			return TRUE;
+		} else {
+			dbg("ignoring odd IKE encrypted fragment (total shrank)");
+			return FALSE;
+		}
+	} else if ((*frags)->frags[skf->isaskf_number].cipher.ptr != NULL) {
+		/* retain earlier fragment with same index */
+		dbg("ignoring repeated IKE encrypted fragment");
+		return FALSE;
+	} else {
+		return TRUE;
+	}
+}
+
+bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
+{
+	struct v2_incomming_fragments **frags = &st->st_v2_incomming[v2_msg_role(md)];
+	struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
+	pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2SKF]->pbs;
+
+	if (!st->st_seen_fragmentation_supported) {
+		dbg(" fragments claiming to be from peer while peer did not signal fragmentation support - dropped");
+		return FALSE;
+	}
+
+	if (!ikev2_check_fragment(md, st)) {
+		return FALSE;
+	}
+
+	/* if receiving fragments, respond with fragments too */
+	if (!st->st_seen_fragments) {
+		st->st_seen_fragments = TRUE;
+		dbg(" updated IKE fragment state to respond using fragments without waiting for re-transmits");
+	}
+
+	/*
+	 * Since the fragment check above can result in all fragments
+	 * so-far being discarded; always check/fix frags.
+	 */
+	if ((*frags) == NULL) {
+		*frags = alloc_thing(struct v2_incomming_fragments, "incoming v2_ike_rfrags");
+		(*frags)->total = skf->isaskf_total;
+	}
+
+	passert(skf->isaskf_number < elemsof((*frags)->frags));
+	struct v2_incomming_fragment *frag = &(*frags)->frags[skf->isaskf_number];
+	passert(frag->cipher.ptr == NULL);
+	frag->iv = e_pbs->cur - md->packet_pbs.start;
+	frag->cipher = clone_bytes_as_chunk(md->packet_pbs.start,
+					    e_pbs->roof - md->packet_pbs.start,
+					    "incoming IKEv2 encrypted fragment");
+
+	if (skf->isaskf_number == 1) {
+		(*frags)->first_np = skf->isaskf_np;
+	}
+
+	passert((*frags)->count < (*frags)->total);
+	(*frags)->count++;
+	return (*frags)->count == (*frags)->total;
+}
+
 static bool ikev2_reassemble_fragments(struct state *st,
 				       struct msg_digest *md)
 {
