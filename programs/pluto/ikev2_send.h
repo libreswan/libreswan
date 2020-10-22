@@ -26,8 +26,9 @@ struct dh_desc;
 struct ike_sa;
 
 struct v2_incomming_fragment {
-	chunk_t cipher;
-	unsigned int iv;
+	chunk_t text;		/* cipher or plain - decrypt in place */
+	chunk_t plain;		/* read-only; points into cipher text */
+	size_t iv_offset;	/* into text */
 };
 
 struct v2_incomming_fragments {

@@ -567,8 +567,9 @@ stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 
 static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 						struct msg_digest *md,
-						chunk_t *chunk,
-						unsigned int iv)
+						chunk_t text,
+						chunk_t *plain,
+						size_t iv_offset)
 {
 	if (!ike->sa.hidden_variables.st_skeyid_calculated) {
 		endpoint_buf b;
@@ -579,7 +580,7 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 		return false;
 	}
 
-	uint8_t *wire_iv_start = chunk->ptr + iv;
+	uint8_t *wire_iv_start = text.ptr + iv_offset;
 	size_t wire_iv_size = ike->sa.st_oakley.ta_encrypt->wire_iv_size;
 	size_t integ_size = (encrypt_desc_is_aead(ike->sa.st_oakley.ta_encrypt)
 			     ? ike->sa.st_oakley.ta_encrypt->aead_tag_size
@@ -592,14 +593,14 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 	 * - at least one padding-length byte
 	 * - truncated integrity digest / tag
 	 */
-	uint8_t *payload_end = chunk->ptr + chunk->len;
+	uint8_t *payload_end = text.ptr + text.len;
 	if (payload_end < (wire_iv_start + wire_iv_size + 1 + integ_size)) {
 		libreswan_log("encrypted payload impossibly short (%tu)",
 			      payload_end - wire_iv_start);
 		return false;
 	}
 
-	uint8_t *auth_start = chunk->ptr;
+	uint8_t *auth_start = text.ptr;
 	uint8_t *enc_start = wire_iv_start + wire_iv_size;
 	uint8_t *integ_start = payload_end - integ_size;
 	size_t enc_size = integ_start - enc_start;
@@ -771,7 +772,7 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 	 * instance, sets them to random values.
 	 */
 	DBGF(DBG_CRYPT, "stripping %u octets as pad", padlen);
-	*chunk = chunk2(enc_start, enc_size - padlen);
+	*plain = chunk2(enc_start, enc_size - padlen);
 
 	/*
 	 * For Intermediate Exchange, apply PRF to the peer's messages and store in state for
@@ -886,7 +887,7 @@ static bool ikev2_check_fragment(struct msg_digest *md, struct ike_sa *ike)
 			dbg("ignoring odd IKE encrypted fragment (total shrank)");
 			return false;
 		}
-	} else if ((*frags)->frags[skf->isaskf_number].cipher.ptr != NULL) {
+	} else if ((*frags)->frags[skf->isaskf_number].text.ptr != NULL) {
 		/* retain earlier fragment with same index */
 		dbg("ignoring repeated IKE encrypted fragment");
 		return false;
@@ -927,11 +928,11 @@ bool ikev2_collect_fragment(struct msg_digest *md, struct ike_sa *ike)
 
 	passert(skf->isaskf_number < elemsof((*frags)->frags));
 	struct v2_incomming_fragment *frag = &(*frags)->frags[skf->isaskf_number];
-	passert(frag->cipher.ptr == NULL);
-	frag->iv = e_pbs->cur - md->packet_pbs.start;
-	frag->cipher = clone_bytes_as_chunk(md->packet_pbs.start,
-					    e_pbs->roof - md->packet_pbs.start,
-					    "incoming IKEv2 encrypted fragment");
+	passert(frag->text.ptr == NULL);
+	frag->iv_offset = e_pbs->cur - md->packet_pbs.start;
+	frag->text = clone_bytes_as_chunk(md->packet_pbs.start,
+					  e_pbs->roof - md->packet_pbs.start,
+					  "incoming IKEv2 encrypted fragment");
 
 	if (skf->isaskf_number == 1) {
 		(*frags)->first_np = skf->isaskf_np;
@@ -961,8 +962,6 @@ static bool ikev2_reassemble_fragments(struct ike_sa *ike,
 	struct v2_incomming_fragments **frags = &ike->sa.st_v2_incomming[v2_msg_role(md)];
 	passert(*frags != NULL);
 
-	chunk_t plain[MAX_IKE_FRAGMENTS + 1];
-	passert(elemsof(plain) == elemsof((*frags)->frags));
 	unsigned int size = 0;
 	for (unsigned i = 1; i <= (*frags)->total; i++) {
 		struct v2_incomming_fragment *frag = &(*frags)->frags[i];
@@ -971,15 +970,14 @@ static bool ikev2_reassemble_fragments(struct ike_sa *ike,
 		 * decrypt in-place.  After the decryption, PLAIN will
 		 * have been adjusted to just point at the data.
 		 */
-		plain[i] = frag->cipher;
-		if (!ikev2_verify_and_decrypt_sk_payload(ike, md,
-							 &plain[i], frag->iv)) {
+		if (!ikev2_verify_and_decrypt_sk_payload(ike, md, frag->text,
+							 &frag->plain, frag->iv_offset)) {
 			log_state(RC_LOG_SERIOUS, &ike->sa,
 				  "fragment %u of %u invalid", i, (*frags)->total);
 			free_v2_incomming_fragments(frags);
 			return false;
 		}
-		size += plain[i].len;
+		size += frag->plain.len;
 	}
 
 	/*
@@ -990,10 +988,11 @@ static bool ikev2_reassemble_fragments(struct ike_sa *ike,
 	md->raw_packet = alloc_chunk(size, "IKEv2 fragments buffer");
 	unsigned int offset = 0;
 	for (unsigned i = 1; i <= (*frags)->total; i++) {
-		passert(offset + plain[i].len <= size);
-		memcpy(md->raw_packet.ptr + offset, plain[i].ptr,
-		       plain[i].len);
-		offset += plain[i].len;
+		struct v2_incomming_fragment *frag = &(*frags)->frags[i];
+		passert(offset + frag->plain.len <= size);
+		memcpy(md->raw_packet.ptr + offset,
+		       frag->plain.ptr, frag->plain.len);
+		offset += frag->plain.len;
 	}
 
 	/*
@@ -1048,9 +1047,10 @@ bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md)
 
 		chunk_t c = chunk2(md->packet_pbs.start,
 				  e_pbs->roof - md->packet_pbs.start);
-		ok = ikev2_verify_and_decrypt_sk_payload(ike, md, &c,
+		chunk_t plain;
+		ok = ikev2_verify_and_decrypt_sk_payload(ike, md, c, &plain,
 							 e_pbs->cur - md->packet_pbs.start);
-		md->chain[ISAKMP_NEXT_v2SK]->pbs = same_chunk_as_in_pbs(c, "decrypted SK payload");
+		md->chain[ISAKMP_NEXT_v2SK]->pbs = same_chunk_as_in_pbs(plain, "decrypted SK payload");
 	}
 
 	dbg("#%lu ikev2 %s decrypt %s",

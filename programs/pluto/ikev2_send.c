@@ -651,7 +651,7 @@ void free_v2_incomming_fragments(struct v2_incomming_fragments **frags)
 	if (*frags != NULL) {
 		for (unsigned i = 0; i < elemsof((*frags)->frags); i++) {
 			struct v2_incomming_fragment *frag = &(*frags)->frags[i];
-			free_chunk_content(&frag->cipher);
+			free_chunk_content(&frag->text);
 		}
 		pfree(*frags);
 		*frags = NULL;
