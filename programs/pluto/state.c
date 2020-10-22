@@ -49,7 +49,7 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#include "xauth.h"		/* for xauth_cancel() */
+#include "xauth.h"		/* for pamauth_cancel() */
 #include "connections.h"	/* needs id.h */
 #include "state.h"
 #include "state_db.h"
@@ -1036,9 +1036,9 @@ void delete_state(struct state *st)
 		}
 	}
 
-#ifdef XAUTH_HAVE_PAM
-	if (st->st_xauth != NULL) {
-		xauth_pam_abort(st);
+#ifdef AUTH_HAVE_PAM
+	if (st->st_pamauth != NULL) {
+		pamauth_abort(st);
 	}
 #endif
 

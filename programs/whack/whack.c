@@ -783,7 +783,7 @@ static const struct option long_opts[] = {
 	PS("ikev2-propose", IKEV2_ALLOW), /* obsolete, map onto allow */
 
 	PS("allow-narrowing", IKEV2_ALLOW_NARROWING),
-#ifdef XAUTH_HAVE_PAM
+#ifdef AUTH_HAVE_PAM
 	PS("ikev2-pam-authorize", IKEV2_PAM_AUTHORIZE),
 #endif
 	PS("ikefrag-allow", IKE_FRAG_ALLOW),
@@ -2181,7 +2181,7 @@ int main(int argc, char **argv)
 			if (streq(optarg, "file")) {
 				msg.xauthby = XAUTHBY_FILE;
 				continue;
-#ifdef XAUTH_HAVE_PAM
+#ifdef AUTH_HAVE_PAM
 			} else if (streq(optarg, "pam")) {
 				msg.xauthby = XAUTHBY_PAM;
 				continue;

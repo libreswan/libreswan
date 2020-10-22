@@ -2526,9 +2526,9 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 				   MESSAGE_REQUEST);
 }
 
-#ifdef XAUTH_HAVE_PAM
+#ifdef AUTH_HAVE_PAM
 
-static xauth_callback_t ikev2_pam_continue;	/* type assertion */
+static pamauth_callback_t ikev2_pam_continue;	/* type assertion */
 
 static void ikev2_pam_continue(struct state *st,
 			       struct msg_digest *md,
@@ -2585,14 +2585,14 @@ static stf_status ikev2_start_pam_authorize(struct state *st)
 	const char *thatid = str_id(&st->st_connection->spd.that.id, &thatidb);
 	libreswan_log("IKEv2: [XAUTH]PAM method requested to authorize '%s'",
 		      thatid);
-	xauth_fork_pam_process(st,
+	auth_fork_pam_process(st,
 			       thatid, "password",
 			       "IKEv2",
 			       ikev2_pam_continue);
 	return STF_SUSPEND;
 }
 
-#endif /* XAUTH_HAVE_PAM */
+#endif /* AUTH_HAVE_PAM */
 
 /*
  *
@@ -3091,7 +3091,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 
 	free_chunk_content(&null_auth);
 
-#ifdef XAUTH_HAVE_PAM
+#ifdef AUTH_HAVE_PAM
 	if (st->st_connection->policy & POLICY_IKEV2_PAM_AUTHORIZE)
 		return ikev2_start_pam_authorize(st);
 #endif

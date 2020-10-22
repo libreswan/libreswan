@@ -1052,7 +1052,7 @@ static bool do_file_authentication(struct state *st, const char *name,
  * method to verify the user/password
  */
 
-static xauth_callback_t ikev1_xauth_callback;	/* type assertion */
+static pamauth_callback_t ikev1_xauth_callback;	/* type assertion */
 
 static void ikev1_xauth_callback(struct state *st,
 				 struct msg_digest *md UNUSED,
@@ -1146,8 +1146,8 @@ static void xauth_launch_authent(struct state *st,
 	/*
 	 * XAUTH somehow already in progress?
 	 */
-#ifdef XAUTH_HAVE_PAM
-	if (st->st_xauth != NULL)
+#ifdef AUTH_HAVE_PAM
+	if (st->st_pamauth != NULL)
 		return;
 #endif
 
@@ -1164,11 +1164,11 @@ static void xauth_launch_authent(struct state *st,
 	event_delete(EVENT_v1_SEND_XAUTH, st);
 
 	switch (st->st_connection->xauthby) {
-#ifdef XAUTH_HAVE_PAM
+#ifdef AUTH_HAVE_PAM
 	case XAUTHBY_PAM:
 		libreswan_log("XAUTH: PAM authentication method requested to authenticate user '%s'",
 			      arg_name);
-		xauth_fork_pam_process(st,
+		auth_fork_pam_process(st,
 				       arg_name, arg_password,
 				       "XAUTH",
 				       ikev1_xauth_callback);

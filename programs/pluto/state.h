@@ -344,8 +344,8 @@ struct state {
 	so_serial_t st_ike_pred;		/* IKEv2: replacing established IKE SA */
 	so_serial_t st_ipsec_pred;		/* replacing established IPsec SA */
 
-#ifdef XAUTH_HAVE_PAM
-	struct xauth *st_xauth;			/* per state xauth/pam thread */
+#ifdef AUTH_HAVE_PAM
+	struct pamauth *st_pamauth;		/* per state auth/pam thread */
 #endif
 
 	/*

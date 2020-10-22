@@ -420,10 +420,10 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		/* note: no md->st to clear */
 		break;
 
-#ifdef XAUTH_HAVE_PAM
+#ifdef AUTH_HAVE_PAM
 	case EVENT_PAM_TIMEOUT:
 		dbg("PAM thread timeout on state #%lu", st->st_serialno);
-		xauth_pam_abort(st);
+		pamauth_abort(st);
 		/*
 		 * Things get cleaned up when the PAM process exits.
 		 *

@@ -275,7 +275,7 @@ static const struct keyword_enum_values kw_remote_peer_type = VALUES_INITIALIZER
 
 static const struct keyword_enum_value kw_xauthby_list[] = {
 	{ "file",	XAUTHBY_FILE },
-#ifdef XAUTH_HAVE_PAM
+#ifdef AUTH_HAVE_PAM
 	{ "pam",	XAUTHBY_PAM },
 #endif
 	{ "alwaysok",	XAUTHBY_ALWAYSOK },

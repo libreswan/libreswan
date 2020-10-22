@@ -82,9 +82,9 @@ unsigned long pstats_ike_dpd_replied;
 unsigned long pstats_iketcp_started[2];
 unsigned long pstats_iketcp_stopped[2];
 unsigned long pstats_iketcp_aborted[2];
-unsigned long pstats_xauth_started;
-unsigned long pstats_xauth_stopped;
-unsigned long pstats_xauth_aborted;
+unsigned long pstats_pamauth_started;
+unsigned long pstats_pamauth_stopped;
+unsigned long pstats_pamauth_aborted;
 
 #define PLUTO_STAT(TYPE, NAMES, WHAT, FLOOR, ROOF)			\
 	static unsigned long pstats_##TYPE##_count[ROOF-FLOOR +1/*overflow*/]; \
@@ -426,9 +426,9 @@ void show_pluto_stats(struct show *s)
 	show_raw(s, "total.ike.traffic.in=%lu", pstats_ike_in_bytes);
 	show_raw(s, "total.ike.traffic.out=%lu", pstats_ike_out_bytes);
 
-	show_raw(s, "total.xauth.started=%lu", pstats_xauth_started);
-	show_raw(s, "total.xauth.stopped=%lu", pstats_xauth_stopped);
-	show_raw(s, "total.xauth.aborted=%lu", pstats_xauth_aborted);
+	show_raw(s, "total.pamauth.started=%lu", pstats_pamauth_started);
+	show_raw(s, "total.pamauth.stopped=%lu", pstats_pamauth_stopped);
+	show_raw(s, "total.pamauth.aborted=%lu", pstats_pamauth_aborted);
 
 	show_raw(s, "total.iketcp.client.started=%lu", pstats_iketcp_started[false]);
 	show_raw(s, "total.iketcp.client.stopped=%lu", pstats_iketcp_stopped[false]);
@@ -491,7 +491,7 @@ void clear_pluto_stats(void)
 	pstats_ipsec_encap_yes = pstats_ipsec_encap_no = 0;
 	pstats_ipsec_esn = pstats_ipsec_tfc = 0;
 	pstats_ike_dpd_recv = pstats_ike_dpd_sent = pstats_ike_dpd_replied = 0;
-	pstats_xauth_started = pstats_xauth_stopped = pstats_xauth_aborted = 0;
+	pstats_pamauth_started = pstats_pamauth_stopped = pstats_pamauth_aborted = 0;
 
 	memset(pstats_iketcp_started, 0, sizeof(pstats_iketcp_started));
 	memset(pstats_iketcp_stopped, 0, sizeof(pstats_iketcp_stopped));

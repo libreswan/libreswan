@@ -27,7 +27,7 @@
     USE_NSS_IPSEC_PROFILE=true \\\
     USE_NSS_KDF=false \\\
     USE_SECCOMP=true \\\
-    USE_XAUTHPAM=true \\\
+    USE_AUTHPAM=true \\\
     USE_XFRM_INTERFACE_IFLA_HEADER=true \\\
 %{nil}
 #global prever rc1

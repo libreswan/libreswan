@@ -30,7 +30,7 @@
     USE_NSS_KDF=false \\\
     USE_OLD_SELINUX=true \\\
     USE_SECCOMP=false \\\
-    USE_XAUTHPAM=true \\\
+    USE_AUTHPAM=true \\\
     USE_XFRM_INTERFACE_IFLA_HEADER=true \\\
 %{nil}
 

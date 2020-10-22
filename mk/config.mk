@@ -621,12 +621,11 @@ endif
 # Link with -lrt (only for glibc versions before 2.17)
 RT_LDFLAGS ?= -lrt
 
-# include PAM support for XAUTH when available on the platform
-
-USE_XAUTHPAM?=true
-ifeq ($(USE_XAUTHPAM),true)
-USERLAND_CFLAGS += -DXAUTH_HAVE_PAM
-XAUTHPAM_LDFLAGS ?= -lpam
+# include PAM support for IKEv1 XAUTH and IKE2 pam-authorize when available on the platform
+USE_AUTHPAM ?= true
+ifeq ($(USE_AUTHPAM),true)
+USERLAND_CFLAGS += -DAUTH_HAVE_PAM
+AUTHPAM_LDFLAGS ?= -lpam
 endif
 
 #

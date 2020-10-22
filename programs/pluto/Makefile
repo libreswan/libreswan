@@ -109,11 +109,12 @@ OBJS += addresspool.o
 OBJS += ikev1_xauth.o
 USERLAND_LDFLAGS += $(CRYPT_LDFLAGS)
 
-ifeq ($(USE_XAUTHPAM),true)
+ifeq ($(USE_AUTHPAM),true)
+# xauth.c is due for a rename, as it is used for IKEv1 XAUTH and IKEv2 pam-autorize
 OBJS += xauth.o
 OBJS += pam_conv.o
 endif
-USERLAND_LDFLAGS += $(XAUTHPAM_LDFLAGS)
+USERLAND_LDFLAGS += $(AUTHPAM_LDFLAGS)
 
 
 # LABELED IPSEC support - requires SElinux

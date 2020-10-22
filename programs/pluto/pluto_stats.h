@@ -55,9 +55,9 @@ extern unsigned long pstats_iketcp_started[2];
 extern unsigned long pstats_iketcp_aborted[2];
 extern unsigned long pstats_iketcp_stopped[2];
 
-extern unsigned long pstats_xauth_started;
-extern unsigned long pstats_xauth_stopped;
-extern unsigned long pstats_xauth_aborted;
+extern unsigned long pstats_pamauth_started;
+extern unsigned long pstats_pamauth_stopped;
+extern unsigned long pstats_pamauth_aborted;
 
 extern void show_pluto_stats(struct show *s);
 extern void clear_pluto_stats(void);

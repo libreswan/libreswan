@@ -229,8 +229,8 @@ static const char compile_time_interop_options[] = ""
 #ifdef USE_LINUX_AUDIT
 	" LINUX_AUDIT"
 #endif
-#ifdef XAUTH_HAVE_PAM
-	" XAUTH_PAM"
+#ifdef AUTH_HAVE_PAM
+	" AUTH_PAM"
 #endif
 #ifdef HAVE_NM
 	" NETWORKMANAGER"
@@ -1718,7 +1718,7 @@ int main(int argc, char **argv)
 
 	libreswan_log("NSS crypto [enabled]");
 
-#ifdef XAUTH_HAVE_PAM
+#ifdef AUTH_HAVE_PAM
 	libreswan_log("XAUTH PAM support [enabled]");
 #else
 	libreswan_log("XAUTH PAM support [disabled]");

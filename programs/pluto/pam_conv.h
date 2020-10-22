@@ -15,7 +15,7 @@
  * Porting to 2.x by Sean Mathews
  */
 
-#ifdef XAUTH_HAVE_PAM
+#ifdef AUTH_HAVE_PAM
 struct pam_thread_arg {
 	char *name;
 	char *password;
@@ -28,4 +28,4 @@ struct pam_thread_arg {
 
 extern bool do_pam_authentication(struct pam_thread_arg *arg);
 
-#endif /* XAUTH_HAVE_PAM */
+#endif /* AUTH_HAVE_PAM */
