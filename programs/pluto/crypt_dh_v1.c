@@ -63,7 +63,7 @@ void start_dh_v1_secretiv(crypto_req_cont_func fn, const char *name,
 	const chunk_t *pss = get_connection_psk(st->st_connection, st->st_logger);
 
 	struct pluto_crypto_req_cont *dh = new_pcrc(fn, name);
-	struct pcr_v1_dh *const dhq = pcr_v1_dh_init(dh, pcr_compute_dh_iv);
+	struct pcr_v1_dh *const dhq = pcr_v1_dh_init(dh, pcr_compute_dh_iv_v1);
 
 	/* convert appropriate data to dhq */
 	dhq->auth = st->st_oakley.auth;
@@ -126,7 +126,7 @@ void start_dh_v1_secret(crypto_req_cont_func fn, const char *name,
 {
 	const chunk_t *pss = get_connection_psk(st->st_connection, st->st_logger);
 	struct pluto_crypto_req_cont *cn = new_pcrc(fn, name);
-	struct pcr_v1_dh *const dhq = pcr_v1_dh_init(cn, pcr_compute_dh);
+	struct pcr_v1_dh *const dhq = pcr_v1_dh_init(cn, pcr_compute_dh_v1);
 
 	/* convert appropriate data to dhq */
 	dhq->auth = st->st_oakley.auth;
@@ -158,7 +158,7 @@ void start_dh_v1_secret(crypto_req_cont_func fn, const char *name,
 
 /* NOTE: if NSS refuses to calculate DH, skr->shared == NULL */
 /* MUST BE THREAD-SAFE */
-void calc_dh(struct pcr_v1_dh *dh, struct logger *logger)
+void calc_dh_v1(struct pcr_v1_dh *dh, struct logger *logger)
 {
 	const struct dh_desc *group = dh->oakley_group;
 	passert(group != NULL);

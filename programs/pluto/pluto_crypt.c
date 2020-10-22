@@ -270,8 +270,8 @@ static void pcr_cancelled(struct crypto_task **task)
 	case pcr_compute_dh_v2:
 		cancelled_dh_v2(&r->pcr_d.dh_v2);
 		break;
-	case pcr_compute_dh_iv:
-	case pcr_compute_dh:
+	case pcr_compute_dh_iv_v1:
+	case pcr_compute_dh_v1:
 		cancelled_v1_dh(&r->pcr_d.v1_dh);
 		break;
 	case pcr_crypto:
@@ -360,12 +360,11 @@ static void pcr_compute(struct logger *logger,
 		calc_nonce(&r->pcr_d.kn);
 		break;
 
-	case pcr_compute_dh_iv:
+	case pcr_compute_dh_iv_v1:
 		calc_dh_iv(&r->pcr_d.v1_dh, logger);
 		break;
-
-	case pcr_compute_dh:
-		calc_dh(&r->pcr_d.v1_dh, logger);
+	case pcr_compute_dh_v1:
+		calc_dh_v1(&r->pcr_d.v1_dh, logger);
 		break;
 
 	case pcr_compute_dh_v2:

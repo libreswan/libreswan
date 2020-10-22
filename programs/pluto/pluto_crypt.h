@@ -85,8 +85,8 @@ enum pluto_crypto_requests {
 	pcr_crypto = 0,		/* using crypto_handler */
 	pcr_build_ke_and_nonce,	/* calculate g^i and generate a nonce */
 	pcr_build_nonce,	/* generate a nonce */
-	pcr_compute_dh_iv,	/* calculate (g^x)(g^y) and skeyids for Phase 1 DH + prf */
-	pcr_compute_dh,		/* calculate (g^x)(g^y) for Phase 2 PFS */
+	pcr_compute_dh_iv_v1,	/* calculate (g^x)(g^y) and skeyids for Phase 1 DH + prf */
+	pcr_compute_dh_v1,	/* calculate (g^x)(g^y) for Phase 2 PFS */
 	pcr_compute_dh_v2,	/* perform IKEv2 SA calculation, create SKEYSEED */
 };
 
@@ -378,7 +378,7 @@ extern void finish_dh_secret(struct state *st,
 			     struct pluto_crypto_req *r);
 
 /* internal */
-extern void calc_dh(struct pcr_v1_dh *dh, struct logger *logger);
+extern void calc_dh_v1(struct pcr_v1_dh *dh, struct logger *logger);
 extern void calc_dh_iv(struct pcr_v1_dh *dh, struct logger *logger);
 extern void cancelled_v1_dh(struct pcr_v1_dh *dh);
 
