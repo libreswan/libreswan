@@ -1227,7 +1227,7 @@ void connection_check_phase2(struct fd *whackfd)
 		    pri_connection(c, &cib));
 
 		if (pending_check_timeout(c)) {
-			struct state *p1st;
+			struct state *p1st = NULL;
 			ipstr_buf b;
 			char cib[CONN_INST_BUF];
 
@@ -1236,9 +1236,11 @@ void connection_check_phase2(struct fd *whackfd)
 				ipstr(&c->spd.that.host_addr, &b),
 				c->name, fmt_conn_instance(c, cib));
 
-			p1st = find_phase1_state(c,
+			if (LIN(POLICY_IKEV2_ALLOW, c->policy))
+				p1st = find_phase1_state(c, IKEV2_ISAKMP_INITIATOR_STATES);
+			else
+				p1st = find_phase1_state(c,
 						 ISAKMP_SA_ESTABLISHED_STATES |
-						 IKEV2_ISAKMP_INITIATOR_STATES |
 						 PHASE1_INITIATOR_STATES);
 
 			if (p1st != NULL) {
