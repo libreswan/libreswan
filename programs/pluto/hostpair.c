@@ -452,20 +452,26 @@ void update_host_pairs(struct connection *c)
 /* Adjust orientations of connections to reflect newly added interfaces. */
 void check_orientations(void)
 {
-	/* Try to orient all the unoriented connections. */
-	{
-		dbg("FOR_EACH_UNORIENTED_CONNECTION_... in %s", __func__);
-		struct connection *c = unoriented_connections;
-
-		unoriented_connections = NULL;
-
-		while (c != NULL) {
-			struct connection *nxt = c->hp_next;
-
-			(void)orient(c);
-			connect_to_host_pair(c);
-			c = nxt;
-		}
+	/*
+	 * Try to orient unoriented connections by re-building the
+	 * unoriented connections list.
+	 *
+	 * The list is emptied, then as each connection fails to
+	 * orient it goes back on the list.
+	 */
+	dbg("FOR_EACH_UNORIENTED_CONNECTION_... in %s", __func__);
+	struct connection *c = unoriented_connections;
+	unoriented_connections = NULL;
+	while (c != NULL) {
+		/* step off */
+		struct connection *nxt = c->hp_next;
+		orient(c);
+		/*
+		 * Either put C back on unoriented, or add to a host
+		 * pair.
+		 */
+		connect_to_host_pair(c);
+		c = nxt;
 	}
 
 	/*
@@ -473,50 +479,45 @@ void check_orientations(void)
 	 * In other words, the far side must not match one of our new
 	 * interfaces.
 	 */
-	{
-		struct iface_port *i;
-
-		for (i = interfaces; i != NULL; i = i->next) {
-			if (i->ip_dev->ifd_change != IFD_ADD) {
-				continue;
-			}
-			for (unsigned u = 0; u < host_pairs.nr_slots; u++) {
-				struct list_head *bucket = &host_pairs.slots[u];
-				struct host_pair *hp = NULL;
-				FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, hp) {
+	for (struct iface_port *i = interfaces; i != NULL; i = i->next) {
+		if (i->ip_dev->ifd_change != IFD_ADD) {
+			continue;
+		}
+		for (unsigned u = 0; u < host_pairs.nr_slots; u++) {
+			struct list_head *bucket = &host_pairs.slots[u];
+			struct host_pair *hp = NULL;
+			FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, hp) {
+				/*
+				 * XXX: what's with the maybe compare
+				 * the port logic?
+				 */
+				if (sameaddr(&hp->remote,
+					     &i->local_endpoint)) {
 					/*
-					 * XXX: what's with the maybe
-					 * compare the port logic?
+					 * bad news: the whole chain
+					 * of connections hanging off
+					 * this host pair has both
+					 * sides matching an
+					 * interface.  We'll get rid
+					 * of them, using orient and
+					 * connect_to_host_pair.
+					 *
+					 * But we'll be lazy and not
+					 * ditch the host_pair itself
+					 * (the cost of leaving it is
+					 * slight and cannot be
+					 * induced by a foe).
 					 */
-					if (sameaddr(&hp->remote,
-						     &i->local_endpoint)) {
-						/*
-						 * bad news: the whole chain of
-						 * connections hanging off this
-						 * host pair has both sides
-						 * matching an interface.
-						 * We'll get rid of them, using
-						 * orient and
-						 * connect_to_host_pair.
-						 * But we'll be lazy and not
-						 * ditch the host_pair itself
-						 * (the cost of leaving it is
-						 * slight and cannot be
-						 * induced by a foe).
-						 */
-						struct connection *c =
-							hp->connections;
-
-						hp->connections = NULL;
-						while (c != NULL) {
-							struct connection *nxt =
-								c->hp_next;
-
-							c->interface = NULL;
-							(void)orient(c);
-							connect_to_host_pair(c);
-							c = nxt;
-						}
+					struct connection *c =
+						hp->connections;
+					hp->connections = NULL;
+					while (c != NULL) {
+						struct connection *nxt =
+							c->hp_next;
+						c->interface = NULL;
+						(void)orient(c);
+						connect_to_host_pair(c);
+						c = nxt;
 					}
 				}
 			}
