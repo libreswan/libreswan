@@ -229,13 +229,23 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 			initiator(whack_sock, c, NULL, policy, try, inception, uctx);
 		}
 	} else if (HAS_IPSEC_POLICY(policy)) {
-		if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
-			/* leave our Phase 2 negotiation pending */
-			add_pending(whack_sock, pexpect_ike_sa(st),
+		if (st->st_ike_version == IKEv1) {
+			if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+				/* leave our Phase 2 negotiation pending */
+				add_pending(whack_sock, pexpect_ike_sa(st),
 				    c, policy, try,
 				    replacing, uctx,
 				    false/*part of initiate*/);
-		} else if (st->st_ike_version == IKEv2) {
+			} else {
+				/* ??? we assume that peer_nexthop_sin isn't important:
+				 * we already have it from when we negotiated the ISAKMP SA!
+				 * It isn't clear what to do with the error return.
+				 */
+			quick_outI1(whack_sock, st, c, policy, try,
+				    replacing, uctx);
+			}
+		}
+		if (st->st_ike_version == IKEv2) {
 			struct pending p = {
 				.whack_sock = whack_sock, /*on-stack*/
 				.ike = pexpect_ike_sa(st),
@@ -246,14 +256,7 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 				.uctx = uctx,
 			};
 			ikev2_initiate_child_sa(&p);
-		} else {
-			/* ??? we assume that peer_nexthop_sin isn't important:
-			 * we already have it from when we negotiated the ISAKMP SA!
-			 * It isn't clear what to do with the error return.
-			 */
-			quick_outI1(whack_sock, st, c, policy, try,
-				    replacing, uctx);
-			}
+		}
 	}
 }
 
