@@ -357,7 +357,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 				} else {
 					/* note: no md->st to clear */
 					passert(st != &ike->sa);
-					schedule_next_child_delete(st, ike);
+					ikev2_schedule_next_child_delete(st, ike);
 					st = NULL;
 				}
 			}

@@ -888,7 +888,7 @@ static stf_status ikev2_send_delete_continue(struct ike_sa *ike UNUSED,
 	return STF_OK;
 }
 
-void schedule_next_child_delete(struct state *st, struct ike_sa *ike)
+void ikev2_schedule_next_child_delete(struct state *st, struct ike_sa *ike)
 {
 	if (st->st_ike_version == IKEv2 &&
 	    should_send_delete(st)) {

@@ -844,7 +844,7 @@ extern void delete_states_by_connection(struct connection *c, bool relations, st
 extern void rekey_p2states_by_connection(struct connection *c);
 enum send_delete { PROBABLY_SEND_DELETE, DONT_SEND_DELETE, };
 extern void delete_ike_family(struct ike_sa *ike, enum send_delete send_delete);
-extern void schedule_next_child_delete(struct state *st, struct ike_sa *ike);
+extern void ikev2_schedule_next_child_delete(struct state *st, struct ike_sa *ike);
 
 struct state *ikev1_duplicate_state(struct state *st, struct fd *whackfd);
 
