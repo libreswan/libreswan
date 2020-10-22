@@ -163,42 +163,6 @@ struct ipsec_proto_info {
 	uint64_t add_time;
 };
 
-struct v1_ike_rfrag {
-	struct v1_ike_rfrag *next;
-	struct msg_digest *md;
-	int index;
-	int last;
-	uint8_t *data;
-	size_t size;
-};
-
-struct v2_incomming_fragment {
-	chunk_t cipher;
-	unsigned int iv;
-};
-
-struct v2_incomming_fragments {
-	unsigned total;
-	unsigned count;
-	/*
-	 * Next-Payload from first fragment.
-	 */
-	int first_np;
-	/*
-	 * For simplicity, index by fragment number which is 1-based;
-	 * leaving element 0 empty.
-	 */
-	struct v2_incomming_fragment frags[MAX_IKE_FRAGMENTS + 1];
-};
-
-/* hunk like */
-
-struct v2_outgoing_fragment {
-	struct v2_outgoing_fragment *next;
-	size_t len;
-	uint8_t ptr[1]; /* can be bigger */
-};
-
 struct v2_id_payload {
 	struct ikev2_id header;
 	chunk_t data;

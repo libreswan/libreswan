@@ -24,8 +24,33 @@
 struct msg_digest;
 struct dh_desc;
 struct ike_sa;
-struct v2_outgoing_fragment;
-struct v2_incomming_fragments;
+
+struct v2_incomming_fragment {
+	chunk_t cipher;
+	unsigned int iv;
+};
+
+struct v2_incomming_fragments {
+	unsigned total;
+	unsigned count;
+	/*
+	 * Next-Payload from first fragment.
+	 */
+	int first_np;
+	/*
+	 * For simplicity, index by fragment number which is 1-based;
+	 * leaving element 0 empty.
+	 */
+	struct v2_incomming_fragment frags[MAX_IKE_FRAGMENTS + 1];
+};
+
+/* hunk like */
+
+struct v2_outgoing_fragment {
+	struct v2_outgoing_fragment *next;
+	size_t len;
+	uint8_t ptr[1]; /* can be bigger */
+};
 
 /*
  * Should the payload be encrypted/protected (don't confuse this with
