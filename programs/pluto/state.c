@@ -809,8 +809,12 @@ static bool should_send_delete(const struct state *st)
 		return false;
 	}
 
+	/*
+	 * PW: But this is valid for IKEv1, where it would need to start a
+	 * new IKE SA to send the delete notification ???
+	 */
 	if (!IS_IPSEC_SA_ESTABLISHED(st) &&
-	    !IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+	    !IS_IKE_SA_ESTABLISHED(st)) {
 		dbg("%s: no, not established", __func__);
 		return false;
 	}
