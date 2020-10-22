@@ -221,9 +221,26 @@ struct host_pair *find_host_pair(const ip_endpoint *local,
 	return NULL;
 }
 
-static void remove_host_pair(struct host_pair *hp)
+static struct host_pair *alloc_host_pair(ip_endpoint local, ip_endpoint remote, where_t where)
 {
-	del_hash_table_entry(&host_pairs, hp);
+	struct host_pair *hp = alloc_thing(struct host_pair, "host pair");
+	hp->magic = host_pair_magic;
+	hp->local = local;
+	hp->remote = remote;
+	add_hash_table_entry(&host_pairs, hp);
+	dbg_alloc("hp", hp, where);
+	return hp;
+}
+
+static void free_host_pair(struct host_pair **hp, where_t where)
+{
+	/* ??? must deal with this! */
+	passert((*hp)->pending == NULL);
+	pexpect((*hp)->connections == NULL);
+	del_hash_table_entry(&host_pairs, *hp);
+	dbg_free("hp", *hp, where);
+	pfree(*hp);
+	*hp = NULL;
 }
 
 /* find head of list of connections with this pair of hosts */
@@ -264,20 +281,15 @@ void connect_to_host_pair(struct connection *c)
 
 		if (hp == NULL) {
 			/* no suitable host_pair -- build one */
-			hp = alloc_thing(struct host_pair, "host_pair");
-			dbg_alloc("hp", hp, HERE);
-			hp->magic = host_pair_magic;
-			hp->local = endpoint3(c->interface->protocol,
-					      &c->spd.this.host_addr,
-					      ip_hport(nat_traversal_enabled ? IKE_UDP_PORT
-						       : c->spd.this.host_port));
-			hp->remote = endpoint3(c->interface->protocol,
-					       &c->spd.that.host_addr,
-					       ip_hport(nat_traversal_enabled ? IKE_UDP_PORT
-							: c->spd.that.host_port));
-			hp->connections = NULL;
-			hp->pending = NULL;
-			add_hash_table_entry(&host_pairs, hp);
+			ip_endpoint local = endpoint3(c->interface->protocol,
+						      &c->spd.this.host_addr,
+						      ip_hport(nat_traversal_enabled ? IKE_UDP_PORT
+							       : c->spd.this.host_port));
+			ip_endpoint remote = endpoint3(c->interface->protocol,
+						       &c->spd.that.host_addr,
+						       ip_hport(nat_traversal_enabled ? IKE_UDP_PORT
+								: c->spd.that.host_port));
+			hp = alloc_host_pair(local, remote, HERE);
 		}
 		c->host_pair = hp;
 		c->hp_next = hp->connections;
@@ -342,16 +354,12 @@ void delete_oriented_hp(struct connection *c)
 	c->host_pair = NULL; /* redundant, but safe */
 
 	/*
-	 * if there are no more connections with this host_pair
-	 * and we haven't even made an initial contact, let's delete
-	 * this guy in case we were created by an attempted DOS attack.
+	 * If there are no more connections with this host_pair and we
+	 * haven't even made an initial contact, let's delete this guy
+	 * in case we were created by an attempted DOS attack.
 	 */
 	if (hp->connections == NULL) {
-		/* ??? must deal with this! */
-		passert(hp->pending == NULL);
-		remove_host_pair(hp);
-		dbg_free("hp", hp, HERE);
-		pfree(hp);
+		free_host_pair(&hp, HERE);
 	}
 }
 
@@ -368,7 +376,7 @@ void host_pair_remove_connection(struct connection *c, bool connection_valid)
 /* update the host pairs with the latest DNS ip address */
 void update_host_pairs(struct connection *c)
 {
-	struct host_pair *const hp = c->host_pair;
+	struct host_pair *hp = c->host_pair;
 	const char *dnshostname = c->dnshostname;
 
 	/* ??? perhaps we should return early if dnshostname == NULL */
@@ -442,10 +450,7 @@ void update_host_pairs(struct connection *c)
 	}
 
 	if (hp->connections == NULL) {
-		passert(hp->pending == NULL); /* ??? must deal with this! */
-		del_hash_table_entry(&host_pairs, hp);
-		dbg_free("hp", hp, HERE);
-		pfree(hp);
+		free_host_pair(&hp, HERE);
 	}
 }
 
@@ -501,12 +506,6 @@ void check_orientations(void)
 					 * interface.  We'll get rid
 					 * of them, using orient and
 					 * connect_to_host_pair.
-					 *
-					 * But we'll be lazy and not
-					 * ditch the host_pair itself
-					 * (the cost of leaving it is
-					 * slight and cannot be
-					 * induced by a foe).
 					 */
 					struct connection *c =
 						hp->connections;
@@ -515,9 +514,18 @@ void check_orientations(void)
 						struct connection *nxt =
 							c->hp_next;
 						c->interface = NULL;
-						(void)orient(c);
+						c->host_pair = NULL;
+						c->hp_next = NULL;
+						orient(c);
 						connect_to_host_pair(c);
 						c = nxt;
+					}
+					/*
+					 * XXX: is this ever not the
+					 * case?
+					 */
+					if (hp->connections == NULL) {
+						free_host_pair(&hp, HERE);
 					}
 				}
 			}
