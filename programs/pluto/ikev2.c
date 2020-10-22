@@ -2190,7 +2190,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * function should not be called).
 			 */
 			struct v2_incomming_fragments *frags =
-				st->st_v2_incomming[v2_msg_role(md)];
+				ike->sa.st_v2_incomming[v2_msg_role(md)];
 			bool have_all_fragments =
 				(frags != NULL && frags->count == frags->total);
 			/*
@@ -2209,7 +2209,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			if (md->message_payloads.present & P(SKF)) {
 				if (have_all_fragments) {
 					dbg("already have all fragments, skipping fragment collection");
-				} else if (!ikev2_collect_fragment(md, st)) {
+				} else if (!ikev2_collect_fragment(md, ike)) {
 					return;
 				}
 			}
@@ -2246,8 +2246,9 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * integrity.  Anything lacking integrity is
 			 * dropped.
 			 */
-			if (!ikev2_decrypt_msg(st, md)) {
-				log_state(RC_LOG, st, "encrypted payload seems to be corrupt; dropping packet");
+			if (!ikev2_decrypt_msg(ike, md)) {
+				log_state(RC_LOG, &ike->sa,
+					  "encrypted payload seems to be corrupt; dropping packet");
 				return;
 			}
 			/*
