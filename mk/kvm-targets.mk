@@ -30,6 +30,7 @@ KVM_GUEST_OS ?= f32
 KVM_GUEST_OS_BSD?= openbsd67
 include testing/libvirt/$(KVM_GUEST_OS).mk
 include testing/libvirt/BSD/$(KVM_GUEST_OS_BSD).mk
+include testing/libvirt/debian.mk
 
 #
 # where things live and what gets created

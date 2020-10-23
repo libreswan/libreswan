@@ -5,7 +5,7 @@
 # make DISTRO=fedora DISTRO_REL=28 docker-image
 #
 # make DISTRO=fedora DISTRO_REL=28 DI_T=swanbase docker-image
-# 
+#
 # The variables above could be set from command line.
 #
 
@@ -162,6 +162,12 @@ install-rpm-run-dep:
 install-rpm-build-dep:
 	$(SUDO_CMD) $(PKG_CMD) groupinstall $(POWER_TOOLS) -y 'Development Tools'
 	$(SUDO_CMD) $(PKG_BUILDDEP) $(REPO_POWERTOOLS) -y libreswan
+
+.PHONY: install-testing-deb-dep
+install-testing-deb-dep: install-deb-dep
+	apt-get update
+	$(if $(TESTING_DEB_PACKAGES), apt-get install -y --no-install-recommends \
+		$(TESTING_DEB_PACKAGES))
 
 .PHONY: install-deb-dep
 # RUN_DEBS_OLD ?= $$(grep -qE 'jessie|xenial' /etc/os-release && echo "host iptables")
