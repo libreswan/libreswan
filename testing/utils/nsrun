@@ -116,7 +116,7 @@ class DefaultVariables ():
         # 100s of NS.
         self.node = "swantest"
         self.node = platform.node().split('.')[0]
-        self.sudo_c = "sudo"
+        self.sudo_c = "sudo --preserve-env SWAN_PLUTOTEST=YES"
         self.nsenter_c = "nsenter"
         self.nsenter_ns_args = ['--mount=/run/mountns/',
                                 '--net=/run/netns/', '--uts=/run/utsns/']
@@ -3458,7 +3458,7 @@ class Docker:
             self.docker_start_container(test, host)
             if self.docker_add_network(test, test.shell[host]):
                 return True
-            
+
             # slef.docker_restart_network(test, host)
 
     def docker_del(self, test, instance="previous"):
@@ -3980,7 +3980,7 @@ class TestListRun():
             if os.path.exists(self.s):  # in tdir
                 logger.error("* stop all tests now. Found %s *", self.s)
                 return (True)
-            
+
             # **** short cut tests to nsplutotest with --ns ***
             if testtype == 'kvmplutotest' and self.args.testtype == 'nsplutotest':
                 testtype = "nsplutotest"
