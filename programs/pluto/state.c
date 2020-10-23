@@ -49,7 +49,7 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#include "xauth.h"		/* for pamauth_cancel() */
+#include "pam_auth.h"		/* for pamauth_cancel() */
 #include "connections.h"	/* needs id.h */
 #include "state.h"
 #include "state_db.h"

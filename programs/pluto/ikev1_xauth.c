@@ -64,7 +64,7 @@
 #include "server.h"
 #include "keys.h"
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
-#include "xauth.h"
+#include "pam_auth.h"
 #include "crypto.h"
 #include "ike_alg.h"
 #include "secrets.h"

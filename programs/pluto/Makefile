@@ -114,8 +114,7 @@ USERLAND_LDFLAGS += $(CRYPT_LDFLAGS)
 endif
 
 ifeq ($(USE_AUTHPAM),true)
-# xauth.c is due for a rename, as it is used for IKEv1 XAUTH and IKEv2 pam-autorize
-OBJS += xauth.o
+OBJS += pam_auth.o
 OBJS += pam_conv.o
 endif
 USERLAND_LDFLAGS += $(AUTHPAM_LDFLAGS)

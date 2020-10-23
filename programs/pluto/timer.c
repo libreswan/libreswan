@@ -56,7 +56,7 @@
 #include "ikev2_redirect.h"
 #include "pending.h" /* for flush_pending_by_connection */
 #include "ikev1_xauth.h"
-#include "xauth.h"
+#include "pam_auth.h"
 #include "kernel.h"		/* for kernel_ops */
 #include "nat_traversal.h"
 #include "pluto_sd.h"

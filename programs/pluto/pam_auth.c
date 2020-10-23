@@ -20,7 +20,7 @@
 #include "constants.h"
 #include "defs.h"
 #include "log.h"
-#include "xauth.h" /* will get renamed pam_auth.h */
+#include "pam_auth.h"
 #include "pam_conv.h"
 #include "event.h"
 #include "state.h"
