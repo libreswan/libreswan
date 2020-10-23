@@ -68,6 +68,7 @@ RHS = "<<<<<<<<<<"
 LHS = ">>>>>>>>>>"
 LINECUT = LHS + "cutnonzeroexit" + LHS
 LINETUC = RHS + "tuc" + RHS
+DONE = LHS + "cut" + LHS +  " done " + RHS + "tuc" + RHS
 
 DEFAULTCONFIG = {
     'bootwait': 59,
@@ -3834,6 +3835,7 @@ class Test():
                 return True
 
             self.run_test_scripts()
+            self.write_done()
             self.script_end = time.time()
             self.script_runtime = self.script_end - self.script_start
             logger.info("finished running %s %s scripts run time %s" % (self.name, self.hosts_scripts, self.script_runtime))
@@ -3853,9 +3855,9 @@ class Test():
 
         console_out = "OUTPUT/%s.console.verbose.txt" % host
 
-        with open(console_out, 'a',  encoding='utf-8') as f_log:
+        with open(console_out, 'a', encoding='utf-8') as f_log:
             console.output(f_log)
-            with open(script, 'r',  encoding='utf-8') as f_cmds:
+            with open(script, 'r', encoding='utf-8') as f_cmds:
                 output = ''
                 for line in f_cmds:
                     line = line.rstrip()
@@ -3887,7 +3889,14 @@ class Test():
         for host, script in self.hosts_scripts:
             self.run_script_pexpect(self.shell[host], host, script)
 
-
+    def write_done(self):
+        for host in self.hosts:
+            console_out = "OUTPUT/%s.console.verbose.txt" % host
+            console=self.shell[host]
+            with open(console_out, 'a', encoding='utf-8') as f_log:
+                console.output(f_log)
+                f_log.write(DONE)
+                console.output()
 
 class TestListRun():
 
