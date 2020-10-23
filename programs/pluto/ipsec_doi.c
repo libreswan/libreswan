@@ -184,6 +184,7 @@ bool ikev1_ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
 	return ikev1_justship_nonce(n, outs, name);
 }
 
+#ifdef USE_IKEv1
 static initiator_function *pick_initiator(struct connection *c,
 					  lset_t policy)
 {
@@ -194,6 +195,7 @@ static initiator_function *pick_initiator(struct connection *c,
 		return (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;
 	}
 }
+#endif
 
 void ipsecdoi_initiate(struct fd *whack_sock,
 		       struct connection *c,
@@ -213,12 +215,18 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 	 * Note: there is no way to initiate with a Road Warrior.
 	 */
 	struct state *st = find_phase1_state(c,
+#ifdef USE_IKEv1
 					     ISAKMP_SA_ESTABLISHED_STATES |
 					     PHASE1_INITIATOR_STATES |
+#endif
 					     IKEV2_ISAKMP_INITIATOR_STATES);
 
 	if (st == NULL) {
+#ifdef USE_IKEv1
 		initiator_function *initiator = pick_initiator(c, policy);
+#else
+		initiator_function *initiator = ikev2_parent_outI1;
+#endif
 
 		if (initiator != NULL) {
 			/*
@@ -229,6 +237,7 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 			initiator(whack_sock, c, NULL, policy, try, inception, uctx);
 		}
 	} else if (HAS_IPSEC_POLICY(policy)) {
+#ifdef USE_IKEv1
 		if (st->st_ike_version == IKEv1) {
 			if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 				/* leave our Phase 2 negotiation pending */
@@ -245,6 +254,7 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 				    replacing, uctx);
 			}
 		}
+#endif
 		if (st->st_ike_version == IKEv2) {
 			struct pending p = {
 				.whack_sock = whack_sock, /*on-stack*/
@@ -287,7 +297,11 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 		if (IS_PARENT_SA_ESTABLISHED(st))
 			libreswan_log("initiate reauthentication of IKE SA");
 
+#ifdef USE_IKEv1
 		initiator_function *initiator = pick_initiator(c, policy);
+#else
+		initiator_function *initiator = ikev2_parent_outI1;
+#endif
 
 		if (initiator != NULL) {
 			/*
@@ -495,9 +509,11 @@ void send_delete(struct state *st)
 		    enum_name(&ike_version_names, st->st_ike_version),
 		    st->st_state->name);
 		switch (st->st_ike_version) {
+#ifdef USE_IKEv1
 		case IKEv1:
 			send_v1_delete(st);
 			break;
+#endif
 		case IKEv2:
 		{
 			struct ike_sa *ike = ike_sa(st, HERE);

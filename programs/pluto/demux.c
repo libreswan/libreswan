@@ -184,6 +184,7 @@ void process_packet(struct msg_digest **mdp)
 			log_md(RC_LOG, md, "ignoring IKEv1 packet as policy is set to silently drop all IKEv1 packets");
 			return;
 		}
+#ifdef USE_IKEv1
 		if (pluto_ikev1_pol == GLOBAL_IKEv1_REJECT) {
 			log_md(RC_LOG, md, "rejecting IKEv1 packet as policy is set to reject all IKEv1 packets");
 			send_notification_from_md(md, INVALID_MAJOR_VERSION);
@@ -215,6 +216,7 @@ void process_packet(struct msg_digest **mdp)
 		    md->hdr.isa_xchg);
 		process_v1_packet(md);
 		/* our caller will release_any_md(mdp) */
+#endif
 		break;
 
 	case IKEv2_MAJOR_VERSION: /* IKEv2 */

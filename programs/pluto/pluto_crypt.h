@@ -378,7 +378,9 @@ extern void finish_dh_secret(struct state *st,
 			     struct pluto_crypto_req *r);
 
 /* internal */
+#ifdef USE_IKEv1
 extern void calc_dh_v1(struct pcr_v1_dh *dh, struct logger *logger);
+#endif
 extern void calc_dh_iv(struct pcr_v1_dh *dh, struct logger *logger);
 extern void cancelled_v1_dh(struct pcr_v1_dh *dh);
 

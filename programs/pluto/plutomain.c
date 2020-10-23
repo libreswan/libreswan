@@ -166,6 +166,10 @@ static void invocation_fail(err_t mess)
 
 /* string naming compile-time options that have interop implications */
 static const char compile_time_interop_options[] = ""
+	" IKEv2"
+#ifdef USE_IKEv1
+	" IKEv1"
+#endif
 #ifdef XFRM_SUPPORT
 	" XFRM(netkey)"
 #endif
@@ -1205,6 +1209,12 @@ int main(int argc, char **argv)
 			pluto_drop_oppo_null = cfg->setup.options[KBF_DROP_OPPO_NULL];
 			pluto_ddos_mode = cfg->setup.options[KBF_DDOS_MODE];
 			pluto_ikev1_pol = cfg->setup.options[KBF_GLOBAL_IKEv1];
+#ifndef USE_IKEv1
+			if (pluto_ikev1_pol != GLOBAL_IKEv1_ACCEPT) {
+				libreswan_log("ignoring ikev1-policy= as IKEv1 support is not compiled in. Incoming IKEv1 packets are silently dropped");
+				pluto_ikev1_pol = GLOBAL_IKEv1_DROP;
+			}
+#endif
 #ifdef HAVE_SECCOMP
 			pluto_seccomp_mode = cfg->setup.options[KBF_SECCOMP];
 #endif
@@ -1747,7 +1757,9 @@ int main(int argc, char **argv)
 	/* obsoleted by nss code: init_rnd_pool(); */
 	init_root_certs();
 	init_secret();
+#ifdef USE_IKEv1
 	init_ikev1();
+#endif
 	init_ikev2();
 	init_states();
 	init_connections();

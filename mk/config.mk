@@ -365,6 +365,13 @@ POD2MAN ?= $(shell which pod2man | grep / | head -n1)
 # HAVE_ variables let you tell Libreswan what system related libraries
 #       you may or maynot have
 
+# Enable or disable support for IKEv1. When disabled, the ike-policy= value
+# will be ignored and all IKEv1 packets will be dropped.
+USE_IKEv1 ?= true
+ifeq ($(USE_IKEv1),true)
+USERLAND_CFLAGS += -DUSE_IKEv1
+endif
+
 # Enable support for DNSSEC. This requires the unbound and ldns libraries.
 USE_DNSSEC ?= true
 

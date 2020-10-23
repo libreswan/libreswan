@@ -283,12 +283,15 @@ static void connection_state(struct state *st, void *data)
 		} else {
 			if (lc->phase1 < p1_init)
 				lc->phase1 = p1_init;
+#ifdef USE_IKEv1
+/* PW: This seems an unintensional flaw of using ikev1 only checks ??? */
 			if (IS_ISAKMP_ENCRYPTED(st->st_state->kind) &&
 			    lc->phase1 < p1_encrypt)
 				lc->phase1 = p1_encrypt;
 			if (IS_ISAKMP_AUTHENTICATED(st->st_state) &&
 			    lc->phase1 < p1_auth)
 				lc->phase1 = p1_auth;
+#endif
 		}
 	} else {
 		lc->phase1 = p1_down;
@@ -298,10 +301,12 @@ static void connection_state(struct state *st, void *data)
 	if (st->st_connection != lc->conn)
 		return;
 
+#ifdef USE_IKEv1
 	if (IS_PHASE15(st->st_state->kind)) {
 		if (lc->tunnel < tun_phase15)
 			lc->tunnel = tun_phase15;
 	}
+#endif
 
 	if (IS_CHILD_SA(st)) {
 		if (lc->tunnel < tun_phase2)

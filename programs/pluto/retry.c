@@ -35,6 +35,7 @@
 #include "ikev2.h"	/* for need_this_intiator() */
 #include "pluto_stats.h"
 
+#ifdef USE_IKEv1
 /* Time to retransmit, or give up.
  *
  * Generally, we'll only try to send the message
@@ -128,6 +129,7 @@ void retransmit_v1_msg(struct state *st)
 	delete_state(st);
 	/* note: no md->st to clear */
 }
+#endif
 
 void retransmit_v2_msg(struct state *st)
 {

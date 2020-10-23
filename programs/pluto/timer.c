@@ -220,19 +220,23 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		case IKEv2:
 			retransmit_v2_msg(st);
 			break;
+#ifdef USE_IKEv1
 		case IKEv1:
 			retransmit_v1_msg(st);
 			break;
+#endif
 		default:
 			bad_case(st->st_ike_version);
 		}
 		break;
 
+#ifdef USE_IKEv1
 	case EVENT_v1_SEND_XAUTH:
 		dbg("XAUTH: event EVENT_v1_SEND_XAUTH #%lu %s",
 		    st->st_serialno, st->st_state->name);
 		xauth_send_request(st);
 		break;
+#endif
 
 	case EVENT_v2_INITIATE_CHILD:
 		ikev2_child_outI(st);
@@ -404,20 +408,13 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		initiate_redirect(st);
 		break;
 
+#ifdef USE_IKEv1
 	case EVENT_DPD:
 		dpd_event(st);
 		break;
 
 	case EVENT_DPD_TIMEOUT:
 		dpd_timeout(st);
-		break;
-
-	case EVENT_CRYPTO_TIMEOUT:
-		dbg("event crypto_failed on state #%lu, aborting",
-		    st->st_serialno);
-		pstat_sa_failed(st, REASON_CRYPTO_TIMEOUT);
-		delete_state(st);
-		/* note: no md->st to clear */
 		break;
 
 #ifdef AUTH_HAVE_PAM
@@ -432,6 +429,15 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		 */
 		break;
 #endif
+#endif
+	case EVENT_CRYPTO_TIMEOUT:
+		dbg("event crypto_failed on state #%lu, aborting",
+		    st->st_serialno);
+		pstat_sa_failed(st, REASON_CRYPTO_TIMEOUT);
+		delete_state(st);
+		/* note: no md->st to clear */
+		break;
+
 
 	default:
 		bad_case(type);

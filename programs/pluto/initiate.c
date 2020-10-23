@@ -1238,10 +1238,12 @@ void connection_check_phase2(struct fd *whackfd)
 
 			if (LIN(POLICY_IKEV2_ALLOW, c->policy))
 				p1st = find_phase1_state(c, IKEV2_ISAKMP_INITIATOR_STATES);
+#ifdef USE_IKEv1
 			else
 				p1st = find_phase1_state(c,
 						 ISAKMP_SA_ESTABLISHED_STATES |
 						 PHASE1_INITIATOR_STATES);
+#endif
 
 			if (p1st != NULL) {
 				/* arrange to rekey the phase 1, if there was one. */

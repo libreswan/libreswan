@@ -460,6 +460,7 @@ enum state_kind {
 
 	/* IKE states */
 
+#ifdef USE_IKEv1
 	STATE_IKEv1_FLOOR,
 
 	STATE_MAIN_R0 = STATE_IKEv1_FLOOR,
@@ -497,8 +498,8 @@ enum state_kind {
 
 	STATE_XAUTH_I0,                 /* client state is awaiting request */
 	STATE_XAUTH_I1,                 /* client state is awaiting result code */
-
 	STATE_IKEv1_ROOF,	/* not a state! */
+#endif
 
 	/*
 	 * IKEv2 states.
@@ -616,7 +617,7 @@ enum sa_role {
 
 extern struct keywords sa_role_names;
 
-
+#ifdef USE_IKEv1
 #define PHASE1_INITIATOR_STATES  (LELEM(STATE_MAIN_I1) | \
 				  LELEM(STATE_MAIN_I2) | \
 				  LELEM(STATE_MAIN_I3) | \
@@ -648,11 +649,13 @@ extern struct keywords sa_role_names;
 #define IS_ISAKMP_AUTHENTICATED(s) (STATE_MAIN_R3 <= (s->kind) && \
 				    STATE_AGGR_R0 != (s->kind) && \
 				    STATE_AGGR_I1 != (s->kind))
+#endif
 
 #define IKEV2_ISAKMP_INITIATOR_STATES (LELEM(STATE_PARENT_I0) |	\
 				       LELEM(STATE_PARENT_I1) |	\
 				       LELEM(STATE_PARENT_I2))
 
+#ifdef USE_IKEv1
 #define ISAKMP_SA_ESTABLISHED_STATES  (LELEM(STATE_MAIN_R3) | \
 				       LELEM(STATE_MAIN_I4) | \
 				       LELEM(STATE_AGGR_I2) | \
@@ -666,6 +669,9 @@ extern struct keywords sa_role_names;
 				       LELEM(STATE_XAUTH_I0) | \
 				       LELEM(STATE_XAUTH_I1) | \
 				       LELEM(STATE_V2_ESTABLISHED_IKE_SA))
+#else
+#define ISAKMP_SA_ESTABLISHED_STATES  (LELEM(STATE_V2_ESTABLISHED_IKE_SA))
+#endif
 
 #define IS_ISAKMP_SA_ESTABLISHED(s) ((LELEM(s->kind) & ISAKMP_SA_ESTABLISHED_STATES) != LEMPTY)
 
@@ -676,11 +682,16 @@ extern struct keywords sa_role_names;
 				LELEM(STATE_PARENT_I2))
 
 /* IKEv1 or IKEv2 */
+#ifdef USE_IKEv1
 #define IS_IPSEC_SA_ESTABLISHED(s) (IS_CHILD_SA(s) &&			\
 				    ((s->st_state->kind) == STATE_QUICK_I2 || \
 				     (s->st_state->kind) == STATE_QUICK_R1 || \
 				     (s->st_state->kind) == STATE_QUICK_R2 || \
 				     (s->st_state->kind) == STATE_V2_ESTABLISHED_CHILD_SA))
+#else
+#define IS_IPSEC_SA_ESTABLISHED(s) (IS_CHILD_SA(s) &&			\
+				     (s->st_state->kind) == STATE_V2_ESTABLISHED_CHILD_SA)
+#endif
 
 #define IS_MODE_CFG_ESTABLISHED(s) ((s->kind) == STATE_MODE_CFG_R2)
 
@@ -691,10 +702,16 @@ extern struct keywords sa_role_names;
 #define IS_V2_ESTABLISHED(s) ((s->kind) == STATE_V2_ESTABLISHED_IKE_SA || \
 			      (s->kind) == STATE_V2_ESTABLISHED_CHILD_SA)
 
+#ifdef USE_IKEv1
 #define IS_IKE_SA_ESTABLISHED(ST) \
 	( IS_ISAKMP_SA_ESTABLISHED((ST)->st_state) ||	\
 		(IS_PARENT_SA_ESTABLISHED(ST) && \
 		 ((ST)->st_clonedfrom == SOS_NOBODY)))
+#else
+#define IS_IKE_SA_ESTABLISHED(ST) \
+		(IS_PARENT_SA_ESTABLISHED(ST) && \
+		 ((ST)->st_clonedfrom == SOS_NOBODY))
+#endif
 
 /*
  * ??? Issue here is that our child SA appears as a
@@ -705,8 +722,8 @@ extern struct keywords sa_role_names;
 	((ST)->st_state->kind == STATE_V2_ESTABLISHED_CHILD_SA && \
 	 IS_CHILD_SA(ST))
 
-#define IS_PARENT_SA_ESTABLISHED(st) (((st)->st_state->kind == STATE_V2_ESTABLISHED_IKE_SA) && \
-				      !IS_CHILD_SA(st))
+#define IS_PARENT_SA_ESTABLISHED(ST) (((ST)->st_state->kind == STATE_V2_ESTABLISHED_IKE_SA) && \
+				      !IS_CHILD_SA(ST))
 
 #define IS_CHILD_SA(st)  ((st)->st_clonedfrom != SOS_NOBODY)
 #define IS_IKE_SA(st)	 ((st)->st_clonedfrom == SOS_NOBODY)

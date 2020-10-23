@@ -202,7 +202,14 @@ bool pluto_listen_udp = TRUE;
 bool pluto_listen_tcp = FALSE;
 
 enum ddos_mode pluto_ddos_mode = DDOS_AUTO; /* default to auto-detect */
-enum global_ikev1_policy pluto_ikev1_pol = GLOBAL_IKEv1_ACCEPT;
+
+enum global_ikev1_policy pluto_ikev1_pol =
+#ifdef USE_IKEv1
+	 GLOBAL_IKEv1_ACCEPT;
+#else
+	/* there is no IKEv1 code compiled in to send a REJECT */
+	GLOBAL_IKEv1_DROP;
+#endif
 
 #ifdef HAVE_SECCOMP
 enum seccomp_mode pluto_seccomp_mode = SECCOMP_DISABLED;
@@ -708,6 +715,7 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 		} else {
 			/* XXX: mumble something about struct ike_version */
 			switch (ike_version) {
+#ifdef USE_IKEv1
 			case IKEv1:
 				/* no switching MD.ST */
 				pexpect(old_md_st == SOS_NOBODY ?
@@ -715,6 +723,7 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 					md != NULL && md->st != NULL && md->st->st_serialno == old_md_st);
 				complete_v1_state_transition(md, status);
 				break;
+#endif
 			case IKEv2:
 				if (old_md_st == SOS_NOBODY) {
 					pexpect(md == NULL || md->st == NULL);

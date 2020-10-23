@@ -35,15 +35,20 @@ static void jam_state(struct jambuf *buf, const void *data)
 static bool state_plausable(struct state *st,
 			    enum ike_version ike_version,
 			    const so_serial_t *clonedfrom,
-			    const msgid_t *v1_msgid,
-			    const enum sa_role *role)
+			    const msgid_t *v1_msgid
+#ifndef USE_IKEv1
+			    UNUSED
+#endif
+			    , const enum sa_role *role)
 {
 	if (st->st_ike_version != ike_version) {
 		return false;
 	}
+#ifdef USE_IKEv1
 	if (v1_msgid != NULL && st->st_v1_msgid.id != *v1_msgid) {
 		return false;
 	}
+#endif
 	if (role != NULL && st->st_sa_role != *role) {
 		return false;
 	}
@@ -330,8 +335,8 @@ static void jam_state_ike_spis(struct jambuf *buf, const void *data)
 
 struct state *state_by_ike_spis(enum ike_version ike_version,
 				const so_serial_t *clonedfrom,
-				const msgid_t *v1_msgid, /*optional*/
-				const enum sa_role *sa_role, /*optional*/
+				const msgid_t *v1_msgid, /* optional */
+				const enum sa_role *sa_role, /* optional */
 				const ike_spis_t *ike_spis,
 				state_by_predicate *predicate,
 				void *predicate_context,

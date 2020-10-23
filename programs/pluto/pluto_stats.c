@@ -255,10 +255,12 @@ static void pstat_child_sa_established(struct state *st)
 {
 	struct connection *const c = st->st_connection;
 
+#ifdef USE_IKEv1
 	/* don't count IKEv1 half ipsec sa */
 	if (st->st_state->kind == STATE_QUICK_R1) {
 		pstats_ipsec_sa++;
 	}
+#endif
 
 	if (st->st_esp.present) {
 		bool nat = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) != 0;

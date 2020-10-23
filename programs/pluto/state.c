@@ -122,6 +122,7 @@ static struct finite_state state_undefined = {
 	.category = CAT_IGNORE,
 };
 
+#ifdef USE_IKEv1
 static struct finite_state state_ikev1_roof = {
 	.kind = STATE_IKEv1_ROOF,
 	.name = "STATE_IKEv1_ROOF",
@@ -129,6 +130,7 @@ static struct finite_state state_ikev1_roof = {
 	.story = "invalid state - IKEv1 roof",
 	.category = CAT_IGNORE,
 };
+#endif
 
 static struct finite_state state_ikev2_roof = {
 	.kind = STATE_IKEv2_ROOF,
@@ -140,7 +142,9 @@ static struct finite_state state_ikev2_roof = {
 
 const struct finite_state *finite_states[STATE_IKE_ROOF] = {
 	[STATE_UNDEFINED] = &state_undefined,
+#ifdef USE_IKEv1
 	[STATE_IKEv1_ROOF] &state_ikev1_roof,
+#endif
 	[STATE_IKEv2_ROOF] &state_ikev2_roof,
 };
 
@@ -718,8 +722,8 @@ void v2_expire_unused_ike_sa(struct ike_sa *ike)
 	/* Any children? */
 	struct state *st = state_by_ike_spis(IKEv2,
 					     &ike->sa.st_serialno,
-					     NULL/* ignore v1 msgid */,
-					     NULL/* ignore role */,
+					     NULL /* ignore v1 msgid */,
+					     NULL /* ignore role */,
 					     &ike->sa.st_ike_spis,
 					     NULL, NULL /* no predicate */,
 					     __func__);
@@ -1193,7 +1197,9 @@ void delete_state(struct state *st)
 
 	/* from here on we are just freeing RAM */
 
+#ifdef USE_IKEv1
 	ikev1_clear_msgid_list(st);
+#endif
 	unreference_key(&st->st_peer_pubkey);
 
 	/*
@@ -1202,7 +1208,9 @@ void delete_state(struct state *st)
 	 */
 	switch (st->st_ike_version) {
 	case IKEv1:
+#ifdef USE_IKEv1
 		free_v1_message_queues(st);
+#endif
 		break;
 	case IKEv2:
 		free_v2_message_queues(st);
@@ -1238,8 +1246,10 @@ void delete_state(struct state *st)
 
 	free_chunk_content(&st->st_firstpacket_me);
 	free_chunk_content(&st->st_firstpacket_peer);
+#ifdef USE_IKEv1
 	free_chunk_content(&st->st_v1_tpacket);
 	free_chunk_content(&st->st_v1_rpacket);
+#endif
 	free_chunk_content(&st->st_p1isa);
 	free_chunk_content(&st->st_gi);
 	free_chunk_content(&st->st_gr);
@@ -1674,16 +1684,13 @@ void for_each_state(void (*f)(struct state *, void *data), void *data,
 	}
 }
 
-/*
- * Find a state object for an IKEv1 state
- */
-
+#ifdef USE_IKEv1
 struct state *find_state_ikev1(const ike_spis_t *ike_spis, msgid_t msgid)
 {
 	return state_by_ike_spis(IKEv1,
-				 NULL/*ignore-clonedfrom*/,
+				 NULL /*ignore-clonedfrom*/,
 				 &msgid/*check v1 msgid*/,
-				 NULL/*ignore-role*/,
+				 NULL /*ignore-role*/,
 				 ike_spis, NULL, NULL, __func__);
 }
 
@@ -1691,11 +1698,12 @@ struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
 				    msgid_t msgid)
 {
 	return state_by_ike_initiator_spi(IKEv1,
-					  NULL/*ignore-clonedfrom*/,
-					  &msgid/*check v1 msgid*/,
-					  NULL/*ignore-role*/,
+					  NULL /*ignore-clonedfrom*/,
+					  &msgid /*check v1 msgid*/,
+					  NULL /*ignore-role*/,
 					  ike_initiator_spi, __func__);
 }
+#endif
 
 /*
  * Find the IKEv2 IKE SA with the specified SPIs.
@@ -1706,7 +1714,7 @@ struct ike_sa *find_v2_ike_sa(const ike_spis_t *ike_spis,
 	const so_serial_t sos_nobody = SOS_NOBODY;
 	struct state *st = state_by_ike_spis(IKEv2,
 					     &sos_nobody/*clonedfrom: IKE SA*/,
-					     NULL/*ignore v1 msgid*/,
+					     NULL /*ignore v1 msgid*/,
 					     &local_ike_role,
 					     ike_spis, NULL, NULL, __func__);
 	return pexpect_ike_sa(st);
@@ -1800,16 +1808,14 @@ struct child_sa *find_v2_child_sa_by_outbound_spi(struct ike_sa *ike,
 	};
 	struct state *st = state_by_ike_spis(IKEv2,
 					     &ike->sa.st_serialno,
-					     NULL/* ignore v1 msgid*/,
-					     NULL/*ignore-role*/,
+					     NULL /* ignore v1 msgid */,
+					     NULL /* ignore-role */,
 					     &ike->sa.st_ike_spis,
 					     v2_spi_predicate, &filter, __func__);
 	return pexpect_child_sa(st);
 }
 
-/*
- * Find a state object.
- */
+#ifdef USE_IKEv1
 struct v1_msgid_filter {
 	msgid_t msgid;
 };
@@ -1836,12 +1842,13 @@ struct state *find_v1_info_state(const ike_spis_t *ike_spis, msgid_t msgid)
 		.msgid = msgid,
 	};
 	return state_by_ike_spis(IKEv1,
-				 NULL/*ignore-clonedfrom*/,
-				 NULL/*ignore v1 msgid; see predicate*/,
-				 NULL/*ignore-role*/,
+				 NULL /* ignore-clonedfrom */,
+				 NULL /* ignore v1 msgid; see predicate */,
+				 NULL /* ignore-role */,
 				 ike_spis, v1_msgid_predicate,
 				 &filter, __func__);
 }
+#endif
 
 /*
  * find_phase2_state_to_delete: find an AH or ESP SA to delete
@@ -2834,8 +2841,8 @@ void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 	};
 	state_by_ike_spis(IKEv2,
 			  &from->sa.st_serialno,
-			  NULL/*ignore v1 msgid*/,
-			  NULL/*ignore-sa-role*/,
+			  NULL /*ignore v1 msgid */,
+			  NULL /*ignore-sa-role */,
 			  &from->sa.st_ike_spis,
 			  v2_migrate_predicate, &filter, __func__);
 }
@@ -2869,8 +2876,8 @@ void delete_ike_family(struct ike_sa *ike, enum send_delete send_delete)
 	 */
 	state_by_ike_spis(ike->sa.st_ike_version,
 			  &ike->sa.st_serialno,
-			  NULL/*ignore v1 msgid*/,
-			  NULL/*ignore-sa-role*/,
+			  NULL /*ignore v1 msgid */,
+			  NULL /*ignore-sa-role */,
 			  &ike->sa.st_ike_spis,
 			  delete_ike_family_child, NULL,
 			  __func__);
@@ -3003,11 +3010,13 @@ void show_globalstate_status(struct show *s)
 	show_raw(s, "current.states.iketype.authenticated="PRI_CAT, cat_count_ike_sa[CAT_AUTHENTICATED]);
 	show_raw(s, "current.states.iketype.halfopen="PRI_CAT, cat_count[CAT_HALF_OPEN_IKE_SA]);
 	show_raw(s, "current.states.iketype.open="PRI_CAT, cat_count[CAT_OPEN_IKE_SA]);
+#ifdef USE_IKEv1
 	for (enum state_kind sk = STATE_IKEv1_FLOOR; sk < STATE_IKEv1_ROOF; sk++) {
 		const struct finite_state *fs = finite_states[sk];
 		show_raw(s, "current.states.enumerate.%s="PRI_CAT,
 			 fs->name, state_count[sk]);
 	}
+#endif
 	for (enum state_kind sk = STATE_IKEv2_FLOOR; sk < STATE_IKEv2_ROOF; sk++) {
 		const struct finite_state *fs = finite_states[sk];
 		show_raw(s, "current.states.enumerate.%s="PRI_CAT,
@@ -3258,6 +3267,7 @@ void list_state_events(struct show *s, monotime_t now)
 	}
 }
 
+#ifdef USE_IKEv1
 void set_v1_transition(struct state *st, const struct state_v1_microcode *transition,
 		       where_t where)
 {
@@ -3270,6 +3280,7 @@ void set_v1_transition(struct state *st, const struct state_v1_microcode *transi
 	}
 	st->st_v1_transition = transition;
 }
+#endif
 
 void set_v2_transition(struct state *st, const struct state_v2_microcode *transition,
 		       where_t where)

@@ -412,6 +412,7 @@ struct state {
 	/** IKEv1-only things **/
 	/* XXX: union { struct { .. } v1; struct {...} v2;} st? */
 
+#ifdef USE_IKEv1
 	struct {
 		msgid_t id;             /* MSG-ID from header. Network Order?!? */
 		bool reserved;		/* is msgid reserved yet? */
@@ -432,8 +433,6 @@ struct state {
 	 */
 	const struct state_v1_microcode *st_v1_last_transition;
 	const struct state_v1_microcode *st_v1_transition; /* anyone? */
-	const struct state_v2_microcode *st_v2_last_transition;
-	const struct state_v2_microcode *st_v2_transition;
 
 	/* Initialization Vectors for IKEv1 IKE encryption */
 
@@ -442,9 +441,13 @@ struct state {
 	struct crypt_mac st_v1_ph1_iv;	/* IV at end of phase 1 */
 
 	/* end of IKEv1-only things */
+#endif
 
 	/** IKEv2-only things **/
 	/* XXX: union { struct { .. } v1; struct {...} v2;} st? */
+
+	const struct state_v2_microcode *st_v2_last_transition;
+	const struct state_v2_microcode *st_v2_transition;
 
 	/* collected received fragments */
 	struct v2_ike_rfrags *st_v2_rfrags;
