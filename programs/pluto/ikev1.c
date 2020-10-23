@@ -1793,7 +1793,7 @@ void process_v1_packet(struct msg_digest *md)
 					release_any_md(&whole_md);
 					free_v1_message_queues(st);
 					/* optimize: if receiving fragments, immediately respond with fragments too */
-					st->st_seen_fragments = TRUE;
+					st->st_v1_seen_fragments = true;
 					dbg(" updated IKE fragment state to respond using fragments without waiting for re-transmits");
 					break;
 				}

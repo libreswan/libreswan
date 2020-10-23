@@ -911,12 +911,6 @@ bool ikev2_collect_fragment(struct msg_digest *md, struct ike_sa *ike)
 		return false;
 	}
 
-	/* if receiving fragments, respond with fragments too */
-	if (!ike->sa.st_seen_fragments) {
-		ike->sa.st_seen_fragments = true;
-		dbg(" updated IKE fragment state to respond using fragments without waiting for re-transmits");
-	}
-
 	/*
 	 * Since the fragment check above can result in all fragments
 	 * so-far being discarded; always check/fix frags.

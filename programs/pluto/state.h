@@ -726,7 +726,7 @@ struct state {
 	bool st_xauth_soft;                     /* XAUTH failed but policy is to soft fail */
 	bool st_seen_fragmentation_supported;	/* v1 frag vid; v2 frag notify */
 	bool st_seen_hashnotify;		/* did we receive hash algo notification in IKE_INIT, then send in response as well */
-	bool st_seen_fragments;                 /* did we receive ike fragments from peer, if so use them in return as well */
+	bool st_v1_seen_fragments;              /* did we receive ike fragments from peer, if so use them in return as well */
 	bool st_seen_no_tfc;			/* did we receive ESP_TFC_PADDING_NOT_SUPPORTED */
 	bool st_seen_use_transport;		/* did we receive USE_TRANSPORT_MODE */
 	bool st_seen_use_ipcomp;		/* did we receive request for IPCOMP */

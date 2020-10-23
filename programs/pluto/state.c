@@ -1589,7 +1589,7 @@ static struct state *duplicate_state(struct state *st,
 	passert(nst->st_ike_version == st->st_ike_version);
 	nst->st_ikev2_anon = st->st_ikev2_anon;
 	nst->st_seen_fragmentation_supported = st->st_seen_fragmentation_supported;
-	nst->st_seen_fragments = st->st_seen_fragments;
+	nst->st_v1_seen_fragments = st->st_v1_seen_fragments;
 	nst->st_seen_ppk = st->st_seen_ppk;
 	nst->st_seen_redirect_sup = st->st_seen_redirect_sup;
 	nst->st_seen_use_ipcomp = st->st_seen_use_ipcomp;
