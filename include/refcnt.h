@@ -45,14 +45,14 @@ void refcnt_init(const char *what, const void *pointer,
 		ref_init(O, here_);		\
 	}
 
-void refcnt_add(const char *what, const void *pointer,
-		refcnt_t *refcnt, where_t where);
-
 /*
  * Add a reference.
  *
  * Note that ref_add(O,HERE) breaks as HERE contains braces.
  */
+
+void refcnt_add(const char *what, const void *pointer,
+		refcnt_t *refcnt, where_t where);
 
 #define ref_add(O, WHERE)						\
 	({								\
