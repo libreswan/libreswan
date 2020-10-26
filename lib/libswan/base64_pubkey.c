@@ -209,7 +209,7 @@ err_t unpack_RSA_public_key(struct RSA_public_key *rsa,
 	if (DBGP(DBG_BASE)) {
 		/* pubkey information isn't DBG_PRIVATE */
 		DBG_log("keyid: *%s", str_keyid(*keyid));
-		DBG_log("  size: %ju", *size);
+		DBG_log("  size: %zu", *size);
 		DBG_dump_hunk("  n", rsa->n);
 		DBG_dump_hunk("  e", rsa->e);
 		DBG_dump_hunk("  CKAID", *ckaid);
@@ -241,7 +241,7 @@ err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa,
 	if (DBGP(DBG_BASE)) {
 		/* pubkey information isn't DBG_PRIVATE */
 		DBG_log("keyid: *%s", str_keyid(*keyid));
-		DBG_log("  size: %ju", *size);
+		DBG_log("  size: %zu", *size);
 		DBG_dump_hunk("  pub", ecdsa->pub);
 		DBG_dump_hunk("  CKAID", *ckaid);
 	}
