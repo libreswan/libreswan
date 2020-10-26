@@ -32,6 +32,7 @@
 #include "ckaid.h"
 #include "diag.h"
 #include "keyid.h"
+#include "refcnt.h"
 
 struct logger;
 struct state;	/* forward declaration */
@@ -171,7 +172,7 @@ const struct pubkey_type *pubkey_alg_type(enum pubkey_alg alg);
 
 /* public key machinery */
 struct pubkey {
-	unsigned refcnt; /* reference counted! */
+	refcnt_t refcnt;	/* reference counted! */
 	struct id id;
 	keyid_t keyid;	/* see ipsec_keyblobtoid(3) */
 	ckaid_t ckaid;
@@ -218,20 +219,18 @@ err_t add_public_key(const struct id *id, /* ASKK */
 		     const chunk_t *key,
 		     struct pubkey **pubkey,
 		     struct pubkey_list **head);
-void replace_public_key(struct pubkey_list **pubkey_db, struct pubkey *pk);
+void replace_public_key(struct pubkey_list **pubkey_db,
+			struct pubkey **pk);
 void delete_public_keys(struct pubkey_list **head,
 			const struct id *id,
 			const struct pubkey_type *type);
 extern void form_keyid(chunk_t e, chunk_t n, keyid_t *keyid, size_t *keysize); /*XXX: make static? */
 
-extern struct pubkey *reference_key(struct pubkey *pk);
-extern void unreference_key(struct pubkey **pkp);
+struct pubkey *pubkey_addref(struct pubkey *pk, where_t where);
+extern void pubkey_delref(struct pubkey **pkp, where_t where);
 
 extern bool same_RSA_public_key(const struct RSA_public_key *a,
 				const struct RSA_public_key *b);
-extern void install_public_key(struct pubkey *pk, struct pubkey_list **head);
-
-extern void free_public_key(struct pubkey *pk);
 
 extern void lsw_load_preshared_secrets(struct secret **psecrets, const char *secrets_file,
 				       struct logger *logger);

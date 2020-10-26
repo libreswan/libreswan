@@ -70,7 +70,7 @@
 #include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "ikev2_redirect.h"
-#include "secrets.h"    /* unreference_key() */
+#include "secrets.h"    	/* for pubkey_delref() */
 #include "enum_names.h"
 #include "crypt_dh.h"
 #include "hostpair.h"
@@ -1200,7 +1200,7 @@ void delete_state(struct state *st)
 #ifdef USE_IKEv1
 	ikev1_clear_msgid_list(st);
 #endif
-	unreference_key(&st->st_peer_pubkey);
+	pubkey_delref(&st->st_peer_pubkey, HERE);
 
 	/*
 	 * Release stored IKE fragments. This is a union in st so only

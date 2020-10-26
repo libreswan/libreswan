@@ -575,18 +575,6 @@ unsigned pubkey_size(const struct pubkey *pk)
 	}
 }
 
-/*
- * free a public key struct
- */
-void free_public_key(struct pubkey *pk)
-{
-	free_id_content(&pk->id);
-	free_chunk_content(&pk->issuer);
-	/* algorithm-specific freeing */
-	pk->type->free_pubkey_content(&pk->u);
-	pfree(pk);
-}
-
 struct secret *lsw_foreach_secret(struct secret *secrets,
 				secret_eval func, void *uservoid)
 {
@@ -1568,33 +1556,27 @@ void lsw_load_preshared_secrets(struct secret **psecrets, const char *secrets_fi
 	process_secrets_file(&flp, psecrets, secrets_file);
 }
 
-struct pubkey *reference_key(struct pubkey *pk)
+struct pubkey *pubkey_addref(struct pubkey *pk, where_t where)
 {
-	pk->refcnt++;
-	return pk;
+	return ref_add(pk, where);
 }
 
-void unreference_key(struct pubkey **pkp)
+/*
+ * free a public key struct
+ */
+static void free_public_key(struct pubkey **pk, where_t where UNUSED)
 {
-	struct pubkey *pk = *pkp;
+	free_id_content(&(*pk)->id);
+	free_chunk_content(&(*pk)->issuer);
+	/* algorithm-specific freeing */
+	(*pk)->type->free_pubkey_content(&(*pk)->u);
+	pfree(*pk);
+	*pk = NULL;
+}
 
-	if (pk == NULL)
-		return;
-
-	/* print stuff */
-	id_buf b;
-	dbg("unreference key: %p %s cnt %d--",
-	    pk, str_id(&pk->id, &b), pk->refcnt);
-
-	/* cancel out the pointer */
-	*pkp = NULL;
-
-	passert(pk->refcnt != 0);
-	pk->refcnt--;
-
-	/* we are going to free the key as the refcount will hit zero */
-	if (pk->refcnt == 0)
-		free_public_key(pk);
+void pubkey_delref(struct pubkey **pkp, where_t where)
+{
+	ref_delete(pkp, free_public_key, where);
 }
 
 /*
@@ -1606,7 +1588,7 @@ struct pubkey_list *free_public_keyentry(struct pubkey_list *p)
 	struct pubkey_list *nxt = p->next;
 
 	if (p->key != NULL)
-		unreference_key(&p->key);
+		pubkey_delref(&p->key, HERE);
 	pfree(p);
 	return nxt;
 }
@@ -1650,13 +1632,14 @@ bool same_RSA_public_key(const struct RSA_public_key *a,
  * still pointing into a cert.  Hence the "how screwed up is this?"
  * :-(
  */
-void install_public_key(struct pubkey *pk, struct pubkey_list **head)
+static void install_public_key(struct pubkey **pk, struct pubkey_list **head)
 {
 	struct pubkey_list *p = alloc_thing(struct pubkey_list, "pubkey entry");
 	/* install new key at front */
-	p->key = reference_key(pk);
+	p->key = *pk;
 	p->next = *head;
 	*head = p;
+	*pk = NULL; /* stolen */
 }
 
 void delete_public_keys(struct pubkey_list **head,
@@ -1676,11 +1659,12 @@ void delete_public_keys(struct pubkey_list **head,
 }
 
 void replace_public_key(struct pubkey_list **pubkey_db,
-			struct pubkey *pk)
+			struct pubkey **pk)
 {
 	/* ??? clang 3.5 thinks pk might be NULL */
-	delete_public_keys(pubkey_db, &pk->id, pk->type);
+	delete_public_keys(pubkey_db, &(*pk)->id, (*pk)->type);
 	install_public_key(pk, pubkey_db);
+	passert(*pk == NULL); /* stolen */
 }
 
 static struct pubkey *alloc_public_key(const struct id *id, /* ASKK */
@@ -1689,22 +1673,23 @@ static struct pubkey *alloc_public_key(const struct id *id, /* ASKK */
 				       realtime_t install_time, realtime_t until_time,
 				       uint32_t ttl,
 				       const union pubkey_content *pkc,
-				       const keyid_t *keyid, const ckaid_t *ckaid, size_t size)
+				       const keyid_t *keyid, const ckaid_t *ckaid, size_t size,
+				       where_t where)
 {
-	struct pubkey pk = {
-		.u = *pkc,
-		.id = clone_id(id, "public key id"),
-		.dns_auth_level = dns_auth_level,
-		.type = type,
-		.installed_time = install_time,
-		.until_time = until_time,
-		.dns_ttl = ttl,
-		.issuer = EMPTY_CHUNK,	/* raw keys have no issuer */
-		.keyid = *keyid,
-		.ckaid = *ckaid,
-		.size = size,
-	};
-	return clone_thing(pk, "raw public key");
+	struct pubkey *pk = alloc_thing(struct pubkey, "raw public key");
+	pk->u = *pkc;
+	pk->id = clone_id(id, "public key id");
+	pk->dns_auth_level = dns_auth_level;
+	pk->type = type;
+	pk->installed_time = install_time;
+	pk->until_time = until_time;
+	pk->dns_ttl = ttl;
+	pk->issuer = EMPTY_CHUNK;	/* raw keys have no issuer */
+	pk->keyid = *keyid;
+	pk->ckaid = *ckaid;
+	pk->size = size;
+	ref_init(pk, where);
+	return pk;
 }
 
 err_t add_public_key(const struct id *id, /* ASKK */
@@ -1713,7 +1698,7 @@ err_t add_public_key(const struct id *id, /* ASKK */
 		     realtime_t install_time, realtime_t until_time,
 		     uint32_t ttl,
 		     const chunk_t *key,
-		     struct pubkey **pubkey,
+		     struct pubkey **pkp,
 		     struct pubkey_list **head)
 {
 	/* first: algorithm-specific decoding of key chunk */
@@ -1726,10 +1711,15 @@ err_t add_public_key(const struct id *id, /* ASKK */
 		return err;
 	}
 
-	*pubkey = alloc_public_key(id, dns_auth_level, type,
-				   install_time, until_time, ttl,
-				   &scratch_pkc, &keyid, &ckaid, size);
-	install_public_key(*pubkey, head);
+	struct pubkey *pubkey = alloc_public_key(id, dns_auth_level, type,
+						 install_time, until_time, ttl,
+						 &scratch_pkc, &keyid, &ckaid, size,
+						 HERE);
+	if (pkp != NULL) {
+		*pkp = pubkey_addref(pubkey, HERE);
+	}
+	install_public_key(&pubkey, head);
+	passert(pubkey == NULL); /* stolen */
 	return NULL;
 }
 
@@ -1969,7 +1959,8 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 	}
 	*pk = alloc_public_key(id, /*dns_auth_level*/0/*default*/,
 			       type, install_time, until_time,
-			       /*ttl*/0, &pkc, &keyid, &ckaid, size);
+			       /*ttl*/0, &pkc, &keyid, &ckaid, size,
+			       HERE);
 	(*pk)->issuer = clone_secitem_as_chunk(cert->derIssuer, "der");
 	SECITEM_FreeItem(ckaid_nss, PR_TRUE);
 	return NULL;

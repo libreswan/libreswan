@@ -159,8 +159,8 @@ static err_t try_ECDSA_signature_v2(const struct crypt_mac *hash,
 	dbg("NSS: verified signature");
 
 	SECITEM_FreeItem(raw_signature, PR_TRUE);
-	unreference_key(&st->st_peer_pubkey);
-	st->st_peer_pubkey = reference_key(kr);
+	pubkey_delref(&st->st_peer_pubkey, HERE);
+	st->st_peer_pubkey = pubkey_addref(kr, HERE);
 
 	return NULL;
 }

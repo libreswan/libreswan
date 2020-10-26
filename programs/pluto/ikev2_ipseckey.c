@@ -285,11 +285,10 @@ static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
 	}
 
 	realtime_t install_time = realnow();
-	struct pubkey *pubkey = NULL; /*ignore*/
 	err_t ugh = add_public_key(keyid, /*dns_auth_level*/al,
 				   &pubkey_type_rsa,
 				   install_time, realtimesum(install_time, deltatime(ttl_used)),
-				   ttl, &keyval, &pubkey, &pluto_pubkeys);
+				   ttl, &keyval, NULL/*don't-return-pubkey*/, &pluto_pubkeys);
 	if (ugh != NULL) {
 		id_buf thatidbuf;
 		loglog(RC_LOG_SERIOUS, "Add publickey failed %s, %s, %s", ugh,

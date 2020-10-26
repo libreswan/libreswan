@@ -377,8 +377,8 @@ static err_t try_RSA_signature_v1(const struct crypt_mac *hash,
 	 * There might be an old one if we previously aborted this
 	 * state transition.
 	 */
-	unreference_key(&st->st_peer_pubkey);
-	st->st_peer_pubkey = reference_key(kr);
+	pubkey_delref(&st->st_peer_pubkey, HERE);
+	st->st_peer_pubkey = pubkey_addref(kr, HERE);
 
 	return NULL; /* happy happy */
 }
