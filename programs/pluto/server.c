@@ -1025,7 +1025,7 @@ static void add_pid(const char *name, so_serial_t serialno, pid_t pid,
 		    pluto_fork_cb *callback, void *context)
 {
 	dbg("forked child %d", pid);
-	struct pid_entry *new_pid = alloc_thing(struct pid_entry, "fork pid");
+	struct pid_entry *new_pid = alloc_thing(struct pid_entry, "(ignore) fork pid");
 	new_pid->magic = PID_MAGIC;
 	new_pid->pid = pid;
 	new_pid->callback = callback;
