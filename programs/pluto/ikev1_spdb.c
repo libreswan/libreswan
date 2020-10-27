@@ -782,7 +782,7 @@ static struct db_prop_conj ah_esp_compress_props[] =
  * with members from { POLICY_ENCRYPT, POLICY_AUTHENTICATE, POLICY_COMPRESS }
  * shifted right by POLICY_IPSEC_SHIFT.
  */
-struct db_sa ipsec_sadb[1 << 3] = {
+const struct db_sa ipsec_sadb[1 << 3] = {
 	{ AD_NULL },                            /* none */
 	{ AD_SAc(esp_props) },                  /* POLICY_ENCRYPT */
 	{ AD_SAc(ah_props) },                   /* POLICY_AUTHENTICATE */
@@ -834,6 +834,7 @@ static void free_sa_prop_conj(struct db_prop_conj *pc)
 
 void free_sa(struct db_sa **sapp)
 {
+	dbg_free("sadb", *sapp, HERE);
 	struct db_sa *f = *sapp;
 
 	if (f != NULL) {
@@ -888,12 +889,12 @@ static void unshare_propconj(struct db_prop_conj *pc)
 		unshare_prop(&pc->props[i]);
 }
 
-struct db_sa *sa_copy_sa(struct db_sa *sa)
+struct db_sa *sa_copy_sa(const struct db_sa *sa)
 {
 	unsigned int i;
 	struct db_sa *nsa;
 
-	nsa = clone_thing(*sa, "sa copy prop_conj (sa_copy_sa)");
+	nsa = clone_const_thing(*sa, "sa copy prop_conj (sa_copy_sa)");
 	nsa->dynamic = TRUE;
 	nsa->parentSA = sa->parentSA;
 
@@ -960,11 +961,17 @@ struct db_sa *sa_merge_proposals(struct db_sa *a, struct db_sa *b)
 	struct db_sa *n;
 	unsigned int i, j, k;
 
-	if (a == NULL || a->prop_conj_cnt == 0)
-		return sa_copy_sa(b);
+	if (a == NULL || a->prop_conj_cnt == 0) {
+		struct db_sa *p = sa_copy_sa(b);
+		dbg_alloc("sadb", p, HERE);
+		return p;
+	}
 
-	if (b == NULL || b->prop_conj_cnt == 0)
-		return sa_copy_sa(a);
+	if (b == NULL || b->prop_conj_cnt == 0) {
+		struct db_sa *p = sa_copy_sa(a);
+		dbg_alloc("sadb", p, HERE);
+		return p;
+	}
 
 	n = clone_thing(*a, "conjoin sa (sa_merge_proposals)");
 

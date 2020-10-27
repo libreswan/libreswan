@@ -106,14 +106,6 @@ void doi_log_cert_thinking(uint16_t auth,
 			   bool send_cert,
 			   bool send_chain);
 
-#if 0	/* not yet disentangled from spdb.h */
-extern bool ikev1_out_sa(pb_stream *outs,
-		const struct db_sa *sadb,
-		struct state *st,
-		bool oakley_mode,
-		bool aggressive_mode);
-#endif
-
 bool ikev1_encrypt_message(pb_stream *pbs, struct state *st);
 bool ikev1_close_message(pb_stream *pbs, const struct state *st);
 

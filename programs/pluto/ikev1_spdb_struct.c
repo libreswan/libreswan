@@ -53,7 +53,7 @@
 #include "ikev1_message.h"
 #include "ip_endpoint.h"
 #include "nat_traversal.h"
-
+#include "refcnt.h"		/* for dbg_alloc()+dbg_free() */
 
 #ifndef HAVE_LABELED_IPSEC
 static bool parse_secctx_attr(pb_stream *pbs UNUSED, struct state *st UNUSED)
@@ -531,16 +531,15 @@ struct db_sa *v1_kernel_alg_makedb(lset_t policy,
 				   bool logit, struct logger *logger)
 {
 	if (proposals.p == NULL) {
-		struct db_sa *sadb;
 		lset_t pm = policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE);
 
 		dbg("empty esp_info, returning defaults for %s",
 		    bitnamesof(sa_policy_bit_names, pm));
 
-		sadb = &ipsec_sadb[pm >> POLICY_IPSEC_SHIFT];
-
 		/* make copy, to keep from freeing the static policies */
-		sadb = sa_copy_sa(sadb);
+		const struct db_sa *db = &ipsec_sadb[pm >> POLICY_IPSEC_SHIFT];
+		struct db_sa *sadb = sa_copy_sa(db);
+		dbg_alloc("sadb", sadb, HERE);
 		sadb->parentSA = FALSE;
 		return sadb;
 	}
@@ -566,6 +565,7 @@ struct db_sa *v1_kernel_alg_makedb(lset_t policy,
 
 	/* make a fresh copy */
 	struct db_sa *n = sa_copy_sa(&t);
+	dbg_alloc("sadb", n, HERE);
 	n->parentSA = FALSE;
 
 	db_destroy(dbnew);
@@ -623,10 +623,6 @@ static struct db_sa oakley_empty = { AD_SAp(oakley_props_empty) };
  * one DH group.
  */
 
-static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
-					enum ikev1_auth_method auth_method,
-					bool single_dh, struct logger *logger);
-
 static struct ike_proposals v1_default_ike_proposals(struct logger *logger)
 {
 	const struct proposal_policy policy = {
@@ -647,32 +643,9 @@ static struct ike_proposals v1_default_ike_proposals(struct logger *logger)
 	return defaults;
 }
 
-static struct db_sa *v1_ike_alg_make_sadb(const struct ike_proposals ike_proposals,
-					  enum ikev1_auth_method auth_method,
-					  bool single_dh, struct logger *logger)
-{
-	/*
-	 * start by copying the proposal that would have been picked by
-	 * standard defaults.
-	 */
-
-	if (ike_proposals.p == NULL) {
-		dbg("no specific IKE algorithms specified - using defaults");
-		struct ike_proposals default_info = v1_default_ike_proposals(logger);
-		struct db_sa *new_db = oakley_alg_mergedb(default_info,
-							  auth_method,
-							  single_dh,
-							  logger);
-		proposals_delref(&default_info.p);
-		return new_db;
-	} else {
-		return oakley_alg_mergedb(ike_proposals, auth_method, single_dh, logger);
-	}
-}
-
-struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
-				 enum ikev1_auth_method auth_method,
-				 bool single_dh, struct logger *logger)
+static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
+					enum ikev1_auth_method auth_method,
+					bool single_dh, struct logger *logger)
 {
 	passert(ike_proposals.p != NULL);
 
@@ -692,8 +665,6 @@ struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 	 * from the base item as the template.
 	 */
 	FOR_EACH_PROPOSAL(ike_proposals.p, proposal) {
-		struct db_sa *emp_sp;
-
 		struct v1_proposal algs = v1_proposal(proposal);
 
 		passert(algs.encrypt != NULL);
@@ -723,7 +694,8 @@ struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 		/*
 		 * copy the template
 		 */
-		emp_sp = sa_copy_sa(&oakley_empty);
+		struct db_sa *emp_sp = sa_copy_sa(&oakley_empty);
+		dbg_alloc("sadb", emp_sp, HERE);
 		passert(emp_sp->dynamic);
 		passert(emp_sp->prop_conj_cnt == 1);
 		passert(emp_sp->prop_conjs[0].prop_cnt == 1);
@@ -895,6 +867,7 @@ struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 
 					if (gsp == NULL) {
 						gsp = sa_copy_sa(emp_sp);
+						dbg_alloc("sadb", gsp, HERE);
 					} else {
 						struct db_sa *new = sa_merge_proposals(gsp, emp_sp);
 
@@ -919,9 +892,10 @@ struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 				}
 			}
 			last_modp = algs.dh->group;
-		}
+		 }
 
-		transcnt++;
+		 pexpect(emp_sp == NULL);
+		 transcnt++;
 	}
 
 	if (gsp != NULL)
@@ -929,6 +903,29 @@ struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 
 	dbg("oakley_alg_makedb() returning %p", gsp);
 	return gsp;
+}
+
+static struct db_sa *v1_ike_alg_make_sadb(const struct ike_proposals ike_proposals,
+					  enum ikev1_auth_method auth_method,
+					  bool single_dh, struct logger *logger)
+{
+	/*
+	 * start by copying the proposal that would have been picked by
+	 * standard defaults.
+	 */
+
+	if (ike_proposals.p == NULL) {
+		dbg("no specific IKE algorithms specified - using defaults");
+		struct ike_proposals default_info = v1_default_ike_proposals(logger);
+		struct db_sa *new_db = oakley_alg_mergedb(default_info,
+							  auth_method,
+							  single_dh,
+							  logger);
+		proposals_delref(&default_info.p);
+		return new_db;
+	} else {
+		return oakley_alg_mergedb(ike_proposals, auth_method, single_dh, logger);
+	}
 }
 
 bool ikev1_out_sa(pb_stream *outs,
@@ -2275,7 +2272,6 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	    enc->val, hash->val, grp->val);
 
 	passert(enc->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM);
-
 
 	struct trans_attrs ta = {
 		/* When this SA expires (seconds) */
