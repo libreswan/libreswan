@@ -2303,6 +2303,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 
 	st->st_oakley = ta;
 
+	free_sa(&revised_sadb);
 	return TRUE;
 }
 
