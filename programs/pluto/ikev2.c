@@ -2610,15 +2610,11 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 		const struct payload_digest *const tarzan_pld = md->chain[ISAKMP_NEXT_v2IDr];
 
 		if (!initiator && tarzan_pld != NULL) {
-			/*
-			 * ??? problem with diagnostics: what we're calling "peer ID"
-			 * is really our "peer's peer ID", in other words us!
-			 */
 			dbg("received IDr payload - extracting our alleged ID");
 			if (!extract_peer_id(tarzan_pld->payload.v2id.isai_type,
 					&tarzan_id, &tarzan_pld->pbs))
 			{
-				libreswan_log("Peer IDr payload extraction failed");
+				libreswan_log("IDr payload extraction failed");
 				return FALSE;
 			}
 			tip = &tarzan_id;

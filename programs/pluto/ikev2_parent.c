@@ -2628,7 +2628,7 @@ stf_status ikev2_ike_sa_process_auth_request_no_skeyid(struct ike_sa *ike,
 	 * our g^xy, and skeyseed values, and then decrypt the payload.
 	 */
 
-	dbg("ikev2 parent inI2outR2: calculating g^{xy} in order to decrypt I2");
+	dbg("ikev2 parent %s(): calculating g^{xy} in order to decrypt I2", __func__);
 
 	/* initiate calculation of g^xy */
 	start_dh_v2(st, "ikev2_inI2outR2 KE",
@@ -2684,7 +2684,7 @@ stf_status ikev2_ike_sa_process_intermediate_request_no_skeyid(struct ike_sa *ik
 	 * our g^xy, and skeyseed values, and then decrypt the payload.
 	 */
 
-	dbg("ikev2 parent inI2outR2: calculating g^{xy} in order to decrypt I2");
+	dbg("ikev2 parent %s(): calculating g^{xy} in order to decrypt I2", __func__);
 
 	/* initiate calculation of g^xy */
 	start_dh_v2(st, "ikev2_inI2outR2 KE",
@@ -3404,7 +3404,6 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 	}
 
 	/* send out the IDr payload */
-
 	{
 		pb_stream r_id_pbs;
 		if (!out_struct(&ike->sa.st_v2_id_payload.header,
@@ -3413,9 +3412,8 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 				  &r_id_pbs, "my identity"))
 			return STF_INTERNAL_ERROR;
 		close_output_pbs(&r_id_pbs);
+		dbg("added IDr payload to packet");
 	}
-
-	dbg("assembled IDr payload");
 
 	/*
 	 * send CERT payload RFC 4306 3.6, 1.2:([CERT,] )
