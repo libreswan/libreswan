@@ -435,6 +435,7 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 	 *
 	 * XXX: mumble something about c->ike_version
 	 */
+#ifdef USE_IKEv1
 	if ((c->policy & POLICY_IKEV1_ALLOW) &&
 	    (c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE))) {
 		struct logger logger[1] = { CONNECTION_LOGGER(c, whackfd), };
@@ -447,6 +448,7 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 		}
 		free_sa(&phase2_sa);
 	}
+#endif
 
 	dbg("connection '%s' +POLICY_UP", c->name);
 	c->policy |= POLICY_UP;
