@@ -171,8 +171,8 @@ extern void sa_log(struct db_sa *f);
 struct alg_info_ike;
 struct alg_info_esp;
 
-extern struct db_sa *kernel_alg_makedb(lset_t policy,
-				       const struct child_proposals proposals,
-				       bool logit, struct logger *logger);
+struct db_sa *v1_kernel_alg_makedb(lset_t policy,
+				   const struct child_proposals proposals,
+				   bool logit, struct logger *logger);
 
 #endif /*  _SPDB_H_ */

@@ -438,8 +438,8 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 	if ((c->policy & POLICY_IKEV1_ALLOW) &&
 	    (c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE))) {
 		struct logger logger[1] = { CONNECTION_LOGGER(c, whackfd), };
-		struct db_sa *phase2_sa = kernel_alg_makedb(c->policy, c->child_proposals,
-							    true, logger);
+		struct db_sa *phase2_sa = v1_kernel_alg_makedb(c->policy, c->child_proposals,
+							       true, logger);
 		if (c->child_proposals.p != NULL && phase2_sa == NULL) {
 			log_message(WHACK_STREAM | RC_LOG_SERIOUS, logger,
 				    "cannot initiate: no acceptable kernel algorithms loaded");
