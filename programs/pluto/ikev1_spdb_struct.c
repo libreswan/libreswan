@@ -38,7 +38,6 @@
 #include "keys.h"
 #include "kernel.h"     /* needs connections.h */
 #include "log.h"
-#include "spdb.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 #include "plutoalg.h"
 #include "crypto.h"

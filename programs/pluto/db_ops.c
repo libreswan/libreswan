@@ -61,7 +61,6 @@
 #include "defs.h"
 #include "state.h"
 #include "packet.h"
-#include "spdb.h"
 #include "db_ops.h"
 #include "log.h"
 #include "whack.h"

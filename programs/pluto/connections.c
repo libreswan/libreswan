@@ -66,7 +66,6 @@
 #include "log.h"
 #include "keys.h"
 #include "whack.h"
-#include "spdb.h"
 #include "ike_alg.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"

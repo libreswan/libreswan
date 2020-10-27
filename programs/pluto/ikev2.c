@@ -57,7 +57,6 @@
 #include "timer.h"
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
-#include "spdb.h"
 #include "nat_traversal.h"
 #include "vendor.h"
 #include "ip_address.h"

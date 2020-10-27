@@ -2,7 +2,7 @@
 #ifndef _DB_OPS_H
 #define _DB_OPS_H
 
-#include "spdb.h"
+#include "ikev1_spdb.h"
 
 /*
  *      Main db object, (quite proposal "oriented")
