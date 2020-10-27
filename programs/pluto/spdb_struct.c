@@ -40,7 +40,7 @@
 
 #include "kernel_alg.h"
 #include "ike_alg.h"
-#include "db_ops.h"
+#include "ikev1_db_ops.h"
 
 #include "nat_traversal.h"
 

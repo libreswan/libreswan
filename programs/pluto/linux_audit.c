@@ -64,7 +64,6 @@
 
 #include "ip_address.h" /* for jam_address */
 
-#include "db_ops.h"
 
 #include "pluto_stats.h"
 

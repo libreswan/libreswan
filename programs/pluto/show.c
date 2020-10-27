@@ -38,7 +38,7 @@
 #include "virtual.h"
 #include "plutoalg.h"
 #include "crypto.h"
-#include "db_ops.h"
+#include "ikev1_db_ops.h"
 #include "kernel_xfrm_interface.h"
 #include "iface.h"
 #include "show.h"

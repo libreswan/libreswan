@@ -54,18 +54,16 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
-
+#include <assert.h>
 
 #include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
 #include "state.h"
 #include "packet.h"
-#include "db_ops.h"
 #include "log.h"
 #include "whack.h"
-
-#include <assert.h>
+#include "ikev1_db_ops.h"
 
 /*
  * stats: do accounting for allocations displayed in db_ops_show_status()

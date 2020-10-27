@@ -139,7 +139,7 @@ ifeq ($(USE_UNBOUND_EVENT_H_COPY),true)
 USERLAND_INCLUDES += -I${LIBRESWANSRCDIR}/include/unbound
 endif
 
-OBJS += db_ops.o
+OBJS += ikev1_db_ops.o
 
 # libefence is a free memory allocation debugger
 # Solaris 2 needs -lsocket -lnsl

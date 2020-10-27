@@ -37,7 +37,7 @@
 #include "ike_alg_encrypt.h"
 #include "plutoalg.h"
 #include "crypto.h"
-#include "db_ops.h"
+#include "ikev1_db_ops.h"
 #include "log.h"
 #include "whack.h"
 #include "ikev1.h"	/* for ikev1_quick_dh() */

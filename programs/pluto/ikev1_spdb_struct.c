@@ -47,7 +47,7 @@
 #include "ike_alg.h"
 #include "ike_alg_encrypt.h"
 #include "ike_alg_integ.h"
-#include "db_ops.h"
+#include "ikev1_db_ops.h"
 #include "lswfips.h" /* for libreswan_fipsmode */
 #include "crypt_prf.h"
 #include "ikev1_message.h"
