@@ -2256,6 +2256,11 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	bool send_idr = ((pc->spd.that.id.kind != ID_NULL && pc->spd.that.id.name.len != 0) ||
 				pc->spd.that.id.kind == ID_NULL); /* me tarzan, you jane */
 
+	if (impair.send_no_idr) {
+		libreswan_log("IMPAIR: omitting IDr payload");
+		send_idr = false;
+	}
+
 	dbg("IDr payload will %sbe sent", send_idr ? "" : "NOT ");
 
 	/* send out the IDi payload */
