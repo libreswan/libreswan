@@ -255,7 +255,14 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 		}
 #endif
 		if (st->st_ike_version == IKEv2) {
-			struct pending p = {
+			if (!IS_PARENT_SA_ESTABLISHED(st)) {
+				/* leave our Phase 2 negotiation pending */
+				add_pending(whack_sock, pexpect_ike_sa(st),
+				    c, policy, try,
+				    replacing, uctx,
+				    false/*part of initiate*/);
+			} else {
+				struct pending p = {
 				.whack_sock = whack_sock, /*on-stack*/
 				.ike = pexpect_ike_sa(st),
 				.connection = c,
@@ -263,8 +270,9 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 				.policy = policy,
 				.replacing = replacing,
 				.uctx = uctx,
-			};
-			ikev2_initiate_child_sa(&p);
+				};
+				ikev2_initiate_child_sa(&p);
+			}
 		}
 	}
 }
