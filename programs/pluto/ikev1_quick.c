@@ -1139,8 +1139,7 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 
 			c->spd.that.client = *peers_net;
 			c->spd.that.has_client = true;
-			pexpect(c->spd.that.virt == NULL);
-			c->spd.that.virt = NULL;	/* ??? leak? */
+			virtual_ip_delref(&c->spd.that.virt, HERE);
 
 			if (subnetishost(peers_net) &&
 			    addrinsubnet(&c->spd.that.host_addr, peers_net)) {

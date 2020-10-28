@@ -259,16 +259,8 @@ static void discard_connection(struct connection *c,
 
 	passert(c->spd.this.virt == NULL);
 
-	if (c->kind != CK_GOING_AWAY) {
-#if 0
-		/* ??? this seens buggy since virts don't get unshared */
-		pfreeany(c->spd.that.virt);
-#else
-		/* ??? make do until virts get unshared */
-		pexpect(c->spd.that.virt == NULL);
-		c->spd.that.virt = NULL;
-#endif
-	}
+	virtual_ip_delref(&c->spd.this.virt, HERE);
+	virtual_ip_delref(&c->spd.that.virt, HERE);
 
 	struct spd_route *sr = c->spd.spd_next;
 
@@ -681,6 +673,7 @@ void unshare_connection_end(struct end *e)
 	e->xauth_username = clone_str(e->xauth_username, "xauth username");
 	e->xauth_password = clone_str(e->xauth_password, "xauth password");
 	e->host_addr_name = clone_str(e->host_addr_name, "host ip");
+	e->virt = virtual_ip_addref(e->virt, HERE);
 	if (e->ckaid != NULL) {
 		e->ckaid = clone_thing(*e->ckaid, "ckaid");
 	}
@@ -1972,6 +1965,7 @@ static bool extract_connection(const struct whack_message *wm,
 		 * or rightprotoport=17/%any
 		 * passert(isanyaddr(&c->spd.that.host_addr));
 		 */
+		passert(c->spd.that.virt == NULL);
 		c->spd.that.virt = create_virtual(wm->left.virt != NULL ?
 						  wm->left.virt :
 						  wm->right.virt,
@@ -2080,8 +2074,7 @@ struct connection *add_group_instance(struct fd *whackfd,
 
 	if (t->spd.that.virt != NULL) {
 		DBG_log("virtual_ip not supported in group instance; ignored");
-		pexpect(t->spd.that.virt == NULL);
-		t->spd.that.virt = NULL;
+		virtual_ip_delref(&t->spd.that.virt, HERE);
 	}
 
 	unshare_connection(t);

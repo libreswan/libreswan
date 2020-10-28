@@ -24,6 +24,7 @@
 #include "connections.h"
 #include "virtual_ip.h"
 #include "nat_traversal.h"		/* for nat_traversal_enabled */
+#include "refcnt.h"
 
 #define F_VIRTUAL_NO		1	/* %no (subnet must be host/32) */
 #define F_VIRTUAL_PRIVATE	2	/* %priv (list held in private_net_{incl,excl} */
@@ -31,6 +32,7 @@
 #define F_VIRTUAL_HOST		8	/* vhost (vnet has no representation) */
 
 struct virtual_ip {
+	refcnt_t refcnt;
 	unsigned short flags;	/* union of F_VIRTUAL_* */
 	unsigned short n_net;
 	ip_subnet net[0];
@@ -269,9 +271,11 @@ struct virtual_ip *create_virtual(const char *string, struct logger *logger)
 		str = next + 1;
 	}
 
+	/* allocate struct + array */
 	struct virtual_ip *v = (struct virtual_ip *)alloc_bytes(
 		sizeof(struct virtual_ip) + (n_net * sizeof(ip_subnet)),
 		"virtual description");
+	refcnt_init("vip", v, &v->refcnt, HERE);
 
 	v->flags = flags;
 	v->n_net = n_net;
@@ -472,4 +476,20 @@ void show_virtual_private(struct show *s)
 					  private_net_excl,
 					  private_net_excl_len);
 	}
+}
+
+static void virtual_ip_free(struct virtual_ip **vip, where_t where UNUSED)
+{
+	pfree(*vip);
+	*vip = NULL;
+}
+
+struct virtual_ip *virtual_ip_addref(struct virtual_ip *vip, where_t where)
+{
+	return refcnt_addref(vip, where);
+}
+
+void virtual_ip_delref(struct virtual_ip **vip, where_t where)
+{
+	refcnt_delref(vip, virtual_ip_free, where);
 }

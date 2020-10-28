@@ -29,7 +29,9 @@ extern void show_virtual_private(struct show *s);
 extern void init_virtual_ip(const char *private_list, struct logger *logger);
 extern void free_virtual_ip(void);
 
-extern struct virtual_ip *create_virtual(const char *string, struct logger *logger);
+struct virtual_ip *create_virtual(const char *string, struct logger *logger);
+struct virtual_ip *virtual_ip_addref(struct virtual_ip *vip, where_t where);
+void virtual_ip_delref(struct virtual_ip **vip, where_t where);
 
 extern bool is_virtual_end(const struct end *that);
 extern bool is_virtual_connection(const struct connection *c);
