@@ -74,7 +74,6 @@
 #include "ip_info.h"
 #include "vendor.h"
 #include "nat_traversal.h"
-#include "virtual.h"	/* needs connections.h */
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"
 #include "ip_address.h"

@@ -639,7 +639,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		 * we found a non-wildcard conn. double check if it needs
 		 * instantiation anyway (eg vnet=)
 		 */
-		if (c->kind == CK_TEMPLATE && c->spd.that.virt) {
+		if (c->kind == CK_TEMPLATE && c->spd.that.virt != NULL) {
 			dbg_md(md, "local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation");
 			ip_address sender_address = endpoint_address(&md->sender);
 			c = rw_instantiate(c, &sender_address, NULL, NULL);

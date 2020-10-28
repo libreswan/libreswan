@@ -52,7 +52,6 @@
 #include "server.h"
 #include "vendor.h"
 #include "kernel.h"
-#include "virtual.h"	/* needs connections.h */
 #include "hostpair.h"
 #include "addresspool.h"
 #include "rnd.h"

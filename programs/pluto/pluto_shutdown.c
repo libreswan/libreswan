@@ -48,7 +48,7 @@
 #include "crl_queue.h"		/* for free_crl_queue() */
 #include "iface.h"		/* for free_ifaces() */
 #include "kernel.h"		/* for kernel_ops.shutdown() */
-#include "virtual.h"		/* for free_virtual_ip() */
+#include "virtual_ip.h"		/* for free_virtual_ip() */
 #include "server.h"		/* for free_server() */
 #ifdef USE_DNSSEC
 #include "dnssec.h"		/* for unbound_ctx_free() */

@@ -58,7 +58,6 @@
 #include "ike_alg_integ.h"
 #include "plutoalg.h"
 /* for show_virtual_private: */
-#include "virtual.h"	/* needs connections.h */
 #include "crypto.h"
 #include "pluto_shutdown.h"		/* for exit_pluto() */
 

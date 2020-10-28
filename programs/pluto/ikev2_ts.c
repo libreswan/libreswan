@@ -29,7 +29,7 @@
 #include "ikev2_ts.h"
 #include "connections.h"	/* for struct end */
 #include "demux.h"
-#include "virtual.h"
+#include "virtual_ip.h"
 #include "hostpair.h"
 #include "ip_info.h"
 #include "ip_selector.h"

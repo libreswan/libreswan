@@ -75,7 +75,7 @@
 
 #include "vendor.h"
 #include "nat_traversal.h"
-#include "virtual.h"	/* needs connections.h */
+#include "virtual_ip.h"
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"
 #include "ip_address.h"
@@ -1138,7 +1138,8 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 			char cthat[END_BUF];
 
 			c->spd.that.client = *peers_net;
-			c->spd.that.has_client = TRUE;
+			c->spd.that.has_client = true;
+			pexpect(c->spd.that.virt == NULL);
 			c->spd.that.virt = NULL;	/* ??? leak? */
 
 			if (subnetishost(peers_net) &&

@@ -68,7 +68,6 @@
 #include "nat_traversal.h"
 #include "ip_address.h"
 #include "initiate.h"
-#include "virtual.h"	/* needs connections.h */
 #include "iface.h"
 #include "hostpair.h"
 

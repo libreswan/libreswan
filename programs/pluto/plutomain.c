@@ -56,7 +56,7 @@
 #include "crypto.h"
 #include "vendor.h"
 #include "enum_names.h"
-#include "virtual.h"	/* needs connections.h */
+#include "virtual_ip.h"
 #include "state_db.h"		/* for init_state_db() */
 #include "connection_db.h"	/* for connection_state_db() */
 #include "nat_traversal.h"

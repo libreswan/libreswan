@@ -57,7 +57,6 @@
 #include "ikev1_xauth.h"
 #include "nat_traversal.h"
 
-#include "virtual.h"	/* needs connections.h */
 
 #include "hostpair.h"
 

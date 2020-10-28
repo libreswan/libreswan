@@ -65,7 +65,6 @@
 #include "hash_table.h"
 #include "iface.h"
 
-#include "virtual.h"	/* needs connections.h */
 
 #include "hostpair.h"
 

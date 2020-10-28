@@ -70,7 +70,6 @@
 #include "secrets.h"
 #include "ikev1.h"
 #include "ikev1_xauth.h"
-#include "virtual.h"	/* needs connections.h */
 #include "addresspool.h"
 #include "ip_address.h"
 #include "send.h"		/* for send without recording */
@@ -1804,6 +1803,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 							sr->this.ca = EMPTY_CHUNK;
 							sr->that.ca = EMPTY_CHUNK;
 
+							/* unshare pointers */
 							sr->this.virt = NULL;
 							sr->that.virt = NULL;
 

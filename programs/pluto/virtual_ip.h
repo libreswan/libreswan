@@ -12,31 +12,32 @@
  * for more details.
  */
 
-#ifndef _VIRTUAL_IP_H
-#define _VIRTUAL_IP_H
+#ifndef VIRTUAL_IP_H
+#define VIRTUAL_IP_H
 
 #include "err.h"
 #include "ip_address.h"
+#include "ip_subnet.h"
 
 struct connection;
 struct spd_route;
 struct end;
+struct show;
 
 extern void show_virtual_private(struct show *s);
 
 extern void init_virtual_ip(const char *private_list, struct logger *logger);
 extern void free_virtual_ip(void);
 
-extern struct virtual_t *create_virtual(const struct connection *c,
-					const char *string, struct logger *logger);
+extern struct virtual_ip *create_virtual(const char *string, struct logger *logger);
 
 extern bool is_virtual_end(const struct end *that);
 extern bool is_virtual_connection(const struct connection *c);
 extern bool is_virtual_sr(const struct spd_route *sr);
 extern bool is_virtual_vhost(const struct end *that);
 extern err_t check_virtual_net_allowed(const struct connection *c,
-	const ip_subnet *peer_net,
-	const ip_address *peers_addr);
+				       const ip_subnet *peer_net,
+				       const ip_address *peers_addr);
 
-#endif /* _VIRTUAL_IP_H */
+#endif /* VIRTUAL_IP_H */
 

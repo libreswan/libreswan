@@ -35,7 +35,7 @@
 #include "pluto_stats.h"
 #include "connections.h"
 #include "kernel.h"
-#include "virtual.h"
+#include "virtual_ip.h"
 #include "plutoalg.h"
 #include "crypto.h"
 #include "ikev1_db_ops.h"

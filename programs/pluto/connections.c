@@ -77,7 +77,7 @@
 #include "nss_cert_load.h"
 #include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
-#include "virtual.h"	/* needs connections.h */
+#include "virtual_ip.h"	/* needs connections.h */
 #include "hostpair.h"
 #include "lswfips.h"
 #include "crypto.h"
@@ -265,6 +265,7 @@ static void discard_connection(struct connection *c,
 		pfreeany(c->spd.that.virt);
 #else
 		/* ??? make do until virts get unshared */
+		pexpect(c->spd.that.virt == NULL);
 		c->spd.that.virt = NULL;
 #endif
 	}
@@ -1971,8 +1972,7 @@ static bool extract_connection(const struct whack_message *wm,
 		 * or rightprotoport=17/%any
 		 * passert(isanyaddr(&c->spd.that.host_addr));
 		 */
-		c->spd.that.virt = create_virtual(c,
-						  wm->left.virt != NULL ?
+		c->spd.that.virt = create_virtual(wm->left.virt != NULL ?
 						  wm->left.virt :
 						  wm->right.virt,
 						  logger);
@@ -2080,6 +2080,7 @@ struct connection *add_group_instance(struct fd *whackfd,
 
 	if (t->spd.that.virt != NULL) {
 		DBG_log("virtual_ip not supported in group instance; ignored");
+		pexpect(t->spd.that.virt == NULL);
 		t->spd.that.virt = NULL;
 	}
 
