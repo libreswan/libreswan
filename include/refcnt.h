@@ -52,7 +52,7 @@ void refcnt_init(const char *what, const void *pointer,
 void refcnt_add(const char *what, const void *pointer,
 		refcnt_t *refcnt, where_t where);
 
-#define ref_add(O, WHERE)						\
+#define refcnt_addref(O, WHERE)						\
 	({								\
 		if ((O) == NULL) {					\
 			dbg("addref "#O"@NULL "PRI_WHERE"", pri_where(WHERE)); \
@@ -65,7 +65,7 @@ void refcnt_add(const char *what, const void *pointer,
 #define add_ref(O)							\
 	({								\
 		where_t here_ = HERE;					\
-		ref_add(O, here_);					\
+		refcnt_addref(O, here_);				\
 	})
 
 /*
@@ -77,7 +77,7 @@ void refcnt_add(const char *what, const void *pointer,
 bool refcnt_delete(const char *what, const void *pointer,
 		   refcnt_t *refcnt, where_t where) MUST_USE_RESULT;
 
-#define ref_delete(O, FREE, WHERE)					\
+#define refcnt_delref(O, FREE, WHERE)					\
 	{								\
 		if (*(O) == NULL) {					\
 			dbg("delref "#O"@NULL "PRI_WHERE"", pri_where(WHERE)); \
@@ -93,7 +93,7 @@ bool refcnt_delete(const char *what, const void *pointer,
 #define delete_ref(O, FREE)						\
 	{								\
 		where_t here_ = HERE;					\
-		ref_delete(O, FREE, here_);				\
+		refcnt_delref(O, FREE, here_);				\
 	}
 
 /*
@@ -103,7 +103,7 @@ bool refcnt_delete(const char *what, const void *pointer,
  * braces.
  */
 
-#define ref_replace(O, NEW, FREE, WHERE)				\
+#define refcnt_replace(O, NEW, FREE, WHERE)				\
 	{								\
 		/* add new before deleting old */			\
 		ref_add(NEW, WHERE);					\
@@ -115,7 +115,7 @@ bool refcnt_delete(const char *what, const void *pointer,
 	{								\
 		where_t here_ = HERE;					\
 		/* add new before deleting old */			\
-		ref_replace(O, NEW, FREE, here_);			\
+		refcnt_replace(O, NEW, FREE, here_);			\
 	}
 
 /* for code wanting to use refcnt for normal allocs */

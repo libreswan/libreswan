@@ -48,7 +48,7 @@ struct msg_digest *clone_raw_md(struct msg_digest *md, where_t where)
 
 struct msg_digest *md_addref(struct msg_digest *md, where_t where)
 {
-	return ref_add(md, where);
+	return refcnt_addref(md, where);
 }
 
 static void free_mdp(struct msg_digest **mdp, where_t where)
@@ -62,5 +62,5 @@ static void free_mdp(struct msg_digest **mdp, where_t where)
 
 void md_delref(struct msg_digest **mdp, where_t where)
 {
-	ref_delete(mdp, free_mdp, where);
+	refcnt_delref(mdp, free_mdp, where);
 }

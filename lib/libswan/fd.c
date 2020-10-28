@@ -34,7 +34,7 @@ struct fd {
 struct fd *dup_any_fd(struct fd *fd, where_t where)
 {
 	pexpect(fd == NULL || fd->magic == FD_MAGIC);
-	ref_add(fd, where);
+	refcnt_addref(fd, where);
 	return fd;
 }
 
@@ -56,7 +56,7 @@ static void free_fd(struct fd **fdp, where_t where)
 
 void close_any_fd(struct fd **fd, where_t where)
 {
-	ref_delete(fd, free_fd, where);
+	refcnt_delref(fd, free_fd, where);
 }
 
 void fd_leak(struct fd *fd, where_t where)

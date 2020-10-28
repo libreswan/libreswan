@@ -33,7 +33,7 @@ struct root_certs *root_certs_addref(where_t where)
 	/* extend or set cert cache lifetime */
 	schedule_oneshot_timer(EVENT_FREE_ROOT_CERTS, FREE_ROOT_CERTS_TIMEOUT);
 	if (root_certs != NULL) {
-		return ref_add(root_certs, where);
+		return refcnt_addref(root_certs, where);
 	}
 
 	plog_global("loading root certificate cache");
@@ -47,7 +47,7 @@ struct root_certs *root_certs_addref(where_t where)
 	 * result of this function.
 	 */
 	root_certs = refcnt_alloc(struct root_certs, where);
-	ref_add(root_certs, where); /* function result */
+	refcnt_addref(root_certs, where); /* function result */
 	root_certs->trustcl = CERT_NewCertList();
 
 
@@ -106,7 +106,7 @@ static void root_certs_free(struct root_certs **certs, where_t unused_where UNUS
 void root_certs_delref(struct root_certs **root_certs,
 			where_t where)
 {
-	ref_delete(root_certs, root_certs_free, where);
+	refcnt_delref(root_certs, root_certs_free, where);
 }
 
 bool root_certs_empty(const struct root_certs *root_certs)
