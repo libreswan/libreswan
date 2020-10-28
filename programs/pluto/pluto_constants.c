@@ -257,6 +257,7 @@ const char *const sa_policy_bit_names[] = {
 	"ESN_NO",
 	"ESN_YES",
 	"INTERMEDIATE",
+	"IGNORE_PEER_DNS",
 	"RSASIG_v1_5",
 	NULL	/* end for bitnamesof() */
 };

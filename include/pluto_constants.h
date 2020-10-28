@@ -938,6 +938,7 @@ enum sa_policy_bits {
 	POLICY_ESN_NO_IX,		/* send/accept ESNno */
 	POLICY_ESN_YES_IX,		/* send/accept ESNyes */
 	POLICY_INTERMEDIATE_IX, /* allow Intermediate Exchange */
+	POLICY_IGNORE_PEER_DNS_IX, /* install obtained DNS servers locally */
 	POLICY_RSASIG_v1_5_IX,
 #define POLICY_IX_LAST	POLICY_RSASIG_v1_5_IX
 };
@@ -990,6 +991,7 @@ enum sa_policy_bits {
 #define POLICY_ESN_NO		LELEM(POLICY_ESN_NO_IX)	/* accept or request ESNno */
 #define POLICY_ESN_YES		LELEM(POLICY_ESN_YES_IX)	/* accept or request ESNyes */
 #define POLICY_INTERMEDIATE	LELEM(POLICY_INTERMEDIATE_IX) /* allow Intermediate Exchange */
+#define POLICY_IGNORE_PEER_DNS	LELEM(POLICY_IGNORE_PEER_DNS_IX)
 #define POLICY_RSASIG_v1_5	LELEM(POLICY_RSASIG_v1_5_IX)
 
 #define NEGOTIATE_AUTH_HASH_SHA1		LELEM(IKEv2_HASH_ALGORITHM_SHA1)	/* rfc7427 does responder support SHA1? */

@@ -796,6 +796,7 @@ static const struct option long_opts[] = {
 	PS("nopmtudisc", NOPMTUDISC),
 	PS("ms-dh-downgrade", MSDH_DOWNGRADE),
 	PS("dns-match-id", DNS_MATCH_ID),
+	PS("ignore-peer-dns", IGNORE_PEER_DNS),
 #undef PS
 
 	{ "tcp", required_argument, NULL, CD_IKE_TCP + OO },

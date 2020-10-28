@@ -523,7 +523,7 @@ enum message_role v2_msg_role(const struct msg_digest *md)
  * Result is allocated on heap so caller must ensure it is freed.
  */
 
-char *cisco_stringify(pb_stream *input_pbs, const char *attr_name)
+char *cisco_stringify(pb_stream *input_pbs, const char *attr_name, lset_t pol)
 {
 	char strbuf[500]; /* Cisco maximum unknown - arbitrary choice */
 	struct jambuf buf = ARRAY_AS_JAMBUF(strbuf); /* let jambuf deal with overflow */
@@ -576,7 +576,10 @@ char *cisco_stringify(pb_stream *input_pbs, const char *attr_name)
 	if (!jambuf_ok(&buf)) {
 		loglog(RC_INFORMATIONAL, "Received overlong %s: %s (truncated)", attr_name, strbuf);
 	} else {
-		loglog(RC_INFORMATIONAL, "Received %s: %s", attr_name, strbuf);
+		bool ignore = streq("INTERNAL_DNS_DOMAIN", attr_name) && LIN(POLICY_IGNORE_PEER_DNS, pol);
+		loglog(RC_INFORMATIONAL, "Received %s%s: %s",
+			ignore ? "and ignored " : "",
+			attr_name, strbuf);
 	}
 	return clone_str(strbuf, attr_name);
 }

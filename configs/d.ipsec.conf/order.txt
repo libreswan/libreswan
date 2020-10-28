@@ -68,6 +68,7 @@ d.ipsec.conf/tcp-remoteport.xml
 d.ipsec.conf/nat-keepalive.xml
 d.ipsec.conf/initial-contact.xml
 d.ipsec.conf/cisco-unity.xml
+d.ipsec.conf/ignore-peer-dns.xml
 d.ipsec.conf/redirect.xml
 d.ipsec.conf/fake-strongswan.xml
 d.ipsec.conf/send-vendorid.xml

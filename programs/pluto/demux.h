@@ -234,7 +234,7 @@ void schedule_md_event(const char *name, struct msg_digest *md);
 
 extern void process_packet(struct msg_digest **mdp);
 
-extern char *cisco_stringify(pb_stream *pbs, const char *attr_name);
+extern char *cisco_stringify(pb_stream *pbs, const char *attr_name, lset_t pol);
 
 extern void lswlog_msg_digest(struct jambuf *log, const struct msg_digest *md);
 

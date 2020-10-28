@@ -1716,8 +1716,10 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 				address_buf a_buf;
 				const char *a_str = ipstr(&a, &a_buf);
-				loglog(RC_INFORMATIONAL, "Received DNS server %s",
-				       a_str);
+				bool ignore = LIN(POLICY_IGNORE_PEER_DNS, c->policy);
+				loglog(RC_INFORMATIONAL, "Received %sDNS server %s",
+					ignore ? "and ignored " : "",
+					a_str);
 
 				append_st_cfg_dns(st, a_str);
 
@@ -1727,13 +1729,13 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 			case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
 			{
-				append_st_cfg_domain(st, cisco_stringify(&strattr, "Domain"));
+				append_st_cfg_domain(st, cisco_stringify(&strattr, "Domain"), c->policy);
 				break;
 			}
 
 			case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
 			{
-				st->st_seen_cfg_banner = cisco_stringify(&strattr, "Banner");
+				st->st_seen_cfg_banner = cisco_stringify(&strattr, "Banner", NULL);
 				break;
 			}
 
