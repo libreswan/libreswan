@@ -1601,6 +1601,8 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
 				       &rbody, st->st_logger);
 
+	struct connection *c = st->st_connection;
+
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	lset_t resp = LEMPTY;
@@ -1729,13 +1731,13 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 			case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
 			{
-				append_st_cfg_domain(st, cisco_stringify(&strattr, "Domain"), c->policy);
+				append_st_cfg_domain(st, cisco_stringify(&strattr, "Domain", c->policy));
 				break;
 			}
 
 			case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
 			{
-				st->st_seen_cfg_banner = cisco_stringify(&strattr, "Banner", NULL);
+				st->st_seen_cfg_banner = cisco_stringify(&strattr, "Banner", c->policy);
 				break;
 			}
 
