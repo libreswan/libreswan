@@ -102,11 +102,11 @@ class Issues:
     GPFAULT = "GPFAULT"
     PRINTF_NULL = "PRINTF_NULL"
     KERNEL = "KERNEL"
+    LEAK = "LEAK"
 
     TIMEOUT = "timeout"
 
     ISCNTRL = "iscntrl"
-    LEAK = "leak"
 
     OUTPUT_MISSING = "output-missing"
     OUTPUT_UNCHECKED = "output-unchecked"
