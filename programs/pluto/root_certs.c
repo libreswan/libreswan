@@ -46,8 +46,7 @@ struct root_certs *root_certs_addref(where_t where)
 	 * Need to start with two references: the ROOT_CERTS; and the
 	 * result of this function.
 	 */
-	root_certs = alloc_thing(struct root_certs, "root certs");
-	ref_init(root_certs, where); /* static pointer */
+	root_certs = refcnt_alloc(struct root_certs, where);
 	ref_add(root_certs, where); /* function result */
 	root_certs->trustcl = CERT_NewCertList();
 

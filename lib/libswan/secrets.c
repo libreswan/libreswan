@@ -1676,7 +1676,7 @@ static struct pubkey *alloc_public_key(const struct id *id, /* ASKK */
 				       const keyid_t *keyid, const ckaid_t *ckaid, size_t size,
 				       where_t where)
 {
-	struct pubkey *pk = alloc_thing(struct pubkey, "raw public key");
+	struct pubkey *pk = refcnt_alloc(struct pubkey, where);
 	pk->u = *pkc;
 	pk->id = clone_id(id, "public key id");
 	pk->dns_auth_level = dns_auth_level;
@@ -1688,7 +1688,6 @@ static struct pubkey *alloc_public_key(const struct id *id, /* ASKK */
 	pk->keyid = *keyid;
 	pk->ckaid = *ckaid;
 	pk->size = size;
-	ref_init(pk, where);
 	return pk;
 }
 

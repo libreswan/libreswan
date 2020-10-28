@@ -27,10 +27,7 @@ struct msg_digest *alloc_md(const struct iface_port *ifp, const ip_endpoint *sen
 	 * - .note = NOTHING_WRONG
 	 * - .encrypted = FALSE
 	 */
-	static const struct msg_digest blank_md;
-	struct msg_digest *md = alloc_thing(struct msg_digest, where.func);
-	*md = blank_md;
-	ref_init(md, where);
+	struct msg_digest *md = refcnt_alloc(struct msg_digest, where);
 	md->iface = ifp;
 	md->sender = *sender;
 	md->md_logger = alloc_logger(md, &logger_message_vec, where);

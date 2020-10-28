@@ -36,14 +36,12 @@ typedef struct {
 void refcnt_init(const char *what, const void *pointer,
 		 refcnt_t *refcnt, where_t where);
 
-#define ref_init(O, WHERE)			\
-	refcnt_init(#O, O, &(O)->refcnt, WHERE)
-
-#define init_ref(O)				\
-	{					\
-		where_t here_ = HERE;		\
-		ref_init(O, here_);		\
-	}
+#define refcnt_alloc(THING, WHERE)				       \
+	({							       \
+		THING *t_ = alloc_bytes(sizeof(THING), (WHERE).func);  \
+		refcnt_init(#THING, t_, &t_->refcnt, WHERE);	       \
+		t_;						       \
+	})
 
 /*
  * Add a reference.

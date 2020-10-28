@@ -100,10 +100,9 @@ struct fd *fd_accept(int socket, where_t where, struct logger *logger)
 		return NULL;
 	}
 
-	struct fd *fdt = alloc_thing(struct fd, where.func);
+	struct fd *fdt = refcnt_alloc(struct fd, where);
 	fdt->fd = fd;
 	fdt->magic = FD_MAGIC;
-	ref_init(fdt, where);
 	dbg("%s: new "PRI_FD" "PRI_WHERE"",
 	    __func__, pri_fd(fdt), pri_where(where));
 	return fdt;

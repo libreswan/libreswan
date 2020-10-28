@@ -64,9 +64,8 @@ static struct list_head interface_dev = INIT_LIST_HEAD(&interface_dev, &iface_de
 
 static void add_iface_dev(const struct raw_iface *ifp)
 {
-	struct iface_dev *ifd = alloc_thing(struct iface_dev,
-					    "struct iface_dev");
-	init_ref(ifd);
+	where_t where = HERE;
+	struct iface_dev *ifd = refcnt_alloc(struct iface_dev, where);
 	ifd->id_rname = clone_str(ifp->name,
 				 "real device name");
 	ifd->id_nic_offload = kernel_ops->detect_offload(ifp);
