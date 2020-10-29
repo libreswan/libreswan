@@ -620,6 +620,7 @@ static bool init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
 		*/
 		new_pluto_xfrmi(if_id, shared, xfrmi_name, c);
 	} else {
+		pfreeany(xfrmi_name);
 		passert(c->xfrmi->shared == shared);
 		reference_xfrmi(c);
 	}
