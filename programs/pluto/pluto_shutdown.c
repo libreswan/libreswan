@@ -56,6 +56,7 @@
 #include "demux.h"		/* for free_demux() */
 
 volatile bool exiting_pluto = false;
+static enum pluto_exit_code exit_code;
 
 /*
  * leave pluto, with status.
@@ -66,12 +67,11 @@ volatile bool exiting_pluto = false;
  *  1 general discomfort
  * 10 lock file exists
  */
+
+static void exit_tail(void) NEVER_RETURNS;
+
 void exit_pluto(enum pluto_exit_code status)
 {
-	/* no whack; right? XXX: yes, but why? */
-	struct fd *whackfd = null_fd;
-	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
-
 	/*
 	 * Tell the world, well actually all the threads, that pluto
 	 * is exiting and they should quit.  Even if pthread_cancel()
@@ -79,11 +79,20 @@ void exit_pluto(enum pluto_exit_code status)
 	 * this instead.
 	 */
 	exiting_pluto = true;
+	exit_code = status;
+
+	exit_tail();
+}
+
+void exit_tail(void)
+{
+	struct fd *whackfd = null_fd;
+	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
 
 	/* needed because we may be called in odd state */
 	reset_globals();
  #ifdef USE_SYSTEMD_WATCHDOG
-	pluto_sd(PLUTO_SD_STOPPING, status);
+	pluto_sd(PLUTO_SD_STOPPING, exit_code);
  #endif
 
 	/*
@@ -155,7 +164,39 @@ void exit_pluto(enum pluto_exit_code status)
 	}
 	close_log();	/* close the logfiles */
 #ifdef USE_SYSTEMD_WATCHDOG
-	pluto_sd(PLUTO_SD_EXIT, status);
+	pluto_sd(PLUTO_SD_EXIT, exit_code);
 #endif
-	exit(status);	/* exit, with our error code */
+	exit(exit_code);	/* exit, with our error code */
+}
+
+void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status)
+{
+	/*
+	 * Tell the world, well actually all the threads, that pluto
+	 * is exiting and they should quit.  Even if pthread_cancel()
+	 * weren't buggy, using it correctly would be hard, so use
+	 * this instead.
+	 */
+	exiting_pluto = true;
+	exit_code = status;
+
+	/*
+	 * Leak the whack FD so that only when pluto finally exits the
+	 * attached whack that is waiting on the socket will be
+	 * released.
+	 *
+	 * Note that this means that the entire exit process is radio
+	 * silent.
+	 */
+	fd_leak(whackfd, HERE);
+	stop_server();
+}
+
+void event_loop_exited(int r)
+{
+	dbg("event loop exited: %s",
+	    r < 0 ? "an error occured" :
+	    r > 0 ? "no pending or active events" :
+	    "success");
+	exit_tail();
 }

@@ -77,7 +77,7 @@
 #include "ikev2.h"		/* for complete_v2_state_transition() */
 #include "state_db.h"
 #include "iface.h"
-#include "pluto_shutdown.h"		/* for exit_pluto() */
+#include "pluto_shutdown.h"		/* for exit_pluto() ... */
 
 #ifdef USE_XFRM_INTERFACE
 #include "kernel_xfrm_interface.h"
@@ -1340,7 +1340,13 @@ void call_server(char *conffile)
 #endif
 
 	int r = event_base_loop(pluto_eb, 0);
-	passert(r == 0);
+	pexpect(r >= 0);
+	event_loop_exited(r);
+}
+
+void stop_server(void)
+{
+	event_base_loopbreak(pluto_eb);
 }
 
 bool ev_before(struct pluto_event *pev, deltatime_t delay)

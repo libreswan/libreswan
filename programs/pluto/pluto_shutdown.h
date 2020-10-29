@@ -24,28 +24,50 @@
 enum pluto_exit_code;
 
 /*
- * Messily exit Pluto
- *
- * This code tries to shutdown pluto while the event loop is still
- * active and while worker threads are still running.  Funny enough,
- * it occasionally crashes or spews garbage, for instance:
- *
- * - a worker thread trying to access NSS after NSS has been shutdown
- *
- * - scary leak-detective errors because there are events sitting in
- *   the event queue
- *
  * The global EXITING_PLUTO is there as a hint to long running threads
  * that they should also shutdown (it should be tested in the thread's
  * main and some inner loops).  Just note that, on its own, it isn't
  * sufficient.  Any long running threads will also need a gentle nudge
  * (so that they loop around and detect the need to quit) and then a
  * join to confirm that they have exited.
+ */
+
+extern volatile bool exiting_pluto;
+
+/*
+ * Cleanly shutdown pluto.
+ *
+ * Well that's the theory - WIP.
+ *
+ * Using the event-loop: shutdown the helper threads; clean up any
+ * child processes; delete any states / connections; and close any
+ * open sockets.
+ *
+ * Then, once the event-loop exits (which should happen once there's
+ * nothing to do), clean up any remaining memory and exit pluto.
+ *
+ * The important thing here is that for most of the shutdown the event
+ * loop is still running.  This way helper threads and states can
+ * continue to rely on the event-loop as they transition to the
+ * shutdown state (rather than special abort paths).
+ */
+
+void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status);
+void event_loop_exited(int r) NEVER_RETURNS;
+
+/*
+ * Messily exit Pluto
+ *
+ * This code tries to exit pluto from the current event (it doesn't
+ * return, new events added to the event queue are lost).
+ *
+ * Since the event-loop isn't shutdown, new events (for instance
+ * running on helper threads) continue to be added to the event-loop
+ * but never get processed.
  *
  * Also avoid pthread_cancel() which can crash.
  */
 
-extern volatile bool exiting_pluto;
 extern void exit_pluto(enum pluto_exit_code status) NEVER_RETURNS;
 
 #endif
