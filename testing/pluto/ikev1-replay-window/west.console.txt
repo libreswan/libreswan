@@ -26,6 +26,8 @@ west #
  echo "initdone"
 initdone
 west #
+ ipsec whack --listen > /dev/null
+west #
  ipsec auto --up westnet-eastnet-default
 002 "westnet-eastnet-default" #1: initiating IKEv1 Main Mode connection
 1v1 "westnet-eastnet-default" #1: sent Main Mode request
@@ -52,6 +54,8 @@ west #
 Redirecting to: [initsystem]
 west #
  /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec whack --listen > /dev/null
 west #
  ipsec auto --up westnet-eastnet-zero
 002 "westnet-eastnet-zero" #1: initiating IKEv1 Main Mode connection
@@ -81,6 +85,8 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  # there is a kernel bug in deplaying "new style" replay-window?
+west #
+ ipsec whack --listen > /dev/null
 west #
  ipsec auto --up westnet-eastnet-64
 002 "westnet-eastnet-64" #1: initiating IKEv1 Main Mode connection
