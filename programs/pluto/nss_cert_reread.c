@@ -36,7 +36,9 @@ static bool nss_reread_cert(struct end *dst, struct logger *logger)
 		return false;
 	}
 
-	diag_t diag = add_end_cert_and_preload_private_key(cert, dst, logger);
+	diag_t diag = add_end_cert_and_preload_private_key(cert, dst,
+							   true/*preserve existing ca?!?*/,
+							   logger);
 	if (diag != NULL) {
 		log_diag(RC_BADID, logger, &diag,
 			 "rereading certificate failed for nickname '%s': ", nickname);

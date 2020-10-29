@@ -816,7 +816,9 @@ static int extract_end(struct end *dst,
 				    dst->leftright, src->cert);
 			return -1; /* fatal */
 		}
-		diag_t diag = add_end_cert_and_preload_private_key(cert, dst, logger);
+		diag_t diag = add_end_cert_and_preload_private_key(cert, dst,
+								   same_ca/*preserve_ca*/,
+								   logger);
 		if (diag != NULL) {
 			log_diag(RC_FATAL, logger, &diag, "failed to add connection: ");
 			CERT_DestroyCertificate(cert);
@@ -894,7 +896,9 @@ static int extract_end(struct end *dst,
 		 */
 		CERTCertificate *cert = get_cert_by_ckaid_from_nss(&ckaid, logger);
 		if (cert != NULL) {
-			diag_t diag = add_end_cert_and_preload_private_key(cert, dst, logger);
+			diag_t diag = add_end_cert_and_preload_private_key(cert, dst,
+									   same_ca/*preserve_ca*/,
+									   logger);
 			if (diag != NULL) {
 				log_diag(RC_FATAL, logger, &diag, "failed to add connection: ");
 				CERT_DestroyCertificate(cert);
@@ -1080,6 +1084,7 @@ static bool check_connection_end(const struct whack_end *this,
 
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 					    struct end *dst_end,
+					    bool preserve_ca,
 					    struct logger *logger)
 {
 	passert(cert != NULL);
@@ -1129,8 +1134,14 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	dst_end->cert.ty = CERT_X509_SIGNATURE;
 	dst_end->cert.u.nss_cert = cert;
 
-	/* if no CA is defined, use issuer as default */
-	if (dst_end->ca.ptr == NULL) {
+	/*
+	 * If no CA is defined, use issuer as default; but only when
+	 * update is ok.
+	 *
+	 */
+	if (preserve_ca || dst_end->ca.ptr != NULL) {
+		dbg("preserving existing %s ca", dst_end->leftright);
+	} else {
 		dst_end->ca = clone_secitem_as_chunk(cert->derIssuer, "issuer ca");
 	}
 
