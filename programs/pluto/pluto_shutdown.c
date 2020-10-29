@@ -81,37 +81,19 @@ void exit_pluto(enum pluto_exit_code status)
 	exiting_pluto = true;
 	exit_code = status;
 
-	exit_tail();
-}
-
-void exit_tail(void)
-{
-	struct fd *whackfd = null_fd;
-	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
-
 	/* needed because we may be called in odd state */
 	reset_globals();
  #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_STOPPING, exit_code);
  #endif
 
-	/*
-	 * Wait for the crypto-helper threads to notice EXITING_PLUTO
-	 * and exit (if necessary, wake any sleeping helpers from
-	 * their slumber).  Without this any helper using NSS after
-	 * the code below has shutdown the NSS DB will crash.
-	 *
-	 * This does not try to delete any tasks left waiting on the
-	 * helper queue.  Instead, code further down deleting
-	 * connections (which in turn deletes states) should clean
-	 * that up?
-	 *
-	 * This also does not try to delete any completed tasks
-	 * waiting on the event loop.  One theory is for the helper
-	 * code to be changed so that helper tasks can be "cancelled"
-	 * after the've completed?
-	 */
-	stop_crypto_helpers(logger);
+	exit_tail();
+}
+
+void exit_tail(void)
+{
+	struct fd *whackfd = null_fd;
+	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
 
 	free_root_certs(whackfd);
 	free_preshared_secrets(logger);
@@ -189,14 +171,44 @@ void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status)
 	 * silent.
 	 */
 	fd_leak(whackfd, HERE);
+
+	/*
+	 * If the event-loop doesn't stop, this kicks in.  XXX: also
+	 * in exit_pluto().
+	 */
+ #ifdef USE_SYSTEMD_WATCHDOG
+	pluto_sd(PLUTO_SD_STOPPING, exit_code);
+ #endif
+
 	stop_server();
 }
 
 void event_loop_exited(int r)
 {
+	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
+
 	dbg("event loop exited: %s",
 	    r < 0 ? "an error occured" :
 	    r > 0 ? "no pending or active events" :
 	    "success");
+
+	/*
+	 * Wait for the crypto-helper threads to notice EXITING_PLUTO
+	 * and exit (if necessary, wake any sleeping helpers from
+	 * their slumber).  Without this any helper using NSS after
+	 * the code below has shutdown the NSS DB will crash.
+	 *
+	 * This does not try to delete any tasks left waiting on the
+	 * helper queue.  Instead, code further down deleting
+	 * connections (which in turn deletes states) should clean
+	 * that up?
+	 *
+	 * This also does not try to delete any completed tasks
+	 * waiting on the event loop.  One theory is for the helper
+	 * code to be changed so that helper tasks can be "cancelled"
+	 * after the've completed?
+	 */
+	stop_crypto_helpers(logger);
+
 	exit_tail();
 }

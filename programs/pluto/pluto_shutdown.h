@@ -35,9 +35,9 @@ enum pluto_exit_code;
 extern volatile bool exiting_pluto;
 
 /*
- * Cleanly shutdown pluto.
+ * "idle" then exit the event-loop, and then exit pluto.
  *
- * Well that's the theory - WIP.
+ * Recommended for shutting down while the event-loop is running.
  *
  * Using the event-loop: shutdown the helper threads; clean up any
  * child processes; delete any states / connections; and close any
@@ -46,7 +46,7 @@ extern volatile bool exiting_pluto;
  * Then, once the event-loop exits (which should happen once there's
  * nothing to do), clean up any remaining memory and exit pluto.
  *
- * The important thing here is that for most of the shutdown the event
+ * The important thing here is that for much of the shutdown the event
  * loop is still running.  This way helper threads and states can
  * continue to rely on the event-loop as they transition to the
  * shutdown state (rather than special abort paths).
@@ -56,16 +56,15 @@ void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status);
 void event_loop_exited(int r) NEVER_RETURNS;
 
 /*
- * Messily exit Pluto
+ * Exit pluto immediately.
  *
- * This code tries to exit pluto from the current event (it doesn't
- * return, new events added to the event queue are lost).
+ * Recommended for shutting down pluto during start-up (i.e., before
+ * the event-loop has started).
  *
- * Since the event-loop isn't shutdown, new events (for instance
- * running on helper threads) continue to be added to the event-loop
- * but never get processed.
- *
- * Also avoid pthread_cancel() which can crash.
+ * This function tries to cleanup a limited subset of resources and
+ * then immediately exit pluto.  For instance, while this function
+ * will close the logs and release the lock file, it will not try to
+ * clean up helper threads or reap child processes.
  */
 
 extern void exit_pluto(enum pluto_exit_code status) NEVER_RETURNS;
