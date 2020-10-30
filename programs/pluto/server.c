@@ -487,9 +487,7 @@ static struct pluto_event *free_event_entry(struct pluto_event **evp)
 		e->ev  = NULL;
 	}
 
-	dbg("%s: delref %s-pe@%p", __func__,
-	    enum_name(&timer_event_names, e->ev_type), e);
-
+	dbg_free("pe", e, HERE);
 	pfree(e);
 	*evp = NULL;
 	return next;
@@ -876,7 +874,7 @@ struct pluto_event *add_fd_read_event_handler(evutil_socket_t fd,
 	passert(in_main_thread());
 	pexpect(fd >= 0);
 	struct pluto_event *e = alloc_thing(struct pluto_event, name);
-	dbg("%s: newref %s-pe@%p", __func__, name, e);
+	dbg_alloc("pe", e, HERE);
 	e->ev_type = EVENT_NULL;
 	e->ev_name = name;
 	link_pluto_event_list(e);
@@ -1173,24 +1171,23 @@ static void childhandler_cb(struct logger *logger)
 static void *libevent_malloc(size_t size)
 {
 	void *ptr = uninitialized_malloc(size, __func__);
-	dbg("%s: newref ptr-libevent@%p size %zu", __func__, ptr, size);
+	dbg_alloc("libevent", ptr, HERE);
 	return ptr;
 }
 static void *libevent_realloc(void *old, size_t size)
 {
+	if (old != NULL) {
+		dbg_free("libevent", old, HERE);
+	}
 	void *new = uninitialized_realloc(old, size, __func__);
-	if (old == NULL) {
-		dbg("%s: newref ptr-libevent@%p size %zu", __func__, new, size);
-	} else {
-		/* enough to keep refcnt.awk happy */
-		dbg("%s: delref ptr-libevent@%p", __func__, old);
-		dbg("%s: newref ptr-libevent@%p size %zu", __func__, new, size);
+	if (new != NULL) {
+		dbg_alloc("libevent", new, HERE);
 	}
 	return new;
 }
 static void libevent_free(void *ptr)
 {
-	dbg("%s: delref ptr-libevent@%p", __func__, ptr);
+	dbg_free("libevent", ptr, HERE);
 	pfree(ptr);
 }
 #endif
