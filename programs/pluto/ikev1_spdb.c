@@ -889,67 +889,19 @@ static void unshare_propconj(struct db_prop_conj *pc)
 		unshare_prop(&pc->props[i]);
 }
 
-struct db_sa *sa_copy_sa(const struct db_sa *sa)
+struct db_sa *sa_copy_sa(const struct db_sa *sa, where_t where)
 {
-	unsigned int i;
-	struct db_sa *nsa;
-
-	nsa = clone_const_thing(*sa, "sa copy prop_conj (sa_copy_sa)");
+	struct db_sa *nsa = clone_const_thing(*sa, "sa copy prop_conj (sa_copy_sa)");
+	dbg_alloc("sadb", nsa, where);
 	nsa->dynamic = TRUE;
 	nsa->parentSA = sa->parentSA;
 
 	nsa->prop_conjs = clone_bytes(nsa->prop_conjs,
 		sizeof(nsa->prop_conjs[0]) * nsa->prop_conj_cnt,
 		"sa copy prop conj array (sa_copy_sa)");
-	for (i = 0; i < nsa->prop_conj_cnt; i++)
+	for (unsigned int i = 0; i < nsa->prop_conj_cnt; i++)
 		unshare_propconj(&nsa->prop_conjs[i]);
 
-	return nsa;
-}
-
-/*
- * clone the sa, but keep only the first transform (if any) of the first proposal (if any)
- * ??? does this make sense?
- */
-struct db_sa *sa_copy_sa_first(struct db_sa *sa)
-{
-	struct db_sa *nsa;
-	struct db_prop_conj *pc;
-	struct db_prop *p;
-
-	/* first do a shallow copy */
-	nsa = clone_thing(*sa, "sa copy prop_conj (sa_copy_first)");
-	nsa->dynamic = TRUE;
-	if (nsa->prop_conj_cnt == 0)
-		return nsa;
-
-	/* truncate to first prop_conj */
-	nsa->prop_conj_cnt = 1;
-	nsa->prop_conjs = clone_bytes(nsa->prop_conjs,
-				      sizeof(nsa->prop_conjs[0]),
-				      "sa copy 1 prop conj array");
-
-	pc = &nsa->prop_conjs[0];
-	if (pc->prop_cnt == 0)
-		return nsa;
-
-	/* truncate to first prop */
-	pc->prop_cnt = 1;
-	pc->props = clone_bytes(pc->props,
-				sizeof(pc->props[0]),
-				"sa copy 1 prop array");
-
-	p = &pc->props[0];
-	if (p->trans_cnt == 0)
-		return nsa;
-
-	/* truncate to first trans */
-	p->trans_cnt = 1;
-	p->trans = clone_bytes(p->trans,
-			       sizeof(p->trans[0]),
-			       "sa copy 1 trans array");
-
-	unshare_trans(&p->trans[0]);
 	return nsa;
 }
 
@@ -958,22 +910,18 @@ struct db_sa *sa_copy_sa_first(struct db_sa *sa)
  */
 struct db_sa *sa_merge_proposals(struct db_sa *a, struct db_sa *b)
 {
-	struct db_sa *n;
-	unsigned int i, j, k;
-
 	if (a == NULL || a->prop_conj_cnt == 0) {
-		struct db_sa *p = sa_copy_sa(b);
-		dbg_alloc("sadb", p, HERE);
+		struct db_sa *p = sa_copy_sa(b, HERE);
 		return p;
 	}
 
 	if (b == NULL || b->prop_conj_cnt == 0) {
-		struct db_sa *p = sa_copy_sa(a);
-		dbg_alloc("sadb", p, HERE);
+		struct db_sa *p = sa_copy_sa(a, HERE);
 		return p;
 	}
 
-	n = clone_thing(*a, "conjoin sa (sa_merge_proposals)");
+	struct db_sa *n = clone_thing(*a, "conjoin sa (sa_merge_proposals)");
+	dbg_alloc("sadb", n, HERE);
 
 	passert(a->prop_conj_cnt == b->prop_conj_cnt);
 	passert(a->prop_conj_cnt == 1);
@@ -983,7 +931,7 @@ struct db_sa *sa_merge_proposals(struct db_sa *a, struct db_sa *b)
 			    n->prop_conj_cnt * sizeof(n->prop_conjs[0]),
 			    "sa copy prop conj array");
 
-	for (i = 0; i < n->prop_conj_cnt; i++) {
+	for (unsigned int i = 0; i < n->prop_conj_cnt; i++) {
 		struct db_prop_conj *pca = &n->prop_conjs[i];
 		struct db_prop_conj *pcb = &b->prop_conjs[i];
 
@@ -994,7 +942,7 @@ struct db_sa *sa_merge_proposals(struct db_sa *a, struct db_sa *b)
 					 pca->prop_cnt * sizeof(pca->props[0]),
 					 "sa copy prop array (sa_merge_proposals)");
 
-		for (j = 0; j < pca->prop_cnt; j++) {
+		for (unsigned int j = 0; j < pca->prop_cnt; j++) {
 			struct db_prop *pa = &pca->props[j];
 			struct db_prop *pb = &pcb->props[j];
 			struct db_trans *t;
@@ -1011,7 +959,7 @@ struct db_sa *sa_merge_proposals(struct db_sa *a, struct db_sa *b)
 
 			pa->trans = t;
 			pa->trans_cnt = t_cnt;
-			for (k = 0; k < pa->trans_cnt; k++)
+			for (unsigned int k = 0; k < pa->trans_cnt; k++)
 				unshare_trans(&pa->trans[k]);
 		}
 	}

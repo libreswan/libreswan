@@ -161,8 +161,7 @@ extern notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,            /* body 
 
 extern void free_sa_attr(struct db_attr *attr);
 extern void free_sa(struct db_sa **sapp);
-extern struct db_sa *sa_copy_sa(const struct db_sa *sa);
-extern struct db_sa *sa_copy_sa_first(struct db_sa *sa);
+extern struct db_sa *sa_copy_sa(const struct db_sa *sa, where_t where);
 extern struct db_sa *sa_merge_proposals(struct db_sa *a, struct db_sa *b);
 
 /* in spdb_print.c - normally never used in pluto */

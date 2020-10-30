@@ -538,8 +538,7 @@ struct db_sa *v1_kernel_alg_makedb(lset_t policy,
 
 		/* make copy, to keep from freeing the static policies */
 		const struct db_sa *db = &ipsec_sadb[pm >> POLICY_IPSEC_SHIFT];
-		struct db_sa *sadb = sa_copy_sa(db);
-		dbg_alloc("sadb", sadb, HERE);
+		struct db_sa *sadb = sa_copy_sa(db, HERE);
 		sadb->parentSA = FALSE;
 		return sadb;
 	}
@@ -564,8 +563,7 @@ struct db_sa *v1_kernel_alg_makedb(lset_t policy,
 	struct db_sa t = { .prop_conj_cnt = 1, .prop_conjs = &pc };
 
 	/* make a fresh copy */
-	struct db_sa *n = sa_copy_sa(&t);
-	dbg_alloc("sadb", n, HERE);
+	struct db_sa *n = sa_copy_sa(&t, HERE);
 	n->parentSA = FALSE;
 
 	db_destroy(dbnew);
@@ -694,8 +692,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 		/*
 		 * copy the template
 		 */
-		struct db_sa *emp_sp = sa_copy_sa(&oakley_empty);
-		dbg_alloc("sadb", emp_sp, HERE);
+		struct db_sa *emp_sp = sa_copy_sa(&oakley_empty, HERE);
 		passert(emp_sp->dynamic);
 		passert(emp_sp->prop_conj_cnt == 1);
 		passert(emp_sp->prop_conjs[0].prop_cnt == 1);
@@ -866,8 +863,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 					emp_sp->prop_conjs[0].props[0].trans[0].attrs[4].val = ks;
 
 					if (gsp == NULL) {
-						gsp = sa_copy_sa(emp_sp);
-						dbg_alloc("sadb", gsp, HERE);
+						gsp = sa_copy_sa(emp_sp, HERE);
 					} else {
 						struct db_sa *new = sa_merge_proposals(gsp, emp_sp);
 
