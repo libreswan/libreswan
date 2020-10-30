@@ -366,11 +366,19 @@ static bool can_reuse_lease(const struct connection *c)
 }
 
 /*
- * return the connection's current lease.
+ * If the connection has the lease, return it.
+ *
+ * Assuming that the connection things it has a lease, need to check
+ * that it still does (it may have been stolen by a newer connection
+ * with the same ID).
  */
 static struct lease *connection_lease(struct connection *c)
 {
-	if (!c->spd.that.has_lease) {
+	/*
+	 * No point looking for a lease when the connection doesn't
+	 * think it has one.
+	 */
+	if (!pexpect(c->spd.that.has_lease)) {
 		return NULL;
 	}
 
@@ -378,7 +386,7 @@ static struct lease *connection_lease(struct connection *c)
 	 * "i" is index of client.addr within pool's range.
 	 *
 	 * Using unsigned arithmetic means that if client.addr is less
-	 * than start, i will wrap around to a very large value.
+	 * than start, it will wrap around to a very large value.
 	 * Therefore a single test against size will indicate
 	 * membership in the range.
 	 */
@@ -388,8 +396,24 @@ static struct lease *connection_lease(struct connection *c)
 	passert(pool->nr_leases <= pool->size);
 	passert(i < pool->nr_leases);
 	struct lease *lease = &pool->leases[i];
-	pexpect(co_serial_is_set(lease->assigned_to));
-	pexpect(co_serial_eq(lease->assigned_to, c->serialno));
+
+	/*
+	 * Has the lease been "stolen" by a newer connection with the
+	 * same ID?
+	 */
+	if (co_serial_cmp(lease->assigned_to, >, c->serialno)) {
+		if (DBGP(DBG_BASE)) {
+			DBG_lease(true, pool, lease, "stolen by "PRI_CO, pri_co(lease->assigned_to));
+		}
+		return NULL;
+	}
+	/*
+	 * The lease is still assigned to this connection (if it weren't the
+	 * connection wouldn't have .has_lease).
+	 */
+	if (!pexpect(co_serial_cmp(lease->assigned_to, ==, c->serialno))) {
+		return NULL;
+	}
 	return lease;
 }
 
@@ -410,8 +434,15 @@ void free_that_address_lease(struct connection *c)
 {
 	passert(subnet_type(&c->spd.that.client) != NULL);
 
+	if (!c->spd.that.has_lease) {
+		dbg("connection has no lease");
+		return;
+	}
+
 	struct lease *lease = connection_lease(c);
 	if (lease == NULL) {
+		dbg("connection lost its lease");
+		c->spd.that.has_lease = false;
 		return;
 	}
 
@@ -465,13 +496,23 @@ static struct lease *recover_lease(const struct connection *c, const char *that_
 		passert(lease->reusable_name != NULL);
 		if (streq(that_name, lease->reusable_name)) {
 			if (IS_INSERTED(lease, free_entry)) {
+				/* unused */
 				REMOVE(pool, free_list, free_entry, lease);
+				pexpect(co_serial_is_unset(lease->assigned_to));
 				pool->nr_in_use++;
-			}
-			if (DBGP(DBG_BASE)) {
-				connection_buf cb;
-				DBG_lease(false, pool, lease, "reclaimed by "PRI_CONNECTION" using '%s'",
-					  pri_connection(c, &cb), that_name);
+				if (DBGP(DBG_BASE)) {
+					connection_buf cb;
+					DBG_lease(false, pool, lease, "recovered by "PRI_CONNECTION" using '%s'; was on free-list",
+						  pri_connection(c, &cb), that_name);
+				}
+			} else {
+				/* still assigned to older connection */
+				pexpect(co_serial_cmp(lease->assigned_to, <, c->serialno));
+				if (DBGP(DBG_BASE)) {
+					connection_buf cb;
+					DBG_lease(false, pool, lease, "recovered by "PRI_CONNECTION" using '%s'; was in use by "PRI_CO,
+						  pri_connection(c, &cb), that_name, pri_co(lease->assigned_to));
+				}
 			}
 			return lease;
 		}
@@ -481,9 +522,9 @@ static struct lease *recover_lease(const struct connection *c, const char *that_
 
 err_t lease_that_address(struct connection *c, const struct state *st)
 {
-	struct lease *lease = connection_lease(c);
-	if (lease != NULL) {
-		/* already leased */
+	if (c->spd.that.has_lease &&
+	    connection_lease(c) != NULL) {
+		dbg("connection both thinks it has, and really has a lease");
 		return NULL;
 	}
 
@@ -598,6 +639,9 @@ err_t lease_that_address(struct connection *c, const struct state *st)
          * convert index i in range to an IP_address
 	 *
 	 * XXX: does this update that.client addr as a side effect?
+	 *
+	 * Can't assert that .assigned_to is unset as this connection
+	 * may be in the process of stealing the lease.
 	 */
 	ip_address ia = lease_address(pool, new_lease);
 	c->spd.that.has_lease = true;
