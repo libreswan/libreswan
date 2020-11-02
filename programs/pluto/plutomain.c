@@ -45,6 +45,7 @@
 #include "lswnss.h"
 #include "defs.h"
 #include "nss_ocsp.h"
+#include "server_fork.h"		/* for init_server_fork() */
 #include "server.h"
 #include "kernel.h"	/* needs connections.h */
 #include "log.h"
@@ -1748,6 +1749,7 @@ int main(int argc, char **argv)
 
 	init_state_db();
 	init_connection_db();
+	init_server_fork();
 	init_server();
 
 	init_rate_log();

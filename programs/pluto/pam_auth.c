@@ -25,7 +25,6 @@
 #include "event.h"
 #include "state.h"
 #include "connections.h"
-#include "server.h"
 #include "id.h"
 #include "pluto_stats.h"
 #include "log.h"
@@ -33,6 +32,7 @@
 #include "demux.h"
 #include "deltatime.h"
 #include "monotime.h"
+#include "server_fork.h"
 
 /* information for tracking pamauth PAM work in flight */
 
@@ -91,12 +91,13 @@ void pamauth_abort(struct state *st)
 }
 
 /*
- * This is the callback from pluto_fork when the process dies.
+ * This is the callback from server_fork() when the process dies.
+ *
  * On the main thread; notify the state (if it is present) of the
  * pamauth result, and then release everything.
  */
 
-static pluto_fork_cb pam_callback; /* type assertion */
+static server_fork_cb pam_callback; /* type assertion */
 
 static void pam_callback(struct state *st,
 			 struct msg_digest *md,
@@ -183,8 +184,8 @@ void auth_fork_pam_process(struct state *st,
 
 	dbg("PAM: #%lu: main-process starting PAM-process for authenticating user '%s'",
 	    pamauth->serialno, pamauth->ptarg.name);
-	pamauth->child = pluto_fork("pamauth", pamauth->serialno,
-				  pam_child, pam_callback, pamauth);
+	pamauth->child = server_fork("pamauth", pamauth->serialno,
+				     pam_child, pam_callback, pamauth);
 	if (pamauth->child < 0) {
 		libreswan_log("PAM: #%lu: creation of PAM-process for user '%s' failed",
 			      pamauth->serialno, pamauth->ptarg.name);

@@ -78,6 +78,7 @@
 #include "state_db.h"
 #include "iface.h"
 #include "pluto_shutdown.h"		/* for exit_pluto() ... */
+#include "server_fork.h"
 
 #ifdef USE_XFRM_INTERFACE
 #include "kernel_xfrm_interface.h"
@@ -102,8 +103,6 @@
  */
 
 char *pluto_vendorid;
-
-static pid_t addconn_child_pid = 0;
 
 /* pluto's main Libevent event_base */
 static struct event_base *pluto_eb =  NULL;
@@ -409,7 +408,6 @@ struct signal_handler {
 	const char *name;
 };
 
-static signal_handler_cb childhandler_cb;
 static signal_handler_cb termhandler_cb;
 static signal_handler_cb huphandler_cb;
 #ifdef HAVE_SECCOMP
@@ -417,7 +415,7 @@ static signal_handler_cb syshandler_cb;
 #endif
 
 static struct signal_handler signal_handlers[] = {
-	{ .signal = SIGCHLD, .cb = childhandler_cb, .persist = true, .name = "PLUTO_SIGCHLD", },
+	{ .signal = SIGCHLD, .cb = server_fork_sigchld_handler, .persist = true, .name = "PLUTO_SIGCHLD", },
 	{ .signal = SIGTERM, .cb = termhandler_cb, .persist = false, .name = "PLUTO_SIGTERM", },
 	{ .signal = SIGHUP, .cb = huphandler_cb, .persist = true, .name = "PLUTO_SIGHUP", },
 #ifdef HAVE_SECCOMP
@@ -960,211 +958,13 @@ static void syshandler_cb(struct logger *logger)
 }
 #endif
 
-#define PID_MAGIC 0x000f000cUL
-
-struct pid_entry {
-	unsigned long magic;
-	struct list_entry hash_entry;
-	pid_t pid;
-	void *context;
-	pluto_fork_cb *callback;
-	so_serial_t serialno;
-	const char *name;
-	monotime_t start_time;
-};
-
-static void jam_pid_entry(struct jambuf *buf, const void *data)
-{
-	if (data == NULL) {
-		jam(buf, "NULL pid");
-	} else {
-		const struct pid_entry *entry = data;
-		passert(entry->magic == PID_MAGIC);
-		if (entry->serialno != SOS_NOBODY) {
-			jam(buf, "#%lu ", entry->serialno);
-		}
-		jam(buf, "%s pid %d", entry->name, entry->pid);
-	}
-}
-
-static hash_t pid_hasher(const pid_t *pid)
-{
-	return hash_table_hasher(shunk2(pid, sizeof(*pid)), zero_hash);
-}
-
-static hash_t pid_entry_hasher(const void *data)
-{
-	const struct pid_entry *entry = data;
-	passert(entry->magic == PID_MAGIC);
-	return pid_hasher(&entry->pid);
-}
-
-static struct list_entry *pid_entry_entry(void *data)
-{
-	struct pid_entry *entry = data;
-	passert(entry->magic == PID_MAGIC);
-	return &entry->hash_entry;
-}
-
-static struct list_head pid_entry_slots[23];
-
-static struct hash_table pids_hash_table = {
-	.info = {
-		.name = "pid table",
-		.jam = jam_pid_entry,
-	},
-	.hasher = pid_entry_hasher,
-	.entry = pid_entry_entry,
-	.nr_slots = elemsof(pid_entry_slots),
-	.slots = pid_entry_slots,
-};
-
-static void add_pid(const char *name, so_serial_t serialno, pid_t pid,
-		    pluto_fork_cb *callback, void *context)
-{
-	dbg("forked child %d", pid);
-	struct pid_entry *new_pid = alloc_thing(struct pid_entry, "(ignore) fork pid");
-	new_pid->magic = PID_MAGIC;
-	new_pid->pid = pid;
-	new_pid->callback = callback;
-	new_pid->context = context;
-	new_pid->serialno = serialno;
-	new_pid->name = name;
-	new_pid->start_time = mononow();
-	add_hash_table_entry(&pids_hash_table, new_pid);
-}
-
-int pluto_fork(const char *name, so_serial_t serialno,
-	       int op(void *context),
-	       pluto_fork_cb *callback, void *context)
-{
-	pid_t pid = fork();
-	switch (pid) {
-	case -1:
-		LOG_ERRNO(errno, "fork failed");
-		return -1;
-	case 0: /* child */
-		reset_globals();
-		exit(op(context));
-		break;
-	default: /* parent */
-		add_pid(name, serialno, pid, callback, context);
-		return pid;
-	}
-}
-
-static pluto_fork_cb addconn_exited; /* type assertion */
+static server_fork_cb addconn_exited; /* type assertion */
 
 static void addconn_exited(struct state *null_st UNUSED,
 			   struct msg_digest *null_mdp UNUSED,
 			   int status, void *context UNUSED)
 {
 	dbg("reaped addconn helper child (status %d)", status);
-	addconn_child_pid = 0;
-}
-
-static void jam_status(struct jambuf *buf, int status)
-{
-	jam(buf, " (");
-	if (WIFEXITED(status)) {
-		jam(buf, "exited with status %u",
-			WEXITSTATUS(status));
-	} else if (WIFSIGNALED(status)) {
-		jam(buf, "terminated with signal %s (%d)",
-			strsignal(WTERMSIG(status)),
-			WTERMSIG(status));
-	} else if (WIFSTOPPED(status)) {
-		/* should not happen */
-		jam(buf, "stopped with signal %s (%d) but WUNTRACED not specified",
-			strsignal(WSTOPSIG(status)),
-			WSTOPSIG(status));
-	} else if (WIFCONTINUED(status)) {
-		jam(buf, "continued");
-	} else {
-		jam(buf, "wait status %x not recognized!", status);
-	}
-#ifdef WCOREDUMP
-	if (WCOREDUMP(status)) {
-		jam_string(buf, ", core dumped");
-	}
-#endif
-	jam_string(buf, ")");
-}
-
-static void childhandler_cb(struct logger *logger)
-{
-	while (true) {
-		int status;
-		errno = 0;
-		pid_t child = waitpid(-1, &status, WNOHANG);
-		switch (child) {
-		case -1: /* error? */
-			if (errno == ECHILD) {
-				dbg("waitpid returned ECHILD (no child processes left)");
-			} else {
-				log_errno(logger, errno, "waitpid unexpectedly failed");
-			}
-			return;
-		case 0: /* nothing to do */
-			dbg("waitpid returned nothing left to do (all child processes are busy)");
-			return;
-		default:
-			LSWDBGP(DBG_BASE, buf) {
-				jam(buf, "waitpid returned pid %d",
-					child);
-				jam_status(buf, status);
-			}
-			struct pid_entry *pid_entry = NULL;
-			hash_t hash = pid_hasher(&child);
-			struct list_head *bucket = hash_table_bucket(&pids_hash_table, hash);
-			FOR_EACH_LIST_ENTRY_OLD2NEW(bucket, pid_entry) {
-				passert(pid_entry->magic == PID_MAGIC);
-				if (pid_entry->pid == child) {
-					break;
-				}
-			}
-			if (pid_entry == NULL) {
-				LOG_JAMBUF(RC_LOG, logger, buf) {
-					jam(buf, "waitpid return unknown child pid %d",
-						child);
-					jam_status(buf, status);
-				}
-			} else {
-				struct state *st = state_with_serialno(pid_entry->serialno);
-				if (pid_entry->serialno == SOS_NOBODY) {
-					pid_entry->callback(NULL, NULL,
-							    status, pid_entry->context);
-				} else if (st == NULL) {
-					LSWDBGP(DBG_BASE, buf) {
-						jam_pid_entry(buf, pid_entry);
-						jam_string(buf, " disappeared");
-					}
-					pid_entry->callback(NULL, NULL,
-							    status, pid_entry->context);
-				} else {
-					so_serial_t old_state = push_cur_state(st);
-					struct msg_digest *md = unsuspend_md(st);
-					if (DBGP(DBG_CPU_USAGE)) {
-						deltatime_t took = monotimediff(mononow(), pid_entry->start_time);
-						deltatime_buf dtb;
-						DBG_log("#%lu waited %s for '%s' fork()",
-							st->st_serialno, str_deltatime(took, &dtb),
-							pid_entry->name);
-					}
-					statetime_t start = statetime_start(st);
-					pid_entry->callback(st, md, status,
-							    pid_entry->context);
-					statetime_stop(&start, "callback for %s",
-						       pid_entry->name);
-					release_any_md(&md);
-					pop_cur_state(old_state);
-				}
-				del_hash_table_entry(&pids_hash_table, pid_entry);
-				pfree(pid_entry);
-			}
-			break;
-		}
-	}
 }
 
 #ifdef EVENT_SET_MEM_FUNCTIONS_IMPLEMENTED
@@ -1231,8 +1031,6 @@ void call_server(char *conffile)
 {
 	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
 
-	init_hash_table(&pids_hash_table);
-
 	/*
 	 * setup basic events, CTL and SIGNALs
 	 */
@@ -1246,9 +1044,9 @@ void call_server(char *conffile)
 	/* do_whacklisten() is now done by the addconn fork */
 
 	/*
-	 * fork to issue the command "ipsec addconn --autoall"
-	 * (or vfork() when fork() isn't available, eg. on embedded platforms
-	 * without MMU, like uClibc)
+	 * fork()+exec() to issue the command "ipsec addconn
+	 * --autoall" (or vfork() when fork() isn't available, eg. on
+	 * embedded platforms without MMU, like uClibc)
 	 */
 	{
 		/* find a pathname to the addconn program */
@@ -1305,27 +1103,8 @@ void call_server(char *conffile)
 				    DISCARD_CONST(char *, conffile),
 				    DISCARD_CONST(char *, "--autoall"), NULL };
 		char *newenv[] = { NULL };
-#if USE_VFORK
-		addconn_child_pid = vfork(); /* for better, for worse, in sickness and health..... */
-#elif USE_FORK
-		addconn_child_pid = fork();
-#else
-#error "addconn requires USE_VFORK or USE_FORK"
-#endif
-		if (addconn_child_pid == 0) {
-			/*
-			 * Child
-			 */
-			execve(addconn_path_space, newargv, newenv);
-			_exit(42);
-		}
-
-		/* Parent */
-
-		dbg("created addconn helper (pid:%d) using %s+execve",
-		    addconn_child_pid, USE_VFORK ? "vfork" : "fork");
-		add_pid("addconn", SOS_NOBODY, addconn_child_pid,
-			addconn_exited, NULL);
+		server_fork_exec("addconn", addconn_path_space, newargv, newenv,
+				 addconn_exited, NULL, logger);
 	}
 
 	/* parent continues */

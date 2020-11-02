@@ -135,30 +135,4 @@ typedef void callback_cb(struct state *st, void *context);
 void schedule_callback(const char *name, so_serial_t serialno,
 		       callback_cb *callback, void *context);
 
-/*
- * Create a child process using fork()
- *
- * Typically used to perform a thread unfriendly operation, such as
- * calling PAM.
- *
- * On callback:
- *
- * ST either points at the state matching SERIALNO, or NULL (SERIALNO
- * is either SOS_NOBODY or the state doesn't exist).  A CB expecting a
- * state back MUST check ST before processing.  Caller sets CUR_STATE
- * so don't play with that.
- *
- * MDP either points at the unsuspended contents of .st_suspended_md,
- * or NULL.  On return, if *MDP is non-NULL, then it will be released.
- *
- * STATUS is the child processes exit code as returned by things like
- * waitpid().
- */
-
-typedef void pluto_fork_cb(struct state *st, struct msg_digest *mdp,
-			   int status, void *context);
-extern int pluto_fork(const char *name, so_serial_t serialno,
-		      int op(void *context),
-		      pluto_fork_cb *callback, void *context);
-
 #endif /* _SERVER_H */
