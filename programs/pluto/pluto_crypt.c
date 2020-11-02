@@ -731,7 +731,7 @@ void start_crypto_helpers(int nhelpers, struct logger *logger)
 		 * only tries to run when there really are threads.
 		 */
 		pc_workers = alloc_things(struct pluto_crypto_worker, nhelpers,
-					  "pluto helpers (ignore)");
+					  "pluto helpers");
 		for (int n = 0; n < nhelpers; n++) {
 			struct pluto_crypto_worker *w = &pc_workers[n];
 			w->pcw_helpernum = n + 1; /* i.e., not 0 */
@@ -777,6 +777,7 @@ static void helper_thread_stopped_callback(struct state *st UNUSED, void *contex
 	 * Finish things using a callback so this code can cleanup all
 	 * its allocated data.
 	 */
+	pfreeany(pc_workers);
 	schedule_callback("all helper threads stopped", SOS_NOBODY,
 			  helper_threads_stopped_callback, NULL);
 }
@@ -788,6 +789,7 @@ void stop_helper_threads(void)
 		message_helpers(NULL);
 	} else {
 		dbg("no helper threads to shutdown");
+		pexpect(pc_workers == NULL);
 		schedule_callback("no helpers to stop", SOS_NOBODY,
 				  helper_threads_stopped_callback, NULL);
 	}
