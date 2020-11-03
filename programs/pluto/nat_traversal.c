@@ -812,7 +812,7 @@ static bool nat_traversal_find_new_mapp_state(struct state *st, void *data)
 	return false;
 }
 
-void nat_traversal_new_mapping(struct ike_sa *ike,
+static void nat_traversal_new_mapping(struct ike_sa *ike,
 			       const ip_endpoint *new_remote_endpoint)
 {
 	endpoint_buf b;

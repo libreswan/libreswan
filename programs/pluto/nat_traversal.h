@@ -115,12 +115,6 @@ void set_nat_traversal(struct state *st, const struct msg_digest *md);
 void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st);
 
 /**
- * New NAT mapping
- */
-void nat_traversal_new_mapping(struct ike_sa *ike,
-			       const ip_endpoint *new_remote_endpoint);
-
-/**
  * IKE port floating
  */
 bool nat_traversal_port_float(struct state *st, struct msg_digest *md,
