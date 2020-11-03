@@ -55,7 +55,7 @@ void transfer_dh_secret_to_state(const char *helper, struct dh_secret **secret,
 void transfer_dh_secret_to_helper(struct state *st,
 				  const char *helper, struct dh_secret **secret);
 
-void free_dh_secret(struct dh_secret **secret);
+void dh_secret_delref(struct dh_secret **secret, where_t where);
 
 /*
  * Compute dh storing result in .st_shared_nss.

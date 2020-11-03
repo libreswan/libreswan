@@ -1303,7 +1303,7 @@ stf_status process_IKE_SA_INIT_v2N_INVALID_KE_PAYLOAD_response(struct ike_sa *ik
 		  new_group->common.fqn);
 	ike->sa.st_oakley.ta_dh = new_group;
 	/* wipe our mismatched KE */
-	free_dh_secret(&ike->sa.st_dh_secret);
+	dh_secret_delref(&ike->sa.st_dh_secret, HERE);
 	/*
 	 * get a new KE
 	 */

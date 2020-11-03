@@ -1224,15 +1224,8 @@ void delete_state(struct state *st)
 	 */
 	free_ikev2_proposal(&st->st_accepted_ike_proposal);
 	free_ikev2_proposal(&st->st_accepted_esp_or_ah_proposal);
-
-	/*
-	 * If this state 'owns' the DH secret, release it.  If not
-	 * then it is presumably owned by a crypto-helper and that can
-	 * clean it up.
-	 */
-	if (st->st_dh_secret != NULL) {
-		free_dh_secret(&st->st_dh_secret);
-	}
+	/* helper may have its own ref */
+	dh_secret_delref(&st->st_dh_secret, HERE);
 
 	/* without st_connection, st isn't complete */
 	/* from here on logging is for the wrong state */

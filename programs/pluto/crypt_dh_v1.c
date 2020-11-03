@@ -41,7 +41,7 @@
 void cancelled_v1_dh(struct pcr_v1_dh *dh)
 {
 	/* query */
-	free_dh_secret(&dh->secret); /* helper must be owner */
+	dh_secret_delref(&dh->secret, HERE);
 	release_symkey("cancelled IKEv1 DH", "skey_d_old", &dh->skey_d_old);
 
 	/* response */

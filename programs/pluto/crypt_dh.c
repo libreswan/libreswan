@@ -65,6 +65,7 @@
 #include "lswnss.h"
 
 struct dh_secret {
+	refcnt_t refcnt;
 	const struct dh_desc *group;
 	SECKEYPrivateKey *privk;
 	SECKEYPublicKey *pubk;
@@ -72,8 +73,7 @@ struct dh_secret {
 
 static void jam_dh_secret(struct jambuf *buf, struct dh_secret *secret)
 {
-	jam(buf, "DH secret %s@%p: ",
-		secret->group->common.fqn, secret);
+	jam(buf, "DH secret %s@%p: ", secret->group->common.fqn, secret);
 }
 
 struct dh_secret *calc_dh_secret(const struct dh_desc *group, chunk_t *local_ke,
@@ -88,7 +88,8 @@ struct dh_secret *calc_dh_secret(const struct dh_desc *group, chunk_t *local_ke,
 	passert(privk != NULL);
 	passert(pubk != NULL);
 	*local_ke = ke;
-	struct dh_secret *secret = alloc_thing(struct dh_secret, "DH secret");
+	where_t here = HERE;
+	struct dh_secret *secret = refcnt_alloc(struct dh_secret, here);
 	secret->group = group;
 	secret->privk = privk;
 	secret->pubk = pubk;
@@ -160,19 +161,20 @@ void transfer_dh_secret_to_helper(struct state *st,
 	st->st_dh_secret = NULL;
 }
 
-void free_dh_secret(struct dh_secret **secret)
+static void free_dh_secret(struct dh_secret **secret, where_t where UNUSED)
 {
 	pexpect(*secret != NULL);
 	if (*secret != NULL) {
-		LSWDBGP(DBG_CRYPT, buf) {
-			jam_dh_secret(buf, *secret);
-			jam_string(buf, "destroyed");
-		}
 		SECKEY_DestroyPublicKey((*secret)->pubk);
 		SECKEY_DestroyPrivateKey((*secret)->privk);
 		pfree(*secret);
 		*secret = NULL;
 	}
+}
+
+void dh_secret_delref(struct dh_secret **secret, where_t where)
+{
+	refcnt_delref(secret, free_dh_secret, where);
 }
 
 struct crypto_task {
@@ -193,7 +195,7 @@ static void compute_dh(struct logger *logger,
 
 static void cancel_dh(struct crypto_task **task)
 {
-	free_dh_secret(&(*task)->local_secret); /* must own */
+	dh_secret_delref(&(*task)->local_secret, HERE);
 	free_chunk_content(&(*task)->remote_ke);
 	release_symkey("DH", "secret", &(*task)->shared_secret);
 	pfreeany(*task);

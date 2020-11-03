@@ -39,7 +39,7 @@ void cancelled_dh_v2(struct pcr_dh_v2 *dh)
 {
 	/* incoming */
 
-	free_dh_secret(&dh->secret); /* must own */
+	dh_secret_delref(&dh->secret, HERE);
 	release_symkey("cancelled IKEv2 DH", "skey_d_old", &dh->skey_d_old);
 
 	/* outgoing */

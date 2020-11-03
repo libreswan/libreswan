@@ -82,9 +82,7 @@ void calc_nonce(struct pcr_kenonce *kn)
 
 void cancelled_ke_and_nonce(struct pcr_kenonce *kn)
 {
-	if (kn->secret != NULL) {
-		free_dh_secret(&kn->secret);
-	}
+	dh_secret_delref(&kn->secret, HERE);
 	free_chunk_content(&kn->n);
 	free_chunk_content(&kn->gi);
 }
