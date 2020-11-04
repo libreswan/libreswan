@@ -85,9 +85,9 @@ enum pluto_crypto_requests {
 	pcr_crypto = 0,		/* using crypto_handler */
 	pcr_build_ke_and_nonce,	/* calculate g^i and generate a nonce */
 	pcr_build_nonce,	/* generate a nonce */
-	pcr_compute_dh_iv_v1,	/* calculate (g^x)(g^y) and skeyids for Phase 1 DH + prf */
-	pcr_compute_dh_v1,	/* calculate (g^x)(g^y) for Phase 2 PFS */
-	pcr_compute_dh_v2,	/* perform IKEv2 SA calculation, create SKEYSEED */
+	pcr_compute_v1_dh_shared_secret_and_iv,	/* calculate (g^x)(g^y) and skeyids for Phase 1 DH + prf */
+	pcr_compute_v1_dh_shared_secret,	/* calculate (g^x)(g^y) for Phase 2 PFS */
+	pcr_compute_v2_dh_shared_secret,	/* perform IKEv2 SA calculation, create SKEYSEED */
 };
 
 /* wire_chunk: a chunk-like representation that is relocatable.
@@ -188,7 +188,7 @@ struct pcr_kenonce {
 	const struct dh_desc *group;
 
 	/* outputs */
-	struct dh_secret *secret;
+	struct dh_local_secret *local_secret;
 	chunk_t gi;
 	chunk_t n;
 };
@@ -214,12 +214,12 @@ struct pcr_v1_dh {
 	wire_chunk_t nr;
 	wire_chunk_t icookie;
 	wire_chunk_t rcookie;
-	struct dh_secret *secret;
+	struct dh_local_secret *local_secret;
 	PK11SymKey *skey_d_old;
 	const struct prf_desc *old_prf;
 
 	/* response */
-	PK11SymKey *shared;
+	PK11SymKey *shared_secret;
 	PK11SymKey *skeyid;
 	PK11SymKey *skeyid_d;
 	PK11SymKey *skeyid_a;
@@ -245,12 +245,12 @@ struct pcr_dh_v2 {
 	wire_chunk_t ni;
 	wire_chunk_t nr;
 	ike_spis_t ike_spis;
-	struct dh_secret *secret;
+	struct dh_local_secret *local_secret;
 	PK11SymKey *skey_d_old;
 	const struct prf_desc *old_prf;
 
 	/* outgoing */
-	PK11SymKey *shared;
+	PK11SymKey *shared_secret;
 	PK11SymKey *skeyid_d;
 	PK11SymKey *skeyid_ai;
 	PK11SymKey *skeyid_ar;
@@ -361,48 +361,49 @@ extern void cancelled_ke_and_nonce(struct pcr_kenonce *kn);
  * IKEv1 DH
  */
 
-extern void compute_dh_shared(struct state *st, const chunk_t g,
-			      const struct dh_desc *group);
+extern void compute_v1_dh_shared_secret(struct state *st, const chunk_t g,
+					const struct dh_desc *group);
 
-extern void start_dh_v1_secretiv(crypto_req_cont_func fn, const char *name,
-				 struct state *st, enum sa_role role,
-				 const struct dh_desc *oakley_group2);
+extern void submit_v1_dh_shared_secret_and_iv(crypto_req_cont_func fn, const char *name,
+					      struct state *st, enum sa_role role,
+					      const struct dh_desc *oakley_group2);
 
-extern bool finish_dh_secretiv(struct state *st,
-			       struct pluto_crypto_req *r);
+extern bool finish_v1_dh_shared_secret_and_iv(struct state *st,
+					      struct pluto_crypto_req *r);
 
-extern void start_dh_v1_secret(crypto_req_cont_func fn, const char *name,
-			       struct state *st, enum sa_role role,
-			       const struct dh_desc *oakley_group2);
+extern void submit_v1_dh_shared_secret(crypto_req_cont_func fn, const char *name,
+				       struct state *st, enum sa_role role,
+				       const struct dh_desc *oakley_group2);
 
-extern void finish_dh_secret(struct state *st,
-			     struct pluto_crypto_req *r);
+extern void finish_v1_dh_shared_secret(struct state *st,
+				       struct pluto_crypto_req *r);
 
 /* internal */
 #ifdef USE_IKEv1
-extern void calc_dh_v1(struct pcr_v1_dh *dh, struct logger *logger);
+extern void calc_v1_dh_shared_secret(struct pcr_v1_dh *dh, struct logger *logger);
 #endif
-extern void calc_dh_iv(struct pcr_v1_dh *dh, struct logger *logger);
-extern void cancelled_v1_dh(struct pcr_v1_dh *dh);
+extern void calc_v1_dh_shared_secret_and_iv(struct pcr_v1_dh *dh, struct logger *logger);
+extern void cancelled_v1_dh_shared_secret(struct pcr_v1_dh *dh);
 
 /*
  * IKEv2 DH
  */
 
-extern void start_dh_v2(struct state *st,
-			const char *name,
-			enum sa_role role,
-			PK11SymKey *skey_d_old,
-			const struct prf_desc *old_prf,
-			const ike_spis_t *ike_spis,
-			crypto_req_cont_func pcrc_func);
+extern void submit_v2_dh_shared_secret(struct state *st,
+				       const char *name,
+				       enum sa_role role,
+				       PK11SymKey *skey_d_old,
+				       const struct prf_desc *old_prf,
+				       const ike_spis_t *ike_spis,
+				       crypto_req_cont_func pcrc_func);
 
-extern bool finish_dh_v2(struct state *st,
-			 struct pluto_crypto_req *r, bool only_shared);
+extern bool finish_v2_dh_shared_secret(struct state *st,
+				       struct pluto_crypto_req *r,
+				       bool only_shared);
 
 /* internal */
-extern void calc_dh_v2(struct pluto_crypto_req *r, struct logger *logger);
-extern void cancelled_dh_v2(struct pcr_dh_v2 *dh);
+extern void calc_v2_dh_shared_secret(struct pluto_crypto_req *r, struct logger *logger);
+extern void cancelled_v2_dh_shared_secret(struct pcr_dh_v2 *dh);
 
 /*
  * KE and NONCE

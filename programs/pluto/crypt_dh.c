@@ -64,37 +64,37 @@
 #include <keyhi.h>
 #include "lswnss.h"
 
-struct dh_secret {
+struct dh_local_secret {
 	refcnt_t refcnt;
 	const struct dh_desc *group;
 	SECKEYPrivateKey *privk;
 	SECKEYPublicKey *pubk;
 };
 
-static void jam_dh_secret(struct jambuf *buf, struct dh_secret *secret)
+static void jam_dh_local_secret(struct jambuf *buf, struct dh_local_secret *secret)
 {
 	jam(buf, "DH secret %s@%p: ", secret->group->common.fqn, secret);
 }
 
-struct dh_secret *calc_dh_secret(const struct dh_desc *group, chunk_t *local_ke,
-				 struct logger *logger)
+struct dh_local_secret *calc_dh_local_secret(const struct dh_desc *group, chunk_t *local_ke,
+					     struct logger *logger)
 {
 	chunk_t ke = alloc_chunk(group->bytes, "local ke");
 	SECKEYPrivateKey *privk;
 	SECKEYPublicKey *pubk;
-	group->dh_ops->calc_secret(group, &privk, &pubk,
-				   ke.ptr, ke.len,
-				   logger);
+	group->dh_ops->calc_local_secret(group, &privk, &pubk,
+					 ke.ptr, ke.len,
+					 logger);
 	passert(privk != NULL);
 	passert(pubk != NULL);
 	*local_ke = ke;
 	where_t here = HERE;
-	struct dh_secret *secret = refcnt_alloc(struct dh_secret, here);
+	struct dh_local_secret *secret = refcnt_alloc(struct dh_local_secret, here);
 	secret->group = group;
 	secret->privk = privk;
 	secret->pubk = pubk;
 	LSWDBGP(DBG_CRYPT, buf) {
-		jam_dh_secret(buf, secret);
+		jam_dh_local_secret(buf, secret);
 		jam_string(buf, "created");
 	}
 	return secret;
@@ -106,22 +106,22 @@ struct dh_secret *calc_dh_secret(const struct dh_desc *group, chunk_t *local_ke,
  * If there is something that upsets NSS (what?) we will return NULL.
  */
 /* MUST BE THREAD-SAFE */
-PK11SymKey *calc_dh_shared(struct dh_secret *secret, chunk_t remote_ke,
-			   struct logger *logger)
+PK11SymKey *calc_dh_shared_secret(struct dh_local_secret *secret, chunk_t remote_ke,
+				  struct logger *logger)
 {
 	PK11SymKey *dhshared =
-		secret->group->dh_ops->calc_shared(secret->group,
-						   secret->privk,
-						   secret->pubk,
-						   remote_ke.ptr,
-						   remote_ke.len,
-						   logger);
+		secret->group->dh_ops->calc_shared_secret(secret->group,
+							  secret->privk,
+							  secret->pubk,
+							  remote_ke.ptr,
+							  remote_ke.len,
+							  logger);
 	/*
 	 * The IKEv2 documentation, even for ECP, refers to "g^ir".
 	 */
 	if (DBGP(DBG_CRYPT)) {
 		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam_dh_secret(buf, secret);
+			jam_dh_local_secret(buf, secret);
 			jam(buf, "computed shared DH secret key@%p",
 			    dhshared);
 		}
@@ -130,12 +130,12 @@ PK11SymKey *calc_dh_shared(struct dh_secret *secret, chunk_t remote_ke,
 	return dhshared;
 }
 
-struct dh_secret *dh_secret_addref(struct dh_secret *secret, where_t where)
+struct dh_local_secret *dh_local_secret_addref(struct dh_local_secret *secret, where_t where)
 {
 	return refcnt_addref(secret, where);
 }
 
-static void free_dh_secret(struct dh_secret **secret, where_t where UNUSED)
+static void free_dh_local_secret(struct dh_local_secret **secret, where_t where UNUSED)
 {
 	pexpect(*secret != NULL);
 	if (*secret != NULL) {
@@ -146,62 +146,62 @@ static void free_dh_secret(struct dh_secret **secret, where_t where UNUSED)
 	}
 }
 
-void dh_secret_delref(struct dh_secret **secret, where_t where)
+void dh_local_secret_delref(struct dh_local_secret **secret, where_t where)
 {
-	refcnt_delref(secret, free_dh_secret, where);
+	refcnt_delref(secret, free_dh_local_secret, where);
 }
 
 struct crypto_task {
 	chunk_t remote_ke;
-	struct dh_secret *local_secret;
+	struct dh_local_secret *local_secret;
 	PK11SymKey *shared_secret;
-	dh_cb *cb;
+	dh_shared_secret_cb *cb;
 };
 
-static void compute_dh(struct logger *logger,
-		       struct crypto_task *task,
-		       int thread_unused UNUSED)
+static void compute_dh_shared_secret(struct logger *logger,
+				     struct crypto_task *task,
+				     int thread_unused UNUSED)
 {
-	task->shared_secret = calc_dh_shared(task->local_secret,
-					     task->remote_ke,
-					     logger);
+	task->shared_secret = calc_dh_shared_secret(task->local_secret,
+						    task->remote_ke,
+						    logger);
 }
 
-static void cancel_dh(struct crypto_task **task)
+static void cancel_dh_shared_secret(struct crypto_task **task)
 {
-	dh_secret_delref(&(*task)->local_secret, HERE);
+	dh_local_secret_delref(&(*task)->local_secret, HERE);
 	free_chunk_content(&(*task)->remote_ke);
 	release_symkey("DH", "secret", &(*task)->shared_secret);
 	pfreeany(*task);
 }
 
-static stf_status complete_dh(struct state *st,
-			      struct msg_digest *md,
-			      struct crypto_task **task)
+static stf_status complete_dh_shared_secret(struct state *st,
+					    struct msg_digest *md,
+					    struct crypto_task **task)
 {
-	dh_secret_delref(&(*task)->local_secret, HERE);
+	dh_local_secret_delref(&(*task)->local_secret, HERE);
 	free_chunk_content(&(*task)->remote_ke);
-	pexpect(st->st_shared_nss == NULL);
-	release_symkey(__func__, "st_shared_nss", &st->st_shared_nss);
-	st->st_shared_nss = (*task)->shared_secret;
+	pexpect(st->st_dh_shared_secret == NULL);
+	release_symkey(__func__, "st_dh_shared_secret", &st->st_dh_shared_secret);
+	st->st_dh_shared_secret = (*task)->shared_secret;
 	stf_status status = (*task)->cb(st, md);
 	pfreeany(*task);
 	return status;
 }
 
-static const struct crypto_handler dh_handler = {
+static const struct crypto_handler dh_shared_secret_handler = {
 	.name = "dh",
-	.cancelled_cb = cancel_dh,
-	.compute_fn = compute_dh,
-	.completed_cb = complete_dh,
+	.cancelled_cb = cancel_dh_shared_secret,
+	.compute_fn = compute_dh_shared_secret,
+	.completed_cb = complete_dh_shared_secret,
 };
 
-void submit_dh(struct state *st, chunk_t remote_ke,
-	       dh_cb *cb, const char *name)
+void submit_dh_shared_secret(struct state *st, chunk_t remote_ke,
+			     dh_shared_secret_cb *cb, const char *name)
 {
 	struct crypto_task *task = alloc_thing(struct crypto_task, "dh");
 	task->remote_ke = clone_hunk(remote_ke, "DH crypto");
-	task->local_secret = dh_secret_addref(st->st_dh_secret, HERE);
+	task->local_secret = dh_local_secret_addref(st->st_dh_local_secret, HERE);
 	task->cb = cb;
-	submit_crypto(st->st_logger, st, task, &dh_handler, name);
+	submit_crypto(st->st_logger, st, task, &dh_shared_secret_handler, name);
 }

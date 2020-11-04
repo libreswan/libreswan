@@ -985,7 +985,7 @@ static void main_inI2_outR2_continue2(struct state *st,
 
 	set_cur_state(st);
 
-	if (finish_dh_secretiv(st, r))
+	if (finish_v1_dh_shared_secret_and_iv(st, r))
 		update_iv(st);
 
 	/*
@@ -1107,8 +1107,8 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 		dbg("main inI2_outR2: starting async DH calculation (group=%d)",
 		    st->st_oakley.ta_dh->group);
 
-		start_dh_v1_secretiv(main_inI2_outR2_continue2, "main_inI2_outR2_tail",
-				     st, SA_RESPONDER, st->st_oakley.ta_dh);
+		submit_v1_dh_shared_secret_and_iv(main_inI2_outR2_continue2, "main_inI2_outR2_tail",
+						  st, SA_RESPONDER, st->st_oakley.ta_dh);
 
 		/* we are calculating in the background, so it doesn't count */
 		dbg("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __func__, __LINE__);
@@ -1136,7 +1136,7 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 	const struct connection *c = st->st_connection;
 	const cert_t mycert = c->spd.this.cert;
 
-	if (!finish_dh_secretiv(st, r))
+	if (!finish_v1_dh_shared_secret_and_iv(st, r))
 		return STF_FAIL + INVALID_KEY_INFORMATION;
 
 	/* decode certificate requests */
@@ -1392,8 +1392,8 @@ stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
 
 	/* Nr in */
 	RETURN_STF_FAILURE(accept_v1_nonce(st->st_logger, md, &st->st_nr, "Nr"));
-	start_dh_v1_secretiv(main_inR2_outI3_continue, "aggr outR1 DH",
-			     st, SA_INITIATOR, st->st_oakley.ta_dh);
+	submit_v1_dh_shared_secret_and_iv(main_inR2_outI3_continue, "aggr outR1 DH",
+					  st, SA_INITIATOR, st->st_oakley.ta_dh);
 	return STF_SUSPEND;
 }
 
@@ -1512,7 +1512,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	st = md->st;
 
 	/* handle case where NSS balked at generating DH */
-	if (st->st_shared_nss == NULL)
+	if (st->st_dh_shared_secret == NULL)
 		return STF_FAIL + INVALID_KEY_INFORMATION;
 
 	if (!v1_decode_certs(md)) {

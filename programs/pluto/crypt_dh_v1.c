@@ -38,14 +38,14 @@
 #include "log.h"
 #include "state.h"
 
-void cancelled_v1_dh(struct pcr_v1_dh *dh)
+void cancelled_v1_dh_shared_secret(struct pcr_v1_dh *dh)
 {
 	/* query */
-	dh_secret_delref(&dh->secret, HERE);
+	dh_local_secret_delref(&dh->local_secret, HERE);
 	release_symkey("cancelled IKEv1 DH", "skey_d_old", &dh->skey_d_old);
 
 	/* response */
-	release_symkey("cancelled IKEv1 DH", "shared", &dh->shared);
+	release_symkey("cancelled IKEv1 DH", "shared", &dh->shared_secret);
 	release_symkey("cancelled IKEv1 DH", "skeyid", &dh->skeyid);
 	release_symkey("cancelled IKEv1 DH", "skeyid_d", &dh->skeyid_d);
 	release_symkey("cancelled IKEv1 DH", "skeyid_a", &dh->skeyid_a);
@@ -56,14 +56,14 @@ void cancelled_v1_dh(struct pcr_v1_dh *dh)
 /*
  * invoke helper to do DH work (IKEv1)
  */
-void start_dh_v1_secretiv(crypto_req_cont_func fn, const char *name,
-			  struct state *st, enum sa_role role,
-			  const struct dh_desc *oakley_group2)
+void submit_v1_dh_shared_secret_and_iv(crypto_req_cont_func fn, const char *name,
+				       struct state *st, enum sa_role role,
+				       const struct dh_desc *oakley_group2)
 {
 	const chunk_t *pss = get_connection_psk(st->st_connection, st->st_logger);
 
 	struct pluto_crypto_req_cont *dh = new_pcrc(fn, name);
-	struct pcr_v1_dh *const dhq = pcr_v1_dh_init(dh, pcr_compute_dh_iv_v1);
+	struct pcr_v1_dh *const dhq = pcr_v1_dh_init(dh, pcr_compute_v1_dh_shared_secret_and_iv);
 
 	/* convert appropriate data to dhq */
 	dhq->auth = st->st_oakley.auth;
@@ -83,7 +83,7 @@ void start_dh_v1_secretiv(crypto_req_cont_func fn, const char *name,
 	WIRE_CLONE_CHUNK(*dhq, gi, st->st_gi);
 	WIRE_CLONE_CHUNK(*dhq, gr, st->st_gr);
 
-	dhq->secret = dh_secret_addref(st->st_dh_secret, HERE);
+	dhq->local_secret = dh_local_secret_addref(st->st_dh_local_secret, HERE);
 
 	ALLOC_WIRE_CHUNK(*dhq, icookie, COOKIE_SIZE);
 	memcpy(WIRE_CHUNK_PTR(*dhq, icookie),
@@ -96,12 +96,12 @@ void start_dh_v1_secretiv(crypto_req_cont_func fn, const char *name,
 	send_crypto_helper_request(st, dh);
 }
 
-bool finish_dh_secretiv(struct state *st,
-			struct pluto_crypto_req *r)
+bool finish_v1_dh_shared_secret_and_iv(struct state *st,
+				       struct pluto_crypto_req *r)
 {
 	struct pcr_v1_dh *dhr = &r->pcr_d.v1_dh;
-	dh_secret_delref(&dhr->secret, HERE);
-	st->st_shared_nss = dhr->shared;
+	dh_local_secret_delref(&dhr->local_secret, HERE);
+	st->st_dh_shared_secret = dhr->shared_secret;
 	st->st_skeyid_nss = dhr->skeyid;
 	st->st_skeyid_d_nss = dhr->skeyid_d;
 	st->st_skeyid_a_nss = dhr->skeyid_a;
@@ -110,7 +110,7 @@ bool finish_dh_secretiv(struct state *st,
 
 	st->hidden_variables.st_skeyid_calculated = TRUE;
 
-	if (st->st_shared_nss == NULL) {
+	if (st->st_dh_shared_secret == NULL) {
 		return FALSE;
 	} else {
 		st->st_v1_new_iv = dhr->new_iv;
@@ -118,13 +118,13 @@ bool finish_dh_secretiv(struct state *st,
 	}
 }
 
-void start_dh_v1_secret(crypto_req_cont_func fn, const char *name,
-			struct state *st, enum sa_role role,
-			const struct dh_desc *oakley_group2)
+void submit_v1_dh_shared_secret(crypto_req_cont_func fn, const char *name,
+				struct state *st, enum sa_role role,
+				const struct dh_desc *oakley_group2)
 {
 	const chunk_t *pss = get_connection_psk(st->st_connection, st->st_logger);
 	struct pluto_crypto_req_cont *cn = new_pcrc(fn, name);
-	struct pcr_v1_dh *const dhq = pcr_v1_dh_init(cn, pcr_compute_dh_v1);
+	struct pcr_v1_dh *const dhq = pcr_v1_dh_init(cn, pcr_compute_v1_dh_shared_secret);
 
 	/* convert appropriate data to dhq */
 	dhq->auth = st->st_oakley.auth;
@@ -141,7 +141,7 @@ void start_dh_v1_secret(crypto_req_cont_func fn, const char *name,
 	WIRE_CLONE_CHUNK(*dhq, gi, st->st_gi);
 	WIRE_CLONE_CHUNK(*dhq, gr, st->st_gr);
 
-	dhq->secret = dh_secret_addref(st->st_dh_secret, HERE);
+	dhq->local_secret = dh_local_secret_addref(st->st_dh_local_secret, HERE);
 
 	ALLOC_WIRE_CHUNK(*dhq, icookie, COOKIE_SIZE);
 	memcpy(WIRE_CHUNK_PTR(*dhq, icookie),
@@ -156,7 +156,7 @@ void start_dh_v1_secret(crypto_req_cont_func fn, const char *name,
 
 /* NOTE: if NSS refuses to calculate DH, skr->shared == NULL */
 /* MUST BE THREAD-SAFE */
-void calc_dh_v1(struct pcr_v1_dh *dh, struct logger *logger)
+void calc_v1_dh_shared_secret(struct pcr_v1_dh *dh, struct logger *logger)
 {
 	const struct dh_desc *group = dh->oakley_group;
 	passert(group != NULL);
@@ -168,16 +168,16 @@ void calc_dh_v1(struct pcr_v1_dh *dh, struct logger *logger)
 		DBG_dump_hunk("peer's g: ", g);
 	}
 
-	dh->shared = calc_dh_shared(dh->secret, g, logger);
+	dh->shared_secret = calc_dh_shared_secret(dh->local_secret, g, logger);
 }
 
-void finish_dh_secret(struct state *st,
-		      struct pluto_crypto_req *r)
+void finish_v1_dh_shared_secret(struct state *st,
+				struct pluto_crypto_req *r)
 {
 	struct pcr_v1_dh *dhr = &r->pcr_d.v1_dh;
-	dh_secret_delref(&dhr->secret, HERE);
-	pexpect(st->st_shared_nss == NULL);
-	st->st_shared_nss = dhr->shared;
+	dh_local_secret_delref(&dhr->local_secret, HERE);
+	pexpect(st->st_dh_shared_secret == NULL);
+	st->st_dh_shared_secret = dhr->shared_secret;
 }
 
 /* Generate the SKEYID_* and new IV
@@ -280,7 +280,7 @@ static void calc_skeyids_iv(struct pcr_v1_dh *skq,
 }
 
 /* MUST BE THREAD-SAFE */
-void calc_dh_iv(struct pcr_v1_dh *dh, struct logger *logger)
+void calc_v1_dh_shared_secret_and_iv(struct pcr_v1_dh *dh, struct logger *logger)
 {
 	const struct dh_desc *group = dh->oakley_group;
 	passert(group != NULL);
@@ -298,12 +298,12 @@ void calc_dh_iv(struct pcr_v1_dh *dh, struct logger *logger)
 		DBG_dump_hunk("peer's g: ", g);
 	}
 
-	dh->shared = calc_dh_shared(dh->secret, g, logger);
+	dh->shared_secret = calc_dh_shared_secret(dh->local_secret, g, logger);
 
-	if (dh->shared != NULL) {
+	if (dh->shared_secret != NULL) {
 		/* okay, so now calculate IV */
 		calc_skeyids_iv(dh,
-			dh->shared,
+			dh->shared_secret,
 			dh->key_size,
 
 			&dh->skeyid,	/* output */

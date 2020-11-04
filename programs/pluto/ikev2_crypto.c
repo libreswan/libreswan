@@ -111,8 +111,8 @@ void ikev2_derive_child_keys(struct child_sa *child)
 	PK11SymKey *shared = NULL;
 	if (st->st_pfs_group != NULL) {
 		DBGF(DBG_CRYPT, "#%lu %s add g^ir to child key %p",
-		     st->st_serialno, st->st_state->name, st->st_shared_nss);
-		shared = st->st_shared_nss;
+		     st->st_serialno, st->st_state->name, st->st_dh_shared_secret);
+		shared = st->st_dh_shared_secret;
 	}
 
 	PK11SymKey *keymat = ikev2_child_sa_keymat(st->st_oakley.ta_prf,

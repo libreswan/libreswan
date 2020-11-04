@@ -1225,7 +1225,7 @@ void delete_state(struct state *st)
 	free_ikev2_proposal(&st->st_accepted_ike_proposal);
 	free_ikev2_proposal(&st->st_accepted_esp_or_ah_proposal);
 	/* helper may have its own ref */
-	dh_secret_delref(&st->st_dh_secret, HERE);
+	dh_local_secret_delref(&st->st_dh_local_secret, HERE);
 
 	/* without st_connection, st isn't complete */
 	/* from here on logging is for the wrong state */
@@ -1251,7 +1251,7 @@ void delete_state(struct state *st)
 	free_chunk_content(&st->st_v2_id_payload.data);
 
 #    define free_any_nss_symkey(p)  release_symkey(__func__, #p, &(p))
-	free_any_nss_symkey(st->st_shared_nss);
+	free_any_nss_symkey(st->st_dh_shared_secret);
 	free_any_nss_symkey(st->st_skeyid_nss);
 	free_any_nss_symkey(st->st_skey_d_nss);	/* aka st_skeyid_d_nss */
 	free_any_nss_symkey(st->st_skey_ai_nss); /* aka st_skeyid_a_nss */

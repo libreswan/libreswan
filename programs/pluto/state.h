@@ -525,31 +525,31 @@ struct state {
 	 * In IKEv1, both the the DH exchange and authentication can
 	 * be combined into a single packet.  Consequently, processing
 	 * consists of: first DH is used to derive the shared secret
-	 * from DH_SECRET and the keying material; and then
+	 * from DH_LOCAL and the keying material; and then
 	 * authentication is performed.  However, should
 	 * authentication fail, everything thing derived from that
 	 * packet gets discarded and this includes the DH derived
 	 * shared secret.  When the real packet arrives (or a
 	 * re-transmit), the whole process is performed again, and
-	 * using the same DH_SECRET.
+	 * using the same DH_LOCAL.
 	 *
 	 * Consequently, when the crypto helper gets created, it gets
-	 * ownership of the DH_SECRET, and then when it finishes,
+	 * ownership of the DH_LOCAL, and then when it finishes,
 	 * ownership is passed back to state.
 	 *
 	 * This all assumes that the crypto helper gets to delete
-	 * DH_SECRET iff state has already been deleted.
+	 * DH_LOCAL iff state has already been deleted.
 	 *
-	 * (An alternative would be to reference count dh_secret; or
+	 * (An alternative would be to reference count dh_local; or
 	 * copy the underlying keying material using NSS, hmm, NSS).
 	 */
-	struct dh_secret *st_dh_secret;
+	struct dh_local_secret *st_dh_local_secret;
 
-	PK11SymKey *st_shared_nss;	/* Derived shared secret
-					 * Note: during Quick Mode,
-					 * presence indicates PFS
-					 * selected.
-					 */
+	PK11SymKey *st_dh_shared_secret;	/* Derived shared secret
+						 * Note: during Quick Mode,
+						 * presence indicates PFS
+						 * selected.
+						 */
 	/* end of DH values */
 
 	/* In a Phase 1 state, preserve peer's public key after authentication */

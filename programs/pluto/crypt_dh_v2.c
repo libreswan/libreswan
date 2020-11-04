@@ -35,15 +35,15 @@
 #include "crypt_dh.h"
 #include "state.h"
 
-void cancelled_dh_v2(struct pcr_dh_v2 *dh)
+void cancelled_v2_dh_shared_secret(struct pcr_dh_v2 *dh)
 {
 	/* incoming */
 
-	dh_secret_delref(&dh->secret, HERE);
+	dh_local_secret_delref(&dh->local_secret, HERE);
 	release_symkey("cancelled IKEv2 DH", "skey_d_old", &dh->skey_d_old);
 
 	/* outgoing */
-	release_symkey("cancelled IKEv2 DH", "shared", &dh->shared);
+	release_symkey("cancelled IKEv2 DH", "shared", &dh->shared_secret);
 	release_symkey("cancelled IKEv2 DH", "skeyid_d", &dh->skeyid_d);
 	release_symkey("cancelled IKEv2 DH", "skeyid_ai", &dh->skeyid_ai);
 	release_symkey("cancelled IKEv2 DH", "skeyid_ar", &dh->skeyid_ar);
@@ -61,12 +61,12 @@ void cancelled_dh_v2(struct pcr_dh_v2 *dh)
 /*
  * invoke helper to do DH work.
  */
-void start_dh_v2(struct state *st,
-		 const char *name, enum sa_role role,
-		 PK11SymKey *skey_d_old, /* SKEYSEED IKE Rekey */
-		 const struct prf_desc *old_prf, /* IKE Rekey */
-		 const ike_spis_t *new_ike_spis,
-		 crypto_req_cont_func pcrc_func)
+void submit_v2_dh_shared_secret(struct state *st,
+				const char *name, enum sa_role role,
+				PK11SymKey *skey_d_old, /* SKEYSEED IKE Rekey */
+				const struct prf_desc *old_prf, /* IKE Rekey */
+				const ike_spis_t *new_ike_spis,
+				crypto_req_cont_func pcrc_func)
 {
 	struct pluto_crypto_req_cont *dh = new_pcrc(pcrc_func, name);
 	struct pcr_dh_v2 *const dhq = pcr_dh_v2_init(dh);
@@ -100,21 +100,21 @@ void start_dh_v2(struct state *st,
 	WIRE_CLONE_CHUNK(*dhq, gi, st->st_gi);
 	WIRE_CLONE_CHUNK(*dhq, gr, st->st_gr);
 
-	dhq->secret = dh_secret_addref(st->st_dh_secret, HERE);
+	dhq->local_secret = dh_local_secret_addref(st->st_dh_local_secret, HERE);
 
 	dhq->ike_spis = *new_ike_spis;
 
 	send_crypto_helper_request(st, dh);
 }
 
-bool finish_dh_v2(struct state *st,
-		  struct pluto_crypto_req *r,  bool only_shared)
+bool finish_v2_dh_shared_secret(struct state *st,
+				struct pluto_crypto_req *r,  bool only_shared)
 {
 	struct pcr_dh_v2 *dhv2 = &r->pcr_d.dh_v2;
 
-	dh_secret_delref(&dhv2->secret, HERE);
-	release_symkey(__func__, "st_shared_nss", &st->st_shared_nss);
-	st->st_shared_nss = dhv2->shared;
+	dh_local_secret_delref(&dhv2->local_secret, HERE);
+	release_symkey(__func__, "st_dh_shared_secret", &st->st_dh_shared_secret);
+	st->st_dh_shared_secret = dhv2->shared_secret;
 
 	if (only_shared) {
 #define free_any_symkey(p) release_symkey(__func__, #p, &p)
@@ -162,7 +162,7 @@ bool finish_dh_v2(struct state *st,
 	}
 
 	st->hidden_variables.st_skeyid_calculated = TRUE;
-	return st->st_shared_nss != NULL;	/* was NSS happy to DH? */
+	return st->st_dh_shared_secret != NULL;	/* was NSS happy to DH? */
 }
 
 /* MUST BE THREAD-SAFE */
@@ -348,9 +348,9 @@ static void calc_skeyseed_v2(struct pcr_dh_v2 *sk,
 	}
 }
 
-/* NOTE: if NSS refuses to calculate DH, skr->shared == NULL */
+/* NOTE: if NSS refuses to calculate DH, skr->shared_secret == NULL */
 /* MUST BE THREAD-SAFE */
-void calc_dh_v2(struct pluto_crypto_req *r, struct logger *logger)
+void calc_v2_dh_shared_secret(struct pluto_crypto_req *r, struct logger *logger)
 {
 	struct pcr_dh_v2 *const sk = &r->pcr_d.dh_v2;
 
@@ -366,14 +366,14 @@ void calc_dh_v2(struct pluto_crypto_req *r, struct logger *logger)
 		DBG_dump_hunk("peer's g: ", remote_ke);
 	}
 
-	sk->shared = calc_dh_shared(sk->secret, remote_ke, logger);
-	if (sk->shared == NULL) {
+	sk->shared_secret = calc_dh_shared_secret(sk->local_secret, remote_ke, logger);
+	if (sk->shared_secret == NULL) {
 		return; /* something went wrong */
 	}
 
 	/* okay, so now all the shared key material */
 	calc_skeyseed_v2(sk,  /* input */
-			 sk->shared,   /* input */
+			 sk->shared_secret,   /* input */
 			 sk->key_size,  /* input */
 			 sk->salt_size, /* input */
 

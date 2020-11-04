@@ -264,13 +264,13 @@ static void pcr_cancelled(struct crypto_task **task)
 	case pcr_build_nonce:
 		cancelled_ke_and_nonce(&r->pcr_d.kn);
 		break;
-	case pcr_compute_dh_v2:
-		cancelled_dh_v2(&r->pcr_d.dh_v2);
+	case pcr_compute_v2_dh_shared_secret:
+		cancelled_v2_dh_shared_secret(&r->pcr_d.dh_v2);
 		break;
 #ifdef USE_IKEv1
-	case pcr_compute_dh_iv_v1:
-	case pcr_compute_dh_v1:
-		cancelled_v1_dh(&r->pcr_d.v1_dh);
+	case pcr_compute_v1_dh_shared_secret_and_iv:
+	case pcr_compute_v1_dh_shared_secret:
+		cancelled_v1_dh_shared_secret(&r->pcr_d.v1_dh);
 		break;
 #endif
 	case pcr_crypto:
@@ -303,7 +303,7 @@ struct pcr_v1_dh *pcr_v1_dh_init(struct pluto_crypto_req_cont *cn,
 struct pcr_dh_v2 *pcr_dh_v2_init(struct pluto_crypto_req_cont *cn)
 {
 	struct pluto_crypto_req *r = &cn->pcrc_pcr;
-	pcr_init(r, pcr_compute_dh_v2);
+	pcr_init(r, pcr_compute_v2_dh_shared_secret);
 	struct pcr_dh_v2 *dhq = &r->pcr_d.dh_v2;
 	INIT_WIRE_ARENA(*dhq);
 	return dhq;
@@ -360,16 +360,16 @@ static void pcr_compute(struct logger *logger,
 		break;
 
 #ifdef USE_IKEv1
-	case pcr_compute_dh_iv_v1:
-		calc_dh_iv(&r->pcr_d.v1_dh, logger);
+	case pcr_compute_v1_dh_shared_secret_and_iv:
+		calc_v1_dh_shared_secret_and_iv(&r->pcr_d.v1_dh, logger);
 		break;
-	case pcr_compute_dh_v1:
-		calc_dh_v1(&r->pcr_d.v1_dh, logger);
+	case pcr_compute_v1_dh_shared_secret:
+		calc_v1_dh_shared_secret(&r->pcr_d.v1_dh, logger);
 		break;
 #endif
 
-	case pcr_compute_dh_v2:
-		calc_dh_v2(r, logger);
+	case pcr_compute_v2_dh_shared_secret:
+		calc_v2_dh_shared_secret(r, logger);
 		break;
 
 	case pcr_crypto:

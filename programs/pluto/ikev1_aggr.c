@@ -114,8 +114,8 @@ static void aggr_inI1_outR1_continue1(struct state *st,
 	/* NOTE: the "r" reply will get freed by our caller */
 
 	/* set up second calculation */
-	start_dh_v1_secretiv(aggr_inI1_outR1_continue2, "aggr outR1 DH",
-			     st, SA_RESPONDER, st->st_oakley.ta_dh);
+	submit_v1_dh_shared_secret_and_iv(aggr_inI1_outR1_continue2, "aggr outR1 DH",
+					  st, SA_RESPONDER, st->st_oakley.ta_dh);
 	/*
 	 * XXX: Since more crypto has been requested, MD needs to be re
 	 * suspended.  If the original crypto request did everything
@@ -289,7 +289,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 	 * so we have to build our reply_stream and emit HDR before calling it.
 	 */
 
-	if (!finish_dh_secretiv(st, r))
+	if (!finish_v1_dh_shared_secret_and_iv(st, r))
 		return STF_FAIL + INVALID_KEY_INFORMATION;
 
 	/* decode certificate requests */
@@ -581,8 +581,8 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	ikev1_natd_init(st, md);
 
 	/* set up second calculation */
-	start_dh_v1_secretiv(aggr_inR1_outI2_crypto_continue, "aggr outR1 DH",
-			     st, SA_INITIATOR, st->st_oakley.ta_dh);
+	submit_v1_dh_shared_secret_and_iv(aggr_inR1_outI2_crypto_continue, "aggr outR1 DH",
+					  st, SA_INITIATOR, st->st_oakley.ta_dh);
 	return STF_SUSPEND;
 }
 
@@ -600,7 +600,7 @@ static void aggr_inR1_outI2_crypto_continue(struct state *st,
 	passert(md != NULL);
 	passert(md->st == st);
 
-	if (!finish_dh_secretiv(st, r)) {
+	if (!finish_v1_dh_shared_secret_and_iv(st, r)) {
 		e = STF_FAIL + INVALID_KEY_INFORMATION;
 	} else {
 		e = aggr_inR1_outI2_tail(md);
