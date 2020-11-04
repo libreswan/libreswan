@@ -100,7 +100,7 @@ void start_dh_v2(struct state *st,
 	WIRE_CLONE_CHUNK(*dhq, gi, st->st_gi);
 	WIRE_CLONE_CHUNK(*dhq, gr, st->st_gr);
 
-	transfer_dh_secret_to_helper(st, "IKEv2 DH", &dhq->secret);
+	dhq->secret = dh_secret_addref(st->st_dh_secret, HERE);
 
 	dhq->ike_spis = *new_ike_spis;
 
@@ -112,8 +112,7 @@ bool finish_dh_v2(struct state *st,
 {
 	struct pcr_dh_v2 *dhv2 = &r->pcr_d.dh_v2;
 
-	transfer_dh_secret_to_state("IKEv2 DH", &dhv2->secret, st);
-
+	dh_secret_delref(&dhv2->secret, HERE);
 	release_symkey(__func__, "st_shared_nss", &st->st_shared_nss);
 	st->st_shared_nss = dhv2->shared;
 

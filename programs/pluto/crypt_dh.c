@@ -130,35 +130,9 @@ PK11SymKey *calc_dh_shared(struct dh_secret *secret, chunk_t remote_ke,
 	return dhshared;
 }
 
-/*
- * If needed, these functions can be tweaked to; instead of moving use
- * a copy and/or a reference count.
- */
-
-void transfer_dh_secret_to_state(const char *helper, struct dh_secret **secret,
-				 struct state *st)
+struct dh_secret *dh_secret_addref(struct dh_secret *secret, where_t where)
 {
-	LSWDBGP(DBG_BASE, buf) {
-		jam_dh_secret(buf, *secret);
-		jam(buf, "transferring ownership from helper %s to state #%lu",
-			helper, st->st_serialno);
-	}
-	pexpect(st->st_dh_secret == NULL);
-	st->st_dh_secret = *secret;
-	*secret = NULL;
-}
-
-void transfer_dh_secret_to_helper(struct state *st,
-				  const char *helper, struct dh_secret **secret)
-{
-	LSWDBGP(DBG_BASE, buf) {
-		jam_dh_secret(buf, st->st_dh_secret);
-		jam(buf, "transferring ownership from state #%lu to helper %s",
-			st->st_serialno, helper);
-	}
-	pexpect(*secret == NULL);
-	*secret = st->st_dh_secret;
-	st->st_dh_secret = NULL;
+	return refcnt_addref(secret, where);
 }
 
 static void free_dh_secret(struct dh_secret **secret, where_t where UNUSED)
@@ -205,7 +179,7 @@ static stf_status complete_dh(struct state *st,
 			      struct msg_digest *md,
 			      struct crypto_task **task)
 {
-	transfer_dh_secret_to_state("IKEv2 DH", &(*task)->local_secret, st);
+	dh_secret_delref(&(*task)->local_secret, HERE);
 	free_chunk_content(&(*task)->remote_ke);
 	pexpect(st->st_shared_nss == NULL);
 	release_symkey(__func__, "st_shared_nss", &st->st_shared_nss);
@@ -227,7 +201,7 @@ void submit_dh(struct state *st, chunk_t remote_ke,
 {
 	struct crypto_task *task = alloc_thing(struct crypto_task, "dh");
 	task->remote_ke = clone_hunk(remote_ke, "DH crypto");
-	transfer_dh_secret_to_helper(st, "DH", &task->local_secret);
+	task->local_secret = dh_secret_addref(st->st_dh_secret, HERE);
 	task->cb = cb;
 	submit_crypto(st->st_logger, st, task, &dh_handler, name);
 }

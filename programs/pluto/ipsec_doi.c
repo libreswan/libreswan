@@ -124,7 +124,10 @@ void unpack_KE_from_helper(struct state *st,
 	free_chunk_content(g); /* happens in odd error cases */
 	*g = kn->gi;
 
-	transfer_dh_secret_to_state("KE", &kn->secret, st);
+	pexpect(st->st_dh_secret == NULL);
+	/* this triggers two log lines */
+	st->st_dh_secret = dh_secret_addref(kn->secret, HERE);
+	dh_secret_delref(&kn->secret, HERE);
 }
 
 /* accept_KE

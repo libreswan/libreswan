@@ -83,7 +83,7 @@ void start_dh_v1_secretiv(crypto_req_cont_func fn, const char *name,
 	WIRE_CLONE_CHUNK(*dhq, gi, st->st_gi);
 	WIRE_CLONE_CHUNK(*dhq, gr, st->st_gr);
 
-	transfer_dh_secret_to_helper(st, "IKEv1 DH+IV", &dhq->secret);
+	dhq->secret = dh_secret_addref(st->st_dh_secret, HERE);
 
 	ALLOC_WIRE_CHUNK(*dhq, icookie, COOKIE_SIZE);
 	memcpy(WIRE_CHUNK_PTR(*dhq, icookie),
@@ -100,9 +100,7 @@ bool finish_dh_secretiv(struct state *st,
 			struct pluto_crypto_req *r)
 {
 	struct pcr_v1_dh *dhr = &r->pcr_d.v1_dh;
-
-	transfer_dh_secret_to_state("IKEv1 DH+IV", &dhr->secret, st);
-
+	dh_secret_delref(&dhr->secret, HERE);
 	st->st_shared_nss = dhr->shared;
 	st->st_skeyid_nss = dhr->skeyid;
 	st->st_skeyid_d_nss = dhr->skeyid_d;
@@ -143,7 +141,7 @@ void start_dh_v1_secret(crypto_req_cont_func fn, const char *name,
 	WIRE_CLONE_CHUNK(*dhq, gi, st->st_gi);
 	WIRE_CLONE_CHUNK(*dhq, gr, st->st_gr);
 
-	transfer_dh_secret_to_helper(st, "IKEv1 DH", &dhq->secret);
+	dhq->secret = dh_secret_addref(st->st_dh_secret, HERE);
 
 	ALLOC_WIRE_CHUNK(*dhq, icookie, COOKIE_SIZE);
 	memcpy(WIRE_CHUNK_PTR(*dhq, icookie),
@@ -177,7 +175,8 @@ void finish_dh_secret(struct state *st,
 		      struct pluto_crypto_req *r)
 {
 	struct pcr_v1_dh *dhr = &r->pcr_d.v1_dh;
-	transfer_dh_secret_to_state("IKEv1 DH", &dhr->secret, st);
+	dh_secret_delref(&dhr->secret, HERE);
+	pexpect(st->st_shared_nss == NULL);
 	st->st_shared_nss = dhr->shared;
 }
 

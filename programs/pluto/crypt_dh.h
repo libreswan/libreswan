@@ -49,12 +49,7 @@ struct dh_secret *calc_dh_secret(const struct dh_desc *group, chunk_t *ke,
 PK11SymKey *calc_dh_shared(struct dh_secret *secret, chunk_t remote_ke,
 			   struct logger *logger);
 
-void transfer_dh_secret_to_state(const char *helper, struct dh_secret **secret,
-				 struct state *st);
-
-void transfer_dh_secret_to_helper(struct state *st,
-				  const char *helper, struct dh_secret **secret);
-
+struct dh_secret *dh_secret_addref(struct dh_secret *secret, where_t where);
 void dh_secret_delref(struct dh_secret **secret, where_t where);
 
 /*
