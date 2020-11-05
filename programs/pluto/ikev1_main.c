@@ -834,10 +834,10 @@ bool ikev1_justship_KE(struct logger *logger, chunk_t *g, pb_stream *outs)
 	}
 }
 
-bool ikev1_ship_KE(struct state *st, struct pluto_crypto_req *r,
-		   chunk_t *g, pb_stream *outs)
+bool ikev1_ship_KE(struct state *st, struct dh_local_secret *local_secret,
+		   chunk_t *g, struct pbs_out *outs)
 {
-	unpack_KE_from_helper(st, r, g);
+	unpack_KE_from_helper(st, local_secret, g);
 	return ikev1_justship_KE(st->st_logger, g, outs);
 }
 
@@ -866,11 +866,11 @@ static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
 				       &rbody, st->st_logger);
 
 	/* KE out */
-	if (!ikev1_ship_KE(st, r, &st->st_gi, &rbody))
+	if (!ikev1_ship_KE(st, r->pcr_d.kn.local_secret, &st->st_gi, &rbody))
 		return STF_INTERNAL_ERROR;
 
 	/* Ni out */
-	if (!ikev1_ship_nonce(&st->st_ni, r, &rbody, "Ni"))
+	if (!ikev1_ship_nonce(&st->st_ni, &r->pcr_d.kn.n, &rbody, "Ni"))
 		return STF_INTERNAL_ERROR;
 
 	if (impair.bust_mi2) {
@@ -1024,11 +1024,11 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 				       &rbody, st->st_logger);
 
 	/* KE out */
-	passert(ikev1_ship_KE(st, r, &st->st_gr, &rbody));
+	passert(ikev1_ship_KE(st, r->pcr_d.kn.local_secret, &st->st_gr, &rbody));
 
 	{
 		/* Nr out */
-		if (!ikev1_ship_nonce(&st->st_nr, r, &rbody, "Nr"))
+		if (!ikev1_ship_nonce(&st->st_nr, &r->pcr_d.kn.n, &rbody, "Nr"))
 			return STF_INTERNAL_ERROR;
 
 		if (impair.bust_mr2) {

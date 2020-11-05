@@ -768,7 +768,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 
 	{
 		/* Ni out */
-		if (!ikev1_ship_nonce(&st->st_ni, r, &rbody, "Ni")) {
+		if (!ikev1_ship_nonce(&st->st_ni, &r->pcr_d.kn.n, &rbody, "Ni")) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
@@ -776,7 +776,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 
 	/* [ KE ] out (for PFS) */
 	if (st->st_pfs_group != NULL) {
-		if (!ikev1_ship_KE(st, r, &st->st_gi, &rbody)) {
+		if (!ikev1_ship_KE(st, r->pcr_d.kn.local_secret, &st->st_gi, &rbody)) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
@@ -1279,11 +1279,11 @@ static void quick_inI1_outR1_continue1(struct state *st,
 	passert(st->st_connection != NULL);
 
 	/* we always calculate a nonce */
-	unpack_nonce(&st->st_nr, r);
+	unpack_nonce(&st->st_nr, &r->pcr_d.kn.n);
 
 	if (st->st_pfs_group != NULL) {
 		/* PFS is on: do a new DH */
-		unpack_KE_from_helper(st, r, &st->st_gr);
+		unpack_KE_from_helper(st, r->pcr_d.kn.local_secret, &st->st_gr);
 		submit_v1_dh_shared_secret(quick_inI1_outR1_continue2, "quick outR1 DH",
 					   st, SA_RESPONDER, st->st_pfs_group);
 		/*

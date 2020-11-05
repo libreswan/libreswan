@@ -702,8 +702,8 @@ void ikev2_parent_outI1_continue(struct state *st, struct msg_digest *unused_md,
 	pexpect(st->st_state->kind == STATE_PARENT_I0 ||
 		st->st_state->kind == STATE_PARENT_I1);
 
-	unpack_KE_from_helper(st, r, &st->st_gi);
-	unpack_nonce(&st->st_ni, r);
+	unpack_KE_from_helper(st, r->pcr_d.kn.local_secret, &st->st_gi);
+	unpack_nonce(&st->st_ni, &r->pcr_d.kn.n);
 	stf_status e = record_v2_IKE_SA_INIT_request(ike) ? STF_OK : STF_INTERNAL_ERROR;
 	complete_v2_state_transition(st, NULL/*initiator*/, e);
 }
@@ -1119,13 +1119,13 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	 * st_oakley.ta_dh once the proposal has been accepted.
 	 */
 	pexpect(st->st_oakley.ta_dh == r->pcr_d.kn.group);
-	unpack_KE_from_helper(st, r, &st->st_gr);
+	unpack_KE_from_helper(st, r->pcr_d.kn.local_secret, &st->st_gr);
 	if (!emit_v2KE(&st->st_gr, r->pcr_d.kn.group, &rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
 
 	/* send NONCE */
-	unpack_nonce(&st->st_nr, r);
+	unpack_nonce(&st->st_nr, &r->pcr_d.kn.n);
 	{
 		pb_stream pb;
 		struct ikev2_generic in = {
@@ -4804,10 +4804,10 @@ static void ikev2_child_inIoutR_continue(struct state *st,
 	}
 
 	stf_status e;
-	unpack_nonce(&st->st_nr, r);
+	unpack_nonce(&st->st_nr, &r->pcr_d.kn.n);
 	if (r->pcr_type == pcr_build_ke_and_nonce) {
 		pexpect(md->chain[ISAKMP_NEXT_v2KE] != NULL);
-		unpack_KE_from_helper(st, r, &st->st_gr);
+		unpack_KE_from_helper(st, r->pcr_d.kn.local_secret, &st->st_gr);
 		/* initiate calculation of g^xy */
 		submit_dh_shared_secret(st, st->st_gi, ikev2_child_inIoutR_continue_continue,
 					"DHv2 for child sa");
@@ -4991,8 +4991,8 @@ static void ikev2_child_ike_inIoutR_continue(struct state *st,
 
 	pexpect(r->pcr_type == pcr_build_ke_and_nonce);
 	pexpect(md->chain[ISAKMP_NEXT_v2KE] != NULL);
-	unpack_nonce(&st->st_nr, r);
-	unpack_KE_from_helper(st, r, &st->st_gr);
+	unpack_nonce(&st->st_nr, &r->pcr_d.kn.n);
+	unpack_KE_from_helper(st, r->pcr_d.kn.local_secret, &st->st_gr);
 
 	/* initiate calculation of g^xy */
 	passert(ike_spi_is_zero(&st->st_ike_rekey_spis.initiator));
@@ -6111,9 +6111,9 @@ static void ikev2_child_outI_continue(struct state *st,
 	/* IKE SA => DH */
 	pexpect(st->st_state->kind == STATE_V2_REKEY_IKE_I0 ? r->pcr_type == pcr_build_ke_and_nonce : true);
 
-	unpack_nonce(&st->st_ni, r);
+	unpack_nonce(&st->st_ni, &r->pcr_d.kn.n);
 	if (r->pcr_type == pcr_build_ke_and_nonce) {
-		unpack_KE_from_helper(st, r, &st->st_gi);
+		unpack_KE_from_helper(st, r->pcr_d.kn.local_secret, &st->st_gi);
 	}
 
 	dbg("adding CHILD SA #%lu to IKE SA #%lu message initiator queue",

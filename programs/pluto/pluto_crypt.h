@@ -409,7 +409,7 @@ extern void cancelled_v2_dh_shared_secret(struct pcr_dh_v2 *dh);
  */
 
 extern void unpack_KE_from_helper(struct state *st,
-				  struct pluto_crypto_req *r,
+				  struct dh_local_secret *local_secret,
 				  chunk_t *g);
 
 void pcr_kenonce_init(struct pluto_crypto_req_cont *cn,

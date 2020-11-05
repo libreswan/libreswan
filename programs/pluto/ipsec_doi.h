@@ -71,7 +71,7 @@ extern bool has_preloaded_public_key(const struct state *st);
 extern bool extract_peer_id(enum ike_id_type kind, struct id *peer, const pb_stream *id_pbs);
 
 struct pluto_crypto_req;	/* prevent struct type being local to function protocol */
-extern void unpack_nonce(chunk_t *n, const struct pluto_crypto_req *r);
+extern void unpack_nonce(chunk_t *n, chunk_t *nonce);
 
 extern void lswlog_child_sa_established(struct jambuf *buf, struct state *st);
 extern void lswlog_ike_sa_established(struct jambuf *buf, struct state *st);

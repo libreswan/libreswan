@@ -86,12 +86,9 @@
 /*
  * Process KE values.
  */
-void unpack_KE_from_helper(struct state *st,
-			   struct pluto_crypto_req *r,
+void unpack_KE_from_helper(struct state *st, struct dh_local_secret *local_secret,
 			   chunk_t *g)
 {
-	struct pcr_kenonce *kn = &r->pcr_d.kn;
-
 	/*
 	 * Should the crypto helper group and the state group be in
 	 * sync?
@@ -115,19 +112,18 @@ void unpack_KE_from_helper(struct state *st,
 	 * responder comes back with a vald accepted propsal and KE.
 	 */
 	if (DBGP(DBG_CRYPT)) {
+		const struct dh_desc *group = dh_local_secret_desc(local_secret);
 		DBG_log("wire (crypto helper) group %s and state group %s %s",
-			kn->group ? kn->group->common.fqn : "NULL",
+			group->common.fqn,
 			st->st_oakley.ta_dh ? st->st_oakley.ta_dh->common.fqn : "NULL",
-			kn->group == st->st_oakley.ta_dh ? "match" : "differ");
+			group == st->st_oakley.ta_dh ? "match" : "differ");
 	}
 
 	free_chunk_content(g); /* happens in odd error cases */
-	*g = clone_dh_local_secret_ke(kn->local_secret);
+	*g = clone_dh_local_secret_ke(local_secret);
 
 	pexpect(st->st_dh_local_secret == NULL);
-	/* this triggers two log lines */
-	st->st_dh_local_secret = dh_local_secret_addref(kn->local_secret, HERE);
-	dh_local_secret_delref(&kn->local_secret, HERE);
+	st->st_dh_local_secret = dh_local_secret_addref(local_secret, HERE);
 }
 
 /* accept_KE
@@ -164,24 +160,23 @@ bool accept_KE(chunk_t *dest, const char *val_name,
 	return true;
 }
 
-void unpack_nonce(chunk_t *n, const struct pluto_crypto_req *r)
+void unpack_nonce(chunk_t *n, chunk_t *nonce)
 {
-	const struct pcr_kenonce *kn = &r->pcr_d.kn;
-
 	free_chunk_content(n);
-	*n = kn->n;
+	*n = *nonce; /* steal away */
+	*nonce = empty_chunk;
 }
 
-bool ikev1_justship_nonce(chunk_t *n, pb_stream *outs,
+bool ikev1_justship_nonce(chunk_t *n, struct pbs_out *outs,
 			  const char *name)
 {
 	return ikev1_out_generic_chunk(&isakmp_nonce_desc, outs, *n, name);
 }
 
-bool ikev1_ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
-		      pb_stream *outs, const char *name)
+bool ikev1_ship_nonce(chunk_t *n, chunk_t *nonce,
+		      struct pbs_out *outs, const char *name)
 {
-	unpack_nonce(n, r);
+	unpack_nonce(n, nonce);
 	return ikev1_justship_nonce(n, outs, name);
 }
 

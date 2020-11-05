@@ -106,10 +106,10 @@ static void aggr_inI1_outR1_continue1(struct state *st,
 	dbg("aggr inI1_outR1: calculated ke+nonce, calculating DH");
 
 	/* unpack first calculation */
-	unpack_KE_from_helper(st, r, &st->st_gr);
+	unpack_KE_from_helper(st, r->pcr_d.kn.local_secret, &st->st_gr);
 
 	/* unpack nonce too */
-	unpack_nonce(&st->st_nr, r);
+	unpack_nonce(&st->st_nr, &r->pcr_d.kn.n);
 
 	/* NOTE: the "r" reply will get freed by our caller */
 
@@ -1119,11 +1119,11 @@ static stf_status aggr_outI1_tail(struct state *st,
 	}
 
 	/* KE out */
-	if (!ikev1_ship_KE(st, r, &st->st_gi, &rbody))
+	if (!ikev1_ship_KE(st, r->pcr_d.kn.local_secret, &st->st_gi, &rbody))
 		return STF_INTERNAL_ERROR;
 
 	/* Ni out */
-	if (!ikev1_ship_nonce(&st->st_ni, r, &rbody, "Ni"))
+	if (!ikev1_ship_nonce(&st->st_ni, &r->pcr_d.kn.n, &rbody, "Ni"))
 		return STF_INTERNAL_ERROR;
 
 	/* IDii out */

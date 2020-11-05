@@ -657,6 +657,13 @@ stf_status pcr_completed(struct state *st,
 	passert(cn->pcrc_func != NULL);
 	pexpect(cn->pcrc_pcr.pcr_type != pcr_crypto);
 	(*cn->pcrc_func)(st, md, &cn->pcrc_pcr);
+	switch (cn->pcrc_pcr.pcr_type) {
+	case pcr_build_ke_and_nonce:
+		cancelled_ke_and_nonce(&cn->pcrc_pcr.pcr_d.kn);
+		break;
+	default:
+		break;
+	}
 	pfree(*task);
 	*task = NULL;
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
