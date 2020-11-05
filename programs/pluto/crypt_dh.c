@@ -101,6 +101,11 @@ chunk_t clone_dh_local_secret_ke(struct dh_local_secret *local_secret)
 								  local_secret->pubk);
 }
 
+const struct dh_desc *dh_local_secret_desc(struct dh_local_secret *local_secret)
+{
+	return local_secret->group;
+}
+
 /** Compute DH shared secret from our local secret and the peer's public value.
  * We make the leap that the length should be that of the group
  * (see quoted passage at start of ACCEPT_KE).
