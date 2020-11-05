@@ -79,12 +79,10 @@ static void jam_dh_local_secret(struct jambuf *buf, struct dh_local_secret *secr
 struct dh_local_secret *calc_dh_local_secret(const struct dh_desc *group, chunk_t *local_ke,
 					     struct logger *logger)
 {
-	chunk_t ke = alloc_chunk(group->bytes, "local ke");
 	SECKEYPrivateKey *privk;
 	SECKEYPublicKey *pubk;
-	group->dh_ops->calc_local_secret(group, &privk, &pubk,
-					 ke.ptr, ke.len,
-					 logger);
+	group->dh_ops->calc_local_secret(group, &privk, &pubk, logger);
+	chunk_t ke = group->dh_ops->clone_local_secret_ke(group, pubk);
 	passert(privk != NULL);
 	passert(pubk != NULL);
 	*local_ke = ke;

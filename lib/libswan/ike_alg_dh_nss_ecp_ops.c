@@ -40,10 +40,8 @@
 static void nss_ecp_calc_local_secret(const struct dh_desc *group,
 				      SECKEYPrivateKey **privk,
 				      SECKEYPublicKey **pubk,
-				      uint8_t *ke, size_t sizeof_ke,
 				      struct logger *logger)
 {
-	passert(sizeof_ke == group->bytes);
 	/*
 	 * Get the PK11 formatted EC parameters (stored in static
 	 * data) from NSS.
@@ -99,7 +97,11 @@ static void nss_ecp_calc_local_secret(const struct dh_desc *group,
 			jam_nss_secitem(buf, &(*pubk)->u.ec.publicValue);
 		}
 	}
+}
 
+static chunk_t nss_ecp_clone_local_secret_ke(const struct dh_desc *group,
+					     const SECKEYPublicKey *local_pubk)
+{
 #ifdef USE_DH31
 	if (group->nss_oid == SEC_OID_CURVE25519) {
 		/*
@@ -107,17 +109,14 @@ static void nss_ecp_calc_local_secret(const struct dh_desc *group,
 		 * in pk11_get_EC_PointLenInBytes(), and that is what
 		 * needs to go over the wire.
 		 */
-		passert((*pubk)->u.ec.publicValue.len == group->bytes);
+		passert(local_pubk->u.ec.publicValue.len == group->bytes);
 		DBG_log("putting NSS raw CURVE25519 public key blob on wire");
-		memcpy(ke, (*pubk)->u.ec.publicValue.data, group->bytes);
-	} else {
-#endif
-		passert((*pubk)->u.ec.publicValue.data[0] == EC_POINT_FORM_UNCOMPRESSED);
-		passert((*pubk)->u.ec.publicValue.len == group->bytes + 1);
-		memcpy(ke, (*pubk)->u.ec.publicValue.data + 1, group->bytes);
-#ifdef USE_DH31
+		return clone_bytes_as_chunk(local_pubk->u.ec.publicValue.data, group->bytes, "ECP KE");
 	}
 #endif
+	passert(local_pubk->u.ec.publicValue.data[0] == EC_POINT_FORM_UNCOMPRESSED);
+	passert(local_pubk->u.ec.publicValue.len == group->bytes + 1);
+	return clone_bytes_as_chunk(local_pubk->u.ec.publicValue.data + 1, group->bytes, "ECP KE");
 }
 
 static PK11SymKey *nss_ecp_calc_shared_secret(const struct dh_desc *group,
@@ -215,5 +214,6 @@ const struct dh_ops ike_alg_dh_nss_ecp_ops = {
 	.backend = "NSS(ECP)",
 	.check = nss_ecp_check,
 	.calc_local_secret = nss_ecp_calc_local_secret,
+	.clone_local_secret_ke = nss_ecp_clone_local_secret_ke,
 	.calc_shared_secret = nss_ecp_calc_shared_secret,
 };

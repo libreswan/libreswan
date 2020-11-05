@@ -15,6 +15,8 @@
 #ifndef IKE_ALG_DH_OPS_H
 #define IKE_ALG_DH_OPS_H
 
+#include "chunk.h"
+
 struct logger;
 
 struct dh_ops {
@@ -39,8 +41,9 @@ struct dh_ops {
 	void (*calc_local_secret)(const struct dh_desc *group,
 				  SECKEYPrivateKey **local_privk,
 				  SECKEYPublicKey **locak_pubk,
-				  uint8_t *ke, size_t sizeof_ke,
 				  struct logger *logger);
+	chunk_t (*clone_local_secret_ke)(const struct dh_desc *group,
+					 const SECKEYPublicKey *local_pubk);
 	PK11SymKey *(*calc_shared_secret)(const struct dh_desc *group,
 					  SECKEYPrivateKey *local_privk,
 					  const SECKEYPublicKey *local_pubk,
