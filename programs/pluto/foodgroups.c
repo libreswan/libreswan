@@ -104,6 +104,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 	if (!lexopen(&flp, fg_path, true, oflp)) {
 		char cwd[PATH_MAX];
 		dbg("no group file \"%s\" (pwd:%s)", fg_path, getcwd(cwd, sizeof(cwd)));
+		pfreeany(fg_path);
 		return;
 	}
 	pfreeany(fg_path);
