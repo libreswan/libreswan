@@ -82,7 +82,7 @@
 #include "nat_traversal.h"
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"
-
+#include "crypt_ke.h"
 #include "lswfips.h"
 #include "ip_address.h"
 #include "send.h"
@@ -754,22 +754,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
  *
  */
 
-static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
-				       struct pluto_crypto_req *r);
-
-static crypto_req_cont_func main_inR1_outI2_continue;	/* type assertion */
-
-static void main_inR1_outI2_continue(struct state *st,
-				     struct msg_digest *md,
-				     struct pluto_crypto_req *r)
-{
-	dbg("main_inR1_outI2_continue for #%lu: calculated ke+nonce, sending I2",
-	    st->st_serialno);
-
-	passert(md != NULL);
-	stf_status e = main_inR1_outI2_tail(st, md, r);
-	complete_v1_state_transition(md, e);
-}
+static ke_and_nonce_cb main_inR1_outI2_continue;	/* type assertion */
 
 stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 {
@@ -797,9 +782,8 @@ stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 
 	set_nat_traversal(st, md);
 
-	request_ke_and_nonce("outI2 KE", st,
-			     st->st_oakley.ta_dh,
-			     main_inR1_outI2_continue);
+	submit_ke_and_nonce(st, st->st_oakley.ta_dh,
+			    main_inR1_outI2_continue, "outI2 KE");
 	return STF_SUSPEND;
 }
 
@@ -852,9 +836,15 @@ bool ikev1_ship_KE(struct state *st, struct dh_local_secret *local_secret,
  *
  * We must verify that the proposal received matches one we sent.
  */
-static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
-				       struct pluto_crypto_req *r)
+
+static stf_status main_inR1_outI2_continue(struct state *st,
+					   struct msg_digest *md,
+					   struct dh_local_secret *local_secret,
+					   chunk_t *nonce/*steal*/)
 {
+	dbg("main_inR1_outI2_continue for #%lu: calculated ke+nonce, sending I2",
+	    st->st_serialno);
+
 	/*
 	 * HDR out.
 	 * We can't leave this to comm_handle() because the isa_np
@@ -866,11 +856,11 @@ static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
 				       &rbody, st->st_logger);
 
 	/* KE out */
-	if (!ikev1_ship_KE(st, r->pcr_d.kn.local_secret, &st->st_gi, &rbody))
+	if (!ikev1_ship_KE(st, local_secret, &st->st_gi, &rbody))
 		return STF_INTERNAL_ERROR;
 
 	/* Ni out */
-	if (!ikev1_ship_nonce(&st->st_ni, &r->pcr_d.kn.n, &rbody, "Ni"))
+	if (!ikev1_ship_nonce(&st->st_ni, nonce, &rbody, "Ni"))
 		return STF_INTERNAL_ERROR;
 
 	if (impair.bust_mi2) {
