@@ -76,16 +76,13 @@ static void jam_dh_local_secret(struct jambuf *buf, struct dh_local_secret *secr
 	jam(buf, "DH secret %s@%p: ", secret->group->common.fqn, secret);
 }
 
-struct dh_local_secret *calc_dh_local_secret(const struct dh_desc *group, chunk_t *local_ke,
-					     struct logger *logger)
+struct dh_local_secret *calc_dh_local_secret(const struct dh_desc *group, struct logger *logger)
 {
 	SECKEYPrivateKey *privk;
 	SECKEYPublicKey *pubk;
 	group->dh_ops->calc_local_secret(group, &privk, &pubk, logger);
-	chunk_t ke = group->dh_ops->clone_local_secret_ke(group, pubk);
 	passert(privk != NULL);
 	passert(pubk != NULL);
-	*local_ke = ke;
 	where_t here = HERE;
 	struct dh_local_secret *secret = refcnt_alloc(struct dh_local_secret, here);
 	secret->group = group;
@@ -96,6 +93,12 @@ struct dh_local_secret *calc_dh_local_secret(const struct dh_desc *group, chunk_
 		jam_string(buf, "created");
 	}
 	return secret;
+}
+
+chunk_t clone_dh_local_secret_ke(struct dh_local_secret *local_secret)
+{
+	return local_secret->group->dh_ops->clone_local_secret_ke(local_secret->group,
+								  local_secret->pubk);
 }
 
 /** Compute DH shared secret from our local secret and the peer's public value.

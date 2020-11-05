@@ -189,7 +189,6 @@ struct pcr_kenonce {
 
 	/* outputs */
 	struct dh_local_secret *local_secret;
-	chunk_t gi;
 	chunk_t n;
 };
 

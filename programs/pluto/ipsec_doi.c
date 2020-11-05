@@ -122,7 +122,7 @@ void unpack_KE_from_helper(struct state *st,
 	}
 
 	free_chunk_content(g); /* happens in odd error cases */
-	*g = kn->gi;
+	*g = clone_dh_local_secret_ke(kn->local_secret);
 
 	pexpect(st->st_dh_local_secret == NULL);
 	/* this triggers two log lines */

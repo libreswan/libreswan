@@ -43,8 +43,8 @@ struct logger;
  */
 struct dh_local_secret;
 
-struct dh_local_secret *calc_dh_local_secret(const struct dh_desc *group, chunk_t *ke,
-					     struct logger *logger);
+struct dh_local_secret *calc_dh_local_secret(const struct dh_desc *group, struct logger *logger);
+chunk_t clone_dh_local_secret_ke(struct dh_local_secret *local_secret);
 
 PK11SymKey *calc_dh_shared_secret(struct dh_local_secret *local_secret, chunk_t remote_ke,
 				  struct logger *logger);
