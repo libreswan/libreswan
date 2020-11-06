@@ -46,6 +46,7 @@
 #include "pending.h"
 #include "iface.h"
 #include "secrets.h"
+#include "crypt_ke.h"
 
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"
@@ -97,19 +98,20 @@ static void aggr_inI1_outR1_continue2(struct state *st,
  * some additional work to set that all up, so this is fine for now.
  */
 
-static crypto_req_cont_func aggr_inI1_outR1_continue1;	/* type assertion */
+static ke_and_nonce_cb aggr_inI1_outR1_continue1;	/* type assertion */
 
-static void aggr_inI1_outR1_continue1(struct state *st,
-				      struct msg_digest *md,
-				      struct pluto_crypto_req *r)
+static stf_status aggr_inI1_outR1_continue1(struct state *st,
+					    struct msg_digest *md UNUSED,
+					    struct dh_local_secret *local_secret,
+					    chunk_t *nonce)
 {
-	dbg("aggr inI1_outR1: calculated ke+nonce, calculating DH");
+	dbg("%s: calculated ke+nonce, calculating DH", __func__);
 
 	/* unpack first calculation */
-	unpack_KE_from_helper(st, r->pcr_d.kn.local_secret, &st->st_gr);
+	unpack_KE_from_helper(st, local_secret, &st->st_gr);
 
 	/* unpack nonce too */
-	unpack_nonce(&st->st_nr, &r->pcr_d.kn.n);
+	unpack_nonce(&st->st_nr, nonce);
 
 	/* NOTE: the "r" reply will get freed by our caller */
 
@@ -121,7 +123,7 @@ static void aggr_inI1_outR1_continue1(struct state *st,
 	 * suspended.  If the original crypto request did everything
 	 * this wouldn't be needed.
 	 */
-	suspend_any_md(st, md);
+	return STF_SUSPEND;
 }
 
 /* STATE_AGGR_R0:
@@ -271,9 +273,9 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	RETURN_STF_FAILURE(accept_v1_nonce(st->st_logger, md, &st->st_ni, "Ni"));
 
 	/* calculate KE and Nonce */
-	request_ke_and_nonce("outI2 KE", st,
-			     st->st_oakley.ta_dh,
-			     aggr_inI1_outR1_continue1);
+	submit_ke_and_nonce(st, st->st_oakley.ta_dh,
+			    aggr_inI1_outR1_continue1,
+			    "outI2 KE");
 	return STF_SUSPEND;
 }
 
