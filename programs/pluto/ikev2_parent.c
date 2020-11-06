@@ -89,7 +89,7 @@
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"
 #endif
-
+#include "crypt_ke.h"
 #include "crypt_symkey.h" /* for release_symkey */
 #include "ip_info.h"
 #include "iface.h"
@@ -867,8 +867,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
  * HDR, SAr1, KEr, Nr, [CERTREQ] -->
  */
 
-static crypto_req_cont_func ikev2_parent_inI1outR1_continue;	/* forward decl and type assertion */
-static crypto_transition_fn ikev2_parent_inI1outR1_continue_tail;	/* forward decl and type assertion */
+static ke_and_nonce_cb ikev2_parent_inI1outR1_continue;	/* forward decl and type assertion */
 
 stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 				  struct child_sa *child,
@@ -990,15 +989,17 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 	}
 
 	/* calculate the nonce and the KE */
-	request_ke_and_nonce("ikev2_inI1outR1 KE", &ike->sa,
-			     ike->sa.st_oakley.ta_dh,
-			     ikev2_parent_inI1outR1_continue);
+	submit_ke_and_nonce(&ike->sa,
+			    ike->sa.st_oakley.ta_dh,
+			    ikev2_parent_inI1outR1_continue,
+			    "ikev2_inI1outR1 KE");
 	return STF_SUSPEND;
 }
 
-static void ikev2_parent_inI1outR1_continue(struct state *st,
-					    struct msg_digest *md,
-					    struct pluto_crypto_req *r)
+static stf_status ikev2_parent_inI1outR1_continue(struct state *st,
+						  struct msg_digest *md,
+						  struct dh_local_secret *local_secret,
+						  chunk_t *nonce)
 {
 	dbg("%s() for #%lu %s: calculated ke+nonce, sending R1",
 	    __func__, st->st_serialno, st->st_state->name);
@@ -1018,26 +1019,6 @@ static void ikev2_parent_inI1outR1_continue(struct state *st,
 	 */
 	md->st = st;
 
-	stf_status e = ikev2_parent_inI1outR1_continue_tail(st, md, r);
-
-	if (!pexpect(md->st == st)) {
-		st = md->st;
-	}
-	complete_v2_state_transition(st, md, e);
-}
-
-/*
- * ikev2_parent_inI1outR1_tail: do what's left after all the crypto
- *
- * Called from:
- *	ikev2_parent_inI1outR1: if KE and Nonce were already calculated
- *	ikev2_parent_inI1outR1_continue: if they needed to be calculated
- */
-static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
-						       struct msg_digest *md,
-						       struct pluto_crypto_req *r)
-{
-	struct ike_sa *ike = pexpect_ike_sa(st);
 	struct connection *c = st->st_connection;
 	bool send_certreq = FALSE;
 
@@ -1118,14 +1099,14 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	 * reused should the initial responder flip-flop) and only set
 	 * st_oakley.ta_dh once the proposal has been accepted.
 	 */
-	pexpect(st->st_oakley.ta_dh == r->pcr_d.kn.group);
-	unpack_KE_from_helper(st, r->pcr_d.kn.local_secret, &st->st_gr);
-	if (!emit_v2KE(&st->st_gr, r->pcr_d.kn.group, &rbody)) {
+	pexpect(st->st_oakley.ta_dh == dh_local_secret_desc(local_secret));
+	unpack_KE_from_helper(st, local_secret, &st->st_gr);
+	if (!emit_v2KE(&st->st_gr, dh_local_secret_desc(local_secret), &rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
 
 	/* send NONCE */
-	unpack_nonce(&st->st_nr, &r->pcr_d.kn.n);
+	unpack_nonce(&st->st_nr, nonce);
 	{
 		pb_stream pb;
 		struct ikev2_generic in = {
@@ -1214,7 +1195,12 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	st->st_firstpacket_me = clone_out_pbs_as_chunk(&reply_stream,
 						   "saved first packet");
 
-	/* note: retransmission is driven by initiator, not us */
+	/*
+	 * sanity check nothing has screwed around with md.st.
+	 */
+	if (!pexpect(md->st == st)) {
+		st = md->st;
+	}
 
 	return STF_OK;
 }
