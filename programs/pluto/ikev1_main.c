@@ -916,22 +916,7 @@ static stf_status main_inR1_outI2_continue(struct state *st,
  *	    --> HDR, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDr1_b>Ke_r
  */
 
-static stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *md,
-						struct pluto_crypto_req *r);
-
-static crypto_req_cont_func main_inI2_outR2_continue1;	/* type assertion */
-
-static void main_inI2_outR2_continue1(struct state *st,
-				      struct msg_digest *md,
-				      struct pluto_crypto_req *r)
-{
-	dbg("main_inI2_outR2_continue for #%lu: calculated ke+nonce, sending R2",
-	    st->st_serialno);
-
-	passert(md != NULL);
-	stf_status e = main_inI2_outR2_continue1_tail(st, md, r);
-	complete_v1_state_transition(md, e);
-}
+static ke_and_nonce_cb main_inI2_outR2_continue1; /* type assertion */
 
 stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 {
@@ -952,9 +937,9 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 
 	ikev1_natd_init(st, md);
 
-	request_ke_and_nonce("inI2_outR2 KE", st,
-			     st->st_oakley.ta_dh,
-			     main_inI2_outR2_continue1);
+	submit_ke_and_nonce(st, st->st_oakley.ta_dh,
+			    main_inI2_outR2_continue1,
+			    "inI2_outR2 KE");
 	return STF_SUSPEND;
 }
 
@@ -989,9 +974,17 @@ static void main_inI2_outR2_continue2(struct state *st,
 	reset_cur_state();
 }
 
-stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *md,
-					  struct pluto_crypto_req *r)
+
+static stf_status main_inI2_outR2_continue1(struct state *st,
+					    struct msg_digest *md,
+					    struct dh_local_secret *local_secret,
+					    chunk_t *nonce)
 {
+	dbg("main_inI2_outR2_continue for #%lu: calculated ke+nonce, sending R2",
+	    st->st_serialno);
+
+	passert(md != NULL);
+
 	if (libreswan_fipsmode() && st->st_oakley.ta_prf == NULL) {
 		log_state(RC_LOG_SERIOUS, st,
 			  "Missing prf - algo not allowed in fips mode (inI2_outR2)?");
@@ -1014,29 +1007,24 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 				       &rbody, st->st_logger);
 
 	/* KE out */
-	passert(ikev1_ship_KE(st, r->pcr_d.kn.local_secret, &st->st_gr, &rbody));
+	passert(ikev1_ship_KE(st, local_secret, &st->st_gr, &rbody));
 
-	{
-		/* Nr out */
-		if (!ikev1_ship_nonce(&st->st_nr, &r->pcr_d.kn.n, &rbody, "Nr"))
+	/* Nr out */
+	if (!ikev1_ship_nonce(&st->st_nr, nonce, &rbody, "Nr"))
+		return STF_INTERNAL_ERROR;
+
+	if (impair.bust_mr2) {
+		/*
+		 * generate a pointless large VID payload to push
+		 * message over MTU
+		 */
+		struct pbs_out vid_pbs;
+		if (!ikev1_out_generic(&isakmp_vendor_id_desc, &rbody,
+				       &vid_pbs))
 			return STF_INTERNAL_ERROR;
-
-		if (impair.bust_mr2) {
-			/*
-			 * generate a pointless large VID payload to push
-			 * message over MTU
-			 */
-			pb_stream vid_pbs;
-
-			if (!ikev1_out_generic(&isakmp_vendor_id_desc, &rbody,
-					       &vid_pbs))
-				return STF_INTERNAL_ERROR;
-
-			if (!out_zero(1500 /*MTU?*/, &vid_pbs, "Filler VID"))
-				return STF_INTERNAL_ERROR;
-
-			close_output_pbs(&vid_pbs);
-		}
+		if (!out_zero(1500 /*MTU?*/, &vid_pbs, "Filler VID"))
+			return STF_INTERNAL_ERROR;
+		close_output_pbs(&vid_pbs);
 	}
 
 	/* CR out */
