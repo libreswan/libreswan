@@ -78,6 +78,7 @@
 #include "initiate.h"
 #include "iface.h"
 #include "show.h"
+#include "impair_message.h"
 #ifdef HAVE_SECCOMP
 #include "pluto_seccomp.h"
 #endif
@@ -199,6 +200,14 @@ static void whack_impair_action(enum impair_action action, unsigned event,
 		struct logger logger = attach_logger(st, true/*background*/, whackfd);
 		log_message(RC_COMMENT, &logger, "sending keepalive");
 		send_keepalive(st, "inject keep-alive");
+		break;
+	}
+	case CALL_IMPAIR_DROP_INCOMING:
+	case CALL_IMPAIR_DROP_OUTGOING:
+	{
+		struct logger logger = GLOBAL_LOGGER(whackfd);
+		/* will log */
+		add_message_impairment(biased_what - 1, action, &logger);
 		break;
 	}
 	}

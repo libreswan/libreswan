@@ -54,6 +54,7 @@
 #include "dnssec.h"		/* for unbound_ctx_free() */
 #endif
 #include "demux.h"		/* for free_demux() */
+#include "impair_message.h"	/* for free_impair_message() */
 
 volatile bool exiting_pluto = false;
 static enum pluto_exit_code exit_code;
@@ -135,7 +136,7 @@ void exit_tail(void)
 	free_server(); /* no libevent evnts beyond this point */
 	free_demux();
 	free_pluto_main();	/* our static chars */
-
+	free_impair_message(logger);
 #ifdef USE_DNSSEC
 	unbound_ctx_free();
 #endif
