@@ -41,29 +41,25 @@ struct logger;
  * The DH secret (opaque, but we all know it is implemented using
  * NSS).
  */
-struct dh_secret;
+struct dh_local_secret;
 
-struct dh_secret *calc_dh_secret(const struct dh_desc *group, chunk_t *ke,
-				 struct logger *logger);
+struct dh_local_secret *calc_dh_local_secret(const struct dh_desc *group, struct logger *logger);
+chunk_t clone_dh_local_secret_ke(struct dh_local_secret *local_secret);
+const struct dh_desc *dh_local_secret_desc(struct dh_local_secret *local_secret);
 
-PK11SymKey *calc_dh_shared(struct dh_secret *secret, chunk_t remote_ke,
-			   struct logger *logger);
+PK11SymKey *calc_dh_shared_secret(struct dh_local_secret *local_secret, chunk_t remote_ke,
+				  struct logger *logger);
 
-void transfer_dh_secret_to_state(const char *helper, struct dh_secret **secret,
-				 struct state *st);
-
-void transfer_dh_secret_to_helper(struct state *st,
-				  const char *helper, struct dh_secret **secret);
-
-void free_dh_secret(struct dh_secret **secret);
+struct dh_local_secret *dh_local_secret_addref(struct dh_local_secret *local_secret, where_t where);
+void dh_local_secret_delref(struct dh_local_secret **local_secret, where_t where);
 
 /*
- * Compute dh storing result in .st_shared_nss.
+ * Compute dh storing result in .st_dh_shared_secret.
  */
-typedef stf_status (dh_cb)(struct state *st,
-			   struct msg_digest *md);
+typedef stf_status (dh_shared_secret_cb)(struct state *st,
+					 struct msg_digest *md);
 
-extern void submit_dh(struct state *st, chunk_t remote_ke,
-		      dh_cb *callback, const char *name);
+extern void submit_dh_shared_secret(struct state *st, chunk_t remote_ke,
+				    dh_shared_secret_cb *callback, const char *name);
 
 #endif

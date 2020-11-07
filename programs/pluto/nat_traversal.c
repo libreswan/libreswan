@@ -202,6 +202,7 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 	return true;
 }
 
+#ifdef USE_IKEv1
 /*
  * Add NAT-Traversal VIDs (supported ones)
  *
@@ -291,6 +292,7 @@ void set_nat_traversal(struct state *st, const struct msg_digest *md)
 		    enum_name(&natt_method_names, v));
 	}
 }
+#endif
 
 static void natd_lookup_common(struct state *st,
 	const ip_address *sender,
@@ -341,6 +343,7 @@ static void natd_lookup_common(struct state *st,
 	}
 }
 
+#ifdef USE_IKEv1
 static void ikev1_natd_lookup(struct msg_digest *md)
 {
 	struct state *st = md->st;
@@ -456,6 +459,7 @@ bool ikev1_nat_traversal_add_natd(pb_stream *outs,
 	return ikev1_out_generic_raw(pd, outs, hash.ptr, hash.len,
 				     "NAT-D");
 }
+#endif
 
 /*
  * nat_traversal_natoa_lookup()
@@ -583,6 +587,7 @@ bool nat_traversal_add_natoa(pb_stream *outs, struct state *st,
 		emit_one_natoa(outs, pd, ipresp, "NAT-OAr");
 }
 
+#ifdef USE_IKEv1
 static void nat_traversal_show_result(lset_t nt, uint16_t sport)
 {
 	const char *rslt = (nt & NAT_T_DETECTED) ?
@@ -630,6 +635,7 @@ void ikev1_natd_init(struct state *st, struct msg_digest *md)
 		nat_traversal_new_ka_event();
 	}
 }
+#endif
 
 void nat_traversal_new_ka_event(void)
 {
@@ -733,6 +739,7 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 		nat_traversal_send_ka(st);
 		return;
 
+#ifdef USE_IKEv1
 	case IKEv1:
 		/*
 		 * IKE SA and IPsec SA keepalives happen over the same port/NAT mapping.
@@ -754,9 +761,10 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 		nat_traversal_send_ka(st);
 		(*nat_kap_st)++;
 		return;
-
+#endif
+	default:
+		bad_case(st->st_ike_version);
 	}
-	bad_case(st->st_ike_version);
 }
 
 void nat_traversal_ka_event(struct fd *unused_whackfd UNUSED)
@@ -804,7 +812,7 @@ static bool nat_traversal_find_new_mapp_state(struct state *st, void *data)
 	return false;
 }
 
-void nat_traversal_new_mapping(struct ike_sa *ike,
+static void nat_traversal_new_mapping(struct ike_sa *ike,
 			       const ip_endpoint *new_remote_endpoint)
 {
 	endpoint_buf b;
@@ -865,6 +873,7 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	pexpect_st_local_endpoint(st);
 }
 
+#ifdef USE_IKEv1
 /*
  * XXX: there should be no maybes about this - each of the callers
  * know the state and hence, know if there's any point in calling this
@@ -901,6 +910,7 @@ void v1_maybe_natify_initiator_endpoints(struct state *st, where_t where)
 	}
 	pexpect_st_local_endpoint(st);
 }
+#endif
 
 void show_setup_natt(struct show *s)
 {
@@ -973,12 +983,12 @@ bool v2_nat_detected(struct ike_sa *ike, struct msg_digest *md)
 	return (ike->sa.hidden_variables.st_nat_traversal & NAT_T_DETECTED);
 }
 
+#ifdef USE_IKEv1
 /*
  * Update the initiator endpoints so that all further exchanges are
  * encapsulated in UDP and exchanged between :PLUTO_NAT_PORTs (i.e.,
  * :4500).
  */
-
 void v1_natify_initiator_endpoints(struct state *st, where_t where)
 {
 	/*
@@ -1024,6 +1034,7 @@ void v1_natify_initiator_endpoints(struct state *st, where_t where)
 	st->st_remote_endpoint = set_endpoint_hport(&st->st_remote_endpoint,
 						    NAT_IKE_UDP_PORT);
 }
+#endif
 
 bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 {

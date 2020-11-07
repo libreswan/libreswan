@@ -162,7 +162,7 @@ static bool should_fragment_v1_ike_msg(struct state *st, size_t len, bool resend
 	 *        && (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW)
 	 *        && st->st_seen_fragmentation_supported)
 	 *     || (st->st_connection->policy & POLICY_IKE_FRAG_FORCE)
-	 *     || st->st_seen_fragments))
+	 *     || st->st_v1_seen_fragments))
 	 *
 	 * ??? the following test does not account for natt_bonus
 	 */
@@ -171,7 +171,7 @@ static bool should_fragment_v1_ike_msg(struct state *st, size_t len, bool resend
 			(st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) &&
 			st->st_seen_fragmentation_supported) ||
 		(st->st_connection->policy & POLICY_IKE_FRAG_FORCE) ||
-		st->st_seen_fragments   );
+		st->st_v1_seen_fragments   );
 }
 
 static bool send_or_resend_v1_ike_msg_from_state(struct state *st,

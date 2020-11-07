@@ -29,7 +29,7 @@
     USE_NM=true \\\
     USE_NSS_KDF=true \\\
     USE_SECCOMP=true \\\
-    USE_XAUTHPAM=true \\\
+    USE_AUTHPAM=true \\\
 %{nil}
 
 #global prever rc1

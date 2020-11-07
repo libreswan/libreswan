@@ -54,7 +54,7 @@
 #include "log.h"
 #include "ike_spi.h"
 #include "server.h"
-#include "spdb.h"
+#include "ikev1_spdb.h"
 #include "timer.h"
 #include "rnd.h"
 #include "ipsec_doi.h" /* needs demux.h and state.h */
@@ -82,7 +82,7 @@
 #include "nat_traversal.h"
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"
-
+#include "crypt_ke.h"
 #include "lswfips.h"
 #include "ip_address.h"
 #include "send.h"
@@ -311,10 +311,7 @@ struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 		return (struct hash_signature) { .len = 0, }; /* failure: no key to use */
 	}
 
-	/* XXX: merge sign_hash_{RSA,ECDSA}()? */
-	const struct RSA_private_key *k = &pks->u.RSA_private_key;
-
-	size_t sz = k->pub.k;
+	size_t sz = pks->size;
 	struct hash_signature sig;
 	passert(RSA_MIN_OCTETS <= sz &&
 		4 + hash->len < sz &&
@@ -364,7 +361,7 @@ static err_t try_RSA_signature_v1(const struct crypt_mac *hash,
 	const struct RSA_public_key *k = &kr->u.rsa;
 
 	/* decrypt the signature -- reversing RSA_sign_hash */
-	if (sig_len != k->k) {
+	if (sig_len != kr->size) {
 		/* XXX notification: INVALID_KEY_INFORMATION */
 		return "1" "SIG length does not match public key length";
 	}
@@ -380,8 +377,8 @@ static err_t try_RSA_signature_v1(const struct crypt_mac *hash,
 	 * There might be an old one if we previously aborted this
 	 * state transition.
 	 */
-	unreference_key(&st->st_peer_pubkey);
-	st->st_peer_pubkey = reference_key(kr);
+	pubkey_delref(&st->st_peer_pubkey, HERE);
+	st->st_peer_pubkey = pubkey_addref(kr, HERE);
 
 	return NULL; /* happy happy */
 }
@@ -642,7 +639,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		 * we found a non-wildcard conn. double check if it needs
 		 * instantiation anyway (eg vnet=)
 		 */
-		if (c->kind == CK_TEMPLATE && c->spd.that.virt) {
+		if (c->kind == CK_TEMPLATE && c->spd.that.virt != NULL) {
 			dbg_md(md, "local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation");
 			ip_address sender_address = endpoint_address(&md->sender);
 			c = rw_instantiate(c, &sender_address, NULL, NULL);
@@ -757,22 +754,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
  *
  */
 
-static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
-				       struct pluto_crypto_req *r);
-
-static crypto_req_cont_func main_inR1_outI2_continue;	/* type assertion */
-
-static void main_inR1_outI2_continue(struct state *st,
-				     struct msg_digest *md,
-				     struct pluto_crypto_req *r)
-{
-	dbg("main_inR1_outI2_continue for #%lu: calculated ke+nonce, sending I2",
-	    st->st_serialno);
-
-	passert(md != NULL);
-	stf_status e = main_inR1_outI2_tail(st, md, r);
-	complete_v1_state_transition(md, e);
-}
+static ke_and_nonce_cb main_inR1_outI2_continue;	/* type assertion */
 
 stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 {
@@ -800,9 +782,8 @@ stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 
 	set_nat_traversal(st, md);
 
-	request_ke_and_nonce("outI2 KE", st,
-			     st->st_oakley.ta_dh,
-			     main_inR1_outI2_continue);
+	submit_ke_and_nonce(st, st->st_oakley.ta_dh,
+			    main_inR1_outI2_continue, "outI2 KE");
 	return STF_SUSPEND;
 }
 
@@ -837,10 +818,10 @@ bool ikev1_justship_KE(struct logger *logger, chunk_t *g, pb_stream *outs)
 	}
 }
 
-bool ikev1_ship_KE(struct state *st, struct pluto_crypto_req *r,
-		   chunk_t *g, pb_stream *outs)
+bool ikev1_ship_KE(struct state *st, struct dh_local_secret *local_secret,
+		   chunk_t *g, struct pbs_out *outs)
 {
-	unpack_KE_from_helper(st, r, g);
+	unpack_KE_from_helper(st, local_secret, g);
 	return ikev1_justship_KE(st->st_logger, g, outs);
 }
 
@@ -855,9 +836,15 @@ bool ikev1_ship_KE(struct state *st, struct pluto_crypto_req *r,
  *
  * We must verify that the proposal received matches one we sent.
  */
-static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
-				       struct pluto_crypto_req *r)
+
+static stf_status main_inR1_outI2_continue(struct state *st,
+					   struct msg_digest *md,
+					   struct dh_local_secret *local_secret,
+					   chunk_t *nonce/*steal*/)
 {
+	dbg("main_inR1_outI2_continue for #%lu: calculated ke+nonce, sending I2",
+	    st->st_serialno);
+
 	/*
 	 * HDR out.
 	 * We can't leave this to comm_handle() because the isa_np
@@ -869,11 +856,11 @@ static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
 				       &rbody, st->st_logger);
 
 	/* KE out */
-	if (!ikev1_ship_KE(st, r, &st->st_gi, &rbody))
+	if (!ikev1_ship_KE(st, local_secret, &st->st_gi, &rbody))
 		return STF_INTERNAL_ERROR;
 
 	/* Ni out */
-	if (!ikev1_ship_nonce(&st->st_ni, r, &rbody, "Ni"))
+	if (!ikev1_ship_nonce(&st->st_ni, nonce, &rbody, "Ni"))
 		return STF_INTERNAL_ERROR;
 
 	if (impair.bust_mi2) {
@@ -988,7 +975,7 @@ static void main_inI2_outR2_continue2(struct state *st,
 
 	set_cur_state(st);
 
-	if (finish_dh_secretiv(st, r))
+	if (finish_v1_dh_shared_secret_and_iv(st, r))
 		update_iv(st);
 
 	/*
@@ -1027,11 +1014,11 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 				       &rbody, st->st_logger);
 
 	/* KE out */
-	passert(ikev1_ship_KE(st, r, &st->st_gr, &rbody));
+	passert(ikev1_ship_KE(st, r->pcr_d.kn.local_secret, &st->st_gr, &rbody));
 
 	{
 		/* Nr out */
-		if (!ikev1_ship_nonce(&st->st_nr, r, &rbody, "Nr"))
+		if (!ikev1_ship_nonce(&st->st_nr, &r->pcr_d.kn.n, &rbody, "Nr"))
 			return STF_INTERNAL_ERROR;
 
 		if (impair.bust_mr2) {
@@ -1110,8 +1097,8 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 		dbg("main inI2_outR2: starting async DH calculation (group=%d)",
 		    st->st_oakley.ta_dh->group);
 
-		start_dh_v1_secretiv(main_inI2_outR2_continue2, "main_inI2_outR2_tail",
-				     st, SA_RESPONDER, st->st_oakley.ta_dh);
+		submit_v1_dh_shared_secret_and_iv(main_inI2_outR2_continue2, "main_inI2_outR2_tail",
+						  st, SA_RESPONDER, st->st_oakley.ta_dh);
 
 		/* we are calculating in the background, so it doesn't count */
 		dbg("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __func__, __LINE__);
@@ -1139,7 +1126,7 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 	const struct connection *c = st->st_connection;
 	const cert_t mycert = c->spd.this.cert;
 
-	if (!finish_dh_secretiv(st, r))
+	if (!finish_v1_dh_shared_secret_and_iv(st, r))
 		return STF_FAIL + INVALID_KEY_INFORMATION;
 
 	/* decode certificate requests */
@@ -1395,8 +1382,8 @@ stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
 
 	/* Nr in */
 	RETURN_STF_FAILURE(accept_v1_nonce(st->st_logger, md, &st->st_nr, "Nr"));
-	start_dh_v1_secretiv(main_inR2_outI3_continue, "aggr outR1 DH",
-			     st, SA_INITIATOR, st->st_oakley.ta_dh);
+	submit_v1_dh_shared_secret_and_iv(main_inR2_outI3_continue, "aggr outR1 DH",
+					  st, SA_INITIATOR, st->st_oakley.ta_dh);
 	return STF_SUSPEND;
 }
 
@@ -1515,7 +1502,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	st = md->st;
 
 	/* handle case where NSS balked at generating DH */
-	if (st->st_shared_nss == NULL)
+	if (st->st_dh_shared_secret == NULL)
 		return STF_FAIL + INVALID_KEY_INFORMATION;
 
 	if (!v1_decode_certs(md)) {

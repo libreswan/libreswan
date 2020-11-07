@@ -92,6 +92,7 @@
 
 #include "nss_cert_reread.h"
 #include "send.h"			/* for impair: send_keepalive() */
+#include "pluto_shutdown.h"		/* for exit_pluto() */
 
 static struct state *find_impaired_state(unsigned biased_what, struct fd *whackfd)
 {
@@ -320,12 +321,14 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 		DBG_dump_hunk(NULL, msg->keyval);
 
 		/* add the public key */
-		const union pubkey_content *pkc = NULL;
+		struct pubkey *pubkey = NULL; /* must-delref */
 		err_t ugh = add_public_key(&keyid, PUBKEY_LOCAL, type,
 					   /*install_time*/realnow(),
 					   /*until_time*/realtime_epoch,
 					   /*ttl*/0,
-					   &msg->keyval, &pkc, &pluto_pubkeys);
+					   &msg->keyval,
+					   &pubkey/*new-public-key:must-delref*/,
+					   &pluto_pubkeys);
 		if (ugh != NULL) {
 			log_message(RC_LOG_SERIOUS, logger, "%s", ugh);
 			free_id_content(&keyid);
@@ -334,7 +337,8 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 
 		/* try to pre-load the private key */
 		bool load_needed;
-		const ckaid_t *ckaid = type->ckaid_from_pubkey_content(pkc);
+		const ckaid_t *ckaid = pubkey_ckaid(pubkey);
+		pubkey_delref(&pubkey, HERE);
 		err_t err = preload_private_key_by_ckaid(ckaid, &load_needed, logger);
 		if (err != NULL) {
 			dbg("no private key: %s", err);
@@ -351,7 +355,8 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 /*
  * handle a whack message.
  */
-static bool whack_process(const struct whack_message *const m, struct show *s)
+
+static void whack_process(const struct whack_message *const m, struct show *s)
 {
 	const monotime_t now = mononow();
 
@@ -381,12 +386,12 @@ static bool whack_process(const struct whack_message *const m, struct show *s)
 				if (lmod_is_set(m->debugging, DBG_PRIVATE)) {
 					whack_log(RC_FATAL, whackfd,
 						  "FIPS: --debug private is not allowed in FIPS mode, aborted");
-					return false; /*don't shutdown*/
+					return; /*don't shutdown*/
 				}
 				if (lmod_is_set(m->debugging, DBG_CRYPT)) {
 					whack_log(RC_FATAL, whackfd,
 						  "FIPS: --debug crypt is not allowed in FIPS mode, aborted");
-					return false; /*don't shutdown*/
+					return; /*don't shutdown*/
 				}
 			}
 			if (m->name == NULL) {
@@ -848,13 +853,14 @@ static bool whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_shutdown) {
 		libreswan_log("shutting down");
-		return true; /* shutting down */
+		shutdown_pluto(whackfd, PLUTO_EXIT_OK);
+		return; /* shutting down */
 	}
 
-	return false; /* don't shut down */
+	return; /* don't shut down */
 }
 
-static bool whack_handle(struct fd *whackfd, struct logger *whack_logger);
+static void whack_handle(struct fd *whackfd, struct logger *whack_logger);
 
 void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
 		     void *arg UNUSED)
@@ -870,24 +876,9 @@ void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
 
 		whack_log_fd = whackfd;
 		struct logger whack_logger[1] = { GLOBAL_LOGGER(whackfd), };
-		bool shutdown = whack_handle(whackfd, whack_logger);
+		whack_handle(whackfd, whack_logger);
 		whack_log_fd = null_fd;
-
-		if (shutdown) {
-			/*
-			 * Leak the whack FD, when pluto finally exits
-			 * it will be closed and whack released.
-			 *
-			 * Note that the above killed off whack_log_fd
-			 * which means that the entire exit process is
-			 * radio silent.
-			 */
-			fd_leak(&whackfd, HERE);
-			/* XXX: shutdown the event loop */
-			exit_pluto(PLUTO_EXIT_OK);
-		} else {
-			close_any(&whackfd);
-		}
+		close_any(&whackfd);
 	}
 	threadtime_stop(&start, SOS_NOBODY, "whack");
 }
@@ -895,7 +886,7 @@ void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
 /*
  * Handle a whack request.
  */
-static bool whack_handle(struct fd *whackfd, struct logger *whack_logger)
+static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 {
 	/*
 	 * properly initialize msg - needed because short reads are
@@ -906,7 +897,7 @@ static bool whack_handle(struct fd *whackfd, struct logger *whack_logger)
 	ssize_t n = fd_read(whackfd, &msg, sizeof(msg));
 	if (n <= 0) {
 		LOG_ERRNO(-(int)n, "read() failed in whack_handle()");
-		return false; /* don't shutdown */
+		return;
 	}
 
 	static uintmax_t msgnum;
@@ -916,15 +907,38 @@ static bool whack_handle(struct fd *whackfd, struct logger *whack_logger)
 	if ((size_t)n < offsetof(struct whack_message, whack_shutdown) + sizeof(msg.whack_shutdown)) {
 		log_message(RC_BADWHACKMESSAGE, whack_logger,
 			    "ignoring runt message from whack: got %zd bytes", n);
-		return false; /* don't shutdown */
+		return;
 	}
+
+	/*
+	 * XXX:
+	 *
+	 * I'm guessing to ensure upgrades work and a new whack can
+	 * shutdown an old pluto, the code below reads .whack_shutdown
+	 * regardless of the value of .magic.
+	 *
+	 * The assumption seems to be that the opening stanza of
+	 * struct whack_message doesn't change so reading the
+	 * .whack_shutdown field is robust.
+	 *
+	 * Except it isn't.
+	 *
+	 * The opening stanza of struct whack_message has changed (for
+	 * instance adding FIPS status et.al.) moving
+	 * .whack_shutdown's offset.  There's even a comment in
+	 * comment in whack.h ("If you change anything earlier in this
+	 * struct, update WHACK_BASIC_MAGIC.").  So if .magic isn't
+	 * WHACK_MAGIC, .whack_shutdown is probably wrong, and when it
+	 * also isn't WHACK_BASIC_MAGIC, it is definitely wrong.
+	 */
 
 	if (msg.magic != WHACK_MAGIC) {
 
 		if (msg.whack_shutdown) {
 			log_message(RC_LOG, whack_logger, "shutting down%s",
 				    (msg.magic != WHACK_BASIC_MAGIC) ?  " despite whacky magic" : "");
-			return true; /* force shutting down */
+			shutdown_pluto(whackfd, PLUTO_EXIT_OK);
+			return; /* force shutting down */
 		}
 
 		if (msg.magic == WHACK_BASIC_MAGIC) {
@@ -935,13 +949,13 @@ static bool whack_handle(struct fd *whackfd, struct logger *whack_logger)
 				free_show(&s);
 			}
 			/* bail early, but without complaint */
-			return false; /* don't shutdown */
+			return; /* don't shutdown */
 		}
 
 		log_message(RC_BADWHACKMESSAGE, whack_logger,
 			    "ignoring message from whack with bad magic %d; should be %d; Mismatched versions of userland tools.",
 			    msg.magic, WHACK_MAGIC);
-		return false; /* bail (but don't shutdown) */
+		return; /* bail (but don't shutdown) */
 	}
 
 	struct whackpacker wp = {
@@ -953,11 +967,10 @@ static bool whack_handle(struct fd *whackfd, struct logger *whack_logger)
 
 	if (!unpack_whack_msg(&wp, whack_logger)) {
 		/* already logged */
-		return false; /* don't shutdown */
+		return; /* don't shutdown */
 	}
 
 	struct show *s = alloc_show(whack_logger);
-	bool shutdown = whack_process(&msg, s);
+	whack_process(&msg, s);
 	free_show(&s);
-	return shutdown;
 }

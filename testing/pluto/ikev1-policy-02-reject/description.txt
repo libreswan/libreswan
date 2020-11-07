@@ -1,0 +1,5 @@
+east is configured to reject all ikev1 packets.
+
+An ikev1 connections is attempted to load and should fail.
+An ikev1 packet is sent which should receive a reply with INVALID_MAJOR
+

@@ -34,7 +34,7 @@ struct fd {
 struct fd *dup_any_fd(struct fd *fd, where_t where)
 {
 	pexpect(fd == NULL || fd->magic == FD_MAGIC);
-	ref_add(fd, where);
+	refcnt_addref(fd, where);
 	return fd;
 }
 
@@ -56,16 +56,15 @@ static void free_fd(struct fd **fdp, where_t where)
 
 void close_any_fd(struct fd **fd, where_t where)
 {
-	ref_delete(fd, free_fd, where);
+	refcnt_delref(fd, free_fd, where);
 }
 
-void fd_leak(struct fd **fd, where_t where)
+void fd_leak(struct fd *fd, where_t where)
 {
 	dbg("leaking "PRI_FD"'s FD; will be closed when pluto exits "PRI_WHERE"",
-	    pri_fd(*fd), pri_where(where));
-	/* leave the old fd hanging */
-	(*fd)->fd = dup((*fd)->fd);
-	ref_delete(fd, free_fd, where);
+	    pri_fd(fd), pri_where(where));
+	/* leave the old underlying file descriptor open */
+	fd->fd = dup(fd->fd);
 }
 
 ssize_t fd_sendmsg(const struct fd *fd, const struct msghdr *msg, int flags)
@@ -101,10 +100,9 @@ struct fd *fd_accept(int socket, where_t where, struct logger *logger)
 		return NULL;
 	}
 
-	struct fd *fdt = alloc_thing(struct fd, where.func);
+	struct fd *fdt = refcnt_alloc(struct fd, where);
 	fdt->fd = fd;
 	fdt->magic = FD_MAGIC;
-	ref_init(fdt, where);
 	dbg("%s: new "PRI_FD" "PRI_WHERE"",
 	    __func__, pri_fd(fdt), pri_where(where));
 	return fdt;

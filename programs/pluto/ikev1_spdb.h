@@ -118,7 +118,7 @@ extern struct db_sa *IKEv1_oakley_am_sadb(lset_t x, const struct connection *c);
 /* The ipsec sadb is subscripted by a bitset with members
  * from POLICY_ENCRYPT, POLICY_AUTHENTICATE, POLICY_COMPRESS
  */
-extern struct db_sa ipsec_sadb[1 << 3];
+extern const struct db_sa ipsec_sadb[1 << 3];
 
 /* for db_sa */
 #define AD_SAp(x)    .prop_conjs = (x), .prop_conj_cnt = elemsof(x), \
@@ -161,8 +161,7 @@ extern notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,            /* body 
 
 extern void free_sa_attr(struct db_attr *attr);
 extern void free_sa(struct db_sa **sapp);
-extern struct db_sa *sa_copy_sa(struct db_sa *sa);
-extern struct db_sa *sa_copy_sa_first(struct db_sa *sa);
+extern struct db_sa *sa_copy_sa(const struct db_sa *sa, where_t where);
 extern struct db_sa *sa_merge_proposals(struct db_sa *a, struct db_sa *b);
 
 /* in spdb_print.c - normally never used in pluto */
@@ -171,12 +170,8 @@ extern void sa_log(struct db_sa *f);
 struct alg_info_ike;
 struct alg_info_esp;
 
-extern struct db_sa *v1_ike_alg_make_sadb(const struct ike_proposals proposals,
-					  enum ikev1_auth_method auth_method,
-					  bool single_dh, struct logger *logger);
-
-extern struct db_sa *kernel_alg_makedb(lset_t policy,
-				       const struct child_proposals proposals,
-				       bool logit, struct logger *logger);
+struct db_sa *v1_kernel_alg_makedb(lset_t policy,
+				   const struct child_proposals proposals,
+				   bool logit, struct logger *logger);
 
 #endif /*  _SPDB_H_ */

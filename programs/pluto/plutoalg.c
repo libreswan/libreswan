@@ -37,170 +37,10 @@
 #include "ike_alg_encrypt.h"
 #include "plutoalg.h"
 #include "crypto.h"
-#include "spdb.h"
-#include "db_ops.h"
+#include "ikev1_db_ops.h"
 #include "log.h"
 #include "whack.h"
 #include "ikev1.h"	/* for ikev1_quick_dh() */
-
-static bool kernel_alg_db_add(struct db_context *db_ctx,
-			      const struct proposal *proposal,
-			      lset_t policy, bool logit)
-{
-	enum ipsec_cipher_algo ealg_i = ESP_reserved;
-
-	struct v1_proposal algs = v1_proposal(proposal);
-	if (policy & POLICY_ENCRYPT) {
-		ealg_i = algs.encrypt->common.id[IKEv1_ESP_ID];
-		/* already checked by the parser? */
-		if (!kernel_alg_encrypt_ok(algs.encrypt)) {
-			if (logit) {
-				loglog(RC_LOG_SERIOUS,
-				       "requested kernel enc ealg_id=%d not present",
-				       ealg_i);
-			} else {
-				DBG_log("requested kernel enc ealg_id=%d not present",
-					ealg_i);
-			}
-			return FALSE;
-		}
-	}
-
-	int aalg_i = algs.integ->integ_ikev1_ah_transform;
-
-	/* already checked by the parser? */
-	if (!kernel_alg_integ_ok(algs.integ)) {
-		DBG_log("kernel_alg_db_add() kernel auth aalg_id=%d not present",
-			aalg_i);
-		return FALSE;
-	}
-
-	if (policy & POLICY_ENCRYPT) {
-		/*open new transformation */
-		db_trans_add(db_ctx, ealg_i);
-
-		/* add ESP auth attr (if present) */
-		if (algs.integ != &ike_alg_integ_none) {
-			db_attr_add_values(db_ctx,
-					   AUTH_ALGORITHM,
-					   algs.integ->common.id[IKEv1_ESP_ID]);
-		}
-
-		/* add keylength if specified in esp= string */
-		if (algs.enckeylen != 0) {
-			db_attr_add_values(db_ctx,
-					   KEY_LENGTH,
-					   algs.enckeylen);
-		} else {
-			/* no key length - if required add default here and add another max entry */
-			int def_ks = (algs.encrypt->keylen_omitted ? 0
-				      : algs.encrypt->keydeflen);
-
-			if (def_ks != 0) {
-				db_attr_add_values(db_ctx, KEY_LENGTH, def_ks);
-				/* add this trans again with max key size */
-				int max_ks = encrypt_max_key_bit_length(algs.encrypt);
-				if (def_ks != max_ks) {
-					db_trans_add(db_ctx, ealg_i);
-					if (algs.integ != &ike_alg_integ_none) {
-						db_attr_add_values(db_ctx,
-							AUTH_ALGORITHM,
-							algs.integ->common.id[IKEv1_ESP_ID]);
-					}
-					db_attr_add_values(db_ctx,
-							   KEY_LENGTH,
-							   max_ks);
-				}
-			}
-		}
-	} else if (policy & POLICY_AUTHENTICATE) {
-		/* open new transformation */
-		db_trans_add(db_ctx, aalg_i);
-
-		/* add ESP auth attr */
-		db_attr_add_values(db_ctx, AUTH_ALGORITHM,
-				   algs.integ->common.id[IKEv1_ESP_ID]);
-	}
-
-	return TRUE;
-}
-
-/*
- *	Create proposal with runtime kernel algos, merging
- *	with passed proposal if not NULL
- *
- * ??? is this still true?  Certainly not free(3):
- *	for now this function does free() previous returned
- *	malloced pointer (this quirk allows easier spdb.c change)
- */
-static struct db_context *kernel_alg_db_new(struct child_proposals proposals,
-					    lset_t policy, bool logit,
-					    struct logger *logger)
-{
-	unsigned int trans_cnt = 0;
-	int protoid = PROTO_RESERVED;
-
-	if (policy & POLICY_ENCRYPT) {
-		trans_cnt = kernel_alg_encrypt_count() * kernel_alg_integ_count();
-		protoid = PROTO_IPSEC_ESP;
-	} else if (policy & POLICY_AUTHENTICATE) {
-		trans_cnt = kernel_alg_integ_count();
-		protoid = PROTO_IPSEC_AH;
-	}
-
-	dbg("%s() initial trans_cnt=%d", __func__, trans_cnt);
-
-	/*	pass aprox. number of transforms and attributes */
-	struct db_context *ctx_new = db_prop_new(protoid, trans_cnt, trans_cnt * 2);
-
-	/*
-	 *      Loop: for each element (struct esp_info) of
-	 *      proposals, if kernel support is present then
-	 *      build the transform (and attrs)
-	 *
-	 *      if NULL proposals, propose everything ...
-	 */
-
-	bool success = TRUE;
-	if (proposals.p != NULL) {
-		FOR_EACH_PROPOSAL(proposals.p, proposal) {
-			LSWDBGP(DBG_BASE, buf) {
-				jam_string(buf, "adding proposal: ");
-				jam_proposal(buf, proposal);
-			}
-			if (!kernel_alg_db_add(ctx_new, proposal, policy, logit))
-				success = FALSE;	/* ??? should we break? */
-		}
-	} else {
-		pexpect_fail(logger, HERE, "%s", "proposals should be non-NULL");
-	}
-
-	if (!success) {
-		/* NO algorithms were found. oops */
-		db_destroy(ctx_new);
-		return NULL;
-	}
-
-	struct db_prop  *prop = db_prop_get(ctx_new);
-
-	dbg("%s() will return p_new->protoid=%d, p_new->trans_cnt=%d",
-	    __func__, prop->protoid, prop->trans_cnt);
-
-	unsigned int tn = 0;
-	struct db_trans *t;
-	for (t = prop->trans, tn = 0;
-	     t != NULL && t[tn].transid != 0 && tn < prop->trans_cnt;
-	     tn++) {
-		dbg("%s()     trans[%d]: transid=%d, attr_cnt=%d, attrs[0].type=%d, attrs[0].val=%d",
-		    __func__, tn,
-		    t[tn].transid, t[tn].attr_cnt,
-		    t[tn].attrs ? t[tn].attrs[0].type.ipsec : 255,
-		    t[tn].attrs ? t[tn].attrs[0].val : 255);
-	}
-	prop->trans_cnt = tn;
-
-	return ctx_new;
-}
 
 void show_kernel_alg_status(struct show *s)
 {
@@ -264,10 +104,17 @@ void show_kernel_alg_connection(struct show *s,
 		 * If this is NULL and PFS is required then callers fall back to using
 		 * the parent's DH algorithm.
 		 */
-		const struct dh_desc *dh = ikev1_quick_pfs(c->child_proposals);
-		if (dh != NULL) {
-			pfsbuf = dh->common.fqn;
-		} else {
+#ifdef USE_IKEv1
+		if (LIN(POLICY_IKEV1_ALLOW, c->policy)) {
+			const struct dh_desc *dh = ikev1_quick_pfs(c->child_proposals);
+			if (dh != NULL) {
+				pfsbuf = dh->common.fqn;
+			} else {
+				pfsbuf = "<Phase1>";
+			}
+		} else
+#endif
+		{
 			pfsbuf = "<Phase1>";
 		}
 	} else {
@@ -326,52 +173,4 @@ void show_kernel_alg_connection(struct show *s,
 			  st->st_ah.attrs.transattrs.ta_integ->common.fqn,
 			  pfsbuf);
 	}
-}
-
-struct db_sa *kernel_alg_makedb(lset_t policy,
-				struct child_proposals proposals,
-				bool logit, struct logger *logger)
-{
-	if (proposals.p == NULL) {
-		struct db_sa *sadb;
-		lset_t pm = policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE);
-
-		dbg("empty esp_info, returning defaults for %s",
-		    bitnamesof(sa_policy_bit_names, pm));
-
-		sadb = &ipsec_sadb[pm >> POLICY_IPSEC_SHIFT];
-
-		/* make copy, to keep from freeing the static policies */
-		sadb = sa_copy_sa(sadb);
-		sadb->parentSA = FALSE;
-		return sadb;
-	}
-
-	struct db_context *dbnew = kernel_alg_db_new(proposals, policy, logit, logger);
-
-	if (dbnew == NULL) {
-		log_message(RC_LOG, logger, "failed to translate esp_info to proposal, returning empty");
-		return NULL;
-	}
-
-	struct db_prop *p = db_prop_get(dbnew);
-
-	if (p == NULL) {
-		log_message(RC_LOG, logger, "failed to get proposal from context, returning empty");
-		db_destroy(dbnew);
-		return NULL;
-	}
-
-	struct db_prop_conj pc = { .prop_cnt = 1, .props = p };
-
-	struct db_sa t = { .prop_conj_cnt = 1, .prop_conjs = &pc };
-
-	/* make a fresh copy */
-	struct db_sa *n = sa_copy_sa(&t);
-	n->parentSA = FALSE;
-
-	db_destroy(dbnew);
-
-	dbg("returning new proposal from esp_info");
-	return n;
 }

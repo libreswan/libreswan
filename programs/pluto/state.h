@@ -163,42 +163,6 @@ struct ipsec_proto_info {
 	uint64_t add_time;
 };
 
-struct v1_ike_rfrag {
-	struct v1_ike_rfrag *next;
-	struct msg_digest *md;
-	int index;
-	int last;
-	uint8_t *data;
-	size_t size;
-};
-
-struct v2_incomming_fragment {
-	chunk_t cipher;
-	unsigned int iv;
-};
-
-struct v2_incomming_fragments {
-	unsigned total;
-	unsigned count;
-	/*
-	 * Next-Payload from first fragment.
-	 */
-	int first_np;
-	/*
-	 * For simplicity, index by fragment number which is 1-based;
-	 * leaving element 0 empty.
-	 */
-	struct v2_incomming_fragment frags[MAX_IKE_FRAGMENTS + 1];
-};
-
-/* hunk like */
-
-struct v2_outgoing_fragment {
-	struct v2_outgoing_fragment *next;
-	size_t len;
-	uint8_t ptr[1]; /* can be bigger */
-};
-
 struct v2_id_payload {
 	struct ikev2_id header;
 	chunk_t data;
@@ -344,8 +308,8 @@ struct state {
 	so_serial_t st_ike_pred;		/* IKEv2: replacing established IKE SA */
 	so_serial_t st_ipsec_pred;		/* replacing established IPsec SA */
 
-#ifdef XAUTH_HAVE_PAM
-	struct xauth *st_xauth;			/* per state xauth/pam thread */
+#ifdef AUTH_HAVE_PAM
+	struct pamauth *st_pamauth;		/* per state auth/pam thread */
 #endif
 
 	/*
@@ -412,6 +376,7 @@ struct state {
 	/** IKEv1-only things **/
 	/* XXX: union { struct { .. } v1; struct {...} v2;} st? */
 
+#ifdef USE_IKEv1
 	struct {
 		msgid_t id;             /* MSG-ID from header. Network Order?!? */
 		bool reserved;		/* is msgid reserved yet? */
@@ -432,8 +397,6 @@ struct state {
 	 */
 	const struct state_v1_microcode *st_v1_last_transition;
 	const struct state_v1_microcode *st_v1_transition; /* anyone? */
-	const struct state_v2_microcode *st_v2_last_transition;
-	const struct state_v2_microcode *st_v2_transition;
 
 	/* Initialization Vectors for IKEv1 IKE encryption */
 
@@ -442,9 +405,13 @@ struct state {
 	struct crypt_mac st_v1_ph1_iv;	/* IV at end of phase 1 */
 
 	/* end of IKEv1-only things */
+#endif
 
 	/** IKEv2-only things **/
 	/* XXX: union { struct { .. } v1; struct {...} v2;} st? */
+
+	const struct state_v2_microcode *st_v2_last_transition;
+	const struct state_v2_microcode *st_v2_transition;
 
 	/* collected received fragments */
 	struct v2_ike_rfrags *st_v2_rfrags;
@@ -558,31 +525,31 @@ struct state {
 	 * In IKEv1, both the the DH exchange and authentication can
 	 * be combined into a single packet.  Consequently, processing
 	 * consists of: first DH is used to derive the shared secret
-	 * from DH_SECRET and the keying material; and then
+	 * from DH_LOCAL and the keying material; and then
 	 * authentication is performed.  However, should
 	 * authentication fail, everything thing derived from that
 	 * packet gets discarded and this includes the DH derived
 	 * shared secret.  When the real packet arrives (or a
 	 * re-transmit), the whole process is performed again, and
-	 * using the same DH_SECRET.
+	 * using the same DH_LOCAL.
 	 *
 	 * Consequently, when the crypto helper gets created, it gets
-	 * ownership of the DH_SECRET, and then when it finishes,
+	 * ownership of the DH_LOCAL, and then when it finishes,
 	 * ownership is passed back to state.
 	 *
 	 * This all assumes that the crypto helper gets to delete
-	 * DH_SECRET iff state has already been deleted.
+	 * DH_LOCAL iff state has already been deleted.
 	 *
-	 * (An alternative would be to reference count dh_secret; or
+	 * (An alternative would be to reference count dh_local; or
 	 * copy the underlying keying material using NSS, hmm, NSS).
 	 */
-	struct dh_secret *st_dh_secret;
+	struct dh_local_secret *st_dh_local_secret;
 
-	PK11SymKey *st_shared_nss;	/* Derived shared secret
-					 * Note: during Quick Mode,
-					 * presence indicates PFS
-					 * selected.
-					 */
+	PK11SymKey *st_dh_shared_secret;	/* Derived shared secret
+						 * Note: during Quick Mode,
+						 * presence indicates PFS
+						 * selected.
+						 */
 	/* end of DH values */
 
 	/* In a Phase 1 state, preserve peer's public key after authentication */
@@ -763,7 +730,7 @@ struct state {
 	bool st_xauth_soft;                     /* XAUTH failed but policy is to soft fail */
 	bool st_seen_fragmentation_supported;	/* v1 frag vid; v2 frag notify */
 	bool st_seen_hashnotify;		/* did we receive hash algo notification in IKE_INIT, then send in response as well */
-	bool st_seen_fragments;                 /* did we receive ike fragments from peer, if so use them in return as well */
+	bool st_v1_seen_fragments;              /* did we receive ike fragments from peer, if so use them in return as well */
 	bool st_seen_no_tfc;			/* did we receive ESP_TFC_PADDING_NOT_SUPPORTED */
 	bool st_seen_use_transport;		/* did we receive USE_TRANSPORT_MODE */
 	bool st_seen_use_ipcomp;		/* did we receive request for IPCOMP */
@@ -857,7 +824,7 @@ extern void delete_states_by_connection(struct connection *c, bool relations, st
 extern void rekey_p2states_by_connection(struct connection *c);
 enum send_delete { PROBABLY_SEND_DELETE, DONT_SEND_DELETE, };
 extern void delete_ike_family(struct ike_sa *ike, enum send_delete send_delete);
-extern void schedule_next_child_delete(struct state *st, struct ike_sa *ike);
+extern void ikev2_schedule_next_child_delete(struct state *st, struct ike_sa *ike);
 
 struct state *ikev1_duplicate_state(struct state *st, struct fd *whackfd);
 

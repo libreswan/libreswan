@@ -15,6 +15,8 @@
 # Cryptographic Algorithm Validation Program (CAVP)
 # see: http://csrc.nist.gov/groups/STM/cavp/index.html
 
+include ../..//mk/config.mk
+
 PROGRAM = cavp
 
 # XXX: Hack to suppress the man page.  Should one be added?
@@ -26,9 +28,12 @@ OBJS += cavp_print.o
 OBJS += cavp_parser.o
 OBJS += cavp_entry.o
 
+ifeq ($(USE_IKEv1),true)
 OBJS += test_ikev1.o
 OBJS += test_ikev1_psk.o
 OBJS += test_ikev1_dsa.o
+USERLAND_CFLAGS += -DUSE_IKEv1
+endif
 OBJS += test_ikev2.o
 OBJS += test_sha.o
 OBJS += test_hmac.o
@@ -42,7 +47,10 @@ OBJS += acvp.o
 #
 USERLAND_CFLAGS += -I$(top_srcdir)/programs/pluto
 PLUTOOBJS += test_buffer.o
+
+ifeq ($(USE_IKEv1),true)
 PLUTOOBJS += ikev1_prf.o
+endif
 PLUTOOBJS += ikev2_prf.o
 # Need absolute path as 'make' (check dependencies) and 'ld' (do link)
 # are run from different directories.
@@ -56,8 +64,6 @@ USERLAND_LDFLAGS += $(NSPR_LDFLAGS)
 
 default: check
 .PHONY: check default
-
-check: test.cavp.ikev2.ok test.cavp.ikev1_dsa.ok test.cavp.ikev1_psk.ok
 
 .PRECIOUS: %.fax
 test.cavp.%.fax: | $(builddir)
@@ -76,7 +82,12 @@ test.cavp.%.ok: test.cavp.%.out test.cavp.%.fax
 	diff -u $(builddir)/test.cavp.$*.fax $(builddir)/test.cavp.$*.out
 	touch $(builddir)/$@
 
-check: test.acvp.ikev2.ok test.acvp.ikev1_dsa.ok test.acvp.ikev1_psk.ok
+ifeq ($(USE_IKEv1),true)
+TESTCHECKS = test.acvp.ikev2.ok test.acvp.ikev1_dsa.ok test.acvp.ikev1_psk.ok
+else
+TESTCHECKS = test.acvp.ikev2.ok
+endif
+check: $(TESTCHECKS)
 
 .PRECIOUS: %.out
 test.acvp.%.out: test.acvp.%.run $(PROGRAM)

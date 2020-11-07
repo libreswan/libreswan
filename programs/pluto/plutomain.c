@@ -45,6 +45,7 @@
 #include "lswnss.h"
 #include "defs.h"
 #include "nss_ocsp.h"
+#include "server_fork.h"		/* for init_server_fork() */
 #include "server.h"
 #include "kernel.h"	/* needs connections.h */
 #include "log.h"
@@ -55,9 +56,8 @@
 #include "ipsecconf/confread.h"
 #include "crypto.h"
 #include "vendor.h"
-#include "pluto_crypt.h"
 #include "enum_names.h"
-#include "virtual.h"	/* needs connections.h */
+#include "virtual_ip.h"
 #include "state_db.h"		/* for init_state_db() */
 #include "connection_db.h"	/* for connection_state_db() */
 #include "nat_traversal.h"
@@ -70,6 +70,7 @@
 #include "crypt_symkey.h"	/* for init_crypt_symkey() */
 #include "crl_queue.h"		/* for free_crl_queue() */
 #include "iface.h"
+#include "pluto_shutdown.h"		/* for exit_pluto() */
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -83,7 +84,7 @@
 # include "security_selinux.h"
 #endif
 
-# include "pluto_sd.h"
+# include "pluto_sd.h"		/* for pluto_sd_init() */
 
 #ifdef USE_DNSSEC
 #include "dnssec.h"
@@ -130,7 +131,7 @@ static int ocsp_cache_size = OCSP_DEFAULT_CACHE_SIZE;
 static int ocsp_cache_min_age = OCSP_DEFAULT_CACHE_MIN_AGE;
 static int ocsp_cache_max_age = OCSP_DEFAULT_CACHE_MAX_AGE;
 
-static void free_pluto_main(void)
+void free_pluto_main(void)
 {
 	/* Some values can be NULL if not specified as pluto argument */
 	pfree(coredir);
@@ -166,6 +167,10 @@ static void invocation_fail(err_t mess)
 
 /* string naming compile-time options that have interop implications */
 static const char compile_time_interop_options[] = ""
+	" IKEv2"
+#ifdef USE_IKEv1
+	" IKEv1"
+#endif
 #ifdef XFRM_SUPPORT
 	" XFRM(netkey)"
 #endif
@@ -229,8 +234,8 @@ static const char compile_time_interop_options[] = ""
 #ifdef USE_LINUX_AUDIT
 	" LINUX_AUDIT"
 #endif
-#ifdef XAUTH_HAVE_PAM
-	" XAUTH_PAM"
+#ifdef AUTH_HAVE_PAM
+	" AUTH_PAM"
 #endif
 #ifdef HAVE_NM
 	" NETWORKMANAGER"
@@ -325,7 +330,7 @@ static bool fill_lock(int lockfd, pid_t pid)
 /*
  * delete_lock - Delete the lock file
  */
-static void delete_lock(void)
+void delete_lock(void)
 {
 	if (pluto_lock_created) {
 		delete_ctl_socket();
@@ -556,6 +561,8 @@ static const struct option long_opts[] = {
 	{ "seedbits\0<number>", required_argument, NULL, 'c' },
 	/* really an attribute type, not a value */
 	{ "ikev1-secctx-attr-type\0<number>", required_argument, NULL, 'w' },
+	{ "ikev1-reject\0", no_argument, NULL, 'k' },
+	{ "ikev1-drop\0", no_argument, NULL, 'l' },
 #ifdef HAVE_SECCOMP
 	{ "seccomp-enabled\0", no_argument, NULL, '3' },
 	{ "seccomp-tolerant\0", no_argument, NULL, '4' },
@@ -837,6 +844,13 @@ int main(int argc, char **argv)
 			secctx_attr_type = u;
 			continue;
 #endif
+		case 'k':	/* --ikev1-reject */
+			pluto_ikev1_pol = GLOBAL_IKEv1_REJECT;
+			continue;
+
+		case 'l':	/* --ikev1-drop */
+			pluto_ikev1_pol = GLOBAL_IKEv1_DROP;
+			continue;
 
 		case '0':	/* --nofork*/
 			fork_desired = FALSE;
@@ -1195,6 +1209,13 @@ int main(int argc, char **argv)
 			log_to_audit = cfg->setup.options[KBF_AUDIT_LOG];
 			pluto_drop_oppo_null = cfg->setup.options[KBF_DROP_OPPO_NULL];
 			pluto_ddos_mode = cfg->setup.options[KBF_DDOS_MODE];
+			pluto_ikev1_pol = cfg->setup.options[KBF_GLOBAL_IKEv1];
+#ifndef USE_IKEv1
+			if (pluto_ikev1_pol != GLOBAL_IKEv1_ACCEPT) {
+				libreswan_log("ignoring ikev1-policy= as IKEv1 support is not compiled in. Incoming IKEv1 packets are silently dropped");
+				pluto_ikev1_pol = GLOBAL_IKEv1_DROP;
+			}
+#endif
 #ifdef HAVE_SECCOMP
 			pluto_seccomp_mode = cfg->setup.options[KBF_SECCOMP];
 #endif
@@ -1564,7 +1585,12 @@ int main(int argc, char **argv)
 	 */
 	pluto_init_log(log_param);
 	struct logger global_logger = GLOBAL_LOGGER(null_fd);
-	free_logger(&logger);
+	/*
+	 * The string_logger() dbg_alloc() message went down a rabit
+	 * hole (aka the console) so fake one up here.
+	 */
+	dbg_alloc("logger", logger, HERE);
+	free_logger(&logger, HERE);
 	logger = &global_logger;
 
 	pluto_init_nss(oco->nssdir, logger);
@@ -1703,7 +1729,7 @@ int main(int argc, char **argv)
 
 	libreswan_log("NSS crypto [enabled]");
 
-#ifdef XAUTH_HAVE_PAM
+#ifdef AUTH_HAVE_PAM
 	libreswan_log("XAUTH PAM support [enabled]");
 #else
 	libreswan_log("XAUTH PAM support [disabled]");
@@ -1723,6 +1749,7 @@ int main(int argc, char **argv)
 
 	init_state_db();
 	init_connection_db();
+	init_server_fork();
 	init_server();
 
 	init_rate_log();
@@ -1732,7 +1759,9 @@ int main(int argc, char **argv)
 	/* obsoleted by nss code: init_rnd_pool(); */
 	init_root_certs();
 	init_secret();
+#ifdef USE_IKEv1
 	init_ikev1();
+#endif
 	init_ikev2();
 	init_states();
 	init_connections();
@@ -1772,110 +1801,6 @@ int main(int argc, char **argv)
 
 	call_server(conffile);
 	return -1;	/* Shouldn't ever reach this */
-}
-
-volatile bool exiting_pluto = false;
-
-/*
- * leave pluto, with status.
- * Once child is launched, parent must not exit this way because
- * the lock would be released.
- *
- *  0 OK
- *  1 general discomfort
- * 10 lock file exists
- */
-void exit_pluto(enum pluto_exit_code status)
-{
-	/* no whack; right? XXX: yes, but why? */
-	struct fd *whackfd = null_fd;
-	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
-
-	/*
-	 * Tell the world, well actually all the threads, that pluto
-	 * is exiting and they should quit.  Even if pthread_cancel()
-	 * weren't buggy, using it correctly would be hard, so use
-	 * this instead.
-	 */
-	exiting_pluto = true;
-
-	/* needed because we may be called in odd state */
-	reset_globals();
- #ifdef USE_SYSTEMD_WATCHDOG
-	pluto_sd(PLUTO_SD_STOPPING, status);
- #endif
-
-	/*
-	 * Wait for the crypto-helper threads to notice EXITING_PLUTO
-	 * and exit (if necessary, wake any sleeping helpers from
-	 * their slumber).  Without this any helper using NSS after
-	 * the code below has shutdown the NSS DB will crash.
-	 *
-	 * This does not try to delete any tasks left waiting on the
-	 * helper queue.  Instead, code further down deleting
-	 * connections (which in turn deletes states) should clean
-	 * that up?
-	 *
-	 * This also does not try to delete any completed tasks
-	 * waiting on the event loop.  One theory is for the helper
-	 * code to be changed so that helper tasks can be "cancelled"
-	 * after the've completed?
-	 */
-	stop_crypto_helpers(logger);
-
-	free_root_certs(whackfd);
-	free_preshared_secrets(logger);
-	free_remembered_public_keys();
-	delete_every_connection();
-
-	/*
-	 * free memory allocated by initialization routines.  Please don't
-	 * forget to do this.
-	 */
-
-#if defined(LIBCURL) || defined(LIBLDAP)
-	/*
-	 * Wait for the CRL fetch handler to finish its current task.
-	 * Without this CRL fetch requests are left hanging and, after
-	 * the NSS DB has been closed (below), the helper can crash.
-	 */
-	stop_crl_fetch_helper();
-	/*
-	 * free the crl list that the fetch-helper is currently
-	 * processing
-	 */
-	free_crl_fetch();
-	/*
-	 * free the crl requests that are waiting to be picked and
-	 * processed by the fetch-helper.
-	 */
-	free_crl_queue();
-#endif
-
-	lsw_conf_free_oco();	/* free global_oco containing path names */
-
-	free_ifaces();	/* free interface list from memory */
-	if (kernel_ops->shutdown != NULL)
-		kernel_ops->shutdown();
-	lsw_nss_shutdown();
-	delete_lock();	/* delete any lock files */
-	free_virtual_ip();	/* virtual_private= */
-	free_server(); /* no libevent evnts beyond this point */
-	free_pluto_main();	/* our static chars */
-
-#ifdef USE_DNSSEC
-	unbound_ctx_free();
-#endif
-
-	/* report memory leaks now, after all free_* calls */
-	if (leak_detective) {
-		report_leaks(logger);
-	}
-	close_log();	/* close the logfiles */
-#ifdef USE_SYSTEMD_WATCHDOG
-	pluto_sd(PLUTO_SD_EXIT, status);
-#endif
-	exit(status);	/* exit, with our error code */
 }
 
 void show_setup_plutomain(struct show *s)
@@ -1923,11 +1848,13 @@ void show_setup_plutomain(struct show *s)
 	);
 
 	show_comment(s,
-		"ddos-cookies-threshold=%d, ddos-max-halfopen=%d, ddos-mode=%s",
+		"ddos-cookies-threshold=%d, ddos-max-halfopen=%d, ddos-mode=%s, ikev1-policy=%s",
 		pluto_ddos_threshold,
 		pluto_max_halfopen,
 		(pluto_ddos_mode == DDOS_AUTO) ? "auto" :
-			(pluto_ddos_mode == DDOS_FORCE_BUSY) ? "busy" : "unlimited");
+			(pluto_ddos_mode == DDOS_FORCE_BUSY) ? "busy" : "unlimited",
+		pluto_ikev1_pol == GLOBAL_IKEv1_ACCEPT ? "accept" :
+			pluto_ikev1_pol == GLOBAL_IKEv1_REJECT ? "reject" : "drop");
 
 	show_comment(s,
 		"ikebuf=%d, msg_errqueue=%s, crl-strict=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%d",

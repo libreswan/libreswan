@@ -102,6 +102,7 @@ class Issues:
     GPFAULT = "GPFAULT"
     PRINTF_NULL = "PRINTF_NULL"
     KERNEL = "KERNEL"
+    LEAK = "LEAK"
 
     TIMEOUT = "timeout"
 
@@ -291,6 +292,9 @@ class TestResult:
                 # This won't detect a \n embedded in the middle of a
                 # log line.
                 self.issues.add(Issues.ISCNTRL, host_name)
+                self.resolution.failed()
+            if self.grub(pluto_log_filename, r"leak detective found [0-9]+ leaks"):
+                self.issues.add(Issues.LEAK, host_name)
                 self.resolution.failed()
 
         # Check the raw console output for problems and that it

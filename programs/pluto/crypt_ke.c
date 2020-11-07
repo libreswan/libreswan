@@ -53,20 +53,12 @@
 #include "test_buffer.h"
 #include "ike_alg.h"
 #include "crypt_dh.h"
+#include "crypt_ke.h"
 
 /* MUST BE THREAD-SAFE */
 void calc_ke(struct pcr_kenonce *kn, struct logger *logger)
 {
-	const struct dh_desc *group = kn->group;
-
-	kn->secret = calc_dh_secret(kn->group, &kn->gi, logger);
-
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("NSS: Local DH %s secret (pointer): %p",
-			group->common.fqn, kn->secret);
-		DBG_dump_hunk("NSS: Public DH wire value:",
-			      kn->gi);
-	}
+	kn->local_secret = calc_dh_local_secret(kn->group, logger);
 }
 
 /* MUST BE THREAD-SAFE */
@@ -82,11 +74,8 @@ void calc_nonce(struct pcr_kenonce *kn)
 
 void cancelled_ke_and_nonce(struct pcr_kenonce *kn)
 {
-	if (kn->secret != NULL) {
-		free_dh_secret(&kn->secret);
-	}
+	dh_local_secret_delref(&kn->local_secret, HERE);
 	free_chunk_content(&kn->n);
-	free_chunk_content(&kn->gi);
 }
 
 /* Note: not all cn's are the same subtype */
@@ -107,4 +96,63 @@ void request_nonce(const char *name,
 	struct pluto_crypto_req_cont *cn = new_pcrc(callback, name);
 	pcr_kenonce_init(cn, pcr_build_nonce, NULL);
 	send_crypto_helper_request(st, cn);
+}
+
+struct crypto_task {
+	const struct dh_desc *dh;
+	chunk_t nonce;
+	struct dh_local_secret *local_secret;
+	ke_and_nonce_cb *cb;
+};
+
+static void compute_ke_and_nonce(struct logger *logger,
+				 struct crypto_task *task,
+				 int thread_unused UNUSED)
+{
+	if (task->dh != NULL) {
+		task->local_secret = calc_dh_local_secret(task->dh, logger);
+		if (DBGP(DBG_CRYPT)) {
+			DBG_log("NSS: Local DH %s secret (pointer): %p",
+				task->dh->common.fqn, task->local_secret);
+		}
+	}
+	task->nonce = alloc_chunk(DEFAULT_NONCE_SIZE, "nonce");
+	fill_rnd_chunk(task->nonce);
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump_hunk("Generated nonce:", task->nonce);
+	}
+}
+
+static void free_ke_and_nonce(struct crypto_task **task)
+{
+	dh_local_secret_delref(&(*task)->local_secret, HERE);
+	free_chunk_content(&(*task)->nonce);
+	pfreeany(*task);
+}
+
+static stf_status complete_ke_and_nonce(struct state *st,
+					struct msg_digest *md,
+					struct crypto_task **task)
+{
+	stf_status status = (*task)->cb(st, md,
+					(*task)->local_secret,
+					&(*task)->nonce);
+	free_ke_and_nonce(task);
+	return status;
+}
+
+static const struct crypto_handler ke_and_nonce_handler = {
+	.name = "dh",
+	.cancelled_cb = free_ke_and_nonce,
+	.compute_fn = compute_ke_and_nonce,
+	.completed_cb = complete_ke_and_nonce,
+};
+
+void submit_ke_and_nonce(struct state *st, const struct dh_desc *dh,
+			 ke_and_nonce_cb *cb, const char *name)
+{
+	struct crypto_task *task = alloc_thing(struct crypto_task, "dh");
+	task->dh = dh;
+	task->cb = cb;
+	submit_crypto(st->st_logger, st, task, &ke_and_nonce_handler, name);
 }

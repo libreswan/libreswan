@@ -365,6 +365,13 @@ POD2MAN ?= $(shell which pod2man | grep / | head -n1)
 # HAVE_ variables let you tell Libreswan what system related libraries
 #       you may or maynot have
 
+# Enable or disable support for IKEv1. When disabled, the ike-policy= value
+# will be ignored and all IKEv1 packets will be dropped.
+USE_IKEv1 ?= true
+ifeq ($(USE_IKEv1),true)
+USERLAND_CFLAGS += -DUSE_IKEv1
+endif
+
 # Enable support for DNSSEC. This requires the unbound and ldns libraries.
 USE_DNSSEC ?= true
 
@@ -621,12 +628,18 @@ endif
 # Link with -lrt (only for glibc versions before 2.17)
 RT_LDFLAGS ?= -lrt
 
-# include PAM support for XAUTH when available on the platform
+# Compatibility with old USE_XAUTHPAM which was changed to USE_AUTHPAM.
+# We will overwrite USE_AUTHPAM with USE_XAUTHPAM until libreswan 4.4
+ifdef USE_XAUTHPAM
+USE_AUTHPAM = $(USE_XAUTHPAM)
+$(warning Warning: Overriding USE_AUTHPAM with deprecated variable USE_XAUTHPAM)
+endif
 
-USE_XAUTHPAM?=true
-ifeq ($(USE_XAUTHPAM),true)
-USERLAND_CFLAGS += -DXAUTH_HAVE_PAM
-XAUTHPAM_LDFLAGS ?= -lpam
+# include PAM support for IKEv1 XAUTH and IKE2 pam-authorize when available on the platform
+USE_AUTHPAM ?= true
+ifeq ($(USE_AUTHPAM),true)
+USERLAND_CFLAGS += -DAUTH_HAVE_PAM
+AUTHPAM_LDFLAGS ?= -lpam
 endif
 
 #

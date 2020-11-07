@@ -68,6 +68,7 @@ d.ipsec.conf/tcp-remoteport.xml
 d.ipsec.conf/nat-keepalive.xml
 d.ipsec.conf/initial-contact.xml
 d.ipsec.conf/cisco-unity.xml
+d.ipsec.conf/ignore-peer-dns.xml
 d.ipsec.conf/redirect.xml
 d.ipsec.conf/fake-strongswan.xml
 d.ipsec.conf/send-vendorid.xml
@@ -116,7 +117,8 @@ d.ipsec.conf/virtual-private.xml
 d.ipsec.conf/myvendorid.xml
 d.ipsec.conf/nhelpers.xml
 d.ipsec.conf/seedbits.xml
-d.ipsec.conf/secctx-attr-type.xml
+d.ipsec.conf/ikev1-secctx-attr-type.xml
+d.ipsec.conf/ikev1-policy.xml
 d.ipsec.conf/crlcheckinterval.xml
 d.ipsec.conf/crl-strict.xml
 d.ipsec.conf/curl-iface.xml

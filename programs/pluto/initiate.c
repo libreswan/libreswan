@@ -60,7 +60,7 @@
 #include "log.h"
 #include "keys.h"
 #include "whack.h"
-#include "spdb.h"
+#include "ikev1_spdb.h"		/* for kernel_alg_makedb() !?! */
 #include "ike_alg.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
@@ -68,7 +68,6 @@
 #include "nat_traversal.h"
 #include "ip_address.h"
 #include "initiate.h"
-#include "virtual.h"	/* needs connections.h */
 #include "iface.h"
 #include "hostpair.h"
 
@@ -435,11 +434,12 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 	 *
 	 * XXX: mumble something about c->ike_version
 	 */
+#ifdef USE_IKEv1
 	if ((c->policy & POLICY_IKEV1_ALLOW) &&
 	    (c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE))) {
 		struct logger logger[1] = { CONNECTION_LOGGER(c, whackfd), };
-		struct db_sa *phase2_sa = kernel_alg_makedb(c->policy, c->child_proposals,
-							    true, logger);
+		struct db_sa *phase2_sa = v1_kernel_alg_makedb(c->policy, c->child_proposals,
+							       true, logger);
 		if (c->child_proposals.p != NULL && phase2_sa == NULL) {
 			log_message(WHACK_STREAM | RC_LOG_SERIOUS, logger,
 				    "cannot initiate: no acceptable kernel algorithms loaded");
@@ -447,6 +447,7 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 		}
 		free_sa(&phase2_sa);
 	}
+#endif
 
 	dbg("connection '%s' +POLICY_UP", c->name);
 	c->policy |= POLICY_UP;
@@ -1227,7 +1228,7 @@ void connection_check_phase2(struct fd *whackfd)
 		    pri_connection(c, &cib));
 
 		if (pending_check_timeout(c)) {
-			struct state *p1st;
+			struct state *p1st = NULL;
 			ipstr_buf b;
 			char cib[CONN_INST_BUF];
 
@@ -1236,10 +1237,14 @@ void connection_check_phase2(struct fd *whackfd)
 				ipstr(&c->spd.that.host_addr, &b),
 				c->name, fmt_conn_instance(c, cib));
 
-			p1st = find_phase1_state(c,
+			if (LIN(POLICY_IKEV2_ALLOW, c->policy))
+				p1st = find_phase1_state(c, IKEV2_ISAKMP_INITIATOR_STATES);
+#ifdef USE_IKEv1
+			else
+				p1st = find_phase1_state(c,
 						 ISAKMP_SA_ESTABLISHED_STATES |
-						 IKEV2_ISAKMP_INITIATOR_STATES |
 						 PHASE1_INITIATOR_STATES);
+#endif
 
 			if (p1st != NULL) {
 				/* arrange to rekey the phase 1, if there was one. */

@@ -282,7 +282,12 @@ if not args.no_eth0:
         print("cannot find eht0. test guest expect eth0. --no-eth0 to disable this check\n%s\n%s" % i (o.output, o.stderr))
         sys.exit(1)
 
-if not args.namespace:
+# nsrun set magic string SWAN_PLUTOTEST=YES in the enviroment
+# to identify namespace
+# echo $SWAN_PLUTOTEST
+if "SWAN_PLUTOTEST" in os.environ:
+    args.namespace = True
+elif not args.namespace:
     o = subprocess.run('ip netns identify', shell=True, capture_output=True, encoding="ascii", check=True,)
     namespace = o.stdout
     namespace_expect = hostname + '-' + testname

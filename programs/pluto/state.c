@@ -49,7 +49,7 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#include "xauth.h"		/* for xauth_cancel() */
+#include "pam_auth.h"		/* for pamauth_cancel() */
 #include "connections.h"	/* needs id.h */
 #include "state.h"
 #include "state_db.h"
@@ -66,11 +66,10 @@
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
 #include "crypto.h"
 #include "crypt_symkey.h"
-#include "spdb.h"
 #include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "ikev2_redirect.h"
-#include "secrets.h"    /* unreference_key() */
+#include "secrets.h"    	/* for pubkey_delref() */
 #include "enum_names.h"
 #include "crypt_dh.h"
 #include "hostpair.h"
@@ -122,6 +121,7 @@ static struct finite_state state_undefined = {
 	.category = CAT_IGNORE,
 };
 
+#ifdef USE_IKEv1
 static struct finite_state state_ikev1_roof = {
 	.kind = STATE_IKEv1_ROOF,
 	.name = "STATE_IKEv1_ROOF",
@@ -129,6 +129,7 @@ static struct finite_state state_ikev1_roof = {
 	.story = "invalid state - IKEv1 roof",
 	.category = CAT_IGNORE,
 };
+#endif
 
 static struct finite_state state_ikev2_roof = {
 	.kind = STATE_IKEv2_ROOF,
@@ -140,7 +141,9 @@ static struct finite_state state_ikev2_roof = {
 
 const struct finite_state *finite_states[STATE_IKE_ROOF] = {
 	[STATE_UNDEFINED] = &state_undefined,
+#ifdef USE_IKEv1
 	[STATE_IKEv1_ROOF] &state_ikev1_roof,
+#endif
 	[STATE_IKEv2_ROOF] &state_ikev2_roof,
 };
 
@@ -718,8 +721,8 @@ void v2_expire_unused_ike_sa(struct ike_sa *ike)
 	/* Any children? */
 	struct state *st = state_by_ike_spis(IKEv2,
 					     &ike->sa.st_serialno,
-					     NULL/* ignore v1 msgid */,
-					     NULL/* ignore role */,
+					     NULL /* ignore v1 msgid */,
+					     NULL /* ignore role */,
 					     &ike->sa.st_ike_spis,
 					     NULL, NULL /* no predicate */,
 					     __func__);
@@ -809,8 +812,12 @@ static bool should_send_delete(const struct state *st)
 		return false;
 	}
 
+	/*
+	 * PW: But this is valid for IKEv1, where it would need to start a
+	 * new IKE SA to send the delete notification ???
+	 */
 	if (!IS_IPSEC_SA_ESTABLISHED(st) &&
-	    !IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+	    !IS_IKE_SA_ESTABLISHED(st)) {
 		dbg("%s: no, not established", __func__);
 		return false;
 	}
@@ -888,7 +895,7 @@ static stf_status ikev2_send_delete_continue(struct ike_sa *ike UNUSED,
 	return STF_OK;
 }
 
-void schedule_next_child_delete(struct state *st, struct ike_sa *ike)
+void ikev2_schedule_next_child_delete(struct state *st, struct ike_sa *ike)
 {
 	if (st->st_ike_version == IKEv2 &&
 	    should_send_delete(st)) {
@@ -1088,9 +1095,9 @@ void delete_state(struct state *st)
 		}
 	}
 
-#ifdef XAUTH_HAVE_PAM
-	if (st->st_xauth != NULL) {
-		xauth_pam_abort(st);
+#ifdef AUTH_HAVE_PAM
+	if (st->st_pamauth != NULL) {
+		pamauth_abort(st);
 	}
 #endif
 
@@ -1245,8 +1252,10 @@ void delete_state(struct state *st)
 
 	/* from here on we are just freeing RAM */
 
+#ifdef USE_IKEv1
 	ikev1_clear_msgid_list(st);
-	unreference_key(&st->st_peer_pubkey);
+#endif
+	pubkey_delref(&st->st_peer_pubkey, HERE);
 
 	/*
 	 * Release stored IKE fragments. This is a union in st so only
@@ -1254,7 +1263,9 @@ void delete_state(struct state *st)
 	 */
 	switch (st->st_ike_version) {
 	case IKEv1:
+#ifdef USE_IKEv1
 		free_v1_message_queues(st);
+#endif
 		break;
 	case IKEv2:
 		free_v2_message_queues(st);
@@ -1269,15 +1280,8 @@ void delete_state(struct state *st)
 	 */
 	free_ikev2_proposal(&st->st_accepted_ike_proposal);
 	free_ikev2_proposal(&st->st_accepted_esp_or_ah_proposal);
-
-	/*
-	 * If this state 'owns' the DH secret, release it.  If not
-	 * then it is presumably owned by a crypto-helper and that can
-	 * clean it up.
-	 */
-	if (st->st_dh_secret != NULL) {
-		free_dh_secret(&st->st_dh_secret);
-	}
+	/* helper may have its own ref */
+	dh_local_secret_delref(&st->st_dh_local_secret, HERE);
 
 	/* without st_connection, st isn't complete */
 	/* from here on logging is for the wrong state */
@@ -1290,8 +1294,10 @@ void delete_state(struct state *st)
 
 	free_chunk_content(&st->st_firstpacket_me);
 	free_chunk_content(&st->st_firstpacket_peer);
+#ifdef USE_IKEv1
 	free_chunk_content(&st->st_v1_tpacket);
 	free_chunk_content(&st->st_v1_rpacket);
+#endif
 	free_chunk_content(&st->st_p1isa);
 	free_chunk_content(&st->st_gi);
 	free_chunk_content(&st->st_gr);
@@ -1301,7 +1307,7 @@ void delete_state(struct state *st)
 	free_chunk_content(&st->st_v2_id_payload.data);
 
 #    define free_any_nss_symkey(p)  release_symkey(__func__, #p, &(p))
-	free_any_nss_symkey(st->st_shared_nss);
+	free_any_nss_symkey(st->st_dh_shared_secret);
 	free_any_nss_symkey(st->st_skeyid_nss);
 	free_any_nss_symkey(st->st_skey_d_nss);	/* aka st_skeyid_d_nss */
 	free_any_nss_symkey(st->st_skey_ai_nss); /* aka st_skeyid_a_nss */
@@ -1346,7 +1352,7 @@ void delete_state(struct state *st)
 	free_chunk_content(&st->st_no_ppk_auth);
 
 	free_sec_ctx(st);
-	free_logger(&st->st_logger);
+	free_logger(&st->st_logger, HERE);
 	messup(st);
 	pfree(st);
 }
@@ -1631,7 +1637,7 @@ static struct state *duplicate_state(struct state *st,
 	passert(nst->st_ike_version == st->st_ike_version);
 	nst->st_ikev2_anon = st->st_ikev2_anon;
 	nst->st_seen_fragmentation_supported = st->st_seen_fragmentation_supported;
-	nst->st_seen_fragments = st->st_seen_fragments;
+	nst->st_v1_seen_fragments = st->st_v1_seen_fragments;
 	nst->st_seen_ppk = st->st_seen_ppk;
 	nst->st_seen_redirect_sup = st->st_seen_redirect_sup;
 	nst->st_seen_use_ipcomp = st->st_seen_use_ipcomp;
@@ -1730,16 +1736,13 @@ void for_each_state(void (*f)(struct state *, void *data), void *data,
 	}
 }
 
-/*
- * Find a state object for an IKEv1 state
- */
-
+#ifdef USE_IKEv1
 struct state *find_state_ikev1(const ike_spis_t *ike_spis, msgid_t msgid)
 {
 	return state_by_ike_spis(IKEv1,
-				 NULL/*ignore-clonedfrom*/,
+				 NULL /*ignore-clonedfrom*/,
 				 &msgid/*check v1 msgid*/,
-				 NULL/*ignore-role*/,
+				 NULL /*ignore-role*/,
 				 ike_spis, NULL, NULL, __func__);
 }
 
@@ -1747,11 +1750,12 @@ struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
 				    msgid_t msgid)
 {
 	return state_by_ike_initiator_spi(IKEv1,
-					  NULL/*ignore-clonedfrom*/,
-					  &msgid/*check v1 msgid*/,
-					  NULL/*ignore-role*/,
+					  NULL /*ignore-clonedfrom*/,
+					  &msgid /*check v1 msgid*/,
+					  NULL /*ignore-role*/,
 					  ike_initiator_spi, __func__);
 }
+#endif
 
 /*
  * Find the IKEv2 IKE SA with the specified SPIs.
@@ -1762,7 +1766,7 @@ struct ike_sa *find_v2_ike_sa(const ike_spis_t *ike_spis,
 	const so_serial_t sos_nobody = SOS_NOBODY;
 	struct state *st = state_by_ike_spis(IKEv2,
 					     &sos_nobody/*clonedfrom: IKE SA*/,
-					     NULL/*ignore v1 msgid*/,
+					     NULL /*ignore v1 msgid*/,
 					     &local_ike_role,
 					     ike_spis, NULL, NULL, __func__);
 	return pexpect_ike_sa(st);
@@ -1856,16 +1860,14 @@ struct child_sa *find_v2_child_sa_by_outbound_spi(struct ike_sa *ike,
 	};
 	struct state *st = state_by_ike_spis(IKEv2,
 					     &ike->sa.st_serialno,
-					     NULL/* ignore v1 msgid*/,
-					     NULL/*ignore-role*/,
+					     NULL /* ignore v1 msgid */,
+					     NULL /* ignore-role */,
 					     &ike->sa.st_ike_spis,
 					     v2_spi_predicate, &filter, __func__);
 	return pexpect_child_sa(st);
 }
 
-/*
- * Find a state object.
- */
+#ifdef USE_IKEv1
 struct v1_msgid_filter {
 	msgid_t msgid;
 };
@@ -1892,12 +1894,13 @@ struct state *find_v1_info_state(const ike_spis_t *ike_spis, msgid_t msgid)
 		.msgid = msgid,
 	};
 	return state_by_ike_spis(IKEv1,
-				 NULL/*ignore-clonedfrom*/,
-				 NULL/*ignore v1 msgid; see predicate*/,
-				 NULL/*ignore-role*/,
+				 NULL /* ignore-clonedfrom */,
+				 NULL /* ignore v1 msgid; see predicate */,
+				 NULL /* ignore-role */,
 				 ike_spis, v1_msgid_predicate,
 				 &filter, __func__);
 }
+#endif
 
 /*
  * find_phase2_state_to_delete: find an AH or ESP SA to delete
@@ -2890,8 +2893,8 @@ void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 	};
 	state_by_ike_spis(IKEv2,
 			  &from->sa.st_serialno,
-			  NULL/*ignore v1 msgid*/,
-			  NULL/*ignore-sa-role*/,
+			  NULL /*ignore v1 msgid */,
+			  NULL /*ignore-sa-role */,
 			  &from->sa.st_ike_spis,
 			  v2_migrate_predicate, &filter, __func__);
 }
@@ -2925,8 +2928,8 @@ void delete_ike_family(struct ike_sa *ike, enum send_delete send_delete)
 	 */
 	state_by_ike_spis(ike->sa.st_ike_version,
 			  &ike->sa.st_serialno,
-			  NULL/*ignore v1 msgid*/,
-			  NULL/*ignore-sa-role*/,
+			  NULL /*ignore v1 msgid */,
+			  NULL /*ignore-sa-role */,
 			  &ike->sa.st_ike_spis,
 			  delete_ike_family_child, NULL,
 			  __func__);
@@ -3059,11 +3062,13 @@ void show_globalstate_status(struct show *s)
 	show_raw(s, "current.states.iketype.authenticated="PRI_CAT, cat_count_ike_sa[CAT_AUTHENTICATED]);
 	show_raw(s, "current.states.iketype.halfopen="PRI_CAT, cat_count[CAT_HALF_OPEN_IKE_SA]);
 	show_raw(s, "current.states.iketype.open="PRI_CAT, cat_count[CAT_OPEN_IKE_SA]);
+#ifdef USE_IKEv1
 	for (enum state_kind sk = STATE_IKEv1_FLOOR; sk < STATE_IKEv1_ROOF; sk++) {
 		const struct finite_state *fs = finite_states[sk];
 		show_raw(s, "current.states.enumerate.%s="PRI_CAT,
 			 fs->name, state_count[sk]);
 	}
+#endif
 	for (enum state_kind sk = STATE_IKEv2_FLOOR; sk < STATE_IKEv2_ROOF; sk++) {
 		const struct finite_state *fs = finite_states[sk];
 		show_raw(s, "current.states.enumerate.%s="PRI_CAT,
@@ -3314,6 +3319,7 @@ void list_state_events(struct show *s, monotime_t now)
 	}
 }
 
+#ifdef USE_IKEv1
 void set_v1_transition(struct state *st, const struct state_v1_microcode *transition,
 		       where_t where)
 {
@@ -3326,6 +3332,7 @@ void set_v1_transition(struct state *st, const struct state_v1_microcode *transi
 	}
 	st->st_v1_transition = transition;
 }
+#endif
 
 void set_v2_transition(struct state *st, const struct state_v2_microcode *transition,
 		       where_t where)

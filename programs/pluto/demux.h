@@ -228,13 +228,13 @@ struct msg_digest *md_addref(struct msg_digest *md, where_t where);
 void md_delref(struct msg_digest **mdp, where_t where);
 
 /* only the buffer */
-struct msg_digest *clone_raw_md(struct msg_digest *md, const char *name);
+struct msg_digest *clone_raw_md(struct msg_digest *md, where_t where);
 
 void schedule_md_event(const char *name, struct msg_digest *md);
 
 extern void process_packet(struct msg_digest **mdp);
 
-extern char *cisco_stringify(pb_stream *pbs, const char *attr_name);
+extern char *cisco_stringify(pb_stream *pbs, const char *attr_name, lset_t pol);
 
 extern void lswlog_msg_digest(struct jambuf *log, const struct msg_digest *md);
 
@@ -242,5 +242,7 @@ extern void lswlog_msg_digest(struct jambuf *log, const struct msg_digest *md);
  * old stuff.
  */
 #define release_any_md(MDP) md_delref(MDP, HERE)
+
+void free_demux(void);
 
 #endif /* _DEMUX_H */

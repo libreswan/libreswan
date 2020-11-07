@@ -55,7 +55,6 @@
 #include "log.h"
 #include "keys.h"
 #include "whack.h"
-#include "spdb.h"
 #include "ike_alg.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
@@ -66,7 +65,6 @@
 #include "hash_table.h"
 #include "iface.h"
 
-#include "virtual.h"	/* needs connections.h */
 
 #include "hostpair.h"
 
@@ -221,9 +219,26 @@ struct host_pair *find_host_pair(const ip_endpoint *local,
 	return NULL;
 }
 
-static void remove_host_pair(struct host_pair *hp)
+static struct host_pair *alloc_host_pair(ip_endpoint local, ip_endpoint remote, where_t where)
 {
-	del_hash_table_entry(&host_pairs, hp);
+	struct host_pair *hp = alloc_thing(struct host_pair, "host pair");
+	hp->magic = host_pair_magic;
+	hp->local = local;
+	hp->remote = remote;
+	add_hash_table_entry(&host_pairs, hp);
+	dbg_alloc("hp", hp, where);
+	return hp;
+}
+
+static void free_host_pair(struct host_pair **hp, where_t where)
+{
+	/* ??? must deal with this! */
+	passert((*hp)->pending == NULL);
+	pexpect((*hp)->connections == NULL);
+	del_hash_table_entry(&host_pairs, *hp);
+	dbg_free("hp", *hp, where);
+	pfree(*hp);
+	*hp = NULL;
 }
 
 /* find head of list of connections with this pair of hosts */
@@ -264,20 +279,15 @@ void connect_to_host_pair(struct connection *c)
 
 		if (hp == NULL) {
 			/* no suitable host_pair -- build one */
-			hp = alloc_thing(struct host_pair, "host_pair");
-			dbg("new hp@%p", hp);
-			hp->magic = host_pair_magic;
-			hp->local = endpoint3(c->interface->protocol,
-					      &c->spd.this.host_addr,
-					      ip_hport(nat_traversal_enabled ? IKE_UDP_PORT
-						       : c->spd.this.host_port));
-			hp->remote = endpoint3(c->interface->protocol,
-					       &c->spd.that.host_addr,
-					       ip_hport(nat_traversal_enabled ? IKE_UDP_PORT
-							: c->spd.that.host_port));
-			hp->connections = NULL;
-			hp->pending = NULL;
-			add_hash_table_entry(&host_pairs, hp);
+			ip_endpoint local = endpoint3(c->interface->protocol,
+						      &c->spd.this.host_addr,
+						      ip_hport(nat_traversal_enabled ? IKE_UDP_PORT
+							       : c->spd.this.host_port));
+			ip_endpoint remote = endpoint3(c->interface->protocol,
+						       &c->spd.that.host_addr,
+						       ip_hport(nat_traversal_enabled ? IKE_UDP_PORT
+								: c->spd.that.host_port));
+			hp = alloc_host_pair(local, remote, HERE);
 		}
 		c->host_pair = hp;
 		c->hp_next = hp->connections;
@@ -342,16 +352,12 @@ void delete_oriented_hp(struct connection *c)
 	c->host_pair = NULL; /* redundant, but safe */
 
 	/*
-	 * if there are no more connections with this host_pair
-	 * and we haven't even made an initial contact, let's delete
-	 * this guy in case we were created by an attempted DOS attack.
+	 * If there are no more connections with this host_pair and we
+	 * haven't even made an initial contact, let's delete this guy
+	 * in case we were created by an attempted DOS attack.
 	 */
 	if (hp->connections == NULL) {
-		/* ??? must deal with this! */
-		passert(hp->pending == NULL);
-		remove_host_pair(hp);
-		dbg("free hp@%p", hp);
-		pfree(hp);
+		free_host_pair(&hp, HERE);
 	}
 }
 
@@ -368,7 +374,7 @@ void host_pair_remove_connection(struct connection *c, bool connection_valid)
 /* update the host pairs with the latest DNS ip address */
 void update_host_pairs(struct connection *c)
 {
-	struct host_pair *const hp = c->host_pair;
+	struct host_pair *hp = c->host_pair;
 	const char *dnshostname = c->dnshostname;
 
 	/* ??? perhaps we should return early if dnshostname == NULL */
@@ -442,30 +448,33 @@ void update_host_pairs(struct connection *c)
 	}
 
 	if (hp->connections == NULL) {
-		passert(hp->pending == NULL); /* ??? must deal with this! */
-		del_hash_table_entry(&host_pairs, hp);
-		dbg("free hp@%p", hp);
-		pfree(hp);
+		free_host_pair(&hp, HERE);
 	}
 }
 
 /* Adjust orientations of connections to reflect newly added interfaces. */
 void check_orientations(void)
 {
-	/* Try to orient all the unoriented connections. */
-	{
-		dbg("FOR_EACH_UNORIENTED_CONNECTION_... in %s", __func__);
-		struct connection *c = unoriented_connections;
-
-		unoriented_connections = NULL;
-
-		while (c != NULL) {
-			struct connection *nxt = c->hp_next;
-
-			(void)orient(c);
-			connect_to_host_pair(c);
-			c = nxt;
-		}
+	/*
+	 * Try to orient unoriented connections by re-building the
+	 * unoriented connections list.
+	 *
+	 * The list is emptied, then as each connection fails to
+	 * orient it goes back on the list.
+	 */
+	dbg("FOR_EACH_UNORIENTED_CONNECTION_... in %s", __func__);
+	struct connection *c = unoriented_connections;
+	unoriented_connections = NULL;
+	while (c != NULL) {
+		/* step off */
+		struct connection *nxt = c->hp_next;
+		orient(c);
+		/*
+		 * Either put C back on unoriented, or add to a host
+		 * pair.
+		 */
+		connect_to_host_pair(c);
+		c = nxt;
 	}
 
 	/*
@@ -473,50 +482,48 @@ void check_orientations(void)
 	 * In other words, the far side must not match one of our new
 	 * interfaces.
 	 */
-	{
-		struct iface_port *i;
-
-		for (i = interfaces; i != NULL; i = i->next) {
-			if (i->ip_dev->ifd_change != IFD_ADD) {
-				continue;
-			}
-			for (unsigned u = 0; u < host_pairs.nr_slots; u++) {
-				struct list_head *bucket = &host_pairs.slots[u];
-				struct host_pair *hp = NULL;
-				FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, hp) {
+	for (struct iface_port *i = interfaces; i != NULL; i = i->next) {
+		if (i->ip_dev->ifd_change != IFD_ADD) {
+			continue;
+		}
+		for (unsigned u = 0; u < host_pairs.nr_slots; u++) {
+			struct list_head *bucket = &host_pairs.slots[u];
+			struct host_pair *hp = NULL;
+			FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, hp) {
+				/*
+				 * XXX: what's with the maybe compare
+				 * the port logic?
+				 */
+				if (sameaddr(&hp->remote,
+					     &i->local_endpoint)) {
 					/*
-					 * XXX: what's with the maybe
-					 * compare the port logic?
+					 * bad news: the whole chain
+					 * of connections hanging off
+					 * this host pair has both
+					 * sides matching an
+					 * interface.  We'll get rid
+					 * of them, using orient and
+					 * connect_to_host_pair.
 					 */
-					if (sameaddr(&hp->remote,
-						     &i->local_endpoint)) {
-						/*
-						 * bad news: the whole chain of
-						 * connections hanging off this
-						 * host pair has both sides
-						 * matching an interface.
-						 * We'll get rid of them, using
-						 * orient and
-						 * connect_to_host_pair.
-						 * But we'll be lazy and not
-						 * ditch the host_pair itself
-						 * (the cost of leaving it is
-						 * slight and cannot be
-						 * induced by a foe).
-						 */
-						struct connection *c =
-							hp->connections;
-
-						hp->connections = NULL;
-						while (c != NULL) {
-							struct connection *nxt =
-								c->hp_next;
-
-							c->interface = NULL;
-							(void)orient(c);
-							connect_to_host_pair(c);
-							c = nxt;
-						}
+					struct connection *c =
+						hp->connections;
+					hp->connections = NULL;
+					while (c != NULL) {
+						struct connection *nxt =
+							c->hp_next;
+						c->interface = NULL;
+						c->host_pair = NULL;
+						c->hp_next = NULL;
+						orient(c);
+						connect_to_host_pair(c);
+						c = nxt;
+					}
+					/*
+					 * XXX: is this ever not the
+					 * case?
+					 */
+					if (hp->connections == NULL) {
+						free_host_pair(&hp, HERE);
 					}
 				}
 			}

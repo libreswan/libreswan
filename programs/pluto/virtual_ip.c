@@ -19,29 +19,20 @@
  *
  */
 
-
-#include <stdlib.h>
-#include <string.h>
-
-#include "sysdep.h"
-#include "constants.h"
-
 #include "defs.h"
 #include "log.h"
-#include "id.h"
-#include "x509.h"
-#include "certs.h"
 #include "connections.h"
-#include "whack.h"
-#include "nat_traversal.h"
-#include "virtual.h"	/* needs connections.h */
+#include "virtual_ip.h"
+#include "nat_traversal.h"		/* for nat_traversal_enabled */
+#include "refcnt.h"
 
 #define F_VIRTUAL_NO		1	/* %no (subnet must be host/32) */
 #define F_VIRTUAL_PRIVATE	2	/* %priv (list held in private_net_{incl,excl} */
 #define F_VIRTUAL_ALL		4	/* %all [only for testing] */
 #define F_VIRTUAL_HOST		8	/* vhost (vnet has no representation) */
 
-struct virtual_t {
+struct virtual_ip {
+	refcnt_t refcnt;
 	unsigned short flags;	/* union of F_VIRTUAL_* */
 	unsigned short n_net;
 	ip_subnet net[0];
@@ -99,7 +90,8 @@ static bool read_subnet(const char *src, size_t len,
 	err_t ugh = ttosubnet(p, len - (p - src), af, 'x',
 			      incl ? dst : dstexcl, logger);
 	if (ugh != NULL) {
-		loglog(RC_LOG_SERIOUS, "virtual-private entry is not a proper subnet: %s", ugh);
+		log_message(RC_LOG_SERIOUS, logger,
+			    "virtual-private entry is not a proper subnet: %s", ugh);
 		return FALSE;
 	}
 
@@ -186,8 +178,8 @@ void init_virtual_ip(const char *private_list,
 			str = *next != '\0' ? next + 1 : NULL;
 		}
 	} else {
-		loglog(RC_LOG_SERIOUS,
-		       "%d bad entries in virtual-private - none loaded", bad);
+		log_message(RC_LOG_SERIOUS, logger,
+			    "%d bad entries in virtual-private - none loaded", bad);
 		pfreeany(private_net_incl);
 		private_net_incl = NULL;
 	}
@@ -213,10 +205,9 @@ void init_virtual_ip(const char *private_list,
  *
  * @param c Connection Struct
  * @param string (virtual_private= from ipsec.conf)
- * @return virtual_t
+ * @return virtual_ip
  */
-struct virtual_t *create_virtual(const struct connection *c,
-				 const char *string, struct logger *logger)
+struct virtual_ip *create_virtual(const char *string, struct logger *logger)
 {
 
 	if (string == NULL || string[0] == '\0')
@@ -230,8 +221,9 @@ struct virtual_t *create_virtual(const struct connection *c,
 	} else if (eat(str, "vnet:")) {
 		/* represented in flags by the absence of F_VIRTUAL_HOST */
 	} else {
-		libreswan_log("virtual string \"%s\" is missing \"vhost:\" or \"vnet:\" - virtual selection is disabled for connection '%s'",
-			string, c->name);
+		log_message(RC_LOG, logger,
+			    "virtual string \"%s\" is missing \"vhost:\" or \"vnet:\" - virtual selection is disabled for connection",
+			    string);
 		return NULL;
 	}
 
@@ -268,8 +260,9 @@ struct virtual_t *create_virtual(const struct connection *c,
 			str = NULL;
 		}
 		if (str != next) {
-			libreswan_log("invalid virtual string \"%s\" - virtual selection is disabled for connection '%s'",
-				string, c->name);
+			log_message(RC_LOG, logger,
+				    "invalid virtual string \"%s\" - virtual selection is disabled for connection",
+				    string);
 			return NULL;
 		}
 		/* clang 3.5 thinks that next might be NULL; wrong */
@@ -278,9 +271,11 @@ struct virtual_t *create_virtual(const struct connection *c,
 		str = next + 1;
 	}
 
-	struct virtual_t *v = (struct virtual_t *)alloc_bytes(
-		sizeof(struct virtual_t) + (n_net * sizeof(ip_subnet)),
+	/* allocate struct + array */
+	struct virtual_ip *v = (struct virtual_ip *)alloc_bytes(
+		sizeof(struct virtual_ip) + (n_net * sizeof(ip_subnet)),
 		"virtual description");
+	refcnt_init("vip", v, &v->refcnt, HERE);
 
 	v->flags = flags;
 	v->n_net = n_net;
@@ -383,10 +378,10 @@ static bool net_in_list(const ip_subnet *peer_net, const ip_subnet *list,
  * @return err_t NULL if allowed, diagnostic otherwise
  */
 err_t check_virtual_net_allowed(const struct connection *c,
-			     const ip_subnet *peer_net,
-			     const ip_address *peers_addr)
+				const ip_subnet *peer_net,
+				const ip_address *peers_addr)
 {
-	const struct virtual_t *virt = c->spd.that.virt;
+	const struct virtual_ip *virt = c->spd.that.virt;
 	if (virt == NULL)
 		return NULL;
 
@@ -429,8 +424,9 @@ err_t check_virtual_net_allowed(const struct connection *c,
 
 	if (virt->flags & F_VIRTUAL_ALL) {
 		/* %all must only be used for testing - log it */
-		loglog(RC_LOG_SERIOUS, "Warning - v%s:%%all must only be used for testing",
-			(virt->flags & F_VIRTUAL_HOST) ? "host" : "net");
+		log_connection(RC_LOG_SERIOUS, null_fd, c,
+			    "WARNING: v%s:%%all must only be used for testing",
+			    (virt->flags & F_VIRTUAL_HOST) ? "host" : "net");
 
 		return NULL;	/* success */
 	}
@@ -480,4 +476,20 @@ void show_virtual_private(struct show *s)
 					  private_net_excl,
 					  private_net_excl_len);
 	}
+}
+
+static void virtual_ip_free(struct virtual_ip **vip, where_t where UNUSED)
+{
+	pfree(*vip);
+	*vip = NULL;
+}
+
+struct virtual_ip *virtual_ip_addref(struct virtual_ip *vip, where_t where)
+{
+	return refcnt_addref(vip, where);
+}
+
+void virtual_ip_delref(struct virtual_ip **vip, where_t where)
+{
+	refcnt_delref(vip, virtual_ip_free, where);
 }

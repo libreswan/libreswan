@@ -55,6 +55,7 @@
 #include "crypt_dh.h"
 #include "ikev1_prf.h"
 #include "state_db.h"
+#include "pluto_shutdown.h"		/* for exiting_pluto */
 
 #include "ikev1.h"	/* for complete_v1_state_transition() */
 #include "ikev2.h"	/* for complete_v2_state_transition() */
@@ -62,6 +63,8 @@
 #ifdef HAVE_SECCOMP
 # include "pluto_seccomp.h"
 #endif
+
+static void helper_thread_stopped_callback(struct state *st, void *arg);
 
 /*
  * Hack to keep old PCR based code working.
@@ -162,6 +165,18 @@ static pthread_cond_t backlog_cond = PTHREAD_COND_INITIALIZER;
 struct list_head backlog = INIT_LIST_HEAD(&backlog, &backlog_info);
 static int backlog_queue_len = 0;
 
+static void message_helpers(struct pluto_crypto_req_cont *cn)
+{
+	pthread_mutex_lock(&backlog_mutex);
+	if (cn != NULL) {
+		insert_list_entry(&backlog, &cn->pcrc_backlog);
+		backlog_queue_len++;
+	}
+	/* wake up threads waiting for work */
+	pthread_cond_signal(&backlog_cond);
+	pthread_mutex_unlock(&backlog_mutex);
+}
+
 /*
  * Create the pluto crypto request object.
  */
@@ -206,24 +221,7 @@ struct pluto_crypto_worker {
 /* may be NULL if we are to do all the work ourselves */
 static struct pluto_crypto_worker *pc_workers = NULL;
 
-static int nr_helpers_started = 0;	/* number of workers threads */
-
-/*
- * PIPE for reporting shutdown down threads.
- *
- * When a helper thread exits, it writes its struct
- * pluto_crypto_worker object to the pipe.  The main thread then
- * expects to read NR_HELPERS_STARTED pointers.
- *
- * Can't use join as there isn't a way to ensure that the thread being
- * waited on is the next to exit; and can't wait on any thread as
- * there may be more than we see here; and besides these get
- * daemonized?
- */
-static struct {
-	int send;
-	int recv;
-} helper_exited;
+static int nr_helper_threads = 0;
 
 /* pluto crypto operations */
 static const char *const pluto_cryptoop_strings[] = {
@@ -266,13 +264,15 @@ static void pcr_cancelled(struct crypto_task **task)
 	case pcr_build_nonce:
 		cancelled_ke_and_nonce(&r->pcr_d.kn);
 		break;
-	case pcr_compute_dh_v2:
-		cancelled_dh_v2(&r->pcr_d.dh_v2);
+	case pcr_compute_v2_dh_shared_secret:
+		cancelled_v2_dh_shared_secret(&r->pcr_d.dh_v2);
 		break;
-	case pcr_compute_dh_iv:
-	case pcr_compute_dh:
-		cancelled_v1_dh(&r->pcr_d.v1_dh);
+#ifdef USE_IKEv1
+	case pcr_compute_v1_dh_shared_secret_and_iv:
+	case pcr_compute_v1_dh_shared_secret:
+		cancelled_v1_dh_shared_secret(&r->pcr_d.v1_dh);
 		break;
+#endif
 	case pcr_crypto:
 	default:
 		bad_case(r->pcr_type);
@@ -303,7 +303,7 @@ struct pcr_v1_dh *pcr_v1_dh_init(struct pluto_crypto_req_cont *cn,
 struct pcr_dh_v2 *pcr_dh_v2_init(struct pluto_crypto_req_cont *cn)
 {
 	struct pluto_crypto_req *r = &cn->pcrc_pcr;
-	pcr_init(r, pcr_compute_dh_v2);
+	pcr_init(r, pcr_compute_v2_dh_shared_secret);
 	struct pcr_dh_v2 *dhq = &r->pcr_d.dh_v2;
 	INIT_WIRE_ARENA(*dhq);
 	return dhq;
@@ -359,16 +359,17 @@ static void pcr_compute(struct logger *logger,
 		calc_nonce(&r->pcr_d.kn);
 		break;
 
-	case pcr_compute_dh_iv:
-		calc_dh_iv(&r->pcr_d.v1_dh, logger);
+#ifdef USE_IKEv1
+	case pcr_compute_v1_dh_shared_secret_and_iv:
+		calc_v1_dh_shared_secret_and_iv(&r->pcr_d.v1_dh, logger);
 		break;
-
-	case pcr_compute_dh:
-		calc_dh(&r->pcr_d.v1_dh, logger);
+	case pcr_compute_v1_dh_shared_secret:
+		calc_v1_dh_shared_secret(&r->pcr_d.v1_dh, logger);
 		break;
+#endif
 
-	case pcr_compute_dh_v2:
-		calc_dh_v2(r, logger);
+	case pcr_compute_v2_dh_shared_secret:
+		calc_v2_dh_shared_secret(r, logger);
 		break;
 
 	case pcr_crypto:
@@ -447,10 +448,9 @@ static void *pluto_crypto_helper_thread(void *arg)
 				cn->pcrc_so_serialno,
 				handle_helper_answer, cn);
 	}
-	dbg("shutting down helper thread %d", w->pcw_helpernum);
-	if (write(helper_exited.send, &w->pcw_helpernum, sizeof(w->pcw_helpernum)) != sizeof(w->pcw_helpernum)) {
-		log_errno(logger, errno, "problem writing to helper exit pipe");
-	}
+	dbg("telling main thread that the helper thread %d is done", w->pcw_helpernum);
+	schedule_callback("helper stopped", SOS_NOBODY,
+			  helper_thread_stopped_callback, NULL);
 	return NULL;
 }
 
@@ -557,14 +557,7 @@ static void submit_crypto_request(struct pluto_crypto_req_cont *cn,
 		clear_retransmits(st);
 		event_schedule(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, st);
 		/* add to backlog */
-		pthread_mutex_lock(&backlog_mutex);
-		{
-			insert_list_entry(&backlog, &cn->pcrc_backlog);
-			backlog_queue_len++;
-			/* wake up threads waiting for work */
-			pthread_cond_signal(&backlog_cond);
-		}
-		pthread_mutex_unlock(&backlog_mutex);
+		message_helpers(cn);
 	}
 }
 
@@ -597,7 +590,7 @@ void delete_cryptographic_continuation(struct state *st)
 			cn->pcrc_handler->cancelled_cb(&cn->pcrc_task);
 			pexpect(cn->pcrc_task == NULL); /* did their job */
 			/* free the heap space */
-			free_logger(&cn->logger);
+			free_logger(&cn->logger, HERE);
 			pfree(cn);
 		}
 	}
@@ -651,7 +644,7 @@ static stf_status handle_helper_answer(struct state *st,
 	}
 	pexpect(cn->pcrc_task == NULL); /* cross check - re-check */
 	/* now free up the continuation */
-	free_logger(&cn->logger);
+	free_logger(&cn->logger, HERE);
 	pfree(cn);
 	return status;
 }
@@ -664,6 +657,13 @@ stf_status pcr_completed(struct state *st,
 	passert(cn->pcrc_func != NULL);
 	pexpect(cn->pcrc_pcr.pcr_type != pcr_crypto);
 	(*cn->pcrc_func)(st, md, &cn->pcrc_pcr);
+	switch (cn->pcrc_pcr.pcr_type) {
+	case pcr_build_ke_and_nonce:
+		cancelled_ke_and_nonce(&cn->pcrc_pcr.pcr_d.kn);
+		break;
+	default:
+		break;
+	}
 	pfree(*task);
 	*task = NULL;
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
@@ -703,7 +703,7 @@ static void init_crypto_helper_delay(struct logger *logger)
 void start_crypto_helpers(int nhelpers, struct logger *logger)
 {
 	pc_workers = NULL;
-	nr_helpers_started = 0;
+	nr_helper_threads = 0;
 
 	init_crypto_helper_delay(logger);
 
@@ -733,28 +733,12 @@ void start_crypto_helpers(int nhelpers, struct logger *logger)
 		log_message(RC_LOG, logger, "starting up %d helper threads", nhelpers);
 
 		/*
-		 * Set up a pipe for shutting down the threads.
-		 */
-		int exit_pipe[2];
-		if (pipe(exit_pipe) < 0) {
-			FATAL_ERRNO(errno, "problem creating helper exit pipe");
-		}
-		for (unsigned i = 0; i < elemsof(exit_pipe); i++) {
-			if (fcntl(exit_pipe[i], F_SETFD, FD_CLOEXEC) < 0) {
-				FATAL_ERRNO(errno, "problem setting FD_CLOEXE on helper exit pipe");
-			}
-			/* Only BSD has O_NOSIGPIPE */
-		}
-		helper_exited.send = exit_pipe[1];
-		helper_exited.recv = exit_pipe[0];
-
-		/*
 		 * create the threads.  Set nr_helpers_started after
 		 * the threads have been created so that shutdown code
 		 * only tries to run when there really are threads.
 		 */
 		pc_workers = alloc_things(struct pluto_crypto_worker, nhelpers,
-					  "pluto helpers (ignore)");
+					  "pluto helpers");
 		for (int n = 0; n < nhelpers; n++) {
 			struct pluto_crypto_worker *w = &pc_workers[n];
 			w->pcw_helpernum = n + 1; /* i.e., not 0 */
@@ -769,7 +753,7 @@ void start_crypto_helpers(int nhelpers, struct logger *logger)
 				log_message(RC_LOG, logger, "started thread for helper %d", n);
 			}
 		}
-		nr_helpers_started = nhelpers;
+		nr_helper_threads = nhelpers;
 	} else {
 		log_message(RC_LOG, logger,
 			    "no helpers will be started; all cryptographic operations will be done inline");
@@ -784,29 +768,37 @@ void start_crypto_helpers(int nhelpers, struct logger *logger)
  * and a specific thread join may block waiting for the wrong thread.
  */
 
-void stop_crypto_helpers(struct logger *logger)
+static void helper_thread_stopped_callback(struct state *st UNUSED, void *context UNUSED)
 {
-	if (nr_helpers_started > 0) {
-		unsigned remaining = nr_helpers_started;
-		do {
-			/* poke threads waiting for work */
-			pthread_mutex_lock(&backlog_mutex);
-			pthread_cond_signal(&backlog_cond);
-			pthread_mutex_unlock(&backlog_mutex);
-			/* wait for one to die; add timeout? */
-			int w = 0;
-			if (read(helper_exited.recv, &w, sizeof(w)) != sizeof(w) ||
-			    w == 0 /*err*/) {
-				log_errno(logger, errno, "error reading helper exit pipe");
-				/* give up; too much risk of a hang */
-				return;
-			}
-			dbg("helper thread %d exited", w);
-			remaining--;
-		} while (remaining > 0);
-		log_message(RC_LOG, logger, "%d helper threads shutdown", nr_helpers_started);
+	nr_helper_threads--;
+	dbg("helper thread exited, %u remaining", nr_helper_threads);
+
+	/* wait for more? */
+	if (nr_helper_threads > 0) {
+		/* poke threads waiting for work */
+		message_helpers(NULL);
+		return;
+	}
+
+	/*
+	 * Finish things using a callback so this code can cleanup all
+	 * its allocated data.
+	 */
+	pfreeany(pc_workers);
+	schedule_callback("all helper threads stopped", SOS_NOBODY,
+			  helper_threads_stopped_callback, NULL);
+}
+
+void stop_helper_threads(void)
+{
+	if (nr_helper_threads > 0) {
+		/* poke threads waiting for work */
+		message_helpers(NULL);
 	} else {
 		dbg("no helper threads to shutdown");
+		pexpect(pc_workers == NULL);
+		schedule_callback("no helpers to stop", SOS_NOBODY,
+				  helper_threads_stopped_callback, NULL);
 	}
 }
 

@@ -825,8 +825,8 @@ static void dh_desc_check(const struct ike_alg *alg, struct logger *logger)
 	if (dh->dh_ops != NULL) {
 		pexpect_ike_alg(logger, alg, dh->dh_ops->backend != NULL);
 		pexpect_ike_alg(logger, alg, dh->dh_ops->check != NULL);
-		pexpect_ike_alg(logger, alg, dh->dh_ops->calc_secret != NULL);
-		pexpect_ike_alg(logger, alg, dh->dh_ops->calc_shared != NULL);
+		pexpect_ike_alg(logger, alg, dh->dh_ops->calc_local_secret != NULL);
+		pexpect_ike_alg(logger, alg, dh->dh_ops->calc_shared_secret != NULL);
 		/* more? */
 		dh->dh_ops->check(dh, logger);
 		/* IKEv1 supports MODP groups but not ECC. */

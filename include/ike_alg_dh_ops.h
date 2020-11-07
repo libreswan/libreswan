@@ -15,6 +15,8 @@
 #ifndef IKE_ALG_DH_OPS_H
 #define IKE_ALG_DH_OPS_H
 
+#include "chunk.h"
+
 struct logger;
 
 struct dh_ops {
@@ -36,16 +38,17 @@ struct dh_ops {
 	 * SIZEOF_KE == .BYTES from above, but pass it in so both ends
 	 * can perform a sanity check.
 	 */
-	void (*calc_secret)(const struct dh_desc *group,
-			    SECKEYPrivateKey **local_privk,
-			    SECKEYPublicKey **locak_pubk,
-			    uint8_t *ke, size_t sizeof_ke,
-			    struct logger *logger);
-	PK11SymKey *(*calc_shared)(const struct dh_desc *group,
-				   SECKEYPrivateKey *local_privk,
-				   const SECKEYPublicKey *local_pubk,
-				   uint8_t *remote_ke, size_t sizeof_remote_ke,
-				   struct logger *logger);
+	void (*calc_local_secret)(const struct dh_desc *group,
+				  SECKEYPrivateKey **local_privk,
+				  SECKEYPublicKey **locak_pubk,
+				  struct logger *logger);
+	chunk_t (*clone_local_secret_ke)(const struct dh_desc *group,
+					 const SECKEYPublicKey *local_pubk);
+	PK11SymKey *(*calc_shared_secret)(const struct dh_desc *group,
+					  SECKEYPrivateKey *local_privk,
+					  const SECKEYPublicKey *local_pubk,
+					  uint8_t *remote_ke, size_t sizeof_remote_ke,
+					  struct logger *logger);
 };
 
 extern const struct dh_ops ike_alg_dh_nss_ecp_ops;

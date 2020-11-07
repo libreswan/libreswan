@@ -50,7 +50,6 @@
 #include "kernel.h"     /* needs connections.h */
 #include "log.h"
 #include "server.h"
-#include "spdb.h"
 #include "timer.h"
 #include "rnd.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */

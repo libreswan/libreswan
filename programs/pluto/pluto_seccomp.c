@@ -21,11 +21,13 @@
 
 #include "defs.h"
 #include "log.h"
+#include "pluto_shutdown.h"
 
 #define LSW_SECCOMP_EXIT_FAIL PLUTO_EXIT_SECCOMP_FAIL
 #include "lswseccomp.h"
 
 #include "pluto_seccomp.h"
+#include "pluto_shutdown.h"		/* for exit_pluto() */
 
 /* helper rules must be a sub-set of main rules */
 

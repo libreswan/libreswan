@@ -475,13 +475,14 @@ static void add_cert_san_pubkeys(struct pubkey_list **pubkey_db,
 
 		gntoid(&id, gn);
 		if (id.kind != ID_NONE) {
-			struct pubkey *pk;
+			struct pubkey *pk = NULL;
 			diag_t d = create_pubkey_from_cert(&id, cert, &pk, logger);
 			if (d != NULL) {
 				log_diag(RC_LOG, logger, &d, "%s", "");
-			} else {
-				replace_public_key(pubkey_db, pk);
+				passert(pk == NULL);
+				return;
 			}
+			replace_public_key(pubkey_db, &pk/*stolen*/);
 		}
 	}
 
@@ -509,7 +510,9 @@ bool add_pubkey_from_nss_cert(struct pubkey_list **pubkey_db,
 		return false;
 	}
 
-	replace_public_key(pubkey_db, pk);
+	replace_public_key(pubkey_db, &pk);
+	passert(pk == NULL); /*stolen*/
+
 	add_cert_san_pubkeys(pubkey_db, cert, logger);
 
 	if (keyid != NULL && keyid->kind != ID_DER_ASN1_DN &&
@@ -519,8 +522,9 @@ bool add_pubkey_from_nss_cert(struct pubkey_list **pubkey_db,
 		diag_t d = create_pubkey_from_cert(keyid, cert, &pk2, logger);
 		if (d != NULL) {
 			log_diag(RC_LOG, logger, &d, "%s", "");
+			/* ignore? */
 		} else {
-			replace_public_key(pubkey_db, pk2);
+			replace_public_key(pubkey_db, &pk2);
 		}
 	}
 	return true;

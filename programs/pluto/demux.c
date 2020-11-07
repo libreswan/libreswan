@@ -180,6 +180,17 @@ void process_packet(struct msg_digest **mdp)
 		return;
 
 	case ISAKMP_MAJOR_VERSION: /* IKEv1 */
+		if (pluto_ikev1_pol == GLOBAL_IKEv1_DROP) {
+			log_md(RC_LOG, md, "ignoring IKEv1 packet as policy is set to silently drop all IKEv1 packets");
+			return;
+		}
+#ifdef USE_IKEv1
+		if (pluto_ikev1_pol == GLOBAL_IKEv1_REJECT) {
+			log_md(RC_LOG, md, "rejecting IKEv1 packet as policy is set to reject all IKEv1 packets");
+			send_notification_from_md(md, INVALID_MAJOR_VERSION);
+			return;
+		}
+
 		if (vmin > ISAKMP_MINOR_VERSION) {
 			/* RFC2408 3.1 ISAKMP Header Format:
 			 *
@@ -205,6 +216,7 @@ void process_packet(struct msg_digest **mdp)
 		    md->hdr.isa_xchg);
 		process_v1_packet(md);
 		/* our caller will release_any_md(mdp) */
+#endif
 		break;
 
 	case IKEv2_MAJOR_VERSION: /* IKEv2 */
@@ -330,7 +342,7 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 {
 	/* not whack FD yet is expected to be reset! */
 	pexpect_reset_globals();
-	struct msg_digest *md = clone_raw_md(orig, fmt /* good enough */);
+	struct msg_digest *md = clone_raw_md(orig, HERE);
 
 	LOG_JAMBUF(RC_LOG, md->md_logger, buf) {
 		jam_string(buf, "IMPAIR: start processing ");
@@ -384,7 +396,7 @@ static void save_md_for_replay(bool already_impaired, struct msg_digest *md)
 {
 	if (!already_impaired) {
 		struct replay_entry *e = alloc_thing(struct replay_entry, "replay");
-		e->md = clone_raw_md(md, "copy of real message");
+		e->md = clone_raw_md(md, HERE);
 		e->nr = ++replay_count; /* yes; pre-increment */
 		e->entry = list_entry(&replay_info, e); /* back-link */
 		insert_list_entry(&replay_packets, &e->entry);
@@ -424,6 +436,16 @@ static bool impair_incoming(struct msg_digest *md)
 		impaired = true;
 	}
 	return impaired;
+}
+
+void free_demux(void)
+{
+	struct replay_entry *e = NULL;
+	FOR_EACH_LIST_ENTRY_NEW2OLD(&replay_packets, e) {
+		md_delref(&e->md, HERE);
+		remove_list_entry(&e->entry);
+		pfreeany(e);
+	}
 }
 
 static callback_cb handle_md_event; /* type assertion */
@@ -501,7 +523,7 @@ enum message_role v2_msg_role(const struct msg_digest *md)
  * Result is allocated on heap so caller must ensure it is freed.
  */
 
-char *cisco_stringify(pb_stream *input_pbs, const char *attr_name)
+char *cisco_stringify(pb_stream *input_pbs, const char *attr_name, lset_t pol)
 {
 	char strbuf[500]; /* Cisco maximum unknown - arbitrary choice */
 	struct jambuf buf = ARRAY_AS_JAMBUF(strbuf); /* let jambuf deal with overflow */
@@ -554,7 +576,10 @@ char *cisco_stringify(pb_stream *input_pbs, const char *attr_name)
 	if (!jambuf_ok(&buf)) {
 		loglog(RC_INFORMATIONAL, "Received overlong %s: %s (truncated)", attr_name, strbuf);
 	} else {
-		loglog(RC_INFORMATIONAL, "Received %s: %s", attr_name, strbuf);
+		bool ignore = streq("INTERNAL_DNS_DOMAIN", attr_name) && LIN(POLICY_IGNORE_PEER_DNS, pol);
+		loglog(RC_INFORMATIONAL, "Received %s%s: %s",
+			ignore ? "and ignored " : "",
+			attr_name, strbuf);
 	}
 	return clone_str(strbuf, attr_name);
 }

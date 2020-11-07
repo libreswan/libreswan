@@ -110,7 +110,7 @@ enum keyword_numeric_config_field {
 
 	KBF_LISTEN_TCP,		/* listen on TCP port 4500 - default no */
 	KBF_LISTEN_UDP,		/* listen on UDP port 500/4500 - default yes */
-
+	KBF_GLOBAL_IKEv1,	/* global ikev1 policy - default accept */
 	KBF_ROOF
 };
 
@@ -271,6 +271,7 @@ enum keyword_numeric_conn_field {
 	KNCF_NIC_OFFLOAD,	/* xfrm offload to network device */
 	KNCF_TCP,		/* TCP (yes/no/fallback) */
 	KNCF_REMOTE_TCPPORT,	/* TCP remote port - default 4500  */
+	KNCF_IGNORE_PEER_DNS,	/* Accept DNS nameservers from peer */
 
 	KNCF_ROOF
 };

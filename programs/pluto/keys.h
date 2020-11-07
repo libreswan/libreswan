@@ -65,6 +65,7 @@ extern const chunk_t *get_ppk_by_id(const chunk_t *ppk_id);
 
 extern void load_preshared_secrets(struct logger *logger);
 extern void free_preshared_secrets(struct logger *logger);
+extern void free_remembered_public_keys(void);
 err_t preload_private_key_by_cert(const struct cert *cert, bool *load_needed, struct logger *logger);
 err_t preload_private_key_by_ckaid(const ckaid_t *ckaid, bool *load_needed, struct logger *logger);
 

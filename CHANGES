@@ -1,6 +1,9 @@
 
 See also https://libreswan.org/
 
+v4.2 (unreleased)
+* pluto: Add ignore-peer-dns=yes|no and whack --ignore-peer-dns [Paul]
+
 v4.1 (October 18, 2020)
 * IKEv2: Fix Notify protocol ID interop with Cisco introduced in 4.0 [Antony]
 * addconn: Fix resolving with %defaultroute plus peer with A + AAAA [Antony]

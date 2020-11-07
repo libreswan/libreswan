@@ -230,6 +230,7 @@ enum retransmit_status retransmit(struct state *st)
 					nr_retransmits);
 			}
 			switch (st->st_state->kind) {
+#ifdef USE_IKEv1
 			case STATE_MAIN_I3:
 			case STATE_AGGR_I2:
 				jam_string(buf, ".  Possible authentication failure: no acceptable response to our first encrypted message");
@@ -243,6 +244,7 @@ enum retransmit_status retransmit(struct state *st)
 					jam_string(buf, ".  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal");
 				}
 				break;
+#endif
 			case STATE_PARENT_I2:
 				jam_string(buf, ".  Possible authentication failure: no acceptable response to our first encrypted message");
 				break;

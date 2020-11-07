@@ -15,10 +15,26 @@
 
 #include "refcnt.h"
 
-#define DEBUG_LOG(OLD_COUNT, WHAT)				\
-	dbg("%s %s@%p(%u->%u) "PRI_WHERE"",			\
-	    WHAT, what, pointer, OLD_COUNT, refcnt->count,	\
-	    pri_where(where))
+static void dbg_ref(const char *what, const void *pointer, where_t where,
+		    int old_count, int new_count, const char *why)
+{
+	dbg("%sref %s@%p(%u->%u) "PRI_WHERE"",
+	    why, what, pointer, old_count, new_count,
+	    pri_where(where));
+}
+
+#define DEBUG_LOG(OLD_COUNT, WHY)				\
+	dbg_ref(what, pointer, where, OLD_COUNT, refcnt->count, WHY)
+
+void dbg_alloc(const char *what, const void *pointer, where_t where)
+{
+	dbg_ref(what, pointer, where, 0, 1, "new");
+}
+
+void dbg_free(const char *what, const void *pointer, where_t where)
+{
+	dbg_ref(what, pointer, where, 1, 0, "del");
+}
 
 void refcnt_init(const char *what, const void *pointer,
 		 refcnt_t *refcnt, where_t where)
@@ -29,7 +45,7 @@ void refcnt_init(const char *what, const void *pointer,
 			    what, pointer);
 	}
 	unsigned old = refcnt->count++;
-	DEBUG_LOG(old, "newref");
+	DEBUG_LOG(old, "new");
 }
 
 void refcnt_add(const char *what, const void *pointer,
@@ -41,7 +57,7 @@ void refcnt_add(const char *what, const void *pointer,
 			    what, pointer);
 	}
 	unsigned old = refcnt->count++;
-	DEBUG_LOG(old, "addref");
+	DEBUG_LOG(old, "add");
 }
 
 bool refcnt_delete(const char *what, const void *pointer,
@@ -56,6 +72,6 @@ bool refcnt_delete(const char *what, const void *pointer,
 	} else {
 		old = refcnt->count--;
 	}
-	DEBUG_LOG(old, "delref");
+	DEBUG_LOG(old, "del");
 	return refcnt->count == 0;
 }

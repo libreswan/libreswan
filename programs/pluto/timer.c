@@ -56,7 +56,7 @@
 #include "ikev2_redirect.h"
 #include "pending.h" /* for flush_pending_by_connection */
 #include "ikev1_xauth.h"
-#include "xauth.h"
+#include "pam_auth.h"
 #include "kernel.h"		/* for kernel_ops */
 #include "nat_traversal.h"
 #include "pluto_sd.h"
@@ -220,19 +220,23 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		case IKEv2:
 			retransmit_v2_msg(st);
 			break;
+#ifdef USE_IKEv1
 		case IKEv1:
 			retransmit_v1_msg(st);
 			break;
+#endif
 		default:
 			bad_case(st->st_ike_version);
 		}
 		break;
 
+#ifdef USE_IKEv1
 	case EVENT_v1_SEND_XAUTH:
 		dbg("XAUTH: event EVENT_v1_SEND_XAUTH #%lu %s",
 		    st->st_serialno, st->st_state->name);
 		xauth_send_request(st);
 		break;
+#endif
 
 	case EVENT_v2_INITIATE_CHILD:
 		ikev2_child_outI(st);
@@ -357,7 +361,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 				} else {
 					/* note: no md->st to clear */
 					passert(st != &ike->sa);
-					schedule_next_child_delete(st, ike);
+					ikev2_schedule_next_child_delete(st, ike);
 					st = NULL;
 				}
 			}
@@ -404,6 +408,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		initiate_redirect(st);
 		break;
 
+#ifdef USE_IKEv1
 	case EVENT_DPD:
 		dpd_event(st);
 		break;
@@ -412,18 +417,10 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		dpd_timeout(st);
 		break;
 
-	case EVENT_CRYPTO_TIMEOUT:
-		dbg("event crypto_failed on state #%lu, aborting",
-		    st->st_serialno);
-		pstat_sa_failed(st, REASON_CRYPTO_TIMEOUT);
-		delete_state(st);
-		/* note: no md->st to clear */
-		break;
-
-#ifdef XAUTH_HAVE_PAM
+#ifdef AUTH_HAVE_PAM
 	case EVENT_PAM_TIMEOUT:
 		dbg("PAM thread timeout on state #%lu", st->st_serialno);
-		xauth_pam_abort(st);
+		pamauth_abort(st);
 		/*
 		 * Things get cleaned up when the PAM process exits.
 		 *
@@ -432,6 +429,15 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		 */
 		break;
 #endif
+#endif
+	case EVENT_CRYPTO_TIMEOUT:
+		dbg("event crypto_failed on state #%lu, aborting",
+		    st->st_serialno);
+		pstat_sa_failed(st, REASON_CRYPTO_TIMEOUT);
+		delete_state(st);
+		/* note: no md->st to clear */
+		break;
+
 
 	default:
 		bad_case(type);

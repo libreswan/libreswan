@@ -28,14 +28,11 @@
 #include "ike_alg_dh_ops.h"
 #include "crypt_symkey.h"
 
-static void nss_modp_calc_secret(const struct dh_desc *group,
-				 SECKEYPrivateKey **privk,
-				 SECKEYPublicKey **pubk,
-				 uint8_t *ke, size_t sizeof_ke,
-				 struct logger *logger)
+static void nss_modp_calc_local_secret(const struct dh_desc *group,
+				       SECKEYPrivateKey **privk,
+				       SECKEYPublicKey **pubk,
+				       struct logger *logger)
 {
-	passert(sizeof_ke == group->bytes);
-
 	chunk_t prime = chunk_from_hex(group->modp, group->modp);
 	chunk_t base = chunk_from_hex(group->gen, group->gen);
 
@@ -78,16 +75,22 @@ static void nss_modp_calc_secret(const struct dh_desc *group,
 
 	free_chunk_content(&prime);
 	free_chunk_content(&base);
-
-	memcpy(ke, (*pubk)->u.dh.publicValue.data, group->bytes);
 }
 
-static PK11SymKey *nss_modp_calc_shared(const struct dh_desc *group,
-					SECKEYPrivateKey *local_privk,
-					const SECKEYPublicKey *local_pubk,
-					uint8_t *remote_ke,
-					size_t sizeof_remote_ke,
-					struct logger *logger)
+static chunk_t nss_modp_clone_local_secret_ke(const struct dh_desc *group,
+					      const SECKEYPublicKey *local_pubk)
+{
+	/* clone secitem as chunk()? */
+	pexpect(local_pubk->u.dh.publicValue.len == group->bytes);
+	return clone_bytes_as_chunk(local_pubk->u.dh.publicValue.data, group->bytes, "MODP KE");
+}
+
+static PK11SymKey *nss_modp_calc_shared_secret(const struct dh_desc *group,
+					       SECKEYPrivateKey *local_privk,
+					       const SECKEYPublicKey *local_pubk,
+					       uint8_t *remote_ke,
+					       size_t sizeof_remote_ke,
+					       struct logger *logger)
 {
 	DBGF(DBG_CRYPT, "Started DH shared-secret computation in NSS:");
 
@@ -133,6 +136,7 @@ static void nss_modp_check(const struct dh_desc *dhmke, struct logger *logger)
 const struct dh_ops ike_alg_dh_nss_modp_ops = {
 	.backend = "NSS(MODP)",
 	.check = nss_modp_check,
-	.calc_secret = nss_modp_calc_secret,
-	.calc_shared = nss_modp_calc_shared,
+	.calc_local_secret = nss_modp_calc_local_secret,
+	.clone_local_secret_ke = nss_modp_clone_local_secret_ke,
+	.calc_shared_secret = nss_modp_calc_shared_secret,
 };

@@ -1,0 +1,32 @@
+/testing/guestbin/swan-prep
+east #
+ # Run the System Role generation for host "east" here.
+east #
+ ./e-systemrole.sh
+east #
+ # test config for syntax errors
+east #
+ ipsec addconn --checkconfig --config /etc/ipsec.conf
+east #
+ # start for test
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ # test secrets reading for early warning of syntax errors
+east #
+ ipsec secrets
+002 forgetting secrets
+002 loading secrets from "/etc/ipsec.secrets"
+002 loading secrets from "/testing/pluto/ikev2-systemrole-01/OUTPUT/east/ipsec.d/east-west.secrets"
+east #
+ echo "initdone"
+initdone
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+east #
+ 

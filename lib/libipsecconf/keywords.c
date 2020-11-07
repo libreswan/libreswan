@@ -275,7 +275,7 @@ static const struct keyword_enum_values kw_remote_peer_type = VALUES_INITIALIZER
 
 static const struct keyword_enum_value kw_xauthby_list[] = {
 	{ "file",	XAUTHBY_FILE },
-#ifdef XAUTH_HAVE_PAM
+#ifdef AUTH_HAVE_PAM
 	{ "pam",	XAUTHBY_PAM },
 #endif
 	{ "alwaysok",	XAUTHBY_ALWAYSOK },
@@ -358,11 +358,19 @@ static const struct keyword_enum_value kw_ocsp_method_values[] = {
 };
 static const struct keyword_enum_values kw_ocsp_method_list = VALUES_INITIALIZER(kw_ocsp_method_values);
 
+static const struct keyword_enum_value kw_global_ikev1_values[] = {
+	{ "accept",      GLOBAL_IKEv1_ACCEPT },
+	{ "reject",     GLOBAL_IKEv1_REJECT },
+	{ "drop",     GLOBAL_IKEv1_DROP },
+};
+static const struct keyword_enum_values kw_global_ikev1_list = VALUES_INITIALIZER(kw_global_ikev1_values);
+
 /* MASTER KEYWORD LIST
  * Note: this table is terminated by an entry with keyname == NULL.
  */
 
 const struct keyword_def ipsec_conf_keywords[] = {
+  { "ikev1-policy",  kv_config,  kt_enum,  KBF_GLOBAL_IKEv1,  &kw_global_ikev1_list, NULL, },
   { "interfaces",  kv_config,  kt_string,  KSF_INTERFACES, NULL, NULL, },
   { "curl-iface",  kv_config,  kt_string,  KSF_CURLIFACE, NULL, NULL, },
   { "curl-timeout",  kv_config,  kt_time,  KBF_CURLTIMEOUT, NULL, NULL, },
@@ -528,6 +536,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "modecfgdns",  kv_conn,  kt_string,  KSCF_MODECFGDNS, NULL, NULL, },
   { "modecfgdomains",  kv_conn,  kt_string,  KSCF_MODECFGDOMAINS, NULL, NULL, },
   { "modecfgbanner",  kv_conn,  kt_string,  KSCF_MODECFGBANNER, NULL, NULL, },
+  { "ignore-peer-dns",  kv_conn,  kt_bool,  KNCF_IGNORE_PEER_DNS, NULL, NULL, },
   { "mark",  kv_conn,  kt_string,  KSCF_CONN_MARK_BOTH, NULL, NULL, },
   { "mark-in",  kv_conn,  kt_string,  KSCF_CONN_MARK_IN, NULL, NULL, },
   { "mark-out",  kv_conn,  kt_string,  KSCF_CONN_MARK_OUT, NULL, NULL, },

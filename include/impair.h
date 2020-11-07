@@ -111,6 +111,7 @@ struct impair {
 	bool send_no_delete;
 	bool send_no_ikev2_auth;
 	bool send_no_xauth_r0;
+	bool send_no_idr;
 	bool drop_xauth_r0;
 	bool send_no_main_r2;
 	bool force_fips;

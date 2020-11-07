@@ -18,24 +18,24 @@
 struct state;
 struct msg_digest;
 
-/* ??? needlessly used even if !XAUTH_HAVE_PAM */
+/* ??? needlessly used even if !AUTH_HAVE_PAM */
 
-typedef void xauth_callback_t(struct state *st,
+typedef void pamauth_callback_t(struct state *st,
 			      struct msg_digest *md,
 			      const char *,
 			      bool success);
 
-#ifdef XAUTH_HAVE_PAM
+#ifdef AUTH_HAVE_PAM
 
 /*
  * XXX: Should XAUTH handle timeouts internally?
  */
-void xauth_pam_abort(struct state *st);
+void pamauth_abort(struct state *st);
 
-void xauth_fork_pam_process(struct state *st,
+void auth_fork_pam_process(struct state *st,
 			    const char *name,
 			    const char *password,
 			    const char *atype,
-			    xauth_callback_t *callback);
+			    pamauth_callback_t *callback);
 
 #endif

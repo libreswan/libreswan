@@ -89,7 +89,7 @@ local-install-base: $(CONFFILES) $(CONFDSUBDIRFILES)
 		echo -e "**********************************************************************\n" ; \
 	fi \
 	fi
-ifeq ($(USE_XAUTHPAM),true)
+ifeq ($(USE_AUTHPAM),true)
 	@if test ! -f $(DESTDIR)/etc/pam.d/pluto ; then \
 		mkdir -p $(DESTDIR)/etc/pam.d/ ; \
 		$(INSTALL) $(INSTCONFFLAGS) pam.d/pluto $(DESTDIR)/etc/pam.d/pluto ; \

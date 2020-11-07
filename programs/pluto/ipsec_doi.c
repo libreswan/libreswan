@@ -50,7 +50,6 @@
 #include "kernel.h"     /* needs connections.h */
 #include "log.h"
 #include "server.h"
-#include "spdb.h"
 #include "timer.h"
 #include "rnd.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
@@ -75,7 +74,6 @@
 #include "ip_info.h"
 #include "vendor.h"
 #include "nat_traversal.h"
-#include "virtual.h"	/* needs connections.h */
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"
 #include "ip_address.h"
@@ -88,12 +86,9 @@
 /*
  * Process KE values.
  */
-void unpack_KE_from_helper(struct state *st,
-			   struct pluto_crypto_req *r,
+void unpack_KE_from_helper(struct state *st, struct dh_local_secret *local_secret,
 			   chunk_t *g)
 {
-	struct pcr_kenonce *kn = &r->pcr_d.kn;
-
 	/*
 	 * Should the crypto helper group and the state group be in
 	 * sync?
@@ -117,16 +112,18 @@ void unpack_KE_from_helper(struct state *st,
 	 * responder comes back with a vald accepted propsal and KE.
 	 */
 	if (DBGP(DBG_CRYPT)) {
+		const struct dh_desc *group = dh_local_secret_desc(local_secret);
 		DBG_log("wire (crypto helper) group %s and state group %s %s",
-			kn->group ? kn->group->common.fqn : "NULL",
+			group->common.fqn,
 			st->st_oakley.ta_dh ? st->st_oakley.ta_dh->common.fqn : "NULL",
-			kn->group == st->st_oakley.ta_dh ? "match" : "differ");
+			group == st->st_oakley.ta_dh ? "match" : "differ");
 	}
 
 	free_chunk_content(g); /* happens in odd error cases */
-	*g = kn->gi;
+	*g = clone_dh_local_secret_ke(local_secret);
 
-	transfer_dh_secret_to_state("KE", &kn->secret, st);
+	pexpect(st->st_dh_local_secret == NULL);
+	st->st_dh_local_secret = dh_local_secret_addref(local_secret, HERE);
 }
 
 /* accept_KE
@@ -163,27 +160,27 @@ bool accept_KE(chunk_t *dest, const char *val_name,
 	return true;
 }
 
-void unpack_nonce(chunk_t *n, const struct pluto_crypto_req *r)
+void unpack_nonce(chunk_t *n, chunk_t *nonce)
 {
-	const struct pcr_kenonce *kn = &r->pcr_d.kn;
-
 	free_chunk_content(n);
-	*n = kn->n;
+	*n = *nonce; /* steal away */
+	*nonce = empty_chunk;
 }
 
-bool ikev1_justship_nonce(chunk_t *n, pb_stream *outs,
+bool ikev1_justship_nonce(chunk_t *n, struct pbs_out *outs,
 			  const char *name)
 {
 	return ikev1_out_generic_chunk(&isakmp_nonce_desc, outs, *n, name);
 }
 
-bool ikev1_ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
-		      pb_stream *outs, const char *name)
+bool ikev1_ship_nonce(chunk_t *n, chunk_t *nonce,
+		      struct pbs_out *outs, const char *name)
 {
-	unpack_nonce(n, r);
+	unpack_nonce(n, nonce);
 	return ikev1_justship_nonce(n, outs, name);
 }
 
+#ifdef USE_IKEv1
 static initiator_function *pick_initiator(struct connection *c,
 					  lset_t policy)
 {
@@ -194,6 +191,7 @@ static initiator_function *pick_initiator(struct connection *c,
 		return (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;
 	}
 }
+#endif
 
 void ipsecdoi_initiate(struct fd *whack_sock,
 		       struct connection *c,
@@ -213,12 +211,18 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 	 * Note: there is no way to initiate with a Road Warrior.
 	 */
 	struct state *st = find_phase1_state(c,
+#ifdef USE_IKEv1
 					     ISAKMP_SA_ESTABLISHED_STATES |
 					     PHASE1_INITIATOR_STATES |
+#endif
 					     IKEV2_ISAKMP_INITIATOR_STATES);
 
 	if (st == NULL) {
+#ifdef USE_IKEv1
 		initiator_function *initiator = pick_initiator(c, policy);
+#else
+		initiator_function *initiator = ikev2_parent_outI1;
+#endif
 
 		if (initiator != NULL) {
 			/*
@@ -229,14 +233,33 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 			initiator(whack_sock, c, NULL, policy, try, inception, uctx);
 		}
 	} else if (HAS_IPSEC_POLICY(policy)) {
-		if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
-			/* leave our Phase 2 negotiation pending */
-			add_pending(whack_sock, pexpect_ike_sa(st),
+#ifdef USE_IKEv1
+		if (st->st_ike_version == IKEv1) {
+			if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+				/* leave our Phase 2 negotiation pending */
+				add_pending(whack_sock, pexpect_ike_sa(st),
 				    c, policy, try,
 				    replacing, uctx,
 				    false/*part of initiate*/);
-		} else if (st->st_ike_version == IKEv2) {
-			struct pending p = {
+			} else {
+				/* ??? we assume that peer_nexthop_sin isn't important:
+				 * we already have it from when we negotiated the ISAKMP SA!
+				 * It isn't clear what to do with the error return.
+				 */
+			quick_outI1(whack_sock, st, c, policy, try,
+				    replacing, uctx);
+			}
+		}
+#endif
+		if (st->st_ike_version == IKEv2) {
+			if (!IS_PARENT_SA_ESTABLISHED(st)) {
+				/* leave our Phase 2 negotiation pending */
+				add_pending(whack_sock, pexpect_ike_sa(st),
+				    c, policy, try,
+				    replacing, uctx,
+				    false/*part of initiate*/);
+			} else {
+				struct pending p = {
 				.whack_sock = whack_sock, /*on-stack*/
 				.ike = pexpect_ike_sa(st),
 				.connection = c,
@@ -244,16 +267,10 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 				.policy = policy,
 				.replacing = replacing,
 				.uctx = uctx,
-			};
-			ikev2_initiate_child_sa(&p);
-		} else {
-			/* ??? we assume that peer_nexthop_sin isn't important:
-			 * we already have it from when we negotiated the ISAKMP SA!
-			 * It isn't clear what to do with the error return.
-			 */
-			quick_outI1(whack_sock, st, c, policy, try,
-				    replacing, uctx);
+				};
+				ikev2_initiate_child_sa(&p);
 			}
+		}
 	}
 }
 
@@ -284,7 +301,11 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 		if (IS_PARENT_SA_ESTABLISHED(st))
 			libreswan_log("initiate reauthentication of IKE SA");
 
+#ifdef USE_IKEv1
 		initiator_function *initiator = pick_initiator(c, policy);
+#else
+		initiator_function *initiator = ikev2_parent_outI1;
+#endif
 
 		if (initiator != NULL) {
 			/*
@@ -492,9 +513,11 @@ void send_delete(struct state *st)
 		    enum_name(&ike_version_names, st->st_ike_version),
 		    st->st_state->name);
 		switch (st->st_ike_version) {
+#ifdef USE_IKEv1
 		case IKEv1:
 			send_v1_delete(st);
 			break;
+#endif
 		case IKEv2:
 		{
 			struct ike_sa *ike = ike_sa(st, HERE);

@@ -64,13 +64,12 @@
 #include "server.h"
 #include "keys.h"
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
-#include "xauth.h"
+#include "pam_auth.h"
 #include "crypto.h"
 #include "ike_alg.h"
 #include "secrets.h"
 #include "ikev1.h"
 #include "ikev1_xauth.h"
-#include "virtual.h"	/* needs connections.h */
 #include "addresspool.h"
 #include "ip_address.h"
 #include "send.h"		/* for send without recording */
@@ -1052,7 +1051,7 @@ static bool do_file_authentication(struct state *st, const char *name,
  * method to verify the user/password
  */
 
-static xauth_callback_t ikev1_xauth_callback;	/* type assertion */
+static pamauth_callback_t ikev1_xauth_callback;	/* type assertion */
 
 static void ikev1_xauth_callback(struct state *st,
 				 struct msg_digest *md UNUSED,
@@ -1146,8 +1145,8 @@ static void xauth_launch_authent(struct state *st,
 	/*
 	 * XAUTH somehow already in progress?
 	 */
-#ifdef XAUTH_HAVE_PAM
-	if (st->st_xauth != NULL)
+#ifdef AUTH_HAVE_PAM
+	if (st->st_pamauth != NULL)
 		return;
 #endif
 
@@ -1164,11 +1163,11 @@ static void xauth_launch_authent(struct state *st,
 	event_delete(EVENT_v1_SEND_XAUTH, st);
 
 	switch (st->st_connection->xauthby) {
-#ifdef XAUTH_HAVE_PAM
+#ifdef AUTH_HAVE_PAM
 	case XAUTHBY_PAM:
 		libreswan_log("XAUTH: PAM authentication method requested to authenticate user '%s'",
 			      arg_name);
-		xauth_fork_pam_process(st,
+		auth_fork_pam_process(st,
 				       arg_name, arg_password,
 				       "XAUTH",
 				       ikev1_xauth_callback);
@@ -1601,6 +1600,8 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
 				       &rbody, st->st_logger);
 
+	struct connection *c = st->st_connection;
+
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	lset_t resp = LEMPTY;
@@ -1716,8 +1717,10 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 				address_buf a_buf;
 				const char *a_str = ipstr(&a, &a_buf);
-				loglog(RC_INFORMATIONAL, "Received DNS server %s",
-				       a_str);
+				bool ignore = LIN(POLICY_IGNORE_PEER_DNS, c->policy);
+				loglog(RC_INFORMATIONAL, "Received %sDNS server %s",
+					ignore ? "and ignored " : "",
+					a_str);
 
 				append_st_cfg_dns(st, a_str);
 
@@ -1727,13 +1730,13 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 			case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
 			{
-				append_st_cfg_domain(st, cisco_stringify(&strattr, "Domain"));
+				append_st_cfg_domain(st, cisco_stringify(&strattr, "Domain", c->policy));
 				break;
 			}
 
 			case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
 			{
-				st->st_seen_cfg_banner = cisco_stringify(&strattr, "Banner");
+				st->st_seen_cfg_banner = cisco_stringify(&strattr, "Banner", c->policy);
 				break;
 			}
 
@@ -1800,6 +1803,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 							sr->this.ca = EMPTY_CHUNK;
 							sr->that.ca = EMPTY_CHUNK;
 
+							/* unshare pointers */
 							sr->this.virt = NULL;
 							sr->that.virt = NULL;
 

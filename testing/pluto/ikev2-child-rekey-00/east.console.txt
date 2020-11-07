@@ -1,0 +1,24 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add rekey
+002 added IKEv2 connection "rekey"
+east #
+ ipsec auto --add rekey1
+002 added IKEv2 connection "rekey1"
+east #
+ ipsec auto --add rekey2
+002 added IKEv2 connection "rekey2"
+east #
+ echo "initdone"
+initdone
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+east #
+ 

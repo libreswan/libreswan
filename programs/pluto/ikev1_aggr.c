@@ -32,7 +32,7 @@
 #include "demux.h"      /* needs packet.h */
 #include "log.h"
 #include "ike_spi.h"
-#include "spdb.h"
+#include "ikev1_spdb.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "ikev1_send.h"
 #include "pluto_crypt.h"
@@ -106,16 +106,16 @@ static void aggr_inI1_outR1_continue1(struct state *st,
 	dbg("aggr inI1_outR1: calculated ke+nonce, calculating DH");
 
 	/* unpack first calculation */
-	unpack_KE_from_helper(st, r, &st->st_gr);
+	unpack_KE_from_helper(st, r->pcr_d.kn.local_secret, &st->st_gr);
 
 	/* unpack nonce too */
-	unpack_nonce(&st->st_nr, r);
+	unpack_nonce(&st->st_nr, &r->pcr_d.kn.n);
 
 	/* NOTE: the "r" reply will get freed by our caller */
 
 	/* set up second calculation */
-	start_dh_v1_secretiv(aggr_inI1_outR1_continue2, "aggr outR1 DH",
-			     st, SA_RESPONDER, st->st_oakley.ta_dh);
+	submit_v1_dh_shared_secret_and_iv(aggr_inI1_outR1_continue2, "aggr outR1 DH",
+					  st, SA_RESPONDER, st->st_oakley.ta_dh);
 	/*
 	 * XXX: Since more crypto has been requested, MD needs to be re
 	 * suspended.  If the original crypto request did everything
@@ -289,7 +289,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 	 * so we have to build our reply_stream and emit HDR before calling it.
 	 */
 
-	if (!finish_dh_secretiv(st, r))
+	if (!finish_v1_dh_shared_secret_and_iv(st, r))
 		return STF_FAIL + INVALID_KEY_INFORMATION;
 
 	/* decode certificate requests */
@@ -581,8 +581,8 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	ikev1_natd_init(st, md);
 
 	/* set up second calculation */
-	start_dh_v1_secretiv(aggr_inR1_outI2_crypto_continue, "aggr outR1 DH",
-			     st, SA_INITIATOR, st->st_oakley.ta_dh);
+	submit_v1_dh_shared_secret_and_iv(aggr_inR1_outI2_crypto_continue, "aggr outR1 DH",
+					  st, SA_INITIATOR, st->st_oakley.ta_dh);
 	return STF_SUSPEND;
 }
 
@@ -600,7 +600,7 @@ static void aggr_inR1_outI2_crypto_continue(struct state *st,
 	passert(md != NULL);
 	passert(md->st == st);
 
-	if (!finish_dh_secretiv(st, r)) {
+	if (!finish_v1_dh_shared_secret_and_iv(st, r)) {
 		e = STF_FAIL + INVALID_KEY_INFORMATION;
 	} else {
 		e = aggr_inR1_outI2_tail(md);
@@ -1119,11 +1119,11 @@ static stf_status aggr_outI1_tail(struct state *st,
 	}
 
 	/* KE out */
-	if (!ikev1_ship_KE(st, r, &st->st_gi, &rbody))
+	if (!ikev1_ship_KE(st, r->pcr_d.kn.local_secret, &st->st_gi, &rbody))
 		return STF_INTERNAL_ERROR;
 
 	/* Ni out */
-	if (!ikev1_ship_nonce(&st->st_ni, r, &rbody, "Ni"))
+	if (!ikev1_ship_nonce(&st->st_ni, &r->pcr_d.kn.n, &rbody, "Ni"))
 		return STF_INTERNAL_ERROR;
 
 	/* IDii out */

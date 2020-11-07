@@ -52,7 +52,6 @@
 #include "server.h"
 #include "vendor.h"
 #include "kernel.h"
-#include "virtual.h"	/* needs connections.h */
 #include "hostpair.h"
 #include "addresspool.h"
 #include "rnd.h"
@@ -328,10 +327,13 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 static void ikev2_set_domain(pb_stream *cp_a_pbs, struct state *st)
 {
 	bool responder = (st->st_state->kind != STATE_PARENT_I2);
+	bool ignore = LIN(POLICY_IGNORE_PEER_DNS, st->st_connection->policy);
 
 	if (!responder) {
-		char *safestr = cisco_stringify(cp_a_pbs, "INTERNAL_DNS_DOMAIN");
-		append_st_cfg_domain(st, safestr);
+		char *safestr = cisco_stringify(cp_a_pbs, "INTERNAL_DNS_DOMAIN",
+			st->st_connection->policy);
+		if (!ignore)
+			append_st_cfg_domain(st, safestr);
 	} else {
 		libreswan_log("initiator INTERNAL_DNS_DOMAIN CP ignored");
 	}
@@ -341,6 +343,7 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st,
 			  const struct ip_info *af)
 {
 	struct connection *c = st->st_connection;
+	bool ignore = LIN(POLICY_IGNORE_PEER_DNS, st->st_connection->policy);
 
 	if (c->policy & POLICY_OPPORTUNISTIC) {
 		libreswan_log("ignored INTERNAL_IP%d_DNS CP payload for Opportunistic IPsec",
@@ -365,9 +368,12 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st,
 	if (!responder) {
 		address_buf ip_buf;
 		const char *ip_str = ipstr(&ip, &ip_buf);
-		libreswan_log("received INTERNAL_IP%d_DNS %s",
+
+		libreswan_log("received %sINTERNAL_IP%d_DNS %s",
+			ignore ? "and ignored " : "",
 			      af->ip_version, ip_str);
-		append_st_cfg_dns(st, ip_str);
+		if (!ignore)
+			append_st_cfg_dns(st, ip_str);
 	} else {
 		libreswan_log("initiator INTERNAL_IP%d_DNS CP ignored",
 			      af->ip_version);

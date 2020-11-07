@@ -134,13 +134,13 @@ static void print(struct private_key_stuff *pks,
 	// only old/obsolete secrets entries use this
 	case PKK_RSA: {
 		printf("RSA");
-		keyid_t keyid = pks->u.RSA_private_key.pub.keyid;
-		printf(" keyid: *%s", str_keyid(keyid)[0] ? str_keyid(keyid) : "<missing-pubkey>");
+		keyid_t keyid = pks->keyid;
+		printf(" keyid: %s", str_keyid(keyid)[0] ? str_keyid(keyid) : "<missing-pubkey>");
 		if (id) {
 			printf(" id: %s", idb);
 		}
 		ckaid_buf cb;
-		ckaid_t *ckaid = &pks->u.RSA_private_key.pub.ckaid;
+		ckaid_t *ckaid = &pks->ckaid;
 		printf(" ckaid: %s\n", str_ckaid(ckaid, &cb));
 		break;
 	}
@@ -209,7 +209,7 @@ static int pick_by_rsaid(struct secret *secret UNUSED,
 {
 	char *rsaid = (char *)uservoid;
 
-	if (pks->kind == PKK_RSA && streq(pks->u.RSA_private_key.pub.keyid.keyid, rsaid)) {
+	if (pks->kind == PKK_RSA && streq(pks->keyid.keyid, rsaid)) {
 		/* stop */
 		return 0;
 	} else {
@@ -223,7 +223,7 @@ static int pick_by_ckaid(struct secret *secret UNUSED,
 			 void *uservoid)
 {
 	char *start = (char *)uservoid;
-	if (pks->kind == PKK_RSA && ckaid_starts_with(&pks->u.RSA_private_key.pub.ckaid, start)) {
+	if (pks->kind == PKK_RSA && ckaid_starts_with(&pks->ckaid, start)) {
 		/* stop */
 		return 0;
 	} else {
@@ -317,31 +317,11 @@ static int show_confkey(struct private_key_stuff *pks,
 	}
 
 	printf("\t# rsakey %s\n",
-	       pks->u.RSA_private_key.pub.keyid.keyid);
+	       pks->keyid.keyid);
 	printf("\t%srsasigkey=%s\n", side,
 	       base64);
 	pfree(base64);
 	return 0;
-}
-
-/*
- * XXX: this code is broken:
- *
- * - it duplicates stuff in secrets.c
- *
- * - it doesn't support ECDSA
- *
- * - it doesn't pass a secret into the iterator
- *
- * Why not load the secret properly?
- */
-
-static void fill_RSA_public_key(struct RSA_public_key *rsa, SECKEYPublicKey *pubkey)
-{
-	passert(SECKEY_GetPublicKeyType(pubkey) == rsaKey);
-	rsa->e = clone_secitem_as_chunk(pubkey->u.rsa.publicExponent, "e");
-	rsa->n = clone_secitem_as_chunk(pubkey->u.rsa.modulus, "n");
-	form_keyid(rsa->e, rsa->n, &rsa->keyid, &rsa->k);
 }
 
 static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval func,
@@ -370,34 +350,45 @@ static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval f
 	     !PRIVKEY_LIST_END(node, list);
 	     node = PRIVKEY_LIST_NEXT(node)) {
 
-		if (SECKEY_GetPrivateKeyType(node->key) != rsaKey) {
-			/* only rsa for now */
+		SECKEYPrivateKey *private_key = node->key;
+
+		/*
+		 * XXX: this code has a lot in common with secrets.c
+		 * which also creates private-key-stuff.
+		 */
+
+		/* XXX: see also private_key_type_nss(pubk); */
+		const struct pubkey_type *type;
+		switch (SECKEY_GetPrivateKeyType(private_key)) {
+		case rsaKey:
+			type = &pubkey_type_rsa;
+			break;
+		case ecKey:
+			type = &pubkey_type_ecdsa;
+			break;
+		default:
+			continue;
+		}
+
+		SECItem *ckaid_nss = PK11_GetLowLevelKeyIDForPrivateKey(node->key); /* must free */
+		if (ckaid_nss == NULL) {
+			continue;
+		}
+
+		SECKEYPublicKey *pubk = SECKEY_ConvertToPublicKey(node->key);
+		if (pubk == NULL) {
 			continue;
 		}
 
 		struct private_key_stuff pks = {
-			.kind = PKK_RSA,
-			.on_heap = TRUE,
+			.pubkey_type = type,
+			.kind = type->private_key_kind,
+			.line = 0,
+			.private_key = SECKEY_CopyPrivateKey(private_key), /* add reference */
 		};
 
-		{
-			SECItem *nss_ckaid
-				= PK11_GetLowLevelKeyIDForPrivateKey(node->key);
-			if (nss_ckaid == NULL) {
-				// fprintf(stderr, "ckaid not found\n");
-				continue;
-			}
-			pks.u.RSA_private_key.pub.ckaid = ckaid_from_secitem(nss_ckaid);
-			SECITEM_FreeItem(nss_ckaid, PR_TRUE);
-		}
-
-		{
-			SECKEYPublicKey *pubkey = SECKEY_ConvertToPublicKey(node->key);
-			if (pubkey != NULL) {
-				fill_RSA_public_key(&pks.u.RSA_private_key.pub, pubkey);
-				SECKEY_DestroyPublicKey(pubkey);
-			}
-		}
+		type->extract_private_key_pubkey_content(&pks, &pks.keyid, &pks.ckaid, &pks.size,
+							 pubk, ckaid_nss);
 
 		/*
 		 * Only count private keys that get processed.
@@ -423,8 +414,7 @@ static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval f
 			break;
 		}
 
-		free_chunk_content(&pks.u.RSA_private_key.pub.e);
-		free_chunk_content(&pks.u.RSA_private_key.pub.n);
+		type->free_secret_content(&pks);
 
 		if (ret < 0) {
 			break;

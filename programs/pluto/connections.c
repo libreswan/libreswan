@@ -66,7 +66,6 @@
 #include "log.h"
 #include "keys.h"
 #include "whack.h"
-#include "spdb.h"
 #include "ike_alg.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
@@ -78,7 +77,7 @@
 #include "nss_cert_load.h"
 #include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
-#include "virtual.h"	/* needs connections.h */
+#include "virtual_ip.h"	/* needs connections.h */
 #include "hostpair.h"
 #include "lswfips.h"
 #include "crypto.h"
@@ -212,7 +211,7 @@ void delete_connection(struct connection *c, bool relations)
 	struct logger tmp = CONNECTION_LOGGER(c, whack_log_fd);
 	struct logger *connection_logger = clone_logger(&tmp); /* must-free */
 	discard_connection(c, true/*connection_valid*/, connection_logger);
-	free_logger(&connection_logger);
+	free_logger(&connection_logger, HERE);
 }
 
 static void discard_connection(struct connection *c,
@@ -260,15 +259,8 @@ static void discard_connection(struct connection *c,
 
 	passert(c->spd.this.virt == NULL);
 
-	if (c->kind != CK_GOING_AWAY) {
-#if 0
-		/* ??? this seens buggy since virts don't get unshared */
-		pfreeany(c->spd.that.virt);
-#else
-		/* ??? make do until virts get unshared */
-		c->spd.that.virt = NULL;
-#endif
-	}
+	virtual_ip_delref(&c->spd.this.virt, HERE);
+	virtual_ip_delref(&c->spd.that.virt, HERE);
 
 	struct spd_route *sr = c->spd.spd_next;
 
@@ -681,6 +673,7 @@ void unshare_connection_end(struct end *e)
 	e->xauth_username = clone_str(e->xauth_username, "xauth username");
 	e->xauth_password = clone_str(e->xauth_password, "xauth password");
 	e->host_addr_name = clone_str(e->host_addr_name, "host ip");
+	e->virt = virtual_ip_addref(e->virt, HERE);
 	if (e->ckaid != NULL) {
 		e->ckaid = clone_thing(*e->ckaid, "ckaid");
 	}
@@ -823,7 +816,9 @@ static int extract_end(struct end *dst,
 				    dst->leftright, src->cert);
 			return -1; /* fatal */
 		}
-		diag_t diag = add_end_cert_and_preload_private_key(cert, dst, logger);
+		diag_t diag = add_end_cert_and_preload_private_key(cert, dst,
+								   same_ca/*preserve_ca*/,
+								   logger);
 		if (diag != NULL) {
 			log_diag(RC_FATAL, logger, &diag, "failed to add connection: ");
 			CERT_DestroyCertificate(cert);
@@ -850,23 +845,25 @@ static int extract_end(struct end *dst,
 				     keyspace, sizeof(keyspace), &keylen,
 				     err_buf, sizeof(err_buf), 0);
 		union pubkey_content pkc;
-		err = type->unpack_pubkey_content(&pkc, chunk2(keyspace, keylen));
+		keyid_t pubkey;
+		ckaid_t ckaid;
+		size_t size;
+		err = type->unpack_pubkey_content(&pkc, &pubkey, &ckaid, &size,
+						  chunk2(keyspace, keylen));
 		if (err != NULL) {
 			log_message(RC_FATAL, logger,
 				    "failed to add connection: %s raw public key invalid: %s",
 				    dst->leftright, err);
 			return -1;
 		}
-		const ckaid_t *ckaid = type->ckaid_from_pubkey_content(&pkc);
 		ckaid_buf ckb;
 		dbg("saving %s CKAID %s extracted from raw %s public key",
-		    dst->leftright, str_ckaid(ckaid, &ckb), type->name);
-		dst->ckaid = clone_const_thing(*ckaid, "raw pubkey's ckaid");
+		    dst->leftright, str_ckaid(&ckaid, &ckb), type->name);
+		dst->ckaid = clone_const_thing(ckaid, "raw pubkey's ckaid");
 		type->free_pubkey_content(&pkc);
 		/* try to pre-load the private key */
 		bool load_needed;
-		err = preload_private_key_by_ckaid(type->ckaid_from_pubkey_content(&pkc),
-						   &load_needed, logger);
+		err = preload_private_key_by_ckaid(&ckaid, &load_needed, logger);
 		if (err != NULL) {
 			ckaid_buf ckb;
 			dbg("no private key matching %s CKAID %s: %s",
@@ -899,7 +896,9 @@ static int extract_end(struct end *dst,
 		 */
 		CERTCertificate *cert = get_cert_by_ckaid_from_nss(&ckaid, logger);
 		if (cert != NULL) {
-			diag_t diag = add_end_cert_and_preload_private_key(cert, dst, logger);
+			diag_t diag = add_end_cert_and_preload_private_key(cert, dst,
+									   same_ca/*preserve_ca*/,
+									   logger);
 			if (diag != NULL) {
 				log_diag(RC_FATAL, logger, &diag, "failed to add connection: ");
 				CERT_DestroyCertificate(cert);
@@ -1085,6 +1084,7 @@ static bool check_connection_end(const struct whack_end *this,
 
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 					    struct end *dst_end,
+					    bool preserve_ca,
 					    struct logger *logger)
 {
 	passert(cert != NULL);
@@ -1134,8 +1134,14 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	dst_end->cert.ty = CERT_X509_SIGNATURE;
 	dst_end->cert.u.nss_cert = cert;
 
-	/* if no CA is defined, use issuer as default */
-	if (dst_end->ca.ptr == NULL) {
+	/*
+	 * If no CA is defined, use issuer as default; but only when
+	 * update is ok.
+	 *
+	 */
+	if (preserve_ca || dst_end->ca.ptr != NULL) {
+		dbg("preserving existing %s ca", dst_end->leftright);
+	} else {
 		dst_end->ca = clone_secitem_as_chunk(cert->derIssuer, "issuer ca");
 	}
 
@@ -1303,6 +1309,11 @@ static bool extract_connection(const struct whack_message *wm,
 	switch (wm->policy & (POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW)) {
 	case POLICY_IKEV1_ALLOW:
 		c->ike_version = IKEv1;
+		if (pluto_ikev1_pol != GLOBAL_IKEv1_ACCEPT) {
+			log_message(RC_FATAL, logger,
+				    "failed to add IKEv1 connection: global ikev1-policy does not allow IKEv1 connections");
+			return false;
+		}
 		break;
 	case POLICY_IKEV2_ALLOW:
 		c->ike_version = IKEv2;
@@ -1974,8 +1985,8 @@ static bool extract_connection(const struct whack_message *wm,
 		 * or rightprotoport=17/%any
 		 * passert(isanyaddr(&c->spd.that.host_addr));
 		 */
-		c->spd.that.virt = create_virtual(c,
-						  wm->left.virt != NULL ?
+		passert(c->spd.that.virt == NULL);
+		c->spd.that.virt = create_virtual(wm->left.virt != NULL ?
 						  wm->left.virt :
 						  wm->right.virt,
 						  logger);
@@ -2032,7 +2043,7 @@ void add_connection(struct fd *whackfd, const struct whack_message *wm)
 		 */
 		discard_connection(c, false/*not-valid*/, logger);
 	}
-	free_logger(&logger);
+	free_logger(&logger, HERE);
 }
 
 /*
@@ -2083,7 +2094,7 @@ struct connection *add_group_instance(struct fd *whackfd,
 
 	if (t->spd.that.virt != NULL) {
 		DBG_log("virtual_ip not supported in group instance; ignored");
-		t->spd.that.virt = NULL;
+		virtual_ip_delref(&t->spd.that.virt, HERE);
 	}
 
 	unshare_connection(t);

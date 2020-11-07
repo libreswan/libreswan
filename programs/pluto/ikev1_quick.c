@@ -49,7 +49,7 @@
 #include "kernel.h"     /* needs connections.h */
 #include "log.h"
 #include "server.h"
-#include "spdb.h"
+#include "ikev1_spdb.h"
 #include "timer.h"
 #include "rnd.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
@@ -75,7 +75,7 @@
 
 #include "vendor.h"
 #include "nat_traversal.h"
-#include "virtual.h"	/* needs connections.h */
+#include "virtual_ip.h"
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"
 #include "ip_address.h"
@@ -323,7 +323,7 @@ static void compute_proto_keymat(struct state *st,
 	pfreeany(pi->our_keymat);
 	pi->our_keymat = ikev1_section_5_keymat(st->st_oakley.ta_prf,
 						st->st_skeyid_d_nss,
-						st->st_shared_nss,
+						st->st_dh_shared_secret,
 						protoid,
 						THING_AS_SHUNK(pi->our_spi),
 						st->st_ni, st->st_nr,
@@ -333,7 +333,7 @@ static void compute_proto_keymat(struct state *st,
 	pfreeany(pi->peer_keymat);
 	pi->peer_keymat = ikev1_section_5_keymat(st->st_oakley.ta_prf,
 						 st->st_skeyid_d_nss,
-						 st->st_shared_nss,
+						 st->st_dh_shared_secret,
 						 protoid,
 						 THING_AS_SHUNK(pi->attrs.spi),
 						 st->st_ni, st->st_nr,
@@ -768,7 +768,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 
 	{
 		/* Ni out */
-		if (!ikev1_ship_nonce(&st->st_ni, r, &rbody, "Ni")) {
+		if (!ikev1_ship_nonce(&st->st_ni, &r->pcr_d.kn.n, &rbody, "Ni")) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
@@ -776,7 +776,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 
 	/* [ KE ] out (for PFS) */
 	if (st->st_pfs_group != NULL) {
-		if (!ikev1_ship_KE(st, r, &st->st_gi, &rbody)) {
+		if (!ikev1_ship_KE(st, r->pcr_d.kn.local_secret, &st->st_gi, &rbody)) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
@@ -1138,8 +1138,8 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 			char cthat[END_BUF];
 
 			c->spd.that.client = *peers_net;
-			c->spd.that.has_client = TRUE;
-			c->spd.that.virt = NULL;	/* ??? leak? */
+			c->spd.that.has_client = true;
+			virtual_ip_delref(&c->spd.that.virt, HERE);
 
 			if (subnetishost(peers_net) &&
 			    addrinsubnet(&c->spd.that.host_addr, peers_net)) {
@@ -1279,13 +1279,13 @@ static void quick_inI1_outR1_continue1(struct state *st,
 	passert(st->st_connection != NULL);
 
 	/* we always calculate a nonce */
-	unpack_nonce(&st->st_nr, r);
+	unpack_nonce(&st->st_nr, &r->pcr_d.kn.n);
 
 	if (st->st_pfs_group != NULL) {
 		/* PFS is on: do a new DH */
-		unpack_KE_from_helper(st, r, &st->st_gr);
-		start_dh_v1_secret(quick_inI1_outR1_continue2, "quick outR1 DH",
-				   st, SA_RESPONDER, st->st_pfs_group);
+		unpack_KE_from_helper(st, r->pcr_d.kn.local_secret, &st->st_gr);
+		submit_v1_dh_shared_secret(quick_inI1_outR1_continue2, "quick outR1 DH",
+					   st, SA_RESPONDER, st->st_pfs_group);
 		/*
 		 * XXX: Since more crypto has been requested, MD needs
 		 * to be re suspended.  If the original crypto request
@@ -1466,7 +1466,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 		if (!ikev1_justship_KE(st->st_logger, &st->st_gr, &rbody))
 			return STF_INTERNAL_ERROR;
 
-		finish_dh_secret(st, r);
+		finish_v1_dh_shared_secret(st, r);
 	}
 
 	/* [ IDci, IDcr ] out */
@@ -1541,8 +1541,8 @@ stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 
 	if (st->st_pfs_group != NULL) {
 		/* set up DH calculation */
-		start_dh_v1_secret(quick_inR1_outI2_continue, "quick outI2 DH",
-				   st, SA_INITIATOR, st->st_pfs_group);
+		submit_v1_dh_shared_secret(quick_inR1_outI2_continue, "quick outI2 DH",
+					   st, SA_INITIATOR, st->st_pfs_group);
 		return STF_SUSPEND;
 	} else {
 		/* just call the tail function */
@@ -1575,7 +1575,7 @@ stf_status quick_inR1_outI2_tail(struct msg_digest *md,
 				       &rbody, st->st_logger);
 
 	if (st->st_pfs_group != NULL && r != NULL)
-		finish_dh_secret(st, r);
+		finish_v1_dh_shared_secret(st, r);
 
 	if ((st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
 	    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA))

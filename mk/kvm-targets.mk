@@ -30,6 +30,7 @@ KVM_GUEST_OS ?= f32
 KVM_GUEST_OS_BSD?= openbsd67
 include testing/libvirt/$(KVM_GUEST_OS).mk
 include testing/libvirt/BSD/$(KVM_GUEST_OS_BSD).mk
+include testing/libvirt/debian.mk
 
 #
 # where things live and what gets created
@@ -406,7 +407,7 @@ $(1): 		$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok \
 			--publish-hash $$(WEB_HASH) \
 			--publish-results $$(WEB_RESULTSDIR) \
 			--publish-status $$(WEB_SUMMARYDIR)/status.json) \
-		$(2) $$(KVM_TEST_FLAGS) $$(STRIPPED_KVM_TESTS)
+		$(2) $$(KVMRUNNER_FLAGS) $$(KVM_TEST_FLAGS) $$(STRIPPED_KVM_TESTS)
 	@$(MAKE) $$(if $$(WEB_ENABLED), web-test-post, -s web-pages-disabled)
 endef
 
@@ -436,10 +437,10 @@ $(KVM_TEST_CLEAN_TARGETS):
 
 .PHONY: kvm-results
 kvm-results:
-	$(KVMRESULTS) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS) $(if $(KVM_BASELINE),--baseline $(KVM_BASELINE))
+	$(KVMRESULTS) $(KVMRESULTS_FLAGS) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS) $(if $(KVM_BASELINE),--baseline $(KVM_BASELINE))
 .PHONY: kvm-diffs
 kvm-diffs:
-	$(KVMRESULTS) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS) $(if $(KVM_BASELINE),--baseline $(KVM_BASELINE)) --print diffs
+	$(KVMRESULTS) $(KVMRESULTS_FLAGS) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS) $(if $(KVM_BASELINE),--baseline $(KVM_BASELINE)) --print diffs
 
 KVM_MODIFIED_TESTS = git status testing/pluto/*/ | awk '/(modified|deleted|renamed):/ { print $$NF }' | cut -d/ -f1-3 | sort -u
 
