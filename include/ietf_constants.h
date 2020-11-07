@@ -1010,6 +1010,7 @@ enum ikev2_ts_type {
 	IKEv2_TS_FC_ADDR_RANGE = 9, /* RFC4595, not implemented */
 	/* 10-240 Unassigned */
 	/* 241-255 Private use */
+	IKEv2_TS_SECLABEL = 241, /* Temporarily used for IKEv2 labeled IPsec */
 };
 
 #define KEY_IKE 1

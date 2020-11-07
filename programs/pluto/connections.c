@@ -1772,6 +1772,15 @@ static bool extract_connection(const struct whack_message *wm,
 #endif
 
 	c->policy_label = clone_str(wm->policy_label, "connection policy_label");
+#ifndef HAVE_LABELED_IPSEC
+	if ((c->policy_label != NULL) && (strlen(c->policy_label) > 0)) {
+		log_message(RC_FATAL, logger,
+			    "failed to add connection: labeled IPsec not compiled in. policy-label=%s not supported.",
+			    c->policy_label);
+
+		return false;
+	}
+#endif
 	c->nflog_group = wm->nflog_group;
 	c->sa_priority = wm->sa_priority;
 	c->sa_tfcpad = wm->sa_tfcpad;

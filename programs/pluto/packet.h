@@ -240,11 +240,37 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 		     struct pbs_in *obj_pbs) MUST_USE_RESULT;
 diag_t pbs_in_raw(struct pbs_in *pbs, void *bytes, size_t len,
 		  const char *name) MUST_USE_RESULT;
+/**
+ * pbs_peek_raw: Peek at the specified number of bytes in the input packet
+ * byte stream without pushing the stream pointer forward.
+ *
+ * @param[in]	pbs	Input packet byte stream.
+ * @param[out]	bytes	Buffer to which peeked bytes should be copied.
+ * @param[in]	len	Number of bytes to peek.
+ * @param[in]	name	Description of the peek operation.
+ *
+ * @return	Status of the peek operation.
+ */
+diag_t pbs_peek_raw(struct pbs_in *pbs, void *bytes, size_t len,
+		    const char *name) MUST_USE_RESULT;
 
 extern bool in_struct(void *struct_ptr, struct_desc *sd,
 		      pb_stream *ins, pb_stream *obj_pbs) MUST_USE_RESULT;
 extern bool in_raw(void *bytes, size_t len, pb_stream *ins,
 		   const char *name) MUST_USE_RESULT; /* XXX: use pbs_in_raw() */
+/**
+ * pbs_peek_raw: Peek at the specified number of bytes in the input packet
+ * stream without pushing the stream pointer forward.
+ *
+ * @param[in]	pbs	Input packet byte stream.
+ * @param[out]	bytes	Buffer to which peeked bytes should be copied.
+ * @param[in]	len	Number of bytes to peek.
+ * @param[in]	name	Description of the peek operation.
+ *
+ * @return	True if peeking was successful.
+ */
+extern bool peek_raw(void *bytes, size_t len, pb_stream *ins,
+		     const char *name) MUST_USE_RESULT; /* XXX: use pbs_peek_raw() */
 
 /*
  * Output PBS
@@ -1089,9 +1115,30 @@ struct ikev2_ts1 {
 	uint16_t isat1_startport;
 	uint16_t isat1_endport;
 };
+/**
+ * ikev2_ts_seclabel: Header of a TS_SECLABEL substructure in a Traffic
+ * Selector (TS) Payload.
+ */
+struct ikev2_ts_seclabel {
+	/**
+	 * `isa_tssec_type` is the Traffic Selector Type.
+	 */
+	uint8_t isa_tssec_type;
+
+	/**
+	 * Reserved; unused
+	 */
+	uint8_t isa_tssec_reserved;
+
+	/* `isa_tssec_sellen` is the Traffic Selector substructure length
+	 * _including_ the header
+	 */
+	uint16_t isa_tssec_sellen;
+};
 extern struct_desc ikev2_ts_i_desc;
 extern struct_desc ikev2_ts_r_desc;
 extern struct_desc ikev2_ts1_desc;
+extern struct_desc ikev2_ts_seclabel_desc;
 
 /* rfc4306, section 3.14, encrypted payload, uses generic header */
 extern struct_desc ikev2_sk_desc;

@@ -720,6 +720,10 @@ struct state {
 	bool st_seen_intermediate;	/* does remote peer support Intermediate Exchange? */
 
 	/* connection included in AUTH (v2) */
+	/*
+	 * Invariant: `st_ts_{this,that}.sec_ctx` is always the same as the
+	 * enclosing `state.sec_ctx`.
+	 */
 	struct traffic_selector st_ts_this;
 	struct traffic_selector st_ts_that;
 
@@ -839,6 +843,15 @@ extern void rehash_state(struct state *st,
 extern void release_any_whack(struct state *st, where_t where, const char *why);
 extern void state_eroute_usage(const ip_subnet *ours, const ip_subnet *peers,
 			       unsigned long count, monotime_t nw);
+
+/**
+ * free_sec_ctx: Free the memory used by security labels in the specified
+ * child/IPsec SA state.
+ *
+ * @param[in,out]	st	Child/IPsec SA state.
+ */
+extern void free_sec_ctx(struct state *const st);
+
 extern void delete_state(struct state *st);
 extern void delete_states_by_connection(struct connection *c, bool relations, struct fd *whackfd);
 extern void rekey_p2states_by_connection(struct connection *c);

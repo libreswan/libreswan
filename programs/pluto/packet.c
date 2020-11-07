@@ -1445,6 +1445,48 @@ struct_desc ikev2_ts1_desc = {
 };
 
 /*
+ * 2.1.  TS_SECLABEL payload format
+ *
+ *                         1                   2                   3
+ *     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ *    +---------------+---------------+-------------------------------+
+ *    |   TS Type     |    Reserved   |       Selector Length         |
+ *    +---------------+---------------+-------------------------------+
+ *    |                                                               |
+ *    ~                         Security Label*                       ~
+ *    |                                                               |
+ *    +---------------------------------------------------------------+
+ *
+ *                Figure 1: Labeled IPsec Traffic Selector
+*/
+static field_desc ikev2_ts_seclabel_fields[] = {
+	{ ft_enum, 8 / BITS_PER_BYTE, "TS type", &ikev2_ts_type_names },
+	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
+
+	/*
+	 * "Selector Length" is NOT a `ft_len` because:
+	 *
+	 *  - We don't want the packet byte stream pointer to skip to the end
+	 *    beyond the "Security Label" during input parsing of a
+	 *    `ikev2_ts_seclabel` struct.
+	 *    - NOTE: The `ikev2_ts_seclabel` struct does NOT include the
+	 *      "Security Label" field since its size is variable.
+	 *
+	 *  - After input parsing an `ikev2_ts_seclabel` struct, we do a raw
+	 *    input parse for the "Security Label" based on the
+	 *    "Selector Length" value.
+	 */
+	{ ft_nat, 16 / BITS_PER_BYTE, "length", NULL },
+
+	{ ft_end,  0, NULL, NULL }
+};
+struct_desc ikev2_ts_seclabel_desc = {
+	.name = "IKEv2 TS_SECLABEL Traffic Selector",
+	.fields = ikev2_ts_seclabel_fields,
+	.size = sizeof(struct ikev2_ts_seclabel),
+};
+
+/*
  * 3.14.  Encrypted Payload
  *                         1                   2                   3
  *    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -2159,7 +2201,11 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 	return true;
 }
 
-diag_t pbs_in_raw(struct pbs_in *ins, void *bytes, size_t len, const char *name)
+static diag_t pbs_in_raw_helper(struct pbs_in *ins,
+				void *bytes,
+				size_t len,
+				const char *name,
+				bool const isPeeking)
 {
 	if (pbs_left(ins) < len) {
 		/* XXX: needs current logger embedded in pbs_in? */
@@ -2180,9 +2226,21 @@ diag_t pbs_in_raw(struct pbs_in *ins, void *bytes, size_t len, const char *name)
 				DBG_dump(name, bytes, len);
 			}
 		}
-		ins->cur += len;
+		if(!isPeeking) {
+			/* Do not modify the buffer as the caller is only
+			 * peeking at the data and therefore may re-read it. */
+			ins->cur += len;
+		}
 		return NULL;
 	}
+}
+
+diag_t pbs_in_raw(struct pbs_in *ins, void *bytes, size_t len, const char *name) {
+	return pbs_in_raw_helper(ins, bytes, len, name, false);
+}
+
+diag_t pbs_peek_raw(struct pbs_in *ins, void *bytes, size_t len, const char *name) {
+	return pbs_in_raw_helper(ins, bytes, len, name, true);
 }
 
 bool in_raw(void *bytes, size_t len, struct pbs_in *ins, const char *name)
@@ -2194,6 +2252,17 @@ bool in_raw(void *bytes, size_t len, struct pbs_in *ins, const char *name)
 		return false;
 	}
 
+	return true;
+}
+
+bool peek_raw(void *bytes, size_t len, struct pbs_in *ins, const char *name)
+{
+	struct logger logger = cur_logger();
+	diag_t d = pbs_peek_raw(ins, bytes, len, name);
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, &logger, &d, "%s", "Error while peeking raw bytes: ");
+		return false;
+	}
 	return true;
 }
 

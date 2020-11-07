@@ -430,7 +430,7 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 		} else {
 			c->spd.this.client.addr = ip;
 			c->spd.this.client.maskbits = af->mask_cnt;
-			st->st_ts_this = ikev2_end_to_ts(&c->spd.this);
+			st->st_ts_this = ikev2_make_ts(&c->spd.this, st->sec_ctx);
 			c->spd.this.has_cat = TRUE; /* create iptable entry */
 		}
 	} else {

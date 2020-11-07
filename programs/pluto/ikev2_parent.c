@@ -564,10 +564,18 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 	}
 
 	if (HAS_IPSEC_POLICY(policy)) {
-		st->sec_ctx = NULL;
-		if (uctx != NULL)
-			libreswan_log(
-				"Labeled ipsec is not supported with ikev2 yet");
+		if (st->sec_ctx != NULL) {
+			free_sec_ctx(st);
+		}
+		if (uctx != NULL) {
+			st->sec_ctx = clone_thing(*uctx, "sec ctx structure");
+			dbg("%s: set security label to \"%s\"", __FUNCTION__, st->sec_ctx->sec_ctx_value);
+			st->st_ts_this = ikev2_make_ts(&c->spd.this, st->sec_ctx);
+			st->st_ts_that = ikev2_make_ts(&c->spd.that, st->sec_ctx);
+			ikev2_print_ts(&st->st_ts_this);
+			ikev2_print_ts(&st->st_ts_that);
+
+		}
 		add_pending(whack_sock, ike, c, policy, 1,
 			    predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
 			    st->sec_ctx,
@@ -2405,10 +2413,13 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 		return STF_INTERNAL_ERROR;
 	}
 
-	cst->st_ts_this = ikev2_end_to_ts(&cc->spd.this);
-	cst->st_ts_that = ikev2_end_to_ts(&cc->spd.that);
+	cst->st_ts_this = ikev2_make_ts(&cc->spd.this, cst->sec_ctx);
+	cst->st_ts_that = ikev2_make_ts(&cc->spd.that, cst->sec_ctx);
 
-	v2_emit_ts_payloads(pexpect_child_sa(cst), &sk.pbs, cc);
+	stf_status const emit_ret = v2_emit_ts_payloads(pexpect_child_sa(cst), &sk.pbs, cc);
+	if (emit_ret != STF_OK) {
+		return STF_INTERNAL_ERROR;
+	}
 
 	if ((cc->policy & POLICY_TUNNEL) == LEMPTY) {
 		dbg("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE");
@@ -3235,8 +3246,8 @@ static bool assign_child_responder_client(struct ike_sa *ike,
 					    ENCRYPTED_PAYLOAD);
 			return false;
 		}
-		child->sa.st_ts_this = ikev2_end_to_ts(&spd->this);
-		child->sa.st_ts_that = ikev2_end_to_ts(&spd->that);
+		child->sa.st_ts_this = ikev2_make_ts(&spd->this, child->sa.sec_ctx);
+		child->sa.st_ts_that = ikev2_make_ts(&spd->that, child->sa.sec_ctx);
 	} else {
 		if (!v2_process_ts_request(child, md)) {
 			/* already logged? */
@@ -4081,7 +4092,9 @@ static bool ikev2_rekey_child_req(struct child_sa *child,
 	}
 
 	child->sa.st_ts_this = rst->st_ts_this;
+	child->sa.st_ts_this.sec_ctx = child->sa.sec_ctx;
 	child->sa.st_ts_that = rst->st_ts_that;
+	child->sa.st_ts_that.sec_ctx = child->sa.sec_ctx;
 
 	char cib[CONN_INST_BUF];
 
@@ -4213,7 +4226,82 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 	return true;
 }
 
-static bool ikev2_rekey_child_copy_ts(struct child_sa *child)
+/**
+ * ikev2_rekey_child_copy_sec_ctx: Copy the security label from the state of
+ * the predecessor child/IPsec SA to the state of the new child/IPsec SA
+ * replacing said predecessor during rekeying.
+ *
+ * @param[in,out]	new_state	State of the new child/IPsec SA.
+ * @param[in]		predecessor	State of the predecessor child/IPsec SA.
+ *
+ * @return	True if copying the security label from `predecessor` to
+ * 		`new_state` was successful.
+ */
+static bool ikev2_rekey_child_copy_sec_ctx(struct state *const new_state,
+					   struct state const* const predecessor) {
+	libreswan_log("%s: Prior to updating new SA's security label: predecessor security label = %s, new child/IPsec SA security label = %s",
+		     __func__,
+		     (predecessor->sec_ctx ? predecessor->sec_ctx->sec_ctx_value: "<NULL>"),
+		     (new_state->sec_ctx ? new_state->sec_ctx->sec_ctx_value : "<NULL>"));
+
+	if (predecessor->sec_ctx != NULL) {
+		/* Predecessor has a security label. */
+		if (new_state->sec_ctx != NULL) {
+			/*
+			 * New child/IPsec SA also has a security label already.
+			 * Check if it matches that of the predecessor.
+			 */
+			if (predecessor->sec_ctx == new_state->sec_ctx) {
+				return true;
+			}
+			if (streq(predecessor->sec_ctx->sec_ctx_value,
+				  new_state->sec_ctx->sec_ctx_value)) {
+				return true;
+			}
+
+			/* Security label mismatch between old and new child/IPsec SAs.*/
+			loglog(RC_LOG_SERIOUS, "ERROR: Security label mismatch between old SA (%s) and new SA (%s) during child rekeying", (predecessor->sec_ctx ? predecessor->sec_ctx->sec_ctx_value: "<NULL>"), (new_state->sec_ctx ? new_state->sec_ctx->sec_ctx_value : "<NULL>"));
+			return false;
+		} else {
+			/*
+			 * New child/IPsec SA doesn't have a security label.
+			 * Copy from the predecessor.
+			 */
+			new_state->sec_ctx = clone_thing(*predecessor->sec_ctx,
+							 "struct xfrm_user_sec_ctx_ike");
+			return true;
+		}
+	} else {
+		/* Predecessor does NOT have a security label. */
+		if (new_state->sec_ctx != NULL) {
+			/*
+			 * New child/IPsec SA has a security label while the
+			 * predecessor doesn't. This should not happen -
+			 * possible bug.
+			 */
+			loglog(RC_LOG_SERIOUS, "ERROR: Security label mismatch between old SA (<NULL>) and new SA (%s) during child rekeying", new_state->sec_ctx->sec_ctx_value);
+			return false;
+		} else {
+			/*
+			 * Neither the predecessor nor the new child/IPsec SA
+			 * has a security label.
+			 */
+			return true;
+		}
+	}
+}
+
+/**
+ * ikev2_rekey_child_copy_sec_ctx_and_ts: Copy security label and other Traffic
+ * Selector information from the predecessor child/IPsec SA to a new
+ * child/IPsec SA replacing said predecessor.
+ *
+ * @param[in,out]	child	New child/IPsec SA.
+ *
+ * @return	True if copying the security label and other Traffic Selector
+ * 		information to `child` from the predecessor was successful.
+ */
+static bool ikev2_rekey_child_copy_sec_ctx_and_ts(struct child_sa *child)
 {
 	passert(child->sa.st_ipsec_pred != SOS_NOBODY);
 
@@ -4223,6 +4311,14 @@ static bool ikev2_rekey_child_copy_ts(struct child_sa *child)
 		/*
 		 * Something screwed up - can't even start to rekey a
 		 * CHILD SA when there's no predicessor.
+		 */
+		return false;
+	}
+
+	if (!ikev2_rekey_child_copy_sec_ctx(&child->sa, &rchild->sa)) {
+		/*
+		 * Copying the security label from the predecessor to the new
+		 * child/IPsec SA failed.
 		 */
 		return false;
 	}
@@ -4240,8 +4336,9 @@ static bool ikev2_rekey_child_copy_ts(struct child_sa *child)
 	    rchild->sa.st_serialno);
 
 	struct spd_route *spd = &rchild->sa.st_connection->spd;
-	child->sa.st_ts_this = ikev2_end_to_ts(&spd->this);
-	child->sa.st_ts_that = ikev2_end_to_ts(&spd->that);
+
+	child->sa.st_ts_this = ikev2_make_ts(&spd->this, child->sa.sec_ctx);
+	child->sa.st_ts_that = ikev2_make_ts(&spd->that, child->sa.sec_ctx);
 	ikev2_print_ts(&child->sa.st_ts_this);
 	ikev2_print_ts(&child->sa.st_ts_that);
 
@@ -4326,11 +4423,14 @@ static stf_status ikev2_child_add_ipsec_payloads(struct child_sa *child,
 
 	if (rekey_spi == 0) {
 		/* not rekey */
-		child->sa.st_ts_this = ikev2_end_to_ts(&cc->spd.this);
-		child->sa.st_ts_that = ikev2_end_to_ts(&cc->spd.that);
+		child->sa.st_ts_this = ikev2_make_ts(&cc->spd.this, child->sa.sec_ctx);
+		child->sa.st_ts_that = ikev2_make_ts(&cc->spd.that, child->sa.sec_ctx);
 	}
 
-	v2_emit_ts_payloads(child, outpbs, cc);
+	stf_status const emit_ret = v2_emit_ts_payloads(child, outpbs, cc);
+	if (emit_ret != STF_OK) {
+		return STF_INTERNAL_ERROR;
+	}
 
 	if (send_use_transport) {
 		dbg("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE");
@@ -5108,7 +5208,7 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 		if (!pexpect(child->sa.st_ipsec_pred != SOS_NOBODY)) {
 			return STF_INTERNAL_ERROR;
 		}
-		if (!ikev2_rekey_child_copy_ts(child)) {
+		if (!ikev2_rekey_child_copy_sec_ctx_and_ts(child)) {
 			/* Should "just work", not working is a screw up */
 			return STF_INTERNAL_ERROR;
 		}
@@ -5974,11 +6074,18 @@ void ikev2_initiate_child_sa(struct pending *p)
 
 	child->sa.st_policy = p->policy;
 
-	child->sa.sec_ctx = NULL;
+	if (child->sa.sec_ctx != NULL) {
+		free_sec_ctx(&child->sa);
+	}
 	if (p->uctx != NULL) {
 		child->sa.sec_ctx = clone_thing(*p->uctx, "sec ctx structure");
 		dbg("pending phase 2 with security context \"%s\"",
 		    child->sa.sec_ctx->sec_ctx_value);
+
+		child->sa.st_ts_this = ikev2_make_ts(&c->spd.this, child->sa.sec_ctx);
+		child->sa.st_ts_that = ikev2_make_ts(&c->spd.that, child->sa.sec_ctx);
+		ikev2_print_ts(&child->sa.st_ts_this);
+		ikev2_print_ts(&child->sa.st_ts_that);
 	}
 
 	binlog_refresh_state(&child->sa);

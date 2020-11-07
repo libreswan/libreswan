@@ -907,6 +907,62 @@ void schedule_next_child_delete(struct state *st, struct ike_sa *ike)
 	v2_expire_unused_ike_sa(ike);
 }
 
+/**
+ * is_sec_ctx_a_member: Check if a specified security label is a member of the
+ * given array of security labels.
+ *
+ * @param[in]	sec_ctx_ptr_coll	Array of security label.
+ * @param[in]	sec_ctx			Security label to check for in `sec_ctx_ptr_coll`.
+ * @param[in]	sec_ctx_coll_count	Number of elements in `sec_ctx_ptr_coll`.
+ *
+ * @return	True if `sec_ctx` is in `sec_ctx_ptr_coll`.
+ */
+static bool is_sec_ctx_a_member(struct xfrm_user_sec_ctx_ike *const sec_ctx_ptr_coll[],
+				struct xfrm_user_sec_ctx_ike const *const sec_ctx,
+				unsigned int const sec_ctx_coll_count) {
+	for (unsigned int i = 0; i < sec_ctx_coll_count; ++i) {
+		if (sec_ctx_ptr_coll[i] == sec_ctx) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/* See function prototype comments in the header file. */
+void free_sec_ctx(struct state *const st) {
+	struct xfrm_user_sec_ctx_ike *freed_ptrs[3] = { NULL };
+
+	unsigned int cur_idx = 0;
+	if (st->sec_ctx != NULL) {
+		/* Free the security label pointed to by the child/IPsec SA. */
+		freed_ptrs[cur_idx] = st->sec_ctx;
+		++cur_idx;
+		pfreeany(st->sec_ctx);
+	}
+
+	if ((st->st_ts_this.sec_ctx != NULL) &&
+	    !is_sec_ctx_a_member(freed_ptrs, st->st_ts_this.sec_ctx, cur_idx)) {
+		/*
+		 * "This" Traffic Selector has a unique security label pointer
+		 * that must be freed.
+		 */
+		freed_ptrs[cur_idx] = st->st_ts_this.sec_ctx;
+		++cur_idx;
+		pfreeany(st->st_ts_this.sec_ctx);
+	}
+
+	if ((st->st_ts_that.sec_ctx != NULL) &&
+	    !is_sec_ctx_a_member(freed_ptrs, st->st_ts_that.sec_ctx, cur_idx)) {
+		/*
+		 * "That" Traffic Selector has a unique security label pointer
+		 * that must be freed.
+		 */
+		freed_ptrs[cur_idx] = st->st_ts_that.sec_ctx;
+		++cur_idx;
+		pfreeany(st->st_ts_that.sec_ctx);
+	}
+}
+
 /* delete a state object */
 void delete_state(struct state *st)
 {
@@ -1289,7 +1345,7 @@ void delete_state(struct state *st)
 
 	free_chunk_content(&st->st_no_ppk_auth);
 
-	pfreeany(st->sec_ctx);
+	free_sec_ctx(st);
 	free_logger(&st->st_logger);
 	messup(st);
 	pfree(st);
@@ -1628,6 +1684,10 @@ static struct state *duplicate_state(struct state *st,
 	nst->st_seen_cfg_dns = clone_str(st->st_seen_cfg_dns, "child st_seen_cfg_dns");
 	nst->st_seen_cfg_domains = clone_str(st->st_seen_cfg_domains, "child st_seen_cfg_domains");
 	nst->st_seen_cfg_banner = clone_str(st->st_seen_cfg_banner, "child st_seen_cfg_banner");
+
+	if (st->sec_ctx != NULL) {
+		nst->sec_ctx = clone_thing(*st->sec_ctx, "struct xfrm_user_sec_ctx_ike");
+	}
 
 	return nst;
 }
