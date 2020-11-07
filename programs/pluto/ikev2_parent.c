@@ -4850,7 +4850,7 @@ static stf_status ikev2_child_inIoutR_continue_continue(struct state *st,
  * processing a new Rekey IKE SA (RFC 7296 1.3.2) request
  */
 
-static crypto_req_cont_func ikev2_child_ike_inIoutR_continue;
+static ke_and_nonce_cb ikev2_child_ike_inIoutR_continue;
 
 stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
 				   struct child_sa *child,
@@ -4938,9 +4938,9 @@ stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
 		return STF_FATAL; /* kill family */
 	}
 
-	request_ke_and_nonce("IKE rekey KE response gir", st,
-			     st->st_oakley.ta_dh,
-			     ikev2_child_ike_inIoutR_continue);
+	submit_ke_and_nonce(st, st->st_oakley.ta_dh,
+			    ikev2_child_ike_inIoutR_continue,
+			    "IKE rekey KE response gir");
 	return STF_SUSPEND;
 }
 
@@ -4948,9 +4948,10 @@ static void ikev2_child_ike_inIoutR_continue_continue(struct state *st,
 						      struct msg_digest *md,
 						      struct pluto_crypto_req *r);
 
-static void ikev2_child_ike_inIoutR_continue(struct state *st,
-					     struct msg_digest *md,
-					     struct pluto_crypto_req *r)
+static stf_status ikev2_child_ike_inIoutR_continue(struct state *st,
+						   struct msg_digest *md,
+						   struct dh_local_secret *local_secret,
+						   chunk_t *nonce)
 {
 	dbg("%s() for #%lu %s",
 	     __func__, st->st_serialno, st->st_state->name);
@@ -4972,13 +4973,13 @@ static void ikev2_child_ike_inIoutR_continue(struct state *st,
 			     "sponsoring child state #%lu has no parent state #%lu",
 			     st->st_serialno, st->st_clonedfrom);
 		/* XXX: release what? */
-		return;
+		return STF_INTERNAL_ERROR;
 	}
 
-	pexpect(r->pcr_type == pcr_build_ke_and_nonce);
+	pexpect(local_secret != NULL);
 	pexpect(md->chain[ISAKMP_NEXT_v2KE] != NULL);
-	unpack_nonce(&st->st_nr, &r->pcr_d.kn.n);
-	unpack_KE_from_helper(st, r->pcr_d.kn.local_secret, &st->st_gr);
+	unpack_nonce(&st->st_nr, nonce);
+	unpack_KE_from_helper(st, local_secret, &st->st_gr);
 
 	/* initiate calculation of g^xy */
 	passert(ike_spi_is_zero(&st->st_ike_rekey_spis.initiator));
@@ -4993,7 +4994,7 @@ static void ikev2_child_ike_inIoutR_continue(struct state *st,
 				   &st->st_ike_rekey_spis,
 				   ikev2_child_ike_inIoutR_continue_continue);
 
-	complete_v2_state_transition(st, md, STF_SUSPEND);
+	return STF_SUSPEND;
 }
 
 static void ikev2_child_ike_inIoutR_continue_continue(struct state *st,
