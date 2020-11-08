@@ -1503,10 +1503,9 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
  * (see RFC 2409 "IKE" 5.5)
  * Installs inbound and outbound IPsec SAs, routing, etc.
  */
-static stf_status quick_inR1_outI2_tail(struct msg_digest *md,
-					struct pluto_crypto_req *r);
+static stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md);
 
-static crypto_req_cont_func quick_inR1_outI2_continue;	/* forward decl and type assertion */
+static dh_shared_secret_cb quick_inR1_outI2_continue;	/* forward decl and type assertion */
 
 stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 {
@@ -1528,41 +1527,35 @@ stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 
 	if (st->st_pfs_group != NULL) {
 		/* set up DH calculation */
-		submit_v1_dh_shared_secret(quick_inR1_outI2_continue, "quick outI2 DH",
-					   st, SA_INITIATOR, st->st_pfs_group);
+		submit_dh_shared_secret(st, st->st_gr,
+					quick_inR1_outI2_continue,
+					"quick_inR1_outI2 submitting dh_shared_secret");
 		return STF_SUSPEND;
 	} else {
 		/* just call the tail function */
-		return quick_inR1_outI2_tail(md, NULL);
+		return quick_inR1_outI2_tail(st, md);
 	}
 }
 
-static void quick_inR1_outI2_continue(struct state *st,
-				      struct msg_digest *md,
-				      struct pluto_crypto_req *r)
+static stf_status quick_inR1_outI2_continue(struct state *st,
+					    struct msg_digest *md)
 {
 	dbg("quick_inR1_outI2_continue for #%lu: calculated ke+nonce, calculating DH",
 	    st->st_serialno);
 
 	passert(st->st_connection != NULL);
 	passert(md != NULL);
-	stf_status e = quick_inR1_outI2_tail(md, r);
-	complete_v1_state_transition(md, e);
+	return quick_inR1_outI2_tail(st, md);
 }
 
-stf_status quick_inR1_outI2_tail(struct msg_digest *md,
-				 struct pluto_crypto_req *r)
+stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 {
-	struct state *st = md->st;
 	struct connection *c = st->st_connection;
 
 	struct pbs_out rbody;
 	ikev1_init_pbs_out_from_md_hdr(md, TRUE,
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
 				       &rbody, st->st_logger);
-
-	if (st->st_pfs_group != NULL && r != NULL)
-		finish_v1_dh_shared_secret(st, r);
 
 	if ((st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
 	    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA))
