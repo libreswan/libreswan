@@ -84,6 +84,7 @@
 #include "ikev1_message.h"
 #include "crypt_ke.h"
 #include <blapit.h>
+#include "crypt_dh.h"
 
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"
@@ -1006,12 +1007,10 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 
 
 /* forward definitions */
-static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
-						   struct pluto_crypto_req *r);
+static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_digest *md);
 
 static ke_and_nonce_cb quick_inI1_outR1_continue1;	/* forward decl and type assertion */
-
-static crypto_req_cont_func quick_inI1_outR1_continue2;	/* forward decl and type assertion */
+static dh_shared_secret_cb quick_inI1_outR1_continue2;	/* forward decl and type assertion */
 
 static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 {
@@ -1280,8 +1279,9 @@ static stf_status quick_inI1_outR1_continue1(struct state *st,
 	if (st->st_pfs_group != NULL) {
 		/* PFS is on: do a new DH */
 		unpack_KE_from_helper(st, local_secret, &st->st_gr);
-		submit_v1_dh_shared_secret(quick_inI1_outR1_continue2, "quick outR1 DH",
-					   st, SA_RESPONDER, st->st_pfs_group);
+		submit_dh_shared_secret(st, st->st_gi,
+					quick_inI1_outR1_continue2,
+					"quick_inI1_outR1_continue1 submitting dh_shared_secret");
 		/*
 		 * XXX: Since more crypto has been requested, MD needs
 		 * to be re suspended.  If the original crypto request
@@ -1294,21 +1294,19 @@ static stf_status quick_inI1_outR1_continue1(struct state *st,
 		 * call the continuation with NULL struct
 		 * pluto_crypto_req *
 		 */
-		return quick_inI1_outR1_continue12_tail(md, NULL);
+		return quick_inI1_outR1_continue12_tail(st, md);
 	}
 }
 
-static void quick_inI1_outR1_continue2(struct state *st,
-				       struct msg_digest *md,
-				       struct pluto_crypto_req *r)
+static stf_status quick_inI1_outR1_continue2(struct state *st,
+					     struct msg_digest *md)
 {
 	dbg("quick_inI1_outR1_cryptocontinue2 for #%lu: calculated DH, sending R1",
 	    st->st_serialno);
 
 	passert(st->st_connection != NULL);
 	passert(md != NULL);
-	stf_status e = quick_inI1_outR1_continue12_tail(md, r);
-	complete_v1_state_transition(md, e);
+	return quick_inI1_outR1_continue12_tail(st, md);
 }
 
 /*
@@ -1337,10 +1335,8 @@ static bool echo_id(pb_stream *outs,
 	return TRUE;
 }
 
-static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
-						   struct pluto_crypto_req *r)
+static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_digest *md)
 {
-	struct state *st = md->st;
 	struct payload_digest *const id_pd = md->chain[ISAKMP_NEXT_ID];
 	struct payload_digest *const sapd = md->chain[ISAKMP_NEXT_SA];
 
@@ -1455,11 +1451,9 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 	}
 
 	/* [ KE ] out (for PFS) */
-	if (st->st_pfs_group != NULL && r != NULL) {
+	if (st->st_pfs_group != NULL && st->st_gr.ptr != NULL) {
 		if (!ikev1_justship_KE(st->st_logger, &st->st_gr, &rbody))
 			return STF_INTERNAL_ERROR;
-
-		finish_v1_dh_shared_secret(st, r);
 	}
 
 	/* [ IDci, IDcr ] out */
