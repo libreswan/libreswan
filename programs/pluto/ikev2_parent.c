@@ -6022,38 +6022,33 @@ void ikev2_initiate_child_sa(struct pending *p)
 	reset_globals();
 }
 
-static crypto_req_cont_func ikev2_child_outI_continue;
+static ke_and_nonce_cb ikev2_child_outI_continue;
 
 void ikev2_child_outI(struct state *st)
 {
+	/*
+	 * XXX: the combination of .st_pfs_group and .st_oakley.ta_dh
+	 * is weird.  Should this instead extract the tentative DH
+	 * from the proposals (providing a default)?
+	 */
 	switch (st->st_state->kind) {
 
 	case STATE_V2_REKEY_CHILD_I0:
-		if (st->st_pfs_group == NULL) {
-			request_nonce("Child Rekey Initiator nonce ni",
-				      st, ikev2_child_outI_continue);
-		} else {
-			request_ke_and_nonce("Child Rekey Initiator KE and nonce ni",
-					     st, st->st_pfs_group,
-					     ikev2_child_outI_continue);
-		}
+		submit_ke_and_nonce(st, st->st_pfs_group,
+				    ikev2_child_outI_continue /*possibly-null*/,
+				    "Child Rekey Initiator KE and nonce ni");
 		break; /* return STF_SUSPEND; */
 
 	case STATE_V2_NEW_CHILD_I0:
-		if (st->st_pfs_group == NULL) {
-			request_nonce("Child Initiator nonce ni",
-				      st, ikev2_child_outI_continue);
-		} else {
-			request_ke_and_nonce("Child Initiator KE and nonce ni",
-					     st, st->st_pfs_group,
-					     ikev2_child_outI_continue);
-		}
+		submit_ke_and_nonce(st, st->st_pfs_group /*possibly-null*/,
+				    ikev2_child_outI_continue,
+				    "Child Initiator KE? and nonce");
 		break; /* return STF_SUSPEND; */
 
 	case STATE_V2_REKEY_IKE_I0:
-		request_ke_and_nonce("IKE REKEY Initiator KE and nonce ni",
-				     st, st->st_oakley.ta_dh,
-				     ikev2_child_outI_continue);
+		submit_ke_and_nonce(st, st->st_oakley.ta_dh,
+				    ikev2_child_outI_continue /*never-null?*/,
+				    "IKE REKEY Initiator KE and nonce ni");
 		break; /* return STF_SUSPEND; */
 
 	default:
@@ -6063,9 +6058,10 @@ void ikev2_child_outI(struct state *st)
 
 static v2_msgid_pending_cb ikev2_child_outI_continue_2;
 
-static void ikev2_child_outI_continue(struct state *st,
-				      struct msg_digest *unused_md,
-				      struct pluto_crypto_req *r)
+static stf_status ikev2_child_outI_continue(struct state *st,
+					    struct msg_digest *unused_md,
+					    struct dh_local_secret *local_secret,
+					    chunk_t *nonce)
 {
 	dbg("%s() for #%lu %s",
 	     __func__, st->st_serialno, st->st_state->name);
@@ -6092,15 +6088,15 @@ static void ikev2_child_outI_continue(struct state *st,
 			     "sponsoring child state #%lu has no parent state #%lu",
 			     st->st_serialno, st->st_clonedfrom);
 		/* XXX: release child? */
-		return;
+		return STF_INTERNAL_ERROR;
 	}
 
 	/* IKE SA => DH */
-	pexpect(st->st_state->kind == STATE_V2_REKEY_IKE_I0 ? r->pcr_type == pcr_build_ke_and_nonce : true);
+	pexpect(st->st_state->kind == STATE_V2_REKEY_IKE_I0 ? local_secret != NULL : true);
 
-	unpack_nonce(&st->st_ni, &r->pcr_d.kn.n);
-	if (r->pcr_type == pcr_build_ke_and_nonce) {
-		unpack_KE_from_helper(st, r->pcr_d.kn.local_secret, &st->st_gi);
+	unpack_nonce(&st->st_ni, nonce);
+	if (local_secret != NULL) {
+		unpack_KE_from_helper(st, local_secret, &st->st_gi);
 	}
 
 	dbg("adding CHILD SA #%lu to IKE SA #%lu message initiator queue",
@@ -6108,8 +6104,7 @@ static void ikev2_child_outI_continue(struct state *st,
 	v2_msgid_queue_initiator(ike, &child->sa, ISAKMP_v2_CREATE_CHILD_SA,
 				 NULL, ikev2_child_outI_continue_2);
 
-	/* return STF_SUSPEND */
-	complete_v2_state_transition(&child->sa, NULL/*initiator*/, STF_SUSPEND);
+	return STF_SUSPEND;
 }
 
 stf_status ikev2_child_outI_continue_2(struct ike_sa *ike, struct state *st,
