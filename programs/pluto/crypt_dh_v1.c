@@ -118,68 +118,6 @@ bool finish_v1_dh_shared_secret_and_iv(struct state *st,
 	}
 }
 
-void submit_v1_dh_shared_secret(crypto_req_cont_func fn, const char *name,
-				struct state *st, enum sa_role role,
-				const struct dh_desc *oakley_group2)
-{
-	const chunk_t *pss = get_connection_psk(st->st_connection, st->st_logger);
-	struct pluto_crypto_req_cont *cn = new_pcrc(fn, name);
-	struct pcr_v1_dh *const dhq = pcr_v1_dh_init(cn, pcr_compute_v1_dh_shared_secret);
-
-	/* convert appropriate data to dhq */
-	dhq->auth = st->st_oakley.auth;
-	dhq->prf = st->st_oakley.ta_prf;
-	dhq->oakley_group = oakley_group2;
-	dhq->role = role;
-	dhq->key_size = st->st_oakley.enckeylen / BITS_PER_BYTE;
-	dhq->salt_size = st->st_oakley.ta_encrypt->salt_size;
-
-	if (pss != NULL)
-		WIRE_CLONE_CHUNK(*dhq, pss, *pss);
-	WIRE_CLONE_CHUNK(*dhq, ni, st->st_ni);
-	WIRE_CLONE_CHUNK(*dhq, nr, st->st_nr);
-	WIRE_CLONE_CHUNK(*dhq, gi, st->st_gi);
-	WIRE_CLONE_CHUNK(*dhq, gr, st->st_gr);
-
-	dhq->local_secret = dh_local_secret_addref(st->st_dh_local_secret, HERE);
-
-	ALLOC_WIRE_CHUNK(*dhq, icookie, COOKIE_SIZE);
-	memcpy(WIRE_CHUNK_PTR(*dhq, icookie),
-	       st->st_ike_spis.initiator.bytes, COOKIE_SIZE);
-
-	ALLOC_WIRE_CHUNK(*dhq, rcookie, COOKIE_SIZE);
-	memcpy(WIRE_CHUNK_PTR(*dhq, rcookie),
-	       st->st_ike_spis.responder.bytes, COOKIE_SIZE);
-
-	send_crypto_helper_request(st, cn);
-}
-
-/* NOTE: if NSS refuses to calculate DH, skr->shared == NULL */
-/* MUST BE THREAD-SAFE */
-void calc_v1_dh_shared_secret(struct pcr_v1_dh *dh, struct logger *logger)
-{
-	const struct dh_desc *group = dh->oakley_group;
-	passert(group != NULL);
-
-	/* now calculate the (g^x)(g^y) */
-	chunk_t g;
-	setchunk_from_wire(g, dh, dh->role == SA_RESPONDER ? &dh->gi : &dh->gr);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("peer's g: ", g);
-	}
-
-	dh->shared_secret = calc_dh_shared_secret(dh->local_secret, g, logger);
-}
-
-void finish_v1_dh_shared_secret(struct state *st,
-				struct pluto_crypto_req *r)
-{
-	struct pcr_v1_dh *dhr = &r->pcr_d.v1_dh;
-	dh_local_secret_delref(&dhr->local_secret, HERE);
-	pexpect(st->st_dh_shared_secret == NULL);
-	st->st_dh_shared_secret = dhr->shared_secret;
-}
-
 /* Generate the SKEYID_* and new IV
  * See draft-ietf-ipsec-ike-01.txt 4.1
  */

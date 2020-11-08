@@ -269,7 +269,6 @@ static void pcr_cancelled(struct crypto_task **task)
 		break;
 #ifdef USE_IKEv1
 	case pcr_compute_v1_dh_shared_secret_and_iv:
-	case pcr_compute_v1_dh_shared_secret:
 		cancelled_v1_dh_shared_secret(&r->pcr_d.v1_dh);
 		break;
 #endif
@@ -362,9 +361,6 @@ static void pcr_compute(struct logger *logger,
 #ifdef USE_IKEv1
 	case pcr_compute_v1_dh_shared_secret_and_iv:
 		calc_v1_dh_shared_secret_and_iv(&r->pcr_d.v1_dh, logger);
-		break;
-	case pcr_compute_v1_dh_shared_secret:
-		calc_v1_dh_shared_secret(&r->pcr_d.v1_dh, logger);
 		break;
 #endif
 

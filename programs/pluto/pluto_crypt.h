@@ -86,7 +86,6 @@ enum pluto_crypto_requests {
 	pcr_build_ke_and_nonce,	/* calculate g^i and generate a nonce */
 	pcr_build_nonce,	/* generate a nonce */
 	pcr_compute_v1_dh_shared_secret_and_iv,	/* calculate (g^x)(g^y) and skeyids for Phase 1 DH + prf */
-	pcr_compute_v1_dh_shared_secret,	/* calculate (g^x)(g^y) for Phase 2 PFS */
 	pcr_compute_v2_dh_shared_secret,	/* perform IKEv2 SA calculation, create SKEYSEED */
 };
 
@@ -360,9 +359,6 @@ extern void cancelled_ke_and_nonce(struct pcr_kenonce *kn);
  * IKEv1 DH
  */
 
-extern void compute_v1_dh_shared_secret(struct state *st, const chunk_t g,
-					const struct dh_desc *group);
-
 extern void submit_v1_dh_shared_secret_and_iv(crypto_req_cont_func fn, const char *name,
 					      struct state *st, enum sa_role role,
 					      const struct dh_desc *oakley_group2);
@@ -370,17 +366,7 @@ extern void submit_v1_dh_shared_secret_and_iv(crypto_req_cont_func fn, const cha
 extern bool finish_v1_dh_shared_secret_and_iv(struct state *st,
 					      struct pluto_crypto_req *r);
 
-extern void submit_v1_dh_shared_secret(crypto_req_cont_func fn, const char *name,
-				       struct state *st, enum sa_role role,
-				       const struct dh_desc *oakley_group2);
-
-extern void finish_v1_dh_shared_secret(struct state *st,
-				       struct pluto_crypto_req *r);
-
 /* internal */
-#ifdef USE_IKEv1
-extern void calc_v1_dh_shared_secret(struct pcr_v1_dh *dh, struct logger *logger);
-#endif
 extern void calc_v1_dh_shared_secret_and_iv(struct pcr_v1_dh *dh, struct logger *logger);
 extern void cancelled_v1_dh_shared_secret(struct pcr_v1_dh *dh);
 
