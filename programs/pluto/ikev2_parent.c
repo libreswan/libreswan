@@ -513,7 +513,7 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
  * Note: this is not called from demux.c, but from ipsecdoi_initiate().
  *
  */
-static crypto_req_cont_func ikev2_parent_outI1_continue;
+static ke_and_nonce_cb ikev2_parent_outI1_continue;
 
 /* extern initiator_function ikev2_parent_outI1; */	/* type assertion */
 
@@ -633,9 +633,9 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 	/*
 	 * Calculate KE and Nonce.
 	 */
-	request_ke_and_nonce("ikev2_outI1 KE", st,
-			     st->st_oakley.ta_dh,
-			     ikev2_parent_outI1_continue);
+	submit_ke_and_nonce(st, st->st_oakley.ta_dh,
+			    ikev2_parent_outI1_continue,
+			    "ikev2_outI1 KE");
 	statetime_stop(&start, "%s()", __func__);
 	reset_globals();
 }
@@ -687,8 +687,10 @@ bool emit_v2KE(chunk_t *g, const struct dh_desc *group,
 	return TRUE;
 }
 
-void ikev2_parent_outI1_continue(struct state *st, struct msg_digest *unused_md,
-				 struct pluto_crypto_req *r)
+stf_status ikev2_parent_outI1_continue(struct state *st,
+				       struct msg_digest *unused_md,
+				       struct dh_local_secret *local_secret,
+				       chunk_t *nonce)
 {
 	dbg("%s() for #%lu %s",
 	     __func__, st->st_serialno, st->st_state->name);
@@ -702,10 +704,9 @@ void ikev2_parent_outI1_continue(struct state *st, struct msg_digest *unused_md,
 	pexpect(st->st_state->kind == STATE_PARENT_I0 ||
 		st->st_state->kind == STATE_PARENT_I1);
 
-	unpack_KE_from_helper(st, r->pcr_d.kn.local_secret, &st->st_gi);
-	unpack_nonce(&st->st_ni, &r->pcr_d.kn.n);
-	stf_status e = record_v2_IKE_SA_INIT_request(ike) ? STF_OK : STF_INTERNAL_ERROR;
-	complete_v2_state_transition(st, NULL/*initiator*/, e);
+	unpack_KE_from_helper(st, local_secret, &st->st_gi);
+	unpack_nonce(&st->st_ni, nonce);
+	return record_v2_IKE_SA_INIT_request(ike) ? STF_OK : STF_INTERNAL_ERROR;
 }
 
 bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
@@ -1219,11 +1220,11 @@ static stf_status ikev2_parent_inI1outR1_continue(struct state *st,
  * HDR, N(COOKIE), SAi1, KEi, Ni -->
  */
 
-static stf_status rerequest_ke_and_nonce(struct ike_sa *ike)
+static stf_status resubmit_ke_and_nonce(struct ike_sa *ike)
 {
-	request_ke_and_nonce("rekey outI", &ike->sa,
-			     ike->sa.st_oakley.ta_dh,
-			     ikev2_parent_outI1_continue);
+	submit_ke_and_nonce(&ike->sa, ike->sa.st_oakley.ta_dh,
+			    ikev2_parent_outI1_continue,
+			    "rekey outI");
 	return STF_SUSPEND;
 }
 
@@ -1293,7 +1294,7 @@ stf_status process_IKE_SA_INIT_v2N_INVALID_KE_PAYLOAD_response(struct ike_sa *ik
 	/*
 	 * get a new KE
 	 */
-	schedule_reinitiate_v2_ike_sa_init(ike, rerequest_ke_and_nonce);
+	schedule_reinitiate_v2_ike_sa_init(ike, resubmit_ke_and_nonce);
 	return STF_OK;
 }
 
