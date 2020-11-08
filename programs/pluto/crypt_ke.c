@@ -55,49 +55,6 @@
 #include "crypt_dh.h"
 #include "crypt_ke.h"
 
-/* MUST BE THREAD-SAFE */
-void calc_ke(struct pcr_kenonce *kn, struct logger *logger)
-{
-	kn->local_secret = calc_dh_local_secret(kn->group, logger);
-}
-
-/* MUST BE THREAD-SAFE */
-void calc_nonce(struct pcr_kenonce *kn)
-{
-	kn->n = alloc_chunk(DEFAULT_NONCE_SIZE, "n");
-	get_rnd_bytes(kn->n.ptr, kn->n.len);
-
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("Generated nonce:", kn->n);
-	}
-}
-
-void cancelled_ke_and_nonce(struct pcr_kenonce *kn)
-{
-	dh_local_secret_delref(&kn->local_secret, HERE);
-	free_chunk_content(&kn->n);
-}
-
-/* Note: not all cn's are the same subtype */
-void request_ke_and_nonce(const char *name,
-			  struct state *st,
-			  const struct dh_desc *group,
-			  crypto_req_cont_func *callback)
-{
-	struct pluto_crypto_req_cont *cn = new_pcrc(callback, name);
-	pcr_kenonce_init(cn, pcr_build_ke_and_nonce, group);
-	send_crypto_helper_request(st, cn);
-}
-
-void request_nonce(const char *name,
-		   struct state *st,
-		   crypto_req_cont_func *callback)
-{
-	struct pluto_crypto_req_cont *cn = new_pcrc(callback, name);
-	pcr_kenonce_init(cn, pcr_build_nonce, NULL);
-	send_crypto_helper_request(st, cn);
-}
-
 struct crypto_task {
 	const struct dh_desc *dh;
 	chunk_t nonce;

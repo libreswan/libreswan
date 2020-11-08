@@ -226,8 +226,6 @@ static int nr_helper_threads = 0;
 /* pluto crypto operations */
 static const char *const pluto_cryptoop_strings[] = {
 	"crypto",		/* generic crypto */
-	"build KE and nonce",	/* calculate g^i and generate a nonce */
-	"build nonce",	/* generate a nonce */
 };
 
 static enum_names pluto_cryptoop_names = {
@@ -257,24 +255,12 @@ static void pcr_cancelled(struct crypto_task **task)
 {
 	struct pluto_crypto_req *r = &(*task)->cn->pcrc_pcr;
 	switch (r->pcr_type) {
-	case pcr_build_ke_and_nonce:
-	case pcr_build_nonce:
-		cancelled_ke_and_nonce(&r->pcr_d.kn);
 		break;
 	case pcr_crypto:
 	default:
 		bad_case(r->pcr_type);
 	}
 	pfreeany(*task);
-}
-
-void pcr_kenonce_init(struct pluto_crypto_req_cont *cn,
-		      enum pluto_crypto_requests pcr_type,
-		      const struct dh_desc *dh)
-{
-	struct pluto_crypto_req *r = &cn->pcrc_pcr;
-	pcr_init(r, pcr_type);
-	r->pcr_d.kn.group = dh;
 }
 
 /*
@@ -309,7 +295,7 @@ static void pluto_do_crypto_op(struct pluto_crypto_req_cont *cn, int helpernum)
 			     cn->pcrc_name, cn->pcrc_handler->name);
 }
 
-static void pcr_compute(struct logger *logger,
+static void pcr_compute(struct logger *logger UNUSED,
 			struct crypto_task *task,
 			int unused_helpernum UNUSED)
 {
@@ -318,14 +304,6 @@ static void pcr_compute(struct logger *logger,
 
 	/* now we have the entire request in the buffer, process it */
 	switch (r->pcr_type) {
-	case pcr_build_ke_and_nonce:
-		calc_ke(&r->pcr_d.kn, logger);
-		calc_nonce(&r->pcr_d.kn);
-		break;
-
-	case pcr_build_nonce:
-		calc_nonce(&r->pcr_d.kn);
-		break;
 
 	case pcr_crypto:
 	default:
@@ -612,13 +590,6 @@ stf_status pcr_completed(struct state *st,
 	passert(cn->pcrc_func != NULL);
 	pexpect(cn->pcrc_pcr.pcr_type != pcr_crypto);
 	(*cn->pcrc_func)(st, md, &cn->pcrc_pcr);
-	switch (cn->pcrc_pcr.pcr_type) {
-	case pcr_build_ke_and_nonce:
-		cancelled_ke_and_nonce(&cn->pcrc_pcr.pcr_d.kn);
-		break;
-	default:
-		break;
-	}
 	pfree(*task);
 	*task = NULL;
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;

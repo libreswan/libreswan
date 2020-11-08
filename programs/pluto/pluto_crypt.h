@@ -45,6 +45,8 @@ struct state;
 struct msg_digest;
 struct logger;
 struct prf_desc;
+struct dh_local_secret;
+struct dh_desc;
 
 /*
  * Offload work to the crypto thread pool (or the event loop if there
@@ -84,8 +86,6 @@ extern void submit_crypto(const struct logger *logger,
  */
 enum pluto_crypto_requests {
 	pcr_crypto = 0,		/* using crypto_handler */
-	pcr_build_ke_and_nonce,	/* calculate g^i and generate a nonce */
-	pcr_build_nonce,	/* generate a nonce */
 };
 
 /* wire_chunk: a chunk-like representation that is relocatable.
@@ -178,24 +178,8 @@ extern void wire_clone_chunk(wire_arena_t *arena,
  * First we define structs for each of these.
  */
 
-#define KENONCE_SIZE 1280
-
-/* query and response */
-struct pcr_kenonce {
-	/* inputs */
-	const struct dh_desc *group;
-
-	/* outputs */
-	struct dh_local_secret *local_secret;
-	chunk_t n;
-};
-
 struct pluto_crypto_req {
 	enum pluto_crypto_requests pcr_type;
-
-	union {
-		struct pcr_kenonce kn;		/* query and result */
-	} pcr_d;
 };
 
 struct pluto_crypto_req_cont;	/* forward reference */
@@ -262,25 +246,6 @@ void helper_threads_stopped_callback(struct state *st, void *context); /* see pl
 
 /* actual helper functions */
 
-/*
- * KE/NONCE
- */
-
-extern void request_ke_and_nonce(const char *name,
-				 struct state *st,
-				 const struct dh_desc *group,
-				 crypto_req_cont_func *callback);
-
-extern void request_nonce(const char *name,
-			  struct state *st,
-			  crypto_req_cont_func *callback);
-
-extern void calc_ke(struct pcr_kenonce *kn, struct logger *logger);
-
-extern void calc_nonce(struct pcr_kenonce *kn);
-
-extern void cancelled_ke_and_nonce(struct pcr_kenonce *kn);
-
 /* internal */
 void calc_v1_skeyid_and_iv(struct state *st);
 void calc_v2_keymat(struct state *st,
@@ -295,9 +260,5 @@ void calc_v2_keymat(struct state *st,
 extern void unpack_KE_from_helper(struct state *st,
 				  struct dh_local_secret *local_secret,
 				  chunk_t *g);
-
-void pcr_kenonce_init(struct pluto_crypto_req_cont *cn,
-		      enum pluto_crypto_requests pcr_type,
-		      const struct dh_desc *dh);
 
 #endif /* _PLUTO_CRYPT_H */
