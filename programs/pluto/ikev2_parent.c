@@ -4641,7 +4641,7 @@ static stf_status ikev2_child_inR_continue(struct state *st,
  * processing a new Child SA (RFC 7296 1.3.1 or 1.3.3) request
  */
 
-static ke_and_nonce_cb ikev2_child_inIoutR_continue;
+static crypto_req_cont_func ikev2_child_inIoutR_continue;
 
 stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 			       struct child_sa *child,
@@ -4726,18 +4726,37 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 	 * XXX: 'see above' is lost; this is a responder state
 	 * which _always_ has an MD.
 	 */
-	submit_ke_and_nonce(&child->sa, child->sa.st_oakley.ta_dh/*maybe-null*/,
-			    ikev2_child_inIoutR_continue,
-			    "responder creawting/rekeying child");
-	return STF_SUSPEND;
+	switch (child->sa.st_state->kind) {
+	case STATE_V2_NEW_CHILD_R0:
+		if (child->sa.st_pfs_group != NULL) {
+			request_ke_and_nonce("Child Responder KE and nonce nr",
+					     &child->sa, child->sa.st_oakley.ta_dh,
+					     ikev2_child_inIoutR_continue);
+		} else {
+			request_nonce("Child Responder nonce nr",
+				      &child->sa, ikev2_child_inIoutR_continue);
+		}
+		return STF_SUSPEND;
+	case STATE_V2_REKEY_CHILD_R0:
+		if (child->sa.st_pfs_group != NULL) {
+			request_ke_and_nonce("Child Rekey Responder KE and nonce nr",
+					     &child->sa, child->sa.st_oakley.ta_dh,
+					     ikev2_child_inIoutR_continue);
+		} else {
+			request_nonce("Child Rekey Responder nonce nr",
+				      &child->sa, ikev2_child_inIoutR_continue);
+		}
+		return STF_SUSPEND;
+	default:
+		bad_case(child->sa.st_state->kind);
+	}
 }
 
 static dh_shared_secret_cb ikev2_child_inIoutR_continue_continue;
 
-static stf_status ikev2_child_inIoutR_continue(struct state *st,
-					       struct msg_digest *md,
-					       struct dh_local_secret *local_secret,
-					       chunk_t *nonce)
+static void ikev2_child_inIoutR_continue(struct state *st,
+					 struct msg_digest *md,
+					 struct pluto_crypto_req *r)
 {
 	dbg("%s() for #%lu %s",
 	     __func__, st->st_serialno, st->st_state->name);
@@ -4767,19 +4786,23 @@ static stf_status ikev2_child_inIoutR_continue(struct state *st,
 			     "sponsoring child state #%lu has no parent state #%lu",
 			     st->st_serialno, st->st_clonedfrom);
 		/* XXX: release what? */
-		return STF_INTERNAL_ERROR;
+		return;
 	}
 
-	unpack_nonce(&st->st_nr, nonce);
-	if (local_secret != NULL) {
-		unpack_KE_from_helper(st, local_secret, &st->st_gr);
+	stf_status e;
+	unpack_nonce(&st->st_nr, &r->pcr_d.kn.n);
+	if (r->pcr_type == pcr_build_ke_and_nonce) {
+		pexpect(md->chain[ISAKMP_NEXT_v2KE] != NULL);
+		unpack_KE_from_helper(st, r->pcr_d.kn.local_secret, &st->st_gr);
 		/* initiate calculation of g^xy */
 		submit_dh_shared_secret(st, st->st_gi, ikev2_child_inIoutR_continue_continue,
 					"DHv2 for child sa");
-		return STF_SUSPEND;
+		e = STF_SUSPEND;
 	} else {
-		return ikev2_child_out_tail(ike, child, md);
+		e = ikev2_child_out_tail(ike, child, md);
 	}
+
+	complete_v2_state_transition(st, md, e);
 }
 
 static stf_status ikev2_child_inIoutR_continue_continue(struct state *st,
