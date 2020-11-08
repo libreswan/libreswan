@@ -54,8 +54,10 @@ struct dh_local_secret *dh_local_secret_addref(struct dh_local_secret *local_sec
 void dh_local_secret_delref(struct dh_local_secret **local_secret, where_t where);
 
 /*
- * Compute dh storing result in .st_dh_shared_secret.
+ * Compute dh using .st_dh_local_secret and REMOTE_KE, storing result
+ * in .st_dh_shared_secret.
  */
+
 typedef stf_status (dh_shared_secret_cb)(struct state *st,
 					 struct msg_digest *md);
 
