@@ -949,7 +949,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
  * --> HDR, SA, KE, Ni, IDii
  */
 
-static crypto_req_cont_func aggr_outI1_continue;	/* type assertion */
+static ke_and_nonce_cb aggr_outI1_continue;	/* type assertion */
 
 /* No initial state for aggr_outI1:
  * SMF_DS_AUTH (RFC 2409 5.1) and SMF_PSK_AUTH (RFC 2409 5.4):
@@ -1011,24 +1011,26 @@ void aggr_outI1(struct fd *whack_sock,
 	/*
 	 * Calculate KE and Nonce.
 	 */
-	request_ke_and_nonce("aggr_outI1 KE + nonce", st,
-			     st->st_oakley.ta_dh,
-			     aggr_outI1_continue);
+	submit_ke_and_nonce(st, st->st_oakley.ta_dh,
+			    aggr_outI1_continue,
+			    "aggr_outI1 KE + nonce");
 	statetime_stop(&start, "%s()", __func__);
 	reset_globals();
 }
 
-static stf_status aggr_outI1_tail(struct state *st, struct pluto_crypto_req *r);
+static ke_and_nonce_cb aggr_outI1_continue_tail;
 
-static void aggr_outI1_continue(struct state *st,
-				struct msg_digest *unused_md,
-				struct pluto_crypto_req *r)
+static stf_status aggr_outI1_continue(struct state *st,
+				      struct msg_digest *unused_md,
+				      struct dh_local_secret *local_secret,
+				      chunk_t *nonce)
 {
 	dbg("aggr_outI1_continue for #%lu: calculated ke+nonce, sending I1",
 	    st->st_serialno);
 	passert(unused_md == NULL); /* no packet */
 
-	stf_status e = aggr_outI1_tail(st, r); /* may return FAIL */
+	stf_status e = aggr_outI1_continue_tail(st, unused_md,
+						local_secret, nonce); /* may return FAIL */
 
 	/*
 	 * XXX: The right fix is to stop
@@ -1043,11 +1045,16 @@ static void aggr_outI1_continue(struct state *st,
 
 	complete_v1_state_transition(st, fake_md, e);
 	md_delref(&fake_md, HERE);
+
+	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
-static stf_status aggr_outI1_tail(struct state *st,
-				  struct pluto_crypto_req *r)
+static stf_status aggr_outI1_continue_tail(struct state *st,
+					   struct msg_digest *unused_md,
+					   struct dh_local_secret *local_secret,
+					   chunk_t *nonce)
 {
+	passert(unused_md == NULL); /* no packet */
 	struct connection *c = st->st_connection;
 	cert_t mycert = c->spd.this.cert;
 	bool send_cr = mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
@@ -1096,11 +1103,11 @@ static stf_status aggr_outI1_tail(struct state *st,
 	}
 
 	/* KE out */
-	if (!ikev1_ship_KE(st, r->pcr_d.kn.local_secret, &st->st_gi, &rbody))
+	if (!ikev1_ship_KE(st, local_secret, &st->st_gi, &rbody))
 		return STF_INTERNAL_ERROR;
 
 	/* Ni out */
-	if (!ikev1_ship_nonce(&st->st_ni, &r->pcr_d.kn.n, &rbody, "Ni"))
+	if (!ikev1_ship_nonce(&st->st_ni, nonce, &rbody, "Ni"))
 		return STF_INTERNAL_ERROR;
 
 	/* IDii out */
