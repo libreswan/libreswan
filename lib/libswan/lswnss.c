@@ -64,6 +64,10 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags, struct logger *l
 				    "Initialization of NSS with %s database \"%s\" failed (%d)",
 				    (flags & LSW_NSS_READONLY) ? "read-only" : "read-write",
 				    nssdir, PR_GetError());
+			LOG_JAMBUF(RC_LOG, logger, buf) {
+				jam_string(buf, "NSS: ");
+				jam_nss_error(buf);
+			}
 			pfree(nssdir);
 			return false;
 		}
