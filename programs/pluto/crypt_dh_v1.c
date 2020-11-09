@@ -122,7 +122,12 @@ bool finish_v1_dh_shared_secret_and_iv(struct state *st,
  * See draft-ietf-ipsec-ike-01.txt 4.1
  */
 /* MUST BE THREAD-SAFE */
-static void calc_skeyids_iv(struct pcr_v1_dh *skq,
+static void calc_skeyids_iv(oakley_auth_t auth, chunk_t pss,
+			    const struct prf_desc *prf_desc,
+			    const struct encrypt_desc *encrypter,
+			    chunk_t ni, chunk_t nr,
+			    chunk_t icookie, chunk_t rcookie,
+			    chunk_t gi, chunk_t gr,
 			    /*const*/ PK11SymKey *shared,	/* NSS doesn't do const */
 			    const size_t keysize,	/* = st->st_oakley.enckeylen/BITS_PER_BYTE; */
 			    PK11SymKey **skeyid_out,	/* output */
@@ -133,36 +138,14 @@ static void calc_skeyids_iv(struct pcr_v1_dh *skq,
 			    PK11SymKey **enc_key_out,	/* output */
 			    struct logger *logger)
 {
-	oakley_auth_t auth = skq->auth;
-	const struct prf_desc *prf_desc = skq->prf;
 	const struct hash_desc *hasher = prf_desc ? prf_desc->hasher : NULL;
-	chunk_t ni;
-	chunk_t nr;
-	chunk_t gi;
-	chunk_t gr;
-	chunk_t icookie;
-	chunk_t rcookie;
-	const struct encrypt_desc *encrypter = skq->encrypter;
-
-	/* this doesn't allocate any memory */
-	setchunk_from_wire(gi, skq, &skq->gi);
-	setchunk_from_wire(gr, skq, &skq->gr);
-	setchunk_from_wire(ni, skq, &skq->ni);
-	setchunk_from_wire(nr, skq, &skq->nr);
-	setchunk_from_wire(icookie, skq, &skq->icookie);
-	setchunk_from_wire(rcookie, skq, &skq->rcookie);
 
 	/* Generate the SKEYID */
 	PK11SymKey *skeyid;
 	switch (auth) {
 	case OAKLEY_PRESHARED_KEY:
-		{
-			chunk_t pss;
-
-			setchunk_from_wire(pss, skq, &skq->pss);
-			skeyid = ikev1_pre_shared_key_skeyid(prf_desc, pss,
-							     ni, nr, logger);
-		}
+		skeyid = ikev1_pre_shared_key_skeyid(prf_desc, pss,
+						     ni, nr, logger);
 		break;
 
 	case OAKLEY_RSA_SIG:
@@ -240,16 +223,35 @@ void calc_v1_dh_shared_secret_and_iv(struct pcr_v1_dh *dh, struct logger *logger
 
 	if (dh->shared_secret != NULL) {
 		/* okay, so now calculate IV */
-		calc_skeyids_iv(dh,
-			dh->shared_secret,
-			dh->key_size,
+		chunk_t pss;
+		chunk_t ni;
+		chunk_t nr;
+		chunk_t gi;
+		chunk_t gr;
+		chunk_t icookie;
+		chunk_t rcookie;
+		/* this doesn't allocate any memory */
+		setchunk_from_wire(pss, dh, &dh->pss);
+		setchunk_from_wire(gi, dh, &dh->gi);
+		setchunk_from_wire(gr, dh, &dh->gr);
+		setchunk_from_wire(ni, dh, &dh->ni);
+		setchunk_from_wire(nr, dh, &dh->nr);
+		setchunk_from_wire(icookie, dh, &dh->icookie);
+		setchunk_from_wire(rcookie, dh, &dh->rcookie);
 
-			&dh->skeyid,	/* output */
-			&dh->skeyid_d,	/* output */
-			&dh->skeyid_a,	/* output */
-			&dh->skeyid_e,	/* output */
-			&dh->new_iv,	/* output */
+		calc_skeyids_iv(dh->auth, pss,
+				dh->prf, dh->encrypter,
+				ni, nr,
+				icookie, rcookie,
+				gi, gr,
+				dh->shared_secret,
+				dh->key_size,
+				&dh->skeyid,	/* output */
+				&dh->skeyid_d,	/* output */
+				&dh->skeyid_a,	/* output */
+				&dh->skeyid_e,	/* output */
+				&dh->new_iv,	/* output */
 				&dh->enc_key,	/* output */
-			logger);
+				logger);
 	}
 }
