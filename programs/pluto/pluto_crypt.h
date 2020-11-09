@@ -367,6 +367,7 @@ extern bool finish_v1_dh_shared_secret_and_iv(struct state *st,
 					      struct pluto_crypto_req *r);
 
 /* internal */
+void calc_v1_skeyid_and_iv(struct state *st);
 extern void calc_v1_dh_shared_secret_and_iv(struct pcr_v1_dh *dh, struct logger *logger);
 extern void cancelled_v1_dh_shared_secret(struct pcr_v1_dh *dh);
 

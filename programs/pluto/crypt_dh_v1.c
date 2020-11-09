@@ -200,6 +200,27 @@ static void calc_skeyids_iv(oakley_auth_t auth, chunk_t pss,
 	}
 }
 
+void calc_v1_skeyid_and_iv(struct state *st)
+{
+	const chunk_t *pss = get_connection_psk(st->st_connection, st->st_logger);
+	calc_skeyids_iv(st->st_oakley.auth, pss != NULL ? *pss : empty_chunk,
+			st->st_oakley.ta_prf, st->st_oakley.ta_encrypt,
+			st->st_ni, st->st_nr,
+			chunk2(st->st_ike_spis.initiator.bytes, COOKIE_SIZE),
+			chunk2(st->st_ike_spis.responder.bytes, COOKIE_SIZE),
+			st->st_gi, st->st_gr,
+			st->st_dh_shared_secret,
+			st->st_oakley.enckeylen / BITS_PER_BYTE,
+			&st->st_skeyid_nss,	/* output */
+			&st->st_skeyid_d_nss,	/* output */
+			&st->st_skeyid_a_nss,	/* output */
+			&st->st_skeyid_e_nss,	/* output */
+			&st->st_v1_new_iv,	/* output */
+			&st->st_enc_key_nss,	/* output */
+			st->st_logger);
+	st->hidden_variables.st_skeyid_calculated = true;
+}
+
 /* MUST BE THREAD-SAFE */
 void calc_v1_dh_shared_secret_and_iv(struct pcr_v1_dh *dh, struct logger *logger)
 {

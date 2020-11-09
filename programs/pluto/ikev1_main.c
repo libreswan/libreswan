@@ -89,7 +89,7 @@
 #include "ikev1_send.h"
 #include "nss_cert_verify.h"
 #include "iface.h"
-
+#include "crypt_dh.h"
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"
 #endif
@@ -1106,16 +1106,30 @@ static stf_status main_inI2_outR2_continue1(struct state *st,
  * SMF_RPKE_AUTH: HDR, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDr1_b>Ke_r
  *	    --> HDR*, HASH_I
  */
-static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
-						pb_stream *rbody,
-						struct pluto_crypto_req *r)
+
+static dh_shared_secret_cb main_inR2_outI3_continue;	/* type assertion */
+
+static stf_status main_inR2_outI3_continue(struct state *st,
+					   struct msg_digest *md)
 {
-	struct state *const st = md->st;
+	dbg("main_inR2_outI3_cryptotail for #%lu: calculated DH, sending R1",
+	    st->st_serialno);
+
+	passert(md != NULL);	/* ??? how would this fail? */
+
+	if (st->st_dh_shared_secret == NULL) {
+		return STF_FAIL + INVALID_KEY_INFORMATION;
+	}
+
+	calc_v1_skeyid_and_iv(st);
+
+	struct pbs_out rbody[1]; /* hack */
+	ikev1_init_pbs_out_from_md_hdr(md, TRUE,
+				       &reply_stream, reply_buffer, sizeof(reply_buffer),
+				       rbody, st->st_logger);
+
 	const struct connection *c = st->st_connection;
 	const cert_t mycert = c->spd.this.cert;
-
-	if (!finish_v1_dh_shared_secret_and_iv(st, r))
-		return STF_FAIL + INVALID_KEY_INFORMATION;
 
 	/* decode certificate requests */
 	ikev1_decode_cr(md);
@@ -1340,25 +1354,6 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 	return STF_OK;
 }
 
-static crypto_req_cont_func main_inR2_outI3_continue;	/* type assertion */
-
-static void main_inR2_outI3_continue(struct state *st,
-				     struct msg_digest *md,
-				     struct pluto_crypto_req *r)
-{
-	dbg("main_inR2_outI3_cryptotail for #%lu: calculated DH, sending R1",
-	    st->st_serialno);
-
-	passert(md != NULL);	/* ??? how would this fail? */
-
-	struct pbs_out rbody;
-	ikev1_init_pbs_out_from_md_hdr(md, TRUE,
-				       &reply_stream, reply_buffer, sizeof(reply_buffer),
-				       &rbody, st->st_logger);
-	stf_status e = main_inR2_outI3_continue_tail(md, &rbody, r);
-	complete_v1_state_transition(md, e);
-}
-
 stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
 {
 	/* KE in */
@@ -1370,8 +1365,7 @@ stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
 
 	/* Nr in */
 	RETURN_STF_FAILURE(accept_v1_nonce(st->st_logger, md, &st->st_nr, "Nr"));
-	submit_v1_dh_shared_secret_and_iv(main_inR2_outI3_continue, "aggr outR1 DH",
-					  st, SA_INITIATOR, st->st_oakley.ta_dh);
+	submit_dh_shared_secret(st, st->st_gr, main_inR2_outI3_continue, "aggr outR1 DH");
 	return STF_SUSPEND;
 }
 
