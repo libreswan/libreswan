@@ -82,7 +82,7 @@
 #include "ip_info.h"
 #include "ikev1_hash.h"
 #include "ikev1_message.h"
-
+#include "crypt_ke.h"
 #include <blapit.h>
 
 #ifdef USE_XFRM_INTERFACE
@@ -1009,7 +1009,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 						   struct pluto_crypto_req *r);
 
-static crypto_req_cont_func quick_inI1_outR1_continue1;	/* forward decl and type assertion */
+static ke_and_nonce_cb quick_inI1_outR1_continue1;	/* forward decl and type assertion */
 
 static crypto_req_cont_func quick_inI1_outR1_continue2;	/* forward decl and type assertion */
 
@@ -1255,23 +1255,19 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 
 		passert(st->st_connection != NULL);
 
-		if (st->st_pfs_group != NULL) {
-			request_ke_and_nonce("quick_outI1 KE", st,
-					     st->st_pfs_group,
-					     quick_inI1_outR1_continue1);
-		} else {
-			request_nonce("quick_outI1 KE", st,
-				      quick_inI1_outR1_continue1);
-		}
+		submit_ke_and_nonce(st, st->st_pfs_group/*possibly-null*/,
+				    quick_inI1_outR1_continue1,
+				    "quick_inI1_outR1_tail");
 
 		passert(st->st_connection != NULL);
 		return STF_SUSPEND;
 	}
 }
 
-static void quick_inI1_outR1_continue1(struct state *st,
-				       struct msg_digest *md,
-				       struct pluto_crypto_req *r)
+static stf_status quick_inI1_outR1_continue1(struct state *st,
+					     struct msg_digest *md,
+					     struct dh_local_secret *local_secret,
+					     chunk_t *nonce)
 {
 	dbg("quick_inI1_outR1_cryptocontinue1 for #%lu: calculated ke+nonce, calculating DH",
 	    st->st_serialno);
@@ -1279,11 +1275,11 @@ static void quick_inI1_outR1_continue1(struct state *st,
 	passert(st->st_connection != NULL);
 
 	/* we always calculate a nonce */
-	unpack_nonce(&st->st_nr, &r->pcr_d.kn.n);
+	unpack_nonce(&st->st_nr, nonce);
 
 	if (st->st_pfs_group != NULL) {
 		/* PFS is on: do a new DH */
-		unpack_KE_from_helper(st, r->pcr_d.kn.local_secret, &st->st_gr);
+		unpack_KE_from_helper(st, local_secret, &st->st_gr);
 		submit_v1_dh_shared_secret(quick_inI1_outR1_continue2, "quick outR1 DH",
 					   st, SA_RESPONDER, st->st_pfs_group);
 		/*
@@ -1291,18 +1287,15 @@ static void quick_inI1_outR1_continue1(struct state *st,
 		 * to be re suspended.  If the original crypto request
 		 * did everything this wouldn't be needed.
 		 */
-		suspend_any_md(st, md);
+		return STF_SUSPEND;
 	} else {
-		/* but if PFS is off, we don't do a second DH, so just
-		 * call the continuation with NULL struct pluto_crypto_req *
+		/*
+		 * but if PFS is off, we don't do a second DH, so just
+		 * call the continuation with NULL struct
+		 * pluto_crypto_req *
 		 */
-		stf_status e = quick_inI1_outR1_continue12_tail(md, NULL);
-		if (e == STF_OK) {
-			passert(md != NULL);	/* ??? when would this fail? */
-			complete_v1_state_transition(md, e);
-		}
+		return quick_inI1_outR1_continue12_tail(md, NULL);
 	}
-	/* ??? why does our caller not care about e? */
 }
 
 static void quick_inI1_outR1_continue2(struct state *st,
