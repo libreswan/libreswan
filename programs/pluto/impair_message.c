@@ -24,6 +24,8 @@
 #include "defs.h"
 #include "demux.h"
 #include "impair_message.h"
+#include "state.h"
+#include "state_db.h"		/* for FOR_EACH_STATE */
 
 /*
  * Track each unique message.
@@ -76,7 +78,7 @@ static void free_messages(struct message **messages)
  */
 
 struct message_impairment {
-	unsigned nr;
+	unsigned message_nr;
 	struct message_impairment *next;
 };
 
@@ -110,12 +112,13 @@ void add_message_impairment(unsigned nr, enum impair_action action, struct logge
 	log_message(RC_LOG, logger, "IMPAIR: will drop %s message %u",
 		    direction->name, nr);
 	struct message_impairment *m = alloc_thing(struct message_impairment, "impair message");
-	m->nr = nr;
+	m->message_nr = nr;
 	m->next = direction->impairments;
 	direction->impairments = m;
 }
 
 static bool impair_message(shunk_t message, struct direction_impairment *direction,
+			   struct message_impairment *impairment,
 			   struct logger *logger)
 {
 	if (direction->impairments == NULL) {
@@ -125,9 +128,12 @@ static bool impair_message(shunk_t message, struct direction_impairment *directi
 	dbg("%s message nr is %u", direction->name, nr);
 	for (struct message_impairment **mp = &direction->impairments; (*mp) != NULL; mp = &(*mp)->next) {
 		struct message_impairment *m = (*mp);
-		if (m->nr == nr) {
+		if (m->message_nr == nr) {
 			log_message(RC_LOG, logger, "IMPAIR: dropping %s message %u",
 				    direction->name, nr);
+			/* return details */
+			(*impairment) = *m;
+			(*impairment).next = NULL;
 			/*
 			 * Delete each impairment as it is consumed.
 			 * This way, at the end of a successful test
@@ -143,13 +149,29 @@ static bool impair_message(shunk_t message, struct direction_impairment *directi
 
 bool impair_incoming_message(struct msg_digest *md)
 {
-	return impair_message(pbs_in_as_shunk(&md->packet_pbs),
-			      &incoming_impairments, md->md_logger);
+	struct message_impairment impairment;
+	bool impair = impair_message(pbs_in_as_shunk(&md->packet_pbs),
+				     &incoming_impairments, &impairment,
+				     md->md_logger);
+	if (!impair) {
+		return false;
+	}
+
+	/* hack to also log to whack */
+	struct state *st;
+	FOR_EACH_STATE_NEW2OLD(st) {
+		if (st->st_logger->object_whackfd != NULL) {
+			log_message(RC_LOG, st->st_logger, "IMPAIR: drop incoming message %u",
+				    impairment.message_nr);
+		}
+	}
+	return true;
 }
 
 bool impair_outgoing_message(shunk_t message, struct logger *logger)
 {
-	return impair_message(message, &outgoing_impairments, logger);
+	struct message_impairment impairment; /*ignored*/
+	return impair_message(message, &outgoing_impairments, &impairment, logger);
 }
 
 static void free_direction(struct direction_impairment *direction, struct logger *logger)
