@@ -1,0 +1,48 @@
+# testing nicrun
+nic #
+ echo nicrun has run
+nicrun has run
+nic #
+ #!/bin/sh
+nic #
+ # nic is used as the System Role provisioning host
+nic #
+ #
+nic #
+ # System Role code to pull data from inventory and create configs files to push to west/east
+nic #
+ # Below is simple reference example of two files that would be pushed to /etc/ipsec.d on
+nic #
+ # both host east and west
+nic #
+ #
+nic #
+ # NOTE: the System Role should only touch files inside /etc/ipsec.d/ on east and west and
+nic #
+ # leave /etc/ipsec.conf and /etc/ipsec.secrets as-is.
+nic #
+ #
+nic #
+ # /etc/ipsec.d/west-east.conf
+nic #
+ # conn west-east
+nic #
+ # 	left=192.1.2.45
+nic #
+ # 	leftid=@west
+nic #
+ # 	right=192.1.2.23
+nic #
+ # 	rightid=@east
+nic #
+ # 	auto=ondemand
+nic #
+ # 	authby=secret
+nic #
+ #
+nic #
+ # /etc/ipsec.d/west-east.secrets
+nic #
+ # @east @west : PSK "SuperSecretAndRandom"
+nic #
+ 
