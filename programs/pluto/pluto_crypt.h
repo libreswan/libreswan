@@ -85,7 +85,6 @@ enum pluto_crypto_requests {
 	pcr_crypto = 0,		/* using crypto_handler */
 	pcr_build_ke_and_nonce,	/* calculate g^i and generate a nonce */
 	pcr_build_nonce,	/* generate a nonce */
-	pcr_compute_v1_dh_shared_secret_and_iv,	/* calculate (g^x)(g^y) and skeyids for Phase 1 DH + prf */
 	pcr_compute_v2_dh_shared_secret,	/* perform IKEv2 SA calculation, create SKEYSEED */
 };
 
@@ -193,40 +192,6 @@ struct pcr_kenonce {
 
 #define DHCALC_SIZE 2560
 
-struct pcr_v1_dh {
-	DECLARE_WIRE_ARENA(DHCALC_SIZE);
-
-	/* query */
-	const struct dh_desc *oakley_group;
-	oakley_auth_t auth; /*IKEv1 AUTH*/
-	const struct integ_desc *integ;
-	const struct prf_desc *prf;
-	const struct encrypt_desc *encrypter;
-	enum sa_role role;
-	size_t key_size; /* of encryptor, in bytes */
-	size_t salt_size; /* of IV salt, in bytes */
-	wire_chunk_t gi;
-	wire_chunk_t gr;
-	wire_chunk_t pss;
-	wire_chunk_t ni;
-	wire_chunk_t nr;
-	wire_chunk_t icookie;
-	wire_chunk_t rcookie;
-	struct dh_local_secret *local_secret;
-	PK11SymKey *skey_d_old;
-	const struct prf_desc *old_prf;
-
-	/* response */
-	PK11SymKey *shared_secret;
-	PK11SymKey *skeyid;
-	PK11SymKey *skeyid_d;
-	PK11SymKey *skeyid_a;
-	PK11SymKey *skeyid_e;
-	PK11SymKey *enc_key;
-	struct crypt_mac new_iv;
-};
-
-/* response */
 struct pcr_dh_v2 {
 	/* incoming */
 	DECLARE_WIRE_ARENA(DHCALC_SIZE);
@@ -268,7 +233,6 @@ struct pluto_crypto_req {
 	union {
 		struct pcr_kenonce kn;		/* query and result */
 		struct pcr_dh_v2 dh_v2;		/* query and response v2 */
-		struct pcr_v1_dh v1_dh;		/* query and response v1 */
 	} pcr_d;
 };
 
@@ -355,21 +319,8 @@ extern void calc_nonce(struct pcr_kenonce *kn);
 
 extern void cancelled_ke_and_nonce(struct pcr_kenonce *kn);
 
-/*
- * IKEv1 DH
- */
-
-extern void submit_v1_dh_shared_secret_and_iv(crypto_req_cont_func fn, const char *name,
-					      struct state *st, enum sa_role role,
-					      const struct dh_desc *oakley_group2);
-
-extern bool finish_v1_dh_shared_secret_and_iv(struct state *st,
-					      struct pluto_crypto_req *r);
-
 /* internal */
 void calc_v1_skeyid_and_iv(struct state *st);
-extern void calc_v1_dh_shared_secret_and_iv(struct pcr_v1_dh *dh, struct logger *logger);
-extern void cancelled_v1_dh_shared_secret(struct pcr_v1_dh *dh);
 
 /*
  * IKEv2 DH
@@ -402,9 +353,6 @@ extern void unpack_KE_from_helper(struct state *st,
 void pcr_kenonce_init(struct pluto_crypto_req_cont *cn,
 		      enum pluto_crypto_requests pcr_type,
 		      const struct dh_desc *dh);
-
-struct pcr_v1_dh *pcr_v1_dh_init(struct pluto_crypto_req_cont *cn,
-				 enum pluto_crypto_requests pcr_type);
 
 struct pcr_dh_v2 *pcr_dh_v2_init(struct pluto_crypto_req_cont *cn);
 

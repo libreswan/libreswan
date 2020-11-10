@@ -228,8 +228,6 @@ static const char *const pluto_cryptoop_strings[] = {
 	"crypto",		/* generic crypto */
 	"build KE and nonce",	/* calculate g^i and generate a nonce */
 	"build nonce",	/* generate a nonce */
-	"compute dh+iv (V1 Phase 1)",	/* calculate (g^x)(g^y) and skeyids for Phase 1 DH + prf */
-	"compute dh (V1 Phase 2 PFS)",	/* calculate (g^x)(g^y) for Phase 2 PFS */
 	"compute dh (V2)",	/* perform IKEv2 PARENT SA calculation, create SKEYSEED */
 };
 
@@ -267,11 +265,6 @@ static void pcr_cancelled(struct crypto_task **task)
 	case pcr_compute_v2_dh_shared_secret:
 		cancelled_v2_dh_shared_secret(&r->pcr_d.dh_v2);
 		break;
-#ifdef USE_IKEv1
-	case pcr_compute_v1_dh_shared_secret_and_iv:
-		cancelled_v1_dh_shared_secret(&r->pcr_d.v1_dh);
-		break;
-#endif
 	case pcr_crypto:
 	default:
 		bad_case(r->pcr_type);
@@ -286,17 +279,6 @@ void pcr_kenonce_init(struct pluto_crypto_req_cont *cn,
 	struct pluto_crypto_req *r = &cn->pcrc_pcr;
 	pcr_init(r, pcr_type);
 	r->pcr_d.kn.group = dh;
-}
-
-struct pcr_v1_dh *pcr_v1_dh_init(struct pluto_crypto_req_cont *cn,
-				 enum pluto_crypto_requests pcr_type)
-{
-	struct pluto_crypto_req *r = &cn->pcrc_pcr;
-	pcr_init(r, pcr_type);
-
-	struct pcr_v1_dh *dhq = &r->pcr_d.v1_dh;
-	INIT_WIRE_ARENA(*dhq);
-	return dhq;
 }
 
 struct pcr_dh_v2 *pcr_dh_v2_init(struct pluto_crypto_req_cont *cn)
@@ -357,12 +339,6 @@ static void pcr_compute(struct logger *logger,
 	case pcr_build_nonce:
 		calc_nonce(&r->pcr_d.kn);
 		break;
-
-#ifdef USE_IKEv1
-	case pcr_compute_v1_dh_shared_secret_and_iv:
-		calc_v1_dh_shared_secret_and_iv(&r->pcr_d.v1_dh, logger);
-		break;
-#endif
 
 	case pcr_compute_v2_dh_shared_secret:
 		calc_v2_dh_shared_secret(r, logger);
