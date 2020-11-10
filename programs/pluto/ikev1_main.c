@@ -949,19 +949,22 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
  * We are precomputing the DH.
  * This also means that it isn't good at reporting an NSS error.
  */
-static crypto_req_cont_func main_inI2_outR2_continue2;	/* type assertion */
+static dh_shared_secret_cb main_inI2_outR2_continue2;	/* type assertion */
 
-static void main_inI2_outR2_continue2(struct state *st,
-				      struct msg_digest *md,
-				      struct pluto_crypto_req *r)
+static stf_status main_inI2_outR2_continue2(struct state *st,
+					    struct msg_digest *md)
 {
 	dbg("main_inI2_outR2_calcdone for #%lu: calculate DH finished",
 	    st->st_serialno);
 
-	set_cur_state(st);
-
-	if (finish_v1_dh_shared_secret_and_iv(st, r))
+	/*
+	 * Ignore error.  It will be handled handled when the next
+	 * message arrives?!?
+	 */
+	if (st->st_dh_shared_secret != NULL) {
+		calc_v1_skeyid_and_iv(st);
 		update_iv(st);
+	}
 
 	/*
 	 * If there was a packet received while we were calculating, then
@@ -969,9 +972,13 @@ static void main_inI2_outR2_continue2(struct state *st,
 	 * Otherwise, the result awaits the packet.
 	 */
 	if (md != NULL) {
+		/*
+		 * This will call complete_v1_state_transition() when
+		 * needed.
+		 */
 		process_packet_tail(md);
 	}
-	reset_cur_state();
+	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
 
@@ -1069,29 +1076,27 @@ static stf_status main_inI2_outR2_continue1(struct state *st,
 		return STF_INTERNAL_ERROR;
 
 	/*
-	 * next message will be encrypted, so, we need to have
-	 * the DH value calculated. We can do this in the background,
-	 * sending the reply right away. We have to be careful on the next
-	 * state, since the other end may reply faster than we can calculate
-	 * things. If it is the case, then the packet is placed in the
-	 * continuation, and we let the continuation process it. If there
-	 * is a retransmit, we keep only the last packet.
+	 * next message will be encrypted, so, we need to have the DH
+	 * value calculated. We can do this in the background, sending
+	 * the reply right away. We have to be careful on the next
+	 * state, since the other end may reply faster than we can
+	 * calculate things. If it is the case, then the packet is
+	 * placed in the continuation, and we let the continuation
+	 * process it. If there is a retransmit, we keep only the last
+	 * packet.
 	 *
 	 * Also, note that this is not a suspended state, since we are
 	 * actually just doing work in the background.  md will not be
 	 * retained.
 	 */
-	{
-		dbg("main inI2_outR2: starting async DH calculation (group=%d)",
-		    st->st_oakley.ta_dh->group);
+	dbg("main inI2_outR2: starting async DH calculation (group=%d)",
+	    st->st_oakley.ta_dh->group);
+	submit_dh_shared_secret(st, st->st_gi/*responder needs initiator's KE*/,
+				main_inI2_outR2_continue2, "main_inI2_outR2_tail");
+	/* we are calculating in the background, so it doesn't count */
+	dbg("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __func__, __LINE__);
+	st->st_v1_offloaded_task_in_background = true;
 
-		submit_v1_dh_shared_secret_and_iv(main_inI2_outR2_continue2, "main_inI2_outR2_tail",
-						  st, SA_RESPONDER, st->st_oakley.ta_dh);
-
-		/* we are calculating in the background, so it doesn't count */
-		dbg("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __func__, __LINE__);
-		st->st_v1_offloaded_task_in_background = true;
-	}
 	return STF_OK;
 }
 
