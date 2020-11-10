@@ -47,7 +47,7 @@
 #include "iface.h"
 #include "secrets.h"
 #include "crypt_ke.h"
-
+#include "crypt_dh.h"
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"
 #endif
@@ -71,26 +71,11 @@
  *	aggr_inI1_outR1_tail: aggr_inI1_outR1_continue2
  */
 
-static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
-						 struct pluto_crypto_req *r);
-
 /*
  * continuation from second calculation (the DH one)
  */
 
-static crypto_req_cont_func aggr_inI1_outR1_continue2;	/* type assertion */
-
-static void aggr_inI1_outR1_continue2(struct state *st,
-				      struct msg_digest *md,
-				      struct pluto_crypto_req *r)
-{
-	dbg("aggr_inI1_outR1_continue2 for #%lu: calculated ke+nonce+DH, sending R1",
-	    st->st_serialno);
-
-	passert(md != NULL);
-	stf_status e = aggr_inI1_outR1_continue2_tail(md, r);
-	complete_v1_state_transition(md, e);
-}
+static dh_shared_secret_cb aggr_inI1_outR1_continue2;	/* type assertion */
 
 /*
  * for aggressive mode, this is sub-optimal, since we should have
@@ -113,11 +98,10 @@ static stf_status aggr_inI1_outR1_continue1(struct state *st,
 	/* unpack nonce too */
 	unpack_nonce(&st->st_nr, nonce);
 
-	/* NOTE: the "r" reply will get freed by our caller */
-
 	/* set up second calculation */
-	submit_v1_dh_shared_secret_and_iv(aggr_inI1_outR1_continue2, "aggr outR1 DH",
-					  st, SA_RESPONDER, st->st_oakley.ta_dh);
+	submit_dh_shared_secret(st, st->st_gi/*initiator's KE*/,
+				aggr_inI1_outR1_continue2, "aggr outR1 DH");
+
 	/*
 	 * XXX: Since more crypto has been requested, MD needs to be re
 	 * suspended.  If the original crypto request did everything
@@ -279,10 +263,13 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	return STF_SUSPEND;
 }
 
-static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
-						 struct pluto_crypto_req *r)
+static stf_status aggr_inI1_outR1_continue2(struct state *st,
+					    struct msg_digest *md)
 {
-	struct state *const st = md->st;
+	dbg("aggr_inI1_outR1_continue2 for #%lu: calculated ke+nonce+DH, sending R1",
+	    st->st_serialno);
+	passert(md != NULL);
+
 	const struct connection *c = st->st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
 	const cert_t mycert = c->spd.this.cert;
@@ -291,8 +278,10 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 	 * so we have to build our reply_stream and emit HDR before calling it.
 	 */
 
-	if (!finish_v1_dh_shared_secret_and_iv(st, r))
+	if (st->st_dh_shared_secret == NULL) {
 		return STF_FAIL + INVALID_KEY_INFORMATION;
+	}
+	calc_v1_skeyid_and_iv(st);
 
 	/* decode certificate requests */
 	ikev1_decode_cr(md);
