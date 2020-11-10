@@ -106,14 +106,14 @@ void DBG_symkey(struct logger *logger, const char *prefix, const char *name, PK1
 		jam_symkey(buf, name, key);
 	}
 #if 0
-	if (DBGP(DBG_PRIVATE)) {
+	if (DBGP(DBG_CRYPT)) {
 		if (libreswan_fipsmode()) {
 			DBG_log("%s secured by FIPS", prefix);
 		} else {
-			chunk_t bytes = chunk_from_symkey(prefix, 0, key);
+			chunk_t bytes = chunk_from_symkey(prefix, key, logger);
 			/* NULL suppresses the dump header */
 			DBG_dump_hunk(NULL, bytes);
-			freeanychunk(bytes);
+			free_chunk_content(&bytes);
 		}
 	}
 #endif
