@@ -504,7 +504,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
  * SMF_DS_AUTH:  HDR, SA, KE, Nr, IDir, [CERT,] SIG_R
  *           --> HDR*, [CERT,] SIG_I
  */
-static crypto_req_cont_func aggr_inR1_outI2_crypto_continue;	/* forward decl and type assertion */
+static dh_shared_secret_cb aggr_inR1_outI2_crypto_continue;	/* forward decl and type assertion */
 
 stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 {
@@ -572,38 +572,25 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	ikev1_natd_init(st, md);
 
 	/* set up second calculation */
-	submit_v1_dh_shared_secret_and_iv(aggr_inR1_outI2_crypto_continue, "aggr outR1 DH",
-					  st, SA_INITIATOR, st->st_oakley.ta_dh);
+	submit_dh_shared_secret(st, st->st_gr/*initiator needs responder's KE*/,
+				aggr_inR1_outI2_crypto_continue, "aggr_inR1_outI2");
 	return STF_SUSPEND;
 }
 
-static stf_status aggr_inR1_outI2_tail(struct msg_digest *md); /* forward */
-
-static void aggr_inR1_outI2_crypto_continue(struct state *st,
-					    struct msg_digest *md,
-					    struct pluto_crypto_req *r)
+static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
+						  struct msg_digest *md)
 {
-	stf_status e;
-
 	dbg("aggr inR1_outI2: calculated DH, sending I2");
 
 	passert(st != NULL);
 	passert(md != NULL);
 	passert(md->st == st);
 
-	if (!finish_v1_dh_shared_secret_and_iv(st, r)) {
-		e = STF_FAIL + INVALID_KEY_INFORMATION;
-	} else {
-		e = aggr_inR1_outI2_tail(md);
+	if (st->st_dh_shared_secret == NULL) {
+		return STF_FAIL + INVALID_KEY_INFORMATION;
 	}
+	calc_v1_skeyid_and_iv(st);
 
-	complete_v1_state_transition(md, e);
-}
-
-/* Note: this is only called once.  Not really a tail. */
-
-static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
-{
 	if (!v1_decode_certs(md)) {
 		libreswan_log("X509: CERT payload bogus or revoked");
 		return STF_FAIL + INVALID_ID_INFORMATION;
@@ -620,7 +607,6 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 			return r;
 	}
 
-	struct state *const st = md->st;
 	struct connection *c = st->st_connection;
 	const cert_t mycert = c->spd.this.cert;
 
