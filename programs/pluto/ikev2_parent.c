@@ -4949,9 +4949,7 @@ stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
 	return STF_SUSPEND;
 }
 
-static void ikev2_child_ike_inIoutR_continue_continue(struct state *st,
-						      struct msg_digest *md,
-						      struct pluto_crypto_req *r);
+static dh_shared_secret_cb ikev2_child_ike_inIoutR_continue_continue;	/* type assertion */
 
 static stf_status ikev2_child_ike_inIoutR_continue(struct state *st,
 						   struct msg_digest *md,
@@ -4993,18 +4991,15 @@ static stf_status ikev2_child_ike_inIoutR_continue(struct state *st,
 				  &st->st_ike_rekey_spis.initiator);
 	st->st_ike_rekey_spis.responder = ike_responder_spi(&md->sender,
 							    st->st_logger);
-	submit_v2_dh_shared_secret(st, "DHv2 for REKEY IKE SA", SA_RESPONDER,
-				   ike->sa.st_skey_d_nss, /* only IKE has SK_d */
-				   ike->sa.st_oakley.ta_prf, /* for IKE/ESP/AH */
-				   &st->st_ike_rekey_spis,
-				   ikev2_child_ike_inIoutR_continue_continue);
+	submit_dh_shared_secret(st, st->st_gi/*responder needs initiator KE*/,
+				ikev2_child_ike_inIoutR_continue_continue,
+				"DHv2 for REKEY IKE SA");
 
 	return STF_SUSPEND;
 }
 
-static void ikev2_child_ike_inIoutR_continue_continue(struct state *st,
-						      struct msg_digest *md,
-						      struct pluto_crypto_req *r)
+static stf_status ikev2_child_ike_inIoutR_continue_continue(struct state *st,
+							    struct msg_digest *md)
 {
 	dbg("%s() for #%lu %s",
 	     __func__, st->st_serialno, st->st_state->name);
@@ -5025,22 +5020,22 @@ static void ikev2_child_ike_inIoutR_continue_continue(struct state *st,
 			     "sponsoring child state #%lu has no parent state #%lu",
 			     st->st_serialno, st->st_clonedfrom);
 		/* XXX: release child? */
-		return;
+		return STF_INTERNAL_ERROR;
 	}
 
-	pexpect(r->pcr_type == pcr_compute_v2_dh_shared_secret);
-	bool only_shared_false = false;
-	stf_status e;
-	if (!finish_v2_dh_shared_secret(st, r, only_shared_false)) {
+	if (st->st_dh_shared_secret == NULL) {
 		record_v2N_response(ike->sa.st_logger, ike, md,
 				    v2N_INVALID_SYNTAX, NULL,
 				    ENCRYPTED_PAYLOAD);
-		e = STF_FATAL; /* kill family */
-	} else {
-		e = ikev2_child_out_tail(ike, child, md);
+		return STF_FATAL; /* kill family */
 	}
 
-	complete_v2_state_transition(st, md, e);
+	calc_v2_keymat(st,
+		       ike->sa.st_skey_d_nss, /* only IKE has SK_d */
+		       ike->sa.st_oakley.ta_prf, /* for IKE/ESP/AH */
+		       &st->st_ike_rekey_spis);
+
+	return ikev2_child_out_tail(ike, child, md);
 }
 
 static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *child,
