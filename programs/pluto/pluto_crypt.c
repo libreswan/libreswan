@@ -66,24 +66,7 @@
 
 static void helper_thread_stopped_callback(struct state *st, void *arg);
 
-/*
- * Hack to keep old PCR based code working.
- */
-struct crypto_task {
-	struct pluto_crypto_req_cont *cn;
-};
-
 static resume_cb handle_helper_answer;
-static crypto_compute_fn pcr_compute;
-static crypto_completed_cb pcr_completed;
-static crypto_cancelled_cb pcr_cancelled;
-
-static const struct crypto_handler pcr_handler = {
-	.name = "pcr",
-	.compute_fn = pcr_compute,
-	.completed_cb = pcr_completed,
-	.cancelled_cb = pcr_cancelled,
-};
 
 /*
  * The crypto continuation structure
@@ -111,18 +94,13 @@ struct pluto_crypto_req_cont {
 
 	/* where to send messages */
 	struct logger *logger;
-
-	/* old way */
-	struct pluto_crypto_req pcrc_pcr;
-	crypto_req_cont_func *pcrc_func;	/* function to continue with */
 };
 
 #define dbg_job(JOB, FMT, ...)						\
 	dbg("job %u for #%lu: %s (%s): "FMT,				\
-	    JOB->pcrc_job_id, JOB->pcrc_so_serialno,		\
+	    JOB->pcrc_job_id, JOB->pcrc_so_serialno,			\
 	    JOB->pcrc_name,						\
-	    (JOB->pcrc_pcr.pcr_type == pcr_crypto ? JOB->pcrc_handler->name : \
-	     enum_show(&pluto_cryptoop_names, JOB->pcrc_pcr.pcr_type)), \
+	    JOB->pcrc_handler->name,					\
 	    ##__VA_ARGS__)
 
 /*
@@ -178,22 +156,6 @@ static void message_helpers(struct pluto_crypto_req_cont *cn)
 }
 
 /*
- * Create the pluto crypto request object.
- */
-
-struct pluto_crypto_req_cont *new_pcrc(crypto_req_cont_func fn,
-				       const char *name)
-{
-	struct pluto_crypto_req_cont *r = alloc_thing(struct pluto_crypto_req_cont, name);
-	r->pcrc_func = fn; /* may be NULL */
-	r->pcrc_cancelled = false;
-	r->pcrc_name = name;
-	r->pcrc_backlog = list_entry(&backlog_info, r);
-	r->pcrc_so_serialno = SOS_NOBODY;
-	return r;
-}
-
-/*
  * Note: this per-helper struct is never modified in a helper thread
  *
  * Life cycle:
@@ -222,46 +184,6 @@ struct pluto_crypto_worker {
 static struct pluto_crypto_worker *pc_workers = NULL;
 
 static int nr_helper_threads = 0;
-
-/* pluto crypto operations */
-static const char *const pluto_cryptoop_strings[] = {
-	"crypto",		/* generic crypto */
-};
-
-static enum_names pluto_cryptoop_names = {
-	0, elemsof(pluto_cryptoop_strings)-1,
-	ARRAY_REF(pluto_cryptoop_strings),
-	NULL, /* prefix */
-	NULL
-};
-
-/* initializers for pluto_crypto_request continuations */
-
-static void pcr_init(struct pluto_crypto_req *r,
-		     enum pluto_crypto_requests pcr_type)
-{
-	zero(r);
-	r->pcr_type = pcr_type;
-}
-
-/*
- * Release the contents of R.
- *
- * For at least DH what part of the union is in use is depdent on the
- * release being performed pre- or post- crypto.  Ewwww!
- */
-
-static void pcr_cancelled(struct crypto_task **task)
-{
-	struct pluto_crypto_req *r = &(*task)->cn->pcrc_pcr;
-	switch (r->pcr_type) {
-		break;
-	case pcr_crypto:
-	default:
-		bad_case(r->pcr_type);
-	}
-	pfreeany(*task);
-}
 
 /*
  * If there are any helper threads, this code is always executed IN A HELPER
@@ -293,22 +215,6 @@ static void pluto_do_crypto_op(struct pluto_crypto_req_cont *cn, int helpernum)
 			     "helper %d processing job %u for state #%lu: %s (%s)",
 			     helpernum, cn->pcrc_job_id, cn->pcrc_so_serialno,
 			     cn->pcrc_name, cn->pcrc_handler->name);
-}
-
-static void pcr_compute(struct logger *logger UNUSED,
-			struct crypto_task *task,
-			int unused_helpernum UNUSED)
-{
-	struct pluto_crypto_req_cont *cn = task->cn;
-	struct pluto_crypto_req *r = &cn->pcrc_pcr;
-
-	/* now we have the entire request in the buffer, process it */
-	switch (r->pcr_type) {
-
-	case pcr_crypto:
-	default:
-		bad_case(r->pcr_type);
-	}
 }
 
 /* IN A HELPER THREAD */
@@ -582,19 +488,6 @@ static stf_status handle_helper_answer(struct state *st,
 	return status;
 }
 
-stf_status pcr_completed(struct state *st,
-			 struct msg_digest *md,
-			 struct crypto_task **task)
-{
-	struct pluto_crypto_req_cont *cn = (*task)->cn;
-	passert(cn->pcrc_func != NULL);
-	pexpect(cn->pcrc_pcr.pcr_type != pcr_crypto);
-	(*cn->pcrc_func)(st, md, &cn->pcrc_pcr);
-	pfree(*task);
-	*task = NULL;
-	return STF_SKIP_COMPLETE_STATE_TRANSITION;
-}
-
 /*
  * Initialize helper debug delay value from environment variable.
  * This function is NOT thread safe (getenv).
@@ -728,24 +621,16 @@ void stop_helper_threads(void)
 	}
 }
 
-void send_crypto_helper_request(struct state *st,
-				struct pluto_crypto_req_cont *cn)
-{
-	passert(cn->pcrc_func != NULL);
-	passert(cn->pcrc_pcr.pcr_type != pcr_crypto);
-	struct crypto_task *task = alloc_thing(struct crypto_task, "pcr_task");
-	task->cn = cn;
-	submit_crypto_request(cn, st->st_logger, st,
-			      task, &pcr_handler);
-}
-
 void submit_crypto(const struct logger *logger,
 		   struct state *st,
 		   struct crypto_task *task,
 		   const struct crypto_handler *handler,
 		   const char *name)
 {
-	struct pluto_crypto_req_cont *cn = new_pcrc(NULL, name);
-	pcr_init(&cn->pcrc_pcr, pcr_crypto);
-	submit_crypto_request(cn, logger, st, task, handler);
+	struct pluto_crypto_req_cont *r = alloc_thing(struct pluto_crypto_req_cont, name);
+	r->pcrc_cancelled = false;
+	r->pcrc_name = name;
+	r->pcrc_backlog = list_entry(&backlog_info, r);
+	r->pcrc_so_serialno = SOS_NOBODY;
+	submit_crypto_request(r, logger, st, task, handler);
 }
