@@ -44,6 +44,7 @@ void jam_symkey(struct jambuf *buf, const char *name, PK11SymKey *key);
  */
 void release_symkey(const char *prefix, const char *name, PK11SymKey **key);
 PK11SymKey *reference_symkey(const char *prefix, const char *name, PK11SymKey *key);
+void symkey_newref(const char *name, PK11SymKey *key);
 
 /*
  * Length of a symkey in bytes.

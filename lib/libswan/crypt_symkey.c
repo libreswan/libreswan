@@ -50,11 +50,11 @@ void release_symkey(const char *prefix, const char *name,
 		    PK11SymKey **key)
 {
 	if (*key != NULL) {
-		DBGF(DBG_CRYPT, "%s: delref %s-key@%p",
+		DBGF(DBG_REFCNT, "%s: delref %s-key@%p",
 		     prefix, name, *key);
 		PK11_FreeSymKey(*key);
 	} else {
-		DBGF(DBG_CRYPT, "%s: delref %s-key@NULL",
+		DBGF(DBG_REFCNT, "%s: delref %s-key@NULL",
 		     prefix, name);
 	}
 	*key = NULL;
@@ -64,11 +64,11 @@ PK11SymKey *reference_symkey(const char *prefix, const char *name,
 			     PK11SymKey *key)
 {
 	if (key != NULL) {
-		DBGF(DBG_CRYPT, "%s: addref %s-key@%p",
+		DBGF(DBG_REFCNT, "%s: addref %s-key@%p",
 		     prefix, name, key);
 		PK11_ReferenceSymKey(key);
 	} else {
-		DBGF(DBG_CRYPT, "%s: addref %s-key@NULL",
+		DBGF(DBG_REFCNT, "%s: addref %s-key@NULL",
 		     prefix, name);
 	}
 	return key;
@@ -181,7 +181,7 @@ PK11SymKey *crypt_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem
 			pexpect_fail(logger, HERE, PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
 		}
 		DBG_DERIVE();
-	} else if (DBGP(DBG_CRYPT)) {
+	} else if (DBGP(DBG_REFCNT)) {
 		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, SPACES"result: newref ");
 			jam_symkey(buf, target_name, target_key);
@@ -317,7 +317,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey,
 		PK11_FreeSlot(slot); /* reference counted */
 		passert(slot_key != NULL);
 	}
-	if (DBGP(DBG_CRYPT)) {
+	if (DBGP(DBG_REFCNT)) {
 	    if (slot_key == symkey) {
 		    /* output should mimic reference_symkey() */
 		    DBG_log("%s: slot-key@%p: addref sym-key@%p",
