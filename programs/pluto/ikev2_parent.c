@@ -2665,7 +2665,7 @@ static stf_status ikev2_ike_sa_process_auth_request_no_keymat_continue(struct st
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
-static crypto_req_cont_func ikev2_ike_sa_process_intermediate_request_no_skeyid_continue;	/* type asssertion */
+static dh_shared_secret_cb ikev2_ike_sa_process_intermediate_request_no_skeyid_continue;	/* type asssertion */
 
 stf_status ikev2_ike_sa_process_intermediate_request_no_skeyid(struct ike_sa *ike,
 						       struct child_sa *child,
@@ -2681,16 +2681,14 @@ stf_status ikev2_ike_sa_process_intermediate_request_no_skeyid(struct ike_sa *ik
 	dbg("ikev2 parent %s(): calculating g^{xy} in order to decrypt I2", __func__);
 
 	/* initiate calculation of g^xy */
-	submit_v2_dh_shared_secret(st, "ikev2_inI2outR2 KE",
-				   SA_RESPONDER,
-				   NULL, NULL, &st->st_ike_spis,
-				   ikev2_ike_sa_process_intermediate_request_no_skeyid_continue);
+	submit_dh_shared_secret(st, st->st_gi/*responder needs initiator KE*/,
+				ikev2_ike_sa_process_intermediate_request_no_skeyid_continue,
+				"ikev2_inI2outR2 KE");
 	return STF_SUSPEND;
 }
 
-static void ikev2_ike_sa_process_intermediate_request_no_skeyid_continue(struct state *st,
-								 struct msg_digest *md,
-								 struct pluto_crypto_req *r)
+static stf_status ikev2_ike_sa_process_intermediate_request_no_skeyid_continue(struct state *st,
+									       struct msg_digest *md)
 {
 	dbg("%s() for #%lu %s: calculating g^{xy}, sending R2",
 	    __func__, st->st_serialno, st->st_state->name);
@@ -2703,9 +2701,7 @@ static void ikev2_ike_sa_process_intermediate_request_no_skeyid_continue(struct 
 
 	pexpect(st->st_state->kind == STATE_PARENT_R1);
 
-	/* extract calculated values from r */
-
-	if (!finish_v2_dh_shared_secret(st, r, FALSE)) {
+	if (st->st_dh_shared_secret == NULL) {
 		/*
 		 * Since dh failed, the channel isn't end-to-end
 		 * encrypted.  Send back a clear text notify and then
@@ -2713,12 +2709,15 @@ static void ikev2_ike_sa_process_intermediate_request_no_skeyid_continue(struct 
 		 */
 		dbg("aborting IKE SA: DH failed");
 		send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);
-		/* replace (*mdp)->st with st ... */
-		complete_v2_state_transition(md->st, md, STF_FATAL);
-		return;
+		return STF_FATAL;
 	}
-	
+
+	calc_v2_keymat(st,
+		       NULL, NULL, /* no old keymat */
+		       &st->st_ike_spis);
+
 	ikev2_process_state_packet(pexpect_ike_sa(st), st, md);
+	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
 static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
