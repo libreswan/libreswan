@@ -1445,10 +1445,8 @@ stf_status ikev2_auth_initiator_process_unknown_notification(struct ike_sa *unus
  *      TSi, TSr}      -->
  */
 
-static crypto_req_cont_func ikev2_parent_inR1outI2_continue;	/* forward decl and type assertion */
-static crypto_transition_fn ikev2_parent_inR1outI2_tail;	/* forward decl and type assertion */
-static crypto_req_cont_func ikev2_parent_inR1out_intermediate;	/* forward decl and type assertion */
-static crypto_transition_fn ikev2_parent_inR1out_intermediate_continue;	/* forward decl and type assertion */
+static dh_shared_secret_cb ikev2_parent_inR1outI2_continue;	/* forward decl and type assertion */
+static dh_shared_secret_cb ikev2_parent_inR1out_intermediate;	/* forward decl and type assertion */
 
 stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 				  struct child_sa *unused_child UNUSED,
@@ -1620,19 +1618,16 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 
 	/* If we seen the intermediate AND we are configured to use intermediate */
 	/* for now, do only one Intermediate Exchange round and proceed with IKE_AUTH */
-	crypto_req_cont_func (*pcrc_func) = (ike->sa.st_seen_intermediate && (md->pbs[PBS_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED] != NULL) && !(md->hdr.isa_xchg == ISAKMP_v2_IKE_INTERMEDIATE)) ?
+	dh_shared_secret_cb (*pcrc_func) = (ike->sa.st_seen_intermediate && (md->pbs[PBS_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED] != NULL) && !(md->hdr.isa_xchg == ISAKMP_v2_IKE_INTERMEDIATE)) ?
 			ikev2_parent_inR1out_intermediate : ikev2_parent_inR1outI2_continue;
 
-	submit_v2_dh_shared_secret(st, "ikev2_inR1outI2 KE",
-				   SA_INITIATOR,
-				   NULL, NULL, &st->st_ike_rekey_spis,
-				   pcrc_func);
+	submit_dh_shared_secret(st, st->st_gr/*initiator needs responder KE*/,
+				pcrc_func, "ikev2_inR1outI2 KE");
 	return STF_SUSPEND;
 }
 
-static void ikev2_parent_inR1out_intermediate(struct state *st,
-					    struct msg_digest *mdp,
-					    struct pluto_crypto_req *r)
+static stf_status ikev2_parent_inR1out_intermediate(struct state *st,
+						    struct msg_digest *mdp)
 {
 	dbg("%s() for #%lu %s: g^{xy} calculated, sending INTERMEDIATE",
 	    __func__, st->st_serialno, st->st_state->name);
@@ -1643,27 +1638,20 @@ static void ikev2_parent_inR1out_intermediate(struct state *st,
 	struct ike_sa *ike = pexpect_ike_sa(st);
 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
 
-	stf_status e = ikev2_parent_inR1out_intermediate_continue(st, mdp, r);
-	/* replace (*mdp)->st with st ... */
-	complete_v2_state_transition(mdp->st, mdp, e);
-}
-
-static stf_status ikev2_parent_inR1out_intermediate_continue(struct state *st,
-					    struct msg_digest *mdp,
-					    struct pluto_crypto_req *r)
-{
-	struct ike_sa *ike = pexpect_ike_sa(st);
-
 	ike->sa.st_intermediate_used = true;
 
-	if (!finish_v2_dh_shared_secret(st, r, FALSE)) {
+	if (st->st_dh_shared_secret == NULL) {
 		/*
 		 * XXX: this is the initiator so returning a
 		 * notification is kind of useless.
 		 */
 		pstat_sa_failed(st, REASON_CRYPTO_FAILED);
-		return STF_FAIL + v2N_INVALID_SYNTAX; /* STF_FATAL? */
+		return STF_FAIL;
 	}
+
+	calc_v2_keymat(st,
+		       NULL, NULL, /*previous keymat*/
+		       &st->st_ike_rekey_spis);
 
 	/*
 	 * All systems are go.
@@ -1726,24 +1714,6 @@ static stf_status ikev2_parent_inR1out_intermediate_continue(struct state *st,
 	dbg_v2_msgid(ike, st, "XXX: in %s() hacking around record'n'send bypassing send queue",
 			     __func__);
 	return STF_OK;
-}
-
-static void ikev2_parent_inR1outI2_continue(struct state *st,
-					    struct msg_digest *md,
-					    struct pluto_crypto_req *r)
-{
-	dbg("%s() for #%lu %s: g^{xy} calculated, sending I2",
-	    __func__, st->st_serialno, st->st_state->name);
-
-	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
-	pexpect(md->st == NULL || md->st == st);
-
-	struct ike_sa *ike = pexpect_ike_sa(st);
-	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
-
-	stf_status e = ikev2_parent_inR1outI2_tail(st, md, r);
-	/* replace (*mdp)->st with st ... */
-	complete_v2_state_transition(md->st, md, e);
 }
 
 /* Misleading name, also used for NULL sized type's */
@@ -1944,21 +1914,34 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 								 struct msg_digest *md,
 								 const struct hash_signature *sig);
 
-static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_digest *md,
-					      struct pluto_crypto_req *r)
+
+static stf_status ikev2_parent_inR1outI2_continue(struct state *st,
+						  struct msg_digest *md)
 {
+	dbg("%s() for #%lu %s: g^{xy} calculated, sending I2",
+	    __func__, st->st_serialno, st->st_state->name);
+
+	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
+	pexpect(md->st == NULL || md->st == st);
+
+	struct ike_sa *ike = pexpect_ike_sa(st);
+	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
+
+	struct state *pst = &ike->sa; /* TBD: hack-to-avoid-code-churn */
 	struct connection *const pc = pst->st_connection;	/* parent connection */
-	struct ike_sa *ike = pexpect_ike_sa(pst);
 
 	if (!(md->hdr.isa_xchg == ISAKMP_v2_IKE_INTERMEDIATE)) {
-		if (!finish_v2_dh_shared_secret(pst, r, FALSE)) {
+		if (st->st_dh_shared_secret == NULL) {
 			/*
 			* XXX: this is the initiator so returning a
 			* notification is kind of useless.
 			*/
 			pstat_sa_failed(pst, REASON_CRYPTO_FAILED);
-			return STF_FAIL + v2N_INVALID_SYNTAX; /* STF_FATAL? */
+			return STF_FAIL;
 		}
+		calc_v2_keymat(st,
+			       NULL, NULL, /*no old keymat*/
+			       &st->st_ike_rekey_spis);
 	}
 
 	/*
