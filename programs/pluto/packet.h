@@ -1140,6 +1140,12 @@ extern struct_desc ikev2_ts_r_desc;
 extern struct_desc ikev2_ts1_desc;
 extern struct_desc ikev2_ts_seclabel_desc;
 
+/**
+ * ikev2_ts_seclabel_header_len: Length of a TS_SECLABEL header
+ * (i.e. `struct ikev2_ts_seclabel`).
+ */
+extern uint16_t const ikev2_ts_seclabel_header_len;
+
 /* rfc4306, section 3.14, encrypted payload, uses generic header */
 extern struct_desc ikev2_sk_desc;
 

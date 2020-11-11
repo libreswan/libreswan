@@ -42,9 +42,31 @@ struct traffic_selector {
 	 *
 	 *  1. If `ts_type` == `IKEv2_TS_SECLABEL`
 	 *
+	 *     This case happens during input parsing of a Traffic Selector
+	 *     (TS) Payload where said payload contains a `TS_SECLABEL`
+	 *     substructure.
+	 *
+	 *     In that scenario, the input parsing code reads the substructure
+	 *     data into this structure by setting:
+	 *      - `ts_type` = `IKEv2_TS_SECLABEL`
+	 *      - `sec_ctx->sec_ctx_value` = Incoming security label bytes
+	 *     
+	 *     Once input parsing code has finished processing the incoming
+	 *     byte stream for the TS Payload:
+	 *      - If a security label was found:
+	 *        - Copy security label to all other `struct traffic_selector`	
+	 *          populated during input parsing.
+	 *
 	 *  2. If `ts_type` corresponds to an address range _and_ the security
 	 *     label is used in conjunction with the other parameters in this 
 	 *     Traffic Selector.
+	 *
+	 *     This case happens in all instances of `struct traffic_selector`
+	 *     usages EXCEPT for the scenario listed for case 1
+	 *     (`ts_type` == `IKEv2_TS_SECLABEL`).
+	 *
+	 *
+	 *  See ikev2_ts.c:parse_ts_seclabel() for more information.
 	 */
 	struct xfrm_user_sec_ctx_ike *sec_ctx;
 };

@@ -1486,6 +1486,8 @@ struct_desc ikev2_ts_seclabel_desc = {
 	.size = sizeof(struct ikev2_ts_seclabel),
 };
 
+uint16_t const ikev2_ts_seclabel_header_len = 4;
+
 /*
  * 3.14.  Encrypted Payload
  *                         1                   2                   3

@@ -4241,7 +4241,9 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
  */
 static bool ikev2_rekey_child_copy_sec_ctx(struct state *const new_state,
 					   struct state const* const predecessor) {
-	libreswan_log("%s: Prior to updating new SA's security label: predecessor security label = %s, new child/IPsec SA security label = %s",
+	libreswan_log("%s: Prior to updating new SA's security label: "
+			"predecessor security label = %s, new child/IPsec "
+			"SA security label = %s",
 		     __func__,
 		     (predecessor->sec_ctx ? predecessor->sec_ctx->sec_ctx_value: "<NULL>"),
 		     (new_state->sec_ctx ? new_state->sec_ctx->sec_ctx_value : "<NULL>"));
@@ -4262,7 +4264,13 @@ static bool ikev2_rekey_child_copy_sec_ctx(struct state *const new_state,
 			}
 
 			/* Security label mismatch between old and new child/IPsec SAs.*/
-			loglog(RC_LOG_SERIOUS, "ERROR: Security label mismatch between old SA (%s) and new SA (%s) during child rekeying", (predecessor->sec_ctx ? predecessor->sec_ctx->sec_ctx_value: "<NULL>"), (new_state->sec_ctx ? new_state->sec_ctx->sec_ctx_value : "<NULL>"));
+			loglog(RC_LOG_SERIOUS,
+			       "ERROR: Security label mismatch between old SA (%s) "
+			       "and new SA (%s) during child rekeying",
+			       (predecessor->sec_ctx ?
+					predecessor->sec_ctx->sec_ctx_value: "<NULL>"),
+			       (new_state->sec_ctx ?
+					new_state->sec_ctx->sec_ctx_value : "<NULL>"));
 			return false;
 		} else {
 			/*
@@ -4281,7 +4289,10 @@ static bool ikev2_rekey_child_copy_sec_ctx(struct state *const new_state,
 			 * predecessor doesn't. This should not happen -
 			 * possible bug.
 			 */
-			loglog(RC_LOG_SERIOUS, "ERROR: Security label mismatch between old SA (<NULL>) and new SA (%s) during child rekeying", new_state->sec_ctx->sec_ctx_value);
+			loglog(RC_LOG_SERIOUS,
+			       "ERROR: Security label mismatch between old SA (<NULL>) "
+			       "and new SA (%s) during child rekeying",
+			       new_state->sec_ctx->sec_ctx_value);
 			return false;
 		} else {
 			/*

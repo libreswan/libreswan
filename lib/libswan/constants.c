@@ -1847,6 +1847,11 @@ static const char *const ikev2_ts_type_name[] = {
 static const char *const ikev2_ts_type_name_private_use[] = {
 	"IKEv2_TS_SECLABEL",		/* 241 */
 };
+
+/**
+ * ikev2_ts_type_names_private_use: See comments for
+ * `ikev2_ts_type_name_private_use` for why this is needed.
+ */
 enum_names ikev2_ts_type_names_private_use = {
 	IKEv2_TS_SECLABEL,
 	IKEv2_TS_SECLABEL,

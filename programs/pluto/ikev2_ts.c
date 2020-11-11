@@ -171,7 +171,8 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 		ts_seclabel.isa_tssec_type = IKEv2_TS_SECLABEL;
 		ts_seclabel.isa_tssec_reserved = 0;
 		/* Length of the TS_SECLABEL substructure = 4 (size of header) + security label length */
-		ts_seclabel.isa_tssec_sellen = 4 + ts->sec_ctx->ctx.ctx_len;
+		ts_seclabel.isa_tssec_sellen =
+			ikev2_ts_seclabel_header_len + ts->sec_ctx->ctx.ctx_len;
 
 		/* Output the header of the TS_SECLABEL substructure payload. */
 		if (!out_struct(&ts_seclabel, &ikev2_ts_seclabel_desc, &ts_pbs, NULL)) {
@@ -503,6 +504,25 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 			      which, ts_pd->payload.v2ts.isat_num, elemsof(tss->ts));
 		return false;	/* won't fit in array */
 	}
+
+	/*
+	 * Traffic Selector (TS) Payload input parsing algorithm:
+	 *
+	 * let ts_seclabel = <NONE>
+	 * For each substructure in TS Payload:
+	 *     let ts_type = <Traffic Selector substructure type>
+	 *     if ts_type == TS_SECLABEL:
+	 *         Process TS_SECLABEL Traffic Selector substructure into tss[current_index]
+	 *         ts_seclabel = tss[current_index]
+	 *     else:
+	 *         Process IKEv2_TS_{IPV4,IPV6}_ADDR_RANGE Traffic Selector substructure
+	 *           into tss[current_index]
+	 *
+	 * If ts_seclabel != <NONE>
+	 *     For each entry in tss:
+	 *         if entry != ts_seclabel
+	 *             entry.sec_ctx = ts_seclabel.sec_ctx
+	 */
 
 	/*
 	 * addr_range_count: Number of address range substructures in the
