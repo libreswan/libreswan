@@ -4407,7 +4407,7 @@ static stf_status ikev2_child_add_ike_payloads(struct child_sa *child,
  * initiator received Rekey IKE SA (RFC 7296 1.3.3) response
  */
 
-static crypto_req_cont_func ikev2_child_ike_inR_continue;
+static dh_shared_secret_cb ikev2_child_ike_inR_continue;
 
 stf_status ikev2_child_ike_inR(struct ike_sa *ike,
 			       struct child_sa *child,
@@ -4481,19 +4481,16 @@ stf_status ikev2_child_ike_inR(struct ike_sa *ike,
 				  &st->st_ike_rekey_spis.responder);
 
 	/* initiate calculation of g^xy for rekey */
-	submit_v2_dh_shared_secret(st, "DHv2 for IKE sa rekey initiator",
-				   SA_INITIATOR,
-				   ike->sa.st_skey_d_nss, /* only IKE has SK_d */
-				   ike->sa.st_oakley.ta_prf, /* for IKE/ESP/AH */
-				   &child->sa.st_ike_rekey_spis, /* new SPIs */
-				   ikev2_child_ike_inR_continue);
+	submit_dh_shared_secret(st, st->st_gr/*initiator needs responder's KE*/,
+				ikev2_child_ike_inR_continue,
+				"DHv2 for IKE sa rekey initiator");
 	return STF_SUSPEND;
 }
 
-static void ikev2_child_ike_inR_continue(struct state *st,
-					 struct msg_digest *md,
-					 struct pluto_crypto_req *r)
+static stf_status ikev2_child_ike_inR_continue(struct state *st,
+					       struct msg_digest *md)
 {
+
 	dbg("%s() for #%lu %s",
 	     __func__, st->st_serialno, st->st_state->name);
 
@@ -4512,24 +4509,24 @@ static void ikev2_child_ike_inR_continue(struct state *st,
 			     "sponsoring child state #%lu has no parent state #%lu",
 			     st->st_serialno, st->st_clonedfrom);
 		/* XXX: release what? */
-		return;
+		return STF_INTERNAL_ERROR;
 	}
 
-	stf_status e = STF_OK;
-	bool only_shared_false = false;
-	if (!finish_v2_dh_shared_secret(st, r, only_shared_false)) {
+	if (st->st_dh_shared_secret == NULL) {
 		/*
 		 * XXX: this is the initiator so returning a
 		 * notification is kind of useless.
 		 */
-		e = STF_FAIL + v2N_INVALID_SYNTAX;
-	}
-	if (e == STF_OK) {
-		ikev2_rekey_expire_pred(st, st->st_ike_pred);
-		e = STF_OK;
+		return STF_FAIL + v2N_INVALID_SYNTAX;
 	}
 
-	complete_v2_state_transition(st, md, e);
+	calc_v2_keymat(st,
+		       ike->sa.st_skey_d_nss, /* only IKE has SK_d */
+		       ike->sa.st_oakley.ta_prf, /* for IKE/ESP/AH */
+		       &child->sa.st_ike_rekey_spis/* new SPIs */);
+
+	ikev2_rekey_expire_pred(st, st->st_ike_pred);
+	return STF_OK;
 }
 
 /*
