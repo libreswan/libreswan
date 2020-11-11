@@ -364,3 +364,36 @@ void calc_v2_dh_shared_secret(struct pluto_crypto_req *r, struct logger *logger)
 			 &sk->skey_chunk_SK_pr, /* output */
 			 logger);
 }
+
+void calc_v2_keymat(struct state *st,
+		    PK11SymKey *old_skey_d, /* SKEYSEED IKE Rekey */
+		    const struct prf_desc *old_prf, /* IKE Rekey */
+		    const ike_spis_t *new_ike_spis)
+{
+	calc_skeyseed_v2(st->st_dh_shared_secret,
+			 /* input */
+			 st->st_oakley.ta_encrypt,
+			 st->st_oakley.ta_prf,
+			 st->st_oakley.ta_integ,
+			 st->st_oakley.enckeylen / BITS_PER_BYTE,
+			 (st->st_oakley.ta_encrypt != NULL ?
+			  st->st_oakley.ta_encrypt->salt_size : 0),
+			 st->st_ni, st->st_nr,
+			 new_ike_spis,
+			 old_prf, old_skey_d,
+			 /* output */
+			 &st->st_skey_d_nss,
+			 &st->st_skey_ai_nss,
+			 &st->st_skey_ar_nss,
+			 &st->st_skey_ei_nss,
+			 &st->st_skey_er_nss,
+			 &st->st_skey_pi_nss,
+			 &st->st_skey_pr_nss,
+			 &st->st_skey_initiator_salt,
+			 &st->st_skey_responder_salt,
+			 &st->st_skey_chunk_SK_pi,
+			 &st->st_skey_chunk_SK_pr,
+			 st->st_logger);
+
+	st->hidden_variables.st_skeyid_calculated = true;
+}

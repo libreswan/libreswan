@@ -321,6 +321,10 @@ extern void cancelled_ke_and_nonce(struct pcr_kenonce *kn);
 
 /* internal */
 void calc_v1_skeyid_and_iv(struct state *st);
+void calc_v2_keymat(struct state *st,
+		    PK11SymKey *old_skey_d, /* SKEYSEED IKE Rekey */
+		    const struct prf_desc *old_prf, /* IKE Rekey */
+		    const ike_spis_t *new_ike_spis);
 
 /*
  * IKEv2 DH
