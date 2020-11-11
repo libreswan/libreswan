@@ -389,6 +389,7 @@ enum {
 
 	/* below are also enabled by debug=all */
 	DBG_CPU_USAGE_IX,
+	DBG_REFCNT_IX,
 
 	/* below are excluded from debug=base */
 	DBG_TMI_IX,
@@ -408,7 +409,8 @@ enum {
 
 #define DBG_BASE        LELEM(DBG_BASE_IX)
 #define DBG_CPU_USAGE	LELEM(DBG_CPU_USAGE_IX)
-#define DBG_ALL         (DBG_BASE | DBG_CPU_USAGE)
+#define DBG_REFCNT	LELEM(DBG_REFCNT_IX)
+#define DBG_ALL         (DBG_BASE | DBG_CPU_USAGE | DBG_REFCNT)
 
 /* singleton sets: must be kept in sync with the items! */
 
