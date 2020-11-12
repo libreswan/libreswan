@@ -38,9 +38,9 @@ west #
  echo done
 done
 west #
- : only one SKEYSEED operation
+ : expect only one SKEYSEED operation
 west #
- grep 'offloading IKEv2 SKEYSEED' /tmp/pluto.log | wc -l
+ grep 'calculating skeyseed' /tmp/pluto.log | wc -l
 1
 west #
  ../../pluto/bin/ipsec-look.sh
