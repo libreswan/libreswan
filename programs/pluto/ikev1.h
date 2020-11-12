@@ -21,7 +21,8 @@ void ikev1_init_pbs_out_from_md_hdr(struct msg_digest *md, bool enc,
 				    uint8_t *output_buffer, size_t sizeof_output_buffer,
 				    struct pbs_out *rbody, struct logger *logger);
 
-extern void complete_v1_state_transition(struct msg_digest *md,
+extern void complete_v1_state_transition(struct state *st,
+					 struct msg_digest *md,
 					 stf_status result);
 
 extern void process_v1_packet(struct msg_digest *md);

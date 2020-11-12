@@ -714,10 +714,17 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 #ifdef USE_IKEv1
 			case IKEv1:
 				/* no switching MD.ST */
-				pexpect(old_md_st == SOS_NOBODY ?
-					md == NULL || md->st == NULL :
-					md != NULL && md->st != NULL && md->st->st_serialno == old_md_st);
-				complete_v1_state_transition(md, status);
+				if (old_md_st == SOS_NOBODY) {
+					/* (old)md->st == (new)md->st == NULL */
+					pexpect(md == NULL || md->st == NULL);
+				} else {
+					/* md->st didn't change */
+					pexpect(md != NULL &&
+						md->st != NULL &&
+						md->st->st_serialno == old_md_st);
+				}
+				pexpect(st != NULL); /* see above */
+				complete_v1_state_transition(st, md, status);
 				break;
 #endif
 			case IKEv2:

@@ -2411,7 +2411,8 @@ void process_packet_tail(struct msg_digest *md)
 	 * XXX: danger - the .informational() processor deletes ST;
 	 * and then tunnels this loss through MD.ST.
 	 */
-	complete_v1_state_transition(md, smc->processor(st, md));
+	stf_status e =smc->processor(st, md);
+	complete_v1_state_transition(md->st, md, e);
 	statetime_stop(&start, "%s()", __func__);
 	/* our caller will release_any_md(mdp); */
 }
@@ -2465,7 +2466,7 @@ static void remember_received_packet(struct state *st, struct msg_digest *md)
  * - smc for smc->flags & SMF_INITIATOR to adjust retransmission
  * - fragvid, dpd, nortel
  */
-void complete_v1_state_transition(struct msg_digest *md, stf_status result)
+void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_status result)
 {
 	passert(md != NULL);
 
@@ -2506,7 +2507,7 @@ void complete_v1_state_transition(struct msg_digest *md, stf_status result)
 
 	enum state_kind from_state = md->v1_from_state;
 
-	struct state *st = md->st;
+	st = md->st;
 	set_cur_state(st); /* might have changed */
 
 	passert(st != NULL);

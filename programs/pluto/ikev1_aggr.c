@@ -1041,7 +1041,7 @@ static void aggr_outI1_continue(struct state *st,
 	fake_md->v1_from_state = STATE_UNDEFINED;	/* ??? */
 	fake_md->fake_dne = true;
 
-	complete_v1_state_transition(fake_md, e);
+	complete_v1_state_transition(st, fake_md, e);
 	md_delref(&fake_md, HERE);
 }
 
