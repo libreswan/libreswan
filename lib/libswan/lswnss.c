@@ -60,14 +60,11 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags, struct logger *l
 		SECStatus rv = NSS_Initialize(nssdir, "", "", SECMOD_DB,
 					      (flags & LSW_NSS_READONLY) ? NSS_INIT_READONLY : 0);
 		if (rv != SECSuccess) {
-			log_message(RC_LOG_SERIOUS|ERROR_STREAM, logger,
-				    "Initialization of NSS with %s database \"%s\" failed (%d)",
-				    (flags & LSW_NSS_READONLY) ? "read-only" : "read-write",
-				    nssdir, PR_GetError());
-			LOG_JAMBUF(RC_LOG, logger, buf) {
-				jam_string(buf, "NSS: ");
-				jam_nss_error(buf);
-			}
+			/* NSS: <message...>: SECERR: N (0xX): <error-string> */
+			log_nss_error(RC_LOG_SERIOUS|ERROR_STREAM, logger,
+				      "initialization of %s database \"%s\" failed",
+				      (flags & LSW_NSS_READONLY) ? "read-only" : "read-write",
+				      nssdir);
 			pfree(nssdir);
 			return false;
 		}
