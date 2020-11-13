@@ -1692,7 +1692,9 @@ static struct state *duplicate_state(struct state *st,
 	nst->st_seen_cfg_banner = clone_str(st->st_seen_cfg_banner, "child st_seen_cfg_banner");
 
 	if (st->sec_ctx != NULL) {
-		nst->sec_ctx = clone_thing(*st->sec_ctx, "struct xfrm_user_sec_ctx_ike");
+		nst->sec_ctx = clone_thing(*st->sec_ctx,
+				"struct xfrm_user_sec_ctx_ike : cloned from "
+				"another state in duplicate_state()");
 	}
 
 	return nst;

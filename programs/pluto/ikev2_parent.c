@@ -567,7 +567,9 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 			free_sec_ctx(st);
 		}
 		if (uctx != NULL) {
-			st->sec_ctx = clone_thing(*uctx, "sec ctx structure");
+			st->sec_ctx = clone_thing(*uctx,
+					"struct xfrm_user_sec_ctx_ike : cloned "
+					"from uctx in ikev2_parent_outI1()");
 			dbg("%s: set security label to \"%s\"", __FUNCTION__, st->sec_ctx->sec_ctx_value);
 			st->st_ts_this = ikev2_make_ts(&c->spd.this, st->sec_ctx);
 			st->st_ts_that = ikev2_make_ts(&c->spd.that, st->sec_ctx);
@@ -4278,7 +4280,9 @@ static bool ikev2_rekey_child_copy_sec_ctx(struct state *const new_state,
 			 * Copy from the predecessor.
 			 */
 			new_state->sec_ctx = clone_thing(*predecessor->sec_ctx,
-							 "struct xfrm_user_sec_ctx_ike");
+						"struct xfrm_user_sec_ctx_ike : "
+						"cloned from predecessor SA in "
+						"ikev2_rekey_child_copy_sec_ctx()");
 			return true;
 		}
 	} else {
@@ -6091,7 +6095,9 @@ void ikev2_initiate_child_sa(struct pending *p)
 		free_sec_ctx(&child->sa);
 	}
 	if (p->uctx != NULL) {
-		child->sa.sec_ctx = clone_thing(*p->uctx, "sec ctx structure");
+		child->sa.sec_ctx = clone_thing(*p->uctx,
+					"struct xfrm_user_sec_ctx_ike : cloned "
+					"from pending in ikev2_initiate_child_sa()");
 		dbg("pending phase 2 with security context \"%s\"",
 		    child->sa.sec_ctx->sec_ctx_value);
 

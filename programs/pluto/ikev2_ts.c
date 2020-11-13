@@ -424,15 +424,18 @@ static bool parse_ts_seclabel(uint32_t* const seclabel_count,
 	/* TS_SECLABEL substructure payload length */
 	uint16_t const payloadLen = ts_seclabel.isa_tssec_sellen;
 	/* TS_SECLABEL substructure payload header length */
-	uint16_t const headerLen = 4;
-	if (payloadLen < headerLen) {
+	if (payloadLen < ikev2_ts_seclabel_header_len) {
 		/* Bad payload length: too small */
-		loglog(RC_LOG_SERIOUS, "ERROR: TS_SECLABEL payloadLen (%u) < headerLen (%u)", payloadLen, headerLen);
+		loglog(RC_LOG_SERIOUS,
+		       "ERROR: TS_SECLABEL payloadLen (%u) < "
+			"ikev2_ts_seclabel_header_len (%u)",
+		       payloadLen,
+		       ikev2_ts_seclabel_header_len);
 		return false;
 	}
 
 	/* Length of the security label. */
-	uint16_t const labelLen = payloadLen - headerLen;
+	uint16_t const labelLen = payloadLen - ikev2_ts_seclabel_header_len;
 	if (labelLen == 0) {
 		/*
 		 * Zero-length security labels disallowed by
@@ -474,7 +477,9 @@ static bool parse_ts_seclabel(uint32_t* const seclabel_count,
 	}
 
 	/* Clone the security label from its current temporary storage. */
-	ts->sec_ctx = clone_thing(incoming_ctx, "struct xfrm_user_sec_ctx_ike");
+	ts->sec_ctx = clone_thing(incoming_ctx,
+			"struct xfrm_user_sec_ctx_ike : cloned from input buffer "
+			"in parse_ts_label()");
 
 	/* Track the number of TS_SECLABEL substructures. */
 	*seclabel_count = *seclabel_count + 1;
