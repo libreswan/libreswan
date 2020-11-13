@@ -64,6 +64,7 @@
 #include "pending.h"
 #include "ikev1_hash.h"
 #include "hostpair.h"
+#include "crypt_symkey.h"		/* for release_symkey() */
 
 #include "crypto.h"
 #include "secrets.h"
@@ -1361,6 +1362,15 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 
 stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
 {
+	/*
+	 * XXX: have we been here before?
+	 *
+	 * Should this end rejects R2 because of auth failure, the
+	 * other end will keep sending the same KE.  Which leads to a
+	 * pexpect() as .st_dh_shared_secret is expected to be empty.
+	 */
+	release_symkey(__func__, "DH shared secret", &st->st_dh_shared_secret);
+
 	/* KE in */
 	if (!accept_KE(&st->st_gr, "Gr",
 		       st->st_oakley.ta_dh,
