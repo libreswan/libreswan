@@ -1862,11 +1862,8 @@ void process_v1_packet(struct msg_digest *md)
 	 * (may be suspended due to crypto operation not yet complete)
 	 */
 	md->st = st;
-	md->v1_from_state = from_state;
 	md->smc = smc;
 	md->new_iv_set = new_iv_set;
-	/* redundant information */
-	pexpect(md->v1_from_state == md->smc->state);
 
 	/*
 	 * look for encrypt packets. We cannot handle them if we have not
@@ -1910,8 +1907,8 @@ void process_v1_packet(struct msg_digest *md)
 void process_packet_tail(struct msg_digest *md)
 {
 	struct state *st = md->st;
-	enum state_kind from_state = md->v1_from_state;
 	const struct state_v1_microcode *smc = md->smc;
+	enum state_kind from_state = smc->state;
 	bool new_iv_set = md->new_iv_set;
 	bool self_delete = FALSE;
 
@@ -2513,8 +2510,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 
 	/* safe to refer to *md */
 
-	enum state_kind from_state = md->v1_from_state;
-
+	enum state_kind from_state = md->smc->state;
 	st = md->st;
 
 	passert(st != NULL);

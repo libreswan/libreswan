@@ -1039,7 +1039,6 @@ static stf_status aggr_outI1_continue(struct state *st,
 	struct msg_digest *fake_md = alloc_md(NULL/*iface-port*/, &unset_endpoint, HERE);
 	fake_md->st = st;
 	fake_md->smc = NULL;	/* ??? */
-	fake_md->v1_from_state = STATE_UNDEFINED;	/* ??? */
 	fake_md->fake_dne = true;
 
 	complete_v1_state_transition(st, fake_md, e);
