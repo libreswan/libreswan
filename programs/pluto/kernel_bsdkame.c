@@ -1011,7 +1011,6 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	.del_sa = bsdkame_del_sa,
 	.get_spi = NULL,
 	.eroute_idle = bsdkame_was_eroute_idle,
-	.scan_shunts = expire_bare_shunts,
 	.init = bsdkame_init_pfkey,
 	.shutdown = NULL,
 	.exceptsocket = bsdkame_except_socket,

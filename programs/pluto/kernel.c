@@ -86,6 +86,8 @@
 
 bool can_do_IPcomp = TRUE;  /* can system actually perform IPCOMP? */
 
+static void kernel_scan_shunts(struct fd *whackfd);
+
 /* test if the routes required for two different connections agree
  * It is assumed that the destination subnets agree; we are only
  * testing that the interfaces and nexthops match.
@@ -2439,11 +2441,6 @@ const struct kernel_ops *kernel_ops =
 
 deltatime_t bare_shunt_interval = DELTATIME_INIT(SHUNT_SCAN_INTERVAL);
 
-static void kernel_scan_shunts(struct fd *unused_whackfd UNUSED)
-{
-	kernel_ops->scan_shunts();
-}
-
 void init_kernel(void)
 {
 	struct utsname un;
@@ -3411,8 +3408,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 	return TRUE;
 }
 
-/* XXX move to proper kernel_ops in kernel_netlink */
-void expire_bare_shunts(void)
+static void kernel_scan_shunts(struct fd *unused_whackfd UNUSED)
 {
 	dbg("checking for aged bare shunts from shunt table to expire");
 	for (struct bare_shunt **bspp = &bare_shunts; *bspp != NULL; ) {

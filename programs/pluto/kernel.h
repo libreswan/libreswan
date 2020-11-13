@@ -205,7 +205,6 @@ struct kernel_ops {
 	void (*pfkey_register)(void);
 	void (*process_queue)(void);
 	void (*process_msg)(int);
-	void (*scan_shunts)(void);
 	bool (*raw_eroute)(const ip_address *this_host,
 			   const ip_subnet *this_client,
 			   const ip_address *that_host,
@@ -429,7 +428,6 @@ static inline bool compatible_overlapping_connections(const struct connection *a
 
 extern void show_kernel_interface(struct show *s);
 extern void free_kernelfd(void);
-extern void expire_bare_shunts(void);
 
 
 /*

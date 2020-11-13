@@ -2742,7 +2742,6 @@ static bool netlink_poke_ipsec_policy_hole(const struct iface_dev *ifd, int fd)
 const struct kernel_ops xfrm_kernel_ops = {
 	.kern_name = "xfrm",
 	.type = USE_XFRM,
-	.scan_shunts = expire_bare_shunts,
 	.async_fdp = &nl_xfrm_fd,
 	.route_fdp = &nl_route_fd,
 	.replay_window = IPSEC_SA_DEFAULT_REPLAY_WINDOW,
