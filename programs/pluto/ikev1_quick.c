@@ -575,26 +575,7 @@ void init_phase2_iv(struct state *st, const msgid_t *msgid)
 	st->st_v1_new_iv = crypt_hash_final_mac(&ctx);
 }
 
-static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
-				   struct state *st);
-
-static crypto_req_cont_func quick_outI1_continue;	/* type assertion */
-
-static void quick_outI1_continue(struct state *st, struct msg_digest *md UNUSED,
-				 struct pluto_crypto_req *r)
-{
-	dbg("quick_outI1_continue for #%lu: calculated ke+nonce, sending I1",
-	    st->st_serialno);
-
-	pexpect(md == NULL); /* no packet */
-	passert(st != NULL);
-	stf_status e = quick_outI1_tail(r, st);
-	if (e == STF_INTERNAL_ERROR) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s: quick_outI1_tail() failed with STF_INTERNAL_ERROR",
-		       __func__);
-	}
-}
+static ke_and_nonce_cb quick_outI1_continue;	/* type assertion */
 
 void quick_outI1(struct fd *whack_sock,
 		 struct state *isakmp_sa,
@@ -678,19 +659,66 @@ void quick_outI1(struct fd *whack_sock,
 	st->st_ipsec_pred = replacing;
 
 	if (policy & POLICY_PFS) {
-		request_ke_and_nonce("quick_outI1 KE", st,
-				     st->st_pfs_group,
-				     quick_outI1_continue);
+		submit_ke_and_nonce(st, st->st_pfs_group,
+				    quick_outI1_continue,
+				    "quick_outI1 KE");
 	} else {
-		request_nonce("quick_outI1 KE", st,
-			      quick_outI1_continue);
+		submit_ke_and_nonce(st, NULL /* no-nonce*/,
+				    quick_outI1_continue,
+				    "quick_outI1 KE");
 	}
 	pop_cur_state(old_state);
 }
 
-static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
-				   struct state *st)
+static ke_and_nonce_cb quick_outI1_continue_tail;	/* type assertion */
+
+static stf_status quick_outI1_continue(struct state *st,
+				       struct msg_digest *unused_md,
+				       struct dh_local_secret *local_secret,
+				       chunk_t *nonce)
 {
+	dbg("quick_outI1_continue for #%lu: calculated ke+nonce, sending I1",
+	    st->st_serialno);
+
+	pexpect(unused_md == NULL); /* no packet */
+	passert(st != NULL);
+
+	/*
+	 * XXX: Read and weep:
+	 *
+	 * - when the tail function fails, ST is leaked
+	 *
+	 * - there is no QUICK I0->I1 state transition
+	 *
+	 * - compilete_v1_state_transition() isn't called
+	 *
+	 * - trying to call compilete_v1_state_transition() digs a
+	 *   hole - as it assumes md (perhaps this is why the function
+	 *   wasn't called)
+	 */
+	stf_status e = quick_outI1_continue_tail(st, unused_md, local_secret, nonce);
+	if (e == STF_INTERNAL_ERROR) {
+		loglog(RC_LOG_SERIOUS,
+		       "%s: quick_outI1_tail() failed with STF_INTERNAL_ERROR",
+		       __func__);
+	}
+	/*
+	 * This way all the broken behaviour is ignored.
+	 */
+	return STF_SKIP_COMPLETE_STATE_TRANSITION;
+}
+
+static stf_status quick_outI1_continue_tail(struct state *st,
+					    struct msg_digest *unused_md,
+					    struct dh_local_secret *local_secret,
+					    chunk_t *nonce)
+{
+	dbg("quick_outI1_continue for #%lu: calculated ke+nonce, sending I1",
+	    st->st_serialno);
+
+	pexpect(unused_md == NULL); /* no packet */
+	passert(st != NULL);
+
 	struct state *isakmp_sa = state_with_serialno(st->st_clonedfrom);
 	struct connection *c = st->st_connection;
 	pb_stream rbody;
@@ -769,7 +797,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 
 	{
 		/* Ni out */
-		if (!ikev1_ship_nonce(&st->st_ni, &r->pcr_d.kn.n, &rbody, "Ni")) {
+		if (!ikev1_ship_nonce(&st->st_ni, nonce, &rbody, "Ni")) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
@@ -777,7 +805,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 
 	/* [ KE ] out (for PFS) */
 	if (st->st_pfs_group != NULL) {
-		if (!ikev1_ship_KE(st, r->pcr_d.kn.local_secret, &st->st_gi, &rbody)) {
+		if (!ikev1_ship_KE(st, local_secret, &st->st_gi, &rbody)) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
