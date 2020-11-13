@@ -427,8 +427,7 @@ static inline bool compatible_overlapping_connections(const struct connection *a
 }
 
 extern void show_kernel_interface(struct show *s);
-extern void free_kernelfd(void);
-
+void shutdown_kernel(void);
 
 /*
  * Note: "why" must be in stable storage (not auto, not heap)

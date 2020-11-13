@@ -3408,7 +3408,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 	return TRUE;
 }
 
-static void kernel_scan_shunts(struct fd *unused_whackfd UNUSED)
+static void expire_bare_shunts(struct fd *whackfd, bool all)
 {
 	dbg("checking for aged bare shunts from shunt table to expire");
 	for (struct bare_shunt **bspp = &bare_shunts; *bspp != NULL; ) {
@@ -3416,13 +3416,13 @@ static void kernel_scan_shunts(struct fd *unused_whackfd UNUSED)
 		time_t age = deltasecs(monotimediff(mononow(), bsp->last_activity));
 		struct connection *c = NULL;
 
-		if (age > deltasecs(pluto_shunt_lifetime)) {
+		if (age > deltasecs(pluto_shunt_lifetime) || all) {
 			dbg_bare_shunt("expiring old", bsp);
 			if (bsp->from_cn != NULL) {
 				c = conn_by_name(bsp->from_cn, FALSE);
 				if (c != NULL) {
 					if (!shunt_eroute(c, &c->spd, RT_ROUTED_PROSPECTIVE, ERO_ADD, "add")) {
-						libreswan_log("trap shunt install failed ");
+						log_global(RC_LOG, whackfd, "trap shunt install failed ");
 					}
 				}
 			}
@@ -3431,7 +3431,7 @@ static void kernel_scan_shunts(struct fd *unused_whackfd UNUSED)
 					       ntohl(bsp->said.spi),
 					       (bsp->from_cn == NULL ? "expire_bare_shunt" :
 						"IGNORE_ON_XFRM: expire_bare_shunt"))) {
-				    log_global(RC_LOG_SERIOUS, null_fd, "failed to delete bare shunt");
+				    log_global(RC_LOG_SERIOUS, whackfd, "failed to delete bare shunt");
 			}
 			passert(bsp != *bspp);
 		} else {
@@ -3439,4 +3439,16 @@ static void kernel_scan_shunts(struct fd *unused_whackfd UNUSED)
 			bspp = &bsp->next;
 		}
 	}
+}
+
+static void kernel_scan_shunts(struct fd *whackfd)
+{
+	expire_bare_shunts(whackfd, false/*not-all*/);
+}
+
+void shutdown_kernel(void)
+{
+	if (kernel_ops->shutdown != NULL)
+		kernel_ops->shutdown();
+	expire_bare_shunts(null_fd, true/*all*/);
 }
