@@ -100,7 +100,7 @@ static stf_status aggr_inI1_outR1_continue1(struct state *st,
 
 	/* set up second calculation */
 	submit_dh_shared_secret(st, st->st_gi/*initiator's KE*/,
-				aggr_inI1_outR1_continue2, "aggr outR1 DH");
+				aggr_inI1_outR1_continue2, HERE);
 
 	/*
 	 * XXX: Since more crypto has been requested, MD needs to be re
@@ -573,7 +573,7 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 
 	/* set up second calculation */
 	submit_dh_shared_secret(st, st->st_gr/*initiator needs responder's KE*/,
-				aggr_inR1_outI2_crypto_continue, "aggr_inR1_outI2");
+				aggr_inR1_outI2_crypto_continue, HERE);
 	return STF_SUSPEND;
 }
 

@@ -62,6 +62,6 @@ typedef stf_status (dh_shared_secret_cb)(struct state *st,
 					 struct msg_digest *md);
 
 extern void submit_dh_shared_secret(struct state *st, chunk_t remote_ke,
-				    dh_shared_secret_cb *callback, const char *name);
+				    dh_shared_secret_cb *callback, where_t where);
 
 #endif

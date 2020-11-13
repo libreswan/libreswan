@@ -1622,7 +1622,7 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 			ikev2_parent_inR1out_intermediate : ikev2_parent_inR1outI2_continue;
 
 	submit_dh_shared_secret(st, st->st_gr/*initiator needs responder KE*/,
-				pcrc_func, "ikev2_inR1outI2 KE");
+				pcrc_func, HERE);
 	return STF_SUSPEND;
 }
 
@@ -2607,7 +2607,7 @@ stf_status ikev2_ike_sa_process_auth_request_no_skeyid(struct ike_sa *ike,
 	/* initiate calculation of g^xy */
 	submit_dh_shared_secret(st, st->st_gi/*responder needs initiator KE*/,
 				ikev2_ike_sa_process_auth_request_no_keymat_continue,
-				"ikev2_inI2outR2 KE");
+				HERE);
 	return STF_SUSPEND;
 }
 
@@ -2666,7 +2666,7 @@ stf_status ikev2_ike_sa_process_intermediate_request_no_skeyid(struct ike_sa *ik
 	/* initiate calculation of g^xy */
 	submit_dh_shared_secret(st, st->st_gi/*responder needs initiator KE*/,
 				ikev2_ike_sa_process_intermediate_request_no_skeyid_continue,
-				"ikev2_inI2outR2 KE");
+				HERE);
 	return STF_SUSPEND;
 }
 
@@ -4465,7 +4465,7 @@ stf_status ikev2_child_ike_inR(struct ike_sa *ike,
 	/* initiate calculation of g^xy for rekey */
 	submit_dh_shared_secret(st, st->st_gr/*initiator needs responder's KE*/,
 				ikev2_child_ike_inR_continue,
-				"DHv2 for IKE sa rekey initiator");
+				HERE);
 	return STF_SUSPEND;
 }
 
@@ -4559,22 +4559,7 @@ stf_status ikev2_child_inR(struct ike_sa *ike,
 		return STF_FAIL + v2N_INVALID_SYNTAX; /* XXX: STF_FATAL? */
 	}
 	chunk_t remote_ke = st->st_gr;
-
-	/*
-	 * XXX: other than logging, these two cases are identical.
-	 */
-	const char *desc;
-	switch (st->st_state->kind) {
-	case STATE_V2_NEW_CHILD_I1:
-		desc = "ikev2 Child SA initiator pfs=yes";
-		break;
-	case STATE_V2_REKEY_CHILD_I1:
-		desc = "ikev2 Child Rekey SA initiator pfs=yes";
-		break;
-	default:
-		bad_case(st->st_state->kind);
-	}
-	submit_dh_shared_secret(st, remote_ke, ikev2_child_inR_continue, desc);
+	submit_dh_shared_secret(st, remote_ke, ikev2_child_inR_continue, HERE);
 	return STF_SUSPEND;
 }
 
@@ -4782,7 +4767,7 @@ static stf_status ikev2_child_inIoutR_continue(struct state *st,
 		unpack_KE_from_helper(st, local_secret, &st->st_gr);
 		/* initiate calculation of g^xy */
 		submit_dh_shared_secret(st, st->st_gi, ikev2_child_inIoutR_continue_continue,
-					"DHv2 for child sa");
+					HERE);
 		return STF_SUSPEND;
 	} else {
 		return ikev2_child_out_tail(ike, child, md);
@@ -4972,7 +4957,7 @@ static stf_status ikev2_child_ike_inIoutR_continue(struct state *st,
 							    st->st_logger);
 	submit_dh_shared_secret(st, st->st_gi/*responder needs initiator KE*/,
 				ikev2_child_ike_inIoutR_continue_continue,
-				"DHv2 for REKEY IKE SA");
+				HERE);
 
 	return STF_SUSPEND;
 }

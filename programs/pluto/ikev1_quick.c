@@ -1309,7 +1309,7 @@ static stf_status quick_inI1_outR1_continue1(struct state *st,
 		unpack_KE_from_helper(st, local_secret, &st->st_gr);
 		submit_dh_shared_secret(st, st->st_gi,
 					quick_inI1_outR1_continue2,
-					"quick_inI1_outR1_continue1 submitting dh_shared_secret");
+					HERE);
 		/*
 		 * XXX: Since more crypto has been requested, MD needs
 		 * to be re suspended.  If the original crypto request
@@ -1557,7 +1557,7 @@ stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 		/* set up DH calculation */
 		submit_dh_shared_secret(st, st->st_gr,
 					quick_inR1_outI2_continue,
-					"quick_inR1_outI2 submitting dh_shared_secret");
+					HERE);
 		return STF_SUSPEND;
 	} else {
 		/* just call the tail function */
