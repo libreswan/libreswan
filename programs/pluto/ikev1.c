@@ -1256,7 +1256,6 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
  */
 void process_v1_packet(struct msg_digest *md)
 {
-	const struct state_v1_microcode *smc;
 	bool new_iv_set = FALSE;
 	struct state *st = NULL;
 	enum state_kind from_state = STATE_UNDEFINED;   /* state we started in */
@@ -1803,14 +1802,16 @@ void process_v1_packet(struct msg_digest *md)
 		return;
 	}
 
-	/* Set smc to describe this state's properties.
+	/*
+	 * Set smc to describe this state's properties.
+	 *
 	 * Look up the appropriate microcode based on state and
 	 * possibly Oakley Auth type.
 	 */
 	passert(STATE_IKEv1_FLOOR <= from_state && from_state < STATE_IKEv1_ROOF);
 	const struct finite_state *fs = finite_states[from_state];
 	passert(fs != NULL);
-	smc = fs->v1_transitions;
+	const struct state_v1_microcode *smc = fs->v1_transitions;
 	passert(smc != NULL);
 
 	/*
@@ -1864,6 +1865,8 @@ void process_v1_packet(struct msg_digest *md)
 	md->v1_from_state = from_state;
 	md->smc = smc;
 	md->new_iv_set = new_iv_set;
+	/* redundant information */
+	pexpect(md->v1_from_state == md->smc->state);
 
 	/*
 	 * look for encrypt packets. We cannot handle them if we have not
