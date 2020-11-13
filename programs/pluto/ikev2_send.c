@@ -263,7 +263,7 @@ bool emit_v2N_signature_hash_algorithms(lset_t sighash_policy,
 	pb_stream n_pbs;
 
 	if (!emit_v2Npl(v2N_SIGNATURE_HASH_ALGORITHMS, outs, &n_pbs)) {
-		libreswan_log("error initializing notify payload for notify message");
+		log_pbs_out(RC_LOG, outs, "error initializing notify payload for notify message");
 		return false;
 	}
 

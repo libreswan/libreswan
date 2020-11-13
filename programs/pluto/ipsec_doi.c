@@ -299,7 +299,7 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 		lset_t policy = c->policy & ~POLICY_IPSEC_MASK;
 
 		if (IS_PARENT_SA_ESTABLISHED(st))
-			libreswan_log("initiate reauthentication of IKE SA");
+			log_state(RC_LOG, st, "initiate reauthentication of IKE SA");
 
 #ifdef USE_IKEv1
 		initiator_function *initiator = pick_initiator(c, policy);

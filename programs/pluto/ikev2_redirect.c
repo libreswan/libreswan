@@ -470,7 +470,7 @@ void initiate_redirect(struct state *st)
 	c->spd.that.host_addr = redirect_ip;
 
 	ipstr_buf b;
-	libreswan_log("initiating a redirect to new gateway (address: %s)",
+	log_state(RC_LOG, st, "initiating a redirect to new gateway (address: %s)",
 			sensitive_ipstr(&redirect_ip, &b));
 
 	initiate_connections_by_name(c->name, NULL,

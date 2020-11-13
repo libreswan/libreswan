@@ -324,7 +324,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 			    type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout");
 			pstat_sa_failed(st, REASON_EXCHANGE_TIMEOUT);
 		} else {
-			libreswan_log("%s %s (%s)", satype,
+			log_state(RC_LOG, st, "%s %s (%s)", satype,
 				      type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout",
 				      (c->policy & POLICY_DONT_REKEY) ?
 				      "--dontrekey" : "LATEST!");
@@ -388,7 +388,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		deltatime_t timeout = (st->st_ike_version == IKEv2 ? MAXIMUM_RESPONDER_WAIT_DELAY :
 				       st->st_connection->r_timeout);
 		deltatime_buf dtb;
-		libreswan_log("deleting incomplete state after %s seconds",
+		log_state(RC_LOG, st, "deleting incomplete state after %s seconds",
 			      str_deltatime(timeout, &dtb));
 		/*
 		 * If no other reason has been given then this is a

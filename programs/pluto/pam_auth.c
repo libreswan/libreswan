@@ -73,7 +73,7 @@ void pamauth_abort(struct state *st)
 		st->st_pamauth = NULL; /* aborted */
 		pstats_pamauth_aborted++;
 		passert(pamauth->serialno == st->st_serialno);
-		libreswan_log("PAM: #%lu: main-process: aborting authentication PAM-process for '%s'",
+		log_state(RC_LOG, st, "PAM: #%lu: main-process: aborting authentication PAM-process for '%s'",
 			      st->st_serialno, pamauth->ptarg.name);
 		/*
 		 * Don't hold back.
@@ -187,7 +187,7 @@ void auth_fork_pam_process(struct state *st,
 	pamauth->child = server_fork("pamauth", pamauth->serialno,
 				     pam_child, pam_callback, pamauth);
 	if (pamauth->child < 0) {
-		libreswan_log("PAM: #%lu: creation of PAM-process for user '%s' failed",
+		log_state(RC_LOG, st, "PAM: #%lu: creation of PAM-process for user '%s' failed",
 			      pamauth->serialno, pamauth->ptarg.name);
 		pfree_pamauth(pamauth);
 		return;

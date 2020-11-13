@@ -613,7 +613,7 @@ static bool init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
 	if (c->xfrmi == NULL) {
 		/*
 		if (!shared) {
-			libreswan_log("%s, index %u, xfrm interface exist will not shared",
+			log_state(RC_LOG, st, "%s, index %u, xfrm interface exist will not shared",
 				       xfrmi_name, if_id);
 			return true;
 		}
@@ -644,7 +644,7 @@ bool setup_xfrm_interface(struct connection *c, uint32_t xfrm_if_id)
 	} else if (shunk_strcaseeq(ifid, "unique")) {
 		// unique or <id> for each connection
 		shared = false;
-		libreswan_log("iface_id = unique is not supported yet shared=%d", shared);
+		log_state(RC_LOG, st, "iface_id = unique is not supported yet shared=%d", shared);
 		return false;
 	*/
 

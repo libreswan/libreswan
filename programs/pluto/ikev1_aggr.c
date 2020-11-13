@@ -183,7 +183,7 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 		0;	/* we don't really know */
 
 	if (!v1_decode_certs(md)) {
-		libreswan_log("X509: CERT payload bogus or revoked");
+		log_state(RC_LOG, st, "X509: CERT payload bogus or revoked");
 		return false;
 	}
 
@@ -213,7 +213,7 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 		ipstr_buf b;
 		char cib[CONN_INST_BUF];
 
-		libreswan_log("responding to Aggressive Mode, state #%lu, connection \"%s\"%s from %s",
+		log_state(RC_LOG, st, "responding to Aggressive Mode, state #%lu, connection \"%s\"%s from %s",
 			st->st_serialno,
 			st->st_connection->name, fmt_conn_instance(st->st_connection, cib),
 			sensitive_ipstr(&c->spd.that.host_addr, &b));
@@ -423,7 +423,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 		struct isakmp_cert cert_hd = {
 			.isacert_type = mycert.ty
 		};
-		libreswan_log("I am sending my certificate");
+		log_state(RC_LOG, st, "I am sending my certificate");
 		if (!out_struct(&cert_hd,
 				&isakmp_ipsec_certificate_desc,
 				&rbody,
@@ -442,7 +442,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 
 	/* CERTREQ out */
 	if (send_cr) {
-		libreswan_log("I am sending a certificate request");
+		log_state(RC_LOG, st, "I am sending a certificate request");
 		if (!ikev1_build_and_ship_CR(mycert.ty, c->spd.that.ca, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
@@ -521,7 +521,7 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	st->st_policy |= POLICY_AGGRESSIVE;	/* ??? surely this should be done elsewhere */
 
 	if (!v1_decode_certs(md)) {
-		libreswan_log("X509: CERT payload bogus or revoked");
+		log_state(RC_LOG, st, "X509: CERT payload bogus or revoked");
 		return false;
 	}
 
@@ -592,7 +592,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 	calc_v1_skeyid_and_iv(st);
 
 	if (!v1_decode_certs(md)) {
-		libreswan_log("X509: CERT payload bogus or revoked");
+		log_state(RC_LOG, st, "X509: CERT payload bogus or revoked");
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
 	/* HASH_R or SIG_R in */
@@ -693,7 +693,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 			.isacert_length = 0 /* XXX unused on sending ? */
 		};
 
-		libreswan_log("I am sending my cert");
+		log_state(RC_LOG, st, "I am sending my cert");
 
 		if (!out_struct(&cert_hd,
 				&isakmp_ipsec_certificate_desc,
@@ -871,7 +871,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	md->chain[ISAKMP_NEXT_ID] = &id_pd;
 
 	if (!v1_decode_certs(md)) {
-		libreswan_log("X509: CERT payload bogus or revoked");
+		log_state(RC_LOG, st, "X509: CERT payload bogus or revoked");
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
 
@@ -1000,10 +1000,10 @@ void aggr_outI1(struct fd *whack_sock,
 			    uctx, true/*part of initiate*/);
 
 	if (predecessor == NULL) {
-		libreswan_log("initiating IKEv1 Aggressive Mode connection");
+		log_state(RC_LOG, st, "initiating IKEv1 Aggressive Mode connection");
 	} else {
 		update_pending(pexpect_ike_sa(predecessor), pexpect_ike_sa(st));
-		libreswan_log(
+		log_state(RC_LOG, st, 
 			"initiating IKEv1 Aggressive Mode connection #%lu to replace #%lu",
 			st->st_serialno, predecessor->st_serialno);
 	}
@@ -1126,7 +1126,7 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 
 	/* CERTREQ out */
 	if (send_cr) {
-		libreswan_log("I am sending a certificate request");
+		log_state(RC_LOG, st, "I am sending a certificate request");
 		if (!ikev1_build_and_ship_CR(mycert.ty, c->spd.that.ca, &rbody))
 			return STF_INTERNAL_ERROR;
 	}

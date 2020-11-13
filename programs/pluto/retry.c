@@ -111,7 +111,7 @@ void retransmit_v1_msg(struct state *st)
 				release_pending_whacks(st, story);
 			} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 				/* no whack: just log */
-				libreswan_log("%s", story);
+				log_state(RC_LOG, st, "%s", story);
 			}
 		} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 			loglog(RC_COMMENT, "%s", story);
@@ -246,7 +246,7 @@ void retransmit_v2_msg(struct state *st)
 			release_pending_whacks(st, story);
 		} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 			/* no whack: just log to syslog */
-			libreswan_log("%s", story);
+			log_state(RC_LOG, st, "%s", story);
 		}
 
 		ipsecdoi_replace(st, try);
