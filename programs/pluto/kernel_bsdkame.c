@@ -103,7 +103,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 				if (after) {
 					ipstr_buf b;
 
-					loglog(RC_LOG_SERIOUS,
+					log_state(RC_LOG_SERIOUS, st,
 					       "IP interfaces %s and %s share address %s!",
 					       ifp->name, vfp->name,
 					       ipstr(&ifp->addr, &b));
@@ -140,7 +140,7 @@ static bool bsdkame_do_command(const struct connection *c, const struct spd_rout
 	if (!fmt_common_shell_out(common_shell_out_str,
 				  sizeof(common_shell_out_str), c, sr,
 				  st)) {
-		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
+		log_state(RC_LOG_SERIOUS, st, "%s%s command too long!", verb,
 		       verb_suffix);
 		return FALSE;
 	}
@@ -153,7 +153,7 @@ static bool bsdkame_do_command(const struct connection *c, const struct spd_rout
 			   verb, verb_suffix,
 			   common_shell_out_str,
 			   sr->this.updown)) {
-		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
+		log_state(RC_LOG_SERIOUS, st, "%s%s command too long!", verb,
 		       verb_suffix);
 		return FALSE;
 	}

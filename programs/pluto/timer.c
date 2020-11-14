@@ -354,7 +354,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 					 * not serialized it is hard
 					 * to say.
 					 */
-					loglog(RC_LOG_SERIOUS, "CHILD SA #%lu lost its IKE SA",
+					log_state(RC_LOG_SERIOUS, st, "CHILD SA #%lu lost its IKE SA",
 					       st->st_serialno);
 					delete_state(st);
 					st = NULL;

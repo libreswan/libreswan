@@ -248,7 +248,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 			err_t e = ttoaddr_num(ipstr, 0, AF_INET, &dnsip);
 
 			if (e != NULL) {
-				loglog(RC_LOG_SERIOUS, "Invalid DNS IPv4 %s:%s", ipstr, e);
+				log_state(RC_LOG_SERIOUS, st, "Invalid DNS IPv4 %s:%s", ipstr, e);
 				return STF_INTERNAL_ERROR;
 			}
 			/* emit attribute's value */
@@ -1527,7 +1527,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 			c->spd.this.has_client = TRUE;
 			subnet_buf caddr;
 			str_subnet(&c->spd.this.client, &caddr);
-			loglog(RC_LOG, "Received IP address %s", caddr.buf);
+			log_state(RC_LOG, st, "Received IP address %s", caddr.buf);
 
 			if (!address_is_specified(&c->spd.this.host_srcip)) {
 				libreswan_log("setting ip source address to %s",
@@ -1557,7 +1557,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 			break;
 		}
 	}
-	/* loglog(LOG_DEBUG, "ModeCfg ACK: 0x%" PRIxLSET, resp); */
+	/* log_state(LOG_DEBUG, st, "ModeCfg ACK: 0x%" PRIxLSET, resp); */
 
 	/* ack things */
 	{
@@ -1682,7 +1682,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				c->spd.this.has_client = TRUE;
 				subnet_buf caddr;
 				str_subnet(&c->spd.this.client, &caddr);
-				loglog(RC_INFORMATIONAL,
+				log_state(RC_INFORMATIONAL, st,
 					"Received IPv4 address: %s",
 					caddr.buf);
 
@@ -1718,7 +1718,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				address_buf a_buf;
 				const char *a_str = ipstr(&a, &a_buf);
 				bool ignore = LIN(POLICY_IGNORE_PEER_DNS, c->policy);
-				loglog(RC_INFORMATIONAL, "Received %sDNS server %s",
+				log_state(RC_INFORMATIONAL, st, "Received %sDNS server %s",
 					ignore ? "and ignored " : "",
 					a_str);
 
@@ -1755,7 +1755,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					struct CISCO_split_item i;
 
 					if (!in_struct(&i, &CISCO_split_desc, &strattr, NULL)) {
-						loglog(RC_INFORMATIONAL,
+						log_state(RC_INFORMATIONAL, st,
 						    "ignoring malformed CISCO_SPLIT_INC payload");
 						break;
 					}
@@ -1765,7 +1765,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					ip_subnet subnet;
 					err_t ugh = address_mask_to_subnet(&base, &mask, &subnet);
 					if (ugh != NULL) {
-						loglog(RC_INFORMATIONAL,
+						log_state(RC_INFORMATIONAL, st,
 							"ignoring malformed CISCO_SPLIT_INC subnet: %s",
 							ugh);
 						break;
@@ -1774,7 +1774,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					subnet_buf pretty_subnet;
 					str_subnet(&subnet, &pretty_subnet);
 
-					loglog(RC_INFORMATIONAL,
+					log_state(RC_INFORMATIONAL, st,
 						"Received subnet %s",
 						pretty_subnet.buf);
 
@@ -1782,7 +1782,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					for (sr = &c->spd; ; sr = sr->spd_next) {
 						if (samesubnet(&subnet, &sr->that.client)) {
 							/* duplicate entry: ignore */
-							loglog(RC_INFORMATIONAL,
+							log_state(RC_INFORMATIONAL, st,
 								"Subnet %s already has an spd_route - ignoring",
 								pretty_subnet.buf);
 							break;
@@ -1915,7 +1915,7 @@ static stf_status xauth_client_resp(struct state *st,
 
 					if (st->st_xauth_username[0] == '\0') {
 						if (!fd_p(st->st_whack_sock)) {
-							loglog(RC_LOG_SERIOUS,
+							log_state(RC_LOG_SERIOUS, st,
 							       "XAUTH username requested, but no file descriptor available for prompt");
 							return STF_FATAL;
 						}
@@ -1926,7 +1926,7 @@ static stf_status xauth_client_resp(struct state *st,
 							xauth_username,
 							sizeof(xauth_username)))
 						{
-							loglog(RC_LOG_SERIOUS,
+							log_state(RC_LOG_SERIOUS, st,
 							       "XAUTH username prompt failed.");
 							return STF_FATAL;
 						}
@@ -1993,7 +1993,7 @@ static stf_status xauth_client_resp(struct state *st,
 						char xauth_password[XAUTH_MAX_PASS_LENGTH];
 
 						if (!fd_p(st->st_whack_sock)) {
-							loglog(RC_LOG_SERIOUS,
+							log_state(RC_LOG_SERIOUS, st,
 							       "XAUTH password requested, but no file descriptor available for prompt");
 							return STF_FATAL;
 						}
@@ -2004,7 +2004,7 @@ static stf_status xauth_client_resp(struct state *st,
 								      xauth_password,
 								      sizeof(xauth_password)))
 						{
-							loglog(RC_LOG_SERIOUS,
+							log_state(RC_LOG_SERIOUS, st,
 							       "XAUTH password prompt failed.");
 							return STF_FATAL;
 						}
@@ -2173,7 +2173,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 				len = sizeof(msgbuf) - 1;
 			memcpy(msgbuf, strattr.cur, len);
 			msgbuf[len] = '\0';
-			loglog(RC_LOG_SERIOUS,
+			log_state(RC_LOG_SERIOUS, st,
 			       "XAUTH Message: %s", msgbuf);
 			break;
 		}
@@ -2235,7 +2235,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 		if (status != XAUTH_STATUS_FAIL && stat == STF_OK) {
 			st->hidden_variables.st_xauth_client_done =
 				TRUE;
-			loglog(RC_LOG, "XAUTH: Successfully Authenticated");
+			log_state(RC_LOG, st, "XAUTH: Successfully Authenticated");
 			st->st_oakley.doing_xauth = FALSE;
 
 			return STF_OK;

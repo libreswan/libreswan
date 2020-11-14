@@ -105,7 +105,7 @@ void retransmit_v1_msg(struct state *st)
 				 * Release whack because the observer
 				 * will get bored.
 				 */
-				loglog(RC_COMMENT,
+				log_state(RC_COMMENT, st,
 				       "%s, but releasing whack",
 				       story);
 				release_pending_whacks(st, story);
@@ -114,7 +114,7 @@ void retransmit_v1_msg(struct state *st)
 				log_state(RC_LOG, st, "%s", story);
 			}
 		} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-			loglog(RC_COMMENT, "%s", story);
+			log_state(RC_COMMENT, st, "%s", story);
 		}
 
 		ipsecdoi_replace(st, try);
@@ -241,7 +241,7 @@ void retransmit_v2_msg(struct state *st)
 			 * Release whack because the observer will
 			 * get bored.
 			 */
-			loglog(RC_COMMENT, "%s, but releasing whack",
+			log_state(RC_COMMENT, st, "%s, but releasing whack",
 				story);
 			release_pending_whacks(st, story);
 		} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
