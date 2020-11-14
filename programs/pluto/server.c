@@ -969,7 +969,8 @@ static server_fork_cb addconn_exited; /* type assertion */
 
 static void addconn_exited(struct state *null_st UNUSED,
 			   struct msg_digest *null_mdp UNUSED,
-			   int status, void *context UNUSED)
+			   int status, void *context UNUSED,
+			   struct logger *logger UNUSED)
 {
 	dbg("reaped addconn helper child (status %d)", status);
 }
