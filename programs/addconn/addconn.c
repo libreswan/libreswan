@@ -83,7 +83,8 @@ static void resolve_defaultroute(struct starter_conn *conn UNUSED, struct logger
 	if (!seeking_src && !seeking_gateway)
 		return;	/* this end already figured out */
 
-	fatal(logger, "addcon: without XFRM/NETKEY, cannot resolve_defaultroute()");
+	fatal(PLUTO_EXIT_FAIL, logger,
+	      "addcon: without XFRM/NETKEY, cannot resolve_defaultroute()");
 #endif
 }
 

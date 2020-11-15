@@ -1095,7 +1095,7 @@ void call_server(char *conffile)
 			n--;
 
 		if ((size_t)n > sizeof(addconn_path_space) - sizeof(addconn_name)) {
-			fatal(logger, "path to %s is too long", addconn_name);
+			fatal(PLUTO_EXIT_FAIL, logger, "path to %s is too long", addconn_name);
 		}
 
 		strcpy(addconn_path_space + n, addconn_name);
