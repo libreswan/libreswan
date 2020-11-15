@@ -285,10 +285,7 @@ extern bool fmt_common_shell_out(char *buf, size_t blen,
 
 /* many bits reach in to use this, but maybe shouldn't */
 extern bool do_command(const struct connection *c, const struct spd_route *sr,
-		       const char *verb, struct state *st);
-
-extern bool invoke_command(const char *verb, const char *verb_suffix,
-			   const char *cmd);
+		       const char *verb, struct state *st, struct logger *logger);
 
 /* information from /proc/net/ipsec_eroute */
 
