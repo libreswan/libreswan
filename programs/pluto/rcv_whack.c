@@ -267,7 +267,7 @@ static void do_whacklisten(struct fd *whackfd)
 	listening = true;
 	find_ifaces(true /* remove dead interfaces */, whackfd);
 #ifdef USE_XFRM_INTERFACE
-	stale_xfrmi_interfaces();
+	stale_xfrmi_interfaces(logger);
 #endif
 	load_preshared_secrets(logger);
 	load_groups(whackfd);
