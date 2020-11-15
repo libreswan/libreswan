@@ -673,12 +673,32 @@ bool do_command(const struct connection *c,
 
 	dbg("command executing %s%s", verb, verb_suffix);
 
-	if (kernel_ops->docommand == NULL) {
-		dbg("no do_command for method %s", kernel_ops->kern_name);
-	} else {
-		return (*kernel_ops->docommand)(c, sr, verb, verb_suffix, st);
+	char common_shell_out_str[2048];
+	if (!fmt_common_shell_out(common_shell_out_str,
+				  sizeof(common_shell_out_str), c, sr,
+				  st)) {
+		log_state(RC_LOG_SERIOUS, st, "%s%s command too long!", verb,
+		       verb_suffix);
+		return false;
 	}
-	return TRUE;
+
+	/* must free */
+	char *cmd = alloc_printf("2>&1 "      /* capture stderr along with stdout */
+				 "PLUTO_VERB='%s%s' "
+				 "%s"         /* other stuff   */
+				 "%s",        /* actual script */
+				 verb, verb_suffix,
+				 common_shell_out_str,
+				 sr->this.updown);
+	if (cmd == NULL) {
+		log_state(RC_LOG_SERIOUS, st, "%s%s command too long!", verb,
+			  verb_suffix);
+		return false;
+	}
+
+	bool ok = invoke_command(verb, verb_suffix, cmd);
+	pfree(cmd);
+	return ok;
 }
 
 bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd)

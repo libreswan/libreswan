@@ -131,36 +131,6 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 	}
 }
 
-static bool bsdkame_do_command(const struct connection *c, const struct spd_route *sr,
-			       const char *verb, const char *verb_suffix, struct state *st)
-{
-	char cmd[2048]; /* arbitrary limit on shell command length */
-	char common_shell_out_str[2048];
-
-	if (!fmt_common_shell_out(common_shell_out_str,
-				  sizeof(common_shell_out_str), c, sr,
-				  st)) {
-		log_state(RC_LOG_SERIOUS, st, "%s%s command too long!", verb,
-		       verb_suffix);
-		return FALSE;
-	}
-
-	if (-1 == snprintf(cmd, sizeof(cmd),
-			   "2>&1 "      /* capture stderr along with stdout */
-			   "PLUTO_VERB='%s%s' "
-			   "%s"         /* other stuff   */
-			   "%s",        /* actual script */
-			   verb, verb_suffix,
-			   common_shell_out_str,
-			   sr->this.updown)) {
-		log_state(RC_LOG_SERIOUS, st, "%s%s command too long!", verb,
-		       verb_suffix);
-		return FALSE;
-	}
-
-	return invoke_command(verb, verb_suffix, cmd);
-}
-
 static void bsdkame_algregister(int satype, int supp_exttype,
 				struct sadb_alg *alg)
 {
@@ -1014,7 +984,6 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	.init = bsdkame_init_pfkey,
 	.shutdown = NULL,
 	.exceptsocket = bsdkame_except_socket,
-	.docommand = bsdkame_do_command,
 	.remove_orphaned_holds = bsdkame_remove_orphaned_holds,
 	.process_raw_ifaces = bsdkame_process_raw_ifaces,
 	.overlap_supported = FALSE,

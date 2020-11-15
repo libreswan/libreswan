@@ -2454,33 +2454,6 @@ static bool netlink_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 	return TRUE;
 }
 
-static bool netkey_do_command(const struct connection *c, const struct spd_route *sr,
-			const char *verb, const char *verb_suffix, struct state *st)
-{
-	char cmd[2048];	/* arbitrary limit on shell command length */
-	char common_shell_out_str[2048];
-
-	if (!fmt_common_shell_out(common_shell_out_str,
-				  sizeof(common_shell_out_str),
-				  c, sr, st)) {
-		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
-		       verb_suffix);
-		return FALSE;
-	}
-
-	if (-1 == snprintf(cmd, sizeof(cmd),
-				"PLUTO_VERB='%s%s' %s%s 2>&1",
-				verb, verb_suffix,
-				common_shell_out_str,
-				sr->this.updown)) {
-		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
-			verb_suffix);
-		return FALSE;
-	}
-
-	return invoke_command(verb, verb_suffix, cmd);
-}
-
 /* add bypass policies/holes icmp */
 static bool netlink_bypass_policy(int family, int proto, int port)
 {
@@ -2761,7 +2734,6 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.grp_sa = NULL,
 	.get_spi = netlink_get_spi,
 	.exceptsocket = NULL,
-	.docommand = netkey_do_command,
 	.process_raw_ifaces = netlink_process_raw_ifaces,
 	.shunt_eroute = netlink_shunt_eroute,
 	.sag_eroute = netlink_sag_eroute,

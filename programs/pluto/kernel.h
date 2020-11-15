@@ -247,11 +247,6 @@ struct kernel_ops {
 			       ipsec_spi_t min,
 			       ipsec_spi_t max,
 			       const char *text_said);
-	bool (*docommand)(const struct connection *c,
-			  const struct spd_route *sr,
-			  const char *verb,
-			  const char *verb_suffix,
-			  struct state *st);
 	void (*process_raw_ifaces)(struct raw_iface *rifaces);
 	bool (*exceptsocket)(int socketfd, int family);
 	err_t (*migrate_sa_check)(void);
