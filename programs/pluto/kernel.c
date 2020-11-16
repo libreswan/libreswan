@@ -2807,7 +2807,7 @@ bool route_and_eroute(struct connection *c,
 		/* we're in trouble -- don't do routing */
 	} else if (ro == NULL) {
 		/* a new route: no deletion required, but preparation is */
-		if (!do_command(c, sr, "prepare", st, st->st_logger))
+		if (!do_command(c, sr, "prepare", st, logger))
 			dbg("prepare command returned an error");
 		route_installed = do_command(c, sr, "route", st, logger);
 		if (!route_installed)
@@ -2831,15 +2831,15 @@ bool route_and_eroute(struct connection *c,
 			if (!do_command(ro, sr, "unroute", st, logger)) {
 				dbg("unroute command returned an error");
 			}
-			route_installed = do_command(c, sr, "route", st, st->st_logger);
+			route_installed = do_command(c, sr, "route", st, logger);
 			if (!route_installed)
 				dbg("route command returned an error");
 		} else {
-			route_installed = do_command(c, sr, "route", st, st->st_logger);
+			route_installed = do_command(c, sr, "route", st, logger);
 			if (!route_installed)
 				dbg("route command returned an error");
 
-			if (!do_command(ro, sr, "unroute", st, st->st_logger)) {
+			if (!do_command(ro, sr, "unroute", st, logger)) {
 				dbg("unroute command returned an error");
 			}
 		}
