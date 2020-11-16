@@ -566,8 +566,8 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 	if (HAS_IPSEC_POLICY(policy)) {
 		st->sec_ctx = NULL;
 		if (uctx != NULL)
-			libreswan_log(
-				"Labeled ipsec is not supported with ikev2 yet");
+			log_state(RC_LOG, &ike->sa,
+				  "Labeled ipsec is not supported with ikev2 yet");
 		add_pending(whack_sock, ike, c, policy, 1,
 			    predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
 			    st->sec_ctx,
@@ -626,7 +626,7 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 		get_v2_ike_proposals(c, "IKE SA initiator selecting KE", ike->sa.st_logger);
 	st->st_oakley.ta_dh = ikev2_proposals_first_dh(ike_proposals, ike->sa.st_logger);
 	if (st->st_oakley.ta_dh == NULL) {
-		libreswan_log("proposals do not contain a valid DH");
+		log_state(RC_LOG, st, "proposals do not contain a valid DH");
 		delete_state(st); /* pops state? */
 		return;
 	}
@@ -649,7 +649,7 @@ bool emit_v2KE(chunk_t *g, const struct dh_desc *group,
 	       pb_stream *outs)
 {
 	if (impair.ke_payload == IMPAIR_EMIT_OMIT) {
-		libreswan_log("IMPAIR: omitting KE payload");
+		log_pbs_out(RC_LOG, outs, "IMPAIR: omitting KE payload");
 		return true;
 	}
 
@@ -817,7 +817,8 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 				return false;
 		}
 	} else {
-		libreswan_log("Impair: Skipping the Signature hash notify in IKE_SA_INIT Request");
+		log_state(RC_LOG, &ike->sa,
+			  "Impair: Skipping the Signature hash notify in IKE_SA_INIT Request");
 	}
 
 	/* Send NAT-T Notify payloads */
@@ -927,7 +928,7 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 	 */
 	if (!ikev2_proposal_to_trans_attrs(ike->sa.st_accepted_ike_proposal,
 					   &ike->sa.st_oakley, ike->sa.st_logger)) {
-		loglog(RC_LOG_SERIOUS, "IKE responder accepted an unsupported algorithm");
+		log_state(RC_LOG_SERIOUS, &ike->sa, "IKE responder accepted an unsupported algorithm");
 		/* STF_INTERNAL_ERROR doesn't delete ST */
 		return STF_FATAL;
 	}
@@ -1154,7 +1155,7 @@ static stf_status ikev2_parent_inI1outR1_continue(struct state *st,
 				return STF_INTERNAL_ERROR;
 		}
 	} else {
-		libreswan_log("Impair: Not sending out signature hash notify");
+		log_state(RC_LOG, st, "Impair: Not sending out signature hash notify");
 	}
 
 	/* Send NAT-T Notify payloads */
@@ -1376,7 +1377,7 @@ stf_status ikev2_auth_initiator_process_unknown_notification(struct ike_sa *unus
 
 		if (ntfy->payload.v2n.isan_spisize != 0) {
 			/* invalid-syntax, but can't do anything about it */
-			libreswan_log("received an encrypted %s notification with an unexpected non-empty SPI; deleting IKE SA",
+			log_state(RC_LOG, st, "received an encrypted %s notification with an unexpected non-empty SPI; deleting IKE SA",
 				 name);
 			return STF_FATAL;
 		}
@@ -1385,17 +1386,17 @@ stf_status ikev2_auth_initiator_process_unknown_notification(struct ike_sa *unus
 			/* just log */
 			pstat(ikev2_recv_notifies_s, n);
 			if (name == NULL) {
-				libreswan_log("IKE_AUTH response contained an unknown status notification (%d)", n);
+				log_state(RC_LOG, st, "IKE_AUTH response contained an unknown status notification (%d)", n);
 			} else {
-				libreswan_log("IKE_AUTH response contained the status notification %s", name);
+				log_state(RC_LOG, st, "IKE_AUTH response contained the status notification %s", name);
 			}
 		} else {
 			pstat(ikev2_recv_notifies_e, n);
 			ignore = false;
 			if (name == NULL) {
-				libreswan_log("IKE_AUTH response contained an unknown error notification (%d)", n);
+				log_state(RC_LOG, st, "IKE_AUTH response contained an unknown error notification (%d)", n);
 			} else {
-				libreswan_log("IKE_AUTH response contained the error notification %s", name);
+				log_state(RC_LOG, st, "IKE_AUTH response contained the error notification %s", name);
 				/*
 				 * There won't be a child state transition, so log if error is child related.
 				 * see RFC 7296 Section 1.2
@@ -1458,8 +1459,8 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 
 	/* for testing only */
 	if (impair.send_no_ikev2_auth) {
-		libreswan_log(
-			"IMPAIR_SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
+		log_state(RC_LOG, &ike->sa,
+			  "IMPAIR_SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
 		return STF_IGNORE;
 	}
 
@@ -1475,8 +1476,9 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 	 * that case, shouldn't this state have been deleted?
 	 */
 	if (c->newest_ipsec_sa > st->st_serialno) {
-		libreswan_log("state superseded by #%lu try=%lu, drop this negotiation",
-			      c->newest_ipsec_sa, st->st_try);
+		log_state(RC_LOG, &ike->sa,
+			  "state superseded by #%lu try=%lu, drop this negotiation",
+			  c->newest_ipsec_sa, st->st_try);
 		return STF_FATAL;
 	}
 	if (md->hdr.isa_xchg != ISAKMP_v2_IKE_INTERMEDIATE) {
@@ -1495,7 +1497,7 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 		if (md->pbs[PBS_v2N_SIGNATURE_HASH_ALGORITHMS] != NULL) {
 			if (impair.ignore_hash_notify_request) {
 				log_state(RC_LOG, &ike->sa,
-					"IMPAIR: ignoring the Signature hash notify in IKE_SA_INIT response");
+					  "IMPAIR: ignoring the Signature hash notify in IKE_SA_INIT response");
 			} else if (!negotiate_hash_algo_from_notification(md->pbs[PBS_v2N_SIGNATURE_HASH_ALGORITHMS], ike)) {
 				return STF_FATAL;
 			}
@@ -1555,7 +1557,7 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 
 			if (!ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal,
 						   &st->st_oakley, ike->sa.st_logger)) {
-				loglog(RC_LOG_SERIOUS, "IKE initiator proposed an unsupported algorithm");
+				log_state(RC_LOG_SERIOUS, st, "IKE initiator proposed an unsupported algorithm");
 				free_ikev2_proposal(&st->st_accepted_ike_proposal);
 				passert(st->st_accepted_ike_proposal == NULL);
 				/*
@@ -1836,7 +1838,8 @@ bool emit_v2_child_configuration_payload(struct connection *c,
 								return false;
 					}
 				} else {
-					loglog(RC_LOG_SERIOUS, "Ignored bogus DNS IP address '%s'", ipstr);
+					log_state(RC_LOG_SERIOUS, &child->sa,
+						  "Ignored bogus DNS IP address '%s'", ipstr);
 				}
 				ipstr = strtok(NULL, ", ");
 			}
@@ -1987,7 +1990,7 @@ static stf_status ikev2_parent_inR1outI2_continue(struct state *st,
 					&ike->sa.st_skey_pi_nss,
 					&ike->sa.st_skey_pr_nss,
 					ike->sa.st_logger);
-			libreswan_log("PPK AUTH calculated as initiator");
+			log_state(RC_LOG, st, "PPK AUTH calculated as initiator");
 		} else {
 			if (pc->policy & POLICY_PPK_INSIST) {
 				log_state(RC_LOG_SERIOUS, &ike->sa,
@@ -2225,7 +2228,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 				pc->spd.that.id.kind == ID_NULL); /* me tarzan, you jane */
 
 	if (impair.send_no_idr) {
-		libreswan_log("IMPAIR: omitting IDr payload");
+		log_state(RC_LOG, &ike->sa, "IMPAIR: omitting IDr payload");
 		send_idr = false;
 	}
 
@@ -2300,7 +2303,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	}
 
 	if (ic) {
-		libreswan_log("sending INITIAL_CONTACT");
+		log_state(RC_LOG, &ike->sa, "sending INITIAL_CONTACT");
 		if (!emit_v2N(v2N_INITIAL_CONTACT, &sk.pbs))
 			return STF_INTERNAL_ERROR;
 	} else {
@@ -2460,7 +2463,8 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 		if (!ikev2_create_psk_auth(AUTHBY_NULL, ike,
 					   &ike->sa.st_v2_id_payload.mac,
 					   &null_auth)) {
-			loglog(RC_LOG_SERIOUS, "Failed to calculate additional NULL_AUTH");
+			log_state(RC_LOG_SERIOUS, &ike->sa,
+				  "Failed to calculate additional NULL_AUTH");
 			return STF_FATAL;
 		}
 		ike->sa.st_intermediate_used = false;
@@ -2556,8 +2560,9 @@ static stf_status ikev2_start_pam_authorize(struct state *st)
 {
 	id_buf thatidb;
 	const char *thatid = str_id(&st->st_connection->spd.that.id, &thatidb);
-	libreswan_log("IKEv2: [XAUTH]PAM method requested to authorize '%s'",
-		      thatid);
+	log_state(RC_LOG, st,
+		  "IKEv2: [XAUTH]PAM method requested to authorize '%s'",
+		  thatid);
 	auth_fork_pam_process(st,
 			       thatid, "password",
 			       "IKEv2",
@@ -2763,7 +2768,7 @@ stf_status ikev2_ike_sa_process_auth_request(struct ike_sa *ike,
 		}
 		close_output_pbs(&rbody);
 		close_output_pbs(&reply_stream);
-		
+
 		stf_status ret = encrypt_v2SK_payload(&sk);
 
 		if (ret != STF_OK) {
@@ -2878,7 +2883,7 @@ static stf_status v2_inI2outR2_post_cert_decode(struct state *st,
 	if (IS_LIBUNBOUND && id_ipseckey_allowed(st, atype)) {
 		stf_status ret = idi_ipseckey_fetch(md);
 		if (ret != STF_OK) {
-			loglog(RC_LOG_SERIOUS, "DNS: IPSECKEY not found or usable");
+			log_state(RC_LOG_SERIOUS, st, "DNS: IPSECKEY not found or usable");
 			return ret;
 		}
 	}
@@ -2920,9 +2925,9 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 					&st->st_skey_pr_nss,
 					st->st_logger);
 			st->st_ppk_used = TRUE;
-			libreswan_log("PPK AUTH calculated as responder");
+			log_state(RC_LOG, st, "PPK AUTH calculated as responder");
 		} else {
-			libreswan_log("ignored received PPK_IDENTITY - connection does not require PPK or PPKID not found");
+			log_state(RC_LOG, st, "ignored received PPK_IDENTITY - connection does not require PPK or PPKID not found");
 		}
 	}
 	if (md->pbs[PBS_v2N_NO_PPK_AUTH] != NULL) {
@@ -2936,7 +2941,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 			chunk_t no_ppk_auth = alloc_chunk(len, "NO_PPK_AUTH");
 
 			if (!in_raw(no_ppk_auth.ptr, len, &pbs, "NO_PPK_AUTH extract")) {
-				loglog(RC_LOG_SERIOUS, "Failed to extract %zd bytes of NO_PPK_AUTH from Notify payload", len);
+				log_state(RC_LOG_SERIOUS, st, "Failed to extract %zd bytes of NO_PPK_AUTH from Notify payload", len);
 				free_chunk_content(&no_ppk_auth);
 				return STF_FATAL;
 			}
@@ -3301,7 +3306,7 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 			/* only allow %any connection to mobike */
 			st->st_sent_mobike = TRUE;
 		} else {
-			libreswan_log("not responding with v2N_MOBIKE_SUPPORTED, that end is not %%any");
+			log_state(RC_LOG, st, "not responding with v2N_MOBIKE_SUPPORTED, that end is not %%any");
 		}
 	}
 
@@ -3312,7 +3317,7 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 	     (!LIN(POLICY_SEND_REDIRECT_NEVER, c->policy) &&
 	      require_ddos_cookies()))) {
 		if (c->redirect_to == NULL) {
-			loglog(RC_LOG_SERIOUS, "redirect-to is not specified, can't redirect requests");
+			log_state(RC_LOG_SERIOUS, st, "redirect-to is not specified, can't redirect requests");
 		} else {
 			send_redirect = TRUE;
 		}
@@ -3410,7 +3415,7 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 		/* initiator didn't propose anything. Weird. Try unpending our end. */
 		/* UNPEND XXX */
 		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-			libreswan_log("No CHILD SA proposals received.");
+			log_state(RC_LOG, st, "No CHILD SA proposals received.");
 		} else {
 			dbg("no CHILD SA proposals received");
 		}
@@ -3536,7 +3541,8 @@ stf_status ikev2_process_child_sa_pl(struct ike_sa *ike, struct child_sa *child,
 	}
 	if (!ikev2_proposal_to_proto_info(child->sa.st_accepted_esp_or_ah_proposal, proto_info,
 					  child->sa.st_logger)) {
-		loglog(RC_LOG_SERIOUS, "%s proposed/accepted a proposal we don't actually support!", what);
+		log_state(RC_LOG_SERIOUS, &child->sa,
+			  "%s proposed/accepted a proposal we don't actually support!", what);
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 	}
 
@@ -3558,10 +3564,10 @@ stf_status ikev2_process_child_sa_pl(struct ike_sa *ike, struct child_sa *child,
 	case SA_INITIATOR:
 		pexpect(expect_accepted_proposal);
 		if (accepted_dh != NULL && accepted_dh != child->sa.st_pfs_group) {
-			loglog(RC_LOG_SERIOUS,
-			       "expecting %s but remote's accepted proposal includes %s",
-			       child->sa.st_pfs_group == NULL ? "no DH" : child->sa.st_pfs_group->common.fqn,
-			       accepted_dh->common.fqn);
+			log_state(RC_LOG_SERIOUS, &child->sa,
+				  "expecting %s but remote's accepted proposal includes %s",
+				  child->sa.st_pfs_group == NULL ? "no DH" : child->sa.st_pfs_group->common.fqn,
+				  accepted_dh->common.fqn);
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 		child->sa.st_pfs_group = accepted_dh;
@@ -3612,7 +3618,7 @@ static stf_status ikev2_process_cp_respnse(struct msg_digest *md)
 	if (need_configuration_payload(c, st->hidden_variables.st_nat_traversal)) {
 		if (md->chain[ISAKMP_NEXT_v2CP] == NULL) {
 			/* not really anything to here... but it would be worth unpending again */
-			loglog(RC_LOG_SERIOUS, "missing v2CP reply, not attempting to setup child SA");
+			log_state(RC_LOG_SERIOUS, st, "missing v2CP reply, not attempting to setup child SA");
 			/*
 			 * ??? this isn't really a failure, is it?
 			 * If none of those payloads appeared, isn't this is a
@@ -3723,7 +3729,8 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 
 		dbg("received v2N_IPCOMP_SUPPORTED of length %zd", len);
 		if ((c->policy & POLICY_COMPRESS) == LEMPTY) {
-			loglog(RC_LOG_SERIOUS, "Unexpected IPCOMP request as our connection policy did not indicate support for it");
+			log_state(RC_LOG_SERIOUS, st,
+				  "Unexpected IPCOMP request as our connection policy did not indicate support for it");
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 
@@ -3732,13 +3739,15 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 		}
 
 		if (n_ipcomp.ikev2_notify_ipcomp_trans != IPCOMP_DEFLATE) {
-			loglog(RC_LOG_SERIOUS, "Unsupported IPCOMP compression method %d",
+			log_state(RC_LOG_SERIOUS, st,
+				  "Unsupported IPCOMP compression method %d",
 			       n_ipcomp.ikev2_notify_ipcomp_trans); /* enum_name this later */
 			return STF_FATAL;
 		}
 
 		if (n_ipcomp.ikev2_cpi < IPCOMP_FIRST_NEGOTIATED) {
-			loglog(RC_LOG_SERIOUS, "Illegal IPCOMP CPI %d", n_ipcomp.ikev2_cpi);
+			log_state(RC_LOG_SERIOUS, st,
+				  "Illegal IPCOMP CPI %d", n_ipcomp.ikev2_cpi);
 			return STF_FATAL;
 		}
 		dbg("Received compression CPI=%d", n_ipcomp.ikev2_cpi);
@@ -3873,12 +3882,14 @@ static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *
 
 	if (md->pbs[PBS_v2N_PPK_IDENTITY] != NULL) {
 		if (!LIN(POLICY_PPK_ALLOW, c->policy)) {
-			loglog(RC_LOG_SERIOUS, "Received PPK_IDENTITY but connection does not allow PPK");
+			log_state(RC_LOG_SERIOUS, st,
+				  "Received PPK_IDENTITY but connection does not allow PPK");
 			return STF_FATAL;
 		}
 	} else {
 		if (LIN(POLICY_PPK_INSIST, c->policy)) {
-			loglog(RC_LOG_SERIOUS, "failed to receive PPK confirmation and connection has ppk=insist");
+			log_state(RC_LOG_SERIOUS, st,
+				  "failed to receive PPK confirmation and connection has ppk=insist");
 			dbg("should be initiating a notify that kills the state");
 			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 			return STF_FATAL;
@@ -3896,7 +3907,7 @@ static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *
 	    LIN(POLICY_PPK_ALLOW, c->policy)) {
 		/* discard the PPK based calculations */
 
-		libreswan_log("Peer wants to continue without PPK - switching to NO_PPK");
+		log_state(RC_LOG, st, "Peer wants to continue without PPK - switching to NO_PPK");
 
 		release_symkey(__func__, "st_skey_d_nss",  &pst->st_skey_d_nss);
 		pst->st_skey_d_nss = reference_symkey(__func__, "used sk_d from no ppk", pst->st_sk_d_no_ppk);
@@ -3989,7 +4000,8 @@ static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *
 	    md->chain[ISAKMP_NEXT_v2TSi] == NULL ||
 	    md->chain[ISAKMP_NEXT_v2TSr] == NULL) {
 		/* not really anything to here... but it would be worth unpending again */
-		loglog(RC_LOG_SERIOUS, "missing v2SA, v2TSi or v2TSr: not attempting to setup child SA");
+		log_state(RC_LOG_SERIOUS, st,
+			  "missing v2SA, v2TSi or v2TSr: not attempting to setup child SA");
 		/*
 		 * ??? this isn't really a failure, is it?
 		 * If none of those payloads appeared, isn't this is a
@@ -4356,7 +4368,7 @@ static stf_status ikev2_child_add_ike_payloads(struct child_sa *child,
 		/* send v2 IKE SAs*/
 		if (!ikev2_emit_sa_proposals(outpbs, ike_proposals,
 					     &local_spi))  {
-			libreswan_log("outsa fail");
+			log_state(RC_LOG, st, "outsa fail");
 			dbg("problem emitting connection ike proposals in CREATE_CHILD_SA");
 			return STF_INTERNAL_ERROR;
 		}
@@ -4435,7 +4447,7 @@ stf_status ikev2_child_ike_inR(struct ike_sa *ike,
 	}
 	if (!ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal,
 					   &st->st_oakley, st->st_logger)) {
-		loglog(RC_LOG_SERIOUS, "IKE responder accepted an unsupported algorithm");
+		log_state(RC_LOG_SERIOUS, st, "IKE responder accepted an unsupported algorithm");
 		/* free early return items */
 		free_ikev2_proposal(&st->st_accepted_ike_proposal);
 		passert(st->st_accepted_ike_proposal == NULL);
@@ -4872,7 +4884,7 @@ stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
 
 	if (!ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal,
 					   &st->st_oakley, st->st_logger)) {
-		loglog(RC_LOG_SERIOUS, "IKE responder accepted an unsupported algorithm");
+		log_state(RC_LOG_SERIOUS, st, "IKE responder accepted an unsupported algorithm");
 		/*
 		 * XXX; where is 'st' freed?  Should the code instead
 		 * tunnel back md.st==st and return STF_FATAL which
@@ -5123,8 +5135,9 @@ static stf_status ikev2_start_new_exchange(struct ike_sa *ike,
 		if (!ike->sa.st_viable_parent) {
 			child->sa.st_policy = child->sa.st_connection->policy; /* for pick_initiator */
 
-			loglog(RC_LOG_SERIOUS, "no viable to parent to initiate CREATE_CHILD_EXCHANGE %s; trying replace",
-			       child->sa.st_state->name);
+			log_state(RC_LOG_SERIOUS, &child->sa,
+				  "no viable to parent to initiate CREATE_CHILD_EXCHANGE %s; trying replace",
+				  child->sa.st_state->name);
 			delete_event(&child->sa);
 			event_schedule(EVENT_SA_REPLACE, REPLACE_ORPHAN_DELAY, &child->sa);
 			/* ??? surely this isn't yet a failure or a success */
@@ -5142,14 +5155,16 @@ static void delete_or_replace_state(struct state *st) {
 
 	if (st->st_event == NULL) {
 		/* ??? should this be an assert/expect? */
-		loglog(RC_LOG_SERIOUS, "received Delete SA payload: delete IPsec State #%lu. st_event == NULL",
-				st->st_serialno);
+		log_state(RC_LOG_SERIOUS, st,
+			  "received Delete SA payload: delete IPsec State #%lu. st_event == NULL",
+			  st->st_serialno);
 		delete_state(st);
 	} else if (st->st_event->ev_type == EVENT_SA_EXPIRE) {
 		/* this state  was going to EXPIRE: hurry it along */
 		/* ??? why is this treated specially.  Can we not delete_state()? */
-		loglog(RC_LOG_SERIOUS, "received Delete SA payload: expire IPsec State #%lu now",
-				st->st_serialno);
+		log_state(RC_LOG_SERIOUS, st,
+			  "received Delete SA payload: expire IPsec State #%lu now",
+			  st->st_serialno);
 		event_force(EVENT_SA_EXPIRE, st);
 	} else if (c->newest_ipsec_sa == st->st_serialno &&
 			(c->policy & POLICY_UP)) {
@@ -5157,13 +5172,15 @@ static void delete_or_replace_state(struct state *st) {
 		 * Last IPsec SA for a permanent  connection that we have initiated.
 		 * Replace it now.  Useful if the other peer is rebooting.
 		 */
-		loglog(RC_LOG_SERIOUS, "received Delete SA payload: replace IPsec State #%lu now",
-				st->st_serialno);
+		log_state(RC_LOG_SERIOUS, st,
+			  "received Delete SA payload: replace IPsec State #%lu now",
+			  st->st_serialno);
 		st->st_replace_margin = deltatime(0);
 		event_force(EVENT_SA_REPLACE, st);
 	} else {
-		loglog(RC_LOG_SERIOUS, "received Delete SA payload: delete IPsec State #%lu now",
-				st->st_serialno);
+		log_state(RC_LOG_SERIOUS, st,
+			  "received Delete SA payload: delete IPsec State #%lu now",
+			  st->st_serialno);
 		delete_state(st);
 	}
 }
@@ -5243,7 +5260,8 @@ static void process_informational_notify_req(struct msg_digest *md, bool *redire
 							 &redirect_ip,
 							 ike->sa.st_logger);
 			if (e != NULL) {
-				loglog(RC_LOG_SERIOUS, "warning: parsing of v2N_REDIRECT payload failed: %s", e);
+				log_state(RC_LOG_SERIOUS, st,
+					  "warning: parsing of v2N_REDIRECT payload failed: %s", e);
 			} else {
 				*redirect = TRUE;
 				st->st_connection->temp_vars.redirect_ip = redirect_ip;
@@ -5255,7 +5273,7 @@ static void process_informational_notify_req(struct msg_digest *md, bool *redire
 				ntfy_update_sa = TRUE;
 				dbg("Need to process v2N_UPDATE_SA_ADDRESSES");
 			} else {
-				libreswan_log("Connection does not allow MOBIKE, ignoring UPDATE_SA_ADDRESSES");
+				log_state(RC_LOG, st, "Connection does not allow MOBIKE, ignoring UPDATE_SA_ADDRESSES");
 			}
 			break;
 
@@ -5263,7 +5281,7 @@ static void process_informational_notify_req(struct msg_digest *md, bool *redire
 			if (may_mobike)
 				st->st_seen_nonats = TRUE;
 			else
-				libreswan_log("Connection does not allow MOBIKE, ignoring v2N_NO_NATS_ALLOWED");
+				log_state(RC_LOG, st, "Connection does not allow MOBIKE, ignoring v2N_NO_NATS_ALLOWED");
 			break;
 
 		case v2N_NAT_DETECTION_DESTINATION_IP:
@@ -5276,7 +5294,7 @@ static void process_informational_notify_req(struct msg_digest *md, bool *redire
 			if (may_mobike) {
 				dbg("Received NO_ADDITIONAL_ADDRESSES - no need to act on this");
 			} else {
-				libreswan_log("Connection does not allow MOBIKE, ignoring NO_ADDITIONAL_ADDRESSES payload");
+				log_state(RC_LOG, st, "Connection does not allow MOBIKE, ignoring NO_ADDITIONAL_ADDRESSES payload");
 			}
 			break;
 
@@ -5293,7 +5311,7 @@ static void process_informational_notify_req(struct msg_digest *md, bool *redire
 					DBG_dump_hunk("MOBIKE COOKIE2 received:", *cookie2);
 				}
 			} else {
-				libreswan_log("Connection does not allow MOBIKE, ignoring COOKIE2");
+				log_state(RC_LOG, st, "Connection does not allow MOBIKE, ignoring COOKIE2");
 			}
 			break;
 
@@ -5315,7 +5333,7 @@ static void process_informational_notify_req(struct msg_digest *md, bool *redire
 
 	if (ntfy_update_sa) {
 		if (LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
-			libreswan_log("Ignoring MOBIKE UPDATE_SA since we are behind NAT");
+			log_state(RC_LOG, st, "Ignoring MOBIKE UPDATE_SA since we are behind NAT");
 		} else {
 			if (!update_mobike_endpoints(ike, md))
 				*ntfy_natd = FALSE;
@@ -5334,7 +5352,7 @@ static void process_informational_notify_req(struct msg_digest *md, bool *redire
 	}
 
 	if (ntfy_update_sa)
-		libreswan_log("MOBIKE request: updating IPsec SA by request");
+		log_state(RC_LOG, st, "MOBIKE request: updating IPsec SA by request");
 	else
 		dbg("MOBIKE request: not updating IPsec SA");
 }
@@ -5445,7 +5463,8 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 			process_informational_notify_req(md, &seen_and_parsed_redirect, &send_mobike_resp, &cookie2);
 		} else {
 			if (process_mobike_resp(md)) {
-				libreswan_log("MOBIKE response: updating IPsec SA");
+				log_state(RC_LOG, &ike->sa,
+					  "MOBIKE response: updating IPsec SA");
 			} else {
 				dbg("MOBIKE response: not updating IPsec SA");
 			}
@@ -5470,17 +5489,20 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 			switch (v2del->isad_protoid) {
 			case PROTO_ISAKMP:
 				if (!responding) {
-					libreswan_log("Response to Delete improperly includes IKE SA");
+					log_state(RC_LOG, &ike->sa,
+						  "Response to Delete improperly includes IKE SA");
 					return STF_FAIL + v2N_INVALID_SYNTAX;
 				}
 
 				if (del_ike) {
-					libreswan_log("Error: INFORMATIONAL Exchange with more than one Delete Payload for the IKE SA");
+					log_state(RC_LOG, &ike->sa,
+						  "Error: INFORMATIONAL Exchange with more than one Delete Payload for the IKE SA");
 					return STF_FAIL + v2N_INVALID_SYNTAX;
 				}
 
 				if (v2del->isad_nrspi != 0 || v2del->isad_spisize != 0) {
-					libreswan_log("IKE SA Delete has non-zero SPI size or number of SPIs");
+					log_state(RC_LOG, &ike->sa,
+						  "IKE SA Delete has non-zero SPI size or number of SPIs");
 					return STF_FAIL + v2N_INVALID_SYNTAX;
 				}
 
@@ -5490,15 +5512,17 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 			case PROTO_IPSEC_AH:
 			case PROTO_IPSEC_ESP:
 				if (v2del->isad_spisize != sizeof(ipsec_spi_t)) {
-					libreswan_log("IPsec Delete Notification has invalid SPI size %u",
-						v2del->isad_spisize);
+					log_state(RC_LOG, &ike->sa,
+						  "IPsec Delete Notification has invalid SPI size %u",
+						  v2del->isad_spisize);
 					return STF_FAIL + v2N_INVALID_SYNTAX;
 				}
 
 				if (v2del->isad_nrspi * v2del->isad_spisize != pbs_left(&p->pbs)) {
-					libreswan_log("IPsec Delete Notification payload size is %zu but %u is required",
-						pbs_left(&p->pbs),
-						v2del->isad_nrspi * v2del->isad_spisize);
+					log_state(RC_LOG, &ike->sa,
+						  "IPsec Delete Notification payload size is %zu but %u is required",
+						  pbs_left(&p->pbs),
+						  v2del->isad_nrspi * v2del->isad_spisize);
 					return STF_FAIL + v2N_INVALID_SYNTAX;
 				}
 
@@ -5506,12 +5530,14 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 				break;
 
 			default:
-				libreswan_log("Ignored bogus delete protoid '%d'", v2del->isad_protoid);
+				log_state(RC_LOG, &ike->sa,
+					  "Ignored bogus delete protoid '%d'", v2del->isad_protoid);
 			}
 		}
 
 		if (del_ike && ndp != 0)
-			libreswan_log("Odd: INFORMATIONAL Exchange deletes IKE SA and yet also deletes some IPsec SA");
+			log_state(RC_LOG, &ike->sa,
+				  "Odd: INFORMATIONAL Exchange deletes IKE SA and yet also deletes some IPsec SA");
 	}
 
 	/*
@@ -5675,11 +5701,11 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 												spi);
 
 					if (dst == NULL) {
-						libreswan_log(
-						    "received delete request for %s SA(0x%08" PRIx32 ") but corresponding state not found",
-							    enum_show(&ikev2_delete_protocol_id_names,
-								      v2del->isad_protoid),
-						    ntohl((uint32_t)spi));
+						log_state(RC_LOG, &ike->sa,
+							  "received delete request for %s SA(0x%08" PRIx32 ") but corresponding state not found",
+							  enum_show(&ikev2_delete_protocol_id_names,
+								    v2del->isad_protoid),
+							  ntohl((uint32_t)spi));
 					} else {
 						dbg("our side SPI that needs to be deleted: %s SA(0x%08" PRIx32 ")",
 						    enum_show(&ikev2_delete_protocol_id_names,
@@ -5700,8 +5726,9 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 								spi_buf[j] = pr->our_spi;
 								j++;
 							} else {
-								libreswan_log("too many SPIs in Delete Notification payload; ignoring 0x%08" PRIx32,
-									      ntohl(spi));
+								log_state(RC_LOG, &ike->sa,
+									  "too many SPIs in Delete Notification payload; ignoring 0x%08" PRIx32,
+									  ntohl(spi));
 							}
 						}
 						delete_or_replace_state(&dst->sa);
@@ -6239,7 +6266,7 @@ void ikev2_addr_change(struct state *st)
 		/* cannot happen */
 		/* ??? original code treated this as failure */
 		/* bad_case(0); */
-		libreswan_log("unexpected SUCCESS from first resolve_defaultroute_one");
+		log_state(RC_LOG, st, "unexpected SUCCESS from first resolve_defaultroute_one");
 		/* FALL THROUGH */
 	case -1:	/* failure */
 	{
@@ -6256,14 +6283,14 @@ void ikev2_addr_change(struct state *st)
 			/* cannot happen */
 			/* ??? original code treated this as failure */
 			/* bad_case(1); */
-			libreswan_log("unexpected TRY AGAIN from second resolve_defaultroute_one");
+			log_state(RC_LOG, st, "unexpected TRY AGAIN from second resolve_defaultroute_one");
 			/* FALL THROUGH */
 		case -1:	/* failure */
 		{
 			ipstr_buf g, b;
-			libreswan_log("no local source address to reach remote %s, local gateway %s",
-					sensitive_ipstr(&that.addr, &b),
-					ipstr(&this.nexthop, &g));
+			log_state(RC_LOG, st, "no local source address to reach remote %s, local gateway %s",
+				  sensitive_ipstr(&that.addr, &b),
+				  ipstr(&this.nexthop, &g));
 			break;
 		}
 
@@ -6281,7 +6308,7 @@ void ikev2_addr_change(struct state *st)
 
 #else /* !defined(XFRM_SUPPORT) */
 
-	libreswan_log("without NETKEY we cannot ikev2_addr_change()");
+	log_state(RC_LOG, st, "without NETKEY we cannot ikev2_addr_change()");
 
 #endif
 }
@@ -6457,7 +6484,7 @@ void v2_event_sa_rekey(struct state *st)
 
 	dbg("rekeying stale %s SA", satype);
 	if (IS_IKE_SA(st)) {
-		libreswan_log("initiate rekey of IKEv2 CREATE_CHILD_SA IKE Rekey");
+		log_state(RC_LOG, st, "initiate rekey of IKEv2 CREATE_CHILD_SA IKE Rekey");
 		ikev2_rekey_ike_start(pexpect_ike_sa(st));
 	} else {
 		/*
