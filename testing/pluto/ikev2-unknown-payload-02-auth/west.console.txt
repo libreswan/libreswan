@@ -53,7 +53,7 @@ west #
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #3: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev2" #4: IMPAIR: retransmit so deleting SA
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: deleting state (STATE_PARENT_I2) and NOT sending notification
-003 "westnet-eastnet-ipv4-psk-ikev2" #3: reschedule pending child #4 STATE_PARENT_I2 of connection "westnet-eastnet-ipv4-psk-ikev2" - the parent is going away
+003 "westnet-eastnet-ipv4-psk-ikev2" #4: reschedule pending CHILD SA - the IKE SA #3 is going away
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  echo done
