@@ -8,7 +8,7 @@ config setup
 	# If logfile= is unset, syslog is used to send log messages too.
 	# Note that on busy VPN servers, the amount of logging can trigger
 	# syslogd (or journald) to rate limit messages.
-	#logfile=/var/log/pluto.log
+	#logfile=@FINALLOGDIR@/pluto.log
 	#
 	# Debugging should only be used to find bugs, not configuration issues!
 	# "base" regular debug, "tmi" is excessive (!) and "private" will log

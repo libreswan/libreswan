@@ -21,6 +21,8 @@ ipsec.secrets.INSTFLAGS = -m 0600
 CONFFILES += ipsec.conf
 CONFFILES += ipsec.secrets
 
+LOGROTATECONFFILE += libreswan
+
 CONFDSUBDIR = policies
 CONFDSUBDIRFILES = clear clear-or-private private-or-clear private block portexcludes.conf
 
@@ -32,12 +34,12 @@ include $(top_srcdir)/mk/targets.mk
 include $(top_srcdir)/mk/rules.mk
 include $(top_srcdir)/mk/manpages.mk
 
-local-base: $(CONFFILES) $(CONFDSUBDIRFILES)
+local-base: $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATECONFFILE)
 
 local-clean-base:
-	rm -f $(foreach file, $(CONFFILES) $(CONFDSUBDIRFILES), $(builddir)/$(file))
+	rm -f $(foreach file, $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATECONFFILE), $(builddir)/$(file))
 
-local-install-base: $(CONFFILES) $(CONFDSUBDIRFILES)
+local-install-base: $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATECONFFILE)
 	@if test ! -d $(CONFDDIR) ; then \
 		mkdir -p $(CONFDDIR) ; \
 		chmod 0700 $(CONFDDIR) ; \
@@ -45,6 +47,9 @@ local-install-base: $(CONFFILES) $(CONFDSUBDIRFILES)
 	@if test ! -d $(CONFDDIR)/$(CONFDSUBDIR) ; then \
 		mkdir -p $(CONFDDIR)/$(CONFDSUBDIR) ; \
 		chmod 0700 $(CONFDDIR)/$(CONFDSUBDIR) ; \
+	fi
+	@if test ! -d $(LOGROTATEDDIR) ; then \
+		mkdir -p $(LOGROTATEDDIR) ; \
 	fi
 	@set -eu ; $(foreach file, $(CONFFILES), \
 		src=$(builddir)/$(file) ; \
@@ -65,6 +70,14 @@ local-install-base: $(CONFFILES) $(CONFDSUBDIRFILES)
 	@set -eu ; $(foreach file, $(CONFDSUBDIRFILES), \
 		src=$(builddir)/$(file) ; \
 		dst=$(CONFDDIR)/$(CONFDSUBDIR)/$(file) ; \
+		if [ ! -f $${dst} ]; then \
+			echo $${src} '->' $${dst} ; \
+			$(INSTALL) $(INSTCONFFLAGS) $${src} $${dst} ; \
+		fi ; \
+	)
+	@set -eu ; $(foreach file, $(LOGROTATECONFFILE), \
+		src=$(builddir)/$(file) ; \
+		dst=$(LOGROTATEDDIR)/$(file) ; \
 		if [ ! -f $${dst} ]; then \
 			echo $${src} '->' $${dst} ; \
 			$(INSTALL) $(INSTCONFFLAGS) $${src} $${dst} ; \

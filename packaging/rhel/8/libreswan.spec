@@ -193,6 +193,7 @@ certutil -N -d sql:$tmpdir --empty-password
 %attr(0644,root,root) %{_tmpfilesdir}/libreswan.conf
 %attr(0644,root,root) %{_unitdir}/ipsec.service
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/pam.d/pluto
+%config(noreplace) %{_sysconfdir}/logrotate.d/libreswan
 %{_sbindir}/ipsec
 %{_libexecdir}/ipsec
 %attr(0644,root,root) %doc %{_mandir}/*/*
