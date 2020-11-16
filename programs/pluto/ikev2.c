@@ -2799,9 +2799,10 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 
 	if (!(c->policy & POLICY_OPPORTUNISTIC)) {
 		id_buf idbuf;
-		libreswan_log("IKEv2 mode peer ID is %s: '%s'",
-			      enum_show(&ikev2_idtype_names, hik),
-			      str_id(&peer_id, &idbuf));
+		log_state(RC_LOG, &ike->sa,
+			  "IKEv2 mode peer ID is %s: '%s'",
+			  enum_show(&ikev2_idtype_names, hik),
+			  str_id(&peer_id, &idbuf));
 	} else if (DBGP(DBG_BASE)) {
 		id_buf idbuf;
 		DBG_log("IKEv2 mode peer ID is %s: '%s'",
