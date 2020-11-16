@@ -285,10 +285,7 @@ extern bool fmt_common_shell_out(char *buf, size_t blen,
 
 /* many bits reach in to use this, but maybe shouldn't */
 extern bool do_command(const struct connection *c, const struct spd_route *sr,
-		       const char *verb, struct state *st);
-
-extern bool invoke_command(const char *verb, const char *verb_suffix,
-			   const char *cmd);
+		       const char *verb, struct state *st, struct logger *logger);
 
 /* information from /proc/net/ipsec_eroute */
 
@@ -390,7 +387,9 @@ extern bool install_ipsec_sa(struct state *st, bool inbound_also);
 extern void delete_ipsec_sa(struct state *st);
 extern bool route_and_eroute(struct connection *c,
 			     struct spd_route *sr,
-			     struct state *st);
+			     struct state *st,
+			     /* st or c */
+			     struct logger *logger);
 
 extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
 extern bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */);
