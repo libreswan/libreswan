@@ -747,63 +747,77 @@ void v2_expire_unused_ike_sa(struct ike_sa *ike)
  * Should it schedule pending events?
  */
 
-static bool flush_incomplete_child(struct state *st, void *pst UNUSED)
+static bool flush_incomplete_child(struct state *cst, void *pst)
 {
-	if (!IS_IPSEC_SA_ESTABLISHED(st)) {
+	struct child_sa *child = pexpect_child_sa(cst);
 
-		struct connection *c = st->st_connection;
+	if (!IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
 
-		so_serial_t newest_sa;
-		switch (st->st_establishing_sa) {
-		case IKE_SA: newest_sa = c->newest_isakmp_sa; break;
-		case IPSEC_SA: newest_sa = c->newest_ipsec_sa; break;
-		default: bad_case(st->st_establishing_sa);
+		struct ike_sa *ike = pexpect_ike_sa(pst);
+		struct connection *c = child->sa.st_connection;
+
+		/*
+		 * If it wasn't so rudely interrupted, what would the
+		 * CHILD SA have eventually replaced?
+		 */
+		so_serial_t replacing_sa;
+		switch (child->sa.st_establishing_sa) {
+		case IKE_SA: replacing_sa = c->newest_isakmp_sa; break;
+		case IPSEC_SA: replacing_sa = c->newest_ipsec_sa; break;
+		default: bad_case(child->sa.st_establishing_sa);
 		}
 
-		if (st->st_serialno > newest_sa &&
+		if (child->sa.st_serialno > replacing_sa &&
 		    (c->policy & POLICY_UP) &&
 		    (c->policy & POLICY_DONT_REKEY) == LEMPTY) {
 
-			connection_buf cib;
-			log_state(RC_LOG_SERIOUS, st,
-				  "reschedule pending child #%lu %s of connection "PRI_CONNECTION" - the parent is going away",
-				  st->st_serialno, st->st_state->name,
-				  pri_connection(c, &cib));
-			st->st_policy = c->policy; /* for pick_initiator */
-			event_force(EVENT_SA_REPLACE, st);
+			/*
+			 * Nothing else has managed to replace
+			 * REPLACING_SA and the connection needs to
+			 * say up.
+			 */
+			log_state(RC_LOG_SERIOUS, &child->sa,
+				  "reschedule pending CHILD SA - the IKE SA #%lu is going away",
+				  ike->sa.st_serialno);
+			child->sa.st_policy = c->policy; /* for pick_initiator */
+			event_force(EVENT_SA_REPLACE, &child->sa);
 
 		} else {
 
-			connection_buf cib;
-			log_state(RC_LOG_SERIOUS, st,
-				  "expire pending child #%lu %s of connection "PRI_CONNECTION" - the parent is going away",
-				  st->st_serialno, st->st_state->name,
-				  pri_connection(c, &cib));
-			event_force(EVENT_SA_EXPIRE, st);
+			/*
+			 * Either something else replaced
+			 * REPLACING_SA, or the connection shouldn't
+			 * stay up.
+			 */
+			log_state(RC_LOG_SERIOUS, &child->sa,
+				  "expire pending CHILD SA - the IKE SA #%lu is going away",
+				  ike->sa.st_serialno);
+			event_force(EVENT_SA_EXPIRE, &child->sa);
 
 		}
 		/*
 		 * Shut down further logging for the child, above are
 		 * the last whack will hear from them.
 		 */
-		release_any_whack(st, HERE, "IKE going away");
+		release_any_whack(&child->sa, HERE, "IKE going away");
 	}
 	/*
 	 * XXX: why was this non-conditional?  probably doesn't matter
 	 * as it is idenpotent?
 	 */
-	delete_cryptographic_continuation(st);
+	delete_cryptographic_continuation(&child->sa);
 	return false; /* keep going */
 }
 
 static void flush_incomplete_children(struct ike_sa *ike)
 {
-	state_by_ike_spis(ike->sa.st_ike_version,
-			  &ike->sa.st_serialno,
+	state_by_ike_spis(ike->sa.st_ike_version, /* match: IKE VERSION */
+			  &ike->sa.st_serialno /* match: parent is IKE SA */,
 			  NULL /* ignore MSGID */,
 			  NULL /* ignore role */,
-			  &ike->sa.st_ike_spis,
-			  flush_incomplete_child, NULL/*arg*/, __func__);
+			  &ike->sa.st_ike_spis /* match: IKE SPIs */,
+			  flush_incomplete_child, ike/*arg*/,
+			  __func__);
 }
 
 static bool should_send_delete(const struct state *st)
