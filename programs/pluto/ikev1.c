@@ -2974,8 +2974,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		    st->st_connection->nmconfigured) {
 			if (!do_command(st->st_connection,
 					&st->st_connection->spd,
-					"disconnectNM",
-					st, st->st_logger))
+					"disconnectNM", st))
 				dbg("sending disconnect to NM failed, you may need to do it manually");
 		}
 #endif
@@ -3028,8 +3027,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		    st->st_connection->nmconfigured) {
 			if (!do_command(st->st_connection,
 					&st->st_connection->spd,
-					"disconnectNM",
-					st, st->st_logger))
+					"disconnectNM", st))
 				dbg("sending disconnect to NM failed, you may need to do it manually");
 		}
 #endif
