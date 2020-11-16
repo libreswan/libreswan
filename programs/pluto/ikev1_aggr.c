@@ -145,10 +145,10 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 		if (c == NULL) {
 			endpoint_buf b;
 
-			loglog(RC_LOG_SERIOUS,
-				"initial Aggressive Mode message from %s but no (wildcard) connection has been configured with policy %s",
-				str_endpoint(&md->sender, &b),
-				bitnamesof(sa_policy_bit_names, policy));
+			log_md(RC_LOG_SERIOUS, md,
+			       "initial Aggressive Mode message from %s but no (wildcard) connection has been configured with policy %s",
+			       str_endpoint(&md->sender, &b),
+			       bitnamesof(sa_policy_bit_names, policy));
 			/* XXX notification is in order! */
 			return STF_IGNORE;
 		}
@@ -194,10 +194,10 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	if (!ikev1_decode_peer_id(md, FALSE, TRUE)) {
 		id_buf buf;
 		endpoint_buf b;
-		loglog(RC_LOG_SERIOUS,
-		       "initial Aggressive Mode packet claiming to be from %s on %s but no matching connection has been authorized",
-		       str_id(&st->st_connection->spd.that.id, &buf),
-		       str_endpoint(&md->sender, &b));
+		log_state(RC_LOG_SERIOUS, st,
+			  "initial Aggressive Mode packet claiming to be from %s on %s but no matching connection has been authorized",
+			  str_id(&st->st_connection->spd.that.id, &buf),
+			  str_endpoint(&md->sender, &b));
 		/* XXX notification is in order! */
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
@@ -214,9 +214,9 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 		char cib[CONN_INST_BUF];
 
 		log_state(RC_LOG, st, "responding to Aggressive Mode, state #%lu, connection \"%s\"%s from %s",
-			st->st_serialno,
-			st->st_connection->name, fmt_conn_instance(st->st_connection, cib),
-			sensitive_ipstr(&c->spd.that.host_addr, &b));
+			  st->st_serialno,
+			  st->st_connection->name, fmt_conn_instance(st->st_connection, cib),
+			  sensitive_ipstr(&c->spd.that.host_addr, &b));
 	}
 
 	merge_quirks(st, md);
@@ -533,10 +533,10 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 		id_buf buf;
 		endpoint_buf b;
 
-		loglog(RC_LOG_SERIOUS,
-		       "initial Aggressive Mode packet claiming to be from %s on %s but no connection has been authorized",
-		       str_id(&st->st_connection->spd.that.id, &buf),
-		       str_endpoint(&md->sender, &b));
+		log_state(RC_LOG_SERIOUS, st,
+			  "initial Aggressive Mode packet claiming to be from %s on %s but no connection has been authorized",
+			  str_id(&st->st_connection->spd.that.id, &buf),
+			  str_endpoint(&md->sender, &b));
 		/* XXX notification is in order! */
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
@@ -988,8 +988,8 @@ void aggr_outI1(struct fd *whack_sock,
 		 * configurations, even conflicting multiple DH groups.  So this
 		 * should tell the user to add a proper proposal policy
 		 */
-		loglog(RC_AGGRALGO,
-		       "no IKE proposal policy specified in config!  Cannot initiate aggressive mode.  A policy must be specified in the configuration and should contain at most one DH group (mod1024, mod1536, mod2048).  Only the first DH group will be honored.");
+		log_state(RC_AGGRALGO, st,
+			  "no IKE proposal policy specified in config!  Cannot initiate aggressive mode.  A policy must be specified in the configuration and should contain at most one DH group (mod1024, mod1536, mod2048).  Only the first DH group will be honored.");
 		reset_globals();
 		return;
 	}
@@ -1003,7 +1003,7 @@ void aggr_outI1(struct fd *whack_sock,
 		log_state(RC_LOG, st, "initiating IKEv1 Aggressive Mode connection");
 	} else {
 		update_pending(pexpect_ike_sa(predecessor), pexpect_ike_sa(st));
-		log_state(RC_LOG, st, 
+		log_state(RC_LOG, st,
 			"initiating IKEv1 Aggressive Mode connection #%lu to replace #%lu",
 			st->st_serialno, predecessor->st_serialno);
 	}
@@ -1154,8 +1154,8 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 	clear_retransmits(st);
 	start_retransmits(st);
 
-	loglog(RC_NEW_V1_STATE + st->st_state->kind,
-	       "%s", st->st_state->story);
+	log_state(RC_NEW_V1_STATE + st->st_state->kind, st,
+		  "%s", st->st_state->story);
 	reset_cur_state();
 	return STF_IGNORE;
 }
