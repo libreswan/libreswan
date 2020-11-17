@@ -82,20 +82,6 @@
 #include "pending.h"
 #include "iface.h"
 #include "ikev2_delete.h"	/* for record_v2_delete(); but call is dying */
-#include "unpack.h"
-
-bool ikev1_justship_nonce(chunk_t *n, struct pbs_out *outs,
-			  const char *name)
-{
-	return ikev1_out_generic_chunk(&isakmp_nonce_desc, outs, *n, name);
-}
-
-bool ikev1_ship_nonce(chunk_t *n, chunk_t *nonce,
-		      struct pbs_out *outs, const char *name)
-{
-	unpack_nonce(n, nonce);
-	return ikev1_justship_nonce(n, outs, name);
-}
 
 #ifdef USE_IKEv1
 static initiator_function *pick_initiator(struct connection *c,
