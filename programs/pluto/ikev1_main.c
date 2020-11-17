@@ -94,6 +94,7 @@
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"
 #endif
+#include "unpack.h"
 
 /*
  * Initiate an Oakley Main Mode exchange.
@@ -922,8 +923,8 @@ static ke_and_nonce_cb main_inI2_outR2_continue1; /* type assertion */
 stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 {
 	/* KE in */
-	if (!accept_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_KE])) {
+	if (!unpack_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_KE], st->st_logger)) {
 		return STF_FAIL + INVALID_KEY_INFORMATION;
 	}
 
@@ -1372,9 +1373,8 @@ stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
 	release_symkey(__func__, "DH shared secret", &st->st_dh_shared_secret);
 
 	/* KE in */
-	if (!accept_KE(&st->st_gr, "Gr",
-		       st->st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_KE])) {
+	if (!unpack_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_KE], st->st_logger)) {
 		return STF_FAIL + INVALID_KEY_INFORMATION;
 	}
 

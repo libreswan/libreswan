@@ -54,6 +54,7 @@ ifeq ($(USE_IKEv1),true)
 OBJS += ikev1_send.o
 endif
 
+OBJS += unpack.o
 OBJS += impair_message.o
 OBJS += ikev2_notify.o
 OBJS += ikev2_send.o

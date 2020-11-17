@@ -97,6 +97,7 @@
 #include "secrets.h"
 #include "cert_decode_helper.h"
 #include "addresspool.h"
+#include "unpack.h"
 
 struct mobike {
 	ip_endpoint remote;
@@ -946,8 +947,8 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 	 * Check and read the KE contents.
 	 */
 	/* note: v1 notification! */
-	if (!accept_KE(&ike->sa.st_gi, "Gi", ike->sa.st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_v2KE])) {
+	if (!unpack_KE(&ike->sa.st_gi, "Gi", ike->sa.st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_v2KE], ike->sa.st_logger)) {
 		send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);
 		return STF_FATAL;
 	}
@@ -1508,11 +1509,9 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 
 		dbg("ikev2 parent inR1: calculating g^{xy} in order to send I2");
 
-	
-
 		/* KE in */
-		if (!accept_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
-				md->chain[ISAKMP_NEXT_v2KE])) {
+		if (!unpack_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
+			       md->chain[ISAKMP_NEXT_v2KE], st->st_logger)) {
 			/*
 			* XXX: Initiator - so this code will not trigger a
 			* notify.  Since packet isn't trusted, should it be
@@ -4445,8 +4444,8 @@ stf_status ikev2_child_ike_inR(struct ike_sa *ike,
 	}
 
 	 /* KE in */
-	if (!accept_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_v2KE])) {
+	if (!unpack_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_v2KE], st->st_logger)) {
 		/*
 		 * XXX: Initiator so returning this notification will
 		 * go no where.  Need to check RFC for what to do
@@ -4550,8 +4549,8 @@ stf_status ikev2_child_inR(struct ike_sa *ike,
 	 * out.
 	 */
 	pexpect(st->st_oakley.ta_dh == st->st_pfs_group);
-	if (!accept_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_v2KE])) {
+	if (!unpack_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_v2KE], st->st_logger)) {
 		/*
 		 * XXX: Initiator so this notification result is going
 		 * no where.  What should happen?
@@ -4648,8 +4647,8 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 	 */
 	if (child->sa.st_pfs_group != NULL) {
 		pexpect(child->sa.st_oakley.ta_dh == child->sa.st_pfs_group);
-		if (!accept_KE(&child->sa.st_gi, "Gi", child->sa.st_oakley.ta_dh,
-			       md->chain[ISAKMP_NEXT_v2KE])) {
+		if (!unpack_KE(&child->sa.st_gi, "Gi", child->sa.st_oakley.ta_dh,
+			       md->chain[ISAKMP_NEXT_v2KE], child->sa.st_logger)) {
 			record_v2N_response(child->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
 					    NULL/*no data*/, ENCRYPTED_PAYLOAD);
 			return STF_FAIL;
@@ -4899,8 +4898,8 @@ stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
 	 */
 	pexpect(st->st_oakley.ta_dh != NULL);
 	pexpect(st->st_pfs_group == NULL);
-	if (!accept_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_v2KE])) {
+	if (!unpack_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_v2KE], st->st_logger)) {
 		record_v2N_response(ike->sa.st_logger, ike, md,
 				    v2N_INVALID_SYNTAX, NULL/*no data*/,
 				    ENCRYPTED_PAYLOAD);

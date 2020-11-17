@@ -82,47 +82,7 @@
 #include "pending.h"
 #include "iface.h"
 #include "ikev2_delete.h"	/* for record_v2_delete(); but call is dying */
-
-/* accept_KE
- *
- * Check and accept DH public value (Gi or Gr) from peer's message.
- * According to RFC2409 "The Internet key exchange (IKE)" 5:
- *  The Diffie-Hellman public value passed in a KE payload, in either
- *  a phase 1 or phase 2 exchange, MUST be the length of the negotiated
- *  Diffie-Hellman group enforced, if necessary, by pre-pending the
- *  value with zeros.
- */
-bool accept_KE(chunk_t *dest, const char *val_name,
-	       const struct dh_desc *gr,
-	       struct payload_digest *ke_pd)
-{
-	if (ke_pd == NULL) {
-		loglog(RC_LOG_SERIOUS, "KE missing");
-		return false;
-	}
-	pb_stream *pbs = &ke_pd->pbs;
-	if (pbs_left(pbs) != gr->bytes) {
-		loglog(RC_LOG_SERIOUS,
-		       "KE has %u byte DH public value; %u required",
-		       (unsigned) pbs_left(pbs), (unsigned) gr->bytes);
-		/* XXX Could send notification back */
-		return false;
-	}
-	free_chunk_content(dest); /* XXX: ever needed? */
-	*dest = clone_hunk(pbs_in_left_as_shunk(pbs), val_name);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("DH public value received:");
-		DBG_dump_hunk(NULL, *dest);
-	}
-	return true;
-}
-
-void unpack_nonce(chunk_t *n, chunk_t *nonce)
-{
-	free_chunk_content(n);
-	*n = *nonce; /* steal away */
-	*nonce = empty_chunk;
-}
+#include "unpack.h"
 
 bool ikev1_justship_nonce(chunk_t *n, struct pbs_out *outs,
 			  const char *name)

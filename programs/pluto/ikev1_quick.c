@@ -85,6 +85,7 @@
 #include "crypt_ke.h"
 #include <blapit.h>
 #include "crypt_dh.h"
+#include "unpack.h"
 
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"
@@ -133,7 +134,8 @@ static notification_t accept_PFS_KE(struct state *st, struct msg_digest *md,
 				  msg_name);
 			return INVALID_KEY_INFORMATION; /* ??? */
 		}
-		if (!accept_KE(dest, val_name, st->st_pfs_group, ke_pd)) {
+		if (!unpack_KE(dest, val_name, st->st_pfs_group,
+			       ke_pd, st->st_logger)) {
 			return INVALID_KEY_INFORMATION;
 		}
 		return NOTHING_WRONG;

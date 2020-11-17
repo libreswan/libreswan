@@ -51,6 +51,7 @@
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"
 #endif
+#include "unpack.h"
 
 /* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii
  *           --> HDR, SA, KE, Nr, IDir, HASH_R/SIG_R
@@ -248,8 +249,8 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	}
 
 	/* KE in */
-	if (!accept_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_KE])) {
+	if (!unpack_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_KE], st->st_logger)) {
 		return STF_FAIL + INVALID_KEY_INFORMATION;
 	}
 
@@ -557,8 +558,8 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	set_nat_traversal(st, md);
 
 	/* KE in */
-	if (!accept_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_KE])) {
+	if (!unpack_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_KE], st->st_logger)) {
 		return STF_FAIL + INVALID_KEY_INFORMATION;
 	}
 
