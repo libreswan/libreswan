@@ -4316,29 +4316,30 @@ void liveness_clear_connection(struct connection *c, const char *v)
 	}
 }
 
-void liveness_action(struct connection *c, enum ike_version ike_version)
+void liveness_action(struct state *st)
 {
-	char cib[CONN_INST_BUF];
-	const char *ikev = enum_name(&ike_version_liveness_names, ike_version);
+	struct connection *c = st->st_connection;
+	const char *ikev = enum_name(&ike_version_liveness_names, st->st_ike_version);
 	passert(ikev != NULL);
-
-	fmt_conn_instance(c, cib);
 
 	switch (c->dpd_action) {
 	case DPD_ACTION_CLEAR:
-		libreswan_log("%s action - clearing connection kind %s", ikev,
-				enum_name(&connection_kind_names, c->kind));
+		log_state(RC_LOG, st,
+			  "%s action - clearing connection kind %s", ikev,
+			  enum_name(&connection_kind_names, c->kind));
 		liveness_clear_connection(c, ikev);
 		break;
 
 	case DPD_ACTION_RESTART:
-		libreswan_log("%s action - restarting all connections that share this peer",
-				ikev);
+		log_state(RC_LOG, st,
+			  "%s action - restarting all connections that share this peer",
+			  ikev);
 		restart_connections_by_peer(c);
 		break;
 
 	case DPD_ACTION_HOLD:
-		libreswan_log("%s action - putting connection into hold", ikev);
+		log_state(RC_LOG, st,
+			  "%s action - putting connection into hold", ikev);
 		if (c->kind == CK_INSTANCE) {
 			dbg("%s warning dpdaction=hold on instance futile - will be deleted", ikev);
 		}

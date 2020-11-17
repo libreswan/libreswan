@@ -328,7 +328,7 @@ static void p2_dpd_outI1(struct state *p2st)
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
 		       "DPD: could not find newest phase 1 state - initiating a new one");
-		liveness_action(p2st->st_connection, p2st->st_ike_version);
+		liveness_action(p2st);
 		return;
 	}
 
@@ -545,5 +545,5 @@ stf_status dpd_inR(struct state *p1st,
 void dpd_timeout(struct state *st)
 {
 	set_cur_state(st);
-	liveness_action(st->st_connection, st->st_ike_version);
+	liveness_action(st);
 }

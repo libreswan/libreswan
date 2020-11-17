@@ -600,7 +600,7 @@ extern void unshare_connection_end(struct end *e);
 
 extern void liveness_clear_connection(struct connection *c, const char *v);
 
-extern void liveness_action(struct connection *c, enum ike_version ike_version);
+extern void liveness_action(struct state *st);
 
 extern uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt);
 

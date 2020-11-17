@@ -218,7 +218,7 @@ void retransmit_v2_msg(struct state *st)
 		 * the IKE SA and not just this one child(?).
 		 */
 		/* already logged */
-		liveness_action(st->st_connection, st->st_ike_version);
+		liveness_action(st);
 		/* presumably liveness_action() deletes the state? */
 		return;
 	}
