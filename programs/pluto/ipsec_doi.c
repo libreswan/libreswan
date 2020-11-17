@@ -83,49 +83,6 @@
 #include "iface.h"
 #include "ikev2_delete.h"	/* for record_v2_delete(); but call is dying */
 
-/*
- * Process KE values.
- */
-void unpack_KE_from_helper(struct state *st, struct dh_local_secret *local_secret,
-			   chunk_t *g)
-{
-	/*
-	 * Should the crypto helper group and the state group be in
-	 * sync?
-	 *
-	 * Probably not, yet seemingly (IKEv2) code is assuming this.
-	 *
-	 * For instance, with IKEv2, the initial initiator is setting
-	 * st_oakley.group to the draft KE group (and well before
-	 * initial responder has had a chance to agree to any thing).
-	 * Should the initial responder comes back with INVALID_KE
-	 * then st_oakley.group gets changed to match the suggestion
-	 * and things restart; should the initial responder come back
-	 * with an accepted proposal and KE, then the st_oakley.group
-	 * is set based on the accepted proposal (the two are
-	 * checked).
-	 *
-	 * Surely, instead, st_oakley.group should be left alone.  The
-	 * the initial initiator would maintain a list of KE values
-	 * proposed (INVALID_KE flip-flopping can lead to more than
-	 * one) and only set st_oakley.group when the initial
-	 * responder comes back with a vald accepted propsal and KE.
-	 */
-	if (DBGP(DBG_CRYPT)) {
-		const struct dh_desc *group = dh_local_secret_desc(local_secret);
-		DBG_log("wire (crypto helper) group %s and state group %s %s",
-			group->common.fqn,
-			st->st_oakley.ta_dh ? st->st_oakley.ta_dh->common.fqn : "NULL",
-			group == st->st_oakley.ta_dh ? "match" : "differ");
-	}
-
-	free_chunk_content(g); /* happens in odd error cases */
-	*g = clone_dh_local_secret_ke(local_secret);
-
-	pexpect(st->st_dh_local_secret == NULL);
-	st->st_dh_local_secret = dh_local_secret_addref(local_secret, HERE);
-}
-
 /* accept_KE
  *
  * Check and accept DH public value (Gi or Gr) from peer's message.

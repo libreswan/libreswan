@@ -94,12 +94,4 @@ void calc_v2_keymat(struct state *st,
 		    const struct prf_desc *old_prf, /* IKE Rekey */
 		    const ike_spis_t *new_ike_spis);
 
-/*
- * KE and NONCE
- */
-
-extern void unpack_KE_from_helper(struct state *st,
-				  struct dh_local_secret *local_secret,
-				  chunk_t *g);
-
 #endif /* _PLUTO_CRYPT_H */
