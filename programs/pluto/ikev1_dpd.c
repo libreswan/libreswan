@@ -126,8 +126,8 @@ stf_status dpd_init(struct state *st)
 		if (!peer_supports_dpd) {
 			dbg("DPD: Peer does not support Dead Peer Detection");
 			if (want_dpd)
-				loglog(RC_LOG_SERIOUS,
-					"Configured DPD (RFC 3706) support not enabled because remote peer did not advertise DPD support");
+				log_state(RC_LOG_SERIOUS, st,
+					  "Configured DPD (RFC 3706) support not enabled because remote peer did not advertise DPD support");
 			return STF_OK;
 		} else {
 			dbg("DPD: Peer supports Dead Peer Detection");
@@ -147,7 +147,8 @@ stf_status dpd_init(struct state *st)
 		/* find the IKE SA */
 		struct state *p1st = find_state_ikev1(&st->st_ike_spis, 0);
 		if (p1st == NULL) {
-			loglog(RC_LOG_SERIOUS, "could not find phase 1 state for DPD");
+			log_state(RC_LOG_SERIOUS, st,
+				  "could not find phase 1 state for DPD");
 			return STF_FAIL;
 		}
 
@@ -298,7 +299,8 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 
 	if (send_isakmp_notification(p1st, R_U_THERE,
 				     &seqno, sizeof(seqno)) != STF_IGNORE) {
-		loglog(RC_LOG_SERIOUS, "DPD: could not send R_U_THERE");
+		log_state(RC_LOG_SERIOUS, st,
+			  "DPD: could not send R_U_THERE");
 		return;
 	}
 
@@ -326,8 +328,8 @@ static void p2_dpd_outI1(struct state *p2st)
 		ISAKMP_SA_ESTABLISHED_STATES);
 
 	if (st == NULL) {
-		loglog(RC_LOG_SERIOUS,
-		       "DPD: could not find newest phase 1 state - initiating a new one");
+		log_state(RC_LOG_SERIOUS, p2st,
+			  "DPD: could not find newest phase 1 state - initiating a new one");
 		liveness_action(p2st);
 		return;
 	}
@@ -368,15 +370,15 @@ stf_status dpd_inI_outR(struct state *p1st,
 	uint32_t seqno;
 
 	if (!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state)) {
-		loglog(RC_LOG_SERIOUS,
-		       "DPD: received R_U_THERE for unestablished ISKAMP SA");
+		log_state(RC_LOG_SERIOUS, p1st,
+			  "DPD: received R_U_THERE for unestablished ISKAMP SA");
 		return STF_IGNORE;
 	}
 	if (n->isan_spisize != COOKIE_SIZE * 2 ||
 	    pbs_left(pbs) < COOKIE_SIZE * 2) {
-		loglog(RC_LOG_SERIOUS,
-		       "DPD: R_U_THERE has invalid SPI length (%d)",
-		       n->isan_spisize);
+		log_state(RC_LOG_SERIOUS, p1st,
+			  "DPD: R_U_THERE has invalid SPI length (%d)",
+			  n->isan_spisize);
 		return STF_FAIL + PAYLOAD_MALFORMED;
 	}
 
@@ -393,20 +395,20 @@ stf_status dpd_inI_outR(struct state *p1st,
 	pbs->cur += COOKIE_SIZE;
 
 	if (pbs_left(pbs) != sizeof(seqno)) {
-		loglog(RC_LOG_SERIOUS,
-		       "DPD: R_U_THERE has invalid data length (%d)", (int) pbs_left(
-			       pbs));
+		log_state(RC_LOG_SERIOUS, p1st,
+			  "DPD: R_U_THERE has invalid data length (%d)",
+			  (int) pbs_left(pbs));
 		return STF_FAIL + PAYLOAD_MALFORMED;
 	}
 
 	seqno = ntohl(*(uint32_t *)pbs->cur);
 	if (p1st->st_dpd_peerseqno && seqno <= p1st->st_dpd_peerseqno) {
-		loglog(RC_LOG_SERIOUS,
-		       "DPD: received old or duplicate R_U_THERE");
+		log_state(RC_LOG_SERIOUS, p1st,
+			  "DPD: received old or duplicate R_U_THERE");
 		if (p1st->st_dpd_rdupcount >= DPD_RETRANS_MAX) {
-			loglog(RC_LOG_SERIOUS,
-		       "DPD: received %d or more duplicate R_U_THERE's - will no longer answer",
-				DPD_RETRANS_MAX);
+			log_state(RC_LOG_SERIOUS, p1st,
+				  "DPD: received %d or more duplicate R_U_THERE's - will no longer answer",
+				  DPD_RETRANS_MAX);
 			return STF_IGNORE;
 		} else {
 			/*
@@ -415,9 +417,9 @@ stf_status dpd_inI_outR(struct state *p1st,
 			 * isakmp_sa->dpd_seq on unanswered DPD probe violating
 			 * RFC 3706 Section 7 "Security Considerations"
 			 */
-			loglog(RC_LOG_SERIOUS,
-		       "DPD: received less than %d duplicate R_U_THERE's - will reluctantly answer",
-				DPD_RETRANS_MAX);
+			log_state(RC_LOG_SERIOUS, p1st,
+				  "DPD: received less than %d duplicate R_U_THERE's - will reluctantly answer",
+				  DPD_RETRANS_MAX);
 			p1st->st_dpd_rdupcount++;
 		}
 	} else {
@@ -435,7 +437,8 @@ stf_status dpd_inI_outR(struct state *p1st,
 
 	if (send_isakmp_notification(p1st, R_U_THERE_ACK,
 				     pbs->cur, pbs_left(pbs)) != STF_IGNORE) {
-		loglog(RC_LOG_SERIOUS, "DPD: could not send R_U_THERE_ACK");
+		log_state(RC_LOG_SERIOUS, p1st,
+			  "DPD: could not send R_U_THERE_ACK");
 		return STF_IGNORE;
 	}
 
@@ -470,16 +473,16 @@ stf_status dpd_inR(struct state *p1st,
 	uint32_t seqno;
 
 	if (!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state)) {
-		loglog(RC_LOG_SERIOUS,
-		       "DPD: received R_U_THERE_ACK for unestablished ISKAMP SA");
+		log_state(RC_LOG_SERIOUS, p1st,
+			  "DPD: received R_U_THERE_ACK for unestablished ISKAMP SA");
 		return STF_FAIL;
 	}
 
 	if (n->isan_spisize != COOKIE_SIZE * 2 ||
 	    pbs_left(pbs) < COOKIE_SIZE * 2) {
-		loglog(RC_LOG_SERIOUS,
-		       "DPD: R_U_THERE_ACK has invalid SPI length (%d)",
-		       n->isan_spisize);
+		log_state(RC_LOG_SERIOUS, p1st,
+			  "DPD: R_U_THERE_ACK has invalid SPI length (%d)",
+			  n->isan_spisize);
 		return STF_FAIL + PAYLOAD_MALFORMED;
 	}
 
@@ -498,9 +501,9 @@ stf_status dpd_inR(struct state *p1st,
 	pbs->cur += COOKIE_SIZE;
 
 	if (pbs_left(pbs) != sizeof(seqno)) {
-		loglog(RC_LOG_SERIOUS,
-		       "DPD: R_U_THERE_ACK has invalid data length (%d)", (int) pbs_left(
-			       pbs));
+		log_state(RC_LOG_SERIOUS, p1st,
+			  "DPD: R_U_THERE_ACK has invalid data length (%d)",
+			  (int) pbs_left(pbs));
 		return STF_FAIL + PAYLOAD_MALFORMED;
 	}
 
@@ -513,9 +516,9 @@ stf_status dpd_inR(struct state *p1st,
 		p1st->st_last_dpd = mononow();
 		p1st->st_dpd_expectseqno = 0;
 	} else if (!p1st->st_dpd_expectseqno) {
-		loglog(RC_LOG_SERIOUS,
-		       "DPD: unexpected R_U_THERE_ACK packet with sequence number %u",
-		       seqno);
+		log_state(RC_LOG_SERIOUS, p1st,
+			  "DPD: unexpected R_U_THERE_ACK packet with sequence number %u",
+			  seqno);
 		/* do not update time stamp, so we'll send a new one sooner */
 	}
 
