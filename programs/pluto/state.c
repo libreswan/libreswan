@@ -734,7 +734,7 @@ void v2_expire_unused_ike_sa(struct ike_sa *ike)
 
 	connection_buf cib;
 	struct connection *c = ike->sa.st_connection;
-	log_state(RC_INFORMATIONAL, st, "expire unused IKE SA #%lu "PRI_CONNECTION,
+	log_state(RC_INFORMATIONAL, &ike->sa, "expire unused IKE SA #%lu "PRI_CONNECTION,
 		  ike->sa.st_serialno,
 		  pri_connection(c, &cib));
 	event_force(EVENT_SA_EXPIRE, &ike->sa);
