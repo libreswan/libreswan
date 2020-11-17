@@ -151,8 +151,9 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 	if (authby != AUTHBY_NULL) {
 		pss = get_connection_psk(c, ike->sa.st_logger);
 		if (pss == NULL) {
-			loglog(RC_LOG_SERIOUS,"No matching PSK found for connection: %s",
-			      ike->sa.st_connection->name);
+			log_state(RC_LOG_SERIOUS, &ike->sa,
+				  "No matching PSK found for connection: %s",
+				  ike->sa.st_connection->name);
 			return empty_mac;
 		}
 		if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
@@ -161,19 +162,20 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 		const size_t key_size_min = crypt_prf_fips_key_size_min(ike->sa.st_oakley.ta_prf);
 		if (pss->len < key_size_min) {
 			if (libreswan_fipsmode()) {
-				loglog(RC_LOG_SERIOUS,
-				       "FIPS: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
-				       ike->sa.st_connection->name,
-				       pss->len,
-				       ike->sa.st_oakley.ta_prf->common.fqn,
-				       key_size_min);
+				log_state(RC_LOG_SERIOUS, &ike->sa,
+					  "FIPS: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
+					  ike->sa.st_connection->name,
+					  pss->len,
+					  ike->sa.st_oakley.ta_prf->common.fqn,
+					  key_size_min);
 				return empty_mac;
 			} else {
-				libreswan_log("WARNING: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
-					      ike->sa.st_connection->name,
-					      pss->len,
-					      ike->sa.st_oakley.ta_prf->common.fqn,
-					      key_size_min);
+				log_state(RC_LOG, &ike->sa,
+					  "WARNING: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
+					  ike->sa.st_connection->name,
+					  pss->len,
+					  ike->sa.st_oakley.ta_prf->common.fqn,
+					  key_size_min);
 			}
 		}
 	} else {
