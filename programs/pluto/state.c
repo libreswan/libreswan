@@ -1691,11 +1691,13 @@ static struct state *duplicate_state(struct state *st,
 	nst->st_seen_cfg_domains = clone_str(st->st_seen_cfg_domains, "child st_seen_cfg_domains");
 	nst->st_seen_cfg_banner = clone_str(st->st_seen_cfg_banner, "child st_seen_cfg_banner");
 
-	if (st->sec_ctx != NULL) {
-		nst->sec_ctx = clone_thing(*st->sec_ctx,
-				"struct xfrm_user_sec_ctx_ike : cloned from "
-				"another state in duplicate_state()");
-	}
+	/*
+	 * Do NOT clone the security label (`st->sec_ctx`) in this function.
+	 *  - If the new child/IPsec SA uses a security label, `nst->sec_ctx`
+	 *    will be set elsewhere in the code.
+	 *  - This includes the case where `nst->sec_ctx` is identical to
+	 *    `st->sec_ctx`.
+	 */
 
 	return nst;
 }
