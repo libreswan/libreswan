@@ -133,7 +133,8 @@ static chunk_t build_redirect_notification_data_common(enum gw_identity_type gwi
 						       struct logger *logger)
 {
 	if (id.len > 0xFF) {
-		loglog(RC_LOG_SERIOUS, "redirect destination longer than 255 octets; ignoring");
+		log_message(RC_LOG_SERIOUS, logger,
+			    "redirect destination longer than 255 octets; ignoring");
 		return empty_chunk;
 	}
 
@@ -444,10 +445,11 @@ void initiate_redirect(struct state *st)
 	/* stuff for loop detection */
 
 	if (c->temp_vars.num_redirects >= MAX_REDIRECTS) {
-		if (deltatime_cmp(realtimediff(c->temp_vars.first_redirect_time, realnow()), <,
-				  deltatime(REDIRECT_LOOP_DETECT_PERIOD)))
-		{
-			loglog(RC_LOG_SERIOUS, "redirect loop, stop initiating IKEv2 exchanges");
+		if (deltatime_cmp(realtimediff(c->temp_vars.first_redirect_time, realnow()),
+				  <,
+				  deltatime(REDIRECT_LOOP_DETECT_PERIOD))) {
+			log_state(RC_LOG_SERIOUS, st,
+				  "redirect loop, stop initiating IKEv2 exchanges");
 			event_force(EVENT_SA_EXPIRE, right_state);
 
 			if (st->st_redirected_in_auth)
