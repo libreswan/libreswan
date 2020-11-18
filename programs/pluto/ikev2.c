@@ -2642,7 +2642,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 	}
 
 	/* process any CERTREQ payloads */
-	ikev2_decode_cr(md);
+	ikev2_decode_cr(md, ike->sa.st_logger);
 
 	/*
 	 * Now that we've decoded the ID payload, let's see if we

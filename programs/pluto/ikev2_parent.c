@@ -2257,7 +2257,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 
 	/* send [CERT,] payload RFC 4306 3.6, 1.2) */
 	if (send_cert) {
-		stf_status certstat = ikev2_send_cert(cst, &sk.pbs);
+		stf_status certstat = ikev2_send_cert(cst->st_connection, &sk.pbs);
 		if (certstat != STF_OK)
 			return certstat;
 
@@ -2995,7 +2995,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 	/* process CERTREQ payload */
 	if (md->chain[ISAKMP_NEXT_v2CERTREQ] != NULL) {
 		dbg("received CERTREQ payload; going to decode it");
-		ikev2_decode_cr(md);
+		ikev2_decode_cr(md, ike->sa.st_logger);
 	}
 
 	/* process AUTH payload */
@@ -3401,7 +3401,7 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 	 * but ultimately should go into the CERT decision
 	 */
 	if (send_cert) {
-		stf_status certstat = ikev2_send_cert(st, &sk.pbs);
+		stf_status certstat = ikev2_send_cert(st->st_connection, &sk.pbs);
 		if (certstat != STF_OK)
 			return certstat;
 	}
