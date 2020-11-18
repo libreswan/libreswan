@@ -1,0 +1,7 @@
+xauth with first east->road XCHG-MODE-CFG request (4th incoming message) dropped
+
+In main mode: there are 3 ISAKMP_XCHG_IDPROT exchanges and then east
+sends XCHG_MODE_CFG request to road - the 4th incoming message.
+
+East should retransmit both the XCHG_MODE_CFG request and the previous
+exchange response.

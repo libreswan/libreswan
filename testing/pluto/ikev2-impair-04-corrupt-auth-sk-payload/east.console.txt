@@ -15,9 +15,9 @@ east #
  echo "initdone"
 initdone
 east #
- : only one SKEYSEED operation
+ : expect only one SKEYSEED operation
 east #
- grep 'offloading IKEv2 SKEYSEED' /tmp/pluto.log | wc -l
+ grep 'calculating skeyseed' /tmp/pluto.log | wc -l
 1
 east #
  ../../pluto/bin/ipsec-look.sh

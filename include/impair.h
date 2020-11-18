@@ -23,6 +23,7 @@
 
 struct fd;
 struct logger;
+struct jambuf;
 
 /*
  * Meddle with the contents of a payload.
@@ -183,6 +184,14 @@ enum impair_action {
 	CALL_SEND_KEEPALIVE,
 	CALL_GLOBAL_EVENT,
 	CALL_STATE_EVENT,
+	CALL_IMPAIR_DROP_INCOMING,
+	CALL_IMPAIR_DROP_OUTGOING,
+#if 0
+	CALL_IMPAIR_DUP_INCOMING,
+	CALL_IMPAIR_DUP_OUTGOING,
+	CALL_IMPAIR_CORRUPT_INCOMING,
+	CALL_IMPAIR_CORRUPT_OUTGOING,
+#endif
 };
 
 bool process_impair(const struct whack_impair *whack_impair,

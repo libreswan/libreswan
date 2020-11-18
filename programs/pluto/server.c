@@ -714,10 +714,17 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 #ifdef USE_IKEv1
 			case IKEv1:
 				/* no switching MD.ST */
-				pexpect(old_md_st == SOS_NOBODY ?
-					md == NULL || md->st == NULL :
-					md != NULL && md->st != NULL && md->st->st_serialno == old_md_st);
-				complete_v1_state_transition(md, status);
+				if (old_md_st == SOS_NOBODY) {
+					/* (old)md->st == (new)md->st == NULL */
+					pexpect(md == NULL || md->st == NULL);
+				} else {
+					/* md->st didn't change */
+					pexpect(md != NULL &&
+						md->st != NULL &&
+						md->st->st_serialno == old_md_st);
+				}
+				pexpect(st != NULL); /* see above */
+				complete_v1_state_transition(st, md, status);
 				break;
 #endif
 			case IKEv2:
@@ -962,7 +969,8 @@ static server_fork_cb addconn_exited; /* type assertion */
 
 static void addconn_exited(struct state *null_st UNUSED,
 			   struct msg_digest *null_mdp UNUSED,
-			   int status, void *context UNUSED)
+			   int status, void *context UNUSED,
+			   struct logger *logger UNUSED)
 {
 	dbg("reaped addconn helper child (status %d)", status);
 }
@@ -1087,7 +1095,7 @@ void call_server(char *conffile)
 			n--;
 
 		if ((size_t)n > sizeof(addconn_path_space) - sizeof(addconn_name)) {
-			fatal(logger, "path to %s is too long", addconn_name);
+			fatal(PLUTO_EXIT_FAIL, logger, "path to %s is too long", addconn_name);
 		}
 
 		strcpy(addconn_path_space + n, addconn_name);

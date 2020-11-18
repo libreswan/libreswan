@@ -105,16 +105,16 @@ void retransmit_v1_msg(struct state *st)
 				 * Release whack because the observer
 				 * will get bored.
 				 */
-				loglog(RC_COMMENT,
+				log_state(RC_COMMENT, st,
 				       "%s, but releasing whack",
 				       story);
 				release_pending_whacks(st, story);
 			} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 				/* no whack: just log */
-				libreswan_log("%s", story);
+				log_state(RC_LOG, st, "%s", story);
 			}
 		} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-			loglog(RC_COMMENT, "%s", story);
+			log_state(RC_COMMENT, st, "%s", story);
 		}
 
 		ipsecdoi_replace(st, try);
@@ -218,7 +218,7 @@ void retransmit_v2_msg(struct state *st)
 		 * the IKE SA and not just this one child(?).
 		 */
 		/* already logged */
-		liveness_action(st->st_connection, st->st_ike_version);
+		liveness_action(st);
 		/* presumably liveness_action() deletes the state? */
 		return;
 	}
@@ -241,12 +241,12 @@ void retransmit_v2_msg(struct state *st)
 			 * Release whack because the observer will
 			 * get bored.
 			 */
-			loglog(RC_COMMENT, "%s, but releasing whack",
+			log_state(RC_COMMENT, st, "%s, but releasing whack",
 				story);
 			release_pending_whacks(st, story);
 		} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 			/* no whack: just log to syslog */
-			libreswan_log("%s", story);
+			log_state(RC_LOG, st, "%s", story);
 		}
 
 		ipsecdoi_replace(st, try);

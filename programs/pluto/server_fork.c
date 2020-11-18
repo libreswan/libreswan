@@ -52,6 +52,7 @@ struct pid_entry {
 	so_serial_t serialno;
 	const char *name;
 	monotime_t start_time;
+	struct logger *logger;
 };
 
 static void jam_pid_entry(struct jambuf *buf, const void *data)
@@ -101,7 +102,7 @@ static struct hash_table pids_hash_table = {
 };
 
 static void add_pid(const char *name, so_serial_t serialno, pid_t pid,
-		    server_fork_cb *callback, void *context)
+		    server_fork_cb *callback, void *context, struct logger *logger)
 {
 	dbg("forked child %d", pid);
 	struct pid_entry *new_pid = alloc_thing(struct pid_entry, "(ignore) fork pid");
@@ -112,12 +113,20 @@ static void add_pid(const char *name, so_serial_t serialno, pid_t pid,
 	new_pid->serialno = serialno;
 	new_pid->name = name;
 	new_pid->start_time = mononow();
+	new_pid->logger = clone_logger(logger);
 	add_hash_table_entry(&pids_hash_table, new_pid);
 }
 
-int server_fork(const char *name, so_serial_t serialno,
-		int op(void *context),
-		server_fork_cb *callback, void *context)
+static void free_pid_entry(struct pid_entry **p)
+{
+	free_logger(&(*p)->logger, HERE);
+	pfree(*p);
+	*p = NULL;
+}
+
+int server_fork(const char *name, so_serial_t serialno, server_fork_op *op,
+		server_fork_cb *callback, void *context,
+		struct logger *logger)
 {
 	pid_t pid = fork();
 	switch (pid) {
@@ -126,10 +135,10 @@ int server_fork(const char *name, so_serial_t serialno,
 		return -1;
 	case 0: /* child */
 		reset_globals();
-		exit(op(context));
+		exit(op(context, logger));
 		break;
 	default: /* parent */
-		add_pid(name, serialno, pid, callback, context);
+		add_pid(name, serialno, pid, callback, context, logger);
 		return pid;
 	}
 }
@@ -200,40 +209,45 @@ void server_fork_sigchld_handler(struct logger *logger)
 						child);
 					jam_status(buf, status);
 				}
-			} else {
-				struct state *st = state_by_serialno(pid_entry->serialno);
-				if (pid_entry->serialno == SOS_NOBODY) {
-					pid_entry->callback(NULL, NULL,
-							    status, pid_entry->context);
-				} else if (st == NULL) {
-					LSWDBGP(DBG_BASE, buf) {
-						jam_pid_entry(buf, pid_entry);
-						jam_string(buf, " disappeared");
-					}
-					pid_entry->callback(NULL, NULL,
-							    status, pid_entry->context);
-				} else {
-					so_serial_t old_state = push_cur_state(st);
-					struct msg_digest *md = unsuspend_md(st);
-					if (DBGP(DBG_CPU_USAGE)) {
-						deltatime_t took = monotimediff(mononow(), pid_entry->start_time);
-						deltatime_buf dtb;
-						DBG_log("#%lu waited %s for '%s' fork()",
-							st->st_serialno, str_deltatime(took, &dtb),
-							pid_entry->name);
-					}
-					statetime_t start = statetime_start(st);
-					pid_entry->callback(st, md, status,
-							    pid_entry->context);
-					statetime_stop(&start, "callback for %s",
-						       pid_entry->name);
-					release_any_md(&md);
-					pop_cur_state(old_state);
-				}
-				del_hash_table_entry(&pids_hash_table, pid_entry);
-				pfree(pid_entry);
+				continue;
 			}
-			break;
+			/* log against pid_entry->logger; must cleanup */
+			struct state *st = state_by_serialno(pid_entry->serialno);
+			if (pid_entry->serialno == SOS_NOBODY) {
+				pid_entry->callback(NULL, NULL, status,
+						    pid_entry->context,
+						    pid_entry->logger);
+			} else if (st == NULL) {
+				LSWDBGP(DBG_BASE, buf) {
+					jam_pid_entry(buf, pid_entry);
+					jam_string(buf, " disappeared");
+				}
+				pid_entry->callback(NULL, NULL, status,
+						    pid_entry->context,
+						    pid_entry->logger);
+			} else {
+				so_serial_t old_state = push_cur_state(st);
+				struct msg_digest *md = unsuspend_md(st);
+				if (DBGP(DBG_CPU_USAGE)) {
+					deltatime_t took = monotimediff(mononow(), pid_entry->start_time);
+					deltatime_buf dtb;
+					DBG_log("#%lu waited %s for '%s' fork()",
+						st->st_serialno, str_deltatime(took, &dtb),
+						pid_entry->name);
+				}
+				statetime_t start = statetime_start(st);
+				pid_entry->callback(st, md, status,
+						    pid_entry->context,
+						    pid_entry->logger);
+				statetime_stop(&start, "callback for %s",
+					       pid_entry->name);
+				release_any_md(&md);
+				pop_cur_state(old_state);
+			}
+			/* clean it up */
+			del_hash_table_entry(&pids_hash_table, pid_entry);
+			free_pid_entry(&pid_entry);
+			continue;
 		}
 	}
 }
@@ -265,7 +279,7 @@ void server_fork_exec(const char *what, const char *path,
 	default: /* parent */
 		dbg("created %s helper (pid:%d) using %s+execve",
 		    what, pid, USE_VFORK ? "vfork" : "fork");
-		add_pid(what, SOS_NOBODY, pid, callback, callback_context);
+		add_pid(what, SOS_NOBODY, pid, callback, callback_context, logger);
 	}
 }
 

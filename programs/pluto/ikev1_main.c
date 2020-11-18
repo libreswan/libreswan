@@ -64,6 +64,7 @@
 #include "pending.h"
 #include "ikev1_hash.h"
 #include "hostpair.h"
+#include "crypt_symkey.h"		/* for release_symkey() */
 
 #include "crypto.h"
 #include "secrets.h"
@@ -89,10 +90,11 @@
 #include "ikev1_send.h"
 #include "nss_cert_verify.h"
 #include "iface.h"
-
+#include "crypt_dh.h"
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"
 #endif
+#include "unpack.h"
 
 /*
  * Initiate an Oakley Main Mode exchange.
@@ -390,24 +392,6 @@ static stf_status RSA_check_signature(struct state *st,
 {
 	return check_signature_gen(st, hash, sig_pbs, 0 /* for ikev2 only */,
 				   &pubkey_type_rsa, try_RSA_signature_v1);
-}
-
-notification_t accept_v1_nonce(struct logger *logger,
-			       struct msg_digest *md, chunk_t *dest,
-			       const char *name)
-{
-	pb_stream *nonce_pbs = &md->chain[ISAKMP_NEXT_NONCE]->pbs;
-	size_t len = pbs_left(nonce_pbs);
-
-	if (len < IKEv1_MINIMUM_NONCE_SIZE || IKEv1_MAXIMUM_NONCE_SIZE < len) {
-		log_message(RC_LOG_SERIOUS, logger, "%s length not between %d and %d",
-			    name, IKEv1_MINIMUM_NONCE_SIZE, IKEv1_MAXIMUM_NONCE_SIZE);
-		return PAYLOAD_MALFORMED; /* ??? */
-	}
-	free_chunk_content(dest);
-	*dest = clone_hunk(pbs_in_left_as_shunk(nonce_pbs), "nonce");
-	passert(len == dest->len);
-	return NOTHING_WRONG;
 }
 
 /*
@@ -788,44 +772,6 @@ stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 }
 
 /*
- * package up the calculate KE value, and emit it as a KE payload.
- * used by IKEv1: main, aggressive, and quick (in PFS mode).
- */
-bool ikev1_justship_KE(struct logger *logger, chunk_t *g, pb_stream *outs)
-{
-	switch (impair.ke_payload) {
-	case IMPAIR_EMIT_NO:
-		return ikev1_out_generic_chunk(&isakmp_keyex_desc, outs, *g,
-					       "keyex value");
-	case IMPAIR_EMIT_OMIT:
-		log_message(RC_LOG, logger, "IMPAIR: sending no KE (g^x) payload");
-		return true;
-	case IMPAIR_EMIT_EMPTY:
-		log_message(RC_LOG, logger, "IMPAIR: sending empty KE (g^x)");
-		return ikev1_out_generic_chunk(&isakmp_keyex_desc, outs,
-					       EMPTY_CHUNK, "empty KE");
-	case IMPAIR_EMIT_ROOF:
-	default:
-	{
-		pb_stream z;
-		uint8_t byte = impair.ke_payload - IMPAIR_EMIT_ROOF;
-		log_message(RC_LOG, logger, "IMPAIR: sending bogus KE (g^x) == %u value to break DH calculations", byte);
-		/* Only used to test sending/receiving bogus g^x */
-		return ikev1_out_generic(&isakmp_keyex_desc, outs, &z) &&
-			out_repeated_byte(byte, g->len, &z, "fake g^x") &&
-			(close_output_pbs(&z), TRUE);
-	}
-	}
-}
-
-bool ikev1_ship_KE(struct state *st, struct dh_local_secret *local_secret,
-		   chunk_t *g, struct pbs_out *outs)
-{
-	unpack_KE_from_helper(st, local_secret, g);
-	return ikev1_justship_KE(st->st_logger, g, outs);
-}
-
-/*
  * STATE_MAIN_I1: HDR, SA --> auth dependent
  * PSK_AUTH, DS_AUTH: --> HDR, KE, Ni
  *
@@ -916,28 +862,13 @@ static stf_status main_inR1_outI2_continue(struct state *st,
  *	    --> HDR, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDr1_b>Ke_r
  */
 
-static stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *md,
-						struct pluto_crypto_req *r);
-
-static crypto_req_cont_func main_inI2_outR2_continue1;	/* type assertion */
-
-static void main_inI2_outR2_continue1(struct state *st,
-				      struct msg_digest *md,
-				      struct pluto_crypto_req *r)
-{
-	dbg("main_inI2_outR2_continue for #%lu: calculated ke+nonce, sending R2",
-	    st->st_serialno);
-
-	passert(md != NULL);
-	stf_status e = main_inI2_outR2_continue1_tail(st, md, r);
-	complete_v1_state_transition(md, e);
-}
+static ke_and_nonce_cb main_inI2_outR2_continue1; /* type assertion */
 
 stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 {
 	/* KE in */
-	if (!accept_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_KE])) {
+	if (!unpack_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_KE], st->st_logger)) {
 		return STF_FAIL + INVALID_KEY_INFORMATION;
 	}
 
@@ -952,9 +883,9 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 
 	ikev1_natd_init(st, md);
 
-	request_ke_and_nonce("inI2_outR2 KE", st,
-			     st->st_oakley.ta_dh,
-			     main_inI2_outR2_continue1);
+	submit_ke_and_nonce(st, st->st_oakley.ta_dh,
+			    main_inI2_outR2_continue1,
+			    "inI2_outR2 KE");
 	return STF_SUSPEND;
 }
 
@@ -964,19 +895,22 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
  * We are precomputing the DH.
  * This also means that it isn't good at reporting an NSS error.
  */
-static crypto_req_cont_func main_inI2_outR2_continue2;	/* type assertion */
+static dh_shared_secret_cb main_inI2_outR2_continue2;	/* type assertion */
 
-static void main_inI2_outR2_continue2(struct state *st,
-				      struct msg_digest *md,
-				      struct pluto_crypto_req *r)
+static stf_status main_inI2_outR2_continue2(struct state *st,
+					    struct msg_digest *md)
 {
 	dbg("main_inI2_outR2_calcdone for #%lu: calculate DH finished",
 	    st->st_serialno);
 
-	set_cur_state(st);
-
-	if (finish_v1_dh_shared_secret_and_iv(st, r))
+	/*
+	 * Ignore error.  It will be handled handled when the next
+	 * message arrives?!?
+	 */
+	if (st->st_dh_shared_secret != NULL) {
+		calc_v1_skeyid_and_iv(st);
 		update_iv(st);
+	}
 
 	/*
 	 * If there was a packet received while we were calculating, then
@@ -984,14 +918,26 @@ static void main_inI2_outR2_continue2(struct state *st,
 	 * Otherwise, the result awaits the packet.
 	 */
 	if (md != NULL) {
+		/*
+		 * This will call complete_v1_state_transition() when
+		 * needed.
+		 */
 		process_packet_tail(md);
 	}
-	reset_cur_state();
+	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
-stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *md,
-					  struct pluto_crypto_req *r)
+
+static stf_status main_inI2_outR2_continue1(struct state *st,
+					    struct msg_digest *md,
+					    struct dh_local_secret *local_secret,
+					    chunk_t *nonce)
 {
+	dbg("main_inI2_outR2_continue for #%lu: calculated ke+nonce, sending R2",
+	    st->st_serialno);
+
+	passert(md != NULL);
+
 	if (libreswan_fipsmode() && st->st_oakley.ta_prf == NULL) {
 		log_state(RC_LOG_SERIOUS, st,
 			  "Missing prf - algo not allowed in fips mode (inI2_outR2)?");
@@ -1014,29 +960,24 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 				       &rbody, st->st_logger);
 
 	/* KE out */
-	passert(ikev1_ship_KE(st, r->pcr_d.kn.local_secret, &st->st_gr, &rbody));
+	passert(ikev1_ship_KE(st, local_secret, &st->st_gr, &rbody));
 
-	{
-		/* Nr out */
-		if (!ikev1_ship_nonce(&st->st_nr, &r->pcr_d.kn.n, &rbody, "Nr"))
+	/* Nr out */
+	if (!ikev1_ship_nonce(&st->st_nr, nonce, &rbody, "Nr"))
+		return STF_INTERNAL_ERROR;
+
+	if (impair.bust_mr2) {
+		/*
+		 * generate a pointless large VID payload to push
+		 * message over MTU
+		 */
+		struct pbs_out vid_pbs;
+		if (!ikev1_out_generic(&isakmp_vendor_id_desc, &rbody,
+				       &vid_pbs))
 			return STF_INTERNAL_ERROR;
-
-		if (impair.bust_mr2) {
-			/*
-			 * generate a pointless large VID payload to push
-			 * message over MTU
-			 */
-			pb_stream vid_pbs;
-
-			if (!ikev1_out_generic(&isakmp_vendor_id_desc, &rbody,
-					       &vid_pbs))
-				return STF_INTERNAL_ERROR;
-
-			if (!out_zero(1500 /*MTU?*/, &vid_pbs, "Filler VID"))
-				return STF_INTERNAL_ERROR;
-
-			close_output_pbs(&vid_pbs);
-		}
+		if (!out_zero(1500 /*MTU?*/, &vid_pbs, "Filler VID"))
+			return STF_INTERNAL_ERROR;
+		close_output_pbs(&vid_pbs);
 	}
 
 	/* CR out */
@@ -1081,29 +1022,27 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 		return STF_INTERNAL_ERROR;
 
 	/*
-	 * next message will be encrypted, so, we need to have
-	 * the DH value calculated. We can do this in the background,
-	 * sending the reply right away. We have to be careful on the next
-	 * state, since the other end may reply faster than we can calculate
-	 * things. If it is the case, then the packet is placed in the
-	 * continuation, and we let the continuation process it. If there
-	 * is a retransmit, we keep only the last packet.
+	 * next message will be encrypted, so, we need to have the DH
+	 * value calculated. We can do this in the background, sending
+	 * the reply right away. We have to be careful on the next
+	 * state, since the other end may reply faster than we can
+	 * calculate things. If it is the case, then the packet is
+	 * placed in the continuation, and we let the continuation
+	 * process it. If there is a retransmit, we keep only the last
+	 * packet.
 	 *
 	 * Also, note that this is not a suspended state, since we are
 	 * actually just doing work in the background.  md will not be
 	 * retained.
 	 */
-	{
-		dbg("main inI2_outR2: starting async DH calculation (group=%d)",
-		    st->st_oakley.ta_dh->group);
+	dbg("main inI2_outR2: starting async DH calculation (group=%d)",
+	    st->st_oakley.ta_dh->group);
+	submit_dh_shared_secret(st, st->st_gi/*responder needs initiator's KE*/,
+				main_inI2_outR2_continue2, HERE);
+	/* we are calculating in the background, so it doesn't count */
+	dbg("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __func__, __LINE__);
+	st->st_v1_offloaded_task_in_background = true;
 
-		submit_v1_dh_shared_secret_and_iv(main_inI2_outR2_continue2, "main_inI2_outR2_tail",
-						  st, SA_RESPONDER, st->st_oakley.ta_dh);
-
-		/* we are calculating in the background, so it doesn't count */
-		dbg("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __func__, __LINE__);
-		st->st_v1_offloaded_task_in_background = true;
-	}
 	return STF_OK;
 }
 
@@ -1118,16 +1057,30 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
  * SMF_RPKE_AUTH: HDR, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDr1_b>Ke_r
  *	    --> HDR*, HASH_I
  */
-static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
-						pb_stream *rbody,
-						struct pluto_crypto_req *r)
+
+static dh_shared_secret_cb main_inR2_outI3_continue;	/* type assertion */
+
+static stf_status main_inR2_outI3_continue(struct state *st,
+					   struct msg_digest *md)
 {
-	struct state *const st = md->st;
+	dbg("main_inR2_outI3_cryptotail for #%lu: calculated DH, sending R1",
+	    st->st_serialno);
+
+	passert(md != NULL);	/* ??? how would this fail? */
+
+	if (st->st_dh_shared_secret == NULL) {
+		return STF_FAIL + INVALID_KEY_INFORMATION;
+	}
+
+	calc_v1_skeyid_and_iv(st);
+
+	struct pbs_out rbody[1]; /* hack */
+	ikev1_init_pbs_out_from_md_hdr(md, TRUE,
+				       &reply_stream, reply_buffer, sizeof(reply_buffer),
+				       rbody, st->st_logger);
+
 	const struct connection *c = st->st_connection;
 	const cert_t mycert = c->spd.this.cert;
-
-	if (!finish_v1_dh_shared_secret_and_iv(st, r))
-		return STF_FAIL + INVALID_KEY_INFORMATION;
 
 	/* decode certificate requests */
 	ikev1_decode_cr(md);
@@ -1352,38 +1305,26 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 	return STF_OK;
 }
 
-static crypto_req_cont_func main_inR2_outI3_continue;	/* type assertion */
-
-static void main_inR2_outI3_continue(struct state *st,
-				     struct msg_digest *md,
-				     struct pluto_crypto_req *r)
-{
-	dbg("main_inR2_outI3_cryptotail for #%lu: calculated DH, sending R1",
-	    st->st_serialno);
-
-	passert(md != NULL);	/* ??? how would this fail? */
-
-	struct pbs_out rbody;
-	ikev1_init_pbs_out_from_md_hdr(md, TRUE,
-				       &reply_stream, reply_buffer, sizeof(reply_buffer),
-				       &rbody, st->st_logger);
-	stf_status e = main_inR2_outI3_continue_tail(md, &rbody, r);
-	complete_v1_state_transition(md, e);
-}
-
 stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
 {
+	/*
+	 * XXX: have we been here before?
+	 *
+	 * Should this end rejects R2 because of auth failure, the
+	 * other end will keep sending the same KE.  Which leads to a
+	 * pexpect() as .st_dh_shared_secret is expected to be empty.
+	 */
+	release_symkey(__func__, "DH shared secret", &st->st_dh_shared_secret);
+
 	/* KE in */
-	if (!accept_KE(&st->st_gr, "Gr",
-		       st->st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_KE])) {
+	if (!unpack_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_KE], st->st_logger)) {
 		return STF_FAIL + INVALID_KEY_INFORMATION;
 	}
 
 	/* Nr in */
 	RETURN_STF_FAILURE(accept_v1_nonce(st->st_logger, md, &st->st_nr, "Nr"));
-	submit_v1_dh_shared_secret_and_iv(main_inR2_outI3_continue, "aggr outR1 DH",
-					  st, SA_INITIATOR, st->st_oakley.ta_dh);
+	submit_dh_shared_secret(st, st->st_gr, main_inR2_outI3_continue, HERE);
 	return STF_SUSPEND;
 }
 

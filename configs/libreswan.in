@@ -1,0 +1,5 @@
+@FINALLOGDIR@/pluto.log {
+    missingok
+    notifempty
+    copytruncate
+}

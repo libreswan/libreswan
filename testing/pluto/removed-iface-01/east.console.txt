@@ -73,4 +73,13 @@ east #
 000 "test2":     unoriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "test3":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 east #
- 
+ ipsec whack --shutdown
+east #
+ ip link set dev eth3 down
+east #
+ ip tunnel del eth3
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

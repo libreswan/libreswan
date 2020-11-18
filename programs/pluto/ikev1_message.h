@@ -22,4 +22,21 @@ extern bool out_zero(size_t len, pb_stream *outs, const char *name) MUST_USE_RES
 extern bool out_repeated_byte(uint8_t, size_t len, pb_stream *outs, const char *name) MUST_USE_RESULT;
 extern bool out_raw(const void *bytes, size_t len, pb_stream *outs, const char *name) MUST_USE_RESULT;
 
+extern bool ikev1_justship_nonce(chunk_t *n, struct pbs_out *outs,
+				 const char *name);
+
+/* calls previous two routines */
+extern bool ikev1_ship_nonce(chunk_t *n, chunk_t *nonce,
+			     struct pbs_out *outs, const char *name);
+
+extern notification_t accept_v1_nonce(struct logger *logger,
+				      struct msg_digest *md, chunk_t *dest,
+				      const char *name);
+
+extern bool ikev1_justship_KE(struct logger *logger, chunk_t *g, struct pbs_out *outs);
+
+/* just calls previous two routines now */
+extern bool ikev1_ship_KE(struct state *st, struct dh_local_secret *local_secret,
+			  chunk_t *g, struct pbs_out *outs);
+
 #endif

@@ -732,14 +732,12 @@ void v2_expire_unused_ike_sa(struct ike_sa *ike)
 		return;
 	}
 
-	{
-		char cib[CONN_INST_BUF];
-		struct connection *c = ike->sa.st_connection;
-		loglog(RC_INFORMATIONAL, "expire unused IKE SA #%lu \"%s\"%s",
-		       ike->sa.st_serialno, c->name,
-		       fmt_conn_instance(c, cib));
-		event_force(EVENT_SA_EXPIRE, &ike->sa);
-	}
+	connection_buf cib;
+	struct connection *c = ike->sa.st_connection;
+	log_state(RC_INFORMATIONAL, &ike->sa, "expire unused IKE SA #%lu "PRI_CONNECTION,
+		  ike->sa.st_serialno,
+		  pri_connection(c, &cib));
+	event_force(EVENT_SA_EXPIRE, &ike->sa);
 }
 
 
@@ -749,60 +747,77 @@ void v2_expire_unused_ike_sa(struct ike_sa *ike)
  * Should it schedule pending events?
  */
 
-static bool flush_incomplete_child(struct state *st, void *pst UNUSED)
+static bool flush_incomplete_child(struct state *cst, void *pst)
 {
-	if (!IS_IPSEC_SA_ESTABLISHED(st)) {
+	struct child_sa *child = pexpect_child_sa(cst);
 
-		char cib[CONN_INST_BUF];
-		struct connection *c = st->st_connection;
+	if (!IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
 
-		so_serial_t newest_sa;
-		switch (st->st_establishing_sa) {
-		case IKE_SA: newest_sa = c->newest_isakmp_sa; break;
-		case IPSEC_SA: newest_sa = c->newest_ipsec_sa; break;
-		default: bad_case(st->st_establishing_sa);
+		struct ike_sa *ike = pexpect_ike_sa(pst);
+		struct connection *c = child->sa.st_connection;
+
+		/*
+		 * If it wasn't so rudely interrupted, what would the
+		 * CHILD SA have eventually replaced?
+		 */
+		so_serial_t replacing_sa;
+		switch (child->sa.st_establishing_sa) {
+		case IKE_SA: replacing_sa = c->newest_isakmp_sa; break;
+		case IPSEC_SA: replacing_sa = c->newest_ipsec_sa; break;
+		default: bad_case(child->sa.st_establishing_sa);
 		}
 
-		if (st->st_serialno > newest_sa &&
+		if (child->sa.st_serialno > replacing_sa &&
 		    (c->policy & POLICY_UP) &&
 		    (c->policy & POLICY_DONT_REKEY) == LEMPTY) {
-			loglog(RC_LOG_SERIOUS, "reschedule pending child #%lu %s of "
-			       "connection \"%s\"%s - the parent is going away",
-			       st->st_serialno, st->st_state->name,
-			       c->name, fmt_conn_instance(c, cib));
 
-			st->st_policy = c->policy; /* for pick_initiator */
-			event_force(EVENT_SA_REPLACE, st);
+			/*
+			 * Nothing else has managed to replace
+			 * REPLACING_SA and the connection needs to
+			 * say up.
+			 */
+			log_state(RC_LOG_SERIOUS, &child->sa,
+				  "reschedule pending CHILD SA - the IKE SA #%lu is going away",
+				  ike->sa.st_serialno);
+			child->sa.st_policy = c->policy; /* for pick_initiator */
+			event_force(EVENT_SA_REPLACE, &child->sa);
+
 		} else {
-			loglog(RC_LOG_SERIOUS, "expire pending child #%lu %s of "
-			       "connection \"%s\"%s - the parent is going away",
-			       st->st_serialno, st->st_state->name,
-			       c->name, fmt_conn_instance(c, cib));
 
-			event_force(EVENT_SA_EXPIRE, st);
+			/*
+			 * Either something else replaced
+			 * REPLACING_SA, or the connection shouldn't
+			 * stay up.
+			 */
+			log_state(RC_LOG_SERIOUS, &child->sa,
+				  "expire pending CHILD SA - the IKE SA #%lu is going away",
+				  ike->sa.st_serialno);
+			event_force(EVENT_SA_EXPIRE, &child->sa);
+
 		}
 		/*
 		 * Shut down further logging for the child, above are
 		 * the last whack will hear from them.
 		 */
-		release_any_whack(st, HERE, "IKE going away");
+		release_any_whack(&child->sa, HERE, "IKE going away");
 	}
 	/*
 	 * XXX: why was this non-conditional?  probably doesn't matter
 	 * as it is idenpotent?
 	 */
-	delete_cryptographic_continuation(st);
+	delete_cryptographic_continuation(&child->sa);
 	return false; /* keep going */
 }
 
 static void flush_incomplete_children(struct ike_sa *ike)
 {
-	state_by_ike_spis(ike->sa.st_ike_version,
-			  &ike->sa.st_serialno,
+	state_by_ike_spis(ike->sa.st_ike_version, /* match: IKE VERSION */
+			  &ike->sa.st_serialno /* match: parent is IKE SA */,
 			  NULL /* ignore MSGID */,
 			  NULL /* ignore role */,
-			  &ike->sa.st_ike_spis,
-			  flush_incomplete_child, NULL/*arg*/, __func__);
+			  &ike->sa.st_ike_spis /* match: IKE SPIs */,
+			  flush_incomplete_child, ike/*arg*/,
+			  __func__);
 }
 
 static bool should_send_delete(const struct state *st)
@@ -853,24 +868,25 @@ static void delete_state_log(struct state *st, struct state *cur_state)
 		* the message prefix.
 		*/
 		deltatime_buf dtb;
-		libreswan_log("deleting state (%s) aged %ss and %ssending notification",
-			      st->st_state->name,
-			      str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
-			      del_notify ? "" : "NOT ");
+		log_state(RC_LOG, st, "deleting state (%s) aged %ss and %ssending notification",
+			  st->st_state->name,
+			  str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
+			  del_notify ? "" : "NOT ");
 	} else if (cur_state != NULL && cur_state->st_connection == st->st_connection) {
 		deltatime_buf dtb;
-		libreswan_log("deleting other state #%lu (%s) aged %ss and %ssending notification",
-			      st->st_serialno, st->st_state->name,
-			      str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
-			      del_notify ? "" : "NOT ");
+		log_state(RC_LOG, cur_state, "deleting other state #%lu (%s) aged %ss and %ssending notification",
+			  st->st_serialno, st->st_state->name,
+			  str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
+			  del_notify ? "" : "NOT ");
 	} else {
 		deltatime_buf dtb;
 		connection_buf cib;
-		libreswan_log("deleting other state #%lu connection (%s) "PRI_CONNECTION" aged %ss and %ssending notification",
-			      st->st_serialno, st->st_state->name,
-			      pri_connection(c, &cib),
-			      str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
-			      del_notify ? "" : "NOT ");
+		log_state(RC_LOG, cur_state,
+			  "deleting other state #%lu connection (%s) "PRI_CONNECTION" aged %ss and %ssending notification",
+			  st->st_serialno, st->st_state->name,
+			  pri_connection(c, &cib),
+			  str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
+			  del_notify ? "" : "NOT ");
 	}
 
 	dbg("%s state #%lu: %s(%s) => delete",
@@ -1020,17 +1036,17 @@ void delete_state(struct state *st)
 		    enum_short_name(&spi_names, nego_shunt));
 
 		if (!orphan_holdpass(c, &c->spd, c->spd.this.protocol, failure_shunt)) {
-			loglog(RC_LOG_SERIOUS, "orphan_holdpass() failure ignored");
+			log_state(RC_LOG_SERIOUS, st, "orphan_holdpass() failure ignored");
 		}
 	}
 
 	if (IS_IPSEC_SA_ESTABLISHED(st)) {
 		/* pull in the traffic counters into state before they're lost */
 		if (!get_sa_info(st, FALSE, NULL)) {
-			libreswan_log("failed to pull traffic counters from outbound IPsec SA");
+			log_state(RC_LOG, st, "failed to pull traffic counters from outbound IPsec SA");
 		}
 		if (!get_sa_info(st, TRUE, NULL)) {
-			libreswan_log("failed to pull traffic counters from inbound IPsec SA");
+			log_state(RC_LOG, st, "failed to pull traffic counters from inbound IPsec SA");
 		}
 
 		/*
@@ -1048,10 +1064,10 @@ void delete_state(struct state *st)
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
-			loglog(RC_INFORMATIONAL, "%s%s%s",
-				statebuf,
-				st->st_xauth_username[0] != '\0' ? " XAUTHuser=" : "",
-				st->st_xauth_username);
+			log_state(RC_INFORMATIONAL, st, "%s%s%s",
+				  statebuf,
+				  st->st_xauth_username[0] != '\0' ? " XAUTHuser=" : "",
+				  st->st_xauth_username);
 			pstats_ipsec_in_bytes += st->st_esp.our_bytes;
 			pstats_ipsec_out_bytes += st->st_esp.peer_bytes;
 		}
@@ -1067,10 +1083,10 @@ void delete_state(struct state *st)
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
-			loglog(RC_INFORMATIONAL, "%s%s%s",
-				statebuf,
-				st->st_xauth_username[0] != '\0' ? " XAUTHuser=" : "",
-				st->st_xauth_username);
+			log_state(RC_INFORMATIONAL, st, "%s%s%s",
+				  statebuf,
+				  st->st_xauth_username[0] != '\0' ? " XAUTHuser=" : "",
+				  st->st_xauth_username);
 			pstats_ipsec_in_bytes += st->st_ah.peer_bytes;
 			pstats_ipsec_out_bytes += st->st_ah.our_bytes;
 		}
@@ -1086,10 +1102,10 @@ void delete_state(struct state *st)
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
-			loglog(RC_INFORMATIONAL, "%s%s%s",
-				statebuf,
-				st->st_xauth_username[0] != '\0' ? " XAUTHuser=" : "",
-				st->st_xauth_username);
+			log_state(RC_INFORMATIONAL, st, "%s%s%s",
+				  statebuf,
+				  st->st_xauth_username[0] != '\0' ? " XAUTHuser=" : "",
+				  st->st_xauth_username);
 			pstats_ipsec_in_bytes += st->st_ipcomp.peer_bytes;
 			pstats_ipsec_out_bytes += st->st_ipcomp.our_bytes;
 		}
@@ -2711,7 +2727,8 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 
 	/* check for all conditions before updating IPsec SA's */
 	if (afi != address_type(&c->spd.that.host_addr)) {
-		libreswan_log("MOBIKE: AF change switching between v4 and v6 not supported");
+		log_state(RC_LOG, &ike->sa,
+			  "MOBIKE: AF change switching between v4 and v6 not supported");
 		return false;
 	}
 
@@ -2760,19 +2777,20 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 		if (md_role == MESSAGE_REQUEST) {
 			/* on responder NAT could hide end-to-end change */
 			endpoint_buf b;
-			libreswan_log("MOBIKE success no change to kernel SA same IP address and port  %s",
-				      str_sensitive_endpoint(&old_endpoint, &b));
+			log_state(RC_LOG, &ike->sa,
+				  "MOBIKE success no change to kernel SA same IP address and port  %s",
+				  str_sensitive_endpoint(&old_endpoint, &b));
 
 			return true;
 		}
 	}
 
 	if (!migrate_ipsec_sa(&child->sa)) {
-		libreswan_log("%s FAILED", buf);
+		log_state(RC_LOG, &ike->sa, "%s FAILED", buf);
 		return false;
 	}
 
-	libreswan_log(" success %s", buf);
+	log_state(RC_LOG, &ike->sa, " success %s", buf);
 
 	switch (md_role) {
 	case MESSAGE_RESPONSE:

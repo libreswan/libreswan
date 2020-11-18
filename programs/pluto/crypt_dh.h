@@ -54,12 +54,14 @@ struct dh_local_secret *dh_local_secret_addref(struct dh_local_secret *local_sec
 void dh_local_secret_delref(struct dh_local_secret **local_secret, where_t where);
 
 /*
- * Compute dh storing result in .st_dh_shared_secret.
+ * Compute dh using .st_dh_local_secret and REMOTE_KE, storing result
+ * in .st_dh_shared_secret.
  */
+
 typedef stf_status (dh_shared_secret_cb)(struct state *st,
 					 struct msg_digest *md);
 
 extern void submit_dh_shared_secret(struct state *st, chunk_t remote_ke,
-				    dh_shared_secret_cb *callback, const char *name);
+				    dh_shared_secret_cb *callback, where_t where);
 
 #endif

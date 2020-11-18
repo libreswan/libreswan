@@ -40,11 +40,13 @@ struct state;
  * waitpid().
  */
 
-typedef void server_fork_cb(struct state *st, struct msg_digest *mdp,
-			    int status, void *context);
-extern int server_fork(const char *name, so_serial_t serialno,
-		       int op(void *context),
-		       server_fork_cb *callback, void *callback_context);
+typedef void server_fork_cb(struct state *st, struct msg_digest *md,
+			    int status, void *context, struct logger *logger);
+typedef int server_fork_op(void *context, struct logger *logger);
+
+extern int server_fork(const char *name, so_serial_t serialno, server_fork_op *op,
+		       server_fork_cb *callback, void *callback_context,
+		       struct logger *logger);
 void server_fork_exec(const char *what, const char *path,
 		      char *argv[], char *envp[],
 		      server_fork_cb *callback, void *callback_context,

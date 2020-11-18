@@ -29,7 +29,8 @@ extern const co_serial_t unset_co_serial;
 
 #define co_serial_is_unset(CO) ((CO).co == 0)
 #define co_serial_is_set !co_serial_is_unset
-#define co_serial_eq(L, R) ((L).co == (R).co)
+/* as in co_serial_cmp(L,>=,R); unset never matches */
+#define co_serial_cmp(L, OP, R) ((L).co != 0 && (R).co != 0 && (L).co OP (R).co)
 
 void init_connection_db(void);
 

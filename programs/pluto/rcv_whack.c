@@ -78,6 +78,7 @@
 #include "initiate.h"
 #include "iface.h"
 #include "show.h"
+#include "impair_message.h"
 #ifdef HAVE_SECCOMP
 #include "pluto_seccomp.h"
 #endif
@@ -201,6 +202,14 @@ static void whack_impair_action(enum impair_action action, unsigned event,
 		send_keepalive(st, "inject keep-alive");
 		break;
 	}
+	case CALL_IMPAIR_DROP_INCOMING:
+	case CALL_IMPAIR_DROP_OUTGOING:
+	{
+		struct logger logger = GLOBAL_LOGGER(whackfd);
+		/* will log */
+		add_message_impairment(biased_what - 1, action, &logger);
+		break;
+	}
 	}
 }
 
@@ -258,7 +267,7 @@ static void do_whacklisten(struct fd *whackfd)
 	listening = true;
 	find_ifaces(true /* remove dead interfaces */, whackfd);
 #ifdef USE_XFRM_INTERFACE
-	stale_xfrmi_interfaces();
+	stale_xfrmi_interfaces(logger);
 #endif
 	load_preshared_secrets(logger);
 	load_groups(whackfd);

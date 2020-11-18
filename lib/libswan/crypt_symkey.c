@@ -36,7 +36,7 @@ void init_crypt_symkey(struct logger *logger)
 		struct jambuf buf[1] = { ARRAY_AS_JAMBUF(error), };
 		jam(buf, "NSS: ephemeral slot error: ");
 		jam_nss_error(buf);
-		fatal(logger, "%s", error);
+		fatal(PLUTO_EXIT_FAIL, logger, "%s", error);
 	}
 	ephemeral_symkey = PK11_KeyGen(slot, CKM_AES_KEY_GEN,
 				       NULL, 128/8, NULL);
@@ -50,11 +50,11 @@ void release_symkey(const char *prefix, const char *name,
 		    PK11SymKey **key)
 {
 	if (*key != NULL) {
-		DBGF(DBG_CRYPT, "%s: delref %s-key@%p",
+		DBGF(DBG_REFCNT, "%s: delref %s-key@%p",
 		     prefix, name, *key);
 		PK11_FreeSymKey(*key);
 	} else {
-		DBGF(DBG_CRYPT, "%s: delref %s-key@NULL",
+		DBGF(DBG_REFCNT, "%s: delref %s-key@NULL",
 		     prefix, name);
 	}
 	*key = NULL;
@@ -64,11 +64,11 @@ PK11SymKey *reference_symkey(const char *prefix, const char *name,
 			     PK11SymKey *key)
 {
 	if (key != NULL) {
-		DBGF(DBG_CRYPT, "%s: addref %s-key@%p",
+		DBGF(DBG_REFCNT, "%s: addref %s-key@%p",
 		     prefix, name, key);
 		PK11_ReferenceSymKey(key);
 	} else {
-		DBGF(DBG_CRYPT, "%s: addref %s-key@NULL",
+		DBGF(DBG_REFCNT, "%s: addref %s-key@NULL",
 		     prefix, name);
 	}
 	return key;
@@ -106,14 +106,14 @@ void DBG_symkey(struct logger *logger, const char *prefix, const char *name, PK1
 		jam_symkey(buf, name, key);
 	}
 #if 0
-	if (DBGP(DBG_PRIVATE)) {
+	if (DBGP(DBG_CRYPT)) {
 		if (libreswan_fipsmode()) {
 			DBG_log("%s secured by FIPS", prefix);
 		} else {
-			chunk_t bytes = chunk_from_symkey(prefix, 0, key);
+			chunk_t bytes = chunk_from_symkey(prefix, key, logger);
 			/* NULL suppresses the dump header */
 			DBG_dump_hunk(NULL, bytes);
-			freeanychunk(bytes);
+			free_chunk_content(&bytes);
 		}
 	}
 #endif
@@ -181,7 +181,7 @@ PK11SymKey *crypt_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem
 			pexpect_fail(logger, HERE, PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
 		}
 		DBG_DERIVE();
-	} else if (DBGP(DBG_CRYPT)) {
+	} else if (DBGP(DBG_REFCNT)) {
 		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, SPACES"result: newref ");
 			jam_symkey(buf, target_name, target_key);
@@ -317,7 +317,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey,
 		PK11_FreeSlot(slot); /* reference counted */
 		passert(slot_key != NULL);
 	}
-	if (DBGP(DBG_CRYPT)) {
+	if (DBGP(DBG_REFCNT)) {
 	    if (slot_key == symkey) {
 		    /* output should mimic reference_symkey() */
 		    DBG_log("%s: slot-key@%p: addref sym-key@%p",

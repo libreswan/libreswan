@@ -64,7 +64,7 @@ case "$1" in
 		echo "Redirecting to: rc-service ipsec start"
 		exec rc-service ipsec start
 		;;
-	    sysv )
+	    sysvinit )
 		echo "Redirecting to: /etc/init.d/ipsec start"
 		exec /etc/init.d/ipsec start
 		;;
@@ -114,7 +114,7 @@ case "$1" in
 		echo "Redirecting to: rc-service ipsec stop"
 		exec rc-service ipsec stop
 		;;
-	    sysv )
+	    sysvinit )
 		echo "Redirecting to: /etc/init.d/ipsec stop"
 		exec /etc/init.d/ipsec stop
 		;;
@@ -180,7 +180,7 @@ case "$1" in
 		echo "Redirecting to: rc-service ipsec status"
 		exec rc-service ipsec status
 		;;
-	    sysv )
+	    sysvinit )
 		echo "Redirecting to: /etc/init.d/ipsec status"
 		exec /etc/init.d/ipsec status
 		;;
@@ -216,7 +216,7 @@ case "$1" in
 		echo "Redirecting to: rc-service ipsec restart"
 		exec rc-service ipsec restart
 		;;
-	    sysv )
+	    sysvinit )
 		echo "Redirecting to: /etc/init.d/ipsec restart"
 		exec /etc/init.d/ipsec restart
 		;;

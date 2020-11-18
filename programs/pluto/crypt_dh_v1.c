@@ -38,153 +38,16 @@
 #include "log.h"
 #include "state.h"
 
-void cancelled_v1_dh_shared_secret(struct pcr_v1_dh *dh)
-{
-	/* query */
-	dh_local_secret_delref(&dh->local_secret, HERE);
-	release_symkey("cancelled IKEv1 DH", "skey_d_old", &dh->skey_d_old);
-
-	/* response */
-	release_symkey("cancelled IKEv1 DH", "shared", &dh->shared_secret);
-	release_symkey("cancelled IKEv1 DH", "skeyid", &dh->skeyid);
-	release_symkey("cancelled IKEv1 DH", "skeyid_d", &dh->skeyid_d);
-	release_symkey("cancelled IKEv1 DH", "skeyid_a", &dh->skeyid_a);
-	release_symkey("cancelled IKEv1 DH", "skeyid_e", &dh->skeyid_e);
-	release_symkey("cancelled IKEv1 DH", "enc_key", &dh->enc_key);
-}
-
-/*
- * invoke helper to do DH work (IKEv1)
- */
-void submit_v1_dh_shared_secret_and_iv(crypto_req_cont_func fn, const char *name,
-				       struct state *st, enum sa_role role,
-				       const struct dh_desc *oakley_group2)
-{
-	const chunk_t *pss = get_connection_psk(st->st_connection, st->st_logger);
-
-	struct pluto_crypto_req_cont *dh = new_pcrc(fn, name);
-	struct pcr_v1_dh *const dhq = pcr_v1_dh_init(dh, pcr_compute_v1_dh_shared_secret_and_iv);
-
-	/* convert appropriate data to dhq */
-	dhq->auth = st->st_oakley.auth;
-	dhq->prf = st->st_oakley.ta_prf;
-	dhq->oakley_group = oakley_group2;
-	dhq->encrypter = st->st_oakley.ta_encrypt;
-	dhq->role = role;
-	dhq->key_size = st->st_oakley.enckeylen / BITS_PER_BYTE;
-	dhq->salt_size = st->st_oakley.ta_encrypt->salt_size;
-
-	passert(dhq->oakley_group != NULL && dhq->oakley_group != &unset_group);
-
-	if (pss != NULL)
-		WIRE_CLONE_CHUNK(*dhq, pss, *pss);
-	WIRE_CLONE_CHUNK(*dhq, ni, st->st_ni);
-	WIRE_CLONE_CHUNK(*dhq, nr, st->st_nr);
-	WIRE_CLONE_CHUNK(*dhq, gi, st->st_gi);
-	WIRE_CLONE_CHUNK(*dhq, gr, st->st_gr);
-
-	dhq->local_secret = dh_local_secret_addref(st->st_dh_local_secret, HERE);
-
-	ALLOC_WIRE_CHUNK(*dhq, icookie, COOKIE_SIZE);
-	memcpy(WIRE_CHUNK_PTR(*dhq, icookie),
-	       st->st_ike_spis.initiator.bytes, COOKIE_SIZE);
-
-	ALLOC_WIRE_CHUNK(*dhq, rcookie, COOKIE_SIZE);
-	memcpy(WIRE_CHUNK_PTR(*dhq, rcookie),
-	       st->st_ike_spis.responder.bytes, COOKIE_SIZE);
-
-	send_crypto_helper_request(st, dh);
-}
-
-bool finish_v1_dh_shared_secret_and_iv(struct state *st,
-				       struct pluto_crypto_req *r)
-{
-	struct pcr_v1_dh *dhr = &r->pcr_d.v1_dh;
-	dh_local_secret_delref(&dhr->local_secret, HERE);
-	st->st_dh_shared_secret = dhr->shared_secret;
-	st->st_skeyid_nss = dhr->skeyid;
-	st->st_skeyid_d_nss = dhr->skeyid_d;
-	st->st_skeyid_a_nss = dhr->skeyid_a;
-	st->st_skeyid_e_nss = dhr->skeyid_e;
-	st->st_enc_key_nss = dhr->enc_key;
-
-	st->hidden_variables.st_skeyid_calculated = TRUE;
-
-	if (st->st_dh_shared_secret == NULL) {
-		return FALSE;
-	} else {
-		st->st_v1_new_iv = dhr->new_iv;
-		return true;
-	}
-}
-
-void submit_v1_dh_shared_secret(crypto_req_cont_func fn, const char *name,
-				struct state *st, enum sa_role role,
-				const struct dh_desc *oakley_group2)
-{
-	const chunk_t *pss = get_connection_psk(st->st_connection, st->st_logger);
-	struct pluto_crypto_req_cont *cn = new_pcrc(fn, name);
-	struct pcr_v1_dh *const dhq = pcr_v1_dh_init(cn, pcr_compute_v1_dh_shared_secret);
-
-	/* convert appropriate data to dhq */
-	dhq->auth = st->st_oakley.auth;
-	dhq->prf = st->st_oakley.ta_prf;
-	dhq->oakley_group = oakley_group2;
-	dhq->role = role;
-	dhq->key_size = st->st_oakley.enckeylen / BITS_PER_BYTE;
-	dhq->salt_size = st->st_oakley.ta_encrypt->salt_size;
-
-	if (pss != NULL)
-		WIRE_CLONE_CHUNK(*dhq, pss, *pss);
-	WIRE_CLONE_CHUNK(*dhq, ni, st->st_ni);
-	WIRE_CLONE_CHUNK(*dhq, nr, st->st_nr);
-	WIRE_CLONE_CHUNK(*dhq, gi, st->st_gi);
-	WIRE_CLONE_CHUNK(*dhq, gr, st->st_gr);
-
-	dhq->local_secret = dh_local_secret_addref(st->st_dh_local_secret, HERE);
-
-	ALLOC_WIRE_CHUNK(*dhq, icookie, COOKIE_SIZE);
-	memcpy(WIRE_CHUNK_PTR(*dhq, icookie),
-	       st->st_ike_spis.initiator.bytes, COOKIE_SIZE);
-
-	ALLOC_WIRE_CHUNK(*dhq, rcookie, COOKIE_SIZE);
-	memcpy(WIRE_CHUNK_PTR(*dhq, rcookie),
-	       st->st_ike_spis.responder.bytes, COOKIE_SIZE);
-
-	send_crypto_helper_request(st, cn);
-}
-
-/* NOTE: if NSS refuses to calculate DH, skr->shared == NULL */
-/* MUST BE THREAD-SAFE */
-void calc_v1_dh_shared_secret(struct pcr_v1_dh *dh, struct logger *logger)
-{
-	const struct dh_desc *group = dh->oakley_group;
-	passert(group != NULL);
-
-	/* now calculate the (g^x)(g^y) */
-	chunk_t g;
-	setchunk_from_wire(g, dh, dh->role == SA_RESPONDER ? &dh->gi : &dh->gr);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("peer's g: ", g);
-	}
-
-	dh->shared_secret = calc_dh_shared_secret(dh->local_secret, g, logger);
-}
-
-void finish_v1_dh_shared_secret(struct state *st,
-				struct pluto_crypto_req *r)
-{
-	struct pcr_v1_dh *dhr = &r->pcr_d.v1_dh;
-	dh_local_secret_delref(&dhr->local_secret, HERE);
-	pexpect(st->st_dh_shared_secret == NULL);
-	st->st_dh_shared_secret = dhr->shared_secret;
-}
-
 /* Generate the SKEYID_* and new IV
  * See draft-ietf-ipsec-ike-01.txt 4.1
  */
 /* MUST BE THREAD-SAFE */
-static void calc_skeyids_iv(struct pcr_v1_dh *skq,
+static void calc_skeyids_iv(oakley_auth_t auth, chunk_t pss,
+			    const struct prf_desc *prf_desc,
+			    const struct encrypt_desc *encrypter,
+			    chunk_t ni, chunk_t nr,
+			    chunk_t icookie, chunk_t rcookie,
+			    chunk_t gi, chunk_t gr,
 			    /*const*/ PK11SymKey *shared,	/* NSS doesn't do const */
 			    const size_t keysize,	/* = st->st_oakley.enckeylen/BITS_PER_BYTE; */
 			    PK11SymKey **skeyid_out,	/* output */
@@ -195,36 +58,14 @@ static void calc_skeyids_iv(struct pcr_v1_dh *skq,
 			    PK11SymKey **enc_key_out,	/* output */
 			    struct logger *logger)
 {
-	oakley_auth_t auth = skq->auth;
-	const struct prf_desc *prf_desc = skq->prf;
 	const struct hash_desc *hasher = prf_desc ? prf_desc->hasher : NULL;
-	chunk_t ni;
-	chunk_t nr;
-	chunk_t gi;
-	chunk_t gr;
-	chunk_t icookie;
-	chunk_t rcookie;
-	const struct encrypt_desc *encrypter = skq->encrypter;
-
-	/* this doesn't allocate any memory */
-	setchunk_from_wire(gi, skq, &skq->gi);
-	setchunk_from_wire(gr, skq, &skq->gr);
-	setchunk_from_wire(ni, skq, &skq->ni);
-	setchunk_from_wire(nr, skq, &skq->nr);
-	setchunk_from_wire(icookie, skq, &skq->icookie);
-	setchunk_from_wire(rcookie, skq, &skq->rcookie);
 
 	/* Generate the SKEYID */
 	PK11SymKey *skeyid;
 	switch (auth) {
 	case OAKLEY_PRESHARED_KEY:
-		{
-			chunk_t pss;
-
-			setchunk_from_wire(pss, skq, &skq->pss);
-			skeyid = ikev1_pre_shared_key_skeyid(prf_desc, pss,
-							     ni, nr, logger);
-		}
+		skeyid = ikev1_pre_shared_key_skeyid(prf_desc, pss,
+						     ni, nr, logger);
 		break;
 
 	case OAKLEY_RSA_SIG:
@@ -279,39 +120,23 @@ static void calc_skeyids_iv(struct pcr_v1_dh *skq,
 	}
 }
 
-/* MUST BE THREAD-SAFE */
-void calc_v1_dh_shared_secret_and_iv(struct pcr_v1_dh *dh, struct logger *logger)
+void calc_v1_skeyid_and_iv(struct state *st)
 {
-	const struct dh_desc *group = dh->oakley_group;
-	passert(group != NULL);
-
-	/*
-	 * Now calculate the (g^x)(g^y).
-	 * Need gi on responder and gr on initiator.
-	 */
-
-	chunk_t g;
-	setchunk_from_wire(g, dh,
-		dh->role == SA_RESPONDER ? &dh->gi : &dh->gr);
-
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("peer's g: ", g);
-	}
-
-	dh->shared_secret = calc_dh_shared_secret(dh->local_secret, g, logger);
-
-	if (dh->shared_secret != NULL) {
-		/* okay, so now calculate IV */
-		calc_skeyids_iv(dh,
-			dh->shared_secret,
-			dh->key_size,
-
-			&dh->skeyid,	/* output */
-			&dh->skeyid_d,	/* output */
-			&dh->skeyid_a,	/* output */
-			&dh->skeyid_e,	/* output */
-			&dh->new_iv,	/* output */
-				&dh->enc_key,	/* output */
-			logger);
-	}
+	const chunk_t *pss = get_connection_psk(st->st_connection, st->st_logger);
+	calc_skeyids_iv(st->st_oakley.auth, pss != NULL ? *pss : empty_chunk,
+			st->st_oakley.ta_prf, st->st_oakley.ta_encrypt,
+			st->st_ni, st->st_nr,
+			chunk2(st->st_ike_spis.initiator.bytes, COOKIE_SIZE),
+			chunk2(st->st_ike_spis.responder.bytes, COOKIE_SIZE),
+			st->st_gi, st->st_gr,
+			st->st_dh_shared_secret,
+			st->st_oakley.enckeylen / BITS_PER_BYTE,
+			&st->st_skeyid_nss,	/* output */
+			&st->st_skeyid_d_nss,	/* output */
+			&st->st_skeyid_a_nss,	/* output */
+			&st->st_skeyid_e_nss,	/* output */
+			&st->st_v1_new_iv,	/* output */
+			&st->st_enc_key_nss,	/* output */
+			st->st_logger);
+	st->hidden_variables.st_skeyid_calculated = true;
 }
