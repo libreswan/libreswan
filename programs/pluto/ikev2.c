@@ -1045,12 +1045,6 @@ static struct state *find_v2_sa_by_responder_wip(struct ike_sa *ike, const msgid
  * instance, little point in searching for a state when the IKE SA's
  * window shows the Message ID is too old (only record'n'send breakage
  * means it might still have a message, argh!).
- *
- * This code should use an explicit log function.  libreswan_log() is
- * at the mercy of the caller so the messages might be logged against
- * ST and might be logged against IKE.  This is one thing that
- * prevents find_v2_sa_by_*_wip() and this code being better
- * organized.
  */
 
 /*
