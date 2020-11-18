@@ -18,13 +18,19 @@
 static void dbg_ref(const char *what, const void *pointer, where_t where,
 		    int old_count, int new_count, const char *why)
 {
-	dbg("%sref %s@%p(%u->%u) "PRI_WHERE"",
-	    why, what, pointer, old_count, new_count,
-	    pri_where(where));
+	if (DBGP(DBG_REFCNT)) {
+		DBG_log("%sref %s@%p(%u->%u) "PRI_WHERE"",
+			why, what, pointer, old_count, new_count,
+			pri_where(where));
+	}
 }
 
 #define DEBUG_LOG(OLD_COUNT, WHY)				\
 	dbg_ref(what, pointer, where, OLD_COUNT, refcnt->count, WHY)
+
+/*
+ * So existing code can use the refcnt tracer.
+ */
 
 void dbg_alloc(const char *what, const void *pointer, where_t where)
 {
@@ -35,6 +41,8 @@ void dbg_free(const char *what, const void *pointer, where_t where)
 {
 	dbg_ref(what, pointer, where, 1, 0, "del");
 }
+
+/* -- */
 
 void refcnt_init(const char *what, const void *pointer,
 		 refcnt_t *refcnt, where_t where)

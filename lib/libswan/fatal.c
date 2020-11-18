@@ -19,11 +19,14 @@
 
 #include "lswlog.h"
 
-void fatal(struct logger *logger, const char *fmt, ...)
+void fatal(enum pluto_exit_code rc, struct logger *logger, const char *fmt, ...)
 {
 	JAMBUF(buf) {
-		/* XXX: notice how <prefix> sits in the middle :-( */
-		/* FATAL ERROR: <prefix><message> */
+		/* XXX: The message format is:
+		 *   FATAL ERROR: <log-prefix><message...>
+		 * and not:
+		 *   <log-prefix>FATAL ERROR: <message...>
+		 */
 		jam(buf, "FATAL ERROR: ");
 		jam_logger_prefix(buf, logger);
 		va_list ap;
@@ -32,5 +35,5 @@ void fatal(struct logger *logger, const char *fmt, ...)
 		va_end(ap);
 		jambuf_to_logger(buf, logger, ERROR_FLAGS);
 	}
-	libreswan_exit(PLUTO_EXIT_FAIL);
+	libreswan_exit(rc);
 }

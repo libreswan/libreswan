@@ -190,6 +190,7 @@ static stf_status complete_dh_shared_secret(struct state *st,
 	pexpect(st->st_dh_shared_secret == NULL);
 	release_symkey(__func__, "st_dh_shared_secret", &st->st_dh_shared_secret);
 	st->st_dh_shared_secret = (*task)->shared_secret;
+	(*task)->shared_secret = NULL;
 	stf_status status = (*task)->cb(st, md);
 	pfreeany(*task);
 	return status;
@@ -203,11 +204,12 @@ static const struct crypto_handler dh_shared_secret_handler = {
 };
 
 void submit_dh_shared_secret(struct state *st, chunk_t remote_ke,
-			     dh_shared_secret_cb *cb, const char *name)
+			     dh_shared_secret_cb *cb, where_t where)
 {
+	dbg("submitting DH shared secret for "PRI_WHERE, pri_where(where));
 	struct crypto_task *task = alloc_thing(struct crypto_task, "dh");
 	task->remote_ke = clone_hunk(remote_ke, "DH crypto");
 	task->local_secret = dh_local_secret_addref(st->st_dh_local_secret, HERE);
 	task->cb = cb;
-	submit_crypto(st->st_logger, st, task, &dh_shared_secret_handler, name);
+	submit_crypto(st->st_logger, st, task, &dh_shared_secret_handler, "DH shared secret");
 }

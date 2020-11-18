@@ -23,7 +23,7 @@ west #
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: adding an unknown payload of type 255 to IKE_AUTH request
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 000 "westnet-eastnet-ipv4-psk-ikev2" #2: non-critical payload ignored because it contains an unknown or unexpected payload type (255??) at the outermost level
-002 "westnet-eastnet-ipv4-psk-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ipv4-psk-ikev2" #1: authenticated using authby=secret
 002 "westnet-eastnet-ipv4-psk-ikev2" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ipv4-psk-ikev2" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
@@ -53,7 +53,7 @@ west #
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #3: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev2" #4: IMPAIR: retransmit so deleting SA
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: deleting state (STATE_PARENT_I2) and NOT sending notification
-003 "westnet-eastnet-ipv4-psk-ikev2" #3: reschedule pending child #4 STATE_PARENT_I2 of connection "westnet-eastnet-ipv4-psk-ikev2" - the parent is going away
+003 "westnet-eastnet-ipv4-psk-ikev2" #4: reschedule pending CHILD SA - the IKE SA #3 is going away
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  echo done

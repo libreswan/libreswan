@@ -55,49 +55,6 @@
 #include "crypt_dh.h"
 #include "crypt_ke.h"
 
-/* MUST BE THREAD-SAFE */
-void calc_ke(struct pcr_kenonce *kn, struct logger *logger)
-{
-	kn->local_secret = calc_dh_local_secret(kn->group, logger);
-}
-
-/* MUST BE THREAD-SAFE */
-void calc_nonce(struct pcr_kenonce *kn)
-{
-	kn->n = alloc_chunk(DEFAULT_NONCE_SIZE, "n");
-	get_rnd_bytes(kn->n.ptr, kn->n.len);
-
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("Generated nonce:", kn->n);
-	}
-}
-
-void cancelled_ke_and_nonce(struct pcr_kenonce *kn)
-{
-	dh_local_secret_delref(&kn->local_secret, HERE);
-	free_chunk_content(&kn->n);
-}
-
-/* Note: not all cn's are the same subtype */
-void request_ke_and_nonce(const char *name,
-			  struct state *st,
-			  const struct dh_desc *group,
-			  crypto_req_cont_func *callback)
-{
-	struct pluto_crypto_req_cont *cn = new_pcrc(callback, name);
-	pcr_kenonce_init(cn, pcr_build_ke_and_nonce, group);
-	send_crypto_helper_request(st, cn);
-}
-
-void request_nonce(const char *name,
-		   struct state *st,
-		   crypto_req_cont_func *callback)
-{
-	struct pluto_crypto_req_cont *cn = new_pcrc(callback, name);
-	pcr_kenonce_init(cn, pcr_build_nonce, NULL);
-	send_crypto_helper_request(st, cn);
-}
-
 struct crypto_task {
 	const struct dh_desc *dh;
 	chunk_t nonce;
@@ -155,4 +112,47 @@ void submit_ke_and_nonce(struct state *st, const struct dh_desc *dh,
 	task->dh = dh;
 	task->cb = cb;
 	submit_crypto(st->st_logger, st, task, &ke_and_nonce_handler, name);
+}
+
+/*
+ * Process KE values.
+ */
+void unpack_KE_from_helper(struct state *st, struct dh_local_secret *local_secret,
+			   chunk_t *g)
+{
+	/*
+	 * Should the crypto helper group and the state group be in
+	 * sync?
+	 *
+	 * Probably not, yet seemingly (IKEv2) code is assuming this.
+	 *
+	 * For instance, with IKEv2, the initial initiator is setting
+	 * st_oakley.group to the draft KE group (and well before
+	 * initial responder has had a chance to agree to any thing).
+	 * Should the initial responder comes back with INVALID_KE
+	 * then st_oakley.group gets changed to match the suggestion
+	 * and things restart; should the initial responder come back
+	 * with an accepted proposal and KE, then the st_oakley.group
+	 * is set based on the accepted proposal (the two are
+	 * checked).
+	 *
+	 * Surely, instead, st_oakley.group should be left alone.  The
+	 * the initial initiator would maintain a list of KE values
+	 * proposed (INVALID_KE flip-flopping can lead to more than
+	 * one) and only set st_oakley.group when the initial
+	 * responder comes back with a vald accepted propsal and KE.
+	 */
+	if (DBGP(DBG_CRYPT)) {
+		const struct dh_desc *group = dh_local_secret_desc(local_secret);
+		DBG_log("wire (crypto helper) group %s and state group %s %s",
+			group->common.fqn,
+			st->st_oakley.ta_dh ? st->st_oakley.ta_dh->common.fqn : "NULL",
+			group == st->st_oakley.ta_dh ? "match" : "differ");
+	}
+
+	free_chunk_content(g); /* happens in odd error cases */
+	*g = clone_dh_local_secret_ke(local_secret);
+
+	pexpect(st->st_dh_local_secret == NULL);
+	st->st_dh_local_secret = dh_local_secret_addref(local_secret, HERE);
 }

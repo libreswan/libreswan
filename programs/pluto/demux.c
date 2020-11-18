@@ -70,6 +70,7 @@
 #include "pluto_stats.h"
 #include "ikev2_send.h"
 #include "iface.h"
+#include "impair_message.h"
 
 /*
  * read the message.
@@ -405,6 +406,9 @@ static void save_md_for_replay(bool already_impaired, struct msg_digest *md)
 
 static bool impair_incoming(struct msg_digest *md)
 {
+	if (impair_incoming_message(md)) {
+		return true;
+	}
 	bool impaired = false;
 	if (impair.replay_duplicates) {
 		save_md_for_replay(impaired, md);

@@ -47,13 +47,14 @@
 #include "fetch.h"		/* for stop_crl_fetch_helper() et.al. */
 #include "crl_queue.h"		/* for free_crl_queue() */
 #include "iface.h"		/* for free_ifaces() */
-#include "kernel.h"		/* for kernel_ops.shutdown() */
+#include "kernel.h"		/* for kernel_ops.shutdown() and free_kernel() */
 #include "virtual_ip.h"		/* for free_virtual_ip() */
 #include "server.h"		/* for free_server() */
 #ifdef USE_DNSSEC
 #include "dnssec.h"		/* for unbound_ctx_free() */
 #endif
 #include "demux.h"		/* for free_demux() */
+#include "impair_message.h"	/* for free_impair_message() */
 
 volatile bool exiting_pluto = false;
 static enum pluto_exit_code exit_code;
@@ -127,15 +128,14 @@ void exit_tail(void)
 	lsw_conf_free_oco();	/* free global_oco containing path names */
 
 	free_ifaces();	/* free interface list from memory */
-	if (kernel_ops->shutdown != NULL)
-		kernel_ops->shutdown();
+	shutdown_kernel();
 	lsw_nss_shutdown();
 	delete_lock();	/* delete any lock files */
 	free_virtual_ip();	/* virtual_private= */
 	free_server(); /* no libevent evnts beyond this point */
 	free_demux();
 	free_pluto_main();	/* our static chars */
-
+	free_impair_message(logger);
 #ifdef USE_DNSSEC
 	unbound_ctx_free();
 #endif

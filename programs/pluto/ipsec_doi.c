@@ -83,103 +83,6 @@
 #include "iface.h"
 #include "ikev2_delete.h"	/* for record_v2_delete(); but call is dying */
 
-/*
- * Process KE values.
- */
-void unpack_KE_from_helper(struct state *st, struct dh_local_secret *local_secret,
-			   chunk_t *g)
-{
-	/*
-	 * Should the crypto helper group and the state group be in
-	 * sync?
-	 *
-	 * Probably not, yet seemingly (IKEv2) code is assuming this.
-	 *
-	 * For instance, with IKEv2, the initial initiator is setting
-	 * st_oakley.group to the draft KE group (and well before
-	 * initial responder has had a chance to agree to any thing).
-	 * Should the initial responder comes back with INVALID_KE
-	 * then st_oakley.group gets changed to match the suggestion
-	 * and things restart; should the initial responder come back
-	 * with an accepted proposal and KE, then the st_oakley.group
-	 * is set based on the accepted proposal (the two are
-	 * checked).
-	 *
-	 * Surely, instead, st_oakley.group should be left alone.  The
-	 * the initial initiator would maintain a list of KE values
-	 * proposed (INVALID_KE flip-flopping can lead to more than
-	 * one) and only set st_oakley.group when the initial
-	 * responder comes back with a vald accepted propsal and KE.
-	 */
-	if (DBGP(DBG_CRYPT)) {
-		const struct dh_desc *group = dh_local_secret_desc(local_secret);
-		DBG_log("wire (crypto helper) group %s and state group %s %s",
-			group->common.fqn,
-			st->st_oakley.ta_dh ? st->st_oakley.ta_dh->common.fqn : "NULL",
-			group == st->st_oakley.ta_dh ? "match" : "differ");
-	}
-
-	free_chunk_content(g); /* happens in odd error cases */
-	*g = clone_dh_local_secret_ke(local_secret);
-
-	pexpect(st->st_dh_local_secret == NULL);
-	st->st_dh_local_secret = dh_local_secret_addref(local_secret, HERE);
-}
-
-/* accept_KE
- *
- * Check and accept DH public value (Gi or Gr) from peer's message.
- * According to RFC2409 "The Internet key exchange (IKE)" 5:
- *  The Diffie-Hellman public value passed in a KE payload, in either
- *  a phase 1 or phase 2 exchange, MUST be the length of the negotiated
- *  Diffie-Hellman group enforced, if necessary, by pre-pending the
- *  value with zeros.
- */
-bool accept_KE(chunk_t *dest, const char *val_name,
-	       const struct dh_desc *gr,
-	       struct payload_digest *ke_pd)
-{
-	if (ke_pd == NULL) {
-		loglog(RC_LOG_SERIOUS, "KE missing");
-		return false;
-	}
-	pb_stream *pbs = &ke_pd->pbs;
-	if (pbs_left(pbs) != gr->bytes) {
-		loglog(RC_LOG_SERIOUS,
-		       "KE has %u byte DH public value; %u required",
-		       (unsigned) pbs_left(pbs), (unsigned) gr->bytes);
-		/* XXX Could send notification back */
-		return false;
-	}
-	free_chunk_content(dest); /* XXX: ever needed? */
-	*dest = clone_hunk(pbs_in_left_as_shunk(pbs), val_name);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("DH public value received:");
-		DBG_dump_hunk(NULL, *dest);
-	}
-	return true;
-}
-
-void unpack_nonce(chunk_t *n, chunk_t *nonce)
-{
-	free_chunk_content(n);
-	*n = *nonce; /* steal away */
-	*nonce = empty_chunk;
-}
-
-bool ikev1_justship_nonce(chunk_t *n, struct pbs_out *outs,
-			  const char *name)
-{
-	return ikev1_out_generic_chunk(&isakmp_nonce_desc, outs, *n, name);
-}
-
-bool ikev1_ship_nonce(chunk_t *n, chunk_t *nonce,
-		      struct pbs_out *outs, const char *name)
-{
-	unpack_nonce(n, nonce);
-	return ikev1_justship_nonce(n, outs, name);
-}
-
 #ifdef USE_IKEv1
 static initiator_function *pick_initiator(struct connection *c,
 					  lset_t policy)
@@ -299,7 +202,7 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 		lset_t policy = c->policy & ~POLICY_IPSEC_MASK;
 
 		if (IS_PARENT_SA_ESTABLISHED(st))
-			libreswan_log("initiate reauthentication of IKE SA");
+			log_state(RC_LOG, st, "initiate reauthentication of IKE SA");
 
 #ifdef USE_IKEv1
 		initiator_function *initiator = pick_initiator(c, policy);

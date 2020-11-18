@@ -283,8 +283,10 @@ void jam_cur_prefix(struct jambuf *buf);
 void libreswan_exit(enum pluto_exit_code rc) NEVER_RETURNS;
 
 /*
- * XXX: Notice how "ERROR: " comes before <prefix>:
- *   ERROR: <prefix><message...>
+ * XXX: The message format is:
+ *   ERROR: <log-prefix><message...>
+ * and not:
+ *   <log-prefix>ERROR: <message...>
  */
 void log_error(struct logger *logger, const char *message, ...) PRINTF_LIKE(2);
 #define log_errno(LOGGER, ERRNO, FMT, ...)				\
@@ -295,14 +297,17 @@ void log_error(struct logger *logger, const char *message, ...) PRINTF_LIKE(2);
 	}
 
 /*
- * XXX: Notice how "FATAL ERROR: " comes before <prefix>:
- *   FATAL ERROR: <prefix><message...>
+ * XXX: The message format is:
+ *   FATAL ERROR: <log-prefix><message...>
+ * and not:
+ *   <log-prefix>FATAL ERROR: <message...>
  */
-void fatal(struct logger *logger, const char *message, ...) PRINTF_LIKE(2) NEVER_RETURNS;
-#define fatal_errno(LOGGER, ERRNO, FMT, ...)				\
+void fatal(enum pluto_exit_code rc, struct logger *logger,
+	   const char *message, ...) PRINTF_LIKE(3) NEVER_RETURNS;
+#define fatal_errno(RC, LOGGER, ERRNO, FMT, ...)			\
 	{								\
 		int e_ = ERRNO; /* save value across va args */		\
-		fatal(LOGGER, FMT". "PRI_ERRNO,				\
+		fatal(RC, LOGGER, FMT". "PRI_ERRNO,			\
 		      ##__VA_ARGS__, pri_errno(e_));			\
 	}
 

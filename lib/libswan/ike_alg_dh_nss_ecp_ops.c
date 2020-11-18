@@ -195,8 +195,9 @@ static PK11SymKey *nss_ecp_calc_shared_secret(const struct dh_desc *group,
 	 * returning a copy of the key.
 	 */
 	PK11SymKey *g_ir = key_from_symkey_bytes(temp, 0, sizeof_symkey(temp), HERE, logger);
-	DBGF(DBG_CRYPT, "NSS: extracted-key@%p from ECDH temp-key@%p (CKM_CONCATENATE_BASE_AND_KEY hack)",
-	     g_ir, temp);
+	if (DBGP(DBG_BASE)) {
+		DBG_symkey(logger, "newref ", "ecp-key", g_ir);
+	}
 
 	release_symkey(__func__, "temp", &temp);
 	SECITEM_FreeItem(&remote_pubk.u.ec.publicValue, PR_FALSE);

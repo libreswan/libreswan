@@ -86,6 +86,10 @@
 
 bool can_do_IPcomp = TRUE;  /* can system actually perform IPCOMP? */
 
+static void kernel_scan_shunts(struct fd *whackfd);
+static bool invoke_command(const char *verb, const char *verb_suffix,
+			   const char *cmd, struct logger *logger);
+
 /* test if the routes required for two different connections agree
  * It is assumed that the destination subnets agree; we are only
  * testing that the interfaces and nexthops match.
@@ -630,7 +634,9 @@ bool fmt_common_shell_out(char *buf, size_t blen, const struct connection *c,
 bool do_command(const struct connection *c,
 		const struct spd_route *sr,
 		const char *verb,
-		struct state *st)
+		struct state *st,
+		/* either st, or c's logger */
+		struct logger *logger)
 {
 	const char *verb_suffix;
 
@@ -640,7 +646,7 @@ bool do_command(const struct connection *c,
 	 */
 	if (sr->this.updown == NULL || streq(sr->this.updown, "%disabled")) {
 		dbg("skipped updown %s command - disabled per policy", verb);
-		return TRUE;
+		return true;
 	}
 	dbg("running updown command \"%s\" for verb %s ", sr->this.updown, verb);
 
@@ -661,7 +667,7 @@ bool do_command(const struct connection *c,
 			cs = "-client-v6";
 			break;
 		default:
-			loglog(RC_LOG_SERIOUS, "unknown address family");
+			log_message(RC_LOG_SERIOUS, logger, "unknown address family");
 			return FALSE;
 		}
 		verb_suffix = subnetisaddr(&sr->this.client,
@@ -671,15 +677,38 @@ bool do_command(const struct connection *c,
 
 	dbg("command executing %s%s", verb, verb_suffix);
 
-	if (kernel_ops->docommand == NULL) {
-		dbg("no do_command for method %s", kernel_ops->kern_name);
-	} else {
-		return (*kernel_ops->docommand)(c, sr, verb, verb_suffix, st);
+	char common_shell_out_str[2048];
+	if (!fmt_common_shell_out(common_shell_out_str,
+				  sizeof(common_shell_out_str), c, sr,
+				  st)) {
+		log_message(RC_LOG_SERIOUS, logger,
+			    "%s%s command too long!", verb,
+			    verb_suffix);
+		return false;
 	}
-	return TRUE;
+
+	/* must free */
+	char *cmd = alloc_printf("2>&1 "      /* capture stderr along with stdout */
+				 "PLUTO_VERB='%s%s' "
+				 "%s"         /* other stuff   */
+				 "%s",        /* actual script */
+				 verb, verb_suffix,
+				 common_shell_out_str,
+				 sr->this.updown);
+	if (cmd == NULL) {
+		log_message(RC_LOG_SERIOUS, logger,
+			    "%s%s command too long!", verb,
+			    verb_suffix);
+		return false;
+	}
+
+	bool ok = invoke_command(verb, verb_suffix, cmd, logger);
+	pfree(cmd);
+	return ok;
 }
 
-bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd)
+bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd,
+		    struct logger *logger)
 {
 #	define CHUNK_WIDTH	80	/* units for cmd logging */
 	if (DBGP(DBG_BASE)) {
@@ -724,8 +753,9 @@ bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd)
 				return TRUE;
 			}
 #endif
-			loglog(RC_LOG_SERIOUS, "unable to popen %s%s command",
-				verb, verb_suffix);
+			log_message(RC_LOG_SERIOUS, logger,
+				    "unable to popen %s%s command",
+				    verb, verb_suffix);
 			return FALSE;
 		}
 
@@ -739,10 +769,11 @@ bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd)
 
 			if (fgets(resp, sizeof(resp), f) == NULL) {
 				if (ferror(f)) {
-					LOG_ERRNO(errno, "fgets failed on output of %s%s command",
+					log_errno(logger, errno,
+						  "fgets failed on output of %s%s command",
 						  verb, verb_suffix);
 					pclose(f);
-					return FALSE;
+					return false;
 				} else {
 					passert(feof(f));
 					break;
@@ -752,8 +783,8 @@ bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd)
 
 				if (e > resp && e[-1] == '\n')
 					e[-1] = '\0'; /* trim trailing '\n' */
-				libreswan_log("%s%s output: %s", verb,
-					verb_suffix, resp);
+				log_message(RC_LOG, logger, "%s%s output: %s", verb,
+					    verb_suffix, resp);
 			}
 		}
 
@@ -762,31 +793,32 @@ bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd)
 			int r = pclose(f);
 
 			if (r == -1) {
-				LOG_ERRNO(errno, "pclose failed for %s%s command",
+				log_errno(logger, errno,
+					  "pclose failed for %s%s command",
 					  verb, verb_suffix);
 				return FALSE;
 			} else if (WIFEXITED(r)) {
 				if (WEXITSTATUS(r) != 0) {
-					loglog(RC_LOG_SERIOUS,
-						"%s%s command exited with status %d",
-						verb, verb_suffix,
-						WEXITSTATUS(r));
-					return FALSE;
+					log_message(RC_LOG_SERIOUS, logger,
+						    "%s%s command exited with status %d",
+						    verb, verb_suffix,
+						    WEXITSTATUS(r));
+					return false;
 				}
 			} else if (WIFSIGNALED(r)) {
-				loglog(RC_LOG_SERIOUS,
-					"%s%s command exited with signal %d",
-					verb, verb_suffix, WTERMSIG(r));
-				return FALSE;
+				log_message(RC_LOG_SERIOUS, logger,
+					    "%s%s command exited with signal %d",
+					    verb, verb_suffix, WTERMSIG(r));
+				return false;
 			} else {
-				loglog(RC_LOG_SERIOUS,
-					"%s%s command exited with unknown status %d",
-					verb, verb_suffix, r);
-				return FALSE;
+				log_message(RC_LOG_SERIOUS, logger,
+					    "%s%s command exited with unknown status %d",
+					    verb, verb_suffix, r);
+				return false;
 			}
 		}
 	}
-	return TRUE;
+	return true;
 }
 
 /* Check that we can route (and eroute).  Diagnose if we cannot. */
@@ -992,7 +1024,7 @@ bool trap_connection(struct connection *c, struct fd *whackfd)
 		 * ??? The test treats RT_UNROUTED_KEYED specially too.
 		 */
 		if (c->spd.routing < RT_ROUTED_TUNNEL)
-			return route_and_eroute(c, &c->spd, NULL);
+			return route_and_eroute(c, &c->spd, NULL, &logger);
 
 		return TRUE;
 
@@ -1058,8 +1090,8 @@ void migration_up(struct connection *c,  struct state *st)
 		num_ipsec_eroute++;
 #endif
 		sr->routing = RT_ROUTED_TUNNEL; /* do now so route_owner won't find us */
-		(void) do_command(c, sr, "up", st);
-		(void) do_command(c, sr, "route", st);
+		do_command(c, sr, "up", st, st->st_logger);
+		do_command(c, sr, "route", st, st->st_logger);
 	}
 }
 
@@ -1077,9 +1109,9 @@ void migration_down(struct connection *c,  struct state *st)
 
 		/* only unroute if no other connection shares it */
 		if (routed(cr) && route_owner(c, sr, NULL, NULL, NULL) == NULL) {
-			(void) do_command(c, sr, "down", st);
+			do_command(c, sr, "down", st, st->st_logger);
 			st->st_mobike_del_src_ip = true;
-			(void) do_command(c, sr, "unroute", st);
+			do_command(c, sr, "unroute", st, st->st_logger);
 			st->st_mobike_del_src_ip = false;
 		}
 	}
@@ -1104,8 +1136,10 @@ void unroute_connection(struct connection *c)
 		sr->routing = RT_UNROUTED; /* do now so route_owner won't find us */
 
 		/* only unroute if no other connection shares it */
-		if (routed(cr) && route_owner(c, sr, NULL, NULL, NULL) == NULL)
-			(void) do_command(c, sr, "unroute", NULL);
+		if (routed(cr) && route_owner(c, sr, NULL, NULL, NULL) == NULL) {
+			struct logger logger = CONNECTION_LOGGER(c, null_fd);
+			do_command(c, sr, "unroute", NULL, &logger);
+		}
 	}
 }
 
@@ -2439,11 +2473,6 @@ const struct kernel_ops *kernel_ops =
 
 deltatime_t bare_shunt_interval = DELTATIME_INIT(SHUNT_SCAN_INTERVAL);
 
-static void kernel_scan_shunts(struct fd *unused_whackfd UNUSED)
-{
-	kernel_ops->scan_shunts();
-}
-
 void init_kernel(void)
 {
 	struct utsname un;
@@ -2673,8 +2702,9 @@ bool install_inbound_ipsec_sa(struct state *st)
  * On failure, steps will be unwound.
  */
 bool route_and_eroute(struct connection *c,
-		struct spd_route *sr,
-		struct state *st)
+		      struct spd_route *sr,
+		      struct state *st/*can be NULL*/,
+		      struct logger *logger/*st or c */)
 {
 	dbg("route_and_eroute() for proto %d, and source port %d dest port %d",
 	    sr->this.protocol, sr->this.port, sr->that.port);
@@ -2764,7 +2794,7 @@ bool route_and_eroute(struct connection *c,
 		 */
 		firewall_notified = st == NULL || /* not a tunnel eroute */
 			sr->eroute_owner != SOS_NOBODY || /* already notified */
-			do_command(c, sr, "up", st); /* go ahead and notify */
+			do_command(c, sr, "up", st, logger); /* go ahead and notify */
 	}
 
 	/* install the route */
@@ -2777,9 +2807,9 @@ bool route_and_eroute(struct connection *c,
 		/* we're in trouble -- don't do routing */
 	} else if (ro == NULL) {
 		/* a new route: no deletion required, but preparation is */
-		if (!do_command(c, sr, "prepare", st))
+		if (!do_command(c, sr, "prepare", st, logger))
 			dbg("prepare command returned an error");
-		route_installed = do_command(c, sr, "route", st);
+		route_installed = do_command(c, sr, "route", st, logger);
 		if (!route_installed)
 			dbg("route command returned an error");
 	} else if (routed(sr->routing) ||
@@ -2798,18 +2828,18 @@ bool route_and_eroute(struct connection *c,
 		 */
 		if (sameaddr(&sr->this.host_nexthop,
 				&esr->this.host_nexthop)) {
-			if (!do_command(ro, sr, "unroute", st)) {
+			if (!do_command(ro, sr, "unroute", st, logger)) {
 				dbg("unroute command returned an error");
 			}
-			route_installed = do_command(c, sr, "route", st);
+			route_installed = do_command(c, sr, "route", st, logger);
 			if (!route_installed)
 				dbg("route command returned an error");
 		} else {
-			route_installed = do_command(c, sr, "route", st);
+			route_installed = do_command(c, sr, "route", st, logger);
 			if (!route_installed)
 				dbg("route command returned an error");
 
-			if (!do_command(ro, sr, "unroute", st)) {
+			if (!do_command(ro, sr, "unroute", st, logger)) {
 				dbg("unroute command returned an error");
 			}
 		}
@@ -2885,7 +2915,7 @@ bool route_and_eroute(struct connection *c,
 	} else {
 		/* Failure!  Unwind our work. */
 		if (firewall_notified && sr->eroute_owner == SOS_NOBODY) {
-			if (!do_command(c, sr, "down", st))
+			if (!do_command(c, sr, "down", st, logger))
 				dbg("down command returned an error");
 		}
 
@@ -3050,7 +3080,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 
 		if (sr->eroute_owner != st->st_serialno &&
 			sr->routing != RT_UNROUTED_KEYED) {
-			if (!route_and_eroute(st->st_connection, sr, st)) {
+			if (!route_and_eroute(st->st_connection, sr, st, st->st_logger)) {
 				delete_ipsec_sa(st);
 				/*
 				 * XXX go and unroute any SRs that were
@@ -3153,7 +3183,7 @@ void delete_ipsec_sa(struct state *st)
 						c->remotepeertype == CISCO)
 						continue;
 
-					(void) do_command(c, sr, "down", st);
+					(void) do_command(c, sr, "down", st, st->st_logger);
 					if ((c->policy & POLICY_OPPORTUNISTIC) &&
 							c->kind == CK_INSTANCE) {
 						/*
@@ -3411,8 +3441,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 	return TRUE;
 }
 
-/* XXX move to proper kernel_ops in kernel_netlink */
-void expire_bare_shunts(void)
+static void expire_bare_shunts(struct fd *whackfd, bool all)
 {
 	dbg("checking for aged bare shunts from shunt table to expire");
 	for (struct bare_shunt **bspp = &bare_shunts; *bspp != NULL; ) {
@@ -3420,13 +3449,13 @@ void expire_bare_shunts(void)
 		time_t age = deltasecs(monotimediff(mononow(), bsp->last_activity));
 		struct connection *c = NULL;
 
-		if (age > deltasecs(pluto_shunt_lifetime)) {
+		if (age > deltasecs(pluto_shunt_lifetime) || all) {
 			dbg_bare_shunt("expiring old", bsp);
 			if (bsp->from_cn != NULL) {
 				c = conn_by_name(bsp->from_cn, FALSE);
 				if (c != NULL) {
 					if (!shunt_eroute(c, &c->spd, RT_ROUTED_PROSPECTIVE, ERO_ADD, "add")) {
-						libreswan_log("trap shunt install failed ");
+						log_global(RC_LOG, whackfd, "trap shunt install failed ");
 					}
 				}
 			}
@@ -3435,7 +3464,7 @@ void expire_bare_shunts(void)
 					       ntohl(bsp->said.spi),
 					       (bsp->from_cn == NULL ? "expire_bare_shunt" :
 						"IGNORE_ON_XFRM: expire_bare_shunt"))) {
-				    log_global(RC_LOG_SERIOUS, null_fd, "failed to delete bare shunt");
+				    log_global(RC_LOG_SERIOUS, whackfd, "failed to delete bare shunt");
 			}
 			passert(bsp != *bspp);
 		} else {
@@ -3443,4 +3472,16 @@ void expire_bare_shunts(void)
 			bspp = &bsp->next;
 		}
 	}
+}
+
+static void kernel_scan_shunts(struct fd *whackfd)
+{
+	expire_bare_shunts(whackfd, false/*not-all*/);
+}
+
+void shutdown_kernel(void)
+{
+	if (kernel_ops->shutdown != NULL)
+		kernel_ops->shutdown();
+	expire_bare_shunts(null_fd, true/*all*/);
 }

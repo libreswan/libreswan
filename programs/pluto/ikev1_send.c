@@ -179,12 +179,12 @@ static bool send_or_resend_v1_ike_msg_from_state(struct state *st,
 						 bool resending)
 {
 	if (st->st_interface == NULL) {
-		libreswan_log("Cannot send packet - interface vanished!");
+		log_state(RC_LOG, st, "Cannot send packet - interface vanished!");
 		return FALSE;
 	}
 	/* another bandaid */
 	if (st->st_v1_tpacket.ptr == NULL) {
-		libreswan_log("Cannot send packet - st_v1_tpacket.ptr is NULL");
+		log_state(RC_LOG, st, "Cannot send packet - st_v1_tpacket.ptr is NULL");
 		return false;
 	}
 

@@ -13,5 +13,9 @@ done
 # what took so long?
 if [ $count -eq 0 ]
 then
+   if echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1 ; then
+	echo "pluto in namespace failed to start - check logs or output"
+   else
 	systemctl --full status ipsec.service
+   fi
 fi

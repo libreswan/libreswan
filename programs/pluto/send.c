@@ -42,6 +42,7 @@
 #include "ip_sockaddr.h"
 #include "ip_protocol.h"
 #include "iface.h"
+#include "impair_message.h"
 
 /* send_ike_msg logic is broken into layers.
  * The rest of the system thinks it is simple.
@@ -71,6 +72,8 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 		 ip_address remote_endpoint,
 		 chunk_t a, chunk_t b)
 {
+	struct logger logger[1] = { cur_logger(), };
+
 	/* NOTE: on system with limited stack, buf could be made static */
 	uint8_t buf[MAX_OUTPUT_UDP_SIZE];
 
@@ -122,7 +125,6 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 
 	const uint8_t *ptr;
 	size_t len = natt_bonus + a.len + b.len;
-	ssize_t wlen;
 
 	if (len > MAX_OUTPUT_UDP_SIZE) {
 		loglog(RC_LOG_SERIOUS, "send_ike_msg(): really too big %zu bytes", len);
@@ -159,25 +161,30 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 		DBG_dump(NULL, ptr, len);
 	}
 
-	wlen = interface->io->write_packet(interface, ptr, len, &remote_endpoint);
-
-	if (wlen != (ssize_t)len) {
-		if (!just_a_keepalive) {
-			endpoint_buf lb;
-			endpoint_buf rb;
-			LOG_ERRNO(errno, "send on %s from %s to %s using %s failed in %s",
-				  interface->ip_dev->id_rname,
-				  str_endpoint(&interface->local_endpoint, &lb),
-				  str_sensitive_endpoint(&remote_endpoint, &rb),
-				  interface->protocol->name,
-				  where);
+	if (!impair_outgoing_message(shunk2(ptr, len), logger)) {
+		ssize_t wlen = interface->io->write_packet(interface, ptr, len, &remote_endpoint);
+		if (wlen != (ssize_t)len) {
+			if (!just_a_keepalive) {
+				endpoint_buf lb;
+				endpoint_buf rb;
+				LOG_ERRNO(errno, "send on %s from %s to %s using %s failed in %s",
+					  interface->ip_dev->id_rname,
+					  str_endpoint(&interface->local_endpoint, &lb),
+					  str_sensitive_endpoint(&remote_endpoint, &rb),
+					  interface->protocol->name,
+					  where);
+			}
+			return false;
 		}
-		return FALSE;
+		pstats_ike_out_bytes += len;
 	}
 
-	pstats_ike_out_bytes += len;
-
-	/* Send a duplicate packet when this impair is enabled - used for testing */
+	/*
+	 * For testing: send a duplicate packet when this impair is
+	 * enabled.
+	 *
+	 * XXX: sends the packet out using UDP?  Merge with above?
+	 */
 	if (impair.jacob_two_two) {
 		/* sleep for half a second, and second another packet */
 		usleep(500000);
@@ -191,7 +198,7 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 			str_endpoint(&remote_endpoint, &b));
 
 		ip_sockaddr remote_sa = sockaddr_from_endpoint(&remote_endpoint);
-		wlen = sendto(interface->fd, ptr, len, 0, &remote_sa.sa.sa, remote_sa.len);
+		ssize_t wlen = sendto(interface->fd, ptr, len, 0, &remote_sa.sa.sa, remote_sa.len);
 		if (wlen != (ssize_t)len) {
 			if (!just_a_keepalive) {
 				LOG_ERRNO(errno,

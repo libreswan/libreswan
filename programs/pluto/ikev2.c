@@ -2449,7 +2449,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		 * If a request, should it send an un-encrypted
 		 * v2N_INVALID_SYNTAX?
 		 */
-		libreswan_log("no useful state microcode entry found for incoming packet");
+		log_state(RC_LOG, st, "no useful state microcode entry found for incoming packet");
 		/* "dropping message with no matching microcode" */
 		return;
 	}
@@ -2578,7 +2578,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 {
 	if (depth > 10) {
 		/* should not happen, but it would be nice to survive */
-		libreswan_log("decoding IKEv2 peer ID failed due to confusion");
+		log_state(RC_LOG, &ike->sa, "decoding IKEv2 peer ID failed due to confusion");
 		return FALSE;
 	}
 	bool initiator = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0;
@@ -2588,7 +2588,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 		md->chain[ISAKMP_NEXT_v2IDr] : md->chain[ISAKMP_NEXT_v2IDi];
 
 	if (id_peer == NULL) {
-		libreswan_log("IKEv2 mode no peer ID");
+		log_state(RC_LOG, &ike->sa, "IKEv2 mode no peer ID");
 		return FALSE;
 	}
 
@@ -2597,7 +2597,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 	struct id peer_id;
 
 	if (!extract_peer_id(hik, &peer_id, &id_peer->pbs)) {
-		libreswan_log("IKEv2 mode peer ID extraction failed");
+		log_state(RC_LOG, &ike->sa, "IKEv2 mode peer ID extraction failed");
 		return FALSE;
 	}
 
@@ -2613,7 +2613,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 			if (!extract_peer_id(tarzan_pld->payload.v2id.isai_type,
 					&tarzan_id, &tarzan_pld->pbs))
 			{
-				libreswan_log("IDr payload extraction failed");
+				log_state(RC_LOG, &ike->sa, "IDr payload extraction failed");
 				return FALSE;
 			}
 			tip = &tarzan_id;
@@ -2663,14 +2663,15 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 		    c->spd.that.id.kind != ID_FROMCERT) {
 			id_buf expect, found;
 
-			loglog(RC_LOG_SERIOUS,
-				"we require IKEv2 peer to have ID '%s', but peer declares '%s'",
-				str_id(&c->spd.that.id, &expect),
-				str_id(&peer_id, &found));
+			log_state(RC_LOG_SERIOUS, &ike->sa,
+				  "we require IKEv2 peer to have ID '%s', but peer declares '%s'",
+				  str_id(&c->spd.that.id, &expect),
+				  str_id(&peer_id, &found));
 			return FALSE;
 		} else if (c->spd.that.id.kind == ID_FROMCERT) {
 			if (peer_id.kind != ID_DER_ASN1_DN) {
-				loglog(RC_LOG_SERIOUS, "peer ID is not a certificate type");
+				log_state(RC_LOG_SERIOUS, &ike->sa,
+					  "peer ID is not a certificate type");
 				return FALSE;
 			}
 			duplicate_id(&c->spd.that.id, &peer_id);
@@ -2725,14 +2726,16 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 				}
 				/* can we continue with what we had? */
 				if (must_switch) {
-					loglog(RC_LOG_SERIOUS, "Peer ID '%s' is not specified on the certificate SubjectAltName (SAN) and no better connection found",
-					      str_id(&peer_id, &peer_str));
+					log_state(RC_LOG_SERIOUS, &ike->sa,
+						  "Peer ID '%s' is not specified on the certificate SubjectAltName (SAN) and no better connection found",
+						  str_id(&peer_id, &peer_str));
 					return FALSE;
 				}
 				/* if X.509, we should have valid peer/san */
 				if (ike->sa.st_remote_certs.verified != NULL && ike->sa.st_peer_alt_id == FALSE) {
-					loglog(RC_LOG_SERIOUS, "Peer ID '%s' is not specified on the certificate SubjectAltName (SAN) and no better connection found",
-					      str_id(&peer_id, &peer_str));
+					log_state(RC_LOG_SERIOUS, &ike->sa,
+						  "Peer ID '%s' is not specified on the certificate SubjectAltName (SAN) and no better connection found",
+						  str_id(&peer_id, &peer_str));
 					return FALSE;
 				}
 				if (!ike->sa.st_peer_alt_id &&
@@ -2741,12 +2744,14 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 				{
 					if (LIN(POLICY_AUTH_NULL, c->policy) &&
 					    tip != NULL && tip->kind == ID_NULL) {
-						libreswan_log("Peer ID '%s' expects us to have ID_NULL and connection allows AUTH_NULL - allowing",
-							      str_id(&peer_id, &peer_str));
+						log_state(RC_LOG, &ike->sa,
+							  "Peer ID '%s' expects us to have ID_NULL and connection allows AUTH_NULL - allowing",
+							  str_id(&peer_id, &peer_str));
 						ike->sa.st_peer_wants_null = TRUE;
 					} else {
 						id_buf peer_str;
-						loglog(RC_LOG_SERIOUS, "Peer ID '%s' mismatched on first found connection and no better connection found",
+						log_state(RC_LOG_SERIOUS, &ike->sa,
+							  "Peer ID '%s' mismatched on first found connection and no better connection found",
 							      str_id(&peer_id, &peer_str));
 						return FALSE;
 					}
@@ -2755,15 +2760,11 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 				}
 			} else if (r != c) {
 				/* r is an improvement on c -- replace */
-
-				char b1[CONN_INST_BUF];
-				char b2[CONN_INST_BUF];
-
-				libreswan_log("switched from \"%s\"%s to \"%s\"%s",
-					c->name,
-					fmt_conn_instance(c, b1),
-					r->name,
-					fmt_conn_instance(r, b2));
+				connection_buf cb, rb;
+				log_state(RC_LOG, &ike->sa,
+					  "switched from "PRI_CONNECTION" to "PRI_CONNECTION,
+					  pri_connection(c, &cb),
+					  pri_connection(r, &rb));
 				if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
 					/* instantiate it, filling in peer's ID */
 					r = rw_instantiate(r, &c->spd.that.host_addr,
@@ -2776,8 +2777,9 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 				return decode_peer_id_counted(ike, md, depth + 1);
 			} else if (must_switch) {
 					id_buf peer_str;
-					loglog(RC_LOG_SERIOUS, "Peer ID '%s' mismatched on first found connection and no better connection found",
-							      str_id(&peer_id, &peer_str));
+					log_state(RC_LOG_SERIOUS, &ike->sa,
+						  "Peer ID '%s' mismatched on first found connection and no better connection found",
+						  str_id(&peer_id, &peer_str));
 					return FALSE;
 			}
 
@@ -2799,9 +2801,10 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 
 	if (!(c->policy & POLICY_OPPORTUNISTIC)) {
 		id_buf idbuf;
-		libreswan_log("IKEv2 mode peer ID is %s: '%s'",
-			      enum_show(&ikev2_idtype_names, hik),
-			      str_id(&peer_id, &idbuf));
+		log_state(RC_LOG, &ike->sa,
+			  "IKEv2 mode peer ID is %s: '%s'",
+			  enum_show(&ikev2_idtype_names, hik),
+			  str_id(&peer_id, &idbuf));
 	} else if (DBGP(DBG_BASE)) {
 		id_buf idbuf;
 		DBG_log("IKEv2 mode peer ID is %s: '%s'",
@@ -2904,16 +2907,16 @@ void log_ipsec_sa_established(const char *m, const struct state *st)
 	const struct traffic_selector *a = &st->st_ts_this;
 	const struct traffic_selector *b = &st->st_ts_that;
 	range_buf ba, bb;
-	libreswan_log("%s [%s:%d-%d %d] -> [%s:%d-%d %d]",
-			m,
-		      str_range(&a->net, &ba),
-			a->startport,
-			a->endport,
-			a->ipprotoid,
-		      str_range(&b->net, &bb),
-			b->startport,
-			b->endport,
-			b->ipprotoid);
+	log_state(RC_LOG, st, "%s [%s:%d-%d %d] -> [%s:%d-%d %d]",
+		  m,
+		  str_range(&a->net, &ba),
+		  a->startport,
+		  a->endport,
+		  a->ipprotoid,
+		  str_range(&b->net, &bb),
+		  b->startport,
+		  b->endport,
+		  b->ipprotoid);
 }
 
 static void ikev2_child_emancipate(struct ike_sa *from, struct child_sa *to,
@@ -3210,12 +3213,13 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 				if (bs != NULL) {
 					dbg("deleting old bare shunt");
 					if (!delete_bare_shunt(&c->spd.this.host_addr,
-						&c->spd.that.host_addr,
-						c->spd.this.protocol,
-						SPI_PASS /* else its not bare */,
-						/* this text is used to signal the low level :/ */
-						"IGNORE_ON_XFRM: installed IPsec SA replaced old bare shunt")) {
-							loglog(RC_LOG_SERIOUS, "Failed to delete old bare shunt");
+							       &c->spd.that.host_addr,
+							       c->spd.this.protocol,
+							       SPI_PASS /* else its not bare */,
+							       /* this text is used to signal the low level :/ */
+							       "IGNORE_ON_XFRM: installed IPsec SA replaced old bare shunt")) {
+						log_state(RC_LOG_SERIOUS, &ike->sa,
+							  "Failed to delete old bare shunt");
 					}
 				}
 			}
@@ -3647,8 +3651,8 @@ void jam_v2_stf_status(struct jambuf *buf, unsigned status)
 
 /* used by parent and child to emit v2N_IPCOMP_SUPPORTED if appropriate */
 bool emit_v2N_compression(struct state *cst,
-			bool OK,
-			pb_stream *s)
+			  bool OK,
+			  pb_stream *s)
 {
 	const struct connection *c = cst->st_connection;
 
@@ -3664,7 +3668,8 @@ bool emit_v2N_compression(struct state *cst,
 			c_spi = (uint16_t)ntohl(cst->st_ipcomp.our_spi);
 			if (c_spi < IPCOMP_FIRST_NEGOTIATED) {
 				/* get_my_cpi() failed */
-				loglog(RC_LOG_SERIOUS, "kernel failed to calculate compression CPI (CPI=%d)", c_spi);
+				log_state(RC_LOG_SERIOUS, cst,
+					  "kernel failed to calculate compression CPI (CPI=%d)", c_spi);
 				return false;
 			}
 			dbg("calculated compression CPI=%d", c_spi);

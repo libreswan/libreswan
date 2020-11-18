@@ -83,7 +83,7 @@ int send_crl_to_import(uint8_t *der, size_t len, const char *url, struct logger 
 #endif
 
 	if ((size_t)n > sizeof(crl_path_space) - sizeof(crl_name)) {
-		fatal(logger, "path to %s is too long", crl_name);
+		fatal(PLUTO_EXIT_FAIL, logger, "path to %s is too long", crl_name);
 	}
 
 	while (n > 0 && crl_path_space[n - 1] != '/')

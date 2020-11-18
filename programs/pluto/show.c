@@ -429,7 +429,7 @@ void binlog_state(struct state *st, enum state_kind new_state)
 		 st->st_ref_peer == IPSEC_SAREF_NULL ? 0u :
 		 IPsecSAref2NFmark(st->st_ref_peer) | IPSEC_NFMARK_IS_SAREF_BIT);
 	if (system(buf) == -1) {
-		loglog(RC_LOG_SERIOUS, "statsbin= failed to send status update notification");
+		log_state(RC_LOG_SERIOUS, st, "statsbin= failed to send status update notification");
 	}
 	dbg("log_state for connection %s completed", conn->name);
 }

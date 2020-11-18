@@ -103,7 +103,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 				if (after) {
 					ipstr_buf b;
 
-					loglog(RC_LOG_SERIOUS,
+					log_state(RC_LOG_SERIOUS, st,
 					       "IP interfaces %s and %s share address %s!",
 					       ifp->name, vfp->name,
 					       ipstr(&ifp->addr, &b));
@@ -129,36 +129,6 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 		rifaces = t->next;
 		pfree(t);
 	}
-}
-
-static bool bsdkame_do_command(const struct connection *c, const struct spd_route *sr,
-			       const char *verb, const char *verb_suffix, struct state *st)
-{
-	char cmd[2048]; /* arbitrary limit on shell command length */
-	char common_shell_out_str[2048];
-
-	if (!fmt_common_shell_out(common_shell_out_str,
-				  sizeof(common_shell_out_str), c, sr,
-				  st)) {
-		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
-		       verb_suffix);
-		return FALSE;
-	}
-
-	if (-1 == snprintf(cmd, sizeof(cmd),
-			   "2>&1 "      /* capture stderr along with stdout */
-			   "PLUTO_VERB='%s%s' "
-			   "%s"         /* other stuff   */
-			   "%s",        /* actual script */
-			   verb, verb_suffix,
-			   common_shell_out_str,
-			   sr->this.updown)) {
-		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
-		       verb_suffix);
-		return FALSE;
-	}
-
-	return invoke_command(verb, verb_suffix, cmd);
 }
 
 static void bsdkame_algregister(int satype, int supp_exttype,
@@ -446,7 +416,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 
 	if (ret < 0) {
 		endpoint_buf s, d;
-		libreswan_log("ret = %d from send_spdadd: %s addr=%s/%s seq=%u opname=eroute", ret,
+		log_state(RC_LOG, st, "ret = %d from send_spdadd: %s addr=%s/%s seq=%u opname=eroute", ret,
 			      ipsec_strerror(),
 			      str_endpoint(&this_client->addr, &s),
 			      str_endpoint(&that_client->addr, &d),
@@ -646,7 +616,7 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 
 		if (ret < 0) {
 			endpoint_buf s, d;
-			libreswan_log("ret = %d from send_spdadd: %s addr=%s/%s seq=%u opname=%s", ret,
+			log_state(RC_LOG, st, "ret = %d from send_spdadd: %s addr=%s/%s seq=%u opname=%s", ret,
 				      ipsec_strerror(),
 				      str_endpoint(&mine->addr, &s),
 				      str_endpoint(&peers->addr, &d),
@@ -707,7 +677,7 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 
 		if (ret < 0) {
 			endpoint_buf s, d;
-			libreswan_log("ret = %d from send_spdadd: %s addr=%s/%s seq=%u opname=%s", ret,
+			log_state(RC_LOG, st, "ret = %d from send_spdadd: %s addr=%s/%s seq=%u opname=%s", ret,
 				      ipsec_strerror(),
 				      str_endpoint(&mine->addr, &s),
 				      str_endpoint(&peers->addr, &d),
@@ -840,7 +810,7 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace)
 		satype = SADB_X_SATYPE_IPCOMP;
 		break;
 	case ET_IPIP:
-		libreswan_log("in %s() ignoring nonsensical ET_IPIP", __func__);
+		log_state(RC_LOG, st, "in %s() ignoring nonsensical ET_IPIP", __func__);
 		return true;
 
 	default:
@@ -850,7 +820,7 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace)
 	}
 
 	if ((sa->enckeylen + sa->authkeylen) > sizeof(keymat)) {
-		libreswan_log(
+		log_state(RC_LOG, st, 
 			"Key material is too big for kernel interface: %d>%zu",
 			(sa->enckeylen + sa->authkeylen),
 			sizeof(keymat));
@@ -915,7 +885,7 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace)
 	bsdkame_consume_pfkey(pfkeyfd, pfkey_seq);
 
 	if (ret < 0) {
-		libreswan_log("ret = %d from add_sa: %s seq=%d", ret,
+		log_state(RC_LOG, st, "ret = %d from add_sa: %s seq=%d", ret,
 			      ipsec_strerror(), pfkey_seq);
 		return FALSE;
 	}
@@ -964,7 +934,7 @@ static bool bsdkame_except_socket(int socketfd, int family)
 		break;
 #endif
 	default:
-		libreswan_log("unsupported address family (%d)", family);
+		log_state(RC_LOG, st, "unsupported address family (%d)", family);
 		return FALSE;
 	}
 
@@ -975,14 +945,14 @@ static bool bsdkame_except_socket(int socketfd, int family)
 	policy.sadb_x_policy_dir = IPSEC_DIR_INBOUND;
 	if (setsockopt(socketfd, level, optname, &policy,
 		       sizeof(policy)) == -1) {
-		libreswan_log("bsdkame except socket setsockopt: %s", strerror(
+		log_state(RC_LOG, st, "bsdkame except socket setsockopt: %s", strerror(
 				      errno));
 		return FALSE;
 	}
 	policy.sadb_x_policy_dir = IPSEC_DIR_OUTBOUND;
 	if (setsockopt(socketfd, level, optname, &policy,
 		       sizeof(policy)) == -1) {
-		libreswan_log("bsdkame except socket setsockopt: %s", strerror(
+		log_state(RC_LOG, st, "bsdkame except socket setsockopt: %s", strerror(
 				      errno));
 		return FALSE;
 	}
@@ -1011,11 +981,9 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	.del_sa = bsdkame_del_sa,
 	.get_spi = NULL,
 	.eroute_idle = bsdkame_was_eroute_idle,
-	.scan_shunts = expire_bare_shunts,
 	.init = bsdkame_init_pfkey,
 	.shutdown = NULL,
 	.exceptsocket = bsdkame_except_socket,
-	.docommand = bsdkame_do_command,
 	.remove_orphaned_holds = bsdkame_remove_orphaned_holds,
 	.process_raw_ifaces = bsdkame_process_raw_ifaces,
 	.overlap_supported = FALSE,
