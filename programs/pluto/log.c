@@ -363,30 +363,6 @@ bool whack_prompt_for(struct state *st, const char *prompt,
 	return true;
 }
 
-static void whack_raw(struct jambuf *buf, enum rc_type rc)
-{
-	/*
-	 * Override more specific STATE WHACKFD with global whack.
-	 *
-	 * Why?  Because it matches existing behaviour (which is a
-	 * pretty lame reason).
-	 *
-	 * But does it make a difference?  Maybe when there's one
-	 * whack attached to an establishing state while
-	 * simultaneously there's a whack trying to delete that same
-	 * state?
-	 */
-	passert(in_main_thread()); /* whack_log_fd is global */
-	const struct fd *whackfd = (fd_p(whack_log_fd) ? whack_log_fd :
-		    cur_state != NULL ? cur_state->st_whack_sock :
-		    null_fd);
-	if (!fd_p(whackfd)) {
-		return;
-	}
-
-	jambuf_to_whack(buf, whackfd, rc);
-}
-
 void jam_cur_prefix(struct jambuf *buf)
 {
 	if (!in_main_thread()) {
@@ -420,7 +396,7 @@ void jambuf_to_error_stream(struct jambuf *buf)
 	log_raw(LOG_ERR, "", buf);
 	if (in_main_thread()) {
 		/* don't whack-log from helper threads */
-		whack_raw(buf, RC_LOG_SERIOUS);
+		jambuf_to_whack(buf, whack_log_fd, RC_LOG_SERIOUS);
 	}
 }
 
@@ -434,7 +410,7 @@ void jambuf_to_default_streams(struct jambuf *buf, enum rc_type rc)
 	log_raw(LOG_WARNING, "", buf);
 	if (in_main_thread()) {
 		/* don't whack-log from helper threads */
-		whack_raw(buf, rc);
+		jambuf_to_whack(buf, whack_log_fd, rc);
 	}
 }
 
