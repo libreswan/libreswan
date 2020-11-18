@@ -252,19 +252,6 @@ void jambuf_to_error_stream(struct jambuf *buf);
 void jambuf_to_debug_stream(struct jambuf *buf);
 
 /*
- * Log to the default stream(s):
- *
- * - for pluto this means 'syslog', and when connected, whack.
- *
- * - for standalone tools, this means stderr, but only when enabled.
- *
- * There are two variants, the first specify the RC (prefix sent to
- * whack), while the second default RC to RC_LOG.
- */
-
-void jam_cur_prefix(struct jambuf *buf);
-
-/*
  * Wrap <message> in a prefix and suffix where the suffix contains
  * errno and message.
  *

@@ -321,7 +321,6 @@ void jambuf_to_default_streams(struct jambuf *buf, enum rc_type rc);
 		/* ERROR: <prefix>: <message>. Errno N: <errmess> */	\
 		JAMBUF(buf) {						\
 			jam(buf, "ERROR: ");				\
-			jam_cur_prefix(buf);				\
 			jam(buf, MESSAGE, ##__VA_ARGS__);		\
 			jam_string(buf, ".");				\
 			jam(buf, " "PRI_ERRNO, pri_errno(e_));		\
@@ -336,7 +335,6 @@ void jambuf_to_default_streams(struct jambuf *buf, enum rc_type rc);
 		/* FATAL ERROR: <cur-prefix><message> */		\
 		JAMBUF(buf) {						\
 			jam(buf, "FATAL ERROR: ");			\
-			jam_cur_prefix(buf);				\
 			jam(buf, MESSAGE". "PRI_ERRNO,			\
 			    ##__VA_ARGS__, pri_errno(e_));		\
 			jambuf_to_error_stream(buf);			\

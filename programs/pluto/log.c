@@ -363,17 +363,6 @@ bool whack_prompt_for(struct state *st, const char *prompt,
 	return true;
 }
 
-void jam_cur_prefix(struct jambuf *buf)
-{
-	if (!in_main_thread()) {
-		if (DBGP(DBG_BASE)) {
-			jam(buf, "[EXPECTATION FAILED: in main thread] ");
-		}
-		return;
-	}
-	return;
-}
-
 static void log_raw(int severity, const char *prefix, struct jambuf *buf)
 {
 	/* assume there's a logging prefix; normally there is */
@@ -922,7 +911,6 @@ void log_state(lset_t rc_flags, const struct state *st,
 void loglog(enum rc_type rc, const char *fmt, ...)
 {
 	JAMBUF(buf) {
-		jam_cur_prefix(buf);
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);

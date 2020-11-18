@@ -28,7 +28,6 @@ void log_va_list(lset_t rc_flags, const struct logger *logger,
 	} else {
 		/* should not happen; but get the word out */
 		JAMBUF(buf) {
-			jam_cur_prefix(buf);
 			if (DBGP(DBG_BASE)) {
 				/* debugging so complain */
 				jam(buf, "[EXPECTATION FAILED: logger != NULL] ");
