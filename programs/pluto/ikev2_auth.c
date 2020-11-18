@@ -310,7 +310,7 @@ bool emit_v2_auth(struct ike_sa *ike,
 	enum keyword_authby authby = v2_auth_by(ike);
 
 	struct ikev2_auth a = {
-		.isaa_critical = build_ikev2_critical(false),
+		.isaa_critical = build_ikev2_critical(false, ike->sa.st_logger),
 		.isaa_auth_method = v2_auth_method(ike, authby),
 	};
 

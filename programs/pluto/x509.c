@@ -1305,7 +1305,7 @@ stf_status ikev2_send_cert(const struct state *st, pb_stream *outpbs)
 			return STF_INTERNAL_ERROR;
 		}
 		struct ikev2_cert pkcs7_hdr = {
-			.isac_critical = build_ikev2_critical(false),
+			.isac_critical = build_ikev2_critical(false, st->st_logger),
 			.isac_enc = CERT_PKCS7_WRAPPED_X509,
 		};
 		pb_stream cert_pbs;
@@ -1349,7 +1349,7 @@ stf_status ikev2_send_cert(const struct state *st, pb_stream *outpbs)
 #endif
 
 	const struct ikev2_cert certhdr = {
-		.isac_critical = build_ikev2_critical(false),
+		.isac_critical = build_ikev2_critical(false, st->st_logger),
 		.isac_enc = mycert.ty,
 	};
 

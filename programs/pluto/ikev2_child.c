@@ -117,7 +117,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		/* send NONCE */
 		struct ikev2_generic in = {
-			.isag_critical = build_ikev2_critical(false),
+			.isag_critical = build_ikev2_critical(false, ike->sa.st_logger),
 		};
 		pb_stream pb_nr;
 		if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &pb_nr) ||

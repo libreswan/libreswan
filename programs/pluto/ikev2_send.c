@@ -102,7 +102,7 @@ bool emit_v2UNKNOWN(const char *victim, enum isakmp_xchg_types exchange_type,
 		    enum_short_name(&ikev2_exchange_names, exchange_type),
 		    victim);
 	struct ikev2_generic gen = {
-		.isag_critical = build_ikev2_critical(impair.unknown_v2_payload_critical),
+		.isag_critical = build_ikev2_critical(impair.unknown_v2_payload_critical, outs->out_logger),
 	};
 	struct pbs_out pbs;
 	d = pbs_out_struct(outs, &ikev2_unknown_payload_desc, &gen, sizeof(gen), &pbs);
@@ -168,10 +168,10 @@ bool emit_v2V(const char *string, pb_stream *outs)
 
 /* emit a v2 Notification payload, with optional SA and optional sub-payload */
 bool emit_v2Nsa_pl(v2_notification_t ntype,
-		enum ikev2_sec_proto_id protoid,
-		const ipsec_spi_t *spi, /* optional */
-		pb_stream *outs,
-		pb_stream *payload_pbs /* optional */)
+		   enum ikev2_sec_proto_id protoid,
+		   const ipsec_spi_t *spi, /* optional */
+		   struct pbs_out *outs,
+		   struct pbs_out *payload_pbs /* optional */)
 {
 	/* See RFC 5996 section 3.10 "Notify Payload" */
 	passert(protoid == PROTO_v2_RESERVED || protoid == PROTO_v2_AH || protoid == PROTO_v2_ESP);
@@ -194,7 +194,7 @@ bool emit_v2Nsa_pl(v2_notification_t ntype,
 	dbg("adding a v2N Payload");
 
 	struct ikev2_notify n = {
-		.isan_critical = build_ikev2_critical(false),
+		.isan_critical = build_ikev2_critical(false, outs->out_logger),
 		.isan_protoid = protoid,
 		.isan_spisize = spi != NULL ? sizeof(*spi) : 0,
 		.isan_type = ntype,

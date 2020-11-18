@@ -1537,7 +1537,7 @@ bool ikev2_emit_sa_proposals(struct pbs_out *pbs,
 
 	/* SA header out */
 	struct ikev2_sa sa = {
-		.isasa_critical = build_ikev2_critical(false),
+		.isasa_critical = build_ikev2_critical(false, pbs->out_logger),
 	};
 	pb_stream sa_pbs;
 	if (!out_struct(&sa, &ikev2_sa_desc, pbs, &sa_pbs))

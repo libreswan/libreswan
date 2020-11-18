@@ -766,7 +766,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	{
 		pb_stream pb;
 		struct ikev2_generic in = {
-			.isag_critical = build_ikev2_critical(false),
+			.isag_critical = build_ikev2_critical(false, ike->sa.st_logger),
 		};
 
 		if (!out_struct(&in, &ikev2_nonce_desc, &rbody, &pb) ||
@@ -1113,7 +1113,7 @@ static stf_status ikev2_parent_inI1outR1_continue(struct state *st,
 	{
 		pb_stream pb;
 		struct ikev2_generic in = {
-			.isag_critical = build_ikev2_critical(false),
+			.isag_critical = build_ikev2_critical(false, st->st_logger),
 		};
 
 		if (!out_struct(&in, &ikev2_nonce_desc, &rbody, &pb) ||
@@ -4288,7 +4288,7 @@ static stf_status ikev2_child_add_ipsec_payloads(struct child_sa *child,
 	}
 
 	struct ikev2_generic in = {
-		.isag_critical = build_ikev2_critical(false),
+		.isag_critical = build_ikev2_critical(false, child->sa.st_logger),
 	};
 	pb_stream pb_nr;
 	if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &pb_nr) ||
@@ -4381,7 +4381,7 @@ static stf_status ikev2_child_add_ike_payloads(struct child_sa *child,
 	/* send NONCE */
 	{
 		struct ikev2_generic in = {
-			.isag_critical = build_ikev2_critical(false),
+			.isag_critical = build_ikev2_critical(false, child->sa.st_logger),
 		};
 		pb_stream nr_pbs;
 		if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &nr_pbs) ||
