@@ -120,27 +120,30 @@ static enum iface_status iketcp_read_packet(const struct iface_port *ifp,
 
 static ssize_t iketcp_write_packet(const struct iface_port *ifp,
 				   const void *ptr, size_t len,
-				   const ip_endpoint *remote_endpoint UNUSED)
+				   const ip_endpoint *remote_endpoint UNUSED,
+				   struct logger *logger)
 {
 	int flags = 0;
 	if (impair.tcp_use_blocking_write) {
-		libreswan_log("IMPAIR: TCP: socket %d switching off NONBLOCK before write",
-			      ifp->fd);
+		log_message(RC_LOG, logger,
+			    "IMPAIR: TCP: socket %d switching off NONBLOCK before write",
+			    ifp->fd);
 		flags = fcntl(ifp->fd, F_GETFL, 0);
 		if (flags == -1) {
-			LOG_ERRNO(errno, "TCP: fcntl(F_GETFL)");
+			log_errno(logger, errno, "TCP: fcntl(F_GETFL)");
 		}
 		if (fcntl(ifp->fd, F_SETFL, flags & ~O_NONBLOCK) == -1) {
-			LOG_ERRNO(errno, "TCP: write - fcntl(F_GETFL)");
+			log_errno(logger, errno, "TCP: write - fcntl(F_GETFL)");
 		}
 	}
 	ssize_t wlen = write(ifp->fd, ptr, len);
 	dbg("TCP: socket %d wrote %zd of %zu bytes", ifp->fd, wlen, len);
 	if (impair.tcp_use_blocking_write && flags >= 0) {
-		libreswan_log("IMPAIR: TCP: socket %d restoring flags 0%o after write",
-			      ifp->fd, flags);
+		log_message(RC_LOG, logger,
+			    "IMPAIR: TCP: socket %d restoring flags 0%o after write",
+			    ifp->fd, flags);
 		if (fcntl(ifp->fd, F_SETFL, flags) == -1) {
-			LOG_ERRNO(errno, "TCP: fcntl(F_GETFL)");
+			log_errno(logger, errno, "TCP: fcntl(F_GETFL)");
 		}
 	}
 	return wlen;

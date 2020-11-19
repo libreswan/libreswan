@@ -163,7 +163,8 @@ static bool send_chunks(const char *where, bool just_a_keepalive,
 	}
 
 	if (!impair_outgoing_message(shunk2(ptr, len), logger)) {
-		ssize_t wlen = interface->io->write_packet(interface, ptr, len, &remote_endpoint);
+		ssize_t wlen = interface->io->write_packet(interface, ptr, len,
+							   &remote_endpoint, logger);
 		if (wlen != (ssize_t)len) {
 			if (!just_a_keepalive) {
 				endpoint_buf lb;

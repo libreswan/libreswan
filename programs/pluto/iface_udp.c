@@ -369,7 +369,8 @@ static enum iface_status udp_read_packet(const struct iface_port *ifp,
 
 static ssize_t udp_write_packet(const struct iface_port *ifp,
 				const void *ptr, size_t len,
-				const ip_endpoint *remote_endpoint)
+				const ip_endpoint *remote_endpoint,
+				struct logger *unused_logger UNUSED)
 {
 #ifdef MSG_ERRQUEUE
 	if (pluto_sock_errqueue) {

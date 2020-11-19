@@ -52,7 +52,8 @@ struct iface_io {
 					 struct iface_packet *);
 	ssize_t (*write_packet)(const struct iface_port *ifp,
 				const void *ptr, size_t len,
-				const ip_endpoint *remote_endpoint);
+				const ip_endpoint *remote_endpoint,
+				struct logger *logger);
 	void (*cleanup)(struct iface_port *ifp);
 	void (*listen)(struct iface_port *fip, struct logger *logger);
 	int (*bind_iface_port)(struct iface_dev *ifd,
