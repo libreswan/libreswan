@@ -340,9 +340,10 @@ static void ikev2_set_domain(pb_stream *cp_a_pbs, struct state *st)
 
 	if (!responder) {
 		char *safestr = cisco_stringify(cp_a_pbs, "INTERNAL_DNS_DOMAIN",
-			st->st_connection->policy);
-		if (!ignore)
+						ignore, st->st_logger);
+		if (safestr != NULL) {
 			append_st_cfg_domain(st, safestr);
+		}
 	} else {
 		log_state(RC_LOG, st, "initiator INTERNAL_DNS_DOMAIN CP ignored");
 	}

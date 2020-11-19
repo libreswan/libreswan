@@ -1744,13 +1744,17 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 			case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
 			{
-				append_st_cfg_domain(st, cisco_stringify(&strattr, "Domain", c->policy));
+				append_st_cfg_domain(st, cisco_stringify(&strattr, "Domain",
+									 false/*don't-ignore*/,
+									 st->st_logger));
 				break;
 			}
 
 			case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
 			{
-				st->st_seen_cfg_banner = cisco_stringify(&strattr, "Banner", c->policy);
+				st->st_seen_cfg_banner = cisco_stringify(&strattr, "Banner",
+									 false/*don't-ignore*/,
+									 st->st_logger);
 				break;
 			}
 
