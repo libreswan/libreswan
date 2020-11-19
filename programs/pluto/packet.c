@@ -2185,18 +2185,6 @@ diag_t pbs_in_raw(struct pbs_in *ins, void *bytes, size_t len, const char *name)
 	}
 }
 
-bool in_raw(void *bytes, size_t len, struct pbs_in *ins, const char *name)
-{
-	struct logger logger = cur_logger();
-	diag_t d = pbs_in_raw(ins, bytes, len, name);
-	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, &logger, &d, "%s", "");
-		return false;
-	}
-
-	return true;
-}
-
 /*
  * Check IKEv2's Last Substructure field.
  */

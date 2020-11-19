@@ -215,7 +215,7 @@ static bool ikev2_try_asn1_hash_blob(const struct hash_desc *hash_algo,
 		pbs_left(a_pbs) >= b.len && /* the stream has enough octets */
 		memeq(a_pbs->cur, b.ptr, b.len) && /* they are the right octets */
 		pexpect(b.len <= sizeof(in_blob)) && /* enough space in in_blob[] */
-		pexpect(in_raw(in_blob, b.len, a_pbs, "ASN.1 blob for hash algo")); /* can eat octets */
+		pexpect(pbs_in_raw(a_pbs, in_blob, b.len, "ASN.1 blob for hash algo") == NULL); /* can eat octets */
 }
 
 void ikev2_ike_sa_established(struct ike_sa *ike,
@@ -2939,9 +2939,10 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		} else {
 
 			chunk_t no_ppk_auth = alloc_chunk(len, "NO_PPK_AUTH");
-
-			if (!in_raw(no_ppk_auth.ptr, len, &pbs, "NO_PPK_AUTH extract")) {
-				log_state(RC_LOG_SERIOUS, st, "Failed to extract %zd bytes of NO_PPK_AUTH from Notify payload", len);
+			diag_t d = pbs_in_raw(&pbs, no_ppk_auth.ptr, len, "NO_PPK_AUTH extract");
+			if (d != NULL) {
+				log_diag(RC_LOG_SERIOUS, st->st_logger, &d,
+					 "failed to extract %zd bytes of NO_PPK_AUTH from Notify payload", len);
 				free_chunk_content(&no_ppk_auth);
 				return STF_FATAL;
 			}
@@ -4131,8 +4132,9 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 	}
 
 	ipsec_spi_t spi = 0;
-	if (!in_raw(&spi, sizeof(spi), &rekey_sa_payload->pbs, "SPI")) {
-		/* already logged */
+	diag_t d = pbs_in_raw(&rekey_sa_payload->pbs, &spi, sizeof(spi), "SPI");
+	if (d != NULL) {
+		log_diag(RC_LOG, child->sa.st_logger, &d, "%s", "");
 		record_v2N_response(child->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
 				    NULL/*empty data*/, ENCRYPTED_PAYLOAD);
 		return false; /* cannot happen; XXX: why? */
@@ -5675,8 +5677,11 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 				for (i = 0; i < v2del->isad_nrspi; i++) {
 					ipsec_spi_t spi;
 
-					if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
+					diag_t d = pbs_in_raw( &p->pbs, &spi, sizeof(spi),"SPI");
+					if (d != NULL) {
+						log_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
 						return STF_INTERNAL_ERROR;	/* cannot happen */
+					}
 
 					dbg("delete %s SA(0x%08" PRIx32 ")",
 					    enum_show(&ikev2_delete_protocol_id_names,

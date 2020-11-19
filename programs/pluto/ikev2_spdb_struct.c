@@ -1006,9 +1006,10 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 			continue;
 		}
 		if (remote_spi.size > 0) {
-			if (!in_raw(remote_spi.bytes, remote_spi.size, &proposal_pbs, "remote SPI")) {
-				log_message(RC_LOG, logger, "proposal %d contains corrupt SPI",
-					      remote_proposal.isap_propnum);
+			diag_t d = pbs_in_raw(&proposal_pbs, remote_spi.bytes, remote_spi.size, "remote SPI");
+			if (d != NULL) {
+				log_diag(RC_LOG, logger, &d, "proposal %d contains corrupt SPI",
+					 remote_proposal.isap_propnum);
 				matching_local_propnum = -(STF_FAIL + v2N_INVALID_SYNTAX);
 				jam_string(remote_jam_buf, "[corrupt-spi]");
 				break;

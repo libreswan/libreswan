@@ -2312,15 +2312,21 @@ bool accept_delete(struct msg_digest *md,
 			 * ISAKMP
 			 */
 			ike_spis_t cookies;
-			struct state *dst;
+			diag_t d;
 
-			if (!in_raw(&cookies.initiator, COOKIE_SIZE, &p->pbs, "iCookie"))
-				return FALSE;
+			d = pbs_in_raw(&p->pbs, &cookies.initiator, COOKIE_SIZE, "iCookie");
+			if (d != NULL) {
+				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+				return false;
+			}
 
-			if (!in_raw(&cookies.responder, COOKIE_SIZE, &p->pbs, "rCookie"))
-				return FALSE;
+			d = pbs_in_raw(&p->pbs, &cookies.responder, COOKIE_SIZE, "rCookie");
+			if (d != NULL) {
+				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+				return false;
+			}
 
-			dst = find_state_ikev1(&cookies, v1_MAINMODE_MSGID);
+			struct state *dst = find_state_ikev1(&cookies, v1_MAINMODE_MSGID);
 
 			if (dst == NULL) {
 				log_state(RC_LOG_SERIOUS, st, "ignoring Delete SA payload: ISAKMP SA not found (maybe expired)");
@@ -2353,9 +2359,11 @@ bool accept_delete(struct msg_digest *md,
 			 * IPSEC (ESP/AH)
 			 */
 			ipsec_spi_t spi;	/* network order */
-
-			if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
-				return FALSE;
+			diag_t dt = pbs_in_raw(&p->pbs, &spi, sizeof(spi), "SPI");
+			if (dt != NULL) {
+				log_diag(RC_LOG, st->st_logger, &dt, "%s", "");
+				return false;
+			}
 
 			bool bogus;
 			struct state *dst = find_phase2_state_to_delete(st,
