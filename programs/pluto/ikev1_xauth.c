@@ -645,8 +645,7 @@ stf_status xauth_send_request(struct state *st)
 			 * Main Mode message and send/create a new XAUTH_R0
 			 * message.
 			 */
-			send_ike_msg_without_recording(st, &reply,
-						       "XAUTH: req (unrecorded)");
+			send_pbs_out_using_state(st, "XAUTH: req (unrecorded)", &reply);
 		}
 	} else {
 		log_state(RC_LOG, st, "IMPAIR: Skipped sending XAUTH user/pass packet");

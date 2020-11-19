@@ -576,8 +576,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	 * This notification is fire-and-forget (not a proper
 	 * exchange, one with retrying) so it is not saved.
 	 */
-	send_chunk("v2 notify", md->iface, md->sender,
-		   same_out_pbs_as_chunk(&reply), md->md_logger);
+	send_pbs_out_using_md(md, "v2 notify", &reply);
 
 	pstat(ikev2_sent_notifies_e, ntype);
 }

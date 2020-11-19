@@ -23,25 +23,22 @@
 
 struct iface_port;
 struct state;
+struct msg_digest;
 
-bool send_chunk(const char *where, const struct iface_port *interface,
-		ip_address remote_endpoint, chunk_t packet,
-		struct logger *logger);
+bool send_pbs_out_using_md(struct msg_digest *md, const char *where, struct pbs_out *packet);
+bool send_pbs_out_using_state(struct state *st, const char *where, struct pbs_out *packet);
 
 bool send_chunks_using_state(struct state *st, const char *where,
 			     chunk_t a, chunk_t b);
 
-bool send_chunk_using_state(struct state *st, const char *where,
-			    chunk_t packet);
+bool send_chunk_using_state(struct state *st, const char *where, chunk_t packet);
+
 #define send_hunk_using_state(ST, WHERE, HUNK)				\
 	({								\
 		chunk_t h_ = { .ptr = (HUNK).ptr, .len = (HUNK).len, };	\
 		send_chunk_using_state(ST, WHERE, h_);			\
 	})
 
-bool send_ike_msg_without_recording(struct state *st, pb_stream *pbs,
-				    const char *where);
-
-bool send_keepalive(struct state *st, const char *where);
+bool send_keepalive_using_state(struct state *st, const char *where);
 
 #endif

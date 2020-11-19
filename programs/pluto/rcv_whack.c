@@ -199,7 +199,7 @@ static void whack_impair_action(enum impair_action action, unsigned event,
 		/* will log */
 		struct logger logger = attach_logger(st, true/*background*/, whackfd);
 		log_message(RC_COMMENT, &logger, "sending keepalive");
-		send_keepalive(st, "inject keep-alive");
+		send_keepalive_using_state(st, "inject keep-alive");
 		break;
 	}
 	case CALL_IMPAIR_DROP_INCOMING:

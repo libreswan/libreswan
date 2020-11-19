@@ -1793,7 +1793,7 @@ stf_status send_isakmp_notification(struct state *st,
 		if (!ikev1_encrypt_message(&rbody, st))
 			return STF_INTERNAL_ERROR;
 
-		send_ike_msg_without_recording(st, &reply_stream, "ISAKMP notify");
+		send_pbs_out_using_state(st, "ISAKMP notify", &reply_stream);
 
 		/* get back old IV for this state */
 		restore_iv(st, old_iv);
@@ -1966,7 +1966,7 @@ static void send_notification(struct logger *logger,
 		close_output_pbs(&r_hdr_pbs);
 	}
 
-	send_ike_msg_without_recording(sndst, &pbs, "notification packet");
+	send_pbs_out_using_state(sndst, "notification packet", &pbs);
 }
 
 void send_notification_from_state(struct state *st, enum state_kind from_state,
@@ -2188,7 +2188,7 @@ void send_v1_delete(struct state *st)
 
 		passert(ikev1_encrypt_message(&r_hdr_pbs, p1st));
 
-		send_ike_msg_without_recording(p1st, &reply_pbs, "delete notify");
+		send_pbs_out_using_state(p1st, "delete notify", &reply_pbs);
 
 		/* get back old IV for this state */
 		restore_iv(p1st, old_iv);

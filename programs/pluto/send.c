@@ -67,6 +67,7 @@
  */
 
 static bool send_chunks(const char *where, bool just_a_keepalive,
+			so_serial_t serialno, /* can be SOS_NOBODY */
 			const struct iface_port *interface,
 			ip_address remote_endpoint,
 			chunk_t a, chunk_t b,
@@ -153,12 +154,13 @@ static bool send_chunks(const char *where, bool just_a_keepalive,
 		endpoint_buf lb;
 		endpoint_buf rb;
 		log_message(DEBUG_STREAM, logger,
-			    "sending %zu bytes for %s through %s from %s to %s using %s",
+			    "sending %zu bytes for %s through %s from %s to %s using %s (for #%lu)",
 			    len, where,
 			    interface->ip_dev->id_rname,
 			    str_endpoint(&interface->local_endpoint, &lb),
 			    str_endpoint(&remote_endpoint, &rb),
-			    interface->protocol->name);
+			    interface->protocol->name,
+			    serialno);
 		DBG_dump(NULL, ptr, len);
 	}
 
@@ -216,21 +218,20 @@ static bool send_chunks(const char *where, bool just_a_keepalive,
 	return true;
 }
 
-bool send_chunk(const char *where, const struct iface_port *interface,
-		ip_address remote_endpoint, chunk_t packet,
-		struct logger *logger)
+bool send_pbs_out_using_md(struct msg_digest *md, const char *where, struct pbs_out *packet)
 {
-	return send_chunks(where, false, interface,
-			   remote_endpoint,
-			   packet, EMPTY_CHUNK,
-			   logger);
+	return send_chunks(where, false, SOS_NOBODY,
+			   md->iface, md->sender,
+			   same_out_pbs_as_chunk(packet), EMPTY_CHUNK,
+			   md->md_logger);
 }
 
 bool send_chunks_using_state(struct state *st, const char *where,
-			     chunk_t a, chunk_t b)
+			     chunk_t chunk_a, chunk_t chunk_b)
 {
-	return send_chunks(where, false, st->st_interface,
-			   st->st_remote_endpoint, a, b,
+	return send_chunks(where, false, st->st_serialno,
+			   st->st_interface, st->st_remote_endpoint,
+			   chunk_a, chunk_b,
 			   st->st_logger);
 }
 
@@ -239,8 +240,7 @@ bool send_chunk_using_state(struct state *st, const char *where, chunk_t packet)
 	return send_chunks_using_state(st, where, packet, EMPTY_CHUNK);
 }
 
-bool send_ike_msg_without_recording(struct state *st, pb_stream *pbs,
-				    const char *where)
+bool send_pbs_out_using_state(struct state *st, const char *where, struct pbs_out *pbs)
 {
 	return send_chunk_using_state(st, where, same_out_pbs_as_chunk(pbs));
 }
@@ -250,11 +250,11 @@ bool send_ike_msg_without_recording(struct state *st, pb_stream *pbs,
  * We don't want send errors logged (too noisy).
  * We don't want the packet prefixed with a non-ESP Marker.
  */
-bool send_keepalive(struct state *st, const char *where)
+bool send_keepalive_using_state(struct state *st, const char *where)
 {
 	static unsigned char ka_payload = 0xff;
 
-	return send_chunks(where, true, st->st_interface,
+	return send_chunks(where, true, st->st_serialno, st->st_interface,
 			   st->st_remote_endpoint,
 			   THING_AS_CHUNK(ka_payload), EMPTY_CHUNK,
 			   st->st_logger);
