@@ -371,14 +371,6 @@ void jam_cur_prefix(struct jambuf *buf)
 		}
 		return;
 	}
-
-	if (cur_state != NULL) {
-		struct logger logger = *(cur_state->st_logger);
-		logger.global_whackfd = whack_log_fd;
-		jam_logger_prefix(buf, &logger);
-		return;
-	}
-
 	return;
 }
 
@@ -856,13 +848,6 @@ struct logger cur_logger(void)
 		};
 		return pexpect_logger;
 	}
-
-	if (cur_state != NULL) {
-		struct logger logger = *(cur_state->st_logger);
-		logger.global_whackfd = whack_log_fd;
-		return logger;
-	}
-
 	return GLOBAL_LOGGER(whack_log_fd);
 };
 
