@@ -24,15 +24,9 @@
 struct iface_port;
 struct state;
 
-bool send_chunks(const char *where, bool just_a_keepalive,
-		 so_serial_t serialno, /* can be SOS_NOBODY */
-		 const struct iface_port *interface,
-		 ip_address remote_endpoint,
-		 chunk_t a, chunk_t b);
-
-bool send_chunk(const char *where, so_serial_t serialno, /* can be SOS_NOBODY */
-		const struct iface_port *interface,
-		ip_address remote_endpoint, chunk_t packet);
+bool send_chunk(const char *where, const struct iface_port *interface,
+		ip_address remote_endpoint, chunk_t packet,
+		struct logger *logger);
 
 bool send_chunks_using_state(struct state *st, const char *where,
 			     chunk_t a, chunk_t b);
