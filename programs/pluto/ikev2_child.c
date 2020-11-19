@@ -362,7 +362,9 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st,
 	}
 
 	ip_address ip;
-	if (!pbs_in_address(&ip, af, cp_a_pbs, "INTERNAL_IP_DNS CP payload")) {
+	diag_t d = pbs_in_address(cp_a_pbs, &ip, af, "INTERNAL_IP_DNS CP payload");
+	if (d != NULL) {
+		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return false;
 	}
 
@@ -398,7 +400,9 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 	struct connection *c = st->st_connection;
 
 	ip_address ip;
-	if (!pbs_in_address(&ip, af, cp_a_pbs, "INTERNAL_IP_ADDRESS")) {
+	diag_t d = pbs_in_address(cp_a_pbs, &ip, af, "INTERNAL_IP_ADDRESS");
+	if (d != NULL) {
+		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return false;
 	}
 

@@ -2806,29 +2806,32 @@ void close_output_pbs(struct pbs_out *pbs)
 	pbs->out_logger = NULL;
 }
 
-bool pbs_in_address(ip_address *address, const struct ip_info *ipv,
-		    struct pbs_in *input_pbs, const char *what)
+diag_t pbs_in_address(struct pbs_in *input_pbs,
+		      ip_address *address, const struct ip_info *ipv,
+		      const char *what)
 {
 	switch (ipv->af) {
 	case AF_INET:
 	{
 		struct in_addr ip;
-		if (!in_raw(&ip, sizeof(ip), input_pbs, what)) {
+		diag_t d = pbs_in_raw(input_pbs, &ip, sizeof(ip), what);
+		if (d != NULL) {
 			*address = unset_address;
-			return false;
+			return d;
 		}
 		*address = address_from_in_addr(&ip);
-		return true;
+		return NULL;
 	}
 	case AF_INET6:
 	{
 		struct in6_addr ip;
-		if (!in_raw(&ip, sizeof(ip), input_pbs, what)) {
+		diag_t d = pbs_in_raw(input_pbs, &ip, sizeof(ip), what);
+		if (d != NULL) {
 			*address = unset_address;
-			return false;
+			return d;
 		}
 		*address = address_from_in6_addr(&ip);
-		return true;
+		return NULL;
 	}
 	default:
 		bad_case(ipv->af);

@@ -407,7 +407,9 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 	case ID_IPV6_ADDR:
 	{
 		ip_address temp_address;
-		if (!pbs_in_address(&temp_address, afi, id_pbs, "ID address")) {
+		diag_t d = pbs_in_address(id_pbs, &temp_address, afi, "ID address");
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
 		/* i.e., "zero" */
@@ -428,13 +430,21 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 	case ID_IPV4_ADDR_SUBNET:
 	case ID_IPV6_ADDR_SUBNET:
 	{
+		diag_t d;
+
 		ip_address temp_address, temp_mask;
-		if (!pbs_in_address(&temp_address, afi, id_pbs, "ID address")) {
+		d = pbs_in_address(id_pbs, &temp_address, afi, "ID address");
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
-		if (!pbs_in_address(&temp_mask, afi, id_pbs, "ID mask")) {
+
+		d = pbs_in_address(id_pbs, &temp_mask, afi, "ID mask");
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
+
 		err_t ughmsg = address_mask_to_subnet(&temp_address, &temp_mask, net);
 		if (ughmsg == NULL &&
 		    subnet_contains_no_addresses(net))
@@ -455,12 +465,19 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 	case ID_IPV4_ADDR_RANGE:
 	case ID_IPV6_ADDR_RANGE:
 	{
+		diag_t d;
+
 		ip_address temp_address_from;
-		if (!pbs_in_address(&temp_address_from, afi, id_pbs, "ID from address")) {
+		d = pbs_in_address(id_pbs, &temp_address_from, afi, "ID from address");
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
+
 		ip_address temp_address_to;
-		if (!pbs_in_address(&temp_address_to, afi, id_pbs, "ID to address")) {
+		d = pbs_in_address(id_pbs, &temp_address_to, afi, "ID to address");
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
 

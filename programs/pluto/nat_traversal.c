@@ -469,6 +469,7 @@ bool ikev1_nat_traversal_add_natd(pb_stream *outs,
 void nat_traversal_natoa_lookup(struct msg_digest *md,
 				struct hidden_variables *hv)
 {
+	struct logger logger[1] = { cur_logger(), };
 	passert(md->iface != NULL);
 
 	/* Initialize NAT-OA */
@@ -524,7 +525,9 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 		return;
 	}
 
-	if (!pbs_in_address(&ip, ipv, &pbs, "NAT-Traversal: NAT-OA IP")) {
+	diag_t d = pbs_in_address(&pbs, &ip, ipv, "NAT-Traversal: NAT-OA IP");
+	if (d != NULL) {
+		log_diag(RC_LOG, logger, &d, "%s", "");
 		return;
 	}
 

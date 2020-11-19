@@ -295,8 +295,9 @@ bool has_preloaded_public_key(const struct state *st)
  * may change the peer's RSA key or ID.
  */
 
-bool extract_peer_id(enum ike_id_type kind, struct id *peer, const pb_stream *id_pbs)
+bool extract_peer_id(enum ike_id_type kind, struct id *peer, const struct pbs_in *id_pbs)
 {
+	struct logger logger[1] = { cur_logger(), };
 	size_t left = pbs_left(id_pbs);
 
 	*peer = (struct id) {.kind = kind };	/* clears everything */
@@ -308,11 +309,11 @@ bool extract_peer_id(enum ike_id_type kind, struct id *peer, const pb_stream *id
 		/* failure mode for initaddr is probably inappropriate address length */
 	{
 		struct pbs_in in_pbs = *id_pbs;
-		if (!pbs_in_address(&peer->ip_addr,
-				    (peer->kind == ID_IPV4_ADDR ? &ipv4_info :
-				     &ipv6_info),
-				    &in_pbs, "peer ID")) {
-			/* XXX Could send notification back */
+		diag_t d = pbs_in_address(&in_pbs, &peer->ip_addr,
+					  (peer->kind == ID_IPV4_ADDR ? &ipv4_info :
+					   &ipv6_info), "peer ID");
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
 	}

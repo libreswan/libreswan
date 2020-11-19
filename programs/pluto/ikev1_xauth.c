@@ -1532,7 +1532,9 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 			struct connection *c = st->st_connection;
 
 			ip_address a;
-			if (!pbs_in_address(&a, &ipv4_info, &strattr, "addr")) {
+			diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
+			if (d != NULL) {
+				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				return STF_FATAL;
 			}
 			endtosubnet(&a, &c->spd.this.client, HERE);
@@ -1687,7 +1689,9 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				struct connection *c = st->st_connection;
 
 				ip_address a;
-				if (!pbs_in_address(&a, &ipv4_info, &strattr, "addr")) {
+				diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
+				if (d != NULL) {
+					log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 					return STF_FATAL;
 				}
 				endtosubnet(&a, &c->spd.this.client, HERE);
@@ -1711,7 +1715,9 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			case INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
 			{
 				ip_address a;
-				if (!pbs_in_address(&a, &ipv4_info, &strattr, "addr")) {
+				diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
+				if (d != NULL) {
+					log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 					return STF_FATAL;
 				}
 
@@ -1724,7 +1730,9 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			case INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
 			{
 				ip_address a;
-				if (!pbs_in_address(&a, &ipv4_info, &strattr, "addr")) {
+				diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
+				if (d != NULL) {
+					log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 					return STF_FATAL;
 				}
 
