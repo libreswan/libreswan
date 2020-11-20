@@ -31,9 +31,11 @@
 #define MESSAGE_H
 
 #include "chunk.h"
+#include "diag.h"
 
 struct payload_digest;
 struct dh_desc;
+struct id;
 
 bool unpack_KE(chunk_t *dest, const char *val_name,
 	       const struct dh_desc *gr,
@@ -41,5 +43,8 @@ bool unpack_KE(chunk_t *dest, const char *val_name,
 	       struct logger *logger);
 
 void unpack_nonce(chunk_t *n, chunk_t *nonce);
+
+diag_t unpack_peer_id(enum ike_id_type kind, struct id *peer, const struct pbs_in *id_pbs);
+
 
 #endif

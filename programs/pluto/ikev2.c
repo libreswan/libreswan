@@ -76,6 +76,7 @@
 #include "kernel.h"
 #include "iface.h"
 #include "ikev2_notify.h"
+#include "unpack.h"
 
 static void v2_dispatch(struct ike_sa *ike, struct state *st,
 			struct msg_digest *md,
@@ -2590,9 +2591,11 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 
 	struct id peer_id;
 
-	if (!extract_peer_id(hik, &peer_id, &id_peer->pbs)) {
-		log_state(RC_LOG, &ike->sa, "IKEv2 mode peer ID extraction failed");
-		return FALSE;
+	diag_t d = unpack_peer_id(hik, &peer_id, &id_peer->pbs);
+	if (d != NULL) {
+		log_diag(RC_LOG, ike->sa.st_logger, &d,
+			 "IKEv2 mode peer ID extraction failed");
+		return false;
 	}
 
 	/* You Tarzan, me Jane? */
@@ -2604,11 +2607,11 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 
 		if (!initiator && tarzan_pld != NULL) {
 			dbg("received IDr payload - extracting our alleged ID");
-			if (!extract_peer_id(tarzan_pld->payload.v2id.isai_type,
-					&tarzan_id, &tarzan_pld->pbs))
-			{
-				log_state(RC_LOG, &ike->sa, "IDr payload extraction failed");
-				return FALSE;
+			diag_t d = unpack_peer_id(tarzan_pld->payload.v2id.isai_type,
+						  &tarzan_id, &tarzan_pld->pbs);
+			if (d != NULL) {
+				log_diag(RC_LOG, ike->sa.st_logger, &d, "IDr payload extraction failed");
+				return false;
 			}
 			tip = &tarzan_id;
 		}

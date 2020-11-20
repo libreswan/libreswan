@@ -162,6 +162,7 @@
 #include "initiate.h"
 #include "iface.h"
 #include "ip_selector.h"
+#include "unpack.h"
 
 #ifdef HAVE_NM
 #include "kernel.h"
@@ -3089,8 +3090,11 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 
 	struct id peer;
 
-	if (!extract_peer_id(id->isaid_idtype, &peer, &id_pld->pbs))
-		return FALSE;
+	diag_t d = unpack_peer_id(id->isaid_idtype, &peer, &id_pld->pbs);
+	if (d != NULL) {
+		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		return false;
+	}
 
 	if (c->spd.that.id.kind == ID_FROMCERT) {
 		/* breaks API, connection modified by %fromcert */
