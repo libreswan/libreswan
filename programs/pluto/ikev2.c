@@ -793,9 +793,11 @@ static struct payload_summary ikev2_decode_payloads(struct logger *log,
 			 * the Critical Bit, we should be upset but if
 			 * it does not, we should just ignore it.
 			 */
-			if (!in_struct(&pd->payload, &ikev2_generic_desc, in_pbs, &pd->pbs)) {
-				log_message(RC_LOG_SERIOUS, log,
-					    "malformed payload in packet");
+			diag_t d = pbs_in_struct(in_pbs, &ikev2_generic_desc,
+						 &pd->payload, sizeof(pd->payload), &pd->pbs);
+			if (d != NULL) {
+				log_diag(RC_LOG_SERIOUS, log, &d,
+					 "malformed payload in packet");
 				summary.n = v2N_INVALID_SYNTAX;
 				break;
 			}
@@ -845,9 +847,12 @@ static struct payload_summary ikev2_decode_payloads(struct logger *log,
 		 * be.
 		 */
 		pd->payload_type = np;
-		if (!in_struct(&pd->payload, sd, in_pbs, &pd->pbs)) {
-			log_message(RC_LOG_SERIOUS,  log,
-				    "malformed payload in packet");
+		diag_t d = pbs_in_struct(in_pbs, sd,
+					 &pd->payload, sizeof(pd->payload),
+					 &pd->pbs);
+		if (d != NULL) {
+			log_diag(RC_LOG_SERIOUS, log, &d,
+				 "malformed payload in packet");
 			summary.n = v2N_INVALID_SYNTAX;
 			break;
 		}
@@ -1106,7 +1111,10 @@ static bool is_duplicate_request(struct ike_sa *ike,
 		if (md->hdr.isa_np == ISAKMP_NEXT_v2SKF) {
 			struct ikev2_skf skf;
 			pb_stream in_pbs = md->message_pbs; /* copy */
-			if (!in_struct(&skf, &ikev2_skf_desc, &in_pbs, NULL)) {
+			diag_t d = pbs_in_struct(&in_pbs, &ikev2_skf_desc,
+						 &skf, sizeof(skf), NULL);
+			if (d != NULL) {
+				log_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
 				return true;
 			}
 			fragment = skf.isaskf_number;
@@ -1178,7 +1186,9 @@ static bool is_duplicate_request(struct ike_sa *ike,
 		if (md->hdr.isa_np == ISAKMP_NEXT_v2SKF) {
 			struct ikev2_skf skf;
 			pb_stream in_pbs = md->message_pbs; /* copy */
-			if (!in_struct(&skf, &ikev2_skf_desc, &in_pbs, NULL)) {
+			diag_t d = pbs_in_struct(&skf, &ikev2_skf_desc, &in_pbs, NULL);
+			if (d != NULL) {
+				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				return true;
 			}
 			fragment = skf.isaskf_number;

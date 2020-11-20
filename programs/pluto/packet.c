@@ -2146,19 +2146,6 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 	return NULL;
 }
 
-bool in_struct(void *struct_ptr, struct_desc *sd,
-	       struct pbs_in *ins, struct pbs_in *obj_pbs)
-{
-	struct logger logger = cur_logger();
-	diag_t d = pbs_in_struct(ins, sd, struct_ptr, 0/*no-size-check*/, obj_pbs);
-	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, &logger, &d, "%s", "");
-		return false;
-	}
-
-	return true;
-}
-
 diag_t pbs_in_raw(struct pbs_in *ins, void *bytes, size_t len, const char *name)
 {
 	if (pbs_left(ins) < len) {

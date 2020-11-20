@@ -477,7 +477,7 @@ const struct iface_io udp_iface_io = {
  */
 
 static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
-					size_t sizeof_buffer)
+					size_t sizeof_buffer, struct logger *logger)
 {
 	if (packet_len > sizeof_buffer) {
 		/*
@@ -495,7 +495,9 @@ static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 	pb_stream packet_pbs;
 	init_pbs(&packet_pbs, buffer, packet_len, __func__);
 	struct isakmp_hdr hdr;
-	if (!in_struct(&hdr, &raw_isakmp_hdr_desc, &packet_pbs, NULL)) {
+	diag_t d = pbs_in_struct(&packet_pbs, &raw_isakmp_hdr_desc,
+				 &hdr, sizeof(hdr), NULL);
+	if (d != NULL) {
 		/*
 		 * XXX:
 		 *
@@ -511,7 +513,7 @@ static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 		 * that involves validation has its type set to FT_NAT
 		 * in RAW_ISAKMP_HDR_DESC).
 		 */
-		libreswan_log("MSG_ERRQUEUE packet IKE header is corrupt");
+		log_diag(RC_LOG, logger, &d, "MSG_ERRQUEUE packet IKE header is corrupt");
 		return NULL;
 	}
 	enum ike_version ike_version = hdr_ike_version(&hdr);
@@ -561,6 +563,8 @@ static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 
 static bool check_msg_errqueue(const struct iface_port *ifp, short interest, const char *before)
 {
+	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
+
 	struct pollfd pfd;
 	int again_count = 0;
 
@@ -642,7 +646,8 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 			}
 
 			sender = find_likely_sender((size_t) packet_len,
-						    buffer, sizeof(buffer));
+						    buffer, sizeof(buffer),
+						    logger);
 		}
 
 		if (DBGP(DBG_BASE)) {

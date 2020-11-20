@@ -857,9 +857,12 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 		/* rewind id_pbs and read what we wrote */
 		id_pbs.roof = pbs.cur;
 		id_pbs.cur = pbs.start;
-		if (!in_struct(&id_pd.payload, &isakmp_identification_desc, &id_pbs,
-			  &id_pd.pbs))
+		diag_t d = pbs_in_struct(&id_pbs, &isakmp_identification_desc,
+					 &id_pd.payload, sizeof(id_pd.payload), &id_pd.pbs);
+		if (d != NULL) {
+			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			return STF_FAIL + PAYLOAD_MALFORMED;
+		}
 	}
 
 	/*

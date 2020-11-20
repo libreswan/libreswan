@@ -1246,7 +1246,9 @@ static bool record_outbound_fragments(const pb_stream *body,
 	{
 		pb_stream pbs;
 		init_pbs(&pbs, body->start, pbs_offset(body), "sk hdr");
-		if (!in_struct(&hdr, &isakmp_hdr_desc, &pbs, NULL)) {
+		diag_t d = pbs_in_struct(&pbs, &isakmp_hdr_desc, &hdr, sizeof(hdr), NULL);
+		if (d != NULL) {
+			log_diag(RC_LOG, sk->logger, &d, "%s", "");
 			return false;
 		}
 	}
@@ -1261,7 +1263,9 @@ static bool record_outbound_fragments(const pb_stream *body,
 	{
 		pb_stream pbs = same_chunk_as_in_pbs(sk->payload, "sk");
 		struct ikev2_generic e;
-		if (!in_struct(&e, &ikev2_sk_desc, &pbs, NULL)) {
+		diag_t d = pbs_in_struct(&pbs, &ikev2_sk_desc, &e, sizeof(e), NULL);
+		if (d != NULL) {
+			log_diag(RC_LOG, sk->logger, &d, "%s", "");
 			return false;
 		}
 		skf_np = e.isag_np;

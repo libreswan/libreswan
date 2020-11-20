@@ -1702,9 +1702,14 @@ void process_v1_packet(struct msg_digest *md)
 			return;
 		}
 
-		if (!in_struct(&fraghdr, &isakmp_ikefrag_desc,
-			       &md->message_pbs, &frag_pbs) ||
-		    pbs_room(&frag_pbs) != fraghdr.isafrag_length ||
+		diag_t d = pbs_in_struct(&md->message_pbs, &isakmp_ikefrag_desc,
+					 &fraghdr, sizeof(fraghdr), &frag_pbs);
+		if (d != NULL) {
+			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+			return;
+		}
+		if (pbs_room(&frag_pbs) != fraghdr.isafrag_length ||
 		    fraghdr.isafrag_np != ISAKMP_NEXT_NONE ||
 		    fraghdr.isafrag_number == 0 ||
 		    fraghdr.isafrag_number > 16) {
@@ -2109,8 +2114,10 @@ void process_packet_tail(struct msg_digest *md)
 					 * - don't keep payload (don't increment pd)
 					 * - skip rest of loop body
 					 */
-					if (!in_struct(&pd->payload, &isakmp_ignore_desc, &md->message_pbs,
-						       &pd->pbs)) {
+					diag_t d = pbs_in_struct(&md->message_pbs, &isakmp_ignore_desc,
+								 &pd->payload, sizeof(pd->payload), &pd->pbs);
+					if (d != NULL) {
+						log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 						LOG_PACKET(RC_LOG_SERIOUS,
 							   "%smalformed payload in packet",
 							   excuse);
@@ -2170,8 +2177,11 @@ void process_packet_tail(struct msg_digest *md)
 			 * should be
 			 */
 			pd->payload_type = np;
-			if (!in_struct(&pd->payload, sd, &md->message_pbs,
-				       &pd->pbs)) {
+			diag_t d = pbs_in_struct(&md->message_pbs, sd,
+						 &pd->payload, sizeof(pd->payload),
+						 &pd->pbs);
+			if (d != NULL) {
+				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				LOG_PACKET(RC_LOG_SERIOUS,
 					   "%smalformed payload in packet",
 					   excuse);

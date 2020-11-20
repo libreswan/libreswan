@@ -346,8 +346,12 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 
 		struct pbs_in addr_pbs;
 		struct ikev2_ts1 ts1;
-		if (!in_struct(&ts1, &ikev2_ts1_desc, &ts_pd->pbs, &addr_pbs))
+		d = pbs_in_struct(&ts_pd->pbs, &ikev2_ts1_desc,
+				  &ts1, sizeof(ts1), &addr_pbs);
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
+		}
 
 		const struct ip_info *ipv;
 		switch (ts1.isat1_type) {

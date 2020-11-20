@@ -1258,8 +1258,10 @@ stf_status process_IKE_SA_INIT_v2N_INVALID_KE_PAYLOAD_response(struct ike_sa *ik
 	}
 
 	struct suggested_group sg;
-	if (!in_struct(&sg, &suggested_group_desc, &invalid_ke_pbs, NULL)) {
-		/* already logged */
+	diag_t d = pbs_in_struct(&invalid_ke_pbs, &suggested_group_desc,
+				 &sg, sizeof(sg), NULL);
+	if (d != NULL) {
+		log_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
 		return STF_IGNORE;
 	}
 
@@ -3735,7 +3737,10 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 
-		if (!in_struct(&n_ipcomp, &ikev2notify_ipcomp_data_desc, &pbs, NULL)) {
+		diag_t d = pbs_in_struct(&pbs, &ikev2notify_ipcomp_data_desc,
+					 &n_ipcomp, sizeof(n_ipcomp), NULL);
+		if (d != NULL) {
+			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			return STF_FATAL;
 		}
 

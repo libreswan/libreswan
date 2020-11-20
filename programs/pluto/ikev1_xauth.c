@@ -1265,8 +1265,10 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 		pb_stream strattr;
 		size_t sz;
 
-		if (!in_struct(&attr, &isakmp_xauth_attribute_desc,
-			       attrs, &strattr)) {
+		diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
+					 &attr, sizeof(attr), &strattr);
+		if (d != NULL) {
+			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			/* fail if malformed */
 			return STF_FAIL;
 		}
@@ -1440,10 +1442,10 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 			struct isakmp_attribute attr;
 			pb_stream strattr;
 
-			if (!in_struct(&attr,
-				       &isakmp_xauth_attribute_desc,
-				       attrs,
-				       &strattr)) {
+			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
+						 &attr, sizeof(attr), &strattr);
+			if (d != NULL) {
+				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				/* reject malformed */
 				return STF_FAIL;
 			}
@@ -1520,8 +1522,10 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 		struct isakmp_attribute attr;
 		pb_stream strattr;
 
-		if (!in_struct(&attr, &isakmp_xauth_attribute_desc,
-			       attrs, &strattr)) {
+		diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
+					 &attr, sizeof(attr), &strattr);
+		if (d != NULL) {
+			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			/* reject malformed */
 			return STF_FAIL;
 		}
@@ -1640,9 +1644,10 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 		while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
 			struct isakmp_attribute attr;
 
-			if (!in_struct(&attr,
-				       &isakmp_xauth_attribute_desc,
-				       attrs, NULL)) {
+			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
+						 &attr, sizeof(attr), NULL);
+			if (d != NULL) {
+				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				/* reject malformed */
 				return STF_FAIL;
 			}
@@ -1676,9 +1681,10 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			struct isakmp_attribute attr;
 			pb_stream strattr;
 
-			if (!in_struct(&attr,
-				       &isakmp_xauth_attribute_desc,
-				       attrs, &strattr)) {
+			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
+						 &attr, sizeof(attr), &strattr);
+			if (d != NULL) {
+				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				/* reject malformed */
 				return STF_FAIL;
 			}
@@ -1779,9 +1785,11 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				while (pbs_left(&strattr) > 0) {
 					struct CISCO_split_item i;
 
-					if (!in_struct(&i, &CISCO_split_desc, &strattr, NULL)) {
-						log_state(RC_INFORMATIONAL, st,
-							  "ignoring malformed CISCO_SPLIT_INC payload");
+					diag_t d = pbs_in_struct(&strattr, &CISCO_split_desc,
+								 &i, sizeof(i), NULL);
+					if (d != NULL) {
+						log_diag(RC_INFORMATIONAL, st->st_logger, &d,
+							 "ignoring malformed CISCO_SPLIT_INC payload");
 						break;
 					}
 
@@ -2160,8 +2168,10 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 		struct isakmp_attribute attr;
 		pb_stream strattr;
 
-		if (!in_struct(&attr, &isakmp_xauth_attribute_desc,
-			       attrs, &strattr)) {
+		diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
+					 &attr, sizeof(attr), &strattr);
+		if (d != NULL) {
+			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			/* reject malformed */
 			return STF_FAIL;
 		}
@@ -2404,9 +2414,10 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 			struct isakmp_attribute attr;
 			pb_stream strattr;
 
-			if (!in_struct(&attr,
-				       &isakmp_xauth_attribute_desc,
-				       attrs, &strattr)) {
+			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
+						 &attr, sizeof(attr), &strattr);
+			if (d != NULL) {
+				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				/* reject malformed */
 				return STF_FAIL;
 			}

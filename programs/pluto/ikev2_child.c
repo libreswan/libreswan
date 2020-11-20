@@ -171,7 +171,10 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 
 			dbg("received v2N_IPCOMP_SUPPORTED of length %zd", len);
 
-			if (!in_struct(&n_ipcomp, &ikev2notify_ipcomp_data_desc, &pbs, NULL)) {
+			diag_t d = pbs_in_struct(&pbs, &ikev2notify_ipcomp_data_desc,
+						 &n_ipcomp, sizeof(n_ipcomp), NULL);
+			if (d != NULL) {
+				log_diag(RC_LOG, child->sa.st_logger, &d, "%s", "");
 				return STF_FATAL;
 			}
 
@@ -496,11 +499,12 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 		struct ikev2_cp_attribute cp_a;
 		pb_stream cp_a_pbs;
 
-		if (!in_struct(&cp_a, &ikev2_cp_attribute_desc,
-					attrs, &cp_a_pbs)) {
-			log_state(RC_LOG_SERIOUS, st,
-				  "ERROR malformed CP attribute");
-			return FALSE;
+		diag_t d = pbs_in_struct(attrs, &ikev2_cp_attribute_desc,
+					 &cp_a, sizeof(cp_a), &cp_a_pbs);
+		if (d != NULL) {
+			log_diag(RC_LOG_SERIOUS, st->st_logger, &d,
+				 "ERROR malformed CP attribute");
+			return false;
 		}
 
 		switch (cp_a.type) {

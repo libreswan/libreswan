@@ -241,9 +241,6 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 diag_t pbs_in_raw(struct pbs_in *pbs, void *bytes, size_t len,
 		  const char *name) MUST_USE_RESULT;
 
-extern bool in_struct(void *struct_ptr, struct_desc *sd,
-		      pb_stream *ins, pb_stream *obj_pbs) MUST_USE_RESULT;
-
 /*
  * Output PBS
  */

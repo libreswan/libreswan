@@ -484,10 +484,13 @@ static int process_transforms(pb_stream *prop_pbs, struct jambuf *remote_jam_buf
 		/* first the transform */
 		struct ikev2_trans remote_trans;
 		pb_stream trans_pbs;
-		if (!in_struct(&remote_trans, &ikev2_trans_desc,
-			       prop_pbs, &trans_pbs)) {
-			log_message(RC_LOG, logger, "remote proposal %u transform %d is corrupt",
-				    remote_propnum, remote_transform_nr);
+		diag_t d = pbs_in_struct(prop_pbs, &ikev2_trans_desc,
+					 &remote_trans, sizeof(remote_trans),
+					 &trans_pbs);
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d,
+				 "remote proposal %u transform %d is corrupt",
+				 remote_propnum, remote_transform_nr);
 			jam_string(remote_jam_buf, "[corrupt-transform]");
 			return -(STF_FAIL + v2N_INVALID_SYNTAX); /* bail */
 		}
@@ -510,11 +513,12 @@ static int process_transforms(pb_stream *prop_pbs, struct jambuf *remote_jam_buf
 		while (pbs_left(&trans_pbs) != 0) {
 			pb_stream attr_pbs;
 			struct ikev2_trans_attr attr;
-			if (!in_struct(&attr, &ikev2_trans_attr_desc,
-				       &trans_pbs,
-				       &attr_pbs)) {
-				log_message(RC_LOG, logger, "remote proposal %u transform %d contains corrupt attribute",
-					    remote_propnum, remote_transform_nr);
+			diag_t d = pbs_in_struct(&trans_pbs, &ikev2_trans_attr_desc,
+						 &attr, sizeof(attr), &attr_pbs);
+			if (d != NULL) {
+				log_diag(RC_LOG, logger, &d,
+					 "remote proposal %u transform %d contains corrupt attribute",
+					 remote_propnum, remote_transform_nr);
 				jam_string(remote_jam_buf, "[corrupt-attribute]");
 				return -(STF_FAIL + v2N_INVALID_SYNTAX); /* bail */
 			}
@@ -905,9 +909,11 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 	do {
 		/* Read the next proposal */
 		pb_stream proposal_pbs;
-		if (!in_struct(&remote_proposal, &ikev2_prop_desc, sa_payload,
-			       &proposal_pbs)) {
-			log_message(RC_LOG, logger, "proposal %d corrupt", next_propnum);
+		diag_t d = pbs_in_struct(sa_payload, &ikev2_prop_desc,
+					 &remote_proposal, sizeof(remote_proposal),
+					 &proposal_pbs);
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "proposal %d corrupt", next_propnum);
 			jam_string(remote_jam_buf, " [corrupt-proposal]");
 			matching_local_propnum = -(STF_FAIL + v2N_INVALID_SYNTAX);
 			break;
