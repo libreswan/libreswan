@@ -1811,6 +1811,8 @@ stf_status send_isakmp_notification(struct state *st,
  * those calls pass a fake state as sndst.
  * Note: msgid is in different order here from other calls :/
  */
+static monotime_t last_malformed = MONOTIME_EPOCH;
+
 static void send_notification(struct logger *logger,
 			      struct state *sndst /*possibly fake*/,
 			      notification_t type,
@@ -1819,7 +1821,6 @@ static void send_notification(struct logger *logger,
 			      uint8_t protoid)
 {
 	pb_stream r_hdr_pbs;
-	static monotime_t last_malformed = MONOTIME_EPOCH;
 	monotime_t n = mononow();
 
 	switch (type) {
@@ -2005,42 +2006,75 @@ void send_notification_from_state(struct state *st, enum state_kind from_state,
 
 void send_notification_from_md(struct msg_digest *md, notification_t type)
 {
-	/*
-	 * Create a fake state object to be able to use send_notification.
-	 * This is somewhat dangerous: the fake state must not be deleted
-	 * or have almost any other operation performed on it.
-	 * Ditto for fake connection.
-	 *
-	 * ??? how can we be sure to have faked all salient fields correctly?
-	 *
-	 * Most details must be left blank (eg. pointers
-	 * set to NULL).  struct initialization is good at this.
-	 *
-	 * We need to set [??? we don't -- is this still true?]:
-	 *   st_connection->that.host_addr
-	 *   st_connection->that.host_port
-	 *   st_connection->interface
-	 */
-	struct connection fake_connection = {
-		.interface = md->iface,
-		.policy = POLICY_IKE_FRAG_FORCE, 	/* for should_fragment_ike_msg() */
-	};
+	pb_stream r_hdr_pbs;
+	monotime_t n = mononow();
 
-	struct ike_sa fake_ike = {
-		.sa = {
-			.st_serialno = SOS_NOBODY,
-			.st_connection = &fake_connection,	/* for should_fragment_ike_msg() */
-			.st_state = finite_states[STATE_UNDEFINED],
-			.st_remote_endpoint = md->sender,
-		},
-	};
+	switch (type) {
+	case PAYLOAD_MALFORMED:
+		/* only send one per second. */
+		/* ??? this depends on monotime_t having a one-second granularity */
+		if (monobefore(last_malformed, n))
+			return;
+		last_malformed = n;
+		break;
 
-	passert(md != NULL);
+	case INVALID_FLAGS:
+		break;
 
-	update_ike_endpoints(&fake_ike, md);
-	send_notification(md->md_logger, &fake_ike.sa, type, NULL, 0,
-			  md->hdr.isa_ike_initiator_spi.bytes, md->hdr.isa_ike_responder_spi.bytes,
-			  PROTO_ISAKMP);
+	default:
+		/* quiet GCC warning */
+		break;
+	}
+
+	endpoint_buf b;
+	log_md(RC_NOTIFICATION + type, md,
+	       "sending notification %s to %s",
+	       enum_name(&ikev1_notify_names, type),
+	       str_endpoint(&md->sender, &b));
+
+	uint8_t buffer[1024];	/* ??? large enough for any notification? */
+	struct pbs_out pbs = open_pbs_out("notification msg",
+					  buffer, sizeof(buffer),
+					  md->md_logger);
+
+	/* HDR* */
+
+	{
+		/* ??? "keep it around for TPM" */
+		struct isakmp_hdr hdr = {
+			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
+				ISAKMP_MINOR_VERSION,
+			.isa_xchg = ISAKMP_XCHG_INFO,
+			.isa_msgid = 0,
+			.isa_flags = 0,
+			.isa_ike_initiator_spi = md->hdr.isa_ike_initiator_spi,
+			.isa_ike_responder_spi = md->hdr.isa_ike_responder_spi,
+		};
+		passert(out_struct(&hdr, &isakmp_hdr_desc, &pbs, &r_hdr_pbs));
+	}
+
+	/* Notification Payload */
+
+	{
+		pb_stream not_pbs;
+		struct isakmp_notification isan = {
+			.isan_doi = ISAKMP_DOI_IPSEC,
+			.isan_type = type,
+			.isan_spisize = 0,
+			.isan_protoid = PROTO_ISAKMP,
+		};
+
+		if (!out_struct(&isan, &isakmp_notification_desc,
+					&r_hdr_pbs, &not_pbs)) {
+			log_md(RC_LOG, md, "failed to build notification in send_notification");
+			return;
+		}
+
+		close_output_pbs(&not_pbs);
+	}
+
+	close_output_pbs(&r_hdr_pbs);
+	send_pbs_out_using_md(md, "notification packet", &pbs);
 }
 
 /*
