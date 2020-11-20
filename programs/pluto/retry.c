@@ -59,7 +59,6 @@ void retransmit_v1_msg(struct state *st)
 	unsigned long try = st->st_try;
 	unsigned long try_limit = c->sa_keying_tries;
 
-	set_cur_state(st);
 
 	/* Paul: this line can say attempt 3 of 2 because the cleanup happens when over the maximum */
 	address_buf b;
@@ -120,7 +119,6 @@ void retransmit_v1_msg(struct state *st)
 		ipsecdoi_replace(st, try);
 	}
 
-	set_cur_state(st);  /* ipsecdoi_replace would reset cur_state, set it again */
 	pstat_sa_failed(st, REASON_TOO_MANY_RETRANSMITS);
 
 	/* placed here because IKEv1 doesn't do a proper state change to STF_FAIL/STF_FATAL */
@@ -140,7 +138,6 @@ void retransmit_v2_msg(struct state *st)
 		delete_state(st);
 	}
 
-	set_cur_state(st);
 	struct connection *c = st->st_connection;
 	unsigned long try_limit = c->sa_keying_tries;
 	unsigned long try = st->st_try + 1;
@@ -255,7 +252,6 @@ void retransmit_v2_msg(struct state *st)
 	}
 
 	if (&ike->sa != st) {
-		set_cur_state(&ike->sa);  /* now we are on pst */
 		if (ike->sa.st_state->kind == STATE_PARENT_I2) {
 			pstat_sa_failed(&ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			delete_state(&ike->sa);
@@ -264,7 +260,6 @@ void retransmit_v2_msg(struct state *st)
 		}
 	}
 
-	set_cur_state(st);  /* ipsecdoi_replace would reset cur_state, set it again */
 
 	/*
 	 * XXX There should not have been a child sa unless this was a timeout of

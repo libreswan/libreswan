@@ -533,7 +533,6 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			log_global(RC_UNKNOWN_NAME, whackfd, "no state #%lu to delete",
 				   m->whack_deletestateno);
 		} else {
-			set_cur_state(st);
 			/* needs an abstraction */
 			close_any(&st->st_logger->global_whackfd);
 			st->st_logger->global_whackfd = dup_any(whackfd);

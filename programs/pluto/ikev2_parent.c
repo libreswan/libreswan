@@ -542,7 +542,6 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 					      c, policy, try, whack_sock);
 	statetime_t start = statetime_backdate(&ike->sa, inception);
 
-	push_cur_state(&ike->sa);
 	/* set up new state */
 	struct state *st = &ike->sa;
 	passert(st->st_ike_version == IKEv2);
@@ -613,7 +612,6 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 	if (IS_LIBUNBOUND && id_ipseckey_allowed(st, IKEv2_AUTH_RESERVED)) {
 		stf_status ret = idr_ipseckey_fetch(st);
 		if (ret != STF_OK) {
-			reset_globals();
 			return;
 		}
 	}
@@ -638,7 +636,6 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 			    ikev2_parent_outI1_continue,
 			    "ikev2_outI1 KE");
 	statetime_stop(&start, "%s()", __func__);
-	reset_globals();
 }
 
 /*
@@ -5944,7 +5941,6 @@ void ikev2_initiate_child_sa(struct pending *p)
 	}
 	update_state_connection(&child->sa, c);
 
-	set_cur_state(&child->sa); /* we must reset before exit */
 	child->sa.st_try = p->try;
 
 	free_chunk_content(&child->sa.st_ni); /* this is from the parent. */
@@ -6019,7 +6015,6 @@ void ikev2_initiate_child_sa(struct pending *p)
 	}
 
 	event_force(EVENT_v2_INITIATE_CHILD, &child->sa);
-	reset_globals();
 }
 
 static ke_and_nonce_cb ikev2_child_outI_continue;

@@ -166,7 +166,6 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	struct state *st = &ike->sa;
 
 	md->st = st;  /* (caller will reset cur_state) */
-	set_cur_state(st);
 	update_state_connection(st, c);
 	change_state(st, STATE_AGGR_R1);
 
@@ -978,7 +977,6 @@ void aggr_outI1(struct fd *whack_sock,
 	statetime_t start = statetime_backdate(st, inception);
 	change_state(st, STATE_AGGR_I1);
 	initialize_new_state(st, c, policy, try);
-	push_cur_state(st);
 
 	if (LIN(POLICY_PSK, c->policy) && LIN(POLICY_AGGRESSIVE, c->policy)) {
 		log_state(RC_LOG_SERIOUS, st,
@@ -994,7 +992,6 @@ void aggr_outI1(struct fd *whack_sock,
 		 */
 		log_state(RC_AGGRALGO, st,
 			  "no IKE proposal policy specified in config!  Cannot initiate aggressive mode.  A policy must be specified in the configuration and should contain at most one DH group (mod1024, mod1536, mod2048).  Only the first DH group will be honored.");
-		reset_globals();
 		return;
 	}
 
@@ -1019,7 +1016,6 @@ void aggr_outI1(struct fd *whack_sock,
 			    aggr_outI1_continue,
 			    "aggr_outI1 KE + nonce");
 	statetime_stop(&start, "%s()", __func__);
-	reset_globals();
 }
 
 static ke_and_nonce_cb aggr_outI1_continue_tail;
@@ -1084,7 +1080,6 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 				&rbody)) {
-			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1096,7 +1091,6 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 		if (!ikev1_out_sa(&rbody,
 				  IKEv1_oakley_am_sadb(st->st_policy, c),
 				  st, TRUE, TRUE)) {
-			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 
@@ -1160,6 +1154,5 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 
 	log_state(RC_NEW_V1_STATE + st->st_state->kind, st,
 		  "%s", st->st_state->story);
-	reset_cur_state();
 	return STF_IGNORE;
 }

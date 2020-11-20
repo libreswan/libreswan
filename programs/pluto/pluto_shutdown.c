@@ -83,7 +83,6 @@ void exit_pluto(enum pluto_exit_code status)
 	exit_code = status;
 
 	/* needed because we may be called in odd state */
-	reset_globals();
  #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_STOPPING, exit_code);
  #endif

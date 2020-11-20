@@ -134,7 +134,6 @@ int server_fork(const char *name, so_serial_t serialno, server_fork_op *op,
 		LOG_ERRNO(errno, "fork failed");
 		return -1;
 	case 0: /* child */
-		reset_globals();
 		exit(op(context, logger));
 		break;
 	default: /* parent */
@@ -226,7 +225,6 @@ void server_fork_sigchld_handler(struct logger *logger)
 						    pid_entry->context,
 						    pid_entry->logger);
 			} else {
-				so_serial_t old_state = push_cur_state(st);
 				struct msg_digest *md = unsuspend_md(st);
 				if (DBGP(DBG_CPU_USAGE)) {
 					deltatime_t took = monotimediff(mononow(), pid_entry->start_time);
@@ -242,7 +240,6 @@ void server_fork_sigchld_handler(struct logger *logger)
 				statetime_stop(&start, "callback for %s",
 					       pid_entry->name);
 				release_any_md(&md);
-				pop_cur_state(old_state);
 			}
 			/* clean it up */
 			del_hash_table_entry(&pids_hash_table, pid_entry);

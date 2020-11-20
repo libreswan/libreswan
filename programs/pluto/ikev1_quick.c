@@ -612,7 +612,6 @@ void quick_outI1(struct fd *whack_sock,
 	update_state_connection(st, c);
 	passert(c != NULL);
 
-	so_serial_t old_state = push_cur_state(st); /* we must reset before exit */
 	st->st_policy = policy;
 	st->st_try = try;
 
@@ -689,7 +688,6 @@ void quick_outI1(struct fd *whack_sock,
 				    quick_outI1_continue,
 				    "quick_outI1 KE");
 	}
-	pop_cur_state(old_state);
 }
 
 static ke_and_nonce_cb quick_outI1_continue_tail;	/* type assertion */
@@ -784,7 +782,6 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 				&rbody)) {
-			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -812,7 +809,6 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 		if (!ikev1_out_sa(&rbody,
 				  &ipsec_sadb[pm >> POLICY_IPSEC_SHIFT],
 				  st, FALSE, FALSE)) {
-			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -820,7 +816,6 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	{
 		/* Ni out */
 		if (!ikev1_ship_nonce(&st->st_ni, nonce, &rbody, "Ni")) {
-			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -828,7 +823,6 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	/* [ KE ] out (for PFS) */
 	if (st->st_pfs_group != NULL) {
 		if (!ikev1_ship_KE(st, local_secret, &st->st_gi, &rbody)) {
-			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -842,7 +836,6 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 		    !emit_subnet_id(&c->spd.that.client,
 				    st->st_peeruserprotoid,
 				    st->st_peeruserport, &rbody)) {
-			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -852,7 +845,6 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	    LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
 		/** Send NAT-OA if our address is NATed */
 		if (!nat_traversal_add_natoa(&rbody, st, true /* initiator */)) {
-			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -866,7 +858,6 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	restore_new_iv(st, isakmp_sa->st_v1_new_iv);
 
 	if (!ikev1_encrypt_message(&rbody, st)) {
-		reset_cur_state();
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -1234,7 +1225,6 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 
 		restore_new_iv(st, b->new_iv);
 
-		set_cur_state(st);      /* (caller will reset) */
 		switch_md_st(md, st, HERE);	/* feed back new state */
 
 		st->st_peeruserprotoid = b->peers.proto;

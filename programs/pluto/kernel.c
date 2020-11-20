@@ -2446,7 +2446,6 @@ static void kernel_process_msg_cb(evutil_socket_t fd,
 	threadtime_t start = threadtime_start();
 	kernel_ops->process_msg(fd);
 	threadtime_stop(&start, SOS_NOBODY, "kernel message");
-	pexpect_reset_globals();
 }
 
 static global_timer_cb kernel_process_queue_cb;
@@ -2456,7 +2455,6 @@ static void kernel_process_queue_cb(struct fd *unused_whackfd UNUSED)
 	if (pexpect(kernel_ops->process_queue != NULL)) {
 		kernel_ops->process_queue();
 	}
-	pexpect_reset_globals();
 }
 
 /* keep track of kernel version  */

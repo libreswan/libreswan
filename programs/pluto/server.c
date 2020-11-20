@@ -634,7 +634,6 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 		threadtime_stop(&start, e->serialno, "resume %s", e->name);
 	} else {
 		/* no previous state */
-		pexpect(push_cur_state(st) == SOS_NOBODY);
 		statetime_t start = statetime_start(st);
 		struct msg_digest *md = unsuspend_md(st);
 
@@ -745,7 +744,6 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 		}
 		release_any_md(&md);
 		statetime_stop(&start, "resume %s", e->name);
-		pop_cur_state(SOS_NOBODY);
 	}
 	passert(e->event != NULL);
 	event_free(e->event);
@@ -828,11 +826,9 @@ static void callback_handler(evutil_socket_t fd UNUSED,
 
 	threadtime_t start = threadtime_start();
 	if (st != NULL) {
-		push_cur_state(st);
 	}
 	callback(st, context);
 	if (st != NULL) {
-		pop_cur_state(SOS_NOBODY);
 	}
 	threadtime_stop(&start, SOS_NOBODY, "callback %s", name);
 }

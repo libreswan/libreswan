@@ -1313,7 +1313,6 @@ void process_v1_packet(struct msg_digest *md)
 			st = find_state_ikev1_init(&md->hdr.isa_ike_initiator_spi,
 						   md->hdr.isa_msgid);
 			if (st != NULL) {
-				so_serial_t old_state = push_cur_state(st);
 				if (!ikev1_duplicate(st, md)) {
 					/*
 					 * Not a duplicate for the
@@ -1326,7 +1325,6 @@ void process_v1_packet(struct msg_digest *md)
 					log_state(RC_LOG, st, "discarding initial packet; already %s",
 						  st->st_state->name);
 				}
-				pop_cur_state(old_state);
 				return;
 			}
 			passert(st == NULL); /* new state needed */
@@ -1355,7 +1353,6 @@ void process_v1_packet(struct msg_digest *md)
 					return;
 				}
 			}
-			set_cur_state(st);
 			from_state = st->st_state->kind;
 		}
 		break;
@@ -1373,9 +1370,6 @@ void process_v1_packet(struct msg_digest *md)
 			st = find_state_ikev1_init(&md->hdr.isa_ike_initiator_spi,
 						   v1_MAINMODE_MSGID);
 		}
-
-		if (st != NULL)
-			set_cur_state(st);
 
 		if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
 			bool quiet = (st == NULL);
@@ -1496,7 +1490,6 @@ void process_v1_packet(struct msg_digest *md)
 			}
 #endif
 
-			set_cur_state(st);
 
 			if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 				log_state(RC_LOG_SERIOUS, st,
@@ -1524,7 +1517,6 @@ void process_v1_packet(struct msg_digest *md)
 				log_state(RC_LOG, st, "Cannot do Quick Mode until XAUTH done.");
 				return;
 			}
-			set_cur_state(st);
 			from_state = st->st_state->kind;
 		}
 
@@ -1567,7 +1559,6 @@ void process_v1_packet(struct msg_digest *md)
 				return;
 			}
 
-			set_cur_state(st);
 
 			const struct end *this = &st->st_connection->spd.this;
 			dbg(" processing received isakmp_xchg_type %s; this is a%s%s%s%s",
@@ -1656,7 +1647,6 @@ void process_v1_packet(struct msg_digest *md)
 			}
 
 			/* otherwise, this is fine, we continue in the state we are in */
-			set_cur_state(st);
 			from_state = st->st_state->kind;
 		}
 
@@ -2501,7 +2491,6 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 
 	switch (result) {
 	case STF_SUSPEND:
-		set_cur_state(md->st);	/* might have changed */
 		/*
 		 * If this transition was triggered by an incoming
 		 * packet, save it.
@@ -2522,7 +2511,6 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 	enum state_kind from_state = md->v1_from_state;
 
 	st = md->st;
-	set_cur_state(st); /* might have changed */
 
 	passert(st != NULL);
 	pexpect(!state_is_busy(st));
@@ -2898,7 +2886,6 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		    !st->hidden_variables.st_modecfg_vars_set &&
 		    !(st->st_connection->policy & POLICY_MODECFG_PULL)) {
 			change_state(st, STATE_MODE_CFG_R1);
-			set_cur_state(st);
 			log_state(RC_LOG, st, "Sending MODE CONFIG set");
 			/*
 			 * ??? we ignore the result of modecfg.
@@ -2918,7 +2905,6 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		    (st->st_seen_nortel_vid)) {
 			log_state(RC_LOG, st, "Nortel 'Contivity Mode' detected, starting Quick Mode");
 			change_state(st, STATE_MAIN_R3); /* ISAKMP is up... */
-			set_cur_state(st);
 			quick_outI1(st->st_whack_sock, st, st->st_connection,
 				    st->st_connection->policy, 1, SOS_NOBODY,
 				    NULL /* Setting NULL as this is responder and will not have sec ctx from a flow*/

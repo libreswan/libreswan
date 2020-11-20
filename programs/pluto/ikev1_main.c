@@ -116,7 +116,6 @@ void main_outI1(struct fd *whack_sock,
 
 	/* set up new state */
 	initialize_new_state(st, c, policy, try);
-	push_cur_state(st);
 
 	change_state(st, STATE_MAIN_I1);
 
@@ -158,7 +157,6 @@ void main_outI1(struct fd *whack_sock,
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 				&rbody)) {
-			reset_cur_state();
 			return;
 		}
 	}
@@ -170,7 +168,6 @@ void main_outI1(struct fd *whack_sock,
 		if (!ikev1_out_sa(&rbody, IKEv1_oakley_sadb(policy, c),
 				  st, TRUE, FALSE)) {
 			log_state(RC_LOG, st, "outsa fail");
-			reset_cur_state();
 			return;
 		}
 
@@ -184,18 +181,15 @@ void main_outI1(struct fd *whack_sock,
 
 	/* send Vendor IDs */
 	if (!out_vid_set(&rbody, c)) {
-		reset_cur_state();
 		return;
 	}
 
 	/* as Initiator, spray NAT VIDs */
 	if (!nat_traversal_insert_vid(&rbody, c)) {
-		reset_cur_state();
 		return;
 	}
 
 	if (!ikev1_close_message(&rbody, st)) {
-		reset_cur_state();
 		return;
 	}
 
@@ -221,7 +215,6 @@ void main_outI1(struct fd *whack_sock,
 	}
 
 	statetime_stop(&start, "%s()", __func__);
-	reset_cur_state();
 }
 
 /*
@@ -643,7 +636,6 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 
 	update_state_connection(st, c);
 
-	set_cur_state(st); /* (caller will reset cur_state) */
 	st->st_try = 0; /* not our job to try again from start */
 	/* only as accurate as connection */
 	st->st_policy = c->policy & ~POLICY_IPSEC_MASK;

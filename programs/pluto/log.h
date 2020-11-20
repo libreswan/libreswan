@@ -77,21 +77,6 @@ extern void binlog_state(struct state *st, enum state_kind state);
 
 extern void set_debugging(lset_t deb);
 
-extern void log_reset_globals(where_t where);
-#define reset_globals() log_reset_globals(HERE)
-
-extern void log_pexpect_reset_globals(where_t where);
-#define pexpect_reset_globals() log_pexpect_reset_globals(HERE)
-
-so_serial_t log_push_state(struct state *st, where_t where);
-void log_pop_state(so_serial_t serialno, where_t where);
-
-#define push_cur_state(ST) log_push_state(ST, HERE)
-#define pop_cur_state(ST) log_pop_state(ST, HERE)
-
-#define set_cur_state(ST) push_cur_state(ST)
-#define reset_cur_state() pop_cur_state(SOS_NOBODY)
-
 extern const struct logger_object_vec logger_global_vec;
 extern const struct logger_object_vec logger_from_vec;
 extern const struct logger_object_vec logger_message_vec;

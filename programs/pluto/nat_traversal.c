@@ -651,7 +651,6 @@ void nat_traversal_new_ka_event(void)
 
 static void nat_traversal_send_ka(struct state *st)
 {
-	set_cur_state(st);
 	endpoint_buf b;
 	dbg("ka_event: send NAT-KA to %s (state=#%lu)",
 	    str_endpoint(&st->st_remote_endpoint, &b),
@@ -660,7 +659,6 @@ static void nat_traversal_send_ka(struct state *st)
 	/* send keep alive */
 	dbg("sending NAT-T Keep Alive");
 	send_keepalive_using_state(st, "NAT-T Keep Alive");
-	reset_cur_state();
 }
 
 /*

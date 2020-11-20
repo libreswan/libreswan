@@ -285,7 +285,6 @@ void process_packet(struct msg_digest **mdp)
 static void process_md(struct msg_digest **mdp)
 {
 	process_packet(mdp);
-	reset_cur_state();
 }
 
 /* wrapper for read_packet and process_packet
@@ -323,7 +322,6 @@ enum iface_status handle_packet_cb(const struct iface_port *ifp)
 	}
 	threadtime_stop(&md_start, SOS_NOBODY,
 			"%s() reading and processing packet", __func__);
-	pexpect_reset_globals();
 	return status;
 }
 
@@ -342,7 +340,6 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...) PRIN
 static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 {
 	/* not whack FD yet is expected to be reset! */
-	pexpect_reset_globals();
 	struct msg_digest *md = clone_raw_md(orig, HERE);
 
 	LOG_JAMBUF(RC_LOG, md->md_logger, buf) {
@@ -369,7 +366,6 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 
 	md_delref(&md, HERE);
 	pexpect(md == NULL);
-	pexpect_reset_globals();
 }
 
 static unsigned long replay_count;
@@ -460,7 +456,6 @@ static void handle_md_event(struct state *st, void *context)
 	process_md(&md);
 	md_delref(&md, HERE);
 	pexpect(md == NULL);
-	pexpect_reset_globals();
 }
 
 void schedule_md_event(const char *name, struct msg_digest *md)

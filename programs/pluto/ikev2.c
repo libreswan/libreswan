@@ -1760,9 +1760,7 @@ void ikev2_process_packet(struct msg_digest *md)
 			if (md->fake_clone) {
 				log_state(RC_LOG, &ike->sa, "IMPAIR: processing a fake (cloned) message");
 			}
-			push_cur_state(&ike->sa);
 			v2_dispatch(ike, &ike->sa, md, transition);
-			pop_cur_state(SOS_NOBODY);
 			statetime_stop(&start, "%s()", __func__);
 			return;
 		}
@@ -1850,9 +1848,7 @@ void ikev2_process_packet(struct msg_digest *md)
 			}
 
 			statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
-			push_cur_state(&ike->sa);
 			v2_dispatch(ike, &ike->sa, md, transition);
-			pop_cur_state(SOS_NOBODY);
 			statetime_stop(&start, "%s()", __func__);
 			return;
 		}
@@ -1904,9 +1900,7 @@ void ikev2_process_packet(struct msg_digest *md)
 	 * it.
 	 */
 	statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
-	so_serial_t old = push_cur_state(&ike->sa);
 	ike_process_packet(md, ike);
-	pop_cur_state(old);
 	statetime_stop(&start, "%s()", __func__);
 }
 
@@ -1985,7 +1979,6 @@ static void ike_process_packet(struct msg_digest *md, struct ike_sa *ike)
 	 */
 	passert(st != NULL);
 	/* XXX: debug-logging this is redundant */
-	push_cur_state(st);
 
 	/*
 	 * Have a state an and IKE SA, time to decode the payloads.
@@ -3372,7 +3365,6 @@ void complete_v2_state_transition(struct state *st,
 	passert(st != NULL);
 	struct ike_sa *ike = ike_sa(st, HERE);
 	/* struct child_sa *child = IS_CHILD_SA(st) ? pexpect_child_sa(st) : NULL; */
-	set_cur_state(st); /* might have changed */ /* XXX: huh? */
 
 	/* statistics */
 	/* this really depends on the type of error whether it is an IKE or IPsec fail */

@@ -564,7 +564,6 @@ static void idr_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 		return;
 	}
 
-	set_cur_state(st);
 
 	ipseckey_dbg_dns_resp(dnsr);
 	parse_err = process_dns_resp(dnsr);
@@ -586,7 +585,6 @@ static void idr_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 
 	st->ipseckey_dnsr = NULL;
 	free_ipseckey_dns(dnsr);
-	reset_globals();
 }
 
 static void idi_ipseckey_fetch_tail(struct state *st, bool err)
@@ -605,7 +603,6 @@ static void idi_ipseckey_fetch_tail(struct state *st, bool err)
 	/* replace (*mdp)->st with st ... */
 	complete_v2_state_transition(md->st, md, stf);
 	release_any_md(&md);
-	reset_globals();
 }
 
 static void idi_a_fetch_continue(struct p_dns_req *dnsr)
@@ -623,7 +620,6 @@ static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 	}
 
 	if (!dnsr->cache_hit)
-		set_cur_state(st);
 
 	ipseckey_dbg_dns_resp(dnsr);
 	process_dns_resp(dnsr);
@@ -686,7 +682,6 @@ static void idi_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 	}
 
 	if (!dnsr->cache_hit)
-		set_cur_state(st);
 
 	ipseckey_dbg_dns_resp(dnsr);
 	parse_err = process_dns_resp(dnsr);

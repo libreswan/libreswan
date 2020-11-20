@@ -962,8 +962,6 @@ void delete_state_tail(struct state *st)
 			pri_cpu_usage(st->st_timing.helper_usage));
 	}
 
-	so_serial_t old_serialno = push_cur_state(st);
-
 	/*
 	 * IKEv2 IKE failures are logged in the state transition conpletion.
 	 * IKEv1 IKE failures do not go through a transition, so we catch
@@ -1258,7 +1256,6 @@ void delete_state_tail(struct state *st)
 
 	/* without st_connection, st isn't complete */
 	/* from here on logging is for the wrong state */
-	pop_cur_state(old_serialno);
 
 	release_certs(&st->st_remote_certs.verified);
 	free_public_keys(&st->st_remote_certs.pubkey_db);
@@ -1425,12 +1422,10 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 				 * suppressing the message 'deleting
 				 * other state'.
 				 */
-				so_serial_t old_serialno = push_cur_state(this);
 				/* XXX: better way? */
 				close_any(&this->st_logger->global_whackfd);
 				this->st_logger->global_whackfd = dup_any(whackfd);
 				delete_state(this);
-				pop_cur_state(old_serialno);
 			}
 		}
 	}
@@ -1699,9 +1694,7 @@ void for_each_state(void (*f)(struct state *, void *data), void *data,
 		 * Since OLD_STATE might be deleted by f();
 		 * save/restore using serialno.
 		 */
-		so_serial_t old_serialno = push_cur_state(st);
 		(*f)(st, data);
-		pop_cur_state(old_serialno);
 	}
 }
 
