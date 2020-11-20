@@ -82,9 +82,6 @@ struct fd *whack_log_fd = NULL;      /* only set during whack_handle() */
  * Context for logging.
  *
  * CUR_CONNECTION and CUR_STATE work something like a stack.
- * cur_logger() will use the first of CUR_STATE or CUR_CONNECTION when
- * looking for the context to use with a prefix.  Operations then
- * "push" and "pop" (or clear all) contexts.
  *
  * For instance, setting CUR_STATE will hide CUR_CONNECTION, and
  * resetting CUR_STATE will re-expose CUR_CONNECTION.
@@ -820,25 +817,6 @@ void free_logger(struct logger **logp, where_t where)
 	pfree(*logp);
 	*logp = NULL;
 }
-
-struct logger cur_logger(void)
-{
-	if (!pexpect(in_main_thread())) {
-		static const struct logger_object_vec logger_pexpect_vec = {
-			.name = "pexpect",
-			.suppress_object_log = never_suppress_log,
-			.jam_object_prefix = jam_string_prefix,
-			.free_object = false,
-		};
-		static const struct logger pexpect_logger = {
-			.object = "[EXPECTATION FAILED on-main-thread] ",
-			.where = { .func = __func__, .basename = HERE_BASENAME , .line = __LINE__},/*HERE*/
-			.object_vec = &logger_pexpect_vec,
-		};
-		return pexpect_logger;
-	}
-	return GLOBAL_LOGGER(whack_log_fd);
-};
 
 /*
  * XXX: these were macros only older GCC's, seeing for some code

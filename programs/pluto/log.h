@@ -92,8 +92,6 @@ void log_pop_state(so_serial_t serialno, where_t where);
 #define set_cur_state(ST) push_cur_state(ST)
 #define reset_cur_state() pop_cur_state(SOS_NOBODY)
 
-struct logger cur_logger(void);
-
 extern const struct logger_object_vec logger_global_vec;
 extern const struct logger_object_vec logger_from_vec;
 extern const struct logger_object_vec logger_message_vec;
