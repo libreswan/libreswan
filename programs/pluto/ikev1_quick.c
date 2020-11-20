@@ -1021,7 +1021,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 			idfqdn[idlen] = '\0';
 
 			hv = p1st->hidden_variables;
-			nat_traversal_natoa_lookup(md, &hv);
+			nat_traversal_natoa_lookup(md, &hv, p1st->st_logger);
 
 			if (address_is_specified(&hv.st_nat_oa)) {
 				endtosubnet(&hv.st_nat_oa, &b.peers.net, HERE);
@@ -1213,7 +1213,7 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 	hv = p1st->hidden_variables;
 	if ((hv.st_nat_traversal & NAT_T_DETECTED) &&
 	    (hv.st_nat_traversal & NAT_T_WITH_NATOA))
-		nat_traversal_natoa_lookup(md, &hv);
+		nat_traversal_natoa_lookup(md, &hv, p1st->st_logger);
 
 	/* create our new state */
 	{
@@ -1611,7 +1611,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 
 	if ((st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
 	    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA))
-		nat_traversal_natoa_lookup(md, &st->hidden_variables);
+		nat_traversal_natoa_lookup(md, &st->hidden_variables, st->st_logger);
 
 	/* [ IDci, IDcr ] in; these must match what we sent */
 

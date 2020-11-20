@@ -71,7 +71,7 @@
  */
 #define NAT_T_DETECTED  ( LELEM(NATED_HOST) | LELEM(NATED_PEER) )
 
-void init_nat_traversal(deltatime_t keep_alive_period);
+void init_nat_traversal(deltatime_t keep_alive_period, struct logger *logger);
 
 extern bool nat_traversal_enabled;
 
@@ -88,7 +88,8 @@ extern bool v2_nat_detected(struct ike_sa *ike, struct msg_digest *md);
 struct hidden_variables;	/* forward */
 
 void nat_traversal_natoa_lookup(struct msg_digest *md,
-				struct hidden_variables *hv);
+				struct hidden_variables *hv,
+				struct logger *logger);
 bool nat_traversal_add_natoa(pb_stream *outs,
 			     struct state *st, bool initiator);
 /*

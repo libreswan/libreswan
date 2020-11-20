@@ -1753,7 +1753,7 @@ int main(int argc, char **argv)
 	init_server();
 
 	init_rate_log();
-	init_nat_traversal(keep_alive);
+	init_nat_traversal(keep_alive, logger);
 
 	init_virtual_ip(virtual_private, logger);
 	/* obsoleted by nss code: init_rnd_pool(); */

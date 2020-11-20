@@ -83,15 +83,15 @@ bool nat_traversal_enabled = TRUE; /* can get disabled if kernel lacks support *
 static deltatime_t nat_kap = DELTATIME_INIT(DEFAULT_KEEP_ALIVE_SECS);	/* keep-alive period */
 static bool nat_kap_event = FALSE;
 
-void init_nat_traversal(deltatime_t keep_alive_period)
+void init_nat_traversal(deltatime_t keep_alive_period, struct logger *logger)
 {
 	if (deltamillisecs(keep_alive_period) != 0)
 		nat_kap = keep_alive_period;
 
 	dbg("init_nat_traversal() initialized with keep_alive=%jds",
 	    deltasecs(keep_alive_period));
-	libreswan_log("NAT-Traversal support %s",
-		nat_traversal_enabled ? " [enabled]" : " [disabled]");
+	log_message(RC_LOG, logger, "NAT-Traversal support %s",
+		    nat_traversal_enabled ? " [enabled]" : " [disabled]");
 
 	init_oneshot_timer(EVENT_NAT_T_KEEPALIVE, nat_traversal_ka_event);
 }
@@ -344,9 +344,8 @@ static void natd_lookup_common(struct state *st,
 }
 
 #ifdef USE_IKEv1
-static void ikev1_natd_lookup(struct msg_digest *md)
+static void ikev1_natd_lookup(struct msg_digest *md, struct state *st)
 {
-	struct state *st = md->st;
 	const struct hash_desc *const hasher = st->st_oakley.ta_prf->hasher;
 	const struct payload_digest *const hd = md->chain[ISAKMP_NEXT_NATD_RFC];
 
@@ -361,9 +360,9 @@ static void ikev1_natd_lookup(struct msg_digest *md)
 	 * We need at least 2 NAT-D (1 for us, many for peer)
 	 */
 	if (i < 2) {
-		loglog(RC_LOG_SERIOUS,
-			"NAT-Traversal: Only %d NAT-D - Aborting NAT-Traversal negotiation",
-			i);
+		log_state(RC_LOG_SERIOUS, st,
+			  "NAT-Traversal: Only %d NAT-D - Aborting NAT-Traversal negotiation",
+			  i);
 		st->hidden_variables.st_nat_traversal = LEMPTY;
 		return;
 	}
@@ -467,9 +466,9 @@ bool ikev1_nat_traversal_add_natd(pb_stream *outs,
  * Look for NAT-OA in message
  */
 void nat_traversal_natoa_lookup(struct msg_digest *md,
-				struct hidden_variables *hv)
+				struct hidden_variables *hv,
+				struct logger *logger)
 {
-	struct logger logger[1] = { cur_logger(), };
 	passert(md->iface != NULL);
 
 	/* Initialize NAT-OA */
@@ -488,16 +487,16 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 		return;
 
 	if (!LHAS(hv->st_nat_traversal, NATED_PEER)) {
-		loglog(RC_LOG_SERIOUS,
-			"NAT-Traversal: received %d NAT-OA. Ignored because peer is not NATed",
-			i);
+		log_message(RC_LOG_SERIOUS, logger,
+			    "NAT-Traversal: received %d NAT-OA. Ignored because peer is not NATed",
+			    i);
 		return;
 	}
 
 	if (i > 1) {
-		loglog(RC_LOG_SERIOUS,
-			"NAT-Traversal: received %d NAT-OA. Using first; ignoring others",
-			i);
+		log_message(RC_LOG_SERIOUS, logger,
+			    "NAT-Traversal: received %d NAT-OA. Using first; ignoring others",
+			    i);
 	}
 
 	/* Take first */
@@ -519,9 +518,9 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 		ipv = &ipv6_info;
 		break;
 	default:
-		loglog(RC_LOG_SERIOUS,
-			"NAT-Traversal: invalid ID Type (%d) in NAT-OA - ignored",
-			p->payload.nat_oa.isanoa_idtype);
+		log_message(RC_LOG_SERIOUS, logger,
+			    "NAT-Traversal: invalid ID Type (%d) in NAT-OA - ignored",
+			    p->payload.nat_oa.isanoa_idtype);
 		return;
 	}
 
@@ -535,8 +534,8 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 	dbg("received NAT-OA: %s", ipstr(&ip, &b));
 
 	if (address_eq_any(&ip)) {
-		loglog(RC_LOG_SERIOUS,
-			"NAT-Traversal: received 0.0.0.0 NAT-OA...");
+		log_message(RC_LOG_SERIOUS, logger,
+			    "NAT-Traversal: received 0.0.0.0 NAT-OA...");
 	} else {
 		hv->st_nat_oa = ip;
 	}
@@ -622,10 +621,11 @@ void ikev1_natd_init(struct state *st, struct msg_digest *md)
 			 * Probably in FIPS trying MD5 ?
 			 * Nothing will get send, so just do nothing
 			 */
-			loglog(RC_LOG_SERIOUS, "Cannot compute NATD payloads without valid PRF");
+			log_state(RC_LOG_SERIOUS, st,
+				  "Cannot compute NATD payloads without valid PRF");
 			return;
 		}
-		ikev1_natd_lookup(md);
+		ikev1_natd_lookup(md, st);
 
 		if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 			nat_traversal_show_result(
