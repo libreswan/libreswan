@@ -477,7 +477,7 @@ const struct iface_io udp_iface_io = {
  */
 
 static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
-					size_t sizeof_buffer, struct logger *logger)
+					size_t sizeof_buffer)
 {
 	if (packet_len > sizeof_buffer) {
 		/*
@@ -499,21 +499,10 @@ static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 				 &hdr, sizeof(hdr), NULL);
 	if (d != NULL) {
 		/*
-		 * XXX:
-		 *
-		 * When in_struct() fails it logs an obscure and
-		 * typically context free error (for instance, cur_*
-		 * is unset when processing error messages); and
-		 * there's no clean for this or calling code to pass
-		 * in context.
-		 *
-		 * Fortunately, since the buffer is large enough to
-		 * hold the header, there's really not much left that
-		 * can trigger an error (everything in ISAKMP_HDR_DESC
-		 * that involves validation has its type set to FT_NAT
-		 * in RAW_ISAKMP_HDR_DESC).
+		 * XXX: Only thing interesting is that there was an
+		 * error, toss the message.
 		 */
-		log_diag(RC_LOG, logger, &d, "MSG_ERRQUEUE packet IKE header is corrupt");
+		pfree_diag(&d);
 		return NULL;
 	}
 	enum ike_version ike_version = hdr_ike_version(&hdr);
@@ -563,8 +552,6 @@ static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 
 static bool check_msg_errqueue(const struct iface_port *ifp, short interest, const char *before)
 {
-	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
-
 	struct pollfd pfd;
 	int again_count = 0;
 
@@ -646,8 +633,7 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 			}
 
 			sender = find_likely_sender((size_t) packet_len,
-						    buffer, sizeof(buffer),
-						    logger);
+						    buffer, sizeof(buffer));
 		}
 
 		if (DBGP(DBG_BASE)) {
