@@ -95,6 +95,7 @@ static stf_status xauth_client_ackstatus(struct state *st,
 struct CISCO_split_item {
 	struct in_addr cs_addr;
 	struct in_addr cs_mask;
+	uint8_t protos_and_ports[6];
 };
 
 static field_desc CISCO_split_fields[] = {
