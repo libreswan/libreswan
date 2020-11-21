@@ -930,8 +930,22 @@ void ikev2_schedule_next_child_delete(struct state *st, struct ike_sa *ike)
 	v2_expire_unused_ike_sa(ike);
 }
 
+static void delete_state_tail(struct state *st);
+
+void delete_other_state(struct state *st, struct state *other_state)
+{
+	delete_state_log(other_state, st);
+	delete_state_tail(other_state);
+}
+
 /* delete a state object */
 void delete_state(struct state *st)
+{
+	delete_state_log(st, st);
+	delete_state_tail(st);
+}
+
+void delete_state_tail(struct state *st)
 {
 	struct connection *const c = st->st_connection;
 	pstat_sa_deleted(st);
@@ -949,7 +963,6 @@ void delete_state(struct state *st)
 	}
 
 	so_serial_t old_serialno = push_cur_state(st);
-	delete_state_log(st, state_by_serialno(old_serialno));
 
 	/*
 	 * IKEv2 IKE failures are logged in the state transition conpletion.
@@ -2860,8 +2873,13 @@ void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 static bool delete_ike_family_child(struct state *st, void *unused_context UNUSED)
 {
 	struct ike_sa *ike = ike_sa(st, HERE);
-	/* pass down whack fd; better abstraction? */
-	if (ike != NULL && fd_p(ike->sa.st_logger->global_whackfd)) {
+	/*
+	 * Transfer the IKE SA's whack-fd to the child so that the
+	 * child can also log its demise; better abstraction?
+	 */
+	if (ike != NULL &&
+	    &ike->sa != st &&
+	    fd_p(ike->sa.st_logger->global_whackfd)) {
 		close_any(&st->st_logger->global_whackfd);
 		st->st_logger->global_whackfd = dup_any(ike->sa.st_logger->global_whackfd);
 	}
@@ -2872,7 +2890,7 @@ static bool delete_ike_family_child(struct state *st, void *unused_context UNUSE
 		st->st_dont_send_delete = true;
 		break;
 	}
-	delete_state(st);
+	delete_other_state(&ike->sa, st/*other*/);
 	return false; /* keep going */
 }
 

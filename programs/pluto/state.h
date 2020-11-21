@@ -807,6 +807,7 @@ extern void release_any_whack(struct state *st, where_t where, const char *why);
 extern void state_eroute_usage(const ip_subnet *ours, const ip_subnet *peers,
 			       unsigned long count, monotime_t nw);
 extern void delete_state(struct state *st);
+extern void delete_other_state(struct state *st, struct state *other_st);
 extern void delete_states_by_connection(struct connection *c, bool relations, struct fd *whackfd);
 extern void rekey_p2states_by_connection(struct connection *c);
 enum send_delete { PROBABLY_SEND_DELETE, DONT_SEND_DELETE, };
