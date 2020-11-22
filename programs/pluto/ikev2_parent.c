@@ -6219,7 +6219,6 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 static const struct iface_port *ikev2_src_iface(struct state *st,
 						struct starter_end *this)
 {
-	struct fd *whackfd = whack_log_fd; /* placeholder */
 	/* success found a new source address */
 	pexpect_st_local_endpoint(st);
 	ip_port port = endpoint_port(&st->st_interface->local_endpoint);
@@ -6230,7 +6229,9 @@ static const struct iface_port *ikev2_src_iface(struct state *st,
 		endpoint_buf b;
 		dbg("#%lu no interface for %s try to initialize",
 		    st->st_serialno, str_endpoint(&local_endpoint, &b));
-		find_ifaces(false, whackfd);
+		/* XXX: should this be building a global logger? */
+		struct logger global_logger[1] = { GLOBAL_LOGGER(whack_log_fd), };
+		find_ifaces(false, global_logger);
 		iface = find_iface_port_by_local_endpoint(&local_endpoint);
 		if (iface ==  NULL) {
 			return NULL;

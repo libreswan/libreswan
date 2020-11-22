@@ -260,7 +260,7 @@ static void do_whacklisten(struct fd *whackfd)
 #endif
 	log_message(RC_LOG, logger, "listening for IKE messages");
 	listening = true;
-	find_ifaces(true /* remove dead interfaces */, whackfd);
+	find_ifaces(true /* remove dead interfaces */, logger);
 #ifdef USE_XFRM_INTERFACE
 	stale_xfrmi_interfaces(logger);
 #endif

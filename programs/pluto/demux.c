@@ -80,7 +80,8 @@
  */
 
 static enum iface_status read_message(const struct iface_port *ifp,
-				      struct msg_digest **mdp)
+				      struct msg_digest **mdp,
+				      struct logger *logger)
 {
 	pexpect(*mdp == NULL);
 
@@ -89,6 +90,7 @@ static enum iface_status read_message(const struct iface_port *ifp,
 	struct iface_packet packet = {
 		.ptr = bigbuffer,
 		.len = sizeof(bigbuffer),
+		.logger = logger,
 	};
 
 	enum iface_status status = ifp->io->read_packet(ifp, &packet);
@@ -303,11 +305,12 @@ static void process_md(struct msg_digest **mdp)
 
 static bool impair_incoming(struct msg_digest *md);
 
-enum iface_status handle_packet_cb(const struct iface_port *ifp)
+enum iface_status handle_packet_cb(const struct iface_port *ifp,
+				   struct logger *logger)
 {
 	threadtime_t md_start = threadtime_start();
 	struct msg_digest *md = NULL;
-	enum iface_status status = read_message(ifp, &md);
+	enum iface_status status = read_message(ifp, &md, logger);
 	if (status != IFACE_OK) {
 		pexpect(md == NULL);
 	} else if (pexpect(md != NULL)) {

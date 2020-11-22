@@ -173,7 +173,7 @@ static void sort_ifaces(struct raw_iface **rifaces)
 	pfree(ifaces);
 }
 
-struct raw_iface *find_raw_ifaces6(void)
+struct raw_iface *find_raw_ifaces6(struct logger *unused_logger UNUSED)
 {
 	/* Get list of interfaces with IPv6 addresses from system from /proc/net/if_inet6).
 	 *

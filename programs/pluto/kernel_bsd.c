@@ -99,7 +99,7 @@ static int pluto_ifn_roof = 0;
 /*
  * there is a BSD way to do this, probably SIOCGCONF
  */
-struct raw_iface *find_raw_ifaces6(void)
+struct raw_iface *find_raw_ifaces6(struct logger *logger UNUSED)
 {
 	return NULL;
 }

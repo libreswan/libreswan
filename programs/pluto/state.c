@@ -1437,7 +1437,7 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
  * but using interfaces that are going down
  */
 
-void delete_states_dead_interfaces(struct fd *whackfd)
+void delete_states_dead_interfaces(struct logger *logger)
 {
 	struct state *this = NULL;
 	dbg("FOR_EACH_STATE_... in %s", __func__);
@@ -1450,12 +1450,12 @@ void delete_states_dead_interfaces(struct fd *whackfd)
 				id_vname = c->xfrmi->name;
 			else
 				id_vname = this->st_interface->ip_dev->id_rname;
-			log_global(RC_LOG, whackfd,
-				   "deleting lasting state #%lu on interface (%s) which is shutting down",
-				   this->st_serialno, id_vname);
+			log_message(RC_LOG, logger,
+				    "deleting lasting state #%lu on interface (%s) which is shutting down",
+				    this->st_serialno, id_vname);
 			/* XXX: better? */
 			close_any(&this->st_logger->global_whackfd);
-			this->st_logger->global_whackfd = dup_any(whackfd);
+			this->st_logger->global_whackfd = dup_any(logger->global_whackfd);
 			delete_state(this);
 			/* note: no md->st to clear */
 		}

@@ -275,7 +275,7 @@ extern const struct kernel_ops xfrm_kernel_ops;
 extern const struct kernel_ops bsdkame_kernel_ops;
 #endif
 
-extern struct raw_iface *find_raw_ifaces6(void);
+extern struct raw_iface *find_raw_ifaces6(struct logger *logger);
 
 /* helper for invoking call outs */
 extern bool fmt_common_shell_out(char *buf, size_t blen,

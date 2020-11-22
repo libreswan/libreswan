@@ -125,7 +125,7 @@ void exit_tail(void)
 
 	lsw_conf_free_oco();	/* free global_oco containing path names */
 
-	free_ifaces();	/* free interface list from memory */
+	free_ifaces(logger);	/* free interface list from memory */
 	shutdown_kernel(logger);
 	lsw_nss_shutdown();
 	delete_lock();	/* delete any lock files */
