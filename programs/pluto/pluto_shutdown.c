@@ -110,7 +110,7 @@ void exit_tail(void)
 	 * Without this CRL fetch requests are left hanging and, after
 	 * the NSS DB has been closed (below), the helper can crash.
 	 */
-	stop_crl_fetch_helper();
+	stop_crl_fetch_helper(logger);
 	/*
 	 * free the crl list that the fetch-helper is currently
 	 * processing

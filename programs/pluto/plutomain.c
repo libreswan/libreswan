@@ -1782,7 +1782,7 @@ int main(int argc, char **argv)
 	init_kernel();
 	init_vendorid();
 #if defined(LIBCURL) || defined(LIBLDAP)
-	start_crl_fetch_helper();
+	start_crl_fetch_helper(logger);
 #endif
 #ifdef HAVE_LABELED_IPSEC
 	init_selinux();
