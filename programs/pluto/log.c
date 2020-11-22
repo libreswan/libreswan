@@ -362,10 +362,12 @@ void rate_log(const struct msg_digest *md,
 	nr_rate_limited_logs++;
 }
 
-static void reset_log_rate_limit(struct fd *whackfd)
+static global_timer_cb reset_log_rate_limit;
+
+static void reset_log_rate_limit(struct logger *logger)
 {
 	if (nr_rate_limited_logs > log_limit()) {
-		log_global(RC_LOG, whackfd, "rate limited log reset");
+		log_message(RC_LOG, logger, "rate limited log reset");
 	}
 	nr_rate_limited_logs = 0;
 }

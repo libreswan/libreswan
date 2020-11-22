@@ -585,8 +585,8 @@ extern void show_connections_status(struct show *s);
 extern int connection_compare(const struct connection *ca,
 			      const struct connection *cb);
 
-void connection_check_ddns(struct fd *whackfd);
-void connection_check_phase2(struct fd *whackfd);
+void connection_check_ddns(struct logger *logger);
+void connection_check_phase2(struct logger *logger);
 void init_connections(void);
 
 extern int foreach_connection_by_alias(const char *alias,

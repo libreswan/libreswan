@@ -21,9 +21,11 @@
 
 #include "chunk.h"
 
+struct logger;
+
 extern void fill_rnd_chunk(chunk_t chunk);
 extern void get_rnd_bytes(void *buffer, size_t size);
 
-extern void init_secret(void);
+extern void init_secret(struct logger *logger);
 
 #endif

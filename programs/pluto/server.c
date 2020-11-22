@@ -268,6 +268,7 @@ static struct global_timer_desc global_timers[] = {
 static void global_timer_event_cb(evutil_socket_t fd UNUSED,
 				  const short event, void *arg)
 {
+	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
 	passert(in_main_thread());
 	struct global_timer_desc *gt = arg;
 	passert(event & EV_TIMEOUT);
@@ -275,11 +276,12 @@ static void global_timer_event_cb(evutil_socket_t fd UNUSED,
 	passert(gt < global_timers + elemsof(global_timers));
 	dbg("processing global timer %s", gt->name);
 	threadtime_t start = threadtime_start();
-	gt->cb(null_fd);
+	gt->cb(logger);
 	threadtime_stop(&start, SOS_NOBODY, "global timer %s", gt->name);
 }
 
-void call_global_event_inline(enum global_timer timer, struct fd *whackfd)
+void call_global_event_inline(enum global_timer timer,
+			      struct logger *logger)
 {
 	passert(in_main_thread());
 	if (!pexpect(timer < elemsof(global_timers))) {
@@ -289,12 +291,13 @@ void call_global_event_inline(enum global_timer timer, struct fd *whackfd)
 	struct global_timer_desc *gt = &global_timers[timer];
 	passert(gt->name != NULL);
 	if (!event_initialized(&gt->ev)) {
-		log_global(RC_LOG, whackfd, "inject: timer %s is not initialized",
-			   gt->name);
+		log_message(RC_LOG, logger,
+			    "inject: timer %s is not initialized",
+			    gt->name);
 	}
-	log_global(RC_LOG, whackfd, "inject: injecting timer event %s", gt->name);
+	log_message(RC_LOG, logger, "inject: injecting timer event %s", gt->name);
 	threadtime_t start = threadtime_start();
-	gt->cb(whackfd);
+	gt->cb(logger);
 	threadtime_stop(&start, SOS_NOBODY, "global timer %s", gt->name);
 }
 

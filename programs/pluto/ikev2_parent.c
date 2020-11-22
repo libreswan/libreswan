@@ -3296,7 +3296,7 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 		/* ensure we run keepalives if needed */
 		if (c->nat_keepalive) {
 			/* XXX: just trigger this event? */
-			nat_traversal_ka_event(null_fd);
+			nat_traversal_ka_event(ike->sa.st_logger);
 		}
 	}
 
@@ -3974,7 +3974,7 @@ static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *
 		/* ensure we run keepalives if needed */
 		if (c->nat_keepalive) {
 			/* XXX: just trigger this event */
-			nat_traversal_ka_event(null_fd);
+			nat_traversal_ka_event(ike->sa.st_logger);
 		}
 	}
 

@@ -92,10 +92,9 @@ void exit_pluto(enum pluto_exit_code status)
 
 void exit_tail(void)
 {
-	struct fd *whackfd = null_fd;
 	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
 
-	free_root_certs(whackfd);
+	free_root_certs(logger);
 	free_preshared_secrets(logger);
 	free_remembered_public_keys();
 	delete_every_connection();
@@ -127,7 +126,7 @@ void exit_tail(void)
 	lsw_conf_free_oco();	/* free global_oco containing path names */
 
 	free_ifaces();	/* free interface list from memory */
-	shutdown_kernel();
+	shutdown_kernel(logger);
 	lsw_nss_shutdown();
 	delete_lock();	/* delete any lock files */
 	free_virtual_ip();	/* virtual_private= */

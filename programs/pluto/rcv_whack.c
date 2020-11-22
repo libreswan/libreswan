@@ -95,61 +95,61 @@
 #include "send.h"			/* for impair: send_keepalive() */
 #include "pluto_shutdown.h"		/* for exit_pluto() */
 
-static struct state *find_impaired_state(unsigned biased_what, struct fd *whackfd)
+static struct state *find_impaired_state(unsigned biased_what,
+					 struct logger *logger)
 {
 	if (biased_what == 0) {
-		log_global(RC_COMMENT, whackfd,
-			   "state 'no' is not valid");
+		log_message(RC_COMMENT, logger, "state 'no' is not valid");
 		return NULL;
 	}
 	so_serial_t so = biased_what - 1; /* unbias */
 	struct state *st = state_by_serialno(so);
 	if (st == NULL) {
-		log_global(RC_COMMENT, whackfd,
-			   "state #%lu not found", so);
+		log_message(RC_COMMENT, logger, "state #%lu not found", so);
 		return NULL;
 	}
 	return st;
 }
 
-static struct logger attach_logger(struct state *st, bool background, struct fd *whackfd)
+static struct logger merge_loggers(struct state *st, bool background, struct logger *logger)
 {
 	/* so errors go to whack and file regardless of BACKGROUND */
-	struct logger logger = *st->st_logger;
-	logger.global_whackfd = whackfd;
+	struct logger loggers = *st->st_logger;
+	loggers.global_whackfd = logger->global_whackfd;
 	if (!background) {
 		/* XXX: something better */
 		close_any(&st->st_logger->object_whackfd);
-		st->st_logger->object_whackfd = dup_any(whackfd);
+		st->st_logger->object_whackfd = dup_any(logger->global_whackfd);
 	}
-	return logger;
+	return loggers;
 }
 
 static void whack_impair_action(enum impair_action action, unsigned event,
-				unsigned biased_what, bool background, struct fd *whackfd)
+				unsigned biased_what, bool background,
+				struct logger *logger)
 {
 	switch (action) {
 	case CALL_IMPAIR_UPDATE:
 		/* err... */
 		break;
 	case CALL_GLOBAL_EVENT:
-		call_global_event_inline(event, whackfd);
+		call_global_event_inline(event, logger);
 		break;
 	case CALL_STATE_EVENT:
 	{
-		struct state *st = find_impaired_state(biased_what, whackfd);
+		struct state *st = find_impaired_state(biased_what, logger);
 		if (st == NULL) {
 			/* already logged */
 			return;
 		}
 		/* will log */
-		struct logger logger = attach_logger(st, background, whackfd);
-		call_state_event_inline(&logger, st, event);
+		struct logger loggers = merge_loggers(st, background, logger);
+		call_state_event_inline(&loggers, st, event);
 		break;
 	}
 	case CALL_INITIATE_v2_LIVENESS:
 	{
-		struct state *st = find_impaired_state(biased_what, whackfd);
+		struct state *st = find_impaired_state(biased_what, logger);
 		if (st == NULL) {
 			/* already logged */
 			return;
@@ -160,56 +160,51 @@ static void whack_impair_action(enum impair_action action, unsigned event,
 			/* already logged */
 			return;
 		}
-		struct logger logger = attach_logger(&ike->sa, background, whackfd);
-		log_message(RC_COMMENT, &logger, "initiating liveness");
-		initiate_v2_liveness(&logger, ike);
+		struct logger loggers = merge_loggers(&ike->sa, background, logger);
+		log_message(RC_COMMENT, &loggers, "initiating liveness");
+		initiate_v2_liveness(&loggers, ike);
 		break;
 	}
 	case CALL_INITIATE_v2_DELETE:
 	{
-		struct state *st = find_impaired_state(biased_what, whackfd);
+		struct state *st = find_impaired_state(biased_what, logger);
 		if (st == NULL) {
 			/* already logged */
 			return;
 		}
 		/* will log */
-		attach_logger(st, background, whackfd);
+		merge_loggers(st, background, logger);
 		initiate_v2_delete(ike_sa(st, HERE), st);
 		break;
 	}
 	case CALL_INITIATE_v2_REKEY:
 	{
-		struct state *st = find_impaired_state(biased_what, whackfd);
+		struct state *st = find_impaired_state(biased_what, logger);
 		if (st == NULL) {
 			/* already logged */
 			return;
 		}
 		/* will log */
-		attach_logger(st, background, whackfd);
+		merge_loggers(st, background, logger);
 		initiate_v2_rekey(ike_sa(st, HERE), st);
 		break;
 	}
 	case CALL_SEND_KEEPALIVE:
 	{
-		struct state *st = find_impaired_state(biased_what, whackfd);
+		struct state *st = find_impaired_state(biased_what, logger);
 		if (st == NULL) {
 			/* already logged */
 			return;
 		}
 		/* will log */
-		struct logger logger = attach_logger(st, true/*background*/, whackfd);
-		log_message(RC_COMMENT, &logger, "sending keepalive");
+		struct logger loggers = merge_loggers(st, true/*background*/, logger);
+		log_message(RC_COMMENT, &loggers, "sending keepalive");
 		send_keepalive_using_state(st, "inject keep-alive");
 		break;
 	}
 	case CALL_IMPAIR_DROP_INCOMING:
 	case CALL_IMPAIR_DROP_OUTGOING:
-	{
-		struct logger logger = GLOBAL_LOGGER(whackfd);
-		/* will log */
-		add_message_impairment(biased_what - 1, action, &logger);
-		break;
-	}
+		add_message_impairment(biased_what - 1, action, logger);
 	}
 }
 
@@ -434,7 +429,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 					process_impair(&m->impairments[i],
 						       whack_impair_action,
 						       m->whack_async/*background*/,
-						       whackfd, &global_logger);
+						       &global_logger);
 				}
 			} else if (!m->whack_connection) {
 				struct connection *c = conn_by_name(m->name, true/*strict*/);
@@ -611,7 +606,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	if (m->whack_ddns) {
 		dbg("whack: ddns %d", m->whack_ddns);
 		libreswan_log("updating pending dns lookups");
-		connection_check_ddns(whackfd);
+		connection_check_ddns(show_logger(s));
 	}
 
 	if (m->whack_reread & REREAD_SECRETS) {

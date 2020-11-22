@@ -901,7 +901,7 @@ extern bool ikev2_viable_parent(const struct ike_sa *ike);
 
 extern bool uniqueIDs;  /* --uniqueids? */
 extern void IKE_SA_established(const struct ike_sa *ike);
-extern void revive_conns(struct fd *whackfd);
+extern void revive_conns(struct logger *logger);
 
 void list_state_events(struct show *s, monotime_t now);
 

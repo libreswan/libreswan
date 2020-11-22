@@ -48,7 +48,8 @@ extern void init_timer(void);
 
 void call_state_event_inline(struct logger *logger, struct state *st,
 			     enum event_type type);
-void call_global_event_inline(enum global_timer type, struct fd *whackfd);
+void call_global_event_inline(enum global_timer type,
+			      struct logger *logger);
 
 extern void list_timers(struct show *s, monotime_t now);
 extern char *revive_conn;
@@ -57,14 +58,14 @@ extern char *revive_conn;
  * Since global timers (one-shot or periodic) rely on global state
  * they don't need a context parameter.
  *
- * Global timers do not have a whackfd, however global timers can be
- * triggered manually using whack (well that's the theory, needs some
- * code).  Hence the parameter.
+ * The logger provided to a global timer may contain a whackfd (when
+ * triggered from whack).
  *
  * XXX: implementation can be found in server.c and not timer.c as it
  * is just easier.
  */
-typedef void (global_timer_cb)(struct fd *whackfd);
+
+typedef void (global_timer_cb)(struct logger *logger);
 void enable_periodic_timer(enum global_timer type, global_timer_cb *cb,
 			   deltatime_t period);
 

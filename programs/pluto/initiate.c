@@ -1179,7 +1179,7 @@ static void connection_check_ddns1(struct connection *c)
 	}
 }
 
-void connection_check_ddns(struct fd *unused_whackfd UNUSED)
+void connection_check_ddns(struct logger *unused_logger UNUSED)
 {
 	struct connection *c, *cnext;
 	threadtime_t start = threadtime_start();
@@ -1201,7 +1201,7 @@ void connection_check_ddns(struct fd *unused_whackfd UNUSED)
  * call me periodically to check to see if pending phase2s ever got
  * unstuck, and if not, perform DPD action.
  */
-void connection_check_phase2(struct fd *whackfd)
+void connection_check_phase2(struct logger *logger)
 {
 	struct connection *c, *cnext;
 
@@ -1258,7 +1258,7 @@ void connection_check_phase2(struct fd *whackfd)
 				struct initiate_stuff is = {
 					.remote_host = NULL,
 				};
-				initiate_a_connection(c, whackfd, &is);
+				initiate_a_connection(c, logger->global_whackfd, &is);
 			}
 		}
 	}

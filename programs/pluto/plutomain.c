@@ -1420,7 +1420,7 @@ int main(int argc, char **argv)
 			switch (parse_impair(optarg, &impairment, true, logger)) {
 			case IMPAIR_OK:
 			{
-				if (!process_impair(&impairment, NULL, true, null_fd, logger)) {
+				if (!process_impair(&impairment, NULL, true, logger)) {
 					fprintf(stderr, "%s: impair option '%s' is not valid from the command line\n",
 						pluto_name, optarg);
 					exit(1);
@@ -1758,7 +1758,7 @@ int main(int argc, char **argv)
 	init_virtual_ip(virtual_private, logger);
 	/* obsoleted by nss code: init_rnd_pool(); */
 	init_root_certs();
-	init_secret();
+	init_secret(logger);
 #ifdef USE_IKEv1
 	init_ikev1();
 #endif

@@ -448,10 +448,9 @@ static void fetch_crls(struct logger *logger)
  * Similarly, if check_crls() is called more frequently than
  * fetch_crls() can process, redundant fetches will be merged.
  */
-void check_crls(struct fd *whackfd)
-{
-	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
 
+void check_crls(struct logger *logger)
+{
 	schedule_oneshot_timer(EVENT_CHECK_CRLS, crl_check_interval);
 	struct crl_fetch_request *requests = NULL;
 

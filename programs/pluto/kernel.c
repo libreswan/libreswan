@@ -86,7 +86,7 @@
 
 bool can_do_IPcomp = TRUE;  /* can system actually perform IPCOMP? */
 
-static void kernel_scan_shunts(struct fd *whackfd);
+static global_timer_cb kernel_scan_shunts;
 static bool invoke_command(const char *verb, const char *verb_suffix,
 			   const char *cmd, struct logger *logger);
 
@@ -2450,7 +2450,7 @@ static void kernel_process_msg_cb(evutil_socket_t fd,
 
 static global_timer_cb kernel_process_queue_cb;
 
-static void kernel_process_queue_cb(struct fd *unused_whackfd UNUSED)
+static void kernel_process_queue_cb(struct logger *unused_logger UNUSED)
 {
 	if (pexpect(kernel_ops->process_queue != NULL)) {
 		kernel_ops->process_queue();
@@ -3439,7 +3439,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 	return TRUE;
 }
 
-static void expire_bare_shunts(struct fd *whackfd, bool all)
+static void expire_bare_shunts(struct logger *logger, bool all)
 {
 	dbg("checking for aged bare shunts from shunt table to expire");
 	for (struct bare_shunt **bspp = &bare_shunts; *bspp != NULL; ) {
@@ -3453,7 +3453,8 @@ static void expire_bare_shunts(struct fd *whackfd, bool all)
 				c = conn_by_name(bsp->from_cn, FALSE);
 				if (c != NULL) {
 					if (!shunt_eroute(c, &c->spd, RT_ROUTED_PROSPECTIVE, ERO_ADD, "add")) {
-						log_global(RC_LOG, whackfd, "trap shunt install failed ");
+						log_message(RC_LOG, logger,
+							    "trap shunt install failed ");
 					}
 				}
 			}
@@ -3462,7 +3463,8 @@ static void expire_bare_shunts(struct fd *whackfd, bool all)
 					       ntohl(bsp->said.spi),
 					       (bsp->from_cn == NULL ? "expire_bare_shunt" :
 						"IGNORE_ON_XFRM: expire_bare_shunt"))) {
-				    log_global(RC_LOG_SERIOUS, whackfd, "failed to delete bare shunt");
+				log_message(RC_LOG_SERIOUS, logger,
+					    "failed to delete bare shunt");
 			}
 			passert(bsp != *bspp);
 		} else {
@@ -3472,14 +3474,14 @@ static void expire_bare_shunts(struct fd *whackfd, bool all)
 	}
 }
 
-static void kernel_scan_shunts(struct fd *whackfd)
+static void kernel_scan_shunts(struct logger *logger)
 {
-	expire_bare_shunts(whackfd, false/*not-all*/);
+	expire_bare_shunts(logger, false/*not-all*/);
 }
 
-void shutdown_kernel(void)
+void shutdown_kernel(struct logger *logger)
 {
 	if (kernel_ops->shutdown != NULL)
 		kernel_ops->shutdown();
-	expire_bare_shunts(null_fd, true/*all*/);
+	expire_bare_shunts(logger, true/*all*/);
 }

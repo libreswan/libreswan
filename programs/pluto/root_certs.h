@@ -21,7 +21,7 @@
 #include "where.h"
 
 void init_root_certs(void);
-void free_root_certs(struct fd *whackfd);
+void free_root_certs(struct logger *logger);
 
 struct root_certs {
 	refcnt_t refcnt;

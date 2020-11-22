@@ -485,9 +485,8 @@ void jam_impairments(struct jambuf *buf, const char *sep)
 bool process_impair(const struct whack_impair *wc,
 		    void (*action)(enum impair_action, unsigned param,
 				   unsigned update, bool background,
-				   struct fd *whackfd),
-		    bool background, struct fd *whackfd,
-		    struct logger *logger)
+				   struct logger *logger),
+		    bool background, struct logger *logger)
 {
 	if (wc->what == 0) {
 		/* ignore; silently */
@@ -551,7 +550,7 @@ bool process_impair(const struct whack_impair *wc,
 				    "no action for impairment %s", cr->what);
 			return false;
 		}
-		action(cr->action, cr->param, wc->how, background, whackfd);
+		action(cr->action, cr->param, wc->how, background, logger);
 		return true;
 	}
 	/* not inside case */

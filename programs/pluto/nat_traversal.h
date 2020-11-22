@@ -103,7 +103,7 @@ void v1_maybe_natify_initiator_endpoints(struct state *st,
  * NAT-keep_alive
  */
 void nat_traversal_new_ka_event(void);
-void nat_traversal_ka_event(struct fd *whackfd);
+void nat_traversal_ka_event(struct logger *logger);
 
 extern void ikev1_natd_init(struct state *st, struct msg_digest *md);
 
