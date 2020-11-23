@@ -901,7 +901,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				calculate_sa_prio(c, LIN(POLICY_OPPORTUNISTIC, c->policy) ? true : false),
 				NULL, 0 /* xfrm-if-id */,
 				ERO_ADD, addwidemsg,
-				NULL)) {
+				NULL,
+				b->logger)) {
 			log_message(RC_LOG, b->logger, "adding bare wide passthrough negotiationshunt failed");
 		} else {
 			dbg("added bare (possibly wided) passthrough negotiationshunt succeeded (violating API)");

@@ -283,7 +283,8 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 			       const uint32_t xfrm_if_id UNUSED,
 			       enum pluto_sadb_operations sadb_op,
 			       const char *text_said UNUSED,
-			       const char *policy_label UNUSED)
+			       const char *policy_label UNUSED,
+			       struct logger *logger)
 {
 	ip_sockaddr saddr = sockaddr_from_endpoint(&this_client->addr);
 	ip_sockaddr daddr = sockaddr_from_endpoint(&that_client->addr);
@@ -418,11 +419,12 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 
 	if (ret < 0) {
 		endpoint_buf s, d;
-		log_state(RC_LOG, st, "ret = %d from send_spdadd: %s addr=%s/%s seq=%u opname=eroute", ret,
-			      ipsec_strerror(),
-			      str_endpoint(&this_client->addr, &s),
-			      str_endpoint(&that_client->addr, &d),
-			      pfkey_seq);
+		log_message(RC_LOG, logger,
+			    "ret = %d from send_spdadd: %s addr=%s/%s seq=%u opname=eroute", ret,
+			    ipsec_strerror(),
+			    str_endpoint(&this_client->addr, &s),
+			    str_endpoint(&that_client->addr, &d),
+			    pfkey_seq);
 		return false;
 	}
 	return true;
@@ -786,7 +788,8 @@ static bool bsdkame_sag_eroute(const struct state *st,
 				  0,		/* xfrm_if_id */
 				  op,
 				  NULL,         /* text_said unused */
-				  NULL);        /*unused*/
+				  NULL,;        /*unused*/
+				  st->st_logger)
 }
 
 static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace)

@@ -1050,10 +1050,11 @@ bool trap_connection(struct connection *c, struct fd *whackfd)
  * is specified in the policy of connection c.
  */
 static bool shunt_eroute(const struct connection *c,
-			const struct spd_route *sr,
-			enum routing_t rt_kind,
-			enum pluto_sadb_operations op,
-			const char *opname)
+			 const struct spd_route *sr,
+			 enum routing_t rt_kind,
+			 enum pluto_sadb_operations op,
+			 const char *opname,
+			 struct logger *logger)
 {
 	if (DBGP(DBG_BASE)) {
 		selector_buf thisb, thatb;
@@ -1065,12 +1066,13 @@ static bool shunt_eroute(const struct connection *c,
 	}
 
 	if (kernel_ops->shunt_eroute != NULL) {
-		return kernel_ops->shunt_eroute(c, sr, rt_kind, op, opname);
+		return kernel_ops->shunt_eroute(c, sr, rt_kind, op, opname, logger);
 	}
 
-	loglog(RC_COMMENT, "no shunt_eroute implemented for %s interface",
-		kernel_ops->kern_name);
-	return TRUE;
+	log_message(RC_COMMENT, logger,
+		    "no shunt_eroute implemented for %s interface",
+		    kernel_ops->kern_name);
+	return true;
 }
 
 static bool sag_eroute(const struct state *st,
@@ -1123,13 +1125,14 @@ void migration_down(struct connection *c,  struct state *st)
 /* delete any eroute for a connection and unroute it if route isn't shared */
 void unroute_connection(struct connection *c)
 {
+	struct logger logger[1] = { CONNECTION_LOGGER(c, null_fd), }; /*guess*/
 	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		enum routing_t cr = sr->routing;
 
 		if (erouted(cr)) {
 			/* cannot handle a live one */
 			passert(cr != RT_ROUTED_TUNNEL);
-			shunt_eroute(c, sr, RT_UNROUTED, ERO_DELETE, "delete");
+			shunt_eroute(c, sr, RT_UNROUTED, ERO_DELETE, "delete", logger);
 #ifdef IPSEC_CONNECTION_LIMIT
 			num_ipsec_eroute--;
 #endif
@@ -1247,7 +1250,8 @@ bool raw_eroute(const ip_address *this_host,
 		const uint32_t xfrm_if_id,
 		enum pluto_sadb_operations op,
 		const char *opname,
-		const char *policy_label)
+		const char *policy_label,
+		struct logger *logger)
 {
 	char text_said[SATOT_BUF + SATOT_BUF];
 
@@ -1293,13 +1297,14 @@ bool raw_eroute(const ip_address *this_host,
 	}
 
 	bool result = kernel_ops->raw_eroute(this_host, this_client,
-					that_host, that_client,
-					cur_spi, new_spi, sa_proto,
-					transport_proto,
-					esatype, proto_info,
-					use_lifetime, sa_priority, sa_marks,
-					xfrm_if_id, op, text_said,
-					policy_label);
+					     that_host, that_client,
+					     cur_spi, new_spi, sa_proto,
+					     transport_proto,
+					     esatype, proto_info,
+					     use_lifetime, sa_priority, sa_marks,
+					     xfrm_if_id, op, text_said,
+					     policy_label,
+					     logger);
 	dbg("raw_eroute result=%s", result ? "success" : "failed");
 
 	return result;
@@ -1406,17 +1411,16 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 			    transport_proto);
 		return true;
 	} else if (raw_eroute(&null_host, &this_client,
-			&null_host, &that_client,
-			htonl(cur_shunt_spi),
-			htonl(new_shunt_spi),
-			&ip_protocol_internal, transport_proto,
-			ET_INT, null_proto_info,
-			deltatime(SHUNT_PATIENCE),
-			0, /* we don't know connection for priority yet */
-			NULL, /* sa_marks */
-			0 /* xfrm interface id */,
-
-			op, why, NULL))
+			      &null_host, &that_client,
+			      htonl(cur_shunt_spi),
+			      htonl(new_shunt_spi),
+			      &ip_protocol_internal, transport_proto,
+			      ET_INT, null_proto_info,
+			      deltatime(SHUNT_PATIENCE),
+			      0, /* we don't know connection for priority yet */
+			      NULL, /* sa_marks */
+			      0 /* xfrm interface id */,
+			      op, why, NULL, logger))
 	{
 		struct bare_shunt **bs_pp = bare_shunt_ptr(
 			&this_client,
@@ -1496,17 +1500,18 @@ bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
 }
 
 bool eroute_connection(const struct spd_route *sr,
-		ipsec_spi_t cur_spi,
-		ipsec_spi_t new_spi,
-		const struct ip_protocol *sa_proto,
-		enum eroute_type esatype,
-		const struct pfkey_proto_info *proto_info,
-		uint32_t sa_priority,
-		const struct sa_marks *sa_marks,
-		const uint32_t xfrm_if_id,
-		unsigned int op,
-	       	const char *opname,
-		const char *policy_label)
+		       ipsec_spi_t cur_spi,
+		       ipsec_spi_t new_spi,
+		       const struct ip_protocol *sa_proto,
+		       enum eroute_type esatype,
+		       const struct pfkey_proto_info *proto_info,
+		       uint32_t sa_priority,
+		       const struct sa_marks *sa_marks,
+		       const uint32_t xfrm_if_id,
+		       unsigned int op,
+		       const char *opname,
+		       const char *policy_label,
+		       struct logger *logger)
 {
 	ip_address peer = sr->that.host_addr;
 	char buf2[256];
@@ -1523,36 +1528,40 @@ bool eroute_connection(const struct spd_route *sr,
 		endtosubnet(&sr->this.host_addr, &client, HERE);
 		bool t = raw_eroute(&sr->this.host_addr, &client,
 				    &peer, &sr->that.client,
-				cur_spi,
-				new_spi,
-				sa_proto,
-				sr->this.protocol,
-				esatype,
-				proto_info,
-				deltatime(0),
-				sa_priority, sa_marks, 
-				xfrm_if_id,
-				op, buf2,
-				policy_label);
-		if (!t)
-			libreswan_log("CAT: failed to eroute additional Client Address Translation policy");
+				    cur_spi,
+				    new_spi,
+				    sa_proto,
+				    sr->this.protocol,
+				    esatype,
+				    proto_info,
+				    deltatime(0),
+				    sa_priority, sa_marks,
+				    xfrm_if_id,
+				    op, buf2,
+				    policy_label,
+				    logger);
+		if (!t) {
+			log_message(RC_LOG, logger,
+				    "CAT: failed to eroute additional Client Address Translation policy");
+		}
 
 		dbg("%s CAT extra route added return=%d", __func__, t);
 	}
 
 	return raw_eroute(&sr->this.host_addr, &sr->this.client,
 			  &peer, &sr->that.client,
-			cur_spi,
-			new_spi,
-			sa_proto,
-			sr->this.protocol,
-			esatype,
-			proto_info,
-			deltatime(0),
-			sa_priority, sa_marks,
-			xfrm_if_id,
-		       	op, buf2,
-			policy_label);
+			  cur_spi,
+			  new_spi,
+			  sa_proto,
+			  sr->this.protocol,
+			  esatype,
+			  proto_info,
+			  deltatime(0),
+			  sa_priority, sa_marks,
+			  xfrm_if_id,
+			  op, buf2,
+			  policy_label,
+			  logger);
 }
 
 /* assign a bare hold or pass to a connection */
@@ -1630,15 +1639,16 @@ bool assign_holdpass(const struct connection *c,
 			}
 
 			if (eroute_connection(sr,
-						htonl(SPI_HOLD), /* kernel induced */
-						htonl(negotiation_shunt),
-						&ip_protocol_internal, ET_INT,
-						null_proto_info,
-						calculate_sa_prio(c, FALSE),
-						NULL, 0 /* xfrm_if_id */,
-						op,
-						reason,
-						c->policy_label))
+					      htonl(SPI_HOLD), /* kernel induced */
+					      htonl(negotiation_shunt),
+					      &ip_protocol_internal, ET_INT,
+					      null_proto_info,
+					      calculate_sa_prio(c, FALSE),
+					      NULL, 0 /* xfrm_if_id */,
+					      op,
+					      reason,
+					      c->policy_label,
+					      logger))
 			{
 				dbg("assign_holdpass() eroute_connection() done");
 			} else {
@@ -2289,9 +2299,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				xfrm_if_id,
 				ERO_ADD_INBOUND,	/* op */
 				"add inbound",		/* opname */
-				st->st_connection->policy_label))
-		{
-			libreswan_log("raw_eroute() in setup_half_ipsec_sa() failed to add inbound");
+				st->st_connection->policy_label,
+				st->st_logger)) {
+			log_message(RC_LOG, st->st_logger,
+				    "raw_eroute() in setup_half_ipsec_sa() failed to add inbound");
 		}
 	}
 
@@ -2386,9 +2397,10 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 			0, /* xfrm_if_id. needed to tear down? */
 			ERO_DEL_INBOUND,
 			"delete inbound",
-			c->policy_label))
-	{
-		libreswan_log("raw_eroute in teardown_half_ipsec_sa() failed to delete inbound");
+			c->policy_label,
+			st->st_logger)) {
+		log_message(RC_LOG, st->st_logger,
+			    "raw_eroute in teardown_half_ipsec_sa() failed to delete inbound");
 	}
 
 	/* collect each proto SA that needs deleting */
@@ -2733,7 +2745,7 @@ bool route_and_eroute(struct connection *c,
 			eroute_installed = shunt_eroute(c, sr,
 							RT_ROUTED_PROSPECTIVE,
 							ERO_REPLACE,
-							"replace");
+							"replace", logger);
 		} else {
 			eroute_installed = sag_eroute(st, sr, ERO_REPLACE,
 						"replace");
@@ -2756,7 +2768,7 @@ bool route_and_eroute(struct connection *c,
 		if (st == NULL) {
 			eroute_installed = shunt_eroute(c, sr,
 							RT_ROUTED_PROSPECTIVE,
-							ERO_ADD, "add");
+							ERO_ADD, "add", logger);
 		} else {
 			eroute_installed = sag_eroute(st, sr, ERO_ADD, "add");
 		}
@@ -2934,7 +2946,8 @@ bool route_and_eroute(struct connection *c,
 						0,
 						ERO_REPLACE,
 						"restore",
-						NULL)) /* bare shunt are not associated with any connection so no security label */
+						NULL, /* bare shunt are not associated with any connection so no security label */
+						logger))
 				{
 					log_message(RC_LOG, logger,
 						    "raw_eroute() in route_and_eroute() failed to restore/replace SA");
@@ -2945,9 +2958,9 @@ bool route_and_eroute(struct connection *c,
 				if (esr->eroute_owner == SOS_NOBODY) {
 					/* note: normal or eclipse case */
 					if (!shunt_eroute(ero, esr,
-								esr->routing,
-								ERO_REPLACE,
-								"restore")) {
+							  esr->routing,
+							  ERO_REPLACE,
+							  "restore", logger)) {
 						log_message(RC_LOG, logger,
 							    "shunt_eroute() in route_and_eroute() failed restore/replace");
 					}
@@ -2977,16 +2990,15 @@ bool route_and_eroute(struct connection *c,
 				/* there was no previous eroute: delete whatever we installed */
 				if (st == NULL) {
 					if (!shunt_eroute(c, sr,
-								sr->routing,
-								ERO_DELETE,
-								"delete")) {
+							  sr->routing, ERO_DELETE,
+							  "delete", logger)) {
 						log_message(RC_LOG, logger,
-							    "shunt_eroute() in route_and_eroute() failed in !st case for delete");
+							    "shunt_eroute() in route_and_eroute() failed in !st case");
 					}
 				} else {
 					if (!sag_eroute(st, sr,
-								ERO_DELETE,
-								"delete")) {
+							ERO_DELETE,
+							"delete")) {
 						log_message(RC_LOG, logger,
 							    "shunt_eroute() in route_and_eroute() failed in st case for delete");
 					}
@@ -3200,9 +3212,8 @@ void delete_ipsec_sa(struct state *st)
 						unroute_connection(c);
 					} else {
 						if (!shunt_eroute(c, sr,
-									sr->routing,
-									ERO_REPLACE,
-									"replace with shunt")) {
+								  sr->routing, ERO_REPLACE,
+								  "replace with shunt", st->st_logger)) {
 							libreswan_log("shunt_eroute() failed replace with shunt in delete_ipsec_sa()");
 						}
 					}
@@ -3444,7 +3455,9 @@ static void expire_bare_shunts(struct logger *logger, bool all)
 			if (bsp->from_cn != NULL) {
 				c = conn_by_name(bsp->from_cn, FALSE);
 				if (c != NULL) {
-					if (!shunt_eroute(c, &c->spd, RT_ROUTED_PROSPECTIVE, ERO_ADD, "add")) {
+					if (!shunt_eroute(c, &c->spd,
+							  RT_ROUTED_PROSPECTIVE, ERO_ADD,
+							  "add", logger)) {
 						log_message(RC_LOG, logger,
 							    "trap shunt install failed ");
 					}

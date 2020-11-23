@@ -221,12 +221,14 @@ struct kernel_ops {
 			   const uint32_t xfrm_if_id,
 			   enum pluto_sadb_operations op,
 			   const char *text_said,
-			   const char *policy_label);
+			   const char *policy_label,
+			   struct logger *logger);
 	bool (*shunt_eroute)(const struct connection *c,
 			     const struct spd_route *sr,
 			     enum routing_t rt_kind,
 			     enum pluto_sadb_operations op,
-			     const char *opname);
+			     const char *opname,
+			     struct logger *logger);
 	bool (*sag_eroute)(const struct state *st, const struct spd_route *sr,
 			   enum pluto_sadb_operations op, const char *opname);
 	bool (*eroute_idle)(struct state *st, deltatime_t idle_max);	/* may mutate *st */
@@ -413,7 +415,8 @@ extern bool eroute_connection(const struct spd_route *sr,
 			      const struct sa_marks *sa_marks,
 			      const uint32_t xfrm_if_id,
 			      unsigned int op, const char *opname,
-			      const char *policy_label);
+			      const char *policy_label,
+			      struct logger *logger);
 static inline bool compatible_overlapping_connections(const struct connection *a,
 						      const struct connection *b)
 {
@@ -452,7 +455,8 @@ extern bool raw_eroute(const ip_address *this_host,
 		       const uint32_t xfrm_if_id,
 		       enum pluto_sadb_operations op,
 		       const char *opname,
-		       const char *policy_label);
+		       const char *policy_label,
+		       struct logger *logger);
 
 extern deltatime_t bare_shunt_interval;
 extern void set_text_said(char *text_said, const ip_address *dst,

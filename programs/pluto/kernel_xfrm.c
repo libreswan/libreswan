@@ -507,22 +507,23 @@ static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
  * @return boolean True if successful
  */
 static bool netlink_raw_eroute(const ip_address *this_host,
-			const ip_subnet *this_client,
-			const ip_address *that_host,
-			const ip_subnet *that_client,
-			ipsec_spi_t cur_spi,	/* current SPI */
-			ipsec_spi_t new_spi,	/* new SPI */
-			const struct ip_protocol *sa_proto,
-			unsigned int transport_proto,
-			enum eroute_type esatype,
-			const struct pfkey_proto_info *proto_info,
-			deltatime_t use_lifetime UNUSED,
-			uint32_t sa_priority,
-			const struct sa_marks *sa_marks,
-			const uint32_t xfrm_if_id,
-			enum pluto_sadb_operations sadb_op,
-			const char *text_said,
-			const char *policy_label)
+			       const ip_subnet *this_client,
+			       const ip_address *that_host,
+			       const ip_subnet *that_client,
+			       ipsec_spi_t cur_spi,	/* current SPI */
+			       ipsec_spi_t new_spi,	/* new SPI */
+			       const struct ip_protocol *sa_proto,
+			       unsigned int transport_proto,
+			       enum eroute_type esatype,
+			       const struct pfkey_proto_info *proto_info,
+			       deltatime_t use_lifetime UNUSED,
+			       uint32_t sa_priority,
+			       const struct sa_marks *sa_marks,
+			       const uint32_t xfrm_if_id,
+			       enum pluto_sadb_operations sadb_op,
+			       const char *text_said,
+			       const char *policy_label,
+			       struct logger *unused_logger UNUSED)
 {
 	struct {
 		struct nlmsghdr n;
@@ -2129,14 +2130,14 @@ static bool netlink_sag_eroute(const struct state *st, const struct spd_route *s
 			proto_info[j].mode =
 				ENCAPSULATION_MODE_TRANSPORT;
 	}
-	
+
 	uint32_t xfrm_if_id = c->xfrmi != NULL ?  c->xfrmi->if_id : 0;
 
 	return eroute_connection(sr, inner_spi, inner_spi, inner_proto,
-				inner_esatype, proto_info + i,
-				calculate_sa_prio(c, FALSE), &c->sa_marks,
-				xfrm_if_id, op, opname,
-				st->st_connection->policy_label);
+				 inner_esatype, proto_info + i,
+				 calculate_sa_prio(c, FALSE), &c->sa_marks,
+				 xfrm_if_id, op, opname,
+				 st->st_connection->policy_label, st->st_logger);
 }
 
 /* Check if there was traffic on given SA during the last idle_max
@@ -2156,10 +2157,11 @@ static bool netlink_eroute_idle(struct state *st, deltatime_t idle_max)
 }
 
 static bool netlink_shunt_eroute(const struct connection *c,
-				const struct spd_route *sr,
-				enum routing_t rt_kind,
-				enum pluto_sadb_operations op,
-				const char *opname)
+				 const struct spd_route *sr,
+				 enum routing_t rt_kind,
+				 enum pluto_sadb_operations op,
+				 const char *opname,
+				 struct logger *logger)
 {
 	ipsec_spi_t spi;
 
@@ -2243,9 +2245,10 @@ static bool netlink_shunt_eroute(const struct connection *c,
 		if (ue != NULL) {
 			esr->routing = RT_ROUTED_PROSPECTIVE;
 			return netlink_shunt_eroute(ue, esr,
-						RT_ROUTED_PROSPECTIVE,
-						ERO_REPLACE,
-						"restoring eclipsed");
+						    RT_ROUTED_PROSPECTIVE,
+						    ERO_REPLACE,
+						    "restoring eclipsed",
+						    logger);
 		}
 	}
 
@@ -2276,8 +2279,9 @@ static bool netlink_shunt_eroute(const struct connection *c,
 				&c->sa_marks,
 				0 /* xfrm_if_id needed for shunt? */,
 				op, buf2,
-				c->policy_label))
-		return FALSE;
+				c->policy_label,
+				logger))
+		return false;
 
 	switch (op) {
 	case ERO_ADD:
@@ -2304,7 +2308,8 @@ static bool netlink_shunt_eroute(const struct connection *c,
 				  &c->sa_marks,
 				  0, /* xfrm_if_id needed for shunt? */
 				  op, buf2,
-				  c->policy_label);
+				  c->policy_label,
+				  logger);
 }
 
 static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
