@@ -620,11 +620,12 @@ static void cannot_oppo(struct find_oppo_bundle *b, err_t ughmsg)
 		 */
 		pexpect(b->failure_shunt != 0); /* PAUL: I don't think this can/should happen? */
 		if (replace_bare_shunt(&b->our_client, &b->peer_client,
-					  b->policy_prio,
-					  b->negotiation_shunt,
-					  b->failure_shunt,
-					  b->transport_proto,
-					  ughmsg)) {
+				       b->policy_prio,
+				       b->negotiation_shunt,
+				       b->failure_shunt,
+				       b->transport_proto,
+				       ughmsg,
+				       b->logger)) {
 			dbg("cannot_oppo() replaced negotiationshunt with bare failureshunt=%s",
 			    enum_short_name(&spi_names, b->failure_shunt));
 		} else {
@@ -783,7 +784,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 		 */
 		if (b->held) {
 			if (assign_holdpass(c, sr, b->transport_proto, b->negotiation_shunt,
-					   &b->our_client, &b->peer_client)) {
+					    &b->our_client, &b->peer_client)) {
 				dbg("initiate_ondemand_body() installed negotiation_shunt,");
 			} else {
 				log_message(RC_LOG, b->logger,
@@ -909,7 +910,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 		/* now delete the (obsoleted) narrow bare kernel shunt - we have a (possibly broadened) negotiationshunt replacement installed */
 		if (!delete_bare_shunt(&b->our_client, &b->peer_client,
 				       b->transport_proto,
-				       SPI_HOLD /* kernel dictated */, delmsg)) {
+				       SPI_HOLD /* kernel dictated */, delmsg,
+				       b->logger)) {
 			log_message(RC_LOG, b->logger, "Failed to: %s", delmsg);
 		} else {
 			dbg("success taking down narrow bare shunt");
@@ -945,7 +947,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 					       b->negotiation_shunt, /* if not from conn, where did this come from? */
 					       b->failure_shunt, /* if not from conn, where did this come from? */
 					       b->transport_proto,
-					       "no suitable connection")) {
+					       "no suitable connection",
+					       b->logger)) {
 				dbg("replaced negotiationshunt with failurehunt=hold because no connection was found");
 			} else {
 				log_message(RC_LOG, b->logger,

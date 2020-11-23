@@ -1789,7 +1789,8 @@ static void netlink_acquire(struct nlmsghdr *n)
 					  "%acquire-netlink");
 }
 
-static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol)
+static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol,
+				 struct logger *logger)
 {
 	const xfrm_address_t *srcx = &pol->sel.saddr;
 	const xfrm_address_t *dstx = &pol->sel.daddr;
@@ -1797,8 +1798,9 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol)
 
 	const struct ip_info *afi = aftoinfo(pol->sel.family);
 	if (afi == NULL) {
-		libreswan_log("XFRM_MSG_POLEXPIRE message from kernel malformed: address family %u unknown",
-			      pol->sel.family);
+		log_message(RC_LOG, logger,
+			    "XFRM_MSG_POLEXPIRE message from kernel malformed: address family %u unknown",
+			    pol->sel.family);
 		return;
 	}
 
@@ -1806,11 +1808,13 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol)
 	ip_address dst = address_from_xfrm(afi, dstx);
 
 	if (delete_bare_shunt(&src, &dst,
-			transport_proto, SPI_HOLD /* why spi to use? */,
-			      "delete expired bare shunt")) {
+			      transport_proto, SPI_HOLD /* why spi to use? */,
+			      "delete expired bare shunt",
+			      logger)) {
 		dbg("netlink_shunt_expire() called delete_bare_shunt() with success");
 	} else {
-		libreswan_log("netlink_shunt_expire() called delete_bare_shunt() which failed!");
+		log_message(RC_LOG, logger,
+			    "netlink_shunt_expire() called delete_bare_shunt() which failed!");
 	}
 }
 
@@ -1865,7 +1869,7 @@ static void process_addr_chage(struct nlmsghdr *n)
 	}
 }
 
-static void netlink_policy_expire(struct nlmsghdr *n)
+static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
 {
 	struct xfrm_user_polexpire *upe;
 	ip_address src, dst;
@@ -1877,10 +1881,10 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 	struct nlm_resp rsp;
 
 	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*upe))) {
-		libreswan_log(
-			"netlink_policy_expire got message with length %zu < %zu bytes; ignore message",
-			(size_t) n->nlmsg_len,
-			sizeof(*upe));
+		log_message(RC_LOG, logger,
+			    "netlink_policy_expire got message with length %zu < %zu bytes; ignore message",
+			    (size_t) n->nlmsg_len,
+			    sizeof(*upe));
 		return;
 	}
 
@@ -1905,10 +1909,10 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 		dbg("netlink_policy_expire: policy died on us: dir=%d, index=%d",
 		    req.id.dir, req.id.index);
 	} else if (rsp.n.nlmsg_len < NLMSG_LENGTH(sizeof(rsp.u.pol))) {
-		libreswan_log(
-			"netlink_policy_expire: XFRM_MSG_GETPOLICY returned message with length %zu < %zu bytes; ignore message",
-			(size_t) rsp.n.nlmsg_len,
-			sizeof(rsp.u.pol));
+		log_message(RC_LOG, logger,
+			    "netlink_policy_expire: XFRM_MSG_GETPOLICY returned message with length %zu < %zu bytes; ignore message",
+			    (size_t) rsp.n.nlmsg_len,
+			    sizeof(rsp.u.pol));
 	} else if (req.id.index != rsp.u.pol.index) {
 		dbg("netlink_policy_expire: policy was replaced: dir=%d, oldindex=%d, newindex=%d",
 		    req.id.dir, req.id.index, rsp.u.pol.index);
@@ -1918,14 +1922,14 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 	} else {
 		switch (upe->pol.dir) {
 		case XFRM_POLICY_OUT:
-			netlink_shunt_expire(&rsp.u.pol);
+			netlink_shunt_expire(&rsp.u.pol, logger);
 			break;
 		}
 	}
 }
 
 /* returns FALSE iff EAGAIN */
-static bool netlink_get(int fd)
+static bool netlink_get(int fd, struct logger *logger)
 {
 	struct nlm_resp rsp;
 	struct sockaddr_nl addr;
@@ -1938,15 +1942,16 @@ static bool netlink_get(int fd)
 			return FALSE;
 
 		if (errno != EINTR) {
-			LOG_ERRNO(errno, "recvfrom() failed in netlink_get: errno(%d): %s",
-				errno, strerror(errno));
+			log_errno(logger, errno,
+				  "recvfrom() failed in netlink_get: errno(%d): %s",
+				  errno, strerror(errno));
 		}
 		return TRUE;
 	} else if ((size_t)r < sizeof(rsp.n)) {
-		libreswan_log(
-			"netlink_get read truncated message: %zd bytes; ignore message",
-			r);
-		return TRUE;
+		log_message(RC_LOG, logger,
+			    "netlink_get read truncated message: %zd bytes; ignore message",
+			    r);
+		return true;
 	} else if (addr.nl_pid != 0) {
 		/* not for us: ignore */
 		dbg("netlink_get: ignoring %s message from process %u",
@@ -1954,10 +1959,10 @@ static bool netlink_get(int fd)
 		    addr.nl_pid);
 		return TRUE;
 	} else if ((size_t)r != rsp.n.nlmsg_len) {
-		libreswan_log(
-			"netlink_get read message with length %zd that doesn't equal nlmsg_len %zu bytes; ignore message",
-			r, (size_t) rsp.n.nlmsg_len);
-		return TRUE;
+		log_message(RC_LOG, logger,
+			    "netlink_get read message with length %zd that doesn't equal nlmsg_len %zu bytes; ignore message",
+			    r, (size_t) rsp.n.nlmsg_len);
+		return true;
 	}
 
 	dbg("netlink_get: %s message",
@@ -1968,7 +1973,7 @@ static bool netlink_get(int fd)
 		netlink_acquire(&rsp.n);
 		break;
 	case XFRM_MSG_POLEXPIRE:
-		netlink_policy_expire(&rsp.n);
+		netlink_policy_expire(&rsp.n, logger);
 		break;
 
 	case RTM_NEWADDR:
@@ -1987,9 +1992,9 @@ static bool netlink_get(int fd)
 	return TRUE;
 }
 
-static void netlink_process_msg(int fd)
+static void netlink_process_msg(int fd, struct logger *logger)
 {
-	do {} while (netlink_get(fd));
+	do {} while (netlink_get(fd, logger));
 }
 
 static ipsec_spi_t netlink_get_spi(const ip_address *src,

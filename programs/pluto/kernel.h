@@ -204,7 +204,7 @@ struct kernel_ops {
 	void (*shutdown)(struct logger *logger);
 	void (*pfkey_register)(void);
 	void (*process_queue)(void);
-	void (*process_msg)(int);
+	void (*process_msg)(int, struct logger *);
 	bool (*raw_eroute)(const ip_address *this_host,
 			   const ip_subnet *this_client,
 			   const ip_address *that_host,
@@ -354,15 +354,17 @@ extern void migration_up(struct connection *c,  struct state *st);
 extern void migration_down(struct connection *c,  struct state *st);
 
 extern bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
-			       int transport_proto, ipsec_spi_t shunt_spi,
-			       const char *why);
+			      int transport_proto, ipsec_spi_t shunt_spi,
+			      const char *why,
+			      struct logger *logger);
 
 extern bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			       policy_prio_t policy_prio,
 			       ipsec_spi_t cur_shunt_spi,   /* in host order! */
 			       ipsec_spi_t new_shunt_spi,   /* in host order! */
 			       int transport_proto,
-			       const char *why);
+			       const char *why,
+			       struct logger *logger);
 
 extern bool assign_holdpass(const struct connection *c,
 			struct spd_route *sr,
@@ -371,7 +373,8 @@ extern bool assign_holdpass(const struct connection *c,
 			const ip_address *src, const ip_address *dst);
 
 extern bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
-		int transport_proto, ipsec_spi_t failure_shunt);
+			    int transport_proto, ipsec_spi_t failure_shunt,
+			    struct logger *logger);
 
 extern ipsec_spi_t shunt_policy_spi(const struct connection *c, bool prospective);
 

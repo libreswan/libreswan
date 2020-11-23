@@ -1312,7 +1312,8 @@ bool raw_eroute(const ip_address *this_host,
  */
 static void clear_narrow_holds(const ip_selector *our_client,
 			       const ip_selector *peer_client,
-			       int transport_proto)
+			       int transport_proto,
+			       struct logger *logger)
 {
 	struct bare_shunt *p, **pp;
 
@@ -1326,7 +1327,8 @@ static void clear_narrow_holds(const ip_selector *our_client,
 		    selector_in_selector(&p->peer_client, peer_client)) {
 			if (!delete_bare_shunt(&p->our_client.addr, &p->peer_client.addr,
 					       transport_proto, SPI_HOLD,
-					       "removing clashing narrow hold")) {
+					       "removing clashing narrow hold",
+					       logger)) {
 				/* ??? we could not delete a bare shunt */
 				log_bare_shunt(RC_LOG, "failed to delete", p);
 				break;	/* unlikely to succeed a second time */
@@ -1358,12 +1360,13 @@ static void clear_narrow_holds(const ip_selector *our_client,
  * Issues the PF_KEY commands and updates the bare_shunts table.
  */
 static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
-			policy_prio_t policy_prio,	/* of replacing shunt*/
-			ipsec_spi_t cur_shunt_spi,	/* in host order! */
-			ipsec_spi_t new_shunt_spi,	/* in host order! */
-			bool repl,		/* if TRUE, replace; if FALSE, delete */
-			int transport_proto,
-			const char *why)
+			      policy_prio_t policy_prio,	/* of replacing shunt*/
+			      ipsec_spi_t cur_shunt_spi,	/* in host order! */
+			      ipsec_spi_t new_shunt_spi,	/* in host order! */
+			      bool repl,		/* if TRUE, replace; if FALSE, delete */
+			      int transport_proto,
+			      const char *why,
+			      struct logger *logger)
 {
 	ip_subnet this_client, that_client;
 	const ip_address null_host = address_any(address_type(src));
@@ -1397,10 +1400,11 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 			transport_proto);
 
 		free_bare_shunt(bs_pp);
-		libreswan_log("raw_eroute() to op='%s' with transport_proto='%d' kernel shunt skipped - deleting from pluto shunt table",
-			repl ? "replace" : "delete",
-			transport_proto);
-		return TRUE;
+		log_message(RC_LOG, logger,
+			    "raw_eroute() to op='%s' with transport_proto='%d' kernel shunt skipped - deleting from pluto shunt table",
+			    repl ? "replace" : "delete",
+			    transport_proto);
+		return true;
 	} else if (raw_eroute(&null_host, &this_client,
 			&null_host, &that_client,
 			htonl(cur_shunt_spi),
@@ -1429,11 +1433,12 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 		if (bs_pp == NULL) {
 			ipstr_buf srcb, dstb;
 
-			libreswan_log("can't find expected bare shunt to %s: %s->%s transport_proto='%d'",
-				repl ? "replace" : "delete",
-				ipstr(src, &srcb), ipstr(dst, &dstb),
-				transport_proto);
-			return TRUE;
+			log_message(RC_LOG, logger,
+				    "can't find expected bare shunt to %s: %s->%s transport_proto='%d'",
+				    repl ? "replace" : "delete",
+				    ipstr(src, &srcb), ipstr(dst, &dstb),
+				    transport_proto);
+			return true;
 		}
 
 		if (repl) {
@@ -1461,11 +1466,11 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 			transport_proto);
 
 		free_bare_shunt(bs_pp);
-		libreswan_log("raw_eroute() to op='%s' with transport_proto='%d' kernel shunt failed - deleting from pluto shunt table",
-			repl ? "replace" : "delete",
-			transport_proto);
-
-		return FALSE;
+		log_message(RC_LOG, logger,
+			    "raw_eroute() to op='%s' with transport_proto='%d' kernel shunt failed - deleting from pluto shunt table",
+			    repl ? "replace" : "delete",
+			    transport_proto);
+		return false;
 	}
 }
 
@@ -1474,16 +1479,20 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			ipsec_spi_t cur_shunt_spi,	/* in host order! */
 			ipsec_spi_t new_shunt_spi,	/* in host order! */
 			int transport_proto,
-			const char *why)
+			const char *why,
+			struct logger *logger)
 {
-	return fiddle_bare_shunt(src, dst, policy_prio, cur_shunt_spi, new_shunt_spi, TRUE, transport_proto, why);
+	return fiddle_bare_shunt(src, dst, policy_prio, cur_shunt_spi, new_shunt_spi,
+				 true, transport_proto, why, logger);
 }
 
 bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
-			int transport_proto, ipsec_spi_t cur_shunt_spi,
-			const char *why)
+		       int transport_proto, ipsec_spi_t cur_shunt_spi,
+		       const char *why,
+		       struct logger *logger)
 {
-	return fiddle_bare_shunt(src, dst, BOTTOM_PRIO, cur_shunt_spi, SPI_PASS /* unused */, FALSE, transport_proto, why);
+	return fiddle_bare_shunt(src, dst, BOTTOM_PRIO, cur_shunt_spi, SPI_PASS /* unused */,
+				 FALSE, transport_proto, why, logger);
 }
 
 bool eroute_connection(const struct spd_route *sr,
@@ -1549,10 +1558,11 @@ bool eroute_connection(const struct spd_route *sr,
 /* assign a bare hold or pass to a connection */
 
 bool assign_holdpass(const struct connection *c,
-		struct spd_route *sr,
-		int transport_proto, ipsec_spi_t negotiation_shunt,
-		const ip_address *src, const ip_address *dst)
+		     struct spd_route *sr,
+		     int transport_proto, ipsec_spi_t negotiation_shunt,
+		     const ip_address *src, const ip_address *dst)
 {
+	struct logger logger[1] = { CONNECTION_LOGGER(c, null_fd), }; /* best guess */
 	/*
 	 * either the automatically installed %hold eroute is broad enough
 	 * or we try to add a broader one and delete the automatic one.
@@ -1589,7 +1599,8 @@ bool assign_holdpass(const struct connection *c,
 
 		if (old == NULL) {
 			/* ??? should this happen?  It does. */
-			libreswan_log("assign_holdpass() no bare shunt to remove? - mismatch?");
+			log_message(RC_LOG, logger,
+				    "assign_holdpass() no bare shunt to remove? - mismatch?");
 		} else {
 			/* ??? should this happen? */
 			dbg("assign_holdpass() removing bare shunt");
@@ -1631,20 +1642,22 @@ bool assign_holdpass(const struct connection *c,
 			{
 				dbg("assign_holdpass() eroute_connection() done");
 			} else {
-				libreswan_log("assign_holdpass() eroute_connection() failed");
-				return FALSE;
+				log_message(RC_LOG, logger,
+					    "assign_holdpass() eroute_connection() failed");
+				return false;
 			}
 		}
 
 		if (!delete_bare_shunt(src, dst,
-					transport_proto,
-					(c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD,
-					(c->policy & POLICY_NEGO_PASS) ? "delete narrow %pass" :
-						"delete narrow %hold")) {
+				       transport_proto,
+				       (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD,
+				       (c->policy & POLICY_NEGO_PASS) ? "delete narrow %pass" :
+				       "delete narrow %hold", logger)) {
 			dbg("assign_holdpass() delete_bare_shunt() succeeded");
 		} else {
-			libreswan_log("assign_holdpass() delete_bare_shunt() failed");
-				return FALSE;
+			log_message(RC_LOG, logger,
+				    "assign_holdpass() delete_bare_shunt() failed");
+			return false;
 		}
 	}
 	sr->routing = rn;
@@ -2440,13 +2453,15 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 static event_callback_routine kernel_process_msg_cb;
 
 static void kernel_process_msg_cb(evutil_socket_t fd,
-		const short event UNUSED, void *arg)
+				  const short event UNUSED,
+				  void *arg)
 {
+	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), }; /* event-handler */
 	const struct kernel_ops *kernel_ops = arg;
 
 	dbg(" %s process netlink message", __func__);
 	threadtime_t start = threadtime_start();
-	kernel_ops->process_msg(fd);
+	kernel_ops->process_msg(fd, logger);
 	threadtime_stop(&start, SOS_NOBODY, "kernel message");
 }
 
@@ -2729,9 +2744,9 @@ bool route_and_eroute(struct connection *c,
 		/* we're adding an eroute */
 #ifdef IPSEC_CONNECTION_LIMIT
 		if (num_ipsec_eroute == IPSEC_CONNECTION_LIMIT) {
-			loglog(RC_LOG_SERIOUS,
-				"Maximum number of IPsec connections reached (%d)",
-				IPSEC_CONNECTION_LIMIT);
+			log_message(RC_LOG_SERIOUS, logger,
+				    "Maximum number of IPsec connections reached (%d)",
+				    IPSEC_CONNECTION_LIMIT);
 			return FALSE;
 		}
 		new_eroute = TRUE;
@@ -2867,15 +2882,15 @@ bool route_and_eroute(struct connection *c,
 			sr->eroute_owner = st->st_serialno;
 			/* clear host shunts that clash with freshly installed route */
 			clear_narrow_holds(&sr->this.client, &sr->that.client,
-					sr->this.protocol);
+					   sr->this.protocol, logger);
 		}
 
 #ifdef IPSEC_CONNECTION_LIMIT
 		if (new_eroute) {
 			num_ipsec_eroute++;
-			loglog(RC_COMMENT,
-				"%d IPsec connections are currently being managed",
-				num_ipsec_eroute);
+			log_message(RC_COMMENT, logger,
+				    "%d IPsec connections are currently being managed",
+				    num_ipsec_eroute);
 		}
 #endif
 
@@ -2921,7 +2936,8 @@ bool route_and_eroute(struct connection *c,
 						"restore",
 						NULL)) /* bare shunt are not associated with any connection so no security label */
 				{
-					libreswan_log("raw_eroute() in route_and_eroute() failed to restore/replace SA");
+					log_message(RC_LOG, logger,
+						    "raw_eroute() in route_and_eroute() failed to restore/replace SA");
 				}
 			} else if (ero != NULL) {
 				passert(esr != NULL);
@@ -2932,7 +2948,8 @@ bool route_and_eroute(struct connection *c,
 								esr->routing,
 								ERO_REPLACE,
 								"restore")) {
-						libreswan_log("shunt_eroute() in route_and_eroute() failed restore/replace");
+						log_message(RC_LOG, logger,
+							    "shunt_eroute() in route_and_eroute() failed restore/replace");
 					}
 				} else {
 					/*
@@ -2952,7 +2969,8 @@ bool route_and_eroute(struct connection *c,
 						if (!sag_eroute(ost, esr,
 							ERO_REPLACE,
 							"restore"))
-							libreswan_log("sag_eroute() in route_and_eroute() failed restore/replace");
+							log_message(RC_LOG, logger,
+								    "sag_eroute() in route_and_eroute() failed restore/replace");
 					}
 				}
 			} else {
@@ -2962,13 +2980,15 @@ bool route_and_eroute(struct connection *c,
 								sr->routing,
 								ERO_DELETE,
 								"delete")) {
-						libreswan_log("shunt_eroute() in route_and_eroute() failed in !st case for delete");
+						log_message(RC_LOG, logger,
+							    "shunt_eroute() in route_and_eroute() failed in !st case for delete");
 					}
 				} else {
 					if (!sag_eroute(st, sr,
 								ERO_DELETE,
 								"delete")) {
-						libreswan_log("shunt_eroute() in route_and_eroute() failed in st case for delete");
+						log_message(RC_LOG, logger,
+							    "shunt_eroute() in route_and_eroute() failed in st case for delete");
 					}
 				}
 			}
@@ -3313,7 +3333,8 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 }
 
 bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
-		int transport_proto, ipsec_spi_t failure_shunt)
+		     int transport_proto, ipsec_spi_t failure_shunt,
+		     struct logger *logger)
 {
 	enum routing_t ro = sr->routing,        /* routing, old */
 			rn = ro;                 /* routing, new */
@@ -3395,8 +3416,9 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 			dbg("replacing negotiation_shunt with failure_shunt");
 			if (!replace_bare_shunt(&sr->this.host_addr, &sr->that.host_addr, bs->policy_prio,
 						negotiation_shunt, failure_shunt, bs->transport_proto,
-						"oe-failed")) {
-				libreswan_log("assign_holdpass() failed to update shunt policy");
+						"oe-failed", logger)) {
+				log_message(RC_LOG, logger,
+					    "assign_holdpass() failed to update shunt policy");
 			}
 		} else {
 			dbg("No need to replace negotiation_shunt with failure_shunt - they are the same");
@@ -3432,7 +3454,8 @@ static void expire_bare_shunts(struct logger *logger, bool all)
 					       bsp->transport_proto,
 					       ntohl(bsp->said.spi),
 					       (bsp->from_cn == NULL ? "expire_bare_shunt" :
-						"IGNORE_ON_XFRM: expire_bare_shunt"))) {
+						"IGNORE_ON_XFRM: expire_bare_shunt"),
+					       logger)) {
 				log_message(RC_LOG_SERIOUS, logger,
 					    "failed to delete bare shunt");
 			}
