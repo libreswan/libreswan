@@ -42,7 +42,6 @@
 #endif
 
 #ifdef HAVE_SECCOMP
-#define LSW_SECCOMP_EXIT_FAIL 8
 #include "lswseccomp.h"
 #endif
 
@@ -93,8 +92,7 @@ static void init_seccomp_addconn(uint32_t def_action, struct logger *logger)
 {
 	scmp_filter_ctx ctx = seccomp_init(def_action);
 	if (ctx == NULL) {
-		fprintf(stderr, "seccomp_init_addconn() failed!");
-		exit(LSW_SECCOMP_EXIT_FAIL);
+		fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, "seccomp_init_addconn() failed!");
 	}
 
 	/*
@@ -162,9 +160,9 @@ static void init_seccomp_addconn(uint32_t def_action, struct logger *logger)
 
 	int rc = seccomp_load(ctx);
 	if (rc < 0) {
-		fprintf(stderr, "seccomp_load() failed!");
 		seccomp_release(ctx);
-		exit(LSW_SECCOMP_EXIT_FAIL);
+		fatal_errno(PLUTO_EXIT_SECCOMP_FAIL, logger, -rc,
+			    "seccomp_load() failed!");
 	}
 }
 #endif
