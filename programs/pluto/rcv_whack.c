@@ -602,7 +602,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_ddos != DDOS_undefined) {
 		dbg("whack: ddos %d", m->whack_ddos);
-		set_whack_pluto_ddos(m->whack_ddos);
+		set_whack_pluto_ddos(m->whack_ddos, logger);
 	}
 
 	if (m->whack_ddns) {

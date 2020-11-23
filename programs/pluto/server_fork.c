@@ -131,7 +131,7 @@ int server_fork(const char *name, so_serial_t serialno, server_fork_op *op,
 	pid_t pid = fork();
 	switch (pid) {
 	case -1:
-		LOG_ERRNO(errno, "fork failed");
+		log_errno(logger, errno, "fork failed");
 		return -1;
 	case 0: /* child */
 		exit(op(context, logger));

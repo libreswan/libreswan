@@ -1750,7 +1750,7 @@ int main(int argc, char **argv)
 	init_state_db();
 	init_connection_db();
 	init_server_fork();
-	init_server();
+	init_server(logger);
 
 	init_rate_log();
 	init_nat_traversal(keep_alive, logger);
@@ -1799,8 +1799,7 @@ int main(int argc, char **argv)
 	}
 #endif
 
-	call_server(conffile);
-	return -1;	/* Shouldn't ever reach this */
+	run_server(conffile, logger);
 }
 
 void show_setup_plutomain(struct show *s)
