@@ -785,57 +785,49 @@ void nat_traversal_ka_event(struct logger *unused_logger UNUSED)
 	}
 }
 
+/*
+ * Re-map entire family.
+ *
+ * In IKEv1 this code needs to handle orphans - the children are
+ * around but the IKE (ISAKMP) SA is gone.
+ */
+
 struct new_mapp_nfo {
-	struct ike_sa *ike;
-	const ip_endpoint *new_remote_endpoint;
+	so_serial_t clonedfrom;
+	const ip_endpoint new_remote_endpoint;
 };
 
-static bool nat_traversal_find_new_mapp_state(struct state *st, void *data)
+static bool nat_traversal_update_family_mapp_state(struct state *st, void *data)
 {
 	struct new_mapp_nfo *nfo = data;
-	if (pexpect(st->st_serialno == nfo->ike->sa.st_serialno ||
-		    st->st_clonedfrom == nfo->ike->sa.st_serialno)) {
+	if (pexpect(st->st_serialno == nfo->clonedfrom /*parent*/ ||
+		    st->st_clonedfrom == nfo->clonedfrom /*sibling*/)) {
 		endpoint_buf b1;
 		endpoint_buf b2;
 		ip_endpoint st_remote_endpoint = st->st_remote_endpoint;
 		dbg("new NAT mapping for #%lu, was %s, now %s",
 		    st->st_serialno,
 		    str_endpoint(&st_remote_endpoint, &b1),
-		    str_endpoint(nfo->new_remote_endpoint, &b2));
+		    str_endpoint(&nfo->new_remote_endpoint, &b2));
 
 		/* update it */
-		st->st_remote_endpoint = *nfo->new_remote_endpoint;
-		st->hidden_variables.st_natd = endpoint_address(nfo->new_remote_endpoint);
+		st->st_remote_endpoint = nfo->new_remote_endpoint;
+		st->hidden_variables.st_natd = endpoint_address(&nfo->new_remote_endpoint);
 		struct connection *c = st->st_connection;
 		if (c->kind == CK_INSTANCE)
-			c->spd.that.host_addr = endpoint_address(nfo->new_remote_endpoint);
+			c->spd.that.host_addr = endpoint_address(&nfo->new_remote_endpoint);
 	}
-	return false;
+	return false; /* search for more */
 }
 
-static void nat_traversal_new_mapping(struct ike_sa *ike,
-			       const ip_endpoint *new_remote_endpoint)
-{
-	endpoint_buf b;
-	dbg("state #%lu NAT-T: new mapping %s",
-	    ike->sa.st_serialno, str_endpoint(new_remote_endpoint, &b));
+/*
+ * this should only be called after packet has been
+ * verified/authenticated! (XXX: IKEv1?)
+ *
+ * XXX: Is this solving an IKEv1 only problem?  IKEv2 only needs to
+ * update the IKE SA and seems to do it using update_ike_endpoints().
+ */
 
-	struct new_mapp_nfo nfo = {
-		.ike = ike,
-		.new_remote_endpoint = new_remote_endpoint,
-	};
-
-	state_by_ike_spis(ike->sa.st_ike_version,
-			  NULL /* clonedfrom */,
-			  NULL /* v1_msgid */,
-			  NULL /* role */,
-			  &ike->sa.st_ike_spis,
-			  nat_traversal_find_new_mapp_state,
-			  &nfo,
-			  __func__);
-}
-
-/* this should only be called after packet has been verified/authenticated! */
 void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 {
 	pexpect_st_local_endpoint(st);
@@ -852,11 +844,24 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	if (md != NULL) {
 
 		/*
-		 * If source port/address has changed, update (including other
-		 * states and established kernel SA)
+		 * If source port/address has changed, update the family.
+		 *
+		 * Since IKEv1 allows orphans - parent deleted but
+		 * children live on.
 		 */
 		if (!endpoint_eq(md->sender, st->st_remote_endpoint)) {
-			nat_traversal_new_mapping(ike_sa(st, HERE), &md->sender);
+			struct new_mapp_nfo nfo = {
+				.clonedfrom = (st->st_clonedfrom != SOS_NOBODY ? st->st_clonedfrom : st->st_serialno),
+				.new_remote_endpoint = md->sender,
+			};
+			state_by_ike_spis(st->st_ike_version,
+					  NULL /* clonedfrom */,
+					  NULL /* v1_msgid */,
+					  NULL /* role */,
+					  &st->st_ike_spis,
+					  nat_traversal_update_family_mapp_state,
+					  &nfo,
+					  __func__);
 		}
 
 		/*
