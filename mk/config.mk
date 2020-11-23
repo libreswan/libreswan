@@ -825,12 +825,6 @@ GCC_LINT = -DGCC_LINT
 endif
 USERLAND_CFLAGS += $(GCC_LINT)
 
-# This option was disabled at 2020-04-07
-# If this is not needed for longer time, it's safe to
-# remove this and code it enables.
-# Enable ALLOW_MICROSOFT_BAD_PROPOSAL
-#USERLAND_CFLAGS += -DALLOW_MICROSOFT_BAD_PROPOSAL
-
 # some systems require -lcrypt when calling crypt() some do not.
 CRYPT_LDFLAGS ?= -lcrypt
 

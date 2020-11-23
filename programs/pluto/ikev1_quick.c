@@ -534,25 +534,17 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 			    "%s subnet returned doesn't match my proposal - us: %s vs them: %s",
 			    which, str_subnet(net, &subxmt),
 			    str_subnet(&net_temp, &subrec));
-#ifdef ALLOW_MICROSOFT_BAD_PROPOSAL
 		log_message(RC_LOG_SERIOUS, logger,
-			    "Allowing questionable proposal anyway [ALLOW_MICROSOFT_BAD_PROPOSAL]");
+			    "Allowing questionable (microsoft) proposal anyway");
 		bad_proposal = FALSE;
-#else
-		bad_proposal = TRUE;
-#endif
 	}
 	if (*protoid != id->isaiid_protoid) {
 		log_message(RC_LOG_SERIOUS, logger,
 			    "%s peer returned protocol id does not match my proposal - us: %d vs them: %d",
 			    which, *protoid, id->isaiid_protoid);
-#ifdef ALLOW_MICROSOFT_BAD_PROPOSAL
 		log_message(RC_LOG_SERIOUS, logger,
-			    "Allowing questionable proposal anyway [ALLOW_MICROSOFT_BAD_PROPOSAL]");
+			    "Allowing questionable (microsoft) proposal anyway]");
 		bad_proposal = FALSE;
-#else
-		bad_proposal = TRUE;
-#endif
 	}
 	/*
 	 * workaround for #802- "our client ID returned doesn't match my proposal"
