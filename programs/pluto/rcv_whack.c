@@ -749,8 +749,9 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		} else {
 			initiate_ondemand(&m->oppo_my_client,
 					  &m->oppo_peer_client, m->oppo_proto,
-					  false, whackfd, m->whack_async,
-					  NULL, "whack");
+					  /*held*/false,
+					  /*background*/m->whack_async,
+					  NULL, "whack", logger);
 		}
 	}
 

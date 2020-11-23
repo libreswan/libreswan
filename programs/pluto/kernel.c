@@ -218,6 +218,7 @@ void record_and_initiate_opportunistic(const ip_selector *our_client,
 				       struct xfrm_user_sec_ctx_ike *uctx,
 				       const char *why)
 {
+	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
 	passert(selector_type(our_client) == selector_type(peer_client));
 	passert(selector_ipproto(our_client) == transport_proto);
 	passert(selector_ipproto(peer_client) == transport_proto);
@@ -250,8 +251,9 @@ void record_and_initiate_opportunistic(const ip_selector *our_client,
 
 	/* actually initiate opportunism / ondemand */
 	initiate_ondemand(&src, &dst, transport_proto,
-			  TRUE, null_fd, true/*background*/,
-			  uctx, "acquire");
+			  /*held*/true,
+			  /*background*/true,
+			  uctx, "acquire", logger);
 
 	if (kernel_ops->remove_orphaned_holds != NULL) {
 		dbg("record_and_initiate_opportunistic(): tell kernel to remove orphan hold for our bare shunt");
