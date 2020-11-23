@@ -2457,9 +2457,6 @@ static void kernel_process_queue_cb(struct logger *unused_logger UNUSED)
 	}
 }
 
-/* keep track of kernel version  */
-static char kversion[256];
-
 const struct kernel_ops *kernel_ops =
 #ifdef XFRM_SUPPORT
 	&xfrm_kernel_ops
@@ -2477,47 +2474,18 @@ void init_kernel(struct logger *logger)
 
 	/* get kernel version */
 	uname(&un);
-	jam_str(kversion, sizeof(kversion), un.release);
+	log_message(RC_LOG, logger,
+		    "using %s %s kernel support code on %s",
+		    un.sysname, kernel_ops->kern_name, un.version);
 
-	switch (kernel_ops->type) {
-#if defined(XFRM_SUPPORT)
-	case USE_XFRM:
-	{
-		struct stat buf;
-		if (stat("/proc/sys/net/core/xfrm_acq_expires", &buf) != 0) {
-			libreswan_log("No XFRM kernel support detected, missing /proc/sys/net/core/xfrm_acq_expires");
-			exit_pluto(PLUTO_EXIT_KERNEL_FAIL);
-		}
-		log_message(RC_LOG, logger,
-			    "Using Linux XFRM/NETKEY IPsec kernel support code on %s", kversion);
-		break;
-	}
-#endif
-
-#if defined(BSD_KAME)
-	case USE_BSDKAME:
-		libreswan_log("Using BSD/KAME IPsec interface code on %s",
-			kversion);
-		break;
-#endif
-
-	default:
-		libreswan_log("FATAL: kernel interface '%s' not available",
-			enum_name(&kern_interface_names,
-				kernel_ops->type));
-		exit_pluto(PLUTO_EXIT_KERNEL_FAIL);
-	}
-
-	if (kernel_ops->init != NULL)
-		kernel_ops->init(logger);
+	passert(kernel_ops->init != NULL);
+	kernel_ops->init(logger);
 
 	/* Add the port bypass polcies */
 
 	if (kernel_ops->v6holes != NULL) {
-		if (!kernel_ops->v6holes()) {
-			libreswan_log("Could not add the ICMP bypass policies");
-			exit_pluto(PLUTO_EXIT_KERNEL_FAIL);
-		}
+		/* may not return */
+		kernel_ops->v6holes(logger);
 	}
 
 	/* register SA types that we can negotiate */

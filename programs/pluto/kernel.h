@@ -251,7 +251,7 @@ struct kernel_ops {
 	bool (*exceptsocket)(int socketfd, int family);
 	err_t (*migrate_sa_check)(void);
 	bool (*migrate_sa)(struct state *st);
-	bool (*v6holes)();
+	void (*v6holes)(struct logger *logger);
 	bool (*poke_ipsec_policy_hole)(const struct iface_dev *ifd, int fd);
 	bool (*detect_offload)(const struct raw_iface *ifp);
 };

@@ -252,6 +252,13 @@ static void init_netlink_route_fd(struct logger *logger)
  */
 static void init_netlink(struct logger *logger)
 {
+#define XFRM_ACQ_EXPIRES "/proc/sys/net/core/xfrm_acq_expires"
+	struct stat buf;
+	if (stat(XFRM_ACQ_EXPIRES, &buf) != 0) {
+		fatal_errno(PLUTO_EXIT_KERNEL_FAIL, logger, errno,
+			    "no XFRM kernel support detected, missing "XFRM_ACQ_EXPIRES);
+	}
+
 	struct sockaddr_nl addr;
 
 	nl_send_fd = safe_socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
@@ -2540,46 +2547,59 @@ static bool netlink_bypass_policy(int family, int proto, int port)
 	return TRUE;
 }
 
-static bool netlink_v6holes(void)
+static void netlink_v6holes(struct logger *logger)
 {
 	/* this could be per interface specific too */
-	char proc_f[] = "/proc/sys/net/ipv6/conf/all/disable_ipv6";
-	int disable_ipv6 = -1;
-	bool ret = FALSE;
+	const char proc_f[] = "/proc/sys/net/ipv6/conf/all/disable_ipv6";
+
 	struct stat sts;
-
-	if (stat(proc_f, &sts) == 0) {
-		FILE *f = fopen(proc_f, "r");
-		if (f != NULL) {
-			char buf[64];
-			if (fgets(buf, sizeof(buf), f) !=  NULL) {
-				disable_ipv6 = atoi(buf);
-			}
-			(void) fclose(f);
-		} else {
-			LOG_ERRNO(errno, "\"%s\"", proc_f);
-		}
-	} else {
-		dbg("starting without ipv6 support! could not stat \"%s\"" PRI_ERRNO,
-		    proc_f, pri_errno(errno));
+	if (stat(proc_f, &sts) != 0) {
+		/* not error */
+		log_message(RC_LOG, logger,
+			    "kernel: starting without ipv6 support! could not stat \"%s\"" PRI_ERRNO,
+			    proc_f, pri_errno(errno));
 		/*
-		 * pretend success, do not exit pluto,
-		 * likely IPv6 is disabled in kernel at compile time. e.g. OpenWRT.
+		 * pretend success, do not exit pluto, likely IPv6 is
+		 * disabled in kernel at compile time. e.g. OpenWRT.
 		 */
-		ret = TRUE;
+		return;
 	}
 
+	/*
+	 * If the IPv6 enabled file is present, insist on being able
+	 * to read it.
+	 */
+
+	FILE *f = fopen(proc_f, "r");
+	if (f == NULL) {
+		fatal_errno(PLUTO_EXIT_KERNEL_FAIL, logger, errno,
+			    "kernel: could not open \"%s\"", proc_f);
+	}
+
+	char buf[64];
+	if (fgets(buf, sizeof(buf), f) ==  NULL) {
+		(void) fclose(f);
+		fatal_errno(PLUTO_EXIT_KERNEL_FAIL, logger, errno,
+			    "kernel: could not read \"%s\"", proc_f);
+	}
+	(void) fclose(f);
+
+	int disable_ipv6 = atoi(buf);
 	if (disable_ipv6 == 1) {
-		dbg("net.ipv6.conf.all.disable_ipv6=1 ignore ipv6 holes");
-		ret = TRUE; /* pretend success, do not exit pluto */
-	} else if (disable_ipv6 == 0) {
-		ret = netlink_bypass_policy(AF_INET6, IPPROTO_ICMPV6,
-						ICMP_NEIGHBOR_DISCOVERY);
-		ret &= netlink_bypass_policy(AF_INET6, IPPROTO_ICMPV6,
-						ICMP_NEIGHBOR_SOLICITATION);
+		log_message(RC_LOG, logger, "kernel: %s=1 ignore ipv6 holes", proc_f);
+		return;
 	}
 
-	return ret;
+	if (!netlink_bypass_policy(AF_INET6, IPPROTO_ICMPV6,
+				   ICMP_NEIGHBOR_DISCOVERY)) {
+		fatal(PLUTO_EXIT_KERNEL_FAIL, logger,
+		      "kernel: could not insert ICMP_NEIGHBOUR_DISCOVERY bypass policy");
+	}
+	if (!netlink_bypass_policy(AF_INET6, IPPROTO_ICMPV6,
+				   ICMP_NEIGHBOR_SOLICITATION)) {
+		fatal(PLUTO_EXIT_KERNEL_FAIL, logger,
+		      "kernel: could not insert ICMP_NEIGHBOUR_SOLICITATION bypass policy");
+	}
 }
 
 static bool qry_xfrm_mirgrate_support(struct nlmsghdr *hdr)
