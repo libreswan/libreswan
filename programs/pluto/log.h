@@ -311,20 +311,6 @@ void jambuf_to_default_streams(struct jambuf *buf, enum rc_type rc);
 		}							\
 	}
 
-#define FATAL_ERRNO(ERRNO, MESSAGE, ...)				\
-	{								\
-		int e_ = ERRNO; /* save value across va args */		\
-		/* XXX: notice how FATAL_ERROR: is before <cur-prefix> */ \
-		/* FATAL ERROR: <cur-prefix><message> */		\
-		JAMBUF(buf) {						\
-			jam(buf, "FATAL ERROR: ");			\
-			jam(buf, MESSAGE". "PRI_ERRNO,			\
-			    ##__VA_ARGS__, pri_errno(e_));		\
-			jambuf_to_error_stream(buf);			\
-		}							\
-		libreswan_exit(PLUTO_EXIT_FAIL);			\
-	}
-
 #define LSWLOG_DEBUG(BUF)					\
 	JAMBUF(BUF)						\
 		/* no-prefix */					\

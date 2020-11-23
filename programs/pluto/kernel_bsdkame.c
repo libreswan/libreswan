@@ -64,7 +64,7 @@ typedef struct pfkey_item {
 
 TAILQ_HEAD(, pfkey_item) pfkey_iq;
 
-static void bsdkame_init_pfkey(void)
+static void bsdkame_init_pfkey(struct logger *logger)
 {
 	/* open PF_KEY socket */
 
@@ -72,7 +72,8 @@ static void bsdkame_init_pfkey(void)
 
 	pfkeyfd = pfkey_open();
 	if (pfkeyfd < 0) {
-		FATAL_ERRNO(errno, "socket() in init_pfkeyfd()");
+		fatal_errno(logger, errno,
+			    "socket() in init_pfkeyfd()");
 	}
 
 	dbg("listening for PF_KEY_V2 on file descriptor %d", pfkeyfd);
@@ -80,7 +81,8 @@ static void bsdkame_init_pfkey(void)
 	/* probe to see if it is alive */
 	if (pfkey_send_register(pfkeyfd, SADB_SATYPE_UNSPEC) < 0 ||
 	    pfkey_recv_register(pfkeyfd) < 0) {
-		FATAL_ERRNO(errno, "pfkey probe failed");
+		fatal_errno(logger, errno,
+			    "pfkey probe failed");
 	}
 }
 

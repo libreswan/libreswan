@@ -1779,7 +1779,7 @@ int main(int argc, char **argv)
 	}
 
 	start_crypto_helpers(nhelpers, logger);
-	init_kernel();
+	init_kernel(logger);
 	init_vendorid();
 #if defined(LIBCURL) || defined(LIBLDAP)
 	start_crl_fetch_helper(logger);

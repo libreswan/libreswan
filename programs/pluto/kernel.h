@@ -200,8 +200,8 @@ struct kernel_ops {
 	int *async_fdp;
 	int *route_fdp;
 
-	void (*init)(void);
-	void (*shutdown)();
+	void (*init)(struct logger *logger);
+	void (*shutdown)(struct logger *logger);
 	void (*pfkey_register)(void);
 	void (*process_queue)(void);
 	void (*process_msg)(int);
@@ -345,7 +345,7 @@ extern void record_and_initiate_opportunistic(const ip_selector *our_client,
 					      unsigned transport_proto,
 					      struct xfrm_user_sec_ctx_ike *,
 					      const char *why);
-extern void init_kernel(void);
+extern void init_kernel(struct logger *logger);
 
 struct connection;      /* forward declaration of tag */
 extern bool trap_connection(struct connection *c, struct fd *whackfd);

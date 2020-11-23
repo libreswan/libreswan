@@ -215,19 +215,21 @@ static xfrm_address_t xfrm_from_address(const ip_address *addr)
 		(REQ).L##port = nport(selector_port(&client_));		\
 	}
 
-static void init_netlink_route_fd(void)
+static void init_netlink_route_fd(struct logger *logger)
 {
 	nl_route_fd = safe_socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
 	if (nl_route_fd < 0) {
-		FATAL_ERRNO(errno, "socket()");
+		fatal_errno(PLUTO_EXIT_FAIL, logger, errno, "socket()");
 	}
 
 	if (fcntl(nl_route_fd, F_SETFD, FD_CLOEXEC) != 0) {
-		FATAL_ERRNO(errno, "fcntl(FD_CLOEXEC) for bcast NETLINK_ROUTE ");
+		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
+			    "fcntl(FD_CLOEXEC) for bcast NETLINK_ROUTE ");
 	}
 
 	if (fcntl(nl_route_fd, F_SETFL, O_NONBLOCK) != 0) {
-		FATAL_ERRNO(errno, "fcntl(O_NONBLOCK) for bcast NETLINK_ROUTE");
+		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
+			    "fcntl(O_NONBLOCK) for bcast NETLINK_ROUTE");
 	}
 
 	struct sockaddr_nl addr = {
@@ -238,7 +240,8 @@ static void init_netlink_route_fd(void)
 	};
 
 	if (bind(nl_route_fd, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
-		FATAL_ERRNO(errno, "Failed to bind NETLINK_ROUTE bcast socket - Perhaps kernel was not compiled with CONFIG_XFRM");
+		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
+			    "failed to bind NETLINK_ROUTE bcast socket - Perhaps kernel was not compiled with CONFIG_XFRM");
 	}
 }
 
@@ -247,31 +250,36 @@ static void init_netlink_route_fd(void)
  * init_netlink - Initialize the netlink inferface.  Opens the sockets and
  * then binds to the broadcast socket.
  */
-static void init_netlink(void)
+static void init_netlink(struct logger *logger)
 {
 	struct sockaddr_nl addr;
 
 	nl_send_fd = safe_socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
 
 	if (nl_send_fd < 0) {
-		FATAL_ERRNO(errno, "socket() in init_netlink()");
+		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
+			    "socket() in init_netlink()");
 	}
 
 	if (fcntl(nl_send_fd, F_SETFD, FD_CLOEXEC) != 0) {
-		FATAL_ERRNO(errno, "fcntl(FD_CLOEXEC) in init_netlink()");
+		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
+			    "fcntl(FD_CLOEXEC) in init_netlink()");
 	}
 
 	nl_xfrm_fd = safe_socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
 	if (nl_xfrm_fd < 0) {
-		FATAL_ERRNO(errno, "socket() for bcast in init_netlink()");
+		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
+			    "socket() for bcast in init_netlink()");
 	}
 
 	if (fcntl(nl_xfrm_fd, F_SETFD, FD_CLOEXEC) != 0) {
-		FATAL_ERRNO(errno, "fcntl(FD_CLOEXEC) for bcast in init_netlink()");
+		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
+			    "fcntl(FD_CLOEXEC) for bcast in init_netlink()");
 	}
 
 	if (fcntl(nl_xfrm_fd, F_SETFL, O_NONBLOCK) != 0) {
-		FATAL_ERRNO(errno, "fcntl(O_NONBLOCK) for bcast in init_netlink()");
+		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
+			    "fcntl(O_NONBLOCK) for bcast in init_netlink()");
 	}
 
 	addr.nl_family = AF_NETLINK;
@@ -279,10 +287,11 @@ static void init_netlink(void)
 	addr.nl_pad = 0; /* make coverity happy */
 	addr.nl_groups = XFRMGRP_ACQUIRE | XFRMGRP_EXPIRE;
 	if (bind(nl_xfrm_fd, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
-		FATAL_ERRNO(errno, "Failed to bind bcast socket in init_netlink() - Perhaps kernel was not compiled with CONFIG_XFRM");
+		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
+			    "Failed to bind bcast socket in init_netlink() - Perhaps kernel was not compiled with CONFIG_XFRM");
 	}
 
-	init_netlink_route_fd();
+	init_netlink_route_fd(logger);
 
 	/*
 	 * pfkey_register_response() does not register an entry for

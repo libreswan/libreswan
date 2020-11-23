@@ -2471,7 +2471,7 @@ const struct kernel_ops *kernel_ops =
 
 deltatime_t bare_shunt_interval = DELTATIME_INIT(SHUNT_SCAN_INTERVAL);
 
-void init_kernel(void)
+void init_kernel(struct logger *logger)
 {
 	struct utsname un;
 
@@ -2488,8 +2488,8 @@ void init_kernel(void)
 			libreswan_log("No XFRM kernel support detected, missing /proc/sys/net/core/xfrm_acq_expires");
 			exit_pluto(PLUTO_EXIT_KERNEL_FAIL);
 		}
-		libreswan_log("Using Linux XFRM/NETKEY IPsec kernel support code on %s",
-			      kversion);
+		log_message(RC_LOG, logger,
+			    "Using Linux XFRM/NETKEY IPsec kernel support code on %s", kversion);
 		break;
 	}
 #endif
@@ -2509,7 +2509,7 @@ void init_kernel(void)
 	}
 
 	if (kernel_ops->init != NULL)
-		kernel_ops->init();
+		kernel_ops->init(logger);
 
 	/* Add the port bypass polcies */
 
@@ -3482,6 +3482,6 @@ static void kernel_scan_shunts(struct logger *logger)
 void shutdown_kernel(struct logger *logger)
 {
 	if (kernel_ops->shutdown != NULL)
-		kernel_ops->shutdown();
+		kernel_ops->shutdown(logger);
 	expire_bare_shunts(logger, true/*all*/);
 }
