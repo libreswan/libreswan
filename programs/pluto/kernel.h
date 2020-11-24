@@ -260,7 +260,7 @@ struct kernel_ops {
 	err_t (*migrate_sa_check)(struct logger *);
 	bool (*migrate_sa)(struct state *st);
 	void (*v6holes)(struct logger *logger);
-	bool (*poke_ipsec_policy_hole)(const struct iface_dev *ifd, int fd);
+	bool (*poke_ipsec_policy_hole)(const struct iface_dev *ifd, int fd, struct logger *logger);
 	bool (*detect_offload)(const struct raw_iface *ifp, struct logger *logger);
 };
 

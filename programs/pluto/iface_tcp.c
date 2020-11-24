@@ -311,7 +311,7 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port,
 	 * 4500 IPv6 port 500
 	 */
 	if (kernel_ops->poke_ipsec_policy_hole != NULL &&
-	    !kernel_ops->poke_ipsec_policy_hole(ifd, fd)) {
+	    !kernel_ops->poke_ipsec_policy_hole(ifd, fd, logger)) {
 		close(fd);
 		return -1;
 	}

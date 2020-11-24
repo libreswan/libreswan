@@ -2742,7 +2742,7 @@ static err_t netlink_migrate_sa_check(struct logger *logger)
 	}
 }
 
-static bool netlink_poke_ipsec_policy_hole(const struct iface_dev *ifd, int fd)
+static bool netlink_poke_ipsec_policy_hole(const struct iface_dev *ifd, int fd, struct logger *logger)
 {
 	const struct ip_info *type = address_type(&ifd->id_address);
 	struct xfrm_userpolicy_info policy = {
@@ -2764,13 +2764,15 @@ static bool netlink_poke_ipsec_policy_hole(const struct iface_dev *ifd, int fd)
 
 	policy.dir = XFRM_POLICY_IN;
 	if (setsockopt(fd, sol, opt, &policy, sizeof(policy)) < 0) {
-		LOG_ERRNO(errno, "setsockopt IP_XFRM_POLICY XFRM_POLICY_IN in process_raw_ifaces()");
+		log_errno(logger, errno,
+			  "setsockopt IP_XFRM_POLICY XFRM_POLICY_IN in process_raw_ifaces()");
 		return false;
 	}
 
 	policy.dir = XFRM_POLICY_OUT;
 	if (setsockopt(fd, sol, opt, &policy, sizeof(policy)) < 0) {
-		LOG_ERRNO(errno, "setsockopt IP_XFRM_POLICY XFRM_POLICY_OUT in process_raw_ifaces()");
+		log_errno(logger, errno,
+			  "setsockopt IP_XFRM_POLICY XFRM_POLICY_OUT in process_raw_ifaces()");
 		return false;
 	}
 
