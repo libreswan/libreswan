@@ -23,6 +23,7 @@
 
 struct jambuf;
 struct logger;
+enum pluto_exit_code;
 
 typedef struct diag *diag_t;
 
@@ -32,9 +33,11 @@ diag_t diag_va_list(const char *fmt, va_list ap) MUST_USE_RESULT;
 void log_diag(lset_t rc_flags, struct logger *logger, diag_t *diag,
 	      const char *fmt, ...) PRINTF_LIKE(4);
 
-const char *str_diag(diag_t diag);
+void fatal_diag(enum pluto_exit_code rc, struct logger *logger, diag_t *diag,
+		const char *message, ...) PRINTF_LIKE(4) NEVER_RETURNS;
 
-size_t jam_diag(struct jambuf *buf, diag_t *diag);
+const char *str_diag(diag_t diag);
+size_t jam_diag(struct jambuf *buf, diag_t diag);
 
 diag_t clone_diag(struct diag *diag);
 void pfree_diag(struct diag **diag);

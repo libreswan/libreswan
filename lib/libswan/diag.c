@@ -60,11 +60,9 @@ void pfree_diag(diag_t *diag)
 	}
 }
 
-size_t jam_diag(struct jambuf *buf, diag_t *diag)
+size_t jam_diag(struct jambuf *buf, diag_t diag)
 {
-	size_t s = jam_string(buf, str_diag(*diag));
-	pfree_diag(diag);
-	return s;
+	return jam_string(buf, str_diag(diag));
 }
 
 void log_diag(lset_t rc_flags, struct logger *logger, diag_t *diag,
@@ -75,6 +73,29 @@ void log_diag(lset_t rc_flags, struct logger *logger, diag_t *diag,
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);
 		va_end(ap);
-		jam_diag(buf, diag);
+		jam_diag(buf, *diag);
 	}
+	pfree_diag(diag);
+}
+
+void fatal_diag(enum pluto_exit_code rc, struct logger *logger, diag_t *diag,
+		const char *fmt, ...)
+{
+	JAMBUF(buf) {
+		/* XXX: The message format is:
+		 *   FATAL ERROR: <log-prefix><message...><diag>
+		 * and not:
+		 *   <log-prefix>FATAL ERROR: <message...><diag>
+		 */
+		jam(buf, "FATAL ERROR: ");
+		jam_logger_prefix(buf, logger);
+		va_list ap;
+		va_start(ap, fmt);
+		jam_va_list(buf, fmt, ap);
+		va_end(ap);
+		jam_diag(buf, *diag);
+		jambuf_to_logger(buf, logger, ERROR_FLAGS);
+	}
+	pfree_diag(diag); /* XXX: bother? */
+	libreswan_exit(rc);
 }
