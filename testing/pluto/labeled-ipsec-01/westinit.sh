@@ -1,10 +1,8 @@
 /testing/guestbin/swan-prep
-# confirm that the network is alive
-../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
-# ensure that clear text does not get through
-iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
-# confirm clear text does not get through
-../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+checkmodule -M -m -o ipsec-test-module.mod ipsec-test-module.te
+semodule_package -o ipsec-test-module.pp -m ipsec-test-module.mod
+semodule -i ipsec-test-module.pp > /dev/null 2>/dev/null
+rm -f ipsec-test-module.mod ipsec-test-module.pp
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add labeled
