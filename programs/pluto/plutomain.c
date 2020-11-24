@@ -70,7 +70,6 @@
 #include "crypt_symkey.h"	/* for init_crypt_symkey() */
 #include "crl_queue.h"		/* for free_crl_queue() */
 #include "iface.h"
-#include "pluto_shutdown.h"		/* for exit_pluto() */
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -243,57 +242,46 @@ static char pluto_lock[sizeof(ctl_addr.sun_path)] =
 static bool pluto_lock_created = FALSE;
 
 /* create lockfile, or die in the attempt */
-static int create_lock(void)
+static int create_lock(struct logger *logger)
 {
-	int fd;
-
 	if (mkdir(rundir, 0755) != 0) {
 		if (errno != EEXIST) {
-			fprintf(stderr,
-				"pluto: FATAL: unable to create lock dir: \"%s\": %s\n",
-				rundir, strerror(errno));
-			exit_pluto(PLUTO_EXIT_LOCK_FAIL);
+			fatal_errno(PLUTO_EXIT_LOCK_FAIL, logger, errno,
+				    "unable to create lock dir: \"%s\"", rundir);
 		}
 	}
 
-	fd = open(pluto_lock, O_WRONLY | O_CREAT | O_EXCL | O_TRUNC,
-		S_IRUSR | S_IRGRP | S_IROTH);
-
-	if (fd < 0) {
-		if (errno == EEXIST) {
-			/*
-			 * if we did not fork, then we do't really need
-			 * the pid to control, so wipe it
-			 */
-			if (!fork_desired) {
-				if (unlink(pluto_lock) == -1) {
-					fprintf(stderr,
-						"pluto: FATAL: lock file \"%s\" already exists and could not be removed (%d %s)\n",
-						pluto_lock, errno,
-						strerror(errno));
-					exit_pluto(PLUTO_EXIT_LOCK_FAIL);
-				} else {
-					/*
-					 * lock file removed,
-					 * try creating it again
-					 */
-					return create_lock();
-				}
-			} else {
-				fprintf(stderr,
-					"pluto: FATAL: lock file \"%s\" already exists\n",
-					pluto_lock);
-				exit_pluto(PLUTO_EXIT_LOCK_FAIL);
-			}
-		} else {
-			fprintf(stderr,
-				"pluto: FATAL: unable to create lock file \"%s\" (%d %s)\n",
-				pluto_lock, errno, strerror(errno));
-			exit_pluto(PLUTO_EXIT_LOCK_FAIL);
+	unsigned attempt;
+	for (attempt = 0; attempt < 2; attempt++) {
+		int fd = open(pluto_lock, O_WRONLY | O_CREAT | O_EXCL | O_TRUNC,
+			      S_IRUSR | S_IRGRP | S_IROTH);
+		if (fd >= 0) {
+			pluto_lock_created = true;
+			return fd;
 		}
+		if (errno != EEXIST) {
+			fatal_errno(PLUTO_EXIT_LOCK_FAIL, logger, errno,
+				    "unable to create lock file \"%s\"", pluto_lock);
+		}
+		if (fork_desired) {
+			fatal(PLUTO_EXIT_LOCK_FAIL, logger,
+			      "lock file \"%s\" already exists", pluto_lock);
+		}
+		/*
+		 * if we did not fork, then we don't really need the pid to
+		 * control, so wipe it
+		 */
+		if (unlink(pluto_lock) == -1) {
+			fatal_errno(PLUTO_EXIT_LOCK_FAIL, logger, errno,
+				    "lock file \"%s\" already exists and could not be removed", pluto_lock);
+		}
+		/*
+		 * lock file removed, try creating it
+		 * again ...
+		 */
 	}
-	pluto_lock_created = TRUE;
-	return fd;
+	fatal(PLUTO_EXIT_LOCK_FAIL, logger, "lock file \"%s\" could not be created after %u attempts",
+	      pluto_lock, attempt);
 }
 
 /*
@@ -376,7 +364,7 @@ static void set_cfg_string(char **target, char *value)
  * Everything else that needs random MUST use get_rnd_bytes()
  * This function MUST NOT be changed to use /dev/urandom.
  */
-static void get_bsi_random(size_t nbytes, unsigned char *buf)
+static void get_bsi_random(size_t nbytes, unsigned char *buf, struct logger *logger)
 {
 	size_t ndone;
 	int dev;
@@ -385,9 +373,8 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf)
 
 	dev = open(device, 0);
 	if (dev < 0) {
-		loglog(RC_LOG_SERIOUS, "could not open %s (%s)\n",
-			device, strerror(errno));
-		exit_pluto(PLUTO_EXIT_NSS_FAIL);
+		fatal_errno(PLUTO_EXIT_NSS_FAIL, logger, errno,
+			    "could not open %s", device);
 	}
 
 	ndone = 0;
@@ -397,13 +384,11 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf)
 	while (ndone < nbytes) {
 		got = read(dev, buf + ndone, nbytes - ndone);
 		if (got < 0) {
-			loglog(RC_LOG_SERIOUS, "read error on %s (%s)\n",
-				device, strerror(errno));
-			exit_pluto(PLUTO_EXIT_NSS_FAIL);
+			fatal_errno(PLUTO_EXIT_NSS_FAIL, logger, errno,
+				    "read error on %s", device);
 		}
 		if (got == 0) {
-			loglog(RC_LOG_SERIOUS, "EOF on %s!?!\n",  device);
-			exit_pluto(PLUTO_EXIT_NSS_FAIL);
+			fatal(PLUTO_EXIT_NSS_FAIL, logger, "EOF on %s!?!\n",  device);
 		}
 		ndone += got;
 	}
@@ -419,8 +404,7 @@ static void pluto_init_nss(const char *nssdir, struct logger *logger)
 	log_message(RC_LOG_SERIOUS, logger, "NSS DB directory: sql:%s", nssdir);
 
 	if (!lsw_nss_setup(nssdir, LSW_NSS_READONLY, logger)) {
-		log_message(RC_LOG_SERIOUS, logger, "FATAL: NSS initialization failure");
-		exit_pluto(PLUTO_EXIT_NSS_FAIL);
+		fatal(PLUTO_EXIT_NSS_FAIL, logger, "FATAL: NSS initialization failure");
 	}
 	log_message(RC_LOG, logger, "NSS crypto library initialized");
 
@@ -432,7 +416,7 @@ static void pluto_init_nss(const char *nssdir, struct logger *logger)
 		int seedbytes = BYTES_FOR_BITS(pluto_nss_seedbits);
 		unsigned char *buf = alloc_bytes(seedbytes, "TLA seedmix");
 
-		get_bsi_random(seedbytes, buf); /* much TLA, very blocking */
+		get_bsi_random(seedbytes, buf, logger); /* much TLA, very blocking */
 		rv = PK11_RandomUpdate(buf, seedbytes);
 		log_message(RC_LOG, logger, "seeded %d bytes into the NSS PRNG", seedbytes);
 		passert(rv == SECSuccess);
@@ -1371,8 +1355,8 @@ int main(int argc, char **argv)
 					log_message(RC_LOG, logger, "the option protostack=%s is obsoleted, falling back to protostack=%s",
 						    protostack, kernel_ops->kern_name);
 				} else if (streq(protostack, "klips")) {
-					log_message(RC_LOG, logger, "protostack=klips is obsoleted, please migrate to protostack=xfrm");
-					exit_pluto(PLUTO_EXIT_KERNEL_FAIL);
+					fatal(PLUTO_EXIT_KERNEL_FAIL, logger,
+					      "protostack=klips is obsoleted, please migrate to protostack=xfrm");
 #ifdef XFRM_SUPPORT
 				} else if (streq(protostack, "xfrm") ||
 					   streq(protostack, "netkey")) {
@@ -1464,7 +1448,7 @@ int main(int argc, char **argv)
 	oco = lsw_init_options();
 
 	if (!selftest_only)
-		lockfd = create_lock();
+		lockfd = create_lock(logger);
 	else
 		lockfd = 0;
 
@@ -1492,9 +1476,7 @@ int main(int argc, char **argv)
 	if (fork_desired) {
 #if USE_DAEMON
 		if (daemon(TRUE, TRUE) < 0) {
-			fprintf(stderr, "pluto: FATAL: daemon failed (%d %s)\n",
-				errno, strerror(errno));
-			exit_pluto(PLUTO_EXIT_FORK_FAIL);
+			fatal_errno(PLUTO_EXIT_FORK_FAIL, logger, "daemon failed");
 		}
 		/*
 		 * Parent just exits, so need to fill in our own PID
@@ -1511,11 +1493,8 @@ int main(int argc, char **argv)
 			pid_t pid = fork();
 
 			if (pid < 0) {
-				int e = errno;
-
-				fprintf(stderr, "pluto: FATAL: fork failed (%d %s)\n",
-					errno, strerror(e));
-				exit_pluto(PLUTO_EXIT_FORK_FAIL);
+				fatal_errno(PLUTO_EXIT_FORK_FAIL, logger, errno,
+					    "fork failed");
 			}
 
 			if (pid != 0) {
@@ -1529,16 +1508,11 @@ int main(int argc, char **argv)
 			}
 		}
 #else
-		fprintf(stderr, "pluto: FATAL: fork/daemon not supported\n");
-		exit_pluto(PLUTO_EXIT_FORK_FAIL);
+		fatal(PLUTO_EXIT_FORK_FAIL, logger, "fork/daemon not supported; specify --nofork");
 #endif
 		if (setsid() < 0) {
-			int e = errno;
-
-			fprintf(stderr,
-				"FATAL: setsid() failed in main(). Errno %d: %s\n",
-				errno, strerror(e));
-			exit_pluto(PLUTO_EXIT_FAIL);
+			fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
+				    "setsid() failed in main()");
 		}
 	} else {
 		/* no daemon fork: we have to fill in lock file */
@@ -1629,8 +1603,7 @@ int main(int argc, char **argv)
 		if (nss_fips_mode) {
 			libreswan_log("NSS library is running in FIPS mode");
 		} else {
-			loglog(RC_LOG_SERIOUS, "ABORT: pluto in FIPS mode but NSS library is not");
-			exit_pluto(PLUTO_EXIT_FIPS_FAIL);
+			fatal(PLUTO_EXIT_FIPS_FAIL, logger, "pluto in FIPS mode but NSS library is not");
 		}
 	} else {
 		libreswan_log("FIPS mode disabled for pluto daemon");
@@ -1644,28 +1617,24 @@ int main(int argc, char **argv)
 			ocsp_timeout, ocsp_strict, ocsp_cache_size,
 			ocsp_cache_min_age, ocsp_cache_min_age,
 			(ocsp_method == OCSP_METHOD_POST))) {
-			loglog(RC_LOG_SERIOUS, "Initializing NSS OCSP failed");
-			exit_pluto(PLUTO_EXIT_NSS_FAIL);
+			fatal(PLUTO_EXIT_NSS_FAIL, logger, "Initializing NSS OCSP failed");
 		} else {
 			libreswan_log("NSS OCSP started");
 		}
 	}
 
 #ifdef FIPS_CHECK
+	log_message(RC_LOG, logger, "FIPS HMAC integrity support [enabled]");
 	bool fips_files = FIPSCHECK_verify_files(fips_package_files);
-
-	libreswan_log("FIPS HMAC integrity support [enabled]");
-
 	if (fips_files) {
-		libreswan_log("FIPS HMAC integrity verification self-test passed");
+		log_message(RC_LOG, logger, "FIPS HMAC integrity verification self-test passed");
+	} else if (libreswan_fipsmode()) {
+		fatal(PLUTO_EXIT_FIPS_FAIL, logger, "FIPS HMAC integrity verification self-test FAILED");
 	} else {
-		loglog(RC_LOG_SERIOUS, "FIPS HMAC integrity verification self-test FAILED");
-	}
-	if (libreswan_fipsmode() && !fips_files) {
-		exit_pluto(PLUTO_EXIT_FIPS_FAIL);
+		log_message(RC_LOG_SERIOUS, logger, "FIPS HMAC integrity verification self-test FAILED");
 	}
 #else
-	libreswan_log("FIPS HMAC integrity support [disabled]");
+	log_message(RC_LOG, logger, "FIPS HMAC integrity support [disabled]");
 #endif
 
 #ifdef HAVE_LIBCAP_NG
