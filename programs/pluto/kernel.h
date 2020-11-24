@@ -257,7 +257,7 @@ struct kernel_ops {
 			       struct logger *logger);
 	void (*process_raw_ifaces)(struct raw_iface *rifaces, struct logger *logger);
 	bool (*exceptsocket)(int socketfd, int family);
-	err_t (*migrate_sa_check)(void);
+	err_t (*migrate_sa_check)(struct logger *);
 	bool (*migrate_sa)(struct state *st);
 	void (*v6holes)(struct logger *logger);
 	bool (*poke_ipsec_policy_hole)(const struct iface_dev *ifd, int fd);

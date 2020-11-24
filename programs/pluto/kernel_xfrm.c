@@ -1373,9 +1373,9 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 	if (sa->authkeylen != 0) {
 		const char *name = sa->integ->integ_netlink_xfrm_name;
 		if (name == NULL) {
-			loglog(RC_LOG_SERIOUS,
-				"XFRM: unknown authentication algorithm: %s",
-				sa->integ->common.fqn);
+			log_message(RC_LOG_SERIOUS, logger,
+				    "XFRM: unknown authentication algorithm: %s",
+				    sa->integ->common.fqn);
 			return FALSE;
 		}
 
@@ -1414,9 +1414,9 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		const char *name = sparse_name(calg_list, sa->compalg);
 
 		if (name == NULL) {
-			loglog(RC_LOG_SERIOUS,
-				"unknown compression algorithm: %u",
-				sa->compalg);
+			log_message(RC_LOG_SERIOUS, logger,
+				    "unknown compression algorithm: %u",
+				    sa->compalg);
 			return FALSE;
 		}
 
@@ -1434,9 +1434,9 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		const char *name = sa->encrypt->encrypt_netlink_xfrm_name;
 
 		if (name == NULL) {
-			loglog(RC_LOG_SERIOUS,
-				"unknown encryption algorithm: %s",
-				sa->encrypt->common.fqn);
+			log_message(RC_LOG_SERIOUS, logger,
+				    "unknown encryption algorithm: %s",
+				    sa->encrypt->common.fqn);
 			return FALSE;
 		}
 
@@ -2635,7 +2635,7 @@ static void netlink_v6holes(struct logger *logger)
 	}
 }
 
-static bool qry_xfrm_mirgrate_support(struct nlmsghdr *hdr)
+static bool qry_xfrm_mirgrate_support(struct nlmsghdr *hdr, struct logger *logger)
 {
 	struct nlm_resp rsp;
 	size_t len;
@@ -2644,12 +2644,14 @@ static bool qry_xfrm_mirgrate_support(struct nlmsghdr *hdr)
 	int nl_fd = socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
 
 	if (nl_fd < 0) {
-		LOG_ERRNO(errno, "socket() in qry_xfrm_mirgrate_support()");
-		return FALSE;
+		log_errno(logger, errno,
+			  "socket() in qry_xfrm_mirgrate_support()");
+		return false;
 	}
 
 	if (fcntl(nl_fd, F_SETFL, O_NONBLOCK) != 0) {
-		LOG_ERRNO(errno, "fcntl(O_NONBLOCK in qry_xfrm_mirgrate_support()");
+		log_errno(logger, errno,
+			  "fcntl(O_NONBLOCK in qry_xfrm_mirgrate_support()");
 		close(nl_fd);
 
 		return FALSE;
@@ -2661,13 +2663,14 @@ static bool qry_xfrm_mirgrate_support(struct nlmsghdr *hdr)
 		r = write(nl_fd, hdr, len);
 	} while (r < 0 && errno == EINTR);
 	if (r < 0) {
-		LOG_ERRNO(errno, "netlink write() xfrm_migrate_support lookup");
+		log_errno(logger, errno,
+			  "netlink write() xfrm_migrate_support lookup");
 		close(nl_fd);
 		return FALSE;
 	} else if ((size_t)r != len) {
-		loglog(RC_LOG_SERIOUS,
-			"ERROR: netlink write() xfrm_migrate_support message truncated: %zd instead of %zu",
-			r, len);
+		log_message(RC_LOG_SERIOUS, logger,
+			    "ERROR: netlink write() xfrm_migrate_support message truncated: %zd instead of %zu",
+			    r, len);
 		close(nl_fd);
 		return FALSE;
 	}
@@ -2699,7 +2702,7 @@ static bool qry_xfrm_mirgrate_support(struct nlmsghdr *hdr)
 	return TRUE;
 }
 
-static err_t netlink_migrate_sa_check(void)
+static err_t netlink_migrate_sa_check(struct logger *logger)
 {
 	if (kernel_mobike_supprt == 0) {
 		/* check the kernel */
@@ -2728,7 +2731,7 @@ static err_t netlink_migrate_sa_check(void)
 		attr->rta_len = RTA_LENGTH(attr->rta_len);
 		req.n.nlmsg_len += attr->rta_len;
 
-		bool ret = qry_xfrm_mirgrate_support(&req.n);
+		bool ret = qry_xfrm_mirgrate_support(&req.n, logger);
 		kernel_mobike_supprt = ret ? 1 : -1;
 	}
 
