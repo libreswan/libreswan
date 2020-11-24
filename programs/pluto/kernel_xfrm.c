@@ -1650,7 +1650,7 @@ static ip_selector selector_from_xfrm(const struct ip_info *afi, unsigned ipprot
 	return selector_from_address(&address, &protoport);
 }
 
-static void netlink_acquire(struct nlmsghdr *n)
+static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 {
 	struct xfrm_user_acquire *acquire;
 	struct xfrm_user_sec_ctx_ike *uctx = NULL;
@@ -1659,10 +1659,10 @@ static void netlink_acquire(struct nlmsghdr *n)
 	dbg("xfrm netlink msg len %zu", (size_t) n->nlmsg_len);
 
 	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*acquire))) {
-		libreswan_log(
-			"netlink_acquire got message with length %zu < %zu bytes; ignore message",
-			(size_t) n->nlmsg_len,
-			sizeof(*acquire));
+		log_message(RC_LOG, logger,
+			    "netlink_acquire got message with length %zu < %zu bytes; ignore message",
+			    (size_t) n->nlmsg_len,
+			    sizeof(*acquire));
 		return;
 	}
 
@@ -1686,8 +1686,9 @@ static void netlink_acquire(struct nlmsghdr *n)
 
 	const struct ip_info *afi = aftoinfo(acquire->policy.sel.family);
 	if (afi == NULL) {
-		libreswan_log("XFRM_MSG_ACQUIRE message from kernel malformed: family %u unknown",
-			      acquire->policy.sel.family);
+		log_message(RC_LOG, logger,
+			    "XFRM_MSG_ACQUIRE message from kernel malformed: family %u unknown",
+			    acquire->policy.sel.family);
 		return;
 	}
 	ip_selector ours = selector_from_xfrm(afi, acquire->sel.proto,
@@ -1734,13 +1735,15 @@ static void netlink_acquire(struct nlmsghdr *n)
 			    len);
 
 			if (uctx != NULL) {
-				libreswan_log("Second Sec Ctx label in a single Acquire message; ignoring Acquire message");
+				log_message(RC_LOG, logger,
+					    "Second Sec Ctx label in a single Acquire message; ignoring Acquire message");
 				return;
 			}
 
 			if (len > MAX_SECCTX_LEN) {
-				libreswan_log("Sec Ctx label of length %zu, longer than MAX_SECCTX_LEN; ignoring Acquire message",
-					len);
+				log_message(RC_LOG, logger,
+					    "Sec Ctx label of length %zu, longer than MAX_SECCTX_LEN; ignoring Acquire message",
+					    len);
 				return;
 			}
 
@@ -1760,16 +1763,19 @@ static void netlink_acquire(struct nlmsghdr *n)
 
 			if (len == 0 || uctx->sec_ctx_value[len-1] != '\0') {
 				if (len == MAX_SECCTX_LEN) {
-					libreswan_log("Sec Ctx label missing final NUL and too long to add; ignoring Acquire message");
+					log_message(RC_LOG, logger,
+						    "Sec Ctx label missing final NUL and too long to add; ignoring Acquire message");
 					return;
 				}
-				libreswan_log("Sec Ctx label missing final NUL; we're adding it");
+				log_message(RC_LOG, logger,
+					    "Sec Ctx label missing final NUL; we're adding it");
 				uctx->sec_ctx_value[len] = '\0';
 				len++;
 			}
 
 			if (strlen(uctx->sec_ctx_value) + 1 != len) {
-				libreswan_log("Sec Ctx label contains embedded NUL; ignoring Acquire message");
+				log_message(RC_LOG, logger,
+					    "Sec Ctx label contains embedded NUL; ignoring Acquire message");
 				return;
 			}
 
@@ -1827,7 +1833,7 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol,
 	}
 }
 
-static void process_addr_chage(struct nlmsghdr *n)
+static void process_addr_chage(struct nlmsghdr *n, struct logger *logger)
 {
 	struct ifaddrmsg *nl_msg = NLMSG_DATA(n);
 	struct rtattr *rta = IFLA_RTA(nl_msg);
@@ -1846,7 +1852,8 @@ static void process_addr_chage(struct nlmsghdr *n)
 			ugh = data_to_address(RTA_DATA(rta), RTA_PAYLOAD(rta)/*size*/,
 					      aftoinfo(nl_msg->ifa_family), &ip);
 			if (ugh != NULL) {
-				libreswan_log("ERROR IFA_LOCAL invalid %s", ugh);
+				log_message(RC_LOG, logger,
+					    "ERROR IFA_LOCAL invalid %s", ugh);
 			} else  {
 				if (n->nlmsg_type == RTM_DELADDR)
 					record_deladdr(&ip, "IFA_LOCAL");
@@ -1859,7 +1866,8 @@ static void process_addr_chage(struct nlmsghdr *n)
 			ugh = data_to_address(RTA_DATA(rta), RTA_PAYLOAD(rta)/*size*/,
 					      aftoinfo(nl_msg->ifa_family), &ip);
 			if (ugh != NULL) {
-				libreswan_log("ERROR IFA_ADDRESS invalid %s", ugh);
+				log_message(RC_LOG, logger,
+					    "ERROR IFA_ADDRESS invalid %s", ugh);
 			} else  {
 				address_buf ip_str;
 				dbg("XFRM IFA_ADDRESS %s IFA_ADDRESS is this PPP?",
@@ -1980,18 +1988,18 @@ static bool netlink_get(int fd, struct logger *logger)
 
 	switch (rsp.n.nlmsg_type) {
 	case XFRM_MSG_ACQUIRE:
-		netlink_acquire(&rsp.n);
+		netlink_acquire(&rsp.n, logger);
 		break;
 	case XFRM_MSG_POLEXPIRE:
 		netlink_policy_expire(&rsp.n, logger);
 		break;
 
 	case RTM_NEWADDR:
-		process_addr_chage(&rsp.n);
+		process_addr_chage(&rsp.n, logger);
 		break;
 
 	case RTM_DELADDR:
-		process_addr_chage(&rsp.n);
+		process_addr_chage(&rsp.n, logger);
 		break;
 
 	default:
@@ -2045,10 +2053,10 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 	}
 
 	if (rsp.n.nlmsg_len < NLMSG_LENGTH(sizeof(rsp.u.sa))) {
-		libreswan_log(
-			"netlink_get_spi: XFRM_MSG_ALLOCSPI returned message with length %zu < %zu bytes; ignore message",
-			(size_t) rsp.n.nlmsg_len,
-			sizeof(rsp.u.sa));
+		log_message(RC_LOG, logger,
+			    "netlink_get_spi: XFRM_MSG_ALLOCSPI returned message with length %zu < %zu bytes; ignore message",
+			    (size_t) rsp.n.nlmsg_len,
+			    sizeof(rsp.u.sa));
 		return 0;
 	}
 
