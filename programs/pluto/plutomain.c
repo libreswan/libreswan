@@ -1668,7 +1668,7 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef USE_LINUX_AUDIT
-	linux_audit_init(log_to_audit);
+	linux_audit_init(log_to_audit, logger);
 #else
 	log_message(RC_LOG, logger, "Linux audit support [disabled]");
 #endif

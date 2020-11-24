@@ -59,8 +59,6 @@
 #include "plutoalg.h"
 /* for show_virtual_private: */
 #include "crypto.h"
-#include "pluto_shutdown.h"		/* for exit_pluto() */
-
 #include "ip_address.h" /* for jam_address */
 
 
@@ -75,34 +73,23 @@ void linux_audit_conn(const struct state *st UNUSED, enum linux_audit_kind op UN
 
 #include <libaudit.h>
 
-#if __GNUC__ >= 7
-	/*
-	 * GCC 7+ warns about the following calls that truncate a string using
-	 * snprintf().  But here we are truncating the log message for a reason.
-	 */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-truncation"
-#endif
-
-void linux_audit_init(int do_audit)
+void linux_audit_init(int do_audit, struct logger *logger)
 {
-	libreswan_log("Linux audit support [enabled]");
+	log_message(RC_LOG, logger, "Linux audit support [enabled]");
 	/* test and log if audit is enabled on the system */
 	int audit_fd;
 	audit_fd = audit_open();
 	if (audit_fd < 0) {
 		if (errno == EINVAL || errno == EPROTONOSUPPORT ||
 			errno == EAFNOSUPPORT) {
-			loglog(RC_LOG_SERIOUS,
-				"Warning: kernel has no audit support");
+			log_message(RC_LOG_SERIOUS, logger,
+				    "Warning: kernel has no audit support");
 			close(audit_fd);
 			log_to_audit = FALSE;
 			return;
 		} else {
-			loglog(RC_LOG_SERIOUS,
-				"FATAL: audit_open() failed : %s",
-				strerror(errno));
-			exit_pluto(PLUTO_EXIT_AUDIT_FAIL);
+			fatal_errno(PLUTO_EXIT_AUDIT_FAIL, logger, errno,
+				    "FATAL: audit_open() failed");
 		}
 	} else {
 		if (do_audit)
@@ -110,19 +97,18 @@ void linux_audit_init(int do_audit)
 	}
 	close(audit_fd);
 	if (do_audit)
-		libreswan_log("Linux audit activated");
+		log_message(RC_LOG, logger, "Linux audit activated");
 }
 
-static void linux_audit(const int type, const char *message, const char *laddr, const int result)
+static void linux_audit(const int type, const char *message, const char *laddr, const int result,
+			struct logger *logger)
 {
 	int audit_fd, rc;
 
 	audit_fd = audit_open();
 	if (audit_fd < 0) {
-		loglog(RC_LOG_SERIOUS,
-		       "FATAL: audit_open() failed : %s",
-		       strerror(errno));
-		exit_pluto(PLUTO_EXIT_AUDIT_FAIL);
+		fatal_errno(PLUTO_EXIT_AUDIT_FAIL, logger, errno,
+			    "FATAL: audit_open() failed");
 	}
 
 	/*
@@ -142,10 +128,8 @@ static void linux_audit(const int type, const char *message, const char *laddr, 
 	rc = audit_log_user_message(audit_fd, type, message, NULL, laddr, NULL, result);
 	close(audit_fd);
 	if (rc < 0) {
-		loglog(RC_LOG_SERIOUS,
-			"FATAL: audit log failed: %s",
-			strerror(errno));
-		exit_pluto(PLUTO_EXIT_AUDIT_FAIL);
+		fatal_errno(PLUTO_EXIT_AUDIT_FAIL, logger, errno,
+			    "FATAL: audit log failed");
 	}
 }
 
@@ -314,7 +298,8 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	linux_audit((op == LAK_CHILD_START || op == LAK_CHILD_DESTROY || op == LAK_CHILD_FAIL) ?
 			AUDIT_CRYPTO_IPSEC_SA : AUDIT_CRYPTO_IKE_SA,
 			audit_str, laddr,
-			(op == LAK_PARENT_FAIL || op == LAK_CHILD_FAIL) ? AUDIT_RESULT_FAIL : AUDIT_RESULT_OK);
+		    (op == LAK_PARENT_FAIL || op == LAK_CHILD_FAIL) ? AUDIT_RESULT_FAIL : AUDIT_RESULT_OK,
+		    st->st_logger);
 }
 #if __GNUC__ >= 7
 #pragma GCC diagnostic pop
