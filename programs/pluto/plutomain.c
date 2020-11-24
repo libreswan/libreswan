@@ -1746,7 +1746,7 @@ int main(int argc, char **argv)
 	init_selinux();
 #endif
 #ifdef USE_SYSTEMD_WATCHDOG
-	pluto_sd_init();
+	pluto_sd_init(logger);
 #endif
 
 #ifdef USE_DNSSEC
