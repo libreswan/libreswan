@@ -1441,7 +1441,7 @@ int main(int argc, char **argv)
 	if (chdir(coredir) == -1) {
 		int e = errno;
 
-		libreswan_log("pluto: warning: chdir(\"%s\") to dumpdir failed (%d: %s)",
+		log_message(RC_LOG, logger, "pluto: warning: chdir(\"%s\") to dumpdir failed (%d: %s)",
 			coredir, e, strerror(e));
 	}
 
@@ -1570,7 +1570,7 @@ int main(int argc, char **argv)
 		 */
 		if (cur_debugging & DBG_PRIVATE) {
 			cur_debugging &= ~DBG_PRIVATE;
-			loglog(RC_LOG_SERIOUS, "FIPS mode: debug-private disabled as such logging is not allowed");
+			log_message(RC_LOG_SERIOUS, logger, "FIPS mode: debug-private disabled as such logging is not allowed");
 		}
 		/*
 		 * clear out --debug-crypt if set
@@ -1580,7 +1580,7 @@ int main(int argc, char **argv)
 		 */
 		if (cur_debugging & DBG_CRYPT) {
 			cur_debugging &= ~DBG_CRYPT;
-			loglog(RC_LOG_SERIOUS, "FIPS mode: debug-crypt disabled as such logging is not allowed");
+			log_message(RC_LOG_SERIOUS, logger, "FIPS mode: debug-crypt disabled as such logging is not allowed");
 		}
 	}
 
@@ -1593,22 +1593,22 @@ int main(int argc, char **argv)
 	 */
 
 	if (impair.force_fips) {
-		libreswan_log("IMPAIR: forcing FIPS checks to true to emulate FIPS mode");
+		log_message(RC_LOG, logger, "IMPAIR: forcing FIPS checks to true to emulate FIPS mode");
 		lsw_set_fips_mode(LSW_FIPS_ON);
 	}
 
 	bool nss_fips_mode = PK11_IsFIPS();
 	if (libreswan_fipsmode()) {
-		libreswan_log("FIPS mode enabled for pluto daemon");
+		log_message(RC_LOG, logger, "FIPS mode enabled for pluto daemon");
 		if (nss_fips_mode) {
-			libreswan_log("NSS library is running in FIPS mode");
+			log_message(RC_LOG, logger, "NSS library is running in FIPS mode");
 		} else {
 			fatal(PLUTO_EXIT_FIPS_FAIL, logger, "pluto in FIPS mode but NSS library is not");
 		}
 	} else {
-		libreswan_log("FIPS mode disabled for pluto daemon");
+		log_message(RC_LOG, logger, "FIPS mode disabled for pluto daemon");
 		if (nss_fips_mode) {
-			loglog(RC_LOG_SERIOUS, "Warning: NSS library is running in FIPS mode");
+			log_message(RC_LOG_SERIOUS, logger, "Warning: NSS library is running in FIPS mode");
 		}
 	}
 
@@ -1619,7 +1619,7 @@ int main(int argc, char **argv)
 			(ocsp_method == OCSP_METHOD_POST))) {
 			fatal(PLUTO_EXIT_NSS_FAIL, logger, "Initializing NSS OCSP failed");
 		} else {
-			libreswan_log("NSS OCSP started");
+			log_message(RC_LOG, logger, "NSS OCSP started");
 		}
 	}
 
@@ -1665,36 +1665,36 @@ int main(int argc, char **argv)
 	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN, CAP_NET_RAW,
 			CAP_DAC_READ_SEARCH, -1);
 	capng_apply(CAPNG_SELECT_BOTH);
-	libreswan_log("libcap-ng support [enabled]");
+	log_message(RC_LOG, logger, "libcap-ng support [enabled]");
 #else
-	libreswan_log("libcap-ng support [disabled]");
+	log_message(RC_LOG, logger, "libcap-ng support [disabled]");
 #endif
 
 #ifdef USE_LINUX_AUDIT
 	linux_audit_init(log_to_audit);
 #else
-	libreswan_log("Linux audit support [disabled]");
+	log_message(RC_LOG, logger, "Linux audit support [disabled]");
 #endif
 
 	{
 		const char *vc = ipsec_version_code();
-		libreswan_log("Starting Pluto (Libreswan Version %s%s) pid:%u",
+		log_message(RC_LOG, logger, "Starting Pluto (Libreswan Version %s%s) pid:%u",
 			vc, compile_time_interop_options, getpid());
 	}
 
-	libreswan_log("core dump dir: %s", coredir);
+	log_message(RC_LOG, logger, "core dump dir: %s", coredir);
 	if (oco->secretsfile && *oco->secretsfile)
-		libreswan_log("secrets file: %s", oco->secretsfile);
+		log_message(RC_LOG, logger, "secrets file: %s", oco->secretsfile);
 
-	libreswan_log(leak_detective ?
+	log_message(RC_LOG, logger, leak_detective ?
 		"leak-detective enabled" : "leak-detective disabled");
 
-	libreswan_log("NSS crypto [enabled]");
+	log_message(RC_LOG, logger, "NSS crypto [enabled]");
 
 #ifdef AUTH_HAVE_PAM
-	libreswan_log("XAUTH PAM support [enabled]");
+	log_message(RC_LOG, logger, "XAUTH PAM support [enabled]");
 #else
-	libreswan_log("XAUTH PAM support [disabled]");
+	log_message(RC_LOG, logger, "XAUTH PAM support [disabled]");
 #endif
 
 	/*
