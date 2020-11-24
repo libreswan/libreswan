@@ -125,22 +125,16 @@ struct sockaddr_un ctl_addr = {
  * Pluto process returns.
  */
 
-bool init_ctl_socket(struct logger *logger)
+diag_t init_ctl_socket(struct logger *logger UNUSED/*maybe*/)
 {
 	delete_ctl_socket();    /* preventative medicine */
 	ctl_fd = safe_socket(AF_UNIX, SOCK_STREAM, 0);
 	if (ctl_fd == -1) {
-		log_message(ERROR_STREAM, logger,
-			    "FATAL ERROR: could not create control socket "PRI_ERRNO,
-			    pri_errno(errno));
-		return false;
+		return diag("could not create control socket "PRI_ERRNO, pri_errno(errno));
 	}
 
 	if (fcntl(ctl_fd, F_SETFD, FD_CLOEXEC) == -1) {
-		log_message(ERROR_STREAM, logger,
-			    "FATAL ERROR: could not fcntl FD+CLOEXEC control socket "PRI_ERRNO,
-			    pri_errno(errno));
-		return false;
+		return diag("could not fcntl FD+CLOEXEC control socket "PRI_ERRNO, pri_errno(errno));
 	}
 
 	/* to keep control socket secure, use umask */
@@ -153,10 +147,7 @@ bool init_ctl_socket(struct logger *logger)
 	if (bind(ctl_fd, (struct sockaddr *)&ctl_addr,
 		 offsetof(struct sockaddr_un, sun_path) +
 		 strlen(ctl_addr.sun_path)) < 0) {
-		log_message(ERROR_STREAM, logger,
-			    "FATAL ERROR: could not bind control socket "PRI_ERRNO,
-			    pri_errno(errno));
-		return false;
+		return diag("could not bind control socket "PRI_ERRNO, pri_errno(errno));
 	}
 	umask(ou);
 
@@ -179,13 +170,10 @@ bool init_ctl_socket(struct logger *logger)
 	 * Rumour has it that this is the max on BSD systems.
 	 */
 	if (listen(ctl_fd, 5) < 0) {
-		log_message(ERROR_STREAM, logger,
-			    "FATAL ERROR: could not listen on control socket "PRI_ERRNO,
-			    pri_errno(errno));
-		return false;
+		return diag("could not listen on control socket "PRI_ERRNO, pri_errno(errno));
 	}
 
-	return true;
+	return NULL;
 }
 
 void delete_ctl_socket(void)

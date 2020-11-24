@@ -1489,9 +1489,9 @@ int main(int argc, char **argv)
 	 * place to do this is before the daemon fork.
 	 */
 	if (!selftest_only) {
-		if (!init_ctl_socket(logger)) {
-			/* already logged */
-			exit_pluto(PLUTO_EXIT_SOCKET_FAIL);
+		diag_t d = init_ctl_socket(logger);
+		if (d != NULL) {
+			fatal_diag(PLUTO_EXIT_SOCKET_FAIL, logger, &d, "%s", "");
 		}
 	}
 

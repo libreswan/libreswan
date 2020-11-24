@@ -28,6 +28,7 @@
 #include "err.h"
 #include "ip_address.h"
 #include "ip_endpoint.h"
+#include "diag.h"
 
 struct state;
 struct msg_digest;
@@ -43,7 +44,7 @@ extern struct sockaddr_un ctl_addr;     /* address of control (whack) socket */
 extern int info_fd;                     /* file descriptor of control (info) socket */
 extern struct sockaddr_un info_addr;    /* address of control (info) socket */
 
-bool init_ctl_socket(struct logger *logger);
+diag_t init_ctl_socket(struct logger *logger);
 extern void delete_ctl_socket(void);
 
 extern stf_status create_tcp_interface(struct state *st); /* TCP: terrible name? */
