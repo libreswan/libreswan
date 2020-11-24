@@ -297,20 +297,6 @@ extern void loglog(enum rc_type, const char *fmt, ...) PRINTF_LIKE(2); /* use lo
 
 void jambuf_to_default_streams(struct jambuf *buf, enum rc_type rc);
 
-#define LOG_ERRNO(ERRNO, MESSAGE, ...)					\
-	{								\
-		int e_ = ERRNO; /* save value across va args */		\
-		/* XXX: notice how ERROR comes before <prefix> */	\
-		/* ERROR: <prefix>: <message>. Errno N: <errmess> */	\
-		JAMBUF(buf) {						\
-			jam(buf, "ERROR: ");				\
-			jam(buf, MESSAGE, ##__VA_ARGS__);		\
-			jam_string(buf, ".");				\
-			jam(buf, " "PRI_ERRNO, pri_errno(e_));		\
-			jambuf_to_error_stream(buf);			\
-		}							\
-	}
-
 #define LSWLOG_DEBUG(BUF)					\
 	JAMBUF(BUF)						\
 		/* no-prefix */					\

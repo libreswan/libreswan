@@ -260,11 +260,9 @@ void jambuf_to_debug_stream(struct jambuf *buf);
  * Because __VA_ARGS__ may contain function calls that modify ERRNO,
  * errno's value is first saved.
  *
- * While these common-case macros could be implemented directly using
- * LSWLOG_ERRNO_() et.al. they are not, instead they are implemented
- * as wrapper functions.  This is so that a crash will include the
- * below functions _including_ the with MESSAGE parameter - makes
- * debugging much easier.
+ * While these common-case macros are implemented as wrapper functions
+ * so that backtrace will include the below function call and that
+ * _includes_ the MESSAGE parameter - makes debugging much easier.
  */
 
 void libreswan_exit(enum pluto_exit_code rc) NEVER_RETURNS;
