@@ -1609,14 +1609,15 @@ int main(int argc, char **argv)
 	}
 
 	if (ocsp_enable) {
-		if (!init_nss_ocsp(ocsp_uri, ocsp_trust_name,
-			ocsp_timeout, ocsp_strict, ocsp_cache_size,
-			ocsp_cache_min_age, ocsp_cache_min_age,
-			(ocsp_method == OCSP_METHOD_POST))) {
-			fatal(PLUTO_EXIT_NSS_FAIL, logger, "Initializing NSS OCSP failed");
-		} else {
-			log_message(RC_LOG, logger, "NSS OCSP started");
+		/* may not return */
+		diag_t d = init_nss_ocsp(ocsp_uri, ocsp_trust_name,
+					 ocsp_timeout, ocsp_strict, ocsp_cache_size,
+					 ocsp_cache_min_age, ocsp_cache_min_age,
+					 (ocsp_method == OCSP_METHOD_POST), logger);
+		if (d != NULL) {
+			fatal_diag(PLUTO_EXIT_NSS_FAIL, logger, &d, "initializing NSS OCSP failed: ");
 		}
+		log_message(RC_LOG, logger, "NSS OCSP started");
 	}
 
 #ifdef FIPS_CHECK

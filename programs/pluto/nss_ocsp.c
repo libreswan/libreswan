@@ -22,13 +22,15 @@
 #include <secerr.h>
 #include <ocsp.h>
 
+#include "lswnss.h"
 #include "defs.h"		/* for so_serial_t */
 #include "log.h"
 
-/* note: returning FALSE here means pluto die! */
-bool init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
-		      int timeout, bool strict, int cache_size,
-			int cache_min, int cache_max, bool ocsp_post)
+/* note: returning a diag is fatal! */
+diag_t init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
+		     int timeout, bool strict, int cache_size,
+		     int cache_min, int cache_max, bool ocsp_post,
+		     struct logger *logger)
 {
 	SECStatus rv;
 
@@ -43,9 +45,7 @@ bool init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 
 	rv = CERT_EnableOCSPChecking(handle);
 	if (rv != SECSuccess) {
-		loglog(RC_LOG_SERIOUS, "NSS error enabling OCSP checking: %s",
-				       nss_err_str(PORT_GetError()));
-		return FALSE;
+		return diag_nss_error("error enabling OCSP checking");
 	}
 	dbg("NSS OCSP checking enabled");
 
@@ -64,22 +64,24 @@ bool init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 			rv = CERT_EnableOCSPDefaultResponder(handle);
 			if (rv != SECSuccess) {
 				int err = PORT_GetError();
-
 				if (err == SEC_ERROR_OCSP_RESPONDER_CERT_INVALID) {
-					loglog(RC_LOG_SERIOUS, "responder certificate %s is invalid. please verify its keyUsage extensions for OCSP",
-								trust_cert_name);
+					log_message(RC_LOG_SERIOUS, logger,
+						    "responder certificate %s is invalid. please verify its keyUsage extensions for OCSP",
+						    trust_cert_name);
 				} else {
-					loglog(RC_LOG_SERIOUS, "NSS error enabling OCSP default responder: %s", nss_err_str(err));
+					log_nss_error(RC_LOG_SERIOUS, logger,
+						      "error enabling OCSP default responder");
 				}
 			}
 		} else {
 			int err = PORT_GetError();
-
 			if (err == SEC_ERROR_UNKNOWN_CERT) {
-				libreswan_log("OCSP responder cert \"%s\" not found in NSS",
-						 trust_cert_name);
+				log_message(RC_LOG, logger,
+					    "OCSP responder cert \"%s\" not found in NSS",
+					    trust_cert_name);
 			} else {
-				libreswan_log("NSS error setting default responder: %s", nss_err_str(err));
+				/* uses global value */
+				log_nss_error(RC_LOG, logger, "error setting default responder");
 			}
 		}
 	}
@@ -88,49 +90,47 @@ bool init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 		dbg("OCSP timeout of %d seconds", timeout);
 		if (CERT_SetOCSPTimeout(timeout) != SECSuccess) {
 			/* don't shoot pluto over this */
-			loglog(RC_LOG_SERIOUS, "NSS error setting OCSP timeout: %s",
-						nss_err_str(PORT_GetError()));
+			log_nss_error(RC_LOG_SERIOUS, logger, "error setting OCSP timeout");
 		}
 	}
 
-	if (strict)
+	if (strict) {
 		rv = CERT_SetOCSPFailureMode(ocspMode_FailureIsVerificationFailure);
-	else
+	} else {
 		rv = CERT_SetOCSPFailureMode(ocspMode_FailureIsNotAVerificationFailure);
+	}
 
 	if (rv != SECSuccess) {
-		loglog(RC_LOG_SERIOUS, "NSS error setting OCSP failure mode: %s",
-					nss_err_str(PORT_GetError()));
-		return FALSE;
+		return diag_nss_error("error setting OCSP failure mode");
 	}
 
 	if (ocsp_post) {
 		rv = CERT_ForcePostMethodForOCSP(TRUE);
 		dbg("OCSP will use POST method");
-	}
-	else
+	} else {
 		rv = CERT_ForcePostMethodForOCSP(FALSE);
+	}
 
 	if (rv != SECSuccess) {
 		/* don't shoot pluto over this */
-		loglog(RC_LOG_SERIOUS, "NSS error enabling OCSP POST method: %s",
-				       nss_err_str(PORT_GetError()));
+		log_nss_error(RC_LOG_SERIOUS, logger, "error enabling OCSP POST method");
 	}
 
 	/*
 	 * NSS uses 0 for unlimited and -1 for disabled. We use 0 for disabled
 	 * and just a large number for a large cache
 	 */
-	if (cache_max == 0)
+	if (cache_max == 0) {
 		cache_max = -1;
+	}
 
 	rv = CERT_OCSPCacheSettings(cache_size, cache_min, cache_max);
 	if (rv != SECSuccess) {
 		/* don't shoot pluto over this */
-		loglog(RC_LOG_SERIOUS, "NSS error setting OCSP cache parameters (size=%d, min=%d, max=%d): %s",
-			 cache_size, cache_min, cache_max,
-			 nss_err_str(PORT_GetError()));
+		log_nss_error(RC_LOG_SERIOUS, logger,
+			      "error setting OCSP cache parameters (size=%d, min=%d, max=%d)",
+			      cache_size, cache_min, cache_max);
 	}
 
-	return TRUE;
+	return NULL;
 }
