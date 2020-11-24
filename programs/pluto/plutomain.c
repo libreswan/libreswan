@@ -1792,10 +1792,13 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef USE_DNSSEC
-	if (!unbound_event_init(get_pluto_event_base(), do_dnssec,
-				pluto_dnssec_rootfile, pluto_dnssec_trusted,
-				logger)) {
-			exit_pluto(PLUTO_EXIT_UNBOUND_FAIL);
+	{
+		diag_t d = unbound_event_init(get_pluto_event_base(), do_dnssec,
+					      pluto_dnssec_rootfile, pluto_dnssec_trusted,
+					      logger/*for-warnings*/);
+		if (d != NULL) {
+			fatal_diag(PLUTO_EXIT_UNBOUND_FAIL, logger, &d, "%s", "");
+		}
 	}
 #endif
 
