@@ -741,9 +741,10 @@ static void handle_known_vendorid_v2(struct msg_digest *md UNUSED,
  * @return void
  */
 static void handle_known_vendorid_v1(struct msg_digest *md,
-				  const char *vidstr,
-				  size_t len,
-				  struct vid_struct *vid)
+				     const char *vidstr,
+				     size_t len,
+				     struct vid_struct *vid,
+				     struct logger *logger)
 {
 	bool vid_useful = TRUE; /* tentatively TRUE */
 
@@ -803,8 +804,8 @@ static void handle_known_vendorid_v1(struct msg_digest *md,
 		break;
 
 	case VID_SSH_SENTINEL_1_4_1:
-		loglog(RC_LOG_SERIOUS,
-		       "SSH Sentinel 1.4.1 found, setting XAUTH_ACK quirk");
+		log_message(RC_LOG_SERIOUS, logger,
+			    "SSH Sentinel 1.4.1 found, setting XAUTH_ACK quirk");
 		md->quirks.xauth_ack_msgid = TRUE;
 		break;
 
@@ -833,12 +834,13 @@ static void handle_known_vendorid(struct msg_digest *md,
 				  const char *vidstr,
 				  size_t len,
 				  struct vid_struct *vid,
-				  bool ikev2)
+				  bool ikev2,
+				  struct logger *logger)
 {
 	if (ikev2)
 		handle_known_vendorid_v2(md, vidstr, len, vid);
 	else
-		handle_known_vendorid_v1(md, vidstr, len, vid);
+		handle_known_vendorid_v1(md, vidstr, len, vid, logger);
 }
 
 /*
@@ -855,7 +857,7 @@ static void handle_known_vendorid(struct msg_digest *md,
  * @return void
  */
 void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
-		     bool ikev2)
+		     bool ikev2, struct logger *logger)
 {
 	struct vid_struct *pvid;
 
@@ -876,14 +878,16 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 			if (pvid->vid_len == len) {
 				if (memeq(pvid->vid, vid, len)) {
 					handle_known_vendorid(md, vid,
-							      len, pvid, ikev2);
+							      len, pvid, ikev2,
+							      logger);
 					return;
 				}
 			} else if (pvid->vid_len < len &&
 				   (pvid->flags & VID_SUBSTRING)) {
 				if (memeq(pvid->vid, vid, pvid->vid_len)) {
 					handle_known_vendorid(md, vid, len,
-							      pvid, ikev2);
+							      pvid, ikev2,
+							      logger);
 					return;
 				}
 			}
@@ -901,9 +905,9 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 		log_vid[2 * i + 1] = hexdig[vid[i] & 0xF];
 	}
 	log_vid[2 * i] = '\0';
-	loglog(RC_LOG_SERIOUS,
-	       "ignoring unknown Vendor ID payload [%s%s]",
-	       log_vid, (len > MAX_LOG_VID_LEN) ? "..." : "");
+	log_message(RC_LOG_SERIOUS, logger,
+		    "ignoring unknown Vendor ID payload [%s%s]",
+		    log_vid, (len > MAX_LOG_VID_LEN) ? "..." : "");
 }
 
 /**

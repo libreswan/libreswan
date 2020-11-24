@@ -886,7 +886,7 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 
 	/* Vendor ID processing */
 	for (struct payload_digest *v = md->chain[ISAKMP_NEXT_v2V]; v != NULL; v = v->next) {
-		handle_vendorid(md, (char *)v->pbs.cur, pbs_left(&v->pbs), TRUE);
+		handle_vendorid(md, (char *)v->pbs.cur, pbs_left(&v->pbs), TRUE, ike->sa.st_logger);
 	}
 
 	/* Get the proposals ready.  */
