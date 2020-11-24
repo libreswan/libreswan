@@ -62,13 +62,12 @@ static const struct list_info iface_dev_info = {
 
 static struct list_head interface_dev = INIT_LIST_HEAD(&interface_dev, &iface_dev_info);
 
-static void add_iface_dev(const struct raw_iface *ifp)
+static void add_iface_dev(const struct raw_iface *ifp, struct logger *logger)
 {
 	where_t where = HERE;
 	struct iface_dev *ifd = refcnt_alloc(struct iface_dev, where);
-	ifd->id_rname = clone_str(ifp->name,
-				 "real device name");
-	ifd->id_nic_offload = kernel_ops->detect_offload(ifp);
+	ifd->id_rname = clone_str(ifp->name, "real device name");
+	ifd->id_nic_offload = kernel_ops->detect_offload(ifp, logger);
 	ifd->id_address = ifp->addr;
 	ifd->ifd_change = IFD_ADD;
 	ifd->ifd_entry = list_entry(&iface_dev_info, ifd);
@@ -96,7 +95,7 @@ static void mark_ifaces_dead(void)
 	}
 }
 
-void add_or_keep_iface_dev(struct raw_iface *ifp)
+void add_or_keep_iface_dev(struct raw_iface *ifp, struct logger *logger)
 {
 	/* find the iface */
 	struct iface_dev *ifd;
@@ -108,7 +107,7 @@ void add_or_keep_iface_dev(struct raw_iface *ifp)
 			return;
 		}
 	}
-	add_iface_dev(ifp);
+	add_iface_dev(ifp, logger);
 }
 
 static void free_iface_dev(struct iface_dev **ifd,
@@ -473,8 +472,8 @@ void find_ifaces(bool rm_dead, struct logger *logger)
 	 */
 	mark_ifaces_dead();
 	if (kernel_ops->process_raw_ifaces != NULL) {
-		kernel_ops->process_raw_ifaces(find_raw_ifaces4(logger));
-		kernel_ops->process_raw_ifaces(find_raw_ifaces6(logger));
+		kernel_ops->process_raw_ifaces(find_raw_ifaces4(logger), logger);
+		kernel_ops->process_raw_ifaces(find_raw_ifaces6(logger), logger);
 	}
 	add_new_ifaces(logger);
 

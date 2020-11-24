@@ -255,13 +255,13 @@ struct kernel_ops {
 			       ipsec_spi_t max,
 			       const char *text_said,
 			       struct logger *logger);
-	void (*process_raw_ifaces)(struct raw_iface *rifaces);
+	void (*process_raw_ifaces)(struct raw_iface *rifaces, struct logger *logger);
 	bool (*exceptsocket)(int socketfd, int family);
 	err_t (*migrate_sa_check)(void);
 	bool (*migrate_sa)(struct state *st);
 	void (*v6holes)(struct logger *logger);
 	bool (*poke_ipsec_policy_hole)(const struct iface_dev *ifd, int fd);
-	bool (*detect_offload)(const struct raw_iface *ifp);
+	bool (*detect_offload)(const struct raw_iface *ifp, struct logger *logger);
 };
 
 extern int create_socket(const struct raw_iface *ifp, const char *v_name, int port, int proto);

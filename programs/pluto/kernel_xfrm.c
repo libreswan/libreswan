@@ -1075,7 +1075,7 @@ static struct {
 	enum nic_offload_state state;
 } netlink_esp_hw_offload;
 
-static bool siocethtool(const char *ifname, void *data, const char *action)
+static bool siocethtool(const char *ifname, void *data, const char *action, struct logger *logger)
 {
 	struct ifreq ifr = { .ifr_data = data };
 	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
@@ -1085,8 +1085,8 @@ static bool siocethtool(const char *ifname, void *data, const char *action)
 			dbg("cannot offload to %s because SIOCETHTOOL %s failed: %s",
 				ifname, action, strerror(errno));
 		} else {
-			LOG_ERRNO(errno, "can't offload to %s because SIOCETHTOOL %s failed",
-				ifname, action);
+			log_errno(logger, errno, "can't offload to %s because SIOCETHTOOL %s failed",
+				  ifname, action);
 		}
 		return false;
 	} else {
@@ -1094,7 +1094,8 @@ static bool siocethtool(const char *ifname, void *data, const char *action)
 	}
 }
 
-static void netlink_find_offload_feature(const char *ifname)
+static void netlink_find_offload_feature(const char *ifname,
+					 struct logger *logger)
 {
 	netlink_esp_hw_offload.state = NIC_OFFLOAD_UNSUPPORTED;
 
@@ -1106,10 +1107,10 @@ static void netlink_find_offload_feature(const char *ifname)
 	sset_info->cmd = ETHTOOL_GSSET_INFO;
 	sset_info->sset_mask = 1ULL << ETH_SS_FEATURES;
 
-	if (!siocethtool(ifname, sset_info, "ETHTOOL_GSSET_INFO") ||
+	if (!siocethtool(ifname, sset_info, "ETHTOOL_GSSET_INFO", logger) ||
 	    sset_info->sset_mask != 1ULL << ETH_SS_FEATURES) {
 		pfree(sset_info);
-		libreswan_log("Kernel does not support NIC esp-hw-offload (ETHTOOL_GSSET_INFO failed)");
+		log_message(RC_LOG, logger, "Kernel does not support NIC esp-hw-offload (ETHTOOL_GSSET_INFO failed)");
 		return;
 	}
 
@@ -1124,7 +1125,7 @@ static void netlink_find_offload_feature(const char *ifname)
 	cmd->cmd = ETHTOOL_GSTRINGS;
 	cmd->string_set = ETH_SS_FEATURES;
 
-	if (siocethtool(ifname, cmd, "ETHTOOL_GSTRINGS")) {
+	if (siocethtool(ifname, cmd, "ETHTOOL_GSTRINGS", logger)) {
 		/* Look for the ESP_HW feature bit */
 		char *str = (char *)cmd->data;
 		for (uint32_t i = 0; i < cmd->len; i++) {
@@ -1141,13 +1142,13 @@ static void netlink_find_offload_feature(const char *ifname)
 	pfree(cmd);
 
 	if (netlink_esp_hw_offload.state == NIC_OFFLOAD_SUPPORTED) {
-		libreswan_log("Kernel supports NIC esp-hw-offload");
+		log_message(RC_LOG, logger, "Kernel supports NIC esp-hw-offload");
 	} else {
-		libreswan_log("Kernel does not support NIC esp-hw-offload");
+		log_message(RC_LOG, logger, "Kernel does not support NIC esp-hw-offload");
 	}
 }
 
-static bool netlink_detect_offload(const struct raw_iface *ifp)
+static bool netlink_detect_offload(const struct raw_iface *ifp, struct logger *logger)
 {
 	const char *ifname = ifp->name;
 	/*
@@ -1155,7 +1156,7 @@ static bool netlink_detect_offload(const struct raw_iface *ifp)
 	 * capability, so we do it here on first invocation.
 	 */
 	if (netlink_esp_hw_offload.state == NIC_OFFLOAD_UNKNOWN)
-		netlink_find_offload_feature(ifname);
+		netlink_find_offload_feature(ifname, logger);
 
 	if (netlink_esp_hw_offload.state == NIC_OFFLOAD_UNSUPPORTED) {
 		return false;
@@ -1172,7 +1173,7 @@ static bool netlink_detect_offload(const struct raw_iface *ifp)
 
 	bool ret = false;
 
-	if (siocethtool(ifname, cmd, "ETHTOOL_GFEATURES")) {
+	if (siocethtool(ifname, cmd, "ETHTOOL_GFEATURES", logger)) {
 		int block = netlink_esp_hw_offload.bit / 32;
 		uint32_t feature_bit = 1U << (netlink_esp_hw_offload.bit % 32);
 		if (cmd->features[block].active & feature_bit)
@@ -2321,7 +2322,7 @@ static bool netlink_shunt_eroute(const struct connection *c,
 				  logger);
 }
 
-static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
+static void netlink_process_raw_ifaces(struct raw_iface *rifaces, struct logger *logger)
 {
 	struct raw_iface *ifp;
 	ip_address lip;	/* --listen filter option */
@@ -2369,11 +2370,11 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 					if (v != NULL) {
 						ipstr_buf b;
 
-						loglog(RC_LOG_SERIOUS,
-							"ipsec interfaces %s and %s share same address %s",
-							v->name, vfp->name,
-							ipstr(&ifp->addr, &b));
-						bad = TRUE;
+						log_message(RC_LOG_SERIOUS, logger,
+							    "ipsec interfaces %s and %s share same address %s",
+							    v->name, vfp->name,
+							    ipstr(&ifp->addr, &b));
+						bad = true;
 					} else {
 						/* current winner */
 						v = vfp;
@@ -2395,10 +2396,10 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 					if (after) {
 						ipstr_buf b;
 
-						loglog(RC_LOG_SERIOUS,
-							"IP interfaces %s and %s share address %s!",
-							ifp->name, vfp->name,
-							ipstr(&ifp->addr, &b));
+						log_message(RC_LOG_SERIOUS, logger,
+							    "IP interfaces %s and %s share address %s!",
+							    ifp->name, vfp->name,
+							    ipstr(&ifp->addr, &b));
 					}
 					bad = TRUE;
 				}
@@ -2434,12 +2435,13 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 		if (pluto_listen != NULL && !sameaddr(&lip, &ifp->addr)) {
 			ipstr_buf b;
 
-			libreswan_log("skipping interface %s with %s",
-				ifp->name, ipstr(&ifp->addr, &b));
+			log_message(RC_LOG, logger,
+				    "skipping interface %s with %s",
+				    ifp->name, ipstr(&ifp->addr, &b));
 			continue;
 		}
 
-		add_or_keep_iface_dev(ifp);
+		add_or_keep_iface_dev(ifp, logger);
 	}
 
 	/* delete the raw interfaces list */
