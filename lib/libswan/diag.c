@@ -40,6 +40,12 @@ diag_t diag(const char *fmt, ...)
 	return d;
 }
 
+diag_t diag_jambuf(struct jambuf *buf)
+{
+	shunk_t msg = jambuf_as_shunk(buf); /* no '\0', but there is one */
+	return (diag_t) clone_str((char*)msg.ptr, "diag jambuf");
+}
+
 diag_t clone_diag(diag_t diag)
 {
 	/* clone_str() clones NULL as NULL */

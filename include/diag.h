@@ -29,6 +29,7 @@ typedef struct diag *diag_t;
 
 diag_t diag(const char *message, ...) PRINTF_LIKE(1) MUST_USE_RESULT;
 diag_t diag_va_list(const char *fmt, va_list ap) MUST_USE_RESULT;
+diag_t diag_jambuf(struct jambuf *buf);
 
 void log_diag(lset_t rc_flags, struct logger *logger, diag_t *diag,
 	      const char *fmt, ...) PRINTF_LIKE(4);
