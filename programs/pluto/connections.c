@@ -1016,8 +1016,9 @@ static int extract_end(struct end *dst,
 }
 
 static bool check_connection_end(const struct whack_end *this,
-				const struct whack_end *that,
-				const struct whack_message *wm)
+				 const struct whack_end *that,
+				 const struct whack_message *wm,
+				 struct logger *logger)
 {
 	if ((this->host_type == KH_IPADDR || this->host_type == KH_IFACE) &&
 		(wm->addr_family != addrtypeof(&this->host_addr) ||
@@ -1039,11 +1040,9 @@ static bool check_connection_end(const struct whack_end *this,
 	/* XXX: still nasty; just less low-level */
 	if (range_is_specified(&this->pool_range)) {
 		struct ip_pool *pool;
-		err_t er = find_addresspool(&this->pool_range, &pool);
-
-		if (er != NULL) {
-			loglog(RC_CLASH, "leftaddresspool clash");
-			return FALSE;
+		if (!find_addresspool(&this->pool_range, &pool, logger)) {
+			/* already logged */
+			return false;
 		}
 	}
 
@@ -1479,8 +1478,8 @@ static bool extract_connection(const struct whack_message *wm,
 		return false;
 	}
 
-	if (!check_connection_end(&wm->right, &wm->left, wm) ||
-	    !check_connection_end(&wm->left, &wm->right, wm)) {
+	if (!check_connection_end(&wm->right, &wm->left, wm, logger) ||
+	    !check_connection_end(&wm->left, &wm->right, wm, logger)) {
 		/* XXX: shouldn't check_connection_end() log the error? */
 		log_message(RC_FATAL, logger,
 			    "failed to add connection: attempt to load incomplete connection");
@@ -1836,7 +1835,7 @@ static bool extract_connection(const struct whack_message *wm,
 		range_type(&wm->left.pool_range) == &ipv6_info)	&&
 		range_is_specified(&wm->left.pool_range)) {
 		/* there is address pool range add to the global list */
-		c->pool = install_addresspool(&wm->left.pool_range);
+		c->pool = install_addresspool(&wm->left.pool_range, logger);
 		c->spd.that.modecfg_server = TRUE;
 		c->spd.this.modecfg_client = TRUE;
 	}
@@ -1844,7 +1843,7 @@ static bool extract_connection(const struct whack_message *wm,
 		range_type(&wm->right.pool_range) == &ipv6_info) &&
 		range_is_specified(&wm->right.pool_range)) {
 		/* there is address pool range add to the global list */
-		c->pool = install_addresspool(&wm->right.pool_range);
+		c->pool = install_addresspool(&wm->right.pool_range, logger);
 		c->spd.that.modecfg_client = TRUE;
 		c->spd.this.modecfg_server = TRUE;
 	}
