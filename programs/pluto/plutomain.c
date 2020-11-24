@@ -1743,7 +1743,7 @@ int main(int argc, char **argv)
 	start_crl_fetch_helper(logger);
 #endif
 #ifdef HAVE_LABELED_IPSEC
-	init_selinux();
+	init_selinux(logger);
 #endif
 #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd_init(logger);

@@ -23,12 +23,14 @@
 #include <selinux/context.h>
 #endif
 
-void init_selinux(void);
+struct logger;
+
+void init_selinux(struct logger *logger);
 
 #ifdef HAVE_OLD_SELINUX
-int within_range(security_context_t sl, security_context_t range);
+int within_range(security_context_t sl, security_context_t range, struct logger *logger);
 #else
-int within_range(const char *sl, const char *range);
+int within_range(const char *sl, const char *range, struct logger *logger);
 #endif
 
 #endif /* _SECURITY_SELINUX_H */
