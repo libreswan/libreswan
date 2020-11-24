@@ -891,7 +891,7 @@ static bool add_xauth_addresspool(struct connection *c,
 			unreference_addresspool(c);
 		}
 
-		c->pool = install_addresspool(&pool_range);
+		c->pool = install_addresspool(&pool_range, logger);
 		if (c->pool != NULL) {
 			reference_addresspool(c);
 			ret = TRUE;
