@@ -51,7 +51,7 @@ bool unpack_KE(chunk_t *dest, const char *val_name,
 	       struct logger *logger)
 {
 	if (ke_pd == NULL) {
-		loglog(RC_LOG_SERIOUS, "KE missing");
+		log_message(RC_LOG_SERIOUS, logger, "KE missing");
 		return false;
 	}
 	struct pbs_in *pbs = &ke_pd->pbs;
@@ -112,10 +112,9 @@ diag_t unpack_peer_id(enum ike_id_type kind, struct id *peer, const struct pbs_i
 	case ID_USER_FQDN:
 #if 0
 		if (memchr(id_pbs->cur, '@', left) == NULL) {
-			loglog(RC_LOG_SERIOUS,
-				"peer's ID_USER_FQDN contains no @: %.*s",
-				(int) left,
-				id_pbs->cur);
+			log_message(RC_LOG_SERIOUS, logger,
+				    "peer's ID_USER_FQDN contains no @: %.*s",
+				    (int) left, id_pbs->cur);
 			/* return FALSE; */
 		}
 #endif
