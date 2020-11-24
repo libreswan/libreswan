@@ -351,8 +351,9 @@ static void init_netlink(struct logger *logger)
 static int netlink_errno;	/* side-channel result of send_netlink_msg */
 
 static bool send_netlink_msg(struct nlmsghdr *hdr,
-			unsigned expected_resp_type, struct nlm_resp *rbuf,
-			const char *description, const char *text_said)
+			     unsigned expected_resp_type, struct nlm_resp *rbuf,
+			     const char *description, const char *text_said,
+			     struct logger *logger)
 {
 	struct nlm_resp rsp;
 	size_t len;
@@ -368,16 +369,17 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 		r = write(nl_send_fd, hdr, len);
 	} while (r < 0 && errno == EINTR);
 	if (r < 0) {
-		LOG_ERRNO(errno, "netlink write() of %s message for %s %s failed",
+		log_errno(logger, errno,
+			  "netlink write() of %s message for %s %s failed",
 			  sparse_val_show(xfrm_type_names,
 					  hdr->nlmsg_type),
 			  description, text_said);
 		return FALSE;
 	} else if ((size_t)r != len) {
-		loglog(RC_LOG_SERIOUS,
-			"ERROR: netlink write() of %s message for %s %s truncated: %zd instead of %zu",
-			sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
-			description, text_said, r, len);
+		log_message(RC_LOG_SERIOUS, logger,
+			    "ERROR: netlink write() of %s message for %s %s truncated: %zd instead of %zu",
+			    sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
+			    description, text_said, r, len);
 		return FALSE;
 	}
 
@@ -390,16 +392,15 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 			if (errno == EINTR)
 				continue;
 			netlink_errno = errno;
-			LOG_ERRNO(errno,
+			log_errno(logger, errno,
 				  "netlink recvfrom() of response to our %s message for %s %s failed",
 				  sparse_val_show(xfrm_type_names,
 							hdr->nlmsg_type),
 				  description, text_said);
 			return FALSE;
 		} else if ((size_t) r < sizeof(rsp.n)) {
-			libreswan_log(
-				"netlink read truncated message: %zd bytes; ignore message",
-				r);
+			log_message(RC_LOG, logger,
+				    "netlink read truncated message: %zd bytes; ignore message", r);
 			continue;
 		} else if (addr.nl_pid != 0) {
 			/* not for us: ignore */
@@ -417,20 +418,20 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 	}
 
 	if (rsp.n.nlmsg_len > (size_t) r) {
-		loglog(RC_LOG_SERIOUS,
-			"netlink recvfrom() of response to our %s message for %s %s was truncated: %zd instead of %zu",
-			sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
-			description, text_said,
-			len, (size_t) rsp.n.nlmsg_len);
+		log_message(RC_LOG_SERIOUS, logger,
+			    "netlink recvfrom() of response to our %s message for %s %s was truncated: %zd instead of %zu",
+			    sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
+			    description, text_said,
+			    len, (size_t) rsp.n.nlmsg_len);
 		return FALSE;
 	}
 
 	if (rsp.n.nlmsg_type != expected_resp_type && rsp.n.nlmsg_type == NLMSG_ERROR) {
 		if (rsp.u.e.error != 0) {
-			loglog(RC_LOG_SERIOUS,
-				"ERROR: netlink response for %s %s included errno %d: %s",
-				description, text_said, -rsp.u.e.error,
-				strerror(-rsp.u.e.error));
+			log_message(RC_LOG_SERIOUS, logger,
+				    "ERROR: netlink response for %s %s included errno %d: %s",
+				    description, text_said, -rsp.u.e.error,
+				    strerror(-rsp.u.e.error));
 			return FALSE;
 		}
 		/*
@@ -447,11 +448,11 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 		return TRUE;
 	}
 	if (rsp.n.nlmsg_type != expected_resp_type) {
-		loglog(RC_LOG_SERIOUS,
-			"netlink recvfrom() of response to our %s message for %s %s was of wrong type (%s)",
-			sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
-			description, text_said,
-			sparse_val_show(xfrm_type_names, rsp.n.nlmsg_type));
+		log_message(RC_LOG_SERIOUS, logger,
+			    "netlink recvfrom() of response to our %s message for %s %s was of wrong type (%s)",
+			    sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
+			    description, text_said,
+			    sparse_val_show(xfrm_type_names, rsp.n.nlmsg_type));
 		return FALSE;
 	}
 	memcpy(rbuf, &rsp, r);
@@ -467,11 +468,12 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
  * @return boolean
  */
 static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
-			const char *text_said)
+			   const char *text_said, struct logger *logger)
 {
 	struct nlm_resp rsp;
 
-	if (!send_netlink_msg(hdr, NLMSG_ERROR, &rsp, "policy", text_said))
+	if (!send_netlink_msg(hdr, NLMSG_ERROR, &rsp,
+			      "policy", text_said, logger))
 		return FALSE;
 
 	/* kind of surprising: we get here by success which implies an error structure! */
@@ -481,10 +483,10 @@ static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
 	if (error == 0 || (error == ENOENT && enoent_ok))
 		return TRUE;
 
-	loglog(RC_LOG_SERIOUS,
-		"ERROR: netlink %s response for flow %s included errno %d: %s",
-		sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
-		text_said, error, strerror(error));
+	log_message(RC_LOG_SERIOUS, logger,
+		    "ERROR: netlink %s response for flow %s included errno %d: %s",
+		    sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
+		    text_said, error, strerror(error));
 	return FALSE;
 }
 
@@ -523,7 +525,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			       enum pluto_sadb_operations sadb_op,
 			       const char *text_said,
 			       const char *policy_label,
-			       struct logger *unused_logger UNUSED)
+			       struct logger *logger)
 {
 	struct {
 		struct nlmsghdr n;
@@ -793,7 +795,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	bool enoent_ok = sadb_op == ERO_DEL_INBOUND ||
 		(sadb_op == ERO_DELETE && ntohl(cur_spi) == SPI_HOLD);
 
-	bool ok = netlink_policy(&req.n, enoent_ok, text_said);
+	bool ok = netlink_policy(&req.n, enoent_ok, text_said, logger);
 
 	/* ??? deal with any forwarding policy */
 	switch (dir) {
@@ -809,7 +811,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		} else {
 			req.u.p.dir = XFRM_POLICY_FWD;
 		}
-		ok &= netlink_policy(&req.n, enoent_ok, text_said);
+		ok &= netlink_policy(&req.n, enoent_ok, text_said, logger);
 		break;
 	}
 	return ok;
@@ -971,7 +973,8 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 	return TRUE;
 }
 
-static bool migrate_xfrm_sa(const struct kernel_sa *sa)
+static bool migrate_xfrm_sa(const struct kernel_sa *sa,
+			    struct logger *logger)
 {
 	struct {
 		struct nlmsghdr n;
@@ -1028,8 +1031,8 @@ static bool migrate_xfrm_sa(const struct kernel_sa *sa)
 		req.n.nlmsg_len += attr->rta_len;
 	}
 
-	bool r = send_netlink_msg(&req.n, NLMSG_ERROR, &rsp, "mobike",
-			sa->text_said);
+	bool r = send_netlink_msg(&req.n, NLMSG_ERROR, &rsp,
+				  "mobike", sa->text_said, logger);
 	if (!r)
 		return FALSE;
 
@@ -1048,13 +1051,13 @@ static bool netlink_migrate_sa(struct state *st)
 
 	return
 		create_xfrm_migrate_sa(st, XFRM_POLICY_OUT, &sa, mig_said) &&
-		migrate_xfrm_sa(&sa) &&
+		migrate_xfrm_sa(&sa, st->st_logger) &&
 
 		create_xfrm_migrate_sa(st, XFRM_POLICY_IN, &sa, mig_said) &&
-		migrate_xfrm_sa(&sa) &&
+		migrate_xfrm_sa(&sa, st->st_logger) &&
 
 		create_xfrm_migrate_sa(st, XFRM_POLICY_FWD, &sa, mig_said) &&
-		migrate_xfrm_sa(&sa);
+		migrate_xfrm_sa(&sa, st->st_logger);
 }
 
 
@@ -1186,7 +1189,8 @@ static bool netlink_detect_offload(const struct raw_iface *ifp)
  * @param replace boolean - true if this replaces an existing SA
  * @return bool True if successful
  */
-static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
+static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
+			   struct logger *logger)
 {
 	struct {
 		struct nlmsghdr n;
@@ -1566,11 +1570,12 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 
-	ret = send_netlink_msg(&req.n, NLMSG_NOOP, NULL, "Add SA", sa->text_said);
+	ret = send_netlink_msg(&req.n, NLMSG_NOOP, NULL,
+			       "Add SA", sa->text_said, logger);
 	if (!ret && netlink_errno == ESRCH &&
 		req.n.nlmsg_type == XFRM_MSG_UPDSA) {
-		loglog(RC_LOG_SERIOUS,
-			"Warning: kernel expired our reserved IPsec SA SPI - negotiation took too long? Try increasing /proc/sys/net/core/xfrm_acq_expires");
+		log_message(RC_LOG_SERIOUS, logger,
+			    "Warning: kernel expired our reserved IPsec SA SPI - negotiation took too long? Try increasing /proc/sys/net/core/xfrm_acq_expires");
 	}
 	return ret;
 }
@@ -1581,7 +1586,8 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
  * @param sa Kernel SA to be deleted
  * @return bool True if successful
  */
-static bool netlink_del_sa(const struct kernel_sa *sa)
+static bool netlink_del_sa(const struct kernel_sa *sa,
+			   struct logger *logger)
 {
 	struct {
 		struct nlmsghdr n;
@@ -1603,7 +1609,8 @@ static bool netlink_del_sa(const struct kernel_sa *sa)
 
 	dbg("XFRM: deleting IPsec SA with reqid %d", sa->reqid);
 
-	return send_netlink_msg(&req.n, NLMSG_NOOP, NULL, "Del SA", sa->text_said);
+	return send_netlink_msg(&req.n, NLMSG_NOOP, NULL,
+				"Del SA", sa->text_said, logger);
 }
 
 /*
@@ -1906,7 +1913,8 @@ static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
 	req.n.nlmsg_type = XFRM_MSG_GETPOLICY;
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
-	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWPOLICY, &rsp, "Get policy", "?")) {
+	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWPOLICY, &rsp,
+			      "Get policy", "?", logger)) {
 		dbg("netlink_policy_expire: policy died on us: dir=%d, index=%d",
 		    req.id.dir, req.id.index);
 	} else if (rsp.n.nlmsg_len < NLMSG_LENGTH(sizeof(rsp.u.pol))) {
@@ -1999,13 +2007,14 @@ static void netlink_process_msg(int fd, struct logger *logger)
 }
 
 static ipsec_spi_t netlink_get_spi(const ip_address *src,
-				const ip_address *dst,
-				const struct ip_protocol *proto,
-				bool tunnel_mode,
-				reqid_t reqid,
-				ipsec_spi_t min,
-				ipsec_spi_t max,
-				const char *text_said)
+				   const ip_address *dst,
+				   const struct ip_protocol *proto,
+				   bool tunnel_mode,
+				   reqid_t reqid,
+				   ipsec_spi_t min,
+				   ipsec_spi_t max,
+				   const char *text_said,
+				   struct logger *logger)
 {
 	struct {
 		struct nlmsghdr n;
@@ -2029,8 +2038,8 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 	req.spi.min = min;
 	req.spi.max = max;
 
-	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWSA, &rsp, "Get SPI",
-				text_said)) {
+	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWSA, &rsp,
+			      "Get SPI", text_said, logger)) {
 		return 0;
 	}
 
@@ -2451,7 +2460,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
  * @return bool True if successful
  */
 static bool netlink_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
-		uint64_t *add_time)
+			   uint64_t *add_time, struct logger *logger)
 {
 	struct {
 		struct nlmsghdr n;
@@ -2472,7 +2481,8 @@ static bool netlink_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
-	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWSA, &rsp, "Get SA", sa->text_said))
+	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWSA, &rsp,
+			      "Get SA", sa->text_said, logger))
 		return FALSE;
 
 	*bytes = rsp.u.info.curlft.bytes;
@@ -2481,7 +2491,8 @@ static bool netlink_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 }
 
 /* add bypass policies/holes icmp */
-static bool netlink_bypass_policy(int family, int proto, int port)
+static bool netlink_bypass_policy(int family, int proto, int port,
+				  struct logger *logger)
 {
 	struct {
 		struct nlmsghdr n;
@@ -2524,23 +2535,23 @@ static bool netlink_bypass_policy(int family, int proto, int port)
 		req.u.p.sel.dport = htons(icmp_code);
 		req.u.p.sel.sport_mask = 0xffff;
 
-		if (!netlink_policy(&req.n, 1, text))
+		if (!netlink_policy(&req.n, 1, text, logger))
 			return FALSE;
 
 		req.u.p.dir = XFRM_POLICY_FWD;
 
-		if (!netlink_policy(&req.n, 1, text))
+		if (!netlink_policy(&req.n, 1, text, logger))
 			return FALSE;
 
 		req.u.p.dir  = XFRM_POLICY_OUT;
 
-		if (!netlink_policy(&req.n, 1, text))
+		if (!netlink_policy(&req.n, 1, text, logger))
 			return FALSE;
 	} else {
 		req.u.p.sel.dport = htons(port);
 		req.u.p.sel.dport_mask = 0xffff;
 
-		if (!netlink_policy(&req.n, 1, text))
+		if (!netlink_policy(&req.n, 1, text, logger))
 			return FALSE;
 
 		req.u.p.dir  = XFRM_POLICY_OUT;
@@ -2550,7 +2561,7 @@ static bool netlink_bypass_policy(int family, int proto, int port)
 		req.u.p.sel.dport = 0;
 		req.u.p.sel.dport_mask = 0;
 
-		if (!netlink_policy(&req.n, 1, text))
+		if (!netlink_policy(&req.n, 1, text, logger))
 			return FALSE;
 	}
 
@@ -2601,12 +2612,14 @@ static void netlink_v6holes(struct logger *logger)
 	}
 
 	if (!netlink_bypass_policy(AF_INET6, IPPROTO_ICMPV6,
-				   ICMP_NEIGHBOR_DISCOVERY)) {
+				   ICMP_NEIGHBOR_DISCOVERY,
+				   logger)) {
 		fatal(PLUTO_EXIT_KERNEL_FAIL, logger,
 		      "kernel: could not insert ICMP_NEIGHBOUR_DISCOVERY bypass policy");
 	}
 	if (!netlink_bypass_policy(AF_INET6, IPPROTO_ICMPV6,
-				   ICMP_NEIGHBOR_SOLICITATION)) {
+				   ICMP_NEIGHBOR_SOLICITATION,
+				   logger)) {
 		fatal(PLUTO_EXIT_KERNEL_FAIL, logger,
 		      "kernel: could not insert ICMP_NEIGHBOUR_SOLICITATION bypass policy");
 	}

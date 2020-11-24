@@ -3664,7 +3664,9 @@ bool emit_v2N_compression(struct state *cst,
 		/* calculate and keep our CPI */
 		if (cst->st_ipcomp.our_spi == 0) {
 			/* CPI is stored in network low order end of an ipsec_spi_t */
-			cst->st_ipcomp.our_spi = get_my_cpi(&c->spd, LIN(POLICY_TUNNEL, c->policy));
+			cst->st_ipcomp.our_spi = get_my_cpi(&c->spd,
+							    LIN(POLICY_TUNNEL, c->policy),
+							    cst->st_logger);
 			c_spi = (uint16_t)ntohl(cst->st_ipcomp.our_spi);
 			if (c_spi < IPCOMP_FIRST_NEGOTIATED) {
 				/* get_my_cpi() failed */

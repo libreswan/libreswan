@@ -104,7 +104,8 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 			if (res != STF_OK)
 				return res;
 		}
-		proto_info->our_spi = ikev2_child_sa_spi(&c->spd, c->policy);
+		proto_info->our_spi = ikev2_child_sa_spi(&c->spd, c->policy,
+							 child->sa.st_logger);
 		chunk_t local_spi = THING_AS_CHUNK(proto_info->our_spi);
 		if (!ikev2_emit_sa_proposal(outpbs,
 					    child->sa.st_accepted_esp_or_ah_proposal,

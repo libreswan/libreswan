@@ -235,12 +235,17 @@ struct kernel_ops {
 	void (*remove_orphaned_holds)(int transportproto,
 				      const ip_subnet *ours,
 				      const ip_subnet *peers);
-	bool (*add_sa)(const struct kernel_sa *sa, bool replace);
+	bool (*add_sa)(const struct kernel_sa *sa,
+		       bool replace,
+		       struct logger *logger);
 	bool (*grp_sa)(const struct kernel_sa *sa_outer,
 		       const struct kernel_sa *sa_inner);
-	bool (*del_sa)(const struct kernel_sa *sa);
-	bool (*get_sa)(const struct kernel_sa *sa, uint64_t *bytes,
-		       uint64_t *add_time);
+	bool (*del_sa)(const struct kernel_sa *sa,
+		       struct logger *logger);
+	bool (*get_sa)(const struct kernel_sa *sa,
+		       uint64_t *bytes,
+		       uint64_t *add_time,
+		       struct logger *logger);
 	ipsec_spi_t (*get_spi)(const ip_address *src,
 			       const ip_address *dst,
 			       const struct ip_protocol *proto,
@@ -248,7 +253,8 @@ struct kernel_ops {
 			       reqid_t reqid,
 			       ipsec_spi_t min,
 			       ipsec_spi_t max,
-			       const char *text_said);
+			       const char *text_said,
+			       struct logger *logger);
 	void (*process_raw_ifaces)(struct raw_iface *rifaces);
 	bool (*exceptsocket)(int socketfd, int family);
 	err_t (*migrate_sa_check)(void);
@@ -384,8 +390,10 @@ struct state;   /* forward declaration of tag */
 extern ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
 				 const struct ip_protocol *proto,
 				 const struct spd_route *sr,
-				 bool tunnel_mode);
-extern ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel_mode);
+				 bool tunnel_mode,
+				 struct logger *logger);
+extern ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel_mode,
+			      struct logger *logger);
 
 extern bool install_inbound_ipsec_sa(struct state *st);
 extern bool install_ipsec_sa(struct state *st, bool inbound_also);
@@ -402,8 +410,8 @@ extern bool migrate_ipsec_sa(struct state *st);
 extern bool del_spi(ipsec_spi_t spi,
 		    const struct ip_protocol *proto,
 		    const ip_address *src,
-		    const ip_address *dest);
-
+		    const ip_address *dest,
+		    struct logger *logger);
 
 extern bool eroute_connection(const struct spd_route *sr,
 			      ipsec_spi_t cur_spi,

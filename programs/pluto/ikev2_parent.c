@@ -2365,7 +2365,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	/* code does not support AH+ESP, which not recommended as per RFC 8247 */
 	struct ipsec_proto_info *proto_info
 		= ikev2_child_sa_proto_info(pexpect_child_sa(cst), cc->policy);
-	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy);
+	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy, cst->st_logger);
 	const chunk_t local_spi = THING_AS_CHUNK(proto_info->our_spi);
 
 	/*
@@ -4250,7 +4250,7 @@ static stf_status ikev2_child_add_ipsec_payloads(struct child_sa *child,
 	/* ??? this code won't support AH + ESP */
 	struct ipsec_proto_info *proto_info
 		= ikev2_child_sa_proto_info(child, cc->policy);
-	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy);
+	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy, child->sa.st_logger);
 	chunk_t local_spi = THING_AS_CHUNK(proto_info->our_spi);
 
 	/*

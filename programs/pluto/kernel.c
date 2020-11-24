@@ -298,9 +298,10 @@ static reqid_t get_proto_reqid(reqid_t base, const struct ip_protocol *proto)
  * SPI lives longer than 4G of its successors).
  */
 ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
-			const struct ip_protocol *proto,
-			const struct spd_route *sr,
-			bool tunnel)
+			  const struct ip_protocol *proto,
+			  const struct spd_route *sr,
+			  bool tunnel,
+			  struct logger *logger)
 {
 	passert(proto == &ip_protocol_ah || proto == &ip_protocol_esp);
 
@@ -308,10 +309,10 @@ ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
 		char text_said[SATOT_BUF];
 		set_text_said(text_said, &sr->this.host_addr, 0, proto);
 		return kernel_ops->get_spi(&sr->that.host_addr,
-					&sr->this.host_addr, proto, tunnel,
-					get_proto_reqid(sr->reqid, proto),
-					IPSEC_DOI_SPI_OUR_MIN, 0xffffffff,
-					text_said);
+					   &sr->this.host_addr, proto, tunnel,
+					   get_proto_reqid(sr->reqid, proto),
+					   IPSEC_DOI_SPI_OUR_MIN, 0xffffffff,
+					   text_said, logger);
 	} else {
 		static ipsec_spi_t spi = 0; /* host order, so not returned directly! */
 
@@ -337,18 +338,19 @@ ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
  * If we can't find one easily, return 0 (a bad SPI,
  * no matter what order) indicating failure.
  */
-ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel)
+ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel,
+		       struct logger *logger)
 {
 	if (kernel_ops->get_spi != NULL) {
 		char text_said[SATOT_BUF];
 		set_text_said(text_said, &sr->this.host_addr, 0, &ip_protocol_comp);
 		return kernel_ops->get_spi(&sr->that.host_addr,
-					&sr->this.host_addr, &ip_protocol_comp,
-					tunnel,
-					get_proto_reqid(sr->reqid, &ip_protocol_comp),
-					IPCOMP_FIRST_NEGOTIATED,
-					IPCOMP_LAST_NEGOTIATED,
-					text_said);
+					   &sr->this.host_addr, &ip_protocol_comp,
+					   tunnel,
+					   get_proto_reqid(sr->reqid, &ip_protocol_comp),
+					   IPCOMP_FIRST_NEGOTIATED,
+					   IPCOMP_LAST_NEGOTIATED,
+					   text_said, logger);
 	} else {
 		static cpi_t first_busy_cpi = 0;
 		static cpi_t latest_cpi = 0;
@@ -1702,7 +1704,8 @@ ipsec_spi_t shunt_policy_spi(const struct connection *c, bool prospective)
 }
 
 bool del_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
-	     const ip_address *src, const ip_address *dest)
+	     const ip_address *src, const ip_address *dest,
+	     struct logger *logger)
 {
 	char text_said[SATOT_BUF];
 
@@ -1719,7 +1722,7 @@ bool del_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
 	};
 
 	passert(kernel_ops->del_sa != NULL);
-	return kernel_ops->del_sa(&sa);
+	return kernel_ops->del_sa(&sa, logger);
 }
 
 static void setup_esp_nic_offload(struct kernel_sa *sa, struct connection *c,
@@ -1878,7 +1881,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			outgoing_ref_set  = true;
 		}
 
-		if (!kernel_ops->add_sa(said_next, replace)) {
+		if (!kernel_ops->add_sa(said_next, replace, st->st_logger)) {
 			log_state(RC_LOG, st, "add_sa ipcomp failed");
 			goto fail;
 		}
@@ -2096,13 +2099,13 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		}
 		setup_esp_nic_offload(said_next, c, &nic_offload_fallback);
 
-		bool ret = kernel_ops->add_sa(said_next, replace);
+		bool ret = kernel_ops->add_sa(said_next, replace, st->st_logger);
 
 		if (!ret && nic_offload_fallback &&
 			said_next->nic_offload_dev != NULL) {
 			/* Fallback to non-nic-offload crypto */
 			said_next->nic_offload_dev = NULL;
-			ret = kernel_ops->add_sa(said_next, replace);
+			ret = kernel_ops->add_sa(said_next, replace, st->st_logger);
 		}
 
 		/* scrub keys from memory */
@@ -2188,7 +2191,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			outgoing_ref_set = true;	/* outgoing_ref_set not subsequently used */
 		}
 
-		if (!kernel_ops->add_sa(said_next, replace)) {
+		if (!kernel_ops->add_sa(said_next, replace, st->st_logger)) {
 			/* scrub key from memory */
 			memset(said_next->authkey, 0, said_next->authkeylen);
 			goto fail;
@@ -2350,7 +2353,8 @@ fail:
 		if (said_next->proto != 0) {
 			(void) del_spi(said_next->spi,
 				       said_next->proto,
-				       &src, said_next->dst.address);
+				       &src, said_next->dst.address,
+				       st->st_logger);
 		}
 	}
 	return false;
@@ -2455,7 +2459,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 			dst = effective_that_host_addr;
 		}
 
-		result &= del_spi(spi, proto, src, dst);
+		result &= del_spi(spi, proto, src, dst, st->st_logger);
 	}
 
 	return result;
@@ -3313,7 +3317,7 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 	uint64_t bytes;
 	uint64_t add_time;
 
-	if (!kernel_ops->get_sa(&sa, &bytes, &add_time))
+	if (!kernel_ops->get_sa(&sa, &bytes, &add_time, st->st_logger))
 		return false;
 
 	p2->add_time = add_time;
