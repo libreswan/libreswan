@@ -85,13 +85,4 @@ extern void start_crypto_helpers(int nhelpers, struct logger *logger);
 void stop_helper_threads(void);
 void helper_threads_stopped_callback(struct state *st, void *context); /* see pluto_shutdown.c */
 
-/* actual helper functions */
-
-/* internal */
-void calc_v1_skeyid_and_iv(struct state *st);
-void calc_v2_keymat(struct state *st,
-		    PK11SymKey *old_skey_d, /* SKEYSEED IKE Rekey */
-		    const struct prf_desc *old_prf, /* IKE Rekey */
-		    const ike_spis_t *new_ike_spis);
-
 #endif /* _PLUTO_CRYPT_H */
