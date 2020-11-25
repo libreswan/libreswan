@@ -730,7 +730,7 @@ void reference_addresspool(struct connection *c)
  * If a pool overlaps, an error is logged AND returned
  * *pool is set to the entry found; NULL if none found.
  */
-bool find_addresspool(const ip_range *pool_range, struct ip_pool **pool, struct logger *logger)
+err_t find_addresspool(const ip_range *pool_range, struct ip_pool **pool)
 {
 	struct ip_pool *h;
 
@@ -753,14 +753,14 @@ bool find_addresspool(const ip_range *pool_range, struct ip_pool **pool, struct 
 			range_buf prbuf;
 			range_buf hbuf;
 
-			log_message(RC_CLASH, logger,
-				    "ERROR: new addresspool %s INEXACTLY OVERLAPS with existing one %s.",
-				    str_range(pool_range, &prbuf),
-				    str_range(&h->r, &hbuf));
-			return false;
+			loglog(RC_CLASH,
+				"ERROR: new addresspool %s INEXACTLY OVERLAPS with existing one %s.",
+			       str_range(pool_range, &prbuf),
+			       str_range(&h->r, &hbuf));
+			return "ERROR: partial overlap of addresspool";
 		}
 	}
-	return true;
+	return NULL;
 }
 
 /*
@@ -769,46 +769,46 @@ bool find_addresspool(const ip_range *pool_range, struct ip_pool **pool, struct 
  * - The range must be non-empty
  */
 
-struct ip_pool *install_addresspool(const ip_range *pool_range, struct logger *logger)
+struct ip_pool *install_addresspool(const ip_range *pool_range)
 {
 	struct ip_pool **head = &pluto_pools;
 	struct ip_pool *pool = NULL;
-	if (!find_addresspool(pool_range, &pool, logger)) {
-		return NULL;
-	}
+	err_t ugh = find_addresspool(pool_range, &pool);
 
-	if (pool != NULL) {
+	if (ugh != NULL) {
+		/* some problem: refuse to install bad addresspool */
+		/* ??? Assume diagnostic already logged? */
+	} else if (pool != NULL) {
 		/* re-use existing pool */
 		if (DBGP(DBG_BASE)) {
 			DBG_pool(true, pool, "reusing existing address pool@%p", pool);
 		}
-		return pool;
-	}
+	} else {
+		/* make a new pool */
+		pool = alloc_thing(struct ip_pool, "addresspool entry");
 
-	/* make a new pool */
-	pool = alloc_thing(struct ip_pool, "addresspool entry");
+		pool->pool_refcount = 0;
+		pool->r = *pool_range;
+		if (range_size(&pool->r, &pool->size)) {
+			/*
+			 * uint32_t overflow, 2001:db8:0:3::/64 truncated to UINT32_MAX
+			 * uint32_t overflow, 2001:db8:0:3:1::/96, truncated by 1
+			 */
+			dbg("WARNING addresspool size overflow truncated to %u", pool->size);
+		}
+		passert(pool->size > 0);
 
-	pool->pool_refcount = 0;
-	pool->r = *pool_range;
-	if (range_size(&pool->r, &pool->size)) {
-		/*
-		 * uint32_t overflow, 2001:db8:0:3::/64 truncated to UINT32_MAX
-		 * uint32_t overflow, 2001:db8:0:3:1::/96, truncated by 1
-		 */
-		dbg("WARNING addresspool size overflow truncated to %u", pool->size);
-	}
-	passert(pool->size > 0);
+		pool->nr_in_use = 0;
+		pool->nr_leases = 0;
+		pool->free_list = empty_list;
+		pool->leases = NULL;
+		/* insert */
+		pool->next = *head;
+		*head = pool;
 
-	pool->nr_in_use = 0;
-	pool->nr_leases = 0;
-	pool->free_list = empty_list;
-	pool->leases = NULL;
-	/* insert */
-	pool->next = *head;
-	*head = pool;
-
-	if (DBGP(DBG_BASE)) {
-		DBG_pool(false, pool, "creating new address pool@%p", pool);
+		if (DBGP(DBG_BASE)) {
+			DBG_pool(false, pool, "creating new address pool@%p", pool);
+		}
 	}
 	return pool;
 }

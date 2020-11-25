@@ -1017,9 +1017,8 @@ static int extract_end(struct end *dst,
 }
 
 static bool check_connection_end(const struct whack_end *this,
-				 const struct whack_end *that,
-				 const struct whack_message *wm,
-				 struct logger *logger)
+				const struct whack_end *that,
+				const struct whack_message *wm)
 {
 	if ((this->host_type == KH_IPADDR || this->host_type == KH_IFACE) &&
 		(wm->addr_family != addrtypeof(&this->host_addr) ||
@@ -1029,11 +1028,11 @@ static bool check_connection_end(const struct whack_end *this,
 		 * be clear.
 		 * !!! overloaded use of RC_CLASH
 		 */
-		log_message(RC_CLASH, logger,
-			    "address family inconsistency in this connection=%d host=%d/nexthop=%d",
-			    wm->addr_family,
-			    addrtypeof(&this->host_addr),
-			    addrtypeof(&this->host_nexthop));
+		loglog(RC_CLASH,
+			"address family inconsistency in this connection=%d host=%d/nexthop=%d",
+			wm->addr_family,
+			addrtypeof(&this->host_addr),
+			addrtypeof(&this->host_nexthop));
 		return FALSE;
 	}
 
@@ -1041,9 +1040,11 @@ static bool check_connection_end(const struct whack_end *this,
 	/* XXX: still nasty; just less low-level */
 	if (range_is_specified(&this->pool_range)) {
 		struct ip_pool *pool;
-		if (!find_addresspool(&this->pool_range, &pool, logger)) {
-			/* already logged */
-			return false;
+		err_t er = find_addresspool(&this->pool_range, &pool);
+
+		if (er != NULL) {
+			loglog(RC_CLASH, "leftaddresspool clash");
+			return FALSE;
 		}
 	}
 
@@ -1054,8 +1055,8 @@ static bool check_connection_end(const struct whack_end *this,
 			/*
 			 * !!! overloaded use of RC_CLASH
 			 */
-			log_message(RC_CLASH, logger,
-				    "address family inconsistency in this/that connection");
+			loglog(RC_CLASH,
+				"address family inconsistency in this/that connection");
 			return FALSE;
 		}
 	}
@@ -1068,17 +1069,16 @@ static bool check_connection_end(const struct whack_end *this,
 		 */
 		if (this->host_type != KH_IPHOSTNAME &&
 			isanyaddr(&this->host_addr)) {
-			log_message(RC_ORIENT, logger,
-				    "connection %s must specify host IP address for our side",
-				    wm->name);
+			loglog(RC_ORIENT,
+				"connection %s must specify host IP address for our side",
+				wm->name);
 			return FALSE;
 		}
 	}
 
 	if (this->protoport.protocol == 0 && this->protoport.port != 0) {
-		log_message(RC_ORIENT, logger,
-			    "connection %s cannot specify non-zero port %d for prototcol 0",
-			    wm->name, this->protoport.port);
+		loglog(RC_ORIENT, "connection %s cannot specify non-zero port %d for prototcol 0",
+			wm->name, this->protoport.port);
 		return FALSE;
 	}
 
@@ -1087,8 +1087,7 @@ static bool check_connection_end(const struct whack_end *this,
 
 		if (this->authby == AUTHBY_PSK || this->authby == AUTHBY_NULL ||
 			auth_pol == POLICY_PSK || auth_pol == POLICY_AUTH_NULL) {
-			log_message(RC_FATAL, logger,
-				    "ID cannot be specified as %%fromcert if PSK or AUTH-NULL is used");
+			loglog(RC_FATAL, "ID cannot be specified as %%fromcert if PSK or AUTH-NULL is used");
 			return false;
 		}
 	}
@@ -1481,8 +1480,8 @@ static bool extract_connection(const struct whack_message *wm,
 		return false;
 	}
 
-	if (!check_connection_end(&wm->right, &wm->left, wm, logger) ||
-	    !check_connection_end(&wm->left, &wm->right, wm, logger)) {
+	if (!check_connection_end(&wm->right, &wm->left, wm) ||
+	    !check_connection_end(&wm->left, &wm->right, wm)) {
 		/* XXX: shouldn't check_connection_end() log the error? */
 		log_message(RC_FATAL, logger,
 			    "failed to add connection: attempt to load incomplete connection");
@@ -1838,7 +1837,7 @@ static bool extract_connection(const struct whack_message *wm,
 		range_type(&wm->left.pool_range) == &ipv6_info)	&&
 		range_is_specified(&wm->left.pool_range)) {
 		/* there is address pool range add to the global list */
-		c->pool = install_addresspool(&wm->left.pool_range, logger);
+		c->pool = install_addresspool(&wm->left.pool_range);
 		c->spd.that.modecfg_server = TRUE;
 		c->spd.this.modecfg_client = TRUE;
 	}
@@ -1846,7 +1845,7 @@ static bool extract_connection(const struct whack_message *wm,
 		range_type(&wm->right.pool_range) == &ipv6_info) &&
 		range_is_specified(&wm->right.pool_range)) {
 		/* there is address pool range add to the global list */
-		c->pool = install_addresspool(&wm->right.pool_range, logger);
+		c->pool = install_addresspool(&wm->right.pool_range);
 		c->spd.that.modecfg_client = TRUE;
 		c->spd.this.modecfg_server = TRUE;
 	}
@@ -2025,7 +2024,7 @@ void add_connection(struct fd *whackfd, const struct whack_message *wm)
 	struct connection *c = alloc_connection(wm->name, HERE);
 	if (extract_connection(wm, c, logger)) {
 		/* log all about this connection */
-		log_message(RC_LOG, logger, "added %s connection \"%s\"",
+		libreswan_log("added %s connection \"%s\"",
 		NEVER_NEGOTIATE(c->policy) ?
 			policy_shunt_names[(c->policy & POLICY_SHUNT_MASK) >> POLICY_SHUNT_SHIFT] :
 			LIN(POLICY_IKEV2_ALLOW, c->policy) ? "IKEv2" : "IKEv1",	 c->name);
@@ -2719,8 +2718,7 @@ struct connection *route_owner(struct connection *c,
 			struct spd_route **esrp)
 {
 	if (!oriented(*c)) {
-		log_connection(RC_LOG, null_fd, c,
-			       "route_owner: connection no longer oriented - system interface change?");
+		libreswan_log("route_owner: connection no longer oriented - system interface change?");
 		return NULL;
 	}
 
@@ -3011,7 +3009,7 @@ struct connection *refine_host_connection(const struct state *st,
 			 * Paul: only true for IKEv1
 			 */
 			if (psk == NULL) {
-				log_state(RC_LOG_SERIOUS, st, "cannot find PSK");
+				loglog(RC_LOG_SERIOUS, "cannot find PSK");
 				return c; /* cannot determine PSK, so not switching */
 			}
 			break;
@@ -3028,7 +3026,7 @@ struct connection *refine_host_connection(const struct state *st,
 			 */
 			const struct pubkey_type *type = &pubkey_type_rsa;
 			if (get_connection_private_key(c, type, st->st_logger) == NULL) {
-				log_state(RC_LOG_SERIOUS, st, "cannot find %s key", type->name);
+				loglog(RC_LOG_SERIOUS, "cannot find %s key", type->name);
 				 /* cannot determine my private key, so not switching */
 				return c;
 			}
@@ -3044,7 +3042,7 @@ struct connection *refine_host_connection(const struct state *st,
 			 */
 			const struct pubkey_type *type = &pubkey_type_ecdsa;
 			if (get_connection_private_key(c, type) == NULL) {
-				log_state(RC_LOG_SERIOUS, st, "cannot find %s key", type->name);
+				loglog(RC_LOG_SERIOUS, "cannot find %s key", type->name);
 				 /* cannot determine my private key, so not switching */
 				return c;
 			}
@@ -3055,9 +3053,8 @@ struct connection *refine_host_connection(const struct state *st,
 			/* don't die on bad_case(auth); */
 
 			/* ??? why not dies?  How could this happen? */
-			log_state(RC_LOG_SERIOUS, st,
-				  "refine_host_connection: unexpected auth policy (%s): only handling PSK, NULL or RSA",
-				  enum_name(&keyword_authby_names, this_authby));
+			loglog(RC_LOG_SERIOUS, "refine_host_connection: unexpected auth policy (%s): only handling PSK, NULL or RSA",
+				enum_name(&keyword_authby_names, this_authby));
 			return c;
 		}
 	}
@@ -3348,23 +3345,23 @@ static bool is_virtual_net_used(struct connection *c,
 				id_buf idb;
 				connection_buf cbuf;
 				subnet_buf client;
-				log_connection(RC_LOG, null_fd, c,
-					       "Virtual IP %s overlaps with connection "PRI_CONNECTION" (kind=%s) '%s'",
-					       str_subnet(peer_net, &client),
-					       pri_connection(d, &cbuf),
-					       enum_name(&connection_kind_names, d->kind),
-					       str_id(&d->spd.that.id, &idb));
+				libreswan_log("Virtual IP %s overlaps with connection "PRI_CONNECTION" (kind=%s) '%s'",
+					      str_subnet(peer_net, &client),
+					      pri_connection(d, &cbuf),
+					      enum_name(&connection_kind_names,
+							d->kind),
+					      str_id(&d->spd.that.id, &idb));
 
 				if (!kernel_ops->overlap_supported) {
-					log_connection(RC_LOG, null_fd, c,
-						       "Kernel method '%s' does not support overlapping IP ranges",
-						       kernel_ops->kern_name);
+					libreswan_log(
+						"Kernel method '%s' does not support overlapping IP ranges",
+						kernel_ops->kern_name);
 					return TRUE;
 				}
 
 				if (LIN(POLICY_OVERLAPIP, c->policy & d->policy)) {
-					log_connection(RC_LOG, null_fd, c,
-						       "overlap is okay by mutual consent");
+					libreswan_log(
+						"overlap is okay by mutual consent");
 
 					/*
 					 * Look for another overlap to report
@@ -3381,17 +3378,15 @@ static bool is_virtual_net_used(struct connection *c,
 					NULL;
 
 				if (x == NULL) {
-					log_connection(RC_LOG, null_fd, c,
-						       "overlap is forbidden (neither agrees to overlap)");
+					libreswan_log(
+						"overlap is forbidden (neither agrees to overlap)");
 				} else {
-					log_connection(RC_LOG, null_fd, c,
-						       "overlap is forbidden ("PRI_CONNECTION" does not agree to overlap)",
-						       pri_connection(x, &cbuf));
+					libreswan_log("overlap is forbidden ("PRI_CONNECTION" does not agree to overlap)",
+						      pri_connection(x, &cbuf));
 				}
 
 				/* ??? why is this a separate log line? */
-				log_connection(RC_LOG, null_fd, c,
-					       "Your ID is '%s'", str_id(peer_id, &idb));
+				libreswan_log("Your ID is '%s'", str_id(peer_id, &idb));
 
 				return TRUE; /* already used by another one */
 			}
@@ -3583,9 +3578,9 @@ static struct connection *fc_try(const struct connection *c,
 	    (best ? best->name : "none"), best_prio);
 
 	if (best == NULL && virtualwhy != NULL) {
-		log_connection(RC_LOG, null_fd, c,
-			       "peer proposal was rejected in a virtual connection policy: %s",
-			       virtualwhy);
+		libreswan_log(
+			"peer proposal was rejected in a virtual connection policy: %s",
+			virtualwhy);
 	}
 
 	return best;
