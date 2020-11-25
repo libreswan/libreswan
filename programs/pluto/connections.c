@@ -101,7 +101,7 @@ static bool idr_wildmatch(const struct end *this, const struct id *b, struct log
 /*
  * Find a connection by name.
  *
- * strict: don't accept a CK_INSTANCE.
+ * no_inst: don't accept a CK_INSTANCE.
  *
  * If none is found, and strict&&!queit, a diagnostic is logged to
  * whack.
@@ -109,7 +109,7 @@ static bool idr_wildmatch(const struct end *this, const struct id *b, struct log
  * XXX: Fun fact: this function re-orders the list, moving the entry
  * to the front as a side effect (ulgh)!.
  */
-struct connection *conn_by_name(const char *nm, bool strict)
+struct connection *conn_by_name(const char *nm, bool no_inst)
 {
 	struct connection *p, *prev;
 
@@ -119,7 +119,7 @@ struct connection *conn_by_name(const char *nm, bool strict)
 			break;
 		}
 		if (streq(p->name, nm) &&
-		    (!strict || p->kind != CK_INSTANCE)) {
+		    (!no_inst || p->kind != CK_INSTANCE)) {
 			if (prev != NULL) {
 				/* remove p from list */
 				prev->ac_next = p->ac_next;
