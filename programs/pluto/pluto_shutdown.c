@@ -194,7 +194,7 @@ void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status)
 	 * code to be changed so that helper tasks can be "cancelled"
 	 * after the've completed?
 	 */
-	stop_helper_threads();
+	stop_server_helpers();
 	/*
 	 * helper_threads_stopped_callback() is called once both all
 	 * helper-threads have exited, and all helper-thread events
@@ -202,7 +202,7 @@ void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status)
 	 */
 }
 
-void helper_threads_stopped_callback(struct state *st UNUSED, void *context UNUSED)
+void server_helpers_stopped_callback(struct state *st UNUSED, void *context UNUSED)
 {
 	stop_server();
 	/*

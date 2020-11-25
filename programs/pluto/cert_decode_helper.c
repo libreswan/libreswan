@@ -48,18 +48,7 @@
  * Just decode a cert payload.
  */
 
-static crypto_compute_fn cert_decode_computer; /* type check */
-static crypto_completed_cb cert_decode_completed; /* type check */
-static crypto_cancelled_cb cert_decode_cancelled; /* type check */
-
-struct crypto_handler cert_decode_handler = {
-	.name = "decode certificate payload",
-	.compute_fn = cert_decode_computer,
-	.completed_cb = cert_decode_completed,
-	.cancelled_cb = cert_decode_cancelled,
-};
-
-struct crypto_task {
+struct task {
 	/* input */
 	struct msg_digest *md; /* counted reference */
 	struct payload_digest *cert_payloads; /* ref into md */
@@ -72,11 +61,22 @@ struct crypto_task {
 	struct verified_certs verified;
 };
 
+static task_computer_fn cert_decode_computer; /* type check */
+static task_completed_cb cert_decode_completed; /* type check */
+static task_cancelled_cb cert_decode_cancelled; /* type check */
+
+struct task_handler cert_decode_handler = {
+	.name = "decode certificate payload",
+	.computer_fn = cert_decode_computer,
+	.completed_cb = cert_decode_completed,
+	.cancelled_cb = cert_decode_cancelled,
+};
+
 void submit_cert_decode(struct ike_sa *ike, struct state *state_to_resume,
 			struct msg_digest *md, struct payload_digest *cert_payloads,
 			cert_decode_cb *cb, const char *why)
 {
-	struct crypto_task task = {
+	struct task task = {
 		.root_certs = root_certs_addref(HERE),
 		.md = md_addref(md, HERE),
 		.cert_payloads = cert_payloads,
@@ -90,13 +90,13 @@ void submit_cert_decode(struct ike_sa *ike, struct state *state_to_resume,
 			.crl_strict = crl_strict,
 		},
 	};
-	submit_crypto(ike->sa.st_logger, state_to_resume,
-		      clone_thing(task, "decode certificate payload task"),
-		      &cert_decode_handler, why);
+	submit_task(ike->sa.st_logger, state_to_resume,
+		    clone_thing(task, "decode certificate payload task"),
+		    &cert_decode_handler, why);
 }
 
 static void cert_decode_computer(struct logger *logger,
-				 struct crypto_task *task,
+				 struct task *task,
 				 int my_thread UNUSED)
 {
 	task->verified = find_and_verify_certs(logger, task->ike_version,
@@ -106,7 +106,7 @@ static void cert_decode_computer(struct logger *logger,
 
 static stf_status cert_decode_completed(struct state *st,
 					struct msg_digest *md,
-					struct crypto_task **task)
+					struct task **task)
 {
 	struct ike_sa *ike = ike_sa(st, HERE);
 	pexpect(!ike->sa.st_remote_certs.processed);
@@ -208,7 +208,7 @@ static stf_status cert_decode_completed(struct state *st,
 	return cb(st, md);
 }
 
-static void cert_decode_cancelled(struct crypto_task **task)
+static void cert_decode_cancelled(struct task **task)
 {
 	pexpect((*task)->verified.cert_chain == NULL);
 	pexpect((*task)->verified.pubkey_db == NULL);

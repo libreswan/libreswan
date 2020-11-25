@@ -61,8 +61,8 @@ static resume_cb handle_helper_answer;
 typedef unsigned int job_id;
 
 struct pluto_crypto_req_cont {
-	struct crypto_task *pcrc_task;
-	const struct crypto_handler *pcrc_handler;
+	struct task *pcrc_task;
+	const struct task_handler *pcrc_handler;
 	struct list_entry pcrc_backlog;
 	so_serial_t pcrc_so_serialno;		/* sponsoring state-object's serial number */
 	bool pcrc_cancelled;
@@ -187,7 +187,7 @@ static void pluto_do_crypto_op(struct pluto_crypto_req_cont *cn, int helpernum)
 		sleep(crypto_helper_delay);
 	}
 
-	cn->pcrc_handler->compute_fn(cn->logger, cn->pcrc_task, helpernum);
+	cn->pcrc_handler->computer_fn(cn->logger, cn->pcrc_task, helpernum);
 
 	cn->pcrc_time_used =
 		logtime_stop(&start,
@@ -332,8 +332,8 @@ static void inline_worker(struct state *unused_st UNUSED,
 static void submit_crypto_request(struct pluto_crypto_req_cont *cn,
 				  const struct logger *logger,
 				  struct state *st,
-				  struct crypto_task *task,
-				  const struct crypto_handler *handler)
+				  struct task *task,
+				  const struct task_handler *handler)
 {
 	passert(st->st_serialno != SOS_NOBODY);
 	passert(cn->pcrc_so_serialno == SOS_NOBODY);
@@ -426,7 +426,7 @@ static stf_status handle_helper_answer(struct state *st,
 	struct pluto_crypto_req_cont *cn = arg;
 	dbg_job(cn, "processing response from helper %d", cn->pcrc_helpernum);
 
-	const struct crypto_handler *h = cn->pcrc_handler;
+	const struct task_handler *h = cn->pcrc_handler;
 	passert(h != NULL);
 
 	/*
@@ -498,7 +498,7 @@ static void init_crypto_helper_delay(struct logger *logger)
  * more requests than average.
  *
  */
-void start_crypto_helpers(int nhelpers, struct logger *logger)
+void start_server_helpers(int nhelpers, struct logger *logger)
 {
 	pc_workers = NULL;
 	nr_helper_threads = 0;
@@ -584,10 +584,10 @@ static void helper_thread_stopped_callback(struct state *st UNUSED, void *contex
 	 */
 	pfreeany(pc_workers);
 	schedule_callback("all helper threads stopped", SOS_NOBODY,
-			  helper_threads_stopped_callback, NULL);
+			  server_helpers_stopped_callback, NULL);
 }
 
-void stop_helper_threads(void)
+void stop_server_helpers(void)
 {
 	if (nr_helper_threads > 0) {
 		/* poke threads waiting for work */
@@ -596,15 +596,15 @@ void stop_helper_threads(void)
 		dbg("no helper threads to shutdown");
 		pexpect(pc_workers == NULL);
 		schedule_callback("no helpers to stop", SOS_NOBODY,
-				  helper_threads_stopped_callback, NULL);
+				  server_helpers_stopped_callback, NULL);
 	}
 }
 
-void submit_crypto(const struct logger *logger,
-		   struct state *st,
-		   struct crypto_task *task,
-		   const struct crypto_handler *handler,
-		   const char *name)
+void submit_task(const struct logger *logger,
+		 struct state *st,
+		 struct task *task,
+		 const struct task_handler *handler,
+		 const char *name)
 {
 	struct pluto_crypto_req_cont *r = alloc_thing(struct pluto_crypto_req_cont, name);
 	r->pcrc_cancelled = false;

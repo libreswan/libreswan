@@ -41,32 +41,32 @@ struct state;
 struct msg_digest;
 struct logger;
 
-struct crypto_task; /*struct job*/
+struct task; /*struct job*/
 
-typedef void crypto_compute_fn(struct logger *logger,
-			       struct crypto_task *task,
+typedef void task_computer_fn(struct logger *logger,
+			       struct task *task,
 			       int my_thread);
-typedef stf_status crypto_completed_cb(struct state *st,
-				       struct msg_digest *md,
-				       struct crypto_task **task);
-typedef void crypto_cancelled_cb(struct crypto_task **task);
+typedef stf_status task_completed_cb(struct state *st,
+				     struct msg_digest *md,
+				     struct task **task);
+typedef void task_cancelled_cb(struct task **task);
 
-struct crypto_handler {
+struct task_handler {
 	const char *name;
-	crypto_compute_fn *compute_fn;
-	crypto_completed_cb *completed_cb;
-	crypto_cancelled_cb *cancelled_cb;
+	task_computer_fn *computer_fn;
+	task_completed_cb *completed_cb;
+	task_cancelled_cb *cancelled_cb;
 };
 
-extern void submit_crypto(const struct logger *logger,
-			  struct state *st,
-			  struct crypto_task *task,
-			  const struct crypto_handler *handler,
-			  const char *name);
+extern void submit_task(const struct logger *logger,
+			struct state *st,
+			struct task *task,
+			const struct task_handler *handler,
+			const char *name);
 
-extern void start_crypto_helpers(int nhelpers, struct logger *logger);
-void stop_helper_threads(void);
-void helper_threads_stopped_callback(struct state *st, void *context); /* see pluto_shutdown.c */
+extern void start_server_helpers(int nhelpers, struct logger *logger);
+void stop_server_helpers(void);
+void server_helpers_stopped_callback(struct state *st, void *context); /* see pluto_shutdown.c */
 
 #endif
 

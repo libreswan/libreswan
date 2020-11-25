@@ -1738,7 +1738,7 @@ int main(int argc, char **argv)
 		exit(PLUTO_EXIT_OK);
 	}
 
-	start_crypto_helpers(nhelpers, logger);
+	start_server_helpers(nhelpers, logger);
 	init_kernel(logger);
 	init_vendorid();
 #if defined(LIBCURL) || defined(LIBLDAP)
