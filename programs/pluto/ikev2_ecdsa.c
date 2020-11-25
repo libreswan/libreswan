@@ -43,7 +43,6 @@
 #include "ike_alg_hash.h"
 #include "log.h"
 #include "demux.h"      /* needs packet.h */
-#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "server.h"
 #include "vendor.h"

@@ -26,7 +26,6 @@
 
 #include "ike_alg.h"
 
-#include "pluto_crypt.h"
 #include "ikev1_prf.h"
 #include "crypt_dh.h"
 #include "crypt_symkey.h"

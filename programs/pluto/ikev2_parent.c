@@ -49,7 +49,6 @@
 #include "ike_alg_dh.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
-#include "pluto_crypt.h"
 #include "packet.h"
 #include "demux.h"
 #include "ikev2.h"

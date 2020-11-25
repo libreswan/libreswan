@@ -75,7 +75,6 @@
 #include "pluto_x509.h"
 #include "nss_cert_verify.h" /* for cert_VerifySubjectAltName() */
 #include "nss_cert_load.h"
-#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "virtual_ip.h"	/* needs connections.h */
 #include "hostpair.h"

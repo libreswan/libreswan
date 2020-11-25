@@ -42,7 +42,7 @@
 #include "crypto.h"
 #include "rnd.h"
 #include "state.h"
-#include "pluto_crypt.h"
+#include "server_pool.h"
 #include "log.h"
 
 #include <nspr.h>

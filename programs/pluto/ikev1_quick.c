@@ -64,7 +64,6 @@
 #include "kernel_alg.h"
 #include "plutoalg.h"
 #include "crypt_symkey.h"
-#include "pluto_crypt.h"
 #include "crypt_prf.h"
 #include "crypt_hash.h"
 #include "ikev1.h"

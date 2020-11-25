@@ -1,5 +1,5 @@
-/*
- * Cryptographic helper process.
+/* Server thread pool, for libreswan
+ *
  * Copyright (C) 2004-2007 Michael C. Richardson <mcr@xelerance.com>
  * Copyright (C) 2008,2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com>
@@ -23,40 +23,23 @@
  */
 
 /*
- * This is an internal interface between the main and helper threads.
+ * This is an internal interface between the main thread and the
+ * helper threads (thread pool).
  *
- * The helper performs the heavy lifting of cryptographic functions
- * for pluto. It does this to avoid head-of-queue problems with aggressive
- * mode, and to deal with the asynchronous nature of hardware offload.
+ * The helper threads performs the heavy lifting, such as
+ * cryptographic functions, for pluto.  It does this to avoid bogging
+ * down the main thread with cryptography, increasing throughput.
  *
  * (Unrelated to code to compartmentalize lookups to LDAP/HTTP/FTP for CRL fetching
  * and checking.)
  */
 
-#ifndef _PLUTO_CRYPT_H
-#define _PLUTO_CRYPT_H
-
-#include "crypto.h"
-#include "chunk.h"
-#include "ike_spi.h"
-#include "crypt_mac.h"
+#ifndef SERVER_POOL_H
+#define SERVER_POOL_H
 
 struct state;
 struct msg_digest;
 struct logger;
-struct prf_desc;
-struct dh_local_secret;
-struct dh_desc;
-
-/*
- * Offload work to the crypto thread pool (or the event loop if there
- * are no threads).
- *
- * XXX: MDP should be just MD.  Per IKEv2, the only code squiriling
- * away MDP should be in complete_v[12]_state_transition() when
- * STF_SUSPEND is returned.  Unfortunately, IKEv1 isn't there and
- * probably never will :-(
- */
 
 struct crypto_task; /*struct job*/
 
@@ -85,4 +68,5 @@ extern void start_crypto_helpers(int nhelpers, struct logger *logger);
 void stop_helper_threads(void);
 void helper_threads_stopped_callback(struct state *st, void *context); /* see pluto_shutdown.c */
 
-#endif /* _PLUTO_CRYPT_H */
+#endif
+

@@ -63,7 +63,6 @@
 #include "server.h"
 #include "fetch.h"
 #include "timer.h"
-#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "ikev2_redirect.h"
 #include "ikev2_delete.h"

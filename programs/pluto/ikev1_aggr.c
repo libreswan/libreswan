@@ -35,7 +35,6 @@
 #include "ikev1_spdb.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "ikev1_send.h"
-#include "pluto_crypt.h"
 #include "ikev1.h"
 #include "vendor.h"
 #include "nat_traversal.h"

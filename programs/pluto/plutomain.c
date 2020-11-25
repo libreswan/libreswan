@@ -70,6 +70,7 @@
 #include "crypt_symkey.h"	/* for init_crypt_symkey() */
 #include "crl_queue.h"		/* for free_crl_queue() */
 #include "iface.h"
+#include "server_pool.h"
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"

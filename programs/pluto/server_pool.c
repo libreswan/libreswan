@@ -1,5 +1,5 @@
-/*
- * Cryptographic helper function.
+/* Pluto's helper thread pool, for libreswan
+ *
  * Copyright (C) 2004-2007 Michael C. Richardson <mcr@xelerance.com>
  * Copyright (C) 2004-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2006 Luis F. Ortiz <lfo@polyad.org>
@@ -28,37 +28,16 @@
  */
 
 #include <pthread.h>    /* Must be the first include file */
+#include <unistd.h>	/* for sleep() */
 
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>		/* for pipe2() */
-#include <fcntl.h>		/* for fcntl() et.al. */
-
-#include "sysdep.h"
-#include "constants.h"
-#include "enum_names.h"
 #include "defs.h"
 #include "log.h"
 #include "state.h"
-#include "connections.h"
-#include "demux.h"
-#include "pluto_crypt.h"
-#include "timer.h"
-
 #include "server.h"
-#include "ikev2_prf.h"
-#include "crypt_dh.h"
-#include "ikev1_prf.h"
-#include "state_db.h"
 #include "pluto_shutdown.h"		/* for exiting_pluto */
-
-#include "ikev1.h"	/* for complete_v1_state_transition() */
-#include "ikev2.h"	/* for complete_v2_state_transition() */
+#include "server_pool.h"
+#include "list_entry.h"
+#include "pluto_timing.h"
 
 #ifdef HAVE_SECCOMP
 # include "pluto_seccomp.h"

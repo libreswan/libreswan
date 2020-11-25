@@ -71,7 +71,6 @@
 #include "rcv_whack.h"
 #include "keys.h"
 #include "whack.h"              /* for RC_LOG_SERIOUS */
-#include "pluto_crypt.h"        /* cryptographic helper functions */
 #include "monotime.h"
 #include "ikev1.h"		/* for complete_v1_state_transition() */
 #include "ikev2.h"		/* for complete_v2_state_transition() */

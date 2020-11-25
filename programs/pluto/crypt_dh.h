@@ -31,6 +31,7 @@
 #include <pk11pub.h>
 
 #include "chunk.h"
+#include "ike_spi.h"
 
 struct dh_desc;
 struct state;

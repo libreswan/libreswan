@@ -26,7 +26,7 @@
 #include "defs.h"
 #include "ikev2_auth.h"
 #include "keys.h"
-#include "pluto_crypt.h"
+#include "server_pool.h"
 #include "state.h"
 #include "secrets.h"
 #include "log.h"

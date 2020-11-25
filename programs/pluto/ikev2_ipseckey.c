@@ -35,7 +35,6 @@
 #include "connections.h"
 #include "dnssec.h"	/* includes unbound.h */
 #include "id.h"
-#include "pluto_crypt.h"	/* for ikev2.h */
 #include "ikev2.h"
 #include "ikev2_ipseckey.h"
 #include "keys.h"

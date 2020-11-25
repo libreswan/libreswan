@@ -51,7 +51,6 @@
 #include "ike_alg.h"
 #include "log.h"
 #include "demux.h"      /* needs packet.h */
-#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "timer.h"

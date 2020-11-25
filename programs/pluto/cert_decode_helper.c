@@ -32,7 +32,7 @@
 #include "demux.h"
 #include "state.h"
 #include "pluto_x509.h"
-#include "pluto_crypt.h"
+#include "server_pool.h"
 #include "cert_decode_helper.h"
 #include "pluto_stats.h"
 #include "id.h"

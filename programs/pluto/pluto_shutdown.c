@@ -39,7 +39,7 @@
 #include "pluto_shutdown.h"
 #include "log.h"		/* for close_log() et.al. */
 
-#include "pluto_crypt.h"	/* for stop_crypto_helpers() */
+#include "server_pool.h"	/* for stop_crypto_helpers() */
 #include "pluto_sd.h"		/* for pluto_sd() */
 #include "root_certs.h"		/* for free_root_certs() */
 #include "keys.h"		/* for free_preshared_secrets() */

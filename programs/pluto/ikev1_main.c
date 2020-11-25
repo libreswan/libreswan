@@ -73,7 +73,6 @@
 #include "ike_alg_encrypt_ops.h"	/* XXX: oops */
 #include "kernel_alg.h"
 #include "plutoalg.h"
-#include "pluto_crypt.h"
 #include "ikev1.h"
 #include "ikev1_continuations.h"
 #include "ikev1_message.h"
