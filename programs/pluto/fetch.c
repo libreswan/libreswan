@@ -334,7 +334,8 @@ static err_t fetch_ldap_url(chunk_t url, chunk_t *blob, struct logger *logger)
 #else
 
 static err_t fetch_ldap_url(chunk_t url UNUSED,
-			    chunk_t *blob UNUSED)
+			    chunk_t *blob UNUSED,
+			    struct logger *logger UNUSED)
 {
 	return "LDAP URL fetching not activated in pluto source code";
 }
