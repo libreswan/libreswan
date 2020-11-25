@@ -71,7 +71,7 @@
  */
 #define NAT_T_DETECTED  ( LELEM(NATED_HOST) | LELEM(NATED_PEER) )
 
-void init_nat_traversal(deltatime_t keep_alive_period);
+void init_nat_traversal(deltatime_t keep_alive_period, struct logger *logger);
 
 extern bool nat_traversal_enabled;
 
@@ -88,7 +88,8 @@ extern bool v2_nat_detected(struct ike_sa *ike, struct msg_digest *md);
 struct hidden_variables;	/* forward */
 
 void nat_traversal_natoa_lookup(struct msg_digest *md,
-				struct hidden_variables *hv);
+				struct hidden_variables *hv,
+				struct logger *logger);
 bool nat_traversal_add_natoa(pb_stream *outs,
 			     struct state *st, bool initiator);
 /*
@@ -102,7 +103,7 @@ void v1_maybe_natify_initiator_endpoints(struct state *st,
  * NAT-keep_alive
  */
 void nat_traversal_new_ka_event(void);
-void nat_traversal_ka_event(struct fd *whackfd);
+void nat_traversal_ka_event(struct logger *logger);
 
 extern void ikev1_natd_init(struct state *st, struct msg_digest *md);
 

@@ -184,9 +184,6 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		arg = ev = *evp = NULL; /* all gone */
 	}
 
-	pexpect_reset_globals();
-	so_serial_t old_state = push_cur_state(st);
-	pexpect(old_state == SOS_NOBODY); /* since globals are reset */
 	statetime_t start = statetime_backdate(st, &inception);
 
 	/*
@@ -444,7 +441,6 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 	}
 
 	statetime_stop(&start, "%s() %s", __func__, event_name);
-	pop_cur_state(old_state);
 }
 
 /*

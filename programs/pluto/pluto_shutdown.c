@@ -83,7 +83,6 @@ void exit_pluto(enum pluto_exit_code status)
 	exit_code = status;
 
 	/* needed because we may be called in odd state */
-	reset_globals();
  #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_STOPPING, exit_code);
  #endif
@@ -93,10 +92,9 @@ void exit_pluto(enum pluto_exit_code status)
 
 void exit_tail(void)
 {
-	struct fd *whackfd = null_fd;
 	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
 
-	free_root_certs(whackfd);
+	free_root_certs(logger);
 	free_preshared_secrets(logger);
 	free_remembered_public_keys();
 	delete_every_connection();
@@ -112,7 +110,7 @@ void exit_tail(void)
 	 * Without this CRL fetch requests are left hanging and, after
 	 * the NSS DB has been closed (below), the helper can crash.
 	 */
-	stop_crl_fetch_helper();
+	stop_crl_fetch_helper(logger);
 	/*
 	 * free the crl list that the fetch-helper is currently
 	 * processing
@@ -127,8 +125,8 @@ void exit_tail(void)
 
 	lsw_conf_free_oco();	/* free global_oco containing path names */
 
-	free_ifaces();	/* free interface list from memory */
-	shutdown_kernel();
+	free_ifaces(logger);	/* free interface list from memory */
+	shutdown_kernel(logger);
 	lsw_nss_shutdown();
 	delete_lock();	/* delete any lock files */
 	free_virtual_ip();	/* virtual_private= */

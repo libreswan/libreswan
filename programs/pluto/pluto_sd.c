@@ -26,6 +26,8 @@
 #include "timer.h"
 #include "pluto_sd.h"
 
+static global_timer_cb sd_watchdog_event;
+
 void pluto_sd_init(void)
 {
 	uint64_t sd_usecs;
@@ -84,7 +86,7 @@ void pluto_sd(int action, int status)
 	}
 }
 
-void sd_watchdog_event(struct fd *unused_whackfd UNUSED)
+void sd_watchdog_event(struct logger *unused_logger UNUSED)
 {
 	pluto_sd(PLUTO_SD_WATCHDOG, SD_REPORT_NO_STATUS);
 }

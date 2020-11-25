@@ -21,7 +21,6 @@ void lsw_passert_fail(where_t where, const char *fmt, ...)
 {
 	JAMBUF(buf) {
 		jam_string(buf, "ABORT: ASSERTION FAILED: ");
-		jam_cur_prefix(buf); /* XXX: grrr */
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);

@@ -60,7 +60,5 @@ extern stf_status send_isakmp_notification(struct state *st,
 
 extern bool has_preloaded_public_key(const struct state *st);
 
-extern bool extract_peer_id(enum ike_id_type kind, struct id *peer, const pb_stream *id_pbs);
-
 extern void lswlog_child_sa_established(struct jambuf *buf, struct state *st);
 extern void lswlog_ike_sa_established(struct jambuf *buf, struct state *st);

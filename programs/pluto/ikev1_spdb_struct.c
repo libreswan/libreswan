@@ -70,10 +70,14 @@ static bool parse_secctx_attr(pb_stream *pbs UNUSED, struct state *st)
 #include "security_selinux.h"
 static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 {
-	struct xfrm_user_sec_ctx_ike uctx;
+	diag_t d;
 
-	if (!in_struct(&uctx.ctx, &sec_ctx_desc, pbs, NULL))
-		return FALSE;
+	struct xfrm_user_sec_ctx_ike uctx;
+	d = pbs_in_struct(pbs, &sec_ctx_desc, &uctx.ctx, sizeof(uctx.ctx), NULL);
+	if (d != NULL) {
+		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		return false;
+	}
 
 	if (pbs_left(pbs) != uctx.ctx.ctx_len) {
 		/* ??? should we ignore padding? */
@@ -92,9 +96,12 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 
 	zero(&uctx.sec_ctx_value);	/* abundance of caution */
 
-	if (!in_raw(uctx.sec_ctx_value, uctx.ctx.ctx_len, pbs,
-			"Sec Ctx Textual Label"))
-		return FALSE;
+	d = pbs_in_raw(pbs, uctx.sec_ctx_value, uctx.ctx.ctx_len,
+		       "Sec Ctx Textual Label");
+	if (d != NULL) {
+		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		return false;
+	}
 
 	/*
 	 * The label should have been NUL-terminated.
@@ -1163,9 +1170,9 @@ bool ikev1_out_sa(pb_stream *outs,
 					 */
 					if (!ipcomp_cpi_generated) {
 						st->st_ipcomp.our_spi =
-							get_my_cpi(
-								&st->st_connection->spd,
-								tunnel_mode);
+							get_my_cpi(&st->st_connection->spd,
+								   tunnel_mode,
+								   st->st_logger);
 						if (st->st_ipcomp.our_spi == 0)
 							goto fail; /* problem generating CPI */
 
@@ -1192,7 +1199,8 @@ bool ikev1_out_sa(pb_stream *outs,
 						*spi_ptr = get_ipsec_spi(0,
 									 proto,
 									 &st->st_connection->spd,
-									 tunnel_mode);
+									 tunnel_mode,
+									 st->st_logger);
 						*spi_generated = TRUE;
 					}
 					if (!out_raw((uint8_t *)spi_ptr,
@@ -1458,13 +1466,19 @@ lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */)
 	uint32_t ipsecdoisit;
 	unsigned trans_left;
 	lset_t policy = LEMPTY;
+	diag_t d;
 
-	if (!in_struct(&ipsecdoisit, &ipsec_sit_desc, &sa_pbs, NULL))
+	d = pbs_in_struct(&sa_pbs, &ipsec_sit_desc, &ipsecdoisit, sizeof(ipsecdoisit), NULL);
+	if (d != NULL) {
+		pfree_diag(&d); /* ignore error! */
 		return LEMPTY;
+	}
 
-	if (!in_struct(&proposal, &isakmp_proposal_desc, &sa_pbs,
-		       &proposal_pbs))
+	d = pbs_in_struct(&sa_pbs, &isakmp_proposal_desc, &proposal, sizeof(proposal), &proposal_pbs);
+	if (d != NULL) {
+		pfree_diag(&d); /* ignore error! */
 		return LEMPTY;
+	}
 
 	if (proposal.isap_spisize > MAX_ISAKMP_SPI_SIZE)
 		return LEMPTY;
@@ -1472,23 +1486,31 @@ lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */)
 	if (proposal.isap_spisize > 0) {
 		uint8_t junk_spi[MAX_ISAKMP_SPI_SIZE];
 
-		if (!in_raw(junk_spi, proposal.isap_spisize, &proposal_pbs,
-			    "Oakley SPI"))
+		d = pbs_in_raw(&proposal_pbs, junk_spi, proposal.isap_spisize, "Oakley SPI");
+		if (d != NULL) {
+			pfree_diag(&d); /* ignore error! */
 			return LEMPTY;
+		}
 	}
 
 	trans_left = proposal.isap_notrans;
 	while (trans_left-- != 0) {
-		if (!in_struct(&trans, &isakmp_isakmp_transform_desc,
-			       &proposal_pbs,
-			       &trans_pbs))
+		diag_t d = pbs_in_struct(&proposal_pbs, &isakmp_isakmp_transform_desc,
+					 &trans, sizeof(trans),
+					 &trans_pbs);
+		if (d != NULL) {
+			pfree_diag(&d); /* ignore error! */
 			return LEMPTY;
+		}
 
 		while (pbs_left(&trans_pbs) >= isakmp_oakley_attribute_desc.size) {
-			if (!in_struct(&a, &isakmp_oakley_attribute_desc,
-				       &trans_pbs,
-				       &attr_pbs))
+			diag_t d = pbs_in_struct(&trans_pbs, &isakmp_oakley_attribute_desc,
+						 &a, sizeof(a),
+						 &attr_pbs);
+			if (d != NULL) {
+				pfree_diag(&d); /* ignore error! */
 				return LEMPTY;
+			}
 
 			switch (a.isaat_af_type) {
 			case OAKLEY_AUTHENTICATION_METHOD | ISAKMP_ATTR_AF_TV:
@@ -1614,6 +1636,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 								 * can appear. */
 				    struct state *const st)	/* current state object */
 {
+	diag_t d;
 	const struct connection *const c = st->st_connection;
 	bool xauth_init = FALSE,
 		xauth_resp = FALSE;
@@ -1654,8 +1677,11 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 	/* Situation */
 	uint32_t ipsecdoisit;
 
-	if (!in_struct(&ipsecdoisit, &ipsec_sit_desc, sa_pbs, NULL))
+	d = pbs_in_struct(sa_pbs, &ipsec_sit_desc, &ipsecdoisit, sizeof(ipsecdoisit), NULL);
+	if (d != NULL) {
+		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return SITUATION_NOT_SUPPORTED;	/* reject whole SA */
+	}
 
 	if (ipsecdoisit != SIT_IDENTITY_ONLY) {
 		log_state(RC_LOG_SERIOUS, st, "unsupported IPsec DOI situation (%s)",
@@ -1672,8 +1698,11 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 	struct isakmp_proposal proposal;
 	pb_stream proposal_pbs;
 
-	if (!in_struct(&proposal, &isakmp_proposal_desc, sa_pbs,
-		       &proposal_pbs)) {
+	d = pbs_in_struct(sa_pbs, &isakmp_proposal_desc,
+			  &proposal, sizeof(proposal),
+			  &proposal_pbs);
+	if (d != NULL) {
+		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return PAYLOAD_MALFORMED;	/* reject whole SA */
 	}
 
@@ -1758,8 +1787,10 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 		struct isakmp_transform trans;
 		pb_stream trans_pbs;
 
-		if (!in_struct(&trans, &isakmp_isakmp_transform_desc,
-			       &proposal_pbs, &trans_pbs)) {
+		diag_t d = pbs_in_struct(&proposal_pbs, &isakmp_isakmp_transform_desc,
+					 &trans, sizeof(trans), &trans_pbs);
+		if (d != NULL) {
+			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 		}
 
@@ -2353,8 +2384,11 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	uint16_t life_type = 0;	/* initialized to silence GCC */
 	const struct dh_desc *pfs_group = NULL;
 
-	if (!in_struct(trans, trans_desc, prop_pbs, trans_pbs))
-		return FALSE;
+	diag_t d = pbs_in_struct(prop_pbs, trans_desc, trans, sizeof(trans), trans_pbs);
+	if (d != NULL) {
+		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		return false;
+	}
 
 	if (trans->isat_transnum <= previous_transnum) {
 		log_state(RC_LOG_SERIOUS, st,
@@ -2412,9 +2446,12 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		uint32_t val;                          /* room for larger value */
 		bool ipcomp_inappropriate = (proto == PROTO_IPCOMP);  /* will get reset if OK */
 
-		if (!in_struct(&a, &isakmp_ipsec_attribute_desc, trans_pbs,
-			       &attr_pbs))
+		diag_t d = pbs_in_struct(trans_pbs, &isakmp_ipsec_attribute_desc,
+					 &a, sizeof(a), &attr_pbs);
+		if (d != NULL) {
+			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			return FALSE;
+		}
 
 		ty = a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK;
 		val = a.isaat_lv;
@@ -2747,7 +2784,8 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 			  struct_desc *trans_desc,              /* descriptor for this transformation */
 			  pb_stream *trans_pbs,                 /* PBS for incoming transform */
 			  const struct spd_route *sr,           /* host details for the association */
-			  bool tunnel_mode)                     /* true for inner most tunnel SA */
+			  bool tunnel_mode,                     /* true for inner most tunnel SA */
+			  struct logger *logger)
 {
 	pb_stream r_proposal_pbs;
 	pb_stream r_trans_pbs;
@@ -2765,7 +2803,7 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 		 * Note: we may fail to generate a satisfactory CPI,
 		 * but we'll ignore that.
 		 */
-		pi->our_spi = get_my_cpi(sr, tunnel_mode);
+		pi->our_spi = get_my_cpi(sr, tunnel_mode, logger);
 		passert(out_raw((uint8_t *) &pi->our_spi +
 				IPSEC_DOI_SPI_SIZE - IPCOMP_CPI_SIZE,
 				IPCOMP_CPI_SIZE,
@@ -2775,7 +2813,8 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 					    r_proposal.isap_protoid == PROTO_IPSEC_AH ?
 						&ip_protocol_ah : &ip_protocol_esp,
 					    sr,
-					    tunnel_mode);
+					    tunnel_mode,
+					    logger);
 		/* XXX should check for errors */
 		passert(out_raw((uint8_t *) &pi->our_spi, IPSEC_DOI_SPI_SIZE,
 				&r_proposal_pbs, "SPI"));
@@ -2800,6 +2839,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				   bool selection,              /* if this SA is a selection, only one transform may appear */
 				   struct state *st)            /* current state object */
 {
+	diag_t d;
 	const struct connection *c = st->st_connection;
 	uint32_t ipsecdoisit;
 	pb_stream next_proposal_pbs;
@@ -2818,8 +2858,11 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 	}
 
 	/* Situation */
-	if (!in_struct(&ipsecdoisit, &ipsec_sit_desc, sa_pbs, NULL))
+	d = pbs_in_struct(sa_pbs, &ipsec_sit_desc, &ipsecdoisit, sizeof(ipsecdoisit), NULL);
+	if (d != NULL) {
+		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return SITUATION_NOT_SUPPORTED;	/* reject whole SA */
+	}
 
 	if (ipsecdoisit != SIT_IDENTITY_ONLY) {
 		log_state(RC_LOG_SERIOUS, st, "unsupported IPsec DOI situation (%s)",
@@ -2841,9 +2884,13 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 	 * look-ahead.
 	 */
 
-	if (!in_struct(&next_proposal, &isakmp_proposal_desc, sa_pbs,
-		       &next_proposal_pbs))
+	d = pbs_in_struct(sa_pbs, &isakmp_proposal_desc,
+			  &next_proposal, sizeof(next_proposal),
+			  &next_proposal_pbs);
+	if (d != NULL) {
+		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+	}
 
 	/* for each conjunction of proposals... */
 	while (next_full) {
@@ -2899,11 +2946,16 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					uint8_t filler[IPSEC_DOI_SPI_SIZE -
 							IPCOMP_CPI_SIZE];
 
-					if (!in_raw(filler, sizeof(filler),
-						    &next_proposal_pbs,
-						    "CPI filler") ||
-					    !all_zero(filler, sizeof(filler)))
+					diag_t d = pbs_in_raw(&next_proposal_pbs,
+							      filler, sizeof(filler),
+							      "CPI filler");
+					if (d != NULL) {
+						log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 						return INVALID_SPI;	/* reject whole SA */
+					}
+					if (!all_zero(filler, sizeof(filler))) {
+						return INVALID_SPI;	/* reject whole SA */
+					}
 				} else if (next_proposal.isap_spisize !=
 					   IPCOMP_CPI_SIZE) {
 					log_state(RC_LOG_SERIOUS, st,
@@ -2916,12 +2968,16 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				 * ipsec_spi_t.  So we start a couple of bytes in.
 				 */
 				zero(&next_spi);
-				if (!in_raw((uint8_t *)&next_spi +
-					    IPSEC_DOI_SPI_SIZE -
-					    IPCOMP_CPI_SIZE,
-					    IPCOMP_CPI_SIZE,
-					    &next_proposal_pbs, "CPI"))
+				diag_t d = pbs_in_raw(&next_proposal_pbs,
+						      (uint8_t *)&next_spi +
+						      IPSEC_DOI_SPI_SIZE -
+						      IPCOMP_CPI_SIZE,
+						      IPCOMP_CPI_SIZE,
+						      "CPI");
+				if (d != NULL) {
+					log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 					return INVALID_SPI;	/* reject whole SA */
+				}
 
 				/* If sanity ruled, CPIs would have to be such that
 				 * the SAID (the triple (CPI, IPCOM, destination IP))
@@ -2964,10 +3020,14 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					return INVALID_SPI;	/* reject whole SA */
 				}
 
-				if (!in_raw((uint8_t *)&next_spi,
-					    sizeof(next_spi),
-					    &next_proposal_pbs, "SPI"))
+				diag_t d = pbs_in_raw(&next_proposal_pbs,
+						      (uint8_t *)&next_spi,
+						      sizeof(next_spi),
+						      "SPI");
+				if (d != NULL) {
+					log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 					return INVALID_SPI;	/* reject whole SA */
+				}
 
 				/* SPI value 0 is invalid and values 1-255 are reserved to IANA.
 				 * RFC 2402 (ESP) 2.4, RFC 2406 (AH) 2.1
@@ -3044,9 +3104,13 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 
-			if (!in_struct(&next_proposal, &isakmp_proposal_desc,
-				       sa_pbs, &next_proposal_pbs))
+			diag_t d = pbs_in_struct(sa_pbs, &isakmp_proposal_desc,
+						 &next_proposal, sizeof(next_proposal),
+						 &next_proposal_pbs);
+			if (d != NULL) {
+				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+			}
 		} while (next_proposal.isap_proposal == propno);
 
 		/* Now that we have all conjuncts, we should try
@@ -3317,7 +3381,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					      &ah_trans_pbs,
 					      &st->st_connection->spd,
 					      tunnel_mode &&
-						inner_proto == &ip_protocol_ah);
+					      inner_proto == &ip_protocol_ah,
+					      st->st_logger);
 			}
 
 			/* ESP proposal */
@@ -3331,7 +3396,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					      &esp_trans_pbs,
 					      &st->st_connection->spd,
 					      tunnel_mode &&
-						inner_proto == &ip_protocol_esp);
+					      inner_proto == &ip_protocol_esp,
+					      st->st_logger);
 			}
 
 			/* IPCOMP proposal */
@@ -3345,7 +3411,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					      &ipcomp_trans_pbs,
 					      &st->st_connection->spd,
 					      tunnel_mode &&
-						inner_proto == &ip_protocol_comp);
+					      inner_proto == &ip_protocol_comp,
+					      st->st_logger);
 			}
 
 			close_output_pbs(r_sa_pbs);

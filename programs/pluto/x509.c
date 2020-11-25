@@ -383,7 +383,7 @@ generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 /*
  *  Converts a X.500 generalName into an ID
  */
-static void gntoid(struct id *id, const generalName_t *gn)
+static void gntoid(struct id *id, const generalName_t *gn, struct logger *logger)
 {
 	*id  = empty_id;
 
@@ -394,18 +394,20 @@ static void gntoid(struct id *id, const generalName_t *gn)
 		break;
 	case GN_IP_ADDRESS:	/* ID type: ID_IPV4_ADDR */
 	{
+		/*
+		 * XXX: why could this fail; and what happens when it
+		 * is ignored?
+		 */
 		const struct ip_info *afi = &ipv4_info;
-		err_t ugh = NULL;
-
 		id->kind = afi->id_addr;
-		ugh = hunk_to_address(gn->name, afi, &id->ip_addr);
+		err_t ugh = hunk_to_address(gn->name, afi, &id->ip_addr);
 		if (ugh != NULL) {
-			libreswan_log(
-				"Warning: gntoid() failed to initaddr(): %s",
-				ugh);
+			log_message(RC_LOG, logger,
+				    "warning: gntoid() failed to initaddr(): %s",
+				    ugh);
 		}
+		break;
 	}
-	break;
 	case GN_RFC822_NAME:	/* ID type: ID_USER_FQDN */
 		id->kind = ID_USER_FQDN;
 		id->name = gn->name;
@@ -417,6 +419,7 @@ static void gntoid(struct id *id, const generalName_t *gn)
 	default:
 		id->kind = ID_NONE;
 		id->name = EMPTY_CHUNK;
+		break;
 	}
 }
 
@@ -473,7 +476,7 @@ static void add_cert_san_pubkeys(struct pubkey_list **pubkey_db,
 	for (generalName_t *gn = gnt; gn != NULL; gn = gn->next) {
 		struct id id;
 
-		gntoid(&id, gn);
+		gntoid(&id, gn, logger);
 		if (id.kind != ID_NONE) {
 			struct pubkey *pk = NULL;
 			diag_t d = create_pubkey_from_cert(&id, cert, &pk, logger);
@@ -647,8 +650,8 @@ bool match_certs_id(const struct certs *certs,
 	CERTCertificate *end_cert = certs->cert;
 
 	if (CERT_IsCACert(end_cert, NULL)) {
-		loglog(RC_LOG_SERIOUS,
-		       "cannot use CA certificate for endpoint");
+		log_message(RC_LOG_SERIOUS, logger,
+			    "cannot use CA certificate for endpoint");
 		return false;
 	}
 
@@ -932,7 +935,7 @@ bool v1_verify_certs(struct msg_digest *md)
  *  treat such payloads as synonymous with "X.509 Certificate -
  *  Signature".
  */
-void ikev1_decode_cr(struct msg_digest *md)
+void ikev1_decode_cr(struct msg_digest *md, struct logger *logger)
 {
 	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_CR];
 	     p != NULL; p = p->next) {
@@ -966,10 +969,9 @@ void ikev1_decode_cr(struct msg_digest *md)
 					str_dn_or_null(ca_name, "%any", &buf));
 			}
 		} else {
-			loglog(RC_LOG_SERIOUS,
-				"ignoring %s certificate request payload",
-				enum_show(&ike_cert_type_names,
-					cr->isacr_type));
+			log_message(RC_LOG_SERIOUS, logger,
+				    "ignoring %s certificate request payload",
+				    enum_show(&ike_cert_type_names, cr->isacr_type));
 		}
 	}
 }
@@ -980,7 +982,7 @@ void ikev1_decode_cr(struct msg_digest *md)
  * This needs to handle the SHA-1 hashes instead. However, receiving CRs
  * does nothing ATM.
  */
-void ikev2_decode_cr(struct msg_digest *md)
+void ikev2_decode_cr(struct msg_digest *md, struct logger *logger)
 {
 	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2CERTREQ];
 	     p != NULL; p = p->next) {
@@ -1016,10 +1018,9 @@ void ikev2_decode_cr(struct msg_digest *md)
 			break;
 		}
 		default:
-			loglog(RC_LOG_SERIOUS,
-				"ignoring CERTREQ payload of unsupported type %s",
-				enum_show(&ikev2_cert_type_names,
-					cr->isacertreq_enc));
+			log_message(RC_LOG_SERIOUS, logger,
+				    "ignoring CERTREQ payload of unsupported type %s",
+				    enum_show(&ikev2_cert_type_names, cr->isacertreq_enc));
 		}
 	}
 }
@@ -1291,21 +1292,21 @@ bool ikev2_send_certreq_INIT_decision(const struct state *st,
 }
 
 /* Send v2 CERT and possible CERTREQ (which should be separated eventually)  */
-stf_status ikev2_send_cert(const struct state *st, pb_stream *outpbs)
+stf_status ikev2_send_cert(const struct connection *c, struct pbs_out *outpbs)
 {
-	const cert_t mycert = st->st_connection->spd.this.cert;
-	bool send_authcerts = st->st_connection->send_ca != CA_SEND_NONE;
-	bool send_full_chain = send_authcerts && st->st_connection->send_ca == CA_SEND_ALL;
+	const cert_t mycert = c->spd.this.cert;
+	bool send_authcerts = c->send_ca != CA_SEND_NONE;
+	bool send_full_chain = send_authcerts && c->send_ca == CA_SEND_ALL;
 
 	if (impair.send_pkcs7_thingie) {
-		libreswan_log("IMPAIR: sending cert as PKCS7 blob");
+		log_pbs_out(RC_LOG, outpbs, "IMPAIR: sending cert as PKCS7 blob");
 		SECItem *pkcs7 = nss_pkcs7_blob(mycert.u.nss_cert,
 						send_full_chain);
 		if (!pexpect(pkcs7 != NULL)) {
 			return STF_INTERNAL_ERROR;
 		}
 		struct ikev2_cert pkcs7_hdr = {
-			.isac_critical = build_ikev2_critical(false),
+			.isac_critical = build_ikev2_critical(false, outpbs->out_logger),
 			.isac_enc = CERT_PKCS7_WRAPPED_X509,
 		};
 		pb_stream cert_pbs;
@@ -1349,7 +1350,7 @@ stf_status ikev2_send_cert(const struct state *st, pb_stream *outpbs)
 #endif
 
 	const struct ikev2_cert certhdr = {
-		.isac_critical = build_ikev2_critical(false),
+		.isac_critical = build_ikev2_critical(false, outpbs->out_logger),
 		.isac_enc = mycert.ty,
 	};
 

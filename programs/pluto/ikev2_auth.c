@@ -163,7 +163,8 @@ enum ikev2_auth_method v2_auth_method(struct ike_sa *ike, enum keyword_authby au
 			if (allow_legacy) {
 				auth_method = IKEv2_AUTH_RSA;
 			} else {
-				loglog(RC_LOG_SERIOUS, "legacy RSA-SHA1 is not allowed but peer supports nothing else");
+				log_state(RC_LOG_SERIOUS, &ike->sa,
+					  "legacy RSA-SHA1 is not allowed but peer supports nothing else");
 				auth_method = IKEv2_AUTH_RESERVED;
 			}
 		} else {
@@ -173,7 +174,8 @@ enum ikev2_auth_method v2_auth_method(struct ike_sa *ike, enum keyword_authby au
 				if (allow_legacy) {
 					auth_method = IKEv2_AUTH_RSA;
 				} else {
-					loglog(RC_LOG_SERIOUS, "Local policy does not allow legacy RSA-SHA1 but connection allows no other hash policy");
+					log_state(RC_LOG_SERIOUS, &ike->sa,
+						  "Local policy does not allow legacy RSA-SHA1 but connection allows no other hash policy");
 					auth_method = IKEv2_AUTH_RESERVED;
 
 				}
@@ -226,23 +228,21 @@ shunk_t authby_asn1_hash_blob(const struct hash_desc *hash_algo,
 	case AUTHBY_ECDSA:
 		return hash_algo->hash_asn1_blob_ecdsa;
 	default:
-		libreswan_log("Unknown or unsupported authby method for DigSig");
 		return null_shunk;
 	}
 }
 
 bool emit_v2_asn1_hash_blob(const struct hash_desc *hash_algo,
-			    pb_stream *a_pbs, enum keyword_authby authby)
+			    struct pbs_out *a_pbs, enum keyword_authby authby)
 {
 	shunk_t b = authby_asn1_hash_blob(hash_algo, authby);
 	if (!pexpect(b.len > 0)) {
-		/* already logged */
 		return false;
 	}
 
-	if (!pbs_out_hunk(b, a_pbs,
-			  "OID of ASN.1 Algorithm Identifier")) {
-		loglog(RC_LOG_SERIOUS, "DigSig: failed to emit OID of ASN.1 Algorithm Identifier");
+	if (!pbs_out_hunk(b, a_pbs, "OID of ASN.1 Algorithm Identifier")) {
+		log_pbs_out(RC_LOG_SERIOUS, a_pbs,
+			    "DigSig: failed to emit OID of ASN.1 Algorithm Identifier");
 		return false;
 	}
 	return true;
@@ -305,12 +305,12 @@ struct hash_signature v2_auth_signature(struct logger *logger,
 bool emit_v2_auth(struct ike_sa *ike,
 		  const struct hash_signature *auth_sig,
 		  const struct crypt_mac *id_payload_mac,
-		  pb_stream *outpbs)
+		  struct pbs_out *outpbs)
 {
 	enum keyword_authby authby = v2_auth_by(ike);
 
 	struct ikev2_auth a = {
-		.isaa_critical = build_ikev2_critical(false),
+		.isaa_critical = build_ikev2_critical(false, ike->sa.st_logger),
 		.isaa_auth_method = v2_auth_method(ike, authby),
 	};
 
@@ -340,7 +340,7 @@ bool emit_v2_auth(struct ike_sa *ike,
 	case IKEv2_AUTH_NULL:
 		/* emit */
 		if (!ikev2_emit_psk_auth(authby, ike, id_payload_mac, &a_pbs)) {
-			loglog(RC_LOG_SERIOUS, "Failed to find our PreShared Key");
+			log_pbs_out(RC_LOG_SERIOUS, outpbs, "Failed to find our PreShared Key");
 			return false;
 		}
 		break;

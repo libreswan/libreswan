@@ -1363,7 +1363,7 @@ static bool extract_connection(const struct whack_message *wm,
 			return false;
 		}
 		/* probe the interface */
-		err_t err = kernel_ops->migrate_sa_check();
+		err_t err = kernel_ops->migrate_sa_check(logger);
 		if (err != NULL) {
 			log_message(RC_FATAL, logger,
 				    "failed to add connection: MOBIKE kernel support missing for %s interface: %s",

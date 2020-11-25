@@ -215,7 +215,7 @@ static bool ikev2_try_asn1_hash_blob(const struct hash_desc *hash_algo,
 		pbs_left(a_pbs) >= b.len && /* the stream has enough octets */
 		memeq(a_pbs->cur, b.ptr, b.len) && /* they are the right octets */
 		pexpect(b.len <= sizeof(in_blob)) && /* enough space in in_blob[] */
-		pexpect(in_raw(in_blob, b.len, a_pbs, "ASN.1 blob for hash algo")); /* can eat octets */
+		pexpect(pbs_in_raw(a_pbs, in_blob, b.len, "ASN.1 blob for hash algo") == NULL); /* can eat octets */
 }
 
 void ikev2_ike_sa_established(struct ike_sa *ike,
@@ -542,7 +542,6 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 					      c, policy, try, whack_sock);
 	statetime_t start = statetime_backdate(&ike->sa, inception);
 
-	push_cur_state(&ike->sa);
 	/* set up new state */
 	struct state *st = &ike->sa;
 	passert(st->st_ike_version == IKEv2);
@@ -623,7 +622,6 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 	if (IS_LIBUNBOUND && id_ipseckey_allowed(st, IKEv2_AUTH_RESERVED)) {
 		stf_status ret = idr_ipseckey_fetch(st);
 		if (ret != STF_OK) {
-			reset_globals();
 			return;
 		}
 	}
@@ -648,7 +646,6 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 			    ikev2_parent_outI1_continue,
 			    "ikev2_outI1 KE");
 	statetime_stop(&start, "%s()", __func__);
-	reset_globals();
 }
 
 /*
@@ -776,7 +773,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	{
 		pb_stream pb;
 		struct ikev2_generic in = {
-			.isag_critical = build_ikev2_critical(false),
+			.isag_critical = build_ikev2_critical(false, ike->sa.st_logger),
 		};
 
 		if (!out_struct(&in, &ikev2_nonce_desc, &rbody, &pb) ||
@@ -1123,7 +1120,7 @@ static stf_status ikev2_parent_inI1outR1_continue(struct state *st,
 	{
 		pb_stream pb;
 		struct ikev2_generic in = {
-			.isag_critical = build_ikev2_critical(false),
+			.isag_critical = build_ikev2_critical(false, st->st_logger),
 		};
 
 		if (!out_struct(&in, &ikev2_nonce_desc, &rbody, &pb) ||
@@ -1268,8 +1265,10 @@ stf_status process_IKE_SA_INIT_v2N_INVALID_KE_PAYLOAD_response(struct ike_sa *ik
 	}
 
 	struct suggested_group sg;
-	if (!in_struct(&sg, &suggested_group_desc, &invalid_ke_pbs, NULL)) {
-		/* already logged */
+	diag_t d = pbs_in_struct(&invalid_ke_pbs, &suggested_group_desc,
+				 &sg, sizeof(sg), NULL);
+	if (d != NULL) {
+		log_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
 		return STF_IGNORE;
 	}
 
@@ -2267,7 +2266,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 
 	/* send [CERT,] payload RFC 4306 3.6, 1.2) */
 	if (send_cert) {
-		stf_status certstat = ikev2_send_cert(cst, &sk.pbs);
+		stf_status certstat = ikev2_send_cert(cst->st_connection, &sk.pbs);
 		if (certstat != STF_OK)
 			return certstat;
 
@@ -2376,7 +2375,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	/* code does not support AH+ESP, which not recommended as per RFC 8247 */
 	struct ipsec_proto_info *proto_info
 		= ikev2_child_sa_proto_info(pexpect_child_sa(cst), cc->policy);
-	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy);
+	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy, cst->st_logger);
 	const chunk_t local_spi = THING_AS_CHUNK(proto_info->our_spi);
 
 	/*
@@ -2952,9 +2951,10 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		} else {
 
 			chunk_t no_ppk_auth = alloc_chunk(len, "NO_PPK_AUTH");
-
-			if (!in_raw(no_ppk_auth.ptr, len, &pbs, "NO_PPK_AUTH extract")) {
-				log_state(RC_LOG_SERIOUS, st, "Failed to extract %zd bytes of NO_PPK_AUTH from Notify payload", len);
+			diag_t d = pbs_in_raw(&pbs, no_ppk_auth.ptr, len, "NO_PPK_AUTH extract");
+			if (d != NULL) {
+				log_diag(RC_LOG_SERIOUS, st->st_logger, &d,
+					 "failed to extract %zd bytes of NO_PPK_AUTH from Notify payload", len);
 				free_chunk_content(&no_ppk_auth);
 				return STF_FATAL;
 			}
@@ -3008,7 +3008,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 	/* process CERTREQ payload */
 	if (md->chain[ISAKMP_NEXT_v2CERTREQ] != NULL) {
 		dbg("received CERTREQ payload; going to decode it");
-		ikev2_decode_cr(md);
+		ikev2_decode_cr(md, ike->sa.st_logger);
 	}
 
 	/* process AUTH payload */
@@ -3309,7 +3309,7 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 		/* ensure we run keepalives if needed */
 		if (c->nat_keepalive) {
 			/* XXX: just trigger this event? */
-			nat_traversal_ka_event(null_fd);
+			nat_traversal_ka_event(ike->sa.st_logger);
 		}
 	}
 
@@ -3414,7 +3414,7 @@ static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *
 	 * but ultimately should go into the CERT decision
 	 */
 	if (send_cert) {
-		stf_status certstat = ikev2_send_cert(st, &sk.pbs);
+		stf_status certstat = ikev2_send_cert(st->st_connection, &sk.pbs);
 		if (certstat != STF_OK)
 			return certstat;
 	}
@@ -3747,7 +3747,10 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 
-		if (!in_struct(&n_ipcomp, &ikev2notify_ipcomp_data_desc, &pbs, NULL)) {
+		diag_t d = pbs_in_struct(&pbs, &ikev2notify_ipcomp_data_desc,
+					 &n_ipcomp, sizeof(n_ipcomp), NULL);
+		if (d != NULL) {
+			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			return STF_FATAL;
 		}
 
@@ -3984,7 +3987,7 @@ static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *
 		/* ensure we run keepalives if needed */
 		if (c->nat_keepalive) {
 			/* XXX: just trigger this event */
-			nat_traversal_ka_event(null_fd);
+			nat_traversal_ka_event(ike->sa.st_logger);
 		}
 	}
 
@@ -4146,8 +4149,9 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 	}
 
 	ipsec_spi_t spi = 0;
-	if (!in_raw(&spi, sizeof(spi), &rekey_sa_payload->pbs, "SPI")) {
-		/* already logged */
+	diag_t d = pbs_in_raw(&rekey_sa_payload->pbs, &spi, sizeof(spi), "SPI");
+	if (d != NULL) {
+		log_diag(RC_LOG, child->sa.st_logger, &d, "%s", "");
 		record_v2N_response(child->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
 				    NULL/*empty data*/, ENCRYPTED_PAYLOAD);
 		return false; /* cannot happen; XXX: why? */
@@ -4358,7 +4362,7 @@ static stf_status ikev2_child_add_ipsec_payloads(struct child_sa *child,
 	/* ??? this code won't support AH + ESP */
 	struct ipsec_proto_info *proto_info
 		= ikev2_child_sa_proto_info(child, cc->policy);
-	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy);
+	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy, child->sa.st_logger);
 	chunk_t local_spi = THING_AS_CHUNK(proto_info->our_spi);
 
 	/*
@@ -4400,7 +4404,7 @@ static stf_status ikev2_child_add_ipsec_payloads(struct child_sa *child,
 	}
 
 	struct ikev2_generic in = {
-		.isag_critical = build_ikev2_critical(false),
+		.isag_critical = build_ikev2_critical(false, child->sa.st_logger),
 	};
 	pb_stream pb_nr;
 	if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &pb_nr) ||
@@ -4496,7 +4500,7 @@ static stf_status ikev2_child_add_ike_payloads(struct child_sa *child,
 	/* send NONCE */
 	{
 		struct ikev2_generic in = {
-			.isag_critical = build_ikev2_critical(false),
+			.isag_critical = build_ikev2_critical(false, child->sa.st_logger),
 		};
 		pb_stream nr_pbs;
 		if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &nr_pbs) ||
@@ -5790,8 +5794,11 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 				for (i = 0; i < v2del->isad_nrspi; i++) {
 					ipsec_spi_t spi;
 
-					if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
+					diag_t d = pbs_in_raw( &p->pbs, &spi, sizeof(spi),"SPI");
+					if (d != NULL) {
+						log_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
 						return STF_INTERNAL_ERROR;	/* cannot happen */
+					}
 
 					dbg("delete %s SA(0x%08" PRIx32 ")",
 					    enum_show(&ikev2_delete_protocol_id_names,
@@ -6049,7 +6056,6 @@ void ikev2_initiate_child_sa(struct pending *p)
 	}
 	update_state_connection(&child->sa, c);
 
-	set_cur_state(&child->sa); /* we must reset before exit */
 	child->sa.st_try = p->try;
 
 	free_chunk_content(&child->sa.st_ni); /* this is from the parent. */
@@ -6133,7 +6139,6 @@ void ikev2_initiate_child_sa(struct pending *p)
 	}
 
 	event_force(EVENT_v2_INITIATE_CHILD, &child->sa);
-	reset_globals();
 }
 
 static ke_and_nonce_cb ikev2_child_outI_continue;
@@ -6338,7 +6343,6 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 static const struct iface_port *ikev2_src_iface(struct state *st,
 						struct starter_end *this)
 {
-	struct fd *whackfd = whack_log_fd; /* placeholder */
 	/* success found a new source address */
 	pexpect_st_local_endpoint(st);
 	ip_port port = endpoint_port(&st->st_interface->local_endpoint);
@@ -6349,7 +6353,9 @@ static const struct iface_port *ikev2_src_iface(struct state *st,
 		endpoint_buf b;
 		dbg("#%lu no interface for %s try to initialize",
 		    st->st_serialno, str_endpoint(&local_endpoint, &b));
-		find_ifaces(false, whackfd);
+		/* XXX: should this be building a global logger? */
+		struct logger global_logger[1] = { GLOBAL_LOGGER(whack_log_fd), };
+		find_ifaces(false, global_logger);
 		iface = find_iface_port_by_local_endpoint(&local_endpoint);
 		if (iface ==  NULL) {
 			return NULL;

@@ -23,7 +23,6 @@ void log_pexpect(where_t where, const char *message, ...)
 {
 	JAMBUF(buf) {
 		jam_string(buf, "EXPECTATION FAILED: ");
-		jam_cur_prefix(buf); /* XXX: grrr */
 		va_list args;
 		va_start(args, message);
 		jam_va_list(buf, message, args);

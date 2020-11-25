@@ -2002,7 +2002,7 @@ static void DBG_prefix_print_struct(const pb_stream *pbs,
  */
 
 diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
-		     void *struct_ptr, size_t struct_size,
+		     void *dest_start, size_t dest_size,
 		     struct pbs_in *obj_pbs)
 {
 	uint8_t *cur = ins->cur;
@@ -2012,11 +2012,11 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 			    sd->size);
 	}
 
+	passert(dest_size >= sd->size);
 	uint8_t *roof = cur + sd->size; /* may be changed by a length field */
-	uint8_t *outp = struct_ptr;
-	bool immediate = FALSE;
-
-	passert(struct_size == 0 || struct_size >= sd->size);
+	uint8_t *dest = dest_start;
+	uint8_t *dest_end = dest + dest_size;
+	bool immediate = false;
 
 	for (field_desc *fp = sd->fields; fp->field_type != ft_end; fp++) {
 
@@ -2024,8 +2024,8 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 		passert(cur + fp->size <= ins->roof);
 		/* field ends within struct? */
 		passert(cur + fp->size <= ins->cur + sd->size);
-		/* "offset into struct" - "offset into pbs" == "start of struct"? */
-		passert(outp - (cur - ins->cur) == struct_ptr);
+		/* field ends within dest */
+		passert(dest + fp->size <= dest_end);
 
 #if 0
 		dbg("%td (%td) '%s'.'%s' %d bytes ",
@@ -2039,7 +2039,14 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 			for (size_t i = fp->size; i != 0; i--) {
 				uint8_t byte = *cur;
 				if (byte != 0) {
-					/* We cannot zeroize it, it would break our hash calculation. */
+					/*
+					 * We cannot zeroize it, it
+					 * would break our hash
+					 * calculation.
+					 *
+					 * XXX: bytes used for hashing
+					 * can't be zero/ignore.
+					 */
 					dbg("byte at offset %td (%td) of '%s'.'%s' is 0x%02"PRIx8" but should have been zero (ignored)",
 					    (cur - ins->cur),
 					    (cur - ins->start),
@@ -2047,7 +2054,7 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 					    byte);
 				}
 				cur++;
-				*outp++ = '\0'; /* probably redundant */
+				*dest++ = '\0';
 			}
 			break;
 
@@ -2145,24 +2152,24 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 			/* deposit the value in the struct */
 			switch (fp->size) {
 			case 8 / BITS_PER_BYTE:
-				*(uint8_t *)outp = n;
+				*(uint8_t *)dest = n;
 				break;
 			case 16 / BITS_PER_BYTE:
-				*(uint16_t *)outp = n;
+				*(uint16_t *)dest = n;
 				break;
 			case 32 / BITS_PER_BYTE:
-				*(uint32_t *)outp = n;
+				*(uint32_t *)dest = n;
 				break;
 			default:
 				bad_case(fp->size);
 			}
-			outp += fp->size;
+			dest += fp->size;
 			break;
 		}
 
 		case ft_raw: /* bytes to be left in network-order */
 			for (size_t i = fp->size; i != 0; i--)
-				*outp++ = *cur++;
+				*dest++ = *cur++;
 			break;
 
 		case ft_end: /* end of field list */
@@ -2184,11 +2191,12 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 	ins->cur = roof;
 	if (DBGP(DBG_BASE)) {
 		DBG_prefix_print_struct(ins, "parse ",
-					struct_ptr, sd,
+					dest_start, sd,
 					true);
 	}
 	return NULL;
 }
+
 
 bool in_struct(void *struct_ptr, struct_desc *sd,
 	       struct pbs_in *ins, struct pbs_in *obj_pbs)
@@ -2204,10 +2212,10 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 }
 
 static diag_t pbs_in_raw_helper(struct pbs_in *ins,
-				void *bytes,
-				size_t len,
-				const char *name,
-				bool const isPeeking)
+                                void *bytes,
+                                size_t len,
+                                const char *name,
+                                bool const isPeeking)
 {
 	if (pbs_left(ins) < len) {
 		/* XXX: needs current logger embedded in pbs_in? */
@@ -2877,29 +2885,32 @@ void close_output_pbs(struct pbs_out *pbs)
 	pbs->out_logger = NULL;
 }
 
-bool pbs_in_address(ip_address *address, const struct ip_info *ipv,
-		    struct pbs_in *input_pbs, const char *what)
+diag_t pbs_in_address(struct pbs_in *input_pbs,
+		      ip_address *address, const struct ip_info *ipv,
+		      const char *what)
 {
 	switch (ipv->af) {
 	case AF_INET:
 	{
 		struct in_addr ip;
-		if (!in_raw(&ip, sizeof(ip), input_pbs, what)) {
+		diag_t d = pbs_in_raw(input_pbs, &ip, sizeof(ip), what);
+		if (d != NULL) {
 			*address = unset_address;
-			return false;
+			return d;
 		}
 		*address = address_from_in_addr(&ip);
-		return true;
+		return NULL;
 	}
 	case AF_INET6:
 	{
 		struct in6_addr ip;
-		if (!in_raw(&ip, sizeof(ip), input_pbs, what)) {
+		diag_t d = pbs_in_raw(input_pbs, &ip, sizeof(ip), what);
+		if (d != NULL) {
 			*address = unset_address;
-			return false;
+			return d;
 		}
 		*address = address_from_in6_addr(&ip);
-		return true;
+		return NULL;
 	}
 	default:
 		bad_case(ipv->af);

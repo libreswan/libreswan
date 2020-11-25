@@ -75,7 +75,8 @@ int send_crl_to_import(uint8_t *der, size_t len, const char *url, struct logger 
 		*crl_path_space = '\0';
 		n = 0;
 # else
-		FATAL_ERRNO(errno, "readlink(\"/proc/self/exe\") failed for crl helper");
+		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
+			    "readlink(\"/proc/self/exe\") failed for crl helper");
 # endif
 	}
 #else

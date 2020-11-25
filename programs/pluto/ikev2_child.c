@@ -104,7 +104,8 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 			if (res != STF_OK)
 				return res;
 		}
-		proto_info->our_spi = ikev2_child_sa_spi(&c->spd, c->policy);
+		proto_info->our_spi = ikev2_child_sa_spi(&c->spd, c->policy,
+							 child->sa.st_logger);
 		chunk_t local_spi = THING_AS_CHUNK(proto_info->our_spi);
 		if (!ikev2_emit_sa_proposal(outpbs,
 					    child->sa.st_accepted_esp_or_ah_proposal,
@@ -117,7 +118,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		/* send NONCE */
 		struct ikev2_generic in = {
-			.isag_critical = build_ikev2_critical(false),
+			.isag_critical = build_ikev2_critical(false, ike->sa.st_logger),
 		};
 		pb_stream pb_nr;
 		if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &pb_nr) ||
@@ -171,7 +172,10 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 
 			dbg("received v2N_IPCOMP_SUPPORTED of length %zd", len);
 
-			if (!in_struct(&n_ipcomp, &ikev2notify_ipcomp_data_desc, &pbs, NULL)) {
+			diag_t d = pbs_in_struct(&pbs, &ikev2notify_ipcomp_data_desc,
+						 &n_ipcomp, sizeof(n_ipcomp), NULL);
+			if (d != NULL) {
+				log_diag(RC_LOG, child->sa.st_logger, &d, "%s", "");
 				return STF_FATAL;
 			}
 
@@ -340,9 +344,10 @@ static void ikev2_set_domain(pb_stream *cp_a_pbs, struct state *st)
 
 	if (!responder) {
 		char *safestr = cisco_stringify(cp_a_pbs, "INTERNAL_DNS_DOMAIN",
-			st->st_connection->policy);
-		if (!ignore)
+						ignore, st->st_logger);
+		if (safestr != NULL) {
 			append_st_cfg_domain(st, safestr);
+		}
 	} else {
 		log_state(RC_LOG, st, "initiator INTERNAL_DNS_DOMAIN CP ignored");
 	}
@@ -361,7 +366,9 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st,
 	}
 
 	ip_address ip;
-	if (!pbs_in_address(&ip, af, cp_a_pbs, "INTERNAL_IP_DNS CP payload")) {
+	diag_t d = pbs_in_address(cp_a_pbs, &ip, af, "INTERNAL_IP_DNS CP payload");
+	if (d != NULL) {
+		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return false;
 	}
 
@@ -397,7 +404,9 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 	struct connection *c = st->st_connection;
 
 	ip_address ip;
-	if (!pbs_in_address(&ip, af, cp_a_pbs, "INTERNAL_IP_ADDRESS")) {
+	diag_t d = pbs_in_address(cp_a_pbs, &ip, af, "INTERNAL_IP_ADDRESS");
+	if (d != NULL) {
+		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return false;
 	}
 
@@ -491,11 +500,12 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 		struct ikev2_cp_attribute cp_a;
 		pb_stream cp_a_pbs;
 
-		if (!in_struct(&cp_a, &ikev2_cp_attribute_desc,
-					attrs, &cp_a_pbs)) {
-			log_state(RC_LOG_SERIOUS, st,
-				  "ERROR malformed CP attribute");
-			return FALSE;
+		diag_t d = pbs_in_struct(attrs, &ikev2_cp_attribute_desc,
+					 &cp_a, sizeof(cp_a), &cp_a_pbs);
+		if (d != NULL) {
+			log_diag(RC_LOG_SERIOUS, st->st_logger, &d,
+				 "ERROR malformed CP attribute");
+			return false;
 		}
 
 		switch (cp_a.type) {

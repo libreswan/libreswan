@@ -77,23 +77,6 @@ extern void binlog_state(struct state *st, enum state_kind state);
 
 extern void set_debugging(lset_t deb);
 
-extern void log_reset_globals(where_t where);
-#define reset_globals() log_reset_globals(HERE)
-
-extern void log_pexpect_reset_globals(where_t where);
-#define pexpect_reset_globals() log_pexpect_reset_globals(HERE)
-
-so_serial_t log_push_state(struct state *st, where_t where);
-void log_pop_state(so_serial_t serialno, where_t where);
-
-#define push_cur_state(ST) log_push_state(ST, HERE)
-#define pop_cur_state(ST) log_pop_state(ST, HERE)
-
-#define set_cur_state(ST) push_cur_state(ST)
-#define reset_cur_state() pop_cur_state(SOS_NOBODY)
-
-struct logger cur_logger(void);
-
 extern const struct logger_object_vec logger_global_vec;
 extern const struct logger_object_vec logger_from_vec;
 extern const struct logger_object_vec logger_message_vec;
@@ -313,36 +296,6 @@ extern void loglog(enum rc_type, const char *fmt, ...) PRINTF_LIKE(2); /* use lo
 #define libreswan_log(MESSAGE, ...) loglog(RC_LOG, MESSAGE, ##__VA_ARGS__) /* XXX: TBD: use log_message() */
 
 void jambuf_to_default_streams(struct jambuf *buf, enum rc_type rc);
-
-#define LOG_ERRNO(ERRNO, MESSAGE, ...)					\
-	{								\
-		int e_ = ERRNO; /* save value across va args */		\
-		/* XXX: notice how ERROR comes before <prefix> */	\
-		/* ERROR: <prefix>: <message>. Errno N: <errmess> */	\
-		JAMBUF(buf) {						\
-			jam(buf, "ERROR: ");				\
-			jam_cur_prefix(buf);				\
-			jam(buf, MESSAGE, ##__VA_ARGS__);		\
-			jam_string(buf, ".");				\
-			jam(buf, " "PRI_ERRNO, pri_errno(e_));		\
-			jambuf_to_error_stream(buf);			\
-		}							\
-	}
-
-#define FATAL_ERRNO(ERRNO, MESSAGE, ...)				\
-	{								\
-		int e_ = ERRNO; /* save value across va args */		\
-		/* XXX: notice how FATAL_ERROR: is before <cur-prefix> */ \
-		/* FATAL ERROR: <cur-prefix><message> */		\
-		JAMBUF(buf) {						\
-			jam(buf, "FATAL ERROR: ");			\
-			jam_cur_prefix(buf);				\
-			jam(buf, MESSAGE". "PRI_ERRNO,			\
-			    ##__VA_ARGS__, pri_errno(e_));		\
-			jambuf_to_error_stream(buf);			\
-		}							\
-		libreswan_exit(PLUTO_EXIT_FAIL);			\
-	}
 
 #define LSWLOG_DEBUG(BUF)					\
 	JAMBUF(BUF)						\

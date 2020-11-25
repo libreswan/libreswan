@@ -820,6 +820,7 @@ extern void state_eroute_usage(const ip_subnet *ours, const ip_subnet *peers,
 extern void free_sec_ctx(struct state *const st);
 
 extern void delete_state(struct state *st);
+extern void delete_other_state(struct state *st, struct state *other_st);
 extern void delete_states_by_connection(struct connection *c, bool relations, struct fd *whackfd);
 extern void rekey_p2states_by_connection(struct connection *c);
 enum send_delete { PROBABLY_SEND_DELETE, DONT_SEND_DELETE, };
@@ -881,7 +882,7 @@ extern void v1_delete_state_by_username(struct state *st, void *name);
 extern void delete_state_by_id_name(struct state *st, void *name);
 
 extern void delete_cryptographic_continuation(struct state *st);
-extern void delete_states_dead_interfaces(struct fd *whackfd);
+extern void delete_states_dead_interfaces(struct logger *logger);
 extern bool dpd_active_locally(const struct state *st);
 
 /*
@@ -913,7 +914,7 @@ extern bool ikev2_viable_parent(const struct ike_sa *ike);
 
 extern bool uniqueIDs;  /* --uniqueids? */
 extern void IKE_SA_established(const struct ike_sa *ike);
-extern void revive_conns(struct fd *whackfd);
+extern void revive_conns(struct logger *logger);
 
 void list_state_events(struct show *s, monotime_t now);
 

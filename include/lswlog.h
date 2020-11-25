@@ -252,19 +252,6 @@ void jambuf_to_error_stream(struct jambuf *buf);
 void jambuf_to_debug_stream(struct jambuf *buf);
 
 /*
- * Log to the default stream(s):
- *
- * - for pluto this means 'syslog', and when connected, whack.
- *
- * - for standalone tools, this means stderr, but only when enabled.
- *
- * There are two variants, the first specify the RC (prefix sent to
- * whack), while the second default RC to RC_LOG.
- */
-
-void jam_cur_prefix(struct jambuf *buf);
-
-/*
  * Wrap <message> in a prefix and suffix where the suffix contains
  * errno and message.
  *
@@ -273,11 +260,9 @@ void jam_cur_prefix(struct jambuf *buf);
  * Because __VA_ARGS__ may contain function calls that modify ERRNO,
  * errno's value is first saved.
  *
- * While these common-case macros could be implemented directly using
- * LSWLOG_ERRNO_() et.al. they are not, instead they are implemented
- * as wrapper functions.  This is so that a crash will include the
- * below functions _including_ the with MESSAGE parameter - makes
- * debugging much easier.
+ * While these common-case macros are implemented as wrapper functions
+ * so that backtrace will include the below function call and that
+ * _includes_ the MESSAGE parameter - makes debugging much easier.
  */
 
 void libreswan_exit(enum pluto_exit_code rc) NEVER_RETURNS;

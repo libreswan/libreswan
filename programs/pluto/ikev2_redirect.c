@@ -382,7 +382,9 @@ err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 		if (gw_info.gw_identity_len < af->ip_size) {
 			return "transferred GW Identity Length is too small for an IP address";
 		}
-		if (!pbs_in_address(redirect_ip, af, &input_pbs, "REDIRECT address")) {
+		diag_t d = pbs_in_address(&input_pbs, redirect_ip, af, "REDIRECT address");
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return "variable part of payload does not match transferred GW Identity Length";
 		}
 		address_buf b;
@@ -429,7 +431,8 @@ static void del_spi_trick(struct state *st)
 {
 	if (del_spi(st->st_esp.our_spi, &ip_protocol_esp,
 		    &st->st_connection->temp_vars.old_gw_address,
-		    &st->st_connection->spd.this.host_addr)) {
+		    &st->st_connection->spd.this.host_addr,
+		    st->st_logger)) {
 		dbg("redirect: successfully deleted lingering SPI entry");
 	} else {
 		dbg("redirect: failed to delete lingering SPI entry");

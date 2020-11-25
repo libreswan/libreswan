@@ -37,7 +37,6 @@
 
 /*
  * To obsolete or convert to runtime options:
- * ALLOW_MICROSOFT_BAD_PROPOSAL
  * IPSEC_CONNECTION_LIMIT
  * NOTYET
  * NOT_YET

@@ -446,12 +446,12 @@ extern void flush_revival(const struct connection *c);
 struct xfrm_user_sec_ctx_ike; /* forward declaration */
 
 extern void initiate_ondemand(const ip_address *our_client,
-			     const ip_address *peer_client,
+			      const ip_address *peer_client,
 			      int transport_proto,
-			      bool held,
-			      struct fd *whackfd, bool background,
+			      bool held, bool background,
 			      struct xfrm_user_sec_ctx_ike *uctx,
-			      const char *why);
+			      const char *why,
+			      struct logger *logger);
 
 extern void terminate_connection(const char *name, bool quiet,
 				 struct fd *whack);
@@ -585,8 +585,8 @@ extern void show_connections_status(struct show *s);
 extern int connection_compare(const struct connection *ca,
 			      const struct connection *cb);
 
-void connection_check_ddns(struct fd *whackfd);
-void connection_check_phase2(struct fd *whackfd);
+void connection_check_ddns(struct logger *logger);
+void connection_check_phase2(struct logger *logger);
 void init_connections(void);
 
 extern int foreach_connection_by_alias(const char *alias,

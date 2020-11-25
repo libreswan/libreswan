@@ -25,12 +25,15 @@
  *
  */
 
+#include "ike_alg.h"
+#include "id.h"
+#include "ip_info.h"
+
 #include "defs.h"		/* for so_serial_t */
+#include "demux.h"
 #include "unpack.h"
 #include "log.h"
 #include "packet.h"
-#include "demux.h"
-#include "ike_alg.h"
 
 /* accept_KE
  *
@@ -72,4 +75,93 @@ void unpack_nonce(chunk_t *n, chunk_t *nonce)
 	free_chunk_content(n);
 	*n = *nonce; /* steal away */
 	*nonce = empty_chunk;
+}
+
+/*
+ * Decode the ID payload of Phase 1 (main_inI3_outR3 and main_inR3)
+ * Clears *peer to avoid surprises.
+ * Note: what we discover may oblige Pluto to switch connections.
+ * We must be called before SIG or HASH are decoded since we
+ * may change the peer's RSA key or ID.
+ */
+
+diag_t unpack_peer_id(enum ike_id_type kind, struct id *peer, const struct pbs_in *id_pbs)
+{
+	size_t left = pbs_left(id_pbs);
+
+	*peer = (struct id) {.kind = kind };	/* clears everything */
+
+	switch (kind) {
+
+	/* ident types mostly match between IKEv1 and IKEv2 */
+	case ID_IPV4_ADDR:
+	case ID_IPV6_ADDR:
+	{
+		/* failure mode for initaddr is probably inappropriate address length */
+		struct pbs_in in_pbs = *id_pbs;
+		diag_t d = pbs_in_address(&in_pbs, &peer->ip_addr,
+					  (peer->kind == ID_IPV4_ADDR ? &ipv4_info :
+					   &ipv6_info), "peer ID");
+		if (d != NULL) {
+			return d;
+		}
+		break;
+	}
+
+	/* seems odd to continue as ID_FQDN? */
+	case ID_USER_FQDN:
+#if 0
+		if (memchr(id_pbs->cur, '@', left) == NULL) {
+			loglog(RC_LOG_SERIOUS,
+				"peer's ID_USER_FQDN contains no @: %.*s",
+				(int) left,
+				id_pbs->cur);
+			/* return FALSE; */
+		}
+#endif
+		if (memchr(id_pbs->cur, '\0', left) != NULL) {
+			return diag("Phase 1 (Parent)ID Payload of type %s contains a NUL",
+				    enum_show(&ike_idtype_names, kind));
+		}
+		/* ??? ought to do some more sanity check, but what? */
+		peer->name = chunk2(id_pbs->cur, left);
+		break;
+
+	case ID_FQDN:
+		if (memchr(id_pbs->cur, '\0', left) != NULL) {
+			return diag("Phase 1 (Parent)ID Payload of type %s contains a NUL",
+				    enum_show(&ike_idtype_names, kind));
+		}
+		/* ??? ought to do some more sanity check, but what? */
+		peer->name = chunk2(id_pbs->cur, left);
+		break;
+
+	case ID_KEY_ID:
+		peer->name = chunk2(id_pbs->cur, left);
+		if (DBGP(DBG_BASE)) {
+			DBG_dump_hunk("KEY ID:", peer->name);
+		}
+		break;
+
+	case ID_DER_ASN1_DN:
+		peer->name = chunk2(id_pbs->cur, left);
+		if (DBGP(DBG_BASE)) {
+		    DBG_dump_hunk("DER ASN1 DN:", peer->name);
+		}
+		break;
+
+	case ID_NULL:
+		if (left != 0) {
+			if (DBGP(DBG_BASE)) {
+				DBG_dump("unauthenticated NULL ID:", id_pbs->cur, left);
+			}
+		}
+		break;
+
+	default:
+		return diag("Unsupported identity type (%s) in Phase 1 (Parent) ID Payload",
+			    enum_show(&ike_idtype_names, kind));
+	}
+
+	return NULL;
 }

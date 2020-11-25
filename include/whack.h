@@ -325,7 +325,7 @@ struct whack_message {
 	lset_t whack_list;
 
 	/* for WHACK_REREAD */
-	u_char whack_reread;
+	uint8_t whack_reread;
 
 	/* for connalias string */
 	char *connalias;

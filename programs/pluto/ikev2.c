@@ -76,6 +76,7 @@
 #include "kernel.h"
 #include "iface.h"
 #include "ikev2_notify.h"
+#include "unpack.h"
 
 static void v2_dispatch(struct ike_sa *ike, struct state *st,
 			struct msg_digest *md,
@@ -792,9 +793,11 @@ static struct payload_summary ikev2_decode_payloads(struct logger *log,
 			 * the Critical Bit, we should be upset but if
 			 * it does not, we should just ignore it.
 			 */
-			if (!in_struct(&pd->payload, &ikev2_generic_desc, in_pbs, &pd->pbs)) {
-				log_message(RC_LOG_SERIOUS, log,
-					    "malformed payload in packet");
+			diag_t d = pbs_in_struct(in_pbs, &ikev2_generic_desc,
+						 &pd->payload, sizeof(pd->payload), &pd->pbs);
+			if (d != NULL) {
+				log_diag(RC_LOG_SERIOUS, log, &d,
+					 "malformed payload in packet");
 				summary.n = v2N_INVALID_SYNTAX;
 				break;
 			}
@@ -844,9 +847,12 @@ static struct payload_summary ikev2_decode_payloads(struct logger *log,
 		 * be.
 		 */
 		pd->payload_type = np;
-		if (!in_struct(&pd->payload, sd, in_pbs, &pd->pbs)) {
-			log_message(RC_LOG_SERIOUS,  log,
-				    "malformed payload in packet");
+		diag_t d = pbs_in_struct(in_pbs, sd,
+					 &pd->payload, sizeof(pd->payload),
+					 &pd->pbs);
+		if (d != NULL) {
+			log_diag(RC_LOG_SERIOUS, log, &d,
+				 "malformed payload in packet");
 			summary.n = v2N_INVALID_SYNTAX;
 			break;
 		}
@@ -1045,12 +1051,6 @@ static struct state *find_v2_sa_by_responder_wip(struct ike_sa *ike, const msgid
  * instance, little point in searching for a state when the IKE SA's
  * window shows the Message ID is too old (only record'n'send breakage
  * means it might still have a message, argh!).
- *
- * This code should use an explicit log function.  libreswan_log() is
- * at the mercy of the caller so the messages might be logged against
- * ST and might be logged against IKE.  This is one thing that
- * prevents find_v2_sa_by_*_wip() and this code being better
- * organized.
  */
 
 /*
@@ -1111,7 +1111,10 @@ static bool is_duplicate_request(struct ike_sa *ike,
 		if (md->hdr.isa_np == ISAKMP_NEXT_v2SKF) {
 			struct ikev2_skf skf;
 			pb_stream in_pbs = md->message_pbs; /* copy */
-			if (!in_struct(&skf, &ikev2_skf_desc, &in_pbs, NULL)) {
+			diag_t d = pbs_in_struct(&in_pbs, &ikev2_skf_desc,
+						 &skf, sizeof(skf), NULL);
+			if (d != NULL) {
+				log_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
 				return true;
 			}
 			fragment = skf.isaskf_number;
@@ -1183,7 +1186,9 @@ static bool is_duplicate_request(struct ike_sa *ike,
 		if (md->hdr.isa_np == ISAKMP_NEXT_v2SKF) {
 			struct ikev2_skf skf;
 			pb_stream in_pbs = md->message_pbs; /* copy */
-			if (!in_struct(&skf, &ikev2_skf_desc, &in_pbs, NULL)) {
+			diag_t d = pbs_in_struct(&skf, &ikev2_skf_desc, &in_pbs, NULL);
+			if (d != NULL) {
+				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				return true;
 			}
 			fragment = skf.isaskf_number;
@@ -1755,9 +1760,7 @@ void ikev2_process_packet(struct msg_digest *md)
 			if (md->fake_clone) {
 				log_state(RC_LOG, &ike->sa, "IMPAIR: processing a fake (cloned) message");
 			}
-			push_cur_state(&ike->sa);
 			v2_dispatch(ike, &ike->sa, md, transition);
-			pop_cur_state(SOS_NOBODY);
 			statetime_stop(&start, "%s()", __func__);
 			return;
 		}
@@ -1845,9 +1848,7 @@ void ikev2_process_packet(struct msg_digest *md)
 			}
 
 			statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
-			push_cur_state(&ike->sa);
 			v2_dispatch(ike, &ike->sa, md, transition);
-			pop_cur_state(SOS_NOBODY);
 			statetime_stop(&start, "%s()", __func__);
 			return;
 		}
@@ -1899,9 +1900,7 @@ void ikev2_process_packet(struct msg_digest *md)
 	 * it.
 	 */
 	statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
-	so_serial_t old = push_cur_state(&ike->sa);
 	ike_process_packet(md, ike);
-	pop_cur_state(old);
 	statetime_stop(&start, "%s()", __func__);
 }
 
@@ -1980,7 +1979,6 @@ static void ike_process_packet(struct msg_digest *md, struct ike_sa *ike)
 	 */
 	passert(st != NULL);
 	/* XXX: debug-logging this is redundant */
-	push_cur_state(st);
 
 	/*
 	 * Have a state an and IKE SA, time to decode the payloads.
@@ -2596,9 +2594,11 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 
 	struct id peer_id;
 
-	if (!extract_peer_id(hik, &peer_id, &id_peer->pbs)) {
-		log_state(RC_LOG, &ike->sa, "IKEv2 mode peer ID extraction failed");
-		return FALSE;
+	diag_t d = unpack_peer_id(hik, &peer_id, &id_peer->pbs);
+	if (d != NULL) {
+		log_diag(RC_LOG, ike->sa.st_logger, &d,
+			 "IKEv2 mode peer ID extraction failed");
+		return false;
 	}
 
 	/* You Tarzan, me Jane? */
@@ -2610,11 +2610,11 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 
 		if (!initiator && tarzan_pld != NULL) {
 			dbg("received IDr payload - extracting our alleged ID");
-			if (!extract_peer_id(tarzan_pld->payload.v2id.isai_type,
-					&tarzan_id, &tarzan_pld->pbs))
-			{
-				log_state(RC_LOG, &ike->sa, "IDr payload extraction failed");
-				return FALSE;
+			diag_t d = unpack_peer_id(tarzan_pld->payload.v2id.isai_type,
+						  &tarzan_id, &tarzan_pld->pbs);
+			if (d != NULL) {
+				log_diag(RC_LOG, ike->sa.st_logger, &d, "IDr payload extraction failed");
+				return false;
 			}
 			tip = &tarzan_id;
 		}
@@ -2648,7 +2648,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 	}
 
 	/* process any CERTREQ payloads */
-	ikev2_decode_cr(md);
+	ikev2_decode_cr(md, ike->sa.st_logger);
 
 	/*
 	 * Now that we've decoded the ID payload, let's see if we
@@ -3217,7 +3217,8 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 							       c->spd.this.protocol,
 							       SPI_PASS /* else its not bare */,
 							       /* this text is used to signal the low level :/ */
-							       "IGNORE_ON_XFRM: installed IPsec SA replaced old bare shunt")) {
+							       "IGNORE_ON_XFRM: installed IPsec SA replaced old bare shunt",
+							       st->st_logger)) {
 						log_state(RC_LOG_SERIOUS, &ike->sa,
 							  "Failed to delete old bare shunt");
 					}
@@ -3365,7 +3366,6 @@ void complete_v2_state_transition(struct state *st,
 	passert(st != NULL);
 	struct ike_sa *ike = ike_sa(st, HERE);
 	/* struct child_sa *child = IS_CHILD_SA(st) ? pexpect_child_sa(st) : NULL; */
-	set_cur_state(st); /* might have changed */ /* XXX: huh? */
 
 	/* statistics */
 	/* this really depends on the type of error whether it is an IKE or IPsec fail */
@@ -3664,7 +3664,9 @@ bool emit_v2N_compression(struct state *cst,
 		/* calculate and keep our CPI */
 		if (cst->st_ipcomp.our_spi == 0) {
 			/* CPI is stored in network low order end of an ipsec_spi_t */
-			cst->st_ipcomp.our_spi = get_my_cpi(&c->spd, LIN(POLICY_TUNNEL, c->policy));
+			cst->st_ipcomp.our_spi = get_my_cpi(&c->spd,
+							    LIN(POLICY_TUNNEL, c->policy),
+							    cst->st_logger);
 			c_spi = (uint16_t)ntohl(cst->st_ipcomp.our_spi);
 			if (c_spi < IPCOMP_FIRST_NEGOTIATED) {
 				/* get_my_cpi() failed */

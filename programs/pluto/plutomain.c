@@ -1420,7 +1420,7 @@ int main(int argc, char **argv)
 			switch (parse_impair(optarg, &impairment, true, logger)) {
 			case IMPAIR_OK:
 			{
-				if (!process_impair(&impairment, NULL, true, null_fd, logger)) {
+				if (!process_impair(&impairment, NULL, true, logger)) {
 					fprintf(stderr, "%s: impair option '%s' is not valid from the command line\n",
 						pluto_name, optarg);
 					exit(1);
@@ -1750,15 +1750,15 @@ int main(int argc, char **argv)
 	init_state_db();
 	init_connection_db();
 	init_server_fork();
-	init_server();
+	init_server(logger);
 
 	init_rate_log();
-	init_nat_traversal(keep_alive);
+	init_nat_traversal(keep_alive, logger);
 
 	init_virtual_ip(virtual_private, logger);
 	/* obsoleted by nss code: init_rnd_pool(); */
 	init_root_certs();
-	init_secret();
+	init_secret(logger);
 #ifdef USE_IKEv1
 	init_ikev1();
 #endif
@@ -1779,10 +1779,10 @@ int main(int argc, char **argv)
 	}
 
 	start_crypto_helpers(nhelpers, logger);
-	init_kernel();
+	init_kernel(logger);
 	init_vendorid();
 #if defined(LIBCURL) || defined(LIBLDAP)
-	start_crl_fetch_helper();
+	start_crl_fetch_helper(logger);
 #endif
 #ifdef HAVE_LABELED_IPSEC
 	init_selinux();
@@ -1799,8 +1799,7 @@ int main(int argc, char **argv)
 	}
 #endif
 
-	call_server(conffile);
-	return -1;	/* Shouldn't ever reach this */
+	run_server(conffile, logger);
 }
 
 void show_setup_plutomain(struct show *s)

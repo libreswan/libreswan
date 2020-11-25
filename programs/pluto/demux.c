@@ -80,7 +80,8 @@
  */
 
 static enum iface_status read_message(const struct iface_port *ifp,
-				      struct msg_digest **mdp)
+				      struct msg_digest **mdp,
+				      struct logger *logger)
 {
 	pexpect(*mdp == NULL);
 
@@ -89,6 +90,7 @@ static enum iface_status read_message(const struct iface_port *ifp,
 	struct iface_packet packet = {
 		.ptr = bigbuffer,
 		.len = sizeof(bigbuffer),
+		.logger = logger,
 	};
 
 	enum iface_status status = ifp->io->read_packet(ifp, &packet);
@@ -285,7 +287,6 @@ void process_packet(struct msg_digest **mdp)
 static void process_md(struct msg_digest **mdp)
 {
 	process_packet(mdp);
-	reset_cur_state();
 }
 
 /* wrapper for read_packet and process_packet
@@ -304,11 +305,12 @@ static void process_md(struct msg_digest **mdp)
 
 static bool impair_incoming(struct msg_digest *md);
 
-enum iface_status handle_packet_cb(const struct iface_port *ifp)
+enum iface_status handle_packet_cb(const struct iface_port *ifp,
+				   struct logger *logger)
 {
 	threadtime_t md_start = threadtime_start();
 	struct msg_digest *md = NULL;
-	enum iface_status status = read_message(ifp, &md);
+	enum iface_status status = read_message(ifp, &md, logger);
 	if (status != IFACE_OK) {
 		pexpect(md == NULL);
 	} else if (pexpect(md != NULL)) {
@@ -323,7 +325,6 @@ enum iface_status handle_packet_cb(const struct iface_port *ifp)
 	}
 	threadtime_stop(&md_start, SOS_NOBODY,
 			"%s() reading and processing packet", __func__);
-	pexpect_reset_globals();
 	return status;
 }
 
@@ -342,7 +343,6 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...) PRIN
 static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 {
 	/* not whack FD yet is expected to be reset! */
-	pexpect_reset_globals();
 	struct msg_digest *md = clone_raw_md(orig, HERE);
 
 	LOG_JAMBUF(RC_LOG, md->md_logger, buf) {
@@ -369,7 +369,6 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 
 	md_delref(&md, HERE);
 	pexpect(md == NULL);
-	pexpect_reset_globals();
 }
 
 static unsigned long replay_count;
@@ -460,7 +459,6 @@ static void handle_md_event(struct state *st, void *context)
 	process_md(&md);
 	md_delref(&md, HERE);
 	pexpect(md == NULL);
-	pexpect_reset_globals();
 }
 
 void schedule_md_event(const char *name, struct msg_digest *md)
@@ -527,7 +525,8 @@ enum message_role v2_msg_role(const struct msg_digest *md)
  * Result is allocated on heap so caller must ensure it is freed.
  */
 
-char *cisco_stringify(pb_stream *input_pbs, const char *attr_name, lset_t pol)
+char *cisco_stringify(pb_stream *input_pbs, const char *attr_name,
+		      bool ignore, struct logger *logger)
 {
 	char strbuf[500]; /* Cisco maximum unknown - arbitrary choice */
 	struct jambuf buf = ARRAY_AS_JAMBUF(strbuf); /* let jambuf deal with overflow */
@@ -577,13 +576,14 @@ char *cisco_stringify(pb_stream *input_pbs, const char *attr_name, lset_t pol)
 			break;
 		}
 	}
-	if (!jambuf_ok(&buf)) {
-		loglog(RC_INFORMATIONAL, "Received overlong %s: %s (truncated)", attr_name, strbuf);
-	} else {
-		bool ignore = streq("INTERNAL_DNS_DOMAIN", attr_name) && LIN(POLICY_IGNORE_PEER_DNS, pol);
-		loglog(RC_INFORMATIONAL, "Received %s%s: %s",
-			ignore ? "and ignored " : "",
-			attr_name, strbuf);
+	log_message(RC_INFORMATIONAL, logger,
+		    "Received %s%s%s: %s%s",
+		    ignore ? "and ignored " : "",
+		    jambuf_ok(&buf) ? "" : "overlong ",
+		    attr_name, strbuf,
+		    jambuf_ok(&buf) ? "" : " (truncated)");
+	if (ignore) {
+		return NULL;
 	}
 	return clone_str(strbuf, attr_name);
 }

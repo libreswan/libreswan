@@ -484,10 +484,13 @@ static int process_transforms(pb_stream *prop_pbs, struct jambuf *remote_jam_buf
 		/* first the transform */
 		struct ikev2_trans remote_trans;
 		pb_stream trans_pbs;
-		if (!in_struct(&remote_trans, &ikev2_trans_desc,
-			       prop_pbs, &trans_pbs)) {
-			log_message(RC_LOG, logger, "remote proposal %u transform %d is corrupt",
-				    remote_propnum, remote_transform_nr);
+		diag_t d = pbs_in_struct(prop_pbs, &ikev2_trans_desc,
+					 &remote_trans, sizeof(remote_trans),
+					 &trans_pbs);
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d,
+				 "remote proposal %u transform %d is corrupt",
+				 remote_propnum, remote_transform_nr);
 			jam_string(remote_jam_buf, "[corrupt-transform]");
 			return -(STF_FAIL + v2N_INVALID_SYNTAX); /* bail */
 		}
@@ -510,11 +513,12 @@ static int process_transforms(pb_stream *prop_pbs, struct jambuf *remote_jam_buf
 		while (pbs_left(&trans_pbs) != 0) {
 			pb_stream attr_pbs;
 			struct ikev2_trans_attr attr;
-			if (!in_struct(&attr, &ikev2_trans_attr_desc,
-				       &trans_pbs,
-				       &attr_pbs)) {
-				log_message(RC_LOG, logger, "remote proposal %u transform %d contains corrupt attribute",
-					    remote_propnum, remote_transform_nr);
+			diag_t d = pbs_in_struct(&trans_pbs, &ikev2_trans_attr_desc,
+						 &attr, sizeof(attr), &attr_pbs);
+			if (d != NULL) {
+				log_diag(RC_LOG, logger, &d,
+					 "remote proposal %u transform %d contains corrupt attribute",
+					 remote_propnum, remote_transform_nr);
 				jam_string(remote_jam_buf, "[corrupt-attribute]");
 				return -(STF_FAIL + v2N_INVALID_SYNTAX); /* bail */
 			}
@@ -905,9 +909,11 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 	do {
 		/* Read the next proposal */
 		pb_stream proposal_pbs;
-		if (!in_struct(&remote_proposal, &ikev2_prop_desc, sa_payload,
-			       &proposal_pbs)) {
-			log_message(RC_LOG, logger, "proposal %d corrupt", next_propnum);
+		diag_t d = pbs_in_struct(sa_payload, &ikev2_prop_desc,
+					 &remote_proposal, sizeof(remote_proposal),
+					 &proposal_pbs);
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "proposal %d corrupt", next_propnum);
 			jam_string(remote_jam_buf, " [corrupt-proposal]");
 			matching_local_propnum = -(STF_FAIL + v2N_INVALID_SYNTAX);
 			break;
@@ -1006,9 +1012,10 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 			continue;
 		}
 		if (remote_spi.size > 0) {
-			if (!in_raw(remote_spi.bytes, remote_spi.size, &proposal_pbs, "remote SPI")) {
-				log_message(RC_LOG, logger, "proposal %d contains corrupt SPI",
-					      remote_proposal.isap_propnum);
+			diag_t d = pbs_in_raw(&proposal_pbs, remote_spi.bytes, remote_spi.size, "remote SPI");
+			if (d != NULL) {
+				log_diag(RC_LOG, logger, &d, "proposal %d contains corrupt SPI",
+					 remote_proposal.isap_propnum);
 				matching_local_propnum = -(STF_FAIL + v2N_INVALID_SYNTAX);
 				jam_string(remote_jam_buf, "[corrupt-spi]");
 				break;
@@ -1537,7 +1544,7 @@ bool ikev2_emit_sa_proposals(struct pbs_out *pbs,
 
 	/* SA header out */
 	struct ikev2_sa sa = {
-		.isasa_critical = build_ikev2_critical(false),
+		.isasa_critical = build_ikev2_critical(false, pbs->out_logger),
 	};
 	pb_stream sa_pbs;
 	if (!out_struct(&sa, &ikev2_sa_desc, pbs, &sa_pbs))
@@ -2246,7 +2253,8 @@ struct ipsec_proto_info *ikev2_child_sa_proto_info(struct child_sa *child, lset_
 	}
 }
 
-ipsec_spi_t ikev2_child_sa_spi(const struct spd_route *spd_route, lset_t policy)
+ipsec_spi_t ikev2_child_sa_spi(const struct spd_route *spd_route, lset_t policy,
+			       struct logger *logger)
 {
 	const struct ip_protocol *ipprotoid;
 	switch (policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
@@ -2261,7 +2269,8 @@ ipsec_spi_t ikev2_child_sa_spi(const struct spd_route *spd_route, lset_t policy)
 	}
 	return get_ipsec_spi(0 /* avoid this # */,
 			     ipprotoid, spd_route,
-			     TRUE /* tunnel */);
+			     true /* tunnel */,
+			     logger);
 }
 
 /*

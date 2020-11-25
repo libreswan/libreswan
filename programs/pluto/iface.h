@@ -36,6 +36,7 @@ struct iface_packet {
 	ssize_t len;
 	ip_endpoint sender;
 	uint8_t *ptr;
+	struct logger *logger; /*global*/
 };
 
 enum iface_status {
@@ -52,11 +53,13 @@ struct iface_io {
 					 struct iface_packet *);
 	ssize_t (*write_packet)(const struct iface_port *ifp,
 				const void *ptr, size_t len,
-				const ip_endpoint *remote_endpoint);
+				const ip_endpoint *remote_endpoint,
+				struct logger *logger);
 	void (*cleanup)(struct iface_port *ifp);
 	void (*listen)(struct iface_port *fip, struct logger *logger);
 	int (*bind_iface_port)(struct iface_dev *ifd,
-			       ip_port port, bool esp_encapsulation_enabled);
+			       ip_port port, bool esp_encapsulation_enabled,
+			       struct logger *logger);
 };
 
 extern const struct iface_io udp_iface_io;
@@ -85,7 +88,7 @@ struct iface_dev {
 };
 
 void release_iface_dev(struct iface_dev **id);
-void add_or_keep_iface_dev(struct raw_iface *ifp);
+void add_or_keep_iface_dev(struct raw_iface *ifp, struct logger *logger);
 struct iface_dev *find_iface_dev_by_address(const ip_address *address);
 
 struct iface_port {
@@ -175,9 +178,9 @@ extern struct iface_port *interfaces;   /* public interfaces */
 
 extern struct iface_port *find_iface_port_by_local_endpoint(ip_endpoint *local_endpoint);
 extern bool use_interface(const char *rifn);
-extern void find_ifaces(bool rm_dead, struct fd *whackfd);
+extern void find_ifaces(bool rm_dead, struct logger *logger);
 extern void show_ifaces_status(struct show *s);
-extern void free_ifaces(void);
+extern void free_ifaces(struct logger *logger);
 void listen_on_iface_port(struct iface_port *ifp, struct logger *logger);
 struct iface_port *bind_iface_port(struct iface_dev *ifd, const struct iface_io *io,
 				   ip_port port,

@@ -672,7 +672,6 @@ static void initiate_next(struct state *st, void *context UNUSED)
 			continue;
 		}
 		dbg_v2_msgid(ike, st, "resuming SA using IKE SA (unack %jd)", unack);
-		so_serial_t old_state = push_cur_state(st);
 		struct child_sa *child = IS_CHILD_SA(st) ? pexpect_child_sa(st) : NULL;
 
 		if (pending.transition != NULL) {
@@ -704,7 +703,6 @@ static void initiate_next(struct state *st, void *context UNUSED)
 			complete_v2_state_transition(st, md, pending.cb(ike, st, md));
 			release_any_md(&md);
 		}
-		pop_cur_state(old_state);
 	}
 }
 

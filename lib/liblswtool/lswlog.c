@@ -76,11 +76,6 @@ struct logger *tool_init_log(const char *name)
 	return &progname_logger;
 }
 
-void jam_cur_prefix(struct jambuf *buf)
-{
-	jam_logger_prefix(buf, &progname_logger);
-}
-
 void jambuf_to_logger(struct jambuf *buf, const struct logger *logger UNUSED, lset_t rc_flags)
 {
 	enum stream only = rc_flags & STREAM_MASK;

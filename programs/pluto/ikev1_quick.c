@@ -407,7 +407,9 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 	case ID_IPV6_ADDR:
 	{
 		ip_address temp_address;
-		if (!pbs_in_address(&temp_address, afi, id_pbs, "ID address")) {
+		diag_t d = pbs_in_address(id_pbs, &temp_address, afi, "ID address");
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
 		/* i.e., "zero" */
@@ -428,13 +430,21 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 	case ID_IPV4_ADDR_SUBNET:
 	case ID_IPV6_ADDR_SUBNET:
 	{
+		diag_t d;
+
 		ip_address temp_address, temp_mask;
-		if (!pbs_in_address(&temp_address, afi, id_pbs, "ID address")) {
+		d = pbs_in_address(id_pbs, &temp_address, afi, "ID address");
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
-		if (!pbs_in_address(&temp_mask, afi, id_pbs, "ID mask")) {
+
+		d = pbs_in_address(id_pbs, &temp_mask, afi, "ID mask");
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
+
 		err_t ughmsg = address_mask_to_subnet(&temp_address, &temp_mask, net);
 		if (ughmsg == NULL &&
 		    subnet_contains_no_addresses(net))
@@ -455,12 +465,19 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 	case ID_IPV4_ADDR_RANGE:
 	case ID_IPV6_ADDR_RANGE:
 	{
+		diag_t d;
+
 		ip_address temp_address_from;
-		if (!pbs_in_address(&temp_address_from, afi, id_pbs, "ID from address")) {
+		d = pbs_in_address(id_pbs, &temp_address_from, afi, "ID from address");
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
+
 		ip_address temp_address_to;
-		if (!pbs_in_address(&temp_address_to, afi, id_pbs, "ID to address")) {
+		d = pbs_in_address(id_pbs, &temp_address_to, afi, "ID to address");
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
 
@@ -517,25 +534,17 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 			    "%s subnet returned doesn't match my proposal - us: %s vs them: %s",
 			    which, str_subnet(net, &subxmt),
 			    str_subnet(&net_temp, &subrec));
-#ifdef ALLOW_MICROSOFT_BAD_PROPOSAL
 		log_message(RC_LOG_SERIOUS, logger,
-			    "Allowing questionable proposal anyway [ALLOW_MICROSOFT_BAD_PROPOSAL]");
+			    "Allowing questionable (microsoft) proposal anyway");
 		bad_proposal = FALSE;
-#else
-		bad_proposal = TRUE;
-#endif
 	}
 	if (*protoid != id->isaiid_protoid) {
 		log_message(RC_LOG_SERIOUS, logger,
 			    "%s peer returned protocol id does not match my proposal - us: %d vs them: %d",
 			    which, *protoid, id->isaiid_protoid);
-#ifdef ALLOW_MICROSOFT_BAD_PROPOSAL
 		log_message(RC_LOG_SERIOUS, logger,
-			    "Allowing questionable proposal anyway [ALLOW_MICROSOFT_BAD_PROPOSAL]");
+			    "Allowing questionable (microsoft) proposal anyway]");
 		bad_proposal = FALSE;
-#else
-		bad_proposal = TRUE;
-#endif
 	}
 	/*
 	 * workaround for #802- "our client ID returned doesn't match my proposal"
@@ -595,7 +604,6 @@ void quick_outI1(struct fd *whack_sock,
 	update_state_connection(st, c);
 	passert(c != NULL);
 
-	so_serial_t old_state = push_cur_state(st); /* we must reset before exit */
 	st->st_policy = policy;
 	st->st_try = try;
 
@@ -672,7 +680,6 @@ void quick_outI1(struct fd *whack_sock,
 				    quick_outI1_continue,
 				    "quick_outI1 KE");
 	}
-	pop_cur_state(old_state);
 }
 
 static ke_and_nonce_cb quick_outI1_continue_tail;	/* type assertion */
@@ -767,7 +774,6 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 				&rbody)) {
-			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -795,7 +801,6 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 		if (!ikev1_out_sa(&rbody,
 				  &ipsec_sadb[pm >> POLICY_IPSEC_SHIFT],
 				  st, FALSE, FALSE)) {
-			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -803,7 +808,6 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	{
 		/* Ni out */
 		if (!ikev1_ship_nonce(&st->st_ni, nonce, &rbody, "Ni")) {
-			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -811,7 +815,6 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	/* [ KE ] out (for PFS) */
 	if (st->st_pfs_group != NULL) {
 		if (!ikev1_ship_KE(st, local_secret, &st->st_gi, &rbody)) {
-			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -825,7 +828,6 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 		    !emit_subnet_id(&c->spd.that.client,
 				    st->st_peeruserprotoid,
 				    st->st_peeruserport, &rbody)) {
-			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -835,7 +837,6 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	    LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
 		/** Send NAT-OA if our address is NATed */
 		if (!nat_traversal_add_natoa(&rbody, st, true /* initiator */)) {
-			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -849,7 +850,6 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	restore_new_iv(st, isakmp_sa->st_v1_new_iv);
 
 	if (!ikev1_encrypt_message(&rbody, st)) {
-		reset_cur_state();
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -1004,7 +1004,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 			idfqdn[idlen] = '\0';
 
 			hv = p1st->hidden_variables;
-			nat_traversal_natoa_lookup(md, &hv);
+			nat_traversal_natoa_lookup(md, &hv, p1st->st_logger);
 
 			if (address_is_specified(&hv.st_nat_oa)) {
 				endtosubnet(&hv.st_nat_oa, &b.peers.net, HERE);
@@ -1196,7 +1196,7 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 	hv = p1st->hidden_variables;
 	if ((hv.st_nat_traversal & NAT_T_DETECTED) &&
 	    (hv.st_nat_traversal & NAT_T_WITH_NATOA))
-		nat_traversal_natoa_lookup(md, &hv);
+		nat_traversal_natoa_lookup(md, &hv, p1st->st_logger);
 
 	/* create our new state */
 	{
@@ -1217,7 +1217,6 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 
 		restore_new_iv(st, b->new_iv);
 
-		set_cur_state(st);      /* (caller will reset) */
 		switch_md_st(md, st, HERE);	/* feed back new state */
 
 		st->st_peeruserprotoid = b->peers.proto;
@@ -1594,7 +1593,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 
 	if ((st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
 	    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA))
-		nat_traversal_natoa_lookup(md, &st->hidden_variables);
+		nat_traversal_natoa_lookup(md, &st->hidden_variables, st->st_logger);
 
 	/* [ IDci, IDcr ] in; these must match what we sent */
 

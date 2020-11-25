@@ -166,7 +166,6 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	struct state *st = &ike->sa;
 
 	md->st = st;  /* (caller will reset cur_state) */
-	set_cur_state(st);
 	update_state_connection(st, c);
 	change_state(st, STATE_AGGR_R1);
 
@@ -285,7 +284,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 	calc_v1_skeyid_and_iv(st);
 
 	/* decode certificate requests */
-	ikev1_decode_cr(md);
+	ikev1_decode_cr(md, st->st_logger);
 
 	if (st->st_requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = TRUE;
@@ -616,7 +615,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 			ISAKMP_NEXT_HASH : ISAKMP_NEXT_SIG;
 
 	/* decode certificate requests */
-	ikev1_decode_cr(md);
+	ikev1_decode_cr(md, st->st_logger);
 
 	if (st->st_requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = TRUE;
@@ -857,9 +856,12 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 		/* rewind id_pbs and read what we wrote */
 		id_pbs.roof = pbs.cur;
 		id_pbs.cur = pbs.start;
-		if (!in_struct(&id_pd.payload, &isakmp_identification_desc, &id_pbs,
-			  &id_pd.pbs))
+		diag_t d = pbs_in_struct(&id_pbs, &isakmp_identification_desc,
+					 &id_pd.payload, sizeof(id_pd.payload), &id_pd.pbs);
+		if (d != NULL) {
+			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			return STF_FAIL + PAYLOAD_MALFORMED;
+		}
 	}
 
 	/*
@@ -975,7 +977,6 @@ void aggr_outI1(struct fd *whack_sock,
 	statetime_t start = statetime_backdate(st, inception);
 	change_state(st, STATE_AGGR_I1);
 	initialize_new_state(st, c, policy, try);
-	push_cur_state(st);
 
 	if (LIN(POLICY_PSK, c->policy) && LIN(POLICY_AGGRESSIVE, c->policy)) {
 		log_state(RC_LOG_SERIOUS, st,
@@ -991,7 +992,6 @@ void aggr_outI1(struct fd *whack_sock,
 		 */
 		log_state(RC_AGGRALGO, st,
 			  "no IKE proposal policy specified in config!  Cannot initiate aggressive mode.  A policy must be specified in the configuration and should contain at most one DH group (mod1024, mod1536, mod2048).  Only the first DH group will be honored.");
-		reset_globals();
 		return;
 	}
 
@@ -1016,7 +1016,6 @@ void aggr_outI1(struct fd *whack_sock,
 			    aggr_outI1_continue,
 			    "aggr_outI1 KE + nonce");
 	statetime_stop(&start, "%s()", __func__);
-	reset_globals();
 }
 
 static ke_and_nonce_cb aggr_outI1_continue_tail;
@@ -1081,7 +1080,6 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 				&rbody)) {
-			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1093,7 +1091,6 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 		if (!ikev1_out_sa(&rbody,
 				  IKEv1_oakley_am_sadb(st->st_policy, c),
 				  st, TRUE, TRUE)) {
-			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 
@@ -1157,6 +1154,5 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 
 	log_state(RC_NEW_V1_STATE + st->st_state->kind, st,
 		  "%s", st->st_state->story);
-	reset_cur_state();
 	return STF_IGNORE;
 }

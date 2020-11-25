@@ -549,6 +549,7 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 	 */
 	int seclabel_index = -1;
 	for (tss->nr = 0; tss->nr < ts_pd->payload.v2ts.isat_num; tss->nr++) {
+		diag_t d;
 		struct traffic_selector *ts = &tss->ts[tss->nr];
 		/* Zero-out the Traffic Selector to prevent garbage data. */
 		zero(ts);
@@ -571,13 +572,15 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 			continue;
 		}
 
-		pb_stream addr;
+		struct pbs_in addr_pbs;
 		struct ikev2_ts1 ts1;
-
-		if (!in_struct(&ts1, &ikev2_ts1_desc, &ts_pd->pbs, &addr)) {
+		d = pbs_in_struct(&ts_pd->pbs, &ikev2_ts1_desc,
+				  &ts1, sizeof(ts1), &addr_pbs);
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
-		++addr_range_count;
+    ++addr_range_count;
 
 		const struct ip_info *ipv;
 		switch (ts1.isat1_type) {
@@ -593,14 +596,20 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 			return false;
 		}
 
-		if (!pbs_in_address(&ts->net.start, ipv, &addr, "TS low")) {
+		d = pbs_in_address(&addr_pbs, &ts->net.start, ipv, "TS low");
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
-		if (!pbs_in_address(&ts->net.end, ipv, &addr, "TS high")) {
+
+		d = pbs_in_address(&addr_pbs, &ts->net.end, ipv, "TS high");
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
+
 		/* XXX: does this matter? */
-		if (pbs_left(&addr) != 0)
+		if (pbs_left(&addr_pbs) != 0)
 			return false;
 
 		ts->ipprotoid = ts1.isat1_ipprotoid;

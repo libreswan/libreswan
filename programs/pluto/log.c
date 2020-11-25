@@ -79,150 +79,6 @@ char *pluto_stats_binary = NULL;
 struct fd *whack_log_fd = NULL;      /* only set during whack_handle() */
 
 /*
- * Context for logging.
- *
- * CUR_CONNECTION and CUR_STATE work something like a stack.
- * cur_logger() will use the first of CUR_STATE or CUR_CONNECTION when
- * looking for the context to use with a prefix.  Operations then
- * "push" and "pop" (or clear all) contexts.
- *
- * For instance, setting CUR_STATE will hide CUR_CONNECTION, and
- * resetting CUR_STATE will re-expose CUR_CONNECTION.
- *
- * Global variables: must be carefully adjusted at transaction
- * boundaries!
- */
-static struct state *cur_state = NULL;                 /* current state, for diagnostics */
-
-/*
- * if any debugging is on, make sure that we log the connection we are
- * processing, because it may not be clear in later debugging.
- */
-
-enum processing {
-	START = 1,
-	STOP,
-	RESTART,
-	SUSPEND,
-	RESUME,
-	RESET,
-};
-
-static void log_processing(enum processing processing, bool current,
-			   struct state *st, struct connection *c,
-			   const ip_address *from,
-			   where_t where)
-{
-	pexpect(((st != NULL) + (c != NULL) + (from != NULL)) == 1);	/* exactly 1 */
-	LSWDBGP(DBG_BASE, buf) {
-		switch (processing) {
-		case START: jam(buf, "start"); break;
-		case STOP: jam(buf, "stop"); break;
-		case RESTART: jam(buf, "[RE]START"); break;
-		case SUSPEND: jam(buf, "suspend"); break;
-		case RESUME: jam(buf, "resume"); break;
-		case RESET: jam(buf, "RESET"); break;
-		}
-		jam(buf, " processing:");
-		if (st != NULL) {
-			jam(buf, " state #%lu", st->st_serialno);
-			/* also include connection/from */
-			c = st->st_connection;
-			from = &st->st_remote_endpoint;
-		}
-		if (c != NULL) {
-			jam_string(buf, " connection ");
-			jam_connection(buf, c);
-		}
-		if (from != NULL) {
-			jam(buf, " from ");
-			jam_endpoint(buf, from);
-		}
-		if (!current) {
-			jam(buf, " (BACKGROUND)");
-		}
-		jam(buf, " "PRI_WHERE, pri_where(where));
-	}
-}
-
-/*
- * XXX:
- *
- * Given code should be using matching push/pop operations on each
- * field, this global 'blat' looks like some sort of - we've lost
- * track - hack.  Especially since the reset_globals() call is often
- * followed by passert(globals_are_reset()).
- *
- * Is this leaking the whack_log_fd?
- *
- * For instance, the IKEv1/IKEv2 specific initiate code calls
- * reset_globals() when it probably should be calling pop_cur_state().
- * Luckily, whack_log_fd isn't the real value (that seems to be stored
- * elsewhere?) and, for as long as the whack connection is up, code
- * keeps setting it back.
- */
-void log_reset_globals(where_t where)
-{
-	if (cur_state != NULL) {
-		log_processing(RESET, true, cur_state, NULL, NULL, where);
-		cur_state = NULL;
-	}
-}
-
-void log_pexpect_reset_globals(where_t where)
-{
-	if (cur_state != NULL) {
-		log_pexpect(where, "processing: unexpected cur_state #%lu should be #0",
-			    cur_state->st_serialno);
-		cur_state = NULL;
-	}
-}
-
-so_serial_t log_push_state(struct state *new_state, where_t where)
-{
-	struct state *old_state = cur_state;
-
-	if (old_state != NULL) {
-		if (old_state != new_state) {
-			log_processing(SUSPEND, true /* must be current */,
-				       cur_state, NULL, NULL, where);
-		}
-	}
-
-	cur_state = new_state;
-
-	if (new_state == NULL) {
-		dbg("skip start processing: state #0 "PRI_WHERE,
-		    pri_where(where));
-	} else if (old_state == new_state) {
-		log_processing(RESTART, true /* must be current */,
-			       new_state, NULL, NULL, where);
-	} else {
-		log_processing(START, true /* must be current */,
-			       new_state, NULL, NULL, where);
-	}
-	return old_state != NULL ? old_state->st_serialno : SOS_NOBODY;
-}
-
-void log_pop_state(so_serial_t serialno, where_t where)
-{
-	if (cur_state != NULL) {
-		log_processing(STOP, true, /* must be current */
-			       cur_state, NULL, NULL, where);
-	} else {
-		dbg("processing: STOP state #0 "PRI_WHERE,
-		    pri_where(where));
-	}
-
-	cur_state = state_by_serialno(serialno);
-
-	if (cur_state != NULL) {
-		log_processing(RESUME, true, /* must be current */
-			       cur_state, NULL, NULL, where);
-	}
-}
-
-/*
  * Initialization.
  */
 
@@ -363,49 +219,6 @@ bool whack_prompt_for(struct state *st, const char *prompt,
 	return true;
 }
 
-static void whack_raw(struct jambuf *buf, enum rc_type rc)
-{
-	/*
-	 * Override more specific STATE WHACKFD with global whack.
-	 *
-	 * Why?  Because it matches existing behaviour (which is a
-	 * pretty lame reason).
-	 *
-	 * But does it make a difference?  Maybe when there's one
-	 * whack attached to an establishing state while
-	 * simultaneously there's a whack trying to delete that same
-	 * state?
-	 */
-	passert(in_main_thread()); /* whack_log_fd is global */
-	const struct fd *whackfd = (fd_p(whack_log_fd) ? whack_log_fd :
-		    cur_state != NULL ? cur_state->st_whack_sock :
-		    null_fd);
-	if (!fd_p(whackfd)) {
-		return;
-	}
-
-	jambuf_to_whack(buf, whackfd, rc);
-}
-
-void jam_cur_prefix(struct jambuf *buf)
-{
-	if (!in_main_thread()) {
-		if (DBGP(DBG_BASE)) {
-			jam(buf, "[EXPECTATION FAILED: in main thread] ");
-		}
-		return;
-	}
-
-	if (cur_state != NULL) {
-		struct logger logger = *(cur_state->st_logger);
-		logger.global_whackfd = whack_log_fd;
-		jam_logger_prefix(buf, &logger);
-		return;
-	}
-
-	return;
-}
-
 static void log_raw(int severity, const char *prefix, struct jambuf *buf)
 {
 	/* assume there's a logging prefix; normally there is */
@@ -420,7 +233,7 @@ void jambuf_to_error_stream(struct jambuf *buf)
 	log_raw(LOG_ERR, "", buf);
 	if (in_main_thread()) {
 		/* don't whack-log from helper threads */
-		whack_raw(buf, RC_LOG_SERIOUS);
+		jambuf_to_whack(buf, whack_log_fd, RC_LOG_SERIOUS);
 	}
 }
 
@@ -434,7 +247,7 @@ void jambuf_to_default_streams(struct jambuf *buf, enum rc_type rc)
 	log_raw(LOG_WARNING, "", buf);
 	if (in_main_thread()) {
 		/* don't whack-log from helper threads */
-		whack_raw(buf, rc);
+		jambuf_to_whack(buf, whack_log_fd, rc);
 	}
 }
 
@@ -489,7 +302,6 @@ void whack_comment(const struct fd *whackfd, const char *message, ...)
 {
 	pexpect(fd_p(whackfd));
 	pexpect(in_main_thread());
-	pexpect(cur_state == NULL);
 	JAMBUF(buf) {
 		va_list args;
 		va_start(args, message);
@@ -550,10 +362,12 @@ void rate_log(const struct msg_digest *md,
 	nr_rate_limited_logs++;
 }
 
-static void reset_log_rate_limit(struct fd *whackfd)
+static global_timer_cb reset_log_rate_limit;
+
+static void reset_log_rate_limit(struct logger *logger)
 {
 	if (nr_rate_limited_logs > log_limit()) {
-		log_global(RC_LOG, whackfd, "rate limited log reset");
+		log_message(RC_LOG, logger, "rate limited log reset");
 	}
 	nr_rate_limited_logs = 0;
 }
@@ -864,32 +678,6 @@ void free_logger(struct logger **logp, where_t where)
 	*logp = NULL;
 }
 
-struct logger cur_logger(void)
-{
-	if (!pexpect(in_main_thread())) {
-		static const struct logger_object_vec logger_pexpect_vec = {
-			.name = "pexpect",
-			.suppress_object_log = never_suppress_log,
-			.jam_object_prefix = jam_string_prefix,
-			.free_object = false,
-		};
-		static const struct logger pexpect_logger = {
-			.object = "[EXPECTATION FAILED on-main-thread] ",
-			.where = { .func = __func__, .basename = HERE_BASENAME , .line = __LINE__},/*HERE*/
-			.object_vec = &logger_pexpect_vec,
-		};
-		return pexpect_logger;
-	}
-
-	if (cur_state != NULL) {
-		struct logger logger = *(cur_state->st_logger);
-		logger.global_whackfd = whack_log_fd;
-		return logger;
-	}
-
-	return GLOBAL_LOGGER(whack_log_fd);
-};
-
 /*
  * XXX: these were macros only older GCC's, seeing for some code
  * paths, OBJECT was always non-NULL and pexpect(OBJECT!=NULL) was
@@ -961,7 +749,6 @@ void log_state(lset_t rc_flags, const struct state *st,
 void loglog(enum rc_type rc, const char *fmt, ...)
 {
 	JAMBUF(buf) {
-		jam_cur_prefix(buf);
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);

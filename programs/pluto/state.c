@@ -238,7 +238,7 @@ static void add_revival(struct connection *c)
 	}
 }
 
-void revive_conns(struct fd *unused_whackfd UNUSED)
+void revive_conns(struct logger *logger)
 {
 	/*
 	 * XXX: Revive all listed connections regardless of their
@@ -258,7 +258,8 @@ void revive_conns(struct fd *unused_whackfd UNUSED)
 		 * handler.
 		 */
 		if (c == NULL) {
-			loglog(RC_UNKNOWN_NAME, "failed to initiate connection \"%s\" which received a Delete/Notify but must remain up per local policy; connection no longer exists", revivals->name);
+			log_message(RC_UNKNOWN_NAME, logger,
+				    "failed to initiate connection \"%s\" which received a Delete/Notify but must remain up per local policy; connection no longer exists", revivals->name);
 		} else {
 			log_connection(RC_LOG, null_fd, c,
 				       "initiating connection which received a Delete/Notify but must remain up per local policy");
@@ -986,8 +987,22 @@ void free_sec_ctx(struct state *const st) {
 	}
 }
 
+static void delete_state_tail(struct state *st);
+
+void delete_other_state(struct state *st, struct state *other_state)
+{
+	delete_state_log(other_state, st);
+	delete_state_tail(other_state);
+}
+
 /* delete a state object */
 void delete_state(struct state *st)
+{
+	delete_state_log(st, st);
+	delete_state_tail(st);
+}
+
+void delete_state_tail(struct state *st)
 {
 	struct connection *const c = st->st_connection;
 	pstat_sa_deleted(st);
@@ -1003,9 +1018,6 @@ void delete_state(struct state *st)
 			pri_cpu_usage(st->st_timing.main_usage),
 			pri_cpu_usage(st->st_timing.helper_usage));
 	}
-
-	so_serial_t old_serialno = push_cur_state(st);
-	delete_state_log(st, state_by_serialno(old_serialno));
 
 	/*
 	 * IKEv2 IKE failures are logged in the state transition conpletion.
@@ -1035,7 +1047,7 @@ void delete_state(struct state *st)
 		    enum_short_name(&spi_names, failure_shunt),
 		    enum_short_name(&spi_names, nego_shunt));
 
-		if (!orphan_holdpass(c, &c->spd, c->spd.this.protocol, failure_shunt)) {
+		if (!orphan_holdpass(c, &c->spd, c->spd.this.protocol, failure_shunt, st->st_logger)) {
 			log_state(RC_LOG_SERIOUS, st, "orphan_holdpass() failure ignored");
 		}
 	}
@@ -1301,7 +1313,6 @@ void delete_state(struct state *st)
 
 	/* without st_connection, st isn't complete */
 	/* from here on logging is for the wrong state */
-	pop_cur_state(old_serialno);
 
 	release_certs(&st->st_remote_certs.verified);
 	free_public_keys(&st->st_remote_certs.pubkey_db);
@@ -1468,12 +1479,10 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 				 * suppressing the message 'deleting
 				 * other state'.
 				 */
-				so_serial_t old_serialno = push_cur_state(this);
 				/* XXX: better way? */
 				close_any(&this->st_logger->global_whackfd);
 				this->st_logger->global_whackfd = dup_any(whackfd);
 				delete_state(this);
-				pop_cur_state(old_serialno);
 			}
 		}
 	}
@@ -1484,7 +1493,7 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
  * but using interfaces that are going down
  */
 
-void delete_states_dead_interfaces(struct fd *whackfd)
+void delete_states_dead_interfaces(struct logger *logger)
 {
 	struct state *this = NULL;
 	dbg("FOR_EACH_STATE_... in %s", __func__);
@@ -1497,12 +1506,12 @@ void delete_states_dead_interfaces(struct fd *whackfd)
 				id_vname = c->xfrmi->name;
 			else
 				id_vname = this->st_interface->ip_dev->id_rname;
-			log_global(RC_LOG, whackfd,
-				   "deleting lasting state #%lu on interface (%s) which is shutting down",
-				   this->st_serialno, id_vname);
+			log_message(RC_LOG, logger,
+				    "deleting lasting state #%lu on interface (%s) which is shutting down",
+				    this->st_serialno, id_vname);
 			/* XXX: better? */
 			close_any(&this->st_logger->global_whackfd);
-			this->st_logger->global_whackfd = dup_any(whackfd);
+			this->st_logger->global_whackfd = dup_any(logger->global_whackfd);
 			delete_state(this);
 			/* note: no md->st to clear */
 		}
@@ -1750,9 +1759,7 @@ void for_each_state(void (*f)(struct state *, void *data), void *data,
 		 * Since OLD_STATE might be deleted by f();
 		 * save/restore using serialno.
 		 */
-		so_serial_t old_serialno = push_cur_state(st);
 		(*f)(st, data);
-		pop_cur_state(old_serialno);
 	}
 }
 
@@ -2924,8 +2931,13 @@ void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 static bool delete_ike_family_child(struct state *st, void *unused_context UNUSED)
 {
 	struct ike_sa *ike = ike_sa(st, HERE);
-	/* pass down whack fd; better abstraction? */
-	if (ike != NULL && fd_p(ike->sa.st_logger->global_whackfd)) {
+	/*
+	 * Transfer the IKE SA's whack-fd to the child so that the
+	 * child can also log its demise; better abstraction?
+	 */
+	if (ike != NULL &&
+	    &ike->sa != st &&
+	    fd_p(ike->sa.st_logger->global_whackfd)) {
 		close_any(&st->st_logger->global_whackfd);
 		st->st_logger->global_whackfd = dup_any(ike->sa.st_logger->global_whackfd);
 	}
@@ -2936,7 +2948,7 @@ static bool delete_ike_family_child(struct state *st, void *unused_context UNUSE
 		st->st_dont_send_delete = true;
 		break;
 	}
-	delete_state(st);
+	delete_other_state(&ike->sa, st/*other*/);
 	return false; /* keep going */
 }
 

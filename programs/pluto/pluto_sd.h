@@ -25,7 +25,6 @@
 
 extern void pluto_sd_init(void);
 extern void pluto_sd(int action, int status);
-extern void sd_watchdog_event(struct fd *whackfd);
 
 #endif /* USE_SYSTEMD_WATCHDOG */
 

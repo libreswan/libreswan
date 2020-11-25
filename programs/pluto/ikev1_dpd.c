@@ -346,7 +346,6 @@ void dpd_event(struct state *st)
 {
 	passert(st != NULL);
 
-	set_cur_state(st);
 
 	if (IS_PHASE1(st->st_state->kind) || IS_PHASE15(st->st_state->kind))
 		p1_dpd_outI1(st);
@@ -547,6 +546,5 @@ stf_status dpd_inR(struct state *p1st,
  */
 void dpd_timeout(struct state *st)
 {
-	set_cur_state(st);
 	liveness_action(st);
 }

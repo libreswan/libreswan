@@ -116,7 +116,6 @@ void main_outI1(struct fd *whack_sock,
 
 	/* set up new state */
 	initialize_new_state(st, c, policy, try);
-	push_cur_state(st);
 
 	change_state(st, STATE_MAIN_I1);
 
@@ -158,7 +157,6 @@ void main_outI1(struct fd *whack_sock,
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 				&rbody)) {
-			reset_cur_state();
 			return;
 		}
 	}
@@ -170,7 +168,6 @@ void main_outI1(struct fd *whack_sock,
 		if (!ikev1_out_sa(&rbody, IKEv1_oakley_sadb(policy, c),
 				  st, TRUE, FALSE)) {
 			log_state(RC_LOG, st, "outsa fail");
-			reset_cur_state();
 			return;
 		}
 
@@ -184,18 +181,15 @@ void main_outI1(struct fd *whack_sock,
 
 	/* send Vendor IDs */
 	if (!out_vid_set(&rbody, c)) {
-		reset_cur_state();
 		return;
 	}
 
 	/* as Initiator, spray NAT VIDs */
 	if (!nat_traversal_insert_vid(&rbody, c)) {
-		reset_cur_state();
 		return;
 	}
 
 	if (!ikev1_close_message(&rbody, st)) {
-		reset_cur_state();
 		return;
 	}
 
@@ -221,7 +215,6 @@ void main_outI1(struct fd *whack_sock,
 	}
 
 	statetime_stop(&start, "%s()", __func__);
-	reset_cur_state();
 }
 
 /*
@@ -643,7 +636,6 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 
 	update_state_connection(st, c);
 
-	set_cur_state(st); /* (caller will reset cur_state) */
 	st->st_try = 0; /* not our job to try again from start */
 	/* only as accurate as connection */
 	st->st_policy = c->policy & ~POLICY_IPSEC_MASK;
@@ -876,7 +868,7 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 	RETURN_STF_FAILURE(accept_v1_nonce(st->st_logger, md, &st->st_ni, "Ni"));
 
 	/* decode certificate requests */
-	ikev1_decode_cr(md);
+	ikev1_decode_cr(md, st->st_logger);
 
 	if (st->st_requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = TRUE;
@@ -1083,7 +1075,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 	const cert_t mycert = c->spd.this.cert;
 
 	/* decode certificate requests */
-	ikev1_decode_cr(md);
+	ikev1_decode_cr(md, st->st_logger);
 
 	if (st->st_requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = TRUE;
@@ -1793,7 +1785,7 @@ stf_status send_isakmp_notification(struct state *st,
 		if (!ikev1_encrypt_message(&rbody, st))
 			return STF_INTERNAL_ERROR;
 
-		send_ike_msg_without_recording(st, &reply_stream, "ISAKMP notify");
+		send_pbs_out_using_state(st, "ISAKMP notify", &reply_stream);
 
 		/* get back old IV for this state */
 		restore_iv(st, old_iv);
@@ -1811,6 +1803,8 @@ stf_status send_isakmp_notification(struct state *st,
  * those calls pass a fake state as sndst.
  * Note: msgid is in different order here from other calls :/
  */
+static monotime_t last_malformed = MONOTIME_EPOCH;
+
 static void send_notification(struct logger *logger,
 			      struct state *sndst /*possibly fake*/,
 			      notification_t type,
@@ -1819,7 +1813,6 @@ static void send_notification(struct logger *logger,
 			      uint8_t protoid)
 {
 	pb_stream r_hdr_pbs;
-	static monotime_t last_malformed = MONOTIME_EPOCH;
 	monotime_t n = mononow();
 
 	switch (type) {
@@ -1966,7 +1959,7 @@ static void send_notification(struct logger *logger,
 		close_output_pbs(&r_hdr_pbs);
 	}
 
-	send_ike_msg_without_recording(sndst, &pbs, "notification packet");
+	send_pbs_out_using_state(sndst, "notification packet", &pbs);
 }
 
 void send_notification_from_state(struct state *st, enum state_kind from_state,
@@ -2005,42 +1998,75 @@ void send_notification_from_state(struct state *st, enum state_kind from_state,
 
 void send_notification_from_md(struct msg_digest *md, notification_t type)
 {
-	/*
-	 * Create a fake state object to be able to use send_notification.
-	 * This is somewhat dangerous: the fake state must not be deleted
-	 * or have almost any other operation performed on it.
-	 * Ditto for fake connection.
-	 *
-	 * ??? how can we be sure to have faked all salient fields correctly?
-	 *
-	 * Most details must be left blank (eg. pointers
-	 * set to NULL).  struct initialization is good at this.
-	 *
-	 * We need to set [??? we don't -- is this still true?]:
-	 *   st_connection->that.host_addr
-	 *   st_connection->that.host_port
-	 *   st_connection->interface
-	 */
-	struct connection fake_connection = {
-		.interface = md->iface,
-		.policy = POLICY_IKE_FRAG_FORCE, 	/* for should_fragment_ike_msg() */
-	};
+	pb_stream r_hdr_pbs;
+	monotime_t n = mononow();
 
-	struct ike_sa fake_ike = {
-		.sa = {
-			.st_serialno = SOS_NOBODY,
-			.st_connection = &fake_connection,	/* for should_fragment_ike_msg() */
-			.st_state = finite_states[STATE_UNDEFINED],
-			.st_remote_endpoint = md->sender,
-		},
-	};
+	switch (type) {
+	case PAYLOAD_MALFORMED:
+		/* only send one per second. */
+		/* ??? this depends on monotime_t having a one-second granularity */
+		if (monobefore(last_malformed, n))
+			return;
+		last_malformed = n;
+		break;
 
-	passert(md != NULL);
+	case INVALID_FLAGS:
+		break;
 
-	update_ike_endpoints(&fake_ike, md);
-	send_notification(md->md_logger, &fake_ike.sa, type, NULL, 0,
-			  md->hdr.isa_ike_initiator_spi.bytes, md->hdr.isa_ike_responder_spi.bytes,
-			  PROTO_ISAKMP);
+	default:
+		/* quiet GCC warning */
+		break;
+	}
+
+	endpoint_buf b;
+	log_md(RC_NOTIFICATION + type, md,
+	       "sending notification %s to %s",
+	       enum_name(&ikev1_notify_names, type),
+	       str_endpoint(&md->sender, &b));
+
+	uint8_t buffer[1024];	/* ??? large enough for any notification? */
+	struct pbs_out pbs = open_pbs_out("notification msg",
+					  buffer, sizeof(buffer),
+					  md->md_logger);
+
+	/* HDR* */
+
+	{
+		/* ??? "keep it around for TPM" */
+		struct isakmp_hdr hdr = {
+			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
+				ISAKMP_MINOR_VERSION,
+			.isa_xchg = ISAKMP_XCHG_INFO,
+			.isa_msgid = 0,
+			.isa_flags = 0,
+			.isa_ike_initiator_spi = md->hdr.isa_ike_initiator_spi,
+			.isa_ike_responder_spi = md->hdr.isa_ike_responder_spi,
+		};
+		passert(out_struct(&hdr, &isakmp_hdr_desc, &pbs, &r_hdr_pbs));
+	}
+
+	/* Notification Payload */
+
+	{
+		pb_stream not_pbs;
+		struct isakmp_notification isan = {
+			.isan_doi = ISAKMP_DOI_IPSEC,
+			.isan_type = type,
+			.isan_spisize = 0,
+			.isan_protoid = PROTO_ISAKMP,
+		};
+
+		if (!out_struct(&isan, &isakmp_notification_desc,
+					&r_hdr_pbs, &not_pbs)) {
+			log_md(RC_LOG, md, "failed to build notification in send_notification");
+			return;
+		}
+
+		close_output_pbs(&not_pbs);
+	}
+
+	close_output_pbs(&r_hdr_pbs);
+	send_pbs_out_using_md(md, "notification packet", &pbs);
 }
 
 /*
@@ -2188,7 +2214,7 @@ void send_v1_delete(struct state *st)
 
 		passert(ikev1_encrypt_message(&r_hdr_pbs, p1st));
 
-		send_ike_msg_without_recording(p1st, &reply_pbs, "delete notify");
+		send_pbs_out_using_state(p1st, "delete notify", &reply_pbs);
 
 		/* get back old IV for this state */
 		restore_iv(p1st, old_iv);
@@ -2278,15 +2304,21 @@ bool accept_delete(struct msg_digest *md,
 			 * ISAKMP
 			 */
 			ike_spis_t cookies;
-			struct state *dst;
+			diag_t d;
 
-			if (!in_raw(&cookies.initiator, COOKIE_SIZE, &p->pbs, "iCookie"))
-				return FALSE;
+			d = pbs_in_raw(&p->pbs, &cookies.initiator, COOKIE_SIZE, "iCookie");
+			if (d != NULL) {
+				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+				return false;
+			}
 
-			if (!in_raw(&cookies.responder, COOKIE_SIZE, &p->pbs, "rCookie"))
-				return FALSE;
+			d = pbs_in_raw(&p->pbs, &cookies.responder, COOKIE_SIZE, "rCookie");
+			if (d != NULL) {
+				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+				return false;
+			}
 
-			dst = find_state_ikev1(&cookies, v1_MAINMODE_MSGID);
+			struct state *dst = find_state_ikev1(&cookies, v1_MAINMODE_MSGID);
 
 			if (dst == NULL) {
 				log_state(RC_LOG_SERIOUS, st, "ignoring Delete SA payload: ISAKMP SA not found (maybe expired)");
@@ -2319,9 +2351,11 @@ bool accept_delete(struct msg_digest *md,
 			 * IPSEC (ESP/AH)
 			 */
 			ipsec_spi_t spi;	/* network order */
-
-			if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
-				return FALSE;
+			diag_t dt = pbs_in_raw(&p->pbs, &spi, sizeof(spi), "SPI");
+			if (dt != NULL) {
+				log_diag(RC_LOG, st->st_logger, &dt, "%s", "");
+				return false;
+			}
 
 			bool bogus;
 			struct state *dst = find_phase2_state_to_delete(st,

@@ -197,9 +197,8 @@ enum impair_action {
 bool process_impair(const struct whack_impair *whack_impair,
 		    void (*action)(enum impair_action, unsigned what,
 				   unsigned how, bool background,
-				   struct fd *whackfd),
-		    bool background, struct fd *whackfd,
-		    struct logger *logger);
+				   struct logger *logger),
+		    bool background, struct logger *logger);
 
 bool have_impairments(void);
 void jam_impairments(struct jambuf *buf, const char *sep);
