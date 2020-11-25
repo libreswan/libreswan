@@ -133,6 +133,19 @@ struct connection *conn_by_name(const char *nm, bool no_inst)
 	return p;
 }
 
+struct connection *conn_by_serialno(co_serial_t serialno)
+{
+	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
+	for (struct connection *d = connections; d != NULL; ) {
+		if (d == NULL)
+			return NULL;
+		if (co_serial_cmp(d->serialno, ==, serialno))
+			return d;
+		d = d->ac_next;
+	}
+	return NULL; /* unreachable */
+}
+
 void release_connection(struct connection *c, bool relations, struct fd *whackfd)
 {
 	if (c->kind == CK_INSTANCE) {
@@ -4254,6 +4267,14 @@ void update_state_connection(struct state *st, struct connection *c)
 		st->st_peer_alt_id = FALSE; /* must be rechecked against new 'that' */
 		rehash_state_connection(st);
 		if (old != NULL) {
+			/* if we are an established instance planning to revive, don't kill us */
+			if (old->kind == CK_INSTANCE && LIN(POLICY_UP, old->policy) &&
+				IS_IKE_SA_ESTABLISHED(st)) {
+				dbg("skip discarding connection '%s' with serial "PRI_CO" because we are trying to revive",
+					old->name, pri_co(old->serialno));
+				return;
+			}
+			dbg("discard connection");
 			connection_discard(old);
 		}
 	}

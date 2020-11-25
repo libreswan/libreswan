@@ -193,7 +193,7 @@ static const struct keyword_enum_value kw_sendca_values[] = {
 static const struct keyword_enum_values kw_sendca_list = VALUES_INITIALIZER(kw_sendca_values);
 
 /*
- * Values for auto={add,start,route,ignore}
+ * Values for auto={add,start,ondemand,ignore,keep}
  */
 static const struct keyword_enum_value kw_auto_values[] = {
 	{ "ignore", STARTUP_IGNORE },
@@ -203,6 +203,7 @@ static const struct keyword_enum_value kw_auto_values[] = {
 	{ "route",  STARTUP_ONDEMAND }, /* backwards compatibility alias */
 	{ "start",  STARTUP_START },
 	{ "up",     STARTUP_START }, /* alias */
+	{ "keep",   STARTUP_KEEP }, /* add plus once up, keep up */
 };
 
 static const struct keyword_enum_values kw_auto_list = VALUES_INITIALIZER(kw_auto_values);

@@ -342,22 +342,13 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 				return 1;
 			} else {
 				log_connection(RC_NOPEERIP, whackfd, c,
-					       "cannot initiate connection without knowing peer IP address (kind=%s)",
+					       "cannot initiate connection (serial "PRI_CO") without knowing peer IP address (kind=%s)",
+					       pri_co(c->serialno),
 					       enum_show(&connection_kind_names, c->kind));
 			}
 			return 0;
 		}
 
-		if (!(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
-			log_connection(RC_WILDCARD, whackfd, c,
-				       "cannot initiate connection with narrowing=no and (kind=%s)",
-				       enum_show(&connection_kind_names, c->kind));
-		} else {
-			log_connection(RC_WILDCARD, whackfd, c,
-				       "cannot initiate connection with ID wildcards (kind=%s)",
-				       enum_show(&connection_kind_names, c->kind));
-		}
-		return 0;
 	}
 
 	if (isanyaddr(&c->spd.that.host_addr) && (c->policy & POLICY_IKEV2_ALLOW_NARROWING) ) {

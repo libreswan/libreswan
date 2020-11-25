@@ -14,7 +14,10 @@ currently-accepted values are
 <emphasis remap='B'>ipsec auto</emphasis> <option>--up</option>),
 and
 <emphasis remap='B'>ignore</emphasis>
-(also the default) (signifying no automatic startup operation).
+(also the default) (signifying no automatic startup operation),
+and
+<emphasis remap='B'>keep</emphasis>
+(signifying an add plus an attempt to keep the connection up once the remote peer brought it up).
 See the
 <emphasis remap='B'>config setup</emphasis>
 discussion below.

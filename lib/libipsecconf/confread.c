@@ -1523,6 +1523,9 @@ static bool load_conn(struct starter_conn *conn,
 	if (conn->options_set[KNCF_AUTO])
 		conn->desired_state = conn->options[KNCF_AUTO];
 
+	if (conn->desired_state == STARTUP_KEEP)
+		conn->policy |= POLICY_UP; /* auto=keep means once up, keep up */
+
 	return err;
 }
 
