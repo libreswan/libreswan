@@ -398,13 +398,9 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf, struct logger *log
 
 static void pluto_init_nss(const char *nssdir, struct logger *logger)
 {
-	SECStatus rv;
-
-	/* little lie, lsw_nss_setup doesn't have logging */
-	log_message(RC_LOG_SERIOUS, logger, "NSS DB directory: sql:%s", nssdir);
-
-	if (!lsw_nss_setup(nssdir, LSW_NSS_READONLY, logger)) {
-		fatal(PLUTO_EXIT_NSS_FAIL, logger, "FATAL: NSS initialization failure");
+	diag_t d = lsw_nss_setup(nssdir, LSW_NSS_READONLY, logger);
+	if (d != NULL) {
+		fatal_diag(PLUTO_EXIT_NSS_FAIL, logger, &d, "%s", "");
 	}
 	log_message(RC_LOG, logger, "NSS crypto library initialized");
 
@@ -417,7 +413,7 @@ static void pluto_init_nss(const char *nssdir, struct logger *logger)
 		unsigned char *buf = alloc_bytes(seedbytes, "TLA seedmix");
 
 		get_bsi_random(seedbytes, buf, logger); /* much TLA, very blocking */
-		rv = PK11_RandomUpdate(buf, seedbytes);
+		SECStatus rv = PK11_RandomUpdate(buf, seedbytes);
 		log_message(RC_LOG, logger, "seeded %d bytes into the NSS PRNG", seedbytes);
 		passert(rv == SECSuccess);
 		messupn(buf, seedbytes);

@@ -39,7 +39,7 @@ enum lsw_nss_flags {
  * terminated buffer.
  */
 
-bool lsw_nss_setup(const char *config_dir, unsigned flags, struct logger *logger);
+diag_t lsw_nss_setup(const char *config_dir, unsigned flags, struct logger *logger);
 void lsw_nss_shutdown(void);
 
 /*

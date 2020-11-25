@@ -573,10 +573,12 @@ int main(int argc, char *argv[])
 	/*
 	 * Set up for NSS - contains key pairs.
 	 */
-	int status = 0;
-	if (!lsw_nss_setup(oco->nssdir, LSW_NSS_READONLY, logger)) {
-		exit(1);
+	diag_t d = lsw_nss_setup(oco->nssdir, LSW_NSS_READONLY, logger);
+	if (d != NULL) {
+		fatal_diag(1, logger, &d, "%s", "");
 	}
+
+	int status = 0;
 
 	/* options that apply to entire files */
 	if (dump_flg) {
