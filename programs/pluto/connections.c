@@ -1086,7 +1086,8 @@ static bool check_connection_end(const struct whack_end *this,
 
 		if (this->authby == AUTHBY_PSK || this->authby == AUTHBY_NULL ||
 			auth_pol == POLICY_PSK || auth_pol == POLICY_AUTH_NULL) {
-			loglog(RC_FATAL, "ID cannot be specified as %%fromcert if PSK or AUTH-NULL is used");
+			log_message(RC_FATAL, logger,
+				    "ID cannot be specified as %%fromcert if PSK or AUTH-NULL is used");
 			return false;
 		}
 	}
