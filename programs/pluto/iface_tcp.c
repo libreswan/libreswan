@@ -342,7 +342,7 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port,
 
 	/* poke a hole for IKE messages in the IPsec layer */
 	if (kernel_ops->exceptsocket != NULL) {
-		if (!kernel_ops->exceptsocket(fd, AF_INET)) {
+		if (!kernel_ops->exceptsocket(fd, AF_INET, logger)) {
 			close(fd);
 			return -1;
 		}

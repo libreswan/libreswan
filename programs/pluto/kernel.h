@@ -256,7 +256,7 @@ struct kernel_ops {
 			       const char *text_said,
 			       struct logger *logger);
 	void (*process_raw_ifaces)(struct raw_iface *rifaces, struct logger *logger);
-	bool (*exceptsocket)(int socketfd, int family);
+	bool (*exceptsocket)(int socketfd, int family, struct logger *logger);
 	err_t (*migrate_sa_check)(struct logger *);
 	bool (*migrate_sa)(struct state *st);
 	void (*v6holes)(struct logger *logger);
