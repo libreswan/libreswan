@@ -29,6 +29,7 @@
 
 #include <pthread.h>    /* Must be the first include file */
 #include <unistd.h>	/* for sleep() */
+#include <limits.h>	/* for UINT_MAX, ULONG_MAX */
 
 #include "defs.h"
 #include "log.h"
@@ -48,38 +49,39 @@ static void helper_thread_stopped_callback(struct state *st, void *arg);
 static resume_cb handle_helper_answer;
 
 /*
- * The crypto continuation structure
+ * The job structure
  *
- * Pluto is an event-driven transaction system.
- * Each transaction must take a very small slice of time.
- * Those that cannot, must be broken into multiple
- * transactions and the state carried between them
+ * Pluto is an event-driven transaction system.  Each transaction must
+ * take a very small slice of time.  Those that cannot, must be broken
+ * into multiple transactions and the state carried between them
  * cannot be on the stack or in simple global variables.
+ *
  * A continuation is used to hold such state.
  */
 
-typedef unsigned int job_id;
+typedef enum { JOB_ID_MIN = 1, JOB_ID_MAX = ULONG_MAX, } job_id_t;
+typedef enum { HELPER_ID_MIN = 1, HELPER_ID_MAX = UINT_MAX, } helper_id_t;
 
-struct pluto_crypto_req_cont {
-	struct task *pcrc_task;
-	const struct task_handler *pcrc_handler;
-	struct list_entry pcrc_backlog;
-	so_serial_t pcrc_so_serialno;		/* sponsoring state-object's serial number */
-	bool pcrc_cancelled;
-	const char *pcrc_name;
-	job_id pcrc_job_id;
-	int pcrc_helpernum;
-	struct cpu_usage pcrc_time_used;
+struct job {
+	struct task *task;
+	const struct task_handler *handler;
+	struct list_entry backlog;
+	so_serial_t so_serialno;		/* sponsoring state-object's serial number */
+	bool cancelled;
+	const char *name;
+	job_id_t job_id;
+	helper_id_t helper_id;
+	struct cpu_usage time_used;
 
 	/* where to send messages */
 	struct logger *logger;
 };
 
 #define dbg_job(JOB, FMT, ...)						\
-	dbg("job %u for #%lu: %s (%s): "FMT,				\
-	    JOB->pcrc_job_id, JOB->pcrc_so_serialno,			\
-	    JOB->pcrc_name,						\
-	    JOB->pcrc_handler->name,					\
+	dbg("job %lu for #%lu: %s (%s): "FMT,				\
+	    JOB->job_id, JOB->so_serialno,				\
+	    JOB->name,							\
+	    JOB->handler->name,						\
 	    ##__VA_ARGS__)
 
 /*
@@ -91,22 +93,22 @@ static void jam_backlog(struct jambuf *buf, const void *data)
 	if (data == NULL) {
 		jam(buf, "no job");
 	} else {
-		const struct pluto_crypto_req_cont *cn = data;
-		jam(buf, "job %ju", (uintmax_t)cn->pcrc_job_id);
-		if (cn->pcrc_so_serialno != SOS_NOBODY) {
-			jam(buf, " state #%lu", cn->pcrc_so_serialno);
+		const struct job *job = data;
+		jam(buf, "job %ju", (uintmax_t)job->job_id);
+		if (job->so_serialno != SOS_NOBODY) {
+			jam(buf, " state #%lu", job->so_serialno);
 		}
-		if (cn->pcrc_helpernum != 0) {
-			jam(buf, " helper %u", cn->pcrc_helpernum);
+		if (job->helper_id != 0) {
+			jam(buf, " helper %u", job->helper_id);
 		}
-		if (cn->pcrc_cancelled) {
+		if (job->cancelled) {
 			jam(buf, " cancelled");
 		}
-		if (cn->pcrc_name != NULL) {
-			jam(buf, " %s", cn->pcrc_name);
+		if (job->name != NULL) {
+			jam(buf, " %s", job->name);
 		}
-		if (cn->pcrc_handler != NULL) {
-			jam(buf, " (%s)", cn->pcrc_handler->name);
+		if (job->handler != NULL) {
+			jam(buf, " (%s)", job->handler->name);
 		}
 	}
 }
@@ -122,11 +124,11 @@ static pthread_cond_t backlog_cond = PTHREAD_COND_INITIALIZER;
 struct list_head backlog = INIT_LIST_HEAD(&backlog, &backlog_info);
 static int backlog_queue_len = 0;
 
-static void message_helpers(struct pluto_crypto_req_cont *cn)
+static void message_helpers(struct job *job)
 {
 	pthread_mutex_lock(&backlog_mutex);
-	if (cn != NULL) {
-		insert_list_entry(&backlog, &cn->pcrc_backlog);
+	if (job != NULL) {
+		insert_list_entry(&backlog, &job->backlog);
 		backlog_queue_len++;
 	}
 	/* wake up threads waiting for work */
@@ -136,31 +138,15 @@ static void message_helpers(struct pluto_crypto_req_cont *cn)
 
 /*
  * Note: this per-helper struct is never modified in a helper thread
- *
- * Life cycle:
- * - array of nhelpers pointers to this struct created by init_crypto_helpers
- *   Each is initialized by init_crypto_helper (and thread is created):
- *	pcw_work = 0
- *	pcw_dead = FALSE (TRUE if thread creation failed)
- *	pcw_active some kind of queue
- *
- * - cleanup_crypto_helper.
- *   Called by send_crypto_helper_request (if worker is dead and reaped)
- *
- * pcw_work:
- * - send_crypto_helper_request increments it at end
- * - crypto_send_backlog increments it at end
- * - handle_helper_answer decrements it after reading
  */
 
-struct pluto_crypto_worker {
-	int pcw_helpernum;
-	pthread_t pcw_pid;
-	bool pcw_dead;
+struct helper_thread {
+	helper_id_t helper_id;
+	pthread_t pid;
 };
 
 /* may be NULL if we are to do all the work ourselves */
-static struct pluto_crypto_worker *pc_workers = NULL;
+static struct helper_thread *helper_threads = NULL;
 
 static int nr_helper_threads = 0;
 
@@ -169,43 +155,43 @@ static int nr_helper_threads = 0;
  * THREAD. Otherwise it is executed in the main (only) thread.
  */
 
-static int crypto_helper_delay;
+static int helper_thread_delay;
 
-static void pluto_do_crypto_op(struct pluto_crypto_req_cont *cn, int helpernum)
+static void do_job(struct job *job, helper_id_t helper_id)
 {
-	if (cn->pcrc_cancelled) {
-		dbg_job(cn, "helper %d skipping job as cancelled", helpernum);
+	if (job->cancelled) {
+		dbg_job(job, "helper %d skipping job as cancelled", helper_id);
 		return;
 	}
 
-	logtime_t start = logtime_start(cn->logger);
+	logtime_t start = logtime_start(job->logger);
 
-	dbg_job(cn, "helper %d starting job", helpernum);
-	if (crypto_helper_delay > 0) {
+	dbg_job(job, "helper %d starting job", helper_id);
+	if (helper_thread_delay > 0) {
 		DBG_log("helper %d is pausing for %u seconds",
-			helpernum, crypto_helper_delay);
-		sleep(crypto_helper_delay);
+			helper_id, helper_thread_delay);
+		sleep(helper_thread_delay);
 	}
 
-	cn->pcrc_handler->computer_fn(cn->logger, cn->pcrc_task, helpernum);
+	job->handler->computer_fn(job->logger, job->task, helper_id);
 
-	cn->pcrc_time_used =
+	job->time_used =
 		logtime_stop(&start,
-			     "helper %d processing job %u for state #%lu: %s (%s)",
-			     helpernum, cn->pcrc_job_id, cn->pcrc_so_serialno,
-			     cn->pcrc_name, cn->pcrc_handler->name);
+			     "helper %u processing job %lu for state #%lu: %s (%s)",
+			     helper_id, job->job_id, job->so_serialno,
+			     job->name, job->handler->name);
 }
 
 /* IN A HELPER THREAD */
-static void *pluto_crypto_helper_thread(void *arg)
+static void *helper_thread(void *arg)
 {
 	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
-	const struct pluto_crypto_worker *w = arg;
+	const struct helper_thread *w = arg;
 
-	dbg("starting helper thread %d", w->pcw_helpernum);
+	dbg("starting helper thread %d", w->helper_id);
 
 #ifdef HAVE_SECCOMP
-	init_seccomp_cryptohelper(w->pcw_helpernum, logger);
+	init_seccomp_cryptohelper(w->helper_id, logger);
 #else
 	log_message(RC_LOG, logger, "seccomp security for helper not supported");
 #endif
@@ -214,59 +200,59 @@ static void *pluto_crypto_helper_thread(void *arg)
 #if USE_PTHREAD_SETSCHEDPRIO
 	int status = pthread_setschedprio(pthread_self(), 10);
 	dbg("status value returned by setting the priority of this helper thread %d: %d",
-	    w->pcw_helpernum, status);
+	    w->helper_id, status);
 #endif
 
 	while (true) {
-		struct pluto_crypto_req_cont *cn = NULL;
+		struct job *job = NULL;
 		pthread_mutex_lock(&backlog_mutex);
 		{
 			/*
 			 * Search the backlog[] for something to do.
 			 * If needed wait.
 			 */
-			pexpect(cn == NULL);
+			pexpect(job == NULL);
 			while (!exiting_pluto) {
 				/* grab the next entry, if there is one */
-				pexpect(cn == NULL);
-				FOR_EACH_LIST_ENTRY_OLD2NEW(&backlog, cn) { break; }
-				if (cn != NULL) {
+				pexpect(job == NULL);
+				FOR_EACH_LIST_ENTRY_OLD2NEW(&backlog, job) { break; }
+				if (job != NULL) {
 					/*
 					 * Assign the entry to this
 					 * thread, removing it from
 					 * the backlog.
 					 */
-					remove_list_entry(&cn->pcrc_backlog);
-					cn->pcrc_helpernum = w->pcw_helpernum;
+					remove_list_entry(&job->backlog);
+					job->helper_id = w->helper_id;
 					break;
 				}
 				dbg("helper thread %d has nothing to do",
-				    w->pcw_helpernum);
+				    w->helper_id);
 				pthread_cond_wait(&backlog_cond, &backlog_mutex);
 			}
-			if (cn == NULL) {
+			if (job == NULL) {
 				/*
-				 * No CN implies pluto is exiting but
-				 * not reverse - could grab a CN in
+				 * No JOB implies pluto is exiting but
+				 * not reverse - could grab a JOB in
 				 * parallel to pluto starting to exit.
 				 */
 				pexpect(exiting_pluto);
 			}
 		}
 		pthread_mutex_unlock(&backlog_mutex);
-		if (cn == NULL) {
+		if (job == NULL) {
 			/* per above, must be shutting down */
 			break;
 		}
 		/* might be cancelled */
-		pluto_do_crypto_op(cn, w->pcw_helpernum);
-		dbg_job(cn, "helper thread %d sending result back to state",
-			w->pcw_helpernum);
+		do_job(job, w->helper_id);
+		dbg_job(job, "helper thread %d sending result back to state",
+			w->helper_id);
 		schedule_resume("sending helper answer back to state",
-				cn->pcrc_so_serialno,
-				handle_helper_answer, cn);
+				job->so_serialno,
+				handle_helper_answer, job);
 	}
-	dbg("telling main thread that the helper thread %d is done", w->pcw_helpernum);
+	dbg("telling main thread that the helper thread %d is done", w->helper_id);
 	schedule_callback("helper stopped", SOS_NOBODY,
 			  helper_thread_stopped_callback, NULL);
 	return NULL;
@@ -285,12 +271,12 @@ static callback_cb inline_worker; /* type assertion */
 static void inline_worker(struct state *unused_st UNUSED,
 			  void *arg)
 {
-	struct pluto_crypto_req_cont *cn = arg;
+	struct job *job = arg;
 	/* might be cancelled */
-	pluto_do_crypto_op(cn, -1);
+	do_job(job, -1);
 	schedule_resume("inline worker sending helper answer",
-			cn->pcrc_so_serialno,
-			handle_helper_answer, cn);
+			job->so_serialno,
+			handle_helper_answer, job);
 }
 
 /*
@@ -300,7 +286,7 @@ static void inline_worker(struct state *unused_st UNUSED,
  *
  * See also comments prefixing the typedef for crypto_req_cont_func.
  *
- * struct pluto_crypto_req_cont *cn:
+ * struct job *j:
  *
  *	Points to a heap-allocated struct.  The caller transfers
  *	ownership (i.e responsibility to free) to us.  (We or our
@@ -308,7 +294,7 @@ static void inline_worker(struct state *unused_st UNUSED,
  *	or failure is determined.)
  *
  * If a state is deleted (which will cancel any outstanding crypto
- * request), then cn->pcrc_cancelled will be set true.
+ * request), then job->cancelled will be set true.
  *
  * Return values:
  *
@@ -329,41 +315,48 @@ static void inline_worker(struct state *unused_st UNUSED,
  *
  */
 
-static void submit_crypto_request(struct pluto_crypto_req_cont *cn,
-				  const struct logger *logger,
-				  struct state *st,
-				  struct task *task,
-				  const struct task_handler *handler)
+void submit_task(const struct logger *logger,
+		 struct state *st,
+		 struct task *task,
+		 const struct task_handler *handler,
+		 const char *name)
 {
+	struct job *job = alloc_thing(struct job, name);
+	job->cancelled = false;
+	job->name = name;
+	job->backlog = list_entry(&backlog_info, job);
+	job->so_serialno = SOS_NOBODY;
+
 	passert(st->st_serialno != SOS_NOBODY);
-	passert(cn->pcrc_so_serialno == SOS_NOBODY);
-	cn->pcrc_so_serialno = st->st_serialno;
+	passert(job->so_serialno == SOS_NOBODY);
+	job->so_serialno = st->st_serialno;
 
 	/* set up the id */
-	static job_id pcw_job_id = 0;	/* counter for generating unique request IDs */
-	cn->pcrc_job_id = ++pcw_job_id;
-	cn->pcrc_handler = handler;
-	cn->pcrc_task = task;
+	static job_id_t job_id = 0;	/* counter for generating unique request IDs */
+	job->job_id = ++job_id;
+	job->handler = handler;
+	job->task = task;
 
 	/*
 	 * Save in case it needs to be cancelled.
 	 */
+
 	pexpect(st->st_offloaded_task == NULL);
-	st->st_offloaded_task = cn;
+	st->st_offloaded_task = job;
 	st->st_v1_offloaded_task_in_background = false;
-	cn->logger = clone_logger(logger);
-	dbg_job(cn, "adding job to queue");
+	job->logger = clone_logger(logger);
+	dbg_job(job, "adding job to queue");
 
 	/*
 	 * do it all ourselves?
 	 */
-	if (pc_workers == NULL) {
+	if (helper_threads == NULL) {
 		/*
 		 * Invoke the inline worker as if it is on a separate
 		 * thread - no resume (aka unsuspend) and no state
 		 * (hence SOS_NOBODY).
 		 */
-		schedule_callback("inline crypto", SOS_NOBODY, inline_worker, cn);
+		schedule_callback("inline crypto", SOS_NOBODY, inline_worker, job);
 	} else {
 		/*
 		 * XXX: Danger:
@@ -375,41 +368,41 @@ static void submit_crypto_request(struct pluto_crypto_req_cont *cn,
 		clear_retransmits(st);
 		event_schedule(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, st);
 		/* add to backlog */
-		message_helpers(cn);
+		message_helpers(job);
 	}
 }
 
 void delete_cryptographic_continuation(struct state *st)
 {
 	passert(st->st_serialno != SOS_NOBODY);
-	struct pluto_crypto_req_cont *cn = st->st_offloaded_task;
-	if (cn == NULL) {
+	struct job *job = st->st_offloaded_task;
+	if (job == NULL) {
 		return;
 	}
 	/* shut it down */
-	cn->pcrc_cancelled = true;
+	job->cancelled = true;
 	st->st_offloaded_task = NULL;
 	/* remove it from any queue */
-	if (pc_workers != NULL) {
+	if (helper_threads != NULL) {
 		/* remove it from any queue */
 		pthread_mutex_lock(&backlog_mutex);
-		if (detached_list_entry(&cn->pcrc_backlog)) {
+		if (detached_list_entry(&job->backlog)) {
 			/*
 			 * Already grabbed by the helper thread so
 			 * can't delete it here.
 			 */
-			cn = NULL;
+			job = NULL;
 		} else {
-			remove_list_entry(&cn->pcrc_backlog);
+			remove_list_entry(&job->backlog);
 			backlog_queue_len--;
 		}
 		pthread_mutex_unlock(&backlog_mutex);
-		if (cn != NULL) {
-			cn->pcrc_handler->cancelled_cb(&cn->pcrc_task);
-			pexpect(cn->pcrc_task == NULL); /* did their job */
+		if (job != NULL) {
+			job->handler->cancelled_cb(&job->task);
+			pexpect(job->task == NULL); /* did their job */
 			/* free the heap space */
-			free_logger(&cn->logger, HERE);
-			pfree(cn);
+			free_logger(&job->logger, HERE);
+			pfree(job);
 		}
 	}
 }
@@ -423,47 +416,47 @@ static stf_status handle_helper_answer(struct state *st,
 				       struct msg_digest *md,
 				       void *arg)
 {
-	struct pluto_crypto_req_cont *cn = arg;
-	dbg_job(cn, "processing response from helper %d", cn->pcrc_helpernum);
+	struct job *job = arg;
+	dbg_job(job, "processing response from helper %d", job->helper_id);
 
-	const struct task_handler *h = cn->pcrc_handler;
+	const struct task_handler *h = job->handler;
 	passert(h != NULL);
 
 	/*
 	 * call the continuation (skip if suppressed)
 	 */
 	stf_status status;
-	if (cn->pcrc_cancelled) {
+	if (job->cancelled) {
 		/* suppressed */
-		dbg_job(cn, "was cancelled; ignoring respose");
+		dbg_job(job, "was cancelled; ignoring respose");
 		pexpect(st == NULL || st->st_offloaded_task == NULL);
-		h->cancelled_cb(&cn->pcrc_task);
-		pexpect(cn->pcrc_task == NULL); /* did your job */
+		h->cancelled_cb(&job->task);
+		pexpect(job->task == NULL); /* did your job */
 		status = STF_SKIP_COMPLETE_STATE_TRANSITION;
 	} else if (st == NULL) {
 		/* oops, the state disappeared! */
-		pexpect_fail(cn->logger, HERE,
-			     "state #%lu for job %u disappeared!",
-			     cn->pcrc_so_serialno, cn->pcrc_job_id);
-		h->cancelled_cb(&cn->pcrc_task);
-		pexpect(cn->pcrc_task == NULL); /* did your job */
+		pexpect_fail(job->logger, HERE,
+			     "state #%lu for job %lu disappeared!",
+			     job->so_serialno, job->job_id);
+		h->cancelled_cb(&job->task);
+		pexpect(job->task == NULL); /* did your job */
 		status = STF_SKIP_COMPLETE_STATE_TRANSITION;
 	} else {
-		pexpect(st->st_offloaded_task == cn);
+		pexpect(st->st_offloaded_task == job);
 		st->st_offloaded_task = NULL;
 		st->st_v1_offloaded_task_in_background = false;
 		/* bill the thread time */
-		cpu_usage_add(st->st_timing.helper_usage, cn->pcrc_time_used);
+		cpu_usage_add(st->st_timing.helper_usage, job->time_used);
 		/* wall clock time not billed */
 		/* run the callback */
-		dbg_job(cn, "calling continuation function %p", h->completed_cb);
-		status = h->completed_cb(st, md, &cn->pcrc_task);
-		pexpect(cn->pcrc_task == NULL); /* did your job */
+		dbg_job(job, "calling continuation function %p", h->completed_cb);
+		status = h->completed_cb(st, md, &job->task);
+		pexpect(job->task == NULL); /* did your job */
 	}
-	pexpect(cn->pcrc_task == NULL); /* cross check - re-check */
+	pexpect(job->task == NULL); /* cross check - re-check */
 	/* now free up the continuation */
-	free_logger(&cn->logger, HERE);
-	pfree(cn);
+	free_logger(&job->logger, HERE);
+	pfree(job);
 	return status;
 }
 
@@ -471,7 +464,7 @@ static stf_status handle_helper_answer(struct state *st,
  * Initialize helper debug delay value from environment variable.
  * This function is NOT thread safe (getenv).
  */
-static void init_crypto_helper_delay(struct logger *logger)
+static void init_helper_thread_delay(struct logger *logger)
 {
 	const char *envdelay;
 	unsigned long delay;
@@ -487,7 +480,7 @@ static void init_crypto_helper_delay(struct logger *logger)
 			    "$PLUTO_CRYPTO_HELPER_DELAY malformed: %s",
 			    error);
 	else
-		crypto_helper_delay = (int)delay;
+		helper_thread_delay = (int)delay;
 }
 
 /*
@@ -500,10 +493,10 @@ static void init_crypto_helper_delay(struct logger *logger)
  */
 void start_server_helpers(int nhelpers, struct logger *logger)
 {
-	pc_workers = NULL;
+	helper_threads = NULL;
 	nr_helper_threads = 0;
 
-	init_crypto_helper_delay(logger);
+	init_helper_thread_delay(logger);
 
 	/* find out how many CPUs there are, if nhelpers is -1 */
 	/* if nhelpers == 0, then we do all the work ourselves */
@@ -535,18 +528,17 @@ void start_server_helpers(int nhelpers, struct logger *logger)
 		 * the threads have been created so that shutdown code
 		 * only tries to run when there really are threads.
 		 */
-		pc_workers = alloc_things(struct pluto_crypto_worker, nhelpers,
-					  "pluto helpers");
+		helper_threads = alloc_things(struct helper_thread, nhelpers,
+					      "pluto helpers");
 		for (int n = 0; n < nhelpers; n++) {
-			struct pluto_crypto_worker *w = &pc_workers[n];
-			w->pcw_helpernum = n + 1; /* i.e., not 0 */
-			int thread_status = pthread_create(&w->pcw_pid, NULL,
-							   pluto_crypto_helper_thread, (void *)w);
+			struct helper_thread *w = &helper_threads[n];
+			w->helper_id = n + 1; /* i.e., not 0 */
+			int thread_status = pthread_create(&w->pid, NULL,
+							   helper_thread, (void *)w);
 			if (thread_status != 0) {
 				log_message(RC_LOG_SERIOUS, logger,
 					    "failed to start child thread for helper %d, error = %d",
 					    n, thread_status);
-				w->pcw_dead = true;
 			} else {
 				log_message(RC_LOG, logger, "started thread for helper %d", n);
 			}
@@ -582,7 +574,7 @@ static void helper_thread_stopped_callback(struct state *st UNUSED, void *contex
 	 * Finish things using a callback so this code can cleanup all
 	 * its allocated data.
 	 */
-	pfreeany(pc_workers);
+	pfreeany(helper_threads);
 	schedule_callback("all helper threads stopped", SOS_NOBODY,
 			  server_helpers_stopped_callback, NULL);
 }
@@ -594,22 +586,8 @@ void stop_server_helpers(void)
 		message_helpers(NULL);
 	} else {
 		dbg("no helper threads to shutdown");
-		pexpect(pc_workers == NULL);
+		pexpect(helper_threads == NULL);
 		schedule_callback("no helpers to stop", SOS_NOBODY,
 				  server_helpers_stopped_callback, NULL);
 	}
-}
-
-void submit_task(const struct logger *logger,
-		 struct state *st,
-		 struct task *task,
-		 const struct task_handler *handler,
-		 const char *name)
-{
-	struct pluto_crypto_req_cont *r = alloc_thing(struct pluto_crypto_req_cont, name);
-	r->pcrc_cancelled = false;
-	r->pcrc_name = name;
-	r->pcrc_backlog = list_entry(&backlog_info, r);
-	r->pcrc_so_serialno = SOS_NOBODY;
-	submit_crypto_request(r, logger, st, task, handler);
 }
