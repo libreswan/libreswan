@@ -26,7 +26,7 @@ west #
  ipsec whack --impair v2-proposal-integ:no
 west #
  ../bin/libreswan-up-down.sh ike,esp=aes_gcm  -I 192.0.1.254 192.0.2.254
-002 added IKEv2 connection "ike,esp=aes_gcm"
+002 "ike,esp=aes_gcm": added IKEv2 connection
 1v2 "ike,esp=aes_gcm" #1: initiating IKEv2 connection
 1v2 "ike,esp=aes_gcm" #1: sent IKE_SA_INIT request
 1v2 "ike,esp=aes_gcm" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
@@ -46,7 +46,7 @@ west #
  ipsec whack --impair v2-proposal-integ:allow-none
 west #
  ../bin/libreswan-up-down.sh ike,esp=aes_gcm  -I 192.0.1.254 192.0.2.254
-002 added IKEv2 connection "ike,esp=aes_gcm"
+002 "ike,esp=aes_gcm": added IKEv2 connection
 1v2 "ike,esp=aes_gcm" #3: initiating IKEv2 connection
 002 "ike,esp=aes_gcm" #3: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
 002 "ike,esp=aes_gcm" #3: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
@@ -70,7 +70,7 @@ west #
  ipsec whack --impair v2-proposal-integ:drop-none
 west #
  ../bin/libreswan-up-down.sh ike,esp=aes_gcm  -I 192.0.1.254 192.0.2.254
-002 added IKEv2 connection "ike,esp=aes_gcm"
+002 "ike,esp=aes_gcm": added IKEv2 connection
 1v2 "ike,esp=aes_gcm" #5: initiating IKEv2 connection
 002 "ike,esp=aes_gcm" #5: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
 002 "ike,esp=aes_gcm" #5: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
@@ -96,7 +96,7 @@ west #
  ipsec whack --impair v2-proposal-dh:no
 west #
  ../bin/libreswan-up-down.sh ike,esp=aes_gcm  -I 192.0.1.254 192.0.2.254
-002 added IKEv2 connection "ike,esp=aes_gcm"
+002 "ike,esp=aes_gcm": added IKEv2 connection
 1v2 "ike,esp=aes_gcm" #7: initiating IKEv2 connection
 1v2 "ike,esp=aes_gcm" #7: sent IKE_SA_INIT request
 1v2 "ike,esp=aes_gcm" #7: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
@@ -116,7 +116,7 @@ west #
  ipsec whack --impair v2-proposal-dh:allow-none
 west #
  ../bin/libreswan-up-down.sh ike,esp=aes_gcm  -I 192.0.1.254 192.0.2.254
-002 added IKEv2 connection "ike,esp=aes_gcm"
+002 "ike,esp=aes_gcm": added IKEv2 connection
 1v2 "ike,esp=aes_gcm" #9: initiating IKEv2 connection
 1v2 "ike,esp=aes_gcm" #9: sent IKE_SA_INIT request
 002 "ike,esp=aes_gcm" #9: IMPAIR: proposal 1 transform DH=NONE included when counting transforms
@@ -138,7 +138,7 @@ west #
  ipsec whack --impair v2-proposal-dh:drop-none
 west #
  ../bin/libreswan-up-down.sh ike,esp=aes_gcm  -I 192.0.1.254 192.0.2.254
-002 added IKEv2 connection "ike,esp=aes_gcm"
+002 "ike,esp=aes_gcm": added IKEv2 connection
 1v2 "ike,esp=aes_gcm" #11: initiating IKEv2 connection
 1v2 "ike,esp=aes_gcm" #11: sent IKE_SA_INIT request
 002 "ike,esp=aes_gcm" #11: IMPAIR: proposal 1 transform DH=NONE excluded when counting transforms

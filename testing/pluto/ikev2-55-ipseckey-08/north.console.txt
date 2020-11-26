@@ -6,7 +6,7 @@ north #
  /testing/pluto/bin/wait-until-pluto-started
 north #
  ipsec auto --add north-east
-002 added IKEv2 connection "north-east"
+002 "north-east": added IKEv2 connection
 north #
  ipsec whack --impair suppress-retransmits
 north #

@@ -13,15 +13,15 @@ west #
 west #
  ipsec auto --add test1
 002 "test1": terminating SAs using this connection
-002 added IKEv1 connection "test1"
+002 "test1": added IKEv1 connection
 west #
  ipsec auto --add test2
 002 "test2": terminating SAs using this connection
-002 added IKEv1 connection "test2"
+002 "test2": added IKEv1 connection
 west #
  ipsec auto --add test3
 002 "test3": terminating SAs using this connection
-002 added IKEv1 connection "test3"
+002 "test3": added IKEv1 connection
 west #
  # should establish
 west #

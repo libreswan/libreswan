@@ -24,7 +24,7 @@ west #
  ipsec whack --impair send-bogus-payload-flag
 west #
  ipsec auto --add westnet-eastnet-ikev2
-002 added IKEv2 connection "westnet-eastnet-ikev2"
+002 "westnet-eastnet-ikev2": added IKEv2 connection
 west #
  ipsec whack --impair suppress-retransmits
 west #

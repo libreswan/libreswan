@@ -9,7 +9,7 @@ road #
  ipsec whack --impair suppress-retransmits
 road #
  ipsec auto --add road
-002 added IKEv2 connection "road"
+002 "road": added IKEv2 connection
 road #
  ipsec auto --up road
 1v2 "road"[1] 192.1.2.23 #1: initiating IKEv2 connection

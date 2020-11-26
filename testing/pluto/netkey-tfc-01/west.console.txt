@@ -22,7 +22,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add tfc
-002 added IKEv2 connection "tfc"
+002 "tfc": added IKEv2 connection
 west #
  ipsec auto --status | grep tfc
 000 "tfc": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0

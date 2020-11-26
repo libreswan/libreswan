@@ -14,7 +14,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add road-chain-B
-002 added IKEv2 connection "road-chain-B"
+002 "road-chain-B": added IKEv2 connection
 west #
  ipsec auto --status |grep road-chain-B
 000 "road-chain-B": 192.0.1.254/32===192.1.2.45<192.1.2.45>[@west_chain_endcert.testing.libreswan.org]...192.1.2.23<192.1.2.23>[@east.testing.libreswan.org]===192.0.2.254/32; unrouted; eroute owner: #0

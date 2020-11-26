@@ -2024,10 +2024,11 @@ void add_connection(struct fd *whackfd, const struct whack_message *wm)
 	struct connection *c = alloc_connection(wm->name, HERE);
 	if (extract_connection(wm, c, logger)) {
 		/* log all about this connection */
-		libreswan_log("added %s connection \"%s\"",
-		NEVER_NEGOTIATE(c->policy) ?
-			policy_shunt_names[(c->policy & POLICY_SHUNT_MASK) >> POLICY_SHUNT_SHIFT] :
-			LIN(POLICY_IKEV2_ALLOW, c->policy) ? "IKEv2" : "IKEv1",	 c->name);
+		const char *what =
+			NEVER_NEGOTIATE(c->policy) ? policy_shunt_names[(c->policy & POLICY_SHUNT_MASK) >> POLICY_SHUNT_SHIFT] :
+			LIN(POLICY_IKEV2_ALLOW, c->policy) ? "IKEv2" : "IKEv1";
+		/* connection is good-to-go: log against it */
+		log_connection(RC_LOG, whackfd, c, "added %s connection", what);
 		dbg("ike_life: %jd; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s%s",
 		    deltasecs(c->sa_ike_life_seconds),
 		    deltasecs(c->sa_ipsec_life_seconds),

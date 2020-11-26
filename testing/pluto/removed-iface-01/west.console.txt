@@ -12,13 +12,13 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add test1
-002 added IKEv2 connection "test1"
+002 "test1": added IKEv2 connection
 west #
  ipsec auto --add test2
-002 added IKEv2 connection "test2"
+002 "test2": added IKEv2 connection
 west #
  ipsec auto --add test3
-002 added IKEv2 connection "test3"
+002 "test3": added IKEv2 connection
 west #
  ipsec auto --status | grep interface
 000 using kernel interface: xfrm

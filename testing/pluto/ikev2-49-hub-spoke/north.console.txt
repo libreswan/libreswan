@@ -8,7 +8,7 @@ north #
  ipsec whack --impair suppress-retransmits
 north #
  ipsec auto --add northnet-westnet-ipv4-psk
-002 added IKEv2 connection "northnet-westnet-ipv4-psk"
+002 "northnet-westnet-ipv4-psk": added IKEv2 connection
 north #
  ipsec auto --up northnet-westnet-ipv4-psk
 1v2 "northnet-westnet-ipv4-psk" #1: initiating IKEv2 connection

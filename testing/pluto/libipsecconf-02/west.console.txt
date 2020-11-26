@@ -8,13 +8,13 @@ west #
  # These should load
 west #
  ipsec auto --add base
-002 added IKEv1 connection "base"
+002 "base": added IKEv1 connection
 west #
  ipsec auto --add subnet4
-002 added IKEv1 connection "subnet4"
+002 "subnet4": added IKEv1 connection
 west #
  ipsec auto --add subnet6-good
-002 added IKEv1 connection "subnet6-good"
+002 "subnet6-good": added IKEv1 connection
 west #
  # this one should fail to load
 west #

@@ -9,13 +9,13 @@ west #
 west #
  ! ipsec auto --add westnet-eastnet-ikev2
 036 right certificate with CKAID '<<CKAID#1>>' not found in NSS DB
-002 added IKEv2 connection "westnet-eastnet-ikev2"
+002 "westnet-eastnet-ikev2": added IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ipv4
-002 added IKEv2 connection "westnet-eastnet-ipv4"
+002 "westnet-eastnet-ipv4": added IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2-ckaid
-002 added IKEv2 connection "westnet-eastnet-ikev2-ckaid"
+002 "westnet-eastnet-ikev2-ckaid": added IKEv2 connection
 west #
  
 

@@ -6,7 +6,7 @@ road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
  ipsec auto --add modecfg-road-eastnet-psk
-002 added IKEv1 connection "modecfg-road-eastnet-psk"
+002 "modecfg-road-eastnet-psk": added IKEv1 connection
 road #
  echo initdone
 initdone

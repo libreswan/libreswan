@@ -9,7 +9,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add ikev2-westnet-eastnet
-002 added IKEv2 connection "ikev2-westnet-eastnet"
+002 "ikev2-westnet-eastnet": added IKEv2 connection
 east #
  # block IKE and ESP over UDP
 east #

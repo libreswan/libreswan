@@ -6,7 +6,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-northnet-ipv4-psk
-002 added IKEv2 connection "westnet-northnet-ipv4-psk"
+002 "westnet-northnet-ipv4-psk": added IKEv2 connection
 west #
  ipsec auto --status
 000 using kernel interface: xfrm

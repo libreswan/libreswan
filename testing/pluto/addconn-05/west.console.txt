@@ -28,7 +28,7 @@ conn: "west" redirect-to=<unset>
 conn: "west" accept-redirect-to=<unset>
 conn: "west" esp=<unset>
 conn: "west" ike=<unset>
-002 added IKEv2 connection "west"
+002 "west": added IKEv2 connection
 west #
  ipsec addconn --verbose west-bogus
 opening file: /etc/ipsec.conf
@@ -53,7 +53,7 @@ conn: "west-bogus" redirect-to=<unset>
 conn: "west-bogus" accept-redirect-to=<unset>
 conn: "west-bogus" esp=<unset>
 conn: "west-bogus" ike=<unset>
-002 added IKEv2 connection "west-bogus"
+002 "west-bogus": added IKEv2 connection
 west #
  echo "initdone"
 initdone

@@ -6,7 +6,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-east-sourceip
-002 added IKEv1 connection "westnet-east-sourceip"
+002 "westnet-east-sourceip": added IKEv1 connection
 west #
  ipsec whack --impair suppress-retransmits
 west #

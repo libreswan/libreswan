@@ -22,7 +22,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-vti
-002 added IKEv1 connection "westnet-eastnet-vti"
+002 "westnet-eastnet-vti": added IKEv1 connection
 west #
  # remove the regular route for 192.0.2.0/24
 west #

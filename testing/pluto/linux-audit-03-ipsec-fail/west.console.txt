@@ -8,13 +8,13 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add ikev1-ipsec-fail
-002 added IKEv1 connection "ikev1-ipsec-fail"
+002 "ikev1-ipsec-fail": added IKEv1 connection
 west #
  ipsec auto --add ikev1-aggr-ipsec-fail
-002 added IKEv1 connection "ikev1-aggr-ipsec-fail"
+002 "ikev1-aggr-ipsec-fail": added IKEv1 connection
 west #
  ipsec auto --add ikev2-ipsec-fail
-002 added IKEv2 connection "ikev2-ipsec-fail"
+002 "ikev2-ipsec-fail": added IKEv2 connection
 west #
  #ipsec whack --impair delete-on-retransmit
 west #

@@ -9,7 +9,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-x509
-002 added IKEv2 connection "westnet-eastnet-x509"
+002 "westnet-eastnet-x509": added IKEv2 connection
 west #
  echo "initdone"
 initdone

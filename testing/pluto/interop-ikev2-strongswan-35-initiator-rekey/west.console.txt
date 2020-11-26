@@ -27,7 +27,7 @@ west #
  ipsec whack --impair revival
 west #
  ipsec auto --add westnet-eastnet
-002 added IKEv2 connection "westnet-eastnet"
+002 "westnet-eastnet": added IKEv2 connection
 west #
  echo "initdone"
 initdone

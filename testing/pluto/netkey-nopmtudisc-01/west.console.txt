@@ -22,7 +22,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add netkey
-002 added IKEv2 connection "netkey"
+002 "netkey": added IKEv2 connection
 west #
  ipsec auto --status | grep NOPMTUDISC
 000 "netkey":   policy: RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+NOPMTUDISC+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;

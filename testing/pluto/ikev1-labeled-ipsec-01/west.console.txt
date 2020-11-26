@@ -14,7 +14,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add labeled
-002 added IKEv1 connection "labeled"
+002 "labeled": added IKEv1 connection
 west #
  echo "initdone"
 initdone

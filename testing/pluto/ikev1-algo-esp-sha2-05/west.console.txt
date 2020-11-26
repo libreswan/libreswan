@@ -8,7 +8,7 @@ west #
  ipsec whack --impair delete-on-retransmit
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
-002 added IKEv1 connection "westnet-eastnet-ipv4-psk-ikev1"
+002 "westnet-eastnet-ipv4-psk-ikev1": added IKEv1 connection
 west #
  ipsec status |grep westnet-eastnet-ipv4-psk-ikev1
 000 "westnet-eastnet-ipv4-psk-ikev1": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0

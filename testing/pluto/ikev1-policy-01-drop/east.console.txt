@@ -16,7 +16,7 @@ east #
  # should work but unused
 east #
  ipsec auto --add ikev2
-002 added IKEv2 connection "ikev2"
+002 "ikev2": added IKEv2 connection
 east #
  echo "initdone"
 initdone

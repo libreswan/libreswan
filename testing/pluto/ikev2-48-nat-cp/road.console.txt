@@ -8,7 +8,7 @@ road #
  ipsec whack --impair suppress-retransmits
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-002 added IKEv2 connection "westnet-eastnet-ipv4-psk-ikev2"
+002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 road #
  echo "initdone"
 initdone
