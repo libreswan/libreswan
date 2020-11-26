@@ -38,7 +38,6 @@
 #include "state.h"
 #include "demux.h"
 #include "rnd.h"
-#include "pluto_crypt.h"
 
 void wire_clone_chunk(wire_arena_t *arena,
 		      wire_chunk_t *new,

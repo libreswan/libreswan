@@ -30,7 +30,6 @@
 
 #include "defs.h"
 #include "log.h"
-#include "pluto_crypt.h"
 #include "ikev2_prf.h"
 #include "crypt_dh.h"
 #include "state.h"

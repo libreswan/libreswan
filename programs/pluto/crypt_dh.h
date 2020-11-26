@@ -31,6 +31,7 @@
 #include <pk11pub.h>
 
 #include "chunk.h"
+#include "ike_spi.h"
 
 struct dh_desc;
 struct state;
@@ -63,5 +64,12 @@ typedef stf_status (dh_shared_secret_cb)(struct state *st,
 
 extern void submit_dh_shared_secret(struct state *st, chunk_t remote_ke,
 				    dh_shared_secret_cb *callback, where_t where);
+
+/* internal */
+void calc_v1_skeyid_and_iv(struct state *st);
+void calc_v2_keymat(struct state *st,
+		    PK11SymKey *old_skey_d, /* SKEYSEED IKE Rekey */
+		    const struct prf_desc *old_prf, /* IKE Rekey */
+		    const ike_spis_t *new_ike_spis);
 
 #endif

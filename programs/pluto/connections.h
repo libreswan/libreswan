@@ -488,6 +488,7 @@ extern void rekey_now(const char *name, enum sa_type sa_type, struct fd *whackfd
 struct state;   /* forward declaration of tag (defined in state.h) */
 
 extern struct connection *conn_by_name(const char *nm, bool strict);
+extern struct connection *conn_by_serialno(co_serial_t serialno);
 
 extern struct connection
 	*refine_host_connection(const struct state *st, const struct id *peer_id,

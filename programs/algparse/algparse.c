@@ -23,7 +23,8 @@ static bool fips = false;
 static bool pfs = false;
 static int failures = 0;
 
-enum status { PASSED = 0, FAILED = 1, ERROR = 126, };
+#define ERROR 124
+
 enum expect { FAIL = false, PASS = true, COUNT, };
 
 #define CHECK(CHECK,PARSE,OK) {						\
@@ -652,10 +653,11 @@ int main(int argc, char *argv[])
 	 * ike_alg_init().  Sanity checks and algorithm testing
 	 * require a working NSS.
 	 */
-	if (!lsw_nss_setup(NULL, LSW_NSS_READONLY, logger)) {
-		/* already logged */
-		exit(ERROR);
+	diag_t d = lsw_nss_setup(NULL, LSW_NSS_READONLY, logger);
+	if (d != NULL) {
+		fatal_diag(ERROR, logger, &d, "%s", "");
 	}
+
 	init_crypt_symkey(logger);
 	fips = libreswan_fipsmode();
 
@@ -701,5 +703,5 @@ int main(int argc, char *argv[])
 
 	lsw_nss_shutdown();
 
-	exit(failures > 0 ? FAILED : PASSED);
+	exit(failures > 0 ? PLUTO_EXIT_FAIL : PLUTO_EXIT_OK);
 }

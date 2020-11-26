@@ -47,6 +47,17 @@ void log_nss_error(lset_t rc_flags, struct logger *logger,
 	}
 }
 
+diag_t diag_nss_error(const char *message, ...)
+{
+	char lswbuf[LOG_WIDTH];
+	struct jambuf buf = ARRAY_AS_JAMBUF(lswbuf);
+	va_list ap;
+	va_start(ap, message);
+	jam_va_nss_error(&buf, message, ap);
+	va_end(ap);
+	return diag_jambuf(&buf);
+}
+
 void passert_nss_error(struct logger *logger, where_t where,
 		       const char *message, ...)
 {

@@ -51,7 +51,7 @@
 #include "rnd.h"
 #include "state.h"
 #include "connections.h"
-#include "pluto_crypt.h"
+#include "server_pool.h"
 #include "log.h"
 #include "timer.h"
 #include "ike_alg.h"
@@ -157,7 +157,7 @@ void dh_local_secret_delref(struct dh_local_secret **secret, where_t where)
 	refcnt_delref(secret, free_dh_local_secret, where);
 }
 
-struct crypto_task {
+struct task {
 	chunk_t remote_ke;
 	struct dh_local_secret *local_secret;
 	PK11SymKey *shared_secret;
@@ -165,7 +165,7 @@ struct crypto_task {
 };
 
 static void compute_dh_shared_secret(struct logger *logger,
-				     struct crypto_task *task,
+				     struct task *task,
 				     int thread_unused UNUSED)
 {
 	task->shared_secret = calc_dh_shared_secret(task->local_secret,
@@ -173,7 +173,7 @@ static void compute_dh_shared_secret(struct logger *logger,
 						    logger);
 }
 
-static void cancel_dh_shared_secret(struct crypto_task **task)
+static void cancel_dh_shared_secret(struct task **task)
 {
 	dh_local_secret_delref(&(*task)->local_secret, HERE);
 	free_chunk_content(&(*task)->remote_ke);
@@ -183,7 +183,7 @@ static void cancel_dh_shared_secret(struct crypto_task **task)
 
 static stf_status complete_dh_shared_secret(struct state *st,
 					    struct msg_digest *md,
-					    struct crypto_task **task)
+					    struct task **task)
 {
 	dh_local_secret_delref(&(*task)->local_secret, HERE);
 	free_chunk_content(&(*task)->remote_ke);
@@ -196,10 +196,10 @@ static stf_status complete_dh_shared_secret(struct state *st,
 	return status;
 }
 
-static const struct crypto_handler dh_shared_secret_handler = {
+static const struct task_handler dh_shared_secret_handler = {
 	.name = "dh",
 	.cancelled_cb = cancel_dh_shared_secret,
-	.compute_fn = compute_dh_shared_secret,
+	.computer_fn = compute_dh_shared_secret,
 	.completed_cb = complete_dh_shared_secret,
 };
 
@@ -207,9 +207,9 @@ void submit_dh_shared_secret(struct state *st, chunk_t remote_ke,
 			     dh_shared_secret_cb *cb, where_t where)
 {
 	dbg("submitting DH shared secret for "PRI_WHERE, pri_where(where));
-	struct crypto_task *task = alloc_thing(struct crypto_task, "dh");
+	struct task *task = alloc_thing(struct task, "dh");
 	task->remote_ke = clone_hunk(remote_ke, "DH crypto");
 	task->local_secret = dh_local_secret_addref(st->st_dh_local_secret, HERE);
 	task->cb = cb;
-	submit_crypto(st->st_logger, st, task, &dh_shared_secret_handler, "DH shared secret");
+	submit_task(st->st_logger, st, task, &dh_shared_secret_handler, "DH shared secret");
 }

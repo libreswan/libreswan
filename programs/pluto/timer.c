@@ -50,7 +50,6 @@
 #include "rnd.h"
 #include "timer.h"
 #include "whack.h"
-#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev1_dpd.h"
 #include "ikev2.h"
 #include "ikev2_redirect.h"

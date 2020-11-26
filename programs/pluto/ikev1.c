@@ -2398,7 +2398,8 @@ void process_packet_tail(struct msg_digest *md)
 		p = md->chain[ISAKMP_NEXT_VID];
 		while (p != NULL) {
 			handle_vendorid(md, (char *)p->pbs.cur,
-					pbs_left(&p->pbs), FALSE);
+					pbs_left(&p->pbs), FALSE,
+					st != NULL ? st->st_logger : md->md_logger);
 			p = p->next;
 		}
 	}

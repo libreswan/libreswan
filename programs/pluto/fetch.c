@@ -205,7 +205,8 @@ static err_t fetch_curl(chunk_t url UNUSED,
 /*
  * parses the result returned by an ldap query
  */
-static err_t parse_ldap_result(LDAP *ldap, LDAPMessage *result, chunk_t *blob, struct logger *logger)
+static err_t parse_ldap_result(LDAP *ldap, LDAPMessage *result, chunk_t *blob,
+			       struct logger *logger)
 {
 	err_t ugh = NULL;
 
@@ -305,8 +306,10 @@ static err_t fetch_ldap_url(chunk_t url, chunk_t *blob, struct logger *logger)
 						    0, &timeout, &result);
 
 				if (rc == LDAP_SUCCESS) {
-					ugh = parse_ldap_result(ldap, result,
-								blob, logger);
+					ugh = parse_ldap_result(ldap,
+								result,
+								blob,
+								logger);
 					ldap_msgfree(result);
 				} else {
 					ugh = ldap_err2string(rc);
@@ -332,7 +335,7 @@ static err_t fetch_ldap_url(chunk_t url, chunk_t *blob, struct logger *logger)
 
 static err_t fetch_ldap_url(chunk_t url UNUSED,
 			    chunk_t *blob UNUSED,
-			    struct logger *logger)
+			    struct logger *logger UNUSED)
 {
 	return "LDAP URL fetching not activated in pluto source code";
 }

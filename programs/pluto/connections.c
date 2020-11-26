@@ -75,7 +75,6 @@
 #include "pluto_x509.h"
 #include "nss_cert_verify.h" /* for cert_VerifySubjectAltName() */
 #include "nss_cert_load.h"
-#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "virtual_ip.h"	/* needs connections.h */
 #include "hostpair.h"
@@ -101,7 +100,7 @@ static bool idr_wildmatch(const struct end *this, const struct id *b, struct log
 /*
  * Find a connection by name.
  *
- * strict: don't accept a CK_INSTANCE.
+ * no_inst: don't accept a CK_INSTANCE.
  *
  * If none is found, and strict&&!queit, a diagnostic is logged to
  * whack.
@@ -109,7 +108,7 @@ static bool idr_wildmatch(const struct end *this, const struct id *b, struct log
  * XXX: Fun fact: this function re-orders the list, moving the entry
  * to the front as a side effect (ulgh)!.
  */
-struct connection *conn_by_name(const char *nm, bool strict)
+struct connection *conn_by_name(const char *nm, bool no_inst)
 {
 	struct connection *p, *prev;
 
@@ -119,7 +118,7 @@ struct connection *conn_by_name(const char *nm, bool strict)
 			break;
 		}
 		if (streq(p->name, nm) &&
-		    (!strict || p->kind != CK_INSTANCE)) {
+		    (!no_inst || p->kind != CK_INSTANCE)) {
 			if (prev != NULL) {
 				/* remove p from list */
 				prev->ac_next = p->ac_next;
@@ -131,6 +130,19 @@ struct connection *conn_by_name(const char *nm, bool strict)
 		}
 	}
 	return p;
+}
+
+struct connection *conn_by_serialno(co_serial_t serialno)
+{
+	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
+	for (struct connection *d = connections; d != NULL; ) {
+		if (d == NULL)
+			return NULL;
+		if (co_serial_cmp(d->serialno, ==, serialno))
+			return d;
+		d = d->ac_next;
+	}
+	return NULL; /* unreachable */
 }
 
 void release_connection(struct connection *c, bool relations, struct fd *whackfd)
@@ -4258,6 +4270,14 @@ void update_state_connection(struct state *st, struct connection *c)
 		st->st_peer_alt_id = FALSE; /* must be rechecked against new 'that' */
 		rehash_state_connection(st);
 		if (old != NULL) {
+			/* if we are an established instance planning to revive, don't kill us */
+			if (old->kind == CK_INSTANCE && LIN(POLICY_UP, old->policy) &&
+				IS_IKE_SA_ESTABLISHED(st)) {
+				dbg("skip discarding connection '%s' with serial "PRI_CO" because we are trying to revive",
+					old->name, pri_co(old->serialno));
+				return;
+			}
+			dbg("discard connection");
 			connection_discard(old);
 		}
 	}

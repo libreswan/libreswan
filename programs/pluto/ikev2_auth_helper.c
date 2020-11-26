@@ -26,13 +26,13 @@
 #include "defs.h"
 #include "ikev2_auth.h"
 #include "keys.h"
-#include "pluto_crypt.h"
+#include "server_pool.h"
 #include "state.h"
 #include "secrets.h"
 #include "log.h"
 #include "connections.h"
 
-struct crypto_task {
+struct task {
 	/* in */
 	const struct crypt_mac hash_to_sign;
 	const struct hash_desc *hash_algo;
@@ -43,13 +43,13 @@ struct crypto_task {
 	struct hash_signature signature;
 };
 
-static crypto_compute_fn v2_auth_signature_computer; /* type check */
-static crypto_completed_cb v2_auth_signature_completed; /* type check */
-static crypto_cancelled_cb v2_auth_signature_cancelled; /* type check */
+static task_computer_fn v2_auth_signature_computer; /* type check */
+static task_completed_cb v2_auth_signature_completed; /* type check */
+static task_cancelled_cb v2_auth_signature_cancelled; /* type check */
 
-struct crypto_handler v2_auth_signature_handler = {
+struct task_handler v2_auth_signature_handler = {
 	.name = "signature",
-	.compute_fn = v2_auth_signature_computer,
+	.computer_fn = v2_auth_signature_computer,
 	.completed_cb = v2_auth_signature_completed,
 	.cancelled_cb = v2_auth_signature_cancelled,
 };
@@ -61,7 +61,7 @@ bool submit_v2_auth_signature(struct ike_sa *ike,
 			      enum ikev2_auth_method auth_method,
 			      v2_auth_signature_cb *cb)
 {
-	struct crypto_task task = {
+	struct task task = {
 		.cb = cb,
 		.hash_algo = hash_algo,
 		.auth_method = auth_method,
@@ -88,14 +88,15 @@ bool submit_v2_auth_signature(struct ike_sa *ike,
 	default:
 		bad_case(authby);
 	}
-	submit_crypto(ike->sa.st_logger, &ike->sa /*state to resume*/,
-		      clone_thing(task, "signature task"),
-		      &v2_auth_signature_handler,
-		      "computing responder signature");
+
+	submit_task(ike->sa.st_logger, &ike->sa /*state to resume*/,
+		    clone_thing(task, "signature task"),
+		    &v2_auth_signature_handler,
+		    "computing responder signature");
 	return true;
 }
 
-static void v2_auth_signature_computer(struct logger *logger, struct crypto_task *task,
+static void v2_auth_signature_computer(struct logger *logger, struct task *task,
 				       int unused_my_thread UNUSED)
 {
 	task->signature = v2_auth_signature(logger, &task->hash_to_sign, task->hash_algo,
@@ -104,15 +105,15 @@ static void v2_auth_signature_computer(struct logger *logger, struct crypto_task
 }
 
 static stf_status v2_auth_signature_completed(struct state *st,
-						 struct msg_digest *md,
-						 struct crypto_task **task)
+					      struct msg_digest *md,
+					      struct task **task)
 {
 	stf_status status = (*task)->cb(pexpect_ike_sa(st), md, &(*task)->signature);
 	pfreeany(*task);
 	return status;
 }
 
-static void v2_auth_signature_cancelled(struct crypto_task **task)
+static void v2_auth_signature_cancelled(struct task **task)
 {
 	pfreeany(*task);
 }

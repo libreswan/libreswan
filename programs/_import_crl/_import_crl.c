@@ -108,8 +108,9 @@ int main(int argc, char *argv[])
 		exit(-1);
 
 	const struct lsw_conf_options *oco = lsw_init_options();
-	if (!lsw_nss_setup(oco->nssdir, 0, logger)) {
-		exit(1);
+	diag_t d = lsw_nss_setup(oco->nssdir, 0, logger);
+	if (d != NULL) {
+		fatal_diag(1, logger, &d, "%s", "");
 	}
 
 	fin = import_crl(url, tbuf, len);

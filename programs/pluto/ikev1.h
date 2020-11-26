@@ -1,7 +1,6 @@
 #ifndef _IKEV1_H
 #define _IKEV1_H
 
-#include "pluto_crypt.h"
 #include "ikev1_continuations.h"
 #include "packet.h"		/* for pb_stream */
 #include "fd.h"

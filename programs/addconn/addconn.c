@@ -424,11 +424,12 @@ int main(int argc, char *argv[])
 		 * This mimics behaviour of the old _plutoload
 		 */
 		if (verbose > 0)
-			printf("  Pass #1: Loading auto=add, auto=route and auto=start connections\n");
+			printf("  Pass #1: Loading auto=add, auto=keep, auto=route and auto=start connections\n");
 
 		for (conn = cfg->conns.tqh_first; conn != NULL; conn = conn->link.tqe_next) {
 			if (conn->desired_state == STARTUP_ADD ||
 				conn->desired_state == STARTUP_ONDEMAND ||
+				conn->desired_state == STARTUP_KEEP ||
 				conn->desired_state == STARTUP_START)
 			{
 				if (verbose > 0)

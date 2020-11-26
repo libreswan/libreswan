@@ -42,7 +42,7 @@
 #include "crypto.h"
 #include "rnd.h"
 #include "state.h"
-#include "pluto_crypt.h"
+#include "server_pool.h"
 #include "log.h"
 
 #include <nspr.h>
@@ -55,7 +55,7 @@
 #include "crypt_dh.h"
 #include "crypt_ke.h"
 
-struct crypto_task {
+struct task {
 	const struct dh_desc *dh;
 	chunk_t nonce;
 	struct dh_local_secret *local_secret;
@@ -63,7 +63,7 @@ struct crypto_task {
 };
 
 static void compute_ke_and_nonce(struct logger *logger,
-				 struct crypto_task *task,
+				 struct task *task,
 				 int thread_unused UNUSED)
 {
 	if (task->dh != NULL) {
@@ -80,7 +80,7 @@ static void compute_ke_and_nonce(struct logger *logger,
 	}
 }
 
-static void free_ke_and_nonce(struct crypto_task **task)
+static void free_ke_and_nonce(struct task **task)
 {
 	dh_local_secret_delref(&(*task)->local_secret, HERE);
 	free_chunk_content(&(*task)->nonce);
@@ -89,7 +89,7 @@ static void free_ke_and_nonce(struct crypto_task **task)
 
 static stf_status complete_ke_and_nonce(struct state *st,
 					struct msg_digest *md,
-					struct crypto_task **task)
+					struct task **task)
 {
 	stf_status status = (*task)->cb(st, md,
 					(*task)->local_secret,
@@ -98,20 +98,20 @@ static stf_status complete_ke_and_nonce(struct state *st,
 	return status;
 }
 
-static const struct crypto_handler ke_and_nonce_handler = {
+static const struct task_handler ke_and_nonce_handler = {
 	.name = "dh",
 	.cancelled_cb = free_ke_and_nonce,
-	.compute_fn = compute_ke_and_nonce,
+	.computer_fn = compute_ke_and_nonce,
 	.completed_cb = complete_ke_and_nonce,
 };
 
 void submit_ke_and_nonce(struct state *st, const struct dh_desc *dh,
 			 ke_and_nonce_cb *cb, const char *name)
 {
-	struct crypto_task *task = alloc_thing(struct crypto_task, "dh");
+	struct task *task = alloc_thing(struct task, "dh");
 	task->dh = dh;
 	task->cb = cb;
-	submit_crypto(st->st_logger, st, task, &ke_and_nonce_handler, name);
+	submit_task(st->st_logger, st, task, &ke_and_nonce_handler, name);
 }
 
 /*

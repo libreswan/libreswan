@@ -66,7 +66,6 @@
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
 #include "crypto.h"
 #include "crypt_symkey.h"
-#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "ikev2_redirect.h"
 #include "secrets.h"    	/* for pubkey_delref() */
@@ -161,7 +160,7 @@ const struct finite_state *finite_states[STATE_IKE_ROOF] = {
  */
 
 struct revival {
-	char *name;
+	co_serial_t serialno;
 	struct revival *next;
 };
 
@@ -176,7 +175,7 @@ static struct revival *revivals = NULL;
 static struct revival **find_revival(const struct connection *c)
 {
 	for (struct revival **rp = &revivals; ; rp = &(*rp)->next) {
-		if (*rp == NULL || streq((*rp)->name, c->name)) {
+		if (*rp == NULL || co_serial_cmp((*rp)->serialno, ==, c->serialno)) {
 			return rp;
 		}
 	}
@@ -191,7 +190,6 @@ static void free_revival(struct revival **rp)
 {
 	struct revival *r = *rp;
 	*rp = r->next;
-	pfree(r->name);
 	pfree(r);
 }
 
@@ -200,11 +198,11 @@ void flush_revival(const struct connection *c)
 	struct revival **rp = find_revival(c);
 
 	if (*rp == NULL) {
-		dbg("flush revival: connection '%s' wasn't on the list",
-		    c->name);
+		dbg("flush revival: connection '%s' with serial "PRI_CO" wasn't on the list",
+		    c->name, pri_co(c->serialno));
 	} else {
-		dbg("flush revival: connection '%s' revival flushed",
-		    c->name);
+		dbg("flush revival: connection '%s' with serial "PRI_CO" revival flushed",
+		    c->name, pri_co(c->serialno));
 		free_revival(rp);
 	}
 }
@@ -215,12 +213,12 @@ static void add_revival(struct connection *c)
 		struct revival *r = alloc_thing(struct revival,
 						"revival struct");
 
-		r->name = clone_str(c->name, "revival conn name");
+		r->serialno = c->serialno;
 		r->next = revivals;
 		revivals = r;
 		int delay = c->temp_vars.revive_delay;
-		dbg("add revival: connection '%s' added to the list and scheduled for %d seconds",
-		    c->name, delay);
+		dbg("add revival: connection '%s' (serial "PRI_CO") added to the list and scheduled for %d seconds",
+		    c->name, pri_co(c->serialno), delay);
 		c->temp_vars.revive_delay = min(delay + REVIVE_CONN_DELAY,
 						REVIVE_CONN_DELAY_MAX);
 		/*
@@ -235,6 +233,11 @@ static void add_revival(struct connection *c)
 		 * "initiate" and "pending" functionality.
 		 */
 		schedule_oneshot_timer(EVENT_REVIVE_CONNS, deltatime(delay));
+
+		if (c->kind == CK_INSTANCE && c->sa_keying_tries == 0) {
+				dbg("limiting instance revival attempts to 2 keyingtries");
+				c->sa_keying_tries = 2;
+		}
 	}
 }
 
@@ -248,21 +251,16 @@ void revive_conns(struct logger *logger)
 	 * whack_log_fd is invalid so specifying RC isn't exactly
 	 * useful.
 	 */
+	dbg("revive_conns() called");
 	while (revivals != NULL) {
-		struct connection *c = conn_by_name(revivals->name,
-						    true/*strict: don't accept CK_INSTANCE*/);
-		/*
-		 * Above call. with quiet=false, would try to log
-		 * using whack_log(); but that's useless as the global
-		 * whack_log_fd is only valid while in the whack
-		 * handler.
-		 */
+		struct connection *c = conn_by_serialno(revivals->serialno);
 		if (c == NULL) {
 			log_message(RC_UNKNOWN_NAME, logger,
-				    "failed to initiate connection \"%s\" which received a Delete/Notify but must remain up per local policy; connection no longer exists", revivals->name);
+				    "failed to initiate connection "PRI_CO" which received a Delete/Notify but must remain up per local policy; connection no longer exists", pri_co(revivals->serialno));
 		} else {
 			log_connection(RC_LOG, null_fd, c,
-				       "initiating connection which received a Delete/Notify but must remain up per local policy");
+				"initiating connection '%s' with serial "PRI_CO" which received a Delete/Notify but must remain up per local policy",
+				c->name, pri_co(c->serialno));
 			if (!initiate_connection(c, NULL, null_fd, true/*background*/)) {
 				log_connection(RC_FATAL, null_fd, c,
 					       "failed to initiate connection");
@@ -274,6 +272,7 @@ void revive_conns(struct logger *logger)
 		 */
 		free_revival(&revivals);
 	}
+	dbg("revive_conns() done");
 }
 
 /* end of revival mechanism */
@@ -998,6 +997,14 @@ void delete_other_state(struct state *st, struct state *other_state)
 /* delete a state object */
 void delete_state(struct state *st)
 {
+	struct connection *c = st->st_connection;
+	if (IS_IKE_SA_ESTABLISHED(st) && c->kind == CK_INSTANCE && LIN(POLICY_UP, c->policy)) {
+		/* why isn't the host_port set by instantiation ? */
+		dbg("updating connection for remote port %d", st->st_remote_endpoint.hport);
+		c->spd.that.raw.host.ikeport = st->st_remote_endpoint.hport; /* pretend we were given a port */
+		c->spd.that.host_port = st->st_remote_endpoint.hport;
+
+	}
 	delete_state_log(st, st);
 	delete_state_tail(st);
 }

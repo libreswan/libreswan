@@ -32,7 +32,7 @@ struct msg_digest;
 void init_vendorid(void);
 
 void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
-		     bool ikev2);
+		     bool ikev2, struct logger *logger);
 
 bool out_vid(pb_stream *outs, unsigned int vid);
 

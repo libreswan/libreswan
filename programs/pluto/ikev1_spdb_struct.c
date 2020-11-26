@@ -137,8 +137,9 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 				  "This state (connection) is not labeled ipsec enabled, so cannot proceed");
 			return FALSE;
 		} else if (within_range(uctx.sec_ctx_value,
-					 st->st_connection->policy_label)) {
-			DBG_log("security context verification succeeded");
+					st->st_connection->policy_label,
+					st->st_logger)) {
+			dbg("security context verification succeeded");
 		} else {
 			log_state(RC_LOG_SERIOUS, st,
 				  "security context verification failed");

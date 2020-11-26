@@ -48,7 +48,6 @@
 #include "demux.h"
 #include "ikev1_quick.h"
 #include "timer.h"
-#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "ip_address.h"
 #include "hostpair.h"

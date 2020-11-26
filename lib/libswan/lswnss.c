@@ -30,8 +30,34 @@ static char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg);
 
 static unsigned flags;
 
-bool lsw_nss_setup(const char *configdir, unsigned setup_flags, struct logger *logger)
+diag_t lsw_nss_setup(const char *configdir, unsigned setup_flags,
+		     struct logger *logger)
 {
+	/*
+	 * Turn (possibly NULL) CONFIGDIR into (possibly NULL) nssdir
+	 * so it can be used in error messages.
+	 */
+#define SQL "sql:"
+	char *nssdir;
+	if (configdir == NULL) {
+		nssdir = NULL;
+	} else if (startswith(configdir, SQL)) {
+		nssdir = clone_str(configdir, "nssdir");
+	} else {
+		nssdir = alloc_printf(SQL"%s", configdir);
+	}
+
+	/*
+	 * Always log what is about to happen.
+	 */
+	if (nssdir == NULL) {
+		log_message(RC_LOG, logger, "Initializing NSS");
+	} else {
+		log_message(RC_LOG, logger, "Initializing NSS using %s database \"%s\"",
+			    (flags & LSW_NSS_READONLY) ? "read-only" : "read-write",
+			    nssdir);
+	}
+
 	/*
 	 * save for cleanup
 	 */
@@ -43,30 +69,20 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags, struct logger *l
 	 */
 	PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 1);
 
-	log_message(RC_LOG, logger, "Initializing NSS");
+	/*
+	 * Initialize NSS, possibly flipping it to the correct mode.
+	 */
 	enum lsw_fips_mode fips_mode;
-	if (configdir != NULL) {
-		const char sql[] = "sql:";
-		char *nssdir;
-		if (strncmp(sql, configdir, strlen(sql)) == 0) {
-			nssdir = strdup(configdir);
-		} else {
-			nssdir = alloc_bytes(strlen(configdir) + strlen(sql) + 1, "(ignore) nssdir");
-			strcpy(nssdir, sql);
-			strcat(nssdir, configdir);
-		}
-		log_message(RC_LOG, logger, "Opening NSS database \"%s\" %s", nssdir,
-			    (flags & LSW_NSS_READONLY) ? "read-only" : "read-write");
+	if (nssdir != NULL) {
 		SECStatus rv = NSS_Initialize(nssdir, "", "", SECMOD_DB,
 					      (flags & LSW_NSS_READONLY) ? NSS_INIT_READONLY : 0);
 		if (rv != SECSuccess) {
 			/* NSS: <message...>: SECERR: N (0xX): <error-string> */
-			log_nss_error(RC_LOG_SERIOUS|ERROR_STREAM, logger,
-				      "initialization of %s database \"%s\" failed",
-				      (flags & LSW_NSS_READONLY) ? "read-only" : "read-write",
-				      nssdir);
+			diag_t d = diag_nss_error("initialization using %s database \"%s\" failed",
+						  (flags & LSW_NSS_READONLY) ? "read-only" : "read-write",
+						  nssdir);
 			pfree(nssdir);
-			return false;
+			return d;
 		}
 		fips_mode = lsw_get_fips_mode(logger);
 	} else {
@@ -75,28 +91,21 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags, struct logger *l
 		if (fips_mode == LSW_FIPS_ON && !PK11_IsFIPS()) {
 			SECMODModule *internal = SECMOD_GetInternalModule();
 			if (internal == NULL) {
-				log_message(RC_LOG_SERIOUS|ERROR_STREAM, logger,
-					    "SECMOD_GetInternalModule() failed");
-				return false;
+				return diag_nss_error("SECMOD_GetInternalModule() failed");
 			}
 			if (SECMOD_DeleteInternalModule(internal->commonName) != SECSuccess) {
-				log_message(RC_LOG_SERIOUS|ERROR_STREAM, logger,
-					    "SECMOD_DeleteInternalModule(%s) failed",
-					    internal->commonName);
-				return false;
+				return diag_nss_error("SECMOD_DeleteInternalModule(%s) failed",
+						      internal->commonName);
 			}
 			if (!PK11_IsFIPS()) {
-				log_message(RC_LOG_SERIOUS|ERROR_STREAM, logger,
-					    "NSS FIPS mode toggle failed");
-				return false;
+				return diag("NSS: toggling to FIPS mode failed");
 			}
 		}
 	}
 
 	if (fips_mode == LSW_FIPS_UNKNOWN) {
-		log_message(RC_LOG_SERIOUS|ERROR_STREAM, logger,
-			    "ABORT: pluto FIPS mode could not be determined");
-		return false;
+		pfreeany(nssdir);
+		return diag("NSS: FIPS mode could not be determined");
 	}
 
 	/*
@@ -109,16 +118,18 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags, struct logger *l
 	 */
 	PK11_SetPasswordFunc(lsw_nss_get_password);
 
-	if (configdir != NULL) {
+	if (nssdir != NULL) {
 		PK11SlotInfo *slot = lsw_nss_get_authenticated_slot(logger);
 		if (slot == NULL) {
 			/* already logged */
-			return false;
+			pfreeany(nssdir);
+			return diag("NSS: could not authenticate slot");
 		}
 		PK11_FreeSlot(slot);
 	}
 
-	return true;
+	pfreeany(nssdir);
+	return NULL;
 }
 
 void lsw_nss_shutdown(void)
