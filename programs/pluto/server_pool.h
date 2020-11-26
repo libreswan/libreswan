@@ -46,16 +46,18 @@ struct task; /*struct job*/
 typedef void task_computer_fn(struct logger *logger,
 			       struct task *task,
 			       int my_thread);
+/* might be called */
 typedef stf_status task_completed_cb(struct state *st,
 				     struct msg_digest *md,
-				     struct task **task);
-typedef void task_cancelled_cb(struct task **task);
+				     struct task *task);
+/* always called */
+typedef void task_cleanup_cb(struct task **task);
 
 struct task_handler {
 	const char *name;
 	task_computer_fn *computer_fn;
 	task_completed_cb *completed_cb;
-	task_cancelled_cb *cancelled_cb;
+	task_cleanup_cb *cleanup_cb;
 };
 
 extern void submit_task(const struct logger *logger,

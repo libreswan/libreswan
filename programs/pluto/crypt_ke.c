@@ -80,7 +80,7 @@ static void compute_ke_and_nonce(struct logger *logger,
 	}
 }
 
-static void free_ke_and_nonce(struct task **task)
+static void cleanup_ke_and_nonce(struct task **task)
 {
 	dh_local_secret_delref(&(*task)->local_secret, HERE);
 	free_chunk_content(&(*task)->nonce);
@@ -89,18 +89,17 @@ static void free_ke_and_nonce(struct task **task)
 
 static stf_status complete_ke_and_nonce(struct state *st,
 					struct msg_digest *md,
-					struct task **task)
+					struct task *task)
 {
-	stf_status status = (*task)->cb(st, md,
-					(*task)->local_secret,
-					&(*task)->nonce);
-	free_ke_and_nonce(task);
+	stf_status status = task->cb(st, md,
+				     task->local_secret,
+				     &task->nonce);
 	return status;
 }
 
 static const struct task_handler ke_and_nonce_handler = {
 	.name = "dh",
-	.cancelled_cb = free_ke_and_nonce,
+	.cleanup_cb = cleanup_ke_and_nonce,
 	.computer_fn = compute_ke_and_nonce,
 	.completed_cb = complete_ke_and_nonce,
 };

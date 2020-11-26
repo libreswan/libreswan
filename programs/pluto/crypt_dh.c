@@ -173,7 +173,7 @@ static void compute_dh_shared_secret(struct logger *logger,
 						    logger);
 }
 
-static void cancel_dh_shared_secret(struct task **task)
+static void cleanup_dh_shared_secret(struct task **task)
 {
 	dh_local_secret_delref(&(*task)->local_secret, HERE);
 	free_chunk_content(&(*task)->remote_ke);
@@ -183,22 +183,20 @@ static void cancel_dh_shared_secret(struct task **task)
 
 static stf_status complete_dh_shared_secret(struct state *st,
 					    struct msg_digest *md,
-					    struct task **task)
+					    struct task *task)
 {
-	dh_local_secret_delref(&(*task)->local_secret, HERE);
-	free_chunk_content(&(*task)->remote_ke);
 	pexpect(st->st_dh_shared_secret == NULL);
 	release_symkey(__func__, "st_dh_shared_secret", &st->st_dh_shared_secret);
-	st->st_dh_shared_secret = (*task)->shared_secret;
-	(*task)->shared_secret = NULL;
-	stf_status status = (*task)->cb(st, md);
-	pfreeany(*task);
+	/* transfer */
+	st->st_dh_shared_secret = task->shared_secret;
+	task->shared_secret = NULL;
+	stf_status status = task->cb(st, md);
 	return status;
 }
 
 static const struct task_handler dh_shared_secret_handler = {
 	.name = "dh",
-	.cancelled_cb = cancel_dh_shared_secret,
+	.cleanup_cb = cleanup_dh_shared_secret,
 	.computer_fn = compute_dh_shared_secret,
 	.completed_cb = complete_dh_shared_secret,
 };

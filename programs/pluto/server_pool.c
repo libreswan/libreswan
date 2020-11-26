@@ -374,6 +374,7 @@ void submit_task(const struct logger *logger,
 
 void delete_cryptographic_continuation(struct state *st)
 {
+	passert(in_main_thread());
 	passert(st->st_serialno != SOS_NOBODY);
 	struct job *job = st->st_offloaded_task;
 	if (job == NULL) {
@@ -382,29 +383,7 @@ void delete_cryptographic_continuation(struct state *st)
 	/* shut it down */
 	job->cancelled = true;
 	st->st_offloaded_task = NULL;
-	/* remove it from any queue */
-	if (helper_threads != NULL) {
-		/* remove it from any queue */
-		pthread_mutex_lock(&backlog_mutex);
-		if (detached_list_entry(&job->backlog)) {
-			/*
-			 * Already grabbed by the helper thread so
-			 * can't delete it here.
-			 */
-			job = NULL;
-		} else {
-			remove_list_entry(&job->backlog);
-			backlog_queue_len--;
-		}
-		pthread_mutex_unlock(&backlog_mutex);
-		if (job != NULL) {
-			job->handler->cancelled_cb(&job->task);
-			pexpect(job->task == NULL); /* did their job */
-			/* free the heap space */
-			free_logger(&job->logger, HERE);
-			pfree(job);
-		}
-	}
+	/* thread pool will throw the task back for cleanup */
 }
 
 /*
@@ -416,6 +395,8 @@ static stf_status handle_helper_answer(struct state *st,
 				       struct msg_digest *md,
 				       void *arg)
 {
+	passert(in_main_thread());
+
 	struct job *job = arg;
 	dbg_job(job, "processing response from helper %d", job->helper_id);
 
@@ -430,7 +411,7 @@ static stf_status handle_helper_answer(struct state *st,
 		/* suppressed */
 		dbg_job(job, "was cancelled; ignoring respose");
 		pexpect(st == NULL || st->st_offloaded_task == NULL);
-		h->cancelled_cb(&job->task);
+		h->cleanup_cb(&job->task);
 		pexpect(job->task == NULL); /* did your job */
 		status = STF_SKIP_COMPLETE_STATE_TRANSITION;
 	} else if (st == NULL) {
@@ -438,7 +419,7 @@ static stf_status handle_helper_answer(struct state *st,
 		pexpect_fail(job->logger, HERE,
 			     "state #%lu for job %lu disappeared!",
 			     job->so_serialno, job->job_id);
-		h->cancelled_cb(&job->task);
+		h->cleanup_cb(&job->task);
 		pexpect(job->task == NULL); /* did your job */
 		status = STF_SKIP_COMPLETE_STATE_TRANSITION;
 	} else {
@@ -450,7 +431,9 @@ static stf_status handle_helper_answer(struct state *st,
 		/* wall clock time not billed */
 		/* run the callback */
 		dbg_job(job, "calling continuation function %p", h->completed_cb);
-		status = h->completed_cb(st, md, &job->task);
+		status = h->completed_cb(st, md, job->task);
+		dbg_job(job, "calling cleanup function %p", h->cleanup_cb);
+		h->cleanup_cb(&job->task);
 		pexpect(job->task == NULL); /* did your job */
 	}
 	pexpect(job->task == NULL); /* cross check - re-check */
