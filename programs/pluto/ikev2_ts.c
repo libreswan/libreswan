@@ -390,6 +390,7 @@ stf_status v2_emit_ts_payloads(const struct child_sa *child,
  * 					currently being processed in the TS Payload.
  * @param[in,out]	ins		Input packet byte stream for the incoming
  * 					TS Payload.
+ * @param[in,out]	logger		Used for logging.
  * @param[out]		seclabel_index	Set to `ts_index` if the TS_SECLABEL substructure
  * 					parsing is successful.
  * @param[in]		ts_index	Index of the incoming Traffic Selector substructure
@@ -400,6 +401,7 @@ stf_status v2_emit_ts_payloads(const struct child_sa *child,
 static bool parse_ts_seclabel(uint32_t* const seclabel_count,
 			      struct traffic_selector *const ts,
 			      struct pbs_in *const ins,
+			      struct logger *const logger,
 			      int *const seclabel_index,
 			      int const ts_index) {
 	if (*seclabel_count == 1) {
@@ -407,7 +409,9 @@ static bool parse_ts_seclabel(uint32_t* const seclabel_count,
 		 * Current implementation only allows 1 TS_SECLABEL
 		 * substructure at most in a Traffic Selector (TS) Payload.
 		 */
-		loglog(RC_LOG_SERIOUS, "ERROR: Multiple TS_SECLABEL not supported - already found a TS_SECLABEL during input processing");
+		loglog(RC_LOG_SERIOUS,
+		       "ERROR: Multiple TS_SECLABEL not supported - "
+		       	"already found a TS_SECLABEL during input processing");
 		return false;
 	}
 
@@ -415,8 +419,13 @@ static bool parse_ts_seclabel(uint32_t* const seclabel_count,
 	struct ikev2_ts_seclabel ts_seclabel;
 
 	/* Parse the header of the TS_SECLABEL substructure. */
-	if (!in_struct(&ts_seclabel, &ikev2_ts_seclabel_desc, ins, NULL)) {
-		loglog(RC_LOG_SERIOUS, "ERROR: Could not parse header of TS_SECLABEL substructure");
+	diag_t seclabel_header_parse_result = pbs_in_struct(ins, &ikev2_ts_seclabel_desc,
+						     &ts_seclabel, sizeof(ts_seclabel),
+						     NULL);
+	if (seclabel_header_parse_result != NULL) {
+		log_diag(RC_LOG_SERIOUS, logger,
+			 &seclabel_header_parse_result,
+			 "ERROR: Could not parse header of TS_SECLABEL substructure: %s", "");
 		return false;
 	}
 	passert(ts_seclabel.isa_tssec_type == IKEv2_TS_SECLABEL);
@@ -464,9 +473,12 @@ static bool parse_ts_seclabel(uint32_t* const seclabel_count,
 	incoming_ctx.ctx.ctx_len = labelLen;
 
 	/* Parse the security label value of the TS_SECLABEL substructure. */
-	if (!in_raw(incoming_ctx.sec_ctx_value, labelLen, ins,
-				"Traffic Selector Security Label")) {
-		loglog(RC_LOG_SERIOUS, "ERROR: Could not read TS_SECLABEL security label value");
+	diag_t seclabel_value_parse_result = pbs_in_raw(ins, incoming_ctx.sec_ctx_value,
+							labelLen, "Traffic Selector Security Label");
+	if (seclabel_value_parse_result != NULL) {
+		log_diag(RC_LOG_SERIOUS, logger, &seclabel_value_parse_result,
+			 "ERROR: Could not read TS_SECLABEL security label value: %s",
+			 "");
 		return false;
 	}
 
@@ -560,13 +572,20 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 		 * Peek at the Traffic Selector Type in the input stream in order to figure
 		 * out which substructure to process next.
 		 */
-		if (!peek_raw(&ts_type, sizeof(ts_type), &ts_pd->pbs, "Traffic Selector Type")) {
+		diag_t ts_type_peek_result = pbs_peek_raw(&ts_pd->pbs, &ts_type,
+							  sizeof(ts_type),
+							  "Traffic Selector Type");
+		if (ts_type_peek_result != NULL) {
+			log_diag(RC_LOG_SERIOUS, logger, &ts_type_peek_result,
+			 	"ERROR: Could not parse header of TS_SECLABEL substructure: %s",
+				"");
 			return false;
 		}
 
 		if (ts_type == IKEv2_TS_SECLABEL) {
 			/* Parse a TS_SECLABEL substructure in the TS Payload. */
-			if (!parse_ts_seclabel(&seclabel_count, ts, &ts_pd->pbs, &seclabel_index, tss->nr)) {
+			if (!parse_ts_seclabel(&seclabel_count, ts, &ts_pd->pbs,
+					       logger, &seclabel_index, tss->nr)) {
 				return false;
 			}
 			continue;
@@ -580,7 +599,7 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
-    ++addr_range_count;
+		++addr_range_count;
 
 		const struct ip_info *ipv;
 		switch (ts1.isat1_type) {

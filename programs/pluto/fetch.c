@@ -205,7 +205,7 @@ static err_t fetch_curl(chunk_t url UNUSED,
 /*
  * parses the result returned by an ldap query
  */
-static err_t parse_ldap_result(LDAP *ldap, LDAPMessage *result, chunk_t *blob)
+static err_t parse_ldap_result(LDAP *ldap, LDAPMessage *result, chunk_t *blob, struct logger *logger)
 {
 	err_t ugh = NULL;
 
@@ -252,7 +252,7 @@ static err_t parse_ldap_result(LDAP *ldap, LDAPMessage *result, chunk_t *blob)
 /*
  * fetches a binary blob from an ldap url
  */
-static err_t fetch_ldap_url(chunk_t url, chunk_t *blob)
+static err_t fetch_ldap_url(chunk_t url, chunk_t *blob, struct logger *logger)
 {
 	LDAPURLDesc *lurl;
 	err_t ugh = NULL;
@@ -306,7 +306,7 @@ static err_t fetch_ldap_url(chunk_t url, chunk_t *blob)
 
 				if (rc == LDAP_SUCCESS) {
 					ugh = parse_ldap_result(ldap, result,
-								blob);
+								blob, logger);
 					ldap_msgfree(result);
 				} else {
 					ugh = ldap_err2string(rc);
@@ -331,7 +331,8 @@ static err_t fetch_ldap_url(chunk_t url, chunk_t *blob)
 #else
 
 static err_t fetch_ldap_url(chunk_t url UNUSED,
-			    chunk_t *blob UNUSED)
+			    chunk_t *blob UNUSED,
+			    struct logger *logger)
 {
 	return "LDAP URL fetching not activated in pluto source code";
 }
@@ -349,7 +350,7 @@ static err_t fetch_asn1_blob(chunk_t url, chunk_t *blob, struct logger *logger)
 
 	*blob = EMPTY_CHUNK;
 	if (url.len >= 5 && strncaseeq((const char *)url.ptr, "ldap:", 5))
-		ugh = fetch_ldap_url(url, blob);
+		ugh = fetch_ldap_url(url, blob, logger);
 	else
 		ugh = fetch_curl(url, blob, logger);
 	if (ugh != NULL) {

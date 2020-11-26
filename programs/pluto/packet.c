@@ -2198,19 +2198,6 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 }
 
 
-bool in_struct(void *struct_ptr, struct_desc *sd,
-	       struct pbs_in *ins, struct pbs_in *obj_pbs)
-{
-	struct logger logger = cur_logger();
-	diag_t d = pbs_in_struct(ins, sd, struct_ptr, 0/*no-size-check*/, obj_pbs);
-	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, &logger, &d, "%s", "");
-		return false;
-	}
-
-	return true;
-}
-
 static diag_t pbs_in_raw_helper(struct pbs_in *ins,
                                 void *bytes,
                                 size_t len,
@@ -2251,29 +2238,6 @@ diag_t pbs_in_raw(struct pbs_in *ins, void *bytes, size_t len, const char *name)
 
 diag_t pbs_peek_raw(struct pbs_in *ins, void *bytes, size_t len, const char *name) {
 	return pbs_in_raw_helper(ins, bytes, len, name, true);
-}
-
-bool in_raw(void *bytes, size_t len, struct pbs_in *ins, const char *name)
-{
-	struct logger logger = cur_logger();
-	diag_t d = pbs_in_raw(ins, bytes, len, name);
-	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, &logger, &d, "%s", "");
-		return false;
-	}
-
-	return true;
-}
-
-bool peek_raw(void *bytes, size_t len, struct pbs_in *ins, const char *name)
-{
-	struct logger logger = cur_logger();
-	diag_t d = pbs_peek_raw(ins, bytes, len, name);
-	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, &logger, &d, "%s", "Error while peeking raw bytes: ");
-		return false;
-	}
-	return true;
 }
 
 /*
