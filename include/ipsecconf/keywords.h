@@ -29,6 +29,8 @@
 #ifndef _KEYWORDS_H_
 #define _KEYWORDS_H_
 
+#include <sys/queue.h>		/* for TAILQ_ENTRY() et.al. */
+
 #include "lset.h"
 
 #ifndef _LIBRESWAN_H
@@ -36,7 +38,6 @@
 #include "constants.h"
 #endif
 
-#include <sys/queue.h>
 
 /*
  * These are global configuration strings.

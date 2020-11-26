@@ -22,6 +22,8 @@
 #ifndef _IPSEC_CONFREAD_H_
 #define _IPSEC_CONFREAD_H_
 
+#include <sys/queue.h>		/* for TAILQ_ENTRY() */
+
 #include "ipsecconf/keywords.h"
 
 # define DEFAULT_UPDOWN "ipsec _updown"

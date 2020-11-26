@@ -30,7 +30,6 @@
  */
 #pragma GCC diagnostic ignored "-Wsign-compare"
 
-#include <sys/queue.h>
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>

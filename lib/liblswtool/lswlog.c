@@ -25,7 +25,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>	/* used only if MSG_NOSIGNAL not defined */
-#include <sys/queue.h>
 #include <libgen.h>
 #include <sys/stat.h>
 #include <sys/types.h>

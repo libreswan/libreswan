@@ -55,7 +55,6 @@
 #ifdef _KERNEL
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/queue.h>
 #endif
 #include <sys/socket.h>
 

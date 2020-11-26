@@ -20,7 +20,6 @@
 #ifndef IFACE_H
 #define IFACE_H
 
-#include <sys/queue.h>
 
 #include "ip_endpoint.h"
 #include "refcnt.h"
