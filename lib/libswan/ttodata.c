@@ -16,9 +16,9 @@
  */
 
 #include <string.h>
-#include <ctype.h>		/* for tolower() */
 
 #include "libreswan.h"
+#include "hunk.h"		/* for char_to_lower() */
 
 /* converters and misc */
 static int unhex(const char *, char *, size_t);
@@ -210,7 +210,7 @@ static int unhex(const char *src,	/* known to be full length */
 
 	p = strchr(hex, *src);
 	if (p == NULL)
-		p = strchr(hex, tolower(*src));
+		p = strchr(hex, char_tolower(*src));
 	if (p == NULL)
 		return BADCH0;
 
@@ -219,7 +219,7 @@ static int unhex(const char *src,	/* known to be full length */
 
 	p = strchr(hex, *src);
 	if (p == NULL)
-		p = strchr(hex, tolower(*src));
+		p = strchr(hex, char_tolower(*src));
 	if (p == NULL)
 		return BADCH1;
 
@@ -344,7 +344,7 @@ static const char *badch(const char *src,
 	 * This does not seem to be correct.
 	 */
 	ch = *(src + BADOFF(errcode));
-	if (isprint(ch)) {
+	if (char_isprint(ch)) {
 		buf[0] = ch;
 		buf[1] = '\0';
 	} else {

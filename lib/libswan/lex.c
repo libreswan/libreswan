@@ -17,7 +17,6 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
-#include <ctype.h>
 #include <unistd.h>
 #include <errno.h>
 
@@ -27,6 +26,7 @@
 #include "lex.h"
 #include "lswlog.h"
 #include "lswalloc.h"
+#include "hunk.h"		/* for char_is_space() */
 
 /*
  * Open a file for lexical processing.
@@ -123,7 +123,7 @@ bool shift(struct file_lex_position *flp)
 
 			/* strip trailing whitespace, including \n */
 			for (p = flp->buffer + strlen(flp->buffer);
-			     p > flp->buffer && isspace(p[-1]);
+			     p > flp->buffer && char_isspace(p[-1]);
 			     p--)
 				;
 			*p = '\0';
@@ -184,7 +184,7 @@ bool shift(struct file_lex_position *flp)
 					 */
 					do {
 						p++;
-					} while (*p != '\0' && !isspace(*p));
+					} while (*p != '\0' && !char_isblank(*p));
 
 					/*
 					 * fudge to separate ':' from
