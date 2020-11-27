@@ -34,7 +34,6 @@
 #include "oid.h"
 #include "x509.h"
 #include "lswconf.h"
-#include "ctype.h"
 
 /* coding of X.501 distinguished name */
 typedef const struct {

@@ -36,7 +36,6 @@
 #include <unistd.h>
 #include <limits.h>
 #include <glob.h>
-#include <ctype.h>
 
 #include "ipsecconf/keywords.h"
 #define YYDEBUG 1	/* HACK! for ipsecconf/parser.h AND parser.tab.h */

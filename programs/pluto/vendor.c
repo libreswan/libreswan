@@ -22,7 +22,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 #include "sysdep.h"
 #include "constants.h"
