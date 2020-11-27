@@ -18,7 +18,6 @@
 #include "chunk.h"
 #include "lswalloc.h"
 #include "lswlog.h"	/* for DBG_dump() */
-#include "ctype.h"		/* for isxdigit() */
 #include <stdlib.h>		/* for strtoul() */
 
 /*
@@ -111,7 +110,7 @@ chunk_t chunk_from_hex(const char *hex, const char *name)
 			break;
 		}
 		/* Expecting <HEX><HEX> */
-		if (!isxdigit(pos[0]) || !isxdigit(pos[1])) {
+		if (!char_isxdigit(pos[0]) || !char_isxdigit(pos[1])) {
 			/* friendly barf for debugging */
 			PASSERT_FAIL("expected hex digit at offset %tu in hex buffer \"%s\" but found \"%.1s\"",
 				     pos - hex, hex, pos);

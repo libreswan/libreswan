@@ -19,7 +19,6 @@
 #include <stdbool.h>
 #include <stddef.h>		/* size_t */
 #include <stdint.h>		/* uint8_t */
-#include <ctype.h>		/* for isdigit() et.al. */
 
 /*
  * Macros and functions for manipulating hunk like structures.  Any
@@ -163,40 +162,19 @@ bool case_eq(const void *l_ptr, size_t l_len,
 		index_ < hunk_.len ? string_[INDEX] : '\0';		\
 	})
 
-#define hunk_char_isdigit(HUNK, OFFSET)				\
-	({							\
-		unsigned char c_ = hunk_char(HUNK, OFFSET);	\
-		/* is isdigit() is affected by locale? */	\
-		isdigit(c_);					\
-	})
+/* see hunkcheck.c */
+bool char_isbdigit(char c);
+bool char_isblank(char c);
+bool char_isdigit(char c);
+bool char_islower(char c);
+bool char_isodigit(char c);
+bool char_isprint(char c);
+bool char_isspace(char c);
+bool char_isupper(char c);
+bool char_isxdigit(char c);
 
-#define hunk_char_isbdigit(HUNK, OFFSET)			\
-	({							\
-		unsigned char c_ = hunk_char(HUNK, OFFSET);	\
-		/* is isdigit() is affected by locale? */	\
-		c_ >= '0' && c_ <= '1';				\
-	})
-
-#define hunk_char_isodigit(HUNK, OFFSET)			\
-	({							\
-		unsigned char c_ = hunk_char(HUNK, OFFSET);	\
-		c_ >= '0' && c_ <= '7';				\
-	})
-
-#define hunk_char_isxdigit(HUNK, OFFSET)			\
-	({							\
-		unsigned char c_ = hunk_char(HUNK, OFFSET);	\
-		/* is isdigit() is affected by locale? */	\
-		isxdigit(c_);					\
-	})
-
-#define hunk_char_isprint(HUNK, OFFSET)				\
-	({							\
-		unsigned char c_ = hunk_char(HUNK, OFFSET);	\
-		/* isprint() is affected by locale(?) */	\
-		/* isascii() isn't portable */			\
-		c_ >= 0x20 && c_ <= 0x7e;			\
-	})
+char  char_tolower(char c);
+char  char_toupper(char c);
 
 #define hunk_char_ischar(HUNK, OFFSET, CHARS)			\
 	({							\

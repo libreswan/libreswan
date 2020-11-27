@@ -17,7 +17,6 @@
 #include <string.h>
 #include <stdlib.h>	/* for strtoul() */
 #include <limits.h>
-#include <ctype.h>
 
 #include "shunk.h"
 #include "lswlog.h"	/* for pexpect() */
@@ -167,11 +166,11 @@ err_t shunk_to_uint(shunk_t input, shunk_t *output, unsigned base,
 	 */
 	if (base == 0) {
 		if (hunk_strcasestarteq(input, "0x") &&
-		    hunk_char_isxdigit(input, 2)) {
+		    char_isxdigit(hunk_char(input, 2))) {
 			shunk_strcaseeat(&input, "0x");
 			base = 16;
 		} else if (hunk_strcasestarteq(input, "0b") &&
-			   hunk_char_isbdigit(input, 2)) {
+			   char_isbdigit(hunk_char(input, 2))) {
 			shunk_strcaseeat(&input, "0b");
 			base = 2;
 		} else if (hunk_char(input, 0) == '0') {
@@ -193,11 +192,11 @@ err_t shunk_to_uint(shunk_t input, shunk_t *output, unsigned base,
 
 	/* something */
 	uintmax_t u = 0;
-	while (hunk_char_isprint(cursor, 0)) {
+	while (char_isprint(hunk_char(cursor, 0))) {
 		unsigned char c = hunk_char(cursor, 0);
 		/* convert to a digit; <0 will overflow */
 		unsigned d;
-		if (isdigit(c)) {
+		if (char_isdigit(c)) {
 			d = c - '0';
 		} else if (c >= 'a') {
 			d = c - 'a' + 10;

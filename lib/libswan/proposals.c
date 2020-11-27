@@ -717,7 +717,7 @@ bool proposal_parse_encrypt(struct proposal_parser *parser,
 	 */
 	if (tokens->this_term == '-' &&
 	    tokens->next.len > 0 &&
-	    hunk_char_isdigit(tokens->next, 0)) {
+	    char_isdigit(hunk_char(tokens->next, 0))) {
 		/* assume <ealg>-<eklen> */
 		shunk_t ealg = tokens->this;
 		shunk_t eklen = tokens->next;
@@ -767,7 +767,7 @@ bool proposal_parse_encrypt(struct proposal_parser *parser,
 	 * isn't then the lookup error above can be returned.
 	 */
 	size_t end = ealg.len;
-	while (end > 0 && hunk_char_isdigit(ealg, end-1)) {
+	while (end > 0 && char_isdigit(hunk_char(ealg, end-1))) {
 		end--;
 	}
 	if (end == ealg.len) {

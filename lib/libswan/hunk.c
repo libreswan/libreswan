@@ -17,7 +17,6 @@
 #include <string.h>
 #include <stdlib.h>	/* for strtoul() */
 #include <limits.h>
-#include <ctype.h>
 
 #include "hunk.h"
 
@@ -65,4 +64,67 @@ uintmax_t ntoh_bytes(const void *bytes, size_t size)
 		h = (h<<8) + byte[i];
 	}
 	return h;
+}
+
+bool char_isupper(char c)
+{
+	return (c >= 'A' && c <= 'Z');
+}
+
+bool char_islower(char c)
+{
+	return (c >= 'a' && c <= 'z');
+}
+
+bool char_isspace(char c)
+{
+	return (c == ' ' ||
+		c == '\f' ||
+		c == '\n' ||
+		c == '\r' ||
+		c == '\t' ||
+		c == '\v');
+}
+
+bool char_isblank(char c)
+{
+	return (c == ' ' ||
+		c == '\t');
+}
+
+bool char_isdigit(char c)
+{
+	return (c >= '0' && c <= '9');
+}
+
+bool char_isbdigit(char c)
+{
+	return (c >= '0' && c <= '1');
+}
+
+bool char_isodigit(char c)
+{
+	return (c >= '0' && c <= '7');
+}
+
+bool char_isxdigit(char c)
+{
+	return ((c >= '0' && c <= '9') ||
+		(c >= 'a' && c <= 'f') ||
+		(c >= 'A' && c <= 'F'));
+}
+
+bool char_isprint(char c)
+{
+	return (c >= 0x20 && c <= 0x7e);
+}
+
+char char_tolower(char c)
+{
+	return char_isupper(c) ? c - 'A' + 'a' : c;
+}
+
+char char_toupper(char c)
+{
+	return char_islower(c) ? c - 'a' + 'A' : c;
 }
