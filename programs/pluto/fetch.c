@@ -167,7 +167,7 @@ static err_t fetch_curl(chunk_t url, chunk_t *blob, struct logger *logger)
 			/* clone from realloc(3)ed memory to pluto-allocated memory */
 			*blob = clone_hunk(response, "curl blob");
 		} else {
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "fetching uri (%s) with libcurl failed: %s", uri,
 				    errorbuffer);
 		}
@@ -228,7 +228,7 @@ static err_t parse_ldap_result(LDAP *ldap, LDAPMessage *result, chunk_t *blob,
 						values[0]->bv_len,
 						"ldap blob");
 					if (values[1] != NULL)
-						log_message(RC_LOG, logger,
+						llog(RC_LOG, logger,
 							    "warning: more than one value was fetched from LDAP URL");
 				} else {
 					ugh = "no values in attribute";
@@ -387,9 +387,9 @@ static bool insert_crl_nss(chunk_t *blob, const chunk_t crl_uri, struct logger *
 		char *uri_str = clone_hunk_as_string(crl_uri, "NUL-terminated URI");
 		int r = send_crl_to_import(blob->ptr, blob->len, uri_str, logger);
 		if (r == -1) {
-			log_message(RC_LOG, logger, "_import_crl internal error");
+			llog(RC_LOG, logger, "_import_crl internal error");
 		} else if (r != 0) {
-			log_message(RC_LOG, logger, "NSS CRL import error: %s",
+			llog(RC_LOG, logger, "NSS CRL import error: %s",
 				    nss_err_str((PRInt32)r));
 		} else {
 			dbg("CRL imported");
@@ -590,7 +590,7 @@ void start_crl_fetch_helper(struct logger *logger)
 		/* init curl */
 		status = curl_global_init(CURL_GLOBAL_DEFAULT);
 		if (status != 0)
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "libcurl could not be initialized, status = %d",
 				    status);
 #endif
@@ -598,7 +598,7 @@ void start_crl_fetch_helper(struct logger *logger)
 		status = pthread_create(&fetch_thread_id, NULL,
 					fetch_thread, NULL);
 		if (status != 0)
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "could not start thread for fetching certificate, status = %d",
 				    status);
 		schedule_oneshot_timer(EVENT_CHECK_CRLS, deltatime(5));
@@ -612,7 +612,7 @@ void stop_crl_fetch_helper(struct logger *logger)
 		 * Log before blocking.  If the CRL fetch helper is
 		 * currently fetching a CRL, this could take a bit.
 		 */
-		log_message(RC_LOG, logger, "shutting down the CRL fetch helper thread");
+		llog(RC_LOG, logger, "shutting down the CRL fetch helper thread");
 		pexpect(exiting_pluto);
 		/* wake the sleeping dragon from its slumber */
 		add_crl_fetch_requests(NULL);

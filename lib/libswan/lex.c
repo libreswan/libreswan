@@ -148,7 +148,7 @@ bool shift(struct file_lex_position *flp)
 				flp->tok = p;
 				p = strchr(p + 1, *p);
 				if (p == NULL) {
-					log_message(RC_LOG_SERIOUS, flp->logger,
+					llog(RC_LOG_SERIOUS, flp->logger,
 						    "unterminated string");
 					p = flp->tok + strlen(flp->tok);
 				} else {
@@ -238,7 +238,7 @@ bool flushline(struct file_lex_position *flp, const char *message)
 	/* discard tokens until boundary reached */
 	DBGF(DBG_TMI, "lex flushline: need to flush tokens");
 	if (message != NULL) {
-		log_message(RC_LOG_SERIOUS, flp->logger, "%s", message);
+		llog(RC_LOG_SERIOUS, flp->logger, "%s", message);
 	}
 	do {
 		DBGF(DBG_TMI, "lex flushline: discarding '%s'", flp->tok);

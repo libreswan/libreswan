@@ -74,13 +74,13 @@ uint8_t build_ikev2_critical(bool impaired, struct logger *logger)
 	uint8_t octet = 0;
 	if (impaired) {
 		/* flip the expected bit */
-		log_message(RC_LOG, logger, "IMPAIR: setting (should be off) critical payload bit");
+		llog(RC_LOG, logger, "IMPAIR: setting (should be off) critical payload bit");
 		octet = ISAKMP_PAYLOAD_CRITICAL;
 	} else {
 		octet = ISAKMP_PAYLOAD_NONCRITICAL;
 	}
 	if (impair.send_bogus_payload_flag) {
-		log_message(RC_LOG, logger, "IMPAIR: adding bogus bit to critical octet");
+		llog(RC_LOG, logger, "IMPAIR: adding bogus bit to critical octet");
 		octet |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 	}
 	return octet;
@@ -262,7 +262,7 @@ v2SK_payload_t open_v2SK_payload(struct logger *logger,
 		.isag_critical = build_ikev2_critical(false, ike->sa.st_logger),
 	};
 	if (!out_struct(&e, &ikev2_sk_desc, container, &sk.pbs)) {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "error initializing SK header for encrypted %s message",
 			    container->name);
 		return empty_sk;
@@ -271,7 +271,7 @@ v2SK_payload_t open_v2SK_payload(struct logger *logger,
 	/* emit IV and save location */
 
 	if (!emit_v2SK_iv(&sk)) {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "error initializing IV for encrypted %s message",
 			    container->name);
 		return empty_sk;
@@ -1150,7 +1150,7 @@ static bool record_outbound_fragment(struct logger *logger,
 	/* emit IV and save location */
 
 	if (!emit_v2SK_iv(&skf)) {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "error initializing IV for encrypted %s message",
 			    desc);
 		return false;
@@ -1175,7 +1175,7 @@ static bool record_outbound_fragment(struct logger *logger,
 
 	stf_status ret = encrypt_v2SK_payload(&skf);
 	if (ret != STF_OK) {
-		log_message(RC_LOG, logger, "error encrypting fragment %u", number);
+		llog(RC_LOG, logger, "error encrypting fragment %u", number);
 		return false;
 	}
 
@@ -1232,7 +1232,7 @@ static bool record_outbound_fragments(const pb_stream *body,
 	unsigned int nfrags = (sk->cleartext.len + len - 1) / len;
 
 	if (nfrags > MAX_IKE_FRAGMENTS) {
-		log_message(RC_LOG_SERIOUS, sk->logger,
+		llog(RC_LOG_SERIOUS, sk->logger,
 			    "fragmenting this %zu byte message into %u byte chunks leads to too many frags",
 			    sk->cleartext.len, len);
 		return false;
@@ -1334,7 +1334,7 @@ stf_status record_v2SK_message(pb_stream *msg,
 		}
 	} else {
 		if (encrypt_v2SK_payload(sk) != STF_OK) {
-			log_message(RC_LOG, sk->logger,
+			llog(RC_LOG, sk->logger,
 				    "error encrypting %s message", what);
 			return STF_INTERNAL_ERROR;
 		}
@@ -1352,7 +1352,7 @@ struct ikev2_id build_v2_id_payload(const struct end *end, shunk_t *body,
 		.isai_critical = build_ikev2_critical(false, logger),
 	};
 	if (impair.send_nonzero_reserved_id) {
-		log_message(RC_LOG, logger, "IMPAIR: setting reserved byte 3 of %s to 0x%02x",
+		llog(RC_LOG, logger, "IMPAIR: setting reserved byte 3 of %s to 0x%02x",
 			    what, ISAKMP_PAYLOAD_LIBRESWAN_BOGUS);
 		id_header.isai_res3 = ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 	}

@@ -342,7 +342,7 @@ static bool open_response(struct response *response,
 					 md /* response */,
 					 md->hdr.isa_xchg/* same exchange type */);
 	if (!pbs_ok(&response->body)) {
-		log_message(RC_LOG, response->logger,
+		llog(RC_LOG, response->logger,
 			    "error initializing hdr for encrypted notification");
 		return false;
 	}
@@ -385,7 +385,7 @@ static bool close_response(struct response *response)
 		close_output_pbs(&response->message);
 		stf_status ret = encrypt_v2SK_payload(&response->sk);
 		if (ret != STF_OK) {
-			log_message(RC_LOG, response->logger,
+			llog(RC_LOG, response->logger,
 				    "error encrypting response");
 			return false;
 		}
@@ -416,7 +416,7 @@ static bool emit_v2N_spi_response(struct response *response,
 	 * is it ever different to the IKE SA?
 	 */
 	endpoint_buf b;
-	log_message(RC_NOTIFICATION+ntype, response->logger,
+	llog(RC_NOTIFICATION+ntype, response->logger,
 		    "responding to %s message (ID %u) from %s with %s notification %s",
 		    exchange_name, md->hdr.isa_msgid,
 		    str_sensitive_endpoint(&ike->sa.st_remote_endpoint, &b),

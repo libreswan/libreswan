@@ -753,7 +753,7 @@ bool find_addresspool(const ip_range *pool_range, struct ip_pool **pool, struct 
 			range_buf prbuf;
 			range_buf hbuf;
 
-			log_message(RC_CLASH, logger,
+			llog(RC_CLASH, logger,
 				    "ERROR: new addresspool %s INEXACTLY OVERLAPS with existing one %s.",
 				    str_range(pool_range, &prbuf),
 				    str_range(&h->r, &hbuf));

@@ -155,7 +155,7 @@ diag_t init_ctl_socket(struct logger *logger UNUSED/*maybe*/)
 
 		if (g != NULL) {
 			if (fchown(ctl_fd, -1, g->gr_gid) != 0) {
-				log_message(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG_SERIOUS, logger,
 					    "cannot chgrp ctl fd(%d) to gid=%d: %s",
 					    ctl_fd, g->gr_gid, strerror(errno));
 			}
@@ -276,11 +276,11 @@ void call_global_event_inline(enum global_timer timer,
 	struct global_timer_desc *gt = &global_timers[timer];
 	passert(gt->name != NULL);
 	if (!event_initialized(&gt->ev)) {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "inject: timer %s is not initialized",
 			    gt->name);
 	}
-	log_message(RC_LOG, logger, "inject: injecting timer event %s", gt->name);
+	llog(RC_LOG, logger, "inject: injecting timer event %s", gt->name);
 	threadtime_t start = threadtime_start();
 	gt->cb(logger);
 	threadtime_stop(&start, SOS_NOBODY, "global timer %s", gt->name);
@@ -929,13 +929,13 @@ void show_fips_status(struct show *s)
 
 static void huphandler_cb(struct logger *logger)
 {
-	log_message(RC_LOG, logger, "Pluto ignores SIGHUP -- perhaps you want \"whack --listen\"");
+	llog(RC_LOG, logger, "Pluto ignores SIGHUP -- perhaps you want \"whack --listen\"");
 }
 
 static void termhandler_cb(struct logger *logger)
 {
 #if 1
-	log_message(RC_LOG, logger, "terminated");
+	llog(RC_LOG, logger, "terminated");
 	libreswan_exit(PLUTO_EXIT_OK);
 #else
 	fatal(PLUTO_EXIT_OK, logger, "terminated");
@@ -945,7 +945,7 @@ static void termhandler_cb(struct logger *logger)
 #ifdef HAVE_SECCOMP
 static void syshandler_cb(struct logger *logger)
 {
-	log_message(RC_LOG_SERIOUS, logger, "pluto received SIGSYS - possible SECCOMP violation!");
+	llog(RC_LOG_SERIOUS, logger, "pluto received SIGSYS - possible SECCOMP violation!");
 	if (pluto_seccomp_mode == SECCOMP_ENABLED) {
 		fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, "seccomp=enabled mandates daemon restart");
 	}
@@ -1001,7 +1001,7 @@ void init_server(struct logger *logger)
 #else
 	dbg("libevent is using its own memory allocator");
 #endif
-	log_message(RC_LOG, logger,
+	llog(RC_LOG, logger,
 		    "initializing libevent in pthreads mode: headers: %s (%" PRIx32 "); library: %s (%" PRIx32 ")",
 		    LIBEVENT_VERSION, (ev_uint32_t)LIBEVENT_VERSION_NUMBER,
 		    event_get_version(), event_get_version_number());
@@ -1109,7 +1109,7 @@ void run_server(char *conffile, struct logger *logger)
 #ifdef HAVE_SECCOMP
 	init_seccomp_main(logger);
 #else
-	log_message(RC_LOG, logger, "seccomp security not supported");
+	llog(RC_LOG, logger, "seccomp security not supported");
 #endif
 
 	int r = event_base_loop(pluto_eb, 0);
@@ -1137,13 +1137,13 @@ void set_whack_pluto_ddos(enum ddos_mode mode, struct logger *logger)
 			       mode == DDOS_FORCE_BUSY ? "active" :
 			       "unlimited");
 	if (mode == pluto_ddos_mode) {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "pluto DDoS protection remains in %s mode", modestr);
 		return;
 	}
 
 	pluto_ddos_mode = mode;
-	log_message(RC_LOG, logger, "pluto DDoS protection mode set to %s", modestr);
+	llog(RC_LOG, logger, "pluto DDoS protection mode set to %s", modestr);
 }
 
 struct event_base *get_pluto_event_base(void)

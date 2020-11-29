@@ -292,14 +292,14 @@ err_t pack_whack_msg(struct whackpacker *wp)
 bool unpack_whack_msg(struct whackpacker *wp, struct logger *logger)
 {
 	if (wp->str_next > wp->str_roof) {
-		log_message(RC_BADWHACKMESSAGE, logger,
+		llog(RC_BADWHACKMESSAGE, logger,
 			    "ignoring truncated message from whack: got %d bytes; expected %zu",
 			    wp->n, sizeof(wp->msg));
 		return false;
 	}
 
 	if (!pickle_whack_message(wp, &pickle_unpacker)) {
-		log_message(RC_BADWHACKMESSAGE, logger,
+		llog(RC_BADWHACKMESSAGE, logger,
 			    "message from whack contains bad string or key");
 		return false;
 	}

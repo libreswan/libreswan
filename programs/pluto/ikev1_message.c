@@ -87,7 +87,7 @@ notification_t accept_v1_nonce(struct logger *logger,
 	size_t len = pbs_left(nonce_pbs);
 
 	if (len < IKEv1_MINIMUM_NONCE_SIZE || IKEv1_MAXIMUM_NONCE_SIZE < len) {
-		log_message(RC_LOG_SERIOUS, logger, "%s length not between %d and %d",
+		llog(RC_LOG_SERIOUS, logger, "%s length not between %d and %d",
 			    name, IKEv1_MINIMUM_NONCE_SIZE, IKEv1_MAXIMUM_NONCE_SIZE);
 		return PAYLOAD_MALFORMED; /* ??? */
 	}
@@ -108,10 +108,10 @@ bool ikev1_justship_KE(struct logger *logger, chunk_t *g, pb_stream *outs)
 		return ikev1_out_generic_chunk(&isakmp_keyex_desc, outs, *g,
 					       "keyex value");
 	case IMPAIR_EMIT_OMIT:
-		log_message(RC_LOG, logger, "IMPAIR: sending no KE (g^x) payload");
+		llog(RC_LOG, logger, "IMPAIR: sending no KE (g^x) payload");
 		return true;
 	case IMPAIR_EMIT_EMPTY:
-		log_message(RC_LOG, logger, "IMPAIR: sending empty KE (g^x)");
+		llog(RC_LOG, logger, "IMPAIR: sending empty KE (g^x)");
 		return ikev1_out_generic_chunk(&isakmp_keyex_desc, outs,
 					       EMPTY_CHUNK, "empty KE");
 	case IMPAIR_EMIT_ROOF:
@@ -119,7 +119,7 @@ bool ikev1_justship_KE(struct logger *logger, chunk_t *g, pb_stream *outs)
 	{
 		pb_stream z;
 		uint8_t byte = impair.ke_payload - IMPAIR_EMIT_ROOF;
-		log_message(RC_LOG, logger, "IMPAIR: sending bogus KE (g^x) == %u value to break DH calculations", byte);
+		llog(RC_LOG, logger, "IMPAIR: sending bogus KE (g^x) == %u value to break DH calculations", byte);
 		/* Only used to test sending/receiving bogus g^x */
 		return ikev1_out_generic(&isakmp_keyex_desc, outs, &z) &&
 			out_repeated_byte(byte, g->len, &z, "fake g^x") &&

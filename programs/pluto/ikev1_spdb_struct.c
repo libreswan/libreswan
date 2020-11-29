@@ -260,11 +260,11 @@ static bool ikev1_verify_esp(const struct connection *c,
 		return false;
 	}
 	if (!encrypt_has_key_bit_length(ta->ta_encrypt, ta->enckeylen)) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "kernel algorithm does not like: %s key_len %u is incorrect",
 			    ta->ta_encrypt->common.fqn, ta->enckeylen);
 		endpoint_buf epb;
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "unsupported ESP Transform %s from %s",
 			    ta->ta_encrypt->common.fqn,
 			    str_sensitive_endpoint(&c->spd.that.host_addr, &epb));
@@ -374,7 +374,7 @@ static bool ikev1_verify_ah(const struct connection *c,
 		}
 	}
 
-	log_message(RC_LOG, logger, "AH IPsec Transform refused: %s",
+	llog(RC_LOG, logger, "AH IPsec Transform refused: %s",
 		    ta->ta_integ->common.fqn);
 	return false;
 }
@@ -396,7 +396,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		/* already checked by the parser? */
 		if (!kernel_alg_encrypt_ok(algs.encrypt)) {
 			if (logit) {
-				log_message(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG_SERIOUS, logger,
 					    "requested kernel enc ealg_id=%d not present",
 					    ealg_i);
 			} else {
@@ -561,14 +561,14 @@ struct db_sa *v1_kernel_alg_makedb(lset_t policy,
 	struct db_context *dbnew = kernel_alg_db_new(proposals, policy, logit, logger);
 
 	if (dbnew == NULL) {
-		log_message(RC_LOG, logger, "failed to translate esp_info to proposal, returning empty");
+		llog(RC_LOG, logger, "failed to translate esp_info to proposal, returning empty");
 		return NULL;
 	}
 
 	struct db_prop *p = db_prop_get(dbnew);
 
 	if (p == NULL) {
-		log_message(RC_LOG, logger, "failed to get proposal from context, returning empty");
+		llog(RC_LOG, logger, "failed to get proposal from context, returning empty");
 		db_destroy(dbnew);
 		return NULL;
 	}
@@ -791,11 +791,11 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 
 				if (!warned_dropped_dhgr) {
 					/* complain only once */
-					log_message(RC_LOG_SERIOUS, logger,
+					llog(RC_LOG_SERIOUS, logger,
 						    "multiple DH groups were set in aggressive mode. Only first one used.");
 				}
 
-				log_message(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG_SERIOUS, logger,
 					    "transform (%s,%s,%s keylen %d) ignored.",
 					    enum_name(&oakley_enc_names,
 						      algs.encrypt->common.ikev1_oakley_id),
@@ -814,9 +814,9 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 				 * Lemma: there will be only a single previous
 				 * one in gsp (any others were discarded).
 				 */
-				log_message(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG_SERIOUS, logger,
 					    "multiple DH groups in aggressive mode can cause interop failure");
-				log_message(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG_SERIOUS, logger,
 					    "Deleting previous proposal in the hopes of selecting DH 2 or DH 5");
 
 				free_sa(&gsp);
@@ -1554,12 +1554,12 @@ static bool ikev1_verify_ike(const struct trans_attrs *ta,
 			     struct logger *logger)
 {
 	if (ta->ta_encrypt == NULL) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "OAKLEY proposal refused: missing encryption");
 		return false;
 	}
 	if (ta->ta_prf == NULL) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "OAKLEY proposal refused: missing PRF");
 		return false;
 	}
@@ -1569,7 +1569,7 @@ static bool ikev1_verify_ike(const struct trans_attrs *ta,
 		return false;
 	}
 	if (ta->ta_dh == NULL) {
-		log_message(RC_LOG_SERIOUS, logger, "OAKLEY proposal refused: missing DH");
+		llog(RC_LOG_SERIOUS, logger, "OAKLEY proposal refused: missing DH");
 		return false;
 	}
 	if (ike_proposals.p == NULL) {
@@ -1592,7 +1592,7 @@ static bool ikev1_verify_ike(const struct trans_attrs *ta,
 		    algs.prf == ta->ta_prf &&
 		    algs.dh == ta->ta_dh) {
 			if (ealg_insecure) {
-				log_message(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG_SERIOUS, logger,
 					    "You should NOT use insecure/broken IKE algorithms (%s)!",
 					    ta->ta_encrypt->common.fqn);
 			} else {
@@ -1601,7 +1601,7 @@ static bool ikev1_verify_ike(const struct trans_attrs *ta,
 			}
 		}
 	}
-	log_message(RC_LOG, logger, "Oakley Transform [%s (%d), %s, %s] refused%s",
+	llog(RC_LOG, logger, "Oakley Transform [%s (%d), %s, %s] refused%s",
 		    ta->ta_encrypt->common.fqn, ta->enckeylen,
 		    ta->ta_prf->common.fqn, ta->ta_dh->common.fqn,
 		    ealg_insecure ?

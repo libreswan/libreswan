@@ -317,7 +317,7 @@ void lsw_random(size_t nbytes, unsigned char *buf, struct logger *logger)
 	}
 
 	ndone = 0;
-	log_message(RC_LOG, logger, "getting %d random seed bytes for NSS from %s...\n",
+	llog(RC_LOG, logger, "getting %d random seed bytes for NSS from %s...\n",
 		    (int) nbytes * BITS_PER_BYTE, device);
 	while (ndone < nbytes) {
 		got = read(dev, buf + ndone, nbytes - ndone);

@@ -211,7 +211,7 @@ bool test_cbc_vectors(const struct encrypt_desc *desc,
 	bool ok = TRUE;
 	const struct cbc_test_vector *test;
 	for (test = tests; test->description != NULL; test++) {
-		log_message(RC_LOG, logger, "  %s", test->description);
+		llog(RC_LOG, logger, "  %s", test->description);
 		if (!test_cbc_vector(desc, test, logger)) {
 			ok = FALSE;
 		}

@@ -367,7 +367,7 @@ static global_timer_cb reset_log_rate_limit;
 static void reset_log_rate_limit(struct logger *logger)
 {
 	if (nr_rate_limited_logs > log_limit()) {
-		log_message(RC_LOG, logger, "rate limited log reset");
+		llog(RC_LOG, logger, "rate limited log reset");
 	}
 	nr_rate_limited_logs = 0;
 }
@@ -695,7 +695,7 @@ void log_md(lset_t rc_flags, const struct msg_digest *md, const char *msg, ...)
 		: &failsafe_logger;
 	va_list ap;
 	va_start(ap, msg);
-	log_va_list(rc_flags, logger, msg, ap);
+	llog_va_list(rc_flags, logger, msg, ap);
 	va_end(ap);
 }
 
@@ -707,7 +707,7 @@ void log_connection(lset_t rc_flags, struct fd *whackfd,
 	struct logger logger = (pexpect(c != NULL) && pexpect(in_main_thread()))
 		? CONNECTION_LOGGER(c, whackfd)
 		: failsafe_logger;
-	log_va_list(rc_flags, &logger, msg, ap);
+	llog_va_list(rc_flags, &logger, msg, ap);
 	va_end(ap);
 }
 
@@ -718,7 +718,7 @@ void log_pending(lset_t rc_flags, const struct pending *p, const char *msg, ...)
 	struct logger logger = (pexpect(p != NULL) && pexpect(in_main_thread()))
 		? PENDING_LOGGER(p)
 		: failsafe_logger;
-	log_va_list(rc_flags, &logger, msg, ap);
+	llog_va_list(rc_flags, &logger, msg, ap);
 	va_end(ap);
 }
 
@@ -737,10 +737,10 @@ void log_state(lset_t rc_flags, const struct state *st,
 		if (whack_log_fd != NULL) {
 			logger.global_whackfd = whack_log_fd;
 		}
-		log_va_list(rc_flags, &logger, msg, ap);
+		llog_va_list(rc_flags, &logger, msg, ap);
 	} else {
 		/* still get the message out */
-		log_va_list(rc_flags, &failsafe_logger, msg, ap);
+		llog_va_list(rc_flags, &failsafe_logger, msg, ap);
 
 	}
 	va_end(ap);

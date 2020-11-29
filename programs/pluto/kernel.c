@@ -397,7 +397,7 @@ static void jam_clean_xauth_username(struct jambuf *buf,
 		src++;
 	}
 	if (changed || !jambuf_ok(buf)) {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "Warning: XAUTH username changed from '%s' to '%s'",
 			    src, dst);
 	}
@@ -674,7 +674,7 @@ bool do_command(const struct connection *c,
 			cs = "-client-v6";
 			break;
 		default:
-			log_message(RC_LOG_SERIOUS, logger, "unknown address family");
+			llog(RC_LOG_SERIOUS, logger, "unknown address family");
 			return false;
 		}
 		verb_suffix = subnetisaddr(&sr->this.client,
@@ -688,7 +688,7 @@ bool do_command(const struct connection *c,
 	if (!fmt_common_shell_out(common_shell_out_str,
 				  sizeof(common_shell_out_str), c, sr,
 				  st)) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "%s%s command too long!", verb,
 			    verb_suffix);
 		return false;
@@ -703,7 +703,7 @@ bool do_command(const struct connection *c,
 				 common_shell_out_str,
 				 sr->this.updown);
 	if (cmd == NULL) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "%s%s command too long!", verb,
 			    verb_suffix);
 		return false;
@@ -760,7 +760,7 @@ bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd,
 				return true;
 			}
 #endif
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "unable to popen %s%s command",
 				    verb, verb_suffix);
 			return false;
@@ -790,7 +790,7 @@ bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd,
 
 				if (e > resp && e[-1] == '\n')
 					e[-1] = '\0'; /* trim trailing '\n' */
-				log_message(RC_LOG, logger, "%s%s output: %s", verb,
+				llog(RC_LOG, logger, "%s%s output: %s", verb,
 					    verb_suffix, resp);
 			}
 		}
@@ -806,19 +806,19 @@ bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd,
 				return false;
 			} else if (WIFEXITED(r)) {
 				if (WEXITSTATUS(r) != 0) {
-					log_message(RC_LOG_SERIOUS, logger,
+					llog(RC_LOG_SERIOUS, logger,
 						    "%s%s command exited with status %d",
 						    verb, verb_suffix,
 						    WEXITSTATUS(r));
 					return false;
 				}
 			} else if (WIFSIGNALED(r)) {
-				log_message(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG_SERIOUS, logger,
 					    "%s%s command exited with signal %d",
 					    verb, verb_suffix, WTERMSIG(r));
 				return false;
 			} else {
-				log_message(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG_SERIOUS, logger,
 					    "%s%s command exited with unknown status %d",
 					    verb, verb_suffix, r);
 				return false;
@@ -871,7 +871,7 @@ static enum routability note_nearconflict(struct connection *outside,	/* CK_PERM
 	inside->policy_prio = outside->policy_prio + 1;
 
 	char inst[CONN_INST_BUF];
-	log_message(RC_LOG_SERIOUS, logger,
+	llog(RC_LOG_SERIOUS, logger,
 		    "conflict on eroute (%s), switching eroute to %s and linking %s",
 		    fmt_conn_instance(inside, inst),
 		    inside->name, outside->name);
@@ -893,7 +893,7 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 
 	/* it makes no sense to route a connection that is ISAKMP-only */
 	if (!NEVER_NEGOTIATE(c->policy) && !HAS_IPSEC_POLICY(c->policy)) {
-		log_message(RC_ROUTE, logger,
+		llog(RC_ROUTE, logger,
 			    "cannot route an ISAKMP-only connection");
 		return route_impossible;
 	}
@@ -912,7 +912,7 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 	if (!c->spd.that.has_client &&
 	    c->kind == CK_TEMPLATE &&
 	    !(c->policy & POLICY_OPPORTUNISTIC)) {
-		log_message(RC_ROUTE, logger,
+		llog(RC_ROUTE, logger,
 			    "cannot route template policy of %s",
 			    prettypolicy(c->policy));
 		return route_impossible;
@@ -922,7 +922,7 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 	if (c->spd.this.host_port != NAT_IKE_UDP_PORT &&
 	    c->spd.this.host_port != IKE_UDP_PORT &&
 	    addrinsubnet(&c->spd.that.host_addr, &c->spd.that.client)) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "cannot install route: peer is within its client");
 		return route_impossible;
 	}
@@ -947,13 +947,13 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 			 */
 			if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 				connection_buf cib;
-				log_message(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG_SERIOUS, logger,
 					    "cannot route -- route already in use for "PRI_CONNECTION"",
 					    pri_connection(ro, &cib));
 				return route_impossible;
 			} else {
 				connection_buf cib;
-				log_message(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG_SERIOUS, logger,
 					    "cannot route -- route already in use for "PRI_CONNECTION" - but allowing anyway",
 					    pri_connection(ro, &cib));
 			}
@@ -999,7 +999,7 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 			 * TODO: XFRM apparently can do this though
 			 */
 			connection_buf erob;
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "cannot install eroute -- it is in use for "PRI_CONNECTION" #%lu",
 				    pri_connection(ero, &erob), esr->eroute_owner);
 			return route_impossible;
@@ -1072,7 +1072,7 @@ static bool shunt_eroute(const struct connection *c,
 		return kernel_ops->shunt_eroute(c, sr, rt_kind, op, opname, logger);
 	}
 
-	log_message(RC_COMMENT, logger,
+	llog(RC_COMMENT, logger,
 		    "no shunt_eroute implemented for %s interface",
 		    kernel_ops->kern_name);
 	return true;
@@ -1407,7 +1407,7 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 			transport_proto);
 
 		free_bare_shunt(bs_pp);
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "raw_eroute() to op='%s' with transport_proto='%d' kernel shunt skipped - deleting from pluto shunt table",
 			    repl ? "replace" : "delete",
 			    transport_proto);
@@ -1439,7 +1439,7 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 		if (bs_pp == NULL) {
 			ipstr_buf srcb, dstb;
 
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "can't find expected bare shunt to %s: %s->%s transport_proto='%d'",
 				    repl ? "replace" : "delete",
 				    ipstr(src, &srcb), ipstr(dst, &dstb),
@@ -1472,7 +1472,7 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 			transport_proto);
 
 		free_bare_shunt(bs_pp);
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "raw_eroute() to op='%s' with transport_proto='%d' kernel shunt failed - deleting from pluto shunt table",
 			    repl ? "replace" : "delete",
 			    transport_proto);
@@ -1543,7 +1543,7 @@ bool eroute_connection(const struct spd_route *sr,
 				    policy_label,
 				    logger);
 		if (!t) {
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "CAT: failed to eroute additional Client Address Translation policy");
 		}
 
@@ -1610,7 +1610,7 @@ bool assign_holdpass(const struct connection *c,
 
 		if (old == NULL) {
 			/* ??? should this happen?  It does. */
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "assign_holdpass() no bare shunt to remove? - mismatch?");
 		} else {
 			/* ??? should this happen? */
@@ -1654,7 +1654,7 @@ bool assign_holdpass(const struct connection *c,
 			{
 				dbg("assign_holdpass() eroute_connection() done");
 			} else {
-				log_message(RC_LOG, logger,
+				llog(RC_LOG, logger,
 					    "assign_holdpass() eroute_connection() failed");
 				return false;
 			}
@@ -1667,7 +1667,7 @@ bool assign_holdpass(const struct connection *c,
 				       "delete narrow %hold", logger)) {
 			dbg("assign_holdpass() delete_bare_shunt() succeeded");
 		} else {
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "assign_holdpass() delete_bare_shunt() failed");
 			return false;
 		}
@@ -2305,7 +2305,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				"add inbound",		/* opname */
 				st->st_connection->policy_label,
 				st->st_logger)) {
-			log_message(RC_LOG, st->st_logger,
+			llog(RC_LOG, st->st_logger,
 				    "raw_eroute() in setup_half_ipsec_sa() failed to add inbound");
 		}
 	}
@@ -2402,7 +2402,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 			"delete inbound",
 			c->policy_label,
 			st->st_logger)) {
-		log_message(RC_LOG, st->st_logger,
+		llog(RC_LOG, st->st_logger,
 			    "raw_eroute in teardown_half_ipsec_sa() failed to delete inbound");
 	}
 
@@ -2506,7 +2506,7 @@ void init_kernel(struct logger *logger)
 
 	/* get kernel version */
 	uname(&un);
-	log_message(RC_LOG, logger,
+	llog(RC_LOG, logger,
 		    "using %s %s kernel support code on %s",
 		    un.sysname, kernel_ops->kern_name, un.version);
 
@@ -2759,7 +2759,7 @@ bool route_and_eroute(struct connection *c,
 		/* we're adding an eroute */
 #ifdef IPSEC_CONNECTION_LIMIT
 		if (num_ipsec_eroute == IPSEC_CONNECTION_LIMIT) {
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "Maximum number of IPsec connections reached (%d)",
 				    IPSEC_CONNECTION_LIMIT);
 			return false;
@@ -2903,7 +2903,7 @@ bool route_and_eroute(struct connection *c,
 #ifdef IPSEC_CONNECTION_LIMIT
 		if (new_eroute) {
 			num_ipsec_eroute++;
-			log_message(RC_COMMENT, logger,
+			llog(RC_COMMENT, logger,
 				    "%d IPsec connections are currently being managed",
 				    num_ipsec_eroute);
 		}
@@ -2952,7 +2952,7 @@ bool route_and_eroute(struct connection *c,
 						NULL, /* bare shunt are not associated with any connection so no security label */
 						logger))
 				{
-					log_message(RC_LOG, logger,
+					llog(RC_LOG, logger,
 						    "raw_eroute() in route_and_eroute() failed to restore/replace SA");
 				}
 			} else if (ero != NULL) {
@@ -2964,7 +2964,7 @@ bool route_and_eroute(struct connection *c,
 							  esr->routing,
 							  ERO_REPLACE,
 							  "restore", logger)) {
-						log_message(RC_LOG, logger,
+						llog(RC_LOG, logger,
 							    "shunt_eroute() in route_and_eroute() failed restore/replace");
 					}
 				} else {
@@ -2985,7 +2985,7 @@ bool route_and_eroute(struct connection *c,
 						if (!sag_eroute(ost, esr,
 							ERO_REPLACE,
 							"restore"))
-							log_message(RC_LOG, logger,
+							llog(RC_LOG, logger,
 								    "sag_eroute() in route_and_eroute() failed restore/replace");
 					}
 				}
@@ -2995,14 +2995,14 @@ bool route_and_eroute(struct connection *c,
 					if (!shunt_eroute(c, sr,
 							  sr->routing, ERO_DELETE,
 							  "delete", logger)) {
-						log_message(RC_LOG, logger,
+						llog(RC_LOG, logger,
 							    "shunt_eroute() in route_and_eroute() failed in !st case");
 					}
 				} else {
 					if (!sag_eroute(st, sr,
 							ERO_DELETE,
 							"delete")) {
-						log_message(RC_LOG, logger,
+						llog(RC_LOG, logger,
 							    "shunt_eroute() in route_and_eroute() failed in st case for delete");
 					}
 				}
@@ -3433,7 +3433,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 			if (!replace_bare_shunt(&sr->this.host_addr, &sr->that.host_addr, bs->policy_prio,
 						negotiation_shunt, failure_shunt, bs->transport_proto,
 						"oe-failed", logger)) {
-				log_message(RC_LOG, logger,
+				llog(RC_LOG, logger,
 					    "assign_holdpass() failed to update shunt policy");
 			}
 		} else {
@@ -3463,7 +3463,7 @@ static void expire_bare_shunts(struct logger *logger, bool all)
 					if (!shunt_eroute(c, &c->spd,
 							  RT_ROUTED_PROSPECTIVE, ERO_ADD,
 							  "add", logger)) {
-						log_message(RC_LOG, logger,
+						llog(RC_LOG, logger,
 							    "trap shunt install failed ");
 					}
 				}
@@ -3474,7 +3474,7 @@ static void expire_bare_shunts(struct logger *logger, bool all)
 					       (bsp->from_cn == NULL ? "expire_bare_shunt" :
 						"IGNORE_ON_XFRM: expire_bare_shunt"),
 					       logger)) {
-				log_message(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG_SERIOUS, logger,
 					    "failed to delete bare shunt");
 			}
 			passert(bsp != *bspp);

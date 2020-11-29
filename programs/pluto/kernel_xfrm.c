@@ -376,7 +376,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 			  description, text_said);
 		return FALSE;
 	} else if ((size_t)r != len) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "ERROR: netlink write() of %s message for %s %s truncated: %zd instead of %zu",
 			    sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
 			    description, text_said, r, len);
@@ -399,7 +399,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 				  description, text_said);
 			return FALSE;
 		} else if ((size_t) r < sizeof(rsp.n)) {
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "netlink read truncated message: %zd bytes; ignore message", r);
 			continue;
 		} else if (addr.nl_pid != 0) {
@@ -418,7 +418,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 	}
 
 	if (rsp.n.nlmsg_len > (size_t) r) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "netlink recvfrom() of response to our %s message for %s %s was truncated: %zd instead of %zu",
 			    sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
 			    description, text_said,
@@ -428,7 +428,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 
 	if (rsp.n.nlmsg_type != expected_resp_type && rsp.n.nlmsg_type == NLMSG_ERROR) {
 		if (rsp.u.e.error != 0) {
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "ERROR: netlink response for %s %s included errno %d: %s",
 				    description, text_said, -rsp.u.e.error,
 				    strerror(-rsp.u.e.error));
@@ -448,7 +448,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 		return TRUE;
 	}
 	if (rsp.n.nlmsg_type != expected_resp_type) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "netlink recvfrom() of response to our %s message for %s %s was of wrong type (%s)",
 			    sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
 			    description, text_said,
@@ -483,7 +483,7 @@ static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
 	if (error == 0 || (error == ENOENT && enoent_ok))
 		return TRUE;
 
-	log_message(RC_LOG_SERIOUS, logger,
+	llog(RC_LOG_SERIOUS, logger,
 		    "ERROR: netlink %s response for flow %s included errno %d: %s",
 		    sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
 		    text_said, error, strerror(error));
@@ -1110,7 +1110,7 @@ static void netlink_find_offload_feature(const char *ifname,
 	if (!siocethtool(ifname, sset_info, "ETHTOOL_GSSET_INFO", logger) ||
 	    sset_info->sset_mask != 1ULL << ETH_SS_FEATURES) {
 		pfree(sset_info);
-		log_message(RC_LOG, logger, "Kernel does not support NIC esp-hw-offload (ETHTOOL_GSSET_INFO failed)");
+		llog(RC_LOG, logger, "Kernel does not support NIC esp-hw-offload (ETHTOOL_GSSET_INFO failed)");
 		return;
 	}
 
@@ -1142,9 +1142,9 @@ static void netlink_find_offload_feature(const char *ifname,
 	pfree(cmd);
 
 	if (netlink_esp_hw_offload.state == NIC_OFFLOAD_SUPPORTED) {
-		log_message(RC_LOG, logger, "Kernel supports NIC esp-hw-offload");
+		llog(RC_LOG, logger, "Kernel supports NIC esp-hw-offload");
 	} else {
-		log_message(RC_LOG, logger, "Kernel does not support NIC esp-hw-offload");
+		llog(RC_LOG, logger, "Kernel does not support NIC esp-hw-offload");
 	}
 }
 
@@ -1373,7 +1373,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 	if (sa->authkeylen != 0) {
 		const char *name = sa->integ->integ_netlink_xfrm_name;
 		if (name == NULL) {
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "XFRM: unknown authentication algorithm: %s",
 				    sa->integ->common.fqn);
 			return FALSE;
@@ -1414,7 +1414,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		const char *name = sparse_name(calg_list, sa->compalg);
 
 		if (name == NULL) {
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "unknown compression algorithm: %u",
 				    sa->compalg);
 			return FALSE;
@@ -1434,7 +1434,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		const char *name = sa->encrypt->encrypt_netlink_xfrm_name;
 
 		if (name == NULL) {
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "unknown encryption algorithm: %s",
 				    sa->encrypt->common.fqn);
 			return FALSE;
@@ -1575,7 +1575,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 			       "Add SA", sa->text_said, logger);
 	if (!ret && netlink_errno == ESRCH &&
 		req.n.nlmsg_type == XFRM_MSG_UPDSA) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "Warning: kernel expired our reserved IPsec SA SPI - negotiation took too long? Try increasing /proc/sys/net/core/xfrm_acq_expires");
 	}
 	return ret;
@@ -1659,7 +1659,7 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 	dbg("xfrm netlink msg len %zu", (size_t) n->nlmsg_len);
 
 	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*acquire))) {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "netlink_acquire got message with length %zu < %zu bytes; ignore message",
 			    (size_t) n->nlmsg_len,
 			    sizeof(*acquire));
@@ -1686,7 +1686,7 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 
 	const struct ip_info *afi = aftoinfo(acquire->policy.sel.family);
 	if (afi == NULL) {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "XFRM_MSG_ACQUIRE message from kernel malformed: family %u unknown",
 			    acquire->policy.sel.family);
 		return;
@@ -1735,13 +1735,13 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 			    len);
 
 			if (uctx != NULL) {
-				log_message(RC_LOG, logger,
+				llog(RC_LOG, logger,
 					    "Second Sec Ctx label in a single Acquire message; ignoring Acquire message");
 				return;
 			}
 
 			if (len > MAX_SECCTX_LEN) {
-				log_message(RC_LOG, logger,
+				llog(RC_LOG, logger,
 					    "Sec Ctx label of length %zu, longer than MAX_SECCTX_LEN; ignoring Acquire message",
 					    len);
 				return;
@@ -1763,18 +1763,18 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 
 			if (len == 0 || uctx->sec_ctx_value[len-1] != '\0') {
 				if (len == MAX_SECCTX_LEN) {
-					log_message(RC_LOG, logger,
+					llog(RC_LOG, logger,
 						    "Sec Ctx label missing final NUL and too long to add; ignoring Acquire message");
 					return;
 				}
-				log_message(RC_LOG, logger,
+				llog(RC_LOG, logger,
 					    "Sec Ctx label missing final NUL; we're adding it");
 				uctx->sec_ctx_value[len] = '\0';
 				len++;
 			}
 
 			if (strlen(uctx->sec_ctx_value) + 1 != len) {
-				log_message(RC_LOG, logger,
+				llog(RC_LOG, logger,
 					    "Sec Ctx label contains embedded NUL; ignoring Acquire message");
 				return;
 			}
@@ -1813,7 +1813,7 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol,
 
 	const struct ip_info *afi = aftoinfo(pol->sel.family);
 	if (afi == NULL) {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "XFRM_MSG_POLEXPIRE message from kernel malformed: address family %u unknown",
 			    pol->sel.family);
 		return;
@@ -1828,7 +1828,7 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol,
 			      logger)) {
 		dbg("netlink_shunt_expire() called delete_bare_shunt() with success");
 	} else {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "netlink_shunt_expire() called delete_bare_shunt() which failed!");
 	}
 }
@@ -1852,7 +1852,7 @@ static void process_addr_chage(struct nlmsghdr *n, struct logger *logger)
 			ugh = data_to_address(RTA_DATA(rta), RTA_PAYLOAD(rta)/*size*/,
 					      aftoinfo(nl_msg->ifa_family), &ip);
 			if (ugh != NULL) {
-				log_message(RC_LOG, logger,
+				llog(RC_LOG, logger,
 					    "ERROR IFA_LOCAL invalid %s", ugh);
 			} else  {
 				if (n->nlmsg_type == RTM_DELADDR)
@@ -1866,7 +1866,7 @@ static void process_addr_chage(struct nlmsghdr *n, struct logger *logger)
 			ugh = data_to_address(RTA_DATA(rta), RTA_PAYLOAD(rta)/*size*/,
 					      aftoinfo(nl_msg->ifa_family), &ip);
 			if (ugh != NULL) {
-				log_message(RC_LOG, logger,
+				llog(RC_LOG, logger,
 					    "ERROR IFA_ADDRESS invalid %s", ugh);
 			} else  {
 				address_buf ip_str;
@@ -1898,7 +1898,7 @@ static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
 	struct nlm_resp rsp;
 
 	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*upe))) {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "netlink_policy_expire got message with length %zu < %zu bytes; ignore message",
 			    (size_t) n->nlmsg_len,
 			    sizeof(*upe));
@@ -1927,7 +1927,7 @@ static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
 		dbg("netlink_policy_expire: policy died on us: dir=%d, index=%d",
 		    req.id.dir, req.id.index);
 	} else if (rsp.n.nlmsg_len < NLMSG_LENGTH(sizeof(rsp.u.pol))) {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "netlink_policy_expire: XFRM_MSG_GETPOLICY returned message with length %zu < %zu bytes; ignore message",
 			    (size_t) rsp.n.nlmsg_len,
 			    sizeof(rsp.u.pol));
@@ -1966,7 +1966,7 @@ static bool netlink_get(int fd, struct logger *logger)
 		}
 		return TRUE;
 	} else if ((size_t)r < sizeof(rsp.n)) {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "netlink_get read truncated message: %zd bytes; ignore message",
 			    r);
 		return true;
@@ -1977,7 +1977,7 @@ static bool netlink_get(int fd, struct logger *logger)
 		    addr.nl_pid);
 		return TRUE;
 	} else if ((size_t)r != rsp.n.nlmsg_len) {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "netlink_get read message with length %zd that doesn't equal nlmsg_len %zu bytes; ignore message",
 			    r, (size_t) rsp.n.nlmsg_len);
 		return true;
@@ -2053,7 +2053,7 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 	}
 
 	if (rsp.n.nlmsg_len < NLMSG_LENGTH(sizeof(rsp.u.sa))) {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "netlink_get_spi: XFRM_MSG_ALLOCSPI returned message with length %zu < %zu bytes; ignore message",
 			    (size_t) rsp.n.nlmsg_len,
 			    sizeof(rsp.u.sa));
@@ -2378,7 +2378,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces, struct logger 
 					if (v != NULL) {
 						ipstr_buf b;
 
-						log_message(RC_LOG_SERIOUS, logger,
+						llog(RC_LOG_SERIOUS, logger,
 							    "ipsec interfaces %s and %s share same address %s",
 							    v->name, vfp->name,
 							    ipstr(&ifp->addr, &b));
@@ -2404,7 +2404,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces, struct logger 
 					if (after) {
 						ipstr_buf b;
 
-						log_message(RC_LOG_SERIOUS, logger,
+						llog(RC_LOG_SERIOUS, logger,
 							    "IP interfaces %s and %s share address %s!",
 							    ifp->name, vfp->name,
 							    ipstr(&ifp->addr, &b));
@@ -2443,7 +2443,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces, struct logger 
 		if (pluto_listen != NULL && !sameaddr(&lip, &ifp->addr)) {
 			ipstr_buf b;
 
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "skipping interface %s with %s",
 				    ifp->name, ipstr(&ifp->addr, &b));
 			continue;
@@ -2586,7 +2586,7 @@ static void netlink_v6holes(struct logger *logger)
 	struct stat sts;
 	if (stat(proc_f, &sts) != 0) {
 		/* not error */
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "kernel: starting without ipv6 support! could not stat \"%s\"" PRI_ERRNO,
 			    proc_f, pri_errno(errno));
 		/*
@@ -2617,7 +2617,7 @@ static void netlink_v6holes(struct logger *logger)
 
 	int disable_ipv6 = atoi(buf);
 	if (disable_ipv6 == 1) {
-		log_message(RC_LOG, logger, "kernel: %s=1 ignore ipv6 holes", proc_f);
+		llog(RC_LOG, logger, "kernel: %s=1 ignore ipv6 holes", proc_f);
 		return;
 	}
 
@@ -2668,7 +2668,7 @@ static bool qry_xfrm_mirgrate_support(struct nlmsghdr *hdr, struct logger *logge
 		close(nl_fd);
 		return FALSE;
 	} else if ((size_t)r != len) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "ERROR: netlink write() xfrm_migrate_support message truncated: %zd instead of %zu",
 			    r, len);
 		close(nl_fd);

@@ -128,7 +128,7 @@ void free_logger(struct logger **logp, where_t where);
 		if (suppress_log(LOGGER)) {				\
 			dbg(FORMAT, ##__VA_ARGS__);			\
 		} else {						\
-			log_message(RC_FLAGS, LOGGER, FORMAT,		\
+			llog(RC_FLAGS, LOGGER, FORMAT,		\
 				    ##__VA_ARGS__);			\
 		}							\
 	}
@@ -140,7 +140,7 @@ void free_logger(struct logger **logp, where_t where);
 #define log_global(RC, WHACKFD, MESSAGE, ...)				\
 	{								\
 		struct logger log_ = GLOBAL_LOGGER(WHACKFD);		\
-		log_message(RC,	&log_,					\
+		llog(RC,	&log_,					\
 			    MESSAGE,##__VA_ARGS__);			\
 	}
 

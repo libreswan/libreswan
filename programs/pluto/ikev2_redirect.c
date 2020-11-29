@@ -133,7 +133,7 @@ static chunk_t build_redirect_notification_data_common(enum gw_identity_type gwi
 						       struct logger *logger)
 {
 	if (id.len > 0xFF) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "redirect destination longer than 255 octets; ignoring");
 		return empty_chunk;
 	}
@@ -257,7 +257,7 @@ bool redirect_global(struct msg_digest *md)
 							    logger);
 
 	if (data.len == 0) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "failed to construct REDIRECT notification data");
 		return true;
 	}

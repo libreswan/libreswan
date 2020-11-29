@@ -167,14 +167,14 @@ void init_seccomp_main(struct logger *logger)
 	switch (pluto_seccomp_mode) {
 	case SECCOMP_ENABLED:
 		init_seccomp(SCMP_ACT_KILL, true, logger);
-		log_message(RC_LOG, logger, "seccomp security enabled in strict mode");
+		llog(RC_LOG, logger, "seccomp security enabled in strict mode");
 		break;
 	case SECCOMP_TOLERANT:
 		init_seccomp(SCMP_ACT_TRAP, true, logger);
-		log_message(RC_LOG, logger, "seccomp security enabled in tolerant mode");
+		llog(RC_LOG, logger, "seccomp security enabled in tolerant mode");
 		break;
 	case SECCOMP_DISABLED:
-		log_message(RC_LOG, logger, "seccomp security disabled");
+		llog(RC_LOG, logger, "seccomp security disabled");
 		break;
 	default:
 		bad_case(pluto_seccomp_mode);
@@ -187,14 +187,14 @@ void init_seccomp_cryptohelper(int helpernum, struct logger *logger)
 	switch (pluto_seccomp_mode) {
 	case SECCOMP_ENABLED:
 		init_seccomp(SCMP_ACT_KILL, false, logger);
-		log_message(RC_LOG, logger, "seccomp security enabled in strict mode for crypto helper %d", helpernum);
+		llog(RC_LOG, logger, "seccomp security enabled in strict mode for crypto helper %d", helpernum);
 		break;
 	case SECCOMP_TOLERANT:
 		init_seccomp(SCMP_ACT_TRAP, false, logger);
-		log_message(RC_LOG, logger, "seccomp security enabled in tolerant mode for crypto helper %d", helpernum);
+		llog(RC_LOG, logger, "seccomp security enabled in tolerant mode for crypto helper %d", helpernum);
 		break;
 	case SECCOMP_DISABLED:
-		log_message(RC_LOG, logger, "seccomp security disabled for crypto helper %d", helpernum);
+		llog(RC_LOG, logger, "seccomp security disabled for crypto helper %d", helpernum);
 		break;
 	default:
 		bad_case(pluto_seccomp_mode);

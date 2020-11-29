@@ -109,7 +109,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 	}
 	pfreeany(fg_path);
 
-	log_message(RC_LOG, flp->logger, "loading group \"%s\"", flp->filename);
+	llog(RC_LOG, flp->logger, "loading group \"%s\"", flp->filename);
 	while (flp->bdry == B_record) {
 
 		/* force advance to first token */
@@ -127,7 +127,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 			ip_address t;
 			err_t err = numeric_to_address(shunk1(flp->tok), NULL, &t);
 			if (err != NULL) {
-				log_message(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG_SERIOUS, flp->logger,
 					    "ignored, '%s' is not an address: %s",
 					    flp->tok, err);
 				flushline(flp, NULL/*shh*/);
@@ -138,7 +138,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 			const struct ip_info *afi = strchr(flp->tok, ':') == NULL ? &ipv4_info : &ipv6_info;
 			err_t err = ttosubnet(flp->tok, 0, afi->af, 'x', &sn, flp->logger);
 			if (err != NULL) {
-				log_message(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG_SERIOUS, flp->logger,
 					    "ignored, '%s' is not a subnet: %s",
 					    flp->tok, err);
 				flushline(flp, NULL/*shh*/);
@@ -148,7 +148,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 
 		const struct ip_info *type = subnet_type(&sn);
 		if (type == NULL) {
-			log_message(RC_LOG_SERIOUS, flp->logger,
+			llog(RC_LOG_SERIOUS, flp->logger,
 				    "ignored, unsupported Address Family \"%s\"",
 				    flp->tok);
 			flushline(flp, NULL/*shh*/);
@@ -165,46 +165,46 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 			/* protocol */
 			err = ttoipproto(flp->tok, &proto);
 			if (err != NULL) {
-				log_message(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG_SERIOUS, flp->logger,
 					    "protocol '%s' invalid: %s",
 					    flp->tok, err);
 				break;
 			}
 			if (proto == 0 || proto == IPPROTO_ESP || proto == IPPROTO_AH) {
-				log_message(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG_SERIOUS, flp->logger,
 					    "invalid protocol '%s' - mistakenly defined to be 0 or %u(esp) or %u(ah)",
 					    flp->tok, IPPROTO_ESP, IPPROTO_AH);
 				break;
 			}
 			/* source port */
 			if (!shift(flp)) {
-				log_message(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG_SERIOUS, flp->logger,
 					    "missing source_port: either only specify CIDR, or specify CIDR protocol source_port dest_port");
 				break;
 			}
 			err = ttoport(flp->tok, &sport);
 			if (err != NULL) {
-				log_message(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG_SERIOUS, flp->logger,
 					    "source port '%s' invalid: %s",
 					    flp->tok, err);
 				break;
 			}
 			/* dest port */
 			if (!shift(flp)) {
-				log_message(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG_SERIOUS, flp->logger,
 					    "missing dest_port: either only specify CIDR, or specify CIDR protocol source_port dest_port");
 				break;
 			}
 			err = ttoport(flp->tok, &dport);
 			if (err != NULL) {
-				log_message(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG_SERIOUS, flp->logger,
 					    "destination port '%s' invalid: %s",
 					    flp->tok, err);
 				break;
 			}
 			/* more stuff? */
 			if (shift(flp)) {
-				log_message(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG_SERIOUS, flp->logger,
 					    "garbage '%s' at end of line: either only specify CIDR, or specify CIDR protocol source_port dest_port",
 					    flp->tok);
 				break;
@@ -241,7 +241,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 		if (r == 0) {
 			subnet_buf source;
 			subnet_buf dest;
-			log_message(RC_LOG_SERIOUS, flp->logger,
+			llog(RC_LOG_SERIOUS, flp->logger,
 				    "subnet \"%s\", proto %d, sport %d dport %d, source %s, already \"%s\"",
 				    str_subnet(&sn, &dest),
 				    proto, sport, dport,
@@ -261,7 +261,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 		}
 	}
 	if (flp->bdry != B_file) {
-		log_message(RC_LOG_SERIOUS, flp->logger, "rest of file ignored");
+		llog(RC_LOG_SERIOUS, flp->logger, "rest of file ignored");
 	}
 	lexclose(&flp);
 }

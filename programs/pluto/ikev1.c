@@ -1143,7 +1143,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 			struct logger *logger = (st != NULL ? st->st_logger :
 						 md != NULL ? md->md_logger :
 						 &failsafe_logger);
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "received and ignored notification payload: %s",
 				    enum_name(&ikev1_notify_names, n->isan_type));
 			return STF_IGNORE;
@@ -1155,7 +1155,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 			struct logger *logger = (st != NULL ? st->st_logger :
 						 md != NULL ? md->md_logger :
 						 &failsafe_logger);
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "received and ignored empty informational notification payload");
 		}
 		return STF_IGNORE;
@@ -2812,7 +2812,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			passert(st->st_state->kind < STATE_IKEv1_ROOF);
 
 			/* tell whack and logs our progress */
-			LOG_JAMBUF(w, st->st_logger, buf) {
+			LLOG_JAMBUF(w, st->st_logger, buf) {
 				jam(buf, "%s", st->st_state->story);
 				/* document SA details for admin's pleasure */
 				if (log_details != NULL) {

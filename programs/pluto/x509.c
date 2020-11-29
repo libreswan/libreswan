@@ -402,7 +402,7 @@ static void gntoid(struct id *id, const generalName_t *gn, struct logger *logger
 		id->kind = afi->id_addr;
 		err_t ugh = hunk_to_address(gn->name, afi, &id->ip_addr);
 		if (ugh != NULL) {
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "warning: gntoid() failed to initaddr(): %s",
 				    ugh);
 		}
@@ -650,7 +650,7 @@ bool match_certs_id(const struct certs *certs,
 	CERTCertificate *end_cert = certs->cert;
 
 	if (CERT_IsCACert(end_cert, NULL)) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "cannot use CA certificate for endpoint");
 		return false;
 	}
@@ -713,7 +713,7 @@ bool match_certs_id(const struct certs *certs,
 			 * all about certificates.
 			 */
 			id_buf idb;
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "ID_DER_ASN1_DN '%s' does not match expected '%s'",
 				    end_cert->subjectName, str_id(peer_id, &idb));
 		} else if (DBGP(DBG_BASE)) {
@@ -726,7 +726,7 @@ bool match_certs_id(const struct certs *certs,
 	}
 
 	default:
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "unhandled ID type %s; cannot match peer's certificate with expected peer ID",
 			    enum_show(&ike_idtype_names, peer_id->kind));
 		return false;
@@ -969,7 +969,7 @@ void ikev1_decode_cr(struct msg_digest *md, struct logger *logger)
 					str_dn_or_null(ca_name, "%any", &buf));
 			}
 		} else {
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "ignoring %s certificate request payload",
 				    enum_show(&ike_cert_type_names, cr->isacr_type));
 		}
@@ -1018,7 +1018,7 @@ void ikev2_decode_cr(struct msg_digest *md, struct logger *logger)
 			break;
 		}
 		default:
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "ignoring CERTREQ payload of unsupported type %s",
 				    enum_show(&ikev2_cert_type_names, cr->isacertreq_enc));
 		}

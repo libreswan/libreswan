@@ -281,7 +281,7 @@ bool ikev2_schedule_retry(struct state *st)
 		dbg("maximum number of retries reached - deleting state");
 		return false;
 	}
-	LOG_JAMBUF(RC_COMMENT, st->st_logger, buf) {
+	LLOG_JAMBUF(RC_COMMENT, st->st_logger, buf) {
 		jam(buf, "scheduling retry attempt %ld of ", try);
 		if (try_limit == 0) {
 			jam_string(buf, "an unlimited number");

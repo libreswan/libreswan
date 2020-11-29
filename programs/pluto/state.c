@@ -255,7 +255,7 @@ void revive_conns(struct logger *logger)
 	while (revivals != NULL) {
 		struct connection *c = conn_by_serialno(revivals->serialno);
 		if (c == NULL) {
-			log_message(RC_UNKNOWN_NAME, logger,
+			llog(RC_UNKNOWN_NAME, logger,
 				    "failed to initiate connection "PRI_CO" which received a Delete/Notify but must remain up per local policy; connection no longer exists", pri_co(revivals->serialno));
 		} else {
 			log_connection(RC_LOG, null_fd, c,
@@ -1457,7 +1457,7 @@ void delete_states_dead_interfaces(struct logger *logger)
 				id_vname = c->xfrmi->name;
 			else
 				id_vname = this->st_interface->ip_dev->id_rname;
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "deleting lasting state #%lu on interface (%s) which is shutting down",
 				    this->st_serialno, id_vname);
 			/* XXX: better? */

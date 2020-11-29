@@ -345,7 +345,7 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 	/* not whack FD yet is expected to be reset! */
 	struct msg_digest *md = clone_raw_md(orig, HERE);
 
-	LOG_JAMBUF(RC_LOG, md->md_logger, buf) {
+	LLOG_JAMBUF(RC_LOG, md->md_logger, buf) {
 		jam_string(buf, "IMPAIR: start processing ");
 		va_list ap;
 		va_start(ap, fmt);
@@ -359,7 +359,7 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 
 	process_md(&md);
 
-	LOG_JAMBUF(RC_LOG, md->md_logger, buf) {
+	LLOG_JAMBUF(RC_LOG, md->md_logger, buf) {
 		jam(buf, "IMPAIR: stop processing ");
 		va_list ap;
 		va_start(ap, fmt);
@@ -576,7 +576,7 @@ char *cisco_stringify(pb_stream *input_pbs, const char *attr_name,
 			break;
 		}
 	}
-	log_message(RC_INFORMATIONAL, logger,
+	llog(RC_INFORMATIONAL, logger,
 		    "Received %s%s%s: %s%s",
 		    ignore ? "and ignored " : "",
 		    jambuf_ok(&buf) ? "" : "overlong ",

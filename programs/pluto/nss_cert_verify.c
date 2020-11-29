@@ -129,11 +129,11 @@ static void log_bad_cert(struct logger *logger, const char *prefix,
 
 		last_sn = node->cert->subjectName;
 		last_error = node->error;
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "certificate %s failed %s verification",
 			    node->cert->subjectName, usage);
 		/* ??? we ignore node->depth and node->arg */
-		log_message(RC_LOG_SERIOUS, logger, "NSS %s: %s", prefix,
+		llog(RC_LOG_SERIOUS, logger, "NSS %s: %s", prefix,
 			    nss_err_str(node->error));
 		/*
 		 * XXX: this redundant log message is to keep tests happy -
@@ -144,7 +144,7 @@ static void log_bad_cert(struct logger *logger, const char *prefix,
 		 * above with "NSS ERROR: ".
 		 */
 		if (node->error == SEC_ERROR_REVOKED_CERTIFICATE) {
-			log_message(RC_LOG_SERIOUS, logger, "certificate revoked!");
+			llog(RC_LOG_SERIOUS, logger, "certificate revoked!");
 		}
 	}
 }
@@ -409,7 +409,7 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 		passert(pk != NULL);
 		if (pk->keyType == rsaKey &&
 			((pk->u.rsa.modulus.len * BITS_PER_BYTE) < FIPS_MIN_RSA_KEY_SIZE)) {
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "FIPS: Rejecting peer cert with key size %d under %d",
 				    pk->u.rsa.modulus.len * BITS_PER_BYTE,
 				    FIPS_MIN_RSA_KEY_SIZE);
@@ -460,7 +460,7 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 			bad_case(ike_version);
 		}
 		if (cert_name == NULL) {
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "ignoring certificate with unknown type %d",
 				    cert_type);
 			continue;
@@ -485,12 +485,12 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 			SEC_PKCS7ContentInfo *contents = SEC_PKCS7DecodeItem(&payload, NULL, NULL, NULL, NULL,
 									     NULL, NULL, NULL);
 			if (contents == NULL) {
-				log_message(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG_SERIOUS, logger,
 					    "Wrapped PKCS7 certificate payload could not be decoded");
 				continue;
 			}
 			if (!SEC_PKCS7ContainsCertsOrCrls(contents)) {
-				log_message(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG_SERIOUS, logger,
 					    "Wrapped PKCS7 certificate payload did not contain any certificates");
 				SEC_PKCS7DestroyContentInfo(contents);
 				continue;
@@ -503,7 +503,7 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 			break;
 		}
 		default:
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "ignoring %s certificate payload", cert_name);
 			break;
 		}
@@ -541,7 +541,7 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 	}
 
 	if (root_certs_empty(root_certs)) {
-		log_message(RC_LOG, logger, "no Certificate Authority in NSS Certificate DB! certificate payloads discarded");
+		llog(RC_LOG, logger, "no Certificate Authority in NSS Certificate DB! certificate payloads discarded");
 		return result;
 	}
 
@@ -575,7 +575,7 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 
 	CERTCertificate *end_cert = make_end_cert_first(&result.cert_chain);
 	if (end_cert == NULL) {
-		log_message(RC_LOG, logger, "X509: no EE-cert in chain!");
+		llog(RC_LOG, logger, "X509: no EE-cert in chain!");
 		release_certs(&result.cert_chain);
 		return result;
 	}
@@ -592,7 +592,7 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 	logtime_stop(&crl_time, "%s() calling crl_update_check()", __func__);
 	if (crl_update_needed) {
 		if (rev_opts->crl_strict) {
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "missing or expired CRL in strict mode, failing pending update and forcing CRL update");
 			release_certs(&result.cert_chain);
 			result.crl_update_needed = true;
@@ -610,7 +610,7 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 		 * XXX: preserve verify_end_cert()'s behaviour? only
 		 * send this to the file
 		 */
-		log_message(RC_LOG|LOG_STREAM, logger, "NSS: end certificate invalid");
+		llog(RC_LOG|LOG_STREAM, logger, "NSS: end certificate invalid");
 		release_certs(&result.cert_chain);
 		result.harmless = false;
 		return result;
@@ -634,7 +634,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 					      &subAltName);
 	if (rv != SECSuccess) {
 		id_buf name;
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "certificate contains no subjectAltName extension to match %s '%s'",
 			    enum_name(&ike_idtype_names, id->kind),
 			    str_id(id, &name));
@@ -650,7 +650,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 	CERTGeneralName *nameList = CERT_DecodeAltNameExtension(arena, &subAltName);
 	if (nameList == NULL) {
 		id_buf name;
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "certificate subjectAltName extension failed to decode while looking for %s '%s'",
 			    enum_name(&ike_idtype_names, id->kind),
 			    str_id(id, &name));
@@ -780,7 +780,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 		current = CERT_GetNextGeneralName(current);
 	} while (current != nameList);
 
-	LOG_JAMBUF(RC_LOG_SERIOUS, logger, buf) {
+	LLOG_JAMBUF(RC_LOG_SERIOUS, logger, buf) {
 		jam(buf, "certificate subjectAltName extension does not match ");
 		jam_enum(buf, &ike_idtype_names, id->kind);
 		jam(buf, " '");

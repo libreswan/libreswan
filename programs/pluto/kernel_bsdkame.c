@@ -106,7 +106,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces,
 				if (after) {
 					ipstr_buf b;
 
-					log_message(RC_LOG_SERIOUS, logger,
+					llog(RC_LOG_SERIOUS, logger,
 					            "IP interfaces %s and %s share address %s!",
 					       ifp->name, vfp->name,
 					       ipstr(&ifp->addr, &b));
@@ -420,7 +420,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 
 	if (ret < 0) {
 		endpoint_buf s, d;
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "ret = %d from send_spdadd: %s addr=%s/%s seq=%u opname=eroute", ret,
 			    ipsec_strerror(),
 			    str_endpoint(&this_client->addr, &s),
@@ -623,7 +623,7 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 
 		if (ret < 0) {
 			endpoint_buf s, d;
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
                                     "ret = %d from send_spdadd: %s addr=%s/%s seq=%u opname=%s",
                                     ret, ipsec_strerror(),
 				    str_endpoint(&mine->addr, &s),
@@ -685,7 +685,7 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 
 		if (ret < 0) {
 			endpoint_buf s, d;
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
                                     "ret = %d from send_spdadd: %s addr=%s/%s seq=%u opname=%s",
                                     ret, ipsec_strerror(),
 				    str_endpoint(&mine->addr, &s),
@@ -821,7 +821,7 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace,
 		satype = SADB_X_SATYPE_IPCOMP;
 		break;
 	case ET_IPIP:
-		log_message(RC_LOG, logger, "in %s() ignoring nonsensical ET_IPIP", __func__);
+		llog(RC_LOG, logger, "in %s() ignoring nonsensical ET_IPIP", __func__);
 		return true;
 
 	default:
@@ -831,7 +831,7 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace,
 	}
 
 	if ((sa->enckeylen + sa->authkeylen) > sizeof(keymat)) {
-		log_message(RC_LOG, logger, 
+		llog(RC_LOG, logger, 
 			    "Key material is too big for kernel interface: %d>%zu",
                             (sa->enckeylen + sa->authkeylen),
 			    sizeof(keymat));
@@ -896,7 +896,7 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace,
 	bsdkame_consume_pfkey(pfkeyfd, pfkey_seq);
 
 	if (ret < 0) {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
                             "ret = %d from add_sa: %s seq=%d", ret,
 			    ipsec_strerror(), pfkey_seq);
 		return FALSE;
@@ -947,7 +947,7 @@ static bool bsdkame_except_socket(int socketfd, int family, struct logger *logge
 		break;
 #endif
 	default:
-		log_message(RC_LOG, logger, "unsupported address family (%d)", family);
+		llog(RC_LOG, logger, "unsupported address family (%d)", family);
 		return FALSE;
 	}
 

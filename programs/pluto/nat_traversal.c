@@ -88,7 +88,7 @@ void init_nat_traversal(deltatime_t keep_alive_period, struct logger *logger)
 
 	dbg("init_nat_traversal() initialized with keep_alive=%jds",
 	    deltasecs(keep_alive_period));
-	log_message(RC_LOG, logger, "NAT-Traversal support %s",
+	llog(RC_LOG, logger, "NAT-Traversal support %s",
 		    nat_traversal_enabled ? " [enabled]" : " [disabled]");
 
 	init_oneshot_timer(EVENT_NAT_T_KEEPALIVE, nat_traversal_ka_event);
@@ -485,14 +485,14 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 		return;
 
 	if (!LHAS(hv->st_nat_traversal, NATED_PEER)) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "NAT-Traversal: received %d NAT-OA. Ignored because peer is not NATed",
 			    i);
 		return;
 	}
 
 	if (i > 1) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "NAT-Traversal: received %d NAT-OA. Using first; ignoring others",
 			    i);
 	}
@@ -516,7 +516,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 		ipv = &ipv6_info;
 		break;
 	default:
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "NAT-Traversal: invalid ID Type (%d) in NAT-OA - ignored",
 			    p->payload.nat_oa.isanoa_idtype);
 		return;
@@ -532,7 +532,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 	dbg("received NAT-OA: %s", ipstr(&ip, &b));
 
 	if (address_eq_any(&ip)) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "NAT-Traversal: received 0.0.0.0 NAT-OA...");
 	} else {
 		hv->st_nat_oa = ip;

@@ -563,17 +563,17 @@ void call_state_event_inline(struct logger *logger, struct state *st,
 	/* sanity checks */
 	struct pluto_event **evp = state_event(st, event);
 	if (evp == NULL) {
-		log_message(RC_COMMENT, logger, "%s is not a valid event",
+		llog(RC_COMMENT, logger, "%s is not a valid event",
 			    enum_name(&timer_event_names, event));
 		return;
 	}
 	if (*evp == NULL) {
-		log_message(RC_COMMENT, logger, "no handler for %s",
+		llog(RC_COMMENT, logger, "no handler for %s",
 			    enum_name(&timer_event_names, event));
 		return;
 	}
 	if ((*evp)->ev_type != event) {
-		log_message(RC_COMMENT, logger, "handler for %s is actually %s",
+		llog(RC_COMMENT, logger, "handler for %s is actually %s",
 			    enum_name(&timer_event_names, event),
 			    enum_name(&timer_event_names, (*evp)->ev_type));
 		return;
@@ -582,7 +582,7 @@ void call_state_event_inline(struct logger *logger, struct state *st,
 	 * XXX: can this kill off the old event when it is still
 	 * pending?
 	 */
-	log_message(RC_COMMENT, logger, "calling %s",
+	llog(RC_COMMENT, logger, "calling %s",
 		    enum_name(&timer_event_names, event));
 	timer_event_cb(0/*sock*/, 0/*event*/, *evp);
 }

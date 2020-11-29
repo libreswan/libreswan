@@ -228,7 +228,7 @@ bool test_ctr_vectors(const struct encrypt_desc *desc,
 	bool ok = TRUE;
 	const struct ctr_test_vector *test;
 	for (test = tests; test->description != NULL; test++) {
-		log_message(RC_LOG, logger, "  %s", test->description);
+		llog(RC_LOG, logger, "  %s", test->description);
 		if (!test_ctr_vector(desc, test, logger)) {
 			ok = FALSE;
 		}

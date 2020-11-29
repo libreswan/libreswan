@@ -214,7 +214,7 @@ bool test_prf_vectors(const struct prf_desc *desc,
 	bool ok = TRUE;
 	for (const struct prf_test_vector *test = tests;
 	     test->description != NULL; test++) {
-		log_message(RC_LOG, logger, "  %s", test->description);
+		llog(RC_LOG, logger, "  %s", test->description);
 		if (!test_prf_vector(desc, test, logger)) {
 			ok = FALSE;
 		}

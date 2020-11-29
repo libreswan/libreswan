@@ -2831,7 +2831,7 @@ void log_pbs_out(lset_t rc_flags, struct pbs_out *outs, const char *message, ...
 	if (pexpect(outs != NULL) && pexpect(outs->out_logger != NULL)) {
 		va_list ap;
 		va_start(ap, message);
-		log_va_list(rc_flags, outs->out_logger, message, ap);
+		llog_va_list(rc_flags, outs->out_logger, message, ap);
 		va_end(ap);
 	}
 }

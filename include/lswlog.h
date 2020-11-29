@@ -188,7 +188,7 @@ enum stream {
  * If any *_STREAM flag is specified then only send the message to
  * that stream.
  *
- * log_message() is a catch-all for code that may or may not have ST.
+ * llog() is a catch-all for code that may or may not have ST.
  * For instance a responder decoding a message may not yet have
  * created the state.  It will will use ST, MD, or nothing as the
  * prefix, and logs to ST's whackfd when possible.
@@ -224,16 +224,16 @@ struct logger {
 	int timing_level;
 };
 
-void log_message(lset_t rc_flags,
+void llog(lset_t rc_flags,
 		 const struct logger *log,
 		 const char *format, ...) PRINTF_LIKE(3);
 
-void log_va_list(lset_t rc_flags, const struct logger *logger,
+void llog_va_list(lset_t rc_flags, const struct logger *logger,
 		 const char *message, va_list ap);
 
 void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc_flags);
 
-#define LOG_JAMBUF(RC_FLAGS, LOGGER, BUF)				\
+#define LLOG_JAMBUF(RC_FLAGS, LOGGER, BUF)				\
 	JAMBUF(BUF)							\
 		for (jam_logger_prefix_rc(BUF, LOGGER, RC_FLAGS);	\
 		     BUF != NULL;					\
@@ -429,7 +429,7 @@ void libreswan_bad_case(const char *expression, long value, where_t where) NEVER
 		if (impair.BEHAVIOUR) {					\
 			bool assertion_ = ASSERTION;			\
 			if (!assertion_) {				\
-				log_message(RC_LOG, LOGGER,		\
+				llog(RC_LOG, LOGGER,		\
 					    "IMPAIR: assertion '%s' failed", \
 					    #ASSERTION);		\
 			}						\

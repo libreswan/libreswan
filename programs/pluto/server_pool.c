@@ -193,7 +193,7 @@ static void *helper_thread(void *arg)
 #ifdef HAVE_SECCOMP
 	init_seccomp_cryptohelper(w->helper_id, logger);
 #else
-	log_message(RC_LOG, logger, "seccomp security for helper not supported");
+	llog(RC_LOG, logger, "seccomp security for helper not supported");
 #endif
 
 	/* OS X does not have pthread_setschedprio */
@@ -459,7 +459,7 @@ static void init_helper_thread_delay(struct logger *logger)
 
 	error = ttoulb(envdelay, 0, 0, secs_per_hour, &delay);
 	if (error != NULL)
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "$PLUTO_CRYPTO_HELPER_DELAY malformed: %s",
 			    error);
 	else
@@ -496,7 +496,7 @@ void start_server_helpers(int nhelpers, struct logger *logger)
 		len = sizeof(numcpu);
 		ncpu_online = sysctl(mib, 2, &numcpu, &len, NULL, 0);
 #endif
-		log_message(RC_LOG, logger, "%d CPU cores online", ncpu_online);
+		llog(RC_LOG, logger, "%d CPU cores online", ncpu_online);
 		if (ncpu_online < 4)
 			nhelpers = ncpu_online;
 		else
@@ -504,7 +504,7 @@ void start_server_helpers(int nhelpers, struct logger *logger)
 	}
 
 	if (nhelpers > 0) {
-		log_message(RC_LOG, logger, "starting up %d helper threads", nhelpers);
+		llog(RC_LOG, logger, "starting up %d helper threads", nhelpers);
 
 		/*
 		 * create the threads.  Set nr_helpers_started after
@@ -519,16 +519,16 @@ void start_server_helpers(int nhelpers, struct logger *logger)
 			int thread_status = pthread_create(&w->pid, NULL,
 							   helper_thread, (void *)w);
 			if (thread_status != 0) {
-				log_message(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG_SERIOUS, logger,
 					    "failed to start child thread for helper %d, error = %d",
 					    n, thread_status);
 			} else {
-				log_message(RC_LOG, logger, "started thread for helper %d", n);
+				llog(RC_LOG, logger, "started thread for helper %d", n);
 			}
 		}
 		nr_helper_threads = nhelpers;
 	} else {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "no helpers will be started; all cryptographic operations will be done inline");
 	}
 }

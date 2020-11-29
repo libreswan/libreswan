@@ -136,7 +136,7 @@ static bool accept_v2_nonce(struct logger *logger, struct msg_digest *md,
 	 */
 
 	if (nonce.len < IKEv2_MINIMUM_NONCE_SIZE || nonce.len > IKEv2_MAXIMUM_NONCE_SIZE) {
-		log_message(RC_LOG_SERIOUS, logger, "%s length %zu not between %d and %d",
+		llog(RC_LOG_SERIOUS, logger, "%s length %zu not between %d and %d",
 			    name, nonce.len, IKEv2_MINIMUM_NONCE_SIZE, IKEv2_MAXIMUM_NONCE_SIZE);
 		return false;
 	}
@@ -267,7 +267,7 @@ static bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 	}
 
 	struct esb_buf ke_esb;
-	log_message(RC_LOG, st->st_logger,
+	llog(RC_LOG, st->st_logger,
 		    "initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
 		    enum_show_shortb(&oakley_group_names, ke_group, &ke_esb),
 		    accepted_dh->common.fqn);
@@ -660,7 +660,7 @@ bool emit_v2KE(chunk_t *g, const struct dh_desc *group,
 
 	if (impair.ke_payload >= IMPAIR_EMIT_ROOF) {
 		uint8_t byte = impair.ke_payload - IMPAIR_EMIT_ROOF;
-		log_message(RC_LOG, outs->out_logger,
+		llog(RC_LOG, outs->out_logger,
 			    "IMPAIR: sending bogus KE (g^x) == %u value to break DH calculations", byte);
 		/* Only used to test sending/receiving bogus g^x */
 		diag_t d = pbs_out_repeated_byte(&kepbs, byte, g->len, "ikev2 impair KE (g^x) == 0");
@@ -669,7 +669,7 @@ bool emit_v2KE(chunk_t *g, const struct dh_desc *group,
 			return false;
 		}
 	} else if (impair.ke_payload == IMPAIR_EMIT_EMPTY) {
-		log_message(RC_LOG, outs->out_logger, "IMPAIR: sending an empty KE value");
+		llog(RC_LOG, outs->out_logger, "IMPAIR: sending an empty KE value");
 		diag_t d = pbs_out_zero(&kepbs, 0, "ikev2 impair KE (g^x) == empty");
 		if (d != NULL) {
 			log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
@@ -2798,7 +2798,7 @@ stf_status ikev2_ike_sa_process_auth_request(struct ike_sa *ike,
 	 *
 	 * XXX: move this into ikev2.c?
 	 */
-	LOG_JAMBUF(RC_LOG, ike->sa.st_logger, buf) {
+	LLOG_JAMBUF(RC_LOG, ike->sa.st_logger, buf) {
 		jam(buf, "processing decrypted ");
 		lswlog_msg_digest(buf, md);
 	}
@@ -3519,7 +3519,7 @@ stf_status ikev2_process_child_sa_pl(struct ike_sa *ike, struct child_sa *child,
 				       child_proposals, child->sa.st_logger);
 
 	if (ret != STF_OK) {
-		LOG_JAMBUF(RC_LOG_SERIOUS, child->sa.st_logger, buf) {
+		LLOG_JAMBUF(RC_LOG_SERIOUS, child->sa.st_logger, buf) {
 			jam_string(buf, what);
 			jam(buf, " failed, responder SA processing returned ");
 			jam_v2_stf_status(buf, ret);

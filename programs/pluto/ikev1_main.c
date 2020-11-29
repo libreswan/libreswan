@@ -300,7 +300,7 @@ struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 		get_connection_private_key(c, &pubkey_type_rsa,
 					   logger);
 	if (pks == NULL) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "unable to locate my private key for RSA Signature");
 		return (struct hash_signature) { .len = 0, }; /* failure: no key to use */
 	}
@@ -1833,7 +1833,7 @@ static void send_notification(struct logger *logger,
 		sndst->hidden_variables.st_malformed_sent++;
 		if (sndst->hidden_variables.st_malformed_sent >
 		    MAXIMUM_MALFORMED_NOTIFY) {
-			log_message(RC_LOG, logger, "too many (%d) malformed payloads. Deleting state",
+			llog(RC_LOG, logger, "too many (%d) malformed payloads. Deleting state",
 				    sndst->hidden_variables.st_malformed_sent);
 			delete_state(sndst);
 			/* note: no md->st to clear */
@@ -1841,7 +1841,7 @@ static void send_notification(struct logger *logger,
 		}
 
 		if (sndst->st_v1_iv.len != 0) {
-			LOG_JAMBUF(RC_LOG, logger, buf) {
+			LLOG_JAMBUF(RC_LOG, logger, buf) {
 				jam(buf, "payload malformed.  IV: ");
 				jam_dump_bytes(buf, sndst->st_v1_iv.ptr,
 					       sndst->st_v1_iv.len);
@@ -1877,7 +1877,7 @@ static void send_notification(struct logger *logger,
 		 * SNDST as that may be fake.
 		 */
 		endpoint_buf b;
-		log_message(RC_NOTIFICATION + type, logger,
+		llog(RC_NOTIFICATION + type, logger,
 			    "sending %snotification %s to %s",
 			    encst ? "encrypted " : "",
 			    enum_name(&ikev1_notify_names, type),
@@ -1927,7 +1927,7 @@ static void send_notification(struct logger *logger,
 
 		if (!out_struct(&isan, &isakmp_notification_desc,
 					&r_hdr_pbs, &not_pbs)) {
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "failed to build notification in send_notification");
 			return;
 		}

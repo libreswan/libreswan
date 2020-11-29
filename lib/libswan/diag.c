@@ -74,7 +74,7 @@ size_t jam_diag(struct jambuf *buf, diag_t diag)
 void log_diag(lset_t rc_flags, struct logger *logger, diag_t *diag,
 	      const char *fmt, ...)
 {
-	LOG_JAMBUF(rc_flags, logger, buf) {
+	LLOG_JAMBUF(rc_flags, logger, buf) {
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);

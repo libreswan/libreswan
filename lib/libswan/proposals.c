@@ -388,11 +388,11 @@ void remove_duplicate_algorithms(struct proposal_parser *parser,
 			     alg->enckeylen == (*dup)->enckeylen)) {
 				struct algorithm *dead = (*dup);
 				if (impair.proposal_parser) {
-					log_message(parser->policy->logger_rc_flags, parser->policy->logger,
+					llog(parser->policy->logger_rc_flags, parser->policy->logger,
 						    "IMPAIR: ignoring duplicate algorithms");
 					return;
 				}
-				LOG_JAMBUF(parser->policy->logger_rc_flags, parser->policy->logger, buf) {
+				LLOG_JAMBUF(parser->policy->logger_rc_flags, parser->policy->logger, buf) {
 					jam(buf, "discarding duplicate %s %s algorithm %s",
 					    parser->protocol->name, ike_alg_type_name(dead->desc->algo_type),
 					    dead->desc->fqn);
@@ -534,11 +534,11 @@ static bool proposals_pfs_vs_dh_check(struct proposal_parser *parser,
 				dh = proposal->algorithms[PROPOSAL_dh]->desc;
 			}
 			if (dh == &ike_alg_dh_none.common) {
-				log_message(parser->policy->logger_rc_flags, parser->policy->logger,
+				llog(parser->policy->logger_rc_flags, parser->policy->logger,
 					    "ignoring redundant %s DH algorithm NONE as PFS policy is disabled",
 					    parser->protocol->name);
 			} else if (dh != NULL) {
-				log_message(parser->policy->logger_rc_flags, parser->policy->logger,
+				llog(parser->policy->logger_rc_flags, parser->policy->logger,
 					    "ignoring %s DH algorithm %s as PFS policy is disabled",
 					    parser->protocol->name, dh->fqn);
 			}

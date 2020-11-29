@@ -65,7 +65,7 @@ diag_t init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 			if (rv != SECSuccess) {
 				int err = PORT_GetError();
 				if (err == SEC_ERROR_OCSP_RESPONDER_CERT_INVALID) {
-					log_message(RC_LOG_SERIOUS, logger,
+					llog(RC_LOG_SERIOUS, logger,
 						    "responder certificate %s is invalid. please verify its keyUsage extensions for OCSP",
 						    trust_cert_name);
 				} else {
@@ -76,7 +76,7 @@ diag_t init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 		} else {
 			int err = PORT_GetError();
 			if (err == SEC_ERROR_UNKNOWN_CERT) {
-				log_message(RC_LOG, logger,
+				llog(RC_LOG, logger,
 					    "OCSP responder cert \"%s\" not found in NSS",
 					    trust_cert_name);
 			} else {

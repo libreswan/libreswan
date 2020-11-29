@@ -219,7 +219,7 @@ static bool nat_traversal_espinudp(int sk, struct iface_dev *ifd,
 		dbg("NAT-Traversal: ESPINUDP(%d) setup failed for sockopt style NAT-T family %s (errno=%d)",
 		    sol_value, fam, errno);
 		/* all methods failed to detect NAT-T support */
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "NAT-Traversal: ESPINUDP for this kernel not supported or not found for family %s; NAT-traversal is turned OFF", fam);
 		nat_traversal_enabled = false;
 		return false;
@@ -286,7 +286,7 @@ static enum iface_status udp_read_packet(const struct iface_port *ifp,
 	if (from_ugh != NULL) {
 		if (packet->len >= 0) {
 			/* technically it worked, but returned value was useless */
-			log_message(RC_LOG, packet->logger,
+			llog(RC_LOG, packet->logger,
 				    "recvfrom on %s returned malformed source sockaddr: %s",
 				    ifp->ip_dev->id_rname, from_ugh);
 		} else if (from.len == sizeof(from) &&
@@ -298,12 +298,12 @@ static enum iface_status udp_read_packet(const struct iface_port *ifp,
 			 * some datagram we sent, but we cannot tell
 			 * which one.
 			 */
-			log_message(RC_LOG, packet->logger,
+			llog(RC_LOG, packet->logger,
 				    "recvfrom on %s failed; some IKE message we sent has been rejected with ECONNREFUSED (kernel supplied no details)",
 				    ifp->ip_dev->id_rname);
 		} else {
 			/* if from==0, this prints "unspecified", not "undisclosed", oops */
-			log_message(RC_LOG, packet->logger,
+			llog(RC_LOG, packet->logger,
 				    "recvfrom on %s failed; Pluto cannot decode source sockaddr in rejection: %s "PRI_ERRNO,
 				    ifp->ip_dev->id_rname, from_ugh,
 				    pri_errno(packet_errno));
@@ -318,7 +318,7 @@ static enum iface_status udp_read_packet(const struct iface_port *ifp,
 
 	struct logger logger[1] = { FROM_LOGGER(&packet->sender), }; /* event-handler */
 	if (packet->len < 0) {
-		log_message(RC_LOG, logger, "recvfrom on %s failed "PRI_ERRNO,
+		llog(RC_LOG, logger, "recvfrom on %s failed "PRI_ERRNO,
 			    ifp->ip_dev->id_rname, pri_errno(packet_errno));
 		return IFACE_IGNORE;
 	}
@@ -327,13 +327,13 @@ static enum iface_status udp_read_packet(const struct iface_port *ifp,
 		uint32_t non_esp;
 
 		if (packet->len < (int)sizeof(uint32_t)) {
-			log_message(RC_LOG, logger, "too small packet (%zd)",
+			llog(RC_LOG, logger, "too small packet (%zd)",
 				    packet->len);
 			return IFACE_IGNORE;
 		}
 		memcpy(&non_esp, packet->ptr, sizeof(uint32_t));
 		if (non_esp != 0) {
-			log_message(RC_LOG, logger, "has no Non-ESP marker");
+			llog(RC_LOG, logger, "has no Non-ESP marker");
 			return IFACE_IGNORE;
 		}
 		packet->ptr += sizeof(uint32_t);
@@ -351,7 +351,7 @@ static enum iface_status udp_read_packet(const struct iface_port *ifp,
 		    packet->len >= NON_ESP_MARKER_SIZE &&
 		    memeq(packet->ptr, non_ESP_marker,
 			   NON_ESP_MARKER_SIZE)) {
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "mangled with potential spurious non-esp marker");
 			return IFACE_IGNORE;
 		}
@@ -616,7 +616,7 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest,
 			if (errno == EAGAIN) {
 				/* 32 is picked from thin air */
 				if (again_count == 32) {
-					log_message(RC_LOG_SERIOUS, logger,
+					llog(RC_LOG_SERIOUS, logger,
 						    "recvmsg(,, MSG_ERRQUEUE): given up reading socket after 32 EAGAIN errors");
 					return false;
 				}
@@ -818,7 +818,7 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest,
 				}
 				if (log_to != NO_STREAM) {
 					endpoint_buf epb;
-					log_message(log_to, (sender != NULL ? sender->st_logger : logger),
+					llog(log_to, (sender != NULL ? sender->st_logger : logger),
 						    "ERROR: asynchronous network error report on %s (%s)%s, complainant %s: %s [errno %" PRIu32 ", origin %s]",
 						    ifp->ip_dev->id_rname,
 						    str_endpoint(&ifp->local_endpoint, &epb),
@@ -834,7 +834,7 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest,
 				/* .cmsg_len is a kernel_size_t(!), but the value
 				 * certainly ought to fit in an unsigned long.
 				 */
-				log_message(RC_LOG, logger,
+				llog(RC_LOG, logger,
 					    "unknown cmsg: level %d, type %d, len %zu",
 					    cm->cmsg_level, cm->cmsg_type,
 					    cm->cmsg_len);

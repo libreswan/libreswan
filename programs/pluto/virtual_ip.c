@@ -90,7 +90,7 @@ static bool read_subnet(const char *src, size_t len,
 	err_t ugh = ttosubnet(p, len - (p - src), af, 'x',
 			      incl ? dst : dstexcl, logger);
 	if (ugh != NULL) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "virtual-private entry is not a proper subnet: %s", ugh);
 		return FALSE;
 	}
@@ -178,7 +178,7 @@ void init_virtual_ip(const char *private_list,
 			str = *next != '\0' ? next + 1 : NULL;
 		}
 	} else {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "%d bad entries in virtual-private - none loaded", bad);
 		pfreeany(private_net_incl);
 		private_net_incl = NULL;
@@ -221,7 +221,7 @@ struct virtual_ip *create_virtual(const char *string, struct logger *logger)
 	} else if (eat(str, "vnet:")) {
 		/* represented in flags by the absence of F_VIRTUAL_HOST */
 	} else {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "virtual string \"%s\" is missing \"vhost:\" or \"vnet:\" - virtual selection is disabled for connection",
 			    string);
 		return NULL;
@@ -260,7 +260,7 @@ struct virtual_ip *create_virtual(const char *string, struct logger *logger)
 			str = NULL;
 		}
 		if (str != next) {
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "invalid virtual string \"%s\" - virtual selection is disabled for connection",
 				    string);
 			return NULL;

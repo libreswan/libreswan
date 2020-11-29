@@ -879,7 +879,7 @@ static bool add_xauth_addresspool(struct connection *c,
 		er = ttorange(addresspool, &ipv4_info, &pool_range);
 	}
 	if (er != NULL) {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "XAUTH IP address %s is not valid %s user=%s",
 			    addresspool, er, userid);
 	} else {

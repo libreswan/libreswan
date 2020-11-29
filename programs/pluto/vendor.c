@@ -803,7 +803,7 @@ static void handle_known_vendorid_v1(struct msg_digest *md,
 		break;
 
 	case VID_SSH_SENTINEL_1_4_1:
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "SSH Sentinel 1.4.1 found, setting XAUTH_ACK quirk");
 		md->quirks.xauth_ack_msgid = TRUE;
 		break;
@@ -904,7 +904,7 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 		log_vid[2 * i + 1] = hexdig[vid[i] & 0xF];
 	}
 	log_vid[2 * i] = '\0';
-	log_message(RC_LOG_SERIOUS, logger,
+	llog(RC_LOG_SERIOUS, logger,
 		    "ignoring unknown Vendor ID payload [%s%s]",
 		    log_vid, (len > MAX_LOG_VID_LEN) ? "..." : "");
 }
