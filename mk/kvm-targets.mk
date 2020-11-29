@@ -1121,7 +1121,7 @@ endif
 .PHONY: kvm-install
 kvm-install: $(foreach domain, $(KVM_BUILD_DOMAIN_CLONES), uninstall-kvm-domain-$(domain))
 	$(MAKE) kvm-$(KVM_BUILD_DOMAIN)-install
-	$(MAKE) $(foreach domain, $(KVM_BUILD_DOMAIN_CLONES) $(KVM_BASIC_DOMAINS), install-kvm-domain-$(domain))
+	$(MAKE) $(foreach domain, $(KVM_BUILD_DOMAIN_CLONES) $(KVM_BASIC_DOMAINS) $(KVM_OPENBSD_DOMAIN_CLONES), install-kvm-domain-$(domain))
 	$(MAKE) kvm-keys
 
 $(KVM_POOLDIR)/$(KVM_BSD_ISO):| $(KVM_POOLDIR)
@@ -1146,6 +1146,7 @@ $(KVM_POOLDIR)/$(KVM_BSD_BASE_NAME).qcow2: $(KVM_TESTINGDIR)/utils/openbsdinstal
 		--vcpus=1,maxvcpus=1 --cpu host --os-variant=$(VIRT_BSD_VARIANT) \
 		--cdrom=$(KVM_POOLDIR)/install67.iso \
 		--disk path=$(KVM_POOLDIR)/$(KVM_BSD_BASE_NAME).qcow2,size=4,bus=virtio,format=qcow2 \
+		--network=network:$(KVM_GATEWAY),model=virtio \
 		--graphics none --serial pty --check path_in_use=off"
 
 .PHONY: kvm-bisect
