@@ -225,8 +225,8 @@ struct logger {
 };
 
 void llog(lset_t rc_flags,
-		 const struct logger *log,
-		 const char *format, ...) PRINTF_LIKE(3);
+	  const struct logger *log,
+	  const char *format, ...) PRINTF_LIKE(3);
 
 void llog_va_list(lset_t rc_flags, const struct logger *logger,
 		 const char *message, va_list ap);
@@ -327,6 +327,14 @@ extern lset_t cur_debugging;	/* current debugging level */
 #define DBG(cond, action)	{ if (DBGP(cond)) { action; } }
 #define DBGF(COND, MESSAGE, ...) { if (DBGP(COND)) { DBG_log(MESSAGE,##__VA_ARGS__); } }
 #define dbg(MESSAGE, ...) { if (DBGP(DBG_BASE)) { DBG_log(MESSAGE,##__VA_ARGS__); } }
+
+#define dbgl(LOGGER, FMT, ...)					\
+	{							\
+		if (DBGP(DBG_BASE)) {				\
+			llog(DEBUG_STREAM, (LOGGER),		\
+			     FMT, ##__VA_ARGS__);		\
+		}						\
+	}
 
 /* DBG_*() are unconditional */
 void DBG_log(const char *message, ...) PRINTF_LIKE(1);

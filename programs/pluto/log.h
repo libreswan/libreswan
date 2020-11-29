@@ -152,7 +152,6 @@ void free_logger(struct logger **logp, where_t where);
  * Since MD code is only ever executed when on the socket handler,
  * isn't WHACK_FD always NULL and hence RC_FLAGS uses.  Almost:
  *
- * - dbg_md() uses it to signal that it is a debug log
  * - any event injection will likely want to attach a whack fd
  *
  * and it is just easier.
@@ -160,14 +159,6 @@ void free_logger(struct logger **logp, where_t where);
 
 void log_md(lset_t rc_flags, const struct msg_digest *md,
 	    const char *msg, ...) PRINTF_LIKE(3);
-
-#define dbg_md(MD, MESSAGE, ...)					\
-	{								\
-		if (DBGP(DBG_BASE)) {					\
-			log_md(DEBUG_STREAM, MD,			\
-			       MESSAGE,##__VA_ARGS__);			\
-		}							\
-	}
 
 /*
  * Log with a connection context.
@@ -183,28 +174,8 @@ void log_md(lset_t rc_flags, const struct msg_digest *md,
 void log_connection(lset_t rc_flags, struct fd *whackfd, const struct connection *c,
 		    const char *msg, ...) PRINTF_LIKE(4);
 
-#if 0
-#define dbg_connection(C, FORMAT, ...)					\
-	{								\
-		if (DBGP(DBG_BASE)) {					\
-			log_connection(DEBUG_STREAM, null_fd, C,	\
-				       FORMAT, ##__VA_ARGS__);		\
-		}							\
-	}
-#endif
-
 void log_pending(lset_t rc_flags, const struct pending *p,
 		 const char *msg, ...) PRINTF_LIKE(3);
-
-#if 0
-#define dbg_pending(PENDING, FORMAT, ...)				\
-	{								\
-		if (DBGP(DBG_BASE)) {					\
-			log_pending(DEBUG_STREAM, PENDING,		\
-				    FORMAT, ##__VA_ARGS__);		\
-		}							\
-	}
-#endif
 
 /*
  * log the state; notice how it still needs to pick up the global
@@ -214,26 +185,12 @@ void log_pending(lset_t rc_flags, const struct pending *p,
 void log_state(lset_t rc_flags, const struct state *st,
 	       const char *msg, ...) PRINTF_LIKE(3);
 
-#if 0
-#define dbg_state(ST, FORMAT, ...)					\
-	{								\
-		if (DBGP(DBG_BASE)) {					\
-			log_state(DEBUG_STREAM, ST,			\
-				  FORMAT, ##__VA_ARGS__);		\
-		}							\
-	}
-#endif
-
 /*
  * Wrappers.
  *
  * XXX: do these help or hinder - would calling log_state() directly
  * be better (if slightly more text)?  For the moment stick with the
  * wrappers so changing the underlying implementation is easier.
- *
- * XXX: what about dbg_state() et.al.?  Since these always add a
- * prefix the debate is open.  However, when cur_state is deleted
- * (sure ...), the debug-prefix macro will break.
  *
  * XXX: what about whack_log()?  That only sends messages to the
  * global whack (and never the objects whack).  Likely easier to stick
