@@ -1,0 +1,4 @@
+IKEv1 specifying an ike line with aes-sha2_384 and an esp line of esp=aes
+
+On some versions this combination esp+ike line caused the inbound and outbound
+IPsec SA keys (not IKE keys) to be identical ???
