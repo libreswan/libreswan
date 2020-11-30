@@ -1029,6 +1029,9 @@ kvmplutotest	ikev1-l2tp-02				good
 
 kvmplutotest	listen-change-01			good
 
+# this one might be triggered in 3.32 - 4.x but seems to depend on environment?
+kvmplutotest	ikev1-algo-sha2-variant-bug		good
+
 #################################################################
 # FIPS mode tests: Most require PLUTO built in FIPS mode
 #################################################################
