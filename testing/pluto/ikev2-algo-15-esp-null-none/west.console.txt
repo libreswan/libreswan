@@ -29,7 +29,7 @@ west #
  # should be rejected by the parser (requires allow-null-none)
 west #
  ! ipsec auto --add esp=null-none
-036 connection "esp=null-none": failed to add connection: non-AEAD ESP encryption algorithm NULL cannot have 'NONE' as the integrity algorithm
+036 "esp=null-none": failed to add connection: non-AEAD ESP encryption algorithm NULL cannot have 'NONE' as the integrity algorithm
 west #
  # get esp=null-none past the parser
 west #

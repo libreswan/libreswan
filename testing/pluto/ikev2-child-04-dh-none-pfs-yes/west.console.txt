@@ -40,7 +40,7 @@ west #
 002 "westnet-eastnet-ikev2-00": added IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2-01
-002 connection "westnet-eastnet-ikev2-01": ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
+002 "westnet-eastnet-ikev2-01": ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
 002 "westnet-eastnet-ikev2-01": added IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2-10

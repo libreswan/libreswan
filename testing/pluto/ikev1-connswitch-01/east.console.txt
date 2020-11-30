@@ -12,7 +12,7 @@ east #
 002 "westnet-eastnet": added IKEv1 connection
 east #
  ipsec auto --add distraction
-002 connection "distraction": bad left CA string 'Something bogus': unknown OID in ID_DER_ASN1_DN (ignored)
+002 "distraction": bad left CA string 'Something bogus': unknown OID in ID_DER_ASN1_DN (ignored)
 002 "distraction": added IKEv1 connection
 east #
  ipsec auto --status | grep westnet-eastnet
