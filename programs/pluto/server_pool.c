@@ -56,10 +56,20 @@ static resume_cb handle_helper_answer;
  * into multiple transactions and the state carried between them
  * cannot be on the stack or in simple global variables.
  *
- * A continuation is used to hold such state.
+ * A job is used to hold such state.
+ *
+ * XXX:
+ *
+ * Define job_id_t and helper_id_t as enums so that GCC 10 will detect
+ * and complain when code attempts to assign the wrong type.
+
+ * An enum's size is always an <<int>.  Presumably this is so that the
+ * size of the declaration <<enum foo;>> (i.e., with no other
+ * information) is always known - this means the upper bound is always
+ * UINT_MAX.  See note further down on overflow.
  */
 
-typedef enum { JOB_ID_MIN = 1, JOB_ID_MAX = ULONG_MAX, } job_id_t;
+typedef enum { JOB_ID_MIN = 1, JOB_ID_MAX = UINT_MAX, } job_id_t;
 typedef enum { HELPER_ID_MIN = 1, HELPER_ID_MAX = UINT_MAX, } helper_id_t;
 
 struct job {
@@ -78,7 +88,7 @@ struct job {
 };
 
 #define dbg_job(JOB, FMT, ...)						\
-	dbg("job %lu for #%lu: %s (%s): "FMT,				\
+	dbg("job %u for #%lu: %s (%s): "FMT,				\
 	    JOB->job_id, JOB->so_serialno,				\
 	    JOB->name,							\
 	    JOB->handler->name,						\
@@ -177,7 +187,7 @@ static void do_job(struct job *job, helper_id_t helper_id)
 
 	job->time_used =
 		logtime_stop(&start,
-			     "helper %u processing job %lu for state #%lu: %s (%s)",
+			     "helper %u processing job %u for state #%lu: %s (%s)",
 			     helper_id, job->job_id, job->so_serialno,
 			     job->name, job->handler->name);
 }
@@ -331,9 +341,15 @@ void submit_task(const struct logger *logger,
 	passert(job->so_serialno == SOS_NOBODY);
 	job->so_serialno = st->st_serialno;
 
-	/* set up the id */
+	/*
+	 * set up the id
+	 *
+	 * XXX: job_id is used as a short lifetime identifier so
+	 * rolling (after several years of up-time) isn't a concern.
+	 */
 	static job_id_t job_id = 0;	/* counter for generating unique request IDs */
 	job->job_id = ++job_id;
+
 	job->handler = handler;
 	job->task = task;
 
@@ -417,7 +433,7 @@ static stf_status handle_helper_answer(struct state *st,
 	} else if (st == NULL) {
 		/* oops, the state disappeared! */
 		pexpect_fail(job->logger, HERE,
-			     "state #%lu for job %lu disappeared!",
+			     "state #%lu for job %u disappeared!",
 			     job->so_serialno, job->job_id);
 		h->cleanup_cb(&job->task);
 		pexpect(job->task == NULL); /* did your job */
