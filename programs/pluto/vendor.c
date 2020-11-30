@@ -20,28 +20,18 @@
  *
  */
 
-#include <stdlib.h>
-#include <string.h>
+#include <stdlib.h>	/* for NULL et.al. */
 
-#include "sysdep.h"
-#include "constants.h"
-#include "defs.h"
-#include "log.h"
-#include "id.h"
-#include "x509.h"
-#include "certs.h"
-#include "connections.h"
-#include "packet.h"
-#include "demux.h"
-#include "server.h"
-#include "whack.h"
-#include "vendor.h"
-#include "quirks.h"
-#include "kernel.h"
+#include "libreswan.h"		/* for libreswan_vendorid */
 #include "crypt_hash.h"
 #include "ike_alg_hash.h"
 
-#include "nat_traversal.h"
+#include "defs.h"		/* for so_serial_t et.al. */
+#include "known_vendorid.h"
+#include "vendor.h"
+#include "log.h"
+#include "demux.h"
+#include "connections.h"
 
 /**
  * Listing of interesting but details unknown Vendor IDs:
@@ -582,8 +572,6 @@ static struct vid_struct vid_tab[] = {
 	{ VID_none, 0, NULL, NULL, NULL, 0 }
 };
 
-static const char hexdig[] = "0123456789abcdef";
-
 /*
  * Setup VendorID structs, and populate them
  * FIXME: This functions leaks a little bit, but these are one time leaks:
@@ -664,38 +652,31 @@ void init_vendorid(void)
 	}
 }
 
-static void vidlog(const char *vidstr, size_t len, struct vid_struct *vid, bool vid_useful)
+static void dbg_vid(struct logger *logger, const char *vidstr, size_t len, struct vid_struct *vid, bool vid_useful)
 {
-	char vid_dump[128];
-
-	if (vid->flags & VID_SUBSTRING_DUMPHEXA) {
-		/* Dump description + Hexa */
-		size_t i, j;
-
-		snprintf(vid_dump, sizeof(vid_dump), "%s ",
-			 vid->descr ? vid->descr : "");
-		for (i = strlen(vid_dump), j = vid->vid_len
-		     ; (j < len) && (i < sizeof(vid_dump) - 2)
-		     ; i += 2, j++) {
-			vid_dump[i] = hexdig[(vidstr[j] >> 4) & 0xF];
-			vid_dump[i + 1] = hexdig[vidstr[j] & 0xF];
+	if (DBGP(DBG_BASE)) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam(buf, "%s Vendor ID payload [",
+			    vid_useful ? "received" : "ignoring");
+			if (vid->flags & VID_SUBSTRING_DUMPHEXA) {
+				/* Dump description + Hexa */
+				if (vid->descr != NULL) {
+					jam(buf, "%s ", vid->descr);
+				}
+				jam_dump_bytes(buf, vidstr, len);
+			} else if (vid->flags & VID_SUBSTRING_DUMPASCII) {
+				/* Dump ASCII content */
+				/* no descr? */
+				jam_sanitized_bytes(buf, vidstr, len);
+			} else {
+				/* Dump description (descr) */
+				if (vid->descr != NULL) {
+					jam_string(buf, vid->descr);
+				}
+			}
+			jam(buf, "]");
 		}
-		vid_dump[i] = '\0';
-	} else if (vid->flags & VID_SUBSTRING_DUMPASCII) {
-		/* Dump ASCII content */
-		size_t i;
-
-		for (i = 0; i < len && i < sizeof(vid_dump) - 1; i++)
-			vid_dump[i] = isprint(vidstr[i]) ? vidstr[i] : '.';
-		vid_dump[i] = '\0';
-	} else {
-		/* Dump description (descr) */
-		snprintf(vid_dump, sizeof(vid_dump), "%s",
-			 vid->descr ? vid->descr : "");
 	}
-
-	dbg("%s Vendor ID payload [%s]",
-	    vid_useful ? "received" : "ignoring", vid_dump);
 }
 
 /*
@@ -703,7 +684,7 @@ static void vidlog(const char *vidstr, size_t len, struct vid_struct *vid, bool 
  * We don't know about any real IKEv2 vendor id strings yet
  */
 
-static void handle_known_vendorid_v2(struct msg_digest *md UNUSED,
+static void handle_known_vendorid_v2(struct msg_digest *md,
 				  const char *vidstr,
 				  size_t len,
 				  struct vid_struct *vid)
@@ -723,7 +704,7 @@ static void handle_known_vendorid_v2(struct msg_digest *md UNUSED,
 		break;
 	}
 
-	vidlog(vidstr, len, vid, vid_useful);
+	dbg_vid(md->md_logger, vidstr, len, vid, vid_useful);
 }
 
 /*
@@ -825,7 +806,7 @@ static void handle_known_vendorid_v1(struct msg_digest *md,
 		vid_useful = FALSE;
 		break;
 	}
-	vidlog(vidstr, len, vid, vid_useful);
+	dbg_vid(md->md_logger, vidstr, len, vid, vid_useful);
 }
 
 
@@ -896,17 +877,14 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 	/*
 	 * Unknown VendorID. Log the beginning.
 	 */
-	char log_vid[2 * MAX_LOG_VID_LEN + 1];
-	size_t i;
-
-	for (i = 0; i < len && i < MAX_LOG_VID_LEN; i++) {
-		log_vid[2 * i] = hexdig[(vid[i] >> 4) & 0xF];
-		log_vid[2 * i + 1] = hexdig[vid[i] & 0xF];
+	LLOG_JAMBUF(RC_LOG_SERIOUS, logger, buf) {
+		jam(buf, "ignoring unknown Vendor ID payload [");
+		jam_dump_bytes(buf, vid, PMIN(len, MAX_LOG_VID_LEN));
+		if (len > MAX_LOG_VID_LEN) {
+			jam(buf, "...");
+		}
+		jam(buf, "]");
 	}
-	log_vid[2 * i] = '\0';
-	llog(RC_LOG_SERIOUS, logger,
-		    "ignoring unknown Vendor ID payload [%s%s]",
-		    log_vid, (len > MAX_LOG_VID_LEN) ? "..." : "");
 }
 
 /**

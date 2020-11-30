@@ -28,6 +28,7 @@
 #include "packet.h"		/* for pb_stream */
 
 struct msg_digest;
+struct connection;
 
 void init_vendorid(void);
 
