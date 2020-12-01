@@ -63,7 +63,6 @@ west #
  TAIL=$(ip xfrm state |grep "enc "|tail -1)
 west #
  if [ "$HEAD" = "$TAIL" ]; then echo "ERROR: inbound and outbound key are the same!"; fi
-ERROR: inbound and outbound key are the same!
 west #
  ../bin/check-for-core.sh
 west #
