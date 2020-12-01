@@ -364,10 +364,14 @@ void load_groups(struct fd *whackfd)
 					pfree_target(&op);
 				}
 				if (r >= 0) {
-					struct connection *ng = add_group_instance(whackfd,
-										   np->group->connection,
-										   &np->subnet, np->proto,
+					struct connection *g = np->group->connection;
+					/* XXX: something better? */
+					close_any(&g->logger->global_whackfd);
+					g->logger->global_whackfd = dup_any(whackfd);
+					struct connection *ng = add_group_instance(g, &np->subnet, np->proto,
 										   np->sport, np->dport);
+					/* XXX: something better? */
+					close_any(&g->logger->global_whackfd);
 					if (ng != NULL) {
 						passert(np->name == NULL);
 						np->name = clone_str(ng->name, "group instance name");

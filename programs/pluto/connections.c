@@ -2059,8 +2059,7 @@ void add_connection(struct fd *whackfd, const struct whack_message *wm)
  * Returns name of new connection.  NULL on failure (duplicated name).
  * Caller is responsible for pfreeing name.
  */
-struct connection *add_group_instance(struct fd *whackfd,
-				      struct connection *group, const ip_subnet *target,
+struct connection *add_group_instance(struct connection *group, const ip_subnet *target,
 				      uint8_t proto , uint16_t sport , uint16_t dport)
 {
 	passert(group->kind == CK_GROUP);
@@ -2082,9 +2081,8 @@ struct connection *add_group_instance(struct fd *whackfd,
 	}
 
 	if (conn_by_name(namebuf, false/*!strict*/) != NULL) {
-		log_connection(RC_DUPNAME, whackfd, group,
-			       "group name + target yields duplicate name \"%s\"",
-			       namebuf);
+		llog(RC_DUPNAME, group->logger,
+		     "group name + target yields duplicate name \"%s\"", namebuf);
 		pfreeany(namebuf);
 		return NULL;
 	}
@@ -2141,10 +2139,10 @@ struct connection *add_group_instance(struct fd *whackfd,
 	if (group->policy & POLICY_GROUTED) {
 		/* XXX: something better? */
 		close_any(&t->logger->global_whackfd);
-		t->logger->global_whackfd = dup_any(whackfd);
+		t->logger->global_whackfd = dup_any(group->logger->global_whackfd);
 		if (!trap_connection(t)) {
-			whack_log(RC_ROUTE, whackfd,
-				  "could not route");
+			llog(WHACK_STREAM|RC_ROUTE, group->logger,
+			     "could not route");
 		}
 		/* XXX: something better? */
 		close_any(&t->logger->global_whackfd);
