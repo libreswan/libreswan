@@ -71,6 +71,7 @@ VIRSH = sudo virsh --connect $(KVM_CONNECTION)
 # Should these live in the OS.mk file?
 KVM_USE_EFENCE ?= true
 KVM_USE_NSS_IPSEC_PROFILE ?= true
+KVM_USE_NSS_KDF ?= true
 KVM_ALL_ALGS ?= false
 KVM_USE_SECCOMP ?= true
 KVM_USE_LABELED_IPSEC ?= true
