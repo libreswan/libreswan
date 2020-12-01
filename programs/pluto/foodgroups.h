@@ -19,7 +19,7 @@ struct connection;      /* forward declaration */
 struct fd;
 
 extern void add_group(struct connection *c);
-extern void route_group(struct fd *whackfd, struct connection *c);
+extern void route_group(struct connection *c);
 extern void unroute_group(struct connection *c);
 extern void delete_group(const struct connection *c);
 

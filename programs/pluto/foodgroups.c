@@ -409,12 +409,12 @@ static struct fg_groups *find_group(const struct connection *c)
 	return g;
 }
 
-void route_group(struct fd *whackfd, struct connection *c)
+void route_group(struct connection *c)
 {
 	/* it makes no sense to route a connection that is ISAKMP-only */
 	if (!NEVER_NEGOTIATE(c->policy) && !HAS_IPSEC_POLICY(c->policy)) {
-		log_connection(RC_ROUTE, whackfd, c,
-			       "cannot route an ISAKMP-only group connection");
+		llog(RC_ROUTE, c->logger,
+		     "cannot route an ISAKMP-only group connection");
 	} else {
 		struct fg_groups *g = find_group(c);
 		struct fg_targets *t;
@@ -431,9 +431,9 @@ void route_group(struct fd *whackfd, struct connection *c)
 					 * Shouldn't this leave a
 					 * breadcrumb in the log file?
 					 */
-					if (!trap_connection(ci, whackfd))
-						log_connection(WHACK_STREAM|RC_ROUTE, whackfd, c,
-							       "could not route");
+					if (!trap_connection(ci, c->logger->global_whackfd))
+						llog(WHACK_STREAM|RC_ROUTE, c->logger,
+						     "could not route");
 				}
 			}
 		}

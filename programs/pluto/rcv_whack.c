@@ -211,16 +211,25 @@ static int whack_route_connection(struct connection *c,
 				  struct fd *whackfd,
 				  void *unused_arg UNUSED)
 {
+	/* XXX: something better? */
+	close_any(&c->logger->global_whackfd);
+	c->logger->global_whackfd = dup_any(whackfd);
+
 	if (!oriented(*c)) {
 		/* XXX: why whack only? */
-		log_connection(RC_ORIENT|WHACK_STREAM, whackfd, c,
-			       "we cannot identify ourselves with either end of this connection");
+		llog(WHACK_STREAM|RC_ORIENT, c->logger,
+		     "we cannot identify ourselves with either end of this connection");
 	} else if (c->policy & POLICY_GROUP) {
-		route_group(whackfd, c);
+		route_group(c);
 	} else if (!trap_connection(c, whackfd)) {
 		/* XXX: why whack only? */
-		log_connection(RC_ROUTE|WHACK_STREAM, whackfd, c, "could not route");
+		llog(WHACK_STREAM|RC_ROUTE, c->logger,
+		     "could not route");
 	}
+
+	/* XXX: something better? */
+	close_any(&c->logger->global_whackfd);
+
 	return 1;
 }
 
