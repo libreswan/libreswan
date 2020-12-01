@@ -431,7 +431,7 @@ void route_group(struct connection *c)
 					 * Shouldn't this leave a
 					 * breadcrumb in the log file?
 					 */
-					if (!trap_connection(ci, c->logger->global_whackfd))
+					if (!trap_connection(ci))
 						llog(WHACK_STREAM|RC_ROUTE, c->logger,
 						     "could not route");
 				}

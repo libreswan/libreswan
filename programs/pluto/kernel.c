@@ -1012,10 +1012,9 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 	return route_easy;
 }
 
-bool trap_connection(struct connection *c, struct fd *whackfd)
+bool trap_connection(struct connection *c)
 {
-	struct logger logger = CONNECTION_LOGGER(c, whackfd); /* best-guess */
-	enum routability r = could_route(c, &logger);
+	enum routability r = could_route(c, c->logger);
 
 	switch (r) {
 	case route_impossible:
@@ -1029,7 +1028,7 @@ bool trap_connection(struct connection *c, struct fd *whackfd)
 		 * ??? The test treats RT_UNROUTED_KEYED specially too.
 		 */
 		if (c->spd.routing < RT_ROUTED_TUNNEL)
-			return route_and_eroute(c, &c->spd, NULL, &logger);
+			return route_and_eroute(c, &c->spd, NULL, c->logger);
 
 		return true;
 

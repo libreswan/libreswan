@@ -2139,9 +2139,15 @@ struct connection *add_group_instance(struct fd *whackfd,
 
 	/* route if group is routed */
 	if (group->policy & POLICY_GROUTED) {
-		if (!trap_connection(t, whackfd))
+		/* XXX: something better? */
+		close_any(&t->logger->global_whackfd);
+		t->logger->global_whackfd = dup_any(whackfd);
+		if (!trap_connection(t)) {
 			whack_log(RC_ROUTE, whackfd,
 				  "could not route");
+		}
+		/* XXX: something better? */
+		close_any(&t->logger->global_whackfd);
 	}
 	return t;
 }
