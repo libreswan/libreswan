@@ -424,9 +424,9 @@ err_t check_virtual_net_allowed(const struct connection *c,
 
 	if (virt->flags & F_VIRTUAL_ALL) {
 		/* %all must only be used for testing - log it */
-		log_connection(RC_LOG_SERIOUS, null_fd, c,
-			    "WARNING: v%s:%%all must only be used for testing",
-			    (virt->flags & F_VIRTUAL_HOST) ? "host" : "net");
+		llog(RC_LOG_SERIOUS, c->logger,
+		     "WARNING: v%s:%%all must only be used for testing",
+		     (virt->flags & F_VIRTUAL_HOST) ? "host" : "net");
 
 		return NULL;	/* success */
 	}

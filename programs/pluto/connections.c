@@ -2721,8 +2721,8 @@ struct connection *route_owner(struct connection *c,
 			struct spd_route **esrp)
 {
 	if (!oriented(*c)) {
-		log_connection(RC_LOG, null_fd, c,
-			       "route_owner: connection no longer oriented - system interface change?");
+		llog(RC_LOG, c->logger,
+		     "route_owner: connection no longer oriented - system interface change?");
 		return NULL;
 	}
 
@@ -3350,23 +3350,23 @@ static bool is_virtual_net_used(struct connection *c,
 				id_buf idb;
 				connection_buf cbuf;
 				subnet_buf client;
-				log_connection(RC_LOG, null_fd, c,
-					       "Virtual IP %s overlaps with connection "PRI_CONNECTION" (kind=%s) '%s'",
-					       str_subnet(peer_net, &client),
-					       pri_connection(d, &cbuf),
-					       enum_name(&connection_kind_names, d->kind),
-					       str_id(&d->spd.that.id, &idb));
+				llog(RC_LOG, c->logger,
+				     "Virtual IP %s overlaps with connection "PRI_CONNECTION" (kind=%s) '%s'",
+				     str_subnet(peer_net, &client),
+				     pri_connection(d, &cbuf),
+				     enum_name(&connection_kind_names, d->kind),
+				     str_id(&d->spd.that.id, &idb));
 
 				if (!kernel_ops->overlap_supported) {
-					log_connection(RC_LOG, null_fd, c,
-						       "Kernel method '%s' does not support overlapping IP ranges",
-						       kernel_ops->kern_name);
+					llog(RC_LOG, c->logger,
+					     "Kernel method '%s' does not support overlapping IP ranges",
+					     kernel_ops->kern_name);
 					return TRUE;
 				}
 
 				if (LIN(POLICY_OVERLAPIP, c->policy & d->policy)) {
-					log_connection(RC_LOG, null_fd, c,
-						       "overlap is okay by mutual consent");
+					llog(RC_LOG, c->logger,
+					     "overlap is okay by mutual consent");
 
 					/*
 					 * Look for another overlap to report
@@ -3383,17 +3383,17 @@ static bool is_virtual_net_used(struct connection *c,
 					NULL;
 
 				if (x == NULL) {
-					log_connection(RC_LOG, null_fd, c,
-						       "overlap is forbidden (neither agrees to overlap)");
+					llog(RC_LOG, c->logger,
+					     "overlap is forbidden (neither agrees to overlap)");
 				} else {
-					log_connection(RC_LOG, null_fd, c,
-						       "overlap is forbidden ("PRI_CONNECTION" does not agree to overlap)",
-						       pri_connection(x, &cbuf));
+					llog(RC_LOG, c->logger,
+					     "overlap is forbidden ("PRI_CONNECTION" does not agree to overlap)",
+					     pri_connection(x, &cbuf));
 				}
 
 				/* ??? why is this a separate log line? */
-				log_connection(RC_LOG, null_fd, c,
-					       "Your ID is '%s'", str_id(peer_id, &idb));
+				llog(RC_LOG, c->logger,
+				     "Your ID is '%s'", str_id(peer_id, &idb));
 
 				return TRUE; /* already used by another one */
 			}
@@ -3585,9 +3585,9 @@ static struct connection *fc_try(const struct connection *c,
 	    (best ? best->name : "none"), best_prio);
 
 	if (best == NULL && virtualwhy != NULL) {
-		log_connection(RC_LOG, null_fd, c,
-			       "peer proposal was rejected in a virtual connection policy: %s",
-			       virtualwhy);
+		llog(RC_LOG, c->logger,
+		     "peer proposal was rejected in a virtual connection policy: %s",
+		     virtualwhy);
 	}
 
 	return best;

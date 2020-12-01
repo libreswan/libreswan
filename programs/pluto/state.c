@@ -258,12 +258,12 @@ void revive_conns(struct logger *logger)
 			llog(RC_UNKNOWN_NAME, logger,
 				    "failed to initiate connection "PRI_CO" which received a Delete/Notify but must remain up per local policy; connection no longer exists", pri_co(revivals->serialno));
 		} else {
-			log_connection(RC_LOG, null_fd, c,
-				"initiating connection '%s' with serial "PRI_CO" which received a Delete/Notify but must remain up per local policy",
-				c->name, pri_co(c->serialno));
+			llog(RC_LOG, c->logger,
+			     "initiating connection '%s' with serial "PRI_CO" which received a Delete/Notify but must remain up per local policy",
+			     c->name, pri_co(c->serialno));
 			if (!initiate_connection(c, NULL, null_fd, true/*background*/)) {
-				log_connection(RC_FATAL, null_fd, c,
-					       "failed to initiate connection");
+				llog(RC_FATAL, c->logger,
+				     "failed to initiate connection");
 			}
 		}
 		/*
