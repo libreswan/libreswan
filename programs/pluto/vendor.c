@@ -579,9 +579,8 @@ static struct vid_struct vid_tab[] = {
  * leak: self-vendor ID, item size: 37
  * leak: 2 * vid->data, item size: 13
  */
-void init_vendorid(void)
+void init_vendorid(struct logger *logger)
 {
-	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
 	struct vid_struct *vid;
 
 	for (vid = vid_tab; vid->id != VID_none; vid++) {
