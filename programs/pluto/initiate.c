@@ -462,7 +462,7 @@ void initiate_connections_by_name(const char *name, const char *remote_host,
 	struct connection *c = conn_by_name(name, false/*!strict*/);
 	if (c != NULL) {
 		if (!initiate_connection(c, remote_host, whackfd, background))
-			log_global(RC_FATAL, whackfd, "failed to initiate %s", c->name);
+			log_connection(RC_FATAL, whackfd, c, "failed to initiate connection");
 		return;
 	}
 
