@@ -284,10 +284,12 @@ struct initiate_stuff {
 	const char *remote_host;
 };
 
-bool initiate_connection(struct connection *c, const char *remote_host,
-			 struct fd *whackfd, bool background)
+static bool initiate_connection_2(struct connection *c, const char *remote_host, bool background, const threadtime_t inception);
+
+bool initiate_connection(struct connection *c, const char *remote_host, bool background)
 {
 	threadtime_t inception  = threadtime_start();
+	bool ok;
 
 	/* If whack supplied a remote IP, fill it in if we can */
 	if (remote_host != NULL && isanyaddr(&c->spd.that.host_addr)) {
@@ -296,97 +298,120 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 		ttoaddr_num(remote_host, 0, AF_UNSPEC, &remote_ip);
 
 		if (c->kind != CK_TEMPLATE) {
-			log_connection(RC_NOPEERIP, whackfd, c,
-				       "cannot instantiate non-template connection to a supplied remote IP address");
+			llog(RC_NOPEERIP, c->logger,
+			     "cannot instantiate non-template connection to a supplied remote IP address");
 			return 0;
 		}
 
 		struct connection *d = instantiate(c, &remote_ip, NULL);
-		connection_buf cb;
+		/* XXX: something better? */
+		close_any(&d->logger->global_whackfd);
+		d->logger->global_whackfd = dup_any(c->logger->global_whackfd);
+
 		/*
 		 * XXX: why not write to the log file?
 		 */
-		log_connection(RC_LOG|WHACK_STREAM, whackfd, c,
-			       "instantiated connection "PRI_CONNECTION" with remote IP set to %s",
-			       pri_connection(d, &cb), remote_host);
+		llog(WHACK_STREAM|RC_LOG, d->logger,
+		     "instantiated connection with remote IP set to %s", remote_host);
 		/* flip cur_connection */
-		c = d;
+		ok = initiate_connection_2(d, remote_host, background, inception);
+		if (!ok) {
+			delete_connection(d, false);
+		}
+		/* XXX: something better? */
+		close_any(&d->logger->global_whackfd);
+	} else {
 		/* now proceed as normal */
+		ok = initiate_connection_2(c, remote_host, background, inception);
 	}
+	return ok;
+}
 
+bool initiate_connection_3(struct connection *c, bool background, const threadtime_t inception);
+bool initiate_connection_2(struct connection *c, const char *remote_host, bool background, const threadtime_t inception)
+{
 	if (!oriented(*c)) {
 		ipstr_buf a;
 		ipstr_buf b;
-		log_connection(RC_ORIENT, whackfd, c,
-			       "we cannot identify ourselves with either end of this connection.  %s or %s are not usable",
-			       ipstr(&c->spd.this.host_addr, &a),
-			       ipstr(&c->spd.that.host_addr, &b));
-		return 0;
+		llog(RC_ORIENT, c->logger,
+		     "we cannot identify ourselves with either end of this connection.  %s or %s are not usable",
+		     ipstr(&c->spd.this.host_addr, &a),
+		     ipstr(&c->spd.that.host_addr, &b));
+		return false;
 	}
 
 	if (NEVER_NEGOTIATE(c->policy)) {
-		log_connection(RC_INITSHUNT, whackfd, c,
-			       "cannot initiate an authby=never connection");
-		return 0;
+		llog(RC_INITSHUNT, c->logger,
+		     "cannot initiate an authby=never connection");
+		return false;
 	}
 
 	if ((remote_host == NULL) && (c->kind != CK_PERMANENT) && !(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
 		if (isanyaddr(&c->spd.that.host_addr)) {
 			if (c->dnshostname != NULL) {
-				log_connection(RC_NOPEERIP, whackfd, c,
-					       "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
-					       enum_show(&connection_kind_names,
-							 c->kind));
+				llog(RC_NOPEERIP, c->logger,
+				     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
+				     enum_show(&connection_kind_names, c->kind));
 				dbg("connection '%s' +POLICY_UP", c->name);
 				c->policy |= POLICY_UP;
-				return 1;
+				return true;
 			} else {
-				log_connection(RC_NOPEERIP, whackfd, c,
-					       "cannot initiate connection (serial "PRI_CO") without knowing peer IP address (kind=%s)",
-					       pri_co(c->serialno),
-					       enum_show(&connection_kind_names, c->kind));
+				llog(RC_NOPEERIP, c->logger,
+				     "cannot initiate connection (serial "PRI_CO") without knowing peer IP address (kind=%s)",
+				     pri_co(c->serialno),
+				     enum_show(&connection_kind_names, c->kind));
 			}
-			return 0;
+			return false;
 		}
 
 	}
 
 	if (isanyaddr(&c->spd.that.host_addr) && (c->policy & POLICY_IKEV2_ALLOW_NARROWING) ) {
 		if (c->dnshostname != NULL) {
-			log_connection(RC_NOPEERIP, whackfd, c,
-				       "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
-				       enum_show(&connection_kind_names, c->kind),
-				       bool_str((c->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY));
+			llog(RC_NOPEERIP, c->logger,
+			     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
+			     enum_show(&connection_kind_names, c->kind),
+			     bool_str((c->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY));
 			dbg("connection '%s' +POLICY_UP", c->name);
 			c->policy |= POLICY_UP;
-			return 1;
+			return true;
 		} else {
-			log_connection(RC_NOPEERIP, whackfd, c,
-				       "cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
-				       enum_show(&connection_kind_names,
-						 c->kind),
-				       bool_str((c->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY));
-			return 0;
+			llog(RC_NOPEERIP, c->logger,
+			     "cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
+			     enum_show(&connection_kind_names, c->kind),
+			     bool_str((c->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY));
+			return false;
 		}
 	}
 
+	bool ok;
 	if (LIN(POLICY_IKEV2_ALLOW | POLICY_IKEV2_ALLOW_NARROWING, c->policy) &&
 	    c->kind == CK_TEMPLATE) {
 		struct connection *d = instantiate(c, NULL, NULL);
-#if 0
+		/* XXX: something better? */
+		close_any(&d->logger->global_whackfd);
+		d->logger->global_whackfd = dup_any(c->logger->global_whackfd);
 		/*
 		 * LOGGING: why not log this (other than it messes
 		 * with test output)?
 		 */
-		connection_buf cb;
-		log_connection(RC_LOG, whackfd, c,
-			       "instantiated connection "PRI_CONNECTION"",
-			       pri_connection(d, &cb));
-#endif
+		llog(LOG_STREAM|RC_LOG, d->logger, "instantiated connection");
 		/* flip cur_connection */
-		c = d;
+		ok = initiate_connection_3(d, background, inception);
+		if (!ok) {
+			delete_connection(d, false);
+		}
+		/* XXX: something better? */
+		close_any(&d->logger->global_whackfd);
+	} else {
+		ok = initiate_connection_3(c, background, inception);
 	}
+	return ok;
 
+}
+
+bool initiate_connection_3(struct connection *c, bool background, const threadtime_t inception)
+{
 	/* We will only request an IPsec SA if policy isn't empty
 	 * (ignoring Main Mode items).
 	 * This is a fudge, but not yet important.
@@ -428,15 +453,12 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 #ifdef USE_IKEv1
 	if ((c->policy & POLICY_IKEV1_ALLOW) &&
 	    (c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE))) {
-		/* XXX: build on-stack logger that includes whackfd */
-		struct logger logger = *c->logger;
-		logger.global_whackfd = whackfd;
 		struct db_sa *phase2_sa = v1_kernel_alg_makedb(c->policy, c->child_proposals,
-							       true, &logger);
+							       true, c->logger);
 		if (c->child_proposals.p != NULL && phase2_sa == NULL) {
-			llog(WHACK_STREAM | RC_LOG_SERIOUS, &logger,
-				    "cannot initiate: no acceptable kernel algorithms loaded");
-			return 0;
+			llog(WHACK_STREAM|RC_LOG_SERIOUS, c->logger,
+			     "cannot initiate: no acceptable kernel algorithms loaded");
+			return false;
 		}
 		free_sa(&phase2_sa);
 	}
@@ -444,16 +466,21 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 
 	dbg("connection '%s' +POLICY_UP", c->name);
 	c->policy |= POLICY_UP;
-	ipsecdoi_initiate(background ? null_fd : whackfd,
+	ipsecdoi_initiate(background ? null_fd : c->logger->global_whackfd,
 			  c, c->policy, 1, SOS_NOBODY, &inception, NULL);
-	return 1;
+	return true;
 }
 
 static int initiate_a_connection(struct connection *c, struct fd *whackfd, void *arg)
 {
 	const struct initiate_stuff *is = arg;
-	return initiate_connection(c, is->remote_host,
-				   whackfd, is->background) ? 1 : 0;
+	/* XXX: something better? */
+	close_any(&c->logger->global_whackfd);
+	c->logger->global_whackfd = dup_any(whackfd);
+	int result = initiate_connection(c, is->remote_host, is->background) ? 1 : 0;
+	/* XXX: something better? */
+	close_any(&c->logger->global_whackfd);
+	return result;
 }
 
 void initiate_connections_by_name(const char *name, const char *remote_host,
@@ -461,10 +488,17 @@ void initiate_connections_by_name(const char *name, const char *remote_host,
 {
 	passert(name != NULL);
 
-	struct connection *c = conn_by_name(name, false/*!strict*/);
+	struct connection *c = conn_by_name(name, /*strict-match?*/false);
 	if (c != NULL) {
-		if (!initiate_connection(c, remote_host, whackfd, background))
-			log_connection(RC_FATAL, whackfd, c, "failed to initiate connection");
+		/* XXX: something better? */
+		close_any(&c->logger->global_whackfd);
+		c->logger->global_whackfd = dup_any(whackfd);
+		bool ok = initiate_connection(c, remote_host, background);
+		if (!ok) {
+			llog(RC_FATAL, c->logger, "failed to initiate connection");
+		}
+		/* XXX: something better? */
+		close_any(&c->logger->global_whackfd);
 		return;
 	}
 
