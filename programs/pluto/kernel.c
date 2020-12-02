@@ -1124,17 +1124,19 @@ void migration_down(struct connection *c,  struct state *st)
 }
 
 
-/* delete any eroute for a connection and unroute it if route isn't shared */
+/*
+ * Delete any eroute for a connection and unroute it if route isn't
+ * shared.
+ */
 void unroute_connection(struct connection *c)
 {
-	struct logger logger[1] = { CONNECTION_LOGGER(c, null_fd), }; /* best-guess */
 	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		enum routing_t cr = sr->routing;
 
 		if (erouted(cr)) {
 			/* cannot handle a live one */
 			passert(cr != RT_ROUTED_TUNNEL);
-			shunt_eroute(c, sr, RT_UNROUTED, ERO_DELETE, "delete", logger);
+			shunt_eroute(c, sr, RT_UNROUTED, ERO_DELETE, "delete", c->logger);
 #ifdef IPSEC_CONNECTION_LIMIT
 			num_ipsec_eroute--;
 #endif
@@ -1144,7 +1146,7 @@ void unroute_connection(struct connection *c)
 
 		/* only unroute if no other connection shares it */
 		if (routed(cr) && route_owner(c, sr, NULL, NULL, NULL) == NULL) {
-			do_command(c, sr, "unroute", NULL, logger);
+			do_command(c, sr, "unroute", NULL, c->logger);
 		}
 	}
 }
@@ -1572,15 +1574,14 @@ bool assign_holdpass(const struct connection *c,
 		     int transport_proto, ipsec_spi_t negotiation_shunt,
 		     const ip_address *src, const ip_address *dst)
 {
-	struct logger logger[1] = { CONNECTION_LOGGER(c, null_fd), }; /* best-guess */
 	/*
 	 * either the automatically installed %hold eroute is broad enough
 	 * or we try to add a broader one and delete the automatic one.
 	 * Beware: this %hold might be already handled, but still squeak
 	 * through because of a race.
 	 */
-	enum routing_t ro = sr->routing,	/* routing, old */
-		rn = ro;			/* routing, new */
+	enum routing_t ro = sr->routing;	/* routing, old */
+	enum routing_t rn = ro;			/* routing, new */
 
 	passert(LHAS(LELEM(CK_PERMANENT) | LELEM(CK_INSTANCE), c->kind));
 	/* figure out what routing should become */
@@ -1609,8 +1610,8 @@ bool assign_holdpass(const struct connection *c,
 
 		if (old == NULL) {
 			/* ??? should this happen?  It does. */
-			llog(RC_LOG, logger,
-				    "assign_holdpass() no bare shunt to remove? - mismatch?");
+			llog(RC_LOG, c->logger,
+			     "assign_holdpass() no bare shunt to remove? - mismatch?");
 		} else {
 			/* ??? should this happen? */
 			dbg("assign_holdpass() removing bare shunt");
@@ -1649,12 +1650,12 @@ bool assign_holdpass(const struct connection *c,
 					      op,
 					      reason,
 					      c->policy_label,
-					      logger))
+					      c->logger))
 			{
 				dbg("assign_holdpass() eroute_connection() done");
 			} else {
-				llog(RC_LOG, logger,
-					    "assign_holdpass() eroute_connection() failed");
+				llog(RC_LOG, c->logger,
+				     "assign_holdpass() eroute_connection() failed");
 				return false;
 			}
 		}
@@ -1663,11 +1664,11 @@ bool assign_holdpass(const struct connection *c,
 				       transport_proto,
 				       (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD,
 				       (c->policy & POLICY_NEGO_PASS) ? "delete narrow %pass" :
-				       "delete narrow %hold", logger)) {
+				       "delete narrow %hold", c->logger)) {
 			dbg("assign_holdpass() delete_bare_shunt() succeeded");
 		} else {
-			llog(RC_LOG, logger,
-				    "assign_holdpass() delete_bare_shunt() failed");
+			llog(RC_LOG, c->logger,
+			     "assign_holdpass() delete_bare_shunt() failed");
 			return false;
 		}
 	}
