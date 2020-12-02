@@ -2054,10 +2054,9 @@ struct ikev2_proposals *get_v2_ike_proposals(struct connection *c, const char *w
 
 	c->v2_ike_proposals = v2_proposals;
 	passert(c->v2_ike_proposals != NULL);
-	struct logger clog = CONNECTION_LOGGER(c, null_fd/*no whack*/);
-	llog(RC_LOG|LOG_STREAM/*not-whack*/, &clog,
-		    "local IKE proposals (%s): ", why);
-	log_proposals(&clog, "  ", c->v2_ike_proposals);
+	llog(LOG_STREAM/*not-whack*/|RC_LOG, c->logger,
+	     "local IKE proposals (%s): ", why);
+	log_proposals(c->logger, "  ", c->v2_ike_proposals);
 	return c->v2_ike_proposals;
 }
 
@@ -2175,10 +2174,8 @@ static struct ikev2_proposals *get_v2_child_proposals(struct ikev2_proposals **c
 
 	*child_proposals = v2_proposals;
 	passert(*child_proposals != NULL);
-	struct logger clog = CONNECTION_LOGGER(c, null_fd/*no whack*/);
-	llog(RC_LOG|LOG_STREAM/*not-whack*/, &clog,
-		    "local ESP/AH proposals (%s): ", why);
-	log_proposals(&clog, "  ", *child_proposals);
+	llog(LOG_STREAM/*not-whack*/|RC_LOG, c->logger, "local ESP/AH proposals (%s): ", why);
+	log_proposals(c->logger, "  ", *child_proposals);
 	return *child_proposals;
 }
 
