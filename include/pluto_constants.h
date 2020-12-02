@@ -691,7 +691,7 @@ extern struct keywords sa_role_names;
 				      ((ST)->st_state->kind) == STATE_QUICK_R2 || \
 				      ((ST)->st_state->kind) == STATE_V2_ESTABLISHED_CHILD_SA))
 #else
-#define IS_IPSEC_SA_ESTABLISHED(ST) (IS_CHILD_SA(T) &&			\
+#define IS_IPSEC_SA_ESTABLISHED(ST) (IS_CHILD_SA(ST) &&			\
 				     ((ST)->st_state->kind) == STATE_V2_ESTABLISHED_CHILD_SA)
 #endif
 
