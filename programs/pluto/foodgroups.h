@@ -16,14 +16,14 @@
 #define FOODGROUPS_H
 
 struct connection;      /* forward declaration */
-struct fd;
+struct logger;
 
 extern void add_group(struct connection *c);
 extern void route_group(struct connection *c);
 extern void unroute_group(struct connection *c);
 extern void delete_group(const struct connection *c);
 
-extern void load_groups(struct fd *whackfd);
+extern void load_groups(struct logger *logger);
 
 void free_foodgroups(void);
 

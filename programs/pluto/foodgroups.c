@@ -273,9 +273,8 @@ static void pfree_target(struct fg_targets **target)
 	*target = NULL;
 }
 
-void load_groups(struct fd *whackfd)
+void load_groups(struct logger *logger)
 {
-	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
 	struct fg_targets *new_targets = NULL;
 
 	/* for each group, add config file targets into new_targets */
@@ -367,7 +366,7 @@ void load_groups(struct fd *whackfd)
 					struct connection *g = np->group->connection;
 					/* XXX: something better? */
 					close_any(&g->logger->global_whackfd);
-					g->logger->global_whackfd = dup_any(whackfd);
+					g->logger->global_whackfd = dup_any(logger->global_whackfd);
 					struct connection *ng = add_group_instance(g, &np->subnet, np->proto,
 										   np->sport, np->dport);
 					/* XXX: something better? */

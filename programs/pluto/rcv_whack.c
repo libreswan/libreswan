@@ -272,7 +272,7 @@ static void do_whacklisten(struct logger *logger)
 	stale_xfrmi_interfaces(logger);
 #endif
 	load_preshared_secrets(logger);
-	load_groups(logger->global_whackfd);
+	load_groups(logger);
 #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_READY, SD_REPORT_NO_STATUS);
 #endif
