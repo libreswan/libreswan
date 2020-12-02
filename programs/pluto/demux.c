@@ -179,17 +179,20 @@ void process_packet(struct msg_digest **mdp)
 		 * IKEv2 doesn't say what to do with low versions,
 		 * just drop them.
 		 */
-		log_md(RC_LOG, md, "ignoring packet with IKE major version '%d'", vmaj);
+		llog(RC_LOG, md->md_logger,
+		     "ignoring packet with IKE major version '%d'", vmaj);
 		return;
 
 	case ISAKMP_MAJOR_VERSION: /* IKEv1 */
 		if (pluto_ikev1_pol == GLOBAL_IKEv1_DROP) {
-			log_md(RC_LOG, md, "ignoring IKEv1 packet as policy is set to silently drop all IKEv1 packets");
+			llog(RC_LOG, md->md_logger,
+			     "ignoring IKEv1 packet as policy is set to silently drop all IKEv1 packets");
 			return;
 		}
 #ifdef USE_IKEv1
 		if (pluto_ikev1_pol == GLOBAL_IKEv1_REJECT) {
-			log_md(RC_LOG, md, "rejecting IKEv1 packet as policy is set to reject all IKEv1 packets");
+			llog(RC_LOG, md->md_logger,
+			     "rejecting IKEv1 packet as policy is set to reject all IKEv1 packets");
 			send_notification_from_md(md, INVALID_MAJOR_VERSION);
 			return;
 		}
@@ -209,7 +212,8 @@ void process_packet(struct msg_digest **mdp)
 			 * own, given the major version numbers are
 			 * identical.
 			 */
-			log_md(RC_LOG, md, "ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
+			llog(RC_LOG, md->md_logger,
+			     "ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
 			send_notification_from_md(md, INVALID_MINOR_VERSION);
 			return;
 		}
@@ -227,7 +231,8 @@ void process_packet(struct msg_digest **mdp)
 			/* Unlike IKEv1, for IKEv2 we are supposed to try to
 			 * continue on unknown minors
 			 */
-			log_md(RC_LOG, md, "Ignoring unknown IKEv2 minor version number %d", vmin);
+			llog(RC_LOG, md->md_logger,
+			     "Ignoring unknown IKEv2 minor version number %d", vmin);
 		}
 		dbg(" processing version=%u.%u packet with exchange type=%s (%d)",
 		    vmaj, vmin,
@@ -237,7 +242,8 @@ void process_packet(struct msg_digest **mdp)
 		break;
 
 	default:
-		log_md(RC_LOG, md, "message contains unsupported IKE major version '%d'", vmaj);
+		llog(RC_LOG, md->md_logger,
+		     "message contains unsupported IKE major version '%d'", vmaj);
 		/*
 		 * According to 1.5.  Informational Messages outside
 		 * of an IKE SA, [...] the message is always sent

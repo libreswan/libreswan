@@ -687,18 +687,6 @@ void free_logger(struct logger **logp, where_t where)
  * address of 'stack_md' will never be NULL [-Werror=address]
  */
 
-void log_md(lset_t rc_flags, const struct msg_digest *md, const char *msg, ...)
-{
-	struct logger *logger =
-		(pexpect(md != NULL) && pexpect(md->md_logger != NULL) && pexpect(in_main_thread()))
-		? md->md_logger
-		: &failsafe_logger;
-	va_list ap;
-	va_start(ap, msg);
-	llog_va_list(rc_flags, logger, msg, ap);
-	va_end(ap);
-}
-
 void log_connection(lset_t rc_flags, struct fd *whackfd,
 		    const struct connection *c, const char *msg, ...)
 {

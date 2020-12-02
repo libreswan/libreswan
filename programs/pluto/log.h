@@ -147,20 +147,6 @@ void free_logger(struct logger **logp, where_t where);
 #define plog_global(MESSAGE, ...) log_global(LOG_STREAM, null_fd, MESSAGE, ##__VA_ARGS__)
 
 /*
- * The message digest.
- *
- * Since MD code is only ever executed when on the socket handler,
- * isn't WHACK_FD always NULL and hence RC_FLAGS uses.  Almost:
- *
- * - any event injection will likely want to attach a whack fd
- *
- * and it is just easier.
- */
-
-void log_md(lset_t rc_flags, const struct msg_digest *md,
-	    const char *msg, ...) PRINTF_LIKE(3);
-
-/*
  * Log with a connection context.
  *
  * Unlike state and pending, connections do not have an attached

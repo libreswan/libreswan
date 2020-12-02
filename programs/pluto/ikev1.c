@@ -936,14 +936,16 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 		 */
 		case R_U_THERE:
 			if (st == NULL) {
-				log_md(RC_LOG, md, "received bogus  R_U_THERE informational message");
+				llog(RC_LOG, md->md_logger,
+				     "received bogus  R_U_THERE informational message");
 				return STF_IGNORE;
 			}
 			return dpd_inI_outR(st, n, n_pbs);
 
 		case R_U_THERE_ACK:
 			if (st == NULL) {
-				log_md(RC_LOG, md, "received bogus R_U_THERE_ACK informational message");
+				llog(RC_LOG, md->md_logger,
+				     "received bogus R_U_THERE_ACK informational message");
 				return STF_IGNORE;
 			}
 			return dpd_inR(st, n, n_pbs);
@@ -978,7 +980,8 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 			 * Is anything else possible?  Expected?  Documented?
 			 */
 			if (st == NULL || !IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
-				log_md(RC_LOG, md, "ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message with for unestablished state.");
+				llog(RC_LOG, md->md_logger,
+				     "ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message with for unestablished state.");
 			} else if (pbs_left(n_pbs) < 4) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message without IPv4 address");
@@ -1270,13 +1273,13 @@ void process_v1_packet(struct msg_digest *md)
 			send_notification_from_md(md, t);		\
 	}
 
-#define LOG_PACKET(RC, ...)				\
-	{						\
-		if (st != NULL) {			\
-			log_state(RC, st, __VA_ARGS__);	\
-		} else {				\
-			log_md(RC, md, __VA_ARGS__);	\
-		}					\
+#define LOG_PACKET(RC, ...)					\
+	{							\
+		if (st != NULL) {				\
+			log_state(RC, st, __VA_ARGS__);		\
+		} else {					\
+			llog(RC, md->md_logger, __VA_ARGS__);	\
+		}						\
 	}
 
 	switch (md->hdr.isa_xchg) {
@@ -1348,7 +1351,8 @@ void process_v1_packet(struct msg_digest *md)
 							   md->hdr.isa_msgid);
 
 				if (st == NULL) {
-					log_md(RC_LOG, md, "phase 1 message is part of an unknown exchange");
+					llog(RC_LOG, md->md_logger,
+					     "phase 1 message is part of an unknown exchange");
 					/* XXX Could send notification back */
 					return;
 				}

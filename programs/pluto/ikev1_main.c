@@ -586,31 +586,33 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		}
 
 		if (c == NULL) {
-			log_md(RC_LOG_SERIOUS, md,
-			       "initial Main Mode message received but no connection has been authorized with policy %s",
-			       bitnamesof(sa_policy_bit_names, policy));
+			llog(RC_LOG_SERIOUS, md->md_logger,
+			     "initial Main Mode message received but no connection has been authorized with policy %s",
+			     bitnamesof(sa_policy_bit_names, policy));
 			/* XXX notification is in order! */
 			return STF_IGNORE;
-		} else if (c->kind != CK_TEMPLATE) {
-			connection_buf cib;
-			log_md(RC_LOG_SERIOUS, md,
-			       "initial Main Mode message received but "PRI_CONNECTION" forbids connection",
-			       pri_connection(c, &cib));
-			/* XXX notification is in order! */
-			return STF_IGNORE;
-		} else {
-			/*
-			 * Create a temporary connection that is a copy
-			 * of this one.
-			 * Their ID isn't declared yet.
-			 */
-			connection_buf cib;
-			dbgl(md->md_logger,
-			     "instantiating "PRI_CONNECTION" for initial Main Mode message",
-			     pri_connection(c, &cib));
-			ip_address sender_address = endpoint_address(&md->sender);
-			c = rw_instantiate(c, &sender_address, NULL, NULL);
 		}
+
+		if (c->kind != CK_TEMPLATE) {
+			connection_buf cib;
+			llog(RC_LOG_SERIOUS, md->md_logger,
+			     "initial Main Mode message received but "PRI_CONNECTION" forbids connection",
+			     pri_connection(c, &cib));
+			/* XXX notification is in order! */
+			return STF_IGNORE;
+		}
+
+		/*
+		 * Create a temporary connection that is a copy of
+		 * this one.
+		 *
+		 * Their ID isn't declared yet.
+		 */
+		connection_buf cib;
+		dbgl(md->md_logger, "instantiating "PRI_CONNECTION" for initial Main Mode message",
+		     pri_connection(c, &cib));
+		ip_address sender_address = endpoint_address(&md->sender);
+		c = rw_instantiate(c, &sender_address, NULL, NULL);
 	} else {
 		/*
 		 * we found a non-wildcard conn. double check if it needs
@@ -2021,10 +2023,10 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
 	}
 
 	endpoint_buf b;
-	log_md(RC_NOTIFICATION + type, md,
-	       "sending notification %s to %s",
-	       enum_name(&ikev1_notify_names, type),
-	       str_endpoint(&md->sender, &b));
+	llog(RC_NOTIFICATION + type, md->md_logger,
+	     "sending notification %s to %s",
+	     enum_name(&ikev1_notify_names, type),
+	     str_endpoint(&md->sender, &b));
 
 	uint8_t buffer[1024];	/* ??? large enough for any notification? */
 	struct pbs_out pbs = open_pbs_out("notification msg",
@@ -2060,7 +2062,8 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
 
 		if (!out_struct(&isan, &isakmp_notification_desc,
 					&r_hdr_pbs, &not_pbs)) {
-			log_md(RC_LOG, md, "failed to build notification in send_notification");
+			llog(RC_LOG, md->md_logger,
+			     "failed to build notification in send_notification");
 			return;
 		}
 
