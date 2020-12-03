@@ -82,19 +82,6 @@
 #include "iface.h"
 #include "ikev2_delete.h"	/* for record_v2_delete(); but call is dying */
 
-#ifdef USE_IKEv1
-static initiator_function *pick_initiator(struct connection *c,
-					  lset_t policy)
-{
-	if (policy & c->policy & POLICY_IKEV2_ALLOW) {
-		return ikev2_parent_outI1;
-	} else {
-		/* we may try V1; Aggressive or Main Mode? */
-		return (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;
-	}
-}
-#endif
-
 void ipsecdoi_initiate(struct fd *whack_sock,
 		       struct connection *c,
 		       lset_t policy,
@@ -120,20 +107,16 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 					     IKEV2_ISAKMP_INITIATOR_STATES);
 
 	if (st == NULL) {
-#ifdef USE_IKEv1
-		initiator_function *initiator = pick_initiator(c, policy);
-#else
-		initiator_function *initiator = ikev2_parent_outI1;
-#endif
-
-		if (initiator != NULL) {
-			/*
-			 * initiator will create a state (and that in
-			 * turn will start its timing it), need a way
-			 * to stop it.
-			 */
+		if (policy & c->policy & POLICY_IKEV2_ALLOW) {
+			initiator_function *initiator = ikev2_parent_outI1;
 			initiator(whack_sock, c, NULL, policy, try, inception, uctx);
 		}
+#ifdef USE_IKEv1
+		if (policy & c->policy & POLICY_IKEV1_ALLOW) {
+			initiator_function *initiator = (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;
+			initiator(whack_sock, c, NULL, policy, try, inception, uctx);
+		}
+#endif
 	} else if (HAS_IPSEC_POLICY(policy)) {
 #ifdef USE_IKEv1
 		if (st->st_ike_version == IKEv1) {
@@ -203,21 +186,23 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 		if (IS_PARENT_SA_ESTABLISHED(st))
 			log_state(RC_LOG, st, "initiate reauthentication of IKE SA");
 
+		switch(st->st_ike_version) {
+		case IKEv2:
+		{
+			initiator_function *initiator = ikev2_parent_outI1;
+			initiator(st->st_whack_sock, c, st, policy, try, &inception, st->sec_ctx);
+			break;
+		}
 #ifdef USE_IKEv1
-		initiator_function *initiator = pick_initiator(c, policy);
-#else
-		initiator_function *initiator = ikev2_parent_outI1;
+		case IKEv1:
+		{
+			initiator_function *initiator = (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;
+			initiator(st->st_whack_sock, c, st, policy, try, &inception, st->sec_ctx);
+			break;
+		}
 #endif
-
-		if (initiator != NULL) {
-			/*
-			 * initiator will create a state (and that in
-			 * turn will start its timing it), need a way
-			 * to stop it.
-			 */
-			(void) initiator(st->st_whack_sock,
-					 c, st, policy, try, &inception,
-				st->sec_ctx);
+		default:
+			dbg("unsupported IKE version '%d', cannot initiate", st->st_ike_version);
 		}
 	} else {
 		/*
