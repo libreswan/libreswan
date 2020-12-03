@@ -645,7 +645,7 @@ bool emit_v2KE(chunk_t *g, const struct dh_desc *group,
 	       pb_stream *outs)
 {
 	if (impair.ke_payload == IMPAIR_EMIT_OMIT) {
-		log_pbs_out(RC_LOG, outs, "IMPAIR: omitting KE payload");
+		llog(RC_LOG, outs->outs_logger, "IMPAIR: omitting KE payload");
 		return true;
 	}
 

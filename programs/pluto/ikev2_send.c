@@ -95,12 +95,12 @@ bool emit_v2UNKNOWN(const char *victim, enum isakmp_xchg_types exchange_type,
 		    struct pbs_out *outs)
 {
 	diag_t d;
-	log_pbs_out(RC_LOG, outs,
-		    "IMPAIR: adding an unknown%s payload of type %d to %s %s",
-		    impair.unknown_v2_payload_critical ? " critical" : "",
-		    ikev2_unknown_payload_desc.pt,
-		    enum_short_name(&ikev2_exchange_names, exchange_type),
-		    victim);
+	llog(RC_LOG, outs->outs_logger,
+	     "IMPAIR: adding an unknown%s payload of type %d to %s %s",
+	     impair.unknown_v2_payload_critical ? " critical" : "",
+	     ikev2_unknown_payload_desc.pt,
+	     enum_short_name(&ikev2_exchange_names, exchange_type),
+	     victim);
 	struct ikev2_generic gen = {
 		.isag_critical = build_ikev2_critical(impair.unknown_v2_payload_critical, outs->outs_logger),
 	};
@@ -263,7 +263,7 @@ bool emit_v2N_signature_hash_algorithms(lset_t sighash_policy,
 	pb_stream n_pbs;
 
 	if (!emit_v2Npl(v2N_SIGNATURE_HASH_ALGORITHMS, outs, &n_pbs)) {
-		log_pbs_out(RC_LOG, outs, "error initializing notify payload for notify message");
+		llog(RC_LOG, outs->outs_logger, "error initializing notify payload for notify message");
 		return false;
 	}
 

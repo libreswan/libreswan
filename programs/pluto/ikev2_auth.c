@@ -233,16 +233,16 @@ shunk_t authby_asn1_hash_blob(const struct hash_desc *hash_algo,
 }
 
 bool emit_v2_asn1_hash_blob(const struct hash_desc *hash_algo,
-			    struct pbs_out *a_pbs, enum keyword_authby authby)
+			    struct pbs_out *outs, enum keyword_authby authby)
 {
 	shunk_t b = authby_asn1_hash_blob(hash_algo, authby);
 	if (!pexpect(b.len > 0)) {
 		return false;
 	}
 
-	if (!pbs_out_hunk(b, a_pbs, "OID of ASN.1 Algorithm Identifier")) {
-		log_pbs_out(RC_LOG_SERIOUS, a_pbs,
-			    "DigSig: failed to emit OID of ASN.1 Algorithm Identifier");
+	if (!pbs_out_hunk(b, outs, "OID of ASN.1 Algorithm Identifier")) {
+		llog(RC_LOG_SERIOUS, outs->outs_logger,
+		     "DigSig: failed to emit OID of ASN.1 Algorithm Identifier");
 		return false;
 	}
 	return true;
@@ -305,7 +305,7 @@ struct hash_signature v2_auth_signature(struct logger *logger,
 bool emit_v2_auth(struct ike_sa *ike,
 		  const struct hash_signature *auth_sig,
 		  const struct crypt_mac *id_payload_mac,
-		  struct pbs_out *outpbs)
+		  struct pbs_out *outs)
 {
 	enum keyword_authby authby = v2_auth_by(ike);
 
@@ -315,7 +315,7 @@ bool emit_v2_auth(struct ike_sa *ike,
 	};
 
 	pb_stream a_pbs;
-	if (!out_struct(&a, &ikev2_auth_desc, outpbs, &a_pbs)) {
+	if (!out_struct(&a, &ikev2_auth_desc, outs, &a_pbs)) {
 		return false;
 	}
 
@@ -340,7 +340,7 @@ bool emit_v2_auth(struct ike_sa *ike,
 	case IKEv2_AUTH_NULL:
 		/* emit */
 		if (!ikev2_emit_psk_auth(authby, ike, id_payload_mac, &a_pbs)) {
-			log_pbs_out(RC_LOG_SERIOUS, outpbs, "Failed to find our PreShared Key");
+			llog(RC_LOG_SERIOUS, outs->outs_logger, "Failed to find our PreShared Key");
 			return false;
 		}
 		break;

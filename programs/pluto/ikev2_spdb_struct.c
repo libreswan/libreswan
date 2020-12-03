@@ -73,7 +73,7 @@ static bool v2_out_attr_fixed(struct pbs_out *pbs, enum ikev2_trans_attr_type ty
 		.isatr_lv = val,
 	};
 	if (!out_struct(&attr, &ikev2_trans_attr_desc, pbs, NULL)) {
-		log_pbs_out(RC_LOG, pbs, "%s() for attribute %d failed", __func__, type);
+		llog(RC_LOG, pbs->outs_logger, "%s() for attribute %d failed", __func__, type);
 		return false;
 	}
 	return true;
@@ -1278,19 +1278,19 @@ static bool emit_transform_attributes(struct pbs_out *transform_pbs,
 			PASSERT_FAIL("%s", "should have been handled");
 			break;
 		case IMPAIR_EMIT_EMPTY:
-			log_pbs_out(RC_LOG, transform_pbs,
-				    "IMPAIR: emitting variable-size key-length attribute with no key");
+			llog(RC_LOG, transform_pbs->outs_logger,
+			     "IMPAIR: emitting variable-size key-length attribute with no key");
 			if (!v2_out_attr_variable(transform_pbs, IKEv2_KEY_LENGTH, EMPTY_CHUNK)) {
 				return false;
 			}
 			break;
 		case IMPAIR_EMIT_OMIT:
-			log_pbs_out(RC_LOG, transform_pbs,
-				    "IMPAIR: omitting fixed-size key-length attribute");
+			llog(RC_LOG, transform_pbs->outs_logger,
+			     "IMPAIR: omitting fixed-size key-length attribute");
 			break;
 		case IMPAIR_EMIT_DUPLICATE:
-			log_pbs_out(RC_LOG, transform_pbs,
-				    "IMPAIR: duplicating key-length attribute");
+			llog(RC_LOG, transform_pbs->outs_logger,
+			     "IMPAIR: duplicating key-length attribute");
 			for (unsigned dup = 0; dup < 2; dup++) {
 				/* regardless of value */
 				if (!v2_out_attr_fixed(transform_pbs, IKEv2_KEY_LENGTH,
@@ -1303,9 +1303,8 @@ static bool emit_transform_attributes(struct pbs_out *transform_pbs,
 		default:
 		{
 			uint16_t keylen = impair_key_length_attribute - IMPAIR_EMIT_ROOF; /* remove bias */
-			log_pbs_out(RC_LOG, transform_pbs,
-				    "IMPAIR: emitting fixed-length key-length attribute with %u key",
-				    keylen);
+			llog(RC_LOG, transform_pbs->outs_logger,
+			     "IMPAIR: emitting fixed-length key-length attribute with %u key", keylen);
 			if (!v2_out_attr_fixed(transform_pbs, IKEv2_KEY_LENGTH, keylen)) {
 				return false;
 			}

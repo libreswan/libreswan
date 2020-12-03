@@ -212,7 +212,7 @@ extern const pb_stream empty_pbs;
  * Input PBS
  */
 
-#define pbs_in packet_byte_stream
+#define pbs_in packet_byte_stream /* ins */
 
 /*
  * Initializers; point PBS at a pre-allocated (or static) buffer.
@@ -249,9 +249,7 @@ diag_t pbs_in_raw(struct pbs_in *pbs, void *bytes, size_t len,
  * Output PBS
  */
 
-#define pbs_out packet_byte_stream
-
-void log_pbs_out(lset_t rc_flags, struct pbs_out *outs, const char *message, ...) PRINTF_LIKE(3);
+#define pbs_out packet_byte_stream /* outs */
 
 /*
  * Initializers; point PBS at a pre-allocated (or static) buffer.

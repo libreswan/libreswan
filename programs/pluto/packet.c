@@ -2432,7 +2432,8 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 			uint8_t byte;
 			if (impair.send_nonzero_reserved) {
 				byte = ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
-				log_pbs_out(RC_LOG, outs, "IMPAIR: setting zero/ignore field to 0x%02x", byte);
+				llog(RC_LOG, outs->outs_logger,
+				     "IMPAIR: setting zero/ignore field to 0x%02x", byte);
 			} else {
 				byte = 0;
 			}
@@ -2520,7 +2521,7 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 					if (!impair.emitting) {
 						return diag(MSG);
 					}
-					log_pbs_out(RC_LOG, outs, "IMPAIR: emitting "MSG);
+					llog(RC_LOG, outs->outs_logger, "IMPAIR: emitting "MSG);
 				}
 				break;
 
@@ -2824,14 +2825,4 @@ diag_t pbs_out_address(struct pbs_out *out_pbs, const ip_address *address, const
 {
 	shunk_t as = address_as_shunk(address);
 	return pbs_out_raw(out_pbs, as.ptr, as.len, what);
-}
-
-void log_pbs_out(lset_t rc_flags, struct pbs_out *outs, const char *message, ...)
-{
-	if (pexpect(outs != NULL) && pexpect(outs->outs_logger != NULL)) {
-		va_list ap;
-		va_start(ap, message);
-		llog_va_list(rc_flags, outs->outs_logger, message, ap);
-		va_end(ap);
-	}
 }

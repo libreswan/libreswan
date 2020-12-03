@@ -1299,7 +1299,7 @@ stf_status ikev2_send_cert(const struct connection *c, struct pbs_out *outpbs)
 	bool send_full_chain = send_authcerts && c->send_ca == CA_SEND_ALL;
 
 	if (impair.send_pkcs7_thingie) {
-		log_pbs_out(RC_LOG, outpbs, "IMPAIR: sending cert as PKCS7 blob");
+		llog(RC_LOG, outpbs->outs_logger, "IMPAIR: sending cert as PKCS7 blob");
 		SECItem *pkcs7 = nss_pkcs7_blob(mycert.u.nss_cert,
 						send_full_chain);
 		if (!pexpect(pkcs7 != NULL)) {
