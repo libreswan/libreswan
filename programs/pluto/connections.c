@@ -1322,6 +1322,7 @@ static bool extract_connection(const struct whack_message *wm,
 
 	switch (wm->policy & (POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW)) {
 	case POLICY_IKEV1_ALLOW:
+#ifdef USE_IKEv1
 		c->ike_version = IKEv1;
 		if (pluto_ikev1_pol != GLOBAL_IKEv1_ACCEPT) {
 			llog(RC_FATAL, c->logger,
@@ -1329,16 +1330,16 @@ static bool extract_connection(const struct whack_message *wm,
 			return false;
 		}
 		break;
+#else
+		llog(RC_FATAL, c->logger, "failed to add IKEv1 connection: IKEv1 support not compiled in");
+		return false;
+#endif
 	case POLICY_IKEV2_ALLOW:
 		c->ike_version = IKEv2;
 		break;
 	case 0:
 		c->ike_version = 0; /* i.e., none */
 		break;
-	default:
-		llog(RC_FATAL, c->logger,
-			    "failed to add connection: connection can only be IKEv1 or IKEv2");
-		return false;
 	}
 
 	if (wm->policy & POLICY_OPPORTUNISTIC &&
