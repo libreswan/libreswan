@@ -327,7 +327,6 @@ struct state {
 
 	struct connection *st_connection;       /* connection for this SA */
  	struct logger *st_logger;
-#define st_whack_sock st_logger->object_whackfd
 
 	struct trans_attrs st_oakley;
 

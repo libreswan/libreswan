@@ -190,14 +190,14 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 		case IKEv2:
 		{
 			initiator_function *initiator = ikev2_parent_outI1;
-			initiator(st->st_whack_sock, c, st, policy, try, &inception, st->sec_ctx);
+			initiator(st->st_logger->object_whackfd, c, st, policy, try, &inception, st->sec_ctx);
 			break;
 		}
 #ifdef USE_IKEv1
 		case IKEv1:
 		{
 			initiator_function *initiator = (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;
-			initiator(st->st_whack_sock, c, st, policy, try, &inception, st->sec_ctx);
+			initiator(st->st_logger->object_whackfd, c, st, policy, try, &inception, st->sec_ctx);
 			break;
 		}
 #endif
@@ -238,7 +238,7 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 		if (st->st_ike_version == IKEv1)
 			passert(HAS_IPSEC_POLICY(policy));
 
-		ipsecdoi_initiate(st->st_whack_sock, st->st_connection,
+		ipsecdoi_initiate(st->st_logger->object_whackfd, st->st_connection,
 				  policy, try, st->st_serialno, &inception,
 			st->sec_ctx);
 	}

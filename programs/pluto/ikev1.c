@@ -1009,7 +1009,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 
 				/* Saving connection name and whack sock id */
 				const char *tmp_name = st->st_connection->name;
-				struct fd *tmp_whack_sock = dup_any(st->st_whack_sock);
+				struct fd *tmp_whack_sock = dup_any(st->st_logger->object_whackfd);
 
 				/* deleting ISAKMP SA with the current remote peer */
 				delete_state(st);
@@ -2910,7 +2910,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		    (st->st_seen_nortel_vid)) {
 			log_state(RC_LOG, st, "Nortel 'Contivity Mode' detected, starting Quick Mode");
 			change_state(st, STATE_MAIN_R3); /* ISAKMP is up... */
-			quick_outI1(st->st_whack_sock, st, st->st_connection,
+			quick_outI1(st->st_logger->object_whackfd, st, st->st_connection,
 				    st->st_connection->policy, 1, SOS_NOBODY,
 				    NULL /* Setting NULL as this is responder and will not have sec ctx from a flow*/
 				    );

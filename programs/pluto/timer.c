@@ -206,7 +206,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		    enum_show(&timer_event_names, type),
 		    st->st_serialno,
 		    st->st_state->name,
-		    pri_fd(st->st_whack_sock));
+		    pri_fd(st->st_logger->object_whackfd));
 		release_pending_whacks(st, "release whack");
 		break;
 

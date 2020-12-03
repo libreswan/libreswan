@@ -99,7 +99,7 @@ void retransmit_v1_msg(struct state *st)
 
 		/* ??? DBG and real-world code mixed */
 		if (!DBGP(DBG_WHACKWATCH)) {
-			if (fd_p(st->st_whack_sock)) {
+			if (fd_p(st->st_logger->object_whackfd)) {
 				/*
 				 * Release whack because the observer
 				 * will get bored.
@@ -233,7 +233,7 @@ void retransmit_v2_msg(struct state *st)
 			"starting keying attempt %ld of at most %ld",
 			try, try_limit);
 
-		if (fd_p(st->st_whack_sock)) {
+		if (fd_p(st->st_logger->object_whackfd)) {
 			/*
 			 * Release whack because the observer will
 			 * get bored.
@@ -288,7 +288,7 @@ bool ikev2_schedule_retry(struct state *st)
 		} else {
 			jam(buf, "at most %ld", try_limit);
 		}
-		if (fd_p(st->st_whack_sock)) {
+		if (fd_p(st->st_logger->object_whackfd)) {
 			jam_string(buf, ", but releasing whack");
 		}
 	}

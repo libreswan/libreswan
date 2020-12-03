@@ -479,8 +479,8 @@ void initiate_redirect(struct state *st)
 			sensitive_ipstr(&redirect_ip, &b));
 
 	initiate_connections_by_name(c->name, NULL,
-				     st->st_whack_sock,
-				     st->st_whack_sock == NULL/*background*/);
+				     st->st_logger->object_whackfd,
+				     /*background?*/(st->st_logger->object_whackfd == NULL));
 
 	event_force(EVENT_SA_EXPIRE, right_state);
 	/*

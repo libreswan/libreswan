@@ -2107,7 +2107,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 						    IPSEC_SA,
 						    SA_INITIATOR,
 						    STATE_V2_IKE_AUTH_CHILD_I0,
-						    ike->sa.st_whack_sock);
+						    ike->sa.st_logger->object_whackfd);
 	struct state *cst = &child->sa;
 
 	/* XXX because the early child state ends up with the try counter check, we need to copy it */
@@ -2342,7 +2342,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 
 	/* child connection */
 	struct connection *cc = first_pending(pexpect_ike_sa(pst),
-					      &policy, &cst->st_whack_sock);
+					      &policy, &cst->st_logger->object_whackfd);
 
 	if (cc == NULL) {
 		cc = pc;
@@ -5885,7 +5885,7 @@ static bool add_mobike_payloads(struct state *st, pb_stream *pbs)
 void ikev2_rekey_ike_start(struct ike_sa *ike)
 {
 	struct pending p = {
-		.whack_sock = ike->sa.st_whack_sock,/*on-stack*/
+		.whack_sock = ike->sa.st_logger->object_whackfd,/*on-stack*/
 		.ike = ike,
 		.connection = ike->sa.st_connection,
 		.policy = LEMPTY,

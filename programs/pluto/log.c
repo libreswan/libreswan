@@ -199,11 +199,11 @@ bool whack_prompt_for(struct state *st, const char *prompt,
 		jam(buf, "%s ", st->st_connection->name);
 		/* the real message */
 		jam(buf, "prompt for %s:", prompt);
-		jambuf_to_whack(buf, st->st_whack_sock,
+		jambuf_to_whack(buf, st->st_logger->object_whackfd,
 				echo ? RC_USERPROMPT : RC_ENTERSECRET);
 	}
 
-	ssize_t n = fd_read(st->st_whack_sock, ansbuf, ansbuf_len);
+	ssize_t n = fd_read(st->st_logger->object_whackfd, ansbuf, ansbuf_len);
 	if (n < 0) {
 		log_state(RC_LOG_SERIOUS, st, "read(whackfd) failed: "PRI_ERRNO,
 			  pri_errno(-(int)n));
