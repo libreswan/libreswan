@@ -508,8 +508,8 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			whack_log(RC_FATAL, whackfd,
 				  "received whack command to delete a connection by username, but did not receive the username - ignored");
 		} else {
-			plog_global("received whack to delete connection by user %s",
-				    m->name);
+			log_global(LOG_STREAM, null_fd,
+				   "received whack to delete connection by user %s", m->name);
 			for_each_state(v1_delete_state_by_username, m->name,
 				       __func__);
 		}
@@ -521,8 +521,8 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			whack_log(RC_FATAL, whackfd,
 				  "received whack command to delete a connection by id, but did not receive the id - ignored");
 		} else {
-			plog_global("received whack to delete connection by id %s",
-				    m->name);
+			log_global(LOG_STREAM, null_fd,
+				   "received whack to delete connection by id %s", m->name);
 			for_each_state(delete_state_by_id_name, m->name, __func__);
 		}
 	}

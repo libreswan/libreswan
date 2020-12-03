@@ -354,7 +354,8 @@ void rate_log(const struct msg_digest *md,
 		rate_log_raw("", md->md_logger, message, ap);
 	} else if (nr_rate_limited_logs == limit) {
 		rate_log_raw("", md->md_logger, message, ap);
-		plog_global("rate limited log reached limit of %u entries", limit);
+		log_global(LOG_STREAM, null_fd,
+			   "rate limited log reached limit of %u entries", limit);
 	} else if (DBGP(DBG_BASE)) {
 		rate_log_raw(DEBUG_PREFIX, md->md_logger, message, ap);
 	}

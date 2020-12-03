@@ -136,8 +136,6 @@ void free_logger(struct logger **logp, where_t where);
 			    MESSAGE,##__VA_ARGS__);			\
 	}
 
-#define plog_global(MESSAGE, ...) log_global(LOG_STREAM, null_fd, MESSAGE, ##__VA_ARGS__)
-
 /*
  * Log with a connection context.
  *
