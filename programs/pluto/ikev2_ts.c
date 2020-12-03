@@ -169,12 +169,12 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 		diag_t d;
 		d = pbs_out_address(&ts_pbs2, &ts->net.start, "IP start");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outpbs->out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 		d = pbs_out_address(&ts_pbs2, &ts->net.end, "IP end");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outpbs->out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 		break;

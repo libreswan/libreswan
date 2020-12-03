@@ -102,12 +102,12 @@ bool emit_v2UNKNOWN(const char *victim, enum isakmp_xchg_types exchange_type,
 		    enum_short_name(&ikev2_exchange_names, exchange_type),
 		    victim);
 	struct ikev2_generic gen = {
-		.isag_critical = build_ikev2_critical(impair.unknown_v2_payload_critical, outs->out_logger),
+		.isag_critical = build_ikev2_critical(impair.unknown_v2_payload_critical, outs->outs_logger),
 	};
 	struct pbs_out pbs;
 	d = pbs_out_struct(outs, &ikev2_unknown_payload_desc, &gen, sizeof(gen), &pbs);
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 	close_output_pbs(&pbs);
@@ -129,12 +129,12 @@ bool emit_v2V(const char *string, pb_stream *outs)
 	struct pbs_out pbs;
 	d = pbs_out_struct(outs, &ikev2_vendor_id_desc, &gen, sizeof(gen), &pbs);
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 	d = pbs_out_raw(&pbs, string, strlen(string), string);
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 	close_output_pbs(&pbs);
@@ -194,7 +194,7 @@ bool emit_v2Nsa_pl(v2_notification_t ntype,
 	dbg("adding a v2N Payload");
 
 	struct ikev2_notify n = {
-		.isan_critical = build_ikev2_critical(false, outs->out_logger),
+		.isan_critical = build_ikev2_critical(false, outs->outs_logger),
 		.isan_protoid = protoid,
 		.isan_spisize = spi != NULL ? sizeof(*spi) : 0,
 		.isan_type = ntype,
@@ -207,7 +207,7 @@ bool emit_v2Nsa_pl(v2_notification_t ntype,
 	if (spi != NULL) {
 		diag_t d = pbs_out_raw(&pls, spi, sizeof(*spi), "SPI");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 			return false;
 		}
 	}
@@ -241,7 +241,7 @@ bool emit_v2N_bytes(v2_notification_t ntype,
 	if (size > 0) {
 		diag_t d = pbs_out_raw(&pl, bytes, size, "Notify data");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 			return false;
 		}
 	}
@@ -274,7 +274,7 @@ bool emit_v2N_signature_hash_algorithms(lset_t sighash_policy,
 		diag_t d = pbs_out_raw(&n_pbs, &hash_id, sizeof(hash_id), \
 				       "hash algorithm identifier "#ID);\
 		if (d != NULL) {					\
-			log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", ""); \
+			log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", ""); \
 			return false;					\
 		}							\
 	}

@@ -660,19 +660,19 @@ bool emit_v2KE(chunk_t *g, const struct dh_desc *group,
 
 	if (impair.ke_payload >= IMPAIR_EMIT_ROOF) {
 		uint8_t byte = impair.ke_payload - IMPAIR_EMIT_ROOF;
-		llog(RC_LOG, outs->out_logger,
+		llog(RC_LOG, outs->outs_logger,
 			    "IMPAIR: sending bogus KE (g^x) == %u value to break DH calculations", byte);
 		/* Only used to test sending/receiving bogus g^x */
 		diag_t d = pbs_out_repeated_byte(&kepbs, byte, g->len, "ikev2 impair KE (g^x) == 0");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 			return false;
 		}
 	} else if (impair.ke_payload == IMPAIR_EMIT_EMPTY) {
-		llog(RC_LOG, outs->out_logger, "IMPAIR: sending an empty KE value");
+		llog(RC_LOG, outs->outs_logger, "IMPAIR: sending an empty KE value");
 		diag_t d = pbs_out_zero(&kepbs, 0, "ikev2 impair KE (g^x) == empty");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 			return false;
 		}
 	} else {
@@ -1739,7 +1739,7 @@ static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
 	if (attr.len > 0) {
 		diag_t d = pbs_out_address(&a_pbs, ip, story);
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, a_pbs.out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, a_pbs.outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1748,7 +1748,7 @@ static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
 		uint8_t ipv6_prefix_len = INTERNL_IP6_PREFIX_LEN;
 		diag_t d = pbs_out_raw(&a_pbs, &ipv6_prefix_len, sizeof(uint8_t), "INTERNL_IP6_PREFIX_LEN");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outpbs->out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1773,7 +1773,7 @@ static stf_status ikev2_ship_cp_attr_str(uint16_t type, char *str,
 	if (attr.len > 0) {
 		diag_t d = pbs_out_raw(&a_pbs, str, attr.len, story);
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outpbs->out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 	}

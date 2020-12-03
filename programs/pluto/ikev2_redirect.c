@@ -266,28 +266,28 @@ bool redirect_global(struct msg_digest *md)
 	return true;
 }
 
-bool emit_redirect_notification(const shunk_t dest_str, struct pbs_out *pbs)
+bool emit_redirect_notification(const shunk_t dest_str, struct pbs_out *outs)
 {
 	passert(dest_str.ptr != NULL);
 
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
 	chunk_t data = build_redirect_notification_data_str(dest_str, NULL,
 							    buf, sizeof(buf),
-							    pbs->out_logger);
+							    outs->outs_logger);
 
 	return data.len != 0 &&
-		emit_v2N_bytes(v2N_REDIRECT, data.ptr, data.len, pbs);
+		emit_v2N_bytes(v2N_REDIRECT, data.ptr, data.len, outs);
 }
 
-bool emit_redirected_from_notification(const ip_address *ip_addr, struct pbs_out *pbs)
+bool emit_redirected_from_notification(const ip_address *ip_addr, struct pbs_out *outs)
 {
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
 	chunk_t data = build_redirect_notification_data_ip(ip_addr, NULL,
 							   buf, sizeof(buf),
-							   pbs->out_logger);
+							   outs->outs_logger);
 
 	return data.len != 0 &&
-		emit_v2N_bytes(v2N_REDIRECTED_FROM, data.ptr, data.len, pbs);
+		emit_v2N_bytes(v2N_REDIRECTED_FROM, data.ptr, data.len, outs);
 }
 
 /*

@@ -1246,7 +1246,7 @@ static bool emit_transform_header(struct pbs_out *proposal_pbs,
 	diag_t d = pbs_out_struct(proposal_pbs, &ikev2_trans_desc,
 				  &trans, sizeof(trans), transform_pbs);
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, proposal_pbs->out_logger, &d,
+		log_diag(RC_LOG_SERIOUS, proposal_pbs->outs_logger, &d,
 			 "out_struct() of transform failed: ");
 		return false;
 	}
@@ -1501,7 +1501,7 @@ static bool emit_proposal(struct pbs_out *sa_pbs,
 			  bool allow_single_transform_none)
 {
 	int numtrans = walk_transforms(NULL, -1, proposal, propnum,
-				       allow_single_transform_none, sa_pbs->out_logger);
+				       allow_single_transform_none, sa_pbs->outs_logger);
 	if (numtrans < 0) {
 		return false;
 	}
@@ -1527,7 +1527,7 @@ static bool emit_proposal(struct pbs_out *sa_pbs,
 	}
 
 	if (walk_transforms(&proposal_pbs, numtrans, proposal, propnum,
-			    allow_single_transform_none, sa_pbs->out_logger) < 0) {
+			    allow_single_transform_none, sa_pbs->outs_logger) < 0) {
 		return false;
 	}
 
@@ -1543,7 +1543,7 @@ bool ikev2_emit_sa_proposals(struct pbs_out *pbs,
 
 	/* SA header out */
 	struct ikev2_sa sa = {
-		.isasa_critical = build_ikev2_critical(false, pbs->out_logger),
+		.isasa_critical = build_ikev2_critical(false, pbs->outs_logger),
 	};
 	pb_stream sa_pbs;
 	if (!out_struct(&sa, &ikev2_sa_desc, pbs, &sa_pbs))

@@ -51,16 +51,16 @@ bool create_ppk_id_payload(chunk_t *ppk_id, struct ppk_id_payload *payl)
  * used by initiator to make chunk_t from ppk_id payload
  * for sending it in PPK_ID Notify Payload over the wire
  */
-bool emit_unified_ppk_id(struct ppk_id_payload *payl, pb_stream *pbs)
+bool emit_unified_ppk_id(struct ppk_id_payload *payl, pb_stream *outs)
 {
 	diag_t d;
 	uint8_t type = PPK_ID_FIXED;
-	d = pbs_out_raw(pbs, &type, sizeof(type), "PPK_ID_FIXED");
+	d = pbs_out_raw(outs, &type, sizeof(type), "PPK_ID_FIXED");
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, pbs->out_logger, &d, "%s", "");
+		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
-	return pbs_out_hunk(payl->ppk_id, pbs, "PPK_ID");
+	return pbs_out_hunk(payl->ppk_id, outs, "PPK_ID");
 }
 
 /*

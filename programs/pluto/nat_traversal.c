@@ -184,7 +184,7 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 	/* First: one with local (source) IP & port */
 
 	hb = natd_hash(&ike_alg_hash_sha1, ike_spis, local_endpoint,
-		       outs->out_logger);
+		       outs->outs_logger);
 	if (!emit_v2N_hunk(v2N_NAT_DETECTION_SOURCE_IP, hb, outs)) {
 		return false;
 	}
@@ -192,7 +192,7 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 	/* Second: one with remote (destination) IP & port */
 
 	hb = natd_hash(&ike_alg_hash_sha1, ike_spis, remote_endpoint,
-		       outs->out_logger);
+		       outs->outs_logger);
 	if (!emit_v2N_hunk(v2N_NAT_DETECTION_DESTINATION_IP, hb, outs)) {
 		return false;
 	}
@@ -555,7 +555,7 @@ static bool emit_one_natoa(pb_stream *outs,
 	}
 	diag_t d = pbs_out_address(&pbs, ip, nm);
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 

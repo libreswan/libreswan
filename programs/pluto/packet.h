@@ -164,7 +164,11 @@ struct packet_byte_stream {
 	struct fixup last_substructure;
 
 	/*
-	 * XXX: IKEv2 and output only logger.
+	 * Output packet byte Stream logger.
+	 *
+	 * Valid while the struct pbs_out is "open".
+	 *
+	 * NOT FOR INPUT.
 	 *
 	 * IKEv2 uses on-stack pbs_out which should ensure the
 	 * lifetime of the logger pointer is LE the lifetime of the
@@ -177,7 +181,7 @@ struct packet_byte_stream {
 	 * switches to a state so more complicated; and its lifetime
 	 * is that of MD.
 	 */
-	struct logger *out_logger;
+	struct logger *outs_logger;
 };
 
 typedef struct packet_byte_stream pb_stream;
@@ -296,7 +300,7 @@ diag_t pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len,
 		struct pbs_out *outs_ = OUTS;				\
 		diag_t d_ = pbs_out_raw(outs_, hunk_.ptr, hunk_.len, (NAME)); \
 		if (d_ != NULL) {					\
-			log_diag(RC_LOG_SERIOUS, outs_->out_logger, &d_, "%s", ""); \
+			log_diag(RC_LOG_SERIOUS, outs_->outs_logger, &d_, "%s", ""); \
 		}							\
 		d_ == NULL;						\
 	})

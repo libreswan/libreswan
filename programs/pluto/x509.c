@@ -1166,7 +1166,7 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 			 * and should support more in the future
 			 * */
 			chunk_t cr_full_hash = ikev2_hash_nss_cert_key(cacert,
-								       outs->out_logger);
+								       outs->outs_logger);
 
 			if (!pbs_out_hunk(cr_full_hash, &cr_pbs, "CA cert public key hash")) {
 				free_chunk_content(&cr_full_hash);
@@ -1306,7 +1306,7 @@ stf_status ikev2_send_cert(const struct connection *c, struct pbs_out *outpbs)
 			return STF_INTERNAL_ERROR;
 		}
 		struct ikev2_cert pkcs7_hdr = {
-			.isac_critical = build_ikev2_critical(false, outpbs->out_logger),
+			.isac_critical = build_ikev2_critical(false, outpbs->outs_logger),
 			.isac_enc = CERT_PKCS7_WRAPPED_X509,
 		};
 		pb_stream cert_pbs;
@@ -1350,7 +1350,7 @@ stf_status ikev2_send_cert(const struct connection *c, struct pbs_out *outpbs)
 #endif
 
 	const struct ikev2_cert certhdr = {
-		.isac_critical = build_ikev2_critical(false, outpbs->out_logger),
+		.isac_critical = build_ikev2_critical(false, outpbs->outs_logger),
 		.isac_enc = mycert.ty,
 	};
 

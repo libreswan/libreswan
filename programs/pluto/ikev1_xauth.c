@@ -209,7 +209,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 	{
 		diag_t d = pbs_out_address(&attrval, ia, "IP_addr");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, attrval.out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 		break;
@@ -219,7 +219,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 	{
 		diag_t d = pbs_out_address(&attrval, &c->spd.this.client.addr, "IP4_subnet");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, attrval.out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -256,7 +256,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 			/* emit attribute's value */
 			diag_t d = pbs_out_address(&attrval, &dnsip, "IP4_dns");
 			if (d != NULL) {
-				log_diag(RC_LOG_SERIOUS, attrval.out_logger, &d, "%s", "");
+				log_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
 				return STF_INTERNAL_ERROR;
 			}
 
