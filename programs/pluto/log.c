@@ -41,7 +41,6 @@
 #include "impair.h"
 #include "demux.h"	/* for struct msg_digest */
 #include "pending.h"
-#include "pluto_shutdown.h"		/* for exit_pluto() */
 
 static void log_raw(int severity, const char *prefix, struct jambuf *buf);
 
@@ -260,11 +259,6 @@ void close_log(void)
 		(void)fclose(pluto_log_fp);
 		pluto_log_fp = NULL;
 	}
-}
-
-void libreswan_exit(enum pluto_exit_code rc)
-{
-	exit_pluto(rc);
 }
 
 /* emit message to whack.
