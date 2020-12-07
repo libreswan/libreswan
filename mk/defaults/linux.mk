@@ -119,3 +119,26 @@ ifeq ($(LINUX_VARIANT),fedora)
 
 endif
 #(info USE_GLIBC_KERN_FLIP_HEADERS=$(USE_GLIBC_KERN_FLIP_HEADERS))
+
+
+#
+# INITSYSTEM
+#
+
+ifndef INITSYSTEM
+  ifeq ($(shell test -r /proc/1/comm && cat /proc/1/comm),systemd)
+    #  works for systemd, not upstart?
+    INITSYSTEM=systemd
+  else ifneq ($(and $(wildcard /lib/systemd/systemd),$(wildcard /var/run/systemd)),)
+    INITSYSTEM=systemd
+  else ifneq ($(and $(wildcard /sbin/start),$(wildcard /etc/redhat-release)),)
+    # override for rhel/centos to use sysvinit
+    INITSYSTEM=sysvinit
+  else ifneq ($(wildcard /sbin/start),)
+    INITSYSTEM=upstart
+  else ifneq ($(or $(wildcard /sbin/rc-service),$(wildcard /usr/sbin/rc-service)),)
+    INITSYSTEM=openrc
+  else
+    INITSYSTEM=sysvinit
+  endif
+endif

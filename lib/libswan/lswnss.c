@@ -51,9 +51,9 @@ diag_t lsw_nss_setup(const char *configdir, unsigned setup_flags,
 	 * Always log what is about to happen.
 	 */
 	if (nssdir == NULL) {
-		log_message(RC_LOG, logger, "Initializing NSS");
+		llog(RC_LOG, logger, "Initializing NSS");
 	} else {
-		log_message(RC_LOG, logger, "Initializing NSS using %s database \"%s\"",
+		llog(RC_LOG, logger, "Initializing NSS using %s database \"%s\"",
 			    (flags & LSW_NSS_READONLY) ? "read-only" : "read-write",
 			    nssdir);
 	}
@@ -145,7 +145,7 @@ PK11SlotInfo *lsw_nss_get_authenticated_slot(struct logger *logger)
 {
 	PK11SlotInfo *slot = PK11_GetInternalKeySlot();
 	if (slot == NULL) {
-		log_message(RC_LOG_SERIOUS|ERROR_STREAM, logger,
+		llog(RC_LOG_SERIOUS|ERROR_STREAM, logger,
 			    "no internal key slot");
 		return NULL;
 	}
@@ -155,7 +155,7 @@ PK11SlotInfo *lsw_nss_get_authenticated_slot(struct logger *logger)
 						     lsw_nss_get_password_context(logger));
 		if (status != SECSuccess) {
 			const char *token = PK11_GetTokenName(slot);
-			log_message(RC_LOG_SERIOUS|ERROR_STREAM, logger,
+			llog(RC_LOG_SERIOUS|ERROR_STREAM, logger,
 				    "authentication of \"%s\" failed", token);
 			PK11_FreeSlot(slot);
 			return NULL;
@@ -186,13 +186,13 @@ static char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg)
 	 */
 	const char *token = PK11_GetTokenName(slot);
 	if (token == NULL) {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "NSS Password slot has no token name");
 		return NULL;
 	}
 
 	if (PK11_ProtectedAuthenticationPath(slot)) {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "NSS Password for token \"%s\" failed, slot has protected authentication path",
 			    token);
 		return NULL;
@@ -205,7 +205,7 @@ static char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg)
 	 */
 	if (oco->nsspassword != NULL) {
 		char *password = PORT_Strdup(oco->nsspassword);
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "NSS Password for token \"%s\" with length %zu passed to NSS",
 			    token, strlen(password));
 		return password;
@@ -218,7 +218,7 @@ static char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg)
 	const int max_password_file_size = 4096;
 	char *passwords = PORT_ZAlloc(max_password_file_size);
 	if (passwords == NULL) {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "NSS Password file \"%s\" for token \"%s\" could not be loaded, NSS memory allocate failed",
 			    oco->nsspassword_file, token);
 		return NULL;
@@ -232,7 +232,7 @@ static char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg)
 	{
 		PRFileDesc *fd = PR_Open(oco->nsspassword_file, PR_RDONLY, 0);
 		if (fd == NULL) {
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "NSS Password file \"%s\" for token \"%s\" could not be opened for reading",
 				    oco->nsspassword_file, token);
 			PORT_Free(passwords);
@@ -259,7 +259,7 @@ static char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg)
 			i++;
 
 		if (i == passwords_len) {
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "NSS Password file \"%s\" for token \"%s\" ends with a partial line (ignored)",
 				    oco->nsspassword_file, token);
 			break;	/* no match found */
@@ -278,7 +278,7 @@ static char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg)
 		    p[toklen] == ':') {
 			/* we have a winner! */
 			p = PORT_Strdup(&p[toklen + 1]);
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "NSS Password from file \"%s\" for token \"%s\" with length %zu passed to NSS",
 				    oco->nsspassword_file, token, PORT_Strlen(p));
 			PORT_Free(passwords);
@@ -287,7 +287,7 @@ static char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg)
 	}
 
 	/* no match found in password file */
-	log_message(RC_LOG, logger,
+	llog(RC_LOG, logger,
 		    "NSS Password file \"%s\" does not contain token \"%s\"",
 		    oco->nsspassword_file, token);
 	PORT_Free(passwords);

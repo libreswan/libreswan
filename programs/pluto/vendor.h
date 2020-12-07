@@ -28,8 +28,10 @@
 #include "packet.h"		/* for pb_stream */
 
 struct msg_digest;
+struct connection;
+struct logger;
 
-void init_vendorid(void);
+void init_vendorid(struct logger *logger);
 
 void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 		     bool ikev2, struct logger *logger);

@@ -22,7 +22,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-camellia
-002 added IKEv2 connection "westnet-eastnet-camellia"
+002 "westnet-eastnet-camellia": added IKEv2 connection
 west #
  ipsec whack --impair suppress-retransmits
 west #

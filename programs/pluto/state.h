@@ -327,7 +327,6 @@ struct state {
 
 	struct connection *st_connection;       /* connection for this SA */
  	struct logger *st_logger;
-#define st_whack_sock st_logger->object_whackfd
 
 	struct trans_attrs st_oakley;
 
@@ -639,7 +638,7 @@ struct state {
 	 * (before ST_OFFLOADED_TASK was added), its presence would
 	 * have also served as a state-is-busy marker.
 	 */
-	struct pluto_crypto_req_cont *st_offloaded_task;
+	struct job *st_offloaded_task;
 	bool st_v1_offloaded_task_in_background;
 
 	struct msg_digest *st_suspended_md;     /* suspended state-transition */

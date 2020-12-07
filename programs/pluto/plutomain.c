@@ -335,7 +335,7 @@ static struct starter_config *read_cfg_file(char *configfile, long longindex, st
 	}
 
 	if (errl.errors != NULL) {
-		log_message(RC_LOG, logger, "pluto --config '%s', ignoring: %s",
+		llog(RC_LOG, logger, "pluto --config '%s', ignoring: %s",
 			    configfile, errl.errors);
 		pfree(errl.errors);
 	}
@@ -403,7 +403,7 @@ static void pluto_init_nss(const char *nssdir, struct logger *logger)
 	if (d != NULL) {
 		fatal_diag(PLUTO_EXIT_NSS_FAIL, logger, &d, "%s", "");
 	}
-	log_message(RC_LOG, logger, "NSS crypto library initialized");
+	llog(RC_LOG, logger, "NSS crypto library initialized");
 
 	/*
 	 * This exists purely to make the BSI happy.
@@ -415,7 +415,7 @@ static void pluto_init_nss(const char *nssdir, struct logger *logger)
 
 		get_bsi_random(seedbytes, buf, logger); /* much TLA, very blocking */
 		SECStatus rv = PK11_RandomUpdate(buf, seedbytes);
-		log_message(RC_LOG, logger, "seeded %d bytes into the NSS PRNG", seedbytes);
+		llog(RC_LOG, logger, "seeded %d bytes into the NSS PRNG", seedbytes);
 		passert(rv == SECSuccess);
 		messupn(buf, seedbytes);
 		pfree(buf);
@@ -556,7 +556,7 @@ static void fatal_opt(int longindex, struct logger *logger, const char *fmt, ...
 {
 	passert(longindex >= 0);
 	const char *optname = long_opts[longindex].name;
-	LOG_JAMBUF(RC_LOG, logger, buf) {
+	LLOG_JAMBUF(RC_LOG, logger, buf) {
 		if (optarg == NULL) {
 			jam(buf, "option --%s invalid: ", optname);
 		} else {
@@ -736,16 +736,16 @@ int main(int argc, char **argv)
 			const char *optmeta = optname + strlen(optname) + 1;	/* after '\0' */
 			switch (optmeta[0]) {
 			case '_':
-				log_message(RC_LOG, logger,
+				llog(RC_LOG, logger,
 					    "warning: option \"--%s\" with '_' in its name is obsolete; use '-'",
 					    optname);
 				break;
 			case '>':
-				log_message(RC_LOG, logger,
+				llog(RC_LOG, logger,
 					    "warning: option \"--%s\" is obsolete; use \"--%s\"", optname, optmeta + 1);
 				break;
 			case '!':
-				log_message(RC_LOG, logger,
+				llog(RC_LOG, logger,
 					    "warning: option \"--%s\" is obsolete; ignored", optname);
 				continue;	/* ignore it! */
 			}
@@ -816,7 +816,7 @@ int main(int argc, char **argv)
 		case 'c':	/* --seedbits */
 			pluto_nss_seedbits = atoi(optarg);
 			if (pluto_nss_seedbits == 0) {
-				log_message(RC_LOG, logger, "seedbits must be an integer > 0");
+				llog(RC_LOG, logger, "seedbits must be an integer > 0");
 				/* not exit_pluto because we are not initialized yet */
 				exit(PLUTO_EXIT_NSS_FAIL);
 			}
@@ -908,11 +908,11 @@ int main(int argc, char **argv)
 				/*
 				 * ??? should we continue on failure?
 				 */
-				log_message(RC_LOG, logger,
+				llog(RC_LOG, logger,
 					    "invalid listen argument ignored: %s\n", e);
 			} else {
 				pluto_listen = clone_str(optarg, "pluto_listen");
-				log_message(RC_LOG, logger,
+				llog(RC_LOG, logger,
 					    "bind() will be filtered for %s\n",
 					    pluto_listen);
 			}
@@ -923,7 +923,7 @@ int main(int argc, char **argv)
 #ifdef BSDKAME_SUPPORT
 			kernel_ops = &bsdkame_kernel_ops;
 #else
-			log_message(RC_LOG, logger, "--use-bsdkame not supported");
+			llog(RC_LOG, logger, "--use-bsdkame not supported");
 #endif
 			continue;
 
@@ -931,7 +931,7 @@ int main(int argc, char **argv)
 #ifdef XFRM_SUPPORT
 			kernel_ops = &xfrm_kernel_ops;
 #else
-			log_message(RC_LOG, logger, "--use-xfrm not supported");
+			llog(RC_LOG, logger, "--use-xfrm not supported");
 #endif
 			continue;
 
@@ -1129,7 +1129,7 @@ int main(int argc, char **argv)
 			ip_address rip;
 			check_err(ttoaddr(optarg, 0, AF_UNSPEC, &rip), longindex, logger);
 			set_global_redirect_dests(optarg);
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "all IKE_SA_INIT requests will from now on be redirected to: %s\n",
 				    optarg);
 			continue;
@@ -1144,7 +1144,7 @@ int main(int argc, char **argv)
 			} else if (streq(optarg, "auto")) {
 				global_redirect = GLOBAL_REDIRECT_AUTO;
 			} else {
-				log_message(RC_LOG, logger,
+				llog(RC_LOG, logger,
 					    "invalid option argument for global-redirect (allowed arguments: yes, no, auto)");
 			}
 			continue;
@@ -1200,7 +1200,7 @@ int main(int argc, char **argv)
 			pluto_ikev1_pol = cfg->setup.options[KBF_GLOBAL_IKEv1];
 #ifndef USE_IKEv1
 			if (pluto_ikev1_pol != GLOBAL_IKEv1_ACCEPT) {
-				log_message(RC_LOG, logger, "ignoring ikev1-policy= as IKEv1 support is not compiled in. Incoming IKEv1 packets are silently dropped");
+				llog(RC_LOG, logger, "ignoring ikev1-policy= as IKEv1 support is not compiled in. Incoming IKEv1 packets are silently dropped");
 				pluto_ikev1_pol = GLOBAL_IKEv1_DROP;
 			}
 #endif
@@ -1243,7 +1243,7 @@ int main(int argc, char **argv)
 				global_redirect = GLOBAL_REDIRECT_AUTO;
 			} else {
 				global_redirect = GLOBAL_REDIRECT_NO;
-				log_message(RC_LOG, logger, "unknown argument for global-redirect option");
+				llog(RC_LOG, logger, "unknown argument for global-redirect option");
 			}
 
 			crl_check_interval = deltatime(
@@ -1323,9 +1323,9 @@ int main(int argc, char **argv)
 					pfreeany(pluto_stats_binary);
 					/* statsbin= */
 					pluto_stats_binary = clone_str(cfg->setup.strings[KSF_STATSBINARY], "statsbin via --config");
-					log_message(RC_LOG, logger, "statsbinary set to %s", pluto_stats_binary);
+					llog(RC_LOG, logger, "statsbinary set to %s", pluto_stats_binary);
 				} else {
-					log_message(RC_LOG, logger, "statsbinary= '%s' ignored - file does not exist or is not executable",
+					llog(RC_LOG, logger, "statsbinary= '%s' ignored - file does not exist or is not executable",
 						    pluto_stats_binary);
 				}
 			}
@@ -1349,7 +1349,7 @@ int main(int argc, char **argv)
 				if (streq(protostack, "auto") || streq(protostack, "native") ||
 				    streq(protostack, "nokernel")) {
 
-					log_message(RC_LOG, logger, "the option protostack=%s is obsoleted, falling back to protostack=%s",
+					llog(RC_LOG, logger, "the option protostack=%s is obsoleted, falling back to protostack=%s",
 						    protostack, kernel_ops->kern_name);
 				} else if (streq(protostack, "klips")) {
 					fatal(PLUTO_EXIT_KERNEL_FAIL, logger,
@@ -1366,7 +1366,7 @@ int main(int argc, char **argv)
 					kernel_ops = &bsdkame_kernel_ops;
 #endif
 				} else {
-					log_message(RC_LOG, logger, "protostack=%s ignored, using default protostack=%s",
+					llog(RC_LOG, logger, "protostack=%s ignored, using default protostack=%s",
 						    protostack, kernel_ops->kern_name);
 				}
 			}
@@ -1386,7 +1386,7 @@ int main(int argc, char **argv)
 			passert(EF_PROTECT_BELOW);
 			passert(EF_PROTECT_FREE);
 #else
-			log_message(RC_LOG, logger, "efence support is not enabled; option --efence-protect ignored");
+			llog(RC_LOG, logger, "efence support is not enabled; option --efence-protect ignored");
 #endif
 			continue;
 
@@ -1396,7 +1396,7 @@ int main(int argc, char **argv)
 			if (lmod_arg(&mod, &debug_lmod_info, optarg, true/*enable*/)) {
 				cur_debugging = lmod(cur_debugging, mod);
 			} else {
-				log_message(RC_LOG, logger, "unrecognized --debug '%s' option ignored",
+				llog(RC_LOG, logger, "unrecognized --debug '%s' option ignored",
 					    optarg);
 			}
 			continue;
@@ -1430,7 +1430,7 @@ int main(int argc, char **argv)
 	 * Anything (aka an argument) after all options consumed?
 	 */
 	if (optind != argc) {
-		log_message(RC_LOG, logger, "unexpected trailing argument: %s", argv[optind]);
+		llog(RC_LOG, logger, "unexpected trailing argument: %s", argv[optind]);
 		/* not exit_pluto because we are not initialized yet */
 		exit(PLUTO_EXIT_FAIL);
 	}
@@ -1438,7 +1438,7 @@ int main(int argc, char **argv)
 	if (chdir(coredir) == -1) {
 		int e = errno;
 
-		log_message(RC_LOG, logger, "pluto: warning: chdir(\"%s\") to dumpdir failed (%d: %s)",
+		llog(RC_LOG, logger, "pluto: warning: chdir(\"%s\") to dumpdir failed (%d: %s)",
 			coredir, e, strerror(e));
 	}
 
@@ -1567,7 +1567,7 @@ int main(int argc, char **argv)
 		 */
 		if (cur_debugging & DBG_PRIVATE) {
 			cur_debugging &= ~DBG_PRIVATE;
-			log_message(RC_LOG_SERIOUS, logger, "FIPS mode: debug-private disabled as such logging is not allowed");
+			llog(RC_LOG_SERIOUS, logger, "FIPS mode: debug-private disabled as such logging is not allowed");
 		}
 		/*
 		 * clear out --debug-crypt if set
@@ -1577,7 +1577,7 @@ int main(int argc, char **argv)
 		 */
 		if (cur_debugging & DBG_CRYPT) {
 			cur_debugging &= ~DBG_CRYPT;
-			log_message(RC_LOG_SERIOUS, logger, "FIPS mode: debug-crypt disabled as such logging is not allowed");
+			llog(RC_LOG_SERIOUS, logger, "FIPS mode: debug-crypt disabled as such logging is not allowed");
 		}
 	}
 
@@ -1590,22 +1590,22 @@ int main(int argc, char **argv)
 	 */
 
 	if (impair.force_fips) {
-		log_message(RC_LOG, logger, "IMPAIR: forcing FIPS checks to true to emulate FIPS mode");
+		llog(RC_LOG, logger, "IMPAIR: forcing FIPS checks to true to emulate FIPS mode");
 		lsw_set_fips_mode(LSW_FIPS_ON);
 	}
 
 	bool nss_fips_mode = PK11_IsFIPS();
 	if (libreswan_fipsmode()) {
-		log_message(RC_LOG, logger, "FIPS mode enabled for pluto daemon");
+		llog(RC_LOG, logger, "FIPS mode enabled for pluto daemon");
 		if (nss_fips_mode) {
-			log_message(RC_LOG, logger, "NSS library is running in FIPS mode");
+			llog(RC_LOG, logger, "NSS library is running in FIPS mode");
 		} else {
 			fatal(PLUTO_EXIT_FIPS_FAIL, logger, "pluto in FIPS mode but NSS library is not");
 		}
 	} else {
-		log_message(RC_LOG, logger, "FIPS mode disabled for pluto daemon");
+		llog(RC_LOG, logger, "FIPS mode disabled for pluto daemon");
 		if (nss_fips_mode) {
-			log_message(RC_LOG_SERIOUS, logger, "Warning: NSS library is running in FIPS mode");
+			llog(RC_LOG_SERIOUS, logger, "Warning: NSS library is running in FIPS mode");
 		}
 	}
 
@@ -1618,21 +1618,21 @@ int main(int argc, char **argv)
 		if (d != NULL) {
 			fatal_diag(PLUTO_EXIT_NSS_FAIL, logger, &d, "initializing NSS OCSP failed: ");
 		}
-		log_message(RC_LOG, logger, "NSS OCSP started");
+		llog(RC_LOG, logger, "NSS OCSP started");
 	}
 
 #ifdef FIPS_CHECK
-	log_message(RC_LOG, logger, "FIPS HMAC integrity support [enabled]");
+	llog(RC_LOG, logger, "FIPS HMAC integrity support [enabled]");
 	bool fips_files = FIPSCHECK_verify_files(fips_package_files);
 	if (fips_files) {
-		log_message(RC_LOG, logger, "FIPS HMAC integrity verification self-test passed");
+		llog(RC_LOG, logger, "FIPS HMAC integrity verification self-test passed");
 	} else if (libreswan_fipsmode()) {
 		fatal(PLUTO_EXIT_FIPS_FAIL, logger, "FIPS HMAC integrity verification self-test FAILED");
 	} else {
-		log_message(RC_LOG_SERIOUS, logger, "FIPS HMAC integrity verification self-test FAILED");
+		llog(RC_LOG_SERIOUS, logger, "FIPS HMAC integrity verification self-test FAILED");
 	}
 #else
-	log_message(RC_LOG, logger, "FIPS HMAC integrity support [disabled]");
+	llog(RC_LOG, logger, "FIPS HMAC integrity support [disabled]");
 #endif
 
 #ifdef HAVE_LIBCAP_NG
@@ -1663,43 +1663,43 @@ int main(int argc, char **argv)
 	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN, CAP_NET_RAW,
 			CAP_DAC_READ_SEARCH, -1);
 	capng_apply(CAPNG_SELECT_BOTH);
-	log_message(RC_LOG, logger, "libcap-ng support [enabled]");
+	llog(RC_LOG, logger, "libcap-ng support [enabled]");
 #else
-	log_message(RC_LOG, logger, "libcap-ng support [disabled]");
+	llog(RC_LOG, logger, "libcap-ng support [disabled]");
 #endif
 
 #ifdef USE_LINUX_AUDIT
 	linux_audit_init(log_to_audit, logger);
 #else
-	log_message(RC_LOG, logger, "Linux audit support [disabled]");
+	llog(RC_LOG, logger, "Linux audit support [disabled]");
 #endif
 
 	{
 		const char *vc = ipsec_version_code();
-		log_message(RC_LOG, logger, "Starting Pluto (Libreswan Version %s%s) pid:%u",
+		llog(RC_LOG, logger, "Starting Pluto (Libreswan Version %s%s) pid:%u",
 			vc, compile_time_interop_options, getpid());
 	}
 
-	log_message(RC_LOG, logger, "core dump dir: %s", coredir);
+	llog(RC_LOG, logger, "core dump dir: %s", coredir);
 	if (oco->secretsfile && *oco->secretsfile)
-		log_message(RC_LOG, logger, "secrets file: %s", oco->secretsfile);
+		llog(RC_LOG, logger, "secrets file: %s", oco->secretsfile);
 
-	log_message(RC_LOG, logger, leak_detective ?
+	llog(RC_LOG, logger, leak_detective ?
 		"leak-detective enabled" : "leak-detective disabled");
 
-	log_message(RC_LOG, logger, "NSS crypto [enabled]");
+	llog(RC_LOG, logger, "NSS crypto [enabled]");
 
 #ifdef AUTH_HAVE_PAM
-	log_message(RC_LOG, logger, "XAUTH PAM support [enabled]");
+	llog(RC_LOG, logger, "XAUTH PAM support [enabled]");
 #else
-	log_message(RC_LOG, logger, "XAUTH PAM support [disabled]");
+	llog(RC_LOG, logger, "XAUTH PAM support [disabled]");
 #endif
 
 	/*
 	 * Log impair-* functions that were enabled
 	 */
 	if (have_impairments()) {
-		LOG_JAMBUF(RC_LOG, logger, buf) {
+		LLOG_JAMBUF(RC_LOG, logger, buf) {
 			jam(buf, "Warning: impairments enabled: ");
 			jam_impairments(buf, "+");
 		}
@@ -1740,7 +1740,7 @@ int main(int argc, char **argv)
 
 	start_server_helpers(nhelpers, logger);
 	init_kernel(logger);
-	init_vendorid();
+	init_vendorid(logger);
 #if defined(LIBCURL) || defined(LIBLDAP)
 	start_crl_fetch_helper(logger);
 #endif

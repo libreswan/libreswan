@@ -14,7 +14,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add labeled
-002 added IKEv1 connection "labeled"
+002 "labeled": added IKEv1 connection
 east #
  gcc -Wall -o OUTPUT/getpeercon_server -lselinux /source/contrib/labeled-ipsec/getpeercon_server.c
 east #

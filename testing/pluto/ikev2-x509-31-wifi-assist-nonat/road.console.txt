@@ -11,10 +11,10 @@ road #
  ipsec whack --impair suppress-retransmits
 road #
  ipsec auto --add rw-lte
-002 added IKEv2 connection "rw-lte"
+002 "rw-lte": added IKEv2 connection
 road #
  ipsec auto --add rw-wifi
-002 added IKEv2 connection "rw-wifi"
+002 "rw-wifi": added IKEv2 connection
 road #
  echo "initdone"
 initdone

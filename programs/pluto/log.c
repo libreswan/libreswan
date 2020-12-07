@@ -41,7 +41,6 @@
 #include "impair.h"
 #include "demux.h"	/* for struct msg_digest */
 #include "pending.h"
-#include "pluto_shutdown.h"		/* for exit_pluto() */
 
 static void log_raw(int severity, const char *prefix, struct jambuf *buf);
 
@@ -199,11 +198,11 @@ bool whack_prompt_for(struct state *st, const char *prompt,
 		jam(buf, "%s ", st->st_connection->name);
 		/* the real message */
 		jam(buf, "prompt for %s:", prompt);
-		jambuf_to_whack(buf, st->st_whack_sock,
+		jambuf_to_whack(buf, st->st_logger->object_whackfd,
 				echo ? RC_USERPROMPT : RC_ENTERSECRET);
 	}
 
-	ssize_t n = fd_read(st->st_whack_sock, ansbuf, ansbuf_len);
+	ssize_t n = fd_read(st->st_logger->object_whackfd, ansbuf, ansbuf_len);
 	if (n < 0) {
 		log_state(RC_LOG_SERIOUS, st, "read(whackfd) failed: "PRI_ERRNO,
 			  pri_errno(-(int)n));
@@ -260,11 +259,6 @@ void close_log(void)
 		(void)fclose(pluto_log_fp);
 		pluto_log_fp = NULL;
 	}
-}
-
-void libreswan_exit(enum pluto_exit_code rc)
-{
-	exit_pluto(rc);
 }
 
 /* emit message to whack.
@@ -354,7 +348,8 @@ void rate_log(const struct msg_digest *md,
 		rate_log_raw("", md->md_logger, message, ap);
 	} else if (nr_rate_limited_logs == limit) {
 		rate_log_raw("", md->md_logger, message, ap);
-		plog_global("rate limited log reached limit of %u entries", limit);
+		log_global(LOG_STREAM, null_fd,
+			   "rate limited log reached limit of %u entries", limit);
 	} else if (DBGP(DBG_BASE)) {
 		rate_log_raw(DEBUG_PREFIX, md->md_logger, message, ap);
 	}
@@ -367,7 +362,7 @@ static global_timer_cb reset_log_rate_limit;
 static void reset_log_rate_limit(struct logger *logger)
 {
 	if (nr_rate_limited_logs > log_limit()) {
-		log_message(RC_LOG, logger, "rate limited log reset");
+		llog(RC_LOG, logger, "rate limited log reset");
 	}
 	nr_rate_limited_logs = 0;
 }
@@ -687,38 +682,37 @@ void free_logger(struct logger **logp, where_t where)
  * address of 'stack_md' will never be NULL [-Werror=address]
  */
 
-void log_md(lset_t rc_flags, const struct msg_digest *md, const char *msg, ...)
-{
-	struct logger *logger =
-		(pexpect(md != NULL) && pexpect(md->md_logger != NULL) && pexpect(in_main_thread()))
-		? md->md_logger
-		: &failsafe_logger;
-	va_list ap;
-	va_start(ap, msg);
-	log_va_list(rc_flags, logger, msg, ap);
-	va_end(ap);
-}
-
 void log_connection(lset_t rc_flags, struct fd *whackfd,
 		    const struct connection *c, const char *msg, ...)
 {
+	passert(in_main_thread());
+	passert(c != NULL);
+	struct logger logger = {
+		.where = HERE,
+		.global_whackfd = whackfd,
+		.object = c,
+		.object_vec = &logger_connection_vec,
+	};
 	va_list ap;
 	va_start(ap, msg);
-	struct logger logger = (pexpect(c != NULL) && pexpect(in_main_thread()))
-		? CONNECTION_LOGGER(c, whackfd)
-		: failsafe_logger;
-	log_va_list(rc_flags, &logger, msg, ap);
+	llog_va_list(rc_flags, &logger, msg, ap);
 	va_end(ap);
 }
 
 void log_pending(lset_t rc_flags, const struct pending *p, const char *msg, ...)
 {
+	passert(in_main_thread());
+	passert(p != NULL);
+	struct logger logger = {
+		.where = HERE,
+		.global_whackfd = whack_log_fd,
+		.object_whackfd = p->whack_sock,
+		.object = p->connection,
+		.object_vec = &logger_connection_vec,
+	};
 	va_list ap;
 	va_start(ap, msg);
-	struct logger logger = (pexpect(p != NULL) && pexpect(in_main_thread()))
-		? PENDING_LOGGER(p)
-		: failsafe_logger;
-	log_va_list(rc_flags, &logger, msg, ap);
+	llog_va_list(rc_flags, &logger, msg, ap);
 	va_end(ap);
 }
 
@@ -737,22 +731,11 @@ void log_state(lset_t rc_flags, const struct state *st,
 		if (whack_log_fd != NULL) {
 			logger.global_whackfd = whack_log_fd;
 		}
-		log_va_list(rc_flags, &logger, msg, ap);
+		llog_va_list(rc_flags, &logger, msg, ap);
 	} else {
 		/* still get the message out */
-		log_va_list(rc_flags, &failsafe_logger, msg, ap);
+		llog_va_list(rc_flags, &failsafe_logger, msg, ap);
 
 	}
 	va_end(ap);
-}
-
-void loglog(enum rc_type rc, const char *fmt, ...)
-{
-	JAMBUF(buf) {
-		va_list ap;
-		va_start(ap, fmt);
-		jam_va_list(buf, fmt, ap);
-		va_end(ap);
-		jambuf_to_default_streams(buf, rc);
-	}
 }

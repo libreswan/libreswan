@@ -136,7 +136,7 @@ static bool accept_v2_nonce(struct logger *logger, struct msg_digest *md,
 	 */
 
 	if (nonce.len < IKEv2_MINIMUM_NONCE_SIZE || nonce.len > IKEv2_MAXIMUM_NONCE_SIZE) {
-		log_message(RC_LOG_SERIOUS, logger, "%s length %zu not between %d and %d",
+		llog(RC_LOG_SERIOUS, logger, "%s length %zu not between %d and %d",
 			    name, nonce.len, IKEv2_MINIMUM_NONCE_SIZE, IKEv2_MAXIMUM_NONCE_SIZE);
 		return false;
 	}
@@ -267,7 +267,7 @@ static bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 	}
 
 	struct esb_buf ke_esb;
-	log_message(RC_LOG, st->st_logger,
+	llog(RC_LOG, st->st_logger,
 		    "initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
 		    enum_show_shortb(&oakley_group_names, ke_group, &ke_esb),
 		    accepted_dh->common.fqn);
@@ -655,7 +655,7 @@ bool emit_v2KE(chunk_t *g, const struct dh_desc *group,
 	       pb_stream *outs)
 {
 	if (impair.ke_payload == IMPAIR_EMIT_OMIT) {
-		log_pbs_out(RC_LOG, outs, "IMPAIR: omitting KE payload");
+		llog(RC_LOG, outs->outs_logger, "IMPAIR: omitting KE payload");
 		return true;
 	}
 
@@ -670,19 +670,19 @@ bool emit_v2KE(chunk_t *g, const struct dh_desc *group,
 
 	if (impair.ke_payload >= IMPAIR_EMIT_ROOF) {
 		uint8_t byte = impair.ke_payload - IMPAIR_EMIT_ROOF;
-		log_message(RC_LOG, outs->out_logger,
+		llog(RC_LOG, outs->outs_logger,
 			    "IMPAIR: sending bogus KE (g^x) == %u value to break DH calculations", byte);
 		/* Only used to test sending/receiving bogus g^x */
 		diag_t d = pbs_out_repeated_byte(&kepbs, byte, g->len, "ikev2 impair KE (g^x) == 0");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 			return false;
 		}
 	} else if (impair.ke_payload == IMPAIR_EMIT_EMPTY) {
-		log_message(RC_LOG, outs->out_logger, "IMPAIR: sending an empty KE value");
+		llog(RC_LOG, outs->outs_logger, "IMPAIR: sending an empty KE value");
 		diag_t d = pbs_out_zero(&kepbs, 0, "ikev2 impair KE (g^x) == empty");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 			return false;
 		}
 	} else {
@@ -1749,7 +1749,7 @@ static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
 	if (attr.len > 0) {
 		diag_t d = pbs_out_address(&a_pbs, ip, story);
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, a_pbs.out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, a_pbs.outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1758,7 +1758,7 @@ static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
 		uint8_t ipv6_prefix_len = INTERNL_IP6_PREFIX_LEN;
 		diag_t d = pbs_out_raw(&a_pbs, &ipv6_prefix_len, sizeof(uint8_t), "INTERNL_IP6_PREFIX_LEN");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outpbs->out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1783,7 +1783,7 @@ static stf_status ikev2_ship_cp_attr_str(uint16_t type, char *str,
 	if (attr.len > 0) {
 		diag_t d = pbs_out_raw(&a_pbs, str, attr.len, story);
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outpbs->out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -2117,7 +2117,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 						    IPSEC_SA,
 						    SA_INITIATOR,
 						    STATE_V2_IKE_AUTH_CHILD_I0,
-						    ike->sa.st_whack_sock);
+						    ike->sa.st_logger->object_whackfd);
 	struct state *cst = &child->sa;
 
 	/* XXX because the early child state ends up with the try counter check, we need to copy it */
@@ -2352,7 +2352,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 
 	/* child connection */
 	struct connection *cc = first_pending(pexpect_ike_sa(pst),
-					      &policy, &cst->st_whack_sock);
+					      &policy, &cst->st_logger->object_whackfd);
 
 	if (cc == NULL) {
 		cc = pc;
@@ -2811,7 +2811,7 @@ stf_status ikev2_ike_sa_process_auth_request(struct ike_sa *ike,
 	 *
 	 * XXX: move this into ikev2.c?
 	 */
-	LOG_JAMBUF(RC_LOG, ike->sa.st_logger, buf) {
+	LLOG_JAMBUF(RC_LOG, ike->sa.st_logger, buf) {
 		jam(buf, "processing decrypted ");
 		lswlog_msg_digest(buf, md);
 	}
@@ -3532,7 +3532,7 @@ stf_status ikev2_process_child_sa_pl(struct ike_sa *ike, struct child_sa *child,
 				       child_proposals, child->sa.st_logger);
 
 	if (ret != STF_OK) {
-		LOG_JAMBUF(RC_LOG_SERIOUS, child->sa.st_logger, buf) {
+		LLOG_JAMBUF(RC_LOG_SERIOUS, child->sa.st_logger, buf) {
 			jam_string(buf, what);
 			jam(buf, " failed, responder SA processing returned ");
 			jam_v2_stf_status(buf, ret);
@@ -6000,7 +6000,7 @@ static bool add_mobike_payloads(struct state *st, pb_stream *pbs)
 void ikev2_rekey_ike_start(struct ike_sa *ike)
 {
 	struct pending p = {
-		.whack_sock = ike->sa.st_whack_sock,/*on-stack*/
+		.whack_sock = ike->sa.st_logger->object_whackfd,/*on-stack*/
 		.ike = ike,
 		.connection = ike->sa.st_connection,
 		.policy = LEMPTY,

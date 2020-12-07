@@ -227,12 +227,12 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 		diag_t d;
 		d = pbs_out_address(&ts_pbs2, &ts->net.start, "IP start");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outpbs->out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 		d = pbs_out_address(&ts_pbs2, &ts->net.end, "IP end");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outpbs->out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 		break;
@@ -511,13 +511,13 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 	    which, ts_pd->payload.v2ts.isat_num);
 
 	if (ts_pd->payload.v2ts.isat_num == 0) {
-		log_message(RC_LOG, logger, "%s payload contains no entries when at least one is expected",
+		llog(RC_LOG, logger, "%s payload contains no entries when at least one is expected",
 			      which);
 		return false;
 	}
 
 	if (ts_pd->payload.v2ts.isat_num >= elemsof(tss->ts)) {
-		log_message(RC_LOG, logger, "%s contains %d entries which exceeds hardwired max of %zu",
+		llog(RC_LOG, logger, "%s contains %d entries which exceeds hardwired max of %zu",
 			      which, ts_pd->payload.v2ts.isat_num, elemsof(tss->ts));
 		return false;	/* won't fit in array */
 	}
@@ -636,7 +636,7 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 		ts->startport = ts1.isat1_startport;
 		ts->endport = ts1.isat1_endport;
 		if (ts->startport > ts->endport) {
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "%s traffic selector %d has an invalid port range",
 				    which, tss->nr);
 			return false;

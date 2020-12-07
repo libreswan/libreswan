@@ -28,14 +28,14 @@
 void init_selinux(struct logger *logger)
 {
 	if (!is_selinux_enabled()) {
-		log_message(RC_LOG, logger, "selinux support is NOT enabled.");
+		llog(RC_LOG, logger, "selinux support is NOT enabled.");
 	} else {
 #ifdef HAVE_OLD_SELINUX
 		if (avc_init("libreswan", NULL, NULL, NULL, NULL) != 0) {
 			fatal(PLUTO_EXIT_SELINUX_FAIL, logger, "selinux: could not initialize avc");
 		}
 #endif
-		log_message(RC_LOG, logger, "SELinux support is enabled in %s mode.",
+		llog(RC_LOG, logger, "SELinux support is enabled in %s mode.",
 			security_getenforce() ? "ENFORCING" : "PERMISSIVE");
 	}
 }
@@ -55,12 +55,12 @@ int within_range(security_context_t sl, security_context_t range, struct logger 
 	 */
 	rtn = avc_context_to_sid(sl, &slsid);
 	if (rtn != 0) {
-		log_message(RC_LOG, logger, "selinux within_range: Unable to retrieve sid for sl context (%s)", sl);
+		llog(RC_LOG, logger, "selinux within_range: Unable to retrieve sid for sl context (%s)", sl);
 		return 0;
 	}
 	rtn = avc_context_to_sid(range, &rangesid);
 	if (rtn != 0) {
-		log_message(RC_LOG, logger, "selinux within_range: Unable to retrieve sid for range context (%s)", range);
+		llog(RC_LOG, logger, "selinux within_range: Unable to retrieve sid for range context (%s)", range);
 		return 0;
 	}
 
@@ -71,7 +71,7 @@ int within_range(security_context_t sl, security_context_t range, struct logger 
 	av = string_to_av_perm(tclass, "polmatch");
 	rtn = avc_has_perm(slsid, rangesid, tclass, av, NULL, &avd);
 	if (rtn != 0) {
-		log_message(RC_LOG, logger, "selinux within_range: The sl (%s) is not within range of (%s)", sl, range);
+		llog(RC_LOG, logger, "selinux within_range: The sl (%s) is not within range of (%s)", sl, range);
 		return 0;
 	}
 	dbg("selinux within_range: The sl (%s) is within range of (%s)", sl, range);
@@ -88,7 +88,7 @@ int within_range(const char *sl, const char *range, struct logger *logger)
 	 */
 	rtn = selinux_check_access(sl, range, "association", "polmatch", NULL);
 	if (rtn != 0) {
-		log_message(RC_LOG, logger, "selinux within_range: sl (%s) - range (%s) error: %s\n",
+		llog(RC_LOG, logger, "selinux within_range: sl (%s) - range (%s) error: %s\n",
 			    sl, range, strerror(errno));
 		return 0;
 	}

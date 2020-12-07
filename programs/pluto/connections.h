@@ -30,8 +30,6 @@
 #ifndef CONNECTIONS_H
 #define CONNECTIONS_H
 
-#include <sys/queue.h>
-
 #include "fd.h"
 #include "id.h"    /* for struct id */
 #include "lmod.h"
@@ -278,6 +276,7 @@ struct connection {
 	co_serial_t serialno;
 	co_serial_t serial_from;
 	char *name;
+	struct logger *logger;
 	enum ike_version ike_version;
 	char *foodgroup;
 	char *connalias;
@@ -342,7 +341,6 @@ struct connection {
 
 	char *log_file_name;			/* name of log file */
 	FILE *log_file;				/* possibly open FILE */
-	CIRCLEQ_ENTRY(connection) log_link;	/* linked list of open conns {} */
 	bool log_file_err;			/* only bitch once */
 
 	struct spd_route spd;
@@ -460,8 +458,7 @@ extern void delete_connection(struct connection *c, bool relations);
 extern void delete_connections_by_name(const char *name, bool strict,
 				       struct fd *whack);
 extern void delete_every_connection(void);
-struct connection *add_group_instance(struct fd *whack,
-				      struct connection *group,
+struct connection *add_group_instance(struct connection *group,
 				      const ip_subnet *target,
 				      uint8_t proto,
 				      uint16_t sport,

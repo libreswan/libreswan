@@ -29,7 +29,6 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <unistd.h>
 #include <errno.h>
 #include <time.h>
@@ -310,7 +309,7 @@ static struct hash_signature RSA_sign_hash(const struct private_key_stuff *pks,
 	} else { /* Digital signature scheme with rsa-pss*/
 		const CK_RSA_PKCS_PSS_PARAMS *mech = hash_algo->nss.rsa_pkcs_pss_params;
 		if (mech == NULL) {
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "digital signature scheme not supported for hash algorithm %s",
 				    hash_algo->common.fqn);
 			return (struct hash_signature) { .len = 0, };
@@ -879,7 +878,7 @@ static err_t process_psk_secret(struct file_lex_position *flp, chunk_t *psk)
 		size_t len = flp->cur - flp->tok  - 2;
 
 		if (len < 8) {
-			log_message(RC_LOG_SERIOUS, flp->logger,
+			llog(RC_LOG_SERIOUS, flp->logger,
 				    "WARNING: using a weak secret (PSK)");
 		}
 		*psk = clone_bytes_as_chunk(flp->tok + 1, len, "PSK");
@@ -1270,7 +1269,7 @@ static void process_secret(struct file_lex_position *flp,
 			ugh = "WARNING: The :RSA secrets entries for X.509 certificates are no longer needed";
 		}
 		if (ugh == NULL) {
-			log_message(RC_LOG, flp->logger,
+			llog(RC_LOG, flp->logger,
 				    "loaded private key for keyid: %s:%s",
 				    enum_name(&pkk_names, s->pks.kind),
 				    str_keyid(s->pks.keyid));
@@ -1289,7 +1288,7 @@ static void process_secret(struct file_lex_position *flp,
 	}
 
 	if (ugh != NULL) {
-		log_message(RC_LOG_SERIOUS, flp->logger,
+		llog(RC_LOG_SERIOUS, flp->logger,
 			    "\"%s\" line %d: %s",
 			    flp->filename, flp->lino, ugh);
 		/* free id's that should have been allocated */
@@ -1333,7 +1332,7 @@ static void process_secret_records(struct file_lex_position *flp,
 			char *end_prefix = strrchr(flp->filename, '/');
 
 			if (!shift(flp)) {
-				log_message(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG_SERIOUS, flp->logger,
 					    "\"%s\" line %d: unexpected end of include directive",
 					    flp->filename, flp->lino);
 				continue;	/* abandon this record */
@@ -1357,7 +1356,7 @@ static void process_secret_records(struct file_lex_position *flp,
 				p += pl;
 			}
 			if (flp->cur - flp->tok >= &fn[sizeof(fn)] - p) {
-				log_message(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG_SERIOUS, flp->logger,
 					    "\"%s\" line %d: include pathname too long",
 					    flp->filename, flp->lino);
 				continue;	/* abandon this record */
@@ -1415,7 +1414,7 @@ static void process_secret_records(struct file_lex_position *flp,
 				}
 
 				if (ugh != NULL) {
-					log_message(RC_LOG_SERIOUS, flp->logger,
+					llog(RC_LOG_SERIOUS, flp->logger,
 						    "ERROR \"%s\" line %d: index \"%s\" %s",
 						    flp->filename,
 						    flp->lino, flp->tok,
@@ -1435,7 +1434,7 @@ static void process_secret_records(struct file_lex_position *flp,
 				}
 				if (!shift(flp)) {
 					/* unexpected Record Boundary or EOF */
-					log_message(RC_LOG_SERIOUS, flp->logger,
+					llog(RC_LOG_SERIOUS, flp->logger,
 						    "\"%s\" line %d: unexpected end of id list",
 						    flp->filename, flp->lino);
 					pfree(s);
@@ -1450,7 +1449,7 @@ static void process_secrets_file(struct file_lex_position *oflp,
 				 struct secret **psecrets, const char *file_pat)
 {
 	if (oflp->depth > 10) {
-		log_message(RC_LOG_SERIOUS, oflp->logger,
+		llog(RC_LOG_SERIOUS, oflp->logger,
 			    "preshared secrets file \"%s\" nested too deeply",
 			    file_pat);
 		return;
@@ -1467,7 +1466,7 @@ static void process_secrets_file(struct file_lex_position *oflp,
 		for (char **fnp = globbuf.gl_pathv; fnp != NULL && *fnp != NULL; fnp++) {
 			struct file_lex_position *flp = NULL;
 			if (lexopen(&flp, *fnp, false, oflp)) {
-				log_message(RC_LOG, flp->logger,
+				llog(RC_LOG, flp->logger,
 					    "loading secrets from \"%s\"", *fnp);
 				flushline(flp, "file starts with indentation (continuation notation)");
 				process_secret_records(flp, psecrets);
@@ -1477,7 +1476,7 @@ static void process_secrets_file(struct file_lex_position *oflp,
 		break;
 
 	case GLOB_NOSPACE:
-		log_message(RC_LOG_SERIOUS, oflp->logger,
+		llog(RC_LOG_SERIOUS, oflp->logger,
 			    "out of space processing secrets filename \"%s\"",
 			    file_pat);
 		break;
@@ -1487,12 +1486,12 @@ static void process_secrets_file(struct file_lex_position *oflp,
 		break;
 
 	case GLOB_NOMATCH:
-		log_message(RC_LOG, oflp->logger,
+		llog(RC_LOG, oflp->logger,
 			    "no secrets filename matched \"%s\"", file_pat);
 		break;
 
 	default:
-		log_message(RC_LOG_SERIOUS, oflp->logger,
+		llog(RC_LOG_SERIOUS, oflp->logger,
 			    "unknown glob error %d", r);
 		break;
 	}
@@ -1507,7 +1506,7 @@ void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *logger)
 	if (*psecrets != NULL) {
 		struct secret *s, *ns;
 
-		log_message(RC_LOG, logger, "forgetting secrets");
+		llog(RC_LOG, logger, "forgetting secrets");
 
 		for (s = *psecrets; s != NULL; s = ns) {
 			struct id_list *i, *ni;

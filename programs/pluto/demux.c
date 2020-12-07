@@ -179,17 +179,20 @@ void process_packet(struct msg_digest **mdp)
 		 * IKEv2 doesn't say what to do with low versions,
 		 * just drop them.
 		 */
-		log_md(RC_LOG, md, "ignoring packet with IKE major version '%d'", vmaj);
+		llog(RC_LOG, md->md_logger,
+		     "ignoring packet with IKE major version '%d'", vmaj);
 		return;
 
 	case ISAKMP_MAJOR_VERSION: /* IKEv1 */
 		if (pluto_ikev1_pol == GLOBAL_IKEv1_DROP) {
-			log_md(RC_LOG, md, "ignoring IKEv1 packet as policy is set to silently drop all IKEv1 packets");
+			llog(RC_LOG, md->md_logger,
+			     "ignoring IKEv1 packet as policy is set to silently drop all IKEv1 packets");
 			return;
 		}
 #ifdef USE_IKEv1
 		if (pluto_ikev1_pol == GLOBAL_IKEv1_REJECT) {
-			log_md(RC_LOG, md, "rejecting IKEv1 packet as policy is set to reject all IKEv1 packets");
+			llog(RC_LOG, md->md_logger,
+			     "rejecting IKEv1 packet as policy is set to reject all IKEv1 packets");
 			send_notification_from_md(md, INVALID_MAJOR_VERSION);
 			return;
 		}
@@ -209,7 +212,8 @@ void process_packet(struct msg_digest **mdp)
 			 * own, given the major version numbers are
 			 * identical.
 			 */
-			log_md(RC_LOG, md, "ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
+			llog(RC_LOG, md->md_logger,
+			     "ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
 			send_notification_from_md(md, INVALID_MINOR_VERSION);
 			return;
 		}
@@ -227,7 +231,8 @@ void process_packet(struct msg_digest **mdp)
 			/* Unlike IKEv1, for IKEv2 we are supposed to try to
 			 * continue on unknown minors
 			 */
-			log_md(RC_LOG, md, "Ignoring unknown IKEv2 minor version number %d", vmin);
+			llog(RC_LOG, md->md_logger,
+			     "Ignoring unknown IKEv2 minor version number %d", vmin);
 		}
 		dbg(" processing version=%u.%u packet with exchange type=%s (%d)",
 		    vmaj, vmin,
@@ -237,7 +242,8 @@ void process_packet(struct msg_digest **mdp)
 		break;
 
 	default:
-		log_md(RC_LOG, md, "message contains unsupported IKE major version '%d'", vmaj);
+		llog(RC_LOG, md->md_logger,
+		     "message contains unsupported IKE major version '%d'", vmaj);
 		/*
 		 * According to 1.5.  Informational Messages outside
 		 * of an IKE SA, [...] the message is always sent
@@ -345,7 +351,7 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 	/* not whack FD yet is expected to be reset! */
 	struct msg_digest *md = clone_raw_md(orig, HERE);
 
-	LOG_JAMBUF(RC_LOG, md->md_logger, buf) {
+	LLOG_JAMBUF(RC_LOG, md->md_logger, buf) {
 		jam_string(buf, "IMPAIR: start processing ");
 		va_list ap;
 		va_start(ap, fmt);
@@ -359,7 +365,7 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 
 	process_md(&md);
 
-	LOG_JAMBUF(RC_LOG, md->md_logger, buf) {
+	LLOG_JAMBUF(RC_LOG, md->md_logger, buf) {
 		jam(buf, "IMPAIR: stop processing ");
 		va_list ap;
 		va_start(ap, fmt);
@@ -576,7 +582,7 @@ char *cisco_stringify(pb_stream *input_pbs, const char *attr_name,
 			break;
 		}
 	}
-	log_message(RC_INFORMATIONAL, logger,
+	llog(RC_INFORMATIONAL, logger,
 		    "Received %s%s%s: %s%s",
 		    ignore ? "and ignored " : "",
 		    jambuf_ok(&buf) ? "" : "overlong ",

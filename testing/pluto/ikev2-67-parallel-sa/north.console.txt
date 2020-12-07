@@ -6,8 +6,8 @@ north #
  /testing/pluto/bin/wait-until-pluto-started
 north #
  ipsec auto --add northnet-eastnet
-002 added IKEv2 connection "northnet-eastnet/0x1"
-002 added IKEv2 connection "northnet-eastnet/0x2"
+002 "northnet-eastnet/0x1": added IKEv2 connection
+002 "northnet-eastnet/0x2": added IKEv2 connection
 north #
  ipsec whack --impair suppress-retransmits
 north #

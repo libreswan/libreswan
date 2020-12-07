@@ -6,7 +6,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-aes256
-036 connection "westnet-eastnet-aes256": failed to add connection: ESP DH algorithm '4096' is not recognized
+036 "westnet-eastnet-aes256": failed to add connection: ESP DH algorithm '4096' is not recognized
 west #
  echo "initdone"
 initdone

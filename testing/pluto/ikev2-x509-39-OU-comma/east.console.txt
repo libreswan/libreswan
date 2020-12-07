@@ -52,7 +52,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add x509
-002 added IKEv2 connection "x509"
+002 "x509": added IKEv2 connection
 east #
  echo "initdone"
 initdone

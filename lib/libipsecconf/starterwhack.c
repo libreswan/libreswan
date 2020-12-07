@@ -27,13 +27,11 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <sys/queue.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
-#include <ctype.h>
 
 #include "sysdep.h"
 
@@ -700,7 +698,7 @@ static bool one_subnet_from_string(const struct starter_conn *conn,
 		return FALSE;
 
 	/* find first non-space item */
-	while (*subnets != '\0' && (isspace(*subnets) || *subnets == ','))
+	while (*subnets != '\0' && (char_isspace(*subnets) || *subnets == ','))
 		subnets++;
 
 	/* did we find something? */
@@ -710,7 +708,7 @@ static bool one_subnet_from_string(const struct starter_conn *conn,
 	eln = subnets;
 
 	/* find end of this item */
-	while (*subnets != '\0' && !(isspace(*subnets) || *subnets == ','))
+	while (*subnets != '\0' && !(char_isspace(*subnets) || *subnets == ','))
 		subnets++;
 
 	e = ttosubnet(eln, subnets - eln, afi->af, '6', sn, logger);

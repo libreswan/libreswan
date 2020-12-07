@@ -30,14 +30,12 @@
  */
 #pragma GCC diagnostic ignored "-Wsign-compare"
 
-#include <sys/queue.h>
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <unistd.h>
 #include <limits.h>
 #include <glob.h>
-#include <ctype.h>
 
 #include "ipsecconf/keywords.h"
 #define YYDEBUG 1	/* HACK! for ipsecconf/parser.h AND parser.tab.h */

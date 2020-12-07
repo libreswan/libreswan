@@ -127,7 +127,7 @@ static void pam_callback(struct state *st,
 	 */
 	if (st != NULL) {
 		st->st_pamauth = NULL; /* all done */
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "PAM: #%lu: completed for user '%s' with status %s",
 			    pamauth->serialno, pamauth->ptarg.name,
 			    success ? "SUCCESS" : "FAILURE");

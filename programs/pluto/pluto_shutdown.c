@@ -71,7 +71,7 @@ static enum pluto_exit_code exit_code;
 
 static void exit_tail(void) NEVER_RETURNS;
 
-void exit_pluto(enum pluto_exit_code status)
+void libreswan_exit(enum pluto_exit_code rc)
 {
 	/*
 	 * Tell the world, well actually all the threads, that pluto
@@ -80,7 +80,7 @@ void exit_pluto(enum pluto_exit_code status)
 	 * this instead.
 	 */
 	exiting_pluto = true;
-	exit_code = status;
+	exit_code = rc;
 
 	/* needed because we may be called in odd state */
  #ifdef USE_SYSTEMD_WATCHDOG
@@ -171,8 +171,9 @@ void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status)
 	fd_leak(whackfd, HERE);
 
 	/*
-	 * If the event-loop doesn't stop, this kicks in.  XXX: also
-	 * in exit_pluto().
+	 * If the event-loop doesn't stop, this kicks in.
+	 *
+	 * XXX: same code appears in libreswan_exit() above.
 	 */
  #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_STOPPING, exit_code);

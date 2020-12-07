@@ -1749,12 +1749,12 @@ void init_pbs(pb_stream *pbs, uint8_t *start, size_t len, const char *name)
 struct pbs_out open_pbs_out(const char *name, uint8_t *buffer, size_t sizeof_buffer,
 			    struct logger *logger)
 {
-	struct pbs_out out_pbs;
-	init_pbs(&out_pbs, buffer, sizeof_buffer, name);
+	struct pbs_out outs;
+	init_pbs(&outs, buffer, sizeof_buffer, name);
 	memset(buffer, 0xFA, sizeof_buffer);	/* value likely to be unpleasant */
-	out_pbs.out_logger = logger;
+	outs.outs_logger = logger;
 	dbg("opening output PBS %s", name);
-	return out_pbs;
+	return outs;
 }
 
 pb_stream same_chunk_as_in_pbs(chunk_t chunk, const char *name)
@@ -2322,7 +2322,7 @@ static void start_next_payload_chain(struct pbs_out *outs,
 	uint8_t n = *inp;
 	if (n != ISAKMP_NEXT_NONE) {
 		struct esb_buf npb;
-		pexpect_fail(outs->out_logger, HERE,
+		pexpect_fail(outs->outs_logger, HERE,
 			     "next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
 			     sd->name, fp->name, n,
 			     enum_showb(fp->desc, n, &npb));
@@ -2391,7 +2391,7 @@ static void update_next_payload_chain(pb_stream *outs,
 		     enum_showb(fp->desc, n, &npb));
 	} else if (n != ISAKMP_NEXT_NONE) {
 		struct esb_buf npb;
-		pexpect_fail(outs->out_logger, HERE,
+		pexpect_fail(outs->outs_logger, HERE,
 			     "next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
 			     sd->name, fp->name, n,
 			     enum_showb(fp->desc, n, &npb));
@@ -2458,7 +2458,7 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 		.container = outs,
 		.desc = sd,
 		.name = sd->name,
-		.out_logger = outs->out_logger,
+		.outs_logger = outs->outs_logger,
 
 		/* until a length field is discovered */
 		/* .lenfld = NULL, */
@@ -2493,7 +2493,8 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 			uint8_t byte;
 			if (impair.send_nonzero_reserved) {
 				byte = ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
-				log_pbs_out(RC_LOG, outs, "IMPAIR: setting zero/ignore field to 0x%02x", byte);
+				llog(RC_LOG, outs->outs_logger,
+				     "IMPAIR: setting zero/ignore field to 0x%02x", byte);
 			} else {
 				byte = 0;
 			}
@@ -2581,7 +2582,7 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 					if (!impair.emitting) {
 						return diag(MSG);
 					}
-					log_pbs_out(RC_LOG, outs, "IMPAIR: emitting "MSG);
+					llog(RC_LOG, outs->outs_logger, "IMPAIR: emitting "MSG);
 				}
 				break;
 
@@ -2661,7 +2662,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 {
 	diag_t d = pbs_out_struct(outs, sd, struct_ptr, 0, obj_pbs);
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 
@@ -2690,7 +2691,7 @@ bool ikev1_out_generic_raw(struct_desc *sd,
 	}
 	diag_t d = pbs_out_raw(&pbs, bytes, len, name);
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 
@@ -2846,7 +2847,7 @@ void close_output_pbs(struct pbs_out *pbs)
 	if (pbs->container != NULL)
 		pbs->container->cur = pbs->cur; /* pass space utilization up */
 	/* don't log against a closed pbs */
-	pbs->out_logger = NULL;
+	pbs->outs_logger = NULL;
 }
 
 diag_t pbs_in_address(struct pbs_in *input_pbs,
@@ -2885,14 +2886,4 @@ diag_t pbs_out_address(struct pbs_out *out_pbs, const ip_address *address, const
 {
 	shunk_t as = address_as_shunk(address);
 	return pbs_out_raw(out_pbs, as.ptr, as.len, what);
-}
-
-void log_pbs_out(lset_t rc_flags, struct pbs_out *outs, const char *message, ...)
-{
-	if (pexpect(outs != NULL) && pexpect(outs->out_logger != NULL)) {
-		va_list ap;
-		va_start(ap, message);
-		log_va_list(rc_flags, outs->out_logger, message, ap);
-		va_end(ap);
-	}
 }

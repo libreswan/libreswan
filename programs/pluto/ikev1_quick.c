@@ -168,7 +168,7 @@ static bool emit_subnet_id(const ip_subnet *net,
 	ip_address tp = subnet_prefix(net);
 	diag_t d = pbs_out_address(&id_pbs, &tp, "client network");
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 
@@ -176,7 +176,7 @@ static bool emit_subnet_id(const ip_subnet *net,
 		ip_address tm = subnet_mask(net);
 		diag_t d = pbs_out_address(&id_pbs, &tm, "client mask");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 			return false;
 		}
 	}
@@ -389,13 +389,13 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 		afi = &ipv6_info;
 		break;
 	case ID_FQDN:
-		log_message(RC_COMMENT, logger,
+		llog(RC_COMMENT, logger,
 			    "%s type is FQDN", which);
 		return TRUE;
 
 	default:
 		/* XXX support more */
-		log_message(RC_LOG_SERIOUS, logger, "unsupported ID type %s",
+		llog(RC_LOG_SERIOUS, logger, "unsupported ID type %s",
 			    idtypename);
 		/* XXX Could send notification back */
 		return FALSE;
@@ -414,7 +414,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 		/* i.e., "zero" */
 		if (address_eq_any(&temp_address)) {
 			ipstr_buf b;
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "%s ID payload %s is invalid (%s) in Quick I1",
 				    which, idtypename, ipstr(&temp_address, &b));
 			/* XXX Could send notification back */
@@ -450,7 +450,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			/* i.e., ::/128 or 0.0.0.0/32 */
 			ughmsg = "subnet contains no addresses";
 		if (ughmsg != NULL) {
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "%s ID payload %s bad subnet in Quick I1 (%s)",
 				    which, idtypename, ughmsg);
 			/* XXX Could send notification back */
@@ -489,7 +489,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 		if (ughmsg != NULL) {
 			ipstr_buf a, b;
 
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "%s ID payload in Quick I1, %s %s - %s unacceptable: %s",
 				    which, idtypename,
 				    ipstr(&temp_address_from, &a),
@@ -529,19 +529,19 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 	if (!samesubnet(net, &net_temp)) {
 		subnet_buf subrec;
 		subnet_buf subxmt;
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "%s subnet returned doesn't match my proposal - us: %s vs them: %s",
 			    which, str_subnet(net, &subxmt),
 			    str_subnet(&net_temp, &subrec));
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "Allowing questionable (microsoft) proposal anyway");
 		bad_proposal = FALSE;
 	}
 	if (*protoid != id->isaiid_protoid) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "%s peer returned protocol id does not match my proposal - us: %d vs them: %d",
 			    which, *protoid, id->isaiid_protoid);
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "Allowing questionable (microsoft) proposal anyway]");
 		bad_proposal = FALSE;
 	}
@@ -550,11 +550,11 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 	 * until such time as bug #849 is properly fixed.
 	 */
 	if (*port != id->isaiid_port) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "%s peer returned port doesn't match my proposal - us: %d vs them: %d",
 			    which, *port, id->isaiid_port);
 		if (*port != 0 && id->isaiid_port != 1701) {
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "Allowing bad L2TP/IPsec proposal (see bug #849) anyway");
 			bad_proposal = FALSE;
 		} else {
@@ -646,7 +646,7 @@ void quick_outI1(struct fd *whack_sock,
 			st->st_pfs_group = isakmp_sa->st_oakley.ta_dh;
 	}
 
-	LOG_JAMBUF(RC_LOG, st->st_logger, buf) {
+	LLOG_JAMBUF(RC_LOG, st->st_logger, buf) {
 		jam(buf, "initiating Quick Mode %s", prettypolicy(policy));
 		if (replacing != SOS_NOBODY) {
 			jam(buf, " to replace #%lu", replacing);

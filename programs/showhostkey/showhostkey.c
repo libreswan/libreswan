@@ -336,7 +336,7 @@ static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval f
 
 	SECKEYPrivateKeyList *list = PK11_ListPrivateKeysInSlot(slot);
 	if (list == NULL) {
-		log_message(RC_LOG_SERIOUS|ERROR_STREAM, logger, "no list");
+		llog(RC_LOG_SERIOUS|ERROR_STREAM, logger, "no list");
 		PK11_FreeSlot(slot);
 		return NULL;
 	}
@@ -568,7 +568,7 @@ int main(int argc, char *argv[])
 	 * processed, and really are "constant".
 	 */
 	const struct lsw_conf_options *oco = lsw_init_options();
-	log_message(RC_LOG, logger, "using nss directory \"%s\"", oco->nssdir);
+	llog(RC_LOG, logger, "using nss directory \"%s\"", oco->nssdir);
 
 	/*
 	 * Set up for NSS - contains key pairs.

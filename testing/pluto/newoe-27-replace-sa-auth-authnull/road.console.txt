@@ -10,7 +10,7 @@ road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
  ipsec auto --add authenticated
-002 added IKEv2 connection "authenticated"
+002 "authenticated": added IKEv2 connection
 road #
  # ensure for tests acquires expire before our failureshunt=2m
 road #

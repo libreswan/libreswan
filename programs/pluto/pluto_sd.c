@@ -34,17 +34,17 @@ void pluto_sd_init(struct logger *logger)
 	int ret = sd_watchdog_enabled(0, &sd_usecs);
 
 	if (ret == 0) {
-		log_message(RC_LOG, logger, "systemd watchdog not enabled - not sending watchdog keepalives");
+		llog(RC_LOG, logger, "systemd watchdog not enabled - not sending watchdog keepalives");
 		return;
 	}
 	if (ret < 0) {
-		log_message(RC_LOG, logger, "systemd watchdog returned error %d - not sending watchdog keepalives", ret);
+		llog(RC_LOG, logger, "systemd watchdog returned error %d - not sending watchdog keepalives", ret);
 		return;
 	}
 
-	log_message(RC_LOG, logger, "systemd watchdog for ipsec service configured with timeout of %"PRIu64" usecs", sd_usecs);
+	llog(RC_LOG, logger, "systemd watchdog for ipsec service configured with timeout of %"PRIu64" usecs", sd_usecs);
 	uintmax_t sd_secs = sd_usecs / 2 / 1000000; /* suggestion from sd_watchdog_enabled(3) */
-	log_message(RC_LOG, logger, "watchdog: sending probes every %ju secs", sd_secs);
+	llog(RC_LOG, logger, "watchdog: sending probes every %ju secs", sd_secs);
 	/* tell systemd that we have finished starting up */
 	pluto_sd(PLUTO_SD_START, SD_REPORT_NO_STATUS);
 	/* start the keepalive events */

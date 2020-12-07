@@ -133,21 +133,33 @@ KVM_DEBUGINFO = \
     ElectricFence \
     audit-libs \
     conntrack-tools \
-    cyrus-sasl \
+    cyrus-sasl-lib \
     glibc \
-    keyutils \
+    keyutils-libs \
     krb5-libs \
     ldns \
+    libbrotli \
     libcap-ng \
     libcom_err \
     libcurl \
     libevent \
     libevent-devel \
+    libffi \
     libgcc \
+    libgcrypt \
+    libgpg-error \
     libidn \
+    libidn2 \
+    libnghttp2 \
+    libpsl \
     libseccomp \
     libselinux \
+    libssh \
     libssh2 \
+    libtasn1 \
+    libunistring \
+    libxcrypt \
+    lz4-libs \
     nspr \
     nss$(NSS_VERSION) \
     nss-softokn$(NSS_VERSION) \
@@ -156,10 +168,14 @@ KVM_DEBUGINFO = \
     ocspd \
     openldap \
     openssl-libs \
+    p11-kit \
+    p11-kit-trust \
     pam \
     pcre \
+    pcre2 \
     python3-libs \
-    sqlite \
+    sqlite-libs \
+    systemd-libs \
     unbound-libs \
     xz-libs \
     zlib \

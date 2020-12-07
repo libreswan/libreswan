@@ -936,14 +936,16 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 		 */
 		case R_U_THERE:
 			if (st == NULL) {
-				log_md(RC_LOG, md, "received bogus  R_U_THERE informational message");
+				llog(RC_LOG, md->md_logger,
+				     "received bogus  R_U_THERE informational message");
 				return STF_IGNORE;
 			}
 			return dpd_inI_outR(st, n, n_pbs);
 
 		case R_U_THERE_ACK:
 			if (st == NULL) {
-				log_md(RC_LOG, md, "received bogus R_U_THERE_ACK informational message");
+				llog(RC_LOG, md->md_logger,
+				     "received bogus R_U_THERE_ACK informational message");
 				return STF_IGNORE;
 			}
 			return dpd_inR(st, n, n_pbs);
@@ -978,7 +980,8 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 			 * Is anything else possible?  Expected?  Documented?
 			 */
 			if (st == NULL || !IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
-				log_md(RC_LOG, md, "ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message with for unestablished state.");
+				llog(RC_LOG, md->md_logger,
+				     "ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message with for unestablished state.");
 			} else if (pbs_left(n_pbs) < 4) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message without IPv4 address");
@@ -1006,7 +1009,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 
 				/* Saving connection name and whack sock id */
 				const char *tmp_name = st->st_connection->name;
-				struct fd *tmp_whack_sock = dup_any(st->st_whack_sock);
+				struct fd *tmp_whack_sock = dup_any(st->st_logger->object_whackfd);
 
 				/* deleting ISAKMP SA with the current remote peer */
 				delete_state(st);
@@ -1143,7 +1146,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 			struct logger *logger = (st != NULL ? st->st_logger :
 						 md != NULL ? md->md_logger :
 						 &failsafe_logger);
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "received and ignored notification payload: %s",
 				    enum_name(&ikev1_notify_names, n->isan_type));
 			return STF_IGNORE;
@@ -1155,7 +1158,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 			struct logger *logger = (st != NULL ? st->st_logger :
 						 md != NULL ? md->md_logger :
 						 &failsafe_logger);
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "received and ignored empty informational notification payload");
 		}
 		return STF_IGNORE;
@@ -1270,13 +1273,13 @@ void process_v1_packet(struct msg_digest *md)
 			send_notification_from_md(md, t);		\
 	}
 
-#define LOG_PACKET(RC, ...)				\
-	{						\
-		if (st != NULL) {			\
-			log_state(RC, st, __VA_ARGS__);	\
-		} else {				\
-			log_md(RC, md, __VA_ARGS__);	\
-		}					\
+#define LOG_PACKET(RC, ...)					\
+	{							\
+		if (st != NULL) {				\
+			log_state(RC, st, __VA_ARGS__);		\
+		} else {					\
+			llog(RC, md->md_logger, __VA_ARGS__);	\
+		}						\
 	}
 
 	switch (md->hdr.isa_xchg) {
@@ -1348,7 +1351,8 @@ void process_v1_packet(struct msg_digest *md)
 							   md->hdr.isa_msgid);
 
 				if (st == NULL) {
-					log_md(RC_LOG, md, "phase 1 message is part of an unknown exchange");
+					llog(RC_LOG, md->md_logger,
+					     "phase 1 message is part of an unknown exchange");
 					/* XXX Could send notification back */
 					return;
 				}
@@ -2812,7 +2816,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			passert(st->st_state->kind < STATE_IKEv1_ROOF);
 
 			/* tell whack and logs our progress */
-			LOG_JAMBUF(w, st->st_logger, buf) {
+			LLOG_JAMBUF(w, st->st_logger, buf) {
 				jam(buf, "%s", st->st_state->story);
 				/* document SA details for admin's pleasure */
 				if (log_details != NULL) {
@@ -2906,7 +2910,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		    (st->st_seen_nortel_vid)) {
 			log_state(RC_LOG, st, "Nortel 'Contivity Mode' detected, starting Quick Mode");
 			change_state(st, STATE_MAIN_R3); /* ISAKMP is up... */
-			quick_outI1(st->st_whack_sock, st, st->st_connection,
+			quick_outI1(st->st_logger->object_whackfd, st, st->st_connection,
 				    st->st_connection->policy, 1, SOS_NOBODY,
 				    NULL /* Setting NULL as this is responder and will not have sec ctx from a flow*/
 				    );

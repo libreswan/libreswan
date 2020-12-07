@@ -300,7 +300,7 @@ struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 		get_connection_private_key(c, &pubkey_type_rsa,
 					   logger);
 	if (pks == NULL) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "unable to locate my private key for RSA Signature");
 		return (struct hash_signature) { .len = 0, }; /* failure: no key to use */
 	}
@@ -586,42 +586,47 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		}
 
 		if (c == NULL) {
-			log_md(RC_LOG_SERIOUS, md,
-			       "initial Main Mode message received but no connection has been authorized with policy %s",
-			       bitnamesof(sa_policy_bit_names, policy));
+			llog(RC_LOG_SERIOUS, md->md_logger,
+			     "initial Main Mode message received but no connection has been authorized with policy %s",
+			     bitnamesof(sa_policy_bit_names, policy));
 			/* XXX notification is in order! */
 			return STF_IGNORE;
-		} else if (c->kind != CK_TEMPLATE) {
-			connection_buf cib;
-			log_md(RC_LOG_SERIOUS, md,
-			       "initial Main Mode message received but "PRI_CONNECTION" forbids connection",
-			       pri_connection(c, &cib));
-			/* XXX notification is in order! */
-			return STF_IGNORE;
-		} else {
-			/*
-			 * Create a temporary connection that is a copy
-			 * of this one.
-			 * Their ID isn't declared yet.
-			 */
-			connection_buf cib;
-			dbg_md(md, "instantiating "PRI_CONNECTION" for initial Main Mode message",
-			       pri_connection(c, &cib));
-			ip_address sender_address = endpoint_address(&md->sender);
-			c = rw_instantiate(c, &sender_address, NULL, NULL);
 		}
+
+		if (c->kind != CK_TEMPLATE) {
+			connection_buf cib;
+			llog(RC_LOG_SERIOUS, md->md_logger,
+			     "initial Main Mode message received but "PRI_CONNECTION" forbids connection",
+			     pri_connection(c, &cib));
+			/* XXX notification is in order! */
+			return STF_IGNORE;
+		}
+
+		/*
+		 * Create a temporary connection that is a copy of
+		 * this one.
+		 *
+		 * Their ID isn't declared yet.
+		 */
+		connection_buf cib;
+		dbgl(md->md_logger, "instantiating "PRI_CONNECTION" for initial Main Mode message",
+		     pri_connection(c, &cib));
+		ip_address sender_address = endpoint_address(&md->sender);
+		c = rw_instantiate(c, &sender_address, NULL, NULL);
 	} else {
 		/*
 		 * we found a non-wildcard conn. double check if it needs
 		 * instantiation anyway (eg vnet=)
 		 */
 		if (c->kind == CK_TEMPLATE && c->spd.that.virt != NULL) {
-			dbg_md(md, "local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation");
+			dbgl(md->md_logger,
+			     "local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation");
 			ip_address sender_address = endpoint_address(&md->sender);
 			c = rw_instantiate(c, &sender_address, NULL, NULL);
 		}
 		if (c->kind == CK_TEMPLATE && c->spd.that.has_id_wildcards) {
-			dbg_md(md, "remote end has wildcard ID, needs instantiation");
+			dbgl(md->md_logger,
+			     "remote end has wildcard ID, needs instantiation");
 			ip_address sender_address = endpoint_address(&md->sender);
 			c = rw_instantiate(c, &sender_address, NULL, NULL);
 		}
@@ -1833,7 +1838,7 @@ static void send_notification(struct logger *logger,
 		sndst->hidden_variables.st_malformed_sent++;
 		if (sndst->hidden_variables.st_malformed_sent >
 		    MAXIMUM_MALFORMED_NOTIFY) {
-			log_message(RC_LOG, logger, "too many (%d) malformed payloads. Deleting state",
+			llog(RC_LOG, logger, "too many (%d) malformed payloads. Deleting state",
 				    sndst->hidden_variables.st_malformed_sent);
 			delete_state(sndst);
 			/* note: no md->st to clear */
@@ -1841,7 +1846,7 @@ static void send_notification(struct logger *logger,
 		}
 
 		if (sndst->st_v1_iv.len != 0) {
-			LOG_JAMBUF(RC_LOG, logger, buf) {
+			LLOG_JAMBUF(RC_LOG, logger, buf) {
 				jam(buf, "payload malformed.  IV: ");
 				jam_dump_bytes(buf, sndst->st_v1_iv.ptr,
 					       sndst->st_v1_iv.len);
@@ -1877,7 +1882,7 @@ static void send_notification(struct logger *logger,
 		 * SNDST as that may be fake.
 		 */
 		endpoint_buf b;
-		log_message(RC_NOTIFICATION + type, logger,
+		llog(RC_NOTIFICATION + type, logger,
 			    "sending %snotification %s to %s",
 			    encst ? "encrypted " : "",
 			    enum_name(&ikev1_notify_names, type),
@@ -1927,7 +1932,7 @@ static void send_notification(struct logger *logger,
 
 		if (!out_struct(&isan, &isakmp_notification_desc,
 					&r_hdr_pbs, &not_pbs)) {
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "failed to build notification in send_notification");
 			return;
 		}
@@ -2018,10 +2023,10 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
 	}
 
 	endpoint_buf b;
-	log_md(RC_NOTIFICATION + type, md,
-	       "sending notification %s to %s",
-	       enum_name(&ikev1_notify_names, type),
-	       str_endpoint(&md->sender, &b));
+	llog(RC_NOTIFICATION + type, md->md_logger,
+	     "sending notification %s to %s",
+	     enum_name(&ikev1_notify_names, type),
+	     str_endpoint(&md->sender, &b));
 
 	uint8_t buffer[1024];	/* ??? large enough for any notification? */
 	struct pbs_out pbs = open_pbs_out("notification msg",
@@ -2057,7 +2062,8 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
 
 		if (!out_struct(&isan, &isakmp_notification_desc,
 					&r_hdr_pbs, &not_pbs)) {
-			log_md(RC_LOG, md, "failed to build notification in send_notification");
+			llog(RC_LOG, md->md_logger,
+			     "failed to build notification in send_notification");
 			return;
 		}
 

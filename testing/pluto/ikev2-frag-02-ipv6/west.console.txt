@@ -7,7 +7,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add v6-tunnel
-002 added IKEv2 connection "v6-tunnel"
+002 "v6-tunnel": added IKEv2 connection
 west #
  ipsec whack --impair suppress-retransmits
 west #

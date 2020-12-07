@@ -18,12 +18,12 @@
 
 #include <string.h>
 #include <netdb.h>		/* for gethostbyname2() */
-#include <ctype.h>		/* for isxdigit() */
 
 #include "ip_address.h"
 #include "ip_info.h"
 #include "lswalloc.h"		/* for alloc_things(), pfree() */
 #include "lswlog.h"		/* for pexpect() */
+#include "hunk.h"		/* for char_is_xdigit() */
 
 /*
  * Legal ASCII characters in a domain name.  Underscore technically is not,
@@ -431,14 +431,14 @@ unsigned *retp;	/* return-value pointer */
 
 	p = *srcp;
 	d = 0;
-	while (p < stop && d < NDIG && isxdigit(*p)) {
+	while (p < stop && d < NDIG && char_isxdigit(*p)) {
 		p++;
 		d++;
 	}
 	if (d == 0)
 		return "non-hex field in IPv6 numeric address";
 
-	if (p < stop && d == NDIG && isxdigit(*p))
+	if (p < stop && d == NDIG && char_isxdigit(*p))
 		return "field in IPv6 numeric address longer than 4 hex digits";
 
 	oops = ttoul(*srcp, d, 16, &ret);

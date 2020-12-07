@@ -8,7 +8,7 @@ road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
  ipsec auto --add road
-002 added IKEv1 connection "road"
+002 "road": added IKEv1 connection
 road #
  ../bin/tcpdump.sh --start -i eth0
 road #

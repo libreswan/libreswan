@@ -22,10 +22,10 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-nflog
-002 added IKEv1 connection "westnet-eastnet-nflog"
+002 "westnet-eastnet-nflog": added IKEv1 connection
 west #
  ipsec auto --add west-east-nflog
-002 added IKEv1 connection "west-east-nflog"
+002 "west-east-nflog": added IKEv1 connection
 west #
  echo "initdone"
 initdone

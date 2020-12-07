@@ -22,7 +22,6 @@
 #include <string.h>
 #include <limits.h>
 #include <assert.h>
-#include <sys/queue.h>
 
 #include "constants.h"
 #include "lswlog.h"

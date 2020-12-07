@@ -15,10 +15,10 @@ road #
  ipsec whack --impair suppress-retransmits
 road #
  ipsec auto --add road-east-x509-ipv4
-002 added IKEv2 connection "road-east-x509-ipv4"
+002 "road-east-x509-ipv4": added IKEv2 connection
 road #
  ipsec auto --add road-west-x509-ipv4
-002 added IKEv2 connection "road-west-x509-ipv4"
+002 "road-west-x509-ipv4": added IKEv2 connection
 road #
  echo "initdone"
 initdone

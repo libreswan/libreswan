@@ -8,13 +8,13 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add ikev1
-002 added IKEv1 connection "ikev1"
+002 "ikev1": added IKEv1 connection
 east #
  ipsec auto --add ikev1-aggr
-002 added IKEv1 connection "ikev1-aggr"
+002 "ikev1-aggr": added IKEv1 connection
 east #
  ipsec auto --add ikev2
-002 added IKEv2 connection "ikev2"
+002 "ikev2": added IKEv2 connection
 east #
  echo "initdone"
 initdone

@@ -45,13 +45,13 @@ struct task {
 
 static task_computer_fn v2_auth_signature_computer; /* type check */
 static task_completed_cb v2_auth_signature_completed; /* type check */
-static task_cancelled_cb v2_auth_signature_cancelled; /* type check */
+static task_cleanup_cb v2_auth_signature_cleanup; /* type check */
 
 struct task_handler v2_auth_signature_handler = {
 	.name = "signature",
 	.computer_fn = v2_auth_signature_computer,
 	.completed_cb = v2_auth_signature_completed,
-	.cancelled_cb = v2_auth_signature_cancelled,
+	.cleanup_cb = v2_auth_signature_cleanup,
 };
 
 bool submit_v2_auth_signature(struct ike_sa *ike,
@@ -106,14 +106,13 @@ static void v2_auth_signature_computer(struct logger *logger, struct task *task,
 
 static stf_status v2_auth_signature_completed(struct state *st,
 					      struct msg_digest *md,
-					      struct task **task)
+					      struct task *task)
 {
-	stf_status status = (*task)->cb(pexpect_ike_sa(st), md, &(*task)->signature);
-	pfreeany(*task);
+	stf_status status = task->cb(pexpect_ike_sa(st), md, &task->signature);
 	return status;
 }
 
-static void v2_auth_signature_cancelled(struct task **task)
+static void v2_auth_signature_cleanup(struct task **task)
 {
 	pfreeany(*task);
 }

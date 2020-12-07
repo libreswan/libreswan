@@ -6,7 +6,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add ipv4-psk-ikev2-transport
-002 added IKEv2 connection "ipv4-psk-ikev2-transport"
+002 "ipv4-psk-ikev2-transport": added IKEv2 connection
 west #
  ipsec whack --impair suppress-retransmits
 west #

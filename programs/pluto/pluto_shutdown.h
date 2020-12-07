@@ -54,18 +54,4 @@ extern volatile bool exiting_pluto;
 
 void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status);
 
-/*
- * Exit pluto immediately.
- *
- * Recommended for shutting down pluto during start-up (i.e., before
- * the event-loop has started).
- *
- * This function tries to cleanup a limited subset of resources and
- * then immediately exit pluto.  For instance, while this function
- * will close the logs and release the lock file, it will not try to
- * clean up helper threads or reap child processes.
- */
-
-extern void exit_pluto(enum pluto_exit_code status) NEVER_RETURNS;
-
 #endif

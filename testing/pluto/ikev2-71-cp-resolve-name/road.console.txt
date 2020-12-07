@@ -24,7 +24,7 @@ road #
  ipsec whack --impair suppress-retransmits
 road #
  ipsec auto --add road
-002 added IKEv2 connection "road"
+002 "road": added IKEv2 connection
 road #
  echo "initdone"
 initdone

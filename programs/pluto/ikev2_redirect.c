@@ -133,7 +133,7 @@ static chunk_t build_redirect_notification_data_common(enum gw_identity_type gwi
 						       struct logger *logger)
 {
 	if (id.len > 0xFF) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "redirect destination longer than 255 octets; ignoring");
 		return empty_chunk;
 	}
@@ -257,7 +257,7 @@ bool redirect_global(struct msg_digest *md)
 							    logger);
 
 	if (data.len == 0) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "failed to construct REDIRECT notification data");
 		return true;
 	}
@@ -266,28 +266,28 @@ bool redirect_global(struct msg_digest *md)
 	return true;
 }
 
-bool emit_redirect_notification(const shunk_t dest_str, struct pbs_out *pbs)
+bool emit_redirect_notification(const shunk_t dest_str, struct pbs_out *outs)
 {
 	passert(dest_str.ptr != NULL);
 
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
 	chunk_t data = build_redirect_notification_data_str(dest_str, NULL,
 							    buf, sizeof(buf),
-							    pbs->out_logger);
+							    outs->outs_logger);
 
 	return data.len != 0 &&
-		emit_v2N_bytes(v2N_REDIRECT, data.ptr, data.len, pbs);
+		emit_v2N_bytes(v2N_REDIRECT, data.ptr, data.len, outs);
 }
 
-bool emit_redirected_from_notification(const ip_address *ip_addr, struct pbs_out *pbs)
+bool emit_redirected_from_notification(const ip_address *ip_addr, struct pbs_out *outs)
 {
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
 	chunk_t data = build_redirect_notification_data_ip(ip_addr, NULL,
 							   buf, sizeof(buf),
-							   pbs->out_logger);
+							   outs->outs_logger);
 
 	return data.len != 0 &&
-		emit_v2N_bytes(v2N_REDIRECTED_FROM, data.ptr, data.len, pbs);
+		emit_v2N_bytes(v2N_REDIRECTED_FROM, data.ptr, data.len, outs);
 }
 
 /*
@@ -479,8 +479,8 @@ void initiate_redirect(struct state *st)
 			sensitive_ipstr(&redirect_ip, &b));
 
 	initiate_connections_by_name(c->name, NULL,
-				     st->st_whack_sock,
-				     st->st_whack_sock == NULL/*background*/);
+				     st->st_logger->object_whackfd,
+				     /*background?*/(st->st_logger->object_whackfd == NULL));
 
 	event_force(EVENT_SA_EXPIRE, right_state);
 	/*

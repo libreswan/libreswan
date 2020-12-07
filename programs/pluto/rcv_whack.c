@@ -98,13 +98,13 @@ static struct state *find_impaired_state(unsigned biased_what,
 					 struct logger *logger)
 {
 	if (biased_what == 0) {
-		log_message(RC_COMMENT, logger, "state 'no' is not valid");
+		llog(RC_COMMENT, logger, "state 'no' is not valid");
 		return NULL;
 	}
 	so_serial_t so = biased_what - 1; /* unbias */
 	struct state *st = state_by_serialno(so);
 	if (st == NULL) {
-		log_message(RC_COMMENT, logger, "state #%lu not found", so);
+		llog(RC_COMMENT, logger, "state #%lu not found", so);
 		return NULL;
 	}
 	return st;
@@ -160,7 +160,7 @@ static void whack_impair_action(enum impair_action action, unsigned event,
 			return;
 		}
 		struct logger loggers = merge_loggers(&ike->sa, background, logger);
-		log_message(RC_COMMENT, &loggers, "initiating liveness");
+		llog(RC_COMMENT, &loggers, "initiating liveness");
 		initiate_v2_liveness(&loggers, ike);
 		break;
 	}
@@ -197,7 +197,7 @@ static void whack_impair_action(enum impair_action action, unsigned event,
 		}
 		/* will log */
 		struct logger loggers = merge_loggers(st, true/*background*/, logger);
-		log_message(RC_COMMENT, &loggers, "sending keepalive");
+		llog(RC_COMMENT, &loggers, "sending keepalive");
 		send_keepalive_using_state(st, "inject keep-alive");
 		break;
 	}
@@ -211,16 +211,25 @@ static int whack_route_connection(struct connection *c,
 				  struct fd *whackfd,
 				  void *unused_arg UNUSED)
 {
+	/* XXX: something better? */
+	close_any(&c->logger->global_whackfd);
+	c->logger->global_whackfd = dup_any(whackfd);
+
 	if (!oriented(*c)) {
 		/* XXX: why whack only? */
-		log_connection(RC_ORIENT|WHACK_STREAM, whackfd, c,
-			       "we cannot identify ourselves with either end of this connection");
+		llog(WHACK_STREAM|RC_ORIENT, c->logger,
+		     "we cannot identify ourselves with either end of this connection");
 	} else if (c->policy & POLICY_GROUP) {
-		route_group(whackfd, c);
-	} else if (!trap_connection(c, whackfd)) {
+		route_group(c);
+	} else if (!trap_connection(c)) {
 		/* XXX: why whack only? */
-		log_connection(RC_ROUTE|WHACK_STREAM, whackfd, c, "could not route");
+		llog(WHACK_STREAM|RC_ROUTE, c->logger,
+		     "could not route");
 	}
+
+	/* XXX: something better? */
+	close_any(&c->logger->global_whackfd);
+
 	return 1;
 }
 
@@ -256,14 +265,14 @@ static void do_whacklisten(struct logger *logger)
 #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_RELOADING, SD_REPORT_NO_STATUS);
 #endif
-	log_message(RC_LOG, logger, "listening for IKE messages");
+	llog(RC_LOG, logger, "listening for IKE messages");
 	listening = true;
 	find_ifaces(true /* remove dead interfaces */, logger);
 #ifdef USE_XFRM_INTERFACE
 	stale_xfrmi_interfaces(logger);
 #endif
 	load_preshared_secrets(logger);
-	load_groups(logger->global_whackfd);
+	load_groups(logger);
 #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_READY, SD_REPORT_NO_STATUS);
 #endif
@@ -292,7 +301,7 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 
 	/* --addkey always requires a key */
 	if (msg->whack_addkey && !given_key) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "error: key to add is empty (needs DNS lookup?)");
 		return;
 	}
@@ -300,7 +309,7 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 	struct id keyid;
 	err_t ugh = atoid(msg->keyid, &keyid); /* must free keyid */
 	if (ugh != NULL) {
-		log_message(RC_BADID, logger,
+		llog(RC_BADID, logger,
 			    "bad --keyid \"%s\": %s", msg->keyid, ugh);
 		return;
 	}
@@ -309,7 +318,7 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 	if (!msg->whack_addkey) {
 		if (!given_key) {
 			/* XXX: this gets called by "add" so be silent */
-			log_message(LOG_STREAM/*not-whack*/, logger,
+			llog(LOG_STREAM/*not-whack*/, logger,
 				    "delete keyid %s", msg->keyid);
 		}
 		delete_public_keys(&pluto_pubkeys, &keyid, type);
@@ -319,7 +328,7 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 	/* if a key was given: add it */
 	if (given_key) {
 		/* XXX: this gets called by "add" so be silent */
-		log_message(LOG_STREAM/*not-whack*/, logger,
+		llog(LOG_STREAM/*not-whack*/, logger,
 			    "add keyid %s", msg->keyid);
 		DBG_dump_hunk(NULL, msg->keyval);
 
@@ -333,7 +342,7 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 					   &pubkey/*new-public-key:must-delref*/,
 					   &pluto_pubkeys);
 		if (ugh != NULL) {
-			log_message(RC_LOG_SERIOUS, logger, "%s", ugh);
+			llog(RC_LOG_SERIOUS, logger, "%s", ugh);
 			free_id_content(&keyid);
 			return;
 		}
@@ -347,7 +356,7 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 			dbg("no private key: %s", err);
 		} else if (load_needed) {
 			ckaid_buf ckb;
-			log_message(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
+			llog(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
 				    "loaded private key matching CKAID %s",
 				    str_ckaid(ckaid, &ckb));
 		}
@@ -368,7 +377,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	 *
 	 * Suspect logging code should either:
 	 *
-	 * => use log_message() (or log_show() wrapper?) so failing
+	 * => use llog() (or log_show() wrapper?) so failing
 	 * whack requests leave a breadcrumb in the main whack log.
 	 *
 	 * => use show_*() because the good output is for whack
@@ -499,8 +508,8 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			whack_log(RC_FATAL, whackfd,
 				  "received whack command to delete a connection by username, but did not receive the username - ignored");
 		} else {
-			plog_global("received whack to delete connection by user %s",
-				    m->name);
+			log_global(LOG_STREAM, null_fd,
+				   "received whack to delete connection by user %s", m->name);
 			for_each_state(v1_delete_state_by_username, m->name,
 				       __func__);
 		}
@@ -512,8 +521,8 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			whack_log(RC_FATAL, whackfd,
 				  "received whack command to delete a connection by id, but did not receive the id - ignored");
 		} else {
-			plog_global("received whack to delete connection by id %s",
-				    m->name);
+			log_global(LOG_STREAM, null_fd,
+				   "received whack to delete connection by id %s", m->name);
 			for_each_state(delete_state_by_id_name, m->name, __func__);
 		}
 	}
@@ -574,7 +583,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	if (m->ike_buf_size != 0) {
 		dbg("whack: ike_buf_size %lu", m->ike_buf_size);
 		pluto_sock_bufsize = m->ike_buf_size;
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "set IKE socket buffer to %d", pluto_sock_bufsize);
 	}
 
@@ -582,7 +591,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	if (m->ike_sock_err_toggle) {
 		dbg("whack: ike_sock_err_toggle !%s", bool_str(pluto_sock_errqueue));
 		pluto_sock_errqueue = !pluto_sock_errqueue;
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "%s IKE socket MSG_ERRQUEUEs",
 			    pluto_sock_errqueue ? "enabling" : "disabling");
 	}
@@ -595,7 +604,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_unlisten) {
 		dbg("whack: unlisten");
-		log_message(RC_LOG, logger, "no longer listening for IKE messages");
+		llog(RC_LOG, logger, "no longer listening for IKE messages");
 		listening = false;
 	}
 
@@ -606,7 +615,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_ddns) {
 		dbg("whack: ddns %d", m->whack_ddns);
-		log_message(RC_LOG, logger, "updating pending dns lookups");
+		llog(RC_LOG, logger, "updating pending dns lookups");
 		connection_check_ddns(show_logger(s));
 	}
 
@@ -627,7 +636,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	}
 
 	if (m->whack_reread & REREAD_CRLS) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "ipsec whack: rereadcrls command obsoleted did you mean ipsec whack --fetchcrls");
 	}
 
@@ -818,45 +827,45 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		 * report the test results.
 		 */
 		if (pluto_seccomp_mode == SECCOMP_ENABLED)
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "pluto is running with seccomp=enabled! pluto is expected to die!");
-		log_message(RC_LOG_SERIOUS, logger, "Performing seccomp security test using getsid() syscall");
+		llog(RC_LOG_SERIOUS, logger, "Performing seccomp security test using getsid() syscall");
 		pid_t testpid = getsid(0);
 
 		/* We did not get shot by the kernel seccomp protection */
 		if (testpid == -1) {
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "pluto: seccomp test syscall was blocked");
 			switch (pluto_seccomp_mode) {
 			case SECCOMP_TOLERANT:
-				log_message(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG_SERIOUS, logger,
 					    "OK: seccomp security was tolerant; the rogue syscall was blocked and pluto was not terminated");
 				break;
 			case SECCOMP_DISABLED:
-				log_message(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG_SERIOUS, logger,
 					    "OK: seccomp security was not enabled and the rogue syscall was blocked");
 				break;
 			case SECCOMP_ENABLED:
-				log_message(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG_SERIOUS, logger,
 					    "ERROR: pluto seccomp was enabled but the rogue syscall did not terminate pluto!");
 				break;
 			default:
 				bad_case(pluto_seccomp_mode);
 			}
 		} else {
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "pluto: seccomp test syscall was not blocked");
 			switch (pluto_seccomp_mode) {
 			case SECCOMP_TOLERANT:
-				log_message(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG_SERIOUS, logger,
 					    "ERROR: pluto seccomp was tolerant but the rogue syscall was not blocked!");
 				break;
 			case SECCOMP_DISABLED:
-				log_message(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG_SERIOUS, logger,
 					    "OK: pluto seccomp was disabled and the rogue syscall was not blocked");
 				break;
 			case SECCOMP_ENABLED:
-				log_message(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG_SERIOUS, logger,
 					    "ERROR: pluto seccomp was enabled but the rogue syscall was not blocked!");
 				break;
 			default:
@@ -867,7 +876,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 #endif
 
 	if (m->whack_shutdown) {
-		log_message(RC_LOG, logger, "shutting down");
+		llog(RC_LOG, logger, "shutting down");
 		shutdown_pluto(whackfd, PLUTO_EXIT_OK);
 		return; /* shutting down */
 	}
@@ -921,7 +930,7 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 
 	/* sanity check message */
 	if ((size_t)n < offsetof(struct whack_message, whack_shutdown) + sizeof(msg.whack_shutdown)) {
-		log_message(RC_BADWHACKMESSAGE, whack_logger,
+		llog(RC_BADWHACKMESSAGE, whack_logger,
 			    "ignoring runt message from whack: got %zd bytes", n);
 		return;
 	}
@@ -951,7 +960,7 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 	if (msg.magic != WHACK_MAGIC) {
 
 		if (msg.whack_shutdown) {
-			log_message(RC_LOG, whack_logger, "shutting down%s",
+			llog(RC_LOG, whack_logger, "shutting down%s",
 				    (msg.magic != WHACK_BASIC_MAGIC) ?  " despite whacky magic" : "");
 			shutdown_pluto(whackfd, PLUTO_EXIT_OK);
 			return; /* force shutting down */
@@ -968,7 +977,7 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 			return; /* don't shutdown */
 		}
 
-		log_message(RC_BADWHACKMESSAGE, whack_logger,
+		llog(RC_BADWHACKMESSAGE, whack_logger,
 			    "ignoring message from whack with bad magic %d; should be %d; Mismatched versions of userland tools.",
 			    msg.magic, WHACK_MAGIC);
 		return; /* bail (but don't shutdown) */

@@ -222,10 +222,6 @@ FINALNSSDIR ?= $(FINALVARDIR)/lib/ipsec/nss
 #FINALNSSDIR ?= /etc/ipsec.d
 NSSDIR ?= $(DESTDIR)$(FINALNSSDIR)
 
-
-# Note: this variable gets passed in, as in "make INITSYSTEM=systemd"
-INITSYSTEM ?= $(shell $(top_srcdir)/packaging/utils/lswan_detect.sh init)
-
 DOCKER_PLUTONOFORK ?= --nofork
 
 # An attempt is made to automatically figure out where boot/shutdown scripts

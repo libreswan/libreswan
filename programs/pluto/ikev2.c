@@ -763,7 +763,7 @@ static struct payload_summary ikev2_decode_payloads(struct logger *log,
 		    enum_show(&ikev2_payload_names, np));
 
 		if (md->digest_roof >= elemsof(md->digest)) {
-			log_message(RC_LOG_SERIOUS, log,
+			llog(RC_LOG_SERIOUS, log,
 				    "more than %zu payloads in message; ignored",
 				    elemsof(md->digest));
 			summary.n = v2N_INVALID_SYNTAX;
@@ -817,7 +817,7 @@ static struct payload_summary ikev2_decode_payloads(struct logger *log,
 				default:
 					bad_case(v2_msg_role(md));
 				}
-				log_message(RC_LOG_SERIOUS, log,
+				llog(RC_LOG_SERIOUS, log,
 					    "message %s contained an unknown critical payload type (%s)",
 					    role, enum_show(&ikev2_payload_names, np));
 				summary.n = v2N_UNSUPPORTED_CRITICAL_PAYLOAD;
@@ -826,7 +826,7 @@ static struct payload_summary ikev2_decode_payloads(struct logger *log,
 				break;
 			}
 			struct esb_buf eb;
-			log_message(RC_COMMENT, log,
+			llog(RC_COMMENT, log,
 				    "non-critical payload ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
 				    enum_showb(&ikev2_payload_names, np, &eb));
 			np = pd->payload.generic.isag_np;
@@ -3065,7 +3065,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 			}
 		}
 	} else {
-		LOG_JAMBUF(w, log_st->st_logger, buf) {
+		LLOG_JAMBUF(w, log_st->st_logger, buf) {
 			jam(buf, "%s", st->st_state->story);
 			/* document SA details for admin's pleasure */
 			if (log_details != NULL) {

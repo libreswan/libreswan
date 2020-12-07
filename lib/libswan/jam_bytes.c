@@ -14,7 +14,6 @@
  *
  */
 
-#include <ctype.h>		/* for isprint() */
 
 #include "jambuf.h"
 
@@ -84,7 +83,7 @@ size_t jam_sanitized_bytes(struct jambuf *buf, const void *ptr, size_t size)
 	const char *chars = ptr;
 	for (unsigned i = 0; i < size; i++) {
 		char c = chars[i];
-		if (isprint(c)) {
+		if (char_isprint(c)) {
 			n += jam_char(buf, c);
 		} else {
 			n += jam(buf, "\\%03o", c & 0xFF);
@@ -105,7 +104,7 @@ size_t jam_meta_escaped_bytes(struct jambuf *buf, const void *ptr, size_t size)
 	const char *chars = ptr;
 	for (unsigned i = 0; i < size; i++) {
 		char c = chars[i];
-		if (isprint(c)) {
+		if (char_isprint(c)) {
 			switch (c) {
 			case '\'':
 			case '\\':

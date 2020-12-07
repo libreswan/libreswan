@@ -255,15 +255,15 @@ void revive_conns(struct logger *logger)
 	while (revivals != NULL) {
 		struct connection *c = conn_by_serialno(revivals->serialno);
 		if (c == NULL) {
-			log_message(RC_UNKNOWN_NAME, logger,
+			llog(RC_UNKNOWN_NAME, logger,
 				    "failed to initiate connection "PRI_CO" which received a Delete/Notify but must remain up per local policy; connection no longer exists", pri_co(revivals->serialno));
 		} else {
-			log_connection(RC_LOG, null_fd, c,
-				"initiating connection '%s' with serial "PRI_CO" which received a Delete/Notify but must remain up per local policy",
-				c->name, pri_co(c->serialno));
+			llog(RC_LOG, c->logger,
+			     "initiating connection '%s' with serial "PRI_CO" which received a Delete/Notify but must remain up per local policy",
+			     c->name, pri_co(c->serialno));
 			if (!initiate_connection(c, NULL, null_fd, true/*background*/)) {
-				log_connection(RC_FATAL, null_fd, c,
-					       "failed to initiate connection");
+				llog(RC_FATAL, c->logger,
+				     "failed to initiate connection");
 			}
 		}
 		/*
@@ -702,7 +702,7 @@ void rehash_state(struct state *st, const ike_spi_t *ike_responder_spi)
 void release_any_whack(struct state *st, where_t where, const char *why)
 {
 	dbg("releasing #%lu's "PRI_FD" because %s",
-	    st->st_serialno, pri_fd(st->st_whack_sock), why);
+	    st->st_serialno, pri_fd(st->st_logger->object_whackfd), why);
 	close_any_fd(&st->st_logger->object_whackfd, where);
 	close_any_fd(&st->st_logger->global_whackfd, where);
 }
@@ -1513,7 +1513,7 @@ void delete_states_dead_interfaces(struct logger *logger)
 				id_vname = c->xfrmi->name;
 			else
 				id_vname = this->st_interface->ip_dev->id_rname;
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "deleting lasting state #%lu on interface (%s) which is shutting down",
 				    this->st_serialno, id_vname);
 			/* XXX: better? */

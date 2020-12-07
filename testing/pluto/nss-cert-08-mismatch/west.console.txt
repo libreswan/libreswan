@@ -11,10 +11,10 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add nss-cert-incorrect
-002 added IKEv2 connection "nss-cert-incorrect"
+002 "nss-cert-incorrect": added IKEv2 connection
 west #
  ipsec auto --add nss-cert-correct
-002 added IKEv2 connection "nss-cert-correct"
+002 "nss-cert-correct": added IKEv2 connection
 west #
  ipsec whack --impair suppress-retransmits
 west #

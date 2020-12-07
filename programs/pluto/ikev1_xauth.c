@@ -209,7 +209,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 	{
 		diag_t d = pbs_out_address(&attrval, ia, "IP_addr");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, attrval.out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 		break;
@@ -219,7 +219,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 	{
 		diag_t d = pbs_out_address(&attrval, &c->spd.this.client.addr, "IP4_subnet");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, attrval.out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -256,7 +256,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 			/* emit attribute's value */
 			diag_t d = pbs_out_address(&attrval, &dnsip, "IP4_dns");
 			if (d != NULL) {
-				log_diag(RC_LOG_SERIOUS, attrval.out_logger, &d, "%s", "");
+				log_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
 				return STF_INTERNAL_ERROR;
 			}
 
@@ -879,7 +879,7 @@ static bool add_xauth_addresspool(struct connection *c,
 		er = ttorange(addresspool, &ipv4_info, &pool_range);
 	}
 	if (er != NULL) {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "XAUTH IP address %s is not valid %s user=%s",
 			    addresspool, er, userid);
 	} else {
@@ -891,7 +891,7 @@ static bool add_xauth_addresspool(struct connection *c,
 			unreference_addresspool(c);
 		}
 
-		c->pool = install_addresspool(&pool_range);
+		c->pool = install_addresspool(&pool_range, logger);
 		if (c->pool != NULL) {
 			reference_addresspool(c);
 			ret = TRUE;
@@ -1948,7 +1948,7 @@ static stf_status xauth_client_resp(struct state *st,
 						return STF_INTERNAL_ERROR;
 
 					if (st->st_xauth_username[0] == '\0') {
-						if (!fd_p(st->st_whack_sock)) {
+						if (!fd_p(st->st_logger->object_whackfd)) {
 							log_state(RC_LOG_SERIOUS, st,
 							       "XAUTH username requested, but no file descriptor available for prompt");
 							return STF_FATAL;
@@ -2026,7 +2026,7 @@ static stf_status xauth_client_resp(struct state *st,
 					if (st->st_xauth_password.ptr == NULL) {
 						char xauth_password[XAUTH_MAX_PASS_LENGTH];
 
-						if (!fd_p(st->st_whack_sock)) {
+						if (!fd_p(st->st_logger->object_whackfd)) {
 							log_state(RC_LOG_SERIOUS, st,
 							       "XAUTH password requested, but no file descriptor available for prompt");
 							return STF_FATAL;

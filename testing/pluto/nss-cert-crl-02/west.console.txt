@@ -11,7 +11,7 @@ west #
  ipsec whack --impair delete-on-retransmit
 west #
  ipsec auto --add nss-cert-crl
-002 added IKEv1 connection "nss-cert-crl"
+002 "nss-cert-crl": added IKEv1 connection
 west #
  ipsec auto --status |grep nss-cert-crl
 000 "nss-cert-crl": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=revoked.testing.libreswan.org, E=user-revoked@testing.libreswan.org]...192.1.2.23<192.1.2.23>[%fromcert]===192.0.2.254/32; unrouted; eroute owner: #0

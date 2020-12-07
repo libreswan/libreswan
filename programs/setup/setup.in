@@ -33,7 +33,7 @@ initsystem="@INITSYSTEM@"
 # linux_START
 # The stock Fedora/RHEL RPM gets tested in side namespaces where
 # things get invoked directly is needed.
-if echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1 ; then
+if echo $SUDO_COMMAND | grep "/bin/nsenter " && test -f /testing/guestbin/swan-prep > /dev/null 2>&1 ; then
     # direct start
     initsystem=namespaces
 fi

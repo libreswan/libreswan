@@ -6,7 +6,7 @@ road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
  ipsec auto --add eastnet-any
-002 added IKEv2 connection "eastnet-any"
+002 "eastnet-any": added IKEv2 connection
 road #
  # confirm we have stock resolv.conf
 road #

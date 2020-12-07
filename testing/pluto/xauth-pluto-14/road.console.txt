@@ -6,7 +6,7 @@ road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
  ipsec auto --add modecfg-road-east
-002 added IKEv1 connection "modecfg-road-east"
+002 "modecfg-road-east": added IKEv1 connection
 road #
  ipsec whack --impair suppress-retransmits
 road #

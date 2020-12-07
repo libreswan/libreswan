@@ -82,13 +82,13 @@ static bool send_chunks(const char *where, bool just_a_keepalive,
 	size_t natt_bonus;
 
 	if (interface == NULL) {
-		log_message(RC_LOG, logger, "cannot send packet - interface vanished!");
+		llog(RC_LOG, logger, "cannot send packet - interface vanished!");
 		return false;
 	}
 
 	/* bandaid */
 	if (a.ptr == NULL) {
-		log_message(RC_LOG, logger, "cannot send packet - a.ptr is NULL");
+		llog(RC_LOG, logger, "cannot send packet - a.ptr is NULL");
 		return false;
 	}
 
@@ -107,7 +107,7 @@ static bool send_chunks(const char *where, bool just_a_keepalive,
 	if (isanyaddr(&remote_endpoint)) {
 		/* not asserting, who knows what nonsense a user can generate */
 		endpoint_buf b;
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "will not send packet to bogus address %s",
 			    str_sensitive_endpoint(&remote_endpoint, &b));
 		return false;
@@ -128,7 +128,7 @@ static bool send_chunks(const char *where, bool just_a_keepalive,
 
 	if (len > MAX_OUTPUT_UDP_SIZE) {
 		/* XXX: UDP centric? */
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "send_ike_msg(): really too big %zu bytes", len);
 		return false;
 	}
@@ -153,7 +153,7 @@ static bool send_chunks(const char *where, bool just_a_keepalive,
 	if (DBGP(DBG_BASE)) {
 		endpoint_buf lb;
 		endpoint_buf rb;
-		log_message(DEBUG_STREAM, logger,
+		llog(DEBUG_STREAM, logger,
 			    "sending %zu bytes for %s through %s from %s to %s using %s (for #%lu)",
 			    len, where,
 			    interface->ip_dev->id_rname,
@@ -195,7 +195,7 @@ static bool send_chunks(const char *where, bool just_a_keepalive,
 		usleep(500000);
 		endpoint_buf b;
 		endpoint_buf ib;
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "IMPAIR: JACOB 2-2: resending %zu bytes for %s through %s from %s to %s:",
 			    len, where,
 			    interface->ip_dev->id_rname,

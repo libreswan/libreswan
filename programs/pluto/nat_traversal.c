@@ -31,7 +31,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <stdarg.h>
 #include <errno.h>
 #include <string.h>
@@ -89,7 +88,7 @@ void init_nat_traversal(deltatime_t keep_alive_period, struct logger *logger)
 
 	dbg("init_nat_traversal() initialized with keep_alive=%jds",
 	    deltasecs(keep_alive_period));
-	log_message(RC_LOG, logger, "NAT-Traversal support %s",
+	llog(RC_LOG, logger, "NAT-Traversal support %s",
 		    nat_traversal_enabled ? " [enabled]" : " [disabled]");
 
 	init_oneshot_timer(EVENT_NAT_T_KEEPALIVE, nat_traversal_ka_event);
@@ -185,7 +184,7 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 	/* First: one with local (source) IP & port */
 
 	hb = natd_hash(&ike_alg_hash_sha1, ike_spis, local_endpoint,
-		       outs->out_logger);
+		       outs->outs_logger);
 	if (!emit_v2N_hunk(v2N_NAT_DETECTION_SOURCE_IP, hb, outs)) {
 		return false;
 	}
@@ -193,7 +192,7 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 	/* Second: one with remote (destination) IP & port */
 
 	hb = natd_hash(&ike_alg_hash_sha1, ike_spis, remote_endpoint,
-		       outs->out_logger);
+		       outs->outs_logger);
 	if (!emit_v2N_hunk(v2N_NAT_DETECTION_DESTINATION_IP, hb, outs)) {
 		return false;
 	}
@@ -486,14 +485,14 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 		return;
 
 	if (!LHAS(hv->st_nat_traversal, NATED_PEER)) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "NAT-Traversal: received %d NAT-OA. Ignored because peer is not NATed",
 			    i);
 		return;
 	}
 
 	if (i > 1) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "NAT-Traversal: received %d NAT-OA. Using first; ignoring others",
 			    i);
 	}
@@ -517,7 +516,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 		ipv = &ipv6_info;
 		break;
 	default:
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "NAT-Traversal: invalid ID Type (%d) in NAT-OA - ignored",
 			    p->payload.nat_oa.isanoa_idtype);
 		return;
@@ -533,7 +532,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 	dbg("received NAT-OA: %s", ipstr(&ip, &b));
 
 	if (address_eq_any(&ip)) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "NAT-Traversal: received 0.0.0.0 NAT-OA...");
 	} else {
 		hv->st_nat_oa = ip;
@@ -556,7 +555,7 @@ static bool emit_one_natoa(pb_stream *outs,
 	}
 	diag_t d = pbs_out_address(&pbs, ip, nm);
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 

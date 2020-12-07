@@ -26,7 +26,7 @@
 
 unsigned fails;
 
-#define PRINTLN(FILE, FMT, ...)						\
+#define PRINT(FILE, FMT, ...)						\
 	fprintf(FILE, "%s[%zu]:"FMT"\n",				\
 		__func__, ti,##__VA_ARGS__)
 
@@ -40,7 +40,7 @@ unsigned fails;
 #define FAIL(FMT, ...)						\
 	{							\
 		fails++;					\
-		PRINTLN(stderr, " "FMT,##__VA_ARGS__);		\
+		PRINT(stderr, " "FMT,##__VA_ARGS__);		\
 		continue;					\
 	}
 
@@ -285,7 +285,7 @@ static void shunk_span_check(void)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINTLN(stdout, " old='%s' accept='%s' -> token='%s' new='%s'",
+		PRINT(stdout, " old='%s' accept='%s' -> token='%s' new='%s'",
 			t->old, t->accept, t->token, t->token);
 
 		shunk_t t_input = shunk1(t->old);
@@ -367,72 +367,182 @@ static void check_hunk_char(void)
 static void check_hunk_char_is(void)
 {
 	static const struct test {
-		const char *s;
-		bool print;
-		bool digit;
 		bool bdigit;
+		bool blank;
+		bool digit;
+		bool lower;
 		bool odigit;
+		bool print;
+		bool space;
+		bool upper;
 		bool xdigit;
-	} tests[] = {
-		{ "\037", .print = false, },
-		{ " ", .print = true, },
-		{ "/", .print = true, },
-		{ "0", .print = true, .xdigit = true, .digit = true, .odigit = true, .bdigit = true, },
-		{ "1", .print = true, .xdigit = true, .digit = true, .odigit = true, .bdigit = true, },
-		{ "2", .print = true, .xdigit = true, .digit = true, .odigit = true, },
-		{ "3", .print = true, .xdigit = true, .digit = true, .odigit = true, },
-		{ "4", .print = true, .xdigit = true, .digit = true, .odigit = true, },
-		{ "5", .print = true, .xdigit = true, .digit = true, .odigit = true, },
-		{ "6", .print = true, .xdigit = true, .digit = true, .odigit = true, },
-		{ "7", .print = true, .xdigit = true, .digit = true, .odigit = true, },
-		{ "8", .print = true, .xdigit = true, .digit = true, },
-		{ "9", .print = true, .xdigit = true, .digit = true, },
-		{ ":", .print = true, },
-		{ "a", .print = true, .xdigit = true, },
-		{ "b", .print = true, .xdigit = true, },
-		{ "c", .print = true, .xdigit = true, },
-		{ "d", .print = true, .xdigit = true, },
-		{ "e", .print = true, .xdigit = true, },
-		{ "f", .print = true, .xdigit = true, },
-		{ "g", .print = true, },
-		{ "A", .print = true, .xdigit = true, },
-		{ "B", .print = true, .xdigit = true, },
-		{ "C", .print = true, .xdigit = true, },
-		{ "D", .print = true, .xdigit = true, },
-		{ "E", .print = true, .xdigit = true, },
-		{ "F", .print = true, .xdigit = true, },
-		{ "G", .print = true, },
-		{ "\177", .print = false, },
-		{ "", .print = false, },
+		char to_upper;
+		char to_lower;
+	} tests[256] = {
+		['\t'] = { .space = true, .blank = true, },
+		['\r'] = { .space = true, },
+		['\v'] = { .space = true, },
+		['\f'] = { .space = true, },
+		['\n'] = { .space = true, },
+		[' '] = { .print = true, .space = true, .blank = true, },
+		['!'] = { .print = true, },
+		['"'] = { .print = true, },
+		['#'] = { .print = true, },
+		['$'] = { .print = true, },
+		['%'] = { .print = true, },
+		['&'] = { .print = true, },
+		['\''] = { .print = true, },
+		['('] = { .print = true, },
+		[')'] = { .print = true, },
+		['*'] = { .print = true, },
+		['+'] = { .print = true, },
+		[','] = { .print = true, },
+		['-'] = { .print = true, },
+		['.'] = { .print = true, },
+		['/'] = { .print = true, },
+		['0'] = { .print = true, .xdigit = true, .digit = true, .odigit = true, .bdigit = true, },
+		['1'] = { .print = true, .xdigit = true, .digit = true, .odigit = true, .bdigit = true, },
+		['2'] = { .print = true, .xdigit = true, .digit = true, .odigit = true, },
+		['3'] = { .print = true, .xdigit = true, .digit = true, .odigit = true, },
+		['4'] = { .print = true, .xdigit = true, .digit = true, .odigit = true, },
+		['5'] = { .print = true, .xdigit = true, .digit = true, .odigit = true, },
+		['6'] = { .print = true, .xdigit = true, .digit = true, .odigit = true, },
+		['7'] = { .print = true, .xdigit = true, .digit = true, .odigit = true, },
+		['8'] = { .print = true, .xdigit = true, .digit = true, },
+		['9'] = { .print = true, .xdigit = true, .digit = true, },
+		[':'] = { .print = true, },
+		[';'] = { .print = true, },
+		['<'] = { .print = true, },
+		['='] = { .print = true, },
+		['>'] = { .print = true, },
+		['?'] = { .print = true, },
+		['@'] = { .print = true, },
+		/* upper case */
+		['A'] = { .print = true, .xdigit = true, .upper = true, .to_lower = 'a', },
+		['B'] = { .print = true, .xdigit = true, .upper = true, .to_lower = 'b', },
+		['C'] = { .print = true, .xdigit = true, .upper = true, .to_lower = 'c', },
+		['D'] = { .print = true, .xdigit = true, .upper = true, .to_lower = 'd', },
+		['E'] = { .print = true, .xdigit = true, .upper = true, .to_lower = 'e', },
+		['F'] = { .print = true, .xdigit = true, .upper = true, .to_lower = 'f', },
+		['G'] = { .print = true, .upper = true, .to_lower = 'g', },
+		['H'] = { .print = true, .upper = true, .to_lower = 'h', },
+		['I'] = { .print = true, .upper = true, .to_lower = 'i', },
+		['J'] = { .print = true, .upper = true, .to_lower = 'j', },
+		['K'] = { .print = true, .upper = true, .to_lower = 'k', },
+		['L'] = { .print = true, .upper = true, .to_lower = 'l', },
+		['M'] = { .print = true, .upper = true, .to_lower = 'm', },
+		['N'] = { .print = true, .upper = true, .to_lower = 'n', },
+		['O'] = { .print = true, .upper = true, .to_lower = 'o', },
+		['P'] = { .print = true, .upper = true, .to_lower = 'p', },
+		['Q'] = { .print = true, .upper = true, .to_lower = 'q', },
+		['R'] = { .print = true, .upper = true, .to_lower = 'r', },
+		['S'] = { .print = true, .upper = true, .to_lower = 's', },
+		['T'] = { .print = true, .upper = true, .to_lower = 't', },
+		['U'] = { .print = true, .upper = true, .to_lower = 'u', },
+		['V'] = { .print = true, .upper = true, .to_lower = 'v', },
+		['W'] = { .print = true, .upper = true, .to_lower = 'w', },
+		['X'] = { .print = true, .upper = true, .to_lower = 'x', },
+		['Y'] = { .print = true, .upper = true, .to_lower = 'y', },
+		['Z'] = { .print = true, .upper = true, .to_lower = 'z', },
+		/* misc */
+		['['] = { .print = true, },
+		['\\'] = { .print = true, },
+		[']'] = { .print = true, },
+		['^'] = { .print = true, },
+		['_'] = { .print = true, },
+		['`'] = { .print = true, },
+		/* lower case */
+		['a'] = { .print = true, .xdigit = true, .lower = true, .to_upper = 'A', },
+		['b'] = { .print = true, .xdigit = true, .lower = true, .to_upper = 'B', },
+		['c'] = { .print = true, .xdigit = true, .lower = true, .to_upper = 'C', },
+		['d'] = { .print = true, .xdigit = true, .lower = true, .to_upper = 'D', },
+		['e'] = { .print = true, .xdigit = true, .lower = true, .to_upper = 'E', },
+		['f'] = { .print = true, .xdigit = true, .lower = true, .to_upper = 'F', },
+		['g'] = { .print = true, .lower = true, .to_upper = 'G', },
+		['h'] = { .print = true, .lower = true, .to_upper = 'H', },
+		['i'] = { .print = true, .lower = true, .to_upper = 'I', },
+		['j'] = { .print = true, .lower = true, .to_upper = 'J', },
+		['k'] = { .print = true, .lower = true, .to_upper = 'K', },
+		['l'] = { .print = true, .lower = true, .to_upper = 'L', },
+		['m'] = { .print = true, .lower = true, .to_upper = 'M', },
+		['n'] = { .print = true, .lower = true, .to_upper = 'N', },
+		['o'] = { .print = true, .lower = true, .to_upper = 'O', },
+		['p'] = { .print = true, .lower = true, .to_upper = 'P', },
+		['q'] = { .print = true, .lower = true, .to_upper = 'Q', },
+		['r'] = { .print = true, .lower = true, .to_upper = 'R', },
+		['s'] = { .print = true, .lower = true, .to_upper = 'S', },
+		['t'] = { .print = true, .lower = true, .to_upper = 'T', },
+		['u'] = { .print = true, .lower = true, .to_upper = 'U', },
+		['v'] = { .print = true, .lower = true, .to_upper = 'V', },
+		['w'] = { .print = true, .lower = true, .to_upper = 'W', },
+		['x'] = { .print = true, .lower = true, .to_upper = 'X', },
+		['y'] = { .print = true, .lower = true, .to_upper = 'Y', },
+		['z'] = { .print = true, .lower = true, .to_upper = 'Z', },
+		/* misc */
+		['{'] = { .print = true, },
+		['|'] = { .print = true, },
+		['}'] = { .print = true, },
+		['~'] = { .print = true, },
 	};
 
 	/* this string matches above */
-	const char string[] = "\037 /0123456789:abcdefgABCDEFG\177";
-	shunk_t s = shunk2(string, sizeof(string)); /* include NUL */
+	char string[elemsof(tests) + 1] = "";
+	shunk_t shunk = shunk2(string, sizeof(string)); /* include NUL */
+	for (unsigned c = 0; c < elemsof(tests); c++) {
+		string[c] = c;
+	}
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT_S(stdout, "");
+		PRINT(stdout, "char %c", ti < 32 || ti >= 127 ? '?' : (char)ti);
 
-		char c = hunk_char(s, ti);
-		if (c != t->s[0]) {
-			FAIL_S("hunk_char('"PRI_SHUNK"', %zu) returned '%c' (%u), expecting '%c' (%u)",
-			       pri_shunk(s), ti, c, c, t->s[0], t->s[0]);
+		char c = hunk_char(shunk, ti);
+		if (c != (char)ti) {
+			FAIL("hunk_char('"PRI_SHUNK"', %zu) returned '%c' (%u), expecting '%c' (%zu)",
+			     pri_shunk(shunk), ti, c, c, (char)ti, ti);
 		}
 
-#define HUNK_IS(OP)							\
+#define IS(OP)								\
 		{							\
-			bool is = hunk_char_is##OP(s, ti);			\
+			signed char c = hunk_char(shunk, ti);		\
+			bool is = char_is##OP(c);			\
 			if (is != t->OP) {				\
-				FAIL_S("hunk_char_is"#OP"() returned %s, expecting %s",	\
-				       bool_str(is), bool_str(t->OP));	\
+				FAIL("signed char_is"#OP"('%c') returned %s, expecting %s", \
+				     c, bool_str(is), bool_str(t->OP));	\
+			}						\
+		}							\
+		{							\
+			unsigned char c = hunk_char(shunk, ti);		\
+			bool is = char_is##OP(c);			\
+			if (is != t->OP) {				\
+				FAIL("unsigned char_is"#OP"('%c') returned %s, expecting %s", \
+				     c, bool_str(is), bool_str(t->OP));	\
 			}						\
 		}
-		HUNK_IS(print);
-		HUNK_IS(bdigit);
-		HUNK_IS(odigit);
-		HUNK_IS(digit);
-		HUNK_IS(xdigit);
+		IS(bdigit);
+		IS(blank);
+		IS(digit);
+		IS(lower);
+		IS(odigit);
+		IS(print);
+		IS(space);
+		IS(upper);
+		IS(xdigit);
+#undef IS
+
+#define TO(OP)								\
+		{							\
+			char to = char_to##OP(c);			\
+			char e = t->to_##OP != '\0' ? t->to_##OP : c;	\
+			if (e != to) {					\
+				FAIL("char_to"#OP"('%c') returned %c, expecting %c lower:%s upper:%s", \
+				     c, to, e,				\
+				     bool_str(char_islower(c)),		\
+				     bool_str(char_isupper(c)));	\
+			}						\
+		}
+		TO(lower);
+		TO(upper);
 	}
 }
 
@@ -599,7 +709,7 @@ static void check_ntoh_hton_hunk(void)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINTLN(stdout, " size=%zu i=%jx o=%jx", t->size, t->i, t->o);
+		PRINT(stdout, " size=%zu i=%jx o=%jx", t->size, t->i, t->o);
 
 		shunk_t t_shunk = shunk2(t->bytes, t->size);
 		uintmax_t h = ntoh_hunk(t_shunk);

@@ -23,8 +23,8 @@
 struct ip_range;
 struct ip_pool;        /* forward declaration; definition is local to addresspool.c */
 
-extern struct ip_pool *install_addresspool(const ip_range *pool_range);
-extern err_t find_addresspool(const ip_range *pool_range, struct ip_pool **pool);
+extern struct ip_pool *install_addresspool(const ip_range *pool_range, struct logger *logger);
+extern bool find_addresspool(const ip_range *pool_range, struct ip_pool **pool, struct logger *logger);
 extern bool pool_size(ip_range *r, uint32_t *size);
 
 extern void unreference_addresspool(struct connection *c);

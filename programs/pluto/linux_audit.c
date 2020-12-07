@@ -25,7 +25,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <stdarg.h>
 #include <syslog.h>
 #include <errno.h>
@@ -75,14 +74,14 @@ void linux_audit_conn(const struct state *st UNUSED, enum linux_audit_kind op UN
 
 void linux_audit_init(int do_audit, struct logger *logger)
 {
-	log_message(RC_LOG, logger, "Linux audit support [enabled]");
+	llog(RC_LOG, logger, "Linux audit support [enabled]");
 	/* test and log if audit is enabled on the system */
 	int audit_fd;
 	audit_fd = audit_open();
 	if (audit_fd < 0) {
 		if (errno == EINVAL || errno == EPROTONOSUPPORT ||
 			errno == EAFNOSUPPORT) {
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "Warning: kernel has no audit support");
 			close(audit_fd);
 			log_to_audit = FALSE;
@@ -97,7 +96,7 @@ void linux_audit_init(int do_audit, struct logger *logger)
 	}
 	close(audit_fd);
 	if (do_audit)
-		log_message(RC_LOG, logger, "Linux audit activated");
+		llog(RC_LOG, logger, "Linux audit activated");
 }
 
 static void linux_audit(const int type, const char *message, const char *laddr, const int result,

@@ -173,7 +173,7 @@ bool do_pam_authentication(struct pam_thread_arg *arg, struct logger *logger)
 	} while (FALSE);
 
 	/* common failure code */
-	log_message(RC_LOG, logger,
+	llog(RC_LOG, logger,
 		    "%s FAILED during %s with '%s' for state #%lu, %s[%lu] user=%s.",
 		    arg->atype, what, pam_strerror(pamh, retval),
 		    arg->st_serialno, arg->c_name, arg->c_instance_serial,

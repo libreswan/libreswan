@@ -139,7 +139,7 @@ static void free_dead_ifaces(struct logger *logger)
 	for (p = interfaces; p != NULL; p = p->next) {
 		if (p->ip_dev->ifd_change == IFD_DELETE) {
 			endpoint_buf b;
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "shutting down interface %s %s",
 				    p->ip_dev->id_rname,
 				    str_endpoint(&p->local_endpoint, &b));
@@ -216,7 +216,7 @@ struct iface_port *bind_iface_port(struct iface_dev *ifd, const struct iface_io 
 	if (esp_encapsulation_enabled &&
 	    io->protocol->encap_esp->encap_type == 0) {
 		endpoint_buf b;
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "%s encapsulation on %s interface %s %s is not configured (problem with kernel headers?)",
 			    io->protocol->encap_esp->name,
 			    io->protocol->name,
@@ -245,7 +245,7 @@ struct iface_port *bind_iface_port(struct iface_dev *ifd, const struct iface_io 
 	interfaces = ifp;
 
 	endpoint_buf b;
-	log_message(RC_LOG, logger,
+	llog(RC_LOG, logger,
 		    "adding %s interface %s %s",
 		    io->protocol->name, ifp->ip_dev->id_rname,
 		    str_endpoint(&ifp->local_endpoint, &b));
@@ -481,7 +481,7 @@ void find_ifaces(bool rm_dead, struct logger *logger)
 		free_dead_ifaces(logger); /* ditch remaining old entries */
 
 	if (interfaces == NULL)
-		log_message(RC_LOG_SERIOUS, logger, "no public interfaces found");
+		llog(RC_LOG_SERIOUS, logger, "no public interfaces found");
 
 	if (listening) {
 		for (struct iface_port *ifp = interfaces; ifp != NULL; ifp = ifp->next) {

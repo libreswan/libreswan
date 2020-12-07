@@ -61,7 +61,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 	/* lookup from /etc/hosts before DNS lookups as people expect that */
 	ugh = ub_ctx_hosts(dns_ctx, "/etc/hosts");
 	if (ugh != 0) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "error reading hosts: %s: %s",
 			    ub_strerror(ugh), strerror(errno));
 	} else {
@@ -85,7 +85,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 	if (ugh != 0) {
 		int e = errno;	/* protect value from ub_strerror */
 
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "error reading /etc/resolv.conf: %s: [errno: %s]",
 			    ub_strerror(ugh), strerror(e));
 	} else {
@@ -98,7 +98,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 	errno = 0;
 	ugh = ub_ctx_set_option(dns_ctx, "outgoing-port-avoid:", "0-65535");
 	if (ugh != 0) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "error setting outgoing-port-avoid: %s: %s",
 			    ub_strerror(ugh), strerror(errno));
 	} else {
@@ -108,7 +108,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 	errno = 0;
 	ugh = ub_ctx_set_option(dns_ctx, "outgoing-port-permit:", "32768-60999");
 		if (ugh != 0) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "error setting outgoing-port-permit: %s: %s",
 			    ub_strerror(ugh), strerror(errno));
 	} else {
@@ -124,13 +124,13 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 	/* Only DNSSEC related configuration from here */
 	if (rootfile == NULL) {
 		if (trusted == NULL) {
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "dnssec-enable=yes but no dnssec-rootkey-file or trust anchors specified.");
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "WARNING: DNSSEC validation disabled");
 			return;
 		} else {
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "dnssec-enable=yes but no dnssec-rootkey-file specified. Additional trust anchor file MUST include a root trust anchor or DNSSEC validation will be disabled");
 		}
 	} else {
@@ -140,10 +140,10 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 		if (ugh != 0) {
 			int e = errno;	/* protect value from ub_strerror */
 
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "error adding dnssec root key: %s [errno: %s]",
 				    ub_strerror(ugh), strerror(e));
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "WARNING: DNSSEC validation disabled");
 		}
 	}
@@ -159,7 +159,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 			for (char **fnp = globbuf.gl_pathv; fnp != NULL && *fnp != NULL; fnp++) {
 				ugh = ub_ctx_add_ta_file(dns_ctx, *fnp);
 				if (ugh != 0) {
-					log_message(RC_LOG_SERIOUS, logger,
+					llog(RC_LOG_SERIOUS, logger,
 						    "Ignored trusted key file %s: %s",
 						    *fnp,  ub_strerror(ugh));
 				} else {
@@ -170,7 +170,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 			break;
 
 		case GLOB_NOSPACE:
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "out of space processing dnssec-trusted= argument: %s",
 				    trusted);
 			break;
@@ -180,12 +180,12 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 			break;
 
 		case GLOB_NOMATCH:
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "no trust anchor files matched '%s'", trusted);
 			break;
 
 		default:
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "trusted key file '%s': unknown glob error %d",
 				    trusted, r);
 			break;
@@ -241,7 +241,7 @@ bool unbound_resolve(char *src, size_t srclen, int af, ip_address *ipaddr, struc
 	if (srclen == 0) {
 		srclen = strlen(src);
 		if (srclen == 0) {
-			log_message(RC_LOG, logger, "empty hostname in host lookup");
+			llog(RC_LOG, logger, "empty hostname in host lookup");
 			return FALSE;
 		}
 	}
@@ -250,14 +250,14 @@ bool unbound_resolve(char *src, size_t srclen, int af, ip_address *ipaddr, struc
 		int ugh = ub_resolve(dns_ctx, src, qtype, 1 /* CLASS IN */,
 				&result);
 		if (ugh != 0) {
-			log_message(RC_LOG, logger, "unbound error: %s", ub_strerror(ugh));
+			llog(RC_LOG, logger, "unbound error: %s", ub_strerror(ugh));
 			ub_resolve_free(result);
 			return FALSE;
 		}
 	}
 
 	if (result->bogus) {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "ERROR: %s failed DNSSEC validation!",
 			    result->qname);
 		ub_resolve_free(result);
@@ -312,7 +312,7 @@ bool unbound_resolve(char *src, size_t srclen, int af, ip_address *ipaddr, struc
 				(af == AF_INET) ? "IPv4" : "IPv6");
 			return TRUE;
 		} else {
-			log_message(RC_LOG, logger, "tnatoaddr failed in unbound_resolve()");
+			llog(RC_LOG, logger, "tnatoaddr failed in unbound_resolve()");
 			return FALSE;
 		}
 	}

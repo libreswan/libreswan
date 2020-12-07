@@ -28,6 +28,7 @@
 #include "lswconf.h"
 #include "lswnss.h"
 #include "lswtool.h"
+#include "lswalloc.h"
 
 #ifdef __clang__
 /*
@@ -37,14 +38,14 @@ extern SECStatus NSS_Shutdown(void);
 extern SECStatus NSS_InitReadWrite(const char *configdir);
 #endif
 
-static int import_crl(const char *url, unsigned char *buf, size_t len)
+static enum pluto_exit_code import_crl(const char *url, unsigned char *buf, size_t len)
 {
 	CERTSignedCrl *crl = NULL;
 	SECItem si = {siBuffer, NULL, 0};
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
 
 	if (handle == NULL)
-		return -1;
+		return PLUTO_EXIT_FAIL;
 
 	si.data = buf;
 	si.len = len;
@@ -55,7 +56,7 @@ static int import_crl(const char *url, unsigned char *buf, size_t len)
 	}
 
 	SEC_DestroyCrl(crl);
-	return 0;
+	return PLUTO_EXIT_OK;
 }
 
 /*
@@ -64,35 +65,41 @@ static int import_crl(const char *url, unsigned char *buf, size_t len)
  */
 int main(int argc, char *argv[])
 {
-	char *url, *lenstr;
-	unsigned char *buf, *tbuf;
-	size_t len, tlen;
 	ssize_t rd;
 	int fin;
 
-	if (argc != 3)
-		exit(-1);
-
 	struct logger *logger = tool_init_log(argv[0]);
 
-	url = argv[1];
-	lenstr = argv[2];
-
-	/* can't be 0 */
-	if (*lenstr == '0' && strlen(lenstr) == 1)
-		exit(-1);
-
-	while (*lenstr != '\0') {
-		if (!isalnum(*lenstr++)) {
-			exit(-1);
-		}
+	if (argc != 3) {
+		fatal(PLUTO_EXIT_FAIL, logger, "expecting: <url> <der-size>");
 	}
 
-	tlen = len = (size_t) atoi(argv[2]);
-	tbuf = buf = (unsigned char *) malloc(len);
+	/* <url */
+	const char *url = argv[1];
 
-	if (tbuf == NULL)
+	/* <der-size> */
+	const char *len_str = argv[2];
+	char *len_end;
+	errno = 0; /* strtol() doesn't clear errno; see "pertinent standards" */
+	ssize_t len = strtol(len_str, &len_end, 0);
+	if (len_end == len_str) {
+		fatal(PLUTO_EXIT_FAIL, logger, "<der-size> is not a number: %s", len_str);
+	} else if (*len_end != '\0') {
+		fatal(PLUTO_EXIT_FAIL, logger, "<der-size> contains grailing garbage: %s", len_str);
+	} else if (errno != 0) {
+		fatal_errno(PLUTO_EXIT_FAIL, logger, errno, "<der-size> is out-of-range: %s", len_str);
+	}
+
+	if (len <= 0) {
+		fatal(PLUTO_EXIT_FAIL, logger, "<der-size> must be positive: %s", len_str);
+	}
+
+	uint8_t *buf = alloc_things(uint8_t, len, "der buf");
+	if (buf == NULL)
 		exit(-1);
+
+	ssize_t tlen = len;
+	uint8_t *tbuf = buf;
 
 	while (tlen != 0 && (rd = read(STDIN_FILENO, buf, len)) != 0) {
 		if (rd == -1) {
@@ -104,19 +111,20 @@ int main(int argc, char *argv[])
 		buf += rd;
 	}
 
-	if ((size_t)(buf - tbuf) != len)
-		exit(-1);
+	if ((buf - tbuf) != len) {
+		fatal(PLUTO_EXIT_FAIL, logger, "less then %zd bytes read", len);
+	}
 
 	const struct lsw_conf_options *oco = lsw_init_options();
 	diag_t d = lsw_nss_setup(oco->nssdir, 0, logger);
 	if (d != NULL) {
-		fatal_diag(1, logger, &d, "%s", "");
+		fatal_diag(PLUTO_EXIT_FAIL, logger, &d, "%s", "");
 	}
 
 	fin = import_crl(url, tbuf, len);
 
 	if (tbuf != NULL)
-		free(tbuf);
+		pfree(tbuf);
 
 	NSS_Shutdown();
 

@@ -203,7 +203,7 @@ void server_fork_sigchld_handler(struct logger *logger)
 				}
 			}
 			if (pid_entry == NULL) {
-				LOG_JAMBUF(RC_LOG, logger, buf) {
+				LLOG_JAMBUF(RC_LOG, logger, buf) {
 					jam(buf, "waitpid return unknown child pid %d",
 						child);
 					jam_status(buf, status);

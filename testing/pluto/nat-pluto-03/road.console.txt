@@ -6,7 +6,7 @@ road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
  ipsec auto --add road-eastnet-forceencaps
-002 added IKEv1 connection "road-eastnet-forceencaps"
+002 "road-eastnet-forceencaps": added IKEv1 connection
 road #
  ipsec status |grep encaps:
 000 "road-eastnet-forceencaps":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:yes; nat_keepalive:yes; ikev1_natt:both

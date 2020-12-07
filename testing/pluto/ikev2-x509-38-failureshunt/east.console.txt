@@ -7,10 +7,10 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add failureshunt
-002 added IKEv2 connection "failureshunt"
+002 "failureshunt": added IKEv2 connection
 east #
  ipsec auto --add westnet-eastnet
-002 added IKEv2 connection "westnet-eastnet"
+002 "westnet-eastnet": added IKEv2 connection
 east #
  ipsec status
 000 using kernel interface: xfrm

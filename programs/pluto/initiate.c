@@ -428,11 +428,13 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 #ifdef USE_IKEv1
 	if ((c->policy & POLICY_IKEV1_ALLOW) &&
 	    (c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE))) {
-		struct logger logger[1] = { CONNECTION_LOGGER(c, whackfd), };
+		/* XXX: build on-stack logger that includes whackfd */
+		struct logger logger = *c->logger;
+		logger.global_whackfd = whackfd;
 		struct db_sa *phase2_sa = v1_kernel_alg_makedb(c->policy, c->child_proposals,
-							       true, logger);
+							       true, &logger);
 		if (c->child_proposals.p != NULL && phase2_sa == NULL) {
-			log_message(WHACK_STREAM | RC_LOG_SERIOUS, logger,
+			llog(WHACK_STREAM | RC_LOG_SERIOUS, &logger,
 				    "cannot initiate: no acceptable kernel algorithms loaded");
 			return 0;
 		}
@@ -462,7 +464,7 @@ void initiate_connections_by_name(const char *name, const char *remote_host,
 	struct connection *c = conn_by_name(name, false/*!strict*/);
 	if (c != NULL) {
 		if (!initiate_connection(c, remote_host, whackfd, background))
-			log_global(RC_FATAL, whackfd, "failed to initiate %s", c->name);
+			log_connection(RC_FATAL, whackfd, c, "failed to initiate connection");
 		return;
 	}
 
@@ -597,7 +599,7 @@ static void cannot_oppo(struct find_oppo_bundle *b, err_t ughmsg)
 	const char *pcb = ipstr(&b->peer_client, &pcb_buf);
 
 	enum stream logger_stream = (DBGP(DBG_BASE) ? ALL_STREAMS : WHACK_STREAM);
-	log_message(logger_stream | RC_OPPOFAILURE, b->logger,
+	llog(logger_stream | RC_OPPOFAILURE, b->logger,
 		    "cannot opportunistically initiate for %s to %s: %s",
 		    ocb, pcb, ughmsg);
 
@@ -620,7 +622,7 @@ static void cannot_oppo(struct find_oppo_bundle *b, err_t ughmsg)
 			dbg("cannot_oppo() replaced negotiationshunt with bare failureshunt=%s",
 			    enum_short_name(&spi_names, b->failure_shunt));
 		} else {
-			log_message(RC_LOG, b->logger,
+			llog(RC_LOG, b->logger,
 				    "cannot_oppo() failed to replace negotiationshunt with bare failureshunt");
 		}
 	}
@@ -666,7 +668,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 	/* ??? DBG and real-world code mixed */
 	bool loggedit = false;
 	if (DBGP(DBG_BASE)) {
-		log_message(RC_LOG/*ALL_STREAMS*/, b->logger, "%s", demandbuf);
+		llog(RC_LOG/*ALL_STREAMS*/, b->logger, "%s", demandbuf);
 		loggedit = true;
 	} else if (fd_p(b->logger->global_whackfd)) {
 		whack_log(RC_COMMENT, b->logger->global_whackfd, "%s", demandbuf);
@@ -700,7 +702,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 		 * The failure policy cannot be gotten from a connection; we pick %pass.
 		 */
 		if (!loggedit) {
-			log_message(RC_LOG, b->logger, "%s", demandbuf);
+			llog(RC_LOG, b->logger, "%s", demandbuf);
 		}
 		cannot_oppo(b, "no routed template covers this pair");
 		return;
@@ -714,9 +716,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 
 	if (c->kind == CK_TEMPLATE && (c->policy & POLICY_OPPORTUNISTIC) == 0) {
 		if (!loggedit) {
-			log_message(RC_LOG, b->logger, "%s", demandbuf);
+			llog(RC_LOG, b->logger, "%s", demandbuf);
 		}
-		log_message(RC_NOPEERIP, b->logger,
+		llog(RC_NOPEERIP, b->logger,
 			    "cannot initiate connection for packet %s:%d -> %s:%d proto=%d - template conn",
 			    our_addr, our_port, peer_addr, peer_port,
 			    b->transport_proto);
@@ -727,7 +729,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 		connection_buf cib;
 		/* there is already an instance being negotiated */
 #if 0
-		log_message(RC_LOG, b->logger,
+		llog(RC_LOG, b->logger,
 			    "rekeying existing instance "PRI_CONNECTION", due to acquire",
 			    pri_connection(c, &cib));
 
@@ -746,7 +748,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 		 * and the existing one. So we return without
 		 * doing anything
 		 */
-		log_message(RC_LOG, b->logger,
+		llog(RC_LOG, b->logger,
 			    "ignoring found existing connection instance "PRI_CONNECTION" that covers kernel acquire with IKE state #%lu and IPsec state #%lu - due to duplicate acquire?",
 			    pri_connection(c, &cib),
 			    c->newest_isakmp_sa, c->newest_ipsec_sa);
@@ -778,13 +780,13 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 					    &b->our_client, &b->peer_client)) {
 				dbg("initiate_ondemand_body() installed negotiation_shunt,");
 			} else {
-				log_message(RC_LOG, b->logger,
+				llog(RC_LOG, b->logger,
 					    "initiate_ondemand_body() failed to install negotiation_shunt,");
 			}
 		}
 
 		if (!loggedit) {
-			log_message(RC_LOG, b->logger, "%s", demandbuf);
+			llog(RC_LOG, b->logger, "%s", demandbuf);
 		}
 
 		ipsecdoi_initiate(b->background ? null_fd : b->logger->global_whackfd,
@@ -854,7 +856,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				if (peer_port != 0) {
 					if (c->spd.that.port != 0) {
 						if (c->spd.that.port != peer_port) {
-							log_message(RC_LOG_SERIOUS, b->logger,
+							llog(RC_LOG_SERIOUS, b->logger,
 								    "Dragons! connection port %d mismatches shunt dest port %d",
 								    c->spd.that.port, peer_port);
 						} else {
@@ -894,7 +896,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				ERO_ADD, addwidemsg,
 				NULL,
 				b->logger)) {
-			log_message(RC_LOG, b->logger, "adding bare wide passthrough negotiationshunt failed");
+			llog(RC_LOG, b->logger, "adding bare wide passthrough negotiationshunt failed");
 		} else {
 			dbg("added bare (possibly wided) passthrough negotiationshunt succeeded (violating API)");
 			add_bare_shunt(&this_client, &that_client, shunt_proto, SPI_HOLD, addwidemsg);
@@ -904,7 +906,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				       b->transport_proto,
 				       SPI_HOLD /* kernel dictated */, delmsg,
 				       b->logger)) {
-			log_message(RC_LOG, b->logger, "Failed to: %s", delmsg);
+			llog(RC_LOG, b->logger, "Failed to: %s", delmsg);
 		} else {
 			dbg("success taking down narrow bare shunt");
 		}
@@ -921,7 +923,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 
 		/* ??? CLANG 3.5 thinks ac might be NULL (look up) */
 		address_buf b1, b2;
-		log_message(RC_OPPOFAILURE, b->logger,
+		llog(RC_OPPOFAILURE, b->logger,
 			    "no suitable connection for opportunism between %s and %s",
 			    str_address(&b->our_client, &b1),
 			    str_address(&b->peer_client, &b2));
@@ -943,7 +945,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 					       b->logger)) {
 				dbg("replaced negotiationshunt with failurehunt=hold because no connection was found");
 			} else {
-				log_message(RC_LOG, b->logger,
+				llog(RC_LOG, b->logger,
 					    "failed to replace negotiationshunt with failurehunt=hold");
 			}
 		}
@@ -983,7 +985,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				    &b->peer_client)) {
 			dbg("assign_holdpass succeeded");
 		} else {
-			log_message(RC_LOG, b->logger, "assign_holdpass failed!");
+			llog(RC_LOG, b->logger, "assign_holdpass failed!");
 		}
 	}
 
@@ -1228,7 +1230,7 @@ void connection_check_phase2(struct logger *logger)
 			ipstr_buf b;
 			connection_buf cib;
 
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "pending IPsec SA negotiation with %s "PRI_CONNECTION" took too long -- replacing phase 1",
 				    ipstr(&c->spd.that.host_addr, &b),
 				    pri_connection(c, &cib));

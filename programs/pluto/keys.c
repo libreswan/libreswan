@@ -256,7 +256,7 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 				  + decrypted_signature.len
 				  - expected_hash->len);
 		if (!memeq(start, expected_hash->ptr, expected_hash->len)) {
-			log_message(RC_LOG_SERIOUS, logger, "RSA Signature NOT verified");
+			llog(RC_LOG_SERIOUS, logger, "RSA Signature NOT verified");
 			SECKEY_DestroyPublicKey(publicKey);
 			return "14""NSS error: Not able to verify";
 		}
@@ -689,7 +689,7 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 			 * lacks a counted reference to the private
 			 * key.
 			 */
-			log_message(RC_LOG|LOG_STREAM/*not-whack-grrr*/, logger,
+			llog(RC_LOG|LOG_STREAM/*not-whack-grrr*/, logger,
 				    "reloaded private key matching %s certificate '%s'",
 				    c->spd.this.leftright, nickname);
 		}
@@ -719,7 +719,7 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 							      &pks, &load_needed, logger);
 		if (err != NULL) {
 			ckaid_buf ckb;
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "private key matching CKAID '%s' not found: %s",
 				    str_ckaid(c->spd.this.ckaid, &ckb), err);
 			return NULL;
@@ -734,7 +734,7 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 			 * key.
 			 */
 			ckaid_buf ckb;
-			log_message(RC_LOG|LOG_STREAM/*not-whack-grr*/, logger,
+			llog(RC_LOG|LOG_STREAM/*not-whack-grr*/, logger,
 				    "reloaded private key matching %s CKAID %s",
 				    c->spd.this.leftright, str_ckaid(c->spd.this.ckaid, &ckb));
 		}

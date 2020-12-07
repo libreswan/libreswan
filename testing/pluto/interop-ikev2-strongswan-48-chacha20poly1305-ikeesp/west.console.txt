@@ -22,7 +22,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add chacha
-002 added IKEv2 connection "chacha"
+002 "chacha": added IKEv2 connection
 west #
  ipsec whack --impair delete-on-retransmit
 west #

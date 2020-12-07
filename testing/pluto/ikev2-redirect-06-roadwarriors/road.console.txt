@@ -7,7 +7,7 @@ road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
  ipsec auto --add road-east
-002 added IKEv2 connection "road-east"
+002 "road-east": added IKEv2 connection
 road #
  ipsec whack --impair revival
 road #

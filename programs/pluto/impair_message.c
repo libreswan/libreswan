@@ -109,7 +109,7 @@ void add_message_impairment(unsigned nr, enum impair_action action, struct logge
 	default:
 		bad_case(action);
 	}
-	log_message(RC_LOG, logger, "IMPAIR: will drop %s message %u",
+	llog(RC_LOG, logger, "IMPAIR: will drop %s message %u",
 		    direction->name, nr);
 	struct message_impairment *m = alloc_thing(struct message_impairment, "impair message");
 	m->message_nr = nr;
@@ -129,7 +129,7 @@ static bool impair_message(shunk_t message, struct direction_impairment *directi
 	for (struct message_impairment **mp = &direction->impairments; (*mp) != NULL; mp = &(*mp)->next) {
 		struct message_impairment *m = (*mp);
 		if (m->message_nr == nr) {
-			log_message(RC_LOG, logger, "IMPAIR: dropping %s message %u",
+			llog(RC_LOG, logger, "IMPAIR: dropping %s message %u",
 				    direction->name, nr);
 			/* return details */
 			(*impairment) = *m;
@@ -161,7 +161,7 @@ bool impair_incoming_message(struct msg_digest *md)
 	struct state *st;
 	FOR_EACH_STATE_NEW2OLD(st) {
 		if (st->st_logger->object_whackfd != NULL) {
-			log_message(RC_LOG, st->st_logger, "IMPAIR: drop incoming message %u",
+			llog(RC_LOG, st->st_logger, "IMPAIR: drop incoming message %u",
 				    impairment.message_nr);
 		}
 	}
@@ -183,7 +183,7 @@ static void free_direction(struct direction_impairment *direction, struct logger
 	 */
 	free_messages(&direction->messages);
 	if (direction->impairments != NULL) {
-		log_message(RC_LOG, logger, "IMPAIR: outstanding %s impairment",
+		llog(RC_LOG, logger, "IMPAIR: outstanding %s impairment",
 			direction->name);
 	}
 }

@@ -15,10 +15,10 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add x509
-002 added IKEv2 connection "x509"
+002 "x509": added IKEv2 connection
 west #
  ipsec auto --add x509-comma-comma
-002 added IKEv2 connection "x509-comma-comma"
+002 "x509-comma-comma": added IKEv2 connection
 west #
  # show both conns are interpreted with \,
 west #

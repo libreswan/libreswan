@@ -57,9 +57,6 @@
 #include "iface.h"
 #include "ip_sockaddr.h"
 
-/* for CIRCLEQ_ENTRY */
-#include <sys/queue.h>
-
 /* invoke the updown script to do the routing and firewall commands required
  *
  * The user-specified updown script is run.  Parameters are fed to it in
