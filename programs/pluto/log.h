@@ -103,13 +103,6 @@ struct logger *string_logger(struct fd *whackfd, where_t where, const char *fmt,
 		.object = FROM,					\
 		.object_vec = &logger_from_vec, 		\
 	}
-#define CONNECTION_LOGGER(CONNECTION, WHACKFD) (struct logger)	\
-	{							\
-		.where = HERE,					\
-		.global_whackfd = WHACKFD,			\
-		.object = CONNECTION,				\
-		.object_vec = &logger_connection_vec,		\
-	}
 
 struct logger *alloc_logger(void *object, const struct logger_object_vec *vec, where_t where);
 struct logger *clone_logger(const struct logger *stack);
