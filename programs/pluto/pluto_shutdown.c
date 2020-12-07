@@ -106,10 +106,10 @@ void exit_tail(void)
 		exit(PLUTO_EXIT_LEAVE_STATE);
 	}
 
+	delete_every_connection();
 	free_root_certs(logger);
 	free_preshared_secrets(logger);
 	free_remembered_public_keys();
-	delete_every_connection();
 	/*
 	 * free memory allocated by initialization routines.  Please don't
 	 * forget to do this.
