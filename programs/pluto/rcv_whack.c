@@ -876,8 +876,8 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 #endif
 
 	if (m->whack_shutdown) {
-		llog(RC_LOG, logger, "shutting down, %s state",
-			m->whack_leave_state ? "leaving" : "cleaning up");
+		if (m->whack_leave_state)
+			llog(RC_LOG, logger, "shutting down, leavings state");
 		shutdown_pluto(whackfd, PLUTO_EXIT_OK, m->whack_leave_state);
 		return; /* shutting down */
 	}
