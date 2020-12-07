@@ -33,6 +33,7 @@ enum pluto_exit_code;
  */
 
 extern volatile bool exiting_pluto;
+extern volatile bool pluto_leave_state;
 
 /*
  * "idle" then exit the event-loop, and then exit pluto.
@@ -52,6 +53,6 @@ extern volatile bool exiting_pluto;
  * shutdown state (rather than special abort paths).
  */
 
-void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status);
+void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status, bool leave_state);
 
 #endif

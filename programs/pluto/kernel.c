@@ -1709,7 +1709,6 @@ bool del_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
 	char text_said[SATOT_BUF];
 
 	set_text_said(text_said, dest, spi, proto);
-
 	dbg("delete %s", text_said);
 
 	struct kernel_sa sa = {
@@ -3491,6 +3490,7 @@ static void kernel_scan_shunts(struct logger *logger)
 
 void shutdown_kernel(struct logger *logger)
 {
+
 	if (kernel_ops->shutdown != NULL)
 		kernel_ops->shutdown(logger);
 	expire_bare_shunts(logger, true/*all*/);

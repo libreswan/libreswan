@@ -202,7 +202,7 @@ static void help(void)
 		"testing: whack --seccomp-crashtest (CAREFUL!)\n"
 		"\n"
 #endif
-		"shutdown: whack --shutdown\n"
+		"shutdown: whack --shutdown [--leave-state]\n"
 		"\n"
 		"Libreswan %s\n",
 		ipsec_version_code());
@@ -323,6 +323,7 @@ enum option_enums {
 	OPT_GLOBAL_STATUS,
 	OPT_CLEAR_STATS,
 	OPT_SHUTDOWN,
+	OPT_SHUTDOWN_DIRTY,
 	OPT_TRAFFIC_STATUS,
 	OPT_SHUNT_STATUS,
 	OPT_SHOW_STATES,
@@ -594,6 +595,7 @@ static const struct option long_opts[] = {
 	{ "seccomp-crashtest", no_argument, NULL, OPT_SECCOMP_CRASHTEST + OO },
 #endif
 	{ "shutdown", no_argument, NULL, OPT_SHUTDOWN + OO },
+	{ "leave-state", no_argument, NULL, OPT_SHUTDOWN_DIRTY + OO },
 	{ "username", required_argument, NULL, OPT_USERNAME + OO },
 	{ "xauthuser", required_argument, NULL, OPT_USERNAME + OO }, /* old name */
 	{ "xauthname", required_argument, NULL, OPT_USERNAME + OO }, /* old name */
@@ -1408,6 +1410,10 @@ int main(int argc, char **argv)
 
 		case OPT_SHUTDOWN:	/* --shutdown */
 			msg.whack_shutdown = TRUE;
+			continue;
+
+		case OPT_SHUTDOWN_DIRTY:	/* --leave-state */
+			msg.whack_leave_state = TRUE;
 			continue;
 
 		case OPT_OPPO_HERE:	/* --oppohere <ip-address> */

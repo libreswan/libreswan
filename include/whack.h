@@ -145,6 +145,7 @@ struct whack_message {
 	 * If you change anything earlier in this struct, update WHACK_BASIC_MAGIC.
 	 */
 
+	bool whack_leave_state; /* dont send delete or  clean kernel state on shutdown */
 	/* name is used in connection and initiate */
 	size_t name_len; /* string 1 */
 	char *name;

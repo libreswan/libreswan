@@ -876,8 +876,9 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 #endif
 
 	if (m->whack_shutdown) {
-		llog(RC_LOG, logger, "shutting down");
-		shutdown_pluto(whackfd, PLUTO_EXIT_OK);
+		llog(RC_LOG, logger, "shutting down, %s state",
+			m->whack_leave_state ? "leaving" : "cleaning up");
+		shutdown_pluto(whackfd, PLUTO_EXIT_OK, m->whack_leave_state);
 		return; /* shutting down */
 	}
 
@@ -962,7 +963,7 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 		if (msg.whack_shutdown) {
 			llog(RC_LOG, whack_logger, "shutting down%s",
 				    (msg.magic != WHACK_BASIC_MAGIC) ?  " despite whacky magic" : "");
-			shutdown_pluto(whackfd, PLUTO_EXIT_OK);
+			shutdown_pluto(whackfd, PLUTO_EXIT_OK, msg.whack_leave_state);
 			return; /* force shutting down */
 		}
 

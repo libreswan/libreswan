@@ -57,6 +57,7 @@
 #include "impair_message.h"	/* for free_impair_message() */
 
 volatile bool exiting_pluto = false;
+volatile bool pluto_leave_state = false;
 static enum pluto_exit_code exit_code;
 
 /*
@@ -94,11 +95,21 @@ void exit_tail(void)
 {
 	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
 
+	if (pluto_leave_state) {
+		lsw_nss_shutdown();
+		free_preshared_secrets(logger);
+		delete_lock();	/* delete any lock files */
+		close_log();	/* close the logfiles */
+#ifdef USE_SYSTEMD_WATCHDOG
+		pluto_sd(PLUTO_SD_EXIT, PLUTO_EXIT_LEAVE_STATE);
+#endif
+		exit(PLUTO_EXIT_LEAVE_STATE);
+	}
+
 	free_root_certs(logger);
 	free_preshared_secrets(logger);
 	free_remembered_public_keys();
 	delete_every_connection();
-
 	/*
 	 * free memory allocated by initialization routines.  Please don't
 	 * forget to do this.
@@ -149,7 +160,7 @@ void exit_tail(void)
 	exit(exit_code);	/* exit, with our error code */
 }
 
-void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status)
+void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status, bool leave_state)
 {
 	/*
 	 * Tell the world, well actually all the threads, that pluto
@@ -158,6 +169,7 @@ void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status)
 	 * this instead.
 	 */
 	exiting_pluto = true;
+	pluto_leave_state = leave_state;
 	exit_code = status;
 
 	/*
