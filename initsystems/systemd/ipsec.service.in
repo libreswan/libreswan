@@ -7,6 +7,9 @@ Documentation=man:ipsec(8) man:pluto(8) man:ipsec.conf(5)
 [Service]
 Type=@SD_TYPE@
 Restart=@SD_RESTART_TYPE@
+# 12 is the shutdown while leaving kernel state. Restarting would still kill kernel state
+RestartPreventExitStatus=12
+
 #RestartPreventExitStatus=137 143 SIGTERM SIGKILL
 
 # Set WatchdogSec to the amount of time (in seconds) that systemd will wait
@@ -29,8 +32,8 @@ ExecStart=@FINALLIBEXECDIR@/pluto @SD_PLUTO_OPTIONS@ --config @FINALCONFFILE@ --
 # Enable for portexcludes support
 # ExecStartPost=@FINALLIBEXECDIR@/portexcludes
 ExecStop=@FINALLIBEXECDIR@/whack --shutdown
-ExecStopPost=/sbin/ip xfrm policy flush
-ExecStopPost=/sbin/ip xfrm state flush
+# 12 is the exit code of pluto for shutting down "leaving state"
+ExecStopPost=/bin/bash -c 'if test "$EXIT_STATUS" != "12"; then /sbin/ip xfrm policy flush; /sbin/ip xfrm state flush; fi'
 ExecStopPost=@FINALSBINDIR@/ipsec --stopnflog
 ExecReload=@FINALLIBEXECDIR@/whack --listen
 
