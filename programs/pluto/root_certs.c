@@ -132,10 +132,10 @@ void free_root_certs(struct logger *logger)
 	passert(in_main_thread());
 
 	/*
-	 * The root_cert free code is only scheduled when there are
-	 * root certs
+	 * This function can be called during shutdown when there are
+	 * no certs.
 	 */
-	if (!pexpect(root_cert_db != NULL)) {
+	if (root_cert_db == NULL) {
 		return;
 	}
 
