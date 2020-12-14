@@ -170,7 +170,7 @@ war:
 showversion:
 	@echo ${IPSECVERSION} | sed "s/^v//"
 showdebversion:
-	@echo ${IPSECVERSION} |  sed "s/^v//" | sed -e "s/\([0-9]\{1,3\}\)\.\([0-9]\{1,3\}\)\(.*\)/\1.\2~\3/" | sed "s/~-/~/"
+	@$(MAKE) --silent --directory packaging/debian showdebversion
 showrpmversion:
 	@echo ${IPSECVERSION} |  sed "s/^v//" | sed -e "s/^v//;s/\([0-9]\{1,3\}\)\.\([0-9]\{1,3\}\)\(.*\)/\1.\2_\3/;s/-/_/g;s/__/_/g"
 showrpmrelease:
@@ -178,27 +178,14 @@ showrpmrelease:
 showobjdir:
 	@echo $(OBJDIR)
 
-# these need to move elsewhere and get fixed not to use root
-
-.PHONY: deb-prepare
-DEBIPSECBASEVERSION=$(shell make -s showdebversion)
-deb-prepare:
-	if [ -f /etc/devuan_version ]; then \
-		cp -r packaging/devuan debian; \
-	else \
-		cp -r packaging/debian .; \
-	fi
-	cat debian/changelog
-	grep "IPSECBASEVERSION" debian/changelog && \
-		sed -i "s/@IPSECBASEVERSION@/$(DEBIPSECBASEVERSION)/g" debian/changelog || \
-		echo "missing IPSECBASEVERSION in debian/changelog. This is not git repository?"
-	cat debian/changelog
-
+# these need get fixed not to use root
 .PHONY: deb
-deb: deb-prepare
-	debuild -i -us -uc -b
-	rm -fr debian
-	#debuild -S -sa
+deb:
+	if [ -f /etc/devuan_version ]; then \
+		$(MAKE) --directory packaging/devuan ; \
+	else \
+		$(MAKE) --directory packaging/debian ; \
+	fi
 
 release:
 	packaging/utils/makerelease
