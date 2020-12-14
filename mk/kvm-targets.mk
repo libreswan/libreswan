@@ -173,6 +173,9 @@ VIRT_POOLDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_POOLDIR),
 KVM_OS_VARIANT ?= $(KVM_GUEST_OS)
 VIRT_OS_VARIANT ?= --os-variant $(KVM_OS_VARIANT)
 
+VIRT_INSTALL_BASE_FLAGS = --memory 1024
+VIRT_INSTALL_BUILD_FLAGS = --memory 2048 --vcpus 2
+
 VIRT_INSTALL_COMMAND = \
 	$(VIRT_INSTALL) \
 	$(VIRT_OS_VARIANT) \
@@ -760,8 +763,8 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted: \
 	: delete any old disk and let virt-install create the image
 	rm -f '$(basename $@).qcow2'
 	$(VIRT_INSTALL_COMMAND) \
+		$(VIRT_INSTALL_BASE_FLAGS) \
 		--name=$(KVM_BASE_DOMAIN) \
-		--memory 1024 \
 		--disk size=$(VIRT_DISK_SIZE_GB),cache=writeback,path=$(basename $@).qcow2 \
 		--location=$(KVM_POOLDIR)/$(KVM_ISO) \
 		--initrd-inject=$(KVM_KICKSTART_FILE) \
@@ -922,8 +925,8 @@ $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml: \
 	: build-domain $@
 	$(call destroy-kvm-domain,$(KVM_BUILD_DOMAIN))
 	$(VIRT_INSTALL_COMMAND) \
+		$(VIRT_INSTALL_BUILD_FLAGS) \
 		--name $(KVM_BUILD_DOMAIN) \
-		--memory 1024 \
 		--import \
 		--disk cache=writeback,path=$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2 \
 		--noautoconsole
