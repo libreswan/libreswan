@@ -815,9 +815,12 @@ kvm-upgrade:
 
 # run, or re-run transmogrify from scratch
 
-$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
+$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified: \
+		$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded \
+		| \
+		testing/libvirt/$(KVM_GUEST_OS).transmogrify.sh
 	: transmogrify
-	$(KVMSH) $(KVM_BASE_DOMAIN) sh /testing/libvirt/$(KVM_GUEST_OS)-transmogrify.sh
+	$(KVMSH) $(KVM_BASE_DOMAIN) sh /testing/libvirt/$(KVM_GUEST_OS).transmogrify.sh
 	: snapshot transmogrify result
 	$(MAKE) kvm-shutdown-base-domain
 	$(SNAPSHOT_TAKE) transmogrified $(basename $@).qcow2
