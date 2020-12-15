@@ -12,7 +12,8 @@ run()
 }
 
 
-title limit kernel installs
+title limit kernel to two installs
+
 # https://ask.fedoraproject.org/t/old-kernels-removal/7026/2
 sudo sed -i 's/installonly_limit=3/installonly_limit=2/' /etc/dnf/dnf.conf
 
@@ -151,12 +152,6 @@ title fixup /etc/sysctl.conf
 cp -av /testing/baseconfigs/all/etc/sysctl.conf /etc/
 sysctl -q -p
 restorecon -R /etc/sysctl.conf
-
-
-title limit things to two kernels
-
-# https://ask.fedoraproject.org/t/old-kernels-removal/7026/2
-sed -i 's/installonly_limit=3/installonly_limit=2/' /etc/dnf/dnf.conf
 
 
 # clobber some anoying services
