@@ -34,11 +34,11 @@
     USE_XFRM_INTERFACE_IFLA_HEADER=true \\\
 %{nil}
 
-#global prever rc1
+%global prever rc1
 
 Name: libreswan
 Summary: Internet Key Exchange (IKEv1 and IKEv2) implementation for IPsec
-Version: 4.1
+Version: 4.2
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
