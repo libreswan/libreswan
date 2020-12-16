@@ -149,14 +149,6 @@ static void log_bad_cert(struct logger *logger, const char *prefix,
 	}
 }
 
-static void new_vfy_log(CERTVerifyLog *log)
-{
-	log->count = 0;
-	log->head = NULL;
-	log->tail = NULL;
-	log->arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
-}
-
 static void set_rev_per_meth(CERTRevocationFlags *rev, PRUint64 *lflags,
 						       PRUint64 *cflags)
 {
@@ -254,25 +246,6 @@ static bool verify_end_cert(struct logger *logger,
 		{ certificateUsageSSLServer, "TLS Server" }
 	};
 
-	bool verified = false;	/* more ways to fail than succeed */
-
-	CERTVerifyLog vfy_log;
-
-	enum cvout_param {
-		cvout_errorLog,
-		cvout_end,
-	};
-
-	CERTValOutParam cvout[] = {
-		[cvout_errorLog] = {
-			.type = cert_po_errorLog,
-			.value = { .pointer = { .log = &vfy_log } }
-		},
-		[cvout_end] = {
-			.type = cert_po_end
-		}
-	};
-
 	if (DBGP(DBG_BASE)) {
 		DBG_log("%s verifying %s using:", __func__, end_cert->subjectName);
 		unsigned nr = 0;
@@ -288,47 +261,78 @@ static bool verify_end_cert(struct logger *logger,
 		}
 	}
 
-	for (const struct usage_desc *p = usages; ; p++) {
+	bool keep_trying = true;
+	for (unsigned pi = 0; pi < elemsof(usages) && keep_trying; pi++) {
+		const struct usage_desc *p = &usages[pi];
 		dbg("verify_end_cert trying profile %s", p->usageName);
 
-		new_vfy_log(&vfy_log);
+		/*
+		 * WARNING: cvout[] points at cvout_error_log.  Both vfy_log's
+		 * arena and cvout[1].value.pointer.chan need to be
+		 * freed (and the latter is messy).
+		 */
+		enum cvout_param {
+			cvout_errorLog,
+			cvout_end,
+		};
+		CERTVerifyLog cvout_error_log = {
+			.count = 0,
+			.head = NULL,
+			.tail = NULL,
+			.arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE), /* must-"free" */
+		};
+		CERTValOutParam cvout[] = {
+			[cvout_errorLog] = {
+				.type = cert_po_errorLog,
+				.value = { .pointer = { .log = &cvout_error_log } }
+			},
+			[cvout_end] = {
+				.type = cert_po_end,
+			}
+		};
+
 		SECStatus rv = CERT_PKIXVerifyCert(end_cert, p->usage, cvin, cvout, NULL);
 
 		if (rv == SECSuccess) {
 			/* success! */
-			pexpect(vfy_log.count == 0 && vfy_log.head == NULL);
+			pexpect(cvout_error_log.count == 0 && cvout_error_log.head == NULL);
+			PORT_FreeArena(cvout_error_log.arena, PR_FALSE);
 			dbg("certificate is valid (profile %s)", p->usageName);
-			verified = true;
-			break;
+			return true;
 		}
 
+		/*
+		 * Deal with failure; log; cleanup; and maybe try
+		 * again!
+		 */
 		pexpect(rv == SECFailure);
-
-		/* Failure.  Can we try again? */
+		/* XXX: cvout_error_log.head can be NULL */
 
 		/*
 		 * The (error) log can have more than one entry
 		 * but we only test the first with RETRYABLE_TYPE.
 		 */
-		passert(vfy_log.count > 0 && vfy_log.head != NULL);
-
-		if (p == &usages[elemsof(usages) - 1] ||
-		    !RETRYABLE_TYPE(vfy_log.head->error)) {
+		if (pi == elemsof(usages) - 1) {
+			/* none left */
+			log_bad_cert(logger, "ERROR", p->usageName, cvout_error_log.head);
+			keep_trying = false; /* technically redundant */
+		} else if (cvout_error_log.head != NULL &&
+			   !RETRYABLE_TYPE(cvout_error_log.head->error)) {
 			/* we are a conclusive failure */
-			log_bad_cert(logger, "ERROR", p->usageName, vfy_log.head);
-			break;
+			log_bad_cert(logger, "ERROR", p->usageName, cvout_error_log.head);
+			keep_trying = false;
+		} else {
+			/*
+			 * This usage failed: prepare to repeat for
+			 * the next one.
+			 */
+			log_bad_cert(logger, "warning", p->usageName,  cvout_error_log.head);
 		}
 
-		/* this usage failed: prepare to repeat for the next one */
-
-		log_bad_cert(logger, "warning", p->usageName,  vfy_log.head);
-
-		PORT_FreeArena(vfy_log.arena, PR_FALSE);
+		PORT_FreeArena(cvout_error_log.arena, PR_FALSE);
 	}
 
-	PORT_FreeArena(vfy_log.arena, PR_FALSE);
-
-	return verified;
+	return false;
 }
 
 /*
