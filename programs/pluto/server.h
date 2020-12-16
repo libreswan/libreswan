@@ -28,6 +28,7 @@
 #include "err.h"
 #include "ip_address.h"
 #include "ip_endpoint.h"
+#include "diag.h"
 
 struct state;
 struct msg_digest;
@@ -43,7 +44,7 @@ extern struct sockaddr_un ctl_addr;     /* address of control (whack) socket */
 extern int info_fd;                     /* file descriptor of control (info) socket */
 extern struct sockaddr_un info_addr;    /* address of control (info) socket */
 
-bool init_ctl_socket(struct logger *logger);
+diag_t init_ctl_socket(struct logger *logger);
 extern void delete_ctl_socket(void);
 
 extern stf_status create_tcp_interface(struct state *st); /* TCP: terrible name? */
@@ -65,9 +66,9 @@ extern bool pluto_drop_oppo_null;
 
 extern void show_debug_status(struct show *s);
 extern void show_fips_status(struct show *s);
-extern void call_server(char *conffile);
+extern void run_server(char *conffile, struct logger *logger) NEVER_RETURNS;
 extern void stop_server(void);
-extern void server_stopped(int r); /* see pluto_shutdown.c */
+extern void server_stopped(int r) NEVER_RETURNS; /* see pluto_shutdown.c */
 
 typedef void event_callback_routine(evutil_socket_t, const short, void *);
 
@@ -85,9 +86,9 @@ extern void delete_pluto_event(struct pluto_event **evp);
 extern void link_pluto_event_list(struct pluto_event *e);
 bool ev_before(struct pluto_event *pev, deltatime_t delay);
 extern void set_pluto_busy(bool busy);
-extern void set_whack_pluto_ddos(enum ddos_mode mode);
+extern void set_whack_pluto_ddos(enum ddos_mode mode, struct logger *logger);
 
-extern void init_server(void);
+extern void init_server(struct logger *logger);
 extern void free_server(void);
 
 extern struct event_base *get_pluto_event_base(void);

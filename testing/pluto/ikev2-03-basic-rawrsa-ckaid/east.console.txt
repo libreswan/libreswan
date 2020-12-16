@@ -8,7 +8,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add west-rsasigkey-east-ckaid
-002 added IKEv2 connection "west-rsasigkey-east-ckaid"
+002 "west-rsasigkey-east-ckaid": added IKEv2 connection
 east #
  ipsec auto --status
 000 using kernel interface: xfrm

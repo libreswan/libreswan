@@ -52,7 +52,7 @@ static enum lsw_fips_mode lsw_fips_product(struct logger *logger)
 			return LSW_FIPS_OFF;
 		}
 
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "FIPS ABORT: FIPS product check failed to determine status for %s "PRI_ERRNO,
 			    FIPSPRODUCTCHECK, pri_errno(errno));
 		return LSW_FIPS_UNKNOWN;
@@ -98,10 +98,10 @@ enum lsw_fips_mode lsw_get_fips_mode(struct logger *logger)
 	if (product == LSW_FIPS_OFF && system == LSW_FIPS_ON)
 		fips_mode = LSW_FIPS_OFF;
 
-	log_message(RC_LOG, logger, "FIPS Product: %s", product == LSW_FIPS_UNKNOWN ? "UNKNOWN" : product == LSW_FIPS_ON ? "YES" : "NO");
-	log_message(RC_LOG, logger, "FIPS System: %s",  system == LSW_FIPS_UNKNOWN ? "UNKNOWN" :  system == LSW_FIPS_ON ? "YES" : "NO");
+	llog(RC_LOG, logger, "FIPS Product: %s", product == LSW_FIPS_UNKNOWN ? "UNKNOWN" : product == LSW_FIPS_ON ? "YES" : "NO");
+	llog(RC_LOG, logger, "FIPS System: %s",  system == LSW_FIPS_UNKNOWN ? "UNKNOWN" :  system == LSW_FIPS_ON ? "YES" : "NO");
 #endif
-	log_message(RC_LOG, logger, "FIPS Mode: %s", fips_mode == LSW_FIPS_ON ? "YES" : fips_mode == LSW_FIPS_OFF ? "NO" : "UNKNOWN");
+	llog(RC_LOG, logger, "FIPS Mode: %s", fips_mode == LSW_FIPS_ON ? "YES" : fips_mode == LSW_FIPS_OFF ? "NO" : "UNKNOWN");
 	return fips_mode;
 }
 

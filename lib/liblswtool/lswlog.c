@@ -18,14 +18,12 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <stdarg.h>
 #include <syslog.h>
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>	/* used only if MSG_NOSIGNAL not defined */
-#include <sys/queue.h>
 #include <libgen.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -74,11 +72,6 @@ struct logger *tool_init_log(const char *name)
 		setbuf(stderr, NULL);
 	}
 	return &progname_logger;
-}
-
-void jam_cur_prefix(struct jambuf *buf)
-{
-	jam_logger_prefix(buf, &progname_logger);
 }
 
 void jambuf_to_logger(struct jambuf *buf, const struct logger *logger UNUSED, lset_t rc_flags)

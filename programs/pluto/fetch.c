@@ -95,7 +95,7 @@ static void unlock_crl_fetch_list(const char *who)
 static void free_fetch_request(fetch_req_t *req)
 {
 	pfree(req->issuer.ptr);
-	free_generalNames(req->distributionPoints, TRUE);
+	free_generalNames(req->distributionPoints, true);
 	pfree(req);
 }
 
@@ -129,8 +129,7 @@ static size_t write_buffer(void *ptr, size_t size, size_t nmemb, void *data)
 /*
  * fetches a binary blob from a url with libcurl
  */
-static err_t fetch_curl(chunk_t url,
-			chunk_t *blob)
+static err_t fetch_curl(chunk_t url, chunk_t *blob, struct logger *logger)
 {
 	char errorbuffer[CURL_ERROR_SIZE] = "";
 	char *uri;
@@ -168,8 +167,9 @@ static err_t fetch_curl(chunk_t url,
 			/* clone from realloc(3)ed memory to pluto-allocated memory */
 			*blob = clone_hunk(response, "curl blob");
 		} else {
-			libreswan_log("fetching uri (%s) with libcurl failed: %s", uri,
-			     errorbuffer);
+			llog(RC_LOG, logger,
+				    "fetching uri (%s) with libcurl failed: %s", uri,
+				    errorbuffer);
 		}
 		curl_easy_cleanup(curl);
 
@@ -205,7 +205,8 @@ static err_t fetch_curl(chunk_t url UNUSED,
 /*
  * parses the result returned by an ldap query
  */
-static err_t parse_ldap_result(LDAP *ldap, LDAPMessage *result, chunk_t *blob)
+static err_t parse_ldap_result(LDAP *ldap, LDAPMessage *result, chunk_t *blob,
+			       struct logger *logger)
 {
 	err_t ugh = NULL;
 
@@ -227,8 +228,8 @@ static err_t parse_ldap_result(LDAP *ldap, LDAPMessage *result, chunk_t *blob)
 						values[0]->bv_len,
 						"ldap blob");
 					if (values[1] != NULL)
-						libreswan_log(
-							"warning: more than one value was fetched from LDAP URL");
+						llog(RC_LOG, logger,
+							    "warning: more than one value was fetched from LDAP URL");
 				} else {
 					ugh = "no values in attribute";
 				}
@@ -252,7 +253,7 @@ static err_t parse_ldap_result(LDAP *ldap, LDAPMessage *result, chunk_t *blob)
 /*
  * fetches a binary blob from an ldap url
  */
-static err_t fetch_ldap_url(chunk_t url, chunk_t *blob)
+static err_t fetch_ldap_url(chunk_t url, chunk_t *blob, struct logger *logger)
 {
 	LDAPURLDesc *lurl;
 	err_t ugh = NULL;
@@ -305,8 +306,10 @@ static err_t fetch_ldap_url(chunk_t url, chunk_t *blob)
 						    0, &timeout, &result);
 
 				if (rc == LDAP_SUCCESS) {
-					ugh = parse_ldap_result(ldap, result,
-								blob);
+					ugh = parse_ldap_result(ldap,
+								result,
+								blob,
+								logger);
 					ldap_msgfree(result);
 				} else {
 					ugh = ldap_err2string(rc);
@@ -331,7 +334,8 @@ static err_t fetch_ldap_url(chunk_t url, chunk_t *blob)
 #else
 
 static err_t fetch_ldap_url(chunk_t url UNUSED,
-			    chunk_t *blob UNUSED)
+			    chunk_t *blob UNUSED,
+			    struct logger *logger UNUSED)
 {
 	return "LDAP URL fetching not activated in pluto source code";
 }
@@ -343,15 +347,15 @@ static err_t fetch_ldap_url(chunk_t url UNUSED,
  * Returns error message or NULL.
  * Iff no error, *blob contains fetched ASN.1 blob (to be freed by caller).
  */
-static err_t fetch_asn1_blob(chunk_t url, chunk_t *blob)
+static err_t fetch_asn1_blob(chunk_t url, chunk_t *blob, struct logger *logger)
 {
 	err_t ugh = NULL;
 
 	*blob = EMPTY_CHUNK;
 	if (url.len >= 5 && strncaseeq((const char *)url.ptr, "ldap:", 5))
-		ugh = fetch_ldap_url(url, blob);
+		ugh = fetch_ldap_url(url, blob, logger);
 	else
-		ugh = fetch_curl(url, blob);
+		ugh = fetch_curl(url, blob, logger);
 	if (ugh != NULL) {
 	} else if (is_asn1(*blob)) {
 		dbg("  fetched blob coded in DER format");
@@ -375,7 +379,7 @@ static err_t fetch_asn1_blob(chunk_t url, chunk_t *blob)
 static bool insert_crl_nss(chunk_t *blob, const chunk_t crl_uri, struct logger *logger)
 {
 	/* for CRL use the name passed to helper for the uri */
-	bool ret = FALSE;
+	bool ret = false;
 
 	if (crl_uri.len == 0) {
 		dbg("no CRL URI available");
@@ -383,13 +387,13 @@ static bool insert_crl_nss(chunk_t *blob, const chunk_t crl_uri, struct logger *
 		char *uri_str = clone_hunk_as_string(crl_uri, "NUL-terminated URI");
 		int r = send_crl_to_import(blob->ptr, blob->len, uri_str, logger);
 		if (r == -1) {
-			log_message(RC_LOG, logger, "_import_crl internal error");
+			llog(RC_LOG, logger, "_import_crl internal error");
 		} else if (r != 0) {
-			log_message(RC_LOG, logger, "NSS CRL import error: %s",
+			llog(RC_LOG, logger, "NSS CRL import error: %s",
 				    nss_err_str((PRInt32)r));
 		} else {
 			dbg("CRL imported");
-			ret = TRUE;
+			ret = true;
 		}
 		pfreeany(uri_str);
 	}
@@ -420,7 +424,7 @@ static void fetch_crls(struct logger *logger)
 			}
 
 			chunk_t blob;
-			err_t ugh = fetch_asn1_blob(gn->name, &blob);
+			err_t ugh = fetch_asn1_blob(gn->name, &blob, logger);
 
 			if (ugh != NULL) {
 				dbg("fetch failed:  %s", ugh);
@@ -448,10 +452,9 @@ static void fetch_crls(struct logger *logger)
  * Similarly, if check_crls() is called more frequently than
  * fetch_crls() can process, redundant fetches will be merged.
  */
-void check_crls(struct fd *whackfd)
-{
-	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
 
+void check_crls(struct logger *logger)
+{
 	schedule_oneshot_timer(EVENT_CHECK_CRLS, crl_check_interval);
 	struct crl_fetch_request *requests = NULL;
 
@@ -527,7 +530,7 @@ static void merge_crl_fetch_request(struct crl_fetch_request *);
 static void *fetch_thread(void *arg UNUSED)
 {
 	/* XXX: on thread so no whack */
-	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
+	struct logger *logger = string_logger(null_fd, HERE, "crl thread: "); /* must free */
 
 	dbg("fetch thread started");
 	while (true) {
@@ -564,13 +567,14 @@ static void *fetch_thread(void *arg UNUSED)
 		fetch_crls(logger);
 	}
 	dbg("shutting down crl fetch thread");
+	free_logger(&logger, HERE);
 	return NULL;
 }
 
 /*
  * initializes curl and starts the fetching thread
  */
-void start_crl_fetch_helper(void)
+void start_crl_fetch_helper(struct logger *logger)
 {
 	/*
 	 * XXX: CRT checking is probably really a periodic timer,
@@ -586,33 +590,36 @@ void start_crl_fetch_helper(void)
 		/* init curl */
 		status = curl_global_init(CURL_GLOBAL_DEFAULT);
 		if (status != 0)
-			libreswan_log("libcurl could not be initialized, status = %d",
-			     status);
+			llog(RC_LOG, logger,
+				    "libcurl could not be initialized, status = %d",
+				    status);
 #endif
-		status = pthread_create(&fetch_thread_id, NULL, fetch_thread, NULL);
+
+		status = pthread_create(&fetch_thread_id, NULL,
+					fetch_thread, NULL);
 		if (status != 0)
-			libreswan_log(
-				"could not start thread for fetching certificate, status = %d",
-				status);
+			llog(RC_LOG, logger,
+				    "could not start thread for fetching certificate, status = %d",
+				    status);
 		schedule_oneshot_timer(EVENT_CHECK_CRLS, deltatime(5));
 	}
 }
 
-void stop_crl_fetch_helper(void)
+void stop_crl_fetch_helper(struct logger *logger)
 {
 	if (deltasecs(crl_check_interval) > 0) {
 		/*
 		 * Log before blocking.  If the CRL fetch helper is
 		 * currently fetching a CRL, this could take a bit.
 		 */
-		plog_global("shutting down the CRL fetch helper thread");
+		llog(RC_LOG, logger, "shutting down the CRL fetch helper thread");
 		pexpect(exiting_pluto);
 		/* wake the sleeping dragon from its slumber */
 		add_crl_fetch_requests(NULL);
 		/* use a timer? */
 		int status = pthread_join(fetch_thread_id, NULL);
 		if (status != 0) {
-			LOG_ERRNO(status, "problem waiting for crl fetch thread to exit");
+			log_errno(logger, status, "problem waiting for crl fetch thread to exit");
 		}
 	}
 }

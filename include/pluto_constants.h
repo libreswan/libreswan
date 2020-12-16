@@ -390,6 +390,7 @@ enum {
 
 	/* below are also enabled by debug=all */
 	DBG_CPU_USAGE_IX,
+	DBG_REFCNT_IX,
 
 	/* below are excluded from debug=base */
 	DBG_TMI_IX,
@@ -409,7 +410,8 @@ enum {
 
 #define DBG_BASE        LELEM(DBG_BASE_IX)
 #define DBG_CPU_USAGE	LELEM(DBG_CPU_USAGE_IX)
-#define DBG_ALL         (DBG_BASE | DBG_CPU_USAGE)
+#define DBG_REFCNT	LELEM(DBG_REFCNT_IX)
+#define DBG_ALL         (DBG_BASE | DBG_CPU_USAGE | DBG_REFCNT)
 
 /* singleton sets: must be kept in sync with the items! */
 
@@ -632,13 +634,13 @@ extern struct keywords sa_role_names;
 				  LELEM(STATE_MODE_CFG_I1))
 
 
-#define IS_PHASE1_INIT(s) ((LELEM(s->kind) & PHASE1_INITIATOR_STATES) != LEMPTY)
+#define IS_PHASE1_INIT(ST) ((LELEM((ST)->kind) & PHASE1_INITIATOR_STATES) != LEMPTY)
 
-#define IS_PHASE1(s) (STATE_MAIN_R0 <= (s) && (s) <= STATE_AGGR_R2)
+#define IS_PHASE1(ST) (STATE_MAIN_R0 <= (ST) && (ST) <= STATE_AGGR_R2)
 
-#define IS_PHASE15(s) (STATE_XAUTH_R0 <= (s) && (s) <= STATE_XAUTH_I1)
+#define IS_PHASE15(ST) (STATE_XAUTH_R0 <= (ST) && (ST) <= STATE_XAUTH_I1)
 
-#define IS_QUICK(s) (STATE_QUICK_R0 <= (s) && (s) <= STATE_QUICK_R2)
+#define IS_QUICK(ST) (STATE_QUICK_R0 <= (ST) && (ST) <= STATE_QUICK_R2)
 
 #define ISAKMP_ENCRYPTED_STATES  (LRANGE(STATE_MAIN_R2, STATE_MAIN_I4) | \
 				  LRANGE(STATE_AGGR_R1, STATE_AGGR_R2) | \
@@ -646,12 +648,12 @@ extern struct keywords sa_role_names;
 				  LELEM(STATE_INFO_PROTECTED) | \
 				  LRANGE(STATE_XAUTH_R0, STATE_XAUTH_I1))
 
-#define IS_ISAKMP_ENCRYPTED(s) ((LELEM(s) & ISAKMP_ENCRYPTED_STATES) != LEMPTY)
+#define IS_ISAKMP_ENCRYPTED(ST) ((LELEM(ST) & ISAKMP_ENCRYPTED_STATES) != LEMPTY)
 
 /* ??? Is this really authenticate?  Even in xauth case? In STATE_INFO case? */
-#define IS_ISAKMP_AUTHENTICATED(s) (STATE_MAIN_R3 <= (s->kind) && \
-				    STATE_AGGR_R0 != (s->kind) && \
-				    STATE_AGGR_I1 != (s->kind))
+#define IS_ISAKMP_AUTHENTICATED(ST) (STATE_MAIN_R3 <= ((ST)->kind) && \
+				     STATE_AGGR_R0 != ((ST)->kind) && \
+				     STATE_AGGR_I1 != ((ST)->kind))
 #endif
 
 #define IKEV2_ISAKMP_INITIATOR_STATES (LELEM(STATE_PARENT_I0) |	\
@@ -676,34 +678,34 @@ extern struct keywords sa_role_names;
 #define ISAKMP_SA_ESTABLISHED_STATES  (LELEM(STATE_V2_ESTABLISHED_IKE_SA))
 #endif
 
-#define IS_ISAKMP_SA_ESTABLISHED(s) ((LELEM(s->kind) & ISAKMP_SA_ESTABLISHED_STATES) != LEMPTY)
+#define IS_ISAKMP_SA_ESTABLISHED(ST) ((LELEM((ST)->kind) & ISAKMP_SA_ESTABLISHED_STATES) != LEMPTY)
 
-#define IPSECSA_PENDING_STATES (LELEM(STATE_V2_NEW_CHILD_I1) | \
-				LELEM(STATE_V2_NEW_CHILD_I0) | \
-				LELEM(STATE_V2_NEW_CHILD_R0) | \
-	/* due to a quirk in initiator duplication next one is also needed */ \
+#define IPSECSA_PENDING_STATES (LELEM(STATE_V2_NEW_CHILD_I1) |		\
+				LELEM(STATE_V2_NEW_CHILD_I0) |		\
+				LELEM(STATE_V2_NEW_CHILD_R0) |		\
+				/* due to a quirk in initiator duplication next one is also needed */ \
 				LELEM(STATE_PARENT_I2))
 
 /* IKEv1 or IKEv2 */
 #ifdef USE_IKEv1
-#define IS_IPSEC_SA_ESTABLISHED(s) (IS_CHILD_SA(s) &&			\
-				    ((s->st_state->kind) == STATE_QUICK_I2 || \
-				     (s->st_state->kind) == STATE_QUICK_R1 || \
-				     (s->st_state->kind) == STATE_QUICK_R2 || \
-				     (s->st_state->kind) == STATE_V2_ESTABLISHED_CHILD_SA))
+#define IS_IPSEC_SA_ESTABLISHED(ST) (IS_CHILD_SA(ST) &&			\
+				     (((ST)->st_state->kind) == STATE_QUICK_I2 || \
+				      ((ST)->st_state->kind) == STATE_QUICK_R1 || \
+				      ((ST)->st_state->kind) == STATE_QUICK_R2 || \
+				      ((ST)->st_state->kind) == STATE_V2_ESTABLISHED_CHILD_SA))
 #else
-#define IS_IPSEC_SA_ESTABLISHED(s) (IS_CHILD_SA(s) &&			\
-				     (s->st_state->kind) == STATE_V2_ESTABLISHED_CHILD_SA)
+#define IS_IPSEC_SA_ESTABLISHED(ST) (IS_CHILD_SA(ST) &&			\
+				     ((ST)->st_state->kind) == STATE_V2_ESTABLISHED_CHILD_SA)
 #endif
 
-#define IS_MODE_CFG_ESTABLISHED(s) ((s->kind) == STATE_MODE_CFG_R2)
+#define IS_MODE_CFG_ESTABLISHED(ST) (((ST)->kind) == STATE_MODE_CFG_R2)
 
 /* Only relevant to IKEv2 */
 
 /* adding for just a R2 or I3 check. Will need to be changed when parent/child discerning is fixed */
 
-#define IS_V2_ESTABLISHED(s) ((s->kind) == STATE_V2_ESTABLISHED_IKE_SA || \
-			      (s->kind) == STATE_V2_ESTABLISHED_CHILD_SA)
+#define IS_V2_ESTABLISHED(ST) (((ST)->kind) == STATE_V2_ESTABLISHED_IKE_SA || \
+			       ((ST)->kind) == STATE_V2_ESTABLISHED_CHILD_SA)
 
 #ifdef USE_IKEv1
 #define IS_IKE_SA_ESTABLISHED(ST) \
@@ -1090,6 +1092,11 @@ enum pluto_exit_code {
 	PLUTO_EXIT_UNBOUND_FAIL = 9,
 	PLUTO_EXIT_LOCK_FAIL = 10, /* historic value */
 	PLUTO_EXIT_SELINUX_FAIL = 11,
+	PLUTO_EXIT_LEAVE_STATE = 12, /* leave kernel state and routes */
+	/**/
+	PLUTO_EXIT_GIT_BISECT_CAN_NOT_TEST = 125,
+	PLUTO_EXIT_SHELL_COMMAND_NOT_FOUND = 126,
+	PLUTO_EXIT_SHELL_COMMAND_NOT_EXECUTABLE = 127,
 };
 
 #define SWAN_MAX_DOMAIN_LEN 256 /* includes nul termination */

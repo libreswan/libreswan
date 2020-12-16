@@ -14,7 +14,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add road-chain-B
-002 added IKEv2 connection "road-chain-B"
+002 "road-chain-B": added IKEv2 connection
 west #
  ipsec auto --status |grep road-chain-B
 000 "road-chain-B": 192.0.1.254/32===192.1.2.45<192.1.2.45>[@west_chain_endcert.testing.libreswan.org]...192.1.2.23<192.1.2.23>[@east.testing.libreswan.org]===192.0.2.254/32; unrouted; eroute owner: #0
@@ -54,7 +54,7 @@ west #
 1v2 "road-chain-B" #1: sent IKE_SA_INIT request
 1v2 "road-chain-B" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "road-chain-B" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-002 "road-chain-B" #2: IKEv2 mode peer ID is ID_FQDN: '@east.testing.libreswan.org'
+002 "road-chain-B" #1: IKEv2 mode peer ID is ID_FQDN: '@east.testing.libreswan.org'
 003 "road-chain-B" #1: authenticated using RSA with SHA2_512
 002 "road-chain-B" #2: negotiated connection [192.0.1.254-192.0.1.254:0-65535 0] -> [192.0.2.254-192.0.2.254:0-65535 0]
 004 "road-chain-B" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}

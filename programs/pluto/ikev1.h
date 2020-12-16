@@ -1,7 +1,6 @@
 #ifndef _IKEV1_H
 #define _IKEV1_H
 
-#include "pluto_crypt.h"
 #include "ikev1_continuations.h"
 #include "packet.h"		/* for pb_stream */
 #include "fd.h"
@@ -21,7 +20,8 @@ void ikev1_init_pbs_out_from_md_hdr(struct msg_digest *md, bool enc,
 				    uint8_t *output_buffer, size_t sizeof_output_buffer,
 				    struct pbs_out *rbody, struct logger *logger);
 
-extern void complete_v1_state_transition(struct msg_digest *md,
+extern void complete_v1_state_transition(struct state *st,
+					 struct msg_digest *md,
 					 stf_status result);
 
 extern void process_v1_packet(struct msg_digest *md);
@@ -33,23 +33,6 @@ extern void process_v1_packet(struct msg_digest *md);
 
 /* continue with encrypted packet */
 extern void process_packet_tail(struct msg_digest *md);
-
-extern bool ikev1_justship_nonce(chunk_t *n, struct pbs_out *outs,
-				 const char *name);
-
-/* calls previous two routines */
-extern bool ikev1_ship_nonce(chunk_t *n, chunk_t *nonce,
-			     struct pbs_out *outs, const char *name);
-
-extern notification_t accept_v1_nonce(struct logger *logger,
-				      struct msg_digest *md, chunk_t *dest,
-				      const char *name);
-
-extern bool ikev1_justship_KE(struct logger *logger, chunk_t *g, struct pbs_out *outs);
-
-/* just calls previous two routines now */
-extern bool ikev1_ship_KE(struct state *st, struct dh_local_secret *local_secret,
-			  chunk_t *g, struct pbs_out *outs);
 
 /* **MAIN MODE FUNCTIONS** in ikev1_main.c */
 

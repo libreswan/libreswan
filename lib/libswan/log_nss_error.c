@@ -39,12 +39,23 @@ static void jam_va_nss_error(struct jambuf *buf, const char *message, va_list ap
 void log_nss_error(lset_t rc_flags, struct logger *logger,
 		   const char *message, ...)
 {
-	LOG_JAMBUF(rc_flags, logger, buf) {
+	LLOG_JAMBUF(rc_flags, logger, buf) {
 		va_list ap;
 		va_start(ap, message);
 		jam_va_nss_error(buf, message, ap);
 		va_end(ap);
 	}
+}
+
+diag_t diag_nss_error(const char *message, ...)
+{
+	char lswbuf[LOG_WIDTH];
+	struct jambuf buf = ARRAY_AS_JAMBUF(lswbuf);
+	va_list ap;
+	va_start(ap, message);
+	jam_va_nss_error(&buf, message, ap);
+	va_end(ap);
+	return diag_jambuf(&buf);
 }
 
 void passert_nss_error(struct logger *logger, where_t where,

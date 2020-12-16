@@ -43,7 +43,6 @@
 #include "ike_alg_hash.h"
 #include "log.h"
 #include "demux.h"      /* needs packet.h */
-#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "server.h"
 #include "vendor.h"
@@ -72,7 +71,7 @@ bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
 		get_connection_private_key(c, type,
 					   ike->sa.st_logger);
 	if (pks == NULL) {
-		libreswan_log("No %s private key found", type->name);
+		log_state(RC_LOG, &ike->sa, "No %s private key found", type->name);
 		return false; /* failure: no key to use */
 	}
 
@@ -158,7 +157,7 @@ static err_t try_RSA_signature_v2(const struct crypt_mac *hash,
 
 	/* decrypt the signature -- reversing RSA_sign_hash */
 	if (sig_len != kr->size) {
-		loglog(RC_LOG_SERIOUS, "sig length %zu does not match pubkey length %zd", sig_len, kr->size);
+		log_state(RC_LOG_SERIOUS, st, "sig length %zu does not match pubkey length %zd", sig_len, kr->size);
 		return "1" "SIG length does not match public key length";
 	}
 
@@ -183,12 +182,12 @@ stf_status ikev2_verify_rsa_hash(struct ike_sa *ike,
 
 	/* XXX: table lookup? */
 	if (hash_algo->common.ikev2_alg_id < 0) {
-		loglog(RC_LOG_SERIOUS, "unknown or unsupported hash algorithm");
+		log_state(RC_LOG_SERIOUS, &ike->sa, "unknown or unsupported hash algorithm");
 		return STF_INTERNAL_ERROR;
 	}
 
 	if (sig_len ==0) {
-		loglog(RC_LOG_SERIOUS, "rejecting received zero-length RSA signature");
+		log_state(RC_LOG_SERIOUS, &ike->sa, "rejecting received zero-length RSA signature");
 		return STF_FATAL;
 	}
 

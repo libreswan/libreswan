@@ -6,10 +6,13 @@ road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
  ipsec auto --add xauth-road-eastnet
-002 added IKEv1 connection "xauth-road-eastnet"
+002 "xauth-road-eastnet": added IKEv1 connection
 road #
  echo done
 done
+road #
+ ipsec whack --impair drop-incoming:4
+002 IMPAIR: will drop incoming message 4
 road #
  ipsec whack --xauthname 'use1' --xauthpass 'use1pass' --name xauth-road-eastnet --initiate
 002 "xauth-road-eastnet" #1: initiating IKEv1 Main Mode connection
@@ -19,6 +22,7 @@ road #
 002 "xauth-road-eastnet" #1: Peer ID is ID_FQDN: '@east'
 003 "xauth-road-eastnet" #1: authenticated using RSA with SHA-1
 004 "xauth-road-eastnet" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+002 "xauth-road-eastnet" #1: IMPAIR: drop incoming message 4
 041 "xauth-road-eastnet" #1: xauth-road-eastnet prompt for Username:
 040 "xauth-road-eastnet" #1: xauth-road-eastnet prompt for Password:
 002 "xauth-road-eastnet" #1: XAUTH: Answering XAUTH challenge with user='use1'

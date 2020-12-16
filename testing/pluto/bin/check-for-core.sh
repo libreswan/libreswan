@@ -4,12 +4,21 @@ DIR=${1:-/tmp}
 
 BT()
 {
-    gdb <<EOF -quiet -nx "$@" 2>&1 | tr -cd '\12\15\40-\176'
+    gdb <<EOF -quiet -nx "$@" 2>&1 | tr -cd '\12\15\40-\176' | sed -e 's/^\((gdb) \)*//'
 set width 0
 set height 0
 set pagination no
 set charset ASCII
+echo \nCODE:\n\n
+x/i \$pc
+echo \nLOCAL VARIABLES:\n\n
+info locals
+echo \nSOURCE CODE:\n\n
+list
+echo \nCRASHING THREAD:\n\n
 bt
+echo \nALL THREADS:\n\n
+thread apply all bt
 EOF
 }
 
@@ -22,8 +31,11 @@ for core in ${DIR}/core* ; do
 
     echo
 
-    # Note: Post-mortem scripts use the text "CORE FOUND" in the
-    # console output as a marker for a test failing with a core dump.
+    # Note:
+    #
+    # Post-mortem scripts use the presence of the text "CORE FOUND" in
+    # the console output as a marker indicating a test failing with a
+    # core dump.
     echo CORE FOUND: $core
 
     exe=$(echo $core | cut -d. -f3)

@@ -11,16 +11,16 @@ west #
  # first conn is already loaded, do the second one now
 west #
  ipsec whack --name whack----rsasig --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel --rsasig --encrypt --ikev2-allow --ipv4 --to --host 5.6.7.8
-002 added IKEv2 connection "whack----rsasig"
+002 "whack----rsasig": added IKEv2 connection
 west #
  ipsec whack --name whack-----ecdsa --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel --ecdsa --encrypt --ikev2-allow --ipv4 --to --host 5.6.7.8
-002 added IKEv2 connection "whack-----ecdsa"
+002 "whack-----ecdsa": added IKEv2 connection
 west #
  ipsec whack --name whack--defaults --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel --encrypt --ikev2-allow --ipv4 --to --host 5.6.7.8
-002 added IKEv2 connection "whack--defaults"
+002 "whack--defaults": added IKEv2 connection
 west #
  ipsec whack --name whack--ikev2-default --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel --encrypt --ipv4 --to --host 5.6.7.8
-002 added IKEv2 connection "whack--ikev2-default"
+002 "whack--ikev2-default": added IKEv2 connection
 west #
  ipsec status | grep "policy:" | grep rsasig | grep TUNNEL
 000 "parser---rsasig":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;

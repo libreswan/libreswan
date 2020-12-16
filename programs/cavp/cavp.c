@@ -156,8 +156,9 @@ int main(int argc, char *argv[])
 	}
 
 	/* start NSS so crypto works while args are being parsed */
-	if (!lsw_nss_setup(NULL, 0, logger)) {
-		return 1;
+	diag_t d = lsw_nss_setup(NULL, 0, logger);
+	if (d != NULL) {
+		fatal_diag(1, logger, &d, "%s", "");
 	}
 	init_crypt_symkey(logger);
 

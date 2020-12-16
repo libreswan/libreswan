@@ -1,5 +1,5 @@
 basic-pluto-01 but now with labeled IPsec using NETKEY. A test on port 4300
-using netcat and getpeerconn daemon to confirm traffic flow and label.
+using netcat and getpeercon_server to confirm traffic flow and label.
 
 (requires private getpeercon package, we'll include it as source in /testing soon)
 

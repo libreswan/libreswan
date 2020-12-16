@@ -14,7 +14,7 @@ road #
  sleep 5
 road #
  ipsec auto --add road-east-ikev2
-002 added IKEv2 connection "road-east-ikev2"
+002 "road-east-ikev2": added IKEv2 connection
 road #
  echo "initdone"
 initdone

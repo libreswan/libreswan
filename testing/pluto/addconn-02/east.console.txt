@@ -619,7 +619,7 @@ conn: "test" redirect-to=<unset>
 conn: "test" accept-redirect-to=<unset>
 conn: "test" esp=<unset>
 conn: "test" ike=<unset>
-002 added IKEv2 connection "test"
+002 "test": added IKEv2 connection
 east #
  echo "initdone"
 initdone

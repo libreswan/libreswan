@@ -30,8 +30,6 @@
 #ifndef CONNECTIONS_H
 #define CONNECTIONS_H
 
-#include <sys/queue.h>
-
 #include "fd.h"
 #include "id.h"    /* for struct id */
 #include "lmod.h"
@@ -300,6 +298,7 @@ struct connection {
 	co_serial_t serialno;
 	co_serial_t serial_from;
 	char *name;
+	struct logger *logger;
 	enum ike_version ike_version;
 	char *foodgroup;
 	char *connalias;
@@ -364,7 +363,6 @@ struct connection {
 
 	char *log_file_name;			/* name of log file */
 	FILE *log_file;				/* possibly open FILE */
-	CIRCLEQ_ENTRY(connection) log_link;	/* linked list of open conns {} */
 	bool log_file_err;			/* only bitch once */
 
 	struct spd_route spd;
@@ -468,12 +466,12 @@ extern void flush_revival(const struct connection *c);
 struct xfrm_user_sec_ctx_ike; /* forward declaration */
 
 extern void initiate_ondemand(const ip_address *our_client,
-			     const ip_address *peer_client,
+			      const ip_address *peer_client,
 			      int transport_proto,
-			      bool held,
-			      struct fd *whackfd, bool background,
+			      bool held, bool background,
 			      struct xfrm_user_sec_ctx_ike *uctx,
-			      const char *why);
+			      const char *why,
+			      struct logger *logger);
 
 extern void terminate_connection(const char *name, bool quiet,
 				 struct fd *whack);
@@ -482,8 +480,7 @@ extern void delete_connection(struct connection *c, bool relations);
 extern void delete_connections_by_name(const char *name, bool strict,
 				       struct fd *whack);
 extern void delete_every_connection(void);
-struct connection *add_group_instance(struct fd *whack,
-				      struct connection *group,
+struct connection *add_group_instance(struct connection *group,
 				      const ip_subnet *target,
 				      uint8_t proto,
 				      uint16_t sport,
@@ -510,6 +507,7 @@ extern void rekey_now(const char *name, enum sa_type sa_type, struct fd *whackfd
 struct state;   /* forward declaration of tag (defined in state.h) */
 
 extern struct connection *conn_by_name(const char *nm, bool strict);
+extern struct connection *conn_by_serialno(co_serial_t serialno);
 
 extern struct connection
 	*refine_host_connection(const struct state *st, const struct id *peer_id,
@@ -607,8 +605,8 @@ extern void show_connections_status(struct show *s);
 extern int connection_compare(const struct connection *ca,
 			      const struct connection *cb);
 
-void connection_check_ddns(struct fd *whackfd);
-void connection_check_phase2(struct fd *whackfd);
+void connection_check_ddns(struct logger *logger);
+void connection_check_phase2(struct logger *logger);
 void init_connections(void);
 
 extern int foreach_connection_by_alias(const char *alias,
@@ -622,7 +620,7 @@ extern void unshare_connection_end(struct end *e);
 
 extern void liveness_clear_connection(struct connection *c, const char *v);
 
-extern void liveness_action(struct connection *c, enum ike_version ike_version);
+extern void liveness_action(struct state *st);
 
 extern uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt);
 

@@ -200,12 +200,11 @@ struct kernel_ops {
 	int *async_fdp;
 	int *route_fdp;
 
-	void (*init)(void);
-	void (*shutdown)();
+	void (*init)(struct logger *logger);
+	void (*shutdown)(struct logger *logger);
 	void (*pfkey_register)(void);
 	void (*process_queue)(void);
-	void (*process_msg)(int);
-	void (*scan_shunts)(void);
+	void (*process_msg)(int, struct logger *);
 	bool (*raw_eroute)(const ip_address *this_host,
 			   const ip_subnet *this_client,
 			   const ip_address *that_host,
@@ -222,24 +221,31 @@ struct kernel_ops {
 			   const uint32_t xfrm_if_id,
 			   enum pluto_sadb_operations op,
 			   const char *text_said,
-			   const char *policy_label);
+			   const char *policy_label,
+			   struct logger *logger);
 	bool (*shunt_eroute)(const struct connection *c,
 			     const struct spd_route *sr,
 			     enum routing_t rt_kind,
 			     enum pluto_sadb_operations op,
-			     const char *opname);
+			     const char *opname,
+			     struct logger *logger);
 	bool (*sag_eroute)(const struct state *st, const struct spd_route *sr,
 			   enum pluto_sadb_operations op, const char *opname);
 	bool (*eroute_idle)(struct state *st, deltatime_t idle_max);	/* may mutate *st */
 	void (*remove_orphaned_holds)(int transportproto,
 				      const ip_subnet *ours,
 				      const ip_subnet *peers);
-	bool (*add_sa)(const struct kernel_sa *sa, bool replace);
+	bool (*add_sa)(const struct kernel_sa *sa,
+		       bool replace,
+		       struct logger *logger);
 	bool (*grp_sa)(const struct kernel_sa *sa_outer,
 		       const struct kernel_sa *sa_inner);
-	bool (*del_sa)(const struct kernel_sa *sa);
-	bool (*get_sa)(const struct kernel_sa *sa, uint64_t *bytes,
-		       uint64_t *add_time);
+	bool (*del_sa)(const struct kernel_sa *sa,
+		       struct logger *logger);
+	bool (*get_sa)(const struct kernel_sa *sa,
+		       uint64_t *bytes,
+		       uint64_t *add_time,
+		       struct logger *logger);
 	ipsec_spi_t (*get_spi)(const ip_address *src,
 			       const ip_address *dst,
 			       const struct ip_protocol *proto,
@@ -247,19 +253,15 @@ struct kernel_ops {
 			       reqid_t reqid,
 			       ipsec_spi_t min,
 			       ipsec_spi_t max,
-			       const char *text_said);
-	bool (*docommand)(const struct connection *c,
-			  const struct spd_route *sr,
-			  const char *verb,
-			  const char *verb_suffix,
-			  struct state *st);
-	void (*process_raw_ifaces)(struct raw_iface *rifaces);
-	bool (*exceptsocket)(int socketfd, int family);
-	err_t (*migrate_sa_check)(void);
+			       const char *text_said,
+			       struct logger *logger);
+	void (*process_raw_ifaces)(struct raw_iface *rifaces, struct logger *logger);
+	bool (*exceptsocket)(int socketfd, int family, struct logger *logger);
+	err_t (*migrate_sa_check)(struct logger *);
 	bool (*migrate_sa)(struct state *st);
-	bool (*v6holes)();
-	bool (*poke_ipsec_policy_hole)(const struct iface_dev *ifd, int fd);
-	bool (*detect_offload)(const struct raw_iface *ifp);
+	void (*v6holes)(struct logger *logger);
+	bool (*poke_ipsec_policy_hole)(const struct iface_dev *ifd, int fd, struct logger *logger);
+	bool (*detect_offload)(const struct raw_iface *ifp, struct logger *logger);
 };
 
 extern int create_socket(const struct raw_iface *ifp, const char *v_name, int port, int proto);
@@ -281,7 +283,7 @@ extern const struct kernel_ops xfrm_kernel_ops;
 extern const struct kernel_ops bsdkame_kernel_ops;
 #endif
 
-extern struct raw_iface *find_raw_ifaces6(void);
+extern struct raw_iface *find_raw_ifaces6(struct logger *logger);
 
 /* helper for invoking call outs */
 extern bool fmt_common_shell_out(char *buf, size_t blen,
@@ -291,10 +293,7 @@ extern bool fmt_common_shell_out(char *buf, size_t blen,
 
 /* many bits reach in to use this, but maybe shouldn't */
 extern bool do_command(const struct connection *c, const struct spd_route *sr,
-		       const char *verb, struct state *st);
-
-extern bool invoke_command(const char *verb, const char *verb_suffix,
-			   const char *cmd);
+		       const char *verb, struct state *st, struct logger *logger);
 
 /* information from /proc/net/ipsec_eroute */
 
@@ -354,24 +353,26 @@ extern void record_and_initiate_opportunistic(const ip_selector *our_client,
 					      unsigned transport_proto,
 					      struct xfrm_user_sec_ctx_ike *,
 					      const char *why);
-extern void init_kernel(void);
+extern void init_kernel(struct logger *logger);
 
 struct connection;      /* forward declaration of tag */
-extern bool trap_connection(struct connection *c, struct fd *whackfd);
+extern bool trap_connection(struct connection *c);
 extern void unroute_connection(struct connection *c);
 extern void migration_up(struct connection *c,  struct state *st);
 extern void migration_down(struct connection *c,  struct state *st);
 
 extern bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
-			       int transport_proto, ipsec_spi_t shunt_spi,
-			       const char *why);
+			      int transport_proto, ipsec_spi_t shunt_spi,
+			      const char *why,
+			      struct logger *logger);
 
 extern bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			       policy_prio_t policy_prio,
 			       ipsec_spi_t cur_shunt_spi,   /* in host order! */
 			       ipsec_spi_t new_shunt_spi,   /* in host order! */
 			       int transport_proto,
-			       const char *why);
+			       const char *why,
+			       struct logger *logger);
 
 extern bool assign_holdpass(const struct connection *c,
 			struct spd_route *sr,
@@ -380,7 +381,8 @@ extern bool assign_holdpass(const struct connection *c,
 			const ip_address *src, const ip_address *dst);
 
 extern bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
-		int transport_proto, ipsec_spi_t failure_shunt);
+			    int transport_proto, ipsec_spi_t failure_shunt,
+			    struct logger *logger);
 
 extern ipsec_spi_t shunt_policy_spi(const struct connection *c, bool prospective);
 
@@ -388,15 +390,19 @@ struct state;   /* forward declaration of tag */
 extern ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
 				 const struct ip_protocol *proto,
 				 const struct spd_route *sr,
-				 bool tunnel_mode);
-extern ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel_mode);
+				 bool tunnel_mode,
+				 struct logger *logger);
+extern ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel_mode,
+			      struct logger *logger);
 
 extern bool install_inbound_ipsec_sa(struct state *st);
 extern bool install_ipsec_sa(struct state *st, bool inbound_also);
 extern void delete_ipsec_sa(struct state *st);
 extern bool route_and_eroute(struct connection *c,
 			     struct spd_route *sr,
-			     struct state *st);
+			     struct state *st,
+			     /* st or c */
+			     struct logger *logger);
 
 extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
 extern bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */);
@@ -404,8 +410,8 @@ extern bool migrate_ipsec_sa(struct state *st);
 extern bool del_spi(ipsec_spi_t spi,
 		    const struct ip_protocol *proto,
 		    const ip_address *src,
-		    const ip_address *dest);
-
+		    const ip_address *dest,
+		    struct logger *logger);
 
 extern bool eroute_connection(const struct spd_route *sr,
 			      ipsec_spi_t cur_spi,
@@ -417,7 +423,8 @@ extern bool eroute_connection(const struct spd_route *sr,
 			      const struct sa_marks *sa_marks,
 			      const uint32_t xfrm_if_id,
 			      unsigned int op, const char *opname,
-			      const char *policy_label);
+			      const char *policy_label,
+			      struct logger *logger);
 static inline bool compatible_overlapping_connections(const struct connection *a,
 						      const struct connection *b)
 {
@@ -428,9 +435,7 @@ static inline bool compatible_overlapping_connections(const struct connection *a
 }
 
 extern void show_kernel_interface(struct show *s);
-extern void free_kernelfd(void);
-extern void expire_bare_shunts(void);
-
+void shutdown_kernel(struct logger *logger);
 
 /*
  * Note: "why" must be in stable storage (not auto, not heap)
@@ -458,7 +463,8 @@ extern bool raw_eroute(const ip_address *this_host,
 		       const uint32_t xfrm_if_id,
 		       enum pluto_sadb_operations op,
 		       const char *opname,
-		       const char *policy_label);
+		       const char *policy_label,
+		       struct logger *logger);
 
 extern deltatime_t bare_shunt_interval;
 extern void set_text_said(char *text_said, const ip_address *dst,

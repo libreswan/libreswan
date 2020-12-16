@@ -792,7 +792,7 @@ kvmplutotest	xauth-pluto-25-lsw299	good
 kvmplutotest	xauth-pluto-26		good
 kvmplutotest	xauth-pluto-27		good
 kvmplutotest	xauth-pluto-28-twobehindnat	good
-kvmplutotest	ikev1-xauth-30-retransmit-xchg-mode-cfg-request		wip
+kvmplutotest	ikev1-xauth-30-retransmit-xchg-mode-cfg-request		good
 
 #
 # Aggressive Mode Pluto Tests
@@ -895,8 +895,8 @@ kvmplutotest	interop-ikev2-strongswan-31-asymmetric-responder	good
 kvmplutotest	interop-ikev2-strongswan-32-ip-lease			good
 kvmplutotest	interop-ikev2-xfrmi-strongswan-01			good
 
-# Selinux / secure labeling tests (require netkey and selinux)
-kvmplutotest    labeled-ipsec-01		wip
+# Selinux / secure labeling tests
+kvmplutotest    ikev1-labeled-ipsec-01		wip
 
 # compress tests
 kvmplutotest    compress-pluto-01		good
@@ -1029,6 +1029,9 @@ kvmplutotest	ikev1-l2tp-02				good
 
 kvmplutotest	listen-change-01			good
 
+# this one might be triggered in 3.32 - 4.x but seems to depend on environment?
+kvmplutotest	ikev1-algo-sha2-variant-bug		good
+
 #################################################################
 # FIPS mode tests: Most require PLUTO built in FIPS mode
 #################################################################
@@ -1065,6 +1068,12 @@ kvmplutotest	netkey-passthrough-03			good
 
 kvmplutotest	ikev1-isakmp-reserved-flags-01		good
 kvmplutotest	ikev1-isakmp-reserved-flags-02		good
+
+#################################################################
+# KDF NSS tests
+#################################################################
+kvmplutotest	ikev1-algo-sha2-variant-bug		good
+kvmplutotest	interop-ikev1-strongswan-06-kdf		good
 
 #################################################################
 # X.509 NSS tests

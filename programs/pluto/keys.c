@@ -256,7 +256,7 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 				  + decrypted_signature.len
 				  - expected_hash->len);
 		if (!memeq(start, expected_hash->ptr, expected_hash->len)) {
-			loglog(RC_LOG_SERIOUS, "RSA Signature NOT verified");
+			llog(RC_LOG_SERIOUS, logger, "RSA Signature NOT verified");
 			SECKEY_DestroyPublicKey(publicKey);
 			return "14""NSS error: Not able to verify";
 		}
@@ -338,8 +338,8 @@ static bool take_a_crack(struct tac_state *s,
 		    kr->type->name, str_keyid(*key_id_str), story);
 		return true;
 	} else {
-		loglog(RC_LOG_SERIOUS, "an %s Sig check failed '%s' with *%s [%s]",
-		       kr->type->name, ugh + 1, str_keyid(*key_id_str), story);
+		log_state(RC_LOG_SERIOUS, s->st, "an %s Sig check failed '%s' with *%s [%s]",
+			  kr->type->name, ugh + 1, str_keyid(*key_id_str), story);
 		if (s->best_ugh == NULL || s->best_ugh[0] < ugh[0])
 			s->best_ugh = ugh;
 		if (ugh[0] > '0') {
@@ -393,9 +393,9 @@ static bool try_all_keys(const char *pubkey_description,
 			 * cheap?
 			 */
 			id_buf printkid;
-			loglog(RC_LOG_SERIOUS,
-			       "cached %s public key '%s' has expired and has been deleted",
-			       s->type->name, str_id(&key->id, &printkid));
+			log_state(RC_LOG_SERIOUS, s->st,
+				  "cached %s public key '%s' has expired and has been deleted",
+				  s->type->name, str_id(&key->id, &printkid));
 			*pp = free_public_keyentry(p);
 			continue; /* continue with next public key */
 		} else {
@@ -689,7 +689,7 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 			 * lacks a counted reference to the private
 			 * key.
 			 */
-			log_message(RC_LOG|LOG_STREAM/*not-whack-grrr*/, logger,
+			llog(RC_LOG|LOG_STREAM/*not-whack-grrr*/, logger,
 				    "reloaded private key matching %s certificate '%s'",
 				    c->spd.this.leftright, nickname);
 		}
@@ -719,7 +719,7 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 							      &pks, &load_needed, logger);
 		if (err != NULL) {
 			ckaid_buf ckb;
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "private key matching CKAID '%s' not found: %s",
 				    str_ckaid(c->spd.this.ckaid, &ckb), err);
 			return NULL;
@@ -734,7 +734,7 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 			 * key.
 			 */
 			ckaid_buf ckb;
-			log_message(RC_LOG|LOG_STREAM/*not-whack-grr*/, logger,
+			llog(RC_LOG|LOG_STREAM/*not-whack-grr*/, logger,
 				    "reloaded private key matching %s CKAID %s",
 				    c->spd.this.leftright, str_ckaid(c->spd.this.ckaid, &ckb));
 		}

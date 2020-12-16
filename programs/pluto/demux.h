@@ -34,7 +34,7 @@
 struct state;   /* forward declaration of tag */
 struct iface_port;
 
-enum iface_status handle_packet_cb(const struct iface_port *ifp);
+enum iface_status handle_packet_cb(const struct iface_port *ifp, struct logger *logger);
 
 /* State transition function infrastructure
  *
@@ -239,7 +239,8 @@ void schedule_md_event(const char *name, struct msg_digest *md);
 
 extern void process_packet(struct msg_digest **mdp);
 
-extern char *cisco_stringify(pb_stream *pbs, const char *attr_name, lset_t pol);
+extern char *cisco_stringify(pb_stream *pbs, const char *attr_name,
+			     bool keep, struct logger *logger);
 
 extern void lswlog_msg_digest(struct jambuf *log, const struct msg_digest *md);
 

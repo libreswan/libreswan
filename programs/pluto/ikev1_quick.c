@@ -64,7 +64,6 @@
 #include "kernel_alg.h"
 #include "plutoalg.h"
 #include "crypt_symkey.h"
-#include "pluto_crypt.h"
 #include "crypt_prf.h"
 #include "crypt_hash.h"
 #include "ikev1.h"
@@ -82,8 +81,10 @@
 #include "ip_info.h"
 #include "ikev1_hash.h"
 #include "ikev1_message.h"
-
+#include "crypt_ke.h"
 #include <blapit.h>
+#include "crypt_dh.h"
+#include "unpack.h"
 
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"
@@ -107,33 +108,33 @@ const struct dh_desc *ikev1_quick_pfs(const struct child_proposals proposals)
  * Check and accept optional Quick Mode KE payload for PFS.
  * Extends ACCEPT_PFS to check whether KE is allowed or required.
  */
-static notification_t accept_PFS_KE(struct msg_digest *md, chunk_t *dest,
-				    const char *val_name, const char *msg_name)
+static notification_t accept_PFS_KE(struct state *st, struct msg_digest *md,
+				    chunk_t *dest, const char *val_name, const char *msg_name)
 {
-	struct state *st = md->st;
 	struct payload_digest *const ke_pd = md->chain[ISAKMP_NEXT_KE];
 
 	if (ke_pd == NULL) {
 		if (st->st_pfs_group != NULL) {
-			loglog(RC_LOG_SERIOUS,
-			       "missing KE payload in %s message", msg_name);
+			log_state(RC_LOG_SERIOUS, st,
+				  "missing KE payload in %s message", msg_name);
 			return INVALID_KEY_INFORMATION;
 		}
 		return NOTHING_WRONG;
 	} else {
 		if (st->st_pfs_group == NULL) {
-			loglog(RC_LOG_SERIOUS,
-			       "%s message KE payload requires a GROUP_DESCRIPTION attribute in SA",
-			       msg_name);
+			log_state(RC_LOG_SERIOUS, st,
+				  "%s message KE payload requires a GROUP_DESCRIPTION attribute in SA",
+				  msg_name);
 			return INVALID_KEY_INFORMATION;
 		}
 		if (ke_pd->next != NULL) {
-			loglog(RC_LOG_SERIOUS,
-			       "%s message contains several KE payloads; we accept at most one",
-			       msg_name);
+			log_state(RC_LOG_SERIOUS, st,
+				  "%s message contains several KE payloads; we accept at most one",
+				  msg_name);
 			return INVALID_KEY_INFORMATION; /* ??? */
 		}
-		if (!accept_KE(dest, val_name, st->st_pfs_group, ke_pd)) {
+		if (!unpack_KE(dest, val_name, st->st_pfs_group,
+			       ke_pd, st->st_logger)) {
 			return INVALID_KEY_INFORMATION;
 		}
 		return NOTHING_WRONG;
@@ -167,7 +168,7 @@ static bool emit_subnet_id(const ip_subnet *net,
 	ip_address tp = subnet_prefix(net);
 	diag_t d = pbs_out_address(&id_pbs, &tp, "client network");
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 
@@ -175,7 +176,7 @@ static bool emit_subnet_id(const ip_subnet *net,
 		ip_address tm = subnet_mask(net);
 		diag_t d = pbs_out_address(&id_pbs, &tm, "client mask");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 			return false;
 		}
 	}
@@ -365,7 +366,8 @@ static void compute_keymats(struct state *st)
 static bool decode_net_id(struct isakmp_ipsec_id *id,
 			  pb_stream *id_pbs,
 			  ip_subnet *net,
-			  const char *which)
+			  const char *which,
+			  struct logger *logger)
 {
 	const struct ip_info *afi = NULL;
 
@@ -387,13 +389,14 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 		afi = &ipv6_info;
 		break;
 	case ID_FQDN:
-		loglog(RC_COMMENT, "%s type is FQDN", which);
+		llog(RC_COMMENT, logger,
+			    "%s type is FQDN", which);
 		return TRUE;
 
 	default:
 		/* XXX support more */
-		loglog(RC_LOG_SERIOUS, "unsupported ID type %s",
-		       idtypename);
+		llog(RC_LOG_SERIOUS, logger, "unsupported ID type %s",
+			    idtypename);
 		/* XXX Could send notification back */
 		return FALSE;
 	}
@@ -403,15 +406,17 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 	case ID_IPV6_ADDR:
 	{
 		ip_address temp_address;
-		if (!pbs_in_address(&temp_address, afi, id_pbs, "ID address")) {
+		diag_t d = pbs_in_address(id_pbs, &temp_address, afi, "ID address");
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
 		/* i.e., "zero" */
 		if (address_eq_any(&temp_address)) {
 			ipstr_buf b;
-			loglog(RC_LOG_SERIOUS,
-			       "%s ID payload %s is invalid (%s) in Quick I1",
-			       which, idtypename, ipstr(&temp_address, &b));
+			llog(RC_LOG_SERIOUS, logger,
+				    "%s ID payload %s is invalid (%s) in Quick I1",
+				    which, idtypename, ipstr(&temp_address, &b));
 			/* XXX Could send notification back */
 			return false;
 		}
@@ -424,22 +429,30 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 	case ID_IPV4_ADDR_SUBNET:
 	case ID_IPV6_ADDR_SUBNET:
 	{
+		diag_t d;
+
 		ip_address temp_address, temp_mask;
-		if (!pbs_in_address(&temp_address, afi, id_pbs, "ID address")) {
+		d = pbs_in_address(id_pbs, &temp_address, afi, "ID address");
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
-		if (!pbs_in_address(&temp_mask, afi, id_pbs, "ID mask")) {
+
+		d = pbs_in_address(id_pbs, &temp_mask, afi, "ID mask");
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
+
 		err_t ughmsg = address_mask_to_subnet(&temp_address, &temp_mask, net);
 		if (ughmsg == NULL &&
 		    subnet_contains_no_addresses(net))
 			/* i.e., ::/128 or 0.0.0.0/32 */
 			ughmsg = "subnet contains no addresses";
 		if (ughmsg != NULL) {
-			loglog(RC_LOG_SERIOUS,
-			       "%s ID payload %s bad subnet in Quick I1 (%s)",
-			       which, idtypename, ughmsg);
+			llog(RC_LOG_SERIOUS, logger,
+				    "%s ID payload %s bad subnet in Quick I1 (%s)",
+				    which, idtypename, ughmsg);
 			/* XXX Could send notification back */
 			return FALSE;
 		}
@@ -451,12 +464,19 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 	case ID_IPV4_ADDR_RANGE:
 	case ID_IPV6_ADDR_RANGE:
 	{
+		diag_t d;
+
 		ip_address temp_address_from;
-		if (!pbs_in_address(&temp_address_from, afi, id_pbs, "ID from address")) {
+		d = pbs_in_address(id_pbs, &temp_address_from, afi, "ID from address");
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
+
 		ip_address temp_address_to;
-		if (!pbs_in_address(&temp_address_to, afi, id_pbs, "ID to address")) {
+		d = pbs_in_address(id_pbs, &temp_address_to, afi, "ID to address");
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
 
@@ -469,11 +489,12 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 		if (ughmsg != NULL) {
 			ipstr_buf a, b;
 
-			loglog(RC_LOG_SERIOUS, "%s ID payload in Quick I1, %s %s - %s unacceptable: %s",
-			       which, idtypename,
-			       ipstr(&temp_address_from, &a),
-			       ipstr(&temp_address_to, &b),
-			       ughmsg);
+			llog(RC_LOG_SERIOUS, logger,
+				    "%s ID payload in Quick I1, %s %s - %s unacceptable: %s",
+				    which, idtypename,
+				    ipstr(&temp_address_from, &a),
+				    ipstr(&temp_address_to, &b),
+				    ughmsg);
 			return FALSE;
 		}
 		subnet_buf buf;
@@ -496,52 +517,45 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 			 uint8_t *protoid,
 			 uint16_t *port,
 			 ip_subnet *net,
-			 const char *which)
+			 const char *which,
+			 struct logger *logger)
 {
 	ip_subnet net_temp;
 	bool bad_proposal = FALSE;
 
-	if (!decode_net_id(id, id_pbs, &net_temp, which))
+	if (!decode_net_id(id, id_pbs, &net_temp, which, logger))
 		return FALSE;
 
 	if (!samesubnet(net, &net_temp)) {
 		subnet_buf subrec;
 		subnet_buf subxmt;
-		loglog(RC_LOG_SERIOUS,
-		       "%s subnet returned doesn't match my proposal - us: %s vs them: %s",
-		       which, str_subnet(net, &subxmt),
-		       str_subnet(&net_temp, &subrec));
-#ifdef ALLOW_MICROSOFT_BAD_PROPOSAL
-		loglog(RC_LOG_SERIOUS,
-		       "Allowing questionable proposal anyway [ALLOW_MICROSOFT_BAD_PROPOSAL]");
+		llog(RC_LOG_SERIOUS, logger,
+			    "%s subnet returned doesn't match my proposal - us: %s vs them: %s",
+			    which, str_subnet(net, &subxmt),
+			    str_subnet(&net_temp, &subrec));
+		llog(RC_LOG_SERIOUS, logger,
+			    "Allowing questionable (microsoft) proposal anyway");
 		bad_proposal = FALSE;
-#else
-		bad_proposal = TRUE;
-#endif
 	}
 	if (*protoid != id->isaiid_protoid) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s peer returned protocol id does not match my proposal - us: %d vs them: %d",
-		       which, *protoid, id->isaiid_protoid);
-#ifdef ALLOW_MICROSOFT_BAD_PROPOSAL
-		loglog(RC_LOG_SERIOUS,
-		       "Allowing questionable proposal anyway [ALLOW_MICROSOFT_BAD_PROPOSAL]");
+		llog(RC_LOG_SERIOUS, logger,
+			    "%s peer returned protocol id does not match my proposal - us: %d vs them: %d",
+			    which, *protoid, id->isaiid_protoid);
+		llog(RC_LOG_SERIOUS, logger,
+			    "Allowing questionable (microsoft) proposal anyway]");
 		bad_proposal = FALSE;
-#else
-		bad_proposal = TRUE;
-#endif
 	}
 	/*
 	 * workaround for #802- "our client ID returned doesn't match my proposal"
 	 * until such time as bug #849 is properly fixed.
 	 */
 	if (*port != id->isaiid_port) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s peer returned port doesn't match my proposal - us: %d vs them: %d",
-		       which, *port, id->isaiid_port);
+		llog(RC_LOG_SERIOUS, logger,
+			    "%s peer returned port doesn't match my proposal - us: %d vs them: %d",
+			    which, *port, id->isaiid_port);
 		if (*port != 0 && id->isaiid_port != 1701) {
-			loglog(RC_LOG_SERIOUS,
-			       "Allowing bad L2TP/IPsec proposal (see bug #849) anyway");
+			llog(RC_LOG_SERIOUS, logger,
+				    "Allowing bad L2TP/IPsec proposal (see bug #849) anyway");
 			bad_proposal = FALSE;
 		} else {
 			bad_proposal = TRUE;
@@ -574,26 +588,7 @@ void init_phase2_iv(struct state *st, const msgid_t *msgid)
 	st->st_v1_new_iv = crypt_hash_final_mac(&ctx);
 }
 
-static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
-				   struct state *st);
-
-static crypto_req_cont_func quick_outI1_continue;	/* type assertion */
-
-static void quick_outI1_continue(struct state *st, struct msg_digest *md UNUSED,
-				 struct pluto_crypto_req *r)
-{
-	dbg("quick_outI1_continue for #%lu: calculated ke+nonce, sending I1",
-	    st->st_serialno);
-
-	pexpect(md == NULL); /* no packet */
-	passert(st != NULL);
-	stf_status e = quick_outI1_tail(r, st);
-	if (e == STF_INTERNAL_ERROR) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s: quick_outI1_tail() failed with STF_INTERNAL_ERROR",
-		       __func__);
-	}
-}
+static ke_and_nonce_cb quick_outI1_continue;	/* type assertion */
 
 void quick_outI1(struct fd *whack_sock,
 		 struct state *isakmp_sa,
@@ -608,7 +603,6 @@ void quick_outI1(struct fd *whack_sock,
 	update_state_connection(st, c);
 	passert(c != NULL);
 
-	so_serial_t old_state = push_cur_state(st); /* we must reset before exit */
 	st->st_policy = policy;
 	st->st_try = try;
 
@@ -652,7 +646,7 @@ void quick_outI1(struct fd *whack_sock,
 			st->st_pfs_group = isakmp_sa->st_oakley.ta_dh;
 	}
 
-	LOG_JAMBUF(RC_LOG, st->st_logger, buf) {
+	LLOG_JAMBUF(RC_LOG, st->st_logger, buf) {
 		jam(buf, "initiating Quick Mode %s", prettypolicy(policy));
 		if (replacing != SOS_NOBODY) {
 			jam(buf, " to replace #%lu", replacing);
@@ -677,19 +671,65 @@ void quick_outI1(struct fd *whack_sock,
 	st->st_ipsec_pred = replacing;
 
 	if (policy & POLICY_PFS) {
-		request_ke_and_nonce("quick_outI1 KE", st,
-				     st->st_pfs_group,
-				     quick_outI1_continue);
+		submit_ke_and_nonce(st, st->st_pfs_group,
+				    quick_outI1_continue,
+				    "quick_outI1 KE");
 	} else {
-		request_nonce("quick_outI1 KE", st,
-			      quick_outI1_continue);
+		submit_ke_and_nonce(st, NULL /* no-nonce*/,
+				    quick_outI1_continue,
+				    "quick_outI1 KE");
 	}
-	pop_cur_state(old_state);
 }
 
-static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
-				   struct state *st)
+static ke_and_nonce_cb quick_outI1_continue_tail;	/* type assertion */
+
+static stf_status quick_outI1_continue(struct state *st,
+				       struct msg_digest *unused_md,
+				       struct dh_local_secret *local_secret,
+				       chunk_t *nonce)
 {
+	dbg("quick_outI1_continue for #%lu: calculated ke+nonce, sending I1",
+	    st->st_serialno);
+
+	pexpect(unused_md == NULL); /* no packet */
+	passert(st != NULL);
+
+	/*
+	 * XXX: Read and weep:
+	 *
+	 * - when the tail function fails, ST is leaked
+	 *
+	 * - there is no QUICK I0->I1 state transition
+	 *
+	 * - compilete_v1_state_transition() isn't called
+	 *
+	 * - trying to call compilete_v1_state_transition() digs a
+	 *   hole - as it assumes md (perhaps this is why the function
+	 *   wasn't called)
+	 */
+	stf_status e = quick_outI1_continue_tail(st, unused_md, local_secret, nonce);
+	if (e == STF_INTERNAL_ERROR) {
+		log_state(RC_LOG_SERIOUS, st,
+			  "%s: quick_outI1_tail() failed with STF_INTERNAL_ERROR",
+			  __func__);
+	}
+	/*
+	 * This way all the broken behaviour is ignored.
+	 */
+	return STF_SKIP_COMPLETE_STATE_TRANSITION;
+}
+
+static stf_status quick_outI1_continue_tail(struct state *st,
+					    struct msg_digest *unused_md,
+					    struct dh_local_secret *local_secret,
+					    chunk_t *nonce)
+{
+	dbg("quick_outI1_continue for #%lu: calculated ke+nonce, sending I1",
+	    st->st_serialno);
+
+	pexpect(unused_md == NULL); /* no packet */
+	passert(st != NULL);
+
 	struct state *isakmp_sa = state_with_serialno(st->st_clonedfrom);
 	struct connection *c = st->st_connection;
 	pb_stream rbody;
@@ -699,9 +739,9 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 
 	if (isakmp_sa == NULL) {
 		/* phase1 state got deleted while cryptohelper was working */
-		loglog(RC_LOG_SERIOUS,
-		       "phase2 initiation failed because parent ISAKMP #%lu is gone",
-		       st->st_clonedfrom);
+		log_state(RC_LOG_SERIOUS, st,
+			  "phase2 initiation failed because parent ISAKMP #%lu is gone",
+			  st->st_clonedfrom);
 		return STF_FATAL;
 	}
 
@@ -733,7 +773,6 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 				&rbody)) {
-			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -761,23 +800,20 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 		if (!ikev1_out_sa(&rbody,
 				  &ipsec_sadb[pm >> POLICY_IPSEC_SHIFT],
 				  st, FALSE, FALSE)) {
-			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 	}
 
 	{
 		/* Ni out */
-		if (!ikev1_ship_nonce(&st->st_ni, &r->pcr_d.kn.n, &rbody, "Ni")) {
-			reset_cur_state();
+		if (!ikev1_ship_nonce(&st->st_ni, nonce, &rbody, "Ni")) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
 
 	/* [ KE ] out (for PFS) */
 	if (st->st_pfs_group != NULL) {
-		if (!ikev1_ship_KE(st, r->pcr_d.kn.local_secret, &st->st_gi, &rbody)) {
-			reset_cur_state();
+		if (!ikev1_ship_KE(st, local_secret, &st->st_gi, &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -791,7 +827,6 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 		    !emit_subnet_id(&c->spd.that.client,
 				    st->st_peeruserprotoid,
 				    st->st_peeruserport, &rbody)) {
-			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -801,7 +836,6 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 	    LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
 		/** Send NAT-OA if our address is NATed */
 		if (!nat_traversal_add_natoa(&rbody, st, true /* initiator */)) {
-			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -815,7 +849,6 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 	restore_new_iv(st, isakmp_sa->st_v1_new_iv);
 
 	if (!ikev1_encrypt_message(&rbody, st)) {
-		reset_cur_state();
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -827,13 +860,13 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 	start_retransmits(st);
 
 	if (st->st_ipsec_pred == SOS_NOBODY) {
-		loglog(RC_NEW_V1_STATE + st->st_state->kind,
-		       "%s", st->st_state->story);
+		log_state(RC_NEW_V1_STATE + st->st_state->kind, st,
+			  "%s", st->st_state->story);
 	} else {
-		loglog(RC_NEW_V1_STATE + st->st_state->kind,
-		       "%s, to replace #%lu",
-		       st->st_state->story,
-		       st->st_ipsec_pred);
+		log_state(RC_NEW_V1_STATE + st->st_state->kind, st,
+			  "%s, to replace #%lu",
+			  st->st_state->story,
+			  st->st_ipsec_pred);
 		st->st_ipsec_pred = SOS_NOBODY;
 	}
 
@@ -907,7 +940,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		/* IDci (initiator is peer) */
 
 		if (!decode_net_id(&id_pd->payload.ipsec_id, &id_pd->pbs,
-				   &b.peers.net, "peer client"))
+				   &b.peers.net, "peer client", p1st->st_logger))
 			return STF_FAIL + INVALID_ID_INFORMATION;
 
 		/* Hack for MS 818043 NAT-T Update.
@@ -921,8 +954,8 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		 * ??? needs more complete description.
 		 */
 		if (id_pd->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
-			loglog(RC_LOG_SERIOUS,
-			       "Applying workaround for MS-818043 NAT-T bug");
+			log_state(RC_LOG_SERIOUS, p1st,
+				  "Applying workaround for MS-818043 NAT-T bug");
 			zero(&b.peers.net);
 			happy(endtosubnet(&c->spd.that.host_addr,
 					  &b.peers.net, HERE));
@@ -936,7 +969,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		/* IDcr (we are responder) */
 
 		if (!decode_net_id(&IDci->payload.ipsec_id, &IDci->pbs,
-				   &b.my.net, "our client"))
+				   &b.my.net, "our client", p1st->st_logger))
 			return STF_FAIL + INVALID_ID_INFORMATION;
 
 		b.my.proto = IDci->payload.ipsec_id.isaiid_protoid;
@@ -970,15 +1003,15 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 			idfqdn[idlen] = '\0';
 
 			hv = p1st->hidden_variables;
-			nat_traversal_natoa_lookup(md, &hv);
+			nat_traversal_natoa_lookup(md, &hv, p1st->st_logger);
 
 			if (address_is_specified(&hv.st_nat_oa)) {
 				endtosubnet(&hv.st_nat_oa, &b.peers.net, HERE);
 				subnet_buf buf;
-				loglog(RC_LOG_SERIOUS,
-				       "IDci was FQDN: %s, using NAT_OA=%s %d as IDci",
-				       idfqdn, str_subnet(&b.peers.net, &buf),
-				       isanyaddr(&hv.st_nat_oa)/*XXX: always 0?*/);
+				log_state(RC_LOG_SERIOUS, p1st,
+					  "IDci was FQDN: %s, using NAT_OA=%s %d as IDci",
+					  idfqdn, str_subnet(&b.peers.net, &buf),
+					  isanyaddr(&hv.st_nat_oa)/*XXX: always 0?*/);
 			}
 		}
 	} else {
@@ -1006,12 +1039,10 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 
 
 /* forward definitions */
-static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
-						   struct pluto_crypto_req *r);
+static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_digest *md);
 
-static crypto_req_cont_func quick_inI1_outR1_continue1;	/* forward decl and type assertion */
-
-static crypto_req_cont_func quick_inI1_outR1_continue2;	/* forward decl and type assertion */
+static ke_and_nonce_cb quick_inI1_outR1_continue1;	/* forward decl and type assertion */
+static dh_shared_secret_cb quick_inI1_outR1_continue2;	/* forward decl and type assertion */
 
 static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 {
@@ -1031,9 +1062,9 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 		 * XXX: why is protocol always logged as an integer.
 		 */
 		subnet_buf s1, d1;
-		libreswan_log("the peer proposed: %s:%d/%d -> %s:%d/%d",
-			      str_subnet(our_net, &s1), c->spd.this.protocol, c->spd.this.port,
-			      str_subnet(peers_net, &d1), c->spd.that.protocol, c->spd.that.port);
+		log_state(RC_LOG, p1st, "the peer proposed: %s:%d/%d -> %s:%d/%d",
+			  str_subnet(our_net, &s1), c->spd.this.protocol, c->spd.this.port,
+			  str_subnet(peers_net, &d1), c->spd.that.protocol, c->spd.that.port);
 	}
 
 	/* Now that we have identities of client subnets, we must look for
@@ -1084,8 +1115,9 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 			l += strlen(buf + l);
 			(void)format_end(buf + l, sizeof(buf) - l, &he, NULL,
 					 FALSE, LEMPTY, oriented(*c));
-			libreswan_log("cannot respond to IPsec SA request because no connection is known for %s",
-				      buf);
+			log_state(RC_LOG, p1st,
+				  "cannot respond to IPsec SA request because no connection is known for %s",
+				  buf);
 			return STF_FAIL + INVALID_ID_INFORMATION;
 		}
 
@@ -1163,7 +1195,7 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 	hv = p1st->hidden_variables;
 	if ((hv.st_nat_traversal & NAT_T_DETECTED) &&
 	    (hv.st_nat_traversal & NAT_T_WITH_NATOA))
-		nat_traversal_natoa_lookup(md, &hv);
+		nat_traversal_natoa_lookup(md, &hv, p1st->st_logger);
 
 	/* create our new state */
 	{
@@ -1184,7 +1216,6 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 
 		restore_new_iv(st, b->new_iv);
 
-		set_cur_state(st);      /* (caller will reset) */
 		switch_md_st(md, st, HERE);	/* feed back new state */
 
 		st->st_peeruserprotoid = b->peers.proto;
@@ -1248,30 +1279,26 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 		RETURN_STF_FAILURE(accept_v1_nonce(st->st_logger, md, &st->st_ni, "Ni"));
 
 		/* [ KE ] in (for PFS) */
-		RETURN_STF_FAILURE(accept_PFS_KE(md, &st->st_gi,
+		RETURN_STF_FAILURE(accept_PFS_KE(st, md, &st->st_gi,
 						 "Gi", "Quick Mode I1"));
 
 		passert(st->st_pfs_group != &unset_group);
 
 		passert(st->st_connection != NULL);
 
-		if (st->st_pfs_group != NULL) {
-			request_ke_and_nonce("quick_outI1 KE", st,
-					     st->st_pfs_group,
-					     quick_inI1_outR1_continue1);
-		} else {
-			request_nonce("quick_outI1 KE", st,
-				      quick_inI1_outR1_continue1);
-		}
+		submit_ke_and_nonce(st, st->st_pfs_group/*possibly-null*/,
+				    quick_inI1_outR1_continue1,
+				    "quick_inI1_outR1_tail");
 
 		passert(st->st_connection != NULL);
 		return STF_SUSPEND;
 	}
 }
 
-static void quick_inI1_outR1_continue1(struct state *st,
-				       struct msg_digest *md,
-				       struct pluto_crypto_req *r)
+static stf_status quick_inI1_outR1_continue1(struct state *st,
+					     struct msg_digest *md,
+					     struct dh_local_secret *local_secret,
+					     chunk_t *nonce)
 {
 	dbg("quick_inI1_outR1_cryptocontinue1 for #%lu: calculated ke+nonce, calculating DH",
 	    st->st_serialno);
@@ -1279,43 +1306,39 @@ static void quick_inI1_outR1_continue1(struct state *st,
 	passert(st->st_connection != NULL);
 
 	/* we always calculate a nonce */
-	unpack_nonce(&st->st_nr, &r->pcr_d.kn.n);
+	unpack_nonce(&st->st_nr, nonce);
 
 	if (st->st_pfs_group != NULL) {
 		/* PFS is on: do a new DH */
-		unpack_KE_from_helper(st, r->pcr_d.kn.local_secret, &st->st_gr);
-		submit_v1_dh_shared_secret(quick_inI1_outR1_continue2, "quick outR1 DH",
-					   st, SA_RESPONDER, st->st_pfs_group);
+		unpack_KE_from_helper(st, local_secret, &st->st_gr);
+		submit_dh_shared_secret(st, st->st_gi,
+					quick_inI1_outR1_continue2,
+					HERE);
 		/*
 		 * XXX: Since more crypto has been requested, MD needs
 		 * to be re suspended.  If the original crypto request
 		 * did everything this wouldn't be needed.
 		 */
-		suspend_any_md(st, md);
+		return STF_SUSPEND;
 	} else {
-		/* but if PFS is off, we don't do a second DH, so just
-		 * call the continuation with NULL struct pluto_crypto_req *
+		/*
+		 * but if PFS is off, we don't do a second DH, so just
+		 * call the continuation with NULL struct
+		 * pluto_crypto_req *
 		 */
-		stf_status e = quick_inI1_outR1_continue12_tail(md, NULL);
-		if (e == STF_OK) {
-			passert(md != NULL);	/* ??? when would this fail? */
-			complete_v1_state_transition(md, e);
-		}
+		return quick_inI1_outR1_continue12_tail(st, md);
 	}
-	/* ??? why does our caller not care about e? */
 }
 
-static void quick_inI1_outR1_continue2(struct state *st,
-				       struct msg_digest *md,
-				       struct pluto_crypto_req *r)
+static stf_status quick_inI1_outR1_continue2(struct state *st,
+					     struct msg_digest *md)
 {
 	dbg("quick_inI1_outR1_cryptocontinue2 for #%lu: calculated DH, sending R1",
 	    st->st_serialno);
 
 	passert(st->st_connection != NULL);
 	passert(md != NULL);
-	stf_status e = quick_inI1_outR1_continue12_tail(md, r);
-	complete_v1_state_transition(md, e);
+	return quick_inI1_outR1_continue12_tail(st, md);
 }
 
 /*
@@ -1344,10 +1367,8 @@ static bool echo_id(pb_stream *outs,
 	return TRUE;
 }
 
-static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
-						   struct pluto_crypto_req *r)
+static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_digest *md)
 {
-	struct state *st = md->st;
 	struct payload_digest *const id_pd = md->chain[ISAKMP_NEXT_ID];
 	struct payload_digest *const sapd = md->chain[ISAKMP_NEXT_SA];
 
@@ -1396,13 +1417,14 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 	passert(st->st_pfs_group != &unset_group);
 
 	if ((st->st_policy & POLICY_PFS) && st->st_pfs_group == NULL) {
-		loglog(RC_LOG_SERIOUS,
-		       "we require PFS but Quick I1 SA specifies no GROUP_DESCRIPTION");
+		log_state(RC_LOG_SERIOUS, st,
+			  "we require PFS but Quick I1 SA specifies no GROUP_DESCRIPTION");
 		return STF_FAIL + NO_PROPOSAL_CHOSEN; /* ??? */
 	}
 
-	libreswan_log("responding to Quick Mode proposal {msgid:%08" PRIx32 "}",
-		      st->st_v1_msgid.id);
+	log_state(RC_LOG, st,
+		  "responding to Quick Mode proposal {msgid:%08" PRIx32 "}",
+		  st->st_v1_msgid.id);
 	{
 		char instbuf[END_BUF];
 		const struct connection *c = st->st_connection;
@@ -1410,11 +1432,11 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 
 		format_end(instbuf, sizeof(instbuf), &sr->this, &sr->that,
 			   TRUE, LEMPTY, oriented(*c));
-		libreswan_log("    us: %s", instbuf);
+		log_state(RC_LOG, st, "    us: %s", instbuf);
 
 		format_end(instbuf, sizeof(instbuf), &sr->that, &sr->this,
 			   FALSE, LEMPTY, oriented(*c));
-		libreswan_log("  them: %s", instbuf);
+		log_state(RC_LOG, st, "  them: %s", instbuf);
 	}
 
 	/**** finish reply packet: Nr [, KE ] [, IDci, IDcr ] ****/
@@ -1434,12 +1456,12 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 			pb_stream vid_pbs;
 
 			if (ugh != NULL) {
-				libreswan_log("$PLUTO_UNALIGNED_R1_MSG malformed: %s; pretending it is 3", ugh);
+				log_state(RC_LOG, st, "$PLUTO_UNALIGNED_R1_MSG malformed: %s; pretending it is 3", ugh);
 				padsize = 3;
 			}
 
-			libreswan_log("inserting fake VID payload of %lu size",
-				      padsize);
+			log_state(RC_LOG, st, "inserting fake VID payload of %lu size",
+				  padsize);
 
 			if (st->st_pfs_group != NULL)
 				np = ISAKMP_NEXT_KE;
@@ -1462,11 +1484,9 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 	}
 
 	/* [ KE ] out (for PFS) */
-	if (st->st_pfs_group != NULL && r != NULL) {
+	if (st->st_pfs_group != NULL && st->st_gr.ptr != NULL) {
 		if (!ikev1_justship_KE(st->st_logger, &st->st_gr, &rbody))
 			return STF_INTERNAL_ERROR;
-
-		finish_v1_dh_shared_secret(st, r);
 	}
 
 	/* [ IDci, IDcr ] out */
@@ -1516,10 +1536,9 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
  * (see RFC 2409 "IKE" 5.5)
  * Installs inbound and outbound IPsec SAs, routing, etc.
  */
-static stf_status quick_inR1_outI2_tail(struct msg_digest *md,
-					struct pluto_crypto_req *r);
+static stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md);
 
-static crypto_req_cont_func quick_inR1_outI2_continue;	/* forward decl and type assertion */
+static dh_shared_secret_cb quick_inR1_outI2_continue;	/* forward decl and type assertion */
 
 stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 {
@@ -1536,37 +1555,34 @@ stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 	RETURN_STF_FAILURE(accept_v1_nonce(st->st_logger, md, &st->st_nr, "Nr"));
 
 	/* [ KE ] in (for PFS) */
-	RETURN_STF_FAILURE(accept_PFS_KE(md, &st->st_gr, "Gr",
+	RETURN_STF_FAILURE(accept_PFS_KE(st, md, &st->st_gr, "Gr",
 					 "Quick Mode R1"));
 
 	if (st->st_pfs_group != NULL) {
 		/* set up DH calculation */
-		submit_v1_dh_shared_secret(quick_inR1_outI2_continue, "quick outI2 DH",
-					   st, SA_INITIATOR, st->st_pfs_group);
+		submit_dh_shared_secret(st, st->st_gr,
+					quick_inR1_outI2_continue,
+					HERE);
 		return STF_SUSPEND;
 	} else {
 		/* just call the tail function */
-		return quick_inR1_outI2_tail(md, NULL);
+		return quick_inR1_outI2_tail(st, md);
 	}
 }
 
-static void quick_inR1_outI2_continue(struct state *st,
-				      struct msg_digest *md,
-				      struct pluto_crypto_req *r)
+static stf_status quick_inR1_outI2_continue(struct state *st,
+					    struct msg_digest *md)
 {
 	dbg("quick_inR1_outI2_continue for #%lu: calculated ke+nonce, calculating DH",
 	    st->st_serialno);
 
 	passert(st->st_connection != NULL);
 	passert(md != NULL);
-	stf_status e = quick_inR1_outI2_tail(md, r);
-	complete_v1_state_transition(md, e);
+	return quick_inR1_outI2_tail(st, md);
 }
 
-stf_status quick_inR1_outI2_tail(struct msg_digest *md,
-				 struct pluto_crypto_req *r)
+stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 {
-	struct state *st = md->st;
 	struct connection *c = st->st_connection;
 
 	struct pbs_out rbody;
@@ -1574,12 +1590,9 @@ stf_status quick_inR1_outI2_tail(struct msg_digest *md,
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
 				       &rbody, st->st_logger);
 
-	if (st->st_pfs_group != NULL && r != NULL)
-		finish_v1_dh_shared_secret(st, r);
-
 	if ((st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
 	    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA))
-		nat_traversal_natoa_lookup(md, &st->hidden_variables);
+		nat_traversal_natoa_lookup(md, &st->hidden_variables, st->st_logger);
 
 	/* [ IDci, IDcr ] in; these must match what we sent */
 
@@ -1595,7 +1608,7 @@ stf_status quick_inR1_outI2_tail(struct msg_digest *md,
 					  &st->st_myuserprotoid,
 					  &st->st_myuserport,
 					  &st->st_connection->spd.this.client,
-					  "our client"))
+					  "our client", st->st_logger))
 				return STF_FAIL + INVALID_ID_INFORMATION;
 
 			/* we checked elsewhere that we got two of them */
@@ -1608,7 +1621,7 @@ stf_status quick_inR1_outI2_tail(struct msg_digest *md,
 					  &st->st_peeruserprotoid,
 					  &st->st_peeruserport,
 					  &st->st_connection->spd.that.client,
-					  "peer client"))
+					  "peer client", st->st_logger))
 				return STF_FAIL + INVALID_ID_INFORMATION;
 
 			/*
@@ -1636,10 +1649,10 @@ stf_status quick_inR1_outI2_tail(struct msg_digest *md,
 					    &st->st_connection->spd.that.client,
 					    HERE);
 				subnet_buf buf;
-				loglog(RC_LOG_SERIOUS,
-				       "IDcr was FQDN: %s, using NAT_OA=%s as IDcr",
-				       idfqdn,
-				       str_subnet(&st->st_connection->spd.that.client, &buf));
+				log_state(RC_LOG_SERIOUS, st,
+					  "IDcr was FQDN: %s, using NAT_OA=%s as IDcr",
+					  idfqdn,
+					  str_subnet(&st->st_connection->spd.that.client, &buf));
 			}
 		} else {
 			/* no IDci, IDcr: we must check that the defaults match our proposal */
@@ -1647,8 +1660,8 @@ stf_status quick_inR1_outI2_tail(struct msg_digest *md,
 					  &c->spd.this.host_addr) ||
 			    !subnetisaddr(&c->spd.that.client,
 					  &c->spd.that.host_addr)) {
-				loglog(RC_LOG_SERIOUS,
-					"IDci, IDcr payloads missing in message but default does not match proposal");
+				log_state(RC_LOG_SERIOUS, st,
+					  "IDci, IDcr payloads missing in message but default does not match proposal");
 				return STF_FAIL + INVALID_ID_INFORMATION;
 			}
 		}
@@ -1676,14 +1689,14 @@ stf_status quick_inR1_outI2_tail(struct msg_digest *md,
 				pb_stream vid_pbs;
 
 				if (ugh != NULL) {
-					libreswan_log("$PLUTO_UNALIGNED_I2_MSG malformed: %s; pretending it is 3",
-						ugh);
+					log_state(RC_LOG, st, "$PLUTO_UNALIGNED_I2_MSG malformed: %s; pretending it is 3",
+						  ugh);
 					padsize = 3;
 				}
 
-				libreswan_log(
-					"inserting fake VID payload of %u size",
-					padsize);
+				log_state(RC_LOG, st,
+					  "inserting fake VID payload of %u size",
+					  padsize);
 				START_HASH_PAYLOAD_NO_R_HASH_START(rbody,
 								   ISAKMP_NEXT_VID);
 

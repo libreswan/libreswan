@@ -25,7 +25,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add ikev2-westnet-eastnet
-002 added IKEv2 connection "ikev2-westnet-eastnet"
+002 "ikev2-westnet-eastnet": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -37,7 +37,7 @@ west #
 1v2 "ikev2-westnet-eastnet" #1: sent IKE_SA_INIT request
 1v2 "ikev2-westnet-eastnet" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "ikev2-westnet-eastnet" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-002 "ikev2-westnet-eastnet" #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+002 "ikev2-westnet-eastnet" #1: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 003 "ikev2-westnet-eastnet" #1: authenticated using RSA with SHA2_512
 002 "ikev2-westnet-eastnet" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ikev2-westnet-eastnet" #2: IPsec SA established tunnel mode {ESPinTCP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}

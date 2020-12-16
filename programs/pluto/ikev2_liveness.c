@@ -225,7 +225,7 @@ void initiate_v2_liveness(struct logger *logger, struct ike_sa *ike)
 {
 	const struct state_v2_microcode *transition = &v2_liveness_probe;
 	if (ike->sa.st_state->kind != transition->state) {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "liveness: #%lu unexpectedly in state %s; should be %s",
 			    ike->sa.st_serialno, ike->sa.st_state->short_name,
 			    finite_states[transition->state]->short_name);

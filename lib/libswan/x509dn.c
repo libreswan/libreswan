@@ -1,5 +1,4 @@
-/*
- * Support of X.509 certificates and CRLs
+/* Support of X.509 certificates and CRLs, for libreswan
  *
  * Copyright (C) 2000 Andreas Hess, Patric Lichtsteiner, Roger Wegmann
  * Copyright (C) 2001 Marco Bertossa, Andreas Schleiss
@@ -23,18 +22,14 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  */
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include "constants.h"
-#include "lswlog.h"
-#include "lswalloc.h"
-#include "id.h"
-#include "asn1.h"
+
+#include <stdlib.h>	/* for size_t */
+
 #include "oid.h"
 #include "x509.h"
-#include "lswconf.h"
-#include "ctype.h"
+#include "asn1.h"
+#include "lswlog.h"
+#include "id.h"
 
 /* coding of X.501 distinguished name */
 typedef const struct {
@@ -786,9 +781,9 @@ err_t atodn(const char *src, chunk_t *dn)
 		src += strspn(src, " ");	/* skip white space */
 
 		if (src[0] == '#') {
-			/* dump the raw hex assuming it is a BER */
+			/* assume it is a BER and parse the raw hex dump */
 			src++;
-			while (isxdigit(src[0]) && isxdigit(src[1])) {
+			while (char_isxdigit(src[0]) && char_isxdigit(src[1])) {
 				char hex[3] = { src[0], src[1], };
 				uint8_t byte = strtol(hex, NULL, 16);
 				EXTEND_OBJ(&byte, 1);

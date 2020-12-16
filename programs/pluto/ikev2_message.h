@@ -55,7 +55,7 @@ stf_status record_v2SK_message(struct pbs_out *msg,
 			       const char *what,
 			       enum message_role message);
 
-uint8_t build_ikev2_critical(bool impair);
+uint8_t build_ikev2_critical(bool impair, struct logger *logger);
 
 bool ikev2_collect_fragment(struct msg_digest *md, struct ike_sa *ike);
 

@@ -109,7 +109,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 	}
 	pfreeany(fg_path);
 
-	log_message(RC_LOG, flp->logger, "loading group \"%s\"", flp->filename);
+	llog(RC_LOG, flp->logger, "loading group \"%s\"", flp->filename);
 	while (flp->bdry == B_record) {
 
 		/* force advance to first token */
@@ -127,7 +127,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 			ip_address t;
 			err_t err = numeric_to_address(shunk1(flp->tok), NULL, &t);
 			if (err != NULL) {
-				log_message(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG_SERIOUS, flp->logger,
 					    "ignored, '%s' is not an address: %s",
 					    flp->tok, err);
 				flushline(flp, NULL/*shh*/);
@@ -138,7 +138,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 			const struct ip_info *afi = strchr(flp->tok, ':') == NULL ? &ipv4_info : &ipv6_info;
 			err_t err = ttosubnet(flp->tok, 0, afi->af, 'x', &sn, flp->logger);
 			if (err != NULL) {
-				log_message(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG_SERIOUS, flp->logger,
 					    "ignored, '%s' is not a subnet: %s",
 					    flp->tok, err);
 				flushline(flp, NULL/*shh*/);
@@ -148,7 +148,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 
 		const struct ip_info *type = subnet_type(&sn);
 		if (type == NULL) {
-			log_message(RC_LOG_SERIOUS, flp->logger,
+			llog(RC_LOG_SERIOUS, flp->logger,
 				    "ignored, unsupported Address Family \"%s\"",
 				    flp->tok);
 			flushline(flp, NULL/*shh*/);
@@ -165,46 +165,46 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 			/* protocol */
 			err = ttoipproto(flp->tok, &proto);
 			if (err != NULL) {
-				log_message(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG_SERIOUS, flp->logger,
 					    "protocol '%s' invalid: %s",
 					    flp->tok, err);
 				break;
 			}
 			if (proto == 0 || proto == IPPROTO_ESP || proto == IPPROTO_AH) {
-				log_message(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG_SERIOUS, flp->logger,
 					    "invalid protocol '%s' - mistakenly defined to be 0 or %u(esp) or %u(ah)",
 					    flp->tok, IPPROTO_ESP, IPPROTO_AH);
 				break;
 			}
 			/* source port */
 			if (!shift(flp)) {
-				log_message(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG_SERIOUS, flp->logger,
 					    "missing source_port: either only specify CIDR, or specify CIDR protocol source_port dest_port");
 				break;
 			}
 			err = ttoport(flp->tok, &sport);
 			if (err != NULL) {
-				log_message(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG_SERIOUS, flp->logger,
 					    "source port '%s' invalid: %s",
 					    flp->tok, err);
 				break;
 			}
 			/* dest port */
 			if (!shift(flp)) {
-				log_message(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG_SERIOUS, flp->logger,
 					    "missing dest_port: either only specify CIDR, or specify CIDR protocol source_port dest_port");
 				break;
 			}
 			err = ttoport(flp->tok, &dport);
 			if (err != NULL) {
-				log_message(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG_SERIOUS, flp->logger,
 					    "destination port '%s' invalid: %s",
 					    flp->tok, err);
 				break;
 			}
 			/* more stuff? */
 			if (shift(flp)) {
-				log_message(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG_SERIOUS, flp->logger,
 					    "garbage '%s' at end of line: either only specify CIDR, or specify CIDR protocol source_port dest_port",
 					    flp->tok);
 				break;
@@ -241,7 +241,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 		if (r == 0) {
 			subnet_buf source;
 			subnet_buf dest;
-			log_message(RC_LOG_SERIOUS, flp->logger,
+			llog(RC_LOG_SERIOUS, flp->logger,
 				    "subnet \"%s\", proto %d, sport %d dport %d, source %s, already \"%s\"",
 				    str_subnet(&sn, &dest),
 				    proto, sport, dport,
@@ -261,7 +261,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 		}
 	}
 	if (flp->bdry != B_file) {
-		log_message(RC_LOG_SERIOUS, flp->logger, "rest of file ignored");
+		llog(RC_LOG_SERIOUS, flp->logger, "rest of file ignored");
 	}
 	lexclose(&flp);
 }
@@ -273,9 +273,8 @@ static void pfree_target(struct fg_targets **target)
 	*target = NULL;
 }
 
-void load_groups(struct fd *whackfd)
+void load_groups(struct logger *logger)
 {
-	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
 	struct fg_targets *new_targets = NULL;
 
 	/* for each group, add config file targets into new_targets */
@@ -364,10 +363,14 @@ void load_groups(struct fd *whackfd)
 					pfree_target(&op);
 				}
 				if (r >= 0) {
-					struct connection *ng = add_group_instance(whackfd,
-										   np->group->connection,
-										   &np->subnet, np->proto,
+					struct connection *g = np->group->connection;
+					/* XXX: something better? */
+					close_any(&g->logger->global_whackfd);
+					g->logger->global_whackfd = dup_any(logger->global_whackfd);
+					struct connection *ng = add_group_instance(g, &np->subnet, np->proto,
 										   np->sport, np->dport);
+					/* XXX: something better? */
+					close_any(&g->logger->global_whackfd);
 					if (ng != NULL) {
 						passert(np->name == NULL);
 						np->name = clone_str(ng->name, "group instance name");
@@ -409,12 +412,12 @@ static struct fg_groups *find_group(const struct connection *c)
 	return g;
 }
 
-void route_group(struct fd *whackfd, struct connection *c)
+void route_group(struct connection *c)
 {
 	/* it makes no sense to route a connection that is ISAKMP-only */
 	if (!NEVER_NEGOTIATE(c->policy) && !HAS_IPSEC_POLICY(c->policy)) {
-		log_connection(RC_ROUTE, whackfd, c,
-			       "cannot route an ISAKMP-only group connection");
+		llog(RC_ROUTE, c->logger,
+		     "cannot route an ISAKMP-only group connection");
 	} else {
 		struct fg_groups *g = find_group(c);
 		struct fg_targets *t;
@@ -431,9 +434,9 @@ void route_group(struct fd *whackfd, struct connection *c)
 					 * Shouldn't this leave a
 					 * breadcrumb in the log file?
 					 */
-					if (!trap_connection(ci, whackfd))
-						log_connection(WHACK_STREAM|RC_ROUTE, whackfd, c,
-							       "could not route");
+					if (!trap_connection(ci))
+						llog(WHACK_STREAM|RC_ROUTE, c->logger,
+						     "could not route");
 				}
 			}
 		}

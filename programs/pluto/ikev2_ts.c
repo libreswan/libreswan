@@ -169,12 +169,12 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 		diag_t d;
 		d = pbs_out_address(&ts_pbs2, &ts->net.start, "IP start");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outpbs->out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 		d = pbs_out_address(&ts_pbs2, &ts->net.end, "IP end");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outpbs->out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 		break;
@@ -323,30 +323,35 @@ stf_status v2_emit_ts_payloads(const struct child_sa *child,
 /* return success */
 static bool v2_parse_ts(struct payload_digest *const ts_pd,
 			struct traffic_selectors *tss,
-			const char *which)
+			const char *which, struct logger *logger)
 {
 	dbg("%s: parsing %u traffic selectors",
 	    which, ts_pd->payload.v2ts.isat_num);
 
 	if (ts_pd->payload.v2ts.isat_num == 0) {
-		libreswan_log("%s payload contains no entries when at least one is expected",
+		llog(RC_LOG, logger, "%s payload contains no entries when at least one is expected",
 			      which);
 		return false;
 	}
 
 	if (ts_pd->payload.v2ts.isat_num >= elemsof(tss->ts)) {
-		libreswan_log("%s contains %d entries which exceeds hardwired max of %zu",
+		llog(RC_LOG, logger, "%s contains %d entries which exceeds hardwired max of %zu",
 			      which, ts_pd->payload.v2ts.isat_num, elemsof(tss->ts));
 		return false;	/* won't fit in array */
 	}
 
 	for (tss->nr = 0; tss->nr < ts_pd->payload.v2ts.isat_num; tss->nr++) {
+		diag_t d;
 		struct traffic_selector *ts = &tss->ts[tss->nr];
 
-		pb_stream addr;
+		struct pbs_in addr_pbs;
 		struct ikev2_ts1 ts1;
-		if (!in_struct(&ts1, &ikev2_ts1_desc, &ts_pd->pbs, &addr))
+		d = pbs_in_struct(&ts_pd->pbs, &ikev2_ts1_desc,
+				  &ts1, sizeof(ts1), &addr_pbs);
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
+		}
 
 		const struct ip_info *ipv;
 		switch (ts1.isat1_type) {
@@ -362,14 +367,20 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 			return false;
 		}
 
-		if (!pbs_in_address(&ts->net.start, ipv, &addr, "TS low")) {
+		d = pbs_in_address(&addr_pbs, &ts->net.start, ipv, "TS low");
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
-		if (!pbs_in_address(&ts->net.end, ipv, &addr, "TS high")) {
+
+		d = pbs_in_address(&addr_pbs, &ts->net.end, ipv, "TS high");
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
+
 		/* XXX: does this matter? */
-		if (pbs_left(&addr) != 0)
+		if (pbs_left(&addr_pbs) != 0)
 			return false;
 
 		ts->ipprotoid = ts1.isat1_ipprotoid;
@@ -377,8 +388,9 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 		ts->startport = ts1.isat1_startport;
 		ts->endport = ts1.isat1_endport;
 		if (ts->startport > ts->endport) {
-			libreswan_log("%s traffic selector %d has an invalid port range",
-				      which, tss->nr);
+			llog(RC_LOG, logger,
+				    "%s traffic selector %d has an invalid port range",
+				    which, tss->nr);
 			return false;
 		}
 	}
@@ -389,13 +401,14 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 
 static bool v2_parse_tss(const struct msg_digest *md,
 			 struct traffic_selectors *tsi,
-			 struct traffic_selectors *tsr)
+			 struct traffic_selectors *tsr,
+			 struct logger *logger)
 {
-	if (!v2_parse_ts(md->chain[ISAKMP_NEXT_v2TSi], tsi, "TSi")) {
+	if (!v2_parse_ts(md->chain[ISAKMP_NEXT_v2TSi], tsi, "TSi", logger)) {
 		return false;
 	}
 
-	if (!v2_parse_ts(md->chain[ISAKMP_NEXT_v2TSr], tsr, "TSr")) {
+	if (!v2_parse_ts(md->chain[ISAKMP_NEXT_v2TSr], tsr, "TSr", logger)) {
 		return false;
 	}
 
@@ -794,7 +807,7 @@ bool v2_process_ts_request(struct child_sa *child,
 
 	struct traffic_selectors tsi = { .nr = 0, };
 	struct traffic_selectors tsr = { .nr = 0, };
-	if (!v2_parse_tss(md, &tsi, &tsr)) {
+	if (!v2_parse_tss(md, &tsi, &tsr, child->sa.st_logger)) {
 		return false;
 	}
 
@@ -1164,7 +1177,7 @@ bool v2_process_ts_response(struct child_sa *child,
 
 	struct traffic_selectors tsi = { .nr = 0, };
 	struct traffic_selectors tsr = { .nr = 0, };
-	if (!v2_parse_tss(md, &tsi, &tsr)) {
+	if (!v2_parse_tss(md, &tsi, &tsr, child->sa.st_logger)) {
 		return false;
 	}
 
@@ -1259,8 +1272,9 @@ bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *
 	struct traffic_selectors their_tsis = { .nr = 0, };
 	struct traffic_selectors their_tsrs = { .nr = 0, };
 
-	if (!v2_parse_tss(md, &their_tsis, &their_tsrs)) {
-		log_state(RC_LOG_SERIOUS, &child->sa, "received malformed TSi/TSr payload(s)");
+	if (!v2_parse_tss(md, &their_tsis, &their_tsrs, child->sa.st_logger)) {
+		log_state(RC_LOG_SERIOUS, &child->sa,
+			  "received malformed TSi/TSr payload(s)");
 		return false;
 	}
 
@@ -1275,7 +1289,8 @@ bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *
 			&their_tsrs);
 
 	if (!score.ok) {
-		loglog(RC_LOG_SERIOUS, "Rekey: received Traffic Selectors does not contain existing IPsec SA Traffic Selectors");
+		log_state(RC_LOG_SERIOUS, &child->sa,
+			  "rekey: received Traffic Selectors does not contain existing IPsec SA Traffic Selectors");
 		return false;
 	}
 

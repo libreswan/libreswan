@@ -44,7 +44,6 @@
 #include "ike_alg.h"
 #include "log.h"
 #include "demux.h"      /* needs packet.h */
-#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "server.h"
 #include "vendor.h"
@@ -176,6 +175,7 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 				break;
 			}
 		}
+		break;
 
 	default:
 		bad_case(ike->sa.st_state->kind);
@@ -190,7 +190,7 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 		if (!ike->sa.st_resuming) {
 			pss = get_connection_psk(c, ike->sa.st_logger);
 			if (pss == NULL) {
-				loglog(RC_LOG_SERIOUS,"No matching PSK found for connection: %s",
+				log_state(RC_LOG_SERIOUS, &ike->sa, "No matching PSK found for connection: %s",
 					ike->sa.st_connection->name);
 				return empty_mac;
 			}
@@ -200,7 +200,7 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 			len = pss->len;
 		} else {
 			if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
-				DBG_dump_hunk("SK_px", *SK_px));
+				DBG_dump_hunk("SK_px", *SK_px);
 			}
 			len = SK_px->len;
 		}
@@ -208,21 +208,22 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 		const size_t key_size_min = crypt_prf_fips_key_size_min(ike->sa.st_oakley.ta_prf);
 		if (len < key_size_min) {
 			if (libreswan_fipsmode()) {
-				loglog(RC_LOG_SERIOUS,
-				       "FIPS: connection %s PSK%s length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
-				       ike->sa.st_connection->name,
-				       ike->sa.st_resuming ? "(IKE RESUME)" : "",
-				       len,
-				       ike->sa.st_oakley.ta_prf->common.fqn,
-				       key_size_min);
+				log_state(RC_LOG_SERIOUS, &ike->sa,
+					  "FIPS: connection %s PSK%s length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
+					  ike->sa.st_connection->name,
+					  ike->sa.st_resuming ? "(IKE RESUME)" : "",
+					  pss->len,
+					  ike->sa.st_oakley.ta_prf->common.fqn,
+					  key_size_min);
 				return empty_mac;
 			} else {
-				libreswan_log("WARNING: connection %s PSK%s length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
-					      ike->sa.st_connection->name,
-					      ike->sa.st_resuming ? "(IKE RESUME)" : "",
-					      len,
-					      ike->sa.st_oakley.ta_prf->common.fqn,
-					      key_size_min);
+				log_state(RC_LOG, &ike->sa,
+					  "WARNING: connection %s PSK%s length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
+					  ike->sa.st_connection->name,
+					  ike->sa.st_resuming ? "(IKE RESUME)" : "",
+					  pss->len,
+					  ike->sa.st_oakley.ta_prf->common.fqn,
+					  key_size_min);
 			}
 		}
 	} else {

@@ -1190,11 +1190,11 @@ static void log_ike_algs(struct logger *logger)
 	 */
 	FOR_EACH_IKE_ALG_TYPEP(typep) {
 		const struct ike_alg_type *type = *typep;
-		log_message(RC_LOG, logger, "%s%s algorithms:",
+		llog(RC_LOG, logger, "%s%s algorithms:",
 			    libreswan_fipsmode() ? "FIPS " : "",
 			    type->Name);
 		FOR_EACH_IKE_ALGP(type, algp) {
-			LOG_JAMBUF(RC_LOG, logger, buf) {
+			LLOG_JAMBUF(RC_LOG, logger, buf) {
 				jam_string(buf, "  ");
 				jam_ike_alg_details(buf, name_width, backend_width, *algp);
 			}
@@ -1216,7 +1216,7 @@ static void strip_nonfips(const struct ike_alg_type *type, struct logger *logger
 		 * Check FIPS before trying to run any tests.
 		 */
 		if (!alg->fips) {
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "%s algorithm %s disabled; not FIPS compliant",
 				    type->Name, alg->fqn);
 			continue;

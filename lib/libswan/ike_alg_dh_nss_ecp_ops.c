@@ -53,7 +53,7 @@ static void nss_ecp_calc_local_secret(const struct dh_desc *group,
 			     group->nss_oid, group->common.fqn);
 	}
 	if (DBGP(DBG_CRYPT)) {
-		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, "pk11_data->oid: ");
 			jam_nss_secitem(buf, &pk11_data->oid);
 		}
@@ -71,7 +71,7 @@ static void nss_ecp_calc_local_secret(const struct dh_desc *group,
 	pk11_param->data[1] = pk11_data->oid.len;
 	memcpy(pk11_param->data + 2, pk11_data->oid.data, pk11_data->oid.len);
 	if (DBGP(DBG_CRYPT)) {
-		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, "pk11_param");
 			jam_nss_secitem(buf, pk11_param);
 		}
@@ -88,7 +88,7 @@ static void nss_ecp_calc_local_secret(const struct dh_desc *group,
 	}
 
 	if (DBGP(DBG_CRYPT)) {
-		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam(buf, "public keyType %d size %d publicValue@%p %d bytes public key: ",
 			    (*pubk)->keyType,
 			    (*pubk)->u.ec.size,
@@ -195,8 +195,9 @@ static PK11SymKey *nss_ecp_calc_shared_secret(const struct dh_desc *group,
 	 * returning a copy of the key.
 	 */
 	PK11SymKey *g_ir = key_from_symkey_bytes(temp, 0, sizeof_symkey(temp), HERE, logger);
-	DBGF(DBG_CRYPT, "NSS: extracted-key@%p from ECDH temp-key@%p (CKM_CONCATENATE_BASE_AND_KEY hack)",
-	     g_ir, temp);
+	if (DBGP(DBG_BASE)) {
+		DBG_symkey(logger, "newref ", "ecp-key", g_ir);
+	}
 
 	release_symkey(__func__, "temp", &temp);
 	SECITEM_FreeItem(&remote_pubk.u.ec.publicValue, PR_FALSE);

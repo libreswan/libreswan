@@ -20,6 +20,7 @@
 #include "ikev1_prf.h"
 #include "ike_alg.h"
 #include "ike_alg_prf_ikev1_ops.h"
+#include "crypt_symkey.h"		/* for DBG_symkey() */
 
 /*
  * Compute: SKEYID = prf(Ni_b | Nr_b, g^xy)
@@ -32,8 +33,13 @@ PK11SymKey *ikev1_signature_skeyid(const struct prf_desc *prf_desc,
 				   /*const*/ PK11SymKey *dh_secret /* NSS doesn't do const */,
 				   struct logger *logger)
 {
+	if (DBGP(DBG_CRYPT)) {
+		dbgl(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
 
-	return prf_desc->prf_ikev1_ops->signature_skeyid(prf_desc, Ni, Nr, dh_secret, logger);
+	}
+	PK11SymKey *result = prf_desc->prf_ikev1_ops->signature_skeyid(prf_desc, Ni, Nr,
+								       dh_secret, logger);
+	return result;
 }
 
 /*
@@ -44,7 +50,13 @@ PK11SymKey *ikev1_pre_shared_key_skeyid(const struct prf_desc *prf_desc,
 					chunk_t Ni, chunk_t Nr,
 					struct logger *logger)
 {
-	return prf_desc->prf_ikev1_ops->pre_shared_key_skeyid(prf_desc, pre_shared_key, Ni, Nr, logger);
+	if (DBGP(DBG_CRYPT)) {
+		dbgl(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
+
+	}
+	PK11SymKey *result = prf_desc->prf_ikev1_ops->pre_shared_key_skeyid(prf_desc, pre_shared_key,
+									    Ni, Nr, logger);
+	return result;
 }
 
 /*
@@ -56,7 +68,13 @@ PK11SymKey *ikev1_skeyid_d(const struct prf_desc *prf_desc,
 			   chunk_t cky_i, chunk_t cky_r,
 			   struct logger *logger)
 {
-	return prf_desc->prf_ikev1_ops->skeyid_d(prf_desc, skeyid, dh_secret, cky_i, cky_r, logger);
+	if (DBGP(DBG_CRYPT)) {
+		dbgl(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
+
+	}
+	PK11SymKey *result = prf_desc->prf_ikev1_ops->skeyid_d(prf_desc, skeyid, dh_secret,
+							       cky_i, cky_r, logger);
+	return result;
 }
 
 /*
@@ -68,7 +86,13 @@ PK11SymKey *ikev1_skeyid_a(const struct prf_desc *prf_desc,
 			   chunk_t cky_i, chunk_t cky_r,
 			   struct logger *logger)
 {
-	return prf_desc->prf_ikev1_ops->skeyid_a(prf_desc, skeyid, skeyid_d, dh_secret, cky_i, cky_r, logger);
+	if (DBGP(DBG_CRYPT)) {
+		dbgl(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
+
+	}
+	PK11SymKey *result = prf_desc->prf_ikev1_ops->skeyid_a(prf_desc, skeyid, skeyid_d, dh_secret,
+							       cky_i, cky_r, logger);
+	return result;
 }
 
 /*
@@ -80,7 +104,13 @@ PK11SymKey *ikev1_skeyid_e(const struct prf_desc *prf_desc,
 			   chunk_t cky_i, chunk_t cky_r,
 			   struct logger *logger)
 {
-	return prf_desc->prf_ikev1_ops->skeyid_e(prf_desc, skeyid, skeyid_a, dh_secret, cky_i, cky_r, logger);
+	if (DBGP(DBG_CRYPT)) {
+		dbgl(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
+
+	}
+	PK11SymKey *result = prf_desc->prf_ikev1_ops->skeyid_e(prf_desc, skeyid, skeyid_a, dh_secret,
+							       cky_i, cky_r, logger);
+	return result;
 }
 
 PK11SymKey *ikev1_appendix_b_keymat_e(const struct prf_desc *prf_desc,
@@ -89,11 +119,16 @@ PK11SymKey *ikev1_appendix_b_keymat_e(const struct prf_desc *prf_desc,
 				      unsigned required_keymat,
 				      struct logger *logger)
 {
-	return prf_desc->prf_ikev1_ops->appendix_b_keymat_e(prf_desc, encrypter, skeyid_e,
-							    required_keymat, logger);
+	if (DBGP(DBG_CRYPT)) {
+		dbgl(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
+
+	}
+	PK11SymKey *result = prf_desc->prf_ikev1_ops->appendix_b_keymat_e(prf_desc, encrypter, skeyid_e,
+									  required_keymat, logger);
+	return result;
 }
 
-chunk_t ikev1_section_5_keymat(const struct prf_desc *prf,
+chunk_t ikev1_section_5_keymat(const struct prf_desc *prf_desc,
 			       PK11SymKey *SKEYID_d,
 			       PK11SymKey *g_xy,
 			       uint8_t protocol,
@@ -102,8 +137,23 @@ chunk_t ikev1_section_5_keymat(const struct prf_desc *prf,
 			       unsigned required_keymat,
 			       struct logger *logger)
 {
-	return prf->prf_ikev1_ops->section_5_keymat(prf, SKEYID_d,
-						    g_xy, protocol, SPI,
-						    Ni_b, Nr_b, required_keymat,
-						    logger);
+	if (DBGP(DBG_CRYPT)) {
+		DBG_log("calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
+		DBG_symkey(logger, __func__, "SKEYID_d:", SKEYID_d);
+		DBG_symkey(logger, __func__, "g_xy:", g_xy);
+		DBG_log("protocol: 0x%02"PRIx8, protocol);
+		DBG_dump_hunk("SPI", SPI);
+		DBG_dump_hunk("Ni_b", Ni_b);
+		DBG_dump_hunk("Ni_b", Nr_b);
+		DBG_log("required keymat: %u", required_keymat);
+	}
+	chunk_t result = prf_desc->prf_ikev1_ops->section_5_keymat(prf_desc, SKEYID_d,
+								   g_xy, protocol, SPI,
+								   Ni_b, Nr_b, required_keymat,
+								   logger);
+	if (DBGP(DBG_CRYPT)) {
+		DBG_log("%s.%s() returns:", prf_desc->prf_ikev1_ops->backend, __func__);
+		DBG_dump_hunk(NULL, result);
+	}
+	return result;
 }

@@ -32,7 +32,6 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
-#include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -71,13 +70,11 @@
 #include "rcv_whack.h"
 #include "keys.h"
 #include "whack.h"              /* for RC_LOG_SERIOUS */
-#include "pluto_crypt.h"        /* cryptographic helper functions */
 #include "monotime.h"
 #include "ikev1.h"		/* for complete_v1_state_transition() */
 #include "ikev2.h"		/* for complete_v2_state_transition() */
 #include "state_db.h"
 #include "iface.h"
-#include "pluto_shutdown.h"		/* for exit_pluto() ... */
 #include "server_fork.h"
 
 #ifdef USE_XFRM_INTERFACE
@@ -126,22 +123,16 @@ struct sockaddr_un ctl_addr = {
  * Pluto process returns.
  */
 
-bool init_ctl_socket(struct logger *logger)
+diag_t init_ctl_socket(struct logger *logger UNUSED/*maybe*/)
 {
 	delete_ctl_socket();    /* preventative medicine */
 	ctl_fd = safe_socket(AF_UNIX, SOCK_STREAM, 0);
 	if (ctl_fd == -1) {
-		log_message(ERROR_STREAM, logger,
-			    "FATAL ERROR: could not create control socket "PRI_ERRNO,
-			    pri_errno(errno));
-		return false;
+		return diag("could not create control socket "PRI_ERRNO, pri_errno(errno));
 	}
 
 	if (fcntl(ctl_fd, F_SETFD, FD_CLOEXEC) == -1) {
-		log_message(ERROR_STREAM, logger,
-			    "FATAL ERROR: could not fcntl FD+CLOEXEC control socket "PRI_ERRNO,
-			    pri_errno(errno));
-		return false;
+		return diag("could not fcntl FD+CLOEXEC control socket "PRI_ERRNO, pri_errno(errno));
 	}
 
 	/* to keep control socket secure, use umask */
@@ -154,10 +145,7 @@ bool init_ctl_socket(struct logger *logger)
 	if (bind(ctl_fd, (struct sockaddr *)&ctl_addr,
 		 offsetof(struct sockaddr_un, sun_path) +
 		 strlen(ctl_addr.sun_path)) < 0) {
-		log_message(ERROR_STREAM, logger,
-			    "FATAL ERROR: could not bind control socket "PRI_ERRNO,
-			    pri_errno(errno));
-		return false;
+		return diag("could not bind control socket "PRI_ERRNO, pri_errno(errno));
 	}
 	umask(ou);
 
@@ -167,7 +155,7 @@ bool init_ctl_socket(struct logger *logger)
 
 		if (g != NULL) {
 			if (fchown(ctl_fd, -1, g->gr_gid) != 0) {
-				log_message(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG_SERIOUS, logger,
 					    "cannot chgrp ctl fd(%d) to gid=%d: %s",
 					    ctl_fd, g->gr_gid, strerror(errno));
 			}
@@ -180,13 +168,10 @@ bool init_ctl_socket(struct logger *logger)
 	 * Rumour has it that this is the max on BSD systems.
 	 */
 	if (listen(ctl_fd, 5) < 0) {
-		log_message(ERROR_STREAM, logger,
-			    "FATAL ERROR: could not listen on control socket "PRI_ERRNO,
-			    pri_errno(errno));
-		return false;
+		return diag("could not listen on control socket "PRI_ERRNO, pri_errno(errno));
 	}
 
-	return true;
+	return NULL;
 }
 
 void delete_ctl_socket(void)
@@ -195,10 +180,10 @@ void delete_ctl_socket(void)
 	unlink(ctl_addr.sun_path);
 }
 
-bool listening = FALSE;  /* should we pay attention to IKE messages? */
-bool pluto_drop_oppo_null = FALSE; /* drop opportunistic AUTH-NULL on first IKE msg? */
-bool pluto_listen_udp = TRUE;
-bool pluto_listen_tcp = FALSE;
+bool listening = false;  /* should we pay attention to IKE messages? */
+bool pluto_drop_oppo_null = false; /* drop opportunistic AUTH-NULL on first IKE msg? */
+bool pluto_listen_udp = true;
+bool pluto_listen_tcp = false;
 
 enum ddos_mode pluto_ddos_mode = DDOS_AUTO; /* default to auto-detect */
 
@@ -218,7 +203,7 @@ unsigned int pluto_ddos_threshold = DEFAULT_IKE_SA_DDOS_THRESHOLD;
 deltatime_t pluto_shunt_lifetime = DELTATIME_INIT(PLUTO_SHUNT_LIFE_DURATION_DEFAULT);
 
 unsigned int pluto_sock_bufsize = IKE_BUF_AUTO; /* use system values */
-bool pluto_sock_errqueue = TRUE; /* Enable MSG_ERRQUEUE on IKE socket */
+bool pluto_sock_errqueue = true; /* Enable MSG_ERRQUEUE on IKE socket */
 
 /*
  * Static events.
@@ -268,6 +253,7 @@ static struct global_timer_desc global_timers[] = {
 static void global_timer_event_cb(evutil_socket_t fd UNUSED,
 				  const short event, void *arg)
 {
+	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), }; /* event-handler */
 	passert(in_main_thread());
 	struct global_timer_desc *gt = arg;
 	passert(event & EV_TIMEOUT);
@@ -275,11 +261,12 @@ static void global_timer_event_cb(evutil_socket_t fd UNUSED,
 	passert(gt < global_timers + elemsof(global_timers));
 	dbg("processing global timer %s", gt->name);
 	threadtime_t start = threadtime_start();
-	gt->cb(null_fd);
+	gt->cb(logger);
 	threadtime_stop(&start, SOS_NOBODY, "global timer %s", gt->name);
 }
 
-void call_global_event_inline(enum global_timer timer, struct fd *whackfd)
+void call_global_event_inline(enum global_timer timer,
+			      struct logger *logger)
 {
 	passert(in_main_thread());
 	if (!pexpect(timer < elemsof(global_timers))) {
@@ -289,12 +276,13 @@ void call_global_event_inline(enum global_timer timer, struct fd *whackfd)
 	struct global_timer_desc *gt = &global_timers[timer];
 	passert(gt->name != NULL);
 	if (!event_initialized(&gt->ev)) {
-		log_global(RC_LOG, whackfd, "inject: timer %s is not initialized",
-			   gt->name);
+		llog(RC_LOG, logger,
+			    "inject: timer %s is not initialized",
+			    gt->name);
 	}
-	log_global(RC_LOG, whackfd, "inject: injecting timer event %s", gt->name);
+	llog(RC_LOG, logger, "inject: injecting timer event %s", gt->name);
 	threadtime_t start = threadtime_start();
-	gt->cb(whackfd);
+	gt->cb(logger);
 	threadtime_stop(&start, SOS_NOBODY, "global timer %s", gt->name);
 }
 
@@ -428,7 +416,7 @@ static void signal_handler_handler(evutil_socket_t fd UNUSED,
 {
 	passert(in_main_thread());
 	passert(event & EV_SIGNAL);
-	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
+	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), }; /* event-handler */
 	struct signal_handler *se = arg;
 	dbg("processing signal %s", se->name);
 	threadtime_t start = threadtime_start();
@@ -495,7 +483,7 @@ void free_server(void)
 {
 	if (pluto_eb == NULL) {
 		/*
-		 * exit_pluto() can call free_server() before
+		 * pluto_shutdown() can call free_server() before
 		 * init_server(); mumble something about using
 		 * atexit().
 		 */
@@ -634,7 +622,6 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 		threadtime_stop(&start, e->serialno, "resume %s", e->name);
 	} else {
 		/* no previous state */
-		pexpect(push_cur_state(st) == SOS_NOBODY);
 		statetime_t start = statetime_start(st);
 		struct msg_digest *md = unsuspend_md(st);
 
@@ -714,10 +701,17 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 #ifdef USE_IKEv1
 			case IKEv1:
 				/* no switching MD.ST */
-				pexpect(old_md_st == SOS_NOBODY ?
-					md == NULL || md->st == NULL :
-					md != NULL && md->st != NULL && md->st->st_serialno == old_md_st);
-				complete_v1_state_transition(md, status);
+				if (old_md_st == SOS_NOBODY) {
+					/* (old)md->st == (new)md->st == NULL */
+					pexpect(md == NULL || md->st == NULL);
+				} else {
+					/* md->st didn't change */
+					pexpect(md != NULL &&
+						md->st != NULL &&
+						md->st->st_serialno == old_md_st);
+				}
+				pexpect(st != NULL); /* see above */
+				complete_v1_state_transition(st, md, status);
 				break;
 #endif
 			case IKEv2:
@@ -738,7 +732,6 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 		}
 		release_any_md(&md);
 		statetime_stop(&start, "resume %s", e->name);
-		pop_cur_state(SOS_NOBODY);
 	}
 	passert(e->event != NULL);
 	event_free(e->event);
@@ -821,11 +814,9 @@ static void callback_handler(evutil_socket_t fd UNUSED,
 
 	threadtime_t start = threadtime_start();
 	if (st != NULL) {
-		push_cur_state(st);
 	}
 	callback(st, context);
 	if (st != NULL) {
-		pop_cur_state(SOS_NOBODY);
 	}
 	threadtime_stop(&start, SOS_NOBODY, "callback %s", name);
 }
@@ -938,22 +929,25 @@ void show_fips_status(struct show *s)
 
 static void huphandler_cb(struct logger *logger)
 {
-	/* logging is probably not signal handling / threa safe */
-	log_message(RC_LOG, logger, "Pluto ignores SIGHUP -- perhaps you want \"whack --listen\"");
+	llog(RC_LOG, logger, "Pluto ignores SIGHUP -- perhaps you want \"whack --listen\"");
 }
 
-static void termhandler_cb(struct logger *logger_unused UNUSED)
+static void termhandler_cb(struct logger *logger)
 {
-	exit_pluto(PLUTO_EXIT_OK);
+#if 1
+	llog(RC_LOG, logger, "terminated");
+	libreswan_exit(PLUTO_EXIT_OK);
+#else
+	fatal(PLUTO_EXIT_OK, logger, "terminated");
+#endif
 }
 
 #ifdef HAVE_SECCOMP
 static void syshandler_cb(struct logger *logger)
 {
-	log_message(RC_LOG_SERIOUS, logger, "pluto received SIGSYS - possible SECCOMP violation!");
+	llog(RC_LOG_SERIOUS, logger, "pluto received SIGSYS - possible SECCOMP violation!");
 	if (pluto_seccomp_mode == SECCOMP_ENABLED) {
-		log_message(RC_LOG_SERIOUS, logger, "seccomp=enabled mandates daemon restart");
-		exit_pluto(PLUTO_EXIT_SECCOMP_FAIL);
+		fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, "seccomp=enabled mandates daemon restart");
 	}
 }
 #endif
@@ -962,7 +956,8 @@ static server_fork_cb addconn_exited; /* type assertion */
 
 static void addconn_exited(struct state *null_st UNUSED,
 			   struct msg_digest *null_mdp UNUSED,
-			   int status, void *context UNUSED)
+			   int status, void *context UNUSED,
+			   struct logger *logger UNUSED)
 {
 	dbg("reaped addconn helper child (status %d)", status);
 }
@@ -992,7 +987,7 @@ static void libevent_free(void *ptr)
 }
 #endif
 
-void init_server(void)
+void init_server(struct logger *logger)
 {
 	/*
 	 * "... if you are going to call this function, you should do
@@ -1006,9 +1001,10 @@ void init_server(void)
 #else
 	dbg("libevent is using its own memory allocator");
 #endif
-	libreswan_log("Initializing libevent in pthreads mode: headers: %s (%" PRIx32 "); library: %s (%" PRIx32 ")",
-		      LIBEVENT_VERSION, (ev_uint32_t)LIBEVENT_VERSION_NUMBER,
-		      event_get_version(), event_get_version_number());
+	llog(RC_LOG, logger,
+		    "initializing libevent in pthreads mode: headers: %s (%" PRIx32 "); library: %s (%" PRIx32 ")",
+		    LIBEVENT_VERSION, (ev_uint32_t)LIBEVENT_VERSION_NUMBER,
+		    event_get_version(), event_get_version_number());
 	/*
 	 * According to section 'setup Library setup', libevent needs
 	 * to be set up in pthreads mode before doing anything else.
@@ -1024,13 +1020,13 @@ void init_server(void)
 	dbg("libevent initialized");
 }
 
-/* call_server listens for incoming ISAKMP packets and Whack messages,
- * and handles timer events.
+/*
+ * listens for incoming ISAKMP packets and Whack messages, and handles
+ * timer events.
  */
-void call_server(char *conffile)
-{
-	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
 
+void run_server(char *conffile, struct logger *logger)
+{
 	/*
 	 * setup basic events, CTL and SIGNALs
 	 */
@@ -1070,7 +1066,8 @@ void call_server(char *conffile)
 			 */
 			n = 0;
 # else
-			FATAL_ERRNO(errno, "readlink(\"/proc/self/exe\") failed in call_server()");
+			fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
+				    "readlink(\"/proc/self/exe\") failed in call_server()");
 # endif
 		}
 #else
@@ -1087,14 +1084,14 @@ void call_server(char *conffile)
 			n--;
 
 		if ((size_t)n > sizeof(addconn_path_space) - sizeof(addconn_name)) {
-			fatal(logger, "path to %s is too long", addconn_name);
+			fatal(PLUTO_EXIT_FAIL, logger, "path to %s is too long", addconn_name);
 		}
 
 		strcpy(addconn_path_space + n, addconn_name);
 
 		if (access(addconn_path_space, X_OK) < 0)
-			FATAL_ERRNO(errno, "%s missing or not executable",
-				    addconn_path_space);
+			fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
+				    "%s missing or not executable", addconn_path_space);
 
 		char *newargv[] = { DISCARD_CONST(char *, "addconn"),
 				    DISCARD_CONST(char *, "--ctlsocket"),
@@ -1112,7 +1109,7 @@ void call_server(char *conffile)
 #ifdef HAVE_SECCOMP
 	init_seccomp_main(logger);
 #else
-	libreswan_log("seccomp security not supported");
+	llog(RC_LOG, logger, "seccomp security not supported");
 #endif
 
 	int r = event_base_loop(pluto_eb, 0);
@@ -1134,17 +1131,19 @@ bool ev_before(struct pluto_event *pev, deltatime_t delay)
 	return deltatime_cmp(deltatime_from_timeval(timeout), <, delay);
 }
 
-void set_whack_pluto_ddos(enum ddos_mode mode)
+void set_whack_pluto_ddos(enum ddos_mode mode, struct logger *logger)
 {
+	const char *modestr = (mode == DDOS_AUTO ? "auto-detect" :
+			       mode == DDOS_FORCE_BUSY ? "active" :
+			       "unlimited");
 	if (mode == pluto_ddos_mode) {
-		loglog(RC_LOG, "pluto DDoS protection remains in %s mode",
-		mode == DDOS_AUTO ? "auto-detect" : mode == DDOS_FORCE_BUSY ? "active" : "unlimited");
+		llog(RC_LOG, logger,
+			    "pluto DDoS protection remains in %s mode", modestr);
 		return;
 	}
 
 	pluto_ddos_mode = mode;
-	loglog(RC_LOG, "pluto DDoS protection mode set to %s",
-		mode == DDOS_AUTO ? "auto-detect" : mode == DDOS_FORCE_BUSY ? "active" : "unlimited");
+	llog(RC_LOG, logger, "pluto DDoS protection mode set to %s", modestr);
 }
 
 struct event_base *get_pluto_event_base(void)

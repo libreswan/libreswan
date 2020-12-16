@@ -20,10 +20,10 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add west-east
-002 added IKEv1 connection "west-east"
+002 "west-east": added IKEv1 connection
 west #
  ipsec auto --add west-east-passthrough
-002 added passthrough connection "west-east-passthrough"
+002 "west-east-passthrough": added passthrough connection
 west #
  ipsec auto --route west-east-passthrough
 west #

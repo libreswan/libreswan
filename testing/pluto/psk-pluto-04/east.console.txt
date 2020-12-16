@@ -6,7 +6,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add road-east-psk
-002 added IKEv1 connection "road-east-psk"
+002 "road-east-psk": added IKEv1 connection
 east #
  echo "initdone"
 initdone

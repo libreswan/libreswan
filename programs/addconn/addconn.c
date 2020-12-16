@@ -42,7 +42,6 @@
 #endif
 
 #ifdef HAVE_SECCOMP
-#define LSW_SECCOMP_EXIT_FAIL 8
 #include "lswseccomp.h"
 #endif
 
@@ -83,7 +82,8 @@ static void resolve_defaultroute(struct starter_conn *conn UNUSED, struct logger
 	if (!seeking_src && !seeking_gateway)
 		return;	/* this end already figured out */
 
-	fatal(logger, "addcon: without XFRM/NETKEY, cannot resolve_defaultroute()");
+	fatal(PLUTO_EXIT_FAIL, logger,
+	      "addcon: without XFRM/NETKEY, cannot resolve_defaultroute()");
 #endif
 }
 
@@ -92,8 +92,7 @@ static void init_seccomp_addconn(uint32_t def_action, struct logger *logger)
 {
 	scmp_filter_ctx ctx = seccomp_init(def_action);
 	if (ctx == NULL) {
-		fprintf(stderr, "seccomp_init_addconn() failed!");
-		exit(LSW_SECCOMP_EXIT_FAIL);
+		fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, "seccomp_init_addconn() failed!");
 	}
 
 	/*
@@ -161,9 +160,9 @@ static void init_seccomp_addconn(uint32_t def_action, struct logger *logger)
 
 	int rc = seccomp_load(ctx);
 	if (rc < 0) {
-		fprintf(stderr, "seccomp_load() failed!");
 		seccomp_release(ctx);
-		exit(LSW_SECCOMP_EXIT_FAIL);
+		fatal_errno(PLUTO_EXIT_SECCOMP_FAIL, logger, -rc,
+			    "seccomp_load() failed!");
 	}
 }
 #endif
@@ -425,11 +424,12 @@ int main(int argc, char *argv[])
 		 * This mimics behaviour of the old _plutoload
 		 */
 		if (verbose > 0)
-			printf("  Pass #1: Loading auto=add, auto=route and auto=start connections\n");
+			printf("  Pass #1: Loading auto=add, auto=keep, auto=route and auto=start connections\n");
 
 		for (conn = cfg->conns.tqh_first; conn != NULL; conn = conn->link.tqe_next) {
 			if (conn->desired_state == STARTUP_ADD ||
 				conn->desired_state == STARTUP_ONDEMAND ||
+				conn->desired_state == STARTUP_KEEP ||
 				conn->desired_state == STARTUP_START)
 			{
 				if (verbose > 0)

@@ -15,7 +15,7 @@ west #
  ipsec whack --impair ike-initiator-spi:0
 west #
  ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
-002 added IKEv2 connection "aes128"
+002 "aes128": added IKEv2 connection
 1v2 "aes128" #1: initiating IKEv2 connection
 1v2 "aes128" #1: sent IKE_SA_INIT request
 002 "aes128" #1: IMPAIR: retransmit so deleting SA

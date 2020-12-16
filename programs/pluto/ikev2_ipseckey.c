@@ -35,7 +35,6 @@
 #include "connections.h"
 #include "dnssec.h"	/* includes unbound.h */
 #include "id.h"
-#include "pluto_crypt.h"	/* for ikev2.h */
 #include "ikev2.h"
 #include "ikev2_ipseckey.h"
 #include "keys.h"
@@ -52,9 +51,9 @@ struct p_dns_req {
 
 	bool cache_hit;		/* libunbound hit cache/local, calledback immediately */
 
-	so_serial_t so_serial_t;	/* wake up the state when query returns */
+	so_serial_t so_serial;	/* wake up the state when query returns */
+	struct logger *logger;
 
-	char *dbg_buf;
 	char *log_buf;
 
 	realtime_t start_time;
@@ -109,7 +108,8 @@ static void dbg_log_dns_question(struct p_dns_req *dnsr,
 				ldns_rr_list_rr(
 					ldns_pkt_question(ldnspkt), i));
 		if (status != LDNS_STATUS_OK) {
-			dbg("could not parse DNS QUESTION section for %s", dnsr->dbg_buf);
+			llog(DEBUG_STREAM, dnsr->logger,
+				    "could not parse DNS QUESTION section");
 			return;
 		}
 	}
@@ -174,11 +174,10 @@ static bool get_keyval_chunk(struct p_dns_req *dnsr, ldns_rdf *rdf,
 
 	if (lerr != LDNS_STATUS_OK) {
 		ldns_lookup_table *lt = ldns_lookup_by_id(ldns_error_str, lerr);
-		loglog(RC_LOG_SERIOUS, "IPSECKEY rr parse error %s "
-				"%s", lt->name, dnsr->log_buf);
-
+		llog(RC_LOG_SERIOUS, dnsr->logger,
+			    "IPSECKEY rr parse error %s %s", lt->name, dnsr->log_buf);
 		ldns_buffer_free(ldns_pkey);
-		return FALSE;
+		return false;
 	}
 
 	/* not const: we modify this buffer with strspn() */
@@ -222,7 +221,8 @@ static bool get_keyval_chunk(struct p_dns_req *dnsr, ldns_rdf *rdf,
 	}
 
 	if (ugh != NULL) {
-		loglog(RC_LOG_SERIOUS, "Ignoring IPSECKEY RR: %s", ugh);
+		llog(RC_LOG_SERIOUS, dnsr->logger,
+			    "ignoring IPSECKEY RR: %s", ugh);
 	}
 
 	ldns_buffer_free(ldns_pkey);
@@ -233,7 +233,7 @@ static bool get_keyval_chunk(struct p_dns_req *dnsr, ldns_rdf *rdf,
 static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
 				     uint32_t ttl)
 {
-	const struct state *st = state_with_serialno(dnsr->so_serial_t);
+	const struct state *st = state_with_serialno(dnsr->so_serial);
 	const struct id *keyid = &st->st_connection->spd.that.id;
 
 	/*
@@ -291,9 +291,10 @@ static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
 				   ttl, &keyval, NULL/*don't-return-pubkey*/, &pluto_pubkeys);
 	if (ugh != NULL) {
 		id_buf thatidbuf;
-		loglog(RC_LOG_SERIOUS, "Add publickey failed %s, %s, %s", ugh,
-		       str_id(&st->st_connection->spd.that.id, &thatidbuf),
-		       dnsr->log_buf);
+		llog(RC_LOG_SERIOUS, dnsr->logger,
+			    "add publickey failed %s, %s, %s", ugh,
+			    str_id(&st->st_connection->spd.that.id, &thatidbuf),
+			    dnsr->log_buf);
 	}
 
 	free_chunk_content(&keyval);
@@ -302,7 +303,7 @@ static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
 
 static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
 {
-	struct state *st = state_with_serialno(dnsr->so_serial_t);
+	struct state *st = state_with_serialno(dnsr->so_serial);
 	ip_address ipaddr;
 	const struct ip_info *afi = address_type(&st->st_remote_endpoint);
 
@@ -463,7 +464,8 @@ static err_t process_dns_resp(struct p_dns_req *dnsr)
 
 	case UB_EVENT_INSECURE:
 		if (impair.allow_dns_insecure) {
-			libreswan_log("IMPAIR: allowing insecure DNS response");
+			llog(RC_LOG, dnsr->logger,
+				    "IMPAIR: allowing insecure DNS response");
 			return parse_rr(dnsr, ldnspkt);
 		}
 		return "unbound returned INSECURE response - ignored";
@@ -478,14 +480,14 @@ void free_ipseckey_dns(struct p_dns_req *d)
 	if (d == NULL)
 		return;
 
-	if (d->ub_async_id != 0)
-	{
+	if (d->ub_async_id != 0) {
 		ub_cancel(get_unbound_ctx(), d->ub_async_id);
 		d->ub_async_id = 0;
 	}
 
+	/* XXX: free D, then remove D from a linked list?!?! */
+	free_logger(&d->logger, HERE);
 	pfreeany(d->qname);
-	pfreeany(d->dbg_buf);
 	pfreeany(d->log_buf);
 
 	struct p_dns_req **pp;
@@ -504,11 +506,10 @@ static void ikev2_ipseckey_log_missing_st(struct p_dns_req *dnsr)
 {
 	deltatime_t served_delta = realtimediff(dnsr->done_time, dnsr->start_time);
 	deltatime_buf db;
-	log_global(RC_LOG_SERIOUS, null_fd,
-		   "%s The state #%lu is gone. %s returned %s elapsed time %s seconds",
-		   dnsr->dbg_buf, dnsr->so_serial_t,
-		   dnsr->log_buf, dnsr->rcode_name,
-		   str_deltatime(served_delta, &db));
+	llog(RC_LOG_SERIOUS, dnsr->logger,
+		    "the state is gone; %s returned %s elapsed time %s seconds",
+		    dnsr->log_buf, dnsr->rcode_name,
+		    str_deltatime(served_delta, &db));
 }
 
 static void ikev2_ipseckey_log_dns_err(struct state *st,
@@ -550,7 +551,7 @@ static void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr)
 
 static void idr_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 {
-	struct state *st = state_with_serialno(dnsr->so_serial_t);
+	struct state *st = state_with_serialno(dnsr->so_serial);
 	const char *parse_err;
 
 	dnsr->done_time = realnow();
@@ -562,7 +563,6 @@ static void idr_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 		return;
 	}
 
-	set_cur_state(st);
 
 	ipseckey_dbg_dns_resp(dnsr);
 	parse_err = process_dns_resp(dnsr);
@@ -584,7 +584,6 @@ static void idr_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 
 	st->ipseckey_dnsr = NULL;
 	free_ipseckey_dns(dnsr);
-	reset_globals();
 }
 
 static void idi_ipseckey_fetch_tail(struct state *st, bool err)
@@ -603,12 +602,11 @@ static void idi_ipseckey_fetch_tail(struct state *st, bool err)
 	/* replace (*mdp)->st with st ... */
 	complete_v2_state_transition(md->st, md, stf);
 	release_any_md(&md);
-	reset_globals();
 }
 
 static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 {
-	struct state *st = state_with_serialno(dnsr->so_serial_t);
+	struct state *st = state_with_serialno(dnsr->so_serial);
 	bool err;
 
 	dnsr->done_time = realnow();
@@ -621,14 +619,14 @@ static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 	}
 
 	if (!dnsr->cache_hit)
-		set_cur_state(st);
 
 	ipseckey_dbg_dns_resp(dnsr);
 	process_dns_resp(dnsr);
 
 	if (!dnsr->fwd_addr_valid) {
-		loglog(RC_LOG_SERIOUS, "forward address validation failed %s",
-				dnsr->log_buf);
+		llog(RC_LOG_SERIOUS, dnsr->logger,
+			    "forward address validation failed %s",
+			    dnsr->log_buf);
 	}
 
 	if (dnsr->rcode == 0 && dnsr->fwd_addr_valid) {
@@ -661,8 +659,7 @@ static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 		return;
 	}
 
-	dbg("%s unsuspend id=%s", dnsr->dbg_buf, dnsr->qname);
-
+	llog(DEBUG_STREAM, dnsr->logger, "unsuspend id=%s", dnsr->qname);
 	free_ipseckey_dns(dnsr);
 
 	idi_ipseckey_fetch_tail(st, err);
@@ -670,7 +667,7 @@ static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 
 static void idi_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 {
-	struct state *st = state_with_serialno(dnsr->so_serial_t);
+	struct state *st = state_with_serialno(dnsr->so_serial);
 	const char *parse_err;
 	bool err;
 
@@ -684,7 +681,6 @@ static void idi_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 	}
 
 	if (!dnsr->cache_hit)
-		set_cur_state(st);
 
 	ipseckey_dbg_dns_resp(dnsr);
 	parse_err = process_dns_resp(dnsr);
@@ -723,7 +719,7 @@ static void idi_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 		free_ipseckey_dns(dnsr);
 		return;
 	} else {
-		dbg("%s unsuspend id=%s", dnsr->dbg_buf, dnsr->qname);
+		llog(DEBUG_STREAM, dnsr->logger, "unsuspend id=%s", dnsr->qname);
 		free_ipseckey_dns(dnsr);
 		idi_ipseckey_fetch_tail(st, err);
 	}
@@ -795,35 +791,25 @@ static struct p_dns_req *qry_st_init(struct state *st,
 					dnsr_cb_fn dnsr_cb)
 {
 	struct id id = st->st_connection->spd.that.id;
-	char b[CONN_INST_BUF];
-	char dbg_buf[512] ;	/* Arbitrary length. It is local */
-	struct p_dns_req *p;
-	char log_buf[SWAN_MAX_DOMAIN_LEN * 2];	/* this is local */
-
 
 	char qname[SWAN_MAX_DOMAIN_LEN];
 	struct jambuf qbuf = ARRAY_AS_JAMBUF(qname);
 	err_t err = build_dns_name(&qbuf, &id);
 	if (err != NULL) {
 		/* is there qtype to name lookup function */
-		loglog(RC_LOG_SERIOUS, "could not build dns query name %s %d",
-				err, qtype);
+		log_state(RC_LOG_SERIOUS, st,
+			  "could not build dns query name %s %d",
+			  err, qtype);
 		return NULL;
 	}
 
-	p = alloc_thing(struct p_dns_req, "id remote dns");
-	p->so_serial_t = st->st_serialno;
+	struct p_dns_req *p = alloc_thing(struct p_dns_req, "id remote dns");
+	p->so_serial = st->st_serialno;
+	p->logger = clone_logger(st->st_logger);
 	p->qname = clone_str(qname, "dns qname");
 
-	fmt_conn_instance(st->st_connection, b);
-	snprintf(dbg_buf, sizeof(dbg_buf), "\"%s\"%s #%lu ",
-			st->st_connection->name, b, st->st_serialno);
-
-	snprintf(log_buf, sizeof(log_buf), "IKEv2 DNS query -- %s IN %s --",
-			p->qname, qtype_name);
-
-	p->dbg_buf = clone_str(dbg_buf, "dns debug name");
-	p->log_buf = clone_str(log_buf, "dns log name");
+	p->log_buf = alloc_printf("IKEv2 DNS query -- %s IN %s --",
+				  p->qname, qtype_name);
 
 	p->qclass = ns_c_in;
 	p->qtype = qtype;
@@ -851,18 +837,17 @@ static stf_status dns_qry_start(struct p_dns_req *dnsr)
 
 	passert(get_unbound_ctx() != NULL);
 
-	dbg("%s start %s", dnsr->dbg_buf, dnsr->log_buf);
+	llog(DEBUG_STREAM, dnsr->logger, "start %s", dnsr->log_buf);
 
 	dnsr->start_time = realnow();
 
 	ub_ret = ub_resolve_event(get_unbound_ctx(), dnsr->qname, dnsr->qtype,
-			dnsr->qclass, dnsr, ipseckey_ub_cb, &dnsr->ub_async_id);
+				  dnsr->qclass, dnsr, ipseckey_ub_cb, &dnsr->ub_async_id);
 
 	if (ub_ret != 0) {
-		loglog(RC_LOG_SERIOUS, "unbound resolve call failed for %s",
-				dnsr->log_buf);
+		llog(RC_LOG_SERIOUS, dnsr->logger,
+			    "unbound resolve call failed for %s", dnsr->log_buf);
 		free_ipseckey_dns(dnsr);
-
 		return STF_FAIL;
 	}
 

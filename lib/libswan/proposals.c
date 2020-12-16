@@ -388,11 +388,11 @@ void remove_duplicate_algorithms(struct proposal_parser *parser,
 			     alg->enckeylen == (*dup)->enckeylen)) {
 				struct algorithm *dead = (*dup);
 				if (impair.proposal_parser) {
-					log_message(parser->policy->logger_rc_flags, parser->policy->logger,
+					llog(parser->policy->logger_rc_flags, parser->policy->logger,
 						    "IMPAIR: ignoring duplicate algorithms");
 					return;
 				}
-				LOG_JAMBUF(parser->policy->logger_rc_flags, parser->policy->logger, buf) {
+				LLOG_JAMBUF(parser->policy->logger_rc_flags, parser->policy->logger, buf) {
 					jam(buf, "discarding duplicate %s %s algorithm %s",
 					    parser->protocol->name, ike_alg_type_name(dead->desc->algo_type),
 					    dead->desc->fqn);
@@ -534,11 +534,11 @@ static bool proposals_pfs_vs_dh_check(struct proposal_parser *parser,
 				dh = proposal->algorithms[PROPOSAL_dh]->desc;
 			}
 			if (dh == &ike_alg_dh_none.common) {
-				log_message(parser->policy->logger_rc_flags, parser->policy->logger,
+				llog(parser->policy->logger_rc_flags, parser->policy->logger,
 					    "ignoring redundant %s DH algorithm NONE as PFS policy is disabled",
 					    parser->protocol->name);
 			} else if (dh != NULL) {
-				log_message(parser->policy->logger_rc_flags, parser->policy->logger,
+				llog(parser->policy->logger_rc_flags, parser->policy->logger,
 					    "ignoring %s DH algorithm %s as PFS policy is disabled",
 					    parser->protocol->name, dh->fqn);
 			}
@@ -717,7 +717,7 @@ bool proposal_parse_encrypt(struct proposal_parser *parser,
 	 */
 	if (tokens->this_term == '-' &&
 	    tokens->next.len > 0 &&
-	    hunk_char_isdigit(tokens->next, 0)) {
+	    char_isdigit(hunk_char(tokens->next, 0))) {
 		/* assume <ealg>-<eklen> */
 		shunk_t ealg = tokens->this;
 		shunk_t eklen = tokens->next;
@@ -767,7 +767,7 @@ bool proposal_parse_encrypt(struct proposal_parser *parser,
 	 * isn't then the lookup error above can be returned.
 	 */
 	size_t end = ealg.len;
-	while (end > 0 && hunk_char_isdigit(ealg, end-1)) {
+	while (end > 0 && char_isdigit(hunk_char(ealg, end-1))) {
 		end--;
 	}
 	if (end == ealg.len) {

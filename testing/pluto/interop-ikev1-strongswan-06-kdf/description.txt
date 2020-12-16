@@ -1,0 +1,4 @@
+This tests is to ensure we catch any corner cases in the NSS KDF for IKEv1
+and a corner case for AES_CTR and NSS.
+
+[ Details to follow]

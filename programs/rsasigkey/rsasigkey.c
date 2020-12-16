@@ -244,8 +244,9 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco, stru
 	SECKEYPrivateKey *privkey = NULL;
 	SECKEYPublicKey *pubkey = NULL;
 
-	if (!lsw_nss_setup(oco->nssdir, 0, logger)) {
-		exit(1);
+	diag_t d = lsw_nss_setup(oco->nssdir, 0, logger);
+	if (d != NULL) {
+		fatal_diag(1, logger, &d, "%s", "");
 	}
 
 	slot = lsw_nss_get_authenticated_slot(logger);
@@ -316,7 +317,7 @@ void lsw_random(size_t nbytes, unsigned char *buf, struct logger *logger)
 	}
 
 	ndone = 0;
-	log_message(RC_LOG, logger, "getting %d random seed bytes for NSS from %s...\n",
+	llog(RC_LOG, logger, "getting %d random seed bytes for NSS from %s...\n",
 		    (int) nbytes * BITS_PER_BYTE, device);
 	while (ndone < nbytes) {
 		got = read(dev, buf + ndone, nbytes - ndone);

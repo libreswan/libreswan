@@ -70,7 +70,7 @@
 #include "crypt_symkey.h"	/* for init_crypt_symkey() */
 #include "crl_queue.h"		/* for free_crl_queue() */
 #include "iface.h"
-#include "pluto_shutdown.h"		/* for exit_pluto() */
+#include "server_pool.h"
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -93,6 +93,8 @@
 #ifdef HAVE_SECCOMP
 #include "pluto_seccomp.h"
 #endif
+
+static void fatal_opt(int longindex, struct logger *logger, const char *fmt, ...) PRINTF_LIKE(3) NEVER_RETURNS;
 
 static const char *pluto_name;	/* name (path) we were invoked with */
 
@@ -147,22 +149,6 @@ void free_pluto_main(void)
 	pfreeany(pluto_dnssec_trusted);
 	pfreeany(rundir);
 	free_global_redirect_dests();
-}
-
-/*
- * invocation_fail - print diagnostic and usage hint message and exit
- *
- * @param mess String - diagnostic message to print
- */
-static void invocation_fail(err_t mess)
-{
-	if (mess != NULL)
-		fprintf(stderr, "%s\n", mess);
-	fprintf(stderr, "For usage information: %s --help\n"
-		"Libreswan %s\n",
-		pluto_name, ipsec_version_code());
-	/* not exit_pluto because we are not initialized yet */
-	exit(1);
 }
 
 /* string naming compile-time options that have interop implications */
@@ -257,57 +243,46 @@ static char pluto_lock[sizeof(ctl_addr.sun_path)] =
 static bool pluto_lock_created = FALSE;
 
 /* create lockfile, or die in the attempt */
-static int create_lock(void)
+static int create_lock(struct logger *logger)
 {
-	int fd;
-
 	if (mkdir(rundir, 0755) != 0) {
 		if (errno != EEXIST) {
-			fprintf(stderr,
-				"pluto: FATAL: unable to create lock dir: \"%s\": %s\n",
-				rundir, strerror(errno));
-			exit_pluto(PLUTO_EXIT_LOCK_FAIL);
+			fatal_errno(PLUTO_EXIT_LOCK_FAIL, logger, errno,
+				    "unable to create lock dir: \"%s\"", rundir);
 		}
 	}
 
-	fd = open(pluto_lock, O_WRONLY | O_CREAT | O_EXCL | O_TRUNC,
-		S_IRUSR | S_IRGRP | S_IROTH);
-
-	if (fd < 0) {
-		if (errno == EEXIST) {
-			/*
-			 * if we did not fork, then we do't really need
-			 * the pid to control, so wipe it
-			 */
-			if (!fork_desired) {
-				if (unlink(pluto_lock) == -1) {
-					fprintf(stderr,
-						"pluto: FATAL: lock file \"%s\" already exists and could not be removed (%d %s)\n",
-						pluto_lock, errno,
-						strerror(errno));
-					exit_pluto(PLUTO_EXIT_LOCK_FAIL);
-				} else {
-					/*
-					 * lock file removed,
-					 * try creating it again
-					 */
-					return create_lock();
-				}
-			} else {
-				fprintf(stderr,
-					"pluto: FATAL: lock file \"%s\" already exists\n",
-					pluto_lock);
-				exit_pluto(PLUTO_EXIT_LOCK_FAIL);
-			}
-		} else {
-			fprintf(stderr,
-				"pluto: FATAL: unable to create lock file \"%s\" (%d %s)\n",
-				pluto_lock, errno, strerror(errno));
-			exit_pluto(PLUTO_EXIT_LOCK_FAIL);
+	unsigned attempt;
+	for (attempt = 0; attempt < 2; attempt++) {
+		int fd = open(pluto_lock, O_WRONLY | O_CREAT | O_EXCL | O_TRUNC,
+			      S_IRUSR | S_IRGRP | S_IROTH);
+		if (fd >= 0) {
+			pluto_lock_created = true;
+			return fd;
 		}
+		if (errno != EEXIST) {
+			fatal_errno(PLUTO_EXIT_LOCK_FAIL, logger, errno,
+				    "unable to create lock file \"%s\"", pluto_lock);
+		}
+		if (fork_desired) {
+			fatal(PLUTO_EXIT_LOCK_FAIL, logger,
+			      "lock file \"%s\" already exists", pluto_lock);
+		}
+		/*
+		 * if we did not fork, then we don't really need the pid to
+		 * control, so wipe it
+		 */
+		if (unlink(pluto_lock) == -1) {
+			fatal_errno(PLUTO_EXIT_LOCK_FAIL, logger, errno,
+				    "lock file \"%s\" already exists and could not be removed", pluto_lock);
+		}
+		/*
+		 * lock file removed, try creating it
+		 * again ...
+		 */
 	}
-	pluto_lock_created = TRUE;
-	return fd;
+	fatal(PLUTO_EXIT_LOCK_FAIL, logger, "lock file \"%s\" could not be created after %u attempts",
+	      pluto_lock, attempt);
 }
 
 /*
@@ -345,7 +320,7 @@ void delete_lock(void)
 int verbose = 0;
 
 /* Read config file. exit() on error. */
-static struct starter_config *read_cfg_file(char *configfile, struct logger *logger)
+static struct starter_config *read_cfg_file(char *configfile, long longindex, struct logger *logger)
 {
 	struct starter_config *cfg = NULL;
 	starter_errors_t errl = { NULL };
@@ -353,15 +328,15 @@ static struct starter_config *read_cfg_file(char *configfile, struct logger *log
 	cfg = confread_load(configfile, &errl, NULL /* ctl_addr.sun_path? */, true, logger);
 	if (cfg == NULL) {
 		/*
-		 * note: incovation_fail never returns so we will have
-		 * a leak of errl.errors
+		 * note: fatal_opt() never returns so we will have a
+		 * technical leak of errl.errors
 		 */
-		invocation_fail(errl.errors);
+		fatal_opt(longindex, logger, "%s", errl.errors);
 	}
 
 	if (errl.errors != NULL) {
-		fprintf(stderr, "pluto --config '%s', ignoring: %s\n",
-			configfile, errl.errors);
+		llog(RC_LOG, logger, "pluto --config '%s', ignoring: %s",
+			    configfile, errl.errors);
 		pfree(errl.errors);
 	}
 
@@ -390,7 +365,7 @@ static void set_cfg_string(char **target, char *value)
  * Everything else that needs random MUST use get_rnd_bytes()
  * This function MUST NOT be changed to use /dev/urandom.
  */
-static void get_bsi_random(size_t nbytes, unsigned char *buf)
+static void get_bsi_random(size_t nbytes, unsigned char *buf, struct logger *logger)
 {
 	size_t ndone;
 	int dev;
@@ -399,9 +374,8 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf)
 
 	dev = open(device, 0);
 	if (dev < 0) {
-		loglog(RC_LOG_SERIOUS, "could not open %s (%s)\n",
-			device, strerror(errno));
-		exit_pluto(PLUTO_EXIT_NSS_FAIL);
+		fatal_errno(PLUTO_EXIT_NSS_FAIL, logger, errno,
+			    "could not open %s", device);
 	}
 
 	ndone = 0;
@@ -411,13 +385,11 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf)
 	while (ndone < nbytes) {
 		got = read(dev, buf + ndone, nbytes - ndone);
 		if (got < 0) {
-			loglog(RC_LOG_SERIOUS, "read error on %s (%s)\n",
-				device, strerror(errno));
-			exit_pluto(PLUTO_EXIT_NSS_FAIL);
+			fatal_errno(PLUTO_EXIT_NSS_FAIL, logger, errno,
+				    "read error on %s", device);
 		}
 		if (got == 0) {
-			loglog(RC_LOG_SERIOUS, "EOF on %s!?!\n",  device);
-			exit_pluto(PLUTO_EXIT_NSS_FAIL);
+			fatal(PLUTO_EXIT_NSS_FAIL, logger, "EOF on %s!?!\n",  device);
 		}
 		ndone += got;
 	}
@@ -427,16 +399,11 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf)
 
 static void pluto_init_nss(const char *nssdir, struct logger *logger)
 {
-	SECStatus rv;
-
-	/* little lie, lsw_nss_setup doesn't have logging */
-	log_message(RC_LOG_SERIOUS, logger, "NSS DB directory: sql:%s", nssdir);
-
-	if (!lsw_nss_setup(nssdir, LSW_NSS_READONLY, logger)) {
-		log_message(RC_LOG_SERIOUS, logger, "FATAL: NSS initialization failure");
-		exit_pluto(PLUTO_EXIT_NSS_FAIL);
+	diag_t d = lsw_nss_setup(nssdir, LSW_NSS_READONLY, logger);
+	if (d != NULL) {
+		fatal_diag(PLUTO_EXIT_NSS_FAIL, logger, &d, "%s", "");
 	}
-	log_message(RC_LOG, logger, "NSS crypto library initialized");
+	llog(RC_LOG, logger, "NSS crypto library initialized");
 
 	/*
 	 * This exists purely to make the BSI happy.
@@ -446,9 +413,9 @@ static void pluto_init_nss(const char *nssdir, struct logger *logger)
 		int seedbytes = BYTES_FOR_BITS(pluto_nss_seedbits);
 		unsigned char *buf = alloc_bytes(seedbytes, "TLA seedmix");
 
-		get_bsi_random(seedbytes, buf); /* much TLA, very blocking */
-		rv = PK11_RandomUpdate(buf, seedbytes);
-		log_message(RC_LOG, logger, "seeded %d bytes into the NSS PRNG", seedbytes);
+		get_bsi_random(seedbytes, buf, logger); /* much TLA, very blocking */
+		SECStatus rv = PK11_RandomUpdate(buf, seedbytes);
+		llog(RC_LOG, logger, "seeded %d bytes into the NSS PRNG", seedbytes);
 		passert(rv == SECSuccess);
 		messupn(buf, seedbytes);
 		pfree(buf);
@@ -581,8 +548,38 @@ static const struct option long_opts[] = {
 	{ 0, 0, 0, 0 }
 };
 
+/*
+ * HACK: check UGH, and if it is bad, log it along with the option.
+ */
+
+static void fatal_opt(int longindex, struct logger *logger, const char *fmt, ...)
+{
+	passert(longindex >= 0);
+	const char *optname = long_opts[longindex].name;
+	LLOG_JAMBUF(RC_LOG, logger, buf) {
+		if (optarg == NULL) {
+			jam(buf, "option --%s invalid: ", optname);
+		} else {
+			jam(buf, "option --%s \"%s\" invalid: ", optname, optarg);
+		}
+		va_list ap;
+		va_start(ap, fmt);
+		jam_va_list(buf, fmt, ap);
+		va_end(ap);
+	}
+	/* not exit_pluto as pluto isn't yet up and running? */
+	exit(PLUTO_EXIT_FAIL);
+}
+
+static void check_err(err_t ugh, int longindex, struct logger *logger)
+{
+	if (ugh != NULL) {
+		fatal_opt(longindex, logger, "%s", ugh);
+	}
+}
+
 /* print full usage (from long_opts[]) */
-static void usage(void)
+static void usage(FILE *stream)
 {
 	const struct option *opt;
 	char line[72];
@@ -616,7 +613,7 @@ static void usage(void)
 			cw = strlen(chunk);
 
 			if (force_nl || lw + cw + 2 >= sizeof(line)) {
-				fprintf(stdout, "%s\n", line);
+				fprintf(stream, "%s\n", line);
 				line[0] = '\t';
 				lw = 1;
 			} else {
@@ -628,11 +625,9 @@ static void usage(void)
 		}
 	}
 
-	fprintf(stdout, "%s\n", line);
+	fprintf(stream, "%s\n", line);
 
-	fprintf(stdout, "Libreswan %s\n", ipsec_version_code());
-	/* not exit_pluto because we are not initialized yet */
-	exit(0);
+	fprintf(stream, "Libreswan %s\n", ipsec_version_code());
 }
 
 #ifdef USE_DNSSEC
@@ -709,7 +704,7 @@ int main(int argc, char **argv)
 	 * Start with the program name logger.
 	 */
 	pluto_name = argv[0];
-	struct logger *logger = string_logger(null_fd, HERE, "%s", pluto_name); /* must free */
+	struct logger *logger = string_logger(null_fd, HERE, "%s: ", pluto_name); /* must free */
 
 	conffile = clone_str(IPSEC_CONF, "conffile in main()");
 	coredir = clone_str(DEFAULT_RUNDIR, "coredir in main()");
@@ -733,51 +728,47 @@ int main(int argc, char **argv)
 		 */
 		int longindex = -1;
 		int c = getopt_long(argc, argv, "", long_opts, &longindex);
-		const char *optname = NULL;
-		err_t ugh = NULL;	/* complaint from case */
-		unsigned long u = 0;	/* scratch for case */
+		if (c < 0) break;
 
-		if (longindex != -1) {
-			const char *optmeta;
-			optname = long_opts[longindex].name;
-
-			optmeta = optname + strlen(optname) + 1;	/* after '\0' */
+		if (longindex >= 0) {
+			passert(c != '?' && c != ':'); /* no error */
+			const char *optname = long_opts[longindex].name;
+			const char *optmeta = optname + strlen(optname) + 1;	/* after '\0' */
 			switch (optmeta[0]) {
 			case '_':
-				libreswan_log("warning: option \"--%s\" with '_' in its name is obsolete; use '-'",
-					optname);
+				llog(RC_LOG, logger,
+					    "warning: option \"--%s\" with '_' in its name is obsolete; use '-'",
+					    optname);
 				break;
 			case '>':
-				libreswan_log("warning: option \"--%s\" is obsolete; use \"--%s\"",
-					optname, optmeta + 1);
+				llog(RC_LOG, logger,
+					    "warning: option \"--%s\" is obsolete; use \"--%s\"", optname, optmeta + 1);
 				break;
 			case '!':
-				libreswan_log("warning: option \"--%s\" is obsolete; ignored",
-					optname);
+				llog(RC_LOG, logger,
+					    "warning: option \"--%s\" is obsolete; ignored", optname);
 				continue;	/* ignore it! */
 			}
 		}
 
-		/* Note: "breaking" from case terminates loop */
 		switch (c) {
-		case EOF:	/* end of flags */
-			break;
 
 		case 0:
 			/*
 			 * Long option already handled by getopt_long.
 			 * Not currently used since we always set flag to NULL.
 			 */
-			continue;
+			passert_fail(logger, HERE, "unexpected 0 returned by getopt_long()");
 
 		case ':':	/* diagnostic already printed by getopt_long */
 		case '?':	/* diagnostic already printed by getopt_long */
-			invocation_fail(NULL);
-			break;
+			fprintf(stderr, "For usage information: %s --help\n", pluto_name);
+			fprintf(stderr, "Libreswan %s\n", ipsec_version_code());
+			exit(PLUTO_EXIT_FAIL);
 
 		case 'h':	/* --help */
-			usage();
-			break;	/* not actually reached */
+			usage(stdout); /* so <<| more>> works */
+			exit(PLUTO_EXIT_OK);
 
 		case 'X':	/* --leak-detective */
 			/*
@@ -806,27 +797,26 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'v':	/* --version */
-			printf("%s%s\n", ipsec_version_string(),
-				compile_time_interop_options);
+			printf("%s%s\n", ipsec_version_string(), /* ok */
+			       compile_time_interop_options);
 			/* not exit_pluto because we are not initialized yet */
-			exit(0);
-			break;	/* not actually reached */
+			exit(PLUTO_EXIT_OK);
 
 		case 'j':	/* --nhelpers */
 			if (streq(optarg, "-1")) {
 				nhelpers = -1;
 			} else {
-				ugh = ttoulb(optarg, 0, 10, 1000, &u);
-				if (ugh != NULL)
-					break;
-
+				unsigned long u;
+				check_err(ttoulb(optarg, 0, 10, 1000, &u),
+					  longindex, logger);
 				nhelpers = u;
 			}
 			continue;
+
 		case 'c':	/* --seedbits */
 			pluto_nss_seedbits = atoi(optarg);
 			if (pluto_nss_seedbits == 0) {
-				printf("pluto: seedbits must be an integer > 0");
+				llog(RC_LOG, logger, "seedbits must be an integer > 0");
 				/* not exit_pluto because we are not initialized yet */
 				exit(PLUTO_EXIT_NSS_FAIL);
 			}
@@ -834,16 +824,19 @@ int main(int argc, char **argv)
 
 #ifdef HAVE_LABELED_IPSEC
 		case 'w':	/* --secctx-attr-type */
-			ugh = ttoulb(optarg, 0, 0, 0xFFFF, &u);
-			if (ugh != NULL)
-				break;
+		{
+			unsigned long u;
+			check_err(ttoulb(optarg, 0, 0, 0xFFFF, &u),
+				  longindex, logger);
 			if (u != SECCTX && u != ECN_TUNNEL_or_old_SECCTX) {
-				ugh = "must be a positive 32001 (default) or 10 (for backward compatibility)";
-				break;
+				fatal_opt(longindex, logger,
+					  "must be a positive 32001 (default) or 10 (for backward compatibility)");
 			}
 			secctx_attr_type = u;
 			continue;
+		}
 #endif
+
 		case 'k':	/* --ikev1-reject */
 			pluto_ikev1_pol = GLOBAL_IKEv1_REJECT;
 			continue;
@@ -901,9 +894,7 @@ int main(int argc, char **argv)
 		case '9':	/* --expire-shunt-interval <interval> */
 		{
 			unsigned long d = 0;
-			ugh = ttoulb(optarg, 0, 10, 1000, &d);
-			if (ugh != NULL)
-				break;
+			check_err(ttoulb(optarg, 0, 10, 1000, &d), longindex, logger);
 			bare_shunt_interval = deltatime(d);
 			continue;
 		}
@@ -915,27 +906,24 @@ int main(int argc, char **argv)
 
 			if (e != NULL) {
 				/*
-				 *??? should we continue on failure?
-				 * If not, use ugh mechanism.
+				 * ??? should we continue on failure?
 				 */
-				libreswan_log(
-					"invalid listen argument ignored: %s\n",
-					e);
+				llog(RC_LOG, logger,
+					    "invalid listen argument ignored: %s\n", e);
 			} else {
-				pluto_listen =
-					clone_str(optarg, "pluto_listen");
-				libreswan_log(
-					"bind() will be filtered for %s\n",
-					pluto_listen);
+				pluto_listen = clone_str(optarg, "pluto_listen");
+				llog(RC_LOG, logger,
+					    "bind() will be filtered for %s\n",
+					    pluto_listen);
 			}
-		}
 			continue;
+		}
 
 		case 'F':	/* --use-bsdkame */
 #ifdef BSDKAME_SUPPORT
 			kernel_ops = &bsdkame_kernel_ops;
 #else
-			libreswan_log("--use-bsdkame not supported");
+			llog(RC_LOG, logger, "--use-bsdkame not supported");
 #endif
 			continue;
 
@@ -943,7 +931,7 @@ int main(int argc, char **argv)
 #ifdef XFRM_SUPPORT
 			kernel_ops = &xfrm_kernel_ops;
 #else
-			libreswan_log("--use-xfrm not supported");
+			llog(RC_LOG, logger, "--use-xfrm not supported");
 #endif
 			continue;
 
@@ -968,26 +956,29 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'I':	/* --curl-timeout */
-			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
-			if (ugh != NULL)
-				break;
-			if (u <= 0) {
-				ugh = "must not be < 1";
-				break;
+		{
+			unsigned long u;
+			check_err(ttoulb(optarg, /*not lower-bound*/0, 10, 0xFFFF, &u),
+				  longindex, logger);
+			if (u == 0) {
+				fatal_opt(longindex, logger, "must not be < 1");
 			}
 			curl_timeout = u;
 			continue;
+		}
 
 		case 'r':	/* --crl-strict */
 			crl_strict = TRUE;
 			continue;
 
 		case 'x':	/* --crlcheckinterval <seconds> */
-			ugh = ttoulb(optarg, 0, 10, (unsigned long) TIME_T_MAX, &u);
-			if (ugh != NULL)
-				break;
+		{
+			unsigned long u;
+			check_err(ttoulb(optarg, /*not lower-bound*/0, 10, (unsigned long) TIME_T_MAX, &u),
+				  longindex, logger);
 			crl_check_interval = deltatime(u);
 			continue;
+		}
 
 		case 'o':
 			ocsp_strict = TRUE;
@@ -1006,36 +997,41 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'T':	/* --ocsp_timeout <seconds> */
-			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
-			if (ugh != NULL)
-				break;
+		{
+			unsigned long u;
+			check_err(ttoulb(optarg, /*not-lower-bound*/0, 10, 0xFFFF, &u),
+				  longindex, logger);
 			if (u == 0) {
-				ugh = "must not be 0";
-				break;
+				fatal_opt(longindex, logger, "must not be 0");
+				continue;
 			}
 			ocsp_timeout = u;
 			continue;
+		}
 
 		case 'E':	/* --ocsp-cache-size <entries> */
-			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
-			if (ugh != NULL)
-				break;
+		{
+			unsigned long u;
+			check_err(ttoulb(optarg, 0, 10, 0xFFFF, &u), longindex, logger);
 			ocsp_cache_size = u;
 			continue;
+		}
 
 		case 'G':	/* --ocsp-cache-min-age <seconds> */
-			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
-			if (ugh != NULL)
-				break;
+		{
+			unsigned long u;
+			check_err(ttoulb(optarg, 0, 10, 0xFFFF, &u), longindex, logger);
 			ocsp_cache_min_age = u;
 			continue;
+		}
 
 		case 'H':	/* --ocsp-cache-max-age <seconds> */
-			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
-			if (ugh != NULL)
-				break;
+		{
+			unsigned long u;
+			check_err(ttoulb(optarg, 0, 10, 0xFFFF, &u), longindex, logger);
 			ocsp_cache_max_age = u;
 			continue;
+		}
 
 		case 'B':	/* --ocsp-method get|post */
 			if (streq(optarg, "post")) {
@@ -1045,8 +1041,7 @@ int main(int argc, char **argv)
 				if (streq(optarg, "get")) {
 					ocsp_method = OCSP_METHOD_GET;
 				} else {
-					ugh = "ocsp-method is either 'post' or 'get'";
-					break;
+					fatal_opt(longindex, logger, "ocsp-method is either 'post' or 'get'");
 				}
 			}
 			continue;
@@ -1061,8 +1056,7 @@ int main(int argc, char **argv)
 
 		case 'i':	/* --interface <ifname|ifaddr> */
 			if (!use_interface(optarg)) {
-				ugh = "too many --interface specifications";
-				break;
+				fatal_opt(longindex, logger, "too many --interface specifications");
 			}
 			continue;
 
@@ -1071,15 +1065,15 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'W':	/* --ike-socket-bufsize <bufsize> */
-			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
-			if (ugh != NULL)
-				break;
+		{
+			unsigned long u;
+			check_err(ttoulb(optarg, 0, 10, 0xFFFF, &u), longindex, logger);
 			if (u == 0) {
-				ugh = "must not be 0";
-				break;
+				fatal_opt(longindex, logger, "must not be 0");
 			}
 			pluto_sock_bufsize = u;
 			continue;
+		}
 
 		case 'p':	/* --no-listen-udp */
 			pluto_listen_udp = FALSE;
@@ -1097,17 +1091,14 @@ int main(int argc, char **argv)
 			 * isn't enough, not -1.
 			 * -1 indicates another kind of error.
 			 */
-			if (snprintf(ctl_addr.sun_path,
-					sizeof(ctl_addr.sun_path),
-					"%s/pluto.ctl", optarg) == -1) {
-				ugh = "--rundir argument is invalid for sun_path socket";
-				break;
+			if (snprintf(ctl_addr.sun_path, sizeof(ctl_addr.sun_path),
+				     "%s/pluto.ctl", optarg) == -1) {
+				fatal_opt(longindex, logger, "--rundir argument is invalid for sun_path socket");
 			}
 
 			if (snprintf(pluto_lock, sizeof(pluto_lock),
-					"%s/pluto.pid", optarg) == -1) {
-				ugh = "--rundir ctl_addr.sun_path is invalid for sun_path socket";
-				break;
+				     "%s/pluto.pid", optarg) == -1) {
+				fatal_opt(longindex, logger, "--rundir ctl_addr.sun_path is invalid for sun_path socket");
 			}
 			pfreeany(rundir);
 			rundir = clone_str(optarg, "rundir");
@@ -1136,18 +1127,13 @@ int main(int argc, char **argv)
 		case 'y':	/* --global-redirect-to */
 		{
 			ip_address rip;
-			ugh = ttoaddr(optarg, 0, AF_UNSPEC, &rip);
-
-			if (ugh != NULL) {
-				break;
-			} else {
-				set_global_redirect_dests(optarg);
-				libreswan_log(
-					"all IKE_SA_INIT requests will from now on be redirected to: %s\n",
-					 optarg);
-			}
-		}
+			check_err(ttoaddr(optarg, 0, AF_UNSPEC, &rip), longindex, logger);
+			set_global_redirect_dests(optarg);
+			llog(RC_LOG, logger,
+				    "all IKE_SA_INIT requests will from now on be redirected to: %s\n",
+				    optarg);
 			continue;
+		}
 
 		case 'Q':	/* --global-redirect */
 		{
@@ -1158,18 +1144,19 @@ int main(int argc, char **argv)
 			} else if (streq(optarg, "auto")) {
 				global_redirect = GLOBAL_REDIRECT_AUTO;
 			} else {
-				libreswan_log(
-					"invalid option argument for global-redirect (allowed arguments: yes, no, auto)");
+				llog(RC_LOG, logger,
+					    "invalid option argument for global-redirect (allowed arguments: yes, no, auto)");
 			}
-		}
 			continue;
+		}
 
 		case '2':	/* --keep-alive <delay_secs> */
-			ugh = ttoulb(optarg, 0, 10, secs_per_day, &u);
-			if (ugh != NULL)
-				break;
+		{
+			unsigned long u;
+			check_err(ttoulb(optarg, 0, 10, secs_per_day, &u), longindex, logger);
 			keep_alive = deltatime(u);
 			continue;
+		}
 
 		case '5':	/* --selftest */
 			selftest_only = TRUE;
@@ -1191,11 +1178,12 @@ int main(int argc, char **argv)
 			 */
 			pfree(conffile);
 			conffile = clone_str(optarg, "conffile via getopt");
-			struct starter_config *cfg = read_cfg_file(conffile, logger);
+			/* may not return */
+			struct starter_config *cfg = read_cfg_file(conffile, longindex, logger);
 
 			/* leak */
 			set_cfg_string(&pluto_log_file,
-				cfg->setup.strings[KSF_LOGFILE]);
+				       cfg->setup.strings[KSF_LOGFILE]);
 #ifdef USE_DNSSEC
 			set_dnssec_file_names(cfg);
 #endif
@@ -1212,7 +1200,7 @@ int main(int argc, char **argv)
 			pluto_ikev1_pol = cfg->setup.options[KBF_GLOBAL_IKEv1];
 #ifndef USE_IKEv1
 			if (pluto_ikev1_pol != GLOBAL_IKEv1_ACCEPT) {
-				libreswan_log("ignoring ikev1-policy= as IKEv1 support is not compiled in. Incoming IKEv1 packets are silently dropped");
+				llog(RC_LOG, logger, "ignoring ikev1-policy= as IKEv1 support is not compiled in. Incoming IKEv1 packets are silently dropped");
 				pluto_ikev1_pol = GLOBAL_IKEv1_DROP;
 			}
 #endif
@@ -1255,7 +1243,7 @@ int main(int argc, char **argv)
 				global_redirect = GLOBAL_REDIRECT_AUTO;
 			} else {
 				global_redirect = GLOBAL_REDIRECT_NO;
-				libreswan_log("unknown argument for global-redirect option");
+				llog(RC_LOG, logger, "unknown argument for global-redirect option");
 			}
 
 			crl_check_interval = deltatime(
@@ -1272,7 +1260,7 @@ int main(int argc, char **argv)
 			 * started
 			 */
 			set_cfg_string(&pluto_listen,
-				cfg->setup.strings[KSF_LISTEN]);
+				       cfg->setup.strings[KSF_LISTEN]);
 
 			/* ike-socket-bufsize= */
 			pluto_sock_bufsize = cfg->setup.options[KBF_IKEBUF];
@@ -1296,13 +1284,13 @@ int main(int argc, char **argv)
 				lsw_conf_secretsfile(cfg->setup.strings[KSF_SECRETSFILE]);
 			}
 			if (cfg->setup.strings[KSF_IPSECDIR] != NULL &&
-				*cfg->setup.strings[KSF_IPSECDIR] != 0) {
+			    *cfg->setup.strings[KSF_IPSECDIR] != 0) {
 				/* ipsecdir= */
 				lsw_conf_confddir(cfg->setup.strings[KSF_IPSECDIR], logger);
 			}
 
 			if (cfg->setup.strings[KSF_NSSDIR] != NULL &&
-				*cfg->setup.strings[KSF_NSSDIR] != 0) {
+			    *cfg->setup.strings[KSF_NSSDIR] != 0) {
 				/* nssdir= */
 				lsw_conf_nssdir(cfg->setup.strings[KSF_NSSDIR], logger);
 			}
@@ -1311,7 +1299,7 @@ int main(int argc, char **argv)
 				pfreeany(curl_iface);
 				/* curl-iface= */
 				curl_iface = clone_str(cfg->setup.strings[KSF_CURLIFACE],
-						"curl-iface= via --config");
+						       "curl-iface= via --config");
 			}
 
 			if (cfg->setup.options[KBF_CURLTIMEOUT])
@@ -1321,13 +1309,13 @@ int main(int argc, char **argv)
 				pfree(coredir);
 				/* dumpdir= */
 				coredir = clone_str(cfg->setup.strings[KSF_DUMPDIR],
-						"coredir via --config");
+						    "coredir via --config");
 			}
 			/* vendorid= */
 			if (cfg->setup.strings[KSF_MYVENDORID]) {
 				pfree(pluto_vendorid);
 				pluto_vendorid = clone_str(cfg->setup.strings[KSF_MYVENDORID],
-						"pluto_vendorid via --config");
+							   "pluto_vendorid via --config");
 			}
 
 			if (cfg->setup.strings[KSF_STATSBINARY] != NULL) {
@@ -1335,10 +1323,10 @@ int main(int argc, char **argv)
 					pfreeany(pluto_stats_binary);
 					/* statsbin= */
 					pluto_stats_binary = clone_str(cfg->setup.strings[KSF_STATSBINARY], "statsbin via --config");
-					libreswan_log("statsbinary set to %s", pluto_stats_binary);
+					llog(RC_LOG, logger, "statsbinary set to %s", pluto_stats_binary);
 				} else {
-					libreswan_log("statsbinary= '%s' ignored - file does not exist or is not executable",
-						pluto_stats_binary);
+					llog(RC_LOG, logger, "statsbinary= '%s' ignored - file does not exist or is not executable",
+						    pluto_stats_binary);
 				}
 			}
 
@@ -1346,7 +1334,7 @@ int main(int argc, char **argv)
 			keep_alive = deltatime(cfg->setup.options[KBF_KEEPALIVE]);
 
 			set_cfg_string(&virtual_private,
-				cfg->setup.strings[KSF_VIRTUALPRIVATE]);
+				       cfg->setup.strings[KSF_VIRTUALPRIVATE]);
 
 			set_global_redirect_dests(cfg->setup.strings[KSF_GLOBAL_REDIRECT_TO]);
 
@@ -1359,13 +1347,13 @@ int main(int argc, char **argv)
 
 			if (!(protostack == NULL || *protostack == '\0')) {
 				if (streq(protostack, "auto") || streq(protostack, "native") ||
-					streq(protostack, "nokernel")) {
+				    streq(protostack, "nokernel")) {
 
-					libreswan_log("the option protostack=%s is obsoleted, falling back to protostack=%s",
-						      protostack, kernel_ops->kern_name);
+					llog(RC_LOG, logger, "the option protostack=%s is obsoleted, falling back to protostack=%s",
+						    protostack, kernel_ops->kern_name);
 				} else if (streq(protostack, "klips")) {
-					libreswan_log("protostack=klips is obsoleted, please migrate to protostack=xfrm");
-					exit_pluto(PLUTO_EXIT_KERNEL_FAIL);
+					fatal(PLUTO_EXIT_KERNEL_FAIL, logger,
+					      "protostack=klips is obsoleted, please migrate to protostack=xfrm");
 #ifdef XFRM_SUPPORT
 				} else if (streq(protostack, "xfrm") ||
 					   streq(protostack, "netkey")) {
@@ -1378,8 +1366,8 @@ int main(int argc, char **argv)
 					kernel_ops = &bsdkame_kernel_ops;
 #endif
 				} else {
-					libreswan_log("protostack=%s ignored, using default protostack=%s",
-						      protostack, kernel_ops->kern_name);
+					llog(RC_LOG, logger, "protostack=%s ignored, using default protostack=%s",
+						    protostack, kernel_ops->kern_name);
 				}
 			}
 
@@ -1398,9 +1386,9 @@ int main(int argc, char **argv)
 			passert(EF_PROTECT_BELOW);
 			passert(EF_PROTECT_FREE);
 #else
-			libreswan_log("efence support is not enabled; option --efence-protect ignored");
+			llog(RC_LOG, logger, "efence support is not enabled; option --efence-protect ignored");
 #endif
-			break;
+			continue;
 
 		case OPT_DEBUG:
 		{
@@ -1408,8 +1396,8 @@ int main(int argc, char **argv)
 			if (lmod_arg(&mod, &debug_lmod_info, optarg, true/*enable*/)) {
 				cur_debugging = lmod(cur_debugging, mod);
 			} else {
-				libreswan_log("unrecognized --debug '%s' option ignored",
-					      optarg);
+				llog(RC_LOG, logger, "unrecognized --debug '%s' option ignored",
+					    optarg);
 			}
 			continue;
 		}
@@ -1419,20 +1407,16 @@ int main(int argc, char **argv)
 			struct whack_impair impairment;
 			switch (parse_impair(optarg, &impairment, true, logger)) {
 			case IMPAIR_OK:
-			{
-				if (!process_impair(&impairment, NULL, true, null_fd, logger)) {
-					fprintf(stderr, "%s: impair option '%s' is not valid from the command line\n",
-						pluto_name, optarg);
-					exit(1);
+				if (!process_impair(&impairment, NULL, true, logger)) {
+					fatal_opt(longindex, logger, "not valid from the command line");
 				}
-				break;
-			}
+				continue;
 			case IMPAIR_ERROR:
 				/* parse_impair() printed error */
-				exit(1);
+				exit(PLUTO_EXIT_FAIL);
 			case IMPAIR_HELP:
 				/* parse_impair() printed error */
-				exit(0);
+				exit(PLUTO_EXIT_OK);
 			}
 			continue;
 		}
@@ -1440,38 +1424,28 @@ int main(int argc, char **argv)
 		default:
 			bad_case(c);
 		}
-		/* if ugh is set, bail with diagnostic */
-		if (ugh != NULL) {
-			char mess[200];
-
-			if (longindex == -1) {
-				snprintf(mess, sizeof(mess), "unknown option: %s",
-					ugh);
-			} else if (optarg == NULL) {
-				snprintf(mess, sizeof(mess), "--%s option: %s",
-					optname, ugh);
-			} else {
-				snprintf(mess, sizeof(mess), "--%s \"%s\" option: %s",
-					optname, optarg, ugh);
-			}
-			invocation_fail(mess);
-		}
-		break;
 	}
-	if (optind != argc)
-		invocation_fail("unexpected argument");
+
+	/*
+	 * Anything (aka an argument) after all options consumed?
+	 */
+	if (optind != argc) {
+		llog(RC_LOG, logger, "unexpected trailing argument: %s", argv[optind]);
+		/* not exit_pluto because we are not initialized yet */
+		exit(PLUTO_EXIT_FAIL);
+	}
 
 	if (chdir(coredir) == -1) {
 		int e = errno;
 
-		libreswan_log("pluto: warning: chdir(\"%s\") to dumpdir failed (%d: %s)",
+		llog(RC_LOG, logger, "pluto: warning: chdir(\"%s\") to dumpdir failed (%d: %s)",
 			coredir, e, strerror(e));
 	}
 
 	oco = lsw_init_options();
 
 	if (!selftest_only)
-		lockfd = create_lock();
+		lockfd = create_lock(logger);
 	else
 		lockfd = 0;
 
@@ -1489,9 +1463,9 @@ int main(int argc, char **argv)
 	 * place to do this is before the daemon fork.
 	 */
 	if (!selftest_only) {
-		if (!init_ctl_socket(logger)) {
-			/* already logged */
-			exit_pluto(PLUTO_EXIT_SOCKET_FAIL);
+		diag_t d = init_ctl_socket(logger);
+		if (d != NULL) {
+			fatal_diag(PLUTO_EXIT_SOCKET_FAIL, logger, &d, "%s", "");
 		}
 	}
 
@@ -1499,9 +1473,7 @@ int main(int argc, char **argv)
 	if (fork_desired) {
 #if USE_DAEMON
 		if (daemon(TRUE, TRUE) < 0) {
-			fprintf(stderr, "pluto: FATAL: daemon failed (%d %s)\n",
-				errno, strerror(errno));
-			exit_pluto(PLUTO_EXIT_FORK_FAIL);
+			fatal_errno(PLUTO_EXIT_FORK_FAIL, logger, "daemon failed");
 		}
 		/*
 		 * Parent just exits, so need to fill in our own PID
@@ -1518,11 +1490,8 @@ int main(int argc, char **argv)
 			pid_t pid = fork();
 
 			if (pid < 0) {
-				int e = errno;
-
-				fprintf(stderr, "pluto: FATAL: fork failed (%d %s)\n",
-					errno, strerror(e));
-				exit_pluto(PLUTO_EXIT_FORK_FAIL);
+				fatal_errno(PLUTO_EXIT_FORK_FAIL, logger, errno,
+					    "fork failed");
 			}
 
 			if (pid != 0) {
@@ -1536,16 +1505,11 @@ int main(int argc, char **argv)
 			}
 		}
 #else
-		fprintf(stderr, "pluto: FATAL: fork/daemon not supported\n");
-		exit_pluto(PLUTO_EXIT_FORK_FAIL);
+		fatal(PLUTO_EXIT_FORK_FAIL, logger, "fork/daemon not supported; specify --nofork");
 #endif
 		if (setsid() < 0) {
-			int e = errno;
-
-			fprintf(stderr,
-				"FATAL: setsid() failed in main(). Errno %d: %s\n",
-				errno, strerror(e));
-			exit_pluto(PLUTO_EXIT_FAIL);
+			fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
+				    "setsid() failed in main()");
 		}
 	} else {
 		/* no daemon fork: we have to fill in lock file */
@@ -1603,7 +1567,7 @@ int main(int argc, char **argv)
 		 */
 		if (cur_debugging & DBG_PRIVATE) {
 			cur_debugging &= ~DBG_PRIVATE;
-			loglog(RC_LOG_SERIOUS, "FIPS mode: debug-private disabled as such logging is not allowed");
+			llog(RC_LOG_SERIOUS, logger, "FIPS mode: debug-private disabled as such logging is not allowed");
 		}
 		/*
 		 * clear out --debug-crypt if set
@@ -1613,7 +1577,7 @@ int main(int argc, char **argv)
 		 */
 		if (cur_debugging & DBG_CRYPT) {
 			cur_debugging &= ~DBG_CRYPT;
-			loglog(RC_LOG_SERIOUS, "FIPS mode: debug-crypt disabled as such logging is not allowed");
+			llog(RC_LOG_SERIOUS, logger, "FIPS mode: debug-crypt disabled as such logging is not allowed");
 		}
 	}
 
@@ -1626,53 +1590,49 @@ int main(int argc, char **argv)
 	 */
 
 	if (impair.force_fips) {
-		libreswan_log("IMPAIR: forcing FIPS checks to true to emulate FIPS mode");
+		llog(RC_LOG, logger, "IMPAIR: forcing FIPS checks to true to emulate FIPS mode");
 		lsw_set_fips_mode(LSW_FIPS_ON);
 	}
 
 	bool nss_fips_mode = PK11_IsFIPS();
 	if (libreswan_fipsmode()) {
-		libreswan_log("FIPS mode enabled for pluto daemon");
+		llog(RC_LOG, logger, "FIPS mode enabled for pluto daemon");
 		if (nss_fips_mode) {
-			libreswan_log("NSS library is running in FIPS mode");
+			llog(RC_LOG, logger, "NSS library is running in FIPS mode");
 		} else {
-			loglog(RC_LOG_SERIOUS, "ABORT: pluto in FIPS mode but NSS library is not");
-			exit_pluto(PLUTO_EXIT_FIPS_FAIL);
+			fatal(PLUTO_EXIT_FIPS_FAIL, logger, "pluto in FIPS mode but NSS library is not");
 		}
 	} else {
-		libreswan_log("FIPS mode disabled for pluto daemon");
+		llog(RC_LOG, logger, "FIPS mode disabled for pluto daemon");
 		if (nss_fips_mode) {
-			loglog(RC_LOG_SERIOUS, "Warning: NSS library is running in FIPS mode");
+			llog(RC_LOG_SERIOUS, logger, "Warning: NSS library is running in FIPS mode");
 		}
 	}
 
 	if (ocsp_enable) {
-		if (!init_nss_ocsp(ocsp_uri, ocsp_trust_name,
-			ocsp_timeout, ocsp_strict, ocsp_cache_size,
-			ocsp_cache_min_age, ocsp_cache_min_age,
-			(ocsp_method == OCSP_METHOD_POST))) {
-			loglog(RC_LOG_SERIOUS, "Initializing NSS OCSP failed");
-			exit_pluto(PLUTO_EXIT_NSS_FAIL);
-		} else {
-			libreswan_log("NSS OCSP started");
+		/* may not return */
+		diag_t d = init_nss_ocsp(ocsp_uri, ocsp_trust_name,
+					 ocsp_timeout, ocsp_strict, ocsp_cache_size,
+					 ocsp_cache_min_age, ocsp_cache_min_age,
+					 (ocsp_method == OCSP_METHOD_POST), logger);
+		if (d != NULL) {
+			fatal_diag(PLUTO_EXIT_NSS_FAIL, logger, &d, "initializing NSS OCSP failed: ");
 		}
+		llog(RC_LOG, logger, "NSS OCSP started");
 	}
 
 #ifdef FIPS_CHECK
+	llog(RC_LOG, logger, "FIPS HMAC integrity support [enabled]");
 	bool fips_files = FIPSCHECK_verify_files(fips_package_files);
-
-	libreswan_log("FIPS HMAC integrity support [enabled]");
-
 	if (fips_files) {
-		libreswan_log("FIPS HMAC integrity verification self-test passed");
+		llog(RC_LOG, logger, "FIPS HMAC integrity verification self-test passed");
+	} else if (libreswan_fipsmode()) {
+		fatal(PLUTO_EXIT_FIPS_FAIL, logger, "FIPS HMAC integrity verification self-test FAILED");
 	} else {
-		loglog(RC_LOG_SERIOUS, "FIPS HMAC integrity verification self-test FAILED");
-	}
-	if (libreswan_fipsmode() && !fips_files) {
-		exit_pluto(PLUTO_EXIT_FIPS_FAIL);
+		llog(RC_LOG_SERIOUS, logger, "FIPS HMAC integrity verification self-test FAILED");
 	}
 #else
-	libreswan_log("FIPS HMAC integrity support [disabled]");
+	llog(RC_LOG, logger, "FIPS HMAC integrity support [disabled]");
 #endif
 
 #ifdef HAVE_LIBCAP_NG
@@ -1703,43 +1663,43 @@ int main(int argc, char **argv)
 	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN, CAP_NET_RAW,
 			CAP_DAC_READ_SEARCH, -1);
 	capng_apply(CAPNG_SELECT_BOTH);
-	libreswan_log("libcap-ng support [enabled]");
+	llog(RC_LOG, logger, "libcap-ng support [enabled]");
 #else
-	libreswan_log("libcap-ng support [disabled]");
+	llog(RC_LOG, logger, "libcap-ng support [disabled]");
 #endif
 
 #ifdef USE_LINUX_AUDIT
-	linux_audit_init(log_to_audit);
+	linux_audit_init(log_to_audit, logger);
 #else
-	libreswan_log("Linux audit support [disabled]");
+	llog(RC_LOG, logger, "Linux audit support [disabled]");
 #endif
 
 	{
 		const char *vc = ipsec_version_code();
-		libreswan_log("Starting Pluto (Libreswan Version %s%s) pid:%u",
+		llog(RC_LOG, logger, "Starting Pluto (Libreswan Version %s%s) pid:%u",
 			vc, compile_time_interop_options, getpid());
 	}
 
-	libreswan_log("core dump dir: %s", coredir);
+	llog(RC_LOG, logger, "core dump dir: %s", coredir);
 	if (oco->secretsfile && *oco->secretsfile)
-		libreswan_log("secrets file: %s", oco->secretsfile);
+		llog(RC_LOG, logger, "secrets file: %s", oco->secretsfile);
 
-	libreswan_log(leak_detective ?
+	llog(RC_LOG, logger, leak_detective ?
 		"leak-detective enabled" : "leak-detective disabled");
 
-	libreswan_log("NSS crypto [enabled]");
+	llog(RC_LOG, logger, "NSS crypto [enabled]");
 
 #ifdef AUTH_HAVE_PAM
-	libreswan_log("XAUTH PAM support [enabled]");
+	llog(RC_LOG, logger, "XAUTH PAM support [enabled]");
 #else
-	libreswan_log("XAUTH PAM support [disabled]");
+	llog(RC_LOG, logger, "XAUTH PAM support [disabled]");
 #endif
 
 	/*
 	 * Log impair-* functions that were enabled
 	 */
 	if (have_impairments()) {
-		LOG_JAMBUF(RC_LOG, logger, buf) {
+		LLOG_JAMBUF(RC_LOG, logger, buf) {
 			jam(buf, "Warning: impairments enabled: ");
 			jam_impairments(buf, "+");
 		}
@@ -1750,15 +1710,15 @@ int main(int argc, char **argv)
 	init_state_db();
 	init_connection_db();
 	init_server_fork();
-	init_server();
+	init_server(logger);
 
 	init_rate_log();
-	init_nat_traversal(keep_alive);
+	init_nat_traversal(keep_alive, logger);
 
 	init_virtual_ip(virtual_private, logger);
 	/* obsoleted by nss code: init_rnd_pool(); */
 	init_root_certs();
-	init_secret();
+	init_secret(logger);
 #ifdef USE_IKEv1
 	init_ikev1();
 #endif
@@ -1778,29 +1738,31 @@ int main(int argc, char **argv)
 		exit(PLUTO_EXIT_OK);
 	}
 
-	start_crypto_helpers(nhelpers, logger);
-	init_kernel();
-	init_vendorid();
+	start_server_helpers(nhelpers, logger);
+	init_kernel(logger);
+	init_vendorid(logger);
 #if defined(LIBCURL) || defined(LIBLDAP)
-	start_crl_fetch_helper();
+	start_crl_fetch_helper(logger);
 #endif
 #ifdef HAVE_LABELED_IPSEC
-	init_selinux();
+	init_selinux(logger);
 #endif
 #ifdef USE_SYSTEMD_WATCHDOG
-	pluto_sd_init();
+	pluto_sd_init(logger);
 #endif
 
 #ifdef USE_DNSSEC
-	if (!unbound_event_init(get_pluto_event_base(), do_dnssec,
-				pluto_dnssec_rootfile, pluto_dnssec_trusted,
-				logger)) {
-			exit_pluto(PLUTO_EXIT_UNBOUND_FAIL);
+	{
+		diag_t d = unbound_event_init(get_pluto_event_base(), do_dnssec,
+					      pluto_dnssec_rootfile, pluto_dnssec_trusted,
+					      logger/*for-warnings*/);
+		if (d != NULL) {
+			fatal_diag(PLUTO_EXIT_UNBOUND_FAIL, logger, &d, "%s", "");
+		}
 	}
 #endif
 
-	call_server(conffile);
-	return -1;	/* Shouldn't ever reach this */
+	run_server(conffile, logger);
 }
 
 void show_setup_plutomain(struct show *s)

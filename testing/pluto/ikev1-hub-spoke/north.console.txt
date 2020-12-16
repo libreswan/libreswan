@@ -6,7 +6,7 @@ north #
  /testing/pluto/bin/wait-until-pluto-started
 north #
  ipsec auto --add northnet-westnet-ipv4-psk
-002 added IKEv1 connection "northnet-westnet-ipv4-psk"
+002 "northnet-westnet-ipv4-psk": added IKEv1 connection
 north #
  ipsec auto --up northnet-westnet-ipv4-psk
 002 "northnet-westnet-ipv4-psk" #1: initiating IKEv1 Main Mode connection

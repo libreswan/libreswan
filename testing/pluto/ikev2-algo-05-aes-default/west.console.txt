@@ -16,13 +16,13 @@ west #
 initdone
 west #
  ipsec auto --add westnet-eastnet-aes-default
-002 added IKEv2 connection "westnet-eastnet-aes-default"
+002 "westnet-eastnet-aes-default": added IKEv2 connection
 west #
  ipsec auto --up westnet-eastnet-aes-default
 1v2 "westnet-eastnet-aes-default" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-aes-default" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-aes-default" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-002 "westnet-eastnet-aes-default" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+002 "westnet-eastnet-aes-default" #1: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-aes-default" #1: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-aes-default" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-aes-default" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
@@ -36,13 +36,13 @@ west #
  #
 west #
  ipsec auto --add westnet-eastnet-aes-128
-002 added IKEv2 connection "westnet-eastnet-aes-128"
+002 "westnet-eastnet-aes-128": added IKEv2 connection
 west #
  ipsec auto --up westnet-eastnet-aes-128
 1v2 "westnet-eastnet-aes-128" #3: initiating IKEv2 connection
 1v2 "westnet-eastnet-aes-128" #3: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-aes-128" #3: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-002 "westnet-eastnet-aes-128" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
+002 "westnet-eastnet-aes-128" #3: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-aes-128" #3: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-aes-128" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-aes-128" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
@@ -56,13 +56,13 @@ west #
  #
 west #
  ipsec auto --add westnet-eastnet-aes-256
-002 added IKEv2 connection "westnet-eastnet-aes-256"
+002 "westnet-eastnet-aes-256": added IKEv2 connection
 west #
  ipsec auto --up westnet-eastnet-aes-256
 1v2 "westnet-eastnet-aes-256" #5: initiating IKEv2 connection
 1v2 "westnet-eastnet-aes-256" #5: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-aes-256" #5: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-002 "westnet-eastnet-aes-256" #6: IKEv2 mode peer ID is ID_FQDN: '@east'
+002 "westnet-eastnet-aes-256" #5: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-aes-256" #5: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-aes-256" #6: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-aes-256" #6: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
@@ -76,13 +76,13 @@ west #
  #
 west #
  ipsec auto --add westnet-eastnet-aes-mix-1
-002 added IKEv2 connection "westnet-eastnet-aes-mix-1"
+002 "westnet-eastnet-aes-mix-1": added IKEv2 connection
 west #
  ipsec auto --up westnet-eastnet-aes-mix-1
 1v2 "westnet-eastnet-aes-mix-1" #7: initiating IKEv2 connection
 1v2 "westnet-eastnet-aes-mix-1" #7: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-aes-mix-1" #7: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-002 "westnet-eastnet-aes-mix-1" #8: IKEv2 mode peer ID is ID_FQDN: '@east'
+002 "westnet-eastnet-aes-mix-1" #7: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-aes-mix-1" #7: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-aes-mix-1" #8: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-aes-mix-1" #8: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
@@ -96,13 +96,13 @@ west #
  #
 west #
  ipsec auto --add westnet-eastnet-aes-mix-2
-002 added IKEv2 connection "westnet-eastnet-aes-mix-2"
+002 "westnet-eastnet-aes-mix-2": added IKEv2 connection
 west #
  ipsec auto --up westnet-eastnet-aes-mix-2
 1v2 "westnet-eastnet-aes-mix-2" #9: initiating IKEv2 connection
 1v2 "westnet-eastnet-aes-mix-2" #9: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-aes-mix-2" #9: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-002 "westnet-eastnet-aes-mix-2" #10: IKEv2 mode peer ID is ID_FQDN: '@east'
+002 "westnet-eastnet-aes-mix-2" #9: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-aes-mix-2" #9: authenticated using RSA with SHA2_512
 002 "westnet-eastnet-aes-mix-2" #10: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-aes-mix-2" #10: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}

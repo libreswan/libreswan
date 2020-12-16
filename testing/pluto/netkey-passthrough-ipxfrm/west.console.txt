@@ -29,7 +29,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add west-east
-002 added IKEv1 connection "west-east"
+002 "west-east": added IKEv1 connection
 west #
  ip xfrm policy add src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 222 dport 222 ptype main priority 1440 dir in
 west #

@@ -23,14 +23,14 @@ static bool nss_reread_cert(struct end *dst, struct logger *logger)
 {
 	const char *nickname = cert_nickname(&dst->cert);
 	if (nickname == NULL) {
-		log_message(RC_BADID, logger,
+		llog(RC_BADID, logger,
 			    "certificate cannot reread due to unknown nickname");
 		return false;
 	}
 
 	CERTCertificate *cert = get_cert_by_nickname_from_nss(nickname, logger);
 	if (cert == NULL) {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "%s certificate '%s' not found in the NSS database",
 			    dst->leftright, nickname);
 		return false;
@@ -61,7 +61,7 @@ static void reread_end_cert(struct end *dst, struct logger *logger)
 			return;
 		}
 
-		log_message(RC_COMMENT, logger,
+		llog(RC_COMMENT, logger,
 			    "certificate %scert=%s has been reloaded",
 			    dst->leftright, cert_nickname(&dst->cert));
 		if (old_cert.u.nss_cert != NULL)
@@ -71,14 +71,19 @@ static void reread_end_cert(struct end *dst, struct logger *logger)
 
 void reread_cert(struct fd *whackfd, struct connection *c)
 {
+	dbg("rereading certificate(s) for connection '%s'", c->name);
 	struct end *dst;
 
-	dbg("rereading certificate(s) for connection '%s'", c->name);
-	struct logger logger[1] = { CONNECTION_LOGGER(c, whackfd), };
+	/* XXX: something better? */
+	close_any(&c->logger->global_whackfd);
+	c->logger->global_whackfd = dup_any(whackfd);
 
 	dst = &c->spd.this;
-	reread_end_cert(dst, logger);
+	reread_end_cert(dst, c->logger);
 
 	dst = &c->spd.that;
-	reread_end_cert(dst, logger);
+	reread_end_cert(dst, c->logger);
+
+	/* XXX: something better? */
+	close_any(&c->logger->global_whackfd);
 }

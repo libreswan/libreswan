@@ -16,7 +16,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add west
-002 added IKEv2 connection "west"
+002 "west": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -25,7 +25,7 @@ west #
 1v2 "west"[1] 2001:db8:1:2::23 #1: initiating IKEv2 connection
 1v2 "west"[1] 2001:db8:1:2::23 #1: sent IKE_SA_INIT request
 1v2 "west"[1] 2001:db8:1:2::23 #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "west"[1] 2001:db8:1:2::23 #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+002 "west"[1] 2001:db8:1:2::23 #1: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "west"[1] 2001:db8:1:2::23 #1: authenticated using authby=secret
 002 "west"[1] 2001:db8:1:2::23 #2: received INTERNAL_IP6_ADDRESS 2001:db8:0:3:1::
 002 "west"[1] 2001:db8:1:2::23 #2: negotiated connection [2001:db8:0:3:1::-2001:db8:0:3:1:::0-65535 0] -> [2001:db8:0:2::-2001:db8:0:2:ffff:ffff:ffff:ffff:0-65535 0]

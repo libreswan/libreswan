@@ -7,7 +7,7 @@ north #
  /testing/pluto/bin/wait-until-pluto-started
 north #
  ipsec auto --add north-east
-002 added IKEv2 connection "north-east"
+002 "north-east": added IKEv2 connection
 north #
  ipsec whack --impair revival
 north #
@@ -19,7 +19,7 @@ north #
 1v2 "north-east" #1: sent IKE_SA_INIT request
 1v2 "north-east" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "north-east" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-002 "north-east" #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+002 "north-east" #1: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 003 "north-east" #1: authenticated using RSA with SHA2_512
 002 "north-east" #2: received INTERNAL_IP4_ADDRESS 192.0.2.10X
 002 "north-east" #2: received INTERNAL_IP4_DNS 1.2.3.4

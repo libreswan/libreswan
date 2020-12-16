@@ -155,7 +155,8 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *chosen,
 
 struct ipsec_proto_info *ikev2_child_sa_proto_info(struct child_sa *child, lset_t policy);
 
-ipsec_spi_t ikev2_child_sa_spi(const struct spd_route *spd_route, lset_t policy);
+ipsec_spi_t ikev2_child_sa_spi(const struct spd_route *spd_route, lset_t policy,
+			       struct logger *logger);
 
 extern bool ikev2_decode_peer_id(struct msg_digest *md);
 

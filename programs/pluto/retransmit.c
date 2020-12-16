@@ -165,16 +165,16 @@ enum retransmit_status retransmit(struct state *st)
 	 * - trigger the retransmit timeout path after the first delay
 	 */
 	if (impair.timeout_on_retransmit) {
-		libreswan_log("IMPAIR: retransmit so timing out SA (may retry)");
+		log_state(RC_LOG, st, "IMPAIR: retransmit so timing out SA (may retry)");
 		return RETRANSMITS_TIMED_OUT;
 	}
 	if (impair.delete_on_retransmit) {
-		libreswan_log("IMPAIR: retransmit so deleting SA");
+		log_state(RC_LOG, st, "IMPAIR: retransmit so deleting SA");
 		return DELETE_ON_RETRANSMIT;
 	}
 
 	if (st->st_interface->protocol == &ip_protocol_tcp) {
-		libreswan_log("TCP: retransmit skipped because TCP is handling retransmits");
+		log_state(RC_LOG, st, "TCP: retransmit skipped because TCP is handling retransmits");
 		return RETRANSMIT_NO;
 	}
 
@@ -217,7 +217,7 @@ enum retransmit_status retransmit(struct state *st)
 	if (retransmit_count_exceeded ||
 	    monotime_exceeds_limit ||
 	    deltatime_exceeds_limit) {
-		LOG_JAMBUF(RC_NORETRANSMISSION, st->st_logger, buf) {
+		LLOG_JAMBUF(RC_NORETRANSMISSION, st->st_logger, buf) {
 			jam(buf, "%s: ", st->st_state->name);
 			if (retransmit_count_exceeded) {
 				jam(buf, "max number of retransmissions (%lu) reached after ",
@@ -264,7 +264,7 @@ enum retransmit_status retransmit(struct state *st)
 	rt->nr_retransmits++;
 	rt->delays = deltatime_add(rt->delays, rt->delay);
 	event_schedule(EVENT_RETRANSMIT, rt->delay, st);
-	LOG_JAMBUF(RC_RETRANSMISSION, st->st_logger, buf) {
+	LLOG_JAMBUF(RC_RETRANSMISSION, st->st_logger, buf) {
 		jam(buf, "%s: retransmission; will wait ",
 			st->st_state->name);
 		jam_deltatime(buf, rt->delay);
@@ -286,7 +286,7 @@ void suppress_retransmits(struct state *st)
 	rt->delays = deltatime_add(rt->delays, rt->delay);
 	event_delete(EVENT_RETRANSMIT, st);
 	event_schedule(EVENT_RETRANSMIT, rt->delay, st);
-	LOG_JAMBUF(RC_RETRANSMISSION, st->st_logger, buf) {
+	LLOG_JAMBUF(RC_RETRANSMISSION, st->st_logger, buf) {
 		jam(buf, "%s: suppressing retransmits; will wait ",
 			st->st_state->name);
 		jam_deltatime(buf, rt->delay);

@@ -10,10 +10,10 @@ north #
  /testing/pluto/bin/wait-until-pluto-started
 north #
  ipsec auto --add north-east
-002 added IKEv2 connection "north-east"
+002 "north-east": added IKEv2 connection
 north #
  ipsec auto --add north-west
-002 added IKEv2 connection "north-west"
+002 "north-west": added IKEv2 connection
 north #
  echo "initdone"
 initdone
@@ -22,7 +22,7 @@ north #
 1v2 "north-west" #1: initiating IKEv2 connection
 1v2 "north-west" #1: sent IKE_SA_INIT request
 1v2 "north-west" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "north-west" #2: IKEv2 mode peer ID is ID_FQDN: '@west'
+002 "north-west" #1: IKEv2 mode peer ID is ID_FQDN: '@west'
 003 "north-west" #1: authenticated using authby=secret
 002 "north-west" #2: route-client output: leftsubet == rightsubnet = 0.0.0.0/0 cannot add route
 002 "north-west" #2: negotiated connection [0.0.0.0-255.255.255.255:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0]
@@ -63,7 +63,7 @@ north #
 1v2 "north-east" #3: initiating IKEv2 connection
 1v2 "north-east" #3: sent IKE_SA_INIT request
 1v2 "north-east" #3: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "north-east" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
+002 "north-east" #3: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "north-east" #3: authenticated using authby=secret
 002 "north-east" #4: negotiated connection [0.0.0.0-255.255.255.255:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0]
 004 "north-east" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}

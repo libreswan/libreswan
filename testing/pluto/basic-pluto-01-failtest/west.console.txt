@@ -11,7 +11,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet
-002 added IKEv1 connection "westnet-eastnet"
+002 "westnet-eastnet": added IKEv1 connection
 west #
  ipsec auto --status
 000 using kernel interface: xfrm

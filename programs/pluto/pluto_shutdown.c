@@ -39,7 +39,7 @@
 #include "pluto_shutdown.h"
 #include "log.h"		/* for close_log() et.al. */
 
-#include "pluto_crypt.h"	/* for stop_crypto_helpers() */
+#include "server_pool.h"	/* for stop_crypto_helpers() */
 #include "pluto_sd.h"		/* for pluto_sd() */
 #include "root_certs.h"		/* for free_root_certs() */
 #include "keys.h"		/* for free_preshared_secrets() */
@@ -47,7 +47,7 @@
 #include "fetch.h"		/* for stop_crl_fetch_helper() et.al. */
 #include "crl_queue.h"		/* for free_crl_queue() */
 #include "iface.h"		/* for free_ifaces() */
-#include "kernel.h"		/* for kernel_ops.shutdown() */
+#include "kernel.h"		/* for kernel_ops.shutdown() and free_kernel() */
 #include "virtual_ip.h"		/* for free_virtual_ip() */
 #include "server.h"		/* for free_server() */
 #ifdef USE_DNSSEC
@@ -57,6 +57,7 @@
 #include "impair_message.h"	/* for free_impair_message() */
 
 volatile bool exiting_pluto = false;
+volatile bool pluto_leave_state = false;
 static enum pluto_exit_code exit_code;
 
 /*
@@ -71,7 +72,7 @@ static enum pluto_exit_code exit_code;
 
 static void exit_tail(void) NEVER_RETURNS;
 
-void exit_pluto(enum pluto_exit_code status)
+void libreswan_exit(enum pluto_exit_code rc)
 {
 	/*
 	 * Tell the world, well actually all the threads, that pluto
@@ -80,10 +81,9 @@ void exit_pluto(enum pluto_exit_code status)
 	 * this instead.
 	 */
 	exiting_pluto = true;
-	exit_code = status;
+	exit_code = rc;
 
 	/* needed because we may be called in odd state */
-	reset_globals();
  #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_STOPPING, exit_code);
  #endif
@@ -93,14 +93,23 @@ void exit_pluto(enum pluto_exit_code status)
 
 void exit_tail(void)
 {
-	struct fd *whackfd = null_fd;
 	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
 
-	free_root_certs(whackfd);
+	if (pluto_leave_state) {
+		lsw_nss_shutdown();
+		free_preshared_secrets(logger);
+		delete_lock();	/* delete any lock files */
+		close_log();	/* close the logfiles */
+#ifdef USE_SYSTEMD_WATCHDOG
+		pluto_sd(PLUTO_SD_EXIT, PLUTO_EXIT_LEAVE_STATE);
+#endif
+		exit(PLUTO_EXIT_LEAVE_STATE);
+	}
+
+	delete_every_connection();
+	free_root_certs(logger);
 	free_preshared_secrets(logger);
 	free_remembered_public_keys();
-	delete_every_connection();
-
 	/*
 	 * free memory allocated by initialization routines.  Please don't
 	 * forget to do this.
@@ -112,7 +121,7 @@ void exit_tail(void)
 	 * Without this CRL fetch requests are left hanging and, after
 	 * the NSS DB has been closed (below), the helper can crash.
 	 */
-	stop_crl_fetch_helper();
+	stop_crl_fetch_helper(logger);
 	/*
 	 * free the crl list that the fetch-helper is currently
 	 * processing
@@ -127,9 +136,8 @@ void exit_tail(void)
 
 	lsw_conf_free_oco();	/* free global_oco containing path names */
 
-	free_ifaces();	/* free interface list from memory */
-	if (kernel_ops->shutdown != NULL)
-		kernel_ops->shutdown();
+	free_ifaces(logger);	/* free interface list from memory */
+	shutdown_kernel(logger);
 	lsw_nss_shutdown();
 	delete_lock();	/* delete any lock files */
 	free_virtual_ip();	/* virtual_private= */
@@ -152,7 +160,7 @@ void exit_tail(void)
 	exit(exit_code);	/* exit, with our error code */
 }
 
-void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status)
+void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status, bool leave_state)
 {
 	/*
 	 * Tell the world, well actually all the threads, that pluto
@@ -161,6 +169,7 @@ void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status)
 	 * this instead.
 	 */
 	exiting_pluto = true;
+	pluto_leave_state = leave_state;
 	exit_code = status;
 
 	/*
@@ -174,8 +183,9 @@ void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status)
 	fd_leak(whackfd, HERE);
 
 	/*
-	 * If the event-loop doesn't stop, this kicks in.  XXX: also
-	 * in exit_pluto().
+	 * If the event-loop doesn't stop, this kicks in.
+	 *
+	 * XXX: same code appears in libreswan_exit() above.
 	 */
  #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_STOPPING, exit_code);
@@ -197,7 +207,7 @@ void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status)
 	 * code to be changed so that helper tasks can be "cancelled"
 	 * after the've completed?
 	 */
-	stop_helper_threads();
+	stop_server_helpers();
 	/*
 	 * helper_threads_stopped_callback() is called once both all
 	 * helper-threads have exited, and all helper-thread events
@@ -205,7 +215,7 @@ void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status)
 	 */
 }
 
-void helper_threads_stopped_callback(struct state *st UNUSED, void *context UNUSED)
+void server_helpers_stopped_callback(struct state *st UNUSED, void *context UNUSED)
 {
 	stop_server();
 	/*

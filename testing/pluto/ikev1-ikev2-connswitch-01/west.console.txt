@@ -6,10 +6,10 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet1
-002 added IKEv1 connection "westnet-eastnet1"
+002 "westnet-eastnet1": added IKEv1 connection
 west #
  ipsec auto --add westnet-eastnet2
-002 added IKEv2 connection "westnet-eastnet2"
+002 "westnet-eastnet2": added IKEv2 connection
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -36,7 +36,7 @@ west #
 1v2 "westnet-eastnet2" #3: initiating IKEv2 connection
 1v2 "westnet-eastnet2" #3: sent IKE_SA_INIT request
 1v2 "westnet-eastnet2" #3: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "westnet-eastnet2" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
+002 "westnet-eastnet2" #3: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet2" #3: authenticated using RSA with SHA2_512
 002 "westnet-eastnet2" #4: negotiated connection [10.0.1.0-10.0.1.255:0-65535 0] -> [10.0.2.0-10.0.2.255:0-65535 0]
 004 "westnet-eastnet2" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}

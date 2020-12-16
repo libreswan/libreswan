@@ -8,11 +8,8 @@ west #
 west #
  ipsec pluto --rundir /tmp/rhbz1313816 --nofork --stderrlog --log-no-time
 Pluto initialized
-NSS DB directory: sql:/etc/ipsec.d
-Initializing NSS
-Opening NSS database "sql:/etc/ipsec.d" read-only
-Initialization of NSS with read-only database "sql:/etc/ipsec.d" failed (-8174)
-FATAL: NSS initialization failure
+Initializing NSS using read-write database "sql:/etc/ipsec.d"
+FATAL ERROR: NSS: initialization using read-only database "sql:/etc/ipsec.d" failed: SEC_ERROR 18 (0x12): security library: bad database.
 west #
  #
 west #

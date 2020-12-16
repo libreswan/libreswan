@@ -64,6 +64,7 @@
 #include "pending.h"
 #include "ikev1_hash.h"
 #include "hostpair.h"
+#include "crypt_symkey.h"		/* for release_symkey() */
 
 #include "crypto.h"
 #include "secrets.h"
@@ -72,7 +73,6 @@
 #include "ike_alg_encrypt_ops.h"	/* XXX: oops */
 #include "kernel_alg.h"
 #include "plutoalg.h"
-#include "pluto_crypt.h"
 #include "ikev1.h"
 #include "ikev1_continuations.h"
 #include "ikev1_message.h"
@@ -89,10 +89,11 @@
 #include "ikev1_send.h"
 #include "nss_cert_verify.h"
 #include "iface.h"
-
+#include "crypt_dh.h"
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"
 #endif
+#include "unpack.h"
 
 /*
  * Initiate an Oakley Main Mode exchange.
@@ -114,7 +115,6 @@ void main_outI1(struct fd *whack_sock,
 
 	/* set up new state */
 	initialize_new_state(st, c, policy, try);
-	push_cur_state(st);
 
 	change_state(st, STATE_MAIN_I1);
 
@@ -156,7 +156,6 @@ void main_outI1(struct fd *whack_sock,
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 				&rbody)) {
-			reset_cur_state();
 			return;
 		}
 	}
@@ -168,7 +167,6 @@ void main_outI1(struct fd *whack_sock,
 		if (!ikev1_out_sa(&rbody, IKEv1_oakley_sadb(policy, c),
 				  st, TRUE, FALSE)) {
 			log_state(RC_LOG, st, "outsa fail");
-			reset_cur_state();
 			return;
 		}
 
@@ -182,18 +180,15 @@ void main_outI1(struct fd *whack_sock,
 
 	/* send Vendor IDs */
 	if (!out_vid_set(&rbody, c)) {
-		reset_cur_state();
 		return;
 	}
 
 	/* as Initiator, spray NAT VIDs */
 	if (!nat_traversal_insert_vid(&rbody, c)) {
-		reset_cur_state();
 		return;
 	}
 
 	if (!ikev1_close_message(&rbody, st)) {
-		reset_cur_state();
 		return;
 	}
 
@@ -219,7 +214,6 @@ void main_outI1(struct fd *whack_sock,
 	}
 
 	statetime_stop(&start, "%s()", __func__);
-	reset_cur_state();
 }
 
 /*
@@ -306,7 +300,7 @@ struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 		get_connection_private_key(c, &pubkey_type_rsa,
 					   logger);
 	if (pks == NULL) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "unable to locate my private key for RSA Signature");
 		return (struct hash_signature) { .len = 0, }; /* failure: no key to use */
 	}
@@ -390,24 +384,6 @@ static stf_status RSA_check_signature(struct state *st,
 {
 	return check_signature_gen(st, hash, sig_pbs, 0 /* for ikev2 only */,
 				   &pubkey_type_rsa, try_RSA_signature_v1);
-}
-
-notification_t accept_v1_nonce(struct logger *logger,
-			       struct msg_digest *md, chunk_t *dest,
-			       const char *name)
-{
-	pb_stream *nonce_pbs = &md->chain[ISAKMP_NEXT_NONCE]->pbs;
-	size_t len = pbs_left(nonce_pbs);
-
-	if (len < IKEv1_MINIMUM_NONCE_SIZE || IKEv1_MAXIMUM_NONCE_SIZE < len) {
-		log_message(RC_LOG_SERIOUS, logger, "%s length not between %d and %d",
-			    name, IKEv1_MINIMUM_NONCE_SIZE, IKEv1_MAXIMUM_NONCE_SIZE);
-		return PAYLOAD_MALFORMED; /* ??? */
-	}
-	free_chunk_content(dest);
-	*dest = clone_hunk(pbs_in_left_as_shunk(nonce_pbs), "nonce");
-	passert(len == dest->len);
-	return NOTHING_WRONG;
 }
 
 /*
@@ -610,42 +586,47 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		}
 
 		if (c == NULL) {
-			log_md(RC_LOG_SERIOUS, md,
-			       "initial Main Mode message received but no connection has been authorized with policy %s",
-			       bitnamesof(sa_policy_bit_names, policy));
+			llog(RC_LOG_SERIOUS, md->md_logger,
+			     "initial Main Mode message received but no connection has been authorized with policy %s",
+			     bitnamesof(sa_policy_bit_names, policy));
 			/* XXX notification is in order! */
 			return STF_IGNORE;
-		} else if (c->kind != CK_TEMPLATE) {
-			connection_buf cib;
-			log_md(RC_LOG_SERIOUS, md,
-			       "initial Main Mode message received but "PRI_CONNECTION" forbids connection",
-			       pri_connection(c, &cib));
-			/* XXX notification is in order! */
-			return STF_IGNORE;
-		} else {
-			/*
-			 * Create a temporary connection that is a copy
-			 * of this one.
-			 * Their ID isn't declared yet.
-			 */
-			connection_buf cib;
-			dbg_md(md, "instantiating "PRI_CONNECTION" for initial Main Mode message",
-			       pri_connection(c, &cib));
-			ip_address sender_address = endpoint_address(&md->sender);
-			c = rw_instantiate(c, &sender_address, NULL, NULL);
 		}
+
+		if (c->kind != CK_TEMPLATE) {
+			connection_buf cib;
+			llog(RC_LOG_SERIOUS, md->md_logger,
+			     "initial Main Mode message received but "PRI_CONNECTION" forbids connection",
+			     pri_connection(c, &cib));
+			/* XXX notification is in order! */
+			return STF_IGNORE;
+		}
+
+		/*
+		 * Create a temporary connection that is a copy of
+		 * this one.
+		 *
+		 * Their ID isn't declared yet.
+		 */
+		connection_buf cib;
+		dbgl(md->md_logger, "instantiating "PRI_CONNECTION" for initial Main Mode message",
+		     pri_connection(c, &cib));
+		ip_address sender_address = endpoint_address(&md->sender);
+		c = rw_instantiate(c, &sender_address, NULL, NULL);
 	} else {
 		/*
 		 * we found a non-wildcard conn. double check if it needs
 		 * instantiation anyway (eg vnet=)
 		 */
 		if (c->kind == CK_TEMPLATE && c->spd.that.virt != NULL) {
-			dbg_md(md, "local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation");
+			dbgl(md->md_logger,
+			     "local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation");
 			ip_address sender_address = endpoint_address(&md->sender);
 			c = rw_instantiate(c, &sender_address, NULL, NULL);
 		}
 		if (c->kind == CK_TEMPLATE && c->spd.that.has_id_wildcards) {
-			dbg_md(md, "remote end has wildcard ID, needs instantiation");
+			dbgl(md->md_logger,
+			     "remote end has wildcard ID, needs instantiation");
 			ip_address sender_address = endpoint_address(&md->sender);
 			c = rw_instantiate(c, &sender_address, NULL, NULL);
 		}
@@ -659,7 +640,6 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 
 	update_state_connection(st, c);
 
-	set_cur_state(st); /* (caller will reset cur_state) */
 	st->st_try = 0; /* not our job to try again from start */
 	/* only as accurate as connection */
 	st->st_policy = c->policy & ~POLICY_IPSEC_MASK;
@@ -788,44 +768,6 @@ stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 }
 
 /*
- * package up the calculate KE value, and emit it as a KE payload.
- * used by IKEv1: main, aggressive, and quick (in PFS mode).
- */
-bool ikev1_justship_KE(struct logger *logger, chunk_t *g, pb_stream *outs)
-{
-	switch (impair.ke_payload) {
-	case IMPAIR_EMIT_NO:
-		return ikev1_out_generic_chunk(&isakmp_keyex_desc, outs, *g,
-					       "keyex value");
-	case IMPAIR_EMIT_OMIT:
-		log_message(RC_LOG, logger, "IMPAIR: sending no KE (g^x) payload");
-		return true;
-	case IMPAIR_EMIT_EMPTY:
-		log_message(RC_LOG, logger, "IMPAIR: sending empty KE (g^x)");
-		return ikev1_out_generic_chunk(&isakmp_keyex_desc, outs,
-					       EMPTY_CHUNK, "empty KE");
-	case IMPAIR_EMIT_ROOF:
-	default:
-	{
-		pb_stream z;
-		uint8_t byte = impair.ke_payload - IMPAIR_EMIT_ROOF;
-		log_message(RC_LOG, logger, "IMPAIR: sending bogus KE (g^x) == %u value to break DH calculations", byte);
-		/* Only used to test sending/receiving bogus g^x */
-		return ikev1_out_generic(&isakmp_keyex_desc, outs, &z) &&
-			out_repeated_byte(byte, g->len, &z, "fake g^x") &&
-			(close_output_pbs(&z), TRUE);
-	}
-	}
-}
-
-bool ikev1_ship_KE(struct state *st, struct dh_local_secret *local_secret,
-		   chunk_t *g, struct pbs_out *outs)
-{
-	unpack_KE_from_helper(st, local_secret, g);
-	return ikev1_justship_KE(st->st_logger, g, outs);
-}
-
-/*
  * STATE_MAIN_I1: HDR, SA --> auth dependent
  * PSK_AUTH, DS_AUTH: --> HDR, KE, Ni
  *
@@ -921,8 +863,8 @@ static ke_and_nonce_cb main_inI2_outR2_continue1; /* type assertion */
 stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 {
 	/* KE in */
-	if (!accept_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_KE])) {
+	if (!unpack_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_KE], st->st_logger)) {
 		return STF_FAIL + INVALID_KEY_INFORMATION;
 	}
 
@@ -930,7 +872,7 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 	RETURN_STF_FAILURE(accept_v1_nonce(st->st_logger, md, &st->st_ni, "Ni"));
 
 	/* decode certificate requests */
-	ikev1_decode_cr(md);
+	ikev1_decode_cr(md, st->st_logger);
 
 	if (st->st_requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = TRUE;
@@ -949,19 +891,22 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
  * We are precomputing the DH.
  * This also means that it isn't good at reporting an NSS error.
  */
-static crypto_req_cont_func main_inI2_outR2_continue2;	/* type assertion */
+static dh_shared_secret_cb main_inI2_outR2_continue2;	/* type assertion */
 
-static void main_inI2_outR2_continue2(struct state *st,
-				      struct msg_digest *md,
-				      struct pluto_crypto_req *r)
+static stf_status main_inI2_outR2_continue2(struct state *st,
+					    struct msg_digest *md)
 {
 	dbg("main_inI2_outR2_calcdone for #%lu: calculate DH finished",
 	    st->st_serialno);
 
-	set_cur_state(st);
-
-	if (finish_v1_dh_shared_secret_and_iv(st, r))
+	/*
+	 * Ignore error.  It will be handled handled when the next
+	 * message arrives?!?
+	 */
+	if (st->st_dh_shared_secret != NULL) {
+		calc_v1_skeyid_and_iv(st);
 		update_iv(st);
+	}
 
 	/*
 	 * If there was a packet received while we were calculating, then
@@ -969,9 +914,13 @@ static void main_inI2_outR2_continue2(struct state *st,
 	 * Otherwise, the result awaits the packet.
 	 */
 	if (md != NULL) {
+		/*
+		 * This will call complete_v1_state_transition() when
+		 * needed.
+		 */
 		process_packet_tail(md);
 	}
-	reset_cur_state();
+	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
 
@@ -1069,29 +1018,27 @@ static stf_status main_inI2_outR2_continue1(struct state *st,
 		return STF_INTERNAL_ERROR;
 
 	/*
-	 * next message will be encrypted, so, we need to have
-	 * the DH value calculated. We can do this in the background,
-	 * sending the reply right away. We have to be careful on the next
-	 * state, since the other end may reply faster than we can calculate
-	 * things. If it is the case, then the packet is placed in the
-	 * continuation, and we let the continuation process it. If there
-	 * is a retransmit, we keep only the last packet.
+	 * next message will be encrypted, so, we need to have the DH
+	 * value calculated. We can do this in the background, sending
+	 * the reply right away. We have to be careful on the next
+	 * state, since the other end may reply faster than we can
+	 * calculate things. If it is the case, then the packet is
+	 * placed in the continuation, and we let the continuation
+	 * process it. If there is a retransmit, we keep only the last
+	 * packet.
 	 *
 	 * Also, note that this is not a suspended state, since we are
 	 * actually just doing work in the background.  md will not be
 	 * retained.
 	 */
-	{
-		dbg("main inI2_outR2: starting async DH calculation (group=%d)",
-		    st->st_oakley.ta_dh->group);
+	dbg("main inI2_outR2: starting async DH calculation (group=%d)",
+	    st->st_oakley.ta_dh->group);
+	submit_dh_shared_secret(st, st->st_gi/*responder needs initiator's KE*/,
+				main_inI2_outR2_continue2, HERE);
+	/* we are calculating in the background, so it doesn't count */
+	dbg("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __func__, __LINE__);
+	st->st_v1_offloaded_task_in_background = true;
 
-		submit_v1_dh_shared_secret_and_iv(main_inI2_outR2_continue2, "main_inI2_outR2_tail",
-						  st, SA_RESPONDER, st->st_oakley.ta_dh);
-
-		/* we are calculating in the background, so it doesn't count */
-		dbg("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __func__, __LINE__);
-		st->st_v1_offloaded_task_in_background = true;
-	}
 	return STF_OK;
 }
 
@@ -1106,19 +1053,33 @@ static stf_status main_inI2_outR2_continue1(struct state *st,
  * SMF_RPKE_AUTH: HDR, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDr1_b>Ke_r
  *	    --> HDR*, HASH_I
  */
-static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
-						pb_stream *rbody,
-						struct pluto_crypto_req *r)
+
+static dh_shared_secret_cb main_inR2_outI3_continue;	/* type assertion */
+
+static stf_status main_inR2_outI3_continue(struct state *st,
+					   struct msg_digest *md)
 {
-	struct state *const st = md->st;
+	dbg("main_inR2_outI3_cryptotail for #%lu: calculated DH, sending R1",
+	    st->st_serialno);
+
+	passert(md != NULL);	/* ??? how would this fail? */
+
+	if (st->st_dh_shared_secret == NULL) {
+		return STF_FAIL + INVALID_KEY_INFORMATION;
+	}
+
+	calc_v1_skeyid_and_iv(st);
+
+	struct pbs_out rbody[1]; /* hack */
+	ikev1_init_pbs_out_from_md_hdr(md, TRUE,
+				       &reply_stream, reply_buffer, sizeof(reply_buffer),
+				       rbody, st->st_logger);
+
 	const struct connection *c = st->st_connection;
 	const cert_t mycert = c->spd.this.cert;
 
-	if (!finish_v1_dh_shared_secret_and_iv(st, r))
-		return STF_FAIL + INVALID_KEY_INFORMATION;
-
 	/* decode certificate requests */
-	ikev1_decode_cr(md);
+	ikev1_decode_cr(md, st->st_logger);
 
 	if (st->st_requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = TRUE;
@@ -1340,38 +1301,26 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 	return STF_OK;
 }
 
-static crypto_req_cont_func main_inR2_outI3_continue;	/* type assertion */
-
-static void main_inR2_outI3_continue(struct state *st,
-				     struct msg_digest *md,
-				     struct pluto_crypto_req *r)
-{
-	dbg("main_inR2_outI3_cryptotail for #%lu: calculated DH, sending R1",
-	    st->st_serialno);
-
-	passert(md != NULL);	/* ??? how would this fail? */
-
-	struct pbs_out rbody;
-	ikev1_init_pbs_out_from_md_hdr(md, TRUE,
-				       &reply_stream, reply_buffer, sizeof(reply_buffer),
-				       &rbody, st->st_logger);
-	stf_status e = main_inR2_outI3_continue_tail(md, &rbody, r);
-	complete_v1_state_transition(md, e);
-}
-
 stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
 {
+	/*
+	 * XXX: have we been here before?
+	 *
+	 * Should this end rejects R2 because of auth failure, the
+	 * other end will keep sending the same KE.  Which leads to a
+	 * pexpect() as .st_dh_shared_secret is expected to be empty.
+	 */
+	release_symkey(__func__, "DH shared secret", &st->st_dh_shared_secret);
+
 	/* KE in */
-	if (!accept_KE(&st->st_gr, "Gr",
-		       st->st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_KE])) {
+	if (!unpack_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_KE], st->st_logger)) {
 		return STF_FAIL + INVALID_KEY_INFORMATION;
 	}
 
 	/* Nr in */
 	RETURN_STF_FAILURE(accept_v1_nonce(st->st_logger, md, &st->st_nr, "Nr"));
-	submit_v1_dh_shared_secret_and_iv(main_inR2_outI3_continue, "aggr outR1 DH",
-					  st, SA_INITIATOR, st->st_oakley.ta_dh);
+	submit_dh_shared_secret(st, st->st_gr, main_inR2_outI3_continue, HERE);
 	return STF_SUSPEND;
 }
 
@@ -1840,7 +1789,7 @@ stf_status send_isakmp_notification(struct state *st,
 		if (!ikev1_encrypt_message(&rbody, st))
 			return STF_INTERNAL_ERROR;
 
-		send_ike_msg_without_recording(st, &reply_stream, "ISAKMP notify");
+		send_pbs_out_using_state(st, "ISAKMP notify", &reply_stream);
 
 		/* get back old IV for this state */
 		restore_iv(st, old_iv);
@@ -1858,6 +1807,8 @@ stf_status send_isakmp_notification(struct state *st,
  * those calls pass a fake state as sndst.
  * Note: msgid is in different order here from other calls :/
  */
+static monotime_t last_malformed = MONOTIME_EPOCH;
+
 static void send_notification(struct logger *logger,
 			      struct state *sndst /*possibly fake*/,
 			      notification_t type,
@@ -1866,7 +1817,6 @@ static void send_notification(struct logger *logger,
 			      uint8_t protoid)
 {
 	pb_stream r_hdr_pbs;
-	static monotime_t last_malformed = MONOTIME_EPOCH;
 	monotime_t n = mononow();
 
 	switch (type) {
@@ -1888,7 +1838,7 @@ static void send_notification(struct logger *logger,
 		sndst->hidden_variables.st_malformed_sent++;
 		if (sndst->hidden_variables.st_malformed_sent >
 		    MAXIMUM_MALFORMED_NOTIFY) {
-			log_message(RC_LOG, logger, "too many (%d) malformed payloads. Deleting state",
+			llog(RC_LOG, logger, "too many (%d) malformed payloads. Deleting state",
 				    sndst->hidden_variables.st_malformed_sent);
 			delete_state(sndst);
 			/* note: no md->st to clear */
@@ -1896,7 +1846,7 @@ static void send_notification(struct logger *logger,
 		}
 
 		if (sndst->st_v1_iv.len != 0) {
-			LOG_JAMBUF(RC_LOG, logger, buf) {
+			LLOG_JAMBUF(RC_LOG, logger, buf) {
 				jam(buf, "payload malformed.  IV: ");
 				jam_dump_bytes(buf, sndst->st_v1_iv.ptr,
 					       sndst->st_v1_iv.len);
@@ -1932,7 +1882,7 @@ static void send_notification(struct logger *logger,
 		 * SNDST as that may be fake.
 		 */
 		endpoint_buf b;
-		log_message(RC_NOTIFICATION + type, logger,
+		llog(RC_NOTIFICATION + type, logger,
 			    "sending %snotification %s to %s",
 			    encst ? "encrypted " : "",
 			    enum_name(&ikev1_notify_names, type),
@@ -1982,7 +1932,7 @@ static void send_notification(struct logger *logger,
 
 		if (!out_struct(&isan, &isakmp_notification_desc,
 					&r_hdr_pbs, &not_pbs)) {
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "failed to build notification in send_notification");
 			return;
 		}
@@ -2013,7 +1963,7 @@ static void send_notification(struct logger *logger,
 		close_output_pbs(&r_hdr_pbs);
 	}
 
-	send_ike_msg_without_recording(sndst, &pbs, "notification packet");
+	send_pbs_out_using_state(sndst, "notification packet", &pbs);
 }
 
 void send_notification_from_state(struct state *st, enum state_kind from_state,
@@ -2052,42 +2002,76 @@ void send_notification_from_state(struct state *st, enum state_kind from_state,
 
 void send_notification_from_md(struct msg_digest *md, notification_t type)
 {
-	/*
-	 * Create a fake state object to be able to use send_notification.
-	 * This is somewhat dangerous: the fake state must not be deleted
-	 * or have almost any other operation performed on it.
-	 * Ditto for fake connection.
-	 *
-	 * ??? how can we be sure to have faked all salient fields correctly?
-	 *
-	 * Most details must be left blank (eg. pointers
-	 * set to NULL).  struct initialization is good at this.
-	 *
-	 * We need to set [??? we don't -- is this still true?]:
-	 *   st_connection->that.host_addr
-	 *   st_connection->that.host_port
-	 *   st_connection->interface
-	 */
-	struct connection fake_connection = {
-		.interface = md->iface,
-		.policy = POLICY_IKE_FRAG_FORCE, 	/* for should_fragment_ike_msg() */
-	};
+	pb_stream r_hdr_pbs;
+	monotime_t n = mononow();
 
-	struct ike_sa fake_ike = {
-		.sa = {
-			.st_serialno = SOS_NOBODY,
-			.st_connection = &fake_connection,	/* for should_fragment_ike_msg() */
-			.st_state = finite_states[STATE_UNDEFINED],
-			.st_remote_endpoint = md->sender,
-		},
-	};
+	switch (type) {
+	case PAYLOAD_MALFORMED:
+		/* only send one per second. */
+		/* ??? this depends on monotime_t having a one-second granularity */
+		if (monobefore(last_malformed, n))
+			return;
+		last_malformed = n;
+		break;
 
-	passert(md != NULL);
+	case INVALID_FLAGS:
+		break;
 
-	update_ike_endpoints(&fake_ike, md);
-	send_notification(md->md_logger, &fake_ike.sa, type, NULL, 0,
-			  md->hdr.isa_ike_initiator_spi.bytes, md->hdr.isa_ike_responder_spi.bytes,
-			  PROTO_ISAKMP);
+	default:
+		/* quiet GCC warning */
+		break;
+	}
+
+	endpoint_buf b;
+	llog(RC_NOTIFICATION + type, md->md_logger,
+	     "sending notification %s to %s",
+	     enum_name(&ikev1_notify_names, type),
+	     str_endpoint(&md->sender, &b));
+
+	uint8_t buffer[1024];	/* ??? large enough for any notification? */
+	struct pbs_out pbs = open_pbs_out("notification msg",
+					  buffer, sizeof(buffer),
+					  md->md_logger);
+
+	/* HDR* */
+
+	{
+		/* ??? "keep it around for TPM" */
+		struct isakmp_hdr hdr = {
+			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
+				ISAKMP_MINOR_VERSION,
+			.isa_xchg = ISAKMP_XCHG_INFO,
+			.isa_msgid = 0,
+			.isa_flags = 0,
+			.isa_ike_initiator_spi = md->hdr.isa_ike_initiator_spi,
+			.isa_ike_responder_spi = md->hdr.isa_ike_responder_spi,
+		};
+		passert(out_struct(&hdr, &isakmp_hdr_desc, &pbs, &r_hdr_pbs));
+	}
+
+	/* Notification Payload */
+
+	{
+		pb_stream not_pbs;
+		struct isakmp_notification isan = {
+			.isan_doi = ISAKMP_DOI_IPSEC,
+			.isan_type = type,
+			.isan_spisize = 0,
+			.isan_protoid = PROTO_ISAKMP,
+		};
+
+		if (!out_struct(&isan, &isakmp_notification_desc,
+					&r_hdr_pbs, &not_pbs)) {
+			llog(RC_LOG, md->md_logger,
+			     "failed to build notification in send_notification");
+			return;
+		}
+
+		close_output_pbs(&not_pbs);
+	}
+
+	close_output_pbs(&r_hdr_pbs);
+	send_pbs_out_using_md(md, "notification packet", &pbs);
 }
 
 /*
@@ -2235,7 +2219,7 @@ void send_v1_delete(struct state *st)
 
 		passert(ikev1_encrypt_message(&r_hdr_pbs, p1st));
 
-		send_ike_msg_without_recording(p1st, &reply_pbs, "delete notify");
+		send_pbs_out_using_state(p1st, "delete notify", &reply_pbs);
 
 		/* get back old IV for this state */
 		restore_iv(p1st, old_iv);
@@ -2325,15 +2309,21 @@ bool accept_delete(struct msg_digest *md,
 			 * ISAKMP
 			 */
 			ike_spis_t cookies;
-			struct state *dst;
+			diag_t d;
 
-			if (!in_raw(&cookies.initiator, COOKIE_SIZE, &p->pbs, "iCookie"))
-				return FALSE;
+			d = pbs_in_raw(&p->pbs, &cookies.initiator, COOKIE_SIZE, "iCookie");
+			if (d != NULL) {
+				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+				return false;
+			}
 
-			if (!in_raw(&cookies.responder, COOKIE_SIZE, &p->pbs, "rCookie"))
-				return FALSE;
+			d = pbs_in_raw(&p->pbs, &cookies.responder, COOKIE_SIZE, "rCookie");
+			if (d != NULL) {
+				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+				return false;
+			}
 
-			dst = find_state_ikev1(&cookies, v1_MAINMODE_MSGID);
+			struct state *dst = find_state_ikev1(&cookies, v1_MAINMODE_MSGID);
 
 			if (dst == NULL) {
 				log_state(RC_LOG_SERIOUS, st, "ignoring Delete SA payload: ISAKMP SA not found (maybe expired)");
@@ -2366,9 +2356,11 @@ bool accept_delete(struct msg_digest *md,
 			 * IPSEC (ESP/AH)
 			 */
 			ipsec_spi_t spi;	/* network order */
-
-			if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
-				return FALSE;
+			diag_t dt = pbs_in_raw(&p->pbs, &spi, sizeof(spi), "SPI");
+			if (dt != NULL) {
+				log_diag(RC_LOG, st->st_logger, &dt, "%s", "");
+				return false;
+			}
 
 			bool bogus;
 			struct state *dst = find_phase2_state_to_delete(st,

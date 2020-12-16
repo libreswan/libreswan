@@ -133,7 +133,8 @@ static chunk_t build_redirect_notification_data_common(enum gw_identity_type gwi
 						       struct logger *logger)
 {
 	if (id.len > 0xFF) {
-		loglog(RC_LOG_SERIOUS, "redirect destination longer than 255 octets; ignoring");
+		llog(RC_LOG_SERIOUS, logger,
+			    "redirect destination longer than 255 octets; ignoring");
 		return empty_chunk;
 	}
 
@@ -256,7 +257,7 @@ bool redirect_global(struct msg_digest *md)
 							    logger);
 
 	if (data.len == 0) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "failed to construct REDIRECT notification data");
 		return true;
 	}
@@ -265,28 +266,28 @@ bool redirect_global(struct msg_digest *md)
 	return true;
 }
 
-bool emit_redirect_notification(const shunk_t dest_str, struct pbs_out *pbs)
+bool emit_redirect_notification(const shunk_t dest_str, struct pbs_out *outs)
 {
 	passert(dest_str.ptr != NULL);
 
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
 	chunk_t data = build_redirect_notification_data_str(dest_str, NULL,
 							    buf, sizeof(buf),
-							    pbs->out_logger);
+							    outs->outs_logger);
 
 	return data.len != 0 &&
-		emit_v2N_bytes(v2N_REDIRECT, data.ptr, data.len, pbs);
+		emit_v2N_bytes(v2N_REDIRECT, data.ptr, data.len, outs);
 }
 
-bool emit_redirected_from_notification(const ip_address *ip_addr, struct pbs_out *pbs)
+bool emit_redirected_from_notification(const ip_address *ip_addr, struct pbs_out *outs)
 {
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
 	chunk_t data = build_redirect_notification_data_ip(ip_addr, NULL,
 							   buf, sizeof(buf),
-							   pbs->out_logger);
+							   outs->outs_logger);
 
 	return data.len != 0 &&
-		emit_v2N_bytes(v2N_REDIRECTED_FROM, data.ptr, data.len, pbs);
+		emit_v2N_bytes(v2N_REDIRECTED_FROM, data.ptr, data.len, outs);
 }
 
 /*
@@ -381,7 +382,9 @@ err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 		if (gw_info.gw_identity_len < af->ip_size) {
 			return "transferred GW Identity Length is too small for an IP address";
 		}
-		if (!pbs_in_address(redirect_ip, af, &input_pbs, "REDIRECT address")) {
+		diag_t d = pbs_in_address(&input_pbs, redirect_ip, af, "REDIRECT address");
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return "variable part of payload does not match transferred GW Identity Length";
 		}
 		address_buf b;
@@ -428,7 +431,8 @@ static void del_spi_trick(struct state *st)
 {
 	if (del_spi(st->st_esp.our_spi, &ip_protocol_esp,
 		    &st->st_connection->temp_vars.old_gw_address,
-		    &st->st_connection->spd.this.host_addr)) {
+		    &st->st_connection->spd.this.host_addr,
+		    st->st_logger)) {
 		dbg("redirect: successfully deleted lingering SPI entry");
 	} else {
 		dbg("redirect: failed to delete lingering SPI entry");
@@ -444,10 +448,11 @@ void initiate_redirect(struct state *st)
 	/* stuff for loop detection */
 
 	if (c->temp_vars.num_redirects >= MAX_REDIRECTS) {
-		if (deltatime_cmp(realtimediff(c->temp_vars.first_redirect_time, realnow()), <,
-				  deltatime(REDIRECT_LOOP_DETECT_PERIOD)))
-		{
-			loglog(RC_LOG_SERIOUS, "redirect loop, stop initiating IKEv2 exchanges");
+		if (deltatime_cmp(realtimediff(c->temp_vars.first_redirect_time, realnow()),
+				  <,
+				  deltatime(REDIRECT_LOOP_DETECT_PERIOD))) {
+			log_state(RC_LOG_SERIOUS, st,
+				  "redirect loop, stop initiating IKEv2 exchanges");
 			event_force(EVENT_SA_EXPIRE, right_state);
 
 			if (st->st_redirected_in_auth)
@@ -470,12 +475,12 @@ void initiate_redirect(struct state *st)
 	c->spd.that.host_addr = redirect_ip;
 
 	ipstr_buf b;
-	libreswan_log("initiating a redirect to new gateway (address: %s)",
+	log_state(RC_LOG, st, "initiating a redirect to new gateway (address: %s)",
 			sensitive_ipstr(&redirect_ip, &b));
 
 	initiate_connections_by_name(c->name, NULL,
-				     st->st_whack_sock,
-				     st->st_whack_sock == NULL/*background*/);
+				     st->st_logger->object_whackfd,
+				     /*background?*/(st->st_logger->object_whackfd == NULL));
 
 	event_force(EVENT_SA_EXPIRE, right_state);
 	/*

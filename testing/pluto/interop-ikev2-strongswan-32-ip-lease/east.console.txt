@@ -6,7 +6,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add server
-002 added IKEv2 connection "server"
+002 "server": added IKEv2 connection
 east #
  echo "initdone"
 initdone

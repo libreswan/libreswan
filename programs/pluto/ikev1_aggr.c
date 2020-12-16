@@ -35,7 +35,6 @@
 #include "ikev1_spdb.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "ikev1_send.h"
-#include "pluto_crypt.h"
 #include "ikev1.h"
 #include "vendor.h"
 #include "nat_traversal.h"
@@ -47,10 +46,11 @@
 #include "iface.h"
 #include "secrets.h"
 #include "crypt_ke.h"
-
+#include "crypt_dh.h"
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"
 #endif
+#include "unpack.h"
 
 /* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii
  *           --> HDR, SA, KE, Nr, IDir, HASH_R/SIG_R
@@ -71,26 +71,11 @@
  *	aggr_inI1_outR1_tail: aggr_inI1_outR1_continue2
  */
 
-static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
-						 struct pluto_crypto_req *r);
-
 /*
  * continuation from second calculation (the DH one)
  */
 
-static crypto_req_cont_func aggr_inI1_outR1_continue2;	/* type assertion */
-
-static void aggr_inI1_outR1_continue2(struct state *st,
-				      struct msg_digest *md,
-				      struct pluto_crypto_req *r)
-{
-	dbg("aggr_inI1_outR1_continue2 for #%lu: calculated ke+nonce+DH, sending R1",
-	    st->st_serialno);
-
-	passert(md != NULL);
-	stf_status e = aggr_inI1_outR1_continue2_tail(md, r);
-	complete_v1_state_transition(md, e);
-}
+static dh_shared_secret_cb aggr_inI1_outR1_continue2;	/* type assertion */
 
 /*
  * for aggressive mode, this is sub-optimal, since we should have
@@ -113,11 +98,10 @@ static stf_status aggr_inI1_outR1_continue1(struct state *st,
 	/* unpack nonce too */
 	unpack_nonce(&st->st_nr, nonce);
 
-	/* NOTE: the "r" reply will get freed by our caller */
-
 	/* set up second calculation */
-	submit_v1_dh_shared_secret_and_iv(aggr_inI1_outR1_continue2, "aggr outR1 DH",
-					  st, SA_RESPONDER, st->st_oakley.ta_dh);
+	submit_dh_shared_secret(st, st->st_gi/*initiator's KE*/,
+				aggr_inI1_outR1_continue2, HERE);
+
 	/*
 	 * XXX: Since more crypto has been requested, MD needs to be re
 	 * suspended.  If the original crypto request did everything
@@ -161,10 +145,10 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 		if (c == NULL) {
 			endpoint_buf b;
 
-			loglog(RC_LOG_SERIOUS,
-				"initial Aggressive Mode message from %s but no (wildcard) connection has been configured with policy %s",
-				str_endpoint(&md->sender, &b),
-				bitnamesof(sa_policy_bit_names, policy));
+			llog(RC_LOG_SERIOUS, md->md_logger,
+			     "initial Aggressive Mode message from %s but no (wildcard) connection has been configured with policy %s",
+			     str_endpoint(&md->sender, &b),
+			     bitnamesof(sa_policy_bit_names, policy));
 			/* XXX notification is in order! */
 			return STF_IGNORE;
 		}
@@ -181,7 +165,6 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	struct state *st = &ike->sa;
 
 	md->st = st;  /* (caller will reset cur_state) */
-	set_cur_state(st);
 	update_state_connection(st, c);
 	change_state(st, STATE_AGGR_R1);
 
@@ -199,7 +182,7 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 		0;	/* we don't really know */
 
 	if (!v1_decode_certs(md)) {
-		libreswan_log("X509: CERT payload bogus or revoked");
+		log_state(RC_LOG, st, "X509: CERT payload bogus or revoked");
 		return false;
 	}
 
@@ -210,10 +193,10 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	if (!ikev1_decode_peer_id(md, FALSE, TRUE)) {
 		id_buf buf;
 		endpoint_buf b;
-		loglog(RC_LOG_SERIOUS,
-		       "initial Aggressive Mode packet claiming to be from %s on %s but no matching connection has been authorized",
-		       str_id(&st->st_connection->spd.that.id, &buf),
-		       str_endpoint(&md->sender, &b));
+		log_state(RC_LOG_SERIOUS, st,
+			  "initial Aggressive Mode packet claiming to be from %s on %s but no matching connection has been authorized",
+			  str_id(&st->st_connection->spd.that.id, &buf),
+			  str_endpoint(&md->sender, &b));
 		/* XXX notification is in order! */
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
@@ -229,10 +212,10 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 		ipstr_buf b;
 		char cib[CONN_INST_BUF];
 
-		libreswan_log("responding to Aggressive Mode, state #%lu, connection \"%s\"%s from %s",
-			st->st_serialno,
-			st->st_connection->name, fmt_conn_instance(st->st_connection, cib),
-			sensitive_ipstr(&c->spd.that.host_addr, &b));
+		log_state(RC_LOG, st, "responding to Aggressive Mode, state #%lu, connection \"%s\"%s from %s",
+			  st->st_serialno,
+			  st->st_connection->name, fmt_conn_instance(st->st_connection, cib),
+			  sensitive_ipstr(&c->spd.that.host_addr, &b));
 	}
 
 	merge_quirks(st, md);
@@ -264,8 +247,8 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	}
 
 	/* KE in */
-	if (!accept_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_KE])) {
+	if (!unpack_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_KE], st->st_logger)) {
 		return STF_FAIL + INVALID_KEY_INFORMATION;
 	}
 
@@ -279,10 +262,13 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	return STF_SUSPEND;
 }
 
-static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
-						 struct pluto_crypto_req *r)
+static stf_status aggr_inI1_outR1_continue2(struct state *st,
+					    struct msg_digest *md)
 {
-	struct state *const st = md->st;
+	dbg("aggr_inI1_outR1_continue2 for #%lu: calculated ke+nonce+DH, sending R1",
+	    st->st_serialno);
+	passert(md != NULL);
+
 	const struct connection *c = st->st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
 	const cert_t mycert = c->spd.this.cert;
@@ -291,11 +277,13 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 	 * so we have to build our reply_stream and emit HDR before calling it.
 	 */
 
-	if (!finish_v1_dh_shared_secret_and_iv(st, r))
+	if (st->st_dh_shared_secret == NULL) {
 		return STF_FAIL + INVALID_KEY_INFORMATION;
+	}
+	calc_v1_skeyid_and_iv(st);
 
 	/* decode certificate requests */
-	ikev1_decode_cr(md);
+	ikev1_decode_cr(md, st->st_logger);
 
 	if (st->st_requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = TRUE;
@@ -434,7 +422,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 		struct isakmp_cert cert_hd = {
 			.isacert_type = mycert.ty
 		};
-		libreswan_log("I am sending my certificate");
+		log_state(RC_LOG, st, "I am sending my certificate");
 		if (!out_struct(&cert_hd,
 				&isakmp_ipsec_certificate_desc,
 				&rbody,
@@ -453,7 +441,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 
 	/* CERTREQ out */
 	if (send_cr) {
-		libreswan_log("I am sending a certificate request");
+		log_state(RC_LOG, st, "I am sending a certificate request");
 		if (!ikev1_build_and_ship_CR(mycert.ty, c->spd.that.ca, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
@@ -515,7 +503,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
  * SMF_DS_AUTH:  HDR, SA, KE, Nr, IDir, [CERT,] SIG_R
  *           --> HDR*, [CERT,] SIG_I
  */
-static crypto_req_cont_func aggr_inR1_outI2_crypto_continue;	/* forward decl and type assertion */
+static dh_shared_secret_cb aggr_inR1_outI2_crypto_continue;	/* forward decl and type assertion */
 
 stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 {
@@ -532,7 +520,7 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	st->st_policy |= POLICY_AGGRESSIVE;	/* ??? surely this should be done elsewhere */
 
 	if (!v1_decode_certs(md)) {
-		libreswan_log("X509: CERT payload bogus or revoked");
+		log_state(RC_LOG, st, "X509: CERT payload bogus or revoked");
 		return false;
 	}
 
@@ -544,10 +532,10 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 		id_buf buf;
 		endpoint_buf b;
 
-		loglog(RC_LOG_SERIOUS,
-		       "initial Aggressive Mode packet claiming to be from %s on %s but no connection has been authorized",
-		       str_id(&st->st_connection->spd.that.id, &buf),
-		       str_endpoint(&md->sender, &b));
+		log_state(RC_LOG_SERIOUS, st,
+			  "initial Aggressive Mode packet claiming to be from %s on %s but no connection has been authorized",
+			  str_id(&st->st_connection->spd.that.id, &buf),
+			  str_endpoint(&md->sender, &b));
 		/* XXX notification is in order! */
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
@@ -568,8 +556,8 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	set_nat_traversal(st, md);
 
 	/* KE in */
-	if (!accept_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_KE])) {
+	if (!unpack_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_KE], st->st_logger)) {
 		return STF_FAIL + INVALID_KEY_INFORMATION;
 	}
 
@@ -583,40 +571,27 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	ikev1_natd_init(st, md);
 
 	/* set up second calculation */
-	submit_v1_dh_shared_secret_and_iv(aggr_inR1_outI2_crypto_continue, "aggr outR1 DH",
-					  st, SA_INITIATOR, st->st_oakley.ta_dh);
+	submit_dh_shared_secret(st, st->st_gr/*initiator needs responder's KE*/,
+				aggr_inR1_outI2_crypto_continue, HERE);
 	return STF_SUSPEND;
 }
 
-static stf_status aggr_inR1_outI2_tail(struct msg_digest *md); /* forward */
-
-static void aggr_inR1_outI2_crypto_continue(struct state *st,
-					    struct msg_digest *md,
-					    struct pluto_crypto_req *r)
+static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
+						  struct msg_digest *md)
 {
-	stf_status e;
-
 	dbg("aggr inR1_outI2: calculated DH, sending I2");
 
 	passert(st != NULL);
 	passert(md != NULL);
 	passert(md->st == st);
 
-	if (!finish_v1_dh_shared_secret_and_iv(st, r)) {
-		e = STF_FAIL + INVALID_KEY_INFORMATION;
-	} else {
-		e = aggr_inR1_outI2_tail(md);
+	if (st->st_dh_shared_secret == NULL) {
+		return STF_FAIL + INVALID_KEY_INFORMATION;
 	}
+	calc_v1_skeyid_and_iv(st);
 
-	complete_v1_state_transition(md, e);
-}
-
-/* Note: this is only called once.  Not really a tail. */
-
-static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
-{
 	if (!v1_decode_certs(md)) {
-		libreswan_log("X509: CERT payload bogus or revoked");
+		log_state(RC_LOG, st, "X509: CERT payload bogus or revoked");
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
 	/* HASH_R or SIG_R in */
@@ -631,7 +606,6 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 			return r;
 	}
 
-	struct state *const st = md->st;
 	struct connection *c = st->st_connection;
 	const cert_t mycert = c->spd.this.cert;
 
@@ -640,7 +614,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 			ISAKMP_NEXT_HASH : ISAKMP_NEXT_SIG;
 
 	/* decode certificate requests */
-	ikev1_decode_cr(md);
+	ikev1_decode_cr(md, st->st_logger);
 
 	if (st->st_requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = TRUE;
@@ -718,7 +692,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 			.isacert_length = 0 /* XXX unused on sending ? */
 		};
 
-		libreswan_log("I am sending my cert");
+		log_state(RC_LOG, st, "I am sending my cert");
 
 		if (!out_struct(&cert_hd,
 				&isakmp_ipsec_certificate_desc,
@@ -881,9 +855,12 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 		/* rewind id_pbs and read what we wrote */
 		id_pbs.roof = pbs.cur;
 		id_pbs.cur = pbs.start;
-		if (!in_struct(&id_pd.payload, &isakmp_identification_desc, &id_pbs,
-			  &id_pd.pbs))
+		diag_t d = pbs_in_struct(&id_pbs, &isakmp_identification_desc,
+					 &id_pd.payload, sizeof(id_pd.payload), &id_pd.pbs);
+		if (d != NULL) {
+			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			return STF_FAIL + PAYLOAD_MALFORMED;
+		}
 	}
 
 	/*
@@ -896,7 +873,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	md->chain[ISAKMP_NEXT_ID] = &id_pd;
 
 	if (!v1_decode_certs(md)) {
-		libreswan_log("X509: CERT payload bogus or revoked");
+		log_state(RC_LOG, st, "X509: CERT payload bogus or revoked");
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
 
@@ -974,7 +951,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
  * --> HDR, SA, KE, Ni, IDii
  */
 
-static crypto_req_cont_func aggr_outI1_continue;	/* type assertion */
+static ke_and_nonce_cb aggr_outI1_continue;	/* type assertion */
 
 /* No initial state for aggr_outI1:
  * SMF_DS_AUTH (RFC 2409 5.1) and SMF_PSK_AUTH (RFC 2409 5.4):
@@ -999,7 +976,6 @@ void aggr_outI1(struct fd *whack_sock,
 	statetime_t start = statetime_backdate(st, inception);
 	change_state(st, STATE_AGGR_I1);
 	initialize_new_state(st, c, policy, try);
-	push_cur_state(st);
 
 	if (LIN(POLICY_PSK, c->policy) && LIN(POLICY_AGGRESSIVE, c->policy)) {
 		log_state(RC_LOG_SERIOUS, st,
@@ -1013,9 +989,8 @@ void aggr_outI1(struct fd *whack_sock,
 		 * configurations, even conflicting multiple DH groups.  So this
 		 * should tell the user to add a proper proposal policy
 		 */
-		loglog(RC_AGGRALGO,
-		       "no IKE proposal policy specified in config!  Cannot initiate aggressive mode.  A policy must be specified in the configuration and should contain at most one DH group (mod1024, mod1536, mod2048).  Only the first DH group will be honored.");
-		reset_globals();
+		log_state(RC_AGGRALGO, st,
+			  "no IKE proposal policy specified in config!  Cannot initiate aggressive mode.  A policy must be specified in the configuration and should contain at most one DH group (mod1024, mod1536, mod2048).  Only the first DH group will be honored.");
 		return;
 	}
 
@@ -1025,10 +1000,10 @@ void aggr_outI1(struct fd *whack_sock,
 			    uctx, true/*part of initiate*/);
 
 	if (predecessor == NULL) {
-		libreswan_log("initiating IKEv1 Aggressive Mode connection");
+		log_state(RC_LOG, st, "initiating IKEv1 Aggressive Mode connection");
 	} else {
 		update_pending(pexpect_ike_sa(predecessor), pexpect_ike_sa(st));
-		libreswan_log(
+		log_state(RC_LOG, st,
 			"initiating IKEv1 Aggressive Mode connection #%lu to replace #%lu",
 			st->st_serialno, predecessor->st_serialno);
 	}
@@ -1036,24 +1011,25 @@ void aggr_outI1(struct fd *whack_sock,
 	/*
 	 * Calculate KE and Nonce.
 	 */
-	request_ke_and_nonce("aggr_outI1 KE + nonce", st,
-			     st->st_oakley.ta_dh,
-			     aggr_outI1_continue);
+	submit_ke_and_nonce(st, st->st_oakley.ta_dh,
+			    aggr_outI1_continue,
+			    "aggr_outI1 KE + nonce");
 	statetime_stop(&start, "%s()", __func__);
-	reset_globals();
 }
 
-static stf_status aggr_outI1_tail(struct state *st, struct pluto_crypto_req *r);
+static ke_and_nonce_cb aggr_outI1_continue_tail;
 
-static void aggr_outI1_continue(struct state *st,
-				struct msg_digest *unused_md,
-				struct pluto_crypto_req *r)
+static stf_status aggr_outI1_continue(struct state *st,
+				      struct msg_digest *unused_md,
+				      struct dh_local_secret *local_secret,
+				      chunk_t *nonce)
 {
 	dbg("aggr_outI1_continue for #%lu: calculated ke+nonce, sending I1",
 	    st->st_serialno);
 	passert(unused_md == NULL); /* no packet */
 
-	stf_status e = aggr_outI1_tail(st, r); /* may return FAIL */
+	stf_status e = aggr_outI1_continue_tail(st, unused_md,
+						local_secret, nonce); /* may return FAIL */
 
 	/*
 	 * XXX: The right fix is to stop
@@ -1066,13 +1042,18 @@ static void aggr_outI1_continue(struct state *st,
 	fake_md->v1_from_state = STATE_UNDEFINED;	/* ??? */
 	fake_md->fake_dne = true;
 
-	complete_v1_state_transition(fake_md, e);
+	complete_v1_state_transition(st, fake_md, e);
 	md_delref(&fake_md, HERE);
+
+	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
-static stf_status aggr_outI1_tail(struct state *st,
-				  struct pluto_crypto_req *r)
+static stf_status aggr_outI1_continue_tail(struct state *st,
+					   struct msg_digest *unused_md,
+					   struct dh_local_secret *local_secret,
+					   chunk_t *nonce)
 {
+	passert(unused_md == NULL); /* no packet */
 	struct connection *c = st->st_connection;
 	cert_t mycert = c->spd.this.cert;
 	bool send_cr = mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
@@ -1098,7 +1079,6 @@ static stf_status aggr_outI1_tail(struct state *st,
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 				&rbody)) {
-			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1110,7 +1090,6 @@ static stf_status aggr_outI1_tail(struct state *st,
 		if (!ikev1_out_sa(&rbody,
 				  IKEv1_oakley_am_sadb(st->st_policy, c),
 				  st, TRUE, TRUE)) {
-			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 
@@ -1121,11 +1100,11 @@ static stf_status aggr_outI1_tail(struct state *st,
 	}
 
 	/* KE out */
-	if (!ikev1_ship_KE(st, r->pcr_d.kn.local_secret, &st->st_gi, &rbody))
+	if (!ikev1_ship_KE(st, local_secret, &st->st_gi, &rbody))
 		return STF_INTERNAL_ERROR;
 
 	/* Ni out */
-	if (!ikev1_ship_nonce(&st->st_ni, &r->pcr_d.kn.n, &rbody, "Ni"))
+	if (!ikev1_ship_nonce(&st->st_ni, nonce, &rbody, "Ni"))
 		return STF_INTERNAL_ERROR;
 
 	/* IDii out */
@@ -1144,7 +1123,7 @@ static stf_status aggr_outI1_tail(struct state *st,
 
 	/* CERTREQ out */
 	if (send_cr) {
-		libreswan_log("I am sending a certificate request");
+		log_state(RC_LOG, st, "I am sending a certificate request");
 		if (!ikev1_build_and_ship_CR(mycert.ty, c->spd.that.ca, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
@@ -1172,8 +1151,7 @@ static stf_status aggr_outI1_tail(struct state *st,
 	clear_retransmits(st);
 	start_retransmits(st);
 
-	loglog(RC_NEW_V1_STATE + st->st_state->kind,
-	       "%s", st->st_state->story);
-	reset_cur_state();
+	log_state(RC_NEW_V1_STATE + st->st_state->kind, st,
+		  "%s", st->st_state->story);
 	return STF_IGNORE;
 }

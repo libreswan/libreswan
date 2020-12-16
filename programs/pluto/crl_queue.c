@@ -68,7 +68,7 @@ struct crl_fetch_request *crl_fetch_request(SECItem *issuer_dn,
 	passert(handle != NULL);
 	CERTCertificate *ca = CERT_FindCertByName(handle, issuer_dn);
 	if (ca == NULL) {
-		LOG_JAMBUF(RC_LOG, logger, buf) {
+		LLOG_JAMBUF(RC_LOG, logger, buf) {
 			jam_string(buf, "NSS error finding CA to add to fetch request: ");
 			jam_nss_error(buf);
 		}

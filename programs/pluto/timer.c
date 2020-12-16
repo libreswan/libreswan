@@ -50,7 +50,6 @@
 #include "rnd.h"
 #include "timer.h"
 #include "whack.h"
-#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev1_dpd.h"
 #include "ikev2.h"
 #include "ikev2_redirect.h"
@@ -184,9 +183,6 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		arg = ev = *evp = NULL; /* all gone */
 	}
 
-	pexpect_reset_globals();
-	so_serial_t old_state = push_cur_state(st);
-	pexpect(old_state == SOS_NOBODY); /* since globals are reset */
 	statetime_t start = statetime_backdate(st, &inception);
 
 	/*
@@ -210,7 +206,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		    enum_show(&timer_event_names, type),
 		    st->st_serialno,
 		    st->st_state->name,
-		    pri_fd(st->st_whack_sock));
+		    pri_fd(st->st_logger->object_whackfd));
 		release_pending_whacks(st, "release whack");
 		break;
 
@@ -324,7 +320,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 			    type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout");
 			pstat_sa_failed(st, REASON_EXCHANGE_TIMEOUT);
 		} else {
-			libreswan_log("%s %s (%s)", satype,
+			log_state(RC_LOG, st, "%s %s (%s)", satype,
 				      type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout",
 				      (c->policy & POLICY_DONT_REKEY) ?
 				      "--dontrekey" : "LATEST!");
@@ -354,7 +350,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 					 * not serialized it is hard
 					 * to say.
 					 */
-					loglog(RC_LOG_SERIOUS, "CHILD SA #%lu lost its IKE SA",
+					log_state(RC_LOG_SERIOUS, st, "CHILD SA #%lu lost its IKE SA",
 					       st->st_serialno);
 					delete_state(st);
 					st = NULL;
@@ -388,7 +384,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		deltatime_t timeout = (st->st_ike_version == IKEv2 ? MAXIMUM_RESPONDER_WAIT_DELAY :
 				       st->st_connection->r_timeout);
 		deltatime_buf dtb;
-		libreswan_log("deleting incomplete state after %s seconds",
+		log_state(RC_LOG, st, "deleting incomplete state after %s seconds",
 			      str_deltatime(timeout, &dtb));
 		/*
 		 * If no other reason has been given then this is a
@@ -444,7 +440,6 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 	}
 
 	statetime_stop(&start, "%s() %s", __func__, event_name);
-	pop_cur_state(old_state);
 }
 
 /*
@@ -568,17 +563,17 @@ void call_state_event_inline(struct logger *logger, struct state *st,
 	/* sanity checks */
 	struct pluto_event **evp = state_event(st, event);
 	if (evp == NULL) {
-		log_message(RC_COMMENT, logger, "%s is not a valid event",
+		llog(RC_COMMENT, logger, "%s is not a valid event",
 			    enum_name(&timer_event_names, event));
 		return;
 	}
 	if (*evp == NULL) {
-		log_message(RC_COMMENT, logger, "no handler for %s",
+		llog(RC_COMMENT, logger, "no handler for %s",
 			    enum_name(&timer_event_names, event));
 		return;
 	}
 	if ((*evp)->ev_type != event) {
-		log_message(RC_COMMENT, logger, "handler for %s is actually %s",
+		llog(RC_COMMENT, logger, "handler for %s is actually %s",
 			    enum_name(&timer_event_names, event),
 			    enum_name(&timer_event_names, (*evp)->ev_type));
 		return;
@@ -587,7 +582,7 @@ void call_state_event_inline(struct logger *logger, struct state *st,
 	 * XXX: can this kill off the old event when it is still
 	 * pending?
 	 */
-	log_message(RC_COMMENT, logger, "calling %s",
+	llog(RC_COMMENT, logger, "calling %s",
 		    enum_name(&timer_event_names, event));
 	timer_event_cb(0/*sock*/, 0/*event*/, *evp);
 }

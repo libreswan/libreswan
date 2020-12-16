@@ -8,7 +8,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-md5
-036 connection "westnet-eastnet-md5": failed to add connection: IKE PRF algorithm 'md5' is not supported
+036 "westnet-eastnet-md5": failed to add connection: IKE PRF algorithm 'md5' is not supported
 east #
  echo "initdone"
 initdone

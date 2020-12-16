@@ -59,7 +59,6 @@ void retransmit_v1_msg(struct state *st)
 	unsigned long try = st->st_try;
 	unsigned long try_limit = c->sa_keying_tries;
 
-	set_cur_state(st);
 
 	/* Paul: this line can say attempt 3 of 2 because the cleanup happens when over the maximum */
 	address_buf b;
@@ -100,27 +99,26 @@ void retransmit_v1_msg(struct state *st)
 
 		/* ??? DBG and real-world code mixed */
 		if (!DBGP(DBG_WHACKWATCH)) {
-			if (fd_p(st->st_whack_sock)) {
+			if (fd_p(st->st_logger->object_whackfd)) {
 				/*
 				 * Release whack because the observer
 				 * will get bored.
 				 */
-				loglog(RC_COMMENT,
+				log_state(RC_COMMENT, st,
 				       "%s, but releasing whack",
 				       story);
 				release_pending_whacks(st, story);
 			} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 				/* no whack: just log */
-				libreswan_log("%s", story);
+				log_state(RC_LOG, st, "%s", story);
 			}
 		} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-			loglog(RC_COMMENT, "%s", story);
+			log_state(RC_COMMENT, st, "%s", story);
 		}
 
 		ipsecdoi_replace(st, try);
 	}
 
-	set_cur_state(st);  /* ipsecdoi_replace would reset cur_state, set it again */
 	pstat_sa_failed(st, REASON_TOO_MANY_RETRANSMITS);
 
 	/* placed here because IKEv1 doesn't do a proper state change to STF_FAIL/STF_FATAL */
@@ -140,7 +138,6 @@ void retransmit_v2_msg(struct state *st)
 		delete_state(st);
 	}
 
-	set_cur_state(st);
 	struct connection *c = st->st_connection;
 	unsigned long try_limit = c->sa_keying_tries;
 	unsigned long try = st->st_try + 1;
@@ -218,7 +215,7 @@ void retransmit_v2_msg(struct state *st)
 		 * the IKE SA and not just this one child(?).
 		 */
 		/* already logged */
-		liveness_action(st->st_connection, st->st_ike_version);
+		liveness_action(st);
 		/* presumably liveness_action() deletes the state? */
 		return;
 	}
@@ -236,17 +233,17 @@ void retransmit_v2_msg(struct state *st)
 			"starting keying attempt %ld of at most %ld",
 			try, try_limit);
 
-		if (fd_p(st->st_whack_sock)) {
+		if (fd_p(st->st_logger->object_whackfd)) {
 			/*
 			 * Release whack because the observer will
 			 * get bored.
 			 */
-			loglog(RC_COMMENT, "%s, but releasing whack",
+			log_state(RC_COMMENT, st, "%s, but releasing whack",
 				story);
 			release_pending_whacks(st, story);
 		} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 			/* no whack: just log to syslog */
-			libreswan_log("%s", story);
+			log_state(RC_LOG, st, "%s", story);
 		}
 
 		ipsecdoi_replace(st, try);
@@ -255,7 +252,6 @@ void retransmit_v2_msg(struct state *st)
 	}
 
 	if (&ike->sa != st) {
-		set_cur_state(&ike->sa);  /* now we are on pst */
 		if (ike->sa.st_state->kind == STATE_PARENT_I2) {
 			pstat_sa_failed(&ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			delete_state(&ike->sa);
@@ -264,7 +260,6 @@ void retransmit_v2_msg(struct state *st)
 		}
 	}
 
-	set_cur_state(st);  /* ipsecdoi_replace would reset cur_state, set it again */
 
 	/*
 	 * XXX There should not have been a child sa unless this was a timeout of
@@ -286,14 +281,14 @@ bool ikev2_schedule_retry(struct state *st)
 		dbg("maximum number of retries reached - deleting state");
 		return false;
 	}
-	LOG_JAMBUF(RC_COMMENT, st->st_logger, buf) {
+	LLOG_JAMBUF(RC_COMMENT, st->st_logger, buf) {
 		jam(buf, "scheduling retry attempt %ld of ", try);
 		if (try_limit == 0) {
 			jam_string(buf, "an unlimited number");
 		} else {
 			jam(buf, "at most %ld", try_limit);
 		}
-		if (fd_p(st->st_whack_sock)) {
+		if (fd_p(st->st_logger->object_whackfd)) {
 			jam_string(buf, ", but releasing whack");
 		}
 	}

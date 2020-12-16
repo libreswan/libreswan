@@ -48,7 +48,6 @@
 #include "demux.h"
 #include "ikev1_quick.h"
 #include "timer.h"
-#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "ip_address.h"
 #include "hostpair.h"
@@ -131,7 +130,7 @@ void release_pending_whacks(struct state *st, err_t story)
 	 *
 	 * If the socket is valid, close it.
 	 */
-	if (!fd_p(st->st_whack_sock)) {
+	if (!fd_p(st->st_logger->object_whackfd)) {
 		dbg("%s: state #%lu has no whack fd",
 		     __func__, st->st_serialno);
 		return;
@@ -151,7 +150,7 @@ void release_pending_whacks(struct state *st, err_t story)
 	struct ike_sa *ike_with_same_whack = NULL;
 	if (IS_CHILD_SA(st)) {
 		struct ike_sa *ike = ike_sa(st, HERE);
-		if (same_fd(st->st_whack_sock, ike->sa.st_whack_sock)) {
+		if (same_fd(st->st_logger->object_whackfd, ike->sa.st_logger->object_whackfd)) {
 			ike_with_same_whack = ike;
 			release_any_whack(&ike->sa, HERE, "release pending whacks state's IKE SA");
 		} else {
@@ -180,10 +179,10 @@ void release_pending_whacks(struct state *st, err_t story)
 	for (struct pending *p = *pp; p != NULL; p = p->next) {
 		dbg("%s: IKE SA #%lu "PRI_FD" has pending CHILD SA with socket "PRI_FD,
 		    __func__, p->ike->sa.st_serialno,
-		    pri_fd(p->ike->sa.st_whack_sock),
+		    pri_fd(p->ike->sa.st_logger->object_whackfd),
 		    pri_fd(p->whack_sock));
 		if (p->ike == ike_with_same_whack && fd_p(p->whack_sock)) {
-			if (!same_fd(st->st_whack_sock, p->whack_sock)) {
+			if (!same_fd(st->st_logger->object_whackfd, p->whack_sock)) {
 				/* XXX: why not the log file? */
 				log_pending(WHACK_STREAM|RC_COMMENT, p,
 					    "%s for IKE SA, but releasing whack for pending %s",

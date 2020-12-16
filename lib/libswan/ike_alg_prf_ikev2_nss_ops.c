@@ -167,6 +167,15 @@ static PK11SymKey *child_sa_keymat(const struct prf_desc *prf_desc,
 				   size_t required_bytes,
 				   struct logger *logger)
 {
+	if (required_bytes == 0) {
+		/*
+		 * For instance esp=null-none.  Caller should
+		 * interpret NULL to mean empty (NSS doesn't create
+		 * zero length keys).
+		 */
+		dbgl(logger, "no CHILD SA KEMAT is required");
+		return NULL;
+	}
 	chunk_t seed_data;
 	PK11SymKey *prf_plus;
 

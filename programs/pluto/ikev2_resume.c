@@ -25,7 +25,6 @@
 #include "crypt_symkey.h"
 #include "ikev2_send.h"
 #include "timer.h"
-#include "pluto_crypt.h"
 #include "ipsec_doi.h"
 #include "ikev2_message.h"
 #include "ikev1.h"
@@ -35,6 +34,10 @@
 #include "pending.h"
 #include "nat_traversal.h"
 #include "pluto_x509.h"
+#include "crypt_ke.h"
+
+/* HACK ALERT - needed for out_raw() ??? */
+#include "ikev1_message.h"
 
 chunk_t st_to_ticket(const struct state *st)
 {
@@ -104,10 +107,10 @@ static chunk_t build_resume_notification(struct state *st, struct logger *logger
 
 bool emit_ticket_lt_opaque_notification(struct state *st, pb_stream *pbs)
 {
-    chunk_t data = build_resume_notification(st, pbs->out_logger);
+    chunk_t data = build_resume_notification(st, pbs->outs_logger);
 
 	if (data.len == 0) {
-		libreswan_log("failed to build session resumption ticket - skipping notify payload");
+		llog(RC_LOG, st->st_logger, "failed to build session resumption ticket - skipping notify payload");
 		return false;
 	}
 
@@ -119,7 +122,7 @@ bool emit_ticket_lt_opaque_notification(struct state *st, pb_stream *pbs)
 bool emit_ticket_opaque_notification(chunk_t ticket, pb_stream *pbs)
 {
 	if (ticket.len == 0) {
-		libreswan_log("failed to find session resumption ticket - skipping notify payload");
+		dbg("failed to find session resumption ticket - skipping notify payload");
 		return false;
 	}
 
@@ -132,10 +135,10 @@ bool decrypt_ticket(pb_stream *pbs, size_t len, struct ike_sa *ike)
 	passert(sizeof(struct ticket_by_val) == len);
 
 	struct ticket_by_val temp;
-	if (!in_raw(&temp, len, pbs, "ticket")){
+	if (!pbs_in_raw(pbs, &temp, len, "resumption ticket")){
 		return false;
 	}
-	
+
 	memcpy(ike->sa.st_sk_d_old, temp.sk_d_old, MAX_SK_d_LEN);
 	ike->sa.st_sk_d_old_len = temp.sk_d_old_len;
 	if (!set_ikev2_accepted_proposal(ike, temp.sr_enc_keylen, temp.sr_encr, temp.sr_prf, temp.sr_integ, temp.sr_dh)) {
@@ -149,7 +152,7 @@ bool decrypt_ticket(pb_stream *pbs, size_t len, struct ike_sa *ike)
  */
 void suspend_connection(struct connection *c)
 {
-	libreswan_log("suspending connection '%s' - deleting states", c->name);
+	dbg("suspending connection '%s' - deleting states", c->name);
 	/* terminate connection, but if an instance, don't delete ourselves */
 	c->policy &= ~POLICY_UP;
 	delete_states_by_connection(c, false, NULL);
@@ -171,7 +174,8 @@ void suspend_connection(struct connection *c)
  */
 
 static void ikev2_session_resume_outI1_continue(struct state *st, struct msg_digest *md,
-				 struct pluto_crypto_req *r);
+						struct dh_local_secret *local_secret,
+						chunk_t *nonce);
 
 void ikev2_session_resume_outI1(struct fd *whack_sock,
 				       struct connection *c,
@@ -188,7 +192,6 @@ void ikev2_session_resume_outI1(struct fd *whack_sock,
 					      ike_initiator_spi(), zero_ike_spi,
 					      c, policy, try, whack_sock);
 
-	push_cur_state(&ike->sa);
 	/* set up new state */
 	struct state *st = &ike->sa;
 	passert(st->st_ike_version == IKEv2);
@@ -197,18 +200,19 @@ void ikev2_session_resume_outI1(struct fd *whack_sock,
 	st->st_try = try;
 	ike->sa.st_resuming = TRUE;
 
-	request_nonce("Session Resume Initiator Nonce Ni", st, ikev2_session_resume_outI1_continue);
+	submit_ke_and_nonce(&ike->sa, NULL, ikev2_session_resume_outI1_continue, "Session Resume Initiator Nonce Ni");
 }
 
 void ikev2_session_resume_outI1_continue(struct state *st, struct msg_digest *md,
-				 struct pluto_crypto_req *r)
+					struct dh_local_secret *local_secret,
+					chunk_t *nonce)
 {
 	dbg("%s() for #%lu %s",
 	     __func__, st->st_serialno, st->st_state->name);
 	pexpect(md == NULL);
 
- 	struct ike_sa *ike = pexpect_ike_sa(st);
- 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
+	struct ike_sa *ike = pexpect_ike_sa(st);
+	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
 	pexpect(st->st_state->kind == STATE_PARENT_RESUME_I0);
 	
 	unpack_nonce(&st->st_ni, r);

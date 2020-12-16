@@ -327,7 +327,6 @@ struct state {
 
 	struct connection *st_connection;       /* connection for this SA */
  	struct logger *st_logger;
-#define st_whack_sock st_logger->object_whackfd
 
 	struct trans_attrs st_oakley;
 
@@ -643,7 +642,7 @@ struct state {
 	 * (before ST_OFFLOADED_TASK was added), its presence would
 	 * have also served as a state-is-busy marker.
 	 */
-	struct pluto_crypto_req_cont *st_offloaded_task;
+	struct job *st_offloaded_task;
 	bool st_v1_offloaded_task_in_background;
 
 	struct msg_digest *st_suspended_md;     /* suspended state-transition */
@@ -815,6 +814,7 @@ extern void release_any_whack(struct state *st, where_t where, const char *why);
 extern void state_eroute_usage(const ip_subnet *ours, const ip_subnet *peers,
 			       unsigned long count, monotime_t nw);
 extern void delete_state(struct state *st);
+extern void delete_other_state(struct state *st, struct state *other_st);
 extern void delete_states_by_connection(struct connection *c, bool relations, struct fd *whackfd);
 extern void rekey_p2states_by_connection(struct connection *c);
 enum send_delete { PROBABLY_SEND_DELETE, DONT_SEND_DELETE, };
@@ -876,7 +876,7 @@ extern void v1_delete_state_by_username(struct state *st, void *name);
 extern void delete_state_by_id_name(struct state *st, void *name);
 
 extern void delete_cryptographic_continuation(struct state *st);
-extern void delete_states_dead_interfaces(struct fd *whackfd);
+extern void delete_states_dead_interfaces(struct logger *logger);
 extern bool dpd_active_locally(const struct state *st);
 
 /*
@@ -908,7 +908,7 @@ extern bool ikev2_viable_parent(const struct ike_sa *ike);
 
 extern bool uniqueIDs;  /* --uniqueids? */
 extern void IKE_SA_established(const struct ike_sa *ike);
-extern void revive_conns(struct fd *whackfd);
+extern void revive_conns(struct logger *logger);
 
 void list_state_events(struct show *s, monotime_t now);
 

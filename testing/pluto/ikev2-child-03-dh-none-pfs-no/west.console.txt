@@ -34,20 +34,20 @@ west #
  ipsec whack --impair delete-on-retransmit
 west #
  ipsec auto --add westnet-eastnet-ikev2
-002 added IKEv2 connection "westnet-eastnet-ikev2"
+002 "westnet-eastnet-ikev2": added IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2-00
-002 added IKEv2 connection "westnet-eastnet-ikev2-00"
+002 "westnet-eastnet-ikev2-00": added IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2-01
-002 connection "westnet-eastnet-ikev2-01": ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
-002 added IKEv2 connection "westnet-eastnet-ikev2-01"
+002 "westnet-eastnet-ikev2-01": ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
+002 "westnet-eastnet-ikev2-01": added IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2-10
-002 added IKEv2 connection "westnet-eastnet-ikev2-10"
+002 "westnet-eastnet-ikev2-10": added IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2-11
-002 added IKEv2 connection "westnet-eastnet-ikev2-11"
+002 "westnet-eastnet-ikev2-11": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -56,7 +56,7 @@ west #
 1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+002 "westnet-eastnet-ikev2" #1: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2" #1: authenticated using authby=secret
 002 "westnet-eastnet-ikev2" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ikev2" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_512_256 NATOA=none NATD=none DPD=passive}

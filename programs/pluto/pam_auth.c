@@ -73,7 +73,7 @@ void pamauth_abort(struct state *st)
 		st->st_pamauth = NULL; /* aborted */
 		pstats_pamauth_aborted++;
 		passert(pamauth->serialno == st->st_serialno);
-		libreswan_log("PAM: #%lu: main-process: aborting authentication PAM-process for '%s'",
+		log_state(RC_LOG, st, "PAM: #%lu: main-process: aborting authentication PAM-process for '%s'",
 			      st->st_serialno, pamauth->ptarg.name);
 		/*
 		 * Don't hold back.
@@ -101,7 +101,8 @@ static server_fork_cb pam_callback; /* type assertion */
 
 static void pam_callback(struct state *st,
 			 struct msg_digest *md,
-			 int status, void *arg)
+			 int status, void *arg,
+			 struct logger *logger)
 {
 	struct pamauth *pamauth = arg;
 
@@ -126,10 +127,10 @@ static void pam_callback(struct state *st,
 	 */
 	if (st != NULL) {
 		st->st_pamauth = NULL; /* all done */
-		log_state(RC_LOG, st,
-			  "PAM: #%lu: completed for user '%s' with status %s",
-			  pamauth->serialno, pamauth->ptarg.name,
-			  success ? "SUCCESS" : "FAILURE");
+		llog(RC_LOG, logger,
+			    "PAM: #%lu: completed for user '%s' with status %s",
+			    pamauth->serialno, pamauth->ptarg.name,
+			    success ? "SUCCESS" : "FAILURE");
 		pamauth->callback(st, md, pamauth->ptarg.name, success);
 	}
 
@@ -139,14 +140,14 @@ static void pam_callback(struct state *st,
 /*
  * Perform the authentication in the child process.
  */
-static int pam_child(void *arg)
+static int pam_child(void *arg, struct logger *logger)
 {
 	struct pamauth *pamauth = arg;
 
 	dbg("PAM: #%lu: PAM-process authenticating user '%s'",
 	    pamauth->serialno,
 	    pamauth->ptarg.name);
-	bool success = do_pam_authentication(&pamauth->ptarg);
+	bool success = do_pam_authentication(&pamauth->ptarg, logger);
 	dbg("PAM: #%lu: PAM-process completed for user '%s' with result %s",
 	    pamauth->serialno, pamauth->ptarg.name,
 	    success ? "SUCCESS" : "FAILURE");
@@ -185,9 +186,10 @@ void auth_fork_pam_process(struct state *st,
 	dbg("PAM: #%lu: main-process starting PAM-process for authenticating user '%s'",
 	    pamauth->serialno, pamauth->ptarg.name);
 	pamauth->child = server_fork("pamauth", pamauth->serialno,
-				     pam_child, pam_callback, pamauth);
+				     pam_child, pam_callback, pamauth,
+				     st->st_logger);
 	if (pamauth->child < 0) {
-		libreswan_log("PAM: #%lu: creation of PAM-process for user '%s' failed",
+		log_state(RC_LOG, st, "PAM: #%lu: creation of PAM-process for user '%s' failed",
 			      pamauth->serialno, pamauth->ptarg.name);
 		pfree_pamauth(pamauth);
 		return;

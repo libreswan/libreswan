@@ -95,6 +95,7 @@ static stf_status xauth_client_ackstatus(struct state *st,
 struct CISCO_split_item {
 	struct in_addr cs_addr;
 	struct in_addr cs_mask;
+	uint8_t protos_and_ports[6];
 };
 
 static field_desc CISCO_split_fields[] = {
@@ -208,7 +209,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 	{
 		diag_t d = pbs_out_address(&attrval, ia, "IP_addr");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, attrval.out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 		break;
@@ -218,7 +219,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 	{
 		diag_t d = pbs_out_address(&attrval, &c->spd.this.client.addr, "IP4_subnet");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, attrval.out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -248,13 +249,14 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 			err_t e = ttoaddr_num(ipstr, 0, AF_INET, &dnsip);
 
 			if (e != NULL) {
-				loglog(RC_LOG_SERIOUS, "Invalid DNS IPv4 %s:%s", ipstr, e);
+				log_state(RC_LOG_SERIOUS, st,
+					  "Invalid DNS IPv4 %s:%s", ipstr, e);
 				return STF_INTERNAL_ERROR;
 			}
 			/* emit attribute's value */
 			diag_t d = pbs_out_address(&attrval, &dnsip, "IP4_dns");
 			if (d != NULL) {
-				log_diag(RC_LOG_SERIOUS, attrval.out_logger, &d, "%s", "");
+				log_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
 				return STF_INTERNAL_ERROR;
 			}
 
@@ -308,10 +310,9 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 		break;
 	}
 	default:
-		libreswan_log(
-			"attempt to send unsupported mode cfg attribute %s.",
-			enum_show(&modecfg_attr_names,
-				  attr_type));
+		log_state(RC_LOG, st,
+			  "attempt to send unsupported mode cfg attribute %s.",
+			  enum_show(&modecfg_attr_names, attr_type));
 		break;
 	}
 
@@ -522,7 +523,7 @@ static stf_status modecfg_send_set(struct state *st)
 	/* Transmit */
 	record_and_send_v1_ike_msg(st, &reply, "ModeCfg set");
 
-	if (state_event(st, EVENT_RETRANSMIT) == NULL) {
+	if (*state_event(st, EVENT_RETRANSMIT) == NULL) {
 		delete_event(st);
 		clear_retransmits(st);
 		start_retransmits(st);
@@ -560,8 +561,9 @@ stf_status xauth_send_request(struct state *st)
 	uint8_t buf[256];
 	struct pbs_out reply = open_pbs_out("xauth_buf", buf, sizeof(buf), st->st_logger);
 
-	libreswan_log("XAUTH: Sending Username/Password request (%s->XAUTH_R0)",
-		      st->st_state->short_name);
+	log_state(RC_LOG, st,
+		  "XAUTH: Sending Username/Password request (%s->XAUTH_R0)",
+		  st->st_state->short_name);
 
 	/* this is the beginning of a new exchange */
 	st->st_v1_msgid.phase15 = generate_msgid(st);
@@ -644,18 +646,17 @@ stf_status xauth_send_request(struct state *st)
 			 * Main Mode message and send/create a new XAUTH_R0
 			 * message.
 			 */
-			send_ike_msg_without_recording(st, &reply,
-					"XAUTH: req");
+			send_pbs_out_using_state(st, "XAUTH: req (unrecorded)", &reply);
 		}
 	} else {
-		libreswan_log("IMPAIR: Skipped sending XAUTH user/pass packet");
+		log_state(RC_LOG, st, "IMPAIR: Skipped sending XAUTH user/pass packet");
 		if (p_state == STATE_AGGR_R2) {
 			/* record-only so we properly emulate packet drop */
 			record_outbound_v1_ike_msg(st, &reply, "XAUTH: req");
 		}
 	}
 
-	if (state_event(st, EVENT_RETRANSMIT) == NULL) {
+	if (*state_event(st, EVENT_RETRANSMIT) == NULL) {
 		delete_event(st);
 		clear_retransmits(st);
 		start_retransmits(st);
@@ -674,7 +675,7 @@ stf_status modecfg_send_request(struct state *st)
 	uint8_t buf[256];
 	struct pbs_out reply = open_pbs_out("xauth_buf", buf, sizeof(buf), st->st_logger);
 
-	libreswan_log("modecfg: Sending IP request (MODECFG_I1)");
+	log_state(RC_LOG, st, "modecfg: Sending IP request (MODECFG_I1)");
 
 	/* this is the beginning of a new exchange */
 	st->st_v1_msgid.phase15 = generate_msgid(st);
@@ -753,7 +754,7 @@ stf_status modecfg_send_request(struct state *st)
 	/* Transmit */
 	record_and_send_v1_ike_msg(st, &reply, "modecfg: req");
 
-	if (state_event(st, EVENT_RETRANSMIT) == NULL) {
+	if (*state_event(st, EVENT_RETRANSMIT) == NULL) {
 		delete_event(st);
 		clear_retransmits(st);
 		start_retransmits(st);
@@ -854,7 +855,8 @@ static stf_status xauth_send_status(struct state *st, int status)
 
 static bool add_xauth_addresspool(struct connection *c,
 				  const char *userid,
-				  const char *addresspool)
+				  const char *addresspool,
+				  struct logger *logger)
 {
 	/* set user defined ip address or pool */
 	bool ret = FALSE;
@@ -877,8 +879,9 @@ static bool add_xauth_addresspool(struct connection *c,
 		er = ttorange(addresspool, &ipv4_info, &pool_range);
 	}
 	if (er != NULL) {
-		libreswan_log("XAUTH IP address %s is not valid %s user=%s",
-			addresspool, er, userid);
+		llog(RC_LOG, logger,
+			    "XAUTH IP address %s is not valid %s user=%s",
+			    addresspool, er, userid);
 	} else {
 		/* install new addresspool */
 
@@ -888,7 +891,7 @@ static bool add_xauth_addresspool(struct connection *c,
 			unreference_addresspool(c);
 		}
 
-		c->pool = install_addresspool(&pool_range);
+		c->pool = install_addresspool(&pool_range, logger);
 		if (c->pool != NULL) {
 			reference_addresspool(c);
 			ret = TRUE;
@@ -936,13 +939,13 @@ static bool do_file_authentication(struct state *st, const char *name,
 	FILE *fp = fopen(pswdpath, "r");
 	if (fp == NULL) {
 		/* unable to open the password file */
-		libreswan_log(
-			"XAUTH: unable to open password file (%s) for verification",
-			pswdpath);
+		log_state(RC_LOG, st,
+			  "XAUTH: unable to open password file (%s) for verification",
+			  pswdpath);
 		return FALSE;
 	}
 
-	libreswan_log("XAUTH: password file (%s) open.", pswdpath);
+	log_state(RC_LOG, st, "XAUTH: password file (%s) open.", pswdpath);
 
 	/** simple stuff read in a line then go through positioning
 	 * userid, passwd and conniectionname at the beginning of each of the
@@ -973,7 +976,9 @@ static bool do_file_authentication(struct state *st, const char *name,
 		p = strchr(userid, ':');	/* find end */
 		if (p == NULL) {
 			/* no end: skip line */
-			libreswan_log("XAUTH: %s:%d missing password hash field", pswdpath, lineno);
+			log_state(RC_LOG, st,
+				  "XAUTH: %s:%d missing password hash field",
+				  pswdpath, lineno);
 			continue;
 		}
 
@@ -1023,16 +1028,17 @@ static bool do_file_authentication(struct state *st, const char *name,
 			     win ? "success" : "failure",
 			     userid, connectionname, cp, passwdhash);
 
-			libreswan_log("XAUTH: %s user(%s:%s) ",
-				win ? "success" : "failure",
-				userid, connectionname);
+			log_state(RC_LOG, st, "XAUTH: %s user(%s:%s) ",
+				  win ? "success" : "failure",
+				  userid, connectionname);
 
 			if (win) {
 				if (addresspool != NULL && addresspool[0] != '\0') {
 					/* ??? failure to add addresspool seems like a funny failure */
 					/* ??? should we then keep trying other entries? */
 					if (!add_xauth_addresspool(c, userid,
-								   addresspool)) {
+								   addresspool,
+								   st->st_logger)) {
 						win = FALSE;
 						continue;	/* try other entries */
 					}
@@ -1063,15 +1069,17 @@ static void ikev1_xauth_callback(struct state *st,
 	 * This can be detected in the updown script by the env variable XAUTH_FAILED=1
 	 */
 	if (!results && st->st_connection->xauthfail == XAUTHFAIL_SOFT) {
-		libreswan_log("XAUTH: authentication for %s failed, but policy is set to soft fail",
-			      name);
+		log_state(RC_LOG, st,
+			  "XAUTH: authentication for %s failed, but policy is set to soft fail",
+			  name);
 		st->st_xauth_soft = TRUE; /* passed to updown for notification */
 		results = TRUE;
 	}
 
 	if (results) {
-		libreswan_log("XAUTH: User %s: Authentication Successful",
-			      name);
+		log_state(RC_LOG, st,
+			  "XAUTH: User %s: Authentication Successful",
+			  name);
 		/* ??? result of xauth_send_status is ignored */
 		xauth_send_status(st, XAUTH_STATUS_OK);
 
@@ -1084,8 +1092,9 @@ static void ikev1_xauth_callback(struct state *st,
 		 * Login attempt failed, display error, send XAUTH status to client
 		 * and reset state to XAUTH_R0
 		 */
-		libreswan_log("XAUTH: User %s: Authentication Failed: Incorrect Username or Password",
-			      name);
+		log_state(RC_LOG, st,
+			  "XAUTH: User %s: Authentication Failed: Incorrect Username or Password",
+			  name);
 		/* ??? result of xauth_send_status is ignored */
 		xauth_send_status(st, XAUTH_STATUS_FAIL);
 	}
@@ -1111,8 +1120,9 @@ static stf_status xauth_immediate_callback(struct state *st,
 {
 	struct xauth_immediate_context *xic = (struct xauth_immediate_context *)arg;
 	if (st == NULL) {
-		libreswan_log("XAUTH: #%lu: state destroyed for user '%s'",
-			      xic->serialno, xic->name);
+		log_state(RC_LOG, st,
+			  "XAUTH: #%lu: state destroyed for user '%s'",
+			  xic->serialno, xic->name);
 	} else {
 		/* ikev1_xauth_callback() will log result */
 		ikev1_xauth_callback(st, md, xic->name, xic->success);
@@ -1165,8 +1175,9 @@ static void xauth_launch_authent(struct state *st,
 	switch (st->st_connection->xauthby) {
 #ifdef AUTH_HAVE_PAM
 	case XAUTHBY_PAM:
-		libreswan_log("XAUTH: PAM authentication method requested to authenticate user '%s'",
-			      arg_name);
+		log_state(RC_LOG, st,
+			  "XAUTH: PAM authentication method requested to authenticate user '%s'",
+			  arg_name);
 		auth_fork_pam_process(st,
 				       arg_name, arg_password,
 				       "XAUTH",
@@ -1176,21 +1187,24 @@ static void xauth_launch_authent(struct state *st,
 #endif
 
 	case XAUTHBY_FILE:
-		libreswan_log("XAUTH: password file authentication method requested to authenticate user '%s'",
-			      arg_name);
+		log_state(RC_LOG, st,
+			  "XAUTH: password file authentication method requested to authenticate user '%s'",
+			  arg_name);
 		bool success = do_file_authentication(st, arg_name, arg_password, st->st_connection->name);
 		xauth_immediate(arg_name, st, success);
 		break;
 
 	case XAUTHBY_ALWAYSOK:
-		libreswan_log("XAUTH: authentication method 'always ok' requested to authenticate user '%s'",
-			      arg_name);
+		log_state(RC_LOG, st,
+			  "XAUTH: authentication method 'always ok' requested to authenticate user '%s'",
+			  arg_name);
 		xauth_immediate(arg_name, st, true);
 		break;
 
 	default:
-		libreswan_log("XAUTH: unknown authentication method requested to authenticate user '%s'",
-			      arg_name);
+		log_state(RC_LOG, st,
+			  "XAUTH: unknown authentication method requested to authenticate user '%s'",
+			  arg_name);
 		bad_case(st->st_connection->xauthby);
 	}
 
@@ -1239,11 +1253,11 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 	case ISAKMP_CFG_ACK:
 		break;	/* OK */
 	default:
-		libreswan_log(
-			"Expecting MODE_CFG_REPLY; got %s instead.",
-			enum_name(&attr_msg_type_names,
-				  md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.
-				  mode_attribute.isama_type));
+		log_state(RC_LOG, st,
+			  "Expecting MODE_CFG_REPLY; got %s instead.",
+			  enum_name(&attr_msg_type_names,
+				    md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.
+				    mode_attribute.isama_type));
 		return STF_IGNORE;
 	}
 
@@ -1252,8 +1266,10 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 		pb_stream strattr;
 		size_t sz;
 
-		if (!in_struct(&attr, &isakmp_xauth_attribute_desc,
-			       attrs, &strattr)) {
+		diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
+					 &attr, sizeof(attr), &strattr);
+		if (d != NULL) {
+			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			/* fail if malformed */
 			return STF_FAIL;
 		}
@@ -1275,8 +1291,8 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 			}
 			sz = pbs_left(&strattr);
 			if (strnlen((const char *)strattr.cur, sz) != sz) {
-				libreswan_log(
-					"XAUTH User Name contains NUL character: rejected");
+				log_state(RC_LOG, st,
+					  "XAUTH User Name contains NUL character: rejected");
 				return STF_FAIL + NO_PROPOSAL_CHOSEN;
 			}
 			name = chunk2(strattr.cur, sz);
@@ -1285,19 +1301,19 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 
 		case XAUTH_USER_PASSWORD | ISAKMP_ATTR_AF_TLV:
 			if (gotpassword) {
-				libreswan_log(
-					"XAUTH: two User Passwords!  Rejected");
+				log_state(RC_LOG, st,
+					  "XAUTH: two User Passwords!  Rejected");
 				return STF_FAIL + NO_PROPOSAL_CHOSEN;
 			}
 			sz = pbs_left(&strattr);
 			if (sz > 0 && strattr.cur[sz-1] == '\0') {
-				libreswan_log(
-					"Ignoring NUL at end of XAUTH User Password (Android Issue 36879?)");
+				log_state(RC_LOG, st,
+					  "Ignoring NUL at end of XAUTH User Password (Android Issue 36879?)");
 				sz--;
 			}
 			if (strnlen((const char *)strattr.cur, sz) != sz) {
-				libreswan_log(
-					"XAUTH User Password contains NUL character: rejected");
+				log_state(RC_LOG, st,
+					  "XAUTH User Password contains NUL character: rejected");
 				return STF_FAIL + NO_PROPOSAL_CHOSEN;
 			}
 			password = chunk2(strattr.cur, sz);
@@ -1312,19 +1328,19 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 
 	/** we must get a username and a password value */
 	if (!gotname || !gotpassword) {
-		libreswan_log(
-			"Expected MODE_CFG_REPLY is missing %s%s%s attribute",
-			!gotname ? "username" : "",
-			!gotname && !gotpassword ? " and " : "",
-			!gotpassword ? "password" : "");
+		log_state(RC_LOG, st,
+			  "Expected MODE_CFG_REPLY is missing %s%s%s attribute",
+			  !gotname ? "username" : "",
+			  !gotname && !gotpassword ? " and " : "",
+			  !gotpassword ? "password" : "");
 		if (st->hidden_variables.st_xauth_client_attempt++ <
 		    XAUTH_PROMPT_TRIES) {
 			stf_status stat = xauth_send_request(st);
 
-			libreswan_log(
-				"XAUTH: User %.*s: Authentication Failed (retry %d)",
-				(int)name.len, name.ptr,
-				st->hidden_variables.st_xauth_client_attempt);
+			log_state(RC_LOG, st,
+				  "XAUTH: User %.*s: Authentication Failed (retry %d)",
+				  (int)name.len, name.ptr,
+				  st->hidden_variables.st_xauth_client_attempt);
 			/**
 			 * STF_OK means that we transmitted again okay, but actually
 			 * the state transition failed, as we are prompting again.
@@ -1333,10 +1349,10 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 		} else {
 			stf_status stat = xauth_send_status(st, XAUTH_STATUS_FAIL);
 
-			libreswan_log(
-				"XAUTH: User %.*s: Authentication Failed (Retried %d times)",
-				(int)name.len, name.ptr,
-				st->hidden_variables.st_xauth_client_attempt);
+			log_state(RC_LOG, st,
+				  "XAUTH: User %.*s: Authentication Failed (Retried %d times)",
+				  (int)name.len, name.ptr,
+				  st->hidden_variables.st_xauth_client_attempt);
 
 			return stat == STF_OK ? STF_FAIL : stat;
 		}
@@ -1356,7 +1372,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
  */
 stf_status xauth_inR1(struct state *st, struct msg_digest *md UNUSED)
 {
-	libreswan_log("XAUTH: xauth_inR1(STF_OK)");
+	log_state(RC_LOG, st, "XAUTH: xauth_inR1(STF_OK)");
 	/* Back to where we were */
 	st->st_oakley.doing_xauth = FALSE;
 
@@ -1411,10 +1427,10 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 
 	switch (ma->isama_type) {
 	default:
-		libreswan_log(
-			"Expecting ISAKMP_CFG_REQUEST, got %s instead (ignored).",
-			enum_name(&attr_msg_type_names,
-				  ma->isama_type));
+		log_state(RC_LOG, st,
+			  "Expecting ISAKMP_CFG_REQUEST, got %s instead (ignored).",
+			  enum_name(&attr_msg_type_names,
+				    ma->isama_type));
 		/* ??? what should we do here?  Pretend all is well? */
 		break;
 
@@ -1427,10 +1443,10 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 			struct isakmp_attribute attr;
 			pb_stream strattr;
 
-			if (!in_struct(&attr,
-				       &isakmp_xauth_attribute_desc,
-				       attrs,
-				       &strattr)) {
+			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
+						 &attr, sizeof(attr), &strattr);
+			if (d != NULL) {
+				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				/* reject malformed */
 				return STF_FAIL;
 			}
@@ -1469,7 +1485,7 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 		st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	}
 
-	libreswan_log("modecfg_inR0(STF_OK)");
+	log_state(RC_LOG, st, "modecfg_inR0(STF_OK)");
 	return STF_OK;
 }
 
@@ -1497,9 +1513,9 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 	/* CHECK that SET has been received. */
 
 	if (ma->isama_type != ISAKMP_CFG_SET) {
-		libreswan_log(
-			"Expecting MODE_CFG_SET, got %x instead.",
-			ma->isama_type);
+		log_state(RC_LOG, st,
+			  "Expecting MODE_CFG_SET, got %x instead.",
+			  ma->isama_type);
 		return STF_IGNORE;
 	}
 
@@ -1507,8 +1523,10 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 		struct isakmp_attribute attr;
 		pb_stream strattr;
 
-		if (!in_struct(&attr, &isakmp_xauth_attribute_desc,
-			       attrs, &strattr)) {
+		diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
+					 &attr, sizeof(attr), &strattr);
+		if (d != NULL) {
+			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			/* reject malformed */
 			return STF_FAIL;
 		}
@@ -1519,7 +1537,9 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 			struct connection *c = st->st_connection;
 
 			ip_address a;
-			if (!pbs_in_address(&a, &ipv4_info, &strattr, "addr")) {
+			diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
+			if (d != NULL) {
+				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				return STF_FATAL;
 			}
 			endtosubnet(&a, &c->spd.this.client, HERE);
@@ -1527,11 +1547,11 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 			c->spd.this.has_client = TRUE;
 			subnet_buf caddr;
 			str_subnet(&c->spd.this.client, &caddr);
-			loglog(RC_LOG, "Received IP address %s", caddr.buf);
+			log_state(RC_LOG, st, "Received IP address %s", caddr.buf);
 
 			if (!address_is_specified(&c->spd.this.host_srcip)) {
-				libreswan_log("setting ip source address to %s",
-					      caddr.buf);
+				log_state(RC_LOG, st, "setting ip source address to %s",
+					  caddr.buf);
 				c->spd.this.host_srcip = a;
 			}
 			resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
@@ -1557,7 +1577,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 			break;
 		}
 	}
-	/* loglog(LOG_DEBUG, "ModeCfg ACK: 0x%" PRIxLSET, resp); */
+	/* log_state(LOG_DEBUG, st, "ModeCfg ACK: 0x%" PRIxLSET, resp); */
 
 	/* ack things */
 	{
@@ -1613,9 +1633,9 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 	switch (ma->isama_type) {
 	default:
 	{
-		libreswan_log(
-			"Expecting ISAKMP_CFG_ACK or ISAKMP_CFG_REPLY, got %x instead.",
-			ma->isama_type);
+		log_state(RC_LOG, st,
+			  "Expecting ISAKMP_CFG_ACK or ISAKMP_CFG_REPLY, got %x instead.",
+			  ma->isama_type);
 		return STF_IGNORE;
 		break;
 	}
@@ -1625,9 +1645,10 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 		while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
 			struct isakmp_attribute attr;
 
-			if (!in_struct(&attr,
-				       &isakmp_xauth_attribute_desc,
-				       attrs, NULL)) {
+			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
+						 &attr, sizeof(attr), NULL);
+			if (d != NULL) {
+				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				/* reject malformed */
 				return STF_FAIL;
 			}
@@ -1661,9 +1682,10 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			struct isakmp_attribute attr;
 			pb_stream strattr;
 
-			if (!in_struct(&attr,
-				       &isakmp_xauth_attribute_desc,
-				       attrs, &strattr)) {
+			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
+						 &attr, sizeof(attr), &strattr);
+			if (d != NULL) {
+				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				/* reject malformed */
 				return STF_FAIL;
 			}
@@ -1674,7 +1696,9 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				struct connection *c = st->st_connection;
 
 				ip_address a;
-				if (!pbs_in_address(&a, &ipv4_info, &strattr, "addr")) {
+				diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
+				if (d != NULL) {
+					log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 					return STF_FATAL;
 				}
 				endtosubnet(&a, &c->spd.this.client, HERE);
@@ -1682,9 +1706,9 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				c->spd.this.has_client = TRUE;
 				subnet_buf caddr;
 				str_subnet(&c->spd.this.client, &caddr);
-				loglog(RC_INFORMATIONAL,
-					"Received IPv4 address: %s",
-					caddr.buf);
+				log_state(RC_INFORMATIONAL, st,
+					  "Received IPv4 address: %s",
+					  caddr.buf);
 
 				if (!address_is_specified(&c->spd.this.host_srcip)) {
 					dbg("setting ip source address to %s",
@@ -1698,7 +1722,9 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			case INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
 			{
 				ip_address a;
-				if (!pbs_in_address(&a, &ipv4_info, &strattr, "addr")) {
+				diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
+				if (d != NULL) {
+					log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 					return STF_FATAL;
 				}
 
@@ -1711,16 +1737,18 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			case INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
 			{
 				ip_address a;
-				if (!pbs_in_address(&a, &ipv4_info, &strattr, "addr")) {
+				diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
+				if (d != NULL) {
+					log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 					return STF_FATAL;
 				}
 
 				address_buf a_buf;
 				const char *a_str = ipstr(&a, &a_buf);
 				bool ignore = LIN(POLICY_IGNORE_PEER_DNS, c->policy);
-				loglog(RC_INFORMATIONAL, "Received %sDNS server %s",
-					ignore ? "and ignored " : "",
-					a_str);
+				log_state(RC_INFORMATIONAL, st, "Received %sDNS server %s",
+					  ignore ? "and ignored " : "",
+					  a_str);
 
 				append_st_cfg_dns(st, a_str);
 
@@ -1730,13 +1758,17 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 			case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
 			{
-				append_st_cfg_domain(st, cisco_stringify(&strattr, "Domain", c->policy));
+				append_st_cfg_domain(st, cisco_stringify(&strattr, "Domain",
+									 false/*don't-ignore*/,
+									 st->st_logger));
 				break;
 			}
 
 			case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
 			{
-				st->st_seen_cfg_banner = cisco_stringify(&strattr, "Banner", c->policy);
+				st->st_seen_cfg_banner = cisco_stringify(&strattr, "Banner",
+									 false/*don't-ignore*/,
+									 st->st_logger);
 				break;
 			}
 
@@ -1754,9 +1786,11 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				while (pbs_left(&strattr) > 0) {
 					struct CISCO_split_item i;
 
-					if (!in_struct(&i, &CISCO_split_desc, &strattr, NULL)) {
-						loglog(RC_INFORMATIONAL,
-						    "ignoring malformed CISCO_SPLIT_INC payload");
+					diag_t d = pbs_in_struct(&strattr, &CISCO_split_desc,
+								 &i, sizeof(i), NULL);
+					if (d != NULL) {
+						log_diag(RC_INFORMATIONAL, st->st_logger, &d,
+							 "ignoring malformed CISCO_SPLIT_INC payload");
 						break;
 					}
 
@@ -1765,26 +1799,26 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					ip_subnet subnet;
 					err_t ugh = address_mask_to_subnet(&base, &mask, &subnet);
 					if (ugh != NULL) {
-						loglog(RC_INFORMATIONAL,
-							"ignoring malformed CISCO_SPLIT_INC subnet: %s",
-							ugh);
+						log_state(RC_INFORMATIONAL, st,
+							  "ignoring malformed CISCO_SPLIT_INC subnet: %s",
+							  ugh);
 						break;
 					}
 
 					subnet_buf pretty_subnet;
 					str_subnet(&subnet, &pretty_subnet);
 
-					loglog(RC_INFORMATIONAL,
-						"Received subnet %s",
-						pretty_subnet.buf);
+					log_state(RC_INFORMATIONAL, st,
+						  "Received subnet %s",
+						  pretty_subnet.buf);
 
 					struct spd_route *sr;
 					for (sr = &c->spd; ; sr = sr->spd_next) {
 						if (samesubnet(&subnet, &sr->that.client)) {
 							/* duplicate entry: ignore */
-							loglog(RC_INFORMATIONAL,
-								"Subnet %s already has an spd_route - ignoring",
-								pretty_subnet.buf);
+							log_state(RC_INFORMATIONAL, st,
+								  "Subnet %s already has an spd_route - ignoring",
+								  pretty_subnet.buf);
 							break;
 						} else if (sr->spd_next == NULL) {
 							/* new entry: add at end*/
@@ -1824,7 +1858,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			case INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
 			case INTERNAL_IP6_NBNS | ISAKMP_ATTR_AF_TLV:
 			{
-				libreswan_log("Received and ignored obsoleted Cisco NetBEUI NS info");
+				log_state(RC_LOG, st, "Received and ignored obsoleted Cisco NetBEUI NS info");
 				break;
 			}
 
@@ -1914,8 +1948,8 @@ static stf_status xauth_client_resp(struct state *st,
 						return STF_INTERNAL_ERROR;
 
 					if (st->st_xauth_username[0] == '\0') {
-						if (!fd_p(st->st_whack_sock)) {
-							loglog(RC_LOG_SERIOUS,
+						if (!fd_p(st->st_logger->object_whackfd)) {
+							log_state(RC_LOG_SERIOUS, st,
 							       "XAUTH username requested, but no file descriptor available for prompt");
 							return STF_FATAL;
 						}
@@ -1926,7 +1960,7 @@ static stf_status xauth_client_resp(struct state *st,
 							xauth_username,
 							sizeof(xauth_username)))
 						{
-							loglog(RC_LOG_SERIOUS,
+							log_state(RC_LOG_SERIOUS, st,
 							       "XAUTH username prompt failed.");
 							return STF_FATAL;
 						}
@@ -1992,8 +2026,8 @@ static stf_status xauth_client_resp(struct state *st,
 					if (st->st_xauth_password.ptr == NULL) {
 						char xauth_password[XAUTH_MAX_PASS_LENGTH];
 
-						if (!fd_p(st->st_whack_sock)) {
-							loglog(RC_LOG_SERIOUS,
+						if (!fd_p(st->st_logger->object_whackfd)) {
+							log_state(RC_LOG_SERIOUS, st,
 							       "XAUTH password requested, but no file descriptor available for prompt");
 							return STF_FATAL;
 						}
@@ -2004,7 +2038,7 @@ static stf_status xauth_client_resp(struct state *st,
 								      xauth_password,
 								      sizeof(xauth_password)))
 						{
-							loglog(RC_LOG_SERIOUS,
+							log_state(RC_LOG_SERIOUS, st,
 							       "XAUTH password prompt failed.");
 							return STF_FATAL;
 						}
@@ -2043,7 +2077,7 @@ static stf_status xauth_client_resp(struct state *st,
 					break;
 
 				default:
-					libreswan_log(
+					log_state(RC_LOG, st, 
 						"trying to send XAUTH reply, sending %s instead.",
 						enum_show(&modecfg_attr_names,
 							  attr_type));
@@ -2058,7 +2092,7 @@ static stf_status xauth_client_resp(struct state *st,
 		close_output_pbs(&strattr);
 	}
 
-	libreswan_log("XAUTH: Answering XAUTH challenge with user='%s'",
+	log_state(RC_LOG, st, "XAUTH: Answering XAUTH challenge with user='%s'",
 		      st->st_xauth_username);
 
 	fixup_xauth_hash(st, &hash_fixup, rbody->cur);
@@ -2107,7 +2141,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 	dbg("arrived in xauth_inI0");
 
 	if (impair.drop_xauth_r0) {
-		libreswan_log("IMPAIR: drop XAUTH R0 message ");
+		log_state(RC_LOG, st, "IMPAIR: drop XAUTH R0 message ");
 		return STF_FAIL;
 	}
 
@@ -2115,7 +2149,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 
 	switch (ma->isama_type) {
 	default:
-		libreswan_log(
+		log_state(RC_LOG, st, 
 			"Expecting ISAKMP_CFG_REQUEST or ISAKMP_CFG_SET, got %s instead (ignored).",
 			enum_name(&attr_msg_type_names,
 				  ma->isama_type));
@@ -2135,8 +2169,10 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 		struct isakmp_attribute attr;
 		pb_stream strattr;
 
-		if (!in_struct(&attr, &isakmp_xauth_attribute_desc,
-			       attrs, &strattr)) {
+		diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
+					 &attr, sizeof(attr), &strattr);
+		if (d != NULL) {
+			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			/* reject malformed */
 			return STF_FAIL;
 		}
@@ -2146,7 +2182,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 			got_status = TRUE;
 			switch (attr.isaat_lv) {
 			case XAUTH_STATUS_FAIL:
-				libreswan_log("Received Cisco XAUTH status: FAIL");
+				log_state(RC_LOG, st, "Received Cisco XAUTH status: FAIL");
 				status = attr.isaat_lv;
 				break;
 			case XAUTH_STATUS_OK:
@@ -2155,7 +2191,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 				break;
 			default:
 				/* ??? treat as fail?  Should we abort negotiation? */
-				libreswan_log("invalid XAUTH_STATUS value %u", attr.isaat_lv);
+				log_state(RC_LOG, st, "invalid XAUTH_STATUS value %u", attr.isaat_lv);
 				status = XAUTH_STATUS_FAIL;
 				break;
 			}
@@ -2173,14 +2209,14 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 				len = sizeof(msgbuf) - 1;
 			memcpy(msgbuf, strattr.cur, len);
 			msgbuf[len] = '\0';
-			loglog(RC_LOG_SERIOUS,
+			log_state(RC_LOG_SERIOUS, st,
 			       "XAUTH Message: %s", msgbuf);
 			break;
 		}
 
 		case XAUTH_TYPE | ISAKMP_ATTR_AF_TV:
 			if (attr.isaat_lv != XAUTH_TYPE_GENERIC) {
-				libreswan_log(
+				log_state(RC_LOG, st, 
 					"XAUTH: Unsupported type: %d",
 					attr.isaat_lv);
 				return STF_IGNORE;
@@ -2235,14 +2271,14 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 		if (status != XAUTH_STATUS_FAIL && stat == STF_OK) {
 			st->hidden_variables.st_xauth_client_done =
 				TRUE;
-			loglog(RC_LOG, "XAUTH: Successfully Authenticated");
+			log_state(RC_LOG, st, "XAUTH: Successfully Authenticated");
 			st->st_oakley.doing_xauth = FALSE;
 
 			return STF_OK;
 		} else {
-			libreswan_log("xauth: xauth_client_ackstatus() returned %s",
+			log_state(RC_LOG, st, "xauth: xauth_client_ackstatus() returned %s",
 				      enum_name(&stf_status_names, stat));
-			libreswan_log("XAUTH: aborting entire IKE Exchange");
+			log_state(RC_LOG, st, "XAUTH: aborting entire IKE Exchange");
 			return STF_FATAL;
 		}
 	}
@@ -2261,13 +2297,13 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 			XAUTHLELEM(XAUTH_USER_PASSWORD)))
 		{
 			if (st->st_connection->spd.this.xauth_client) {
-				libreswan_log(
+				log_state(RC_LOG, st, 
 					"XAUTH: No username or password request was received.");
 				return STF_IGNORE;
 			}
 		} else {
 			if (!st->st_connection->spd.this.xauth_client) {
-				libreswan_log(
+				log_state(RC_LOG, st, 
 					"XAUTH: Username or password request was received, but XAUTH client mode not enabled.");
 				return STF_IGNORE;
 			}
@@ -2368,7 +2404,7 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 
 	switch (ma->isama_type) {
 	default:
-		libreswan_log(
+		log_state(RC_LOG, st, 
 			"Expecting MODE_CFG_SET, got %x instead.",
 			ma->isama_type);
 		return STF_IGNORE;
@@ -2379,9 +2415,10 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 			struct isakmp_attribute attr;
 			pb_stream strattr;
 
-			if (!in_struct(&attr,
-				       &isakmp_xauth_attribute_desc,
-				       attrs, &strattr)) {
+			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
+						 &attr, sizeof(attr), &strattr);
+			if (d != NULL) {
+				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				/* reject malformed */
 				return STF_FAIL;
 			}
@@ -2397,14 +2434,14 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 					break;
 				default:
 					/* ??? treat as fail?  Should we abort negotiation? */
-					libreswan_log("invalid XAUTH_STATUS value %u", attr.isaat_lv);
+					log_state(RC_LOG, st, "invalid XAUTH_STATUS value %u", attr.isaat_lv);
 					status = XAUTH_STATUS_FAIL;
 					break;
 				}
 				break;
 
 			default:
-				libreswan_log(
+				log_state(RC_LOG, st, 
 					"while waiting for XAUTH_STATUS, got %s %s instead.",
 					(attr.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
 					enum_show(&modecfg_attr_names,
@@ -2418,7 +2455,7 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 	/* first check if we might be done! */
 	if (!got_status || status == XAUTH_STATUS_FAIL) {
 		/* oops, something seriously wrong */
-		libreswan_log(
+		log_state(RC_LOG, st, 
 			"did not get status attribute in xauth_inI1, looking for new challenge.");
 		change_state(st, STATE_XAUTH_I0);
 		return xauth_inI0(st, md);
@@ -2431,7 +2468,7 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 	/* must have gotten a status */
 	if (status && stat == STF_OK) {
 		st->hidden_variables.st_xauth_client_done = TRUE;
-		libreswan_log("successfully logged in");
+		log_state(RC_LOG, st, "successfully logged in");
 		st->st_oakley.doing_xauth = FALSE;
 
 		return STF_OK;

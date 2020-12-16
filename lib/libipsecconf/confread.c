@@ -33,11 +33,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#include <ctype.h>
 
 #include "lswalloc.h"
 #include "ip_address.h"
 #include "ip_info.h"
+#include "hunk.h"		/* for char_is_space() */
 
 #include "ipsecconf/confread.h"
 #include "ipsecconf/starterlog.h"
@@ -279,7 +279,7 @@ static char **tokens_from_string(const char *value, int *n)
 	int count = 0;
 	for (char *b = val; b < end; ) {
 		char *e;
-		for (e = b; *e != '\0' && !isblank(*e); e++)
+		for (e = b; *e != '\0' && !char_isspace(*e); e++)
 			;
 		*e = '\0';
 		if (e != b)
@@ -1524,6 +1524,9 @@ static bool load_conn(struct starter_conn *conn,
 
 	if (conn->options_set[KNCF_AUTO])
 		conn->desired_state = conn->options[KNCF_AUTO];
+
+	if (conn->desired_state == STARTUP_KEEP)
+		conn->policy |= POLICY_UP; /* auto=keep means once up, keep up */
 
 	return err;
 }

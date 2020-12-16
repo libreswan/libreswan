@@ -164,7 +164,11 @@ struct packet_byte_stream {
 	struct fixup last_substructure;
 
 	/*
-	 * XXX: IKEv2 and output only logger.
+	 * Output packet byte Stream logger.
+	 *
+	 * Valid while the struct pbs_out is "open".
+	 *
+	 * NOT FOR INPUT.
 	 *
 	 * IKEv2 uses on-stack pbs_out which should ensure the
 	 * lifetime of the logger pointer is LE the lifetime of the
@@ -177,7 +181,7 @@ struct packet_byte_stream {
 	 * switches to a state so more complicated; and its lifetime
 	 * is that of MD.
 	 */
-	struct logger *out_logger;
+	struct logger *outs_logger;
 };
 
 typedef struct packet_byte_stream pb_stream;
@@ -208,7 +212,7 @@ extern const pb_stream empty_pbs;
  * Input PBS
  */
 
-#define pbs_in packet_byte_stream
+#define pbs_in packet_byte_stream /* ins */
 
 /*
  * Initializers; point PBS at a pre-allocated (or static) buffer.
@@ -241,18 +245,11 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 diag_t pbs_in_raw(struct pbs_in *pbs, void *bytes, size_t len,
 		  const char *name) MUST_USE_RESULT;
 
-extern bool in_struct(void *struct_ptr, struct_desc *sd,
-		      pb_stream *ins, pb_stream *obj_pbs) MUST_USE_RESULT;
-extern bool in_raw(void *bytes, size_t len, pb_stream *ins,
-		   const char *name) MUST_USE_RESULT; /* XXX: use pbs_in_raw() */
-
 /*
  * Output PBS
  */
 
-#define pbs_out packet_byte_stream
-
-void log_pbs_out(lset_t rc_flags, struct pbs_out *outs, const char *message, ...) PRINTF_LIKE(3);
+#define pbs_out packet_byte_stream /* outs */
 
 /*
  * Initializers; point PBS at a pre-allocated (or static) buffer.
@@ -301,7 +298,7 @@ diag_t pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len,
 		struct pbs_out *outs_ = OUTS;				\
 		diag_t d_ = pbs_out_raw(outs_, hunk_.ptr, hunk_.len, (NAME)); \
 		if (d_ != NULL) {					\
-			log_diag(RC_LOG_SERIOUS, outs_->out_logger, &d_, "%s", ""); \
+			log_diag(RC_LOG_SERIOUS, outs_->outs_logger, &d_, "%s", ""); \
 		}							\
 		d_ == NULL;						\
 	})
@@ -1220,9 +1217,10 @@ extern uint8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
  * build on the primitives?
  */
 
-bool pbs_in_address(ip_address *address, const struct ip_info *af,
-		    struct pbs_in *input_pbs,
-		    const char *WHAT) MUST_USE_RESULT;
-diag_t pbs_out_address(struct pbs_out *output_pbs, const ip_address *address, const char *what);
+diag_t pbs_in_address(struct pbs_in *input_pbs,
+		      ip_address *address, const struct ip_info *af,
+		      const char *WHAT) MUST_USE_RESULT;
+diag_t pbs_out_address(struct pbs_out *output_pbs,
+		       const ip_address *address, const char *what) MUST_USE_RESULT;
 
 #endif /* _PACKET_H */

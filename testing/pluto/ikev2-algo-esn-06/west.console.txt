@@ -22,7 +22,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add replay
-002 added IKEv2 connection "replay"
+002 "replay": added IKEv2 connection
 west #
  ipsec auto --status |grep replay_window
 000 "replay":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 64; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
@@ -36,7 +36,7 @@ west #
 1v2 "replay" #1: initiating IKEv2 connection
 1v2 "replay" #1: sent IKE_SA_INIT request
 1v2 "replay" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "replay" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+002 "replay" #1: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "replay" #1: authenticated using RSA with SHA2_512
 002 "replay" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "replay" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}

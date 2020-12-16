@@ -298,7 +298,7 @@ enum impair_status parse_impair(const char *optarg,
 		}
 	}
 	if (cr == NULL) {
-		log_message(ERROR_STREAM, logger,
+		llog(ERROR_STREAM, logger,
 			    "unrecognized impair option '"PRI_SHUNK"'\n",
 			    pri_shunk(what));
 		return IMPAIR_ERROR;
@@ -318,7 +318,7 @@ enum impair_status parse_impair(const char *optarg,
 	 * instance: --no-impair no-foo:bar.
 	 */
 	if ((!enable + what_no + (how.ptr != NULL)) > 1) {
-		log_message(ERROR_STREAM, logger,
+		llog(ERROR_STREAM, logger,
 			    "overly negative --%simpair %s",
 			    enable ? "" : "no-", optarg);
 		return IMPAIR_ERROR;
@@ -395,7 +395,7 @@ enum impair_status parse_impair(const char *optarg,
 		}
 	}
 
-	log_message(ERROR_STREAM, logger,
+	llog(ERROR_STREAM, logger,
 		    "ignoring impair option '"PRI_SHUNK"' with unrecognized parameter '"PRI_SHUNK"' (%s)",
 		    pri_shunk(what), pri_shunk(how), optarg);
 	return IMPAIR_ERROR;
@@ -485,9 +485,8 @@ void jam_impairments(struct jambuf *buf, const char *sep)
 bool process_impair(const struct whack_impair *wc,
 		    void (*action)(enum impair_action, unsigned param,
 				   unsigned update, bool background,
-				   struct fd *whackfd),
-		    bool background, struct fd *whackfd,
-		    struct logger *logger)
+				   struct logger *logger),
+		    bool background, struct logger *logger)
 {
 	if (wc->what == 0) {
 		/* ignore; silently */
@@ -507,14 +506,14 @@ bool process_impair(const struct whack_impair *wc,
 			const struct impairment *cr = &impairments[ci];
 			if (cr->action == CALL_IMPAIR_UPDATE &&
 			    value_of(cr) != 0) {
-				LOG_JAMBUF(RC_COMMENT, logger, buf) {
+				LLOG_JAMBUF(RC_COMMENT, logger, buf) {
 					jam_impairment(buf, cr);
 				}
 			}
 		}
 		return true;
 	} else if (wc->what >= elemsof(impairments)) {
-		log_message(RC_LOG|ERROR_STREAM, logger,
+		llog(RC_LOG|ERROR_STREAM, logger,
 			    "impairment %u out-of-range", wc->what);
 		return false;
 	}
@@ -533,7 +532,7 @@ bool process_impair(const struct whack_impair *wc,
 			bad_case(cr->sizeof_value);
 		}
 		/* log the update */
-		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_impairment(buf, cr);
 		}
 		return true;
@@ -547,11 +546,11 @@ bool process_impair(const struct whack_impair *wc,
 	case CALL_IMPAIR_DROP_OUTGOING:
 		/* how is always biased */
 		if (action == NULL) {
-			log_message(RC_LOG|DEBUG_STREAM, logger,
+			llog(RC_LOG|DEBUG_STREAM, logger,
 				    "no action for impairment %s", cr->what);
 			return false;
 		}
-		action(cr->action, cr->param, wc->how, background, whackfd);
+		action(cr->action, cr->param, wc->how, background, logger);
 		return true;
 	}
 	/* not inside case */

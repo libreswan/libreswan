@@ -1,0 +1,10 @@
+Test for revival to a host behind NAT.
+
+This uses auto=keep on east, meaning once road has initiated, east
+wants the tunnel to remain up. Road then sends a delete to emulate
+an idle connection being torn down. Normally, east cannot initiate to the
+host behind NAT to keep the connection up. But if it is quick, it can
+re-use the existing NAT mapping to establish a new tunnel.
+
+In this case, we really make road disappear, so that the revival fails.
+East should then still cleanup and delete the instance.

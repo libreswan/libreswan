@@ -77,23 +77,6 @@ extern void binlog_state(struct state *st, enum state_kind state);
 
 extern void set_debugging(lset_t deb);
 
-extern void log_reset_globals(where_t where);
-#define reset_globals() log_reset_globals(HERE)
-
-extern void log_pexpect_reset_globals(where_t where);
-#define pexpect_reset_globals() log_pexpect_reset_globals(HERE)
-
-so_serial_t log_push_state(struct state *st, where_t where);
-void log_pop_state(so_serial_t serialno, where_t where);
-
-#define push_cur_state(ST) log_push_state(ST, HERE)
-#define pop_cur_state(ST) log_pop_state(ST, HERE)
-
-#define set_cur_state(ST) push_cur_state(ST)
-#define reset_cur_state() pop_cur_state(SOS_NOBODY)
-
-struct logger cur_logger(void);
-
 extern const struct logger_object_vec logger_global_vec;
 extern const struct logger_object_vec logger_from_vec;
 extern const struct logger_object_vec logger_message_vec;
@@ -120,21 +103,6 @@ struct logger *string_logger(struct fd *whackfd, where_t where, const char *fmt,
 		.object = FROM,					\
 		.object_vec = &logger_from_vec, 		\
 	}
-#define CONNECTION_LOGGER(CONNECTION, WHACKFD) (struct logger)	\
-	{							\
-		.where = HERE,					\
-		.global_whackfd = WHACKFD,			\
-		.object = CONNECTION,				\
-		.object_vec = &logger_connection_vec,		\
-	}
-#define PENDING_LOGGER(PENDING) (struct logger)			\
-	{							\
-		.where = HERE,					\
-		.global_whackfd = whack_log_fd,			\
-		.object_whackfd = (PENDING)->whack_sock,	\
-		.object = (PENDING)->connection,		\
-		.object_vec = &logger_connection_vec,		\
-	}
 
 struct logger *alloc_logger(void *object, const struct logger_object_vec *vec, where_t where);
 struct logger *clone_logger(const struct logger *stack);
@@ -145,7 +113,7 @@ void free_logger(struct logger **logp, where_t where);
 		if (suppress_log(LOGGER)) {				\
 			dbg(FORMAT, ##__VA_ARGS__);			\
 		} else {						\
-			log_message(RC_FLAGS, LOGGER, FORMAT,		\
+			llog(RC_FLAGS, LOGGER, FORMAT,		\
 				    ##__VA_ARGS__);			\
 		}							\
 	}
@@ -157,33 +125,8 @@ void free_logger(struct logger **logp, where_t where);
 #define log_global(RC, WHACKFD, MESSAGE, ...)				\
 	{								\
 		struct logger log_ = GLOBAL_LOGGER(WHACKFD);		\
-		log_message(RC,	&log_,					\
+		llog(RC,	&log_,					\
 			    MESSAGE,##__VA_ARGS__);			\
-	}
-
-#define plog_global(MESSAGE, ...) log_global(LOG_STREAM, null_fd, MESSAGE, ##__VA_ARGS__)
-
-/*
- * The message digest.
- *
- * Since MD code is only ever executed when on the socket handler,
- * isn't WHACK_FD always NULL and hence RC_FLAGS uses.  Almost:
- *
- * - dbg_md() uses it to signal that it is a debug log
- * - any event injection will likely want to attach a whack fd
- *
- * and it is just easier.
- */
-
-void log_md(lset_t rc_flags, const struct msg_digest *md,
-	    const char *msg, ...) PRINTF_LIKE(3);
-
-#define dbg_md(MD, MESSAGE, ...)					\
-	{								\
-		if (DBGP(DBG_BASE)) {					\
-			log_md(DEBUG_STREAM, MD,			\
-			       MESSAGE,##__VA_ARGS__);			\
-		}							\
 	}
 
 /*
@@ -200,28 +143,8 @@ void log_md(lset_t rc_flags, const struct msg_digest *md,
 void log_connection(lset_t rc_flags, struct fd *whackfd, const struct connection *c,
 		    const char *msg, ...) PRINTF_LIKE(4);
 
-#if 0
-#define dbg_connection(C, FORMAT, ...)					\
-	{								\
-		if (DBGP(DBG_BASE)) {					\
-			log_connection(DEBUG_STREAM, null_fd, C,	\
-				       FORMAT, ##__VA_ARGS__);		\
-		}							\
-	}
-#endif
-
 void log_pending(lset_t rc_flags, const struct pending *p,
 		 const char *msg, ...) PRINTF_LIKE(3);
-
-#if 0
-#define dbg_pending(PENDING, FORMAT, ...)				\
-	{								\
-		if (DBGP(DBG_BASE)) {					\
-			log_pending(DEBUG_STREAM, PENDING,		\
-				    FORMAT, ##__VA_ARGS__);		\
-		}							\
-	}
-#endif
 
 /*
  * log the state; notice how it still needs to pick up the global
@@ -231,26 +154,12 @@ void log_pending(lset_t rc_flags, const struct pending *p,
 void log_state(lset_t rc_flags, const struct state *st,
 	       const char *msg, ...) PRINTF_LIKE(3);
 
-#if 0
-#define dbg_state(ST, FORMAT, ...)					\
-	{								\
-		if (DBGP(DBG_BASE)) {					\
-			log_state(DEBUG_STREAM, ST,			\
-				  FORMAT, ##__VA_ARGS__);		\
-		}							\
-	}
-#endif
-
 /*
  * Wrappers.
  *
  * XXX: do these help or hinder - would calling log_state() directly
  * be better (if slightly more text)?  For the moment stick with the
  * wrappers so changing the underlying implementation is easier.
- *
- * XXX: what about dbg_state() et.al.?  Since these always add a
- * prefix the debate is open.  However, when cur_state is deleted
- * (sure ...), the debug-prefix macro will break.
  *
  * XXX: what about whack_log()?  That only sends messages to the
  * global whack (and never the objects whack).  Likely easier to stick
@@ -295,7 +204,7 @@ enum linux_audit_kind {
 extern void linux_audit_conn(const struct state *st, enum linux_audit_kind);
 
 #ifdef USE_LINUX_AUDIT
-extern void linux_audit_init(int do_audit);
+extern void linux_audit_init(int do_audit, struct logger *logger);
 # include <libaudit.h>	/* from audit-libs devel */
 # define AUDIT_LOG_SIZE 256
 /* should really be in libaudit.h */
@@ -309,40 +218,7 @@ extern void linux_audit_init(int do_audit);
 # endif
 #endif
 
-extern void loglog(enum rc_type, const char *fmt, ...) PRINTF_LIKE(2); /* use log_message() */
-#define libreswan_log(MESSAGE, ...) loglog(RC_LOG, MESSAGE, ##__VA_ARGS__) /* XXX: TBD: use log_message() */
-
 void jambuf_to_default_streams(struct jambuf *buf, enum rc_type rc);
-
-#define LOG_ERRNO(ERRNO, MESSAGE, ...)					\
-	{								\
-		int e_ = ERRNO; /* save value across va args */		\
-		/* XXX: notice how ERROR comes before <prefix> */	\
-		/* ERROR: <prefix>: <message>. Errno N: <errmess> */	\
-		JAMBUF(buf) {						\
-			jam(buf, "ERROR: ");				\
-			jam_cur_prefix(buf);				\
-			jam(buf, MESSAGE, ##__VA_ARGS__);		\
-			jam_string(buf, ".");				\
-			jam(buf, " "PRI_ERRNO, pri_errno(e_));		\
-			jambuf_to_error_stream(buf);			\
-		}							\
-	}
-
-#define FATAL_ERRNO(ERRNO, MESSAGE, ...)				\
-	{								\
-		int e_ = ERRNO; /* save value across va args */		\
-		/* XXX: notice how FATAL_ERROR: is before <cur-prefix> */ \
-		/* FATAL ERROR: <cur-prefix><message> */		\
-		JAMBUF(buf) {						\
-			jam(buf, "FATAL ERROR: ");			\
-			jam_cur_prefix(buf);				\
-			jam(buf, MESSAGE". "PRI_ERRNO,			\
-			    ##__VA_ARGS__, pri_errno(e_));		\
-			jambuf_to_error_stream(buf);			\
-		}							\
-		libreswan_exit(PLUTO_EXIT_FAIL);			\
-	}
 
 #define LSWLOG_DEBUG(BUF)					\
 	JAMBUF(BUF)						\

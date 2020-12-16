@@ -212,15 +212,15 @@ VARDIR ?= $(DESTDIR)$(FINALVARDIR)
 FINALLOGDIR ?= $(FINALVARDIR)/log
 LOGDIR ?= $(DESTDIR)$(FINALLOGDIR)
 
+# Directory for logrotate config
+FINALLOGROTATEDDIR ?= $(FINALSYSCONFDIR)/logrotate.d
+LOGROTATEDDIR ?= $(DESTDIR)$(FINALLOGROTATEDDIR)
+
 # Where nss databases go
 FINALNSSDIR ?= $(FINALVARDIR)/lib/ipsec/nss
 # RHEL/CentOS <= 8 and Fedora <= 32 uses /etc/ipsec.d
 #FINALNSSDIR ?= /etc/ipsec.d
 NSSDIR ?= $(DESTDIR)$(FINALNSSDIR)
-
-
-# Note: this variable gets passed in, as in "make INITSYSTEM=systemd"
-INITSYSTEM ?= $(shell $(top_srcdir)/packaging/utils/lswan_detect.sh init)
 
 DOCKER_PLUTONOFORK ?= --nofork
 
@@ -493,6 +493,7 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@FINALEXAMPLECONFDIR@:$(FINALEXAMPLECONFDIR):g" \
 			-e "s:@FINALLIBEXECDIR@:$(FINALLIBEXECDIR):g" \
 			-e "s:@FINALLOGDIR@:$(FINALLOGDIR):g" \
+			-e "s:@FINALLOGROTATEDDIR@:$(FINALLOGROTATEDDIR):g" \
 			-e "s:@FINALINITDDIR@:$(FINALINITDDIR):g" \
 			-e "s:@FINALSBINDIR@:$(FINALSBINDIR):g" \
 			-e "s:@FINALSYSCONFDIR@:$(FINALSYSCONFDIR):g" \
@@ -819,12 +820,6 @@ ifeq ($(origin GCC_LINT),undefined)
 GCC_LINT = -DGCC_LINT
 endif
 USERLAND_CFLAGS += $(GCC_LINT)
-
-# This option was disabled at 2020-04-07
-# If this is not needed for longer time, it's safe to
-# remove this and code it enables.
-# Enable ALLOW_MICROSOFT_BAD_PROPOSAL
-#USERLAND_CFLAGS += -DALLOW_MICROSOFT_BAD_PROPOSAL
 
 # some systems require -lcrypt when calling crypt() some do not.
 CRYPT_LDFLAGS ?= -lcrypt

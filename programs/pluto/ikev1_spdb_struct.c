@@ -56,42 +56,52 @@
 #include "refcnt.h"		/* for dbg_alloc()+dbg_free() */
 
 #ifndef HAVE_LABELED_IPSEC
-static bool parse_secctx_attr(pb_stream *pbs UNUSED, struct state *st UNUSED)
+static bool parse_secctx_attr(pb_stream *pbs UNUSED, struct state *st)
 {
 	/*
 	 * We received a security label but don't support it,
 	 * so fail the IKE negotiation
 	 */
-	loglog(RC_LOG_SERIOUS, "Received Sec Ctx Textual Label but support for labeled ipsec not compiled in");
+	log_state(RC_LOG_SERIOUS, st,
+		  "Received Sec Ctx Textual Label but support for labeled ipsec not compiled in");
 	return FALSE;
 }
 #else
 #include "security_selinux.h"
 static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 {
-	struct xfrm_user_sec_ctx_ike uctx;
+	diag_t d;
 
-	if (!in_struct(&uctx.ctx, &sec_ctx_desc, pbs, NULL))
-		return FALSE;
+	struct xfrm_user_sec_ctx_ike uctx;
+	d = pbs_in_struct(pbs, &sec_ctx_desc, &uctx.ctx, sizeof(uctx.ctx), NULL);
+	if (d != NULL) {
+		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		return false;
+	}
 
 	if (pbs_left(pbs) != uctx.ctx.ctx_len) {
 		/* ??? should we ignore padding? */
-		loglog(RC_LOG_SERIOUS, "Sec Ctx Textual Label length mismatch (length=%u; packet space = %u)",
-			uctx.ctx.ctx_len, (unsigned)pbs_left(pbs));
+		log_state(RC_LOG_SERIOUS, st,
+			  "Sec Ctx Textual Label length mismatch (length=%u; packet space = %u)",
+			  uctx.ctx.ctx_len, (unsigned)pbs_left(pbs));
 		return FALSE;
 	}
 
 	if (uctx.ctx.ctx_len > MAX_SECCTX_LEN) {
-		loglog(RC_LOG_SERIOUS, "Sec Ctx Textual Label too long (%u > %u)",
-			uctx.ctx.ctx_len, MAX_SECCTX_LEN);
+		log_state(RC_LOG_SERIOUS, st,
+			  "Sec Ctx Textual Label too long (%u > %u)",
+			  uctx.ctx.ctx_len, MAX_SECCTX_LEN);
 		return FALSE;
 	}
 
 	zero(&uctx.sec_ctx_value);	/* abundance of caution */
 
-	if (!in_raw(uctx.sec_ctx_value, uctx.ctx.ctx_len, pbs,
-			"Sec Ctx Textual Label"))
-		return FALSE;
+	d = pbs_in_raw(pbs, uctx.sec_ctx_value, uctx.ctx.ctx_len,
+		       "Sec Ctx Textual Label");
+	if (d != NULL) {
+		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		return false;
+	}
 
 	/*
 	 * The label should have been NUL-terminated.
@@ -100,7 +110,8 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 	if (uctx.ctx.ctx_len == 0 ||
 	    uctx.sec_ctx_value[uctx.ctx.ctx_len - 1] != '\0') {
 		if (uctx.ctx.ctx_len == MAX_SECCTX_LEN) {
-			loglog(RC_LOG_SERIOUS, "Sec Ctx Textual Label missing terminal NUL and there is no space to add it");
+			log_state(RC_LOG_SERIOUS, st,
+				  "Sec Ctx Textual Label missing terminal NUL and there is no space to add it");
 			return FALSE;
 		}
 		DBG_log("Sec Ctx Textual Label missing terminal NUL; we are adding it");
@@ -109,7 +120,8 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 	}
 
 	if (strlen(uctx.sec_ctx_value) + 1 != uctx.ctx.ctx_len) {
-		loglog(RC_LOG_SERIOUS, "Error: Sec Ctx Textual Label contains embedded NUL");
+		log_state(RC_LOG_SERIOUS, st,
+			  "Error: Sec Ctx Textual Label contains embedded NUL");
 		return FALSE;
 	}
 
@@ -121,13 +133,16 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 		 * within range of this connection's policy's security label
 		 */
 		if (st->st_connection->policy_label == NULL) {
-			loglog(RC_LOG_SERIOUS, "This state (connection) is not labeled ipsec enabled, so cannot proceed");
+			log_state(RC_LOG_SERIOUS, st,
+				  "This state (connection) is not labeled ipsec enabled, so cannot proceed");
 			return FALSE;
 		} else if (within_range(uctx.sec_ctx_value,
-					 st->st_connection->policy_label)) {
-			DBG_log("security context verification succeeded");
+					st->st_connection->policy_label,
+					st->st_logger)) {
+			dbg("security context verification succeeded");
 		} else {
-			loglog(RC_LOG_SERIOUS, "security context verification failed");
+			log_state(RC_LOG_SERIOUS, st,
+				  "security context verification failed");
 			return FALSE;
 		}
 		/*
@@ -144,7 +159,8 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 		if (streq(st->sec_ctx->sec_ctx_value, uctx.sec_ctx_value)) {
 			DBG_log("security contexts are verified in the initiator state");
 		} else {
-			loglog(RC_LOG_SERIOUS, "security context verification failed in the initiator state (shouldn't reach here unless responder (or something in between) is modifying the security context");
+			log_state(RC_LOG_SERIOUS, st,
+				  "security context verification failed in the initiator state (shouldn't reach here unless responder (or something in between) is modifying the security context");
 			return FALSE;
 		}
 	}
@@ -244,14 +260,14 @@ static bool ikev1_verify_esp(const struct connection *c,
 		return false;
 	}
 	if (!encrypt_has_key_bit_length(ta->ta_encrypt, ta->enckeylen)) {
-		loglog(RC_LOG_SERIOUS,
-		       "kernel algorithm does not like: %s key_len %u is incorrect",
-		       ta->ta_encrypt->common.fqn, ta->enckeylen);
+		llog(RC_LOG_SERIOUS, logger,
+			    "kernel algorithm does not like: %s key_len %u is incorrect",
+			    ta->ta_encrypt->common.fqn, ta->enckeylen);
 		endpoint_buf epb;
-		loglog(RC_LOG_SERIOUS,
-		       "unsupported ESP Transform %s from %s",
-		       ta->ta_encrypt->common.fqn,
-		       str_sensitive_endpoint(&c->spd.that.host_addr, &epb));
+		llog(RC_LOG_SERIOUS, logger,
+			    "unsupported ESP Transform %s from %s",
+			    ta->ta_encrypt->common.fqn,
+			    str_sensitive_endpoint(&c->spd.that.host_addr, &epb));
 		return false; /* try another */
 	}
 
@@ -358,8 +374,8 @@ static bool ikev1_verify_ah(const struct connection *c,
 		}
 	}
 
-	libreswan_log("AH IPsec Transform refused: %s",
-		      ta->ta_integ->common.fqn);
+	llog(RC_LOG, logger, "AH IPsec Transform refused: %s",
+		    ta->ta_integ->common.fqn);
 	return false;
 }
 
@@ -369,7 +385,8 @@ static bool ikev1_verify_ah(const struct connection *c,
 
 static bool kernel_alg_db_add(struct db_context *db_ctx,
 			      const struct proposal *proposal,
-			      lset_t policy, bool logit)
+			      lset_t policy, bool logit,
+			      struct logger *logger)
 {
 	enum ipsec_cipher_algo ealg_i = ESP_reserved;
 
@@ -379,12 +396,11 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		/* already checked by the parser? */
 		if (!kernel_alg_encrypt_ok(algs.encrypt)) {
 			if (logit) {
-				loglog(RC_LOG_SERIOUS,
-				       "requested kernel enc ealg_id=%d not present",
-				       ealg_i);
+				llog(RC_LOG_SERIOUS, logger,
+					    "requested kernel enc ealg_id=%d not present",
+					    ealg_i);
 			} else {
-				DBG_log("requested kernel enc ealg_id=%d not present",
-					ealg_i);
+				dbg("requested kernel enc ealg_id=%d not present", ealg_i);
 			}
 			return FALSE;
 		}
@@ -394,8 +410,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 
 	/* already checked by the parser? */
 	if (!kernel_alg_integ_ok(algs.integ)) {
-		DBG_log("kernel_alg_db_add() kernel auth aalg_id=%d not present",
-			aalg_i);
+		dbg("kernel_alg_db_add() kernel auth aalg_id=%d not present", aalg_i);
 		return FALSE;
 	}
 
@@ -492,7 +507,7 @@ static struct db_context *kernel_alg_db_new(struct child_proposals proposals,
 				jam_string(buf, "adding proposal: ");
 				jam_proposal(buf, proposal);
 			}
-			if (!kernel_alg_db_add(ctx_new, proposal, policy, logit))
+			if (!kernel_alg_db_add(ctx_new, proposal, policy, logit, logger))
 				success = FALSE;	/* ??? should we break? */
 		}
 	} else {
@@ -546,14 +561,14 @@ struct db_sa *v1_kernel_alg_makedb(lset_t policy,
 	struct db_context *dbnew = kernel_alg_db_new(proposals, policy, logit, logger);
 
 	if (dbnew == NULL) {
-		log_message(RC_LOG, logger, "failed to translate esp_info to proposal, returning empty");
+		llog(RC_LOG, logger, "failed to translate esp_info to proposal, returning empty");
 		return NULL;
 	}
 
 	struct db_prop *p = db_prop_get(dbnew);
 
 	if (p == NULL) {
-		log_message(RC_LOG, logger, "failed to get proposal from context, returning empty");
+		llog(RC_LOG, logger, "failed to get proposal from context, returning empty");
 		db_destroy(dbnew);
 		return NULL;
 	}
@@ -776,18 +791,18 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 
 				if (!warned_dropped_dhgr) {
 					/* complain only once */
-					loglog(RC_LOG_SERIOUS,
-						"multiple DH groups were set in aggressive mode. Only first one used.");
+					llog(RC_LOG_SERIOUS, logger,
+						    "multiple DH groups were set in aggressive mode. Only first one used.");
 				}
 
-				loglog(RC_LOG_SERIOUS,
-				       "transform (%s,%s,%s keylen %d) ignored.",
-				       enum_name(&oakley_enc_names,
-						 algs.encrypt->common.ikev1_oakley_id),
-				       enum_name(&oakley_hash_names,
-						 algs.prf->common.ikev1_oakley_id),
-				       algs.dh->common.fqn,
-				       algs.enckeylen);
+				llog(RC_LOG_SERIOUS, logger,
+					    "transform (%s,%s,%s keylen %d) ignored.",
+					    enum_name(&oakley_enc_names,
+						      algs.encrypt->common.ikev1_oakley_id),
+					    enum_name(&oakley_hash_names,
+						      algs.prf->common.ikev1_oakley_id),
+					    algs.dh->common.fqn,
+					    algs.enckeylen);
 				free_sa(&emp_sp);
 			} else {
 				/*
@@ -799,10 +814,10 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 				 * Lemma: there will be only a single previous
 				 * one in gsp (any others were discarded).
 				 */
-				loglog(RC_LOG_SERIOUS,
-				       "multiple DH groups in aggressive mode can cause interop failure");
-				loglog(RC_LOG_SERIOUS,
-					"Deleting previous proposal in the hopes of selecting DH 2 or DH 5");
+				llog(RC_LOG_SERIOUS, logger,
+					    "multiple DH groups in aggressive mode can cause interop failure");
+				llog(RC_LOG_SERIOUS, logger,
+					    "Deleting previous proposal in the hopes of selecting DH 2 or DH 5");
 
 				free_sa(&gsp);
 			}
@@ -1156,9 +1171,9 @@ bool ikev1_out_sa(pb_stream *outs,
 					 */
 					if (!ipcomp_cpi_generated) {
 						st->st_ipcomp.our_spi =
-							get_my_cpi(
-								&st->st_connection->spd,
-								tunnel_mode);
+							get_my_cpi(&st->st_connection->spd,
+								   tunnel_mode,
+								   st->st_logger);
 						if (st->st_ipcomp.our_spi == 0)
 							goto fail; /* problem generating CPI */
 
@@ -1185,7 +1200,8 @@ bool ikev1_out_sa(pb_stream *outs,
 						*spi_ptr = get_ipsec_spi(0,
 									 proto,
 									 &st->st_connection->spd,
-									 tunnel_mode);
+									 tunnel_mode,
+									 st->st_logger);
 						*spi_generated = TRUE;
 					}
 					if (!out_raw((uint8_t *)spi_ptr,
@@ -1335,7 +1351,7 @@ bool ikev1_out_sa(pb_stream *outs,
 					    (oakley_mode ? a->type.oakley == OAKLEY_KEY_LENGTH
 					     :  a->type.ipsec == KEY_LENGTH)) {
 						key_length_to_impair = a->val;
-						libreswan_log("IMPAIR: stripping key-length");
+						log_state(RC_LOG, st, "IMPAIR: stripping key-length");
 						continue;
 					}
 					if (!out_attr(oakley_mode ? a->type.oakley : a->type.ipsec ,
@@ -1357,14 +1373,14 @@ bool ikev1_out_sa(pb_stream *outs,
 					 * long form packet of no
 					 * length.
 					 */
-					libreswan_log("IMPAIR: key-length-attribute:empty not implemented");
+					log_state(RC_LOG, st, "IMPAIR: key-length-attribute:empty not implemented");
 					break;
 				case IMPAIR_EMIT_OMIT:
-					libreswan_log("IMPAIR: not sending key-length attribute");
+					log_state(RC_LOG, st, "IMPAIR: not sending key-length attribute");
 					break;
 				case IMPAIR_EMIT_DUPLICATE:
 					if (key_length_to_impair >= 0) {
-						libreswan_log("IMPAIR: duplicating key-length");
+						log_state(RC_LOG, st, "IMPAIR: duplicating key-length");
 						for (unsigned dup = 0; dup < 2; dup++) {
 							if (!out_attr(oakley_mode ? OAKLEY_KEY_LENGTH : KEY_LENGTH,
 								      key_length_to_impair,
@@ -1374,15 +1390,15 @@ bool ikev1_out_sa(pb_stream *outs,
 								goto fail;
 						}
 					} else {
-						libreswan_log("IMPAIR: no key-length to duplicate");
+						log_state(RC_LOG, st, "IMPAIR: no key-length to duplicate");
 					}
 					break;
 				case IMPAIR_EMIT_ROOF:
 				default:
 				{
 					unsigned keylen = impair_key_length_attribute - IMPAIR_EMIT_ROOF;
-					libreswan_log("IMPAIR: sending key-length attribute value %u",
-						      keylen);
+					log_state(RC_LOG, st, "IMPAIR: sending key-length attribute value %u",
+						  keylen);
 					if (!out_attr(oakley_mode ? OAKLEY_KEY_LENGTH : KEY_LENGTH,
 						      keylen, attr_desc, attr_val_descs,
 						      &trans_pbs))
@@ -1451,13 +1467,19 @@ lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */)
 	uint32_t ipsecdoisit;
 	unsigned trans_left;
 	lset_t policy = LEMPTY;
+	diag_t d;
 
-	if (!in_struct(&ipsecdoisit, &ipsec_sit_desc, &sa_pbs, NULL))
+	d = pbs_in_struct(&sa_pbs, &ipsec_sit_desc, &ipsecdoisit, sizeof(ipsecdoisit), NULL);
+	if (d != NULL) {
+		pfree_diag(&d); /* ignore error! */
 		return LEMPTY;
+	}
 
-	if (!in_struct(&proposal, &isakmp_proposal_desc, &sa_pbs,
-		       &proposal_pbs))
+	d = pbs_in_struct(&sa_pbs, &isakmp_proposal_desc, &proposal, sizeof(proposal), &proposal_pbs);
+	if (d != NULL) {
+		pfree_diag(&d); /* ignore error! */
 		return LEMPTY;
+	}
 
 	if (proposal.isap_spisize > MAX_ISAKMP_SPI_SIZE)
 		return LEMPTY;
@@ -1465,23 +1487,31 @@ lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */)
 	if (proposal.isap_spisize > 0) {
 		uint8_t junk_spi[MAX_ISAKMP_SPI_SIZE];
 
-		if (!in_raw(junk_spi, proposal.isap_spisize, &proposal_pbs,
-			    "Oakley SPI"))
+		d = pbs_in_raw(&proposal_pbs, junk_spi, proposal.isap_spisize, "Oakley SPI");
+		if (d != NULL) {
+			pfree_diag(&d); /* ignore error! */
 			return LEMPTY;
+		}
 	}
 
 	trans_left = proposal.isap_notrans;
 	while (trans_left-- != 0) {
-		if (!in_struct(&trans, &isakmp_isakmp_transform_desc,
-			       &proposal_pbs,
-			       &trans_pbs))
+		diag_t d = pbs_in_struct(&proposal_pbs, &isakmp_isakmp_transform_desc,
+					 &trans, sizeof(trans),
+					 &trans_pbs);
+		if (d != NULL) {
+			pfree_diag(&d); /* ignore error! */
 			return LEMPTY;
+		}
 
 		while (pbs_left(&trans_pbs) >= isakmp_oakley_attribute_desc.size) {
-			if (!in_struct(&a, &isakmp_oakley_attribute_desc,
-				       &trans_pbs,
-				       &attr_pbs))
+			diag_t d = pbs_in_struct(&trans_pbs, &isakmp_oakley_attribute_desc,
+						 &a, sizeof(a),
+						 &attr_pbs);
+			if (d != NULL) {
+				pfree_diag(&d); /* ignore error! */
 				return LEMPTY;
+			}
 
 			switch (a.isaat_af_type) {
 			case OAKLEY_AUTHENTICATION_METHOD | ISAKMP_ATTR_AF_TV:
@@ -1524,12 +1554,12 @@ static bool ikev1_verify_ike(const struct trans_attrs *ta,
 			     struct logger *logger)
 {
 	if (ta->ta_encrypt == NULL) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "OAKLEY proposal refused: missing encryption");
 		return false;
 	}
 	if (ta->ta_prf == NULL) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "OAKLEY proposal refused: missing PRF");
 		return false;
 	}
@@ -1539,7 +1569,7 @@ static bool ikev1_verify_ike(const struct trans_attrs *ta,
 		return false;
 	}
 	if (ta->ta_dh == NULL) {
-		log_message(RC_LOG_SERIOUS, logger, "OAKLEY proposal refused: missing DH");
+		llog(RC_LOG_SERIOUS, logger, "OAKLEY proposal refused: missing DH");
 		return false;
 	}
 	if (ike_proposals.p == NULL) {
@@ -1562,21 +1592,21 @@ static bool ikev1_verify_ike(const struct trans_attrs *ta,
 		    algs.prf == ta->ta_prf &&
 		    algs.dh == ta->ta_dh) {
 			if (ealg_insecure) {
-				loglog(RC_LOG_SERIOUS,
-				       "You should NOT use insecure/broken IKE algorithms (%s)!",
-				       ta->ta_encrypt->common.fqn);
+				llog(RC_LOG_SERIOUS, logger,
+					    "You should NOT use insecure/broken IKE algorithms (%s)!",
+					    ta->ta_encrypt->common.fqn);
 			} else {
 				dbg("OAKLEY proposal verified; matching alg_info found");
 				return true;
 			}
 		}
 	}
-	libreswan_log("Oakley Transform [%s (%d), %s, %s] refused%s",
-		      ta->ta_encrypt->common.fqn, ta->enckeylen,
-		      ta->ta_prf->common.fqn, ta->ta_dh->common.fqn,
-		      ealg_insecure ?
-		      " due to insecure key_len and enc. alg. not listed in \"ike\" string" :
-		      "");
+	llog(RC_LOG, logger, "Oakley Transform [%s (%d), %s, %s] refused%s",
+		    ta->ta_encrypt->common.fqn, ta->enckeylen,
+		    ta->ta_prf->common.fqn, ta->ta_dh->common.fqn,
+		    ealg_insecure ?
+		    " due to insecure key_len and enc. alg. not listed in \"ike\" string" :
+		  "");
 	return false;
 }
 
@@ -1607,6 +1637,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 								 * can appear. */
 				    struct state *const st)	/* current state object */
 {
+	diag_t d;
 	const struct connection *const c = st->st_connection;
 	bool xauth_init = FALSE,
 		xauth_resp = FALSE;
@@ -1639,7 +1670,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 	/* DOI */
 	if (sa->isasa_doi != ISAKMP_DOI_IPSEC) {
 		log_state(RC_LOG_SERIOUS, st, "Unknown/unsupported DOI %s",
-			    enum_show(&doi_names, sa->isasa_doi));
+			  enum_show(&doi_names, sa->isasa_doi));
 		/* XXX Could send notification back */
 		return DOI_NOT_SUPPORTED;	/* reject whole SA */
 	}
@@ -1647,8 +1678,11 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 	/* Situation */
 	uint32_t ipsecdoisit;
 
-	if (!in_struct(&ipsecdoisit, &ipsec_sit_desc, sa_pbs, NULL))
+	d = pbs_in_struct(sa_pbs, &ipsec_sit_desc, &ipsecdoisit, sizeof(ipsecdoisit), NULL);
+	if (d != NULL) {
+		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return SITUATION_NOT_SUPPORTED;	/* reject whole SA */
+	}
 
 	if (ipsecdoisit != SIT_IDENTITY_ONLY) {
 		log_state(RC_LOG_SERIOUS, st, "unsupported IPsec DOI situation (%s)",
@@ -1665,8 +1699,11 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 	struct isakmp_proposal proposal;
 	pb_stream proposal_pbs;
 
-	if (!in_struct(&proposal, &isakmp_proposal_desc, sa_pbs,
-		       &proposal_pbs)) {
+	d = pbs_in_struct(sa_pbs, &isakmp_proposal_desc,
+			  &proposal, sizeof(proposal),
+			  &proposal_pbs);
+	if (d != NULL) {
+		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return PAYLOAD_MALFORMED;	/* reject whole SA */
 	}
 
@@ -1751,8 +1788,10 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 		struct isakmp_transform trans;
 		pb_stream trans_pbs;
 
-		if (!in_struct(&trans, &isakmp_isakmp_transform_desc,
-			       &proposal_pbs, &trans_pbs)) {
+		diag_t d = pbs_in_struct(&proposal_pbs, &isakmp_isakmp_transform_desc,
+					 &trans, sizeof(trans), &trans_pbs);
+		if (d != NULL) {
+			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 		}
 
@@ -2346,33 +2385,36 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	uint16_t life_type = 0;	/* initialized to silence GCC */
 	const struct dh_desc *pfs_group = NULL;
 
-	if (!in_struct(trans, trans_desc, prop_pbs, trans_pbs))
-		return FALSE;
+	diag_t d = pbs_in_struct(prop_pbs, trans_desc, trans, sizeof(trans), trans_pbs);
+	if (d != NULL) {
+		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		return false;
+	}
 
 	if (trans->isat_transnum <= previous_transnum) {
-		loglog(RC_LOG_SERIOUS,
-		       "Transform Numbers in Proposal are not monotonically increasing");
+		log_state(RC_LOG_SERIOUS, st,
+			  "Transform Numbers in Proposal are not monotonically increasing");
 		return FALSE;
 	}
 
 	switch (trans->isat_tnp) {
 	case ISAKMP_NEXT_T:
 		if (is_last) {
-			loglog(RC_LOG_SERIOUS,
-			       "Proposal Payload has more Transforms than specified");
+			log_state(RC_LOG_SERIOUS, st,
+				  "Proposal Payload has more Transforms than specified");
 			return FALSE;
 		}
 		break;
 	case ISAKMP_NEXT_NONE:
 		if (!is_last) {
-			loglog(RC_LOG_SERIOUS,
-			       "Proposal Payload has fewer Transforms than specified");
+			log_state(RC_LOG_SERIOUS, st,
+				  "Proposal Payload has fewer Transforms than specified");
 			return FALSE;
 		}
 		break;
 	default:
-		loglog(RC_LOG_SERIOUS,
-		       "expecting Transform Payload, but found %s in Proposal",
+		log_state(RC_LOG_SERIOUS, st,
+			  "expecting Transform Payload, but found %s in Proposal",
 		       enum_show(&ikev1_payload_names, trans->isat_tnp));
 		return FALSE;
 	}
@@ -2405,18 +2447,21 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		uint32_t val;                          /* room for larger value */
 		bool ipcomp_inappropriate = (proto == PROTO_IPCOMP);  /* will get reset if OK */
 
-		if (!in_struct(&a, &isakmp_ipsec_attribute_desc, trans_pbs,
-			       &attr_pbs))
+		diag_t d = pbs_in_struct(trans_pbs, &isakmp_ipsec_attribute_desc,
+					 &a, sizeof(a), &attr_pbs);
+		if (d != NULL) {
+			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			return FALSE;
+		}
 
 		ty = a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK;
 		val = a.isaat_lv;
 
 		if (ty == secctx_attr_type) {
 			if (seen_secctx_attr) {
-				loglog(RC_LOG_SERIOUS,
-				       "repeated SECCTX attribute in IPsec Transform %u",
-				       trans->isat_transnum);
+				log_state(RC_LOG_SERIOUS, st,
+					  "repeated SECCTX attribute in IPsec Transform %u",
+					  trans->isat_transnum);
 				return FALSE;
 			}
 			seen_secctx_attr = TRUE;
@@ -2424,10 +2469,10 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		} else {
 			passert(ty < LELEM_ROOF);
 			if (LHAS(seen_attrs, ty)) {
-				loglog(RC_LOG_SERIOUS,
-				       "repeated %s attribute in IPsec Transform %u",
-				       enum_show(&ipsec_attr_names, a.isaat_af_type),
-				       trans->isat_transnum);
+				log_state(RC_LOG_SERIOUS, st,
+					  "repeated %s attribute in IPsec Transform %u",
+					  enum_show(&ipsec_attr_names, a.isaat_af_type),
+					  trans->isat_transnum);
 				return FALSE;
 			}
 
@@ -2439,9 +2484,9 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		if (vdesc != NULL) {
 			/* reject unknown enum values */
 			if (enum_name(vdesc, val) == NULL) {
-				loglog(RC_LOG_SERIOUS,
-				       "invalid value %" PRIu32 " for attribute %s in IPsec Transform",
-				       val,
+				log_state(RC_LOG_SERIOUS, st,
+					  "invalid value %" PRIu32 " for attribute %s in IPsec Transform",
+					  val,
 				       enum_show(&ipsec_attr_names,
 						 a.isaat_af_type));
 				return FALSE;
@@ -2461,9 +2506,9 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		case SA_LIFE_TYPE | ISAKMP_ATTR_AF_TV:
 			ipcomp_inappropriate = FALSE;
 			if (LHAS(seen_durations, val)) {
-				loglog(RC_LOG_SERIOUS,
-				       "attribute SA_LIFE_TYPE value %s repeated in message",
-				       enum_show(&sa_lifetime_names, val));
+				log_state(RC_LOG_SERIOUS, st,
+					  "attribute SA_LIFE_TYPE value %s repeated in message",
+					  enum_show(&sa_lifetime_names, val));
 				return FALSE;
 			}
 			seen_durations |= LELEM(val);
@@ -2476,8 +2521,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		case SA_LIFE_DURATION | ISAKMP_ATTR_AF_TV:
 			ipcomp_inappropriate = FALSE;
 			if (!LHAS(seen_attrs, SA_LIFE_TYPE)) {
-				loglog(RC_LOG_SERIOUS,
-				       "SA_LIFE_DURATION IPsec attribute not preceded by SA_LIFE_TYPE attribute");
+				log_state(RC_LOG_SERIOUS, st,
+					  "SA_LIFE_DURATION IPsec attribute not preceded by SA_LIFE_TYPE attribute");
 				return FALSE;
 			}
 			seen_attrs &=
@@ -2531,14 +2576,14 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				 * draft-shacham-ippcp-rfc2393bis-05.txt 4.1.
 				 */
 				ipcomp_inappropriate = FALSE;
-				loglog(RC_COMMENT,
-				       "IPCA (IPcomp SA) contains GROUP_DESCRIPTION.  Ignoring inappropriate attribute.");
+				log_state(RC_COMMENT, st,
+					  "IPCA (IPcomp SA) contains GROUP_DESCRIPTION.  Ignoring inappropriate attribute.");
 			}
 			pfs_group = ikev1_get_ike_dh_desc(val);
 			if (pfs_group == NULL) {
-				loglog(RC_LOG_SERIOUS,
-				       "OAKLEY_GROUP %" PRIu32 " not supported for PFS",
-				       val);
+				log_state(RC_LOG_SERIOUS, st,
+					  "OAKLEY_GROUP %" PRIu32 " not supported for PFS",
+					  val);
 				return FALSE;
 			}
 			break;
@@ -2596,22 +2641,22 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				 * Either straight AH, or ESP
 				 * containing AUTH; or what?
 				 */
-				loglog(RC_LOG_SERIOUS,
-				       "IKEv1 %s integrity algorithm %s not supported",
-				       (proto == PROTO_IPSEC_ESP ? "ESP" : "AH"),
-				       enum_show(&ah_transformid_names, val));
+				log_state(RC_LOG_SERIOUS, st,
+					  "IKEv1 %s integrity algorithm %s not supported",
+					  (proto == PROTO_IPSEC_ESP ? "ESP" : "AH"),
+					  enum_show(&ah_transformid_names, val));
 			}
 			break;
 
 		case KEY_LENGTH | ISAKMP_ATTR_AF_TV:
 			if (attrs->transattrs.ta_encrypt == NULL) {
-				loglog(RC_LOG_SERIOUS,
-				       "IKEv1 key-length attribute without encryption algorithm");
+				log_state(RC_LOG_SERIOUS, st,
+					  "IKEv1 key-length attribute without encryption algorithm");
 				return false;
 			}
 			if (!encrypt_has_key_bit_length(attrs->transattrs.ta_encrypt, val)) {
-				loglog(RC_LOG_SERIOUS,
-				       "IKEv1 key-length attribute without encryption algorithm");
+				log_state(RC_LOG_SERIOUS, st,
+					  "IKEv1 key-length attribute without encryption algorithm");
 				return false;
 			}
 			attrs->transattrs.enckeylen = val;
@@ -2625,17 +2670,17 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				if (!parse_secctx_attr(pbs, st))
 					return FALSE;
 			} else {
-				loglog(RC_LOG_SERIOUS,
-				       "unsupported IPsec attribute %s",
-				       enum_show(&ipsec_attr_names, a.isaat_af_type));
+				log_state(RC_LOG_SERIOUS, st,
+					  "unsupported IPsec attribute %s",
+					  enum_show(&ipsec_attr_names, a.isaat_af_type));
 				return FALSE;
 			}
 		}
 
 		if (ipcomp_inappropriate) {
-			loglog(RC_LOG_SERIOUS,
-			       "IPsec attribute %s inappropriate for IPCOMP",
-			       enum_show(&ipsec_attr_names, a.isaat_af_type));
+			log_state(RC_LOG_SERIOUS, st,
+				  "IPsec attribute %s inappropriate for IPCOMP",
+				  enum_show(&ipsec_attr_names, a.isaat_af_type));
 			return FALSE;
 		}
 	}
@@ -2649,16 +2694,16 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			st->st_pfs_group = pfs_group;
 
 		if (st->st_pfs_group != pfs_group) {
-			loglog(RC_LOG_SERIOUS,
-			       "GROUP_DESCRIPTION inconsistent with that of %s in IPsec SA",
-			       selection ? "the Proposal" : "a previous Transform");
+			log_state(RC_LOG_SERIOUS, st,
+				  "GROUP_DESCRIPTION inconsistent with that of %s in IPsec SA",
+				  selection ? "the Proposal" : "a previous Transform");
 			return FALSE;
 		}
 	}
 
 	if (LHAS(seen_attrs, SA_LIFE_DURATION)) {
-		loglog(RC_LOG_SERIOUS,
-		       "SA_LIFE_TYPE IPsec attribute not followed by SA_LIFE_DURATION attribute in message");
+		log_state(RC_LOG_SERIOUS, st,
+			  "SA_LIFE_TYPE IPsec attribute not followed by SA_LIFE_DURATION attribute in message");
 		return FALSE;
 	}
 
@@ -2675,8 +2720,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			 * the default is "unspecified (host-dependent)".
 			 * This makes little sense, so we demand that it be specified.
 			 */
-			loglog(RC_LOG_SERIOUS,
-			       "IPsec Transform must specify ENCAPSULATION_MODE");
+			log_state(RC_LOG_SERIOUS, st,
+				  "IPsec Transform must specify ENCAPSULATION_MODE");
 			return FALSE;
 		}
 	}
@@ -2698,9 +2743,9 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			attrs->transattrs.enckeylen = attrs->transattrs.ta_encrypt->keydeflen;
 		} else {
 			/* ealg requires a key length attr */
-			loglog(RC_LOG_SERIOUS,
-			       "IPsec encryption transform %s did not specify required KEY_LENGTH attribute",
-			       attrs->transattrs.ta_encrypt->common.fqn);
+			log_state(RC_LOG_SERIOUS, st,
+				  "IPsec encryption transform %s did not specify required KEY_LENGTH attribute",
+				  attrs->transattrs.ta_encrypt->common.fqn);
 			attrs->transattrs.ta_encrypt = NULL; /* force rejection */
 		}
 	}
@@ -2723,8 +2768,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 	if (proto == PROTO_IPSEC_AH) {
 		if (!LHAS(seen_attrs, AUTH_ALGORITHM)) {
-			loglog(RC_LOG_SERIOUS,
-			       "AUTH_ALGORITHM attribute missing in AH Transform");
+			log_state(RC_LOG_SERIOUS, st,
+				  "AUTH_ALGORITHM attribute missing in AH Transform");
 			return false;
 		}
 	}
@@ -2740,7 +2785,8 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 			  struct_desc *trans_desc,              /* descriptor for this transformation */
 			  pb_stream *trans_pbs,                 /* PBS for incoming transform */
 			  const struct spd_route *sr,           /* host details for the association */
-			  bool tunnel_mode)                     /* true for inner most tunnel SA */
+			  bool tunnel_mode,                     /* true for inner most tunnel SA */
+			  struct logger *logger)
 {
 	pb_stream r_proposal_pbs;
 	pb_stream r_trans_pbs;
@@ -2758,7 +2804,7 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 		 * Note: we may fail to generate a satisfactory CPI,
 		 * but we'll ignore that.
 		 */
-		pi->our_spi = get_my_cpi(sr, tunnel_mode);
+		pi->our_spi = get_my_cpi(sr, tunnel_mode, logger);
 		passert(out_raw((uint8_t *) &pi->our_spi +
 				IPSEC_DOI_SPI_SIZE - IPCOMP_CPI_SIZE,
 				IPCOMP_CPI_SIZE,
@@ -2768,7 +2814,8 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 					    r_proposal.isap_protoid == PROTO_IPSEC_AH ?
 						&ip_protocol_ah : &ip_protocol_esp,
 					    sr,
-					    tunnel_mode);
+					    tunnel_mode,
+					    logger);
 		/* XXX should check for errors */
 		passert(out_raw((uint8_t *) &pi->our_spi, IPSEC_DOI_SPI_SIZE,
 				&r_proposal_pbs, "SPI"));
@@ -2793,6 +2840,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				   bool selection,              /* if this SA is a selection, only one transform may appear */
 				   struct state *st)            /* current state object */
 {
+	diag_t d;
 	const struct connection *c = st->st_connection;
 	uint32_t ipsecdoisit;
 	pb_stream next_proposal_pbs;
@@ -2804,19 +2852,22 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 	/* DOI */
 	if (sa->isasa_doi != ISAKMP_DOI_IPSEC) {
-		loglog(RC_LOG_SERIOUS, "Unknown or unsupported DOI %s",
-		       enum_show(&doi_names, sa->isasa_doi));
+		log_state(RC_LOG_SERIOUS, st, "Unknown or unsupported DOI %s",
+			  enum_show(&doi_names, sa->isasa_doi));
 		/* XXX Could send notification back */
 		return DOI_NOT_SUPPORTED;	/* reject whole SA */
 	}
 
 	/* Situation */
-	if (!in_struct(&ipsecdoisit, &ipsec_sit_desc, sa_pbs, NULL))
+	d = pbs_in_struct(sa_pbs, &ipsec_sit_desc, &ipsecdoisit, sizeof(ipsecdoisit), NULL);
+	if (d != NULL) {
+		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return SITUATION_NOT_SUPPORTED;	/* reject whole SA */
+	}
 
 	if (ipsecdoisit != SIT_IDENTITY_ONLY) {
-		loglog(RC_LOG_SERIOUS, "unsupported IPsec DOI situation (%s)",
-		       bitnamesof(sit_bit_names, ipsecdoisit));
+		log_state(RC_LOG_SERIOUS, st, "unsupported IPsec DOI situation (%s)",
+			  bitnamesof(sit_bit_names, ipsecdoisit));
 		/* XXX Could send notification back */
 		return SITUATION_NOT_SUPPORTED;	/* reject whole SA */
 	}
@@ -2834,9 +2885,13 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 	 * look-ahead.
 	 */
 
-	if (!in_struct(&next_proposal, &isakmp_proposal_desc, sa_pbs,
-		       &next_proposal_pbs))
+	d = pbs_in_struct(sa_pbs, &isakmp_proposal_desc,
+			  &next_proposal, sizeof(next_proposal),
+			  &next_proposal_pbs);
+	if (d != NULL) {
+		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+	}
 
 	/* for each conjunction of proposals... */
 	while (next_full) {
@@ -2892,16 +2947,21 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					uint8_t filler[IPSEC_DOI_SPI_SIZE -
 							IPCOMP_CPI_SIZE];
 
-					if (!in_raw(filler, sizeof(filler),
-						    &next_proposal_pbs,
-						    "CPI filler") ||
-					    !all_zero(filler, sizeof(filler)))
+					diag_t d = pbs_in_raw(&next_proposal_pbs,
+							      filler, sizeof(filler),
+							      "CPI filler");
+					if (d != NULL) {
+						log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 						return INVALID_SPI;	/* reject whole SA */
+					}
+					if (!all_zero(filler, sizeof(filler))) {
+						return INVALID_SPI;	/* reject whole SA */
+					}
 				} else if (next_proposal.isap_spisize !=
 					   IPCOMP_CPI_SIZE) {
-					loglog(RC_LOG_SERIOUS,
-					       "IPsec Proposal with improper CPI size (%u)",
-					       next_proposal.isap_spisize);
+					log_state(RC_LOG_SERIOUS, st,
+						  "IPsec Proposal with improper CPI size (%u)",
+						  next_proposal.isap_spisize);
 					return INVALID_SPI;	/* reject whole SA */
 				}
 
@@ -2909,12 +2969,16 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				 * ipsec_spi_t.  So we start a couple of bytes in.
 				 */
 				zero(&next_spi);
-				if (!in_raw((uint8_t *)&next_spi +
-					    IPSEC_DOI_SPI_SIZE -
-					    IPCOMP_CPI_SIZE,
-					    IPCOMP_CPI_SIZE,
-					    &next_proposal_pbs, "CPI"))
+				diag_t d = pbs_in_raw(&next_proposal_pbs,
+						      (uint8_t *)&next_spi +
+						      IPSEC_DOI_SPI_SIZE -
+						      IPCOMP_CPI_SIZE,
+						      IPCOMP_CPI_SIZE,
+						      "CPI");
+				if (d != NULL) {
+					log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 					return INVALID_SPI;	/* reject whole SA */
+				}
 
 				/* If sanity ruled, CPIs would have to be such that
 				 * the SAID (the triple (CPI, IPCOM, destination IP))
@@ -2929,8 +2993,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					well_known_cpi = ntohl(next_spi);
 					next_spi = uniquify_peer_cpi(next_spi, st, 0);
 					if (next_spi == 0) {
-						loglog(RC_LOG_SERIOUS,
-						       "IPsec Proposal contains well-known CPI that I cannot uniquify");
+						log_state(RC_LOG_SERIOUS, st,
+							  "IPsec Proposal contains well-known CPI that I cannot uniquify");
 						return INVALID_SPI;	/* reject whole SA */
 					}
 					break;
@@ -2939,9 +3003,9 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					    IPCOMP_FIRST_NEGOTIATED ||
 					    ntohl(next_spi) >
 					    IPCOMP_LAST_NEGOTIATED) {
-						loglog(RC_LOG_SERIOUS,
-						       "IPsec Proposal contains CPI from non-negotiated range (0x%" PRIx32 ")",
-						       ntohl(next_spi));
+						log_state(RC_LOG_SERIOUS, st,
+							  "IPsec Proposal contains CPI from non-negotiated range (0x%" PRIx32 ")",
+							  ntohl(next_spi));
 						return INVALID_SPI;	/* reject whole SA */
 					}
 					break;
@@ -2951,40 +3015,44 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				/* AH or ESP SPI */
 				if (next_proposal.isap_spisize !=
 				    IPSEC_DOI_SPI_SIZE) {
-					loglog(RC_LOG_SERIOUS,
-					       "IPsec Proposal with improper SPI size (%u)",
-					       next_proposal.isap_spisize);
+					log_state(RC_LOG_SERIOUS, st,
+						  "IPsec Proposal with improper SPI size (%u)",
+						  next_proposal.isap_spisize);
 					return INVALID_SPI;	/* reject whole SA */
 				}
 
-				if (!in_raw((uint8_t *)&next_spi,
-					    sizeof(next_spi),
-					    &next_proposal_pbs, "SPI"))
+				diag_t d = pbs_in_raw(&next_proposal_pbs,
+						      (uint8_t *)&next_spi,
+						      sizeof(next_spi),
+						      "SPI");
+				if (d != NULL) {
+					log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 					return INVALID_SPI;	/* reject whole SA */
+				}
 
 				/* SPI value 0 is invalid and values 1-255 are reserved to IANA.
 				 * RFC 2402 (ESP) 2.4, RFC 2406 (AH) 2.1
 				 * IPCOMP???
 				 */
 				if (ntohl(next_spi) < IPSEC_DOI_SPI_MIN) {
-					loglog(RC_LOG_SERIOUS,
-					       "IPsec Proposal contains invalid SPI (0x%" PRIx32 ")",
-					       ntohl(next_spi));
+					log_state(RC_LOG_SERIOUS, st,
+						  "IPsec Proposal contains invalid SPI (0x%" PRIx32 ")",
+						  ntohl(next_spi));
 					return INVALID_SPI;	/* reject whole SA */
 				}
 			}
 
 			if (next_proposal.isap_notrans == 0) {
-				loglog(RC_LOG_SERIOUS,
-				       "IPsec Proposal contains no Transforms (skipped)");
+				log_state(RC_LOG_SERIOUS, st,
+					  "IPsec Proposal contains no Transforms (skipped)");
 				continue;
 			}
 
 			switch (next_proposal.isap_protoid) {
 			case PROTO_IPSEC_AH:
 				if (ah_seen) {
-					loglog(RC_LOG_SERIOUS,
-					       "IPsec SA contains two simultaneous AH Proposals");
+					log_state(RC_LOG_SERIOUS, st,
+						  "IPsec SA contains two simultaneous AH Proposals");
 					return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 				}
 				ah_seen = TRUE;
@@ -2995,8 +3063,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 			case PROTO_IPSEC_ESP:
 				if (esp_seen) {
-					loglog(RC_LOG_SERIOUS,
-					       "IPsec SA contains two simultaneous ESP Proposals");
+					log_state(RC_LOG_SERIOUS, st,
+						  "IPsec SA contains two simultaneous ESP Proposals");
 					return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 				}
 				esp_seen = TRUE;
@@ -3007,8 +3075,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 			case PROTO_IPCOMP:
 				if (ipcomp_seen) {
-					loglog(RC_LOG_SERIOUS,
-					       "IPsec SA contains two simultaneous IPCOMP Proposals");
+					log_state(RC_LOG_SERIOUS, st,
+						  "IPsec SA contains two simultaneous IPCOMP Proposals");
 					return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 				}
 				ipcomp_seen = TRUE;
@@ -3018,10 +3086,10 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				break;
 
 			default:
-				loglog(RC_LOG_SERIOUS,
-				       "unexpected Protocol ID (%s) in IPsec Proposal",
-				       enum_show(&ikev1_protocol_names,
-						 next_proposal.isap_protoid));
+				log_state(RC_LOG_SERIOUS, st,
+					  "unexpected Protocol ID (%s) in IPsec Proposal",
+					  enum_show(&ikev1_protocol_names,
+						    next_proposal.isap_protoid));
 				return INVALID_PROTOCOL_ID;	/* reject whole SA */
 			}
 
@@ -3030,16 +3098,20 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				next_full = FALSE;
 				break;
 			} else if (next_proposal.isap_pnp != ISAKMP_NEXT_P) {
-				loglog(RC_LOG_SERIOUS,
-				       "unexpected in Proposal: %s",
-				       enum_show(&ikev1_payload_names,
-						 next_proposal.isap_pnp));
+				log_state(RC_LOG_SERIOUS, st,
+					  "unexpected in Proposal: %s",
+					  enum_show(&ikev1_payload_names,
+						    next_proposal.isap_pnp));
 				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 
-			if (!in_struct(&next_proposal, &isakmp_proposal_desc,
-				       sa_pbs, &next_proposal_pbs))
+			diag_t d = pbs_in_struct(sa_pbs, &isakmp_proposal_desc,
+						 &next_proposal, sizeof(next_proposal),
+						 &next_proposal_pbs);
+			if (d != NULL) {
+				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+			}
 		} while (next_proposal.isap_proposal == propno);
 
 		/* Now that we have all conjuncts, we should try
@@ -3097,11 +3169,11 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				 * AH_DES, AUTH_ALGORITHM_DES_MAC (unimplemented)
 				 */
 				if (ah_trans.isat_transid != ah_attrs.transattrs.ta_integ->integ_ikev1_ah_transform) {
-					loglog(RC_LOG_SERIOUS,
-					       "%s attribute inappropriate in %s Transform",
-					       ah_attrs.transattrs.ta_integ->common.fqn,
-					       enum_show(&ah_transformid_names,
-							 ah_trans.isat_transid));
+					log_state(RC_LOG_SERIOUS, st,
+						  "%s attribute inappropriate in %s Transform",
+						  ah_attrs.transattrs.ta_integ->common.fqn,
+						  enum_show(&ah_transformid_names,
+							    ah_trans.isat_transid));
 					return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 				}
 				break;                  /* we seem to be happy */
@@ -3168,8 +3240,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				if (ah_seen &&
 				    ah_attrs.mode !=
 				      esp_attrs.mode) {
-					loglog(RC_LOG_SERIOUS,
-					       "Skipped bogus proposal where AH and ESP transforms disagree about mode");
+					log_state(RC_LOG_SERIOUS, st,
+						  "Skipped bogus proposal where AH and ESP transforms disagree about mode");
 					continue; /* try another */
 				}
 
@@ -3207,25 +3279,25 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				ipstr_buf b;
 				char cib[CONN_INST_BUF];
 
-				libreswan_log(
-					"compression proposed by %s, but policy for \"%s\"%s forbids it",
-					ipstr(&c->spd.that.host_addr, &b),
-					c->name, fmt_conn_instance(c, cib));
+				log_state(RC_LOG, st,
+					  "compression proposed by %s, but policy for \"%s\"%s forbids it",
+					  ipstr(&c->spd.that.host_addr, &b),
+					  c->name, fmt_conn_instance(c, cib));
 				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 
 			if (!can_do_IPcomp) {
 				ipstr_buf b;
 
-				libreswan_log(
-					"compression proposed by %s, but kernel has no IPCOMP support",
-					ipstr(&c->spd.that.host_addr, &b));
+				log_state(RC_LOG, st,
+					  "compression proposed by %s, but kernel has no IPCOMP support",
+					  ipstr(&c->spd.that.host_addr, &b));
 				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 
 			if (well_known_cpi != 0 && !ah_seen && !esp_seen) {
-				libreswan_log(
-					"illegal proposal: bare IPCOMP used with well-known CPI");
+				log_state(RC_LOG, st,
+					  "illegal proposal: bare IPCOMP used with well-known CPI");
 				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 
@@ -3248,8 +3320,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 				if (well_known_cpi != 0 &&
 				    ipcomp_attrs.transattrs.ta_comp != well_known_cpi) {
-					libreswan_log(
-						"illegal proposal: IPCOMP well-known CPI disagrees with transform");
+					log_state(RC_LOG, st,
+						  "illegal proposal: IPCOMP well-known CPI disagrees with transform");
 					return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 				}
 
@@ -3310,7 +3382,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					      &ah_trans_pbs,
 					      &st->st_connection->spd,
 					      tunnel_mode &&
-						inner_proto == &ip_protocol_ah);
+					      inner_proto == &ip_protocol_ah,
+					      st->st_logger);
 			}
 
 			/* ESP proposal */
@@ -3324,7 +3397,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					      &esp_trans_pbs,
 					      &st->st_connection->spd,
 					      tunnel_mode &&
-						inner_proto == &ip_protocol_esp);
+					      inner_proto == &ip_protocol_esp,
+					      st->st_logger);
 			}
 
 			/* IPCOMP proposal */
@@ -3338,7 +3412,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					      &ipcomp_trans_pbs,
 					      &st->st_connection->spd,
 					      tunnel_mode &&
-						inner_proto == &ip_protocol_comp);
+					      inner_proto == &ip_protocol_comp,
+					      st->st_logger);
 			}
 
 			close_output_pbs(r_sa_pbs);
@@ -3370,6 +3445,6 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 		return NOTHING_WRONG;	/* accept this transform! */
 	}
 
-	loglog(RC_LOG_SERIOUS, "no acceptable Proposal in IPsec SA");
+	log_state(RC_LOG_SERIOUS, st, "no acceptable Proposal in IPsec SA");
 	return NO_PROPOSAL_CHOSEN;	/* reject whole SA */
 }

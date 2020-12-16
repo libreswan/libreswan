@@ -54,6 +54,7 @@ ifeq ($(USE_IKEv1),true)
 OBJS += ikev1_send.o
 endif
 
+OBJS += unpack.o
 OBJS += impair_message.o
 OBJS += ikev2_notify.o
 OBJS += ikev2_send.o
@@ -191,6 +192,7 @@ OBJS += ike_spi.o
 OBJS += foodgroups.o log.o state.o plutomain.o plutoalg.o
 OBJS += server.o
 OBJS += server_fork.o
+OBJS += server_pool.o
 OBJS += iface.o
 OBJS += iface_udp.o
 OBJS += iface_tcp.o
@@ -216,7 +218,7 @@ OBJS += cert_decode_helper.o
 OBJS += kernel.o
 OBJS += rcv_whack.o pluto_stats.o
 OBJS += demux.o msgdigest.o keys.o
-OBJS += pluto_crypt.o crypt_utils.o crypt_ke.o crypt_dh.o
+OBJS += crypt_ke.o crypt_dh.o
 OBJS += crypt_dh_v2.o
 OBJS += rnd.o
 OBJS += ikev1_spdb.o

@@ -38,4 +38,12 @@ typedef stf_status (ke_and_nonce_cb)(struct state *st, struct msg_digest *md,
 void submit_ke_and_nonce(struct state *st, const struct dh_desc *dh,
 			 ke_and_nonce_cb *cb, const char *name);
 
+/*
+ * KE and NONCE
+ */
+
+extern void unpack_KE_from_helper(struct state *st,
+				  struct dh_local_secret *local_secret,
+				  chunk_t *g);
+
 #endif /* _PLUTO_CRYPT_H */

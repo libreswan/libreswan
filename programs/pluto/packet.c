@@ -1726,12 +1726,12 @@ void init_pbs(pb_stream *pbs, uint8_t *start, size_t len, const char *name)
 struct pbs_out open_pbs_out(const char *name, uint8_t *buffer, size_t sizeof_buffer,
 			    struct logger *logger)
 {
-	struct pbs_out out_pbs;
-	init_pbs(&out_pbs, buffer, sizeof_buffer, name);
+	struct pbs_out outs;
+	init_pbs(&outs, buffer, sizeof_buffer, name);
 	memset(buffer, 0xFA, sizeof_buffer);	/* value likely to be unpleasant */
-	out_pbs.out_logger = logger;
+	outs.outs_logger = logger;
 	dbg("opening output PBS %s", name);
-	return out_pbs;
+	return outs;
 }
 
 pb_stream same_chunk_as_in_pbs(chunk_t chunk, const char *name)
@@ -1979,7 +1979,7 @@ static void DBG_prefix_print_struct(const pb_stream *pbs,
  */
 
 diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
-		     void *struct_ptr, size_t struct_size,
+		     void *dest_start, size_t dest_size,
 		     struct pbs_in *obj_pbs)
 {
 	uint8_t *cur = ins->cur;
@@ -1989,11 +1989,11 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 			    sd->size);
 	}
 
+	passert(dest_size >= sd->size);
 	uint8_t *roof = cur + sd->size; /* may be changed by a length field */
-	uint8_t *outp = struct_ptr;
-	bool immediate = FALSE;
-
-	passert(struct_size == 0 || struct_size >= sd->size);
+	uint8_t *dest = dest_start;
+	uint8_t *dest_end = dest + dest_size;
+	bool immediate = false;
 
 	for (field_desc *fp = sd->fields; fp->field_type != ft_end; fp++) {
 
@@ -2001,8 +2001,8 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 		passert(cur + fp->size <= ins->roof);
 		/* field ends within struct? */
 		passert(cur + fp->size <= ins->cur + sd->size);
-		/* "offset into struct" - "offset into pbs" == "start of struct"? */
-		passert(outp - (cur - ins->cur) == struct_ptr);
+		/* field ends within dest */
+		passert(dest + fp->size <= dest_end);
 
 #if 0
 		dbg("%td (%td) '%s'.'%s' %d bytes ",
@@ -2016,7 +2016,14 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 			for (size_t i = fp->size; i != 0; i--) {
 				uint8_t byte = *cur;
 				if (byte != 0) {
-					/* We cannot zeroize it, it would break our hash calculation. */
+					/*
+					 * We cannot zeroize it, it
+					 * would break our hash
+					 * calculation.
+					 *
+					 * XXX: bytes used for hashing
+					 * can't be zero/ignore.
+					 */
 					dbg("byte at offset %td (%td) of '%s'.'%s' is 0x%02"PRIx8" but should have been zero (ignored)",
 					    (cur - ins->cur),
 					    (cur - ins->start),
@@ -2024,7 +2031,7 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 					    byte);
 				}
 				cur++;
-				*outp++ = '\0'; /* probably redundant */
+				*dest++ = '\0';
 			}
 			break;
 
@@ -2122,24 +2129,24 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 			/* deposit the value in the struct */
 			switch (fp->size) {
 			case 8 / BITS_PER_BYTE:
-				*(uint8_t *)outp = n;
+				*(uint8_t *)dest = n;
 				break;
 			case 16 / BITS_PER_BYTE:
-				*(uint16_t *)outp = n;
+				*(uint16_t *)dest = n;
 				break;
 			case 32 / BITS_PER_BYTE:
-				*(uint32_t *)outp = n;
+				*(uint32_t *)dest = n;
 				break;
 			default:
 				bad_case(fp->size);
 			}
-			outp += fp->size;
+			dest += fp->size;
 			break;
 		}
 
 		case ft_raw: /* bytes to be left in network-order */
 			for (size_t i = fp->size; i != 0; i--)
-				*outp++ = *cur++;
+				*dest++ = *cur++;
 			break;
 
 		case ft_end: /* end of field list */
@@ -2161,23 +2168,10 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 	ins->cur = roof;
 	if (DBGP(DBG_BASE)) {
 		DBG_prefix_print_struct(ins, "parse ",
-					struct_ptr, sd,
+					dest_start, sd,
 					true);
 	}
 	return NULL;
-}
-
-bool in_struct(void *struct_ptr, struct_desc *sd,
-	       struct pbs_in *ins, struct pbs_in *obj_pbs)
-{
-	struct logger logger = cur_logger();
-	diag_t d = pbs_in_struct(ins, sd, struct_ptr, 0/*no-size-check*/, obj_pbs);
-	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, &logger, &d, "%s", "");
-		return false;
-	}
-
-	return true;
 }
 
 diag_t pbs_in_raw(struct pbs_in *ins, void *bytes, size_t len, const char *name)
@@ -2204,18 +2198,6 @@ diag_t pbs_in_raw(struct pbs_in *ins, void *bytes, size_t len, const char *name)
 		ins->cur += len;
 		return NULL;
 	}
-}
-
-bool in_raw(void *bytes, size_t len, struct pbs_in *ins, const char *name)
-{
-	struct logger logger = cur_logger();
-	diag_t d = pbs_in_raw(ins, bytes, len, name);
-	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, &logger, &d, "%s", "");
-		return false;
-	}
-
-	return true;
 }
 
 /*
@@ -2300,7 +2282,7 @@ static void start_next_payload_chain(struct pbs_out *outs,
 	uint8_t n = *inp;
 	if (n != ISAKMP_NEXT_NONE) {
 		struct esb_buf npb;
-		pexpect_fail(outs->out_logger, HERE,
+		pexpect_fail(outs->outs_logger, HERE,
 			     "next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
 			     sd->name, fp->name, n,
 			     enum_showb(fp->desc, n, &npb));
@@ -2369,7 +2351,7 @@ static void update_next_payload_chain(pb_stream *outs,
 		     enum_showb(fp->desc, n, &npb));
 	} else if (n != ISAKMP_NEXT_NONE) {
 		struct esb_buf npb;
-		pexpect_fail(outs->out_logger, HERE,
+		pexpect_fail(outs->outs_logger, HERE,
 			     "next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
 			     sd->name, fp->name, n,
 			     enum_showb(fp->desc, n, &npb));
@@ -2436,7 +2418,7 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 		.container = outs,
 		.desc = sd,
 		.name = sd->name,
-		.out_logger = outs->out_logger,
+		.outs_logger = outs->outs_logger,
 
 		/* until a length field is discovered */
 		/* .lenfld = NULL, */
@@ -2471,7 +2453,8 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 			uint8_t byte;
 			if (impair.send_nonzero_reserved) {
 				byte = ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
-				log_pbs_out(RC_LOG, outs, "IMPAIR: setting zero/ignore field to 0x%02x", byte);
+				llog(RC_LOG, outs->outs_logger,
+				     "IMPAIR: setting zero/ignore field to 0x%02x", byte);
 			} else {
 				byte = 0;
 			}
@@ -2559,7 +2542,7 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 					if (!impair.emitting) {
 						return diag(MSG);
 					}
-					log_pbs_out(RC_LOG, outs, "IMPAIR: emitting "MSG);
+					llog(RC_LOG, outs->outs_logger, "IMPAIR: emitting "MSG);
 				}
 				break;
 
@@ -2639,7 +2622,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 {
 	diag_t d = pbs_out_struct(outs, sd, struct_ptr, 0, obj_pbs);
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 
@@ -2668,7 +2651,7 @@ bool ikev1_out_generic_raw(struct_desc *sd,
 	}
 	diag_t d = pbs_out_raw(&pbs, bytes, len, name);
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 
@@ -2824,32 +2807,35 @@ void close_output_pbs(struct pbs_out *pbs)
 	if (pbs->container != NULL)
 		pbs->container->cur = pbs->cur; /* pass space utilization up */
 	/* don't log against a closed pbs */
-	pbs->out_logger = NULL;
+	pbs->outs_logger = NULL;
 }
 
-bool pbs_in_address(ip_address *address, const struct ip_info *ipv,
-		    struct pbs_in *input_pbs, const char *what)
+diag_t pbs_in_address(struct pbs_in *input_pbs,
+		      ip_address *address, const struct ip_info *ipv,
+		      const char *what)
 {
 	switch (ipv->af) {
 	case AF_INET:
 	{
 		struct in_addr ip;
-		if (!in_raw(&ip, sizeof(ip), input_pbs, what)) {
+		diag_t d = pbs_in_raw(input_pbs, &ip, sizeof(ip), what);
+		if (d != NULL) {
 			*address = unset_address;
-			return false;
+			return d;
 		}
 		*address = address_from_in_addr(&ip);
-		return true;
+		return NULL;
 	}
 	case AF_INET6:
 	{
 		struct in6_addr ip;
-		if (!in_raw(&ip, sizeof(ip), input_pbs, what)) {
+		diag_t d = pbs_in_raw(input_pbs, &ip, sizeof(ip), what);
+		if (d != NULL) {
 			*address = unset_address;
-			return false;
+			return d;
 		}
 		*address = address_from_in6_addr(&ip);
-		return true;
+		return NULL;
 	}
 	default:
 		bad_case(ipv->af);
@@ -2860,14 +2846,4 @@ diag_t pbs_out_address(struct pbs_out *out_pbs, const ip_address *address, const
 {
 	shunk_t as = address_as_shunk(address);
 	return pbs_out_raw(out_pbs, as.ptr, as.len, what);
-}
-
-void log_pbs_out(lset_t rc_flags, struct pbs_out *outs, const char *message, ...)
-{
-	if (pexpect(outs != NULL) && pexpect(outs->out_logger != NULL)) {
-		va_list ap;
-		va_start(ap, message);
-		log_va_list(rc_flags, outs->out_logger, message, ap);
-		va_end(ap);
-	}
 }

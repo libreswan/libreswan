@@ -10,14 +10,14 @@ east #
  ipsec whack --impair corrupt-encrypted
 east #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-002 added IKEv2 connection "westnet-eastnet-ipv4-psk-ikev2"
+002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 east #
  echo "initdone"
 initdone
 east #
- : only one SKEYSEED operation
+ : expect only one SKEYSEED operation
 east #
- grep 'offloading IKEv2 SKEYSEED' /tmp/pluto.log | wc -l
+ grep 'calculating skeyseed' /tmp/pluto.log | wc -l
 1
 east #
  ../../pluto/bin/ipsec-look.sh

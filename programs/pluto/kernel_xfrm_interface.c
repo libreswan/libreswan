@@ -110,7 +110,8 @@ static bool nl_query_small_resp(const struct nlmsghdr *req,
 				context, if_name);
 			/* pretend all is well */
 		} else {
-			LOG_ERRNO(errno, "in nl_query_small_resp() for %s() dev %s", context, if_name);
+			log_errno(logger, errno,
+				  "in nl_query_small_resp() for %s() dev %s", context, if_name);
 			passert(errno > 0);
 			unhappy = true;
 		}
@@ -121,7 +122,8 @@ static bool nl_query_small_resp(const struct nlmsghdr *req,
 	} else if (rsp.n.nlmsg_type == NLMSG_ERROR) {
 		/* The packet is an error packet: rsp.u.e.error is a negative errno value */
 		passert(rsp.u.e.error < 0);
-		LOG_ERRNO(-rsp.u.e.error, "NLMSG_ERROR in nl_query_small_resp() for %s() dev %s", context, if_name);
+		log_errno(logger, -rsp.u.e.error,
+			  "NLMSG_ERROR in nl_query_small_resp() for %s() dev %s", context, if_name);
 		unhappy = true;
 	} else {
 		/* ??? this treatment looks suspect */
@@ -145,11 +147,11 @@ static struct nl_ifinfomsg_req init_nl_ifi(uint16_t type, uint16_t flags)
 	return req;
 }
 
-/* ??? true means failure! */
 static bool link_add_nl_msg(const char *if_name /*non-NULL*/,
 			    const char *dev_name /*non-NULL*/,
 			    const uint32_t if_id,
-			    struct nl_ifinfomsg_req *req)
+			    struct nl_ifinfomsg_req *req,
+			    struct logger *logger)
 {
 	*req = init_nl_ifi(RTM_NEWLINK, NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL);
 
@@ -173,8 +175,8 @@ static bool link_add_nl_msg(const char *if_name /*non-NULL*/,
 		/* e.g link id of the interface, eth0 */
 		uint32_t dev_link_id = if_nametoindex(dev_name);
 		if (dev_link_id == 0) {
-			LOG_ERRNO(errno, "Cannot find interface index for device %s",
-					dev_name);
+			log_errno(logger, errno,
+				  "cannot find interface index for device %s", dev_name);
 			return true;
 		}
 		nl_addattr32(&req->n, sizeof(req->data), IFLA_XFRM_LINK, dev_link_id);
@@ -227,8 +229,8 @@ static bool ip_link_add_xfrmi(const char *if_name /*non-NULL*/,
 	dbg("add xfrm interface %s@%s id=%u", if_name, dev_name, if_id);
 	struct nl_ifinfomsg_req req;
 	zero(&req);
-	if (link_add_nl_msg(if_name, dev_name, if_id, &req)) {
-		log_message(RC_FATAL, logger,
+	if (link_add_nl_msg(if_name, dev_name, if_id, &req, logger)) {
+		llog(RC_FATAL, logger,
 			    "ERROR: link_add_nl_msg() creating netlink message failed");
 		return true;
 	}
@@ -425,7 +427,7 @@ static bool find_xfrmi_interface(const char *if_name, /* optional */
 	int nl_fd = nl_send_query(&req.n, NETLINK_ROUTE, logger);
 
 	if (nl_fd < 0) {
-		log_message(RC_LOG_SERIOUS, logger, "ERROR: write to netlink socket failed");
+		llog(RC_LOG_SERIOUS, logger, "ERROR: write to netlink socket failed");
 		return true;
 	}
 
@@ -437,7 +439,7 @@ static bool find_xfrmi_interface(const char *if_name, /* optional */
 	close(nl_fd);
 
 	if (len < 0) {
-		log_message(RC_LOG_SERIOUS, logger, "ERROR: netlink_read_reply() failed in find_any_xfrmi_interface()");
+		llog(RC_LOG_SERIOUS, logger, "ERROR: netlink_read_reply() failed in find_any_xfrmi_interface()");
 		pfreeany(resp_msgbuf);
 		return true;
 	}
@@ -493,7 +495,8 @@ static err_t ipsec1_support_test(const char *if_name /*non-NULL*/,
 		return "xfrmi is not supported";
 	} else {
 		if (dev_exists_check(if_name)) {
-			LOG_ERRNO(errno, "FATAL cannot find device %s", if_name);
+			log_errno(logger, errno,
+				  "FATAL cannot find device %s", if_name);
 
 			/*
 			 * failed to create xfrmi device.
@@ -560,7 +563,7 @@ err_t xfrm_iface_supported(struct logger *logger)
 			 * may be more extensive checks?
 			 * such if it is a xfrmi device or something else
 			 */
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "conflict %s already exist cannot support xfrm-interface. May be leftover from previous pluto?",
 				    if_name);
 			xfrm_interface_support = -1;
@@ -613,7 +616,7 @@ static bool init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
 	if (c->xfrmi == NULL) {
 		/*
 		if (!shared) {
-			libreswan_log("%s, index %u, xfrm interface exist will not shared",
+			log_state(RC_LOG, st, "%s, index %u, xfrm interface exist will not shared",
 				       xfrmi_name, if_id);
 			return true;
 		}
@@ -644,7 +647,7 @@ bool setup_xfrm_interface(struct connection *c, uint32_t xfrm_if_id)
 	} else if (shunk_strcaseeq(ifid, "unique")) {
 		// unique or <id> for each connection
 		shared = false;
-		libreswan_log("iface_id = unique is not supported yet shared=%d", shared);
+		log_state(RC_LOG, st, "iface_id = unique is not supported yet shared=%d", shared);
 		return false;
 	*/
 
@@ -670,7 +673,7 @@ bool add_xfrmi(struct connection *c, struct logger *logger)
 		/* device exists: match name, type xfrmi, and xfrm_if_id */
 		if (find_xfrmi_interface(c->xfrmi->name, c->xfrmi->if_id, logger)) {
 			/* found wrong device abort adding */
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "ERROR device %s exist and do not match expected type xfrm or xfrm_if_id %u. check 'ip -d link show dev %s'", c->xfrmi->name, c->xfrmi->if_id, c->xfrmi->name);
 			return true;
 		}
@@ -689,10 +692,10 @@ static void free_xfrmi(struct pluto_xfrmi *xfrmi /*non-NULL*/, struct logger *lo
 			*pp = p->next;
 			if (xfrmi->pluto_added)  {
 				ip_link_del(xfrmi->name, logger);
-				log_message(RC_LOG, logger,
+				llog(RC_LOG, logger,
 					    "delete ipsec-interface=%s if_id=%u added by pluto", xfrmi->name, xfrmi->if_id);
 			} else {
-				log_message(RC_LOG, logger,
+				llog(RC_LOG, logger,
 					    "cannot delete ipsec-interface=%s if_id=%u, not created by pluto", xfrmi->name, xfrmi->if_id);
 			}
 			pfreeany(xfrmi->name);
@@ -706,7 +709,7 @@ static void free_xfrmi(struct pluto_xfrmi *xfrmi /*non-NULL*/, struct logger *lo
 }
 
 /* at start call this to see if there are any stale interface lying around. */
-void stale_xfrmi_interfaces(void)
+void stale_xfrmi_interfaces(struct logger *logger)
 {
 	if (stale_checked)
 		return; /* possibly from second whack listen */
@@ -724,14 +727,16 @@ void stale_xfrmi_interfaces(void)
 
 	unsigned int if_id = if_nametoindex(if_name);
 	if (if_id != 0) {
-		loglog(RC_LOG_SERIOUS, "found an unexpected interface %s if_id=%u From previous pluto run?",
-				if_name, if_id);
+		llog(RC_LOG_SERIOUS, logger,
+			    "found an unexpected interface %s if_id=%u From previous pluto run?",
+			    if_name, if_id);
 		return; /* ERROR */
 	}
 	if (errno == ENXIO || errno == ENODEV) {
 		dbg("no stale xfrmi interface '%s' found", if_name);
 	} else {
-		LOG_ERRNO(errno, "failed stale_xfrmi_interfaces() call if_nametoindex('%s')", if_name);
+		log_errno(logger, errno,
+			  "failed stale_xfrmi_interfaces() call if_nametoindex('%s')", if_name);
 		return;
 	}
 }

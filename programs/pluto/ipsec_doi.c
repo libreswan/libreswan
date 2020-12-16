@@ -65,7 +65,6 @@
 #include "ike_alg_encrypt.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
-#include "pluto_crypt.h"
 #include "ikev1.h"
 #include "ikev1_continuations.h"
 #include "ikev2.h"
@@ -83,126 +82,6 @@
 #include "iface.h"
 #include "ikev2_delete.h"	/* for record_v2_delete(); but call is dying */
 #include "ikev2_resume.h"
-
-/*
- * Process KE values.
- */
-void unpack_KE_from_helper(struct state *st, struct dh_local_secret *local_secret,
-			   chunk_t *g)
-{
-	/*
-	 * Should the crypto helper group and the state group be in
-	 * sync?
-	 *
-	 * Probably not, yet seemingly (IKEv2) code is assuming this.
-	 *
-	 * For instance, with IKEv2, the initial initiator is setting
-	 * st_oakley.group to the draft KE group (and well before
-	 * initial responder has had a chance to agree to any thing).
-	 * Should the initial responder comes back with INVALID_KE
-	 * then st_oakley.group gets changed to match the suggestion
-	 * and things restart; should the initial responder come back
-	 * with an accepted proposal and KE, then the st_oakley.group
-	 * is set based on the accepted proposal (the two are
-	 * checked).
-	 *
-	 * Surely, instead, st_oakley.group should be left alone.  The
-	 * the initial initiator would maintain a list of KE values
-	 * proposed (INVALID_KE flip-flopping can lead to more than
-	 * one) and only set st_oakley.group when the initial
-	 * responder comes back with a vald accepted propsal and KE.
-	 */
-	if (DBGP(DBG_CRYPT)) {
-		const struct dh_desc *group = dh_local_secret_desc(local_secret);
-		DBG_log("wire (crypto helper) group %s and state group %s %s",
-			group->common.fqn,
-			st->st_oakley.ta_dh ? st->st_oakley.ta_dh->common.fqn : "NULL",
-			group == st->st_oakley.ta_dh ? "match" : "differ");
-	}
-
-	free_chunk_content(g); /* happens in odd error cases */
-	*g = clone_dh_local_secret_ke(local_secret);
-
-	pexpect(st->st_dh_local_secret == NULL);
-	st->st_dh_local_secret = dh_local_secret_addref(local_secret, HERE);
-}
-
-/* accept_KE
- *
- * Check and accept DH public value (Gi or Gr) from peer's message.
- * According to RFC2409 "The Internet key exchange (IKE)" 5:
- *  The Diffie-Hellman public value passed in a KE payload, in either
- *  a phase 1 or phase 2 exchange, MUST be the length of the negotiated
- *  Diffie-Hellman group enforced, if necessary, by pre-pending the
- *  value with zeros.
- */
-bool accept_KE(chunk_t *dest, const char *val_name,
-	       const struct dh_desc *gr,
-	       struct payload_digest *ke_pd)
-{
-	if (ke_pd == NULL) {
-		loglog(RC_LOG_SERIOUS, "KE missing");
-		return false;
-	}
-	pb_stream *pbs = &ke_pd->pbs;
-	if (pbs_left(pbs) != gr->bytes) {
-		loglog(RC_LOG_SERIOUS,
-		       "KE has %u byte DH public value; %u required",
-		       (unsigned) pbs_left(pbs), (unsigned) gr->bytes);
-		/* XXX Could send notification back */
-		return false;
-	}
-	free_chunk_content(dest); /* XXX: ever needed? */
-	*dest = clone_hunk(pbs_in_left_as_shunk(pbs), val_name);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("DH public value received:");
-		DBG_dump_hunk(NULL, *dest);
-	}
-	return true;
-}
-
-void unpack_nonce(chunk_t *n, chunk_t *nonce)
-{
-	free_chunk_content(n);
-	*n = *nonce; /* steal away */
-	*nonce = empty_chunk;
-}
-
-bool ikev1_justship_nonce(chunk_t *n, struct pbs_out *outs,
-			  const char *name)
-{
-	return ikev1_out_generic_chunk(&isakmp_nonce_desc, outs, *n, name);
-}
-
-bool ikev1_ship_nonce(chunk_t *n, chunk_t *nonce,
-		      struct pbs_out *outs, const char *name)
-{
-	unpack_nonce(n, nonce);
-	return ikev1_justship_nonce(n, outs, name);
-}
-
-#ifdef USE_IKEv1
-static initiator_function *pick_initiator(struct connection *c,
-					  lset_t policy)
-{
-	if (policy & c->policy & POLICY_IKEV2_ALLOW) {
-		if (c->temp_vars.ticket_variables.stored_ticket.len > 0) {
-			if(time(NULL)-c->temp_vars.ticket_variables.sr_our_expire < c->temp_vars.ticket_variables.sr_server_expire) {
-				return ikev2_session_resume_outI1;
-			} else {
-				libreswan_log("ticket has been expired, dropping it");
-				free_chunk_content(&c->temp_vars.ticket_variables.stored_ticket);
-				return ikev2_parent_outI1;
-			}
-		} else {
-			return ikev2_parent_outI1;
-		}
-	} else {
-		/* we may try V1; Aggressive or Main Mode? */
-		return (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;
-	}
-}
-#endif
 
 void ipsecdoi_initiate(struct fd *whack_sock,
 		       struct connection *c,
@@ -229,20 +108,25 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 					     IKEV2_ISAKMP_INITIATOR_STATES);
 
 	if (st == NULL) {
+		if (policy & c->policy & POLICY_IKEV2_ALLOW) {
+			if (c->temp_vars.ticket_variables.stored_ticket.len > 0) {
+				if (time(NULL) - c->temp_vars.ticket_variables.sr_our_expire < c->temp_vars.ticket_variables.sr_server_expire) {
+					initiator_function *initiator = ikev2_session_resume_outI1;
+					initiator(whack_sock, c, NULL, policy, try, inception, uctx);
+				} else {
+					dbg("ticket has been expired, dropping it");
+					free_chunk_content(&c->temp_vars.ticket_variables.stored_ticket);
+					initiator_function *initiator = ikev2_parent_outI1;
+					initiator(whack_sock, c, NULL, policy, try, inception, uctx);
+				}
+			}
+		}
 #ifdef USE_IKEv1
-		initiator_function *initiator = pick_initiator(c, policy);
-#else
-		initiator_function *initiator = ikev2_parent_outI1;
-#endif
-
-		if (initiator != NULL) {
-			/*
-			 * initiator will create a state (and that in
-			 * turn will start its timing it), need a way
-			 * to stop it.
-			 */
+		if (policy & c->policy & POLICY_IKEV1_ALLOW) {
+			initiator_function *initiator = (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;
 			initiator(whack_sock, c, NULL, policy, try, inception, uctx);
 		}
+#endif
 	} else if (HAS_IPSEC_POLICY(policy)) {
 #ifdef USE_IKEv1
 		if (st->st_ike_version == IKEv1) {
@@ -310,23 +194,25 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 		lset_t policy = c->policy & ~POLICY_IPSEC_MASK;
 
 		if (IS_PARENT_SA_ESTABLISHED(st))
-			libreswan_log("initiate reauthentication of IKE SA");
+			log_state(RC_LOG, st, "initiate reauthentication of IKE SA");
 
+		switch(st->st_ike_version) {
+		case IKEv2:
+		{
+			initiator_function *initiator = ikev2_parent_outI1;
+			initiator(st->st_logger->object_whackfd, c, st, policy, try, &inception, st->sec_ctx);
+			break;
+		}
 #ifdef USE_IKEv1
-		initiator_function *initiator = pick_initiator(c, policy);
-#else
-		initiator_function *initiator = ikev2_parent_outI1;
+		case IKEv1:
+		{
+			initiator_function *initiator = (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;
+			initiator(st->st_logger->object_whackfd, c, st, policy, try, &inception, st->sec_ctx);
+			break;
+		}
 #endif
-
-		if (initiator != NULL) {
-			/*
-			 * initiator will create a state (and that in
-			 * turn will start its timing it), need a way
-			 * to stop it.
-			 */
-			(void) initiator(st->st_whack_sock,
-					 c, st, policy, try, &inception,
-				st->sec_ctx);
+		default:
+			dbg("unsupported IKE version '%d', cannot initiate", st->st_ike_version);
 		}
 	} else {
 		/*
@@ -362,7 +248,7 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 		if (st->st_ike_version == IKEv1)
 			passert(HAS_IPSEC_POLICY(policy));
 
-		ipsecdoi_initiate(st->st_whack_sock, st->st_connection,
+		ipsecdoi_initiate(st->st_logger->object_whackfd, st->st_connection,
 				  policy, try, st->st_serialno, &inception,
 			st->sec_ctx);
 	}
@@ -393,93 +279,6 @@ bool has_preloaded_public_key(const struct state *st)
 		}
 	}
 	return FALSE;
-}
-
-/*
- * Decode the ID payload of Phase 1 (main_inI3_outR3 and main_inR3)
- * Clears *peer to avoid surprises.
- * Note: what we discover may oblige Pluto to switch connections.
- * We must be called before SIG or HASH are decoded since we
- * may change the peer's RSA key or ID.
- */
-
-bool extract_peer_id(enum ike_id_type kind, struct id *peer, const pb_stream *id_pbs)
-{
-	size_t left = pbs_left(id_pbs);
-
-	*peer = (struct id) {.kind = kind };	/* clears everything */
-
-	switch (kind) {
-	/* ident types mostly match between IKEv1 and IKEv2 */
-	case ID_IPV4_ADDR:
-	case ID_IPV6_ADDR:
-		/* failure mode for initaddr is probably inappropriate address length */
-	{
-		struct pbs_in in_pbs = *id_pbs;
-		if (!pbs_in_address(&peer->ip_addr,
-				    (peer->kind == ID_IPV4_ADDR ? &ipv4_info :
-				     &ipv6_info),
-				    &in_pbs, "peer ID")) {
-			/* XXX Could send notification back */
-			return false;
-		}
-	}
-	break;
-
-	/* seems odd to continue as ID_FQDN? */
-	case ID_USER_FQDN:
-		if (memchr(id_pbs->cur, '@', left) == NULL) {
-			loglog(RC_LOG_SERIOUS,
-				"peer's ID_USER_FQDN contains no @: %.*s",
-				(int) left,
-				id_pbs->cur);
-			/* return FALSE; */
-		}
-	/* FALLTHROUGH */
-	case ID_FQDN:
-		if (memchr(id_pbs->cur, '\0', left) != NULL) {
-			loglog(RC_LOG_SERIOUS,
-				"Phase 1 (Parent)ID Payload of type %s contains a NUL",
-				enum_show(&ike_idtype_names, kind));
-			return FALSE;
-		}
-
-		/* ??? ought to do some more sanity check, but what? */
-
-		peer->name = chunk2(id_pbs->cur, left);
-		break;
-
-	case ID_KEY_ID:
-		peer->name = chunk2(id_pbs->cur, left);
-		if (DBGP(DBG_BASE)) {
-			DBG_dump_hunk("KEY ID:", peer->name);
-		}
-		break;
-
-	case ID_DER_ASN1_DN:
-		peer->name = chunk2(id_pbs->cur, left);
-		if (DBGP(DBG_BASE)) {
-		    DBG_dump_hunk("DER ASN1 DN:", peer->name);
-		}
-		break;
-
-	case ID_NULL:
-		if (left != 0) {
-			if (DBGP(DBG_BASE)) {
-				DBG_dump("unauthenticated NULL ID:", id_pbs->cur, left);
-			}
-		}
-		break;
-
-	default:
-		/* XXX Could send notification back */
-		loglog(RC_LOG_SERIOUS,
-			"Unsupported identity type (%s) in Phase 1 (Parent) ID Payload",
-			enum_show(&ike_idtype_names, kind));
-		return FALSE;
-	}
-
-	return TRUE;
 }
 
 void initialize_new_state(struct state *st,

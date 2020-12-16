@@ -12,13 +12,13 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add test1
-002 added IKEv2 connection "test1"
+002 "test1": added IKEv2 connection
 west #
  ipsec auto --add test2
-002 added IKEv2 connection "test2"
+002 "test2": added IKEv2 connection
 west #
  ipsec auto --add test3
-002 added IKEv2 connection "test3"
+002 "test3": added IKEv2 connection
 west #
  ipsec auto --status | grep interface
 000 using kernel interface: xfrm
@@ -153,4 +153,13 @@ west #
 000 "test2":     unoriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "test3":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 west #
- 
+ ipsec whack --shutdown
+west #
+ ip link set dev eth3 down
+west #
+ ip tunnel del eth3
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

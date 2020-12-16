@@ -22,7 +22,6 @@
 #include <string.h>
 #include <limits.h>
 #include <assert.h>
-#include <sys/queue.h>
 
 #include "constants.h"
 #include "lswlog.h"
@@ -446,6 +445,10 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 
 		case STARTUP_START:
 			dsn = "start";
+			break;
+
+		case STARTUP_KEEP:
+			dsn = "keep";
 			break;
 		}
 		cwf("auto", dsn);

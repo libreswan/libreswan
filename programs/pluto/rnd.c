@@ -82,7 +82,7 @@ void fill_rnd_chunk(chunk_t chunk)
 	get_rnd_bytes(chunk.ptr, chunk.len);
 }
 
-static void refresh_secrets(struct fd *unused_whackfd UNUSED)
+static void refresh_secrets(struct logger *unused_logger UNUSED)
 {
 	/*
 	 * Generate the secret value for responder cookies, and
@@ -92,9 +92,9 @@ static void refresh_secrets(struct fd *unused_whackfd UNUSED)
 	refresh_v2_cookie_secret();
 }
 
-void init_secret(void)
+void init_secret(struct logger *logger)
 {
 	enable_periodic_timer(EVENT_REINIT_SECRET, refresh_secrets,
 			      deltatime(EVENT_REINIT_SECRET_DELAY));
-	refresh_secrets(null_fd);
+	refresh_secrets(logger);
 }

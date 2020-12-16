@@ -50,7 +50,7 @@ int nl_send_query(const struct nlmsghdr *req, int protocol, struct logger *logge
 		close(nl_fd);
 		return -1;
 	} else if ((size_t)r != len) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "ERROR: netlink write() message truncated: %zd instead of %zu",
 			    r, len);
 		close(nl_fd);

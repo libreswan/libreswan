@@ -8,7 +8,7 @@ road #
  ipsec whack --impair suppress-retransmits
 road #
  ipsec auto --add road
-002 added IKEv2 connection "road"
+002 "road": added IKEv2 connection
 road #
  echo "initdone"
 initdone
@@ -17,7 +17,7 @@ road #
 1v2 "road"[1] 192.1.2.23 #1: initiating IKEv2 connection
 1v2 "road"[1] 192.1.2.23 #1: sent IKE_SA_INIT request
 1v2 "road"[1] 192.1.2.23 #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "road"[1] 192.1.2.23 #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+002 "road"[1] 192.1.2.23 #1: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "road"[1] 192.1.2.23 #1: authenticated using authby=secret
 002 "road"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.1
 002 "road"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4

@@ -22,7 +22,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add nosecrets
-002 added IKEv1 connection "nosecrets"
+002 "nosecrets": added IKEv1 connection
 west #
  ipsec auto --status
 000 using kernel interface: xfrm

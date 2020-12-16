@@ -17,7 +17,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <errno.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -38,23 +37,6 @@
 #include "state.h"
 #include "demux.h"
 #include "rnd.h"
-#include "pluto_crypt.h"
-
-void alloc_wire_chunk(wire_arena_t *arena,
-		      wire_chunk_t *new,
-		      size_t size)
-{
-	/*
-	 * passert for now, since we should be able to figure out what
-	 * the maximum is.
-	 */
-	passert(size <= arena->roof - arena->next);
-
-	new->start = arena->next;
-	new->len = size;
-
-	arena->next += size;
-}
 
 void wire_clone_chunk(wire_arena_t *arena,
 		      wire_chunk_t *new,

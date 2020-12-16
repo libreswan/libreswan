@@ -41,7 +41,7 @@ static bool warning_or_false(struct proposal_parser *parser,
 		 * XXX: the algorithm might be unknown, or might be
 		 * known but not enabled due to FIPS, or ...?
 		 */
-		log_message(RC_LOG, parser->policy->logger,
+		llog(RC_LOG, parser->policy->logger,
 			    "ignoring %s %s %s algorithm '"PRI_SHUNK"'",
 			    enum_name(&ike_version_names, parser->policy->version),
 			    parser->protocol->name, /* ESP|IKE|AH */

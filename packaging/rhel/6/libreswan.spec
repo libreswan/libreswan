@@ -205,6 +205,7 @@ fi
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
 %attr(0755,root,root) %dir %{_rundir}/pluto
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/pam.d/pluto
+%config(noreplace) %{_sysconfdir}/logrotate.d/libreswan
 %{_sbindir}/ipsec
 %attr(0755,root,root) %dir %{_libexecdir}/ipsec
 %{_libexecdir}/ipsec/*

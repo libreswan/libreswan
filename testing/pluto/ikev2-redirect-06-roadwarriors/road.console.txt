@@ -7,7 +7,7 @@ road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
  ipsec auto --add road-east
-002 added IKEv2 connection "road-east"
+002 "road-east": added IKEv2 connection
 road #
  ipsec whack --impair revival
 road #
@@ -16,7 +16,7 @@ initdone
 road #
  ipsec auto --up road-east | sed -e "s/192.0.2.10./192.0.2.10X/" | sort
 002 "road-east" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-002 "road-east" #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+002 "road-east" #1: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 002 "road-east" #2: negotiated connection [192.0.2.10X-192.0.2.101:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0]
 002 "road-east" #2: received INTERNAL_IP4_ADDRESS 192.0.2.10X
 002 "road-east" #2: received INTERNAL_IP4_DNS 1.2.3.4

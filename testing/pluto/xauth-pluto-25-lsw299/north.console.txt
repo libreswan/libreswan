@@ -8,7 +8,7 @@ north #
  ../bin/block-non-ipsec.sh
 north #
  ipsec auto --add north-east
-002 added IKEv1 connection "north-east"
+002 "north-east": added IKEv1 connection
 north #
  # note - initiating during "init" when multiple hosts/namespaces are starting up is unwise - race conditions
 north #

@@ -95,19 +95,19 @@ bool emit_v2UNKNOWN(const char *victim, enum isakmp_xchg_types exchange_type,
 		    struct pbs_out *outs)
 {
 	diag_t d;
-	log_pbs_out(RC_LOG, outs,
-		    "IMPAIR: adding an unknown%s payload of type %d to %s %s",
-		    impair.unknown_v2_payload_critical ? " critical" : "",
-		    ikev2_unknown_payload_desc.pt,
-		    enum_short_name(&ikev2_exchange_names, exchange_type),
-		    victim);
+	llog(RC_LOG, outs->outs_logger,
+	     "IMPAIR: adding an unknown%s payload of type %d to %s %s",
+	     impair.unknown_v2_payload_critical ? " critical" : "",
+	     ikev2_unknown_payload_desc.pt,
+	     enum_short_name(&ikev2_exchange_names, exchange_type),
+	     victim);
 	struct ikev2_generic gen = {
-		.isag_critical = build_ikev2_critical(impair.unknown_v2_payload_critical),
+		.isag_critical = build_ikev2_critical(impair.unknown_v2_payload_critical, outs->outs_logger),
 	};
 	struct pbs_out pbs;
 	d = pbs_out_struct(outs, &ikev2_unknown_payload_desc, &gen, sizeof(gen), &pbs);
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 	close_output_pbs(&pbs);
@@ -129,12 +129,12 @@ bool emit_v2V(const char *string, pb_stream *outs)
 	struct pbs_out pbs;
 	d = pbs_out_struct(outs, &ikev2_vendor_id_desc, &gen, sizeof(gen), &pbs);
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 	d = pbs_out_raw(&pbs, string, strlen(string), string);
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 	close_output_pbs(&pbs);
@@ -168,10 +168,10 @@ bool emit_v2V(const char *string, pb_stream *outs)
 
 /* emit a v2 Notification payload, with optional SA and optional sub-payload */
 bool emit_v2Nsa_pl(v2_notification_t ntype,
-		enum ikev2_sec_proto_id protoid,
-		const ipsec_spi_t *spi, /* optional */
-		pb_stream *outs,
-		pb_stream *payload_pbs /* optional */)
+		   enum ikev2_sec_proto_id protoid,
+		   const ipsec_spi_t *spi, /* optional */
+		   struct pbs_out *outs,
+		   struct pbs_out *payload_pbs /* optional */)
 {
 	/* See RFC 5996 section 3.10 "Notify Payload" */
 	passert(protoid == PROTO_v2_RESERVED || protoid == PROTO_v2_AH || protoid == PROTO_v2_ESP);
@@ -194,7 +194,7 @@ bool emit_v2Nsa_pl(v2_notification_t ntype,
 	dbg("adding a v2N Payload");
 
 	struct ikev2_notify n = {
-		.isan_critical = build_ikev2_critical(false),
+		.isan_critical = build_ikev2_critical(false, outs->outs_logger),
 		.isan_protoid = protoid,
 		.isan_spisize = spi != NULL ? sizeof(*spi) : 0,
 		.isan_type = ntype,
@@ -207,7 +207,7 @@ bool emit_v2Nsa_pl(v2_notification_t ntype,
 	if (spi != NULL) {
 		diag_t d = pbs_out_raw(&pls, spi, sizeof(*spi), "SPI");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 			return false;
 		}
 	}
@@ -241,7 +241,7 @@ bool emit_v2N_bytes(v2_notification_t ntype,
 	if (size > 0) {
 		diag_t d = pbs_out_raw(&pl, bytes, size, "Notify data");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", "");
+			log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 			return false;
 		}
 	}
@@ -263,7 +263,7 @@ bool emit_v2N_signature_hash_algorithms(lset_t sighash_policy,
 	pb_stream n_pbs;
 
 	if (!emit_v2Npl(v2N_SIGNATURE_HASH_ALGORITHMS, outs, &n_pbs)) {
-		libreswan_log("error initializing notify payload for notify message");
+		llog(RC_LOG, outs->outs_logger, "error initializing notify payload for notify message");
 		return false;
 	}
 
@@ -274,7 +274,7 @@ bool emit_v2N_signature_hash_algorithms(lset_t sighash_policy,
 		diag_t d = pbs_out_raw(&n_pbs, &hash_id, sizeof(hash_id), \
 				       "hash algorithm identifier "#ID);\
 		if (d != NULL) {					\
-			log_diag(RC_LOG_SERIOUS, outs->out_logger, &d, "%s", ""); \
+			log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", ""); \
 			return false;					\
 		}							\
 	}
@@ -342,7 +342,7 @@ static bool open_response(struct response *response,
 					 md /* response */,
 					 md->hdr.isa_xchg/* same exchange type */);
 	if (!pbs_ok(&response->body)) {
-		log_message(RC_LOG, response->logger,
+		llog(RC_LOG, response->logger,
 			    "error initializing hdr for encrypted notification");
 		return false;
 	}
@@ -385,7 +385,7 @@ static bool close_response(struct response *response)
 		close_output_pbs(&response->message);
 		stf_status ret = encrypt_v2SK_payload(&response->sk);
 		if (ret != STF_OK) {
-			log_message(RC_LOG, response->logger,
+			llog(RC_LOG, response->logger,
 				    "error encrypting response");
 			return false;
 		}
@@ -416,7 +416,7 @@ static bool emit_v2N_spi_response(struct response *response,
 	 * is it ever different to the IKE SA?
 	 */
 	endpoint_buf b;
-	log_message(RC_NOTIFICATION+ntype, response->logger,
+	llog(RC_NOTIFICATION+ntype, response->logger,
 		    "responding to %s message (ID %u) from %s with %s notification %s",
 		    exchange_name, md->hdr.isa_msgid,
 		    str_sensitive_endpoint(&ike->sa.st_remote_endpoint, &b),
@@ -526,11 +526,11 @@ void send_v2N_response_from_md(struct msg_digest *md,
 		    exchange_type);
 	}
 
-	log_md(RC_LOG, md,
-	       "responding to %s (%d) message (Message ID %u) with unencrypted notification %s",
-	       exchange_name, exchange_type,
-	       md->hdr.isa_msgid,
-	       notify_name);
+	llog(RC_LOG, md->md_logger,
+	     "responding to %s (%d) message (Message ID %u) with unencrypted notification %s",
+	     exchange_name, exchange_type,
+	     md->hdr.isa_msgid,
+	     notify_name);
 
 	/*
 	 * Normally an unencrypted response is only valid for
@@ -577,8 +577,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	 * This notification is fire-and-forget (not a proper
 	 * exchange, one with retrying) so it is not saved.
 	 */
-	send_chunk("v2 notify", SOS_NOBODY, md->iface, md->sender,
-		   same_out_pbs_as_chunk(&reply));
+	send_pbs_out_using_md(md, "v2 notify", &reply);
 
 	pstat(ikev2_sent_notifies_e, ntype);
 }
