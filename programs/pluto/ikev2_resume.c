@@ -35,6 +35,7 @@
 #include "nat_traversal.h"
 #include "pluto_x509.h"
 #include "crypt_ke.h"
+#include "unpack.h"
 
 /* HACK ALERT - needed for out_raw() ??? */
 #include "ikev1_message.h"
@@ -173,9 +174,7 @@ void suspend_connection(struct connection *c)
  *
  */
 
-static void ikev2_session_resume_outI1_continue(struct state *st, struct msg_digest *md,
-						struct dh_local_secret *local_secret,
-						chunk_t *nonce);
+static ke_and_nonce_cb ikev2_session_resume_outI1_continue;
 
 void ikev2_session_resume_outI1(struct fd *whack_sock,
 				       struct connection *c,
@@ -203,8 +202,8 @@ void ikev2_session_resume_outI1(struct fd *whack_sock,
 	submit_ke_and_nonce(&ike->sa, NULL, ikev2_session_resume_outI1_continue, "Session Resume Initiator Nonce Ni");
 }
 
-void ikev2_session_resume_outI1_continue(struct state *st, struct msg_digest *md,
-					struct dh_local_secret *local_secret,
+stf_status ikev2_session_resume_outI1_continue(struct state *st, struct msg_digest *md,
+					struct dh_local_secret *local_secret UNUSED,
 					chunk_t *nonce)
 {
 	dbg("%s() for #%lu %s",
@@ -215,7 +214,6 @@ void ikev2_session_resume_outI1_continue(struct state *st, struct msg_digest *md
 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
 	pexpect(st->st_state->kind == STATE_PARENT_RESUME_I0);
 	
-	unpack_nonce(&st->st_ni, r);
-	stf_status e = record_v2_IKE_SA_INIT_OR_RESUME_request(ike) ? STF_OK : STF_INTERNAL_ERROR;
-	complete_v2_state_transition(st, NULL, e);
+	unpack_nonce(&st->st_ni, nonce);
+	return record_v2_IKE_SA_INIT_OR_RESUME_request(ike) ? STF_OK : STF_INTERNAL_ERROR;
 }
