@@ -34,9 +34,9 @@ else
 fi | while read d; do
     dir=$(dirname $d)
     hash=$(${webdir}/gime-git-rev.sh $dir)
-    hash=$(cd $repodir && git show --no-patch --format=%H ${hash})
-    if test "${hash}" = "" ; then
-	hash=null
+    # expand to full hash
+    if HASH=$(cd $repodir && git show --no-patch --format=%H ${hash} --) && test "${HASH}" = "" ; then
+	hash=${hash}
     fi
     # let any existing hash override above
     jq --arg hash "${hash}" \
