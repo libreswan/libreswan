@@ -19,7 +19,7 @@
 
 #include "ip_port_range.h"
 
-ip_port unset_port_range; /* aka all ports? */
+const ip_port_range unset_port_range; /* aka all ports? */
 
 ip_port_range ip_port_range_from_ports(ip_port lo, ip_port hi)
 {

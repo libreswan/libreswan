@@ -499,31 +499,34 @@ static void jam_end_client(struct jambuf *buf, const struct end *this,
 			   lset_t policy, bool is_left)
 {
 	/* [CLIENT===] or [===CLIENT] */
-	if (this->has_client && subnet_is_set(&this->client)) {
-		bool boring = (subnet_contains_all_addresses(&this->client) &&
-			       (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC)));
+	if (!this->has_client) {
+		return;
+	}
+	if (subnet_is_unset(&this->client)) {
+		return;
+	}
+	bool boring = (subnet_contains_all_addresses(&this->client) &&
+		       (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC)));
 
-		if (!boring && !is_left) {
-			jam_string(buf, "===");
-		}
+	if (!boring && !is_left) {
+		jam_string(buf, "===");
+	}
 
-		if (boring) {
-			/* boring case */
-		} else if (is_virtual_end(this)) {
-			if (is_virtual_vhost(this))
-				jam_string(buf, "vhost:?");
-			else
-				jam_string(buf,  "vnet:?");
-		} else if (subnet_contains_no_addresses(&this->client)) {
-			jam_string(buf, "?");
-		} else {
-			jam_subnet(buf, &this->client);
-		}
+	if (boring) {
+		/* boring case */
+	} else if (is_virtual_end(this)) {
+		if (is_virtual_vhost(this))
+			jam_string(buf, "vhost:?");
+		else
+			jam_string(buf,  "vnet:?");
+	} else if (subnet_contains_no_addresses(&this->client)) {
+		jam_string(buf, "?");
+	} else {
+		jam_subnet(buf, &this->client);
+	}
 
-		if (!boring && is_left) {
-			jam_string(buf, "===");
-		}
-
+	if (!boring && is_left) {
+		jam_string(buf, "===");
 	}
 }
 
@@ -972,7 +975,7 @@ static int extract_end(struct end *dst,
 	 */
 	dst->has_client = src->has_client;
 	if (src->has_client) {
-		pexpect(subnet_is_set(&src->client));
+		pexpect(!subnet_is_unset(&src->client));
 		dst->client = selector_from_subnet(&src->client,
 						   &src->protoport);
 	}

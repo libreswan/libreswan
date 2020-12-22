@@ -175,9 +175,14 @@ bool selector_contains_no_addresses(const ip_selector *selector)
 
 bool selector_in_selector(const ip_selector *l, const ip_selector *r)
 {
-	return (/* exclude unset */
-		selector_is_set(r) &&
-		/* version (4/6) wildcards!?! */
+	/* exclude unset */
+	if (selector_is_unset(l)) {
+		return false;
+	}
+	if (selector_is_unset(r)) {
+		return false;
+	}
+	return (/* version (4/6) wildcards!?! */
 		(r->addr.version == 0 || l->addr.version == r->addr.version) &&
 		/* protocol wildcards */
 		(r->addr.ipproto == 0 || l->addr.ipproto == r->addr.ipproto) &&

@@ -82,9 +82,7 @@ err_t range_to_selector(const ip_range *range,
 /* attributes */
 
 extern const ip_selector unset_selector;
-
 bool selector_is_unset(const ip_selector *selector);
-#define selector_is_set !selector_is_unset
 
 void update_selector_hport(ip_selector *selector, unsigned hport);
 const struct ip_info *selector_type(const ip_selector *selector);

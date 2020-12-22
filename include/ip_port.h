@@ -34,7 +34,7 @@ typedef struct {
 	unsigned hport;
 } ip_port;
 
-extern ip_port unset_port; /* aka all ports? */
+extern const ip_port unset_port; /* aka all ports? */
 
 ip_port ip_hport(unsigned hport);
 ip_port ip_nport(unsigned nport);

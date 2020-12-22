@@ -114,11 +114,9 @@ extern size_t jam_subnet(struct jambuf *buf, const ip_subnet *subnet);
  */
 
 extern const ip_subnet unset_subnet;
+bool subnet_is_unset(const ip_subnet *subnet);
 
 const struct ip_info *subnet_type(const ip_subnet *subnet);
-
-bool subnet_is_unset(const ip_subnet *subnet);
-#define subnet_is_set !subnet_is_unset
 
 /* default route - ::/0 or 0.0.0.0/0 - matches all addresses */
 bool subnet_contains_all_addresses(const ip_subnet *subnet);

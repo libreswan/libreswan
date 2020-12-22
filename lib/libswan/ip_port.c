@@ -19,7 +19,7 @@
 
 #include "ip_port.h"
 
-ip_port unset_port; /* aka all ports? */
+const ip_port unset_port; /* aka all ports? */
 
 ip_port ip_hport(unsigned hport)
 {
