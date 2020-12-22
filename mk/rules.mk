@@ -53,7 +53,7 @@ $(builddir)/%: %.pl $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver | $(bu
 
 ifdef OBJS
 
-.c.o: | $(builddir)
+.c.o:
 	$(CC) $(USERLAND_CFLAGS) \
 		$(USERLAND_INCLUDES) \
 		-DHERE_BASENAME=\"$(notdir $<)\" $(CFLAGS) \
