@@ -85,7 +85,7 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket in priority 0 ptype main 
 west #
- echo "quit" | nc -p 4301 -vvv 192.1.2.23 4300
+ echo "quit" | nc -p 4301 -vvv 192.1.2.23 4300 2>&1 | sed "s/received in .*$/received .../"
 Ncat: Version 7.80 ( https://nmap.org/ncat )
 NCAT DEBUG: Using system default trusted CA certificates and those in PATH/share/ncat/ca-bundle.crt.
 NCAT DEBUG: Unable to load trusted CA certificates from PATH/share/ncat/ca-bundle.crt: error:02001002:system library:fopen:No such file or directory
@@ -103,7 +103,7 @@ libnsock nsock_trace_handler_callback(): Callback: WRITE SUCCESS for EID 35 [192
 libnsock nsock_readbytes(): Read request for 0 bytes from IOD #2 [peer unspecified] EID 42
 libnsock nsock_trace_handler_callback(): Callback: READ EOF for EID 42 [peer unspecified]
 libnsock nsock_trace_handler_callback(): Callback: READ EOF for EID 18 [192.1.2.23:4300]
-Ncat: 5 bytes sent, 0 bytes received in 1.09 seconds.
+Ncat: 5 bytes sent, 0 bytes received ...
 libnsock nsock_iod_delete(): nsock_iod_delete (IOD #1)
 libnsock nsock_iod_delete(): nsock_iod_delete (IOD #2)
 west #
