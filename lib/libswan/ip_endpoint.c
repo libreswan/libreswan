@@ -231,27 +231,13 @@ bool endpoint_eq(const ip_endpoint *l, const ip_endpoint *r)
 {
 	const struct ip_info *lt = address_type(l);
 	const struct ip_info *rt = address_type(r);
-	if (lt == NULL || rt == NULL) {
-		/* AF_UNSPEC/NULL are never equal; think NaN */
-		return false;
-	}
-	if (lt != rt) {
-		return false;
-	}
-	if (l->hport != r->hport) {
-		return false;
-	}
-	if (!memeq(&l->bytes, &r->bytes, sizeof(l->bytes))) {
-		return false;
-	}
-	if (l->ipproto != 0 && r->ipproto != 0 &&
-	    l->ipproto != r->ipproto) {
-		return false;
-	}
-	if (l->ipproto == 0 || r->ipproto == 0) {
-		dbg("endpoint fuzzy ipproto match");
-	}
-	return true;
+	return
+		lt == rt &&
+		lt != NULL &&	/* AF_UNSPEC/NULL are never equal */
+		l->hport == r->hport &&
+		memeq(&l->bytes, &r->bytes, sizeof(l->bytes)) &&
+		( l->ipproto == 0 || r->ipproto == 0 ||
+		  l->ipproto == r->ipproto );
 }
 
 void pexpect_endpoint(const ip_endpoint *e, const char *s, where_t where)
