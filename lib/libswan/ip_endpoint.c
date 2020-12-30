@@ -231,13 +231,42 @@ bool endpoint_eq(const ip_endpoint *l, const ip_endpoint *r)
 {
 	const struct ip_info *lt = address_type(l);
 	const struct ip_info *rt = address_type(r);
-	return
-		lt == rt &&
-		lt != NULL &&	/* AF_UNSPEC/NULL are never equal */
-		l->hport == r->hport &&
-		memeq(&l->bytes, &r->bytes, sizeof(l->bytes)) &&
-		( l->ipproto == 0 || r->ipproto == 0 ||
-		  l->ipproto == r->ipproto );
+	if (lt == NULL || rt == NULL) {
+		/* AF_UNSPEC/NULL are never equal; think NaN */
+		return false;
+	}
+	if (lt != rt) {
+		return false;
+	}
+	if (l->hport != r->hport) {
+		return false;
+	}
+	if (!memeq(&l->bytes, &r->bytes, sizeof(l->bytes))) {
+		return false;
+	}
+	if (l->ipproto != 0 && r->ipproto != 0 &&
+	    l->ipproto != r->ipproto) {
+		return false;
+	}
+	if (l->ipproto == 0 || r->ipproto == 0) {
+		/*
+		 * XXX: note the <<#if 0 pendpoint()>> sprinkled all
+		 * over this file.
+		 *
+		 * There is (was?) code lurking in pluto that does not
+		 * initialize the ip_endpoint's .iproto field.  For
+		 * instance by assigning an ip_address to an
+		 * ip_endpoint (the two are still compatible).
+		 *
+		 * This dbg() line is one step towards tracking these
+		 * cases down.
+		 *
+		 * (If the intent is for some sort of wildcard match
+		 * then either ip_selector or ip_subnet can be used.)
+		 */
+		dbg("endpoint fuzzy ipproto match");
+	}
+	return true;
 }
 
 void pexpect_endpoint(const ip_endpoint *e, const char *s, where_t where)
