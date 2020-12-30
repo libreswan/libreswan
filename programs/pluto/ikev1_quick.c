@@ -1011,7 +1011,8 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 				log_state(RC_LOG_SERIOUS, p1st,
 					  "IDci was FQDN: %s, using NAT_OA=%s %d as IDci",
 					  idfqdn, str_subnet(&b.peers.net, &buf),
-					  isanyaddr(&hv.st_nat_oa)/*XXX: always 0?*/);
+					  (address_is_unset(&hv.st_nat_oa) ||
+					   address_eq_any(&hv.st_nat_oa)/*XXX: always 0?*/));
 			}
 		}
 	} else {

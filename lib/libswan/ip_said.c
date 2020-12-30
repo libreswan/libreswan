@@ -43,7 +43,7 @@ void jam_said(struct jambuf *buf, const ip_said *sa)
 
 	if (strcmp(pre, PASSTHROUGHTYPE) == 0 &&
 	    sa->spi == PASSTHROUGHSPI &&
-	    isanyaddr(&sa->dst)) {
+	    (address_is_unset(&sa->dst) /*short-circuit*/|| address_eq_any(&sa->dst))) {
 		jam_string(buf, (said_type(sa) == &ipv4_info ?
 				 PASSTHROUGH4NAME :
 				 PASSTHROUGH6NAME));

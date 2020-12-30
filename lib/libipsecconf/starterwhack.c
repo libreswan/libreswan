@@ -350,7 +350,7 @@ static void set_whack_end(char *lr,
 	if (subnet_is_specified(&l->vti_ip))
 		w->host_vtiip = l->vti_ip;
 
-	if (!isanyaddr(&l->ifaceip.addr))
+	if (!(address_is_unset(&l->ifaceip.addr) || address_eq_any(&l->ifaceip.addr)))
 		w->ifaceip = l->ifaceip;
 
 	w->has_client = l->has_client;

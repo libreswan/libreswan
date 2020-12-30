@@ -292,7 +292,8 @@ bool initiate_connection(struct connection *c, const char *remote_host, bool bac
 	bool ok;
 
 	/* If whack supplied a remote IP, fill it in if we can */
-	if (remote_host != NULL && isanyaddr(&c->spd.that.host_addr)) {
+	if (remote_host != NULL && (address_is_unset(&c->spd.that.host_addr) ||
+				    address_eq_any(&c->spd.that.host_addr))) {
 		ip_address remote_ip;
 
 		ttoaddr_num(remote_host, 0, AF_UNSPEC, &remote_ip);
@@ -347,7 +348,7 @@ bool initiate_connection_2(struct connection *c, const char *remote_host, bool b
 	}
 
 	if ((remote_host == NULL) && (c->kind != CK_PERMANENT) && !(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
-		if (isanyaddr(&c->spd.that.host_addr)) {
+		if (address_is_unset(&c->spd.that.host_addr) || address_eq_any(&c->spd.that.host_addr)) {
 			if (c->dnshostname != NULL) {
 				llog(RC_NOPEERIP, c->logger,
 				     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
@@ -366,7 +367,8 @@ bool initiate_connection_2(struct connection *c, const char *remote_host, bool b
 
 	}
 
-	if (isanyaddr(&c->spd.that.host_addr) && (c->policy & POLICY_IKEV2_ALLOW_NARROWING) ) {
+	if ((address_is_unset(&c->spd.that.host_addr) || address_eq_any(&c->spd.that.host_addr)) &&
+	    (c->policy & POLICY_IKEV2_ALLOW_NARROWING) ) {
 		if (c->dnshostname != NULL) {
 			llog(RC_NOPEERIP, c->logger,
 			     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
@@ -713,7 +715,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 	 * First try for one that explicitly handles the clients.
 	 */
 
-	if (isanyaddr(&b->our_client) || isanyaddr(&b->peer_client)) {
+	if ((address_is_unset(&b->our_client) || address_eq_any(&b->our_client)) ||
+	    (address_is_unset(&b->peer_client) || address_eq_any(&b->peer_client))) {
 		cannot_oppo(b, "impossible IP address");
 		return;
 	}
@@ -1136,7 +1139,7 @@ static void connection_check_ddns1(struct connection *c)
 		return;
 	}
 
-	if (isanyaddr(&new_addr)) {
+	if (address_is_unset(&new_addr) || address_eq_any(&new_addr)) {
 		connection_buf cib;
 		dbg("pending ddns: connection "PRI_CONNECTION" still no address for \"%s\"",
 		    pri_connection(c, &cib), c->dnshostname);

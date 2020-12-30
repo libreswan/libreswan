@@ -460,7 +460,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 		jam(buf, "' ");
 	}
 
-	if (!isanyaddr(&sr->this.ifaceip.addr)) {
+	if (!(address_is_unset(&sr->this.ifaceip.addr) || address_eq_any(&sr->this.ifaceip.addr))) {
 		jam(buf, "INTERFACE_IP='");
 		jam_subnet(buf, &sr->this.ifaceip);
 		jam(buf, "' ");
