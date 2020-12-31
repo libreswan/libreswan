@@ -25,6 +25,7 @@
 #include "virtual_ip.h"
 #include "nat_traversal.h"		/* for nat_traversal_enabled */
 #include "refcnt.h"
+#include "ip_info.h"
 
 #define F_VIRTUAL_NO		1	/* %no (subnet must be host/32) */
 #define F_VIRTUAL_PRIVATE	2	/* %priv (list held in private_net_{incl,excl} */
@@ -68,7 +69,6 @@ static bool read_subnet(const char *src, size_t len,
 			bool *isincl,
 			struct logger *logger)
 {
-	int af = AF_UNSPEC;	/* AF_UNSPEC means "guess from form" */
 	const char *p = src;	/* cursor */
 
 	/*
@@ -76,10 +76,13 @@ static bool read_subnet(const char *src, size_t len,
 	 * but that's OK because the character in src[len] is either ',' or '\0'
 	 * so the result will be a non-match, safely and correctly.
 	 */
+	const struct ip_info *afi;
 	if (eat(p, "%v4:")) {
-		af = AF_INET;
+		afi = &ipv4_info;
 	} else if (eat(p, "%v6:")) {
-		af = AF_INET6;
+		afi = &ipv6_info;
+	} else {
+		afi = NULL;	/* "guess from src" */
 	}
 
 	bool incl = TRUE;
@@ -87,7 +90,7 @@ static bool read_subnet(const char *src, size_t len,
 	if (dstexcl != NULL)
 		*isincl = incl = !eat(p, "!");
 
-	err_t ugh = ttosubnet(p, len - (p - src), af, 'x',
+	err_t ugh = ttosubnet(p, len - (p - src), afi, 'x',
 			      incl ? dst : dstexcl, logger);
 	if (ugh != NULL) {
 		llog(RC_LOG_SERIOUS, logger,

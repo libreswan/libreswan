@@ -1647,7 +1647,7 @@ int main(int argc, char **argv)
 				msg.right.virt = optarg;
 			} else {
 				diagq(ttosubnet(optarg, 0,
-						msg.tunnel_addr_family,
+						aftoinfo(msg.tunnel_addr_family),
 						'6', &msg.right.client,
 						logger),
 					optarg);

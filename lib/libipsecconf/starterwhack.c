@@ -711,7 +711,7 @@ static bool one_subnet_from_string(const struct starter_conn *conn,
 	while (*subnets != '\0' && !(char_isspace(*subnets) || *subnets == ','))
 		subnets++;
 
-	e = ttosubnet(eln, subnets - eln, afi->af, '6', sn, logger);
+	e = ttosubnet(eln, subnets - eln, afi, '6', sn, logger);
 	if (e != NULL) {
 		starter_log(LOG_LEVEL_ERR,
 			"conn: \"%s\" warning '%s' is not a subnet declaration. (%ssubnets)",

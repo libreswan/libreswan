@@ -144,7 +144,7 @@ static err_t to_subnet_selector(const struct selector *s,
 	}
 
 	ip_subnet subnet;
-	err_t err = ttosubnet(s->addresses, 0, SA_FAMILY(s->family), '6',
+	err_t err = ttosubnet(s->addresses, 0, IP_TYPE(s->family), '6',
 			      &subnet, logger);
 	if (err != NULL) {
 		return err;
@@ -235,7 +235,7 @@ static err_t to_subnet_port_selector(const struct selector *s,
 	}
 
 	/* hack */
-	return ttosubnet(s->addresses, 0, SA_FAMILY(s->family), '6', selector, logger);
+	return ttosubnet(s->addresses, 0, IP_TYPE(s->family), '6', selector, logger);
 }
 
 static void check_selector_from_subnet_port(struct logger *logger)

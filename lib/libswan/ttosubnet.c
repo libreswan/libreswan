@@ -31,13 +31,12 @@
  * Mask can be integer bit count.
  */
 err_t ttosubnet(const char *srcstr, size_t srclen,	/* 0 means "apply strlen" */
-		int af,	/* AF_INET or AF_INET6 */
+		const struct ip_info *afi, /* could be NULL */
 		int clash,  /* '0' zero host-part bits, 'x' die on them, '6' die on IPv6 and warn on IPv4 */
 		ip_subnet *dst,
 		struct logger *logger)
 {
 	err_t oops;
-	const struct ip_info *afi = aftoinfo(af); /* could be NULL */
 
 	/*
 	 * XXX: should always pass in the length!
