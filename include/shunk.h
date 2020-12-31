@@ -120,8 +120,8 @@ bool shunk_strcaseeat(shunk_t *lhs, const char *string);
 /*
  * Number conversion.  like strtoul() et.al.
  */
-err_t shunk_to_uint(shunk_t input, shunk_t *cursor, unsigned base,
-		    uintmax_t *value, uintmax_t ceiling);
+err_t shunk_to_uintmax(shunk_t input, shunk_t *cursor, unsigned base,
+		       uintmax_t *value, uintmax_t ceiling);
 
 /*
  * To print, use: printf(PRI_SHUNK, pri_shunk(shunk));

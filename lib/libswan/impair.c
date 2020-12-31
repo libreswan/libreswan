@@ -241,7 +241,7 @@ static unsigned parse_biased_unsigned(shunk_t string, const struct impairment *c
 {
 	unsigned bias = cr->how_keywords != NULL ? cr->how_keywords->nr_values : 1;
 	uintmax_t u;
-	err_t err = shunk_to_uint(string, NULL, 0/*base*/, &u, UINTMAX_MAX - bias/*ceiling*/);
+	err_t err = shunk_to_uintmax(string, NULL, 0/*base*/, &u, UINTMAX_MAX - bias/*ceiling*/);
 	if (err == NULL) {
 		return u + bias;
 	} else {

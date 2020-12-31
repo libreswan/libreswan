@@ -546,7 +546,7 @@ static void check_hunk_char_is(void)
 	}
 }
 
-static void check_shunk_to_uint(void)
+static void check_shunk_to_uintmax(void)
 {
 	static const struct test {
 		const char *s;
@@ -647,31 +647,31 @@ static void check_shunk_to_uint(void)
 		shunk_t t_s = shunk1(t->s);
 
 		/* must use entire buffer */
-		err = shunk_to_uint(t_s, NULL, t->base, &u, t->ceiling);
+		err = shunk_to_uintmax(t_s, NULL, t->base, &u, t->ceiling);
 		bool t_ok = t->o != NULL && t->o[0] == '\0';
 		if ((err == NULL) != t_ok) {
-			FAIL_S("shunk_to_uint(cursor==NULL) returned '%s', expecting '%s'",
+			FAIL_S("shunk_to_uintmax(cursor==NULL) returned '%s', expecting '%s'",
 			       err, bool_str(t_ok));
 		}
 		if (u != (t_ok ? t->u : 0)) {
-			FAIL_S("shunk_to_uint(cursor==NULL) returned %ju (0x%jx), expecting %ju (0x%jx)",
+			FAIL_S("shunk_to_uintmax(cursor==NULL) returned %ju (0x%jx), expecting %ju (0x%jx)",
 			       u, u, t->u, t->u);
 		}
 
 		/* remainder left in O */
 		shunk_t o;
-		err = shunk_to_uint(t_s, &o, t->base, &u, t->ceiling);
+		err = shunk_to_uintmax(t_s, &o, t->base, &u, t->ceiling);
 		bool t_o_ok = t->o != NULL;
 		if ((err == NULL) != t_o_ok) {
-			FAIL_S("shunk_to_uint(&cursor) returned '%s', expecting '%s'",
+			FAIL_S("shunk_to_uintmax(&cursor) returned '%s', expecting '%s'",
 			       err, bool_str(t_o_ok));
 		}
 		if (u != t->u) {
-			FAIL_S("shunk_to_uint(&cursor) returned %ju (0x%jx), expecting %ju (0x%jx)",
+			FAIL_S("shunk_to_uintmax(&cursor) returned %ju (0x%jx), expecting %ju (0x%jx)",
 			       u, u, t->u, t->u);
 		}
 		if (!hunk_eq(o, t_o)) {
-			FAIL_S("shunk_to_uint(&cursor) returned '"PRI_SHUNK"', expecting '"PRI_SHUNK"'",
+			FAIL_S("shunk_to_uintmax(&cursor) returned '"PRI_SHUNK"', expecting '"PRI_SHUNK"'",
 			       pri_shunk(o), pri_shunk(t_o));
 		}
 	}
@@ -737,7 +737,7 @@ int main(int argc UNUSED, char *argv[] UNUSED)
 	shunk_clone_check();
 	check_hunk_char();
 	check_hunk_char_is();
-	check_shunk_to_uint();
+	check_shunk_to_uintmax();
 	check_ntoh_hton_hunk();
 
 	if (fails > 0) {

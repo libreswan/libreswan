@@ -95,7 +95,7 @@ err_t text_cidr_to_subnet(shunk_t cidr, const struct ip_info *afi, ip_subnet *su
 	}
 	uintmax_t maskbits = afi->mask_cnt;
 	/* don't use bound - error is confusing */
-	err = shunk_to_uint(mask, NULL, 0, &maskbits, 0);
+	err = shunk_to_uintmax(mask, NULL, 0, &maskbits, 0);
 	if (err != NULL) {
 		/* not a number */
 		return err;

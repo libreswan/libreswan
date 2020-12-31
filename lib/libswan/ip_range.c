@@ -175,7 +175,7 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 	{
 		/* START/MASK */
 		uintmax_t maskbits = afi->mask_cnt;
-		err = shunk_to_uint(end, NULL, 0, &maskbits, afi->mask_cnt);
+		err = shunk_to_uintmax(end, NULL, 0, &maskbits, afi->mask_cnt);
 		if (err != NULL) {
 			return err;
 		}
