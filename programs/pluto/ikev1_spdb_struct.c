@@ -2385,7 +2385,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	uint16_t life_type = 0;	/* initialized to silence GCC */
 	const struct dh_desc *pfs_group = NULL;
 
-	diag_t d = pbs_in_struct(prop_pbs, trans_desc, trans, sizeof(trans), trans_pbs);
+	diag_t d = pbs_in_struct(prop_pbs, trans_desc, trans, sizeof(*trans), trans_pbs);
 	if (d != NULL) {
 		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return false;
