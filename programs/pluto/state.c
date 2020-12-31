@@ -253,7 +253,7 @@ void revive_conns(struct logger *logger)
 	 */
 	dbg("revive_conns() called");
 	while (revivals != NULL) {
-		struct connection *c = conn_by_serialno(revivals->serialno);
+		struct connection *c = connection_by_serialno(revivals->serialno);
 		if (c == NULL) {
 			llog(RC_UNKNOWN_NAME, logger,
 				    "failed to initiate connection "PRI_CO" which received a Delete/Notify but must remain up per local policy; connection no longer exists", pri_co(revivals->serialno));

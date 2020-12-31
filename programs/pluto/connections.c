@@ -132,19 +132,6 @@ struct connection *conn_by_name(const char *nm, bool no_inst)
 	return p;
 }
 
-struct connection *conn_by_serialno(co_serial_t serialno)
-{
-	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
-	for (struct connection *d = connections; d != NULL; ) {
-		if (d == NULL)
-			return NULL;
-		if (co_serial_cmp(d->serialno, ==, serialno))
-			return d;
-		d = d->ac_next;
-	}
-	return NULL; /* unreachable */
-}
-
 void release_connection(struct connection *c, bool relations, struct fd *whackfd)
 {
 	if (c->kind == CK_INSTANCE) {
