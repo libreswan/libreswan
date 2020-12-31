@@ -21,92 +21,6 @@
 #include "lswlog.h"	/* for dbg() */
 
 /*
- * initsubnet - initialize ip_subnet from address and count
- *
- * The only hard part is checking for host-part bits turned on.
- *
- * Return NULL for success, else string literal.
- */
-
-static err_t initsubnet(const ip_address *addr,
-			int maskbits,
-			int clash,	/* '0' zero host-part bits, 'x' die on them */
-			ip_subnet *dst,
-			struct logger *logger)
-{
-	unsigned char *p;
-	int n;
-	int c;
-	unsigned m;
-	bool die = false;
-	bool warn = 0;
-
-	dst->addr = *addr;
-	chunk_t addr_chunk = address_as_chunk(&dst->addr);
-	n = addr_chunk.len;
-	p = addr_chunk.ptr; /* cast void* */
-	if (n == 0)
-		return "unknown address family";
-
-	switch (clash) {
-	case '0':
-		die = 0;
-		break;
-	case 'x':
-		die = 1;
-		break;
-	case '6':
-		pexpect(logger != NULL);
-		if (address_type(addr) == &ipv6_info)
-			die = 1;
-		warn = 1;
-		break;
-
-	default:
-		return "unknown clash-control value in initsubnet";
-	}
-
-	c = maskbits / 8;
-	if (c > n)
-		return "impossible mask count";
-
-	p += c;
-	n -= c;
-
-	m = 0xff;
-	c = maskbits % 8;
-	if (n > 0 && c != 0)	/* partial byte */
-		m >>= c;
-
-	bool warning = false;
-	for (; n > 0; n--) {
-		if ((*p & m) != 0) {
-			if (die)
-				return "improper subnet, host-part bits on";
-			if (warn && !warning)
-				warning = true;
-			*p &= ~m;
-		}
-		m = 0xff;
-		p++;
-	}
-
-	dst->maskbits = maskbits;
-
-	if (warning) {
-		LLOG_JAMBUF(RC_LOG, logger, buf) {
-			jam(buf, "WARNING:improper subnet mask, host-part bits on input ");
-			jam_address(buf, addr);
-			jam(buf, "/%d ", maskbits);
-			jam(buf, " extracted subnet ");
-			jam_subnet(buf, dst);
-		}
-	}
-
-	return NULL;
-}
-
-/*
  * rangetosubnet - turn an address range into a subnet, if possible
  *
  * A range which is a valid subnet will have a network part which is the
@@ -115,61 +29,68 @@ static err_t initsubnet(const ip_address *addr,
  *
  * ??? this really should use ip_range rather than a pair of ip_address values
  */
-err_t rangetosubnet(from, to, dst)
-const ip_address *from;
-const ip_address *to;
-ip_subnet *dst;
+err_t rangetosubnet(const ip_address *from, const ip_address *to, ip_subnet *dst)
 {
-	const struct ip_info *ft = address_type(from);
-	const struct ip_info *tt = address_type(to);
-	if (ft == NULL || tt == NULL) {
-		return "unknown address type";
+	if (address_is_unset(from)) {
+		/* XXX: should never happen? */
+		return "FROM address unset";
 	}
-	if (ft != tt) {
+
+	if (address_is_unset(to)) {
+		/* XXX: should never happen? */
+		return "TO address unset";
+	}
+
+	if (address_type(from) != address_type(to)) {
 		return "mismatched address types";
 	}
 
-	unsigned fb;
-	unsigned tb;
-	const unsigned char *f;
-	const unsigned char *t;
-	int i;
-	int nnet;
-	unsigned m;
-
 	shunk_t fs = address_as_shunk(from);
-	const uint8_t *fp = fs.ptr; /* cast cast void * */
-	passert(fs.len > 0);
-	size_t n = fs.len;
-
 	shunk_t ts = address_as_shunk(to);
-	const uint8_t *tp = ts.ptr; /* cast const void * */
-	passert(fs.len == ts.len);
 
-	f = fp;
-	t = tp;
-	nnet = 0;
-	for (i = n; i > 0 && *f == *t; i--, f++, t++)
-		nnet += 8;
-	if (i > 0 && !(*f == 0x00 && *t == 0xff)) {	/* mid-byte bdry. */
-		fb = *f++;
-		tb = *t++;
-		i--;
-		m = 0x80;
+	passert(fs.len > 0);
+	passert(ts.len > 0);
+	const uint8_t *f = fs.ptr; /* cast cast void * */;
+	const uint8_t *t = ts.ptr; /* cast const void * */;
+
+	passert(fs.len == ts.len);
+	size_t n = fs.len;
+	size_t i = 0;
+
+	/*
+	 * Determine the maskbits (the CIDR network part) by matching
+	 * leading bits of FROM and TO.  Trailing bits (subnet address)
+	 * must be either all 0 (from) or 1 (to).
+	 */
+	unsigned maskbits = 0;
+	for (; i < n && f[i] == t[i]; i++) {
+		maskbits += 8;
+	}
+	if (i < n && !(f[i] == 0x00 && t[i] == 0xff)) {	/* mid-byte bdry. */
+		uint8_t fb = f[i];
+		uint8_t tb = t[i];
+		i++;
+		uint8_t m = 0x80;
+		/*
+		 * clear each FB bit, and set each TB as it is matched
+		 * so that, at the end FB==0x00 and TB=0xFF
+		 */
 		while ((fb & m) == (tb & m)) {
 			fb &= ~m;
 			tb |= m;
 			m >>= 1;
-			nnet++;
+			maskbits++;
 		}
-		if (fb != 0x00 || tb != 0xff)
+		if (fb != 0x00 || tb != 0xff) {
 			return "not a valid subnet";
+		}
 	}
-	for (; i > 0 && *f == 0x00 && *t == 0xff; i--, f++, t++)
-		continue;
+	for (; i < n; i++) {
+		if (f[i] != 0x00 || t[i] != 0xff) {
+			return "invalid subnet";
+		}
+	}
 
-	if (i != 0)
-		return "invalid subnet";
-
-	return initsubnet(from, nnet, 'x', dst, NULL);
+	*dst = subnet_from_address_maskbits(from, maskbits);
+	return NULL;
 }

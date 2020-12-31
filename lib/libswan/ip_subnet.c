@@ -25,7 +25,7 @@
 
 const ip_subnet unset_subnet; /* all zeros */
 
-static ip_subnet subnet2(const ip_address *address, int maskbits)
+ip_subnet subnet_from_address_maskbits(const ip_address *address, unsigned maskbits)
 {
 	ip_subnet s = {
 		.addr = strip_endpoint(address, HERE),
@@ -42,7 +42,7 @@ ip_subnet subnet_from_address(const ip_address *address)
 	if (!pexpect(afi != NULL)) {
 		return unset_subnet;
 	}
-	return subnet2(address, afi->mask_cnt);
+	return subnet_from_address_maskbits(address, afi->mask_cnt);
 }
 
 err_t address_mask_to_subnet(const ip_address *address,
@@ -62,7 +62,7 @@ err_t address_mask_to_subnet(const ip_address *address,
 		return "invalid mask";
 	}
 	ip_address prefix = address_blit(*address, &keep_bits, &clear_bits, maskbits);
-	*subnet = subnet2(&prefix, maskbits);
+	*subnet = subnet_from_address_maskbits(&prefix, maskbits);
 	return NULL;
 }
 
@@ -105,7 +105,7 @@ err_t text_cidr_to_subnet(shunk_t cidr, const struct ip_info *afi, ip_subnet *su
 	}
 
 	/* combine */
-	*subnet = subnet2(&subnet_address, maskbits);
+	*subnet = subnet_from_address_maskbits(&subnet_address, maskbits);
 	return NULL;
 }
 
