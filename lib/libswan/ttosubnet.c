@@ -27,32 +27,100 @@
 #endif
 
 /*
- * initsubnet - initialize ip_subnet from address and count
- *
- * The only hard part is checking for host-part bits turned on.
- *
- * Return NULL for success, else string literal.
+ * ttosubnet - convert text "addr/mask" to address and mask
+ * Mask can be integer bit count.
  */
-static err_t initsubnet(const ip_address *addr,
-			int maskbits,
-			int clash,	/* '0' zero host-part bits, 'x' die on them */
-			ip_subnet *dst,
-			struct logger *logger)
+err_t ttosubnet(const char *srcstr, size_t srclen,	/* 0 means "apply strlen" */
+		int af,	/* AF_INET or AF_INET6 */
+		int clash,  /* '0' zero host-part bits, 'x' die on them, '6' die on IPv6 and warn on IPv4 */
+		ip_subnet *dst,
+		struct logger *logger)
 {
-	unsigned char *p;
-	int n;
-	int c;
-	unsigned m;
+	err_t oops;
+	const struct ip_info *afi = aftoinfo(af); /* could be NULL */
+
+	/*
+	 * XXX: should always pass in the length!
+	 */
+	if (srclen == 0) {
+		srclen = strlen(srcstr);
+		if (srclen == 0) {
+			return "empty string";
+		}
+	}
+	shunk_t src = shunk2(srcstr, srclen);
+
+	/*
+	 * Match %default, can't work when AFI=NULL.
+	 *
+	 * you cannot use af==AF_UNSPEC and src=0/0,
+	 * makes no sense as will it be AF_INET
+	 */
+	if (hunk_strcaseeq(src, DEFAULTSUBNET)) {
+		if (afi == NULL) {
+			return "unknown address family with " DEFAULTSUBNET " subnet not allowed.";
+		}
+		*dst = afi->all_addresses; /* 0.0.0.0/0 or ::/0 */
+		return NULL;
+	}
+
+	/* split the input into ADDR "/" (mask)... */
+	char slash;
+	shunk_t addr = shunk_token(&src, &slash, "/");
+	if (slash == '\0') {
+		/* consumed entire input */
+		return "no / in subnet specification";
+	}
+
+	ip_address addrtmp;
+	oops = numeric_to_address(addr, afi, &addrtmp);
+	if (oops != NULL) {
+		return oops;
+	}
+
+	if (afi == NULL) {
+		afi = address_type(&addrtmp);
+	}
+	if (afi == NULL) {
+		/* XXX: pexpect()? */
+		return "unknown address family in ttosubnet";
+	}
+
+	/* split the input into MASK [ ":" (port) ... ] */
+	char colon;
+	shunk_t mask = shunk_token(&src, &colon, ":");
+	uintmax_t maskbits;
+	oops = shunk_to_uintmax(mask, NULL, 10, &maskbits, afi->mask_cnt);
+	if (oops != NULL) {
+		if (afi == &ipv4_info) {
+			ip_address masktmp;
+			oops = numeric_to_address(mask, afi, &masktmp);
+			if (oops != NULL) {
+				return oops;
+			}
+
+			int i = masktocount(&masktmp);
+			if (i < 0) {
+				return "non-contiguous or otherwise erroneous mask";
+			}
+			maskbits = i;
+		} else {
+			return "masks are not permitted for IPv6 addresses";
+		}
+	}
+
+	/* the :PORT */
+	if (colon != '\0') {
+		uintmax_t port;
+		err_t oops = shunk_to_uintmax(src, NULL, 0, &port, 0xFFFF);
+		if (oops != NULL) {
+			return oops;
+		}
+		addrtmp = set_endpoint_hport(&addrtmp, port);
+	}
+
 	bool die = false;
 	bool warn = 0;
-
-	dst->addr = *addr;
-	chunk_t addr_chunk = address_as_chunk(&dst->addr);
-	n = addr_chunk.len;
-	p = addr_chunk.ptr; /* cast void* */
-	if (n == 0)
-		return "unknown address family";
-
 	switch (clash) {
 	case '0':
 		die = 0;
@@ -61,24 +129,28 @@ static err_t initsubnet(const ip_address *addr,
 		die = 1;
 		break;
 	case '6':
-		pexpect(logger != NULL);
-		if (address_type(addr) == &ipv6_info)
+		if (afi == &ipv6_info)
 			die = 1;
 		warn = 1;
 		break;
-
 	default:
 		return "unknown clash-control value in initsubnet";
 	}
 
-	c = maskbits / 8;
+	chunk_t addr_chunk = address_as_chunk(&addrtmp);
+	unsigned n = addr_chunk.len;
+	uint8_t *p = addr_chunk.ptr; /* cast void* */
+	if (n == 0)
+		return "unknown address family";
+
+	unsigned c = maskbits / 8;
 	if (c > n)
 		return "impossible mask count";
 
 	p += c;
 	n -= c;
 
-	m = 0xff;
+	unsigned m = 0xff;
 	c = maskbits % 8;
 	if (n > 0 && c != 0)	/* partial byte */
 		m >>= c;
@@ -96,128 +168,22 @@ static err_t initsubnet(const ip_address *addr,
 		p++;
 	}
 
+	/*
+	 * XXX: see above, this isn't a true subnet as addrtmp can
+	 * have its port set.
+	 */
+	dst->addr = addrtmp;
 	dst->maskbits = maskbits;
 
 	if (warning) {
 		LLOG_JAMBUF(RC_LOG, logger, buf) {
 			jam(buf, "WARNING:improper subnet mask, host-part bits on input ");
-			jam_address(buf, addr);
-			jam(buf, "/%d ", maskbits);
+			jam_address(buf, &addrtmp);
+			jam(buf, "/%ju ", maskbits);
 			jam(buf, " extracted subnet ");
 			jam_subnet(buf, dst);
 		}
 	}
 
 	return NULL;
-}
-
-/*
- * ttosubnet - convert text "addr/mask" to address and mask
- * Mask can be integer bit count.
- */
-err_t ttosubnet(const char *src,
-		size_t srclen,	/* 0 means "apply strlen" */
-		int af,	/* AF_INET or AF_INET6 */
-		int clash,  /* '0' zero host-part bits, 'x' die on them, '6' die on IPv6 and warn on IPv4 */
-		ip_subnet *dst,
-		struct logger *logger)
-{
-	const char *slash;
-	const char *colon;
-	const char *mask;
-	size_t mlen;
-	const char *oops;
-	unsigned long bc;
-	static const char def[] = DEFAULTSUBNET;
-#define DEFLEN (sizeof(def) - 1)	/* -1 for NUL */
-	static const char defis4[] = "0/0";
-#define DEFIS4LEN (sizeof(defis4) - 1)
-	static const char defis6[] = "::/0";
-#define DEFIS6LEN (sizeof(defis6) - 1)
-	ip_address addrtmp;
-	ip_address masktmp;
-	int nbits;
-	int i;
-
-	if (srclen == 0) {
-		srclen = strlen(src);
-		if (srclen == 0)
-			return "empty string";
-	}
-
-	/*
-	 * you cannot use af==AF_UNSPEC and src=0/0,
-	 * makes no sense as will it be AF_INET
-	 */
-	if (srclen == DEFLEN && strncmp(src, def, srclen) == 0) {
-		switch (af) {
-		case AF_INET:
-			src = defis4;
-			srclen = DEFIS4LEN;
-			break;
-		case AF_INET6:
-			src = defis6;
-			srclen = DEFIS6LEN;
-			break;
-		default:
-			return "unknown address family with " DEFAULTSUBNET " subnet not allowed.";
-		}
-	}
-
-	slash = memchr(src, '/', srclen);
-	if (slash == NULL)
-		return "no / in subnet specification";
-
-	mask = slash + 1;
-	mlen = srclen - (mask - src);
-	oops = ttoaddr_num(src, slash - src, af, &addrtmp);
-	if (oops != NULL)
-		return oops;
-
-	if (af == AF_UNSPEC)
-		af = addrtypeof(&addrtmp);
-
-	switch (af) {
-	case AF_INET:
-		nbits = 32;
-		break;
-	case AF_INET6:
-		nbits = 128;
-		break;
-	default:
-		return "unknown address family in ttosubnet";
-	}
-
-	/* extract port, as last : */
-	colon = memchr(mask, ':', mlen);
-	if (colon == 0) {
-		setportof(0, &addrtmp);
-	} else {
-		unsigned long port;
-
-		oops =  ttoulb(colon + 1, mlen - (colon - mask + 1), 0, 0xFFFF, &port);
-		if (oops != NULL)
-			return oops;
-
-		setportof(htons(port), &addrtmp);
-		mlen = colon - mask;
-	}
-
-	/* extract mask */
-	oops = ttoulb(mask, mlen, 10, nbits, &bc);
-	if (oops == NULL) {
-		/* ttoul succeeded, it's a bit-count mask */
-		i = bc;
-	} else if (af == AF_INET) {
-		oops = ttoaddr_num(mask, mlen, af, &masktmp);
-		if (oops != NULL)
-			return oops;
-
-		i = masktocount(&masktmp);
-		if (i < 0)
-			return "non-contiguous or otherwise erroneous mask";
-	} else {
-		return "masks are not permitted for IPv6 addresses";
-	}
-	return initsubnet(&addrtmp, i, clash, dst, logger);
 }
