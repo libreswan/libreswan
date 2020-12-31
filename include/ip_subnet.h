@@ -150,8 +150,6 @@ ip_address subnet_address(const ip_subnet *subnet);
 extern err_t ttosubnet(const char *src, size_t srclen, int af, int clash,
 		       ip_subnet *dst, struct logger *logger);
 #define SUBNETTOT_BUF   sizeof(subnet_buf)
-extern err_t initsubnet(const ip_address *addr, int maskbits, int clash,
-			ip_subnet *dst, struct logger *logger);
 extern err_t endtosubnet(const ip_endpoint *end, ip_subnet *dst, where_t where);
 
 /* misc. conversions and related */

@@ -19,10 +19,97 @@
 
 #include "ip_subnet.h"
 #include "libreswan.h"		/* for ttoulb() */
+#include "ip_info.h" 	/* ipv6_info */
+#include "lswlog.h"	/* for dbg() */
 
 #ifndef DEFAULTSUBNET
 #define DEFAULTSUBNET "%default"
 #endif
+
+/*
+ * initsubnet - initialize ip_subnet from address and count
+ *
+ * The only hard part is checking for host-part bits turned on.
+ *
+ * Return NULL for success, else string literal.
+ */
+static err_t initsubnet(const ip_address *addr,
+			int maskbits,
+			int clash,	/* '0' zero host-part bits, 'x' die on them */
+			ip_subnet *dst,
+			struct logger *logger)
+{
+	unsigned char *p;
+	int n;
+	int c;
+	unsigned m;
+	bool die = false;
+	bool warn = 0;
+
+	dst->addr = *addr;
+	chunk_t addr_chunk = address_as_chunk(&dst->addr);
+	n = addr_chunk.len;
+	p = addr_chunk.ptr; /* cast void* */
+	if (n == 0)
+		return "unknown address family";
+
+	switch (clash) {
+	case '0':
+		die = 0;
+		break;
+	case 'x':
+		die = 1;
+		break;
+	case '6':
+		pexpect(logger != NULL);
+		if (address_type(addr) == &ipv6_info)
+			die = 1;
+		warn = 1;
+		break;
+
+	default:
+		return "unknown clash-control value in initsubnet";
+	}
+
+	c = maskbits / 8;
+	if (c > n)
+		return "impossible mask count";
+
+	p += c;
+	n -= c;
+
+	m = 0xff;
+	c = maskbits % 8;
+	if (n > 0 && c != 0)	/* partial byte */
+		m >>= c;
+
+	bool warning = false;
+	for (; n > 0; n--) {
+		if ((*p & m) != 0) {
+			if (die)
+				return "improper subnet, host-part bits on";
+			if (warn && !warning)
+				warning = true;
+			*p &= ~m;
+		}
+		m = 0xff;
+		p++;
+	}
+
+	dst->maskbits = maskbits;
+
+	if (warning) {
+		LLOG_JAMBUF(RC_LOG, logger, buf) {
+			jam(buf, "WARNING:improper subnet mask, host-part bits on input ");
+			jam_address(buf, addr);
+			jam(buf, "/%d ", maskbits);
+			jam(buf, " extracted subnet ");
+			jam_subnet(buf, dst);
+		}
+	}
+
+	return NULL;
+}
 
 /*
  * ttosubnet - convert text "addr/mask" to address and mask
