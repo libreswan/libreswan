@@ -299,7 +299,7 @@ static void check_range_from_subnet(struct logger *logger)
 		PRINT_IN(stdout, " -> '%s'..'%s'", t->start, t->end);
 
 		ip_subnet s;
-		oops = ttosubnet(t->in, 0, IP_TYPE(t->family), '6', &s, logger);
+		oops = ttosubnet(shunk1(t->in), IP_TYPE(t->family), '6', &s, logger);
 		if (oops != NULL) {
 			FAIL_IN("ttosubnet() failed: %s", oops);
 		}

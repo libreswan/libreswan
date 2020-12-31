@@ -532,7 +532,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			end->virt = clone_str(value, "validate_end item");
 		} else {
 			end->has_client = TRUE;
-			er = ttosubnet(value, 0, AF_UNSPEC, '0',
+			er = ttosubnet(shunk1(value), AF_UNSPEC, '0',
 				       &end->subnet, logger);
 		}
 		if (er != NULL)

@@ -148,7 +148,7 @@ ip_address subnet_address(const ip_subnet *subnet);
  */
 #include "err.h"
 
-extern err_t ttosubnet(const char *src, size_t srclen, const struct ip_info *afi,
+extern err_t ttosubnet(shunk_t src, const struct ip_info *afi,
 		       int clash, ip_subnet *dst, struct logger *logger);
 #define SUBNETTOT_BUF   sizeof(subnet_buf)
 extern err_t endtosubnet(const ip_endpoint *end, ip_subnet *dst, where_t where);

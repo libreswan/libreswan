@@ -1646,7 +1646,7 @@ int main(int argc, char **argv)
 			    startswith(optarg, "vnet:")) {
 				msg.right.virt = optarg;
 			} else {
-				diagq(ttosubnet(optarg, 0,
+				diagq(ttosubnet(shunk1(optarg),
 						aftoinfo(msg.tunnel_addr_family),
 						'6', &msg.right.client,
 						logger),

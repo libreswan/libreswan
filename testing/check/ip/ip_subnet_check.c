@@ -102,7 +102,7 @@ static void check_str_subnet(struct logger *logger)
 			 t->out ? t->out : "<error>");
 
 		ip_subnet s;
-		oops = ttosubnet(t->in, 0, IP_TYPE(t->family), '6', &s, logger);
+		oops = ttosubnet(shunk1(t->in), IP_TYPE(t->family), '6', &s, logger);
 		if (oops != NULL && t->out == NULL) {
 			/* Error was expected, do nothing */
 			continue;
@@ -154,7 +154,7 @@ static void check_str_subnet_port(struct logger *logger)
 			 t->out ? t->out : "<error>");
 
 		ip_subnet s;
-		oops = ttosubnet(t->in, 0, IP_TYPE(t->family), '6', &s, logger);
+		oops = ttosubnet(shunk1(t->in), IP_TYPE(t->family), '6', &s, logger);
 		if (oops != NULL && t->out == NULL) {
 			/* Error was expected, do nothing */
 			continue;
@@ -203,7 +203,7 @@ static void check_subnet_mask(struct logger *logger)
 		PRINT_IN(stdout, " -> %s", t->mask);
 
 		ip_subnet s;
-		err_t oops = ttosubnet(t->in, 0, IP_TYPE(t->family), '6', &s, logger);
+		err_t oops = ttosubnet(shunk1(t->in), IP_TYPE(t->family), '6', &s, logger);
 		if (oops != NULL) {
 			FAIL_IN("ttosubnet() failed: %s", oops);
 		}
@@ -251,7 +251,7 @@ static void check_subnet_prefix(struct logger *logger)
 		PRINT_IN(stdout, " -> %s", t->out);
 
 		ip_subnet s;
-		err_t oops = ttosubnet(t->in, 0, IP_TYPE(t->family), '6', &s, logger);
+		err_t oops = ttosubnet(shunk1(t->in), IP_TYPE(t->family), '6', &s, logger);
 		if (oops != NULL) {
 			FAIL_IN("ttosubnet() failed: %s", oops);
 		}
@@ -389,7 +389,7 @@ static void check_subnet_contains(struct logger *logger)
 
 		ip_subnet s = unset_subnet;
 		if (t->family != 0) {
-			err_t oops = ttosubnet(t->in, 0, IP_TYPE(t->family), '6', &s, logger);
+			err_t oops = ttosubnet(shunk1(t->in), IP_TYPE(t->family), '6', &s, logger);
 			if (oops != NULL) {
 				FAIL(OUT, "ttosubnet() failed: %s", oops);
 			}

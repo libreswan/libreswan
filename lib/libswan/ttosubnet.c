@@ -30,24 +30,13 @@
  * ttosubnet - convert text "addr/mask" to address and mask
  * Mask can be integer bit count.
  */
-err_t ttosubnet(const char *srcstr, size_t srclen,	/* 0 means "apply strlen" */
+err_t ttosubnet(shunk_t src,
 		const struct ip_info *afi, /* could be NULL */
 		int clash,  /* '0' zero host-part bits, 'x' die on them, '6' die on IPv6 and warn on IPv4 */
 		ip_subnet *dst,
 		struct logger *logger)
 {
 	err_t oops;
-
-	/*
-	 * XXX: should always pass in the length!
-	 */
-	if (srclen == 0) {
-		srclen = strlen(srcstr);
-		if (srclen == 0) {
-			return "empty string";
-		}
-	}
-	shunk_t src = shunk2(srcstr, srclen);
 
 	/*
 	 * Match %default, can't work when AFI=NULL.
