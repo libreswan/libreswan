@@ -75,11 +75,9 @@ bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
 		return false; /* failure: no key to use */
 	}
 
-	/* XXX: merge ikev2_calculate_{rsa,ecdsa}_hash()? */
-	unsigned int sz = pks->size;
-
 	struct crypt_mac hash = v2_calculate_sighash(ike, idhash, hash_algo,
 						     LOCAL_PERSPECTIVE);
+	passert(hash.len <= sizeof(hash.ptr/*array*/));
 
 	/*
 	 * Allocate large enough space for any digest.  Bound could be
@@ -99,7 +97,6 @@ bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
 	case IKEv2_HASH_ALGORITHM_SHA2_256:
 	case IKEv2_HASH_ALGORITHM_SHA2_384:
 	case IKEv2_HASH_ALGORITHM_SHA2_512:
-		passert(hash.len <= sizeof(signed_octets));
 		memcpy(signed_octets, hash.ptr, hash.len);
 		signed_len = hash.len;
 		break;
@@ -107,12 +104,16 @@ bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
 		bad_case(hash_algo->common.ikev2_alg_id);
 	}
 
-	passert(RSA_MIN_OCTETS <= sz && 4 + signed_len < sz &&
-		sz <= RSA_MAX_OCTETS);
-
+	passert(signed_len <= sizeof(signed_octets));
 	if (DBGP(DBG_CRYPT)) {
 	    DBG_dump("v2rsa octets", signed_octets, signed_len);
 	}
+
+	/* XXX: merge ikev2_calculate_{rsa,ecdsa}_hash()? */
+	unsigned int sz = pks->size;
+	passert(RSA_MIN_OCTETS <= sz);
+	passert(4 + signed_len < sz);
+	passert(sz <= RSA_MAX_OCTETS);
 
 	{
 		/* now generate signature blob */
