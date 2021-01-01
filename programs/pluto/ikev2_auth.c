@@ -254,6 +254,7 @@ struct hash_signature v2_auth_signature(struct logger *logger,
 					enum ikev2_auth_method auth_method,
 					const struct private_key_stuff *pks)
 {
+	passert(hash_to_sign->len <= sizeof(hash_to_sign->ptr/*array*/)); /*hint to coverity*/
 	logtime_t start = logtime_start(logger);
 
 	/*
