@@ -52,8 +52,9 @@ struct ip_info {
 	/*
 	 * ID stuff.
 	 */
-	uint8_t id_addr, id_subnet, id_range;
-
+	enum ike_id_type id_ip_addr;
+	enum ike_id_type id_ip_addr_subnet;
+	enum ike_id_type id_ip_addr_range;
 };
 
 extern const struct ip_info ipv4_info;

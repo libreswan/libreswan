@@ -399,7 +399,7 @@ static void gntoid(struct id *id, const generalName_t *gn, struct logger *logger
 		 * is ignored?
 		 */
 		const struct ip_info *afi = &ipv4_info;
-		id->kind = afi->id_addr;
+		id->kind = afi->id_ip_addr;
 		err_t ugh = hunk_to_address(gn->name, afi, &id->ip_addr);
 		if (ugh != NULL) {
 			llog(RC_LOG, logger,

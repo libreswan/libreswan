@@ -157,7 +157,7 @@ static bool emit_subnet_id(const ip_subnet *net,
 	pb_stream id_pbs;
 
 	struct isakmp_ipsec_id id = {
-		.isaiid_idtype = usehost ? ai->id_addr : ai->id_subnet,
+		.isaiid_idtype = usehost ? ai->id_ip_addr : ai->id_ip_addr_subnet,
 		.isaiid_protoid = protoid,
 		.isaiid_port = port,
 	};

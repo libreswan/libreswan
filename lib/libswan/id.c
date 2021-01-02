@@ -116,7 +116,7 @@ err_t atoid(const char *src, struct id *id)
 			return ugh;
 		}
 		*id = (struct id) {
-			.kind = afi->id_addr,
+			.kind = afi->id_ip_addr,
 			.ip_addr = addr,
 		};
 		return NULL;
@@ -562,7 +562,7 @@ enum ike_id_type id_to_payload(const struct id *id, const ip_address *host, shun
 	shunk_t tl;
 	switch (id->kind) {
 	case ID_NONE:
-		type = address_type(host)->id_addr;
+		type = address_type(host)->id_ip_addr;
 		tl = address_as_shunk(host);
 		break;
 	case ID_FROMCERT:

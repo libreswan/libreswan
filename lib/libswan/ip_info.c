@@ -65,9 +65,9 @@ const struct ip_info ipv4_info = {
 	.sockaddr_size = sizeof(struct sockaddr_in),
 
 	/* id */
-	.id_addr = ID_IPV4_ADDR,
-	.id_subnet = ID_IPV4_ADDR_SUBNET,
-	.id_range = ID_IPV4_ADDR_RANGE,
+	.id_ip_addr = ID_IPV4_ADDR,
+	.id_ip_addr_subnet = ID_IPV4_ADDR_SUBNET,
+	.id_ip_addr_range = ID_IPV4_ADDR_RANGE,
 };
 
 const struct ip_info ipv6_info = {
@@ -97,9 +97,9 @@ const struct ip_info ipv6_info = {
 	.sockaddr_size = sizeof(struct sockaddr_in6),
 
 	/* id */
-	.id_addr = ID_IPV6_ADDR,
-	.id_subnet = ID_IPV6_ADDR_SUBNET,
-	.id_range = ID_IPV6_ADDR_RANGE,
+	.id_ip_addr = ID_IPV6_ADDR,
+	.id_ip_addr_subnet = ID_IPV6_ADDR_SUBNET,
+	.id_ip_addr_range = ID_IPV6_ADDR_RANGE,
 };
 
 const struct ip_info *aftoinfo(int af)
