@@ -545,8 +545,7 @@ static bool emit_one_natoa(pb_stream *outs,
 	pb_stream pbs;
 
 	struct isakmp_nat_oa natoa = {
-		.isanoa_idtype = addrtypeof(ip) == AF_INET ?
-			ID_IPV4_ADDR : ID_IPV6_ADDR,
+		.isanoa_idtype = address_type(ip)->id_ip_addr,
 	};
 	if (!out_struct(&natoa, pd, outs, &pbs)) {
 		return false;

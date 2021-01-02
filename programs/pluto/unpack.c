@@ -98,10 +98,11 @@ diag_t unpack_peer_id(enum ike_id_type kind, struct id *peer, const struct pbs_i
 	case ID_IPV6_ADDR:
 	{
 		/* failure mode for initaddr is probably inappropriate address length */
+		const struct ip_info *afi = (kind == ID_IPV4_ADDR ? &ipv4_info :
+					     kind == ID_IPV6_ADDR ? &ipv6_info :
+					     NULL);
 		struct pbs_in in_pbs = *id_pbs;
-		diag_t d = pbs_in_address(&in_pbs, &peer->ip_addr,
-					  (peer->kind == ID_IPV4_ADDR ? &ipv4_info :
-					   &ipv6_info), "peer ID");
+		diag_t d = pbs_in_address(&in_pbs, &peer->ip_addr, afi, "peer ID");
 		if (d != NULL) {
 			return d;
 		}

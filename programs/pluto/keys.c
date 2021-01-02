@@ -33,9 +33,9 @@
 #include <arpa/inet.h>
 #include <resolv.h>
 
-
 #include "sysdep.h"
 #include "constants.h"
+#include "ip_info.h"
 #include "defs.h"
 #include "id.h"
 #include "x509.h"
@@ -536,8 +536,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		   address_eq_any(&c->spd.that.host_addr)) ) ) )
 		) {
 		/* roadwarrior: replace that with %ANYADDR */
-		rw_id.kind = addrtypeof(&c->spd.that.host_addr) == AF_INET ?
-			     ID_IPV4_ADDR : ID_IPV6_ADDR;
+		rw_id.kind = address_type(&c->spd.that.host_addr)->id_ip_addr;
 		rw_id.ip_addr = address_any(address_type(&c->spd.that.host_addr));
 		id_buf old_buf, new_buf;
 		dbg("%s() switching remote roadwarrier ID from %s to %s (%%ANYADDR)",
