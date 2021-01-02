@@ -25,11 +25,11 @@ bool selector_is_unset(const ip_selector *selector)
 	return memeq(&unset_selector, selector, sizeof(unset_selector));
 }
 
-void jam_selector(struct jambuf *buf, const ip_subnet *subnet)
+void jam_selector(struct jambuf *buf, const ip_selector *selector)
 {
-	jam_address(buf, &subnet->addr); /* sensitive? */
-	jam(buf, "/%u", subnet->maskbits);
-	int port = subnet_hport(subnet);
+	jam_address(buf, &selector->addr); /* sensitive? */
+	jam(buf, "/%u", selector->maskbits);
+	int port = selector_hport(selector);
 	if (port >= 0) {
 		jam(buf, ":%d", port);
 	}
@@ -236,4 +236,9 @@ void pexpect_selector(const ip_selector *s, const char *t, where_t where)
 			    t, pri_subnet(s, &b), pri_where(where));
 		}
 	}
+}
+
+int selector_hport(const ip_selector *s)
+{
+	return endpoint_hport(&s->addr);
 }

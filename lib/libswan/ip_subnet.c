@@ -135,13 +135,6 @@ const struct ip_info *subnet_type(const ip_subnet *src)
 	return endpoint_type(&src->addr);
 }
 
-#ifndef SUBNET_TYPE
-int subnet_hport(const ip_subnet *s)
-{
-	return endpoint_hport(&s->addr);
-}
-#endif
-
 bool subnet_is_unset(const ip_subnet *s)
 {
 	return subnet_type(s) == NULL;

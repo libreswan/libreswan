@@ -84,13 +84,17 @@ err_t range_to_selector(const ip_range *range,
 extern const ip_selector unset_selector;
 bool selector_is_unset(const ip_selector *selector);
 
-void update_selector_hport(ip_selector *selector, unsigned hport);
 const struct ip_info *selector_type(const ip_selector *selector);
 unsigned selector_ipproto(const ip_selector *selector);
 const ip_protocol *selector_protocol(const ip_selector *selector);
 ip_range selector_range(const ip_selector *selector);
 ip_protoport selector_protoport(const ip_selector *selector);
+
 ip_port selector_port(const ip_selector *selector);
+
+int selector_hport(const ip_selector *selector);
+void update_selector_hport(ip_selector *selector, unsigned hport);
+
 
 /* assuming a subnet like XFRM does */
 ip_address selector_prefix(const ip_selector *selector);

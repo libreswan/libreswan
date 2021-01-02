@@ -131,9 +131,6 @@ bool subnet_contains_no_addresses(const ip_subnet *subnet);
 /* ADDRESS..ADDRESS in SUBNET */
 bool address_in_subnet(const ip_address *address, const ip_subnet *subnet);
 
-/* h(ost) or n(etwork) ordered */
-int subnet_hport(const ip_subnet *subnet);
-
 /* when applied to an address, leaves just the routing prefix */
 extern ip_address subnet_mask(const ip_subnet *subnet);
 /* Given ROUTING_PREFIX|HOST_ID return ROUTING_PREFIX|0 */

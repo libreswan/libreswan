@@ -244,8 +244,8 @@ void record_and_initiate_opportunistic(const ip_selector *our_client,
 	/* XXX: missing transport_proto */
 	ip_address sp = subnet_prefix(our_client);
 	ip_address dp = subnet_prefix(peer_client);
-	ip_endpoint src = endpoint(&sp, subnet_hport(our_client));
-	ip_endpoint dst = endpoint(&dp, subnet_hport(peer_client));
+	ip_endpoint src = endpoint(&sp, selector_hport(our_client));
+	ip_endpoint dst = endpoint(&dp, selector_hport(peer_client));
 	passert(endpoint_type(&src) == endpoint_type(&dst)); /* duh */
 
 	/* actually initiate opportunism / ondemand */

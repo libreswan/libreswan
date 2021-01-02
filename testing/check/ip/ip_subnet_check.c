@@ -453,7 +453,7 @@ static void check_subnet_from_address(void)
 
 		CHECK_TYPE(PRINT_IN, subnet_type(&s));
 
-		int hport = subnet_hport(&s);
+		int hport = selector_hport(&s);
 		if (hport != 0) {
 			FAIL_IN("subnet_port() returned %d, expecting 0", hport);
 		}
