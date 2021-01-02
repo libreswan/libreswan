@@ -551,8 +551,7 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 	if ((c->iketcp == IKE_TCP_ONLY) || (try > 1 && c->iketcp != IKE_TCP_NO)) {
 		dbg("TCP: forcing #%lu remote endpoint port to %d",
 		    st->st_serialno, c->remote_tcpport);
-		st->st_remote_endpoint = set_endpoint_hport(&st->st_remote_endpoint,
-							    c->remote_tcpport);
+		update_endpoint_port(&st->st_remote_endpoint, ip_hport(c->remote_tcpport));
 		stf_status ret = create_tcp_interface(st);
 		if (ret != STF_OK) {
 			/* TCP: already logged? */

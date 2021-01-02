@@ -2704,8 +2704,8 @@ bool route_and_eroute(struct connection *c,
 {
 	dbg("route_and_eroute() for proto %d, and source port %d dest port %d",
 	    sr->this.protocol, sr->this.port, sr->that.port);
-	setportof(htons(sr->this.port), &sr->this.client.addr);
-	setportof(htons(sr->that.port), &sr->that.client.addr);
+	update_selector_hport(&sr->this.client, sr->this.port);
+	update_selector_hport(&sr->that.client, sr->that.port);
 
 	struct spd_route *esr, *rosr;
 	struct connection *ero,
@@ -3392,8 +3392,8 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 
 	{
 		/* are we replacing a bare shunt ? */
-		setportof(htons(sr->this.port), &sr->this.client.addr);
-		setportof(htons(sr->that.port), &sr->that.client.addr);
+		update_selector_hport(&sr->this.client, sr->this.port);
+		update_selector_hport(&sr->that.client, sr->that.port);
 		struct bare_shunt **old = bare_shunt_ptr(&sr->this.client, &sr->that.client, sr->this.protocol);
 
 		if (old != NULL) {

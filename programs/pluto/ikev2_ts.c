@@ -1219,8 +1219,7 @@ bool v2_process_ts_response(struct child_sa *child,
 	c->spd.this.client = tmp_subnet_i;
 	c->spd.this.port = st->st_ts_this.startport;
 	c->spd.this.protocol = st->st_ts_this.ipprotoid;
-	setportof(htons(c->spd.this.port),
-		  &c->spd.this.client.addr);
+	update_selector_hport(&c->spd.this.client, c->spd.this.port);
 
 	c->spd.this.has_client =
 		!(subnetishost(&c->spd.this.client) &&
@@ -1230,8 +1229,7 @@ bool v2_process_ts_response(struct child_sa *child,
 	c->spd.that.client = tmp_subnet_r;
 	c->spd.that.port = st->st_ts_that.startport;
 	c->spd.that.protocol = st->st_ts_that.ipprotoid;
-	setportof(htons(c->spd.that.port),
-		  &c->spd.that.client.addr);
+	update_selector_hport(&c->spd.that.client, c->spd.that.port),
 
 	c->spd.that.has_client =
 		!(subnetishost(&c->spd.that.client) &&

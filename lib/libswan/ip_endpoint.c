@@ -90,7 +90,12 @@ ip_port endpoint_port(const ip_endpoint *endpoint)
 	return ip_hport(endpoint->hport);
 }
 
-ip_endpoint set_endpoint_hport(const ip_endpoint *endpoint, int hport)
+void update_endpoint_port(ip_endpoint *endpoint, ip_port port)
+{
+	*endpoint = set_endpoint_port(endpoint, port);
+}
+
+ip_endpoint set_endpoint_port(const ip_endpoint *endpoint, ip_port port)
 {
 	const struct ip_info *afi = endpoint_type(endpoint);
 	if (afi == NULL) {
@@ -101,12 +106,12 @@ ip_endpoint set_endpoint_hport(const ip_endpoint *endpoint, int hport)
 #ifdef ENDPOINT_TYPE
 	ip_endpoint dst = {
 		.address = endpoint->address,
-		.hport = hport,
+		.hport = hport(port),
 	};
 	return dst;
 #else
 	ip_endpoint dst = *endpoint;
-	dst.hport = hport;
+	dst.hport = hport(port);
 	return dst;
 #endif
 }

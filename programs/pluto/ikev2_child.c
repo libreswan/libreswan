@@ -458,7 +458,7 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 		}
 	} else {
 		endtosubnet(&ip, &c->spd.this.client, HERE);
-		setportof(0, &c->spd.this.client.addr); /* ??? redundant? */
+		update_selector_hport(&c->spd.this.client, 0); /* ??? redundant? */
 		/* only set sourceip= value if unset in configuration */
 		if (address_type(&c->spd.this.host_srcip) == NULL ||
 		    address_is_unset(&c->spd.this.host_srcip) ||

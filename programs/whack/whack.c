@@ -2388,8 +2388,9 @@ int main(int argc, char **argv)
 	}
 
 
-	if (oppo_dport != 0)
-		setportof(htons(oppo_dport), &msg.oppo_peer_client);
+	if (oppo_dport != 0) {
+		update_endpoint_port(&msg.oppo_peer_client, ip_hport(oppo_dport));
+	}
 
 	if (optind != argc) {
 		/*

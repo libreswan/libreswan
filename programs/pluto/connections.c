@@ -2398,8 +2398,8 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 					const ip_address *peer_client,
 					int transport_proto)
 {
-	int our_port = ntohs(portof(our_client));
-	int peer_port = ntohs(portof(peer_client));
+	int our_port = endpoint_hport(our_client);
+	int peer_port = endpoint_hport(peer_client);
 
 	struct connection *best = NULL;
 	policy_prio_t best_prio = BOTTOM_PRIO;
@@ -2410,10 +2410,8 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 
 	address_buf a, b;
 	dbg("find_connection: looking for policy for connection: %s:%d/%d -> %s:%d/%d",
-	    str_address(our_client, &a),
-	    transport_proto, our_port,
-	    str_address(peer_client, &b),
-	    transport_proto, peer_port);
+	    str_address(our_client, &a), transport_proto, our_port,
+	    str_address(peer_client, &b), transport_proto, peer_port);
 
 	struct connection *c;
 
@@ -2561,7 +2559,7 @@ struct connection *oppo_instantiate(struct connection *c,
 	happy(endtosubnet(peer_client, &d->spd.that.client, HERE));
 
 	/* opportunistic connections do not use port selectors */
-	setportof(0, &d->spd.that.client.addr);
+	update_selector_hport(&d->spd.that.client, 0);
 
 	if (sameaddr(peer_client, &d->spd.that.host_addr))
 		d->spd.that.has_client = FALSE;

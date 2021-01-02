@@ -104,7 +104,7 @@ err_t ttosubnet(shunk_t src,
 		if (oops != NULL) {
 			return oops;
 		}
-		addrtmp = set_endpoint_hport(&addrtmp, port);
+		update_endpoint_port(&addrtmp, ip_hport(port));
 	}
 
 	bool die = false;

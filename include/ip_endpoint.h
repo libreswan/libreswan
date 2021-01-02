@@ -111,32 +111,20 @@ extern const ip_endpoint unset_endpoint;
 
 const struct ip_info *endpoint_type(const ip_endpoint *endpoint);
 const struct ip_protocol *endpoint_protocol(const ip_endpoint *endpoint);
-ip_address endpoint_address(const ip_endpoint *endpoint);
 
 bool endpoint_is_set(const ip_endpoint *endpoint);
 bool endpoint_is_any(const ip_endpoint *endpoint);
 bool endpoint_is_specified(const ip_endpoint *endpoint);
 
-/* Host or Network byte order */
-int endpoint_hport(const ip_endpoint *endpoint);
-ip_port endpoint_port(const ip_endpoint *endpoint);
-
-ip_endpoint set_endpoint_hport(const ip_endpoint *endpoint,
-			       int hport) MUST_USE_RESULT;
+ip_address endpoint_address(const ip_endpoint *endpoint);
 ip_endpoint set_endpoint_address(const ip_endpoint *endpoint,
 				 const ip_address) MUST_USE_RESULT;
 
-/*
- * Old style.
- */
+ip_port endpoint_port(const ip_endpoint *endpoint);
+ip_endpoint set_endpoint_port(const ip_endpoint *endpoint,
+			      ip_port port) MUST_USE_RESULT;
+void update_endpoint_port(ip_endpoint *endpoint, ip_port port);
 
-/*
- * XXX: compatibility.
- *
- * setportof() should be replaced by update_{subnet,endpoint}_nport();
- * code is assuming ip_subnet.addr is an endpoint.
- */
-#define portof(SRC) nport(endpoint_port((SRC)))
-#define setportof(NPORT, ENDPOINT) { *(ENDPOINT) = set_endpoint_hport((ENDPOINT), ntohs(NPORT)); }
+int endpoint_hport(const ip_endpoint *endpoint);
 
 #endif

@@ -881,8 +881,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 		/* OLD: negotiationshunt must be wider than bare shunt, esp on NETKEY */
 		/* if the connection we found has protoports, match those for the shunt */
 
-		setportof(0, &this_client.addr); /* always catch all ephemeral to dest */
-		setportof(0, &that_client.addr); /* default unless connection says otherwise */
+		update_selector_hport(&this_client, 0); /* always catch all ephemeral to dest */
+		update_selector_hport(&that_client, 0); /* default unless connection says otherwise */
 		if (b->transport_proto != 0) {
 			if (c->spd.that.protocol == 0) {
 				dbg("shunt widened for protoports since conn does not limit protocols");
@@ -915,10 +915,12 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 		// PAUL: should this use shunt_eroute() instead of API violation into raw_eroute()
 		/* if we have protoport= set, narrow to it. zero out ephemeral port */
 		if (shunt_proto != 0) {
-			if (c->spd.this.port != 0)
-				setportof(portof(&b->our_client), &this_client.addr);
-			if (c->spd.that.port != 0)
-				setportof(portof(&b->peer_client), &that_client.addr);
+			if (c->spd.this.port != 0) {
+				update_selector_hport(&this_client, endpoint_hport(&b->our_client));
+			}
+			if (c->spd.that.port != 0) {
+				update_selector_hport(&that_client,  endpoint_hport(&b->peer_client));
+			}
 		}
 
 		if (!raw_eroute(&b->our_client, &this_client,
@@ -999,10 +1001,10 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 		/* if we have protoport= set, narrow to it. zero out ephemeral port */
 		if (b->transport_proto != 0) {
 			if (c->spd.this.port != 0) {
-				setportof(htons(c->spd.this.port), &b->our_client);
+				update_endpoint_port(&b->our_client, ip_hport(c->spd.this.port));
 			}
 			if (c->spd.that.port != 0) {
-				setportof(htons(c->spd.that.port), &b->peer_client);
+				update_endpoint_port(&b->peer_client, ip_hport(c->spd.that.port));
 			}
 		}
 		/* packet triggered - not whack triggered */
@@ -1010,10 +1012,12 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 		/* if we have protoport= set, narrow to it. zero out ephemeral port */
 		/* warning: we know ports in this_client/that_client are 0 so far */
 		if (c->spd.this.protocol != 0) {
-			if (c->spd.this.port != 0)
-				setportof(portof(&b->our_client), &c->spd.this.client.addr);
-			if (c->spd.that.port != 0)
-				setportof(portof(&b->peer_client), &c->spd.that.client.addr);
+			if (c->spd.this.port != 0) {
+				update_selector_hport(&c->spd.this.client, endpoint_hport(&b->our_client));
+			}
+			if (c->spd.that.port != 0) {
+				update_selector_hport(&c->spd.that.client, endpoint_hport(&b->peer_client));
+			}
 		}
 		if (assign_holdpass(c, &c->spd,
 				    b->transport_proto,

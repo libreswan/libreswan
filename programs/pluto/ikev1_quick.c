@@ -504,11 +504,10 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 	}
 
 	/* set the port selector */
-	setportof(htons(id->isaiid_port), &net->addr);
-
+	update_endpoint_port(&net->addr, ip_hport(id->isaiid_port));
 	dbg("%s protocol/port is %d/%d", which, id->isaiid_protoid, id->isaiid_port);
 
-	return TRUE;
+	return true;
 }
 
 /* like decode, but checks that what is received matches what was sent */
@@ -1158,13 +1157,12 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 
 		/* fill in the client's true port */
 		if (c->spd.that.has_port_wildcard) {
-			int port = htons(b->peers.port);
-
-			setportof(port, &c->spd.that.host_addr);
-			setportof(port, &c->spd.that.client.addr);
+			int port = b->peers.port;
+			update_endpoint_port(&c->spd.that.host_addr, ip_hport(port));
+			update_selector_hport(&c->spd.that.client, port);
 
 			c->spd.that.port = b->peers.port;
-			c->spd.that.has_port_wildcard = FALSE;
+			c->spd.that.has_port_wildcard = false;
 		}
 
 		if (is_virtual_connection(c)) {

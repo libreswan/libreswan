@@ -165,7 +165,7 @@ bool ikev2_out_nat_v2n(pb_stream *outs, struct state *st,
 		dbg("NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection");
 		lport = 0;
 	}
-	ip_endpoint local_endpoint = set_endpoint_hport(&st->st_interface->local_endpoint, lport);
+	ip_endpoint local_endpoint = set_endpoint_port(&st->st_interface->local_endpoint, ip_hport(lport));
 	ip_endpoint remote_endpoint = st->st_remote_endpoint;
 	return ikev2_out_natd(&local_endpoint, &remote_endpoint,
 			      &ike_spis, outs);
@@ -435,8 +435,7 @@ bool ikev1_nat_traversal_add_natd(pb_stream *outs,
 
 	/* first: emit payload with hash of sender IP & port */
 
-	const ip_endpoint remote_endpoint = set_endpoint_hport(&md->sender,
-							       remote_port);
+	const ip_endpoint remote_endpoint = set_endpoint_port(&md->sender, ip_hport(remote_port));
 	struct crypt_mac hash;
 
 	hash = natd_hash(st->st_oakley.ta_prf->hasher,
@@ -448,8 +447,7 @@ bool ikev1_nat_traversal_add_natd(pb_stream *outs,
 
 	/* second: emit payload with hash of my IP & port */
 
-	const ip_endpoint local_endpoint = set_endpoint_hport(&md->iface->local_endpoint,
-							      local_port);
+	const ip_endpoint local_endpoint = set_endpoint_port(&md->iface->local_endpoint, ip_hport(local_port));
 	hash = natd_hash(st->st_oakley.ta_prf->hasher,
 			 &ike_spis, &local_endpoint,
 			 st->st_logger);
@@ -1002,7 +1000,7 @@ void v1_natify_initiator_endpoints(struct state *st, where_t where)
 	 */
 	pexpect_st_local_endpoint(st);
 	endpoint_buf b1, b2;
-	ip_endpoint new_local_endpoint = set_endpoint_hport(&st->st_interface->local_endpoint, NAT_IKE_UDP_PORT);
+	ip_endpoint new_local_endpoint = set_endpoint_port(&st->st_interface->local_endpoint, ip_hport(NAT_IKE_UDP_PORT));
 	dbg("NAT: #%lu floating local endpoint from %s to %s using NAT_IKE_UDP_PORT "PRI_WHERE,
 	    st->st_serialno,
 	    str_endpoint(&st->st_interface->local_endpoint, &b1),
@@ -1035,8 +1033,7 @@ void v1_natify_initiator_endpoints(struct state *st, where_t where)
 	dbg("NAT-T: #%lu floating remote port from %d to %d using NAT_IKE_UDP_PORT "PRI_WHERE,
 	    st->st_serialno, endpoint_hport(&st->st_remote_endpoint), NAT_IKE_UDP_PORT,
 	    pri_where(where));
-	st->st_remote_endpoint = set_endpoint_hport(&st->st_remote_endpoint,
-						    NAT_IKE_UDP_PORT);
+	update_endpoint_port(&st->st_remote_endpoint, ip_hport(NAT_IKE_UDP_PORT));
 }
 #endif
 
@@ -1059,7 +1056,7 @@ bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 		 * :PLUTO_NAT_PORT should exist.  IPv6 nat isn't
 		 * supported.
 		 */
-		ip_endpoint new_local_endpoint = set_endpoint_hport(&ike->sa.st_interface->local_endpoint, NAT_IKE_UDP_PORT);
+		ip_endpoint new_local_endpoint = set_endpoint_port(&ike->sa.st_interface->local_endpoint, ip_hport(NAT_IKE_UDP_PORT));
 		struct iface_port *i = find_iface_port_by_local_endpoint(&new_local_endpoint);
 		if (i == NULL) {
 			endpoint_buf b2;
@@ -1097,8 +1094,7 @@ bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 		dbg("NAT: #%lu floating remote port from %d to %d using NAT_IKE_UDP_PORT "PRI_WHERE,
 		    ike->sa.st_serialno, endpoint_hport(&ike->sa.st_remote_endpoint), NAT_IKE_UDP_PORT,
 		    pri_where(where));
-		ike->sa.st_remote_endpoint = set_endpoint_hport(&ike->sa.st_remote_endpoint,
-								NAT_IKE_UDP_PORT);
+		update_endpoint_port(&ike->sa.st_remote_endpoint, ip_hport(NAT_IKE_UDP_PORT));
 	}
 
 	return true;
