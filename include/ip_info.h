@@ -29,7 +29,7 @@ struct ip_info {
 	/*
 	 * ip_subnet.
 	 */
-	int mask_cnt; /* 32 or 128 */
+	unsigned mask_cnt; /* 32 or 128 */
 	/* unspecified address - ::/128 or 0.0.0.0/32 - matches no addresses */
 	const ip_subnet no_addresses;
 	/* default route - ::/0 or 0.0.0.0/0 - matches all addresses */

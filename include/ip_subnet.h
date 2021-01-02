@@ -64,7 +64,7 @@ typedef struct {
 	bool is_selector;
 #endif
 	/* (routing prefix) bits */
-	int maskbits;
+	unsigned maskbits;
 	bool is_subnet;
 } ip_subnet;
 
