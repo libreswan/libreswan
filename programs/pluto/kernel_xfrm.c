@@ -878,7 +878,7 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 	const ip_address *src, *dst;
 	const ip_subnet *src_client, *dst_client;
 
-	if (endpoint_type(&st->st_mobike_local_endpoint) != NULL) {
+	if (endpoint_is_specified(&st->st_mobike_local_endpoint)) {
 		char *n = jam_str(text_said, SAMIGTOT_BUF, "initiator migrate kernel SA ");
 		passert((SAMIGTOT_BUF - strlen(text_said)) > SATOT_BUF);
 		pexpect_st_local_endpoint(st);

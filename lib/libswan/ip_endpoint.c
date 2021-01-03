@@ -129,14 +129,14 @@ const struct ip_info *endpoint_type(const ip_endpoint *endpoint)
 #endif
 }
 
+bool endpoint_is_unset(const ip_endpoint *endpoint)
+{
+	return thingeq(*endpoint, unset_endpoint);
+}
+
 const struct ip_protocol *endpoint_protocol(const ip_endpoint *endpoint)
 {
 	return protocol_by_ipproto(endpoint->ipproto);
-}
-
-bool endpoint_is_set(const ip_endpoint *endpoint)
-{
-	return endpoint_type(endpoint) != NULL;
 }
 
 bool endpoint_is_specified(const ip_endpoint *e)

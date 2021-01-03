@@ -135,9 +135,9 @@ const struct ip_info *subnet_type(const ip_subnet *src)
 	return endpoint_type(&src->addr);
 }
 
-bool subnet_is_unset(const ip_subnet *s)
+bool subnet_is_unset(const ip_subnet *subnet)
 {
-	return subnet_type(s) == NULL;
+	return thingeq(*subnet, unset_subnet);
 }
 
 bool subnet_is_specified(const ip_subnet *s)

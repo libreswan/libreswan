@@ -253,9 +253,9 @@ const struct ip_info *range_type(const ip_range *range)
 	return start;
 }
 
-bool range_is_set(const ip_range *r)
+bool range_is_unset(const ip_range *range)
 {
-	return range_type(r) != NULL;
+	return thingeq(*range, unset_range);
 }
 
 bool range_is_specified(const ip_range *r)

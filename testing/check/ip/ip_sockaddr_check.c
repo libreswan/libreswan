@@ -79,8 +79,8 @@ static void check_sockaddr_as_endpoint(void)
 			} else if (!streq(err, t->err)) {
 				FAIL_IN("sockaddr_to_endpoint() returned error '%s', expecting '%s'", err, t->err);
 			}
-			if (endpoint_type(&endpoint) != NULL) {
-				FAIL_IN("sockaddr_to_endpoint() failed yet endpoint has a type");
+			if (!endpoint_is_unset(&endpoint)) {
+				FAIL_IN("sockaddr_to_endpoint() failed yet endpoint is set");
 			}
 		} else if (t->err != NULL) {
 			FAIL_IN("sockaddr_to_endpoint() should have failed: %s", t->err);

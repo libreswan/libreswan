@@ -16,7 +16,7 @@
 #include <arpa/inet.h>		/* for ntohs() */
 
 #include "jambuf.h"
-
+#include "constants.h"		/* for thingeq() */
 #include "ip_port_range.h"
 
 const ip_port_range unset_port_range; /* aka all ports? */
@@ -32,7 +32,7 @@ ip_port_range ip_port_range_from_ports(ip_port lo, ip_port hi)
 
 bool port_range_is_unset(ip_port_range port_range)
 {
-	return port_is_unset(port_range.lo) && port_is_unset(port_range.hi);
+	return thingeq(port_range, unset_port_range);
 }
 
 size_t jam_port_range(struct jambuf *buf, ip_port_range port_range)

@@ -56,14 +56,14 @@ const char *str_range(const ip_range *range, range_buf *buf);
  * term "unspecified" underspecified.
  *
  * Consequently an AF_UNSPEC address (i.e., uninitialized or unset),
- * is identified by *_type() returning NULL.
+ * is identified by *_unset().
  */
 
 extern const ip_range unset_range;
+bool range_is_unset(const ip_range *r);
 
 const struct ip_info *range_type(const ip_range *r);
 
-bool range_is_set(const ip_range *r);
 bool range_is_specified(const ip_range *r);
 
 /*

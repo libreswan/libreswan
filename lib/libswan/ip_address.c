@@ -360,7 +360,7 @@ ip_address address_any(const struct ip_info *info)
 
 bool address_is_unset(const ip_address *address)
 {
-	return address_type(address) == NULL;
+	return thingeq(*address, unset_address);
 }
 
 bool address_is_specified(const ip_address *address)

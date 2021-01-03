@@ -432,7 +432,7 @@ static struct lease *connection_lease(struct connection *c)
 
 void free_that_address_lease(struct connection *c)
 {
-	passert(subnet_type(&c->spd.that.client) != NULL);
+	passert(!subnet_is_unset(&c->spd.that.client));
 
 	if (!c->spd.that.has_lease) {
 		dbg("connection has no lease");

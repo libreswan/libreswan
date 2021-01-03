@@ -16,7 +16,7 @@
 #include <arpa/inet.h>		/* for ntohs() */
 
 #include "jambuf.h"
-
+#include "constants.h"		/* for thingeq() */
 #include "ip_port.h"
 
 const ip_port unset_port; /* aka all ports? */
@@ -44,7 +44,7 @@ unsigned nport(const ip_port port)
 
 bool port_is_unset(ip_port port)
 {
-	return port.hport == 0;
+	return thingeq(port, unset_port);
 }
 
 size_t jam_hport(struct jambuf *buf, ip_port port)

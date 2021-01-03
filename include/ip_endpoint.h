@@ -104,15 +104,15 @@ bool endpoint_eq(const ip_endpoint *l, const ip_endpoint *r);
  * term "unspecified" underspecified.
  *
  * Consequently an AF_UNSPEC address (i.e., uninitialized or unset),
- * is identified by *_type() returning NULL.
+ * is identified by *_unset().
  */
 
 extern const ip_endpoint unset_endpoint;
+bool endpoint_is_unset(const ip_endpoint *endpoint);
 
 const struct ip_info *endpoint_type(const ip_endpoint *endpoint);
 const struct ip_protocol *endpoint_protocol(const ip_endpoint *endpoint);
 
-bool endpoint_is_set(const ip_endpoint *endpoint);
 bool endpoint_is_any(const ip_endpoint *endpoint);
 bool endpoint_is_specified(const ip_endpoint *endpoint);
 

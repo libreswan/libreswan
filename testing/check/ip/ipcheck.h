@@ -103,7 +103,6 @@ extern bool use_dns;
 #define CHECK_ADDRESS(PRINT, ADDRESS)					\
 	{								\
 		CHECK_TYPE(PRINT, address_type(ADDRESS));		\
-		/* aka address_type(ADDRESS) == NULL; */		\
 		bool unset = address_is_unset(ADDRESS);			\
 		if (unset != t->unset) {					\
 			FAIL(PRINT, " address_is_unset() returned %s; expected %s", \

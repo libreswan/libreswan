@@ -79,12 +79,25 @@ err_t range_to_selector(const ip_range *range,
 			const ip_protoport *protoport,
 			ip_selector *selector);
 
-/* attributes */
+/*
+ * Magic values.
+ *
+ * XXX: While the headers call the all-zero address "ANY" (INADDR_ANY,
+ * IN6ADDR_ANY_INIT), the headers also refer to the IPv6 value as
+ * unspecified (for instance IN6_IS_ADDR_UNSPECIFIED()) leaving the
+ * term "unspecified" underspecified.
+ *
+ * Consequently an AF_UNSPEC address (i.e., uninitialized or unset),
+ * is identified by *_unset().
+ */
 
 extern const ip_selector unset_selector;
 bool selector_is_unset(const ip_selector *selector);
 
+/* attributes */
+
 const struct ip_info *selector_type(const ip_selector *selector);
+
 unsigned selector_ipproto(const ip_selector *selector);
 const ip_protocol *selector_protocol(const ip_selector *selector);
 ip_range selector_range(const ip_selector *selector);

@@ -111,7 +111,7 @@ extern size_t jam_subnet(struct jambuf *buf, const ip_subnet *subnet);
  * term "unspecified" underspecified.
  *
  * Consequently an AF_UNSPEC address (i.e., uninitialized or unset),
- * is identified by *_type() returning NULL.
+ * is identified by *_unset().
  */
 
 extern const ip_subnet unset_subnet;

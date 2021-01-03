@@ -334,24 +334,24 @@ static void check_range_is(void)
 		int family;
 		const char *lo;
 		const char *hi;
-		bool set;
+		bool unset;
 		bool specified;
 	} tests[] = {
-		{ 0, "", "",                .set = false, },
+		{ 0, "", "",                .unset = true, },
 
-		{ 4, "0.0.0.0", "0.0.0.0",  .set = true, },
-		{ 4, "0.0.0.1", "0.0.0.2",  .set = true, .specified = true, },
+		{ 4, "0.0.0.0", "0.0.0.0",  .specified = false, },
+		{ 4, "0.0.0.1", "0.0.0.2",  .specified = true, },
 
-		{ 6, "::", "::",            .set = true, },
-		{ 6, "::1", "::2",          .set = true, .specified = true, },
+		{ 6, "::", "::",            .specified = false, },
+		{ 6, "::1", "::2",          .specified = true, },
 	};
 
 	const char *oops;
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT_LO2HI(stdout, " -> set: %s specified: %s",
-			    bool_str(t->set), bool_str(t->specified));
+		PRINT_LO2HI(stdout, " -> unset: %s specified: %s",
+			    bool_str(t->unset), bool_str(t->specified));
 
 		const struct ip_info *type = IP_TYPE(t->family);
 
@@ -378,10 +378,10 @@ static void check_range_is(void)
 		ip_range r = range(&lo, &hi);
 		CHECK_TYPE(PRINT_LO2HI, range_type(&r));
 
-		bool set = range_is_set(&r);
-		if (set != t->set) {
+		bool unset = range_is_unset(&r);
+		if (unset != t->unset) {
 			FAIL_LO2HI("range_is_invalid() returned %s, expecting %s",
-				   bool_str(set), bool_str(t->set));
+				   bool_str(unset), bool_str(t->unset));
 		}
 
 		bool specified = range_is_specified(&r);

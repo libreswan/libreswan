@@ -460,8 +460,7 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 		endtosubnet(&ip, &c->spd.this.client, HERE);
 		update_selector_hport(&c->spd.this.client, 0); /* ??? redundant? */
 		/* only set sourceip= value if unset in configuration */
-		if (address_type(&c->spd.this.host_srcip) == NULL ||
-		    address_is_unset(&c->spd.this.host_srcip) ||
+		if (address_is_unset(&c->spd.this.host_srcip) ||
 		    address_eq_any(&c->spd.this.host_srcip)) {
 			dbg("setting host source IP address to %s",
 			    ipstr(&ip, &ip_str));

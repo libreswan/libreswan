@@ -152,7 +152,7 @@ const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b);
  * term "unspecified" underspecified.
  *
  * Consequently an AF_UNSPEC address (i.e., uninitialized or unset),
- * is identified by *_type() returning NULL.
+ * is identified by *_unset().
  */
 
 extern const ip_address unset_address;

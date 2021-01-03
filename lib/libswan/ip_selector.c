@@ -22,7 +22,7 @@ const ip_selector unset_selector;
 
 bool selector_is_unset(const ip_selector *selector)
 {
-	return memeq(&unset_selector, selector, sizeof(unset_selector));
+	return thingeq(*selector, unset_selector);
 }
 
 void jam_selector(struct jambuf *buf, const ip_selector *selector)
