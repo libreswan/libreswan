@@ -126,6 +126,13 @@ enum {
 #define strcaseeq(a, b) (strcasecmp((a), (b)) == 0)
 #define strncaseeq(a, b, n) (strncasecmp((a), (b), (n)) == 0)
 #define memeq(a, b, n) (memcmp((a), (b), (n)) == 0)
+#define thingeq(L, R)							\
+	({								\
+		/* check type compat by flipping types */		\
+		const typeof(R) *l_ = &(L);/* type flip */		\
+		const typeof(L) *r_ = &(R);/* type flip */		\
+		memeq(l_, r_, sizeof(L));				\
+	})
 
 /*
  * Fill a string field, ensuring that it is padded and terminated with NUL
