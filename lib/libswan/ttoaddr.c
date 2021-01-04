@@ -472,10 +472,18 @@ ttoaddr(const char *src,
 	err = ttoaddr_base(src, srclen, af, &numfailed, dst);
 
 	if (numfailed) {
-		if (err && af != AF_INET)
-			err = tryname(src, srclen, nultermd, AF_INET6, af, dst);
-		if (err && af != AF_INET6)
-			err = tryname(src, srclen, nultermd, AF_INET, af, dst);
+		/* err == non-numeric */
+		err_t v4err = NULL, v6err = NULL;
+		if (err && (af == AF_UNSPEC || af == AF_INET)) {
+			err = v4err = tryname(src, srclen, nultermd, AF_INET, af, dst);
+		}
+		if (err && (af == AF_UNSPEC || af == AF_INET6)) {
+			err = v6err = tryname(src, srclen, nultermd, AF_INET6, af, dst);
+		}
+		/* prefer the IPv4 error */
+		if (err != NULL && v4err != NULL) {
+			err = v4err;
+		}
 	}
 
 	return err;
