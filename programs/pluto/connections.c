@@ -1014,20 +1014,48 @@ static bool check_connection_end(const struct whack_end *this,
 				 const struct whack_message *wm,
 				 struct logger *logger)
 {
-	if ((this->host_type == KH_IPADDR || this->host_type == KH_IFACE) &&
-		(wm->addr_family != addrtypeof(&this->host_addr) ||
-			wm->addr_family != addrtypeof(&this->host_nexthop))) {
-		/*
-		 * This should have been diagnosed by whack, so we need not
-		 * be clear.
-		 * !!! overloaded use of RC_CLASH
-		 */
-		llog(RC_CLASH, logger,
-			    "address family inconsistency in this connection=%d host=%d/nexthop=%d",
-			    wm->addr_family,
-			    addrtypeof(&this->host_addr),
-			    addrtypeof(&this->host_nexthop));
-		return FALSE;
+	/*
+	 * This should have been diagnosed by whack,
+	 * so we need not be clear.
+	 *
+	 * XXX: don't trust whack.
+	 * XXX: don't assume values were set (defaulted).
+	 * XXX: don't assume unset's type is NULL.
+	 * XXX: because both directions are tested some checks are redundant.
+	 *
+	 * !!! overloaded use of RC_CLASH
+	 */
+
+	/*
+	 * Find a type for the host addresses.  Order search by what
+	 * was most liklely speicified.
+	 */
+	const struct ip_info *type = (!address_is_unset(&this->host_addr) ? address_type(&this->host_addr) :
+				      !address_is_unset(&this->host_nexthop) ? address_type(&this->host_nexthop) :
+				      NULL);
+
+	if (type != NULL) {
+		if (!address_is_unset(&this->host_nexthop) &&
+		    address_type(&this->host_nexthop) != type) {
+			llog(RC_CLASH, logger,
+			     "host address family inconsistent: expecting %s but %snexthop is %s",
+			     type->ip_name, this->leftright, address_type(&this->host_nexthop)->ip_name);
+			return false;
+		}
+		if (!address_is_unset(&that->host_addr) &&
+		    address_type(&that->host_addr) != type) {
+			llog(RC_CLASH, logger,
+			     "host address family inconsistent: expecting %s but %shost is %s",
+			     type->ip_name, that->leftright, address_type(&that->host_addr)->ip_name);
+			return false;
+		}
+		if (!address_is_unset(&that->host_nexthop) &&
+		    address_type(&that->host_nexthop) != type) {
+			llog(RC_CLASH, logger,
+			     "host address family inconsistent: expecting %s but %snexthop is %s",
+			     type->ip_name, that->leftright, address_type(&that->host_nexthop)->ip_name);
+			return false;
+		}
 	}
 
 	/* ??? seems like a nasty test (in-band, low-level) */
