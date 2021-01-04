@@ -96,6 +96,8 @@
 #include "ip_selector.h"
 #include "ip_encap.h"
 
+#include "labeled_ipsec.h" /* TEMP for MAX_SECCTX_LEN */
+
 /* required for Linux 2.6.26 kernel and later */
 #ifndef XFRM_STATE_AF_UNSPEC
 #define XFRM_STATE_AF_UNSPEC 32
@@ -1548,14 +1550,14 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		dbg("netlink: esp-hw-offload not set for IPsec SA");
 	}
 
-	if (sa->sec_ctx != NULL) {
-		size_t len = sa->sec_ctx->ctx.ctx_len;
+	if (sa->sec_label != NULL) {
+		size_t len = strlen(sa->sec_label);
 		struct xfrm_user_sec_ctx xuctx;
 
 		xuctx.len = sizeof(struct xfrm_user_sec_ctx) + len;
 		xuctx.exttype = XFRMA_SEC_CTX;
-		xuctx.ctx_alg = 1;	/* ??? sa->sec_ctx.ctx_alg? */
-		xuctx.ctx_doi = 1;	/* ??? sa->sec_ctx.ctx_doi? */
+		xuctx.ctx_alg = XFRM_SC_ALG_SELINUX; /* 1 */
+		xuctx.ctx_doi = XFRM_SC_DOI_LSM; /* 1 */
 		xuctx.ctx_len = len;
 
 		attr->rta_type = XFRMA_SEC_CTX;
@@ -1563,7 +1565,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 
 		memcpy(RTA_DATA(attr), &xuctx, sizeof(xuctx));
 		memcpy((char *)RTA_DATA(attr) + sizeof(xuctx),
-			sa->sec_ctx->sec_ctx_value, len);
+			sa->sec_label, len);
 
 		req.n.nlmsg_len += attr->rta_len;
 
@@ -1654,7 +1656,7 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 {
 	struct xfrm_user_acquire *acquire;
 	struct xfrm_user_sec_ctx_ike *uctx = NULL;
-	struct xfrm_user_sec_ctx_ike uctx_space;
+	char *sec_label = NULL;
 
 	dbg("xfrm netlink msg len %zu", (size_t) n->nlmsg_len);
 
@@ -1734,15 +1736,25 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 			    xuctx->ctx_doi, xuctx->ctx_alg,
 			    len);
 
+			if (xuctx->ctx_doi != XFRM_SC_DOI_LSM) {
+				llog(RC_LOG, logger, "Acquire message for unknown sec_label DOI %d; ignoring Acquire message",
+					xuctx->ctx_doi);
+				return;
+			}
+			if (xuctx->ctx_alg != XFRM_SC_ALG_SELINUX) {
+				llog(RC_LOG, logger, "Acquire message for unknown sec_label LSM %d; ignoring Acquire message",
+					xuctx->ctx_alg);
+				return;
+			}
 			if (uctx != NULL) {
 				llog(RC_LOG, logger,
-					    "Second Sec Ctx label in a single Acquire message; ignoring Acquire message");
+					    "Second sec_label in a single Acquire message; ignoring Acquire message");
 				return;
 			}
 
 			if (len > MAX_SECCTX_LEN) {
 				llog(RC_LOG, logger,
-					    "Sec Ctx label of length %zu, longer than MAX_SECCTX_LEN; ignoring Acquire message",
+					    "length %zu of sec_label is longer than MAX_SECCTX_LEN; ignoring Acquire message",
 					    len);
 				return;
 			}
@@ -1751,38 +1763,16 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 			 * note: xuctx + 1 is tricky:
 			 * first byte after header
 			 */
+			sec_label = (char *)(xuctx + 1);
 			dbg("xfrm: xuctx security context value: %.*s",
 			    xuctx->ctx_len,
 			    (const char *) (xuctx + 1));
 
-			zero(&uctx_space);
-			uctx = &uctx_space;
-
-			memcpy(uctx->sec_ctx_value, (xuctx + 1),
-				xuctx->ctx_len);
-
-			if (len == 0 || uctx->sec_ctx_value[len-1] != '\0') {
-				if (len == MAX_SECCTX_LEN) {
-					llog(RC_LOG, logger,
-						    "Sec Ctx label missing final NUL and too long to add; ignoring Acquire message");
-					return;
-				}
+			if (strlen(sec_label)+ 1 != xuctx->ctx_len) {
 				llog(RC_LOG, logger,
-					    "Sec Ctx label missing final NUL; we're adding it");
-				uctx->sec_ctx_value[len] = '\0';
-				len++;
-			}
-
-			if (strlen(uctx->sec_ctx_value) + 1 != len) {
-				llog(RC_LOG, logger,
-					    "Sec Ctx label contains embedded NUL; ignoring Acquire message");
+				    "received sec_label contains embedded NULl ignoring Acquire message");
 				return;
 			}
-
-			uctx->ctx.ctx_alg = xuctx->ctx_alg;
-			uctx->ctx.ctx_doi = xuctx->ctx_doi;
-			/* Length includes '\0'*/
-			uctx->ctx.ctx_len = len;
 
 			break;
 		}
@@ -1799,8 +1789,11 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 	 * XXX also the type of src/dst should be checked to make sure
 	 *     that they aren't v4 to v6 or something goofy
 	 */
+
+
+
 	record_and_initiate_opportunistic(&ours, &theirs,
-					  acquire->sel.proto, uctx,
+					  acquire->sel.proto, sec_label,
 					  "%acquire-netlink");
 }
 
@@ -2155,7 +2148,7 @@ static bool netlink_sag_eroute(const struct state *st, const struct spd_route *s
 				 inner_esatype, proto_info + i,
 				 calculate_sa_prio(c, FALSE), &c->sa_marks,
 				 xfrm_if_id, op, opname,
-				 st->st_connection->policy_label, st->st_logger);
+				 c->sec_label, st->st_logger);
 }
 
 /* Check if there was traffic on given SA during the last idle_max
@@ -2297,7 +2290,7 @@ static bool netlink_shunt_eroute(const struct connection *c,
 				&c->sa_marks,
 				0 /* xfrm_if_id needed for shunt? */,
 				op, buf2,
-				c->policy_label,
+				c->sec_label,
 				logger))
 		return false;
 
@@ -2326,7 +2319,7 @@ static bool netlink_shunt_eroute(const struct connection *c,
 				  &c->sa_marks,
 				  0, /* xfrm_if_id needed for shunt? */
 				  op, buf2,
-				  c->policy_label,
+				  c->sec_label,
 				  logger);
 }
 

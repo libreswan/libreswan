@@ -87,9 +87,7 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 		       lset_t policy,
 		       unsigned long try,
 		       so_serial_t replacing,
-		       const threadtime_t *inception,
-		       struct xfrm_user_sec_ctx_ike *uctx
-		       )
+		       const threadtime_t *inception)
 {
 	/*
 	 * If there's already an IKEv1 ISAKMP SA established, use that and
@@ -109,12 +107,12 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 	if (st == NULL) {
 		if (policy & c->policy & POLICY_IKEV2_ALLOW) {
 			initiator_function *initiator = ikev2_parent_outI1;
-			initiator(whack_sock, c, NULL, policy, try, inception, uctx);
+			initiator(whack_sock, c, NULL, policy, try, inception);
 		}
 #ifdef USE_IKEv1
 		if (policy & c->policy & POLICY_IKEV1_ALLOW) {
 			initiator_function *initiator = (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;
-			initiator(whack_sock, c, NULL, policy, try, inception, uctx);
+			initiator(whack_sock, c, NULL, policy, try, inception);
 		}
 #endif
 	} else if (HAS_IPSEC_POLICY(policy)) {
@@ -124,15 +122,15 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 				/* leave our Phase 2 negotiation pending */
 				add_pending(whack_sock, pexpect_ike_sa(st),
 				    c, policy, try,
-				    replacing, uctx,
-				    false/*part of initiate*/);
+				    replacing,
+				    false /*part of initiate*/);
 			} else {
 				/* ??? we assume that peer_nexthop_sin isn't important:
 				 * we already have it from when we negotiated the ISAKMP SA!
 				 * It isn't clear what to do with the error return.
 				 */
 			quick_outI1(whack_sock, st, c, policy, try,
-				    replacing, uctx);
+				    replacing);
 			}
 		}
 #endif
@@ -141,8 +139,8 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 				/* leave our Phase 2 negotiation pending */
 				add_pending(whack_sock, pexpect_ike_sa(st),
 				    c, policy, try,
-				    replacing, uctx,
-				    false/*part of initiate*/);
+				    replacing,
+				    false /*part of initiate*/);
 			} else {
 				struct pending p = {
 				.whack_sock = whack_sock, /*on-stack*/
@@ -151,7 +149,6 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 				.try = try,
 				.policy = policy,
 				.replacing = replacing,
-				.uctx = uctx,
 				};
 				ikev2_initiate_child_sa(&p);
 			}
@@ -190,14 +187,14 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 		case IKEv2:
 		{
 			initiator_function *initiator = ikev2_parent_outI1;
-			initiator(st->st_logger->object_whackfd, c, st, policy, try, &inception, st->sec_ctx);
+			initiator(st->st_logger->object_whackfd, c, st, policy, try, &inception);
 			break;
 		}
 #ifdef USE_IKEv1
 		case IKEv1:
 		{
 			initiator_function *initiator = (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;
-			initiator(st->st_logger->object_whackfd, c, st, policy, try, &inception, st->sec_ctx);
+			initiator(st->st_logger->object_whackfd, c, st, policy, try, &inception);
 			break;
 		}
 #endif
@@ -239,8 +236,7 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 			passert(HAS_IPSEC_POLICY(policy));
 
 		ipsecdoi_initiate(st->st_logger->object_whackfd, st->st_connection,
-				  policy, try, st->st_serialno, &inception,
-			st->sec_ctx);
+				  policy, try, st->st_serialno, &inception);
 	}
 }
 

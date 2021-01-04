@@ -1607,7 +1607,7 @@ static field_desc sec_ctx_fields[] = {
 };
 
 struct_desc sec_ctx_desc = {
-	.name = "Label Security Context",
+	.name = "Security Label Context",
 	.fields = sec_ctx_fields,
 	.size = sizeof(struct sec_ctx),
 };

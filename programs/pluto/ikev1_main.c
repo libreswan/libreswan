@@ -106,8 +106,7 @@ void main_outI1(struct fd *whack_sock,
 		struct state *predecessor,
 		lset_t policy,
 		unsigned long try,
-		const threadtime_t *inception,
-		struct xfrm_user_sec_ctx_ike *uctx)
+		const threadtime_t *inception)
 {
 	struct ike_sa *ike = new_v1_istate(whack_sock);
 	struct state *st = &ike->sa;
@@ -122,12 +121,8 @@ void main_outI1(struct fd *whack_sock,
 		add_pending(whack_sock, ike, c, policy, 1,
 			    predecessor == NULL ?
 			    SOS_NOBODY : predecessor->st_serialno,
-			    uctx,
-			    true/* part of initiate */);
+			    true /* part of initiate */);
 	}
-
-	/* For main modes states, sec ctx is always null */
-	st->sec_ctx = NULL;
 
 	if (predecessor == NULL) {
 		log_state(RC_LOG, &ike->sa, "initiating IKEv1 Main Mode connection");

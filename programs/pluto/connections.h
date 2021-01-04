@@ -331,7 +331,7 @@ struct connection {
 #ifdef HAVE_NM
 	bool nmconfigured;
 #endif
-	char *policy_label;
+	char *sec_label;
 
 	/* Cisco interop: remote peer type */
 	enum keyword_remotepeertype remotepeertype;
@@ -447,7 +447,7 @@ extern void initiate_ondemand(const ip_address *our_client,
 			      const ip_address *peer_client,
 			      int transport_proto,
 			      bool held, bool background,
-			      struct xfrm_user_sec_ctx_ike *uctx,
+			      const char *sec_label,
 			      const char *why,
 			      struct logger *logger);
 

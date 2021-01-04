@@ -458,7 +458,7 @@ enum option_enums {
 	CD_SHA2_TRUNCBUG,
 	CD_NMCONFIGURED,
 	CD_LABELED_IPSEC,
-	CD_POLICY_LABEL,
+	CD_SEC_LABEL,
 	CD_XAUTHBY,
 	CD_XAUTHFAIL,
 	CD_NIC_OFFLOAD,
@@ -807,10 +807,8 @@ static const struct option long_opts[] = {
 	{ "nm_configured", no_argument, NULL, CD_NMCONFIGURED + OO }, /* backwards compat */
 	{ "nm-configured", no_argument, NULL, CD_NMCONFIGURED + OO },
 #endif
-#ifdef HAVE_LABELED_IPSEC
-	{ "labeledipsec", no_argument, NULL, CD_LABELED_IPSEC + OO },
-	{ "policylabel", required_argument, NULL, CD_POLICY_LABEL + OO },
-#endif
+
+	{ "policylabel", required_argument, NULL, CD_SEC_LABEL + OO },
 
 	{ "debug-none", no_argument, NULL, DBGOPT_NONE + OO },
 	{ "debug-all", no_argument, NULL, DBGOPT_ALL + OO },
@@ -961,10 +959,7 @@ int main(int argc, char **argv)
 	msg.nmconfigured = FALSE;
 #endif
 
-#ifdef HAVE_LABELED_IPSEC
-	msg.labeled_ipsec = FALSE;
-	msg.policy_label = NULL;
-#endif
+	msg.sec_label = NULL;
 
 	msg.xauthby = XAUTHBY_FILE;
 	msg.xauthfail = XAUTHFAIL_HARD;
@@ -1980,15 +1975,13 @@ int main(int argc, char **argv)
 				diag("--tcp-options are 'yes', 'no' or 'fallback'");
 			continue;
 
-#ifdef HAVE_LABELED_IPSEC
-		case CD_LABELED_IPSEC:	/* --labeledipsec */
-			msg.labeled_ipsec = TRUE;
+		case CD_LABELED_IPSEC:	/* obsolete --labeledipsec */
+			/* ignore */
 			continue;
 
-		case CD_POLICY_LABEL:	/* --policylabel */
-			msg.policy_label = optarg;
+		case CD_SEC_LABEL:	/* --sec-label */
+			msg.sec_label = optarg;
 			continue;
-#endif
 
 		case CD_CONNIPV4:	/* --ipv4 */
 			if (LHAS(cd_seen, CD_CONNIPV6 - CD_FIRST))

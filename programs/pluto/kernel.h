@@ -169,7 +169,8 @@ struct kernel_sa {
 	const struct ip_encap *encap_type;		/* ESP in TCP or UDP; or NULL */
 	ip_address *natt_oa;
 	const char *text_said;
-	struct xfrm_user_sec_ctx_ike *sec_ctx;
+	char *sec_label;
+
 	const char *nic_offload_dev;
 	uint32_t xfrm_if_id;
 	struct sa_mark mark_set; /* config keyword mark-out */
@@ -351,7 +352,7 @@ struct xfrm_user_sec_ctx_ike; /* forward declaration of tag */
 extern void record_and_initiate_opportunistic(const ip_selector *our_client,
 					      const ip_selector *peer_client,
 					      unsigned transport_proto,
-					      struct xfrm_user_sec_ctx_ike *,
+					      const char *sec_label,
 					      const char *why);
 extern void init_kernel(struct logger *logger);
 

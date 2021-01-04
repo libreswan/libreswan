@@ -27,7 +27,6 @@ void add_pending(struct fd *whack_sock,
 		 lset_t policy,
 		 unsigned long try,
 		 so_serial_t replacing,
-		 struct xfrm_user_sec_ctx_ike *uctx,
 		 bool part_of_initiate);
 
 void flush_pending_by_connection(const struct connection *c);
@@ -56,6 +55,5 @@ struct pending {
 	so_serial_t replacing;
 	monotime_t pend_time;
 	bool part_of_initiate;
-	struct xfrm_user_sec_ctx_ike *uctx;
 	struct pending *next;
 };

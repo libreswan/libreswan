@@ -236,8 +236,7 @@ struct whack_message {
 	reqid_t sa_reqid;
 	int nflog_group;
 
-	bool labeled_ipsec;
-	char *policy_label;
+	char *sec_label;
 
 	/*  note that each end contains string 2/5.id, string 3/6 cert,
 	 *  and string 4/7 updown

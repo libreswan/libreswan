@@ -619,13 +619,11 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 
 #endif
 
-#ifdef HAVE_LABELED_IPSEC
-	if (conn->strings_set[KSCF_POLICY_LABEL]) {
-		msg.policy_label = conn->policy_label;
-		starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" policy_label=%s",
-			conn->name, msg.policy_label);
+	if (conn->strings_set[KSCF_SA_SEC_LABEL]) {
+		msg.sec_label = conn->sec_label;
+		starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" sec_label=%s",
+			conn->name, msg.sec_label);
 	}
-#endif
 
 	msg.modecfg_dns = conn->modecfg_dns;
 	conn_log_val(conn, "modecfgdns", msg.modecfg_dns);

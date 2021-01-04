@@ -20,6 +20,4 @@ extern void quick_outI1(struct fd *whack_sock,
 			struct connection *c,
 			lset_t policy,
 			unsigned long try,
-			so_serial_t replacing,
-			struct xfrm_user_sec_ctx_ike *uctx
-			);
+			so_serial_t replacing);

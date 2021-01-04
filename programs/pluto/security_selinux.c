@@ -40,6 +40,9 @@ void init_selinux(struct logger *logger)
 	}
 }
 
+/*
+ * Note: It is unclear if any real SElinux policy actually allows sub-sets.
+ */
 #ifdef HAVE_OLD_SELINUX
 int within_range(security_context_t sl, security_context_t range, struct logger *logger)
 {

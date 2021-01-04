@@ -594,9 +594,7 @@ void quick_outI1(struct fd *whack_sock,
 		 struct connection *c,
 		 lset_t policy,
 		 unsigned long try,
-		 so_serial_t replacing,
-		 struct xfrm_user_sec_ctx_ike *uctx
-		 )
+		 so_serial_t replacing)
 {
 	struct state *st = ikev1_duplicate_state(isakmp_sa, whack_sock);
 	update_state_connection(st, c);
@@ -605,11 +603,9 @@ void quick_outI1(struct fd *whack_sock,
 	st->st_policy = policy;
 	st->st_try = try;
 
-	st->sec_ctx = NULL;
-	if (uctx != NULL) {
-		st->sec_ctx = clone_thing(*uctx, "sec ctx structure");
+	if (c->sec_label != NULL) {
 		dbg("pending phase 2 with security context \"%s\"",
-		    st->sec_ctx->sec_ctx_value);
+		    c->sec_label);
 	}
 
 	st->st_myuserprotoid = c->spd.this.protocol;

@@ -522,9 +522,7 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 		       struct state *predecessor,
 		       lset_t policy,
 		       unsigned long try,
-		       const threadtime_t *inception,
-		       struct xfrm_user_sec_ctx_ike *uctx
-		       )
+		       const threadtime_t *inception)
 {
 	if (drop_new_exchanges()) {
 		/* Only drop outgoing opportunistic connections */
@@ -561,14 +559,13 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 	}
 
 	if (HAS_IPSEC_POLICY(policy)) {
-		st->sec_ctx = NULL;
-		if (uctx != NULL)
+		if (c->sec_label != NULL) {
 			log_state(RC_LOG, &ike->sa,
 				  "Labeled ipsec is not supported with ikev2 yet");
+		}
 		add_pending(whack_sock, ike, c, policy, 1,
 			    predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
-			    st->sec_ctx,
-			    true/*part of initiate*/);
+			    true /*part of initiate*/);
 	}
 
 	/*
@@ -5889,8 +5886,7 @@ void ikev2_rekey_ike_start(struct ike_sa *ike)
 		.connection = ike->sa.st_connection,
 		.policy = LEMPTY,
 		.try = 1,
-		.replacing = ike->sa.st_serialno,
-		.uctx = ike->sa.sec_ctx,
+		.replacing = ike->sa.st_serialno
 	};
 	ikev2_initiate_child_sa(&p);
 }
@@ -5956,13 +5952,6 @@ void ikev2_initiate_child_sa(struct pending *p)
 	}
 
 	child->sa.st_policy = p->policy;
-
-	child->sa.sec_ctx = NULL;
-	if (p->uctx != NULL) {
-		child->sa.sec_ctx = clone_thing(*p->uctx, "sec ctx structure");
-		dbg("pending phase 2 with security context \"%s\"",
-		    child->sa.sec_ctx->sec_ctx_value);
-	}
 
 	binlog_refresh_state(&child->sa);
 

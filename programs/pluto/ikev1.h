@@ -42,8 +42,7 @@ extern void main_outI1(struct fd *whack_sock,
 		       struct state *predecessor,
 		       lset_t policy,
 		       unsigned long try,
-		       const threadtime_t *inception,
-		       struct xfrm_user_sec_ctx_ike *uctx);
+		       const threadtime_t *inception);
 
 /* extern initiator_function aggr_outI1; */
 extern void aggr_outI1(struct fd *whack_sock,
@@ -51,8 +50,7 @@ extern void aggr_outI1(struct fd *whack_sock,
 		       struct state *predecessor,
 		       lset_t policy,
 		       unsigned long try,
-		       const threadtime_t *inception,
-		       struct xfrm_user_sec_ctx_ike *uctx);
+		       const threadtime_t *inception);
 
 extern void send_v1_delete(struct state *st);
 

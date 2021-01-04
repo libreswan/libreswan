@@ -63,11 +63,13 @@ static bool parse_secctx_attr(pb_stream *pbs UNUSED, struct state *st)
 	 * so fail the IKE negotiation
 	 */
 	log_state(RC_LOG_SERIOUS, st,
-		  "Received Sec Ctx Textual Label but support for labeled ipsec not compiled in");
+		  "Received IPsec Security Label support for labeled ipsec not compiled in");
 	return FALSE;
 }
 #else
 #include "security_selinux.h"
+#include "labeled_ipsec.h"
+#include <linux/xfrm.h> /* for XFRM_SC_DOI_LSM and XFRM_SC_ALG_SELINUX */
 static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 {
 	diag_t d;
@@ -82,87 +84,49 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 	if (pbs_left(pbs) != uctx.ctx.ctx_len) {
 		/* ??? should we ignore padding? */
 		log_state(RC_LOG_SERIOUS, st,
-			  "Sec Ctx Textual Label length mismatch (length=%u; packet space = %u)",
+			  "IPsec Security Label length mismatch (length=%u; packet space = %u)",
 			  uctx.ctx.ctx_len, (unsigned)pbs_left(pbs));
 		return FALSE;
 	}
 
 	if (uctx.ctx.ctx_len > MAX_SECCTX_LEN) {
 		log_state(RC_LOG_SERIOUS, st,
-			  "Sec Ctx Textual Label too long (%u > %u)",
+			  "IPsec Security Label too long (%u > %u)",
 			  uctx.ctx.ctx_len, MAX_SECCTX_LEN);
 		return FALSE;
 	}
 
-	zero(&uctx.sec_ctx_value);	/* abundance of caution */
+	if (st->st_seen_sec_label != NULL) {
+		dbg("already received IPsec Security Label in responder state: updating st_seen_sec_label");
+		pfree(st->st_seen_sec_label);
+	} 
+	st->st_seen_sec_label = alloc_bytes(uctx.ctx.ctx_len, "st_seen_sec_label");
 
-	d = pbs_in_raw(pbs, uctx.sec_ctx_value, uctx.ctx.ctx_len,
-		       "Sec Ctx Textual Label");
+	d = pbs_in_raw(pbs, st->st_seen_sec_label, uctx.ctx.ctx_len, "sec_label from pbs");
 	if (d != NULL) {
 		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
-		return false;
-	}
-
-	/*
-	 * The label should have been NUL-terminated.
-	 * We will generously add one if it is missing and there is room.
-	 */
-	if (uctx.ctx.ctx_len == 0 ||
-	    uctx.sec_ctx_value[uctx.ctx.ctx_len - 1] != '\0') {
-		if (uctx.ctx.ctx_len == MAX_SECCTX_LEN) {
-			log_state(RC_LOG_SERIOUS, st,
-				  "Sec Ctx Textual Label missing terminal NUL and there is no space to add it");
-			return FALSE;
-		}
-		DBG_log("Sec Ctx Textual Label missing terminal NUL; we are adding it");
-		uctx.sec_ctx_value[uctx.ctx.ctx_len] = '\0';
-		uctx.ctx.ctx_len++;
-	}
-
-	if (strlen(uctx.sec_ctx_value) + 1 != uctx.ctx.ctx_len) {
-		log_state(RC_LOG_SERIOUS, st,
-			  "Error: Sec Ctx Textual Label contains embedded NUL");
 		return FALSE;
 	}
 
-	if (st->sec_ctx == NULL && st->st_state->kind == STATE_QUICK_R0) {
-		DBG_log("Received sec ctx in responder state");
+	dbg("received sec_label:%s", st->st_seen_sec_label);
 
-		/*
-		 * verify that the received security label is
-		 * within range of this connection's policy's security label
-		 */
-		if (st->st_connection->policy_label == NULL) {
-			log_state(RC_LOG_SERIOUS, st,
-				  "This state (connection) is not labeled ipsec enabled, so cannot proceed");
-			return FALSE;
-		} else if (within_range(uctx.sec_ctx_value,
-					st->st_connection->policy_label,
-					st->st_logger)) {
-			dbg("security context verification succeeded");
-		} else {
-			log_state(RC_LOG_SERIOUS, st,
-				  "security context verification failed");
-			return FALSE;
-		}
-		/*
-		 * Note: this clones the whole of uctx.sec_ctx_value.
-		 * It would be reasonable to clone only the part that's used.
-		 */
-		st->sec_ctx = clone_thing(uctx, "struct xfrm_user_sec_ctx_ike");
-	} else if (st->st_state->kind == STATE_QUICK_R0) {
-		/* ??? can this happen? */
-		/* ??? should we check that this label and first one match? */
-		DBG_log("Received sec ctx in responder state again: ignoring this one");
-	} else if (st->st_state->kind == STATE_QUICK_I1) {
-		dbg("initiator state received security context from responder state, now verifying if both are same");
-		if (streq(st->sec_ctx->sec_ctx_value, uctx.sec_ctx_value)) {
-			DBG_log("security contexts are verified in the initiator state");
-		} else {
-			log_state(RC_LOG_SERIOUS, st,
-				  "security context verification failed in the initiator state (shouldn't reach here unless responder (or something in between) is modifying the security context");
-			return FALSE;
-		}
+	if (strlen(st->st_seen_sec_label) + 1 != uctx.ctx.ctx_len) {
+		log_state(RC_LOG_SERIOUS, st,
+			  "Error: received IPsec Security Label contains embedded NUL");
+		return FALSE;
+	}
+
+	if (st->st_connection->sec_label == NULL) {
+		log_state(RC_LOG_SERIOUS, st,
+			  "received IPsec Security Label on connection not configured with labeled ipsec");
+		return FALSE;
+	} else if (streq(st->st_seen_sec_label, st->st_connection->sec_label)) {
+		dbg("connection security context IPsec Security Label verification succeeded");
+	} else {
+		log_state(RC_LOG_SERIOUS, st,
+			  "received IPsec Security Label '%s' mismatches our configured security label %s",
+			st->st_seen_sec_label, st->st_connection->sec_label);
+		return FALSE;
 	}
 	return TRUE;
 }
@@ -1296,28 +1260,34 @@ bool ikev1_out_sa(pb_stream *outs,
 						      &trans_pbs))
 						goto fail;
 
-					if (st->sec_ctx != NULL &&
-					    st->st_connection->policy_label != NULL) {
-						passert(st->sec_ctx->ctx.ctx_len <= MAX_SECCTX_LEN);
-
+					if (st->st_connection->sec_label != NULL) {
 						pb_stream val_pbs;
+						struct sec_ctx uctx = {
+							.ctx_doi = XFRM_SC_DOI_LSM,
+							.ctx_alg = XFRM_SC_ALG_SELINUX,
+							.ctx_len = strlen(st->st_connection->sec_label) + 1,
+						};
+
 						struct isakmp_attribute attr = {
 							.isaat_af_type = secctx_attr_type |
 								ISAKMP_ATTR_AF_TLV,
 						};
 
+						char *nbyte[1];
+						nbyte[0] = '\0';
+
 						if (!out_struct(&attr,
 								attr_desc,
 								&trans_pbs,
 								&val_pbs) ||
-						    !out_struct(&st->sec_ctx->ctx,
+						    !out_struct(&uctx,
 								&sec_ctx_desc,
 								&val_pbs,
 								NULL) ||
-						    !out_raw(st->sec_ctx->
-							     sec_ctx_value,
-							     st->sec_ctx->ctx.ctx_len, &val_pbs,
-							     " variable length sec ctx"))
+						    !out_raw(st->st_connection->sec_label,
+							     strlen(st->st_connection->sec_label), &val_pbs,
+							     " variable length sec_label") ||
+						    !out_raw(nbyte, 1, &val_pbs, "NUL terminator"))
 							goto fail;
 
 						close_output_pbs(&val_pbs);
@@ -2662,19 +2632,19 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			attrs->transattrs.enckeylen = val;
 			break;
 
-		default:
-			if (a.isaat_af_type ==
-			    (secctx_attr_type | ISAKMP_ATTR_AF_TLV)) {
-				pb_stream *pbs = &attr_pbs;
-
-				if (!parse_secctx_attr(pbs, st))
-					return FALSE;
-			} else {
-				log_state(RC_LOG_SERIOUS, st,
-					  "unsupported IPsec attribute %s",
-					  enum_show(&ipsec_attr_names, a.isaat_af_type));
+		case SECCTX | ISAKMP_ATTR_AF_TLV:
+		{
+			pb_stream *pbs = &attr_pbs;
+			if (!parse_secctx_attr(pbs, st))
 				return FALSE;
-			}
+			break;
+		}
+
+		default:
+			log_state(RC_LOG_SERIOUS, st,
+				  "unsupported IPsec attribute %s",
+				  enum_show(&ipsec_attr_names, a.isaat_af_type));
+			return FALSE;
 		}
 
 		if (ipcomp_inappropriate) {

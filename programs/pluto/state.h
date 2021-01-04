@@ -46,7 +46,6 @@
 #include <pk11pub.h>
 #include <x509.h>
 
-#include "labeled_ipsec.h"	/* for struct xfrm_user_sec_ctx_ike and friends */
 #include "list_entry.h"
 #include "retransmit.h"
 #include "ikev2_ts.h"		/* for struct traffic_selector */
@@ -471,8 +470,6 @@ struct state {
 
 	/* my stuff */
 
-	struct xfrm_user_sec_ctx_ike *sec_ctx;
-
 	/* Phase 2 ID payload info about my user */
 	uint8_t st_myuserprotoid;             /* IDcx.protoid */
 	uint16_t st_myuserport;
@@ -739,6 +736,7 @@ struct state {
 	generalName_t *st_requested_ca;		/* collected certificate requests */
 	uint8_t st_reply_xchg;
 	bool st_peer_wants_null;		/* We received IDr payload of type ID_NULL (and we allow POLICY_AUTH_NULL */
+	char *st_seen_sec_label;		/* TEMP until we move it into c->spd */
 };
 
 /*

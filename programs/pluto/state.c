@@ -1327,9 +1327,10 @@ void delete_state_tail(struct state *st)
 	pfreeany(st->st_seen_cfg_domains);
 	pfreeany(st->st_seen_cfg_banner);
 
+	pfreeany(st->st_seen_sec_label);
+
 	free_chunk_content(&st->st_no_ppk_auth);
 
-	pfreeany(st->sec_ctx);
 	free_logger(&st->st_logger, HERE);
 	messup(st);
 	pfree(st);

@@ -24,21 +24,17 @@ struct payload_digest;
 struct state;
 struct jambuf;
 
-extern struct xfrm_user_sec_ctx_ike *uctx; /* forward declaration */
-
 typedef void initiator_function(struct fd *whack_sock,
 				struct connection *c,
 				struct state *predecessor,
 				lset_t policy,
 				unsigned long try,
-				const threadtime_t *inception,
-				struct xfrm_user_sec_ctx_ike *uctx);
+				const threadtime_t *inception);
 
 extern void ipsecdoi_initiate(struct fd *whack_sock, struct connection *c,
 			      lset_t policy, unsigned long try,
 			      so_serial_t replacing,
-			      const threadtime_t *inception,
-			      struct xfrm_user_sec_ctx_ike *uctx);
+			      const threadtime_t *inception);
 
 extern void ipsecdoi_replace(struct state *st, unsigned long try);
 

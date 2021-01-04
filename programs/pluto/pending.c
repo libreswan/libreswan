@@ -62,7 +62,6 @@ void add_pending(struct fd *whack_sock,
 		 lset_t policy,
 		 unsigned long try,
 		 so_serial_t replacing,
-		 struct xfrm_user_sec_ctx_ike *uctx,
 		 bool part_of_initiate)
 {
 	struct pending *p, **pp;
@@ -90,12 +89,9 @@ void add_pending(struct fd *whack_sock,
 	p->replacing = replacing;
 	p->pend_time = mononow();
 	p->part_of_initiate = part_of_initiate; /* useful */
-	p->uctx = NULL;
-	if (uctx != NULL) {
-		p->uctx = clone_thing(*uctx, "pending security context");
-		dbg("pending IPsec SA negotiation with security context %s, %d",
-		    p->uctx->sec_ctx_value,
-		    p->uctx->ctx.ctx_len);
+	if (c->sec_label != NULL) {
+		dbg("pending IPsec SA negotiation with security context %s",
+		    c->sec_label);
 	}
 
 	/*
@@ -227,7 +223,6 @@ static void delete_pending(struct pending **pp)
 		}
 	}
 
-	pfreeany(p->uctx);
 	pfree(p);
 }
 
@@ -278,9 +273,7 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 #ifdef USE_IKEv1
 				quick_outI1(p->whack_sock, &ike->sa, p->connection,
 					    p->policy,
-					    p->try, p->replacing
-					    , p->uctx
-					    );
+					    p->try, p->replacing);
 #endif
 				break;
 			default:

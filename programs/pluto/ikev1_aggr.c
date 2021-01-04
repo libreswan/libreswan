@@ -967,8 +967,7 @@ void aggr_outI1(struct fd *whack_sock,
 		struct state *predecessor,
 		lset_t policy,
 		unsigned long try,
-		const threadtime_t *inception,
-		struct xfrm_user_sec_ctx_ike *uctx)
+		const threadtime_t *inception)
 {
 	/* set up new state */
 	struct ike_sa *ike = new_v1_istate(whack_sock);
@@ -997,7 +996,7 @@ void aggr_outI1(struct fd *whack_sock,
 	if (HAS_IPSEC_POLICY(policy))
 		add_pending(whack_sock, ike, c, policy, 1,
 			    predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
-			    uctx, true/*part of initiate*/);
+			    true /*part of initiate*/);
 
 	if (predecessor == NULL) {
 		log_state(RC_LOG, st, "initiating IKEv1 Aggressive Mode connection");

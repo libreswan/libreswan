@@ -469,7 +469,7 @@ bool initiate_connection_3(struct connection *c, bool background, const threadti
 	dbg("connection '%s' +POLICY_UP", c->name);
 	c->policy |= POLICY_UP;
 	ipsecdoi_initiate(background ? null_fd : c->logger->global_whackfd,
-			  c, c->policy, 1, SOS_NOBODY, &inception, NULL);
+			  c, c->policy, 1, SOS_NOBODY, &inception);
 	return true;
 }
 
@@ -625,6 +625,7 @@ struct find_oppo_bundle {
 	ipsec_spi_t failure_shunt; /* in host order! */
 	struct logger *logger; /* has whack attached */
 	bool background;
+	char *sec_label;
 };
 
 static void cannot_oppo(struct find_oppo_bundle *b, err_t ughmsg)
@@ -664,8 +665,7 @@ static void cannot_oppo(struct find_oppo_bundle *b, err_t ughmsg)
 	}
 }
 
-static void initiate_ondemand_body(struct find_oppo_bundle *b,
-				   struct xfrm_user_sec_ctx_ike *uctx)
+static void initiate_ondemand_body(struct find_oppo_bundle *b)
 {
 	threadtime_t inception = threadtime_start();
 
@@ -689,10 +689,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 	address_buf peerb;
 	const char *peer_addr = str_address(&peer_address, &peerb);
 
-	if (uctx != NULL) {
-		dbg("received security label string: %.*s",
-		    uctx->ctx.ctx_len,
-		    uctx->sec_ctx_value);
+	if (b->sec_label != NULL) {
+		dbg("received security label string: %s", b->sec_label);
 	}
 
 	char demandbuf[256];
@@ -827,8 +825,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 		}
 
 		ipsecdoi_initiate(b->background ? null_fd : b->logger->global_whackfd,
-				  c, c->policy, 1,
-				  SOS_NOBODY, &inception, uctx);
+				  c, c->policy, 1, SOS_NOBODY, &inception);
 		address_buf b1;
 		address_buf b2;
 		dbg("initiate on demand using %s from %s to %s",
@@ -1038,16 +1035,14 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 
 	ipsecdoi_initiate(b->background ? null_fd : b->logger->global_whackfd,
 			  c, c->policy, 1,
-			  SOS_NOBODY, &inception
-			  , NULL /* shall we pass uctx for opportunistic connections? */
-		);
+			  SOS_NOBODY, &inception);
 }
 
 void initiate_ondemand(const ip_address *our_client,
 		       const ip_address *peer_client,
 		       int transport_proto,
 		       bool held, bool background,
-		       struct xfrm_user_sec_ctx_ike *uctx,
+		       const char *sec_label,
 		       const char *why,
 		       struct logger *logger)
 {
@@ -1063,9 +1058,14 @@ void initiate_ondemand(const ip_address *our_client,
 		.failure_shunt = SPI_HOLD, /* until we found connection policy */
 		.logger = logger, /*on-stack*/
 		.background = background,
+		.sec_label = NULL
 	};
+	if (sec_label != NULL) {
+		b.sec_label = clone_str(sec_label, "sec_label in bundle");
+	}
 
-	initiate_ondemand_body(&b, uctx);
+	initiate_ondemand_body(&b);
+	pfreeany(b.sec_label);
 }
 
 /* Find a connection that owns the shunt eroute between subnets.

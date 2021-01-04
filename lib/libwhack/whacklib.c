@@ -247,7 +247,7 @@ static bool pickle_whack_message(struct whackpacker *wp, struct pickler *pickle)
 		PICKLE_STRING(&wp->msg->string3) &&
 		PICKLE_STRING(&wp->msg->dnshostname) &&
 #ifdef HAVE_LABELED_IPSEC
-		PICKLE_STRING(&wp->msg->policy_label) &&
+		PICKLE_STRING(&wp->msg->sec_label) &&
 #endif
 		PICKLE_STRING(&wp->msg->modecfg_dns) &&
 		PICKLE_STRING(&wp->msg->modecfg_domains) &&

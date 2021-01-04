@@ -251,7 +251,7 @@ static void discard_connection(struct connection *c,
 	pfreeany(c->modecfg_dns);
 	pfreeany(c->modecfg_domains);
 	pfreeany(c->modecfg_banner);
-	pfreeany(c->policy_label);
+	pfreeany(c->sec_label);
 	pfreeany(c->dnshostname);
 	pfreeany(c->redirect_to);
 	pfreeany(c->accept_redirect_to);
@@ -708,8 +708,8 @@ static void unshare_connection(struct connection *c)
 				"connection modecfg_domains");
 	c->modecfg_banner = clone_str(c->modecfg_banner,
 				"connection modecfg_banner");
-	c->policy_label = clone_str(c->policy_label,
-				    "connection policy_label");
+	c->sec_label = clone_str(c->sec_label,
+				    "connection sec_label");
 	c->dnshostname = clone_str(c->dnshostname, "connection dnshostname");
 
 	/* duplicate any alias, adding spaces to the beginning and end */
@@ -1789,7 +1789,7 @@ static bool extract_connection(const struct whack_message *wm,
 	c->nmconfigured = wm->nmconfigured;
 #endif
 
-	c->policy_label = clone_str(wm->policy_label, "connection policy_label");
+	c->sec_label = clone_str(wm->sec_label, "connection sec_label");
 	c->nflog_group = wm->nflog_group;
 	c->sa_priority = wm->sa_priority;
 	c->sa_tfcpad = wm->sa_tfcpad;
@@ -3933,10 +3933,9 @@ static void show_one_sr(struct show *s,
 		c->name, instance, c->modecfg_banner);
 	}
 
-	const char *policy_label;
-	policy_label = (c->policy_label == NULL) ? "unset" : c->policy_label;
-	show_comment(s, "\"%s\"%s:   policy_label:%s;",
-		  c->name, instance, policy_label);
+	show_comment(s, "\"%s\"%s:   sec_label:%s;",
+		c->name, instance,
+		(c->sec_label == NULL) ? "unset" : c->sec_label);
 }
 
 void show_one_connection(struct show *s,

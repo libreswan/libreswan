@@ -1270,12 +1270,7 @@ static bool load_conn(struct starter_conn *conn,
 	str_to_conn(modecfg_domains, KSCF_MODECFGDOMAINS);
 	str_to_conn(modecfg_banner, KSCF_MODECFGBANNER);
 
-#ifdef HAVE_LABELED_IPSEC
-	str_to_conn(policy_label, KSCF_POLICY_LABEL);
-	if (conn->policy_label != NULL)
-		starter_log(LOG_LEVEL_DEBUG, "connection's policy label: %s",
-				conn->policy_label);
-#endif
+	str_to_conn(sec_label, KSCF_SA_SEC_LABEL);
 
 	str_to_conn(conn_mark_both, KSCF_CONN_MARK_BOTH);
 	str_to_conn(conn_mark_in, KSCF_CONN_MARK_IN);
@@ -1562,7 +1557,7 @@ static void copy_conn_default(struct starter_conn *conn,
 	STR_FIELD(conn_mark_both);
 	STR_FIELD(conn_mark_in);
 	STR_FIELD(conn_mark_out);
-	STR_FIELD(policy_label);
+	STR_FIELD(sec_label);
 	STR_FIELD(conn_mark_both);
 	STR_FIELD(conn_mark_in);
 	STR_FIELD(conn_mark_out);
@@ -1739,7 +1734,7 @@ static void confread_free_conn(struct starter_conn *conn)
 	STR_FIELD(conn_mark_both);
 	STR_FIELD(conn_mark_in);
 	STR_FIELD(conn_mark_out);
-	STR_FIELD(policy_label);
+	STR_FIELD(sec_label);
 	STR_FIELD(conn_mark_both);
 	STR_FIELD(conn_mark_in);
 	STR_FIELD(conn_mark_out);
