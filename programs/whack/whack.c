@@ -863,17 +863,17 @@ static void check_life_time(deltatime_t life, time_t raw_limit,
 }
 
 static void check_end(struct whack_end *this, struct whack_end *that,
-		      sa_family_t caf, sa_family_t taf)
+		      const struct ip_info *caf, const struct ip_info *taf)
 {
-	if (caf != addrtypeof(&this->host_addr))
+	if (caf != address_type(&this->host_addr))
 		diag("address family of host inconsistent");
 
 	if (this->has_client) {
-		if (aftoinfo(taf) != subnet_type(&this->client))
+		if (taf != subnet_type(&this->client))
 			diag("address family of client subnet inconsistent");
 	} else {
 		/* fill in anyaddr-anyaddr as (missing) client subnet */
-		ip_address cn = address_any(aftoinfo(caf));
+		ip_address cn = address_any(caf);
 		diagq(rangetosubnet(&cn, &cn, &this->client), NULL);
 	}
 
@@ -2435,10 +2435,10 @@ int main(int argc, char **argv)
 		}
 
 		check_end(&msg.left, &msg.right,
-			  msg.addr_family, msg.tunnel_addr_family);
+			  aftoinfo(msg.addr_family), aftoinfo(msg.tunnel_addr_family));
 
 		check_end(&msg.right, &msg.left,
-			  msg.addr_family, msg.tunnel_addr_family);
+			  aftoinfo(msg.addr_family), aftoinfo(msg.tunnel_addr_family));
 
 		if (subnet_type(&msg.left.client) !=
 		    subnet_type(&msg.right.client))
