@@ -125,7 +125,7 @@ west #
 000 "TUNNEL-A":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "TUNNEL-A":   our auth:rsasig, their auth:rsasig
 000 "TUNNEL-A":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "TUNNEL-A":   policy_label:unset;
+000 "TUNNEL-A":   sec_label:unset;
 000 "TUNNEL-A":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "TUNNEL-A":   ike_life: 60s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-A":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
@@ -142,7 +142,7 @@ west #
 000 "TUNNEL-B":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "TUNNEL-B":   our auth:rsasig, their auth:rsasig
 000 "TUNNEL-B":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "TUNNEL-B":   policy_label:unset;
+000 "TUNNEL-B":   sec_label:unset;
 000 "TUNNEL-B":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "TUNNEL-B":   ike_life: 60s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-B":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
@@ -158,7 +158,7 @@ west #
 000 "TUNNEL-C":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "TUNNEL-C":   our auth:rsasig, their auth:rsasig
 000 "TUNNEL-C":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "TUNNEL-C":   policy_label:unset;
+000 "TUNNEL-C":   sec_label:unset;
 000 "TUNNEL-C":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "TUNNEL-C":   ike_life: 60s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-C":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
@@ -186,7 +186,7 @@ west #
 000 "TUNNEL-A":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "TUNNEL-A":   our auth:rsasig, their auth:rsasig
 000 "TUNNEL-A":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "TUNNEL-A":   policy_label:unset;
+000 "TUNNEL-A":   sec_label:unset;
 000 "TUNNEL-A":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "TUNNEL-A":   ike_life: 60s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-A":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
@@ -203,7 +203,7 @@ west #
 000 "TUNNEL-C":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "TUNNEL-C":   our auth:rsasig, their auth:rsasig
 000 "TUNNEL-C":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "TUNNEL-C":   policy_label:unset;
+000 "TUNNEL-C":   sec_label:unset;
 000 "TUNNEL-C":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "TUNNEL-C":   ike_life: 60s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-C":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;

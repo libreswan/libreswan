@@ -30,7 +30,7 @@ west #
 000 "westnet-eastnet-esp-3des-alg":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-esp-3des-alg":   our auth:rsasig, their auth:rsasig
 000 "westnet-eastnet-esp-3des-alg":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "westnet-eastnet-esp-3des-alg":   policy_label:unset;
+000 "westnet-eastnet-esp-3des-alg":   sec_label:unset;
 000 "westnet-eastnet-esp-3des-alg":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-esp-3des-alg":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-esp-3des-alg":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;

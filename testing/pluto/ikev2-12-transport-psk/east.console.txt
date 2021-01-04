@@ -14,7 +14,7 @@ east #
 000 "ipv4-psk-ikev2-transport":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "ipv4-psk-ikev2-transport":   our auth:secret, their auth:secret
 000 "ipv4-psk-ikev2-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "ipv4-psk-ikev2-transport":   policy_label:unset;
+000 "ipv4-psk-ikev2-transport":   sec_label:unset;
 000 "ipv4-psk-ikev2-transport":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "ipv4-psk-ikev2-transport":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "ipv4-psk-ikev2-transport":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;

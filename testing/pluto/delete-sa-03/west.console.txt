@@ -20,7 +20,7 @@ west #
 000 "west-east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west-east":   our auth:rsasig, their auth:rsasig
 000 "west-east":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "west-east":   policy_label:unset;
+000 "west-east":   sec_label:unset;
 000 "west-east":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west-east":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "west-east":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -35,7 +35,7 @@ west #
 000 "west-east-b":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west-east-b":   our auth:rsasig, their auth:rsasig
 000 "west-east-b":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "west-east-b":   policy_label:unset;
+000 "west-east-b":   sec_label:unset;
 000 "west-east-b":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west-east-b":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "west-east-b":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -50,7 +50,7 @@ west #
 000 "west-east-c":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west-east-c":   our auth:rsasig, their auth:rsasig
 000 "west-east-c":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "west-east-c":   policy_label:unset;
+000 "west-east-c":   sec_label:unset;
 000 "west-east-c":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west-east-c":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "west-east-c":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -94,7 +94,7 @@ west #
 000 "west-east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west-east":   our auth:rsasig, their auth:rsasig
 000 "west-east":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "west-east":   policy_label:unset;
+000 "west-east":   sec_label:unset;
 000 "west-east":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west-east":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "west-east":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -111,7 +111,7 @@ west #
 000 "west-east-b":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west-east-b":   our auth:rsasig, their auth:rsasig
 000 "west-east-b":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "west-east-b":   policy_label:unset;
+000 "west-east-b":   sec_label:unset;
 000 "west-east-b":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west-east-b":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "west-east-b":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -127,7 +127,7 @@ west #
 000 "west-east-c":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west-east-c":   our auth:rsasig, their auth:rsasig
 000 "west-east-c":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "west-east-c":   policy_label:unset;
+000 "west-east-c":   sec_label:unset;
 000 "west-east-c":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west-east-c":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "west-east-c":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -160,7 +160,7 @@ west #
 000 "west-east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west-east":   our auth:rsasig, their auth:rsasig
 000 "west-east":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "west-east":   policy_label:unset;
+000 "west-east":   sec_label:unset;
 000 "west-east":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west-east":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "west-east":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -176,7 +176,7 @@ west #
 000 "west-east-b":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west-east-b":   our auth:rsasig, their auth:rsasig
 000 "west-east-b":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "west-east-b":   policy_label:unset;
+000 "west-east-b":   sec_label:unset;
 000 "west-east-b":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west-east-b":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "west-east-b":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -192,7 +192,7 @@ west #
 000 "west-east-c":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west-east-c":   our auth:rsasig, their auth:rsasig
 000 "west-east-c":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "west-east-c":   policy_label:unset;
+000 "west-east-c":   sec_label:unset;
 000 "west-east-c":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west-east-c":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "west-east-c":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -217,7 +217,7 @@ west #
 000 "west-east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west-east":   our auth:rsasig, their auth:rsasig
 000 "west-east":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "west-east":   policy_label:unset;
+000 "west-east":   sec_label:unset;
 000 "west-east":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west-east":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "west-east":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -233,7 +233,7 @@ west #
 000 "west-east-b":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west-east-b":   our auth:rsasig, their auth:rsasig
 000 "west-east-b":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "west-east-b":   policy_label:unset;
+000 "west-east-b":   sec_label:unset;
 000 "west-east-b":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west-east-b":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "west-east-b":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -249,7 +249,7 @@ west #
 000 "west-east-c":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west-east-c":   our auth:rsasig, their auth:rsasig
 000 "west-east-c":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "west-east-c":   policy_label:unset;
+000 "west-east-c":   sec_label:unset;
 000 "west-east-c":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west-east-c":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "west-east-c":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;

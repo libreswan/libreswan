@@ -39,7 +39,7 @@ road #
 000 "v6-tunnel-east-road":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "v6-tunnel-east-road":   our auth:rsasig, their auth:rsasig
 000 "v6-tunnel-east-road":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "v6-tunnel-east-road":   policy_label:unset;
+000 "v6-tunnel-east-road":   sec_label:unset;
 000 "v6-tunnel-east-road":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "v6-tunnel-east-road":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "v6-tunnel-east-road":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;

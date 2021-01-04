@@ -108,7 +108,7 @@ road #
 000 "block":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "block":   our auth:unset, their auth:unset
 000 "block":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "block":   policy_label:unset;
+000 "block":   sec_label:unset;
 000 "block":   ike_life: 0s; ipsec_life: 0s; replay_window: 0; rekey_margin: 0s; rekey_fuzz: 0%; keyingtries: 0;
 000 "block":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:0;
 000 "block":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -123,7 +123,7 @@ road #
 000 "clear":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "clear":   our auth:unset, their auth:unset
 000 "clear":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "clear":   policy_label:unset;
+000 "clear":   sec_label:unset;
 000 "clear":   ike_life: 0s; ipsec_life: 0s; replay_window: 0; rekey_margin: 0s; rekey_fuzz: 0%; keyingtries: 0;
 000 "clear":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:0;
 000 "clear":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -138,7 +138,7 @@ road #
 000 "clear#192.1.2.253/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "clear#192.1.2.253/32":   our auth:unset, their auth:unset
 000 "clear#192.1.2.253/32":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "clear#192.1.2.253/32":   policy_label:unset;
+000 "clear#192.1.2.253/32":   sec_label:unset;
 000 "clear#192.1.2.253/32":   ike_life: 0s; ipsec_life: 0s; replay_window: 0; rekey_margin: 0s; rekey_fuzz: 0%; keyingtries: 0;
 000 "clear#192.1.2.253/32":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:0;
 000 "clear#192.1.2.253/32":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -153,7 +153,7 @@ road #
 000 "clear#192.1.3.253/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "clear#192.1.3.253/32":   our auth:unset, their auth:unset
 000 "clear#192.1.3.253/32":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "clear#192.1.3.253/32":   policy_label:unset;
+000 "clear#192.1.3.253/32":   sec_label:unset;
 000 "clear#192.1.3.253/32":   ike_life: 0s; ipsec_life: 0s; replay_window: 0; rekey_margin: 0s; rekey_fuzz: 0%; keyingtries: 0;
 000 "clear#192.1.3.253/32":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:0;
 000 "clear#192.1.3.253/32":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -168,7 +168,7 @@ road #
 000 "clear#192.1.3.254/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "clear#192.1.3.254/32":   our auth:unset, their auth:unset
 000 "clear#192.1.3.254/32":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "clear#192.1.3.254/32":   policy_label:unset;
+000 "clear#192.1.3.254/32":   sec_label:unset;
 000 "clear#192.1.3.254/32":   ike_life: 0s; ipsec_life: 0s; replay_window: 0; rekey_margin: 0s; rekey_fuzz: 0%; keyingtries: 0;
 000 "clear#192.1.3.254/32":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:0;
 000 "clear#192.1.3.254/32":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -183,7 +183,7 @@ road #
 000 "clear-or-private":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "clear-or-private":   our auth:null, their auth:null
 000 "clear-or-private":   modecfg info: us:client, them:server, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:set;
-000 "clear-or-private":   policy_label:unset;
+000 "clear-or-private":   sec_label:unset;
 000 "clear-or-private":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
 000 "clear-or-private":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "clear-or-private":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -199,7 +199,7 @@ road #
 000 "private":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "private":   our auth:null, their auth:null
 000 "private":   modecfg info: us:client, them:server, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:set;
-000 "private":   policy_label:unset;
+000 "private":   sec_label:unset;
 000 "private":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
 000 "private":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "private":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -215,7 +215,7 @@ road #
 000 "private-or-clear":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "private-or-clear":   our auth:null, their auth:null
 000 "private-or-clear":   modecfg info: us:client, them:server, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:set;
-000 "private-or-clear":   policy_label:unset;
+000 "private-or-clear":   sec_label:unset;
 000 "private-or-clear":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
 000 "private-or-clear":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "private-or-clear":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -231,7 +231,7 @@ road #
 000 "private-or-clear#192.1.2.0/24":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "private-or-clear#192.1.2.0/24":   our auth:null, their auth:null
 000 "private-or-clear#192.1.2.0/24":   modecfg info: us:client, them:server, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:set;
-000 "private-or-clear#192.1.2.0/24":   policy_label:unset;
+000 "private-or-clear#192.1.2.0/24":   sec_label:unset;
 000 "private-or-clear#192.1.2.0/24":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
 000 "private-or-clear#192.1.2.0/24":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "private-or-clear#192.1.2.0/24":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;

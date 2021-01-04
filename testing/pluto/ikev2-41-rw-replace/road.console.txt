@@ -127,7 +127,7 @@ road #
 000 "road-east-x509-ipv4":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "road-east-x509-ipv4":   our auth:rsasig, their auth:rsasig
 000 "road-east-x509-ipv4":   modecfg info: us:client, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "road-east-x509-ipv4":   policy_label:unset;
+000 "road-east-x509-ipv4":   sec_label:unset;
 000 "road-east-x509-ipv4":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "road-east-x509-ipv4":   ike_life: 90s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-east-x509-ipv4":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
@@ -144,7 +144,7 @@ road #
 000 "road-east-x509-ipv4"[1]:   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "road-east-x509-ipv4"[1]:   our auth:rsasig, their auth:rsasig
 000 "road-east-x509-ipv4"[1]:   modecfg info: us:client, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "road-east-x509-ipv4"[1]:   policy_label:unset;
+000 "road-east-x509-ipv4"[1]:   sec_label:unset;
 000 "road-east-x509-ipv4"[1]:   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "road-east-x509-ipv4"[1]:   ike_life: 90s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-east-x509-ipv4"[1]:   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
@@ -282,7 +282,7 @@ road #
 000 "road-east-x509-ipv4":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "road-east-x509-ipv4":   our auth:rsasig, their auth:rsasig
 000 "road-east-x509-ipv4":   modecfg info: us:client, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "road-east-x509-ipv4":   policy_label:unset;
+000 "road-east-x509-ipv4":   sec_label:unset;
 000 "road-east-x509-ipv4":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "road-east-x509-ipv4":   ike_life: 90s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-east-x509-ipv4":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
@@ -299,7 +299,7 @@ road #
 000 "road-east-x509-ipv4"[1]:   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "road-east-x509-ipv4"[1]:   our auth:rsasig, their auth:rsasig
 000 "road-east-x509-ipv4"[1]:   modecfg info: us:client, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "road-east-x509-ipv4"[1]:   policy_label:unset;
+000 "road-east-x509-ipv4"[1]:   sec_label:unset;
 000 "road-east-x509-ipv4"[1]:   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "road-east-x509-ipv4"[1]:   ike_life: 90s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-east-x509-ipv4"[1]:   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;

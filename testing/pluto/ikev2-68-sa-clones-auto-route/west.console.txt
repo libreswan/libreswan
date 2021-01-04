@@ -22,7 +22,7 @@ west #
 000 "westnet-eastnet-0":   our auth:secret, their auth:secret
 000 "westnet-eastnet-0":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
 000 "westnet-eastnet-0":   labeled_ipsec:no;
-000 "westnet-eastnet-0":   policy_label:unset;
+000 "westnet-eastnet-0":   sec_label:unset;
 000 "westnet-eastnet-0":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 0;
 000 "westnet-eastnet-0":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-0":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -39,7 +39,7 @@ west #
 000 "westnet-eastnet-1":   our auth:secret, their auth:secret
 000 "westnet-eastnet-1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
 000 "westnet-eastnet-1":   labeled_ipsec:no;
-000 "westnet-eastnet-1":   policy_label:unset;
+000 "westnet-eastnet-1":   sec_label:unset;
 000 "westnet-eastnet-1":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 1;
 000 "westnet-eastnet-1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -56,7 +56,7 @@ west #
 000 "westnet-eastnet-2":   our auth:secret, their auth:secret
 000 "westnet-eastnet-2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
 000 "westnet-eastnet-2":   labeled_ipsec:no;
-000 "westnet-eastnet-2":   policy_label:unset;
+000 "westnet-eastnet-2":   sec_label:unset;
 000 "westnet-eastnet-2":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 2;
 000 "westnet-eastnet-2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -149,7 +149,7 @@ west #
 000 "westnet-eastnet-0":   our auth:secret, their auth:secret
 000 "westnet-eastnet-0":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
 000 "westnet-eastnet-0":   labeled_ipsec:no;
-000 "westnet-eastnet-0":   policy_label:unset;
+000 "westnet-eastnet-0":   sec_label:unset;
 000 "westnet-eastnet-0":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 0;
 000 "westnet-eastnet-0":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-0":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -168,7 +168,7 @@ west #
 000 "westnet-eastnet-1":   our auth:secret, their auth:secret
 000 "westnet-eastnet-1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
 000 "westnet-eastnet-1":   labeled_ipsec:no;
-000 "westnet-eastnet-1":   policy_label:unset;
+000 "westnet-eastnet-1":   sec_label:unset;
 000 "westnet-eastnet-1":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 1;
 000 "westnet-eastnet-1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -186,7 +186,7 @@ west #
 000 "westnet-eastnet-2":   our auth:secret, their auth:secret
 000 "westnet-eastnet-2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
 000 "westnet-eastnet-2":   labeled_ipsec:no;
-000 "westnet-eastnet-2":   policy_label:unset;
+000 "westnet-eastnet-2":   sec_label:unset;
 000 "westnet-eastnet-2":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 2;
 000 "westnet-eastnet-2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
