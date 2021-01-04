@@ -1298,7 +1298,7 @@ int main(int argc, char **argv)
 
 		case OPT_DELETECRASH:	/* --crash <ip-address> */
 			msg.whack_crash = TRUE;
-			diagq(ttoaddr(optarg, 0, msg.tunnel_addr_family,
+			diagq(ttoaddr(optarg, 0, msg.addr_family,
 				      &msg.whack_crash_peer), optarg);
 			if (address_is_unset(&msg.whack_crash_peer) || address_eq_any(&msg.whack_crash_peer)) {
 				diagq("0.0.0.0 or 0::0 isn't a valid client address",
