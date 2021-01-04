@@ -531,6 +531,8 @@ enum option_enums {
 #define NUMERIC_ARG (1 << 11)	/* expect a numeric argument */
 #define AUX_SHIFT   12	/* amount to shift for aux information */
 
+int long_index;
+
 static const struct option long_opts[] = {
 #   define OO   OPTION_OFFSET
 	/* name, has_arg, flag, val */
@@ -822,6 +824,48 @@ static const struct option long_opts[] = {
 	{ 0, 0, 0, 0 }
 };
 
+/*
+ * figure out an adress family.
+ */
+struct family {
+	const char *used_by;
+	const struct ip_info *type;
+};
+
+static err_t opt_numeric_to_address(struct family *family, ip_address *address)
+{
+	err_t err = numeric_to_address(shunk1(optarg), family->type, address);
+	if (err == NULL && family->type == NULL) {
+		family->type = address_type(address);
+		family->used_by = long_opts[long_index].name;
+	}
+	return err;
+}
+
+static err_t opt_domain_to_address(struct family *family, ip_address *address)
+{
+	err_t err = domain_to_address(shunk1(optarg), family->type, address);
+	if (err == NULL && family->type == NULL) {
+		family->type = address_type(address);
+		family->used_by = long_opts[long_index].name;
+	}
+	return err;
+}
+
+static void opt_to_address(struct family *family, ip_address *address)
+{
+	diagq(opt_domain_to_address(family, address), optarg);
+}
+
+static ip_address any_address(struct family *family)
+{
+	if (family->type == NULL) {
+		family->type = &ipv4_info;
+		family->used_by = long_opts[long_index].name;
+	}
+	return family->type->any_address;
+}
+
 struct sockaddr_un ctl_addr = {
 	.sun_family = AF_UNIX,
 	.sun_path   = DEFAULT_CTL_SOCKET,
@@ -863,9 +907,9 @@ static void check_life_time(deltatime_t life, time_t raw_limit,
 }
 
 static void check_end(struct whack_end *this, struct whack_end *that,
-		      const struct ip_info *caf, const struct ip_info *taf)
+		      struct family *caf, const struct ip_info *taf)
 {
-	if (caf != address_type(&this->host_addr))
+	if (caf->type != NULL && caf->type != address_type(&this->host_addr))
 		diag("address family of host inconsistent");
 
 	if (this->has_client) {
@@ -873,7 +917,7 @@ static void check_end(struct whack_end *this, struct whack_end *that,
 			diag("address family of client subnet inconsistent");
 	} else {
 		/* fill in anyaddr-anyaddr as (missing) client subnet */
-		ip_address cn = address_any(caf);
+		ip_address cn = any_address(caf);
 		diagq(rangetosubnet(&cn, &cn, &this->client), NULL);
 	}
 
@@ -913,9 +957,7 @@ int main(int argc, char **argv)
 		cdp_seen = LEMPTY,
 		end_seen = LEMPTY,
 		algo_seen = LEMPTY;
-	const char
-		*af_used_by = NULL,
-		*tunnel_af_used_by = NULL;
+	const char *tunnel_af_used_by = NULL;
 	/* space for at most one RSA key */
 	char keyspace[RSA_MAX_ENCODING_BYTES];
 
@@ -940,6 +982,8 @@ int main(int argc, char **argv)
 	zero(&msg);	/* ??? pointer fields might not be NULLed */
 
 	clear_end(&msg.right);	/* left set from this after --to */
+
+	struct family host_family = { 0, };
 
 	msg.name = NULL;
 	msg.remote_host = NULL;
@@ -980,7 +1024,6 @@ int main(int argc, char **argv)
 
 	msg.active_redirect_dests = NULL;
 
-	msg.addr_family = AF_INET;
 	msg.tunnel_addr_family = AF_INET;
 
 	msg.right.updown = DEFAULT_UPDOWN;
@@ -992,7 +1035,6 @@ int main(int argc, char **argv)
 	msg.xfrm_if_id = UINT32_MAX;
 
 	for (;;) {
-		int long_index;
 		/* numeric argument for some flags */
 		unsigned long opt_whole = 0;
 
@@ -1297,12 +1339,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_DELETECRASH:	/* --crash <ip-address> */
-			msg.whack_crash = TRUE;
-			diagq(ttoaddr(optarg, 0, msg.addr_family,
-				      &msg.whack_crash_peer), optarg);
-			if (address_is_unset(&msg.whack_crash_peer) || address_eq_any(&msg.whack_crash_peer)) {
+			msg.whack_crash = true;
+			opt_to_address(&host_family, &msg.whack_crash_peer);
+			if (address_eq_any(&msg.whack_crash_peer)) {
 				diagq("0.0.0.0 or 0::0 isn't a valid client address",
-					optarg);
+				      optarg);
 			}
 			continue;
 
@@ -1474,27 +1515,28 @@ int main(int argc, char **argv)
 
 		case END_HOST:	/* --host <ip-address> */
 		{
-			lset_t new_policy = LEMPTY;
-
-			af_used_by = long_opts[long_index].name;
-			msg.right.host_addr = address_any(aftoinfo(msg.addr_family));
+			lset_t new_policy;
 			if (streq(optarg, "%any")) {
+				new_policy = LEMPTY;
+				msg.right.host_addr = any_address(&host_family);
 			} else if (streq(optarg, "%opportunistic")) {
 				/* always use tunnel mode; mark as opportunistic */
-				new_policy |= POLICY_TUNNEL | POLICY_OPPORTUNISTIC;
+				new_policy = POLICY_TUNNEL | POLICY_OPPORTUNISTIC;
+				msg.right.host_addr = any_address(&host_family);
 			} else if (streq(optarg, "%group")) {
 				/* always use tunnel mode; mark as group */
-				new_policy |= POLICY_TUNNEL | POLICY_GROUP;
+				new_policy = POLICY_TUNNEL | POLICY_GROUP;
+				msg.right.host_addr = any_address(&host_family);
 			} else if (streq(optarg, "%opportunisticgroup")) {
 				/* always use tunnel mode; mark as opportunistic */
-				new_policy |= POLICY_TUNNEL | POLICY_OPPORTUNISTIC |
-					      POLICY_GROUP;
+				new_policy = POLICY_TUNNEL | POLICY_OPPORTUNISTIC | POLICY_GROUP;
+				msg.right.host_addr = any_address(&host_family);
 			} else if (msg.left.id != NULL && !streq(optarg, "%null")) {
-				if (ttoaddr_num(optarg, 0, msg.addr_family,
-					&msg.right.host_addr) == NULL) {
+				new_policy = LEMPTY;
+				if (opt_numeric_to_address(&host_family, &msg.right.host_addr) == NULL) {
 					/*
 					 * we have a proper numeric IP
-					 * address
+					 * address.
 					 */
 				} else {
 					/*
@@ -1504,16 +1546,15 @@ int main(int argc, char **argv)
 					 * the syntax.
 					 */
 					msg.dnshostname = optarg;
-					ttoaddr(optarg, 0, msg.addr_family,
-						&msg.right.host_addr);
+					opt_domain_to_address(&host_family, &msg.right.host_addr);
 					/*
-					 * we don't fail here.
-					 * pluto will re-check the DNS later
+					 * we don't fail here.  pluto
+					 * will re-check the DNS later
 					 */
 				}
 			} else {
-				diagq(ttoaddr(optarg, 0, msg.addr_family,
-				      &msg.right.host_addr), optarg);
+				new_policy = LEMPTY;
+				opt_to_address(&host_family, &msg.right.host_addr);
 			}
 
 			msg.policy |= new_policy;
@@ -1596,20 +1637,15 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_NEXTHOP:	/* --nexthop <ip-address> */
-			af_used_by = long_opts[long_index].name;
 			if (streq(optarg, "%direct")) {
-				msg.right.host_nexthop = address_any(aftoinfo(msg.addr_family));
+				msg.right.host_nexthop = any_address(&host_family);
 			} else {
-				diagq(ttoaddr(optarg, 0, msg.addr_family,
-					      &msg.right.host_nexthop),
-				      optarg);
+				opt_to_address(&host_family, &msg.right.host_nexthop);
 			}
 			continue;
 
 		case END_SRCIP:	/* --srcip <ip-address> */
-			af_used_by = long_opts[long_index].name;
-			diagq(ttoaddr(optarg, 0, msg.addr_family,
-				      &msg.right.host_srcip), optarg);
+			opt_to_address(&host_family, &msg.right.host_srcip);
 			continue;
 
 		case END_VTIIP:	/* --vtiip <ip-address/mask> */
@@ -2045,11 +2081,10 @@ int main(int argc, char **argv)
 			if (LHAS(cd_seen, CD_CONNIPV6 - CD_FIRST))
 				diag("--ipv4 conflicts with --ipv6");
 
-			if (af_used_by != NULL)
-				diagq("--ipv4 must precede", af_used_by);
-
-			af_used_by = long_opts[long_index].name;
-			msg.addr_family = AF_INET;
+			if (host_family.used_by != NULL)
+				diagq("--ipv4 must precede", host_family.used_by);
+			host_family.used_by = long_opts[long_index].name;
+			host_family.type = &ipv4_info;
 
 			/*
 			 * Consider defaulting tunnel_addr_family to AF_INET6.
@@ -2066,11 +2101,10 @@ int main(int argc, char **argv)
 			if (LHAS(cd_seen, CD_CONNIPV4 - CD_FIRST))
 				diag("--ipv6 conflicts with --ipv4");
 
-			if (af_used_by != NULL)
-				diagq("--ipv6 must precede", af_used_by);
-
-			af_used_by = long_opts[long_index].name;
-			msg.addr_family = AF_INET6;
+			if (host_family.used_by != NULL)
+				diagq("--ipv6 must precede", host_family.used_by);
+			host_family.used_by = long_opts[long_index].name;
+			host_family.type = &ipv6_info;
 
 			/*
 			 * Consider defaulting tunnel_addr_family to AF_INET6.
@@ -2441,11 +2475,11 @@ int main(int argc, char **argv)
 				diag("encryption required for opportunism");
 		}
 
-		check_end(&msg.left, &msg.right,
-			  aftoinfo(msg.addr_family), aftoinfo(msg.tunnel_addr_family));
+		check_end(&msg.left, &msg.right, &host_family,
+			  aftoinfo(msg.tunnel_addr_family));
 
-		check_end(&msg.right, &msg.left,
-			  aftoinfo(msg.addr_family), aftoinfo(msg.tunnel_addr_family));
+		check_end(&msg.right, &msg.left, &host_family,
+			  aftoinfo(msg.tunnel_addr_family));
 
 		if (subnet_type(&msg.left.client) !=
 		    subnet_type(&msg.right.client))
