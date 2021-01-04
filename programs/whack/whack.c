@@ -1983,19 +1983,6 @@ int main(int argc, char **argv)
 			msg.sec_label = optarg;
 			continue;
 
-		case CD_CONNIPV4:	/* --ipv4 */
-			if (LHAS(cd_seen, CD_CONNIPV6 - CD_FIRST))
-				diag("--ipv4 conflicts with --ipv6");
-
-			/*
-			 * Since this is the default, the flag is redundant.
-			 * So we don't need to set msg.addr_family
-			 * and we don't need to check af_used_by
-			 * and we don't have to consider defaulting
-			 * tunnel_addr_family.
-			 */
-			continue;
-
 		case ALGO_RSASIG: /* --rsasig */
 			auth_specified = TRUE;
 			msg.policy |= POLICY_RSASIG;
@@ -2054,6 +2041,27 @@ int main(int argc, char **argv)
 			msg.policy |= POLICY_ECDSA;
 			continue;
 
+		case CD_CONNIPV4:	/* --ipv4 */
+			if (LHAS(cd_seen, CD_CONNIPV6 - CD_FIRST))
+				diag("--ipv4 conflicts with --ipv6");
+
+			if (af_used_by != NULL)
+				diagq("--ipv4 must precede", af_used_by);
+
+			af_used_by = long_opts[long_index].name;
+			msg.addr_family = AF_INET;
+
+			/*
+			 * Consider defaulting tunnel_addr_family to AF_INET6.
+			 * Do so only if it hasn't yet been specified or used.
+			 */
+			if (LDISJOINT(cd_seen,
+				      LELEM(CD_TUNNELIPV4 - CD_FIRST) |
+				      LELEM(CD_TUNNELIPV6 - CD_FIRST)) &&
+			    tunnel_af_used_by == NULL)
+				msg.tunnel_addr_family = AF_INET;
+			continue;
+
 		case CD_CONNIPV6:	/* --ipv6 */
 			if (LHAS(cd_seen, CD_CONNIPV4 - CD_FIRST))
 				diag("--ipv6 conflicts with --ipv4");
@@ -2069,8 +2077,7 @@ int main(int argc, char **argv)
 			 * Do so only if it hasn't yet been specified or used.
 			 */
 			if (LDISJOINT(cd_seen,
-				      LELEM(CD_TUNNELIPV4 -
-					    CD_FIRST) |
+				      LELEM(CD_TUNNELIPV4 - CD_FIRST) |
 				      LELEM(CD_TUNNELIPV6 - CD_FIRST)) &&
 			    tunnel_af_used_by == NULL)
 				msg.tunnel_addr_family = AF_INET6;
@@ -2081,7 +2088,7 @@ int main(int argc, char **argv)
 				diag("--tunnelipv4 conflicts with --tunnelipv6");
 
 			if (tunnel_af_used_by != NULL)
-				diagq("--tunnelipv4 must precede", af_used_by);
+				diagq("--tunnelipv4 must precede", tunnel_af_used_by);
 
 			msg.tunnel_addr_family = AF_INET;
 			continue;
@@ -2091,7 +2098,7 @@ int main(int argc, char **argv)
 				diag("--tunnelipv6 conflicts with --tunnelipv4");
 
 			if (tunnel_af_used_by != NULL)
-				diagq("--tunnelipv6 must precede", af_used_by);
+				diagq("--tunnelipv6 must precede", tunnel_af_used_by);
 
 			msg.tunnel_addr_family = AF_INET6;
 			continue;
