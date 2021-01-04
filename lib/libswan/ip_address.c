@@ -124,107 +124,6 @@ chunk_t address_as_chunk(ip_address *address)
 	return chunk2(&address->bytes, afi->ip_size);
 }
 
-/*
- * Implement https://tools.ietf.org/html/rfc5952
- */
-
-static size_t jam_raw_ipv4_address(struct jambuf *buf, shunk_t a, char sepc)
-{
-	const char seps[2] = { sepc == 0 ? '.' : sepc, 0, };
-	const char *sep = "";
-	size_t s = 0;
-	for (size_t i = 0; i < a.len; i++) {
-		const uint8_t *bytes = a.ptr;
-		s += jam(buf, "%s%"PRIu8, sep, bytes[i]);
-		sep = seps;
-	}
-	return s;
-}
-
-static size_t jam_raw_ipv6_address(struct jambuf *buf, shunk_t a, char sepc,
-				   shunk_t skip)
-{
-	const char seps[2] = { sepc == 0 ? ':' : sepc, 0, };
-	const void *ptr = a.ptr;
-	const char *sep = "";
-	const void *last = a.ptr + a.len - 2;
-	size_t s = 0;
-	while (ptr <= last) {
-		if (ptr == skip.ptr) {
-			/* skip zero run */
-			s += jam(buf, "%s%s", seps, seps);
-			sep = "";
-			ptr += skip.len;
-		} else {
-			/*
-			 * suppress leading zeros in two-byte
-			 * big-endian hex value, need to cast away
-			 * ptr's sign
-			 */
-			const uint8_t *p = (const uint8_t*)ptr;
-			unsigned ia = (p[0] << 8) + p[1];
-			s += jam(buf, "%s%x", sep, ia);
-			sep = seps;
-			ptr += 2;
-		}
-	}
-	return s;
-}
-
-size_t jam_address_raw(struct jambuf *buf, const ip_address *address, char sepc)
-{
-	if (address == NULL) {
-		return jam(buf, "<none>");
-	}
-
-	shunk_t a = address_as_shunk(address);
-	int type = addrtypeof(address);
-	size_t s = 0;
-
-	switch (type) {
-	case AF_INET: /* N.N.N.N */
-		s += jam_raw_ipv4_address(buf, a, sepc);
-		break;
-	case AF_INET6: /* N:N:...:N */
-		s += jam_raw_ipv6_address(buf, a, sepc, null_shunk);
-		break;
-	case AF_UNSPEC:
-		s += jam(buf, "<unspecified>");
-		break;
-	default:
-		s += jam(buf, "<invalid>");
-		break;
-	}
-	return s;
-}
-
-/*
- * Find longest run of zero pairs that should be suppressed (need at
- * least two).
- */
-static shunk_t zeros_to_skip(shunk_t a)
-{
-	shunk_t zero = null_shunk;
-	const char *ptr = a.ptr;
-	const char *last = a.ptr + a.len - 2;
-	while (ptr <= last) {
-		unsigned l = 0;
-		for (l = 0; ptr + l <= last; l += 2) {
-			/* ptr is probably signed */
-			if (ptr[l+0] != 0 || ptr[l+1] != 0) {
-				break;
-			}
-		}
-		if (l > 2 && l > zero.len) {
-			zero = shunk2(ptr, l);
-			ptr += l;
-		} else {
-			ptr += 2;
-		}
-	}
-	return zero;
-}
-
 static size_t format_address_cooked(struct jambuf *buf, bool sensitive,
 				    const ip_address *address)
 {
@@ -239,25 +138,12 @@ static size_t format_address_cooked(struct jambuf *buf, bool sensitive,
 		return jam(buf, "<ip-address>");
 	}
 
-	shunk_t a = address_as_shunk(address);
-	int type = addrtypeof(address);
-	size_t s = 0;
-
-	switch (type) {
-	case AF_INET: /* N.N.N.N */
-		s += jam_raw_ipv4_address(buf, a, 0);
-		break;
-	case AF_INET6: /* N:N:...:N */
-		s += jam_raw_ipv6_address(buf, a, 0, zeros_to_skip(a));
-		break;
-	case AF_UNSPEC:
-		s += jam(buf, "<unspecified>");
-		break;
-	default:
-		s += jam(buf, "<invalid>");
-		break;
+	const struct ip_info *afi = address_type(address);
+	if (afi == NULL) {
+		return jam(buf, "<invalid>");
 	}
-	return s;
+
+	return afi->jam_address(buf, afi, &address->bytes);
 }
 
 size_t jam_address(struct jambuf *buf, const ip_address *address)
@@ -272,45 +158,37 @@ size_t jam_address_sensitive(struct jambuf *buf, const ip_address *address)
 
 size_t jam_address_reversed(struct jambuf *buf, const ip_address *address)
 {
+	const struct ip_info *afi = address_type(address);
+	if (afi == NULL) {
+		return jam(buf, "<invalid>");
+	}
+
 	shunk_t bytes = address_as_shunk(address);
-	int type = addrtypeof(address);
 	size_t s = 0;
 
-	switch (type) {
+	switch (afi->af) {
 	case AF_INET:
-	{
 		for (int i = bytes.len - 1; i >= 0; i--) {
 			const uint8_t *byte = bytes.ptr;
 			s += jam(buf, "%d.", byte[i]);
 		}
 		s += jam(buf, "IN-ADDR.ARPA.");
 		break;
-	}
 	case AF_INET6:
-	{
 		for (int i = bytes.len - 1; i >= 0; i--) {
 			const uint8_t *byte = bytes.ptr;
 			s += jam(buf, "%x.%x.", byte[i] & 0xf, byte[i] >> 4);
 		}
 		s += jam(buf, "IP6.ARPA.");
 		break;
-	}
 	case AF_UNSPEC:
 		s += jam(buf, "<unspecified>");
 		break;
 	default:
-		s += jam(buf, "<invalid>");
+		bad_case(afi->af);
 		break;
 	}
 	return s;
-}
-
-const char *str_address_raw(const ip_address *src, char sep,
-			    address_buf *dst)
-{
-	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
-	jam_address_raw(&buf, src, sep);
-	return dst->buf;
 }
 
 const char *str_address(const ip_address *src,

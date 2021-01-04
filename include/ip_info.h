@@ -55,6 +55,8 @@ struct ip_info {
 	enum ike_id_type id_ip_addr;
 	enum ike_id_type id_ip_addr_subnet;
 	enum ike_id_type id_ip_addr_range;
+
+	size_t (*jam_address)(struct jambuf *buf, const struct ip_info *info, const struct ip_bytes *bytes);
 };
 
 extern const struct ip_info ipv4_info;

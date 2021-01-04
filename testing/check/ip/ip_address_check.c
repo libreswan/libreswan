@@ -30,56 +30,52 @@ static void check_shunk_to_address(void)
 	static const struct test {
 		int family;
 		const char *in;
-		const char sep;
 		const char *cooked;
-		const char *raw;
 		bool requires_dns;
 	} tests[] = {
 
 		/* any/unspec */
-		{ 4, "0.0.0.0", 0, "0.0.0.0", NULL, false, },
-		{ 6, "::", 0, "::", "0:0:0:0:0:0:0:0", false, },
-		{ 6, "0:0:0:0:0:0:0:0", 0, "::", "0:0:0:0:0:0:0:0", false, },
+		{ 4, "0.0.0.0", "0.0.0.0", false, },
+		{ 6, "::", "::", false, },
+		{ 6, "0:0:0:0:0:0:0:0", "::", false, },
 
 		/* local */
-		{ 4, "127.0.0.1", 0, "127.0.0.1", NULL, false, },
-		{ 6, "::1", 0, "::1", "0:0:0:0:0:0:0:1", false, },
-		{ 6, "0:0:0:0:0:0:0:1", 0, "::1", "0:0:0:0:0:0:0:1", false, },
+		{ 4, "127.0.0.1", "127.0.0.1", false, },
+		{ 6, "::1", "::1", false, },
+		{ 6, "0:0:0:0:0:0:0:1", "::1", false, },
 
 		/* mask - and buffer overflow */
-		{ 4, "255.255.255.255", 0, "255.255.255.255", NULL, false, },
-		{ 6, "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 0, "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", NULL, false, },
+		{ 4, "255.255.255.255", "255.255.255.255", false, },
+		{ 6, "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", false, },
 
 		/* all bytes and '/' */
-		{ 4, "1.2.3.4", '/', "1.2.3.4", "1/2/3/4", false, },
-		{ 6, "1:2:3:4:5:6:7:8", '/', "1:2:3:4:5:6:7:8", "1/2/3/4/5/6/7/8", false, },
+		{ 4, "1.2.3.4", "1.2.3.4", false, },
+		{ 6, "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8", false, },
 
 		/* suppress leading zeros - 01 vs 1 */
-		{ 6, "0001:0012:0003:0014:0005:0016:0007:0018", 0, "1:12:3:14:5:16:7:18", NULL, false, },
+		{ 6, "0001:0012:0003:0014:0005:0016:0007:0018", "1:12:3:14:5:16:7:18", false, },
 		/* drop leading 0:0: */
-		{ 6, "0:0:3:4:5:6:7:8", 0, "::3:4:5:6:7:8", "0:0:3:4:5:6:7:8", false, },
+		{ 6, "0:0:3:4:5:6:7:8", "::3:4:5:6:7:8", false, },
 		/* drop middle 0:...:0 */
-		{ 6, "1:2:0:0:0:0:7:8", 0, "1:2::7:8", "1:2:0:0:0:0:7:8", false, },
+		{ 6, "1:2:0:0:0:0:7:8", "1:2::7:8", false, },
 		/* drop trailing :0..:0 */
-		{ 6, "1:2:3:4:5:0:0:0", 0, "1:2:3:4:5::", "1:2:3:4:5:0:0:0", false, },
+		{ 6, "1:2:3:4:5:0:0:0", "1:2:3:4:5::", false, },
 		/* drop first 0:..:0 */
-		{ 6, "1:2:0:0:5:6:0:0", 0, "1:2::5:6:0:0", "1:2:0:0:5:6:0:0", false, },
+		{ 6, "1:2:0:0:5:6:0:0", "1:2::5:6:0:0", false, },
 		/* drop logest 0:..:0 */
-		{ 6, "0:0:3:0:0:0:7:8", 0, "0:0:3::7:8", "0:0:3:0:0:0:7:8", false, },
+		{ 6, "0:0:3:0:0:0:7:8", "0:0:3::7:8", false, },
 		/* need two 0 */
-		{ 6, "0:2:0:4:0:6:0:8", 0, "0:2:0:4:0:6:0:8", NULL, false, },
+		{ 6, "0:2:0:4:0:6:0:8", "0:2:0:4:0:6:0:8", false, },
 
-		{ 4, "www.libreswan.org", 0, "188.127.201.229", .requires_dns = true, },
+		{ 4, "www.libreswan.org", "188.127.201.229", .requires_dns = true, },
 	};
 
 	err_t err;
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT_IN(stdout, " '%c' -> cooked: %s raw: %s dns: %s",
-			 t->sep == 0 ? '0' : t->sep,
+		PRINT_IN(stdout, " -> cooked: %s dns: %s",
 			 t->cooked == NULL ? "ERROR" : t->cooked,
-			 t->raw == NULL ? t->cooked == NULL ? "ERROR" : t->cooked : t->raw,
 			 bool_str(t->requires_dns));
 
 		const struct ip_info *type;
@@ -106,7 +102,7 @@ static void check_shunk_to_address(void)
 		type = IP_TYPE(t->family);
 		err = numeric_to_address(shunk1(t->in), type, &a);
 		if (err != NULL) {
-			if (!t->requires_dns && t->raw != NULL) {
+			if (!t->requires_dns) {
 				FAIL_IN(" numeric_to_address(type) unexpecedly failed: %s", err);
 			}
 		} else if (t->requires_dns) {
@@ -142,7 +138,6 @@ static void check_shunk_to_address(void)
 
 		/* now convert it back cooked */
 		CHECK_STR(address_buf, address, t->cooked, &a);
-		CHECK_STR(address_buf, address_raw, t->raw == NULL ? t->cooked : t->raw, &a, t->sep);
 
 	}
 }

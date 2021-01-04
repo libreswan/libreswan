@@ -133,11 +133,9 @@ typedef struct {
 
 size_t jam_address_sensitive(struct jambuf *buf, const ip_address *src);
 size_t jam_address_reversed(struct jambuf *buf, const ip_address *src);
-size_t jam_address_raw(struct jambuf *buf, const ip_address *src, char sepc);
 
 const char *str_address_sensitive(const ip_address *src, address_buf *dst);
 const char *str_address_reversed(const ip_address *src, address_reversed_buf *buf);
-const char *str_address_raw(const ip_address *src, char sepc, address_buf *dst);
 
 typedef address_buf ipstr_buf;
 const char *ipstr(const ip_address *src, ipstr_buf *b);

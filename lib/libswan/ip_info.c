@@ -23,6 +23,81 @@
 #include "lswlog.h"		/* for bad_case() */
 
 /*
+ * Implement https://tools.ietf.org/html/rfc5952
+ */
+
+static size_t jam_ipv4_address(struct jambuf *buf, const struct ip_info *afi, const struct ip_bytes *bytes)
+{
+	const char *sep = "";
+	size_t s = 0;
+	for (size_t i = 0; i < afi->ip_size; i++) {
+		s += jam(buf, "%s%"PRIu8, sep, bytes->byte[i]);
+		sep = ".";
+	}
+	return s;
+}
+
+/*
+ * Find longest run of zero pairs that should be suppressed (need at
+ * least two).
+ */
+static shunk_t zeros_to_skip(const struct ip_info *afi, const struct ip_bytes *bytes)
+{
+	shunk_t zero = null_shunk;
+	const uint8_t *ptr = bytes->byte;
+	/* stop at or before last pair; ensure ptr[1] safe */
+	const uint8_t *last = ptr + afi->ip_size - 2;
+	while (ptr <= last) {
+		/*
+		 * Set L to the the number of paired zero bytes
+		 * starting at PTR (could be zero).
+		 */
+		unsigned l = 0;
+		for (l = 0; ptr + l <= last; l += 2) {
+			/* need both bytes zero */
+			if (ptr[l+0] != 0 || ptr[l+1] != 0) {
+				break;
+			}
+		}
+		/*
+		 * Save longer run, but only when more than one pair.
+		 */
+		if (l > 2 && l > zero.len) {
+			zero = shunk2(ptr, l);
+			ptr += l;
+		} else {
+			ptr += 2;
+		}
+	}
+	return zero;
+}
+
+static size_t jam_ipv6_address(struct jambuf *buf, const struct ip_info *afi, const struct ip_bytes *bytes)
+{
+	size_t s = 0;
+	shunk_t zeros = zeros_to_skip(afi, bytes);
+	const char *sep = "";
+	const uint8_t *ptr = bytes->byte;
+	/* stop at or before last pair; ensure ptr[1] safe */
+	const uint8_t *last = ptr + afi->ip_size - 2;
+	while (ptr <= last) {
+		if (ptr == zeros.ptr) {
+			/* skip zero run */
+			s += jam(buf, "::");
+			sep = "";
+			ptr += zeros.len;
+		} else {
+			/* print pair of bytes in hex, supress leading zeros */
+			unsigned ia = (ptr[0] << 8) + ptr[1];
+			s += jam(buf, "%s%x", sep, ia);
+			sep = ":";
+			ptr += 2;
+		}
+	}
+	return s;
+}
+
+/*
  * Construct well known addresses.
  */
 
@@ -68,6 +143,9 @@ const struct ip_info ipv4_info = {
 	.id_ip_addr = ID_IPV4_ADDR,
 	.id_ip_addr_subnet = ID_IPV4_ADDR_SUBNET,
 	.id_ip_addr_range = ID_IPV4_ADDR_RANGE,
+
+	/* output */
+	.jam_address = jam_ipv4_address,
 };
 
 const struct ip_info ipv6_info = {
@@ -100,6 +178,9 @@ const struct ip_info ipv6_info = {
 	.id_ip_addr = ID_IPV6_ADDR,
 	.id_ip_addr_subnet = ID_IPV6_ADDR_SUBNET,
 	.id_ip_addr_range = ID_IPV6_ADDR_RANGE,
+
+	/* output */
+	.jam_address = jam_ipv6_address,
 };
 
 const struct ip_info *aftoinfo(int af)
