@@ -220,7 +220,8 @@ struct pickler pickle_unpacker = {
 static bool pickle_whack_end(struct whackpacker *wp, struct whack_end *end,
 			     struct pickler *pickle)
 {
-	return (PICKLE_STRING(&end->id) &&
+	return (PICKLE_STRING(&end->leftright) &&
+		PICKLE_STRING(&end->id) &&
 		PICKLE_STRING(&end->cert) &&
 		PICKLE_STRING(&end->rsasigkey) &&
 		PICKLE_STRING(&end->ckaid) &&

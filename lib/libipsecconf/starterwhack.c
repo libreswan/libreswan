@@ -291,6 +291,7 @@ static void set_whack_end(char *lr,
 			struct whack_end *w,
 			const struct starter_end *l)
 {
+	w->leftright = lr;
 	w->id = l->id;
 	w->host_type = l->addrtype;
 
