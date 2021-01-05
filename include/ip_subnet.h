@@ -68,12 +68,15 @@ typedef struct {
 	bool is_subnet;
 } ip_subnet;
 
-#define PRI_SUBNET "{"PRI_ADDRESS"} maskbits=%u is_subnet=%s is_selector=%s"
+#ifdef SUBNET_TYPE
+#else
+#define PRI_SUBNET "%s; maskbits=%u is_subnet=%s is_selector=%s"
 #define pri_subnet(S, B)						\
-	pri_address(&(S)->addr, B),					\
+		str_subnet(S, B),					\
 		(S)->maskbits,						\
 		bool_str((S)->is_subnet),				\
 		bool_str((S)->is_selector)
+#endif
 
 void pexpect_subnet(const ip_subnet *s, const char *t, where_t where);
 #define psubnet(S) pexpect_subnet(S, #S, HERE)

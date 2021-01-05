@@ -43,6 +43,7 @@ extern bool log_ip; /* false -> redact (aka sanitize) ip addresses */
  */
 
 typedef struct {
+	bool is_address;
 	/*
 	 * Index into the struct ip_info array; must be stream
 	 * friendly.
@@ -53,7 +54,7 @@ typedef struct {
 	 * (struct in_addr requires htonl() which is run-time only).
 	 */
 	struct ip_bytes { uint8_t byte[16]; } bytes;
-#ifndef ENDPOINT_TYPE
+/*#ifndef ENDPOINT_TYPE*/
 	/*
 	 * XXX: An address abstraction - type+bytes - should not
 	 * contain a port.  If a port is required, the abstraction
@@ -65,12 +66,11 @@ typedef struct {
 	 */
 	uint16_t hport;
 	unsigned ipproto;
-	bool is_address;
 	bool is_endpoint;
-#endif
+/*#endif*/
 } ip_address;
 
-#define PRI_ADDRESS "%s version=%d hport=%u ipproto=%u is_address=%s is_endpoint=%s"
+#define PRI_ADDRESS "%s (version=%d hport=%u ipproto=%u is_address=%s is_endpoint=%s)"
 #define pri_address(A, B)						\
 		str_address(A, B),					\
 		(A)->version,						\
@@ -82,7 +82,8 @@ typedef struct {
 void pexpect_address(const ip_address *a, const char *t, where_t where);
 #define paddress(A) pexpect_address(A, #A, HERE)
 
-ip_address strip_endpoint(const ip_address *address, where_t where);
+ /* remove bogus port from address */
+ip_address strip_address(const ip_address *address, where_t where);
 
 /*
  * Constructors.

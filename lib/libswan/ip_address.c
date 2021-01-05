@@ -23,19 +23,19 @@
 
 const ip_address unset_address; /* all zeros */
 
-ip_address strip_endpoint(const ip_address *in, where_t where)
+ip_address strip_address(const ip_address *in, where_t where UNUSED)
 {
-	ip_address out = *in;
 	if (in->hport != 0 || in->ipproto != 0 || in->is_endpoint) {
 		address_buf b;
 		dbg("stripping address %s of is_endpoint=%d hport=%u ipproto=%u "PRI_WHERE,
 		    str_address(in, &b), in->is_endpoint,
 		    in->hport, in->ipproto, pri_where(where));
-		out.hport = 0;
-		out.ipproto = 0;
-		out.is_endpoint = false;
 	}
-	out.is_address = true;
+	ip_address out = {
+		.is_address = true,
+		.version = in->version,
+		.bytes = in->bytes,
+	};
 	paddress(&out);
 	return out;
 }

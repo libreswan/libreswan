@@ -27,7 +27,8 @@ bool selector_is_unset(const ip_selector *selector)
 
 void jam_selector(struct jambuf *buf, const ip_selector *selector)
 {
-	jam_address(buf, &selector->addr); /* sensitive? */
+	ip_address sa = selector_prefix(selector);
+	jam_address(buf, &sa); /* sensitive? */
 	jam(buf, "/%u", selector->maskbits);
 	int port = selector_hport(selector);
 	if (port >= 0) {
@@ -150,7 +151,7 @@ ip_range selector_range(const ip_selector *selector)
 
 ip_address selector_prefix(const ip_selector *selector)
 {
-	return strip_endpoint(&selector->addr, HERE);
+	return endpoint_address(&selector->addr);
 }
 
 unsigned selector_maskbits(const ip_selector *selector)
@@ -176,24 +177,36 @@ bool selector_contains_no_addresses(const ip_selector *selector)
 bool selector_in_selector(const ip_selector *l, const ip_selector *r)
 {
 	/* exclude unset */
-	if (selector_is_unset(l)) {
+	if (selector_is_unset(l) || selector_is_unset(r)) {
 		return false;
 	}
-	if (selector_is_unset(r)) {
+	/* version wild card (actually version is 4/6) */
+	if (/*r->addr.version != 0 &&*/ l->addr.version != r->addr.version) {
 		return false;
 	}
-	return (/* version (4/6) wildcards!?! */
-		(r->addr.version == 0 || l->addr.version == r->addr.version) &&
-		/* protocol wildcards */
-		(r->addr.ipproto == 0 || l->addr.ipproto == r->addr.ipproto) &&
-		/* port wildcards */
-		(r->addr.hport == 0 || l->addr.hport == r->addr.hport) &&
-		/* exclude any(zero), other than for any/0 */
-		(address_eq_any(&r->addr) ? r->maskbits == 0 : r->maskbits > 0) &&
-		/* address < range */
-		addrinsubnet(&l->addr, r) &&
-		/* more maskbits => more address & smaller subnet */
-		l->maskbits >= r->maskbits);
+	/* protocol wildcards */
+	if (r->addr.ipproto != 0 && l->addr.ipproto != r->addr.ipproto) {
+		return false;
+	}
+	/* port wildcards */
+	if (r->addr.hport != 0 && l->addr.hport != r->addr.hport) {
+		return false;
+	}
+	/* exclude any(zero), other than for any/0 */
+	ip_address ra = selector_prefix(r);
+	if (address_eq_any(&ra) && r->maskbits > 0) {
+		return false;
+	}
+	/* l.address < range */
+	ip_address la = selector_prefix(l);
+	if (!addrinsubnet(&la, r)) {
+		return false;
+	}
+	/* more maskbits => more prefix & smaller subnet */
+	if (l->maskbits < r->maskbits) {
+		return false;
+	}
+	return true;
 }
 
 bool address_in_selector(const ip_address *address, const ip_selector *selector)
@@ -210,12 +223,6 @@ bool endpoint_in_selector(const ip_endpoint *endpoint, const ip_selector *select
 	return selector_in_selector(&inner, selector);
 }
 
-#if 0
-bool endpoint_in_selector(const ip_endpoint *l, const ip_selector *r)
-{
-}
-#endif
-
 bool selector_eq(const ip_selector *l, const ip_selector *r)
 {
 	return samesubnet(l, r);
@@ -223,7 +230,9 @@ bool selector_eq(const ip_selector *l, const ip_selector *r)
 
 bool selector_address_eq(const ip_selector *l, const ip_selector *r)
 {
-	return subnetishost(l) && subnetishost(r) && sameaddr(&l->addr, &r->addr);
+	ip_address la = subnet_address(l);
+	ip_address ra = subnet_address(r);
+	return subnetishost(l) && subnetishost(r) && sameaddr(&la, &ra);
 }
 
 void pexpect_selector(const ip_selector *s, const char *t, where_t where)
@@ -231,9 +240,9 @@ void pexpect_selector(const ip_selector *s, const char *t, where_t where)
 	if (s != NULL && s->addr.version != 0) { /* non-zero */
 		if (s->is_subnet == true ||
 		    s->is_selector == false) {
-			address_buf b;
-			dbg("EXPECTATION FAILED: %s is not a selector; "PRI_SUBNET" "PRI_WHERE,
-			    t, pri_subnet(s, &b), pri_where(where));
+			selector_buf b;
+			dbg("EXPECTATION FAILED: %s is not a selector; "PRI_SELECTOR" "PRI_WHERE,
+			    t, pri_selector(s, &b), pri_where(where));
 		}
 	}
 }

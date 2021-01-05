@@ -66,10 +66,13 @@ bool sameaddr(const ip_address *a, const ip_address *b)
 /*
  * samesubnet - are two subnets the same?
  */
-bool samesubnet(const ip_subnet * a, const ip_subnet *b)
+bool samesubnet(const ip_subnet *l, const ip_subnet *r)
 {
-	return sameaddr(&a->addr, &b->addr) &&	/* also does type check */
-		a->maskbits == b->maskbits;
+	ip_address la = subnet_address(l);
+	ip_address ra = subnet_address(r);
+	return (l->maskbits == r->maskbits &&
+		/* also does type check */
+		sameaddr(&la, &ra));
 }
 
 /*
@@ -86,8 +89,9 @@ bool subnetishost(const ip_subnet *a)
  */
 bool addrinsubnet(const ip_address *a, const ip_subnet *s)
 {
-	return address_type(a) == subnet_type(s) &&
-		samenbits(a, &s->addr, s->maskbits);
+	ip_address sp = subnet_prefix(s);
+	return (address_type(a) == subnet_type(s) &&
+		samenbits(a, &sp, s->maskbits));
 }
 
 /*
@@ -95,8 +99,11 @@ bool addrinsubnet(const ip_address *a, const ip_subnet *s)
  */
 bool subnetinsubnet(const ip_subnet *a, const ip_subnet *b)
 {
-	return addrinsubnet(&a->addr, b) &&
-		a->maskbits >= b->maskbits;	/* a is not bigger than b */
+	ip_address ap = subnet_prefix(a);
+	return (/* a's prefix is longer than b */
+		a->maskbits >= b->maskbits &&
+		/* a's prefix is within B; also type checks */
+		addrinsubnet(&ap, b));
 }
 
 /*

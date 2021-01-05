@@ -23,6 +23,21 @@
 
 const ip_endpoint unset_endpoint; /* all zeros */
 
+ip_endpoint strip_endpoint(const ip_address *in, where_t where UNUSED)
+{
+	if (in->hport != 0 || in->ipproto != 0 || in->is_endpoint) {
+		address_buf b;
+		dbg("stripping address %s of is_endpoint=%d hport=%u ipproto=%u "PRI_WHERE,
+		    str_address(in, &b), in->is_endpoint,
+		    in->hport, in->ipproto, pri_where(where));
+	}
+	ip_endpoint out = {
+		.version = in->version,
+		.bytes = in->bytes,
+	};
+	return out;
+}
+
 static ip_endpoint raw_endpoint(const struct ip_protocol *protocol,
 				const ip_address *address, int hport)
 {
@@ -226,8 +241,8 @@ const char *str_sensitive_endpoint(const ip_endpoint *endpoint, endpoint_buf *ds
 
 bool endpoint_eq(const ip_endpoint *l, const ip_endpoint *r)
 {
-	const struct ip_info *lt = address_type(l);
-	const struct ip_info *rt = address_type(r);
+	const struct ip_info *lt = endpoint_type(l);
+	const struct ip_info *rt = endpoint_type(r);
 	if (lt == NULL || rt == NULL) {
 		/* AF_UNSPEC/NULL are never equal; think NaN */
 		return false;
@@ -274,9 +289,9 @@ void pexpect_endpoint(const ip_endpoint *e, const char *s, where_t where)
 		    e->is_address == true ||
 		    e->hport == 0 ||
 		    e->ipproto == 0) {
-			address_buf b;
-			dbg("EXPECTATION FAILED: %s is not an endpoint; "PRI_ADDRESS" "PRI_WHERE,
-			    s, pri_address(e, &b),
+			endpoint_buf b;
+			dbg("EXPECTATION FAILED: %s is not an endpoint; "PRI_ENDPOINT" "PRI_WHERE,
+			    s, pri_endpoint(e, &b),
 			    pri_where(where));
 		}
 	}

@@ -63,6 +63,9 @@ typedef ip_subnet ip_selector;
 
 #endif
 
+#define PRI_SELECTOR "%s"
+#define pri_selector(S,B) str_selector(S, B)
+
 void pexpect_selector(const ip_selector *s, const char *t, where_t where);
 #define pselector(S) pexpect_selector(S, #S, HERE)
 

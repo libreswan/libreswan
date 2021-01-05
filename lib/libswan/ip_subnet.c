@@ -111,7 +111,7 @@ err_t text_cidr_to_subnet(shunk_t cidr, const struct ip_info *afi, ip_subnet *su
 
 ip_address subnet_prefix(const ip_subnet *src)
 {
-	return address_blit(strip_endpoint(&src->addr, HERE),
+	return address_blit(subnet_address(src),
 			    /*routing-prefix*/&keep_bits,
 			    /*host-id*/&clear_bits,
 			    src->maskbits);
@@ -119,7 +119,7 @@ ip_address subnet_prefix(const ip_subnet *src)
 
 ip_address subnet_host(const ip_subnet *src)
 {
-	return address_blit(strip_endpoint(&src->addr, HERE),
+	return address_blit(subnet_address(src),
 			    /*routing-prefix*/&clear_bits,
 			    /*host-id*/&keep_bits,
 			    src->maskbits);
@@ -127,7 +127,7 @@ ip_address subnet_host(const ip_subnet *src)
 
 ip_address subnet_address(const ip_subnet *src)
 {
-	return strip_endpoint(&src->addr, HERE);
+	return endpoint_address(&src->addr);
 }
 
 const struct ip_info *subnet_type(const ip_subnet *src)
@@ -213,7 +213,8 @@ ip_address subnet_mask(const ip_subnet *src)
 size_t jam_subnet(struct jambuf *buf, const ip_subnet *subnet)
 {
 	size_t s = 0;
-	s += jam_address(buf, &subnet->addr); /* sensitive? */
+	ip_address sa = subnet_address(subnet);
+	s += jam_address(buf, &sa); /* sensitive? */
 	s += jam(buf, "/%u", subnet->maskbits);
 	return s;
 }
@@ -230,7 +231,7 @@ void pexpect_subnet(const ip_subnet *s, const char *t, where_t where)
 	if (s != NULL && s->addr.version != 0) {
 		if (s->is_subnet == false ||
 		    s->is_selector == true) {
-			address_buf b;
+			subnet_buf b;
 			dbg("EXPECTATION FAILED: %s is not a subnet; "PRI_SUBNET" "PRI_WHERE,
 			    t, pri_subnet(s, &b),
 			    pri_where(where));

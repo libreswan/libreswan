@@ -653,11 +653,7 @@ static bool validate_end(struct starter_conn *conn_st,
 					leftright, value, er);
 		}
 		if (!end->has_client) {
-			er = endtosubnet(&end->sourceip, &end->subnet, HERE);
-			if (er != NULL) {
-				ERR_FOUND("attempt to default %ssubnet from %s failed: %s",
-					leftright, value, er);
-			}
+			end->subnet = subnet_from_address(&end->sourceip);
 			end->has_client = TRUE;
 		}
 		if (end->strings_set[KSCF_INTERFACE_IP]) {

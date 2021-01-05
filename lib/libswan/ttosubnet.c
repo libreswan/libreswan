@@ -21,6 +21,7 @@
 #include "libreswan.h"		/* for ttoulb() */
 #include "ip_info.h" 	/* ipv6_info */
 #include "lswlog.h"	/* for dbg() */
+#include "ip_protocol.h"
 
 #ifndef DEFAULTSUBNET
 #define DEFAULTSUBNET "%default"
@@ -98,13 +99,14 @@ err_t ttosubnet(shunk_t src,
 	}
 
 	/* the :PORT */
+	uintmax_t port;
 	if (colon != '\0') {
-		uintmax_t port;
 		err_t oops = shunk_to_uintmax(src, NULL, 0, &port, 0xFFFF);
 		if (oops != NULL) {
 			return oops;
 		}
-		update_endpoint_port(&addrtmp, ip_hport(port));
+	} else {
+		port = 0;
 	}
 
 	bool die = false;
@@ -160,7 +162,7 @@ err_t ttosubnet(shunk_t src,
 	 * XXX: see above, this isn't a true subnet as addrtmp can
 	 * have its port set.
 	 */
-	dst->addr = addrtmp;
+	dst->addr = endpoint3(&ip_protocol_unset, &addrtmp, ip_hport(port));
 	dst->maskbits = maskbits;
 
 	if (warning) {
