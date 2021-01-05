@@ -40,22 +40,22 @@ ip_address strip_endpoint(const ip_address *in, where_t where)
 	return out;
 }
 
-ip_address address_from_shunk(const struct ip_info *afi, const shunk_t bytes)
+ip_address address_from_raw(unsigned version, const struct ip_bytes *bytes)
 {
-	passert(afi != NULL);
-	ip_address address = {
-		.version = afi->ip_version,
+	ip_address a = {
 		.is_address = true,
+		.version = version,
+		.bytes = *bytes,
 	};
-	passert(afi->ip_size == bytes.len);
-	memcpy(&address.bytes, bytes.ptr, bytes.len);
-	paddress(&address);
-	return address;
+	paddress(&a);
+	return a;
 }
 
 ip_address address_from_in_addr(const struct in_addr *in)
 {
-	return address_from_shunk(&ipv4_info, THING_AS_SHUNK(*in));
+	struct ip_bytes bytes = { .byte = { 0, }, };
+	memcpy(bytes.byte, in, sizeof(*in));
+	return address_from_raw(ipv4_info.ip_version, &bytes);
 }
 
 uint32_t ntohl_address(const ip_address *a)
@@ -74,7 +74,9 @@ uint32_t ntohl_address(const ip_address *a)
 
 ip_address address_from_in6_addr(const struct in6_addr *in6)
 {
-	return address_from_shunk(&ipv6_info, THING_AS_SHUNK(*in6));
+	struct ip_bytes bytes = { .byte = { 0, }, };
+	memcpy(bytes.byte, in6, sizeof(*in6));
+	return address_from_raw(ipv6_info.ip_version, &bytes);
 }
 
 const struct ip_info *address_type(const ip_address *address)
@@ -243,13 +245,19 @@ bool address_is_unset(const ip_address *address)
 
 bool address_is_specified(const ip_address *address)
 {
-	const struct ip_info *type = address_type(address);
-	if (type == NULL) {
+	if (address_is_unset(address)) {
 		return false;
 	}
-	shunk_t addr = address_as_shunk(address);
-	shunk_t any = address_as_shunk(&type->any_address);
-	return !hunk_eq(addr, any);
+	const struct ip_info *afi = address_type(address);
+	if (afi == NULL) {
+		return false;
+	}
+	/* check all bytes; not just .ip_size */
+	if (thingeq(address->bytes, afi->any_address.bytes)) {
+		/* any address (but we know it is zero) */
+		return false;
+	}
+	return true;
 }
 
 bool address_eq(const ip_address *l, const ip_address *r)

@@ -92,7 +92,7 @@ ip_address address_from_in_addr(const struct in_addr *in);
 ip_address address_from_in6_addr(const struct in6_addr *sin6);
 err_t data_to_address(const void *data, size_t sizeof_data,
 		      const struct ip_info *af, ip_address *dst) MUST_USE_RESULT;
-ip_address address_from_shunk(const struct ip_info *afi, const shunk_t bytes);
+ip_address address_from_raw(unsigned version, const struct ip_bytes *bytes);
 /* either SHUNK or CHUNK */
 #define hunk_to_address(HUNK, AF, DST) data_to_address(HUNK.ptr, HUNK.len, AF, DST)
 

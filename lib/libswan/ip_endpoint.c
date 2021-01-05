@@ -59,13 +59,7 @@ ip_address endpoint_address(const ip_endpoint *endpoint)
 	if (afi == NULL) {
 		return unset_address; /* empty_address? */
 	}
-	shunk_t bytes = {
-		.ptr = &endpoint->bytes,
-		.len = afi->ip_size,
-	};
-	ip_address address = address_from_shunk(afi, bytes);
-	paddress(&address);
-	return address;
+	return address_from_raw(endpoint->version, &endpoint->bytes);
 }
 
 int endpoint_hport(const ip_endpoint *endpoint)
@@ -103,30 +97,18 @@ ip_endpoint set_endpoint_port(const ip_endpoint *endpoint, ip_port port)
 		dbg("endpoint has unspecified type");
 		return unset_endpoint;
 	}
-#ifdef ENDPOINT_TYPE
-	ip_endpoint dst = {
-		.address = endpoint->address,
-		.hport = hport(port),
-	};
-	return dst;
-#else
+
 	ip_endpoint dst = *endpoint;
 	dst.hport = hport(port);
-	return dst;
+#if 0
+	pendpoint(&dst);
 #endif
+	return dst;
 }
 
 const struct ip_info *endpoint_type(const ip_endpoint *endpoint)
 {
-	/*
-	 * Avoid endpoint*() functions as things quickly get
-	 * recursive.
-	 */
-#if defined(ENDPOINT_TYPE)
-	return address_type(&endpoint->address);
-#else
-	return address_type(endpoint);
-#endif
+	return (endpoint == NULL ? NULL : ip_version_info(endpoint->version));
 }
 
 bool endpoint_is_unset(const ip_endpoint *endpoint)
@@ -139,13 +121,23 @@ const struct ip_protocol *endpoint_protocol(const ip_endpoint *endpoint)
 	return protocol_by_ipproto(endpoint->ipproto);
 }
 
-bool endpoint_is_specified(const ip_endpoint *e)
+bool endpoint_is_specified(const ip_endpoint *endpoint)
 {
-#ifdef ENDPOINT_TYPE
-	return address_is_specified(&e->address);
-#else
-	return address_is_specified(e);
-#endif
+	if (endpoint_is_unset(endpoint)) {
+		return false;
+	}
+	const struct ip_info *afi = endpoint_type(endpoint);
+	if (afi == NULL) {
+		return false;
+	}
+	if (memeq(&endpoint->bytes, &afi->any_address.bytes, afi->ip_size)) {
+		/* any address (but we know it is zero) */
+		return false;
+	}
+	if (endpoint->hport == 0) {
+		dbg("treating endpoint with unset port as specified");
+	}
+	return true;
 }
 
 /*

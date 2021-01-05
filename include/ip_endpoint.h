@@ -47,7 +47,7 @@ typedef struct {
 	 * We need something that makes static IPv4 initializers possible
 	 * (struct in_addr requires htonl() which is run-time only).
 	 */
-	struct ip_bytes { uint8_t byte[16]; } bytes;
+	struct ip_bytes bytes;
 	/*
 	 * In pluto "0" denotes all ports (or, in the context of an
 	 * endpoint, is that none?).
