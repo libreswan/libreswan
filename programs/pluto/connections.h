@@ -171,9 +171,8 @@ struct end {
 		host_addr,
 		host_nexthop,
 		host_srcip;
-	ip_subnet
-		host_vtiip,
-		ifaceip;
+	ip_cidr host_vtiip;
+	ip_cidr ifaceip;
 
 	ip_selector client;
 

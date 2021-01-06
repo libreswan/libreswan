@@ -53,6 +53,7 @@ int main(int argc, char *argv[])
 	ip_sockaddr_check();
 	ip_port_check();
 	ip_port_range_check();
+	ip_cidr_check();
 
 	if (fails > 0) {
 		fprintf(stderr, "TOTAL FAILURES: %d\n", fails);

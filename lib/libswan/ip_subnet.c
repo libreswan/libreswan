@@ -66,49 +66,6 @@ err_t address_mask_to_subnet(const ip_address *address,
 	return NULL;
 }
 
-err_t text_cidr_to_subnet(shunk_t cidr, const struct ip_info *afi, ip_subnet *subnet)
-{
-	err_t err;
-
-	/* split CIDR into ADDRESS/MASK */
-	shunk_t mask = cidr;
-	shunk_t address = shunk_token(&mask, NULL, "/");
-	/* mask could be empty/null */
-
-	/* parse ADDRESS */
-	ip_address subnet_address;
-	err = numeric_to_address(address, afi/*possibly NULL */,
-				 &subnet_address);
-	if (err != NULL) {
-		return err;
-	}
-	/* Fix AFI, now that it is known */
-	afi = address_type(&subnet_address);
-	passert(afi != NULL);
-
-	/* parse mask; required */
-	if (mask.ptr == NULL) {
-		return "missing '/MASK'";
-	}
-	if (mask.len == 0) {
-		return "empty '/MASK'";
-	}
-	uintmax_t maskbits = afi->mask_cnt;
-	/* don't use bound - error is confusing */
-	err = shunk_to_uintmax(mask, NULL, 0, &maskbits, 0);
-	if (err != NULL) {
-		/* not a number */
-		return err;
-	}
-	if (maskbits > (uintmax_t)afi->mask_cnt) {
-		return "'/MASK' too big";
-	}
-
-	/* combine */
-	*subnet = subnet_from_address_maskbits(&subnet_address, maskbits);
-	return NULL;
-}
-
 ip_address subnet_prefix(const ip_subnet *src)
 {
 	return address_blit(subnet_address(src),

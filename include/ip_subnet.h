@@ -92,9 +92,6 @@ ip_subnet subnet_from_address_maskbits(const ip_address *address, unsigned maskb
 err_t address_mask_to_subnet(const ip_address *address, const ip_address *mask,
 			     ip_subnet *subnet);
 
-/* convert CIDR address/mask to subnet */
-err_t text_cidr_to_subnet(shunk_t cidr, const struct ip_info *afi, ip_subnet *subnet);
-
 /*
  * Format as a string.
  */

@@ -225,82 +225,6 @@ static void check_subnet_prefix(struct logger *logger)
 	}
 }
 
-static void check_cidr_to_subnet(void)
-{
-	static const struct test {
-		int family;
-		const char *in;
-		const char *prefix;
-		const char *host;
-	} tests[] = {
-		{ 4, "128.0.0.0/0", "0.0.0.0", "128.0.0.0", },
-		{ 6, "8000::/0", "::", "8000::", },
-
-		{ 4, "128.0.0.0/1", "128.0.0.0", "0.0.0.0", },
-		{ 6, "8000::/1", "8000::", "::", },
-
-		{ 4, "1.2.255.4/23", "1.2.254.0", "0.0.1.4", },
-		{ 4, "1.2.255.255/24", "1.2.255.0", "0.0.0.255", },
-		{ 4, "1.2.3.255/25", "1.2.3.128", "0.0.0.127", },
-
-		{ 6, "1:2:3:ffff::/63", "1:2:3:fffe::", "0:0:0:1::", },
-		{ 6, "1:2:3:ffff:ffff::/64", "1:2:3:ffff::", "::ffff:0:0:0", },
-		{ 6, "1:2:3:4:ffff::/65", "1:2:3:4:8000::", "::7fff:0:0:0", },
-
-		{ 4, "1.2.3.255/31", "1.2.3.254", "0.0.0.1", },
-		{ 4, "1.2.3.255/32", "1.2.3.255", "0.0.0.0", },
-		{ 6, "1:2:3:4:5:6:7:ffff/127", "1:2:3:4:5:6:7:fffe", "::1", },
-		{ 6, "1:2:3:4:5:6:7:ffff/128", "1:2:3:4:5:6:7:ffff", "::", },
-
-		{ 4, "1.2.3.4", NULL, NULL, },
-		{ 6, "1:2:3:4:5:6:7:8", NULL, NULL, },
-		{ 4, "1.2.3.255/33", NULL, NULL, },
-		{ 6, "1:2:3:4:5:6:7:ffff/129", NULL, NULL, },
-	};
-
-#define OUT(FILE, FMT, ...)						\
-	PRINT(FILE, "%s %s %s"FMT,					\
-	      t->in,							\
-	      t->prefix != NULL ? t->prefix : "N/A",			\
-	      t->host != NULL ? t->host : "N/A",			\
-	      ##__VA_ARGS__)
-
-	for (size_t ti = 0; ti < elemsof(tests); ti++) {
-		const struct test *t = &tests[ti];
-		OUT(stdout, "");
-
-		ip_subnet subnet;
-		err_t err = text_cidr_to_subnet(shunk1(t->in), IP_TYPE(t->family), &subnet);
-		if (err != NULL) {
-			if (t->prefix != NULL) {
-				FAIL(OUT, "cidr_to_subnet() unexpectedly failed: %s", err);
-			}
-			continue;
-		} else if (t->prefix == NULL) {
-			FAIL(OUT, "cidr_to_subnet() unexpectedly succeeded");
-		}
-
-		CHECK_TYPE(OUT, subnet_type(&subnet));
-
-		ip_address prefix = subnet_prefix(&subnet);
-		address_buf pb;
-		const char *p = str_address(&prefix, &pb);
-		if (!streq(p, t->prefix)) {
-			FAIL(OUT, "subnet_prefix() returned '%s', expected '%s'",
-			     p, t->prefix);
-		}
-
-		ip_address host = subnet_host(&subnet);
-		address_buf hb;
-		const char *h = str_address(&host, &hb);
-		if (!streq(h, t->host)) {
-			FAIL(OUT, "subnet_host() returned '%s', expected '%s'",
-			     h, t->host);
-		}
-#undef OUT
-	}
-}
-
 static void check_subnet_contains(struct logger *logger)
 {
 	static const struct test {
@@ -521,5 +445,4 @@ void ip_subnet_check(struct logger *logger)
 	check_subnet_contains(logger);
 	check_subnet_from_address();
 	check_address_mask_to_subnet();
-	check_cidr_to_subnet();
 }

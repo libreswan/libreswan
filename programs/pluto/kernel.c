@@ -455,15 +455,15 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	jam_address(buf, &ta);
 	jam(buf, "' ");
 
-	if (subnet_is_specified(&sr->this.host_vtiip)) {
+	if (cidr_is_specified(&sr->this.host_vtiip)) {
 		jam(buf, "VTI_IP='");
-		jam_subnet(buf, &sr->this.host_vtiip);
+		jam_cidr(buf, &sr->this.host_vtiip);
 		jam(buf, "' ");
 	}
 
-	if (!(address_is_unset(&sr->this.ifaceip.addr) || address_eq_any(&sr->this.ifaceip.addr))) {
+	if (cidr_is_specified(&sr->this.ifaceip)) {
 		jam(buf, "INTERFACE_IP='");
-		jam_subnet(buf, &sr->this.ifaceip);
+		jam_cidr(buf, &sr->this.ifaceip);
 		jam(buf, "' ");
 	}
 

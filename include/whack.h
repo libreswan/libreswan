@@ -35,6 +35,7 @@
 #include "ip_range.h"
 #include "ip_subnet.h"
 #include "ip_protoport.h"
+#include "ip_cidr.h"
 
 #ifndef DEFAULT_RUNDIR
 # define DEFAULT_RUNDIR "/run/pluto/"
@@ -94,8 +95,8 @@ struct whack_end {
 	unsigned host_ikeport;
 	ip_address host_nexthop;
 	ip_address host_srcip;
-	ip_subnet host_vtiip;
-	ip_subnet ifaceip;
+	ip_cidr host_vtiip;
+	ip_cidr ifaceip;
 
 	ip_subnet client;
 	ip_protoport protoport;

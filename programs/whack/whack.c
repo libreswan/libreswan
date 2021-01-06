@@ -1649,8 +1649,8 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_VTIIP:	/* --vtiip <ip-address/mask> */
-			diagq(text_cidr_to_subnet(shunk1(optarg), aftoinfo(msg.tunnel_addr_family),
-						  &msg.right.host_vtiip), optarg);
+			diagq(numeric_to_cidr(shunk1(optarg), aftoinfo(msg.tunnel_addr_family),
+					      &msg.right.host_vtiip), optarg);
 			continue;
 
 		/*

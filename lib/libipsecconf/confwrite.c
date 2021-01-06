@@ -336,16 +336,16 @@ static void confwrite_side(FILE *out,
 		}
 	}
 
-	if (subnet_is_specified(&end->vti_ip)) {
-		subnet_buf as;
+	if (cidr_is_specified(&end->vti_ip)) {
+		cidr_buf as;
 		fprintf(out, "\t%svti=%s\n", side,
-			str_subnet(&end->vti_ip, &as));
+			str_cidr(&end->vti_ip, &as));
 	}
 
-	if (subnet_is_specified(&end->ifaceip)) {
-		subnet_buf as;
+	if (cidr_is_specified(&end->ifaceip)) {
+		cidr_buf as;
 		fprintf(out, "\t%sinterface-ip=%s\n", side,
-			str_subnet(&end->ifaceip, &as));
+			str_cidr(&end->ifaceip, &as));
 	}
 
 	if (end->rsasigkey != NULL && end->rsasigkey[0] != '\0')

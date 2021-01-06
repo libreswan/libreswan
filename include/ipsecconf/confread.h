@@ -33,6 +33,7 @@
 #include "ip_range.h"
 #include "ip_subnet.h"
 #include "ip_protoport.h"
+#include "ip_cidr.h"
 #include "lswcdefs.h"
 
 struct logger;
@@ -64,8 +65,8 @@ struct starter_end {
 	ip_address sourceip;
 	bool has_client;
 	ip_subnet subnet;
-	ip_subnet vti_ip;
-	ip_subnet ifaceip;
+	ip_cidr vti_ip;
+	ip_cidr ifaceip;
 	char *iface;
 	char *id;
 	enum keyword_authby authby;

@@ -38,6 +38,7 @@
 #include "ip_address.h"
 #include "ip_info.h"
 #include "hunk.h"		/* for char_is_space() */
+#include "ip_cidr.h"
 
 #include "ipsecconf/confread.h"
 #include "ipsecconf/starterlog.h"
@@ -510,7 +511,7 @@ static bool validate_end(struct starter_conn *conn_st,
 
 	if (end->strings_set[KSCF_VTI_IP]) {
 		const char *value = end->strings[KSCF_VTI_IP];
-		err_t oops = text_cidr_to_subnet(shunk1(value), NULL, &end->vti_ip);
+		err_t oops = numeric_to_cidr(shunk1(value), NULL, &end->vti_ip);
 		if (oops != NULL) {
 			ERR_FOUND("bad addr %s%s=%s [%s]",
 				  leftright, "vti", value, oops);
@@ -723,7 +724,7 @@ static bool validate_end(struct starter_conn *conn_st,
 
 	if (end->strings_set[KSCF_INTERFACE_IP]) {
 		const char *value = end->strings[KSCF_INTERFACE_IP];
-		err_t oops = text_cidr_to_subnet(shunk1(value), NULL, &end->ifaceip);
+		err_t oops = numeric_to_cidr(shunk1(value), NULL, &end->ifaceip);
 		if (oops != NULL) {
 			ERR_FOUND("bad addr %s%s=%s [%s]",
 				  leftright, "interface-ip", value, oops);

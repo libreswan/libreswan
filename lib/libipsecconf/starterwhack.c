@@ -348,10 +348,10 @@ static void set_whack_end(char *lr,
 	if (address_is_specified(&l->sourceip))
 		w->host_srcip = l->sourceip;
 
-	if (subnet_is_specified(&l->vti_ip))
+	if (cidr_is_specified(&l->vti_ip))
 		w->host_vtiip = l->vti_ip;
 
-	if (subnet_is_specified(&l->ifaceip))
+	if (cidr_is_specified(&l->ifaceip))
 		w->ifaceip = l->ifaceip;
 
 	w->has_client = l->has_client;

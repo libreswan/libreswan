@@ -33,6 +33,7 @@ extern void ip_selector_check(struct logger *logger);
 extern void ip_sockaddr_check(void);
 extern void ip_port_check(void);
 extern void ip_port_range_check(void);
+extern void ip_cidr_check(void);
 
 /*
  * See: https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
