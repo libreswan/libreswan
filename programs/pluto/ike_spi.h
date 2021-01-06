@@ -21,7 +21,7 @@
 #include <stdbool.h>
 
 #include "ietf_constants.h"	/* for IKE_SA_SPI_SIZE */
-#include "ip_address.h"
+#include "ip_endpoint.h"
 
 struct state;
 
@@ -50,7 +50,7 @@ bool ike_spis_eq(const ike_spis_t *lhs, const ike_spis_t *rhs);
  */
 
 ike_spi_t ike_initiator_spi(void);
-ike_spi_t ike_responder_spi(const ip_address *addr, struct logger *logger);
+ike_spi_t ike_responder_spi(const ip_endpoint *initiator_endpoint, struct logger *logger);
 
 void refresh_ike_spi_secret(void);
 
