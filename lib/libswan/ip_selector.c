@@ -1,6 +1,7 @@
 /* ip selector, for libreswan
  *
- * Copyright (C) 2020 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2020  Andrew Cagney
+ * Copyright (C) 2000  Henry Spencer.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -250,4 +251,122 @@ void pexpect_selector(const ip_selector *s, const char *t, where_t where)
 int selector_hport(const ip_selector *s)
 {
 	return endpoint_hport(&s->addr);
+}
+
+#define DEFAULTSUBNET "%default"
+
+/*
+ * ttosubnet - convert text "addr/mask" to address and mask
+ * Mask can be integer bit count.
+ */
+err_t numeric_to_selector(shunk_t src,
+			  const struct ip_info *afi, /* could be NULL */
+			  ip_selector *dst)
+{
+	err_t oops;
+
+	/*
+	 * Match %default, can't work when AFI=NULL.
+	 *
+	 * you cannot use af==AF_UNSPEC and src=0/0,
+	 * makes no sense as will it be AF_INET
+	 */
+	if (hunk_strcaseeq(src, DEFAULTSUBNET)) {
+		if (afi == NULL) {
+			return "unknown address family with " DEFAULTSUBNET " subnet not allowed.";
+		}
+		*dst = afi->all_addresses; /* 0.0.0.0/0 or ::/0 */
+		return NULL;
+	}
+
+	/* split the input into ADDR "/" (mask)... */
+	char slash;
+	shunk_t addr = shunk_token(&src, &slash, "/");
+	if (slash == '\0') {
+		/* consumed entire input */
+		return "no / in subnet specification";
+	}
+
+	ip_address addrtmp;
+	oops = numeric_to_address(addr, afi, &addrtmp);
+	if (oops != NULL) {
+		return oops;
+	}
+
+	if (afi == NULL) {
+		afi = address_type(&addrtmp);
+	}
+	if (afi == NULL) {
+		/* XXX: pexpect()? */
+		return "unknown address family in ttosubnet";
+	}
+
+	/* split the input into MASK [ ":" (port) ... ] */
+	char colon;
+	shunk_t mask = shunk_token(&src, &colon, ":");
+	uintmax_t maskbits;
+	oops = shunk_to_uintmax(mask, NULL, 10, &maskbits, afi->mask_cnt);
+	if (oops != NULL) {
+		if (afi == &ipv4_info) {
+			ip_address masktmp;
+			oops = numeric_to_address(mask, afi, &masktmp);
+			if (oops != NULL) {
+				return oops;
+			}
+
+			int i = masktocount(&masktmp);
+			if (i < 0) {
+				return "non-contiguous or otherwise erroneous mask";
+			}
+			maskbits = i;
+		} else {
+			return "masks are not permitted for IPv6 addresses";
+		}
+	}
+
+	/* the :PORT */
+	uintmax_t port;
+	if (colon != '\0') {
+		err_t oops = shunk_to_uintmax(src, NULL, 0, &port, 0xFFFF);
+		if (oops != NULL) {
+			return oops;
+		}
+	} else {
+		port = 0;
+	}
+
+	chunk_t addr_chunk = address_as_chunk(&addrtmp);
+	unsigned n = addr_chunk.len;
+	uint8_t *p = addr_chunk.ptr; /* cast void* */
+	if (n == 0)
+		return "unknown address family";
+
+	unsigned c = maskbits / 8;
+	if (c > n)
+		return "impossible mask count";
+
+	p += c;
+	n -= c;
+
+	unsigned m = 0xff;
+	c = maskbits % 8;
+	if (n > 0 && c != 0)	/* partial byte */
+		m >>= c;
+
+	for (; n > 0; n--) {
+		if ((*p & m) != 0) {
+			return "improper subnet, host-part bits on";
+		}
+		m = 0xff;
+		p++;
+	}
+
+	/*
+	 * XXX: see above, this isn't a true subnet as addrtmp can
+	 * have its port set.
+	 */
+	dst->addr = endpoint3(&ip_protocol_unset, &addrtmp, ip_hport(port));
+	dst->maskbits = maskbits;
+
+	return NULL;
 }

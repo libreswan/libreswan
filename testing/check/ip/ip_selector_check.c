@@ -1,4 +1,4 @@
-/* test subnets, for libreswan
+/* test selectors, for libreswan
  *
  * Copyright (C) 2000  Henry Spencer.
  * Copyright (C) 2018, 2019, 2020  Andrew Cagney
@@ -99,9 +99,9 @@ static void check_selector_from(const struct from_test *tests, unsigned nr_tests
 #undef OUT
 }
 
-static err_t to_address_selector(const struct selector *s,
-				 ip_selector *selector,
-				 struct logger *logger_unused UNUSED)
+static err_t do_selector_from_address(const struct selector *s,
+				      ip_selector *selector,
+				      struct logger *logger_unused UNUSED)
 {
 	if (s->family == 0) {
 		*selector = unset_selector;
@@ -131,12 +131,12 @@ static void check_selector_from_address(struct logger *logger)
 		{ { 6, "8000::", "16/10", }, "8000::-8000::", 16, 10, { 0, 10, }, },
 	};
 	check_selector_from(tests, elemsof(tests), "address",
-			    to_address_selector, logger);
+			    do_selector_from_address, logger);
 }
 
-static err_t to_subnet_selector(const struct selector *s,
-				ip_selector *selector,
-				struct logger *logger)
+static err_t do_selector_from_subnet(const struct selector *s,
+					       ip_selector *selector,
+					       struct logger *logger)
 {
 	if (s->family == 0) {
 		*selector = unset_selector;
@@ -176,7 +176,7 @@ static void check_selector_from_subnet(struct logger *logger)
 		{ { 4, "101.102.0.0/16", "0/0", }, "101.102.0.0-101.102.255.255", 0, 0, { 0, 0, }, },
 		{ { 6, "1001:1002:1003:1004::/64", "0/0", }, "1001:1002:1003:1004::-1001:1002:1003:1004:ffff:ffff:ffff:ffff", 0, 0, { 0, 0, }, },
 		{ { 4, "101.102.103.104/32", "0/0", }, "101.102.103.104-101.102.103.104", 0, 0, { 0, 0, }, },
-		{ { 6, "1001:1002:1003:1004:1005:1006:1007:1008/128:0", "0/0", }, "1001:1002:1003:1004:1005:1006:1007:1008-1001:1002:1003:1004:1005:1006:1007:1008", 0, 0, { 0, 0, }, },
+		{ { 6, "1001:1002:1003:1004:1005:1006:1007:1008/128", "0/0", }, "1001:1002:1003:1004:1005:1006:1007:1008-1001:1002:1003:1004:1005:1006:1007:1008", 0, 0, { 0, 0, }, },
 		/* non-zero port mixed with mask; only allow when /32/128? */
 		{ { 4, "0.0.0.0/0", "16/65534", }, "0.0.0.0-255.255.255.255", 16, 65534, { 255, 254, }, },
 		{ { 6, "::0/0", "16/65534", }, "::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 16, 65534, { 255, 254, }, },
@@ -186,12 +186,12 @@ static void check_selector_from_subnet(struct logger *logger)
 		{ { 6, "1001:1002:1003:1004:1005:1006:1007:1008/128", "16/65534", }, "1001:1002:1003:1004:1005:1006:1007:1008-1001:1002:1003:1004:1005:1006:1007:1008", 16, 65534, { 255, 254, }, },
 	};
 	check_selector_from(tests, elemsof(tests), "subnet",
-			    to_subnet_selector, logger);
+			    do_selector_from_subnet, logger);
 }
 
-static err_t to_range_selector(const struct selector *s,
-			       ip_selector *selector,
-			       struct logger *logger UNUSED)
+static err_t do_range_to_selector(const struct selector *s,
+				  ip_selector *selector,
+				  struct logger *logger UNUSED)
 {
 	if (s->family == 0) {
 		*selector = unset_selector;
@@ -214,7 +214,7 @@ static err_t to_range_selector(const struct selector *s,
 	return err;
 }
 
-static void check_selector_from_range(struct logger *logger)
+static void check_range_to_selector(struct logger *logger)
 {
 	static const struct from_test tests[] = {
 		{ { 4, "128.0.0.0-128.0.0.0", "0/0", }, "128.0.0.0-128.0.0.0", 0, 0, { 0, 0, }, },
@@ -222,23 +222,22 @@ static void check_selector_from_range(struct logger *logger)
 		{ { 6, "8000::-8000::1", "16/10", }, "8000::-8000::1", 16, 10, { 0, 10, }, },
 	};
 	check_selector_from(tests, elemsof(tests), "range",
-			    to_range_selector, logger);
+			    do_range_to_selector, logger);
 }
 
-static err_t to_subnet_port_selector(const struct selector *s,
-				     ip_selector *selector,
-				     struct logger *logger)
+static err_t do_numeric_to_selector(const struct selector *s,
+				    ip_selector *selector,
+				    struct logger *logger_ UNUSED)
 {
 	if (s->family == 0) {
 		*selector = unset_selector;
 		return NULL;
 	}
 
-	/* hack */
-	return ttosubnet(shunk1(s->addresses), IP_TYPE(s->family), '6', selector, logger);
+	return numeric_to_selector(shunk1(s->addresses), IP_TYPE(s->family), selector);
 }
 
-static void check_selector_from_subnet_port(struct logger *logger)
+static void check_numeric_to_selector(struct logger *logger)
 {
 	static const struct from_test tests[] = {
 		/* zero port implied */
@@ -272,7 +271,7 @@ static void check_selector_from_subnet_port(struct logger *logger)
 	};
 
 	check_selector_from(tests, elemsof(tests), "subnet-port",
-			    to_subnet_port_selector, logger);
+			    do_numeric_to_selector, logger);
 }
 
 static void check_selector_contains(struct logger *logger)
@@ -319,7 +318,7 @@ static void check_selector_contains(struct logger *logger)
 		OUT(stdout, "");
 
 		ip_selector selector;
-		err = to_subnet_selector(&t->from, &selector, logger);
+		err = do_numeric_to_selector(&t->from, &selector, logger);
 		if (err != NULL) {
 			FAIL(OUT, "to_selector() failed: %s", err);
 		}
@@ -455,13 +454,13 @@ static void check_in_selector(struct logger *logger)
 		OUT(stdout, "");
 
 		ip_selector outer_selector;
-		err = to_subnet_selector(&t->outer, &outer_selector, logger);
+		err = do_selector_from_subnet(&t->outer, &outer_selector, logger);
 		if (err != NULL) {
 			FAIL(OUT, "outer-selector failed: %s", err);
 		}
 
 		ip_selector inner_selector;
-		err = to_subnet_selector(&t->inner, &inner_selector, logger);
+		err = do_selector_from_subnet(&t->inner, &inner_selector, logger);
 		if (err != NULL) {
 			FAIL(OUT, "inner-selector failed: %s", err);
 		}
@@ -495,8 +494,8 @@ void ip_selector_check(struct logger *logger)
 {
 	check_selector_from_address(logger);
 	check_selector_from_subnet(logger);
-	check_selector_from_subnet_port(logger);
-	check_selector_from_range(logger);
+	check_range_to_selector(logger);
 	check_selector_contains(logger);
 	check_in_selector(logger);
+	check_numeric_to_selector(logger);
 }

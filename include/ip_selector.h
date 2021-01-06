@@ -82,6 +82,8 @@ err_t range_to_selector(const ip_range *range,
 			const ip_protoport *protoport,
 			ip_selector *selector);
 
+err_t numeric_to_selector(shunk_t src, const struct ip_info *afi, ip_selector *dst);
+
 /*
  * Magic values.
  *
