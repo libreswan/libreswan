@@ -529,7 +529,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 	ipstr_buf b;
 	dbg("received NAT-OA: %s", ipstr(&ip, &b));
 
-	if (address_eq_any(&ip)) {
+	if (address_is_any(&ip)) {
 		llog(RC_LOG_SERIOUS, logger,
 			    "NAT-Traversal: received 0.0.0.0 NAT-OA...");
 	} else {

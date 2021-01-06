@@ -522,7 +522,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	    ( remote_id_was_instantiated(c) &&
 	      !(c->policy & POLICY_AGGRESSIVE) &&
 	      (address_is_unset(&c->spd.that.host_addr) ||
-	       address_eq_any(&c->spd.that.host_addr)) ) ||
+	       address_is_any(&c->spd.that.host_addr)) ) ||
 
 	    /* case 2 */
 	    ( (c->policy & POLICY_PSK) &&
@@ -533,7 +533,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		  id_is_ipaddr(&c->spd.that.id) &&
 		  /* Check if we are a road warrior instantiation, not a vnet: instantiation */
 		  (address_is_unset(&c->spd.that.host_addr) ||
-		   address_eq_any(&c->spd.that.host_addr)) ) ) )
+		   address_is_any(&c->spd.that.host_addr)) ) ) )
 		) {
 		/* roadwarrior: replace that with %ANYADDR */
 		rw_id.kind = address_type(&c->spd.that.host_addr)->id_ip_addr;

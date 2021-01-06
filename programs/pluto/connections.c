@@ -353,7 +353,7 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 		return;
 	}
 
-	if (address_eq_any(&this->host_addr)) {
+	if (address_is_any(&this->host_addr)) {
 		dbg("%s.host_addr's is %%any; skipping default_end()",
 		    this->leftright);
 		return;
@@ -370,7 +370,7 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 
 	/* propogate this HOST_ADDR to that. */
 	if (address_is_unset(&that->host_nexthop) ||
-	    address_eq_any(&that->host_nexthop)) {
+	    address_is_any(&that->host_nexthop)) {
 		that->host_nexthop = this->host_addr;
 		address_buf ab;
 		dbg("%s host_nexthop %s",
@@ -427,7 +427,7 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 	bool dohost_name;
 	bool dohost_port;
 	if (address_is_unset(&this->host_addr) ||
-	    address_eq_any(&this->host_addr)) {
+	    address_is_any(&this->host_addr)) {
 		dohost_port = false;
 		if (this->host_type == KH_IPHOSTNAME) {
 			dohost_name = true;
@@ -1085,13 +1085,13 @@ static bool check_connection_end(const struct whack_end *this,
 
 	/* MAKE this more sane in the face of unresolved IP addresses */
 	if (that->host_type != KH_IPHOSTNAME &&
-	    (address_is_unset(&that->host_addr) || address_eq_any(&that->host_addr))) {
+	    (address_is_unset(&that->host_addr) || address_is_any(&that->host_addr))) {
 		/*
 		 * Other side is wildcard: we must check if other conditions
 		 * met.
 		 */
 		if (this->host_type != KH_IPHOSTNAME &&
-		    (address_is_unset(&this->host_addr) || address_eq_any(&this->host_addr))) {
+		    (address_is_unset(&this->host_addr) || address_is_any(&this->host_addr))) {
 			llog(RC_ORIENT, logger,
 				    "connection %s must specify host IP address for our side",
 				    wm->name);
@@ -1919,7 +1919,7 @@ static bool extract_connection(const struct whack_message *wm,
 	 * or any wildcard ID to _that_ end
 	 */
 	if (address_is_unset(&c->spd.this.host_addr) ||
-	    address_eq_any(&c->spd.this.host_addr) ||
+	    address_is_any(&c->spd.this.host_addr) ||
 	    c->spd.this.has_port_wildcard ||
 	    c->spd.this.has_id_wildcards) {
 		struct end t = c->spd.this;
@@ -1973,7 +1973,7 @@ static bool extract_connection(const struct whack_message *wm,
 	if (c->policy & POLICY_GROUP) {
 		c->kind = CK_GROUP;
 		add_group(c);
-	} else if (((address_is_unset(&c->spd.that.host_addr) || address_eq_any(&c->spd.that.host_addr)) &&
+	} else if (((address_is_unset(&c->spd.that.host_addr) || address_is_any(&c->spd.that.host_addr)) &&
 		    !NEVER_NEGOTIATE(c->policy)) ||
 		c->spd.that.has_port_wildcard ||
 		((c->policy & POLICY_SHUNT_MASK) == POLICY_SHUNT_TRAP &&
@@ -2012,7 +2012,7 @@ static bool extract_connection(const struct whack_message *wm,
 		 * This now happens with wildcards on
 		 * non-instantiations, such as rightsubnet=vnet:%priv
 		 * or rightprotoport=17/%any
-		 * passert(address_is_unset(&c->spd.that.host_addr) || address_eq_any(&c->spd.that.host_addr));
+		 * passert(address_is_unset(&c->spd.that.host_addr) || address_is_any(&c->spd.that.host_addr));
 		 */
 		passert(c->spd.that.virt == NULL);
 		c->spd.that.virt = create_virtual(wm->left.virt != NULL ?
@@ -2139,7 +2139,7 @@ struct connection *add_group_instance(struct connection *group, const ip_subnet 
 	}
 	t->policy &= ~(POLICY_GROUP | POLICY_GROUTED);
 	t->policy |= POLICY_GROUPINSTANCE; /* mark as group instance for later */
-	t->kind = (address_is_unset(&t->spd.that.host_addr) || address_eq_any(&t->spd.that.host_addr)) &&
+	t->kind = (address_is_unset(&t->spd.that.host_addr) || address_is_any(&t->spd.that.host_addr)) &&
 		!NEVER_NEGOTIATE(t->policy) ?
 		CK_TEMPLATE : CK_INSTANCE;
 

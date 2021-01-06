@@ -149,7 +149,7 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 		return err;
 	}
 
-	if (address_eq_any(&start_address)) {
+	if (address_is_any(&start_address)) {
 		/* XXX: being more specific would mean diag_t */
 		return "0.0.0.0 or :: not allowed in range";
 	}

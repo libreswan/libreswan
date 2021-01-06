@@ -199,7 +199,7 @@ bool selector_in_selector(const ip_selector *l, const ip_selector *r)
 	}
 	/* exclude any(zero), other than for any/0 */
 	ip_address ra = selector_prefix(r);
-	if (address_eq_any(&ra) && r->maskbits > 0) {
+	if (address_is_any(&ra) && r->maskbits > 0) {
 		return false;
 	}
 	/* l.address < range */

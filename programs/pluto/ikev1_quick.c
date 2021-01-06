@@ -412,7 +412,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			return false;
 		}
 		/* i.e., "zero" */
-		if (address_eq_any(&temp_address)) {
+		if (address_is_any(&temp_address)) {
 			ipstr_buf b;
 			llog(RC_LOG_SERIOUS, logger,
 				    "%s ID payload %s is invalid (%s) in Quick I1",
@@ -1007,7 +1007,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 					  "IDci was FQDN: %s, using NAT_OA=%s %d as IDci",
 					  idfqdn, str_subnet(&b.peers.net, &buf),
 					  (address_is_unset(&hv.st_nat_oa) ||
-					   address_eq_any(&hv.st_nat_oa)/*XXX: always 0?*/));
+					   address_is_any(&hv.st_nat_oa)/*XXX: always 0?*/));
 			}
 		}
 	} else {

@@ -118,7 +118,7 @@ bool subnet_contains_all_addresses(const ip_subnet *s)
 		return false;
 	}
 	ip_address network = subnet_prefix(s);
-	return address_eq_any(&network);
+	return address_is_any(&network);
 }
 
 bool subnet_contains_no_addresses(const ip_subnet *s)
@@ -134,7 +134,7 @@ bool subnet_contains_no_addresses(const ip_subnet *s)
 		return false; /* weird one */
 	}
 	ip_address network = subnet_prefix(s);
-	return address_eq_any(&network);
+	return address_is_any(&network);
 }
 
 bool subnet_contains_one_address(const ip_subnet *s)
@@ -153,7 +153,7 @@ bool subnet_contains_one_address(const ip_subnet *s)
 	/* ignore port */
 	ip_address network = subnet_prefix(s);
 	/* address_is_set(&network) implied as afi non-NULL */
-	return !address_eq_any(&network); /* i.e., non-zero */
+	return !address_is_any(&network); /* i.e., non-zero */
 }
 
 /*

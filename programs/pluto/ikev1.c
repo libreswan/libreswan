@@ -998,7 +998,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				ip_address new_peer = address_from_in_addr(&in);
 
 				/* is all zeros? */
-				if (address_eq_any(&new_peer)) {
+				if (address_is_any(&new_peer)) {
 					ipstr_buf b;
 
 					log_state(RC_LOG_SERIOUS, st,

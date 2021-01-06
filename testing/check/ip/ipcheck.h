@@ -114,12 +114,12 @@ extern bool use_dns;
 			FAIL(PRINT, " address_is_specified() returned %s; expected %s", \
 			     bool_str(specified), bool_str(t->specified)); \
 		}							\
-		bool any = address_eq_any(ADDRESS);			\
+		bool any = address_is_any(ADDRESS);			\
 		if (any != t->any) {					\
-			FAIL(PRINT, " address_eq_any() returned %s; expected %s", \
+			FAIL(PRINT, " address_is_any() returned %s; expected %s", \
 			     bool_str(any), bool_str(t->any));		\
 		}							\
-		bool loopback = address_eq_loopback(ADDRESS);		\
+		bool loopback = address_is_loopback(ADDRESS);		\
 		if (loopback != t->loopback) {				\
 			FAIL(PRINT, " address_eq_loopback() returned %s; expected %s", \
 			     bool_str(loopback), bool_str(t->loopback)); \

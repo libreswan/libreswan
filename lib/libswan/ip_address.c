@@ -276,7 +276,7 @@ bool address_eq(const ip_address *l, const ip_address *r)
 	return hunk_eq(ls, rs);
 }
 
-bool address_eq_loopback(const ip_address *address)
+bool address_is_loopback(const ip_address *address)
 {
 	const struct ip_info *type = address_type(address);
 	if (type == NULL) {
@@ -285,7 +285,7 @@ bool address_eq_loopback(const ip_address *address)
 	return address_eq(address, &type->loopback_address);
 }
 
-bool address_eq_any(const ip_address *address)
+bool address_is_any(const ip_address *address)
 {
 	const struct ip_info *type = address_type(address);
 	if (type == NULL) {
