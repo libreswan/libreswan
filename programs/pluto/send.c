@@ -69,7 +69,7 @@
 static bool send_chunks(const char *where, bool just_a_keepalive,
 			so_serial_t serialno, /* can be SOS_NOBODY */
 			const struct iface_port *interface,
-			ip_address remote_endpoint,
+			ip_endpoint remote_endpoint,
 			chunk_t a, chunk_t b,
 			struct logger *logger)
 {
@@ -104,7 +104,7 @@ static bool send_chunks(const char *where, bool just_a_keepalive,
 	 * hsetportof(port,addr) where addr is invalid also get an
 	 * expecation failed message.
 	 */
-	if (address_is_unset(&remote_endpoint) || address_eq_any(&remote_endpoint)) {
+	if (!endpoint_is_specified(&remote_endpoint)) {
 		/* not asserting, who knows what nonsense a user can generate */
 		endpoint_buf b;
 		llog(RC_LOG, logger,
