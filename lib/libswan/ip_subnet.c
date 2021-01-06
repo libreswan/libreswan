@@ -74,14 +74,6 @@ ip_address subnet_prefix(const ip_subnet *src)
 			    src->maskbits);
 }
 
-ip_address subnet_host(const ip_subnet *src)
-{
-	return address_blit(subnet_address(src),
-			    /*routing-prefix*/&clear_bits,
-			    /*host-id*/&keep_bits,
-			    src->maskbits);
-}
-
 ip_address subnet_address(const ip_subnet *src)
 {
 	return endpoint_address(&src->addr);

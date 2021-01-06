@@ -135,8 +135,6 @@ bool address_in_subnet(const ip_address *address, const ip_subnet *subnet);
 extern ip_address subnet_mask(const ip_subnet *subnet);
 /* Given ROUTING_PREFIX|HOST_ID return ROUTING_PREFIX|0 */
 ip_address subnet_prefix(const ip_subnet *subnet);
-/* Given ROUTING_PREFIX|HOST_ID return 0|HOST_ID */
-ip_address subnet_host(const ip_subnet *subnet);
 /* Given ROUTING_PREFIX|HOST_ID return ROUTING_PREFIX|HOST_ID */
 ip_address subnet_address(const ip_subnet *subnet);
 
