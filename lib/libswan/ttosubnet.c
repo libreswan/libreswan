@@ -53,14 +53,16 @@ err_t ttosubnet(shunk_t src,
 		return NULL;
 	}
 
-	/* split the input into ADDR "/" (mask)... */
+	/* split the input into ADDR "/" MASK */
 	char slash;
 	shunk_t addr = shunk_token(&src, &slash, "/");
+	shunk_t mask = src;
 	if (slash == '\0') {
 		/* consumed entire input */
 		return "no / in subnet specification";
 	}
 
+	/* parse ADDR */
 	ip_address addrtmp;
 	oops = numeric_to_address(addr, afi, &addrtmp);
 	if (oops != NULL) {
@@ -75,9 +77,7 @@ err_t ttosubnet(shunk_t src,
 		return "unknown address family in ttosubnet";
 	}
 
-	/* split the input into MASK [ ":" (port) ... ] */
-	char colon;
-	shunk_t mask = shunk_token(&src, &colon, ":");
+	/* parse MASK */
 	uintmax_t maskbits;
 	oops = shunk_to_uintmax(mask, NULL, 10, &maskbits, afi->mask_cnt);
 	if (oops != NULL) {
@@ -96,17 +96,6 @@ err_t ttosubnet(shunk_t src,
 		} else {
 			return "masks are not permitted for IPv6 addresses";
 		}
-	}
-
-	/* the :PORT */
-	uintmax_t port;
-	if (colon != '\0') {
-		err_t oops = shunk_to_uintmax(src, NULL, 0, &port, 0xFFFF);
-		if (oops != NULL) {
-			return oops;
-		}
-	} else {
-		port = 0;
 	}
 
 	bool die = false;
@@ -158,11 +147,7 @@ err_t ttosubnet(shunk_t src,
 		p++;
 	}
 
-	/*
-	 * XXX: see above, this isn't a true subnet as addrtmp can
-	 * have its port set.
-	 */
-	dst->addr = endpoint3(&ip_protocol_unset, &addrtmp, ip_hport(port));
+	dst->addr = endpoint3(&ip_protocol_unset, &addrtmp, ip_hport(0));
 	dst->maskbits = maskbits;
 
 	if (warning) {
