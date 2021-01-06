@@ -281,6 +281,12 @@ bool endpoint_eq(const ip_endpoint *l, const ip_endpoint *r)
 	return true;
 }
 
+bool endpoint_address_eq(const ip_endpoint *endpoint, const ip_address *address)
+{
+	ip_address ea = endpoint_address(endpoint);
+	return address_eq(&ea, address);
+}
+
 void pexpect_endpoint(const ip_endpoint *e, const char *s, where_t where)
 {
 	if (e != NULL && e->version != 0) {
