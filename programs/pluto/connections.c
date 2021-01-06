@@ -757,11 +757,13 @@ static int extract_end(struct end *dst,
 	if (src->id == NULL) {
 		dst->id.kind = ID_NONE;
 	} else {
-		err_t ugh = atoid(src->id, &dst->id);
-		if (ugh != NULL) {
-			llog(RC_BADID, logger,
-				    "bad %s --id: %s (ignored)", leftright, ugh);
-		}
+		/*
+		 * Cannot report errors due to low level nesting of functions,
+		 * since it will try literal IP string conversions first. But
+		 * atoid() will log real failures like illegal DNS chars already,
+		 * and for @string ID's all chars are valid without processing.
+		 */
+		atoid(src->id, &dst->id);
 	}
 
 	/* decode CA distinguished name, if any */

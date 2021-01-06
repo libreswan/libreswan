@@ -88,11 +88,12 @@ ttoaddr_base(const char *src,
 		if (oops == NULL)
 			return NULL;	/* it worked */
 
+	*allnumericfailed = 1;
+
 		if (*oops != '?')
 			return oops;	/* probably meant as d-d */
 	}
 
-	*allnumericfailed = 1;
 	return "not numeric";
 }
 
