@@ -366,8 +366,8 @@ struct state {
 
 	bool st_mobike_del_src_ip;		/* for mobike migrate unroute */
 	/* IKEv2 MOBIKE probe copies */
-	ip_address st_mobike_remote_endpoint;
 	ip_address st_deleted_local_addr;	/* kernel deleted address */
+	ip_endpoint st_mobike_remote_endpoint;
 	ip_endpoint st_mobike_local_endpoint;	/* new address to initiate MOBIKE */
 	ip_address st_mobike_host_nexthop;	/* for updown script */
 

@@ -121,7 +121,7 @@ struct kernel_end {
 	 * optional or unchanging? perhaps the port is assumed to be
 	 * embedded in the address (making it an endpoint)
 	 */
-	const ip_address *new_address;
+	ip_address new_address;
 };
 
 struct kernel_sa {
