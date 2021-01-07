@@ -47,8 +47,7 @@ err_t cidr_specified(const ip_cidr *cidr)
 	    cidr->prefix_bits == 0) {
 		return "default route (no specific route)";
 	}
-	if (thingeq(cidr->bytes, afi->any_address.bytes) &&
-	    cidr->prefix_bits == afi->mask_cnt) {
+	if (thingeq(cidr->bytes, afi->any_address.bytes)) {
 		return "unspecified address";
 	}
 	return NULL;

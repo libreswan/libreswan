@@ -99,7 +99,10 @@ static void check_cidr_is()
 
 		/* unspecified address */
 		{ 4, "0.0.0.0/32", false, },
+		{ 4, "0.0.0.0/24", false, },
+		{ 4, "0.0.0.0/16", false, },
 		{ 6, "::/128", false, },
+		{ 6, "::/64", false, },
 
 		/* something valid */
 		{ 4, "127.0.0.1/32", true, },
