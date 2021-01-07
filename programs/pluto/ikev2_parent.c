@@ -5149,38 +5149,47 @@ static stf_status ikev2_start_new_exchange(struct ike_sa *ike,
 
 }
 
-static void delete_or_replace_state(struct state *st) {
-	struct connection *c = st->st_connection;
+static void delete_or_replace_child(struct ike_sa *ike, struct child_sa *child)
+{
+	/* the CHILD's connection; not IKE's */
+	struct connection *c = child->sa.st_connection;
 
-	if (st->st_event == NULL) {
-		/* ??? should this be an assert/expect? */
-		log_state(RC_LOG_SERIOUS, st,
-			  "received Delete SA payload: delete IPsec State #%lu. st_event == NULL",
-			  st->st_serialno);
-		delete_state(st);
-	} else if (st->st_event->ev_type == EVENT_SA_EXPIRE) {
-		/* this state  was going to EXPIRE: hurry it along */
-		/* ??? why is this treated specially.  Can we not delete_state()? */
-		log_state(RC_LOG_SERIOUS, st,
-			  "received Delete SA payload: expire IPsec State #%lu now",
-			  st->st_serialno);
-		event_force(EVENT_SA_EXPIRE, st);
-	} else if (c->newest_ipsec_sa == st->st_serialno &&
-			(c->policy & POLICY_UP)) {
+	if (child->sa.st_event == NULL) {
 		/*
-		 * Last IPsec SA for a permanent  connection that we have initiated.
-		 * Replace it now.  Useful if the other peer is rebooting.
+		 * ??? should this be an assert/expect?
 		 */
-		log_state(RC_LOG_SERIOUS, st,
-			  "received Delete SA payload: replace IPsec State #%lu now",
-			  st->st_serialno);
-		st->st_replace_margin = deltatime(0);
-		event_force(EVENT_SA_REPLACE, st);
+		log_state(RC_LOG_SERIOUS, &ike->sa,
+			  "received Delete SA payload: delete CHILD SA #%lu. st_event == NULL",
+			  child->sa.st_serialno);
+		delete_state(&child->sa);
+	} else if (child->sa.st_event->ev_type == EVENT_SA_EXPIRE) {
+		/*
+		 * this state  was going to EXPIRE: hurry it along
+		 *
+		 * ??? why is this treated specially.  Can we not
+		 * delete_state()?
+		 */
+		log_state(RC_LOG_SERIOUS, &ike->sa,
+			  "received Delete SA payload: expire CHILD SA #%lu now",
+			  child->sa.st_serialno);
+		event_force(EVENT_SA_EXPIRE, &child->sa);
+	} else if (c->newest_ipsec_sa == child->sa.st_serialno &&
+		   (c->policy & POLICY_UP)) {
+		/*
+		 * CHILD SA for a permanent connection that we have
+		 * initiated.  Replace it now.  Useful if the other
+		 * peer is rebooting.
+		 */
+		log_state(RC_LOG_SERIOUS, &ike->sa,
+			  "received Delete SA payload: replace CHILD SA #%lu now",
+			  child->sa.st_serialno);
+		child->sa.st_replace_margin = deltatime(0);
+		event_force(EVENT_SA_REPLACE, &child->sa);
 	} else {
-		log_state(RC_LOG_SERIOUS, st,
-			  "received Delete SA payload: delete IPsec State #%lu now",
-			  st->st_serialno);
-		delete_state(st);
+		log_state(RC_LOG_SERIOUS, &ike->sa,
+			  "received Delete SA payload: delete CHILD SA #%lu now",
+			  child->sa.st_serialno);
+		delete_state(&child->sa);
 	}
 }
 
@@ -5733,7 +5742,7 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 									  ntohl(spi));
 							}
 						}
-						delete_or_replace_state(&dst->sa);
+						delete_or_replace_child(ike, dst);
 						/* note: md->st != dst */
 					}
 				} /* for each spi */
