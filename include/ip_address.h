@@ -93,7 +93,6 @@ ip_address address_from_in_addr(const struct in_addr *in);
 ip_address address_from_in6_addr(const struct in6_addr *sin6);
 err_t data_to_address(const void *data, size_t sizeof_data,
 		      const struct ip_info *af, ip_address *dst) MUST_USE_RESULT;
-ip_address address_from_raw(unsigned version, const struct ip_bytes *bytes);
 /* either SHUNK or CHUNK */
 #define hunk_to_address(HUNK, AF, DST) data_to_address(HUNK.ptr, HUNK.len, AF, DST)
 
@@ -189,10 +188,15 @@ extern const struct ip_blit set_bits;
 extern const struct ip_blit clear_bits;
 extern const struct ip_blit keep_bits;
 
-ip_address address_blit(const ip_address in,
-			const struct ip_blit *routing_prefix,
-			const struct ip_blit *host_id,
-			unsigned nr_mask_bits);
+ip_address address_from_blit(const struct ip_info *afi,
+			     struct ip_bytes bytes,
+			     const struct ip_blit *routing_prefix,
+			     const struct ip_blit *host_id,
+			     unsigned nr_prefix_bits);
+
+/* address_from_blit(AFI, BYTES, clear_bits, keep_bits, 0); */
+ip_address address_from_raw(const struct ip_info *afi,
+			    const struct ip_bytes *bytes);
 
 /*
  * Old style.

@@ -40,11 +40,11 @@ ip_address strip_address(const ip_address *in, where_t where UNUSED)
 	return out;
 }
 
-ip_address address_from_raw(unsigned version, const struct ip_bytes *bytes)
+ip_address address_from_raw(const struct ip_info *afi, const struct ip_bytes *bytes)
 {
 	ip_address a = {
 		.is_address = true,
-		.version = version,
+		.version = afi->ip_version,
 		.bytes = *bytes,
 	};
 	paddress(&a);
@@ -55,7 +55,7 @@ ip_address address_from_in_addr(const struct in_addr *in)
 {
 	struct ip_bytes bytes = { .byte = { 0, }, };
 	memcpy(bytes.byte, in, sizeof(*in));
-	return address_from_raw(ipv4_info.ip_version, &bytes);
+	return address_from_raw(&ipv4_info, &bytes);
 }
 
 uint32_t ntohl_address(const ip_address *a)
@@ -76,7 +76,7 @@ ip_address address_from_in6_addr(const struct in6_addr *in6)
 {
 	struct ip_bytes bytes = { .byte = { 0, }, };
 	memcpy(bytes.byte, in6, sizeof(*in6));
-	return address_from_raw(ipv6_info.ip_version, &bytes);
+	return address_from_raw(&ipv6_info, &bytes);
 }
 
 const struct ip_info *address_type(const ip_address *address)
@@ -308,19 +308,17 @@ const struct ip_blit clear_bits = { .and = 0x00, .or = 0x00, };
 const struct ip_blit set_bits = { .and = 0x00/*don't care*/, .or = 0xff, };
 const struct ip_blit keep_bits = { .and = 0xff, .or = 0x00, };
 
-ip_address address_blit(ip_address address,
-			const struct ip_blit *routing_prefix,
-			const struct ip_blit *host_id,
-			unsigned nr_mask_bits)
+ip_address address_from_blit(const struct ip_info *afi,
+			     struct ip_bytes bytes,
+			     const struct ip_blit *routing_prefix,
+			     const struct ip_blit *host_identifier,
+			     unsigned nr_prefix_bits)
 {
-	/* strip port; copy type */
-	chunk_t raw = address_as_chunk(&address);
-
-	if (!pexpect(nr_mask_bits <= raw.len * 8)) {
+	if (!pexpect(nr_prefix_bits <= afi->mask_cnt)) {
 		return unset_address;	/* "can't happen" */
 	}
 
-	uint8_t *p = raw.ptr; /* cast void* */
+	uint8_t *p = bytes.byte;
 
 	/*
 	 * Split the byte array into:
@@ -332,8 +330,8 @@ ip_address address_blit(ip_address address,
 	 * contains the first HOST_ID bit at big (aka PPC) endian
 	 * position XBIT.
 	 */
-	size_t xbyte = nr_mask_bits / BITS_PER_BYTE;
-	unsigned xbit = nr_mask_bits % BITS_PER_BYTE;
+	size_t xbyte = nr_prefix_bits / BITS_PER_BYTE;
+	unsigned xbit = nr_prefix_bits % BITS_PER_BYTE;
 
 	/* leading bytes only contain the ROUTING_PREFIX */
 	for (unsigned b = 0; b < xbyte; b++) {
@@ -352,20 +350,20 @@ ip_address address_blit(ip_address address,
 	 * tricky logic:
 	 * - if xbyte == raw.len we must not access p[xbyte]
 	 */
-	if (xbyte < raw.len) {
+	if (xbyte < afi->ip_size) {
 		uint8_t hmask = 0xFF >> xbit; /* clear MSBs */
 		uint8_t pmask = ~hmask; /* set MSBs */
-		p[xbyte] &= (routing_prefix->and & pmask) | (host_id->and & hmask);
-		p[xbyte] |= (routing_prefix->or & pmask) | (host_id->or & hmask);
+		p[xbyte] &= (routing_prefix->and & pmask) | (host_identifier->and & hmask);
+		p[xbyte] |= (routing_prefix->or & pmask) | (host_identifier->or & hmask);
 	}
 
 	/* trailing bytes only contain the HOST_ID */
-	for (unsigned b = xbyte + 1; b < raw.len; b++) {
-		p[b] &= host_id->and;
-		p[b] |= host_id->or;
+	for (unsigned b = xbyte + 1; b < afi->ip_size; b++) {
+		p[b] &= host_identifier->and;
+		p[b] |= host_identifier->or;
 	}
 
-	return address;
+	return address_from_raw(afi, &bytes);
 }
 
 void pexpect_address(const ip_address *a, const char *s, where_t where)

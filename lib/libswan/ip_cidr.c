@@ -26,7 +26,11 @@ const struct ip_info *cidr_type(const ip_cidr *cidr)
 
 ip_address cidr_address(const ip_cidr *cidr)
 {
-	return address_from_raw(cidr->version, &cidr->bytes);
+	const struct ip_info *afi = cidr_type(cidr);
+	if (afi == NULL) {
+		return unset_address;
+	}
+	return address_from_raw(afi, &cidr->bytes);
 }
 
 bool cidr_is_specified(const ip_cidr *cidr)

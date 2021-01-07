@@ -181,8 +181,14 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 		}
 		/* XXX: should this reject bad addresses */
 		*dst = (ip_range) {
-			.start = address_blit(start_address, &keep_bits, &clear_bits, maskbits),
-			.end = address_blit(start_address, &keep_bits, &set_bits, maskbits),
+			.start = address_from_blit(afi, start_address.bytes,
+						   /*routing-prefix*/&keep_bits,
+						   /*host-identifier*/&clear_bits,
+						   maskbits),
+			.end = address_from_blit(afi, start_address.bytes,
+						 /*routing-prefix*/&keep_bits,
+						 /*host-identifier*/&set_bits,
+						 maskbits),
 		};
 		dst->is_subnet = (afi == &ipv6_info);
 		return NULL;
@@ -231,14 +237,19 @@ const char *str_range(const ip_range *range, range_buf *out)
 
 ip_range range_from_subnet(const ip_subnet *subnet)
 {
+	const struct ip_info *afi = subnet_type(subnet);
+	if (afi == NULL) {
+		return unset_range;
+	}
 	ip_range r = {
-		/* SHHHHH */
-		.start = address_blit(endpoint_address(&subnet->addr),
-				      &keep_bits, &clear_bits,
-				      subnet->maskbits),
-		.end = address_blit(endpoint_address(&subnet->addr),
-				    &keep_bits, &set_bits,
-				    subnet->maskbits),
+		.start = address_from_blit(afi, subnet->addr.bytes,
+					   /*routing-prefix*/&keep_bits,
+					   /*host-identifier*/&clear_bits,
+					   subnet->maskbits),
+		.end = address_from_blit(afi, subnet->addr.bytes,
+					 /*routing-prefix*/&keep_bits,
+					 /*host-identifier*/&set_bits,
+					 subnet->maskbits),
 	};
 	return r;
 }

@@ -61,22 +61,33 @@ err_t address_mask_to_subnet(const ip_address *address,
 	if (maskbits < 0) {
 		return "invalid mask";
 	}
-	ip_address prefix = address_blit(*address, &keep_bits, &clear_bits, maskbits);
+	ip_address prefix = address_from_blit(afi, address->bytes,
+					      /*routing-prefix*/&keep_bits,
+					      /*host-identifier*/&clear_bits,
+					      maskbits);
 	*subnet = subnet_from_address_maskbits(&prefix, maskbits);
 	return NULL;
 }
 
-ip_address subnet_prefix(const ip_subnet *src)
+ip_address subnet_prefix(const ip_subnet *subnet)
 {
-	return address_blit(subnet_address(src),
-			    /*routing-prefix*/&keep_bits,
-			    /*host-id*/&clear_bits,
-			    src->maskbits);
+	const struct ip_info *afi = subnet_type(subnet);
+	if (afi == NULL) {
+		return unset_address;
+	}
+	return address_from_blit(afi, subnet->addr.bytes,
+				 /*routing-prefix*/&keep_bits,
+				 /*host-identifier*/&clear_bits,
+				 subnet->maskbits);
 }
 
-ip_address subnet_address(const ip_subnet *src)
+ip_address subnet_address(const ip_subnet *subnet)
 {
-	return endpoint_address(&src->addr);
+	const struct ip_info *afi = subnet_type(subnet);
+	if (afi == NULL) {
+		return unset_address;
+	}
+	return address_from_raw(afi, &subnet->addr.bytes);
 }
 
 const struct ip_info *subnet_type(const ip_subnet *src)
@@ -151,12 +162,16 @@ bool subnet_contains_one_address(const ip_subnet *s)
  * For instance 1.2.3.4/24 -> 255.255.255.0.
  */
 
-ip_address subnet_mask(const ip_subnet *src)
+ip_address subnet_mask(const ip_subnet *subnet)
 {
-	return address_blit(endpoint_address(&src->addr),
-			    /*network-prefix*/ &set_bits,
-			    /*host-id*/ &clear_bits,
-			    src->maskbits);
+	const struct ip_info *afi = subnet_type(subnet);
+	if (afi == NULL) {
+		return unset_address;
+	}
+	return address_from_blit(afi, subnet->addr.bytes,
+				 /*routing-prefix*/ &set_bits,
+				 /*host-identifier*/ &clear_bits,
+				 subnet->maskbits);
 }
 
 size_t jam_subnet(struct jambuf *buf, const ip_subnet *subnet)

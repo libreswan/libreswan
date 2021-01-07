@@ -152,7 +152,11 @@ ip_range selector_range(const ip_selector *selector)
 
 ip_address selector_prefix(const ip_selector *selector)
 {
-	return endpoint_address(&selector->addr);
+	const struct ip_info *afi = selector_type(selector);
+	if (afi == NULL) {
+		return unset_address;
+	}
+	return address_from_raw(afi, &selector->addr.bytes);
 }
 
 unsigned selector_maskbits(const ip_selector *selector)
