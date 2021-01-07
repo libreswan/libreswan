@@ -2077,12 +2077,21 @@ int main(int argc, char **argv)
 			msg.policy |= POLICY_ECDSA;
 			continue;
 
-		case CD_CONNIPV4:	/* --ipv4 */
-			if (LHAS(cd_seen, CD_CONNIPV6 - CD_FIRST))
-				diag("--ipv4 conflicts with --ipv6");
+		case CD_CONNIPV4:	/* --ipv4; mimic --ipv6 */
+			if (host_family.type == &ipv4_info) {
+				/* ignore redundant options */
+				continue;
+			}
 
-			if (host_family.used_by != NULL)
+			if (LHAS(cd_seen, CD_CONNIPV6 - CD_FIRST)) {
+				/* i.e., --ipv6 ... --ipv4 */
+				diag("--ipv4 conflicts with --ipv6");
+			}
+
+			if (host_family.used_by != NULL) {
+				/* i.e., --host ::1 --ipv4; useful? wrong message? */
 				diagq("--ipv4 must precede", host_family.used_by);
+			}
 			host_family.used_by = long_opts[long_index].name;
 			host_family.type = &ipv4_info;
 
@@ -2097,12 +2106,21 @@ int main(int argc, char **argv)
 				msg.tunnel_addr_family = AF_INET;
 			continue;
 
-		case CD_CONNIPV6:	/* --ipv6 */
-			if (LHAS(cd_seen, CD_CONNIPV4 - CD_FIRST))
-				diag("--ipv6 conflicts with --ipv4");
+		case CD_CONNIPV6:	/* --ipv6; mimic ipv4 */
+			if (host_family.type == &ipv6_info) {
+				/* ignore redundant options */
+				continue;
+			}
 
-			if (host_family.used_by != NULL)
+			if (LHAS(cd_seen, CD_CONNIPV4 - CD_FIRST)) {
+				/* i.e., --ipv4 ... --ipv6 */
+				diag("--ipv6 conflicts with --ipv4");
+			}
+
+			if (host_family.used_by != NULL) {
+				/* i.e., --host 0.0.0.1 --ipv6; useful? wrong message? */
 				diagq("--ipv6 must precede", host_family.used_by);
+			}
 			host_family.used_by = long_opts[long_index].name;
 			host_family.type = &ipv6_info;
 
