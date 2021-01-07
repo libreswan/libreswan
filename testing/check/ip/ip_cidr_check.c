@@ -86,7 +86,52 @@ static void check_numeric_to_cidr(void)
 	}
 }
 
+static void check_cidr_is()
+{
+	static const struct test {
+		int family;
+		const char *in;
+		bool specified;
+	} tests[] = {
+		/* default route */
+		{ 4, "0.0.0.0/0", false, },
+		{ 6, "::/0", false, },
+
+		/* unspecified address */
+		{ 4, "0.0.0.0/32", false, },
+		{ 6, "::/128", false, },
+
+		/* something valid */
+		{ 4, "127.0.0.1/32", true, },
+		{ 6, "::1/128", true, },
+	};
+
+#define OUT(FILE, FMT, ...)						\
+	PRINT(FILE, "%s %s "FMT,					\
+	      t->in,							\
+	      bool_str(t->specified),					\
+	      ##__VA_ARGS__)
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		OUT(stdout, "");
+
+		ip_cidr cidr;
+		err_t err = numeric_to_cidr(shunk1(t->in), IP_TYPE(t->family), &cidr);
+		if (err != NULL) {
+			FAIL(OUT, "numeric_to_cidr() unexpectedly failed: %s", err);
+		}
+
+		bool specified = cidr_is_specified(&cidr);
+		if (specified != t->specified) {
+			FAIL(OUT, "cidr_is_specified() returned %s, expecting %s",
+			     bool_str(specified), bool_str(t->specified));
+		}
+	}
+}
+
 void ip_cidr_check(void)
 {
 	check_numeric_to_cidr();
+	check_cidr_is();
 }

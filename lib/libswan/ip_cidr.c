@@ -33,21 +33,30 @@ ip_address cidr_address(const ip_cidr *cidr)
 	return address_from_raw(afi, &cidr->bytes);
 }
 
-bool cidr_is_specified(const ip_cidr *cidr)
+err_t cidr_specified(const ip_cidr *cidr)
 {
 	if (cidr->version == 0) {
-		return false;
+		return "unset";
 	}
 	const struct ip_info *afi = cidr_type(cidr);
 	if (afi == NULL) {
-		return false;
+		return "unknown address family";
 	}
-	/* XXX: is this correct? */
+	/* https://en.wikipedia.org/wiki/IPv6_address#Special_addresses */
 	if (thingeq(cidr->bytes, afi->any_address.bytes) &&
-	    (cidr->prefix_bits == 0 || cidr->prefix_bits == afi->mask_cnt)) {
-		return false;
+	    cidr->prefix_bits == 0) {
+		return "default route (no specific route)";
 	}
-	return true;
+	if (thingeq(cidr->bytes, afi->any_address.bytes) &&
+	    cidr->prefix_bits == afi->mask_cnt) {
+		return "unspecified address";
+	}
+	return NULL;
+}
+
+bool cidr_is_specified(const ip_cidr *cidr)
+{
+	return cidr_specified(cidr) == NULL;
 }
 
 err_t numeric_to_cidr(shunk_t src, const struct ip_info *afi, ip_cidr *cidr)

@@ -516,6 +516,11 @@ static bool validate_end(struct starter_conn *conn_st,
 			ERR_FOUND("bad addr %s%s=%s [%s]",
 				  leftright, "vti", value, oops);
 		}
+		oops = cidr_specified(&end->vti_ip);
+		if (oops != NULL) {
+			ERR_FOUND("bad addr %s%s=%s [%s]",
+				  leftright, "vti", value, oops);
+		}
 		/* XXX: check type? */
 	}
 
@@ -729,6 +734,11 @@ static bool validate_end(struct starter_conn *conn_st,
 			ERR_FOUND("bad addr %s%s=%s [%s]",
 				  leftright, "interface-ip", value, oops);
 		}
+		oops = cidr_specified(&end->ifaceip);
+		if (oops != NULL) {
+			ERR_FOUND("bad addr %s%s=%s [%s]",
+				  leftright, "interface-ip", value, oops);
+		}
 		if (end->strings_set[KSCF_SOURCEIP]) {
 			ERR_FOUND("can  not specify  %sinterface-ip=%s and  %sssourceip=%s",
 					leftright,
@@ -736,7 +746,6 @@ static bool validate_end(struct starter_conn *conn_st,
 					leftright,
 					end->strings[KSCF_SOURCEIP]);
 		}
-
 	}
 
 	if (end->options_set[KNCF_XAUTHSERVER] ||

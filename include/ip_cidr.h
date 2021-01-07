@@ -36,9 +36,17 @@ typedef struct {
 const struct ip_info *cidr_type(const ip_cidr *cidr);
 ip_address cidr_address(const ip_cidr *cidr);
 
-/* convert CIDR address/mask */
+/* convert CIDR address/mask; does not judge the result */
 err_t numeric_to_cidr(shunk_t src, const struct ip_info *afi, ip_cidr *cidr);
 
+/*
+ * return why, if CDIR isn't useful.
+ *
+ * "specified"? wikipedia refers to ::/0 as "Default route (no
+ * specific route)" and ::/128 as "Unspecified address". While these
+ * addresses are valid, they don't specifically specify anything...
+ */
+err_t cidr_specified(const ip_cidr *cidr);
 bool cidr_is_specified(const ip_cidr *cidr);
 
 typedef struct {
