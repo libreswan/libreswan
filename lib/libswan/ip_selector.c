@@ -229,13 +229,6 @@ bool selector_eq(const ip_selector *l, const ip_selector *r)
 	return samesubnet(l, r);
 }
 
-bool selector_address_eq(const ip_selector *l, const ip_selector *r)
-{
-	ip_address la = subnet_address(l);
-	ip_address ra = subnet_address(r);
-	return subnetishost(l) && subnetishost(r) && sameaddr(&la, &ra);
-}
-
 void pexpect_selector(const ip_selector *s, const char *t, where_t where)
 {
 	if (s != NULL && s->addr.version != 0) { /* non-zero */

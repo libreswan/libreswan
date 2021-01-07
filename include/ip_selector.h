@@ -127,7 +127,6 @@ bool endpoint_in_selector(const ip_endpoint *l, const ip_selector *r);
 bool address_in_selector(const ip_address *l, const ip_selector *r);
 
 bool selector_eq(const ip_selector *l, const ip_selector *r);
-bool selector_address_eq(const ip_selector *l, const ip_selector *r);
 
 /* printing */
 
