@@ -20,6 +20,7 @@
 
 #include "lswalloc.h"
 
+__attribute__((__format__(__printf__, 1, 0)))
 char *alloc_vprintf(const char *fmt, va_list master_ap /* must va_copy */)
 {
 	int length;

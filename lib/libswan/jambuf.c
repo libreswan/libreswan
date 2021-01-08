@@ -172,6 +172,7 @@ size_t jam_raw_bytes(struct jambuf *buf, const void *string, size_t n)
 	return n;
 }
 
+__attribute__((__format__(__printf__, 2, 0)))
 size_t jam_va_list(struct jambuf *buf, const char *format, va_list ap)
 {
 	assert_jambuf(buf);
