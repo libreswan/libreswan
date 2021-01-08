@@ -941,16 +941,6 @@ void delete_other_state(struct state *st, struct state *other_state)
 /* delete a state object */
 void delete_state(struct state *st)
 {
-	struct connection *c = st->st_connection;
-	if (IS_IKE_SA_ESTABLISHED(st) && c->kind == CK_INSTANCE && LIN(POLICY_UP, c->policy)) {
-		/* why isn't the host_port set by instantiation ? */
-		dbg("updating connection for remote port %d", st->st_remote_endpoint.hport);
-		c->spd.that.raw.host.ikeport = st->st_remote_endpoint.hport; /* pretend we were given a port */
-		dbg("%s() %s.host_port: %u->%u (that)", __func__, c->spd.that.leftright,
-		    c->spd.that.host_port, st->st_remote_endpoint.hport);
-		c->spd.that.host_port = st->st_remote_endpoint.hport;
-
-	}
 	delete_state_log(st, st);
 	delete_state_tail(st);
 }
