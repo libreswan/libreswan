@@ -24,7 +24,7 @@
 size_t jam_nss_ckm(struct jambuf *buf, CK_MECHANISM_TYPE mechanism)
 {
 	switch (mechanism) {
-#define CASE(T) case T: return jam_string(buf, #T + strlen("CKM_"))
+#define CASE(T) case T: return jam_string(buf, &#T [strlen("CKM_")])
 
 		CASE(CKM_CONCATENATE_BASE_AND_DATA);
 		CASE(CKM_CONCATENATE_BASE_AND_KEY);

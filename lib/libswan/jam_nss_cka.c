@@ -24,7 +24,7 @@
 size_t jam_nss_cka(struct jambuf *buf, CK_ATTRIBUTE_TYPE attribute)
 {
 	switch (attribute) {
-#define CASE(T) case T: return jam_string(buf, #T + strlen("CKA_"))
+#define CASE(T) case T: return jam_string(buf, &#T[strlen("CKA_")])
 		CASE(CKA_DERIVE);
 		CASE(CKA_FLAGS_ONLY);
 		CASE(CKA_WRAP);

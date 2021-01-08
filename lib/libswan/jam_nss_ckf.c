@@ -29,7 +29,7 @@ size_t jam_nss_ckf(struct jambuf *buf, CK_FLAGS flags)
 #define FLAG(F) \
 	if (flags & F) {					\
 		size += jam_string(buf, sep);			\
-		size += jam_string(buf, #F + strlen("CKF_"));	\
+		size += jam_string(buf, &#F[strlen("CKF_")]);	\
 		sep = "+";					\
 		flags ^= F;					\
 	}
