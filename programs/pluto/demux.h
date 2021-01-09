@@ -32,9 +32,9 @@
 #include "where.h"
 
 struct state;   /* forward declaration of tag */
-struct iface_port;
+struct iface_endpoint;
 
-enum iface_status handle_packet_cb(const struct iface_port *ifp, struct logger *logger);
+enum iface_status handle_packet_cb(const struct iface_endpoint *ifp, struct logger *logger);
 
 /* State transition function infrastructure
  *
@@ -130,7 +130,7 @@ enum v1_pbs {
 struct msg_digest {
 	refcnt_t refcnt;
 	chunk_t raw_packet;			/* (v1) if encrypted, received packet before decryption */
-	const struct iface_port *iface;		/* interface on which message arrived */
+	const struct iface_endpoint *iface;		/* interface on which message arrived */
 	ip_endpoint sender;			/* address:port where message came from */
 	struct isakmp_hdr hdr;			/* message's header */
 	bool encrypted;				/* (v1) was it encrypted? */
@@ -220,7 +220,7 @@ struct msg_digest {
 enum ike_version hdr_ike_version(const struct isakmp_hdr *hdr);
 enum message_role v2_msg_role(const struct msg_digest *md);
 
-extern struct msg_digest *alloc_md(const struct iface_port *ifp,
+extern struct msg_digest *alloc_md(const struct iface_endpoint *ifp,
 				   const ip_endpoint *sender,
 				   where_t where);
 struct msg_digest *md_addref(struct msg_digest *md, where_t where);

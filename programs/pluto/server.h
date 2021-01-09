@@ -33,7 +33,7 @@
 struct state;
 struct msg_digest;
 struct bufferevent;
-struct iface_port;
+struct iface_endpoint;
 struct show;
 
 extern char *pluto_vendorid;

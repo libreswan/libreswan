@@ -21,7 +21,7 @@
 #include "ip_address.h"
 #include "packet.h"		/* for pb_stream */
 
-struct iface_port;
+struct iface_endpoint;
 struct state;
 struct msg_digest;
 

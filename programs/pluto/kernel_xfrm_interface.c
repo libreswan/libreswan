@@ -38,7 +38,7 @@
 #include "lswalloc.h"
 #include "netlink_attrib.h"
 #include "connections.h"
-#include "server.h" /* for struct iface_port */
+#include "server.h" /* for struct iface_endpoint */
 #include "kernel_xfrm_interface.h"
 #include "kernel_netlink_reply.h"
 #include "kernel_netlink_query.h"

@@ -351,7 +351,7 @@ struct connection {
 	policy_prio_t policy_prio;
 	bool instance_initiation_ok;		/* this is an instance of a policy that mandates initiate */
 	enum connection_kind kind;
-	const struct iface_port *interface;	/* filled in iff oriented */
+	const struct iface_endpoint *interface;	/* filled in iff oriented */
 
 	struct ephemeral_variables temp_vars;
 

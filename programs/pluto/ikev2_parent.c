@@ -100,7 +100,7 @@
 
 struct mobike {
 	ip_endpoint remote;
-	const struct iface_port *interface;
+	const struct iface_endpoint *interface;
 };
 
 static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
@@ -6163,7 +6163,7 @@ void ikev2_record_deladdr(struct state *st, void *arg_ip)
 
 #ifdef XFRM_SUPPORT
 static void initiate_mobike_probe(struct state *st, struct starter_end *this,
-				  const struct iface_port *iface)
+				  const struct iface_endpoint *iface)
 {
 	struct ike_sa *ike = ike_sa(st, HERE);
 	/*
@@ -6188,7 +6188,7 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 	st->st_mobike_local_endpoint = endpoint3(st->st_interface->protocol,
 						 &this->addr, port);
 	st->st_mobike_host_nexthop = this->nexthop; /* for updown, after xfrm migration */
-	const struct iface_port *o_iface = st->st_interface;
+	const struct iface_endpoint *o_iface = st->st_interface;
 	/* notice how it gets set back below */
 	st->st_interface = iface;
 
@@ -6212,7 +6212,7 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 #endif
 
 #ifdef XFRM_SUPPORT
-static const struct iface_port *ikev2_src_iface(struct state *st,
+static const struct iface_endpoint *ikev2_src_iface(struct state *st,
 						struct starter_end *this)
 {
 	/* success found a new source address */
@@ -6220,7 +6220,7 @@ static const struct iface_port *ikev2_src_iface(struct state *st,
 	ip_port port = endpoint_port(&st->st_interface->local_endpoint);
 	ip_endpoint local_endpoint = endpoint3(st->st_interface->protocol,
 					       &this->addr, port);
-	const struct iface_port *iface = find_iface_port_by_local_endpoint(&local_endpoint);
+	const struct iface_endpoint *iface = find_iface_port_by_local_endpoint(&local_endpoint);
 	if (iface == NULL) {
 		endpoint_buf b;
 		dbg("#%lu no interface for %s try to initialize",
@@ -6298,7 +6298,7 @@ void ikev2_addr_change(struct state *st)
 
 		case 0:	/* success */
 		{
-			const struct iface_port *iface = ikev2_src_iface(st, &this);
+			const struct iface_endpoint *iface = ikev2_src_iface(st, &this);
 			if (iface != NULL)
 				initiate_mobike_probe(st, &this, iface);
 			break;

@@ -27,7 +27,7 @@
 
 struct fd;
 struct raw_iface;
-struct iface_port;
+struct iface_endpoint;
 struct show;
 struct iface_dev;
 
@@ -48,14 +48,14 @@ enum iface_status {
 struct iface_io {
 	bool send_keepalive;
 	const struct ip_protocol *protocol;
-	enum iface_status (*read_packet)(const struct iface_port *ifp,
+	enum iface_status (*read_packet)(const struct iface_endpoint *ifp,
 					 struct iface_packet *);
-	ssize_t (*write_packet)(const struct iface_port *ifp,
+	ssize_t (*write_packet)(const struct iface_endpoint *ifp,
 				const void *ptr, size_t len,
 				const ip_endpoint *remote_endpoint,
 				struct logger *logger);
-	void (*cleanup)(struct iface_port *ifp);
-	void (*listen)(struct iface_port *fip, struct logger *logger);
+	void (*cleanup)(struct iface_endpoint *ifp);
+	void (*listen)(struct iface_endpoint *fip, struct logger *logger);
 	int (*bind_iface_port)(struct iface_dev *ifd,
 			       ip_port port, bool esp_encapsulation_enabled,
 			       struct logger *logger);
@@ -90,12 +90,12 @@ void release_iface_dev(struct iface_dev **id);
 void add_or_keep_iface_dev(struct raw_iface *ifp, struct logger *logger);
 struct iface_dev *find_iface_dev_by_address(const ip_address *address);
 
-struct iface_port {
+struct iface_endpoint {
 	struct iface_dev   *ip_dev;
 	const struct iface_io *io;
 	ip_endpoint local_endpoint;	/* interface IP address:port */
 	int fd;                 /* file descriptor of socket for IKE UDP messages */
-	struct iface_port *next;
+	struct iface_endpoint *next;
 	const struct ip_protocol *protocol;
 	/*
 	 * Here's what the RFC has to say:
@@ -170,18 +170,18 @@ struct iface_port {
 	struct event *iketcp_timeout;
 };
 
-void stop_iketcp_iface_port(struct iface_port **ifp);
-void free_any_iface_port(struct iface_port **ifp);
+void stop_iketcp_iface_port(struct iface_endpoint **ifp);
+void free_any_iface_port(struct iface_endpoint **ifp);
 
-extern struct iface_port *interfaces;   /* public interfaces */
+extern struct iface_endpoint *interfaces;   /* public interfaces */
 
-extern struct iface_port *find_iface_port_by_local_endpoint(ip_endpoint *local_endpoint);
+extern struct iface_endpoint *find_iface_port_by_local_endpoint(ip_endpoint *local_endpoint);
 extern bool use_interface(const char *rifn);
 extern void find_ifaces(bool rm_dead, struct logger *logger);
 extern void show_ifaces_status(struct show *s);
 extern void free_ifaces(struct logger *logger);
-void listen_on_iface_port(struct iface_port *ifp, struct logger *logger);
-struct iface_port *bind_iface_port(struct iface_dev *ifd, const struct iface_io *io,
+void listen_on_iface_port(struct iface_endpoint *ifp, struct logger *logger);
+struct iface_endpoint *bind_iface_port(struct iface_dev *ifd, const struct iface_io *io,
 				   ip_port port,
 				   bool esp_encapsulation_enabled,
 				   bool float_nat_initiator,

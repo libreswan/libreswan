@@ -57,7 +57,7 @@ static void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 				 struct sockaddr *sockaddr, int sockaddr_len,
 				 void *arg);
 
-static enum iface_status iketcp_read_packet(const struct iface_port *ifp,
+static enum iface_status iketcp_read_packet(const struct iface_endpoint *ifp,
 					    struct iface_packet *packet)
 {
 	/*
@@ -119,7 +119,7 @@ static enum iface_status iketcp_read_packet(const struct iface_port *ifp,
 	return IFACE_OK;
 }
 
-static ssize_t iketcp_write_packet(const struct iface_port *ifp,
+static ssize_t iketcp_write_packet(const struct iface_endpoint *ifp,
 				   const void *ptr, size_t len,
 				   const ip_endpoint *remote_endpoint UNUSED,
 				   struct logger *logger)
@@ -150,7 +150,7 @@ static ssize_t iketcp_write_packet(const struct iface_port *ifp,
 	return wlen;
 }
 
-static void iketcp_cleanup(struct iface_port *ifp)
+static void iketcp_cleanup(struct iface_endpoint *ifp)
 {
 	dbg("TCP: socket %d cleaning up interface", ifp->fd);
 	switch (ifp->iketcp_state) {
@@ -185,7 +185,7 @@ static void iketcp_server_timeout(evutil_socket_t unused_fd UNUSED,
 				  const short unused_event UNUSED,
 				  void *arg UNUSED)
 {
-	struct iface_port *ifp = arg;
+	struct iface_endpoint *ifp = arg;
 	struct logger logger = FROM_LOGGER(&ifp->iketcp_remote_endpoint); /* event-handler */
 	llog(RC_LOG, &logger,
 		    "TCP: socket %d timed out before first message received",
@@ -193,7 +193,7 @@ static void iketcp_server_timeout(evutil_socket_t unused_fd UNUSED,
 	free_any_iface_port(&ifp);
 }
 
-static void iketcp_listen(struct iface_port *ifp,
+static void iketcp_listen(struct iface_endpoint *ifp,
 			  struct logger *logger)
 {
 	if (ifp->tcp_accept_listener == NULL) {
@@ -372,7 +372,7 @@ static void iketcp_message_listener_cb(evutil_socket_t unused_fd UNUSED,
 				       const short unused_event UNUSED,
 				       void *arg)
 {
-	struct iface_port *ifp = arg;
+	struct iface_endpoint *ifp = arg;
 	struct logger logger[1] = { FROM_LOGGER(&ifp->iketcp_remote_endpoint), }; /* event-handler */
 
 	switch (ifp->iketcp_state) {
@@ -651,7 +651,7 @@ stf_status create_tcp_interface(struct state *st)
 		}
 	}
 
-	struct iface_port *ifp = alloc_thing(struct iface_port, "TCP iface initiator");
+	struct iface_endpoint *ifp = alloc_thing(struct iface_endpoint, "TCP iface initiator");
 	ifp->io = &iketcp_iface_io;
 	ifp->fd = fd;
 	ifp->local_endpoint = local_endpoint;
@@ -682,7 +682,7 @@ void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 			  void *arg)
 {
 	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), }; /* event-handler */
-	struct iface_port *bind_ifp = arg;
+	struct iface_endpoint *bind_ifp = arg;
 
 	ip_sockaddr sa = {
 		.len = sockaddr_len,
@@ -699,7 +699,7 @@ void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 
 	llog(RC_LOG, logger, "TCP: accepting connection");
 
-	struct iface_port *ifp = alloc_thing(struct iface_port, "TCP iface responder");
+	struct iface_endpoint *ifp = alloc_thing(struct iface_endpoint, "TCP iface responder");
 	ifp->fd = accepted_fd;
 	ifp->io = &iketcp_iface_io;
 	ifp->protocol = &ip_protocol_tcp;

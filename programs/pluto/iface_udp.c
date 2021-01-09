@@ -231,12 +231,12 @@ static bool nat_traversal_espinudp(int sk, struct iface_dev *ifd,
 }
 
 #ifdef MSG_ERRQUEUE
-static bool check_msg_errqueue(const struct iface_port *ifp,
+static bool check_msg_errqueue(const struct iface_endpoint *ifp,
 			       short interest, const char *func,
 			       struct logger *logger);
 #endif
 
-static enum iface_status udp_read_packet(const struct iface_port *ifp,
+static enum iface_status udp_read_packet(const struct iface_endpoint *ifp,
 					 struct iface_packet *packet)
 {
 #ifdef MSG_ERRQUEUE
@@ -373,7 +373,7 @@ static enum iface_status udp_read_packet(const struct iface_port *ifp,
 	return IFACE_OK;
 }
 
-static ssize_t udp_write_packet(const struct iface_port *ifp,
+static ssize_t udp_write_packet(const struct iface_endpoint *ifp,
 				const void *ptr, size_t len,
 				const ip_endpoint *remote_endpoint,
 				struct logger *logger /*possibly*/UNUSED)
@@ -393,11 +393,11 @@ static void handle_udp_packet_cb(evutil_socket_t unused_fd UNUSED,
 				 void *arg)
 {
 	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), }; /* event-handler */
-	const struct iface_port *ifp = arg;
+	const struct iface_endpoint *ifp = arg;
 	handle_packet_cb(ifp, logger);
 }
 
-static void udp_listen(struct iface_port *ifp,
+static void udp_listen(struct iface_endpoint *ifp,
 		       struct logger *unused_logger UNUSED)
 {
 	if (ifp->udp_message_listener == NULL) {
@@ -421,7 +421,7 @@ static int udp_bind_iface_port(struct iface_dev *ifd, ip_port port,
 	return fd;
 }
 
-static void udp_cleanup(struct iface_port *ifp)
+static void udp_cleanup(struct iface_endpoint *ifp)
 {
 	event_free(ifp->udp_message_listener);
 	ifp->udp_message_listener = NULL;
@@ -558,7 +558,7 @@ static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 	return st;
 }
 
-static bool check_msg_errqueue(const struct iface_port *ifp, short interest,
+static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 			       const char *before,
 			       struct logger *logger)
 {

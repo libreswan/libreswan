@@ -484,7 +484,7 @@ void check_orientations(void)
 	 * In other words, the far side must not match one of our new
 	 * interfaces.
 	 */
-	for (struct iface_port *i = interfaces; i != NULL; i = i->next) {
+	for (struct iface_endpoint *i = interfaces; i != NULL; i = i->next) {
 		if (i->ip_dev->ifd_change != IFD_ADD) {
 			continue;
 		}

@@ -1015,7 +1015,7 @@ void v1_natify_initiator_endpoints(struct state *st, where_t where)
 		 * :PLUTO_NAT_PORT should exist.  IPv6 nat isn't
 		 * supported.
 		 */
-		struct iface_port *i = find_iface_port_by_local_endpoint(&new_local_endpoint);
+		struct iface_endpoint *i = find_iface_port_by_local_endpoint(&new_local_endpoint);
 		if (pexpect(i != NULL)) {
 			endpoint_buf b;
 			dbg("NAT: #%lu floating endpoint ended up on interface %s %s",
@@ -1056,7 +1056,7 @@ bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 		 * supported.
 		 */
 		ip_endpoint new_local_endpoint = set_endpoint_port(&ike->sa.st_interface->local_endpoint, ip_hport(NAT_IKE_UDP_PORT));
-		struct iface_port *i = find_iface_port_by_local_endpoint(&new_local_endpoint);
+		struct iface_endpoint *i = find_iface_port_by_local_endpoint(&new_local_endpoint);
 		if (i == NULL) {
 			endpoint_buf b2;
 			log_state(RC_LOG/*fatal!*/, &ike->sa,

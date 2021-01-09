@@ -43,7 +43,7 @@
 #include "ip_sockaddr.h"
 #include "ip_encap.h"
 
-struct iface_port  *interfaces = NULL;  /* public interfaces */
+struct iface_endpoint  *interfaces = NULL;  /* public interfaces */
 
 /*
  * The interfaces - eth0 ...
@@ -126,7 +126,7 @@ void release_iface_dev(struct iface_dev **id)
 
 static void free_dead_ifaces(struct logger *logger)
 {
-	struct iface_port *p;
+	struct iface_endpoint *p;
 	bool some_dead = false;
 	bool some_new = false;
 
@@ -157,7 +157,7 @@ static void free_dead_ifaces(struct logger *logger)
 		 */
 		release_dead_interfaces(logger);
 		delete_states_dead_interfaces(logger);
-		for (struct iface_port **pp = &interfaces; (p = *pp) != NULL; ) {
+		for (struct iface_endpoint **pp = &interfaces; (p = *pp) != NULL; ) {
 			if (p->ip_dev->ifd_change == IFD_DELETE) {
 				*pp = p->next; /* advance *pp */
 				free_any_iface_port(&p);
@@ -194,7 +194,7 @@ void free_ifaces(struct logger *logger)
 	free_dead_ifaces(logger);
 }
 
-void free_any_iface_port(struct iface_port **ifp)
+void free_any_iface_port(struct iface_endpoint **ifp)
 {
 	/* generic stuff */
 	(*ifp)->io->cleanup(*ifp);
@@ -206,7 +206,7 @@ void free_any_iface_port(struct iface_port **ifp)
 	*ifp = NULL;
 }
 
-struct iface_port *bind_iface_port(struct iface_dev *ifd, const struct iface_io *io,
+struct iface_endpoint *bind_iface_port(struct iface_dev *ifd, const struct iface_io *io,
 				   ip_port port,
 				   bool esp_encapsulation_enabled,
 				   bool float_nat_initiator,
@@ -230,8 +230,8 @@ struct iface_port *bind_iface_port(struct iface_dev *ifd, const struct iface_io 
 		return NULL;
 	}
 
-	struct iface_port *ifp = alloc_thing(struct iface_port,
-					     "struct iface_port");
+	struct iface_endpoint *ifp = alloc_thing(struct iface_endpoint,
+					     "struct iface_endpoint");
 	ifp->fd = fd;
 	ifp->ip_dev = add_ref(ifd);
 	ifp->io = io;
@@ -320,7 +320,7 @@ static void add_new_ifaces(struct logger *logger)
 	}
 }
 
-void listen_on_iface_port(struct iface_port *ifp, struct logger *logger)
+void listen_on_iface_port(struct iface_endpoint *ifp, struct logger *logger)
 {
 	ifp->io->listen(ifp, logger);
 	endpoint_buf b;
@@ -484,15 +484,15 @@ void find_ifaces(bool rm_dead, struct logger *logger)
 		llog(RC_LOG_SERIOUS, logger, "no public interfaces found");
 
 	if (listening) {
-		for (struct iface_port *ifp = interfaces; ifp != NULL; ifp = ifp->next) {
+		for (struct iface_endpoint *ifp = interfaces; ifp != NULL; ifp = ifp->next) {
 			listen_on_iface_port(ifp, logger);
 		}
 	}
 }
 
-struct iface_port *find_iface_port_by_local_endpoint(ip_endpoint *local_endpoint)
+struct iface_endpoint *find_iface_port_by_local_endpoint(ip_endpoint *local_endpoint)
 {
-	for (struct iface_port *p = interfaces; p != NULL; p = p->next) {
+	for (struct iface_endpoint *p = interfaces; p != NULL; p = p->next) {
 		if (endpoint_eq(local_endpoint, &p->local_endpoint)) {
 			return p;
 		}
@@ -503,7 +503,7 @@ struct iface_port *find_iface_port_by_local_endpoint(ip_endpoint *local_endpoint
 void show_ifaces_status(struct show *s)
 {
 	show_separator(s); /* if needed */
-	for (struct iface_port *p = interfaces; p != NULL; p = p->next) {
+	for (struct iface_endpoint *p = interfaces; p != NULL; p = p->next) {
 		endpoint_buf b;
 		show_comment(s, "interface %s %s %s",
 			     p->ip_dev->id_rname,

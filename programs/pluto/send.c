@@ -68,7 +68,7 @@
 
 static bool send_chunks(const char *where, bool just_a_keepalive,
 			so_serial_t serialno, /* can be SOS_NOBODY */
-			const struct iface_port *interface,
+			const struct iface_endpoint *interface,
 			ip_endpoint remote_endpoint,
 			chunk_t a, chunk_t b,
 			struct logger *logger)

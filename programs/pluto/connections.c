@@ -2687,7 +2687,7 @@ struct connection *build_outgoing_opportunistic_connection(const ip_address *our
 	our_port = endpoint_hport(our_client);
 	peer_port = endpoint_hport(peer_client);
 
-	struct iface_port *p;
+	struct iface_endpoint *p;
 
 	struct connection *c = NULL;
 

@@ -20,7 +20,7 @@
 #include "demux.h"      /* needs packet.h */
 #include "iface.h"
 
-struct msg_digest *alloc_md(const struct iface_port *ifp, const ip_endpoint *sender, where_t where)
+struct msg_digest *alloc_md(const struct iface_endpoint *ifp, const ip_endpoint *sender, where_t where)
 {
 	/* convenient initializer:
 	 * - all pointers NULL

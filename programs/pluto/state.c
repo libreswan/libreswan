@@ -1212,7 +1212,7 @@ void delete_state_tail(struct state *st)
 		 */
 		if (st->st_interface->protocol == &ip_protocol_tcp) {
 			dbg("TCP: freeing interface; release instead?");
-			struct iface_port **p = (void*)&st->st_interface; /* hack const */
+			struct iface_endpoint **p = (void*)&st->st_interface; /* hack const */
 			/*
 			 * XXX: The state and the event loop are
 			 * sharing EVP.  This deletes both.
