@@ -362,6 +362,12 @@ ip_port end_host_port(const struct end *end, const struct end *other)
 		 * NAT_IKE_UDP_PORT.
 		 */
 		port = NAT_IKE_UDP_PORT;
+	} else if (other->host_encap) {
+		/*
+		 * See above.  Presumably an instance which previously
+		 * had a natted port and is being revived.
+		 */
+		port = NAT_IKE_UDP_PORT;
 	} else {
 		port = IKE_UDP_PORT;
 	}

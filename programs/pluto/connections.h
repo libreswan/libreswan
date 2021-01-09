@@ -169,6 +169,7 @@ struct end {
 	char *host_addr_name;	/* string version from whack */
 	ip_address host_addr;
 	uint16_t host_port;		/* where the IKE port is */
+	bool host_encap;
 	ip_address
 		host_nexthop,
 		host_srcip;

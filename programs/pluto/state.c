@@ -78,6 +78,7 @@
 #include "iface.h"
 #include "ikev1_send.h"		/* for free_v1_messages() */
 #include "ikev2_send.h"		/* for free_v2_messages() */
+#include "nat_traversal.h"	/* for NAT_T_DETECTED during revival */
 
 #include <pk11pub.h>
 #include <keyhi.h>
@@ -207,7 +208,7 @@ void flush_revival(const struct connection *c)
 	}
 }
 
-static void add_revival(struct connection *c)
+static void add_revival(struct state *st, struct connection *c)
 {
 	if (*find_revival(c) == NULL) {
 		struct revival *r = alloc_thing(struct revival,
@@ -221,6 +222,27 @@ static void add_revival(struct connection *c)
 		    c->name, pri_co(c->serialno), delay);
 		c->temp_vars.revive_delay = min(delay + REVIVE_CONN_DELAY,
 						REVIVE_CONN_DELAY_MAX);
+		struct connection *c = st->st_connection;
+		if (IS_IKE_SA_ESTABLISHED(st) &&
+		    c->kind == CK_INSTANCE &&
+		    LIN(POLICY_UP, c->policy)) {
+			/*
+			 * why isn't the host_port set by instantiation ?
+			 *
+			 * XXX: it is, but it is set to 500; better
+			 * question is why isn't the host_port updated
+			 * once things have established and nat has
+			 * been detected.
+			 */
+			dbg("updating connection for remote port %d", st->st_remote_endpoint.hport);
+			c->spd.that.raw.host.ikeport = st->st_remote_endpoint.hport; /* pretend we were given a port */
+			dbg("%s() %s.host_port: %u->%u (that)", __func__, c->spd.that.leftright,
+			    c->spd.that.host_port, st->st_remote_endpoint.hport);
+			c->spd.that.host_port = st->st_remote_endpoint.hport;
+			/* need to force the encap port */
+			c->spd.that.host_encap = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED ||
+						  st->st_interface->protocol == &ip_protocol_tcp);
+		}
 		/*
 		 * XXX: Schedule the next revival using this
 		 * connection's revival delay and not the most urgent
@@ -1168,7 +1190,7 @@ void delete_state_tail(struct state *st)
 		} else {
 			log_state(RC_LOG, st,
 				  "deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS");
-			add_revival(c);
+			add_revival(st, c);
 		}
 	}
 
