@@ -65,7 +65,7 @@ static int terminate_a_connection(struct connection *c, struct fd *whackfd,
 {
 	log_connection(RC_LOG, whackfd, c,
 		       "terminating SAs using this connection");
-	dbg("connection '%s' -POLICY_UP", c->name);
+	dbg("%s() connection '%s' -POLICY_UP", __func__, c->name);
 	c->policy &= ~POLICY_UP;
 	flush_pending_by_connection(c);
 

@@ -355,7 +355,7 @@ bool initiate_connection_2(struct connection *c, const char *remote_host, bool b
 				llog(RC_NOPEERIP, c->logger,
 				     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
 				     enum_show(&connection_kind_names, c->kind));
-				dbg("connection '%s' +POLICY_UP", c->name);
+				dbg("%s() connection '%s' +POLICY_UP", __func__, c->name);
 				c->policy |= POLICY_UP;
 				return true;
 			} else {
@@ -377,7 +377,7 @@ bool initiate_connection_2(struct connection *c, const char *remote_host, bool b
 			     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
 			     enum_show(&connection_kind_names, c->kind),
 			     bool_str((c->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY));
-			dbg("connection '%s' +POLICY_UP", c->name);
+			dbg("%s() connection '%s' +POLICY_UP", __func__, c->name);
 			c->policy |= POLICY_UP;
 			return true;
 		} else {
@@ -469,7 +469,7 @@ bool initiate_connection_3(struct connection *c, bool background, const threadti
 	}
 #endif
 
-	dbg("connection '%s' +POLICY_UP", c->name);
+	dbg("%s() connection '%s' +POLICY_UP", __func__, c->name);
 	c->policy |= POLICY_UP;
 	ipsecdoi_initiate(background ? null_fd : c->logger->global_whackfd,
 			  c, c->policy, 1, SOS_NOBODY, &inception);

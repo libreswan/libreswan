@@ -2412,7 +2412,7 @@ bool accept_delete(struct msg_digest *md,
 				}
 
 				if (rc->newest_ipsec_sa == SOS_NOBODY) {
-					dbg("connection '%s' -POLICY_UP", rc->name);
+					dbg("%s() connection '%s' -POLICY_UP", __func__, rc->name);
 					rc->policy &= ~POLICY_UP;
 					if (!shared_phase1_connection(rc)) {
 						flush_pending_by_connection(rc);
