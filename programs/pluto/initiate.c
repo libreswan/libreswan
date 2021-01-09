@@ -160,8 +160,9 @@ static bool orient_new_iface_port(struct connection *c, struct fd *whackfd, bool
 	return true;
 }
 
-static bool end_matches_port(const struct end *end, const struct end *other,
-			     const struct iface_port *ifp)
+static bool end_matches_iface_endpoint(const struct end *end,
+				       const struct end *other_end,
+				       const struct iface_port *ifp)
 {
 	/*
 	 * XXX: something stomps on .host_addr turning it into an
@@ -169,14 +170,9 @@ static bool end_matches_port(const struct end *end, const struct end *other,
 	 */
 	ip_address host_addr = strip_endpoint(&end->host_addr, HERE);
 	/*
-	 * First choice is the IKEPORT.  Second choice, when the other
-	 * end is using IKEPORT, is to use the PLUTO_NAT_PORT -
-	 * IKEPORT assumes esp encapsulation which means sending the
-	 * ESP=0 prefix and that doesn't work with PLUTO_PORT.
+	 * which port?
 	 */
-	ip_port port = ip_hport(end->raw.host.ikeport ? end->raw.host.ikeport :
-				other->raw.host.ikeport ? NAT_IKE_UDP_PORT :
-				IKE_UDP_PORT);
+	ip_port port = end_host_port(end, other_end);
 	ip_endpoint host_end = endpoint3(ifp->protocol, &host_addr, port);
 	return endpoint_eq(&host_end, &ifp->local_endpoint);
 }
@@ -196,8 +192,8 @@ bool orient(struct connection *c)
 	for (const struct iface_port *ifp = interfaces; ifp != NULL; ifp = ifp->next) {
 
 		/* XXX: check connection allows p->protocol? */
-		bool this = end_matches_port(&c->spd.this, &c->spd.that, ifp);
-		bool that = end_matches_port(&c->spd.that, &c->spd.this, ifp);
+		bool this = end_matches_iface_endpoint(&c->spd.this, &c->spd.that, ifp);
+		bool that = end_matches_iface_endpoint(&c->spd.that, &c->spd.this, ifp);
 
 		if (this && that) {
 			/* too many choices */

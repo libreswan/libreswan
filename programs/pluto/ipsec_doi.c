@@ -274,7 +274,13 @@ void initialize_new_state(struct state *st,
 {
 	update_state_connection(st, c);
 
-	/* reset our choice of interface */
+	/*
+	 * reset our choice of interface
+	 *
+	 * XXX: why? suspect this has the side effect of restoring /
+	 * updating connection's ends?
+	 */
+	pexpect(oriented(*c));
 	c->interface = NULL;
 	(void)orient(c);
 	st->st_interface = c->interface;
@@ -282,6 +288,9 @@ void initialize_new_state(struct state *st,
 	st->st_remote_endpoint = endpoint3(c->interface->protocol,
 					   &c->spd.that.host_addr,
 					   ip_hport(c->spd.that.host_port));
+	endpoint_buf eb;
+	dbg("in %s with remote endpoint set to %s",
+	    __func__, str_endpoint(&st->st_remote_endpoint, &eb));
 
 	st->st_policy = policy & ~POLICY_IPSEC_MASK;        /* clear bits */
 	st->st_try = try;

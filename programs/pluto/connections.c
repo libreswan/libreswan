@@ -344,6 +344,30 @@ void delete_every_connection(void)
 		delete_connection(connections, TRUE);
 }
 
+ip_port end_host_port(const struct end *end, const struct end *other)
+{
+	unsigned port;
+	if (end->raw.host.ikeport != 0) {
+		/*
+		 * The END's IKEPORT was specified in the config file.
+		 * Use that.
+		 */
+		port = end->raw.host.ikeport;
+	} else if (other->raw.host.ikeport != 0) {
+		/*
+		 * The other end's IKEPORT was specified in the config
+		 * file.  Since specifying an IKEPORT implies ESP
+		 * encapsulation (i.e. IKE packets must include the
+		 * ESP=0 prefix), send packets from the encapsulating
+		 * NAT_IKE_UDP_PORT.
+		 */
+		port = NAT_IKE_UDP_PORT;
+	} else {
+		port = IKE_UDP_PORT;
+	}
+	return ip_hport(port);
+}
+
 void update_ends_from_this_host_addr(struct end *this, struct end *that)
 {
 	const struct ip_info *afi = address_type(&this->host_addr);
@@ -382,10 +406,10 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 	 * prefixed), then THIS must send from either IKEPORT or the
 	 * NAT port (and also ESP=0 prefix messages).
 	 */
-	this->host_port = (this->raw.host.ikeport != 0 ? this->raw.host.ikeport :
-			   that->raw.host.ikeport != 0 ? NAT_IKE_UDP_PORT :
-			   IKE_UDP_PORT);
-	dbg("%s host_port %d", this->leftright, this->host_port);
+	unsigned host_port = hport(end_host_port(this, that));
+	dbg("%s() %s.host_port: %u->%u", __func__, this->leftright,
+	    this->host_port, host_port);
+	this->host_port = host_port;
 
 	/* Default client to subnet containing only self */
 	if (!this->has_client) {

@@ -167,8 +167,9 @@ struct end {
 
 	enum keyword_host host_type;
 	char *host_addr_name;	/* string version from whack */
+	ip_address host_addr;
+	uint16_t host_port;		/* where the IKE port is */
 	ip_address
-		host_addr,
 		host_nexthop,
 		host_srcip;
 	ip_cidr host_vtiip;
@@ -191,7 +192,6 @@ struct end {
 	bool has_client;
 	bool has_id_wildcards;
 	char *updown;
-	uint16_t host_port;		/* where the IKE port is */
 	/*
 	 * Was the PORT, in the PROTOPORT included in the whack
 	 * message "wild"?  Can't use .port as that will have been
@@ -605,5 +605,7 @@ so_serial_t get_newer_sa_from_connection(struct state *st);
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert, struct end *dst_end,
 					    bool preserve_ca, struct logger *logger);
 extern void reread_cert_connections(struct fd *whackfd);
+
+ip_port end_host_port(const struct end *end, const struct end *other);
 
 #endif
