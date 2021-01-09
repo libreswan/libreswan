@@ -1213,3 +1213,6 @@ kvmplutotest	ikev2-systemrole-01			skiptest
 
 kvmplutotest	ikev1-policy-01-drop			good
 kvmplutotest	ikev1-policy-02-reject			good
+
+kvmplutotest	ikev2-revive-through-nat		good
+kvmplutotest	ikev2-revive-through-nat-02-cleanfail	good
