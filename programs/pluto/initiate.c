@@ -189,7 +189,8 @@ bool orient(struct connection *c)
 		return true;
 	}
 
-	dbg("orienting %s", c->name);
+	connection_buf cb;
+	dbg("orienting "PRI_CONNECTION, pri_connection(c, &cb));
 	set_policy_prio(c); /* for updates */
 	bool swap = false;
 	for (const struct iface_port *ifp = interfaces; ifp != NULL; ifp = ifp->next) {
@@ -212,7 +213,7 @@ bool orient(struct connection *c)
 
 		if (!this && !that) {
 			endpoint_buf eb;
-			dbg("%s doesn't match %s at all",
+			dbg("  %s doesn't match %s at all",
 			    c->name, str_endpoint(&ifp->local_endpoint, &eb));
 			continue;
 		}
@@ -250,10 +251,14 @@ bool orient(struct connection *c)
 
 		/* orient then continue search */
 		if (this) {
-			dbg("oriented %s's this", c->name);
+			endpoint_buf eb;
+			dbg("oriented %s's THIS to %s",
+			    c->name, str_endpoint(&ifp->local_endpoint, &eb));
 			swap = false;
 		} else if (that) {
-			dbg("oriented %s's that", c->name);
+			endpoint_buf eb;
+			dbg("oriented %s's THAT to %s (will need to swap ends)",
+			    c->name, str_endpoint(&ifp->local_endpoint, &eb));
 			swap = true;
 		}
 		c->interface = ifp;
@@ -261,7 +266,7 @@ bool orient(struct connection *c)
 	}
 	if (oriented(*c)) {
 		if (swap) {
-			dbg("swapping ends so that that is this")
+			dbg("orient swapping ends so that THAT <-> THIS")
 			swap_ends(c);
 		}
 		return true;
