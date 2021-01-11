@@ -48,9 +48,6 @@ struct dh_local_secret *calc_dh_local_secret(const struct dh_desc *group, struct
 chunk_t clone_dh_local_secret_ke(struct dh_local_secret *local_secret);
 const struct dh_desc *dh_local_secret_desc(struct dh_local_secret *local_secret);
 
-PK11SymKey *calc_dh_shared_secret(struct dh_local_secret *local_secret, chunk_t remote_ke,
-				  struct logger *logger);
-
 struct dh_local_secret *dh_local_secret_addref(struct dh_local_secret *local_secret, where_t where);
 void dh_local_secret_delref(struct dh_local_secret **local_secret, where_t where);
 

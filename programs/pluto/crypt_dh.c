@@ -105,36 +105,6 @@ const struct dh_desc *dh_local_secret_desc(struct dh_local_secret *local_secret)
 	return local_secret->group;
 }
 
-/** Compute DH shared secret from our local secret and the peer's public value.
- * We make the leap that the length should be that of the group
- * (see quoted passage at start of ACCEPT_KE).
- * If there is something that upsets NSS (what?) we will return NULL.
- */
-/* MUST BE THREAD-SAFE */
-PK11SymKey *calc_dh_shared_secret(struct dh_local_secret *secret, chunk_t remote_ke,
-				  struct logger *logger)
-{
-	PK11SymKey *dhshared =
-		secret->group->dh_ops->calc_shared_secret(secret->group,
-							  secret->privk,
-							  secret->pubk,
-							  remote_ke.ptr,
-							  remote_ke.len,
-							  logger);
-	/*
-	 * The IKEv2 documentation, even for ECP, refers to "g^ir".
-	 */
-	if (DBGP(DBG_CRYPT)) {
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam_dh_local_secret(buf, secret);
-			jam(buf, "computed shared DH secret key@%p",
-			    dhshared);
-		}
-		DBG_symkey(logger, "dh-shared ", "g^ir", dhshared);
-	}
-	return dhshared;
-}
-
 struct dh_local_secret *dh_local_secret_addref(struct dh_local_secret *secret, where_t where)
 {
 	return refcnt_addref(secret, where);
@@ -163,13 +133,41 @@ struct task {
 	dh_shared_secret_cb *cb;
 };
 
+/*
+ * Compute DH shared secret from our local secret and the peer's
+ * public value.  We make the leap that the length should be that of
+ * the group (see quoted passage at start of ACCEPT_KE).  If there is
+ * something that upsets NSS (what?) we will return NULL.
+ */
+/* MUST BE THREAD-SAFE */
+
 static void compute_dh_shared_secret(struct logger *logger,
 				     struct task *task,
 				     int thread_unused UNUSED)
 {
-	task->shared_secret = calc_dh_shared_secret(task->local_secret,
-						    task->remote_ke,
-						    logger);
+
+	struct dh_local_secret *secret = task->local_secret;
+	diag_t diag = secret->group->dh_ops->calc_shared_secret(secret->group,
+								secret->privk,
+								secret->pubk,
+								task->remote_ke,
+								&task->shared_secret,
+								logger);
+	if (diag != NULL) {
+		log_diag(RC_LOG_SERIOUS, logger, &diag, "%s", "");
+		return;
+	}
+	/*
+	 * The IKEv2 documentation, even for ECP, refers to "g^ir".
+	 */
+	if (DBGP(DBG_CRYPT)) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam_dh_local_secret(buf, secret);
+			jam(buf, "computed shared DH secret key@%p",
+			    task->shared_secret);
+		}
+		DBG_symkey(logger, "dh-shared ", "g^ir", task->shared_secret);
+	}
 }
 
 static void cleanup_dh_shared_secret(struct task **task)

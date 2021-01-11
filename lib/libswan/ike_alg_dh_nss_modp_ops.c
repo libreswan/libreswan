@@ -85,12 +85,12 @@ static chunk_t nss_modp_clone_local_secret_ke(const struct dh_desc *group,
 	return clone_bytes_as_chunk(local_pubk->u.dh.publicValue.data, group->bytes, "MODP KE");
 }
 
-static PK11SymKey *nss_modp_calc_shared_secret(const struct dh_desc *group,
-					       SECKEYPrivateKey *local_privk,
-					       const SECKEYPublicKey *local_pubk,
-					       uint8_t *remote_ke,
-					       size_t sizeof_remote_ke,
-					       struct logger *logger)
+static diag_t nss_modp_calc_shared_secret(const struct dh_desc *group,
+					  SECKEYPrivateKey *local_privk,
+					  const SECKEYPublicKey *local_pubk,
+					  chunk_t remote_ke,
+					  PK11SymKey **shared_secret,
+					  struct logger *logger)
 {
 	DBGF(DBG_CRYPT, "Started DH shared-secret computation in NSS:");
 
@@ -104,26 +104,29 @@ static PK11SymKey *nss_modp_calc_shared_secret(const struct dh_desc *group,
 			.prime = local_pubk->u.dh.prime,
 			.base = local_pubk->u.dh.base,
 			.publicValue = {
-				.data = remote_ke,
-				.len = sizeof_remote_ke,
+				.data = remote_ke.ptr,/*NSS-doesn't do const*/
+				.len = remote_ke.len,
 				.type = siBuffer
 			},
 		},
 	};
 
-	PK11SymKey *g_ir = PK11_PubDerive(local_privk, &remote_pubk,
-					  PR_FALSE, NULL, NULL,
-					  /* what to do */
-					  CKM_DH_PKCS_DERIVE,
-					  /* type of result (anything) */
-					  CKM_CONCATENATE_DATA_AND_BASE,
-					  CKA_DERIVE, group->bytes,
-					  lsw_nss_get_password_context(logger));
-	if (DBGP(DBG_BASE)) {
-		DBG_symkey(logger, "newref ", "g_ir", g_ir);
+	*shared_secret = PK11_PubDerive(local_privk, &remote_pubk,
+					PR_FALSE, NULL, NULL,
+					/* what to do */
+					CKM_DH_PKCS_DERIVE,
+					/* type of result (anything) */
+					CKM_CONCATENATE_DATA_AND_BASE,
+					CKA_DERIVE, group->bytes,
+					lsw_nss_get_password_context(logger));
+	if (*shared_secret == NULL) {
+		return diag_nss_error("shared key calculation using MODP failed");
 	}
 
-	return g_ir;
+	if (DBGP(DBG_BASE)) {
+		DBG_symkey(logger, "newref", "g_ir", *shared_secret);
+	}
+	return NULL;
 }
 
 static void nss_modp_check(const struct dh_desc *dhmke, struct logger *logger)
