@@ -359,7 +359,7 @@ static enum iface_status udp_read_packet(const struct iface_endpoint *ifp,
 
 	if (packet->len == 1 && packet->ptr[0] == 0xff) {
 		/**
-		 * NAT-T Keep-alive packets should be discared by kernel ESPinUDP
+		 * NAT-T Keep-alive packets should be discarded by kernel ESPinUDP
 		 * layer. But bogus keep-alive packets (sent with a non-esp marker)
 		 * can reach this point. Complain and discard them.
 		 * Possibly too if the NAT mapping vanished on the initiator NAT gw ?

@@ -291,7 +291,7 @@ enum keyword_numeric_conn_field {
 enum keyword_valid {
 	kv_config = LELEM(0),           /* may be present in config section */
 	kv_conn   = LELEM(1),           /* may be present in conn section */
-	kv_leftright = LELEM(2),        /* comes in leftFOO and rightFOO varients */
+	kv_leftright = LELEM(2),        /* comes in leftFOO and rightFOO variants */
 	kv_alias  = LELEM(5),           /* is an alias for another keyword */
 	kv_policy = LELEM(6),           /* is a policy affecting verb, processed specially */
 	kv_processed = LELEM(7),        /* is processed, do not output literal string */

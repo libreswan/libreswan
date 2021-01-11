@@ -1,5 +1,5 @@
 /*
- * netlink atrributes to message, for libreswan
+ * netlink attributes to message, for libreswan
  *
  * Copyright (C) 2018-2020 Antony Antony <antony@phenome.org>
  * A part of this came from iproute2 lib/libnetlink.c

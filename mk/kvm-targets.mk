@@ -1061,7 +1061,7 @@ $(eval $(call kvm-hosts-domains,shutdown))
 # For kvm-uninstall, instead of trying to uninstall libreswan from the
 # $(KVM_BUILD_DOMAIN_CLONES), delete both $(KVM_BUILD_DOMAIN_CLONES) and
 # $(KVM_BUILD_DOMAIN) the install domains were cloned from.  This way,
-# in addition to giving kvm-install a 100% fresh start (no depdenence
+# in addition to giving kvm-install a 100% fresh start (no dependence
 # on 'make uninstall') the next test run also gets entirely new
 # domains.
 
@@ -1361,7 +1361,7 @@ Domains and networks:
           directory's test domains
         - uninstall dependencies: test domains
 
-Manually building and modifing the base domain and network:
+Manually building and modifying the base domain and network:
 
   Normally kvm-install et.al, below, are sufficient.  However ....
 

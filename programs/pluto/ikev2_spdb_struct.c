@@ -1553,7 +1553,7 @@ bool ikev2_emit_sa_proposals(struct pbs_out *pbs,
 	FOR_EACH_V2_PROPOSAL(propnum, proposal, proposals) {
 		/*
 		 * Initiator doesn't normally send a single
-		 * tranform=NONE.
+		 * transform=NONE.
 		 */
 		if (!emit_proposal(&sa_pbs, proposal, propnum, local_spi,
 				   (propnum < proposals->roof - 1
@@ -1585,12 +1585,12 @@ bool ikev2_emit_sa_proposal(pb_stream *pbs,
 	}
 
 	/*
-	 * Responder will include TRANFORM=NONE if it was sent by the
+	 * Responder will include TRANSFORM=NONE if it was sent by the
 	 * initiator.
 	 */
 	if (!emit_proposal(&sa_pbs, proposal, proposal->propnum,
 			   local_spi, v2_PROPOSAL_LAST,
-			   true/*allow-single-tranform=NONE*/)) {
+			   true/*allow-single-transform=NONE*/)) {
 		return FALSE;
 	}
 

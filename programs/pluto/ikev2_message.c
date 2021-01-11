@@ -120,7 +120,7 @@ struct pbs_out open_v2_message(struct pbs_out *message,
 	 * If there is no IKE SA, then, presumably, this is a response
 	 * to an initial exchange and the flag should be clear.
 	 *
-	 * The other possability is that this is a response to an
+	 * The other possibility is that this is a response to an
 	 * IKEv++ message, just assume this is the initial exchange
 	 * and the I flag should be clear (see 1.5.  Informational
 	 * Messages outside of an IKE SA).  The other option would be

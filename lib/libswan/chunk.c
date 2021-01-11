@@ -95,7 +95,7 @@ chunk_t clone_bytes_as_chunk(const void *bytes, size_t sizeof_bytes, const char 
 chunk_t chunk_from_hex(const char *hex, const char *name)
 {
 	/*
-	 * The decoded buffer (consiting of can't be bigger than half the encoded
+	 * The decoded buffer (consisting of can't be bigger than half the encoded
 	 * string.
 	 */
 	chunk_t chunk = alloc_chunk((strlen(hex)+1)/2, name);

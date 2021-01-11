@@ -3124,7 +3124,7 @@ bool migrate_ipsec_sa(struct state *st)
 		return true;
 
 	default:
-		dbg("Usupported kernel stack in migrate_ipsec_sa");
+		dbg("Unsupported kernel stack in migrate_ipsec_sa");
 		return false;
 	}
 }

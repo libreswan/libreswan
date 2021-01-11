@@ -576,7 +576,7 @@ extern enum_names perspective_names;
  * (to a request) as determined by the IKEv2 "R (Response)" flag.
  *
  * Since either end can initiate a request either end can set the
- * R(Repsonse) flag.
+ * R(Response) flag.
  *
  * During a CHILD_SA exchange it is the request initiator (receives
  * the MESSAGE_RESPONSE) and request responder (receives the

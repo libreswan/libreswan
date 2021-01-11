@@ -305,7 +305,7 @@ static void add_new_ifaces(struct logger *logger)
 		 *
 		 * An explicit {left,right}IKEPORT must enable
 		 * ESPINUDP so that it can tunnel NAT.  This means
-		 * that incomming packets must add the ESP=0 prefix,
+		 * that incoming packets must add the ESP=0 prefix,
 		 * which in turn means that it can't interop with port
 		 * 500 as that port will never send the ESP=0 prefix.
 		 *

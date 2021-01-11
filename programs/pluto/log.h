@@ -175,7 +175,7 @@ void rate_log(const struct msg_digest *md,
 /*
  * Whack only logging.
  *
- * None of these functions add a contex prefix (such as connection
+ * None of these functions add a context prefix (such as connection
  * name).  If that's really really needed then use
  * log_*(WHACK_STREAM,...) above.
  *

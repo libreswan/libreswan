@@ -238,7 +238,7 @@ err_t shunk_to_uintmax(shunk_t input, shunk_t *output, unsigned base,
 		}
 	}
 
-	/* everyting consumed? */
+	/* everything consumed? */
 	if (output == NULL) {
 		if (cursor.len > 0) {
 			switch (base) {

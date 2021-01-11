@@ -1,4 +1,4 @@
-/* PAM Authentication and Autherization related functions
+/* PAM Authentication and Authorization related functions
  *
  * Copyright (C) 2001-2002 Colubris Networks
  * Copyright (C) 2003 Sean Mathews - Nu Tech Software Solutions, inc.

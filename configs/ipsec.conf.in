@@ -12,7 +12,7 @@ config setup
 	#
 	# Debugging should only be used to find bugs, not configuration issues!
 	# "base" regular debug, "tmi" is excessive (!) and "private" will log
-	# senstive key material (not available in FIPS mode). The "cpu-usage"
+	# sensitive key material (not available in FIPS mode). The "cpu-usage"
 	# value logs timing information and should not be used with other
 	# debug options as it will defeat getting accurate timing information.
 	# Default is "none"

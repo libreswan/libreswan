@@ -2646,7 +2646,7 @@ static stf_status ikev2_ike_sa_process_auth_request_no_keymat_continue(struct st
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
-static dh_shared_secret_cb ikev2_ike_sa_process_intermediate_request_no_skeyid_continue;	/* type asssertion */
+static dh_shared_secret_cb ikev2_ike_sa_process_intermediate_request_no_skeyid_continue;	/* type assertion */
 
 stf_status ikev2_ike_sa_process_intermediate_request_no_skeyid(struct ike_sa *ike,
 						       struct child_sa *child,
@@ -6274,7 +6274,7 @@ void ikev2_addr_change(struct state *st)
 	{
 		/* keep this DEBUG, if a libreswan log, too many false +ve */
 		address_buf b;
-		dbg("#%lu no local gatway to reach %s",
+		dbg("#%lu no local gateway to reach %s",
 		    st->st_serialno, str_address(&that.addr, &b));
 		break;
 	}

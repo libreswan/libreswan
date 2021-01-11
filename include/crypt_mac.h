@@ -26,7 +26,7 @@
  * See also ike_alg_init() for runtime check that the array is big
  * enough.
  *
- * XXX: the field names (noteably the counter intuitive .ptr) are
+ * XXX: the field names (notably the counter intuitive .ptr) are
  * chosen so that this structure is "hunk" like and works with hunk()
  * macros.
  *

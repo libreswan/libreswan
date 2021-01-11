@@ -12,7 +12,7 @@ $(builddir):
 # script transforms
 
 # Some Makefiles use $(buildir)/SCRIPT as the target while others use
-# just SCRIPT.  Accomodate both.
+# just SCRIPT.  Accommodate both.
 
 define transform_script
 	@echo  'IN' $< '->' $(builddir)/$@

@@ -249,7 +249,7 @@ static void init_netlink_route_fd(struct logger *logger)
 
 
 /*
- * init_netlink - Initialize the netlink inferface.  Opens the sockets and
+ * init_netlink - Initialize the netlink interface.  Opens the sockets and
  * then binds to the broadcast socket.
  */
 static void init_netlink(struct logger *logger)
