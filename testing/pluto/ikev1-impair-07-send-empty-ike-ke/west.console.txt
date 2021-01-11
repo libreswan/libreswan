@@ -11,7 +11,9 @@ west #
  echo "initdone"
 initdone
 west #
- # should fail fast
+ # initiator sends an empty KE payload
+west #
+ # responder should return invalid KE
 west #
  ipsec whack --impair ke-payload:empty
 west #
@@ -30,7 +32,11 @@ west #
 west #
  ipsec whack --impair none
 west #
- # expected to fail with a timeout
+ # initiator sends valid KE
+west #
+ # responder sends back empty KE, should be rejected
+west #
+ # (responder also has re-transmits disabled)
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -45,15 +51,8 @@ west #
 1v1 "westnet-eastnet-ipv4-psk" #3: sent Main Mode I2
 003 "westnet-eastnet-ipv4-psk" #3: KE has 0 byte DH public value; 256 required
 217 "westnet-eastnet-ipv4-psk" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-003 "westnet-eastnet-ipv4-psk" #3: KE has 0 byte DH public value; 256 required
-217 "westnet-eastnet-ipv4-psk" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-003 "westnet-eastnet-ipv4-psk" #3: KE has 0 byte DH public value; 256 required
-217 "westnet-eastnet-ipv4-psk" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 031 "westnet-eastnet-ipv4-psk" #3: STATE_MAIN_I2: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv1 message
 000 "westnet-eastnet-ipv4-psk" #3: starting keying attempt 2 of an unlimited number, but releasing whack
-west #
- echo done
-done
 west #
  grep INVALID_KEY_INFORMATION /tmp/pluto.log
 |    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
@@ -62,14 +61,6 @@ west #
 "westnet-eastnet-ipv4-psk" #1: received and ignored notification payload: INVALID_KEY_INFORMATION
 | complete v1 state transition with INVALID_KEY_INFORMATION
 "westnet-eastnet-ipv4-psk" #2: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-|    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
-| state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
-| complete v1 state transition with INVALID_KEY_INFORMATION
-"westnet-eastnet-ipv4-psk" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-|    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
-| state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
-| complete v1 state transition with INVALID_KEY_INFORMATION
-"westnet-eastnet-ipv4-psk" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 |    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
 | state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
 | complete v1 state transition with INVALID_KEY_INFORMATION
