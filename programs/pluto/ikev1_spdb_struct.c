@@ -1260,6 +1260,7 @@ bool ikev1_out_sa(pb_stream *outs,
 						      &trans_pbs))
 						goto fail;
 
+#ifdef HAVE_LABELED_IPSEC
 					if (st->st_connection->sec_label != NULL) {
 						pb_stream val_pbs;
 						struct sec_ctx uctx = {
@@ -1292,6 +1293,7 @@ bool ikev1_out_sa(pb_stream *outs,
 
 						close_output_pbs(&val_pbs);
 					}
+#endif
 				}
 
 				/*
