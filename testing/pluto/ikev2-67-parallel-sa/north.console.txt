@@ -21,12 +21,12 @@ north #
 1v2 "northnet-eastnet/0x2" #1: initiating IKEv2 connection
 000 "northnet-eastnet/0x1": queuing pending IPsec SA negotiating with 192.1.2.23 IKE SA #1 "northnet-eastnet/0x2"
 1v2 "northnet-eastnet/0x2" #1: sent IKE_SA_INIT request
-1v2 "northnet-eastnet/0x1" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "northnet-eastnet/0x1" #1: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "northnet-eastnet/0x1" #1: authenticated using authby=secret
+1v2 "northnet-eastnet/0x2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "northnet-eastnet/0x2" #1: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "northnet-eastnet/0x2" #1: authenticated using authby=secret
 002 "northnet-eastnet/0x1" #2: negotiated connection [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "northnet-eastnet/0x1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
-1v2 "northnet-eastnet/0x2" #3: sent IPsec Child req wait response
+1v2 "northnet-eastnet/0x2" #3: sent CREATE_CHILD_SA request for new IPsec SA
 002 "northnet-eastnet/0x2" #3: negotiated connection [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "northnet-eastnet/0x2" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
 north #
@@ -39,7 +39,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.3.254 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 north #
  taskset 0x2 ping -n -c 2 -I 192.0.3.254 192.0.2.254
-taskset: failed to set pid 1094's affinity: Invalid argument
+taskset: failed to set pid PID's affinity: Invalid argument
 north #
  ipsec whack --trafficstatus
 006 #2: "northnet-eastnet/0x1", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
