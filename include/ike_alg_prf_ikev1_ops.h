@@ -135,7 +135,7 @@ struct prf_ikev1_ops {
 					   struct logger *logger);
 
 	/*
-	 * Setion 5.5 - CHILD (IPSEC) SA keys & Quick Mode
+	 * Section 5.5 - CHILD (IPSEC) SA keys & Quick Mode
 	 *
 	 * If PFS is not needed, and KE payloads are not exchanged,
 	 * the new keying material is defined as

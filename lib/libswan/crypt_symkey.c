@@ -608,7 +608,7 @@ PK11SymKey *key_from_symkey_bytes(PK11SymKey *source_key,
  * target=CKM_CONCATENATE_BASE_AND_DATA it used
  * target=hasher-to-ckm(hasher).
  *
- * hasher-to-ckm maped hasher->common.alg_id to CMK vis: OAKLEY_MD5 ->
+ * hasher-to-ckm mapped hasher->common.alg_id to CMK vis: OAKLEY_MD5 ->
  * CKM_MD5; OAKLEY_SHA1 -> CKM_SHA_1; OAKLEY_SHA2_256 -> CKM_SHA256;
  * OAKLEY_SHA2_384 -> CKM_SHA384; OAKLEY_SHA2_512 -> CKM_SHA512; only
  * in the default case it would set target to 0x80000000????

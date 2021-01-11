@@ -428,7 +428,7 @@ static err_t format_dn(struct jambuf *buf, chunk_t dn,
 			 * - a space (' ' U+0020) character occurring
 			 *   at the end of the string;
 			 *
-			 * Again note the singlar - a space - I guess
+			 * Again note the singular - a space - I guess
 			 * the parser tosses a run of un-escaped
 			 * spaces before a separator.
 			 */

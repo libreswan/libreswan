@@ -52,7 +52,7 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 	/*
 	 * NOTE: intermediate_auth is only initialized to quiet GCC.
 	 * It doesn't understand that all uses and references are
-	 * guarded indentically, with ike->sa.st_intermediate_used.
+	 * guarded identically, with ike->sa.st_intermediate_used.
 	 * Using a local copy ike->sa.st_intermediate_used doesn't help.
 	 * DHR 2020 Sept 12; GCC 10.2.1
 	 */

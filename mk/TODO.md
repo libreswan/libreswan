@@ -95,7 +95,7 @@ The following are quirks in the test infrastructure:
 
 - have *init.sh et.al. scripts always succeed.  This means that
   commands like ping that are expected to fail (demonstrating no
-  conectivity) will need a "!" prefix so the failure is success.
+  connectivity) will need a "!" prefix so the failure is success.
 
 - simplify fips check
 

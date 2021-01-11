@@ -140,7 +140,7 @@ v3.30 (February 13, 2020)
 * IKEv2: Refuse SHA1 for RFC 7427 Digital Signatures as per RFC 8247 [Sahana]
 * IKEv2: Use IKEv2 fragment size values (not IKEv1) [Andrew]
 * IKEv2: On initiator, do not retransmit on IKE_AUTH processing failure [Paul]
-* IKEv1: Re-implement CVE-2019-10155 fix to prevent future occurances [Andrew]
+* IKEv1: Re-implement CVE-2019-10155 fix to prevent future occurences [Andrew]
 * IKEv1: do not assert on bad virtual private entry [Paul]
 * pluto: Simplify plutodebug= options to: base, cpu-usage, crypt, private and tmi
          (maps old values to new ones for compatibility) [Andrew]
@@ -301,7 +301,7 @@ v3.28 (May 20, 2019)
 * FIPS: Fixup FIPS_IKE_SA_LIFETIME_MAXIMUM to 24h as per NIST SP 800-77 [Paul]
 * FIPS: Force IKE maximum lifetime of 24h (default is 1h) [Paul/Vukasin]
 * XFRM: Use netlink for last remaining obsolete PF_KEY API API calls [Antony]
-* XFRM: Clean up and aadd logging to IPsec SA for nic-offload= [Hugh/Paul]
+* XFRM: Clean up and add logging to IPsec SA for nic-offload= [Hugh/Paul]
 * XFRM: Set default XFRM_LIFETIME_DEFAULT to 30 (was 300) [Paul]
 * libswan: Fix leaks in badly formed secrets/ppk_id [Vukasin Karadzic]
 * libswan: Don't crash on mangled PSK or PPK secrets [Vukasin Karadzic]

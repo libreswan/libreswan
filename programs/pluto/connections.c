@@ -398,7 +398,7 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 		this->has_id_wildcards = FALSE;
 	}
 
-	/* propogate this HOST_ADDR to that. */
+	/* propagate this HOST_ADDR to that. */
 	if (address_is_unset(&that->host_nexthop) ||
 	    address_is_any(&that->host_nexthop)) {
 		that->host_nexthop = this->host_addr;

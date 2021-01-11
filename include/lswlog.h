@@ -400,7 +400,7 @@ void lswbuf(struct jambuf *log)
  * When evaluating ASSERTION, do not wrap it in parentheses as it will
  * suppress the warning for 'foo = bar'.
  *
- * Because static analizer tools are easily confused, explicitly
+ * Because static analyzer tools are easily confused, explicitly
  * return the assertion result.
  */
 

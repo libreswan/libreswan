@@ -44,7 +44,7 @@ void lsw_nss_shutdown(void);
 
 /*
  * Any code that could call back into lsw_nss_get_password() needs to
- * pass in a context parameter - the logger is it.  Otherwize the
+ * pass in a context parameter - the logger is it.  Otherwise the
  * password code can't log!
  *
  * Just a wrapper but type checked.

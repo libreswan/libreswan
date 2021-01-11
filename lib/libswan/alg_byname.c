@@ -151,7 +151,7 @@ const struct ike_alg *encrypt_alg_byname(struct proposal_parser *parser,
 				    parser->protocol->name,
 				    encrypt->common.fqn,
 				    key_bit_length);
-				/* reverse: table in decending order with trailing zeros */
+				/* reverse: table in descending order with trailing zeros */
 				const char *sep = " ";
 				for (int i = elemsof(encrypt->key_bit_lengths) - 1; i >= 0; i--) {
 					if (encrypt->key_bit_lengths[i] > 0) {

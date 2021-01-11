@@ -20,7 +20,7 @@
  * IKETCP.
  *
  * XXX: Confusingly mode (TUNNEL, TRANSPORT) is also (understandably)
- * refered to as encapsulation :-(
+ * referred to as encapsulation :-(
  */
 
 #ifndef IP_ENCAP_H

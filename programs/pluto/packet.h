@@ -175,7 +175,7 @@ struct packet_byte_stream {
 	 * logger.
 	 *
 	 * IKEv1 uses the global reply_stream which is a sure way to
-	 * break any lifetime guarentees
+	 * break any lifetime guarantees
 	 *
 	 * The input stream logger starts out with MD but then
 	 * switches to a state so more complicated; and its lifetime

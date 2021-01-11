@@ -248,7 +248,7 @@ struct raw_iface *find_raw_ifaces6(struct logger *unused_logger UNUSED)
 		}
 		fclose(proc_sock);
 		/*
-		 * Sort the list by IPv6 address in assending order.
+		 * Sort the list by IPv6 address in ascending order.
 		 *
 		 * XXX: The code then inserts these interfaces in
 		 * _reverse_ order (why I don't know) - the loop-back

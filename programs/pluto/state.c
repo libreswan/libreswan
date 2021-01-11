@@ -985,7 +985,7 @@ void delete_state_tail(struct state *st)
 	}
 
 	/*
-	 * IKEv2 IKE failures are logged in the state transition conpletion.
+	 * IKEv2 IKE failures are logged in the state transition completion.
 	 * IKEv1 IKE failures do not go through a transition, so we catch
 	 * these in delete_state()
 	 */
@@ -1113,7 +1113,7 @@ void delete_state_tail(struct state *st)
 		 *
 		 * ??? in IKEv2, we should not immediately delete:
 		 * we should use an Informational Exchange to
-		 * co-ordinate deletion.
+		 * coordinate deletion.
 		 * ikev2_delete_out doesn't really accomplish this.
 		 */
 		send_delete(st);

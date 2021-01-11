@@ -2,7 +2,7 @@
   <term><emphasis remap='B'>enable-tcp</emphasis></term>
   <listitem>
 <para>
-Normally, IKE negotation and ESP encapsulation happens over UDP. This option enables
+Normally, IKE negotiation and ESP encapsulation happens over UDP. This option enables
 support for IKE and ESP over TCP as per RFC 8229. Acceptable values are 
 <emphasis remap='B'>no</emphasis>(the default), 
 <emphasis remap='B'>yes</emphasis> meaning only TCP will be used, or

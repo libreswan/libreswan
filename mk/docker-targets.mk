@@ -171,7 +171,7 @@ install-testing-deb-dep: install-deb-dep
 
 .PHONY: install-deb-dep
 # RUN_DEBS_OLD ?= $$(grep -qE 'jessie|xenial' /etc/os-release && echo "host iptables")
-# hard codde these two packages it fail on xenial and old ones.
+# hard code these two packages it fail on xenial and old ones.
 # on buster host is virtual package
 RUN_DEBS_OLD ?= bind9-host iptables
 RUN_DEBS ?= $$(test -f /usr/bin/apt-cache && apt-cache depends libreswan | awk '/Depends:/{print $$2}' | grep -v "<" | sort -u)
@@ -238,7 +238,7 @@ docker-image: dockerfile $(TWEAKS) docker-ssh-image docker-build
 	echo "done docker image tag $(DI_T) from $(DISTRO)-$(DISTRO_REL) with ssh"
 
 
-# NEW tragets to get docker handling 201906
+# NEW targets to get docker handling 201906
 .PHONY: docker-instance-name
 docker-instance-name:
 	echo $(DI_T)
