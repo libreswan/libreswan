@@ -37,6 +37,7 @@
 /* GCC magic for use in function definitions! */
 #ifdef GCC_LINT
 # define PRINTF_LIKE(n) __attribute__ ((format(printf, n, n + 1)))
+# define PRINTF_LIKE_VA(n) __attribute__((format(printf, n, 0)))
 # define STRFTIME_LIKE(n) __attribute__ ((format (strftime, n, 0)))
 # define NEVER_RETURNS __attribute__ ((noreturn))
 # define UNUSED __attribute__ ((unused))
