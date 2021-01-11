@@ -88,6 +88,7 @@ static void jam_wip_sa(struct jambuf *buf, const char *who,
 	}
 }
 
+PRINTF_LIKE_VA(4)
 static void jam_v2_msgid(struct jambuf *buf,
 			 struct ike_sa *ike, struct state *wip_sa,
 			 const char *fmt, va_list ap)

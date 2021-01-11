@@ -27,6 +27,7 @@
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=172051
  */
 
+PRINTF_LIKE_VA(2)
 static void jam_va_nss_error(struct jambuf *buf, const char *message, va_list ap)
 {
 	jam(buf, "NSS: ");

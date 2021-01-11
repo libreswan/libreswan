@@ -229,7 +229,7 @@ void llog(lset_t rc_flags,
 	  const char *format, ...) PRINTF_LIKE(3);
 
 void llog_va_list(lset_t rc_flags, const struct logger *logger,
-		 const char *message, va_list ap);
+		 const char *message, va_list ap) PRINTF_LIKE_VA(3);
 
 void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc_flags);
 

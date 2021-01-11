@@ -325,6 +325,7 @@ static unsigned log_limit(void)
 	}
 }
 
+PRINTF_LIKE_VA(3)
 static void rate_log_raw(const char *prefix,
 			 struct logger *logger,
 			 const char *message,
