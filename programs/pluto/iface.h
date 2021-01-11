@@ -30,6 +30,7 @@ struct raw_iface;
 struct iface_endpoint;
 struct show;
 struct iface_dev;
+struct logger;
 
 struct iface_packet {
 	ssize_t len;
@@ -49,7 +50,8 @@ struct iface_io {
 	bool send_keepalive;
 	const struct ip_protocol *protocol;
 	enum iface_status (*read_packet)(const struct iface_endpoint *ifp,
-					 struct iface_packet *);
+					 struct iface_packet *,
+					 struct logger *logger);
 	ssize_t (*write_packet)(const struct iface_endpoint *ifp,
 				const void *ptr, size_t len,
 				const ip_endpoint *remote_endpoint,

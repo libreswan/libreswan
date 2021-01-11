@@ -237,7 +237,8 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp,
 #endif
 
 static enum iface_status udp_read_packet(const struct iface_endpoint *ifp,
-					 struct iface_packet *packet)
+					 struct iface_packet *packet,
+					 struct logger *logger)
 {
 #ifdef MSG_ERRQUEUE
 	/*
@@ -312,11 +313,12 @@ static enum iface_status udp_read_packet(const struct iface_endpoint *ifp,
 	}
 
 	/*
-	 * Managed to decode the from address; fudge up a logger so
-	 * that it be used as log context prefix.
+	 * Managed to decode the from address; switch to a "from"
+	 * logger so that it be used as log context prefix.
 	 */
+	struct logger from_logger = logger_from(logger, &packet->sender);
+	logger = &from_logger;
 
-	struct logger logger[1] = { FROM_LOGGER(&packet->sender), }; /* event-handler */
 	if (packet->len < 0) {
 		llog(RC_LOG, logger, "recvfrom on %s failed "PRI_ERRNO,
 			    ifp->ip_dev->id_rname, pri_errno(packet_errno));

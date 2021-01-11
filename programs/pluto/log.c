@@ -444,6 +444,17 @@ const struct logger_object_vec logger_global_vec = {
 	.free_object = false,
 };
 
+struct logger logger_from(struct logger *global, const ip_address *from)
+{
+	struct logger logger = {
+		.where = HERE,
+		.global_whackfd = global->global_whackfd,
+		.object = from,
+		.object_vec = &logger_from_vec,
+	};
+	return logger;
+}
+
 static size_t jam_from_prefix(struct jambuf *buf, const void *object)
 {
 	size_t s = 0;

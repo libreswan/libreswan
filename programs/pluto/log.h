@@ -96,14 +96,7 @@ struct logger *string_logger(struct fd *whackfd, where_t where, const char *fmt,
 		.object = NULL,					\
 		.object_vec = &logger_global_vec,		\
 	}
-#define FROM_LOGGER(FROM) (struct logger)			\
-	{							\
-		.where = HERE,					\
-		.global_whackfd = null_fd,			\
-		.object = FROM,					\
-		.object_vec = &logger_from_vec, 		\
-	}
-
+struct logger logger_from(struct logger *outer, const ip_endpoint *endpoint); /*on-stack*/
 struct logger *alloc_logger(void *object, const struct logger_object_vec *vec, where_t where);
 struct logger *clone_logger(const struct logger *stack);
 void free_logger(struct logger **logp, where_t where);

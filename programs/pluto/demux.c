@@ -93,7 +93,7 @@ static enum iface_status read_message(const struct iface_endpoint *ifp,
 		.logger = logger,
 	};
 
-	enum iface_status status = ifp->io->read_packet(ifp, &packet);
+	enum iface_status status = ifp->io->read_packet(ifp, &packet, logger);
 	if (status != IFACE_OK) {
 		/* already logged */
 		return status;

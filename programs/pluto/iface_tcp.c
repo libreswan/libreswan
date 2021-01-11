@@ -58,14 +58,16 @@ static void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 				 void *arg);
 
 static enum iface_status iketcp_read_packet(const struct iface_endpoint *ifp,
-					    struct iface_packet *packet)
+					    struct iface_packet *packet,
+					    struct logger *logger)
 {
 	/*
 	 * At this point there's no logger so log it against the
 	 * remote endpoint determined earlier.
 	 */
 	/* XXX: pick up packet.logger.global_whackfd? */
-	struct logger logger[1] = { FROM_LOGGER(&ifp->iketcp_remote_endpoint), }; /* event-handler */
+	struct logger from_logger = logger_from(logger, &ifp->iketcp_remote_endpoint);
+	logger = &from_logger;
 
 	/*
 	 * Reads the entire packet _without_ length, if buffer isn't
@@ -186,10 +188,13 @@ static void iketcp_server_timeout(evutil_socket_t unused_fd UNUSED,
 				  void *arg UNUSED)
 {
 	struct iface_endpoint *ifp = arg;
-	struct logger logger = FROM_LOGGER(&ifp->iketcp_remote_endpoint); /* event-handler */
-	llog(RC_LOG, &logger,
-		    "TCP: socket %d timed out before first message received",
-		    ifp->fd);
+	/* build up the logger using the stack */
+	struct logger global_logger = GLOBAL_LOGGER(null_fd); /* event-handler */
+	struct logger from_logger = logger_from(&global_logger, &ifp->iketcp_remote_endpoint);
+	struct logger *logger = &from_logger;
+	llog(RC_LOG, logger,
+	     "TCP: socket %d timed out before first message received",
+	     ifp->fd);
 	free_any_iface_port(&ifp);
 }
 
@@ -373,7 +378,10 @@ static void iketcp_message_listener_cb(evutil_socket_t unused_fd UNUSED,
 				       void *arg)
 {
 	struct iface_endpoint *ifp = arg;
-	struct logger logger[1] = { FROM_LOGGER(&ifp->iketcp_remote_endpoint), }; /* event-handler */
+	/* build the logger on the stack */
+	struct logger global_logger = GLOBAL_LOGGER(null_fd); /* event-handler */
+	struct logger from_logger = logger_from(&global_logger, &ifp->iketcp_remote_endpoint);
+	struct logger *logger = &from_logger;
 
 	switch (ifp->iketcp_state) {
 
@@ -681,8 +689,10 @@ void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 			  struct sockaddr *sockaddr, int sockaddr_len,
 			  void *arg)
 {
-	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), }; /* event-handler */
 	struct iface_endpoint *bind_ifp = arg;
+
+	struct logger global_logger = GLOBAL_LOGGER(null_fd); /* event-handler */
+	struct logger *logger = &global_logger;
 
 	ip_sockaddr sa = {
 		.len = sockaddr_len,
@@ -697,6 +707,8 @@ void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 		return;
 	}
 
+	struct logger from_logger = logger_from(logger, &tcp_remote_endpoint);
+	logger = &from_logger;
 	llog(RC_LOG, logger, "TCP: accepting connection");
 
 	struct iface_endpoint *ifp = alloc_thing(struct iface_endpoint, "TCP iface responder");
