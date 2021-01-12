@@ -32,64 +32,32 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <fcntl.h>
-#include <event2/bufferevent.h>		/* TCP: for bufferevent_free()? */
-
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
-#include "id.h"
-#include "x509.h"
-#include "certs.h"
 #include "pam_auth.h"		/* for pamauth_cancel() */
 #include "connections.h"	/* needs id.h */
 #include "state.h"
 #include "state_db.h"
 #include "ikev1_msgid.h"
-#include "kernel.h"	/* needs connections.h */
 #include "log.h"
-#include "packet.h"	/* so we can calculate sizeof(struct isakmp_hdr) */
-#include "keys.h"	/* for free_public_key */
 #include "rnd.h"
-#include "timer.h"
-#include "whack.h"
 #include "demux.h"	/* needs packet.h */
 #include "pending.h"
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
-#include "crypto.h"
 #include "crypt_symkey.h"
 #include "ikev2.h"
-#include "ikev2_redirect.h"
 #include "secrets.h"    	/* for pubkey_delref() */
 #include "enum_names.h"
 #include "crypt_dh.h"
 #include "hostpair.h"
-#include "initiate.h"
 #include "kernel.h"
 #include "kernel_xfrm_interface.h"
 #include "iface.h"
 #include "ikev1_send.h"		/* for free_v1_messages() */
 #include "ikev2_send.h"		/* for free_v2_messages() */
-#include "nat_traversal.h"	/* for NAT_T_DETECTED during revival */
-#include "revival.h"
-
-#include <pk11pub.h>
-#include <keyhi.h>
-
-#include "ikev2_msgid.h"
 #include "pluto_stats.h"
-#include "ikev2_ipseckey.h"
-#include "ip_address.h"
 #include "ip_info.h"
-#include "ip_selector.h"
+#include "revival.h"
 
 bool uniqueIDs = FALSE;
 
