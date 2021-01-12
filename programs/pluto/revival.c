@@ -239,3 +239,10 @@ void init_revival(void)
 {
 	init_oneshot_timer(EVENT_REVIVE_CONNS, revive_conns);
 }
+
+void free_revivals(void)
+{
+	while (revivals != NULL) {
+		free_revival(&revivals);
+	}
+}

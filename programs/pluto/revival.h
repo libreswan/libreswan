@@ -22,5 +22,6 @@ struct connection;
 
 void add_revival_if_needed(struct state *st, struct connection *connection);
 void init_revival(void);
+void free_revivals(void);
 
 #endif

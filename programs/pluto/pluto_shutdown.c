@@ -50,6 +50,7 @@
 #include "kernel.h"		/* for kernel_ops.shutdown() and free_kernel() */
 #include "virtual_ip.h"		/* for free_virtual_ip() */
 #include "server.h"		/* for free_server() */
+#include "revival.h"		/* for free_revivals() */
 #ifdef USE_DNSSEC
 #include "dnssec.h"		/* for unbound_ctx_free() */
 #endif
@@ -95,6 +96,11 @@ static void exit_prologue(enum pluto_exit_code exit_code, bool leave_state)
  #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_STOPPING, exit_code);
  #endif
+
+	/*
+	 * don't try to bring back existing connections.
+	 */
+	free_revivals();
 }
 
 void exit_epilogue(void)
