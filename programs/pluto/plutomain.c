@@ -59,6 +59,7 @@
 #include "enum_names.h"
 #include "virtual_ip.h"
 #include "state_db.h"		/* for init_state_db() */
+#include "revival.h"		/* for init_revival() */
 #include "connection_db.h"	/* for connection_state_db() */
 #include "nat_traversal.h"
 #include "ike_alg.h"
@@ -1724,6 +1725,7 @@ int main(int argc, char **argv)
 #endif
 	init_ikev2();
 	init_states();
+	init_revival();
 	init_connections();
 	init_host_pair();
 	init_ike_alg(logger);

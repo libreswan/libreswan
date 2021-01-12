@@ -79,6 +79,7 @@
 #include "ikev1_send.h"		/* for free_v1_messages() */
 #include "ikev2_send.h"		/* for free_v2_messages() */
 #include "nat_traversal.h"	/* for NAT_T_DETECTED during revival */
+#include "revival.h"
 
 #include <pk11pub.h>
 #include <keyhi.h>
@@ -146,158 +147,6 @@ const struct finite_state *finite_states[STATE_IKE_ROOF] = {
 #endif
 	[STATE_IKEv2_ROOF] &state_ikev2_roof,
 };
-
-/*
- * Revival mechanism: keep track of connections
- * that should be kept up, even though all their
- * states have been deleted.
- *
- * We record the connection names.
- * Each name is recorded only once.
- *
- * XXX: This functionality totally overlaps both "initiate" and
- * "pending" and should be merged (however, this simple code might
- * prove to be a better starting point).
- */
-
-struct revival {
-	co_serial_t serialno;
-	struct revival *next;
-};
-
-static struct revival *revivals = NULL;
-
-/*
- * XXX: Return connection C's revival object's link, if found.  If the
- * connection C can't be found, then the address of the revival list's
- * tail is returned.  Perhaps, exiting the loop and returning NULL
- * would be more obvious.
- */
-static struct revival **find_revival(const struct connection *c)
-{
-	for (struct revival **rp = &revivals; ; rp = &(*rp)->next) {
-		if (*rp == NULL || co_serial_cmp((*rp)->serialno, ==, c->serialno)) {
-			return rp;
-		}
-	}
-}
-
-/*
- * XXX: In addition to freeing RP (and killing the pointer), this
- * "free" function has the side effect of unlinks RP from the revival
- * list.  Perhaps free*() isn't the best name.
- */
-static void free_revival(struct revival **rp)
-{
-	struct revival *r = *rp;
-	*rp = r->next;
-	pfree(r);
-}
-
-void flush_revival(const struct connection *c)
-{
-	struct revival **rp = find_revival(c);
-
-	if (*rp == NULL) {
-		dbg("flush revival: connection '%s' with serial "PRI_CO" wasn't on the list",
-		    c->name, pri_co(c->serialno));
-	} else {
-		dbg("flush revival: connection '%s' with serial "PRI_CO" revival flushed",
-		    c->name, pri_co(c->serialno));
-		free_revival(rp);
-	}
-}
-
-static void add_revival(struct state *st, struct connection *c)
-{
-	if (*find_revival(c) == NULL) {
-		struct revival *r = alloc_thing(struct revival,
-						"revival struct");
-
-		r->serialno = c->serialno;
-		r->next = revivals;
-		revivals = r;
-		int delay = c->temp_vars.revive_delay;
-		dbg("add revival: connection '%s' (serial "PRI_CO") added to the list and scheduled for %d seconds",
-		    c->name, pri_co(c->serialno), delay);
-		c->temp_vars.revive_delay = min(delay + REVIVE_CONN_DELAY,
-						REVIVE_CONN_DELAY_MAX);
-		struct connection *c = st->st_connection;
-		if (IS_IKE_SA_ESTABLISHED(st) &&
-		    c->kind == CK_INSTANCE &&
-		    LIN(POLICY_UP, c->policy)) {
-			/*
-			 * why isn't the host_port set by instantiation ?
-			 *
-			 * XXX: it is, but it is set to 500; better
-			 * question is why isn't the host_port updated
-			 * once things have established and nat has
-			 * been detected.
-			 */
-			dbg("updating connection for remote port %d", st->st_remote_endpoint.hport);
-			c->spd.that.raw.host.ikeport = st->st_remote_endpoint.hport; /* pretend we were given a port */
-			dbg("%s() %s.host_port: %u->%u (that)", __func__, c->spd.that.leftright,
-			    c->spd.that.host_port, st->st_remote_endpoint.hport);
-			c->spd.that.host_port = st->st_remote_endpoint.hport;
-			/* need to force the encap port */
-			c->spd.that.host_encap = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED ||
-						  st->st_interface->protocol == &ip_protocol_tcp);
-		}
-		/*
-		 * XXX: Schedule the next revival using this
-		 * connection's revival delay and not the most urgent
-		 * connection's revival delay.  Trying to fix this
-		 * here just is annoying and probably of marginal
-		 * benefit: it is something better handled with a
-		 * proper connection event so that the event loop deal
-		 * with all the math (this code would then be
-		 * deleted); and would encroach even further on
-		 * "initiate" and "pending" functionality.
-		 */
-		schedule_oneshot_timer(EVENT_REVIVE_CONNS, deltatime(delay));
-
-		if (c->kind == CK_INSTANCE && c->sa_keying_tries == 0) {
-				dbg("limiting instance revival attempts to 2 keyingtries");
-				c->sa_keying_tries = 2;
-		}
-	}
-}
-
-void revive_conns(struct logger *logger)
-{
-	/*
-	 * XXX: Revive all listed connections regardless of their
-	 * DELAY.  See note above in add_revival().
-	 *
-	 * XXX: since this is called from the event loop, the global
-	 * whack_log_fd is invalid so specifying RC isn't exactly
-	 * useful.
-	 */
-	dbg("revive_conns() called");
-	while (revivals != NULL) {
-		struct connection *c = connection_by_serialno(revivals->serialno);
-		if (c == NULL) {
-			llog(RC_UNKNOWN_NAME, logger,
-				    "failed to initiate connection "PRI_CO" which received a Delete/Notify but must remain up per local policy; connection no longer exists", pri_co(revivals->serialno));
-		} else {
-			llog(RC_LOG, c->logger,
-			     "initiating connection '%s' with serial "PRI_CO" which received a Delete/Notify but must remain up per local policy",
-			     c->name, pri_co(c->serialno));
-			if (!initiate_connection(c, NULL, true/*background*/)) {
-				llog(RC_FATAL, c->logger,
-				     "failed to initiate connection");
-			}
-		}
-		/*
-		 * Danger! The free_revival() call removes head,
-		 * replacing it with the next in the list.
-		 */
-		free_revival(&revivals);
-	}
-	dbg("revive_conns() done");
-}
-
-/* end of revival mechanism */
 
 void lswlog_finite_state(struct jambuf *buf, const struct finite_state *fs)
 {
@@ -660,7 +509,6 @@ void init_states(void)
 		passert(s->kind == kind);
 		passert(s->category != CAT_UNKNOWN);
 	}
-	init_oneshot_timer(EVENT_REVIVE_CONNS, revive_conns);
 }
 
 void delete_state_by_id_name(struct state *st, void *name)
@@ -1168,31 +1016,7 @@ void delete_state_tail(struct state *st)
 	 * is.
 	 * ??? What problem is this referring to?
 	 */
-	if ((c->policy & (POLICY_UP | POLICY_DONT_REKEY)) == POLICY_UP &&
-	    IS_IKE_SA(st)) {
-		/* XXX: break it down so it can be logged */
-		so_serial_t newer_sa = get_newer_sa_from_connection(st);
-		if (state_by_serialno(newer_sa) != NULL) {
-			/*
-			 * Presumably this is an old state that has
-			 * either been rekeyed or replaced.
-			 *
-			 * XXX: Should not even be here though!  The
-			 * old IKE SA should be going through delete
-			 * state transition that, at the end, cleanly
-			 * deletes it with none of this guff.
-			 */
-			dbg("IKE delete_state() for #%lu and connection '%s' that is supposed to remain up;  not a problem - have newer #%lu",
-			    st->st_serialno, c->name, newer_sa);
-		} else if (impair.revival) {
-			log_state(RC_LOG, st,
-				  "IMPAIR: skipping revival of connection that is supposed to remain up");
-		} else {
-			log_state(RC_LOG, st,
-				  "deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS");
-			add_revival(st, c);
-		}
-	}
+	add_revival_if_needed(st, c);
 
 	/*
 	 * fake a state change here while we are still associated with a
