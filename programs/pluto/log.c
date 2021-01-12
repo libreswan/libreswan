@@ -600,7 +600,7 @@ struct logger *alloc_logger(void *object, const struct logger_object_vec *vec, w
 	return l;
 }
 
-struct logger *clone_logger(const struct logger *stack)
+struct logger *clone_logger(const struct logger *stack, where_t where)
 {
 	/*
 	 * Convert the dynamicically generated OBJECT prefix into an
@@ -635,7 +635,7 @@ struct logger *clone_logger(const struct logger *stack)
 	};
 	/* and clone it */
 	struct logger *l = clone_thing(heap, "heap logger");
-	dbg_alloc("clone logger", l, HERE);
+	dbg_alloc("clone logger", l, where);
 	return l;
 }
 

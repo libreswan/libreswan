@@ -360,7 +360,7 @@ void submit_task(const struct logger *logger,
 	pexpect(st->st_offloaded_task == NULL);
 	st->st_offloaded_task = job;
 	st->st_v1_offloaded_task_in_background = false;
-	job->logger = clone_logger(logger);
+	job->logger = clone_logger(logger, HERE);
 	dbg_job(job, "adding job to queue");
 
 	/*

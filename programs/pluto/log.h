@@ -98,7 +98,7 @@ struct logger *string_logger(struct fd *whackfd, where_t where, const char *fmt,
 	}
 struct logger logger_from(struct logger *outer, const ip_endpoint *endpoint); /*on-stack*/
 struct logger *alloc_logger(void *object, const struct logger_object_vec *vec, where_t where);
-struct logger *clone_logger(const struct logger *stack);
+struct logger *clone_logger(const struct logger *stack, where_t where);
 void free_logger(struct logger **logp, where_t where);
 
 #define log_verbose(RC_FLAGS, LOGGER, FORMAT, ...)			\

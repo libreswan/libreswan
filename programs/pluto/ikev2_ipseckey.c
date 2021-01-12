@@ -805,7 +805,7 @@ static struct p_dns_req *qry_st_init(struct state *st,
 
 	struct p_dns_req *p = alloc_thing(struct p_dns_req, "id remote dns");
 	p->so_serial = st->st_serialno;
-	p->logger = clone_logger(st->st_logger);
+	p->logger = clone_logger(st->st_logger, HERE);
 	p->qname = clone_str(qname, "dns qname");
 
 	p->log_buf = alloc_printf("IKEv2 DNS query -- %s IN %s --",

@@ -210,7 +210,7 @@ void delete_connection(struct connection *c, bool relations)
 	}
 	release_connection(c, relations, whackfd); /* won't delete c */
 	/* make a copy of the logger so it works even after the delete */
-	struct logger *logger = clone_logger(c->logger); /* must-free */
+	struct logger *logger = clone_logger(c->logger, HERE); /* must-free */
 	discard_connection(c, true/*connection_valid*/, logger);
 	free_logger(&logger, HERE);
 }
@@ -2081,7 +2081,7 @@ void add_connection(struct fd *whackfd, const struct whack_message *wm)
 
 	if (!extract_connection(wm, c)) {
 		/* already logged */
-		struct logger *logger = clone_logger(c->logger);
+		struct logger *logger = clone_logger(c->logger, HERE);
 		discard_connection(c, false/*not-valid*/, logger);
 		free_logger(&logger, HERE);
 		return;
