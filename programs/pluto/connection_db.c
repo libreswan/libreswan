@@ -121,12 +121,7 @@ static void add_connection_to_db(struct connection *c)
 static struct connection *finish_connection(struct connection *c, const char *name, where_t where)
 {
 	c->name = clone_str(name, __func__);
-	struct logger logger = {
-		.where = where,
-		.object = c,
-		.object_vec = &logger_connection_vec,
-	};
-	c->logger = clone_thing(logger, "connection logger");
+	c->logger = alloc_logger(c, &logger_connection_vec, where);
 	/* logger is GO! */
 	static co_serial_t connection_serialno;
 	c->serial_from = c->serialno;
