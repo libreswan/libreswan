@@ -216,15 +216,25 @@ void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status, bool leave_
 	 */
 }
 
+static void server_stopped_callback(int r) NEVER_RETURNS;
+
 void server_helpers_stopped_callback(struct state *st UNUSED, void *context UNUSED)
 {
-	stop_server();
+	/*
+	 * As libevent to shutdown the event-loop, once completed
+	 * SERVER_STOPPED_CALLBACK is called.
+	 *
+	 * XXX: don't hardwire the callback - passing it in as an
+	 * explicit parameter hopefully makes following the code flow
+	 * a little easier(?).
+	 */
+	stop_server(server_stopped_callback);
 	/*
 	 * server_stopped() is called once the event-loop exits.
 	 */
 }
 
-void server_stopped(int r)
+void server_stopped_callback(int r)
 {
 	dbg("event loop exited: %s",
 	    r < 0 ? "an error occured" :

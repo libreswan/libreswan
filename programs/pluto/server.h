@@ -67,8 +67,10 @@ extern bool pluto_drop_oppo_null;
 extern void show_debug_status(struct show *s);
 extern void show_fips_status(struct show *s);
 extern void run_server(char *conffile, struct logger *logger) NEVER_RETURNS;
-extern void stop_server(void);
-extern void server_stopped(int r) NEVER_RETURNS; /* see pluto_shutdown.c */
+
+/* XXX: grr, need pointer to function else NEVER_RETURNS is ignored */
+typedef void (*server_stopped_cb)(int r) NEVER_RETURNS;
+extern void stop_server(server_stopped_cb cb);
 
 typedef void event_callback_routine(evutil_socket_t, const short, void *);
 

@@ -1023,7 +1023,12 @@ void init_server(struct logger *logger)
 /*
  * listens for incoming ISAKMP packets and Whack messages, and handles
  * timer events.
+ *
+ * On shutdown, calls SERVER_STOPPED() (which was hopefully set by
+ * shutdown code).
  */
+
+static server_stopped_cb server_stopped;
 
 void run_server(char *conffile, struct logger *logger)
 {
@@ -1117,8 +1122,13 @@ void run_server(char *conffile, struct logger *logger)
 	server_stopped(r);
 }
 
-void stop_server(void)
+/*
+ * Indicate to libevent that the event-loop should be shutdown.  Once
+ * shutdown has completed CB is called.
+ */
+void stop_server(server_stopped_cb cb)
 {
+	server_stopped = cb;
 	event_base_loopbreak(pluto_eb);
 }
 
