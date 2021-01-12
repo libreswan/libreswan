@@ -209,9 +209,9 @@ static diag_t nss_ecp_calc_shared_secret(const struct dh_desc *group,
 	 * CKM_CONCATENATE_BASE_AND_KEY - work around this by
 	 * returning a copy of the key.
 	 */
-	PK11SymKey *g_ir = key_from_symkey_bytes(temp, 0, sizeof_symkey(temp), HERE, logger);
+	*shared_secret = key_from_symkey_bytes(temp, 0, sizeof_symkey(temp), HERE, logger);
 	if (DBGP(DBG_BASE)) {
-		DBG_symkey(logger, "newref ", "ecp-key", g_ir);
+		DBG_symkey(logger, "newref ", "ecp-key", *shared_secret);
 	}
 
 	release_symkey(__func__, "temp", &temp);
