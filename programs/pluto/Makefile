@@ -190,6 +190,7 @@ OBJS += test_buffer.o
 OBJS += pending.o crypto.o defs.o
 OBJS += ike_spi.o
 OBJS += foodgroups.o log.o state.o plutomain.o plutoalg.o
+OBJS += revival.o
 OBJS += server.o
 OBJS += server_fork.o
 OBJS += server_pool.o
