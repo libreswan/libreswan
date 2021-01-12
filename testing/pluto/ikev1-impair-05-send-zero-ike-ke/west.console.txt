@@ -22,8 +22,7 @@ west #
 1v1 "westnet-eastnet-ipv4-psk" #1: sent Main Mode request
 002 "westnet-eastnet-ipv4-psk" #1: IMPAIR: sending bogus KE (g^x) == 0 value to break DH calculations
 1v1 "westnet-eastnet-ipv4-psk" #1: sent Main Mode I2
-217 "westnet-eastnet-ipv4-psk" #1: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-217 "westnet-eastnet-ipv4-psk" #1: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
+003 "westnet-eastnet-ipv4-psk" #1: NSS: shared key calculation using MODP failed: SEC_ERROR 19 (0x13): security library: memory allocation failure.
 217 "westnet-eastnet-ipv4-psk" #1: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 002 "westnet-eastnet-ipv4-psk" #1: deleting state (STATE_MAIN_I2) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
@@ -43,8 +42,7 @@ west #
 002 "westnet-eastnet-ipv4-psk" #3: initiating IKEv1 Main Mode connection
 1v1 "westnet-eastnet-ipv4-psk" #3: sent Main Mode request
 1v1 "westnet-eastnet-ipv4-psk" #3: sent Main Mode I2
-217 "westnet-eastnet-ipv4-psk" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-217 "westnet-eastnet-ipv4-psk" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
+003 "westnet-eastnet-ipv4-psk" #3: NSS: shared key calculation using MODP failed: SEC_ERROR 19 (0x13): security library: memory allocation failure.
 217 "westnet-eastnet-ipv4-psk" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 002 "westnet-eastnet-ipv4-psk" #3: deleting state (STATE_MAIN_I2) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk" #3: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
@@ -58,23 +56,7 @@ west #
 |    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
 | state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
 | complete v1 state transition with INVALID_KEY_INFORMATION
-"westnet-eastnet-ipv4-psk" #1: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-|    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
-| state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
-| complete v1 state transition with INVALID_KEY_INFORMATION
-"westnet-eastnet-ipv4-psk" #1: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-|    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
-| state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
-| complete v1 state transition with INVALID_KEY_INFORMATION
 "westnet-eastnet-ipv4-psk" #2: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-|    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
-| state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
-| complete v1 state transition with INVALID_KEY_INFORMATION
-"westnet-eastnet-ipv4-psk" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-|    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
-| state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
-| complete v1 state transition with INVALID_KEY_INFORMATION
-"westnet-eastnet-ipv4-psk" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 |    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
 | state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
 | complete v1 state transition with INVALID_KEY_INFORMATION
