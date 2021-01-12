@@ -38,6 +38,7 @@
 #include "iface.h"
 #include "initiate.h"			/* for initiate_connection() */
 #include "revival.h"
+#include "state_db.h"
 
 /*
  * Revival mechanism: keep track of connections
@@ -100,59 +101,98 @@ void flush_revival(const struct connection *c)
 	}
 }
 
-void add_revival(struct state *st, struct connection *c)
+void add_revival_if_needed(struct state *st, struct connection *c)
 {
-	if (*find_revival(c) == NULL) {
-		struct revival *r = alloc_thing(struct revival,
-						"revival struct");
-
-		r->serialno = c->serialno;
-		r->next = revivals;
-		revivals = r;
-		int delay = c->temp_vars.revive_delay;
-		dbg("add revival: connection '%s' (serial "PRI_CO") added to the list and scheduled for %d seconds",
-		    c->name, pri_co(c->serialno), delay);
-		c->temp_vars.revive_delay = min(delay + REVIVE_CONN_DELAY,
-						REVIVE_CONN_DELAY_MAX);
-		struct connection *c = st->st_connection;
-		if (IS_IKE_SA_ESTABLISHED(st) &&
-		    c->kind == CK_INSTANCE &&
-		    LIN(POLICY_UP, c->policy)) {
-			/*
-			 * why isn't the host_port set by instantiation ?
-			 *
-			 * XXX: it is, but it is set to 500; better
-			 * question is why isn't the host_port updated
-			 * once things have established and nat has
-			 * been detected.
-			 */
-			dbg("updating connection for remote port %d", st->st_remote_endpoint.hport);
-			c->spd.that.raw.host.ikeport = st->st_remote_endpoint.hport; /* pretend we were given a port */
-			dbg("%s() %s.host_port: %u->%u (that)", __func__, c->spd.that.leftright,
-			    c->spd.that.host_port, st->st_remote_endpoint.hport);
-			c->spd.that.host_port = st->st_remote_endpoint.hport;
-			/* need to force the encap port */
-			c->spd.that.host_encap = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED ||
-						  st->st_interface->protocol == &ip_protocol_tcp);
-		}
-		/*
-		 * XXX: Schedule the next revival using this
-		 * connection's revival delay and not the most urgent
-		 * connection's revival delay.  Trying to fix this
-		 * here just is annoying and probably of marginal
-		 * benefit: it is something better handled with a
-		 * proper connection event so that the event loop deal
-		 * with all the math (this code would then be
-		 * deleted); and would encroach even further on
-		 * "initiate" and "pending" functionality.
-		 */
-		schedule_oneshot_timer(EVENT_REVIVE_CONNS, deltatime(delay));
-
-		if (c->kind == CK_INSTANCE && c->sa_keying_tries == 0) {
-				dbg("limiting instance revival attempts to 2 keyingtries");
-				c->sa_keying_tries = 2;
-		}
+	if (!IS_IKE_SA(st)) {
+		dbg("skipping revival: not an IKE SA");
+		return;
 	}
+
+	if ((c->policy & POLICY_UP) == LEMPTY) {
+		dbg("skipping revival: POLICY_UP disabled");
+		return;
+	}
+
+	if ((c->policy & POLICY_DONT_REKEY) != LEMPTY) {
+		dbg("skipping revival: POLICY_DONT_REKEY enabled");
+		return;
+	}
+
+	/* XXX: break it down so it can be logged */
+	so_serial_t newer_sa = get_newer_sa_from_connection(st);
+	if (state_by_serialno(newer_sa) != NULL) {
+		/*
+		 * Presumably this is an old state that has either
+		 * been rekeyed or replaced.
+		 *
+		 * XXX: Should not even be here though!  The old IKE
+		 * SA should be going through delete state transition
+		 * that, at the end, cleanly deletes it with none of
+		 * this guff.
+		 */
+		dbg("skipping revival: IKE delete_state() for #%lu and connection '%s' that is supposed to remain up;  not a problem - have newer #%lu",
+		    st->st_serialno, c->name, newer_sa);
+		return;
+	}
+
+	if (impair.revival) {
+		log_state(RC_LOG, st,
+			  "IMPAIR: skipping revival of connection that is supposed to remain up");
+		return;
+	}
+
+	if (*find_revival(c) != NULL) {
+		log_state(RC_LOG, st, "deleting IKE SA but connection is supposed to remain up; EVENT_REVIVE_CONNS already scheduled");
+		return;
+	}
+
+	log_state(RC_LOG, st, "deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS");
+
+	struct revival *r = alloc_thing(struct revival,
+					"revival struct");
+	r->serialno = c->serialno;
+	r->next = revivals;
+	revivals = r;
+	int delay = c->temp_vars.revive_delay;
+	dbg("add revival: connection '%s' (serial "PRI_CO") added to the list and scheduled for %d seconds",
+	    c->name, pri_co(c->serialno), delay);
+	c->temp_vars.revive_delay = min(delay + REVIVE_CONN_DELAY,
+						REVIVE_CONN_DELAY_MAX);
+	if (IS_IKE_SA_ESTABLISHED(st) &&
+	    c->kind == CK_INSTANCE &&
+	    LIN(POLICY_UP, c->policy)) {
+		/*
+		 * why isn't the host_port set by instantiation ?
+		 *
+		 * XXX: it is, but it is set to 500; better question
+		 * is why isn't the host_port updated once things have
+		 * established and nat has been detected.
+		 */
+		dbg("updating connection for remote port %d", st->st_remote_endpoint.hport);
+		c->spd.that.raw.host.ikeport = st->st_remote_endpoint.hport; /* pretend we were given a port */
+		dbg("%s() %s.host_port: %u->%u (that)", __func__, c->spd.that.leftright,
+		    c->spd.that.host_port, st->st_remote_endpoint.hport);
+		c->spd.that.host_port = st->st_remote_endpoint.hport;
+		/* need to force the encap port */
+		c->spd.that.host_encap = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED ||
+					  st->st_interface->protocol == &ip_protocol_tcp);
+	}
+
+	if (c->kind == CK_INSTANCE && c->sa_keying_tries == 0) {
+		dbg("limiting instance revival attempts to 2 keyingtries");
+		c->sa_keying_tries = 2;
+	}
+	/*
+	 * XXX: Schedule the next revival using this connection's
+	 * revival delay and not the most urgent connection's revival
+	 * delay.  Trying to fix this here just is annoying and
+	 * probably of marginal benefit: it is something better
+	 * handled with a proper connection event so that the event
+	 * loop deal with all the math (this code would then be
+	 * deleted); and would encroach even further on "initiate" and
+	 * "pending" functionality.
+	 */
+	schedule_oneshot_timer(EVENT_REVIVE_CONNS, deltatime(delay));
 }
 
 static void revive_conns(struct logger *logger)

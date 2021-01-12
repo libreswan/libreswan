@@ -1016,31 +1016,7 @@ void delete_state_tail(struct state *st)
 	 * is.
 	 * ??? What problem is this referring to?
 	 */
-	if ((c->policy & (POLICY_UP | POLICY_DONT_REKEY)) == POLICY_UP &&
-	    IS_IKE_SA(st)) {
-		/* XXX: break it down so it can be logged */
-		so_serial_t newer_sa = get_newer_sa_from_connection(st);
-		if (state_by_serialno(newer_sa) != NULL) {
-			/*
-			 * Presumably this is an old state that has
-			 * either been rekeyed or replaced.
-			 *
-			 * XXX: Should not even be here though!  The
-			 * old IKE SA should be going through delete
-			 * state transition that, at the end, cleanly
-			 * deletes it with none of this guff.
-			 */
-			dbg("IKE delete_state() for #%lu and connection '%s' that is supposed to remain up;  not a problem - have newer #%lu",
-			    st->st_serialno, c->name, newer_sa);
-		} else if (impair.revival) {
-			log_state(RC_LOG, st,
-				  "IMPAIR: skipping revival of connection that is supposed to remain up");
-		} else {
-			log_state(RC_LOG, st,
-				  "deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS");
-			add_revival(st, c);
-		}
-	}
+	add_revival_if_needed(st, c);
 
 	/*
 	 * fake a state change here while we are still associated with a
