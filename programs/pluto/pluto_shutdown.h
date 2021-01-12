@@ -33,7 +33,6 @@ enum pluto_exit_code;
  */
 
 extern volatile bool exiting_pluto;
-extern volatile bool pluto_leave_state;
 
 /*
  * "idle" then exit the event-loop, and then exit pluto.

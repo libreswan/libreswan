@@ -57,8 +57,8 @@
 #include "impair_message.h"	/* for free_impair_message() */
 
 volatile bool exiting_pluto = false;
-volatile bool pluto_leave_state = false;
-static enum pluto_exit_code exit_code;
+static bool pluto_leave_state = false;
+static enum pluto_exit_code pluto_exit_code;
 
 /*
  * leave pluto, with status.
@@ -70,9 +70,16 @@ static enum pluto_exit_code exit_code;
  * 10 lock file exists
  */
 
-static void exit_tail(void) NEVER_RETURNS;
+static void exit_prologue(enum pluto_exit_code code, bool leave_state);
+static void exit_epilogue(void) NEVER_RETURNS;
 
-void libreswan_exit(enum pluto_exit_code rc)
+void libreswan_exit(enum pluto_exit_code exit_code)
+{
+	exit_prologue(exit_code, /*leave-state?*/false);
+	exit_epilogue();
+}
+
+static void exit_prologue(enum pluto_exit_code exit_code, bool leave_state)
 {
 	/*
 	 * Tell the world, well actually all the threads, that pluto
@@ -81,17 +88,16 @@ void libreswan_exit(enum pluto_exit_code rc)
 	 * this instead.
 	 */
 	exiting_pluto = true;
-	exit_code = rc;
+	pluto_leave_state = leave_state;
+	pluto_exit_code = exit_code;
 
 	/* needed because we may be called in odd state */
  #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_STOPPING, exit_code);
  #endif
-
-	exit_tail();
 }
 
-void exit_tail(void)
+void exit_epilogue(void)
 {
 	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
 
@@ -155,23 +161,13 @@ void exit_tail(void)
 	}
 	close_log();	/* close the logfiles */
 #ifdef USE_SYSTEMD_WATCHDOG
-	pluto_sd(PLUTO_SD_EXIT, exit_code);
+	pluto_sd(PLUTO_SD_EXIT, pluto_exit_code);
 #endif
-	exit(exit_code);	/* exit, with our error code */
+	exit(pluto_exit_code);	/* exit, with our error code */
 }
 
 void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status, bool leave_state)
 {
-	/*
-	 * Tell the world, well actually all the threads, that pluto
-	 * is exiting and they should quit.  Even if pthread_cancel()
-	 * weren't buggy, using it correctly would be hard, so use
-	 * this instead.
-	 */
-	exiting_pluto = true;
-	pluto_leave_state = leave_state;
-	exit_code = status;
-
 	/*
 	 * Leak the whack FD so that only when pluto finally exits the
 	 * attached whack that is waiting on the socket will be
@@ -183,13 +179,12 @@ void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status, bool leave_
 	fd_leak(whackfd, HERE);
 
 	/*
-	 * If the event-loop doesn't stop, this kicks in.
+	 * Start the shutdown process.
 	 *
-	 * XXX: same code appears in libreswan_exit() above.
+	 * Flag that things are going down and delete anything that
+	 * isn't asynchronous (or depends on something asynchronous).
 	 */
- #ifdef USE_SYSTEMD_WATCHDOG
-	pluto_sd(PLUTO_SD_STOPPING, exit_code);
- #endif
+	exit_prologue(status, leave_state);
 
 	/*
 	 * Wait for the crypto-helper threads to notice EXITING_PLUTO
@@ -230,5 +225,5 @@ void server_stopped(int r)
 	    r > 0 ? "no pending or active events" :
 	    "success");
 
-	exit_tail();
+	exit_epilogue();
 }
