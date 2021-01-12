@@ -39,6 +39,7 @@
 #include "initiate.h"			/* for initiate_connection() */
 #include "revival.h"
 #include "state_db.h"
+#include "pluto_shutdown.h"		/* for exiting_pluto */
 
 /*
  * Revival mechanism: keep track of connections
@@ -115,6 +116,11 @@ void add_revival_if_needed(struct state *st, struct connection *c)
 
 	if ((c->policy & POLICY_DONT_REKEY) != LEMPTY) {
 		dbg("skipping revival: POLICY_DONT_REKEY enabled");
+		return;
+	}
+
+	if (exiting_pluto) {
+		dbg("skilling revival: pluto is going down");
 		return;
 	}
 
