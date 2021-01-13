@@ -44,7 +44,7 @@ west #
 1v2 "test1" #1: sent IKE_SA_INIT request
 002 "test1" #1: WARNING: connection test1 PSK length of 9 bytes is too short for HMAC_SHA2_512 PRF in FIPS mode (32 bytes required)
 1v2 "test1" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "test1" #2: WARNING: connection test1 PSK length of 9 bytes is too short for HMAC_SHA2_512 PRF in FIPS mode (32 bytes required)
+002 "test1" #1: WARNING: connection test1 PSK length of 9 bytes is too short for HMAC_SHA2_512 PRF in FIPS mode (32 bytes required)
 003 "test1" #1: authenticated using authby=secret
 002 "test1" #2: negotiated connection [192.1.3.2-192.1.3.2:0-65535 0] -> [192.1.3.1-192.1.3.1:0-65535 0]
 004 "test1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
@@ -76,7 +76,7 @@ west #
 1v2 "test2" #3: sent IKE_SA_INIT request
 002 "test2" #3: WARNING: connection test2 PSK length of 9 bytes is too short for HMAC_SHA2_512 PRF in FIPS mode (32 bytes required)
 1v2 "test2" #3: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "test2" #4: WARNING: connection test2 PSK length of 9 bytes is too short for HMAC_SHA2_512 PRF in FIPS mode (32 bytes required)
+002 "test2" #3: WARNING: connection test2 PSK length of 9 bytes is too short for HMAC_SHA2_512 PRF in FIPS mode (32 bytes required)
 003 "test2" #3: authenticated using authby=secret
 002 "test2" #4: negotiated connection [192.1.3.3-192.1.3.3:0-65535 0] -> [192.1.3.1-192.1.3.1:0-65535 0]
 004 "test2" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
@@ -162,4 +162,5 @@ west #
  ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+west #
+ 
