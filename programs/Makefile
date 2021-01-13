@@ -20,30 +20,31 @@ include $(top_srcdir)/Makefile.inc
 
 SUBDIRS=
 
+# first
 SUBDIRS += pluto
 SUBDIRS += whack
-SUBDIRS += addconn
+
+SUBDIRS += _import_crl
 SUBDIRS += _plutorun
-SUBDIRS += _stackmanager
 SUBDIRS += _secretcensor
-SUBDIRS += _updown
+SUBDIRS += _stackmanager
 SUBDIRS += _unbound-hook
+SUBDIRS += _updown
+SUBDIRS += addconn
+SUBDIRS += algparse
 SUBDIRS += auto
 SUBDIRS += barf
-SUBDIRS += verify
-SUBDIRS += show
+SUBDIRS += cavp
 SUBDIRS += ipsec
+SUBDIRS += letsencrypt
 SUBDIRS += look
 SUBDIRS += newhostkey
+SUBDIRS += readwriteconf
 SUBDIRS += rsasigkey
 SUBDIRS += setup
+SUBDIRS += show
 SUBDIRS += showhostkey
-SUBDIRS += newhostkey
-SUBDIRS += readwriteconf
-SUBDIRS += _import_crl
-SUBDIRS += algparse
-SUBDIRS += cavp
-SUBDIRS += letsencrypt
+SUBDIRS += verify
 
 ifeq ($(USE_PORTEXCLUDES),true)
 SUBDIRS += portexcludes
