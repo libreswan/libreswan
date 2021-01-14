@@ -32,7 +32,7 @@ west #
  ip addr add 192.1.2.66/24 dev eth1
 west #
  arping -c 1 -U -I eth1 192.1.2.66
-ARPING 192.1.2.66 from 192.1.2.66 eth1
+ARPING 192.1.2.66 from 192.1.2.45 eth1
 Sent 1 probes (1 broadcast(s))
 Received 0 response(s)
 west #
@@ -72,7 +72,7 @@ west #
 002 "float-east" #3: deleting state (STATE_MAIN_I4) and sending notification
 003 ERROR: "float-east" #3: send on eth1 from 192.1.2.66:500 to 192.1.2.23:500 using UDP failed in delete notify [...]
 002 "float-east" #3: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
-002 unroute-host output: RTNETLINK answers: Network is unreachable
+002 "float-east": unroute-host output: RTNETLINK answers: Network is unreachable
 002 "float-east": terminating SAs using this connection
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
@@ -81,9 +81,14 @@ west #
  ipsec auto --up west-float #retransmits
 002 "west-float" #5: initiating IKEv1 Main Mode connection
 1v1 "west-float" #5: sent Main Mode request
-010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 15 seconds for response
-010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 30 seconds for response
-031 "west-float" #5: STATE_MAIN_I1: 60 second timeout exceeded after 2 retransmits.  No response (or no acceptable response) to our first IKEv1 message
+010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 0.5 seconds for response
+010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 1 seconds for response
+010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 2 seconds for response
+010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 4 seconds for response
+010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 8 seconds for response
+010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 16 seconds for response
+010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 32 seconds for response
+031 "west-float" #5: STATE_MAIN_I1: 60 second timeout exceeded after 7 retransmits.  No response (or no acceptable response) to our first IKEv1 message
 000 "west-float" #5: starting keying attempt 2 of an unlimited number, but releasing whack
 west #
  # wait for pending cleanups
