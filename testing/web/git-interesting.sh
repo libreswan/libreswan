@@ -64,16 +64,12 @@ fi
 
 # All branches (commits with more than one child) are "interesting".
 #
-# Determining children is messy for some reason.  Search revisions
-# more recent than GITREV (REV.. seems to be interpreted as that) for
-# a parent matching GITREV.
+# Determining children is messy for some reason: generate a <<parent
+# child ...> list of all revisions more recent than GITREV
+# (REV.. seems to be interpreted as that) and use that to find
+# immediate parents (a child matches $GITREV).
 
-children=$(git rev-list --parents ${gitrev}.. | \
-	       while read commit parents ; do
-		   case " ${parents} " in
-		       *" ${gitrev}"* ) echo ${commit} ;;
-		   esac
-	       done)
+children=$(git rev-list --parents ${gitrev}.. | awk "/ ${gitrev}/ { print \$1}")
 if test $(echo ${children} | wc -w) -gt 1 ; then
     echo branch: ${children}
     exit 0
