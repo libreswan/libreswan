@@ -63,25 +63,41 @@
 static int terminate_a_connection(struct connection *c, struct fd *whackfd,
 				  void *unused_arg UNUSED)
 {
-	log_connection(RC_LOG, whackfd, c,
-		       "terminating SAs using this connection");
+	/* XXX: something better? */
+	close_any(&c->logger->global_whackfd);
+	c->logger->global_whackfd = dup_any(whackfd);
+
+	llog(RC_LOG, c->logger,
+	     "terminating SAs using this connection");
 	dbg("%s() connection '%s' -POLICY_UP", __func__, c->name);
 	c->policy &= ~POLICY_UP;
 	flush_pending_by_connection(c);
 
+	bool connection_still_exists;
 	if (shared_phase1_connection(c)) {
-		log_connection(RC_LOG, whackfd, c,
-			       "IKE SA is shared - only terminating IPsec SA");
+		connection_still_exists = true;
+		llog(RC_LOG, c->logger,
+		     "IKE SA is shared - only terminating IPsec SA");
 		if (c->newest_ipsec_sa != SOS_NOBODY) {
 			struct state *st = state_with_serialno(c->newest_ipsec_sa);
-			/* XXX: better? */
+			/* XXX: something better? */
 			close_any(&st->st_logger->global_whackfd);
 			st->st_logger->global_whackfd = dup_any(whackfd);
 			delete_state(st);
 		}
 	} else {
+		/*
+		 * CK_INSTANCE is deleted simultaneous to deleting
+		 * state :-/
+		 */
+		connection_still_exists = c->kind != CK_INSTANCE;
 		dbg("connection not shared - terminating IKE and IPsec SA");
 		delete_states_by_connection(c, false, whackfd);
+	}
+
+	if (connection_still_exists) {
+		/* XXX: something better? */
+		close_any(&c->logger->global_whackfd);
 	}
 
 	return 1;
