@@ -28,7 +28,7 @@ east #
 000 "road-A":     oriented; my_ip=192.0.2.254; their_ip=unset; mycert=east; my_updown=ipsec _updown;
 000 "road-A":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "road-A":   our auth:rsasig, their auth:rsasig
-000 "road-A":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
+000 "road-A":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "road-A":   sec_label:unset;
 000 "road-A":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for otherca, E=testing@libreswan.org'
 000 "road-A":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
@@ -45,7 +45,7 @@ east #
 000 "road-chain-B":     oriented; my_ip=192.0.2.254; their_ip=unset; mycert=east; my_updown=ipsec _updown;
 000 "road-chain-B":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "road-chain-B":   our auth:rsasig, their auth:rsasig
-000 "road-chain-B":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
+000 "road-chain-B":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "road-chain-B":   sec_label:unset;
 000 "road-chain-B":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "road-chain-B":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
