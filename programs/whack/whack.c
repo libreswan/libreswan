@@ -118,7 +118,7 @@ static void help(void)
 		"	[--nm-configured] \\\n"
 #endif
 #ifdef HAVE_LABELED_IPSEC
-		"	[--labeledipsec] [--policylabel <label>] \\\n"
+		"	[--policylabel <label>] \\\n"
 #endif
 		"	[--xauthby file|pam|alwaysok] [--xauthfail hard|soft] \\\n"
 		"	[--dontrekey] [--aggressive] \\\n"
