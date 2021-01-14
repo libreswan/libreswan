@@ -133,9 +133,6 @@ void free_logger(struct logger **logp, where_t where);
  * a state or pending struct.
  */
 
-void log_connection(lset_t rc_flags, struct fd *whackfd, const struct connection *c,
-		    const char *msg, ...) PRINTF_LIKE(4);
-
 void log_pending(lset_t rc_flags, const struct pending *p,
 		 const char *msg, ...) PRINTF_LIKE(3);
 

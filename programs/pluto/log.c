@@ -694,23 +694,6 @@ void free_logger(struct logger **logp, where_t where)
  * address of 'stack_md' will never be NULL [-Werror=address]
  */
 
-void log_connection(lset_t rc_flags, struct fd *whackfd,
-		    const struct connection *c, const char *msg, ...)
-{
-	passert(in_main_thread());
-	passert(c != NULL);
-	struct logger logger = {
-		.where = HERE,
-		.global_whackfd = whackfd,
-		.object = c,
-		.object_vec = &logger_connection_vec,
-	};
-	va_list ap;
-	va_start(ap, msg);
-	llog_va_list(rc_flags, &logger, msg, ap);
-	va_end(ap);
-}
-
 void log_pending(lset_t rc_flags, const struct pending *p, const char *msg, ...)
 {
 	passert(in_main_thread());
