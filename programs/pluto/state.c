@@ -785,7 +785,6 @@ void delete_state(struct state *st)
 
 void delete_state_tail(struct state *st)
 {
-	struct connection *const c = st->st_connection;
 	pstat_sa_deleted(st);
 
 	/*
@@ -818,9 +817,11 @@ void delete_state_tail(struct state *st)
 		linux_audit_conn(st, LAK_PARENT_DESTROY);
 
 	/* If we are failed OE initiator, make shunt bare */
-	if (IS_IKE_SA(st) && (c->policy & POLICY_OPPORTUNISTIC) &&
+	if (IS_IKE_SA(st) &&
+	    (st->st_connection->policy & POLICY_OPPORTUNISTIC) &&
 	    (st->st_state->kind == STATE_PARENT_I1 ||
 	     st->st_state->kind == STATE_PARENT_I2)) {
+		struct connection *c = st->st_connection;
 		ipsec_spi_t failure_shunt = shunt_policy_spi(c, FALSE /* failure_shunt */);
 		ipsec_spi_t nego_shunt = shunt_policy_spi(c, TRUE /* negotiation shunt */);
 
@@ -970,21 +971,17 @@ void delete_state_tail(struct state *st)
 			delete_ipsec_sa(st);
 	}
 
-	if (c->newest_ipsec_sa == st->st_serialno)
-		c->newest_ipsec_sa = SOS_NOBODY;
+	if (st->st_connection->newest_ipsec_sa == st->st_serialno)
+		st->st_connection->newest_ipsec_sa = SOS_NOBODY;
 
-	if (c->newest_isakmp_sa == st->st_serialno)
-		c->newest_isakmp_sa = SOS_NOBODY;
+	if (st->st_connection->newest_isakmp_sa == st->st_serialno)
+		st->st_connection->newest_isakmp_sa = SOS_NOBODY;
 
 	/*
-	 * If policy dictates, try to keep the connection alive.
-	 * DONT_REKEY overrides UP.
-	 *
-	 * XXX: need more info from someone knowing what the problem
-	 * is.
-	 * ??? What problem is this referring to?
+	 * If policy dictates, try to keep the state's connection
+	 * alive.  DONT_REKEY overrides UP.
 	 */
-	add_revival_if_needed(st, c);
+	add_revival_if_needed(st);
 
 	/*
 	 * fake a state change here while we are still associated with a

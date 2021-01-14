@@ -102,8 +102,10 @@ void flush_revival(const struct connection *c)
 	}
 }
 
-void add_revival_if_needed(struct state *st, struct connection *c)
+void add_revival_if_needed(struct state *st)
 {
+	struct connection *c = st->st_connection;
+
 	if (!IS_IKE_SA(st)) {
 		dbg("skipping revival: not an IKE SA");
 		return;
