@@ -4314,23 +4314,26 @@ void connection_discard(struct connection *c)
  *
  * - discard the old connection when not in use
  */
-void update_state_connection(struct state *st, struct connection *c)
+void update_state_connection(struct state *st, struct connection *new)
 {
 	struct connection *old = st->st_connection;
 
-	if (old != c) {
-		st->st_connection = c;
+	if (old != new) {
+		st->st_connection = new;
 		st->st_peer_alt_id = FALSE; /* must be rechecked against new 'that' */
 		rehash_state_connection(st);
 		if (old != NULL) {
 			/* if we are an established instance planning to revive, don't kill us */
-			if (old->kind == CK_INSTANCE && LIN(POLICY_UP, old->policy) &&
-				IS_IKE_SA_ESTABLISHED(st)) {
+			if (old->kind == CK_INSTANCE &&
+			    LIN(POLICY_UP, old->policy) &&
+			    IS_IKE_SA_ESTABLISHED(st)) {
 				dbg("skip discarding connection '%s' with serial "PRI_CO" because we are trying to revive",
 					old->name, pri_co(old->serialno));
 				return;
 			}
-			dbg("discard connection");
+			/* XXX: something better? */
+			close_any(&old->logger->global_whackfd);
+			old->logger->global_whackfd = dup_any(st->st_logger->global_whackfd);
 			connection_discard(old);
 		}
 	}

@@ -1012,11 +1012,14 @@ void delete_state_tail(struct state *st)
 	st->st_interface = NULL;
 
 	/*
-	 * Unlink the connection which may in turn delete the
-	 * connection instance.  Needs to be done before the state is
-	 * removed from the state DB as it can otherwise leak the
-	 * connection (or explode because it was removed from the
-	 * list).
+	 * Danger!
+	 *
+	 * Break the STATE->CONNECTION link.  If CONNECTION is an
+	 * instance, then it too will be deleted.
+	 *
+	 * Needs to be done before the state is removed from it's DB
+	 * as it can otherwise leak the connection (or explode because
+	 * it was removed from the list). ???
 	 */
 	update_state_connection(st, NULL);
 
