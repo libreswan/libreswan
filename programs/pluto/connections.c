@@ -3975,7 +3975,7 @@ static void show_one_sr(struct show *s,
 		enum_show_shortb(&keyword_authby_names, sr->that.authby, &auth2));
 
 	show_comment(s,
-		"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg policy:%s, dns:%s, domains:%s%s, cat:%s;",
+		"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg policy:%s, dns:%s, domains:%s, cat:%s;",
 		c->name, instance,
 		COMBO(sr->this, modecfg_server, modecfg_client),
 		COMBO(sr->that, modecfg_server, modecfg_client),
@@ -3983,7 +3983,6 @@ static void show_one_sr(struct show *s,
 		(c->policy & POLICY_MODECFG_PULL) ? "pull" : "push",
 		(c->modecfg_dns == NULL) ? "unset" : c->modecfg_dns,
 		(c->modecfg_domains == NULL) ? "unset" : c->modecfg_domains,
-		(c->modecfg_banner == NULL) ? ", banner:unset" : "",
 		sr->this.cat ? "set" : "unset");
 
 #undef COMBO
