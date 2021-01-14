@@ -308,53 +308,6 @@ void initialize_new_state(struct state *st,
 	binlog_refresh_state(st);
 }
 
-void send_delete(struct state *st)
-{
-	if (impair.send_no_delete) {
-		dbg("IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
-	} else {
-		dbg("#%lu send %s delete notification for %s",
-		    st->st_serialno,
-		    enum_name(&ike_version_names, st->st_ike_version),
-		    st->st_state->name);
-		switch (st->st_ike_version) {
-#ifdef USE_IKEv1
-		case IKEv1:
-			send_v1_delete(st);
-			break;
-#endif
-		case IKEv2:
-		{
-			struct ike_sa *ike = ike_sa(st, HERE);
-			record_v2_delete(ike, st);
-			send_recorded_v2_message(ike, "delete notification",
-						 MESSAGE_REQUEST);
-			/*
-			 * XXX: The record 'n' send call shouldn't be
-			 * needed.  Instead, as part of this
-			 * transition (live -> being-deleted) the
-			 * standard success_v2_transition() code path
-			 * should get to do the right thing.
-			 *
-			 * XXX: The record 'n' send call leads to an
-			 * RFC violation.  The lack of a state
-			 * transition means there's nothing set up to
-			 * wait for the ack.  And that in turn means
-			 * that the next packet will be sent before
-			 * this one has had a response.
-			 */
-			dbg("Message ID: IKE #%lu sender #%lu in %s hacking around record 'n' send",
-			    ike->sa.st_serialno, st->st_serialno, __func__);
-			v2_msgid_update_sent(ike, &ike->sa, NULL/*new exchange*/, MESSAGE_REQUEST);
-			st->st_dont_send_delete = true;
-			break;
-		}
-		default:
-			bad_case(st->st_ike_version);
-		}
-	}
-}
-
 void lswlog_child_sa_established(struct jambuf *buf, struct state *st)
 {
 	struct connection *const c = st->st_connection;
