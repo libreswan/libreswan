@@ -33,7 +33,8 @@ struct finite_state v1_states[] = {
 #define S(KIND, STORY, CAT) [KIND - STATE_IKEv1_FLOOR] = {	\
 		.kind = KIND,					\
 		.name = #KIND,					\
-		.short_name = #KIND + 6/*STATE_*/,		\
+		/* Not using #KIND + 6 because of clang's -Wstring-plus-int */
+		.short_name = &#KIND[6]/*STATE_*/,		\
 		.story = STORY,					\
 		.category = CAT,				\
 	}
