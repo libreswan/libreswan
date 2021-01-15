@@ -717,9 +717,19 @@ static void send_delete(struct state *st)
 	case IKEv2:
 	{
 		struct ike_sa *ike = ike_sa(st, HERE);
+
+		/* XXX: something better? */
+		struct fd *ike_whack = ike->sa.st_logger->global_whackfd;
+		ike->sa.st_logger->global_whackfd = dup_any(st->st_logger->global_whackfd);
+
 		record_v2_delete(ike, st);
 		send_recorded_v2_message(ike, "delete notification",
 					 MESSAGE_REQUEST);
+
+		/* XXX: something better? */
+		close_any(&ike->sa.st_logger->global_whackfd);
+		ike->sa.st_logger->global_whackfd = ike_whack;
+
 		/*
 		 * XXX: The record 'n' send call shouldn't be needed.
 		 * Instead, as part of this transition (live ->
