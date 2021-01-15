@@ -304,45 +304,66 @@ void connect_to_host_pair(struct connection *c)
 
 void release_dead_interfaces(struct logger *logger)
 {
-	for (unsigned i = 0; i < host_pairs.nr_slots; i++) {
-		struct list_head *bucket = &host_pairs.slots[i];
-		struct host_pair *hp = NULL;
-		FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, hp) {
-			struct connection **pp, *p;
+	/*
+	 * Delete any connections with a dead interface.  Deleting the
+	 * connection could (?) trigger deleting other connections,
+	 * but presumably they are further down in the list?
+	 */
+	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
+	for (struct connection **cp = &connections, *c = connections;
+	     c != NULL; c = *cp) {
 
-			for (pp = &hp->connections; (p = *pp) != NULL; ) {
-				if (p->interface->ip_dev->ifd_change == IFD_DELETE) {
-					/* this connection's interface is going away */
-					enum connection_kind k = p->kind;
-
-					release_connection(p, true/*relations?*/, logger->global_whackfd);
-
-					if (k <= CK_PERMANENT) {
-						/* The connection should have survived release:
-						 * move it to the unoriented_connections list.
-						 */
-						passert(p == *pp);
-
-						terminate_connection(p->name,
-								     false/*relations?*/,
-								     logger->global_whackfd);
-						p->interface = NULL; /* withdraw orientation */
-
-						*pp = p->hp_next; /* advance *pp */
-						p->host_pair = NULL;
-						p->hp_next = unoriented_connections;
-						unoriented_connections = p;
-					} else {
-						/* The connection should have vanished,
-						 * but the previous connection remains.
-						 */
-						passert(p != *pp);
-					}
-				} else {
-					pp = &p->hp_next; /* advance pp */
-				}
-			}
+		if (!oriented(*c)) {
+			connection_buf cb;
+			dbg("connection interface un-oriented: "PRI_CONNECTION,
+			    pri_connection(c, &cb));
+			cp = &c->ac_next;
+			continue;
 		}
+
+		passert(c->interface != NULL); /* aka oriented() */
+		if (c->interface->ip_dev->ifd_change != IFD_DELETE) {
+			connection_buf cb;
+			dbg("connection interface safe: "PRI_CONNECTION,
+			    pri_connection(c, &cb));
+			cp = &c->ac_next;
+			continue;
+		}
+
+		connection_buf cb;
+		dbg("connection interface deleted: "PRI_CONNECTION,
+		    pri_connection(c, &cb));
+
+		/* this connection's interface is going away */
+		enum connection_kind kind = c->kind;
+		passert(c == *cp);
+		release_connection(c, true/*relations*/, logger->global_whackfd);
+		if (kind == CK_INSTANCE) {
+			/* C invalid; was deleted */
+			pexpect(c != *cp);
+			continue;
+		}
+
+		/*
+		 * The connection should have survived release: move
+		 * it to the unoriented_connections list.
+		 */
+		passert(c == *cp);
+		terminate_connection(c->name,
+				     false/*quiet?*/,
+				     logger->global_whackfd);
+		/*
+		 * disorient connection and then put on the unoriented
+		 * list.
+		 */
+		pexpect(c->host_pair != NULL);
+		delete_oriented_hp(c);
+		c->interface = NULL;
+		c->hp_next = unoriented_connections;
+		unoriented_connections = c;
+		pexpect(c->host_pair == NULL);
+		/* advance */
+		cp = &c->ac_next;
 	}
 }
 
@@ -366,6 +387,10 @@ void delete_oriented_hp(struct connection *c)
 void host_pair_remove_connection(struct connection *c, bool connection_valid)
 {
 	if (c->host_pair == NULL) {
+		/*
+		 * When CONNECTION_VALID expect to find/remove C from
+		 * the unoriented list.
+		 */
 		LIST_RM(hp_next, c, unoriented_connections,
 			connection_valid);
 	} else {
