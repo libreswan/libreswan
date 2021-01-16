@@ -6220,7 +6220,7 @@ static const struct iface_endpoint *ikev2_src_iface(struct state *st,
 	ip_port port = endpoint_port(&st->st_interface->local_endpoint);
 	ip_endpoint local_endpoint = endpoint3(st->st_interface->protocol,
 					       &this->addr, port);
-	const struct iface_endpoint *iface = find_iface_port_by_local_endpoint(&local_endpoint);
+	const struct iface_endpoint *iface = find_iface_endpoint_by_local_endpoint(&local_endpoint);
 	if (iface == NULL) {
 		endpoint_buf b;
 		dbg("#%lu no interface for %s try to initialize",
@@ -6228,7 +6228,7 @@ static const struct iface_endpoint *ikev2_src_iface(struct state *st,
 		/* XXX: should this be building a global logger? */
 		struct logger global_logger[1] = { GLOBAL_LOGGER(whack_log_fd), };
 		find_ifaces(false, global_logger);
-		iface = find_iface_port_by_local_endpoint(&local_endpoint);
+		iface = find_iface_endpoint_by_local_endpoint(&local_endpoint);
 		if (iface ==  NULL) {
 			return NULL;
 		}

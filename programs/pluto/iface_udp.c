@@ -408,9 +408,9 @@ static void udp_listen(struct iface_endpoint *ifp,
 	}
 }
 
-static int udp_bind_iface_port(struct iface_dev *ifd, ip_port port,
-			       bool esp_encapsulation_enabled,
-			       struct logger *logger)
+static int udp_bind_iface_endpoint(struct iface_dev *ifd, ip_port port,
+				   bool esp_encapsulation_enabled,
+				   struct logger *logger)
 {
 	int fd = bind_udp_socket(ifd, port, logger);
 	if (fd < 0) {
@@ -435,7 +435,7 @@ const struct iface_io udp_iface_io = {
 	.read_packet = udp_read_packet,
 	.write_packet = udp_write_packet,
 	.listen = udp_listen,
-	.bind_iface_port = udp_bind_iface_port,
+	.bind_iface_endpoint = udp_bind_iface_endpoint,
 	.cleanup = udp_cleanup,
 };
 

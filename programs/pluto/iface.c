@@ -160,7 +160,7 @@ static void free_dead_ifaces(struct logger *logger)
 		for (struct iface_endpoint **pp = &interfaces; (p = *pp) != NULL; ) {
 			if (p->ip_dev->ifd_change == IFD_DELETE) {
 				*pp = p->next; /* advance *pp */
-				free_any_iface_port(&p);
+				free_any_iface_endpoint(&p);
 			} else {
 				pp = &p->next; /* advance pp */
 			}
@@ -194,7 +194,7 @@ void free_ifaces(struct logger *logger)
 	free_dead_ifaces(logger);
 }
 
-void free_any_iface_port(struct iface_endpoint **ifp)
+void free_any_iface_endpoint(struct iface_endpoint **ifp)
 {
 	/* generic stuff */
 	(*ifp)->io->cleanup(*ifp);
@@ -206,11 +206,11 @@ void free_any_iface_port(struct iface_endpoint **ifp)
 	*ifp = NULL;
 }
 
-struct iface_endpoint *bind_iface_port(struct iface_dev *ifd, const struct iface_io *io,
-				   ip_port port,
-				   bool esp_encapsulation_enabled,
-				   bool float_nat_initiator,
-				   struct logger *logger)
+struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd, const struct iface_io *io,
+					   ip_port port,
+					   bool esp_encapsulation_enabled,
+					   bool float_nat_initiator,
+					   struct logger *logger)
 {
 	ip_endpoint local_endpoint = endpoint3(io->protocol, &ifd->id_address, port);
 	if (esp_encapsulation_enabled &&
@@ -224,7 +224,7 @@ struct iface_endpoint *bind_iface_port(struct iface_dev *ifd, const struct iface
 		return NULL;
 	}
 
-	int fd = io->bind_iface_port(ifd, port, esp_encapsulation_enabled, logger);
+	int fd = io->bind_iface_endpoint(ifd, port, esp_encapsulation_enabled, logger);
 	if (fd < 0) {
 		/* already logged? */
 		return NULL;
@@ -270,10 +270,10 @@ static void add_new_ifaces(struct logger *logger)
 
 		if (pluto_listen_udp)
 		{
-			if (bind_iface_port(ifd, &udp_iface_io, ip_hport(IKE_UDP_PORT),
-					    false /*esp_encapsulation_enabled*/,
-					    true /*float_nat_initiator*/,
-					    logger)  == NULL) {
+			if (bind_iface_endpoint(ifd, &udp_iface_io, ip_hport(IKE_UDP_PORT),
+						false /*esp_encapsulation_enabled*/,
+						true /*float_nat_initiator*/,
+						logger)  == NULL) {
 				ifd->ifd_change = IFD_DELETE;
 				continue;
 			}
@@ -293,10 +293,10 @@ static void add_new_ifaces(struct logger *logger)
 			 * Let it float to itself - code might rely on it?
 			 */
 			if (address_type(&ifd->id_address) == &ipv4_info) {
-				bind_iface_port(ifd, &udp_iface_io, ip_hport(NAT_IKE_UDP_PORT),
-						true /*esp_encapsulation_enabled*/,
-						true /*float_nat_initiator*/,
-						logger);
+				bind_iface_endpoint(ifd, &udp_iface_io, ip_hport(NAT_IKE_UDP_PORT),
+						    true /*esp_encapsulation_enabled*/,
+						    true /*float_nat_initiator*/,
+						    logger);
 			}
 		}
 
@@ -312,15 +312,15 @@ static void add_new_ifaces(struct logger *logger)
 		 * See comments in iface.h.
 		 */
 		if (pluto_listen_tcp) {
-			bind_iface_port(ifd, &iketcp_iface_io, ip_hport(NAT_IKE_UDP_PORT),
-					true /*esp_encapsulation_enabled*/,
-					false /*float_nat_initiator*/,
-					logger);
+			bind_iface_endpoint(ifd, &iketcp_iface_io, ip_hport(NAT_IKE_UDP_PORT),
+					    true /*esp_encapsulation_enabled*/,
+					    false /*float_nat_initiator*/,
+					    logger);
 		}
 	}
 }
 
-void listen_on_iface_port(struct iface_endpoint *ifp, struct logger *logger)
+void listen_on_iface_endpoint(struct iface_endpoint *ifp, struct logger *logger)
 {
 	ifp->io->listen(ifp, logger);
 	endpoint_buf b;
@@ -485,12 +485,12 @@ void find_ifaces(bool rm_dead, struct logger *logger)
 
 	if (listening) {
 		for (struct iface_endpoint *ifp = interfaces; ifp != NULL; ifp = ifp->next) {
-			listen_on_iface_port(ifp, logger);
+			listen_on_iface_endpoint(ifp, logger);
 		}
 	}
 }
 
-struct iface_endpoint *find_iface_port_by_local_endpoint(ip_endpoint *local_endpoint)
+struct iface_endpoint *find_iface_endpoint_by_local_endpoint(ip_endpoint *local_endpoint)
 {
 	for (struct iface_endpoint *p = interfaces; p != NULL; p = p->next) {
 		if (endpoint_eq(local_endpoint, &p->local_endpoint)) {

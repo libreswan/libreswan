@@ -58,9 +58,9 @@ struct iface_io {
 				struct logger *logger);
 	void (*cleanup)(struct iface_endpoint *ifp);
 	void (*listen)(struct iface_endpoint *fip, struct logger *logger);
-	int (*bind_iface_port)(struct iface_dev *ifd,
-			       ip_port port, bool esp_encapsulation_enabled,
-			       struct logger *logger);
+	int (*bind_iface_endpoint)(struct iface_dev *ifd,
+				   ip_port port, bool esp_encapsulation_enabled,
+				   struct logger *logger);
 };
 
 extern const struct iface_io udp_iface_io;
@@ -74,9 +74,9 @@ extern const struct iface_io iketcp_iface_io; /*IKETCP specific*/
  * - their shared IP address (eg. 10.7.3.2)
  * Note: the port for IKE is always implicitly UDP/pluto_port.
  *
- * The iface is a unique IP address on a system. It may be used
- * by multiple port numbers. In general, two conns have the same
- * interface if they have the same iface_port->iface_alias.
+ * The iface is a unique IP address on a system. It may be used by
+ * multiple port numbers. In general, two conns have the same
+ * interface if they have the same iface_endpoint->iface_alias.
  */
 
 struct iface_dev {
@@ -172,21 +172,21 @@ struct iface_endpoint {
 	struct event *iketcp_timeout;
 };
 
-void stop_iketcp_iface_port(struct iface_endpoint **ifp);
-void free_any_iface_port(struct iface_endpoint **ifp);
+void stop_iketcp_iface_endpoint(struct iface_endpoint **ifp);
+void free_any_iface_endpoint(struct iface_endpoint **ifp);
 
 extern struct iface_endpoint *interfaces;   /* public interfaces */
 
-extern struct iface_endpoint *find_iface_port_by_local_endpoint(ip_endpoint *local_endpoint);
+extern struct iface_endpoint *find_iface_endpoint_by_local_endpoint(ip_endpoint *local_endpoint);
 extern bool use_interface(const char *rifn);
 extern void find_ifaces(bool rm_dead, struct logger *logger);
 extern void show_ifaces_status(struct show *s);
 extern void free_ifaces(struct logger *logger);
-void listen_on_iface_port(struct iface_endpoint *ifp, struct logger *logger);
-struct iface_endpoint *bind_iface_port(struct iface_dev *ifd, const struct iface_io *io,
-				   ip_port port,
-				   bool esp_encapsulation_enabled,
-				   bool float_nat_initiator,
-				   struct logger *logger);
+void listen_on_iface_endpoint(struct iface_endpoint *ifp, struct logger *logger);
+struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd, const struct iface_io *io,
+					   ip_port port,
+					   bool esp_encapsulation_enabled,
+					   bool float_nat_initiator,
+					   struct logger *logger);
 
 #endif

@@ -1064,7 +1064,7 @@ void delete_state_tail(struct state *st)
 			 * XXX: The state and the event loop are
 			 * sharing EVP.  This deletes both.
 			 */
-			free_any_iface_port(p);
+			free_any_iface_endpoint(p);
 		}
 	}
 	st->st_interface = NULL;

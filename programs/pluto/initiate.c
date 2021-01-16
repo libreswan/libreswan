@@ -116,7 +116,7 @@ static void swap_ends(struct connection *c)
 	set_policy_prio(c);
 }
 
-static bool orient_new_iface_port(struct connection *c, struct fd *whackfd, bool this)
+static bool orient_new_iface_endpoint(struct connection *c, struct fd *whackfd, bool this)
 {
 	struct end *end = (this ? &c->spd.this : &c->spd.that);
 	if (end->raw.host.ikeport == 0) {
@@ -139,11 +139,11 @@ static bool orient_new_iface_port(struct connection *c, struct fd *whackfd, bool
 	 * XXX: should this log globally or against the connection?
 	 */
 	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
-	struct iface_endpoint *ifp = bind_iface_port(dev, &udp_iface_io,
-						 ip_hport(end->raw.host.ikeport),
-						 true/*esp_encapsulation_enabled*/,
-						 false/*float_nat_initiator*/,
-						 logger);
+	struct iface_endpoint *ifp = bind_iface_endpoint(dev, &udp_iface_io,
+							 ip_hport(end->raw.host.ikeport),
+							 true/*esp_encapsulation_enabled*/,
+							 false/*float_nat_initiator*/,
+							 logger);
 	if (ifp == NULL) {
 		dbg("could not create new interface");
 		return false;
@@ -155,7 +155,7 @@ static bool orient_new_iface_port(struct connection *c, struct fd *whackfd, bool
 		swap_ends(c);
 	}
 	if (listening) {
-		listen_on_iface_port(ifp, logger);
+		listen_on_iface_endpoint(ifp, logger);
 	}
 	return true;
 }
@@ -271,10 +271,10 @@ bool orient(struct connection *c)
 	/*
 	 * No existing interface worked, should a new one be created?
 	 */
-	if (orient_new_iface_port(c, whackfd, true)) {
+	if (orient_new_iface_endpoint(c, whackfd, true)) {
 		return true;
 	}
-	if (orient_new_iface_port(c, whackfd, false)) {
+	if (orient_new_iface_endpoint(c, whackfd, false)) {
 		return true;
 	}
 	return false;

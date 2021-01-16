@@ -195,7 +195,7 @@ static void iketcp_server_timeout(evutil_socket_t unused_fd UNUSED,
 	llog(RC_LOG, logger,
 	     "TCP: socket %d timed out before first message received",
 	     ifp->fd);
-	free_any_iface_port(&ifp);
+	free_any_iface_endpoint(&ifp);
 }
 
 static void iketcp_listen(struct iface_endpoint *ifp,
@@ -356,9 +356,9 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port,
 	return fd;
 }
 
-static int iketcp_bind_iface_port(struct iface_dev *ifd, ip_port port,
-				  bool unused_esp_encapsulation_enabled UNUSED,
-				  struct logger *logger)
+static int iketcp_bind_iface_endpoint(struct iface_dev *ifd, ip_port port,
+				      bool unused_esp_encapsulation_enabled UNUSED,
+				      struct logger *logger)
 {
 	return bind_tcp_socket(ifd, port, logger);
 }
@@ -370,7 +370,7 @@ const struct iface_io iketcp_iface_io = {
 	.write_packet = iketcp_write_packet,
 	.cleanup = iketcp_cleanup,
 	.listen = iketcp_listen,
-	.bind_iface_port = iketcp_bind_iface_port,
+	.bind_iface_endpoint = iketcp_bind_iface_endpoint,
 };
 
 static void iketcp_message_listener_cb(evutil_socket_t unused_fd UNUSED,
@@ -402,7 +402,7 @@ static void iketcp_message_listener_cb(evutil_socket_t unused_fd UNUSED,
 			 * reading the socket, there isn't a state
 			 * that could be sharing IFP.
 			 */
-			free_any_iface_port(&ifp);
+			free_any_iface_endpoint(&ifp);
 			return;
 		}
 
@@ -415,7 +415,7 @@ static void iketcp_message_listener_cb(evutil_socket_t unused_fd UNUSED,
 			 * reading the socket, there isn't a state
 			 * that could be sharing IFP.
 			 */
-			free_any_iface_port(&ifp);
+			free_any_iface_endpoint(&ifp);
 			return;
 		}
 
@@ -429,7 +429,7 @@ static void iketcp_message_listener_cb(evutil_socket_t unused_fd UNUSED,
 			 * reading the socket, there isn't a state
 			 * that could be sharing IFP.
 			 */
-			free_any_iface_port(&ifp);
+			free_any_iface_endpoint(&ifp);
 			return;
 		}
 
@@ -456,7 +456,7 @@ static void iketcp_message_listener_cb(evutil_socket_t unused_fd UNUSED,
 				 * there isn't a state that could be
 				 * sharing IFP.
 				 */
-				free_any_iface_port(&ifp);
+				free_any_iface_endpoint(&ifp);
 				return;
 			}
 		}
@@ -493,7 +493,7 @@ static void iketcp_message_listener_cb(evutil_socket_t unused_fd UNUSED,
 			 * read, no state was created so there's no
 			 * problem with state and event sharing IFP.
 			 */
-			free_any_iface_port(&ifp);
+			free_any_iface_endpoint(&ifp);
 			return;
 		}
 		bad_case(0);
