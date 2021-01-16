@@ -177,7 +177,6 @@ void add_revival_if_needed(struct state *st)
 		 * established and nat has been detected.
 		 */
 		dbg("updating connection for remote port %d", st->st_remote_endpoint.hport);
-		c->spd.that.raw.host.ikeport = st->st_remote_endpoint.hport; /* pretend we were given a port */
 		dbg("%s() %s.host_port: %u->%u (that)", __func__, c->spd.that.leftright,
 		    c->spd.that.host_port, st->st_remote_endpoint.hport);
 		c->spd.that.host_port = st->st_remote_endpoint.hport;
