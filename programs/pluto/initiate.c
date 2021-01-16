@@ -188,12 +188,14 @@ bool orient(struct connection *c)
 	connection_buf cb;
 	dbg("orienting "PRI_CONNECTION, pri_connection(c, &cb));
 	address_buf ab;
-	dbg("  %s(THIS) host-address %s host-port "PRI_HPORT,
+	dbg("  %s(THIS) host-address=%s host-port="PRI_HPORT" ikeport=%d encap=%s",
 	    c->spd.this.leftright, str_address(&c->spd.this.host_addr, &ab),
-	    pri_hport(end_host_port(&c->spd.this, &c->spd.that)));
-	dbg("  %s(THAT) host-address %s host-port "PRI_HPORT,
+	    pri_hport(end_host_port(&c->spd.this, &c->spd.that)),
+	    c->spd.this.raw.host.ikeport, bool_str(c->spd.this.host_encap));
+	dbg("  %s(THAT) host-address=%s host-port="PRI_HPORT" ikeport=%d encap=%s",
 	    c->spd.that.leftright, str_address(&c->spd.that.host_addr, &ab),
-	    pri_hport(end_host_port(&c->spd.that, &c->spd.this)));
+	    pri_hport(end_host_port(&c->spd.that, &c->spd.this)),
+	    c->spd.that.raw.host.ikeport, bool_str(c->spd.that.host_encap));
 	set_policy_prio(c); /* for updates */
 	bool swap = false;
 	for (const struct iface_endpoint *ifp = interfaces; ifp != NULL; ifp = ifp->next) {
