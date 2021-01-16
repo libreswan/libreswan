@@ -187,6 +187,13 @@ bool orient(struct connection *c)
 
 	connection_buf cb;
 	dbg("orienting "PRI_CONNECTION, pri_connection(c, &cb));
+	address_buf ab;
+	dbg("  %s(THIS) host-address %s host-port "PRI_HPORT,
+	    c->spd.this.leftright, str_address(&c->spd.this.host_addr, &ab),
+	    pri_hport(end_host_port(&c->spd.this, &c->spd.that)));
+	dbg("  %s(THAT) host-address %s host-port "PRI_HPORT,
+	    c->spd.that.leftright, str_address(&c->spd.that.host_addr, &ab),
+	    pri_hport(end_host_port(&c->spd.that, &c->spd.this)));
 	set_policy_prio(c); /* for updates */
 	bool swap = false;
 	for (const struct iface_endpoint *ifp = interfaces; ifp != NULL; ifp = ifp->next) {
@@ -209,8 +216,9 @@ bool orient(struct connection *c)
 
 		if (!this && !that) {
 			endpoint_buf eb;
-			dbg("  %s doesn't match %s at all",
-			    c->name, str_endpoint(&ifp->local_endpoint, &eb));
+			dbg("  interface endpoint %s does not match %s(THIS) or %s(THAT)",
+			    str_endpoint(&ifp->local_endpoint, &eb),
+			    c->spd.this.leftright, c->spd.that.leftright);
 			continue;
 		}
 		pexpect(this != that); /* only one */
@@ -246,15 +254,19 @@ bool orient(struct connection *c)
 		}
 
 		/* orient then continue search */
+		passert(this != that); /* only one */
 		if (this) {
 			endpoint_buf eb;
-			dbg("oriented %s's THIS to %s",
-			    c->name, str_endpoint(&ifp->local_endpoint, &eb));
+			dbg("  interface endpoint %s matches %s(THIS); orienting",
+			    str_endpoint(&ifp->local_endpoint, &eb),
+			    c->spd.this.leftright);
 			swap = false;
-		} else if (that) {
+		}
+		if (that) {
 			endpoint_buf eb;
-			dbg("oriented %s's THAT to %s (will need to swap ends)",
-			    c->name, str_endpoint(&ifp->local_endpoint, &eb));
+			dbg("  interface endpoint %s matches %s(THAT); orienting and swapping",
+			    str_endpoint(&ifp->local_endpoint, &eb),
+			    c->spd.that.leftright);
 			swap = true;
 		}
 		c->interface = ifp;
@@ -262,7 +274,8 @@ bool orient(struct connection *c)
 	}
 	if (oriented(*c)) {
 		if (swap) {
-			dbg("orient swapping ends so that THAT <-> THIS")
+			dbg("  swapping ends so that %s(THAT) is oriented as (THIS)",
+			    c->spd.that.leftright);
 			swap_ends(c);
 		}
 		return true;
