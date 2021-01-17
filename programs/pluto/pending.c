@@ -205,11 +205,19 @@ void release_pending_whacks(struct state *st, err_t story)
  */
 static void delete_pending(struct pending **pp)
 {
+	/* remove from list */
 	struct pending *p = *pp;
-
 	*pp = p->next;
-	if (p->connection != NULL)
-		connection_discard(p->connection);
+
+	if (p->connection != NULL) {
+		/* above unlink means C is no longer pending */
+		pexpect(!connection_is_pending(p->connection));
+		connection_delete_unused_instance(&p->connection,
+						  /*old-state*/NULL,
+						  null_fd/*XXX: p->whack_sock?*/);
+		pexpect(p->connection == NULL ||
+			p->connection->kind != CK_INSTANCE);
+	}
 	close_any(&p->whack_sock); /*on-heap*/
 
 	if (DBGP(DBG_BASE)) {

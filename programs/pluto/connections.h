@@ -562,7 +562,7 @@ extern void unpend(struct ike_sa *ike, struct connection *cc);
 extern void update_pending(struct ike_sa *old_ike, struct ike_sa *new_ike);
 extern void flush_pending_by_state(struct ike_sa *ike);
 
-extern void connection_discard(struct connection *c);
+extern void connection_delete_unused_instance(struct connection **cp, struct state *old_state, struct fd *whackfd);
 extern void update_state_connection(struct state *st, struct connection *c);
 
 /* A template connection's eroute can be eclipsed by

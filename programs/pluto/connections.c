@@ -4268,43 +4268,63 @@ void show_connections_status(struct show *s)
  * We must be careful to avoid circularity:
  * we don't touch it if it is CK_GOING_AWAY.
  */
-void connection_discard(struct connection *c)
+void connection_delete_unused_instance(struct connection **cp,
+				       struct state *old_state,
+				       struct fd *whackfd)
 {
-	dbg("in connection_discard for connection %s", c->name);
-
-	if (c->kind == CK_INSTANCE) {
-		dbg("connection is instance");
-		if (connection_is_pending(c)) {
-			dbg("connection instance is pending; not deleting");
-			return;
-		}
-		dbg("not in pending use");
-
-		/* find the first */
-		struct state *st = state_by_connection(c, NULL, NULL, __func__);
-		if (DBGP(DBG_BASE)) {
-			/*
-			 * Cross check that the state DB has been kept
-			 * up-to-date.
-			 */
-			struct state *dst = NULL;
-			FOR_EACH_STATE_NEW2OLD(dst) {
-				if (dst->st_connection == c) {
-					break;
-				}
-			}
-			/* found a state, may not be the same */
-			pexpect((dst == NULL) == (st == NULL));
-			st = dst; /* let the truth be free */
-		}
-
-		if (st == NULL) {
-			dbg("no states use this connection instance, deleting");
-			delete_connection(c, FALSE);
-		} else {
-			dbg("states still using this connection instance, retaining");
-		}
+	struct connection *c = (*cp);
+	if (c->kind != CK_INSTANCE) {
+		dbg("connection %s is not an instance, skipping delete-unused", c->name);
+		return;
 	}
+
+	if (connection_is_pending(c)) {
+		dbg("connection instance %s is pending, skipping delete-unused",
+		    c->name);
+		return;
+	}
+
+	if (LIN(POLICY_UP, c->policy) &&
+	    old_state != NULL && IS_IKE_SA_ESTABLISHED(old_state)) {
+		/*
+		 * If this connection instance was previously for an
+		 * established sa planning to revive, don't delete.
+		 */
+		dbg("connection instance %s with serial "PRI_CO" is being revived, skipping delete-unused",
+		    c->name, pri_co(c->serialno));
+		return;
+	}
+
+	/* find the first */
+	struct state *st = state_by_connection(c, NULL, NULL, __func__);
+	if (DBGP(DBG_BASE)) {
+		/*
+		 * Cross check that the state DB has been kept
+		 * up-to-date.
+		 */
+		struct state *dst = NULL;
+		FOR_EACH_STATE_NEW2OLD(dst) {
+			if (dst->st_connection == c) {
+				break;
+			}
+		}
+		/* found a state, may not be the same */
+		pexpect((dst == NULL) == (st == NULL));
+		st = dst; /* let the truth be free */
+	}
+
+	if (st != NULL) {
+		dbg("connection instance %s in use by #%lu, skipping delete-unused",
+		    c->name, st->st_serialno);
+		return;
+	}
+
+	dbg("connection instance %s is not being used, deleting", c->name);
+	/* XXX: something better? */
+	close_any(&c->logger->global_whackfd);
+	c->logger->global_whackfd = dup_any(whackfd);
+	delete_connection(c, false);
+	*cp = c = NULL;
 }
 
 /*
@@ -4323,18 +4343,8 @@ void update_state_connection(struct state *st, struct connection *new)
 		st->st_peer_alt_id = FALSE; /* must be rechecked against new 'that' */
 		rehash_state_connection(st);
 		if (old != NULL) {
-			/* if we are an established instance planning to revive, don't kill us */
-			if (old->kind == CK_INSTANCE &&
-			    LIN(POLICY_UP, old->policy) &&
-			    IS_IKE_SA_ESTABLISHED(st)) {
-				dbg("skip discarding connection '%s' with serial "PRI_CO" because we are trying to revive",
-					old->name, pri_co(old->serialno));
-				return;
-			}
-			/* XXX: something better? */
-			close_any(&old->logger->global_whackfd);
-			old->logger->global_whackfd = dup_any(st->st_logger->global_whackfd);
-			connection_discard(old);
+			connection_delete_unused_instance(&old, st,
+							  st->st_logger->global_whackfd);
 		}
 	}
 }
