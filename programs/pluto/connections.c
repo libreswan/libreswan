@@ -4274,8 +4274,8 @@ void connection_discard(struct connection *c)
 
 	if (c->kind == CK_INSTANCE) {
 		dbg("connection is instance");
-		if (in_pending_use(c)) {
-			dbg("in pending use");
+		if (connection_is_pending(c)) {
+			dbg("connection instance is pending; not deleting");
 			return;
 		}
 		dbg("not in pending use");

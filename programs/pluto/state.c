@@ -1225,7 +1225,7 @@ bool v2_child_connection_probably_shared(struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
 
-	if (in_pending_use(c)) {
+	if (connection_is_pending(c)) {
 		dbg("#%lu connection is also pending; but what about pending for this state???",
 		    child->sa.st_serialno);
 		return true;

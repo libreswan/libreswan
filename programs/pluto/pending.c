@@ -431,7 +431,7 @@ void show_pending_phase2(struct show *s,
 	}
 }
 
-bool in_pending_use(const struct connection *c)
+bool connection_is_pending(const struct connection *c)
 {
 	/* see if it is being used by a pending */
 	struct pending **pp, *p;

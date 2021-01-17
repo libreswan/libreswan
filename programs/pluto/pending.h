@@ -30,7 +30,7 @@ void add_pending(struct fd *whack_sock,
 		 bool part_of_initiate);
 
 void flush_pending_by_connection(const struct connection *c);
-bool in_pending_use(const struct connection *c);
+bool connection_is_pending(const struct connection *c);
 void show_pending_phase2(struct show *s,
 			 const struct connection *c,
 			 const struct ike_sa *ike);
