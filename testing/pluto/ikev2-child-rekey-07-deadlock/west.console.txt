@@ -30,7 +30,7 @@ west #
 000 "west-east/1x0": queuing pending IPsec SA negotiating with 192.1.2.23 IKE SA #1 "west-east/4x0"
 1v2 "west-east/4x0" #1: sent IKE_SA_INIT request
 1v2 "west-east/4x0" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "west-east/1x0" #1: IKEv2 mode peer ID is ID_FQDN: '@east'
+002 "west-east/4x0" #1: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "west-east/4x0" #1: authenticated using authby=secret
 002 "west-east/1x0" #2: negotiated connection [192.0.1.254-192.0.1.254:0-65535 0] -> [192.0.2.254-192.0.2.254:0-65535 0]
 004 "west-east/1x0" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
@@ -62,7 +62,7 @@ west #
 west #
  sleep 45
 west #
- # state #1(STATE_V2_ESTABLISHED_IKE_SA) #6, #7, #8  and #9 in STATE_V2_ESTABLISHED_CHILD_SA
+ # state #1 in STATE_V2_ESTABLISHED_IKE_SA, and #6, #7, #8 and #9 in STATE_V2_ESTABLISHED_CHILD_SA
 west #
  # anything other state is a sign of regression
 west #
