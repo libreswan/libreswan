@@ -2104,10 +2104,9 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 						    SA_INITIATOR,
 						    STATE_V2_IKE_AUTH_CHILD_I0,
 						    ike->sa.st_logger->object_whackfd);
-	struct state *cst = &child->sa;
 
 	/* XXX because the early child state ends up with the try counter check, we need to copy it */
-	cst->st_try = pst->st_try;
+	child->sa.st_try = pst->st_try;
 
 	/*
 	 * XXX: This is so lame.  Need to move the current initiator
@@ -2117,7 +2116,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	 */
 	v2_msgid_switch_initiator(ike, child, md);
 
-	binlog_refresh_state(cst);
+	binlog_refresh_state(&child->sa);
 	switch_md_st(md, &child->sa, HERE);
 
 	/*
@@ -2216,7 +2215,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	/* decide whether to send CERT payload */
 
 	/* it should use parent not child state */
-	bool send_cert = ikev2_send_cert_decision(cst);
+	bool send_cert = ikev2_send_cert_decision(&child->sa);
 	bool ic =  pc->initial_contact && (pst->st_ike_pred == SOS_NOBODY);
 	bool send_idr = ((pc->spd.that.id.kind != ID_NULL && pc->spd.that.id.name.len != 0) ||
 				pc->spd.that.id.kind == ID_NULL); /* me tarzan, you jane */
@@ -2251,19 +2250,19 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 
 	/* send [CERT,] payload RFC 4306 3.6, 1.2) */
 	if (send_cert) {
-		stf_status certstat = ikev2_send_cert(cst->st_connection, &sk.pbs);
+		stf_status certstat = ikev2_send_cert(child->sa.st_connection, &sk.pbs);
 		if (certstat != STF_OK)
 			return certstat;
 
 		/* send CERTREQ  */
-		bool send_certreq = ikev2_send_certreq_INIT_decision(cst, SA_INITIATOR);
+		bool send_certreq = ikev2_send_certreq_INIT_decision(&child->sa, SA_INITIATOR);
 		if (send_certreq) {
 			if (DBGP(DBG_BASE)) {
 				dn_buf buf;
 				DBG_log("Sending [CERTREQ] of %s",
-					str_dn(cst->st_connection->spd.that.ca, &buf));
+					str_dn(child->sa.st_connection->spd.that.ca, &buf));
 			}
-			ikev2_send_certreq(cst, md, &sk.pbs);
+			ikev2_send_certreq(&child->sa, md, &sk.pbs);
 		}
 	}
 
@@ -2332,13 +2331,13 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	 */
 
 	/* so far child's connection is same as parent's */
-	passert(pc == cst->st_connection);
+	passert(pc == child->sa.st_connection);
 
 	lset_t policy = pc->policy;
 
 	/* child connection */
 	struct connection *cc = first_pending(pexpect_ike_sa(pst),
-					      &policy, &cst->st_logger->object_whackfd);
+					      &policy, &child->sa.st_logger->object_whackfd);
 
 	if (cc == NULL) {
 		cc = pc;
@@ -2346,21 +2345,20 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 		    cc->name);
 	}
 
-	if (cc != cst->st_connection) {
+	if (cc != child->sa.st_connection) {
 		/* ??? DBG_log not conditional on some DBG selector */
 		char cib[CONN_INST_BUF];
 		DBG_log("Switching Child connection for #%lu to \"%s\"%s from \"%s\"%s",
-				cst->st_serialno, cc->name,
+				child->sa.st_serialno, cc->name,
 				fmt_conn_instance(cc, cib),
 				pc->name, fmt_conn_instance(pc, cib));
 	}
 	/* ??? this seems very late to change the connection */
-	update_state_connection(cst, cc);
+	update_state_connection(&child->sa, cc);
 
 	/* code does not support AH+ESP, which not recommended as per RFC 8247 */
-	struct ipsec_proto_info *proto_info
-		= ikev2_child_sa_proto_info(pexpect_child_sa(cst), cc->policy);
-	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy, cst->st_logger);
+	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(child, cc->policy);
+	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy, child->sa.st_logger);
 	const chunk_t local_spi = THING_AS_CHUNK(proto_info->our_spi);
 
 	/*
@@ -2375,10 +2373,10 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 		return STF_INTERNAL_ERROR;
 	}
 
-	cst->st_ts_this = ikev2_end_to_ts(&cc->spd.this);
-	cst->st_ts_that = ikev2_end_to_ts(&cc->spd.that);
+	child->sa.st_ts_this = ikev2_end_to_ts(&cc->spd.this);
+	child->sa.st_ts_that = ikev2_end_to_ts(&cc->spd.that);
 
-	v2_emit_ts_payloads(pexpect_child_sa(cst), &sk.pbs, cc);
+	v2_emit_ts_payloads(child, &sk.pbs, cc);
 
 	if ((cc->policy & POLICY_TUNNEL) == LEMPTY) {
 		dbg("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE");
@@ -2390,7 +2388,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 		dbg("Initiator child policy is tunnel mode, NOT sending v2N_USE_TRANSPORT_MODE");
 	}
 
-	if (!emit_v2N_compression(cst, true, &sk.pbs)) {
+	if (!emit_v2N_compression(&child->sa, true, &sk.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -2401,7 +2399,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	}
 
 	if (LIN(POLICY_MOBIKE, cc->policy)) {
-		cst->st_sent_mobike = pst->st_sent_mobike = TRUE;
+		child->sa.st_sent_mobike = pst->st_sent_mobike = TRUE;
 		if (!emit_v2N(v2N_MOBIKE_SUPPORTED, &sk.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
