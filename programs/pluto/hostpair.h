@@ -35,8 +35,7 @@ struct host_pair {
 
 /* export to pending.c */
 extern void host_pair_enqueue_pending(const struct connection *c,
-				      struct pending *p,
-				      struct pending **pnext);
+				      struct pending *p);
 struct pending **host_pair_first_pending(const struct connection *c);
 
 extern void connect_to_host_pair(struct connection *c);

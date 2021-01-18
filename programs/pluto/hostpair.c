@@ -154,10 +154,9 @@ void init_host_pair(void)
 static struct connection *unoriented_connections = NULL;
 
 void host_pair_enqueue_pending(const struct connection *c,
-			       struct pending *p,
-			       struct pending **pnext)
+			       struct pending *p)
 {
-	*pnext = c->host_pair->pending;
+	p->next = c->host_pair->pending;
 	c->host_pair->pending = p;
 }
 

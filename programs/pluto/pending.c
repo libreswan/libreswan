@@ -64,12 +64,9 @@ void add_pending(struct fd *whack_sock,
 		 so_serial_t replacing,
 		 bool part_of_initiate)
 {
-	struct pending *p, **pp;
-
 	/* look for duplicate pending IPsec SA's, skip add operation */
-	pp = host_pair_first_pending(c);
-
-	for (p = pp ? *pp : NULL; p != NULL; p = p->next) {
+	struct pending **pp = host_pair_first_pending(c);
+	for (struct pending *p = pp ? *pp : NULL; p != NULL; p = p->next) {
 		if (p->connection == c && p->ike == ike) {
 			address_buf b;
 			connection_buf cib;
@@ -80,7 +77,7 @@ void add_pending(struct fd *whack_sock,
 		}
 	}
 
-	p = alloc_thing(struct pending, "struct pending");
+	struct pending *p = alloc_thing(struct pending, "struct pending");
 	p->whack_sock = dup_any(whack_sock); /*on heap*/
 	p->ike = ike;
 	p->connection = c;
@@ -108,7 +105,7 @@ void add_pending(struct fd *whack_sock,
 			    ipstr(&c->spd.that.host_addr, &b),
 			    ike->sa.st_serialno, pri_connection(cb, &cibb));
 	}
-	host_pair_enqueue_pending(c, p, &p->next);
+	host_pair_enqueue_pending(c, p);
 }
 
 /*
