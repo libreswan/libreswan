@@ -67,13 +67,18 @@ void add_pending(struct fd *whack_sock,
 	/* look for duplicate pending IPsec SA's, skip add operation */
 	struct pending **pp = host_pair_first_pending(c);
 	for (struct pending *p = pp ? *pp : NULL; p != NULL; p = p->next) {
-		if (p->connection == c && p->ike == ike) {
+		if (p->connection == c) {
 			address_buf b;
 			connection_buf cib;
-			dbg("Ignored already queued up pending IPsec SA negotiation with %s "PRI_CONNECTION"",
+			bool duplicate = (p->ike == ike);
+			dbg("connection "PRI_CONNECTION" is already pending: waiting on IKE SA #%lu connecting to %s; %s",
+			    pri_connection(c, &cib),
+			    p->ike->sa.st_serialno,
 			    str_address(&c->spd.that.host_addr, &b),
-			    pri_connection(c, &cib));
-			return;
+			    duplicate ? "ignoring duplicate" : "this IKE SA is different");
+			if (duplicate) {
+				return;
+			}
 		}
 	}
 
