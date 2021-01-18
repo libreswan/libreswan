@@ -215,8 +215,6 @@ static void delete_pending(struct pending **pp)
 		connection_delete_unused_instance(&p->connection,
 						  /*old-state*/NULL,
 						  null_fd/*XXX: p->whack_sock?*/);
-		pexpect(p->connection == NULL ||
-			p->connection->kind != CK_INSTANCE);
 	}
 	close_any(&p->whack_sock); /*on-heap*/
 
