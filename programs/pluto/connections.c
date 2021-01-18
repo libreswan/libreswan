@@ -4090,8 +4090,8 @@ void show_one_connection(struct show *s,
 		  c->name, instance,
 		  prettypolicy(c->policy),
 		  NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "",
-		  c->spd.this.key_from_DNS_on_demand |
-			c->spd.that.key_from_DNS_on_demand ? "; " : "",
+		  (c->spd.this.key_from_DNS_on_demand |
+			c->spd.that.key_from_DNS_on_demand) ? "; " : "",
 		  c->spd.this.key_from_DNS_on_demand ? "+lKOD" : "",
 		  c->spd.that.key_from_DNS_on_demand ? "+rKOD" : "");
 
