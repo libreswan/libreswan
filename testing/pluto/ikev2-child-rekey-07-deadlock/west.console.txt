@@ -29,6 +29,7 @@ west #
 000 "west-east/2x0": queuing pending IPsec SA negotiating with 192.1.2.23 IKE SA #1 "west-east/4x0"
 000 "west-east/1x0": queuing pending IPsec SA negotiating with 192.1.2.23 IKE SA #1 "west-east/4x0"
 1v2 "west-east/4x0" #1: sent IKE_SA_INIT request
+002 "west-east/4x0" #1: switching CHILD #2 to pending connection "west-east/1x0"
 1v2 "west-east/4x0" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "west-east/4x0" #1: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "west-east/4x0" #1: authenticated using authby=secret
