@@ -76,6 +76,7 @@
 #include "iface.h"
 #include "ikev2_notify.h"
 #include "unpack.h"
+#include "pending.h"		/* for release_pending_whacks() */
 
 static void v2_dispatch(struct ike_sa *ike, struct state *st,
 			struct msg_digest *md,

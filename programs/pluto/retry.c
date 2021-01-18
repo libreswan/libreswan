@@ -34,6 +34,7 @@
 #include "ipsec_doi.h"
 #include "ikev2.h"	/* for need_this_intiator() */
 #include "pluto_stats.h"
+#include "pending.h"		/* for release_pending_whacks() */
 
 #ifdef USE_IKEv1
 /* Time to retransmit, or give up.

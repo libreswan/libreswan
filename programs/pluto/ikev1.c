@@ -163,6 +163,7 @@
 #include "iface.h"
 #include "ip_selector.h"
 #include "unpack.h"
+#include "pending.h"
 
 #ifdef HAVE_NM
 #include "kernel.h"

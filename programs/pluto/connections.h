@@ -551,17 +551,6 @@ const char *str_connection_instance(const struct connection *c,
 #define PRI_CONNECTION "\"%s\"%s"
 #define pri_connection(C,B) (C)->name, str_connection_instance(C, B)
 
-/* operations on "pending", the structure representing Quick Mode
- * negotiations delayed until a Keying Channel has been negotiated.
- */
-
-struct pending; /* forward declaration (opaque outside connections.c) */
-
-extern void release_pending_whacks(struct state *st, err_t story);
-extern void unpend(struct ike_sa *ike, struct connection *cc);
-extern void update_pending(struct ike_sa *old_ike, struct ike_sa *new_ike);
-extern void flush_pending_by_state(struct ike_sa *ike);
-
 extern void connection_delete_unused_instance(struct connection **cp, struct state *old_state, struct fd *whackfd);
 extern void update_state_connection(struct state *st, struct connection *c);
 
