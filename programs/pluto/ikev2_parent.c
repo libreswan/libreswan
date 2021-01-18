@@ -2340,18 +2340,14 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 		cc = pc;
 		dbg("no pending CHILD SAs found for %s Reauthentication so use the original policy",
 		    cc->name);
+	} else if (cc != child->sa.st_connection) {
+		connection_buf cib;
+		log_state(RC_LOG, &ike->sa,
+			  "switching CHILD #%lu to pending connection "PRI_CONNECTION,
+			  child->sa.st_serialno, pri_connection(cc, &cib));
+		/* ??? this seems very late to change the connection */
+		update_state_connection(&child->sa, cc);
 	}
-
-	if (cc != child->sa.st_connection) {
-		/* ??? DBG_log not conditional on some DBG selector */
-		char cib[CONN_INST_BUF];
-		DBG_log("Switching Child connection for #%lu to \"%s\"%s from \"%s\"%s",
-				child->sa.st_serialno, cc->name,
-				fmt_conn_instance(cc, cib),
-				pc->name, fmt_conn_instance(pc, cib));
-	}
-	/* ??? this seems very late to change the connection */
-	update_state_connection(&child->sa, cc);
 
 	/* code does not support AH+ESP, which not recommended as per RFC 8247 */
 	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(child, cc->policy);
