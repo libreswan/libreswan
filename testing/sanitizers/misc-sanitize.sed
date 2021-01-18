@@ -30,9 +30,12 @@ s/^Protocol mismatch\.$/Invalid SSH identification string./g
 # some things are different on Debian/Ubuntu, and we dont really need to see those for testing
 /000 nssdir=.*$/d
 /000 dnssec-rootkey-file=.*$/d
+
 # timing info from the log
 s/last_contact=0->[0-9]*\.[0-9]*/last_contact=0->XX.XXX/g
+s/last_contact=[0-9]*\.[0-9]*->[0-9]*\.[0-9]*/last_contact=XX.XXX->XX.XXX/g
 s/last_contact=[0-9]*\.[0-9]*/last_contact=XX.XXX/g
+
 # TCP sockets
 s/from socket [0-9]* /from socket XX /g
 s/IMPAIR: TCP: socket [0-9]* /IMPAIR: TCP: socket XX /g
