@@ -2080,10 +2080,9 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 								 struct msg_digest *md,
 								 const struct hash_signature *auth_sig)
 {
-	struct state *pst = &ike->sa;
-	struct connection *const pc = pst->st_connection;	/* parent connection */
+	struct connection *const pc = ike->sa.st_connection;	/* parent connection */
 
-	ikev2_log_parentSA(pst);
+	ikev2_log_parentSA(&ike->sa);
 
 	/*
 	 * XXX This is too early and many failures could lead to not
@@ -2099,14 +2098,13 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	 * SA.  It might later change when its discovered that the
 	 * child is for something pending?
 	 */
-	struct child_sa *child = new_v2_child_state(pexpect_ike_sa(pst),
-						    IPSEC_SA,
+	struct child_sa *child = new_v2_child_state(ike, IPSEC_SA,
 						    SA_INITIATOR,
 						    STATE_V2_IKE_AUTH_CHILD_I0,
 						    ike->sa.st_logger->object_whackfd);
 
 	/* XXX because the early child state ends up with the try counter check, we need to copy it */
-	child->sa.st_try = pst->st_try;
+	child->sa.st_try = ike->sa.st_try;
 
 	/*
 	 * XXX: This is so lame.  Need to move the current initiator
@@ -2183,8 +2181,8 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	 */
 	/* record first packet for later checking of signature */
 	if (md->hdr.isa_xchg != ISAKMP_v2_IKE_INTERMEDIATE){
-		free_chunk_content(&pst->st_firstpacket_peer);
-		pst->st_firstpacket_peer = clone_out_pbs_as_chunk(&md->message_pbs,
+		free_chunk_content(&ike->sa.st_firstpacket_peer);
+		ike->sa.st_firstpacket_peer = clone_out_pbs_as_chunk(&md->message_pbs,
 								"saved first received non-intermediate packet");
 	}
 	/* beginning of data going out */
@@ -2196,7 +2194,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 
 	/* HDR out */
 
-	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(pst, HERE),
+	pb_stream rbody = open_v2_message(&reply_stream, ike,
 					  NULL /* request */,
 					  ISAKMP_v2_IKE_AUTH);
 	if (!pbs_ok(&rbody)) {
@@ -2205,7 +2203,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 
 	/* insert an Encryption payload header (SK) */
 
-	v2SK_payload_t sk = open_v2SK_payload(child->sa.st_logger, &rbody, ike_sa(pst, HERE));
+	v2SK_payload_t sk = open_v2SK_payload(child->sa.st_logger, &rbody, ike);
 	if (!pbs_ok(&sk.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -2216,7 +2214,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 
 	/* it should use parent not child state */
 	bool send_cert = ikev2_send_cert_decision(&child->sa);
-	bool ic =  pc->initial_contact && (pst->st_ike_pred == SOS_NOBODY);
+	bool ic =  pc->initial_contact && (ike->sa.st_ike_pred == SOS_NOBODY);
 	bool send_idr = ((pc->spd.that.id.kind != ID_NULL && pc->spd.that.id.name.len != 0) ||
 				pc->spd.that.id.kind == ID_NULL); /* me tarzan, you jane */
 
@@ -2310,7 +2308,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (need_configuration_payload(pc, pst->hidden_variables.st_nat_traversal)) {
+	if (need_configuration_payload(pc, ike->sa.hidden_variables.st_nat_traversal)) {
 		/*
 		 * XXX: should this be passed the CHILD SA's
 		 * .st_connection?  Here CHILD and IKE SAs share a
@@ -2336,8 +2334,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	lset_t policy = pc->policy;
 
 	/* child connection */
-	struct connection *cc = first_pending(pexpect_ike_sa(pst),
-					      &policy, &child->sa.st_logger->object_whackfd);
+	struct connection *cc = first_pending(ike, &policy, &child->sa.st_logger->object_whackfd);
 
 	if (cc == NULL) {
 		cc = pc;
@@ -2399,7 +2396,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	}
 
 	if (LIN(POLICY_MOBIKE, cc->policy)) {
-		child->sa.st_sent_mobike = pst->st_sent_mobike = TRUE;
+		child->sa.st_sent_mobike = ike->sa.st_sent_mobike = TRUE;
 		if (!emit_v2N(v2N_MOBIKE_SUPPORTED, &sk.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
@@ -2409,7 +2406,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	 * If we and responder are willing to use a PPK, we need to
 	 * generate NO_PPK_AUTH as well as PPK-based AUTH payload
 	 */
-	if (pst->st_seen_ppk) {
+	if (ike->sa.st_seen_ppk) {
 		chunk_t *ppk_id;
 		get_connection_ppk(ike->sa.st_connection, &ppk_id,
 				   ike->sa.st_logger);
@@ -2435,7 +2432,7 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 			}
 
 			if (!emit_v2N_hunk(v2N_NO_PPK_AUTH,
-					   pst->st_no_ppk_auth, &sk.pbs)) {
+					   ike->sa.st_no_ppk_auth, &sk.pbs)) {
 				return STF_INTERNAL_ERROR;
 			}
 		}
