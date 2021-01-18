@@ -37,6 +37,7 @@
 #include "ikev2_redirect.h"
 #include "initiate.h"
 #include "log.h"
+#include "pending.h"
 
 enum allow_global_redirect global_redirect = GLOBAL_REDIRECT_NO;
 
@@ -441,8 +442,8 @@ static void del_spi_trick(struct state *st)
 
 void initiate_redirect(struct state *st)
 {
-	struct state *right_state = &ike_sa(st, HERE)->sa;
-	struct connection *c = right_state->st_connection;
+	struct ike_sa *ike = ike_sa(st, HERE);
+	struct connection *c = ike->sa.st_connection;
 	ip_address redirect_ip = c->temp_vars.redirect_ip;
 
 	/* stuff for loop detection */
@@ -453,7 +454,7 @@ void initiate_redirect(struct state *st)
 				  deltatime(REDIRECT_LOOP_DETECT_PERIOD))) {
 			log_state(RC_LOG_SERIOUS, st,
 				  "redirect loop, stop initiating IKEv2 exchanges");
-			event_force(EVENT_SA_EXPIRE, right_state);
+			event_force(EVENT_SA_EXPIRE, &ike->sa);
 
 			if (st->st_redirected_in_auth)
 				del_spi_trick(st);
@@ -477,12 +478,12 @@ void initiate_redirect(struct state *st)
 	ipstr_buf b;
 	log_state(RC_LOG, st, "initiating a redirect to new gateway (address: %s)",
 			sensitive_ipstr(&redirect_ip, &b));
-
+	flush_pending_by_state(ike);
 	initiate_connections_by_name(c->name, NULL,
 				     st->st_logger->object_whackfd,
 				     /*background?*/(st->st_logger->object_whackfd == NULL));
 
-	event_force(EVENT_SA_EXPIRE, right_state);
+	event_force(EVENT_SA_EXPIRE, &ike->sa);
 	/*
 	 * if we were redirected in AUTH, we must delete one XFRM
 	 * state entry manually (to the old gateway), because
