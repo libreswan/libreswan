@@ -2696,18 +2696,17 @@ struct connection *build_outgoing_opportunistic_connection(const ip_address *our
 
 	struct iface_endpoint *p;
 
-	struct connection *c = NULL;
-
 	for (p = interfaces; p != NULL; p = p->next) {
 		/*
-		 * Go through those connections with our address and NO_IP as
-		 * hosts.
-		 * We cannot know what port the peer would use, so we assume
-		 * that it is pluto_port (makes debugging easier).
+		 * Go through those connections with our address and
+		 * NO_IP as hosts.
+		 *
+		 * We cannot know what port the peer would use, so we
+		 * assume that it is pluto_port (makes debugging
+		 * easier).
 		 */
-		c = find_host_pair_connections(&p->local_endpoint, NULL);
+		FOR_EACH_HOST_PAIR_CONNECTION(&p->ip_dev->id_address, NULL, c) {
 
-		for (; c != NULL; c = c->hp_next) {
 			dbg("checking %s", c->name);
 			if (c->kind == CK_GROUP)
 				continue;
