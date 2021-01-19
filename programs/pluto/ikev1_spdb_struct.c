@@ -74,6 +74,8 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 {
 	diag_t d;
 
+	const struct connection *c = st->st_connection;
+
 	struct xfrm_user_sec_ctx_ike uctx;
 	d = pbs_in_struct(pbs, &sec_ctx_desc, &uctx.ctx, sizeof(uctx.ctx), NULL);
 	if (d != NULL) {
@@ -96,36 +98,32 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 		return FALSE;
 	}
 
-	if (st->st_seen_sec_label != NULL) {
+	if (st->st_seen_sec_label.len != 0) {
 		dbg("already received IPsec Security Label in responder state: updating st_seen_sec_label");
-		pfree(st->st_seen_sec_label);
+		free_chunk_content(&st->st_seen_sec_label);
 	} 
-	st->st_seen_sec_label = alloc_bytes(uctx.ctx.ctx_len, "st_seen_sec_label");
+	st->st_seen_sec_label.ptr = alloc_bytes(uctx.ctx.ctx_len, "st_seen_sec_label");
+	st->st_seen_sec_label.len = uctx.ctx.ctx_len;
 
-	d = pbs_in_raw(pbs, st->st_seen_sec_label, uctx.ctx.ctx_len, "sec_label from pbs");
+	d = pbs_in_raw(pbs, st->st_seen_sec_label.ptr, uctx.ctx.ctx_len, "sec_label from pbs");
 	if (d != NULL) {
 		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return FALSE;
 	}
 
-	dbg("received sec_label:%s", st->st_seen_sec_label);
+	dbg("received sec_label:%.*s", (int)st->st_seen_sec_label.len, st->st_seen_sec_label.ptr);
 
-	if (strlen(st->st_seen_sec_label) + 1 != uctx.ctx.ctx_len) {
-		log_state(RC_LOG_SERIOUS, st,
-			  "Error: received IPsec Security Label contains embedded NUL");
-		return FALSE;
-	}
-
-	if (st->st_connection->sec_label == NULL) {
+	if (c->spd.this.sec_label.ptr == NULL) {
 		log_state(RC_LOG_SERIOUS, st,
 			  "received IPsec Security Label on connection not configured with labeled ipsec");
 		return FALSE;
-	} else if (streq(st->st_seen_sec_label, st->st_connection->sec_label)) {
+	} else if (hunk_eq(st->st_seen_sec_label, c->spd.this.sec_label)) {
 		dbg("connection security context IPsec Security Label verification succeeded");
 	} else {
 		log_state(RC_LOG_SERIOUS, st,
-			  "received IPsec Security Label '%s' mismatches our configured security label %s",
-			st->st_seen_sec_label, st->st_connection->sec_label);
+			  "received IPsec Security Label '%.*s' mismatches our configured security label %.*s",
+			(int)st->st_seen_sec_label.len, st->st_seen_sec_label.ptr,
+			(int)c->spd.this.sec_label.len, c->spd.this.sec_label.ptr);
 		return FALSE;
 	}
 	return TRUE;
@@ -910,6 +908,7 @@ bool ikev1_out_sa(pb_stream *outs,
 		  bool aggressive_mode)
 {
 	struct db_sa *revised_sadb;
+	struct connection *c = st->st_connection;
 
 	if (oakley_mode) {
 		/*
@@ -928,13 +927,13 @@ bool ikev1_out_sa(pb_stream *outs,
 		 * Aggr-Mode - Max transforms == 2 - Multiple
 		 * transforms, 1 DH group
 		 */
-		revised_sadb = v1_ike_alg_make_sadb(st->st_connection->ike_proposals,
+		revised_sadb = v1_ike_alg_make_sadb(c->ike_proposals,
 						    auth_method,
 						    aggressive_mode,
 						    st->st_logger);
 	} else {
-		revised_sadb = v1_kernel_alg_makedb(st->st_connection->policy,
-						    st->st_connection->child_proposals,
+		revised_sadb = v1_kernel_alg_makedb(c->policy,
+						    c->child_proposals,
 						    true, st->st_logger);
 
 		/* add IPcomp proposal if policy asks for it */
@@ -1135,7 +1134,7 @@ bool ikev1_out_sa(pb_stream *outs,
 					 */
 					if (!ipcomp_cpi_generated) {
 						st->st_ipcomp.our_spi =
-							get_my_cpi(&st->st_connection->spd,
+							get_my_cpi(&c->spd,
 								   tunnel_mode,
 								   st->st_logger);
 						if (st->st_ipcomp.our_spi == 0)
@@ -1163,7 +1162,7 @@ bool ikev1_out_sa(pb_stream *outs,
 					if (!*spi_generated) {
 						*spi_ptr = get_ipsec_spi(0,
 									 proto,
-									 &st->st_connection->spd,
+									 &c->spd,
 									 tunnel_mode,
 									 st->st_logger);
 						*spi_generated = TRUE;
@@ -1178,6 +1177,7 @@ bool ikev1_out_sa(pb_stream *outs,
 			/* within proposal: Transform Payloads */
 			for (unsigned tn = 0; tn != p->trans_cnt; tn++) {
 				const struct db_trans *const t = &p->trans[tn];
+
 				pb_stream trans_pbs;
 
 				{
@@ -1222,7 +1222,7 @@ bool ikev1_out_sa(pb_stream *outs,
 						      attr_val_descs,
 						      &trans_pbs) ||
 					    !out_attr(OAKLEY_LIFE_DURATION,
-						      deltasecs(st->st_connection->sa_ike_life_seconds),
+						      deltasecs(c->sa_ike_life_seconds),
 						      attr_desc,
 						      attr_val_descs,
 						      &trans_pbs))
@@ -1254,28 +1254,25 @@ bool ikev1_out_sa(pb_stream *outs,
 						      attr_val_descs,
 						      &trans_pbs) ||
 					    !out_attr(SA_LIFE_DURATION,
-						      deltasecs(st->st_connection->sa_ipsec_life_seconds),
+						      deltasecs(c->sa_ipsec_life_seconds),
 						      attr_desc,
 						      attr_val_descs,
 						      &trans_pbs))
 						goto fail;
 
 #ifdef HAVE_LABELED_IPSEC
-					if (st->st_connection->sec_label != NULL) {
+					if (c->spd.this.sec_label.len != 0) {
 						pb_stream val_pbs;
 						struct sec_ctx uctx = {
 							.ctx_doi = XFRM_SC_DOI_LSM,
 							.ctx_alg = XFRM_SC_ALG_SELINUX,
-							.ctx_len = strlen(st->st_connection->sec_label) + 1,
+							.ctx_len = c->spd.this.sec_label.len
 						};
 
 						struct isakmp_attribute attr = {
 							.isaat_af_type = secctx_attr_type |
 								ISAKMP_ATTR_AF_TLV,
 						};
-
-						char *nbyte[1];
-						nbyte[0] = '\0';
 
 						if (!out_struct(&attr,
 								attr_desc,
@@ -1285,10 +1282,9 @@ bool ikev1_out_sa(pb_stream *outs,
 								&sec_ctx_desc,
 								&val_pbs,
 								NULL) ||
-						    !out_raw(st->st_connection->sec_label,
-							     strlen(st->st_connection->sec_label), &val_pbs,
-							     " variable length sec_label") ||
-						    !out_raw(nbyte, 1, &val_pbs, "NUL terminator"))
+						    !out_raw(c->spd.this.sec_label.ptr,
+							     c->spd.this.sec_label.len, &val_pbs,
+							     " variable length sec_label"))
 							goto fail;
 
 						close_output_pbs(&val_pbs);
@@ -2102,7 +2098,7 @@ rsasig_common:
 					if (libreswan_fipsmode()) {
 						log_state(RC_LOG_SERIOUS, st,
 							  "FIPS Error: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
-							  st->st_connection->name,
+							  c->name,
 							  pss->len,
 							  ta.ta_prf->common.fqn,
 							  key_size_min);
@@ -2110,7 +2106,7 @@ rsasig_common:
 					} else {
 						log_state(RC_LOG, st,
 							  "WARNING: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
-							  st->st_connection->name,
+							  c->name,
 							  pss->len,
 							  ta.ta_prf->common.fqn,
 							  key_size_min);
@@ -3352,7 +3348,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					      &st->st_ah,
 					      &isakmp_ah_transform_desc,
 					      &ah_trans_pbs,
-					      &st->st_connection->spd,
+					      &c->spd,
 					      tunnel_mode &&
 					      inner_proto == &ip_protocol_ah,
 					      st->st_logger);
@@ -3367,7 +3363,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					      &st->st_esp,
 					      &isakmp_esp_transform_desc,
 					      &esp_trans_pbs,
-					      &st->st_connection->spd,
+					      &c->spd,
 					      tunnel_mode &&
 					      inner_proto == &ip_protocol_esp,
 					      st->st_logger);
@@ -3382,7 +3378,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					      &st->st_ipcomp,
 					      &isakmp_ipcomp_transform_desc,
 					      &ipcomp_trans_pbs,
-					      &st->st_connection->spd,
+					      &c->spd,
 					      tunnel_mode &&
 					      inner_proto == &ip_protocol_comp,
 					      st->st_logger);

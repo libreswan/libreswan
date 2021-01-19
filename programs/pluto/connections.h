@@ -189,6 +189,7 @@ struct end {
 		} host;
 	} raw;
 
+	chunk_t sec_label;
 	bool key_from_DNS_on_demand;
 	bool has_client;
 	bool has_id_wildcards;
@@ -331,7 +332,6 @@ struct connection {
 #ifdef HAVE_NM
 	bool nmconfigured;
 #endif
-	char *sec_label;
 
 	/* Cisco interop: remote peer type */
 	enum keyword_remotepeertype remotepeertype;
@@ -447,7 +447,7 @@ extern void initiate_ondemand(const ip_address *our_client,
 			      const ip_address *peer_client,
 			      int transport_proto,
 			      bool held, bool background,
-			      const char *sec_label,
+			      const chunk_t *sec_label,
 			      const char *why,
 			      struct logger *logger);
 
@@ -501,7 +501,7 @@ extern struct connection
 	*find_connection_for_clients(struct spd_route **srp,
 				      const ip_address *our_client,
 				      const ip_address *peer_client,
-				      int transport_proto);
+				      int transport_proto, chunk_t sec_label);
 
 /* instantiating routines */
 

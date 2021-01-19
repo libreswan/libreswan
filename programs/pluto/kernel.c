@@ -214,7 +214,7 @@ void add_bare_shunt(const ip_subnet *our_client, const ip_subnet *peer_client,
 void record_and_initiate_opportunistic(const ip_selector *our_client,
 				       const ip_selector *peer_client,
 				       unsigned transport_proto,
-				       const char *sec_label,
+				       const chunk_t *sec_label,
 				       const char *why)
 {
 	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
@@ -1253,7 +1253,7 @@ bool raw_eroute(const ip_address *this_host,
 		const uint32_t xfrm_if_id,
 		enum pluto_sadb_operations op,
 		const char *opname,
-		const char *sec_label,
+		const chunk_t *sec_label,
 		struct logger *logger)
 {
 	char text_said[SATOT_BUF + SATOT_BUF];
@@ -1285,18 +1285,15 @@ bool raw_eroute(const ip_address *this_host,
 	if (DBGP(DBG_BASE)) {
 		selector_buf mybuf;
 		selector_buf peerbuf;
-		DBG_log("%s eroute %s --%d-> %s => %s using reqid %d (raw_eroute) proto=%d",
+		DBG_log("%s eroute %s --%d-> %s => %s using reqid %d (raw_eroute) proto=%d %s sec_label",
 			opname,
 			str_selector(this_client, &mybuf),
 			transport_proto,
 			str_selector(that_client, &peerbuf),
 			text_said,
 			proto_info->reqid,
-			proto_info->proto);
-
-		if (sec_label != NULL)
-			DBG_log("policy security sec_label %s",
-				sec_label);
+			proto_info->proto,
+			sec_label == NULL  ? "with" : "without");
 	}
 
 	bool result = kernel_ops->raw_eroute(this_host, this_client,
@@ -1513,7 +1510,6 @@ bool eroute_connection(const struct spd_route *sr,
 		       const uint32_t xfrm_if_id,
 		       unsigned int op,
 		       const char *opname,
-		       const char *sec_label,
 		       struct logger *logger)
 {
 	ip_address peer = sr->that.host_addr;
@@ -1541,7 +1537,7 @@ bool eroute_connection(const struct spd_route *sr,
 				    sa_priority, sa_marks,
 				    xfrm_if_id,
 				    op, buf2,
-				    sec_label,
+				    &sr->this.sec_label,
 				    logger);
 		if (!t) {
 			llog(RC_LOG, logger,
@@ -1563,7 +1559,7 @@ bool eroute_connection(const struct spd_route *sr,
 			  sa_priority, sa_marks,
 			  xfrm_if_id,
 			  op, buf2,
-			  sec_label,
+			  &sr->this.sec_label,
 			  logger);
 }
 
@@ -1649,7 +1645,6 @@ bool assign_holdpass(const struct connection *c,
 					      NULL, 0 /* xfrm_if_id */,
 					      op,
 					      reason,
-					      c->sec_label,
 					      c->logger))
 			{
 				dbg("assign_holdpass() eroute_connection() done");
@@ -1824,7 +1819,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		.transport_proto = c->spd.this.protocol,
 		.sa_lifetime = c->sa_ipsec_life_seconds,
 		.outif = -1,
-		.sec_label = c->sec_label /* assume connection outlive their kernel_sa's */
+		.sec_label = c->spd.this.sec_label /* assume connection outlive their kernel_sa's */
 	};
 
 	inner_spi = SPI_PASS;
@@ -2302,7 +2297,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				xfrm_if_id,
 				ERO_ADD_INBOUND,	/* op */
 				"add inbound",		/* opname */
-				c->sec_label,
+				&c->spd.this.sec_label,
 				st->st_logger)) {
 			llog(RC_LOG, st->st_logger,
 				    "raw_eroute() in setup_half_ipsec_sa() failed to add inbound");
@@ -2399,7 +2394,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 			0, /* xfrm_if_id. needed to tear down? */
 			ERO_DEL_INBOUND,
 			"delete inbound",
-			c->sec_label,
+			&c->spd.this.sec_label,
 			st->st_logger)) {
 		llog(RC_LOG, st->st_logger,
 			    "raw_eroute in teardown_half_ipsec_sa() failed to delete inbound");

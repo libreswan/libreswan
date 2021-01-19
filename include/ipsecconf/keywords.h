@@ -135,6 +135,7 @@ enum keyword_string_conn_field {
 
 	KSCF_UPDOWN,	/* left/right */
 	KSCF_ID,	/* left/right */
+	KSCF_SEC_LABEL,	/* left/right */
 	KSCF_CERT,	/* left/right */
 	KSCF_CKAID,	/* left/right */
 	KSCF_CA,	/* left/right */

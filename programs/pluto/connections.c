@@ -162,6 +162,7 @@ static void delete_end(struct end *e)
 	pfreeany(e->xauth_password);
 	pfreeany(e->xauth_username);
 	pfreeany(e->ckaid);
+	free_chunk_content(&e->sec_label);
 }
 
 static void delete_sr(struct spd_route *sr)
@@ -251,7 +252,6 @@ static void discard_connection(struct connection *c,
 	pfreeany(c->modecfg_dns);
 	pfreeany(c->modecfg_domains);
 	pfreeany(c->modecfg_banner);
-	pfreeany(c->sec_label);
 	pfreeany(c->dnshostname);
 	pfreeany(c->redirect_to);
 	pfreeany(c->accept_redirect_to);
@@ -738,8 +738,6 @@ static void unshare_connection(struct connection *c)
 				"connection modecfg_domains");
 	c->modecfg_banner = clone_str(c->modecfg_banner,
 				"connection modecfg_banner");
-	c->sec_label = clone_str(c->sec_label,
-				    "connection sec_label");
 	c->dnshostname = clone_str(c->dnshostname, "connection dnshostname");
 
 	/* duplicate any alias, adding spaces to the beginning and end */
@@ -794,6 +792,11 @@ static int extract_end(struct end *dst,
 		 * and for @string ID's all chars are valid without processing.
 		 */
 		atoid(src->id, &dst->id);
+	}
+
+	if (src->sec_label != NULL) {
+		dst->sec_label = clone_bytes_as_chunk(src->sec_label, strlen(src->sec_label), "struct end sec_label");
+		dbg("received sec_label '%s' from whack", src->sec_label);
 	}
 
 	/* decode CA distinguished name, if any */
@@ -1849,7 +1852,6 @@ static bool extract_connection(const struct whack_message *wm,
 	c->nmconfigured = wm->nmconfigured;
 #endif
 
-	c->sec_label = clone_str(wm->sec_label, "connection sec_label");
 	c->nflog_group = wm->nflog_group;
 	c->sa_priority = wm->sa_priority;
 	c->sa_tfcpad = wm->sa_tfcpad;
@@ -2456,7 +2458,7 @@ char *fmt_conn_instance(const struct connection *c, char buf[CONN_INST_BUF])
 struct connection *find_connection_for_clients(struct spd_route **srp,
 					const ip_address *our_client,
 					const ip_address *peer_client,
-					int transport_proto)
+					int transport_proto, chunk_t sec_label)
 {
 	int our_port = endpoint_hport(our_client);
 	int peer_port = endpoint_hport(peer_client);
@@ -2492,7 +2494,8 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 				(sr->this.port == 0 ||
 					our_port == sr->this.port) &&
 				(sr->that.port == 0 ||
-					peer_port == sr->that.port))
+					peer_port == sr->that.port) &&
+				hunk_eq(sec_label, sr->this.sec_label))
 			{
 				policy_prio_t prio =
 					8 * (c->policy_prio +
@@ -3992,9 +3995,13 @@ static void show_one_sr(struct show *s,
 		c->name, instance, c->modecfg_banner);
 	}
 
-	show_comment(s, "\"%s\"%s:   sec_label:%s;",
-		c->name, instance,
-		(c->sec_label == NULL) ? "unset" : c->sec_label);
+	/* we only support symmetric labels, but store it in struct end - pick one */
+	if (sr->this.sec_label.len == 0)
+		show_comment(s, "\"%s\"%s:   sec_label:unset;", c->name, instance);
+	else
+		show_comment(s, "\"%s\"%s:   sec_label:%.*s;",
+			c->name, instance,
+			(int)sr->this.sec_label.len, sr->this.sec_label.ptr);
 }
 
 void show_one_connection(struct show *s,

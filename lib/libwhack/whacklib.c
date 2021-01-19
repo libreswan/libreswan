@@ -222,6 +222,7 @@ static bool pickle_whack_end(struct whackpacker *wp, struct whack_end *end,
 {
 	return (PICKLE_STRING(&end->leftright) &&
 		PICKLE_STRING(&end->id) &&
+		PICKLE_STRING(&end->sec_label) &&
 		PICKLE_STRING(&end->cert) &&
 		PICKLE_STRING(&end->rsasigkey) &&
 		PICKLE_STRING(&end->ckaid) &&
@@ -247,9 +248,6 @@ static bool pickle_whack_message(struct whackpacker *wp, struct pickler *pickle)
 		PICKLE_STRING(&wp->msg->string2) &&
 		PICKLE_STRING(&wp->msg->string3) &&
 		PICKLE_STRING(&wp->msg->dnshostname) &&
-#ifdef HAVE_LABELED_IPSEC
-		PICKLE_STRING(&wp->msg->sec_label) &&
-#endif
 		PICKLE_STRING(&wp->msg->modecfg_dns) &&
 		PICKLE_STRING(&wp->msg->modecfg_domains) &&
 		PICKLE_STRING(&wp->msg->modecfg_banner) &&

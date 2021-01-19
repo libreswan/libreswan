@@ -293,6 +293,7 @@ static void set_whack_end(char *lr,
 {
 	w->leftright = lr;
 	w->id = l->id;
+	w->sec_label = l->sec_label;
 	w->host_type = l->addrtype;
 
 	switch (l->addrtype) {

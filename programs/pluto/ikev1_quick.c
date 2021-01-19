@@ -603,9 +603,9 @@ void quick_outI1(struct fd *whack_sock,
 	st->st_policy = policy;
 	st->st_try = try;
 
-	if (c->sec_label != NULL) {
-		dbg("pending phase 2 with security context \"%s\"",
-		    c->sec_label);
+	if (c->spd.this.sec_label.ptr != NULL) {
+		dbg("pending phase 2 with security context \"%.*s\"",
+		    (int)c->spd.this.sec_label.len, c->spd.this.sec_label.ptr);
 	}
 
 	st->st_myuserprotoid = c->spd.this.protocol;

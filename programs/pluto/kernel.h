@@ -169,7 +169,7 @@ struct kernel_sa {
 	const struct ip_encap *encap_type;		/* ESP in TCP or UDP; or NULL */
 	ip_address *natt_oa;
 	const char *text_said;
-	char *sec_label;
+	chunk_t sec_label;
 
 	const char *nic_offload_dev;
 	uint32_t xfrm_if_id;
@@ -222,7 +222,7 @@ struct kernel_ops {
 			   const uint32_t xfrm_if_id,
 			   enum pluto_sadb_operations op,
 			   const char *text_said,
-			   const char *policy_label,
+			   const chunk_t *sec_label,
 			   struct logger *logger);
 	bool (*shunt_eroute)(const struct connection *c,
 			     const struct spd_route *sr,
@@ -352,7 +352,7 @@ struct xfrm_user_sec_ctx_ike; /* forward declaration of tag */
 extern void record_and_initiate_opportunistic(const ip_selector *our_client,
 					      const ip_selector *peer_client,
 					      unsigned transport_proto,
-					      const char *sec_label,
+					      const chunk_t *sec_label,
 					      const char *why);
 extern void init_kernel(struct logger *logger);
 
@@ -424,7 +424,6 @@ extern bool eroute_connection(const struct spd_route *sr,
 			      const struct sa_marks *sa_marks,
 			      const uint32_t xfrm_if_id,
 			      unsigned int op, const char *opname,
-			      const char *policy_label,
 			      struct logger *logger);
 static inline bool compatible_overlapping_connections(const struct connection *a,
 						      const struct connection *b)
@@ -464,7 +463,7 @@ extern bool raw_eroute(const ip_address *this_host,
 		       const uint32_t xfrm_if_id,
 		       enum pluto_sadb_operations op,
 		       const char *opname,
-		       const char *policy_label,
+		       const chunk_t *sec_label,
 		       struct logger *logger);
 
 extern deltatime_t bare_shunt_interval;

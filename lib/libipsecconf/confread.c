@@ -394,7 +394,8 @@ static bool load_setup(struct starter_config *cfg,
  *
  * The function checks that IP addresses are valid, nexthops are
  * present (if needed) as well as policies, and sets the leftID
- * from the left= if it isn't set.
+ * from the left= if it isn't set. It sets the conn's sec_label
+ * into its left/right struct end options
  *
  * @param conn_st a connection definition
  * @param end a connection end
@@ -605,6 +606,14 @@ static bool validate_end(struct starter_conn *conn_st,
 				cc[0] = '\\';
 			}
 		}
+	}
+
+	/* Note label is conn option copied to both end's option */
+	if (conn_st->strings_set[KSCF_SA_SEC_LABEL]) {
+		char *value = conn_st->strings[KSCF_SA_SEC_LABEL];
+
+		pfreeany(end->sec_label);
+		end->sec_label = clone_str(value, "end->sec_label");
 	}
 
 	if (end->options_set[KSCF_RSASIGKEY]) {
@@ -1276,7 +1285,7 @@ static bool load_conn(struct starter_conn *conn,
 	str_to_conn(modecfg_domains, KSCF_MODECFGDOMAINS);
 	str_to_conn(modecfg_banner, KSCF_MODECFGBANNER);
 
-	str_to_conn(sec_label, KSCF_SA_SEC_LABEL);
+	str_to_conn(sec_label, KSCF_SA_SEC_LABEL); /* copied to left/right later */
 
 	str_to_conn(conn_mark_both, KSCF_CONN_MARK_BOTH);
 	str_to_conn(conn_mark_in, KSCF_CONN_MARK_IN);
@@ -1580,6 +1589,7 @@ static void copy_conn_default(struct starter_conn *conn,
 
 	STR_FIELD_END(iface);
 	STR_FIELD_END(id);
+	STR_FIELD_END(sec_label);
 	STR_FIELD_END(rsasigkey);
 	STR_FIELD_END(virt);
 	STR_FIELD_END(certx);
@@ -1757,6 +1767,7 @@ static void confread_free_conn(struct starter_conn *conn)
 
 	STR_FIELD_END(iface);
 	STR_FIELD_END(id);
+	STR_FIELD_END(sec_label);
 	STR_FIELD_END(rsasigkey);
 	STR_FIELD_END(virt);
 	STR_FIELD_END(certx);

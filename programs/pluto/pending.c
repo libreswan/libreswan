@@ -91,10 +91,6 @@ void add_pending(struct fd *whack_sock,
 	p->replacing = replacing;
 	p->pend_time = mononow();
 	p->part_of_initiate = part_of_initiate; /* useful */
-	if (c->sec_label != NULL) {
-		dbg("pending IPsec SA negotiation with security context %s",
-		    c->sec_label);
-	}
 
 	/*
 	 * If this is part of an initiate then there's already enough

@@ -1833,9 +1833,27 @@ enum_names ikev2_notify_names = {
 
 /* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-19 */
 static const char *const ikev2_ts_type_name[] = {
-	"IKEv2_TS_IPV4_ADDR_RANGE",
-	"IKEv2_TS_IPV6_ADDR_RANGE",
-	"IKEv2_TS_FC_ADDR_RANGE",	/* not implemented */
+	"IKEv2_TS_IPV4_ADDR_RANGE",     /* 7 */
+	"IKEv2_TS_IPV6_ADDR_RANGE",     /* 8 */
+	"IKEv2_TS_FC_ADDR_RANGE",	/* 9; not implemented */
+};
+
+/**
+ * ikev2_ts_type_name_private_use: Traffic Selector Types allocated for private use.
+ *
+ * The reason this is required is that private Traffic Selector Type values are
+ * not contiguous with publicly allocated TS Type values.
+ */
+static const char *const ikev2_ts_type_name_private_use[] = {
+	"IKEv2_TS_SECLABEL",		/* 241 */
+};
+
+enum_names ikev2_ts_type_names_private_use = {
+	IKEv2_TS_SECLABEL,
+	IKEv2_TS_SECLABEL,
+	ARRAY_REF(ikev2_ts_type_name_private_use),
+	NULL, /* prefix */
+	NULL
 };
 
 enum_names ikev2_ts_type_names = {
@@ -1843,7 +1861,8 @@ enum_names ikev2_ts_type_names = {
 	IKEv2_TS_FC_ADDR_RANGE,
 	ARRAY_REF(ikev2_ts_type_name),
 	NULL, /* prefix */
-	NULL
+	/* Link to the private Traffic Selector Type values */
+	&ikev2_ts_type_names_private_use
 };
 
 /*

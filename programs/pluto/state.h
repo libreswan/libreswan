@@ -736,7 +736,7 @@ struct state {
 	generalName_t *st_requested_ca;		/* collected certificate requests */
 	uint8_t st_reply_xchg;
 	bool st_peer_wants_null;		/* We received IDr payload of type ID_NULL (and we allow POLICY_AUTH_NULL */
-	char *st_seen_sec_label;		/* TEMP until we move it into c->spd */
+	chunk_t st_seen_sec_label;
 };
 
 /*

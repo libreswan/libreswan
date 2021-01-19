@@ -643,7 +643,7 @@ struct find_oppo_bundle {
 	ipsec_spi_t failure_shunt; /* in host order! */
 	struct logger *logger; /* has whack attached */
 	bool background;
-	char *sec_label;
+	chunk_t sec_label;
 };
 
 static void cannot_oppo(struct find_oppo_bundle *b, err_t ughmsg)
@@ -707,8 +707,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	address_buf peerb;
 	const char *peer_addr = str_address(&peer_address, &peerb);
 
-	if (b->sec_label != NULL) {
-		dbg("received security label string: %s", b->sec_label);
+	if (b->sec_label.len != 0) {
+		dbg("received security label string: %.*s",
+			(int)b->sec_label.len, b->sec_label.ptr);
 	}
 
 	char demandbuf[256];
@@ -745,10 +746,12 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	}
 
 	struct spd_route *sr;
+	/* Why is this not passed the entire bundle b ? */
 	struct connection *c = find_connection_for_clients(&sr,
 							   &b->our_client,
 							   &b->peer_client,
-							   b->transport_proto);
+							   b->transport_proto,
+							   b->sec_label);
 	if (c == NULL) {
 		/* No connection explicitly handles the clients and there
 		 * are no Opportunistic connections -- whine and give up.
@@ -948,7 +951,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 				calculate_sa_prio(c, LIN(POLICY_OPPORTUNISTIC, c->policy) ? true : false),
 				NULL, 0 /* xfrm-if-id */,
 				ERO_ADD, addwidemsg,
-				NULL,
+				&b->sec_label,
 				b->logger)) {
 			llog(RC_LOG, b->logger, "adding bare wide passthrough negotiationshunt failed");
 		} else {
@@ -967,6 +970,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	}
 
 	/* XXX: re-use C */
+	/* XXX shouldn't this pass b->sec_label too in theory - but we don't support OE with labels */
 	c = build_outgoing_opportunistic_connection(&b->our_client,
 						    &b->peer_client,
 						    b->transport_proto);
@@ -1060,7 +1064,7 @@ void initiate_ondemand(const ip_address *our_client,
 		       const ip_address *peer_client,
 		       int transport_proto,
 		       bool held, bool background,
-		       const char *sec_label,
+		       const chunk_t *sec_label,
 		       const char *why,
 		       struct logger *logger)
 {
@@ -1076,14 +1080,10 @@ void initiate_ondemand(const ip_address *our_client,
 		.failure_shunt = SPI_HOLD, /* until we found connection policy */
 		.logger = logger, /*on-stack*/
 		.background = background,
-		.sec_label = NULL
+		.sec_label = *sec_label
 	};
-	if (sec_label != NULL) {
-		b.sec_label = clone_str(sec_label, "sec_label in bundle");
-	}
 
 	initiate_ondemand_body(&b);
-	pfreeany(b.sec_label);
 }
 
 /* Find a connection that owns the shunt eroute between subnets.

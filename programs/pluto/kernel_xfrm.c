@@ -526,7 +526,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			       const uint32_t xfrm_if_id,
 			       enum pluto_sadb_operations sadb_op,
 			       const char *text_said,
-			       const char *policy_label,
+			       const chunk_t *sec_label,
 			       struct logger *logger)
 {
 	struct {
@@ -772,25 +772,23 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 #endif
 	}
 
-	if (policy_label != NULL) {
-		size_t len = strlen(policy_label) + 1;
+	if (sec_label->len != 0) {
 		struct rtattr *attr = (struct rtattr *)
 			((char *)&req + req.n.nlmsg_len);
 		struct xfrm_user_sec_ctx *uctx;
 
-		passert(len <= MAX_SECCTX_LEN);
+		passert(sec_label->len <= MAX_SECCTX_LEN);
 		attr->rta_type = XFRMA_SEC_CTX;
 
-		dbg("passing security label \"%s\" to kernel", policy_label);
-		attr->rta_len =
-			RTA_LENGTH(sizeof(struct xfrm_user_sec_ctx) + len);
+		dbg("passing security label \"%.*s\" to kernel", (int)sec_label->len, sec_label->ptr);
+		attr->rta_len = RTA_LENGTH(sizeof(struct xfrm_user_sec_ctx) + sec_label->len);
 		uctx = RTA_DATA(attr);
 		uctx->exttype = XFRMA_SEC_CTX;
-		uctx->len = sizeof(struct xfrm_user_sec_ctx) + len;
-		uctx->ctx_doi = 1;	/* ??? hardwired and nameless */
-		uctx->ctx_alg = 1;	/* ??? hardwired and nameless */
-		uctx->ctx_len = len;
-		memcpy(uctx + 1, policy_label, len);
+		uctx->len = sizeof(struct xfrm_user_sec_ctx) + sec_label->len;
+		uctx->ctx_doi = XFRM_SC_DOI_LSM;
+		uctx->ctx_alg = XFRM_SC_ALG_SELINUX;
+		uctx->ctx_len = sec_label->len;
+		memcpy(uctx + 1, sec_label->ptr, sec_label->len);
 		req.n.nlmsg_len += attr->rta_len;
 	}
 
@@ -865,6 +863,7 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 		.proto = proto,
 		.reqid = reqid_esp(c->spd.reqid),
 		.encap_type = encap_type,
+		/* WWW what about sec_label? */
 	};
 
 	if (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
@@ -1547,22 +1546,21 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		dbg("netlink: esp-hw-offload not set for IPsec SA");
 	}
 
-	if (sa->sec_label != NULL) {
-		size_t len = strlen(sa->sec_label);
+	if (sa->sec_label.len != 0) {
 		struct xfrm_user_sec_ctx xuctx;
 
-		xuctx.len = sizeof(struct xfrm_user_sec_ctx) + len;
+		xuctx.len = sizeof(struct xfrm_user_sec_ctx) + sa->sec_label.len;
 		xuctx.exttype = XFRMA_SEC_CTX;
 		xuctx.ctx_alg = XFRM_SC_ALG_SELINUX; /* 1 */
 		xuctx.ctx_doi = XFRM_SC_DOI_LSM; /* 1 */
-		xuctx.ctx_len = len;
+		xuctx.ctx_len = sa->sec_label.len;
 
 		attr->rta_type = XFRMA_SEC_CTX;
 		attr->rta_len = RTA_LENGTH(xuctx.len);
 
 		memcpy(RTA_DATA(attr), &xuctx, sizeof(xuctx));
 		memcpy((char *)RTA_DATA(attr) + sizeof(xuctx),
-			sa->sec_label, len);
+			sa->sec_label.ptr, sa->sec_label.len);
 
 		req.n.nlmsg_len += attr->rta_len;
 
@@ -1653,7 +1651,10 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 {
 	struct xfrm_user_acquire *acquire;
 	struct xfrm_user_sec_ctx_ike *uctx = NULL;
-	char *sec_label = NULL;
+	chunk_t sec_label = {
+		.ptr = NULL,
+		.len = 0
+	};
 
 	dbg("xfrm netlink msg len %zu", (size_t) n->nlmsg_len);
 
@@ -1760,12 +1761,13 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 			 * note: xuctx + 1 is tricky:
 			 * first byte after header
 			 */
-			sec_label = (char *)(xuctx + 1);
+			sec_label.ptr = (uint8_t *)(xuctx + 1);
+			sec_label.len = xuctx->ctx_len;
 			dbg("xfrm: xuctx security context value: %.*s",
 			    xuctx->ctx_len,
 			    (const char *) (xuctx + 1));
 
-			if (strlen(sec_label)+ 1 != xuctx->ctx_len) {
+			if (strlen((char *)sec_label.ptr) + 1 != xuctx->ctx_len) {
 				llog(RC_LOG, logger,
 				    "received sec_label contains embedded NULl ignoring Acquire message");
 				return;
@@ -1790,7 +1792,7 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 
 
 	record_and_initiate_opportunistic(&ours, &theirs,
-					  acquire->sel.proto, sec_label,
+					  acquire->sel.proto, &sec_label,
 					  "%acquire-netlink");
 }
 
@@ -2144,8 +2146,7 @@ static bool netlink_sag_eroute(const struct state *st, const struct spd_route *s
 	return eroute_connection(sr, inner_spi, inner_spi, inner_proto,
 				 inner_esatype, proto_info + i,
 				 calculate_sa_prio(c, FALSE), &c->sa_marks,
-				 xfrm_if_id, op, opname,
-				 c->sec_label, st->st_logger);
+				 xfrm_if_id, op, opname, st->st_logger);
 }
 
 /* Check if there was traffic on given SA during the last idle_max
@@ -2287,7 +2288,7 @@ static bool netlink_shunt_eroute(const struct connection *c,
 				&c->sa_marks,
 				0 /* xfrm_if_id needed for shunt? */,
 				op, buf2,
-				c->sec_label,
+				&sr->this.sec_label,
 				logger))
 		return false;
 
@@ -2316,7 +2317,7 @@ static bool netlink_shunt_eroute(const struct connection *c,
 				  &c->sa_marks,
 				  0, /* xfrm_if_id needed for shunt? */
 				  op, buf2,
-				  c->sec_label,
+				  &sr->this.sec_label,
 				  logger);
 }
 

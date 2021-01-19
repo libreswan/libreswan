@@ -1003,8 +1003,6 @@ int main(int argc, char **argv)
 	msg.nmconfigured = FALSE;
 #endif
 
-	msg.sec_label = NULL;
-
 	msg.xauthby = XAUTHBY_FILE;
 	msg.xauthfail = XAUTHFAIL_HARD;
 	msg.modecfg_domains = NULL;
@@ -2016,7 +2014,9 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_SEC_LABEL:	/* --sec-label */
-			msg.sec_label = optarg;
+			/* we only support symmetric labels but put it in struct end */
+			msg.right.sec_label = optarg;
+			msg.left.sec_label = optarg;
 			continue;
 
 		case ALGO_RSASIG: /* --rsasig */
