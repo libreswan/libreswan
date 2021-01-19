@@ -26,8 +26,9 @@
 
 struct host_pair {
 	const char *magic;
-	ip_endpoint local;
-	ip_endpoint remote;
+	/* host-pair doesn't look at ports */
+	ip_address local;
+	ip_address remote;
 	struct connection *connections;         /* connections with this pair */
 	struct pending *pending;                /* awaiting Keying Channel */
 	struct list_entry host_pair_entry;
@@ -43,8 +44,8 @@ extern void connect_to_host_pair(struct connection *c);
 extern struct connection *find_host_pair_connections(const ip_endpoint *local,
 						     const ip_endpoint *remote);
 
-extern struct host_pair *find_host_pair(const ip_endpoint *local,
-					const ip_endpoint *remote);
+extern struct host_pair *find_host_pair(const ip_address *local,
+					const ip_address *remote);
 
 void delete_oriented_hp(struct connection *c);
 void host_pair_remove_connection(struct connection *c, bool connection_valid);

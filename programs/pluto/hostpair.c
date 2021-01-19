@@ -78,20 +78,16 @@ static void jam_host_pair(struct jambuf *buf, const void *data)
 {
 	const struct host_pair *hp = data;
 	passert(hp->magic == host_pair_magic);
-	jam_endpoint(buf, &hp->local);
+	jam_address(buf, &hp->local);
 	jam(buf, "->");
-	jam_endpoint(buf, &hp->remote);
+	jam_address(buf, &hp->remote);
 }
 
-static hash_t hp_hasher(const ip_endpoint *local, const ip_endpoint *remote)
+static hash_t hp_hasher(const ip_address *local, const ip_address *remote)
 {
-	/* strip port */
-	ip_address laddr = endpoint_address(local);
-	/* NULL -> any_address aka zero; must hash it */
-	ip_address raddr = (remote != NULL ? endpoint_address(remote) : endpoint_type(local)->any_address);
 	hash_t hash = zero_hash;
-	hash = hash_table_hasher(address_as_shunk(&laddr), hash);
-	hash = hash_table_hasher(address_as_shunk(&raddr), hash);
+	hash = hash_table_hasher(address_as_shunk(local), hash);
+	hash = hash_table_hasher(address_as_shunk(remote), hash);
 	return hash;
 }
 
@@ -176,12 +172,12 @@ struct pending **host_pair_first_pending(const struct connection *c)
  * found faster next time.
  */
 
-struct host_pair *find_host_pair(const ip_endpoint *local,
-				 const ip_endpoint *remote)
+struct host_pair *find_host_pair(const ip_address *local,
+				 const ip_address *remote)
 {
 	/* NULL -> any_address aka zero; must hash it */
 	if (remote == NULL) {
-		remote = &endpoint_type(local)->any_address;
+		remote = &address_type(local)->any_address;
 	}
 	/*
 	 * look for a host-pair that has the right set of ports/address.
@@ -203,11 +199,11 @@ struct host_pair *find_host_pair(const ip_endpoint *local,
 			continue;
 		}
 
-		endpoint_buf b1;
-		endpoint_buf b2;
-		dbg("find_host_pair: comparing %s to %s but ignoring ports",
-		    str_endpoint(&hp->local, &b1),
-		    str_endpoint(&hp->remote, &b2));
+		address_buf b1;
+		address_buf b2;
+		dbg("find_host_pair: comparing %s to %s",
+		    str_address(&hp->local, &b1),
+		    str_address(&hp->remote, &b2));
 
 		/* XXX: same addr does not compare ports.  */
 		if (sameaddr(&hp->local, local) &&
@@ -218,7 +214,7 @@ struct host_pair *find_host_pair(const ip_endpoint *local,
 	return NULL;
 }
 
-static struct host_pair *alloc_host_pair(ip_endpoint local, ip_endpoint remote, where_t where)
+static struct host_pair *alloc_host_pair(ip_address local, ip_address remote, where_t where)
 {
 	struct host_pair *hp = alloc_thing(struct host_pair, "host pair");
 	hp->magic = host_pair_magic;
@@ -278,14 +274,8 @@ void connect_to_host_pair(struct connection *c)
 
 		if (hp == NULL) {
 			/* no suitable host_pair -- build one */
-			ip_endpoint local = endpoint3(c->interface->protocol,
-						      &c->spd.this.host_addr,
-						      ip_hport(nat_traversal_enabled ? IKE_UDP_PORT
-							       : c->spd.this.host_port));
-			ip_endpoint remote = endpoint3(c->interface->protocol,
-						       &c->spd.that.host_addr,
-						       ip_hport(nat_traversal_enabled ? IKE_UDP_PORT
-								: c->spd.that.host_port));
+			ip_address local = c->spd.this.host_addr;
+			ip_address remote = c->spd.that.host_addr;
 			hp = alloc_host_pair(local, remote, HERE);
 		}
 		c->host_pair = hp;
