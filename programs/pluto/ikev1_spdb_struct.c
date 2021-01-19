@@ -1275,7 +1275,7 @@ bool ikev1_out_sa(pb_stream *outs,
 						};
 
 						char *nbyte[1];
-						nbyte[0] = '\0';
+						nbyte[0] = NULL;
 
 						if (!out_struct(&attr,
 								attr_desc,
