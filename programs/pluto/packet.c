@@ -1388,7 +1388,7 @@ struct_desc ikev2_vendor_id_desc = {
  *    !                                                               !
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
-static field_desc ikev2ts_fields[] = {
+static field_desc ikev2_ts_fields[] = {
 	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
@@ -1398,18 +1398,21 @@ static field_desc ikev2ts_fields[] = {
 };
 struct_desc ikev2_ts_i_desc = {
 	.name = "IKEv2 Traffic Selector - Initiator - Payload",
-	.fields = ikev2ts_fields,
+	.fields = ikev2_ts_fields,
 	.size = sizeof(struct ikev2_ts),
 	.pt = ISAKMP_NEXT_v2TSi,
 };
 struct_desc ikev2_ts_r_desc = {
 	.name = "IKEv2 Traffic Selector - Responder - Payload",
-	.fields = ikev2ts_fields,
+	.fields = ikev2_ts_fields,
 	.size = sizeof(struct ikev2_ts),
 	.pt = ISAKMP_NEXT_v2TSr,
 };
 
 /*
+ * Different types of traffic selector are handled together
+ * See RFC 7296 and draft-ietf-ipsecme-labeled-ipsec-04
+ *
  * 3.13.1.  Traffic Selector
  *
  *                         1                   2                   3
@@ -1417,31 +1420,61 @@ struct_desc ikev2_ts_r_desc = {
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *    !   TS Type     !IP Protocol ID*|       Selector Length         |
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- *    |           Start Port*         |           End Port*           |
+ *    |           Start Port          |           End Port            |
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *    !                                                               !
- *    ~                         Starting Address*                     ~
+ *    ~                         Starting Address                      ~
  *    !                                                               !
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *    !                                                               !
- *    ~                         Ending Address*                       ~
+ *    ~                         Ending Address                        ~
  *    !                                                               !
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  *                Figure 20: Traffic Selector
+ *
+ * 2.1.  TS_SECLABEL payload format
+ *
+ *                         1                   2                   3
+ *     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ *    +---------------+---------------+-------------------------------+
+ *    |   TS Type     |    Reserved   |       Selector Length         |
+ *    +---------------+---------------+-------------------------------+
+ *    |                                                               |
+ *    ~                         Security Label*                       ~
+ *    |                                                               |
+ *    +---------------------------------------------------------------+
+ *
+ *                Figure 1: Labeled IPsec Traffic Selector
  */
-static field_desc ikev2ts1_fields[] = {
+
+/*
+ * These are just read raw, so no struct or fields/desc are needed
+ */
+/*
+ * Traffic Selector Header - read header, then sub out work to type handler
+ */
+static field_desc ikev2_ts_header_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "TS type", &ikev2_ts_type_names },
 	{ ft_loose_enum,  8 / BITS_PER_BYTE, "IP Protocol ID", &ip_protocol_id_names, },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_nat, 16 / BITS_PER_BYTE, "start port", NULL },
-	{ ft_nat, 16 / BITS_PER_BYTE, "end port", NULL },
 	{ ft_end,  0, NULL, NULL }
 };
-struct_desc ikev2_ts1_desc = {
-	.name = "IKEv2 Traffic Selector",
-	.fields = ikev2ts1_fields,
-	.size = sizeof(struct ikev2_ts1),
+struct_desc ikev2_ts_header_desc = {
+	.name = "IKEv2 Traffic Selector Header",
+	.fields = ikev2_ts_header_fields,
+	.size = 4 /*sizeof(struct ikev2_ts_header) */ ,
+};
+
+static field_desc ikev2_ts_portrange_fields[] = {
+	{ ft_nat, 16 / BITS_PER_BYTE, "start port", NULL },
+	{ ft_nat, 16 / BITS_PER_BYTE, "end port", NULL },
+	{ ft_end, 0, NULL, NULL }
+};
+struct_desc ikev2_ts_portrange_desc = {
+	.name = "IKEv2 IP Traffic Selector port range",
+	.fields = ikev2_ts_portrange_fields,
+	.size = sizeof(struct ikev2_ts_portrange),
 };
 
 /*
@@ -2151,6 +2184,12 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 					true);
 	}
 	return NULL;
+}
+
+/* return first byte. If no byte return -1 */
+int pbs_peek_byte(const struct pbs_in *ins)
+{
+	return pbs_left(ins) == 0 ? -1 : ins->cur[0];
 }
 
 diag_t pbs_in_raw(struct pbs_in *ins, void *bytes, size_t len, const char *name)

@@ -75,10 +75,15 @@ void ikev2_print_ts(const struct traffic_selector *ts)
 		DBG_log("  port range: %d-%d", ts->startport, ts->endport);
 		range_buf b;
 		DBG_log("  ip range: %s", str_range(&ts->net, &b));
+		if (ts->sec_label.len != 0)
+			DBG_dump_hunk("security label:", ts->sec_label);
 	}
 }
 
 /* rewrite me with address_as_{chunk,shunk}()? */
+/* For now, note the struct traffic_selector can contain
+ * two selectors - an IPvX range and a sec_label
+ */
 struct traffic_selector ikev2_end_to_ts(const struct end *e)
 {
 	struct traffic_selector ts;
@@ -113,85 +118,112 @@ struct traffic_selector ikev2_end_to_ts(const struct end *e)
 		ts.endport = e->port;
 	}
 
+	ts.sec_label = e->sec_label;
+
 	return ts;
 }
 
+/*
+ * A struct end is converted to a struct traffic_selector.
+ * This (currently) can contain both an IP range AND a
+ * SEC_LABEL, which will get output here as two Traffic
+ * Selectors. The label is optional, the IP range is
+ * mandatory.
+ */
 static stf_status ikev2_emit_ts(pb_stream *outpbs,
 				const struct_desc *ts_desc,
 				const struct traffic_selector *ts)
 {
 	pb_stream ts_pbs;
+	bool with_label = ts->sec_label.len != 0;
+
+	if (ts->ts_type != IKEv2_TS_IPV4_ADDR_RANGE &&
+		ts->ts_type != IKEv2_TS_IPV6_ADDR_RANGE)
+	{
+		return STF_INTERNAL_ERROR;
+	}
 
 	{
 		struct ikev2_ts its = {
 			.isat_critical = ISAKMP_PAYLOAD_NONCRITICAL,
-			.isat_num = 1,
+			/*
+			 * If there is a security label in the Traffic Selector,
+			 * then we must send a TS_SECLABEL substructure as part of the
+			 * Traffic Selector (TS) Payload.
+			 * That means the TS Payload contains two TS substructures:
+			 *  - One for the address/port range
+			 *  - One for the TS_SECLABEL
+			 */
+			.isat_num = with_label ? 2 : 1,
 		};
 
 		if (!out_struct(&its, ts_desc, outpbs, &ts_pbs))
 			return STF_INTERNAL_ERROR;
 	}
 
-	pb_stream ts_pbs2;
-
 	{
-		struct ikev2_ts1 its1 = {
-			.isat1_ipprotoid = ts->ipprotoid,   /* protocol as per local policy */
-			.isat1_startport = ts->startport,   /* ports as per local policy */
-			.isat1_endport = ts->endport,
+		pb_stream ts_range_pbs;
+		struct ikev2_ts_header ts_header = {
+			.isath_ipprotoid = ts->ipprotoid
 		};
+
 		switch (ts->ts_type) {
 		case IKEv2_TS_IPV4_ADDR_RANGE:
-			its1.isat1_type = IKEv2_TS_IPV4_ADDR_RANGE;
+			ts_header.isath_type = IKEv2_TS_IPV4_ADDR_RANGE;
 			break;
 		case IKEv2_TS_IPV6_ADDR_RANGE:
-			its1.isat1_type = IKEv2_TS_IPV6_ADDR_RANGE;
+			ts_header.isath_type = IKEv2_TS_IPV6_ADDR_RANGE;
 			break;
-		case IKEv2_TS_FC_ADDR_RANGE:
-			DBG_log("IKEv2 Traffic Selector IKEv2_TS_FC_ADDR_RANGE not yet supported");
-			return STF_INTERNAL_ERROR;
-
-		default:
-			DBG_log("IKEv2 Traffic Selector type '%d' not supported",
-				ts->ts_type);
-			return STF_INTERNAL_ERROR;	/* ??? should be bad_case()? */
 		}
 
-		if (!out_struct(&its1, &ikev2_ts1_desc, &ts_pbs, &ts_pbs2))
+		if (!out_struct(&ts_header, &ikev2_ts_header_desc, &ts_pbs, &ts_range_pbs))
 			return STF_INTERNAL_ERROR;
-	}
 
-	/* now do IP addresses */
-	switch (ts->ts_type) {
-	case IKEv2_TS_IPV4_ADDR_RANGE:
-	case IKEv2_TS_IPV6_ADDR_RANGE:
-	{
+
+		struct ikev2_ts_portrange ts_ports = {
+			.isatpr_startport = ts->startport,
+			.isatpr_endport = ts->endport
+		};
+
+		if (!out_struct(&ts_ports, &ikev2_ts_portrange_desc, &ts_range_pbs, NULL))
+			return STF_INTERNAL_ERROR;
+
 		diag_t d;
-		d = pbs_out_address(&ts_pbs2, &ts->net.start, "IP start");
+		d = pbs_out_address(&ts_range_pbs, &ts->net.start, "IP start");
 		if (d != NULL) {
 			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
-		d = pbs_out_address(&ts_pbs2, &ts->net.end, "IP end");
+		d = pbs_out_address(&ts_range_pbs, &ts->net.end, "IP end");
 		if (d != NULL) {
 			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
-		break;
-	}
-	case IKEv2_TS_FC_ADDR_RANGE:
-		DBG_log("Traffic Selector IKEv2_TS_FC_ADDR_RANGE not supported");
-		return STF_FAIL;
-
-	default:
-		DBG_log("Failed to create unknown IKEv2 Traffic Selector payload '%d'",
-			ts->ts_type);
-		return STF_FAIL;
+		close_output_pbs(&ts_range_pbs);
 	}
 
-	close_output_pbs(&ts_pbs2);
+	if (with_label)
+	{
+		pb_stream ts_label_pbs;
+		struct ikev2_ts_header ts_header = {
+			.isath_type = IKEv2_TS_SECLABEL,
+			.isath_ipprotoid = 0 /* really RESERVED, not iprotoid */
+		};
+		/* Output the header of the TS_SECLABEL substructure payload. */
+		if (!out_struct(&ts_header, &ikev2_ts_header_desc, &ts_pbs, &ts_label_pbs)) {
+			return STF_INTERNAL_ERROR;
+		}
+
+		/* Output the security label value of the TS_SECLABEL substructure payload. */
+		diag_t d = pbs_out_raw(&ts_label_pbs, ts->sec_label.ptr, ts->sec_label.len, "output Security label");
+		if (d != NULL) {
+			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
+			return STF_INTERNAL_ERROR;
+		}
+		close_output_pbs(&ts_label_pbs);
+	}
+
 	close_output_pbs(&ts_pbs);
-
 	return STF_OK;
 }
 
@@ -216,6 +248,8 @@ static struct traffic_selector impair_ts_to_supernet(const struct traffic_select
 		ts_ret.net = range_from_subnet(&ipv6_info.all_addresses);
 
 	ts_ret.net.is_subnet = true;
+
+	ts_ret.sec_label = ts->sec_label;
 
 	return ts_ret;
 }
@@ -336,63 +370,115 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 
 	if (ts_pd->payload.v2ts.isat_num >= elemsof(tss->ts)) {
 		llog(RC_LOG, logger, "%s contains %d entries which exceeds hardwired max of %zu",
-			      which, ts_pd->payload.v2ts.isat_num, elemsof(tss->ts));
+			which, ts_pd->payload.v2ts.isat_num, elemsof(tss->ts));
 		return false;	/* won't fit in array */
 	}
 
-	for (tss->nr = 0; tss->nr < ts_pd->payload.v2ts.isat_num; tss->nr++) {
+	for (tss->nr = 0; tss->nr < ts_pd->payload.v2ts.isat_num; ) {
 		diag_t d;
 		struct traffic_selector *ts = &tss->ts[tss->nr];
 
-		struct pbs_in addr_pbs;
-		struct ikev2_ts1 ts1;
-		d = pbs_in_struct(&ts_pd->pbs, &ikev2_ts1_desc,
-				  &ts1, sizeof(ts1), &addr_pbs);
-		if (d != NULL) {
-			log_diag(RC_LOG, logger, &d, "%s", "");
-			return false;
-		}
+		*ts = (struct traffic_selector){0};
 
-		const struct ip_info *ipv;
-		switch (ts1.isat1_type) {
+		struct ikev2_ts_header ts_h;
+		struct pbs_in ts_body_pbs;
+
+		d = pbs_in_struct(&ts_pd->pbs, &ikev2_ts_header_desc,
+			  &ts_h, sizeof(ts_h), &ts_body_pbs);
+
+		switch (ts_h.isath_type) {
 		case IKEv2_TS_IPV4_ADDR_RANGE:
-			ts->ts_type = IKEv2_TS_IPV4_ADDR_RANGE;
-			ipv = &ipv4_info;
-			break;
 		case IKEv2_TS_IPV6_ADDR_RANGE:
-			ts->ts_type = IKEv2_TS_IPV6_ADDR_RANGE;
-			ipv = &ipv6_info;
+		{
+			ts->ipprotoid = ts_h.isath_ipprotoid;
+
+			/* read and fill in port range */
+			struct ikev2_ts_portrange pr;
+
+			d = pbs_in_struct(&ts_body_pbs, &ikev2_ts_portrange_desc,
+				  &pr, sizeof(pr), NULL);
+			if (d != NULL) {
+				log_diag(RC_LOG, logger, &d, "%s", "");
+				return false;
+			}
+
+			ts->startport = pr.isatpr_startport;
+			ts->endport = pr.isatpr_endport;
+
+			if (ts->startport > ts->endport) {
+				llog(RC_LOG, logger,
+					    "%s traffic selector %d has an invalid port range - ignored",
+					    which, tss->nr);
+				continue;
+			}
+
+			/* read and fill in IP address range */
+			const struct ip_info *ipv;
+			switch (ts_h.isath_type) {
+			case IKEv2_TS_IPV4_ADDR_RANGE:
+				ipv = &ipv4_info;
+				break;
+			case IKEv2_TS_IPV6_ADDR_RANGE:
+				ipv = &ipv6_info;
+				break;
+			default:
+				bad_case(ts_h.isath_type); /* make compiler happy */
+			}
+
+
+			d = pbs_in_address(&ts_body_pbs, &ts->net.start, ipv, "TS IP start");
+			if (d != NULL) {
+				log_diag(RC_LOG, logger, &d, "%s", "");
+				return false;
+			}
+
+			d = pbs_in_address(&ts_body_pbs, &ts->net.end, ipv, "TS IP end");
+			if (d != NULL) {
+				log_diag(RC_LOG, logger, &d, "%s", "");
+				return false;
+			}
+
+			/* XXX: does this matter? */
+			if (pbs_left(&ts_body_pbs) != 0)
+				return false;
+			ts->ts_type = ts_h.isath_type;
 			break;
+		}
+
+		case IKEv2_TS_SECLABEL:
+		{
+			if (ts_h.isath_ipprotoid != 0) {
+				llog(RC_LOG, logger, "Traffic Selector of type Security Label should not have non-zero IP protocol '%u' - ignored",
+					ts_h.isath_ipprotoid);
+			}
+
+			size_t sl_len = pbs_left(&ts_body_pbs);
+
+			if (sl_len == 0) {
+				llog(RC_LOG, logger, "Traffic Selector of type Security Label cannot be zero length - ignoring this TS");
+				continue;
+			}
+
+			ts->sec_label = alloc_chunk(sl_len, "incoming TS sec_label");
+			d = pbs_in_raw(&ts_body_pbs, ts->sec_label.ptr, sl_len, "TS Security Label content");
+
+			if (d != NULL) {
+				log_diag(RC_LOG, logger, &d, "%s", "");
+				return false;
+			}
+			ts->ts_type = ts_h.isath_type;
+			break;
+		}
+
+		case IKEv2_TS_FC_ADDR_RANGE:
+			llog(RC_LOG, logger, "Encountered Traffic Selector Type FC_ADDR_RANGE not supported");
+			return false;
+
 		default:
+			llog(RC_LOG, logger, "Encountered Traffic Selector of unknown Type");
 			return false;
 		}
-
-		d = pbs_in_address(&addr_pbs, &ts->net.start, ipv, "TS low");
-		if (d != NULL) {
-			log_diag(RC_LOG, logger, &d, "%s", "");
-			return false;
-		}
-
-		d = pbs_in_address(&addr_pbs, &ts->net.end, ipv, "TS high");
-		if (d != NULL) {
-			log_diag(RC_LOG, logger, &d, "%s", "");
-			return false;
-		}
-
-		/* XXX: does this matter? */
-		if (pbs_left(&addr_pbs) != 0)
-			return false;
-
-		ts->ipprotoid = ts1.isat1_ipprotoid;
-
-		ts->startport = ts1.isat1_startport;
-		ts->endport = ts1.isat1_endport;
-		if (ts->startport > ts->endport) {
-			llog(RC_LOG, logger,
-				    "%s traffic selector %d has an invalid port range",
-				    which, tss->nr);
-			return false;
-		}
+		tss->nr++;
 	}
 
 	dbg("%s: parsed %d traffic selectors", which, tss->nr);
@@ -574,6 +660,7 @@ static int score_narrow_port(const struct end *end,
 	return f;
 }
 
+
 /*
  * Does TS fit inside of END?
  *
@@ -583,8 +670,6 @@ static int score_narrow_port(const struct end *end,
  * NOTE: Our parser/config only allows 1 CIDR, however IKEv2 ranges
  *       can be non-CIDR for now we really support/limit ourselves to
  *       a single CIDR
- *
- * XXX: what exactly is CIDR?
  */
 
 static int score_address_range(const struct end *end,
@@ -654,9 +739,9 @@ static int score_address_range(const struct end *end,
 	    jam_range(buf, &ts->net);
 	    jam(buf, ": ");
 	    if (f > 0) {
-		    jam(buf, "YES fitness %d", f);
+		jam(buf, "YES fitness %d", f);
 	    } else {
-		    jam(buf, "NO");
+		jam(buf, "NO");
 	    }
 	}
 	return f;
@@ -676,28 +761,49 @@ static struct score score_end(const struct end *end,
 {
 	const struct traffic_selector *ts = &tss->ts[index];
 	range_buf ts_net;
-	dbg("    %s[%u] .net=%s .iporotoid=%d .{start,end}port=%d..%d",
-	    what, index,
-	    str_range(&ts->net, &ts_net),
-	    ts->ipprotoid,
-	    ts->startport,
-	    ts->endport);
 
-	struct score score = { .ok = false, };
-	score.address = score_address_range(end, tss, fit, what, index);
-	if (score.address <= 0) {
+	if (ts->sec_label.len == 0) {
+		dbg("    %s[%u] .net=%s .iporotoid=%d .{start,end}port=%d..%d",
+			what, index,
+			str_range(&ts->net, &ts_net),
+			ts->ipprotoid,
+			ts->startport,
+			ts->endport);
+	} else if (ts->sec_label.len != 0) {
+
+		dbg("    %s[%u] security_label:%.*s",
+			what, index,
+			(int)ts->sec_label.len, ts->sec_label.ptr);
+	} else {
+		dbg("    %s[%u] unknown Traffic Selector Type",
+			what, index);
+	}
+
+	struct score score = {
+		.ok = false,
+	};
+
+	switch(ts->ts_type) {
+	case IKEv2_TS_IPV4_ADDR_RANGE:
+	case IKEv2_TS_IPV6_ADDR_RANGE:
+		score.address = score_address_range(end, tss, fit, what, index);
+		if (score.address <= 0) {
+			return score;
+		}
+		score.port = score_narrow_port(end, tss, fit, what, index);
+		if (score.port <= 0) {
+			return score;
+		}
+		score.protocol = score_narrow_protocol(end, tss, fit, what, index);
+		if (score.protocol <= 0) {
+			return score;
+		}
+		score.ok = true;
+		return score;
+	case IKEv2_TS_SECLABEL:
+	default:
 		return score;
 	}
-	score.port = score_narrow_port(end, tss, fit, what, index);
-	if (score.port <= 0) {
-		return score;
-	}
-	score.protocol = score_narrow_protocol(end, tss, fit, what, index);
-	if (score.protocol <= 0) {
-		return score;
-	}
-	score.ok = true;
-	return score;
 }
 
 struct best_score {
@@ -720,7 +826,60 @@ static bool score_gt(const struct best_score *score, const struct best_score *be
 		 score->protocol > best->protocol));
 }
 
-static struct best_score score_ends(enum fit fit,
+static bool score_ends_seclabel(const struct ends *ends,
+				const struct connection *d,
+				const struct traffic_selectors *tsi,
+				const struct traffic_selectors *tsr)
+{
+	/* sec_labels are symmetric, pick from one end */
+	bool require_label = d->spd.this.sec_label.len != 0;
+	bool recv_label_i = false;
+	bool recv_label_r = false;
+	bool match_i = false;
+	bool match_r = false;
+
+	for (unsigned tsi_n = 0; tsi_n < tsi->nr; tsi_n++) {
+		const struct traffic_selector *cur = &tsi->ts[tsi_n];
+		if (cur->ts_type == IKEv2_TS_SECLABEL) {
+			recv_label_i = true;
+			if (cur->sec_label.len == 0) {
+				// complain loudly
+				continue;
+			} else {
+				if (hunk_eq(ends->i->sec_label, cur->sec_label))
+					match_i = true;
+				else
+					continue; // hope for a better one
+			}
+
+			for (unsigned tsr_n = 0; tsr_n < tsr->nr; tsr_n++) {
+				const struct traffic_selector *cur = &tsr->ts[tsr_n];
+				if (cur->ts_type == IKEv2_TS_SECLABEL) {
+					recv_label_r = true;
+					if (cur->sec_label.len == 0) {
+						// complain loudly
+						continue;
+					} else {
+						if (hunk_eq(ends->r->sec_label, cur->sec_label))
+							match_r = true;
+						else
+							continue; // hope for a better one
+					}
+				}
+			}
+		}
+	}
+
+	if (recv_label_r != recv_label_i)
+		return false;
+
+	if (!require_label && !recv_label_i)
+		return true;
+
+	return require_label == recv_label_i && match_i && match_r;
+}
+
+static struct best_score score_ends_iprange(enum fit fit,
 				    const struct connection *d,
 				    const struct ends *ends,
 				    const struct traffic_selectors *tsi,
@@ -743,7 +902,7 @@ static struct best_score score_ends(enum fit fit,
 	for (unsigned tsi_n = 0; tsi_n < tsi->nr; tsi_n++) {
 		const struct traffic_selector *tni = &tsi->ts[tsi_n];
 
-		/* choice hardwired! */
+		/* choice hardwired for IPrange and sec_label */
 		struct score score_i = score_end(ends->i, tsi, fit, "TSi", tsi_n);
 		if (!score_i.ok) {
 			continue;
@@ -756,7 +915,6 @@ static struct best_score score_ends(enum fit fit,
 			if (!score_r.ok) {
 				continue;
 			}
-
 			struct best_score score = {
 				.ok = true,
 				/* ??? this objective function is odd and arbitrary */
@@ -826,15 +984,21 @@ bool v2_process_ts_request(struct child_sa *child,
 			.i = &sra->that,
 			.r = &sra->this,
 		};
+
+
+		if (!score_ends_seclabel(&ends, c, &tsi, &tsr)) {
+			continue;
+		}
+
 		enum fit responder_fit =
 			(c->policy & POLICY_IKEV2_ALLOW_NARROWING)
 			? END_NARROWER_THAN_TS
 			: END_EQUALS_TS;
-
-		struct best_score score = score_ends(responder_fit, c, &ends, &tsi, &tsr);
+		struct best_score score = score_ends_iprange(responder_fit, c, &ends, &tsi, &tsr);
 		if (!score.ok) {
 			continue;
 		}
+
 		if (score_gt(&score, &best_score)) {
 			dbg("    found better spd route for TSi[%td],TSr[%td]",
 			    score.tsi - tsi.ts, score.tsr - tsr.ts);
@@ -923,7 +1087,9 @@ bool v2_process_ts_request(struct child_sa *child,
 					? END_NARROWER_THAN_TS
 					: END_EQUALS_TS;
 
-				struct best_score score = score_ends(responder_fit, d/*note D*/,
+				if (!score_ends_seclabel(&ends, d, &tsi, &tsr))
+					continue;
+				struct best_score score = score_ends_iprange(responder_fit, d/*note D*/,
 								     &ends, &tsi, &tsr);
 				if (!score.ok) {
 					continue;
@@ -1192,7 +1358,10 @@ bool v2_process_ts_response(struct child_sa *child,
 		? END_WIDER_THAN_TS
 		: END_EQUALS_TS;
 
-	struct best_score best = score_ends(initiator_widening, c, &e, &tsi, &tsr);
+	if (!score_ends_seclabel(&e, c, &tsi, &tsr))
+		return false;
+
+	struct best_score best = score_ends_iprange(initiator_widening, c, &e, &tsi, &tsr);
 
 	if (!best.ok) {
 		dbg("reject responder TSi/TSr Traffic Selector");
@@ -1283,7 +1452,13 @@ bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *
 
 	enum fit fitness = END_NARROWER_THAN_TS;
 
-	struct best_score score = score_ends(fitness, c, &ends, &their_tsis,
+	if (!score_ends_seclabel(&ends, c, &their_tsis, &their_tsrs)) {
+		log_state(RC_LOG_SERIOUS, &child->sa,
+			  "rekey: received Traffic Selectors mismatch configured selectors for Security Label");
+		return false;
+	}
+
+	struct best_score score = score_ends_iprange(fitness, c, &ends, &their_tsis,
 			&their_tsrs);
 
 	if (!score.ok) {

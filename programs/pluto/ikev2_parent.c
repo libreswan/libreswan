@@ -559,10 +559,14 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 	}
 
 	if (HAS_IPSEC_POLICY(policy)) {
-		if (c->sec_label != NULL) {
-			log_state(RC_LOG, &ike->sa,
-				  "Labeled ipsec is not supported with ikev2 yet");
-		}
+		dbg("%s: set security label to \"%.*s\"", __FUNCTION__,
+			(int)c->spd.this.sec_label.len, c->spd.this.sec_label.ptr);
+#if 0
+		st->st_ts_this = ikev2_end_to_ts(&c->spd.this);
+		st->st_ts_that = ikev2_end_to_ts(&c->spd.that);
+		ikev2_print_ts(&st->st_ts_this);
+		ikev2_print_ts(&st->st_ts_that);
+#endif
 		add_pending(whack_sock, ike, c, policy, 1,
 			    predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
 			    true /*part of initiate*/);

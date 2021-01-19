@@ -772,7 +772,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 #endif
 	}
 
-	if (sec_label->len != 0) {
+	if (sec_label != NULL && sec_label->len > 0) {
 		struct rtattr *attr = (struct rtattr *)
 			((char *)&req + req.n.nlmsg_len);
 		struct xfrm_user_sec_ctx *uctx;

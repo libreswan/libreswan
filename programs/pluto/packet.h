@@ -1072,23 +1072,29 @@ extern struct_desc ikev2_delete_desc;
 
 /* rfc4306, section 3.13 */
 struct ikev2_ts {
-	uint8_t isat_lt;	/* Last Transform */
+	uint8_t isat_np;	/* Next Payload */
 	uint8_t isat_critical;
 	uint16_t isat_length;	/* Payload length */
 	uint8_t isat_num;	/* number of TSs */
 	uint8_t isat_res1;
 	uint16_t isat_res2;
 };
-struct ikev2_ts1 {
-	uint8_t isat1_type;
-	uint8_t isat1_ipprotoid;
-	uint16_t isat1_sellen;
-	uint16_t isat1_startport;
-	uint16_t isat1_endport;
+
+struct ikev2_ts_header {
+	uint8_t isath_type;
+	uint8_t isath_ipprotoid;
+	uint16_t isath_length;
 };
+
+struct ikev2_ts_portrange {
+	uint16_t isatpr_startport;
+	uint16_t isatpr_endport;
+};
+
 extern struct_desc ikev2_ts_i_desc;
 extern struct_desc ikev2_ts_r_desc;
-extern struct_desc ikev2_ts1_desc;
+extern struct_desc ikev2_ts_header_desc;
+extern struct_desc ikev2_ts_portrange_desc;
 
 /* rfc4306, section 3.14, encrypted payload, uses generic header */
 extern struct_desc ikev2_sk_desc;
@@ -1218,5 +1224,7 @@ diag_t pbs_in_address(struct pbs_in *input_pbs,
 		      const char *WHAT) MUST_USE_RESULT;
 diag_t pbs_out_address(struct pbs_out *output_pbs,
 		       const ip_address *address, const char *what) MUST_USE_RESULT;
+
+int pbs_peek_byte(const struct pbs_in *ins);
 
 #endif /* _PACKET_H */
