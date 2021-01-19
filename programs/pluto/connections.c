@@ -3140,16 +3140,23 @@ struct connection *refine_host_connection(const struct state *st,
 	 */
 	passert(c != NULL);
 
-	struct connection *d = c->host_pair->connections;
-
 	int best_our_pathlen = 0;
 	int best_peer_pathlen = 0;
 	struct connection *best_found = NULL;
 	int best_wildcards = 0;
 
-	/* wcip stands for: wildcard Peer IP? */
-	for (bool wcpip = FALSE;; wcpip = TRUE) {
-		for (; d != NULL; d = d->hp_next) {
+	/* wcpip stands for: wildcard Peer IP? */
+	for (unsigned wcpip = 1; wcpip <= 2; wcpip++) {
+		/*
+		 * When starting second time around we're willing to
+		 * settle for a connection that needs Peer IP
+		 * instantiated: Road Warrior or Opportunistic.  Look
+		 * on list of connections for host pair with wildcard
+		 * Peer IP.
+		 */
+		ip_address remote = wcpip == 2 ? unset_address : endpoint_address(&st->st_remote_endpoint);
+		FOR_EACH_HOST_PAIR_CONNECTION(&c->interface->ip_dev->id_address, &remote, d) {
+
 			int wildcards;
 			bool matching_peer_id = match_id(peer_id,
 							&d->spd.that.id,
@@ -3370,23 +3377,8 @@ struct connection *refine_host_connection(const struct state *st,
 				best_our_pathlen = our_pathlen;
 			}
 		}
-
-		if (wcpip) {
-			/* been around twice already */
-			dbg("returning since no better match than original best_found");
-			return best_found;
-		}
-
-		/*
-		 * Starting second time around.
-		 * We're willing to settle for a connection that needs Peer IP
-		 * instantiated: Road Warrior or Opportunistic.
-		 * Look on list of connections for host pair with wildcard
-		 * Peer IP.
-		 */
-		dbg("refine going into 2nd loop allowing instantiated conns as well");
-		d = find_host_pair_connections(&c->spd.this.host_addr, NULL);
 	}
+	return best_found;
 }
 
 /*
