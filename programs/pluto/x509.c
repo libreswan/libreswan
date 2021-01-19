@@ -60,7 +60,7 @@
 #include "state.h"
 #include "whack.h"
 #include "fetch.h"
-#include "hostpair.h" /* for find_host_pair_connections */
+#include "hostpair.h" 		/* for FOR_EACH_HOST_PAIR_CONNECTION() */
 #include "secrets.h"
 #include "ip_address.h"
 #include "ikev2_message.h"	/* for build_ikev2_critical() */
@@ -349,31 +349,32 @@ generalName_t *gndp_from_nss_cert(CERTCertificate *cert)
 generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 {
 	generalName_t *top = NULL;
-	struct connection *d = find_host_pair_connections(&md->iface->local_endpoint, NULL);
+	FOR_EACH_HOST_PAIR_CONNECTION(&md->iface->ip_dev->id_address, &unset_address, d) {
 
-	for (; d != NULL; d = d->hp_next) {
-		if (NEVER_NEGOTIATE(d->policy))
+		if (NEVER_NEGOTIATE(d->policy)) {
 			continue;
+		}
 
 		/* we require a road warrior connection */
-		if (d->kind == CK_TEMPLATE &&
-		    !(d->policy & POLICY_OPPORTUNISTIC) &&
-		    d->spd.that.ca.ptr != NULL) {
-			generalName_t *gn;
+		if (d->kind != CK_TEMPLATE ||
+		    (d->policy & POLICY_OPPORTUNISTIC) ||
+		    d->spd.that.ca.ptr == NULL) {
+			continue;
+		}
 
-			for (gn = top; ; gn = gn->next) {
-				if (gn == NULL) {
-					gn = alloc_thing(generalName_t, "generalName");
-					gn->kind = GN_DIRECTORY_NAME;
-					gn->name = d->spd.that.ca;
-					gn->next = top;
-					top = gn;
-					break;
-				}
-				if (same_dn(gn->name,
-						      d->spd.that.ca)) {
-					break;
-				}
+		for (generalName_t *gn = top; ; gn = gn->next) {
+			if (gn == NULL) {
+				/* prepend a new gn for D */
+				gn = alloc_thing(generalName_t, "generalName");
+				gn->kind = GN_DIRECTORY_NAME;
+				gn->name = d->spd.that.ca;
+				gn->next = top;
+				top = gn;
+				break;
+			}
+			if (same_dn(gn->name, d->spd.that.ca)) {
+				/* D's CA already in list */
+				break;
 			}
 		}
 	}
