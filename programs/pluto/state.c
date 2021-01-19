@@ -113,9 +113,9 @@ static struct finite_state state_ikev2_roof = {
 const struct finite_state *finite_states[STATE_IKE_ROOF] = {
 	[STATE_UNDEFINED] = &state_undefined,
 #ifdef USE_IKEv1
-	[STATE_IKEv1_ROOF] &state_ikev1_roof,
+	[STATE_IKEv1_ROOF] = &state_ikev1_roof,
 #endif
-	[STATE_IKEv2_ROOF] &state_ikev2_roof,
+	[STATE_IKEv2_ROOF] = &state_ikev2_roof,
 };
 
 void lswlog_finite_state(struct jambuf *buf, const struct finite_state *fs)
