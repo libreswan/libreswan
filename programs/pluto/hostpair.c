@@ -247,28 +247,6 @@ static void free_host_pair(struct host_pair **hp, where_t where)
 	*hp = NULL;
 }
 
-/* find head of list of connections with this pair of hosts */
-struct connection *find_host_pair_connections(const ip_address *myaddr,
-					      const ip_address *peer_addr)
-{
-	struct host_pair *hp = find_host_pair(myaddr, peer_addr);
-
-#if 0
-	address_buf bm, bh;
-	connection_buf ci;
-	dbg("find_host_pair_conn: %s:%d %s:%d -> hp:%s%s",
-	    str_address(myaddr, &bm), myport,
-	    peer_addr != NULL ? str_address(peer_addr, &bh) : "%any",
-	    peer_port,
-	    hp != NULL && hp->connections != NULL ?
-	    hp->connections->name : "none",
-	    hp != NULL && hp->connections != NULL ?
-	    str_conn_instance(hp->connections, ci) : ""));
-#endif
-
-	return hp == NULL ? NULL : hp->connections;
-}
-
 struct connection *next_host_pair_connection(const ip_address *local,
 					     const ip_address *remote,
 					     struct connection **next,
