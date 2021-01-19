@@ -896,7 +896,10 @@ kvmplutotest	interop-ikev2-strongswan-32-ip-lease			good
 kvmplutotest	interop-ikev2-xfrmi-strongswan-01			good
 
 # Selinux / secure labeling tests
-kvmplutotest    ikev1-labeled-ipsec-01		wip
+kvmplutotest	ikev1-labeled-ipsec-01					wip
+kvmplutotest	ikev1-labeled-ipsec-02-mismatch				good
+kvmplutotest	ikev2-labeled-ipsec-01					wip
+kvmplutotest	ikev2-labeled-ipsec-02-mismatch				good
 
 # compress tests
 kvmplutotest    compress-pluto-01		good
