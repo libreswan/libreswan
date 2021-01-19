@@ -1,0 +1,24 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add labeled
+002 "labeled": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec whack --shutdown
+east #
+ semodule -r ipsec-test-module
+libsemanage.semanage_direct_remove_key: Unable to remove module ipsec-test-module at priority 400. (No such file or directory).
+semodule:  Failed!
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+east #
+ 

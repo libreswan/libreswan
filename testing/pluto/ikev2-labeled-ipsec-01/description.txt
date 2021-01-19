@@ -9,4 +9,3 @@ This needs updating to must use netutils_t type for both ncat server
 and client (via runcon -t), I did not find a better context type than
 this. Also you need to switch nis_enabled and domain_can_mmap_file
 selinux boolean on to make it work.
-
