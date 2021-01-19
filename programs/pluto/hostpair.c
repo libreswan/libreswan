@@ -258,6 +258,26 @@ struct connection *find_host_pair_connections(const ip_address *myaddr,
 	return hp == NULL ? NULL : hp->connections;
 }
 
+struct connection *next_host_pair_connection(const ip_address *local,
+					     const ip_address *remote,
+					     struct connection **next,
+					     where_t where)
+{
+	/* for moment just wrap above; should merge */
+	struct connection *c;
+	if (next == NULL || *next == NULL) {
+		dbg("FOR_EACH_HOST_PAIR_CONNECTION in "PRI_WHERE, pri_where(where));
+		struct host_pair *hp = find_host_pair(local, remote);
+		c = (hp != NULL) ? hp->connections : NULL;
+	} else {
+		c = *next;
+	}
+	if (next != NULL) {
+		*next = (c != NULL) ? c->hp_next : NULL;
+	}
+	return c;
+}
+
 void connect_to_host_pair(struct connection *c)
 {
 	if (oriented(*c)) {

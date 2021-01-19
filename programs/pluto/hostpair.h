@@ -22,6 +22,9 @@
  *
  */
 
+#ifndef HOST_PAIR_H
+#define HOST_PAIR_H /* XXX: file needs a rename */
+
 #include "list_entry.h"
 
 struct host_pair {
@@ -69,3 +72,15 @@ struct connection *find_host_connection(const ip_endpoint *local,
 					const ip_endpoint *remote,
 					lset_t req_policy,
 					lset_t policy_exact_mask);
+
+struct connection *next_host_pair_connection(const ip_address *local,
+					     const ip_address *remote,
+					     struct connection **next,
+					     where_t where);
+#define FOR_EACH_HOST_PAIR_CONNECTION(LOCAL, REMOTE, CONNECTION)	\
+	for (struct connection *next_ = NULL,				\
+		     *CONNECTION = next_host_pair_connection(LOCAL, REMOTE, &next_, HERE); \
+	     CONNECTION != NULL;					\
+	     CONNECTION = next_host_pair_connection(LOCAL, REMOTE, &next_, HERE))
+
+#endif
