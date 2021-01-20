@@ -2,6 +2,7 @@
 See also https://libreswan.org/
 
 v4.2 (unreleased)
+* IKEv2: Support for IKEv2 Labeled IPsec [Hugh, Sahana, Paul, Kavinda Wewegama]
 * IKEv1: Re-enable questionable Microsoft proposals to fix L2TP/IPsec [Paul]
 * pluto: Add ignore-peer-dns=yes|no and whack --ignore-peer-dns [Paul]
 * initsystem: fix docker/podman startup with sysvinit [Paul]
