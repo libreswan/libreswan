@@ -55,28 +55,21 @@
 struct jambuf;
 
 typedef struct {
-#ifdef SUBNET_TYPE
-	/* proper subnet, not libreswan mashup */
-	ip_address addr;
-#else
+	bool is_subnet;
 	/* (routing)prefix|host(id):port */
 	ip_endpoint addr;
-	bool is_selector;
-#endif
 	/* (routing prefix) bits */
 	unsigned maskbits;
-	bool is_subnet;
+	/* to-be-deleted - selector */
+	bool is_selector;
 } ip_subnet;
 
-#ifdef SUBNET_TYPE
-#else
 #define PRI_SUBNET "%s; maskbits=%u is_subnet=%s is_selector=%s"
 #define pri_subnet(S, B)						\
 		str_subnet(S, B),					\
 		(S)->maskbits,						\
 		bool_str((S)->is_subnet),				\
 		bool_str((S)->is_selector)
-#endif
 
 void pexpect_subnet(const ip_subnet *s, const char *t, where_t where);
 #define psubnet(S) pexpect_subnet(S, #S, HERE)

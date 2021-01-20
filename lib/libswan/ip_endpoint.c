@@ -23,15 +23,15 @@
 
 const ip_endpoint unset_endpoint; /* all zeros */
 
-ip_endpoint strip_endpoint(const ip_address *in, where_t where UNUSED)
+ip_address strip_endpoint(const ip_endpoint *in, where_t where UNUSED)
 {
 	if (in->hport != 0 || in->ipproto != 0 || in->is_endpoint) {
-		address_buf b;
-		dbg("stripping address %s of is_endpoint=%d hport=%u ipproto=%u "PRI_WHERE,
-		    str_address(in, &b), in->is_endpoint,
+		endpoint_buf b;
+		dbg("stripping endpoint %s of is_endpoint=%d hport=%u ipproto=%u "PRI_WHERE,
+		    str_endpoint(in, &b), in->is_endpoint,
 		    in->hport, in->ipproto, pri_where(where));
 	}
-	ip_endpoint out = {
+	ip_address out = {
 		.version = in->version,
 		.bytes = in->bytes,
 	};

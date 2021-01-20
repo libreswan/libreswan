@@ -28,9 +28,12 @@ const ip_subnet unset_subnet; /* all zeros */
 ip_subnet subnet_from_address_maskbits(const ip_address *address, unsigned maskbits)
 {
 	ip_subnet s = {
-		.addr = strip_endpoint(address, HERE),
-		.maskbits = maskbits,
 		.is_subnet = true,
+		.addr = {
+			.version = address->version,
+			.bytes = address->bytes,
+		},
+		.maskbits = maskbits,
 	};
 	psubnet(&s);
 	return s;

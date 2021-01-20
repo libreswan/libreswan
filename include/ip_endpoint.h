@@ -75,7 +75,7 @@ typedef ip_address ip_endpoint;
 void pexpect_endpoint(const ip_endpoint *e, const char *t, where_t where);
 #define pendpoint(E) pexpect_endpoint(E, #E, HERE)
 
-ip_endpoint strip_endpoint(const ip_address *address, where_t where);
+ip_address strip_endpoint(const ip_endpoint *address, where_t where);
 
 /*
  * Constructors.
