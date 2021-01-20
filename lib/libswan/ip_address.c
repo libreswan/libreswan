@@ -273,9 +273,9 @@ bool address_eq(const ip_address *l, const ip_address *r)
 {
 	const struct ip_info *lt = address_type(l);
 	const struct ip_info *rt = address_type(r);
-	if (lt == NULL || rt == NULL) {
-		/* AF_UNSPEC/NULL are never equal; think NaN */
-		return false;
+	if (lt == NULL && rt == NULL) {
+		/* unset/NULL addresses are equal */
+		return true;
 	}
 	if (lt != rt) {
 		return false;
