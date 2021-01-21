@@ -243,6 +243,9 @@ ip_address address_any(const struct ip_info *info)
 
 bool address_is_unset(const ip_address *address)
 {
+	if (address == NULL) {
+		return true;
+	}
 	return thingeq(*address, unset_address);
 }
 

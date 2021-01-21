@@ -103,6 +103,9 @@ const struct ip_info *subnet_type(const ip_subnet *subnet)
 
 bool subnet_is_unset(const ip_subnet *subnet)
 {
+	if (subnet == NULL) {
+		return true;
+	}
 	return thingeq(*subnet, unset_subnet);
 }
 

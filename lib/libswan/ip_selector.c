@@ -23,6 +23,9 @@ const ip_selector unset_selector;
 
 bool selector_is_unset(const ip_selector *selector)
 {
+	if (selector == NULL) {
+		return true;
+	}
 	return thingeq(*selector, unset_selector);
 }
 

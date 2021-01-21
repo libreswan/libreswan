@@ -131,6 +131,9 @@ const struct ip_info *endpoint_type(const ip_endpoint *endpoint)
 
 bool endpoint_is_unset(const ip_endpoint *endpoint)
 {
+	if (endpoint == NULL) {
+		return true;
+	}
 	return thingeq(*endpoint, unset_endpoint);
 }
 

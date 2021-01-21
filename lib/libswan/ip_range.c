@@ -269,6 +269,9 @@ const struct ip_info *range_type(const ip_range *range)
 
 bool range_is_unset(const ip_range *range)
 {
+	if (range == NULL) {
+		return true;
+	}
 	return thingeq(*range, unset_range);
 }
 
