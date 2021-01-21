@@ -66,6 +66,8 @@ const struct ip_info *range_type(const ip_range *r);
 
 bool range_is_specified(const ip_range *r);
 
+bool range_eq(const ip_range *l, const ip_range *r);
+
 /*
  * Calculate the number of significant bits in the size of the range.
  * floor(lg(|high-low| + 1))

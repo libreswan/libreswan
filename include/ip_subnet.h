@@ -146,6 +146,7 @@ extern err_t rangetosubnet(const ip_address *from, const ip_address *to,
 		    ip_subnet *dst);
 
 /* tests */
+bool subnet_eq(const ip_subnet *a, const ip_subnet *b);
 extern bool samesubnet(const ip_subnet *a, const ip_subnet *b);
 extern bool addrinsubnet(const ip_address *a, const ip_subnet *s);
 extern bool subnetinsubnet(const ip_subnet *a, const ip_subnet *b);

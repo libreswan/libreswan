@@ -31,6 +31,10 @@ bool selector_is_unset(const ip_selector *selector)
 
 void jam_selector(struct jambuf *buf, const ip_selector *selector)
 {
+	if (selector == NULL) {
+		jam(buf, "<none>/0");
+		return;
+	}
 	ip_address sa = selector_prefix(selector);
 	jam_address(buf, &sa); /* sensitive? */
 	jam(buf, "/%u", selector->maskbits);
@@ -236,7 +240,19 @@ bool endpoint_in_selector(const ip_endpoint *endpoint, const ip_selector *select
 
 bool selector_eq(const ip_selector *l, const ip_selector *r)
 {
-	return samesubnet(l, r);
+	pselector(l);
+	pselector(r);
+	const struct ip_info *lt = selector_type(l);
+	const struct ip_info *rt = selector_type(r);
+	if (lt == NULL || rt == NULL) {
+		/* NULL/unset selectors are equal */
+		return (lt == NULL && rt == NULL);
+	}
+	/* strict check */
+	return (l->maskbits == r->maskbits &&
+		l->addr.version == r->addr.version &&
+		l->addr.ipproto == r->addr.ipproto &&
+		thingeq(l->addr.bytes, r->addr.bytes));
 }
 
 void pexpect_selector(const ip_selector *s, const char *t, where_t where)

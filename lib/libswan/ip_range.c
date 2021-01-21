@@ -314,3 +314,19 @@ bool range_size(ip_range *r, uint32_t *size) {
 	*size = n;
 	return truncated;
 }
+
+bool range_eq(const ip_range *l, const ip_range *r)
+{
+	const struct ip_info *lt = range_type(l);
+	const struct ip_info *rt = range_type(r);
+	if (lt == NULL && rt == NULL) {
+		/* unset/NULL ranges are equal */
+		return true;
+	}
+	if (lt != rt) {
+		return false;
+	}
+	/* ignore .is_subnet */
+	return (address_eq(&l->start, &r->start) &&
+		address_eq(&l->end, &r->end));
+}

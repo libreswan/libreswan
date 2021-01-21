@@ -188,6 +188,9 @@ ip_address subnet_mask(const ip_subnet *subnet)
 
 size_t jam_subnet(struct jambuf *buf, const ip_subnet *subnet)
 {
+	if (subnet == NULL) {
+		return jam(buf, "<none>/0");
+	}
 	size_t s = 0;
 	ip_address sa = subnet_address(subnet);
 	s += jam_address(buf, &sa); /* sensitive? */
@@ -213,4 +216,19 @@ void pexpect_subnet(const ip_subnet *s, const char *t, where_t where)
 			    pri_where(where));
 		}
 	}
+}
+
+bool subnet_eq(const ip_subnet *l, const ip_subnet *r)
+{
+	psubnet(l);
+	psubnet(r);
+	const struct ip_info *lt = subnet_type(l);
+	const struct ip_info *rt = subnet_type(r);
+	if (lt == NULL || rt == NULL) {
+		/* NULL/unset subnets are equal */
+		return (lt == NULL && rt == NULL);
+	}
+	return (l->maskbits == r->maskbits &&
+		l->addr.version == r->addr.version &&
+		thingeq(l->addr.bytes, r->addr.bytes));
 }
