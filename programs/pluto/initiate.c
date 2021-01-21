@@ -1079,9 +1079,11 @@ void initiate_ondemand(const ip_address *our_client,
 		.negotiation_shunt = SPI_HOLD, /* until we found connection policy */
 		.failure_shunt = SPI_HOLD, /* until we found connection policy */
 		.logger = logger, /*on-stack*/
-		.background = background,
-		.sec_label = *sec_label
+		.background = background
 	};
+	if (sec_label != NULL) {
+		b.sec_label = *sec_label;
+	}
 
 	initiate_ondemand_body(&b);
 }
