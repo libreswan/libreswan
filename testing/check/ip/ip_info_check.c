@@ -22,6 +22,8 @@
 #include "lswcdefs.h"		/* for elemsof() */
 #include "constants.h"		/* for streq() */
 #include "ip_address.h"
+#include "ip_selector.h"
+#include "ip_range.h"
 
 #include "ipcheck.h"
 
@@ -142,9 +144,49 @@ static void check_ip_info_subnet(void)
 	}
 }
 
+static void check_ip_info_selector(void)
+{
+	static const struct test {
+		int family;
+		const ip_selector *selector;
+		bool unset;
+	} tests[] = {
+		{ 0, &unset_selector,         .unset = true, },
+	};
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINT_INFO(stdout, "");
+
+		const ip_selector *s = t->selector;
+		CHECK_TYPE(PRINT_INFO, selector_type(s));
+	}
+}
+
+static void check_ip_info_range(void)
+{
+	static const struct test {
+		int family;
+		const ip_range *range;
+		bool unset;
+	} tests[] = {
+		{ 0, &unset_range,         .unset = true, },
+	};
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINT_INFO(stdout, "");
+
+		const ip_range *r = t->range;
+		CHECK_TYPE(PRINT_INFO, range_type(r));
+	}
+}
+
 void ip_info_check(void)
 {
 	check_ip_info_address();
 	check_ip_info_endpoint();
 	check_ip_info_subnet();
+	check_ip_info_range();
+	check_ip_info_selector();
 }
