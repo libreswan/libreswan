@@ -175,10 +175,14 @@ struct pending **host_pair_first_pending(const struct connection *c)
 struct host_pair *find_host_pair(const ip_address *local,
 				 const ip_address *remote)
 {
-	/* NULL -> any_address aka zero; must hash it */
-	if (remote == NULL) {
+	/*
+	 * Force unset/NULL to 'any' a.k.a. zero; so hash is
+	 * consistent and comparisons work.
+	 */
+	if (remote == NULL || address_is_unset(remote)) {
 		remote = &address_type(local)->any_address;
 	}
+
 	/*
 	 * look for a host-pair that has the right set of ports/address.
 	 *
@@ -201,13 +205,16 @@ struct host_pair *find_host_pair(const ip_address *local,
 
 		address_buf b1;
 		address_buf b2;
-		dbg("find_host_pair: comparing %s to %s",
+		dbg("host_pair: comparing to %s->%s",
 		    str_address(&hp->local, &b1),
 		    str_address(&hp->remote, &b2));
 
 		/* XXX: same addr does not compare ports.  */
 		if (sameaddr(&hp->local, local) &&
 		    sameaddr(&hp->remote, remote)) {
+			connection_buf cb;
+			dbg("host_pair: match connection="PRI_CONNECTION,
+			    pri_connection(hp->connections, &cb));
 			return hp;
 		}
 	}
@@ -219,7 +226,11 @@ static struct host_pair *alloc_host_pair(ip_address local, ip_address remote, wh
 	struct host_pair *hp = alloc_thing(struct host_pair, "host pair");
 	hp->magic = host_pair_magic;
 	hp->local = local;
-	hp->remote = remote;
+	/*
+	 * Force unset/NULL to 'any' a.k.a. zero; so hash is
+	 * consistent and comparisons work.
+	 */
+	hp->remote = (address_is_unset(&remote) ? address_type(&local)->any_address : remote);
 	add_hash_table_entry(&host_pairs, hp);
 	dbg_alloc("hp", hp, where);
 	return hp;
@@ -265,16 +276,17 @@ struct connection *next_host_pair_connection(const ip_address *local,
 {
 	/* for moment just wrap above; should merge */
 	struct connection *c;
-	if (next == NULL || *next == NULL) {
-		dbg("FOR_EACH_HOST_PAIR_CONNECTION in "PRI_WHERE, pri_where(where));
+	if (*next == NULL) {
+		address_buf lb, rb;
+		dbg("FOR_EACH_HOST_PAIR_CONNECTION(%s->%s) in "PRI_WHERE,
+		    str_address(local, &lb), str_address(remote, &rb),
+		    pri_where(where));
 		struct host_pair *hp = find_host_pair(local, remote);
 		c = (hp != NULL) ? hp->connections : NULL;
 	} else {
 		c = *next;
 	}
-	if (next != NULL) {
-		*next = (c != NULL) ? c->hp_next : NULL;
-	}
+	*next = (c != NULL) ? c->hp_next : NULL;
 	return c;
 }
 
@@ -282,19 +294,19 @@ void connect_to_host_pair(struct connection *c)
 {
 	if (oriented(*c)) {
 		struct host_pair *hp = find_host_pair(&c->spd.this.host_addr,
+						      /* remote could be unset OR any */
 						      &c->spd.that.host_addr);
 
 		address_buf b1, b2;
-		dbg("connect_to_host_pair: %s:%d %s:%d -> hp@%p: %s",
+		dbg("connect_to_host_pair: %s->%s -> hp@%p: %s",
 		    str_address(&c->spd.this.host_addr, &b1),
-		    c->spd.this.host_port,
 		    str_address(&c->spd.that.host_addr, &b2),
-		    c->spd.that.host_port,
 		    hp, (hp != NULL && hp->connections != NULL) ? hp->connections->name : "none");
 
 		if (hp == NULL) {
 			/* no suitable host_pair -- build one */
 			ip_address local = c->spd.this.host_addr;
+			/* remote could be unset OR any */
 			ip_address remote = c->spd.that.host_addr;
 			hp = alloc_host_pair(local, remote, HERE);
 		}
