@@ -624,9 +624,13 @@ struct connection *find_host_connection(const ip_endpoint *local,
 	    str_endpoint(local, &lb), str_endpoint(remote, &rb),
 	    bitnamesof(sa_policy_bit_names, req_policy));
 
-	struct connection *c =
-		find_next_host_connection(find_host_pair_connections(local, remote),
-					  req_policy, policy_exact_mask);
+	ip_address local_address = endpoint_address(local);
+	ip_address remote_address = endpoint_address(remote);/*could return unset OR any*/
+	struct host_pair *hp = find_host_pair(&local_address, &remote_address);
+
+	/* XXX: don't be fooled by "next", the search includes hp->connections */
+	struct connection *c = find_next_host_connection(hp == NULL ? NULL : hp->connections,
+							 req_policy, policy_exact_mask);
 	/*
 	 * This could be a shared IKE SA connection, in which case
 	 * we prefer to find the connection that has the IKE SA
