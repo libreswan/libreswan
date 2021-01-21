@@ -43,6 +43,7 @@ static void check_ip_info_address(void)
 		bool specified;
 		bool loopback;
 	} tests[] = {
+		{ 0, NULL,                        .unset = true, },
 		{ 0, &unset_address,              .unset = true, },
 		{ 4, &ipv4_info.any_address,      .any = true },
 		{ 6, &ipv6_info.any_address,      .any = true },
@@ -69,6 +70,7 @@ static void check_ip_info_endpoint(void)
 		bool loopback;
 		int hport;
 	} tests[] = {
+		{ 0, NULL,                    .unset = true, .hport = -1, },
 		{ 0, &unset_endpoint,         .unset = true, .hport = -1, },
 		{ 4, &ipv4_info.any_endpoint, .any = true },
 		{ 6, &ipv6_info.any_endpoint, .any = true },
@@ -78,14 +80,14 @@ static void check_ip_info_endpoint(void)
 		const struct test *t = &tests[ti];
 		PRINT_INFO(stdout, "");
 
-		ip_endpoint e = *t->endpoint;
-		CHECK_TYPE(PRINT_INFO, endpoint_type(&e));
+		const ip_endpoint *e = t->endpoint;
+		CHECK_TYPE(PRINT_INFO, endpoint_type(e));
 
-		ip_address a = endpoint_address(&e);
+		ip_address a = endpoint_address(e);
 		CHECK_ADDRESS(PRINT_INFO, &a);
 
 		if (!t->unset) {
-			int hport = endpoint_hport(&e);
+			int hport = endpoint_hport(e);
 			if (hport != t->hport) {
 				FAIL(PRINT_INFO, " endpoint_port() returned %d, expecting %d",
 				     hport, t->hport);
@@ -105,11 +107,12 @@ static void check_ip_info_subnet(void)
 		bool contains_one_address;
 		bool contains_no_addresses;
 	} tests[] = {
-		{ 0, &unset_subnet,              true, false, false, false, false, },
-		{ 4, &ipv4_info.no_addresses,    false, false, false, false, true },
-		{ 6, &ipv6_info.no_addresses,    false, false, false, false, true },
-		{ 4, &ipv4_info.all_addresses,   false, true, false, false, false, },
-		{ 6, &ipv6_info.all_addresses,   false, true, false, false, false, },
+		{ 0, NULL,                       .is_unset = true, },
+		{ 0, &unset_subnet,              .is_unset = true, },
+		{ 4, &ipv4_info.no_addresses,    .contains_no_addresses = true, },
+		{ 6, &ipv6_info.no_addresses,    .contains_no_addresses = true, },
+		{ 4, &ipv4_info.all_addresses,   .contains_all_addresses = true, },
+		{ 6, &ipv6_info.all_addresses,   .contains_all_addresses = true, },
 	};
 #define OUT(FILE, FMT, ...)						\
 	PRINT(FILE, "%s unset=%s all=%s some=%s one=%s none=%s"FMT,	\
@@ -151,6 +154,7 @@ static void check_ip_info_selector(void)
 		const ip_selector *selector;
 		bool unset;
 	} tests[] = {
+		{ 0, NULL,                    .unset = true, },
 		{ 0, &unset_selector,         .unset = true, },
 	};
 
@@ -170,6 +174,7 @@ static void check_ip_info_range(void)
 		const ip_range *range;
 		bool unset;
 	} tests[] = {
+		{ 0, NULL,                 .unset = true, },
 		{ 0, &unset_range,         .unset = true, },
 	};
 
