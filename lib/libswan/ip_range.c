@@ -274,6 +274,9 @@ bool range_is_unset(const ip_range *range)
 
 bool range_is_specified(const ip_range *r)
 {
+	if (r == NULL) {
+		return false;
+	}
 	bool start = address_is_specified(&r->start);
 	bool end = address_is_specified(&r->end);
 	if (!pexpect(start == end)) {

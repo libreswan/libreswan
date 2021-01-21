@@ -106,9 +106,12 @@ bool subnet_is_unset(const ip_subnet *subnet)
 	return thingeq(*subnet, unset_subnet);
 }
 
-bool subnet_is_specified(const ip_subnet *s)
+bool subnet_is_specified(const ip_subnet *subnet)
 {
-	return endpoint_is_specified(&s->addr);
+	if (subnet == NULL) {
+		return false;
+	}
+	return endpoint_is_specified(&subnet->addr);
 }
 
 bool subnet_contains_all_addresses(const ip_subnet *s)

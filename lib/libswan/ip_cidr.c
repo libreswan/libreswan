@@ -38,6 +38,9 @@ ip_address cidr_address(const ip_cidr *cidr)
 
 err_t cidr_specified(const ip_cidr *cidr)
 {
+	if (cidr == NULL) {
+		return "unset";
+	}
 	if (cidr->version == 0) {
 		return "unset";
 	}

@@ -248,6 +248,9 @@ bool address_is_unset(const ip_address *address)
 
 bool address_is_specified(const ip_address *address)
 {
+	if (address == NULL) {
+		return false;
+	}
 	if (address_is_unset(address)) {
 		return false;
 	}
