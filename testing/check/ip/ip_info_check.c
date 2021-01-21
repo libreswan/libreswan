@@ -80,6 +80,21 @@ static void check_ip_info_address(void)
 
 		CHECK_ADDRESS(PRINT_INFO, t->address);
 	}
+
+	/* must match table above */
+	bool eq[elemsof(tests)][elemsof(tests)] = {
+		/* unset/NULL */
+		[0][0] = true,
+		[0][1] = true,
+		[1][1] = true,
+		[1][0] = true,
+		/* other */
+		[2][2] = true,
+		[3][3] = true,
+		[4][4] = true,
+		[5][5] = true,
+	};
+	CHECK_EQ(address);
 }
 
 static void check_ip_info_endpoint(void)
@@ -117,6 +132,19 @@ static void check_ip_info_endpoint(void)
 			}
 		}
 	}
+
+	/* must match table above */
+	bool eq[elemsof(tests)][elemsof(tests)] = {
+		/* unset/NULL */
+		[0][0] = true,
+		[0][1] = true,
+		[1][1] = true,
+		[1][0] = true,
+		/* other */
+		[2][2] = true,
+		[3][3] = true,
+	};
+	CHECK_EQ(endpoint);
 }
 
 static void check_ip_info_subnet(void)
@@ -168,6 +196,21 @@ static void check_ip_info_subnet(void)
 		T(contains_no_addresses);
 #undef T
 	}
+
+	/* must match table above */
+	bool eq[elemsof(tests)][elemsof(tests)] = {
+		/* unset/NULL */
+		[0][0] = true,
+		[0][1] = true,
+		[1][1] = true,
+		[1][0] = true,
+		/* other */
+		[2][2] = true,
+		[3][3] = true,
+		[4][4] = true,
+		[5][5] = true,
+	};
+	CHECK_EQ(subnet);
 }
 
 static void check_ip_info_selector(void)
