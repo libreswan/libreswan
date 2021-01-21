@@ -1174,8 +1174,8 @@ struct bare_shunt **bare_shunt_ptr(const ip_selector *our_client,
 
 	for (pp = &bare_shunts; (p = *pp) != NULL; pp = &p->next) {
 		if (transport_proto == p->transport_proto &&
-		    selector_eq(our_client, &p->our_client) &&
-		    selector_eq(peer_client, &p->peer_client)) {
+		    samesubnet(our_client, &p->our_client) &&
+		    samesubnet(peer_client, &p->peer_client)) {
 			return pp;
 		}
 	}
