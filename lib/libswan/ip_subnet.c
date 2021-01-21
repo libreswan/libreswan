@@ -93,9 +93,12 @@ ip_address subnet_address(const ip_subnet *subnet)
 	return address_from_raw(afi, &subnet->addr.bytes);
 }
 
-const struct ip_info *subnet_type(const ip_subnet *src)
+const struct ip_info *subnet_type(const ip_subnet *subnet)
 {
-	return endpoint_type(&src->addr);
+	if (subnet == NULL) {
+		return NULL;
+	}
+	return ip_version_info(subnet->addr.version);
 }
 
 bool subnet_is_unset(const ip_subnet *subnet)

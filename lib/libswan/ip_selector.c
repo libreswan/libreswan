@@ -116,7 +116,10 @@ ip_selector selector_from_range()
 
 const struct ip_info *selector_type(const ip_selector *selector)
 {
-	return endpoint_type(&selector->addr);
+	if (selector == NULL) {
+		return NULL;
+	}
+	return ip_version_info(selector->addr.version);
 }
 
 ip_protoport selector_protoport(const ip_selector *selector)

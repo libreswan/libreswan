@@ -81,6 +81,9 @@ ip_address address_from_in6_addr(const struct in6_addr *in6)
 
 const struct ip_info *address_type(const ip_address *address)
 {
+	if (address == NULL) {
+		return NULL;
+	}
 	return ip_version_info(address->version);
 }
 

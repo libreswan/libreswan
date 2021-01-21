@@ -123,7 +123,10 @@ ip_endpoint set_endpoint_port(const ip_endpoint *endpoint, ip_port port)
 
 const struct ip_info *endpoint_type(const ip_endpoint *endpoint)
 {
-	return (endpoint == NULL ? NULL : ip_version_info(endpoint->version));
+	if (endpoint == NULL) {
+		return NULL;
+	}
+	return ip_version_info(endpoint->version);
 }
 
 bool endpoint_is_unset(const ip_endpoint *endpoint)

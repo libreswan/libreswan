@@ -92,7 +92,10 @@ const char *str_said(const ip_said *said, said_buf *buf)
 
 const struct ip_info *said_type(const ip_said *said)
 {
-	return address_type(&said->dst);
+	if (said == NULL) {
+		return NULL;
+	}
+	return ip_version_info(said->dst.version);
 }
 
 ip_address said_address(const ip_said *said)

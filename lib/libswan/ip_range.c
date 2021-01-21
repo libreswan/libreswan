@@ -256,8 +256,11 @@ ip_range range_from_subnet(const ip_subnet *subnet)
 
 const struct ip_info *range_type(const ip_range *range)
 {
-	const struct ip_info *start = address_type(&range->start);
-	const struct ip_info *end = address_type(&range->end);
+	if (range == NULL) {
+		return NULL;
+	}
+	const struct ip_info *start = ip_version_info(range->start.version);
+	const struct ip_info *end = ip_version_info(range->end.version);
 	if (!pexpect(start == end)) {
 		return NULL;
 	}

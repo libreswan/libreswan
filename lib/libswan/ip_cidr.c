@@ -21,6 +21,9 @@
 
 const struct ip_info *cidr_type(const ip_cidr *cidr)
 {
+	if (cidr == NULL) {
+		return NULL;
+	}
 	return ip_version_info(cidr->version);
 }
 
