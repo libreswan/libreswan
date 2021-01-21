@@ -23,7 +23,7 @@
 
 unsigned fails;
 
-static void check_jambuf(const char *expect, bool ok, ...)
+static void check_jambuf(bool ok, const char *expect, ...)
 {
 	const char *oks =  ok ? "true" : "false";
 	for (int i = 0; i < 3; i++) {
@@ -82,7 +82,7 @@ static void check_jambuf(const char *expect, bool ok, ...)
 		 * and the string can be NULL!
 		 */
 		va_list ap;
-		va_start(ap, ok);
+		va_start(ap, expect);
 		const char *str = va_arg(ap, const char *);
 		do {
 			if (str == NULL) {
@@ -197,32 +197,32 @@ static void check_jam_bytes(const char *what, jam_bytes_fn *jam_bytes,
 
 int main(int argc UNUSED, char *argv[] UNUSED)
 {
-	check_jambuf("(null)", true, NULL, NULL);
-	check_jambuf("0", true, "0", NULL);
-	check_jambuf("01", true, "0", "1", NULL);
-	check_jambuf("012", true, "0", "1", "2", NULL);
-	check_jambuf("0123", true, "0", "1", "2", "3", NULL);
-	check_jambuf("01234", true, "0", "1", "2", "3", "4", NULL);
-	check_jambuf("012345", true, "0", "1", "2", "3", "4", "5", NULL);
-	check_jambuf("0123456", true, "0", "1", "2", "3", "4", "5", "6", NULL);
-	check_jambuf("01234567", true, "0", "1", "2", "3", "4", "5", "6", "7", NULL);
-	check_jambuf("012345678", true, "0", "1", "2", "3", "4", "5", "6", "7", "8", NULL);
-	check_jambuf("0123456789", true, "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", NULL);
+	check_jambuf(true, "(null)", NULL, NULL);
+	check_jambuf(true, "0", "0", NULL);
+	check_jambuf(true, "01", "0", "1", NULL);
+	check_jambuf(true, "012", "0", "1", "2", NULL);
+	check_jambuf(true, "0123", "0", "1", "2", "3", NULL);
+	check_jambuf(true, "01234", "0", "1", "2", "3", "4", NULL);
+	check_jambuf(true, "012345", "0", "1", "2", "3", "4", "5", NULL);
+	check_jambuf(true, "0123456", "0", "1", "2", "3", "4", "5", "6", NULL);
+	check_jambuf(true, "01234567", "0", "1", "2", "3", "4", "5", "6", "7", NULL);
+	check_jambuf(true, "012345678", "0", "1", "2", "3", "4", "5", "6", "7", "8", NULL);
+	check_jambuf(true, "0123456789", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", NULL);
 
-	check_jambuf("0123456789", true, "0123456789", NULL);
-	check_jambuf("0123456789", true, "0123456789", "", NULL);
-	check_jambuf("0123456789", true, "", "0123456789", NULL);
-	check_jambuf("0123456789", true, "012345678", "9", NULL);
-	check_jambuf("0123456789", true, "012345678", "9", "", NULL);
-	check_jambuf("0123456789", true, "012345678", "", "9", NULL);
+	check_jambuf(true, "0123456789", "0123456789", NULL);
+	check_jambuf(true, "0123456789", "0123456789", "", NULL);
+	check_jambuf(true, "0123456789", "", "0123456789", NULL);
+	check_jambuf(true, "0123456789", "012345678", "9", NULL);
+	check_jambuf(true, "0123456789", "012345678", "9", "", NULL);
+	check_jambuf(true, "0123456789", "012345678", "", "9", NULL);
 
-	check_jambuf("0123456...", false, "0123456789-", NULL);
-	check_jambuf("0123456...", false, "0123456789-", "", NULL);
-	check_jambuf("0123456...", false, "", "0123456789-", NULL);
-	check_jambuf("0123456...", false, "0123456789", "-", NULL);
-	check_jambuf("0123456...", false, "0123456789", "-", NULL);
-	check_jambuf("0123456...", false, "0123456789", "-", "", NULL);
-	check_jambuf("0123456...", false, "0123456789", "", "-", NULL);
+	check_jambuf(false, "0123456...", "0123456789-", NULL);
+	check_jambuf(false, "0123456...", "0123456789-", "", NULL);
+	check_jambuf(false, "0123456...", "", "0123456789-", NULL);
+	check_jambuf(false, "0123456...", "0123456789", "-", NULL);
+	check_jambuf(false, "0123456...", "0123456789", "-", NULL);
+	check_jambuf(false, "0123456...", "0123456789", "-", "", NULL);
+	check_jambuf(false, "0123456...", "0123456789", "", "-", NULL);
 
 	/* st... */
 
