@@ -27,8 +27,7 @@
 #include "pk11pub.h"
 #include "crypt_symkey.h"
 
-#include "defs.h"		/* for so_serial_t */
-#include "log.h"
+#include "lswlog.h"
 
 /*
  * Ref: https://tools.ietf.org/html/rfc3602: Test Vectors

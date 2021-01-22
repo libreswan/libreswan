@@ -26,8 +26,7 @@
 #include "pk11pub.h"
 #include "crypt_symkey.h"
 
-#include "defs.h"		/* for so_serial_t */
-#include "log.h"
+#include "lswlog.h"
 
 /*
  * Ref: http://csrc.nist.gov/groups/STM/cavp/documents/mac/gcmtestvectors.zip
