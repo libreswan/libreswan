@@ -129,7 +129,7 @@ def main():
                 logger.info("info: option --output disabled as it makes pexpect crash when in interactive mode.")
             else:
                 console.redirect_output(args.output)
-            console.run(b'')
+            console.run("")
 
             status = console.run(' '.join(args.command), timeout=args.timeout)
             print()
@@ -142,7 +142,7 @@ def main():
             logger.info("Escape character is ^]")
             # Hack so that the prompt appears
             console.redirect_output(sys.stdout)
-            console.run(b'')
+            console.run("")
             console.redirect_output(None)
             # Get this terminals properties.
             columns, rows = os.get_terminal_size()
