@@ -36,7 +36,7 @@ You can load this machine definition into libvirt using:
     </filesystem>
     <filesystem type='mount' accessmode='squash'>
       <source dir='@@SOURCEDIR@@'/>
-      <target dir='swansource'/>
+      <target dir='source'/>
     </filesystem>
     <filesystem type='mount' accessmode='squash'>
       <source dir='/tmp'/>

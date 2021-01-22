@@ -37,7 +37,7 @@ You can load this machine definition into libvirt using:
     </filesystem>
     <filesystem type='mount' accessmode='squash'>
       <source dir='@@SOURCEDIR@@'/>
-      <target dir='swansource'/>
+      <target dir='source'/>
     </filesystem>
     <interface type='network'>
       <mac address='12:00:00:AB:CD:02'/>

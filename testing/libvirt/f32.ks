@@ -134,11 +134,6 @@ EOD
 for mount in testing source pool ; do
 
     case ${mount} in
-    source) what=swansource ;;
-    *)      what=${mount} ;;
-    esac
-
-    case ${mount} in
     pool) condition_host= ;;
     *)    condition_host="# " ;;
     esac
@@ -148,7 +143,7 @@ for mount in testing source pool ; do
   Description=libreswan ${mount}
   ${condition_host}ConditionHost=swanbase
 [Mount]
-  What=${what}
+  What=${mount}
   Where=/${mount}
   Type=9p
   Options=defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0
