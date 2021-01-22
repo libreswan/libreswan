@@ -22,8 +22,7 @@
 #include "test_buffer.h"
 #include "ike_alg.h"
 
-#include "defs.h"		/* for so_serial_t */
-#include "log.h"
+#include "lswlog.h"
 
 static chunk_t zalloc_chunk(size_t length, const char *name)
 {

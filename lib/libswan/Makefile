@@ -146,6 +146,7 @@ OBJS += lswlog_enum_lset_short.o
 
 # Crypto code:
 
+OBJS += test_buffer.o
 OBJS += ike_alg.o
 OBJS += ike_alg_test.o
 OBJS += ike_alg_dh_nss_ecp_ops.o
@@ -196,6 +197,11 @@ OBJS += crypt_mac.o
 OBJS += crypt_hash.o
 OBJS += crypt_prf.o
 OBJS += crypt_symkey.o
+
+ifeq ($(USE_IKEv1),true)
+OBJS += ikev1_prf.o
+endif
+OBJS += ikev2_prf.o
 
 ifeq ($(USE_NSS_AVA_COPY),true)
 OBJS += nss_copies.o

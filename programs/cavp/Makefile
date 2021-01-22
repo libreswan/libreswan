@@ -41,21 +41,6 @@ OBJS += test_gcm.o
 
 OBJS += acvp.o
 
-#
-# XXX: For the moment build things by pulling in chunks of pluto.
-# What, if anything, should be moved to libswan or another library?
-#
-USERLAND_CFLAGS += -I$(top_srcdir)/programs/pluto
-PLUTOOBJS += test_buffer.o
-
-ifeq ($(USE_IKEv1),true)
-PLUTOOBJS += ikev1_prf.o
-endif
-PLUTOOBJS += ikev2_prf.o
-# Need absolute path as 'make' (check dependencies) and 'ld' (do link)
-# are run from different directories.
-OBJS += $(addprefix $(abs_top_builddir)/programs/pluto/, $(PLUTOOBJS))
-
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
 

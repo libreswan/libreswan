@@ -22,7 +22,6 @@ OBJS += $(PROGRAM).o
 # XXX: For the moment build things by pulling in chunks of pluto.
 # What, if anything, should be moved to libswan or another library?
 #
-PLUTOOBJS += test_buffer.o
 PLUTOOBJS += cbc_test_vectors.o
 PLUTOOBJS += ctr_test_vectors.o
 PLUTOOBJS += gcm_test_vectors.o
