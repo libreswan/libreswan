@@ -24,19 +24,3 @@ include $(top_srcdir)/mk/targets.mk
 include $(top_srcdir)/mk/config.mk
 
 UTILS=${LIBRESWANSRCDIR}/testing/utils
-
-local-check:
-ifeq ($(UPDATEONLY),)
-	$(MAKE) -C $(LIBRESWANSRCDIR) kvm-keys-up-to-date
-endif
-# skip rebuilding KVMs unless started with: make check UPDATE=1
-ifneq ($(UPDATE)$(UPDATEONLY),)
-	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --compile --install --hostname east
-	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --install --hostname west
-	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --install --hostname road
-	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --install --hostname north
-endif
-ifeq ($(UPDATEONLY),)
-	rm -rf */OUTPUT
-	../utils/swantest
-endif
