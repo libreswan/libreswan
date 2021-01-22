@@ -125,6 +125,7 @@ class Remote:
     def __init__(self, command, hostname=None, username=None, prefix=""):
         # Need access to HOSTNAME.
         self.logger = logutil.getLogger(prefix, __name__, hostname)
+        self.unicode_output_file = None
         self.basename = None
         self.hostname = hostname
         self.username = username
@@ -151,6 +152,7 @@ class Remote:
         .sendcontrol("]")
 
         """
+        self.logger.info("closing console")
         self.child.close()
 
     def sync(self, hostname=None, username=None, timeout=TIMEOUT):
@@ -195,15 +197,20 @@ class Remote:
         self.basename = os.path.basename(directory)
         return self.run("cd " + directory)
 
-    def output(self, logfile=None):
-        self.logger.debug("switching output from %s to %s", self.child.logfile, logfile)
-        logfile, self.child.logfile = self.child.logfile, logfile
-        return logfile
+    def redirect_output(self, unicode_file):
+        self.unicode_output_file = unicode_file
+        self.logger.debug("switching output from %s to %s's buffer", self.child.logfile, unicode_file)
+        self.child.logfile = unicode_file.buffer
 
     def append_output(self, unicode_format, *unicode_args):
-        unicode_output = unicode_format % unicode_args
-        # file is binary
-        self.child.logfile.write(unicode_output.encode())
+        self.unicode_output_file.write(unicode_format % unicode_args)
+        self.unicode_output_file.flush()
+
+    def close_output(self):
+        if self.unicode_output_file:
+            self.logger.info("closing console output");
+            self.unicode_output_file.close()
+            self.child.logfile = None
 
     def sendline(self, line):
         return self.child.sendline(line)

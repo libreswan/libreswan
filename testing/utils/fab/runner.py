@@ -107,11 +107,7 @@ class TestDomain:
             console.expect([pexpect.EOF])
         # close the old console.
         if self.console:
-            output = self.console.output()
-            if output:
-                log("closing console output log")
-                output.close()
-            log("closing console")
+            self.console.close_output()
             self.console.close()
         self.console = None
 
@@ -412,7 +408,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                             for test_domain in test_domains.values():
                                 output = os.path.join(test.output_directory,
                                                       test_domain.domain.host_name + ".console.verbose.txt")
-                                test_domain.console.output(open(output, "wb"))
+                                test_domain.console.redirect_output(open(output, "w"))
 
                             # If a script times out, don't try to run
                             # post-mortem.sh.
@@ -477,8 +473,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                             # Close the redirected test-result log files
                             logger.info("closing all the test domain log files")
                             for test_domain in test_domains.values():
-                                outfile = test_domain.console.output()
-                                outfile.close()
+                                test_domain.console.close_output()
 
                             # Always disconnect from the test domains.
                             logger.info("closing all the test domains")

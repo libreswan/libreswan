@@ -112,12 +112,12 @@ def stdout_or_open_file(arg):
     if arg == "-":
         return sys.stdout.buffer
     elif arg.startswith("++"):
-        return tee.open(sys.stdout, files=[open(arg[2:], "ab")])
+        return tee.open(sys.stdout, files=[open(arg[2:], "a")])
     elif arg.startswith("+="):
-        return tee.open(sys.stdout, files=[open(arg[2:], "wb")])
+        return tee.open(sys.stdout, files=[open(arg[2:], "w")])
     elif arg.startswith("+"):
-        return open(arg[1:], "ab")
+        return open(arg[1:], "a")
     elif arg.startswith("="):
-        return open(arg[1:], "wb")
+        return open(arg[1:], "w")
     else:
-        return open(arg, "wb")
+        return open(arg, "w")

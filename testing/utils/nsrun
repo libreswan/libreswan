@@ -3856,7 +3856,7 @@ class Test():
         console_out = "OUTPUT/%s.console.verbose.txt" % host
 
         with open(console_out, 'a', encoding='utf-8') as f_log:
-            console.output(f_log)
+            console.redirect_output(f_log)
             with open(script, 'r', encoding='utf-8') as f_cmds:
                 output = ''
                 for line in f_cmds:
@@ -3883,7 +3883,7 @@ class Test():
                             "\n%s %s:%s %s\n" % (EXCEPTION, host, script, str(e)))
                         raise
 
-        console.output()
+        console.redirect_output(None)
 
     def run_test_scripts(self):
         for host, script in self.hosts_scripts:
@@ -3894,9 +3894,9 @@ class Test():
             console_out = "OUTPUT/%s.console.verbose.txt" % host
             console=self.shell[host]
             with open(console_out, 'a', encoding='utf-8') as f_log:
-                console.output(f_log)
+                console.redirect_output(f_log)
                 f_log.write(DONE)
-                console.output()
+                console.redirect_output(None)
 
 class TestListRun():
 
