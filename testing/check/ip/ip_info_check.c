@@ -33,6 +33,29 @@
 #define FAIL_INFO(FMT, ...)				\
 	FAIL(PRINT_INFO, FMT,##__VA_ARGS__)
 
+#define CHECK_EQ(TYPE) \
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {		\
+		const struct test *t = &tests[ti];			\
+		const ip_##TYPE *ai = t->TYPE;				\
+		for (size_t tj = 0; tj < elemsof(tests); tj++) {	\
+			const ip_##TYPE *aj = tests[tj].TYPE;		\
+			TYPE##_buf bi, bj;				\
+			bool expected = eq[ti][tj];			\
+			PRINT_INFO(stdout, #TYPE"_eq(%s,%s) == %s",	\
+				   str_##TYPE(ai, &bi),			\
+				   str_##TYPE(aj, &bj),			\
+				   bool_str(expected));			\
+			bool actual = TYPE##_eq(ai, aj);		\
+			if (expected != actual) {			\
+				FAIL_INFO(#TYPE"_eq(%s,%s) returned %s, expecting %s", \
+					  str_##TYPE(ai, &bi),		\
+					  str_##TYPE(aj, &bj),		\
+					  bool_str(actual),		\
+					  bool_str(expected));		\
+			}						\
+		}							\
+	}
+
 static void check_ip_info_address(void)
 {
 	static const struct test {
@@ -165,6 +188,17 @@ static void check_ip_info_selector(void)
 		const ip_selector *s = t->selector;
 		CHECK_TYPE(PRINT_INFO, selector_type(s));
 	}
+
+	/* must match table above */
+	bool eq[elemsof(tests)][elemsof(tests)] = {
+		/* unset/NULL */
+		[0][0] = true,
+		[0][1] = true,
+		[1][1] = true,
+		[1][0] = true,
+		/* other */
+	};
+	CHECK_EQ(selector);
 }
 
 static void check_ip_info_range(void)
@@ -185,6 +219,17 @@ static void check_ip_info_range(void)
 		const ip_range *r = t->range;
 		CHECK_TYPE(PRINT_INFO, range_type(r));
 	}
+
+	/* must match table above */
+	bool eq[elemsof(tests)][elemsof(tests)] = {
+		/* unset/NULL */
+		[0][0] = true,
+		[0][1] = true,
+		[1][1] = true,
+		[1][0] = true,
+		/* other */
+	};
+	CHECK_EQ(range);
 }
 
 void ip_info_check(void)
