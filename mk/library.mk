@@ -10,7 +10,7 @@ include $(top_srcdir)/mk/targets.mk
 
 ARFLAGS=crvs
 
-local-base: $(LIB)
+local-check local-base: $(LIB)
 
 local-clean-base:
 	rm -f $(builddir)/*.o
