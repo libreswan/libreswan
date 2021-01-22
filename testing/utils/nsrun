@@ -3869,17 +3869,17 @@ class Test():
                             # leave a cut/tuc marker in verbose to cleanup
                             logger.warning(
                                 "WARNING %s line %s exit status %d", script, line, status)
-                            console.child.logfile.write("%s exit status %s %s '%s' %s" % (
+                            console.append_output("%s exit status %s %s '%s' %s" % (
                                 LINECUT, status, script, line, LINETUC))
                     except pexpect.TIMEOUT as e:
                         post_timeout = "%s %s:%s" % (TIMEOUT, host, script)
                         logger.warning("*** %s ***" % post_timeout)
-                        console.child.logfile.write(
+                        console.append_output(
                             "%s\n%s %s\n" % (CUT, post_timeout, TUC))
                     except BaseException as e:
                         # if there is an exception, write
                         # it to the console
-                        console.child.logfile.write(
+                        console.append_output(
                             "\n%s %s:%s %s\n" % (EXCEPTION, host, script, str(e)))
                         raise
 
