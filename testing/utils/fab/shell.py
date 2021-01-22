@@ -200,7 +200,7 @@ class Remote:
     def redirect_output(self, unicode_file):
         self.unicode_output_file = unicode_file
         self.logger.debug("switching output from %s to %s's buffer", self.child.logfile, unicode_file)
-        self.child.logfile = unicode_file.buffer
+        self.child.logfile = unicode_file and unicode_file.buffer or None
 
     def append_output(self, unicode_format, *unicode_args):
         self.unicode_output_file.write(unicode_format % unicode_args)
