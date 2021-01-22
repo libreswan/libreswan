@@ -19,8 +19,8 @@ road #
 000 "road-eastnet-nonat":     oriented; my_ip=192.0.2.219; their_ip=unset; my_updown=ipsec _updown;
 000 "road-eastnet-nonat":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "road-eastnet-nonat":   our auth:rsasig, their auth:rsasig
-000 "road-eastnet-nonat":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "road-eastnet-nonat":   sec_label:unset;
+000 "road-eastnet-nonat":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
+000 "road-eastnet-nonat":   policy_label:unset;
 000 "road-eastnet-nonat":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-eastnet-nonat":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "road-eastnet-nonat":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
