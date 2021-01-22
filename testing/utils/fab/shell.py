@@ -200,6 +200,11 @@ class Remote:
         logfile, self.child.logfile = self.child.logfile, logfile
         return logfile
 
+    def append_output(self, unicode_format, *unicode_args):
+        unicode_output = unicode_format % unicode_args
+        # file is binary
+        self.child.logfile.write(unicode_output.encode())
+
     def sendline(self, line):
         return self.child.sendline(line)
 
