@@ -110,14 +110,14 @@ def add_redirect_argument(parser, what, *args, **kwargs):
 
 def stdout_or_open_file(arg):
     if arg == "-":
-        return sys.stdout
+        return sys.stdout.buffer
     elif arg.startswith("++"):
-        return tee.open(sys.stdout, files=[open(arg[2:], "a")])
+        return tee.open(sys.stdout, files=[open(arg[2:], "ab")])
     elif arg.startswith("+="):
-        return tee.open(sys.stdout, files=[open(arg[2:], "w")])
+        return tee.open(sys.stdout, files=[open(arg[2:], "wb")])
     elif arg.startswith("+"):
-        return open(arg[1:], "a")
+        return open(arg[1:], "ab")
     elif arg.startswith("="):
-        return open(arg[1:], "w")
+        return open(arg[1:], "wb")
     else:
-        return open(arg, "w")
+        return open(arg, "wb")

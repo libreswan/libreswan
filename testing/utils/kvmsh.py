@@ -48,7 +48,7 @@ def main():
                               " (default: no timeout)"))
     argutil.add_redirect_argument(parser, "re-direct console output from stdout to %(metavar)s",
                                   "--output", "-o",
-                                  default=sys.stdout, metavar="FILE")
+                                  default=sys.stdout.buffer, metavar="FILE")
 
     parser.add_argument("--chdir", default=None, action="store", metavar="PATH",
                         help=("first change directory to %(metavar)s on the remote"
@@ -126,7 +126,7 @@ def main():
         if args.command:
 
             console.output(args.output)
-            console.run("")
+            console.run(b'')
 
             status = console.run(' '.join(args.command), timeout=args.timeout)
             print()
@@ -141,8 +141,8 @@ def main():
                 logger.info("info: pexpect ignores --debug in interactive mode!")
             logger.info("Escape character is ^]")
             # Hack so that the prompt appears
-            console.output(sys.stdout)
-            console.run("")
+            console.output(sys.stdout.buffer)
+            console.run(b'')
             console.output()
             # Get this terminals properties.
             columns, rows = os.get_terminal_size()
