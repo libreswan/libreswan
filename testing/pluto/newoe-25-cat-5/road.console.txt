@@ -183,7 +183,7 @@ road #
 000 "clear-or-private":   our auth:null, their auth:null
 000 "clear-or-private":   modecfg info: us:client, them:server, modecfg policy:push, dns:unset, domains:unset, cat:set;
 000 "clear-or-private":   sec_label:unset;
-000 "clear-or-private":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
+000 "clear-or-private":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
 000 "clear-or-private":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "clear-or-private":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "clear-or-private":   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+NEGO_PASS+OPPORTUNISTIC+GROUP+IKEV2_ALLOW+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+failurePASS;
@@ -199,7 +199,7 @@ road #
 000 "private":   our auth:null, their auth:null
 000 "private":   modecfg info: us:client, them:server, modecfg policy:push, dns:unset, domains:unset, cat:set;
 000 "private":   sec_label:unset;
-000 "private":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
+000 "private":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
 000 "private":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "private":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "private":   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+GROUP+GROUTED+IKEV2_ALLOW+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+failureDROP;
@@ -215,7 +215,7 @@ road #
 000 "private-or-clear":   our auth:null, their auth:null
 000 "private-or-clear":   modecfg info: us:client, them:server, modecfg policy:push, dns:unset, domains:unset, cat:set;
 000 "private-or-clear":   sec_label:unset;
-000 "private-or-clear":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
+000 "private-or-clear":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
 000 "private-or-clear":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "private-or-clear":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "private-or-clear":   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+NEGO_PASS+OPPORTUNISTIC+GROUP+GROUTED+IKEV2_ALLOW+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+failurePASS;
@@ -231,7 +231,7 @@ road #
 000 "private-or-clear#192.1.2.0/24":   our auth:null, their auth:null
 000 "private-or-clear#192.1.2.0/24":   modecfg info: us:client, them:server, modecfg policy:push, dns:unset, domains:unset, cat:set;
 000 "private-or-clear#192.1.2.0/24":   sec_label:unset;
-000 "private-or-clear#192.1.2.0/24":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
+000 "private-or-clear#192.1.2.0/24":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
 000 "private-or-clear#192.1.2.0/24":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "private-or-clear#192.1.2.0/24":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "private-or-clear#192.1.2.0/24":   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+NEGO_PASS+OPPORTUNISTIC+GROUPINSTANCE+IKEV2_ALLOW+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+failurePASS;

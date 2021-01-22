@@ -186,7 +186,7 @@ done
 000 "west":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, cat:unset;
 000 "west":   labeled_ipsec:no;
 000 "west":   policy_label:unset;
-000 "west":   ike_life: 3600s; ipsec_life: 30s; replay_window: 32; rekey_margin: 5s; rekey_fuzz: 100%; keyingtries: 0;
+000 "west":   ike_life: 28800s; ipsec_life: 30s; replay_window: 32; rekey_margin: 5s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west":   retransmit-interval: 15000ms; retransmit-timeout: 60s;
 000 "west":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "west":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_PROPOSE+IKE_FRAG_ALLOW+ESN_NO;
