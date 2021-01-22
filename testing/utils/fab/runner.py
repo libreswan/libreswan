@@ -436,7 +436,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                                 except BaseException as e:
                                     # if there is an exception, write
                                     # it to the console
-                                    test_domain.console.append_output("\n%s %s %s\n%s", post.LHS, post.EXCEPTION, script, post.RHS, str(e))
+                                    test_domain.console.append_output("\n%s %s %s %s\n%s", post.LHS, post.EXCEPTION, script, post.RHS, str(e))
                                     raise
 
                             if args.run_post_mortem is False:
@@ -466,7 +466,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                                     except BaseException as e:
                                         # if there is an exception, write
                                         # it to the console
-                                        test_domain.console.append_output("\n%s %s %s\n%s", post.LHS, post.EXCEPTION, script, post.RHS, str(e))
+                                        test_domain.console.append_output("\n%s %s %s %s\n%s", post.LHS, post.EXCEPTION, script, post.RHS, str(e))
                                         raise
 
                             for test_domain in test_domains.values():
