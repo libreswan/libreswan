@@ -44,7 +44,7 @@ typedef struct {
 	char buf[sizeof(address_buf) + 1/*"-"*/ + sizeof(address_buf)];
 } range_buf;
 
-void jam_range(struct jambuf *buf, const ip_range *range);
+size_t jam_range(struct jambuf *buf, const ip_range *range);
 const char *str_range(const ip_range *range, range_buf *buf);
 
 /*

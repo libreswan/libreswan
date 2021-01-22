@@ -215,17 +215,22 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 	return "error";
 }
 
-void jam_range(struct jambuf *buf, const ip_range *range)
+size_t jam_range(struct jambuf *buf, const ip_range *range)
 {
-	jam_address(buf, &range->start);
+	if (range == NULL) {
+		return jam(buf, "<none-none>");
+	}
+	size_t s = 0;
+	s += jam_address(buf, &range->start);
 	if (range->is_subnet) {
 		ip_subnet tmp_subnet;
 		rangetosubnet(&range->start, &range->end, &tmp_subnet);
-		jam(buf, "/%u", tmp_subnet.maskbits);
+		s += jam(buf, "/%u", tmp_subnet.maskbits);
 	} else {
-		jam(buf, "-");
-		jam_address(buf, &range->end);
+		s += jam(buf, "-");
+		s += jam_address(buf, &range->end);
 	}
+	return s;
 }
 
 const char *str_range(const ip_range *range, range_buf *out)
