@@ -12,10 +12,13 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
+ifndef top_srcdir
+include ../../mk/dirs.mk
+endif
+include $(top_srcdir)/mk/config.mk
+
 # Cryptographic Algorithm Validation Program (CAVP)
 # see: http://csrc.nist.gov/groups/STM/cavp/index.html
-
-include ../..//mk/config.mk
 
 PROGRAM = cavp
 
@@ -47,8 +50,15 @@ OBJS += $(LSWTOOLLIBS)
 USERLAND_LDFLAGS += $(NSS_LDFLAGS)
 USERLAND_LDFLAGS += $(NSPR_LDFLAGS)
 
-default: check
-.PHONY: check default
+default: local-check
+.PHONY: default
+
+ifeq ($(USE_IKEv1),true)
+TESTCHECKS = test.acvp.ikev2.ok test.acvp.ikev1_dsa.ok test.acvp.ikev1_psk.ok
+else
+TESTCHECKS = test.acvp.ikev2.ok
+endif
+local-check: $(TESTCHECKS)
 
 .PRECIOUS: %.fax
 test.cavp.%.fax: | $(builddir)
@@ -66,13 +76,6 @@ test.cavp.%.out: test.cavp.%.fax $(PROGRAM)
 test.cavp.%.ok: test.cavp.%.out test.cavp.%.fax
 	diff -u $(builddir)/test.cavp.$*.fax $(builddir)/test.cavp.$*.out
 	touch $(builddir)/$@
-
-ifeq ($(USE_IKEv1),true)
-TESTCHECKS = test.acvp.ikev2.ok test.acvp.ikev1_dsa.ok test.acvp.ikev1_psk.ok
-else
-TESTCHECKS = test.acvp.ikev2.ok
-endif
-check: $(TESTCHECKS)
 
 .PRECIOUS: %.out
 test.acvp.%.out: test.acvp.%.run $(PROGRAM)
@@ -93,8 +96,4 @@ clean.cavp:
 	rm -f $(builddir)/*.out
 	rm -f $(builddir)/*.tmp
 
-ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
-else
-include ../../mk/program.mk
-endif

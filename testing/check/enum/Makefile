@@ -27,5 +27,5 @@ else
 include ../../../mk/program.mk
 endif
 
-local-selfcheck:
+local-check: $(PROGRAM)
 	$(builddir)/$(PROGRAM) | diff -u $(srcdir)/OUTPUT.$(PROGRAM).txt -

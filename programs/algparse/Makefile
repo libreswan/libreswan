@@ -29,5 +29,5 @@ else
 include ../../mk/program.mk
 endif
 
-local-selfcheck: $(PROGRAM)
-	$(top_srcdir)/testing/pluto/basic-pluto-00/algparse.sh $(builddir)/$(PROGRAM)
+local-check: $(PROGRAM)
+	$(top_srcdir)/testing/pluto/bin/algparse.sh $(builddir)/$(PROGRAM)
