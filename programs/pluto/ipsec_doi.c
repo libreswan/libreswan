@@ -104,55 +104,53 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 #endif
 					     IKEV2_ISAKMP_INITIATOR_STATES);
 
-	if (st == NULL) {
-		if (policy & c->policy & POLICY_IKEV2_ALLOW) {
-			initiator_function *initiator = ikev2_parent_outI1;
-			initiator(whack_sock, c, NULL, policy, try, inception);
-		}
+	switch (c->ike_version) {
 #ifdef USE_IKEv1
-		if (policy & c->policy & POLICY_IKEV1_ALLOW) {
+	case IKEv1:
+		if (st == NULL) {
 			initiator_function *initiator = (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;
 			initiator(whack_sock, c, NULL, policy, try, inception);
-		}
-#endif
-	} else if (HAS_IPSEC_POLICY(policy)) {
-#ifdef USE_IKEv1
-		if (st->st_ike_version == IKEv1) {
-			if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
-				/* leave our Phase 2 negotiation pending */
-				add_pending(whack_sock, pexpect_ike_sa(st),
+		} else if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+			/* leave our Phase 2 negotiation pending */
+			add_pending(whack_sock, pexpect_ike_sa(st),
 				    c, policy, try,
 				    replacing,
 				    false /*part of initiate*/);
-			} else {
-				/* ??? we assume that peer_nexthop_sin isn't important:
-				 * we already have it from when we negotiated the ISAKMP SA!
-				 * It isn't clear what to do with the error return.
-				 */
+		} else {
+			/*
+			 * ??? we assume that peer_nexthop_sin isn't
+			 * important: we already have it from when we
+			 * negotiated the ISAKMP SA!  It isn't clear
+			 * what to do with the error return.
+			 */
 			quick_outI1(whack_sock, st, c, policy, try,
 				    replacing);
-			}
 		}
+		break;
 #endif
-		if (st->st_ike_version == IKEv2) {
-			if (!IS_PARENT_SA_ESTABLISHED(st)) {
-				/* leave our Phase 2 negotiation pending */
-				add_pending(whack_sock, pexpect_ike_sa(st),
+	case IKEv2:
+		if (st == NULL) {
+			ikev2_parent_outI1(whack_sock, c, NULL, policy, try, inception);
+		} else if (!IS_PARENT_SA_ESTABLISHED(st)) {
+			/* leave CHILD SA negotiation pending */
+			add_pending(whack_sock, pexpect_ike_sa(st),
 				    c, policy, try,
 				    replacing,
 				    false /*part of initiate*/);
-			} else {
-				struct pending p = {
+		} else {
+			struct pending p = {
 				.whack_sock = whack_sock, /*on-stack*/
 				.ike = pexpect_ike_sa(st),
 				.connection = c,
 				.try = try,
 				.policy = policy,
 				.replacing = replacing,
-				};
-				ikev2_initiate_child_sa(&p);
-			}
+			};
+			ikev2_initiate_child_sa(&p);
 		}
+		break;
+	default:
+		bad_case(c->ike_version);
 	}
 }
 
