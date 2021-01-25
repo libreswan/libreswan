@@ -123,25 +123,32 @@ The root password is "swan"
 EOD
 
 
-# Mount /testing, /source, and /pool (swanbase only) using 9p (will
-# be available after a reboot).
-
 # load 9p modules in time for auto mounts
+
 cat << EOD > /etc/modules-load.d/9pnet_virtio.conf
 9pnet_virtio
 EOD
 
+
+# Mount points:
+#
+# /source, and /pool are mounted on swanbase; /testing on test
+# machines.  Either way, only available after a reboot as 9p isn't yet
+# configured.
+
 for mount in testing source pool ; do
-
     case ${mount} in
-    pool) condition_host= ;;
-    *)    condition_host="# " ;;
+    pool|source)
+	condition_host=ConditionHost=swanbase
+	;;
+    testing)
+	condition_host="# ConditionHost="
+    	;;
     esac
-
     cat <<EOF >/etc/systemd/system/${mount}.mount
 [Unit]
   Description=libreswan ${mount}
-  ${condition_host}ConditionHost=swanbase
+  ${condition_host}
 [Mount]
   What=${mount}
   Where=/${mount}
@@ -150,10 +157,10 @@ for mount in testing source pool ; do
 [Install]
   WantedBy=multi-user.target
 EOF
-
     mkdir /${mount}
     systemctl enable ${mount}.mount
 done
+
 
 systemctl enable systemd-networkd
 systemctl enable systemd-networkd-wait-online
