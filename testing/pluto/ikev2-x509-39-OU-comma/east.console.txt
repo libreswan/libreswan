@@ -1,47 +1,67 @@
 /testing/guestbin/swan-prep
 east #
- # always zap and recreate special comma certs
+ # Always zap and recreate special comma certs. Saved under OUTPUT/nss
 east #
- rm /etc/ipsec.d/*.*
+ # and left waiting for clients (west et.al.) which an import using:
 east #
- /testing/x509/nss-certs.sh
-++ dirname /testing/x509/nss-certs.sh
-+ nssdir=/testing/x509/nss
-++ dirname /testing/x509/nss-certs.sh
-+ mydir=/testing/x509
-+ mkdir -p /testing/x509/nss
-+ rm -f /testing/x509/nss/cert9.db /testing/x509/nss/cert.noise /testing/x509/nss/client.p12 /testing/x509/nss/clientX.p12 /testing/x509/nss/key4.db /testing/x509/nss/pkcs11.txt /testing/x509/nss/server.p12 /testing/x509/nss/serverX.p12
-+ ipsec initnss --nssdir /testing/x509/nss
-Initializing NSS database
-+ echo dsadasdasdasdadasdasdasdasdsadfwerwerjfdksdjfksdlfhjsdk
-+ certutil -S -k rsa -n cacert -s CN=cacert -v 12 -d . -t C,C,C -x -d sql:/testing/x509/nss -z /testing/x509/nss/cert.noise -f /testing/x509/nss-pw
+ # pk12util -i OUTPUT/nss/client.p12 -d sql:/etc/ipsec.d -K 'foobar' -W 'foobar'
+east #
+ # certutil -M -d sql:/etc/ipsec.d -n cacert -t 'CT,,'
+east #
+ # new scratch DB
+east #
+ rm -f OUTPUT/nss
+east #
+ mkdir OUTPUT/nss
+east #
+ certutil -N -d sql:OUTPUT/nss -f /dev/null
+password file contains no data
+east #
+ # generate keys
+east #
+ echo "dsadasdasdasdadasdasdasdasdsadfwerwerjfdksdjfksdlfhjsdk" > OUTPUT/nss/cert.noise
+east #
+ certutil -S -k rsa -n cacert -s "CN=cacert" -v 12 -d . -t "C,C,C" -x -d sql:OUTPUT/nss  -z OUTPUT/nss/cert.noise -f /dev/null
 Generating key.  This may take a few moments...
-+ certutil -S -k rsa -c cacert -n client --extSAN dns:client.libreswan.org -m 101 -s 'C=CZ, ST=Moravia, L=Brno, O=Test Example, OU="Global, Support, Services", CN=client' -v 12 -t u,u,u -d sql:/testing/x509/nss -z /testing/x509/nss/cert.noise -f /testing/x509/nss-pw
-Generating key.  This may take a few moments...
-Notice: Trust flag u is set automatically if the private key is present.
-+ certutil -S -k rsa -c cacert -n server --extSAN dns:server.libreswan.org -m 102 -s 'C=CZ, ST=Moravia, L=Brno, O=Test Example, OU="Global, Support, Services", CN=server' -v 12 -t u,u,u -d sql:/testing/x509/nss -z /testing/x509/nss/cert.noise -f /testing/x509/nss-pw
-Generating key.  This may take a few moments...
-Notice: Trust flag u is set automatically if the private key is present.
-+ pk12util -o /testing/x509/nss/client.p12 -n client -d sql:/testing/x509/nss -W foobar -K foobar
-pk12util: PKCS12 EXPORT SUCCESSFUL
-+ pk12util -o /testing/x509/nss/server.p12 -n server -d sql:/testing/x509/nss -W foobar -K foobar
-pk12util: PKCS12 EXPORT SUCCESSFUL
-+ certutil -S -k rsa -n cacertX -s CN=cacertX -v 12 -d . -t C,C,C -x -d sql:/testing/x509/nss -z /testing/x509/nss/cert.noise -f /testing/x509/nss-pw
-Generating key.  This may take a few moments...
-+ certutil -S -k rsa -c cacertX -n clientX --extSAN dns:clientX.libreswan.org -m 103 -s 'C=CZ, ST=Moravia, L=Brno, O=Test Example, OU="Global Support Services", CN=clientX' -v 12 -t u,u,u -d sql:/testing/x509/nss -z /testing/x509/nss/cert.noise -f /testing/x509/nss-pw
+east #
+ certutil -S -k rsa -c cacert -n 'client' --extSAN 'dns:client.libreswan.org' -m 101 -s 'C=CZ, ST=Moravia, L=Brno, O=Test Example, OU="Global, Support, Services", CN=client' -v 12 -t 'u,u,u' -d sql:OUTPUT/nss -z OUTPUT/nss/cert.noise -f /dev/null
 Generating key.  This may take a few moments...
 Notice: Trust flag u is set automatically if the private key is present.
-+ certutil -S -k rsa -c cacertX -n serverX --extSAN dns:serverX.libreswan.org -m 104 -s 'C=CZ, ST=Moravia, L=Brno, O=Test Example, OU="Global Support Services", CN=serverX' -v 12 -t u,u,u -d sql:/testing/x509/nss -z /testing/x509/nss/cert.noise -f /testing/x509/nss-pw
+east #
+ certutil -S -k rsa -c cacert -n 'server' --extSAN 'dns:server.libreswan.org' -m 102 -s 'C=CZ, ST=Moravia, L=Brno, O=Test Example, OU="Global, Support, Services", CN=server' -v 12 -t 'u,u,u' -d sql:OUTPUT/nss -z OUTPUT/nss/cert.noise -f /dev/null
 Generating key.  This may take a few moments...
 Notice: Trust flag u is set automatically if the private key is present.
-+ pk12util -o /testing/x509/nss/clientX.p12 -n clientX -d sql:/testing/x509/nss -W foobar -K foobar
+east #
+ pk12util -o OUTPUT/nss/client.p12 -n client -d sql:OUTPUT/nss -W 'foobar' -K 'foobar'
 pk12util: PKCS12 EXPORT SUCCESSFUL
-+ pk12util -o /testing/x509/nss/serverX.p12 -n serverX -d sql:/testing/x509/nss -W foobar -K foobar
+east #
+ pk12util -o OUTPUT/nss/server.p12 -n server -d sql:OUTPUT/nss -W 'foobar' -K 'foobar'
 pk12util: PKCS12 EXPORT SUCCESSFUL
+east #
+ # tmp
+east #
+ certutil -S -k rsa -n cacertX -s "CN=cacertX" -v 12 -d . -t "C,C,C" -x -d sql:OUTPUT/nss  -z OUTPUT/nss/cert.noise -f /dev/null
+Generating key.  This may take a few moments...
+east #
+ certutil -S -k rsa -c cacertX -n 'clientX' --extSAN 'dns:clientX.libreswan.org' -m 103 -s 'C=CZ, ST=Moravia, L=Brno, O=Test Example, OU="Global Support Services", CN=clientX' -v 12 -t 'u,u,u' -d sql:OUTPUT/nss -z OUTPUT/nss/cert.noise -f /dev/null
+Generating key.  This may take a few moments...
+Notice: Trust flag u is set automatically if the private key is present.
+east #
+ certutil -S -k rsa -c cacertX -n 'serverX' --extSAN 'dns:serverX.libreswan.org' -m 104 -s 'C=CZ, ST=Moravia, L=Brno, O=Test Example, OU="Global Support Services", CN=serverX' -v 12 -t 'u,u,u' -d sql:OUTPUT/nss -z OUTPUT/nss/cert.noise -f /dev/null
+Generating key.  This may take a few moments...
+Notice: Trust flag u is set automatically if the private key is present.
+east #
+ pk12util -o OUTPUT/nss/clientX.p12 -n clientX -d sql:OUTPUT/nss -W 'foobar' -K 'foobar'
+pk12util: PKCS12 EXPORT SUCCESSFUL
+east #
+ pk12util -o OUTPUT/nss/serverX.p12 -n serverX -d sql:OUTPUT/nss -W 'foobar' -K 'foobar'
+pk12util: PKCS12 EXPORT SUCCESSFUL
+east #
+ # init and import real server
 east #
  ipsec initnss > /dev/null 2> /dev/null
 east #
- pk12util -i /testing/x509/nss/server.p12 -d sql:/etc/ipsec.d -K 'foobar' -W 'foobar'
+ pk12util -i OUTPUT/nss/server.p12 -d sql:/etc/ipsec.d -K 'foobar' -W 'foobar'
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
  certutil -M -d sql:/etc/ipsec.d -n cacert -t 'CT,,'
