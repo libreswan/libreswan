@@ -27,7 +27,7 @@ west #
 [NET] sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 [NET] received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 [ENC] parsed IKE_SA_INIT response 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(CHDLESS_SUP) N(MULT_AUTH) ]
-[CFG] selected proposal: IKE:AES_CBC_128/HMAC_SHA2_256_128/PRF_AES128_XCBC/ECP_256
+[CFG] selected proposal: IKE:AES_CBC_128/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/ECP_256
 [IKE] authentication of 'west' (myself) with pre-shared key
 [IKE] establishing CHILD_SA westnet-eastnet{1}
 [ENC] generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MULT_AUTH) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
@@ -38,14 +38,18 @@ west #
 [IKE] IKE_SA west[1] established between 192.1.2.45[west]...192.1.2.23[east]
 [IKE] scheduling rekeying in XXXs
 [IKE] maximum IKE_SA lifetime XXXs
-[CFG] selected proposal: ESP:AES_CBC_128/HMAC_SHA2_256_128/NO_EXT_SEQ
+[CFG] selected proposal: ESP:AES_GCM_16_128
 [IKE] CHILD_SA westnet-eastnet{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
 initiate completed successfully
 west #
  ping -w 4 -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+From 192.0.1.254 icmp_seq=1 Destination Host Unreachable
+From 192.0.1.254 icmp_seq=2 Destination Host Unreachable
+From 192.0.1.254 icmp_seq=3 Destination Host Unreachable
 --- 192.0.2.254 ping statistics ---
-4 packets transmitted, 0 received, 100% packet loss, time XXXX
+3 packets transmitted, 0 received, +3 errors, 100% packet loss, time XXXX
+pipe 3
 west #
  ip xfrm policy
 src 192.0.1.0/24 dst 192.0.2.0/24 
@@ -78,13 +82,11 @@ west #
  ip xfrm state
 src 192.1.2.45 dst 192.1.2.23
 	replay-window 0 flag af-unspec
-	auth-trunc hmac(sha256) 0xHASHKEY 128
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	if_id 0x2
 src 192.1.2.23 dst 192.1.2.45
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha256) 0xHASHKEY 128
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	if_id 0x2
 west #
  ip link set up dev ipsec2
