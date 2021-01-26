@@ -570,24 +570,29 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 	pfd.fd = ifp->fd;
 	pfd.events = interest | POLLPRI | POLLOUT;
 
-	while (pfd.revents = 0,
-	       poll(&pfd, 1, -1) > 0 && (pfd.revents & POLLERR)) {
+	while (/*clear .revents*/ pfd.revents = 0,
+		/*poll .revents*/ poll(&pfd, 1, -1) > 0 &&
+		/*test .revents*/ (pfd.revents & POLLERR)) {
+
 		/*
-		 * This buffer needs to be large enough to fit the IKE
-		 * header so that the IKE SPIs and flags can be
-		 * extracted and used to find the sender of the
+		 * A single IOV (I/O Vector) pointing at a buffer for
+		 * storing the message fragment.
+		 *
+		 * It needs to be large enough to fit the IKE header +
+		 * leading ESP:0 prefix so that the IKE SPIs and flags
+		 * can be extracted and used to find the sender of the
 		 * message.
 		 *
 		 * Give it double that.
 		 */
 		uint8_t buffer[sizeof(struct isakmp_hdr) * 2];
+		struct iovec eiov[1] = {
+			{
+				.iov_base = buffer, /* see readv(2) */
+				.iov_len = sizeof(buffer),
+			},
+		};
 
-		ip_sockaddr from;
-
-		ssize_t packet_len;
-
-		struct msghdr emh;
-		struct iovec eiov;
 		union {
 			/* force alignment (not documented as necessary) */
 			struct cmsghdr ecms;
@@ -596,25 +601,21 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 			unsigned char space[256];
 		} ecms_buf;
 
-		struct cmsghdr *cm;
-		struct state *sender = NULL;
+		ip_sockaddr from = { 0, };
+		struct msghdr emh = {
+			.msg_name = &from.sa, /* ??? filled in? */
+			.msg_namelen = sizeof(from.sa),
+			.msg_iov = eiov,
+			.msg_iovlen = elemsof(eiov),
+			.msg_control = &ecms_buf,
+			.msg_controllen = sizeof(ecms_buf),
+			.msg_flags = 0,
+		};
 
-		zero(&from);
-
-		emh.msg_name = &from.sa; /* ??? filled in? */
-		emh.msg_namelen = sizeof(from.sa);
-		emh.msg_iov = &eiov;
-		emh.msg_iovlen = 1;
-		emh.msg_control = &ecms_buf;
-		emh.msg_controllen = sizeof(ecms_buf);
-		emh.msg_flags = 0;
-
-		eiov.iov_base = buffer; /* see readv(2) */
-		eiov.iov_len = sizeof(buffer);
-
-		packet_len = recvmsg(ifp->fd, &emh, MSG_ERRQUEUE);
+		ssize_t packet_len = recvmsg(ifp->fd, &emh, MSG_ERRQUEUE);
 
 		if (packet_len == -1) {
+			/* XXX: all paths either break. return, or continue */
 			if (errno == EAGAIN) {
 				/* 32 is picked from thin air */
 				if (again_count == 32) {
@@ -627,26 +628,22 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 					  "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s) (attempt %d)",
 					  ifp->ip_dev->id_rname, before, again_count);
 				continue;
-			} else {
-				log_errno(logger, errno,
-					  "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s)",
-					  ifp->ip_dev->id_rname, before);
-				break;
 			}
-		} else {
-			/*
-			 * Getting back a truncated IKE datagram a big
-			 * deal - find_likely_sender() only needs the
-			 * header when figuring out which state sent
-			 * the packet.
-			 */
-			if (DBGP(DBG_BASE) && (emh.msg_flags & MSG_TRUNC)) {
-				DBG_log("recvmsg(,, MSG_ERRQUEUE) on %s returned a truncated (IKE) datagram (MSG_TRUNC)",
-					ifp->ip_dev->id_rname);
-			}
+			log_errno(logger, errno,
+				  "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s)",
+				  ifp->ip_dev->id_rname, before);
+			break;
+		}
+		passert(packet_len >= 0);
 
-			sender = find_likely_sender((size_t) packet_len,
-						    buffer, sizeof(buffer));
+		/*
+		 * Getting back a truncated IKE datagram isn't a big
+		 * deal - find_likely_sender() only needs the header
+		 * when figuring out which state sent the packet.
+		 */
+		if (DBGP(DBG_BASE) && (emh.msg_flags & MSG_TRUNC)) {
+			DBG_log("recvmsg(,, MSG_ERRQUEUE) on %s returned a truncated (IKE) datagram (MSG_TRUNC)",
+				ifp->ip_dev->id_rname);
 		}
 
 		if (DBGP(DBG_BASE)) {
@@ -658,6 +655,9 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 			DBG_dump(NULL, emh.msg_control,
 				 emh.msg_controllen);
 		}
+
+		struct state *sender = find_likely_sender((size_t) packet_len,
+							  buffer, sizeof(buffer));
 
 		/* ??? Andi Kleen <ak@suse.de> and misc documentation
 		 * suggests that name will have the original destination
@@ -685,9 +685,7 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 			}
 		}
 
-		for (cm = CMSG_FIRSTHDR(&emh)
-		     ; cm != NULL
-		     ; cm = CMSG_NXTHDR(&emh, cm)) {
+		for (struct cmsghdr *cm = CMSG_FIRSTHDR(&emh); cm != NULL; cm = CMSG_NXTHDR(&emh, cm)) {
 			if (cm->cmsg_level == SOL_IP &&
 			    cm->cmsg_type == IP_RECVERR) {
 				/* ip(7) and recvmsg(2) specify:
@@ -833,13 +831,14 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 				   cm->cmsg_type == IP_PKTINFO) {
 				/* do nothing */
 			} else {
-				/* .cmsg_len is a kernel_size_t(!), but the value
-				 * certainly ought to fit in an unsigned long.
+				/* .cmsg_len is a kernel_size_t(!),
+				 * but the value certainly ought to
+				 * fit in a size_t.
 				 */
 				llog(RC_LOG, logger,
-					    "unknown cmsg: level %d, type %d, len %zu",
-					    cm->cmsg_level, cm->cmsg_type,
-					    cm->cmsg_len);
+				     "unknown cmsg: level %d, type %d, len %zu",
+				     cm->cmsg_level, cm->cmsg_type,
+				     cm->cmsg_len);
 			}
 		}
 	}
