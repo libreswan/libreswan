@@ -141,7 +141,7 @@ road #
 done
 road #
  ipsec whack --trafficstatus
-006 #2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=672, outBytes=672, id='192.1.2.23', lease=192.0.3.10/32
+006 #2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=840, outBytes=840, id='192.1.2.23', lease=192.0.3.10/32
 road #
  ip xfrm state
 src 192.1.2.23 dst 192.1.33.222

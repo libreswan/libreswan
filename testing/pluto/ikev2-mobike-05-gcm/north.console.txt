@@ -96,7 +96,7 @@ north #
 done
 north #
  ipsec whack --trafficstatus
-006 #2: "northnet-eastnet", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='192.1.2.23'
+006 #2: "northnet-eastnet", type=ESP, add_time=1234567890, inBytes=504, outBytes=504, id='192.1.2.23'
 north #
  ip xfrm state
 src 192.1.2.23 dst 192.1.8.22
