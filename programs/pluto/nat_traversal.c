@@ -1081,26 +1081,24 @@ bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 	}
 
 	/*
-	 * Float the remote port to :PLUTO_NAT_PORT (:4500).
+	 * Float the remote port from IKE_UDP_PORT (:500) to
+	 * :NAT_IKE_UDP_PORT (:4500).
 	 *
-	 * XXX: see also end_host_port().
+	 * XXX: see also end_host_port().  Some of these are
+	 * redundant, but logging is useful.
 	 */
 	unsigned remote_hport = endpoint_hport(&ike->sa.st_remote_endpoint);
 	if (ike->sa.st_connection->spd.that.raw.host.ikeport != 0) {
 		dbg("NAT: #%lu not floating remote port; hardwired to ikeport=%u "PRI_WHERE,
 		    ike->sa.st_serialno, ike->sa.st_connection->spd.that.raw.host.ikeport,
 		    pri_where(where));
-	} else if (ike->sa.st_connection->spd.that.host_encap) {
-		dbg("NAT: #%lu not floating remote port; already popinting at encapsulated port %u (from revival)"PRI_WHERE,
+	} else if (remote_hport != IKE_UDP_PORT) {
+		dbg("NAT: #%lu not floating remote port; already pointing at non-IKE_UDP_PORT %u "PRI_WHERE,
 		    ike->sa.st_serialno, remote_hport, pri_where(where));
-	} else if (remote_hport == NAT_IKE_UDP_PORT) {
-		dbg("NAT: #%lu not floating remote port; already pointing at PLUTO_NAT_PORT %u "PRI_WHERE,
-		    ike->sa.st_serialno, NAT_IKE_UDP_PORT, pri_where(where));
 	} else {
-		/* XXX: if port==IKE_UDP_PORT? */
+		pexpect(remote_hport == IKE_UDP_PORT);
 		dbg("NAT: #%lu floating remote port from %d to %d using NAT_IKE_UDP_PORT "PRI_WHERE,
-		    ike->sa.st_serialno, endpoint_hport(&ike->sa.st_remote_endpoint), NAT_IKE_UDP_PORT,
-		    pri_where(where));
+		    ike->sa.st_serialno, remote_hport, NAT_IKE_UDP_PORT, pri_where(where));
 		update_endpoint_port(&ike->sa.st_remote_endpoint, ip_hport(NAT_IKE_UDP_PORT));
 	}
 
