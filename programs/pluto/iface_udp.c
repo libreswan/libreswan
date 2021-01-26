@@ -498,10 +498,21 @@ static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 		dbg("MSG_ERRQUEUE packet longer than %zu bytes; truncated", sizeof_buffer);
 		packet_len = sizeof_buffer;
 	}
+
+	static const uint8_t non_ESP_marker[NON_ESP_MARKER_SIZE] = { 0x00, };
+	if (packet_len >= sizeof(non_ESP_marker) &&
+	    memeq(buffer, non_ESP_marker, sizeof(non_ESP_marker))) {
+		buffer += sizeof(non_ESP_marker);
+		packet_len -= sizeof(non_ESP_marker);
+		sizeof_buffer -= sizeof(non_ESP_marker);
+		dbg("MSG_ERRQUEUE packet has leading ESP:0 marker - discarded");
+	}
+
 	if (packet_len < sizeof(struct isakmp_hdr)) {
 		dbg("MSG_ERRQUEUE packet is smaller than an IKE header");
 		return NULL;
 	}
+
 	struct pbs_in packet_pbs;
 	init_pbs(&packet_pbs, buffer, packet_len, __func__);
 	struct isakmp_hdr hdr;
@@ -515,6 +526,7 @@ static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 		pfree_diag(&d);
 		return NULL;
 	}
+
 	enum ike_version ike_version = hdr_ike_version(&hdr);
 	struct state *st;
 	switch (ike_version) {
@@ -554,6 +566,7 @@ static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 		    enum_name(&ike_version_names, ike_version));
 		return NULL;
 	}
+
 	dbg("MSG_ERRQUEUE packet matches %s SA #%lu",
 	    enum_name(&ike_version_names, ike_version),
 	    st->st_serialno);
