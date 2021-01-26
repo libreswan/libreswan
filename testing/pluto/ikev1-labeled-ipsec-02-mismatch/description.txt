@@ -1,6 +1,4 @@
-basic-pluto-01 but now with labeled IPsec using NETKEY. A test on port 4300
-using netcat and getpeercon_server to confirm traffic flow and label.
+As ikev2-labeled-ipsec-01 but now one side is not using labels.
 
-(requires private getpeercon package, we'll include it as source in /testing soon)
+The connection should fail.
 
-A shutdown is issued to verify no kernel state is left behind
