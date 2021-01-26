@@ -11,6 +11,7 @@ west #
 west #
  ipsec initnss --nssdir ${IPSEC_TEST_DIR}
 Initializing NSS database
+Warning no default label for /tmp/TESTipsec.d
 west #
  ls ${IPSEC_DIR} | egrep '*.db' # should show no db files
 west #
@@ -29,4 +30,5 @@ west #
  ipsec newhostkey --nssdir ${IPSEC_TEST_DIR} > /dev/null 2> /dev/null
 west #
  rm -rf ${IPSEC_TEST_DIR}
-
+west #
+ 

@@ -26,8 +26,8 @@ west #
 003 "westnet-eastnet-ikev2" #1: authenticated using authby=secret
 003 "westnet-eastnet-ikev2" #2: local policy requires Transport Mode but peer requires required Tunnel Mode
 002 "westnet-eastnet-ikev2" #1: sending IKE SA delete
-002 "westnet-eastnet-ikev2" #2: deleting state (STATE_PARENT_I2) and NOT sending notification
-002 "westnet-eastnet-ikev2" #1: deleting other state #1 connection (STATE_V2_ESTABLISHED_IKE_SA) "westnet-eastnet-ikev2" and sending notification
+002 "westnet-eastnet-ikev2" #1: deleting other state #2 (STATE_PARENT_I2) and NOT sending notification
+002 "westnet-eastnet-ikev2" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "westnet-eastnet-ikev2" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254

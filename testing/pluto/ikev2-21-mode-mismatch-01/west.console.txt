@@ -44,8 +44,8 @@ west #
 003 "ipv4-psk-ikev2-transport" #1: authenticated using authby=secret
 003 "ipv4-psk-ikev2-transport" #2: local policy requires Transport Mode but peer requires required Tunnel Mode
 002 "ipv4-psk-ikev2-transport" #1: sending IKE SA delete
-002 "ipv4-psk-ikev2-transport" #2: deleting state (STATE_PARENT_I2) and NOT sending notification
-002 "ipv4-psk-ikev2-transport" #1: deleting other state #1 connection (STATE_V2_ESTABLISHED_IKE_SA) "ipv4-psk-ikev2-transport" and sending notification
+002 "ipv4-psk-ikev2-transport" #1: deleting other state #2 (STATE_PARENT_I2) and NOT sending notification
+002 "ipv4-psk-ikev2-transport" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ipv4-psk-ikev2-transport" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  echo done

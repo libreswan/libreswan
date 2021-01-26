@@ -8,7 +8,7 @@ ipsec whack --shuntstatus
 ip -o xfrm pol | grep 192.1.2.23
 ipsec status | grep STATE_
 sleep 10
-# should show %pass in shuntstatus and xfrm policy and without partial STATE
+# should show pass in shuntstatus and xfrm policy and without partial STATE
 ipsec whack --shuntstatus
 ip -o xfrm pol | grep 192.1.2.23
 ipsec status | grep STATE_
@@ -17,7 +17,7 @@ sleep 35
 ipsec whack --shuntstatus
 ip -o xfrm pol | grep 192.1.2.23
 ipsec status | grep STATE_
-# repeat test with a %hold shunt - but it really shouldn't matter
+# repeat test with a hold shunt - but it really shouldn't matter
 # trigger a private and check for shunt and shunt expiry
 ping -n -c 1 -I 192.1.3.209 192.1.3.46
 # wait on OE retransmits and rekeying
@@ -29,7 +29,7 @@ ipsec whack --shuntstatus
 ip -o xfrm pol | grep 192.1.3.46
 ipsec status | grep STATE_
 sleep 10
-# should show %pass in shuntstatus and xfrm policy and without partial STATE
+# should show pass in shuntstatus and xfrm policy and without partial STATE
 ipsec whack --shuntstatus
 ip -o xfrm pol | grep 192.1.3.46
 ipsec status | grep STATE_
