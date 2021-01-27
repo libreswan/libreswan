@@ -3076,58 +3076,6 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	}
 
 	/*
-	 * Adjust NAT but not for initial state (initial outbound
-	 * message?).
-	 *
-	 * ??? why should STATE_PARENT_I1 be excluded?
-	 *
-	 * XXX: and why, for that state, does ikev2_natd_lookup() call
-	 * it.
-	 *
-	 * XXX: STATE_PARENT_I1 is special in that, per the RFC, it
-	 * must switch the local and remote ports to :4500.
-	 *
-	 * XXX: The "initial outbound message" check was first added
-	 * by commit "pluto: various fixups associated with RFC 7383
-	 * code".  At the time a fake MD (created when an initiator
-	 * initiates) had the magic state STATE_IKEv2_BASE and so it
-	 * checked for that.  What isn't clear is if the check was
-	 * intended to block just an IKE SA initiating, or also block
-	 * a CHILD SA initiate.
-	 *
-	 * XXX: STATE_PARENT_R1 (AUTH responder), in addition to the
-	 * below, will also call nat*() explicitly.  Perhaps multiple
-	 * calls are benign?
-	 *
-	 * XXX: This is getting silly:
-	 *
-	 * - check for MD != NULL (aka NO_MESSAGE) - while initiators
-	 *   don't have an incoming message
-	 *
-	 * - delete the call - IKE state transition code is already
-	 *   somewhat doing this and why would nat need to be updated
-	 *   during a child exchange
-	 *
-	 * - or what about an STF flag on the state?
-	 *
-	 * XXX: it would appear this is only for secure responder
-	 * states.
-	 *
-	 * XXX: It's a hack trying to implement the below:
-	 *
-	 * - the correct check for this end not being behind a NAT is
-	 *   !NATED_HOST && NATED_PEER
-	 *
-	 * - the state checks wrongly assume the responder isn't
-	 *   behind a NAT; and will completely fail if, after a REKEY,
-	 *   the initiator and responder roles switch
-	 *
-	 * - ikev2_parent_inI2outR2_continue_tail()'s call can be
-	 *   merged; suspect the thing to do is move the code to after
-	 *   the message is decrypted?
-	 *
-	 * - is MOBIKE mutually excluded through policy flag checks?
-	 *
 	 * 2.23.  NAT Traversal
 	 *
 	 * There are cases where a NAT box decides to remove mappings
@@ -3157,22 +3105,49 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	 * interferes with MOBIKE's way of recovering from the same
 	 * situation.  See Section 3.8 of [MOBIKE] for more
 	 * information.
+	 *
+	 * XXX: so ....
+	 *
+	 * - replay protection?
+	 *
+	 * - IKE_AUTH exchange? Already handled? Exclude?
 	 */
-	if (transition->send != NO_MESSAGE &&
-	    nat_traversal_enabled &&
-	    from_state != STATE_PARENT_I0 &&
-	    from_state != STATE_V2_NEW_CHILD_I0 &&
-	    from_state != STATE_V2_REKEY_CHILD_I0 &&
-	    from_state != STATE_V2_REKEY_IKE_I0 &&
-	    from_state != STATE_PARENT_R0 &&
-	    from_state != STATE_PARENT_I1 &&
-	    from_state != STATE_V2_ESTABLISHED_CHILD_SA) {
-		/* from_state = STATE_PARENT_R1 */
-		/* from_state = STATE_CREATE_R */
-		/* from_state = STATE_REKEY_IKE_R */
-		/* from_state = ??? */
-		/* adjust our destination port if necessary */
-		nat_traversal_change_port_lookup(md, &ike->sa);
+	if (nat_traversal_enabled &&
+	    /*
+	     * Only when responding ...
+	     */
+	    transition->send == MESSAGE_RESPONSE &&
+	    pexpect(v2_msg_role(md) == MESSAGE_REQUEST) &&
+	    /*
+	     * Only when the request changes the remote's endpoint ...
+	     */
+	    !endpoint_eq(&ike->sa.st_remote_endpoint, &md->sender) &&
+	    /*
+	     * Only when the request was protected and passes
+	     * integrity ...
+	     *
+	     * Once keymat is present, only encrypted messessages with
+	     * valid integrity can succesfully complete a transaction
+	     * with STF_OK.  True?
+	     */
+	    ike->sa.hidden_variables.st_skeyid_calculated &&
+	    md->encrypted_payloads.parsed &&
+	    md->encrypted_payloads.n == v2N_NOTHING_WRONG &&
+	    /*
+	     * Only when the local IKE SA isn't behind NAT but the
+	     * remote IKE SA is ...
+	     */
+	    !LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST) &&
+	    LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_PEER) &&
+	    /*
+	     * Only when MOBIKE has not been negotiated ...
+	     */
+	    ike->sa.st_sent_mobike && st->st_seen_mobike) {
+		endpoint_buf sb, mb;
+		dbg("NAT: updating remote sender from %s -> %s as non-MOBIKE NAT change",
+		    str_endpoint(&ike->sa.st_remote_endpoint, &sb),
+		    str_endpoint(&md->sender, &mb));
+		ike->sa.st_remote_endpoint = md->sender;
 	}
 
 	/* if requested, send the new reply packet */
