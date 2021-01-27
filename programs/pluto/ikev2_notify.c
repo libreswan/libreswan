@@ -63,6 +63,7 @@ enum v2_pbs v2_notification_to_v2_pbs(v2_notification_t n)
 	C(INVALID_MAJOR_VERSION);
 	C(TS_UNACCEPTABLE);
 	C(INTERMEDIATE_EXCHANGE_SUPPORTED);
+	C(UPDATE_SA_ADDRESSES);
 	default: return PBS_v2_INVALID;
 	}
 #undef C
