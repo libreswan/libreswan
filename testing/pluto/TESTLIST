@@ -174,7 +174,7 @@ kvmplutotest	ikev2-48-nat-cp-two-servers		good
 kvmplutotest	ikev2-49-hub-spoke			good
 kvmplutotest	ikev2-50-propnum			good
 kvmplutotest	ikev2-53-clean-pending			good
-kvmplutotest	ikev2-59-multiple-acquires-alias	good
+kvmplutotest	ikev2-59-multiple-acquires-alias	wip
 kvmplutotest	ikev2-59-alias-ondemand			wip
 kvmplutotest	ikev2-59-alias-retransmit		wip
 kvmplutotest	ikev2-59-multiple-acquires 		wip
