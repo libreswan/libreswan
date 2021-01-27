@@ -3142,7 +3142,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	    /*
 	     * Only when MOBIKE has not been negotiated ...
 	     */
-	    ike->sa.st_sent_mobike && st->st_seen_mobike) {
+	    !(ike->sa.st_sent_mobike && st->st_seen_mobike)) {
 		endpoint_buf sb, mb;
 		dbg("NAT: updating remote sender from %s -> %s as non-MOBIKE NAT change",
 		    str_endpoint(&ike->sa.st_remote_endpoint, &sb),
