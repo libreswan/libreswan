@@ -2656,12 +2656,12 @@ IETF registry enum_names:
          match IKEv2_TS_FC_ADDR_RANGE: OK
          short_name 9: IKEv2_TS_FC_ADDR_RANGE OK
          jam_enum_short 9: IKEv2_TS_FC_ADDR_RANGE OK
-  241 -> IKEv2_TS_SECLABEL
-         jam_enum 241: IKEv2_TS_SECLABEL OK
+   10 -> IKEv2_TS_SECLABEL
+         jam_enum 10: IKEv2_TS_SECLABEL OK
          search IKEv2_TS_SECLABEL: OK
          match IKEv2_TS_SECLABEL: OK
-         short_name 241: IKEv2_TS_SECLABEL OK
-         jam_enum_short 241: IKEv2_TS_SECLABEL OK
+         short_name 10: IKEv2_TS_SECLABEL OK
+         jam_enum_short 10: IKEv2_TS_SECLABEL OK
 
   ikev2_cp_type_names:
     1 -> IKEv2_CP_CFG_REQUEST
