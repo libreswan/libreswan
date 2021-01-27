@@ -1,53 +1,54 @@
-swan-prep
+rm -rf OUTPUT/nss
 west #
- rm -f /etc/ipsec.secrets
+ mkdir OUTPUT/nss
+west #
+ ipsec initnss -d OUTPUT/nss
+Initializing NSS database
 west #
  # generate first key
 west #
- ipsec newhostkey --bits 2192 --seeddev /dev/urandom
+ ipsec newhostkey --bits 2192 --seeddev /dev/urandom --nssdir OUTPUT/nss
 Generated RSA key pair with CKAID <<CKAID#1>> was stored in the NSS database
 The public key can be displayed using: ipsec showhostkey --left --ckaid <<CKAID#1>>
 west #
- test ! -f /etc/ipsec.secrets || echo oops ipsec.secrets was created
-west #
  # generate second key
 west #
- ipsec newhostkey --bits 2192 --seeddev /dev/urandom
+ ipsec newhostkey --bits 2192 --seeddev /dev/urandom  --nssdir OUTPUT/nss
 Generated RSA key pair with CKAID <<CKAID#2>> was stored in the NSS database
 The public key can be displayed using: ipsec showhostkey --left --ckaid <<CKAID#2>>
 west #
- test ! -f /etc/ipsec.secrets || echo oops ipsec.secrets was created
-west #
  # empty the database
 west #
- rm /etc/ipsec.d/*db
+ rm -rf OUTPUT/nss
 west #
- ipsec initnss > /dev/null 2> /dev/null
+ mkdir OUTPUT/nss
+west #
+ ipsec initnss -d OUTPUT/nss > /dev/null 2> /dev/null
 west #
  # confirm reject too small keysizes and non-multiples of 16 for RSA
 west #
  # min size is 2192 (lost to history why not 2048)
 west #
- ipsec newhostkey --bits 512 --seeddev /dev/urandom
+ ipsec newhostkey --bits  512 --seeddev /dev/urandom --nssdir OUTPUT/nss
 ipsec rsasigkey: requested RSA key size (512) is too small - use 2192 or more
 west #
- ipsec newhostkey --bits 1024 --seeddev /dev/urandom
+ ipsec newhostkey --bits 1024 --seeddev /dev/urandom --nssdir OUTPUT/nss
 ipsec rsasigkey: requested RSA key size (1024) is too small - use 2192 or more
 west #
- ipsec newhostkey --bits 2048 --seeddev /dev/urandom
+ ipsec newhostkey --bits 2048 --seeddev /dev/urandom --nssdir OUTPUT/nss
 ipsec rsasigkey: requested RSA key size (2048) is too small - use 2192 or more
 west #
- ipsec newhostkey --bits 2051 --seeddev /dev/urandom
+ ipsec newhostkey --bits 2051 --seeddev /dev/urandom --nssdir OUTPUT/nss
 ipsec rsasigkey: requested RSA key size (2051) is too small - use 2192 or more
 west #
- ipsec newhostkey --bits 3192 --seeddev /dev/urandom
+ ipsec newhostkey --bits 3192 --seeddev /dev/urandom --nssdir OUTPUT/nss
 ipsec rsasigkey: requested RSA key size (3192) is not a multiple of 16
 west #
  # there should be no keys
 west #
- ipsec showhostkey --list
+ ipsec showhostkey --list --nssdir OUTPUT/nss
 west #
- test ! -f /etc/ipsec.secrets || echo oops ipsec.secrets was created
+ rm -rf OUTPUT/nss
 west #
  
 

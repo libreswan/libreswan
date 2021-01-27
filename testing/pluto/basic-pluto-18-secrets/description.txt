@@ -1,6 +1,7 @@
-This tests that secrets file is created with proper umask and that
-creating a newhostkey appends and not overwrites the secrets file.
+Port from downstream redhat test for rhbz#1449983
 
-port from downstream redhat test for rhbz#1449983
+Check for invalid key sizes
 
-Currently only for RSA as those are only raw keys supported
+Note: this test used to check for ipsec.secrets file permissions, but newhostkey
+no longer creates those because public keys and certificates no longer require
+a secrets file entry.
