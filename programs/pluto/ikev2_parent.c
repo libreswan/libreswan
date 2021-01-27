@@ -2846,16 +2846,13 @@ static stf_status v2_inI2outR2_post_cert_decode(struct state *st,
 						struct msg_digest *md)
 {
 	struct ike_sa *ike = ike_sa(st, HERE);
-
 	ikev2_log_parentSA(st);
 
-	struct state *pst = IS_CHILD_SA(md->st) ?
-		state_with_serialno(md->st->st_clonedfrom) : md->st;
 	/* going to switch to child st. before that update parent */
-	if (!LHAS(pst->hidden_variables.st_nat_traversal, NATED_HOST))
+	if (!LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST))
 		update_ike_endpoints(ike, md);
 
-	nat_traversal_change_port_lookup(md, st); /* shouldn't this be pst? */
+	nat_traversal_change_port_lookup(md, st); /* shouldn't this be ike? */
 
 	/* this call might update connection in md->st */
 	if (!ikev2_decode_peer_id(md)) {
