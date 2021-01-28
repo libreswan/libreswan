@@ -1378,8 +1378,12 @@ void delete_states_by_connection(struct connection *c, bool relations, struct fd
 	const struct spd_route *sr;
 
 	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
-		passert(sr->eroute_owner == SOS_NOBODY);
-		passert(sr->routing != RT_ROUTED_TUNNEL);
+		/*
+		 * these passerts are not true currently due to mobike.
+		 * Requires some re-implementation. Use pexpect for now.
+		 */
+		pexpect(sr->eroute_owner == SOS_NOBODY);
+		pexpect(sr->routing != RT_ROUTED_TUNNEL);
 	}
 
 	if (ck == CK_INSTANCE) {
