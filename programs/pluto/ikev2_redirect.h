@@ -36,12 +36,19 @@ extern void free_global_redirect_dests(void);
 extern void set_global_redirect_dests(const char *gdr_str);
 
 /*
+ * Check if global redirect is enabled or not.
+ *
+ * @return bool TRUE if redirection is a MUST, FALSE otherwise.
+ */
+extern bool is_redirect_global_enabled(void);
+
+/*
  * Check whether we received v2N_REDIRECT_SUPPORTED (in IKE_SA_INIT request),
  * and if we did, send a response with REDIRECT payload (without creating state -
  * just as in COOKIE case).
  *
  * @param md message digest of IKE_SA_INIT request.
- * @return bool TRUE if redirection is a MUST, FALSE otherwise.
+ * @return bool TRUE if a redirection response was sent, FALSE otherwise.
  */
 extern bool redirect_global(struct msg_digest *md);
 

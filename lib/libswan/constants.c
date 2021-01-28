@@ -1821,11 +1821,12 @@ static const char *const ikev2_notify_name[] = {
 	"v2N_CHILD_SA_NOT_FOUND",
 	"v2N_INVALID_GROUP_ID", /* 45 draft-yeung-g-ikev2 */
 	"v2N_AUTHORIZATION_FAILED",
+	"v2N_REDIRECT_FAILED",
 };
 
 enum_names ikev2_notify_names = {
 	v2N_NOTHING_WRONG,
-	v2N_AUTHORIZATION_FAILED,
+	v2N_REDIRECT_FAILED,
 	ARRAY_REF(ikev2_notify_name),
 	"v2N_", /* prefix */
 	&ikev2_notify_names_16384

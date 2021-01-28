@@ -1682,13 +1682,16 @@ void ikev2_process_packet(struct msg_digest *md)
 			 * notification. If redirection is a MUST, try to respond
 			 * with v2N_REDIRECT and don't continue further.
 			 * Otherwise continue as usual.
-			 *
-			 * The function below will do everything (and log the result).
 			 */
-			if (redirect_global(md)) {
+			if (is_redirect_global_enabled()) {
+				/*
+				 * This function will do everything (and log the result)
+				 */
+				if (!redirect_global(md)) {
+					pstat(ikev2_recv_notifies_e, v2N_REDIRECT_FAILED)
+				}
 				return;
 			}
-
 			/*
 			 * Check if we would drop the packet based on
 			 * VID before we create a state. Move this to
