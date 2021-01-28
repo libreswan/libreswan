@@ -1495,7 +1495,12 @@ int main(int argc, char **argv)
 					    "fork failed");
 			}
 
-			if (pid != 0) {
+			if (pid == 0) {
+				/*
+				 * parent fills in the PID.
+				 */
+				close(lockfd);
+			} else {
 				/*
 				 * parent: die, after filling PID into lock
 				 * file.
@@ -1523,23 +1528,41 @@ int main(int argc, char **argv)
 	}
 
 	/*
-	 * Close everything but ctl_fd and (if needed) stderr.
-	 * There is some danger that a library that we don't know
-	 * about is using some fd that we don't know about.
-	 * I guess we'll soon find out.
+	 * Close stdin, stdout, and when not needed, stderr.  This
+	 * should just leave CTL_FD.
+	 *
+	 * Follow that by directing the closed file descriptors at
+	 * /dev/null.  UNIX always uses the lowest file descriptor
+	 * when opening a file.
 	 */
-	{
-		int i;
+	close(STDIN_FILENO);/*stdin*/
+	close(STDOUT_FILENO);/*stdout*/
+	if (!log_to_stderr) {
+		close(STDERR_FILENO); /*stderr*/
+	}
+	/* make sure that stdin, stdout, stderr are reserved */
+	passert(open("/dev/null", O_RDONLY) == STDIN_FILENO);
+	/* open("/dev/null", O_WRONLY) == STDOUT_FILENO? */
+	passert(dup2(0, STDOUT_FILENO) == STDOUT_FILENO);
+	/* dup2(STDOUT_FILENO, STDERR_FILENO) == STDERR_FILENO? */
+	passert(log_to_stderr || dup2(0, STDERR_FILENO) == STDERR_FILENO);
 
-		for (i = getdtablesize() - 1; i >= 0; i--)	/* Bad hack */
-			if ((!log_to_stderr || i != 2) &&
-				i != ctl_fd)
-				close(i);
-
-		/* make sure that stdin, stdout, stderr are reserved */
-		passert(open("/dev/null", O_RDONLY) == 0);
-		passert(dup2(0, 1) == 1);
-		passert(log_to_stderr || dup2(0, 2) == 2);
+	/*
+	 * Check for no unexpected file descriptors.
+	 */
+	if (DBGP(DBG_BASE)) {/* even set? */
+		for (int fd = getdtablesize() - 1; fd >= 0; fd--) {
+			if (fd == ctl_fd ||
+			    fd == STDIN_FILENO ||
+			    fd == STDOUT_FILENO ||
+			    fd == STDERR_FILENO) {
+				continue;
+			}
+			struct stat s;
+			if (fstat(fd, &s) == 0) {
+				llog(RC_LOG_SERIOUS, logger, "pluto: unexpected open file descriptor %d", fd);
+			}
+		}
 	}
 
 	init_constants();
