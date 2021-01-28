@@ -231,13 +231,13 @@ extern pb_stream same_chunk_as_in_pbs(chunk_t chunk, const char *name);
  * Map/Clone the entire contents [start..pbs_room()) of an input PBS
  * as a chunk.
  */
-extern shunk_t pbs_in_as_shunk(pb_stream *pbs);
+extern shunk_t pbs_in_as_shunk(const struct pbs_in *pbs);
 
 /*
  * Map/Clone the remaining contents [cur..pbs_left()) of an input PBS
  * as a chunk.
  */
-extern shunk_t pbs_in_left_as_shunk(const pb_stream *pbs);
+extern shunk_t pbs_in_left_as_shunk(const struct pbs_in *pbs);
 
 diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 		     void *struct_ptr, size_t struct_size,
