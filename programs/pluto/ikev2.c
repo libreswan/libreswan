@@ -3129,6 +3129,8 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	     * Once keymat is present, only encrypted messessages with
 	     * valid integrity can succesfully complete a transaction
 	     * with STF_OK.  True?
+	     *
+	     * IS_IKE_SA_ESTABLISHED() better?
 	     */
 	    ike->sa.hidden_variables.st_skeyid_calculated &&
 	    md->encrypted_payloads.parsed &&
@@ -3138,16 +3140,26 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	     * remote IKE SA is ...
 	     */
 	    !LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST) &&
-	    LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_PEER) &&
-	    /*
-	     * Only when MOBIKE has not been negotiated ...
-	     */
-	    !(ike->sa.st_sent_mobike && st->st_seen_mobike)) {
-		endpoint_buf sb, mb;
-		dbg("NAT: updating remote sender from %s -> %s as non-MOBIKE NAT change",
-		    str_endpoint(&ike->sa.st_remote_endpoint, &sb),
-		    str_endpoint(&md->sender, &mb));
-		ike->sa.st_remote_endpoint = md->sender;
+	    LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_PEER)) {
+		/*
+		 * Things are looking plausable.
+		 */
+		if ((ike->sa.st_sent_mobike && st->st_seen_mobike) &&
+		    md->hdr.isa_xchg == ISAKMP_v2_INFORMATIONAL) {
+			/*
+			 * Only when MOBIKE has not been negotiated ...
+			 */
+			endpoint_buf sb, mb;
+			dbg("NAT: MOBIKE: skipping remote sender from %s -> %s as MOBIKE delt with it in informational code(?)",
+			    str_endpoint(&ike->sa.st_remote_endpoint, &sb),
+			    str_endpoint(&md->sender, &mb));
+		} else {
+			endpoint_buf sb, mb;
+			dbg("NAT: MOBKIE: updating remote sender from %s -> %s as non-MOBIKE or non-INFORMATIONAL",
+			    str_endpoint(&ike->sa.st_remote_endpoint, &sb),
+			    str_endpoint(&md->sender, &mb));
+			ike->sa.st_remote_endpoint = md->sender;
+		}
 	}
 
 	/* if requested, send the new reply packet */
