@@ -604,6 +604,10 @@ USERLAND_CFLAGS += -DLIBCURL
 CURL_LDFLAGS ?= -lcurl
 endif
 
+ifeq ($(USE_CLOSE_RANGE),true)
+USERLAND_CFLAGS += -DUSE_CLOSE_RANGE
+endif
+
 # Build support for the Linux Audit system
 
 USE_LINUX_AUDIT ?= false

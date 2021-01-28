@@ -8,6 +8,9 @@ USERLAND_CFLAGS += -Dlinux
 # Expose pipe2() which is always available on BSD, what else?
 USERLAND_CFLAGS += -D_GNU_SOURCE
 
+# close_range
+USE_CLOSE_RANGE := $(shell if echo | gcc -include linux/close_range.h -E - > /dev/null 2>&1; then echo true; else echo false; fi)
+
 PORTDEFINE=-DSCANDIR_HAS_CONST
 
 # Detect linux variants and releases.

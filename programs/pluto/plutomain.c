@@ -95,6 +95,10 @@
 #include "pluto_seccomp.h"
 #endif
 
+#ifdef USE_CLOSE_RANGE
+#include <sys/syscall.h>
+#endif
+
 static void fatal_opt(int longindex, struct logger *logger, const char *fmt, ...) PRINTF_LIKE(3) NEVER_RETURNS;
 
 static const char *pluto_name;	/* name (path) we were invoked with */
@@ -1529,9 +1533,21 @@ int main(int argc, char **argv)
 	 * I guess we'll soon find out.
 	 */
 	{
-		int i;
+		int i, topfd;
 
-		for (i = getdtablesize() - 1; i >= 0; i--)	/* Bad hack */
+		topfd = getdtablesize() - 1;
+
+#ifdef USE_CLOSE_RANGE
+		/*
+		 * Try to close_range all the fds we no longer want,
+		 * looping only up to ctl_fd if this succeeds.
+		 */
+		if (syscall(__NR_close_range, ctl_fd + 1, ~0U, 0) != -1) {
+			topfd = ctl_fd - 1;
+		}
+#endif
+
+		for (i = topfd; i >= 0; i--)	/* Bad hack */
 			if ((!log_to_stderr || i != 2) &&
 				i != ctl_fd)
 				close(i);

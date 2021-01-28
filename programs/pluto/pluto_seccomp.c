@@ -118,6 +118,12 @@ static void init_seccomp(uint32_t def_action, bool main, struct logger *logger)
 		LSW_SECCOMP_ADD(uname);
 		LSW_SECCOMP_ADD(unlink);
 		LSW_SECCOMP_ADD(unlinkat);
+#ifdef USE_CLOSE_RANGE
+#ifndef __SNR_close_range
+#define __SNR_close_range __NR_close_range
+#endif
+		LSW_SECCOMP_ADD(close_range);
+#endif
 	}
 
 	/* common to pluto and helpers */
