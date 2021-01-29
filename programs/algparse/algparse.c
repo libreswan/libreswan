@@ -564,10 +564,10 @@ static void usage(void)
 		"         default: no\n"
 		"    -fips | -fips=yes | -fips=no: force NSS's FIPS mode\n"
 		"         default: determined by system environment\n"
-		"    -P <password> | -nsspw <password> | -password <password>:\n"
-		"        <password> to unlock crypto database\n"
 		"    -v --verbose: be more verbose\n"
-		"    -d --debug: enable debug logging\n"
+		"    --debug: enable debug logging\n"
+		/* -d <NSSDB> is reserved */
+		/* -P <password> | -nsspw <password> | -password <password> are reserved */
 		"    --impair: disable all algorithm parser checks\n"
 		"    --ignore: ignore parser errors (or at least some)\n"
 		"    -p1: simple parser\n"
@@ -630,6 +630,7 @@ int main(int argc, char *argv[])
 		} else if (streq(arg, "v") || streq(arg, "verbose")) {
 			verbose = true;
 		} else if (streq(arg, "debug")) {
+			/* -d <NSSDB> is reserved */
 			debug = true;
 		} else if (streq(arg, "ignore")) {
 			ignore_parser_errors = true;
