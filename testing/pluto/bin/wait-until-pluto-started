@@ -1,13 +1,14 @@
 #!/bin/sh
 
-# Wait until --listen succeeds.
-# This will delay until pluto is started
+# Wait until both whack can talk to pluto and the addconn process has
+# disappeared.  This will delay until pluto is started
 
 count=10
-until [ $count -eq 0 ] || ipsec whack --impair none >/dev/null 2>&1
+until test $count -eq 0 || \
+	( ps=$(ipsec whack --processstatus 2>/dev/null) && echo "${ps}" | grep -v addconn > /dev/null )
 do
-	count=$(expr $count - 1)
-	sleep 1
+    count=$(expr $count - 1)
+    sleep 1
 done
 
 # what took so long?
