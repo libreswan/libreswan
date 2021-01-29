@@ -194,7 +194,7 @@ static void help(void)
 		"\n"
 		"status: whack [--status] | [--trafficstatus] | [--globalstatus] | \\\n"
 		"	[--clearstats] | [--shuntstatus] | [--fipsstatus] | [--briefstatus] \n"
-		"	[--showstates] | [--addresspoolstatus]\n"
+		"	[--showstates] | [--addresspoolstatus] [--processstatus]\n"
 		"\n"
 		"refresh dns: whack --ddns\n"
 		"\n"
@@ -330,6 +330,7 @@ enum option_enums {
 	OPT_ADDRESSPOOL_STATUS,
 	OPT_FIPS_STATUS,
 	OPT_BRIEF_STATUS,
+	OPT_PROCESS_STATUS,
 
 #ifdef HAVE_SECCOMP
 	OPT_SECCOMP_CRASHTEST,
@@ -592,6 +593,7 @@ static const struct option long_opts[] = {
 	{ "addresspoolstatus", no_argument, NULL, OPT_ADDRESSPOOL_STATUS + OO },
 	{ "fipsstatus", no_argument, NULL, OPT_FIPS_STATUS + OO },
 	{ "briefstatus", no_argument, NULL, OPT_BRIEF_STATUS + OO },
+	{ "processstatus", no_argument, NULL, OPT_PROCESS_STATUS + OO },
 	{ "showstates", no_argument, NULL, OPT_SHOW_STATES + OO },
 #ifdef HAVE_SECCOMP
 	{ "seccomp-crashtest", no_argument, NULL, OPT_SECCOMP_CRASHTEST + OO },
@@ -1430,6 +1432,11 @@ int main(int argc, char **argv)
 		case OPT_BRIEF_STATUS:	/* --briefstatus */
 			msg.whack_brief_status = TRUE;
 			ignore_errors = TRUE;
+			continue;
+
+		case OPT_PROCESS_STATUS:	/* --processstatus */
+			msg.whack_process_status = true;
+			ignore_errors = true;
 			continue;
 
 		case OPT_SHOW_STATES:	/* --showstates */
@@ -2569,6 +2576,7 @@ int main(int argc, char **argv)
 	      msg.whack_reread || msg.whack_crash || msg.whack_shunt_status ||
 	      msg.whack_status || msg.whack_global_status || msg.whack_traffic_status ||
 	      msg.whack_addresspool_status ||
+	      msg.whack_process_status ||
 	      msg.whack_fips_status || msg.whack_brief_status || msg.whack_clear_stats || msg.whack_options ||
 	      msg.whack_shutdown || msg.whack_purgeocsp || msg.whack_seccomp_crashtest || msg.whack_show_states ||
 	      msg.whack_rekey_ike || msg.whack_rekey_ipsec))

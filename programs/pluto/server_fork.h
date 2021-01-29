@@ -19,6 +19,7 @@
 struct logger;
 struct msg_digest;
 struct state;
+struct show;
 
 /*
  * Create a child process using fork()
@@ -54,5 +55,6 @@ void server_fork_exec(const char *what, const char *path,
 
 void server_fork_sigchld_handler(struct logger *logger);
 void init_server_fork(void);
+void show_process_status(struct show *s);
 
 #endif /* _SERVER_H */

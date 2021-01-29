@@ -81,6 +81,7 @@
 #ifdef HAVE_SECCOMP
 #include "pluto_seccomp.h"
 #endif
+#include "server_fork.h"		/* for show_process_status() */
 
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"
@@ -798,10 +799,13 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg("whack: fips_status");
 		show_fips_status(s);
 	}
-
 	if (m->whack_brief_status) {
 		dbg("whack: brief_status");
 		show_brief_status(s);
+	}
+	if (m->whack_process_status) {
+		dbg("whack: processstatus");
+		show_process_status(s);
 	}
 	if (m->whack_addresspool_status) {
 		dbg("whack: addresspool_status");

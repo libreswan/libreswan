@@ -40,6 +40,7 @@
 #include "state.h"		/* for unsuspend_md() */
 #include "demux.h"		/* for release_any_md() */
 #include "pluto_timing.h"
+#include "show.h"
 
 #define PID_MAGIC 0x000f000cUL
 
@@ -100,6 +101,25 @@ static struct hash_table pids_hash_table = {
 	.nr_slots = elemsof(pid_entry_slots),
 	.slots = pid_entry_slots,
 };
+
+void show_process_status(struct show *s)
+{
+	show_separator(s);
+	/* XXX: don't sort for now */
+	show_comment(s, "  PID  Process");
+	for (unsigned i = 0; i < elemsof(pid_entry_slots); i++) {
+		const struct list_head *h = &pid_entry_slots[i];
+		const struct pid_entry *e;
+		FOR_EACH_LIST_ENTRY_NEW2OLD(h, e) {
+			/*
+			 * XXX: Danger! The test script
+			 * wait-until-pluto-started greps to see if
+			 * the "addconn" line has disappeared.
+			 */
+			show_comment(s, "%5d  %s", e->pid, e->name);
+		}
+	}
+}
 
 static void add_pid(const char *name, so_serial_t serialno, pid_t pid,
 		    server_fork_cb *callback, void *context, struct logger *logger)
