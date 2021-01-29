@@ -1,6 +1,4 @@
 /testing/guestbin/swan-prep --userland strongswan
-# force the number of threads
-sed -i -e 's/threads[ ]*=[ 0-9]*$/threads = 6/' /etc/strongswan/strongswan.conf
 # confirm that the network is alive
 ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
 # ensure that clear text does not get through
