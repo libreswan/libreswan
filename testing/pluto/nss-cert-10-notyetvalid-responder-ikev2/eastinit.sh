@@ -2,9 +2,13 @@
 certutil -d sql:/etc/ipsec.d -D -n west
 ipsec _stackmanager start
 mkdir -p /var/run/pluto
-# set a time in the future so notyetvalid and west certs are valid
-faketime -f +370d ipsec pluto  --config /etc/ipsec.conf
+
+# Set a time in the future so notyetvalid and east certs are valid
+# here.  Invoke pluto directly so that it is the root of the shared
+# faketime tree.
+LD_PRELOAD=/usr/lib64/faketime/libfaketime.so.1 FAKETIME=+370d ipsec pluto  --config /etc/ipsec.conf
 /testing/pluto/bin/wait-until-pluto-started
+
 # if faketime works, adding conn should not give a warning about cert
 ipsec auto --add nss-cert
 echo "initdone"

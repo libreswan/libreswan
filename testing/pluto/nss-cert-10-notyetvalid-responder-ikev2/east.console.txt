@@ -7,9 +7,13 @@ east #
 east #
  mkdir -p /var/run/pluto
 east #
- # set a time in the future so notyetvalid and west certs are valid
+ # Set a time in the future so notyetvalid and east certs are valid
 east #
- faketime -f +370d ipsec pluto  --config /etc/ipsec.conf
+ # here.  Invoke pluto directly so that it is the root of the shared
+east #
+ # faketime tree.
+east #
+ LD_PRELOAD=PATH/lib64/faketime/libfaketime.so.1 FAKETIME=+370d ipsec pluto  --config /etc/ipsec.conf
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
