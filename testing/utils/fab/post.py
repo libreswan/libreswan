@@ -32,8 +32,6 @@ LHS = ">>>>>>>>>>"
 CUT = LHS + "cut" + LHS
 TUC = RHS + "tuc" + RHS
 DONE = CUT + " done " + TUC
-TIMEOUT = "timeout while running test script"
-EXCEPTION = "exception while running test script"
 
 class Resolution:
     PASSED = "passed"
@@ -104,7 +102,9 @@ class Issues:
     KERNEL = "KERNEL"
     LEAK = "LEAK"
 
-    TIMEOUT = "timeout"
+    TIMEOUT = "TIMEOUT"
+    EOF = "EOF"
+    EXCEPTION = "EXCEPTION"
 
     ISCNTRL = "iscntrl"
 
@@ -341,10 +341,20 @@ class TestResult:
 
             logger.debug("host %s checking if raw console output is complete");
 
-            if self.grub(raw_output_filename, LHS + " " + TIMEOUT):
+            if self.grub(raw_output_filename, LHS + " " + Issues.TIMEOUT):
                 # One of the test scripts hung; all the
                 self.issues.add(Issues.TIMEOUT, host_name)
                 self.resolution.failed()
+
+            if self.grub(raw_output_filename, LHS + " " + Issues.EOF):
+                # One of the test scripts hung; all the
+                self.issues.add(Issues.EOF, host_name)
+                self.resolution.unresolved()
+
+            if self.grub(raw_output_filename, LHS + " " + Issues.EXCEPTION):
+                # One of the test scripts hung; all the
+                self.issues.add(Issues.EXCEPTION, host_name)
+                self.resolution.unresolved()
 
             if self.grub(raw_output_filename, DONE) is None:
                 self.issues.add(Issues.OUTPUT_TRUNCATED, host_name)
