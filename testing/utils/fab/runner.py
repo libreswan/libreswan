@@ -420,12 +420,12 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                             for script in test.host_scripts:
                                 test_domain = test_domains[script.host_name]
                                 try:
-                                    test_domain.read_file_run(script.path)
+                                    print(post.Issues.TIMEOUT)
                                 except pexpect.TIMEOUT as e:
                                     # A timeout while running a test
                                     # script is a sign that a command
                                     # hung.
-                                    message = "%s while running script %s" % (Issues.TIMEOUT, script)
+                                    message = "%s while running script %s" % (post.Issues.TIMEOUT, script)
                                     logger.warning("*** %s ***" % message)
                                     test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
                                     host_timed_out = script.host_name
@@ -433,7 +433,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                                 except pexpect.EOF as e:
                                     # An EOF while a script is running
                                     # is a sign that libvirt crashed.
-                                    message = "%s while running script %s" % (Issues.EOF, script)
+                                    message = "%s while running script %s" % (post.Issues.EOF, script)
                                     logger.exception("*** %s ***" % message)
                                     test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
                                     host_timed_out = script.host_name
@@ -441,7 +441,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                                 except BaseException as e:
                                     # if there is an exception, write
                                     # it to the console
-                                    message = "%s %s while running script %s" % (Issues.EXCEPTION, str(e), script)
+                                    message = "%s %s while running script %s" % (post.Issues.EXCEPTION, str(e), script)
                                     logger.exception("*** %s ***" % message)
                                     test_domain.console.append_output("\n%s %s %s\n", post.LHS, message, post.RHS)
                                     raise
@@ -466,7 +466,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                                         # A post-mortem ending with a
                                         # TIMEOUT gets treated as a
                                         # FAIL.
-                                        message = "%s while running script %s" % (Issues.TIMEOUT, script)
+                                        message = "%s while running script %s" % (post.Issues.TIMEOUT, script)
                                         logger.warning("*** %s ***" % message)
                                         test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
                                         continue # always teardown
@@ -474,14 +474,14 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                                         # A post-mortem ending with an
                                         # EOF gets treated as
                                         # unresloved.
-                                        message = "%s while running script %s" % (Issues.EOF, script)
+                                        message = "%s while running script %s" % (post.Issues.EOF, script)
                                         logger.exception("*** %s ***" % message)
                                         test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
                                         continue # always teardown
                                     except BaseException as e:
                                         # if there is an exception, write
                                         # it to the console
-                                        message = "%s %s while running script %s" % (Issues.EXCEPTION, str(e), script)
+                                        message = "%s %s while running script %s" % (post.Issues.EXCEPTION, str(e), script)
                                         logger.exception(message)
                                         test_domain.console.append_output("\n%s %s %s\n", post.LHS, message, post.RHS)
                                         raise
