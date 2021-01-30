@@ -5,37 +5,79 @@ KVM_KICKSTART_FILE = testing/libvirt/$(KVM_GUEST_OS).ks
 KVM_OS_VARIANT ?= fedora30
 KVM_PACKAGE_INSTALL = dnf install -y
 KVM_PACKAGE_UPGRADE = dnf upgrade -y
-KVM_DEBUGINFO_INSTALL = dnf debuginfo-install -y
+KVM_DEBUGINFO_INSTALL = dnf install --enablerepo=*-debuginfo -y
 KVM_INSTALL_RPM_LIST = 'rpm -aq > /var/tmp/rpm-qa-fedora-updates.log'
 
-# Force the NSS version - version 3.40 caused pluto to dump core while
-# loading the NSS DB.  Versions 3.36 and 3.41 (current at time of
-# writing) seem to work.
+#
+# NSS
+#
+# If necessary, force the NSS version or RPMs: version 3.40 dumped
+# core while loading the NSS DB; version 3.59, 3.60 all dumped core
+# while computing appendix-b keymat.
+#
+# KVM_NSS_RPMDIR = /source/nss/
+# KVM_NSS_PACKAGE_VERSION = -3.36.0-1.0.fc28.x86_64
+# KVM_NSS_PACKAGES = $(addprefix /source/rpm,$(addsuffix -3.36.0-1.0.fc28.x86_64.rpm,$(NSS_PACKAGE_NAMES)))
 
-# NSS_VERSION = -3.36.0-1.0.fc28.x86_64
-NSS_VERSION =
+KVM_NSS_RPMDIR ?=
+KVM_NSS_VERSION ?=
+KVM_NSS_DEBUGINFO_NAMES ?= \
+	nss-debugsource \
+	nss-debuginfo \
+	nss-softokn-debuginfo \
+	nss-softokn-freebl-debuginfo \
+	nss-util-debuginfo \
+	$(NULL)
+KVM_NSS_DEBUGINFO ?= \
+	$(addprefix $(KVM_NSS_RPMDIR), $(addsuffix $(KVM_NSS_VERSION), $(KVM_NSS_DEBUGINFO_NAMES)))
+KVM_NSS_PACKAGE_NAMES ?= \
+	nss \
+	nss-devel \
+	nss-softokn \
+	nss-softokn-devel \
+	nss-softokn-freebl \
+	nss-softokn-freebl-devel \
+	nss-sysinit \
+	nss-tools \
+	nss-util \
+	nss-util-devel \
+	$(NULL)
+KVM_NSS_PACKAGES ?= \
+	$(addprefix $(KVM_NSS_RPMDIR), $(addsuffix $(KVM_NSS_VERSION), $(KVM_NSS_PACKAGE_NAMES)))
 
+#
+# KERNEL:
+#
 # The kernel packages can only be installed.  To stop a new version
 # being installed set this to empty.  XL2TPD sucks in the latest
 # kernel so is included in the list.
-
+#
+# KVM_KERNEL_RPMDIR ?= /source/kernel
 # KVM_KERNEL_ARCH ? = x86_64
 # KVM_KERNEL_VERSION ?= 5.8.0-0.rc1.1.fc33.$(KERNEL_ARCH).rpm
 
+KVM_KERNEL_RPMDIR ?=
 KVM_KERNEL_VERSION ?=
+KVM_KERNEL_PACKAGE_NAMES ?= \
+	kernel \
+	kernel-core \
+	kernel-devel \
+	kernel-headers \
+	kernel-modules \
+	kernel-modules-extra \
+	$(NULL)
+
 KVM_KERNEL_PACKAGES ?= \
-    kernel$(KVM_KERNEL_VERSION) \
-    kernel-core$(KVM_KERNEL_VERSION) \
-    kernel-modules$(KVM_KERNEL_VERSION) \
-    kernel-devel$(KVM_KERNEL_VERSION) \
-    kernel-headers$(KVM_KERNEL_VERSION) \
-    kernel-modules-extra$(KVM_KERNEL_VERSION) \
-    xl2tpd
+	$(addprefix $(KVM_KERNEL_RPMDIR), $(addsuffix $(KVM_KERNEL_VERSION), $(KVM_KERNEL_PACKAGE_NAMES))) \
+	xl2tpd
 
 #    kernel-debuginfo-$(RPM_KERNEL_VERSION)
 #    kernel-debuginfo-common-$(KERNEL_ARCH)-$(RPM_KERNEL_VERSION)
 
 
+#
+# STRONGSWAN
+#
 # Strongswan is brokenly dependent on libgcrypt.
 #
 # Because it calls gcry_check_version(GCRYPT_VERSION) (where
@@ -49,6 +91,7 @@ KVM_KERNEL_PACKAGES ?= \
 #   libgcrypt
 
 KVM_STRONGSWAN_PACKAGES = strongswan libgcrypt
+
 
 KVM_INSTALL_PACKAGES ?= \
     $(KVM_KERNEL_PACKAGES) \
@@ -95,11 +138,7 @@ KVM_UPGRADE_PACKAGES ?= \
     nsd \
     nspr \
     nspr-devel \
-    nss$(NSS_VERSION) \
-    nss-devel$(NSS_VERSION) \
-    nss-tools$(NSS_VERSION) \
-    nss-softokn$(NSS_VERSION) \
-    nss-softokn-freebl$(NSS_VERSION) \
+    $(KVM_NSS_PACKAGES) \
     ocspd \
     openldap-devel \
     p11-kit-trust \
@@ -130,52 +169,48 @@ KVM_UPGRADE_PACKAGES ?= \
 
 
 KVM_DEBUGINFO = \
-    ElectricFence \
-    audit-libs \
-    conntrack-tools \
-    cyrus-sasl-lib \
-    glibc \
-    keyutils-libs \
-    krb5-libs \
-    ldns \
-    libbrotli \
-    libcap-ng \
-    libcom_err \
-    libcurl \
-    libevent \
-    libevent-devel \
-    libffi \
-    libgcc \
-    libgcrypt \
-    libgpg-error \
-    libidn \
-    libidn2 \
-    libnghttp2 \
-    libpsl \
-    libseccomp \
-    libselinux \
-    libssh \
-    libssh2 \
-    libtasn1 \
-    libunistring \
-    libxcrypt \
-    lz4-libs \
-    nspr \
-    nss$(NSS_VERSION) \
-    nss-softokn$(NSS_VERSION) \
-    nss-softokn-freebl$(NSS_VERSION) \
-    nss-util$(NSS_VERSION) \
-    ocspd \
-    openldap \
-    openssl-libs \
-    p11-kit \
-    p11-kit-trust \
-    pam \
-    pcre \
-    pcre2 \
-    python3-libs \
-    sqlite-libs \
-    systemd-libs \
-    unbound-libs \
-    xz-libs \
-    zlib \
+	ElectricFence-debuginfo \
+	audit-libs-debuginfo \
+	conntrack-tools-debuginfo \
+	cyrus-sasl-lib-debuginfo \
+	glibc-debuginfo \
+	keyutils-libs-debuginfo \
+	krb5-libs-debuginfo \
+	ldns-debuginfo \
+	libbrotli-debuginfo \
+	libcap-ng-debuginfo \
+	libcom_err-debuginfo \
+	libcurl-debuginfo \
+	libevent-debuginfo \
+	libffi-debuginfo \
+	libgcc-debuginfo \
+	libgcrypt-debuginfo \
+	libgpg-error-debuginfo \
+	libidn-debuginfo \
+	libidn2-debuginfo \
+	libnghttp2-debuginfo \
+	libpsl-debuginfo \
+	libseccomp-debuginfo \
+	libselinux-debuginfo \
+	libssh-debuginfo \
+	libssh2-debuginfo \
+	libtasn1-debuginfo \
+	libunistring-debuginfo \
+	libxcrypt-debuginfo \
+	lz4-libs-debuginfo \
+	nspr-debuginfo \
+	$(KVM_NSS_DEBUGINFO) \
+	ocspd-debuginfo \
+	openldap-debuginfo \
+	openssl-libs-debuginfo \
+	p11-kit-debuginfo \
+	p11-kit-trust-debuginfo \
+	pam-debuginfo \
+	pcre-debuginfo \
+	pcre2-debuginfo \
+	sqlite-libs-debuginfo \
+	systemd-libs-debuginfo \
+	unbound-libs-debuginfo \
+	xz-libs-debuginfo \
+	zlib-debuginfo \
+	$(NULL)
