@@ -3,13 +3,23 @@
 # Wait until both whack can talk to pluto and the addconn process has
 # disappeared.  This will delay until pluto is started
 
+echo ==== cut ====
 count=10
-until test $count -eq 0 || \
-	( ps=$(ipsec whack --processstatus 2>/dev/null) && echo "${ps}" | grep -v addconn > /dev/null )
-do
-    count=$(expr $count - 1)
+while count=$(expr $count - 1) && test $count -gt 0 ; do
+    # both need to attach ...
+    if ps=$(ipsec whack --processstatus) ; then
+	echo "${ps}"
+	# ... and not find addconn
+	if echo "${ps}" | grep addconn ; then
+	    echo try again
+	else
+	    echo addconn exited
+	    break
+	fi
+    fi
     sleep 1
 done
+echo ==== tuc ====
 
 # what took so long?
 if [ $count -eq 0 ]
