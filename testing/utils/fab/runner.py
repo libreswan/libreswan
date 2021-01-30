@@ -420,7 +420,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                             for script in test.host_scripts:
                                 test_domain = test_domains[script.host_name]
                                 try:
-                                    print(post.Issues.TIMEOUT)
+                                    test_domain.read_file_run(script.path)
                                 except pexpect.TIMEOUT as e:
                                     # A timeout while running a test
                                     # script is a sign that a command
