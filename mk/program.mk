@@ -62,7 +62,7 @@ ifdef OBJS
 # instance something is removed), a re-link is triggered.
 
 $(PROGRAM): $(OBJS) $(srcdir)/Makefile
-	cd $(builddir) && $(CC) $(USERLAND_CFLAGS) $(USERLAND_INCLUDES) $(CFLAGS)  -o $@ $(OBJS) $(USERLAND_LDFLAGS) $(LDFAGS)
+	cd $(builddir) && $(CC) $(USERLAND_CFLAGS) $(USERLAND_INCLUDES) $(CFLAGS)  -o $@ $(OBJS) $(USERLAND_LDFLAGS) $(LDLFAGS)
 
 endif
 
