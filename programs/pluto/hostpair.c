@@ -272,11 +272,12 @@ struct connection *find_host_pair_connections(const ip_address *myaddr,
 struct connection *next_host_pair_connection(const ip_address *local,
 					     const ip_address *remote,
 					     struct connection **next,
+					     bool first,
 					     where_t where)
 {
 	/* for moment just wrap above; should merge */
 	struct connection *c;
-	if (*next == NULL) {
+	if (first) {
 		address_buf lb, rb;
 		dbg("FOR_EACH_HOST_PAIR_CONNECTION(%s->%s) in "PRI_WHERE,
 		    str_address(local, &lb), str_address(remote, &rb),

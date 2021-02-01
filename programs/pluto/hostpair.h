@@ -76,11 +76,12 @@ struct connection *find_host_connection(const ip_endpoint *local,
 struct connection *next_host_pair_connection(const ip_address *local,
 					     const ip_address *remote,
 					     struct connection **next,
+					     bool first,
 					     where_t where);
 #define FOR_EACH_HOST_PAIR_CONNECTION(LOCAL, REMOTE, CONNECTION)	\
 	for (struct connection *next_ = NULL,				\
-		     *CONNECTION = next_host_pair_connection(LOCAL, REMOTE, &next_, HERE); \
+		     *CONNECTION = next_host_pair_connection(LOCAL, REMOTE, &next_, true, HERE); \
 	     CONNECTION != NULL;					\
-	     CONNECTION = next_host_pair_connection(LOCAL, REMOTE, &next_, HERE))
+	     CONNECTION = next_host_pair_connection(LOCAL, REMOTE, &next_, false, HERE))
 
 #endif
