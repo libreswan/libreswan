@@ -3214,7 +3214,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 			release_any_whack(&ike->sa, HERE, "IKEv2 transitions finished so releaseing IKE SA");
 		}
 	} else if (transition->flags & SMF2_RELEASE_WHACK) {
-		log_state(RC_COMMENT, st, "releasing whack");
+		dbg("releasing whack");
 		release_any_whack(st, HERE, "ST per transition");
 		if (st != &ike->sa) {
 			release_any_whack(&ike->sa, HERE, "IKE per transition");
