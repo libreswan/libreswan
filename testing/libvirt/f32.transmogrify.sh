@@ -40,7 +40,28 @@ EOF
 title hostnamer
 
 rm -f /etc/hostname # hostnamectl set-hostname ""
-cp -av /testing/libvirt/hostnamer.service /etc/systemd/system/
+cat <<EOF > /etc/systemd/system/hostnamer.service
+[Unit]
+  Description=Figure out who we are
+  ConditionFileNotEmpty=|!/etc/hostname
+  # need interfaces configured
+  After=systemd-networkd-wait-online.service
+  Before=network.target
+[Service]
+  Type=oneshot
+  ExecStart=/usr/local/sbin/hostnamer.sh
+[Install]
+  WantedBy=multi-user.target
+EOF
+cat <<EOF > /usr/local/sbin/hostnamer.sh
+#!/bin/sh
+ip=\$(ip address show dev eth0 | awk '\$1 == "inet" { print gensub("/[0-9]*", "", 1, \$2)}')
+echo ip: \${ip} | tee /dev/console
+hostname=\$(awk '\$1 == IP { host=\$2; } END { print host; }' IP=\${ip} /etc/hosts)
+echo hostname: \${hostname} | tee /dev/console
+test -n "\${hostname}" && hostnamectl set-hostname \${hostname}
+EOF
+chmod a+x /usr/local/sbin/hostnamer.sh
 restorecon -R /etc/systemd/system
 systemctl enable hostnamer.service
 
