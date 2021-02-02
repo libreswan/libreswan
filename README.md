@@ -42,10 +42,14 @@ For Debian/Ubuntu
 		libcap-ng-dev libcap-ng-utils libselinux-dev \
 		libcurl3-nss-dev flex bison gcc make libldns-dev \
 		libunbound-dev libnss3-tools libevent-dev xmlto \
-		libsystemd-dev
+		libsystemd-dev man2html htmldoc libaudit-dev \
+		libkrb5-dev libldap2-dev dh-systemd
 
 	(there is no fipscheck library for these, set USE_FIPSCHECK=false)
 	(unbound is build without event api, set USE_DNSSEC=false)
+Note: If you get no package error for dh-systemd, download it from 
+
+	https://packages.debian.org/buster/dh-systemd
 
 For Fedora/RHEL8/CentOS8/RHEL7/CentOS7
 
