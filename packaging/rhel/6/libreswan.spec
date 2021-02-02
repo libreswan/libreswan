@@ -4,7 +4,7 @@
 %global with_efence 0
 # There is no new enough unbound on rhel6
 %global with_dnssec 0
-%global nss_version 3.34.0-4
+%global nss_version 3.28.4
 # _rundir is not defined on rhel6
 %{!?_rundir:%global _rundir %{_localstatedir}/run}
 # Libreswan config options
@@ -17,7 +17,7 @@
     FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \\\
     INITSYSTEM=sysvinit \\\
     PREFIX=%{_prefix} \\\
-    PYTHON_BINARY=%{__python} \\\
+    PYTHON_BINARY=python2 \\\
     USE_DNSSEC=%{USE_DNSSEC} \\\
     USE_FIPSCHECK=true \\\
     USE_LABELED_IPSEC=true \\\

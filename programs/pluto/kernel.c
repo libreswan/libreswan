@@ -3267,7 +3267,10 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 	const ip_address *src, *dst;
 	ipsec_spi_t spi;
 	bool redirected = false;
-	ip_address tmp_ip;
+	ip_address tmp_ip = {
+		.hport = 0,
+		.version = 0
+	};
 
 	/*
 	 * if we were redirected (using the REDIRECT
