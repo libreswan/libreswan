@@ -3,13 +3,34 @@ See also https://libreswan.org/
 
 v4.2 (unreleased)
 * IKEv2: Support for IKEv2 Labeled IPsec [Hugh, Sahana, Paul, Kavinda Wewegama]
+* IKEv2: MOBIKE could cause assertion failure due to eroute ownership [Paul]
+* IKEv2: MOBIKE and NAT port update code interfered with each other [Andrew]
 * IKEv1: Re-enable questionable Microsoft proposals to fix L2TP/IPsec [Paul]
+* IKEv1: Do not load IKEv1 conns when IKEv1 support not compiled in [Paul]
+* IKEv1: Fix XAUTH: re-transmit when sending CFG request [Andrew]
+* pluto: New config setup option ikev1-policy=<accept|drop|reject> [Paul]
 * pluto: Change default ikelifetime from 1h to 8h [Paul]
 * pluto: Add ignore-peer-dns=yes|no and whack --ignore-peer-dns [Paul]
+* pluto: Startup could take long time closing fd's (github#373) [Andrew]
+* pluto: IKEv2 connection could accidentally retry as IKEv1 [Andrew]
+* pluto: change default IKE SA lifetime from 1h to 8h [Paul]
+         Resolves: github#362, github#405, hwdsl2/setup-ipsec-vpn#912
+* pluto: Revived conns can try to quickly re-use existing NAT mapping.
+         Can be used with new auto=keep [Paul, Andrew]
+* pluto: Don't complain about DNS names starting with number [Paul]
+* pluto: Re-implement Labeled IPsec for IKEv1 [Paul, Sahana]
+* pluto: Support for --shutdown --leave-state [Paul]
+* whack: add very raw --processstatus [Andrew]
+* whack: no longer require --ipv6 when specifying raw IPv6 host addresses
+* libswan: Re-introduce xauthusername/remote_peer_type for NM-libreswan [Paul]
 * initsystem: fix docker/podman startup with sysvinit [Paul]
 * initsystem: ensure non-testing namespaces work with systemd [Paul]
+* initsystem: systemd support for ipsec whack --shutdown --leave-state [Paul]
 * pluto: prefer IPv4 over IPv6 when performing DNS lookups [Andrew]
-* whack: no longer require --ipv6 when specifying raw IPv6 host addresses
+* building: Support for compiling without IKEv1 via USE_IKEv1=false [Paul]
+* building: Various clang compiler related fixes [Timm Baeder]
+* building: fix NetBSD arm64 build [Andrew]
+* testing: many updates [Andrew, Paul]
 
 v4.1 (October 18, 2020)
 * IKEv2: Fix Notify protocol ID interop with Cisco introduced in 4.0 [Antony]
