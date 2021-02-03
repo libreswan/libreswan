@@ -1,6 +1,6 @@
-# Testing check makefile, for libreswan
+# Test programs that run on the GUEST, for libreswan
 #
-# Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2019,2021 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -12,13 +12,13 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-SUBDIRS += enum
-SUBDIRS += ip
-SUBDIRS += jambuf
-SUBDIRS += time
-SUBDIRS += hunk
-SUBDIRS += dn
-SUBDIRS += keyid
+SUBDIRS += enumcheck
+SUBDIRS += ipcheck
+SUBDIRS += jambufcheck
+SUBDIRS += timecheck
+SUBDIRS += hunkcheck
+SUBDIRS += dncheck
+SUBDIRS += keyidcheck
 
 ifndef top_srcdir
 include ../../mk/dirs.mk

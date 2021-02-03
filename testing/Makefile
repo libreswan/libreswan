@@ -13,7 +13,7 @@
 # for more details.
 
 SUBDIRS += pluto
-SUBDIRS += check
+SUBDIRS += programs
 
 ifndef top_srcdir
 include ../mk/dirs.mk
