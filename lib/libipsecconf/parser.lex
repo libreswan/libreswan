@@ -352,6 +352,21 @@ static int parser_y_eof(void)
 	return 0;
 }
 
+static unsigned parser_lex_number(const char *yytext)
+{
+	errno = 0; /* must clear, see strtoul(3) */
+	unsigned long val = strtoul(yytext, NULL, 10);
+	if (errno != 0 || val > UINT_MAX) {
+		char ebuf[128];
+
+		snprintf(ebuf, sizeof(ebuf),
+			 "number too large: %s",
+			 yytext);
+		yyerror(ebuf);
+	}
+	return val;
+}
+
 %}
 
 /* lexical states:
@@ -415,17 +430,7 @@ static int parser_y_eof(void)
 
 <INITIAL,VALUE>[0-9]+	{
 				/* process a number */
-				unsigned long val = (errno = 0, strtoul(yytext, NULL, 10));
-
-				if (errno != 0 || val > UINT_MAX) {
-					char ebuf[128];
-
-					snprintf(ebuf, sizeof(ebuf),
-						"number too large: %s",
-						yytext);
-					yyerror(ebuf);
-				}
-				yylval.num = val;
+				yylval.num = parser_lex_number(yytext);
 				BEGIN INITIAL;
 				return INTEGER;
 			}
