@@ -1,6 +1,6 @@
-# Test programs that run on the GUEST, for libreswan
+# getpeercon_server Makefile, for libreswan
 #
-# Copyright (C) 2015-2019,2021 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2021 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -12,20 +12,16 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-ifndef top_srcdir
-include ../../mk/dirs.mk
-endif
-include $(top_srcdir)/mk/config.mk
+# XXX: Hack to suppress the man page.  Should one be added?
+PROGRAM_MANPAGE =
 
-SUBDIRS += enumcheck
-SUBDIRS += ipcheck
-SUBDIRS += jambufcheck
-SUBDIRS += timecheck
-SUBDIRS += hunkcheck
-SUBDIRS += dncheck
-SUBDIRS += keyidcheck
-ifeq ($(USE_LABELED_IPSEC),true)
-SUBDIRS += getpeercon_server
-endif
+PROGRAM = getpeercon_server
 
-include $(top_srcdir)/mk/targets.mk
+OBJS += getpeercon_server.o
+LDFLAGS += -lselinux
+
+ifdef top_srcdir
+include $(top_srcdir)/mk/program.mk
+else
+include ../../../mk/program.mk
+endif
