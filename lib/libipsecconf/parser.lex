@@ -356,14 +356,22 @@ static int parser_y_eof(void)
 
 /* lexical states:
  *
- * INITIAL
- * USERDEF: after <INITIAL>"=" or <INITIAL>"conn"; returns to INITIAL after next token (integer or string)
- * BOOLEAN: after keyword with BOOLWORD attribute; followed by '='; returns to INITIAL after next token (bool)
- * COMMENTEQUAL: after keyword "x-comment"; followed by = and then switches to COMMENTSTRING
- * COMMENTSTRING: after = in COMMENTEQUAL state; everything up to \n is a string; then returns to INITIAL
+ * INITIAL: pre-defined and default lex state
+ *
+ * VALUE: after <INITIAL>"=" or <INITIAL>"conn"; returns to INITIAL
+ * after next token (integer or string)
+ *
+ * BOOLEAN_VALUE: after keyword with BOOLWORD attribute; followed by '=';
+ * returns to INITIAL after next token (bool)
+ *
+ * COMMENT_KEY: after keyword "x-comment"; followed by = and then
+ * switches to COMMENT_VALUE
+ *
+ * COMMENT_VALUE: after = in COMMENT_KEY state; everything up to \n is
+ * a string; then returns to INITIAL
  */
 
-%x USERDEF BOOLEAN COMMENTEQUAL COMMENTSTRING
+%x VALUE BOOLEAN_VALUE COMMENT_KEY COMMENT_VALUE
 
 %%
 
@@ -403,9 +411,9 @@ static int parser_y_eof(void)
 
 ^[\t ]+			return FIRST_SPACES;
 
-<INITIAL,BOOLEAN>[\t ]+	/* ignore spaces in line */ ;
+<INITIAL,BOOLEAN_VALUE>[\t ]+	/* ignore spaces in line */ ;
 
-<INITIAL,USERDEF>[0-9]+	{
+<INITIAL,VALUE>[0-9]+	{
 				/* process a number */
 				unsigned long val = (errno = 0, strtoul(yytext, NULL, 10));
 
@@ -422,53 +430,53 @@ static int parser_y_eof(void)
 				return INTEGER;
 			}
 
-<USERDEF>%forever	{
+<VALUE>%forever	{
 				/* a number, really 0 */
 				yylval.num = 0;
 				BEGIN INITIAL;
 				return INTEGER;
 			}
 
-<BOOLEAN>y    |
-<BOOLEAN>yes  |
-<BOOLEAN>true |
-<BOOLEAN>on		{
+<BOOLEAN_VALUE>y    |
+<BOOLEAN_VALUE>yes  |
+<BOOLEAN_VALUE>true |
+<BOOLEAN_VALUE>on		{
 				/* process a boolean */
 				yylval.num = 1;
 				BEGIN INITIAL;
 				return BOOL;
 			}
 
-<BOOLEAN>n     |
-<BOOLEAN>no    |
-<BOOLEAN>false |
-<BOOLEAN>off		{
+<BOOLEAN_VALUE>n     |
+<BOOLEAN_VALUE>no    |
+<BOOLEAN_VALUE>false |
+<BOOLEAN_VALUE>off		{
 				/* process a boolean */
 				yylval.num = 0;
 				BEGIN INITIAL;
 				return BOOL;
 			}
 
-<BOOLEAN>=		return EQUAL;
+<BOOLEAN_VALUE>=		return EQUAL;
 
-<BOOLEAN>\n		{
+<BOOLEAN_VALUE>\n		{
 				stacktop->line++;
 				BEGIN INITIAL;
 				return EOL;
 			}
 
-<COMMENTEQUAL>=		{
-				BEGIN COMMENTSTRING;
+<COMMENT_KEY>=		{
+				BEGIN COMMENT_VALUE;
 				return EQUAL;
 			}
 
-<COMMENTSTRING>[^\n]*	{
+<COMMENT_VALUE>[^\n]*	{
 				yylval.s = strdup(yytext);
 				BEGIN INITIAL;
 				return STRING;
 			}
 
-<USERDEF>\"[^\"\n]*\"	{
+<VALUE>\"[^\"\n]*\"	{
 				/* "string" */
 				char *s = yytext + 1;
 				int len = strlen(s);
@@ -484,7 +492,7 @@ static int parser_y_eof(void)
 				return STRING;
 			}
 
-<USERDEF>\{[^\"\n]*\}	{
+<VALUE>\{[^\"\n]*\}	{
 				/* { string-without-quotes } */
 				char *s = yytext + 1;
 				int len = strlen(s);
@@ -500,14 +508,14 @@ static int parser_y_eof(void)
 				return STRING;
 			}
 
-<USERDEF>[^\" \t\n]+	{
+<VALUE>[^\" \t\n]+	{
 				/* string-without-quotes-or-whitespace */
 				yylval.s = strdup(yytext);
 				BEGIN INITIAL;
 				return STRING;
 			}
 
-<USERDEF>[^\{} \t\n]+	{
+<VALUE>[^\{} \t\n]+	{
 				/* string-without-braces-or-whitespace */
 				yylval.s = strdup(yytext);
 				BEGIN INITIAL;
@@ -519,7 +527,7 @@ static int parser_y_eof(void)
 				return EOL;
 			}
 
-=			{ BEGIN USERDEF; return EQUAL; }
+=			{ BEGIN VALUE; return EQUAL; }
 
 version			return VERSION;
 
@@ -527,7 +535,7 @@ config			return CONFIG;
 
 setup			return SETUP;
 
-conn			{ BEGIN USERDEF; return CONN; }
+conn			{ BEGIN VALUE; return CONN; }
 
 include			return INCLUDE;
 
@@ -541,10 +549,10 @@ include			return INCLUDE;
 				switch (tok)
 				{
 				case BOOLWORD:
-					BEGIN BOOLEAN;
+					BEGIN BOOLEAN_VALUE;
 					break;
 				case COMMENT:
-					BEGIN COMMENTEQUAL;
+					BEGIN COMMENT_KEY;
 					break;
 				default:
 					break;
