@@ -373,20 +373,20 @@ static unsigned parser_lex_number(const char *yytext)
  *
  * INITIAL: pre-defined and default lex state
  *
- * VALUE: after <INITIAL>"=" or <INITIAL>"conn"; returns to INITIAL
- * after next token (integer or string)
+ * BOOLEAN_KEY, COMMENT_KEY, KEY: just matched the BOOLWORD,
+ * "x-comment", other keyword; expecting '='
  *
- * BOOLEAN_VALUE: after keyword with BOOLWORD attribute; followed by '=';
- * returns to INITIAL after next token (bool)
+ * VALUE: just matched '=' in KEY state; matches a quoted/braced/raw
+ * string; returns to INITIAL state
  *
- * COMMENT_KEY: after keyword "x-comment"; followed by = and then
- * switches to COMMENT_VALUE
+ * BOOLEAN_VALUE: just matched '=' in BOOLEAN_KEY state; matches a
+ * boolean token; returns to INITIAL state
  *
- * COMMENT_VALUE: after = in COMMENT_KEY state; everything up to \n is
- * a string; then returns to INITIAL
+ * COMMENT_VALUE: just matched '=' in COMMENT_KEY state; matches
+ * everything up to \n as a string; returns to INITIAL state
  */
 
-%x VALUE BOOLEAN_VALUE COMMENT_KEY COMMENT_VALUE
+%x KEY VALUE BOOLEAN_KEY BOOLEAN_VALUE COMMENT_KEY COMMENT_VALUE
 
 %%
 
@@ -442,10 +442,29 @@ static unsigned parser_lex_number(const char *yytext)
 				return INTEGER;
 			}
 
+<KEY,BOOLEAN_KEY,COMMENT_KEY>[\t ] /* eat blanks */
+<KEY,BOOLEAN_KEY,COMMENT_KEY>\n {
+				/* missing equals? */
+				stacktop->line++;
+				BEGIN INITIAL;
+				return EOL;
+			}
+<KEY>=			{ BEGIN VALUE; return EQUAL; }
+<BOOLEAN_KEY>=		{ BEGIN BOOLEAN_VALUE; return EQUAL; }
+<COMMENT_KEY>=		{ BEGIN COMMENT_VALUE; return EQUAL; }
+
+<VALUE,BOOLEAN_VALUE>[\t ] /* eat blanks (not COMMENT_VALUE) */
+<VALUE,BOOLEAN_VALUE>\n	{
+				/* missing value? (not COMMENT_VALUE) */
+				stacktop->line++;
+				BEGIN INITIAL;
+				return EOL;
+			}
+
 <BOOLEAN_VALUE>y    |
 <BOOLEAN_VALUE>yes  |
 <BOOLEAN_VALUE>true |
-<BOOLEAN_VALUE>on		{
+<BOOLEAN_VALUE>on	{
 				/* process a boolean */
 				yylval.num = 1;
 				BEGIN INITIAL;
@@ -455,24 +474,11 @@ static unsigned parser_lex_number(const char *yytext)
 <BOOLEAN_VALUE>n     |
 <BOOLEAN_VALUE>no    |
 <BOOLEAN_VALUE>false |
-<BOOLEAN_VALUE>off		{
+<BOOLEAN_VALUE>off	{
 				/* process a boolean */
 				yylval.num = 0;
 				BEGIN INITIAL;
 				return BOOL;
-			}
-
-<BOOLEAN_VALUE>=		return EQUAL;
-
-<BOOLEAN_VALUE>\n		{
-				stacktop->line++;
-				BEGIN INITIAL;
-				return EOL;
-			}
-
-<COMMENT_KEY>=		{
-				BEGIN COMMENT_VALUE;
-				return EQUAL;
 			}
 
 <COMMENT_VALUE>[^\n]*	{
@@ -514,20 +520,20 @@ static unsigned parser_lex_number(const char *yytext)
 			}
 
 <VALUE>[^\" \t\n]+	{
-				/* string-without-quotes-or-whitespace */
+				/* string-without-quotes-or-blanks */
 				yylval.s = strdup(yytext);
 				BEGIN INITIAL;
 				return STRING;
 			}
 
 <VALUE>[^\{} \t\n]+	{
-				/* string-without-braces-or-whitespace */
+				/* string-without-braces-or-blanks */
 				yylval.s = strdup(yytext);
 				BEGIN INITIAL;
 				return STRING;
 			}
 
-\n			{
+<INITIAL>\n		{
 				stacktop->line++;
 				return EOL;
 			}
@@ -551,15 +557,15 @@ include			return INCLUDE;
 					fprintf(stderr, "STR/KEY: %s\n",
 						yytext);
 				tok = parser_find_keyword(yytext, &yylval);
-				switch (tok)
-				{
+				switch (tok) {
 				case BOOLWORD:
-					BEGIN BOOLEAN_VALUE;
+					BEGIN BOOLEAN_KEY;
 					break;
 				case COMMENT:
 					BEGIN COMMENT_KEY;
 					break;
 				default:
+					BEGIN KEY;
 					break;
 				}
 				return tok;
