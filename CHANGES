@@ -1,6 +1,8 @@
 
 See also https://libreswan.org/
 
+v4.3 (unreleased)
+
 v4.2 (February 2, 2021)
 * IKEv2: Support for IKEv2 Labeled IPsec [Hugh, Sahana, Paul, Kavinda Wewegama]
 * IKEv2: MOBIKE could cause assertion failure due to eroute ownership [Paul]
