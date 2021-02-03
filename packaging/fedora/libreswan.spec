@@ -145,9 +145,6 @@ rm -fr %{buildroot}%{_sysconfdir}/rc.d/rc*
 cp %{SOURCE1} %{SOURCE2} %{SOURCE3} .
 bunzip2 *.fax.bz2
 
-# work around for older xen based machines
-export NSS_DISABLE_HW_GCM=1
-
 : starting CAVS test for IKEv2
 %{buildroot}%{_libexecdir}/ipsec/cavp -v2 ikev2.fax | \
     diff -u ikev2.fax - > /dev/null
