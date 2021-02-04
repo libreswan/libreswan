@@ -405,7 +405,6 @@ static struct state *new_state(struct connection *c,
 		.st_state = &state_undefined,
 		.st_serialno = next_so++,
 		.st_inception = realnow(),
-		.st_ike_version = c->ike_version,
 		.st_establishing_sa = sa_type,
 		.st_connection = c,
 		.st_ike_spis = {
