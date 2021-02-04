@@ -1083,17 +1083,38 @@ void delete_state_tail(struct state *st)
 	 */
 	{
 		struct connection *old = st->st_connection;
-		struct connection *new = NULL;
 		passert(old != NULL);
-		if (old != new) {
-			st->st_connection = new;
-			st->st_peer_alt_id = FALSE; /* must be rechecked against new 'that' */
-			rehash_state_connection(st);
-			if (old != NULL) {
-				connection_delete_unused_instance(&old, st,
-								  st->st_logger->global_whackfd);
-			}
-		}
+		st->st_connection = NULL;
+		st->st_peer_alt_id = FALSE; /* must be rechecked against new 'that' */
+		/*
+		 * XXX:
+		 *
+		 * - this removes ST from the CONNECTION -> STATE hash
+		 *   table but leaves it in the other tables
+		 *
+		 *   i.e., a lookup by-so-serial will still work for
+		 *   the state but not lookup by-connection
+		 *
+		 * The del_state_from_db() call will re-do the same
+		 * thing.
+		 */
+		rehash_state_connection(st);
+		/*
+		 * XXX: can the connection be deleted?
+		 *
+		 * - checks ST's POLICY_UP
+		 *
+		 *   is the established IKE SA being revived and,
+		 *   hence, the connection should not be deleted
+		 *
+		 * - checks for a another state still using the connection
+		 *
+		 *   since this state was removed from the CONNECTION
+		 *   -> STATE hash table this succeeding means that
+		 *   there must be a second state using the connection
+		 */
+		connection_delete_unused_instance(&old, st,
+						  st->st_logger->global_whackfd);
 	}
 
 	/*
