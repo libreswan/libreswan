@@ -1069,59 +1069,32 @@ void delete_state_tail(struct state *st)
 			free_any_iface_endpoint(p);
 		}
 	}
-	st->st_interface = NULL;
 
 	/*
-	 * Danger!
-	 *
+	 * This, effectively,  deletes any ISAKMP SA that this state
+	 * represents - lookups for this state no longer work.
+	 */
+	del_state_from_db(st);
+
+	/*
 	 * Break the STATE->CONNECTION link.  If CONNECTION is an
 	 * instance, then it too will be deleted.
 	 *
-	 * Needs to be done before the state is removed from it's DB
-	 * as it can otherwise leak the connection (or explode because
-	 * it was removed from the list). ???
+	 * - checks ST's POLICY_UP
+	 *
+	 *   is the established IKE SA being revived and, hence, the
+	 *   connection should not be deleted
+	 *
+	 * - checks for a another state still using the connection
+	 *
+	 *   since this state was removed from the CONNECTION -> STATE
+	 *   hash table this succeeding means that there must be a
+	 *   second state using the connection
 	 */
-	{
-		struct connection *old = st->st_connection;
-		passert(old != NULL);
-		st->st_connection = NULL;
-		st->st_peer_alt_id = FALSE; /* must be rechecked against new 'that' */
-		/*
-		 * XXX:
-		 *
-		 * - this removes ST from the CONNECTION -> STATE hash
-		 *   table but leaves it in the other tables
-		 *
-		 *   i.e., a lookup by-so-serial will still work for
-		 *   the state but not lookup by-connection
-		 *
-		 * The del_state_from_db() call will re-do the same
-		 * thing.
-		 */
-		rehash_state_connection(st);
-		/*
-		 * XXX: can the connection be deleted?
-		 *
-		 * - checks ST's POLICY_UP
-		 *
-		 *   is the established IKE SA being revived and,
-		 *   hence, the connection should not be deleted
-		 *
-		 * - checks for a another state still using the connection
-		 *
-		 *   since this state was removed from the CONNECTION
-		 *   -> STATE hash table this succeeding means that
-		 *   there must be a second state using the connection
-		 */
-		connection_delete_unused_instance(&old, st,
-						  st->st_logger->global_whackfd);
-	}
-
-	/*
-	 * Effectively, this deletes any ISAKMP SA that this state
-	 * represents
-	 */
-	del_state_from_db(st);
+	connection_delete_unused_instance(&st->st_connection, st,
+					  st->st_logger->global_whackfd);
+	pexpect(st->st_connection == NULL);
+	st->st_interface = NULL;
 
 	v2_msgid_free(st);
 
