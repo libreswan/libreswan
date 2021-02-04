@@ -4280,6 +4280,8 @@ void connection_delete_unused_instance(struct connection **cp,
 				       struct fd *whackfd)
 {
 	struct connection *c = (*cp);
+	*cp = NULL;
+
 	if (c->kind != CK_INSTANCE) {
 		dbg("connection %s is not an instance, skipping delete-unused", c->name);
 		return;
@@ -4331,7 +4333,6 @@ void connection_delete_unused_instance(struct connection **cp,
 	close_any(&c->logger->global_whackfd);
 	c->logger->global_whackfd = dup_any(whackfd);
 	delete_connection(c, false);
-	*cp = c = NULL;
 }
 
 /*

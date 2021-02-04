@@ -207,6 +207,23 @@ static void delete_pending(struct pending **pp)
 	struct pending *p = *pp;
 	*pp = p->next;
 
+	if (DBGP(DBG_BASE)) {
+		if (p->connection == NULL) {
+			/*
+			 * ??? when does this happen?
+			 *
+			 * Look for p->connection=NULL below.  When
+			 * unpend()ing, the pending connection's
+			 * ownership is transfered to the state.
+			 */
+			DBG_log("removing pending policy {%p}; connection ownership transfered", p);
+		} else {
+			connection_buf cib;
+			DBG_log("removing pending policy {%p} with connection "PRI_CONNECTION"",
+				p, pri_connection(p->connection, &cib));
+		}
+	}
+
 	if (p->connection != NULL) {
 		/* above unlink means C is no longer pending */
 		pexpect(!connection_is_pending(p->connection));
@@ -215,17 +232,6 @@ static void delete_pending(struct pending **pp)
 						  null_fd/*XXX: p->whack_sock?*/);
 	}
 	close_any(&p->whack_sock); /*on-heap*/
-
-	if (DBGP(DBG_BASE)) {
-		if (p->connection == NULL) {
-			/* ??? when does this happen? */
-			DBG_log("removing pending policy for no connection {%p}", p);
-		} else {
-			connection_buf cib;
-			DBG_log("removing pending policy for "PRI_CONNECTION" {%p}",
-				pri_connection(p->connection, &cib), p);
-		}
-	}
 
 	pfree(p);
 }
