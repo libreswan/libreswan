@@ -425,7 +425,7 @@ static stf_status handle_helper_answer(struct state *st,
 	stf_status status;
 	if (job->cancelled) {
 		/* suppressed */
-		dbg_job(job, "was cancelled; ignoring respose");
+		dbg_job(job, "was cancelled; ignoring response");
 		pexpect(st == NULL || st->st_offloaded_task == NULL);
 		h->cleanup_cb(&job->task);
 		pexpect(job->task == NULL); /* did your job */

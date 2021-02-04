@@ -165,7 +165,7 @@ v3.30 (February 13, 2020)
 * IKEv2: Refuse SHA1 for RFC 7427 Digital Signatures as per RFC 8247 [Sahana]
 * IKEv2: Use IKEv2 fragment size values (not IKEv1) [Andrew]
 * IKEv2: On initiator, do not retransmit on IKE_AUTH processing failure [Paul]
-* IKEv1: Re-implement CVE-2019-10155 fix to prevent future occurences [Andrew]
+* IKEv1: Re-implement CVE-2019-10155 fix to prevent future occurrences [Andrew]
 * IKEv1: do not assert on bad virtual private entry [Paul]
 * pluto: Simplify plutodebug= options to: base, cpu-usage, crypt, private and tmi
          (maps old values to new ones for compatibility) [Andrew]

@@ -87,7 +87,7 @@ static size_t jam_ipv6_address(struct jambuf *buf, const struct ip_info *afi, co
 			sep = "";
 			ptr += zeros.len;
 		} else {
-			/* print pair of bytes in hex, supress leading zeros */
+			/* print pair of bytes in hex, suppress leading zeros */
 			unsigned ia = (ptr[0] << 8) + ptr[1];
 			s += jam(buf, "%s%x", sep, ia);
 			sep = ":";

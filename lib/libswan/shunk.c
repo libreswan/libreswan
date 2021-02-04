@@ -144,7 +144,7 @@ bool shunk_strcaseeat(shunk_t *shunk, const char *dinner)
  * If OUTPUT is NULL, INPUT must only contain the numeric value, else
  * OUTPUT is set to any trailing characters.
  *
- * If CEILING is non-ZERO, *dest cann't be greater than CEILING.
+ * If CEILING is non-ZERO, *dest can't be greater than CEILING.
  */
 err_t shunk_to_uintmax(shunk_t input, shunk_t *output, unsigned base,
 		       uintmax_t *dest, uintmax_t ceiling)

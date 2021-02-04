@@ -237,7 +237,7 @@ void server_helpers_stopped_callback(struct state *st UNUSED, void *context UNUS
 void server_stopped_callback(int r)
 {
 	dbg("event loop exited: %s",
-	    r < 0 ? "an error occured" :
+	    r < 0 ? "an error occurred" :
 	    r > 0 ? "no pending or active events" :
 	    "success");
 
