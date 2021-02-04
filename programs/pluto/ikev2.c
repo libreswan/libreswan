@@ -1214,7 +1214,7 @@ static bool is_duplicate_request(struct ike_sa *ike,
 		return true;
 	}
 
-	struct v2_incomming_fragments *frags = ike->sa.st_v2_incomming[MESSAGE_REQUEST];
+	struct v2_incoming_fragments *frags = ike->sa.st_v2_incoming[MESSAGE_REQUEST];
 	if (frags != NULL) {
 		pexpect(frags->count < frags->total);
 		dbg_v2_msgid(ike, &ike->sa,
@@ -2186,8 +2186,8 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * with all fragments present (so "the"
 			 * function should not be called).
 			 */
-			struct v2_incomming_fragments *frags =
-				ike->sa.st_v2_incomming[v2_msg_role(md)];
+			struct v2_incoming_fragments *frags =
+				ike->sa.st_v2_incoming[v2_msg_role(md)];
 			bool have_all_fragments =
 				(frags != NULL && frags->count == frags->total);
 			/*
