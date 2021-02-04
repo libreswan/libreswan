@@ -41,7 +41,7 @@ static bool state_plausable(struct state *st,
 #endif
 			    , const enum sa_role *role)
 {
-	if (st->st_ike_version != ike_version) {
+	if (ike_version != st->st_connection->ike_version) {
 		return false;
 	}
 #ifdef USE_IKEv1
@@ -431,7 +431,7 @@ static struct hash_table state_hash_tables[] = {
 void add_state_to_db(struct state *st)
 {
 	dbg("State DB: adding %s state #%lu in %s",
-	    enum_name(&ike_version_names, st->st_ike_version),
+	    enum_name(&ike_version_names, st->st_connection->ike_version),
 	    st->st_serialno, st->st_state->short_name);
 	passert(st->st_serialno != SOS_NOBODY);
 
@@ -448,9 +448,8 @@ void add_state_to_db(struct state *st)
 void rehash_state_cookies_in_db(struct state *st)
 {
 	dbg("State DB: re-hashing %s state #%lu IKE SPIi and SPI[ir]",
-	    enum_name(&ike_version_names, st->st_ike_version),
+	    enum_name(&ike_version_names, st->st_connection->ike_version),
 	    st->st_serialno);
-
 	rehash_table_entry(&state_hash_tables[STATE_IKE_SPIS_HASH_TABLE], st);
 	rehash_table_entry(&state_hash_tables[STATE_IKE_INITIATOR_SPI_HASH_TABLE], st);
 }
@@ -458,7 +457,7 @@ void rehash_state_cookies_in_db(struct state *st)
 void del_state_from_db(struct state *st)
 {
 	dbg("State DB: deleting %s state #%lu in %s",
-	    enum_name(&ike_version_names, st->st_ike_version),
+	    enum_name(&ike_version_names, st->st_connection->ike_version),
 	    st->st_serialno, st->st_state->short_name);
 	remove_list_entry(&st->st_serialno_list_entry);
 	for (unsigned h = 0; h < elemsof(state_hash_tables); h++) {

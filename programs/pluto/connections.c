@@ -2091,7 +2091,9 @@ void add_connection(struct fd *whackfd, const struct whack_message *wm)
 
 	/* log all about this connection */
 	const char *what = (NEVER_NEGOTIATE(c->policy) ? policy_shunt_names[(c->policy & POLICY_SHUNT_MASK) >> POLICY_SHUNT_SHIFT] :
-			    LIN(POLICY_IKEV2_ALLOW, c->policy) ? "IKEv2" : "IKEv1");
+			    c->ike_version == IKEv1 ? "IKEv1" :
+			    c->ike_version == IKEv2 ? "IKEv2" :
+			    "IKEv?");
 	/* connection is good-to-go: log against it */
 	llog(RC_LOG, c->logger, "added %s connection", what);
 	dbg("ike_life: %jd; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s%s",
