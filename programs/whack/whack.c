@@ -87,12 +87,13 @@ static void help(void)
 		"	[--client <subnet> \\\n"
 		"	[--clientprotoport <protocol>/<port>] \\\n"
 		"	[--dnskeyondemand] [--updown <updown>] \\\n"
-		"	[--psk] | [--rsasig] | [--rsa-sha1] | [--rsa-sha2] | [--rsa-sha2_256] | \\\n"
-		"		[--rsa-sha2_384 ] | [--rsa-sha2_512 ] | [ --auth-null] | \\\n"
-		"		[--auth-never] \\\n"
+		"	[--psk] | [--rsasig] | [--rsa-sha1] | [--rsa-sha2] | \\\n"
+		"		[--rsa-sha2_256] | [--rsa-sha2_384 ] | [--rsa-sha2_512 ] | \\\n"
+		"		[ --auth-null] | [--auth-never] \\\n"
 		"	[--encrypt] [--authenticate] [--compress] [--sha2-truncbug] \\\n"
 		"	[--ms-dh-downgrade] \\\n"
-		"	[--overlapip] [--tunnel] [--pfs] [--dns-match-id] [--allow-cert-without-san-id]\\\n"
+		"	[--overlapip] [--tunnel] [--pfs] \\\n"
+		"	[--allow-cert-without-san-id] [--dns-match-id] \\\n"
 		"	[--pfsgroup modp1024 | modp1536 | modp2048 | \\\n"
 		"		modp3072 | modp4096 | modp6144 | modp8192 \\\n"
 		"		dh22 | dh23 | dh24] \\\n"
@@ -190,7 +191,7 @@ static void help(void)
 		"\n"
 		"purge: whack --purgeocsp\n"
 		"\n"
-		"reread: whack [--rereadsecrets] [--fetchcrls] [--rereadall]\n"
+		"reread: whack [--fetchcrls] [--rereadcerts] [--rereadsecrets] [--rereadall]\n"
 		"\n"
 		"status: whack [--status] | [--trafficstatus] | [--globalstatus] | \\\n"
 		"	[--clearstats] | [--shuntstatus] | [--fipsstatus] | [--briefstatus] \n"
@@ -1381,9 +1382,9 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_REREADSECRETS:	/* --rereadsecrets */
-		case OPT_REREADCRLS:    /* --rereadcrls */
-		case OPT_REREADCERTS:    /* --rereadcerts */
-		case OPT_FETCHCRLS:    /* --fetchcrls */
+		case OPT_REREADCRLS:	/* --rereadcrls */
+		case OPT_REREADCERTS:	/* --rereadcerts */
+		case OPT_FETCHCRLS:	/* --fetchcrls */
 			msg.whack_reread |= LELEM(c - OPT_REREADSECRETS);
 			continue;
 
