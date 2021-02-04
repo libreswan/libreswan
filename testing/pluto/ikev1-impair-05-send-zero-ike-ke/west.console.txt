@@ -33,6 +33,8 @@ west #
 west #
  ipsec whack --impair suppress-retransmits
 west #
+ ipsec whack --impair revival
+west #
  ipsec auto --add westnet-eastnet-ipv4-psk
 002 "westnet-eastnet-ipv4-psk": terminating SAs using this connection
 002 "westnet-eastnet-ipv4-psk" #2: deleting state (STATE_MAIN_I2) and NOT sending notification
@@ -45,7 +47,7 @@ west #
 003 "westnet-eastnet-ipv4-psk" #3: NSS: shared key calculation using MODP failed: SEC_ERROR 19 (0x13): security library: memory allocation failure.
 217 "westnet-eastnet-ipv4-psk" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 002 "westnet-eastnet-ipv4-psk" #3: deleting state (STATE_MAIN_I2) and NOT sending notification
-002 "westnet-eastnet-ipv4-psk" #3: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+002 "westnet-eastnet-ipv4-psk" #3: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  echo done
 done
@@ -61,10 +63,6 @@ west #
 | state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
 | complete v1 state transition with INVALID_KEY_INFORMATION
 "westnet-eastnet-ipv4-psk" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-|    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
-| state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
-| complete v1 state transition with INVALID_KEY_INFORMATION
-"westnet-eastnet-ipv4-psk" #4: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 |    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
 | state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
 west #

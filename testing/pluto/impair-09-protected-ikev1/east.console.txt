@@ -8,6 +8,8 @@ east #
  ipsec auto --add westnet-eastnet
 002 "westnet-eastnet": added IKEv1 connection
 east #
+ ipsec whack --impair suppress-retransmits
+east #
  echo "initdone"
 initdone
 east #
