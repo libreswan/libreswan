@@ -108,12 +108,12 @@ void main_outI1(struct fd *whack_sock,
 		unsigned long try,
 		const threadtime_t *inception)
 {
-	struct ike_sa *ike = new_v1_istate(whack_sock);
+	struct ike_sa *ike = new_v1_istate(c, whack_sock);
 	struct state *st = &ike->sa;
 	statetime_t start = statetime_backdate(st, inception);
 
 	/* set up new state */
-	initialize_new_state(st, c, policy, try);
+	initialize_new_state(st, policy, try);
 
 	change_state(st, STATE_MAIN_I1);
 
@@ -628,12 +628,10 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 	}
 
 	/* Set up state */
-	struct ike_sa *ike = new_v1_rstate(md);
+	struct ike_sa *ike = new_v1_rstate(c, md);
 	struct state *st = md->st = &ike->sa;
 
 	passert(!st->st_oakley.doing_xauth);
-
-	update_state_connection(st, c);
 
 	st->st_try = 0; /* not our job to try again from start */
 	/* only as accurate as connection */

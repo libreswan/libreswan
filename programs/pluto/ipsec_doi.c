@@ -266,18 +266,16 @@ bool has_preloaded_public_key(const struct state *st)
 }
 
 void initialize_new_state(struct state *st,
-			  struct connection *c,
 			  lset_t policy,
 			  int try)
 {
-	update_state_connection(st, c);
-
 	/*
 	 * reset our choice of interface
 	 *
 	 * XXX: why? suspect this has the side effect of restoring /
 	 * updating connection's ends?
 	 */
+	struct connection *c = st->st_connection;
 	pexpect(oriented(*c));
 	c->interface = NULL;
 	(void)orient(c);

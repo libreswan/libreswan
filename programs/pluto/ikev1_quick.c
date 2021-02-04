@@ -596,8 +596,7 @@ void quick_outI1(struct fd *whack_sock,
 		 unsigned long try,
 		 so_serial_t replacing)
 {
-	struct state *st = ikev1_duplicate_state(isakmp_sa, whack_sock);
-	update_state_connection(st, c);
+	struct state *st = ikev1_duplicate_state(c, isakmp_sa, whack_sock);
 	passert(c != NULL);
 
 	st->st_policy = policy;
@@ -1194,16 +1193,13 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 
 	/* create our new state */
 	{
-		struct state *const st = ikev1_duplicate_state(p1st, null_fd);
+		struct state *const st = ikev1_duplicate_state(c, p1st, null_fd);
 
 		/* first: fill in missing bits of our new state object
 		 * note: we don't copy over st_peer_pubkey, the public key
 		 * that authenticated the ISAKMP SA.  We only need it in this
 		 * routine, so we can "reach back" to p1st to get it.
 		 */
-		if (st->st_connection != c) {
-			update_state_connection(st, c);
-		}
 
 		st->st_try = 0; /* not our job to try again from start */
 

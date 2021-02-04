@@ -942,7 +942,8 @@ static struct child_sa *process_v2_child_ix(struct ike_sa *ike,
 				svm->state == STATE_V2_REKEY_CHILD_R0 ? IPSEC_SA :
 				pexpect(svm->state == STATE_V2_REKEY_IKE_R0) ? IKE_SA :
 				IKE_SA);
-	struct child_sa *child = new_v2_child_state(ike, sa_type,
+	struct child_sa *child = new_v2_child_state(ike->sa.st_connection,
+						    ike, sa_type,
 						    SA_RESPONDER,
 						    svm->state,
 						    null_fd);
@@ -1749,11 +1750,11 @@ void ikev2_process_packet(struct msg_digest *md)
 			 * presumably, dedicating real resources to
 			 * the connection.
 			 */
-			struct ike_sa *ike = new_v2_ike_state(transition, SA_RESPONDER,
+			struct ike_sa *ike = new_v2_ike_state(c, transition, SA_RESPONDER,
 							      md->hdr.isa_ike_spis.initiator,
 							      ike_responder_spi(&md->sender,
 										md->md_logger),
-							      c, policy, 0, null_fd);
+							      policy, 0, null_fd);
 
 			statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
 			/* XXX: keep test results happy */

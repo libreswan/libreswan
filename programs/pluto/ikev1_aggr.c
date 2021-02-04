@@ -161,11 +161,9 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	}
 
 	/* Set up state */
-	struct ike_sa *ike = new_v1_rstate(md);
+	struct ike_sa *ike = new_v1_rstate(c, md);
 	struct state *st = &ike->sa;
-
 	md->st = st;  /* (caller will reset cur_state) */
-	update_state_connection(st, c);
 	change_state(st, STATE_AGGR_R1);
 
 	/* warn for especially dangerous Aggressive Mode and PSK */
@@ -970,11 +968,11 @@ void aggr_outI1(struct fd *whack_sock,
 		const threadtime_t *inception)
 {
 	/* set up new state */
-	struct ike_sa *ike = new_v1_istate(whack_sock);
+	struct ike_sa *ike = new_v1_istate(c, whack_sock);
 	struct state *st = &ike->sa;
 	statetime_t start = statetime_backdate(st, inception);
 	change_state(st, STATE_AGGR_I1);
-	initialize_new_state(st, c, policy, try);
+	initialize_new_state(st, policy, try);
 
 	if (LIN(POLICY_PSK, c->policy) && LIN(POLICY_AGGRESSIVE, c->policy)) {
 		log_state(RC_LOG_SERIOUS, st,

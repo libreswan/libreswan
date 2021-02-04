@@ -777,18 +777,23 @@ extern bool states_use_connection(const struct connection *c);
 
 /* state functions */
 
-struct ike_sa *new_v1_istate(struct fd *whackfd);
-struct ike_sa *new_v1_rstate(struct msg_digest *md);
+struct ike_sa *new_v1_istate(struct connection *c, struct fd *whackfd);
+struct ike_sa *new_v1_rstate(struct connection *c, struct msg_digest *md);
+struct state *ikev1_duplicate_state(struct connection *c, struct state *st, struct fd *whackfd);
 
-struct ike_sa *new_v2_ike_state(const struct state_v2_microcode *transition,
+struct ike_sa *new_v2_ike_state(struct connection *c, 
+				const struct state_v2_microcode *transition,
 				enum sa_role sa_role,
 				const ike_spi_t ike_initiator_spi,
 				const ike_spi_t ike_responder_spi,
-				struct connection *c, lset_t policy,
+				lset_t policy,
 				int try, struct fd *whack_sock);
 /* could eventually be IKE or CHILD SA */
-struct child_sa *new_v2_child_state(struct ike_sa *st, enum sa_type sa_type,
-				    enum sa_role sa_role, enum state_kind kind,
+struct child_sa *new_v2_child_state(struct connection *c,
+				    struct ike_sa *ike,
+				    enum sa_type sa_type,
+				    enum sa_role sa_role,
+				    enum state_kind kind,
 				    struct fd *whackfd);
 
 void set_v1_transition(struct state *st, const struct state_v1_microcode *transition, where_t where);
@@ -810,8 +815,6 @@ extern void rekey_p2states_by_connection(struct connection *c);
 enum send_delete { PROBABLY_SEND_DELETE, DONT_SEND_DELETE, };
 extern void delete_ike_family(struct ike_sa *ike, enum send_delete send_delete);
 extern void ikev2_schedule_next_child_delete(struct state *st, struct ike_sa *ike);
-
-struct state *ikev1_duplicate_state(struct state *st, struct fd *whackfd);
 
 extern struct state
 	*state_with_serialno(so_serial_t sn),
@@ -840,7 +843,6 @@ extern struct state *find_v1_info_state(const ike_spis_t *ike_spis,
 					msgid_t msgid);
 
 extern void initialize_new_state(struct state *st,
-				 struct connection *c,
 				 lset_t policy,
 				 int try);
 

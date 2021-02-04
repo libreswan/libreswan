@@ -534,9 +534,9 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 	const struct finite_state *fs = finite_states[STATE_PARENT_I0];
 	pexpect(fs->nr_transitions == 1);
 	const struct state_v2_microcode *transition = &fs->v2_transitions[0];
-	struct ike_sa *ike = new_v2_ike_state(transition, SA_INITIATOR,
+	struct ike_sa *ike = new_v2_ike_state(c, transition, SA_INITIATOR,
 					      ike_initiator_spi(), zero_ike_spi,
-					      c, policy, try, whack_sock);
+					      policy, try, whack_sock);
 	statetime_t start = statetime_backdate(&ike->sa, inception);
 
 	/* set up new state */
@@ -2102,7 +2102,8 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	 * SA.  It might later change when its discovered that the
 	 * child is for something pending?
 	 */
-	struct child_sa *child = new_v2_child_state(ike, IPSEC_SA,
+	struct child_sa *child = new_v2_child_state(ike->sa.st_connection,
+						    ike, IPSEC_SA,
 						    SA_INITIATOR,
 						    STATE_V2_IKE_AUTH_CHILD_I0,
 						    ike->sa.st_logger->object_whackfd);
@@ -3230,10 +3231,9 @@ static stf_status ike_auth_child_responder(struct ike_sa *ike,
 	struct connection *c = md->st->st_connection;
 	pexpect(md->hdr.isa_xchg == ISAKMP_v2_IKE_AUTH); /* redundant */
 
-	struct child_sa *child = new_v2_child_state(ike, IPSEC_SA, SA_RESPONDER,
+	struct child_sa *child = new_v2_child_state(c, ike, IPSEC_SA, SA_RESPONDER,
 						    STATE_V2_IKE_AUTH_CHILD_R0,
 						    null_fd);
-	update_state_connection(&child->sa, c);
 	binlog_refresh_state(&child->sa);
 
 	/*
@@ -5919,14 +5919,14 @@ void ikev2_initiate_child_sa(struct pending *p)
 			/* can't replace a state that isn't established */
 			child_being_replaced = NULL;
 		}
-		child = new_v2_child_state(ike, IPSEC_SA,
+		child = new_v2_child_state(c, ike, IPSEC_SA,
 					   SA_INITIATOR,
 					   (child_being_replaced != NULL ? STATE_V2_REKEY_CHILD_I0 :
 					    STATE_V2_NEW_CHILD_I0),
 					   p->whack_sock);
 	} else {
 		child_being_replaced = NULL; /* obviously the IKE SA */
-		child = new_v2_child_state(ike, IKE_SA,
+		child = new_v2_child_state(c, ike, IKE_SA,
 					   SA_INITIATOR,
 					   STATE_V2_REKEY_IKE_I0,
 					   p->whack_sock);
@@ -5934,7 +5934,6 @@ void ikev2_initiate_child_sa(struct pending *p)
 		child->sa.st_ike_rekey_spis.initiator = ike_initiator_spi();
 		child->sa.st_ike_pred = ike->sa.st_serialno;
 	}
-	update_state_connection(&child->sa, c);
 
 	child->sa.st_try = p->try;
 

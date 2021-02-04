@@ -18,6 +18,7 @@
 
 #include "defs.h"
 #include "state.h"
+#include "connections.h"
 #include "pluto_timing.h"
 #include "log.h"
 
