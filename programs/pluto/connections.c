@@ -4345,6 +4345,8 @@ void connection_delete_unused_instance(struct connection **cp,
 void update_state_connection(struct state *st, struct connection *new)
 {
 	struct connection *old = st->st_connection;
+	passert(old != NULL);
+	passert(new != NULL);
 
 	if (old != new) {
 		st->st_connection = new;

@@ -1081,7 +1081,20 @@ void delete_state_tail(struct state *st)
 	 * as it can otherwise leak the connection (or explode because
 	 * it was removed from the list). ???
 	 */
-	update_state_connection(st, NULL);
+	{
+		struct connection *old = st->st_connection;
+		struct connection *new = NULL;
+		passert(old != NULL);
+		if (old != new) {
+			st->st_connection = new;
+			st->st_peer_alt_id = FALSE; /* must be rechecked against new 'that' */
+			rehash_state_connection(st);
+			if (old != NULL) {
+				connection_delete_unused_instance(&old, st,
+								  st->st_logger->global_whackfd);
+			}
+		}
+	}
 
 	/*
 	 * Effectively, this deletes any ISAKMP SA that this state
