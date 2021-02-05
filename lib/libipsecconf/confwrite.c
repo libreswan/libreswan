@@ -537,14 +537,18 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 
 			/* ikev2= */
 			{
-				const char *v2ps = "UNKNOWN";
-
-				if (conn->policy & POLICY_IKEV2_ALLOW)
-					v2ps = "yes";
-
-				if (conn->policy & POLICY_IKEV1_ALLOW)
+				const char *v2ps;
+				switch (conn->ike_version) {
+				case IKEv1:
 					v2ps = "no";
-
+					break;
+				case IKEv2:
+					v2ps = "yes";
+					break;
+				default:
+					v2ps = "UNKNOWN";
+					break;
+				}
 				cwf("ikev2", v2ps);
 			}
 

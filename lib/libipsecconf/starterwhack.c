@@ -503,6 +503,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.r_interval = deltatime_ms(conn->options[KNCF_RETRANSMIT_INTERVAL_MS]);
 	msg.r_timeout = deltatime(conn->options[KNCF_RETRANSMIT_TIMEOUT]);
 
+	msg.ike_version = conn->ike_version;
 	msg.policy = conn->policy;
 	msg.sighash_policy = conn->sighash_policy;
 

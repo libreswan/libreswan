@@ -171,6 +171,7 @@ struct whack_message {
 	bool whack_connection;
 	bool whack_async;
 
+	enum ike_version ike_version;
 	lset_t policy;
 	lset_t sighash_policy;
 	deltatime_t sa_ike_life_seconds;

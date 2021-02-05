@@ -408,6 +408,9 @@ enum option_enums {
 #   define CD_FIRST CD_TO	/* first connection description */
 	CD_TO,
 
+	CD_IKEv1,
+	CD_IKEv2,
+
 	CD_MODECFGDNS,
 	CD_MODECFGDOMAINS,
 	CD_MODECFGBANNER,
@@ -784,11 +787,11 @@ static const struct option long_opts[] = {
 	{ "rsa-sha2_512", no_argument, NULL, ALGO_RSA_SHA2_512 + OO },
 
 
-	PS("ikev1", IKEV1_ALLOW),
-	PS("ikev1-allow", IKEV1_ALLOW), /* obsolete name */
-	PS("ikev2", IKEV2_ALLOW),
-	PS("ikev2-allow", IKEV2_ALLOW), /* obsolete name */
-	PS("ikev2-propose", IKEV2_ALLOW), /* obsolete, map onto allow */
+	{ "ikev1", no_argument, NULL, CD_IKEv1 + OO },
+	{ "ikev1-allow", no_argument, NULL, CD_IKEv1 + OO }, /* obsolete name */
+	{ "ikev2", no_argument, NULL, CD_IKEv2 +OO },
+	{ "ikev2-allow", no_argument, NULL, CD_IKEv2 +OO }, /* obsolete name */
+	{ "ikev2-propose", no_argument, NULL, CD_IKEv2 +OO }, /* obsolete, map onto allow */
 
 	PS("allow-narrowing", IKEV2_ALLOW_NARROWING),
 #ifdef AUTH_HAVE_PAM
@@ -1719,6 +1722,18 @@ int main(int argc, char **argv)
 			end_seen = LEMPTY;
 			continue;
 
+		/* --ikev1 --ikev2 --ikev2-propose */
+		case CD_IKEv1:
+		case CD_IKEv2:
+		{
+			enum ike_version ike_version = IKEv1 + c - CD_IKEv1;
+			if (msg.ike_version != 0 && msg.ike_version != ike_version) {
+				diag("connection can no longer have --ikev1 and --ikev2");
+			}
+			msg.ike_version = ike_version;
+			continue;
+		}
+
 		/* RSASIG/ECDSA need more than a single policy bit */
 		case CDP_SINGLETON + POLICY_PSK_IX:	/* --psk */
 		case CDP_SINGLETON + POLICY_AUTH_NEVER_IX:	/* --auth-never */
@@ -1749,11 +1764,6 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_AGGRESSIVE_IX:
 		/* --overlapip */
 		case CDP_SINGLETON + POLICY_OVERLAPIP_IX:
-
-		/* --ikev1 */
-		case CDP_SINGLETON + POLICY_IKEV1_ALLOW_IX:
-		/* --ikev2 (now also --ikev2-propose) */
-		case CDP_SINGLETON + POLICY_IKEV2_ALLOW_IX:
 
 		/* --allow-narrowing */
 		case CDP_SINGLETON + POLICY_IKEV2_ALLOW_NARROWING_IX:
@@ -2418,29 +2428,28 @@ int main(int argc, char **argv)
 		break;
 	}
 
-	if (msg.policy & POLICY_IKEV2_ALLOW) {
-		if (msg.policy & POLICY_IKEV1_ALLOW) {
-			diag("connection can no longer have --ikev1 and --ikev2");
-		}
-	} else if (!(msg.policy & POLICY_IKEV1_ALLOW)) {
+	if (msg.ike_version == 0) {
 		/* no ike version specified, default to IKEv2 */
-		msg.policy |= POLICY_IKEV2_ALLOW;
+		msg.ike_version = IKEv2;
 	}
 
-	if (msg.policy & POLICY_IKEV1_ALLOW) {
+	switch (msg.ike_version) {
+	case IKEv1:
 		if (msg.policy & POLICY_ECDSA)
 			diag("connection cannot specify --ecdsa and --ikev1");
 		/* delete any inherited sighash_poliyc from --rsasig including sha2 */
 		msg.sighash_policy = LEMPTY;
-	} else {
+		break;
+	case IKEv2:
 		if (msg.policy & POLICY_AGGRESSIVE)
 			diag("connection cannot specify --ikev2 and --aggressive");
+		break;
 	}
 
 	if (!auth_specified) {
 		/* match the parser loading defaults to whack defaults */
 		msg.policy |= POLICY_RSASIG;
-		if (msg.policy & POLICY_IKEV2_ALLOW) {
+		if (msg.ike_version == IKEv2) {
 			msg.policy |= POLICY_RSASIG_v1_5;
 			msg.policy |= POLICY_ECDSA;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
@@ -2522,14 +2531,6 @@ int main(int argc, char **argv)
 			if ((msg.policy & POLICY_ID_AUTH_MASK) == LEMPTY &&
 				msg.left.authby == AUTHBY_NEVER && msg.right.authby == AUTHBY_NEVER)
 				diag("must specify connection authentication, eg --rsasig, --psk or --auth-null for non-shunt connection");
-
-			/*
-			 * If neither v1 nor v2, default to v2
-			 */
-			if (!LIN(POLICY_IKEV1_ALLOW, msg.policy) &&
-				!LIN(POLICY_IKEV2_ALLOW, msg.policy))
-					msg.policy |= POLICY_IKEV2_ALLOW;
-
 			/*
 			 * ??? this test can never fail:
 			 *	!NEVER_NEGOTIATE=>HAS_IPSEC_POLICY

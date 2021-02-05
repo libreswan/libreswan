@@ -106,6 +106,7 @@ struct starter_conn {
 	str_set strings_set;
 	int_set options_set;
 
+	enum ike_version ike_version;
 	lset_t policy;
 	lset_t sighash_policy;
 

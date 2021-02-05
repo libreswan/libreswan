@@ -175,11 +175,11 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 # undef DOPT
 
+	d->ike_version = IKEv2;
 	d->policy =
 		POLICY_TUNNEL |
 		POLICY_ECDSA | POLICY_RSASIG | POLICY_RSASIG_v1_5 | /* authby= */
 		POLICY_ENCRYPT | POLICY_PFS |
-		POLICY_IKEV2_ALLOW |
 		POLICY_IKE_FRAG_ALLOW |      /* ike_frag=yes */
 		POLICY_ESN_NO;      	     /* esn=no */
 
@@ -1311,22 +1311,18 @@ static bool load_conn(struct starter_conn *conn,
 		switch (conn->options[KNCF_IKEv2]) {
 		case fo_never:
 		case fo_permit:
-			conn->policy |= POLICY_IKEV1_ALLOW;
-			/* clear any inherited default */
-			conn->policy &= ~POLICY_IKEV2_ALLOW;
+			conn->ike_version = IKEv1;
 			break;
 
 		case fo_propose:
 		case fo_insist:
-			conn->policy |= POLICY_IKEV2_ALLOW;
-			/* clear any inherited default */
-			conn->policy &= ~POLICY_IKEV1_ALLOW;
+			conn->ike_version = IKEv2;
 			break;
 		}
 	}
 
 	if (conn->options_set[KNCF_SEND_REDIRECT]) {
-		if (!LIN(POLICY_IKEV1_ALLOW, conn->policy)) {
+		if (conn->ike_version >= IKEv2) {
 			switch (conn->options[KNCF_SEND_REDIRECT]) {
 			case yna_yes:
 				conn->policy |= POLICY_SEND_REDIRECT_ALWAYS;
@@ -1347,7 +1343,7 @@ static bool load_conn(struct starter_conn *conn,
 	}
 
 	if (conn->options_set[KNCF_ACCEPT_REDIRECT]) {
-		if (!LIN(POLICY_IKEV1_ALLOW, conn->policy)) {
+		if (conn->ike_version >= IKEv2) {
 			switch (conn->options[KNCF_ACCEPT_REDIRECT]) {
 			case yna_yes:
 				conn->policy |= POLICY_ACCEPT_REDIRECT_YES;
@@ -1370,7 +1366,7 @@ static bool load_conn(struct starter_conn *conn,
 	if (conn->options_set[KNCF_PPK]) {
 		lset_t ppk = LEMPTY;
 
-		if (!(conn->policy & POLICY_IKEV1_ALLOW)) {
+		if (conn->ike_version >= IKEv2) {
 			switch (conn->options[KNCF_PPK]) {
 			case fo_propose:
 				ppk = POLICY_PPK_ALLOW;
@@ -1460,7 +1456,7 @@ static bool load_conn(struct starter_conn *conn,
 			} else if (streq(val, "never")) {
 				conn->policy |= POLICY_AUTH_NEVER;
 			/* everything else is only supported for IKEv2 */
-			} else if (conn->policy & POLICY_IKEV1_ALLOW) {
+			} else if (conn->ike_version == IKEv1) {
 				starter_error_append(perrl, "ikev1 connection must use authby= of rsasig, secret or never");
 				return TRUE;
 			} else if (streq(val, "null")) {
@@ -1512,12 +1508,16 @@ static bool load_conn(struct starter_conn *conn,
 	 */
 	if (NEVER_NEGOTIATE(conn->policy)) {
 		/* remove IPsec related options */
-		conn->policy &= ~(POLICY_PFS | POLICY_COMPRESS | POLICY_ESN_NO |
-			POLICY_ESN_YES | POLICY_DECAP_DSCP |
-			POLICY_NOPMTUDISC) &
-			/* remove IKE related options */
-			~(POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW |
-			POLICY_IKE_FRAG_ALLOW | POLICY_IKE_FRAG_FORCE);
+		conn->ike_version = 0;
+		conn->policy &= (~(POLICY_PFS |
+				   POLICY_COMPRESS |
+				   POLICY_ESN_NO |
+				   POLICY_ESN_YES |
+				   POLICY_DECAP_DSCP |
+				   POLICY_NOPMTUDISC) &
+				 /* remove IKE related options */
+				 ~(POLICY_IKE_FRAG_ALLOW |
+				   POLICY_IKE_FRAG_FORCE));
 	}
 
 	err |= validate_end(conn, &conn->left, "left", perrl, logger);
