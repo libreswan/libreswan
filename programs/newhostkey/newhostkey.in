@@ -19,10 +19,16 @@
 #
 
 me="ipsec newhostkey"
-usage="Usage: $me [--seeddev device] [--bits n] \\
-    [--quiet] [--hostname host] [--nssdir @IPSEC_NSSDIR@] [--password password] "
+usage="Usage:
+	$me [--seeddev device] [--keytype rsa] [--bits n]
+	$me [--seeddev device] --keytype ecdsa [--curve curve]
+
+	other options: [--quiet] [--hostname host] [--nssdir @IPSEC_NSSDIR@] \\
+		[--password password]"
 
 bits=
+curve=
+keytype=rsa
 verbose=
 host=
 seeddev="--seeddev /dev/random"
@@ -32,6 +38,14 @@ while [ $# != 0 ] ; do
     case "$1" in
 	--bits)
 	    bits="${2}"
+	    shift
+	    ;;
+	--curve)
+	    curve="${2}"
+	    shift
+	    ;;
+	--keytype)
+	    keytype="${2}"
 	    shift
 	    ;;
 	--quiet)
@@ -75,6 +89,28 @@ while [ $# != 0 ] ; do
     shift
 done
 
+if [ -n "$bits" ] && [ -n "$curve" ]; then
+    echo "${me}: --bits and --curve are mutually exclusive"
+    exit 2
+fi
+
+case "$keytype" in
+    rsa)
+	if [ -n "$curve" ]; then
+	    echo "${me}: --curve and --keytype rsa are mutually exclusive"
+	fi
+	;;
+    ecdsa)
+	if [ -n "$bits" ]; then
+	    echo "${me}: --bits and --keytype ecdsa are mutually exclusive"
+	fi
+	;;
+    *)
+	echo "${me}: unknown key type \`$keytype'" >&2
+	exit 2
+	;;
+esac
+
 if [ ! -d ${nssdir} ]; then
     echo "No such directory: ${nssdir}"
     exit 255
@@ -88,7 +124,15 @@ if [ ${RETVAL} -eq 255 ]; then
     exit 255
 fi
 
-key=$(ipsec rsasigkey ${verbose} ${seeddev} --nssdir ${nssdir} ${password} ${host} ${bits})
+case "$keytype" in
+    rsa)
+	key=$(ipsec rsasigkey ${verbose} ${seeddev} --nssdir ${nssdir} ${password} ${host} ${bits})
+	;;
+    ecdsa)
+	key=$(ipsec ecdsasigkey ${verbose} ${seeddev} --nssdir ${nssdir} ${password} ${host} ${curve})
+	;;
+esac
+
 RETVAL=$?
 if [ ${RETVAL} -ne 0 ]; then
     exit ${RETVAL}
