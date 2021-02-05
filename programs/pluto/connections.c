@@ -4095,14 +4095,17 @@ void show_one_connection(struct show *s,
 			c->name, instance, c->policy_next->name);
 	}
 
-	show_comment(s, "\"%s\"%s:   policy: %s%s%s%s%s;",
-		  c->name, instance,
-		  prettypolicy(c->policy),
-		  NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "",
-		  (c->spd.this.key_from_DNS_on_demand ||
-			c->spd.that.key_from_DNS_on_demand) ? "; " : "",
-		  c->spd.this.key_from_DNS_on_demand ? "+lKOD" : "",
-		  c->spd.that.key_from_DNS_on_demand ? "+rKOD" : "");
+	lset_t policy = c->policy & ~(POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW);
+	show_comment(s, "\"%s\"%s:   policy: %s%s%s%s%s%s%s;",
+		     c->name, instance,
+		     c->ike_version > 0 ? enum_name(&ike_version_names, c->ike_version) : "",
+		     c->ike_version > 0 && policy != LEMPTY ? "+" : "",
+		     prettypolicy(policy),
+		     NEVER_NEGOTIATE(policy) ? "+NEVER_NEGOTIATE" : "",
+		     (c->spd.this.key_from_DNS_on_demand ||
+		      c->spd.that.key_from_DNS_on_demand) ? "; " : "",
+		     c->spd.this.key_from_DNS_on_demand ? "+lKOD" : "",
+		     c->spd.that.key_from_DNS_on_demand ? "+rKOD" : "");
 
 	if (c->ike_version == IKEv2) {
 		char hashpolbuf[200];
