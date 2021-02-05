@@ -519,12 +519,11 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 	}
 
 	/* random source ports are handled by find_host_connection */
-	c = find_host_connection(&md->iface->local_endpoint, &md->sender,
-				 POLICY_IKEV1_ALLOW, POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW);
+	c = find_host_connection(IKEv1, &md->iface->local_endpoint, &md->sender,
+				 LEMPTY, POLICY_AGGRESSIVE);
 
 	if (c == NULL) {
-		lset_t policy = preparse_isakmp_sa_body(sa_pd->pbs) |
-			POLICY_IKEV1_ALLOW;
+		lset_t policy = preparse_isakmp_sa_body(sa_pd->pbs);
 
 		/*
 		 * Other IKE clients, such as strongswan, send the XAUTH
@@ -545,8 +544,8 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		 * but Food Groups kind of assumes one.
 		 */
 		{
-			struct connection *d = find_host_connection(&md->iface->local_endpoint, NULL,
-								    policy, POLICY_XAUTH | POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW);
+			struct connection *d = find_host_connection(IKEv1, &md->iface->local_endpoint, NULL,
+								    policy, POLICY_XAUTH | POLICY_AGGRESSIVE);
 
 			while (d != NULL) {
 				if (d->kind == CK_GROUP) {
@@ -575,8 +574,8 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 						c = d;
 					}
 				}
-				d = find_next_host_connection(d->hp_next,
-					policy, POLICY_XAUTH | POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW);
+				d = find_next_host_connection(IKEv1, d->hp_next,
+							      policy, POLICY_XAUTH | POLICY_AGGRESSIVE);
 			}
 		}
 

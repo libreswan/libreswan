@@ -405,7 +405,8 @@ bool initiate_connection_2(struct connection *c, const char *remote_host, bool b
 	}
 
 	bool ok;
-	if (LIN(POLICY_IKEV2_ALLOW | POLICY_IKEV2_ALLOW_NARROWING, c->policy) &&
+	if (c->ike_version == IKEv2 &&
+	    (c->policy & POLICY_IKEV2_ALLOW_NARROWING) &&
 	    c->kind == CK_TEMPLATE) {
 		struct connection *d = instantiate(c, NULL, NULL);
 		/* XXX: something better? */
@@ -471,7 +472,7 @@ bool initiate_connection_3(struct connection *c, bool background, const threadti
 	 * XXX: mumble something about c->ike_version
 	 */
 #ifdef USE_IKEv1
-	if ((c->policy & POLICY_IKEV1_ALLOW) &&
+	if (c->ike_version == IKEv1 &&
 	    (c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE))) {
 		struct db_sa *phase2_sa = v1_kernel_alg_makedb(c->policy, c->child_proposals,
 							       true, c->logger);
@@ -1287,7 +1288,6 @@ void connection_check_phase2(struct logger *logger)
 		    pri_connection(c, &cib));
 
 		if (pending_check_timeout(c)) {
-			struct state *p1st = NULL;
 			ipstr_buf b;
 			connection_buf cib;
 
@@ -1296,14 +1296,21 @@ void connection_check_phase2(struct logger *logger)
 				    ipstr(&c->spd.that.host_addr, &b),
 				    pri_connection(c, &cib));
 
-			if (LIN(POLICY_IKEV2_ALLOW, c->policy))
-				p1st = find_phase1_state(c, IKEV2_ISAKMP_INITIATOR_STATES);
+			struct state *p1st;
+			switch (c->ike_version) {
 #ifdef USE_IKEv1
-			else
+			case IKEv1:
 				p1st = find_phase1_state(c,
-						 ISAKMP_SA_ESTABLISHED_STATES |
-						 PHASE1_INITIATOR_STATES);
+							 (ISAKMP_SA_ESTABLISHED_STATES |
+							  PHASE1_INITIATOR_STATES));
+				break;
 #endif
+			case IKEv2:
+				p1st = find_phase1_state(c, IKEV2_ISAKMP_INITIATOR_STATES);
+				break;
+			default:
+				bad_case(c->ike_version);
+			}
 
 			if (p1st != NULL) {
 				/* arrange to rekey the phase 1, if there was one. */

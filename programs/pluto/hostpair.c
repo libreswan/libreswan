@@ -610,26 +610,33 @@ void check_orientations(void)
  * For all bits in policy_exact mask, the req_policy
  * and connection's policy must be equal.  Likely candidates:
  * - XAUTH (POLICY_XAUTH)
- * - kind of IKEV1 (POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW)
+ * - kind of IKEV1 (POLICY_AGGRESSIVE)
  * These should only be used if the caller actually knows
  * the exact value and has included it in req_policy.
  */
-struct connection *find_host_connection(const ip_endpoint *local,
-					const ip_endpoint *remote,
+struct connection *find_host_connection(enum ike_version ike_version,
+					const ip_endpoint *local_endpoint,
+					const ip_endpoint *remote_endpoint,
 					lset_t req_policy, lset_t policy_exact_mask)
 {
 	endpoint_buf lb;
 	endpoint_buf rb;
-	dbg("find_host_connection local=%s remote=%s policy=%s but ignoring ports",
-	    str_endpoint(local, &lb), str_endpoint(remote, &rb),
+	dbg("find_host_connection %s local=%s remote=%s policy=%s but ignoring ports",
+	    enum_name(&ike_version_names, ike_version),
+	    str_endpoint(local_endpoint, &lb),
+	    str_endpoint(remote_endpoint, &rb),
 	    bitnamesof(sa_policy_bit_names, req_policy));
 
-	ip_address local_address = endpoint_address(local);
-	ip_address remote_address = endpoint_address(remote);/*could return unset OR any*/
+	/* strip port */
+	ip_address local_address = endpoint_address(local_endpoint);
+	ip_address remote_address = endpoint_address(remote_endpoint);/*could return unset OR any*/
 	struct host_pair *hp = find_host_pair(&local_address, &remote_address);
+	if (hp == NULL) {
+		return NULL;
+	}
 
 	/* XXX: don't be fooled by "next", the search includes hp->connections */
-	struct connection *c = find_next_host_connection(hp == NULL ? NULL : hp->connections,
+	struct connection *c = find_next_host_connection(ike_version, hp->connections,
 							 req_policy, policy_exact_mask);
 	/*
 	 * This could be a shared IKE SA connection, in which case
@@ -641,8 +648,8 @@ struct connection *find_host_connection(const ip_endpoint *local,
 	 */
 	for (struct connection *candidate = c;
 	     candidate != NULL;
-	     candidate = find_next_host_connection(candidate->hp_next, req_policy,
-						   policy_exact_mask)) {
+	     candidate = find_next_host_connection(ike_version, candidate->hp_next,
+						   req_policy, policy_exact_mask)) {
 		if (candidate->newest_isakmp_sa != SOS_NOBODY)
 			return candidate;
 	}
@@ -650,9 +657,9 @@ struct connection *find_host_connection(const ip_endpoint *local,
 	return c;
 }
 
-struct connection *find_next_host_connection(
-	struct connection *c,
-	lset_t req_policy, lset_t policy_exact_mask)
+struct connection *find_next_host_connection(enum ike_version ike_version,
+					     struct connection *c,
+					     lset_t req_policy, lset_t policy_exact_mask)
 {
 	dbg("find_next_host_connection policy=%s",
 	    bitnamesof(sa_policy_bit_names, req_policy));
@@ -689,11 +696,14 @@ struct connection *find_next_host_connection(
 		/*
 		 * Success may require exact match of:
 		 * (1) XAUTH (POLICY_XAUTH)
-		 * (2) kind of IKEV1 (POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW)
+		 * (2) kind of IKEV1 (POLICY_AGGRESSIVE)
+		 * (3) IKE_VERSION
 		 * So if any bits are on in the exclusive OR, we fail.
 		 * Each of our callers knows what is known so specifies
 		 * the policy_exact_mask.
 		 */
+		if (c->ike_version != ike_version)
+			continue;
 		if ((req_policy ^ c->policy) & policy_exact_mask)
 			continue;
 
@@ -721,54 +731,60 @@ struct connection *find_next_host_connection(
 static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 						     lset_t policy, bool *send_reject_response)
 {
-	const ip_endpoint *local = &md->iface->local_endpoint;
-	const ip_endpoint *remote = &md->sender;
+	const ip_endpoint *local_endpoint = &md->iface->local_endpoint;
+	const ip_endpoint *remote_endpoint = &md->sender;
+	/* just the adddress */
+	ip_address remote_address = endpoint_address(remote_endpoint);
 
-	struct connection *c = find_host_connection(local, remote, policy, LEMPTY);
+	struct connection *c = find_host_connection(IKEv2, local_endpoint,
+						    remote_endpoint,
+						    policy, LEMPTY);
 	if (c == NULL) {
-		/* See if a wildcarded connection can be found.
-		 * We cannot pick the right connection, so we're making a guess.
-		 * All Road Warrior connections are fair game:
-		 * we pick the first we come across (if any).
-		 * If we don't find any, we pick the first opportunistic
+		/*
+		 * See if a wildcarded connection can be found.  We
+		 * cannot pick the right connection, so we're making a
+		 * guess.  All Road Warrior connections are fair game:
+		 * we pick the first we come across (if any).  If we
+		 * don't find any, we pick the first opportunistic
 		 * with the smallest subnet that includes the peer.
-		 * There is, of course, no necessary relationship between
-		 * an Initiator's address and that of its client,
-		 * but Food Groups kind of assumes one.
+		 * There is, of course, no necessary relationship
+		 * between an Initiator's address and that of its
+		 * client, but Food Groups kind of assumes one.
 		 */
-		{
-			struct connection *d = find_host_connection(local, NULL,
-								    policy, LEMPTY);
+		for (struct connection *d = find_host_connection(IKEv2, local_endpoint,
+								 &unset_endpoint,
+								 policy, LEMPTY);
+		     d != NULL; d = find_next_host_connection(IKEv2, d->hp_next, policy, LEMPTY)) {
+			if (d->kind == CK_GROUP) {
+				continue;
+			}
+			/*
+			 * Road Warrior: we have an instant winner.
+			 */
+			if (d->kind == CK_TEMPLATE && !(d->policy & POLICY_OPPORTUNISTIC)) {
+				c = d;
+				break;
+			}
+			/*
+			 * Opportunistic or Shunt: keep searching
+			 * selecting the tightest match.
+			 */
+			ip_address remote_address = endpoint_address(remote_endpoint);
+			if (address_in_selector(&remote_address, &d->spd.that.client) &&
+			    (c == NULL || !selector_in_selector(&c->spd.that.client,
+								&d->spd.that.client))) {
 
-			while (d != NULL) {
-				if (d->kind == CK_GROUP) {
-					/* ignore */
-				} else {
-					if (d->kind == CK_TEMPLATE &&
-							!(d->policy & POLICY_OPPORTUNISTIC)) {
-						/* must be Road Warrior: we have a winner */
-						c = d;
-						break;
-					}
-
-					/* Opportunistic or Shunt: pick tightest match */
-					if (addrinsubnet(remote, &d->spd.that.client) &&
-							(c == NULL ||
-							 !subnetinsubnet(&c->spd.that.client,
-								 &d->spd.that.client))) {
-						c = d;
-					}
-				}
-				d = find_next_host_connection(d->hp_next,
-						policy, LEMPTY);
+				c = d;
+				/* keep looking */
 			}
 		}
+
 		if (c == NULL) {
 			endpoint_buf b;
 			dbgl(md->md_logger,
 			     "%s message received on %s but no connection has been authorized with policy %s",
 			     enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
-			     str_endpoint(local, &b),
+			     str_endpoint(local_endpoint, &b),
 			     bitnamesof(sa_policy_bit_names, policy));
 			*send_reject_response = true;
 			return NULL;
@@ -780,7 +796,7 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 			dbgl(md->md_logger,
 			     "%s message received on %s for "PRI_CONNECTION" with kind=%s dropped",
 			     enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
-			     str_endpoint(local, &b),
+			     str_endpoint(local_endpoint, &b),
 			     pri_connection(c, &cib),
 			     enum_name(&connection_kind_names, c->kind));
 			/*
@@ -806,13 +822,14 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 		if (LIN(POLICY_OPPORTUNISTIC, c->policy) &&
 		    c->ike_version == IKEv2) {
 			dbgl(md->md_logger, "oppo_instantiate");
-			ip_address remote_addr = endpoint_address(remote);
-			c = oppo_instantiate(c, &remote_addr, &c->spd.that.id, &c->spd.this.host_addr, remote);
+			c = oppo_instantiate(c, &remote_address,
+					     &c->spd.that.id,
+					     &c->spd.this.host_addr,
+					     remote_endpoint);
 		} else {
 			/* regular roadwarrior */
 			dbgl(md->md_logger, "rw_instantiate");
-			ip_address remote_addr = endpoint_address(remote);
-			c = rw_instantiate(c, &remote_addr, NULL, NULL);
+			c = rw_instantiate(c, &remote_address, NULL, NULL);
 		}
 	} else {
 		/*
@@ -825,14 +842,12 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 		if (c->kind == CK_TEMPLATE && c->spd.that.virt != NULL) {
 			dbgl(md->md_logger,
 			     "local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation");
-			ip_address remote_addr = endpoint_address(remote);
-			c = rw_instantiate(c, &remote_addr, NULL, NULL);
+			c = rw_instantiate(c, &remote_address, NULL, NULL);
 		} else if ((c->kind == CK_TEMPLATE) &&
 				(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
 			dbgl(md->md_logger,
 			     "local endpoint has narrowing=yes - needs instantiation");
-			ip_address remote_addr = endpoint_address(remote);
-			c = rw_instantiate(c, &remote_addr, NULL, NULL);
+			c = rw_instantiate(c, &remote_address, NULL, NULL);
 		}
 	}
 	return c;
@@ -860,7 +875,7 @@ struct connection *find_v2_host_pair_connection(struct msg_digest *md, lset_t *p
 		 * For instance, if an earlier search returns NULL but
 		 * clears SEND_REJECT_RESPONSE, that will be lost.
 		 */
-		*policy = policies[i] | POLICY_IKEV2_ALLOW;
+		*policy = policies[i];
 		*send_reject_response = true;
 		c = ikev2_find_host_connection(md, *policy,
 					       send_reject_response);
