@@ -110,10 +110,10 @@ west #
 002 "westnet-eastnet-subnets/2x2" #1: Peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-subnets/2x2" #1: authenticated using RSA with SHA-1
 004 "westnet-eastnet-subnets/2x2" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet-subnets/1x1" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
-002 "westnet-eastnet-subnets/1x2" #3: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
-002 "westnet-eastnet-subnets/2x1" #4: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
-002 "westnet-eastnet-subnets/2x2" #5: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-eastnet-subnets/1x1" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-eastnet-subnets/1x2" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-eastnet-subnets/2x1" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-eastnet-subnets/2x2" #5: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet-subnets/1x1" #2: sent Quick Mode request
 1v1 "westnet-eastnet-subnets/1x2" #3: sent Quick Mode request
 1v1 "westnet-eastnet-subnets/2x1" #4: sent Quick Mode request

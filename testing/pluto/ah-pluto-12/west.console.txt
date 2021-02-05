@@ -35,7 +35,7 @@ west #
 002 "westnet-eastnet-ah-sha1" #1: Peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ah-sha1" #1: authenticated using RSA with SHA-1
 004 "westnet-eastnet-ah-sha1" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP2048}
-002 "westnet-eastnet-ah-sha1" #2: initiating Quick Mode RSASIG+AUTHENTICATE+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-eastnet-ah-sha1" #2: initiating Quick Mode IKEv1+RSASIG+AUTHENTICATE+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet-ah-sha1" #2: sent Quick Mode request
 004 "westnet-eastnet-ah-sha1" #2: IPsec SA established tunnel mode {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
