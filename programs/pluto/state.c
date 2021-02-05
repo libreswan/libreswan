@@ -1862,13 +1862,12 @@ bool ikev2_viable_parent(const struct ike_sa *ike)
 struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 {
 	struct state *best = NULL;
-	bool is_ikev2 = (c->policy & POLICY_IKEV1_ALLOW) == LEMPTY;
 
 	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st;
 	FOR_EACH_STATE_NEW2OLD(st) {
 		if (LHAS(ok_states, st->st_state->kind) &&
-		    (st->st_ike_version == IKEv2) == is_ikev2 &&
+		    c->ike_version == st->st_connection->ike_version &&
 		    c->host_pair == st->st_connection->host_pair &&
 		    same_peer_ids(c, st->st_connection, NULL) &&
 		    sameaddr(&st->st_remote_endpoint, &c->spd.that.host_addr) &&
