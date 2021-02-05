@@ -1568,7 +1568,6 @@ static bool extract_connection(const struct whack_message *wm,
 
 	if (NEVER_NEGOTIATE(c->policy)) {
 		/* cleanup inherited default */
-		c->policy &= ~(POLICY_IKEV1_ALLOW|POLICY_IKEV2_ALLOW);
 		c->ike_version = 0;
 		c->iketcp = IKE_TCP_NO;
 		c->remote_tcpport = 0;
@@ -4096,7 +4095,7 @@ void show_one_connection(struct show *s,
 			c->name, instance, c->policy_next->name);
 	}
 
-	lset_t policy = c->policy & ~(POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW);
+	lset_t policy = c->policy;
 	policy_buf pb;
 	show_comment(s, "\"%s\"%s:   policy: %s%s%s%s%s%s%s;",
 		     c->name, instance,

@@ -920,14 +920,6 @@ enum sa_policy_bits {
 	POLICY_AGGRESSIVE_IX,	/* do we do aggressive mode? */
 	POLICY_OVERLAPIP_IX,	/* can two conns that have subnet=vhost: declare the same IP? */
 
-	/*
-	 * this is mapped by parser's ikev2={four_state}. It is a bit richer
-	 * in that we can actually turn off everything, but it expands more
-	 * sensibly to an IKEv3 and other methods.
-	 */
-	POLICY_IKEV1_ALLOW_IX,	/* !accept IKEv1?  0x0100 0000 */
-	POLICY_IKEV2_ALLOW_IX,	/* accept IKEv2?   0x0200 0000 */
-
 	POLICY_IKEV2_ALLOW_NARROWING_IX,	/* Allow RFC-5669 section 2.9? 0x0800 0000 */
 	POLICY_IKEV2_PAM_AUTHORIZE_IX,
 	POLICY_SEND_REDIRECT_ALWAYS_IX,		/* next three policies are for RFC 5685 */
@@ -983,8 +975,6 @@ enum sa_policy_bits {
 #define POLICY_MODECFG_PULL	LELEM(POLICY_MODECFG_PULL_IX)	/* is modecfg pulled by client? */
 #define POLICY_AGGRESSIVE	LELEM(POLICY_AGGRESSIVE_IX)	/* do we do aggressive mode? */
 #define POLICY_OVERLAPIP	LELEM(POLICY_OVERLAPIP_IX)	/* can two conns that have subnet=vhost: declare the same IP? */
-#define POLICY_IKEV1_ALLOW	LELEM(POLICY_IKEV1_ALLOW_IX)	/* !accept IKEv1?  0x0100 0000 */
-#define POLICY_IKEV2_ALLOW	LELEM(POLICY_IKEV2_ALLOW_IX)	/* accept IKEv2?   0x0200 0000 */
 #define POLICY_IKEV2_ALLOW_NARROWING	LELEM(POLICY_IKEV2_ALLOW_NARROWING_IX)	/* Allow RFC-5669 section 2.9? 0x0800 0000 */
 #define POLICY_IKEV2_PAM_AUTHORIZE	LELEM(POLICY_IKEV2_PAM_AUTHORIZE_IX)    /* non-standard, custom PAM authorize call on ID */
 #define POLICY_SEND_REDIRECT_ALWAYS	LELEM(POLICY_SEND_REDIRECT_ALWAYS_IX)
