@@ -26,7 +26,7 @@ west #
 000 "westnet-eastnet-0":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 0;
 000 "westnet-eastnet-0":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-0":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-0":   policy: PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-0":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-0":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-0":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-0":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
@@ -43,7 +43,7 @@ west #
 000 "westnet-eastnet-1":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 1;
 000 "westnet-eastnet-1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-1":   policy: PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-1":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-1":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
@@ -60,7 +60,7 @@ west #
 000 "westnet-eastnet-2":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 2;
 000 "westnet-eastnet-2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-2":   policy: PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-2":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
@@ -153,7 +153,7 @@ west #
 000 "westnet-eastnet-0":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 0;
 000 "westnet-eastnet-0":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-0":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-0":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+OVERLAPIP+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-0":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+UP+OVERLAPIP+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-0":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-0":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-0":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
@@ -172,7 +172,7 @@ west #
 000 "westnet-eastnet-1":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 1;
 000 "westnet-eastnet-1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+OVERLAPIP+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-1":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+UP+OVERLAPIP+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-1":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
@@ -190,7 +190,7 @@ west #
 000 "westnet-eastnet-2":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 2;
 000 "westnet-eastnet-2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-2":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+OVERLAPIP+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-2":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+UP+OVERLAPIP+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
