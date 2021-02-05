@@ -31,6 +31,7 @@
 #endif
 #include "passert.h"
 
+#include "jambuf.h"
 #include "constants.h"
 #include "enum_names.h"
 #include "defs.h"
@@ -382,26 +383,35 @@ enum_names perspective_names = {
 /* print a policy: like bitnamesof, but it also does the non-bitfields.
  * Suppress the shunt and fail fields if 0.
  */
-const char *prettypolicy(lset_t policy)
+
+size_t jam_policy(struct jambuf *buf, lset_t policy)
 {
+	size_t s = 0;
 	char pbitnamesbuf[200];
 	const char *bn = bitnamesofb(sa_policy_bit_names,
-				     policy &
-				     ~(POLICY_SHUNT_MASK | POLICY_FAIL_MASK),
+				     policy & ~(POLICY_SHUNT_MASK | POLICY_FAIL_MASK),
 				     pbitnamesbuf, sizeof(pbitnamesbuf));
-	static char buf[512]; /* NOT RE-ENTRANT!  I hope that it is big enough! */
-	lset_t shunt = (policy & POLICY_SHUNT_MASK) >> POLICY_SHUNT_SHIFT;
-	lset_t fail = (policy & POLICY_FAIL_MASK) >> POLICY_FAIL_SHIFT;
+	if (bn == pbitnamesbuf) {
+		/* ok */
+		s += jam_string(buf, pbitnamesbuf);
+	}
 
-	if (bn != pbitnamesbuf)
-		pbitnamesbuf[0] = '\0';
-	snprintf(buf, sizeof(buf), "%s%s%s%s%s",
-		 pbitnamesbuf,
-		 shunt == POLICY_SHUNT_TRAP >> POLICY_SHUNT_SHIFT ?  "" : "+",
-		 shunt ==  POLICY_SHUNT_TRAP >> POLICY_SHUNT_SHIFT ? "" : policy_shunt_names[shunt],
-		 fail == POLICY_FAIL_NONE >> POLICY_FAIL_SHIFT ? "" : "+failure",
-		 fail == POLICY_FAIL_NONE >> POLICY_FAIL_SHIFT ? "" : policy_fail_names[fail]);
-	return buf;
+	lset_t shunt = (policy & POLICY_SHUNT_MASK);
+	if (shunt != POLICY_SHUNT_TRAP) {
+		s += jam(buf, "+%s", policy_shunt_names[shunt >> POLICY_SHUNT_SHIFT]);
+	}
+	lset_t fail = (policy & POLICY_FAIL_MASK);
+	if (fail != POLICY_FAIL_NONE) {
+		s += jam(buf, "+failure%s", policy_fail_names[fail >> POLICY_FAIL_SHIFT]);
+	}
+	return s;
+}
+
+const char *str_policy(lset_t policy, policy_buf *dst)
+{
+	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
+	jam_policy(&buf, policy);
+	return dst->buf;
 }
 
 static const enum_names *pluto_enum_names_checklist[] = {

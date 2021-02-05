@@ -1206,8 +1206,9 @@ bool ikev2_send_cert_decision(const struct state *st)
 	if (st->st_peer_wants_null) {
 		/* ??? should we log something?  All others do. */
 	} else if (LDISJOINT(c->policy, POLICY_ECDSA | POLICY_RSASIG)) {
+		policy_buf pb;
 		dbg("IKEv2 CERT: policy does not have RSASIG or ECDSA: %s",
-		    prettypolicy(c->policy & POLICY_ID_AUTH_MASK));
+		    str_policy(c->policy & POLICY_ID_AUTH_MASK, &pb));
 	} else if (this->cert.ty == CERT_NONE || this->cert.u.nss_cert == NULL) {
 		dbg("IKEv2 CERT: no certificate to send");
 	} else if (this->sendcert == CERT_SENDIFASKED &&

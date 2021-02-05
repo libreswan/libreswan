@@ -523,7 +523,14 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	}
 
 	jam(buf, "PLUTO_ADDTIME='%" PRIu64 "' ", st == NULL ? (uint64_t)0 : st->st_esp.add_time);
-	jam(buf, "PLUTO_CONN_POLICY='%s%s' ", prettypolicy(c->policy), NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "");
+
+	jam(buf, "PLUTO_CONN_POLICY='");
+	jam_policy(buf, c->policy);
+	if (NEVER_NEGOTIATE(c->policy)) {
+		jam(buf, "+NEVER_NEGOTIATE");
+	}
+	jam(buf, "'");
+
 	jam(buf, "PLUTO_CONN_KIND='%s' ", enum_show(&connection_kind_names, c->kind));
 	jam(buf, "PLUTO_CONN_ADDRFAMILY='ipv%d' ", address_type(&sr->this.host_addr)->ip_version);
 	jam(buf, "XAUTH_FAILED=%d ", (st != NULL && st->st_xauth_soft) ? 1 : 0);
@@ -912,9 +919,10 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 	if (!c->spd.that.has_client &&
 	    c->kind == CK_TEMPLATE &&
 	    !(c->policy & POLICY_OPPORTUNISTIC)) {
+		policy_buf pb;
 		llog(RC_ROUTE, logger,
-			    "cannot route template policy of %s",
-			    prettypolicy(c->policy));
+		     "cannot route template policy of %s",
+		     str_policy(c->policy, &pb));
 		return route_impossible;
 	}
 

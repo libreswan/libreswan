@@ -5987,17 +5987,19 @@ void ikev2_initiate_child_sa(struct pending *p)
 
 		child->sa.st_pfs_group = ikev2_proposals_first_dh(child_proposals, child->sa.st_logger);
 
+		policy_buf pb;
 		dbg("#%lu schedule %s IPsec SA %s%s using IKE# %lu pfs=%s",
 		    child->sa.st_serialno,
 		    child_being_replaced != NULL ? "rekey initiate" : "initiate",
-		    prettypolicy(p->policy),
+		    str_policy(p->policy, &pb),
 		    replacestr,
 		    ike->sa.st_serialno,
 		    child->sa.st_pfs_group == NULL ? "no-pfs" : child->sa.st_pfs_group->common.fqn);
 	} else {
+		policy_buf pb;
 		dbg("#%lu schedule initiate IKE Rekey SA %s to replace IKE# %lu",
 		    child->sa.st_serialno,
-		    prettypolicy(p->policy),
+		    str_policy(p->policy, &pb),
 		    ike->sa.st_serialno);
 	}
 

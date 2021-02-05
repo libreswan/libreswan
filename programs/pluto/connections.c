@@ -1501,12 +1501,13 @@ static bool extract_connection(const struct whack_message *wm,
 					bad_case(wm->left.authby);
 				}
 				if (conflict != NULL) {
+					policy_buf pb;
 					llog(RC_FATAL, c->logger,
-						    "failed to add connection: leftauth=%s and rightauth=%s conflict with authby=%s, %s",
-						    enum_name(&keyword_authby_names, wm->left.authby),
-						    enum_name(&keyword_authby_names, wm->right.authby),
-						    prettypolicy(wm->policy & POLICY_ID_AUTH_MASK),
-						    conflict);
+					     "failed to add connection: leftauth=%s and rightauth=%s conflict with authby=%s, %s",
+					     enum_name(&keyword_authby_names, wm->left.authby),
+					     enum_name(&keyword_authby_names, wm->right.authby),
+					     str_policy(wm->policy & POLICY_ID_AUTH_MASK, &pb),
+					     conflict);
 					return false;
 				}
 			} else {
@@ -1587,8 +1588,10 @@ static bool extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	dbg("added new connection %s with policy %s%s",
-	    c->name, prettypolicy(c->policy),
+	policy_buf pb;
+	dbg("added new %s connection %s with policy %s%s",
+	    enum_name(&ike_version_names, c->ike_version),
+	    c->name, str_policy(c->policy, &pb),
 	    NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "");
 
 	if (NEVER_NEGOTIATE(wm->policy)) {
@@ -1597,8 +1600,9 @@ static bool extract_connection(const struct whack_message *wm,
 			if ((c->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
 				/* authby= was also not specified - fill in default */
 				c->policy |= POLICY_AUTH_NEVER;
+				policy_buf pb;
 				dbg("no AUTH policy was set for type=passthrough - defaulting to %s",
-				    prettypolicy(c->policy & POLICY_ID_AUTH_MASK));
+				    str_policy(c->policy & POLICY_ID_AUTH_MASK, &pb));
 			}
 		}
 	} else {
@@ -1607,8 +1611,9 @@ static bool extract_connection(const struct whack_message *wm,
 			 if ((c->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
 				/* authby= was also not specified - fill in default */
 				c->policy |= POLICY_DEFAULT;
+				policy_buf pb;
 				dbg("no AUTH policy was set - defaulting to %s",
-				    prettypolicy(c->policy & POLICY_ID_AUTH_MASK));
+				    str_policy(c->policy & POLICY_ID_AUTH_MASK, &pb));
 			}
 		}
 
@@ -2088,6 +2093,7 @@ void add_connection(struct fd *whackfd, const struct whack_message *wm)
 			    "IKEv?");
 	/* connection is good-to-go: log against it */
 	llog(RC_LOG, c->logger, "added %s connection", what);
+	policy_buf pb;
 	dbg("ike_life: %jd; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s%s",
 	    deltasecs(c->sa_ike_life_seconds),
 	    deltasecs(c->sa_ipsec_life_seconds),
@@ -2095,7 +2101,7 @@ void add_connection(struct fd *whackfd, const struct whack_message *wm)
 	    c->sa_rekey_fuzz,
 	    c->sa_keying_tries,
 	    c->sa_replay_window,
-	    prettypolicy(c->policy),
+	    str_policy(c->policy, &pb),
 	    NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "");
 	char topo[CONN_BUF_LEN];
 	dbg("%s", format_connection(topo, sizeof(topo), c, &c->spd));
@@ -4088,11 +4094,12 @@ void show_one_connection(struct show *s,
 	}
 
 	lset_t policy = c->policy & ~(POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW);
+	policy_buf pb;
 	show_comment(s, "\"%s\"%s:   policy: %s%s%s%s%s%s%s;",
 		     c->name, instance,
 		     c->ike_version > 0 ? enum_name(&ike_version_names, c->ike_version) : "",
 		     c->ike_version > 0 && policy != LEMPTY ? "+" : "",
-		     prettypolicy(policy),
+		     str_policy(policy, &pb),
 		     NEVER_NEGOTIATE(policy) ? "+NEVER_NEGOTIATE" : "",
 		     (c->spd.this.key_from_DNS_on_demand ||
 		      c->spd.that.key_from_DNS_on_demand) ? "; " : "",

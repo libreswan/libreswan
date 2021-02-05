@@ -1173,7 +1173,8 @@ bool v2_process_ts_request(struct child_sa *child,
 				if (t->foodgroup != NULL) {
 					jam(buf, " food-group=\"%s\"", t->foodgroup);
 				}
-				jam(buf, " policy=%s", prettypolicy(t->policy & CONNECTION_POLICIES));
+				jam(buf, " policy=");
+				jam_policy(buf, t->policy & CONNECTION_POLICIES);
 			}
 
 			/*
