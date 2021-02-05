@@ -104,18 +104,23 @@ void show_kernel_alg_connection(struct show *s,
 		 * If this is NULL and PFS is required then callers fall back to using
 		 * the parent's DH algorithm.
 		 */
+		switch (c->ike_version) {
 #ifdef USE_IKEv1
-		if (LIN(POLICY_IKEV1_ALLOW, c->policy)) {
+		case IKEv1:
+		{
 			const struct dh_desc *dh = ikev1_quick_pfs(c->child_proposals);
 			if (dh != NULL) {
 				pfsbuf = dh->common.fqn;
 			} else {
 				pfsbuf = "<Phase1>";
 			}
-		} else
+			break;
+		}
 #endif
-		{
+		case IKEv2:
+		default:
 			pfsbuf = "<Phase1>";
+			break;
 		}
 	} else {
 		pfsbuf = "<N/A>";
