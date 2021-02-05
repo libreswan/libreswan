@@ -47,7 +47,7 @@ west #
 002 "westnet-eastnet-aes256" #1: Peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-aes256" #1: authenticated using RSA with SHA-1
 004 "westnet-eastnet-aes256" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-002 "westnet-eastnet-aes256" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-eastnet-aes256" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet-aes256" #2: sent Quick Mode request
 031 "westnet-eastnet-aes256" #2: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
 000 "westnet-eastnet-aes256" #2: starting keying attempt 2 of an unlimited number, but releasing whack

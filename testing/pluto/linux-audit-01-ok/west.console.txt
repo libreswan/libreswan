@@ -31,7 +31,7 @@ west #
 002 "ikev1" #1: Peer ID is ID_FQDN: '@east-v1'
 003 "ikev1" #1: authenticated using RSA with SHA-1
 004 "ikev1" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
-002 "ikev1" #2: initiating Quick Mode RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "ikev1" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "ikev1" #2: sent Quick Mode request
 004 "ikev1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP NATOA=none NATD=none DPD=passive}
 west #
@@ -49,7 +49,7 @@ west #
 002 "ikev1-aggr" #3: Peer ID is ID_FQDN: '@east-v1'
 003 "ikev1-aggr" #3: authenticated using RSA with SHA-1
 004 "ikev1-aggr" #3: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
-002 "ikev1-aggr" #4: initiating Quick Mode RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+AGGRESSIVE+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "ikev1-aggr" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO
 1v1 "ikev1-aggr" #4: sent Quick Mode request
 004 "ikev1-aggr" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP NATOA=none NATD=none DPD=passive}
 west #
