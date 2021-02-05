@@ -224,7 +224,7 @@ OBJS += $(abs_builddir)/version.o
 # build version.c using version number from Makefile.ver
 $(abs_builddir)/version.c: $(srcdir)/version.in.c $(top_srcdir)/Makefile.ver
 	rm -f $@.tmp
-	sed -e '/"/s/@IPSECVERSION@/$(IPSECVERSION)/' \
+	sed -e '/"/s/@IPSECVERSION@/$(subst /,\/,$(IPSECVERSION))/' \
 	    -e '/"/s/@IPSECVIDVERSION@/$(IPSECVIDVERSION)/' \
 	    $(srcdir)/version.in.c \
 	    > $@.tmp
