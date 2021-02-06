@@ -35,6 +35,7 @@ SUBDIRS += algparse
 SUBDIRS += auto
 SUBDIRS += barf
 SUBDIRS += cavp
+SUBDIRS += ecdsasigkey
 SUBDIRS += ipsec
 SUBDIRS += letsencrypt
 SUBDIRS += look
