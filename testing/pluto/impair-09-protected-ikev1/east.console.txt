@@ -161,7 +161,7 @@ east #
 |    protocol ID: 3 (03)
 |    SPI size: 4 (04)
 |    number of SPIs: 1 (00 01)
-"westnet-eastnet" #6: message for STATE_INFO_PROTECTED is missing payloads ISAKMP_NEXT_HASH
+"westnet-eastnet" #6: message for STATE_INFO_PROTECTED is missing payloads HASH
 -- start message (D)
 |    next payload type: ISAKMP_NEXT_D (0xc)
 | ***parse ISAKMP Delete Payload:
@@ -171,7 +171,7 @@ east #
 |    protocol ID: 1 (01)
 |    SPI size: 16 (10)
 |    number of SPIs: 1 (00 01)
-"westnet-eastnet" #6: message for STATE_INFO_PROTECTED is missing payloads ISAKMP_NEXT_HASH
+"westnet-eastnet" #6: message for STATE_INFO_PROTECTED is missing payloads HASH
 -- start message (ID)
 |    next payload type: ISAKMP_NEXT_ID (0x5)
 | ***parse ISAKMP Signature Payload:

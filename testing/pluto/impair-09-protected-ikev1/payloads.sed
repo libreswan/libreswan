@@ -33,7 +33,7 @@
 /^[^|].* authenticated using RSA/ {G;p}
 /received .* message HASH[^ ]* data / {G;p}
 /received .* message SIG[^ ]* data / {G;p}
-/^[^|].* message for STATE_INFO_PROTECTED is missing payloads ISAKMP_NEXT_HASH/ {G;p}
+/^[^|].* message for STATE_INFO_PROTECTED is missing payloads HASH/ {G;p}
 /received Hash Payload does not match computed value/ {G;p}
 /Informational Exchange is for an unknown/ {
 	s/MSGID:0x.*/MSGID:0x..../
