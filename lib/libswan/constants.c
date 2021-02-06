@@ -159,12 +159,13 @@ enum_names version_names = {
  */
 
 static const char *const ike_version_name[] = {
+	"<do-not-negotiate>",
 	"IKEv1",
 	"IKEv2",
 };
 
 enum_names ike_version_names = {
-	IKEv1, IKEv2,
+	0, IKEv2,
 	ARRAY_REF(ike_version_name),
 	"IKE", /* prefix */
 	NULL,
@@ -2556,6 +2557,10 @@ static const enum_names *en_checklist[] = {
 	&ikev2_ppk_id_type_names,
 	&ikev2_redirect_gw_names,
 	&ip_protocol_id_names,
+	&ike_version_names,
+	&ike_version_liveness_names,
+	&ike_version_ike_names,
+	&ike_version_child_names,
 };
 
 void check_enum_names(enum_names *checklist[], size_t tl)
