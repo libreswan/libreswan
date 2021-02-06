@@ -285,8 +285,7 @@ static const char *trans_type_name(enum ikev2_trans_type type)
 
 static void jam_trans_types(struct jambuf *buf, lset_t types)
 {
-	jam_enum_lset_short(buf, &ikev2_trans_type_names,
-			    "+", types);
+	jam_lset_short(buf, &ikev2_trans_type_names, "+", types);
 }
 
 /* <TRANSFORM-TYPE> "=" <TRANSFORM> */

@@ -142,8 +142,6 @@ OBJS += jam_nss_ckf.o
 OBJS += jam_nss_cka.o
 OBJS += jam_nss_secitem.o
 
-OBJS += lswlog_enum_lset_short.o
-
 # Crypto code:
 
 OBJS += test_buffer.o

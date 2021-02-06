@@ -306,28 +306,28 @@ void log_v2_payload_errors(struct logger *logger, struct msg_digest *md,
 		}
 		if (md->message_payloads.parsed) {
 			jam(buf, "; message payloads: ");
-			jam_enum_lset_short(buf, &ikev2_payload_names, ",",
-					    md->message_payloads.present);
+			jam_lset_short(buf, &ikev2_payload_names, ",",
+				       md->message_payloads.present);
 		}
 		if (md->encrypted_payloads.parsed) {
 			jam(buf, "; encrypted payloads: ");
-			jam_enum_lset_short(buf, &ikev2_payload_names, ",",
-					       md->encrypted_payloads.present);
+			jam_lset_short(buf, &ikev2_payload_names, ",",
+				       md->encrypted_payloads.present);
 		}
 		if (errors->missing != LEMPTY) {
 			jam(buf, "; missing payloads: ");
-			jam_enum_lset_short(buf, &ikev2_payload_names, ",",
-					    errors->missing);
+			jam_lset_short(buf, &ikev2_payload_names, ",",
+				       errors->missing);
 		}
 		if (errors->unexpected != LEMPTY) {
 			jam(buf, "; unexpected payloads: ");
-			jam_enum_lset_short(buf, &ikev2_payload_names, ",",
-					    errors->unexpected);
+			jam_lset_short(buf, &ikev2_payload_names, ",",
+				       errors->unexpected);
 		}
 		if (errors->excessive != LEMPTY) {
 			jam(buf, "; excessive payloads: ");
-			jam_enum_lset_short(buf, &ikev2_payload_names, ",",
-					       errors->excessive);
+			jam_lset_short(buf, &ikev2_payload_names, ",",
+				       errors->excessive);
 		}
 		if (errors->notification != v2N_NOTHING_WRONG) {
 			jam(buf, "; missing notification ");

@@ -100,3 +100,45 @@ const char *bitnamesofb(const char *const table[], lset_t val,
 	}
 	return b;
 }
+
+size_t jam_lset(struct jambuf *buf, enum_names *en,
+		const char *separator, lset_t val)
+{
+	if (val == LEMPTY) {
+		return jam(buf, "none");
+	}
+
+	size_t s = 0;
+	const char *sep = "";
+	for (unsigned e = 0; val != 0; e++) {
+		lset_t bit = LELEM(e);
+		if (val & bit) {
+			s += jam_string(buf, sep);
+			sep = separator;
+			s += jam_enum(buf, en, e);
+			val ^= bit;
+		}
+	}
+	return s;
+}
+
+size_t jam_lset_short(struct jambuf *buf, enum_names *en,
+		      const char *separator, lset_t val)
+{
+	if (val == LEMPTY) {
+		return jam(buf, "none");
+	}
+
+	size_t s = 0;
+	const char *sep = "";
+	for (unsigned e = 0; val != 0; e++) {
+		lset_t bit = LELEM(e);
+		if (val & bit) {
+			s += jam_string(buf, sep);
+			sep = separator;
+			s += jam_enum_short(buf, en, e);
+			val ^= bit;
+		}
+	}
+	return s;
+}

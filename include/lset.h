@@ -63,7 +63,9 @@ extern const char *bitnamesofb(const char *const table[],
 			       lset_t val,
 			       char *buf, size_t blen);
 
-size_t jam_enum_lset_short(struct jambuf *, const struct enum_names *sd,
-			      const char *separator, lset_t val);
+size_t jam_lset(struct jambuf *, const struct enum_names *sd,
+		const char *separator, lset_t val);
+size_t jam_lset_short(struct jambuf *, const struct enum_names *sd,
+		      const char *separator, lset_t val);
 
 #endif /* CONSTANTS_H */

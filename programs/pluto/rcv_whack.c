@@ -423,15 +423,15 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 				set_debugging(cur_debugging | new_debugging);
 				LSWDBGP(DBG_BASE, buf) {
 					jam(buf, "old debugging ");
-					jam_enum_lset_short(buf, &debug_names,
-							    "+", old_debugging);
+					jam_lset_short(buf, &debug_names,
+						       "+", old_debugging);
 					jam(buf, " + ");
 					jam_lmod(buf, &debug_names, "+", m->debugging);
 				}
 				LSWDBGP(DBG_BASE, buf) {
 					jam(buf, "new debugging = ");
-					jam_enum_lset_short(buf, &debug_names,
-							    "+", new_debugging);
+					jam_lset_short(buf, &debug_names,
+						       "+", new_debugging);
 				}
 				set_debugging(new_debugging);
 				for (unsigned i = 0; i < m->nr_impairments; i++) {

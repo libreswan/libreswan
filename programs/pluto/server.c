@@ -909,8 +909,8 @@ void show_debug_status(struct show *s)
 		jam(buf, "debug:");
 		if (cur_debugging & DBG_MASK) {
 			jam(buf, " ");
-			jam_enum_lset_short(buf, &debug_names,
-					    "+", cur_debugging & DBG_MASK);
+			jam_lset_short(buf, &debug_names, "+",
+				       cur_debugging & DBG_MASK);
 		}
 		if (have_impairments()) {
 			jam(buf, " impair: ");

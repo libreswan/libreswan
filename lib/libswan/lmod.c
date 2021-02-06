@@ -122,10 +122,10 @@ size_t jam_lmod(struct jambuf *buf, enum_names *names,
 		const char *separator, lmod_t mod)
 {
 	size_t s = 0;
-	s += jam_enum_lset_short(buf, names, separator, mod.set);
+	s += jam_lset_short(buf, names, separator, mod.set);
 	if (mod.clr != LEMPTY) {
 		s += jam(buf, " - ");
-		s += jam_enum_lset_short(buf, names, separator, mod.clr);
+		s += jam_lset_short(buf, names, separator, mod.clr);
 	}
 	return s;
 }

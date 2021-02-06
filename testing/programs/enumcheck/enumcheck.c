@@ -277,7 +277,7 @@ static void test_enum_lset(const char *name, const enum_names *en, lset_t val)
 	{
 		char scratch[100];
 		struct jambuf buf = ARRAY_AS_JAMBUF(scratch);
-		jam_enum_lset_short(&buf, en, "+", val);
+		jam_lset_short(&buf, en, "+", val);
 		printf(PRI_SHUNK, pri_shunk(jambuf_as_shunk(&buf)));
 	}
 	printf(">>");
