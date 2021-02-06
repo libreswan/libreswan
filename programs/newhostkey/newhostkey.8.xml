@@ -29,6 +29,8 @@
     <arg choice='opt'>--nssdir<replaceable>nssdir</replaceable></arg>
     <arg choice='opt'>--password <replaceable>password</replaceable></arg>
     <arg choice='opt'>--bits <replaceable>bits</replaceable></arg>
+    <arg choice='opt'>--curve <replaceable>curve</replaceable></arg>
+    <arg choice='opt'>--keytype <replaceable>rsa|ecdsa</replaceable></arg>
     <arg choice='opt'>--seeddev <replaceable>device</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -84,6 +86,21 @@
 	  number of bits in the RSA key; the current default is a
 	  random (multiple of 16) value between 3072 and 4096. The
 	  minimum allowed is 2192.  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>--curve</option>&nbsp;<replaceable>curve</replaceable></term>
+	<listitem>
+	  <para>The <option>--curve</option> option specifies the
+	  named curve used in the ECDSA key; the current default is secp256r1. See <citerefentry><refentrytitle>ipsec_ecdsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry> for the available curve names. </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>--keytype</option>&nbsp;<replaceable>rsa|ecdsa</replaceable></term>
+	<listitem>
+	  <para>The <option>--keytype</option> option specifies the type of key, which can either be <emphasis remap='I'>rsa</emphasis> (RSA) or <emphasis remap='I'>ecdsa</emphasis> (ECDSA); if omitted the current default is <emphasis remap='I'>rsa</emphasis>. </para>
 	</listitem>
       </varlistentry>
 
