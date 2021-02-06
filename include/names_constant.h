@@ -50,7 +50,6 @@ extern enum_enum_names payload_type_names;
 extern enum_names ikev2_last_proposal_desc;
 extern enum_names ikev2_last_transform_desc;
 extern enum_names payload_names_ikev1orv2;
-extern const char *const payload_name_ikev1[];	/* suitable for bitnamesof() */
 extern enum_names attr_msg_type_names;
 extern enum_names modecfg_attr_names;
 extern enum_names xauth_type_names;
