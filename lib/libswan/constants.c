@@ -196,8 +196,8 @@ enum_names ike_version_child_names = {
 };
 
 static const char *const ike_version_ike_name[] = {
-	"IKE",
 	"ISAKMP",
+	"IKE",
 };
 
 enum_names ike_version_ike_names = {
