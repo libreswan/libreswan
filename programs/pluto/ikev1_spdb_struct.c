@@ -510,8 +510,9 @@ struct db_sa *v1_kernel_alg_makedb(lset_t policy,
 	if (proposals.p == NULL) {
 		lset_t pm = policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE);
 
+		policy_buf pb;
 		dbg("empty esp_info, returning defaults for %s",
-		    bitnamesof(sa_policy_bit_names, pm));
+		    str_policy(pm, &pb));
 
 		/* make copy, to keep from freeing the static policies */
 		const struct db_sa *db = &ipsec_sadb[pm >> POLICY_IPSEC_SHIFT];

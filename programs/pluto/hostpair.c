@@ -621,11 +621,12 @@ struct connection *find_host_connection(enum ike_version ike_version,
 {
 	endpoint_buf lb;
 	endpoint_buf rb;
+	policy_buf pb;
 	dbg("find_host_connection %s local=%s remote=%s policy=%s but ignoring ports",
 	    enum_name(&ike_version_names, ike_version),
 	    str_endpoint(local_endpoint, &lb),
 	    str_endpoint(remote_endpoint, &rb),
-	    bitnamesof(sa_policy_bit_names, req_policy));
+	    str_policy(req_policy, &pb));
 
 	/* strip port */
 	ip_address local_address = endpoint_address(local_endpoint);
@@ -661,12 +662,14 @@ struct connection *find_next_host_connection(enum ike_version ike_version,
 					     struct connection *c,
 					     lset_t req_policy, lset_t policy_exact_mask)
 {
+	policy_buf pb;
 	dbg("find_next_host_connection policy=%s",
-	    bitnamesof(sa_policy_bit_names, req_policy));
+	    str_policy(req_policy, &pb));
 
 	for (; c != NULL; c = c->hp_next) {
+		policy_buf fb;
 		dbg("found policy = %s (%s)",
-		    bitnamesof(sa_policy_bit_names, c->policy),
+		    str_policy(c->policy, &fb),
 		    c->name);
 
 		if (NEVER_NEGOTIATE(c->policy)) {
@@ -781,11 +784,12 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 
 		if (c == NULL) {
 			endpoint_buf b;
+			policy_buf pb;
 			dbgl(md->md_logger,
 			     "%s message received on %s but no connection has been authorized with policy %s",
 			     enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
 			     str_endpoint(local_endpoint, &b),
-			     bitnamesof(sa_policy_bit_names, policy));
+			     str_policy(policy, &pb));
 			*send_reject_response = true;
 			return NULL;
 		}
@@ -896,10 +900,11 @@ struct connection *find_v2_host_pair_connection(struct msg_digest *md, lset_t *p
 	passert(c != NULL);	/* (e != STF_OK) == (c == NULL) */
 
 	connection_buf ci;
+	policy_buf pb;
 	dbgl(md->md_logger,
 	     "found connection: "PRI_CONNECTION" with policy %s",
 	     pri_connection(c, &ci),
-	     bitnamesof(sa_policy_bit_names, *policy));
+	     str_policy(*policy, &pb));
 
 	/*
 	 * Did we overlook a type=passthrough foodgroup?

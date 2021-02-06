@@ -206,61 +206,67 @@ enum_names stf_status_names = {
 
 /*
  * Names for sa_policy_bits.
- * Note: we drop the POLICY_ prefix so that logs are more concise.
  */
-const char *const sa_policy_bit_names[] = {
-	"PSK",
-	"RSASIG",
-	"ECDSA",
-	"AUTH_NEVER",
-	"AUTHNULL",
-	"ENCRYPT",
-	"AUTHENTICATE",
-	"COMPRESS",
-	"TUNNEL",
-	"PFS",
-	"DECAP_DSCP",
-	"NOPMTUDISC",
-	"MSDH_DOWNGRADE",
-	"ALLOW_NO_SAN",
-	"DNS_MATCH_ID",
-	"SHA2_TRUNCBUG",
-	"SHUNT0",
-	"SHUNT1",
-	"FAIL0",
-	"FAIL1",
-	"NEGO_PASS",
-	"DONT_REKEY",
-	"REAUTH",
-	"OPPORTUNISTIC",
-	"GROUP",
-	"GROUTED",
-	"GROUPINSTANCE",
-	"UP",
-	"XAUTH",
-	"MODECFG_PULL",
-	"AGGRESSIVE",
-	"OVERLAPIP",
-	"IKEV1_ALLOW",
-	"IKEV2_ALLOW",
-	"IKEV2_ALLOW_NARROWING",
-	"IKEV2_PAM_AUTHORIZE",
-	"SEND_REDIRECT_ALWAYS",
-	"SEND_REDIRECT_NEVER",
-	"ACCEPT_REDIRECT_YES",
-	"IKE_FRAG_ALLOW",
-	"IKE_FRAG_FORCE",
-	"NO_IKEPAD",
-	"MOBIKE",
-	"PPK_ALLOW",
-	"PPK_INSIST",
-	"ESN_NO",
-	"ESN_YES",
-	"INTERMEDIATE",
-	"IGNORE_PEER_DNS",
-	"RSASIG_v1_5",
-	NULL	/* end for bitnamesof() */
+static const char *const sa_policy_bit_name[] = {
+	"POLICY_PSK",
+	"POLICY_RSASIG",
+	"POLICY_ECDSA",
+	"POLICY_AUTH_NEVER",
+	"POLICY_AUTHNULL",
+	"POLICY_ENCRYPT",
+	"POLICY_AUTHENTICATE",
+	"POLICY_COMPRESS",
+	"POLICY_TUNNEL",
+	"POLICY_PFS",
+	"POLICY_DECAP_DSCP",
+	"POLICY_NOPMTUDISC",
+	"POLICY_MSDH_DOWNGRADE",
+	"POLICY_ALLOW_NO_SAN",
+	"POLICY_DNS_MATCH_ID",
+	"POLICY_SHA2_TRUNCBUG",
+	"POLICY_SHUNT0",
+	"POLICY_SHUNT1",
+	"POLICY_FAIL0",
+	"POLICY_FAIL1",
+	"POLICY_NEGO_PASS",
+	"POLICY_DONT_REKEY",
+	"POLICY_REAUTH",
+	"POLICY_OPPORTUNISTIC",
+	"POLICY_GROUP",
+	"POLICY_GROUTED",
+	"POLICY_GROUPINSTANCE",
+	"POLICY_UP",
+	"POLICY_XAUTH",
+	"POLICY_MODECFG_PULL",
+	"POLICY_AGGRESSIVE",
+	"POLICY_OVERLAPIP",
+	"POLICY_IKEV1_ALLOW",
+	"POLICY_IKEV2_ALLOW",
+	"POLICY_IKEV2_ALLOW_NARROWING",
+	"POLICY_IKEV2_PAM_AUTHORIZE",
+	"POLICY_SEND_REDIRECT_ALWAYS",
+	"POLICY_SEND_REDIRECT_NEVER",
+	"POLICY_ACCEPT_REDIRECT_YES",
+	"POLICY_IKE_FRAG_ALLOW",
+	"POLICY_IKE_FRAG_FORCE",
+	"POLICY_NO_IKEPAD",
+	"POLICY_MOBIKE",
+	"POLICY_PPK_ALLOW",
+	"POLICY_PPK_INSIST",
+	"POLICY_ESN_NO",
+	"POLICY_ESN_YES",
+	"POLICY_INTERMEDIATE",
+	"POLICY_IGNORE_PEER_DNS",
+	"POLICY_RSASIG_v1_5",
 };
+
+static const enum_names sa_policy_bit_names = {
+	0, POLICY_IX_LAST,
+	ARRAY_REF(sa_policy_bit_name),
+	"POLICY_", /* prefix */
+	NULL
+};
+
 
 /*
  * Names for RFC 7427 IKEv2 AUTH signature hash algo sighash_policy_bits
@@ -387,22 +393,23 @@ enum_names perspective_names = {
 size_t jam_policy(struct jambuf *buf, lset_t policy)
 {
 	size_t s = 0;
-	char pbitnamesbuf[200];
-	const char *bn = bitnamesofb(sa_policy_bit_names,
-				     policy & ~(POLICY_SHUNT_MASK | POLICY_FAIL_MASK),
-				     pbitnamesbuf, sizeof(pbitnamesbuf));
-	if (bn == pbitnamesbuf) {
-		/* ok */
-		s += jam_string(buf, pbitnamesbuf);
+
+	lset_t other = policy & ~(POLICY_SHUNT_MASK | POLICY_FAIL_MASK);
+	const char *sep = "";
+	if (other != LEMPTY) {
+		s += jam_lset_short(buf, &sa_policy_bit_names, "+", other);
+		sep = "+";
 	}
 
 	lset_t shunt = (policy & POLICY_SHUNT_MASK);
 	if (shunt != POLICY_SHUNT_TRAP) {
-		s += jam(buf, "+%s", policy_shunt_names[shunt >> POLICY_SHUNT_SHIFT]);
+		s += jam(buf, "%s%s", sep, policy_shunt_names[shunt >> POLICY_SHUNT_SHIFT]);
+		sep = "+";
 	}
 	lset_t fail = (policy & POLICY_FAIL_MASK);
 	if (fail != POLICY_FAIL_NONE) {
-		s += jam(buf, "+failure%s", policy_fail_names[fail >> POLICY_FAIL_SHIFT]);
+		s += jam(buf, "%sfailure%s", sep, policy_fail_names[fail >> POLICY_FAIL_SHIFT]);
+		sep = "+";
 	}
 	return s;
 }
@@ -428,6 +435,7 @@ static const enum_names *pluto_enum_names_checklist[] = {
 	&v1_sa_type_names,
 	&v2_sa_type_names,
 	&perspective_names,
+	&sa_policy_bit_names,
 };
 
 void init_pluto_constants(void) {

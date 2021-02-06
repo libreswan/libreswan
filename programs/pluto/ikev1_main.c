@@ -580,9 +580,10 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		}
 
 		if (c == NULL) {
+			policy_buf pb;
 			llog(RC_LOG_SERIOUS, md->md_logger,
 			     "initial Main Mode message received but no connection has been authorized with policy %s",
-			     bitnamesof(sa_policy_bit_names, policy));
+			     str_policy(policy, &pb));
 			/* XXX notification is in order! */
 			return STF_IGNORE;
 		}

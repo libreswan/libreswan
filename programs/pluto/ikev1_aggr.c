@@ -141,11 +141,11 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 					 policy, policy_exact_mask);
 		if (c == NULL) {
 			endpoint_buf b;
-
+			policy_buf pb;
 			llog(RC_LOG_SERIOUS, md->md_logger,
 			     "initial Aggressive Mode message from %s but no (wildcard) connection has been configured with policy %s",
 			     str_endpoint(&md->sender, &b),
-			     bitnamesof(sa_policy_bit_names, policy));
+			     str_policy(policy, &pb));
 			/* XXX notification is in order! */
 			return STF_IGNORE;
 		}

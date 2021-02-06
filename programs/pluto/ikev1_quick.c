@@ -793,8 +793,9 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 		lset_t pm = st->st_policy & (POLICY_ENCRYPT |
 					     POLICY_AUTHENTICATE |
 					     (can_do_IPcomp ? POLICY_COMPRESS : 0));
+		policy_buf pb;
 		dbg("emitting quick defaults using policy %s",
-		     bitnamesof(sa_policy_bit_names, pm));
+		    str_policy(pm, &pb));
 
 		if (!ikev1_out_sa(&rbody,
 				  &ipsec_sadb[pm >> POLICY_IPSEC_SHIFT],
