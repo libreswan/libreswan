@@ -223,7 +223,8 @@ static int pick_by_ckaid(struct secret *secret UNUSED,
 			 void *uservoid)
 {
 	char *start = (char *)uservoid;
-	if (pks->kind == PKK_RSA && ckaid_starts_with(&pks->ckaid, start)) {
+	if ((pks->kind == PKK_RSA || pks->kind == PKK_ECDSA) &&
+	    ckaid_starts_with(&pks->ckaid, start)) {
 		/* stop */
 		return 0;
 	} else {
@@ -294,7 +295,7 @@ static int show_dnskey(struct private_key_stuff *pks,
 static int show_confkey(struct private_key_stuff *pks,
 			char *side)
 {
-	if (pks->kind != PKK_RSA) {
+	if (pks->kind != PKK_RSA && pks->kind != PKK_ECDSA) {
 		char *enumstr = "gcc is crazy";
 		switch (pks->kind) {
 		case PKK_PSK:
@@ -316,11 +317,25 @@ static int show_confkey(struct private_key_stuff *pks,
 		return 5;
 	}
 
-	printf("\t# rsakey %s\n",
-	       pks->keyid.keyid);
-	printf("\t%srsasigkey=%s\n", side,
-	       base64);
-	pfree(base64);
+	switch (pks->kind) {
+	case PKK_RSA:
+		printf("\t# rsakey %s\n",
+		       pks->keyid.keyid);
+		printf("\t%srsasigkey=%s\n", side,
+		       base64);
+		pfree(base64);
+		break;
+	case PKK_ECDSA:
+		printf("\t# ecdsakey %s\n",
+		       pks->keyid.keyid);
+		printf("\t%secdsasigkey=%s\n", side,
+		       base64);
+		pfree(base64);
+		break;
+	default:
+		passert(FALSE);
+	}
+
 	return 0;
 }
 
