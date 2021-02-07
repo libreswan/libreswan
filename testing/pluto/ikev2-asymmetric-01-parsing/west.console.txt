@@ -248,13 +248,13 @@ west #
 000 "test9":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
 000 "test9":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "testmanual1":   our auth:secret, their auth:rsasig
-000 "testmanual1":   policy: IKEv2+ENCRYPT+;
+000 "testmanual1":   policy: IKEv2+ENCRYPT;
 000 "testmanual1":   v2-auth-hash-policy: none;
 000 "testmanual2":   our auth:null, their auth:rsasig
-000 "testmanual2":   policy: IKEv2+RSASIG+ENCRYPT+;
+000 "testmanual2":   policy: IKEv2+RSASIG+ENCRYPT;
 000 "testmanual2":   v2-auth-hash-policy: none;
 000 "testmanual3":   our auth:secret, their auth:secret
-000 "testmanual3":   policy: IKEv2+PSK+ENCRYPT+;
+000 "testmanual3":   policy: IKEv2+PSK+ENCRYPT;
 000 "testmanual3":   v2-auth-hash-policy: none;
 west #
  echo done
