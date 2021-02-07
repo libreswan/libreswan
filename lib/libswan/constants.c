@@ -241,7 +241,7 @@ enum_names connection_kind_names = {
 };
 
 /* Payload types (RFC 2408 "ISAKMP" section 3.1) */
-const char *const payload_name_ikev1[] = {
+static const char *const payload_name_ikev1[] = {
 	"ISAKMP_NEXT_NONE",
 	"ISAKMP_NEXT_SA",	/* 1 */
 	"ISAKMP_NEXT_P",
@@ -265,7 +265,6 @@ const char *const payload_name_ikev1[] = {
 	"ISAKMP_NEXT_NATD_RFC",
 	"ISAKMP_NEXT_NATOA_RFC",
 	"ISAKMP_NEXT_GAP",
-	NULL	/* termination for bitnamesof() */
 };
 
 static const char *const payload_name_ikev1_private_use[] = {
@@ -280,15 +279,15 @@ static enum_names payload_names_ikev1_private_use = {
 	ISAKMP_NEXT_NATD_DRAFTS,
 	ISAKMP_NEXT_IKE_FRAGMENTATION,
 	ARRAY_REF(payload_name_ikev1_private_use),
-	NULL, /* prefix */
+	"ISAKMP_NEXT_", /* prefix */
 	NULL
 };
 
 enum_names ikev1_payload_names = {
 	ISAKMP_NEXT_NONE,
 	ISAKMP_NEXT_GAP,
-	ARRAY_REF(payload_name_ikev1)-1,	/* don't count NULL */
-	NULL, /* prefix */
+	ARRAY_REF(payload_name_ikev1),
+	"ISAKMP_NEXT_", /* prefix */
 	&payload_names_ikev1_private_use
 };
 
@@ -367,7 +366,7 @@ static enum_names payload_names_ikev2copy_main = {
 enum_names payload_names_ikev1orv2 = {
 	ISAKMP_NEXT_NONE,
 	ISAKMP_NEXT_GAP,
-	ARRAY_REF(payload_name_ikev1)-1,
+	ARRAY_REF(payload_name_ikev1),
 	NULL, /* prefix */
 	&payload_names_ikev2copy_main
 };

@@ -98,158 +98,184 @@ IETF registry enum_names:
          jam_enum 0: ISAKMP_NEXT_NONE OK
          search ISAKMP_NEXT_NONE: OK
          match ISAKMP_NEXT_NONE: OK
-         short_name 0: ISAKMP_NEXT_NONE OK
-         jam_enum_short 0: ISAKMP_NEXT_NONE OK
+         short_name 0: NONE OK
+         jam_enum_short 0: NONE OK
+         match NONE [short]: OK
     1 -> ISAKMP_NEXT_SA
          jam_enum 1: ISAKMP_NEXT_SA OK
          search ISAKMP_NEXT_SA: OK
          match ISAKMP_NEXT_SA: OK
-         short_name 1: ISAKMP_NEXT_SA OK
-         jam_enum_short 1: ISAKMP_NEXT_SA OK
+         short_name 1: SA OK
+         jam_enum_short 1: SA OK
+         match SA [short]: OK
     2 -> ISAKMP_NEXT_P
          jam_enum 2: ISAKMP_NEXT_P OK
          search ISAKMP_NEXT_P: OK
          match ISAKMP_NEXT_P: OK
-         short_name 2: ISAKMP_NEXT_P OK
-         jam_enum_short 2: ISAKMP_NEXT_P OK
+         short_name 2: P OK
+         jam_enum_short 2: P OK
+         match P [short]: OK
     3 -> ISAKMP_NEXT_T
          jam_enum 3: ISAKMP_NEXT_T OK
          search ISAKMP_NEXT_T: OK
          match ISAKMP_NEXT_T: OK
-         short_name 3: ISAKMP_NEXT_T OK
-         jam_enum_short 3: ISAKMP_NEXT_T OK
+         short_name 3: T OK
+         jam_enum_short 3: T OK
+         match T [short]: OK
     4 -> ISAKMP_NEXT_KE
          jam_enum 4: ISAKMP_NEXT_KE OK
          search ISAKMP_NEXT_KE: OK
          match ISAKMP_NEXT_KE: OK
-         short_name 4: ISAKMP_NEXT_KE OK
-         jam_enum_short 4: ISAKMP_NEXT_KE OK
+         short_name 4: KE OK
+         jam_enum_short 4: KE OK
+         match KE [short]: OK
     5 -> ISAKMP_NEXT_ID
          jam_enum 5: ISAKMP_NEXT_ID OK
          search ISAKMP_NEXT_ID: OK
          match ISAKMP_NEXT_ID: OK
-         short_name 5: ISAKMP_NEXT_ID OK
-         jam_enum_short 5: ISAKMP_NEXT_ID OK
+         short_name 5: ID OK
+         jam_enum_short 5: ID OK
+         match ID [short]: OK
     6 -> ISAKMP_NEXT_CERT
          jam_enum 6: ISAKMP_NEXT_CERT OK
          search ISAKMP_NEXT_CERT: OK
          match ISAKMP_NEXT_CERT: OK
-         short_name 6: ISAKMP_NEXT_CERT OK
-         jam_enum_short 6: ISAKMP_NEXT_CERT OK
+         short_name 6: CERT OK
+         jam_enum_short 6: CERT OK
+         match CERT [short]: OK
     7 -> ISAKMP_NEXT_CR
          jam_enum 7: ISAKMP_NEXT_CR OK
          search ISAKMP_NEXT_CR: OK
          match ISAKMP_NEXT_CR: OK
-         short_name 7: ISAKMP_NEXT_CR OK
-         jam_enum_short 7: ISAKMP_NEXT_CR OK
+         short_name 7: CR OK
+         jam_enum_short 7: CR OK
+         match CR [short]: OK
     8 -> ISAKMP_NEXT_HASH
          jam_enum 8: ISAKMP_NEXT_HASH OK
          search ISAKMP_NEXT_HASH: OK
          match ISAKMP_NEXT_HASH: OK
-         short_name 8: ISAKMP_NEXT_HASH OK
-         jam_enum_short 8: ISAKMP_NEXT_HASH OK
+         short_name 8: HASH OK
+         jam_enum_short 8: HASH OK
+         match HASH [short]: OK
     9 -> ISAKMP_NEXT_SIG
          jam_enum 9: ISAKMP_NEXT_SIG OK
          search ISAKMP_NEXT_SIG: OK
          match ISAKMP_NEXT_SIG: OK
-         short_name 9: ISAKMP_NEXT_SIG OK
-         jam_enum_short 9: ISAKMP_NEXT_SIG OK
+         short_name 9: SIG OK
+         jam_enum_short 9: SIG OK
+         match SIG [short]: OK
    10 -> ISAKMP_NEXT_NONCE
          jam_enum 10: ISAKMP_NEXT_NONCE OK
          search ISAKMP_NEXT_NONCE: OK
          match ISAKMP_NEXT_NONCE: OK
-         short_name 10: ISAKMP_NEXT_NONCE OK
-         jam_enum_short 10: ISAKMP_NEXT_NONCE OK
+         short_name 10: NONCE OK
+         jam_enum_short 10: NONCE OK
+         match NONCE [short]: OK
    11 -> ISAKMP_NEXT_N
          jam_enum 11: ISAKMP_NEXT_N OK
          search ISAKMP_NEXT_N: OK
          match ISAKMP_NEXT_N: OK
-         short_name 11: ISAKMP_NEXT_N OK
-         jam_enum_short 11: ISAKMP_NEXT_N OK
+         short_name 11: N OK
+         jam_enum_short 11: N OK
+         match N [short]: OK
    12 -> ISAKMP_NEXT_D
          jam_enum 12: ISAKMP_NEXT_D OK
          search ISAKMP_NEXT_D: OK
          match ISAKMP_NEXT_D: OK
-         short_name 12: ISAKMP_NEXT_D OK
-         jam_enum_short 12: ISAKMP_NEXT_D OK
+         short_name 12: D OK
+         jam_enum_short 12: D OK
+         match D [short]: OK
    13 -> ISAKMP_NEXT_VID
          jam_enum 13: ISAKMP_NEXT_VID OK
          search ISAKMP_NEXT_VID: OK
          match ISAKMP_NEXT_VID: OK
-         short_name 13: ISAKMP_NEXT_VID OK
-         jam_enum_short 13: ISAKMP_NEXT_VID OK
+         short_name 13: VID OK
+         jam_enum_short 13: VID OK
+         match VID [short]: OK
    14 -> ISAKMP_NEXT_MODECFG
          jam_enum 14: ISAKMP_NEXT_MODECFG OK
          search ISAKMP_NEXT_MODECFG: OK
          match ISAKMP_NEXT_MODECFG: OK
-         short_name 14: ISAKMP_NEXT_MODECFG OK
-         jam_enum_short 14: ISAKMP_NEXT_MODECFG OK
+         short_name 14: MODECFG OK
+         jam_enum_short 14: MODECFG OK
+         match MODECFG [short]: OK
    15 -> ISAKMP_NEXT_SAK
          jam_enum 15: ISAKMP_NEXT_SAK OK
          search ISAKMP_NEXT_SAK: OK
          match ISAKMP_NEXT_SAK: OK
-         short_name 15: ISAKMP_NEXT_SAK OK
-         jam_enum_short 15: ISAKMP_NEXT_SAK OK
+         short_name 15: SAK OK
+         jam_enum_short 15: SAK OK
+         match SAK [short]: OK
    16 -> ISAKMP_NEXT_TEK
          jam_enum 16: ISAKMP_NEXT_TEK OK
          search ISAKMP_NEXT_TEK: OK
          match ISAKMP_NEXT_TEK: OK
-         short_name 16: ISAKMP_NEXT_TEK OK
-         jam_enum_short 16: ISAKMP_NEXT_TEK OK
+         short_name 16: TEK OK
+         jam_enum_short 16: TEK OK
+         match TEK [short]: OK
    17 -> ISAKMP_NEXT_KD
          jam_enum 17: ISAKMP_NEXT_KD OK
          search ISAKMP_NEXT_KD: OK
          match ISAKMP_NEXT_KD: OK
-         short_name 17: ISAKMP_NEXT_KD OK
-         jam_enum_short 17: ISAKMP_NEXT_KD OK
+         short_name 17: KD OK
+         jam_enum_short 17: KD OK
+         match KD [short]: OK
    18 -> ISAKMP_NEXT_SEQ
          jam_enum 18: ISAKMP_NEXT_SEQ OK
          search ISAKMP_NEXT_SEQ: OK
          match ISAKMP_NEXT_SEQ: OK
-         short_name 18: ISAKMP_NEXT_SEQ OK
-         jam_enum_short 18: ISAKMP_NEXT_SEQ OK
+         short_name 18: SEQ OK
+         jam_enum_short 18: SEQ OK
+         match SEQ [short]: OK
    19 -> ISAKMP_NEXT_POP
          jam_enum 19: ISAKMP_NEXT_POP OK
          search ISAKMP_NEXT_POP: OK
          match ISAKMP_NEXT_POP: OK
-         short_name 19: ISAKMP_NEXT_POP OK
-         jam_enum_short 19: ISAKMP_NEXT_POP OK
+         short_name 19: POP OK
+         jam_enum_short 19: POP OK
+         match POP [short]: OK
    20 -> ISAKMP_NEXT_NATD_RFC
          jam_enum 20: ISAKMP_NEXT_NATD_RFC OK
          search ISAKMP_NEXT_NATD_RFC: OK
          match ISAKMP_NEXT_NATD_RFC: OK
-         short_name 20: ISAKMP_NEXT_NATD_RFC OK
-         jam_enum_short 20: ISAKMP_NEXT_NATD_RFC OK
+         short_name 20: NATD_RFC OK
+         jam_enum_short 20: NATD_RFC OK
+         match NATD_RFC [short]: OK
    21 -> ISAKMP_NEXT_NATOA_RFC
          jam_enum 21: ISAKMP_NEXT_NATOA_RFC OK
          search ISAKMP_NEXT_NATOA_RFC: OK
          match ISAKMP_NEXT_NATOA_RFC: OK
-         short_name 21: ISAKMP_NEXT_NATOA_RFC OK
-         jam_enum_short 21: ISAKMP_NEXT_NATOA_RFC OK
+         short_name 21: NATOA_RFC OK
+         jam_enum_short 21: NATOA_RFC OK
+         match NATOA_RFC [short]: OK
    22 -> ISAKMP_NEXT_GAP
          jam_enum 22: ISAKMP_NEXT_GAP OK
          search ISAKMP_NEXT_GAP: OK
          match ISAKMP_NEXT_GAP: OK
-         short_name 22: ISAKMP_NEXT_GAP OK
-         jam_enum_short 22: ISAKMP_NEXT_GAP OK
+         short_name 22: GAP OK
+         jam_enum_short 22: GAP OK
+         match GAP [short]: OK
   130 -> ISAKMP_NEXT_NATD_DRAFTS
          jam_enum 130: ISAKMP_NEXT_NATD_DRAFTS OK
          search ISAKMP_NEXT_NATD_DRAFTS: OK
          match ISAKMP_NEXT_NATD_DRAFTS: OK
-         short_name 130: ISAKMP_NEXT_NATD_DRAFTS OK
-         jam_enum_short 130: ISAKMP_NEXT_NATD_DRAFTS OK
+         short_name 130: NATD_DRAFTS OK
+         jam_enum_short 130: NATD_DRAFTS OK
+         match NATD_DRAFTS [short]: OK
   131 -> ISAKMP_NEXT_NATOA_DRAFTS
          jam_enum 131: ISAKMP_NEXT_NATOA_DRAFTS OK
          search ISAKMP_NEXT_NATOA_DRAFTS: OK
          match ISAKMP_NEXT_NATOA_DRAFTS: OK
-         short_name 131: ISAKMP_NEXT_NATOA_DRAFTS OK
-         jam_enum_short 131: ISAKMP_NEXT_NATOA_DRAFTS OK
+         short_name 131: NATOA_DRAFTS OK
+         jam_enum_short 131: NATOA_DRAFTS OK
+         match NATOA_DRAFTS [short]: OK
   132 -> ISAKMP_NEXT_IKE_FRAGMENTATION
          jam_enum 132: ISAKMP_NEXT_IKE_FRAGMENTATION OK
          search ISAKMP_NEXT_IKE_FRAGMENTATION: OK
          match ISAKMP_NEXT_IKE_FRAGMENTATION: OK
-         short_name 132: ISAKMP_NEXT_IKE_FRAGMENTATION OK
-         jam_enum_short 132: ISAKMP_NEXT_IKE_FRAGMENTATION OK
+         short_name 132: IKE_FRAGMENTATION OK
+         jam_enum_short 132: IKE_FRAGMENTATION OK
+         match IKE_FRAGMENTATION [short]: OK
 
   ikev2_payload_names:
     0 -> ISAKMP_NEXT_v2NONE

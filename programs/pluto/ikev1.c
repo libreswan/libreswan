@@ -1282,6 +1282,8 @@ void process_v1_packet(struct msg_digest *md)
 			llog(RC, md->md_logger, __VA_ARGS__);	\
 		}						\
 	}
+#define LOG_PACKET_JAMBUF(RC_FLAGS, BUF)				\
+	LLOG_JAMBUF(RC_FLAGS, (st != NULL ? st->st_logger : md->md_logger), BUF)
 
 	switch (md->hdr.isa_xchg) {
 	case ISAKMP_XCHG_AGGR:
@@ -2235,10 +2237,11 @@ void process_packet_tail(struct msg_digest *md)
 		/* check that all mandatory payloads appeared */
 
 		if (needed != 0) {
-			LOG_PACKET(RC_LOG_SERIOUS,
-				   "message for %s is missing payloads %s",
-				   finite_states[from_state]->name,
-				   bitnamesof(payload_name_ikev1, needed));
+			LOG_PACKET_JAMBUF(RC_LOG_SERIOUS, buf) {
+				jam(buf, "message for %s is missing payloads ",
+				    finite_states[from_state]->name);
+				jam_lset_short(buf, &ikev1_payload_names, "+", needed);
+			}
 			if (!md->encrypted) {
 				SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 			}
