@@ -48,6 +48,22 @@ bool testset(const char *const table[], lset_t val)
 	return true;
 }
 
+/* test a set by seeing if all bits have names */
+bool test_lset(const struct enum_names *en, lset_t val)
+{
+	for (unsigned e = 0; val != 0; e++) {
+		lset_t bit = LELEM(e);
+		if (val & bit) {
+			const char *n = enum_name(en, e);
+			if (n == NULL) {
+				return false;
+			}
+		}
+		val &= ~bit;
+	}
+	return true;
+}
+
 /*
  * construct a string to name the bits on in a set
  *
@@ -122,6 +138,14 @@ size_t jam_lset(struct jambuf *buf, enum_names *en,
 	return s;
 }
 
+const char *str_lset(enum_names *en, const char *separator,
+		     lset_t val, lset_buf *out)
+{
+	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
+	jam_lset(&buf, en, separator, val);
+	return out->buf;
+}
+
 size_t jam_lset_short(struct jambuf *buf, enum_names *en,
 		      const char *separator, lset_t val)
 {
@@ -141,4 +165,12 @@ size_t jam_lset_short(struct jambuf *buf, enum_names *en,
 		}
 	}
 	return s;
+}
+
+const char *str_lset_short(enum_names *en, const char *separator,
+			   lset_t val, lset_buf *out)
+{
+	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
+	jam_lset_short(&buf, en, separator, val);
+	return out->buf;
 }
