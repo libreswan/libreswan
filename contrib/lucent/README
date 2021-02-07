@@ -18,7 +18,7 @@ In a nutshell, they "tunnelize" all the traffic to/from the client and
 the gateway into a IP/UDP:XXX header
 
 May be there are better ways to do it but using iptables QUEUE is the
-one we used to encapsulate/decapsulate. I thougth about adding it to
+one we used to encapsulate/decapsulate. I thought about adding it to
 LSW code as well as some code to make it manipulate iptables QUEUE stuff
 but got lost on it. :-(
 

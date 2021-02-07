@@ -1063,7 +1063,7 @@ static bool check_connection_end(const struct whack_end *this,
 
 	/*
 	 * Find a type for the host addresses.  Order search by what
-	 * was most liklely speicified.
+	 * was most liklely specified.
 	 */
 	const struct ip_info *type = (!address_is_unset(&this->host_addr) ? address_type(&this->host_addr) :
 				      !address_is_unset(&this->host_nexthop) ? address_type(&this->host_nexthop) :

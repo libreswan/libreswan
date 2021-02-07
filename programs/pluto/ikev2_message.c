@@ -840,7 +840,7 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 
 static bool ikev2_check_fragment(struct msg_digest *md, struct ike_sa *ike)
 {
-	struct v2_incomming_fragments **frags = &ike->sa.st_v2_incomming[v2_msg_role(md)];
+	struct v2_incoming_fragments **frags = &ike->sa.st_v2_incoming[v2_msg_role(md)];
 	struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
 
 	/* ??? CLANG 3.5 thinks st might be NULL */
@@ -892,7 +892,7 @@ static bool ikev2_check_fragment(struct msg_digest *md, struct ike_sa *ike)
 		 */
 		if (skf->isaskf_total > (*frags)->total) {
 			dbg("discarding saved fragments because this fragment has larger total");
-			free_v2_incomming_fragments(frags);
+			free_v2_incoming_fragments(frags);
 			return true;
 		} else {
 			dbg("ignoring odd IKE encrypted fragment (total shrank)");
@@ -909,7 +909,7 @@ static bool ikev2_check_fragment(struct msg_digest *md, struct ike_sa *ike)
 
 bool ikev2_collect_fragment(struct msg_digest *md, struct ike_sa *ike)
 {
-	struct v2_incomming_fragments **frags = &ike->sa.st_v2_incomming[v2_msg_role(md)];
+	struct v2_incoming_fragments **frags = &ike->sa.st_v2_incoming[v2_msg_role(md)];
 	struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
 	pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2SKF]->pbs;
 
@@ -927,12 +927,12 @@ bool ikev2_collect_fragment(struct msg_digest *md, struct ike_sa *ike)
 	 * so-far being discarded; always check/fix frags.
 	 */
 	if ((*frags) == NULL) {
-		*frags = alloc_thing(struct v2_incomming_fragments, "incoming v2_ike_rfrags");
+		*frags = alloc_thing(struct v2_incoming_fragments, "incoming v2_ike_rfrags");
 		(*frags)->total = skf->isaskf_total;
 	}
 
 	passert(skf->isaskf_number < elemsof((*frags)->frags));
-	struct v2_incomming_fragment *frag = &(*frags)->frags[skf->isaskf_number];
+	struct v2_incoming_fragment *frag = &(*frags)->frags[skf->isaskf_number];
 	passert(frag->text.ptr == NULL);
 	frag->iv_offset = e_pbs->cur - md->packet_pbs.start;
 	frag->text = clone_bytes_as_chunk(md->packet_pbs.start,
@@ -964,12 +964,12 @@ static bool ikev2_reassemble_fragments(struct ike_sa *ike,
 		return false;
 	}
 
-	struct v2_incomming_fragments **frags = &ike->sa.st_v2_incomming[v2_msg_role(md)];
+	struct v2_incoming_fragments **frags = &ike->sa.st_v2_incoming[v2_msg_role(md)];
 	passert(*frags != NULL);
 
 	unsigned int size = 0;
 	for (unsigned i = 1; i <= (*frags)->total; i++) {
-		struct v2_incomming_fragment *frag = &(*frags)->frags[i];
+		struct v2_incoming_fragment *frag = &(*frags)->frags[i];
 		/*
 		 * Point PLAIN at the encrypted fragment and then
 		 * decrypt in-place.  After the decryption, PLAIN will
@@ -979,7 +979,7 @@ static bool ikev2_reassemble_fragments(struct ike_sa *ike,
 							 &frag->plain, frag->iv_offset)) {
 			log_state(RC_LOG_SERIOUS, &ike->sa,
 				  "fragment %u of %u invalid", i, (*frags)->total);
-			free_v2_incomming_fragments(frags);
+			free_v2_incoming_fragments(frags);
 			return false;
 		}
 		size += frag->plain.len;
@@ -993,7 +993,7 @@ static bool ikev2_reassemble_fragments(struct ike_sa *ike,
 	md->raw_packet = alloc_chunk(size, "IKEv2 fragments buffer");
 	unsigned int offset = 0;
 	for (unsigned i = 1; i <= (*frags)->total; i++) {
-		struct v2_incomming_fragment *frag = &(*frags)->frags[i];
+		struct v2_incoming_fragment *frag = &(*frags)->frags[i];
 		passert(offset + frag->plain.len <= size);
 		memcpy(md->raw_packet.ptr + offset,
 		       frag->plain.ptr, frag->plain.len);
@@ -1016,7 +1016,7 @@ static bool ikev2_reassemble_fragments(struct ike_sa *ike,
 	md->chain[ISAKMP_NEXT_v2SK] = skf;
 	*skf = sk; /* scribble */
 
-	free_v2_incomming_fragments(frags);
+	free_v2_incoming_fragments(frags);
 
 	return true;
 }

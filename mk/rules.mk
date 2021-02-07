@@ -67,7 +67,7 @@ ifdef OBJS
 # these files, create an include file that includes them.
 #
 # Use := so it is evaluated immediately, using the context from
-# parsing this file (and ot later).
+# parsing this file (and not later).
 
 mk.depend.file := $(lastword $(MAKEFILE_LIST))
 mk.depend.dependencies.file := $(builddir)/Makefile.depend.mk

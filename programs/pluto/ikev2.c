@@ -1215,7 +1215,7 @@ static bool is_duplicate_request(struct ike_sa *ike,
 		return true;
 	}
 
-	struct v2_incomming_fragments *frags = ike->sa.st_v2_incomming[MESSAGE_REQUEST];
+	struct v2_incoming_fragments *frags = ike->sa.st_v2_incoming[MESSAGE_REQUEST];
 	if (frags != NULL) {
 		pexpect(frags->count < frags->total);
 		dbg_v2_msgid(ike, &ike->sa,
@@ -2187,8 +2187,8 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * with all fragments present (so "the"
 			 * function should not be called).
 			 */
-			struct v2_incomming_fragments *frags =
-				ike->sa.st_v2_incomming[v2_msg_role(md)];
+			struct v2_incoming_fragments *frags =
+				ike->sa.st_v2_incoming[v2_msg_role(md)];
 			bool have_all_fragments =
 				(frags != NULL && frags->count == frags->total);
 			/*
@@ -3128,7 +3128,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	     * integrity ...
 	     *
 	     * Once keymat is present, only encrypted messessages with
-	     * valid integrity can succesfully complete a transaction
+	     * valid integrity can successfully complete a transaction
 	     * with STF_OK.  True?
 	     *
 	     * IS_IKE_SA_ESTABLISHED() better?
@@ -3143,7 +3143,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	    !LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST) &&
 	    LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_PEER)) {
 		/*
-		 * Things are looking plausable.
+		 * Things are looking plausible.
 		 */
 		if ((ike->sa.st_sent_mobike && st->st_seen_mobike) &&
 		    md->hdr.isa_xchg == ISAKMP_v2_INFORMATIONAL) {

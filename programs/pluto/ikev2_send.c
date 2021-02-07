@@ -645,11 +645,11 @@ void free_v2_outgoing_fragments(struct v2_outgoing_fragment **frags)
 	}
 }
 
-void free_v2_incomming_fragments(struct v2_incomming_fragments **frags)
+void free_v2_incoming_fragments(struct v2_incoming_fragments **frags)
 {
 	if (*frags != NULL) {
 		for (unsigned i = 0; i < elemsof((*frags)->frags); i++) {
-			struct v2_incomming_fragment *frag = &(*frags)->frags[i];
+			struct v2_incoming_fragment *frag = &(*frags)->frags[i];
 			free_chunk_content(&frag->text);
 		}
 		pfree(*frags);
@@ -662,6 +662,6 @@ void free_v2_message_queues(struct state *st)
 	for (enum message_role message = MESSAGE_ROLE_FLOOR;
 	     message < MESSAGE_ROLE_ROOF; message++) {
 		free_v2_outgoing_fragments(&st->st_v2_outgoing[message]);
-		free_v2_incomming_fragments(&st->st_v2_incomming[message]);
+		free_v2_incoming_fragments(&st->st_v2_incoming[message]);
 	}
 }

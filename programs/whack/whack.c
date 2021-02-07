@@ -833,7 +833,7 @@ static const struct option long_opts[] = {
 };
 
 /*
- * figure out an adress family.
+ * figure out an address family.
  */
 struct family {
 	const char *used_by;
