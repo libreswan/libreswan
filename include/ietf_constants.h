@@ -807,16 +807,30 @@ enum isakmp_xchg_types {
 	ISAKMP_XCHG_ECHOREPLY_PRIVATE = 245, /* Private Echo Reply */
 };
 
-/* ISAKMP header flag bits */
-#define ISAKMP_FLAGS_v1_ENCRYPTION (1 << 0) /* bit 0 of flags - IKEv1 encrypt */
-#define ISAKMP_FLAGS_v1_COMMIT (1 << 1) /* bit 1 of flags - IKEv1 commit - unused */
-#define ISAKMP_FLAGS_v1_AUTH (1 << 2) /* bit 2 of flags - IKEv1 authonly - unused */
-#define ISAKMP_FLAGS_v2_IKE_I (1 << 3) /* bit 3 of flags - IKEv2 Original Initiator */
-#define ISAKMP_FLAGS_v2_VER (1 << 4) /* bit 4 of flags - IKEv2 Version flag */
-#define ISAKMP_FLAGS_v2_MSG_R (1 << 5) /* bit 5 of flags - IKEv2 Message response */
-#define ISAKMP_FLAGS_RESERVED_BIT6 (1 << 6) /* RESERVED */
-#define ISAKMP_FLAGS_RESERVED_BIT7 (1 << 7) /* RESERVED */
-extern const char *const isakmp_flag_names[];
+/*
+ * ISAKMP header flag bits
+ */
+
+enum isakmp_header_flags {
+	ISAKMP_FLAGS_v1_ENCRYPTION_IX = 0, /* IKEv1 encrypt */
+	ISAKMP_FLAGS_v1_COMMIT_IX = 1, /* IKEv1 commit - unused */
+	ISAKMP_FLAGS_v1_AUTH_IX = 2, /* IKEv1 authonly - unused */
+	ISAKMP_FLAGS_v2_IKE_I_IX = 3, /* IKEv2 Original Initiator */
+	ISAKMP_FLAGS_v2_VER_IX = 4, /* IKEv2 Version flag */
+	ISAKMP_FLAGS_v2_MSG_R_IX = 5, /* IKEv2 Message response */
+	ISAKMP_FLAGS_RESERVED_BIT6_IX = 6, /* RESERVED */
+	ISAKMP_FLAGS_RESERVED_BIT7_IX = 7, /* RESERVED */
+};
+
+#define ISAKMP_FLAGS_v1_ENCRYPTION (1<<ISAKMP_FLAGS_v1_ENCRYPTION_IX)
+#define ISAKMP_FLAGS_v1_COMMIT (1<<ISAKMP_FLAGS_v1_COMMIT_IX)
+#define ISAKMP_FLAGS_v1_AUTH (1<<ISAKMP_FLAGS_v1_AUTH_IX)
+#define ISAKMP_FLAGS_v2_IKE_I (1<<ISAKMP_FLAGS_v2_IKE_I_IX)
+#define ISAKMP_FLAGS_v2_VER (1<<ISAKMP_FLAGS_v2_VER_IX)
+#define ISAKMP_FLAGS_v2_MSG_R (1<<ISAKMP_FLAGS_v2_MSG_R_IX)
+#define ISAKMP_FLAGS_RESERVED_BIT6 (1<<ISAKMP_FLAGS_RESERVED_BIT6_IX)
+#define ISAKMP_FLAGS_RESERVED_BIT7 (1<<ISAKMP_FLAGS_RESERVED_BIT7_IX)
+extern const struct enum_names isakmp_flag_names;
 
 /* IKEv2 header field sizes and offsets from the start of the header */
 #define ADJ_LENGTH_SIZE 4

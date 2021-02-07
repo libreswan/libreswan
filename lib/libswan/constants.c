@@ -505,7 +505,7 @@ enum_enum_names exchange_type_names = {
 };
 
 /* Flag BITS */
-const char *const isakmp_flag_names[] = {
+static const char *const isakmp_flag_name[] = {
 	"ISAKMP_FLAG_v1_ENCRYPTION", /* IKEv1 only bit 0 */
 	"ISAKMP_FLAG_v1_COMMIT", /* IKEv1 only bit 1 */
 	"ISAKMP_FLAG_v1_AUTHONLY", /* IKEv1 only bit 2 */
@@ -514,8 +514,16 @@ const char *const isakmp_flag_names[] = {
 	"ISAKMP_FLAG_v2_MSG_RESPONSE", /* IKEv2 only bit 5 */
 	"ISAKMP_FLAG_MSG_RESERVED_BIT6",
 	"ISAKMP_FLAG_MSG_RESERVED_BIT7",
-	NULL	/* termination for bitnamesof() */
 };
+
+const struct enum_names isakmp_flag_names = {
+	ISAKMP_FLAGS_v1_ENCRYPTION_IX,
+	ISAKMP_FLAGS_RESERVED_BIT7_IX,
+	ARRAY_REF(isakmp_flag_name),
+	NULL, /* prefix */
+	NULL, /* next */
+};
+
 
 /* Situation BITS definition for IPsec DOI */
 const char *const sit_bit_names[] = {
