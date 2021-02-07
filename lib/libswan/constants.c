@@ -296,7 +296,6 @@ static const char *const payload_name_ikev2[] = {
 };
 
 /* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-2 */
-/* dual-use: for enum_name and for bitnamesof */
 static const char *const payload_name_ikev2_main[] = {
 	"ISAKMP_NEXT_v2SA",	/* 33 */
 	"ISAKMP_NEXT_v2KE",
@@ -319,7 +318,6 @@ static const char *const payload_name_ikev2_main[] = {
 	"ISAKMP_NEXT_v2GSA", /* [draft-yeung-g-ikev2] */
 	"ISAKMP_NEXT_v2KD", /* [draft-yeung-g-ikev2] */
 	"ISAKMP_NEXT_v2SKF", /* RFC 7383 */
-	NULL	/* termination for bitnamesof() */
 };
 
 /*
@@ -341,7 +339,7 @@ static enum_names payload_names_ikev2_private_use = {
 static enum_names payload_names_ikev2_main = {
 	ISAKMP_NEXT_v2SA,
 	ISAKMP_NEXT_v2SKF,
-	ARRAY_REF(payload_name_ikev2_main)-1,
+	ARRAY_REF(payload_name_ikev2_main),
 	NULL, /* prefix */
 	&payload_names_ikev2_private_use
 };
@@ -358,7 +356,7 @@ enum_names ikev2_payload_names = {
 static enum_names payload_names_ikev2copy_main = {
 	ISAKMP_NEXT_v2SA,
 	ISAKMP_NEXT_v2SKF,
-	ARRAY_REF(payload_name_ikev2_main)-1,
+	ARRAY_REF(payload_name_ikev2_main),
 	NULL, /* prefix */
 	&payload_names_ikev1_private_use
 };
