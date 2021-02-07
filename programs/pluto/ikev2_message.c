@@ -81,7 +81,7 @@ uint8_t build_ikev2_critical(bool impaired, struct logger *logger)
 	}
 	if (impair.send_bogus_payload_flag) {
 		llog(RC_LOG, logger, "IMPAIR: adding bogus bit to critical octet");
-		octet |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
+		octet |= ISAKMP_PAYLOAD_FLAG_LIBRESWAN_BOGUS;
 	}
 	return octet;
 }
@@ -1353,8 +1353,8 @@ struct ikev2_id build_v2_id_payload(const struct end *end, shunk_t *body,
 	};
 	if (impair.send_nonzero_reserved_id) {
 		llog(RC_LOG, logger, "IMPAIR: setting reserved byte 3 of %s to 0x%02x",
-			    what, ISAKMP_PAYLOAD_LIBRESWAN_BOGUS);
-		id_header.isai_res3 = ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
+		     what, ISAKMP_PAYLOAD_FLAG_LIBRESWAN_BOGUS);
+		id_header.isai_res3 = ISAKMP_PAYLOAD_FLAG_LIBRESWAN_BOGUS;
 	}
 	return id_header;
 }

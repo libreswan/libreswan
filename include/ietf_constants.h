@@ -850,14 +850,21 @@ extern const char *const sit_bit_names[];
 
 /*
  * See https://tools.ietf.org/html/rfc5996#section-3.2
- * Critical bit in each payload
+ * Critical bit in each payload is only one defined
  */
-extern const char *const critical_names[];
+
+extern struct enum_names const payload_flag_names;
+enum {
+	ISAKMP_PAYLOAD_FLAG_LIBRESWAN_BOGUS_IX = 0,
+	ISAKMP_PAYLOAD_FLAG_CRITICAL_IX = 7,
+};
+
 #define ISAKMP_PAYLOAD_NONCRITICAL 0x00
-#define ISAKMP_PAYLOAD_CRITICAL 0x80
+#define ISAKMP_PAYLOAD_CRITICAL (1<<ISAKMP_PAYLOAD_FLAG_CRITICAL_IX) /*0x80*/
+
 /* These are followed by 7 more bits, currently RESERVED */
 /* Note we use 1 of those bits for IMPAIR-SEND-BOGUS-ISAKMP-FLAG */
-#define ISAKMP_PAYLOAD_LIBRESWAN_BOGUS 0x01
+#define ISAKMP_PAYLOAD_FLAG_LIBRESWAN_BOGUS (1<<ISAKMP_PAYLOAD_FLAG_LIBRESWAN_BOGUS_IX) /*0x01*/
 
 /*
  * Protocol IDs

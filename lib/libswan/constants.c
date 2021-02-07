@@ -1876,7 +1876,7 @@ enum_names attr_msg_type_names = {
 /*
  * IKEv2 Critical bit and RESERVED (7) bits
  */
-const char *const critical_names[] = {
+static const char *const payload_flag_name[] = {
 	"RESERVED bit 0",	/* bit 0 */
 	"RESERVED bit 1",	/* bit 1 */
 	"RESERVED bit 2",	/* bit 2 */
@@ -1885,6 +1885,14 @@ const char *const critical_names[] = {
 	"RESERVED bit 5",	/* bit 5 */
 	"RESERVED bit 6",	/* bit 6 */
 	"PAYLOAD_CRITICAL",	/* bit 7 */
+};
+
+const enum_names payload_flag_names = {
+	ISAKMP_PAYLOAD_FLAG_LIBRESWAN_BOGUS_IX,
+	ISAKMP_PAYLOAD_FLAG_CRITICAL_IX,
+	ARRAY_REF(payload_flag_name),
+	NULL, /* prefix */
+	NULL, /* next */
 };
 
 /*
@@ -2600,6 +2608,7 @@ static const enum_names *en_checklist[] = {
 	&ike_version_liveness_names,
 	&ike_version_ike_names,
 	&ike_version_child_names,
+	&payload_flag_names,
 };
 
 void check_enum_names(enum_names *checklist[], size_t tl)
