@@ -709,20 +709,23 @@ IETF registry enum_names:
          jam_enum 130: ISAKMP_NEXT_NATD_DRAFTS OK
          search ISAKMP_NEXT_NATD_DRAFTS: OK
          match ISAKMP_NEXT_NATD_DRAFTS: OK
-         short_name 130: ISAKMP_NEXT_NATD_DRAFTS OK
-         jam_enum_short 130: ISAKMP_NEXT_NATD_DRAFTS OK
+         short_name 130: NATD_DRAFTS OK
+         jam_enum_short 130: NATD_DRAFTS OK
+         match NATD_DRAFTS [short]: OK
   131 -> ISAKMP_NEXT_NATOA_DRAFTS
          jam_enum 131: ISAKMP_NEXT_NATOA_DRAFTS OK
          search ISAKMP_NEXT_NATOA_DRAFTS: OK
          match ISAKMP_NEXT_NATOA_DRAFTS: OK
-         short_name 131: ISAKMP_NEXT_NATOA_DRAFTS OK
-         jam_enum_short 131: ISAKMP_NEXT_NATOA_DRAFTS OK
+         short_name 131: NATOA_DRAFTS OK
+         jam_enum_short 131: NATOA_DRAFTS OK
+         match NATOA_DRAFTS [short]: OK
   132 -> ISAKMP_NEXT_IKE_FRAGMENTATION
          jam_enum 132: ISAKMP_NEXT_IKE_FRAGMENTATION OK
          search ISAKMP_NEXT_IKE_FRAGMENTATION: OK
          match ISAKMP_NEXT_IKE_FRAGMENTATION: OK
-         short_name 132: ISAKMP_NEXT_IKE_FRAGMENTATION OK
-         jam_enum_short 132: ISAKMP_NEXT_IKE_FRAGMENTATION OK
+         short_name 132: IKE_FRAGMENTATION OK
+         jam_enum_short 132: IKE_FRAGMENTATION OK
+         match IKE_FRAGMENTATION [short]: OK
 
   ikev1_exchange_names:
     0 -> ISAKMP_XCHG_NONE
@@ -972,62 +975,72 @@ IETF registry enum_names:
          jam_enum 34: ISAKMP_v2_IKE_SA_INIT OK
          search ISAKMP_v2_IKE_SA_INIT: OK
          match ISAKMP_v2_IKE_SA_INIT: OK
-         short_name 34: ISAKMP_v2_IKE_SA_INIT OK
-         jam_enum_short 34: ISAKMP_v2_IKE_SA_INIT OK
+         short_name 34: IKE_SA_INIT OK
+         jam_enum_short 34: IKE_SA_INIT OK
+         match IKE_SA_INIT [short]: OK
    35 -> ISAKMP_v2_IKE_AUTH
          jam_enum 35: ISAKMP_v2_IKE_AUTH OK
          search ISAKMP_v2_IKE_AUTH: OK
          match ISAKMP_v2_IKE_AUTH: OK
-         short_name 35: ISAKMP_v2_IKE_AUTH OK
-         jam_enum_short 35: ISAKMP_v2_IKE_AUTH OK
+         short_name 35: IKE_AUTH OK
+         jam_enum_short 35: IKE_AUTH OK
+         match IKE_AUTH [short]: OK
    36 -> ISAKMP_v2_CREATE_CHILD_SA
          jam_enum 36: ISAKMP_v2_CREATE_CHILD_SA OK
          search ISAKMP_v2_CREATE_CHILD_SA: OK
          match ISAKMP_v2_CREATE_CHILD_SA: OK
-         short_name 36: ISAKMP_v2_CREATE_CHILD_SA OK
-         jam_enum_short 36: ISAKMP_v2_CREATE_CHILD_SA OK
+         short_name 36: CREATE_CHILD_SA OK
+         jam_enum_short 36: CREATE_CHILD_SA OK
+         match CREATE_CHILD_SA [short]: OK
    37 -> ISAKMP_v2_INFORMATIONAL
          jam_enum 37: ISAKMP_v2_INFORMATIONAL OK
          search ISAKMP_v2_INFORMATIONAL: OK
          match ISAKMP_v2_INFORMATIONAL: OK
-         short_name 37: ISAKMP_v2_INFORMATIONAL OK
-         jam_enum_short 37: ISAKMP_v2_INFORMATIONAL OK
+         short_name 37: INFORMATIONAL OK
+         jam_enum_short 37: INFORMATIONAL OK
+         match INFORMATIONAL [short]: OK
    38 -> ISAKMP_v2_IKE_SESSION_RESUME
          jam_enum 38: ISAKMP_v2_IKE_SESSION_RESUME OK
          search ISAKMP_v2_IKE_SESSION_RESUME: OK
          match ISAKMP_v2_IKE_SESSION_RESUME: OK
-         short_name 38: ISAKMP_v2_IKE_SESSION_RESUME OK
-         jam_enum_short 38: ISAKMP_v2_IKE_SESSION_RESUME OK
+         short_name 38: IKE_SESSION_RESUME OK
+         jam_enum_short 38: IKE_SESSION_RESUME OK
+         match IKE_SESSION_RESUME [short]: OK
    39 -> ISAKMP_v2_GSA_AUTH
          jam_enum 39: ISAKMP_v2_GSA_AUTH OK
          search ISAKMP_v2_GSA_AUTH: OK
          match ISAKMP_v2_GSA_AUTH: OK
-         short_name 39: ISAKMP_v2_GSA_AUTH OK
-         jam_enum_short 39: ISAKMP_v2_GSA_AUTH OK
+         short_name 39: GSA_AUTH OK
+         jam_enum_short 39: GSA_AUTH OK
+         match GSA_AUTH [short]: OK
    40 -> ISAKMP_v2_GSA_REGISTRATION
          jam_enum 40: ISAKMP_v2_GSA_REGISTRATION OK
          search ISAKMP_v2_GSA_REGISTRATION: OK
          match ISAKMP_v2_GSA_REGISTRATION: OK
-         short_name 40: ISAKMP_v2_GSA_REGISTRATION OK
-         jam_enum_short 40: ISAKMP_v2_GSA_REGISTRATION OK
+         short_name 40: GSA_REGISTRATION OK
+         jam_enum_short 40: GSA_REGISTRATION OK
+         match GSA_REGISTRATION [short]: OK
    41 -> ISAKMP_v2_GSA_REKEY
          jam_enum 41: ISAKMP_v2_GSA_REKEY OK
          search ISAKMP_v2_GSA_REKEY: OK
          match ISAKMP_v2_GSA_REKEY: OK
-         short_name 41: ISAKMP_v2_GSA_REKEY OK
-         jam_enum_short 41: ISAKMP_v2_GSA_REKEY OK
+         short_name 41: GSA_REKEY OK
+         jam_enum_short 41: GSA_REKEY OK
+         match GSA_REKEY [short]: OK
    42 -> ISAKMP_v2_UNASSIGNED_42
          jam_enum 42: ISAKMP_v2_UNASSIGNED_42 OK
          search ISAKMP_v2_UNASSIGNED_42: OK
          match ISAKMP_v2_UNASSIGNED_42: OK
-         short_name 42: ISAKMP_v2_UNASSIGNED_42 OK
-         jam_enum_short 42: ISAKMP_v2_UNASSIGNED_42 OK
+         short_name 42: UNASSIGNED_42 OK
+         jam_enum_short 42: UNASSIGNED_42 OK
+         match UNASSIGNED_42 [short]: OK
    43 -> ISAKMP_v2_IKE_INTERMEDIATE
          jam_enum 43: ISAKMP_v2_IKE_INTERMEDIATE OK
          search ISAKMP_v2_IKE_INTERMEDIATE: OK
          match ISAKMP_v2_IKE_INTERMEDIATE: OK
-         short_name 43: ISAKMP_v2_IKE_INTERMEDIATE OK
-         jam_enum_short 43: ISAKMP_v2_IKE_INTERMEDIATE OK
+         short_name 43: IKE_INTERMEDIATE OK
+         jam_enum_short 43: IKE_INTERMEDIATE OK
+         match IKE_INTERMEDIATE [short]: OK
   244 -> ISAKMP_XCHG_ECHOREQUEST_PRIVATE
          jam_enum 244: ISAKMP_XCHG_ECHOREQUEST_PRIVATE OK
          search ISAKMP_XCHG_ECHOREQUEST_PRIVATE: OK
