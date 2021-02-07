@@ -1848,6 +1848,7 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 		case ft_af_enum:        /* Attribute Format + value from an enumeration */
 		case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
 		case ft_set:            /* bits representing set */
+		case ft_lset:           /* bits representing set */
 			/* grab bytes in host-byte-order */
 			switch (i) {
 			case 8 / BITS_PER_BYTE:
@@ -1925,6 +1926,15 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 					bitnamesof(fp->desc, n),
 					n);
 				break;
+
+			case ft_lset: /* bits representing set */
+				LSWLOG_DEBUG(buf) {
+					jam(buf, "   %s: ", fp->name);
+					jam_lset(buf, fp->desc, n);
+					jam(buf, " (0x%jx)", n);
+				}
+				break;
+
 			default:
 				bad_case(fp->field_type);
 			}
@@ -2059,6 +2069,7 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 		case ft_af_enum:        /* Attribute Format + value from an enumeration */
 		case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
 		case ft_set:            /* bits representing set */
+		case ft_lset:           /* bits representing set */
 		{
 			uintmax_t n = 0;
 
@@ -2130,6 +2141,15 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 					return diag("bitset %s of %s has unknown member(s): %s (0x%ju)",
 						    fp->name, sd->name,
 						    bitnamesof(fp->desc, n),
+						    n);
+				}
+				break;
+			case ft_lset:            /* bits representing set */
+				if (!test_lset(fp->desc, n)) {
+					lset_buf lb;
+					return diag("bitset %s of %s has unknown member(s): %s (0x%ju)",
+						    fp->name, sd->name,
+						    str_lset(fp->desc, n, &lb),
 						    n);
 				}
 				break;
@@ -2531,6 +2551,7 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 		case ft_af_enum:        /* Attribute Format + value from an enumeration */
 		case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
 		case ft_set:            /* bits representing set */
+		case ft_lset:           /* bits representing set */
 		{
 			uint32_t n;
 
@@ -2583,6 +2604,16 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 					return diag("bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
 						    fp->name, sd->name,
 						    bitnamesof(fp->desc, n),
+						    n);
+				}
+				break;
+
+			case ft_lset:           /* bits representing set */
+				if (!test_lset(fp->desc, n)) {
+					lset_buf lb;
+					return diag("bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
+						    fp->name, sd->name,
+						    str_lset(fp->desc, n, &lb),
 						    n);
 				}
 				break;
