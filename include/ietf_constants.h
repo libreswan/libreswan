@@ -807,16 +807,30 @@ enum isakmp_xchg_types {
 	ISAKMP_XCHG_ECHOREPLY_PRIVATE = 245, /* Private Echo Reply */
 };
 
-/* ISAKMP header flag bits */
-#define ISAKMP_FLAGS_v1_ENCRYPTION (1 << 0) /* bit 0 of flags - IKEv1 encrypt */
-#define ISAKMP_FLAGS_v1_COMMIT (1 << 1) /* bit 1 of flags - IKEv1 commit - unused */
-#define ISAKMP_FLAGS_v1_AUTH (1 << 2) /* bit 2 of flags - IKEv1 authonly - unused */
-#define ISAKMP_FLAGS_v2_IKE_I (1 << 3) /* bit 3 of flags - IKEv2 Original Initiator */
-#define ISAKMP_FLAGS_v2_VER (1 << 4) /* bit 4 of flags - IKEv2 Version flag */
-#define ISAKMP_FLAGS_v2_MSG_R (1 << 5) /* bit 5 of flags - IKEv2 Message response */
-#define ISAKMP_FLAGS_RESERVED_BIT6 (1 << 6) /* RESERVED */
-#define ISAKMP_FLAGS_RESERVED_BIT7 (1 << 7) /* RESERVED */
-extern const char *const isakmp_flag_names[];
+/*
+ * ISAKMP header flag bits
+ */
+
+enum isakmp_header_flags {
+	ISAKMP_FLAGS_v1_ENCRYPTION_IX = 0, /* IKEv1 encrypt */
+	ISAKMP_FLAGS_v1_COMMIT_IX = 1, /* IKEv1 commit - unused */
+	ISAKMP_FLAGS_v1_AUTH_IX = 2, /* IKEv1 authonly - unused */
+	ISAKMP_FLAGS_v2_IKE_I_IX = 3, /* IKEv2 Original Initiator */
+	ISAKMP_FLAGS_v2_VER_IX = 4, /* IKEv2 Version flag */
+	ISAKMP_FLAGS_v2_MSG_R_IX = 5, /* IKEv2 Message response */
+	ISAKMP_FLAGS_RESERVED_BIT6_IX = 6, /* RESERVED */
+	ISAKMP_FLAGS_RESERVED_BIT7_IX = 7, /* RESERVED */
+};
+
+#define ISAKMP_FLAGS_v1_ENCRYPTION (1<<ISAKMP_FLAGS_v1_ENCRYPTION_IX)
+#define ISAKMP_FLAGS_v1_COMMIT (1<<ISAKMP_FLAGS_v1_COMMIT_IX)
+#define ISAKMP_FLAGS_v1_AUTH (1<<ISAKMP_FLAGS_v1_AUTH_IX)
+#define ISAKMP_FLAGS_v2_IKE_I (1<<ISAKMP_FLAGS_v2_IKE_I_IX)
+#define ISAKMP_FLAGS_v2_VER (1<<ISAKMP_FLAGS_v2_VER_IX)
+#define ISAKMP_FLAGS_v2_MSG_R (1<<ISAKMP_FLAGS_v2_MSG_R_IX)
+#define ISAKMP_FLAGS_RESERVED_BIT6 (1<<ISAKMP_FLAGS_RESERVED_BIT6_IX)
+#define ISAKMP_FLAGS_RESERVED_BIT7 (1<<ISAKMP_FLAGS_RESERVED_BIT7_IX)
+extern const struct enum_names isakmp_flag_names;
 
 /* IKEv2 header field sizes and offsets from the start of the header */
 #define ADJ_LENGTH_SIZE 4
@@ -827,23 +841,39 @@ extern const char *const isakmp_flag_names[];
 #define SK_HEADER_SIZE 4
 #define ADJ_PAYLOAD_LENGTH_SIZE 2
 
-/* Situation definition for IPsec DOI */
-extern const char *const sit_bit_names[];
+/*
+ * Situation definition for IPsec DOI.
+ */
 
-#define SIT_IDENTITY_ONLY 0x01
-#define SIT_SECRECY 0x02
-#define SIT_INTEGRITY 0x04
+extern const struct enum_names sit_bit_names;
+
+enum sit_bits {
+	SIT_IDENTITY_ONLY_IX = 0,
+	SIT_SECRECY_IX = 1,
+	SIT_INTEGRITY_IX = 2,
+};
+
+#define SIT_IDENTITY_ONLY (1<<SIT_IDENTITY_ONLY_IX)
+#define SIT_SECRECY (1<<SIT_SECRECY_IX)
+#define SIT_INTEGRITY (1<<SIT_INTEGRITY_IX)
 
 /*
  * See https://tools.ietf.org/html/rfc5996#section-3.2
- * Critical bit in each payload
+ * Critical bit in each payload is only one defined
  */
-extern const char *const critical_names[];
+
+extern struct enum_names const payload_flag_names;
+enum {
+	ISAKMP_PAYLOAD_FLAG_LIBRESWAN_BOGUS_IX = 0,
+	ISAKMP_PAYLOAD_FLAG_CRITICAL_IX = 7,
+};
+
 #define ISAKMP_PAYLOAD_NONCRITICAL 0x00
-#define ISAKMP_PAYLOAD_CRITICAL 0x80
+#define ISAKMP_PAYLOAD_CRITICAL (1<<ISAKMP_PAYLOAD_FLAG_CRITICAL_IX) /*0x80*/
+
 /* These are followed by 7 more bits, currently RESERVED */
 /* Note we use 1 of those bits for IMPAIR-SEND-BOGUS-ISAKMP-FLAG */
-#define ISAKMP_PAYLOAD_LIBRESWAN_BOGUS 0x01
+#define ISAKMP_PAYLOAD_FLAG_LIBRESWAN_BOGUS (1<<ISAKMP_PAYLOAD_FLAG_LIBRESWAN_BOGUS_IX) /*0x01*/
 
 /*
  * Protocol IDs
@@ -1813,6 +1843,14 @@ enum ipsec_comp_algo {
  *
  * Currently it is only used by RFC 7427 Signature Authentication in
  * the Internet Key Exchange Version 2.
+ *
+ * XXX: Danger!
+ *
+ * As well as IKEv2_HASH_ALGORITHM_* and the the lset_t constants
+ * NEGOTIATE_AUTH_HASH_*, pluto defines the enum POL_SIGHASH_*_IX and
+ * lset_t constants POL_SIGHHASH_* using different values.  Ulgh.
+ *
+ * sighash_policy_bit_names is for the _latter.
  */
 
 enum ikev2_hash_algorithm {

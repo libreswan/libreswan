@@ -1002,6 +1002,16 @@ enum sa_policy_bits {
 #define POLICY_IGNORE_PEER_DNS	LELEM(POLICY_IGNORE_PEER_DNS_IX)
 #define POLICY_RSASIG_v1_5	LELEM(POLICY_RSASIG_v1_5_IX)
 
+/*
+ * XXX: Danger!
+ *
+ * As well as IKEv2_HASH_ALGORITHM_* and the the lset_t constants
+ * NEGOTIATE_AUTH_HASH_*, pluto defines the enum POL_SIGHASH_*_IX and
+ * lset_t constants POL_SIGHHASH_* using different values.  Ulgh.
+ *
+ * sighash_policy_bit_names is for the _latter.
+ */
+
 #define NEGOTIATE_AUTH_HASH_SHA1		LELEM(IKEv2_HASH_ALGORITHM_SHA1)	/* rfc7427 does responder support SHA1? */
 #define NEGOTIATE_AUTH_HASH_SHA2_256		LELEM(IKEv2_HASH_ALGORITHM_SHA2_256)	/* rfc7427 does responder support SHA2-256?  */
 #define NEGOTIATE_AUTH_HASH_SHA2_384		LELEM(IKEv2_HASH_ALGORITHM_SHA2_384)	/* rfc7427 does responder support SHA2-384? */
@@ -1013,6 +1023,9 @@ enum sighash_policy_bits {
 	POL_SIGHASH_SHA2_384_IX,
 	POL_SIGHASH_SHA2_512_IX,
 };
+
+extern const struct enum_names sighash_policy_bit_names;
+
 #define POL_SIGHASH_SHA2_256 LELEM(POL_SIGHASH_SHA2_256_IX)
 #define POL_SIGHASH_SHA2_384 LELEM(POL_SIGHASH_SHA2_384_IX)
 #define POL_SIGHASH_SHA2_512 LELEM(POL_SIGHASH_SHA2_512_IX)

@@ -56,7 +56,7 @@ enum field_type {
 	ft_loose_enum_enum,	/* value from an enumeration with partial name table based on previous enum */
 	ft_af_enum,		/* Attribute Format + value from an enumeration */
 	ft_af_loose_enum,	/* Attribute Format + enumeration, some names known */
-	ft_set,			/* bits representing set */
+	ft_lset,		/* bits representing set; uses jam_lset() */
 	ft_raw,			/* bytes to be left in network-order */
 	ft_end,			/* end of field list */
 };

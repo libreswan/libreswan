@@ -4110,11 +4110,10 @@ void show_one_connection(struct show *s,
 		     c->spd.that.key_from_DNS_on_demand ? "+rKOD" : "");
 
 	if (c->ike_version == IKEv2) {
-		char hashpolbuf[200];
-		const char *hashstr = bitnamesofb(sighash_policy_bit_names,
-				c->sighash_policy,
-				hashpolbuf, sizeof(hashpolbuf));
-
+		lset_buf hashpolbuf;
+		const char *hashstr = str_lset(&sighash_policy_bit_names,
+					       c->sighash_policy,
+					       &hashpolbuf);
 		show_comment(s, "\"%s\"%s:   v2-auth-hash-policy: %s;",
 			c->name, instance, hashstr);
 	}
