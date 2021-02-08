@@ -69,13 +69,11 @@ typedef struct {
 
 extern bool test_lset(const struct enum_names *table, lset_t val);
 
-size_t jam_lset(struct jambuf *, const struct enum_names *sd,
-		const char *separator, lset_t val);
+size_t jam_lset(struct jambuf *, const struct enum_names *sd, lset_t val);
+const char *str_lset(const struct enum_names *sd, lset_t val, lset_buf *buf);
+
 size_t jam_lset_short(struct jambuf *, const struct enum_names *sd,
 		      const char *separator, lset_t val);
-const char *str_lset(const struct enum_names *sd,
-		     const char *separator, lset_t val,
-		     lset_buf *buf);
 const char *str_lset_short(const struct enum_names *sd,
 			   const char *separator, lset_t val,
 			   lset_buf *buf);

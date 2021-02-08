@@ -117,8 +117,9 @@ const char *bitnamesofb(const char *const table[], lset_t val,
 	return b;
 }
 
-size_t jam_lset(struct jambuf *buf, enum_names *en,
-		const char *separator, lset_t val)
+#define LSET_SEPARATOR "+"
+
+size_t jam_lset(struct jambuf *buf, enum_names *en, lset_t val)
 {
 	if (val == LEMPTY) {
 		return jam(buf, "none");
@@ -130,7 +131,7 @@ size_t jam_lset(struct jambuf *buf, enum_names *en,
 		lset_t bit = LELEM(e);
 		if (val & bit) {
 			s += jam_string(buf, sep);
-			sep = separator;
+			sep = LSET_SEPARATOR;
 			s += jam_enum(buf, en, e);
 			val ^= bit;
 		}
@@ -138,11 +139,10 @@ size_t jam_lset(struct jambuf *buf, enum_names *en,
 	return s;
 }
 
-const char *str_lset(enum_names *en, const char *separator,
-		     lset_t val, lset_buf *out)
+const char *str_lset(enum_names *en, lset_t val, lset_buf *out)
 {
 	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
-	jam_lset(&buf, en, separator, val);
+	jam_lset(&buf, en, val);
 	return out->buf;
 }
 
