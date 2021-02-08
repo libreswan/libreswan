@@ -2230,34 +2230,64 @@ long next_enum(enum_names *en, long l)
 	}
 }
 
-static const char *name_of_enum(enum_names *ed, unsigned long val, bool shorten)
+/*
+ * the enum_name range containing VAL, or NULL.
+ */
+const struct enum_names *enum_range(const struct enum_names *en, unsigned long val, const char **prefix)
 {
-	const char *prefix = NULL;
-	for (enum_names *p = ed; p != NULL; p = p->en_next_range) {
+	*prefix = NULL;
+	for (enum_names *p = en; p != NULL; p = p->en_next_range) {
 		passert(p->en_last - p->en_first + 1 == p->en_checklen);
-		prefix = (p->en_prefix == NULL ? prefix : p->en_prefix);
+		/* return most recent prefix */
+		if (p->en_prefix != NULL) {
+			*prefix = p->en_prefix;
+		}
 		if (p->en_first <= val && val <= p->en_last) {
-			/* can be NULL */
-			const char *name = p->en_names[val - p->en_first];
-			if (name != NULL && prefix != NULL && shorten) {
-				return strip_prefix(name, prefix);
-			} else {
-				return name;
-			}
+			return p;
 		}
 	}
 	return NULL;
 }
 
+/*
+ * The actual name for VAL, using RANGE; possibly shortened using
+ * PREFIX.
+ */
+const char *enum_range_name(const struct enum_names *range, unsigned long val,
+			    const char *prefix, bool shorten)
+{
+	if (range == NULL) {
+		return NULL;
+	}
+	passert(range->en_first <= val && val <= range->en_last);
+	/* can be NULL */
+	const char *name = range->en_names[val - range->en_first];
+	if (name != NULL && prefix != NULL && shorten) {
+		/* grr: can't use eat() */
+		size_t pl = strlen(prefix);
+		return strneq(name, prefix, pl) ? name + pl : name;
+	} else {
+		return name;
+	}
+}
+
 /* look up enum names in an enum_names */
 const char *enum_name(enum_names *ed, unsigned long val)
 {
-	return name_of_enum(ed, val, /*shorten?*/false);
+	const char *prefix = NULL;
+	/* can be NULL */
+	const struct enum_names *range = enum_range(ed, val, &prefix);
+	/* can be NULL */
+	return enum_range_name(range, val, prefix, /*shorten?*/false);
 }
 
 const char *enum_short_name(enum_names *ed, unsigned long val)
 {
-	return name_of_enum(ed, val, /*shorten?*/true);
+	const char *prefix = NULL;
+	/* can be NULL */
+	const struct enum_names *range = enum_range(ed, val, &prefix);
+	/* can be NULL */
+	return enum_range_name(range, val, prefix, /*shorten?*/true);
 }
 
 size_t jam_enum(struct jambuf *buf, enum_names *en, unsigned long val)
@@ -2304,10 +2334,17 @@ const char *enum_showb(enum_names *ed, unsigned long val, struct esb_buf *b)
 
 const char *enum_show_shortb(enum_names *ed, unsigned long val, struct esb_buf *b)
 {
-	const char *p = enum_showb(ed, val, b);
-
-	return ed->en_prefix == NULL ? p : strip_prefix(p, ed->en_prefix);
+	const char *prefix;
+	const struct enum_names *range = enum_range(ed, val, &prefix);
+	/* could be NULL */
+	const char *name = enum_range_name(range, val, prefix, /*shorten?*/true);
+	if (name == NULL) {
+		snprintf(b->buf, sizeof(b->buf), "%lu??", val);
+		name = b->buf;
+	}
+	return name;
 }
+
 /*
  * find or construct a string to describe an enum value
  * Result may be in STATIC buffer -- NOT RE-ENTRANT!
@@ -2322,14 +2359,6 @@ const char *enum_show(enum_names *ed, unsigned long val)
 	static struct esb_buf buf;	/* only one! NON-RE-ENTRANT */
 
 	return enum_showb(ed, val, &buf);
-}
-
-/* sometimes the prefix gets annoying */
-const char *strip_prefix(const char *s, const char *prefix)
-{
-	size_t pl = strlen(prefix);
-
-	return strneq(s, prefix, pl) ? s + pl : s;
 }
 
 /*

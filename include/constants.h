@@ -250,9 +250,6 @@ extern const char *enum_show(enum_names *ed, unsigned long val);	/* NOT RE-ENTRA
  */
 extern long next_enum(enum_names *en, long last);
 
-/* sometimes the prefix gets annoying */
-extern const char *strip_prefix(const char *s, const char *prefix);
-
 extern int enum_search(enum_names *ed, const char *string);
 
 /*
@@ -265,6 +262,15 @@ extern int enum_search(enum_names *ed, const char *string);
  * "esp_blowfish(obsolete)", "esp_blowfish" and "blowfish" will match.
  */
 extern int enum_match(enum_names *ed, shunk_t string);
+
+/*
+ * primitives:
+ *
+ * Return the enum_names range containing VAL; and using its result,
+ * the corresponding and adjusted name.
+ */
+const struct enum_names *enum_range(enum_names *en, unsigned long val, const char **prefix);
+const char *enum_range_name(enum_names *range, unsigned long val, const char *prefix, bool shorten);
 
 /*
  * Printing enum enums.

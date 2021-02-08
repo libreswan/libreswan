@@ -20,6 +20,7 @@
 #include "lset.h"
 
 #include "lswlog.h"	/* for passert() */
+#include "enum_names.h"
 
 /*
  * NOT RE-ENTRANT!
@@ -117,9 +118,8 @@ const char *bitnamesofb(const char *const table[], lset_t val,
 	return b;
 }
 
-#define LSET_SEPARATOR "+"
-
-size_t jam_lset(struct jambuf *buf, enum_names *en, lset_t val)
+static size_t jam_lset_pretty(struct jambuf *buf, enum_names *en, lset_t val,
+			      const char *separator, bool shorten)
 {
 	if (val == LEMPTY) {
 		return jam(buf, "none");
@@ -127,16 +127,37 @@ size_t jam_lset(struct jambuf *buf, enum_names *en, lset_t val)
 
 	size_t s = 0;
 	const char *sep = "";
+	const struct enum_names *range = NULL;
+	const char *prefix = NULL;
 	for (unsigned e = 0; val != 0; e++) {
 		lset_t bit = LELEM(e);
 		if (val & bit) {
+			/* range!=NULL implies e>=range->en_first */
+			if (range == NULL || e > range->en_last) {
+				/* try to find a new range */
+				range = enum_range(en, e, &prefix);
+			}
 			s += jam_string(buf, sep);
-			sep = LSET_SEPARATOR;
-			s += jam_enum(buf, en, e);
-			val ^= bit;
+			sep = separator;
+			/* can handle range==NULL */
+			const char *name = enum_range_name(range, e, prefix, shorten);
+			if (name == NULL) {
+				/* No name for this bit, use hex. */
+				s += jam(buf, "0x" PRI_LSET, bit);
+			} else {
+				s += jam_string(buf, name);
+			}
 		}
+		val &= ~bit;
 	}
 	return s;
+}
+
+#define LSET_SEPARATOR "+"
+
+size_t jam_lset(struct jambuf *buf, enum_names *en, lset_t val)
+{
+	return jam_lset_pretty(buf, en, val, LSET_SEPARATOR, /*shorten?*/false);
 }
 
 const char *str_lset(enum_names *en, lset_t val, lset_buf *out)
@@ -149,22 +170,7 @@ const char *str_lset(enum_names *en, lset_t val, lset_buf *out)
 size_t jam_lset_short(struct jambuf *buf, enum_names *en,
 		      const char *separator, lset_t val)
 {
-	if (val == LEMPTY) {
-		return jam(buf, "none");
-	}
-
-	size_t s = 0;
-	const char *sep = "";
-	for (unsigned e = 0; val != 0; e++) {
-		lset_t bit = LELEM(e);
-		if (val & bit) {
-			s += jam_string(buf, sep);
-			sep = separator;
-			s += jam_enum_short(buf, en, e);
-			val ^= bit;
-		}
-	}
-	return s;
+	return jam_lset_pretty(buf, en, val, separator, /*shorten?*/true);
 }
 
 const char *str_lset_short(enum_names *en, const char *separator,
