@@ -1071,6 +1071,23 @@ void delete_state_tail(struct state *st)
 	}
 
 	/*
+	 * Release stored IKE fragments. This is a union in st so only
+	 * call one!  XXX: should be a union???
+	 */
+	switch (st->st_connection->ike_version) {
+	case IKEv1:
+#ifdef USE_IKEv1
+		free_v1_message_queues(st);
+#endif
+		break;
+	case IKEv2:
+		free_v2_message_queues(st);
+		break;
+	default:
+		bad_case(st->st_connection->ike_version);
+	}
+
+	/*
 	 * This, effectively,  deletes any ISAKMP SA that this state
 	 * represents - lookups for this state no longer work.
 	 */
@@ -1108,23 +1125,6 @@ void delete_state_tail(struct state *st)
 	ikev1_clear_msgid_list(st);
 #endif
 	pubkey_delref(&st->st_peer_pubkey, HERE);
-
-	/*
-	 * Release stored IKE fragments. This is a union in st so only
-	 * call one!  XXX: should be a union???
-	 */
-	switch (st->st_ike_version) {
-	case IKEv1:
-#ifdef USE_IKEv1
-		free_v1_message_queues(st);
-#endif
-		break;
-	case IKEv2:
-		free_v2_message_queues(st);
-		break;
-	default:
-		bad_case(st->st_ike_version);
-	}
 
 	/*
 	 * Free the accepted proposal first, it points into the
