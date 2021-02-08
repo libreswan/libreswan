@@ -108,7 +108,6 @@ extern enum_names dns_auth_level_names;
  */
 extern uint16_t secctx_attr_type;
 
-extern const char *const natt_bit_names[];
 extern enum_names natt_method_names;
 
 extern enum_names pkk_names;

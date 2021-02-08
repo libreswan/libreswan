@@ -588,8 +588,9 @@ bool nat_traversal_add_natoa(pb_stream *outs, struct state *st,
 #ifdef USE_IKEv1
 static void nat_traversal_show_result(lset_t nt, uint16_t sport)
 {
+	lset_buf lb;
 	const char *rslt = (nt & NAT_T_DETECTED) ?
-		bitnamesof(natt_bit_names, nt & NAT_T_DETECTED) :
+		str_lset(&natt_method_names, nt & NAT_T_DETECTED, &lb) :
 		"no NAT detected";
 
 	dbg("NAT-Traversal: Result using %s sender port %" PRIu16 ": %s",
@@ -606,9 +607,10 @@ static void nat_traversal_show_result(lset_t nt, uint16_t sport)
 
 void ikev1_natd_init(struct state *st, struct msg_digest *md)
 {
+	lset_buf lb;
 	dbg("init checking NAT-T: %s; %s",
 	    nat_traversal_enabled ? "enabled" : "disabled",
-	    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal));
+	    str_lset(&natt_method_names, st->hidden_variables.st_nat_traversal, &lb));
 
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 		if (md->st->st_oakley.ta_prf == NULL) {

@@ -2050,9 +2050,11 @@ void process_packet_tail(struct msg_digest *md)
 						 * don't accept NAT-D/NAT-OA reloc directly in message,
 						 * unless we're using NAT-T RFC
 						 */
+						lset_buf lb;
 						dbg("st_nat_traversal was: %s",
-						    bitnamesof(natt_bit_names,
-							       st->hidden_variables.st_nat_traversal));
+						    str_lset(&natt_method_names,
+							     st->hidden_variables.st_nat_traversal,
+							     &lb));
 						sd = NULL;
 					}
 					break;

@@ -143,12 +143,8 @@ enum_names timer_event_names = {
 	NULL
 };
 
-/*
- * natt_bit_names is dual purpose:
- * - for bitnamesof(natt_bit_names, lset_t of enum natt_method)
- * - for enum_name(&natt_method_names, enum natt_method)
- */
-const char *const natt_bit_names[] = {
+/* NAT methods */
+static const char *const natt_method_name[] = {
 	"none",
 	"draft-ietf-ipsec-nat-t-ike-02/03",
 	"draft-ietf-ipsec-nat-t-ike-05",
@@ -156,12 +152,11 @@ const char *const natt_bit_names[] = {
 
 	"I am behind NAT",
 	"peer behind NAT",
-	NULL	/* end for bitnamesof() */
 };
 
 enum_names natt_method_names = {
 	NAT_TRAVERSAL_METHOD_none, NATED_PEER,
-	ARRAY_REF(natt_bit_names)-1,
+	ARRAY_REF(natt_method_name),
 	NULL, /* prefix */
 	NULL
 };
