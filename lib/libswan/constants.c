@@ -2230,27 +2230,34 @@ long next_enum(enum_names *en, long l)
 	}
 }
 
+static const char *name_of_enum(enum_names *ed, unsigned long val, bool shorten)
+{
+	const char *prefix = NULL;
+	for (enum_names *p = ed; p != NULL; p = p->en_next_range) {
+		passert(p->en_last - p->en_first + 1 == p->en_checklen);
+		prefix = (p->en_prefix == NULL ? prefix : p->en_prefix);
+		if (p->en_first <= val && val <= p->en_last) {
+			/* can be NULL */
+			const char *name = p->en_names[val - p->en_first];
+			if (name != NULL && prefix != NULL && shorten) {
+				return strip_prefix(name, prefix);
+			} else {
+				return name;
+			}
+		}
+	}
+	return NULL;
+}
+
 /* look up enum names in an enum_names */
 const char *enum_name(enum_names *ed, unsigned long val)
 {
-	enum_names  *p;
-
-	for (p = ed; p != NULL; p = p->en_next_range) {
-		passert(p->en_last - p->en_first + 1 == p->en_checklen);
-		if (p->en_first <= val && val <= p->en_last)
-			/* can be NULL */
-			return p->en_names[val - p->en_first];
-	}
-
-	return NULL;
+	return name_of_enum(ed, val, /*shorten?*/false);
 }
 
 const char *enum_short_name(enum_names *ed, unsigned long val)
 {
-	const char *p = enum_name(ed, val);
-
-	return p == NULL || ed->en_prefix == NULL ? p :
-		strip_prefix(p, ed->en_prefix);
+	return name_of_enum(ed, val, /*shorten?*/true);
 }
 
 size_t jam_enum(struct jambuf *buf, enum_names *en, unsigned long val)
@@ -2351,8 +2358,10 @@ int enum_search(enum_names *ed, const char *str)
 
 int enum_match(enum_names *ed, shunk_t string)
 {
+	const char *prefix = NULL;
 	for (enum_names *p = ed; p != NULL; p = p->en_next_range) {
 		passert(p->en_last - p->en_first + 1 == p->en_checklen);
+		prefix = (p->en_prefix == NULL ? prefix : p->en_prefix);
 		for (unsigned long en = p->en_first; en <= p->en_last; en++) {
 			const char *name = p->en_names[en - p->en_first];
 
@@ -2368,17 +2377,13 @@ int enum_match(enum_names *ed, shunk_t string)
 			 * with and without suffix '(...)'
 			 */
 			size_t name_len = strlen(name);
-
-			/* pl: prefix length */
-			size_t pl = ed->en_prefix == NULL ? 0 :
-				strip_prefix(name, ed->en_prefix) - name;
+			size_t prefix_len = (prefix == NULL ? 0 : strlen(prefix));
 
 			/* suffix must not and will not overlap prefix */
-			const char *suffix = strchr(name + pl, '(');
+			const char *suffix = strchr(name + prefix_len, '(');
 
-			/* sl: suffix length */
-			size_t sl = suffix != NULL && name[name_len - 1] == ')' ?
-				&name[name_len] - suffix : 0;
+			size_t suffix_len = (suffix != NULL && name[name_len - 1] == ')' ?
+					     &name[name_len] - suffix : 0);
 
 #			define try(guard, f, b) ( \
 				(guard) && \
@@ -2386,9 +2391,9 @@ int enum_match(enum_names *ed, shunk_t string)
 				strncaseeq(name + (f), string.ptr, string.len))
 
 			if (try(true, 0, 0) ||
-			    try(sl > 0, 0, sl) ||
-			    try(pl > 0, pl, 0) ||
-			    try(pl > 0 && sl > 0, pl, sl))
+			    try(suffix_len > 0, 0, suffix_len) ||
+			    try(prefix_len > 0, prefix_len, 0) ||
+			    try(suffix_len > 0 && suffix_len > 0, prefix_len, suffix_len))
 			{
 				return en;
 			}
