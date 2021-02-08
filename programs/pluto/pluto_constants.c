@@ -271,11 +271,18 @@ static const enum_names sa_policy_bit_names = {
 /*
  * Names for RFC 7427 IKEv2 AUTH signature hash algo sighash_policy_bits
  */
-const char *const sighash_policy_bit_names[] = {
+static const char *const sighash_policy_bit_name[] = {
 	"SHA2_256",
 	"SHA2_384",
 	"SHA2_512",
-	NULL	/* end for bitnamesof() */
+};
+
+const struct enum_names sighash_policy_bit_names = {
+	POL_SIGHASH_SHA2_256_IX,
+	POL_SIGHASH_SHA2_512_IX,
+	ARRAY_REF(sighash_policy_bit_name),
+	NULL, /* prefix */
+	NULL, /* next */
 };
 
 static const char *const keyword_authby_name[] = {

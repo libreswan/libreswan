@@ -1843,6 +1843,14 @@ enum ipsec_comp_algo {
  *
  * Currently it is only used by RFC 7427 Signature Authentication in
  * the Internet Key Exchange Version 2.
+ *
+ * XXX: Danger!
+ *
+ * As well as IKEv2_HASH_ALGORITHM_* and the the lset_t constants
+ * NEGOTIATE_AUTH_HASH_*, pluto defines the enum POL_SIGHASH_*_IX and
+ * lset_t constants POL_SIGHHASH_* using different values.  Ulgh.
+ *
+ * sighash_policy_bit_names is for the _latter.
  */
 
 enum ikev2_hash_algorithm {
