@@ -64,7 +64,7 @@ road #
  echo done
 done
 road #
- # Authentication should be AUTHNULL
+ # Authentication should be AUTH_NULL
 road #
  hostname | grep nic > /dev/null || grep authenticated /tmp/pluto.log
 "private-or-clear#192.1.2.23/32"[1] ...192.1.2.23 #1: authenticated using authby=null
