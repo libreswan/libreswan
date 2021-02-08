@@ -226,7 +226,7 @@ struct_desc isakmp_sa_desc = {
 };
 
 static field_desc ipsec_sit_field[] = {
-	{ ft_set, 32 / BITS_PER_BYTE, "IPsec DOI SIT", &sit_bit_names },
+	{ ft_lset, 32 / BITS_PER_BYTE, "IPsec DOI SIT", &sit_bit_names },
 	{ ft_end, 0, NULL, NULL }
 };
 

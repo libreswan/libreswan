@@ -526,11 +526,20 @@ const struct enum_names isakmp_flag_names = {
 
 
 /* Situation BITS definition for IPsec DOI */
-const char *const sit_bit_names[] = {
-	"SIT_IDENTITY_ONLY",
-	"SIT_SECRECY",
-	"SIT_INTEGRITY",
-	NULL	/* termination for bitnamesof() */
+
+static const char *const sit_bit_name[] = {
+#define P(N) [N##_IX] = #N
+	P(SIT_IDENTITY_ONLY),
+	P(SIT_SECRECY),
+	P(SIT_INTEGRITY),
+};
+
+const struct enum_names sit_bit_names = {
+	SIT_IDENTITY_ONLY_IX,
+	SIT_INTEGRITY_IX,
+	ARRAY_REF(sit_bit_name),
+	NULL, /* prefix */
+	NULL, /* next */
 };
 
 /* Protocol IDs (RFC 2407 "IPsec DOI" section 4.4.1) */

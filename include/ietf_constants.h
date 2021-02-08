@@ -841,12 +841,21 @@ extern const struct enum_names isakmp_flag_names;
 #define SK_HEADER_SIZE 4
 #define ADJ_PAYLOAD_LENGTH_SIZE 2
 
-/* Situation definition for IPsec DOI */
-extern const char *const sit_bit_names[];
+/*
+ * Situation definition for IPsec DOI.
+ */
 
-#define SIT_IDENTITY_ONLY 0x01
-#define SIT_SECRECY 0x02
-#define SIT_INTEGRITY 0x04
+extern const struct enum_names sit_bit_names;
+
+enum sit_bits {
+	SIT_IDENTITY_ONLY_IX = 0,
+	SIT_SECRECY_IX = 1,
+	SIT_INTEGRITY_IX = 2,
+};
+
+#define SIT_IDENTITY_ONLY (1<<SIT_IDENTITY_ONLY_IX)
+#define SIT_SECRECY (1<<SIT_SECRECY_IX)
+#define SIT_INTEGRITY (1<<SIT_INTEGRITY_IX)
 
 /*
  * See https://tools.ietf.org/html/rfc5996#section-3.2

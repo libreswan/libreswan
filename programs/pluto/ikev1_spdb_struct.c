@@ -1654,8 +1654,9 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 	}
 
 	if (ipsecdoisit != SIT_IDENTITY_ONLY) {
+		lset_buf lb;
 		log_state(RC_LOG_SERIOUS, st, "unsupported IPsec DOI situation (%s)",
-			  bitnamesof(sit_bit_names, ipsecdoisit));
+			  str_lset(&sit_bit_names, ipsecdoisit, &lb));
 		/* XXX Could send notification back */
 		return SITUATION_NOT_SUPPORTED;	/* reject whole SA */
 	}
@@ -2835,8 +2836,9 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 	}
 
 	if (ipsecdoisit != SIT_IDENTITY_ONLY) {
+		lset_buf lb;
 		log_state(RC_LOG_SERIOUS, st, "unsupported IPsec DOI situation (%s)",
-			  bitnamesof(sit_bit_names, ipsecdoisit));
+			  str_lset(&sit_bit_names, ipsecdoisit, &lb));
 		/* XXX Could send notification back */
 		return SITUATION_NOT_SUPPORTED;	/* reject whole SA */
 	}
