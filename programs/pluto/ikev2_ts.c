@@ -846,10 +846,15 @@ static bool score_ends_seclabel(const struct ends *ends,
 				// complain loudly
 				continue;
 			} else {
-				if (hunk_eq(ends->i->sec_label, cur->sec_label))
+				if (hunk_eq(ends->i->sec_label, cur->sec_label)) {
 					match_i = true;
-				else
+					dbg("PAUL: ikev2ts #1: hunk_eq matches security label");
+				} else {
+					dbg("PAUL: ikev2ts #1: hunk_eq does not match security label");
+					DBG_dump_hunk("PAUL:ends->i->sec_label", ends->i->sec_label);
+					DBG_dump_hunk("PAUL:cur->sec_label", cur->sec_label);
 					continue; // hope for a better one
+				}
 			}
 
 			for (unsigned tsr_n = 0; tsr_n < tsr->nr; tsr_n++) {
@@ -858,12 +863,18 @@ static bool score_ends_seclabel(const struct ends *ends,
 					recv_label_r = true;
 					if (cur->sec_label.len == 0) {
 						// complain loudly
+						dbg("PAUL: IKEv2_TS_SECLABEL but zero length cur->sec_label");
 						continue;
 					} else {
-						if (hunk_eq(ends->r->sec_label, cur->sec_label))
+						if (hunk_eq(ends->r->sec_label, cur->sec_label)) {
+							dbg("PAUL: ikev2ts #2: hunk_eq matches security label");
 							match_r = true;
-						else
+						} else {
+							dbg("PAUL: ikev2ts #2: hunk_eq does not match security label");
+							DBG_dump_hunk("PAUL:ends->r->sec_label", ends->r->sec_label);
+							DBG_dump_hunk("PAUL:cur->sec_label", cur->sec_label);
 							continue; // hope for a better one
+						}
 					}
 				}
 			}

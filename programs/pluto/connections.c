@@ -2485,6 +2485,10 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 		struct spd_route *sr;
 
 		for (sr = &c->spd; best != c && sr; sr = sr->spd_next) {
+			dbg("PAUL: security label hunk check in find_connection_for_clients() returns %s",
+				hunk_eq(sec_label, sr->this.sec_label) ? "true" : "false");
+				DBG_dump_hunk("PAUL:sec_label", sec_label);
+				DBG_dump_hunk("PAUL:sr->this.sec_label", sr->this.sec_label);
 			if ((routed(sr->routing) ||
 					c->instance_initiation_ok) &&
 				addrinsubnet(our_client, &sr->this.client) &&

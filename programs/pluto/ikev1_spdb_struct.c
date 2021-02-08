@@ -118,10 +118,10 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 			  "received IPsec Security Label on connection not configured with labeled ipsec");
 		return FALSE;
 	} else if (hunk_eq(st->st_seen_sec_label, c->spd.this.sec_label)) {
-		dbg("connection security context IPsec Security Label verification succeeded");
+		dbg("PAUL: connection security context IPsec Security Label verification succeeded");
 	} else {
 		log_state(RC_LOG_SERIOUS, st,
-			  "received IPsec Security Label '%.*s' mismatches our configured security label %.*s",
+			  "PAUL: received IPsec Security Label '%.*s' mismatches our configured security label %.*s",
 			(int)st->st_seen_sec_label.len, st->st_seen_sec_label.ptr,
 			(int)c->spd.this.sec_label.len, c->spd.this.sec_label.ptr);
 		return FALSE;
