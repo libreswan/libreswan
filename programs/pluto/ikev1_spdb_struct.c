@@ -2137,9 +2137,10 @@ rsasig_common:
 					 LELEM(OAKLEY_GROUP_DESCRIPTION));
 
 				if (missing) {
+					lset_buf lb;
 					log_state(RC_LOG_SERIOUS, st,
 						  "missing mandatory attribute(s) %s in Oakley Transform %u",
-						  bitnamesof(oakley_attr_bit_names, missing),
+						  str_lset(&oakley_attr_bit_names, missing, &lb),
 						  trans.isat_transnum);
 					return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 				}
