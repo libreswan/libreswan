@@ -2137,9 +2137,10 @@ rsasig_common:
 					 LELEM(OAKLEY_GROUP_DESCRIPTION));
 
 				if (missing) {
+					lset_buf lb;
 					log_state(RC_LOG_SERIOUS, st,
 						  "missing mandatory attribute(s) %s in Oakley Transform %u",
-						  bitnamesof(oakley_attr_bit_names, missing),
+						  str_lset(&oakley_attr_bit_names, missing, &lb),
 						  trans.isat_transnum);
 					return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 				}
@@ -2563,21 +2564,30 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			switch (val) {
 			case ENCAPSULATION_MODE_TUNNEL:
 			case ENCAPSULATION_MODE_TRANSPORT:
+			{
+				lset_buf lb;
 				dbg("NAT-T non-encap: Installing IPsec SA without ENCAP, st->hidden_variables.st_nat_traversal is %s",
-				    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal));
+				    str_lset(&natt_method_names, st->hidden_variables.st_nat_traversal, &lb));
 				break;
+			}
 
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS:
 			case ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS:
+			{
+				lset_buf lb;
 				dbg("NAT-T draft: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is %s",
-				    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal));
+				    str_lset(&natt_method_names, st->hidden_variables.st_nat_traversal, &lb));
 				break;
+			}
 
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_RFC:
 			case ENCAPSULATION_MODE_UDP_TUNNEL_RFC:
+			{
+				lset_buf lb;
 				dbg("NAT-T RFC: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is %s",
-				    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal));
+				    str_lset(&natt_method_names, st->hidden_variables.st_nat_traversal, &lb));
 				break;
+			}
 
 			default:
 				/* should already be filtered out by enum checker */

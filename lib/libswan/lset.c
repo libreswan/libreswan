@@ -22,33 +22,6 @@
 #include "lswlog.h"	/* for passert() */
 #include "enum_names.h"
 
-/*
- * NOT RE-ENTRANT!
- */
-const char *bitnamesof(const char *const table[], lset_t val)
-{
-	static char bitnamesbuf[8192]; /* I hope that it is big enough! */
-
-	return bitnamesofb(table, val, bitnamesbuf, sizeof(bitnamesbuf));
-}
-
-/* test a set by seeing if all bits have names */
-bool testset(const char *const table[], lset_t val)
-{
-	lset_t bit;
-	const char *const *tp;
-
-	for (tp = table, bit = 01; val != 0; bit <<= 1, tp++) {
-		const char *n = *tp;
-
-		if (n == NULL || ((val & bit) && *n == '\0'))
-			return false;
-
-		val &= ~bit;
-	}
-	return true;
-}
-
 /* test a set by seeing if all bits have names */
 bool test_lset(const struct enum_names *en, lset_t val)
 {
@@ -63,59 +36,6 @@ bool test_lset(const struct enum_names *en, lset_t val)
 		val &= ~bit;
 	}
 	return true;
-}
-
-/*
- * construct a string to name the bits on in a set
- *
- * Result of bitnamesof may be in STATIC buffer -- NOT RE-ENTRANT!
- * Note: prettypolicy depends on internal details of bitnamesofb.
- * binamesofb is re-entrant since the caller provides the buffer.
- */
-const char *bitnamesofb(const char *const table[], lset_t val,
-			char *b, size_t blen)
-{
-	char *const roof = b + blen;
-	char *p = b;
-	lset_t bit;
-	const char *const *tp;
-
-	passert(blen != 0); /* need room for NUL */
-
-	/* if nothing gets filled in, default to "none" rather than "" */
-	(void) jam_str(b, blen, "none");
-
-	for (tp = table, bit = 01; val != 0; bit <<= 1) {
-		if (val & bit) {
-			const char *n = *tp;
-
-			if (p != b)
-				p = jam_str(p, (size_t)(roof - p), "+");
-
-			if (n == NULL || *n == '\0') {
-				/*
-				 * No name for this bit, so use hex.
-				 * if snprintf returns a different value from
-				 * strlen, truncation happened
-				 */
-				(void)snprintf(p, (size_t)(roof - p),
-					"0x%" PRIxLSET,
-					bit);
-				p += strlen(p);
-			} else {
-				p = jam_str(p, (size_t)(roof - p), n);
-			}
-			val -= bit;
-		}
-		/*
-		 * Move on in the table, but not past end.
-		 * This is a bit of a trick: while we are at stuck the end,
-		 * the loop will print out the remaining bits in hex.
-		 */
-		if (*tp != NULL)
-			tp++;
-	}
-	return b;
 }
 
 static size_t jam_lset_pretty(struct jambuf *buf, enum_names *en, lset_t val,

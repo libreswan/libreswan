@@ -849,7 +849,7 @@ enum_names certpolicy_type_names = {
  * and bit names.
  * https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-2
  */
-const char *const oakley_attr_bit_names[] = {
+static const char *const oakley_attr_bit_name[] = {
 	"OAKLEY_ENCRYPTION_ALGORITHM",
 	"OAKLEY_HASH_ALGORITHM",
 	"OAKLEY_AUTHENTICATION_METHOD",
@@ -866,7 +866,14 @@ const char *const oakley_attr_bit_names[] = {
 	"OAKLEY_KEY_LENGTH",
 	"OAKLEY_FIELD_SIZE",
 	"OAKLEY_GROUP_ORDER",
-	NULL	/* termination for bitnamesof() */
+};
+
+const struct enum_names oakley_attr_bit_names = {
+	OAKLEY_ENCRYPTION_ALGORITHM,
+	OAKLEY_GROUP_DESCRIPTION,
+	ARRAY_REF(oakley_attr_bit_name),
+	NULL, /*prefix*/
+	NULL, /*next*/
 };
 
 static const char *const oakley_var_attr_name[] = {
@@ -886,7 +893,7 @@ static const char *const oakley_var_attr_name[] = {
 static enum_names oakley_attr_desc_tv = {
 	OAKLEY_ENCRYPTION_ALGORITHM + ISAKMP_ATTR_AF_TV,
 	OAKLEY_GROUP_ORDER + ISAKMP_ATTR_AF_TV,
-	ARRAY_REF(oakley_attr_bit_names)-1,
+	ARRAY_REF(oakley_attr_bit_name),
 	NULL, /* prefix */
 	NULL
 };
