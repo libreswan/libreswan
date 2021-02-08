@@ -1847,7 +1847,6 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 		case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
 		case ft_af_enum:        /* Attribute Format + value from an enumeration */
 		case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
-		case ft_set:            /* bits representing set */
 		case ft_lset:           /* bits representing set */
 			/* grab bytes in host-byte-order */
 			switch (i) {
@@ -1919,13 +1918,6 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 					fp->name, name, n);
 				break;
 			}
-
-			case ft_set: /* bits representing set */
-				DBG_log("   %s: %s (0x%jx)",
-					fp->name,
-					bitnamesof(fp->desc, n),
-					n);
-				break;
 
 			case ft_lset: /* bits representing set */
 				LSWLOG_DEBUG(buf) {
@@ -2068,7 +2060,6 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 		case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
 		case ft_af_enum:        /* Attribute Format + value from an enumeration */
 		case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
-		case ft_set:            /* bits representing set */
 		case ft_lset:           /* bits representing set */
 		{
 			uintmax_t n = 0;
@@ -2136,14 +2127,6 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 			case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
 				break;
 
-			case ft_set:            /* bits representing set */
-				if (!testset(fp->desc, n)) {
-					return diag("bitset %s of %s has unknown member(s): %s (0x%ju)",
-						    fp->name, sd->name,
-						    bitnamesof(fp->desc, n),
-						    n);
-				}
-				break;
 			case ft_lset:            /* bits representing set */
 				if (!test_lset(fp->desc, n)) {
 					lset_buf lb;
@@ -2550,7 +2533,6 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 		case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
 		case ft_af_enum:        /* Attribute Format + value from an enumeration */
 		case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
-		case ft_set:            /* bits representing set */
 		case ft_lset:           /* bits representing set */
 		{
 			uint32_t n;
@@ -2597,15 +2579,6 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 				break;
 
 			case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
-				break;
-
-			case ft_set:            /* bits representing set */
-				if (!testset(fp->desc, n)) {
-					return diag("bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
-						    fp->name, sd->name,
-						    bitnamesof(fp->desc, n),
-						    n);
-				}
 				break;
 
 			case ft_lset:           /* bits representing set */
