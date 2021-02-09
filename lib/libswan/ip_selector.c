@@ -51,8 +51,8 @@ const char *str_selector(const ip_selector *selector, selector_buf *out)
 	return out->buf;
 }
 
-ip_selector selector_from_address(const ip_address *address,
-				  const ip_protoport *protoport)
+ip_selector selector_from_address_protoport(const ip_address *address,
+					    const ip_protoport *protoport)
 {
 	const struct ip_info *afi = address_type(address);
 	if (!pexpect(afi != NULL)) {
@@ -60,6 +60,11 @@ ip_selector selector_from_address(const ip_address *address,
 	}
 	ip_subnet subnet = subnet_from_address(address);
 	return selector_from_subnet(&subnet, protoport);
+}
+
+ip_selector selector_from_address(const ip_address *address)
+{
+	return selector_from_address_protoport(address, &unset_protoport);
 }
 
 ip_selector selector_from_endpoint(const ip_endpoint *endpoint)
@@ -227,8 +232,8 @@ bool selector_in_selector(const ip_selector *l, const ip_selector *r)
 bool address_in_selector(const ip_address *address, const ip_selector *selector)
 {
 	ip_protoport protoport = selector_protoport(selector);
-	/* HACK: use same prot/port as selector so they always match */
-	ip_selector inner = selector_from_address(address, &protoport);
+	/* HACK: use same ipprot/port as selector so they always match */
+	ip_selector inner = selector_from_address_protoport(address, &protoport);
 	return selector_in_selector(&inner, selector);
 }
 

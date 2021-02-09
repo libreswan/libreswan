@@ -425,7 +425,8 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 		 * For instance, the config file omitted subnet, but
 		 * specified protoport; merge that.
 		 */
-		this->client = selector_from_address(&this->host_addr, &this->raw.client.protoport);
+		this->client = selector_from_address_protoport(&this->host_addr,
+							       &this->raw.client.protoport);
 	}
 
 	if (this->sendcert == 0) {
@@ -2601,7 +2602,7 @@ struct connection *oppo_instantiate(struct connection *c,
 			 * the required client is within that subnet
 			 * narrow it(?), ...
 			*/
-			d->spd.this.client = selector_from_address(local_address, &unset_protoport/*all*/);
+			d->spd.this.client = selector_from_address(local_address);
 		} else if (address_eq(local_address, &d->spd.this.host_addr)) {
 			/*
 			 * or that it is our private ip in case we are
@@ -2626,7 +2627,7 @@ struct connection *oppo_instantiate(struct connection *c,
 	 */
 	passert(d->policy & POLICY_OPPORTUNISTIC);
 	passert(address_in_selector(remote_address, &d->spd.that.client));
-	d->spd.that.client = selector_from_address(remote_address, &unset_protoport/*all*/);
+	d->spd.that.client = selector_from_address(remote_address);
 
 	if (address_eq(remote_address, &d->spd.that.host_addr))
 		d->spd.that.has_client = false;

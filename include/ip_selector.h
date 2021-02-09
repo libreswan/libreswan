@@ -69,11 +69,12 @@ typedef ip_subnet ip_selector;
 void pexpect_selector(const ip_selector *s, const char *t, where_t where);
 #define pselector(S) pexpect_selector(S, #S, HERE)
 
-ip_selector selector_from_address(const ip_address *address,
-				  const ip_protoport *protoport);
+ip_selector selector_from_address(const ip_address *address);
+ip_selector selector_from_address_protoport(const ip_address *address,
+					    const ip_protoport *protoport);
+ip_selector selector_from_endpoint(const ip_endpoint *address);
 ip_selector selector_from_subnet(const ip_subnet *subnet,
 				 const ip_protoport *protoport);
-ip_selector selector_from_endpoint(const ip_endpoint *address);
 #if 0
 ip_selector selector_from_range(const ip_range *range,
 				const ip_protoport *protoport);

@@ -120,7 +120,7 @@ static err_t do_selector_from_address(const struct selector *s,
 		return err;
 	}
 
-	*selector = selector_from_address(&address, &protoport);
+	*selector = selector_from_address_protoport(&address, &protoport);
 	return NULL;
 }
 

@@ -1250,12 +1250,12 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 			/* inbound; fix this end */
 			ip_port port = selector_port(sa->src.client);
 			ip_protoport protoport = protoport2(sa->transport_proto, port);
-			src = selector_from_address(sa->src.address, &protoport);
+			src = selector_from_address_protoport(sa->src.address, &protoport);
 		} else {
 			/* outbound; fix other end */
 			ip_port port = selector_port(sa->dst.client);
 			ip_protoport protoport = protoport2(sa->transport_proto, port);
-			dst = selector_from_address(sa->dst.address, &protoport);
+			dst = selector_from_address_protoport(sa->dst.address, &protoport);
 		}
 
 		/* .[sd]addr, .prefixlen_[sd], .[sd]port */
@@ -1644,7 +1644,7 @@ static ip_selector selector_from_xfrm(const struct ip_info *afi, unsigned ipprot
 {
 	ip_address address = address_from_xfrm(afi, src);
 	ip_protoport protoport = protoport2(ipproto, ip_nport(nport));
-	return selector_from_address(&address, &protoport);
+	return selector_from_address_protoport(&address, &protoport);
 }
 
 static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
