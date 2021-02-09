@@ -28,8 +28,8 @@ struct jambuf;
 
 typedef struct {
 	bool any_port;
-	unsigned port;		/* 1..65535; 0->0-65535 */
-	unsigned protocol;	/* 1..255; 0->unset */
+	unsigned hport;		/* 1..65535; 0->0-65535 */
+	unsigned ipproto;	/* 1..255; 0->unset */
 } ip_protoport;
 
 extern const ip_protoport unset_protoport;

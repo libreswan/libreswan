@@ -89,8 +89,8 @@ ip_selector selector_from_subnet(const ip_subnet *subnet,
 		.addr = {
 			.version = subnet->addr.version,
 			.bytes = subnet->addr.bytes,
-			.ipproto = protoport->protocol,
-			.hport = protoport->port,
+			.ipproto = protoport->ipproto,
+			.hport = protoport->hport,
 		},
 	};
 	pselector(&selector);

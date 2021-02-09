@@ -1003,8 +1003,8 @@ static int extract_end(struct end *dst,
 						   &src->protoport);
 	}
 
-	dst->protocol = src->protoport.protocol;
-	dst->port = src->protoport.port;
+	dst->protocol = src->protoport.ipproto;
+	dst->port = src->protoport.hport;
 	dst->has_port_wildcard = protoport_has_any_port(&src->protoport);
 	dst->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
 	dst->updown = clone_str(src->updown, "updown");
@@ -1132,10 +1132,10 @@ static bool check_connection_end(const struct whack_end *this,
 		}
 	}
 
-	if (this->protoport.protocol == 0 && this->protoport.port != 0) {
+	if (this->protoport.ipproto == 0 && this->protoport.hport != 0) {
 		llog(RC_ORIENT, logger,
 			    "connection %s cannot specify non-zero port %d for prototcol 0",
-			    wm->name, this->protoport.port);
+			    wm->name, this->protoport.hport);
 		return FALSE;
 	}
 

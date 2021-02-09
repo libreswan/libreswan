@@ -29,8 +29,8 @@ const ip_protoport unset_protoport;
 ip_protoport protoport2(unsigned ipproto, ip_port port)
 {
 	ip_protoport protoport = {
-		.protocol = ipproto,
-		.port = hport(port),
+		.ipproto = ipproto,
+		.hport = hport(port),
 	};
 	return protoport;
 }
@@ -141,25 +141,25 @@ err_t ttoprotoport(const char *src, ip_protoport *protoport)
 		return "protocol 0 must have 0 port";
 	}
 
-	protoport->protocol = protocol;
+	protoport->ipproto = protocol;
 	protoport->any_port = any_port;
-	protoport->port = port;
+	protoport->hport = port;
 	return NULL;
 }
 
 size_t jam_protoport(struct jambuf *buf, const ip_protoport *protoport)
 {
 	size_t s = 0;
-	if (protoport->protocol == 0) {
+	if (protoport->ipproto == 0) {
 		s += jam_string(buf, "%any");
 	} else {
-		s += jam(buf, "%u", protoport->protocol);
+		s += jam(buf, "%u", protoport->ipproto);
 	}
 	jam(buf, "/");
 	if (protoport->any_port) { /* XXX:->any_port?*/
 		s += jam_string(buf, "%any");
 	} else {
-		s += jam(buf, "%u", protoport->port);
+		s += jam(buf, "%u", protoport->hport);
 	}
 	return s;
 }
@@ -173,10 +173,10 @@ const char *str_protoport(const ip_protoport *protoport, protoport_buf *buf)
 
 bool protoport_is_set(const ip_protoport *protoport)
 {
-	return protoport->protocol != 0;
+	return protoport->ipproto != 0;
 }
 
 bool protoport_has_any_port(const ip_protoport *protoport)
 {
-	return protoport->protocol != 0 && protoport->any_port;
+	return protoport->ipproto != 0 && protoport->any_port;
 }

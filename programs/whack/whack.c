@@ -930,7 +930,7 @@ static void check_end(struct whack_end *this, struct whack_end *that,
 	}
 
 	/* check protocol */
-	if (this->protoport.protocol != that->protoport.protocol) {
+	if (this->protoport.ipproto != that->protoport.ipproto) {
 		diagq("the protocol for leftprotoport and rightprotoport must be the same",
 			NULL);
 	}

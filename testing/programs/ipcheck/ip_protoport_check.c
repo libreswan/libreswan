@@ -22,7 +22,8 @@ void ip_protoport_check(void)
 {
 	static const struct test {
 		char *in;
-		unsigned proto, port;
+		unsigned ipproto;
+		unsigned hport;
 		bool ok;
 	} tests[] = {
 		/* { "", 0, 0, false, }, */
@@ -37,8 +38,8 @@ void ip_protoport_check(void)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT(stdout, "in=%s proto=%d port=%d ok=%s",
-		      t->in, t->proto, t->port, bool_str(t->ok));
+		PRINT(stdout, "in=%s proto=%u port=%u ok=%s",
+		      t->in, t->ipproto, t->hport, bool_str(t->ok));
 
 		ip_protoport out;
 		err_t err = ttoprotoport(t->in, &out);
@@ -51,14 +52,14 @@ void ip_protoport_check(void)
 			FAIL(PRINT, "%s got error: %s\n", t->in, err);
 		}
 
-		if (out.protocol != t->proto) {
+		if (out.ipproto != t->ipproto) {
 			FAIL(PRINT, "%s expected proto %u, got %u", t->in,
-			     t->proto, out.protocol);
+			     t->ipproto, out.ipproto);
 		}
 
-		if (out.port != t->port) {
+		if (out.hport != t->hport) {
 			FAIL(PRINT, "%s expected port %u, got %u",
-			     t->in, t->port, out.port);
+			     t->in, t->hport, out.hport);
 		}
 	}
 }
