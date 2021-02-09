@@ -2,7 +2,7 @@ iptables -t nat -F
 nic #
  iptables -F
 nic #
- # Authentication should be AUTHNULL
+ # Authentication should be AUTH_NULL
 nic #
  hostname | grep nic > /dev/null || grep authenticated /tmp/pluto.log
 nic #

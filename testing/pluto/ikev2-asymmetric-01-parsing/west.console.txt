@@ -230,7 +230,7 @@ west #
 000 "test2":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
 000 "test2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "test3":   our auth:null, their auth:null
-000 "test3":   policy: IKEv2+AUTHNULL+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
+000 "test3":   policy: IKEv2+AUTH_NULL+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
 000 "test3":   v2-auth-hash-policy: none;
 000 "test5":   our auth:secret, their auth:rsasig
 000 "test5":   policy: IKEv2+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
@@ -242,7 +242,7 @@ west #
 000 "test7":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
 000 "test7":   v2-auth-hash-policy: none;
 000 "test8":   our auth:null, their auth:null
-000 "test8":   policy: IKEv2+AUTHNULL+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
+000 "test8":   policy: IKEv2+AUTH_NULL+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
 000 "test8":   v2-auth-hash-policy: none;
 000 "test9":   our auth:rsasig, their auth:rsasig
 000 "test9":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
