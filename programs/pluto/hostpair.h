@@ -44,9 +44,6 @@ struct pending **host_pair_first_pending(const struct connection *c);
 
 extern void connect_to_host_pair(struct connection *c);
 
-extern struct connection *find_host_pair_connections(const ip_endpoint *local,
-						     const ip_endpoint *remote);
-
 extern struct host_pair *find_host_pair(const ip_address *local,
 					const ip_address *remote);
 

@@ -247,28 +247,6 @@ static void free_host_pair(struct host_pair **hp, where_t where)
 	*hp = NULL;
 }
 
-/* find head of list of connections with this pair of hosts */
-struct connection *find_host_pair_connections(const ip_address *myaddr,
-					      const ip_address *peer_addr)
-{
-	struct host_pair *hp = find_host_pair(myaddr, peer_addr);
-
-#if 0
-	address_buf bm, bh;
-	connection_buf ci;
-	dbg("find_host_pair_conn: %s:%d %s:%d -> hp:%s%s",
-	    str_address(myaddr, &bm), myport,
-	    peer_addr != NULL ? str_address(peer_addr, &bh) : "%any",
-	    peer_port,
-	    hp != NULL && hp->connections != NULL ?
-	    hp->connections->name : "none",
-	    hp != NULL && hp->connections != NULL ?
-	    str_conn_instance(hp->connections, ci) : ""));
-#endif
-
-	return hp == NULL ? NULL : hp->connections;
-}
-
 struct connection *next_host_pair_connection(const ip_address *local,
 					     const ip_address *remote,
 					     struct connection **next,
@@ -909,26 +887,27 @@ struct connection *find_v2_host_pair_connection(struct msg_digest *md, lset_t *p
 	/*
 	 * Did we overlook a type=passthrough foodgroup?
 	 */
-	{
-		struct connection *tmp = find_host_pair_connections(&md->iface->local_endpoint, NULL);
-
-		for (; tmp != NULL; tmp = tmp->hp_next) {
-			if ((tmp->policy & POLICY_SHUNT_MASK) != POLICY_SHUNT_TRAP &&
-			    tmp->kind == CK_INSTANCE &&
-			    addrinsubnet(&md->sender, &tmp->spd.that.client))
-			{
-				dbgl(md->md_logger,
-				     "passthrough conn %s also matches - check which has longer prefix match", tmp->name);
-
-				if (c->spd.that.client.maskbits  < tmp->spd.that.client.maskbits) {
-					dbgl(md->md_logger,
-					     "passthrough conn was a better match (%d bits versus conn %d bits) - suppressing NO_PROPSAL_CHOSEN reply",
-					     tmp->spd.that.client.maskbits,
-					     c->spd.that.client.maskbits);
-					return NULL;
-				}
-			}
+	FOR_EACH_HOST_PAIR_CONNECTION(&md->iface->ip_dev->id_address, NULL, tmp) {
+		if ((tmp->policy & POLICY_SHUNT_MASK) == POLICY_SHUNT_TRAP) {
+			continue;
 		}
+		if (tmp->kind != CK_INSTANCE) {
+			continue;
+		}
+		ip_address sender = endpoint_address(&md->sender);
+		if (!addrinsubnet(&sender, &tmp->spd.that.client)) {
+			continue;
+		}
+		dbgl(md->md_logger,
+		     "passthrough conn %s also matches - check which has longer prefix match", tmp->name);
+		if (c->spd.that.client.maskbits >= tmp->spd.that.client.maskbits) {
+			continue;
+		}
+		dbgl(md->md_logger,
+		     "passthrough conn was a better match (%d bits versus conn %d bits) - suppressing NO_PROPSAL_CHOSEN reply",
+		     tmp->spd.that.client.maskbits,
+		     c->spd.that.client.maskbits);
+		return NULL;
 	}
 	return c;
 }
