@@ -2683,23 +2683,62 @@ struct connection *oppo_instantiate(struct connection *c,
  * find_connection_for_clients. In this case, we know the gateways
  * that we need to instantiate an opportunistic connection.
  */
-struct connection *build_outgoing_opportunistic_connection(const ip_endpoint *our_client,
-							   const ip_endpoint *peer_client,
+struct connection *build_outgoing_opportunistic_connection(const ip_endpoint *local_client,
+							   const ip_endpoint *remote_client,
 							   const int transport_proto)
 {
+	/*
+	 * Did the caller do theirn job?
+	 *
+	 * Where the protocol includes a port, the endpoint ports
+	 * don't need to match but they do need to be defined.
+	 *
+	 * Unfortunately rcv_whack.c calls this function with a very
+	 * flimsy looking local/remote endpoints - both the protocol
+	 * and the port are missing.  Hence some of the fuzzy checks
+	 * below.
+	 */
+#if 1
+	passert(endpoint_is_specified(local_client));
+	passert(endpoint_is_specified(remote_client));
+#else
+	pendpoint(local_client);
+	pendpoint(remote_client);
+	pexpect(endpoint_protocol(local_client) == transport_proto);
+	pexpect(endpoint_protocol(remote_client) == transport_proto);
+#endif
+	ip_address local_address = endpoint_address(local_client);
+	ip_address remote_address = endpoint_address(remote_client);
+	/* for some protocols this is 0 */
+	unsigned local_port = endpoint_hport(local_client);
+	unsigned remote_port = endpoint_hport(remote_client);
+
+	/*
+	 * Go through all the "half" oriented connections (remote
+	 * address is unset) looking for client that matches the
+	 * local/remote endpoint.
+	 *
+	 * Unfortunately there's no good data structure for doing
+	 * this, so ...
+	 *
+	 * Big hack: get the list of local addresses by iterating over
+	 * the interface endpoints, and then feed the endpoint's
+	 * address into FOR_EACH_HOST_PAIR_CONNECTION(LOCAL,UNSET).
+	 */
 	struct connection *best = NULL;
-	struct spd_route *bestsr = NULL;	/* initialization not necessary */
-	int our_port, peer_port;
-
-	passert(endpoint_is_specified(our_client));
-	passert(endpoint_is_specified(peer_client));
-
-	our_port = endpoint_hport(our_client);
-	peer_port = endpoint_hport(peer_client);
-
-	struct iface_endpoint *p;
-
-	for (p = interfaces; p != NULL; p = p->next) {
+	struct spd_route *best_spd_route = NULL;
+	struct iface_dev *last_iface_device = NULL;
+	for (struct iface_endpoint *p = interfaces; p != NULL; p = p->next) {
+		/*
+		 * Bigger hack: assume the interface endpoints
+		 * (ADDRESS:500 ADDRESS:4500) for a device are grouped
+		 * (mostly true, TCP, custom port?) and only search
+		 * when a new interface device is found.
+		 */
+		if (p->ip_dev == last_iface_device) {
+			continue;
+		}
+		last_iface_device = p->ip_dev;
 		/*
 		 * Go through those connections with our address and
 		 * NO_IP as hosts.
@@ -2707,48 +2746,85 @@ struct connection *build_outgoing_opportunistic_connection(const ip_endpoint *ou
 		 * We cannot know what port the peer would use, so we
 		 * assume that it is pluto_port (makes debugging
 		 * easier).
+		 *
+		 * XXX: the port doesn't matter!
 		 */
-		FOR_EACH_HOST_PAIR_CONNECTION(&p->ip_dev->id_address, NULL, c) {
+		FOR_EACH_HOST_PAIR_CONNECTION(&p->ip_dev->id_address, &unset_address, c) {
 
 			dbg("checking %s", c->name);
 			if (c->kind == CK_GROUP)
 				continue;
 
-			struct spd_route *sr;
-
-			/* for each sr of c, see if we have a new best */
-			/* Paul: while this code can reject unmatched conns, it does not find the most narrow match! */
-			for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
-				if (!routed(sr->routing) ||
-				    !addrinsubnet(our_client, &sr->this.client) ||
-				    !addrinsubnet(peer_client, &sr->that.client) ||
-				    ((sr->this.protocol != 0) && transport_proto != 0 && sr->this.protocol != transport_proto) ||
-				    ((sr->this.protocol != 0) && sr->that.port != 0 && peer_port != sr->that.port) ||
-				    ((sr->this.protocol != 0) && sr->this.port != 0 && our_port != sr->this.port)
-				   )
-				{
-					/*  sr does not work for these clients */
-				} else if (best == NULL ||
-					   !subnetinsubnet(&bestsr->this.client, &sr->this.client) ||
-					   (samesubnet(&bestsr->this.client, &sr->this.client) &&
-					    !subnetinsubnet(&bestsr->that.client, &sr->that.client)))
-				{
-					/*
-					 * First or better solution.
-					 *
-					 * The test for better (see above) is:
-					 *   sr's this is narrower, or
-					 *   sr's this is same and sr's that is narrower.
-					 * ??? not elegant, not symmetric.
-					 * Possible replacement test:
-					 *   bestsr->this.client.maskbits + bestsr->that.client.maskbits >
-					 *   sr->this.client.maskbits + sr->that.client.maskbits
-					 * but this knows too much about the representation of ip_subnet.
-					 * What is the correct semantics?
-					 */
-					best = c;
-					bestsr = sr;
+			/*
+			 * for each sr of c, see if we have a new best
+			 *
+			 * Paul: while this code can reject unmatched
+			 * conns, it does not find the most narrow
+			 * match!
+			 */
+			for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
+				if (!routed(sr->routing)) {
+					continue;
 				}
+				/* protocol match; be fuzzy thanks to rcv_whack */
+				if (sr->this.protocol != 0 && transport_proto != 0 && sr->this.protocol != transport_proto) {
+					continue;
+				}
+				/* require local_client in sr->this.client; use endpoint_in_selector()? */
+				if (!address_in_selector(&local_address, &sr->this.client) ||
+				    (sr->this.protocol != 0 && sr->this.port != 0 && sr->this.port != local_port)) {
+					continue;
+				}
+				/* require remote_client in sr->that.client); use endpoint_in_selector()? */
+				if (!address_in_selector(&remote_address, &sr->that.client) ||
+				    (sr->this.protocol != 0 && sr->that.port != 0 && sr->that.port != remote_port)) {
+					continue;
+				}
+
+				/*
+				 * First or better solution.
+				 *
+				 * The test for better is:
+				 *   sr's .this is narrower, or
+				 *   sr's .this is same and sr's .that is narrower.
+				 * ??? not elegant, not symmetric.
+				 * Possible replacement test:
+				 *   best_spd_route->this.client.maskbits + best_spd_route->that.client.maskbits >
+				 *   sr->this.client.maskbits + sr->that.client.maskbits
+				 * but this knows too much about the representation of ip_subnet.
+				 * What is the correct semantics?
+				 *
+				 * XXX: selector_in_selector() is
+				 * exclusive - it excludes
+				 * selector_eq().
+				 */
+
+				if (best_spd_route != NULL &&
+				    selector_in_selector(&best_spd_route->this.client, &sr->this.client)) {
+					/*
+					 * BEST_SPD_ROUTE is better.
+					 *
+					 * BEST_SPD_ROUTE's .this is
+					 * narrower than .SR's.
+					 */
+					continue;
+				}
+				if (best_spd_route != NULL &&
+				    selector_eq(&best_spd_route->this.client, &sr->this.client) &&
+				    selector_in_selector(&best_spd_route->that.client, &sr->that.client)) {
+					/*
+					 * BEST_SPD_ROUTE is better.
+					 *
+					 * Since BEST_SPD_ROUTE's
+					 * .this matches SR's,
+					 * tie-break with
+					 * BEST_SPD_ROUTE's .that
+					 * being narrower than .SR's.
+					 */
+					continue;
+				}
+				best = c;
+				best_spd_route = sr;
 			}
 		}
 	}
@@ -2761,8 +2837,6 @@ struct connection *build_outgoing_opportunistic_connection(const ip_endpoint *ou
 	}
 
 	/* XXX we might not yet know the ID! */
-	ip_address local_address = endpoint_address(our_client);
-	ip_address remote_address = endpoint_address(peer_client);
 	return oppo_instantiate(best, NULL, &local_address, &remote_address);
 }
 
