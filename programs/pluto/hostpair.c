@@ -715,6 +715,7 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 	const ip_endpoint *local_endpoint = &md->iface->local_endpoint;
 	const ip_endpoint *remote_endpoint = &md->sender;
 	/* just the adddress */
+	ip_address local_address = endpoint_address(local_endpoint);
 	ip_address remote_address = endpoint_address(remote_endpoint);
 
 	struct connection *c = find_host_connection(IKEv2, local_endpoint,
@@ -750,7 +751,6 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 			 * Opportunistic or Shunt: keep searching
 			 * selecting the tightest match.
 			 */
-			ip_address remote_address = endpoint_address(remote_endpoint);
 			if (address_in_selector(&remote_address, &d->spd.that.client) &&
 			    (c == NULL || !selector_in_selector(&c->spd.that.client,
 								&d->spd.that.client))) {
@@ -804,10 +804,8 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 		if (LIN(POLICY_OPPORTUNISTIC, c->policy) &&
 		    c->ike_version == IKEv2) {
 			dbgl(md->md_logger, "oppo_instantiate");
-			c = oppo_instantiate(c, &remote_address,
-					     &c->spd.that.id,
-					     &c->spd.this.host_addr,
-					     remote_endpoint);
+			c = oppo_instantiate(c, &c->spd.that.id,
+					     &local_address, &remote_address);
 		} else {
 			/* regular roadwarrior */
 			dbgl(md->md_logger, "rw_instantiate");

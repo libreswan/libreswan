@@ -2574,46 +2574,50 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 }
 
 struct connection *oppo_instantiate(struct connection *c,
-				    const ip_address *peer_addr,
-				    const struct id *peer_id,
-				    const ip_address *our_client,
-				    const ip_address *peer_client)
+				    const struct id *remote_id,
+				    /* both host and client */
+				    const ip_address *local_address,
+				    const ip_address *remote_address)
 {
-	struct connection *d = instantiate(c, peer_addr, peer_id);
+	address_buf lb, rb;
+	dbg("oppo instantiating c=\"%s\" with c->routing %s between %s -> %s",
+	    c->name, enum_name(&routing_story, c->spd.routing),
+	    str_address(local_address, &lb), str_address(remote_address, &rb));
 
-	dbg("oppo instantiate d=\"%s\" from c=\"%s\" with c->routing %s, d->routing %s",
-	    d->name, c->name,
-	    enum_name(&routing_story, c->spd.routing),
-	    enum_name(&routing_story, d->spd.routing));
-	if (DBGP(DBG_BASE)) {
-		char instbuf[512];
-		DBG_log("new oppo instance: %s",
-			format_connection(instbuf, sizeof(instbuf), d, &d->spd));
-	}
+	struct connection *d = instantiate(c, remote_address, remote_id);
 
 	passert(d->spd.spd_next == NULL);
 
 	/* fill in our client side */
 	if (d->spd.this.has_client) {
 		/*
-		 * There was a client in the abstract connection so we demand
-		 * that the required client is within that subnet, * or that
-		 * it is our private ip in case we are behind a port forward
+		 * There was a client in the abstract connection so we
+		 * demand that either ...
 		 */
-		passert(addrinsubnet(our_client, &d->spd.this.client) || sameaddr(our_client, &d->spd.this.host_addr));
 
 		/* opportunistic connections do not use port selectors */
-		if (addrinsubnet(our_client, &d->spd.this.client)) {
-			d->spd.this.client = selector_from_address(our_client, &unset_protoport/*all*/);
-		} else {
+		if (address_in_selector(local_address, &d->spd.this.client)) {
+			/*
+			 * the required client is within that subnet
+			 * narrow it(?), ...
+			*/
+			d->spd.this.client = selector_from_address(local_address, &unset_protoport/*all*/);
+		} else if (address_eq(local_address, &d->spd.this.host_addr)) {
+			/*
+			 * or that it is our private ip in case we are
+			 * behind a port forward.
+			 */
 			update_selector_hport(&d->spd.this.client, 0);
+		} else {
+			passert_fail(c->logger, HERE,
+				     "local address does not match the host or client");
 		}
 	} else {
 		/*
-		 * There was no client in the abstract connection
-		 * so we demand that the required client be the host.
+		 * There was no client in the abstract connection so
+		 * we demand that the required client be the host.
 		 */
-		passert(sameaddr(our_client, &d->spd.this.host_addr));
+		passert(address_eq(local_address, &d->spd.this.host_addr));
 	}
 
 	/*
@@ -2621,14 +2625,11 @@ struct connection *oppo_instantiate(struct connection *c,
 	 * If the client is the peer, excise the client from the connection.
 	 */
 	passert(d->policy & POLICY_OPPORTUNISTIC);
-	passert(addrinsubnet(peer_client, &d->spd.that.client));
-	happy(endtosubnet(peer_client, &d->spd.that.client, HERE));
+	passert(address_in_selector(remote_address, &d->spd.that.client));
+	d->spd.that.client = selector_from_address(remote_address, &unset_protoport/*all*/);
 
-	/* opportunistic connections do not use port selectors */
-	update_selector_hport(&d->spd.that.client, 0);
-
-	if (sameaddr(peer_client, &d->spd.that.host_addr))
-		d->spd.that.has_client = FALSE;
+	if (address_eq(remote_address, &d->spd.that.host_addr))
+		d->spd.that.has_client = false;
 
 	/*
 	 * Adjust routing if something is eclipsing c.
@@ -2644,19 +2645,22 @@ struct connection *oppo_instantiate(struct connection *c,
 	 * even if it is created for responding.
 	 */
 	if (routed(c->spd.routing))
-		d->instance_initiation_ok = TRUE;
+		d->instance_initiation_ok = true;
 
 	if (DBGP(DBG_BASE)) {
 		char topo[CONN_BUF_LEN];
 		connection_buf inst;
-		DBG_log("oppo_instantiate() instantiated "PRI_CONNECTION": %s",
+		DBG_log("oppo_instantiate() instantiated "PRI_CONNECTION" with routing %s: %s",
 			pri_connection(d, &inst),
+			enum_name(&routing_story, d->spd.routing),
 			format_connection(topo, sizeof(topo), d, &d->spd));
 	}
 	return d;
 }
 
 /*
+ * Outgoing opportunistic connection.
+ *
  * Find and instantiate a connection for an outgoing Opportunistic connection.
  * We've already discovered its gateway.
  * We look for a connection such that:
@@ -2679,8 +2683,8 @@ struct connection *oppo_instantiate(struct connection *c,
  * find_connection_for_clients. In this case, we know the gateways
  * that we need to instantiate an opportunistic connection.
  */
-struct connection *build_outgoing_opportunistic_connection(const ip_address *our_client,
-							   const ip_address *peer_client,
+struct connection *build_outgoing_opportunistic_connection(const ip_endpoint *our_client,
+							   const ip_endpoint *peer_client,
 							   const int transport_proto)
 {
 	struct connection *best = NULL;
@@ -2750,17 +2754,16 @@ struct connection *build_outgoing_opportunistic_connection(const ip_address *our
 	}
 
 	if (best == NULL ||
-		NEVER_NEGOTIATE(best->policy) ||
-		(best->policy & POLICY_OPPORTUNISTIC) == LEMPTY ||
-		best->kind != CK_TEMPLATE)
-	{
+	    NEVER_NEGOTIATE(best->policy) ||
+	    (best->policy & POLICY_OPPORTUNISTIC) == LEMPTY ||
+	    best->kind != CK_TEMPLATE) {
 		return NULL;
-	} else {
-		/* XXX we might not yet know the ID! */
-		ip_address peer_addr = endpoint_address(peer_client);
-		return oppo_instantiate(best, &peer_addr, NULL,
-					our_client, peer_client);
 	}
+
+	/* XXX we might not yet know the ID! */
+	ip_address local_address = endpoint_address(our_client);
+	ip_address remote_address = endpoint_address(peer_client);
+	return oppo_instantiate(best, NULL, &local_address, &remote_address);
 }
 
 /*

@@ -512,17 +512,16 @@ extern struct connection *rw_instantiate(struct connection *c,
 					 const ip_subnet *peer_subnet,
 					 const struct id *peer_id);
 struct connection *oppo_instantiate(struct connection *c,
-				    const ip_address *peer_addr,
-				    const struct id *peer_id,
-				    const ip_address *our_client,
-				    const ip_address *peer_client);
+				    const struct id *remote_id,
+				    const ip_address *local_address,
+				    const ip_address *remote_address);
 extern struct connection *instantiate(struct connection *c,
 				      const ip_address *peer_addr,
 				      const struct id *peer_id);
 
 extern struct connection *build_outgoing_opportunistic_connection(
-		const ip_address *our_client,
-		const ip_address *peer_client,
+		const ip_endpoint *our_client,
+		const ip_endpoint *peer_client,
 		const int transport_proto);
 
 /* worst case: "[" serial "] " myclient "=== ..." peer "===" peer_client '\0' <cookie> */
