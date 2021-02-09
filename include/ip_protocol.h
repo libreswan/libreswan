@@ -18,6 +18,10 @@
 #ifndef IP_PROTOCOL_H
 #define IP_PROTOCOL_H
 
+#include <stdbool.h>
+
+#include <netinet/in.h>		/* for IPPROTO_* */
+
 /*
  * What's being encapsulated using DST IP packets.
  *
@@ -28,31 +32,47 @@
  */
 
 typedef struct ip_protocol {
-	const char *description;
-	const char *prefix;
-	const char *name;
-	unsigned ikev1;
 	/*
 	 * https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
 	 *
 	 * IPPROTO_*
 	 */
 	unsigned ipproto;
+	const char *description;
+	const char *prefix;
+	const char *name;
+	bool ipv6_extension_header;
+	const char *reference;
+	/*
+	 * IKEv1's Protocol ID
+	 * RFC2407 The Internet IP security Domain of Interpretation for ISAKMP 4.4.1
+	 */
+	unsigned ikev1_protocol_id;
 	/*
 	 * Using this to encapsulate.
 	 */
 	const struct ip_encap *encap_esp;
 } ip_protocol;
 
-extern const struct ip_protocol ip_protocol_unset;
-extern const struct ip_protocol ip_protocol_icmp;	/* Internet Control Message */
-extern const struct ip_protocol ip_protocol_ipip;	/* IPv4 encapsulation */
-extern const struct ip_protocol ip_protocol_tcp;	/* any host internal protocol */
-extern const struct ip_protocol ip_protocol_udp;	/* any host internal protocol */
-extern const struct ip_protocol ip_protocol_esp;	/* Encapsulated Security Payload */
-extern const struct ip_protocol ip_protocol_ah;		/* Authentication Header */
-extern const struct ip_protocol ip_protocol_comp;	/* IP Payload Compression Protocol */
-extern const struct ip_protocol ip_protocol_internal;	/* any host internal protocol */
+#ifdef IPPROTO_COMP
+#define COMP_IPPROTO IPPROTO_COMP /*linux*/
+#endif
+#ifdef IPPROTO_IPCOMP
+#define COMP_IPPROTO IPPROTO_IPCOMP
+#endif
+#define INTERNAL_IPPROTO 61
+
+extern const struct ip_protocol ip_protocols[];
+
+#define ip_protocol_unset ip_protocols[0]
+#define ip_protocol_icmp ip_protocols[IPPROTO_ICMP]		/* Internet Control Message */
+#define ip_protocol_ipip ip_protocols[IPPROTO_IPIP]		/* IPv4 encapsulation */
+#define ip_protocol_tcp ip_protocols[IPPROTO_TCP]		/* any host internal protocol */
+#define ip_protocol_udp ip_protocols[IPPROTO_UDP]		/* any host internal protocol */
+#define ip_protocol_esp ip_protocols[IPPROTO_ESP]		/* Encapsulated Security Payload */
+#define ip_protocol_ah ip_protocols[IPPROTO_AH]			/* Authentication Header */
+#define ip_protocol_comp ip_protocols[COMP_IPPROTO]		/* IP Payload Compression Protocol */
+#define ip_protocol_internal ip_protocols[INTERNAL_IPPROTO]	/* any host internal protocol */
 
 #if 0
 enum eroute_type {
