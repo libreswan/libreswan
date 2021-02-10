@@ -445,7 +445,7 @@ const struct logger_object_vec logger_global_vec = {
 	.free_object = false,
 };
 
-struct logger logger_from(struct logger *global, const ip_address *from)
+struct logger logger_from(struct logger *global, const ip_endpoint *from)
 {
 	struct logger logger = {
 		.where = HERE,

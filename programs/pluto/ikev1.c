@@ -1033,7 +1033,6 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 					for (const struct spd_route *tmp_spd = &tmp_c->spd;
 					     tmp_spd != NULL; tmp_spd = tmp_spd->spd_next) {
 						address_buf b;
-						endpoint_buf e;
 
 						DBG_log("spd route number: %d",
 							count_spd++);
@@ -1048,7 +1047,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 								      tmp_spd->that.id. name);
 						}
 						DBG_log("that host_addr: %s",
-							str_endpoint(&tmp_spd->that.host_addr, &e));
+							str_address(&tmp_spd->that.host_addr, &b));
 						DBG_log("that nexthop: %s",
 							str_address(&tmp_spd->that.host_nexthop, &b));
 						DBG_log("that srcip: %s",

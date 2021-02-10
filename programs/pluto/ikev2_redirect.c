@@ -562,9 +562,9 @@ void send_active_redirect_in_informational(struct state *st)
 		v2_msgid_update_sent(ike, &ike->sa, NULL /* new exchange */, MESSAGE_REQUEST);
 	}
 
-	ipstr_buf b;
+	endpoint_buf b;
 	dbg("redirection %ssent to peer %s", e == STF_OK ? "" : "not ",
-	    sensitive_ipstr(&st->st_remote_endpoint, &b));
+	    str_endpoint(&st->st_remote_endpoint, &b));
 }
 
 stf_status process_IKE_SA_INIT_v2N_REDIRECT_response(struct ike_sa *ike,

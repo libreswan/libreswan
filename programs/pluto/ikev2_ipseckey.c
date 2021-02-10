@@ -316,18 +316,19 @@ static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
 		return;
 
 	if (!sameaddr(&ipaddr, &st->st_remote_endpoint)) {
-		address_buf ra, rb;
+		endpoint_buf ra;
+		address_buf rb;
 		dbg(" forward address of IDi %s do not match remote address %s != %s",
 		    dnsr->qname,
-		    str_address(&st->st_remote_endpoint, &ra),
+		    str_endpoint(&st->st_remote_endpoint, &ra),
 		    str_address(&ipaddr, &rb));
 		return;
 	}
 
 	dnsr->fwd_addr_valid = TRUE;
-	address_buf ra;
+	endpoint_buf ra;
 	dbg("address of IDi %s match remote address %s",
-	    dnsr->qname, str_address(&st->st_remote_endpoint, &ra));
+	    dnsr->qname, str_endpoint(&st->st_remote_endpoint, &ra));
 }
 
 static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)

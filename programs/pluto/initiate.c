@@ -848,12 +848,12 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 
 		ipsecdoi_initiate(b->background ? null_fd : b->logger->global_whackfd,
 				  c, c->policy, 1, SOS_NOBODY, &inception);
-		address_buf b1;
-		address_buf b2;
+		endpoint_buf b1;
+		endpoint_buf b2;
 		dbg("initiate on demand using %s from %s to %s",
 		    (c->policy & POLICY_AUTH_NULL) ? "AUTH_NULL" : "RSASIG",
-		    str_address(&b->our_client, &b1),
-		    str_address(&b->peer_client, &b2));
+		    str_endpoint(&b->our_client, &b1),
+		    str_endpoint(&b->peer_client, &b2));
 		return;
 	}
 
@@ -981,11 +981,11 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 */
 
 		/* ??? CLANG 3.5 thinks ac might be NULL (look up) */
-		address_buf b1, b2;
+		endpoint_buf b1, b2;
 		llog(RC_OPPOFAILURE, b->logger,
 			    "no suitable connection for opportunism between %s and %s",
-			    str_address(&b->our_client, &b1),
-			    str_address(&b->peer_client, &b2));
+			    str_endpoint(&b->our_client, &b1),
+			    str_endpoint(&b->peer_client, &b2));
 
 		/*
 		 * Replace negotiation_shunt with failure_shunt

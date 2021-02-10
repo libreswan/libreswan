@@ -2470,10 +2470,10 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 	passert(endpoint_is_specified(our_client));
 	passert(endpoint_is_specified(peer_client));
 
-	address_buf a, b;
+	endpoint_buf a, b;
 	dbg("find_connection: looking for policy for connection: %s:%d/%d -> %s:%d/%d",
-	    str_address(our_client, &a), transport_proto, our_port,
-	    str_address(peer_client, &b), transport_proto, peer_port);
+	    str_endpoint(our_client, &a), transport_proto, our_port,
+	    str_endpoint(peer_client, &b), transport_proto, peer_port);
 
 	struct connection *c;
 

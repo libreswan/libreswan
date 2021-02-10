@@ -225,11 +225,11 @@ static bool ikev1_verify_esp(const struct connection *c,
 		llog(RC_LOG_SERIOUS, logger,
 			    "kernel algorithm does not like: %s key_len %u is incorrect",
 			    ta->ta_encrypt->common.fqn, ta->enckeylen);
-		endpoint_buf epb;
+		address_buf epb;
 		llog(RC_LOG_SERIOUS, logger,
 			    "unsupported ESP Transform %s from %s",
 			    ta->ta_encrypt->common.fqn,
-			    str_sensitive_endpoint(&c->spd.that.host_addr, &epb));
+			    str_address_sensitive(&c->spd.that.host_addr, &epb));
 		return false; /* try another */
 	}
 
@@ -3211,7 +3211,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					    !ah_seen) {
 						LSWDBGP(DBG_BASE, buf) {
 							jam_string(buf, "ESP from ");
-							jam_endpoint(buf, &c->spd.that.host_addr);
+							jam_address(buf, &c->spd.that.host_addr);
 							jam_string(buf, " must either have AUTH or be combined with AH");
 						}
 						continue; /* try another */

@@ -312,9 +312,9 @@ static void natd_lookup_common(struct state *st,
 		}
 
 		if (!found_peer) {
-			address_buf b;
+			endpoint_buf b;
 			dbg("NAT_TRAVERSAL that end is behind NAT %s",
-			    str_address(sender, &b));
+			    str_endpoint(sender, &b));
 			st->hidden_variables.st_nat_traversal |= LELEM(NATED_PEER);
 			st->hidden_variables.st_natd = *sender;
 		} else {
@@ -337,8 +337,8 @@ static void natd_lookup_common(struct state *st,
 	}
 
 	if (st->st_connection->nat_keepalive) {
-		address_buf b;
-		dbg("NAT_TRAVERSAL nat-keepalive enabled %s", str_address(sender, &b));
+		endpoint_buf b;
+		dbg("NAT_TRAVERSAL nat-keepalive enabled %s", str_endpoint(sender, &b));
 	}
 }
 
