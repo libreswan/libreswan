@@ -161,7 +161,8 @@ static void help(void)
 		"\n"
 		"opportunistic initiation: whack [--tunnelipv4 | --tunnelipv6] \\\n"
 		"	--oppohere <ip-address> --oppothere <ip-address> \\\n"
-		"	[-oppotproto <protocol>]\n"
+		"	--opposport <port> --oppodport <port> \\\n"
+		"	[--oppoproto <protocol>]\n"
 		"\n"
 		"delete: whack --delete --name <connection_name>\n"
 		"\n"
@@ -342,6 +343,7 @@ enum option_enums {
 	OPT_OPPO_HERE,
 	OPT_OPPO_THERE,
 	OPT_OPPO_PROTO,
+	OPT_OPPO_SPORT,
 	OPT_OPPO_DPORT,
 
 #   define OPT_LAST1 OPT_OPPO_DPORT	/* last "normal" option, range 1 */
@@ -975,7 +977,6 @@ int main(int argc, char **argv)
 	int xauthpasslen = 0;
 	bool gotusername = FALSE, gotxauthpass = FALSE;
 	const char *ugh;
-	int oppo_dport = 0;
 	bool ignore_errors = FALSE;
 
 	/* check division of numbering space */
@@ -1466,29 +1467,35 @@ int main(int argc, char **argv)
 		case OPT_OPPO_HERE:	/* --oppohere <ip-address> */
 			tunnel_af_used_by = long_opts[long_index].name;
 			diagq(ttoaddr(optarg, 0, msg.tunnel_addr_family,
-				      &msg.oppo_my_client), optarg);
-			if (address_is_unset(&msg.oppo_my_client) || address_is_any(&msg.oppo_my_client)) {
+				      &msg.oppo.local.address), optarg);
+			if (address_is_unset(&msg.oppo.local.address) ||
+			    address_is_any(&msg.oppo.local.address)) {
 				diagq("0.0.0.0 or 0::0 isn't a valid client address",
-					optarg);
+				      optarg);
 			}
 			continue;
 
 		case OPT_OPPO_THERE:	/* --oppothere <ip-address> */
 			tunnel_af_used_by = long_opts[long_index].name;
 			diagq(ttoaddr(optarg, 0, msg.tunnel_addr_family,
-				      &msg.oppo_peer_client), optarg);
-			if (address_is_unset(&msg.oppo_peer_client) || address_is_any(&msg.oppo_peer_client)) {
+				      &msg.oppo.remote.address), optarg);
+			if (address_is_unset(&msg.oppo.remote.address) ||
+			    address_is_any(&msg.oppo.remote.address)) {
 				diagq("0.0.0.0 or 0::0 isn't a valid client address",
-					optarg);
+				      optarg);
 			}
 			continue;
 
 		case OPT_OPPO_PROTO:	/* --oppoproto <protocol> */
-			msg.oppo_proto = strtol(optarg, NULL, 0);
+			msg.oppo.ipproto = strtol(optarg, NULL, 0);
+			continue;
+
+		case OPT_OPPO_SPORT:	/* --opposport <port> */
+			msg.oppo.local.port = ip_hport(strtol(optarg, NULL, 0));
 			continue;
 
 		case OPT_OPPO_DPORT:	/* --oppodport <port> */
-			oppo_dport = strtol(optarg, NULL, 0);
+			msg.oppo.remote.port = ip_hport(strtol(optarg, NULL, 0));
 			continue;
 
 		case OPT_ASYNC:	/* --asynchronous */
@@ -2456,11 +2463,6 @@ int main(int argc, char **argv)
 			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
 		}
-	}
-
-
-	if (oppo_dport != 0) {
-		update_endpoint_port(&msg.oppo_peer_client, ip_hport(oppo_dport));
 	}
 
 	if (optind != argc) {

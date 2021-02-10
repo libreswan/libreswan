@@ -466,6 +466,16 @@
 
       <arg choice="plain">--oppothere
       <replaceable>ip-address</replaceable></arg>
+
+      <arg choice="plain">--opposport
+      <replaceable>port</replaceable></arg>
+
+      <arg choice="plain">--oppodport
+      <replaceable>port</replaceable></arg>
+
+      <arg choice="plain">--oppoproto
+      <replaceable>protocol</replaceable></arg>
+
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -2145,8 +2155,10 @@
         </varlistentry>
       </variablelist>
 
-      <para>The opportunistic initiate form is mainly used for
-      debugging.</para>
+      <para>
+	The opportunistic initiate form is mainly used for
+	debugging.
+      </para>
 
       <variablelist remap="TP">
         <varlistentry>
@@ -2154,17 +2166,39 @@
 
           <term><option>--tunnelipv6</option></term>
 
-          <term><option>--oppohere</option>&nbsp;<emphasis
-          remap="I">ip-address</emphasis></term>
+          <term>
+	    <option>--oppohere</option>&nbsp;
+	    <emphasis remap="I">ip-address</emphasis>
+	  </term>
 
-          <term><option>--oppothere</option>&nbsp;<emphasis
-          remap="I">ip-address</emphasis></term>
+          <term>
+	    <option>--oppothere</option>&nbsp;
+	    <emphasis remap="I">ip-address</emphasis>
+	  </term>
+
+          <term>
+	    <option>--opposport</option>&nbsp;
+	    <emphasis remap="I">port</emphasis>
+	  </term>
+
+          <term>
+	    <option>--oppodport</option>&nbsp;
+	    <emphasis remap="I">port</emphasis>
+	  </term>
+
+          <term>
+	    <option>--oppoproto</option>&nbsp;
+	    <emphasis remap="I">protocol</emphasis>
+	  </term>
 
           <listitem>
-            <para>This will cause <emphasis remap="B">pluto</emphasis> to
-            attempt to opportunistically initiate a connection from here to
-            the there, even if a previous attempt had been made. The whack log
-            will show the progress of this attempt.</para>
+            <para>
+	      This will cause <emphasis remap="B">pluto</emphasis> to
+	      attempt to opportunistically initiate a connection from
+	      here to the there, even if a previous attempt had been
+	      made. The whack log will show the progress of this
+	      attempt.
+	    </para>
           </listitem>
         </varlistentry>
       </variablelist>
