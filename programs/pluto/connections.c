@@ -392,7 +392,7 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 	dbg("updating connection from %s.host_addr", this->leftright);
 
 	/* Default ID to IP (but only if not NO_IP -- WildCard) */
-	if (this->id.kind == ID_NONE && endpoint_is_specified(&this->host_addr)) {
+	if (this->id.kind == ID_NONE && address_is_specified(&this->host_addr)) {
 		this->id.kind = afi->id_ip_addr;
 		this->id.ip_addr = this->host_addr;
 		this->has_id_wildcards = FALSE;

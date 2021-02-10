@@ -420,7 +420,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			/* XXX Could send notification back */
 			return false;
 		}
-		happy(endtosubnet(&temp_address, net, HERE));
+		*net = subnet_from_address(&temp_address);
 		subnet_buf b;
 		dbg("%s is %s", which, str_subnet(net, &b));
 		break;
@@ -956,8 +956,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 			log_state(RC_LOG_SERIOUS, p1st,
 				  "Applying workaround for MS-818043 NAT-T bug");
 			zero(&b.peers.net);
-			happy(endtosubnet(&c->spd.that.host_addr,
-					  &b.peers.net, HERE));
+			b.peers.net = subnet_from_address(&c->spd.that.host_addr);
 		}
 		/* End Hack for MS 818043 NAT-T Update */
 
@@ -1005,7 +1004,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 			nat_traversal_natoa_lookup(md, &hv, p1st->st_logger);
 
 			if (address_is_specified(&hv.st_nat_oa)) {
-				endtosubnet(&hv.st_nat_oa, &b.peers.net, HERE);
+				b.peers.net = subnet_from_address(&hv.st_nat_oa);
 				subnet_buf buf;
 				log_state(RC_LOG_SERIOUS, p1st,
 					  "IDci was FQDN: %s, using NAT_OA=%s %d as IDci",
@@ -1016,12 +1015,11 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		}
 	} else {
 		/* implicit IDci and IDcr: peer and self */
-		if (endpoint_type(&c->spd.this.host_addr) !=
-		    endpoint_type(&c->spd.that.host_addr))
+		if (address_type(&c->spd.this.host_addr) != address_type(&c->spd.that.host_addr))
 			return STF_FAIL;
 
-		happy(endtosubnet(&c->spd.this.host_addr, &b.my.net, HERE));
-		happy(endtosubnet(&c->spd.that.host_addr, &b.peers.net, HERE));
+		b.my.net = subnet_from_address(&c->spd.this.host_addr);
+		b.peers.net = subnet_from_address(&c->spd.that.host_addr);
 		b.peers.proto = b.my.proto = 0;
 		b.peers.port = b.my.port = 0;
 	}
@@ -1641,9 +1639,8 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 				memcpy(idfqdn, IDcr->pbs.cur, idlen);
 				idfqdn[idlen] = '\0';
 
-				endtosubnet(&st->hidden_variables.st_nat_oa,
-					    &st->st_connection->spd.that.client,
-					    HERE);
+				st->st_connection->spd.that.client =
+					selector_from_address(&st->hidden_variables.st_nat_oa);
 				subnet_buf buf;
 				log_state(RC_LOG_SERIOUS, st,
 					  "IDcr was FQDN: %s, using NAT_OA=%s as IDcr",

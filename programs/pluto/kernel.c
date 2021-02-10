@@ -1381,14 +1381,13 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 			      const char *why,
 			      struct logger *logger)
 {
-	ip_subnet this_client, that_client;
 	const ip_address null_host = address_any(address_type(src));
 
 	dbg("fiddle_bare_shunt called");
 
 	passert(addrtypeof(src) == addrtypeof(dst));
-	happy(endtosubnet(src, &this_client, HERE));
-	happy(endtosubnet(dst, &that_client, HERE));
+	ip_subnet this_client = subnet_from_address(src);
+	ip_subnet that_client = subnet_from_address(dst);
 
 	/*
 	 * ??? this comment might be obsolete.
@@ -1530,9 +1529,7 @@ bool eroute_connection(const struct spd_route *sr,
 		peer = address_any(address_type(&peer));
 
 	if (sr->this.has_cat) {
-		ip_subnet client;
-
-		endtosubnet(&sr->this.host_addr, &client, HERE);
+		ip_subnet client = subnet_from_address(&sr->this.host_addr);
 		bool t = raw_eroute(&sr->this.host_addr, &client,
 				    &peer, &sr->that.client,
 				    cur_spi,

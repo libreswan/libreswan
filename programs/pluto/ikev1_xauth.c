@@ -1543,7 +1543,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				return STF_FATAL;
 			}
-			endtosubnet(&a, &c->spd.this.client, HERE);
+			c->spd.this.client = selector_from_address(&a);
 
 			c->spd.this.has_client = TRUE;
 			subnet_buf caddr;
@@ -1702,7 +1702,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 					return STF_FATAL;
 				}
-				endtosubnet(&a, &c->spd.this.client, HERE);
+				c->spd.this.client = selector_from_address(&a);
 
 				c->spd.this.has_client = TRUE;
 				subnet_buf caddr;
