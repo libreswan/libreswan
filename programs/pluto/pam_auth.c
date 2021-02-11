@@ -49,8 +49,6 @@ static void pfree_pamauth(struct pamauth *x)
 	pfree(x->ptarg.name);
 	pfree(x->ptarg.password);
 	pfree(x->ptarg.c_name);
-	pfree(x->ptarg.ra);
-
 	pfree(x);
 }
 
@@ -176,9 +174,7 @@ void auth_fork_pam_process(struct state *st,
 
 	pamauth->ptarg.password = clone_str(password, "pam password");
 	pamauth->ptarg.c_name = clone_str(st->st_connection->name, "pam connection name");
-
-	ipstr_buf ra;
-	pamauth->ptarg.ra = clone_str(ipstr(&st->st_remote_endpoint, &ra), "pam remoteaddr");
+	pamauth->ptarg.rhost = endpoint_address(&st->st_remote_endpoint);
 	pamauth->ptarg.st_serialno = serialno;
 	pamauth->ptarg.c_instance_serial = st->st_connection->instance_serial;
 	pamauth->ptarg.atype = atype;

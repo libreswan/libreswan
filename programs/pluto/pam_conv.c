@@ -147,7 +147,8 @@ bool do_pam_authentication(struct pam_thread_arg *arg, struct logger *logger)
 
 		/* Send the remote host address to PAM */
 		what = "pam_set_item";
-		retval = pam_set_item(pamh, PAM_RHOST, arg->ra);
+		address_buf rhb;
+		retval = pam_set_item(pamh, PAM_RHOST, str_address(&arg->rhost, &rhb));
 		if (retval != PAM_SUCCESS)
 			break;
 		dbg_pam_step(arg, what);

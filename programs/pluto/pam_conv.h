@@ -16,11 +16,14 @@
  */
 
 #ifdef AUTH_HAVE_PAM
+
+#include "ip_address.h"
+
 struct pam_thread_arg {
 	char *name;
 	char *password;
 	char *c_name;
-	char *ra;
+	ip_address rhost;
 	so_serial_t st_serialno;
 	unsigned long c_instance_serial;
 	const char *atype;  /* string XAUTH or IKEv2 */
