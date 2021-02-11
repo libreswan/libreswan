@@ -1636,15 +1636,17 @@ static ip_address address_from_xfrm(const struct ip_info *afi,
 }
 
 /*
- * Create ip_selector / ip_client out of xfrm_address_t:NPORT.
+ * Create the client's ip_endpoint from xfrm_address_t:NPORT.
  */
 
-static ip_selector selector_from_xfrm(const struct ip_info *afi, unsigned ipproto,
-				      const xfrm_address_t *src, uint16_t nport)
+static ip_endpoint endpoint_from_xfrm(const struct ip_info *afi,
+				      const ip_protocol *protocol,
+				      const xfrm_address_t *src,
+				      uint16_t nport)
 {
 	ip_address address = address_from_xfrm(afi, src);
-	ip_protoport protoport = protoport2(ipproto, ip_nport(nport));
-	return selector_from_address_protoport(&address, &protoport);
+	ip_port port = ip_nport(nport);
+	return endpoint3(protocol, &address, port);
 }
 
 static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
@@ -1660,9 +1662,9 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 
 	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*acquire))) {
 		llog(RC_LOG, logger,
-			    "netlink_acquire got message with length %zu < %zu bytes; ignore message",
-			    (size_t) n->nlmsg_len,
-			    sizeof(*acquire));
+		     "netlink_acquire got message with length %zu < %zu bytes; ignore message",
+		     (size_t) n->nlmsg_len,
+		     sizeof(*acquire));
 		return;
 	}
 
@@ -1687,14 +1689,21 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 	const struct ip_info *afi = aftoinfo(acquire->policy.sel.family);
 	if (afi == NULL) {
 		llog(RC_LOG, logger,
-			    "XFRM_MSG_ACQUIRE message from kernel malformed: family %u unknown",
-			    acquire->policy.sel.family);
+		     "XFRM_MSG_ACQUIRE message from kernel malformed: family %u unknown",
+		     acquire->policy.sel.family);
 		return;
 	}
-	ip_selector ours = selector_from_xfrm(afi, acquire->sel.proto,
+	const ip_protocol *protocol = protocol_by_ipproto(acquire->sel.proto);
+	if (protocol == NULL) {
+		llog(RC_LOG, logger,
+		     "XFRM_MSG_ACQUIRE message from kernel malformed: protocol %u unknown",
+		     acquire->policy.sel.proto);
+		return;
+	}
+	ip_endpoint local = endpoint_from_xfrm(afi, protocol,
 					      &acquire->sel.saddr,
 					      acquire->sel.sport);
-	ip_selector theirs = selector_from_xfrm(afi, acquire->sel.proto,
+	ip_endpoint remote = endpoint_from_xfrm(afi, protocol,
 						&acquire->sel.daddr,
 						acquire->sel.dport);
 
@@ -1735,25 +1744,27 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 			    len);
 
 			if (xuctx->ctx_doi != XFRM_SC_DOI_LSM) {
-				llog(RC_LOG, logger, "Acquire message for unknown sec_label DOI %d; ignoring Acquire message",
-					xuctx->ctx_doi);
+				llog(RC_LOG, logger,
+				     "Acquire message for unknown sec_label DOI %d; ignoring Acquire message",
+				     xuctx->ctx_doi);
 				return;
 			}
 			if (xuctx->ctx_alg != XFRM_SC_ALG_SELINUX) {
-				llog(RC_LOG, logger, "Acquire message for unknown sec_label LSM %d; ignoring Acquire message",
-					xuctx->ctx_alg);
+				llog(RC_LOG, logger,
+				     "Acquire message for unknown sec_label LSM %d; ignoring Acquire message",
+				     xuctx->ctx_alg);
 				return;
 			}
 			if (uctx != NULL) {
 				llog(RC_LOG, logger,
-					    "Second sec_label in a single Acquire message; ignoring Acquire message");
+				     "Second sec_label in a single Acquire message; ignoring Acquire message");
 				return;
 			}
 
 			if (len > MAX_SECCTX_LEN) {
 				llog(RC_LOG, logger,
-					    "length %zu of sec_label is longer than MAX_SECCTX_LEN; ignoring Acquire message",
-					    len);
+				     "length %zu of sec_label is longer than MAX_SECCTX_LEN; ignoring Acquire message",
+				     len);
 				return;
 			}
 
@@ -1783,16 +1794,7 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 		/* updates remaining too */
 		attr = RTA_NEXT(attr, remaining);
 	}
-
-	/*
-	 * XXX also the type of src/dst should be checked to make sure
-	 *     that they aren't v4 to v6 or something goofy
-	 */
-
-
-
-	record_and_initiate_opportunistic(&ours, &theirs,
-					  acquire->sel.proto, &sec_label,
+	record_and_initiate_opportunistic(&local, &remote, &sec_label,
 					  "%acquire-netlink");
 }
 

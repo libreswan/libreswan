@@ -349,9 +349,8 @@ struct bare_shunt **bare_shunt_ptr(const ip_subnet *ours,
  * Simple rule: use a string literal.
  */
 struct xfrm_user_sec_ctx_ike; /* forward declaration of tag */
-extern void record_and_initiate_opportunistic(const ip_selector *our_client,
-					      const ip_selector *peer_client,
-					      unsigned transport_proto,
+extern void record_and_initiate_opportunistic(const ip_endpoint *our_client,
+					      const ip_endpoint *peer_client,
 					      const chunk_t *sec_label,
 					      const char *why);
 extern void init_kernel(struct logger *logger);

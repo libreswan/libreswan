@@ -211,17 +211,26 @@ void add_bare_shunt(const ip_subnet *our_client, const ip_subnet *peer_client,
  * Simple rule: use a string literal.
  */
 
-void record_and_initiate_opportunistic(const ip_selector *our_client,
-				       const ip_selector *peer_client,
-				       unsigned transport_proto,
+void record_and_initiate_opportunistic(const ip_endpoint *local_client,
+				       const ip_endpoint *remote_client,
 				       const chunk_t *sec_label,
 				       const char *why)
 {
 	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
-	passert(selector_type(our_client) == selector_type(peer_client));
-	passert(selector_ipproto(our_client) == transport_proto);
-	passert(selector_ipproto(peer_client) == transport_proto);
-	/* XXX: port may or may not be zero */
+	/*
+	 * Port's value and interpretation depends on protocol (ICMP,
+	 * TCP, UDP, ...) and ends may not be equal.
+	 */
+	passert(endpoint_type(local_client) == endpoint_type(remote_client));
+	passert(endpoint_protocol(local_client) == endpoint_protocol(remote_client));
+
+	/*
+	 * XXX: hack to keep code below happy - need to figigure out
+	 * what to do with the shunt functions.
+	 */
+	ip_selector our_client[] = { selector_from_endpoint(local_client), };
+	ip_selector peer_client[] = { selector_from_endpoint(remote_client), };
+	unsigned transport_proto = endpoint_protocol(local_client)->ipproto;
 
 	/*
 	 * Add the kernel shunt to the pluto bare shunt list.
@@ -229,7 +238,6 @@ void record_and_initiate_opportunistic(const ip_selector *our_client,
 	 * We need to do this because the %hold shunt was installed by
 	 * kernel and we want to keep track of it inside pluto.
 	 */
-
 	/*const*/ struct bare_shunt **bspp = bare_shunt_ptr(our_client, peer_client,
 							    transport_proto);
 	if (bspp != NULL &&
@@ -241,15 +249,9 @@ void record_and_initiate_opportunistic(const ip_selector *our_client,
 		add_bare_shunt(our_client, peer_client, transport_proto, SPI_HOLD, why);
 	}
 
-	/* XXX: missing transport_proto */
-	ip_address sp = subnet_prefix(our_client);
-	ip_address dp = subnet_prefix(peer_client);
-	ip_endpoint src = endpoint(&sp, selector_hport(our_client));
-	ip_endpoint dst = endpoint(&dp, selector_hport(peer_client));
-	passert(endpoint_type(&src) == endpoint_type(&dst)); /* duh */
-
 	/* actually initiate opportunism / ondemand */
-	initiate_ondemand(&src, &dst, transport_proto,
+	initiate_ondemand(local_client, remote_client,
+			  transport_proto,
 			  /*held*/ true,
 			  /*background*/ true,
 			  sec_label,
