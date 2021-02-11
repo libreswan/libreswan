@@ -834,7 +834,7 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	    !(st->st_policy & POLICY_TUNNEL) &&
 	    LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
 		/** Send NAT-OA if our address is NATed */
-		if (!nat_traversal_add_natoa(&rbody, st, true /* initiator */)) {
+		if (!v1_nat_traversal_add_initiator_natoa(&rbody, st)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}

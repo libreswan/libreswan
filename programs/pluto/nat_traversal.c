@@ -1,5 +1,4 @@
-/*
- * Libreswan NAT-Traversal
+/* Libreswan NAT-Traversal
  *
  * Copyright (C) 2002-2003 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2005-2007 Michael Richardson <mcr@xelerance.com>
@@ -294,8 +293,8 @@ void set_nat_traversal(struct state *st, const struct msg_digest *md)
 #endif
 
 static void natd_lookup_common(struct state *st,
-	const ip_address *sender,
-	bool found_me, bool found_peer)
+			       const ip_endpoint *sender,
+			       bool found_me, bool found_peer)
 {
 	st->hidden_variables.st_natd = address_any(&ipv4_info);
 
@@ -306,7 +305,7 @@ static void natd_lookup_common(struct state *st,
 		if (!found_me) {
 			dbg("NAT_TRAVERSAL this end is behind NAT");
 			st->hidden_variables.st_nat_traversal |= LELEM(NATED_HOST);
-			st->hidden_variables.st_natd = *sender;
+			st->hidden_variables.st_natd = endpoint_address(sender);
 		} else {
 			dbg("NAT_TRAVERSAL this end is NOT behind NAT");
 		}
@@ -316,7 +315,7 @@ static void natd_lookup_common(struct state *st,
 			dbg("NAT_TRAVERSAL that end is behind NAT %s",
 			    str_endpoint(sender, &b));
 			st->hidden_variables.st_nat_traversal |= LELEM(NATED_PEER);
-			st->hidden_variables.st_natd = *sender;
+			st->hidden_variables.st_natd = endpoint_address(sender);
 		} else {
 			dbg("NAT_TRAVERSAL that end is NOT behind NAT");
 		}
@@ -332,7 +331,7 @@ static void natd_lookup_common(struct state *st,
 		dbg("NAT_TRAVERSAL forceencaps enabled");
 		st->hidden_variables.st_nat_traversal |=
 			LELEM(NATED_PEER) | LELEM(NATED_HOST);
-		st->hidden_variables.st_natd = *sender;
+		st->hidden_variables.st_natd = endpoint_address(sender);
 		break;
 	}
 
@@ -538,19 +537,20 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 	}
 }
 
-static bool emit_one_natoa(pb_stream *outs,
+static bool emit_one_natoa(struct pbs_out *outs,
 			   struct_desc *pd,
 			   const ip_address *ip,
 			   const char *nm)
 {
-	pb_stream pbs;
-
 	struct isakmp_nat_oa natoa = {
 		.isanoa_idtype = address_type(ip)->id_ip_addr,
 	};
+
+	struct pbs_out pbs;
 	if (!out_struct(&natoa, pd, outs, &pbs)) {
 		return false;
 	}
+
 	diag_t d = pbs_out_address(&pbs, ip, nm);
 	if (d != NULL) {
 		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
@@ -560,29 +560,19 @@ static bool emit_one_natoa(pb_stream *outs,
 	address_buf ab;
 	dbg("NAT-OAi (S): %s", str_address(ip, &ab));
 	close_output_pbs(&pbs);
-	return TRUE;
+	return true;
 }
 
-bool nat_traversal_add_natoa(pb_stream *outs, struct state *st,
-			     bool initiator)
+bool v1_nat_traversal_add_initiator_natoa(pb_stream *outs, struct state *st)
 {
-	const ip_address *ipinit, *ipresp;
-
-	pexpect_st_local_endpoint(st);
-	if (initiator) {
-		ipinit = &st->st_interface->local_endpoint;
-		ipresp = &st->st_remote_endpoint;
-	} else {
-		ipresp = &st->st_interface->local_endpoint;
-		ipinit = &st->st_remote_endpoint;
-	}
+	ip_address ipinit = st->st_interface->ip_dev->id_address;
+	ip_address ipresp = endpoint_address(&st->st_remote_endpoint);
 
 	struct_desc *pd = LDISJOINT(st->hidden_variables.st_nat_traversal, NAT_T_WITH_RFC_VALUES) ?
 		&isakmp_nat_oa_drafts : &isakmp_nat_oa;
 
-	return
-		emit_one_natoa(outs, pd, ipinit, "NAT-OAi") &&
-		emit_one_natoa(outs, pd, ipresp, "NAT-OAr");
+	return (emit_one_natoa(outs, pd, &ipinit, "NAT-OAi") &&
+		emit_one_natoa(outs, pd, &ipresp, "NAT-OAr"));
 }
 
 #ifdef USE_IKEv1

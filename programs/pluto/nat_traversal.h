@@ -90,8 +90,8 @@ struct hidden_variables;	/* forward */
 void nat_traversal_natoa_lookup(struct msg_digest *md,
 				struct hidden_variables *hv,
 				struct logger *logger);
-bool nat_traversal_add_natoa(pb_stream *outs,
-			     struct state *st, bool initiator);
+bool v1_nat_traversal_add_initiator_natoa(struct pbs_out *outs, struct state *st);
+
 /*
  * move initiator endpoints (src, dst) to NAT ports.
  */
