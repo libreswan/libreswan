@@ -955,7 +955,6 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		if (id_pd->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
 			log_state(RC_LOG_SERIOUS, p1st,
 				  "Applying workaround for MS-818043 NAT-T bug");
-			zero(&b.peers.net);
 			b.peers.net = subnet_from_address(&c->spd.that.host_addr);
 		}
 		/* End Hack for MS 818043 NAT-T Update */
@@ -1156,7 +1155,6 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 		/* fill in the client's true port */
 		if (c->spd.that.has_port_wildcard) {
 			int port = b->peers.port;
-			update_endpoint_port(&c->spd.that.host_addr, ip_hport(port));
 			update_selector_hport(&c->spd.that.client, port);
 
 			c->spd.that.port = b->peers.port;
