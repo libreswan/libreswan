@@ -529,7 +529,7 @@ void check_orientations(void)
 				 * the port logic?
 				 */
 				if (sameaddr(&hp->remote,
-					     &i->local_endpoint)) {
+					     &i->ip_dev->id_address)) {
 					/*
 					 * bad news: the whole chain
 					 * of connections hanging off

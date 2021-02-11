@@ -1121,18 +1121,8 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				/*
 				 * ??? is this wise?  This may changes
 				 * a lot of other connections.
-				 *
-				 * XXX:
-				 *
-				 * As for the old code, preserve the
-				 * existing port.  NEW_PEER, an
-				 * address, doesn't have a port and
-				 * presumably the port wasn't
-				 * updated(?).
 				 */
-				tmp_c->host_pair->remote = endpoint3(&ip_protocol_udp,
-								     &new_peer,
-								     endpoint_port(&tmp_c->host_pair->remote));
+				tmp_c->host_pair->remote = new_peer;
 
 				/* Initiating connection to the redirected peer */
 				initiate_connections_by_name(tmp_name, NULL,
