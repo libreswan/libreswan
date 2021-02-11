@@ -3271,29 +3271,25 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 		return false;
 	}
 
-	const ip_address *src, *dst;
-	ipsec_spi_t spi;
-	bool redirected = false;
-	ip_address tmp_ip = {
-		.hport = 0,
-		.version = 0
-	};
-
 	/*
-	 * if we were redirected (using the REDIRECT
-	 * mechanism), change
-	 * spd.that.host_addr temporarily, we reset
-	 * it back later
+	 * If we were redirected (using the REDIRECT mechanism),
+	 * change spd.that.host_addr temporarily, we reset it back
+	 * later.
 	 */
-	if (!sameaddr(&st->st_remote_endpoint, &c->spd.that.host_addr) &&
+	bool redirected = false;
+	ip_address tmp_host_addr = unset_address;
+	unsigned tmp_host_port = 0;
+	if (!endpoint_address_eq(&st->st_remote_endpoint, &c->spd.that.host_addr) &&
 	    address_is_specified(&c->temp_vars.redirect_ip)) {
 		redirected = true;
-		tmp_ip = c->spd.that.host_addr;
-		tmp_ip.version = c->spd.that.host_addr.version;
-		tmp_ip.hport = c->spd.that.host_addr.hport;
-		c->spd.that.host_addr = st->st_remote_endpoint;
+		tmp_host_addr = c->spd.that.host_addr;
+		tmp_host_port = c->spd.that.host_port; /* XXX: needed? */
+		c->spd.that.host_addr = endpoint_address(&st->st_remote_endpoint);
+		c->spd.that.host_port = endpoint_hport(&st->st_remote_endpoint);
 	}
 
+	const ip_address *src, *dst;
+	ipsec_spi_t spi;
 	if (inbound) {
 		src = &c->spd.that.host_addr;
 		dst = &c->spd.this.host_addr;
@@ -3346,8 +3342,10 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 			*ago = monotimediff(mononow(), p2->peer_lastused);
 	}
 
-	if (redirected)
-		c->spd.that.host_addr = tmp_ip;
+	if (redirected) {
+		c->spd.that.host_addr = tmp_host_addr;
+		c->spd.that.host_port = tmp_host_port;
+	}
 
 	return true;
 }
