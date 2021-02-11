@@ -761,7 +761,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 						      m->oppo.local.port);
 			ip_endpoint remote = endpoint3(protocol, &m->oppo.remote.address,
 						       m->oppo.remote.port);
-			initiate_ondemand(&local, &remote, m->oppo.ipproto,
+			initiate_ondemand(&local, &remote,
 					  /*held*/false,
 					  /*background*/m->whack_async,
 					  NULL, "whack", logger);

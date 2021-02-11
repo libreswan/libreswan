@@ -635,8 +635,8 @@ void restart_connections_by_peer(struct connection *const c)
 struct find_oppo_bundle {
 	const char *want;
 	bool failure_ok;        /* if true, continue_oppo should not die on DNS failure */
-	ip_address our_client;  /* not pointer! */
-	ip_address peer_client;
+	ip_endpoint our_client;  /* not pointer! */
+	ip_endpoint peer_client;
 	int transport_proto;
 	bool held;
 	policy_prio_t policy_prio;
@@ -649,10 +649,10 @@ struct find_oppo_bundle {
 
 static void cannot_oppo(struct find_oppo_bundle *b, err_t ughmsg)
 {
-	address_buf ocb_buf;
-	const char *ocb = ipstr(&b->our_client, &ocb_buf);
-	address_buf pcb_buf;
-	const char *pcb = ipstr(&b->peer_client, &pcb_buf);
+	endpoint_buf ocb_buf;
+	const char *ocb = str_endpoint(&b->our_client, &ocb_buf);
+	endpoint_buf pcb_buf;
+	const char *pcb = str_endpoint(&b->peer_client, &pcb_buf);
 
 	enum stream logger_stream = (DBGP(DBG_BASE) ? ALL_STREAMS : WHACK_STREAM);
 	llog(logger_stream | RC_OPPOFAILURE, b->logger,
@@ -733,13 +733,13 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 * First try for one that explicitly handles the clients.
 	 */
 
-	if ((address_is_unset(&b->our_client) || address_is_any(&b->our_client)) ||
-	    (address_is_unset(&b->peer_client) || address_is_any(&b->peer_client))) {
+	if (!endpoint_is_specified(&b->our_client) &&
+	    !endpoint_is_specified(&b->peer_client)) {
 		cannot_oppo(b, "impossible IP address");
 		return;
 	}
 
-	if (sameaddr(&b->our_client, &b->peer_client)) {
+	if (address_eq(&our_address, &peer_address)) {
 		/* NETKEY gives us acquires for our own IP */
 		/* this does not catch talking to ourselves on another ip */
 		cannot_oppo(b, "acquire for our own IP address");
@@ -1058,9 +1058,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			  SOS_NOBODY, &inception);
 }
 
-void initiate_ondemand(const ip_address *our_client,
-		       const ip_address *peer_client,
-		       int transport_proto,
+void initiate_ondemand(const ip_endpoint *our_client,
+		       const ip_endpoint *peer_client,
 		       bool held, bool background,
 		       const chunk_t *sec_label,
 		       const char *why,
@@ -1071,7 +1070,7 @@ void initiate_ondemand(const ip_address *our_client,
 		.failure_ok = false,
 		.our_client = *our_client,
 		.peer_client = *peer_client,
-		.transport_proto = transport_proto,
+		.transport_proto = endpoint_protocol(our_client)->ipproto,
 		.held = held,
 		.policy_prio = BOTTOM_PRIO,
 		.negotiation_shunt = SPI_HOLD, /* until we found connection policy */

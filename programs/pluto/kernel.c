@@ -251,7 +251,6 @@ void record_and_initiate_opportunistic(const ip_endpoint *local_client,
 
 	/* actually initiate opportunism / ondemand */
 	initiate_ondemand(local_client, remote_client,
-			  transport_proto,
 			  /*held*/ true,
 			  /*background*/ true,
 			  sec_label,

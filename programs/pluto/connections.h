@@ -443,9 +443,8 @@ extern void flush_revival(const struct connection *c);
 
 struct xfrm_user_sec_ctx_ike; /* forward declaration */
 
-extern void initiate_ondemand(const ip_address *our_client,
-			      const ip_address *peer_client,
-			      int transport_proto,
+extern void initiate_ondemand(const ip_endpoint *our_client,
+			      const ip_endpoint *peer_client,
 			      bool held, bool background,
 			      const chunk_t *sec_label,
 			      const char *why,
