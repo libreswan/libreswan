@@ -1084,38 +1084,33 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				tmp_c->spd.that.id.ip_addr = new_peer;
 
 				/* update things that were the old peer */
-				ipstr_buf b;
-				if (sameaddr(&tmp_c->spd.this.host_nexthop,
-					     &old_addr)) {
-					if (DBGP(DBG_BASE)) {
-						DBG_log("this host's next hop %s was the same as the old remote addr",
-							ipstr(&old_addr, &b));
-						DBG_log("changing this host's next hop to %s",
-							ipstr(&new_peer, &b));
-					}
+				if (address_eq(&tmp_c->spd.this.host_nexthop, &old_addr)) {
+					address_buf ob, nb;
+					dbg("local next hop %s is the same as the old remote addr, changing local next hop to %s",
+					    str_address(&old_addr, &ob),
+					    str_address(&new_peer, &nb));
 					tmp_c->spd.this.host_nexthop = new_peer;
 				}
 
-				if (sameaddr(&tmp_c->spd.that.host_srcip,
-					     &old_addr)) {
-					if (DBGP(DBG_BASE)) {
-						DBG_log("Old that host's srcip %s was the same as the old remote addr",
-							ipstr(&old_addr, &b));
-						DBG_log("changing that host's srcip to %s",
-							ipstr(&new_peer, &b));
-					}
+				if (address_eq(&tmp_c->spd.that.host_srcip, &old_addr)) {
+					address_buf ob, nb;
+					dbg("remote host's srcip %s is the same as the old remote addr, changing remote host's srcip to %s",
+					    str_address(&old_addr, &ob),
+					    str_address(&new_peer, &nb));
 					tmp_c->spd.that.host_srcip = new_peer;
 				}
 
-				if (sameaddr(&tmp_c->spd.that.client.addr,
-					     &old_addr)) {
-					if (DBGP(DBG_BASE)) {
-						DBG_log("Old that client ip %s was the same as the old remote address",
-							ipstr(&old_addr, &b));
-						DBG_log("changing that client's ip to %s",
-							ipstr(&new_peer, &b));
-					}
-					tmp_c->spd.that.client.addr = new_peer;
+				/*
+				 * XXX: should this also check that
+				 * the client is a single address?
+				 */
+				ip_address client_prefix = selector_prefix(&tmp_c->spd.that.client);
+				if (address_eq(&client_prefix, &old_addr)) {
+					address_buf ob, nb;
+					dbg("old remote client's ip %s is the same as the old remote address, changing remote client ip to %s",
+					    str_address(&old_addr, &ob),
+					    str_address(&new_peer, &nb));
+					tmp_c->spd.that.client = selector_from_address(&new_peer);
 				}
 
 				/*
