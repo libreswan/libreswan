@@ -217,7 +217,8 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 
 	case INTERNAL_IP4_SUBNET:
 	{
-		diag_t d = pbs_out_address(&attrval, &c->spd.this.client.addr, "IP4_subnet");
+		ip_address client_addr = selector_prefix(&c->spd.this.client);
+		diag_t d = pbs_out_address(&attrval, &client_addr, "IP4_subnet");
 		if (d != NULL) {
 			log_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
