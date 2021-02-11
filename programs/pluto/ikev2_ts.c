@@ -33,6 +33,7 @@
 #include "hostpair.h"
 #include "ip_info.h"
 #include "ip_selector.h"
+#include "security_selinux.h"
 
 /*
  * While the RFC seems to suggest that the traffic selectors come in
@@ -846,13 +847,13 @@ static bool score_ends_seclabel(const struct ends *ends,
 				// complain loudly
 				continue;
 			} else {
-				if (hunk_eq(ends->i->sec_label, cur->sec_label)) {
+				if (within_range((const char *)cur->sec_label.ptr, (const char *)d->spd.this.sec_label.ptr, NULL)) {
 					match_i = true;
-					dbg("PAUL: ikev2ts #1: hunk_eq matches security label");
+					dbg("ikev2ts #1: received label within range of our security label");
 				} else {
-					dbg("PAUL: ikev2ts #1: hunk_eq does not match security label");
-					DBG_dump_hunk("PAUL:ends->i->sec_label", ends->i->sec_label);
-					DBG_dump_hunk("PAUL:cur->sec_label", cur->sec_label);
+					dbg("ikev2ts #1: received label not within range of our security label");
+					DBG_dump_hunk("ends->i->sec_label", ends->i->sec_label);
+					DBG_dump_hunk("cur->sec_label", cur->sec_label);
 					continue; // hope for a better one
 				}
 			}
@@ -862,17 +863,16 @@ static bool score_ends_seclabel(const struct ends *ends,
 				if (cur->ts_type == IKEv2_TS_SECLABEL) {
 					recv_label_r = true;
 					if (cur->sec_label.len == 0) {
-						// complain loudly
-						dbg("PAUL: IKEv2_TS_SECLABEL but zero length cur->sec_label");
+						dbg("IKEv2_TS_SECLABEL but zero length cur->sec_label");
 						continue;
 					} else {
-						if (hunk_eq(ends->r->sec_label, cur->sec_label)) {
-							dbg("PAUL: ikev2ts #2: hunk_eq matches security label");
+						if (within_range((const char *)ends->r->sec_label.ptr, (const char *)d->spd.this.sec_label.ptr, NULL)) {
+							dbg("ikev2ts #2: received label within range of our security label");
 							match_r = true;
 						} else {
-							dbg("PAUL: ikev2ts #2: hunk_eq does not match security label");
-							DBG_dump_hunk("PAUL:ends->r->sec_label", ends->r->sec_label);
-							DBG_dump_hunk("PAUL:cur->sec_label", cur->sec_label);
+							dbg("ikev2ts #2: received label not within range of our security label");
+							DBG_dump_hunk("ends->r->sec_label", ends->r->sec_label);
+							DBG_dump_hunk("cur->sec_label", cur->sec_label);
 							continue; // hope for a better one
 						}
 					}

@@ -89,6 +89,7 @@
 #include "iface.h"
 #include "ip_selector.h"
 #include "nss_cert_reread.h"
+#include "security_selinux.h"
 
 struct connection *connections = NULL;
 
@@ -2499,7 +2500,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 					our_port == sr->this.port) &&
 				(sr->that.port == 0 ||
 					peer_port == sr->that.port) &&
-				hunk_eq(sec_label, sr->this.sec_label))
+				within_range((const char *)sec_label.ptr, (const char *)sr->this.sec_label.ptr, NULL))
 			{
 				policy_prio_t prio =
 					8 * (c->policy_prio +
