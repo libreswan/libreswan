@@ -175,8 +175,7 @@ bool endpoint_is_specified(const ip_endpoint *endpoint)
  * and a value of zero means no port.
  */
 
-static size_t format_endpoint(struct jambuf *buf,
-			      bool sensitive, bool ports,
+static size_t format_endpoint(struct jambuf *buf, bool sensitive,
 			      const ip_endpoint *endpoint)
 {
 	/*
@@ -198,19 +197,13 @@ static size_t format_endpoint(struct jambuf *buf,
 	switch (afi->af) {
 	case AF_INET: /* N.N.N.N[:PORT] */
 		s += jam_address(buf, &address);
-		if (hport > 0 || ports) {
-			s += jam(buf, ":%d", hport);
-		}
+		s += jam(buf, ":%d", hport);
 		break;
 	case AF_INET6: /* [N:..:N]:PORT or N:..:N */
-		if (hport > 0 || ports) {
-			s += jam(buf, "[");
-			s += jam_address(buf, &address);
-			s += jam(buf, "]");
-			s += jam(buf, ":%d", hport);
-		} else {
-			s += jam_address(buf, &address);
-		}
+		s += jam(buf, "[");
+		s += jam_address(buf, &address);
+		s += jam(buf, "]");
+		s += jam(buf, ":%d", hport);
 		break;
 	default:
 		bad_case(afi->af);
@@ -220,7 +213,7 @@ static size_t format_endpoint(struct jambuf *buf,
 
 size_t jam_endpoint(struct jambuf *buf, const ip_endpoint *endpoint)
 {
-	return format_endpoint(buf, /*sensitive?*/false, /*ports?*/false, endpoint);
+	return format_endpoint(buf, /*sensitive?*/false, endpoint);
 }
 
 const char *str_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
@@ -232,7 +225,7 @@ const char *str_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
 
 size_t jam_sensitive_endpoint(struct jambuf *buf, const ip_endpoint *endpoint)
 {
-	return format_endpoint(buf, /*sensitive?*/!log_ip, /*ports?*/false, endpoint);
+	return format_endpoint(buf, /*sensitive?*/!log_ip, endpoint);
 }
 
 const char *str_sensitive_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
@@ -247,9 +240,9 @@ size_t jam_endpoints(struct jambuf *buf, const ip_endpoint *src, const ip_endpoi
 	const ip_protocol *srcp = endpoint_protocol(src);
 	const ip_protocol *dstp = endpoint_protocol(dst);
 	size_t s = 0;
-	s += format_endpoint(buf, /*sensitive?*/false, /*ports?*/true, src);
+	s += format_endpoint(buf, /*sensitive?*/false, src);
 	s += jam_protocols(buf, srcp, '-', dstp);
-	s += format_endpoint(buf, /*sensitive?*/false, /*ports?*/true, dst);
+	s += format_endpoint(buf, /*sensitive?*/false, dst);
 	return s;
 }
 
