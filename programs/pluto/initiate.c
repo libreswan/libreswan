@@ -752,7 +752,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 							   &b->our_client,
 							   &b->peer_client,
 							   b->transport_proto,
-							   b->sec_label);
+							   b->sec_label,
+							   b->logger);
 	if (c == NULL) {
 		/* No connection explicitly handles the clients and there
 		 * are no Opportunistic connections -- whine and give up.

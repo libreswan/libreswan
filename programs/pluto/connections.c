@@ -2457,9 +2457,11 @@ char *fmt_conn_instance(const struct connection *c, char buf[CONN_INST_BUF])
  * See also build_outgoing_opportunistic_connection.
  */
 struct connection *find_connection_for_clients(struct spd_route **srp,
-					const ip_address *our_client,
-					const ip_address *peer_client,
-					int transport_proto, chunk_t sec_label)
+					       const ip_address *our_client,
+					       const ip_address *peer_client,
+					       int transport_proto,
+					       chunk_t sec_label,
+					       struct logger *logger)
 {
 	int our_port = endpoint_hport(our_client);
 	int peer_port = endpoint_hport(peer_client);
@@ -2500,7 +2502,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 					our_port == sr->this.port) &&
 				(sr->that.port == 0 ||
 					peer_port == sr->that.port) &&
-				within_range((const char *)sec_label.ptr, (const char *)sr->this.sec_label.ptr, NULL))
+				within_range((const char *)sec_label.ptr, (const char *)sr->this.sec_label.ptr, logger))
 			{
 				policy_prio_t prio =
 					8 * (c->policy_prio +

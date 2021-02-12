@@ -830,7 +830,8 @@ static bool score_gt(const struct best_score *score, const struct best_score *be
 static bool score_ends_seclabel(const struct ends *ends,
 				const struct connection *d,
 				const struct traffic_selectors *tsi,
-				const struct traffic_selectors *tsr)
+				const struct traffic_selectors *tsr,
+				struct logger *logger)
 {
 	/* sec_labels are symmetric, pick from one end */
 	bool require_label = d->spd.this.sec_label.len != 0;
@@ -847,7 +848,7 @@ static bool score_ends_seclabel(const struct ends *ends,
 				// complain loudly
 				continue;
 			} else {
-				if (within_range((const char *)cur->sec_label.ptr, (const char *)d->spd.this.sec_label.ptr, NULL)) {
+				if (within_range((const char *)cur->sec_label.ptr, (const char *)d->spd.this.sec_label.ptr, logger)) {
 					match_i = true;
 					dbg("ikev2ts #1: received label within range of our security label");
 				} else {
@@ -866,7 +867,7 @@ static bool score_ends_seclabel(const struct ends *ends,
 						dbg("IKEv2_TS_SECLABEL but zero length cur->sec_label");
 						continue;
 					} else {
-						if (within_range((const char *)ends->r->sec_label.ptr, (const char *)d->spd.this.sec_label.ptr, NULL)) {
+						if (within_range((const char *)ends->r->sec_label.ptr, (const char *)d->spd.this.sec_label.ptr, logger)) {
 							dbg("ikev2ts #2: received label within range of our security label");
 							match_r = true;
 						} else {
@@ -997,7 +998,7 @@ bool v2_process_ts_request(struct child_sa *child,
 		};
 
 
-		if (!score_ends_seclabel(&ends, c, &tsi, &tsr)) {
+		if (!score_ends_seclabel(&ends, c, &tsi, &tsr, child->sa.st_logger)) {
 			continue;
 		}
 
@@ -1098,7 +1099,8 @@ bool v2_process_ts_request(struct child_sa *child,
 					? END_NARROWER_THAN_TS
 					: END_EQUALS_TS;
 
-				if (!score_ends_seclabel(&ends, d, &tsi, &tsr))
+				if (!score_ends_seclabel(&ends, d, &tsi, &tsr,
+					    child->sa.st_logger))
 					continue;
 				struct best_score score = score_ends_iprange(responder_fit, d/*note D*/,
 								     &ends, &tsi, &tsr);
@@ -1370,7 +1372,7 @@ bool v2_process_ts_response(struct child_sa *child,
 		? END_WIDER_THAN_TS
 		: END_EQUALS_TS;
 
-	if (!score_ends_seclabel(&e, c, &tsi, &tsr))
+	if (!score_ends_seclabel(&e, c, &tsi, &tsr, child->sa.st_logger))
 		return false;
 
 	struct best_score best = score_ends_iprange(initiator_widening, c, &e, &tsi, &tsr);
@@ -1464,7 +1466,8 @@ bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *
 
 	enum fit fitness = END_NARROWER_THAN_TS;
 
-	if (!score_ends_seclabel(&ends, c, &their_tsis, &their_tsrs)) {
+	if (!score_ends_seclabel(&ends, c, &their_tsis, &their_tsrs,
+				 child->sa.st_logger)) {
 		log_state(RC_LOG_SERIOUS, &child->sa,
 			  "rekey: received Traffic Selectors mismatch configured selectors for Security Label");
 		return false;
