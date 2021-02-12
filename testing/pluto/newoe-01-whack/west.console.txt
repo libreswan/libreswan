@@ -16,9 +16,7 @@ west #
  echo "initdone"
 initdone
 west #
- # ICMP ping; expect error from trying to delete the kernel's acquire shunt
-west #
- ipsec whack --oppohere 192.1.2.45 --oppothere 192.1.2.23 --oppoproto 1 --opposport 8 --oppodport 0
+ ipsec whack --oppohere 192.1.2.45 --oppothere 192.1.2.23
 002 initiate on demand from 192.1.2.45:8 to 192.1.2.23:0 proto=1 because: whack
 002 can't find expected bare shunt to delete: 192.1.2.45->192.1.2.23 transport_proto='1'
 1v2 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiating IKEv2 connection
