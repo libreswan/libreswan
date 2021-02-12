@@ -52,6 +52,8 @@ typedef struct ip_protocol {
 	 * Using this to encapsulate.
 	 */
 	const struct ip_encap *encap_esp;
+	/* is a port required? */
+	bool endpoint_requires_non_zero_port;
 } ip_protocol;
 
 #ifdef IPPROTO_COMP

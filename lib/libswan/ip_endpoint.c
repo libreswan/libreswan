@@ -295,16 +295,21 @@ bool endpoint_address_eq(const ip_endpoint *endpoint, const ip_address *address)
 
 void pexpect_endpoint(const ip_endpoint *e, const char *s, where_t where)
 {
-	if (e != NULL && e->version != 0) {
-		/* i.e., is set */
-		if (e->is_endpoint == false ||
-		    e->is_address == true ||
-		    e->hport == 0 ||
-		    e->ipproto == 0) {
-			endpoint_buf b;
-			dbg("EXPECTATION FAILED: %s is not an endpoint; "PRI_ENDPOINT" "PRI_WHERE,
-			    s, pri_endpoint(e, &b),
-			    pri_where(where));
-		}
+	if (endpoint_is_unset(e)) {
+		/* NULL or zero */
+		return;
+	}
+
+	const ip_protocol *protocol = endpoint_protocol(e);
+	if (e->version == 0 ||
+	    e->is_endpoint == false ||
+	    e->is_address == true ||
+	    e->ipproto == 0 ||
+	    protocol == NULL ||
+	    (protocol->endpoint_requires_non_zero_port && e->hport == 0)) {
+		endpoint_buf b;
+		dbg("EXPECTATION FAILED: %s is not an endpoint; "PRI_ENDPOINT" "PRI_WHERE,
+		    s, pri_endpoint(e, &b),
+		    pri_where(where));
 	}
 }
