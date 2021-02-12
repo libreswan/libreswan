@@ -126,7 +126,6 @@ void add_revival_if_needed(struct state *st)
 		return;
 	}
 
-	/* XXX: break it down so it can be logged */
 	so_serial_t newer_sa = get_newer_sa_from_connection(st);
 	if (state_by_serialno(newer_sa) != NULL) {
 		/*

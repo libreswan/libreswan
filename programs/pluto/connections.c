@@ -4649,7 +4649,7 @@ so_serial_t get_newer_sa_from_connection(struct state *st)
 		    newest, st->st_serialno);
 	}
 
-	if (newest != SOS_NOBODY && newest > st->st_serialno) {
+	if (newest != SOS_NOBODY && newest != st->st_serialno) {
 		return newest;
 	} else {
 		return SOS_NOBODY;
