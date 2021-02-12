@@ -616,6 +616,7 @@ static const struct option long_opts[] = {
 	{ "oppohere", required_argument, NULL, OPT_OPPO_HERE + OO },
 	{ "oppothere", required_argument, NULL, OPT_OPPO_THERE + OO },
 	{ "oppoproto", required_argument, NULL, OPT_OPPO_PROTO + OO },
+	{ "opposport", required_argument, NULL, OPT_OPPO_SPORT + OO },
 	{ "oppodport", required_argument, NULL, OPT_OPPO_DPORT + OO },
 
 	{ "asynchronous", no_argument, NULL, OPT_ASYNC + OO },
