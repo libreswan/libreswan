@@ -88,8 +88,8 @@ int within_range(const char *sl, const char *range, struct logger *logger)
 	 */
 	rtn = selinux_check_access(sl, range, "association", "polmatch", NULL);
 	if (rtn != 0) {
-		llog(RC_LOG, logger, "selinux within_range: sl (%s) - range (%s) error: %s\n",
-			    sl, range, strerror(errno));
+		llog(RC_LOG, logger, "selinux within_range: sl (%s) - range (%s) error: %s",
+		     sl, range, strerror(errno));
 		return 0;
 	}
 	dbg("selinux within_range: Permission granted sl (%s) - range (%s)", sl, range);
