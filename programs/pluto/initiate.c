@@ -908,20 +908,18 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 				shunt_proto = 0;
 				our_port = 0;
 				peer_port = 0;
-			} else {
-				if (peer_port != 0) {
-					if (c->spd.that.port != 0) {
-						if (c->spd.that.port != peer_port) {
-							llog(RC_LOG_SERIOUS, b->logger,
-								    "Dragons! connection port %d mismatches shunt dest port %d",
-								    c->spd.that.port, peer_port);
-						} else {
-							update_selector_hport(&that_client, peer_port);
-							dbg("bare shunt destination port set to %d", peer_port);
-						}
+			} else if (peer_port != 0) {
+				if (c->spd.that.port != 0) {
+					if (c->spd.that.port != peer_port) {
+						llog(RC_LOG_SERIOUS, b->logger,
+						     "Dragons! connection port %d mismatches shunt dest port %d",
+						     c->spd.that.port, peer_port);
 					} else {
-						dbg("not really expecting a shunt for dport 0 ?");
+						update_selector_hport(&that_client, peer_port);
+						dbg("bare shunt destination port set to %d", peer_port);
 					}
+				} else {
+					dbg("not really expecting a shunt for dport 0 ?");
 				}
 			}
 		} else {
@@ -956,7 +954,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 				b->logger)) {
 			llog(RC_LOG, b->logger, "adding bare wide passthrough negotiationshunt failed");
 		} else {
-			dbg("added bare (possibly wided) passthrough negotiationshunt succeeded (violating API)");
+			dbg("adding bare (possibly wided) passthrough negotiationshunt succeeded (violating API)");
 			add_bare_shunt(&this_client, &that_client, shunt_proto, SPI_HOLD, addwidemsg);
 		}
 		/* now delete the (obsoleted) narrow bare kernel shunt - we have a (possibly broadened) negotiationshunt replacement installed */
