@@ -33,8 +33,12 @@ typedef struct {
 	unsigned prefix_bits;
 } ip_cidr;
 
+extern const ip_cidr unset_cidr;
+
 const struct ip_info *cidr_type(const ip_cidr *cidr);
 ip_address cidr_address(const ip_cidr *cidr);
+
+bool cidr_is_unset(const ip_cidr *cidr);
 
 /* convert CIDR address/mask; does not judge the result */
 err_t numeric_to_cidr(shunk_t src, const struct ip_info *afi, ip_cidr *cidr);

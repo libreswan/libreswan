@@ -29,19 +29,20 @@ bool selector_is_unset(const ip_selector *selector)
 	return thingeq(*selector, unset_selector);
 }
 
-void jam_selector(struct jambuf *buf, const ip_selector *selector)
+size_t jam_selector(struct jambuf *buf, const ip_selector *selector)
 {
-	if (selector == NULL) {
-		jam(buf, "<none>/0");
-		return;
+	size_t s = 0;
+	if (selector_is_unset(selector)) {
+		return jam_string(buf, "<unset-selector>");
 	}
 	ip_address sa = selector_prefix(selector);
-	jam_address(buf, &sa); /* sensitive? */
-	jam(buf, "/%u", selector->maskbits);
+	s += jam_address(buf, &sa); /* sensitive? */
+	s += jam(buf, "/%u", selector->maskbits);
 	int port = selector_hport(selector);
 	if (port >= 0) {
-		jam(buf, ":%d", port);
+		s += jam(buf, ":%d", port);
 	}
+	return s;
 }
 
 const char *str_selector(const ip_selector *selector, selector_buf *out)

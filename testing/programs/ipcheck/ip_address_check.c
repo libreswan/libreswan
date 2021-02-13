@@ -149,8 +149,8 @@ static void check_str_address_sensitive(void)
 		const char *in;
 		const char *out;
 	} tests[] = {
-		{ 4, "1.2.3.4",			"<ip-address>" },
-		{ 6, "1:12:3:14:5:16:7:18",	"<ip-address>" },
+		{ 4, "1.2.3.4",			"<address>" },
+		{ 6, "1:12:3:14:5:16:7:18",	"<address>" },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {

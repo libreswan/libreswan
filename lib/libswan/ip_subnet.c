@@ -188,8 +188,8 @@ ip_address subnet_mask(const ip_subnet *subnet)
 
 size_t jam_subnet(struct jambuf *buf, const ip_subnet *subnet)
 {
-	if (subnet == NULL) {
-		return jam(buf, "<none>/0");
+	if (subnet_is_unset(subnet)) {
+		return jam_string(buf, "<unset-subnet>");
 	}
 	size_t s = 0;
 	ip_address sa = subnet_address(subnet);

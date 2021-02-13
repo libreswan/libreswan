@@ -134,7 +134,8 @@ bool selector_eq(const ip_selector *l, const ip_selector *r);
 typedef struct {
 	char buf[sizeof(address_buf) + 4/*"/NNN"*/ + 6/*:65535*/];
 } selector_buf;
+
 const char *str_selector(const ip_selector *selector, selector_buf *out);
-void jam_selector(struct jambuf *buf, const ip_selector *selector);
+size_t jam_selector(struct jambuf *buf, const ip_selector *selector);
 
 #endif

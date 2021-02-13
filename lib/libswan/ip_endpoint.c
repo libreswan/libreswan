@@ -172,28 +172,20 @@ bool endpoint_is_specified(const ip_endpoint *endpoint)
  * and a value of zero means no port.
  */
 static size_t format_endpoint(struct jambuf *buf, bool sensitive,
-			    const ip_endpoint *endpoint)
+			      const ip_endpoint *endpoint)
 {
 	/*
 	 * A NULL endpoint can't be sensitive so always log it.
 	 */
-	if (endpoint == NULL) {
-		return jam(buf, "<none:>");
-	}
-
-	/*
-	 * An endpoint with no type (i.e., uninitialized) can't be
-	 * sensitive so always log it.
-	 */
-	const struct ip_info *afi = endpoint_type(endpoint);
-	if (afi == NULL) {
-		return jam(buf, "<unspecified:>");
+	if (endpoint_is_unset(endpoint)) {
+		return jam_string(buf, "<unset-endpoint>");
 	}
 
 	if (sensitive) {
-		return jam(buf, "<address:>");
+		return jam_string(buf, "<endpoint>");
 	}
 
+	const struct ip_info *afi = endpoint_type(endpoint);
 	ip_address address = endpoint_address(endpoint);
 	int hport = endpoint_hport(endpoint);
 	size_t s = 0;

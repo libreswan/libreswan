@@ -132,22 +132,15 @@ chunk_t address_as_chunk(ip_address *address)
 static size_t format_address_cooked(struct jambuf *buf, bool sensitive,
 				    const ip_address *address)
 {
-	/*
-	 * A NULL address can't be sensitive.
-	 */
-	if (address == NULL) {
-		return jam(buf, "<none>");
+	if (address_is_unset(address)) {
+		return jam_string(buf, "<unset-address>");
 	}
 
 	if (sensitive) {
-		return jam(buf, "<ip-address>");
+		return jam_string(buf, "<address>");
 	}
 
 	const struct ip_info *afi = address_type(address);
-	if (afi == NULL) {
-		return jam(buf, "<invalid>");
-	}
-
 	return afi->jam_address(buf, afi, &address->bytes);
 }
 

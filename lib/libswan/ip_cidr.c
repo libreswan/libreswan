@@ -19,9 +19,19 @@
 #include "ip_cidr.h"
 #include "ip_info.h"
 
-const struct ip_info *cidr_type(const ip_cidr *cidr)
+const ip_cidr unset_cidr;
+
+bool cidr_is_unset(const ip_cidr *cidr)
 {
 	if (cidr == NULL) {
+		return false;
+	}
+	return thingeq(*cidr, unset_cidr);
+}
+
+const struct ip_info *cidr_type(const ip_cidr *cidr)
+{
+	if (cidr_is_unset(cidr)) {
 		return NULL;
 	}
 	return ip_version_info(cidr->version);
@@ -29,6 +39,9 @@ const struct ip_info *cidr_type(const ip_cidr *cidr)
 
 ip_address cidr_address(const ip_cidr *cidr)
 {
+	if (cidr_is_unset(cidr)) {
+		return unset_address;
+	}
 	const struct ip_info *afi = cidr_type(cidr);
 	if (afi == NULL) {
 		return unset_address;
@@ -38,10 +51,7 @@ ip_address cidr_address(const ip_cidr *cidr)
 
 err_t cidr_specified(const ip_cidr *cidr)
 {
-	if (cidr == NULL) {
-		return "unset";
-	}
-	if (cidr->version == 0) {
+	if (cidr_is_unset(cidr)) {
 		return "unset";
 	}
 	const struct ip_info *afi = cidr_type(cidr);
@@ -113,6 +123,10 @@ err_t numeric_to_cidr(shunk_t src, const struct ip_info *afi, ip_cidr *cidr)
 
 size_t jam_cidr(struct jambuf *buf, const ip_cidr *cidr)
 {
+	if (cidr_is_unset(cidr)) {
+		return jam_string(buf, "<unset-cidr>");
+	}
+
 	size_t s = 0;
 	ip_address sa = cidr_address(cidr);
 	s += jam_address(buf, &sa); /* sensitive? */

@@ -217,8 +217,8 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 
 size_t jam_range(struct jambuf *buf, const ip_range *range)
 {
-	if (range == NULL) {
-		return jam(buf, "<none-none>");
+	if (range_is_unset(range)) {
+		return jam_string(buf, "<unset-range>");
 	}
 	size_t s = 0;
 	s += jam_address(buf, &range->start);
