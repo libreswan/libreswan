@@ -1042,6 +1042,11 @@ int main(int argc, char **argv)
 
 	msg.xfrm_if_id = UINT32_MAX;
 
+	/* set defaults to ICMP PING request */
+	msg.oppo.ipproto = IPPROTO_ICMP;
+	msg.oppo.local.port = ip_hport(8);
+	msg.oppo.remote.port = ip_hport(0);
+
 	for (;;) {
 		/* numeric argument for some flags */
 		unsigned long opt_whole = 0;
