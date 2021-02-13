@@ -2494,18 +2494,18 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 				DBG_dump_hunk("PAUL:sec_label", sec_label);
 				DBG_dump_hunk("PAUL:sr->this.sec_label", sr->this.sec_label);
 			}
-			if ((routed(sr->routing) ||
-					c->instance_initiation_ok) &&
-				addrinsubnet(our_client, &sr->this.client) &&
-				addrinsubnet(peer_client, &sr->that.client) &&
-				(sr->this.protocol == 0 ||
-					transport_proto == sr->this.protocol) &&
-				(sr->this.port == 0 ||
-					our_port == sr->this.port) &&
-				(sr->that.port == 0 ||
-					peer_port == sr->that.port) &&
-				within_range((const char *)sec_label.ptr, (const char *)sr->this.sec_label.ptr, logger))
-			{
+			if ((routed(sr->routing) || c->instance_initiation_ok) &&
+			    addrinsubnet(our_client, &sr->this.client) &&
+			    addrinsubnet(peer_client, &sr->that.client) &&
+			    (sr->this.protocol == 0 || transport_proto == sr->this.protocol) &&
+			    (sr->this.port == 0 || our_port == sr->this.port) &&
+			    (sr->that.port == 0 || peer_port == sr->that.port) &&
+			    ((sec_label.ptr == NULL &&
+			      sr->this.sec_label.ptr == NULL) ||
+			     /* don't call with NULL, it confuses it */
+			     within_range((const char *)sec_label.ptr,
+					  (const char *)sr->this.sec_label.ptr, logger))) {
+
 				policy_prio_t prio =
 					8 * (c->policy_prio +
 					     (c->kind == CK_INSTANCE)) +
