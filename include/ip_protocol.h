@@ -22,6 +22,8 @@
 
 #include <netinet/in.h>		/* for IPPROTO_* */
 
+struct jambuf;
+
 /*
  * What's being encapsulated using DST IP packets.
  *
@@ -89,5 +91,9 @@ enum eroute_type {
 
 const struct ip_protocol *protocol_by_prefix(const char  *prefix);
 const struct ip_protocol *protocol_by_ipproto(unsigned protoid);
+
+/* ex: '=TCP=>' */
+size_t jam_protocols(struct jambuf *buf, const ip_protocol *src, char sep,
+		     const ip_protocol *dst);
 
 #endif

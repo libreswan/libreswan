@@ -139,6 +139,9 @@ bool endpoint_is_unset(const ip_endpoint *endpoint)
 
 const struct ip_protocol *endpoint_protocol(const ip_endpoint *endpoint)
 {
+	if (endpoint_is_unset(endpoint)) {
+		return NULL;
+	}
 	return protocol_by_ipproto(endpoint->ipproto);
 }
 
@@ -171,11 +174,13 @@ bool endpoint_is_specified(const ip_endpoint *endpoint)
  * cannot be used, while for UDP, the source port is optional
  * and a value of zero means no port.
  */
-static size_t format_endpoint(struct jambuf *buf, bool sensitive,
+
+static size_t format_endpoint(struct jambuf *buf,
+			      bool sensitive, bool ports,
 			      const ip_endpoint *endpoint)
 {
 	/*
-	 * A NULL endpoint can't be sensitive so always log it.
+	 * A NULL/unset endpoint can't be sensitive so always log it.
 	 */
 	if (endpoint_is_unset(endpoint)) {
 		return jam_string(buf, "<unset-endpoint>");
@@ -193,12 +198,12 @@ static size_t format_endpoint(struct jambuf *buf, bool sensitive,
 	switch (afi->af) {
 	case AF_INET: /* N.N.N.N[:PORT] */
 		s += jam_address(buf, &address);
-		if (hport > 0) {
+		if (hport > 0 || ports) {
 			s += jam(buf, ":%d", hport);
 		}
 		break;
 	case AF_INET6: /* [N:..:N]:PORT or N:..:N */
-		if (hport > 0) {
+		if (hport > 0 || ports) {
 			s += jam(buf, "[");
 			s += jam_address(buf, &address);
 			s += jam(buf, "]");
@@ -215,7 +220,7 @@ static size_t format_endpoint(struct jambuf *buf, bool sensitive,
 
 size_t jam_endpoint(struct jambuf *buf, const ip_endpoint *endpoint)
 {
-	return format_endpoint(buf, false, endpoint);
+	return format_endpoint(buf, /*sensitive?*/false, /*ports?*/false, endpoint);
 }
 
 const char *str_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
@@ -227,7 +232,7 @@ const char *str_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
 
 size_t jam_sensitive_endpoint(struct jambuf *buf, const ip_endpoint *endpoint)
 {
-	return format_endpoint(buf, !log_ip, endpoint);
+	return format_endpoint(buf, /*sensitive?*/!log_ip, /*ports?*/false, endpoint);
 }
 
 const char *str_sensitive_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
@@ -235,6 +240,24 @@ const char *str_sensitive_endpoint(const ip_endpoint *endpoint, endpoint_buf *ds
 	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
 	jam_sensitive_endpoint(&buf, endpoint);
 	return dst->buf;
+}
+
+size_t jam_endpoints(struct jambuf *buf, const ip_endpoint *src, const ip_endpoint *dst)
+{
+	const ip_protocol *srcp = endpoint_protocol(src);
+	const ip_protocol *dstp = endpoint_protocol(dst);
+	size_t s = 0;
+	s += format_endpoint(buf, /*sensitive?*/false, /*ports?*/true, src);
+	s += jam_protocols(buf, srcp, '-', dstp);
+	s += format_endpoint(buf, /*sensitive?*/false, /*ports?*/true, dst);
+	return s;
+}
+
+const char *str_endpoints(const ip_endpoint *src, const ip_endpoint *dst, endpoints_buf *out)
+{
+	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
+	jam_endpoints(&buf, src, dst);
+	return out->buf;
 }
 
 bool endpoint_eq(const ip_endpoint *l, const ip_endpoint *r)

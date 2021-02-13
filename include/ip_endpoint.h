@@ -92,16 +92,26 @@ ip_endpoint endpoint3(const struct ip_protocol *protocol,
  * Endpoint formatting is always "cooked".  For instance, the address
  * "::1" is printed as "[::1]:PORT" (raw would print it as
  * "[0:0....:0]:PORT"
+ *
+ * XXX: sizeof("") includes '\0'.  What's an extra few bytes between
+ * friends?
  */
 
 typedef struct {
-	char buf[1/*[*/ + sizeof(address_buf) + 1/*]*/ + 5/*:65535*/];
+	char buf[sizeof("[") + sizeof(address_buf) + sizeof("]:65535")];
 } endpoint_buf;
 
 const char *str_endpoint(const ip_endpoint *, endpoint_buf *);
 size_t jam_endpoint(struct jambuf *, const ip_endpoint*);
 const char *str_sensitive_endpoint(const ip_endpoint *, endpoint_buf *);
 size_t jam_sensitive_endpoint(struct jambuf *, const ip_endpoint*);
+
+typedef struct {
+	char buf[sizeof(endpoint_buf) + sizeof("--UNKNOWN--UNKNOWN-->") + sizeof(endpoint_buf)];
+} endpoints_buf;
+
+size_t jam_endpoints(struct jambuf *jambuf, const ip_endpoint *src, const ip_endpoint *dst);
+const char *str_endpoints(const ip_endpoint *src, const ip_endpoint *dst, endpoints_buf *buf);
 
 /*
  * Logic

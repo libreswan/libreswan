@@ -52,6 +52,24 @@ const char *str_selector(const ip_selector *selector, selector_buf *out)
 	return out->buf;
 }
 
+size_t jam_selectors(struct jambuf *buf, const ip_selector *src, const ip_selector *dst)
+{
+	const ip_protocol *srcp = selector_protocol(src);
+	const ip_protocol *dstp = selector_protocol(dst);
+	size_t s = 0;
+	s += jam_selector(buf, src);
+	s += jam_protocols(buf, srcp, '=', dstp);
+	s += jam_selector(buf, dst);
+	return s;
+}
+
+const char *str_selectors(const ip_selector *src, const ip_selector *dst, selectors_buf *out)
+{
+	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
+	jam_selectors(&buf, src, dst);
+	return out->buf;
+}
+
 ip_selector selector_from_address_protoport(const ip_address *address,
 					    const ip_protoport *protoport)
 {
@@ -158,6 +176,9 @@ unsigned selector_ipproto(const ip_selector *selector)
 
 const ip_protocol *selector_protocol(const ip_selector *selector)
 {
+	if (selector_is_unset(selector)) {
+		return NULL;
+	}
 	return protocol_by_ipproto(selector->addr.ipproto);
 }
 

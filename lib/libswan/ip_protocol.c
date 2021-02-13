@@ -22,6 +22,7 @@
 #include "passert.h"
 #include "ip_protocol.h"
 #include "ip_encap.h"
+#include "jambuf.h"
 
 const struct ip_protocol ip_protocols[] = {
 	/*
@@ -1128,3 +1129,21 @@ enum_names ip_protocol_id_names = {
 	NULL, /* prefix */
 	NULL, /* next */
 };
+
+size_t jam_protocols(struct jambuf *buf, const ip_protocol *src, char sep, const ip_protocol *dst)
+{
+	size_t s = 0;
+	s += jam_char(buf, sep);
+	s += jam_string(buf, (src == NULL ? "?" :
+			      src->ipproto == 0 ? "*" :
+			      src->name));
+	if (src != dst) {
+		s += jam_char(buf, sep);
+		s += jam_string(buf, (dst == NULL ? "?" :
+				      dst->ipproto == 0 ? "*" :
+				      dst->name));
+	}
+	s += jam_char(buf, sep);
+	s += jam_char(buf, '>');
+	return s;
+}
