@@ -751,7 +751,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	struct connection *c = find_connection_for_clients(&sr,
 							   &b->our_client,
 							   &b->peer_client,
-							   b->transport_proto,
 							   b->sec_label,
 							   b->logger);
 	if (c == NULL) {

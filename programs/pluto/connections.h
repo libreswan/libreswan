@@ -499,9 +499,9 @@ extern struct connection
 			const uint8_t peer_protocol,
 			const uint16_t peer_port);
 struct connection *find_connection_for_clients(struct spd_route **srp,
-					       const ip_address *our_client,
-					       const ip_address *peer_client,
-					       int transport_proto, chunk_t sec_label,
+					       const ip_endpoint *our_client,
+					       const ip_endpoint *peer_client,
+					       chunk_t sec_label,
 					       struct logger *logger);
 
 /* instantiating routines */

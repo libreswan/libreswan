@@ -2442,6 +2442,7 @@ char *fmt_conn_instance(const struct connection *c, char buf[CONN_INST_BUF])
 
 /*
  * Find an existing connection for a trapped outbound packet.
+ *
  * This is attempted before we bother with gateway discovery.
  *   + this connection is routed or instance_of_routed_template
  *     (i.e. approved for on-demand)
@@ -2457,26 +2458,25 @@ char *fmt_conn_instance(const struct connection *c, char buf[CONN_INST_BUF])
  * See also build_outgoing_opportunistic_connection.
  */
 struct connection *find_connection_for_clients(struct spd_route **srp,
-					       const ip_address *our_client,
-					       const ip_address *peer_client,
-					       int transport_proto,
+					       const ip_endpoint *local_client,
+					       const ip_endpoint *remote_client,
 					       chunk_t sec_label,
 					       struct logger *logger)
 {
-	int our_port = endpoint_hport(our_client);
-	int peer_port = endpoint_hport(peer_client);
+	passert(endpoint_is_specified(local_client));
+	passert(endpoint_is_specified(remote_client));
+	passert(endpoint_protocol(local_client) == endpoint_protocol(remote_client));
+
+	int local_port = endpoint_hport(local_client);
+	int remote_port = endpoint_hport(remote_client);
 
 	struct connection *best = NULL;
 	policy_prio_t best_prio = BOTTOM_PRIO;
 	struct spd_route *best_sr = NULL;
 
-	passert(endpoint_is_specified(our_client));
-	passert(endpoint_is_specified(peer_client));
-
-	endpoint_buf a, b;
-	dbg("find_connection: looking for policy for connection: %s:%d/%d -> %s:%d/%d",
-	    str_endpoint(our_client, &a), transport_proto, our_port,
-	    str_endpoint(peer_client, &b), transport_proto, peer_port);
+	endpoints_buf eb;
+	dbg("find_connection: looking for policy for connection: %s",
+	    str_endpoints(local_client, remote_client, &eb));
 
 	struct connection *c;
 
@@ -2495,32 +2495,27 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 				DBG_dump_hunk("PAUL:sr->this.sec_label", sr->this.sec_label);
 			}
 			if ((routed(sr->routing) || c->instance_initiation_ok) &&
-			    addrinsubnet(our_client, &sr->this.client) &&
-			    addrinsubnet(peer_client, &sr->that.client) &&
-			    (sr->this.protocol == 0 || transport_proto == sr->this.protocol) &&
-			    (sr->this.port == 0 || our_port == sr->this.port) &&
-			    (sr->that.port == 0 || peer_port == sr->that.port) &&
+			    endpoint_in_selector(local_client, &sr->this.client) &&
+			    endpoint_in_selector(remote_client, &sr->that.client) &&
 			    ((sec_label.ptr == NULL &&
 			      sr->this.sec_label.ptr == NULL) ||
 			     /* don't call with NULL, it confuses it */
 			     within_range((const char *)sec_label.ptr,
 					  (const char *)sr->this.sec_label.ptr, logger))) {
 
+				unsigned ipproto = endpoint_protocol(local_client)->ipproto;
 				policy_prio_t prio =
-					8 * (c->policy_prio +
-					     (c->kind == CK_INSTANCE)) +
-					2 * (sr->this.port == our_port) +
-					2 * (sr->that.port == peer_port) +
-					1 * (sr->this.protocol == transport_proto);
+					(8 * (c->policy_prio + (c->kind == CK_INSTANCE)) +
+					 2 * (sr->this.port == local_port) +
+					 2 * (sr->that.port == remote_port) +
+					 1 * (sr->this.protocol == ipproto));
 
 				if (DBGP(DBG_BASE)) {
 					connection_buf cib;
-					selector_buf c_ocb;
-					selector_buf c_pcb;
-					DBG_log("find_connection: conn "PRI_CONNECTION" has compatible peers: %s -> %s [pri: %" PRIu32 "]",
+					selectors_buf sb;
+					DBG_log("find_connection: conn "PRI_CONNECTION" has compatible peers: %s [pri: %" PRIu32 "]",
 						pri_connection(c, &cib),
-						str_selector(&c->spd.this.client, &c_ocb),
-						str_selector(&c->spd.that.client, &c_pcb),
+						str_selectors(&c->spd.this.client, &c->spd.that.client, &sb),
 						prio);
 
 					if (best == NULL) {
