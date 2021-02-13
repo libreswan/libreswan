@@ -2685,11 +2685,10 @@ struct connection *oppo_instantiate(struct connection *c,
  * that we need to instantiate an opportunistic connection.
  */
 struct connection *build_outgoing_opportunistic_connection(const ip_endpoint *local_client,
-							   const ip_endpoint *remote_client,
-							   const int transport_proto)
+							   const ip_endpoint *remote_client)
 {
 	/*
-	 * Did the caller do theirn job?
+	 * Did the caller do their job?
 	 *
 	 * Where the protocol includes a port, the endpoint ports
 	 * don't need to match but they do need to be defined.
@@ -2699,20 +2698,9 @@ struct connection *build_outgoing_opportunistic_connection(const ip_endpoint *lo
 	 * and the port are missing.  Hence some of the fuzzy checks
 	 * below.
 	 */
-#if 1
-	passert(endpoint_is_specified(local_client));
-	passert(endpoint_is_specified(remote_client));
-#else
 	pendpoint(local_client);
 	pendpoint(remote_client);
-	pexpect(endpoint_protocol(local_client) == transport_proto);
-	pexpect(endpoint_protocol(remote_client) == transport_proto);
-#endif
-	ip_address local_address = endpoint_address(local_client);
-	ip_address remote_address = endpoint_address(remote_client);
-	/* for some protocols this is 0 */
-	unsigned local_port = endpoint_hport(local_client);
-	unsigned remote_port = endpoint_hport(remote_client);
+	pexpect(endpoint_protocol(local_client) == endpoint_protocol(remote_client));
 
 	/*
 	 * Go through all the "half" oriented connections (remote
@@ -2767,18 +2755,10 @@ struct connection *build_outgoing_opportunistic_connection(const ip_endpoint *lo
 				if (!routed(sr->routing)) {
 					continue;
 				}
-				/* protocol match; be fuzzy thanks to rcv_whack */
-				if (sr->this.protocol != 0 && transport_proto != 0 && sr->this.protocol != transport_proto) {
+				if (!endpoint_in_selector(local_client, &sr->this.client)) {
 					continue;
 				}
-				/* require local_client in sr->this.client; use endpoint_in_selector()? */
-				if (!address_in_selector(&local_address, &sr->this.client) ||
-				    (sr->this.protocol != 0 && sr->this.port != 0 && sr->this.port != local_port)) {
-					continue;
-				}
-				/* require remote_client in sr->that.client); use endpoint_in_selector()? */
-				if (!address_in_selector(&remote_address, &sr->that.client) ||
-				    (sr->this.protocol != 0 && sr->that.port != 0 && sr->that.port != remote_port)) {
+				if (!endpoint_in_selector(remote_client, &sr->that.client)) {
 					continue;
 				}
 
@@ -2838,6 +2818,8 @@ struct connection *build_outgoing_opportunistic_connection(const ip_endpoint *lo
 	}
 
 	/* XXX we might not yet know the ID! */
+	ip_address local_address = endpoint_address(local_client);
+	ip_address remote_address = endpoint_address(remote_client);
 	return oppo_instantiate(best, NULL, &local_address, &remote_address);
 }
 

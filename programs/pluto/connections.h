@@ -520,10 +520,8 @@ extern struct connection *instantiate(struct connection *c,
 				      const ip_address *peer_addr,
 				      const struct id *peer_id);
 
-extern struct connection *build_outgoing_opportunistic_connection(
-		const ip_endpoint *our_client,
-		const ip_endpoint *peer_client,
-		const int transport_proto);
+struct connection *build_outgoing_opportunistic_connection(const ip_endpoint *our_client,
+							   const ip_endpoint *peer_client);
 
 /* worst case: "[" serial "] " myclient "=== ..." peer "===" peer_client '\0' <cookie> */
 #define CONN_INST_BUF \

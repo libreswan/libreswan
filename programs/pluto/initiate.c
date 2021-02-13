@@ -971,8 +971,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	/* XXX: re-use C */
 	/* XXX shouldn't this pass b->sec_label too in theory - but we don't support OE with labels */
 	c = build_outgoing_opportunistic_connection(&b->our_client,
-						    &b->peer_client,
-						    b->transport_proto);
+						    &b->peer_client);
 	if (c == NULL) {
 		/* We cannot seem to instantiate a suitable connection:
 		 * complain clearly.
