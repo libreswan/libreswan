@@ -66,7 +66,7 @@
  */
 
 #define WHACK_BASIC_MAGIC (((((('w' << 8) + 'h') << 8) + 'k') << 8) + 25)
-#define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 48)
+#define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 49)
 
 /* struct whack_end is a lot like connection.h's struct end
  * It differs because it is going to be shipped down a socket
@@ -355,6 +355,8 @@ struct whack_message {
 	bool vti_shared; /* use remote %any and skip cleanup on down? */
 
 	/* for RFC 5685 - IKEv2 Redirect mechanism */
+	enum allow_global_redirect global_redirect;
+	char *global_redirect_to;
 	char *redirect_to;
 	char *accept_redirect_to;
 

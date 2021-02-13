@@ -580,6 +580,21 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		find_states_and_redirect(m->name, m->active_redirect_dests, whackfd);
 	}
 
+	if (m->global_redirect) {
+		dbg("whack: global_redirect %d", m->global_redirect);
+		global_redirect = m->global_redirect;
+		llog(RC_LOG, logger,
+			"set global redirect to %s",
+			enum_name(&allow_global_redirect_names, global_redirect));
+	}
+
+	if (m->global_redirect_to) {
+		dbg("whack: global_redirect_to %s", m->global_redirect_to);
+		set_global_redirect_dests(m->global_redirect_to);
+		llog(RC_LOG, logger,
+			"set global redirect target to %s", global_redirect_to());
+	}
+
 	/* update any socket buffer size before calling listen */
 	if (m->ike_buf_size != 0) {
 		dbg("whack: ike_buf_size %lu", m->ike_buf_size);
