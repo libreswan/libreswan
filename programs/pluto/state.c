@@ -1423,7 +1423,7 @@ void delete_states_by_peer(const struct fd *whackfd, const ip_address *peer)
 			    str_endpoint(&this->st_remote_endpoint, &b),
 			    peerstr);
 
-			if (sameaddr(&this->st_remote_endpoint, peer)) {
+			if (endpoint_address_eq(&this->st_remote_endpoint, peer)) {
 				if (ph1 == 0 && IS_IKE_SA(this)) {
 					whack_log(RC_COMMENT, whackfd,
 						  "peer %s for connection %s crashed; replacing",
@@ -1869,7 +1869,7 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 		    c->ike_version == st->st_connection->ike_version &&
 		    c->host_pair == st->st_connection->host_pair &&
 		    same_peer_ids(c, st->st_connection, NULL) &&
-		    sameaddr(&st->st_remote_endpoint, &c->spd.that.host_addr) &&
+		    endpoint_address_eq(&st->st_remote_endpoint, &c->spd.that.host_addr) &&
 		    IS_IKE_SA(st) &&
 		    (best == NULL || best->st_serialno < st->st_serialno))
 		{
