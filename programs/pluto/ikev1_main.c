@@ -564,13 +564,9 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 					 * Opportunistic or Shunt:
 					 * pick tightest match
 					 */
-					if (addrinsubnet(
-						&md->sender,
-						&d->spd.that.client) &&
-					    (c == NULL ||
-					     !subnetinsubnet(
-						&c->spd.that.client,
-						&d->spd.that.client))) {
+					if (endpoint_in_selector(&md->sender, &d->spd.that.client) &&
+					    (c == NULL || selector_in_selector(&c->spd.that.client,
+									       &d->spd.that.client))) {
 						c = d;
 					}
 				}

@@ -443,8 +443,8 @@ static stf_status modecfg_resp(struct state *st,
 			dbg("We are not sending a banner");
 		}
 
-		if (address_is_unset(&c->spd.this.client.addr) ||
-		    address_is_any(&c->spd.this.client.addr)) {
+		if (selector_is_unset(&c->spd.this.client) ||
+		    selector_contains_all_addresses(&c->spd.this.client)) {
 			dbg("We are 0.0.0.0/0 so not sending CISCO_SPLIT_INC");
 		} else {
 			dbg("We are sending our subnet as CISCO_SPLIT_INC");
