@@ -2634,7 +2634,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 		break;
 	case MESSAGE_REQUEST:
 		/* MOBIKE responder processing request */
-		c->spd.that.host_addr = md->sender;
+		c->spd.that.host_addr = endpoint_address(&md->sender);
 		dbg("%s() %s.host_port: %u->%u", __func__, c->spd.that.leftright,
 		    c->spd.that.host_port, endpoint_hport(&md->sender));
 		c->spd.that.host_port = endpoint_hport(&md->sender);

@@ -451,8 +451,7 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 			    st->st_serialno, c->name, c->instance_serial,
 			    af->ip_version, ipstr(&ip, &ip_str));
 		} else {
-			c->spd.this.client.addr = ip;
-			c->spd.this.client.maskbits = af->mask_cnt;
+			c->spd.this.client = selector_from_address(&ip);
 			st->st_ts_this = ikev2_end_to_ts(&c->spd.this);
 			c->spd.this.has_cat = TRUE; /* create iptable entry */
 		}

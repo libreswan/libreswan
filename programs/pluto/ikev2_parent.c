@@ -6249,7 +6249,7 @@ void ikev2_addr_change(struct state *st)
 	struct starter_end that = {
 		.addrtype = KH_IPADDR,
 		.host_family = endpoint_type(&st->st_remote_endpoint),
-		.addr = st->st_remote_endpoint
+		.addr = endpoint_address(&st->st_remote_endpoint),
 	};
 
 	/*
