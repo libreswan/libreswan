@@ -1794,8 +1794,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		dst_client = c->spd.that.client;
 	}
 	/* XXX: code is stuffing an endpoint in .host_addr */
-	src = strip_endpoint(&src, HERE);
-	dst = strip_endpoint(&dst, HERE);
+	src = strip_address(&src, HERE);
+	dst = strip_address(&dst, HERE);
 
 	/*
 	 * mode: encapsulation mode called for
@@ -2380,16 +2380,15 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 	 * We point effective_that_host_address to the appropriate address.
 	 */
 
-	const ip_address *effective_that_host_addr = &c->spd.that.host_addr;
-
-	if (!sameaddr(&st->st_remote_endpoint, effective_that_host_addr) &&
+	ip_address effective_remote_address = c->spd.that.host_addr;
+	if (!endpoint_address_eq(&st->st_remote_endpoint, &effective_remote_address) &&
 	    address_is_specified(&c->temp_vars.redirect_ip)) {
-		effective_that_host_addr = &st->st_remote_endpoint;
+		effective_remote_address = endpoint_address(&st->st_remote_endpoint);
 	}
 
 	/* ??? CLANG 3.5 thinks that c might be NULL */
 	if (inbound && c->spd.eroute_owner == SOS_NOBODY &&
-	    !raw_eroute(effective_that_host_addr,
+	    !raw_eroute(&effective_remote_address,
 			&c->spd.that.client,
 			&c->spd.this.host_addr,
 			&c->spd.this.client,
@@ -2457,12 +2456,12 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 
 		if (inbound) {
 			spi = protos[i].info->our_spi;
-			src = effective_that_host_addr;
+			src = &effective_remote_address;
 			dst = &c->spd.this.host_addr;
 		} else {
 			spi = protos[i].info->attrs.spi;
 			src = &c->spd.this.host_addr;
-			dst = effective_that_host_addr;
+			dst = &effective_remote_address;
 		}
 
 		result &= del_spi(spi, proto, src, dst, st->st_logger);
