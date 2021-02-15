@@ -1804,9 +1804,10 @@ bool emit_v2_child_configuration_payload(struct connection *c,
 		return false;
 
 	if (cfg_reply) {
+		ip_address that_client_address = subnet_prefix(&c->spd.that.client);
 		ikev2_ship_cp_attr_ip(subnet_type(&c->spd.that.client) == &ipv4_info ?
-			IKEv2_INTERNAL_IP4_ADDRESS : IKEv2_INTERNAL_IP6_ADDRESS,
-			&c->spd.that.client.addr, "Internal IP Address", &cp_pbs);
+				      IKEv2_INTERNAL_IP4_ADDRESS : IKEv2_INTERNAL_IP6_ADDRESS,
+				      &that_client_address, "Internal IP Address", &cp_pbs);
 
 		if (c->modecfg_dns != NULL) {
 			char *ipstr;
@@ -5377,8 +5378,7 @@ static void mobike_switch_remote(struct msg_digest *md, struct mobike *est_remot
 
 	if (mobike_check_established(st) &&
 	    !LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST) &&
-	    (!sameaddr(&md->sender, &st->st_remote_endpoint) ||
-	     endpoint_hport(&md->sender) != endpoint_hport(&st->st_remote_endpoint))) {
+	    !endpoint_eq(&md->sender, &st->st_remote_endpoint)) {
 		/* remember the established/old address and interface */
 		est_remote->remote = st->st_remote_endpoint;
 		est_remote->interface = st->st_interface;

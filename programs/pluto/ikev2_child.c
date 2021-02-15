@@ -444,16 +444,19 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 	if (c->spd.this.cat) {
 		dbg("CAT is set, not setting host source IP address to %s",
 		    ipstr(&ip, &ip_str));
-		if (sameaddr(&c->spd.this.client.addr, &ip)) {
-			/* The address we received is same as this side
-			 * should we also check the host_srcip */
+		ip_address this_client_prefix = selector_prefix(&c->spd.this.client);
+		if (address_eq(&this_client_prefix, &ip)) {
+			/*
+			 * The address we received is same as this
+			 * side should we also check the host_srcip.
+			 */
 			dbg("#%lu %s[%lu] received INTERNAL_IP%d_ADDRESS that is same as this.client.addr %s. Will not add CAT iptable rules",
 			    st->st_serialno, c->name, c->instance_serial,
 			    af->ip_version, ipstr(&ip, &ip_str));
 		} else {
 			c->spd.this.client = selector_from_address(&ip);
 			st->st_ts_this = ikev2_end_to_ts(&c->spd.this);
-			c->spd.this.has_cat = TRUE; /* create iptable entry */
+			c->spd.this.has_cat = true; /* create iptable entry */
 		}
 	} else {
 		c->spd.this.client = selector_from_address(&ip);
