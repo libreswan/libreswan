@@ -522,13 +522,6 @@ extern struct connection *instantiate(struct connection *c,
 struct connection *build_outgoing_opportunistic_connection(const ip_endpoint *our_client,
 							   const ip_endpoint *peer_client);
 
-/* worst case: "[" serial "] " myclient "=== ..." peer "===" peer_client '\0' <cookie> */
-#define CONN_INST_BUF \
-	(2 + 10 + 1 + SUBNETTOT_BUF + 7 + ADDRTOT_BUF + 3 + SUBNETTOT_BUF + 1 + 1)
-
-extern char *fmt_conn_instance(const struct connection *c,
-			       char buf[CONN_INST_BUF]);
-
 /* publicly useful? */
 size_t jam_connection_instance(struct jambuf *buf, const struct connection *c);
 size_t jam_connection(struct jambuf *buf, const struct connection *c);
@@ -536,10 +529,20 @@ size_t jam_connection(struct jambuf *buf, const struct connection *c);
 /*
  * XXX: Instead of str_connection(), which would require a buffer big
  * enough to fit an any length name, there's PRI_CONNECTION et.al.
- */
+*/
 
 typedef struct {
-	char buf[CONN_INST_BUF];
+	char buf[/*why?*/ 1 +
+		 /*"["*/ 1 +
+		 /*<serialno>*/ 10 +
+		 /*"]"*/ 1 +
+		 /*<myclient*/SUBNETTOT_BUF +
+		 /*"=== ..."*/ 7 +
+		 /*<peer>*/ ADDRTOT_BUF +
+		 /*"==="*/ 3 +
+		 /*<peer_client>*/ SUBNETTOT_BUF +
+		 /*"\0"*/ 1 +
+		 /*<cookie>*/ 1];
 } connection_buf;
 
 const char *str_connection_instance(const struct connection *c,

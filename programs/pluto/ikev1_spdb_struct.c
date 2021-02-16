@@ -3259,13 +3259,12 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			int tn;
 
 			if (!(st->st_policy & POLICY_COMPRESS)) {
-				ipstr_buf b;
-				char cib[CONN_INST_BUF];
-
+				address_buf b;
+				connection_buf cib;
 				log_state(RC_LOG, st,
-					  "compression proposed by %s, but policy for \"%s\"%s forbids it",
-					  ipstr(&c->spd.that.host_addr, &b),
-					  c->name, fmt_conn_instance(c, cib));
+					  "compression proposed by %s, but policy for "PRI_CONNECTION" forbids it",
+					  str_address(&c->spd.that.host_addr, &b),
+					  pri_connection(c, &cib));
 				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 

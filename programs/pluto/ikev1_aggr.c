@@ -204,13 +204,13 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	binlog_refresh_state(st);
 
 	{
-		ipstr_buf b;
-		char cib[CONN_INST_BUF];
-
-		log_state(RC_LOG, st, "responding to Aggressive Mode, state #%lu, connection \"%s\"%s from %s",
+		address_buf b;
+		connection_buf cib;
+		log_state(RC_LOG, st,
+			  "responding to Aggressive Mode, state #%lu, connection "PRI_CONNECTION" from %s",
 			  st->st_serialno,
-			  st->st_connection->name, fmt_conn_instance(st->st_connection, cib),
-			  sensitive_ipstr(&c->spd.that.host_addr, &b));
+			  pri_connection(st->st_connection, &cib),
+			  str_address_sensitive(&c->spd.that.host_addr, &b));
 	}
 
 	merge_quirks(st, md);

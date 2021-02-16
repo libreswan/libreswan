@@ -4059,12 +4059,10 @@ static bool ikev2_rekey_child_req(struct child_sa *child,
 	child->sa.st_ts_this = rst->st_ts_this;
 	child->sa.st_ts_that = rst->st_ts_that;
 
-	char cib[CONN_INST_BUF];
-
-	dbg("#%lu initiate rekey request for \"%s\"%s #%lu SPI 0x%x TSi TSr",
+	connection_buf cib;
+	dbg("#%lu initiate rekey request for "PRI_CONNECTION" #%lu SPI 0x%x TSi TSr",
 	    child->sa.st_serialno,
-	    rst->st_connection->name,
-	    fmt_conn_instance(rst->st_connection, cib),
+	    pri_connection(rst->st_connection, &cib),
 	    rst->st_serialno, ntohl(*rekey_spi));
 
 	ikev2_print_ts(&child->sa.st_ts_this);

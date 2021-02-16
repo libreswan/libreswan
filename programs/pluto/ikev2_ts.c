@@ -1303,15 +1303,13 @@ bool v2_process_ts_request(struct child_sa *child,
 			best_spd_route = &best_connection->spd;
 
 			if (shared) {
-				char old[CONN_INST_BUF];
-				char new[CONN_INST_BUF];
-				dbg("switching from \"%s\"%s to \"%s\"%s",
-				    c->name, fmt_conn_instance(c, old),
-				    best_connection->name, fmt_conn_instance(best_connection, new));
+				connection_buf from, to;
+				dbg("switching from "PRI_CONNECTION" to "PRI_CONNECTION,
+				    pri_connection(c, &from), pri_connection(best_connection, &to));
 			} else {
-				char cib[CONN_INST_BUF];
-				dbg("  overwrote connection with instance %s%s",
-				    best_connection->name, fmt_conn_instance(best_connection, cib));
+				connection_buf cib;
+				dbg("  overwrote connection with instance "PRI_CONNECTION,
+				    pri_connection(best_connection, &cib));
 			}
 			break;
 		}

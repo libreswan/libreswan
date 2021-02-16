@@ -2424,23 +2424,6 @@ const char *str_connection_instance(const struct connection *c, connection_buf *
 }
 
 /*
- * This function is called using the convention:
- *
- *    printf("\"%s\"%s", c->name, fmt_conn_instance(c, &buf));
- *
- * The CK_INSTANCE check is so it returns "" when false.
- */
-char *fmt_conn_instance(const struct connection *c, char buf[CONN_INST_BUF])
-{
-	/* not sizeof(buf), as BUF is an address */
-	struct jambuf p = array_as_jambuf(buf, CONN_INST_BUF);
-	if (c->kind == CK_INSTANCE) {
-		jam_connection_instance(&p, c);
-	}
-	return buf;
-}
-
-/*
  * Find an existing connection for a trapped outbound packet.
  *
  * This is attempted before we bother with gateway discovery.
@@ -3424,12 +3407,11 @@ struct connection *refine_host_connection(const struct state *st,
 				  peer_pathlen < best_peer_pathlen) ||
 				 (peer_pathlen == best_peer_pathlen &&
 				  our_pathlen < best_our_pathlen))) {
-				char cib[CONN_INST_BUF];
-				dbg("refine_host_connection: picking new best \"%s\"%s (wild=%d, peer_pathlen=%d/our=%d)",
-					d->name,
-					fmt_conn_instance(d, cib),
-					wildcards, peer_pathlen,
-					our_pathlen);
+				connection_buf cib;
+				dbg("refine_host_connection: picking new best "PRI_CONNECTION" (wild=%d, peer_pathlen=%d/our=%d)",
+				    pri_connection(d, &cib),
+				    wildcards, peer_pathlen,
+				    our_pathlen);
 				*fromcert = d_fromcert;
 				best_found = d;
 				best_wildcards = wildcards;

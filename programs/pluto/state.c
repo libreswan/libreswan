@@ -1988,7 +1988,6 @@ void fmt_state(struct state *st, const monotime_t now,
 {
 	/* what the heck is interesting about a state? */
 	const struct connection *c = st->st_connection;
-	char inst[CONN_INST_BUF];
 	char dpdbuf[128];
 	char traffic_buf[512], *mbcp;
 	const char *np1 = c->newest_isakmp_sa == st->st_serialno ?
@@ -1999,7 +1998,8 @@ void fmt_state(struct state *st, const monotime_t now,
 	const char *eo = c->spd.eroute_owner == st->st_serialno ?
 			 "; eroute owner" : "";
 
-	fmt_conn_instance(c, inst);
+	connection_buf cib;
+	const char *inst = str_connection_instance(c, &cib);
 
 	dpdbuf[0] = '\0';	/* default to empty string */
 	if (IS_IPSEC_SA_ESTABLISHED(st)) {
@@ -3152,11 +3152,8 @@ static void list_state_event(struct show *s, struct state *st,
 				    deltasecs(monotimediff(pe->ev_time, now)));
 			}
 			if (st->st_connection != NULL) {
-				/* fmt_connection(buf, st->st_connection); */
-				char cib[CONN_INST_BUF];
-				jam(buf, " \"%s\"%s",
-				    st->st_connection->name,
-				    fmt_conn_instance(st->st_connection, cib));
+				connection_buf cib;
+				jam(buf, " "PRI_CONNECTION, pri_connection(st->st_connection, &cib));
 			}
 			jam(buf, "  #%lu", st->st_serialno);
 		}

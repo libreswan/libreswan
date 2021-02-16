@@ -878,11 +878,11 @@ static enum routability note_nearconflict(struct connection *outside,	/* CK_PERM
 	 */
 	inside->policy_prio = outside->policy_prio + 1;
 
-	char inst[CONN_INST_BUF];
+	connection_buf inst;
 	llog(RC_LOG_SERIOUS, logger,
-		    "conflict on eroute (%s), switching eroute to %s and linking %s",
-		    fmt_conn_instance(inside, inst),
-		    inside->name, outside->name);
+	     "conflict on eroute (%s), switching eroute to %s and linking %s",
+	     str_connection_instance(inside, &inst),
+	     inside->name, outside->name);
 
 	return route_nearconflict;
 }
