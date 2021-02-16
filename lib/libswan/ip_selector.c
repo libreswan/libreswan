@@ -78,7 +78,7 @@ ip_selector selector_from_address_protoport(const ip_address *address,
 		return unset_selector;
 	}
 	ip_subnet subnet = subnet_from_address(address);
-	return selector_from_subnet(&subnet, protoport);
+	return selector_from_subnet_protoport(&subnet, protoport);
 }
 
 ip_selector selector_from_address(const ip_address *address)
@@ -97,11 +97,11 @@ ip_selector selector_from_endpoint(const ip_endpoint *endpoint)
 	ip_protoport protoport = protoport2(protocol->ipproto, port);
 	ip_address address = endpoint_address(endpoint);
 	ip_subnet subnet = subnet_from_address(&address);
-	return selector_from_subnet(&subnet, &protoport);
+	return selector_from_subnet_protoport(&subnet, &protoport);
 }
 
-ip_selector selector_from_subnet(const ip_subnet *subnet,
-				 const ip_protoport *protoport)
+ip_selector selector_from_subnet_protoport(const ip_subnet *subnet,
+					   const ip_protoport *protoport)
 {
 	const struct ip_info *afi = subnet_type(subnet);
 	if (!pexpect(afi != NULL)) {
@@ -135,7 +135,7 @@ err_t range_to_selector(const ip_range *range,
 	if (err != NULL) {
 		return err;
 	}
-	*selector = selector_from_subnet(&subnet, protoport);
+	*selector = selector_from_subnet_protoport(&subnet, protoport);
 	return NULL;
 }
 

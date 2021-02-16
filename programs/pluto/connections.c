@@ -1001,8 +1001,8 @@ static int extract_end(struct end *dst,
 	dst->has_client = src->has_client;
 	if (src->has_client) {
 		pexpect(!subnet_is_unset(&src->client));
-		dst->client = selector_from_subnet(&src->client,
-						   &src->protoport);
+		dst->client = selector_from_subnet_protoport(&src->client,
+							     &src->protoport);
 	}
 
 	dst->protocol = src->protoport.ipproto;

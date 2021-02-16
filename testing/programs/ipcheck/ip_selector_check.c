@@ -134,7 +134,7 @@ static void check_selector_from_address(struct logger *logger)
 			    do_selector_from_address, logger);
 }
 
-static err_t do_selector_from_subnet(const struct selector *s,
+static err_t do_selector_from_subnet_protoport(const struct selector *s,
 					       ip_selector *selector,
 					       struct logger *logger)
 {
@@ -156,11 +156,11 @@ static err_t do_selector_from_subnet(const struct selector *s,
 		return err;
 	}
 
-	*selector = selector_from_subnet(&subnet, &protoport);
+	*selector = selector_from_subnet_protoport(&subnet, &protoport);
 	return NULL;
 }
 
-static void check_selector_from_subnet(struct logger *logger)
+static void check_selector_from_subnet_protoport(struct logger *logger)
 {
 	static const struct from_test tests[] = {
 		/* zero port implied */
@@ -186,7 +186,7 @@ static void check_selector_from_subnet(struct logger *logger)
 		{ { 6, "1001:1002:1003:1004:1005:1006:1007:1008/128", "16/65534", }, "1001:1002:1003:1004:1005:1006:1007:1008-1001:1002:1003:1004:1005:1006:1007:1008", 16, 65534, { 255, 254, }, },
 	};
 	check_selector_from(tests, elemsof(tests), "subnet",
-			    do_selector_from_subnet, logger);
+			    do_selector_from_subnet_protoport, logger);
 }
 
 static err_t do_range_to_selector(const struct selector *s,
@@ -454,13 +454,13 @@ static void check_in_selector(struct logger *logger)
 		OUT(stdout, "");
 
 		ip_selector outer_selector;
-		err = do_selector_from_subnet(&t->outer, &outer_selector, logger);
+		err = do_selector_from_subnet_protoport(&t->outer, &outer_selector, logger);
 		if (err != NULL) {
 			FAIL(OUT, "outer-selector failed: %s", err);
 		}
 
 		ip_selector inner_selector;
-		err = do_selector_from_subnet(&t->inner, &inner_selector, logger);
+		err = do_selector_from_subnet_protoport(&t->inner, &inner_selector, logger);
 		if (err != NULL) {
 			FAIL(OUT, "inner-selector failed: %s", err);
 		}
@@ -493,7 +493,7 @@ static void check_in_selector(struct logger *logger)
 void ip_selector_check(struct logger *logger)
 {
 	check_selector_from_address(logger);
-	check_selector_from_subnet(logger);
+	check_selector_from_subnet_protoport(logger);
 	check_range_to_selector(logger);
 	check_selector_contains(logger);
 	check_in_selector(logger);
