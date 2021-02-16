@@ -1819,8 +1819,8 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol,
 
 	if (delete_bare_shunt(&src, &dst,
 			      transport_proto, SPI_HOLD /* why spi to use? */,
-			      "delete expired bare shunt",
-			      logger)) {
+			       /*skip_xfrm_raw_eroute_delete?*/false,
+			      "delete expired bare shunt", logger)) {
 		dbg("netlink_shunt_expire() called delete_bare_shunt() with success");
 	} else {
 		llog(RC_LOG, logger,

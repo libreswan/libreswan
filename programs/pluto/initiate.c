@@ -890,7 +890,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	    (b->transport_proto != 0 ||
 	     our_port != 0 ||
 	     peer_port != 0)) {
-		const char *const delmsg = "delete bare kernel shunt - was replaced with  negotiationshunt";
 		const char *const addwidemsg = "oe-negotiating";
 		ip_subnet this_client, that_client;
 		int shunt_proto = b->transport_proto;
@@ -958,10 +957,12 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			add_bare_shunt(&this_client, &that_client, shunt_proto, SPI_HOLD, addwidemsg);
 		}
 		/* now delete the (obsoleted) narrow bare kernel shunt - we have a (possibly broadened) negotiationshunt replacement installed */
+		const char *const delmsg = "delete bare kernel shunt - was replaced with  negotiationshunt";
 		if (!delete_bare_shunt(&b->our_client, &b->peer_client,
 				       b->transport_proto,
-				       SPI_HOLD /* kernel dictated */, delmsg,
-				       b->logger)) {
+				       SPI_HOLD /* kernel dictated */,
+				       /*skip_xfrm_raw_eroute_delete?*/false,
+				       delmsg, b->logger)) {
 			llog(RC_LOG, b->logger, "Failed to: %s", delmsg);
 		} else {
 			dbg("success taking down narrow bare shunt");

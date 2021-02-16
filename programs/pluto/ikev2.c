@@ -3207,8 +3207,8 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 							       &c->spd.that.host_addr,
 							       c->spd.this.protocol,
 							       SPI_PASS /* else its not bare */,
-							       /* this text is used to signal the low level :/ */
-							       "IGNORE_ON_XFRM: installed IPsec SA replaced old bare shunt",
+							       /*skip_xfrm_raw_eroute_delete?*/true,
+							       "installed IPsec SA replaced old bare shunt",
 							       st->st_logger)) {
 						log_state(RC_LOG_SERIOUS, &ike->sa,
 							  "Failed to delete old bare shunt");

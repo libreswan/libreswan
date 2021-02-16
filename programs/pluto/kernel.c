@@ -1347,6 +1347,7 @@ static void clear_narrow_holds(const ip_selector *our_client,
 		    selector_in_selector(&p->peer_client, peer_client)) {
 			if (!delete_bare_shunt(&p->our_client.addr, &p->peer_client.addr,
 					       transport_proto, SPI_HOLD,
+					       /*skip_xfrm_raw_eroute_delete?*/false,
 					       "removing clashing narrow hold",
 					       logger)) {
 				/* ??? we could not delete a bare shunt */
@@ -1503,20 +1504,19 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 
 bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
 		       int transport_proto, ipsec_spi_t cur_shunt_spi,
-		       const char *why,
-		       struct logger *logger)
+		       bool skip_xfrm_raw_eroute_delete,
+		       const char *why, struct logger *logger)
 {
-	if (kernel_ops->type == USE_XFRM && strstr(why, "IGNORE_ON_XFRM:") != NULL) {
-		dbg("fiddle_bare_shunt: skipping raw_eroute because IGNORE_ON_XFRM");
-		passert(addrtypeof(src) == addrtypeof(dst));
-		ip_subnet this_client = subnet_from_address(src);
-		ip_subnet that_client = subnet_from_address(dst);
-		struct bare_shunt **bs_pp = bare_shunt_ptr(&this_client, &that_client,
+	if (kernel_ops->type == USE_XFRM && skip_xfrm_raw_eroute_delete) {
+		const ip_protocol *protocol = protocol_by_ipproto(transport_proto);
+		ip_selector local_client = selector_from_address_protocol(src, protocol);
+		ip_selector remote_client = selector_from_address_protocol(dst, protocol);
+		selectors_buf sb;
+		llog(RC_LOG, logger, "deleting bare shunt %s from pluto shunt table",
+		     str_selectors(&local_client, &remote_client, &sb));
+		struct bare_shunt **bs_pp = bare_shunt_ptr(&local_client, &remote_client,
 							   transport_proto, why);
 		free_bare_shunt(bs_pp);
-		llog(RC_LOG, logger,
-		     "raw_eroute() to op='delete' with transport_proto='%d' kernel shunt skipped - deleting from pluto shunt table",
-		     transport_proto);
 		return true;
 	}
 
@@ -1682,8 +1682,10 @@ bool assign_holdpass(const struct connection *c,
 		if (!delete_bare_shunt(src, dst,
 				       transport_proto,
 				       (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD,
-				       (c->policy & POLICY_NEGO_PASS) ? "delete narrow %pass" :
-				       "delete narrow %hold", c->logger)) {
+				       /*skip_xfrm_raw_eroute_delete?*/false,
+				       ((c->policy & POLICY_NEGO_PASS) ? "delete narrow %pass" :
+					"delete narrow %hold"),
+				       c->logger)) {
 			dbg("assign_holdpass() delete_bare_shunt() succeeded");
 		} else {
 			llog(RC_LOG, c->logger,
@@ -3509,9 +3511,8 @@ static void expire_bare_shunts(struct logger *logger, bool all)
 			if (!delete_bare_shunt(&bsp->our_client.addr, &bsp->peer_client.addr,
 					       bsp->transport_proto,
 					       ntohl(bsp->said.spi),
-					       (bsp->from_cn == NULL ? "expire_bare_shunt" :
-						"IGNORE_ON_XFRM: expire_bare_shunt"),
-					       logger)) {
+					       /*skip_xfrm_raw_eroute_delete?*/(bsp->from_cn != NULL),
+					       "expire_bare_shunt", logger)) {
 				llog(RC_LOG_SERIOUS, logger,
 					    "failed to delete bare shunt");
 			}

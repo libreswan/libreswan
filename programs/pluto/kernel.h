@@ -364,8 +364,8 @@ extern void migration_down(struct connection *c,  struct state *st);
 
 extern bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
 			      int transport_proto, ipsec_spi_t shunt_spi,
-			      const char *why,
-			      struct logger *logger);
+			      bool skip_xfrm_raw_eroute_delete,
+			      const char *why, struct logger *logger);
 
 extern bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			       policy_prio_t policy_prio,
