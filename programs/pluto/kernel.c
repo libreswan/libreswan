@@ -598,10 +598,10 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 				c->xfrmi->if_id);
 		} else {
 			address_buf bpeer;
-			subnet_buf peerclient_str;
+			selector_buf peerclient_str;
 			dbg("not adding PLUTO_XFRMI_FWMARK. PLUTO_PEER=%s is not inside PLUTO_PEER_CLIENT=%s",
 			    str_address(&sr->that.host_addr, &bpeer),
-			    str_subnet(&sr->that.client, &peerclient_str));
+			    str_selector(&sr->that.client, &peerclient_str));
 			jam(buf, "PLUTO_XFRMI_FWMARK='' ");
 		}
 	}
@@ -1301,12 +1301,11 @@ bool raw_eroute(const ip_address *this_host,
 		bad_case(op);
 	}
 
-	selector_buf mybuf, peerbuf;
-	dbg("raw_eroute: %s eroute %s -%d-> %s => %s using reqid %d proto=%d %s sec_label",
+	selectors_buf sb;
+	dbg("raw_eroute: %s eroute %s (%d) => %s using reqid %d proto=%d %s sec_label",
 	    opname,
-	    str_selector(this_client, &mybuf),
+	    str_selectors(this_client, that_client, &sb),
 	    transport_proto,
-	    str_selector(that_client, &peerbuf),
 	    text_said,
 	    proto_info->reqid,
 	    proto_info->proto,
@@ -1400,6 +1399,11 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 	ip_subnet this_client = subnet_from_address(src);
 	ip_subnet that_client = subnet_from_address(dst);
 
+	selectors_buf ssb;
+	dbg("fiddle_bare_shunt: %s (%d); %s for %s",
+	    str_selectors(&this_client, &that_client, &ssb), transport_proto,
+	    repl ? "replacing" : "removing", why);
+
 	/*
 	 * ??? this comment might be obsolete.
 	 *
@@ -1439,10 +1443,10 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 		       op, why, NULL, logger)) {
 		struct bare_shunt **bs_pp = bare_shunt_ptr(&this_client, &that_client,
 							   transport_proto, why);
-		selector_buf sb, db;
-		dbg("fiddle_bare_shunt: bare shunt lookup with op='%s' for %s -%d-> %s after installing kernel eroute %s",
+		selectors_buf sb;
+		dbg("fiddle_bare_shunt: bare shunt lookup with op='%s' for %s (%d) after installing kernel eroute %s",
 		    (repl ? "replace" : "delete"),
-		    str_selector(&this_client, &sb), transport_proto, str_selector(&that_client, &db),
+		    str_selectors(&this_client, &that_client, &sb), transport_proto,
 		    (bs_pp == NULL ? "failed" : "succeeded"));
 
 		/*
@@ -2716,7 +2720,9 @@ bool route_and_eroute(struct connection *c,
 		      struct state *st/*can be NULL*/,
 		      struct logger *logger/*st or c */)
 {
-	dbg("route_and_eroute() for proto %d, and source port %d dest port %d",
+	selectors_buf sb;
+	dbg("route_and_eroute() for %s; proto %d, and source port %d dest port %d",
+	    str_selectors(&sr->this.client, &sr->that.client, &sb),
 	    sr->this.protocol, sr->this.port, sr->that.port);
 #if 0
 	/* XXX: apparently not so */
