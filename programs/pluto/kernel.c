@@ -173,7 +173,7 @@ void add_bare_shunt(const ip_subnet *our_client, const ip_subnet *peer_client,
 		    const char *why)
 {
 	/* report any duplication; this should NOT happen */
-	struct bare_shunt **bspp = bare_shunt_ptr(our_client, peer_client, transport_proto);
+	struct bare_shunt **bspp = bare_shunt_ptr(our_client, peer_client, transport_proto, why);
 
 	if (bspp != NULL) {
 		/* maybe: passert(bsp == NULL); */
@@ -239,7 +239,7 @@ void record_and_initiate_opportunistic(const ip_endpoint *local_client,
 	 * kernel and we want to keep track of it inside pluto.
 	 */
 	/*const*/ struct bare_shunt **bspp = bare_shunt_ptr(our_client, peer_client,
-							    transport_proto);
+							    transport_proto, why);
 	if (bspp != NULL &&
 	    (*bspp)->said.proto == &ip_protocol_internal &&
 	    (*bspp)->said.spi == htonl(SPI_HOLD)) {
@@ -1176,9 +1176,19 @@ void set_text_said(char *text_said, const ip_address *dst,
  */
 struct bare_shunt **bare_shunt_ptr(const ip_selector *our_client,
 				   const ip_selector *peer_client,
-				   int transport_proto)
+				   int transport_proto,
+				   const char *why)
 
 {
+	selectors_buf sb;
+	dbg("%s looking for %s (%d)",
+	    why, str_selectors(our_client, peer_client, &sb),
+	    transport_proto);
+#if 0
+	/* XXX: transport_proto is redundant */
+	pexpect(selector_protocol(our_client)->ipproto == (unsigned)transport_proto);
+	pexpect(selector_protocol(peer_client)->ipproto == (unsigned)transport_proto);
+#endif
 	for (struct bare_shunt **pp = &bare_shunts; *pp != NULL; pp = &(*pp)->next) {
 		struct bare_shunt *p = *pp;
 		dbg_bare_shunt("comparing", p);
@@ -1406,9 +1416,8 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 
 	if (kernel_ops->type == USE_XFRM && strstr(why, "IGNORE_ON_XFRM:") != NULL) {
 		dbg("fiddle_bare_shunt: skipping raw_eroute because IGNORE_ON_XFRM");
-		struct bare_shunt **bs_pp = bare_shunt_ptr(&this_client,
-							   &that_client,
-							   transport_proto);
+		struct bare_shunt **bs_pp = bare_shunt_ptr(&this_client, &that_client,
+							   transport_proto, why);
 		free_bare_shunt(bs_pp);
 		llog(RC_LOG, logger,
 		     "raw_eroute() to op='%s' with transport_proto='%d' kernel shunt skipped - deleting from pluto shunt table",
@@ -1428,9 +1437,8 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 		       NULL, /* sa_marks */
 		       0 /* xfrm interface id */,
 		       op, why, NULL, logger)) {
-		struct bare_shunt **bs_pp = bare_shunt_ptr(&this_client,
-							   &that_client,
-							   transport_proto);
+		struct bare_shunt **bs_pp = bare_shunt_ptr(&this_client, &that_client,
+							   transport_proto, why);
 		selector_buf sb, db;
 		dbg("fiddle_bare_shunt: bare shunt lookup with op='%s' for %s -%d-> %s after installing kernel eroute %s",
 		    (repl ? "replace" : "delete"),
@@ -1478,10 +1486,8 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 		}
 		return true;
 	} else {
-		struct bare_shunt **bs_pp = bare_shunt_ptr(
-			&this_client,
-			&that_client,
-			transport_proto);
+		struct bare_shunt **bs_pp = bare_shunt_ptr(&this_client, &that_client,
+							   transport_proto, why);
 
 		free_bare_shunt(bs_pp);
 		llog(RC_LOG, logger,
@@ -1614,7 +1620,8 @@ bool assign_holdpass(const struct connection *c,
 		 * Although %hold or %pass is appropriately broad, it will
 		 * no longer be bare so we must ditch it from the bare table
 		 */
-		struct bare_shunt **old = bare_shunt_ptr(&sr->this.client, &sr->that.client, sr->this.protocol);
+		struct bare_shunt **old = bare_shunt_ptr(&sr->this.client, &sr->that.client,
+							 sr->this.protocol, "assign_holdpass");
 
 		if (old == NULL) {
 			/* ??? should this happen?  It does. */
@@ -2711,12 +2718,25 @@ bool route_and_eroute(struct connection *c,
 {
 	dbg("route_and_eroute() for proto %d, and source port %d dest port %d",
 	    sr->this.protocol, sr->this.port, sr->that.port);
+#if 0
+	/* XXX: apparently not so */
+	pexpect(sr->this.client.addr.ipproto == sr->this.protocol);
+	pexpect(sr->that.client.addr.ipproto == sr->that.protocol);
+	pexpect(sr->this.client.addr.hport == sr->this.port);
+	pexpect(sr->that.client.addr.hport == sr->that.port);
+#endif
+
+	/* XXX: ... so make it so */
 	update_selector_hport(&sr->this.client, sr->this.port);
 	update_selector_hport(&sr->that.client, sr->that.port);
+#if 0
+	sr->this.client.addr.ipproto = sr->this.protocol;
+	sr->that.client.addr.ipproto = sr->that.protocol;
+#endif
 
 	struct spd_route *esr, *rosr;
-	struct connection *ero,
-		*ro = route_owner(c, sr, &rosr, &ero, &esr);	/* who, if anyone, owns our eroute? */
+	struct connection *ero;
+	struct connection *ro = route_owner(c, sr, &rosr, &ero, &esr);	/* who, if anyone, owns our eroute? */
 
 	dbg("route_and_eroute with c: %s (next: %s) ero:%s esr:{%p} ro:%s rosr:{%p} and state: #%lu",
 	    c->name,
@@ -2732,9 +2752,11 @@ bool route_and_eroute(struct connection *c,
 	/* we should look for dest port as well? */
 	/* ports are now switched to the ones in this.client / that.client ??????? */
 	/* but port set is sr->this.port and sr.that.port ! */
-	struct bare_shunt **bspp = (ero == NULL) ?
-		bare_shunt_ptr(&sr->this.client, &sr->that.client, sr->this.protocol) :
-		NULL;
+	struct bare_shunt **bspp = ((ero == NULL) ? bare_shunt_ptr(&sr->this.client,
+								   &sr->that.client,
+								   sr->this.protocol,
+								   "route and eroute") :
+				    NULL);
 
 	/* install the eroute */
 
@@ -3402,7 +3424,10 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 		/* are we replacing a bare shunt ? */
 		update_selector_hport(&sr->this.client, sr->this.port);
 		update_selector_hport(&sr->that.client, sr->that.port);
-		struct bare_shunt **old = bare_shunt_ptr(&sr->this.client, &sr->that.client, sr->this.protocol);
+		struct bare_shunt **old = bare_shunt_ptr(&sr->this.client,
+							 &sr->that.client,
+							 sr->this.protocol,
+							 "orphan holdpass");
 
 		if (old != NULL) {
 			free_bare_shunt(old);

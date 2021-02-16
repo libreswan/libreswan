@@ -3196,7 +3196,10 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 			 */
 			if (LIN(POLICY_OPPORTUNISTIC, c->policy)) {
 				struct spd_route *sr = &c->spd;
-				struct bare_shunt **bs = bare_shunt_ptr(&sr->this.client, &sr->that.client, sr->this.protocol);
+				struct bare_shunt **bs = bare_shunt_ptr(&sr->this.client,
+									&sr->that.client,
+									sr->this.protocol,
+									"old bare shunt to delete");
 
 				if (bs != NULL) {
 					dbg("deleting old bare shunt");
