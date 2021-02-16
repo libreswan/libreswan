@@ -1234,7 +1234,9 @@ bool v2_process_ts_request(struct child_sa *child,
 				continue;
 			}
 			/* require responder address match; why? */
-			if (!sameaddr(&c->spd.this.client.addr, &t->spd.this.client.addr)) {
+			ip_address c_this_client_address = selector_prefix(&c->spd.this.client);
+			ip_address t_this_client_address = selector_prefix(&t->spd.this.client);
+			if (!address_eq(&c_this_client_address, &t_this_client_address)) {
 				dbg("    skipping; responder addresses don't match");
 				continue;
 			}
