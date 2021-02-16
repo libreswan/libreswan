@@ -2444,7 +2444,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 					       const ip_endpoint *local_client,
 					       const ip_endpoint *remote_client,
 					       chunk_t sec_label,
-					       struct logger *logger)
+					       struct logger *logger UNUSED)
 {
 	passert(endpoint_is_specified(local_client));
 	passert(endpoint_is_specified(remote_client));
@@ -2479,13 +2479,15 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 			}
 			if ((routed(sr->routing) || c->instance_initiation_ok) &&
 			    endpoint_in_selector(local_client, &sr->this.client) &&
-			    endpoint_in_selector(remote_client, &sr->that.client) &&
-			    ((sec_label.ptr == NULL &&
+			    endpoint_in_selector(remote_client, &sr->that.client)
+#ifdef HAVE_LABELED_IPSEC
+			    && ((sec_label.ptr == NULL &&
 			      sr->this.sec_label.ptr == NULL) ||
 			     /* don't call with NULL, it confuses it */
 			     within_range((const char *)sec_label.ptr,
-					  (const char *)sr->this.sec_label.ptr, logger))) {
-
+					  (const char *)sr->this.sec_label.ptr, logger))
+#endif
+			     ) {
 				unsigned ipproto = endpoint_protocol(local_client)->ipproto;
 				policy_prio_t prio =
 					(8 * (c->policy_prio + (c->kind == CK_INSTANCE)) +

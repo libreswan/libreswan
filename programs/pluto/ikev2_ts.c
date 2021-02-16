@@ -827,6 +827,7 @@ static bool score_gt(const struct best_score *score, const struct best_score *be
 		 score->protocol > best->protocol));
 }
 
+#ifdef HAVE_LABELED_IPSEC
 static bool score_ends_seclabel(const struct ends *ends,
 				const struct connection *d,
 				const struct traffic_selectors *tsi,
@@ -890,6 +891,16 @@ static bool score_ends_seclabel(const struct ends *ends,
 
 	return require_label == recv_label_i && match_i && match_r;
 }
+#else
+static bool score_ends_seclabel(const struct ends *ends UNUSED,
+				const struct connection *d UNUSED,
+				const struct traffic_selectors *tsi UNUSED,
+				const struct traffic_selectors *tsr UNUSED,
+				struct logger *logger UNUSED)
+{
+	return true;
+}
+#endif
 
 static struct best_score score_ends_iprange(enum fit fit,
 				    const struct connection *d,
@@ -997,7 +1008,6 @@ bool v2_process_ts_request(struct child_sa *child,
 			.r = &sra->this,
 		};
 
-
 		if (!score_ends_seclabel(&ends, c, &tsi, &tsr, child->sa.st_logger)) {
 			continue;
 		}
@@ -1102,6 +1112,7 @@ bool v2_process_ts_request(struct child_sa *child,
 				if (!score_ends_seclabel(&ends, d, &tsi, &tsr,
 					    child->sa.st_logger))
 					continue;
+
 				struct best_score score = score_ends_iprange(responder_fit, d/*note D*/,
 								     &ends, &tsi, &tsr);
 				if (!score.ok) {
