@@ -1232,6 +1232,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 	if (sa->add_selector) {
 		ip_selector src = *sa->src.client;
 		ip_selector dst = *sa->dst.client;
+		const ip_protocol *protocol = protocol_by_ipproto(sa->transport_proto);
 
 		/*
 		 * With XFRM/NETKEY and transport mode with nat-traversal we
@@ -1249,13 +1250,13 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		if (sa->inbound) {
 			/* inbound; fix this end */
 			ip_port port = selector_port(sa->src.client);
-			ip_protoport protoport = protoport2(sa->transport_proto, port);
-			src = selector_from_address_protoport(sa->src.address, &protoport);
+			src = selector_from_address_protocol_port(sa->src.address,
+								  protocol, port);
 		} else {
 			/* outbound; fix other end */
 			ip_port port = selector_port(sa->dst.client);
-			ip_protoport protoport = protoport2(sa->transport_proto, port);
-			dst = selector_from_address_protoport(sa->dst.address, &protoport);
+			dst = selector_from_address_protocol_port(sa->dst.address,
+								  protocol, port);
 		}
 
 		/* .[sd]addr, .prefixlen_[sd], .[sd]port */

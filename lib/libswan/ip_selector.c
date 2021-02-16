@@ -72,41 +72,45 @@ const char *str_selectors(const ip_selector *src, const ip_selector *dst, select
 	return out->buf;
 }
 
-ip_selector selector_from_address_protoport(const ip_address *address,
-					    const ip_protoport *protoport)
+ip_selector selector_from_address(const ip_address *address)
 {
-	const struct ip_info *afi = address_type(address);
-	if (!pexpect(afi != NULL)) {
+	return selector_from_address_protocol_port(address, &ip_protocol_unset, unset_port);
+}
+
+ip_selector selector_from_address_protocol(const ip_address *address,
+					   const ip_protocol *protocol)
+{
+	return selector_from_address_protocol_port(address, protocol, unset_port);
+}
+
+ip_selector selector_from_address_protocol_port(const ip_address *address,
+						const ip_protocol *protocol,
+						ip_port port)
+{
+	if (address_is_unset(address)) {
 		return unset_selector;
 	}
 	ip_subnet subnet = subnet_from_address(address);
-	return selector_from_subnet_protoport(&subnet, protoport);
-}
-
-ip_selector selector_from_address(const ip_address *address)
-{
-	return selector_from_address_protoport(address, &unset_protoport);
+	return selector_from_subnet_protocol_port(&subnet, protocol, port);
 }
 
 ip_selector selector_from_endpoint(const ip_endpoint *endpoint)
 {
-	const struct ip_info *afi = endpoint_type(endpoint);
-	if (!pexpect(afi != NULL)) {
+	if (endpoint_is_unset(endpoint)) {
 		return unset_selector;
 	}
-	const ip_protocol *protocol = endpoint_protocol(endpoint);
-	ip_port port = endpoint_port(endpoint);
-	ip_protoport protoport = protoport2(protocol->ipproto, port);
 	ip_address address = endpoint_address(endpoint);
 	ip_subnet subnet = subnet_from_address(&address);
-	return selector_from_subnet_protoport(&subnet, &protoport);
+	const ip_protocol *protocol = endpoint_protocol(endpoint);
+	ip_port port = endpoint_port(endpoint);
+	return selector_from_subnet_protocol_port(&subnet, protocol, port);
 }
 
-ip_selector selector_from_subnet_protoport(const ip_subnet *subnet,
-					   const ip_protoport *protoport)
+ip_selector selector_from_subnet_protocol_port(const ip_subnet *subnet,
+					       const ip_protocol *protocol,
+					       ip_port port)
 {
-	const struct ip_info *afi = subnet_type(subnet);
-	if (!pexpect(afi != NULL)) {
+	if (subnet_is_unset(subnet)) {
 		return unset_selector;
 	}
 	ip_selector selector = {
@@ -115,12 +119,27 @@ ip_selector selector_from_subnet_protoport(const ip_subnet *subnet,
 		.addr = {
 			.version = subnet->addr.version,
 			.bytes = subnet->addr.bytes,
-			.ipproto = protoport->ipproto,
-			.hport = protoport->hport,
+			.ipproto = protocol->ipproto,
+			.hport = port.hport,
 		},
 	};
 	pselector(&selector);
 	return selector;
+}
+
+ip_selector selector_from_address_protoport(const ip_address *address,
+					    const ip_protoport *protoport)
+{
+	ip_subnet subnet = subnet_from_address(address);
+	return selector_from_subnet_protoport(&subnet, protoport);
+}
+
+ip_selector selector_from_subnet_protoport(const ip_subnet *subnet,
+					   const ip_protoport *protoport)
+{
+	const ip_protocol *protocol = protocol_by_ipproto(protoport->ipproto);
+	const ip_port port = ip_hport(protoport->hport);
+	return selector_from_subnet_protocol_port(subnet, protocol, port);
 }
 
 err_t range_to_selector(const ip_range *range,
@@ -140,12 +159,6 @@ err_t range_to_selector(const ip_range *range,
 	*selector = selector_from_subnet_protoport(&subnet, protoport);
 	return NULL;
 }
-
-#if 0
-ip_selector selector_from_range()
-{
-}
-#endif
 
 const struct ip_info *selector_type(const ip_selector *selector)
 {
@@ -255,9 +268,10 @@ bool selector_in_selector(const ip_selector *l, const ip_selector *r)
 
 bool address_in_selector(const ip_address *address, const ip_selector *selector)
 {
-	ip_protoport protoport = selector_protoport(selector);
-	/* HACK: use same ipprot/port as selector so they always match */
-	ip_selector inner = selector_from_address_protoport(address, &protoport);
+	/* HACK: use same protocol/port as selector so they always match */
+	const ip_protocol *protocol = selector_protocol(selector);
+	const ip_port port = selector_port(selector);
+	ip_selector inner = selector_from_address_protocol_port(address, protocol, port);
 	return selector_in_selector(&inner, selector);
 }
 
