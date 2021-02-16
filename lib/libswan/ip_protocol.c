@@ -1133,17 +1133,19 @@ enum_names ip_protocol_id_names = {
 size_t jam_protocols(struct jambuf *buf, const ip_protocol *src, char sep, const ip_protocol *dst)
 {
 	size_t s = 0;
+	/* caller adds ' ' */
 	s += jam_char(buf, sep);
-	s += jam_string(buf, (src == NULL ? "?" :
-			      src->ipproto == 0 ? "*" :
+	s += jam_string(buf, (src == NULL ? "<null>" :
+			      src->ipproto == 0 ? "<all>" :
 			      src->name));
 	if (src != dst) {
 		s += jam_char(buf, sep);
-		s += jam_string(buf, (dst == NULL ? "?" :
-				      dst->ipproto == 0 ? "*" :
+		s += jam_string(buf, (dst == NULL ? "<null>" :
+				      dst->ipproto == 0 ? "<all>" :
 				      dst->name));
 	}
 	s += jam_char(buf, sep);
 	s += jam_char(buf, '>');
+	/* caller adds ' ' */
 	return s;
 }

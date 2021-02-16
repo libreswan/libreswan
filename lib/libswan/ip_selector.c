@@ -58,7 +58,9 @@ size_t jam_selectors(struct jambuf *buf, const ip_selector *src, const ip_select
 	const ip_protocol *dstp = selector_protocol(dst);
 	size_t s = 0;
 	s += jam_selector(buf, src);
-	s += jam_protocols(buf, srcp, '=', dstp);
+	s += jam_char(buf, ' ');
+	s += jam_protocols(buf, srcp, '-', dstp);
+	s += jam_char(buf, ' ');
 	s += jam_selector(buf, dst);
 	return s;
 }
