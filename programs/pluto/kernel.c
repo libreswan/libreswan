@@ -1413,22 +1413,9 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 	 * before.
 	 *
 	 * This is at odds with !repl, which should delete things.
-	 *
 	 */
 
 	enum pluto_sadb_operations op = repl ? ERO_REPLACE : ERO_DELETE;
-
-	if (kernel_ops->type == USE_XFRM && strstr(why, "IGNORE_ON_XFRM:") != NULL) {
-		dbg("fiddle_bare_shunt: skipping raw_eroute because IGNORE_ON_XFRM");
-		struct bare_shunt **bs_pp = bare_shunt_ptr(&this_client, &that_client,
-							   transport_proto, why);
-		free_bare_shunt(bs_pp);
-		llog(RC_LOG, logger,
-		     "raw_eroute() to op='%s' with transport_proto='%d' kernel shunt skipped - deleting from pluto shunt table",
-		     repl ? "replace" : "delete",
-		     transport_proto);
-		return true;
-	}
 
 	if (raw_eroute(&null_host, &this_client,
 		       &null_host, &that_client,
@@ -1519,6 +1506,20 @@ bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
 		       const char *why,
 		       struct logger *logger)
 {
+	if (kernel_ops->type == USE_XFRM && strstr(why, "IGNORE_ON_XFRM:") != NULL) {
+		dbg("fiddle_bare_shunt: skipping raw_eroute because IGNORE_ON_XFRM");
+		passert(addrtypeof(src) == addrtypeof(dst));
+		ip_subnet this_client = subnet_from_address(src);
+		ip_subnet that_client = subnet_from_address(dst);
+		struct bare_shunt **bs_pp = bare_shunt_ptr(&this_client, &that_client,
+							   transport_proto, why);
+		free_bare_shunt(bs_pp);
+		llog(RC_LOG, logger,
+		     "raw_eroute() to op='delete' with transport_proto='%d' kernel shunt skipped - deleting from pluto shunt table",
+		     transport_proto);
+		return true;
+	}
+
 	return fiddle_bare_shunt(src, dst, BOTTOM_PRIO, cur_shunt_spi, SPI_PASS /* unused */,
 				 false, transport_proto, why, logger);
 }
