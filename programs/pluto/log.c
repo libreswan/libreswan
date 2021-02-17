@@ -136,7 +136,7 @@ static void syslog_raw(int severity, const char *prefix, char *message)
 		syslog(severity, "%s%s", prefix, message);
 }
 
-void jambuf_to_whack(struct jambuf *buf, const struct fd *whackfd, enum rc_type rc)
+static void jambuf_to_whack(struct jambuf *buf, const struct fd *whackfd, enum rc_type rc)
 {
 	/*
 	 * XXX: use iovec as it's easier than trying to deal with
@@ -230,7 +230,7 @@ static void log_raw(int severity, const char *prefix, struct jambuf *buf)
 void jambuf_to_error_stream(struct jambuf *buf)
 {
 	log_raw(LOG_ERR, "", buf);
-	if (in_main_thread()) {
+	if (in_main_thread() && fd_p(whack_log_fd)) {
 		/* don't whack-log from helper threads */
 		jambuf_to_whack(buf, whack_log_fd, RC_LOG_SERIOUS);
 	}
@@ -244,7 +244,7 @@ void jambuf_to_debug_stream(struct jambuf *buf)
 void jambuf_to_default_streams(struct jambuf *buf, enum rc_type rc)
 {
 	log_raw(LOG_WARNING, "", buf);
-	if (in_main_thread()) {
+	if (in_main_thread() && fd_p(whack_log_fd)) {
 		/* don't whack-log from helper threads */
 		jambuf_to_whack(buf, whack_log_fd, rc);
 	}
@@ -267,42 +267,45 @@ void close_log(void)
  * - text is a human-readable annotation
  */
 
+static void whack_va_list(enum rc_type rc, const struct fd *whackfd,
+			  const char *message, va_list args) PRINTF_LIKE_VA(3);
+static void whack_va_list(enum rc_type rc, const struct fd *whackfd,
+			  const char *message, va_list args)
+{
+	/* no-prefix: RC added by jambuf_to_whack() below */
+	JAMBUF(buf) {
+		/* always get the message out */
+		if (!in_main_thread()) {
+			jam_string(buf, "[EXPECTATION FAILED: on main thread]: ");
+		}
+		if (!fd_p(whackfd)) {
+			jam_string(buf, "[EXPECTATION FAILED: whackfd valid]: ");
+		}
+		{
+			jam_va_list(buf, message, args);
+		}
+		if (!in_main_thread() || !fd_p(whackfd)) {
+			log_raw(LOG_ERR, "", buf);
+		} else {
+			jambuf_to_whack(buf, whackfd, rc);
+		}
+	}
+}
+
 void whack_log(enum rc_type rc, const struct fd *whackfd, const char *message, ...)
 {
-	if (!in_main_thread()) {
-		/* still get the message out */
-		JAMBUF(buf) {
-			jam(buf, "[EXPECTATION FAILED: whack_log() on main thread]: ");
-			va_list args;
-			va_start(args, message);
-			jam_va_list(buf, message, args);
-			va_end(args);
-			log_raw(LOG_ERR, "", buf);
-		}
-		return;
-	}
-
-	JAMBUF(buf) {
-		/* no-prefix: RC added by jambuf_to_whack() */
-		va_list args;
-		va_start(args, message);
-		jam_va_list(buf, message, args);
-		va_end(args);
-		jambuf_to_whack(buf, whackfd, rc);
-	}
+	va_list args;
+	va_start(args, message);
+	whack_va_list(rc, whackfd, message, args);
+	va_end(args);
 }
 
 void whack_comment(const struct fd *whackfd, const char *message, ...)
 {
-	pexpect(fd_p(whackfd));
-	pexpect(in_main_thread());
-	JAMBUF(buf) {
-		va_list args;
-		va_start(args, message);
-		jam_va_list(buf, message, args);
-		va_end(args);
-		jambuf_to_whack(buf, whackfd, RC_COMMENT);
-	}
+	va_list args;
+	va_start(args, message);
+	whack_va_list(RC_COMMENT, whackfd, message, args);
+	va_end(args);
 }
 
 void set_debugging(lset_t deb)

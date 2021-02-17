@@ -176,7 +176,6 @@ void rate_log(const struct msg_digest *md,
 
 void whack_log(enum rc_type rc, const struct fd *whackfd, const char *message, ...) PRINTF_LIKE(3);
 void whack_comment(const struct fd *whackfd, const char *message, ...) PRINTF_LIKE(2);
-void jambuf_to_whack(struct jambuf *buf, const struct fd *whackfd, enum rc_type rc);
 
 extern void show_status(struct show *s);
 extern void show_setup_plutomain(struct show *s);
