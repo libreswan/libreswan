@@ -52,6 +52,21 @@ const char *str_selector(const ip_selector *selector, selector_buf *out)
 	return out->buf;
 }
 
+size_t jam_selector_sensitive(struct jambuf *buf, const ip_selector *selector)
+{
+	if (!log_ip) {
+		return jam_string(buf, "<selector>");
+	}
+	return jam_selector(buf, selector);
+}
+
+const char *str_selector_sensitive(const ip_selector *selector, selector_buf *out)
+{
+	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
+	jam_selector_sensitive(&buf, selector);
+	return out->buf;
+}
+
 size_t jam_selectors(struct jambuf *buf, const ip_selector *src, const ip_selector *dst)
 {
 	const ip_protocol *srcp = selector_protocol(src);
@@ -69,6 +84,21 @@ const char *str_selectors(const ip_selector *src, const ip_selector *dst, select
 {
 	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
 	jam_selectors(&buf, src, dst);
+	return out->buf;
+}
+
+size_t jam_selectors_sensitive(struct jambuf *buf, const ip_selector *src, const ip_selector *dst)
+{
+	if(!log_ip) {
+		return jam_string(buf, "<selector> -> <selector>");
+	}
+	return jam_selectors(buf, src, dst);
+}
+
+const char *str_selectors_sensitive(const ip_selector *src, const ip_selector *dst, selectors_buf *out)
+{
+	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
+	jam_selectors_sensitive(&buf, src, dst);
 	return out->buf;
 }
 

@@ -146,11 +146,17 @@ typedef struct {
 const char *str_selector(const ip_selector *selector, selector_buf *out);
 size_t jam_selector(struct jambuf *buf, const ip_selector *selector);
 
+const char *str_selector_sensitive(const ip_selector *selector, selector_buf *out);
+size_t jam_selector_sensitive(struct jambuf *buf, const ip_selector *selector);
+
 typedef struct {
 	char buf[sizeof(selector_buf) + sizeof("=UNKNOWN=UNKNOWN=>") + sizeof(selector_buf)];
 } selectors_buf;
 
 const char *str_selectors(const ip_selector *src, const ip_selector *dst, selectors_buf *out);
 size_t jam_selectors(struct jambuf *buf, const ip_selector *src, const ip_selector *dst);
+
+const char *str_selectors_sensitive(const ip_selector *src, const ip_selector *dst, selectors_buf *out);
+size_t jam_selectors_sensitive(struct jambuf *buf, const ip_selector *src, const ip_selector *dst);
 
 #endif
