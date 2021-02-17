@@ -1449,13 +1449,15 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 		 */
 		/* passert(bs_pp != NULL); */
 		if (bs_pp == NULL) {
-			address_buf srcb, dstb;
+			/* XXX: hack */
+			ip_selector s = this_client, d = that_client;
+			s.addr.ipproto = transport_proto;
+			d.addr.ipproto = transport_proto;
+			selectors_buf sb;
 			llog(RC_LOG, logger,
-			     "can't find expected bare shunt to %s: %s->%s transport_proto='%d'",
+			     "can't find expected bare shunt to %s: %s",
 			     repl ? "replace" : "delete",
-			     str_address_sensitive(src, &srcb),
-			     str_address_sensitive(dst, &dstb),
-			     transport_proto);
+			     str_selectors(&s, &d, &sb));
 			return true;
 		}
 
