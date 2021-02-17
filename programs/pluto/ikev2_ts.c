@@ -81,6 +81,26 @@ void ikev2_print_ts(const struct traffic_selector *ts)
 	}
 }
 
+static void ts_to_end(const struct traffic_selector *ts, struct end *end,
+		      struct traffic_selector *st_ts)
+{
+	ikev2_print_ts(ts);
+	ip_subnet subnet;
+	/* XXX: check conversion worked */
+	rangetosubnet(&ts->net.start, &ts->net.end, &subnet);
+	const ip_protocol *protocol = protocol_by_ipproto(ts->ipprotoid);
+	/* XXX: check port range valid */
+	ip_port port = ip_hport(ts->startport);
+	end->client = selector_from_subnet_protocol_port(&subnet, protocol, port);
+	/* redundant */
+	end->port = ts->startport;
+	end->protocol = ts->ipprotoid;
+	end->has_client = !(selector_contains_one_address(&end->client) &&
+			    address_in_selector(&end->host_addr, &end->client));
+	/* also save in state */
+	*st_ts = *ts;
+}
+
 /* rewrite me with address_as_{chunk,shunk}()? */
 /* For now, note the struct traffic_selector can contain
  * two selectors - an IPvX range and a sec_label
@@ -1394,41 +1414,12 @@ bool v2_process_ts_response(struct child_sa *child,
 		return false;
 	}
 
-	dbg("found an acceptable TSi/TSr Traffic Selector");
-	struct state *st = &child->sa;
-	memcpy(&st->st_ts_this, best.tsi,
-	       sizeof(struct traffic_selector));
-	memcpy(&st->st_ts_that, best.tsr,
-	       sizeof(struct traffic_selector));
-	ikev2_print_ts(&st->st_ts_this);
-	ikev2_print_ts(&st->st_ts_that);
+	/* XXX: check conversions */
+	dbg("initiator saving acceptable TSi response in this");
+	ts_to_end(best.tsi, &c->spd.this, &child->sa.st_ts_this);
 
-	ip_subnet tmp_subnet_i;
-	ip_subnet tmp_subnet_r;
-	rangetosubnet(&st->st_ts_this.net.start,
-		      &st->st_ts_this.net.end, &tmp_subnet_i);
-	rangetosubnet(&st->st_ts_that.net.start,
-		      &st->st_ts_that.net.end, &tmp_subnet_r);
-
-	c->spd.this.client = tmp_subnet_i;
-	c->spd.this.port = st->st_ts_this.startport;
-	c->spd.this.protocol = st->st_ts_this.ipprotoid;
-	update_selector_hport(&c->spd.this.client, c->spd.this.port);
-
-	c->spd.this.has_client =
-		!(subnetishost(&c->spd.this.client) &&
-		  addrinsubnet(&c->spd.this.host_addr,
-			       &c->spd.this.client));
-
-	c->spd.that.client = tmp_subnet_r;
-	c->spd.that.port = st->st_ts_that.startport;
-	c->spd.that.protocol = st->st_ts_that.ipprotoid;
-	update_selector_hport(&c->spd.that.client, c->spd.that.port),
-
-	c->spd.that.has_client =
-		!(subnetishost(&c->spd.that.client) &&
-		  addrinsubnet(&c->spd.that.host_addr,
-			       &c->spd.that.client));
+	dbg("initiator saving acceptable TSr response in that");
+	ts_to_end(best.tsr, &c->spd.that, &child->sa.st_ts_that);
 
 	return true;
 }
