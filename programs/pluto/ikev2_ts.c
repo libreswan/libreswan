@@ -1331,6 +1331,13 @@ bool v2_process_ts_request(struct child_sa *child,
 			best_connection->spd.that.port = tsi_port;
 			best_connection->spd.this.protocol = tsr_protocol;
 			best_connection->spd.that.protocol = tsi_protocol;
+			/* hack */
+			dbg("XXX: updating best connection's ports/protocols");
+			update_selector_hport(&best_connection->spd.this.client, tsr_port);
+			update_selector_hport(&best_connection->spd.that.client, tsi_port);
+			update_selector_ipproto(&best_connection->spd.this.client, tsr_protocol);
+			update_selector_ipproto(&best_connection->spd.that.client, tsi_protocol);
+			/* switch */
 			best_spd_route = &best_connection->spd;
 
 			if (shared) {
