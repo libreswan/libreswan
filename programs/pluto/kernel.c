@@ -1376,34 +1376,23 @@ static void clear_narrow_holds(const ip_selector *our_client,
 	}
 }
 
-/*
- * Replace (or delete) a shunt that is in the bare_shunts table.
- * Issues the PF_KEY commands and updates the bare_shunts table.
- */
-static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
-			      policy_prio_t policy_prio,	/* of replacing shunt*/
-			      ipsec_spi_t cur_shunt_spi,	/* in host order! */
-			      ipsec_spi_t new_shunt_spi,	/* in host order! */
-			      bool repl,		/* if "true", replace; if "false", delete */
-			      int transport_proto,
-			      const char *why,
-			      struct logger *logger)
+bool replace_bare_shunt(const ip_address *src_address, const ip_address *dst_address,
+			policy_prio_t policy_prio,	/* of replacing shunt*/
+			ipsec_spi_t cur_shunt_spi,	/* in host order! */
+			ipsec_spi_t new_shunt_spi,	/* in host order! */
+			int transport_proto,
+			const char *why, struct logger *logger)
 {
-	address_buf sb, db;
-	dbg("fiddle_bare_shunt: %s -%d-> %s; %s for %s",
-	    str_address(src, &sb), transport_proto, str_address(dst, &db),
-	    repl ? "replacing" : "removing", why);
+	const struct ip_info *afi = address_type(src_address);
+	passert(afi == address_type(dst_address));
+	const ip_protocol *protocol = protocol_by_ipproto(transport_proto);
+	/* ports? assumed wide? */
+	ip_selector src = selector_from_address_protocol(src_address, protocol);
+	ip_selector dst = selector_from_address_protocol(dst_address, protocol);
 
-	const ip_address null_host = address_any(address_type(src));
-
-	passert(addrtypeof(src) == addrtypeof(dst));
-	ip_subnet this_client = subnet_from_address(src);
-	ip_subnet that_client = subnet_from_address(dst);
-
-	selectors_buf ssb;
-	dbg("fiddle_bare_shunt: %s (%d); %s for %s",
-	    str_selectors(&this_client, &that_client, &ssb), transport_proto,
-	    repl ? "replacing" : "removing", why);
+	selectors_buf sb;
+	dbg("replace bare shunt %s for %s",
+	    str_selectors(&src, &dst, &sb), why);
 
 	/*
 	 * ??? this comment might be obsolete.
@@ -1416,114 +1405,126 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 	 * This is at odds with !repl, which should delete things.
 	 */
 
-	enum pluto_sadb_operations op = repl ? ERO_REPLACE : ERO_DELETE;
-
-	if (raw_eroute(&null_host, &this_client,
-		       &null_host, &that_client,
-		       htonl(cur_shunt_spi),
-		       htonl(new_shunt_spi),
-		       &ip_protocol_internal, transport_proto,
-		       ET_INT, null_proto_info,
-		       deltatime(SHUNT_PATIENCE),
-		       0, /* we don't know connection for priority yet */
-		       NULL, /* sa_marks */
-		       0 /* xfrm interface id */,
-		       op, why, NULL, logger)) {
-		struct bare_shunt **bs_pp = bare_shunt_ptr(&this_client, &that_client,
-							   transport_proto, why);
-		selectors_buf sb;
-		dbg("fiddle_bare_shunt: bare shunt lookup with op='%s' for %s (%d) after installing kernel eroute %s",
-		    (repl ? "replace" : "delete"),
-		    str_selectors(&this_client, &that_client, &sb), transport_proto,
-		    (bs_pp == NULL ? "failed" : "succeeded"));
-
-		/*
-		 * We can have proto mismatching acquires with xfrm -
-		 * this is a bad workaround.
-		 *
-		 * ??? what is the nature of those mismatching acquires?
-		 *
-		 * XXX: for instance, when whack initiates an OE
-		 * connection.  There is no kernel-acquire shunt to
-		 * remove.
-		 */
-		/* passert(bs_pp != NULL); */
-		if (bs_pp == NULL) {
-			/* XXX: hack */
-			ip_selector s = this_client, d = that_client;
-			s.addr.ipproto = transport_proto;
-			d.addr.ipproto = transport_proto;
-			selectors_buf sb;
-			llog(RC_LOG, logger,
-			     "can't find expected bare shunt to %s: %s",
-			     repl ? "replace" : "delete",
-			     str_selectors(&s, &d, &sb));
-			return true;
-		}
-
-		if (repl) {
-			/*
-			 * change over to new bare eroute
-			 * ours, peers, transport_proto are the same.
-			 */
-			struct bare_shunt *bs = *bs_pp;
-
-			bs->why = why;
-			bs->policy_prio = policy_prio;
-			bs->said = said3(&null_host, htonl(new_shunt_spi), &ip_protocol_internal);
-			bs->count = 0;
-			bs->last_activity = mononow();
-			dbg_bare_shunt("change", bs);
-		} else {
-			/* delete pluto bare shunt */
-			free_bare_shunt(bs_pp);
-		}
-		return true;
-	} else {
-		struct bare_shunt **bs_pp = bare_shunt_ptr(&this_client, &that_client,
-							   transport_proto, why);
-
-		free_bare_shunt(bs_pp);
+	const ip_address null_host = afi->any_address;
+	bool ok = raw_eroute(&null_host, &src, &null_host, &dst,
+			     htonl(cur_shunt_spi), htonl(new_shunt_spi),
+			     &ip_protocol_internal, transport_proto,
+			     ET_INT, null_proto_info,
+			     deltatime(SHUNT_PATIENCE),
+			     0, /* we don't know connection for priority yet */
+			     NULL, /* sa_marks */
+			     0 /* xfrm interface id */,
+			     ERO_REPLACE, why, NULL, logger);
+	if (!ok) {
 		llog(RC_LOG, logger,
-			    "raw_eroute() to op='%s' with transport_proto='%d' kernel shunt failed - deleting from pluto shunt table",
-			    repl ? "replace" : "delete",
-			    transport_proto);
-		return false;
+		     "replace kernel shunt %s failed - deleting from pluto shunt table",
+		     str_selectors_sensitive(&src, &dst, &sb));
 	}
+
+	/*
+	 * We can have proto mismatching acquires with xfrm - this is
+	 * a bad workaround.
+	 *
+	 * ??? what is the nature of those mismatching acquires?
+	 *
+	 * XXX: for instance, when whack initiates an OE connection.
+	 * There is no kernel-acquire shunt to remove.
+	 */
+	struct bare_shunt **bs_pp = bare_shunt_ptr(&src, &dst, transport_proto, why);
+	/* passert(bs_pp != NULL); */
+	if (bs_pp == NULL) {
+		selectors_buf sb;
+		llog(RC_LOG, logger,
+		     "can't find expected bare shunt to %s: %s",
+		     ok ? "replace" : "delete",
+		     str_selectors_sensitive(&src, &dst, &sb));
+		return ok;
+	}
+
+	if (ok) {
+		/*
+		 * change over to new bare eroute ours, peers,
+		 * transport_proto are the same.
+		 */
+		struct bare_shunt *bs = *bs_pp;
+		bs->why = why;
+		bs->policy_prio = policy_prio;
+		bs->said = said3(&null_host, htonl(new_shunt_spi), &ip_protocol_internal);
+		bs->count = 0;
+		bs->last_activity = mononow();
+		dbg_bare_shunt("replace", bs);
+	} else {
+		free_bare_shunt(bs_pp);
+	}
+
+	return ok;
 }
 
-bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
-			policy_prio_t policy_prio,	/* of replacing shunt*/
-			ipsec_spi_t cur_shunt_spi,	/* in host order! */
-			ipsec_spi_t new_shunt_spi,	/* in host order! */
-			int transport_proto,
-			const char *why,
-			struct logger *logger)
-{
-	return fiddle_bare_shunt(src, dst, policy_prio, cur_shunt_spi, new_shunt_spi,
-				 true, transport_proto, why, logger);
-}
-
-bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
+bool delete_bare_shunt(const ip_address *src_address,
+		       const ip_address *dst_address,
 		       int transport_proto, ipsec_spi_t cur_shunt_spi,
 		       bool skip_xfrm_raw_eroute_delete,
 		       const char *why, struct logger *logger)
 {
+	const struct ip_info *afi = address_type(src_address);
+	pexpect(afi == address_type(dst_address));
+	const ip_protocol *protocol = protocol_by_ipproto(transport_proto);
+	/* port? assumed wide? */
+	ip_selector src = selector_from_address_protocol(src_address, protocol);
+	ip_selector dst = selector_from_address_protocol(dst_address, protocol);
+
+	bool ok;
 	if (kernel_ops->type == USE_XFRM && skip_xfrm_raw_eroute_delete) {
-		const ip_protocol *protocol = protocol_by_ipproto(transport_proto);
-		ip_selector local_client = selector_from_address_protocol(src, protocol);
-		ip_selector remote_client = selector_from_address_protocol(dst, protocol);
 		selectors_buf sb;
 		llog(RC_LOG, logger, "deleting bare shunt %s from pluto shunt table",
-		     str_selectors(&local_client, &remote_client, &sb));
-		struct bare_shunt **bs_pp = bare_shunt_ptr(&local_client, &remote_client,
-							   transport_proto, why);
-		free_bare_shunt(bs_pp);
-		return true;
+		     str_selectors_sensitive(&src, &dst, &sb));
+		ok = true; /* always succeed */
+	} else {
+		selectors_buf sb;
+		dbg("deleting bare shunt %s from kernel for %s",
+		    str_selectors(&src, &dst, &sb), why);
+		const ip_address null_host = afi->any_address;
+		/* assume low code logged action */
+		ok = raw_eroute(&null_host, &src, &null_host, &dst,
+				htonl(cur_shunt_spi), htonl(SPI_PASS),
+				&ip_protocol_internal,
+				transport_proto,
+				ET_INT, null_proto_info,
+				deltatime(SHUNT_PATIENCE),
+				0, /* we don't know connection for priority yet */
+				NULL, /* sa_marks */
+				0 /* xfrm interface id */,
+				ERO_DELETE, why, NULL, logger);
+		if (!ok) {
+			/* did/should kernel log this? */
+			selectors_buf sb;
+			llog(RC_LOG, logger,
+			     "delete kernel shunt %s failed - deleting from pluto shunt table",
+			     str_selectors_sensitive(&src, &dst, &sb));
+		}
 	}
 
-	return fiddle_bare_shunt(src, dst, BOTTOM_PRIO, cur_shunt_spi, SPI_PASS /* unused */,
-				 false, transport_proto, why, logger);
+	/*
+	 * We can have proto mismatching acquires with xfrm - this is
+	 * a bad workaround.
+	 *
+	 * ??? what is the nature of those mismatching acquires?
+	 *
+	 * XXX: for instance, when whack initiates an OE connection.
+	 * There is no kernel-acquire shunt to remove.
+	 */
+
+	struct bare_shunt **bs_pp = bare_shunt_ptr(&src, &dst, transport_proto, why);
+	if (bs_pp == NULL) {
+		selectors_buf sb;
+		llog(RC_LOG, logger,
+		     "can't find expected bare shunt to delete: %s",
+		     str_selectors_sensitive(&src, &dst, &sb));
+		return ok;
+	}
+
+	free_bare_shunt(bs_pp);
+	return ok;
 }
 
 bool eroute_connection(const struct spd_route *sr,
