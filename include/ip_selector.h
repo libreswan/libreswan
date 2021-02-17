@@ -119,8 +119,10 @@ ip_protoport selector_protoport(const ip_selector *selector);
 
 ip_port selector_port(const ip_selector *selector);
 
+/* hacks */
 int selector_hport(const ip_selector *selector);
-void update_selector_hport(ip_selector *selector, unsigned hport);
+#define update_selector_hport(SELECTOR, HPORT) { (SELECTOR)->addr.hport = (HPORT); }
+#define update_selector_ipproto(SELECTOR, IPPROTO) { (SELECTOR)->addr.ipproto = (IPPROTO); }
 
 
 /* assuming a subnet like XFRM does */

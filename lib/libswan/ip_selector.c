@@ -209,11 +209,6 @@ ip_port selector_port(const ip_selector *selector)
 	return ip_hport(selector->addr.hport);
 }
 
-void update_selector_hport(ip_selector *selector, unsigned hport)
-{
-	selector->addr.hport = hport;
-}
-
 unsigned selector_ipproto(const ip_selector *selector)
 {
 	return selector->addr.ipproto;
