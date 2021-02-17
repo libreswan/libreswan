@@ -15,6 +15,7 @@
 
 #ifndef _SECURITY_SELINUX_H
 #define _SECURITY_SELINUX_H
+#ifdef HAVE_LABELED_IPSEC
 
 #include <selinux/selinux.h>
 
@@ -33,4 +34,5 @@ int within_range(security_context_t sl, security_context_t range, struct logger 
 int within_range(const char *sl, const char *range, struct logger *logger);
 #endif
 
+#endif
 #endif /* _SECURITY_SELINUX_H */
