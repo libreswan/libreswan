@@ -85,7 +85,7 @@ void ip_endpoint_check()
 		/*
 		 * endpoint_*address()
 		 */
-		ip_address aout = endpoint_address(&a);
+		ip_address aout = endpoint_address(&e);
 		address_buf astr;
 		if (!streq(str_address(&aout, &astr), t->in)) {
 			FAIL_IN("endpoint_address() returned %s, expecting %s",
