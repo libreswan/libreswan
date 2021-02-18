@@ -1345,7 +1345,9 @@ static void clear_narrow_holds(const ip_selector *our_client,
 		    transport_proto == p->transport_proto &&
 		    selector_in_selector(&p->our_client, our_client) &&
 		    selector_in_selector(&p->peer_client, peer_client)) {
-			if (!delete_bare_shunt(&p->our_client.addr, &p->peer_client.addr,
+			ip_address our_addr = selector_prefix(&p->our_client);
+			ip_address peer_addr = selector_prefix(&p->peer_client);
+			if (!delete_bare_shunt(&our_addr, &peer_addr,
 					       transport_proto, SPI_HOLD,
 					       /*skip_xfrm_raw_eroute_delete?*/false,
 					       "removing clashing narrow hold",
@@ -3511,7 +3513,9 @@ static void expire_bare_shunts(struct logger *logger, bool all)
 					}
 				}
 			}
-			if (!delete_bare_shunt(&bsp->our_client.addr, &bsp->peer_client.addr,
+			ip_address our_addr = selector_prefix(&bsp->our_client);
+			ip_address peer_addr = selector_prefix(&bsp->peer_client);
+			if (!delete_bare_shunt(&our_addr, &peer_addr,
 					       bsp->transport_proto,
 					       ntohl(bsp->said.spi),
 					       /*skip_xfrm_raw_eroute_delete?*/(bsp->from_cn != NULL),
