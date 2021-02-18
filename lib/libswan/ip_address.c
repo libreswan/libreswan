@@ -23,23 +23,6 @@
 
 const ip_address unset_address; /* all zeros */
 
-ip_address strip_address(const ip_address *in, where_t where UNUSED)
-{
-	if (in->hport != 0 || in->ipproto != 0 || in->is_endpoint) {
-		address_buf b;
-		dbg("stripping address %s of is_endpoint=%d hport=%u ipproto=%u "PRI_WHERE,
-		    str_address(in, &b), in->is_endpoint,
-		    in->hport, in->ipproto, pri_where(where));
-	}
-	ip_address out = {
-		.is_address = true,
-		.version = in->version,
-		.bytes = in->bytes,
-	};
-	paddress(&out);
-	return out;
-}
-
 ip_address address_from_raw(const struct ip_info *afi, const struct ip_bytes *bytes)
 {
 	ip_address a = {
@@ -370,16 +353,15 @@ ip_address address_from_blit(const struct ip_info *afi,
 
 void pexpect_address(const ip_address *a, const char *s, where_t where)
 {
-	if (a != NULL && a->version != 0) {
-		/* i.e., is-set */
-		if (a->is_address == false ||
-		    a->is_endpoint == true ||
-		    a->hport != 0 ||
-		    a->ipproto != 0) {
-			address_buf b;
-			dbg("EXPECTATION FAILED: %s is not an address; "PRI_ADDRESS" "PRI_WHERE,
-			    s, pri_address(a, &b),
-			    pri_where(where));
-		}
+	if (address_is_unset(a)) {
+		return;
+	}
+
+	if (a->version == 0 ||
+	    a->is_address == false) {
+		address_buf b;
+		dbg("EXPECTATION FAILED: %s is not an address; "PRI_ADDRESS" "PRI_WHERE,
+		    s, pri_address(a, &b),
+		    pri_where(where));
 	}
 }

@@ -54,36 +54,16 @@ typedef struct {
 	 * (struct in_addr requires htonl() which is run-time only).
 	 */
 	struct ip_bytes { uint8_t byte[16]; } bytes;
-/*#ifndef ENDPOINT_TYPE*/
-	/*
-	 * XXX: An address abstraction - type+bytes - should not
-	 * contain a port.  If a port is required, the abstraction
-	 * ip_endpoint should be used.
-	 *
-	 * In pluto, port "0" is reserved and indicates all ports (but
-	 * does it also denote no port?).  Hopefully it is only paired
-	 * with the zero (any) address.
-	 */
-	uint16_t hport;
-	unsigned ipproto;
-	bool is_endpoint;
-/*#endif*/
 } ip_address;
 
-#define PRI_ADDRESS "%s (version=%d hport=%u ipproto=%u is_address=%s is_endpoint=%s)"
+#define PRI_ADDRESS "%s (version=%d is_address=%s)"
 #define pri_address(A, B)						\
 		str_address(A, B),					\
 		(A)->version,						\
-		(A)->hport,						\
-		(A)->ipproto,						\
-		bool_str((A)->is_address),				\
-		bool_str((A)->is_endpoint)
+		bool_str((A)->is_address)
 
 void pexpect_address(const ip_address *a, const char *t, where_t where);
 #define paddress(A) pexpect_address(A, #A, HERE)
-
- /* remove bogus port from address */
-ip_address strip_address(const ip_address *address, where_t where);
 
 /*
  * Constructors.

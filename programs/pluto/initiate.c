@@ -164,11 +164,7 @@ static bool end_matches_iface_endpoint(const struct end *end,
 				       const struct end *other_end,
 				       const struct iface_endpoint *ifp)
 {
-	/*
-	 * XXX: something stomps on .host_addr turning it into an
-	 * endpoint - .ipproto gets set; hack around it
-	 */
-	ip_address host_addr = strip_address(&end->host_addr, HERE);
+	ip_address host_addr = end->host_addr;
 	/*
 	 * which port?
 	 */

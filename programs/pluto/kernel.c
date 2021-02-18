@@ -1812,9 +1812,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		dst = c->spd.that.host_addr;
 		dst_client = c->spd.that.client;
 	}
-	/* XXX: code is stuffing an endpoint in .host_addr */
-	src = strip_address(&src, HERE);
-	dst = strip_address(&dst, HERE);
 
 	/*
 	 * mode: encapsulation mode called for
