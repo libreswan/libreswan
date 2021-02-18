@@ -28,14 +28,6 @@
 struct jambuf;
 struct ip_protocol;
 
-/*
- * ip_endpoint and ip_address should be distinct types where the
- * latter consists of ADDRESS:PORT.  Unfortunately separating them is
- * going to be slow.
- *
- * Defining ENDPOINT_TYPE causes the the types to become distinct.
- */
-
 typedef struct {
 	/*
 	 * Index into the struct ip_info array; must be stream
@@ -54,24 +46,18 @@ typedef struct {
 	int hport;
 	unsigned ipproto;
 	bool is_endpoint;
-/*ifndef ENDPOINT_TYPE*/
-	bool is_address;
-/*#endif*/
 } ip_endpoint;
 
-#define PRI_ENDPOINT "%s (version=%d hport=%u ipproto=%u is_address=%s is_endpoint=%s)"
+#define PRI_ENDPOINT "%s (version=%d hport=%u ipproto=%u is_endpoint=%s)"
 #define pri_endpoint(A, B)						\
 		str_endpoint(A, B),					\
 		(A)->version,						\
 		(A)->hport,						\
 		(A)->ipproto,						\
-		bool_str((A)->is_address),				\
 		bool_str((A)->is_endpoint)
 
 void pexpect_endpoint(const ip_endpoint *e, const char *t, where_t where);
 #define pendpoint(E) pexpect_endpoint(E, #E, HERE)
-
-ip_address strip_endpoint(const ip_endpoint *address, where_t where);
 
 /*
  * Constructors.

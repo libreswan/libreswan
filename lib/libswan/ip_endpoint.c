@@ -23,21 +23,6 @@
 
 const ip_endpoint unset_endpoint; /* all zeros */
 
-ip_address strip_endpoint(const ip_endpoint *in, where_t where UNUSED)
-{
-	if (in->hport != 0 || in->ipproto != 0 || in->is_endpoint) {
-		endpoint_buf b;
-		dbg("stripping endpoint %s of is_endpoint=%d hport=%u ipproto=%u "PRI_WHERE,
-		    str_endpoint(in, &b), in->is_endpoint,
-		    in->hport, in->ipproto, pri_where(where));
-	}
-	ip_address out = {
-		.version = in->version,
-		.bytes = in->bytes,
-	};
-	return out;
-}
-
 static ip_endpoint raw_endpoint(const struct ip_protocol *protocol,
 				const ip_address *address, int hport)
 {
@@ -313,7 +298,6 @@ void pexpect_endpoint(const ip_endpoint *e, const char *s, where_t where)
 	const ip_protocol *protocol = endpoint_protocol(e);
 	if (e->version == 0 ||
 	    e->is_endpoint == false ||
-	    e->is_address == true ||
 	    e->ipproto == 0 ||
 	    protocol == NULL ||
 	    (protocol->endpoint_requires_non_zero_port && e->hport == 0)) {
