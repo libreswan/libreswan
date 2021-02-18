@@ -36,7 +36,6 @@ struct ip_protocol;
  * Defining ENDPOINT_TYPE causes the the types to become distinct.
  */
 
-#ifdef ENDPOINT_TYPE
 typedef struct {
 	/*
 	 * Index into the struct ip_info array; must be stream
@@ -59,9 +58,6 @@ typedef struct {
 	bool is_address;
 /*#endif*/
 } ip_endpoint;
-#else
-typedef ip_address ip_endpoint;
-#endif
 
 #define PRI_ENDPOINT "%s (version=%d hport=%u ipproto=%u is_address=%s is_endpoint=%s)"
 #define pri_endpoint(A, B)						\
