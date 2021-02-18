@@ -635,8 +635,19 @@ void restart_connections_by_peer(struct connection *const c)
 struct find_oppo_bundle {
 	const char *want;
 	bool failure_ok;        /* if true, continue_oppo should not die on DNS failure */
-	ip_endpoint our_client;  /* not pointer! */
+	/*
+	 * Traffic that triggered the opportunistic exchange.
+	 */
+	ip_endpoint our_client;
 	ip_endpoint peer_client;
+	struct {
+		/*
+		 * Host addresses for traffic (redundant, but
+		 * convenient).
+		 */
+		ip_address host_addr;
+	} local, remote;
+	/* redundant - prococol involved */
 	int transport_proto;
 	bool held;
 	policy_prio_t policy_prio;
@@ -668,7 +679,7 @@ static void cannot_oppo(struct find_oppo_bundle *b, err_t ughmsg)
 		 * If no failure_shunt specified, use SPI_PASS -- THIS MAY CHANGE.
 		 */
 		pexpect(b->failure_shunt != 0); /* PAUL: I don't think this can/should happen? */
-		if (replace_bare_shunt(&b->our_client, &b->peer_client,
+		if (replace_bare_shunt(&b->local.host_addr, &b->remote.host_addr,
 				       b->policy_prio,
 				       b->negotiation_shunt,
 				       b->failure_shunt,
@@ -697,16 +708,14 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 * which does not.  So output matches tests the string below
 	 * forces addr:port and not end (latter strips of 0 port).
 	 */
-	ip_address our_address = endpoint_address(&b->our_client);
-	ip_address peer_address = endpoint_address(&b->peer_client);
 
 	int our_port = endpoint_hport(&b->our_client);
 	int peer_port = endpoint_hport(&b->peer_client);
 
 	address_buf ourb;
-	const char *our_addr = str_address(&our_address, &ourb);
+	const char *our_addr = str_address(&b->local.host_addr, &ourb);
 	address_buf peerb;
-	const char *peer_addr = str_address(&peer_address, &peerb);
+	const char *peer_addr = str_address(&b->remote.host_addr, &peerb);
 
 	if (b->sec_label.len != 0) {
 		dbg("received security label string: %.*s",
@@ -739,7 +748,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		return;
 	}
 
-	if (address_eq(&our_address, &peer_address)) {
+	if (address_eq(&b->local.host_addr, &b->remote.host_addr)) {
 		/* NETKEY gives us acquires for our own IP */
 		/* this does not catch talking to ourselves on another ip */
 		cannot_oppo(b, "acquire for our own IP address");
@@ -834,7 +843,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 */
 		if (b->held) {
 			if (assign_holdpass(c, sr, b->transport_proto, b->negotiation_shunt,
-					    &b->our_client, &b->peer_client)) {
+					    &b->local.host_addr, &b->remote.host_addr)) {
 				dbg("initiate_ondemand_body() installed negotiation_shunt,");
 			} else {
 				llog(RC_LOG, b->logger,
@@ -939,8 +948,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			}
 		}
 
-		if (!raw_eroute(&b->our_client, &this_client,
-				&b->peer_client, &that_client,
+		if (!raw_eroute(&b->local.host_addr, &this_client,
+				&b->remote.host_addr, &that_client,
 				htonl(SPI_HOLD), /* kernel induced */
 				htonl(b->negotiation_shunt),
 				&ip_protocol_internal, shunt_proto,
@@ -958,7 +967,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		}
 		/* now delete the (obsoleted) narrow bare kernel shunt - we have a (possibly broadened) negotiationshunt replacement installed */
 		const char *const delmsg = "delete bare kernel shunt - was replaced with  negotiationshunt";
-		if (!delete_bare_shunt(&b->our_client, &b->peer_client,
+		if (!delete_bare_shunt(&b->local.host_addr, &b->remote.host_addr,
 				       b->transport_proto,
 				       SPI_HOLD /* kernel dictated */,
 				       /*skip_xfrm_raw_eroute_delete?*/false,
@@ -992,8 +1001,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * default to HOLD
 		 */
 		if (b->held) {
-			if (replace_bare_shunt(&b->our_client,
-					       &b->peer_client,
+			if (replace_bare_shunt(&b->local.host_addr,
+					       &b->remote.host_addr,
 					       b->policy_prio,
 					       b->negotiation_shunt, /* if not from conn, where did this come from? */
 					       b->failure_shunt, /* if not from conn, where did this come from? */
@@ -1040,8 +1049,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		if (assign_holdpass(c, &c->spd,
 				    b->transport_proto,
 				    b->negotiation_shunt,
-				    &b->our_client,
-				    &b->peer_client)) {
+				    &b->local.host_addr,
+				    &b->remote.host_addr)) {
 			dbg("assign_holdpass succeeded");
 		} else {
 			llog(RC_LOG, b->logger, "assign_holdpass failed!");
@@ -1071,6 +1080,8 @@ void initiate_ondemand(const ip_endpoint *our_client,
 		.failure_ok = false,
 		.our_client = *our_client,
 		.peer_client = *peer_client,
+		.local.host_addr = endpoint_address(our_client),
+		.remote.host_addr = endpoint_address(peer_client),
 		.transport_proto = endpoint_protocol(our_client)->ipproto,
 		.held = held,
 		.policy_prio = BOTTOM_PRIO,
