@@ -73,8 +73,6 @@ size_t jam_dump_bytes(struct jambuf *buf, const void *bytes, size_t size)
 /*
  * For logging - output the string but convert any unprintable
  * characters into an equivalent escape code.
- *
- * XXX: bonus points for anyone encoding \r \n ... correctly?
  */
 
 size_t jam_sanitized_bytes(struct jambuf *buf, const void *ptr, size_t size)
@@ -83,10 +81,36 @@ size_t jam_sanitized_bytes(struct jambuf *buf, const void *ptr, size_t size)
 	const char *chars = ptr;
 	for (unsigned i = 0; i < size; i++) {
 		char c = chars[i];
-		if (char_isprint(c)) {
-			n += jam_char(buf, c);
-		} else {
-			n += jam(buf, "\\%03o", c & 0xFF);
+		/*
+		 * Notes:
+		 *
+		 * - NUL is always represented as '\0'.
+		 *
+		 * - octal format can use up-to 3 digts but can't be
+		 *   ambigious, so only use when next character isn't
+		 *   numeric
+		 */
+
+		switch (c) {
+		case '\0': n += jam_string(buf, "\\0"); break;
+		case '\a': n += jam_string(buf, "\\a"); break;
+		case '\b': n += jam_string(buf, "\\b"); break;
+		case '\t': n += jam_string(buf, "\\t"); break;
+		case '\n': n += jam_string(buf, "\\n"); break;
+		case '\v': n += jam_string(buf, "\\v"); break;
+		case '\f': n += jam_string(buf, "\\f"); break;
+		case '\r': n += jam_string(buf, "\\r"); break;
+		default:
+			if (char_isprint(c)) {
+				n += jam_char(buf, c);
+			} else if (i + 1 == size ||
+				   !char_isdigit(chars[i + 1])) {
+				n += jam(buf, "\\%o", c & 0xFF);
+			} else {
+				n += jam(buf, "\\%03o", c & 0xFF);
+			}
+			break;
+
 		}
 	}
 	return n;
@@ -96,6 +120,9 @@ size_t jam_sanitized_bytes(struct jambuf *buf, const void *ptr, size_t size)
  * For shell variables - output the string but (assuming text is
  * enclosed in single quotes) convert any shell meta characters into
  * equivalent escape codes.
+ *
+ * XXX: bonus points for anyone encoding \r \n ... correctly?  But is
+ * it even safe?
  */
 
 size_t jam_meta_escaped_bytes(struct jambuf *buf, const void *ptr, size_t size)
@@ -104,20 +131,21 @@ size_t jam_meta_escaped_bytes(struct jambuf *buf, const void *ptr, size_t size)
 	const char *chars = ptr;
 	for (unsigned i = 0; i < size; i++) {
 		char c = chars[i];
-		if (char_isprint(c)) {
-			switch (c) {
-			case '\'':
-			case '\\':
-			case '"':
-			case '`':
-			case '$':
-				n += jam(buf, "\\%03o", c & 0xFF);
-				break;
-			default:
-				n += jam_char(buf, c);
-			}
-		} else {
+		switch (c) {
+		case '\'':
+		case '\\':
+		case '"':
+		case '`':
+		case '$':
 			n += jam(buf, "\\%03o", c & 0xFF);
+			break;
+		default:
+			if (char_isprint(c)) {
+				n += jam_char(buf, c);
+			} else {
+				n += jam(buf, "\\%03o", c & 0xFF);
+			}
+			break;
 		}
 	}
 	return n;
