@@ -137,6 +137,12 @@ bool case_eq(const void *l_ptr, size_t l_len,
 			case_eq(hunk_.ptr, slen_, string_, slen_);	\
 	})
 
+#define hunk_strnlen(HUNK)					\
+	({							\
+		typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
+		strnlen((const char *)hunk_.ptr, hunk_.len);	\
+	})
+
 /* misc */
 
 #define hunk_memeq(HUNK, MEM, SIZE)					\
