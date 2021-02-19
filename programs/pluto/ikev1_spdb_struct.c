@@ -70,7 +70,7 @@ static bool parse_secctx_attr(pb_stream *pbs UNUSED, struct state *st)
 #include "security_selinux.h"
 #include "labeled_ipsec.h"
 #include <linux/xfrm.h> /* for XFRM_SC_DOI_LSM and XFRM_SC_ALG_SELINUX */
-static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
+static bool parse_secctx_attr(struct pbs_in *pbs, struct state *st)
 {
 	diag_t d;
 
@@ -83,54 +83,59 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 		return false;
 	}
 
-	if (pbs_left(pbs) != uctx.ctx.ctx_len) {
+	/*
+	 * XXX: this and the IKEv2 equivalent have a lot in common.
+	 */
+	shunk_t sec_label = pbs_in_left_as_shunk(pbs);
+	if (sec_label.len != uctx.ctx.ctx_len) {
 		/* ??? should we ignore padding? */
 		log_state(RC_LOG_SERIOUS, st,
-			  "IPsec Security Label length mismatch (length=%u; packet space = %u)",
-			  uctx.ctx.ctx_len, (unsigned)pbs_left(pbs));
-		return FALSE;
+			  "IPsec Security Label length mismatch (length=%u; packet space = %zu)",
+			  uctx.ctx.ctx_len, sec_label.len);
+		return false;
 	}
 
-	if (uctx.ctx.ctx_len > MAX_SECCTX_LEN) {
+	if (sec_label.len > MAX_SECCTX_LEN) {
 		log_state(RC_LOG_SERIOUS, st,
-			  "IPsec Security Label too long (%u > %u)",
-			  uctx.ctx.ctx_len, MAX_SECCTX_LEN);
-		return FALSE;
+			  "IPsec Security Label too long (%zu > %u)",
+			  sec_label.len, MAX_SECCTX_LEN);
+		return false;
 	}
 
-	if (st->st_seen_sec_label.len != 0) {
-		dbg("already received IPsec Security Label in responder state: updating st_seen_sec_label");
-		free_chunk_content(&st->st_seen_sec_label);
-	} 
-	st->st_seen_sec_label.ptr = alloc_bytes(uctx.ctx.ctx_len, "st_seen_sec_label");
-	st->st_seen_sec_label.len = uctx.ctx.ctx_len;
-
-	d = pbs_in_raw(pbs, st->st_seen_sec_label.ptr, uctx.ctx.ctx_len, "sec_label from pbs");
-	if (d != NULL) {
-		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
-		return FALSE;
+	if (hunk_strnlen(sec_label) + 1 != sec_label.len) {
+		llog(RC_LOG, st->st_logger, "security label is not NUL terminated");
+		return false;
 	}
 
-	dbg("received sec_label:%.*s", (int)st->st_seen_sec_label.len, st->st_seen_sec_label.ptr);
-
-	if (c->spd.this.sec_label.ptr == NULL) {
+	if (c->spd.this.sec_label.len == 0) {
 		log_state(RC_LOG_SERIOUS, st,
 			  "received IPsec Security Label on connection not configured with labeled ipsec");
-		free_chunk_content(&st->st_seen_sec_label);
-		return FALSE;
-	} else if (within_range((const char *)st->st_seen_sec_label.ptr,
-                                        (const char *)c->spd.this.sec_label.ptr, /* we ensured NUL termination above */
-                                        st->st_logger)) {
-		dbg("connection security context IPsec Security Label verification succeeded");
-	} else {
-		log_state(RC_LOG_SERIOUS, st,
-			  "received IPsec Security Label '%.*s' not within range of our configured security label %.*s",
-			(int)st->st_seen_sec_label.len, st->st_seen_sec_label.ptr,
-			(int)c->spd.this.sec_label.len, c->spd.this.sec_label.ptr);
-			free_chunk_content(&st->st_seen_sec_label);
-		return FALSE;
+		return false;
 	}
-	return TRUE;
+
+	if (!within_range(sec_label.ptr, /* we ensured NUL termination above */
+			  (const char *)c->spd.this.sec_label.ptr,  /* we ensured NUL termination earlier? */
+			  st->st_logger)) {
+		LLOG_JAMBUF(RC_LOG_SERIOUS, st->st_logger, buf) {
+			jam(buf, "received IPsec Security Label '");
+			jam_sanitized_bytes(buf, sec_label.ptr,
+					    sec_label.len-1/*drop'\0'*/);
+			jam(buf, "' not within range of our configured security label '");
+			jam_sanitized_bytes(buf, c->spd.this.sec_label.ptr,
+					    c->spd.this.sec_label.len-1/*drop'\0'*/);
+			jam(buf, "'");
+		}
+		return false;
+	}
+
+	/* free old when needed */
+	free_chunk_content(&st->st_seen_sec_label);
+	st->st_seen_sec_label = clone_hunk(sec_label, "st_seen_sec_label");
+	if (DBGP(DBG_BASE)) {
+		DBG_dump_hunk("connection security context IPsec Security Label verification succeeded with:",
+			      st->st_seen_sec_label);
+	}
+	return true;
 }
 #endif
 
