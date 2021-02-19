@@ -106,7 +106,8 @@ void main_outI1(struct fd *whack_sock,
 		struct state *predecessor,
 		lset_t policy,
 		unsigned long try,
-		const threadtime_t *inception)
+		const threadtime_t *inception,
+		chunk_t sec_label)
 {
 	struct ike_sa *ike = new_v1_istate(c, whack_sock);
 	struct state *st = &ike->sa;
@@ -121,7 +122,7 @@ void main_outI1(struct fd *whack_sock,
 		add_pending(whack_sock, ike, c, policy, 1,
 			    predecessor == NULL ?
 			    SOS_NOBODY : predecessor->st_serialno,
-			    true /* part of initiate */);
+			    sec_label, true /* part of initiate */);
 	}
 
 	if (predecessor == NULL) {

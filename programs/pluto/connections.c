@@ -797,7 +797,7 @@ static int extract_end(struct end *dst,
 	}
 
 	if (src->sec_label != NULL) {
-		dst->sec_label = clone_bytes_as_chunk(src->sec_label, strlen(src->sec_label), "struct end sec_label");
+		dst->sec_label = clone_bytes_as_chunk(src->sec_label, strlen(src->sec_label)+1, "struct end sec_label");
 		dbg("received sec_label '%s' from whack", src->sec_label);
 	}
 
@@ -2471,13 +2471,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 		struct spd_route *sr;
 
 		for (sr = &c->spd; best != c && sr; sr = sr->spd_next) {
-			if (DBGP(DBG_BASE)) {
-				DBG_log("PAUL: security label hunk check in find_connection_for_clients() returns %s",
-					bool_str(hunk_eq(sec_label, sr->this.sec_label)));
-				DBG_dump_hunk("PAUL:sec_label", sec_label);
-				DBG_dump_hunk("PAUL:sr->this.sec_label", sr->this.sec_label);
-			}
-			if ((routed(sr->routing) || c->instance_initiation_ok) &&
+			if ( ((routed(sr->routing) || c->instance_initiation_ok) || sec_label.ptr != NULL) &&
 			    endpoint_in_selector(local_client, &sr->this.client) &&
 			    endpoint_in_selector(remote_client, &sr->that.client)
 #ifdef HAVE_LABELED_IPSEC

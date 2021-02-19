@@ -522,7 +522,8 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 		       struct state *predecessor,
 		       lset_t policy,
 		       unsigned long try,
-		       const threadtime_t *inception)
+		       const threadtime_t *inception,
+		       chunk_t sec_label)
 {
 	if (drop_new_exchanges()) {
 		/* Only drop outgoing opportunistic connections */
@@ -546,6 +547,18 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 	passert(st->st_sa_role == SA_INITIATOR);
 	st->st_try = try;
 
+	if (sec_label.len != 0) {
+		dbg("%s: received security label from acquire: \"%.*s\"", __FUNCTION__,
+				(int)sec_label.len, sec_label.ptr);
+		dbg("%s: connection security label: \"%.*s\"", __FUNCTION__,
+				(int)c->spd.this.sec_label.len, c->spd.this.sec_label.ptr);
+		/*
+		 * Should we have a within_range() check here? In theory, the ACQUIRE came
+		 * from a policy we gave the kernel, so it _should_ be within our range?
+		 */
+		st->st_acquired_sec_label = clone_hunk(sec_label, "st_acquired_sec_label");
+	}
+
 	if ((c->iketcp == IKE_TCP_ONLY) || (try > 1 && c->iketcp != IKE_TCP_NO)) {
 		dbg("TCP: forcing #%lu remote endpoint port to %d",
 		    st->st_serialno, c->remote_tcpport);
@@ -559,17 +572,15 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 	}
 
 	if (HAS_IPSEC_POLICY(policy)) {
-		dbg("%s: set security label to \"%.*s\"", __FUNCTION__,
-			(int)c->spd.this.sec_label.len, c->spd.this.sec_label.ptr);
-#if 0
-		st->st_ts_this = ikev2_end_to_ts(&c->spd.this);
-		st->st_ts_that = ikev2_end_to_ts(&c->spd.that);
-		ikev2_print_ts(&st->st_ts_this);
-		ikev2_print_ts(&st->st_ts_that);
-#endif
+		if (DBGP(DBG_BASE)) {
+			st->st_ts_this = ikev2_end_to_ts(&c->spd.this, st->st_acquired_sec_label);
+			st->st_ts_that = ikev2_end_to_ts(&c->spd.that, st->st_seen_sec_label);
+			ikev2_print_ts(&st->st_ts_this);
+			ikev2_print_ts(&st->st_ts_that);
+		}
 		add_pending(whack_sock, ike, c, policy, 1,
 			    predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
-			    true /*part of initiate*/);
+			    sec_label, true /*part of initiate*/);
 	}
 
 	/*
@@ -2372,8 +2383,8 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 		return STF_INTERNAL_ERROR;
 	}
 
-	child->sa.st_ts_this = ikev2_end_to_ts(&cc->spd.this);
-	child->sa.st_ts_that = ikev2_end_to_ts(&cc->spd.that);
+	child->sa.st_ts_this = ikev2_end_to_ts(&cc->spd.this, child->sa.st_acquired_sec_label);
+	child->sa.st_ts_that = ikev2_end_to_ts(&cc->spd.that, child->sa.st_seen_sec_label);
 
 	v2_emit_ts_payloads(child, &sk.pbs, cc);
 
@@ -3204,8 +3215,8 @@ static bool assign_child_responder_client(struct ike_sa *ike,
 					    ENCRYPTED_PAYLOAD);
 			return false;
 		}
-		child->sa.st_ts_this = ikev2_end_to_ts(&spd->this);
-		child->sa.st_ts_that = ikev2_end_to_ts(&spd->that);
+		child->sa.st_ts_this = ikev2_end_to_ts(&spd->this, child->sa.st_acquired_sec_label);
+		child->sa.st_ts_that = ikev2_end_to_ts(&spd->that, child->sa.st_seen_sec_label);
 	} else {
 		if (!v2_process_ts_request(child, md)) {
 			/* already logged? */
@@ -4215,8 +4226,8 @@ static bool ikev2_rekey_child_copy_ts(struct child_sa *child)
 	    rchild->sa.st_serialno);
 
 	struct spd_route *spd = &rchild->sa.st_connection->spd;
-	child->sa.st_ts_this = ikev2_end_to_ts(&spd->this);
-	child->sa.st_ts_that = ikev2_end_to_ts(&spd->that);
+	child->sa.st_ts_this = ikev2_end_to_ts(&spd->this, child->sa.st_acquired_sec_label);
+	child->sa.st_ts_that = ikev2_end_to_ts(&spd->that, child->sa.st_seen_sec_label);
 	ikev2_print_ts(&child->sa.st_ts_this);
 	ikev2_print_ts(&child->sa.st_ts_that);
 
@@ -4301,8 +4312,8 @@ static stf_status ikev2_child_add_ipsec_payloads(struct child_sa *child,
 
 	if (rekey_spi == 0) {
 		/* not rekey */
-		child->sa.st_ts_this = ikev2_end_to_ts(&cc->spd.this);
-		child->sa.st_ts_that = ikev2_end_to_ts(&cc->spd.that);
+		child->sa.st_ts_this = ikev2_end_to_ts(&cc->spd.this, child->sa.st_acquired_sec_label);
+		child->sa.st_ts_that = ikev2_end_to_ts(&cc->spd.that, child->sa.st_seen_sec_label);
 	}
 
 	v2_emit_ts_payloads(child, outpbs, cc);
@@ -5922,6 +5933,20 @@ void ikev2_initiate_child_sa(struct pending *p)
 					   (child_being_replaced != NULL ? STATE_V2_REKEY_CHILD_I0 :
 					    STATE_V2_NEW_CHILD_I0),
 					   p->whack_sock);
+		if (p->sec_label.len != 0) {
+			dbg("%s: received security label from acquire via pending: \"%.*s\"", __FUNCTION__,
+					(int)p->sec_label.len, p->sec_label.ptr);
+			dbg("%s: connection security label: \"%.*s\"", __FUNCTION__,
+					(int)c->spd.this.sec_label.len, c->spd.this.sec_label.ptr);
+			/*
+			 * Should we have a within_range() check here? In theory, the ACQUIRE came
+			 * from a policy we gave the kernel, so it _should_ be within our range?
+			 */
+			child->sa.st_acquired_sec_label = clone_hunk(p->sec_label, "st_acquired_sec_label");
+			c->spd.this.sec_label = clone_hunk(p->sec_label, "updated conn label");
+			c->spd.that.sec_label = clone_hunk(p->sec_label, "updated conn label");
+		}
+
 	} else {
 		child_being_replaced = NULL; /* obviously the IKE SA */
 		child = new_v2_child_state(c, ike, IKE_SA,
@@ -6080,6 +6105,9 @@ static stf_status ikev2_child_outI_continue(struct state *st,
 	if (local_secret != NULL) {
 		unpack_KE_from_helper(st, local_secret, &st->st_gi);
 	}
+
+	dbg("queueing child sa with acquired label %.*s",
+			(int)st->st_acquired_sec_label.len, st->st_acquired_sec_label.ptr);
 
 	dbg("adding CHILD SA #%lu to IKE SA #%lu message initiator queue",
 	    child->sa.st_serialno, ike->sa.st_serialno);

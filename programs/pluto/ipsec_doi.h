@@ -29,12 +29,14 @@ typedef void initiator_function(struct fd *whack_sock,
 				struct state *predecessor,
 				lset_t policy,
 				unsigned long try,
-				const threadtime_t *inception);
+				const threadtime_t *inception,
+				chunk_t sec_label);
 
 extern void ipsecdoi_initiate(struct fd *whack_sock, struct connection *c,
 			      lset_t policy, unsigned long try,
 			      so_serial_t replacing,
-			      const threadtime_t *inception);
+			      const threadtime_t *inception,
+			      chunk_t sec_label);
 
 extern void ipsecdoi_replace(struct state *st, unsigned long try);
 

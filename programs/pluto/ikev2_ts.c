@@ -105,7 +105,7 @@ static void ts_to_end(const struct traffic_selector *ts, struct end *end,
 /* For now, note the struct traffic_selector can contain
  * two selectors - an IPvX range and a sec_label
  */
-struct traffic_selector ikev2_end_to_ts(const struct end *e)
+struct traffic_selector ikev2_end_to_ts(const struct end *e, chunk_t sec_label)
 {
 	struct traffic_selector ts;
 
@@ -140,6 +140,9 @@ struct traffic_selector ikev2_end_to_ts(const struct end *e)
 	}
 
 	ts.sec_label = e->sec_label;
+	/* use the 'instance/narrowed' label from the ACQUIRE, if present */
+	if (sec_label.len != 0)
+		ts.sec_label = sec_label;
 
 	return ts;
 }
@@ -153,7 +156,8 @@ struct traffic_selector ikev2_end_to_ts(const struct end *e)
  */
 static stf_status ikev2_emit_ts(pb_stream *outpbs,
 				const struct_desc *ts_desc,
-				const struct traffic_selector *ts)
+				const struct traffic_selector *ts,
+				const struct state *st)
 {
 	pb_stream ts_pbs;
 	bool with_label = ts->sec_label.len != 0;
@@ -226,6 +230,8 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 	if (with_label)
 	{
 		pb_stream ts_label_pbs;
+		chunk_t out_label;
+
 		struct ikev2_ts_header ts_header = {
 			.isath_type = IKEv2_TS_SECLABEL,
 			.isath_ipprotoid = 0 /* really RESERVED, not iprotoid */
@@ -235,8 +241,16 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 			return STF_INTERNAL_ERROR;
 		}
 
-		/* Output the security label value of the TS_SECLABEL substructure payload. */
-		diag_t d = pbs_out_raw(&ts_label_pbs, ts->sec_label.ptr, ts->sec_label.len, "output Security label");
+		/* Output the security label value of the TS_SECLABEL substructure payload.
+		 * If we got ACQUIRE, or received a subset TS_LABEL, use that one - it is subset of connection policy one
+		 */
+		if (st->st_acquired_sec_label.len != 0)
+			out_label = st->st_acquired_sec_label;
+		else if (st->st_seen_sec_label.len != 0)
+			out_label = st->st_seen_sec_label;
+		else out_label = ts->sec_label;
+
+		diag_t d = pbs_out_raw(&ts_label_pbs, out_label.ptr, out_label.len, "output Security label");
 		if (d != NULL) {
 			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
@@ -363,11 +377,11 @@ stf_status v2_emit_ts_payloads(const struct child_sa *child,
 
 	for (const struct spd_route *sr = &c0->spd; sr != NULL;
 	     sr = sr->spd_next) {
-		stf_status ret = ikev2_emit_ts(outpbs, &ikev2_ts_i_desc, ts_i);
+		stf_status ret = ikev2_emit_ts(outpbs, &ikev2_ts_i_desc, ts_i, &child->sa);
 
 		if (ret != STF_OK)
 			return ret;
-		ret = ikev2_emit_ts(outpbs, &ikev2_ts_r_desc, ts_r);
+		ret = ikev2_emit_ts(outpbs, &ikev2_ts_r_desc, ts_r, &child->sa);
 		if (ret != STF_OK)
 			return ret;
 	}
@@ -1375,8 +1389,8 @@ bool v2_process_ts_request(struct child_sa *child,
 	 */
 	update_state_connection(&child->sa, best_connection);
 
-	child->sa.st_ts_this = ikev2_end_to_ts(&best_spd_route->this);
-	child->sa.st_ts_that = ikev2_end_to_ts(&best_spd_route->that);
+	child->sa.st_ts_this = ikev2_end_to_ts(&best_spd_route->this, child->sa.st_acquired_sec_label);
+	child->sa.st_ts_that = ikev2_end_to_ts(&best_spd_route->that, child->sa.st_seen_sec_label);
 
 	ikev2_print_ts(&child->sa.st_ts_this);
 	ikev2_print_ts(&child->sa.st_ts_that);

@@ -737,6 +737,7 @@ struct state {
 	uint8_t st_reply_xchg;
 	bool st_peer_wants_null;		/* We received IDr payload of type ID_NULL (and we allow POLICY_AUTH_NULL */
 	chunk_t st_seen_sec_label;
+	chunk_t st_acquired_sec_label;
 };
 
 /*

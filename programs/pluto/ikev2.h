@@ -34,7 +34,8 @@ extern void ikev2_parent_outI1(struct fd *whack_sock,
 			      struct state *predecessor,
 			      lset_t policy,
 			      unsigned long try,
-			      const threadtime_t *inception);
+			      const threadtime_t *inception,
+			      chunk_t sec_label);
 
 extern void log_ipsec_sa_established(const char *m, const struct state *st);
 

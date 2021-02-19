@@ -62,6 +62,7 @@ void add_pending(struct fd *whack_sock,
 		 lset_t policy,
 		 unsigned long try,
 		 so_serial_t replacing,
+		 const chunk_t sec_label,
 		 bool part_of_initiate)
 {
 	/* look for duplicate pending IPsec SA's, skip add operation */
@@ -91,6 +92,7 @@ void add_pending(struct fd *whack_sock,
 	p->replacing = replacing;
 	p->pend_time = mononow();
 	p->part_of_initiate = part_of_initiate; /* useful */
+	p->sec_label = sec_label;
 
 	/*
 	 * If this is part of an initiate then there's already enough
@@ -283,7 +285,7 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 #ifdef USE_IKEv1
 				quick_outI1(p->whack_sock, &ike->sa, p->connection,
 					    p->policy,
-					    p->try, p->replacing);
+					    p->try, p->replacing, empty_chunk);
 #endif
 				break;
 			default:

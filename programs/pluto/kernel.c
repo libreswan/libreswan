@@ -1002,7 +1002,7 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 		 * other than c, conflicts with c?
 		 */
 
-		if (LDISJOINT(POLICY_OVERLAPIP, c->policy | ero->policy)) {
+		if (LDISJOINT(POLICY_OVERLAPIP, c->policy | ero->policy) && c->spd.this.sec_label.len == 0) {
 			/*
 			 * another connection is already using the eroute,
 			 * TODO: XFRM apparently can do this though
@@ -1849,6 +1849,14 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		.outif = -1,
 		.sec_label = c->spd.this.sec_label /* assume connection outlive their kernel_sa's */
 	};
+	if (st->st_acquired_sec_label.len != 0) {
+			said_boilerplate.sec_label.ptr = st->st_acquired_sec_label.ptr;
+			said_boilerplate.sec_label.len = st->st_acquired_sec_label.len;
+	}
+	if (st->st_seen_sec_label.len != 0) {
+			said_boilerplate.sec_label.ptr = st->st_seen_sec_label.ptr;
+			said_boilerplate.sec_label.len = st->st_seen_sec_label.len;
+	}
 
 	inner_spi = SPI_PASS;
 	if (mode == ENCAPSULATION_MODE_TUNNEL) {
@@ -2726,7 +2734,7 @@ bool route_and_eroute(struct connection *c,
 		      struct logger *logger/*st or c */)
 {
 	selectors_buf sb;
-	dbg("route_and_eroute() for %s; proto %d, and source port %d dest port %d",
+	dbg("route_and_eroute() for %s; proto %d, and source port %d dest port %d sec_label",
 	    str_selectors(&sr->this.client, &sr->that.client, &sb),
 	    sr->this.protocol, sr->this.port, sr->that.port);
 #if 0

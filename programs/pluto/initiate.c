@@ -70,6 +70,7 @@
 #include "initiate.h"
 #include "iface.h"
 #include "hostpair.h"
+#include "state_db.h"
 
 /*
  * swap ends and try again.
@@ -484,7 +485,7 @@ bool initiate_connection_3(struct connection *c, bool background, const threadti
 	dbg("%s() connection '%s' +POLICY_UP", __func__, c->name);
 	c->policy |= POLICY_UP;
 	ipsecdoi_initiate(background ? null_fd : c->logger->global_whackfd,
-			  c, c->policy, 1, SOS_NOBODY, &inception);
+			  c, c->policy, 1, SOS_NOBODY, &inception, c->spd.this.sec_label);
 	return true;
 }
 
@@ -714,7 +715,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	const char *peer_addr = str_address(&b->remote.host_addr, &peerb);
 
 	if (b->sec_label.len != 0) {
-		dbg("received security label string: %.*s",
+		dbg("oppo bundle: received security label string: %.*s",
 			(int)b->sec_label.len, b->sec_label.ptr);
 	}
 
@@ -753,6 +754,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 
 	struct spd_route *sr;
 	/* Why is this not passed the entire bundle b ? */
+
 	struct connection *c = find_connection_for_clients(&sr,
 							   &b->our_client,
 							   &b->peer_client,
@@ -767,6 +769,17 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			llog(RC_LOG, b->logger, "%s", demandbuf);
 		}
 		cannot_oppo(b, "no routed template covers this pair");
+		return;
+	}
+
+	if (c->ike_version == IKEv2 && c->kind == CK_INSTANCE && b->sec_label.ptr != NULL) {
+		/* a bit of a hack until we properly instantiate labeled ipsec connections */
+		struct connection *templ = connection_by_serialno(c->serial_from);
+		struct ike_sa *ikesa = ike_sa(state_by_serialno(c->newest_ipsec_sa), HERE);
+		ip_address b_peer = endpoint_address(&b->peer_client);
+		struct connection *inst = instantiate(templ, &b_peer, NULL);
+		add_pending(NULL, ikesa, inst, inst->policy, 1, SOS_NOBODY, b->sec_label, false );
+		unpend(ikesa, NULL); /* cuases initiate */
 		return;
 	}
 
@@ -787,7 +800,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		return;
 	}
 
-	if (c->kind == CK_INSTANCE) {
+	if (c->kind == CK_INSTANCE && b->sec_label.len == 0) {
 		connection_buf cib;
 		/* there is already an instance being negotiated */
 #if 0
@@ -852,7 +865,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		}
 
 		ipsecdoi_initiate(b->background ? null_fd : b->logger->global_whackfd,
-				  c, c->policy, 1, SOS_NOBODY, &inception);
+				  c, c->policy, 1, SOS_NOBODY, &inception, b->sec_label);
 		endpoint_buf b1;
 		endpoint_buf b2;
 		dbg("initiate on demand using %s from %s to %s",
@@ -1061,7 +1074,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 
 	ipsecdoi_initiate(b->background ? null_fd : b->logger->global_whackfd,
 			  c, c->policy, 1,
-			  SOS_NOBODY, &inception);
+			  SOS_NOBODY, &inception, b->sec_label);
 }
 
 void initiate_ondemand(const ip_endpoint *our_client,
@@ -1084,11 +1097,9 @@ void initiate_ondemand(const ip_endpoint *our_client,
 		.negotiation_shunt = SPI_HOLD, /* until we found connection policy */
 		.failure_shunt = SPI_HOLD, /* until we found connection policy */
 		.logger = logger, /*on-stack*/
-		.background = background
+		.background = background,
+		.sec_label = *sec_label
 	};
-	if (sec_label != NULL) {
-		b.sec_label = *sec_label;
-	}
 
 	initiate_ondemand_body(&b);
 }

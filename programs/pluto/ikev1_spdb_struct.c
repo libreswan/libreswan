@@ -116,6 +116,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 	if (c->spd.this.sec_label.ptr == NULL) {
 		log_state(RC_LOG_SERIOUS, st,
 			  "received IPsec Security Label on connection not configured with labeled ipsec");
+		free_chunk_content(&st->st_seen_sec_label);
 		return FALSE;
 	} else if (within_range((const char *)st->st_seen_sec_label.ptr,
                                         (const char *)c->spd.this.sec_label.ptr, /* we ensured NUL termination above */
@@ -126,6 +127,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 			  "received IPsec Security Label '%.*s' not within range of our configured security label %.*s",
 			(int)st->st_seen_sec_label.len, st->st_seen_sec_label.ptr,
 			(int)c->spd.this.sec_label.len, c->spd.this.sec_label.ptr);
+			free_chunk_content(&st->st_seen_sec_label);
 		return FALSE;
 	}
 	return TRUE;
@@ -1265,12 +1267,22 @@ bool ikev1_out_sa(pb_stream *outs,
 
 #ifdef HAVE_LABELED_IPSEC
 					if (c->spd.this.sec_label.len != 0) {
+						chunk_t out_label = c->spd.this.sec_label;
+
+						if (st->st_acquired_sec_label.len != 0) {
+							out_label = st->st_acquired_sec_label;
+						} else {
+							if (st->st_seen_sec_label.len !=0)
+								out_label = st->st_seen_sec_label;
+						}
+
 						pb_stream val_pbs;
 						struct sec_ctx uctx = {
 							.ctx_doi = XFRM_SC_DOI_LSM,
 							.ctx_alg = XFRM_SC_ALG_SELINUX,
-							.ctx_len = c->spd.this.sec_label.len
+							.ctx_len = out_label.len
 						};
+
 
 						struct isakmp_attribute attr = {
 							.isaat_af_type = secctx_attr_type |
@@ -1285,8 +1297,7 @@ bool ikev1_out_sa(pb_stream *outs,
 								&sec_ctx_desc,
 								&val_pbs,
 								NULL) ||
-						    !out_raw(c->spd.this.sec_label.ptr,
-							     c->spd.this.sec_label.len, &val_pbs,
+						    !out_raw(out_label.ptr, out_label.len, &val_pbs,
 							     " variable length sec_label"))
 							goto fail;
 

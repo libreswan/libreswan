@@ -87,8 +87,10 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 		       lset_t policy,
 		       unsigned long try,
 		       so_serial_t replacing,
-		       const threadtime_t *inception)
+		       const threadtime_t *inception,
+		       chunk_t sec_label)
 {
+	dbg("ipsecdoi_initiate() called with sec_label %.*s", (int)sec_label.len, sec_label.ptr);
 	/*
 	 * If there's already an IKEv1 ISAKMP SA established, use that and
 	 * go directly to Quick Mode.  We are even willing to use one
@@ -109,12 +111,12 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 	case IKEv1:
 		if (st == NULL) {
 			initiator_function *initiator = (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;
-			initiator(whack_sock, c, NULL, policy, try, inception);
+			initiator(whack_sock, c, NULL, policy, try, inception, sec_label);
 		} else if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 			/* leave our Phase 2 negotiation pending */
 			add_pending(whack_sock, pexpect_ike_sa(st),
 				    c, policy, try,
-				    replacing,
+				    replacing, sec_label,
 				    false /*part of initiate*/);
 		} else {
 			/*
@@ -124,18 +126,19 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 			 * what to do with the error return.
 			 */
 			quick_outI1(whack_sock, st, c, policy, try,
-				    replacing);
+				    replacing, sec_label);
 		}
 		break;
 #endif
 	case IKEv2:
 		if (st == NULL) {
-			ikev2_parent_outI1(whack_sock, c, NULL, policy, try, inception);
+			/* note: new IKE SA pulls sec_label from connection */
+			ikev2_parent_outI1(whack_sock, c, NULL, policy, try, inception, empty_chunk);
 		} else if (!IS_PARENT_SA_ESTABLISHED(st)) {
 			/* leave CHILD SA negotiation pending */
 			add_pending(whack_sock, pexpect_ike_sa(st),
 				    c, policy, try,
-				    replacing,
+				    replacing, sec_label,
 				    false /*part of initiate*/);
 		} else {
 			struct pending p = {
@@ -145,6 +148,7 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 				.try = try,
 				.policy = policy,
 				.replacing = replacing,
+				.sec_label = sec_label,
 			};
 			ikev2_initiate_child_sa(&p);
 		}
@@ -185,14 +189,14 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 		case IKEv2:
 		{
 			initiator_function *initiator = ikev2_parent_outI1;
-			initiator(st->st_logger->object_whackfd, c, st, policy, try, &inception);
+			initiator(st->st_logger->object_whackfd, c, st, policy, try, &inception, c->spd.this.sec_label);
 			break;
 		}
 #ifdef USE_IKEv1
 		case IKEv1:
 		{
 			initiator_function *initiator = (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;
-			initiator(st->st_logger->object_whackfd, c, st, policy, try, &inception);
+			initiator(st->st_logger->object_whackfd, c, st, policy, try, &inception, c->spd.this.sec_label);
 			break;
 		}
 #endif
@@ -234,7 +238,7 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 			passert(HAS_IPSEC_POLICY(policy));
 
 		ipsecdoi_initiate(st->st_logger->object_whackfd, st->st_connection,
-				  policy, try, st->st_serialno, &inception);
+				  policy, try, st->st_serialno, &inception, empty_chunk);
 	}
 }
 
