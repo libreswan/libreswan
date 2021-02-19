@@ -147,8 +147,7 @@ err_t ttosubnet(shunk_t src,
 		p++;
 	}
 
-	dst->addr = endpoint3(&ip_protocol_unset, &addrtmp, ip_hport(0));
-	dst->maskbits = maskbits;
+	*dst = subnet_from_address_maskbits(&addrtmp, maskbits);
 
 	if (warning) {
 		LLOG_JAMBUF(RC_LOG, logger, buf) {
