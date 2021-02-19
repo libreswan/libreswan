@@ -1795,7 +1795,7 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 		/* updates remaining too */
 		attr = RTA_NEXT(attr, remaining);
 	}
-	record_and_initiate_opportunistic(&local, &remote, &sec_label,
+	record_and_initiate_opportunistic(&local, &remote, sec_label,
 					  "%acquire-netlink");
 }
 

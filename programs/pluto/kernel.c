@@ -213,7 +213,7 @@ void add_bare_shunt(const ip_subnet *our_client, const ip_subnet *peer_client,
 
 void record_and_initiate_opportunistic(const ip_endpoint *local_client,
 				       const ip_endpoint *remote_client,
-				       const chunk_t *sec_label,
+				       const chunk_t sec_label,
 				       const char *why)
 {
 	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };

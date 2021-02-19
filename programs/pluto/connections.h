@@ -444,7 +444,7 @@ extern void flush_revival(const struct connection *c);
 extern void initiate_ondemand(const ip_endpoint *our_client,
 			      const ip_endpoint *peer_client,
 			      bool held, bool background,
-			      const chunk_t *sec_label,
+			      const chunk_t sec_label,
 			      const char *why,
 			      struct logger *logger);
 

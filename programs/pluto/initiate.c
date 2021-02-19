@@ -1079,7 +1079,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 void initiate_ondemand(const ip_endpoint *our_client,
 		       const ip_endpoint *peer_client,
 		       bool held, bool background,
-		       const chunk_t *sec_label,
+		       const chunk_t sec_label,
 		       const char *why,
 		       struct logger *logger)
 {
@@ -1097,7 +1097,7 @@ void initiate_ondemand(const ip_endpoint *our_client,
 		.failure_shunt = SPI_HOLD, /* until we found connection policy */
 		.logger = logger, /*on-stack*/
 		.background = background,
-		.sec_label = *sec_label
+		.sec_label = sec_label
 	};
 
 	initiate_ondemand_body(&b);
