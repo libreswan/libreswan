@@ -50,8 +50,6 @@
 #include "ip_address.h"
 #include "ip_endpoint.h"
 
-#include "where.h"		/* used by endtosubnet() */
-
 struct jambuf;
 
 typedef struct {
@@ -139,7 +137,6 @@ ip_address subnet_address(const ip_subnet *subnet);
 extern err_t ttosubnet(shunk_t src, const struct ip_info *afi,
 		       int clash, ip_subnet *dst, struct logger *logger);
 #define SUBNETTOT_BUF   sizeof(subnet_buf)
-extern err_t endtosubnet(const ip_endpoint *end, ip_subnet *dst, where_t where);
 
 /* misc. conversions and related */
 extern err_t rangetosubnet(const ip_address *from, const ip_address *to,

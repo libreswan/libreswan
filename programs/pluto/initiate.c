@@ -909,14 +909,13 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	     our_port != 0 ||
 	     peer_port != 0)) {
 		const char *const addwidemsg = "oe-negotiating";
-		ip_subnet this_client, that_client;
 		int shunt_proto = b->transport_proto;
 
-		happy(endtosubnet(&b->our_client, &this_client, HERE));
-		happy(endtosubnet(&b->peer_client, &that_client, HERE));
+		ip_selector this_client = selector_from_endpoint(&b->our_client);
+		ip_selector that_client = selector_from_endpoint(&b->peer_client);
+
 		/* OLD: negotiationshunt must be wider than bare shunt, esp on NETKEY */
 		/* if the connection we found has protoports, match those for the shunt */
-
 		update_selector_hport(&this_client, 0); /* always catch all ephemeral to dest */
 		update_selector_hport(&that_client, 0); /* default unless connection says otherwise */
 		if (b->transport_proto != 0) {
