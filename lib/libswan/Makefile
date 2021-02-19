@@ -40,7 +40,8 @@ LIB = libswan.a
 OBJS += x509dn.o asn1.o oid.o
 
 OBJS += constants.o \
-	id.o initaddr.o initsubnet.o \
+	id.o \
+	initaddr.o \
 	lex.o \
 	lswconf.o \
 	lswfips.o \
