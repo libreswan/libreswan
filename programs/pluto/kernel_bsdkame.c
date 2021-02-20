@@ -269,9 +269,9 @@ static void bsdkame_consume_pfkey(int pfkeyfd, unsigned int pfkey_seq)
  *
  */
 static bool bsdkame_raw_eroute(const ip_address *this_host,
-			       const ip_subnet *this_client,
+			       const ip_selector *this_client,
 			       const ip_address *that_host,
-			       const ip_subnet *that_client,
+			       const ip_selector *that_client,
 			       ipsec_spi_t cur_spi UNUSED,
 			       ipsec_spi_t new_spi,
 			       const struct ip_protocol *sa_proto,
@@ -284,7 +284,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 			       const uint32_t xfrm_if_id UNUSED,
 			       enum pluto_sadb_operations sadb_op,
 			       const char *text_said UNUSED,
-			       const char *policy_label UNUSED,
+			       const chunk_t *policy_label UNUSED,
 			       struct logger *logger)
 {
 	ip_sockaddr saddr = sockaddr_from_endpoint(&this_client->addr);
@@ -369,8 +369,8 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 	policylen = sizeof(*policy_struct);
 
 	if (policy == IPSEC_POLICY_IPSEC) {
-		ip_sockaddr local_sa = sockaddr_from_endpoint(this_host);
-		ip_sockaddr remote_sa = sockaddr_from_endpoint(that_host);
+		ip_sockaddr local_sa = sockaddr_from_address(this_host);
+		ip_sockaddr remote_sa = sockaddr_from_address(that_host);
 
 		ir = (struct sadb_x_ipsecrequest *)&policy_struct[1];
 
@@ -535,8 +535,8 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 	case ERO_REPLACE:
 	case ERO_ADD:
 	{
-		const ip_subnet *mine   = &sr->this.client;
-		const ip_subnet *peers    = &sr->that.client;
+		const ip_selector *mine   = &sr->this.client;
+		const ip_selector *peers    = &sr->that.client;
 		ip_sockaddr saddr = sockaddr_from_endpoint(&mine->addr);
 		ip_sockaddr daddr = sockaddr_from_endpoint(&peers->addr);
 		char pbuf[512];
@@ -570,8 +570,8 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 		policylen = sizeof(*policy_struct);
 
 		if (policy == IPSEC_POLICY_IPSEC) {
-			ip_sockaddr local_sa = sockaddr_from_endpoint(&sr->this.host_addr);
-			ip_sockaddr remote_sa = sockaddr_from_endpoint(&sr->that.host_addr);
+			ip_sockaddr local_sa = sockaddr_from_address(&sr->this.host_addr);
+			ip_sockaddr remote_sa = sockaddr_from_address(&sr->that.host_addr);
 
 			ir = (struct sadb_x_ipsecrequest *)&policy_struct[1];
 
@@ -800,8 +800,8 @@ static bool bsdkame_sag_eroute(const struct state *st,
 static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace,
                            struct logger *logger)
 {
-	ip_sockaddr saddr = sockaddr_from_endpoint(sa->src.address);
-	ip_sockaddr daddr = sockaddr_from_endpoint(sa->dst.address);
+	ip_sockaddr saddr = sockaddr_from_address(sa->src.address);
+	ip_sockaddr daddr = sockaddr_from_address(sa->dst.address);
 	char keymat[256];
 	int ret, mode, satype;
 
