@@ -1,6 +1,6 @@
 : dump all emitted and parsed proposals onto the console
 : weird pattern deals with optional length field
-grep -B 1 -e '|    last proposal: ' -A 3 -e '|    prop #: ' /tmp/pluto.log
+grep -v '| helper' /tmp/pluto.log | grep -B 1 -e '|    last proposal: ' -A 3 -e '|    prop #: '
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

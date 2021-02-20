@@ -37,7 +37,7 @@ west #
 west #
  : weird pattern deals with optional length field
 west #
- grep -B 1 -e '|    last proposal: ' -A 3 -e '|    prop #: ' /tmp/pluto.log
+ grep -v '| helper' /tmp/pluto.log | grep -B 1 -e '|    last proposal: ' -A 3 -e '|    prop #: '
 | ****emit IKEv2 Proposal Substructure Payload:
 |    last proposal: v2_PROPOSAL_NON_LAST (0x2)
 |    prop #: 1 (01)
