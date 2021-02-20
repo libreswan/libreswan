@@ -67,7 +67,7 @@ road #
  # this should show DNS query
 road #
  grep "DNS QUESTION" /tmp/pluto.log
-| DNS QUESTION 23.2.1.192.IN-ADDR.ARPA.\011IN\011IPSECKEY\012
+| DNS QUESTION 23.2.1.192.IN-ADDR.ARPA.\tIN\tIPSECKEY\n
 road #
  # shows existing bad keys replaced with working new key (why is that?)
 road #
