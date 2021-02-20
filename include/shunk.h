@@ -48,7 +48,6 @@ typedef struct shunk shunk_t;
  * be used.
  */
 
-#define NULL_SHUNK { .ptr = NULL, .len = 0, }
 extern const shunk_t null_shunk;
 extern const shunk_t empty_shunk;
 

@@ -20,11 +20,7 @@
 #include "lswlog.h"	/* for DBG_dump() */
 #include <stdlib.h>		/* for strtoul() */
 
-/*
- * Compiler note: some older versions of GCC claim that EMPTY_CHUNK
- * isn't a constant so we cannot use it as an initializer for empty_chunk.
- */
-const chunk_t empty_chunk = { .ptr = NULL, .len = 0 };
+const chunk_t empty_chunk = NULL_HUNK;
 
 chunk_t chunk2(void *ptr, size_t len)
 {
