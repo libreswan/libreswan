@@ -73,7 +73,9 @@ void ip_endpoint_check()
 			/* Error occurred, but we didn't expect one  */
 			FAIL_IN("ttosubnet failed: %s", oops);
 		}
-		ip_endpoint e = endpoint(&a, t->hport);
+
+		ip_endpoint e = endpoint_from_address_protocol_port(&a, &ip_protocol_udp,
+								    ip_hport(t->hport));
 
 		CHECK_TYPE(PRINT_IN, endpoint_type(&e));
 

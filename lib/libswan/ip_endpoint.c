@@ -23,13 +23,14 @@
 
 const ip_endpoint unset_endpoint; /* all zeros */
 
-static ip_endpoint raw_endpoint(const struct ip_protocol *protocol,
-				const ip_address *address, int hport)
+ip_endpoint endpoint_from_address_protocol_port(const ip_address *address,
+						const struct ip_protocol *protocol,
+						ip_port port)
 {
 	ip_endpoint endpoint = {
 		.version = address->version,
 		.bytes = address->bytes,
-		.hport = hport,
+		.hport = port.hport,
 		.ipproto = protocol->ipproto,
 		.is_endpoint = true,
 	};
@@ -42,15 +43,7 @@ static ip_endpoint raw_endpoint(const struct ip_protocol *protocol,
 ip_endpoint endpoint3(const struct ip_protocol *protocol,
 		      const ip_address *address, ip_port port)
 {
-#if 0
-	padddress(address);
-#endif
-	return raw_endpoint(protocol, address, hport(port));
-}
-
-ip_endpoint endpoint(const ip_address *address, int hport)
-{
-	return raw_endpoint(&ip_protocol_unset, address, hport);
+	return endpoint_from_address_protocol_port(address, protocol, port);
 }
 
 ip_address endpoint_address(const ip_endpoint *endpoint)

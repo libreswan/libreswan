@@ -63,8 +63,9 @@ void pexpect_endpoint(const ip_endpoint *e, const char *t, where_t where);
  * Constructors.
  */
 
-ip_endpoint endpoint(const ip_address *address, int port);
-
+ip_endpoint endpoint_from_address_protocol_port(const ip_address *address,
+						const struct ip_protocol *protocol,
+						ip_port port);
 ip_endpoint endpoint3(const struct ip_protocol *protocol,
 		      const ip_address *address, ip_port port);
 
