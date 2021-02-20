@@ -850,27 +850,29 @@ enum_names certpolicy_type_names = {
  * https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-2
  */
 static const char *const oakley_attr_bit_name[] = {
-	"OAKLEY_ENCRYPTION_ALGORITHM",
-	"OAKLEY_HASH_ALGORITHM",
-	"OAKLEY_AUTHENTICATION_METHOD",
-	"OAKLEY_GROUP_DESCRIPTION",
-	"OAKLEY_GROUP_TYPE",
-	"OAKLEY_GROUP_PRIME",
-	"OAKLEY_GROUP_GENERATOR_ONE",
-	"OAKLEY_GROUP_GENERATOR_TWO",
-	"OAKLEY_GROUP_CURVE_A",
-	"OAKLEY_GROUP_CURVE_B",
-	"OAKLEY_LIFE_TYPE",
-	"OAKLEY_LIFE_DURATION",
-	"OAKLEY_PRF",
-	"OAKLEY_KEY_LENGTH",
-	"OAKLEY_FIELD_SIZE",
-	"OAKLEY_GROUP_ORDER",
+#define S(E) [E - OAKLEY_ENCRYPTION_ALGORITHM] = #E
+	S(OAKLEY_ENCRYPTION_ALGORITHM),
+	S(OAKLEY_HASH_ALGORITHM),
+	S(OAKLEY_AUTHENTICATION_METHOD),
+	S(OAKLEY_GROUP_DESCRIPTION),
+	S(OAKLEY_GROUP_TYPE),
+	S(OAKLEY_GROUP_PRIME),
+	S(OAKLEY_GROUP_GENERATOR_ONE),
+	S(OAKLEY_GROUP_GENERATOR_TWO),
+	S(OAKLEY_GROUP_CURVE_A),
+	S(OAKLEY_GROUP_CURVE_B),
+	S(OAKLEY_LIFE_TYPE),
+	S(OAKLEY_LIFE_DURATION),
+	S(OAKLEY_PRF),
+	S(OAKLEY_KEY_LENGTH),
+	S(OAKLEY_FIELD_SIZE),
+	S(OAKLEY_GROUP_ORDER),
+#undef S
 };
 
 const struct enum_names oakley_attr_bit_names = {
 	OAKLEY_ENCRYPTION_ALGORITHM,
-	OAKLEY_GROUP_DESCRIPTION,
+	OAKLEY_GROUP_ORDER,
 	ARRAY_REF(oakley_attr_bit_name),
 	NULL, /*prefix*/
 	NULL, /*next*/
@@ -2625,6 +2627,7 @@ static const enum_names *en_checklist[] = {
 	&ike_version_ike_names,
 	&ike_version_child_names,
 	&payload_flag_names,
+	&oakley_attr_bit_names,
 };
 
 void check_enum_names(enum_names *checklist[], size_t tl)
