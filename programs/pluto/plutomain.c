@@ -1565,9 +1565,6 @@ int main(int argc, char **argv)
 		}
 	}
 
-	init_constants();
-	init_pluto_constants();
-
 	/*
 	 * Initialize logging then switch to the real logger.
 	 */
@@ -1580,6 +1577,9 @@ int main(int argc, char **argv)
 	dbg_alloc("logger", logger, HERE);
 	free_logger(&logger, HERE);
 	logger = &global_logger;
+
+	init_constants();
+	init_pluto_constants();
 
 	pluto_init_nss(oco->nssdir, logger);
 	if (libreswan_fipsmode()) {
