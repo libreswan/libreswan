@@ -13,7 +13,7 @@ initdone
 east #
  : dump key-length attributes to the connsole - none can be zero
 east #
- grep -A 1 'af+type: AF+IKEv2_KEY_LENGTH' /tmp/pluto.log
+ grep -v '^| helper' /tmp/pluto.log | grep -A 1 'af+type: AF+IKEv2_KEY_LENGTH'
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (01 00)
 --
