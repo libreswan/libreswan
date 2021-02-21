@@ -1,7 +1,7 @@
 
 See also https://libreswan.org/
 
-v4.3 (unreleased)
+v4.3 (February 21, 2021)
 * pluto: Restore range checking on Labeled IPsec [Paul/Andrew]
 * pluto: Higher state serialno does not imply newest state [Paul]
 * pluto: Cleanup ip_address vs ip_endpoint (protoport dropping) [Andrew]

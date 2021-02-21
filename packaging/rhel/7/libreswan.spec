@@ -31,7 +31,7 @@
     USE_XFRM_INTERFACE_IFLA_HEADER=true \\\
 %{nil}
 
-%global prever dr1
+#global prever dr1
 
 Name: libreswan
 Summary: Internet Key Exchange (IKEv1 and IKEv2) implementation for IPsec
@@ -231,5 +231,5 @@ prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
 %{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
 
 %changelog
-* Tue Feb 02 2021 Team Libreswan <team@libreswan.org> - 4.2-1
+* Sun Feb 21 2021 Team Libreswan <team@libreswan.org> - 4.3-1
 - Automated build from release tar ball
