@@ -2,6 +2,13 @@
 See also https://libreswan.org/
 
 v4.3 (unreleased)
+* pluto: Restore range checking on Labeled IPsec [Paul/Andrew]
+* pluto: Higher state serialno does not imply newest state [Paul]
+* pluto: Cleanup ip_address vs ip_endpoint (protoport dropping) [Andrew]
+* pluto: Revival of code could accidentally fallback to IKEv1 [Andrew]
+* newhostkey: Add support for generating ECDSA keys [Daiki Ueno]
+* libipsecconf: Ignore empty option at end of config (rhbz#1685653) [Andrew]
+* whack: Add --global-redirect and --global-redirect-to options [Pietro Monteiro]
 
 v4.2 (February 2, 2021)
 * IKEv2: Support for IKEv2 Labeled IPsec [Hugh, Sahana, Paul, Kavinda Wewegama]
