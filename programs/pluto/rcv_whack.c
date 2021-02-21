@@ -580,6 +580,34 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		find_states_and_redirect(m->name, m->active_redirect_dests, whackfd);
 	}
 
+	if (m->global_redirect_to) {
+		dbg("whack: global_redirect_to %s", m->global_redirect_to);
+		if (streq(m->global_redirect_to, "<none>")) {
+			set_global_redirect_dests("");
+			global_redirect = GLOBAL_REDIRECT_NO;
+			llog(RC_LOG, logger,
+				"cleared global redirect targets and disabled global redirects");
+		} else {
+			set_global_redirect_dests(m->global_redirect_to);
+			llog(RC_LOG, logger,
+				"set global redirect target to %s", global_redirect_to());
+		}
+	}
+
+	if (m->global_redirect) {
+		if (m->global_redirect != GLOBAL_REDIRECT_NO && strlen(global_redirect_to()) == 0) {
+			llog(RC_LOG_SERIOUS, logger,
+			    "ipsec whack: --global-redirect set to no as there are no active redirect targets");
+			global_redirect = GLOBAL_REDIRECT_NO;
+		} else {
+			dbg("whack: global_redirect %d", m->global_redirect);
+			global_redirect = m->global_redirect;
+			llog(RC_LOG, logger,
+				"set global redirect to %s",
+				enum_name(&allow_global_redirect_names, global_redirect));
+		}
+	}
+
 	/* update any socket buffer size before calling listen */
 	if (m->ike_buf_size != 0) {
 		dbg("whack: ike_buf_size %lu", m->ike_buf_size);

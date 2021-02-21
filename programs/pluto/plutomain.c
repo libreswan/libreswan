@@ -1874,7 +1874,7 @@ void show_setup_plutomain(struct show *s)
 	show_comment(s,
 		"global-redirect=%s, global-redirect-to=%s",
 		enum_name(&allow_global_redirect_names, global_redirect),
-		global_redirect_to()
+		strlen(global_redirect_to()) > 0 ? global_redirect_to() : "<unset>"
 		);
 
 #ifdef HAVE_LABELED_IPSEC

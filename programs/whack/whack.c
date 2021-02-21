@@ -159,6 +159,9 @@ static void help(void)
 		"active redirect: whack [--name <connection_name>] \\\n"
 		"	--redirect-to <ip-address(es)> \n"
 		"\n"
+		"global redirect: whack --global-redirect yes|no|auto\n"
+		"	--global-redirect-to <ip-address, dns-domain, ..> \n"
+		"\n"
 		"opportunistic initiation: whack [--tunnelipv4 | --tunnelipv6] \\\n"
 		"	--oppohere <ip-address> --oppothere <ip-address> \\\n"
 		"	--opposport <port> --oppodport <port> \\\n"
@@ -308,6 +311,8 @@ enum option_enums {
 	OPT_REKEY_IPSEC,
 
 	OPT_ACTIVE_REDIRECT,
+	OPT_GLOBAL_REDIRECT,
+	OPT_GLOBAL_REDIRECT_TO,
 
 	OPT_DDOS_BUSY,
 	OPT_DDOS_UNLIMITED,
@@ -578,6 +583,8 @@ static const struct option long_opts[] = {
 	{ "ike-socket-errqueue-toggle", no_argument, NULL, OPT_IKE_MSGERR + OO },
 
 	{ "redirect-to", required_argument, NULL, OPT_ACTIVE_REDIRECT + OO },
+	{ "global-redirect", required_argument, NULL, OPT_GLOBAL_REDIRECT + OO },
+	{ "global-redirect-to", required_argument, NULL, OPT_GLOBAL_REDIRECT_TO + OO },
 
 	{ "ddos-busy", no_argument, NULL, OPT_DDOS_BUSY + OO },
 	{ "ddos-unlimited", no_argument, NULL, OPT_DDOS_UNLIMITED + OO },
@@ -1367,6 +1374,26 @@ int main(int argc, char **argv)
 
 		case OPT_ACTIVE_REDIRECT:	/* --redirect-to */
 			msg.active_redirect_dests = strdup(optarg);
+			continue;
+
+		case OPT_GLOBAL_REDIRECT:	/* --global-redirect */
+			if (streq(optarg, "yes")) {
+				msg.global_redirect = GLOBAL_REDIRECT_YES;
+			} else if (streq(optarg, "no")) {
+				msg.global_redirect = GLOBAL_REDIRECT_NO;
+			} else if (streq(optarg, "auto")) {
+				msg.global_redirect = GLOBAL_REDIRECT_AUTO;
+			} else {
+				diag("invalid option argument for --global-redirect (allowed arguments: yes, no, auto)");
+			}
+			continue;
+
+		case OPT_GLOBAL_REDIRECT_TO:	/* --global-redirect-to */
+			if (!strlen(optarg)) {
+				msg.global_redirect_to = strdup("<none>");
+			} else {
+				msg.global_redirect_to = strdup(optarg);
+			}
 			continue;
 
 		case OPT_DDOS_BUSY:	/* --ddos-busy */
@@ -2580,6 +2607,7 @@ int main(int argc, char **argv)
 	if (!(msg.whack_connection || msg.whack_key ||
 	      msg.whack_delete ||msg.whack_deleteid || msg.whack_deletestate ||
 	      msg.whack_deleteuser || msg.active_redirect_dests != NULL ||
+	      msg.global_redirect || msg.global_redirect_to ||
 	      msg.whack_initiate || msg.whack_oppo_initiate ||
 	      msg.whack_terminate ||
 	      msg.whack_route || msg.whack_unroute || msg.whack_listen ||

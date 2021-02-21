@@ -440,6 +440,24 @@
 
       <arg choice="plain"><replaceable>whack</replaceable></arg>
 
+      <arg choice="plain">--global-redirect
+      <replaceable>yes|no|auto</replaceable></arg>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>ipsec</command>
+
+      <arg choice="plain"><replaceable>whack</replaceable></arg>
+
+      <arg choice="plain">--global-redirect-to
+      <replaceable>ip-address(es)</replaceable></arg>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>ipsec</command>
+
+      <arg choice="plain"><replaceable>whack</replaceable></arg>
+
       <arg choice="opt">
 	--name
 	<replaceable>connection-name</replaceable>
@@ -449,7 +467,7 @@
       <replaceable>ip-address(es)</replaceable></arg>
 
     </cmdsynopsis>
-    
+
     <cmdsynopsis>
       <command>ipsec</command>
 
@@ -2281,30 +2299,47 @@
         </varlistentry>
       </variablelist>
 
-      <para>Redirecting active clients can be done using IKEv2 redirect
-      mechanism.</para>
+      <para>Redirecting clients can be done using IKEv2 redirect mechanism.</para>
 
       <variablelist remap="TP">
         <varlistentry>
-          <term><option>--name</option>&nbsp;<emphasis
-          remap="i">connection_name</emphasis></term>
+          <term><option>--global-redirect</option>&nbsp;<emphasis
+          remap="i">yes|no|auto</emphasis></term>
 
-	  <listitem>
-	    <para>Specifying this is optional. If not specified
-	    the mechanism will redirect all currently active peers.
-	    If specified, only the peers from connection <emphasis
-	    remap="i">connection_name</emphasis> will be redirected.
-            </para>
+          <listitem>
+            <para>The --global-redirect option controls whether <emphasis
+            remap="b">pluto</emphasis> will instruct remote peers to redirect
+            IKE/IPsec SA's during IKE_SA_INIT. Valid options are <emphasis
+            remap="b">no</emphasis>, <emphasis remap="b">yes</emphasis> and
+            <emphasis remap="b">auto</emphasis>, where auto means remote peers
+            will be redirected if DDoS mode is active.</para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
+          <term><option>--global-redirect-to</option>&nbsp;<emphasis
+          remap="i">ip-address(es)</emphasis></term>
+
+          <listitem>
+            <para>The destination, or a list of destinations, where the peers will
+            be redirected.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--name</option>&nbsp;<emphasis
+          remap="i">connection_name</emphasis></term>
+
           <term><option>--redirect-to</option>&nbsp;<emphasis
           remap="i">ip-address(es)</emphasis></term>
 
-	  <listitem>
-	    <para>A destination, or a list of destination, where
-	    the peers will be redirected.
+          <listitem>
+            <para>The destination, or a list of destinations, where the peers will
+            be redirected.
+            Specifying the connection name is optional. If not specified
+            the mechanism will redirect all currently active peers.
+            If specified, only the peers from connection <emphasis
+            remap="i">connection_name</emphasis> will be redirected.
             </para>
           </listitem>
         </varlistentry>

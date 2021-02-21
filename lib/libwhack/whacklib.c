@@ -256,6 +256,7 @@ static bool pickle_whack_message(struct whackpacker *wp, struct pickler *pickle)
 		PICKLE_STRING(&wp->msg->conn_mark_out) &&
 		PICKLE_STRING(&wp->msg->vti_iface) &&
 		PICKLE_STRING(&wp->msg->remote_host) &&
+		PICKLE_STRING(&wp->msg->global_redirect_to) &&
 		PICKLE_STRING(&wp->msg->redirect_to) &&
 		PICKLE_STRING(&wp->msg->accept_redirect_to) &&
 		PICKLE_STRING(&wp->msg->active_redirect_dests) &&

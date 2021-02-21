@@ -51,9 +51,9 @@ static struct redirect_dests active_dests = { NULL, NULL };
 
 const char *global_redirect_to(void)
 {
-	return global_dests.whole == NULL || *global_dests.whole == '\0' ?
-		"<unset>" :
-		global_dests.whole;
+	if (global_dests.whole == NULL)
+		return ""; /* allows caller to strlen() */
+	return global_dests.whole;
 }
 
 static void free_redirect_dests(struct redirect_dests *dests)
