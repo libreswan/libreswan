@@ -1,6 +1,6 @@
 /* ip traffic selector, for libreswan
  *
- * Copyright (C) 2020 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2020-2021  Andrew Cagney
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
@@ -41,19 +41,20 @@ struct jambuf;
  */
 
 /*
- * Define SELECTOR_TYPE to enable a proper selector structure; expect
+ * Define SELECTOR_TYPE to enable an ip_selector type separate to ip_subnet; expect
  * everything to break.
  */
 
 #ifdef SELECTOR_TYPE
 
-struct {
-	/*
-	 * XXX: Data structure sufficient for IKEv2?
-	 */
-	const struct ip_protocol * protocol;
-	ip_address lo_address, hi_address;
-	uint16_t lo_hport, hi_hport;
+typedef struct {
+	bool is_selector;
+	/* (routing)prefix|host(id):port */
+	ip_endpoint addr;
+	/* (routing prefix) bits */
+	unsigned maskbits;
+	/* to-be-deleted - selector */
+	bool is_subnet;
 } ip_selector;
 
 #else
