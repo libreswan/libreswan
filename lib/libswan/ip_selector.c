@@ -236,7 +236,7 @@ ip_address selector_prefix(const ip_selector *selector)
 	return address_from_raw(afi, &selector->addr.bytes);
 }
 
-unsigned selector_maskbits(const ip_selector *selector)
+unsigned selector_prefix_bits(const ip_selector *selector)
 {
 	return selector->maskbits;
 }

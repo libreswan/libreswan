@@ -125,10 +125,9 @@ int selector_hport(const ip_selector *selector);
 #define update_selector_hport(SELECTOR, HPORT) { (SELECTOR)->addr.hport = (HPORT); }
 #define update_selector_ipproto(SELECTOR, IPPROTO) { (SELECTOR)->addr.ipproto = (IPPROTO); }
 
-
 /* assuming a subnet like XFRM does */
 ip_address selector_prefix(const ip_selector *selector);
-unsigned selector_maskbits(const ip_selector *selector);
+unsigned selector_prefix_bits(const ip_selector *selector);
 
 bool selector_contains_all_addresses(const ip_selector *selector);
 bool selector_contains_one_address(const ip_selector *selector);
