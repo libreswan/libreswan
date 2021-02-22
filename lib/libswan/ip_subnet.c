@@ -25,15 +25,18 @@
 
 const ip_subnet unset_subnet; /* all zeros */
 
-ip_subnet subnet_from_address_maskbits(const ip_address *address, unsigned maskbits)
+ip_subnet subnet_from_address_prefix_bits(const ip_address *address, unsigned prefix_bits)
 {
+	if (address_is_unset(address)) {
+		return unset_subnet;
+	}
 	ip_subnet s = {
 		.is_subnet = true,
 		.addr = {
 			.version = address->version,
 			.bytes = address->bytes,
 		},
-		.maskbits = maskbits,
+		.maskbits = prefix_bits,
 	};
 	psubnet(&s);
 	return s;
@@ -41,11 +44,11 @@ ip_subnet subnet_from_address_maskbits(const ip_address *address, unsigned maskb
 
 ip_subnet subnet_from_address(const ip_address *address)
 {
-	const struct ip_info *afi = address_type(address);
-	if (!pexpect(afi != NULL)) {
+	if (address_is_unset(address)) {
 		return unset_subnet;
 	}
-	return subnet_from_address_maskbits(address, afi->mask_cnt);
+	const struct ip_info *afi = address_type(address);
+	return subnet_from_address_prefix_bits(address, afi->mask_cnt);
 }
 
 err_t address_mask_to_subnet(const ip_address *address,
@@ -60,15 +63,15 @@ err_t address_mask_to_subnet(const ip_address *address,
 	if (address_type(mask) != afi) {
 		return "invalid mask type";
 	}
-	int maskbits =  masktocount(mask);
-	if (maskbits < 0) {
+	int prefix_bits =  masktocount(mask);
+	if (prefix_bits < 0) {
 		return "invalid mask";
 	}
 	ip_address prefix = address_from_blit(afi, address->bytes,
 					      /*routing-prefix*/&keep_bits,
 					      /*host-identifier*/&clear_bits,
-					      maskbits);
-	*subnet = subnet_from_address_maskbits(&prefix, maskbits);
+					      prefix_bits);
+	*subnet = subnet_from_address_prefix_bits(&prefix, prefix_bits);
 	return NULL;
 }
 

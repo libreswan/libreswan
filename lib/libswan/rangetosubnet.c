@@ -58,13 +58,13 @@ err_t rangetosubnet(const ip_address *from, const ip_address *to, ip_subnet *dst
 	size_t i = 0;
 
 	/*
-	 * Determine the maskbits (the CIDR network part) by matching
-	 * leading bits of FROM and TO.  Trailing bits (subnet address)
-	 * must be either all 0 (from) or 1 (to).
+	 * Determine the prefix_bits (the CIDR network part) by
+	 * matching leading bits of FROM and TO.  Trailing bits
+	 * (subnet address) must be either all 0 (from) or 1 (to).
 	 */
-	unsigned maskbits = 0;
+	unsigned prefix_bits = 0;
 	for (; i < n && f[i] == t[i]; i++) {
-		maskbits += 8;
+		prefix_bits += 8;
 	}
 	if (i < n && !(f[i] == 0x00 && t[i] == 0xff)) {	/* mid-byte bdry. */
 		uint8_t fb = f[i];
@@ -79,7 +79,7 @@ err_t rangetosubnet(const ip_address *from, const ip_address *to, ip_subnet *dst
 			fb &= ~m;
 			tb |= m;
 			m >>= 1;
-			maskbits++;
+			prefix_bits++;
 		}
 		if (fb != 0x00 || tb != 0xff) {
 			return "not a valid subnet";
@@ -91,6 +91,6 @@ err_t rangetosubnet(const ip_address *from, const ip_address *to, ip_subnet *dst
 		}
 	}
 
-	*dst = subnet_from_address_maskbits(from, maskbits);
+	*dst = subnet_from_address_prefix_bits(from, prefix_bits);
 	return NULL;
 }

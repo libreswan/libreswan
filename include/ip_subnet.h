@@ -76,9 +76,10 @@ void pexpect_subnet(const ip_subnet *s, const char *t, where_t where);
  * Constructors
  */
 
-/* ADDRESS..ADDRESS:0..65535 */
+/* ADDRESS..ADDRESS */
 ip_subnet subnet_from_address(const ip_address *address);
-ip_subnet subnet_from_address_maskbits(const ip_address *address, unsigned maskbits);
+/* ADDRESS/PREFIX_BITS */
+ip_subnet subnet_from_address_prefix_bits(const ip_address *address, unsigned prefixbits);
 
 err_t address_mask_to_subnet(const ip_address *address, const ip_address *mask,
 			     ip_subnet *subnet);

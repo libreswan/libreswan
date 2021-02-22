@@ -78,8 +78,8 @@ err_t ttosubnet(shunk_t src,
 	}
 
 	/* parse MASK */
-	uintmax_t maskbits;
-	oops = shunk_to_uintmax(mask, NULL, 10, &maskbits, afi->mask_cnt);
+	uintmax_t prefix_bits;
+	oops = shunk_to_uintmax(mask, NULL, 10, &prefix_bits, afi->mask_cnt);
 	if (oops != NULL) {
 		if (afi == &ipv4_info) {
 			ip_address masktmp;
@@ -92,7 +92,7 @@ err_t ttosubnet(shunk_t src,
 			if (i < 0) {
 				return "non-contiguous or otherwise erroneous mask";
 			}
-			maskbits = i;
+			prefix_bits = i;
 		} else {
 			return "masks are not permitted for IPv6 addresses";
 		}
@@ -122,7 +122,7 @@ err_t ttosubnet(shunk_t src,
 	if (n == 0)
 		return "unknown address family";
 
-	unsigned c = maskbits / 8;
+	unsigned c = prefix_bits / 8;
 	if (c > n)
 		return "impossible mask count";
 
@@ -130,7 +130,7 @@ err_t ttosubnet(shunk_t src,
 	n -= c;
 
 	unsigned m = 0xff;
-	c = maskbits % 8;
+	c = prefix_bits % 8;
 	if (n > 0 && c != 0)	/* partial byte */
 		m >>= c;
 
@@ -147,13 +147,13 @@ err_t ttosubnet(shunk_t src,
 		p++;
 	}
 
-	*dst = subnet_from_address_maskbits(&addrtmp, maskbits);
+	*dst = subnet_from_address_prefix_bits(&addrtmp, prefix_bits);
 
 	if (warning) {
 		LLOG_JAMBUF(RC_LOG, logger, buf) {
 			jam(buf, "WARNING:improper subnet mask, host-part bits on input ");
 			jam_address(buf, &addrtmp);
-			jam(buf, "/%ju ", maskbits);
+			jam(buf, "/%ju ", prefix_bits);
 			jam(buf, " extracted subnet ");
 			jam_subnet(buf, dst);
 		}
