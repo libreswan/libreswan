@@ -116,7 +116,6 @@ const struct ip_info *selector_type(const ip_selector *selector);
 unsigned selector_ipproto(const ip_selector *selector);
 const ip_protocol *selector_protocol(const ip_selector *selector);
 ip_range selector_range(const ip_selector *selector);
-ip_protoport selector_protoport(const ip_selector *selector);
 
 ip_port selector_port(const ip_selector *selector);
 

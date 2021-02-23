@@ -198,12 +198,6 @@ const struct ip_info *selector_type(const ip_selector *selector)
 	return ip_version_info(selector->addr.version);
 }
 
-ip_protoport selector_protoport(const ip_selector *selector)
-{
-	return protoport2(selector->addr.ipproto,
-			  ip_hport(selector->addr.hport));
-}
-
 ip_port selector_port(const ip_selector *selector)
 {
 	return ip_hport(selector->addr.hport);
