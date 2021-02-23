@@ -111,7 +111,7 @@ struct traffic_selector ikev2_end_to_ts(const struct end *e, chunk_t sec_label)
 
 	zero(&ts);	/* OK: no pointer fields */
 
-	switch (subnet_type(&e->client)->af) {
+	switch (selector_type(&e->client)->af) {
 	case AF_INET:
 		ts.ts_type = IKEv2_TS_IPV4_ADDR_RANGE;
 		break;
@@ -121,7 +121,7 @@ struct traffic_selector ikev2_end_to_ts(const struct end *e, chunk_t sec_label)
 	}
 
 	/* subnet => range */
-	ts.net = range_from_subnet(&e->client);
+	ts.net = selector_range(&e->client);
 	/* Setting ts_type IKEv2_TS_FC_ADDR_RANGE (RFC-4595) not yet supported */
 
 	ts.ipprotoid = e->protocol;
@@ -730,7 +730,7 @@ static int score_address_range(const struct end *end,
 	 *
 	 * XXX: so what is CIDR?
 	 */
-	ip_range range = range_from_subnet(&end->client);
+	ip_range range = selector_range(&end->client);
 	passert(addrcmp(&range.start, &range.end) <= 0);
 	passert(addrcmp(&ts->net.start, &ts->net.end) <= 0);
 	switch (fit) {
@@ -769,7 +769,7 @@ static int score_address_range(const struct end *end,
 
 	LSWDBGP(DBG_BASE, buf) {
 	    jam(buf, MATCH_PREFIX "match address end->client=");
-	    jam_subnet(buf, &end->client);
+	    jam_selector(buf, &end->client);
 	    jam(buf, " %s %s[%u]net=", fit_string(fit), which, index);
 	    jam_range(buf, &ts->net);
 	    jam(buf, ": ");
@@ -1274,7 +1274,7 @@ bool v2_process_ts_request(struct child_sa *child,
 			}
 
 			/* require initiator's subnet <= T; why? */
-			if (!subnetinsubnet(&c->spd.that.client, &t->spd.that.client)) {
+			if (!selector_in_selector(&c->spd.that.client, &t->spd.that.client)) {
 				dbg("    skipping; current connection's initiator subnet is not <= template");
 				continue;
 			}
