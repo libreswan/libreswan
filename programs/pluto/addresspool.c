@@ -391,7 +391,7 @@ static struct lease *connection_lease(struct connection *c)
 	 * membership in the range.
 	 */
 	struct ip_pool *pool = c->pool;
-	ip_address cp = subnet_prefix(&c->spd.that.client);
+	ip_address cp = selector_prefix(&c->spd.that.client);
 	uint32_t i = ntohl_address(&cp) - ntohl_address(&pool->r.start);
 	passert(pool->nr_leases <= pool->size);
 	passert(i < pool->nr_leases);
@@ -432,7 +432,7 @@ static struct lease *connection_lease(struct connection *c)
 
 void free_that_address_lease(struct connection *c)
 {
-	passert(!subnet_is_unset(&c->spd.that.client));
+	passert(!selector_is_unset(&c->spd.that.client));
 
 	if (!c->spd.that.has_lease) {
 		dbg("connection has no lease");
@@ -551,12 +551,12 @@ err_t lease_that_address(struct connection *c, const struct state *st)
 		 * connection's previously had a release then it may
 		 * still be the old value.
 		 */
-		subnet_buf b;
+		selector_buf b;
 		connection_buf cb;
 		DBG_pool(false, pool, "requesting %s lease for connection "PRI_CONNECTION" with '%s' and old address %s",
 			 reusable ? "reusable" : "one-time",
 			 pri_connection(c, &cb), thatstr,
-			 str_subnet(&c->spd.that.client, &b));
+			 str_selector(&c->spd.that.client, &b));
 	}
 
 	struct lease *new_lease = NULL;
@@ -650,7 +650,7 @@ err_t lease_that_address(struct connection *c, const struct state *st)
 	new_lease->assigned_to = c->serialno;
 
 	if (DBGP(DBG_BASE)) {
-		subnet_buf a;
+		selector_buf a;
 		connection_buf cb;
 		DBG_lease(true, pool, new_lease,
 			  "assign %s %s lease to "PRI_CONNECTION" "PRI_CO" with ID '%s' and that.client %s",
@@ -659,7 +659,7 @@ err_t lease_that_address(struct connection *c, const struct state *st)
 			  pri_connection(c, &cb),
 			  pri_co(new_lease->assigned_to),
 			  thatstr,
-			  str_subnet(&c->spd.that.client, &a));
+			  str_selector(&c->spd.that.client, &a));
 	}
 
 	return NULL;
