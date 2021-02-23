@@ -893,7 +893,7 @@ struct connection *find_v2_host_pair_connection(struct msg_digest *md, lset_t *p
 			continue;
 		}
 		ip_address sender = endpoint_address(&md->sender);
-		if (!addrinsubnet(&sender, &tmp->spd.that.client)) {
+		if (!address_in_selector(&sender, &tmp->spd.that.client)) {
 			continue;
 		}
 		dbgl(md->md_logger,
