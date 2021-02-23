@@ -223,16 +223,28 @@ ip_range selector_range(const ip_selector *selector)
 
 ip_address selector_prefix(const ip_selector *selector)
 {
-	const struct ip_info *afi = selector_type(selector);
-	if (afi == NULL) {
+	if (selector_is_unset(selector)) {
 		return unset_address;
 	}
+	const struct ip_info *afi = selector_type(selector);
 	return address_from_raw(afi, &selector->addr.bytes);
 }
 
 unsigned selector_prefix_bits(const ip_selector *selector)
 {
 	return selector->maskbits;
+}
+
+ip_address selector_prefix_mask(const ip_selector *selector)
+{
+	if (selector_is_unset(selector)) {
+		return unset_address;
+	}
+	const struct ip_info *afi = selector_type(selector);
+	return address_from_blit(afi, selector->addr.bytes,
+				 /*routing-prefix*/ &set_bits,
+				 /*host-identifier*/ &clear_bits,
+				 selector->maskbits);
 }
 
 bool selector_contains_all_addresses(const ip_selector *selector)

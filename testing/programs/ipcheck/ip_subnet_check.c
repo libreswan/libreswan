@@ -168,7 +168,7 @@ static void check_subnet_mask(struct logger *logger)
 		address_buf buf;
 		const char *out;
 
-		ip_address mask = subnet_mask(&s);
+		ip_address mask = subnet_prefix_mask(&s);
 		out = str_address(&mask, &buf);
 		if (!streq(t->mask, out)) {
 			FAIL_IN("subnet_mask() returned '%s', expected '%s'",
@@ -332,11 +332,6 @@ static void check_subnet_from_address(void)
 
 		CHECK_TYPE(PRINT_IN, subnet_type(&s));
 
-		int hport = selector_hport(&s);
-		if (hport != 0) {
-			FAIL_IN("subnet_port() returned %d, expecting 0", hport);
-		}
-
 		ip_address prefix = subnet_prefix(&s);
 		if (!sameaddr(&prefix, &a)) {
 			address_buf pb, ab;
@@ -344,7 +339,7 @@ static void check_subnet_from_address(void)
 				str_address(&prefix, &pb), str_address(&a, &ab));
 		}
 
-		ip_address mask = subnet_mask(&s);
+		ip_address mask = subnet_prefix_mask(&s);
 		if (!address_is_0xff(&mask)) {
 			address_buf mb;
 			FAIL_IN("subnet_mask(&s) returned %s, expecting 255.255.255.255",

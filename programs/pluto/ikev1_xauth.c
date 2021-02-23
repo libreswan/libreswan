@@ -300,8 +300,8 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 	case CISCO_SPLIT_INC:
 	{
 		/* XXX: bitstomask(c->spd.this.client.maskbits), */
-		ip_address mask = subnet_mask(&c->spd.this.client);
-		ip_address addr = subnet_prefix(&c->spd.this.client);
+		ip_address mask = selector_prefix_mask(&c->spd.this.client);
+		ip_address addr = selector_prefix(&c->spd.this.client);
 		struct CISCO_split_item i = {
 			.cs_addr = { htonl(ntohl_address(&addr)), },
 			.cs_mask = { htonl(ntohl_address(&mask)), },

@@ -56,10 +56,10 @@ err_t address_mask_to_subnet(const ip_address *address,
 			     ip_subnet *subnet)
 {
 	*subnet = unset_subnet;
-	const struct ip_info *afi = address_type(address);
-	if (afi == NULL) {
+	if (address_is_unset(address)) {
 		return "invalid address type";
 	}
+	const struct ip_info *afi = address_type(address);
 	if (address_type(mask) != afi) {
 		return "invalid mask type";
 	}
@@ -77,28 +77,19 @@ err_t address_mask_to_subnet(const ip_address *address,
 
 ip_address subnet_prefix(const ip_subnet *subnet)
 {
-	const struct ip_info *afi = subnet_type(subnet);
-	if (afi == NULL) {
+	if (subnet_is_unset(subnet)) {
 		return unset_address;
 	}
+	const struct ip_info *afi = subnet_type(subnet);
 	return address_from_blit(afi, subnet->addr.bytes,
 				 /*routing-prefix*/&keep_bits,
 				 /*host-identifier*/&clear_bits,
 				 subnet->maskbits);
 }
 
-ip_address subnet_address(const ip_subnet *subnet)
-{
-	const struct ip_info *afi = subnet_type(subnet);
-	if (afi == NULL) {
-		return unset_address;
-	}
-	return address_from_raw(afi, &subnet->addr.bytes);
-}
-
 const struct ip_info *subnet_type(const ip_subnet *subnet)
 {
-	if (subnet == NULL) {
+	if (subnet_is_unset(subnet)) {
 		return NULL;
 	}
 	return ip_version_info(subnet->addr.version);
@@ -114,59 +105,58 @@ bool subnet_is_unset(const ip_subnet *subnet)
 
 bool subnet_is_specified(const ip_subnet *subnet)
 {
-	if (subnet == NULL) {
+	if (subnet_is_unset(subnet)) {
 		return false;
 	}
 	return endpoint_is_specified(&subnet->addr);
 }
 
-bool subnet_contains_all_addresses(const ip_subnet *s)
+bool subnet_contains_all_addresses(const ip_subnet *subnet)
 {
-	const struct ip_info *afi = subnet_type(s);
-	if (afi == NULL) {
+	if (subnet_is_unset(subnet)) {
 		return false;
 	}
-	if (s->addr.hport != 0) {
+	if (subnet->addr.hport != 0) {
 		return false;
 	}
-	if (s->maskbits != 0) {
+	if (subnet->maskbits != 0) {
 		return false;
 	}
-	ip_address network = subnet_prefix(s);
+	ip_address network = subnet_prefix(subnet);
 	return address_is_any(&network);
 }
 
-bool subnet_contains_no_addresses(const ip_subnet *s)
+bool subnet_contains_no_addresses(const ip_subnet *subnet)
 {
-	const struct ip_info *afi = subnet_type(s);
-	if (afi == NULL) {
+	if (subnet_is_unset(subnet)) {
 		return false;
 	}
-	if (s->maskbits != afi->mask_cnt) {
+	const struct ip_info *afi = subnet_type(subnet);
+	if (subnet->maskbits != afi->mask_cnt) {
 		return false;
 	}
-	if (s->addr.hport != 0) {
+	if (subnet->addr.hport != 0) {
 		return false; /* weird one */
 	}
-	ip_address network = subnet_prefix(s);
+	ip_address network = subnet_prefix(subnet);
 	return address_is_any(&network);
 }
 
-bool subnet_contains_one_address(const ip_subnet *s)
+bool subnet_contains_one_address(const ip_subnet *subnet)
 {
 	/* Unlike subnetishost() this rejects 0.0.0.0/32. */
-	const struct ip_info *afi = subnet_type(s);
-	if (afi == NULL) {
+	if (subnet_is_unset(subnet)) {
 		return false;
 	}
-	if (s->addr.hport != 0) {
+	const struct ip_info *afi = subnet_type(subnet);
+	if (subnet->addr.hport != 0) {
 		return false;
 	}
-	if (s->maskbits != afi->mask_cnt) {
+	if (subnet->maskbits != afi->mask_cnt) {
 		return false;
 	}
 	/* ignore port */
-	ip_address network = subnet_prefix(s);
+	ip_address network = subnet_prefix(subnet);
 	/* address_is_set(&network) implied as afi non-NULL */
 	return !address_is_any(&network); /* i.e., non-zero */
 }
@@ -177,12 +167,12 @@ bool subnet_contains_one_address(const ip_subnet *s)
  * For instance 1.2.3.4/24 -> 255.255.255.0.
  */
 
-ip_address subnet_mask(const ip_subnet *subnet)
+ip_address subnet_prefix_mask(const ip_subnet *subnet)
 {
-	const struct ip_info *afi = subnet_type(subnet);
-	if (afi == NULL) {
+	if (subnet_is_unset(subnet)) {
 		return unset_address;
 	}
+	const struct ip_info *afi = subnet_type(subnet);
 	return address_from_blit(afi, subnet->addr.bytes,
 				 /*routing-prefix*/ &set_bits,
 				 /*host-identifier*/ &clear_bits,
@@ -195,7 +185,7 @@ size_t jam_subnet(struct jambuf *buf, const ip_subnet *subnet)
 		return jam_string(buf, "<unset-subnet>");
 	}
 	size_t s = 0;
-	ip_address sa = subnet_address(subnet);
+	ip_address sa = subnet_prefix(subnet);
 	s += jam_address(buf, &sa); /* sensitive? */
 	s += jam(buf, "/%u", subnet->maskbits);
 	return s;
@@ -208,16 +198,18 @@ const char *str_subnet(const ip_subnet *subnet, subnet_buf *out)
 	return out->buf;
 }
 
-void pexpect_subnet(const ip_subnet *s, const char *t, where_t where)
+void pexpect_subnet(const ip_subnet *subnet, const char *t, where_t where)
 {
-	if (s != NULL && s->addr.version != 0) {
-		if (s->is_subnet == false ||
-		    s->is_selector == true) {
-			subnet_buf b;
-			dbg("EXPECTATION FAILED: %s is not a subnet; "PRI_SUBNET" "PRI_WHERE,
-			    t, pri_subnet(s, &b),
-			    pri_where(where));
-		}
+	if (subnet_is_unset(subnet)) {
+		return;
+	}
+	if (subnet->addr.version == 0 ||
+	    subnet->is_subnet == false ||
+	    subnet->is_selector == true) {
+		subnet_buf b;
+		dbg("EXPECTATION FAILED: %s is not a subnet; "PRI_SUBNET" "PRI_WHERE,
+		    t, pri_subnet(subnet, &b),
+		    pri_where(where));
 	}
 }
 
@@ -225,11 +217,14 @@ bool subnet_eq(const ip_subnet *l, const ip_subnet *r)
 {
 	psubnet(l);
 	psubnet(r);
+	if (subnet_is_unset(l) && subnet_is_unset(r)) {
+		/* NULL/unset subnets are equal */
+		return true;
+	}
 	const struct ip_info *lt = subnet_type(l);
 	const struct ip_info *rt = subnet_type(r);
-	if (lt == NULL || rt == NULL) {
-		/* NULL/unset subnets are equal */
-		return (lt == NULL && rt == NULL);
+	if (lt != rt) {
+		return false;
 	}
 	return (l->maskbits == r->maskbits &&
 		l->addr.version == r->addr.version &&

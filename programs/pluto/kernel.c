@@ -452,7 +452,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	jam(buf, "' ");
 
 	jam(buf, "PLUTO_MY_CLIENT_MASK='");
-	ta = subnet_mask(&sr->this.client);
+	ta = selector_prefix_mask(&sr->this.client);
 	jam_address(buf, &ta);
 	jam(buf, "' ");
 
@@ -493,7 +493,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	jam(buf, "' ");
 
 	jam(buf, "PLUTO_PEER_CLIENT_MASK='");
-	ta = subnet_mask(&sr->that.client);
+	ta = selector_prefix_mask(&sr->that.client);
 	jam_address(buf, &ta);
 	jam(buf, "' ");
 

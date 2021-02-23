@@ -68,8 +68,8 @@ bool sameaddr(const ip_address *a, const ip_address *b)
  */
 bool samesubnet(const ip_subnet *l, const ip_subnet *r)
 {
-	ip_address la = subnet_address(l);
-	ip_address ra = subnet_address(r);
+	ip_address la = subnet_prefix(l);
+	ip_address ra = subnet_prefix(r);
 	return (l->maskbits == r->maskbits &&
 		/* also does type check */
 		sameaddr(&la, &ra));

@@ -126,6 +126,7 @@ int selector_hport(const ip_selector *selector);
 
 /* assuming a subnet like XFRM does */
 ip_address selector_prefix(const ip_selector *selector);
+ip_address selector_prefix_mask(const ip_selector *selector);
 unsigned selector_prefix_bits(const ip_selector *selector);
 
 bool selector_contains_all_addresses(const ip_selector *selector);
