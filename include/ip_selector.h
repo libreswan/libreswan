@@ -79,6 +79,7 @@ ip_selector selector_from_address_protocol_port(const ip_address *address,
 
 ip_selector selector_from_endpoint(const ip_endpoint *address);
 
+ip_selector selector_from_subnet(const ip_subnet *subnet);
 ip_selector selector_from_subnet_protocol_port(const ip_subnet *subnet,
 					       const ip_protocol *protocol,
 					       ip_port port);
@@ -87,10 +88,6 @@ ip_selector selector_from_address_protoport(const ip_address *address,
 					    const ip_protoport *protoport);
 ip_selector selector_from_subnet_protoport(const ip_subnet *subnet,
 					   const ip_protoport *protoport);
-
-err_t range_to_selector(const ip_range *range,
-			const ip_protoport *protoport,
-			ip_selector *selector);
 
 err_t numeric_to_selector(shunk_t src, const struct ip_info *afi, ip_selector *dst);
 
@@ -113,11 +110,10 @@ bool selector_is_unset(const ip_selector *selector);
 
 const struct ip_info *selector_type(const ip_selector *selector);
 
-unsigned selector_ipproto(const ip_selector *selector);
 const ip_protocol *selector_protocol(const ip_selector *selector);
 ip_range selector_range(const ip_selector *selector);
-
 ip_port selector_port(const ip_selector *selector);
+/* ip_port_range selector_port_range(const ip_selector *selector); */
 
 /* hacks */
 int selector_hport(const ip_selector *selector);

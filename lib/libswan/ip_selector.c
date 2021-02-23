@@ -136,6 +136,11 @@ ip_selector selector_from_endpoint(const ip_endpoint *endpoint)
 	return selector_from_subnet_protocol_port(&subnet, protocol, port);
 }
 
+ip_selector selector_from_subnet(const ip_subnet *subnet)
+{
+	return selector_from_subnet_protocol_port(subnet, &ip_protocol_unset, unset_port);
+}
+
 ip_selector selector_from_subnet_protocol_port(const ip_subnet *subnet,
 					       const ip_protocol *protocol,
 					       ip_port port)
@@ -172,27 +177,9 @@ ip_selector selector_from_subnet_protoport(const ip_subnet *subnet,
 	return selector_from_subnet_protocol_port(subnet, protocol, port);
 }
 
-err_t range_to_selector(const ip_range *range,
-			const ip_protoport *protoport,
-			ip_selector *selector)
-{
-	const struct ip_info *afi = range_type(range);
-	if (!pexpect(afi != NULL)) {
-		return "range has unknown type";
-	}
-	/* XXX: hack while code cleaned up - subnet should have range */
-	ip_subnet subnet;
-	err_t err = rangetosubnet(&range->start, &range->end, &subnet);
-	if (err != NULL) {
-		return err;
-	}
-	*selector = selector_from_subnet_protoport(&subnet, protoport);
-	return NULL;
-}
-
 const struct ip_info *selector_type(const ip_selector *selector)
 {
-	if (selector == NULL) {
+	if (selector_is_unset(selector)) {
 		return NULL;
 	}
 	return ip_version_info(selector->addr.version);
@@ -200,12 +187,10 @@ const struct ip_info *selector_type(const ip_selector *selector)
 
 ip_port selector_port(const ip_selector *selector)
 {
+	if (selector_is_unset(selector)) {
+		return unset_port;
+	}
 	return ip_hport(selector->addr.hport);
-}
-
-unsigned selector_ipproto(const ip_selector *selector)
-{
-	return selector->addr.ipproto;
 }
 
 const ip_protocol *selector_protocol(const ip_selector *selector)
@@ -218,7 +203,19 @@ const ip_protocol *selector_protocol(const ip_selector *selector)
 
 ip_range selector_range(const ip_selector *selector)
 {
-	return range_from_subnet(selector);
+	if (selector_is_unset(selector)) {
+		return unset_range;
+	}
+	const struct ip_info *afi = selector_type(selector);
+	ip_address start = address_from_blit(afi, selector->addr.bytes,
+					     /*routing-prefix*/&keep_bits,
+					     /*host-identifier*/&clear_bits,
+					     selector->maskbits);
+	ip_address end = address_from_blit(afi, selector->addr.bytes,
+					   /*routing-prefix*/&keep_bits,
+					   /*host-identifier*/&set_bits,
+					   selector->maskbits);
+	return range(&start, &end);
 }
 
 ip_address selector_prefix(const ip_selector *selector)
@@ -249,17 +246,52 @@ ip_address selector_prefix_mask(const ip_selector *selector)
 
 bool selector_contains_all_addresses(const ip_selector *selector)
 {
-	return subnet_contains_all_addresses(selector);
+	if (selector_is_unset(selector)) {
+		return false;
+	}
+	if (selector->addr.hport != 0) {
+		return false;
+	}
+	if (selector->maskbits != 0) {
+		return false;
+	}
+	ip_address network = selector_prefix(selector);
+	return address_is_any(&network);
 }
 
 bool selector_contains_one_address(const ip_selector *selector)
 {
-	return subnet_contains_one_address(selector);
+	/* Unlike selectorishost() this rejects 0.0.0.0/32. */
+	if (selector_is_unset(selector)) {
+		return false;
+	}
+	const struct ip_info *afi = selector_type(selector);
+	if (selector->addr.hport != 0) {
+		return false;
+	}
+	if (selector->maskbits != afi->mask_cnt) {
+		return false;
+	}
+	/* ignore port */
+	ip_address network = selector_prefix(selector);
+	/* address_is_set(&network) implied as afi non-NULL */
+	return !address_is_any(&network); /* i.e., non-zero */
 }
 
 bool selector_contains_no_addresses(const ip_selector *selector)
 {
-	return subnet_contains_no_addresses(selector);
+	if (selector_is_unset(selector)) {
+		return false;
+	}
+	const struct ip_info *afi = selector_type(selector);
+	if (selector->maskbits != afi->mask_cnt) {
+		return false;
+	}
+	if (selector->addr.hport != 0) {
+		return false; /* weird one */
+	}
+	ip_address network = selector_prefix(selector);
+	return address_is_any(&network);
 }
 
 bool selector_in_selector(const ip_selector *l, const ip_selector *r)
@@ -285,13 +317,19 @@ bool selector_in_selector(const ip_selector *l, const ip_selector *r)
 	if (address_is_any(&ra) && r->maskbits > 0) {
 		return false;
 	}
-	/* l.address < range */
-	ip_address la = selector_prefix(l);
-	if (!addrinsubnet(&la, r)) {
-		return false;
-	}
 	/* more maskbits => more prefix & smaller subnet */
 	if (l->maskbits < r->maskbits) {
+		return false;
+	}
+	/* l.prefix[r.bits] == r.prefix */
+	const struct ip_info *afi = selector_type(l);
+	ip_address lp = address_from_blit(afi,
+					  /*LEFT*/l->addr.bytes,
+					  /*routing-prefix*/&keep_bits,
+					  /*host-identifier*/&clear_bits,
+					  /*RIGHT*/r->maskbits);
+	ip_address rp = selector_prefix(r);
+	if (!address_eq(&lp,&rp)) {
 		return false;
 	}
 	return true;

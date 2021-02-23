@@ -77,9 +77,9 @@ static void check_selector_from(const struct from_test *tests, unsigned nr_tests
 			FAIL(OUT, "range was %s, expected %s", rb.buf, t->range);
 		}
 
-		unsigned ipproto = selector_ipproto(&selector);
-		if (ipproto != t->ipproto) {
-			FAIL(OUT, "ipproto was %u, expected %u", ipproto, t->ipproto);
+		const ip_protocol *protocol = selector_protocol(&selector);
+		if (protocol->ipproto != t->ipproto) {
+			FAIL(OUT, "ipproto was %u, expected %u", protocol->ipproto, t->ipproto);
 		}
 
 		ip_port port = selector_port(&selector);
@@ -187,42 +187,6 @@ static void check_selector_from_subnet_protoport(struct logger *logger)
 	};
 	check_selector_from(tests, elemsof(tests), "subnet",
 			    do_selector_from_subnet_protoport, logger);
-}
-
-static err_t do_range_to_selector(const struct selector *s,
-				  ip_selector *selector,
-				  struct logger *logger UNUSED)
-{
-	if (s->family == 0) {
-		*selector = unset_selector;
-		return NULL;
-	}
-
-	ip_range range;
-	err_t err = ttorange(s->addresses, IP_TYPE(s->family), &range);
-	if (err != NULL) {
-		return err;
-	}
-
-	ip_protoport protoport;
-	err = ttoprotoport(s->protoport, &protoport);
-	if (err != NULL) {
-		return err;
-	}
-
-	err = range_to_selector(&range, &protoport, selector);
-	return err;
-}
-
-static void check_range_to_selector(struct logger *logger)
-{
-	static const struct from_test tests[] = {
-		{ { 4, "128.0.0.0-128.0.0.0", "0/0", }, "128.0.0.0-128.0.0.0", 0, 0, { 0, 0, }, },
-		{ { 4, "128.0.0.0-128.0.0.1", "0/0", }, "128.0.0.0-128.0.0.1", 0,0, { 0, 0, }, },
-		{ { 6, "8000::-8000::1", "16/10", }, "8000::-8000::1", 16, 10, { 0, 10, }, },
-	};
-	check_selector_from(tests, elemsof(tests), "range",
-			    do_range_to_selector, logger);
 }
 
 static err_t do_numeric_to_selector(const struct selector *s,
@@ -494,7 +458,6 @@ void ip_selector_check(struct logger *logger)
 {
 	check_selector_from_address(logger);
 	check_selector_from_subnet_protoport(logger);
-	check_range_to_selector(logger);
 	check_selector_contains(logger);
 	check_in_selector(logger);
 	check_numeric_to_selector(logger);
