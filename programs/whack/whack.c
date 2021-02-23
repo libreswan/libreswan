@@ -881,7 +881,7 @@ static ip_address any_address(struct family *family)
 		family->type = &ipv4_info;
 		family->used_by = long_opts[long_index].name;
 	}
-	return family->type->any_address;
+	return family->type->address.any;
 }
 
 struct sockaddr_un ctl_addr = {
@@ -1618,7 +1618,7 @@ int main(int argc, char **argv)
 					 * or IPV6 equivalent
 					 */
 					tunnel_af_used_by = optarg;
-					msg.right.client = (aftoinfo(msg.tunnel_addr_family)->all_addresses);
+					msg.right.client = (aftoinfo(msg.tunnel_addr_family)->subnet.all);
 				}
 				msg.right.has_client = TRUE;
 			}

@@ -59,11 +59,11 @@ err_t cidr_specified(const ip_cidr *cidr)
 		return "unknown address family";
 	}
 	/* https://en.wikipedia.org/wiki/IPv6_address#Special_addresses */
-	if (thingeq(cidr->bytes, afi->any_address.bytes) &&
+	if (thingeq(cidr->bytes, afi->address.any.bytes) &&
 	    cidr->prefix_bits == 0) {
 		return "default route (no specific route)";
 	}
-	if (thingeq(cidr->bytes, afi->any_address.bytes)) {
+	if (thingeq(cidr->bytes, afi->address.any.bytes)) {
 		return "unspecified address";
 	}
 	return NULL;

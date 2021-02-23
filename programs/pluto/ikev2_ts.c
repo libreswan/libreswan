@@ -278,9 +278,9 @@ static struct traffic_selector impair_ts_to_supernet(const struct traffic_select
 	struct traffic_selector ts_ret = *ts;
 
 	if (ts_ret.ts_type == IKEv2_TS_IPV4_ADDR_RANGE)
-		ts_ret.net = range_from_subnet(&ipv4_info.all_addresses);
+		ts_ret.net = range_from_subnet(&ipv4_info.subnet.all);
 	else if (ts_ret.ts_type == IKEv2_TS_IPV6_ADDR_RANGE)
-		ts_ret.net = range_from_subnet(&ipv6_info.all_addresses);
+		ts_ret.net = range_from_subnet(&ipv6_info.subnet.all);
 
 	ts_ret.net.is_subnet = true;
 

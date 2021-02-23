@@ -180,7 +180,7 @@ struct host_pair *find_host_pair(const ip_address *local,
 	 * consistent and comparisons work.
 	 */
 	if (remote == NULL || address_is_unset(remote)) {
-		remote = &address_type(local)->any_address;
+		remote = &address_type(local)->address.any;
 	}
 
 	/*
@@ -230,7 +230,7 @@ static struct host_pair *alloc_host_pair(ip_address local, ip_address remote, wh
 	 * Force unset/NULL to 'any' a.k.a. zero; so hash is
 	 * consistent and comparisons work.
 	 */
-	hp->remote = (address_is_unset(&remote) ? address_type(&local)->any_address : remote);
+	hp->remote = (address_is_unset(&remote) ? address_type(&local)->address.any : remote);
 	add_hash_table_entry(&host_pairs, hp);
 	dbg_alloc("hp", hp, where);
 	return hp;

@@ -7,33 +7,59 @@
 
 #include "ip_address.h"
 #include "ip_subnet.h"
+#include "ip_selector.h"
 
 struct ip_info {
 	/*
-	 * ip_address
+	 * address family
 	 */
 	unsigned ip_version; /* 4 or 6 */
 	const char *ip_name; /* "IPv4" or "IPv6" */
 	size_t ip_size; /* 4 or 16 */
-	/* 0.0.0.0 or :: */
-	const ip_address any_address;
-	/* 127.0.0.1 or ::1 */
-	const ip_address loopback_address;
+	unsigned mask_cnt; /* 32 or 128 */
+
+	/*
+	 * ip_address
+	 */
+	struct {
+		const ip_address any;		/* 0.0.0.0 or :: */
+		const ip_address loopback;	/* 127.0.0.1 or ::1 */
+	} address;
 
 	/*
 	 * ip_endpoint
 	 */
-	/* 0.0.0.0:0 or [::]:0 */
-	const ip_endpoint any_endpoint;
+	struct {
+		const ip_endpoint any;		/* 0.0.0.0:0 or [::]:0 */
+	} endpoint;
 
 	/*
 	 * ip_subnet.
+	 *
+	 * none: the unspecified address - matches no addresses
+	 * all: the default route - matches all addresses
+	 *
+	 * (if nothing else, used for edge case testing)
 	 */
-	unsigned mask_cnt; /* 32 or 128 */
-	/* unspecified address - ::/128 or 0.0.0.0/32 - matches no addresses */
-	const ip_subnet no_addresses;
-	/* default route - ::/0 or 0.0.0.0/0 - matches all addresses */
-	const ip_subnet all_addresses;
+	struct {
+		const ip_subnet none;		/* ::/128 or 0.0.0.0/32 */
+		const ip_subnet all;		/* ::/0 or 0.0.0.0/0 */
+	} subnet;
+
+	/*
+	 * ip_selector
+	 *
+	 * none: match no endpoints/addresses
+	 * all: matches all endpoints/addresses
+	 *
+	 * (if nothing else, used for edge case testing)
+	 */
+	struct {
+		/* matches no addresses */
+		const ip_selector none;		/* ::/128 or 0.0.0.0/32 */
+		/* matches all addresses */
+		const ip_selector all;		/* ::/0 or 0.0.0.0/0 */
+	} selector;
 
 	/*
 	 * ike

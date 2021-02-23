@@ -112,18 +112,30 @@ const struct ip_info ipv4_info = {
 	.ip_version = 4,
 	.ip_size = sizeof(struct in_addr),
 	.ip_name = "IPv4",
+	.mask_cnt = 32,
 
 	/* ip_address */
-	.any_address = { IPv4_ADDRESS, }, /* 0.0.0.0 */
-	.loopback_address = { IPv4_ADDRESS, .bytes = { { 127, 0, 0, 1, }, }, },
+	.address = {
+		.any = { IPv4_ADDRESS, }, /* 0.0.0.0 */
+		.loopback = { IPv4_ADDRESS, .bytes = { { 127, 0, 0, 1, }, }, },
+	},
 
 	/* ip_endpoint */
-	.any_endpoint = { IPv4_ENDPOINT, }, /* 0.0.0.0:0 */
+	.endpoint = {
+		.any = { IPv4_ENDPOINT, }, /* 0.0.0.0:0 */
+	},
 
 	/* ip_subnet */
-	.mask_cnt = 32,
-	.no_addresses = { .addr = { IPv4_ENDPOINT, }, .maskbits = 32, }, /* 0.0.0.0/32 */
-	.all_addresses = { .addr = { IPv4_ENDPOINT, }, .maskbits = 0, }, /* 0.0.0.0/0 */
+	.subnet = {
+		.none = { .is_subnet = true, .addr = { IPv4_ENDPOINT, }, .maskbits = 32, }, /* 0.0.0.0/32 */
+		.all = { .is_subnet = true, .addr = { IPv4_ENDPOINT, }, .maskbits = 0, }, /* 0.0.0.0/0 */
+	},
+
+	/* ip_selector */
+	.selector = {
+		.none = { .is_selector = true, .addr = { IPv4_ENDPOINT, }, .maskbits = 32, }, /* 0.0.0.0/0 */
+		.all = { .is_selector = true, .addr = { IPv4_ENDPOINT, }, .maskbits = 0, }, /* 0.0.0.0/0 */
+	},
 
 	/* ike */
 	.ikev1_max_fragment_size = ISAKMP_V1_FRAG_MAXLEN_IPv4,
@@ -148,18 +160,30 @@ const struct ip_info ipv6_info = {
 	.ip_version = 6,
 	.ip_size = sizeof(struct in6_addr),
 	.ip_name = "IPv6",
+	.mask_cnt = 128,
 
 	/* ip_address */
-	.any_address = { IPv6_ADDRESS, }, /* :: */
-	.loopback_address = { IPv6_ADDRESS, .bytes = { { [15] = 1, }, }, }, /* ::1 */
+	.address = {
+		.any = { IPv6_ADDRESS, }, /* :: */
+		.loopback = { IPv6_ADDRESS, .bytes = { { [15] = 1, }, }, }, /* ::1 */
+	},
 
 	/* ip_endpoint */
-	.any_endpoint = { IPv6_ENDPOINT, }, /* [::]:0 */
+	.endpoint = {
+		.any = { IPv6_ENDPOINT, }, /* [::]:0 */
+	},
 
 	/* ip_subnet */
-	.mask_cnt = 128,
-	.no_addresses = { .addr = { IPv6_ENDPOINT, }, .maskbits = 128, }, /* ::/128 */
-	.all_addresses = { .addr = { IPv6_ENDPOINT, }, .maskbits = 0, }, /* ::/0 */
+	.subnet = {
+		.none = { .is_subnet = true, .addr = { IPv6_ENDPOINT, }, .maskbits = 128, }, /* ::/128 */
+		.all = { .is_subnet = true, .addr = { IPv6_ENDPOINT, }, .maskbits = 0, }, /* ::/0 */
+	},
+
+	/* ip_selector */
+	.selector = {
+		.none = { .is_selector = true, .addr = { IPv6_ENDPOINT, }, .maskbits = 128, }, /* ::/0 */
+		.all = { .is_selector = true, .addr = { IPv6_ENDPOINT, }, .maskbits = 0, }, /* ::/0 */
+	},
 
 	/* ike */
 	.ikev1_max_fragment_size = ISAKMP_V1_FRAG_MAXLEN_IPv6,

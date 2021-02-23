@@ -359,7 +359,7 @@ static void set_whack_end(char *lr,
 	if (l->has_client) {
 		w->client = l->subnet;
 	} else {
-		w->client = l->host_family->all_addresses;
+		w->client = l->host_family->subnet.all;
 	}
 
 	w->host_ikeport = l->options[KNCF_IKEPORT];

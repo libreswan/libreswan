@@ -183,7 +183,7 @@ static void xfrm2ip(const xfrm_address_t *xaddr, ip_address *addr, const sa_fami
 	const struct ip_info *afi = aftoinfo(family);
 	passert(afi != NULL);
 
-	*addr = afi->any_address; /* initialize dst type and zero */
+	*addr = afi->address.any; /* initialize dst type and zero */
 	chunk_t a = address_as_chunk(addr);
 
 	/* a = x */
@@ -1626,7 +1626,7 @@ static ip_address address_from_xfrm(const struct ip_info *afi,
 	/* .len == ipv6 size */
 	shunk_t x = THING_AS_SHUNK(*xaddr);
 
-	ip_address addr = afi->any_address; /* "zero" it & set type */
+	ip_address addr = afi->address.any; /* "zero" it & set type */
 	chunk_t a = address_as_chunk(&addr);
 
 	/* a = x */

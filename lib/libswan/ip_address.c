@@ -213,7 +213,7 @@ ip_address address_any(const struct ip_info *info)
 		log_pexpect(HERE, "AF_UNSPEC unexpected");
 		return unset_address;
 	} else {
-		return info->any_address;
+		return info->address.any;
 	}
 }
 
@@ -238,7 +238,7 @@ bool address_is_specified(const ip_address *address)
 		return false;
 	}
 	/* check all bytes; not just .ip_size */
-	if (thingeq(address->bytes, afi->any_address.bytes)) {
+	if (thingeq(address->bytes, afi->address.any.bytes)) {
 		/* any address (but we know it is zero) */
 		return false;
 	}
@@ -267,7 +267,7 @@ bool address_is_loopback(const ip_address *address)
 	if (type == NULL) {
 		return false;
 	}
-	return address_eq(address, &type->loopback_address);
+	return address_eq(address, &type->address.loopback);
 }
 
 bool address_is_any(const ip_address *address)
@@ -276,7 +276,7 @@ bool address_is_any(const ip_address *address)
 	if (type == NULL) {
 		return false;
 	}
-	return address_eq(address, &type->any_address);
+	return address_eq(address, &type->address.any);
 }
 
 /*

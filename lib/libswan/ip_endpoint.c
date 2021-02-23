@@ -132,7 +132,7 @@ bool endpoint_is_specified(const ip_endpoint *endpoint)
 	if (afi == NULL) {
 		return false;
 	}
-	if (memeq(&endpoint->bytes, &afi->any_address.bytes, afi->ip_size)) {
+	if (thingeq(endpoint->bytes, afi->address.any.bytes)) {
 		/* any address (but we know it is zero) */
 		return false;
 	}

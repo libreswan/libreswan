@@ -49,7 +49,7 @@ err_t ttosubnet(shunk_t src,
 		if (afi == NULL) {
 			return "unknown address family with " DEFAULTSUBNET " subnet not allowed.";
 		}
-		*dst = afi->all_addresses; /* 0.0.0.0/0 or ::/0 */
+		*dst = afi->subnet.all; /* 0.0.0.0/0 or ::/0 */
 		return NULL;
 	}
 

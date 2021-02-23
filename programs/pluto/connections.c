@@ -2317,7 +2317,7 @@ struct connection *rw_instantiate(struct connection *c,
 		 * from trying to use this connection to get to a particular
 		 * client
 		 */
-		d->spd.that.client = subnet_type(&d->spd.that.client)->no_addresses;
+		d->spd.that.client = subnet_type(&d->spd.that.client)->subnet.none;
 	}
 	connection_buf inst;
 	address_buf b;
