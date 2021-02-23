@@ -38,8 +38,8 @@ ip_range range(const ip_address *start, const ip_address *end)
 	const struct ip_info *st = address_type(start);
 	const struct ip_info *et = address_type(end);
 	passert(st == et);
-	bool ss = address_is_specified(start);
-	bool es = address_is_specified(end);
+	bool ss = address_is_unset(start);
+	bool es = address_is_unset(end);
 	passert(ss == es);
 	ip_range r = {
 		.start = *start,
