@@ -100,8 +100,7 @@ libnsock nsock_iod_delete(): nsock_iod_delete (IOD #2)
 west #
  ipsec trafficstatus
 006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
-006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=40, id='@east'
-006 #4: "labeled", type=ESP, add_time=1234567890, inBytes=104, outBytes=133, id='@east'
+006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=104, outBytes=173, id='@east'
 west #
  ping -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -121,8 +120,7 @@ west #
 west #
  ipsec trafficstatus
 006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
-006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=40, id='@east'
-006 #4: "labeled", type=ESP, add_time=1234567890, inBytes=104, outBytes=133, id='@east'
+006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=104, outBytes=173, id='@east'
 west #
  echo done
 done
@@ -130,18 +128,6 @@ west #
  ../../pluto/bin/ipsec-look.sh
 west NOW
 XFRM state:
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 32 
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
-	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 32 
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
-	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
