@@ -454,11 +454,11 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 		switch (ike_version) {
 		case IKEv2:
 			cert_type = p->payload.v2cert.isac_enc;
-			cert_name = enum_short_name(&ikev2_cert_type_names, cert_type);
+			cert_name = enum_name_short(&ikev2_cert_type_names, cert_type);
 			break;
 		case IKEv1:
 			cert_type = p->payload.cert.isacert_type;
-			cert_name = enum_short_name(&ike_cert_type_names, cert_type);
+			cert_name = enum_name_short(&ike_cert_type_names, cert_type);
 			break;
 		default:
 			bad_case(ike_version);

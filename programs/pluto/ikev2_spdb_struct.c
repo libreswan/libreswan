@@ -280,7 +280,7 @@ static void jam_transform(struct jambuf *buf, enum ikev2_trans_type type,
 
 static const char *trans_type_name(enum ikev2_trans_type type)
 {
-	return enum_short_name(&ikev2_trans_type_names, type);
+	return enum_name_short(&ikev2_trans_type_names, type);
 }
 
 static void jam_trans_types(struct jambuf *buf, lset_t types)
@@ -299,7 +299,7 @@ static void jam_type_transform(struct jambuf *buf, enum ikev2_trans_type type,
 
 static const char *protoid_name(enum ikev2_sec_proto_id protoid)
 {
-	return enum_short_name(&ikev2_proposal_protocol_id_names, protoid);
+	return enum_name_short(&ikev2_proposal_protocol_id_names, protoid);
 }
 
 /* <TRANSFORM> { "+" <TRANSFORM> }+ */
@@ -1376,11 +1376,11 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 
 			struct esb_buf esb_type;
 			const char *transform_type_name =
-				enum_show_shortb(&ikev2_trans_type_names, transform_type, &esb_type);
+				enum_show_short(&ikev2_trans_type_names, transform_type, &esb_type);
 			struct esb_buf esb_id;
 			const char *transform_id_name =
-				enum_enum_show_shortb(&v2_transform_ID_enums,
-						      transform_type, transform->id, &esb_id);
+				enum_enum_show_short(&v2_transform_ID_enums,
+						     transform_type, transform->id, &esb_id);
 
 			enum impair_v2_transform impairment;
 			unsigned none;
@@ -1476,9 +1476,9 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 			unsigned transform_id = (type_id & 0xffff);
 			struct esb_buf typeb, idb;
 			llog(RC_LOG, logger, "IMPAIR: adding transform type %s (0x%x) id %s (0x%x)",
-				    enum_show_shortb(&ikev2_trans_type_names, transform_type, &typeb),
+				    enum_show_short(&ikev2_trans_type_names, transform_type, &typeb),
 				    transform_type,
-				    enum_enum_showb(&v2_transform_ID_enums, transform_type, transform_id, &idb),
+				    enum_enum_show(&v2_transform_ID_enums, transform_type, transform_id, &idb),
 				    transform_id);
 			if (!emit_transform_header(proposal_pbs, transform_type, transform_id,
 						   is_last_transform,
@@ -1815,7 +1815,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 				     unsigned keylen,
 				     struct logger *logger)
 {
-	const char *protocol = enum_short_name(&ikev2_proposal_protocol_id_names, proposal->protoid);
+	const char *protocol = enum_name_short(&ikev2_proposal_protocol_id_names, proposal->protoid);
 	if (proposal->protoid == 0 || protocol == NULL) {
 		pexpect_fail(logger, HERE, "%s", "IKEv2 ENCRYPT transform protocol unknown");
 		return false;

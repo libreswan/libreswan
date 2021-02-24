@@ -99,7 +99,7 @@ bool emit_v2UNKNOWN(const char *victim, enum isakmp_xchg_types exchange_type,
 	     "IMPAIR: adding an unknown%s payload of type %d to %s %s",
 	     impair.unknown_v2_payload_critical ? " critical" : "",
 	     ikev2_unknown_payload_desc.pt,
-	     enum_short_name(&ikev2_exchange_names, exchange_type),
+	     enum_name_short(&ikev2_exchange_names, exchange_type),
 	     victim);
 	struct ikev2_generic gen = {
 		.isag_critical = build_ikev2_critical(impair.unknown_v2_payload_critical, outs->outs_logger),
@@ -406,10 +406,10 @@ static bool emit_v2N_spi_response(struct response *response,
 				  v2_notification_t ntype,
 				  const chunk_t *ndata /* optional */)
 {
-	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
+	const char *const notify_name = enum_name_short(&ikev2_notify_names, ntype);
 
 	enum isakmp_xchg_types exchange_type = md->hdr.isa_xchg;
-	const char *const exchange_name = enum_short_name(&ikev2_exchange_names, exchange_type);
+	const char *const exchange_name = enum_name_short(&ikev2_exchange_names, exchange_type);
 
 	/*
 	 * XXX: this will prefix with cur_state.  For this code path
@@ -514,11 +514,11 @@ void send_v2N_response_from_md(struct msg_digest *md,
 {
 	passert(md != NULL); /* always a response */
 
-	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
+	const char *const notify_name = enum_name_short(&ikev2_notify_names, ntype);
 	passert(notify_name != NULL); /* must be known */
 
 	enum isakmp_xchg_types exchange_type = md->hdr.isa_xchg;
-	const char *exchange_name = enum_short_name(&ikev2_exchange_names, exchange_type);
+	const char *exchange_name = enum_name_short(&ikev2_exchange_names, exchange_type);
 	if (exchange_name == NULL) {
 		/* when responding to crud, name may not be known */
 		exchange_name = "UNKNOWN";

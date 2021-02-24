@@ -198,47 +198,48 @@ extern char *add_str(char *buf, size_t size, char *hint, const char *src);
  * (e.g. a call to a log function).
  */
 
-/* Printing Enums:
+/*
+ * Printing Enums:
  *
  * An enum_names table describes an enumeration (a correspondence
  * between integer values and names).
  *
  * enum_name() returns the name of an enum value, or NULL if unnamed.
- * enum_show() is like enum_name, except it formats a numeric representation
- *    for any unnamed value (in a static area -- NOT RE-ENTRANT)
- * enum_showb() is like enum_show() but uses a caller-supplied buffer
- *    for any unnamed value and thus is re-entrant.
+ *
+ * enum_show() is like enum_name, except it formats a numeric
+ * representation for any unnamed value in a caller-supplied buffer.
  *
  * jam_enum() appends the name of an enum value; if unnamed, append a
  * mashup of the standard prefix and the numeric value.
  *
- * jam_enum_short() appends the name of an enum value with any
- * standard prefix removed; if unnamed, append a mashup of the
- * standard prefix and the numeric value.
+ * {*}_short() same as for root, but with any standard prefix removed.
  */
 
 typedef const struct enum_names enum_names;
 
 extern const char *enum_name(enum_names *ed, unsigned long val);
-extern const char *enum_short_name(enum_names *ed, unsigned long val);
+extern const char *enum_name_short(enum_names *ed, unsigned long val);
 
 /* old names */
 size_t jam_enum(struct jambuf *, enum_names *en, unsigned long val);
 size_t jam_enum_short(struct jambuf *, enum_names *en, unsigned long val);
 
-/* caller-allocated buffer for enum_showb */
+/*
+ * caller-allocated E[num] S[how] B[uffer] for enum_show*().
+ *
+ * enough space for decimal rep of any unsigned long + "??"  sizeof
+ * yields log-base-256 of maximum value.  Multiplying by 241/100
+ * converts this to the number of decimal digits (the common log),
+ * rounded up a little (instead of 2.40654...).  The addition of 99
+ * ensures that the division rounds up to an integer rather than
+ * truncates.
+ */
 struct esb_buf {
-	/* enough space for decimal rep of any unsigned long + "??"
-	 * sizeof yields log-base-256 of maximum value.
-	 * Multiplying by 241/100 converts this to the number of decimal digits
-	 * (the common log), rounded up a little (instead of 2.40654...).
-	 * The addition of 99 ensures that the division rounds up to an integer
-	 * rather than truncates.
-	 */
 	char buf[(sizeof(unsigned long) * 241 + 99) / 100 + sizeof("??")];
 };
+
 extern const char *enum_showb(enum_names *ed, unsigned long val, struct esb_buf *);
-extern const char *enum_show_shortb(enum_names *ed, unsigned long val, struct esb_buf *);
+extern const char *enum_show_short(enum_names *ed, unsigned long val, struct esb_buf *);
 
 extern const char *enum_show(enum_names *ed, unsigned long val);	/* NOT RE-ENTRANT */
 
@@ -297,10 +298,10 @@ typedef const struct enum_enum_names enum_enum_names;
 enum_names *enum_enum_table(enum_enum_names *e, unsigned long table);
 const char *enum_enum_name(enum_enum_names *e, unsigned long table,
 			   unsigned long val);
-const char *enum_enum_showb(enum_enum_names *e, unsigned long table,
-			    unsigned long val, struct esb_buf *buf);
-const char *enum_enum_show_shortb(enum_enum_names *e, unsigned long table,
-				  unsigned long val, struct esb_buf *buf);
+const char *enum_enum_show(enum_enum_names *e, unsigned long table,
+			   unsigned long val, struct esb_buf *buf);
+const char *enum_enum_show_short(enum_enum_names *e, unsigned long table,
+				 unsigned long val, struct esb_buf *buf);
 
 size_t jam_enum_enum(struct jambuf *log, enum_enum_names *een,
 		     unsigned long table, unsigned long val);

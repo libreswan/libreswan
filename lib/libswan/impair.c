@@ -214,7 +214,7 @@ static void help(const char *prefix, const struct impairment *cr, FILE *file)
 			} else {
 				fprintf(file, ", ");
 			}
-			const char *sname = enum_short_name(cr->how_enum_names, e);
+			const char *sname = enum_name_short(cr->how_enum_names, e);
 			fprintf(file, "%s", sname);
 		}
 	}
@@ -434,7 +434,7 @@ static void jam_impairment(struct jambuf *buf,
 			jam(buf, "?%u?", value);
 		}
 	} else if (cr->how_enum_names != NULL) {
-		const char *sname = enum_short_name(cr->how_enum_names, value);
+		const char *sname = enum_name_short(cr->how_enum_names, value);
 		if (sname != NULL) {
 			jam_string(buf, sname);
 		} else {

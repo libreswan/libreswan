@@ -143,7 +143,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		dbg("%s: processing event@%p", __func__, ev);
 		passert(ev != NULL);
 		type = ev->ev_type;
-		event_name = enum_short_name(&timer_event_names, type);
+		event_name = enum_name_short(&timer_event_names, type);
 		st = ev->ev_state;	/* note: *st might be changed; XXX: why? */
 		passert(st != NULL);
 

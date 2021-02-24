@@ -269,7 +269,7 @@ static bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 	struct esb_buf ke_esb;
 	llog(RC_LOG, st->st_logger,
 		    "initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
-		    enum_show_shortb(&oakley_group_names, ke_group, &ke_esb),
+		    enum_show_short(&oakley_group_names, ke_group, &ke_esb),
 		    accepted_dh->common.fqn);
 	pstats(invalidke_sent_u, ke_group);
 	pstats(invalidke_sent_s, accepted_dh->common.id[IKEv2_ALG_ID]);
@@ -1282,8 +1282,8 @@ stf_status process_IKE_SA_INIT_v2N_INVALID_KE_PAYLOAD_response(struct ike_sa *ik
 		log_state(RC_LOG, &ike->sa,
 			  "Discarding unauthenticated INVALID_KE_PAYLOAD response to DH %s; suggested DH %s is not acceptable",
 			  ike->sa.st_oakley.ta_dh->common.fqn,
-			  enum_show_shortb(&oakley_group_names,
-					   sg.sg_group, &esb));
+			  enum_show_short(&oakley_group_names,
+					  sg.sg_group, &esb));
 		return STF_IGNORE;
 	}
 
@@ -1329,7 +1329,7 @@ stf_status ikev2_auth_initiator_process_failure_notification(struct ike_sa *ike,
 	 * was taken.
 	 */
 	log_state(RC_LOG, &ike->sa, "IKE SA authentication request rejected by peer: %s",
-		  enum_short_name(&ikev2_notify_names, n));
+		  enum_name_short(&ikev2_notify_names, n));
 
 	/*
 	 * XXX: ST here should be the IKE SA.  The state machine,
@@ -1382,7 +1382,7 @@ stf_status ikev2_auth_initiator_process_unknown_notification(struct ike_sa *unus
 	bool ignore = true;
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		v2_notification_t n = ntfy->payload.v2n.isan_type;
-		const char *name = enum_short_name(&ikev2_notify_names, n);
+		const char *name = enum_name_short(&ikev2_notify_names, n);
 
 		if (ntfy->payload.v2n.isan_spisize != 0) {
 			/* invalid-syntax, but can't do anything about it */

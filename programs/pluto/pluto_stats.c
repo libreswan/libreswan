@@ -320,7 +320,7 @@ static void whack_pluto_stat(struct show *s, const struct pluto_stat *stat)
 {
 	unsigned long other = stat->count[stat->roof - stat->floor];
 	for (unsigned long e = stat->floor; e < stat->roof; e++) {
-		const char *nm = enum_short_name(stat->names, e);
+		const char *nm = enum_name_short(stat->names, e);
 		unsigned long count = stat->count[e - stat->floor];
 		/* not logging "UNUSED" */
 		if (nm != NULL && strstr(nm, "UNUSED") == NULL) {
@@ -350,7 +350,7 @@ static void enum_stats(struct show *s, enum_names *names, unsigned long start,
 		 * XXX: the bug is that the enum table contains names
 		 * that include UNUSED.  Skip them.
 		 */
-		const char *name = enum_short_name(names, e);
+		const char *name = enum_name_short(names, e);
 		if (name != NULL && strstr(name, "UNUSED") == NULL) {
 			show_raw(s, "total.%s.%s=%lu",
 				 what, name, count[e]);

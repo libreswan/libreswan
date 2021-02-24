@@ -211,7 +211,7 @@ static const struct ike_alg *lookup_by_id(const struct ike_alg_type *type,
 	FOR_EACH_IKE_ALGP(type, algp) {
 		const struct ike_alg *alg = *algp;
 		if (alg->id[key] == id) {
-			const char *name = enum_short_name(type->enum_names[key], id);
+			const char *name = enum_name_short(type->enum_names[key], id);
 			DBGF(debug, "%s ike_alg_lookup_by_id id: %s=%u, found %s\n",
 			     type->name,
 			     name ? name : "???",
@@ -219,7 +219,7 @@ static const struct ike_alg *lookup_by_id(const struct ike_alg_type *type,
 			return alg;
 		}
  	}
-	const char *name = enum_short_name(type->enum_names[key], id);
+	const char *name = enum_name_short(type->enum_names[key], id);
 	DBGF(debug, "%s ike_alg_lookup_by_id id: %s=%u, not found\n",
 	     type->name, name ? name : "???", id);
 	return NULL;
@@ -586,9 +586,9 @@ static void integ_desc_check(const struct ike_alg *alg, struct logger *logger)
 	if (integ->common.id[IKEv1_ESP_ID] >= 0) {
 		struct esb_buf esb;
 		pexpect_ike_alg_streq(logger, alg, integ->integ_kernel_audit_name,
-				      enum_show_shortb(&auth_alg_names,
-						       integ->common.id[IKEv1_ESP_ID],
-						       &esb));
+				      enum_show_short(&auth_alg_names,
+						      integ->common.id[IKEv1_ESP_ID],
+						      &esb));
 	}
 	if (integ->prf != NULL) {
 		pexpect_ike_alg(logger, alg, integ->integ_keymat_size == integ->prf->prf_key_size);
@@ -705,9 +705,9 @@ static void encrypt_desc_check(const struct ike_alg *alg, struct logger *logger)
 	if (encrypt->common.id[IKEv1_ESP_ID] >= 0) {
 		struct esb_buf esb;
 		pexpect_ike_alg_streq(logger, alg, encrypt->encrypt_kernel_audit_name,
-				      enum_show_shortb(&esp_transformid_names,
-						       encrypt->common.id[IKEv1_ESP_ID],
-						       &esb));
+				      enum_show_short(&esp_transformid_names,
+						      encrypt->common.id[IKEv1_ESP_ID],
+						      &esb));
 	}
 
 	/*
@@ -873,7 +873,7 @@ static void check_enum_name(const char *what,
 				     alg->algo_type->name,
 				     alg->fqn, what);
 		}
-		const char *enum_name = enum_short_name(enum_names, id);
+		const char *enum_name = enum_name_short(enum_names, id);
 		DBGF(DBG_CRYPT, "%s id: %d enum name: %s",
 		     what, id, enum_name);
 		pexpect_ike_alg_has_name(logger, HERE, alg, enum_name, "enum table name");

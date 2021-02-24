@@ -2315,7 +2315,7 @@ const char *enum_name(enum_names *ed, unsigned long val)
 	return enum_range_name(range, val, prefix, /*shorten?*/false);
 }
 
-const char *enum_short_name(enum_names *ed, unsigned long val)
+const char *enum_name_short(enum_names *ed, unsigned long val)
 {
 	const char *prefix = NULL;
 	/* can be NULL */
@@ -2339,7 +2339,7 @@ size_t jam_enum(struct jambuf *buf, enum_names *en, unsigned long val)
 
 size_t jam_enum_short(struct jambuf *buf, enum_names *en, unsigned long val)
 {
-	const char *name = enum_short_name(en, val);
+	const char *name = enum_name_short(en, val);
 	if (name == NULL) {
 		if (en->en_prefix != NULL) {
 			jam_string(buf, en->en_prefix);
@@ -2366,7 +2366,7 @@ const char *enum_showb(enum_names *ed, unsigned long val, struct esb_buf *b)
 	return p;
 }
 
-const char *enum_show_shortb(enum_names *ed, unsigned long val, struct esb_buf *b)
+const char *enum_show_short(enum_names *ed, unsigned long val, struct esb_buf *b)
 {
 	const char *prefix;
 	const struct enum_names *range = enum_range(ed, val, &prefix);
@@ -2487,8 +2487,8 @@ const char *enum_enum_name(enum_enum_names *een, unsigned long table,
 	return en == NULL ? NULL : enum_name(en, val);
 }
 
-const char *enum_enum_showb(enum_enum_names *een, unsigned long table,
-			    unsigned long val, struct esb_buf *b)
+const char *enum_enum_show(enum_enum_names *een, unsigned long table,
+			   unsigned long val, struct esb_buf *b)
 {
 	enum_names *en = enum_enum_table(een, table);
 	if (en == NULL) {
@@ -2500,8 +2500,8 @@ const char *enum_enum_showb(enum_enum_names *een, unsigned long table,
 	return enum_showb(en, val, b);
 }
 
-const char *enum_enum_show_shortb(enum_enum_names *een, unsigned long table,
-				  unsigned long val, struct esb_buf *b)
+const char *enum_enum_show_short(enum_enum_names *een, unsigned long table,
+				 unsigned long val, struct esb_buf *b)
 {
 	enum_names *en = enum_enum_table(een, table);
 	if (en == NULL) {
@@ -2510,7 +2510,7 @@ const char *enum_enum_show_shortb(enum_enum_names *een, unsigned long table,
 		return b->buf;
 	}
 
-	return enum_show_shortb(en, val, b);
+	return enum_show_short(en, val, b);
 }
 
 size_t jam_enum_enum(struct jambuf *buf, enum_enum_names *een,

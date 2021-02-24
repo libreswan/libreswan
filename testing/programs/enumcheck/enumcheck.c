@@ -110,7 +110,7 @@ static void test_enum(enum_names *enum_test, int i,
 	}
 
 	printf(PREFIX "short_name %d: ", i);
-	const char *short_name = enum_short_name(enum_test, i);
+	const char *short_name = enum_name_short(enum_test, i);
 	printf("%s ", short_name);
 	if (short_name == NULL) {
 		printf("ERROR\n");
@@ -259,7 +259,7 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 		jam_enum_enum_short(&buf, een, table, val);
 		shunk_t s = jambuf_as_shunk(&buf);
 		printf(""PRI_SHUNK" ", pri_shunk(s));
-		if (val_ok && hunk_streq(s, enum_short_name(en, val))) {
+		if (val_ok && hunk_streq(s, enum_name_short(en, val))) {
 			printf("OK\n");
 		} else if (s.len > 0) {
 			printf("OK\n");

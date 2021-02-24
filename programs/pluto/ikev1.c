@@ -808,7 +808,7 @@ void init_ikev1(void)
 				}
 			}
 			DBG_log("    -> %s %s (%s)", to->short_name,
-				enum_short_name(&timer_event_names,
+				enum_name_short(&timer_event_names,
 						t->timeout_event),
 				t->message);
 		}

@@ -4006,8 +4006,8 @@ static void show_one_sr(struct show *s,
 	show_comment(s,
 		"\"%s\"%s:   our auth:%s, their auth:%s",
 		c->name, instance,
-		enum_show_shortb(&keyword_authby_names, sr->this.authby, &auth1),
-		enum_show_shortb(&keyword_authby_names, sr->that.authby, &auth2));
+		enum_show_short(&keyword_authby_names, sr->this.authby, &auth1),
+		enum_show_short(&keyword_authby_names, sr->that.authby, &auth2));
 
 	show_comment(s,
 		"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg policy:%s, dns:%s, domains:%s, cat:%s;",

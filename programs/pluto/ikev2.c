@@ -683,7 +683,7 @@ void init_ikev2(void)
 			default: bad_case(t->send);
 			}
 			DBG_log("    -> %s %s%s (%s)", to->short_name,
-				enum_short_name(&timer_event_names,
+				enum_name_short(&timer_event_names,
 						t->timeout_event),
 				send, t->story);
 		}
@@ -1123,21 +1123,21 @@ static bool is_duplicate_request(struct ike_sa *ike,
 		if (fragment == 0) {
 			log_state(RC_LOG, &ike->sa,
 				  "received duplicate %s message request (Message ID %jd); retransmitting response",
-				  enum_short_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+				  enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
 				  msgid);
 			send_recorded_v2_message(ike, "ikev2-responder-retransmit",
 						 MESSAGE_RESPONSE);
 		} else if (fragment == 1) {
 			log_state(RC_LOG, &ike->sa,
 				  "received duplicate %s message request (Message ID %jd, fragment %u); retransmitting response",
-				  enum_short_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+				  enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
 				  msgid, fragment);
 			send_recorded_v2_message(ike, "ikev2-responder-retransmt (fragment 1)",
 						 MESSAGE_RESPONSE);
 		} else {
 			dbg_v2_msgid(ike, &ike->sa,
 				     "received duplicate %s message request (Message ID %jd, fragment %u); discarded as not fragment 1",
-				     enum_short_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+				     enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
 				     msgid, fragment);
 		}
 		return true;
@@ -1305,7 +1305,7 @@ static bool is_duplicate_response(struct ike_sa *ike,
 			dbg_v2_msgid(ike, initiator, "XXX: expecting initiator==NULL - suspect record'n'send with an out-of-order wrong packet response; discarding packet");
 		} else {
 			dbg_v2_msgid(ike, initiator, "already processed response %jd (%s); discarding packet",
-				     msgid, enum_short_name(&ikev2_exchange_names, md->hdr.isa_xchg));
+				     msgid, enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg));
 		}
 		return true;
 	}
@@ -1599,7 +1599,7 @@ void ikev2_process_packet(struct msg_digest *md)
 					 */
 					log_state(RC_LOG, &old->sa,
 						  "received duplicate %s message request (Message ID %jd); retransmitting response",
-						  enum_short_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+						  enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
 						  msgid);
 					send_recorded_v2_message(old, "IKE_SA_INIT responder retransmit",
 								 MESSAGE_RESPONSE);
@@ -1875,7 +1875,7 @@ void ikev2_process_packet(struct msg_digest *md)
 	if (ike == NULL) {
 		struct esb_buf ixb;
 		rate_log(md, "%s message %s has no corresponding IKE SA",
-			 enum_show_shortb(&ikev2_exchange_names, ix, &ixb),
+			 enum_show_short(&ikev2_exchange_names, ix, &ixb),
 			 v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");
 		return;
 	}

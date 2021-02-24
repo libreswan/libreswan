@@ -684,7 +684,7 @@ static void cannot_oppo(struct find_oppo_bundle *b, err_t ughmsg)
 				       ughmsg,
 				       b->logger)) {
 			dbg("cannot_oppo() replaced negotiationshunt with bare failureshunt=%s",
-			    enum_short_name(&spi_names, b->failure_shunt));
+			    enum_name_short(&spi_names, b->failure_shunt));
 		} else {
 			llog(RC_LOG, b->logger,
 				    "cannot_oppo() failed to replace negotiationshunt with bare failureshunt");
@@ -943,7 +943,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		}
 
 		dbg("going to initiate opportunistic, first installing %s negotiationshunt",
-		    enum_short_name(&spi_names, b->negotiation_shunt));
+		    enum_name_short(&spi_names, b->negotiation_shunt));
 
 		// PAUL: should this use shunt_eroute() instead of API violation into raw_eroute()
 		/* if we have protoport= set, narrow to it. zero out ephemeral port */
