@@ -861,7 +861,8 @@ static bool score_gt(const struct best_score *score, const struct best_score *be
 }
 
 #ifdef HAVE_LABELED_IPSEC
-static bool score_ends_seclabel(const struct ends *ends,
+static bool score_ends_seclabel(const chunk_t **selected_sec_label,
+				const struct ends *ends,
 				const struct connection *d,
 				const struct traffic_selectors *tsi,
 				const struct traffic_selectors *tsr,
@@ -873,6 +874,10 @@ static bool score_ends_seclabel(const struct ends *ends,
 	bool recv_label_r = false;
 	bool match_i = false;
 	bool match_r = false;
+
+	if (selected_sec_label != NULL) {
+		*selected_sec_label = NULL;
+	}
 
 	for (unsigned tsi_n = 0; tsi_n < tsi->nr; tsi_n++) {
 		const struct traffic_selector *cur = &tsi->ts[tsi_n];
@@ -904,6 +909,9 @@ static bool score_ends_seclabel(const struct ends *ends,
 						if (within_range((const char *)ends->r->sec_label.ptr, (const char *)d->spd.this.sec_label.ptr, logger)) {
 							dbg("ikev2ts #2: received label within range of our security label");
 							match_r = true;
+							if (selected_sec_label != NULL) {
+								*selected_sec_label = &cur->sec_label;
+							}
 						} else {
 							dbg("ikev2ts #2: received label not within range of our security label");
 							DBG_dump_hunk("ends->r->sec_label", ends->r->sec_label);
@@ -925,7 +933,8 @@ static bool score_ends_seclabel(const struct ends *ends,
 	return require_label == recv_label_i && match_i && match_r;
 }
 #else
-static bool score_ends_seclabel(const struct ends *ends UNUSED,
+static bool score_ends_seclabel(const chunk_t **selected_sec_label,
+				const struct ends *ends UNUSED,
 				const struct connection *d UNUSED,
 				const struct traffic_selectors *tsi UNUSED,
 				const struct traffic_selectors *tsr UNUSED,
@@ -1029,6 +1038,7 @@ bool v2_process_ts_request(struct child_sa *child,
 	struct best_score best_score = NO_SCORE;
 	const struct spd_route *best_spd_route = NULL;
 	struct connection *best_connection = c;
+	const chunk_t *best_sec_label = NULL;
 
 	/* find best spd in c */
 
@@ -1041,7 +1051,8 @@ bool v2_process_ts_request(struct child_sa *child,
 			.r = &sra->this,
 		};
 
-		if (!score_ends_seclabel(&ends, c, &tsi, &tsr, child->sa.st_logger)) {
+		const chunk_t* selected_sec_label = NULL;
+		if (!score_ends_seclabel(&selected_sec_label, &ends, c, &tsi, &tsr, child->sa.st_logger)) {
 			continue;
 		}
 
@@ -1059,6 +1070,7 @@ bool v2_process_ts_request(struct child_sa *child,
 			    score.tsi - tsi.ts, score.tsr - tsr.ts);
 			best_score = score;
 			best_spd_route = sra;
+			best_sec_label = selected_sec_label;
 			passert(best_connection == c);
 		}
 	}
@@ -1142,7 +1154,8 @@ bool v2_process_ts_request(struct child_sa *child,
 					? END_NARROWER_THAN_TS
 					: END_EQUALS_TS;
 
-				if (!score_ends_seclabel(&ends, d, &tsi, &tsr,
+				const chunk_t* selected_sec_label = NULL;
+				if (!score_ends_seclabel(&selected_sec_label, &ends, d, &tsi, &tsr,
 					    child->sa.st_logger))
 					continue;
 
@@ -1158,6 +1171,7 @@ bool v2_process_ts_request(struct child_sa *child,
 					best_connection = d;
 					best_score = score;
 					best_spd_route = sr;
+					best_sec_label = selected_sec_label;
 				}
 			}
 		}
@@ -1388,6 +1402,13 @@ bool v2_process_ts_request(struct child_sa *child,
 	 */
 	update_state_connection(&child->sa, best_connection);
 
+	if (best_sec_label != NULL) {
+		if (child->sa.st_seen_sec_label.len != 0) {
+			free_chunk_content(&child->sa.st_seen_sec_label);
+		}
+		child->sa.st_seen_sec_label = clone_hunk(*best_sec_label, "st_seen_sec_label");
+	}
+
 	child->sa.st_ts_this = ikev2_end_to_ts(&best_spd_route->this, child->sa.st_acquired_sec_label);
 	child->sa.st_ts_that = ikev2_end_to_ts(&best_spd_route->that, child->sa.st_seen_sec_label);
 
@@ -1423,7 +1444,8 @@ bool v2_process_ts_response(struct child_sa *child,
 		? END_WIDER_THAN_TS
 		: END_EQUALS_TS;
 
-	if (!score_ends_seclabel(&e, c, &tsi, &tsr, child->sa.st_logger))
+	const chunk_t *selected_sec_label = NULL;
+	if (!score_ends_seclabel(&selected_sec_label, &e, c, &tsi, &tsr, child->sa.st_logger))
 		return false;
 
 	struct best_score best = score_ends_iprange(initiator_widening, c, &e, &tsi, &tsr);
@@ -1432,6 +1454,13 @@ bool v2_process_ts_response(struct child_sa *child,
 		dbg("reject responder TSi/TSr Traffic Selector");
 		/* prevents parent from going to I3 */
 		return false;
+	}
+
+	if (selected_sec_label != NULL) {
+		if (child->sa.st_seen_sec_label.len != 0) {
+			free_chunk_content(&child->sa.st_seen_sec_label);
+		}
+		child->sa.st_seen_sec_label = clone_hunk(*selected_sec_label, "st_seen_sec_label");
 	}
 
 	/* XXX: check conversions */
@@ -1488,7 +1517,7 @@ bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *
 
 	enum fit fitness = END_NARROWER_THAN_TS;
 
-	if (!score_ends_seclabel(&ends, c, &their_tsis, &their_tsrs,
+	if (!score_ends_seclabel(NULL, &ends, c, &their_tsis, &their_tsrs,
 				 child->sa.st_logger)) {
 		log_state(RC_LOG_SERIOUS, &child->sa,
 			  "rekey: received Traffic Selectors mismatch configured selectors for Security Label");
