@@ -815,15 +815,20 @@ void list_public_keys(struct show *s, bool utc, bool check_pub_keys)
 							    TRUE);
 		if (!check_pub_keys ||
 		    !startswith(check_expiry_msg, "ok")) {
+			bool load_needed;
+			err_t load_err = preload_private_key_by_ckaid(&key->ckaid,
+								      &load_needed,
+								      show_logger(s));
 			SHOW_JAMBUF(RC_COMMENT, s, buf) {
 				jam_realtime(buf, key->installed_time, utc);
-				jam(buf, ", ");
-				jam(buf, "%4zd %s Key %s",
-				    8 * key->size,
-				    key->type->name,
-				    str_keyid(key->keyid));
-				jam(buf, " (%s private key), until ",
-				    (lsw_has_private_rawkey(pluto_secrets, key) ? "has" : "no"));
+				jam(buf, ",");
+				jam(buf, " %4zd", 8 * key->size);
+				jam(buf, " %s", key->type->name);
+				jam(buf, " Key %s", str_keyid(key->keyid));
+				jam(buf, " (%s private key),",
+				    (load_err != NULL ? "no" :
+				     load_needed ? "loaded" : "has"));
+				jam(buf, " until ");
 				jam_realtime(buf, key->until_time, utc);
 				jam(buf, " %s", check_expiry_msg);
 			}

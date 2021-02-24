@@ -613,15 +613,6 @@ static struct secret *find_secret_by_pubkey_ckaid_1(struct secret *secrets,
 	return NULL;
 }
 
-struct secret *find_secret_by_pubkey_ckaid(struct secret *secrets,
-					   const struct pubkey_type *type,
-					   const ckaid_t *pubkey_ckaid)
-{
-	SECItem ckaid_secitem = same_ckaid_as_secitem(pubkey_ckaid);
-	return find_secret_by_pubkey_ckaid_1(secrets, type, &ckaid_secitem);
-}
-
-
 struct secret *lsw_find_secret_by_id(struct secret *secrets,
 				     enum PrivateKeyKind kind,
 				     const struct id *local_id,
@@ -810,22 +801,6 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 	    best == NULL ? -1 : best->pks.line);
 
 	return best;
-}
-
-/*
- * check the existence of an RSA private key matching an RSA public
- */
-bool lsw_has_private_rawkey(const struct secret *secrets, const struct pubkey *pk)
-{
-	for (const struct secret *s = secrets; s != NULL; s = s->next) {
-		if (s->pks.kind == PKK_RSA &&
-		    same_RSA_public_key(&s->pks.u.RSA_private_key.pub,
-					&pk->u.rsa))
-		{
-			return TRUE;
-		}
-	}
-	return FALSE;
 }
 
 /*
