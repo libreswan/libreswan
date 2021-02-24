@@ -1374,10 +1374,10 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 		const struct ikev2_transform *transform;
 		FOR_EACH_TRANSFORM(transform, transforms) {
 
-			struct esb_buf esb_type;
+			esb_buf esb_type;
 			const char *transform_type_name =
 				enum_show_short(&ikev2_trans_type_names, transform_type, &esb_type);
-			struct esb_buf esb_id;
+			esb_buf esb_id;
 			const char *transform_id_name =
 				enum_enum_show_short(&v2_transform_ID_enums,
 						     transform_type, transform->id, &esb_id);
@@ -1474,7 +1474,7 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 			unsigned type_id = add_impaired_transform - 1; /* unbias */
 			enum ikev2_trans_type transform_type = (type_id >> 16) & 0xff;
 			unsigned transform_id = (type_id & 0xffff);
-			struct esb_buf typeb, idb;
+			esb_buf typeb, idb;
 			llog(RC_LOG, logger, "IMPAIR: adding transform type %s (0x%x) id %s (0x%x)",
 				    enum_show_short(&ikev2_trans_type_names, transform_type, &typeb),
 				    transform_type,
@@ -1629,7 +1629,7 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 				const struct encrypt_desc *encrypt =
 					ikev2_get_encrypt_desc(transform->id);
 				if (encrypt == NULL) {
-					struct esb_buf buf;
+					esb_buf buf;
 					pexpect_fail(logger, HERE,
 						     "accepted IKEv2 proposal contains unexpected ENCRYPT %s",
 						     enum_showb(&ikev2_trans_type_encr_names,
@@ -1651,7 +1651,7 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 					 * the lookup should always
 					 * succeed.
 					 */
-					struct esb_buf buf;
+					esb_buf buf;
 					pexpect_fail(logger, HERE,
 						     "accepted IKEv2 proposal contains unexpected PRF %s",
 						     enum_showb(&ikev2_trans_type_prf_names,
@@ -1671,7 +1671,7 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 					 * the lookup should always
 					 * succeed.
 					 */
-					struct esb_buf buf;
+					esb_buf buf;
 					pexpect_fail(logger, HERE,
 						     "accepted IKEv2 proposal contains unexpected INTEG %s",
 						     enum_showb(&ikev2_trans_type_integ_names,
@@ -1692,7 +1692,7 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 					 * finding the DH group is
 					 * likely really bad.
 					 */
-					struct esb_buf buf;
+					esb_buf buf;
 					pexpect_fail(logger, HERE,
 						     "accepted IKEv2 proposal contains unexpected DH %s",
 						     enum_showb(&oakley_group_names,

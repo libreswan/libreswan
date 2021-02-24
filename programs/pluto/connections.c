@@ -4001,7 +4001,7 @@ static void show_one_sr(struct show *s,
 		sr->this.xauth_username != NULL ? sr->this.xauth_username : "[any]",
 		sr->that.xauth_username != NULL ? sr->that.xauth_username : "[any]");
 
-	struct esb_buf auth1, auth2;
+	esb_buf auth1, auth2;
 
 	show_comment(s,
 		"\"%s\"%s:   our auth:%s, their auth:%s",

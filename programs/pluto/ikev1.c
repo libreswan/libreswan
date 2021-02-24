@@ -3252,14 +3252,14 @@ void doi_log_cert_thinking(uint16_t auth,
 	if (DBGP(DBG_BASE)) {
 		DBG_log("thinking about whether to send my certificate:");
 
-		struct esb_buf oan;
-		struct esb_buf ictn;
+		esb_buf oan;
+		esb_buf ictn;
 
 		DBG_log("  I have RSA key: %s cert.type: %s ",
 			enum_showb(&oakley_auth_names, auth, &oan),
 			enum_showb(&ike_cert_type_names, certtype, &ictn));
 
-		struct esb_buf cptn;
+		esb_buf cptn;
 
 		DBG_log("  sendcert: %s and I did%s get a certificate request ",
 			enum_showb(&certpolicy_type_names, policy, &cptn),

@@ -826,7 +826,7 @@ static struct payload_summary ikev2_decode_payloads(struct logger *log,
 				summary.data_size = 1;
 				break;
 			}
-			struct esb_buf eb;
+			esb_buf eb;
 			llog(RC_COMMENT, log,
 				    "non-critical payload ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
 				    enum_showb(&ikev2_payload_names, np, &eb));
@@ -1873,7 +1873,7 @@ void ikev2_process_packet(struct msg_digest *md)
 	struct ike_sa *ike = find_v2_ike_sa(&md->hdr.isa_ike_spis,
 					    expected_local_ike_role);
 	if (ike == NULL) {
-		struct esb_buf ixb;
+		esb_buf ixb;
 		rate_log(md, "%s message %s has no corresponding IKE SA",
 			 enum_show_short(&ikev2_exchange_names, ix, &ixb),
 			 v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");

@@ -2355,7 +2355,7 @@ size_t jam_enum_short(struct jambuf *buf, enum_names *en, unsigned long val)
  *
  * Note: result may or may not be in b.
  */
-const char *enum_showb(enum_names *ed, unsigned long val, struct esb_buf *b)
+const char *enum_showb(enum_names *ed, unsigned long val, esb_buf *b)
 {
 	const char *p = enum_name(ed, val);
 
@@ -2366,7 +2366,7 @@ const char *enum_showb(enum_names *ed, unsigned long val, struct esb_buf *b)
 	return p;
 }
 
-const char *enum_show_short(enum_names *ed, unsigned long val, struct esb_buf *b)
+const char *enum_show_short(enum_names *ed, unsigned long val, esb_buf *b)
 {
 	const char *prefix;
 	const struct enum_names *range = enum_range(ed, val, &prefix);
@@ -2390,7 +2390,7 @@ const char *enum_show_short(enum_names *ed, unsigned long val, struct esb_buf *b
  */
 const char *enum_show(enum_names *ed, unsigned long val)
 {
-	static struct esb_buf buf;	/* only one! NON-RE-ENTRANT */
+	static esb_buf buf;	/* only one! NON-RE-ENTRANT */
 
 	return enum_showb(ed, val, &buf);
 }
@@ -2488,7 +2488,7 @@ const char *enum_enum_name(enum_enum_names *een, unsigned long table,
 }
 
 const char *enum_enum_show(enum_enum_names *een, unsigned long table,
-			   unsigned long val, struct esb_buf *b)
+			   unsigned long val, esb_buf *b)
 {
 	enum_names *en = enum_enum_table(een, table);
 	if (en == NULL) {
@@ -2501,7 +2501,7 @@ const char *enum_enum_show(enum_enum_names *een, unsigned long table,
 }
 
 const char *enum_enum_show_short(enum_enum_names *een, unsigned long table,
-				 unsigned long val, struct esb_buf *b)
+				 unsigned long val, esb_buf *b)
 {
 	enum_names *en = enum_enum_table(een, table);
 	if (en == NULL) {
@@ -2559,7 +2559,7 @@ const char *sparse_val_show(sparse_names sd, unsigned long val)
 	const char *p = sparse_name(sd, val);
 
 	if (p == NULL) {
-		static struct esb_buf b;	/* STATIC!! */
+		static esb_buf b;	/* STATIC!! */
 
 		snprintf(b.buf, sizeof(b.buf), "%lu??", val);
 		p = b.buf;

@@ -266,7 +266,7 @@ static bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 		return true;
 	}
 
-	struct esb_buf ke_esb;
+	esb_buf ke_esb;
 	llog(RC_LOG, st->st_logger,
 		    "initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
 		    enum_show_short(&oakley_group_names, ke_group, &ke_esb),
@@ -1278,7 +1278,7 @@ stf_status process_IKE_SA_INIT_v2N_INVALID_KE_PAYLOAD_response(struct ike_sa *ik
 	struct ikev2_proposals *ike_proposals =
 		get_v2_ike_proposals(c, "IKE SA initiator validating remote's suggested KE", ike->sa.st_logger);
 	if (!ikev2_proposals_include_modp(ike_proposals, sg.sg_group)) {
-		struct esb_buf esb;
+		esb_buf esb;
 		log_state(RC_LOG, &ike->sa,
 			  "Discarding unauthenticated INVALID_KE_PAYLOAD response to DH %s; suggested DH %s is not acceptable",
 			  ike->sa.st_oakley.ta_dh->common.fqn,
@@ -3698,7 +3698,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 	 *   ignored, and they should be logged.
 	 */
 	if (md->v2N_error != v2N_NOTHING_WRONG) {
-		struct esb_buf esb;
+		esb_buf esb;
 		log_state(RC_LOG_SERIOUS, &child->sa, "received ERROR NOTIFY (%d): %s ",
 			  md->v2N_error,
 			  enum_showb(&ikev2_notify_names, md->v2N_error, &esb));
