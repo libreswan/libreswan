@@ -371,11 +371,11 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 {
 	const struct ip_info *afi = NULL;
 
-	/* Note: the following may be a pointer into static memory
-	 * that may be recycled, but only if the type is not known.
-	 * That case is disposed of very early -- in the first switch.
+	/*
+	 * IDB and IDTYPENAME must have same scope.
 	 */
-	const char *idtypename = enum_show(&ike_idtype_names, id->isaiid_idtype);
+	esb_buf idb;
+	const char *idtypename = enum_show(&ike_idtype_names, id->isaiid_idtype, &idb);
 
 	switch (id->isaiid_idtype) {
 	case ID_IPV4_ADDR:

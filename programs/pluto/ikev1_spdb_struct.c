@@ -180,9 +180,10 @@ static bool out_attr(int type,
 	}
 	if (DBGP(DBG_BASE)) {
 		enum_names *d = attr_val_descs[type];
-		if (d != NULL)
-			DBG_log("    [%lu is %s]",
-				val, enum_show(d, val));
+		if (d != NULL) {
+			esb_buf b;
+			DBG_log("    [%lu is %s]", val, enum_show(d, val, &b));
+		}
 	}
 	return TRUE;
 }
@@ -1656,8 +1657,9 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 
 	/* DOI */
 	if (sa->isasa_doi != ISAKMP_DOI_IPSEC) {
+		esb_buf b;
 		log_state(RC_LOG_SERIOUS, st, "Unknown/unsupported DOI %s",
-			  enum_show(&doi_names, sa->isasa_doi));
+			  enum_show(&doi_names, sa->isasa_doi, &b));
 		/* XXX Could send notification back */
 		return DOI_NOT_SUPPORTED;	/* reject whole SA */
 	}
@@ -1696,16 +1698,18 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 	}
 
 	if (proposal.isap_pnp != ISAKMP_NEXT_NONE) {
+		esb_buf b;
 		log_state(RC_LOG_SERIOUS, st,
 			  "Proposal Payload must be alone in Oakley SA; found %s following Proposal",
-			  enum_show(&ikev1_payload_names, proposal.isap_pnp));
+			  enum_show(&ikev1_payload_names, proposal.isap_pnp, &b));
 		return PAYLOAD_MALFORMED;	/* reject whole SA */
 	}
 
 	if (proposal.isap_protoid != PROTO_ISAKMP) {
+		esb_buf b;
 		log_state(RC_LOG_SERIOUS, st,
 			  "unexpected Protocol ID (%s) found in Oakley Proposal",
-			  enum_show(&ikev1_protocol_names, proposal.isap_protoid));
+			  enum_show(&ikev1_protocol_names, proposal.isap_protoid, &b));
 		return INVALID_PROTOCOL_ID;	/* reject whole SA */
 	}
 
@@ -1792,10 +1796,11 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 		last_transnum = trans.isat_transnum;
 
 		if (trans.isat_transid != KEY_IKE) {
+			esb_buf b;
 			log_state(RC_LOG_SERIOUS, st,
 				  "expected KEY_IKE but found %s in Oakley Transform",
 				  enum_show(&isakmp_transformid_names,
-					    trans.isat_transid));
+					    trans.isat_transid, &b));
 			return INVALID_TRANSFORM_ID;	/* reject whole SA */
 		}
 
@@ -1809,11 +1814,13 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 		bool ok = true;
 #define UGH(FMT, ...)							\
 		{							\
+			esb_buf typeesb_;				\
 			ok = false;					\
 			log_state(RC_LOG_SERIOUS, st,			\
 				  FMT".  Attribute %s",			\
 				  ##__VA_ARGS__,			\
-				  enum_show(&oakley_attr_names, a.isaat_af_type)); \
+				  enum_show(&oakley_attr_names,		\
+					    a.isaat_af_type, &typeesb_)); \
 		}
 
 		while (pbs_left(&trans_pbs) >= isakmp_oakley_attribute_desc.size) {
@@ -1831,12 +1838,11 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 			passert((a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) <
 				LELEM_ROOF);
 
-			if (LHAS(seen_attrs, a.isaat_af_type &
-				 ISAKMP_ATTR_RTYPE_MASK)) {
+			if (LHAS(seen_attrs, a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK)) {
+				esb_buf b;
 				log_state(RC_LOG_SERIOUS, st,
 					  "repeated %s attribute in Oakley Transform %u",
-					  enum_show(&oakley_attr_names,
-						    a.isaat_af_type),
+					  enum_show(&oakley_attr_names, a.isaat_af_type, &b),
 					  trans.isat_transnum);
 				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
@@ -1869,8 +1875,9 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 			{
 				const struct encrypt_desc *encrypter = ikev1_get_ike_encrypt_desc(val);
 				if (encrypter == NULL) {
+					esb_buf b;
 					UGH("%s is not supported",
-					    enum_show(&oakley_enc_names, val));
+					    enum_show(&oakley_enc_names, val, &b));
 					break;
 				}
 				ta.ta_encrypt = encrypter;
@@ -1881,8 +1888,9 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 			case OAKLEY_HASH_ALGORITHM | ISAKMP_ATTR_AF_TV:
 				ta.ta_prf = ikev1_get_ike_prf_desc(val);
 				if (ta.ta_prf == NULL) {
+					esb_buf b;
 					UGH("%s is not supported",
-					    enum_show(&oakley_hash_names, val));
+					    enum_show(&oakley_hash_names, val, &b));
 				}
 				break;
 
@@ -2002,9 +2010,12 @@ rsasig_common:
 					break;
 
 				default:
+				{
+					esb_buf b;
 					UGH("Pluto does not support %s authentication",
-					    enum_show(&oakley_auth_names, val));
+					    enum_show(&oakley_auth_names, val, &b));
 					break;
+				}
 				}
 			}
 			break;
@@ -2022,18 +2033,22 @@ rsasig_common:
 				case OAKLEY_LIFE_SECONDS:
 				case OAKLEY_LIFE_KILOBYTES:
 					if (LHAS(seen_durations, val)) {
+						esb_buf b;
 						log_state(RC_LOG_SERIOUS, st,
 							  "attribute OAKLEY_LIFE_TYPE value %s repeated",
-							  enum_show(&oakley_lifetime_names, val));
+							  enum_show(&oakley_lifetime_names, val, &b));
 						return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 					}
 					seen_durations |= LELEM(val);
 					life_type = val;
 					break;
 				default:
+				{
+					esb_buf b;
 					UGH("unknown value %s",
-					    enum_show(&oakley_lifetime_names, val));
+					    enum_show(&oakley_lifetime_names, val, &b));
 					break;
+				}
 				}
 				break;
 
@@ -2226,9 +2241,10 @@ rsasig_common:
 			break;
 		}
 		if (trans.isat_tnp != ISAKMP_NEXT_T) {
+			esb_buf b;
 			log_state(RC_LOG_SERIOUS, st,
 				  "unexpected %s payload in Oakley Proposal",
-				  enum_show(&ikev1_payload_names, proposal.isap_pnp));
+				  enum_show(&ikev1_payload_names, proposal.isap_pnp, &b));
 			return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 		}
 	}
@@ -2402,10 +2418,13 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		}
 		break;
 	default:
+	{
+		esb_buf b;
 		log_state(RC_LOG_SERIOUS, st,
 			  "expecting Transform Payload, but found %s in Proposal",
-		       enum_show(&ikev1_payload_names, trans->isat_tnp));
-		return FALSE;
+			  enum_show(&ikev1_payload_names, trans->isat_tnp, &b));
+		return false;
+	}
 	}
 
 	*attrs = (struct ipsec_trans_attrs) {
@@ -2458,9 +2477,10 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		} else {
 			passert(ty < LELEM_ROOF);
 			if (LHAS(seen_attrs, ty)) {
+				esb_buf b;
 				log_state(RC_LOG_SERIOUS, st,
 					  "repeated %s attribute in IPsec Transform %u",
-					  enum_show(&ipsec_attr_names, a.isaat_af_type),
+					  enum_show(&ipsec_attr_names, a.isaat_af_type, &b),
 					  trans->isat_transnum);
 				return FALSE;
 			}
@@ -2473,20 +2493,20 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		if (vdesc != NULL) {
 			/* reject unknown enum values */
 			if (enum_name(vdesc, val) == NULL) {
+				esb_buf b;
 				log_state(RC_LOG_SERIOUS, st,
 					  "invalid value %" PRIu32 " for attribute %s in IPsec Transform",
 					  val,
-				       enum_show(&ipsec_attr_names,
-						 a.isaat_af_type));
+					  enum_show(&ipsec_attr_names, a.isaat_af_type, &b));
 				return FALSE;
 			}
 			if (DBGP(DBG_BASE)) {
-				if ((a.isaat_af_type &
-				     ISAKMP_ATTR_AF_MASK) ==
+				if ((a.isaat_af_type & ISAKMP_ATTR_AF_MASK) ==
 				    ISAKMP_ATTR_AF_TV) {
+					esb_buf b;
 					DBG_log("   [%" PRIu32 " is %s]",
 						val,
-						enum_show(vdesc, val));
+						enum_show(vdesc, val, &b));
 				}
 			}
 		}
@@ -2495,9 +2515,10 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		case SA_LIFE_TYPE | ISAKMP_ATTR_AF_TV:
 			ipcomp_inappropriate = FALSE;
 			if (LHAS(seen_durations, val)) {
+				esb_buf b;
 				log_state(RC_LOG_SERIOUS, st,
 					  "attribute SA_LIFE_TYPE value %s repeated in message",
-					  enum_show(&sa_lifetime_names, val));
+					  enum_show(&sa_lifetime_names, val, &b));
 				return FALSE;
 			}
 			seen_durations |= LELEM(val);
@@ -2639,10 +2660,11 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				 * Either straight AH, or ESP
 				 * containing AUTH; or what?
 				 */
+				esb_buf b;
 				log_state(RC_LOG_SERIOUS, st,
 					  "IKEv1 %s integrity algorithm %s not supported",
 					  (proto == PROTO_IPSEC_ESP ? "ESP" : "AH"),
-					  enum_show(&ah_transformid_names, val));
+					  enum_show(&ah_transformid_names, val, &b));
 			}
 			break;
 
@@ -2669,16 +2691,20 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		}
 
 		default:
+		{
+			esb_buf b;
 			log_state(RC_LOG_SERIOUS, st,
 				  "unsupported IPsec attribute %s",
-				  enum_show(&ipsec_attr_names, a.isaat_af_type));
+				  enum_show(&ipsec_attr_names, a.isaat_af_type, &b));
 			return FALSE;
+		}
 		}
 
 		if (ipcomp_inappropriate) {
+			esb_buf b;
 			log_state(RC_LOG_SERIOUS, st,
 				  "IPsec attribute %s inappropriate for IPCOMP",
-				  enum_show(&ipsec_attr_names, a.isaat_af_type));
+				  enum_show(&ipsec_attr_names, a.isaat_af_type, &b));
 			return FALSE;
 		}
 	}
@@ -2850,8 +2876,9 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 	/* DOI */
 	if (sa->isasa_doi != ISAKMP_DOI_IPSEC) {
+		esb_buf b;
 		log_state(RC_LOG_SERIOUS, st, "Unknown or unsupported DOI %s",
-			  enum_show(&doi_names, sa->isasa_doi));
+			  enum_show(&doi_names, sa->isasa_doi, &b));
 		/* XXX Could send notification back */
 		return DOI_NOT_SUPPORTED;	/* reject whole SA */
 	}
@@ -3085,11 +3112,14 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				break;
 
 			default:
+			{
+				esb_buf b;
 				log_state(RC_LOG_SERIOUS, st,
 					  "unexpected Protocol ID (%s) in IPsec Proposal",
 					  enum_show(&ikev1_protocol_names,
-						    next_proposal.isap_protoid));
+						    next_proposal.isap_protoid, &b));
 				return INVALID_PROTOCOL_ID;	/* reject whole SA */
+			}
 			}
 
 			/* refill next_proposal */
@@ -3097,10 +3127,10 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				next_full = FALSE;
 				break;
 			} else if (next_proposal.isap_pnp != ISAKMP_NEXT_P) {
+				esb_buf b;
 				log_state(RC_LOG_SERIOUS, st,
 					  "unexpected in Proposal: %s",
-					  enum_show(&ikev1_payload_names,
-						    next_proposal.isap_pnp));
+					  enum_show(&ikev1_payload_names, next_proposal.isap_pnp, &b));
 				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 
@@ -3168,11 +3198,12 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				 * AH_DES, AUTH_ALGORITHM_DES_MAC (unimplemented)
 				 */
 				if (ah_trans.isat_transid != ah_attrs.transattrs.ta_integ->integ_ikev1_ah_transform) {
+					esb_buf b;
 					log_state(RC_LOG_SERIOUS, st,
 						  "%s attribute inappropriate in %s Transform",
 						  ah_attrs.transattrs.ta_integ->common.fqn,
 						  enum_show(&ah_transformid_names,
-							    ah_trans.isat_transid));
+							    ah_trans.isat_transid, &b));
 					return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 				}
 				break;                  /* we seem to be happy */

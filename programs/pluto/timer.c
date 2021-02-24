@@ -147,8 +147,9 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		st = ev->ev_state;	/* note: *st might be changed; XXX: why? */
 		passert(st != NULL);
 
+		esb_buf b;
 		dbg("handling event %s for %s state #%lu",
-		    enum_show(&timer_event_names, type),
+		    enum_show(&timer_event_names, type, &b),
 		    (st->st_clonedfrom == SOS_NOBODY) ? "parent" : "child",
 		    st->st_serialno);
 
@@ -202,13 +203,16 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		break;
 
 	case EVENT_v2_RELEASE_WHACK:
+	{
+		esb_buf b;
 		dbg("%s releasing whack for #%lu %s (sock="PRI_FD")",
-		    enum_show(&timer_event_names, type),
+		    enum_show(&timer_event_names, type, &b),
 		    st->st_serialno,
 		    st->st_state->name,
 		    pri_fd(st->st_logger->object_whackfd));
 		release_pending_whacks(st, "release whack");
 		break;
+	}
 
 	case EVENT_RETRANSMIT:
 		dbg("IKEv%d retransmit event", st->st_ike_version);
@@ -473,10 +477,10 @@ void delete_event(struct state *st)
 			dbg("state #%lu has no .%s to delete", st->st_serialno,
 			    l->name);
 		} else {
+			esb_buf b;
 			dbg("state #%lu deleting .%s %s",
 			    st->st_serialno, l->name,
-			    enum_show(&timer_event_names,
-				      (*l->event)->ev_type));
+			    enum_show(&timer_event_names, (*l->event)->ev_type, &b));
 			delete_pluto_event(l->event);
 		}
 	}

@@ -2273,17 +2273,21 @@ bool accept_delete(struct msg_digest *md,
 		return FALSE;
 
 	default:
+	{
+		esb_buf b;
 		log_state(RC_LOG_SERIOUS, st,
 			  "ignoring Delete SA payload: unknown Protocol ID (%s)",
-			  enum_show(&ikev1_protocol_names, d->isad_protoid));
+			  enum_show(&ikev1_protocol_names, d->isad_protoid, &b));
 		return false;
+	}
 	}
 
 	if (d->isad_spisize != sizespi) {
+		esb_buf b;
 		log_state(RC_LOG_SERIOUS, st,
 			  "ignoring Delete SA payload: bad SPI size (%d) for %s",
 			  d->isad_spisize,
-			  enum_show(&ikev1_protocol_names, d->isad_protoid));
+			  enum_show(&ikev1_protocol_names, d->isad_protoid, &b));
 		return false;
 	}
 
@@ -2360,17 +2364,17 @@ bool accept_delete(struct msg_digest *md,
 
 			passert(dst != st);	/* st is an IKE SA */
 			if (dst == NULL) {
+				esb_buf b;
 				log_state(RC_LOG_SERIOUS, st,
 					  "ignoring Delete SA payload: %s SA(0x%08" PRIx32 ") not found (maybe expired)",
-					  enum_show(&ikev1_protocol_names,
-						    d->isad_protoid),
+					  enum_show(&ikev1_protocol_names, d->isad_protoid, &b),
 					  ntohl(spi));
 			} else {
 				if (bogus) {
+					esb_buf b;
 					log_state(RC_LOG_SERIOUS, st,
 						  "warning: Delete SA payload: %s SA(0x%08" PRIx32 ") is our own SPI (bogus implementation) - deleting anyway",
-						  enum_show(&ikev1_protocol_names,
-							    d->isad_protoid),
+						  enum_show(&ikev1_protocol_names, d->isad_protoid, &b),
 						  ntohl(spi));
 				}
 

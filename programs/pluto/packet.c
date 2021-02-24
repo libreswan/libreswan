@@ -1884,10 +1884,13 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 				 * try to deal with fp->desc
 				 * containing a selection of
 				 * AF+<value> and <value> entries.
+				 *
+				 * NB and NAME must have same scope.
 				 */
+				esb_buf nb;
 				const char *name = enum_name(fp->desc, last_enum);
 				if (name == NULL) {
-					name = enum_show(fp->desc, n);
+					name = enum_show(fp->desc, n, &nb);
 				}
 				DBG_log("   %s: %s%s (0x%jx)",
 					fp->name,
@@ -1901,16 +1904,19 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 			case ft_mnpc:
 			case ft_pnpc:
 			case ft_lss:
+			{
 				last_enum = n;
+				esb_buf nb;
 				DBG_log("   %s: %s (0x%jx)",
 					fp->name,
-					enum_show(fp->desc, n),
+					enum_show(fp->desc, n, &nb),
 					n);
 				break;
+			}
 
 			case ft_loose_enum_enum:
 			{
-				struct esb_buf buf;
+				esb_buf buf;
 				const char *name = enum_enum_show(fp->desc, last_enum, n, &buf);
 				DBG_log("   %s: %s (0x%jx)",
 					fp->name, name, n);
@@ -2240,20 +2246,20 @@ static void update_last_substructure(pb_stream *outs,
 	 * last.  Check/set its last substructure field to its type.
 	 */
 	if (outs->last_substructure.loc != NULL) {
-		struct esb_buf locb;
-		struct esb_buf nsstb;
+		esb_buf locb;
+		esb_buf nsstb;
 		dbg("last substructure: checking '%s'.'%s'.'%s' containing %s (0x%x) is %s (0x%x)",
 		    /* '%s'.'%s'.'%s' */
 		    outs->desc->name,
 		    outs->last_substructure.sd->name,
 		    outs->last_substructure.fp->name,
 		    /* containing ... */
-		    enum_showb(outs->last_substructure.fp->desc,
-			       outs->last_substructure.loc[0], &locb),
+		    enum_show(outs->last_substructure.fp->desc,
+			      outs->last_substructure.loc[0], &locb),
 		    outs->last_substructure.loc[0],
 		    /* is ... */
-		    enum_showb(outs->last_substructure.fp->desc,
-			       outs->desc->nsst, &nsstb),
+		    enum_show(outs->last_substructure.fp->desc,
+			      outs->desc->nsst, &nsstb),
 		    outs->desc->nsst);
 		pexpect(outs->last_substructure.loc[0] == outs->desc->nsst);
 	}
@@ -2300,11 +2306,11 @@ static void start_next_payload_chain(struct pbs_out *outs,
 	outs->next_payload_chain.fp = fp;
 	uint8_t n = *inp;
 	if (n != ISAKMP_NEXT_NONE) {
-		struct esb_buf npb;
+		esb_buf npb;
 		pexpect_fail(outs->outs_logger, HERE,
 			     "next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
 			     sd->name, fp->name, n,
-			     enum_showb(fp->desc, n, &npb));
+			     enum_show(fp->desc, n, &npb));
 		n = ISAKMP_NEXT_NONE;
 	}
 	*cur = n;
@@ -2323,9 +2329,9 @@ static void update_next_payload_chain(pb_stream *outs,
 	 * just the "Identification Payload".
 	 */
 	if (outs->container == NULL) {
-		struct esb_buf npb;
+		esb_buf npb;
 		dbg("next payload chain: no previous for current %s (%d:%s); assumed to be fake",
-		    sd->name, sd->pt, enum_showb(fp->desc, sd->pt, &npb));
+		    sd->name, sd->pt, enum_show(fp->desc, sd->pt, &npb));
 		return;
 	}
 
@@ -2364,26 +2370,26 @@ static void update_next_payload_chain(pb_stream *outs,
 		 * This works because v2SKF messages never have more
 		 * than one payload.
 		 */
-		struct esb_buf npb;
+		esb_buf npb;
 		dbg("next payload chain: using supplied v2SKF '%s'.'%s' value %d:%s",
 		     sd->name, fp->name, n,
-		     enum_showb(fp->desc, n, &npb));
+		     enum_show(fp->desc, n, &npb));
 	} else if (n != ISAKMP_NEXT_NONE) {
-		struct esb_buf npb;
+		esb_buf npb;
 		pexpect_fail(outs->outs_logger, HERE,
 			     "next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
 			     sd->name, fp->name, n,
-			     enum_showb(fp->desc, n, &npb));
+			     enum_show(fp->desc, n, &npb));
 		n = ISAKMP_NEXT_NONE;
 	}
 	*cur = n;
 
 	/* update previous struct's next payload type field */
-	struct esb_buf npb;
+	esb_buf npb;
 	dbg("next payload chain: setting previous '%s'.'%s' to current %s (%d:%s)",
 	     message->next_payload_chain.sd->name,
 	     message->next_payload_chain.fp->name,
-	     sd->name, sd->pt, enum_showb(fp->desc, sd->pt, &npb));
+	     sd->name, sd->pt, enum_show(fp->desc, sd->pt, &npb));
 	*message->next_payload_chain.loc = sd->pt;
 
 	/* save new */

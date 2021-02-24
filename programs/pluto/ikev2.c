@@ -760,8 +760,9 @@ static struct payload_summary ikev2_decode_payloads(struct logger *log,
 	 */
 
 	while (np != ISAKMP_NEXT_v2NONE) {
+		esb_buf b;
 		dbg("Now let's proceed with payload (%s)",
-		    enum_show(&ikev2_payload_names, np));
+		    enum_show(&ikev2_payload_names, np, &b));
 
 		if (md->digest_roof >= elemsof(md->digest)) {
 			llog(RC_LOG_SERIOUS, log,
@@ -818,18 +819,19 @@ static struct payload_summary ikev2_decode_payloads(struct logger *log,
 				default:
 					bad_case(v2_msg_role(md));
 				}
+				esb_buf b;
 				llog(RC_LOG_SERIOUS, log,
-					    "message %s contained an unknown critical payload type (%s)",
-					    role, enum_show(&ikev2_payload_names, np));
+				     "message %s contained an unknown critical payload type (%s)",
+				     role, enum_show(&ikev2_payload_names, np, &b));
 				summary.n = v2N_UNSUPPORTED_CRITICAL_PAYLOAD;
 				summary.data[0] = np;
 				summary.data_size = 1;
 				break;
 			}
-			struct esb_buf eb;
+			esb_buf eb;
 			llog(RC_COMMENT, log,
-				    "non-critical payload ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
-				    enum_showb(&ikev2_payload_names, np, &eb));
+			     "non-critical payload ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
+			     enum_show(&ikev2_payload_names, np, &eb));
 			np = pd->payload.generic.isag_np;
 			continue;
 		}
@@ -858,7 +860,7 @@ static struct payload_summary ikev2_decode_payloads(struct logger *log,
 		}
 
 		dbg("processing payload: %s (len=%zu)",
-		    enum_show(&ikev2_payload_names, np),
+		    enum_show(&ikev2_payload_names, np, &b),
 		    pbs_left(&pd->pbs));
 
 		/*
@@ -1873,7 +1875,7 @@ void ikev2_process_packet(struct msg_digest *md)
 	struct ike_sa *ike = find_v2_ike_sa(&md->hdr.isa_ike_spis,
 					    expected_local_ike_role);
 	if (ike == NULL) {
-		struct esb_buf ixb;
+		esb_buf ixb;
 		rate_log(md, "%s message %s has no corresponding IKE SA",
 			 enum_show_short(&ikev2_exchange_names, ix, &ixb),
 			 v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");
@@ -2802,14 +2804,16 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 
 	if (!(c->policy & POLICY_OPPORTUNISTIC)) {
 		id_buf idbuf;
+		esb_buf b;
 		log_state(RC_LOG, &ike->sa,
 			  "IKEv2 mode peer ID is %s: '%s'",
-			  enum_show(&ikev2_idtype_names, hik),
+			  enum_show(&ikev2_idtype_names, hik, &b),
 			  str_id(&peer_id, &idbuf));
 	} else if (DBGP(DBG_BASE)) {
 		id_buf idbuf;
+		esb_buf b;
 		DBG_log("IKEv2 mode peer ID is %s: '%s'",
-			enum_show(&ikev2_idtype_names, hik),
+			enum_show(&ikev2_idtype_names, hik, &b),
 			str_id(&peer_id, &idbuf));
 	}
 

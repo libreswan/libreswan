@@ -364,17 +364,19 @@ bool initiate_connection_2(struct connection *c, const char *remote_host, bool b
 		if (address_is_unset(&c->spd.that.host_addr) ||
 		    address_is_any(&c->spd.that.host_addr)) {
 			if (c->dnshostname != NULL) {
+				esb_buf b;
 				llog(RC_NOPEERIP, c->logger,
 				     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
-				     enum_show(&connection_kind_names, c->kind));
+				     enum_show(&connection_kind_names, c->kind, &b));
 				dbg("%s() connection '%s' +POLICY_UP", __func__, c->name);
 				c->policy |= POLICY_UP;
 				return true;
 			} else {
+				esb_buf b;
 				llog(RC_NOPEERIP, c->logger,
 				     "cannot initiate connection (serial "PRI_CO") without knowing peer IP address (kind=%s)",
 				     pri_co(c->serialno),
-				     enum_show(&connection_kind_names, c->kind));
+				     enum_show(&connection_kind_names, c->kind, &b));
 			}
 			return false;
 		}
@@ -385,17 +387,19 @@ bool initiate_connection_2(struct connection *c, const char *remote_host, bool b
 	     address_is_any(&c->spd.that.host_addr)) &&
 	    (c->policy & POLICY_IKEV2_ALLOW_NARROWING) ) {
 		if (c->dnshostname != NULL) {
+			esb_buf b;
 			llog(RC_NOPEERIP, c->logger,
 			     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
-			     enum_show(&connection_kind_names, c->kind),
+			     enum_show(&connection_kind_names, c->kind, &b),
 			     bool_str((c->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY));
 			dbg("%s() connection '%s' +POLICY_UP", __func__, c->name);
 			c->policy |= POLICY_UP;
 			return true;
 		} else {
+			esb_buf b;
 			llog(RC_NOPEERIP, c->logger,
 			     "cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
-			     enum_show(&connection_kind_names, c->kind),
+			     enum_show(&connection_kind_names, c->kind, &b),
 			     bool_str((c->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY));
 			return false;
 		}

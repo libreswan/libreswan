@@ -530,9 +530,12 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	if (NEVER_NEGOTIATE(c->policy)) {
 		jam(buf, "+NEVER_NEGOTIATE");
 	}
-	jam(buf, "'");
+	jam(buf, "' ");
 
-	jam(buf, "PLUTO_CONN_KIND='%s' ", enum_show(&connection_kind_names, c->kind));
+	jam(buf, "PLUTO_CONN_KIND='");
+	jam_enum(buf, &connection_kind_names, c->kind);
+	jam(buf,"' ");
+
 	jam(buf, "PLUTO_CONN_ADDRFAMILY='ipv%d' ", address_type(&sr->this.host_addr)->ip_version);
 	jam(buf, "XAUTH_FAILED=%d ", (st != NULL && st->st_xauth_soft) ? 1 : 0);
 
@@ -892,9 +895,10 @@ static enum routability note_nearconflict(struct connection *outside,	/* CK_PERM
  */
 static enum routability could_route(struct connection *c, struct logger *logger)
 {
+	esb_buf b;
 	dbg("could_route called for %s; kind=%s that.has_client=%s oppo=%s this.host_port=%u",
 	    c->name,
-	    enum_show(&connection_kind_names, c->kind),
+	    enum_show(&connection_kind_names, c->kind, &b),
 	    bool_str(c->spd.that.has_client),
 	    bool_str(c->policy & POLICY_OPPORTUNISTIC),
 	    c->spd.this.host_port);
