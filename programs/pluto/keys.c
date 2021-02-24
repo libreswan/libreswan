@@ -481,12 +481,6 @@ stf_status check_signature_gen(struct state *st,
 		return STF_FAIL + INVALID_KEY_INFORMATION;
 	}
 
-	if (s.best_ugh[0] == '9') {
-		log_state(RC_LOG_SERIOUS, st, "%s", s.best_ugh + 1);
-		/* XXX Could send notification back */
-		return STF_FAIL + INVALID_HASH_INFORMATION;
-	}
-
 	if (s.tried_cnt == 1) {
 		log_state(RC_LOG_SERIOUS, st,
 			  "%s Signature check (on %s) failed (wrong key?); tried%s",
