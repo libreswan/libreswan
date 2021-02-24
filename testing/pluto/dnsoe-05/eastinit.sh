@@ -6,6 +6,9 @@ ip addr add 192.1.2.66/24 dev eth1
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec whack --impair suppress-retransmits
+# "loaded private key"
+ipsec whack --listpubkeys
+# "has private key"
 ipsec whack --listpubkeys
 # give OE policies time to load
 sleep 5

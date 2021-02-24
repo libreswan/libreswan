@@ -15,6 +15,17 @@ east #
 east #
  ipsec whack --impair suppress-retransmits
 east #
+ # "loaded private key"
+east #
+ ipsec whack --listpubkeys
+000  
+000 List of Public Keys:
+000  
+000 TIMESTAMP, 2192 RSA Key AQO9bJbr3 (loaded private key), until --- -- --:--:-- ---- ok (expires never)
+000        ID_IPV4_ADDR '192.1.2.66'
+east #
+ # "has private key"
+east #
  ipsec whack --listpubkeys
 000  
 000 List of Public Keys:
