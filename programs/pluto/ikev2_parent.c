@@ -473,6 +473,8 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 	}
 
 	if (DBGP(DBG_BASE)) {
+		/* eb2 and err2 must have same scope */
+		esb_buf eb2;
 		const char *err1 = "%dnsondemand";
 		const char *err2 = "";
 
@@ -483,10 +485,10 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 		}
 
 		if (id.kind != ID_FQDN &&
-				id.kind != ID_IPV4_ADDR &&
-				id.kind != ID_IPV6_ADDR) {
+		    id.kind != ID_IPV4_ADDR &&
+		    id.kind != ID_IPV6_ADDR) {
 			err1 = " mismatched ID type, that ID is not a FQDN, IPV4_ADDR, or IPV6_ADDR id type=";
-			err2 = enum_show(&ike_idtype_names, id.kind);
+			err2 = enum_show(&ike_idtype_names, id.kind, &eb2);
 		}
 
 		id_buf thatid;
@@ -2304,9 +2306,12 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 			break;
 		}
 		default:
+		{
+			esb_buf b;
 			dbg("Not sending IDr payload for remote ID type %s",
-			    enum_show(&ike_idtype_names, pc->spd.that.id.kind));
+			    enum_show(&ike_idtype_names, pc->spd.that.id.kind, &b));
 			break;
+		}
 		}
 	}
 
@@ -3701,7 +3706,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 		esb_buf esb;
 		log_state(RC_LOG_SERIOUS, &child->sa, "received ERROR NOTIFY (%d): %s ",
 			  md->v2N_error,
-			  enum_showb(&ikev2_notify_names, md->v2N_error, &esb));
+			  enum_show(&ikev2_notify_names, md->v2N_error, &esb));
 		return STF_FATAL;
 	}
 
@@ -4118,8 +4123,9 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 	/*
 	 * find old state to rekey
 	 */
+	esb_buf b;
 	dbg("CREATE_CHILD_SA IPsec SA rekey Protocol %s",
-	    enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid));
+	    enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));
 
 	if (rekey_notify->isan_spisize != sizeof(ipsec_spi_t)) {
 		log_state(RC_LOG, &child->sa,
@@ -4149,9 +4155,10 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 
 	if (rekey_notify->isan_protoid != PROTO_IPSEC_ESP &&
 	    rekey_notify->isan_protoid != PROTO_IPSEC_AH) {
+		esb_buf b;
 		log_state(RC_LOG, &child->sa,
 			  "CREATE_CHILD_SA IPsec SA rekey invalid Protocol ID %s",
-			  enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid));
+			  enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));
 		record_v2N_spi_response(child->sa.st_logger, ike, md,
 					rekey_notify->isan_protoid, &spi,
 					v2N_CHILD_SA_NOT_FOUND,
@@ -4159,9 +4166,10 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 		return false;
 	}
 
+	esb_buf protoesb;
 	dbg("CREATE_CHILD_S to rekey IPsec SA(0x%08" PRIx32 ") Protocol %s",
 	    ntohl((uint32_t) spi),
-	    enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid));
+	    enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &protoesb));
 
 	/*
 	 * From 1.3.3.  Rekeying Child SAs with the CREATE_CHILD_SA
@@ -4174,10 +4182,11 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 	 */
 	struct child_sa *replaced_child = find_v2_child_sa_by_outbound_spi(ike, rekey_notify->isan_protoid, spi);
 	if (replaced_child == NULL) {
+		esb_buf b;
 		log_state(RC_LOG, &child->sa,
 			  "CREATE_CHILD_SA no such IPsec SA to rekey SA(0x%08" PRIx32 ") Protocol %s",
 			  ntohl((uint32_t) spi),
-			  enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid));
+			  enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));
 		record_v2N_spi_response(child->sa.st_logger, ike, md,
 					rekey_notify->isan_protoid, &spi,
 					v2N_CHILD_SA_NOT_FOUND,
@@ -5690,9 +5699,10 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 						return STF_INTERNAL_ERROR;	/* cannot happen */
 					}
 
+					esb_buf b;
 					dbg("delete %s SA(0x%08" PRIx32 ")",
 					    enum_show(&ikev2_delete_protocol_id_names,
-						      v2del->isad_protoid),
+						      v2del->isad_protoid, &b),
 					    ntohl((uint32_t) spi));
 
 					/*
@@ -5713,15 +5723,18 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 												spi);
 
 					if (dst == NULL) {
+						esb_buf b;
 						log_state(RC_LOG, &ike->sa,
 							  "received delete request for %s SA(0x%08" PRIx32 ") but corresponding state not found",
 							  enum_show(&ikev2_delete_protocol_id_names,
-								    v2del->isad_protoid),
+								    v2del->isad_protoid, &b),
 							  ntohl((uint32_t)spi));
 					} else {
+						esb_buf b;
 						dbg("our side SPI that needs to be deleted: %s SA(0x%08" PRIx32 ")",
 						    enum_show(&ikev2_delete_protocol_id_names,
-							      v2del->isad_protoid), ntohl((uint32_t)spi));
+							      v2del->isad_protoid, &b),
+						    ntohl((uint32_t)spi));
 
 						/* we just received a delete, don't send another delete */
 						dst->sa.st_dont_send_delete = true;

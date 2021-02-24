@@ -311,10 +311,13 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 		break;
 	}
 	default:
+	{
+		esb_buf b;
 		log_state(RC_LOG, st,
 			  "attempt to send unsupported mode cfg attribute %s.",
-			  enum_show(&modecfg_attr_names, attr_type));
+			  enum_show(&modecfg_attr_names, attr_type, &b));
 		break;
+	}
 	}
 
 	if (!ok)
@@ -1217,10 +1220,11 @@ static void xauth_launch_authent(struct state *st,
 /* log a nice description of an unsupported attribute */
 static void log_bad_attr(const char *kind, enum_names *ed, unsigned val)
 {
+	esb_buf b;
 	dbg("Unsupported %s %s attribute %s received.",
 	    kind,
 	    (val & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
-	    enum_show(ed, val & ISAKMP_ATTR_RTYPE_MASK));
+	    enum_show(ed, val & ISAKMP_ATTR_RTYPE_MASK, &b));
 }
 
 /*
@@ -1280,8 +1284,9 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 		case XAUTH_TYPE | ISAKMP_ATTR_AF_TV:
 			/* since we only accept XAUTH_TYPE_GENERIC we don't need to record this attribute */
 			if (attr.isaat_lv != XAUTH_TYPE_GENERIC) {
+				esb_buf b;
 				dbg("unsupported XAUTH_TYPE value %s received",
-				    enum_show(&xauth_type_names, attr.isaat_lv));
+				    enum_show(&xauth_type_names, attr.isaat_lv, &b));
 				return STF_FAIL + NO_PROPOSAL_CHOSEN;
 			}
 			break;
@@ -2079,11 +2084,13 @@ static stf_status xauth_client_resp(struct state *st,
 					break;
 
 				default:
+				{
+					esb_buf b;
 					log_state(RC_LOG, st, 
 						"trying to send XAUTH reply, sending %s instead.",
-						enum_show(&modecfg_attr_names,
-							  attr_type));
+						  enum_show(&modecfg_attr_names, attr_type, &b));
 					break;
+				}
 				}
 			}
 
@@ -2443,12 +2450,15 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 				break;
 
 			default:
+			{
+				esb_buf b;
 				log_state(RC_LOG, st, 
 					"while waiting for XAUTH_STATUS, got %s %s instead.",
 					(attr.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
 					enum_show(&modecfg_attr_names,
-						  attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK));
+						  attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK, &b));
 				break;
+			}
 			}
 		}
 		break;

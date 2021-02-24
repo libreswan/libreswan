@@ -727,10 +727,13 @@ bool match_certs_id(const struct certs *certs,
 	}
 
 	default:
+	{
+		esb_buf b;
 		llog(RC_LOG_SERIOUS, logger,
 			    "unhandled ID type %s; cannot match peer's certificate with expected peer ID",
-			    enum_show(&ike_idtype_names, peer_id->kind));
+		     enum_show(&ike_idtype_names, peer_id->kind, &b));
 		return false;
+	}
 	}
 }
 
@@ -970,9 +973,10 @@ void ikev1_decode_cr(struct msg_digest *md, struct logger *logger)
 					str_dn_or_null(ca_name, "%any", &buf));
 			}
 		} else {
+			esb_buf b;
 			llog(RC_LOG_SERIOUS, logger,
-				    "ignoring %s certificate request payload",
-				    enum_show(&ike_cert_type_names, cr->isacr_type));
+			     "ignoring %s certificate request payload",
+			     enum_show(&ike_cert_type_names, cr->isacr_type, &b));
 		}
 	}
 }
@@ -1019,9 +1023,12 @@ void ikev2_decode_cr(struct msg_digest *md, struct logger *logger)
 			break;
 		}
 		default:
+		{
+			esb_buf b;
 			llog(RC_LOG_SERIOUS, logger,
-				    "ignoring CERTREQ payload of unsupported type %s",
-				    enum_show(&ikev2_cert_type_names, cr->isacertreq_enc));
+			     "ignoring CERTREQ payload of unsupported type %s",
+			     enum_show(&ikev2_cert_type_names, cr->isacertreq_enc, &b));
+		}
 		}
 	}
 }

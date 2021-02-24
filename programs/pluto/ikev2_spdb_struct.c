@@ -1632,8 +1632,8 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 					esb_buf buf;
 					pexpect_fail(logger, HERE,
 						     "accepted IKEv2 proposal contains unexpected ENCRYPT %s",
-						     enum_showb(&ikev2_trans_type_encr_names,
-								transform->id, &buf));
+						     enum_show(&ikev2_trans_type_encr_names,
+							       transform->id, &buf));
 					return false;
 				}
 				ta.ta_encrypt = encrypt;
@@ -1654,8 +1654,8 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 					esb_buf buf;
 					pexpect_fail(logger, HERE,
 						     "accepted IKEv2 proposal contains unexpected PRF %s",
-						     enum_showb(&ikev2_trans_type_prf_names,
-								transform->id, &buf));
+						     enum_show(&ikev2_trans_type_prf_names,
+							       transform->id, &buf));
 					return false;
 				}
 				ta.ta_prf = prf;
@@ -1674,8 +1674,8 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 					esb_buf buf;
 					pexpect_fail(logger, HERE,
 						     "accepted IKEv2 proposal contains unexpected INTEG %s",
-						     enum_showb(&ikev2_trans_type_integ_names,
-								transform->id, &buf));
+						     enum_show(&ikev2_trans_type_integ_names,
+							       transform->id, &buf));
 					return false;
 				}
 				ta.ta_integ = integ;
@@ -1695,8 +1695,8 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 					esb_buf buf;
 					pexpect_fail(logger, HERE,
 						     "accepted IKEv2 proposal contains unexpected DH %s",
-						     enum_showb(&oakley_group_names,
-								transform->id, &buf));
+						     enum_show(&oakley_group_names,
+							       transform->id, &buf));
 					return false;
 				}
 				ta.ta_dh = group;

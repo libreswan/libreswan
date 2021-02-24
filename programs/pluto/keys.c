@@ -829,9 +829,9 @@ void list_public_keys(struct show *s, bool utc, bool check_pub_keys)
 
 			/* XXX could be ikev2_idtype_names */
 			id_buf idb;
+			esb_buf b;
 			show_comment(s, "       %s '%s'",
-				     enum_show(&ike_idtype_names,
-					       key->id.kind),
+				     enum_show(&ike_idtype_names, key->id.kind, &b),
 				     str_id(&key->id, &idb));
 
 			if (key->issuer.len > 0) {

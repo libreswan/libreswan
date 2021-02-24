@@ -3226,13 +3226,15 @@ struct connection *refine_host_connection(const struct state *st,
 			/* 'You Tarzan, me Jane' check based on received IDr */
 			if (!initiator && tarzan_id != NULL) {
 				id_buf tzb;
+				esb_buf tzesb;
 				dbg("peer expects us to be %s (%s) according to its IDr payload",
 				    str_id(tarzan_id, &tzb),
-				    enum_show(&ike_idtype_names, tarzan_id->kind));
+				    enum_show(&ike_idtype_names, tarzan_id->kind, &tzesb));
 				id_buf usb;
+				esb_buf usesb;
 				dbg("this connection's local id is %s (%s)",
 				    str_id(&d->spd.this.id, &usb),
-				    enum_show(&ike_idtype_names, d->spd.this.id.kind));
+				    enum_show(&ike_idtype_names, d->spd.this.id.kind, &usesb));
 				/* ??? pexpect(d->spd.spd_next == NULL); */
 				if (!idr_wildmatch(&d->spd.this, tarzan_id, st->st_logger)) {
 					dbg("peer IDr payload does not match our expected ID, this connection will not do");

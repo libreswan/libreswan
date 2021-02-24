@@ -238,10 +238,8 @@ typedef struct {
 	char buf[(sizeof(unsigned long) * 241 + 99) / 100 + sizeof("??")];
 } esb_buf;
 
-extern const char *enum_showb(enum_names *ed, unsigned long val, esb_buf *);
+extern const char *enum_show(enum_names *ed, unsigned long val, esb_buf *);
 extern const char *enum_show_short(enum_names *ed, unsigned long val, esb_buf *);
-
-extern const char *enum_show(enum_names *ed, unsigned long val);	/* NOT RE-ENTRANT */
 
 /*
  * iterator

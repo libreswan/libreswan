@@ -2355,7 +2355,7 @@ size_t jam_enum_short(struct jambuf *buf, enum_names *en, unsigned long val)
  *
  * Note: result may or may not be in b.
  */
-const char *enum_showb(enum_names *ed, unsigned long val, esb_buf *b)
+const char *enum_show(enum_names *ed, unsigned long val, esb_buf *b)
 {
 	const char *p = enum_name(ed, val);
 
@@ -2377,22 +2377,6 @@ const char *enum_show_short(enum_names *ed, unsigned long val, esb_buf *b)
 		name = b->buf;
 	}
 	return name;
-}
-
-/*
- * find or construct a string to describe an enum value
- * Result may be in STATIC buffer -- NOT RE-ENTRANT!
- *
- * One consequence is that you cannot have two or more calls
- * as arguments in a single logging call.  Use enum_name instead.
- * (Of course that means that unnamed values will be shown
- * badly.)
- */
-const char *enum_show(enum_names *ed, unsigned long val)
-{
-	static esb_buf buf;	/* only one! NON-RE-ENTRANT */
-
-	return enum_showb(ed, val, &buf);
 }
 
 /*
@@ -2497,7 +2481,7 @@ const char *enum_enum_show(enum_enum_names *een, unsigned long table,
 		return b->buf;
 	}
 
-	return enum_showb(en, val, b);
+	return enum_show(en, val, b);
 }
 
 const char *enum_enum_show_short(enum_enum_names *een, unsigned long table,

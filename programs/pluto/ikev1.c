@@ -1552,8 +1552,9 @@ void process_v1_packet(struct msg_digest *md)
 
 
 			const struct end *this = &st->st_connection->spd.this;
+			esb_buf b;
 			dbg(" processing received isakmp_xchg_type %s; this is a%s%s%s%s",
-			    enum_show(&ikev1_exchange_names, md->hdr.isa_xchg),
+			    enum_show(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
 			    this->xauth_server ? " xauthserver" : "",
 			    this->xauth_client ? " xauthclient" : "",
 			    this->modecfg_server ? " modecfgserver" : "",
@@ -1620,8 +1621,9 @@ void process_v1_packet(struct msg_digest *md)
 				dbg(" set from_state to %s this is modecfgclient and IS_PHASE1() is TRUE",
 				    st->st_state->name);
 			} else {
+				esb_buf b;
 				dbg("received isakmp_xchg_type %s; this is a%s%s%s%s in state %s. Reply with UNSUPPORTED_EXCHANGE_TYPE",
-				    enum_show(&ikev1_exchange_names, md->hdr.isa_xchg),
+				    enum_show(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
 				    st->st_connection ->spd.this.xauth_server ? " xauthserver" : "",
 				    st->st_connection->spd.this.xauth_client ? " xauthclient" : "",
 				    st->st_connection->spd.this.modecfg_server ? " modecfgserver" : "",
@@ -1648,10 +1650,13 @@ void process_v1_packet(struct msg_digest *md)
 	case ISAKMP_XCHG_AO:
 	case ISAKMP_XCHG_NGRP:
 	default:
+	{
+		esb_buf b;
 		dbg("unsupported exchange type %s in message",
-		    enum_show(&ikev1_exchange_names, md->hdr.isa_xchg));
+		    enum_show(&ikev1_exchange_names, md->hdr.isa_xchg, &b));
 		SEND_NOTIFICATION(UNSUPPORTED_EXCHANGE_TYPE);
 		return;
+	}
 	}
 
 	/* We have found a from_state, and perhaps a state object.
@@ -2111,14 +2116,17 @@ void process_packet_tail(struct msg_digest *md)
 					continue;  /* skip rest of the loop */
 
 				default:
+				{
+					esb_buf b;
 					LOG_PACKET(RC_LOG_SERIOUS,
 						   "%smessage ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
 						   excuse,
-						   enum_show(&ikev1_payload_names, np));
+						   enum_show(&ikev1_payload_names, np, &b));
 					if (!md->encrypted) {
 						SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
 					}
 					return;
+				}
 				}
 				passert(sd != NULL);
 			}
@@ -2135,10 +2143,11 @@ void process_packet_tail(struct msg_digest *md)
 					      LELEM(ISAKMP_NEXT_D) |
 					      LELEM(ISAKMP_NEXT_CR) |
 					      LELEM(ISAKMP_NEXT_CERT))) {
+					esb_buf b;
 					LOG_PACKET(RC_LOG_SERIOUS,
 						   "%smessage ignored because it contains a payload type (%s) unexpected by state %s",
 						   excuse,
-						   enum_show(&ikev1_payload_names, np),
+						   enum_show(&ikev1_payload_names, np, &b),
 						   finite_states[smc->state]->name);
 					if (!md->encrypted) {
 						SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
@@ -2146,8 +2155,9 @@ void process_packet_tail(struct msg_digest *md)
 					return;
 				}
 
+				esb_buf b;
 				dbg("got payload 0x%" PRIxLSET"  (%s) needed: 0x%" PRIxLSET " opt: 0x%" PRIxLSET,
-				    s, enum_show(&ikev1_payload_names, np),
+				    s, enum_show(&ikev1_payload_names, np, &b),
 				    needed, smc->opt_payloads);
 				needed &= ~s;
 			}
@@ -2348,14 +2358,17 @@ void process_packet_tail(struct msg_digest *md)
 				/* FALL THROUGH */
 			default:
 				if (st == NULL) {
+					esb_buf b;
 					dbg("ignoring informational payload %s, no corresponding state",
 					    enum_show(& ikev1_notify_names,
-						      p->payload.notification.isan_type));
+						      p->payload.notification.isan_type, &b));
 				} else {
+					esb_buf b;
 					LOG_PACKET(RC_LOG_SERIOUS,
 						   "ignoring informational payload %s, msgid=%08" PRIx32 ", length=%d",
 						   enum_show(&ikev1_notify_names,
-							     p->payload.notification.isan_type),
+							     p->payload.notification.isan_type,
+							     &b),
 						   st->st_v1_msgid.id,
 						   p->payload.notification.isan_length);
 					if (DBGP(DBG_BASE)) {
@@ -3095,9 +3108,9 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 
 	{
 		id_buf buf;
-
+		esb_buf b;
 		log_state(RC_LOG, st, "Peer ID is %s: '%s'",
-			  enum_show(&ike_idtype_names, id->isaid_idtype),
+			  enum_show(&ike_idtype_names, id->isaid_idtype, &b),
 			  str_id(&peer, &buf));
 	}
 
@@ -3254,15 +3267,13 @@ void doi_log_cert_thinking(uint16_t auth,
 
 		esb_buf oan;
 		esb_buf ictn;
-
 		DBG_log("  I have RSA key: %s cert.type: %s ",
-			enum_showb(&oakley_auth_names, auth, &oan),
-			enum_showb(&ike_cert_type_names, certtype, &ictn));
+			enum_show(&oakley_auth_names, auth, &oan),
+			enum_show(&ike_cert_type_names, certtype, &ictn));
 
 		esb_buf cptn;
-
 		DBG_log("  sendcert: %s and I did%s get a certificate request ",
-			enum_showb(&certpolicy_type_names, policy, &cptn),
+			enum_show(&certpolicy_type_names, policy, &cptn),
 			gotcertrequest ? "" : " not");
 
 		DBG_log("  so %ssend cert.", send_cert ? "" : "do not ");

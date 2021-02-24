@@ -1884,10 +1884,13 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 				 * try to deal with fp->desc
 				 * containing a selection of
 				 * AF+<value> and <value> entries.
+				 *
+				 * NB and NAME must have same scope.
 				 */
+				esb_buf nb;
 				const char *name = enum_name(fp->desc, last_enum);
 				if (name == NULL) {
-					name = enum_show(fp->desc, n);
+					name = enum_show(fp->desc, n, &nb);
 				}
 				DBG_log("   %s: %s%s (0x%jx)",
 					fp->name,
@@ -1901,12 +1904,15 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 			case ft_mnpc:
 			case ft_pnpc:
 			case ft_lss:
+			{
 				last_enum = n;
+				esb_buf nb;
 				DBG_log("   %s: %s (0x%jx)",
 					fp->name,
-					enum_show(fp->desc, n),
+					enum_show(fp->desc, n, &nb),
 					n);
 				break;
+			}
 
 			case ft_loose_enum_enum:
 			{
@@ -2248,12 +2254,12 @@ static void update_last_substructure(pb_stream *outs,
 		    outs->last_substructure.sd->name,
 		    outs->last_substructure.fp->name,
 		    /* containing ... */
-		    enum_showb(outs->last_substructure.fp->desc,
-			       outs->last_substructure.loc[0], &locb),
+		    enum_show(outs->last_substructure.fp->desc,
+			      outs->last_substructure.loc[0], &locb),
 		    outs->last_substructure.loc[0],
 		    /* is ... */
-		    enum_showb(outs->last_substructure.fp->desc,
-			       outs->desc->nsst, &nsstb),
+		    enum_show(outs->last_substructure.fp->desc,
+			      outs->desc->nsst, &nsstb),
 		    outs->desc->nsst);
 		pexpect(outs->last_substructure.loc[0] == outs->desc->nsst);
 	}
@@ -2304,7 +2310,7 @@ static void start_next_payload_chain(struct pbs_out *outs,
 		pexpect_fail(outs->outs_logger, HERE,
 			     "next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
 			     sd->name, fp->name, n,
-			     enum_showb(fp->desc, n, &npb));
+			     enum_show(fp->desc, n, &npb));
 		n = ISAKMP_NEXT_NONE;
 	}
 	*cur = n;
@@ -2325,7 +2331,7 @@ static void update_next_payload_chain(pb_stream *outs,
 	if (outs->container == NULL) {
 		esb_buf npb;
 		dbg("next payload chain: no previous for current %s (%d:%s); assumed to be fake",
-		    sd->name, sd->pt, enum_showb(fp->desc, sd->pt, &npb));
+		    sd->name, sd->pt, enum_show(fp->desc, sd->pt, &npb));
 		return;
 	}
 
@@ -2367,13 +2373,13 @@ static void update_next_payload_chain(pb_stream *outs,
 		esb_buf npb;
 		dbg("next payload chain: using supplied v2SKF '%s'.'%s' value %d:%s",
 		     sd->name, fp->name, n,
-		     enum_showb(fp->desc, n, &npb));
+		     enum_show(fp->desc, n, &npb));
 	} else if (n != ISAKMP_NEXT_NONE) {
 		esb_buf npb;
 		pexpect_fail(outs->outs_logger, HERE,
 			     "next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
 			     sd->name, fp->name, n,
-			     enum_showb(fp->desc, n, &npb));
+			     enum_show(fp->desc, n, &npb));
 		n = ISAKMP_NEXT_NONE;
 	}
 	*cur = n;
@@ -2383,7 +2389,7 @@ static void update_next_payload_chain(pb_stream *outs,
 	dbg("next payload chain: setting previous '%s'.'%s' to current %s (%d:%s)",
 	     message->next_payload_chain.sd->name,
 	     message->next_payload_chain.fp->name,
-	     sd->name, sd->pt, enum_showb(fp->desc, sd->pt, &npb));
+	     sd->name, sd->pt, enum_show(fp->desc, sd->pt, &npb));
 	*message->next_payload_chain.loc = sd->pt;
 
 	/* save new */
