@@ -91,8 +91,7 @@ notification_t accept_v1_nonce(struct logger *logger,
 			    name, IKEv1_MINIMUM_NONCE_SIZE, IKEv1_MAXIMUM_NONCE_SIZE);
 		return PAYLOAD_MALFORMED; /* ??? */
 	}
-	free_chunk_content(dest);
-	*dest = clone_hunk(pbs_in_left_as_shunk(nonce_pbs), "nonce");
+	replace_chunk(dest, clone_hunk(pbs_in_left_as_shunk(nonce_pbs), "nonce"));
 	passert(len == dest->len);
 	return NOTHING_WRONG;
 }

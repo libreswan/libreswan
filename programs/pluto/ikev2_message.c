@@ -541,9 +541,8 @@ stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 		 * If P(SK) not empty, append its decrypted contents IntAuth_*_A | IntAuth_*_P
 		 */
 		if (sk_data.len > 0) {
-			chunk_t both = clone_chunk_chunk(intermediate_auth, sk_data, "IntAuth_*_A | IntAuth_*_P");
-			free_chunk_content(&intermediate_auth);
-			intermediate_auth = both;
+			replace_chunk(&intermediate_auth,
+				clone_chunk_chunk(intermediate_auth, sk_data, "IntAuth_*_A | IntAuth_*_P"));
 		}
 		struct crypt_prf *prf = crypt_prf_init_symkey("prf(IntAuth_*_A [| IntAuth_*_P])", ike->sa.st_oakley.ta_prf,
 							 "SK_p", intermediatekey, ike->sa.st_logger);
@@ -812,11 +811,10 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 		 * If P(SK) not empty, append its decrypted contents IntAuth_*_A | IntAuth_*_P
 		 */
 		if (enc_size - padlen > 0) {
-			chunk_t both = clone_chunk_chunk(intermediate_auth,
-							 chunk2(enc_start, enc_size - padlen),
-							 "IntAuth_*_A | IntAuth_*_P");
-			free_chunk_content(&intermediate_auth);
-			intermediate_auth = both;
+			replace_chunk(&intermediate_auth,
+				clone_chunk_chunk(intermediate_auth,
+					chunk2(enc_start, enc_size - padlen),
+					"IntAuth_*_A | IntAuth_*_P"));
 		}
 
 		struct crypt_prf *prf = crypt_prf_init_symkey("prf(IntAuth_*_A [| IntAuth_*_P])", ike->sa.st_oakley.ta_prf,

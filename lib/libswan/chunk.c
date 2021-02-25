@@ -39,6 +39,12 @@ void free_chunk_content(chunk_t *chunk)
 	*chunk = EMPTY_CHUNK;
 }
 
+void replace_chunk(chunk_t *dest, chunk_t src)
+{
+	free_chunk_content(dest);
+	*dest = src;
+}
+
 chunk_t clone_chunk_chunk(chunk_t lhs, chunk_t rhs, const char *name)
 {
 	size_t len = lhs.len + rhs.len;

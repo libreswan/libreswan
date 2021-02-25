@@ -140,8 +140,7 @@ static bool accept_v2_nonce(struct logger *logger, struct msg_digest *md,
 			    name, nonce.len, IKEv2_MINIMUM_NONCE_SIZE, IKEv2_MAXIMUM_NONCE_SIZE);
 		return false;
 	}
-	free_chunk_content(dest);
-	*dest = clone_hunk(nonce, name);
+	replace_chunk(dest, clone_hunk(nonce, name));
 	return true;
 }
 
@@ -731,9 +730,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	if (impair.send_bogus_dcookie) {
 		/* add or mangle a dcookie so what we will send is bogus */
 		DBG_log("Mangling dcookie because --impair-send-bogus-dcookie is set");
-		free_chunk_content(&ike->sa.st_dcookie);
-		ike->sa.st_dcookie.ptr = alloc_bytes(1, "mangled dcookie");
-		ike->sa.st_dcookie.len = 1;
+		replace_chunk(&ike->sa.st_dcookie, alloc_chunk(1, "mangled dcookie"));
 		messupn(ike->sa.st_dcookie.ptr, 1);
 	}
 
@@ -854,9 +851,8 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	close_output_pbs(&reply_stream);
 
 	/* save packet for later signing */
-	free_chunk_content(&ike->sa.st_firstpacket_me);
-	ike->sa.st_firstpacket_me = clone_out_pbs_as_chunk(&reply_stream,
-						       "saved first packet");
+	replace_chunk(&ike->sa.st_firstpacket_me,
+		clone_out_pbs_as_chunk(&reply_stream, "saved first packet"));
 
 	/* Transmit */
 	record_v2_message(ike, &reply_stream, "IKE_SA_INIT request",
@@ -1054,9 +1050,9 @@ static stf_status ikev2_parent_inI1outR1_continue(struct state *st,
 	 * "trim padding (not actually legit)".
 	 */
 	/* record first packet for later checking of signature */
-	free_chunk_content(&st->st_firstpacket_peer);
-	st->st_firstpacket_peer = clone_out_pbs_as_chunk(&md->message_pbs,
-							"saved first received packet in inI1outR1_continue_tail");
+	replace_chunk(&st->st_firstpacket_peer,
+		clone_out_pbs_as_chunk(&md->message_pbs,
+			"saved first received packet in inI1outR1_continue_tail"));
 
 	/* make sure HDR is at start of a clean buffer */
 	struct pbs_out reply_stream = open_pbs_out("reply packet",
@@ -1203,9 +1199,8 @@ static stf_status ikev2_parent_inI1outR1_continue(struct state *st,
 			  MESSAGE_RESPONSE);
 
 	/* save packet for later signing */
-	free_chunk_content(&st->st_firstpacket_me);
-	st->st_firstpacket_me = clone_out_pbs_as_chunk(&reply_stream,
-						   "saved first packet");
+	replace_chunk(&st->st_firstpacket_me,
+		clone_out_pbs_as_chunk(&reply_stream, "saved first packet"));
 
 	/*
 	 * sanity check nothing has screwed around with md.st.
@@ -1578,9 +1573,9 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 				return STF_FAIL;
 			}
 		}
-		free_chunk_content(&st->st_firstpacket_peer);
-		st->st_firstpacket_peer = clone_out_pbs_as_chunk(&md->message_pbs,
-						"saved first received packet in inR1outI2");
+		replace_chunk(&st->st_firstpacket_peer,
+			clone_out_pbs_as_chunk(&md->message_pbs,
+				"saved first received packet in inR1outI2"));
 
 	} else {
 		dbg("No KE payload in INTERMEDIATE RESPONSE, not calculating keys, going to AUTH by completing state transition");
@@ -2199,10 +2194,9 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 	 * "trim padding (not actually legit)".
 	 */
 	/* record first packet for later checking of signature */
-	if (md->hdr.isa_xchg != ISAKMP_v2_IKE_INTERMEDIATE){
-		free_chunk_content(&ike->sa.st_firstpacket_peer);
-		ike->sa.st_firstpacket_peer = clone_out_pbs_as_chunk(&md->message_pbs,
-								"saved first received non-intermediate packet");
+	if (md->hdr.isa_xchg != ISAKMP_v2_IKE_INTERMEDIATE) {
+		replace_chunk(&ike->sa.st_firstpacket_peer,
+			clone_out_pbs_as_chunk(&md->message_pbs, "saved first received non-intermediate packet"));
 	}
 	/* beginning of data going out */
 
@@ -2950,8 +2944,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 				free_chunk_content(&no_ppk_auth);
 				return STF_FATAL;
 			}
-			free_chunk_content(&st->st_no_ppk_auth);	/* in case this was already occupied */
-			st->st_no_ppk_auth = no_ppk_auth;
+			replace_chunk(&st->st_no_ppk_auth, no_ppk_auth);
 		}
 	}
 	if (md->pbs[PBS_v2N_MOBIKE_SUPPORTED] != NULL) {

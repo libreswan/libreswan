@@ -2445,10 +2445,10 @@ static void remember_received_packet(struct state *st, struct msg_digest *md)
 		}
 	} else {
 		/* this may be a repeat, but it will work */
-		free_chunk_content(&st->st_v1_rpacket);
-		st->st_v1_rpacket = clone_bytes_as_chunk(md->packet_pbs.start,
-						      pbs_room(&md->packet_pbs),
-						      "raw packet");
+		replace_chunk(&st->st_v1_rpacket,
+			clone_bytes_as_chunk(md->packet_pbs.start,
+					     pbs_room(&md->packet_pbs),
+					     "raw packet"));
 	}
 }
 

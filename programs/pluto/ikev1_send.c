@@ -238,8 +238,7 @@ void record_outbound_v1_ike_msg(struct state *st, pb_stream *pbs, const char *wh
 {
 	passert(pbs_offset(pbs) != 0);
 	free_v1_message_queues(st);
-	free_chunk_content(&st->st_v1_tpacket);
-	st->st_v1_tpacket = clone_out_pbs_as_chunk(pbs, what);
+	replace_chunk(&st->st_v1_tpacket, clone_out_pbs_as_chunk(pbs, what));
 	st->st_last_liveness = mononow();
 }
 

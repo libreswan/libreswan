@@ -87,6 +87,8 @@ chunk_t clone_bytes_as_chunk(const void *bytes, size_t sizeof_bytes, const char 
 
 void free_chunk_content(chunk_t *chunk); /* blats *CHUNK */
 
+void replace_chunk(chunk_t *dest, chunk_t src);
+
 /*
  * misc ops.
  */

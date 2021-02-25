@@ -32,8 +32,7 @@ void op_chunk(const struct cavp_entry *entry,
 		fprintf(stderr, "missing chunk for '%s'\n", entry->key);
 		exit(1);
 	}
-	free_chunk_content(entry->chunk);
-	*(entry->chunk) = chunk_from_hex(value, entry->key);
+	replace_chunk(entry->chunk, chunk_from_hex(value, entry->key));
 }
 
 void op_symkey(const struct cavp_entry *entry,

@@ -709,8 +709,8 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		return STF_INTERNAL_ERROR;
 
 	/* save initiator SA for HASH */
-	free_chunk_content(&st->st_p1isa);
-	st->st_p1isa = clone_hunk(pbs_in_as_shunk(&sa_pd->pbs), "sa in main_inI1_outR1()");
+	replace_chunk(&st->st_p1isa,
+		clone_hunk(pbs_in_as_shunk(&sa_pd->pbs), "sa in main_inI1_outR1()"));
 
 	return STF_OK;
 }

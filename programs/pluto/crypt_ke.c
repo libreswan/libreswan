@@ -148,9 +148,7 @@ void unpack_KE_from_helper(struct state *st, struct dh_local_secret *local_secre
 			group == st->st_oakley.ta_dh ? "match" : "differ");
 	}
 
-	free_chunk_content(g); /* happens in odd error cases */
-	*g = clone_dh_local_secret_ke(local_secret);
-
+	replace_chunk(g, clone_dh_local_secret_ke(local_secret));
 	pexpect(st->st_dh_local_secret == NULL);
 	st->st_dh_local_secret = dh_local_secret_addref(local_secret, HERE);
 }
