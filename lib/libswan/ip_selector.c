@@ -408,121 +408,123 @@ int selector_hport(const ip_selector *s)
 #define DEFAULTSUBNET "%default"
 
 /*
- * ttosubnet - convert text "addr/mask" to address and mask
- * Mask can be integer bit count.
+ * Parse the selector:
+ *
+ *  <address>
+ *  <address>/<prefix-bits>
+ *  <address>/<prefix-bits>:<protocol>/ <- NOTE
+ *  <address>/<prefix-bits>:<protocol>/<port>
+ *
+ * new syntax required for:
+ *
+ *  <address>-<address>:<protocol>/<port>-<port>
+ *
  */
-err_t numeric_to_selector(shunk_t src,
+
+err_t numeric_to_selector(shunk_t input,
 			  const struct ip_info *afi, /* could be NULL */
 			  ip_selector *dst)
 {
 	err_t oops;
 
 	/*
-	 * Match %default, can't work when AFI=NULL.
-	 *
-	 * you cannot use af==AF_UNSPEC and src=0/0,
-	 * makes no sense as will it be AF_INET
+	 * <address> / ...
 	 */
-	if (hunk_strcaseeq(src, DEFAULTSUBNET)) {
-		if (afi == NULL) {
-			return "unknown address family with " DEFAULTSUBNET " subnet not allowed.";
-		}
-		*dst = afi->selector.all; /* 0.0.0.0/0 or ::/0 */
-		return NULL;
-	}
 
-	/* split the input into ADDR "/" (mask)... */
-	char slash;
-	shunk_t addr = shunk_token(&src, &slash, "/");
-	if (slash == '\0') {
-		/* consumed entire input */
-		return "no / in subnet specification";
-	}
+	char address_term;
+	shunk_t address_token = shunk_token(&input, &address_term, "/");
+	/* fprintf(stderr, "address="PRI_SHUNK"\n", pri_shunk(address_token)); */
 
-	ip_address addrtmp;
-	oops = numeric_to_address(addr, afi, &addrtmp);
+	ip_address address;
+	oops = numeric_to_address(address_token, afi/*possibly NULL*/, &address);
 	if (oops != NULL) {
 		return oops;
 	}
 
 	if (afi == NULL) {
-		afi = address_type(&addrtmp);
+		afi = address_type(&address);
 	}
-	if (afi == NULL) {
-		/* XXX: pexpect()? */
-		return "unknown address family in ttosubnet";
-	}
-
-	/* split the input into MASK [ ":" (port) ... ] */
-	char colon;
-	shunk_t mask = shunk_token(&src, &colon, ":");
-	uintmax_t maskbits;
-	oops = shunk_to_uintmax(mask, NULL, 10, &maskbits, afi->mask_cnt);
-	if (oops != NULL) {
-		if (afi == &ipv4_info) {
-			ip_address masktmp;
-			oops = numeric_to_address(mask, afi, &masktmp);
-			if (oops != NULL) {
-				return oops;
-			}
-
-			int i = masktocount(&masktmp);
-			if (i < 0) {
-				return "non-contiguous or otherwise erroneous mask";
-			}
-			maskbits = i;
-		} else {
-			return "masks are not permitted for IPv6 addresses";
-		}
-	}
-
-	/* the :PORT */
-	uintmax_t port;
-	if (colon != '\0') {
-		err_t oops = shunk_to_uintmax(src, NULL, 0, &port, 0xFFFF);
-		if (oops != NULL) {
-			return oops;
-		}
-	} else {
-		port = 0;
-	}
-
-	chunk_t addr_chunk = address_as_chunk(&addrtmp);
-	unsigned n = addr_chunk.len;
-	uint8_t *p = addr_chunk.ptr; /* cast void* */
-	if (n == 0)
-		return "unknown address family";
-
-	unsigned c = maskbits / 8;
-	if (c > n)
-		return "impossible mask count";
-
-	p += c;
-	n -= c;
-
-	unsigned m = 0xff;
-	c = maskbits % 8;
-	if (n > 0 && c != 0)	/* partial byte */
-		m >>= c;
-
-	for (; n > 0; n--) {
-		if ((*p & m) != 0) {
-			return "improper subnet, host-part bits on";
-		}
-		m = 0xff;
-		p++;
+	if (!pexpect(afi != NULL)) {
+		return "confused address family";
 	}
 
 	/*
-	 * XXX: see above, this isn't a true subnet as addrtmp can
-	 * have its port set.
+	 * ... <prefix-bits> : ...
 	 */
-	dst->bytes = addrtmp.bytes;
-	dst->version = addrtmp.version;
-	dst->ipproto = 0;
-	dst->hport = port;
-	dst->maskbits = maskbits;
 
+	char prefix_bits_term;
+	shunk_t prefix_bits_token = shunk_token(&input, &prefix_bits_term, ":");
+	/* fprintf(stderr, "prefix-bits="PRI_SHUNK"\n", pri_shunk(prefix_bits_token)); */
+
+	uintmax_t prefix_bits = afi->mask_cnt;
+	if (prefix_bits_token.len > 0) {
+		oops = shunk_to_uintmax(prefix_bits_token, NULL, 0, &prefix_bits, afi->mask_cnt);
+		if (oops != NULL) {
+			return oops;
+		}
+	} else if (prefix_bits_token.ptr != NULL) {
+		/* found but empty */
+		pexpect(prefix_bits_token.len == 0);
+		return "missing prefix bit size";
+	}
+
+	ip_address host = address_from_blit(afi, address.bytes,
+					    /*routing-prefix*/&clear_bits,
+					    /*host-identifier*/&keep_bits,
+					    prefix_bits);
+	if (!address_eq(&host, &afi->address.any)) {
+		return "host-identifier must be zero";
+	}
+
+	/*
+	 * ... <protocol> / ...
+	 */
+
+	char protocol_term;
+	shunk_t protocol_token = shunk_token(&input, &protocol_term, "/");
+	/* fprintf(stderr, "protocol="PRI_SHUNK"\n", pri_shunk(protocol_token)); */
+
+	const ip_protocol *protocol = &ip_protocol_unset; /*0*/
+	if (protocol_token.len > 0) {
+		if (protocol_term != '/') {
+			return "protocol must be followed by '/'";
+		}
+		protocol = protocol_by_shunk(protocol_token);
+		if (protocol == NULL) {
+			return "unknown protocol";
+		}
+	} else if (protocol_token.ptr != NULL) {
+		/* found but empty */
+		pexpect(protocol_token.len == 0);
+		return "missing protocol/port following ':'";
+	}
+
+	/*
+	 * ... <port>
+	 */
+
+	shunk_t port_token = input;
+	/* fprintf(stderr, "port="PRI_SHUNK"\n", pri_shunk(port_token)); */
+
+	ip_port port = unset_port;
+	if (port_token.len > 0) {
+		uintmax_t hport;
+		err_t oops = shunk_to_uintmax(port_token, NULL, 0, &hport, 0xFFFF);
+		if (oops != NULL) {
+			return oops;
+		}
+		if (protocol == &ip_protocol_unset && hport != 0) {
+			return "a non-zero port requires a valid protocol";
+		}
+		port = ip_hport(hport);
+	} else if (port_token.ptr != NULL) {
+		/* found but empty */
+		pexpect(port_token.len == 0);
+		return "missing port following protocol/";
+	}
+
+	ip_subnet subnet = subnet_from_address_prefix_bits(&address, prefix_bits);
+	*dst = selector_from_subnet_protocol_port(&subnet, protocol, port);
 	return NULL;
 }
 
