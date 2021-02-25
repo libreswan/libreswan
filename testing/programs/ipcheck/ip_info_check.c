@@ -222,7 +222,7 @@ static void check_ip_info_selector(void)
 		const ip_selector *selector;
 		bool is_unset;
 		bool contains_all_addresses;
-		bool contains_one_address;
+		bool is_one_address;
 		bool contains_no_addresses;
 	} tests[] = {
 		{ 0, NULL,                     .is_unset = true, },
@@ -248,7 +248,7 @@ static void check_ip_info_selector(void)
 		}
 		T(is_unset);
 		T(contains_all_addresses);
-		T(contains_one_address);
+		T(is_one_address);
 		T(contains_no_addresses);
 #undef T
 	}

@@ -245,7 +245,7 @@ static void check_selector_contains(struct logger *logger)
 		bool is_unset;
 		bool contains_all_addresses;
 		bool contains_some_addresses;
-		bool contains_one_address;
+		bool is_one_address;
 		bool contains_no_addresses;
 	} tests[] = {
 		/* all */
@@ -272,7 +272,7 @@ static void check_selector_contains(struct logger *logger)
 	      bool_str(t->is_unset),					\
 	      bool_str(t->contains_all_addresses),			\
 	      bool_str(t->contains_some_addresses),			\
-	      bool_str(t->contains_one_address),			\
+	      bool_str(t->is_one_address),				\
 	      bool_str(t->contains_no_addresses),			\
 	      ##__VA_ARGS__)
 
@@ -295,7 +295,7 @@ static void check_selector_contains(struct logger *logger)
 		}
 		T(is_unset);
 		T(contains_all_addresses);
-		T(contains_one_address);
+		T(is_one_address);
 		T(contains_no_addresses);
 	}
 #undef OUT

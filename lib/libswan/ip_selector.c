@@ -259,7 +259,7 @@ bool selector_contains_all_addresses(const ip_selector *selector)
 	return address_is_any(&network);
 }
 
-bool selector_contains_one_address(const ip_selector *selector)
+bool selector_is_one_address(const ip_selector *selector)
 {
 	/* Unlike selectorishost() this rejects 0.0.0.0/32. */
 	if (selector_is_unset(selector)) {
@@ -276,6 +276,12 @@ bool selector_contains_one_address(const ip_selector *selector)
 	ip_address network = selector_prefix(selector);
 	/* address_is_set(&network) implied as afi non-NULL */
 	return !address_is_any(&network); /* i.e., non-zero */
+}
+
+bool selector_is_address(const ip_selector *selector, const ip_address *address)
+{
+	ip_selector address_selector = selector_from_address(address);
+	return selector_eq(selector, &address_selector);
 }
 
 bool selector_contains_no_addresses(const ip_selector *selector)

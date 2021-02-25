@@ -126,7 +126,6 @@ ip_address selector_prefix_mask(const ip_selector *selector);
 unsigned selector_prefix_bits(const ip_selector *selector);
 
 bool selector_contains_all_addresses(const ip_selector *selector);
-bool selector_contains_one_address(const ip_selector *selector);
 bool selector_contains_no_addresses(const ip_selector *selector);
 
 bool selector_in_selector(const ip_selector *l, const ip_selector *r);
@@ -134,6 +133,10 @@ bool endpoint_in_selector(const ip_endpoint *l, const ip_selector *r);
 bool address_in_selector(const ip_address *l, const ip_selector *r);
 
 bool selector_eq(const ip_selector *l, const ip_selector *r);
+
+bool selector_is_one_address(const ip_selector *selector);
+bool selector_is_address(const ip_selector *selector, const ip_address *address);
+
 
 /* printing */
 

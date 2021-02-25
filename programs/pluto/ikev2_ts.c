@@ -95,8 +95,7 @@ static void ts_to_end(const struct traffic_selector *ts, struct end *end,
 	/* redundant */
 	end->port = ts->startport;
 	end->protocol = ts->ipprotoid;
-	end->has_client = !(selector_contains_one_address(&end->client) &&
-			    address_in_selector(&end->host_addr, &end->client));
+	end->has_client = !selector_is_address(&end->client, &end->host_addr);
 	/* also save in state */
 	*st_ts = *ts;
 }
