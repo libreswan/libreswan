@@ -79,6 +79,8 @@
 #include "pluto_x509.h"
 #include "ip_address.h"
 #include "ip_info.h"
+#include "ip_protocol.h"
+#include "ip_selector.h"
 #include "ikev1_hash.h"
 #include "ikev1_message.h"
 #include "crypt_ke.h"
@@ -358,26 +360,28 @@ static void compute_keymats(struct state *st)
 		compute_proto_keymat(st, PROTO_IPSEC_ESP, &st->st_esp, "ESP");
 }
 
-/* Decode the variable part of an ID packet (during Quick Mode).
+/*
+ * Decode the variable part of an ID packet (during Quick Mode).
+ *
  * This is designed for packets that identify clients, not peers.
- * Rejects 0.0.0.0/32 or IPv6 equivalent because
- * (1) it is wrong and (2) we use this value for inband signalling.
+ * Rejects 0.0.0.0/32 or IPv6 equivalent because (1) it is wrong and
+ * (2) we use this value for inband signalling.
  */
 static bool decode_net_id(struct isakmp_ipsec_id *id,
-			  pb_stream *id_pbs,
-			  ip_subnet *net,
+			  struct pbs_in *id_pbs,
+			  ip_selector *client,
 			  const char *which,
 			  struct logger *logger)
 {
+	*client = unset_selector;
 	const struct ip_info *afi = NULL;
 
-	/*
-	 * IDB and IDTYPENAME must have same scope.
-	 */
+	/* IDB and IDTYPENAME must have same scope. */
+	enum ike_id_type id_type = id->isaiid_idtype;
 	esb_buf idb;
-	const char *idtypename = enum_show(&ike_idtype_names, id->isaiid_idtype, &idb);
+	const char *idtypename = enum_show(&ike_idtype_names, id_type, &idb);
 
-	switch (id->isaiid_idtype) {
+	switch (id_type) {
 	case ID_IPV4_ADDR:
 	case ID_IPV4_ADDR_SUBNET:
 	case ID_IPV4_ADDR_RANGE:
@@ -389,19 +393,19 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 		afi = &ipv6_info;
 		break;
 	case ID_FQDN:
-		llog(RC_COMMENT, logger,
-			    "%s type is FQDN", which);
-		return TRUE;
+		llog(RC_COMMENT, logger, "%s type is FQDN", which);
+		return true;
 
 	default:
 		/* XXX support more */
 		llog(RC_LOG_SERIOUS, logger, "unsupported ID type %s",
-			    idtypename);
+		     idtypename);
 		/* XXX Could send notification back */
-		return FALSE;
+		return false;
 	}
 
-	switch (id->isaiid_idtype) {
+	ip_subnet net;
+	switch (id_type) {
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
 	{
@@ -420,9 +424,9 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			/* XXX Could send notification back */
 			return false;
 		}
-		*net = subnet_from_address(&temp_address);
+		net = subnet_from_address(&temp_address);
 		subnet_buf b;
-		dbg("%s is %s", which, str_subnet(net, &b));
+		dbg("%s is %s", which, str_subnet(&net, &b));
 		break;
 	}
 
@@ -431,33 +435,34 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 	{
 		diag_t d;
 
-		ip_address temp_address, temp_mask;
+		ip_address temp_address;
 		d = pbs_in_address(id_pbs, &temp_address, afi, "ID address");
 		if (d != NULL) {
 			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
 
+		ip_address temp_mask;
 		d = pbs_in_address(id_pbs, &temp_mask, afi, "ID mask");
 		if (d != NULL) {
 			log_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
 
-		err_t ughmsg = address_mask_to_subnet(&temp_address, &temp_mask, net);
-		if (ughmsg == NULL &&
-		    subnet_contains_no_addresses(net))
+		err_t ughmsg = address_mask_to_subnet(&temp_address, &temp_mask, &net);
+		if (ughmsg == NULL && subnet_contains_no_addresses(&net)) {
 			/* i.e., ::/128 or 0.0.0.0/32 */
 			ughmsg = "subnet contains no addresses";
+		}
 		if (ughmsg != NULL) {
 			llog(RC_LOG_SERIOUS, logger,
-				    "%s ID payload %s bad subnet in Quick I1 (%s)",
-				    which, idtypename, ughmsg);
+			     "%s ID payload %s bad subnet in Quick I1 (%s)",
+			     which, idtypename, ughmsg);
 			/* XXX Could send notification back */
-			return FALSE;
+			return false;
 		}
 		subnet_buf buf;
-		dbg("%s is subnet %s", which, str_subnet(net, &buf));
+		dbg("%s is subnet %s", which, str_subnet(&net, &buf));
 		break;
 	}
 
@@ -481,31 +486,39 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 		}
 
 		err_t ughmsg = rangetosubnet(&temp_address_from,
-					     &temp_address_to, net);
-		if (ughmsg == NULL &&
-		    subnet_contains_no_addresses(net))
+					     &temp_address_to, &net);
+		if (ughmsg == NULL && subnet_contains_no_addresses(&net)) {
 			/* i.e., ::/128 or 0.0.0.0/32 */
 			ughmsg = "range contains no addresses";
-		if (ughmsg != NULL) {
-			ipstr_buf a, b;
-
-			llog(RC_LOG_SERIOUS, logger,
-				    "%s ID payload in Quick I1, %s %s - %s unacceptable: %s",
-				    which, idtypename,
-				    ipstr(&temp_address_from, &a),
-				    ipstr(&temp_address_to, &b),
-				    ughmsg);
-			return FALSE;
 		}
+		if (ughmsg != NULL) {
+			address_buf a, b;
+			llog(RC_LOG_SERIOUS, logger,
+			     "%s ID payload in Quick I1, %s %s - %s unacceptable: %s",
+			     which, idtypename,
+			     str_address_sensitive(&temp_address_from, &a),
+			     str_address_sensitive(&temp_address_to, &b),
+			     ughmsg);
+			return false;
+		}
+
 		subnet_buf buf;
-		dbg("%s is subnet %s (received as range)", which, str_subnet(net, &buf));
+		dbg("%s is subnet %s (received as range)", which, str_subnet(&net, &buf));
 		break;
 	}
+	default:
+		/* first case rejected all others */
+		bad_case(id_type);
 	}
 
-	/* set the port selector */
-	update_endpoint_port(&net->addr, ip_hport(id->isaiid_port));
-	dbg("%s protocol/port is %d/%d", which, id->isaiid_protoid, id->isaiid_port);
+	const ip_protocol *protocol = protocol_by_ipproto(id->isaiid_protoid);
+	if (!pexpect(protocol != NULL)) {
+		/* things would need to be pretty screwed up */
+		return false;
+	}
+
+	ip_port port = ip_hport(id->isaiid_port);
+	*client = selector_from_subnet_protocol_port(&net, protocol, port);
 
 	return true;
 }
@@ -519,11 +532,11 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 			 const char *which,
 			 struct logger *logger)
 {
-	ip_subnet net_temp;
-	bool bad_proposal = FALSE;
+	bool bad_proposal = false;
 
+	ip_selector net_temp;
 	if (!decode_net_id(id, id_pbs, &net_temp, which, logger))
-		return FALSE;
+		return false;
 
 	if (!samesubnet(net, &net_temp)) {
 		subnet_buf subrec;
@@ -905,115 +918,104 @@ static stf_status quick_outI1_continue_tail(struct state *st,
  * we have to call nonce/ke and DH if we are doing PFS.
  */
 
-/* hold anything we can handle of a Phase 2 ID */
-struct p2id {
-	ip_subnet net;
-	uint8_t proto;
-	uint16_t port;
-};
-
-struct verify_oppo_bundle {
-	bool failure_ok;	/* if true, quick_inI1_outR1_tail will try
-				 * other things on DNS failure
-				 */
-	struct msg_digest *md;
-	struct p2id my, peers;
-	struct crypt_mac new_iv;
-	/* int whackfd; */	/* not needed because we are Responder */
-};
-
-static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b);
+static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *md,
+					const ip_selector *local_client,
+					const ip_selector *remote_client,
+					struct crypt_mac new_iv);
 
 stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 {
 	passert(p1st != NULL && p1st == md->st);
 	struct connection *c = p1st->st_connection;
-	struct payload_digest *const id_pd = md->chain[ISAKMP_NEXT_ID];
-	struct verify_oppo_bundle b;
+	ip_selector local_client;
+	ip_selector remote_client;
 
-	/* [ IDci, IDcr ] in
-	 * We do this now (probably out of physical order) because
-	 * we wish to select the correct connection before we consult
-	 * it for policy.
+	/*
+	 * [ IDci, IDcr ] in
+	 *
+	 * We do this now (probably out of physical order) because we
+	 * wish to select the correct connection before we consult it
+	 * for policy.
 	 */
 
-	if (id_pd != NULL) {
-		struct payload_digest *IDci = id_pd->next;
+	struct payload_digest *const IDci = md->chain[ISAKMP_NEXT_ID];
+	if (IDci != NULL) {
+		struct payload_digest *IDcr = IDci->next;
 
 		/* ??? we are assuming IPSEC_DOI */
 
-		/* IDci (initiator is peer) */
+		/* IDci (initiator is remote peer) */
 
-		if (!decode_net_id(&id_pd->payload.ipsec_id, &id_pd->pbs,
-				   &b.peers.net, "peer client", p1st->st_logger))
+		if (!decode_net_id(&IDci->payload.ipsec_id, &IDci->pbs,
+				   &remote_client, "peer client", p1st->st_logger))
 			return STF_FAIL + INVALID_ID_INFORMATION;
+
+		/* for code overwriting above */
+		const ip_protocol *remote_protocol = protocol_by_ipproto(IDci->payload.ipsec_id.isaiid_protoid);
+		ip_port remote_port = ip_hport(IDci->payload.ipsec_id.isaiid_port);
 
 		/* Hack for MS 818043 NAT-T Update.
 		 *
 		 * <http://support.microsoft.com/kb/818043>
-		 * "L2TP/IPsec NAT-T update for Windows XP and Windows 2000"
-		 * This update is has a bug.  We choose to work around that
-		 * bug rather than failing to interoperate.
-		 * As to what the bug is, Paul says:
-		 * "I believe on rekey, it sent a bogus subnet or wrong type of ID."
-		 * ??? needs more complete description.
+		 * "L2TP/IPsec NAT-T update for Windows XP and Windows
+		 * 2000" This update is has a bug.  We choose to work
+		 * around that bug rather than failing to
+		 * interoperate.  As to what the bug is, Paul says: "I
+		 * believe on rekey, it sent a bogus subnet or wrong
+		 * type of ID."  ??? needs more complete description.
 		 */
-		if (id_pd->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
+		if (IDci->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
 			log_state(RC_LOG_SERIOUS, p1st,
 				  "Applying workaround for MS-818043 NAT-T bug");
-			b.peers.net = subnet_from_address(&c->spd.that.host_addr);
+			remote_client = selector_from_address_protocol_port(&c->spd.that.host_addr,
+									    remote_protocol,
+									    remote_port);
 		}
 		/* End Hack for MS 818043 NAT-T Update */
 
-		b.peers.proto = id_pd->payload.ipsec_id.isaiid_protoid;
-		b.peers.port = id_pd->payload.ipsec_id.isaiid_port;
-		update_selector_hport(&b.peers.net, b.peers.port);
 
-		/* IDcr (we are responder) */
+		/* IDcr (we are local responder) */
 
-		if (!decode_net_id(&IDci->payload.ipsec_id, &IDci->pbs,
-				   &b.my.net, "our client", p1st->st_logger))
+		if (!decode_net_id(&IDcr->payload.ipsec_id, &IDcr->pbs,
+				   &local_client, "our client", p1st->st_logger))
 			return STF_FAIL + INVALID_ID_INFORMATION;
-
-		b.my.proto = IDci->payload.ipsec_id.isaiid_protoid;
-		b.my.port = IDci->payload.ipsec_id.isaiid_port;
-		update_selector_hport(&b.my.net, b.my.port);
 
 		/*
 		 * if there is a NATOA payload, then use it as
 		 *    &st->st_connection->spd.that.client, if the type
 		 * of the ID was FQDN
 		 *
-		 * we actually do NATOA calculation again later on,
-		 * but we need the info here, and we don't have a state
-		 * to store it in until after we've done the authorization steps.
+		 * We actually do NATOA calculation again later on,
+		 * but we need the info here, and we don't have a
+		 * state to store it in until after we've done the
+		 * authorization steps.
 		 */
-		if ((p1st->hidden_variables.st_nat_traversal &
-		     NAT_T_DETECTED) &&
-		    (p1st->hidden_variables.st_nat_traversal &
-		     NAT_T_WITH_NATOA) &&
-		    (id_pd->payload.ipsec_id.isaiid_idtype == ID_FQDN)) {
+		if ((p1st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
+		    (p1st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA) &&
+		    (IDci->payload.ipsec_id.isaiid_idtype == ID_FQDN)) {
 			struct hidden_variables hv;
 			char idfqdn[IDTOA_BUF];
-			size_t idlen = pbs_room(&IDci->pbs);
+			size_t idlen = pbs_room(&IDcr->pbs);
 
 			if (idlen >= sizeof(idfqdn)) {
 				/* ??? truncation seems rude and dangerous */
 				idlen = sizeof(idfqdn) - 1;
 			}
 			/* ??? what should happen if fqdn contains '\0'? */
-			memcpy(idfqdn, IDci->pbs.cur, idlen);
+			memcpy(idfqdn, IDcr->pbs.cur, idlen);
 			idfqdn[idlen] = '\0';
 
 			hv = p1st->hidden_variables;
 			nat_traversal_natoa_lookup(md, &hv, p1st->st_logger);
 
 			if (address_is_specified(&hv.st_nat_oa)) {
-				b.peers.net = subnet_from_address(&hv.st_nat_oa);
-				subnet_buf buf;
+				remote_client = selector_from_address_protocol_port(&hv.st_nat_oa,
+										    remote_protocol,
+										    remote_port);
+				selector_buf buf;
 				log_state(RC_LOG_SERIOUS, p1st,
 					  "IDci was FQDN: %s, using NAT_OA=%s %d as IDci",
-					  idfqdn, str_subnet(&b.peers.net, &buf),
+					  idfqdn, str_selector(&remote_client, &buf),
 					  (address_is_unset(&hv.st_nat_oa) ||
 					   address_is_any(&hv.st_nat_oa)/*XXX: always 0?*/));
 			}
@@ -1023,23 +1025,18 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		if (address_type(&c->spd.this.host_addr) != address_type(&c->spd.that.host_addr))
 			return STF_FAIL;
 
-		b.my.net = subnet_from_address(&c->spd.this.host_addr);
-		b.peers.net = subnet_from_address(&c->spd.that.host_addr);
-		b.peers.proto = b.my.proto = 0;
-		b.peers.port = b.my.port = 0;
+		local_client = selector_from_address(&c->spd.this.host_addr);
+		remote_client = selector_from_address(&c->spd.that.host_addr);
 	}
-	b.md = md;
-	save_new_iv(p1st, b.new_iv);
+
+	struct crypt_mac new_iv;
+	save_new_iv(p1st, new_iv);
 
 	/*
-	 * FIXME - DAVIDM
-	 * "b" is on the stack,  for OPPO  tunnels this will be bad, in
-	 * quick_inI1_outR1_start_query it saves a pointer to it before
-	 * a crypto (async op).
+	 * XXX: merge.
 	 */
-	return quick_inI1_outR1_tail(&b);
+	return quick_inI1_outR1_tail(p1st, md, &local_client, &remote_client, new_iv);
 }
-
 
 /* forward definitions */
 static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_digest *md);
@@ -1047,44 +1044,32 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 static ke_and_nonce_cb quick_inI1_outR1_continue1;	/* forward decl and type assertion */
 static dh_shared_secret_cb quick_inI1_outR1_continue2;	/* forward decl and type assertion */
 
-static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
+static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *md,
+					const ip_selector *local_client,
+					const ip_selector *remote_client,
+					struct crypt_mac new_iv)
 {
-	struct msg_digest *md = b->md;
-	struct state *const p1st = md->st;
+	pexpect(p1st == md->st);
 	struct connection *c = p1st->st_connection;
-	ip_subnet *our_net = &b->my.net,
-	*peers_net = &b->peers.net;
 	struct hidden_variables hv;
 
-	{
-		/*
-		 * XXX: ADDRESS/MASK:PROTOCOL/PORT - is a pretty
-		 * messed up way of logging things.  Should at least
-		 * follow SUB -%d-> SUB format.
-		 *
-		 * XXX: why is protocol always logged as an integer.
-		 */
-		subnet_buf s1, d1;
-		log_state(RC_LOG, p1st, "the peer proposed: %s:%d/%d -> %s:%d/%d",
-			  str_subnet(our_net, &s1), c->spd.this.protocol, c->spd.this.port,
-			  str_subnet(peers_net, &d1), c->spd.that.protocol, c->spd.that.port);
-	}
+	/*
+	 * XXX: isn't local->remote backwards?  The peer things it
+	 * proposed the reverse?
+	 */
+	selectors_buf sb;
+	log_state(RC_LOG, p1st, "the peer proposed: %s",
+		  str_selectors(local_client, remote_client, &sb));
 
 	/* Now that we have identities of client subnets, we must look for
 	 * a suitable connection (our current one only matches for hosts).
 	 */
 	{
-		struct connection *p = find_client_connection(c,
-							      our_net, peers_net,
-							      b->my.proto,
-							      b->my.port,
-							      b->peers.proto,
-							      b->peers.port);
+		struct connection *p = find_v1_client_connection(c, local_client, remote_client);
 
-		if ((p1st->hidden_variables.st_nat_traversal &
-		      NAT_T_DETECTED) &&
-		     !(p1st->st_policy & POLICY_TUNNEL) &&
-		     p == NULL) {
+		if ((p1st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
+		    !(p1st->st_policy & POLICY_TUNNEL) &&
+		    p == NULL) {
 			p = c;
 			connection_buf cib;
 			dbg("using something (we hope the IP we or they are NAT'ed to) for transport mode connection "PRI_CONNECTION"",
@@ -1102,15 +1087,15 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 				 sizeof(id_buf) + 2 * sizeof(address_buf) + 12];                       /* + 12 for separating */
 			size_t l;
 
-			me.client = *our_net;
-			me.has_client = !subnetisaddr(our_net, &me.host_addr);
-			me.protocol = b->my.proto;
-			me.port = b->my.port;
+			me.client = *local_client;
+			me.has_client = !subnetisaddr(local_client, &me.host_addr);
+			me.protocol = selector_protocol(local_client)->ipproto;
+			me.port = selector_port(local_client).hport;
 
-			he.client = *peers_net;
-			he.has_client = !subnetisaddr(peers_net, &he.host_addr);
-			he.protocol = b->peers.proto;
-			he.port = b->peers.port;
+			he.client = *remote_client;
+			he.has_client = !subnetisaddr(remote_client, &he.host_addr);
+			he.protocol = selector_protocol(remote_client)->ipproto;
+			he.port = selector_port(remote_client).hport;
 
 			l = format_end(buf, sizeof(buf), &me, NULL, TRUE,
 				       LEMPTY, oriented(*c));
@@ -1134,7 +1119,7 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 				 * instantiate, carrying over authenticated peer ID
 				 */
 				p = rw_instantiate(p, &c->spd.that.host_addr,
-						   peers_net,
+						   remote_client,
 						   &c->spd.that.id);
 			}
 			/* temporarily bump up cur_debugging to get "using..." message
@@ -1160,22 +1145,21 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 
 		/* fill in the client's true port */
 		if (c->spd.that.has_port_wildcard) {
-			int port = b->peers.port;
+			int port = selector_port(remote_client).hport;
 			update_selector_hport(&c->spd.that.client, port);
-
-			c->spd.that.port = b->peers.port;
+			c->spd.that.port = port;
 			c->spd.that.has_port_wildcard = false;
 		}
 
 		if (is_virtual_connection(c)) {
 			char cthat[END_BUF];
 
-			c->spd.that.client = *peers_net;
+			c->spd.that.client = *remote_client;
 			c->spd.that.has_client = true;
 			virtual_ip_delref(&c->spd.that.virt, HERE);
 
-			if (subnetishost(peers_net) &&
-			    addrinsubnet(&c->spd.that.host_addr, peers_net)) {
+			if (subnetishost(remote_client) &&
+			    addrinsubnet(&c->spd.that.host_addr, remote_client)) {
 				c->spd.that.has_client = FALSE;
 			}
 
@@ -1212,14 +1196,14 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 
 		st->st_v1_msgid.id = md->hdr.isa_msgid;
 
-		restore_new_iv(st, b->new_iv);
+		restore_new_iv(st, new_iv);
 
 		switch_md_st(md, st, HERE);	/* feed back new state */
 
-		st->st_peeruserprotoid = b->peers.proto;
-		st->st_peeruserport = b->peers.port;
-		st->st_myuserprotoid = b->my.proto;
-		st->st_myuserport = b->my.port;
+		st->st_peeruserprotoid = selector_protocol(remote_client)->ipproto;
+		st->st_peeruserport = selector_port(remote_client).hport;
+		st->st_myuserprotoid = selector_protocol(local_client)->ipproto;
+		st->st_myuserport = selector_port(local_client).hport;
 
 		change_state(st, STATE_QUICK_R0);
 

@@ -3785,13 +3785,9 @@ static struct connection *fc_try_oppo(const struct connection *c,
 	return best;
 }
 
-struct connection *find_client_connection(struct connection *const c,
-					const ip_subnet *our_net,
-					const ip_subnet *peer_net,
-					const uint8_t our_protocol,
-					const uint16_t our_port,
-					const uint8_t peer_protocol,
-					const uint16_t peer_port)
+struct connection *find_v1_client_connection(struct connection *const c,
+					     const ip_selector *local_client,
+					     const ip_selector *remote_client)
 {
 	struct connection *d;
 
@@ -3801,14 +3797,26 @@ struct connection *find_client_connection(struct connection *const c,
 	}
 
 	if (DBGP(DBG_BASE)) {
-		selector_buf s1;
-		selector_buf d1;
-		DBG_log("find_client_connection starting with %s",
-			c->name);
-		DBG_log("  looking for %s:%d/%d -> %s:%d/%d",
-			str_selector(our_net, &s1), our_protocol, our_port,
-			str_selector(peer_net, &d1), peer_protocol, peer_port);
+		selectors_buf sb;
+		DBG_log("find_v1_client_connection starting with %s", c->name);
+		DBG_log("  looking for %s",
+			str_selectors(local_client, remote_client, &sb));
 	}
+
+	/*
+	 * XXX: these are all redundant.
+	 *
+	 * XXX: assigning the ip_selector LOCAL_CLIENT to the
+	 * ip_subnet OUR_NET is deliberately broken.  Caller was
+	 * stuffing the port into the NET, while at the same time
+	 * using subnet calls.
+	 */
+	unsigned our_protocol = selector_protocol(local_client)->ipproto;
+	unsigned our_port = selector_port(local_client).hport;
+	unsigned peer_protocol = selector_protocol(remote_client)->ipproto;
+	unsigned peer_port = selector_port(remote_client).hport;
+	const ip_subnet *our_net = local_client;
+	const ip_subnet *peer_net = remote_client;
 
 	/*
 	 * Give priority to current connection

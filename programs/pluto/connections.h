@@ -487,14 +487,10 @@ extern struct connection
 	*refine_host_connection(const struct state *st, const struct id *peer_id,
 			const struct id *tarzan_id,
 			bool initiator, lset_t auth_policy /* used by ikev1 */,
-			enum keyword_authby, bool *fromcert),
-	*find_client_connection(struct connection *c,
-			const ip_subnet *our_net,
-			const ip_subnet *peer_net,
-			const uint8_t our_protocol,
-			const uint16_t out_port,
-			const uint8_t peer_protocol,
-			const uint16_t peer_port);
+			enum keyword_authby, bool *fromcert);
+struct connection *find_v1_client_connection(struct connection *c,
+					     const ip_selector *local_client,
+					     const ip_selector *remote_client);
 struct connection *find_connection_for_clients(struct spd_route **srp,
 					       const ip_endpoint *our_client,
 					       const ip_endpoint *peer_client,
