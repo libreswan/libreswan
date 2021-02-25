@@ -2070,15 +2070,13 @@ static stf_status xauth_client_resp(struct state *st,
 							  &attrval,
 							  "XAUTH password")) {
 						if (discard_pw) {
-							free_chunk_content(&
-								st->st_xauth_password);
+							free_chunk_content(&st->st_xauth_password);
 						}
 						return STF_INTERNAL_ERROR;
 					}
 
 					if (discard_pw) {
-						free_chunk_content(&
-							st->st_xauth_password);
+						free_chunk_content(&st->st_xauth_password);
 					}
 					close_output_pbs(&attrval);
 					break;
