@@ -717,7 +717,7 @@ static int score_address_range(const struct end *end,
 	 * Pre-compute possible fit --- sum of bits gives how good a
 	 * fit this is.
 	 */
-	int ts_range = iprange_bits(ts->net.start, ts->net.end);
+	int ts_range = range_significant_bits(&ts->net);
 	int maskbits = end->client.maskbits;
 	int fitbits = maskbits + ts_range;
 

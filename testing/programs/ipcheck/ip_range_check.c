@@ -146,8 +146,10 @@ static void check_iprange_bits(void)
 		 * XXX: apparently iprange_bits() working for both
 		 * low-hi and hi-low is a feature!?!
 		 */
-		int lo2hi = iprange_bits(lo, hi);
-		int hi2lo = iprange_bits(hi, lo);
+		ip_range lo_hi = { .start = lo, .end = hi, };
+		ip_range hi_lo = { .start = hi, .end = lo, };
+		int lo2hi = range_significant_bits(&lo_hi);
+		int hi2lo = range_significant_bits(&hi_lo);
 		if (lo2hi != hi2lo) {
 			FAIL_LO2HI("iprange_bits(lo,hi) returned %d and iprange_bits(hi,lo) returned %d",
 				   lo2hi, hi2lo);

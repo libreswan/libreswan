@@ -55,28 +55,26 @@ ip_range range(const ip_address *start, const ip_address *end)
  * ??? this really should use ip_range rather than a pair of ip_address values
  */
 
-int iprange_bits(ip_address low, ip_address high)
+int range_significant_bits(const ip_range *range)
 {
-	const struct ip_info *ht = address_type(&high);
-	const struct ip_info *lt = address_type(&low);
-	if (ht == NULL || lt == NULL) {
-		/* either invalid */
+	if (range_is_unset(range)) {
 		return -1;
 	}
-	if (ht != lt) {
+	const struct ip_info *afi = range_type(range);
+	if (afi == NULL) {
 		return -1;
 	}
 
-	shunk_t hs = address_as_shunk(&high);
+	shunk_t hs = address_as_shunk(&range->end);
 	const uint8_t *hp = hs.ptr; /* cast const void * */
 	passert(hs.len > 0);
 	size_t n = hs.len;
 
-	shunk_t ls = address_as_shunk(&low);
+	shunk_t ls = address_as_shunk(&range->start);
 	const uint8_t *lp = ls.ptr; /* cast const void * */
 	passert(hs.len == ls.len);
 
-	ip_address diff = low;	/* initialize all the contents to sensible values */
+	ip_address diff = range->start;	/* initialize all the contents to sensible values */
 	unsigned char *dp;
 	chunk_t diff_chunk = address_as_chunk(&diff);
 	dp = diff_chunk.ptr; /* cast void* */
@@ -242,10 +240,10 @@ const char *str_range(const ip_range *range, range_buf *out)
 
 ip_range range_from_subnet(const ip_subnet *subnet)
 {
-	const struct ip_info *afi = subnet_type(subnet);
-	if (afi == NULL) {
+	if (subnet_is_unset(subnet)) {
 		return unset_range;
 	}
+	const struct ip_info *afi = subnet_type(subnet);
 	ip_range r = {
 		.start = address_from_blit(afi, subnet->addr.bytes,
 					   /*routing-prefix*/&keep_bits,
@@ -261,7 +259,7 @@ ip_range range_from_subnet(const ip_subnet *subnet)
 
 const struct ip_info *range_type(const ip_range *range)
 {
-	if (range == NULL) {
+	if (range_is_unset(range)) {
 		return NULL;
 	}
 	const struct ip_info *start = ip_version_info(range->start.version);
@@ -280,13 +278,13 @@ bool range_is_unset(const ip_range *range)
 	return thingeq(*range, unset_range);
 }
 
-bool range_is_specified(const ip_range *r)
+bool range_is_specified(const ip_range *range)
 {
-	if (r == NULL) {
+	if (range_is_unset(range)) {
 		return false;
 	}
-	bool start = address_is_specified(&r->start);
-	bool end = address_is_specified(&r->end);
+	bool start = address_is_specified(&range->start);
+	bool end = address_is_specified(&range->end);
 	if (!pexpect(start == end)) {
 		return false;
 	}
@@ -300,7 +298,7 @@ bool range_size(ip_range *r, uint32_t *size) {
 
 	n = (ntohl_address(&r->end) - ntohl_address(&r->start));
 	if (address_type(&r->start) == &ipv6_info) {
-		int prefix_len = ipv6_info.mask_cnt - iprange_bits(r->start, r->end);
+		int prefix_len = ipv6_info.mask_cnt - range_significant_bits(r);
 		if (prefix_len < IPV6_MIN_POOL_PREFIX_LEN) {
 			truncated = true;
 			uint32_t s = ntohl_address(&r->start);
@@ -322,12 +320,12 @@ bool range_size(ip_range *r, uint32_t *size) {
 
 bool range_eq(const ip_range *l, const ip_range *r)
 {
-	const struct ip_info *lt = range_type(l);
-	const struct ip_info *rt = range_type(r);
-	if (lt == NULL && rt == NULL) {
+	if (range_is_unset(l) && range_is_unset(r)) {
 		/* unset/NULL ranges are equal */
 		return true;
 	}
+	const struct ip_info *lt = range_type(l);
+	const struct ip_info *rt = range_type(r);
 	if (lt != rt) {
 		return false;
 	}

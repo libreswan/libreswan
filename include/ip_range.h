@@ -70,11 +70,12 @@ bool range_eq(const ip_range *l, const ip_range *r);
 
 /*
  * Calculate the number of significant bits in the size of the range.
- * floor(lg(|high-low| + 1))
+ * floor(log2(|high-low| + 1)).
  *
- * ??? this really should use ip_range rather than a pair of ip_address values
+ * If RANGE is CIDR then this returns the number of host identifier
+ * bits, otherwize it returns an approximation.
  */
-int iprange_bits(ip_address low, ip_address high);
+int range_significant_bits(const ip_range *range);
 
 extern bool range_size(ip_range *r, uint32_t *size);
 
