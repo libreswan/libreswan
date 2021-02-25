@@ -388,12 +388,9 @@ void lswlog_child_sa_established(struct jambuf *buf, struct state *st)
 		jam_string(buf, "none");
 	} else {
 		/* XXX: can lswlog_ip() be used?  need to check st_remoteport */
-		char oa[ADDRTOT_BUF + sizeof(":00000")];
-		snprintf(oa, sizeof(oa),
-			 "%s:%d",
-			 sensitive_ipstr(&st->hidden_variables.st_natd, &ipb),
-			 endpoint_hport(&st->st_remote_endpoint));
-		jam_string(buf, oa);
+		jam(buf, "%s:%d",
+		    str_address_sensitive(&st->hidden_variables.st_natd, &ipb),
+		    endpoint_hport(&st->st_remote_endpoint));
 	}
 
 	jam(buf, (st->st_ike_version == IKEv1 && !st->hidden_variables.st_peer_supports_dpd) ? " DPD=unsupported" :

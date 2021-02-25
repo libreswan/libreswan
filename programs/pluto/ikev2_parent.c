@@ -6150,9 +6150,9 @@ void ikev2_record_newaddr(struct state *st, void *arg_ip)
 			event_schedule(EVENT_v2_ADDR_CHANGE,
 				       RTM_NEWADDR_ROUTE_DELAY, st);
 		} else {
-			ipstr_buf b;
+			address_buf b;
 			dbg("#%lu MOBIKE ignore address %s change pending previous",
-			    st->st_serialno, sensitive_ipstr(ip, &b));
+			    st->st_serialno, str_address_sensitive(ip, &b));
 		}
 	}
 }
@@ -6314,10 +6314,10 @@ void ikev2_addr_change(struct state *st)
 			/* FALL THROUGH */
 		case -1:	/* failure */
 		{
-			ipstr_buf g, b;
+			address_buf g, b;
 			log_state(RC_LOG, st, "no local source address to reach remote %s, local gateway %s",
-				  sensitive_ipstr(&that.addr, &b),
-				  ipstr(&this.nexthop, &g));
+				  str_address_sensitive(&that.addr, &b),
+				  str_address(&this.nexthop, &g));
 			break;
 		}
 

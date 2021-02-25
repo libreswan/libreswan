@@ -475,9 +475,9 @@ void initiate_redirect(struct state *st)
 	/* update host_addr of other end, port stays the same */
 	c->spd.that.host_addr = redirect_ip;
 
-	ipstr_buf b;
+	address_buf b;
 	log_state(RC_LOG, st, "initiating a redirect to new gateway (address: %s)",
-			sensitive_ipstr(&redirect_ip, &b));
+		  str_address_sensitive(&redirect_ip, &b));
 	flush_pending_by_state(ike);
 	initiate_connections_by_name(c->name, NULL,
 				     st->st_logger->object_whackfd,

@@ -83,11 +83,6 @@ const char *ipstr(const ip_address *src, ipstr_buf *b)
 	return str_address(src, b);
 }
 
-const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b)
-{
-	return str_address_sensitive(src, b);
-}
-
 shunk_t address_as_shunk(const ip_address *address)
 {
 	if (address == NULL) {

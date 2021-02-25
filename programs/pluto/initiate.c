@@ -1206,7 +1206,6 @@ static void connection_check_ddns1(struct connection *c)
 		return;
 	}
 
-	ipstr_buf old,new;
 	/* I think this is ok now we check everything above ? */
 
 	/*
@@ -1222,9 +1221,11 @@ static void connection_check_ddns1(struct connection *c)
 	    pri_connection(c, &cib));
 	c->kind = CK_PERMANENT;
 
+	address_buf old, new;
 	dbg("pending ddns: updating IP address for %s from %s to %s",
-	    c->dnshostname, sensitive_ipstr(&c->spd.that.host_addr, &old),
-	    sensitive_ipstr(&new_addr, &new));
+	    c->dnshostname,
+	    str_address_sensitive(&c->spd.that.host_addr, &old),
+	    str_address_sensitive(&new_addr, &new));
 	c->spd.that.host_addr = new_addr;
 	update_ends_from_this_host_addr(&c->spd.that, &c->spd.this);
 

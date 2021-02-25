@@ -119,7 +119,6 @@ const char *str_address_reversed(const ip_address *src, address_reversed_buf *bu
 
 typedef address_buf ipstr_buf;
 const char *ipstr(const ip_address *src, ipstr_buf *b);
-const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b);
 
 /*
  * Magic values.
