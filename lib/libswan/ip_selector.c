@@ -215,7 +215,9 @@ ip_range selector_range(const ip_selector *selector)
 					   /*routing-prefix*/&keep_bits,
 					   /*host-identifier*/&set_bits,
 					   selector->maskbits);
-	return range(&start, &end);
+	ip_range r = range(&start, &end);
+	r.is_subnet = true;
+	return r;
 }
 
 ip_address selector_prefix(const ip_selector *selector)
