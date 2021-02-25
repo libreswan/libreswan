@@ -201,15 +201,15 @@ const char *str_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
 	return dst->buf;
 }
 
-size_t jam_sensitive_endpoint(struct jambuf *buf, const ip_endpoint *endpoint)
+size_t jam_endpoint_sensitive(struct jambuf *buf, const ip_endpoint *endpoint)
 {
 	return format_endpoint(buf, /*sensitive?*/!log_ip, endpoint);
 }
 
-const char *str_sensitive_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
+const char *str_endpoint_sensitive(const ip_endpoint *endpoint, endpoint_buf *dst)
 {
 	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
-	jam_sensitive_endpoint(&buf, endpoint);
+	jam_endpoint_sensitive(&buf, endpoint);
 	return dst->buf;
 }
 

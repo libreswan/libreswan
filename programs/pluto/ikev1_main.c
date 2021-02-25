@@ -648,7 +648,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 	if (c->kind == CK_INSTANCE) {
 		endpoint_buf b;
 		log_state(RC_LOG, st, "responding to Main Mode from unknown peer %s",
-			  str_sensitive_endpoint(&md->sender, &b));
+			  str_endpoint_sensitive(&md->sender, &b));
 	} else {
 		log_state(RC_LOG, st, "responding to Main Mode");
 	}

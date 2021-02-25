@@ -109,7 +109,7 @@ static bool send_chunks(const char *where, bool just_a_keepalive,
 		endpoint_buf b;
 		llog(RC_LOG, logger,
 			    "will not send packet to bogus address %s",
-			    str_sensitive_endpoint(&remote_endpoint, &b));
+			    str_endpoint_sensitive(&remote_endpoint, &b));
 		return false;
 	}
 
@@ -175,7 +175,7 @@ static bool send_chunks(const char *where, bool just_a_keepalive,
 					  "send on %s from %s to %s using %s failed in %s",
 					  interface->ip_dev->id_rname,
 					  str_endpoint(&interface->local_endpoint, &lb),
-					  str_sensitive_endpoint(&remote_endpoint, &rb),
+					  str_endpoint_sensitive(&remote_endpoint, &rb),
 					  interface->protocol->name,
 					  where);
 			}

@@ -419,7 +419,7 @@ static bool emit_v2N_spi_response(struct response *response,
 	llog(RC_NOTIFICATION+ntype, response->logger,
 		    "responding to %s message (ID %u) from %s with %s notification %s",
 		    exchange_name, md->hdr.isa_msgid,
-		    str_sensitive_endpoint(&ike->sa.st_remote_endpoint, &b),
+		    str_endpoint_sensitive(&ike->sa.st_remote_endpoint, &b),
 		    response->security == ENCRYPTED_PAYLOAD ? "encrypted" : "unencrypted",
 		    notify_name);
 

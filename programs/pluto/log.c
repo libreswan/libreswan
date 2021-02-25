@@ -474,7 +474,7 @@ static size_t jam_from_prefix(struct jambuf *buf, const void *object)
 		} else {
 			s += jam(buf, "packet from ");
 		}
-		s += jam_sensitive_endpoint(buf, from);
+		s += jam_endpoint_sensitive(buf, from);
 		s += jam(buf, ": ");
 	}
 	return s;

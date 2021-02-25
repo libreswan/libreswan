@@ -694,7 +694,7 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 				endpoint_buf ab;
 				snprintf(fromstr, sizeof(fromstr),
 					 " for message to %s",
-					 str_sensitive_endpoint(&endpoint, &ab));
+					 str_endpoint_sensitive(&endpoint, &ab));
 			}
 		}
 

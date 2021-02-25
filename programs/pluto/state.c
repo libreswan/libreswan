@@ -2600,8 +2600,8 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	endpoint_buf new;
 	snprintf(buf, sizeof(buf), "MOBIKE update %s address %s -> %s",
 		 md_role == MESSAGE_RESPONSE ? "local" : "remote",
-		 str_sensitive_endpoint(&old_endpoint, &old),
-		 str_sensitive_endpoint(&new_endpoint, &new));
+		 str_endpoint_sensitive(&old_endpoint, &old),
+		 str_endpoint_sensitive(&new_endpoint, &new));
 
 	dbg("#%lu pst=#%lu %s", child->sa.st_serialno,
 	    ike->sa.st_serialno, buf);
@@ -2612,7 +2612,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 			endpoint_buf b;
 			log_state(RC_LOG, &ike->sa,
 				  "MOBIKE success no change to kernel SA same IP address and port  %s",
-				  str_sensitive_endpoint(&old_endpoint, &b));
+				  str_endpoint_sensitive(&old_endpoint, &b));
 
 			return true;
 		}
