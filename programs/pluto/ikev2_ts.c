@@ -862,12 +862,11 @@ static bool score_gt(const struct best_score *score, const struct best_score *be
 }
 
 #ifdef HAVE_LABELED_IPSEC
-static bool score_ends_seclabel(const chunk_t **selected_sec_label,
-				const struct ends *ends,
-				const struct connection *d,
-				const struct traffic_selectors *tsi,
-				const struct traffic_selectors *tsr,
-				struct logger *logger)
+static const chunk_t *score_ends_seclabel(const struct ends *ends,
+					  const struct connection *d,
+					  const struct traffic_selectors *tsi,
+					  const struct traffic_selectors *tsr,
+					  struct logger *logger)
 {
 	/* sec_labels are symmetric, pick from one end */
 	bool require_label = d->spd.this.sec_label.len != 0;
@@ -875,10 +874,7 @@ static bool score_ends_seclabel(const chunk_t **selected_sec_label,
 	bool recv_label_r = false;
 	bool match_i = false;
 	bool match_r = false;
-
-	if (selected_sec_label != NULL) {
-		*selected_sec_label = NULL;
-	}
+	chunk_t const *selected_sec_label = NULL;
 
 	for (unsigned tsi_n = 0; tsi_n < tsi->nr; tsi_n++) {
 		const struct traffic_selector *cur = &tsi->ts[tsi_n];
@@ -910,9 +906,7 @@ static bool score_ends_seclabel(const chunk_t **selected_sec_label,
 						if (within_range((const char *)ends->r->sec_label.ptr, (const char *)d->spd.this.sec_label.ptr, logger)) {
 							dbg("ikev2ts #2: received label within range of our security label");
 							match_r = true;
-							if (selected_sec_label != NULL) {
-								*selected_sec_label = &cur->sec_label;
-							}
+							selected_sec_label = &cur->sec_label;
 						} else {
 							dbg("ikev2ts #2: received label not within range of our security label");
 							DBG_dump_hunk("ends->r->sec_label", ends->r->sec_label);
@@ -925,23 +919,39 @@ static bool score_ends_seclabel(const chunk_t **selected_sec_label,
 		}
 	}
 
-	if (recv_label_r != recv_label_i)
-		return false;
+	if (require_label) {
+		/* Security label required. */
+		if (recv_label_i != recv_label_r) {
+			/* Mismatching security labels found. Caller handles this error case. */
+			return NULL;
+		}
 
-	if (!require_label && !recv_label_i)
-		return true;
-
-	return require_label == recv_label_i && match_i && match_r;
+		if (recv_label_i && match_i && match_r) {
+			/* Found an appropriate security label. */
+			return selected_sec_label;
+		} else {
+			/* No security label found. Caller handles this error case. */
+			return NULL;
+		}
+	} else {
+		/* Security label NOT required. */
+		if (!recv_label_i && !recv_label_r) {
+			/* No security label found. This is expected. */
+			return NULL;
+		} else {
+			/* Unexpected security label found. Caller handles this error case. */
+			return selected_sec_label;
+		}
+	}
 }
 #else
-static bool score_ends_seclabel(const chunk_t **selected_sec_label,
-				const struct ends *ends UNUSED,
-				const struct connection *d UNUSED,
-				const struct traffic_selectors *tsi UNUSED,
-				const struct traffic_selectors *tsr UNUSED,
-				struct logger *logger UNUSED)
+static const chunk_t *score_ends_seclabel(const struct ends *ends,
+					  const struct connection *d,
+					  const struct traffic_selectors *tsi,
+					  const struct traffic_selectors *tsr,
+					  struct logger *logger)
 {
-	return true;
+	return NULL;
 }
 #endif
 
@@ -1044,6 +1054,7 @@ bool v2_process_ts_request(struct child_sa *child,
 	/* find best spd in c */
 
 	dbg("looking for best SPD in current connection");
+	bool const is_seclabel_required = (c->spd.this.sec_label.len != 0);
 	for (const struct spd_route *sra = &c->spd; sra != NULL; sra = sra->spd_next) {
 
 		/* responder */
@@ -1052,9 +1063,18 @@ bool v2_process_ts_request(struct child_sa *child,
 			.r = &sra->this,
 		};
 
-		const chunk_t* selected_sec_label = NULL;
-		if (!score_ends_seclabel(&selected_sec_label, &ends, c, &tsi, &tsr, child->sa.st_logger)) {
-			continue;
+		chunk_t const *const selected_sec_label =
+			score_ends_seclabel(&ends, c, &tsi, &tsr, child->sa.st_logger);
+		if (is_seclabel_required) {
+			if (!selected_sec_label) {
+				/* Security label required, but not found. */
+				continue;
+			}
+		} else {
+			if (selected_sec_label) {
+				/* Security label *not* required, but found. */
+				continue;
+			}
 		}
 
 		enum fit responder_fit =
@@ -1142,6 +1162,7 @@ bool v2_process_ts_request(struct child_sa *child,
 
 			const struct spd_route *sr;
 
+			bool const is_seclabel_required = (d->spd.this.sec_label.len != 0);
 			for (sr = &d->spd; sr != NULL; sr = sr->spd_next) {
 
 				/* responder */
@@ -1155,10 +1176,19 @@ bool v2_process_ts_request(struct child_sa *child,
 					? END_NARROWER_THAN_TS
 					: END_EQUALS_TS;
 
-				const chunk_t* selected_sec_label = NULL;
-				if (!score_ends_seclabel(&selected_sec_label, &ends, d, &tsi, &tsr,
-					    child->sa.st_logger))
-					continue;
+				chunk_t const *const selected_sec_label =
+					score_ends_seclabel(&ends, d, &tsi, &tsr, child->sa.st_logger);
+				if (is_seclabel_required) {
+					if (!selected_sec_label) {
+						/* Security label required, but not found. */
+						continue;
+					}
+				} else {
+					if (selected_sec_label) {
+						/* Security label *not* required, but found. */
+						continue;
+					}
+				}
 
 				struct best_score score = score_ends_iprange(responder_fit, d/*note D*/,
 								     &ends, &tsi, &tsr);
@@ -1404,9 +1434,7 @@ bool v2_process_ts_request(struct child_sa *child,
 	update_state_connection(&child->sa, best_connection);
 
 	if (best_sec_label != NULL) {
-		if (child->sa.st_seen_sec_label.len != 0) {
-			free_chunk_content(&child->sa.st_seen_sec_label);
-		}
+		free_chunk_content(&child->sa.st_seen_sec_label);
 		child->sa.st_seen_sec_label = clone_hunk(*best_sec_label, "st_seen_sec_label");
 	}
 
@@ -1445,9 +1473,20 @@ bool v2_process_ts_response(struct child_sa *child,
 		? END_WIDER_THAN_TS
 		: END_EQUALS_TS;
 
-	const chunk_t *selected_sec_label = NULL;
-	if (!score_ends_seclabel(&selected_sec_label, &e, c, &tsi, &tsr, child->sa.st_logger))
-		return false;
+	bool const is_seclabel_required = (c->spd.this.sec_label.len != 0);
+	chunk_t const *const selected_sec_label =
+		score_ends_seclabel(&e, c, &tsi, &tsr, child->sa.st_logger);
+	if (is_seclabel_required) {
+		if (!selected_sec_label) {
+			/* Security label required, but not found. */
+			return false;
+		}
+	} else {
+		if (selected_sec_label) {
+			/* Security label *not* required, but found. */
+			return false;
+		}
+	}
 
 	struct best_score best = score_ends_iprange(initiator_widening, c, &e, &tsi, &tsr);
 
@@ -1458,9 +1497,7 @@ bool v2_process_ts_response(struct child_sa *child,
 	}
 
 	if (selected_sec_label != NULL) {
-		if (child->sa.st_seen_sec_label.len != 0) {
-			free_chunk_content(&child->sa.st_seen_sec_label);
-		}
+		free_chunk_content(&child->sa.st_seen_sec_label);
 		child->sa.st_seen_sec_label = clone_hunk(*selected_sec_label, "st_seen_sec_label");
 	}
 
@@ -1518,11 +1555,24 @@ bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *
 
 	enum fit fitness = END_NARROWER_THAN_TS;
 
-	if (!score_ends_seclabel(NULL, &ends, c, &their_tsis, &their_tsrs,
-				 child->sa.st_logger)) {
-		log_state(RC_LOG_SERIOUS, &child->sa,
-			  "rekey: received Traffic Selectors mismatch configured selectors for Security Label");
-		return false;
+	bool const is_seclabel_required = (c->spd.this.sec_label.len != 0);
+	chunk_t const *const selected_sec_label =
+		score_ends_seclabel(&ends, c, &their_tsis, &their_tsrs, child->sa.st_logger);
+	if (is_seclabel_required) {
+		if (!selected_sec_label) {
+			/* Security label required, but not found. */
+			log_state(RC_LOG_SERIOUS, &child->sa,
+				"rekey - security label required: received Traffic Selectors mismatch configured selectors for Security Label");
+			return false;
+
+		}
+	} else {
+		if (selected_sec_label) {
+			/* Security label *not* required, but found. */
+			log_state(RC_LOG_SERIOUS, &child->sa,
+				"rekey - security label NOT required: received Traffic Selectors mismatch configured selectors for Security Label");
+			return false;
+		}
 	}
 
 	struct best_score score = score_ends_iprange(fitness, c, &ends, &their_tsis,
