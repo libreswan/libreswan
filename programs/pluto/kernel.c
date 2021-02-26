@@ -168,7 +168,8 @@ static void dbg_bare_shunt(const char *op, const struct bare_shunt *bs)
  * because we use it indefinitely without copying or pfreeing.
  * Simple rule: use a string literal.
  */
-void add_bare_shunt(const ip_subnet *our_client, const ip_subnet *peer_client,
+void add_bare_shunt(const ip_selector *our_client,
+		    const ip_selector *peer_client,
 		    int transport_proto, ipsec_spi_t shunt_spi,
 		    const char *why)
 {
@@ -1261,9 +1262,9 @@ void show_shunt_status(struct show *s)
 
 // should be made static again once we fix initiate.c calling this directly!
 bool raw_eroute(const ip_address *this_host,
-		const ip_subnet *this_client,
+		const ip_selector *this_client,
 		const ip_address *that_host,
-		const ip_subnet *that_client,
+		const ip_selector *that_client,
 		ipsec_spi_t cur_spi,
 		ipsec_spi_t new_spi,
 		const struct ip_protocol *sa_proto,

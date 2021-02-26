@@ -1111,7 +1111,7 @@ void initiate_ondemand(const ip_endpoint *our_client,
  * There ought to be only one.
  * This might get to be a bottleneck -- try hashing if it does.
  */
-struct connection *shunt_owner(const ip_subnet *ours, const ip_subnet *peers)
+struct connection *shunt_owner(const ip_selector *ours, const ip_selector *peers)
 {
 	struct connection *c;
 

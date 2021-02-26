@@ -511,9 +511,9 @@ static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
  * @return boolean True if successful
  */
 static bool netlink_raw_eroute(const ip_address *this_host,
-			       const ip_subnet *this_client,
+			       const ip_selector *this_client,
 			       const ip_address *that_host,
-			       const ip_subnet *that_client,
+			       const ip_selector *that_client,
 			       ipsec_spi_t cur_spi,	/* current SPI */
 			       ipsec_spi_t new_spi,	/* new SPI */
 			       const struct ip_protocol *sa_proto,
@@ -877,7 +877,7 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 	uint16_t encap_sport = 0;
 	uint16_t encap_dport = 0;
 	const ip_address *src, *dst;
-	const ip_subnet *src_client, *dst_client;
+	const ip_selector *src_client, *dst_client;
 
 	if (endpoint_is_specified(&st->st_mobike_local_endpoint)) {
 		char *n = jam_str(text_said, SAMIGTOT_BUF, "initiator migrate kernel SA ");

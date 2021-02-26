@@ -65,7 +65,7 @@ static struct fg_groups *groups = NULL;
 struct fg_targets {
 	struct fg_targets *next;
 	struct fg_groups *group;
-	ip_subnet subnet;
+	ip_selector subnet;
 	uint8_t proto;
 	uint16_t sport;
 	uint16_t dport;
@@ -78,7 +78,7 @@ static struct fg_targets *targets = NULL;
  * It returns -1, 0, or +1 if a is, respectively,
  * less than, equal to, or greater than b.
  */
-static int subnetcmp(const ip_subnet *a, const ip_subnet *b)
+static int subnetcmp(const ip_selector *a, const ip_selector *b)
 {
 	int r;
 
@@ -96,7 +96,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 			   struct fg_targets **new_targets)
 {
 	const char *fgn = g->connection->name;
-	const ip_subnet *lsn = &g->connection->spd.this.client;
+	const ip_selector *lsn = &g->connection->spd.this.client;
 	const struct lsw_conf_options *oco = lsw_init_options();
 	char *fg_path = alloc_printf("%s/%s", oco->policies_dir, fgn); /* must free */
 
@@ -121,7 +121,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 		}
 
 		/* address or address/mask */
-		ip_subnet sn;
+		ip_selector sn;
 		if (strchr(flp->tok, '/') == NULL) {
 			/* no /, so treat as /32 or V6 equivalent */
 			ip_address t;

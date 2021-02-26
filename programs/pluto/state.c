@@ -1884,7 +1884,7 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 	return best;
 }
 
-void state_eroute_usage(const ip_subnet *ours, const ip_subnet *peers,
+void state_eroute_usage(const ip_selector *ours, const ip_selector *peers,
 			unsigned long count, monotime_t nw)
 {
 	dbg("FOR_EACH_STATE_... in %s", __func__);

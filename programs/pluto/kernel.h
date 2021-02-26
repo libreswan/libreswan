@@ -115,7 +115,7 @@ struct kernel_end {
 	 * This is not the subnet you're looking for: the transport
 	 * selector or packet filter.
 	 */
-	const ip_subnet *client;
+	const ip_selector *client;
 	/*
 	 * XXX: for mobike? does this need a port or is the port
 	 * optional or unchanging? perhaps the port is assumed to be
@@ -207,9 +207,9 @@ struct kernel_ops {
 	void (*process_queue)(void);
 	void (*process_msg)(int, struct logger *);
 	bool (*raw_eroute)(const ip_address *this_host,
-			   const ip_subnet *this_client,
+			   const ip_selector *this_client,
 			   const ip_address *that_host,
-			   const ip_subnet *that_client,
+			   const ip_selector *that_client,
 			   ipsec_spi_t cur_spi,
 			   ipsec_spi_t new_spi,
 			   const struct ip_protocol *sa_proto,
@@ -234,8 +234,8 @@ struct kernel_ops {
 			   enum pluto_sadb_operations op, const char *opname);
 	bool (*eroute_idle)(struct state *st, deltatime_t idle_max);	/* may mutate *st */
 	void (*remove_orphaned_holds)(int transportproto,
-				      const ip_subnet *ours,
-				      const ip_subnet *peers);
+				      const ip_selector *ours,
+				      const ip_selector *peers);
 	bool (*add_sa)(const struct kernel_sa *sa,
 		       bool replace,
 		       struct logger *logger);
@@ -332,8 +332,8 @@ struct eroute_info {
 extern void show_shunt_status(struct show *);
 extern unsigned shunt_count(void);
 
-struct bare_shunt **bare_shunt_ptr(const ip_subnet *ours,
-				   const ip_subnet *peers,
+struct bare_shunt **bare_shunt_ptr(const ip_selector *ours,
+				   const ip_selector *peers,
 				   int transport_proto,
 				   const char *why);
 
@@ -442,15 +442,15 @@ void shutdown_kernel(struct logger *logger);
  * because we use it indefinitely without copying or pfreeing.
  * Simple rule: use a string literal.
  */
-extern void add_bare_shunt(const ip_subnet *ours, const ip_subnet *peers,
-		int transport_proto, ipsec_spi_t shunt_spi,
-		const char *why);
+extern void add_bare_shunt(const ip_selector *ours, const ip_selector *peers,
+			   int transport_proto, ipsec_spi_t shunt_spi,
+			   const char *why);
 
 // TEMPORARY
 extern bool raw_eroute(const ip_address *this_host,
-		       const ip_subnet *this_client,
+		       const ip_selector *this_client,
 		       const ip_address *that_host,
-		       const ip_subnet *that_client,
+		       const ip_selector *that_client,
 		       ipsec_spi_t cur_spi,
 		       ipsec_spi_t new_spi,
 		       const struct ip_protocol *sa_proto,

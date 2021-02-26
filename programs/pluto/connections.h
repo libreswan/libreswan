@@ -456,7 +456,7 @@ extern void delete_connections_by_name(const char *name, bool strict,
 				       struct fd *whack);
 extern void delete_every_connection(void);
 struct connection *add_group_instance(struct connection *group,
-				      const ip_subnet *target,
+				      const ip_selector *target,
 				      uint8_t proto,
 				      uint16_t sport,
 				      uint16_t dport);
@@ -469,8 +469,8 @@ extern struct connection *route_owner(struct connection *c,
 				      struct connection **erop,
 				      struct spd_route **esrp);
 
-extern struct connection *shunt_owner(const ip_subnet *ours,
-				      const ip_subnet *peers);
+extern struct connection *shunt_owner(const ip_selector *ours,
+				      const ip_selector *peers);
 extern void rekey_now(const char *name, enum sa_type sa_type, struct fd *whackfd,
 		      bool background);
 
@@ -503,7 +503,7 @@ struct alg_info;        /* forward declaration of tag (defined in alg_info.h) */
 
 extern struct connection *rw_instantiate(struct connection *c,
 					 const ip_address *peer_addr,
-					 const ip_subnet *peer_subnet,
+					 const ip_selector *peer_subnet,
 					 const struct id *peer_id);
 struct connection *oppo_instantiate(struct connection *c,
 				    const struct id *remote_id,

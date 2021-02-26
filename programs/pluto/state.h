@@ -54,6 +54,7 @@
 #include "pluto_timing.h"	/* for statetime_t */
 #include "ikev2_msgid.h"
 #include "ip_endpoint.h"
+#include "ip_selector.h"
 #include "crypt_mac.h"
 #include "show.h"
 
@@ -807,7 +808,7 @@ extern void init_states(void);
 extern void rehash_state(struct state *st,
 			 const ike_spi_t *ike_responder_spi);
 extern void release_any_whack(struct state *st, where_t where, const char *why);
-extern void state_eroute_usage(const ip_subnet *ours, const ip_subnet *peers,
+extern void state_eroute_usage(const ip_selector *ours, const ip_selector *peers,
 			       unsigned long count, monotime_t nw);
 extern void delete_state(struct state *st);
 extern void delete_other_state(struct state *st, struct state *other_st);

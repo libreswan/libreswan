@@ -2116,7 +2116,8 @@ void add_connection(struct fd *whackfd, const struct whack_message *wm)
  * Returns name of new connection.  NULL on failure (duplicated name).
  * Caller is responsible for pfreeing name.
  */
-struct connection *add_group_instance(struct connection *group, const ip_subnet *target,
+struct connection *add_group_instance(struct connection *group,
+				      const ip_selector *target,
 				      uint8_t proto , uint16_t sport , uint16_t dport)
 {
 	passert(group->kind == CK_GROUP);
@@ -2299,7 +2300,7 @@ struct connection *instantiate(struct connection *c,
 
 struct connection *rw_instantiate(struct connection *c,
 				  const ip_address *peer_addr,
-				  const ip_subnet *peer_subnet,
+				  const ip_selector *peer_subnet,
 				  const struct id *peer_id)
 {
 	struct connection *d = instantiate(c, peer_addr, peer_id);
@@ -2361,7 +2362,8 @@ void set_policy_prio(struct connection *c)
 
 static size_t jam_connection_client(struct jambuf *b,
 				    const char *prefix, const char *suffix,
-				    const ip_subnet *client, const ip_address *gw)
+				    const ip_selector *client,
+				    const ip_address *gw)
 {
 	size_t s = 0;
 	if (subnetisaddr(client, gw)) {
@@ -3426,7 +3428,7 @@ struct connection *refine_host_connection(const struct state *st,
  * used (by another id) addr/net.
  */
 static bool is_virtual_net_used(struct connection *c,
-				const ip_subnet *peer_net,
+				const ip_selector *peer_net,
 				const struct id *peer_id)
 {
 	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
@@ -3533,8 +3535,8 @@ static bool is_virtual_net_used(struct connection *c,
 /* fc_try: a helper function for find_client_connection */
 static struct connection *fc_try(const struct connection *c,
 				const struct host_pair *hp,
-				const ip_subnet *our_net,
-				const ip_subnet *peer_net,
+				const ip_selector *our_net,
+				const ip_selector *peer_net,
 				const uint8_t our_protocol,
 				const uint16_t our_port,
 				const uint8_t peer_protocol,
@@ -3687,13 +3689,13 @@ static struct connection *fc_try(const struct connection *c,
 }
 
 static struct connection *fc_try_oppo(const struct connection *c,
-				const struct host_pair *hp,
-				const ip_subnet *our_net,
-				const ip_subnet *peer_net,
-				const uint8_t our_protocol,
-				const uint16_t our_port,
-				const uint8_t peer_protocol,
-				const uint16_t peer_port)
+				      const struct host_pair *hp,
+				      const ip_selector *our_net,
+				      const ip_selector *peer_net,
+				      const uint8_t our_protocol,
+				      const uint16_t our_port,
+				      const uint8_t peer_protocol,
+				      const uint16_t peer_port)
 {
 	struct connection *best = NULL;
 	policy_prio_t best_prio = BOTTOM_PRIO;
