@@ -43,13 +43,6 @@ struct hash_desc;
 struct show;
 struct ike_sa;
 
-extern err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
-				      const struct crypt_mac *hash,
-				      const uint8_t *sig_val, size_t sig_len,
-				      const struct hash_desc *hash_algo,
-				      struct logger *logger);
-
-
 const struct private_key_stuff *get_connection_private_key(const struct connection *c,
 							   const struct pubkey_type *type,
 							   struct logger *logger);
@@ -78,13 +71,16 @@ extern struct pubkey_list *pluto_pubkeys;
 const struct pubkey *find_pubkey_by_ckaid(const char *ckaid);
 
 typedef err_t (try_signature_fn) (const struct crypt_mac *hash,
-				  const struct packet_byte_stream *sig_pbs,
+				  shunk_t signature,
 				  struct pubkey *kr,
-				  struct state *st,
-				  const struct hash_desc *hash_algo);
+				  const struct hash_desc *hash_algo,
+				  struct logger *logger);
+
+extern try_signature_fn try_signature_RSA;
+
 extern stf_status check_signature_gen(struct ike_sa *ike,
 				      const struct crypt_mac *hash,
-				      const struct packet_byte_stream *sig_pbs,
+				      shunk_t signature,
 				      const struct hash_desc *hash_algo,
 				      const struct pubkey_type *type,
 				      try_signature_fn *try_signature);

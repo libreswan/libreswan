@@ -314,75 +314,6 @@ struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 }
 
 /*
- * Check a Main Mode RSA Signature against computed hash using RSA public
- * key k.
- *
- * As a side effect, on success, the public key is copied into the
- * state object to record the authenticator.
- *
- * Can fail because wrong public key is used or because hash disagrees.
- * We distinguish because diagnostics should also.
- *
- * The result is NULL if the Signature checked out.
- * Otherwise, the first character of the result indicates
- * how far along failure occurred.  A greater character signifies
- * greater progress.
- *
- * Classes:
- * 0	reserved for caller
- * 1	SIG length doesn't match key length -- wrong key
- * 2-8	malformed ECB after decryption -- probably wrong key
- * 9	decrypted hash != computed hash -- probably correct key
- * 10   NSS error
- * 11   NSS error
- * 12   NSS error
- *
- * Although the math should be the same for generating and checking signatures,
- * it is not: the knowledge of the private key allows more efficient (i.e.
- * different) computation for encryption.
- */
-static err_t try_RSA_signature_v1(const struct crypt_mac *hash,
-				const pb_stream *sig_pbs, struct pubkey *kr,
-				struct state *st,
-				const struct hash_desc *hash_algo_unused UNUSED /* for ikev2 only */)
-{
-	const uint8_t *sig_val = sig_pbs->cur;
-	size_t sig_len = pbs_left(sig_pbs);
-	const struct RSA_public_key *k = &kr->u.rsa;
-
-	/* decrypt the signature -- reversing RSA_sign_hash */
-	if (sig_len != kr->size) {
-		/* XXX notification: INVALID_KEY_INFORMATION */
-		return "1" "SIG length does not match public key length";
-	}
-
-	err_t ugh = RSA_signature_verify_nss(k, hash, sig_val,
-					     sig_len, 0 /* for ikev2 only */,
-					     st->st_logger);
-	if (ugh != NULL)
-		return ugh;
-
-	/*
-	 * Success: copy successful key into state.
-	 * There might be an old one if we previously aborted this
-	 * state transition.
-	 */
-	pubkey_delref(&st->st_peer_pubkey, HERE);
-	st->st_peer_pubkey = pubkey_addref(kr, HERE);
-
-	return NULL; /* happy happy */
-}
-
-static stf_status RSA_check_signature(struct ike_sa *ike,
-				      struct crypt_mac *hash,
-				      const pb_stream *sig_pbs,
-				      enum ikev2_hash_algorithm hash_algo UNUSED /* for ikev2 only */)
-{
-	return check_signature_gen(ike, hash, sig_pbs, 0 /* for ikev2 only */,
-				   &pubkey_type_rsa, try_RSA_signature_v1);
-}
-
-/*
  * encrypt message, sans fixed part of header
  * IV is fetched from st->st_new_iv and stored into st->st_iv.
  * The theory is that there will be no "backing out", so we commit to IV.
@@ -1396,9 +1327,12 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 
 	case OAKLEY_RSA_SIG:
 	{
-		r = RSA_check_signature(ike_sa(st, HERE), &hash,
-					&md->chain[ISAKMP_NEXT_SIG]->pbs, 0 /* for ikev2 only*/);
+		shunk_t signature = pbs_in_left_as_shunk(&md->chain[ISAKMP_NEXT_SIG]->pbs);
+		r = check_signature_gen(ike_sa(st, HERE), &hash, signature,
+					NULL/*hash_algo is IKEv2 only*/,
+					&pubkey_type_rsa, try_signature_RSA);
 		if (r != STF_OK) {
+			/* already logged */
 			dbg("received '%s' message SIG_%s data did not match computed value",
 			    aggrmode ? "Aggr" : "Main",
 			    initiator ? "R" : "I" /*reverse*/);

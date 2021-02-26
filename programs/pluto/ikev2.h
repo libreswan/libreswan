@@ -179,12 +179,12 @@ extern bool ikev2_create_psk_auth(enum keyword_authby authby,
 
 extern stf_status ikev2_verify_rsa_hash(struct ike_sa *ike,
 					const struct crypt_mac *idhash,
-					pb_stream *sig_pbs,
+					shunk_t signature,
 					const struct hash_desc *hash_algo);
 
 extern stf_status ikev2_verify_ecdsa_hash(struct ike_sa *ike,
 					const struct crypt_mac *idhash,
-					pb_stream *sig_pbs,
+					shunk_t signature,
 					const struct hash_desc *hash_algo);
 
 extern bool ikev2_verify_psk_auth(enum keyword_authby authby,

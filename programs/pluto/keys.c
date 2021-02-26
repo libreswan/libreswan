@@ -148,12 +148,20 @@ void list_psks(struct show *s)
 	lsw_foreach_secret(pluto_secrets, print_secrets, s);
 }
 
-err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
-			       const struct crypt_mac *expected_hash,
-			       const uint8_t *sig_val, size_t sig_len,
-			       const struct hash_desc *hash_algo,
-			       struct logger *logger)
+err_t try_signature_RSA(const struct crypt_mac *expected_hash,
+			shunk_t signature,
+			struct pubkey *kr,
+			const struct hash_desc *hash_algo,
+			struct logger *logger)
 {
+	const struct RSA_public_key *k = &kr->u.rsa;
+
+	/* decrypt the signature -- reversing RSA_sign_hash */
+	if (signature.len != kr->size) {
+		/* XXX notification: INVALID_KEY_INFORMATION */
+		return "1" "SIG length does not match public key length";
+	}
+
 	SECStatus retVal;
 	if (DBGP(DBG_BASE)) {
 		DBG_dump_hunk("NSS RSA: verifying that decrypted signature matches hash: ",
@@ -222,8 +230,8 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 
 	const SECItem encrypted_signature = {
 		.type = siBuffer,
-		.data = DISCARD_CONST(unsigned char *, sig_val),
-		.len  = (unsigned int)sig_len,
+		.data = DISCARD_CONST(unsigned char *, signature.ptr),
+		.len  = signature.len,
 	};
 
 	if (hash_algo == NULL /* ikev1*/ ||
@@ -232,7 +240,7 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 			.type = siBuffer,
 		};
 		if (SECITEM_AllocItem(publicKey->arena, &decrypted_signature,
-				      sig_len) == NULL) {
+				      signature.len) == NULL) {
 			SECKEY_DestroyPublicKey(publicKey);
 			return "12""NSS error: unable to allocate space for decrypted signature";
 		}
@@ -312,7 +320,7 @@ struct tac_state {
 	/* check_signature's args that take_a_crack needs */
 	struct state *st;
 	const struct crypt_mac *hash;
-	const pb_stream *sig_pbs;
+	shunk_t signature;
 	const struct hash_desc *hash_algo;
 	try_signature_fn *try_signature;
 
@@ -384,13 +392,21 @@ static bool try_all_keys(const char *pubkey_description,
 
 		s->tried_cnt++;
 		statetime_t try_time = statetime_start(s->st);
-		err_t ugh = (s->try_signature)(s->hash, s->sig_pbs,
-					       key, s->st, s->hash_algo);
+		err_t ugh = (s->try_signature)(s->hash, s->signature,
+					       key, s->hash_algo,
+					       s->st->st_logger);
 		statetime_stop(&try_time, "%s() trying a pubkey", __func__);
 
 		if (ugh == NULL) {
+			/*
+			 * Success: copy successful key into state.
+			 * There might be an old one if we previously
+			 * aborted this state transition.
+			 */
 			dbg("an %s signature check passed with *%s [%s]",
 			    key->type->name, key_id_str, pubkey_description);
+			pubkey_delref(&s->st->st_peer_pubkey, HERE);
+			s->st->st_peer_pubkey = pubkey_addref(key, HERE);
 			return true;
 		}
 
@@ -408,7 +424,7 @@ static bool try_all_keys(const char *pubkey_description,
 
 stf_status check_signature_gen(struct ike_sa *ike,
 			       const struct crypt_mac *hash,
-			       const pb_stream *sig_pbs,
+			       shunk_t signature,
 			       const struct hash_desc *hash_algo,
 			       const struct pubkey_type *type,
 			       try_signature_fn *try_signature)
@@ -418,7 +434,7 @@ stf_status check_signature_gen(struct ike_sa *ike,
 		.type = type,
 		.st = &ike->sa,
 		.hash = hash,
-		.sig_pbs = sig_pbs,
+		.signature = signature,
 		.hash_algo = hash_algo,
 		.try_signature = try_signature,
 		.best_ugh = NULL,

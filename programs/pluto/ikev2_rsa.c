@@ -142,44 +142,12 @@ bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
 	return TRUE;
 }
 
-static try_signature_fn try_RSA_signature_v2; /* type assertion */
-
-static err_t try_RSA_signature_v2(const struct crypt_mac *hash,
-				  const pb_stream *sig_pbs, struct pubkey *kr,
-				  struct state *st,
-				  const struct hash_desc *hash_algo)
-{
-	const uint8_t *sig_val = sig_pbs->cur;
-	size_t sig_len = pbs_left(sig_pbs);
-	const struct RSA_public_key *k = &kr->u.rsa;
-
-	if (k == NULL)
-		return "1" "no key available"; /* failure: no key to use */
-
-	/* decrypt the signature -- reversing RSA_sign_hash */
-	if (sig_len != kr->size) {
-		log_state(RC_LOG_SERIOUS, st, "sig length %zu does not match pubkey length %zd", sig_len, kr->size);
-		return "1" "SIG length does not match public key length";
-	}
-
-	err_t ugh = RSA_signature_verify_nss(k, hash, sig_val, sig_len,
-					     hash_algo, st->st_logger);
-	if (ugh != NULL)
-		return ugh;
-
-	pubkey_delref(&st->st_peer_pubkey, HERE);
-	st->st_peer_pubkey = pubkey_addref(kr, HERE);
-
-	return NULL;
-}
-
 stf_status ikev2_verify_rsa_hash(struct ike_sa *ike,
 				 const struct crypt_mac *idhash,
-				 pb_stream *sig_pbs,
+				 shunk_t signature,
 				 const struct hash_desc *hash_algo)
 {
 	statetime_t start = statetime_start(&ike->sa);
-	size_t sig_len = pbs_left(sig_pbs);
 
 	/* XXX: table lookup? */
 	if (hash_algo->common.ikev2_alg_id < 0) {
@@ -187,15 +155,15 @@ stf_status ikev2_verify_rsa_hash(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (sig_len ==0) {
+	if (signature.len == 0) {
 		log_state(RC_LOG_SERIOUS, &ike->sa, "rejecting received zero-length RSA signature");
 		return STF_FATAL;
 	}
 
 	struct crypt_mac hash = v2_calculate_sighash(ike, idhash, hash_algo,
 						     REMOTE_PERSPECTIVE);
-	stf_status retstat = check_signature_gen(ike, &hash, sig_pbs, hash_algo,
-						 &pubkey_type_rsa, try_RSA_signature_v2);
+	stf_status retstat = check_signature_gen(ike, &hash, signature, hash_algo,
+						 &pubkey_type_rsa, try_signature_RSA);
 	statetime_stop(&start, "%s()", __func__);
 	return retstat;
 }
