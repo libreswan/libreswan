@@ -1193,7 +1193,7 @@ kvmplutotest 	interop-ikev2-strongswan-39-mobike-responder	good
 
 kvmplutotest	bad-nexthop-01		wip
 
-# TCP tests
+# TCP tests and UDP encap tests
 kvmplutotest	ikev2-tcp-00-yes				good
 kvmplutotest	ikev2-tcp-00-fallback				good
 kvmplutotest	ikev2-tcp-01-eof				good
@@ -1205,6 +1205,7 @@ kvmplutotest	ikev2-tcp-10-rekey-child			good
 kvmplutotest	ikev2-tcp-10-rekey-ike				good
 kvmplutotest	ikev2-tcp-25-rw-nat				good
 kvmplutotest	ikev2-tcp-26-rw-nat-keepalive			good
+kvmplutotest	kev2-udp-05-transport-mode 			good
 
 # OpenBSD interop
 kvmplutotest	interop-ikev2-openbsd-01		skiptest
