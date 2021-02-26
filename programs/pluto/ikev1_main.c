@@ -71,6 +71,7 @@
 
 #include "ike_alg.h"
 #include "ike_alg_encrypt_ops.h"	/* XXX: oops */
+#include "ike_alg_hash.h"		/* for ike_alg_hash_sha1 */
 #include "kernel_alg.h"
 #include "plutoalg.h"
 #include "ikev1.h"
@@ -1334,7 +1335,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 	{
 		shunk_t signature = pbs_in_left_as_shunk(&md->chain[ISAKMP_NEXT_SIG]->pbs);
 		r = check_signature_gen(ike_sa(st, HERE), &hash, signature,
-					NULL/*hash_algo is IKEv2 only*/,
+					&ike_alg_hash_sha1, /*always*/
 					&pubkey_type_rsa, try_signature_RSA);
 		if (r != STF_OK) {
 			/* already logged */
