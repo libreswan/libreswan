@@ -1,0 +1,3 @@
+Using transport mode with UDP encaps.
+
+A missing socket option upto libreswan 4.3 prevented this from working

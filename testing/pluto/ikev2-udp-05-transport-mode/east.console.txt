@@ -1,0 +1,26 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add ikev2-west-east
+002 "ikev2-west-east": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ # test TCP code for leaks
+east #
+ ipsec whack --shutdown
+east #
+ grep -e leak /tmp/pluto.log | grep -v -e '|'
+leak-detective enabled
+leak detective found no leaks
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+east #
+ 
