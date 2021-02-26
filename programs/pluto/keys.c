@@ -323,32 +323,6 @@ struct tac_state {
 	struct jambuf tn;
 };
 
-static bool take_a_crack(struct tac_state *s,
-			 struct pubkey *kr,
-			 const char *story)
-{
-	s->tried_cnt++;
-	err_t ugh = (s->try_signature)(s->hash, s->sig_pbs,
-				       kr, s->st, s->hash_algo);
-
-	const keyid_t *key_id_str = pubkey_keyid(kr);
-
-	if (ugh == NULL) {
-		dbg("an %s Sig check passed with *%s [%s]",
-		    kr->type->name, str_keyid(*key_id_str), story);
-		return true;
-	} else {
-		log_state(RC_LOG_SERIOUS, s->st, "an %s Sig check failed '%s' with *%s [%s]",
-			  kr->type->name, ugh + 1, str_keyid(*key_id_str), story);
-		if (s->best_ugh == NULL || s->best_ugh[0] < ugh[0])
-			s->best_ugh = ugh;
-		if (ugh[0] > '0') {
-			jam(&s->tn, " *%s", str_keyid(*key_id_str));
-		}
-		return false;
-	}
-}
-
 static bool try_all_keys(const char *pubkey_description,
 			 struct pubkey_list *pubkey_db,
 			 const struct connection *c, realtime_t now,
@@ -401,18 +375,31 @@ static bool try_all_keys(const char *pubkey_description,
 			continue;
 		}
 
-		{
-			id_buf printkid;
-			dn_buf buf;
-			dbg("  trying '%s' issued by CA '%s'",
-			    str_id(&key->id, &printkid), str_dn_or_null(key->issuer, "%any", &buf));
+		id_buf printkid;
+		dn_buf buf;
+		dbg("  trying '%s' issued by CA '%s'",
+		    str_id(&key->id, &printkid), str_dn_or_null(key->issuer, "%any", &buf));
 
-			statetime_t try_time = statetime_start(s->st);
-			bool ok = take_a_crack(s, key, pubkey_description);
-			statetime_stop(&try_time, "%s() trying a pubkey", __func__);
-			if (ok) {
-				return true;
-			}
+		const char *key_id_str = str_keyid(*pubkey_keyid(key));
+
+		s->tried_cnt++;
+		statetime_t try_time = statetime_start(s->st);
+		err_t ugh = (s->try_signature)(s->hash, s->sig_pbs,
+					       key, s->st, s->hash_algo);
+		statetime_stop(&try_time, "%s() trying a pubkey", __func__);
+
+		if (ugh == NULL) {
+			dbg("an %s signature check passed with *%s [%s]",
+			    key->type->name, key_id_str, pubkey_description);
+			return true;
+		}
+
+		log_state(RC_LOG_SERIOUS, s->st, "an %s Sig check failed '%s' with *%s [%s]",
+			  key->type->name, ugh + 1, key_id_str, pubkey_description);
+		if (s->best_ugh == NULL || s->best_ugh[0] < ugh[0])
+			s->best_ugh = ugh;
+		if (ugh[0] > '0') {
+			jam(&s->tn, " *%s", key_id_str);
 		}
 
 	}
