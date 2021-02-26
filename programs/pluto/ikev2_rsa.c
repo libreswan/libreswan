@@ -194,7 +194,7 @@ stf_status ikev2_verify_rsa_hash(struct ike_sa *ike,
 
 	struct crypt_mac hash = v2_calculate_sighash(ike, idhash, hash_algo,
 						     REMOTE_PERSPECTIVE);
-	stf_status retstat = check_signature_gen(&ike->sa, &hash, sig_pbs, hash_algo,
+	stf_status retstat = check_signature_gen(ike, &hash, sig_pbs, hash_algo,
 						 &pubkey_type_rsa, try_RSA_signature_v2);
 	statetime_stop(&start, "%s()", __func__);
 	return retstat;

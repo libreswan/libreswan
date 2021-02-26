@@ -373,12 +373,12 @@ static err_t try_RSA_signature_v1(const struct crypt_mac *hash,
 	return NULL; /* happy happy */
 }
 
-static stf_status RSA_check_signature(struct state *st,
+static stf_status RSA_check_signature(struct ike_sa *ike,
 				      struct crypt_mac *hash,
 				      const pb_stream *sig_pbs,
 				      enum ikev2_hash_algorithm hash_algo UNUSED /* for ikev2 only */)
 {
-	return check_signature_gen(st, hash, sig_pbs, 0 /* for ikev2 only */,
+	return check_signature_gen(ike, hash, sig_pbs, 0 /* for ikev2 only */,
 				   &pubkey_type_rsa, try_RSA_signature_v1);
 }
 
@@ -1396,7 +1396,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 
 	case OAKLEY_RSA_SIG:
 	{
-		r = RSA_check_signature(st, &hash,
+		r = RSA_check_signature(ike_sa(st, HERE), &hash,
 					&md->chain[ISAKMP_NEXT_SIG]->pbs, 0 /* for ikev2 only*/);
 		if (r != STF_OK) {
 			dbg("received '%s' message SIG_%s data did not match computed value",

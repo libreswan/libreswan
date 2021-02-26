@@ -416,17 +416,17 @@ static bool try_all_keys(const char *pubkey_description,
 	return false;
 }
 
-stf_status check_signature_gen(struct state *st,
+stf_status check_signature_gen(struct ike_sa *ike,
 			       const struct crypt_mac *hash,
 			       const pb_stream *sig_pbs,
 			       const struct hash_desc *hash_algo,
 			       const struct pubkey_type *type,
 			       try_signature_fn *try_signature)
 {
-	const struct connection *c = st->st_connection;
+	const struct connection *c = ike->sa.st_connection;
 	struct tac_state s = {
 		.type = type,
-		.st = st,
+		.st = &ike->sa,
 		.hash = hash,
 		.sig_pbs = sig_pbs,
 		.hash_algo = hash_algo,
@@ -446,14 +446,14 @@ stf_status check_signature_gen(struct state *st,
 			str_dn_or_null(c->spd.that.ca, "%any", &buf));
 	}
 
-	pexpect(st->st_remote_certs.processed);
+	pexpect(ike->sa.st_remote_certs.processed);
 	if (try_all_keys("remote certificates",
-			 &st->st_remote_certs.pubkey_db,
+			 &ike->sa.st_remote_certs.pubkey_db,
 			 c, now, &s) ||
 	    try_all_keys("preloaded keys",
 			 &pluto_pubkeys,
 			 c, now, &s)) {
-		log_state(RC_LOG_SERIOUS, st,
+		log_state(RC_LOG_SERIOUS, &ike->sa,
 			  "authenticated using %s with %s",
 			  type->name,
 			  (c->ike_version == IKEv1) ? "SHA-1" : hash_algo->common.fqn);
@@ -470,11 +470,11 @@ stf_status check_signature_gen(struct state *st,
 
 	/* sanitize the ID suitable for logging */
 	id_buf id_str = { "" }; /* arbitrary limit on length of ID reported */
-	str_id(&st->st_connection->spd.that.id, &id_str);
+	str_id(&c->spd.that.id, &id_str);
 	passert(id_str.buf[0] != '\0');
 
 	if (s.best_ugh == NULL) {
-		log_state(RC_LOG_SERIOUS, st,
+		log_state(RC_LOG_SERIOUS, &ike->sa,
 			  "no %s public key known for '%s'",
 			  type->name, id_str.buf);
 		/* ??? is this the best code there is? */
@@ -482,11 +482,11 @@ stf_status check_signature_gen(struct state *st,
 	}
 
 	if (s.tried_cnt == 1) {
-		log_state(RC_LOG_SERIOUS, st,
+		log_state(RC_LOG_SERIOUS, &ike->sa,
 			  "%s Signature check (on %s) failed (wrong key?); tried%s",
 			  type->name, id_str.buf, s.tried);
 	} else {
-		log_state(RC_LOG_SERIOUS, st,
+		log_state(RC_LOG_SERIOUS, &ike->sa,
 			  "%s Signature check (on %s) failed: tried%s keys but none worked.",
 			  type->name, id_str.buf, s.tried);
 	}

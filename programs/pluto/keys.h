@@ -41,6 +41,7 @@ struct packet_byte_stream;
 struct private_key_stuff;
 struct hash_desc;
 struct show;
+struct ike_sa;
 
 extern err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 				      const struct crypt_mac *hash,
@@ -81,7 +82,7 @@ typedef err_t (try_signature_fn) (const struct crypt_mac *hash,
 				  struct pubkey *kr,
 				  struct state *st,
 				  const struct hash_desc *hash_algo);
-extern stf_status check_signature_gen(struct state *st,
+extern stf_status check_signature_gen(struct ike_sa *ike,
 				      const struct crypt_mac *hash,
 				      const struct packet_byte_stream *sig_pbs,
 				      const struct hash_desc *hash_algo,
