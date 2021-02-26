@@ -350,7 +350,7 @@ static bool take_a_crack(struct tac_state *s,
 }
 
 static bool try_all_keys(const char *pubkey_description,
-			 struct pubkey_list **pubkey_db,
+			 struct pubkey_list *pubkey_db,
 			 const struct connection *c, realtime_t now,
 			 struct tac_state *s)
 {
@@ -359,46 +359,49 @@ static bool try_all_keys(const char *pubkey_description,
 	dbg("trying all %s public keys for %s key that matches ID: %s",
 	    pubkey_description, s->type->name, str_id(&c->spd.that.id, &thatid));
 
-	/*
-	 * XXX: danger, serves double purpose of pruning expired
-	 * public keys, hence strange trailing pp pointer.
-	 */
-	struct pubkey_list **pp = pubkey_db;
-	for (struct pubkey_list *p = *pubkey_db; p != NULL; p = *pp) {
+	for (struct pubkey_list *p = pubkey_db; p != NULL; p = p->next) {
 		struct pubkey *key = p->key;
-
-		/* passed to trusted_ca_nss() */
-		int pl;	/* value ignored */
 
 		if (key->type != s->type) {
 			id_buf printkid;
 			dbg("  skipping '%s' with type %s",
 			    str_id(&key->id, &printkid), key->type->name);
-		} else if (!same_id(&c->spd.that.id, &key->id)) {
+			continue;
+		}
+
+		if (!same_id(&c->spd.that.id, &key->id)) {
 			id_buf printkid;
 			dbg("  skipping '%s' with wrong ID",
 			    str_id(&key->id, &printkid));
-		} else if (!trusted_ca_nss(key->issuer, c->spd.that.ca, &pl)) {
+			continue;
+		}
+
+		int pl;	/* value ignored */
+		if (!trusted_ca_nss(key->issuer, c->spd.that.ca, &pl)) {
 			id_buf printkid;
 			dn_buf buf;
 			dbg("  skipping '%s' with untrusted CA '%s'",
 			    str_id(&key->id, &printkid),
 			    str_dn_or_null(key->issuer, "%any", &buf));
-		} else if (!is_realtime_epoch(key->until_time) &&
-			   realbefore(key->until_time, now)) {
-			/*
-			 * XXX: danger: found public key has expired;
-			 * deleting mid loop.  Why only do this for
-			 * matched keys as the test is relatively
-			 * cheap?
-			 */
+			continue;
+		}
+
+		/*
+		 * XXX: even though loop above filtered out these
+		 * certs, keep this check, at some point the above
+		 * loop will be deleted.
+		 */
+		if (!is_realtime_epoch(key->until_time) &&
+		    realbefore(key->until_time, now)) {
 			id_buf printkid;
-			log_state(RC_LOG_SERIOUS, s->st,
-				  "cached %s public key '%s' has expired and has been deleted",
-				  s->type->name, str_id(&key->id, &printkid));
-			*pp = free_public_keyentry(p);
-			continue; /* continue with next public key */
-		} else {
+			realtime_buf buf;
+			dbg("  skipping '%s' which expired on %s",
+			    str_id(&key->id, &printkid),
+			    str_realtime(key->until_time, /*utc?*/false, &buf));
+			continue;
+		}
+
+		{
 			id_buf printkid;
 			dn_buf buf;
 			dbg("  trying '%s' issued by CA '%s'",
@@ -411,7 +414,7 @@ static bool try_all_keys(const char *pubkey_description,
 				return true;
 			}
 		}
-		pp = &p->next;
+
 	}
 	return false;
 }
@@ -447,12 +450,36 @@ stf_status check_signature_gen(struct ike_sa *ike,
 	}
 
 	pexpect(ike->sa.st_remote_certs.processed);
-	if (try_all_keys("remote certificates",
-			 &ike->sa.st_remote_certs.pubkey_db,
-			 c, now, &s) ||
-	    try_all_keys("preloaded keys",
-			 &pluto_pubkeys,
-			 c, now, &s)) {
+	bool found = try_all_keys("remote certificates",
+				  ike->sa.st_remote_certs.pubkey_db,
+				  c, now, &s);
+
+	/*
+	 * Prune the expired public keys from the pre-loaded public
+	 * key list.  But why here, and why not as a separate job?
+	 * And why blame the IKE SA as it isn't really its fault?
+	 */
+	for (struct pubkey_list **pp = &pluto_pubkeys; *pp != NULL; ) {
+		struct pubkey *key = (*pp)->key;
+		if (!is_realtime_epoch(key->until_time) &&
+		    realbefore(key->until_time, now)) {
+			id_buf printkid;
+			log_state(RC_LOG_SERIOUS, &ike->sa,
+				  "cached %s public key '%s' has expired and has been deleted",
+				  key->type->name, str_id(&key->id, &printkid));
+			*pp = free_public_keyentry(*(pp));
+			continue; /* continue with next public key */
+		}
+		pp = &(*pp)->next;
+	}
+
+	if (!found) {
+		found = try_all_keys("preloaded keys",
+				     pluto_pubkeys,
+				     c, now, &s);
+	}
+
+	if (found) {
 		log_state(RC_LOG_SERIOUS, &ike->sa,
 			  "authenticated using %s with %s",
 			  type->name,
