@@ -175,7 +175,7 @@ static bool emit_subnet_id(const ip_subnet *net,
 	}
 
 	if (!usehost) {
-		ip_address tm = subnet_prefix_mask(net);
+		ip_address tm = selector_prefix_mask(net);
 		diag_t d = pbs_out_address(&id_pbs, &tm, "client mask");
 		if (d != NULL) {
 			log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");

@@ -83,9 +83,9 @@ static int subnetcmp(const ip_selector *a, const ip_selector *b)
 	int r;
 
 	ip_address neta = selector_prefix(a);
-	ip_address maska = subnet_prefix_mask(a);
+	ip_address maska = selector_prefix_mask(a);
 	ip_address netb = selector_prefix(b);
-	ip_address maskb = subnet_prefix_mask(b);
+	ip_address maskb = selector_prefix_mask(b);
 	r = addrcmp(&neta, &netb);
 	if (r == 0)
 		r = addrcmp(&maska, &maskb);
