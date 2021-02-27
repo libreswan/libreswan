@@ -522,7 +522,7 @@ static void jam_end_client(struct jambuf *buf, const struct end *this,
 	if (!this->has_client) {
 		return;
 	}
-	if (subnet_is_unset(&this->client)) {
+	if (selector_is_unset(&this->client)) {
 		return;
 	}
 	bool boring = (subnet_contains_all_addresses(&this->client) &&

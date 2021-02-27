@@ -397,7 +397,7 @@ static stf_status modecfg_resp(struct state *st,
 			address_buf iab;
 			dbg("a lease %s", str_address(&ia, &iab));
 		} else {
-			pexpect(subnet_is_specified(&c->spd.that.client));
+			pexpect(!selector_is_unset(&c->spd.that.client));
 			ia = selector_prefix(&c->spd.that.client);
 			address_buf iab;
 			dbg("a client %s", str_address(&ia, &iab));
