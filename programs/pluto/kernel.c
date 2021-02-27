@@ -1558,7 +1558,7 @@ bool eroute_connection(const struct spd_route *sr,
 		peer = address_any(address_type(&peer));
 
 	if (sr->this.has_cat) {
-		ip_subnet client = subnet_from_address(&sr->this.host_addr);
+		ip_selector client = selector_from_address(&sr->this.host_addr);
 		bool t = raw_eroute(&sr->this.host_addr, &client,
 				    &peer, &sr->that.client,
 				    cur_spi,

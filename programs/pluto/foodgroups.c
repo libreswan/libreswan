@@ -133,7 +133,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 				flushline(flp, NULL/*shh*/);
 				continue;
 			}
-			sn = subnet_from_address(&t);
+			sn = selector_from_address(&t);
 		} else {
 			const struct ip_info *afi = strchr(flp->tok, ':') == NULL ? &ipv4_info : &ipv6_info;
 			err_t err = ttosubnet(shunk1(flp->tok), afi, 'x', &sn, flp->logger);

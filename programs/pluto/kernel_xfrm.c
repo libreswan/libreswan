@@ -615,11 +615,11 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 
 		if (dir == XFRM_POLICY_OUT) {
 			local_port = selector_hport(that_client);
-			local_client = subnet_from_address(that_host);
+			local_client = selector_from_address(that_host);
 			that_client = &local_client;
 		} else {
 			local_port = selector_hport(this_client);
-			local_client = subnet_from_address(this_host);
+			local_client = selector_from_address(this_host);
 			this_client = &local_client;
 		}
 		update_selector_hport(&local_client, local_port);
