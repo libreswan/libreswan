@@ -146,7 +146,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 			}
 		}
 
-		const struct ip_info *type = subnet_type(&sn);
+		const struct ip_info *type = selector_type(&sn);
 		if (type == NULL) {
 			llog(RC_LOG_SERIOUS, flp->logger,
 				    "ignored, unsupported Address Family \"%s\"",

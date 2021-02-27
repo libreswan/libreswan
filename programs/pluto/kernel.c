@@ -191,7 +191,8 @@ void add_bare_shunt(const ip_selector *our_client,
 	bs->transport_proto = transport_proto;
 	bs->policy_prio = BOTTOM_PRIO;
 
-	bs->said = said3(&subnet_type(our_client)->address.any, htonl(shunt_spi), &ip_protocol_internal);
+	bs->said = said3(&selector_type(our_client)->address.any,
+			 htonl(shunt_spi), &ip_protocol_internal);
 	bs->count = 0;
 	bs->last_activity = mononow();
 
@@ -3468,7 +3469,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 		bs->transport_proto = sr->this.protocol;
 		bs->policy_prio = BOTTOM_PRIO;
 
-		bs->said = said3(&subnet_type(&sr->this.client)->address.any,
+		bs->said = said3(&selector_type(&sr->this.client)->address.any,
 				 htonl(negotiation_shunt), &ip_protocol_internal);
 
 		bs->count = 0;

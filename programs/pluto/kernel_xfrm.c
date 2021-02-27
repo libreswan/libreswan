@@ -629,7 +629,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 
-	const int family = subnet_type(that_client)->af;
+	const int family = selector_type(that_client)->af;
 
 	/* .[sd]addr, .prefixlen_[sd], .[sd]port */
 	SELECTOR_TO_XFRM(this_client, req.u.p.sel, s);
@@ -1295,7 +1295,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		req.p.sel.sport_mask = req.p.sel.sport == 0 ? 0 : ~0;
 		req.p.sel.dport_mask = req.p.sel.dport == 0 ? 0 : ~0;
 		req.p.sel.proto = sa->transport_proto;
-		req.p.sel.family = subnet_type(&src)->af;
+		req.p.sel.family = selector_type(&src)->af;
 	}
 
 	req.p.reqid = sa->reqid;
