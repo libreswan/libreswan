@@ -1065,16 +1065,14 @@ bool v2_process_ts_request(struct child_sa *child,
 
 		chunk_t const *const selected_sec_label =
 			score_ends_seclabel(&ends, c, &tsi, &tsr, child->sa.st_logger);
-		if (is_seclabel_required) {
-			if (!selected_sec_label) {
-				/* Security label required, but not found. */
-				continue;
-			}
-		} else {
-			if (selected_sec_label) {
-				/* Security label *not* required, but found. */
-				continue;
-			}
+		if (is_seclabel_required != (selected_sec_label != NULL)) {
+			/*
+			 * Either:
+			 *  - Security label required, but not found.
+			 *    OR
+			 *  - Security label *not* required, but found.
+			 */
+			continue;
 		}
 
 		enum fit responder_fit =
@@ -1178,16 +1176,14 @@ bool v2_process_ts_request(struct child_sa *child,
 
 				chunk_t const *const selected_sec_label =
 					score_ends_seclabel(&ends, d, &tsi, &tsr, child->sa.st_logger);
-				if (is_seclabel_required) {
-					if (!selected_sec_label) {
-						/* Security label required, but not found. */
-						continue;
-					}
-				} else {
-					if (selected_sec_label) {
-						/* Security label *not* required, but found. */
-						continue;
-					}
+				if (is_seclabel_required != (selected_sec_label != NULL)) {
+					/*
+					 * Either:
+					 *  - Security label required, but not found.
+					 *    OR
+					 *  - Security label *not* required, but found.
+					 */
+					continue;
 				}
 
 				struct best_score score = score_ends_iprange(responder_fit, d/*note D*/,
@@ -1476,16 +1472,14 @@ bool v2_process_ts_response(struct child_sa *child,
 	bool const is_seclabel_required = (c->spd.this.sec_label.len != 0);
 	chunk_t const *const selected_sec_label =
 		score_ends_seclabel(&e, c, &tsi, &tsr, child->sa.st_logger);
-	if (is_seclabel_required) {
-		if (!selected_sec_label) {
-			/* Security label required, but not found. */
-			return false;
-		}
-	} else {
-		if (selected_sec_label) {
-			/* Security label *not* required, but found. */
-			return false;
-		}
+	if (is_seclabel_required != (selected_sec_label != NULL)) {
+		/*
+		 * Either:
+		 *  - Security label required, but not found.
+		 *    OR
+		 *  - Security label *not* required, but found.
+		 */
+		return false;
 	}
 
 	struct best_score best = score_ends_iprange(initiator_widening, c, &e, &tsi, &tsr);
@@ -1558,21 +1552,16 @@ bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *
 	bool const is_seclabel_required = (c->spd.this.sec_label.len != 0);
 	chunk_t const *const selected_sec_label =
 		score_ends_seclabel(&ends, c, &their_tsis, &their_tsrs, child->sa.st_logger);
-	if (is_seclabel_required) {
-		if (!selected_sec_label) {
-			/* Security label required, but not found. */
-			log_state(RC_LOG_SERIOUS, &child->sa,
-				"rekey - security label required: received Traffic Selectors mismatch configured selectors for Security Label");
-			return false;
-
-		}
-	} else {
-		if (selected_sec_label) {
-			/* Security label *not* required, but found. */
-			log_state(RC_LOG_SERIOUS, &child->sa,
-				"rekey - security label NOT required: received Traffic Selectors mismatch configured selectors for Security Label");
-			return false;
-		}
+	if (is_seclabel_required != (selected_sec_label != NULL)) {
+		/*
+		 * Either:
+		 *  - Security label required, but not found.
+		 *    OR
+		 *  - Security label *not* required, but found.
+		 */
+		log_state(RC_LOG_SERIOUS, &child->sa,
+			"rekey: received Traffic Selectors mismatch configured selectors for Security Label");
+		return false;
 	}
 
 	struct best_score score = score_ends_iprange(fitness, c, &ends, &their_tsis,
