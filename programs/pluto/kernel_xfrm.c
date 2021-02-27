@@ -615,11 +615,11 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 
 		if (dir == XFRM_POLICY_OUT) {
 			local_port = selector_hport(that_client);
-			local_client = subnet_from_address(that_host);
+			local_client = selector_from_address(that_host);
 			that_client = &local_client;
 		} else {
 			local_port = selector_hport(this_client);
-			local_client = subnet_from_address(this_host);
+			local_client = selector_from_address(this_host);
 			this_client = &local_client;
 		}
 		update_selector_hport(&local_client, local_port);
@@ -629,7 +629,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 
-	const int family = subnet_type(that_client)->af;
+	const int family = selector_type(that_client)->af;
 
 	/* .[sd]addr, .prefixlen_[sd], .[sd]port */
 	SELECTOR_TO_XFRM(this_client, req.u.p.sel, s);
@@ -1295,7 +1295,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		req.p.sel.sport_mask = req.p.sel.sport == 0 ? 0 : ~0;
 		req.p.sel.dport_mask = req.p.sel.dport == 0 ? 0 : ~0;
 		req.p.sel.proto = sa->transport_proto;
-		req.p.sel.family = subnet_type(&src)->af;
+		req.p.sel.family = selector_type(&src)->af;
 	}
 
 	req.p.reqid = sa->reqid;

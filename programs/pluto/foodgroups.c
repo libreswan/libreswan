@@ -82,10 +82,10 @@ static int subnetcmp(const ip_selector *a, const ip_selector *b)
 {
 	int r;
 
-	ip_address neta = subnet_prefix(a);
-	ip_address maska = subnet_prefix_mask(a);
-	ip_address netb = subnet_prefix(b);
-	ip_address maskb = subnet_prefix_mask(b);
+	ip_address neta = selector_prefix(a);
+	ip_address maska = selector_prefix_mask(a);
+	ip_address netb = selector_prefix(b);
+	ip_address maskb = selector_prefix_mask(b);
 	r = addrcmp(&neta, &netb);
 	if (r == 0)
 		r = addrcmp(&maska, &maskb);
@@ -133,7 +133,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 				flushline(flp, NULL/*shh*/);
 				continue;
 			}
-			sn = subnet_from_address(&t);
+			sn = selector_from_address(&t);
 		} else {
 			const struct ip_info *afi = strchr(flp->tok, ':') == NULL ? &ipv4_info : &ipv6_info;
 			err_t err = ttosubnet(shunk1(flp->tok), afi, 'x', &sn, flp->logger);
@@ -146,7 +146,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 			}
 		}
 
-		const struct ip_info *type = subnet_type(&sn);
+		const struct ip_info *type = selector_type(&sn);
 		if (type == NULL) {
 			llog(RC_LOG_SERIOUS, flp->logger,
 				    "ignored, unsupported Address Family \"%s\"",
@@ -243,9 +243,9 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 			subnet_buf dest;
 			llog(RC_LOG_SERIOUS, flp->logger,
 				    "subnet \"%s\", proto %d, sport %d dport %d, source %s, already \"%s\"",
-				    str_subnet(&sn, &dest),
+				    str_selector_subnet(&sn, &dest),
 				    proto, sport, dport,
-				    str_subnet(lsn, &source),
+				    str_selector_subnet(lsn, &source),
 				    (*pp)->group->connection->name);
 		} else {
 			struct fg_targets *f = alloc_thing(struct fg_targets,

@@ -154,7 +154,7 @@ static bool emit_subnet_id(const ip_subnet *net,
 			   uint16_t port,
 			   pb_stream *outs)
 {
-	const struct ip_info *ai = subnet_type(net);
+	const struct ip_info *ai = selector_type(net);
 	const bool usehost = net->maskbits == ai->mask_cnt;
 	pb_stream id_pbs;
 
@@ -167,7 +167,7 @@ static bool emit_subnet_id(const ip_subnet *net,
 	if (!out_struct(&id, &isakmp_ipsec_identification_desc, outs, &id_pbs))
 		return FALSE;
 
-	ip_address tp = subnet_prefix(net);
+	ip_address tp = selector_prefix(net);
 	diag_t d = pbs_out_address(&id_pbs, &tp, "client network");
 	if (d != NULL) {
 		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
@@ -175,7 +175,7 @@ static bool emit_subnet_id(const ip_subnet *net,
 	}
 
 	if (!usehost) {
-		ip_address tm = subnet_prefix_mask(net);
+		ip_address tm = selector_prefix_mask(net);
 		diag_t d = pbs_out_address(&id_pbs, &tm, "client mask");
 		if (d != NULL) {
 			log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
@@ -543,8 +543,8 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 		subnet_buf subxmt;
 		llog(RC_LOG_SERIOUS, logger,
 			    "%s subnet returned doesn't match my proposal - us: %s vs them: %s",
-			    which, str_subnet(net, &subxmt),
-			    str_subnet(&net_temp, &subrec));
+			    which, str_selector_subnet(net, &subxmt),
+			    str_selector_subnet(&net_temp, &subrec));
 		llog(RC_LOG_SERIOUS, logger,
 			    "Allowing questionable (microsoft) proposal anyway");
 		bad_proposal = FALSE;
@@ -1633,7 +1633,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 				log_state(RC_LOG_SERIOUS, st,
 					  "IDcr was FQDN: %s, using NAT_OA=%s as IDcr",
 					  idfqdn,
-					  str_subnet(&st->st_connection->spd.that.client, &buf));
+					  str_selector_subnet(&st->st_connection->spd.that.client, &buf));
 			}
 		} else {
 			/* no IDci, IDcr: we must check that the defaults match our proposal */

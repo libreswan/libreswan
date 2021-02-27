@@ -191,7 +191,8 @@ void add_bare_shunt(const ip_selector *our_client,
 	bs->transport_proto = transport_proto;
 	bs->policy_prio = BOTTOM_PRIO;
 
-	bs->said = said3(&subnet_type(our_client)->address.any, htonl(shunt_spi), &ip_protocol_internal);
+	bs->said = said3(&selector_type(our_client)->address.any,
+			 htonl(shunt_spi), &ip_protocol_internal);
 	bs->count = 0;
 	bs->last_activity = mononow();
 
@@ -444,11 +445,11 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	jam(buf, "' ");
 
 	jam(buf, "PLUTO_MY_CLIENT='");
-	jam_subnet(buf, &sr->this.client);
+	jam_selector_subnet(buf, &sr->this.client);
 	jam(buf, "' ");
 
 	jam(buf, "PLUTO_MY_CLIENT_NET='");
-	ta = subnet_prefix(&sr->this.client);
+	ta = selector_prefix(&sr->this.client);
 	jam_address(buf, &ta);
 	jam(buf, "' ");
 
@@ -485,11 +486,11 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	jam(buf, "' ");
 
 	jam(buf, "PLUTO_PEER_CLIENT='");
-	jam_subnet(buf, &sr->that.client);
+	jam_selector_subnet(buf, &sr->that.client);
 	jam(buf, "' ");
 
 	jam(buf, "PLUTO_PEER_CLIENT_NET='");
-	ta = subnet_prefix(&sr->that.client);
+	ta = selector_prefix(&sr->that.client);
 	jam_address(buf, &ta);
 	jam(buf, "' ");
 
@@ -1557,7 +1558,7 @@ bool eroute_connection(const struct spd_route *sr,
 		peer = address_any(address_type(&peer));
 
 	if (sr->this.has_cat) {
-		ip_subnet client = subnet_from_address(&sr->this.host_addr);
+		ip_selector client = selector_from_address(&sr->this.host_addr);
 		bool t = raw_eroute(&sr->this.host_addr, &client,
 				    &peer, &sr->that.client,
 				    cur_spi,
@@ -3468,7 +3469,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 		bs->transport_proto = sr->this.protocol;
 		bs->policy_prio = BOTTOM_PRIO;
 
-		bs->said = said3(&subnet_type(&sr->this.client)->address.any,
+		bs->said = said3(&selector_type(&sr->this.client)->address.any,
 				 htonl(negotiation_shunt), &ip_protocol_internal);
 
 		bs->count = 0;

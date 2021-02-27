@@ -1812,8 +1812,8 @@ bool emit_v2_child_configuration_payload(struct connection *c,
 		return false;
 
 	if (cfg_reply) {
-		ip_address that_client_address = subnet_prefix(&c->spd.that.client);
-		ikev2_ship_cp_attr_ip(subnet_type(&c->spd.that.client) == &ipv4_info ?
+		ip_address that_client_address = selector_prefix(&c->spd.that.client);
+		ikev2_ship_cp_attr_ip(selector_type(&c->spd.that.client) == &ipv4_info ?
 				      IKEv2_INTERNAL_IP4_ADDRESS : IKEv2_INTERNAL_IP6_ADDRESS,
 				      &that_client_address, "Internal IP Address", &cp_pbs);
 

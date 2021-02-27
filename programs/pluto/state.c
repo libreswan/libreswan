@@ -1956,14 +1956,14 @@ static void jam_state_traffic(struct jambuf *buf, struct state *st)
 		 * pool.
 		 */
 		jam(buf, ", lease=");
-		jam_subnet(buf, &c->spd.that.client);
+		jam_selector_subnet(buf, &c->spd.that.client);
 	} else if (c->spd.this.has_internal_address) {
 		/*
 		 * "this" received an internal address from "that";
 		 * presumably from "that"'s address pool.
 		 */
 		jam(buf, ", lease=");
-		jam_subnet(buf, &c->spd.this.client);
+		jam_selector_subnet(buf, &c->spd.this.client);
 	}
 }
 

@@ -397,7 +397,7 @@ static stf_status modecfg_resp(struct state *st,
 			address_buf iab;
 			dbg("a lease %s", str_address(&ia, &iab));
 		} else {
-			pexpect(subnet_is_specified(&c->spd.that.client));
+			pexpect(!selector_is_unset(&c->spd.that.client));
 			ia = selector_prefix(&c->spd.that.client);
 			address_buf iab;
 			dbg("a client %s", str_address(&ia, &iab));
@@ -1553,7 +1553,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 
 			c->spd.this.has_client = TRUE;
 			subnet_buf caddr;
-			str_subnet(&c->spd.this.client, &caddr);
+			str_selector_subnet(&c->spd.this.client, &caddr);
 			log_state(RC_LOG, st, "Received IP address %s", caddr.buf);
 
 			if (!address_is_specified(&c->spd.this.host_srcip)) {
@@ -1712,7 +1712,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 				c->spd.this.has_client = TRUE;
 				subnet_buf caddr;
-				str_subnet(&c->spd.this.client, &caddr);
+				str_selector_subnet(&c->spd.this.client, &caddr);
 				log_state(RC_INFORMATIONAL, st,
 					  "Received IPv4 address: %s",
 					  caddr.buf);
@@ -1787,7 +1787,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				if (!c->spd.that.has_client) {
 					passert(c->spd.spd_next == NULL);
 					c->spd.that.has_client = TRUE;
-					c->spd.that.client = ipv4_info.subnet.all;
+					c->spd.that.client = ipv4_info.selector.all;
 				}
 
 				while (pbs_left(&strattr) > 0) {

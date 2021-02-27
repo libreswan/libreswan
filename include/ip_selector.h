@@ -150,6 +150,9 @@ size_t jam_selector(struct jambuf *buf, const ip_selector *selector);
 const char *str_selector_sensitive(const ip_selector *selector, selector_buf *out);
 size_t jam_selector_sensitive(struct jambuf *buf, const ip_selector *selector);
 
+const char *str_selector_subnet(const ip_selector *selector, subnet_buf *buf);
+size_t jam_selector_subnet(struct jambuf *buf, const ip_selector *selector);
+
 typedef struct {
 	char buf[sizeof(selector_buf) + sizeof("=UNKNOWN=UNKNOWN=>") + sizeof(selector_buf)];
 } selectors_buf;
