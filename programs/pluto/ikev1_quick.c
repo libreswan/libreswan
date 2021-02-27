@@ -167,7 +167,7 @@ static bool emit_subnet_id(const ip_subnet *net,
 	if (!out_struct(&id, &isakmp_ipsec_identification_desc, outs, &id_pbs))
 		return FALSE;
 
-	ip_address tp = subnet_prefix(net);
+	ip_address tp = selector_prefix(net);
 	diag_t d = pbs_out_address(&id_pbs, &tp, "client network");
 	if (d != NULL) {
 		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
