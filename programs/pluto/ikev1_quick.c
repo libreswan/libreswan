@@ -543,8 +543,8 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 		subnet_buf subxmt;
 		llog(RC_LOG_SERIOUS, logger,
 			    "%s subnet returned doesn't match my proposal - us: %s vs them: %s",
-			    which, str_subnet(net, &subxmt),
-			    str_subnet(&net_temp, &subrec));
+			    which, str_selector_subnet(net, &subxmt),
+			    str_selector_subnet(&net_temp, &subrec));
 		llog(RC_LOG_SERIOUS, logger,
 			    "Allowing questionable (microsoft) proposal anyway");
 		bad_proposal = FALSE;
@@ -1633,7 +1633,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 				log_state(RC_LOG_SERIOUS, st,
 					  "IDcr was FQDN: %s, using NAT_OA=%s as IDcr",
 					  idfqdn,
-					  str_subnet(&st->st_connection->spd.that.client, &buf));
+					  str_selector_subnet(&st->st_connection->spd.that.client, &buf));
 			}
 		} else {
 			/* no IDci, IDcr: we must check that the defaults match our proposal */

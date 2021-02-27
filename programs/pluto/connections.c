@@ -542,7 +542,7 @@ static void jam_end_client(struct jambuf *buf, const struct end *this,
 	} else if (subnet_contains_no_addresses(&this->client)) {
 		jam_string(buf, "?");
 	} else {
-		jam_subnet(buf, &this->client);
+		jam_selector_subnet(buf, &this->client);
 	}
 
 	if (!boring && is_left) {
@@ -2129,7 +2129,7 @@ struct connection *add_group_instance(struct connection *group,
 	char *namebuf; /* must free */
 
 	subnet_buf targetbuf;
-	str_subnet(target, &targetbuf);
+	str_selector_subnet(target, &targetbuf);
 
 	if (proto == 0) {
 		namebuf = alloc_printf("%s#%s", group->name, targetbuf.buf);
@@ -2373,7 +2373,7 @@ static size_t jam_connection_client(struct jambuf *b,
 		if (subnet_contains_no_addresses(client)) {
 			s += jam_string(b, "?"); /* unknown */
 		} else {
-			s += jam_subnet(b, client);
+			s += jam_selector_subnet(b, client);
 		}
 		s += jam_string(b, suffix);
 	}
@@ -3447,7 +3447,7 @@ static bool is_virtual_net_used(struct connection *c,
 				subnet_buf client;
 				llog(RC_LOG, c->logger,
 				     "Virtual IP %s overlaps with connection "PRI_CONNECTION" (kind=%s) '%s'",
-				     str_subnet(peer_net, &client),
+				     str_selector_subnet(peer_net, &client),
 				     pri_connection(d, &cbuf),
 				     enum_name(&connection_kind_names, d->kind),
 				     str_id(&d->spd.that.id, &idb));

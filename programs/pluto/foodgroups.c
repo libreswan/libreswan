@@ -243,9 +243,9 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 			subnet_buf dest;
 			llog(RC_LOG_SERIOUS, flp->logger,
 				    "subnet \"%s\", proto %d, sport %d dport %d, source %s, already \"%s\"",
-				    str_subnet(&sn, &dest),
+				    str_selector_subnet(&sn, &dest),
 				    proto, sport, dport,
-				    str_subnet(lsn, &source),
+				    str_selector_subnet(lsn, &source),
 				    (*pp)->group->connection->name);
 		} else {
 			struct fg_targets *f = alloc_thing(struct fg_targets,

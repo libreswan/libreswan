@@ -445,7 +445,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	jam(buf, "' ");
 
 	jam(buf, "PLUTO_MY_CLIENT='");
-	jam_subnet(buf, &sr->this.client);
+	jam_selector_subnet(buf, &sr->this.client);
 	jam(buf, "' ");
 
 	jam(buf, "PLUTO_MY_CLIENT_NET='");
@@ -486,7 +486,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	jam(buf, "' ");
 
 	jam(buf, "PLUTO_PEER_CLIENT='");
-	jam_subnet(buf, &sr->that.client);
+	jam_selector_subnet(buf, &sr->that.client);
 	jam(buf, "' ");
 
 	jam(buf, "PLUTO_PEER_CLIENT_NET='");

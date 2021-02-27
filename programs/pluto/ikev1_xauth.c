@@ -1553,7 +1553,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 
 			c->spd.this.has_client = TRUE;
 			subnet_buf caddr;
-			str_subnet(&c->spd.this.client, &caddr);
+			str_selector_subnet(&c->spd.this.client, &caddr);
 			log_state(RC_LOG, st, "Received IP address %s", caddr.buf);
 
 			if (!address_is_specified(&c->spd.this.host_srcip)) {
@@ -1712,7 +1712,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 				c->spd.this.has_client = TRUE;
 				subnet_buf caddr;
-				str_subnet(&c->spd.this.client, &caddr);
+				str_selector_subnet(&c->spd.this.client, &caddr);
 				log_state(RC_INFORMATIONAL, st,
 					  "Received IPv4 address: %s",
 					  caddr.buf);
