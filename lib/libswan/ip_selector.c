@@ -67,6 +67,21 @@ const char *str_selector_sensitive(const ip_selector *selector, selector_buf *ou
 	return out->buf;
 }
 
+size_t jam_selector_subnet(struct jambuf *buf, const ip_selector *selector)
+{
+	ip_address address = selector_prefix(selector);
+	int prefix_bits = selector_prefix_bits(selector);
+	ip_subnet subnet = subnet_from_address_prefix_bits(&address, prefix_bits);
+	return jam_subnet(buf, &subnet);
+}
+
+const char *str_selector_subnet(const ip_selector *selector, subnet_buf *out)
+{
+	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
+	jam_selector_subnet(&buf, selector);
+	return out->buf;
+}
+
 size_t jam_selectors(struct jambuf *buf, const ip_selector *src, const ip_selector *dst)
 {
 	const ip_protocol *srcp = selector_protocol(src);
