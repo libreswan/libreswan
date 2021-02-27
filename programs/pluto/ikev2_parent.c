@@ -5943,8 +5943,6 @@ void ikev2_initiate_child_sa(struct pending *p)
 			 * from a policy we gave the kernel, so it _should_ be within our range?
 			 */
 			child->sa.st_acquired_sec_label = clone_hunk(p->sec_label, "st_acquired_sec_label");
-			c->spd.this.sec_label = clone_hunk(p->sec_label, "updated conn label");
-			c->spd.that.sec_label = clone_hunk(p->sec_label, "updated conn label");
 		}
 
 	} else {
