@@ -1787,7 +1787,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				if (!c->spd.that.has_client) {
 					passert(c->spd.spd_next == NULL);
 					c->spd.that.has_client = TRUE;
-					c->spd.that.client = ipv4_info.subnet.all;
+					c->spd.that.client = ipv4_info.selector.all;
 				}
 
 				while (pbs_left(&strattr) > 0) {
