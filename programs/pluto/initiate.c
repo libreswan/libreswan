@@ -698,17 +698,6 @@ static void cannot_oppo(struct find_oppo_bundle *b, err_t ughmsg)
 static void initiate_ondemand_body(struct find_oppo_bundle *b)
 {
 	threadtime_t inception = threadtime_start();
-
-	/*
-	 * XXX: this function gets called either with a real trigger
-	 * (which includes ports) or with:
-	 *
-	 *    ipsec whack --oppohere 192.1.3.209 --oppothere 192.1.2.23
-	 *
-	 * which does not.  So output matches tests the string below
-	 * forces addr:port and not end (latter strips of 0 port).
-	 */
-
 	int our_port = endpoint_hport(&b->our_client);
 	int peer_port = endpoint_hport(&b->peer_client);
 
@@ -738,8 +727,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		loggedit = true;
 	}
 
-	/* What connection shall we use?
-	 * First try for one that explicitly handles the clients.
+	/*
+	 * What connection shall we use?  First try for one that
+	 * explicitly handles the clients.
 	 */
 
 	if (!endpoint_is_specified(&b->our_client) &&
@@ -749,24 +739,26 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	}
 
 	if (address_eq(&b->local.host_addr, &b->remote.host_addr)) {
-		/* NETKEY gives us acquires for our own IP */
-		/* this does not catch talking to ourselves on another ip */
+		/*
+		 * NETKEY gives us acquires for our own IP this does
+		 * not catch talking to ourselves on another ip.
+		 */
 		cannot_oppo(b, "acquire for our own IP address");
 		return;
 	}
 
 	struct spd_route *sr;
-	/* Why is this not passed the entire bundle b ? */
-
 	struct connection *c = find_connection_for_clients(&sr,
 							   &b->our_client,
 							   &b->peer_client,
 							   b->sec_label,
 							   b->logger);
 	if (c == NULL) {
-		/* No connection explicitly handles the clients and there
-		 * are no Opportunistic connections -- whine and give up.
-		 * The failure policy cannot be gotten from a connection; we pick %pass.
+		/*
+		 * No connection explicitly handles the clients and
+		 * there are no Opportunistic connections -- whine and
+		 * give up.  The failure policy cannot be gotten from
+		 * a connection; we pick %pass.
 		 */
 		if (!loggedit) {
 			llog(RC_LOG, b->logger, "%s", demandbuf);
@@ -776,7 +768,10 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	}
 
 	if (c->ike_version == IKEv2 && c->kind == CK_INSTANCE && b->sec_label.ptr != NULL) {
-		/* a bit of a hack until we properly instantiate labeled ipsec connections */
+		/*
+		 * a bit of a hack until we properly instantiate
+		 * labeled ipsec connections.
+		 */
 		struct connection *templ = connection_by_serialno(c->serial_from);
 		struct ike_sa *ikesa = ike_sa(state_by_serialno(c->newest_ipsec_sa), HERE);
 		ip_address b_peer = endpoint_address(&b->peer_client);
@@ -787,7 +782,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	}
 
 	if ((c->policy & POLICY_OPPORTUNISTIC) && !orient(c)) {
-		/* happens when dst is ourselves on a different IP */
+		/*
+		 * happens when dst is ourselves on a different IP
+		 */
 		cannot_oppo(b, "connection to self on another IP?");
 		return;
 	}
@@ -812,9 +809,10 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			    pri_connection(c, &cib));
 
 		/*
-		 * we used to return here, but rekeying is a better choice. If we
-		 * got the acquire, it is because something turned stuff into a
-		 * %trap, or something got deleted, perhaps due to an expiry.
+		 * we used to return here, but rekeying is a better
+		 * choice. If we got the acquire, it is because
+		 * something turned stuff into a %trap, or something
+		 * got deleted, perhaps due to an expiry.
 		 */
 #else
 		/*
@@ -835,23 +833,27 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	}
 
 	if (c->kind != CK_TEMPLATE) {
-		/* We've found a connection that can serve.
-		 * Do we have to initiate it?
-		 * Not if there is currently an IPSEC SA.
-		 * This may be redundant if a non-opportunistic
-		 * negotiation is already being attempted.
+		/*
+		 * We've found a connection that can serve.  Do we
+		 * have to initiate it?  Not if there is currently an
+		 * IPSEC SA.  This may be redundant if a
+		 * non-opportunistic negotiation is already being
+		 * attempted.
+		 *
+		 * If we are to proceed asynchronously, b->whackfd
+		 * will be NULL_WHACKFD.
+		 *
+		 * we have a connection, fill in the negotiation_shunt
+		 * and failure_shunt
 		 */
-
-		/* If we are to proceed asynchronously, b->whackfd will be NULL_WHACKFD. */
-
-		/* we have a connection, fill in the negotiation_shunt and failure_shunt */
 		b->failure_shunt = shunt_policy_spi(c, false);
 		b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
 
 		/*
-		 * otherwise, there is some kind of static conn that can handle
-		 * this connection, so we initiate it.
-		 * Only needed if we this was triggered by a packet, not by whack
+		 * otherwise, there is some kind of static conn that
+		 * can handle this connection, so we initiate it.
+		 * Only needed if we this was triggered by a packet,
+		 * not by whack
 		 */
 		if (b->held) {
 			if (assign_holdpass(c, sr, b->transport_proto, b->negotiation_shunt,
@@ -878,14 +880,18 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		return;
 	}
 
-	/* We are handling an opportunistic situation.
-	 * This involves several DNS lookup steps that require suspension.
+	/*
+	 * We are handling an opportunistic situation.  This involves
+	 * several DNS lookup steps that require suspension.
+	 *
 	 * NOTE: will be re-implemented
 	 *
 	 * old comment:
+	 *
 	 * The first chunk of code handles the result of the previous
-	 * DNS query (if any).  It also selects the kind of the next step.
-	 * The second chunk initiates the next DNS query (if any).
+	 * DNS query (if any).  It also selects the kind of the next
+	 * step.  The second chunk initiates the next DNS query (if
+	 * any).
 	 */
 
 	connection_buf cib;
@@ -905,88 +911,92 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
 
 	/*
-	 * XFRM always has shunts with protoports, even when no *protoport= settings in conn
+	 * Always have shunts with protoports, even when no
+	 * *protoport= settings in conn.
 	 */
-	if (b->negotiation_shunt != SPI_HOLD ||
-	    (b->transport_proto != 0 ||
-	     our_port != 0 ||
-	     peer_port != 0)) {
-		const char *const addwidemsg = "oe-negotiating";
-		int shunt_proto = b->transport_proto;
+	const char *const addwidemsg = "oe-negotiating";
 
-		ip_selector this_client = selector_from_endpoint(&b->our_client);
-		ip_selector that_client = selector_from_endpoint(&b->peer_client);
+	/*
+	 * OLD: negotiationshunt must be wider than bare shunt, esp on
+	 * NETKEY.
+	 *
+	 * if the connection we found has protoports, match those for
+	 * the shunt.
+	 *
+	 * XXX: this is trying to emulate selector_from_address().
+	 */
+	ip_selector this_client = selector_from_endpoint(&b->our_client);
+	ip_selector that_client = selector_from_endpoint(&b->peer_client);
+	update_selector_hport(&this_client, 0); /* always catch all ephemeral to dest */
+	update_selector_hport(&that_client, 0); /* default unless connection says otherwise */
 
-		/* OLD: negotiationshunt must be wider than bare shunt, esp on NETKEY */
-		/* if the connection we found has protoports, match those for the shunt */
-		update_selector_hport(&this_client, 0); /* always catch all ephemeral to dest */
-		update_selector_hport(&that_client, 0); /* default unless connection says otherwise */
-		if (b->transport_proto != 0) {
-			if (c->spd.that.protocol == 0) {
-				dbg("shunt widened for protoports since conn does not limit protocols");
-				shunt_proto = 0;
-				our_port = 0;
-				peer_port = 0;
-			} else if (peer_port != 0) {
-				if (c->spd.that.port != 0) {
-					if (c->spd.that.port != peer_port) {
-						llog(RC_LOG_SERIOUS, b->logger,
-						     "Dragons! connection port %d mismatches shunt dest port %d",
-						     c->spd.that.port, peer_port);
-					} else {
-						update_selector_hport(&that_client, peer_port);
-						dbg("bare shunt destination port set to %d", peer_port);
-					}
-				} else {
-					dbg("not really expecting a shunt for dport 0 ?");
-				}
+	int shunt_proto = b->transport_proto;
+	if (c->spd.that.protocol == 0) {
+		dbg("shunt widened for protoports since conn does not limit protocols");
+		shunt_proto = 0;
+		our_port = 0;
+		peer_port = 0;
+	} else if (peer_port != 0) {
+		if (c->spd.that.port != 0) {
+			if (c->spd.that.port != peer_port) {
+				llog(RC_LOG_SERIOUS, b->logger,
+				     "Dragons! connection port %d mismatches shunt dest port %d",
+				     c->spd.that.port, peer_port);
+			} else {
+				update_selector_hport(&that_client, peer_port);
+				dbg("bare shunt destination port set to %d", peer_port);
 			}
 		} else {
-			dbg("shunt not widened for oppo because no protoport received from the kernel for the shunt");
+			dbg("not really expecting a shunt for dport 0 ?");
 		}
+	}
 
-		dbg("going to initiate opportunistic, first installing %s negotiationshunt",
-		    enum_name_short(&spi_names, b->negotiation_shunt));
+	dbg("going to initiate opportunistic, first installing %s negotiationshunt",
+	    enum_name_short(&spi_names, b->negotiation_shunt));
 
-		// PAUL: should this use shunt_eroute() instead of API violation into raw_eroute()
-		/* if we have protoport= set, narrow to it. zero out ephemeral port */
-		if (shunt_proto != 0) {
-			if (c->spd.this.port != 0) {
-				update_selector_hport(&this_client, endpoint_hport(&b->our_client));
-			}
-			if (c->spd.that.port != 0) {
-				update_selector_hport(&that_client,  endpoint_hport(&b->peer_client));
-			}
+	/*
+	 * PAUL: should this use shunt_eroute() instead of API
+	 * violation into raw_eroute()
+	 *
+	 * if we have protoport= set, narrow to it. zero out ephemeral
+	 * port
+	 */
+	if (shunt_proto != 0) {
+		if (c->spd.this.port != 0) {
+			update_selector_hport(&this_client, endpoint_hport(&b->our_client));
 		}
+		if (c->spd.that.port != 0) {
+			update_selector_hport(&that_client,  endpoint_hport(&b->peer_client));
+		}
+	}
 
-		if (!raw_eroute(&b->local.host_addr, &this_client,
-				&b->remote.host_addr, &that_client,
-				htonl(SPI_HOLD), /* kernel induced */
-				htonl(b->negotiation_shunt),
-				&ip_protocol_internal, shunt_proto,
-				ET_INT, null_proto_info,
-				deltatime(SHUNT_PATIENCE),
-				calculate_sa_prio(c, LIN(POLICY_OPPORTUNISTIC, c->policy) ? true : false),
-				NULL, 0 /* xfrm-if-id */,
-				ERO_ADD, addwidemsg,
-				&b->sec_label,
-				b->logger)) {
-			llog(RC_LOG, b->logger, "adding bare wide passthrough negotiationshunt failed");
-		} else {
-			dbg("adding bare (possibly wided) passthrough negotiationshunt succeeded (violating API)");
-			add_bare_shunt(&this_client, &that_client, shunt_proto, SPI_HOLD, addwidemsg);
-		}
-		/* now delete the (obsoleted) narrow bare kernel shunt - we have a (possibly broadened) negotiationshunt replacement installed */
-		const char *const delmsg = "delete bare kernel shunt - was replaced with  negotiationshunt";
-		if (!delete_bare_shunt(&b->local.host_addr, &b->remote.host_addr,
-				       b->transport_proto,
-				       SPI_HOLD /* kernel dictated */,
-				       /*skip_xfrm_raw_eroute_delete?*/false,
-				       delmsg, b->logger)) {
-			llog(RC_LOG, b->logger, "Failed to: %s", delmsg);
-		} else {
-			dbg("success taking down narrow bare shunt");
-		}
+	if (!raw_eroute(&b->local.host_addr, &this_client,
+			&b->remote.host_addr, &that_client,
+			htonl(SPI_HOLD), /* kernel induced */
+			htonl(b->negotiation_shunt),
+			&ip_protocol_internal, shunt_proto,
+			ET_INT, null_proto_info,
+			deltatime(SHUNT_PATIENCE),
+			calculate_sa_prio(c, LIN(POLICY_OPPORTUNISTIC, c->policy) ? true : false),
+			NULL, 0 /* xfrm-if-id */,
+			ERO_ADD, addwidemsg,
+			&b->sec_label,
+			b->logger)) {
+		llog(RC_LOG, b->logger, "adding bare wide passthrough negotiationshunt failed");
+	} else {
+		dbg("adding bare (possibly wided) passthrough negotiationshunt succeeded (violating API)");
+		add_bare_shunt(&this_client, &that_client, shunt_proto, SPI_HOLD, addwidemsg);
+	}
+	/* now delete the (obsoleted) narrow bare kernel shunt - we have a (possibly broadened) negotiationshunt replacement installed */
+	const char *const delmsg = "delete bare kernel shunt - was replaced with  negotiationshunt";
+	if (!delete_bare_shunt(&b->local.host_addr, &b->remote.host_addr,
+			       b->transport_proto,
+			       SPI_HOLD /* kernel dictated */,
+			       /*skip_xfrm_raw_eroute_delete?*/false,
+			       delmsg, b->logger)) {
+		llog(RC_LOG, b->logger, "Failed to: %s", delmsg);
+	} else {
+		dbg("success taking down narrow bare shunt");
 	}
 
 	/* XXX: re-use C */
@@ -1036,19 +1046,25 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		     LELEM(RT_ROUTED_PROSPECTIVE),
 		     c->spd.routing));
 	if (b->held) {
-		/* if we have protoport= set, narrow to it. zero out ephemeral port */
-		if (b->transport_proto != 0) {
-			if (c->spd.this.port != 0) {
-				update_endpoint_port(&b->our_client, ip_hport(c->spd.this.port));
-			}
-			if (c->spd.that.port != 0) {
-				update_endpoint_port(&b->peer_client, ip_hport(c->spd.that.port));
-			}
+		/*
+		 * if we have protoport= set, narrow to it. zero out
+		 * ephemeral port
+		 */
+		if (c->spd.this.port != 0) {
+			update_endpoint_port(&b->our_client, ip_hport(c->spd.this.port));
+		}
+		if (c->spd.that.port != 0) {
+			update_endpoint_port(&b->peer_client, ip_hport(c->spd.that.port));
 		}
 		/* packet triggered - not whack triggered */
 		dbg("assigning negotiation_shunt to connection");
-		/* if we have protoport= set, narrow to it. zero out ephemeral port */
-		/* warning: we know ports in this_client/that_client are 0 so far */
+		/*
+		 * if we have protoport= set, narrow to it. zero out
+		 * ephemeral port
+		 *
+		 * warning: we know ports in this_client/that_client
+		 * are 0 so far
+		 */
 		if (c->spd.this.protocol != 0) {
 			if (c->spd.this.port != 0) {
 				update_selector_hport(&c->spd.this.client, endpoint_hport(&b->our_client));
@@ -1086,13 +1102,16 @@ void initiate_ondemand(const ip_endpoint *our_client,
 		       const char *why,
 		       struct logger *logger)
 {
+	unsigned transport_proto = endpoint_protocol(our_client)->ipproto;
+	pexpect(transport_proto != 0);
+	pexpect(transport_proto == endpoint_protocol(peer_client)->ipproto);
 	struct find_oppo_bundle b = {
 		.want = why,   /* fudge */
 		.our_client = *our_client,
 		.peer_client = *peer_client,
 		.local.host_addr = endpoint_address(our_client),
 		.remote.host_addr = endpoint_address(peer_client),
-		.transport_proto = endpoint_protocol(our_client)->ipproto,
+		.transport_proto = transport_proto,
 		.held = held,
 		.policy_prio = BOTTOM_PRIO,
 		.negotiation_shunt = SPI_HOLD, /* until we found connection policy */
