@@ -635,7 +635,6 @@ void restart_connections_by_peer(struct connection *const c)
 
 struct find_oppo_bundle {
 	const char *want;
-	bool failure_ok;        /* if true, continue_oppo should not die on DNS failure */
 	/*
 	 * Traffic that triggered the opportunistic exchange.
 	 */
@@ -1089,7 +1088,6 @@ void initiate_ondemand(const ip_endpoint *our_client,
 {
 	struct find_oppo_bundle b = {
 		.want = why,   /* fudge */
-		.failure_ok = false,
 		.our_client = *our_client,
 		.peer_client = *peer_client,
 		.local.host_addr = endpoint_address(our_client),
