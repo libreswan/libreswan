@@ -14,7 +14,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add labeled
-002 "labeled": added IKEv1 connection
+002 "labeled": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -24,30 +24,29 @@ west #
  echo 1 >/proc/sys/net/ipv4/tcp_tw_reuse
 west #
  ipsec auto --up labeled
-002 "labeled" #1: initiating IKEv1 Main Mode connection
-1v1 "labeled" #1: sent Main Mode request
-1v1 "labeled" #1: sent Main Mode I2
-1v1 "labeled" #1: sent Main Mode I3
-002 "labeled" #1: Peer ID is ID_FQDN: '@east'
-003 "labeled" #1: authenticated using RSA with SHA-1
-004 "labeled" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "labeled" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
-1v1 "labeled" #2: sent Quick Mode request
-004 "labeled" #2: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+1v2 "labeled" #1: initiating IKEv2 connection
+1v2 "labeled" #1: sent IKE_SA_INIT request
+1v2 "labeled" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "labeled" #1: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "labeled" #1: authenticated using RSA with SHA2_512
+002 "labeled" #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 6] -> [192.1.2.23-192.1.2.23:4300-4300 6]
+004 "labeled" #2: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
- ip xfrm state
+ # workaround kernel bug displaying a NUL freaking out python
+west #
+ ip xfrm state | strings
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
 west #
  ip xfrm pol
 src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
@@ -119,9 +118,34 @@ west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 
+	replay-window 32 
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
+	security context unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
+	security context unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
 XFRM policy:
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300
+	security context system_u:object_r:ipsec_spd_t:s0
+	dir in priority 1687486 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
 src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300
 	security context system_u:object_r:ipsec_spd_t:s0
 	dir out priority 1687486 ptype main
@@ -138,8 +162,6 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-west #
- ipsec whack --shutdown
 west #
  semodule -r ipsec-test-module
 libsemanage.semanage_direct_remove_key: Removing last ipsec-test-module module (no other ipsec-test-module module exists at another priority).
