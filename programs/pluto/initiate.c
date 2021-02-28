@@ -769,8 +769,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 */
 		struct connection *templ = connection_by_serialno(c->serial_from);
 		struct ike_sa *ikesa = ike_sa(state_by_serialno(c->newest_ipsec_sa), HERE);
-		ip_address b_peer = endpoint_address(&b->remote.client);
-		struct connection *inst = instantiate(templ, &b_peer, NULL);
+		struct connection *inst = instantiate(templ, &b->remote.host_addr, NULL);
 		add_pending(NULL, ikesa, inst, inst->policy, 1, SOS_NOBODY, b->sec_label, false );
 		unpend(ikesa, NULL); /* cuases initiate */
 		return;
@@ -912,39 +911,40 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	const char *const addwidemsg = "oe-negotiating";
 
 	/*
-	 * OLD: negotiationshunt must be wider than bare shunt, especially on
-	 * NETKEY.
+	 * Widen the shunt?
 	 *
-	 * If the connection we found has protoports, match those for
-	 * the shunt.
-	 *
-	 * XXX: this is trying to emulate selector_from_address().
+	 * If we have protoport= set, narrow to it.  Zero the
+	 * ephemeral port.
 	 */
-	ip_selector this_client = selector_from_endpoint(&b->local.client);
-	ip_selector that_client = selector_from_endpoint(&b->remote.client);
-	update_selector_hport(&this_client, 0); /* always catch all ephemeral to dest */
-	update_selector_hport(&that_client, 0); /* default unless connection says otherwise */
-
-	int shunt_proto = b->transport_proto;
+	ip_selector local_shunt;
+	ip_selector remote_shunt;
 	if (c->spd.that.protocol == 0) {
-		dbg("shunt widened for protoports since conn does not limit protocols");
-		shunt_proto = 0;
+		dbg("shunt widened to all protocols + all ports since conn does not limit protocols");
+		pexpect(c->spd.that.port == 0);
+		local_shunt = selector_from_address(&b->local.host_addr);
+		remote_shunt = selector_from_address(&b->remote.host_addr);
 		our_port = 0;
 		peer_port = 0;
-	} else if (peer_port != 0) {
-		if (c->spd.that.port != 0) {
-			if (c->spd.that.port != peer_port) {
-				llog(RC_LOG_SERIOUS, b->logger,
-				     "Dragons! connection port %d mismatches shunt dest port %d",
-				     c->spd.that.port, peer_port);
-			} else {
-				update_selector_hport(&that_client, peer_port);
-				dbg("bare shunt destination port set to %d", peer_port);
-			}
-		} else {
-			dbg("not really expecting a shunt for dport 0 ?");
-		}
+	} else if (c->spd.that.port == 0) {
+		dbg("shunt widend to all ports since conn does not limit ports");
+		pexpect(c->spd.that.protocol == b->transport_proto);
+		const ip_protocol *protocol = protocol_by_ipproto(c->spd.that.protocol);
+		local_shunt = selector_from_address_protocol_port(&b->local.host_addr, protocol, unset_port);
+		remote_shunt = selector_from_address_protocol_port(&b->remote.host_addr, protocol, unset_port);
+	} else if (c->spd.that.port == endpoint_hport(&b->remote.client)) {
+		local_shunt = selector_from_endpoint(&b->local.client);
+		remote_shunt = selector_from_endpoint(&b->remote.client);
+	} else {
+		llog(RC_LOG_SERIOUS, b->logger,
+		     "Dragons! connection port %d mismatches shunt dest port %d",
+		     c->spd.that.port, peer_port);
+		/* XXX: why continue? */
+		local_shunt = selector_from_address(&b->local.host_addr);
+		remote_shunt = selector_from_address(&b->remote.host_addr);
 	}
+
+	const ip_protocol *shunt_proto = selector_protocol(&remote_shunt);
+	pexpect(shunt_proto == selector_protocol(&local_shunt));
 
 	dbg("going to initiate opportunistic, first installing %s negotiationshunt",
 	    enum_name_short(&spi_names, b->negotiation_shunt));
@@ -952,24 +952,13 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	/*
 	 * PAUL: should this use shunt_eroute() instead of API
 	 * violation into raw_eroute()?
-	 *
-	 * If we have protoport= set, narrow to it.  Zero the ephemeral
-	 * port.
 	 */
-	if (shunt_proto != 0) {
-		if (c->spd.this.port != 0) {
-			update_selector_hport(&this_client, endpoint_hport(&b->local.client));
-		}
-		if (c->spd.that.port != 0) {
-			update_selector_hport(&that_client,  endpoint_hport(&b->remote.client));
-		}
-	}
 
-	if (!raw_eroute(&b->local.host_addr, &this_client,
-			&b->remote.host_addr, &that_client,
+	if (!raw_eroute(&b->local.host_addr, &local_shunt,
+			&b->remote.host_addr, &remote_shunt,
 			htonl(SPI_HOLD), /* kernel induced */
 			htonl(b->negotiation_shunt),
-			&ip_protocol_internal, shunt_proto,
+			&ip_protocol_internal, shunt_proto->ipproto,
 			ET_INT, null_proto_info,
 			deltatime(SHUNT_PATIENCE),
 			calculate_sa_prio(c, LIN(POLICY_OPPORTUNISTIC, c->policy) ? true : false),
@@ -980,7 +969,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		llog(RC_LOG, b->logger, "adding bare wide passthrough negotiationshunt failed");
 	} else {
 		dbg("adding bare (possibly wided) passthrough negotiationshunt succeeded (violating API)");
-		add_bare_shunt(&this_client, &that_client, shunt_proto, SPI_HOLD, addwidemsg);
+		add_bare_shunt(&local_shunt, &remote_shunt,
+			       shunt_proto->ipproto, SPI_HOLD, addwidemsg);
 	}
 	/*
 	 * Now delete the (obsoleted) narrow bare kernel shunt - we have
