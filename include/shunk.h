@@ -24,7 +24,7 @@
 #include "err.h"
 
 /*
- * Think of shunk_t and shunk_t as opposite solutions to the same
+ * Think of shunk_t and chunk_t as opposite solutions to the same
  * problem - carving up streams of octets:
  *
  * shunk_t's buffer is constant making it good for manipulating static
