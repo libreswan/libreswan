@@ -73,7 +73,7 @@
 #include "state_db.h"
 
 /*
- * swap ends and try again.
+ * Swap ends and try again.
  * It is a little tricky to see that this loop will stop.
  * Only continue if the far side matches.
  * If both sides match, there is an error-out.
@@ -87,8 +87,8 @@ static void swap_ends(struct connection *c)
 	sr->that = t;
 
 	/*
-	 * in case of asymmetric auth c->policy contains left.authby
-	 * This magic will help responder to find connection during INIT
+	 * In case of asymmetric auth c->policy contains left.authby.
+	 * This magic will help responder to find connection during INIT.
 	 */
 	if (sr->this.authby != sr->that.authby)
 	{
@@ -280,9 +280,8 @@ bool orient(struct connection *c)
 		return true;
 	}
 
-	/*
-	 * No existing interface worked, should a new one be created?
-	 */
+	/* No existing interface worked, should a new one be created? */
+
 	if (orient_new_iface_endpoint(c, whackfd, true)) {
 		return true;
 	}
@@ -297,7 +296,8 @@ struct initiate_stuff {
 	const char *remote_host;
 };
 
-static bool initiate_connection_2(struct connection *c, const char *remote_host, bool background, const threadtime_t inception);
+static bool initiate_connection_2(struct connection *c, const char *remote_host,
+				  bool background, const threadtime_t inception);
 
 bool initiate_connection(struct connection *c, const char *remote_host, bool background)
 {
@@ -322,11 +322,10 @@ bool initiate_connection(struct connection *c, const char *remote_host, bool bac
 		close_any(&d->logger->global_whackfd);
 		d->logger->global_whackfd = dup_any(c->logger->global_whackfd);
 
-		/*
-		 * XXX: why not write to the log file?
-		 */
+		/* XXX: why not write to the log file? */
 		llog(WHACK_STREAM|RC_LOG, d->logger,
 		     "instantiated connection with remote IP set to %s", remote_host);
+
 		/* flip cur_connection */
 		ok = initiate_connection_2(d, remote_host, background, inception);
 		if (!ok) {
@@ -342,7 +341,11 @@ bool initiate_connection(struct connection *c, const char *remote_host, bool bac
 }
 
 bool initiate_connection_3(struct connection *c, bool background, const threadtime_t inception);
-bool initiate_connection_2(struct connection *c, const char *remote_host, bool background, const threadtime_t inception)
+
+bool initiate_connection_2(struct connection *c,
+			   const char *remote_host,
+			   bool background,
+			   const threadtime_t inception)
 {
 	if (!oriented(*c)) {
 		ipstr_buf a;
@@ -380,7 +383,6 @@ bool initiate_connection_2(struct connection *c, const char *remote_host, bool b
 			}
 			return false;
 		}
-
 	}
 
 	if ((address_is_unset(&c->spd.that.host_addr) ||
@@ -429,7 +431,6 @@ bool initiate_connection_2(struct connection *c, const char *remote_host, bool b
 		ok = initiate_connection_3(c, background, inception);
 	}
 	return ok;
-
 }
 
 bool initiate_connection_3(struct connection *c, bool background, const threadtime_t inception)
@@ -635,25 +636,20 @@ void restart_connections_by_peer(struct connection *const c)
 
 struct find_oppo_bundle {
 	const char *want;
-	/*
-	 * Traffic that triggered the opportunistic exchange.
-	 */
+	/* traffic that triggered the opportunistic exchange */
 	ip_endpoint our_client;
 	ip_endpoint peer_client;
 	struct {
-		/*
-		 * Host addresses for traffic (redundant, but
-		 * convenient).
-		 */
+		/* host addresses for traffic (redundant, but convenient) */
 		ip_address host_addr;
 	} local, remote;
 	/* redundant - prococol involved */
 	int transport_proto;
 	bool held;
 	policy_prio_t policy_prio;
-	ipsec_spi_t negotiation_shunt; /* in host order! */
-	ipsec_spi_t failure_shunt; /* in host order! */
-	struct logger *logger; /* has whack attached */
+	ipsec_spi_t negotiation_shunt;	/* in host order! */
+	ipsec_spi_t failure_shunt;	/* in host order! */
+	struct logger *logger;	/* has whack attached */
 	bool background;
 	chunk_t sec_label;
 };
@@ -675,7 +671,7 @@ static void cannot_oppo(struct find_oppo_bundle *b, err_t ughmsg)
 		dbg("cannot_oppo() detected packet triggered shunt from bundle");
 
 		/*
-		 * Replace negotiationshunt (hold or pass) with failureshunt (hold or pass)
+		 * Replace negotiationshunt (hold or pass) with failureshunt (hold or pass).
 		 * If no failure_shunt specified, use SPI_PASS -- THIS MAY CHANGE.
 		 */
 		pexpect(b->failure_shunt != 0); /* PAUL: I don't think this can/should happen? */
@@ -740,8 +736,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 
 	if (address_eq(&b->local.host_addr, &b->remote.host_addr)) {
 		/*
-		 * NETKEY gives us acquires for our own IP this does
-		 * not catch talking to ourselves on another ip.
+		 * NETKEY gives us acquires for our own IP. This code
+		 * does not handle talking to ourselves on another ip.
 		 */
 		cannot_oppo(b, "acquire for our own IP address");
 		return;
@@ -769,7 +765,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 
 	if (c->ike_version == IKEv2 && c->kind == CK_INSTANCE && b->sec_label.ptr != NULL) {
 		/*
-		 * a bit of a hack until we properly instantiate
+		 * A bit of a hack until we properly instantiate
 		 * labeled ipsec connections.
 		 */
 		struct connection *templ = connection_by_serialno(c->serial_from);
@@ -809,8 +805,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			    pri_connection(c, &cib));
 
 		/*
-		 * we used to return here, but rekeying is a better
-		 * choice. If we got the acquire, it is because
+		 * We used to return here, but rekeying is a better
+		 * choice.  If we got the acquire, it is because
 		 * something turned stuff into a %trap, or something
 		 * got deleted, perhaps due to an expiry.
 		 */
@@ -821,8 +817,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * We cannot process as normal because the
 		 * bare_shunts table and assign_holdpass()
 		 * would get confused between this new entry
-		 * and the existing one. So we return without
-		 * doing anything
+		 * and the existing one.  So we return without
+		 * doing anything.
 		 */
 		llog(RC_LOG, b->logger,
 			    "ignoring found existing connection instance "PRI_CONNECTION" that covers kernel acquire with IKE state #%lu and IPsec state #%lu - due to duplicate acquire?",
@@ -843,14 +839,14 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * If we are to proceed asynchronously, b->whackfd
 		 * will be NULL_WHACKFD.
 		 *
-		 * we have a connection, fill in the negotiation_shunt
-		 * and failure_shunt
+		 * We have a connection: fill in the negotiation_shunt
+		 * and failure_shunt.
 		 */
 		b->failure_shunt = shunt_policy_spi(c, false);
 		b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
 
 		/*
-		 * otherwise, there is some kind of static conn that
+		 * Otherwise, there is some kind of static conn that
 		 * can handle this connection, so we initiate it.
 		 * Only needed if we this was triggered by a packet,
 		 * not by whack
@@ -906,21 +902,21 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	pexpect(c->kind == CK_TEMPLATE);
 	passert(c->policy & POLICY_OPPORTUNISTIC); /* can't initiate Road Warrior connections */
 
-	/* we have a connection, fill in the negotiation_shunt and failure_shunt */
+	/* we have a connection: fill in the negotiation_shunt and failure_shunt */
 	b->failure_shunt = shunt_policy_spi(c, false);
 	b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
 
 	/*
 	 * Always have shunts with protoports, even when no
-	 * *protoport= settings in conn.
+	 * protoport= settings in conn.
 	 */
 	const char *const addwidemsg = "oe-negotiating";
 
 	/*
-	 * OLD: negotiationshunt must be wider than bare shunt, esp on
+	 * OLD: negotiationshunt must be wider than bare shunt, especially on
 	 * NETKEY.
 	 *
-	 * if the connection we found has protoports, match those for
+	 * If the connection we found has protoports, match those for
 	 * the shunt.
 	 *
 	 * XXX: this is trying to emulate selector_from_address().
@@ -956,10 +952,10 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 
 	/*
 	 * PAUL: should this use shunt_eroute() instead of API
-	 * violation into raw_eroute()
+	 * violation into raw_eroute()?
 	 *
-	 * if we have protoport= set, narrow to it. zero out ephemeral
-	 * port
+	 * If we have protoport= set, narrow to it.  Zero the ephemeral
+	 * port.
 	 */
 	if (shunt_proto != 0) {
 		if (c->spd.this.port != 0) {
@@ -987,7 +983,10 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		dbg("adding bare (possibly wided) passthrough negotiationshunt succeeded (violating API)");
 		add_bare_shunt(&this_client, &that_client, shunt_proto, SPI_HOLD, addwidemsg);
 	}
-	/* now delete the (obsoleted) narrow bare kernel shunt - we have a (possibly broadened) negotiationshunt replacement installed */
+	/*
+	 * Now delete the (obsoleted) narrow bare kernel shunt - we have
+	 * a (possibly broadened) negotiationshunt replacement installed.
+	 */
 	const char *const delmsg = "delete bare kernel shunt - was replaced with  negotiationshunt";
 	if (!delete_bare_shunt(&b->local.host_addr, &b->remote.host_addr,
 			       b->transport_proto,
@@ -999,8 +998,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		dbg("success taking down narrow bare shunt");
 	}
 
-	/* XXX: re-use C */
-	/* XXX shouldn't this pass b->sec_label too in theory - but we don't support OE with labels */
+	/* XXX: re-use c */
+	/* XXX Shouldn't this pass b->sec_label too in theory?  But we don't support OE with labels. */
 	c = build_outgoing_opportunistic_connection(&b->our_client,
 						    &b->peer_client);
 	if (c == NULL) {
@@ -1016,10 +1015,10 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			    str_endpoint(&b->peer_client, &b2));
 
 		/*
-		 * Replace negotiation_shunt with failure_shunt
+		 * Replace negotiation_shunt with failure_shunt.
 		 * The type of replacement *ought* to be
 		 * specified by policy, but we did not find a connection, so
-		 * default to HOLD
+		 * default to HOLD.
 		 */
 		if (b->held) {
 			if (replace_bare_shunt(&b->local.host_addr,
@@ -1059,7 +1058,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		/* packet triggered - not whack triggered */
 		dbg("assigning negotiation_shunt to connection");
 		/*
-		 * if we have protoport= set, narrow to it. zero out
+		 * if we have protoport= set, narrow to it and zero out
 		 * ephemeral port
 		 *
 		 * warning: we know ports in this_client/that_client
@@ -1124,7 +1123,8 @@ void initiate_ondemand(const ip_endpoint *our_client,
 	initiate_ondemand_body(&b);
 }
 
-/* Find a connection that owns the shunt eroute between subnets.
+/*
+ * Find a connection that owns the shunt eroute between subnets.
  * There ought to be only one.
  * This might get to be a bottleneck -- try hashing if it does.
  */
@@ -1170,10 +1170,10 @@ static void connection_check_ddns1(struct connection *c)
 		return;
 
 	/*
-	 * We do not update a resolved address once resolved. That might
-	 * be considered a bug. Can we count on liveness if the target
-	 * changed IP? The connection would * need to gets its host_addr
-	 * updated? Do we do that when terminating the conn?
+	 * We do not update a resolved address once resolved.  That might
+	 * be considered a bug.  Can we count on liveness if the target
+	 * changed IP?  The connection might need to get its host_addr
+	 * updated.  Do we do that when terminating the conn?
 	 */
 	if (address_is_specified(&c->spd.that.host_addr)) {
 		connection_buf cib;
@@ -1215,7 +1215,10 @@ static void connection_check_ddns1(struct connection *c)
 		return;
 	}
 
-	/* This cannot currently be reached. If in the future we do, don't do weird things */
+	/*
+	 * This cannot currently be reached.  If in the future we do,
+	 * don't do weird things
+	 */
 	if (sameaddr(&new_addr, &c->spd.that.host_addr)) {
 		connection_buf cib;
 		dbg("pending ddns: IP address unchanged for connection "PRI_CONNECTION"",
@@ -1223,12 +1226,12 @@ static void connection_check_ddns1(struct connection *c)
 		return;
 	}
 
-	/* I think this is ok now we check everything above ? */
+	/* I think this is OK now we check everything above. */
 
 	/*
 	 * It seems DNS failure puts a connection into CK_TEMPLATE, so once the
 	 * resolve is fixed, it is manually placed in CK_PERMANENT here.
-	 * However, that is questionable, eg for connections that are templates
+	 * However, that is questionable, eg. for connections that are templates
 	 * to begin with, such as those with narrowing=yes. These will mistakenly
 	 * be placed into CK_PERMANENT.
 	 */
@@ -1294,8 +1297,8 @@ void connection_check_ddns(struct logger *unused_logger UNUSED)
 #define PENDING_PHASE2_INTERVAL (2 * secs_per_minute)
 
 /*
- * call me periodically to check to see if pending phase2s ever got
- * unstuck, and if not, perform DPD action.
+ * Call connection_check_phase2 periodically to check to see if pending
+ * phase2s ever got unstuck, and if not, perform DPD action.
  */
 void connection_check_phase2(struct logger *logger)
 {
