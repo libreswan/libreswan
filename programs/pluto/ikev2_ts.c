@@ -946,11 +946,11 @@ static const chunk_t *score_ends_seclabel(const struct ends *ends,
 	}
 }
 #else
-static const chunk_t *score_ends_seclabel(const struct ends *ends,
-					  const struct connection *d,
-					  const struct traffic_selectors *tsi,
-					  const struct traffic_selectors *tsr,
-					  struct logger *logger)
+static const chunk_t *score_ends_seclabel(const struct ends *ends UNUSED,
+					  const struct connection *d UNUSED,
+					  const struct traffic_selectors *tsi UNUSED,
+					  const struct traffic_selectors *tsr UNUSED,
+					  struct logger *logger UNUSED)
 {
 	return NULL;
 }
