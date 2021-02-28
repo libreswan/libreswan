@@ -883,7 +883,8 @@ static const chunk_t *score_ends_seclabel(const struct ends *ends,
 				// complain loudly
 				continue;
 			} else {
-				if (within_range((const char *)cur->sec_label.ptr, (const char *)d->spd.this.sec_label.ptr, logger)) {
+				if (hunk_eq(cur->sec_label, d->spd.this.sec_label) ||
+					within_range((const char *)cur->sec_label.ptr, (const char *)d->spd.this.sec_label.ptr, logger)) {
 					match_i = true;
 					dbg("ikev2ts #1: received label within range of our security label");
 				} else {
@@ -902,7 +903,8 @@ static const chunk_t *score_ends_seclabel(const struct ends *ends,
 						dbg("IKEv2_TS_SECLABEL but zero length cur->sec_label");
 						continue;
 					} else {
-						if (within_range((const char *)ends->r->sec_label.ptr, (const char *)d->spd.this.sec_label.ptr, logger)) {
+						if (hunk_eq(ends->r->sec_label, d->spd.this.sec_label) ||
+						    within_range((const char *)ends->r->sec_label.ptr, (const char *)d->spd.this.sec_label.ptr, logger)) {
 							dbg("ikev2ts #2: received label within range of our security label");
 							match_r = true;
 							selected_sec_label = &cur->sec_label;

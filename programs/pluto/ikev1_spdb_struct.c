@@ -113,7 +113,8 @@ static bool parse_secctx_attr(struct pbs_in *pbs, struct state *st)
 		return false;
 	}
 
-	if (!within_range(sec_label.ptr, /* we ensured NUL termination above */
+	if (!hunk_eq(sec_label, c->spd.this.sec_label) &&
+		!within_range(sec_label.ptr, /* we ensured NUL termination above */
 			  (const char *)c->spd.this.sec_label.ptr,  /* we ensured NUL termination earlier? */
 			  st->st_logger)) {
 		LLOG_JAMBUF(RC_LOG_SERIOUS, st->st_logger, buf) {

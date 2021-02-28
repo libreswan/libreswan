@@ -2477,10 +2477,9 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 			    endpoint_in_selector(local_client, &sr->this.client) &&
 			    endpoint_in_selector(remote_client, &sr->that.client)
 #ifdef HAVE_LABELED_IPSEC
-			    && ((sec_label.ptr == NULL &&
-			      sr->this.sec_label.ptr == NULL) ||
-			     /* don't call with NULL, it confuses it */
-			     within_range((const char *)sec_label.ptr,
+			    && ((sec_label.ptr == NULL && sr->this.sec_label.ptr == NULL) ||
+				hunk_eq(sec_label, sr->this.sec_label) || 
+				within_range((const char *)sec_label.ptr,
 					  (const char *)sr->this.sec_label.ptr, logger))
 #endif
 			     ) {
