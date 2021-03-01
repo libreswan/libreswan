@@ -34,6 +34,7 @@
 #include "ip_info.h"
 #include "ip_selector.h"
 #include "security_selinux.h"
+#include "labeled_ipsec.h"		/* for MAX_SECCTX_LEN */
 
 /*
  * While the RFC seems to suggest that the traffic selectors come in
@@ -486,20 +487,33 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 					ts_h.isath_ipprotoid);
 			}
 
-			size_t sl_len = pbs_left(&ts_body_pbs);
+			/*
+			 * XXX: this and the IKEv1 equivalent have a
+			 * lot in common.
+			 */
+			shunk_t sec_label = pbs_in_left_as_shunk(&ts_body_pbs);
 
-			if (sl_len == 0) {
-				llog(RC_LOG, logger, "Traffic Selector of type Security Label cannot be zero length - ignoring this TS");
+			if (sec_label.len == 0) {
+				llog(RC_LOG, logger,
+				     "Traffic Selector of type Security Label cannot be zero length - ignoring this TS");
 				continue;
 			}
 
-			ts->sec_label = alloc_chunk(sl_len, "incoming TS sec_label");
-			d = pbs_in_raw(&ts_body_pbs, ts->sec_label.ptr, sl_len, "TS Security Label content");
-
-			if (d != NULL) {
-				log_diag(RC_LOG, logger, &d, "%s", "");
+			if (sec_label.len > MAX_SECCTX_LEN) {
+				llog(RC_LOG, logger,
+				     "Traffic Selector of type Security Label too long (%zu > %u)",
+				     sec_label.len, MAX_SECCTX_LEN);
 				return false;
 			}
+
+			if (hunk_strnlen(sec_label) + 1 != sec_label.len) {
+				llog(RC_LOG, logger,
+				     "Traffic Selector of type Security Label is not NUL terminated");
+				return false;
+			}
+
+			/* XXX: probably leaks; should be shunk_t */
+			ts->sec_label = clone_hunk(sec_label, "incoming TS sec_label");
 			ts->ts_type = ts_h.isath_type;
 			break;
 		}
