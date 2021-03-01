@@ -52,6 +52,16 @@
 #include "nat_traversal.h"	/* for nat_traversal_enabled which seems like a broken idea */
 #include "pluto_stats.h"
 
+/* work around weird combo's of glibc and kernel header conflicts */
+#ifndef GLIBC_KERN_FLIP_HEADERS
+# include "linux/xfrm.h" /* local (if configured) or system copy */
+# include "libreswan.h"
+#else
+# include "libreswan.h"
+# include "linux/xfrm.h" /* local (if configured) or system copy */
+#endif
+
+
 static void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 				 int accepted_fd,
 				 struct sockaddr *sockaddr, int sockaddr_len,
@@ -383,6 +393,8 @@ static void iketcp_message_listener_cb(evutil_socket_t unused_fd UNUSED,
 	struct logger from_logger = logger_from(&global_logger, &ifp->iketcp_remote_endpoint);
 	struct logger *logger = &from_logger;
 
+	bool v6 = ifp->ip_dev->id_address.version == 6;
+
 	switch (ifp->iketcp_state) {
 
 	case IKETCP_OPEN:
@@ -443,7 +455,19 @@ static void iketcp_message_listener_cb(evutil_socket_t unused_fd UNUSED,
 		if (impair.tcp_skip_setsockopt_espintcp) {
 			llog(RC_LOG, logger, "IMPAIR: TCP: skipping setsockopt(ESPINTCP)");
 		} else {
+			struct xfrm_userpolicy_info policy_in = {
+				.action = XFRM_POLICY_ALLOW,
+				.sel.family = v6 ? AF_INET6 :AF_INET,
+				.dir = XFRM_POLICY_IN,
+			};
+			struct xfrm_userpolicy_info policy_out = {
+				.action = XFRM_POLICY_ALLOW,
+				.sel.family = v6 ? AF_INET6 :AF_INET,
+				.dir = XFRM_POLICY_OUT,
+			};
+
 			dbg("TCP: OPEN: socket %d enabling ESPINTCP", ifp->fd);
+
 			if (setsockopt(ifp->fd, IPPROTO_TCP, TCP_ULP,
 				      "espintcp", sizeof("espintcp"))) {
 				int e = errno;
@@ -459,6 +483,24 @@ static void iketcp_message_listener_cb(evutil_socket_t unused_fd UNUSED,
 				free_any_iface_endpoint(&ifp);
 				return;
 			}
+
+			if (setsockopt(ifp->fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_in, sizeof(policy_in))) {
+				int e = errno;
+				llog(RC_LOG, logger,
+					    "TCP: setsockopt(%d, SOL_TCP, IP_XFRM_POLICY, \"policy_in\") failed; closing socket "PRI_ERRNO,
+					    ifp->fd, pri_errno(e));
+				free_any_iface_endpoint(&ifp);
+				return;
+			}
+			if (setsockopt(ifp->fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_out, sizeof(policy_out))) {
+				int e = errno;
+				llog(RC_LOG, logger,
+					    "TCP: setsockopt(%d, SOL_TCP, IP_XFRM_POLICY, \"policy_out\") failed; closing socket "PRI_ERRNO,
+					    ifp->fd, pri_errno(e));
+				free_any_iface_endpoint(&ifp);
+				return;
+			}
+
 		}
 
 		/*
@@ -650,10 +692,33 @@ stf_status create_tcp_interface(struct state *st)
 	if (impair.tcp_skip_setsockopt_espintcp) {
 		log_state(RC_LOG, st, "IMPAIR: TCP: skipping setsockopt(espintcp)");
 	} else {
+		bool v6 = st->st_remote_endpoint.version == 6;
+		struct xfrm_userpolicy_info policy_in = {
+			.action = XFRM_POLICY_ALLOW,
+			.sel.family = v6 ? AF_INET6 :AF_INET,
+			.dir = XFRM_POLICY_IN,
+		};
+		struct xfrm_userpolicy_info policy_out = {
+			.action = XFRM_POLICY_ALLOW,
+			.sel.family = v6 ? AF_INET6 :AF_INET,
+			.dir = XFRM_POLICY_OUT,
+		};
 		dbg("TCP: socket %d enabling \"espintcp\"", fd);
 		if (setsockopt(fd, IPPROTO_TCP, TCP_ULP, "espintcp", sizeof("espintcp"))) {
 			log_errno(st->st_logger, errno,
 				  "setsockopt(SOL_TCP, TCP_ULP) failed in netlink_espintcp()");
+			close(fd);
+			return STF_FATAL;
+		}
+		if (setsockopt(fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_in, sizeof(policy_in))) {
+			log_errno(st->st_logger, errno,
+				  "setsockopt(PPROTO_IP, IP_XFRM_POLICY(in)) failed in netlink_espintcp()");
+			close(fd);
+			return STF_FATAL;
+		}
+		if (setsockopt(fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_out, sizeof(policy_out))) {
+			log_errno(st->st_logger, errno,
+				  "setsockopt(PPROTO_IP, IP_XFRM_POLICY(out)) failed in netlink_espintcp()");
 			close(fd);
 			return STF_FATAL;
 		}
