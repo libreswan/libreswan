@@ -690,6 +690,35 @@ static void cannot_oppo(struct find_oppo_bundle *b, err_t ughmsg)
 	}
 }
 
+static ip_selector shunt_from_traffic_end(const char *what,
+					  const ip_endpoint *traffic_endpoint,
+					  const struct end *end)
+{
+	ip_address shunt_address = endpoint_address(traffic_endpoint);
+	const ip_protocol *shunt_protocol;
+	ip_port shunt_port;
+	if (end->protocol == 0) {
+		dbg("widening %s shunt to all protocols + all ports", what);
+		pexpect(end->port == 0);
+		shunt_protocol = &ip_protocol_unset;
+		shunt_port = unset_port;
+	} else if (end->port == 0) {
+		dbg("widening %s shunt to all ports", what);
+		shunt_protocol = protocol_by_ipproto(end->protocol);
+		shunt_port = unset_port;
+		pexpect(endpoint_protocol(traffic_endpoint) == shunt_protocol);
+	} else {
+		dbg("leaving %s shunt alone", what);
+		shunt_protocol = protocol_by_ipproto(end->protocol);
+		shunt_port = endpoint_port(traffic_endpoint);
+		pexpect(end->port == hport(shunt_port));
+		pexpect(endpoint_protocol(traffic_endpoint) == shunt_protocol);
+	}
+	return selector_from_address_protocol_port(&shunt_address,
+						   shunt_protocol,
+						   shunt_port);
+}
+
 static void initiate_ondemand_body(struct find_oppo_bundle *b)
 {
 	threadtime_t inception = threadtime_start();
@@ -915,38 +944,19 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 *
 	 * If we have protoport= set, narrow to it.  Zero the
 	 * ephemeral port.
+	 *
+	 * XXX: should local/remote shunts be computed independently?
 	 */
-	ip_selector local_shunt;
-	ip_selector remote_shunt;
-	if (c->spd.that.protocol == 0) {
-		dbg("shunt widened to all protocols + all ports since conn does not limit protocols");
-		pexpect(c->spd.that.port == 0);
-		local_shunt = selector_from_address(&b->local.host_addr);
-		remote_shunt = selector_from_address(&b->remote.host_addr);
-		our_port = 0;
-		peer_port = 0;
-	} else if (c->spd.that.port == 0) {
-		dbg("shunt widend to all ports since conn does not limit ports");
-		pexpect(c->spd.that.protocol == b->transport_proto);
-		const ip_protocol *protocol = protocol_by_ipproto(c->spd.that.protocol);
-		local_shunt = selector_from_address_protocol_port(&b->local.host_addr, protocol, unset_port);
-		remote_shunt = selector_from_address_protocol_port(&b->remote.host_addr, protocol, unset_port);
-	} else if (c->spd.that.port == endpoint_hport(&b->remote.client)) {
-		local_shunt = selector_from_endpoint(&b->local.client);
-		remote_shunt = selector_from_endpoint(&b->remote.client);
-	} else {
-		llog(RC_LOG_SERIOUS, b->logger,
-		     "Dragons! connection port %d mismatches shunt dest port %d",
-		     c->spd.that.port, peer_port);
-		/* XXX: why continue? */
-		local_shunt = selector_from_address(&b->local.host_addr);
-		remote_shunt = selector_from_address(&b->remote.host_addr);
-	}
+	pexpect(c->spd.this.protocol == c->spd.that.protocol);
+	ip_selector local_shunt = shunt_from_traffic_end("local", &b->local.client, &c->spd.this);
+	ip_selector remote_shunt = shunt_from_traffic_end("remote", &b->remote.client, &c->spd.that);
 
-	const ip_protocol *shunt_proto = selector_protocol(&remote_shunt);
-	pexpect(shunt_proto == selector_protocol(&local_shunt));
+	const ip_protocol *shunt_protocol = selector_protocol(&local_shunt);
+	pexpect(shunt_protocol == selector_protocol(&remote_shunt));
 
-	dbg("going to initiate opportunistic, first installing %s negotiationshunt",
+	selectors_buf sb;
+	dbg("going to initiate opportunistic %s, first installing %s negotiationshunt",
+	    str_selectors(&local_shunt, &remote_shunt, &sb),
 	    enum_name_short(&spi_names, b->negotiation_shunt));
 
 	/*
@@ -958,7 +968,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			&b->remote.host_addr, &remote_shunt,
 			htonl(SPI_HOLD), /* kernel induced */
 			htonl(b->negotiation_shunt),
-			&ip_protocol_internal, shunt_proto->ipproto,
+			&ip_protocol_internal, shunt_protocol->ipproto,
 			ET_INT, null_proto_info,
 			deltatime(SHUNT_PATIENCE),
 			calculate_sa_prio(c, LIN(POLICY_OPPORTUNISTIC, c->policy) ? true : false),
@@ -970,7 +980,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	} else {
 		dbg("adding bare (possibly wided) passthrough negotiationshunt succeeded (violating API)");
 		add_bare_shunt(&local_shunt, &remote_shunt,
-			       shunt_proto->ipproto, SPI_HOLD, addwidemsg);
+			       shunt_protocol->ipproto, SPI_HOLD, addwidemsg);
 	}
 	/*
 	 * Now delete the (obsoleted) narrow bare kernel shunt - we have
@@ -1033,34 +1043,25 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	passert(LHAS(LELEM(RT_UNROUTED) |
 		     LELEM(RT_ROUTED_PROSPECTIVE),
 		     c->spd.routing));
-	if (b->held) {
-		/*
-		 * if we have protoport= set, narrow to it. zero out
-		 * ephemeral port
-		 */
+	/*
+	 * if we have protoport= set, narrow to it and zero out
+	 * ephemeral port
+	 *
+	 * warning: we know ports in this_client/that_client are 0 so
+	 * far
+	 *
+	 * XXX: ?????
+	 */
+	if (c->spd.this.protocol != 0) {
 		if (c->spd.this.port != 0) {
-			update_endpoint_port(&b->local.client, ip_hport(c->spd.this.port));
+			update_selector_hport(&c->spd.this.client, c->spd.this.port);
 		}
 		if (c->spd.that.port != 0) {
-			update_endpoint_port(&b->remote.client, ip_hport(c->spd.that.port));
+			update_selector_hport(&c->spd.that.client, c->spd.that.port);
 		}
-		/* packet triggered - not whack triggered */
-		dbg("assigning negotiation_shunt to connection");
-		/*
-		 * if we have protoport= set, narrow to it and zero out
-		 * ephemeral port
-		 *
-		 * warning: we know ports in this_client/that_client
-		 * are 0 so far
-		 */
-		if (c->spd.this.protocol != 0) {
-			if (c->spd.this.port != 0) {
-				update_selector_hport(&c->spd.this.client, endpoint_hport(&b->local.client));
-			}
-			if (c->spd.that.port != 0) {
-				update_selector_hport(&c->spd.that.client, endpoint_hport(&b->remote.client));
-			}
-		}
+	}
+
+	if (b->held) {
 		if (assign_holdpass(c, &c->spd,
 				    b->transport_proto,
 				    b->negotiation_shunt,
@@ -1071,12 +1072,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			llog(RC_LOG, b->logger, "assign_holdpass failed!");
 		}
 	}
-
-	dbg("initiate on demand from %s:%d to %s:%d using %s proto=%d because: %s",
-	    our_addr, our_port, peer_addr, peer_port,
-	    (c->policy & POLICY_AUTH_NULL) ? "AUTH_NULL" : "RSASIG",
-	    b->transport_proto,
-	    b->want);
 
 	ipsecdoi_initiate(b->background ? null_fd : b->logger->global_whackfd,
 			  c, c->policy, 1,
