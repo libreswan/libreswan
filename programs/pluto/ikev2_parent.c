@@ -1480,6 +1480,10 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 	 * a newer IKE SA (not child).  Suspect this is to handle a
 	 * race where the other end brings up the IKE SA first?  For
 	 * that case, shouldn't this state have been deleted?
+	 *
+	 * NOTE: a larger serialno does not mean superseded. crossed
+	 * streams could mean the lower serial established later and is
+	 * the "newest". Should > be replaced with !=   ?
 	 */
 	if (c->newest_ipsec_sa > st->st_serialno) {
 		log_state(RC_LOG, &ike->sa,

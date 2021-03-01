@@ -171,6 +171,10 @@ void retransmit_v2_msg(struct state *st)
 	 * XXX: Suspect this is to handle a race where the other end
 	 * brings up the connection first?  For that case, shouldn't
 	 * this state have been deleted?
+	 *
+	 *  NOTE: a larger serialno does not mean superseded. crossed
+	 * streams could mean the lower serial established later and is
+	 * the "newest". Should > be replaced with !=   ?
 	 */
 	if (st->st_establishing_sa == IKE_SA &&
 	    c->newest_isakmp_sa > st->st_serialno) {
