@@ -28,9 +28,10 @@ config setup
 	# dnssec-enable=no
 	#
 	# To enable IKE and IPsec over TCP for VPN server. Requires at least
-	# Linux 5.7 kernel. For TCP support as a VPN client, specify
-	# tcp-remote-port=4500 in the client conn section.
+	# Linux 5.7 kernel or a kernel with TCP backport (like RHEL8 4.18.0-291)
 	# listen-tcp=yes
+	# To enable IKE and IPsec over TCP for VPN client, also specify
+	# tcp-remote-port=4500 in the client's conn section.
 
 # if it exists, include system wide crypto-policy defaults
 # include /etc/crypto-policies/back-ends/libreswan.config
