@@ -1205,7 +1205,7 @@ kvmplutotest	ikev2-tcp-10-rekey-child			good
 kvmplutotest	ikev2-tcp-10-rekey-ike				good
 kvmplutotest	ikev2-tcp-25-rw-nat				good
 kvmplutotest	ikev2-tcp-26-rw-nat-keepalive			good
-kvmplutotest	kev2-udp-05-transport-mode 			good
+kvmplutotest	ikev2-udp-05-transport-mode 			good
 
 # OpenBSD interop
 kvmplutotest	interop-ikev2-openbsd-01		skiptest
