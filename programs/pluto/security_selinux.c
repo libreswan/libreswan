@@ -41,58 +41,70 @@ void init_selinux(struct logger *logger)
 }
 
 #ifdef HAVE_OLD_SELINUX
-int within_range(security_context_t sl, security_context_t range, struct logger *logger)
-{
-	int rtn = 1;
-	security_id_t slsid;
-	security_id_t rangesid;
-	struct av_decision avd;
-	security_class_t tclass;
-	access_vector_t av;
-
-	/*
-	 * * Get the sids for the sl and range contexts
-	 */
-	rtn = avc_context_to_sid(sl, &slsid);
-	if (rtn != 0) {
-		llog(RC_LOG, logger, "selinux within_range: Unable to retrieve sid for sl context (%s)", sl);
-		return 0;
-	}
-	rtn = avc_context_to_sid(range, &rangesid);
-	if (rtn != 0) {
-		llog(RC_LOG, logger, "selinux within_range: Unable to retrieve sid for range context (%s)", range);
-		return 0;
-	}
-
-	/*
-	** Straight up test between sl and range
-	**/
-	tclass = string_to_security_class("association");
-	av = string_to_av_perm(tclass, "polmatch");
-	rtn = avc_has_perm(slsid, rangesid, tclass, av, NULL, &avd);
-	if (rtn != 0) {
-		llog(RC_LOG, logger, "selinux within_range: The sl (%s) is not within range of (%s)", sl, range);
-		return 0;
-	}
-	dbg("selinux within_range: The sl (%s) is within range of (%s)", sl, range);
-	return 1;
-}
-#else
-int within_range(const char *sl, const char *range, struct logger *logger)
+static bool within_range(security_context_t sl, security_context_t range, struct logger *logger)
 {
 	int rtn;
+
+	/* Get the sids for the sl and range contexts */
+
+	security_id_t slsid;
+	rtn = avc_context_to_sid(sl, &slsid);
+	if (rtn != 0) {
+		/* ??? log message should report errno */
+		llog(RC_LOG, logger, "selinux within_range: Unable to retrieve sid for sl context (%s)", sl);
+		return false;
+	}
+	security_id_t rangesid;
+	rtn = avc_context_to_sid(range, &rangesid);
+	if (rtn != 0) {
+		/* ??? log message should report errno */
+		llog(RC_LOG, logger, "selinux within_range: Unable to retrieve sid for range context (%s)", range);
+		return false;
+	}
+
+	/* Straight up test between sl and range */
+
+	security_class_t tclass = string_to_security_class("association");
+	access_vector_t av = string_to_av_perm(tclass, "polmatch");
+	struct av_decision avd;
+	rtn = avc_has_perm(slsid, rangesid, tclass, av, NULL, &avd);
+	if (rtn != 0) {
+		/* ??? log message should report errno */
+		llog(RC_LOG, logger, "selinux within_range: The sl (%s) is not within range of (%s)", sl, range);
+		return false;
+	}
+	dbg("selinux within_range: The sl (%s) is within range of (%s)", sl, range);
+	return true;
+}
+#else
+static bool within_range(const char *sl, const char *range, struct logger *logger)
+{
 	/*
 	 * Check access permission for sl (connection policy label from SAD)
 	 * and range (connection flow label from SPD but initially the
 	 * conn policy-label= entry of the ipsec.conf(5) configuration file).
 	 */
-	rtn = selinux_check_access(sl, range, "association", "polmatch", NULL);
+	int rtn = selinux_check_access(sl, range, "association", "polmatch", NULL);
 	if (rtn != 0) {
+		/* note: selinux_check_access(3) does not specify that errno is set */
 		llog(RC_LOG, logger, "selinux within_range: sl (%s) - range (%s) error: %s",
 		     sl, range, strerror(errno));
-		return 0;
+		return false;
 	}
 	dbg("selinux within_range: Permission granted sl (%s) - range (%s)", sl, range);
-	return 1;
+	return true;
 }
 #endif
+
+bool se_label_match(const chunk_t *a, const chunk_t *b, struct logger *logger)
+{
+	if (hunk_eq(*a, *b))
+		return true;
+
+	/*
+	 * ??? should security labels be NUL-terminated?
+	 * passert(a->ptr == NULL || (a->len > 0 && a->ptr[a->len - 1] == '\0')); 
+	 * passert(b->ptr == NULL || (b->len > 0 && b->ptr[b->len - 1] == '\0'));
+	 */
+	return within_range((const char *)a->ptr, (const char *)b->ptr, logger);
+}

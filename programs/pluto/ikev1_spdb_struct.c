@@ -72,12 +72,10 @@ static bool parse_secctx_attr(pb_stream *pbs UNUSED, struct state *st)
 #include <linux/xfrm.h> /* for XFRM_SC_DOI_LSM and XFRM_SC_ALG_SELINUX */
 static bool parse_secctx_attr(struct pbs_in *pbs, struct state *st)
 {
-	diag_t d;
-
 	const struct connection *c = st->st_connection;
 
 	struct xfrm_user_sec_ctx_ike uctx;
-	d = pbs_in_struct(pbs, &sec_ctx_desc, &uctx.ctx, sizeof(uctx.ctx), NULL);
+	diag_t d = pbs_in_struct(pbs, &sec_ctx_desc, &uctx.ctx, sizeof(uctx.ctx), NULL);
 	if (d != NULL) {
 		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return false;
@@ -113,10 +111,7 @@ static bool parse_secctx_attr(struct pbs_in *pbs, struct state *st)
 		return false;
 	}
 
-	if (!hunk_eq(sec_label, c->spd.this.sec_label) &&
-		!within_range(sec_label.ptr, /* we ensured NUL termination above */
-			  (const char *)c->spd.this.sec_label.ptr,  /* we ensured NUL termination earlier? */
-			  st->st_logger)) {
+	if (!se_label_match((chunk_t *)&sec_label, &c->spd.this.sec_label, st->st_logger)) {
 		LLOG_JAMBUF(RC_LOG_SERIOUS, st->st_logger, buf) {
 			jam(buf, "received IPsec Security Label '");
 			jam_sanitized_bytes(buf, sec_label.ptr,

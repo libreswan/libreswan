@@ -876,44 +876,38 @@ static const chunk_t *score_ends_seclabel(const struct ends *ends,
 	chunk_t const *selected_sec_label = NULL;
 
 	for (unsigned tsi_n = 0; tsi_n < tsi->nr; tsi_n++) {
-		const struct traffic_selector *cur = &tsi->ts[tsi_n];
-		if (cur->ts_type == IKEv2_TS_SECLABEL) {
+		const struct traffic_selector *cur_i = &tsi->ts[tsi_n];
+		if (cur_i->ts_type == IKEv2_TS_SECLABEL) {
 			recv_label_i = true;
-			if (cur->sec_label.len == 0) {
-				// complain loudly
+			if (cur_i->sec_label.len == 0) {
+				/* ??? complain loudly */
 				continue;
-			} else {
-				if (hunk_eq(cur->sec_label, d->spd.this.sec_label) ||
-					within_range((const char *)cur->sec_label.ptr, (const char *)d->spd.this.sec_label.ptr, logger)) {
-					match_i = true;
-					dbg("ikev2ts #1: received label within range of our security label");
-				} else {
-					dbg("ikev2ts #1: received label not within range of our security label");
-					DBG_dump_hunk("ends->i->sec_label", ends->i->sec_label);
-					DBG_dump_hunk("cur->sec_label", cur->sec_label);
-					continue; // hope for a better one
-				}
 			}
 
+			if (!se_label_match(&cur_i->sec_label, &d->spd.this.sec_label, logger)) {
+				dbg("ikev2ts #1: received label not within range of our security label");
+				DBG_dump_hunk("ends->i->sec_label", ends->i->sec_label);
+				DBG_dump_hunk("cur_i->sec_label", cur_i->sec_label);
+				continue;
+			}
+
+			match_i = true;
+			dbg("ikev2ts #1: received label within range of our security label");
+
 			for (unsigned tsr_n = 0; tsr_n < tsr->nr; tsr_n++) {
-				const struct traffic_selector *cur = &tsr->ts[tsr_n];
-				if (cur->ts_type == IKEv2_TS_SECLABEL) {
+				const struct traffic_selector *cur_r = &tsr->ts[tsr_n];
+				if (cur_r->ts_type == IKEv2_TS_SECLABEL) {
 					recv_label_r = true;
-					if (cur->sec_label.len == 0) {
-						dbg("IKEv2_TS_SECLABEL but zero length cur->sec_label");
-						continue;
+					if (cur_r->sec_label.len == 0) {
+						dbg("IKEv2_TS_SECLABEL but zero length cur_r->sec_label");
+					} else if (se_label_match(&ends->r->sec_label, &d->spd.this.sec_label, logger)) {
+						dbg("ikev2ts #2: received label within range of our security label");
+						match_r = true;
+						selected_sec_label = &cur_r->sec_label;
 					} else {
-						if (hunk_eq(ends->r->sec_label, d->spd.this.sec_label) ||
-						    within_range((const char *)ends->r->sec_label.ptr, (const char *)d->spd.this.sec_label.ptr, logger)) {
-							dbg("ikev2ts #2: received label within range of our security label");
-							match_r = true;
-							selected_sec_label = &cur->sec_label;
-						} else {
-							dbg("ikev2ts #2: received label not within range of our security label");
-							DBG_dump_hunk("ends->r->sec_label", ends->r->sec_label);
-							DBG_dump_hunk("cur->sec_label", cur->sec_label);
-							continue; // hope for a better one
-						}
+						dbg("ikev2ts #2: received label not within range of our security label");
+						DBG_dump_hunk("ends->r->sec_label", ends->r->sec_label);
+						DBG_dump_hunk("cur_r->sec_label", cur_r->sec_label);
 					}
 				}
 			}

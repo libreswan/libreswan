@@ -15,7 +15,10 @@
 
 #ifndef _SECURITY_SELINUX_H
 #define _SECURITY_SELINUX_H
+
 #ifdef HAVE_LABELED_IPSEC
+
+#include <stdbool.h>
 
 #include <selinux/selinux.h>
 
@@ -24,15 +27,14 @@
 #include <selinux/context.h>
 #endif
 
+#include "chunk.h"
+
 struct logger;
 
 void init_selinux(struct logger *logger);
 
-#ifdef HAVE_OLD_SELINUX
-int within_range(security_context_t sl, security_context_t range, struct logger *logger);
-#else
-int within_range(const char *sl, const char *range, struct logger *logger);
-#endif
+bool se_label_match(const chunk_t *a, const chunk_t *b, struct logger *logger);
 
-#endif
+#endif /* HAVE_LABELED_IPSEC */
+
 #endif /* _SECURITY_SELINUX_H */
