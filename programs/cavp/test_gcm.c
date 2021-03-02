@@ -189,7 +189,7 @@ static void gcm_run_test(struct logger *logger)
 							    key,
 							    HERE, logger);
 
-	chunk_t text_and_tag = clone_chunk_chunk(ct, tag, "text-and-tag");
+	chunk_t text_and_tag = clone_hunk_hunk(ct, tag, "text-and-tag");
 
 	bool result = gcm_alg->encrypt_ops
 		->do_aead(gcm_alg,

@@ -79,8 +79,9 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 	case STATE_PARENT_I2:
 		if (ike->sa.st_intermediate_used) {
 			intermediate_auth = clone_hunk(ike->sa.st_intermediate_packet_me, "IntAuth_*_I");
-			intermediate_auth = clone_chunk_chunk(intermediate_auth, ike->sa.st_intermediate_packet_peer,
-									"IntAuth_*_I_A | IntAuth_*_R");
+			intermediate_auth = clone_hunk_hunk(intermediate_auth,
+							    ike->sa.st_intermediate_packet_peer,
+							    "IntAuth_*_I_A | IntAuth_*_R");
 		}
 		if (!verify) {
 			/* we are initiator sending PSK */
@@ -104,8 +105,9 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 		nonce_name = "verify: initiator inputs to hash2 (responder nonce)";
 		if (ike->sa.st_intermediate_used) {
 			intermediate_auth = clone_hunk(ike->sa.st_intermediate_packet_peer, "IntAuth_*_I");
-			intermediate_auth = clone_chunk_chunk(intermediate_auth, ike->sa.st_intermediate_packet_me,
-									"IntAuth_*_I_A | IntAuth_*_R");
+			intermediate_auth = clone_hunk_hunk(intermediate_auth,
+							    ike->sa.st_intermediate_packet_me,
+							    "IntAuth_*_I_A | IntAuth_*_R");
 		}
 		break;
 
@@ -122,8 +124,9 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 			nonce_name = "verify: initiator inputs to hash2 (initiator nonce)";
 			if (ike->sa.st_intermediate_used) {
 				intermediate_auth = clone_hunk(ike->sa.st_intermediate_packet_me, "IntAuth_*_I");
-				intermediate_auth = clone_chunk_chunk(intermediate_auth, ike->sa.st_intermediate_packet_peer,
-										"IntAuth_*_I_A | IntAuth_*_R");
+				intermediate_auth = clone_hunk_hunk(intermediate_auth,
+								    ike->sa.st_intermediate_packet_peer,
+								    "IntAuth_*_I_A | IntAuth_*_R");
 			}
 		} else {
 			/* we are responder sending PSK */
@@ -133,8 +136,9 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 			nonce_name = "create: responder inputs to hash2 (initiator nonce)";
 			if (ike->sa.st_intermediate_used) {
 				intermediate_auth = clone_hunk(ike->sa.st_intermediate_packet_peer, "IntAuth_*_I");
-				intermediate_auth = clone_chunk_chunk(intermediate_auth, ike->sa.st_intermediate_packet_me,
-										"IntAuth_*_I_A | IntAuth_*_R");
+				intermediate_auth = clone_hunk_hunk(intermediate_auth,
+								    ike->sa.st_intermediate_packet_me,
+								    "IntAuth_*_I_A | IntAuth_*_R");
 			}
 		}
 		break;

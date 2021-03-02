@@ -505,7 +505,7 @@ void append_chunk_symkey(const char *name, chunk_t *lhs, PK11SymKey *rhs,
 			 struct logger *logger)
 {
 	chunk_t rhs_chunk = chunk_from_symkey(name, rhs, logger);
-	chunk_t new = clone_chunk_chunk(*lhs, rhs_chunk, name);
+	chunk_t new = clone_hunk_hunk(*lhs, rhs_chunk, name);
 	free_chunk_content(&rhs_chunk);
 	replace_chunk(lhs, new);
 }
