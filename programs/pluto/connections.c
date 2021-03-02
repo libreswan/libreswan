@@ -3531,23 +3531,17 @@ static bool is_virtual_net_used(struct connection *c,
 
 /* fc_try: a helper function for find_client_connection */
 static struct connection *fc_try(const struct connection *c,
-				const struct host_pair *hp,
-				const ip_selector *our_net,
-				const ip_selector *peer_net,
-				const uint8_t our_protocol,
-				const uint16_t our_port,
-				const uint8_t peer_protocol,
-				const uint16_t peer_port)
+				 const struct host_pair *hp,
+				 const ip_selector *local_client,
+				 const ip_selector *remote_client)
 {
 	struct connection *best = NULL;
 	policy_prio_t best_prio = BOTTOM_PRIO;
-	const bool peer_net_is_host = subnetisaddr(peer_net,
-						&c->spd.that.host_addr);
+	const bool remote_is_host = selector_is_address(remote_client,
+							&c->spd.that.host_addr);
+
 	err_t virtualwhy = NULL;
-
-	struct connection *d;
-
-	for (d = hp->connections; d != NULL; d = d->hp_next) {
+	for (struct connection *d = hp->connections; d != NULL; d = d->hp_next) {
 		if (d->policy & POLICY_GROUP)
 			continue;
 
@@ -3561,37 +3555,41 @@ static struct connection *fc_try(const struct connection *c,
 		}
 
 		/* compare protocol and ports */
-		if (!(d->spd.this.protocol == our_protocol &&
-		      d->spd.that.protocol == peer_protocol &&
-		      (d->spd.this.port == 0 || d->spd.this.port == our_port) &&
-		      (d->spd.that.has_port_wildcard || d->spd.that.port == peer_port)))
+		unsigned local_protocol = selector_protocol(local_client)->ipproto;
+		unsigned remote_protocol = selector_protocol(remote_client)->ipproto;
+		unsigned local_port = hport(selector_port(local_client));
+		unsigned remote_port = hport(selector_port(remote_client));
+		if (!(d->spd.this.protocol == local_protocol &&
+		      d->spd.that.protocol == remote_protocol &&
+		      (d->spd.this.port == 0 || d->spd.this.port == local_port) &&
+		      (d->spd.that.has_port_wildcard || d->spd.that.port == remote_port)))
 		{
 			continue;
 		}
 
 		/*
 		 * non-Opportunistic case:
-		 * our_client must match.
+		 * local_client must match.
 		 *
-		 * So must peer_client, but the testing is complicated
+		 * So must remote_client, but the testing is complicated
 		 * by the fact that the peer might be a wildcard
 		 * and if so, the default value of that.client
-		 * won't match the default peer_net. The appropriate test:
+		 * won't match the default remote_net. The appropriate test:
 		 *
-		 * If d has a peer client, it must match peer_net.
-		 * If d has no peer client, peer_net must just have peer itself.
+		 * If d has a peer client, it must match remote_net.
+		 * If d has no peer client, remote_net must just have peer itself.
 		 */
 
-		const struct spd_route *sr;
+		for (const struct spd_route *sr = &d->spd;
+		     best != d && sr != NULL; sr = sr->spd_next) {
 
-		for (sr = &d->spd; best != d && sr != NULL; sr = sr->spd_next) {
 			if (DBGP(DBG_BASE)) {
 				selector_buf s1, d1;
 				selector_buf s3, d3;
 				DBG_log("  fc_try trying %s:%s:%d/%d -> %s:%d/%d%s vs %s:%s:%d/%d -> %s:%d/%d%s",
-					c->name, str_selector(our_net, &s1),
+					c->name, str_selector(local_client, &s1),
 					c->spd.this.protocol, c->spd.this.port,
-					str_selector(peer_net, &d1),
+					str_selector(remote_client, &d1),
 					c->spd.that.protocol, c->spd.that.port,
 					is_virtual_connection(c) ?
 					"(virt)" : "", d->name,
@@ -3602,45 +3600,40 @@ static struct connection *fc_try(const struct connection *c,
 					is_virtual_sr(sr) ? "(virt)" : "");
 			}
 
-			if (!samesubnet(&sr->this.client, our_net)) {
+			if (!selector_subnet_eq(&sr->this.client, local_client)) {
 				if (DBGP(DBG_BASE)) {
 					selector_buf s1, s3;
-					DBG_log("   our client (%s) not in our_net (%s)",
+					DBG_log("   our client (%s) not in local_net (%s)",
 						str_selector(&sr->this.client, &s3),
-						str_selector(our_net, &s1));
+						str_selector(local_client, &s1));
 				}
-
 				continue;
 			}
 
 			if (sr->that.has_client) {
-				if (!samesubnet(&sr->that.client, peer_net) &&
+
+				if (!selector_subnet_eq(&sr->that.client, remote_client) &&
 				    !is_virtual_sr(sr)) {
 					if (DBGP(DBG_BASE)) {
 						selector_buf d1, d3;
-						DBG_log("   their client (%s) not in same peer_net (%s)",
+						DBG_log("   their client (%s) not in same remote_net (%s)",
 							str_selector(&sr->that.client, &d3),
-							str_selector(peer_net, &d1));
+							str_selector(remote_client, &d1));
 					}
 					continue;
 				}
 
-				virtualwhy = check_virtual_net_allowed(
-						d,
-						peer_net,
-						&sr->that.host_addr);
+				virtualwhy = check_virtual_net_allowed(d, remote_client,
+								       &sr->that.host_addr);
 
 				if (is_virtual_sr(sr) &&
 				    (virtualwhy != NULL ||
-				     is_virtual_net_used(
-					d,
-					peer_net,
-					&sr->that.id)))
-				{
+				     is_virtual_net_used(d, remote_client,
+							 &sr->that.id))) {
 					dbg("   virtual net not allowed");
 					continue;
 				}
-			} else if (!peer_net_is_host) {
+			} else if (!remote_is_host) {
 				continue;
 			}
 
@@ -3687,24 +3680,17 @@ static struct connection *fc_try(const struct connection *c,
 
 static struct connection *fc_try_oppo(const struct connection *c,
 				      const struct host_pair *hp,
-				      const ip_selector *our_net,
-				      const ip_selector *peer_net,
-				      const uint8_t our_protocol,
-				      const uint16_t our_port,
-				      const uint8_t peer_protocol,
-				      const uint16_t peer_port)
+				      const ip_selector *local_client,
+				      const ip_selector *remote_client)
 {
 	struct connection *best = NULL;
 	policy_prio_t best_prio = BOTTOM_PRIO;
 
-	struct connection *d;
-
-	for (d = hp->connections; d != NULL; d = d->hp_next) {
+	for (struct connection *d = hp->connections; d != NULL; d = d->hp_next) {
 		if (d->policy & POLICY_GROUP)
 			continue;
 
 		int wildcards, pathlen;
-
 		if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
 		      match_id(&c->spd.that.id, &d->spd.that.id, &wildcards) &&
 		      trusted_ca_nss(c->spd.that.ca, d->spd.that.ca, &pathlen)))
@@ -3713,39 +3699,43 @@ static struct connection *fc_try_oppo(const struct connection *c,
 		}
 
 		/* compare protocol and ports */
-		if (d->spd.this.protocol != our_protocol ||
-			(d->spd.this.port && d->spd.this.port != our_port) ||
-			d->spd.that.protocol != peer_protocol ||
-			(d->spd.that.port != peer_port &&
+		unsigned local_protocol = selector_protocol(local_client)->ipproto;
+		unsigned remote_protocol = selector_protocol(remote_client)->ipproto;
+		unsigned local_port = hport(selector_port(local_client));
+		unsigned remote_port = hport(selector_port(remote_client));
+		if (d->spd.this.protocol != local_protocol ||
+			(d->spd.this.port && d->spd.this.port != local_port) ||
+			d->spd.that.protocol != remote_protocol ||
+			(d->spd.that.port != remote_port &&
 				!d->spd.that.has_port_wildcard))
 			continue;
 
 		/*
 		 * Opportunistic case:
-		 * our_net must be inside d->spd.this.client
-		 * and peer_net must be inside d->spd.that.client
+		 * local_net must be inside d->spd.this.client
+		 * and remote_net must be inside d->spd.that.client
 		 * Note: this host_pair chain also has shunt
 		 * eroute conns (clear, drop), but they won't
 		 * be marked as opportunistic.
 		 */
 
-		const struct spd_route *sr;
+		for (const struct spd_route *sr = &d->spd;
+		     sr != NULL; sr = sr->spd_next) {
 
-		for (sr = &d->spd; sr != NULL; sr = sr->spd_next) {
 			if (DBGP(DBG_BASE)) {
 				selector_buf s1;
 				selector_buf d1;
 				selector_buf s3;
 				selector_buf d3;
 				DBG_log("  fc_try_oppo trying %s:%s -> %s vs %s:%s -> %s",
-					c->name, str_selector(our_net, &s1),
-					str_selector(peer_net, &d1),
+					c->name, str_selector(local_client, &s1),
+					str_selector(remote_client, &d1),
 					d->name, str_selector(&sr->this.client, &s3),
 					str_selector(&sr->that.client, &d3));
 			}
 
-			if (!subnetinsubnet(our_net, &sr->this.client) ||
-				!subnetinsubnet(peer_net, &sr->that.client))
+			if (!selector_subnet_in(local_client, &sr->this.client) ||
+			    !selector_subnet_in(remote_client, &sr->that.client))
 				continue;
 
 			/*
@@ -3803,21 +3793,6 @@ struct connection *find_v1_client_connection(struct connection *const c,
 	}
 
 	/*
-	 * XXX: these are all redundant.
-	 *
-	 * XXX: assigning the ip_selector LOCAL_CLIENT to the
-	 * ip_subnet OUR_NET is deliberately broken.  Caller was
-	 * stuffing the port into the NET, while at the same time
-	 * using subnet calls.
-	 */
-	unsigned our_protocol = selector_protocol(local_client)->ipproto;
-	unsigned our_port = selector_port(local_client).hport;
-	unsigned peer_protocol = selector_protocol(remote_client)->ipproto;
-	unsigned peer_port = selector_port(remote_client).hport;
-	const ip_subnet *our_net = local_client;
-	const ip_subnet *peer_net = remote_client;
-
-	/*
 	 * Give priority to current connection
 	 * but even greater priority to a routed concrete connection.
 	 */
@@ -3825,9 +3800,7 @@ struct connection *find_v1_client_connection(struct connection *const c,
 		struct connection *unrouted = NULL;
 		int srnum = -1;
 
-		const struct spd_route *sr;
-
-		for (sr = &c->spd; unrouted == NULL && sr != NULL;
+		for (const struct spd_route *sr = &c->spd; unrouted == NULL && sr != NULL;
 			sr = sr->spd_next) {
 			srnum++;
 
@@ -3839,14 +3812,16 @@ struct connection *find_v1_client_connection(struct connection *const c,
 					str_selector(&sr->that.client, &d2));
 			}
 
-			if (samesubnet(&sr->this.client, our_net) &&
-				samesubnet(&sr->that.client, peer_net) &&
-				sr->this.protocol == our_protocol &&
-				(!sr->this.port ||
-					sr->this.port == our_port) &&
-				(sr->that.protocol == peer_protocol) &&
-				(!sr->that.port ||
-					sr->that.port == peer_port)) {
+			unsigned local_protocol = selector_protocol(local_client)->ipproto;
+			unsigned local_port = selector_port(local_client).hport;
+			unsigned remote_protocol = selector_protocol(remote_client)->ipproto;
+			unsigned remote_port = selector_port(remote_client).hport;
+			if (selector_subnet_eq(&sr->this.client, local_client) &&
+			    selector_subnet_eq(&sr->that.client, remote_client) &&
+			    sr->this.protocol == local_protocol &&
+			    (!sr->this.port || sr->this.port == local_port) &&
+			    (sr->that.protocol == remote_protocol) &&
+			    (!sr->that.port || sr->that.port == remote_port)) {
 				if (routed(sr->routing))
 					return c;
 
@@ -3860,8 +3835,7 @@ struct connection *find_v1_client_connection(struct connection *const c,
 		 * If so, the caller must have passed NULL for it
 		 * and earlier references would be wrong (segfault).
 		 */
-		d = fc_try(c, c->host_pair, our_net, peer_net,
-			our_protocol, our_port, peer_protocol, peer_port);
+		d = fc_try(c, c->host_pair, local_client, remote_client);
 
 		dbg("  fc_try %s gives %s", c->name, (d ? d->name : "none"));
 
@@ -3870,13 +3844,12 @@ struct connection *find_v1_client_connection(struct connection *const c,
 	}
 
 	if (d == NULL) {
-		/* look for an abstract connection to match */
+		/*
+		 * look for an abstract connection to match
+		 */
 		const struct host_pair *hp = NULL;
-
-		const struct spd_route *sra;
-
-		for (sra = &c->spd; hp == NULL &&
-				sra != NULL; sra = sra->spd_next) {
+		for (const struct spd_route *sra = &c->spd;
+		     sra != NULL && hp == NULL; sra = sra->spd_next) {
 			hp = find_host_pair(&sra->this.host_addr, NULL);
 			if (DBGP(DBG_BASE)) {
 				selector_buf s2;
@@ -3889,23 +3862,19 @@ struct connection *find_v1_client_connection(struct connection *const c,
 		}
 
 		if (hp != NULL) {
-			/* RW match with actual peer_id or abstract peer_id? */
-			d = fc_try(c, hp, our_net, peer_net,
-				our_protocol, our_port, peer_protocol,
-				peer_port);
+			/* RW match with actual remote_id or abstract remote_id? */
+			d = fc_try(c, hp, local_client, remote_client);
 
 			if (d == NULL &&
-				subnetishost(our_net) &&
-				subnetishost(peer_net)) {
+			    selector_is_one_address(local_client) &&
+			    selector_is_one_address(remote_client)) {
 				/*
 				 * Opportunistic match?
-				 * Always use abstract peer_id.
+				 * Always use abstract remote_id.
 				 * Note that later instantiation will result
-				 * in the same peer_id.
+				 * in the same remote_id.
 				 */
-				d = fc_try_oppo(c, hp, our_net, peer_net,
-						our_protocol, our_port,
-						peer_protocol, peer_port);
+				d = fc_try_oppo(c, hp, local_client, remote_client);
 			}
 		}
 	}
