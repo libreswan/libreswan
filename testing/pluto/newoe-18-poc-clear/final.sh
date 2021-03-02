@@ -1,6 +1,6 @@
 ../../pluto/bin/ipsec-look.sh
 # should not show any hits
-grep "negotiated connection" /tmp/pluto.log
+grep -v '^|' /tmp/pluto.log | grep "negotiated connection"
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
