@@ -1,0 +1,78 @@
+/testing/guestbin/swan-prep
+east #
+ checkmodule -M -m -o ipsec-test-module.mod ipsec-test-module.te
+east #
+ semodule_package -o ipsec-test-module.pp -m ipsec-test-module.mod
+east #
+ semodule -i ipsec-test-module.pp > /dev/null 2>/dev/null
+east #
+ rm -f ipsec-test-module.mod ipsec-test-module.pp
+east #
+ setenforce 1
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ echo 1 > /proc/sys/net/core/xfrm_acq_expires
+east #
+ ipsec auto --add labeled
+002 "labeled": added IKEv2 connection
+east #
+ runcon -t netutils_t ipsec getpeercon_server 4300 &
+[x] PID
+east #
+ echo "initdone"
+initdone
+[1]+  Segmentation fault      runcon -t netutils_t ipsec getpeercon_server 4300
+east #
+ ../../pluto/bin/ipsec-look.sh
+east NOW
+XFRM state:
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
+XFRM policy:
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300
+	security context system_u:object_r:ipsec_spd_t:s0
+	dir out priority 1687486 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300
+	security context system_u:object_r:ipsec_spd_t:s0
+	dir in priority 1687486 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east #
+ ../bin/check-for-core.sh
+east #
+ semodule -r ipsec-test-module
+libsemanage.semanage_direct_remove_key: Removing last ipsec-test-module module (no other ipsec-test-module module exists at another priority).
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -ts recent -m AVC | audit2allow ; fi
+#============= netutils_t ==============
+#!!!! This avc can be allowed using the boolean 'domain_can_mmap_files'
+allow netutils_t shell_exec_t:file map;
+east #
+ 
