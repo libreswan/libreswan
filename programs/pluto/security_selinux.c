@@ -98,9 +98,6 @@ static bool within_range(const char *sl, const char *range, struct logger *logge
 
 bool se_label_match(const chunk_t *a, const chunk_t *b, struct logger *logger)
 {
-	if (hunk_eq(*a, *b))
-		return true;
-
 	/*
 	 * ??? should security labels be NUL-terminated?
 	 * passert(a->ptr == NULL || (a->len > 0 && a->ptr[a->len - 1] == '\0')); 
