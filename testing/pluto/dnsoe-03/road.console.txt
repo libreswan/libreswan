@@ -65,7 +65,7 @@ road #
  # this should not show any hits
 road #
  grep "DNS QUESTION" /tmp/pluto.log
-| DNS QUESTION 23.2.1.192.IN-ADDR.ARPA.\011IN\011IPSECKEY\012
+| DNS QUESTION 23.2.1.192.IN-ADDR.ARPA.\tIN\tIPSECKEY\n
 road #
  echo done
 done

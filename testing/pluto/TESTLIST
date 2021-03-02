@@ -194,6 +194,7 @@ kvmplutotest	ikev2-ikeport-02-initiator		good
 kvmplutotest	ikev2-ikeport-03-responder		good
 kvmplutotest	ikev2-ikeport-04-rw-nat-initiator	good
 kvmplutotest	ikev2-ikeport-05-rw-nat-responder	good
+kvmplutotest	ikev2-ikeport-06-host-to-host		wip
 
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good
@@ -898,11 +899,12 @@ kvmplutotest	interop-ikev2-xfrmi-strongswan-01			good
 
 # Selinux / secure labeling tests
 kvmplutotest	ikev1-labeled-ipsec-01					wip
-kvmplutotest	ikev1-labeled-ipsec-02-mismatch				good
+kvmplutotest	ikev1-labeled-ipsec-02-mismatch				wip
 kvmplutotest	ikev1-labeled-ipsec-03-multi-acquires			good
 kvmplutotest	ikev2-labeled-ipsec-01					wip
-kvmplutotest	ikev2-labeled-ipsec-02-mismatch				good
+kvmplutotest	ikev2-labeled-ipsec-02-mismatch				wip
 kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires			good
+kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-enforced		good
 
 # compress tests
 kvmplutotest    compress-pluto-01		good
@@ -1205,7 +1207,7 @@ kvmplutotest	ikev2-tcp-10-rekey-child			good
 kvmplutotest	ikev2-tcp-10-rekey-ike				good
 kvmplutotest	ikev2-tcp-25-rw-nat				good
 kvmplutotest	ikev2-tcp-26-rw-nat-keepalive			good
-kvmplutotest	kev2-udp-05-transport-mode 			good
+kvmplutotest	ikev2-udp-05-transport-mode 			good
 
 # OpenBSD interop
 kvmplutotest	interop-ikev2-openbsd-01		skiptest

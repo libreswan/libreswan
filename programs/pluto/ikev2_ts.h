@@ -36,7 +36,14 @@ struct traffic_selector {
 	uint16_t startport;
 	uint16_t endport;
 	ip_range net;	/* for now, always happens to be a CIDR */
-	chunk_t sec_label; /* security label for labeled ipsec */
+	/*
+	 * shares memory with any of:
+	 * - the struct pbs_in's buffer
+	 * - end.sec_label
+	 * - st.*sec_label
+	 * - acquire's sec_label
+	 */
+	shunk_t sec_label;
 };
 
 void ikev2_print_ts(const struct traffic_selector *ts);

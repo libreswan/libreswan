@@ -111,7 +111,7 @@ static bool parse_secctx_attr(struct pbs_in *pbs, struct state *st)
 		return false;
 	}
 
-	if (!se_label_match((chunk_t *)&sec_label, &c->spd.this.sec_label, st->st_logger)) {
+	if (!se_label_match(sec_label, c->spd.this.sec_label, st->st_logger)) {
 		LLOG_JAMBUF(RC_LOG_SERIOUS, st->st_logger, buf) {
 			jam(buf, "received IPsec Security Label '");
 			jam_sanitized_bytes(buf, sec_label.ptr,

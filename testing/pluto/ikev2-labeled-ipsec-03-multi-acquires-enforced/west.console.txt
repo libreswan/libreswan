@@ -1,0 +1,164 @@
+/testing/guestbin/swan-prep
+west #
+ checkmodule -M -m -o ipsec-test-module.mod ipsec-test-module.te
+west #
+ semodule_package -o ipsec-test-module.pp -m ipsec-test-module.mod
+west #
+ semodule -i ipsec-test-module.pp > /dev/null 2>/dev/null
+west #
+ rm -f ipsec-test-module.mod ipsec-test-module.pp
+west #
+ setenforce 1
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ echo 1 > /proc/sys/net/core/xfrm_acq_expires
+west #
+ ipsec auto --add labeled
+002 "labeled": added IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ # for port re-use in tests with protoport selectors
+west #
+ echo 1 >/proc/sys/net/ipv4/tcp_tw_reuse
+west #
+ ipsec auto --up labeled
+1v2 "labeled" #1: initiating IKEv2 connection
+1v2 "labeled" #1: sent IKE_SA_INIT request
+1v2 "labeled" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "labeled" #1: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "labeled" #1: authenticated using RSA with SHA2_512
+002 "labeled" #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 6] -> [192.1.2.23-192.1.2.23:4300-4300 6]
+004 "labeled" #2: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+west #
+ ip xfrm state
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
+west #
+ ip xfrm pol
+src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
+	dir out priority 1687486 ptype main 
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 16389 mode transport
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
+	dir in priority 1687486 ptype main 
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 16389 mode transport
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+west #
+ echo "quit" | runcon -t netutils_t nc -w 50 -p 4301 -vvv 192.1.2.23 4300 2>&1 | sed "s/received in .*$/received .../"
+west #
+ ipsec trafficstatus
+006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+west #
+ ping -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ # let another on-demand label establish
+west #
+ sleep 3
+west #
+ # we are expecting three tunnels now (main one with 0 byte counters)
+west #
+ ipsec trafficstatus
+006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+west #
+ echo done
+done
+west #
+ ../../pluto/bin/ipsec-look.sh
+west NOW
+XFRM state:
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
+XFRM policy:
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300
+	security context system_u:object_r:ipsec_spd_t:s0
+	dir in priority 1687486 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300
+	security context system_u:object_r:ipsec_spd_t:s0
+	dir out priority 1687486 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west #
+ ../bin/check-for-core.sh
+west #
+ semodule -r ipsec-test-module
+libsemanage.semanage_direct_remove_key: Removing last ipsec-test-module module (no other ipsec-test-module module exists at another priority).
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -ts recent -m AVC | audit2allow ; fi
+#============= netutils_t ==============
+#!!!! This avc can be allowed using the boolean 'domain_can_mmap_files'
+allow netutils_t bin_t:file map;
+west #
+ 

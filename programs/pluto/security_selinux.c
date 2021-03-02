@@ -96,12 +96,26 @@ static bool within_range(const char *sl, const char *range, struct logger *logge
 }
 #endif
 
-bool se_label_match(const chunk_t *a, const chunk_t *b, struct logger *logger)
+static void dbg_sec_label_match(shunk_t a, chunk_t b, const char *match, struct logger *logger)
 {
-	/*
-	 * ??? should security labels be NUL-terminated?
-	 * passert(a->ptr == NULL || (a->len > 0 && a->ptr[a->len - 1] == '\0')); 
-	 * passert(b->ptr == NULL || (b->len > 0 && b->ptr[b->len - 1] == '\0'));
-	 */
-	return within_range((const char *)a->ptr, (const char *)b->ptr, logger);
+	if (DBGP(DBG_BASE)) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam(buf, "sec_labels '");
+			jam_sanitized_hunk(buf, a);
+			jam(buf, "' vs '");
+			jam_sanitized_hunk(buf, b);
+			jam(buf, "' %s", match);
+		}
+	}
+}
+
+bool se_label_match(shunk_t a, chunk_t b, struct logger *logger)
+{
+	if (within_range(a.ptr, (char*)b.ptr, logger)) {
+		dbg_sec_label_match(a, b, "matched with within_range()", logger);
+		return true;
+	}
+
+	dbg_sec_label_match(a, b, "did not match", logger);
+	return false;
 }

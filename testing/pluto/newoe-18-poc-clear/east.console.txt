@@ -64,7 +64,7 @@ Certificate Nickname                                         Trust Attributes
 east #
  # should not show any hits
 east #
- grep "negotiated connection" /tmp/pluto.log
+ grep -v '^|' /tmp/pluto.log | grep "negotiated connection"
 east #
  ../bin/check-for-core.sh
 east #

@@ -1044,22 +1044,10 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		     LELEM(RT_ROUTED_PROSPECTIVE),
 		     c->spd.routing));
 	/*
-	 * if we have protoport= set, narrow to it and zero out
-	 * ephemeral port
-	 *
-	 * warning: we know ports in this_client/that_client are 0 so
-	 * far
-	 *
-	 * XXX: ?????
+	 * Save the selector in .client.
 	 */
-	if (c->spd.this.protocol != 0) {
-		if (c->spd.this.port != 0) {
-			update_selector_hport(&c->spd.this.client, c->spd.this.port);
-		}
-		if (c->spd.that.port != 0) {
-			update_selector_hport(&c->spd.that.client, c->spd.that.port);
-		}
-	}
+	c->spd.this.client = local_shunt;
+	c->spd.that.client = remote_shunt;
 
 	if (b->held) {
 		if (assign_holdpass(c, &c->spd,
