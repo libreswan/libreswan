@@ -140,10 +140,14 @@ struct traffic_selector ikev2_end_to_ts(const struct end *e, chunk_t sec_label)
 		ts.endport = e->port;
 	}
 
-	ts.sec_label = e->sec_label;
-	/* use the 'instance/narrowed' label from the ACQUIRE, if present */
-	if (sec_label.len != 0)
-		ts.sec_label = sec_label;
+	/*
+	 * Use the 'instance/narrowed' label from the ACQUIRE, if
+	 * present.
+	 *
+	 * Points into either the END, or
+	 * .st_{seen,acquired}_sec_label.
+	 */
+	ts.sec_label = HUNK_AS_SHUNK(sec_label.len != 0 ? sec_label : e->sec_label);
 
 	return ts;
 }
@@ -228,10 +232,9 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 		close_output_pbs(&ts_range_pbs);
 	}
 
-	if (with_label)
-	{
+	if (with_label) {
 		pb_stream ts_label_pbs;
-		chunk_t out_label;
+		shunk_t out_label;
 
 		struct ikev2_ts_header ts_header = {
 			.isath_type = IKEv2_TS_SECLABEL,
@@ -246,10 +249,11 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 		 * If we got ACQUIRE, or received a subset TS_LABEL, use that one - it is subset of connection policy one
 		 */
 		if (st->st_acquired_sec_label.len != 0)
-			out_label = st->st_acquired_sec_label;
+			out_label = HUNK_AS_SHUNK(st->st_acquired_sec_label);
 		else if (st->st_seen_sec_label.len != 0)
-			out_label = st->st_seen_sec_label;
-		else out_label = ts->sec_label;
+			out_label = HUNK_AS_SHUNK(st->st_seen_sec_label);
+		else
+			out_label = ts->sec_label;
 
 		diag_t d = pbs_out_raw(&ts_label_pbs, out_label.ptr, out_label.len, "output Security label");
 		if (d != NULL) {
@@ -513,8 +517,7 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 				return false;
 			}
 
-			/* XXX: probably leaks; should be shunk_t */
-			ts->sec_label = clone_hunk(sec_label, "incoming TS sec_label");
+			ts->sec_label = sec_label;
 			ts->ts_type = ts_h.isath_type;
 			tss->contains_sec_label = true;
 			break;
@@ -810,23 +813,23 @@ static struct score score_end(const struct end *end,
 			      const char *what, unsigned index)
 {
 	const struct traffic_selector *ts = &tss->ts[index];
-	range_buf ts_net;
 
-	if (ts->sec_label.len == 0) {
-		dbg("    %s[%u] .net=%s .iporotoid=%d .{start,end}port=%d..%d",
-			what, index,
-			str_range(&ts->net, &ts_net),
-			ts->ipprotoid,
-			ts->startport,
-			ts->endport);
-	} else if (ts->sec_label.len != 0) {
-
-		dbg("    %s[%u] security_label:%.*s",
-			what, index,
-			(int)ts->sec_label.len, ts->sec_label.ptr);
-	} else {
-		dbg("    %s[%u] unknown Traffic Selector Type",
-			what, index);
+	LSWDBGP(DBG_BASE, buf) {
+		jam(buf, "    %s[%u] ", what, index);
+		if (ts->sec_label.len == 0) {
+			range_buf ts_net;
+			jam(buf, ".net=%s .iporotoid=%d .{start,end}port=%d..%d",
+			    str_range(&ts->net, &ts_net),
+			    ts->ipprotoid,
+			    ts->startport,
+			    ts->endport);
+		} else if (ts->sec_label.len != 0) {
+			/* XXX: assumes sec label is printable */
+			jam(buf, "security_label:");
+			jam_sanitized_hunk(buf, ts->sec_label);
+		} else {
+			jam(buf, "unknown Traffic Selector Type");
+		}
 	}
 
 	struct score score = {
@@ -880,11 +883,11 @@ static bool score_gt(const struct best_score *score, const struct best_score *be
  * Danger! this returns three types of value:
  *
  * NULL: no sec_label was found and none was expected
- * &empty_chunk: someting is wrong; skip
+ * &null_shunk: someting is wrong; skip
  * chunk: something was found
  */
 
-static const chunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UNUSED,
+static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UNUSED,
 					  const struct connection *d,
 					  const struct traffic_selectors *tsi,
 					  const struct traffic_selectors *tsr,
@@ -899,20 +902,20 @@ static const chunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 		return NULL;
 	}
 
-	chunk_t const *selected_sec_label = &empty_chunk; /* assume invalid */
+	shunk_t const *selected_sec_label = &null_shunk; /* assume invalid */
 
 #ifdef HAVE_LABELED_IPSEC
 
 	/* short-cut */
 	if (!tsi->contains_sec_label || !tsr->contains_sec_label) {
 		/* both are needed; can't match */
-		return &empty_chunk;
+		return &null_shunk;
 	}
 
 	/* short-cut */
 	if (d->spd.this.sec_label.len == 0) {
 		/* not expected; can't match */
-		return &empty_chunk;
+		return &null_shunk;
 	}
 
 	for (unsigned tsi_n = 0; tsi_n < tsi->nr; tsi_n++) {
@@ -923,7 +926,7 @@ static const chunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 				continue;
 			}
 
-			if (!se_label_match(&cur_i->sec_label, &d->spd.this.sec_label, logger)) {
+			if (!se_label_match(cur_i->sec_label, d->spd.this.sec_label, logger)) {
 				dbg("ikev2ts #1: received label not within range of our security label");
 				DBG_dump_hunk("ends->i->sec_label", ends->i->sec_label);
 				DBG_dump_hunk("cur_i->sec_label", cur_i->sec_label);
@@ -937,7 +940,9 @@ static const chunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 				if (cur_r->ts_type == IKEv2_TS_SECLABEL) {
 					if (cur_r->sec_label.len == 0) {
 						dbg("IKEv2_TS_SECLABEL but zero length cur_r->sec_label");
-					} else if (se_label_match(&ends->r->sec_label, &d->spd.this.sec_label, logger)) {
+					} else if (se_label_match(HUNK_AS_SHUNK(ends->r->sec_label),
+								  d->spd.this.sec_label,
+								  logger)) {
 						dbg("ikev2ts #2: received label within range of our security label");
 						selected_sec_label = &cur_r->sec_label;
 						/* XXX: better match? */
@@ -1050,7 +1055,7 @@ bool v2_process_ts_request(struct child_sa *child,
 	struct best_score best_score = NO_SCORE;
 	const struct spd_route *best_spd_route = NULL;
 	struct connection *best_connection = c;
-	const chunk_t *best_sec_label = NULL;
+	const shunk_t *best_sec_label = NULL;
 
 	/* find best spd in c */
 
@@ -1064,9 +1069,9 @@ bool v2_process_ts_request(struct child_sa *child,
 		};
 
 		/* Returns NULL(ok), &empty_chunk(error), memory(ok). */
-		chunk_t const *const selected_sec_label =
+		shunk_t const *const selected_sec_label =
 			score_ends_seclabel(&ends, c, &tsi, &tsr, child->sa.st_logger);
-		if (selected_sec_label == &empty_chunk) {
+		if (selected_sec_label == &null_shunk) {
 			/*
 			 * Either:
 			 *  - Security label required, but not found.
@@ -1175,9 +1180,9 @@ bool v2_process_ts_request(struct child_sa *child,
 					: END_EQUALS_TS;
 
 				/* Returns NULL(ok), &empty_chunk(skip), memory(ok). */
-				chunk_t const *const selected_sec_label =
+				shunk_t const *const selected_sec_label =
 					score_ends_seclabel(&ends, d, &tsi, &tsr, child->sa.st_logger);
-				if (selected_sec_label == &empty_chunk) {
+				if (selected_sec_label == &null_shunk) {
 					/*
 					 * Either:
 					 *  - Security label required, but not found.
@@ -1471,9 +1476,9 @@ bool v2_process_ts_response(struct child_sa *child,
 		: END_EQUALS_TS;
 
 	/* Returns NULL(ok), &empty_chunk(skip), memory(ok). */
-	chunk_t const *const selected_sec_label =
+	shunk_t const *const selected_sec_label =
 		score_ends_seclabel(&e, c, &tsi, &tsr, child->sa.st_logger);
-	if (selected_sec_label == &empty_chunk) {
+	if (selected_sec_label == &null_shunk) {
 		/*
 		 * Either:
 		 *  - Security label required, but not found.
@@ -1551,9 +1556,9 @@ bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *
 	enum fit fitness = END_NARROWER_THAN_TS;
 
 	/* Returns NULL(ok), &empty_chunk(skip), memory(ok). */
-	chunk_t const *const selected_sec_label =
+	shunk_t const *const selected_sec_label =
 		score_ends_seclabel(&ends, c, &their_tsis, &their_tsrs, child->sa.st_logger);
-	if (selected_sec_label == &empty_chunk) {
+	if (selected_sec_label == &null_shunk) {
 		/*
 		 * Either:
 		 *  - Security label required, but not found.

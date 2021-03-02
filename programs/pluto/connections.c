@@ -2445,9 +2445,10 @@ const char *str_connection_instance(const struct connection *c, connection_buf *
 struct connection *find_connection_for_clients(struct spd_route **srp,
 					       const ip_endpoint *local_client,
 					       const ip_endpoint *remote_client,
-					       chunk_t sec_label,
+					       chunk_t csec_label,
 					       struct logger *logger UNUSED)
 {
+	shunk_t sec_label = HUNK_AS_SHUNK(csec_label);
 	passert(endpoint_is_specified(local_client));
 	passert(endpoint_is_specified(remote_client));
 	passert(endpoint_protocol(local_client) == endpoint_protocol(remote_client));
@@ -2477,7 +2478,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 			    endpoint_in_selector(local_client, &sr->this.client) &&
 			    endpoint_in_selector(remote_client, &sr->that.client)
 #ifdef HAVE_LABELED_IPSEC
-			    && se_label_match(&sec_label, &sr->this.sec_label, logger)
+			     && se_label_match(sec_label, sr->this.sec_label, logger)
 #endif
 			     ) {
 				unsigned ipproto = endpoint_protocol(local_client)->ipproto;
