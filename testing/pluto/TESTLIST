@@ -902,7 +902,7 @@ kvmplutotest	ikev1-labeled-ipsec-01					wip
 kvmplutotest	ikev1-labeled-ipsec-02-mismatch				wip
 kvmplutotest	ikev1-labeled-ipsec-03-multi-acquires			good
 kvmplutotest	ikev2-labeled-ipsec-01					wip
-kvmplutotest	ikev2-labeled-ipsec-02-mismatch				wip
+kvmplutotest	ikev2-labeled-ipsec-04-no-label				good
 kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires			good
 kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-enforced		good
 
