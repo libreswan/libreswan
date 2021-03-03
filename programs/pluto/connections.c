@@ -3432,10 +3432,9 @@ static bool is_virtual_net_used(struct connection *c,
 		case CK_PERMANENT:
 		case CK_TEMPLATE:
 		case CK_INSTANCE:
-			if ((subnetinsubnet(peer_net, &d->spd.that.client) ||
-					subnetinsubnet(&d->spd.that.client,
-						peer_net)) &&
-				!same_id(&d->spd.that.id, peer_id))
+			if ((selector_subnet_in(peer_net, &d->spd.that.client) ||
+			     selector_subnet_in(&d->spd.that.client, peer_net)) &&
+			    !same_id(&d->spd.that.id, peer_id))
 			{
 				id_buf idb;
 				connection_buf cbuf;
