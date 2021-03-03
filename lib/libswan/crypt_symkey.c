@@ -463,6 +463,11 @@ void append_symkey_bytes(const char *name,
 			 size_t sizeof_rhs,
 			 struct logger *logger)
 {
+	if (sizeof_rhs == 0) {
+		/* no change required; stops nss crash */
+		return;
+	}
+
 	PK11SymKey *newkey = merge_symkey_bytes(name, *lhs, rhs, sizeof_rhs,
 						CKM_CONCATENATE_BASE_AND_DATA,
 						PK11_GetMechanism(*lhs),
