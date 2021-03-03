@@ -376,14 +376,58 @@ static void construct_enc_iv(const char *name,
 	}
 }
 
+/*
+ * Without this the code makes little sense.
+ * https://datatracker.ietf.org/doc/draft-ietf-ipsecme-ikev2-intermediate/?include_text=1
+ *
+ *                       1                   2                   3
+ *   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ ^ ^
+ *  |                       IKE SA Initiator's SPI                  | | |
+ *  |                                                               | | |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ I |
+ *  |                       IKE SA Responder's SPI                  | K |
+ *  |                                                               | E |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+   |
+ *  |  Next Payload | MjVer | MnVer | Exchange Type |     Flags     | H |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ d |
+ *  |                          Message ID                           | r A
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | |
+ *  |                       Adjusted Length                         | | |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ v |
+ *  |                                                               |   |
+ *  ~                 Unencrypted payloads (if any)                 ~   |
+ *  |                                                               |   |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ ^ |
+ *  | Next Payload  |C|  RESERVED   |    Adjusted Payload Length    | | |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ E v
+ *  |                     Initialization Vector                     | n
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ c ^
+ *  |                                                               | r |
+ *  ~             Inner payloads (not yet encrypted)                ~   P
+ *  |                                                               | P |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ l v
+ *  |              Padding (0-255 octets)           |  Pad Length   | d
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ |
+ *  ~                    Integrity Checksum Data                    ~ |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ v
+ *
+ *      Figure 1: Data to Authenticate in the IKE_INTERMEDIATE Exchange
+ *                                Messages
+ *
+ *   Figure 1 illustrates the layout of the IntAuth_*_[I/R]_P (denoted as
+ *  P) and the IntAuth_*_[I/R]_A (denoted as A) chunks in case the
+ *  Encrypted payload is not empty.
+ */
+
 static void compute_intermediate_mac(struct ike_sa *ike,
 				     PK11SymKey *intermediate_key,
 				     const uint8_t *auth_start, chunk_t plain,
 				     chunk_t *out)
 {
 	/*
-	 * Define variables that match the naming scheme used
-	 * by the RFC's ASCII diagram.
+	 * Define variables that match the naming scheme used by the
+	 * RFC's ASCII diagram above.
 	 */
 	const uint8_t *header_start = auth_start;
 	size_t header_size = NSIZEOF_isakmp_hdr;
@@ -403,16 +447,13 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 						      "SK_p", intermediate_key,
 						      ike->sa.st_logger);
 	/*
-	 * Hash the the IKE header, stopping at the (Adjusted)
-	 * Length field.
+	 * Hash IntAuth_*_[I/R]_A.
 	 */
+
+	/* Header, stooping before Adjusted Length field. */
 	crypt_prf_update_bytes(prf, "IKE Header short of Adjusted Length",
 			       header_start, header_size - ADJ_LENGTH_SIZE);
-	/*
-	 * Hash the network byte ordered Adjusted Length
-	 * computed from the sum of length of IntAuth_*_A and
-	 * IntAuth_*_P.
-	 */
+	/* Adjusted length; in network byte order */
 	size_t adjusted_length = (header_size
 				  + unencrypted_payload_size
 				  + sk_header_size
@@ -423,20 +464,13 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 		   sizeof(adjusted_length_bytes));
 	crypt_prf_update_thing(prf, "Adjusted Length",
 			       adjusted_length_bytes);
-	/*
-	 * Hash the unencrypted payload (can be empty), and
-	 * then the SK header stopping at the Adjusted Payload
-	 * length.
-	 */
+	/* Unencrypted payload */
 	crypt_prf_update_bytes(prf, "Unencrypted payloads (if any)",
 			       unencrypted_payload_start, unencrypted_payload_size);
+	/* sk header, stooping before adjusted payload length */
 	crypt_prf_update_bytes(prf, "SK Header short of Adjusted Payload Length",
 			       sk_header_start, sk_header_size - ADJ_PAYLOAD_LENGTH_SIZE);
-	/*
-	 * Hash the network byte ordered Adjusted Payload
-	 * Length computed from the length of IntAuth_*_P plus
-	 * the size of the Payload header (four octets).
-	 */
+	/* adjusted payload length, in network byte order */
 	size_t adjusted_payload_length = inner_payloads_size + SK_HEADER_SIZE;
 	DBG(DBG_CRYPT, DBG_log("adjusted payload length: %zu", adjusted_payload_length));
 	uint8_t adjusted_payload_length_bytes[ADJ_PAYLOAD_LENGTH_SIZE];
@@ -444,11 +478,13 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 		   sizeof(adjusted_payload_length_bytes));
 	crypt_prf_update_thing(prf, "Adjusted Payload Length",
 			       adjusted_payload_length_bytes);
+
 	/*
-	 * finally the inner payloads
+	 * IntAuth_*_[I/R]_P aka inner payload.
 	 */
 	crypt_prf_update_bytes(prf, "Inner payloads (decrypted)",
 			       inner_payloads_start, inner_payloads_size);
+
 	/* extract the mac */
 	struct crypt_mac mac = crypt_prf_final_mac(&prf, NULL/*no-truncation*/);
 	*out = clone_hunk(mac, "IntAuth");
