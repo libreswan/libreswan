@@ -8,7 +8,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013,2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017,2021 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -38,23 +38,30 @@ void DBG_dump(const char *label, const void *p, size_t len)
 	}
 	const uint8_t *cp = p;
 	do {
-		/* 4 * ' xx xx xx xx' + '\0' */
-		char buf[4 * (1 + 4 * 3) + 1];
-		char *bp = buf;
+		/* each line shows 16 bytes; remember sizeof includes '\0' */
+		char hex[sizeof("  xx xx xx xx  xx xx xx xx  xx xx xx xx  xx xx xx xx")];
+		char str[sizeof("................")];
+		char *hp = hex;
+		char *sp = str;
 		for (int  i = 0; len != 0 && i != 4; i++) {
-			*bp++ = ' ';
+			*hp++ = ' ';
 			for (int j = 0; len != 0 && j != 4; len--, j++) {
 				static const char hexdig[] =
 					"0123456789abcdef";
 
-				*bp++ = ' ';
-				*bp++ = hexdig[(*cp >> 4) & 0xF];
-				*bp++ = hexdig[*cp & 0xF];
+				*hp++ = ' ';
+				*hp++ = hexdig[(*cp >> 4) & 0xF];
+				*hp++ = hexdig[(*cp >> 0) & 0xF];
+
+				*sp++ = (char_isprint(*cp) ? *cp : '.');
+
 				cp++;
 			}
 		}
-		*bp = '\0';
-		passert(bp < buf + elemsof(buf));
-		DBG_log("%s", buf);
+		*hp++ = '\0';
+		*sp++ = '\0';
+		passert(hp <= hex + elemsof(hex));
+		passert(sp <= str + elemsof(str));
+		DBG_log("%-*s   %s", (int)sizeof(hex)-1, hex, str);
 	} while (len != 0);
 }
