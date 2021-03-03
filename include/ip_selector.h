@@ -133,6 +133,7 @@ bool endpoint_in_selector(const ip_endpoint *l, const ip_selector *r);
 bool address_in_selector(const ip_address *l, const ip_selector *r);
 
 bool selector_eq(const ip_selector *l, const ip_selector *r);
+bool selector_in(const ip_selector *l, const ip_selector *r);
 
 bool selector_is_one_address(const ip_selector *selector);
 bool selector_is_address(const ip_selector *selector, const ip_address *address);
@@ -162,5 +163,19 @@ size_t jam_selectors(struct jambuf *buf, const ip_selector *src, const ip_select
 
 const char *str_selectors_sensitive(const ip_selector *src, const ip_selector *dst, selectors_buf *out);
 size_t jam_selectors_sensitive(struct jambuf *buf, const ip_selector *src, const ip_selector *dst);
+
+/*
+ * XXX: two hacks to get around .client not containing a proper
+ * selector and instead needing to compare just the client's subnet.
+ *
+ * These are needed by code manipulating end.client because it is
+ * serving double time.  It holding either:
+ *
+ * - the configured client subnet
+ * - a connection's shunt
+ */
+
+bool selector_subnet_eq(const ip_selector *lhs, const ip_selector *rhs);
+bool selector_subnet_in(const ip_selector *lhs, const ip_selector *rhs);
 
 #endif

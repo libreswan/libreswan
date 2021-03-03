@@ -122,6 +122,8 @@ bool subnet_contains_no_addresses(const ip_subnet *subnet);
 
 /* ADDRESS..ADDRESS in SUBNET */
 bool address_in_subnet(const ip_address *address, const ip_subnet *subnet);
+bool subnet_eq(const ip_subnet *a, const ip_subnet *b);
+bool subnet_in(const ip_subnet *lhs, const ip_subnet *rhs);
 
 /* Given ROUTING_PREFIX|HOST_ID return ROUTING_PREFIX|0 */
 ip_address subnet_prefix(const ip_subnet *subnet);
@@ -142,7 +144,6 @@ extern err_t rangetosubnet(const ip_address *from, const ip_address *to,
 		    ip_subnet *dst);
 
 /* tests */
-bool subnet_eq(const ip_subnet *a, const ip_subnet *b);
 extern bool samesubnet(const ip_subnet *a, const ip_subnet *b);
 extern bool addrinsubnet(const ip_address *a, const ip_subnet *s);
 extern bool subnetinsubnet(const ip_subnet *a, const ip_subnet *b);
