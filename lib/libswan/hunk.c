@@ -18,7 +18,25 @@
 #include <stdlib.h>	/* for strtoul() */
 #include <limits.h>
 
+#include "lswalloc.h"		/* for clone_bytes() */
 #include "hunk.h"
+
+char *clone_bytes_as_string(const void *ptr, size_t len, const char *name)
+{
+	if (ptr == NULL) {
+		return NULL;
+	}
+
+	/* NUL terminated (could also contain NULs, oops)? */
+	const char *in = ptr;
+	if (len > 0 && in[len - 1] == '\0') {
+		return clone_bytes(in, len, name);
+	}
+
+	char *out = alloc_things(char, len + 1, name);
+	memcpy(out, ptr, len);
+	return out;
+}
 
 bool bytes_eq(const void *l_ptr, size_t l_len,
 	      const void *r_ptr, size_t r_len)

@@ -84,12 +84,17 @@ chunk_t clone_bytes_bytes_as_chunk(const void *first_ptr, size_t first_len,
 					   NAME);			\
 	})
 
-/* always NUL terminated; NULL is NULL */
-char *clone_bytes_as_string(const void *ptr, size_t len, const char *name);
-#define clone_hunk_as_string(HUNK, NAME)				\
+/*
+ * replace RHS with the contatenation of LHS+RHS
+ *
+ * These functions have their name first which, while inconsistent
+ * with the other functions does read better.
+ */
+void append_chunk_bytes(const char *name, chunk_t *lhs, const void *rhs, size_t sizeof_rhs);
+#define append_chunk_hunk(NAME, LHS, RHS)				\
 	({								\
-		typeof(HUNK) hunk_ = HUNK; /* evaluate once */		\
-		clone_bytes_as_string(hunk_.ptr, hunk_.len, NAME);	\
+		typeof(RHS) rhs_ = RHS; /* evaluate once */		\
+		append_chunk_bytes(NAME, LHS, (rhs_).ptr, (rhs_).len);	\
 	})
 
 /*

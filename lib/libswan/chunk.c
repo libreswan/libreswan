@@ -45,23 +45,6 @@ void replace_chunk(chunk_t *dest, chunk_t src)
 	*dest = src;
 }
 
-char *clone_bytes_as_string(const void *ptr, size_t len, const char *name)
-{
-	if (ptr == NULL) {
-		return NULL;
-	}
-
-	/* NUL terminated (could also contain NULs, oops)? */
-	const char *in = ptr;
-	if (len > 0 && in[len - 1] == '\0') {
-		return clone_bytes(in, len, name);
-	}
-
-	char *out = alloc_things(char, len + 1, name);
-	memcpy(out, ptr, len);
-	return out;
-}
-
 chunk_t clone_bytes_as_chunk(const void *bytes, size_t sizeof_bytes, const char *name)
 {
 	/*
@@ -81,6 +64,16 @@ chunk_t clone_bytes_bytes_as_chunk(const void *lhs_ptr, size_t lhs_size,
 	memcpy(bytes, lhs_ptr, lhs_size);
 	memcpy(bytes + lhs_size, rhs_ptr, rhs_size);
 	return chunk2(bytes, size);
+}
+
+void append_chunk_bytes(const char *name, chunk_t *lhs,
+			const void *rhs, size_t sizeof_rhs)
+{
+	size_t len = lhs->len + sizeof_rhs;
+	chunk_t new = alloc_chunk(len, name);
+	memcpy(new.ptr, lhs->ptr, lhs->len);
+	memcpy(new.ptr + lhs->len, rhs, sizeof_rhs);
+	replace_chunk(lhs, new);
 }
 
 /*

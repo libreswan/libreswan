@@ -81,11 +81,6 @@ void prepend_bytes_to_symkey(const char *result,
 void append_symkey_byte(PK11SymKey **lhs, uint8_t rhs,
 			struct logger *logger);
 
-void append_chunk_bytes(const char *name, chunk_t *lhs, const void *rhs,
-			size_t sizeof_rhs);
-#define append_chunk_hunk(NAME, LHS, RHS)			\
-	append_chunk_bytes(NAME, LHS, (RHS).ptr, (RHS).len)
-
 void append_chunk_symkey(const char *name, chunk_t *lhs, PK11SymKey *rhs,
 			 struct logger *logger);
 
