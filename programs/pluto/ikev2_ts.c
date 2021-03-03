@@ -910,8 +910,6 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 		return NULL;
 	}
 
-	shunk_t const *selected_sec_label = &null_shunk; /* assume invalid */
-
 #ifdef HAVE_LABELED_IPSEC
 
 	/* short-cut */
@@ -943,7 +941,11 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 								  d->spd.this.sec_label,
 								  logger)) {
 						dbg("ikev2ts #2: received label within range of our security label");
-						selected_sec_label = &cur_r->sec_label;
+						/*
+						 * ??? we return the responder label.
+						 * Could the initiator label be different?
+						 */
+						return &cur_r->sec_label;	/* first match */
 						/* XXX: better match? */
 					} else {
 						dbg("ikev2ts #2: received label not within range of our security label");
@@ -956,8 +958,8 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 	}
 #endif
 
-	/* return what was found; if anything */
-	return selected_sec_label;
+	/* security label required but no matching one found */
+	return &null_shunk;
 }
 
 static struct best_score score_ends_iprange(enum fit fit,
