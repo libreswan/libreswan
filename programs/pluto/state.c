@@ -970,6 +970,10 @@ void delete_state_tail(struct state *st)
 	}
 #endif
 
+	/* intermediate */
+	free_chunk_content(&st->st_intermediate_packet_me);
+	free_chunk_content(&st->st_intermediate_packet_peer);
+
 	event_delete(EVENT_DPD, st);
 	event_delete(EVENT_v2_LIVENESS, st);
 	event_delete(EVENT_v2_RELEASE_WHACK, st);
