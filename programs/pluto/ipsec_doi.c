@@ -133,7 +133,7 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 	case IKEv2:
 		if (st == NULL) {
 			/* note: new IKE SA pulls sec_label from connection */
-			ikev2_parent_outI1(whack_sock, c, NULL, policy, try, inception, empty_chunk);
+			ikev2_out_IKE_SA_INIT_I(whack_sock, c, NULL, policy, try, inception, empty_chunk);
 		} else if (!IS_PARENT_SA_ESTABLISHED(st)) {
 			/* leave CHILD SA negotiation pending */
 			add_pending(whack_sock, pexpect_ike_sa(st),
@@ -188,7 +188,7 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 		switch(st->st_ike_version) {
 		case IKEv2:
 		{
-			initiator_function *initiator = ikev2_parent_outI1;
+			initiator_function *initiator = ikev2_out_IKE_SA_INIT_I;
 			initiator(st->st_logger->object_whackfd, c, st, policy, try, &inception, c->spd.this.sec_label);
 			break;
 		}

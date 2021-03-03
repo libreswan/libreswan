@@ -199,9 +199,9 @@ static stf_status resume_IKE_SA_INIT_with_cookie(struct ike_sa *ike)
 	return STF_OK;
 }
 
-stf_status process_IKE_SA_INIT_v2N_COOKIE_response(struct ike_sa *ike,
-						   struct child_sa *child,
-						   struct msg_digest *md)
+stf_status ikev2_in_IKE_SA_INIT_R_v2N_COOKIE(struct ike_sa *ike,
+					     struct child_sa *child,
+					     struct msg_digest *md)
 {
 	pexpect(child == NULL);
 	const struct pbs_in *cookie_pbs = md->pbs[PBS_v2N_COOKIE];

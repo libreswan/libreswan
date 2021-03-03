@@ -567,9 +567,9 @@ void send_active_redirect_in_informational(struct state *st)
 	    str_endpoint(&st->st_remote_endpoint, &b));
 }
 
-stf_status process_IKE_SA_INIT_v2N_REDIRECT_response(struct ike_sa *ike,
-						     struct child_sa *child,
-						     struct msg_digest *md)
+stf_status ikev2_in_IKE_SA_INIT_R_v2N_REDIRECT(struct ike_sa *ike,
+					       struct child_sa *child,
+					       struct msg_digest *md)
 {
 	struct connection *c = ike->sa.st_connection;
 	pexpect(child == NULL);
