@@ -920,12 +920,6 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 		return &null_shunk;
 	}
 
-	/* short-cut */
-	if (d->spd.this.sec_label.len == 0) {
-		/* not expected; can't match */
-		return &null_shunk;
-	}
-
 	passert(proper_seclabel(HUNK_AS_SHUNK(d->spd.this.sec_label)));
 
 	for (unsigned tsi_n = 0; tsi_n < tsi->nr; tsi_n++) {
