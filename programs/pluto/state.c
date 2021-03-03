@@ -1900,8 +1900,8 @@ void state_eroute_usage(const ip_selector *ours, const ip_selector *peers,
 		if (IS_IPSEC_SA_ESTABLISHED(st) &&
 		    c->spd.eroute_owner == st->st_serialno &&
 		    c->spd.routing == RT_ROUTED_TUNNEL &&
-		    samesubnet(&c->spd.this.client, ours) &&
-		    samesubnet(&c->spd.that.client, peers)) {
+		    selector_subnet_eq(&c->spd.this.client, ours) &&
+		    selector_subnet_eq(&c->spd.that.client, peers)) {
 			if (st->st_outbound_count != count) {
 				st->st_outbound_count = count;
 				st->st_outbound_time = nw;

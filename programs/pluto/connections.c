@@ -2867,8 +2867,7 @@ struct connection *route_owner(struct connection *c,
 				if (src == srd)
 					continue;
 
-				if (!samesubnet(&src->that.client,
-						&srd->that.client) ||
+				if (!selector_subnet_eq(&src->that.client, &srd->that.client) ||
 				    src->that.protocol != srd->that.protocol ||
 				    src->that.port != srd->that.port ||
 				    !sameaddr(&src->this.host_addr,
@@ -2881,8 +2880,7 @@ struct connection *route_owner(struct connection *c,
 					best_routing = srd->routing;
 				}
 
-				if (samesubnet(&src->this.client,
-						&srd->this.client) &&
+				if (selector_subnet_eq(&src->this.client, &srd->this.client) &&
 				    src->this.protocol == srd->this.protocol &&
 				    src->this.port == srd->this.port &&
 				    srd->routing > best_erouting)
@@ -4402,8 +4400,8 @@ struct connection *eclipsed(const struct connection *c, struct spd_route **esrp 
 
 			for (src = &c->spd; src != NULL; src = src->spd_next) {
 				if (srue->routing == RT_ROUTED_ECLIPSED &&
-				    samesubnet(&src->this.client, &srue->this.client) &&
-				    samesubnet(&src->that.client, &srue->that.client))
+				    selector_subnet_eq(&src->this.client, &srue->this.client) &&
+				    selector_subnet_eq(&src->that.client, &srue->that.client))
 				{
 					dbg("%s eclipsed %s", c->name, ue->name);
 					*esrp = srue;

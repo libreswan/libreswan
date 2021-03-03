@@ -1199,8 +1199,8 @@ struct bare_shunt **bare_shunt_ptr(const ip_selector *our_client,
 		struct bare_shunt *p = *pp;
 		dbg_bare_shunt("comparing", p);
 		if (transport_proto == p->transport_proto &&
-		    samesubnet(our_client, &p->our_client) &&
-		    samesubnet(peer_client, &p->peer_client)) {
+		    selector_subnet_eq(our_client, &p->our_client) &&
+		    selector_subnet_eq(peer_client, &p->peer_client)) {
 			return pp;
 		}
 	}
