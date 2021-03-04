@@ -42,7 +42,8 @@ extern void ikev2_out_IKE_SA_INIT_I(struct fd *whack_sock,
 				    chunk_t sec_label);
 
 extern ikev2_state_transition_fn ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R;
-extern ikev2_state_transition_fn ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_or_IKE_INTERMEDIATE_I;
+extern ikev2_state_transition_fn ikev2_in_IKE_SA_INIT_R_out_IKE_AUTH_I_or_IKE_INTERMEDIATE_I;
+extern ikev2_state_transition_fn ikev2_in_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_or_IKE_INTERMEDIATE_I;
 extern ikev2_state_transition_fn ikev2_in_IKE_AUTH_R;
 extern stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest * md);
 

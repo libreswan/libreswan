@@ -1460,6 +1460,35 @@ stf_status ikev2_in_IKE_AUTH_R_unknown_notification(struct ike_sa *unused_ike UN
 
 static dh_shared_secret_cb ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_continue;	/* forward decl and type assertion */
 static dh_shared_secret_cb ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_INTERMEDIATE_I_continue;	/* forward decl and type assertion */
+static  ikev2_state_transition_fn ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_or_IKE_INTERMEDIATE_I;	/* forward decl and type assertion */
+
+/*
+ * XXX: there's a lot of code duplication between the IKE_AUTH and
+ * IKE_INTERMEDIATE paths.
+ */
+
+stf_status ikev2_in_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_or_IKE_INTERMEDIATE_I(struct ike_sa *ike,
+									    struct child_sa *child,
+									    struct msg_digest *md)
+{
+	/*
+	 * The function below always schedules a dh calculation - even
+	 * when it's been peformed earlier (there's something in the
+	 * intermediate echange about this?).
+	 *
+	 * So that things don't pexpect, blow away the old shared securet.
+	 */
+	dbg("HACK: blow away old shared secret as going to re-compute it");
+	release_symkey(__func__, "st_dh_shared_secret", &ike->sa.st_dh_shared_secret);
+	return ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_or_IKE_INTERMEDIATE_I(ike, child, md);
+}
+
+stf_status ikev2_in_IKE_SA_INIT_R_out_IKE_AUTH_I_or_IKE_INTERMEDIATE_I(struct ike_sa *ike,
+								       struct child_sa *child,
+								       struct msg_digest *md)
+{
+	return ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_or_IKE_INTERMEDIATE_I(ike, child, md);
+}
 
 stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_or_IKE_INTERMEDIATE_I(struct ike_sa *ike,
 											     struct child_sa *unused_child UNUSED,
