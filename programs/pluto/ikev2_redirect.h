@@ -110,8 +110,8 @@ extern void find_states_and_redirect(const char *conn_name,
  */
 extern void send_active_redirect_in_informational(struct state *st);
 
-extern stf_status process_IKE_SA_INIT_v2N_REDIRECT_response(struct ike_sa *ike,
-						     struct child_sa *child,
-						     struct msg_digest *md);
+extern stf_status ikev2_in_IKE_SA_INIT_R_v2N_REDIRECT(struct ike_sa *ike,
+						      struct child_sa *child,
+						      struct msg_digest *md);
 
 #endif

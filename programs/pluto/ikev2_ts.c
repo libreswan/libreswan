@@ -952,10 +952,8 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 			for (unsigned tsr_n = 0; tsr_n < tsr->nr; tsr_n++) {
 				const struct traffic_selector *cur_r = &tsr->ts[tsr_n];
 				if (cur_r->ts_type == IKEv2_TS_SECLABEL) {
-					passert(proper_seclabel(cur_r->sec_label));
-					if (se_label_match(cur_r->sec_label,
-								  d->spd.this.sec_label,
-								  logger)) {
+					passert(proper_seclabel(cur_i->sec_label));
+					if (se_label_match(cur_r->sec_label, d->spd.this.sec_label, logger)) {
 						dbg("ikev2ts #2: received label within range of our security label");
 						/*
 						 * ??? we return the responder label.

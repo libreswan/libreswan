@@ -8,5 +8,5 @@ ping -n -c 5 -I 192.0.1.254 192.0.2.254
 ipsec auto --down westnet-eastnet-ikev2
 iptables -L -n
 cp /tmp/nflog-50.pcap OUTPUT/nflog-50.pcap
-tcpdump -n -r /tmp/nflog-50.pcap
+tcpdump -n -r /tmp/nflog-50.pcap 2>/dev/null
 echo done
