@@ -525,7 +525,7 @@ static void jam_end_client(struct jambuf *buf, const struct end *this,
 	if (selector_is_unset(&this->client)) {
 		return;
 	}
-	bool boring = (subnet_contains_all_addresses(&this->client) &&
+	bool boring = (selector_contains_all_addresses(&this->client) &&
 		       (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC)));
 
 	if (!boring && !is_left) {
@@ -539,7 +539,7 @@ static void jam_end_client(struct jambuf *buf, const struct end *this,
 			jam_string(buf, "vhost:?");
 		else
 			jam_string(buf,  "vnet:?");
-	} else if (subnet_contains_no_addresses(&this->client)) {
+	} else if (selector_contains_no_addresses(&this->client)) {
 		jam_string(buf, "?");
 	} else {
 		jam_selector_subnet(buf, &this->client);
@@ -2307,7 +2307,7 @@ struct connection *rw_instantiate(struct connection *c,
 
 	if (peer_subnet != NULL && is_virtual_connection(c)) {
 		d->spd.that.client = *peer_subnet;
-		if (subnetishost(peer_subnet) && addrinsubnet(peer_addr, peer_subnet))
+		if (selector_is_address(peer_subnet, peer_addr))
 			d->spd.that.has_client = FALSE;
 	}
 
