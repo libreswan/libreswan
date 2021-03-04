@@ -902,12 +902,13 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 					  struct logger *logger)
 {
 	/* sec_labels are symmetric, pick from one end */
+	chunk_t sec_label = d->spd.this.sec_label;
 
 	/* No sec_label was found and none was expected? */
-	if (d->spd.this.sec_label.len == 0 &&
+	if (sec_label.len == 0 &&
 	    !tsi->contains_sec_label &&
 	    !tsr->contains_sec_label) {
-		return NULL;
+		return NULL;	/* success: no label, as expected */
 	}
 
 #ifdef HAVE_LABELED_IPSEC
@@ -920,7 +921,7 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 		 * negotiation (i.e. when using `auto=start` for the connection
 		 * configuration).
 		 */
-		return NULL;
+		return NULL;	/* success: no label, as expected */
 	}
 
 	/* short-cut */
@@ -929,49 +930,54 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 		 * if either TSi or TSr contains a label, then both are needed;
 		 * can't match
 		 */
-		return &null_shunk;
+		return &null_shunk;	/* error */
 	}
 
-	passert(proper_seclabel(HUNK_AS_SHUNK(d->spd.this.sec_label)));
+	passert(proper_seclabel(HUNK_AS_SHUNK(sec_label)));
 
 	for (unsigned tsi_n = 0; tsi_n < tsi->nr; tsi_n++) {
 		const struct traffic_selector *cur_i = &tsi->ts[tsi_n];
-		if (cur_i->ts_type == IKEv2_TS_SECLABEL) {
+		if (cur_i->ts_type != IKEv2_TS_SECLABEL) {
+			continue;
+		}
+		passert(proper_seclabel(cur_i->sec_label));
+		if (!se_label_match(cur_i->sec_label, sec_label, logger)) {
+			dbg("ikev2ts #1: received label not within range of our security label");
+			DBG_dump_hunk("ends->i->sec_label", ends->i->sec_label);
+			DBG_dump_hunk("cur_i->sec_label", cur_i->sec_label);
+			continue;
+		}
+
+		dbg("ikev2ts #1: received label within range of our security label");
+
+		for (unsigned tsr_n = 0; tsr_n < tsr->nr; tsr_n++) {
+			const struct traffic_selector *cur_r = &tsr->ts[tsr_n];
+			if (cur_r->ts_type != IKEv2_TS_SECLABEL) {
+				continue;
+			}
 			passert(proper_seclabel(cur_i->sec_label));
-			if (!se_label_match(cur_i->sec_label, d->spd.this.sec_label, logger)) {
-				dbg("ikev2ts #1: received label not within range of our security label");
-				DBG_dump_hunk("ends->i->sec_label", ends->i->sec_label);
-				DBG_dump_hunk("cur_i->sec_label", cur_i->sec_label);
+			if (!se_label_match(cur_r->sec_label, sec_label, logger)) {
+				dbg("ikev2ts #2: received label not within range of our security label");
+				DBG_dump_hunk("ends->r->sec_label", ends->r->sec_label);
+				DBG_dump_hunk("cur_r->sec_label", cur_r->sec_label);
 				continue;
 			}
 
-			dbg("ikev2ts #1: received label within range of our security label");
+			dbg("ikev2ts #2: received label within range of our security label");
 
-			for (unsigned tsr_n = 0; tsr_n < tsr->nr; tsr_n++) {
-				const struct traffic_selector *cur_r = &tsr->ts[tsr_n];
-				if (cur_r->ts_type == IKEv2_TS_SECLABEL) {
-					passert(proper_seclabel(cur_i->sec_label));
-					if (se_label_match(cur_r->sec_label, d->spd.this.sec_label, logger)) {
-						dbg("ikev2ts #2: received label within range of our security label");
-						/*
-						 * ??? we return the responder label.
-						 * Could the initiator label be different?
-						 */
-						return &cur_r->sec_label;	/* first match */
-						/* XXX: better match? */
-					} else {
-						dbg("ikev2ts #2: received label not within range of our security label");
-						DBG_dump_hunk("ends->r->sec_label", ends->r->sec_label);
-						DBG_dump_hunk("cur_r->sec_label", cur_r->sec_label);
-					}
-				}
-			}
+			/*
+			 * ??? we return the responder label.
+			 * Could the initiator label be different?
+			 *
+			 * XXX we return the first match.  Should we return the best?
+			 */
+			return &cur_r->sec_label;	/* first match */
 		}
 	}
 #endif
 
 	/* security label required but no matching one found */
-	return &null_shunk;
+	return &null_shunk;	/* error */
 }
 
 static struct best_score score_ends_iprange(enum fit fit,
