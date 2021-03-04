@@ -1853,7 +1853,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		.transport_proto = c->spd.this.protocol,
 		.sa_lifetime = c->sa_ipsec_life_seconds,
 		.outif = -1,
-		.sec_label = c->spd.this.sec_label /* assume connection outlive their kernel_sa's */
+		.sec_label = { NULL, 0 },
 	};
 	if (st->st_acquired_sec_label.len != 0) {
 			said_boilerplate.sec_label.ptr = st->st_acquired_sec_label.ptr;
