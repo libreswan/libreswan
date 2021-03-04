@@ -28,24 +28,30 @@ void ikev2_process_packet(struct msg_digest *mdp);
 void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				struct msg_digest *mdp);
 
+typedef stf_status ikev2_state_transition_fn(struct ike_sa *ike,
+					     struct child_sa *child, /* could be NULL */
+					     struct msg_digest *md /* could be NULL */);
+
 /* extern initiator_function ikev2_parent_outI1; */
-extern void ikev2_parent_outI1(struct fd *whack_sock,
-			      struct connection *c,
-			      struct state *predecessor,
-			      lset_t policy,
-			      unsigned long try,
-			      const threadtime_t *inception,
-			      chunk_t sec_label);
+extern void ikev2_out_IKE_SA_INIT_I(struct fd *whack_sock,
+				    struct connection *c,
+				    struct state *predecessor,
+				    lset_t policy,
+				    unsigned long try,
+				    const threadtime_t *inception,
+				    chunk_t sec_label);
+
+extern ikev2_state_transition_fn ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R;
+extern ikev2_state_transition_fn ikev2_in_IKE_SA_INIT_R_out_IKE_AUTH_I_or_IKE_INTERMEDIATE_I;
+extern ikev2_state_transition_fn ikev2_in_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_or_IKE_INTERMEDIATE_I;
+extern ikev2_state_transition_fn ikev2_in_IKE_AUTH_R;
+extern stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest * md);
 
 extern void log_ipsec_sa_established(const char *m, const struct state *st);
 
 extern void complete_v2_state_transition(struct state *st,
 					 struct msg_digest *mdp,
 					 stf_status result);
-
-typedef stf_status ikev2_state_transition_fn(struct ike_sa *ike,
-					     struct child_sa *child, /* could be NULL */
-					     struct msg_digest *md /* could be NULL */);
 
 extern ikev2_state_transition_fn process_encrypted_informational_ikev2;
 
@@ -54,28 +60,23 @@ extern ikev2_state_transition_fn ikev2_child_ike_inR;
 extern ikev2_state_transition_fn ikev2_child_inR;
 extern ikev2_state_transition_fn ikev2_child_inIoutR;
 
-extern ikev2_state_transition_fn ikev2_parent_inI1outR1;
-extern ikev2_state_transition_fn ikev2_auth_initiator_process_failure_notification;
-extern ikev2_state_transition_fn ikev2_auth_initiator_process_unknown_notification;
-extern ikev2_state_transition_fn ikev2_ike_sa_process_intermediate_request_no_skeyid;
-extern ikev2_state_transition_fn ikev2_ike_sa_process_auth_request_no_skeyid;
-extern ikev2_state_transition_fn ikev2_ike_sa_process_auth_request;
-extern ikev2_state_transition_fn ikev2_parent_inR1outI2;
-extern ikev2_state_transition_fn ikev2_parent_inR2;
+extern ikev2_state_transition_fn ikev2_in_IKE_AUTH_R_failure_notification;
+extern ikev2_state_transition_fn ikev2_in_IKE_AUTH_R_unknown_notification;
+extern ikev2_state_transition_fn ikev2_in_IKE_INTERMEDIATE_I_out_IKE_INTERMEDIATE_R_no_skeyid;
+extern ikev2_state_transition_fn ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_no_skeyid;
+extern ikev2_state_transition_fn ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R;
 
 void schedule_reinitiate_v2_ike_sa_init(struct ike_sa *ike,
 					stf_status (*resume)(struct ike_sa *ike));
 
 bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike);
-extern ikev2_state_transition_fn process_IKE_SA_INIT_v2N_INVALID_KE_PAYLOAD_response;
+extern ikev2_state_transition_fn ikev2_in_IKE_SA_INIT_R_v2N_INVALID_KE_PAYLOAD;
 
 extern void ikev2_initiate_child_sa(struct pending *p);
 
 void ikev2_rekey_ike_start(struct ike_sa *ike);
 
 extern void ikev2_child_outI(struct state *st);
-
-extern stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest * md);
 
 /* MAGIC: perform f, a function that returns notification_t
  * and return from the ENCLOSING stf_status returning function if it fails.
