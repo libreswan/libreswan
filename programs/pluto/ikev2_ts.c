@@ -881,12 +881,10 @@ static bool score_gt(const struct best_score *score, const struct best_score *be
 		 score->protocol > best->protocol));
 }
 
-/* a security label is a hunk containing a non-empty well-formed C string */
+/* a security label is a hunk containing only a non-empty well-formed C string */
 static bool proper_seclabel(shunk_t lab)
 {
-	const uint8_t *start = lab.ptr;	/* needed since lab.ptr is void * */
-	return	lab.len > 1 &&
-		memchr(start, '\0', lab.len) == start + lab.len - 1;
+	return	lab.len > 1 && hunk_strnlen(lab) == lab.len - 1;
 }
 
 /*
