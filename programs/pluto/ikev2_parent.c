@@ -574,8 +574,8 @@ void ikev2_parent_outI1(struct fd *whack_sock,
 
 	if (HAS_IPSEC_POLICY(policy)) {
 		if (DBGP(DBG_BASE)) {
-			st->st_ts_this = ikev2_end_to_ts(&c->spd.this, st->st_acquired_sec_label);
-			st->st_ts_that = ikev2_end_to_ts(&c->spd.that, st->st_seen_sec_label);
+			st->st_ts_this = ikev2_end_to_ts(&c->spd.this, st);
+			st->st_ts_that = ikev2_end_to_ts(&c->spd.that, st);
 			ikev2_print_ts(&st->st_ts_this);
 			ikev2_print_ts(&st->st_ts_that);
 		}
@@ -2386,8 +2386,8 @@ static stf_status ikev2_parent_inR1outI2_auth_signature_continue(struct ike_sa *
 		return STF_INTERNAL_ERROR;
 	}
 
-	child->sa.st_ts_this = ikev2_end_to_ts(&cc->spd.this, child->sa.st_acquired_sec_label);
-	child->sa.st_ts_that = ikev2_end_to_ts(&cc->spd.that, child->sa.st_seen_sec_label);
+	child->sa.st_ts_this = ikev2_end_to_ts(&cc->spd.this, &child->sa);
+	child->sa.st_ts_that = ikev2_end_to_ts(&cc->spd.that, &child->sa);
 
 	v2_emit_ts_payloads(child, &sk.pbs, cc);
 
@@ -3217,8 +3217,8 @@ static bool assign_child_responder_client(struct ike_sa *ike,
 					    ENCRYPTED_PAYLOAD);
 			return false;
 		}
-		child->sa.st_ts_this = ikev2_end_to_ts(&spd->this, child->sa.st_acquired_sec_label);
-		child->sa.st_ts_that = ikev2_end_to_ts(&spd->that, child->sa.st_seen_sec_label);
+		child->sa.st_ts_this = ikev2_end_to_ts(&spd->this, &child->sa);
+		child->sa.st_ts_that = ikev2_end_to_ts(&spd->that, &child->sa);
 	} else {
 		if (!v2_process_ts_request(child, md)) {
 			/* already logged? */
@@ -4232,8 +4232,8 @@ static bool ikev2_rekey_child_copy_ts(struct child_sa *child)
 	    rchild->sa.st_serialno);
 
 	struct spd_route *spd = &rchild->sa.st_connection->spd;
-	child->sa.st_ts_this = ikev2_end_to_ts(&spd->this, child->sa.st_acquired_sec_label);
-	child->sa.st_ts_that = ikev2_end_to_ts(&spd->that, child->sa.st_seen_sec_label);
+	child->sa.st_ts_this = ikev2_end_to_ts(&spd->this, &child->sa);
+	child->sa.st_ts_that = ikev2_end_to_ts(&spd->that, &child->sa);
 	ikev2_print_ts(&child->sa.st_ts_this);
 	ikev2_print_ts(&child->sa.st_ts_that);
 
@@ -4318,8 +4318,8 @@ static stf_status ikev2_child_add_ipsec_payloads(struct child_sa *child,
 
 	if (rekey_spi == 0) {
 		/* not rekey */
-		child->sa.st_ts_this = ikev2_end_to_ts(&cc->spd.this, child->sa.st_acquired_sec_label);
-		child->sa.st_ts_that = ikev2_end_to_ts(&cc->spd.that, child->sa.st_seen_sec_label);
+		child->sa.st_ts_this = ikev2_end_to_ts(&cc->spd.this, &child->sa);
+		child->sa.st_ts_that = ikev2_end_to_ts(&cc->spd.that, &child->sa);
 	}
 
 	v2_emit_ts_payloads(child, outpbs, cc);

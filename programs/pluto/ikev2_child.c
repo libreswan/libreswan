@@ -455,7 +455,7 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 			    af->ip_version, ipstr(&ip, &ip_str));
 		} else {
 			c->spd.this.client = selector_from_address(&ip);
-			st->st_ts_this = ikev2_end_to_ts(&c->spd.this, st->st_acquired_sec_label);
+			st->st_ts_this = ikev2_end_to_ts(&c->spd.this, st);
 			c->spd.this.has_cat = true; /* create iptable entry */
 		}
 	} else {

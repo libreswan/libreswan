@@ -106,7 +106,7 @@ static void ts_to_end(const struct traffic_selector *ts, struct end *end,
 /* For now, note the struct traffic_selector can contain
  * two selectors - an IPvX range and a sec_label
  */
-struct traffic_selector ikev2_end_to_ts(const struct end *e, chunk_t sec_label)
+struct traffic_selector ikev2_end_to_ts(const struct end *e, const struct state *st)
 {
 	struct traffic_selector ts;
 
@@ -147,7 +147,9 @@ struct traffic_selector ikev2_end_to_ts(const struct end *e, chunk_t sec_label)
 	 * Points into either the END, or
 	 * .st_{seen,acquired}_sec_label.
 	 */
-	ts.sec_label = HUNK_AS_SHUNK(sec_label.len != 0 ? sec_label : e->sec_label);
+	ts.sec_label = HUNK_AS_SHUNK((st->st_seen_sec_label.len != 0) ?
+					st->st_seen_sec_label :
+					st->st_acquired_sec_label);
 
 	return ts;
 }
@@ -906,9 +908,23 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 
 #ifdef HAVE_LABELED_IPSEC
 
+	if (!tsi->contains_sec_label && !tsr->contains_sec_label) {
+		/*
+		 * if neither TSi nor TSr contains a label, that is OK.
+		 * This case is expected for the initial child/IPsec SA setup
+		 * during IKE_AUTH when there is no ACQUIRE driving said IKE
+		 * negotiation (i.e. when using `auto=start` for the connection
+		 * configuration).
+		 */
+		return NULL;
+	}
+
 	/* short-cut */
 	if (!tsi->contains_sec_label || !tsr->contains_sec_label) {
-		/* both are needed; can't match */
+		/*
+		 * if either TSi or TSr contains a label, then both are needed;
+		 * can't match
+		 */
 		return &null_shunk;
 	}
 
@@ -1440,8 +1456,8 @@ bool v2_process_ts_request(struct child_sa *child,
 		child->sa.st_seen_sec_label = clone_hunk(*best_sec_label, "st_seen_sec_label");
 	}
 
-	child->sa.st_ts_this = ikev2_end_to_ts(&best_spd_route->this, child->sa.st_acquired_sec_label);
-	child->sa.st_ts_that = ikev2_end_to_ts(&best_spd_route->that, child->sa.st_seen_sec_label);
+	child->sa.st_ts_this = ikev2_end_to_ts(&best_spd_route->this, &child->sa);
+	child->sa.st_ts_that = ikev2_end_to_ts(&best_spd_route->that, &child->sa);
 
 	ikev2_print_ts(&child->sa.st_ts_this);
 	ikev2_print_ts(&child->sa.st_ts_that);
