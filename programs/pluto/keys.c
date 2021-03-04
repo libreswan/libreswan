@@ -148,12 +148,20 @@ void list_psks(struct show *s)
 	lsw_foreach_secret(pluto_secrets, print_secrets, s);
 }
 
-err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
-			       const struct crypt_mac *expected_hash,
-			       const uint8_t *sig_val, size_t sig_len,
-			       const struct hash_desc *hash_algo,
-			       struct logger *logger)
+err_t try_signature_RSA(const struct crypt_mac *expected_hash,
+			shunk_t signature,
+			struct pubkey *kr,
+			const struct hash_desc *hash_algo,
+			struct logger *logger)
 {
+	const struct RSA_public_key *k = &kr->u.rsa;
+
+	/* decrypt the signature -- reversing RSA_sign_hash */
+	if (signature.len != kr->size) {
+		/* XXX notification: INVALID_KEY_INFORMATION */
+		return "1" "SIG length does not match public key length";
+	}
+
 	SECStatus retVal;
 	if (DBGP(DBG_BASE)) {
 		DBG_dump_hunk("NSS RSA: verifying that decrypted signature matches hash: ",
@@ -222,8 +230,8 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 
 	const SECItem encrypted_signature = {
 		.type = siBuffer,
-		.data = DISCARD_CONST(unsigned char *, sig_val),
-		.len  = (unsigned int)sig_len,
+		.data = DISCARD_CONST(unsigned char *, signature.ptr),
+		.len  = signature.len,
 	};
 
 	if (hash_algo == NULL /* ikev1*/ ||
@@ -232,7 +240,7 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 			.type = siBuffer,
 		};
 		if (SECITEM_AllocItem(publicKey->arena, &decrypted_signature,
-				      sig_len) == NULL) {
+				      signature.len) == NULL) {
 			SECKEY_DestroyPublicKey(publicKey);
 			return "12""NSS error: unable to allocate space for decrypted signature";
 		}
@@ -309,135 +317,138 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
  */
 struct tac_state {
 	const struct pubkey_type *type;
-	/* check_signature's args that take_a_crack needs */
-	struct state *st;
 	const struct crypt_mac *hash;
-	const pb_stream *sig_pbs;
+	shunk_t signature;
 	const struct hash_desc *hash_algo;
 	try_signature_fn *try_signature;
+	realtime_t now;
+	struct logger *logger;
+	const struct end *remote;
 
 	/* state carried between calls */
 	err_t best_ugh; /* most successful failure */
 	int tried_cnt;  /* number of keys tried */
 	char tried[50]; /* keyids of tried public keys */
-	struct jambuf tn;
+	struct jambuf tried_jambuf;
+	struct pubkey *key;
 };
 
-static bool take_a_crack(struct tac_state *s,
-			 struct pubkey *kr,
-			 const char *story)
-{
-	s->tried_cnt++;
-	err_t ugh = (s->try_signature)(s->hash, s->sig_pbs,
-				       kr, s->st, s->hash_algo);
-
-	const keyid_t *key_id_str = pubkey_keyid(kr);
-
-	if (ugh == NULL) {
-		dbg("an %s Sig check passed with *%s [%s]",
-		    kr->type->name, str_keyid(*key_id_str), story);
-		return true;
-	} else {
-		log_state(RC_LOG_SERIOUS, s->st, "an %s Sig check failed '%s' with *%s [%s]",
-			  kr->type->name, ugh + 1, str_keyid(*key_id_str), story);
-		if (s->best_ugh == NULL || s->best_ugh[0] < ugh[0])
-			s->best_ugh = ugh;
-		if (ugh[0] > '0') {
-			jam(&s->tn, " *%s", str_keyid(*key_id_str));
-		}
-		return false;
-	}
-}
-
 static bool try_all_keys(const char *pubkey_description,
-			 struct pubkey_list **pubkey_db,
-			 const struct connection *c, realtime_t now,
+			 struct pubkey_list *pubkey_db,
 			 struct tac_state *s)
 {
 
 	id_buf thatid;
 	dbg("trying all %s public keys for %s key that matches ID: %s",
-	    pubkey_description, s->type->name, str_id(&c->spd.that.id, &thatid));
+	    pubkey_description, s->type->name, str_id(&s->remote->id, &thatid));
 
-	/*
-	 * XXX: danger, serves double purpose of pruning expired
-	 * public keys, hence strange trailing pp pointer.
-	 */
-	struct pubkey_list **pp = pubkey_db;
-	for (struct pubkey_list *p = *pubkey_db; p != NULL; p = *pp) {
+	for (struct pubkey_list *p = pubkey_db; p != NULL; p = p->next) {
 		struct pubkey *key = p->key;
-
-		/* passed to trusted_ca_nss() */
-		int pl;	/* value ignored */
 
 		if (key->type != s->type) {
 			id_buf printkid;
 			dbg("  skipping '%s' with type %s",
 			    str_id(&key->id, &printkid), key->type->name);
-		} else if (!same_id(&c->spd.that.id, &key->id)) {
+			continue;
+		}
+
+		if (!same_id(&s->remote->id, &key->id)) {
 			id_buf printkid;
 			dbg("  skipping '%s' with wrong ID",
 			    str_id(&key->id, &printkid));
-		} else if (!trusted_ca_nss(key->issuer, c->spd.that.ca, &pl)) {
+			continue;
+		}
+
+		int pl;	/* value ignored */
+		if (!trusted_ca_nss(key->issuer, s->remote->ca, &pl)) {
 			id_buf printkid;
 			dn_buf buf;
 			dbg("  skipping '%s' with untrusted CA '%s'",
 			    str_id(&key->id, &printkid),
 			    str_dn_or_null(key->issuer, "%any", &buf));
-		} else if (!is_realtime_epoch(key->until_time) &&
-			   realbefore(key->until_time, now)) {
-			/*
-			 * XXX: danger: found public key has expired;
-			 * deleting mid loop.  Why only do this for
-			 * matched keys as the test is relatively
-			 * cheap?
-			 */
-			id_buf printkid;
-			log_state(RC_LOG_SERIOUS, s->st,
-				  "cached %s public key '%s' has expired and has been deleted",
-				  s->type->name, str_id(&key->id, &printkid));
-			*pp = free_public_keyentry(p);
-			continue; /* continue with next public key */
-		} else {
-			id_buf printkid;
-			dn_buf buf;
-			dbg("  trying '%s' issued by CA '%s'",
-			    str_id(&key->id, &printkid), str_dn_or_null(key->issuer, "%any", &buf));
-
-			statetime_t try_time = statetime_start(s->st);
-			bool ok = take_a_crack(s, key, pubkey_description);
-			statetime_stop(&try_time, "%s() trying a pubkey", __func__);
-			if (ok) {
-				return true;
-			}
+			continue;
 		}
-		pp = &p->next;
+
+		/*
+		 * XXX: even though loop above filtered out these
+		 * certs, keep this check, at some point the above
+		 * loop will be deleted.
+		 */
+		if (!is_realtime_epoch(key->until_time) &&
+		    realbefore(key->until_time, s->now)) {
+			id_buf printkid;
+			realtime_buf buf;
+			dbg("  skipping '%s' which expired on %s",
+			    str_id(&key->id, &printkid),
+			    str_realtime(key->until_time, /*utc?*/false, &buf));
+			continue;
+		}
+
+		id_buf printkid;
+		dn_buf buf;
+		dbg("  trying '%s' issued by CA '%s'",
+		    str_id(&key->id, &printkid), str_dn_or_null(key->issuer, "%any", &buf));
+
+		const char *key_id_str = str_keyid(*pubkey_keyid(key));
+
+		s->tried_cnt++;
+		logtime_t try_time = logtime_start(s->logger);
+		err_t ugh = (s->try_signature)(s->hash, s->signature,
+					       key, s->hash_algo,
+					       s->logger);
+		logtime_stop(&try_time, "%s() trying a pubkey", __func__);
+
+		if (ugh == NULL) {
+			/*
+			 * Success: copy successful key into state.
+			 * There might be an old one if we previously
+			 * aborted this state transition.
+			 */
+			dbg("an %s signature check passed with *%s [%s]",
+			    key->type->name, key_id_str, pubkey_description);
+			s->key = key;
+			return true;
+		}
+
+		llog(RC_LOG_SERIOUS, s->logger,
+		     "an %s Sig check failed '%s' with *%s [%s]",
+		     key->type->name, ugh + 1, key_id_str, pubkey_description);
+		if (s->best_ugh == NULL || s->best_ugh[0] < ugh[0])
+			s->best_ugh = ugh;
+		if (ugh[0] > '0') {
+			jam(&s->tried_jambuf, " *%s", key_id_str);
+		}
+
 	}
 	return false;
 }
 
-stf_status check_signature_gen(struct state *st,
+stf_status check_signature_gen(struct ike_sa *ike,
 			       const struct crypt_mac *hash,
-			       const pb_stream *sig_pbs,
+			       shunk_t signature,
 			       const struct hash_desc *hash_algo,
 			       const struct pubkey_type *type,
 			       try_signature_fn *try_signature)
 {
-	const struct connection *c = st->st_connection;
+	const struct connection *c = ike->sa.st_connection;
 	struct tac_state s = {
+		/* in */
 		.type = type,
-		.st = st,
+		.logger = ike->sa.st_logger,
 		.hash = hash,
-		.sig_pbs = sig_pbs,
+		.now = realnow(),
+		.signature = signature,
 		.hash_algo = hash_algo,
+		.remote = &c->spd.that,
 		.try_signature = try_signature,
+		/* out */
 		.best_ugh = NULL,
 		.tried_cnt = 0,
+		.key = NULL,
 	};
-	s.tn = ARRAY_AS_JAMBUF(s.tried);
+	s.tried_jambuf = ARRAY_AS_JAMBUF(s.tried);
 
 	/* try all appropriate Public keys */
-	realtime_t now = realnow();
 
 	if (DBGP(DBG_BASE)) {
 		dn_buf buf;
@@ -446,14 +457,36 @@ stf_status check_signature_gen(struct state *st,
 			str_dn_or_null(c->spd.that.ca, "%any", &buf));
 	}
 
-	pexpect(st->st_remote_certs.processed);
-	if (try_all_keys("remote certificates",
-			 &st->st_remote_certs.pubkey_db,
-			 c, now, &s) ||
-	    try_all_keys("preloaded keys",
-			 &pluto_pubkeys,
-			 c, now, &s)) {
-		log_state(RC_LOG_SERIOUS, st,
+	pexpect(ike->sa.st_remote_certs.processed);
+	bool found = try_all_keys("remote certificates", ike->sa.st_remote_certs.pubkey_db, &s);
+
+	/*
+	 * Prune the expired public keys from the pre-loaded public
+	 * key list.  But why here, and why not as a separate job?
+	 * And why blame the IKE SA as it isn't really its fault?
+	 */
+	for (struct pubkey_list **pp = &pluto_pubkeys; *pp != NULL; ) {
+		struct pubkey *key = (*pp)->key;
+		if (!is_realtime_epoch(key->until_time) &&
+		    realbefore(key->until_time, s.now)) {
+			id_buf printkid;
+			log_state(RC_LOG_SERIOUS, &ike->sa,
+				  "cached %s public key '%s' has expired and has been deleted",
+				  key->type->name, str_id(&key->id, &printkid));
+			*pp = free_public_keyentry(*(pp));
+			continue; /* continue with next public key */
+		}
+		pp = &(*pp)->next;
+	}
+
+	if (!found) {
+		found = try_all_keys("preloaded keys", pluto_pubkeys, &s);
+	}
+
+	if (found) {
+		pubkey_delref(&ike->sa.st_peer_pubkey, HERE);
+		ike->sa.st_peer_pubkey = pubkey_addref(s.key, HERE);
+		log_state(RC_LOG_SERIOUS, &ike->sa,
 			  "authenticated using %s with %s",
 			  type->name,
 			  (c->ike_version == IKEv1) ? "SHA-1" : hash_algo->common.fqn);
@@ -470,11 +503,11 @@ stf_status check_signature_gen(struct state *st,
 
 	/* sanitize the ID suitable for logging */
 	id_buf id_str = { "" }; /* arbitrary limit on length of ID reported */
-	str_id(&st->st_connection->spd.that.id, &id_str);
+	str_id(&c->spd.that.id, &id_str);
 	passert(id_str.buf[0] != '\0');
 
 	if (s.best_ugh == NULL) {
-		log_state(RC_LOG_SERIOUS, st,
+		log_state(RC_LOG_SERIOUS, &ike->sa,
 			  "no %s public key known for '%s'",
 			  type->name, id_str.buf);
 		/* ??? is this the best code there is? */
@@ -482,11 +515,11 @@ stf_status check_signature_gen(struct state *st,
 	}
 
 	if (s.tried_cnt == 1) {
-		log_state(RC_LOG_SERIOUS, st,
+		log_state(RC_LOG_SERIOUS, &ike->sa,
 			  "%s Signature check (on %s) failed (wrong key?); tried%s",
 			  type->name, id_str.buf, s.tried);
 	} else {
-		log_state(RC_LOG_SERIOUS, st,
+		log_state(RC_LOG_SERIOUS, &ike->sa,
 			  "%s Signature check (on %s) failed: tried%s keys but none worked.",
 			  type->name, id_str.buf, s.tried);
 	}

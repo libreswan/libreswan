@@ -310,8 +310,9 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 			return false;
 		}
 
-		stf_status authstat = ikev2_verify_rsa_hash(ike, idhash_in, pbs,
-							    &ike_alg_hash_sha1);
+		shunk_t signature = pbs_in_left_as_shunk(pbs);
+		stf_status authstat = ikev2_verify_rsa_hash(ike, idhash_in,
+							    signature, &ike_alg_hash_sha1);
 
 		if (authstat != STF_OK) {
 			log_state(RC_LOG, &ike->sa,
@@ -415,14 +416,17 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 		/* try to match the hash */
 		stf_status authstat;
 
+		shunk_t signature = pbs_in_left_as_shunk(pbs);
 		switch (that_authby) {
 		case AUTHBY_RSASIG:
-			authstat = ikev2_verify_rsa_hash(ike, idhash_in, pbs,
+			authstat = ikev2_verify_rsa_hash(ike, idhash_in,
+							 signature,
 							 hap->algo);
 			break;
 
 		case AUTHBY_ECDSA:
-			authstat = ikev2_verify_ecdsa_hash(ike, idhash_in, pbs,
+			authstat = ikev2_verify_ecdsa_hash(ike, idhash_in,
+							   signature,
 							   hap->algo);
 			break;
 
