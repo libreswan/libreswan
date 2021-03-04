@@ -956,9 +956,7 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 				if (cur_r->ts_type == IKEv2_TS_SECLABEL) {
 					if (cur_r->sec_label.len == 0) {
 						dbg("IKEv2_TS_SECLABEL but zero length cur_r->sec_label");
-					} else if (se_label_match(HUNK_AS_SHUNK(ends->r->sec_label),
-								  d->spd.this.sec_label,
-								  logger)) {
+					} else if (se_label_match(cur_r->sec_label, d->spd.this.sec_label, logger)) {
 						dbg("ikev2ts #2: received label within range of our security label");
 						selected_sec_label = &cur_r->sec_label;
 						/* XXX: better match? */
