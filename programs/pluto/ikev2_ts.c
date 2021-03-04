@@ -515,7 +515,12 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 
 			if (hunk_strnlen(sec_label) + 1 != sec_label.len) {
 				llog(RC_LOG, logger,
-				     "Traffic Selector of type Security Label is not NUL terminated");
+				     "Traffic Selector of type Security Label is not NUL terminated or contains an ebedded NUL");
+				return false;
+			}
+
+			if (sec_label.len <= 1) {
+				llog(RC_LOG, logger, "Traffic Selector of type Security Label is an empty string");
 				return false;
 			}
 

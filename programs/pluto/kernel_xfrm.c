@@ -1774,14 +1774,19 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 			 * first byte after header
 			 */
 			sec_label.ptr = (uint8_t *)(xuctx + 1);
-			sec_label.len = xuctx->ctx_len;
+			sec_label.len = len;
 			dbg("xfrm: xuctx security context value: %.*s",
-			    xuctx->ctx_len,
-			    (const char *) (xuctx + 1));
+				(int)len,
+				(const char *) (xuctx + 1));
 
-			if (strlen((char *)sec_label.ptr) + 1 != xuctx->ctx_len) {
+			if (strnlen((char *)sec_label.ptr, len) + 1 != len) {
 				llog(RC_LOG, logger,
-				    "received sec_label contains embedded NULl ignoring Acquire message");
+					"received sec_label contains embedded NUL or no terminal NUL; ignoring Acquire message");
+				return;
+			}
+			if (len <= 1) {
+				llog(RC_LOG, logger,
+					"received sec_label is empty; ignoring Acquire message");
 				return;
 			}
 
