@@ -376,13 +376,125 @@ static void construct_enc_iv(const char *name,
 	}
 }
 
+/*
+ * Without this the code makes little sense.
+ * https://datatracker.ietf.org/doc/draft-ietf-ipsecme-ikev2-intermediate/?include_text=1
+ *
+ *                       1                   2                   3
+ *   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ ^ ^
+ *  |                       IKE SA Initiator's SPI                  | | |
+ *  |                                                               | | |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ I |
+ *  |                       IKE SA Responder's SPI                  | K |
+ *  |                                                               | E |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+   |
+ *  |  Next Payload | MjVer | MnVer | Exchange Type |     Flags     | H |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ d |
+ *  |                          Message ID                           | r A
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | |
+ *  |                       Adjusted Length                         | | |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ v |
+ *  |                                                               |   |
+ *  ~                 Unencrypted payloads (if any)                 ~   |
+ *  |                                                               |   |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ ^ |
+ *  | Next Payload  |C|  RESERVED   |    Adjusted Payload Length    | | |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ E v
+ *  |                     Initialization Vector                     | n
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ c ^
+ *  |                                                               | r |
+ *  ~             Inner payloads (not yet encrypted)                ~   P
+ *  |                                                               | P |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ l v
+ *  |              Padding (0-255 octets)           |  Pad Length   | d
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ |
+ *  ~                    Integrity Checksum Data                    ~ |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ v
+ *
+ *      Figure 1: Data to Authenticate in the IKE_INTERMEDIATE Exchange
+ *                                Messages
+ *
+ *   Figure 1 illustrates the layout of the IntAuth_*_[I/R]_P (denoted as
+ *  P) and the IntAuth_*_[I/R]_A (denoted as A) chunks in case the
+ *  Encrypted payload is not empty.
+ */
+
+static void compute_intermediate_mac(struct ike_sa *ike,
+				     PK11SymKey *intermediate_key,
+				     const uint8_t *auth_start, chunk_t plain,
+				     chunk_t *out)
+{
+	/*
+	 * Define variables that match the naming scheme used by the
+	 * RFC's ASCII diagram above.
+	 */
+	const uint8_t *header_start = auth_start;
+	size_t header_size = NSIZEOF_isakmp_hdr;
+	const uint8_t *unencrypted_payload_start = header_start + header_size;
+	size_t unencrypted_payload_size = (plain.ptr
+					   - ike->sa.st_oakley.ta_encrypt->wire_iv_size
+					   - SK_HEADER_SIZE
+					   - unencrypted_payload_start);
+	const uint8_t *sk_header_start = (unencrypted_payload_start + unencrypted_payload_size);
+	size_t sk_header_size = SK_HEADER_SIZE;
+	/* skip the IV */
+	const uint8_t *inner_payloads_start = plain.ptr;
+	size_t inner_payloads_size = plain.len;
+	/* compute the PRF over "A" + "P" */
+	struct crypt_prf *prf = crypt_prf_init_symkey("prf(IntAuth_*_A [| IntAuth_*_P])",
+						      ike->sa.st_oakley.ta_prf,
+						      "SK_p", intermediate_key,
+						      ike->sa.st_logger);
+	/*
+	 * Hash IntAuth_*_[I/R]_A.
+	 */
+
+	/* Header, stooping before Adjusted Length field. */
+	crypt_prf_update_bytes(prf, "IKE Header short of Adjusted Length",
+			       header_start, header_size - ADJ_LENGTH_SIZE);
+	/* Adjusted length; in network byte order */
+	size_t adjusted_length = (header_size
+				  + unencrypted_payload_size
+				  + sk_header_size
+				  + inner_payloads_size);
+	DBG(DBG_CRYPT, DBG_log("adjusted length: %zu", adjusted_length));
+	uint8_t adjusted_length_bytes[ADJ_LENGTH_SIZE];
+	hton_bytes(adjusted_length, adjusted_length_bytes,
+		   sizeof(adjusted_length_bytes));
+	crypt_prf_update_thing(prf, "Adjusted Length",
+			       adjusted_length_bytes);
+	/* Unencrypted payload */
+	crypt_prf_update_bytes(prf, "Unencrypted payloads (if any)",
+			       unencrypted_payload_start, unencrypted_payload_size);
+	/* sk header, stooping before adjusted payload length */
+	crypt_prf_update_bytes(prf, "SK Header short of Adjusted Payload Length",
+			       sk_header_start, sk_header_size - ADJ_PAYLOAD_LENGTH_SIZE);
+	/* adjusted payload length, in network byte order */
+	size_t adjusted_payload_length = inner_payloads_size + SK_HEADER_SIZE;
+	DBG(DBG_CRYPT, DBG_log("adjusted payload length: %zu", adjusted_payload_length));
+	uint8_t adjusted_payload_length_bytes[ADJ_PAYLOAD_LENGTH_SIZE];
+	hton_bytes(adjusted_payload_length, adjusted_payload_length_bytes,
+		   sizeof(adjusted_payload_length_bytes));
+	crypt_prf_update_thing(prf, "Adjusted Payload Length",
+			       adjusted_payload_length_bytes);
+
+	/*
+	 * IntAuth_*_[I/R]_P aka inner payload.
+	 */
+	crypt_prf_update_bytes(prf, "Inner payloads (decrypted)",
+			       inner_payloads_start, inner_payloads_size);
+
+	/* extract the mac */
+	struct crypt_mac mac = crypt_prf_final_mac(&prf, NULL/*no-truncation*/);
+	*out = clone_hunk(mac, "IntAuth");
+}
 
 stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 {
 	struct ike_sa *ike = sk->ike;
 	uint8_t *auth_start = sk->pbs.container->start;
 	uint8_t *wire_iv_start = sk->iv.ptr;
-	size_t wire_iv_size = ike->sa.st_oakley.ta_encrypt->wire_iv_size;
 	uint8_t *enc_start = sk->cleartext.ptr;
 	uint8_t *integ_start = sk->integrity.ptr;
 	size_t integ_size = sk->integrity.len;
@@ -395,20 +507,20 @@ stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 	chunk_t salt;
 	PK11SymKey *cipherkey;
 	PK11SymKey *authkey;
-	PK11SymKey *intermediatekey;
+	PK11SymKey *intermediate_key;
 	/* encrypt with our end's key */
 	switch (ike->sa.st_sa_role) {
 	case SA_INITIATOR:
 		cipherkey = ike->sa.st_skey_ei_nss;
 		authkey = ike->sa.st_skey_ai_nss;
 		salt = ike->sa.st_skey_initiator_salt;
-		intermediatekey = ike->sa.st_skey_pi_nss;
+		intermediate_key = ike->sa.st_skey_pi_nss;
 		break;
 	case SA_RESPONDER:
 		cipherkey = ike->sa.st_skey_er_nss;
 		authkey = ike->sa.st_skey_ar_nss;
 		salt = ike->sa.st_skey_responder_salt;
-		intermediatekey = ike->sa.st_skey_pr_nss;
+		intermediate_key = ike->sa.st_skey_pr_nss;
 		break;
 	default:
 		bad_case(ike->sa.st_sa_role);
@@ -416,8 +528,17 @@ stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 
 	/* size of plain or cipher text.  */
 	size_t enc_size = integ_start - enc_start;
-	chunk_t intermediate_auth = NULL_HUNK;
-	chunk_t sk_data = NULL_HUNK;
+
+	/*
+	 * For Intermediate Exchange, apply PRF to the peer's messages
+	 * and store in state for further authentication.
+	 */
+	if (exchange_type == ISAKMP_v2_IKE_INTERMEDIATE) {
+		compute_intermediate_mac(ike, intermediate_key,
+					 auth_start,
+					 sk->cleartext /* inner payloads */,
+					 &ike->sa.st_intermediate_packet_me);
+	}
 
 	/* encrypt and authenticate the block */
 	if (encrypt_desc_is_aead(ike->sa.st_oakley.ta_encrypt)) {
@@ -431,16 +552,6 @@ stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 		pexpect(integ_size == ike->sa.st_oakley.ta_encrypt->aead_tag_size);
 		unsigned char *aad_start = auth_start;
 		size_t aad_size = enc_start - aad_start - wire_iv_size;
-
-		if (exchange_type == ISAKMP_v2_IKE_INTERMEDIATE) {
-			/* save contents of IntAuth_*_A in a chunk */
-			/*
-			 * ??? do these need to be copies?
-			 * Are these chunks of memory mutated before the copy is used?
-			 */
-			intermediate_auth = clone_bytes_as_chunk(aad_start, aad_size, "IntAuth_*_A");
-			sk_data = clone_hunk(sk->cleartext, "IntAuth_*_P");
-		}
 
 		/* now, encrypt */
 		if (DBGP(DBG_CRYPT)) {
@@ -462,8 +573,6 @@ stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 			      aad_start, aad_size,
 			      enc_start, enc_size, integ_size,
 			      cipherkey, true, sk->logger)) {
-			free_chunk_content(&intermediate_auth);
-			free_chunk_content(&sk_data);
 			return STF_FAIL;
 		}
 
@@ -514,44 +623,6 @@ stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 		}
 	}
 
-	/*
-	 * For Intermediate Exchange, apply PRF to the peer's messages and store in state for
-	 * further authentication.
-	 */
-	if (exchange_type == ISAKMP_v2_IKE_INTERMEDIATE) {
-		/*
-		 * Set Adjusted Payload Length to the length of IntAuth_*_P plus the size
-		 * of the Payload header (four octets)
-		 */
-		uint8_t *adj_payload_len_start = intermediate_auth.ptr + intermediate_auth.len - ADJ_PAYLOAD_LENGTH_SIZE;
-		uint16_t adj_payload_len = sk_data.len + SK_HEADER_SIZE;
-		DBG(DBG_CRYPT, DBG_log("adjusted payload length: %u", adj_payload_len));
-		uint16_t adj_payload_len_no = htons(adj_payload_len);
-		memcpy(adj_payload_len_start, &adj_payload_len_no, sizeof(adj_payload_len_no));
-		/*
-		 * Set the Adjusted Length field to the sum of length of IntAuth_*_A and
-		 * IntAuth_*_P
-		 */
-		uint8_t *adj_len_start = intermediate_auth.ptr + ADJ_LENGTH_OFFSET;
-		uint32_t adj_len = (enc_start - auth_start - wire_iv_size) + (sk_data.len);
-		DBG(DBG_CRYPT, DBG_log("adjusted length: %u", adj_len));
-		uint32_t adj_len_no = htonl(adj_len);	/* network order */
-		memcpy(adj_len_start, &adj_len_no, sizeof(adj_len_no));
-		/*
-		 * If P(SK) not empty, append its decrypted contents IntAuth_*_A | IntAuth_*_P
-		 */
-		if (sk_data.len > 0) {
-			replace_chunk(&intermediate_auth,
-				clone_chunk_chunk(intermediate_auth, sk_data, "IntAuth_*_A | IntAuth_*_P"));
-		}
-		struct crypt_prf *prf = crypt_prf_init_symkey("prf(IntAuth_*_A [| IntAuth_*_P])", ike->sa.st_oakley.ta_prf,
-							 "SK_p", intermediatekey, ike->sa.st_logger);
-		crypt_prf_update_bytes(prf, "IntAuth", intermediate_auth.ptr, intermediate_auth.len);
-		struct crypt_mac int_mac = crypt_prf_final_mac(&prf, NULL/*no-truncation*/);
-		ike->sa.st_intermediate_packet_me = clone_hunk(int_mac, "IntAuth");
-	}
-	free_chunk_content(&intermediate_auth);
-	free_chunk_content(&sk_data);
 	return STF_OK;
 }
 
@@ -635,27 +706,26 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 	chunk_t salt;
 	PK11SymKey *cipherkey;
 	PK11SymKey *authkey;
-	PK11SymKey *intermediatekey;
+	PK11SymKey *intermediate_key;
 	switch (ike->sa.st_sa_role) {
 	case SA_INITIATOR:
 		/* need responders key */
 		cipherkey = ike->sa.st_skey_er_nss;
 		authkey = ike->sa.st_skey_ar_nss;
 		salt = ike->sa.st_skey_responder_salt;
-		intermediatekey = ike->sa.st_skey_pr_nss;
+		intermediate_key = ike->sa.st_skey_pr_nss;
 		break;
 	case SA_RESPONDER:
 		/* need initiators key */
 		cipherkey = ike->sa.st_skey_ei_nss;
 		authkey = ike->sa.st_skey_ai_nss;
 		salt = ike->sa.st_skey_initiator_salt;
-		intermediatekey = ike->sa.st_skey_pi_nss;
+		intermediate_key = ike->sa.st_skey_pi_nss;
 		break;
 	default:
 		bad_case(ike->sa.st_sa_role);
 	}
 
-	chunk_t intermediate_auth = NULL_HUNK;
 	/* authenticate and decrypt the block. */
 	if (encrypt_desc_is_aead(ike->sa.st_oakley.ta_encrypt)) {
 		/*
@@ -666,13 +736,6 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 		 */
 		unsigned char *aad_start = auth_start;
 		size_t aad_size = enc_start - auth_start - wire_iv_size;
-
-		if (exchange_type == ISAKMP_v2_IKE_INTERMEDIATE) {
-			/* save contents of IntAuth_*_A in a chunk */
-			/* ??? does this need to be a copy? */
-			/* ??? if so, does sk_data need to be a copy? */
-			intermediate_auth = clone_bytes_as_chunk(aad_start, aad_size, "IntAuth_*_A");
-		}
 
 		/* decrypt */
 		if (DBGP(DBG_CRYPT)) {
@@ -694,7 +757,6 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 			      aad_start, aad_size,
 			      enc_start, enc_size, integ_size,
 			      cipherkey, false, ike->sa.st_logger)) {
-			free_chunk_content(&intermediate_auth);
 			return false;
 		}
 
@@ -760,7 +822,6 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 		log_state(RC_LOG, &ike->sa,
 			  "discarding invalid packet: padding-length %u (octet 0x%02x) is larger than %zu octet payload length",
 			  padlen, padlen - 1, enc_size);
-		free_chunk_content(&intermediate_auth);
 		return false;
 	}
 	if (pad_to_blocksize) {
@@ -785,45 +846,17 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 	*plain = chunk2(enc_start, enc_size - padlen);
 
 	/*
-	 * For Intermediate Exchange, apply PRF to the peer's messages and store in state for
-	 * further authentication.
+	 * Now that the payload has been decrypted, perform the
+	 * intermediate exchange calculation.
+	 *
+	 * For Intermediate Exchange, apply PRF to the peer's messages
+	 * and store in state for further authentication.
 	 */
 	if (exchange_type == ISAKMP_v2_IKE_INTERMEDIATE) {
-		/*
-		 * Set Adjusted Payload Length to the length of IntAuth_*_P plus the size
-		 * of the Payload header (four octets)
-		 */
-		uint8_t *adj_payload_len_start = intermediate_auth.ptr + intermediate_auth.len - ADJ_PAYLOAD_LENGTH_SIZE;
-		uint16_t adj_payload_len = enc_size - padlen + SK_HEADER_SIZE;
-		DBG(DBG_CRYPT, DBG_log("adjusted payload length: %u", adj_payload_len));
-		uint16_t adj_payload_len_no = htons(adj_payload_len);
-		memcpy(adj_payload_len_start, &adj_payload_len_no, sizeof(adj_payload_len_no));
-		/*
-		 * Set the Adjusted Length field to the sum of length of IntAuth_*_A and
-		 * IntAuth_*_P
-		 */
-		uint8_t *adj_len_start = intermediate_auth.ptr + ADJ_LENGTH_OFFSET;
-		uint32_t adj_len = (enc_start - auth_start - wire_iv_size) + (enc_size - padlen);
-		DBG(DBG_CRYPT, DBG_log("adjusted length: %u", adj_len));
-		uint32_t adj_len_no = htonl(adj_len);	/* network order */
-		memcpy(adj_len_start, &adj_len_no, sizeof(adj_len_no));
-		/*
-		 * If P(SK) not empty, append its decrypted contents IntAuth_*_A | IntAuth_*_P
-		 */
-		if (enc_size - padlen > 0) {
-			replace_chunk(&intermediate_auth,
-				clone_chunk_chunk(intermediate_auth,
-					chunk2(enc_start, enc_size - padlen),
-					"IntAuth_*_A | IntAuth_*_P"));
-		}
-
-		struct crypt_prf *prf = crypt_prf_init_symkey("prf(IntAuth_*_A [| IntAuth_*_P])", ike->sa.st_oakley.ta_prf,
-							 "SK_p", intermediatekey, ike->sa.st_logger);
-		crypt_prf_update_bytes(prf, "IntAuth", intermediate_auth.ptr, intermediate_auth.len);
-		struct crypt_mac mac = crypt_prf_final_mac(&prf, NULL/*no-truncation*/);
-		ike->sa.st_intermediate_packet_peer = clone_hunk(mac, "IntAuth");
+		compute_intermediate_mac(ike, intermediate_key,
+					 auth_start, *plain,
+					 &ike->sa.st_intermediate_packet_peer);
 	}
-	free_chunk_content(&intermediate_auth);
 	return true;
 }
 

@@ -60,26 +60,42 @@ chunk_t chunk2(void *ptr, size_t len);
 
 chunk_t alloc_chunk(size_t count, const char *name);
 
-/* result is always a WRITEABLE chunk; NULL->NULL */
-#define clone_hunk(HUNK, NAME) ({					\
-			typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
-			clone_bytes_as_chunk(hunk_.ptr, hunk_.len, NAME); \
-		})
+/* result is always a WRITEABLE, hence chunk; NULL->NULL_CHUNK */
 
+chunk_t clone_bytes_as_chunk(const void *first_ptr, size_t first_len,
+			     const char *name);
 
-/* clone(first+second) */
-chunk_t clone_chunk_chunk(chunk_t first, chunk_t second, const char *name);
-
-/* always NUL terminated; NULL is NULL */
-char *clone_bytes_as_string(const void *ptr, size_t len, const char *name);
-#define clone_hunk_as_string(HUNK, NAME)				\
+#define clone_hunk(HUNK, NAME)						\
 	({								\
 		typeof(HUNK) hunk_ = HUNK; /* evaluate once */		\
-		clone_bytes_as_string(hunk_.ptr, hunk_.len, NAME);	\
+		clone_bytes_as_chunk(hunk_.ptr, hunk_.len, NAME);	\
 	})
 
-/* BYTES==NULL => NULL_CHUNK */
-chunk_t clone_bytes_as_chunk(const void *bytes, size_t sizeof_bytes, const char *name);
+chunk_t clone_bytes_bytes_as_chunk(const void *first_ptr, size_t first_len,
+				   const void *second_ptr, size_t second_len,
+				   const char *name);
+
+#define clone_hunk_hunk(LHS, RHS, NAME)					\
+	({								\
+		typeof(LHS) lhs_ = LHS; /* evaluate once */		\
+		typeof(RHS) rhs_ = RHS; /* evaluate once */		\
+		clone_bytes_bytes_as_chunk(lhs_.ptr, lhs_.len,		\
+					   rhs_.ptr, rhs_.len,		\
+					   NAME);			\
+	})
+
+/*
+ * replace RHS with the contatenation of LHS+RHS
+ *
+ * These functions have their name first which, while inconsistent
+ * with the other functions does read better.
+ */
+void append_chunk_bytes(const char *name, chunk_t *lhs, const void *rhs, size_t sizeof_rhs);
+#define append_chunk_hunk(NAME, LHS, RHS)				\
+	({								\
+		typeof(RHS) rhs_ = RHS; /* evaluate once */		\
+		append_chunk_bytes(NAME, LHS, (rhs_).ptr, (rhs_).len);	\
+	})
 
 /*
  * Free contents of chunk (if any) and blat chunk.

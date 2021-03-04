@@ -230,3 +230,8 @@ bool subnet_eq(const ip_subnet *l, const ip_subnet *r)
 		l->addr.version == r->addr.version &&
 		thingeq(l->addr.bytes, r->addr.bytes));
 }
+
+bool subnet_in(const ip_subnet *l, const ip_subnet *r)
+{
+	return subnetinsubnet(l, r);
+}

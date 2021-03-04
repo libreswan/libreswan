@@ -78,9 +78,9 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 	switch (ike->sa.st_state->kind) {
 	case STATE_PARENT_I2:
 		if (ike->sa.st_intermediate_used) {
-			intermediate_auth = clone_hunk(ike->sa.st_intermediate_packet_me, "IntAuth_*_I");
-			intermediate_auth = clone_chunk_chunk(intermediate_auth, ike->sa.st_intermediate_packet_peer,
-									"IntAuth_*_I_A | IntAuth_*_R");
+			intermediate_auth = clone_hunk_hunk(ike->sa.st_intermediate_packet_me,
+							    ike->sa.st_intermediate_packet_peer,
+							    "IntAuth_*_I_A | IntAuth_*_R");
 		}
 		if (!verify) {
 			/* we are initiator sending PSK */
@@ -103,9 +103,9 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 		nonce = &ike->sa.st_nr;
 		nonce_name = "verify: initiator inputs to hash2 (responder nonce)";
 		if (ike->sa.st_intermediate_used) {
-			intermediate_auth = clone_hunk(ike->sa.st_intermediate_packet_peer, "IntAuth_*_I");
-			intermediate_auth = clone_chunk_chunk(intermediate_auth, ike->sa.st_intermediate_packet_me,
-									"IntAuth_*_I_A | IntAuth_*_R");
+			intermediate_auth = clone_hunk_hunk(ike->sa.st_intermediate_packet_peer,
+							    ike->sa.st_intermediate_packet_me,
+							    "IntAuth_*_I_A | IntAuth_*_R");
 		}
 		break;
 
@@ -121,9 +121,9 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 			nonce = &ike->sa.st_ni;
 			nonce_name = "verify: initiator inputs to hash2 (initiator nonce)";
 			if (ike->sa.st_intermediate_used) {
-				intermediate_auth = clone_hunk(ike->sa.st_intermediate_packet_me, "IntAuth_*_I");
-				intermediate_auth = clone_chunk_chunk(intermediate_auth, ike->sa.st_intermediate_packet_peer,
-										"IntAuth_*_I_A | IntAuth_*_R");
+				intermediate_auth = clone_hunk_hunk(ike->sa.st_intermediate_packet_me,
+								    ike->sa.st_intermediate_packet_peer,
+								    "IntAuth_*_I_A | IntAuth_*_R");
 			}
 		} else {
 			/* we are responder sending PSK */
@@ -132,9 +132,9 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 			nonce = &ike->sa.st_ni;
 			nonce_name = "create: responder inputs to hash2 (initiator nonce)";
 			if (ike->sa.st_intermediate_used) {
-				intermediate_auth = clone_hunk(ike->sa.st_intermediate_packet_peer, "IntAuth_*_I");
-				intermediate_auth = clone_chunk_chunk(intermediate_auth, ike->sa.st_intermediate_packet_me,
-										"IntAuth_*_I_A | IntAuth_*_R");
+				intermediate_auth = clone_hunk_hunk(ike->sa.st_intermediate_packet_peer,
+								    ike->sa.st_intermediate_packet_me,
+								    "IntAuth_*_I_A | IntAuth_*_R");
 			}
 		}
 		break;
@@ -206,9 +206,7 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 	    DBG_dump_hunk("inputs to hash1 (first packet)", firstpacket);
 	    DBG_dump_hunk(nonce_name, *nonce);
 	    DBG_dump_hunk("idhash", *idhash);
-	    if (ike->sa.st_intermediate_used) {
-		DBG_dump_hunk("IntAuth", intermediate_auth);
-	    }
+	    DBG_dump_hunk("IntAuth", intermediate_auth);
 	}
 
 	/*
@@ -216,8 +214,11 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 	 * AUTH = prf(prf(Shared Secret, "Key Pad for IKEv2"), <msg octets>)
 	 */
 	passert(idhash->len == ike->sa.st_oakley.ta_prf->prf_output_size);
-	return ikev2_psk_auth(ike->sa.st_oakley.ta_prf, *pss, firstpacket, *nonce, idhash,
-			      ike->sa.st_logger, ike->sa.st_intermediate_used, intermediate_auth);
+	struct crypt_mac mac = ikev2_psk_auth(ike->sa.st_oakley.ta_prf, *pss,
+					      firstpacket, *nonce, idhash,
+					      intermediate_auth, ike->sa.st_logger);
+	free_chunk_content(&intermediate_auth);
+	return mac;
 }
 
 bool ikev2_emit_psk_auth(enum keyword_authby authby,

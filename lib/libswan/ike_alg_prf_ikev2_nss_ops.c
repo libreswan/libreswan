@@ -148,7 +148,7 @@ static PK11SymKey *ike_sa_keymat(const struct prf_desc *prf_desc,
 {
 	PK11SymKey *prf_plus;
 
-	chunk_t seed_data = clone_chunk_chunk(Ni, Nr, "seed_data = Ni || Nr");
+	chunk_t seed_data = clone_hunk_hunk(Ni, Nr, "seed_data = Ni || Nr");
 	append_chunk_hunk("seed_data = Nir || SPIi", &seed_data, SPIi);
 	append_chunk_hunk("seed_data = Nir || SPIir", &seed_data, SPIr);
 	prf_plus = prfplus_key_data("keymat", prf_desc, skeyseed, NULL, seed_data,
@@ -179,7 +179,7 @@ static PK11SymKey *child_sa_keymat(const struct prf_desc *prf_desc,
 	chunk_t seed_data;
 	PK11SymKey *prf_plus;
 
-	seed_data = clone_chunk_chunk(Ni, Nr, "seed_data = Ni || Nr");
+	seed_data = clone_hunk_hunk(Ni, Nr, "seed_data = Ni || Nr");
 	prf_plus = prfplus_key_data("keymat", prf_desc, SK_d, new_dh_secret, seed_data,
 				    required_bytes, logger);
 	free_chunk_content(&seed_data);
@@ -189,8 +189,8 @@ static PK11SymKey *child_sa_keymat(const struct prf_desc *prf_desc,
 static struct crypt_mac psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
 				 chunk_t first_packet, chunk_t nonce,
 				 const struct crypt_mac *id_hash,
-				 struct logger *logger,
-				 bool use_intermediate, chunk_t intermediate_packet)
+				 chunk_t intermediate_packet,
+				 struct logger *logger)
 {
 	PK11SymKey *prf_psk;
 
@@ -251,9 +251,7 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
 		crypt_prf_update_hunk(prf, "first-packet", first_packet);
 		crypt_prf_update_hunk(prf, "nonce", nonce);
 		crypt_prf_update_hunk(prf, "hash", *id_hash);
-		if (use_intermediate) {
-			crypt_prf_update_hunk(prf,"IntAuth", intermediate_packet);
-		}
+		crypt_prf_update_hunk(prf,"IntAuth", intermediate_packet);
 		signed_octets = crypt_prf_final_mac(&prf, NULL);
 	}
 	release_symkey(__func__, "prf-psk", &prf_psk);

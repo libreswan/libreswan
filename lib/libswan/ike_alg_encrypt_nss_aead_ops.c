@@ -47,7 +47,7 @@ static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 		.ptr = wire_iv,
 		.len = wire_iv_size,
 	};
-	chunk_t iv = clone_chunk_chunk(salt_chunk, wire_iv_chunk, "IV");
+	chunk_t iv = clone_hunk_hunk(salt_chunk, wire_iv_chunk, "IV");
 
 	CK_NSS_AEAD_PARAMS aead_params = {
 		.pNonce = iv.ptr,

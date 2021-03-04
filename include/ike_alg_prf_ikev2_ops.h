@@ -62,7 +62,8 @@ struct prf_ikev2_ops {
 	struct crypt_mac (*psk_auth)(const struct prf_desc *prf_desc, chunk_t pss,
 				     chunk_t first_packet, chunk_t nonce,
 				     const struct crypt_mac *id_hash,
-				     struct logger *logger, bool use_intermediate, chunk_t intermediate_packet);
+				     chunk_t intermediate_packet,
+				     struct logger *logger);
 };
 
 extern const struct prf_ikev2_ops ike_alg_prf_ikev2_mac_ops;

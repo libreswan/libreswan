@@ -970,6 +970,10 @@ void delete_state_tail(struct state *st)
 	}
 #endif
 
+	/* intermediate */
+	free_chunk_content(&st->st_intermediate_packet_me);
+	free_chunk_content(&st->st_intermediate_packet_peer);
+
 	event_delete(EVENT_DPD, st);
 	event_delete(EVENT_v2_LIVENESS, st);
 	event_delete(EVENT_v2_RELEASE_WHACK, st);
@@ -1896,8 +1900,8 @@ void state_eroute_usage(const ip_selector *ours, const ip_selector *peers,
 		if (IS_IPSEC_SA_ESTABLISHED(st) &&
 		    c->spd.eroute_owner == st->st_serialno &&
 		    c->spd.routing == RT_ROUTED_TUNNEL &&
-		    samesubnet(&c->spd.this.client, ours) &&
-		    samesubnet(&c->spd.that.client, peers)) {
+		    selector_subnet_eq(&c->spd.this.client, ours) &&
+		    selector_subnet_eq(&c->spd.that.client, peers)) {
 			if (st->st_outbound_count != count) {
 				st->st_outbound_count = count;
 				st->st_outbound_time = nw;

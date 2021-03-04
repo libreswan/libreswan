@@ -522,3 +522,22 @@ err_t numeric_to_selector(shunk_t src,
 
 	return NULL;
 }
+
+bool selector_subnet_eq(const ip_selector *lhs, const ip_selector *rhs)
+{
+	ip_range lhs_range = selector_range(lhs);
+	ip_range rhs_range = selector_range(rhs);
+	return range_eq(&lhs_range, &rhs_range);
+}
+
+bool selector_subnet_in(const ip_selector *lhs, const ip_selector *rhs)
+{
+	ip_address lhs_prefix = selector_prefix(lhs);
+	ip_address rhs_prefix = selector_prefix(rhs);
+	int lhs_bits = selector_prefix_bits(lhs);
+	int rhs_bits = selector_prefix_bits(rhs);
+	ip_subnet lhs_subnet = subnet_from_address_prefix_bits(&lhs_prefix, lhs_bits);
+	ip_subnet rhs_subnet = subnet_from_address_prefix_bits(&rhs_prefix, rhs_bits);
+	return subnet_in(&lhs_subnet, &rhs_subnet);
+}
+

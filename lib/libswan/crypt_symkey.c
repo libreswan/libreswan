@@ -463,6 +463,11 @@ void append_symkey_bytes(const char *name,
 			 size_t sizeof_rhs,
 			 struct logger *logger)
 {
+	if (sizeof_rhs == 0) {
+		/* no change required; stops nss crash */
+		return;
+	}
+
 	PK11SymKey *newkey = merge_symkey_bytes(name, *lhs, rhs, sizeof_rhs,
 						CKM_CONCATENATE_BASE_AND_DATA,
 						PK11_GetMechanism(*lhs),
@@ -491,21 +496,11 @@ void append_symkey_byte(PK11SymKey **lhs, uint8_t rhs,
 	append_symkey_bytes("result", lhs, &rhs, sizeof(rhs), logger);
 }
 
-void append_chunk_bytes(const char *name, chunk_t *lhs,
-			const void *rhs, size_t sizeof_rhs)
-{
-	size_t len = lhs->len + sizeof_rhs;
-	chunk_t new = alloc_chunk(len, name);
-	memcpy(new.ptr, lhs->ptr, lhs->len);
-	memcpy(new.ptr + lhs->len, rhs, sizeof_rhs);
-	replace_chunk(lhs, new);
-}
-
 void append_chunk_symkey(const char *name, chunk_t *lhs, PK11SymKey *rhs,
 			 struct logger *logger)
 {
 	chunk_t rhs_chunk = chunk_from_symkey(name, rhs, logger);
-	chunk_t new = clone_chunk_chunk(*lhs, rhs_chunk, name);
+	chunk_t new = clone_hunk_hunk(*lhs, rhs_chunk, name);
 	free_chunk_content(&rhs_chunk);
 	replace_chunk(lhs, new);
 }

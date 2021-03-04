@@ -1,0 +1,28 @@
+module ipsec-test-module 1.0;
+
+require {
+	type bin_t;
+	type ipsec_t;
+	type ipsec_spd_t;
+	type ping_t;
+	type kernel_t;
+	type unlabeled_t;
+	type netutils_t;
+	class peer { recv };
+	class association { polmatch setcontext };
+	class file { entrypoint execute };
+}
+
+#============= ipsec_t ==============
+allow ipsec_t ipsec_spd_t:association setcontext;
+allow ipsec_t ping_t:association setcontext;
+allow ipsec_t netutils_t:association setcontext;
+
+#============= ping_t ==============
+allow ping_t ipsec_spd_t:association polmatch;
+allow netutils_t ipsec_spd_t:association polmatch;
+allow netutils_t bin_t:file entrypoint;
+allow netutils_t bin_t:file execute;
+
+#============= kernel_t ==============
+allow kernel_t unlabeled_t:peer recv;

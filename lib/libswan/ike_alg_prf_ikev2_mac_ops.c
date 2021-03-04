@@ -99,12 +99,12 @@ static PK11SymKey *ike_sa_skeyseed(const struct prf_desc *prf_desc,
 	{
 		chunk_t Ni64 = chunk2(Ni.ptr, BYTES_FOR_BITS(64));
 		chunk_t Nr64 = chunk2(Nr.ptr, BYTES_FOR_BITS(64));
-		key = clone_chunk_chunk(Ni64, Nr64, "key = Ni|Nr");
+		key = clone_hunk_hunk(Ni64, Nr64, "key = Ni|Nr");
 		key_name = "Ni[0:63] | Nr[0:63]";
 		break;
 	}
 	default:
-		key = clone_chunk_chunk(Ni, Nr, "key = Ni|Nr");
+		key = clone_hunk_hunk(Ni, Nr, "key = Ni|Nr");
 		key_name = "Ni | Nr";
 		break;
 	}
@@ -213,8 +213,8 @@ static PK11SymKey *child_sa_keymat(const struct prf_desc *prf_desc,
 static struct crypt_mac psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
 				 chunk_t first_packet, chunk_t nonce,
 				 const struct crypt_mac *id_hash,
-				 struct logger *logger,
-				 bool use_intermediate, chunk_t intermediate_packet)
+				 chunk_t intermediate_packet,
+				 struct logger *logger)
 {
 	/* calculate inner prf */
 	PK11SymKey *prf_psk;
@@ -264,9 +264,7 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
 		crypt_prf_update_hunk(prf, "first-packet", first_packet);
 		crypt_prf_update_hunk(prf, "nonce", nonce);
 		crypt_prf_update_hunk(prf, "hash", *id_hash);
-		if (use_intermediate) {
-			crypt_prf_update_hunk(prf,"IntAuth", intermediate_packet);
-		}
+		crypt_prf_update_hunk(prf,"IntAuth", intermediate_packet);
 		signed_octets = crypt_prf_final_mac(&prf, NULL);
 	}
 	release_symkey(__func__, "prf-psk", &prf_psk);

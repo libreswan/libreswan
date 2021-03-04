@@ -214,4 +214,15 @@ uintmax_t ntoh_bytes(const void *bytes, size_t size);
 		hton_bytes(H, hunk_.ptr, hunk_.len);			\
 	})
 
+/*
+ * convert a hunk into a NUL terminated string; NULL is NULL.
+ */
+
+char *clone_bytes_as_string(const void *ptr, size_t len, const char *name);
+#define clone_hunk_as_string(HUNK, NAME)				\
+	({								\
+		typeof(HUNK) hunk_ = HUNK; /* evaluate once */		\
+		clone_bytes_as_string(hunk_.ptr, hunk_.len, NAME);	\
+	})
+
 #endif

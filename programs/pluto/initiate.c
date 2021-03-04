@@ -1110,8 +1110,8 @@ struct connection *shunt_owner(const ip_selector *ours, const ip_selector *peers
 
 		for (sr = &c->spd; sr; sr = sr->spd_next) {
 			if (shunt_erouted(sr->routing) &&
-			    samesubnet(ours, &sr->this.client) &&
-			    samesubnet(peers, &sr->that.client))
+			    selector_subnet_eq(ours, &sr->this.client) &&
+			    selector_subnet_eq(peers, &sr->that.client))
 				return c;
 		}
 	}
