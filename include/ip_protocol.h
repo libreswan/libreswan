@@ -22,6 +22,8 @@
 
 #include <netinet/in.h>		/* for IPPROTO_* */
 
+#include "err.h"
+
 struct jambuf;
 
 /*
@@ -91,6 +93,8 @@ enum eroute_type {
 
 const struct ip_protocol *protocol_by_prefix(const char  *prefix);
 const struct ip_protocol *protocol_by_ipproto(unsigned protoid);
+
+err_t ttoipproto(const char *text, unsigned *ipproto);
 
 /* ex: '=TCP=>' */
 size_t jam_protocols(struct jambuf *buf, const ip_protocol *src, char sep,

@@ -13,7 +13,10 @@
  * License for more details.
  */
 
+
+#include <netdb.h>		/* for getservbyname() */
 #include <arpa/inet.h>		/* for ntohs() */
+#include <stdlib.h>		/* for strtol() */
 
 #include "jambuf.h"
 #include "constants.h"		/* for thingeq() */
@@ -70,4 +73,30 @@ const char *str_nport(ip_port port, port_buf *buf)
 	struct jambuf jambuf = ARRAY_AS_JAMBUF(buf->buf);
 	jam_nport(&jambuf, port);
 	return buf->buf;
+}
+
+err_t ttoport(const char *service_name, unsigned *port)
+{
+       /* extract port by trying to resolve it by name */
+       const struct servent *service = getservbyname(service_name, NULL);
+       if (service != NULL) {
+               *port = ntohs(service->s_port);
+               return NULL;
+       }
+
+       /* failed, now try it by number */
+       char *end;
+       long l = strtol(service_name, &end, 0);
+       if (*service_name && *end) {
+               *port = 0;
+               return "<protocol> is neither a number nor a valid name";
+       }
+
+       if (l < 0 || l > 0xffff) {
+               *port = 0;
+               return "<port> must be between 0 and 65535";
+       }
+
+       *port = l;
+       return NULL;
 }

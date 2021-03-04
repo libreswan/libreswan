@@ -27,6 +27,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "err.h"
+
 struct jambuf;
 
 typedef struct {
@@ -44,6 +46,8 @@ unsigned nport(ip_port port);
 
 bool port_is_unset(ip_port port);
 #define port_is_set !port_is_unset
+
+err_t ttoport(const char *text, unsigned *port);
 
 /*
  * XXX: to choices, which is better?

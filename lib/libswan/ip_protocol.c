@@ -13,6 +13,8 @@
  * for more details.
  */
 
+#include <netdb.h>		/* for getprotobyname() */
+#include <stdlib.h>		/* for strtol() */
 #include <netinet/in.h>		/* for IPPROTO_* */
 
 #include "lswcdefs.h"		/* for elemsof() */
@@ -1108,6 +1110,32 @@ const struct ip_protocol *protocol_by_ipproto(unsigned ipproto)
 	}
 	const struct ip_protocol *p = &ip_protocols[ipproto];
 	return p;
+}
+
+err_t ttoipproto(const char *proto_name, unsigned *proto)
+{
+       /* extract protocol by trying to resolve it by name */
+       const struct protoent *protocol = getprotobyname(proto_name);
+       if (protocol != NULL) {
+               *proto = protocol->p_proto;
+               return NULL;
+       }
+
+       /* failed, now try it by number */
+       char *end;
+       long l = strtol(proto_name, &end, 0);
+       if (*proto_name && *end) {
+               *proto = 0;
+               return "<protocol> is neither a number nor a valid name";
+       }
+
+       if (l < 0 || l > 0xff) {
+               *proto = 0;
+               return "<protocol> must be between 0 and 255";
+       }
+
+       *proto = (uint8_t)l;
+       return NULL;
 }
 
 /*
