@@ -14,5 +14,5 @@ iptables -L -n
 ipsec auto --down west-east-nflog
 iptables -L -n
 cp  /tmp/nflog-50.pcap OUTPUT/nflog-50.pcap
-tcpdump -n -r OUTPUT/nflog-50.pcap
+tcpdump -n -r OUTPUT/nflog-50.pcap 2>/dev/null
 echo done

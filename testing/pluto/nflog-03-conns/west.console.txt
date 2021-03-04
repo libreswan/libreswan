@@ -154,8 +154,7 @@ target     prot opt source               destination
 west #
  cp  /tmp/nflog-50.pcap OUTPUT/nflog-50.pcap
 west #
- tcpdump -n -r OUTPUT/nflog-50.pcap
-reading from file OUTPUT/nflog-50.pcap, link-type NFLOG (Linux netfilter log messages)
+ tcpdump -n -r OUTPUT/nflog-50.pcap 2>/dev/null
 IP 192.1.2.45 > 192.1.2.23: ICMP echo request, id XXXX, seq 1, length 64
 IP 192.1.2.23 > 192.1.2.45: ICMP echo reply, id XXXX, seq 1, length 64
 IP 192.1.2.45 > 192.1.2.23: ICMP echo request, id XXXX, seq 2, length 64
