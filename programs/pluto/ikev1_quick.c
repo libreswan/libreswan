@@ -149,13 +149,13 @@ static notification_t accept_PFS_KE(struct state *st, struct msg_digest *md,
  * Note: this is not called from demux.c
  */
 
-static bool emit_subnet_id(const ip_subnet *net,
+static bool emit_subnet_id(const ip_subnet net,
 			   uint8_t protoid,
 			   uint16_t port,
-			   pb_stream *outs)
+			   struct pbs_out *outs)
 {
-	const struct ip_info *ai = selector_type(net);
-	const bool usehost = net->maskbits == ai->mask_cnt;
+	const struct ip_info *ai = subnet_type(&net);
+	const bool usehost = subnet_prefix_bits(net) == ai->mask_cnt;
 	pb_stream id_pbs;
 
 	struct isakmp_ipsec_id id = {
@@ -167,7 +167,7 @@ static bool emit_subnet_id(const ip_subnet *net,
 	if (!out_struct(&id, &isakmp_ipsec_identification_desc, outs, &id_pbs))
 		return FALSE;
 
-	ip_address tp = selector_prefix(net);
+	ip_address tp = subnet_prefix(&net);
 	diag_t d = pbs_out_address(&id_pbs, &tp, "client network");
 	if (d != NULL) {
 		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
@@ -175,7 +175,7 @@ static bool emit_subnet_id(const ip_subnet *net,
 	}
 
 	if (!usehost) {
-		ip_address tm = selector_prefix_mask(net);
+		ip_address tm = subnet_prefix_mask(&net);
 		diag_t d = pbs_out_address(&id_pbs, &tm, "client mask");
 		if (d != NULL) {
 			log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
@@ -523,39 +523,45 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 	return true;
 }
 
-/* like decode, but checks that what is received matches what was sent */
+/*
+ * Like decode, but checks that what is received matches what was
+ * sent.
+ */
+
 static bool check_net_id(struct isakmp_ipsec_id *id,
-			 pb_stream *id_pbs,
+			 struct pbs_in *id_pbs,
 			 uint8_t protoid,
 			 uint16_t port,
-			 ip_subnet *net,
+			 ip_subnet net,
 			 const char *which,
 			 struct logger *logger)
 {
 	bool bad_proposal = false;
 
-	ip_selector net_temp;
-	if (!decode_net_id(id, id_pbs, &net_temp, which, logger))
+	ip_selector selector_temp;
+	if (!decode_net_id(id, id_pbs, &selector_temp, which, logger))
 		return false;
+	/* toss the proto/port */
+	ip_subnet subnet_temp = selector_subnet(selector_temp);
 
-	if (!samesubnet(net, &net_temp)) {
+	if (!samesubnet(&net, &subnet_temp)) {
 		subnet_buf subrec;
 		subnet_buf subxmt;
 		llog(RC_LOG_SERIOUS, logger,
 			    "%s subnet returned doesn't match my proposal - us: %s vs them: %s",
-			    which, str_selector_subnet(net, &subxmt),
-			    str_selector_subnet(&net_temp, &subrec));
+			    which, str_subnet(&net, &subxmt),
+			    str_subnet(&subnet_temp, &subrec));
 		llog(RC_LOG_SERIOUS, logger,
-			    "Allowing questionable (microsoft) proposal anyway");
-		bad_proposal = FALSE;
+		     "Allowing questionable (microsoft) proposal anyway");
+		bad_proposal = false;
 	}
 	if (protoid != id->isaiid_protoid) {
 		llog(RC_LOG_SERIOUS, logger,
 		     "%s peer returned protocol id does not match my proposal - us: %d vs them: %d",
 		     which, protoid, id->isaiid_protoid);
 		llog(RC_LOG_SERIOUS, logger,
-			    "Allowing questionable (microsoft) proposal anyway]");
-		bad_proposal = FALSE;
+		     "Allowing questionable (microsoft) proposal anyway]");
+		bad_proposal = false;
 	}
 	/*
 	 * workaround for #802- "our client ID returned doesn't match my proposal"
@@ -568,9 +574,9 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 		if (port != 0 && id->isaiid_port != 1701) {
 			llog(RC_LOG_SERIOUS, logger,
 				    "Allowing bad L2TP/IPsec proposal (see bug #849) anyway");
-			bad_proposal = FALSE;
+			bad_proposal = false;
 		} else {
-			bad_proposal = TRUE;
+			bad_proposal = true;
 		}
 	}
 
@@ -835,10 +841,10 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	/* [ IDci, IDcr ] out */
 	if (has_client) {
 		/* IDci (we are initiator), then IDcr (peer is responder) */
-		if (!emit_subnet_id(&c->spd.this.client,
+		if (!emit_subnet_id(selector_subnet(c->spd.this.client),
 				    c->spd.this.protocol,
 				    c->spd.this.port, &rbody) ||
-		    !emit_subnet_id(&c->spd.that.client,
+		    !emit_subnet_id(selector_subnet(c->spd.that.client),
 				    c->spd.that.protocol,
 				    c->spd.that.port, &rbody)) {
 			return STF_INTERNAL_ERROR;
@@ -1571,7 +1577,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 			/* IDci (we are initiator) */
 			if (!check_net_id(&IDci->payload.ipsec_id, &IDci->pbs,
 					  c->spd.this.protocol, c->spd.this.port,
-					  &st->st_connection->spd.this.client,
+					  selector_subnet(st->st_connection->spd.this.client),
 					  "our client", st->st_logger))
 				return STF_FAIL + INVALID_ID_INFORMATION;
 
@@ -1583,7 +1589,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 
 			if (!check_net_id(&IDcr->payload.ipsec_id, &IDcr->pbs,
 					  c->spd.that.protocol, c->spd.that.port,
-					  &st->st_connection->spd.that.client,
+					  selector_subnet(st->st_connection->spd.that.client),
 					  "peer client", st->st_logger))
 				return STF_FAIL + INVALID_ID_INFORMATION;
 
