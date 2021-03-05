@@ -1853,16 +1853,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		.transport_proto = c->spd.this.protocol,
 		.sa_lifetime = c->sa_ipsec_life_seconds,
 		.outif = -1,
-		.sec_label = { NULL, 0 },
+		.sec_label = st->st_acquired_sec_label.len != 0 ?
+			st->st_acquired_sec_label : st->st_seen_sec_label,
 	};
-	if (st->st_acquired_sec_label.len != 0) {
-			said_boilerplate.sec_label.ptr = st->st_acquired_sec_label.ptr;
-			said_boilerplate.sec_label.len = st->st_acquired_sec_label.len;
-	}
-	if (st->st_seen_sec_label.len != 0) {
-			said_boilerplate.sec_label.ptr = st->st_seen_sec_label.ptr;
-			said_boilerplate.sec_label.len = st->st_seen_sec_label.len;
-	}
 
 	inner_spi = SPI_PASS;
 	if (mode == ENCAPSULATION_MODE_TUNNEL) {
