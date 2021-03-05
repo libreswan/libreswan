@@ -425,14 +425,17 @@ extern bool orient(struct connection *c);
 extern bool same_peer_ids(const struct connection *c,
 			  const struct connection *d, const struct id *peers_id);
 
-/* Format the topology of a connection end, leaving out defaults.
- * Largest left end looks like: client === host : port [ host_id ] --- hop
- * Note: if that==NULL, skip nexthop
+/*
+ * Format the topology of a connection end, leaving out defaults.
+ * Largest left end looks like: client === host : port [ host_id ] ---
+ * hop Note: if that==NULL, skip nexthop
  */
 #define END_BUF (SUBNETTOT_BUF + ADDRTOT_BUF + IDTOA_BUF + ADDRTOT_BUF + 10)
 extern size_t format_end(char *buf, size_t buf_len,
 			 const struct end *this, const struct end *that,
 			 bool is_left, lset_t policy, bool filter_rnh);
+void jam_end(struct jambuf *buf, const struct end *this, const struct end *that,
+	     bool is_left, lset_t policy, bool filter_rnh);
 
 struct whack_message;   /* forward declaration of tag whack_msg */
 extern void add_connection(struct fd *whackfd, const struct whack_message *wm);

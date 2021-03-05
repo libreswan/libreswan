@@ -631,12 +631,8 @@ static void jam_end_nexthop(struct jambuf *buf, const struct end *this,
 	}
 }
 
-static void jam_end(struct jambuf *buf,
-		  const struct end *this,
-		    const struct end *that,
-		    bool is_left,
-		    lset_t policy,
-		    bool filter_rnh)
+void jam_end(struct jambuf *buf, const struct end *this, const struct end *that,
+	     bool is_left, lset_t policy, bool filter_rnh)
 {
 	if (is_left) {
 		/* CLIENT=== */
