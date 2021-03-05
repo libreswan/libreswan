@@ -136,7 +136,8 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 			sn = selector_from_address(&t);
 		} else {
 			const struct ip_info *afi = strchr(flp->tok, ':') == NULL ? &ipv4_info : &ipv6_info;
-			err_t err = ttosubnet(shunk1(flp->tok), afi, 'x', &sn, flp->logger);
+			ip_subnet snn;
+			err_t err = ttosubnet(shunk1(flp->tok), afi, 'x', &snn, flp->logger);
 			if (err != NULL) {
 				llog(RC_LOG_SERIOUS, flp->logger,
 					    "ignored, '%s' is not a subnet: %s",
@@ -144,6 +145,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 				flushline(flp, NULL/*shh*/);
 				continue;
 			}
+			sn = selector_from_subnet(&snn);
 		}
 
 		const struct ip_info *type = selector_type(&sn);

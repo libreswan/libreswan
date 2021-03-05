@@ -4,6 +4,7 @@ See also https://libreswan.org/
 v4.4 (unreleased)
 * IKEv2: Fixes for TCP encap in Transport Mode and host-to-host [Paul/Sabrina]
 * IKEv2: Fixes to Labeled IPsec policies [Kavinda Wewegama/Paul]
+* IKEv2: Add redirect statistics to whack --globalstatus [Clive Zagno]
 
 v4.3 (February 21, 2021)
 * pluto: Restore range checking on Labeled IPsec [Paul/Andrew]

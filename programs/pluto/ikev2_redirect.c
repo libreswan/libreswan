@@ -38,6 +38,7 @@
 #include "initiate.h"
 #include "log.h"
 #include "pending.h"
+#include "pluto_stats.h"
 
 enum allow_global_redirect global_redirect = GLOBAL_REDIRECT_NO;
 
@@ -231,24 +232,28 @@ bool redirect_global(struct msg_digest *md)
 	if (md->chain[ISAKMP_NEXT_v2Ni] == NULL) {
 		/* Ni is used as cookie to protect REDIRECT in IKE_SA_INIT */
 		dbg("Ni payload required for REDIRECT is missing");
+		pstats_ikev2_redirect_failed++;
 		return true;
 	}
 
 	if (md->pbs[PBS_v2N_REDIRECTED_FROM] == NULL &&
 	    md->pbs[PBS_v2N_REDIRECT_SUPPORTED] == NULL) {
 		dbg("peer didn't indicate support for redirection");
+		pstats_ikev2_redirect_failed++;
 		return true;
 	}
 
 	shunk_t Ni = pbs_in_left_as_shunk(&md->chain[ISAKMP_NEXT_v2Ni]->pbs);
 	if (Ni.len == 0) {
 		dbg("Initiator nonce should not be zero length");
+		pstats_ikev2_redirect_failed++;
 		return true;
 	}
 
 	shunk_t dest = get_redirect_dest(&global_dests);
 	if (dest.len == 0) {
 		dbg("no (meaningful) destination for global redirection has been specified");
+		pstats_ikev2_redirect_failed++;
 		return true;
 	}
 
@@ -260,10 +265,12 @@ bool redirect_global(struct msg_digest *md)
 	if (data.len == 0) {
 		llog(RC_LOG_SERIOUS, logger,
 			    "failed to construct REDIRECT notification data");
+		pstats_ikev2_redirect_failed++;
 		return true;
 	}
 
 	send_v2N_response_from_md(md, v2N_REDIRECT, &data);
+	pstats_ikev2_redirect_completed++;
 	return true;
 }
 

@@ -111,6 +111,9 @@ static void dbg_sec_label_match(shunk_t a, chunk_t b, const char *match, struct 
 
 bool se_label_match(shunk_t a, chunk_t b, struct logger *logger)
 {
+	if (a.ptr == NULL && b.ptr == NULL)
+		return true;
+
 	if (within_range(a.ptr, (char*)b.ptr, logger)) {
 		dbg_sec_label_match(a, b, "matched with within_range()", logger);
 		return true;

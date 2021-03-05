@@ -791,7 +791,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		return;
 	}
 
-	if (c->ike_version == IKEv2 && c->kind == CK_INSTANCE && b->sec_label.ptr != NULL) {
+	if (c->ike_version == IKEv2 && c->kind == CK_INSTANCE && b->sec_label.len != 0) {
 		/*
 		 * A bit of a hack until we properly instantiate
 		 * labeled ipsec connections.

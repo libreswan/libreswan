@@ -525,7 +525,7 @@ static void jam_end_client(struct jambuf *buf, const struct end *this,
 	if (selector_is_unset(&this->client)) {
 		return;
 	}
-	bool boring = (subnet_contains_all_addresses(&this->client) &&
+	bool boring = (selector_contains_all_addresses(&this->client) &&
 		       (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC)));
 
 	if (!boring && !is_left) {
@@ -539,7 +539,7 @@ static void jam_end_client(struct jambuf *buf, const struct end *this,
 			jam_string(buf, "vhost:?");
 		else
 			jam_string(buf,  "vnet:?");
-	} else if (subnet_contains_no_addresses(&this->client)) {
+	} else if (selector_contains_no_addresses(&this->client)) {
 		jam_string(buf, "?");
 	} else {
 		jam_selector_subnet(buf, &this->client);
@@ -631,12 +631,8 @@ static void jam_end_nexthop(struct jambuf *buf, const struct end *this,
 	}
 }
 
-static void jam_end(struct jambuf *buf,
-		  const struct end *this,
-		    const struct end *that,
-		    bool is_left,
-		    lset_t policy,
-		    bool filter_rnh)
+void jam_end(struct jambuf *buf, const struct end *this, const struct end *that,
+	     bool is_left, lset_t policy, bool filter_rnh)
 {
 	if (is_left) {
 		/* CLIENT=== */
@@ -2307,7 +2303,7 @@ struct connection *rw_instantiate(struct connection *c,
 
 	if (peer_subnet != NULL && is_virtual_connection(c)) {
 		d->spd.that.client = *peer_subnet;
-		if (subnetishost(peer_subnet) && addrinsubnet(peer_addr, peer_subnet))
+		if (selector_is_address(peer_subnet, peer_addr))
 			d->spd.that.has_client = FALSE;
 	}
 
@@ -2363,14 +2359,14 @@ void set_policy_prio(struct connection *c)
 static size_t jam_connection_client(struct jambuf *b,
 				    const char *prefix, const char *suffix,
 				    const ip_selector *client,
-				    const ip_address *gw)
+				    const ip_address *host_addr)
 {
 	size_t s = 0;
-	if (subnetisaddr(client, gw)) {
+	if (selector_subnet_is_address(client, host_addr)) {
 		/* compact denotation for "self" */
 	} else {
 		s += jam_string(b, prefix);
-		if (subnet_contains_no_addresses(client)) {
+		if (selector_contains_no_addresses(client)) {
 			s += jam_string(b, "?"); /* unknown */
 		} else {
 			s += jam_selector_subnet(b, client);
@@ -2474,7 +2470,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 		struct spd_route *sr;
 
 		for (sr = &c->spd; best != c && sr; sr = sr->spd_next) {
-			if ( ((routed(sr->routing) || c->instance_initiation_ok) || sec_label.ptr != NULL) &&
+			if ( ((routed(sr->routing) || c->instance_initiation_ok) || sec_label.len != 0) &&
 			    endpoint_in_selector(local_client, &sr->this.client) &&
 			    endpoint_in_selector(remote_client, &sr->that.client)
 #ifdef HAVE_LABELED_IPSEC

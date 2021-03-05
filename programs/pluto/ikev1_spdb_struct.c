@@ -101,7 +101,12 @@ static bool parse_secctx_attr(struct pbs_in *pbs, struct state *st)
 	}
 
 	if (hunk_strnlen(sec_label) + 1 != sec_label.len) {
-		llog(RC_LOG, st->st_logger, "security label is not NUL terminated");
+		llog(RC_LOG, st->st_logger, "security label is not NUL terminated or contains an embedded NUL");
+		return false;
+	}
+
+	if (sec_label.len <= 1) {
+		llog(RC_LOG, st->st_logger, "security label is an empty string");
 		return false;
 	}
 

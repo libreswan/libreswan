@@ -616,10 +616,10 @@ void quick_outI1(struct fd *whack_sock,
 	st->st_policy = policy;
 	st->st_try = try;
 
-	if (c->spd.this.sec_label.ptr != NULL) {
+	if (c->spd.this.sec_label.len != 0) {
 		dbg("pending phase 2 with base security context \"%.*s\"",
 		    (int)c->spd.this.sec_label.len, c->spd.this.sec_label.ptr);
-		if (sec_label.ptr != NULL) {
+		if (sec_label.len != 0) {
 			st->st_acquired_sec_label = clone_hunk(sec_label, "st_acquired_sec_label");
 			dbg("pending phase 2 with 'instance' security context \"%.*s\"",
 				(int)sec_label.len, sec_label.ptr);
@@ -1077,35 +1077,32 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 		}
 
 		if (p == NULL) {
-			/* This message occurs in very puzzling circumstances
-			 * so we must add as much information and beauty as we can.
-			 */
-			struct end
-				me = c->spd.this,
-				he = c->spd.that;
-			char buf[2 * sizeof(subnet_buf) + 2 * sizeof(address_buf) + 2 *
-				 sizeof(id_buf) + 2 * sizeof(address_buf) + 12];                       /* + 12 for separating */
-			size_t l;
+			LLOG_JAMBUF(RC_LOG, p1st->st_logger, buf) {
+				jam(buf, "cannot respond to IPsec SA request because no connection is known for ");
 
-			me.client = *local_client;
-			me.has_client = !subnetisaddr(local_client, &me.host_addr);
-			me.protocol = selector_protocol(local_client)->ipproto;
-			me.port = selector_port(local_client).hport;
+				/*
+				 * This message occurs in very
+				 * puzzling circumstances so we must
+				 * add as much information and beauty
+				 * as we can.
+				 */
 
-			he.client = *remote_client;
-			he.has_client = !subnetisaddr(remote_client, &he.host_addr);
-			he.protocol = selector_protocol(remote_client)->ipproto;
-			he.port = selector_port(remote_client).hport;
+				struct end local = c->spd.this;
+				local.client = *local_client;
+				local.has_client = !selector_is_address(local_client, &local.host_addr);
+				local.protocol = selector_protocol(local_client)->ipproto;
+				local.port = selector_port(local_client).hport;
+				jam_end(buf, &local, NULL, /*left?*/true, LEMPTY, oriented(*c));
 
-			l = format_end(buf, sizeof(buf), &me, NULL, TRUE,
-				       LEMPTY, oriented(*c));
-			snprintf(buf + l, sizeof(buf) - l, "...");
-			l += strlen(buf + l);
-			(void)format_end(buf + l, sizeof(buf) - l, &he, NULL,
-					 FALSE, LEMPTY, oriented(*c));
-			log_state(RC_LOG, p1st,
-				  "cannot respond to IPsec SA request because no connection is known for %s",
-				  buf);
+				jam(buf, "...");
+
+				struct end remote = c->spd.that;
+				remote.client = *remote_client;
+				remote.has_client = !selector_is_address(remote_client, &remote.host_addr);
+				remote.protocol = selector_protocol(remote_client)->ipproto;
+				remote.port = selector_port(remote_client).hport;
+				jam_end(buf, &remote, NULL, /*left?*/false, LEMPTY, oriented(*c));
+			}
 			return STF_FAIL + INVALID_ID_INFORMATION;
 		}
 

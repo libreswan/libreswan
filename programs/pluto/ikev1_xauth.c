@@ -1837,7 +1837,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 							sr->that.id.name = EMPTY_CHUNK;
 
 							sr->this.host_addr_name = NULL;
-							sr->that.client = subnet;
+							sr->that.client = selector_from_subnet(&subnet);
 							sr->this.cert.ty = CERT_NONE;
 							sr->that.cert.ty = CERT_NONE;
 
