@@ -469,18 +469,6 @@ struct state {
 	chunk_t st_nr;                          /* Nr nonce */
 	chunk_t st_dcookie;                     /* DOS cookie of responder - v2 only */
 
-	/* my stuff */
-
-	/* Phase 2 ID payload info about my user */
-	uint8_t st_myuserprotoid;             /* IDcx.protoid */
-	uint16_t st_myuserport;
-
-	/* peers stuff */
-
-	/* Phase 2 ID payload info about peer's user */
-	uint8_t st_peeruserprotoid;           /* IDcx.protoid */
-	uint16_t st_peeruserport;
-
 	/* end of symmetric stuff */
 
 	/* Support quirky feature of Phase 1 ID payload for peer

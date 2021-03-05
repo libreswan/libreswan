@@ -526,8 +526,8 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 /* like decode, but checks that what is received matches what was sent */
 static bool check_net_id(struct isakmp_ipsec_id *id,
 			 pb_stream *id_pbs,
-			 uint8_t *protoid,
-			 uint16_t *port,
+			 uint8_t protoid,
+			 uint16_t port,
 			 ip_subnet *net,
 			 const char *which,
 			 struct logger *logger)
@@ -549,10 +549,10 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 			    "Allowing questionable (microsoft) proposal anyway");
 		bad_proposal = FALSE;
 	}
-	if (*protoid != id->isaiid_protoid) {
+	if (protoid != id->isaiid_protoid) {
 		llog(RC_LOG_SERIOUS, logger,
-			    "%s peer returned protocol id does not match my proposal - us: %d vs them: %d",
-			    which, *protoid, id->isaiid_protoid);
+		     "%s peer returned protocol id does not match my proposal - us: %d vs them: %d",
+		     which, protoid, id->isaiid_protoid);
 		llog(RC_LOG_SERIOUS, logger,
 			    "Allowing questionable (microsoft) proposal anyway]");
 		bad_proposal = FALSE;
@@ -561,11 +561,11 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 	 * workaround for #802- "our client ID returned doesn't match my proposal"
 	 * until such time as bug #849 is properly fixed.
 	 */
-	if (*port != id->isaiid_port) {
+	if (port != id->isaiid_port) {
 		llog(RC_LOG_SERIOUS, logger,
-			    "%s peer returned port doesn't match my proposal - us: %d vs them: %d",
-			    which, *port, id->isaiid_port);
-		if (*port != 0 && id->isaiid_port != 1701) {
+		     "%s peer returned port doesn't match my proposal - us: %d vs them: %d",
+		     which, port, id->isaiid_port);
+		if (port != 0 && id->isaiid_port != 1701) {
 			llog(RC_LOG_SERIOUS, logger,
 				    "Allowing bad L2TP/IPsec proposal (see bug #849) anyway");
 			bad_proposal = FALSE;
@@ -626,10 +626,6 @@ void quick_outI1(struct fd *whack_sock,
 		}
 	}
 
-	st->st_myuserprotoid = c->spd.this.protocol;
-	st->st_peeruserprotoid = c->spd.that.protocol;
-	st->st_myuserport = c->spd.this.port;
-	st->st_peeruserport = c->spd.that.port;
 
 	st->st_v1_msgid.id = generate_msgid(isakmp_sa);
 	change_state(st, STATE_QUICK_I1); /* from STATE_UNDEFINED */
@@ -840,11 +836,11 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	if (has_client) {
 		/* IDci (we are initiator), then IDcr (peer is responder) */
 		if (!emit_subnet_id(&c->spd.this.client,
-				    st->st_myuserprotoid,
-				    st->st_myuserport, &rbody) ||
+				    c->spd.this.protocol,
+				    c->spd.this.port, &rbody) ||
 		    !emit_subnet_id(&c->spd.that.client,
-				    st->st_peeruserprotoid,
-				    st->st_peeruserport, &rbody)) {
+				    c->spd.that.protocol,
+				    c->spd.that.port, &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1196,11 +1192,6 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 		restore_new_iv(st, new_iv);
 
 		switch_md_st(md, st, HERE);	/* feed back new state */
-
-		st->st_peeruserprotoid = selector_protocol(remote_client)->ipproto;
-		st->st_peeruserport = selector_port(remote_client).hport;
-		st->st_myuserprotoid = selector_protocol(local_client)->ipproto;
-		st->st_myuserport = selector_port(local_client).hport;
 
 		change_state(st, STATE_QUICK_R0);
 
@@ -1584,8 +1575,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 
 			/* IDci (we are initiator) */
 			if (!check_net_id(&IDci->payload.ipsec_id, &IDci->pbs,
-					  &st->st_myuserprotoid,
-					  &st->st_myuserport,
+					  c->spd.this.protocol, c->spd.this.port,
 					  &st->st_connection->spd.this.client,
 					  "our client", st->st_logger))
 				return STF_FAIL + INVALID_ID_INFORMATION;
@@ -1597,8 +1587,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 			/* IDcr (responder is peer) */
 
 			if (!check_net_id(&IDcr->payload.ipsec_id, &IDcr->pbs,
-					  &st->st_peeruserprotoid,
-					  &st->st_peeruserport,
+					  c->spd.that.protocol, c->spd.that.port,
 					  &st->st_connection->spd.that.client,
 					  "peer client", st->st_logger))
 				return STF_FAIL + INVALID_ID_INFORMATION;
