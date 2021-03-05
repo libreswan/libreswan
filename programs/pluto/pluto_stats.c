@@ -46,6 +46,8 @@ unsigned long pstats_ikev1_fail;
 unsigned long pstats_ikev2_fail;
 unsigned long pstats_ikev1_completed;
 unsigned long pstats_ikev2_completed;
+unsigned long pstats_ikev2_redirect_failed;
+unsigned long pstats_ikev2_redirect_completed;
 unsigned long pstats_ikev1_encr[OAKLEY_ENCR_PSTATS_ROOF];
 unsigned long pstats_ikev2_encr[IKEv2_ENCR_PSTATS_ROOF];
 unsigned long pstats_ikev1_integ[OAKLEY_HASH_PSTATS_ROOF];
@@ -393,6 +395,8 @@ void show_pluto_stats(struct show *s)
 	show_raw(s, "total.ike.ikev2.established=%lu", pstats_ikev2_sa);
 	show_raw(s, "total.ike.ikev2.failed=%lu", pstats_ikev2_fail);
 	show_raw(s, "total.ike.ikev2.completed=%lu", pstats_ikev2_completed);
+	show_raw(s, "total.ike.ikev2.redirect.completed=%lu", pstats_ikev2_redirect_completed);
+	show_raw(s, "total.ike.ikev2.redirect.failed=%lu", pstats_ikev2_redirect_failed);
 	show_raw(s, "total.ike.ikev1.established=%lu", pstats_ikev1_sa);
 	show_raw(s, "total.ike.ikev1.failed=%lu", pstats_ikev1_fail);
 	show_raw(s, "total.ike.ikev1.completed=%lu", pstats_ikev1_completed);
@@ -482,6 +486,7 @@ void clear_pluto_stats(void)
 	pstats_ipsec_sa = pstats_ikev1_sa = pstats_ikev2_sa = 0;
 	pstats_ikev1_fail = pstats_ikev2_fail = 0;
 	pstats_ikev1_completed = pstats_ikev2_completed = 0;
+	pstats_ikev2_redirect_failed = pstats_ikev2_redirect_completed=0;
 
 	memset(pstats_sa_started, 0, sizeof pstats_sa_started);
 	memset(pstats_sa_finished, 0, sizeof pstats_sa_finished);
