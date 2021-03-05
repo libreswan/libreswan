@@ -1145,7 +1145,6 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 		}
 
 		if (is_virtual_connection(c)) {
-			char cthat[END_BUF];
 
 			c->spd.that.client = *remote_client;
 			c->spd.that.has_client = true;
@@ -1156,9 +1155,10 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 				c->spd.that.has_client = FALSE;
 			}
 
-			format_end(cthat, sizeof(cthat), &c->spd.that, NULL,
-				   TRUE, LEMPTY, oriented(*c));
-			dbg("setting phase 2 virtual values to %s", cthat);
+			LSWDBGP(DBG_BASE, buf) {
+				jam(buf, "setting phase 2 virtual values to ");
+				jam_end(buf, &c->spd.that, NULL, /*left?*/true, LEMPTY, oriented(*c));
+			}
 		}
 	}
 
@@ -1395,18 +1395,13 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 	log_state(RC_LOG, st,
 		  "responding to Quick Mode proposal {msgid:%08" PRIx32 "}",
 		  st->st_v1_msgid.id);
-	{
-		char instbuf[END_BUF];
+	LLOG_JAMBUF(RC_LOG, st->st_logger, buf) {
+		jam(buf, "    us: ");
 		const struct connection *c = st->st_connection;
 		const struct spd_route *sr = &c->spd;
-
-		format_end(instbuf, sizeof(instbuf), &sr->this, &sr->that,
-			   TRUE, LEMPTY, oriented(*c));
-		log_state(RC_LOG, st, "    us: %s", instbuf);
-
-		format_end(instbuf, sizeof(instbuf), &sr->that, &sr->this,
-			   FALSE, LEMPTY, oriented(*c));
-		log_state(RC_LOG, st, "  them: %s", instbuf);
+		jam_end(buf, &sr->this, &sr->that, /*left?*/true, LEMPTY, oriented(*c));
+		jam(buf, "  them: ");
+		jam_end(buf, &sr->that, &sr->this, /*left?*/false, LEMPTY, oriented(*c));
 	}
 
 	/**** finish reply packet: Nr [, KE ] [, IDci, IDcr ] ****/
