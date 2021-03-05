@@ -2474,7 +2474,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 		struct spd_route *sr;
 
 		for (sr = &c->spd; best != c && sr; sr = sr->spd_next) {
-			if ( ((routed(sr->routing) || c->instance_initiation_ok) || sec_label.ptr != NULL) &&
+			if ( ((routed(sr->routing) || c->instance_initiation_ok) || sec_label.len != 0) &&
 			    endpoint_in_selector(local_client, &sr->this.client) &&
 			    endpoint_in_selector(remote_client, &sr->that.client)
 #ifdef HAVE_LABELED_IPSEC

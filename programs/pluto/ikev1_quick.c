@@ -616,10 +616,10 @@ void quick_outI1(struct fd *whack_sock,
 	st->st_policy = policy;
 	st->st_try = try;
 
-	if (c->spd.this.sec_label.ptr != NULL) {
+	if (c->spd.this.sec_label.len != 0) {
 		dbg("pending phase 2 with base security context \"%.*s\"",
 		    (int)c->spd.this.sec_label.len, c->spd.this.sec_label.ptr);
-		if (sec_label.ptr != NULL) {
+		if (sec_label.len != 0) {
 			st->st_acquired_sec_label = clone_hunk(sec_label, "st_acquired_sec_label");
 			dbg("pending phase 2 with 'instance' security context \"%.*s\"",
 				(int)sec_label.len, sec_label.ptr);
