@@ -781,6 +781,11 @@ static int extract_end(struct end *dst,
 	if (src->sec_label != NULL) {
 		dst->sec_label = clone_bytes_as_chunk(src->sec_label, strlen(src->sec_label)+1, "struct end sec_label");
 		dbg("received sec_label '%s' from whack", src->sec_label);
+		err_t ugh = vet_seclabel(HUNK_AS_SHUNK(dst->sec_label));
+		if (ugh != NULL) {
+			llog(RC_LOG, logger, "bad %s; ignored", ugh);
+			dst->sec_label = empty_chunk;
+		}
 	}
 
 	/* decode CA distinguished name, if any */

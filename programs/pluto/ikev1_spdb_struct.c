@@ -85,6 +85,7 @@ static bool parse_secctx_attr(struct pbs_in *pbs, struct state *st)
 	 * XXX: this and the IKEv2 equivalent have a lot in common.
 	 */
 	shunk_t sec_label = pbs_in_left_as_shunk(pbs);
+
 	if (sec_label.len != uctx.ctx.ctx_len) {
 		/* ??? should we ignore padding? */
 		log_state(RC_LOG_SERIOUS, st,
@@ -93,20 +94,10 @@ static bool parse_secctx_attr(struct pbs_in *pbs, struct state *st)
 		return false;
 	}
 
-	if (sec_label.len > MAX_SECCTX_LEN) {
-		log_state(RC_LOG_SERIOUS, st,
-			  "IPsec Security Label too long (%zu > %u)",
-			  sec_label.len, MAX_SECCTX_LEN);
-		return false;
-	}
+	err_t ugh = vet_seclabel(sec_label);
 
-	if (hunk_strnlen(sec_label) + 1 != sec_label.len) {
-		llog(RC_LOG, st->st_logger, "security label is not NUL terminated or contains an embedded NUL");
-		return false;
-	}
-
-	if (sec_label.len <= 1) {
-		llog(RC_LOG, st->st_logger, "security label is an empty string");
+	if (ugh != NULL) {
+		log_state(RC_LOG_SERIOUS, st, "IPsec %s", ugh);
 		return false;
 	}
 

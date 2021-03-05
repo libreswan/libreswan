@@ -500,27 +500,11 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 			 */
 			shunk_t sec_label = pbs_in_left_as_shunk(&ts_body_pbs);
 
-			if (sec_label.len == 0) {
-				llog(RC_LOG, logger,
-				     "Traffic Selector of type Security Label cannot be zero length - ignoring this TS");
-				continue;
-			}
+			err_t ugh = vet_seclabel(sec_label);
 
-			if (sec_label.len > MAX_SECCTX_LEN) {
-				llog(RC_LOG, logger,
-				     "Traffic Selector of type Security Label too long (%zu > %u)",
-				     sec_label.len, MAX_SECCTX_LEN);
-				return false;
-			}
-
-			if (hunk_strnlen(sec_label) + 1 != sec_label.len) {
-				llog(RC_LOG, logger,
-				     "Traffic Selector of type Security Label is not NUL terminated or contains an ebedded NUL");
-				return false;
-			}
-
-			if (sec_label.len <= 1) {
-				llog(RC_LOG, logger, "Traffic Selector of type Security Label is an empty string");
+			if (ugh != NULL) {
+				llog(RC_LOG, logger, "Traffic Selector %s", ugh);
+				/* ??? should we just ignore?  If so, use continue */
 				return false;
 			}
 

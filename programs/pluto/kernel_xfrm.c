@@ -97,6 +97,7 @@
 #include "ip_encap.h"
 
 #include "labeled_ipsec.h" /* TEMP for MAX_SECCTX_LEN */
+#include "security_selinux.h"	/* for vet_seclabel() */
 
 /* required for Linux 2.6.26 kernel and later */
 #ifndef XFRM_STATE_AF_UNSPEC
@@ -1762,34 +1763,24 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 				return;
 			}
 
-			if (len > MAX_SECCTX_LEN) {
-				llog(RC_LOG, logger,
-				     "length %zu of sec_label is longer than MAX_SECCTX_LEN; ignoring Acquire message",
-				     len);
-				return;
-			}
-
 			/*
 			 * note: xuctx + 1 is tricky:
 			 * first byte after header
 			 */
 			sec_label.ptr = (uint8_t *)(xuctx + 1);
 			sec_label.len = len;
+
+			err_t ugh = vet_seclabel(HUNK_AS_SHUNK(sec_label));
+
+			if (ugh != NULL) {
+				llog(RC_LOG, logger,
+					"received bad %s; ignoring Acquire message", ugh);
+				return;
+			}
+
 			dbg("xfrm: xuctx security context value: %.*s",
 				(int)len,
 				(const char *) (xuctx + 1));
-
-			if (strnlen((char *)sec_label.ptr, len) + 1 != len) {
-				llog(RC_LOG, logger,
-					"received sec_label contains embedded NUL or no terminal NUL; ignoring Acquire message");
-				return;
-			}
-			if (len <= 1) {
-				llog(RC_LOG, logger,
-					"received sec_label is empty; ignoring Acquire message");
-				return;
-			}
-
 			break;
 		}
 		default:
