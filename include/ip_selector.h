@@ -151,9 +151,6 @@ size_t jam_selector(struct jambuf *buf, const ip_selector *selector);
 const char *str_selector_sensitive(const ip_selector *selector, selector_buf *out);
 size_t jam_selector_sensitive(struct jambuf *buf, const ip_selector *selector);
 
-const char *str_selector_subnet(const ip_selector *selector, subnet_buf *buf);
-size_t jam_selector_subnet(struct jambuf *buf, const ip_selector *selector);
-
 typedef struct {
 	char buf[sizeof(selector_buf) + sizeof("=UNKNOWN=UNKNOWN=>") + sizeof(selector_buf)];
 } selectors_buf;
@@ -177,5 +174,8 @@ size_t jam_selectors_sensitive(struct jambuf *buf, const ip_selector *src, const
 
 bool selector_subnet_eq(const ip_selector *lhs, const ip_selector *rhs);
 bool selector_subnet_in(const ip_selector *lhs, const ip_selector *rhs);
+const char *str_selector_subnet(const ip_selector *selector, subnet_buf *buf);
+size_t jam_selector_subnet(struct jambuf *buf, const ip_selector *selector);
+bool selector_subnet_is_address(const ip_selector *selector, const ip_address *address);
 
 #endif

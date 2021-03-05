@@ -2363,14 +2363,14 @@ void set_policy_prio(struct connection *c)
 static size_t jam_connection_client(struct jambuf *b,
 				    const char *prefix, const char *suffix,
 				    const ip_selector *client,
-				    const ip_address *gw)
+				    const ip_address *host_addr)
 {
 	size_t s = 0;
-	if (subnetisaddr(client, gw)) {
+	if (selector_subnet_is_address(client, host_addr)) {
 		/* compact denotation for "self" */
 	} else {
 		s += jam_string(b, prefix);
-		if (subnet_contains_no_addresses(client)) {
+		if (selector_contains_no_addresses(client)) {
 			s += jam_string(b, "?"); /* unknown */
 		} else {
 			s += jam_selector_subnet(b, client);

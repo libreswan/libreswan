@@ -541,3 +541,10 @@ bool selector_subnet_in(const ip_selector *lhs, const ip_selector *rhs)
 	return subnet_in(&lhs_subnet, &rhs_subnet);
 }
 
+bool selector_subnet_is_address(const ip_selector *selector, const ip_address *address)
+{
+	ip_address sp = selector_prefix(selector);
+	int sb = selector_prefix_bits(selector);
+	ip_subnet ss = subnet_from_address_prefix_bits(&sp, sb);
+	return subnetisaddr(&ss, address);
+}
