@@ -128,7 +128,7 @@ bool subnet_in(const ip_subnet *lhs, const ip_subnet *rhs);
 /* Given ROUTING_PREFIX|HOST_ID return ROUTING_PREFIX|0 */
 ip_address subnet_prefix(const ip_subnet *subnet);
 ip_address subnet_prefix_mask(const ip_subnet *subnet);
-/*unsigned subnet_prefix_bits(const ip_subnet *subnet);*/
+unsigned subnet_prefix_bits(const ip_subnet subnet);
 
 /*
  * old

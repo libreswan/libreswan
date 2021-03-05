@@ -523,6 +523,13 @@ err_t numeric_to_selector(shunk_t src,
 	return NULL;
 }
 
+ip_subnet selector_subnet(const ip_selector selector)
+{
+	ip_address address = selector_prefix(&selector);
+	int prefix_bits = selector_prefix_bits(&selector);
+	return subnet_from_address_prefix_bits(&address, prefix_bits);
+}
+
 bool selector_subnet_eq(const ip_selector *lhs, const ip_selector *rhs)
 {
 	ip_range lhs_range = selector_range(lhs);
@@ -532,19 +539,13 @@ bool selector_subnet_eq(const ip_selector *lhs, const ip_selector *rhs)
 
 bool selector_subnet_in(const ip_selector *lhs, const ip_selector *rhs)
 {
-	ip_address lhs_prefix = selector_prefix(lhs);
-	ip_address rhs_prefix = selector_prefix(rhs);
-	int lhs_bits = selector_prefix_bits(lhs);
-	int rhs_bits = selector_prefix_bits(rhs);
-	ip_subnet lhs_subnet = subnet_from_address_prefix_bits(&lhs_prefix, lhs_bits);
-	ip_subnet rhs_subnet = subnet_from_address_prefix_bits(&rhs_prefix, rhs_bits);
+	ip_subnet lhs_subnet = selector_subnet(*lhs);
+	ip_subnet rhs_subnet = selector_subnet(*rhs);
 	return subnet_in(&lhs_subnet, &rhs_subnet);
 }
 
 bool selector_subnet_is_address(const ip_selector *selector, const ip_address *address)
 {
-	ip_address sp = selector_prefix(selector);
-	int sb = selector_prefix_bits(selector);
-	ip_subnet ss = subnet_from_address_prefix_bits(&sp, sb);
-	return subnetisaddr(&ss, address);
+	ip_subnet subnet = selector_subnet(*selector);
+	return subnetisaddr(&subnet, address);
 }

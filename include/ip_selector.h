@@ -172,6 +172,7 @@ size_t jam_selectors_sensitive(struct jambuf *buf, const ip_selector *src, const
  * - a connection's shunt
  */
 
+ip_subnet selector_subnet(const ip_selector selector);
 bool selector_subnet_eq(const ip_selector *lhs, const ip_selector *rhs);
 bool selector_subnet_in(const ip_selector *lhs, const ip_selector *rhs);
 const char *str_selector_subnet(const ip_selector *selector, subnet_buf *buf);

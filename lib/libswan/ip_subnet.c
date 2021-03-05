@@ -179,6 +179,11 @@ ip_address subnet_prefix_mask(const ip_subnet *subnet)
 				 subnet->maskbits);
 }
 
+unsigned subnet_prefix_bits(const ip_subnet subnet)
+{
+	return subnet.maskbits;
+}
+
 size_t jam_subnet(struct jambuf *buf, const ip_subnet *subnet)
 {
 	if (subnet_is_unset(subnet)) {
