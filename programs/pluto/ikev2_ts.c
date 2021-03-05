@@ -978,6 +978,7 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 			 */
 			return &cur_r->sec_label;	/* first match */
 		}
+		break;	/* no point in trying a different tsi_n */
 	}
 #endif
 
