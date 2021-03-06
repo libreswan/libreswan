@@ -598,7 +598,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 			/* user configured XFRMI_SET_MARK (a.k.a. output mark) add it */
 			jam(buf, "PLUTO_XFRMI_FWMARK='%" PRIu32 "/%#08" PRIx32 "' ",
 				c->sa_marks.out.val, c->sa_marks.out.mask);
-		} else if (addrinsubnet(&sr->that.host_addr, &sr->that.client)) {
+		} else if (address_in_selector(&sr->that.host_addr, &sr->that.client)) {
 			jam(buf, "PLUTO_XFRMI_FWMARK='%" PRIu32 "/0xffffffff' ",
 				c->xfrmi->if_id);
 		} else {
@@ -690,9 +690,7 @@ bool do_command(const struct connection *c,
 			llog(RC_LOG_SERIOUS, logger, "unknown address family");
 			return false;
 		}
-		verb_suffix = subnetisaddr(&sr->this.client,
-					&sr->this.host_addr) ?
-			hs : cs;
+		verb_suffix = selector_subnet_is_address(&sr->this.client, &sr->this.host_addr) ? hs : cs;
 	}
 
 	dbg("command executing %s%s", verb, verb_suffix);
@@ -936,7 +934,7 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 	/* if routing would affect IKE messages, reject */
 	if (c->spd.this.host_port != NAT_IKE_UDP_PORT &&
 	    c->spd.this.host_port != IKE_UDP_PORT &&
-	    addrinsubnet(&c->spd.that.host_addr, &c->spd.that.client)) {
+	    address_in_selector(&c->spd.that.host_addr, &c->spd.that.client)) {
 		llog(RC_LOG_SERIOUS, logger,
 			    "cannot install route: peer is within its client");
 		return route_impossible;
