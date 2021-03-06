@@ -3607,7 +3607,8 @@ static struct connection *fc_try(const struct connection *c,
 					continue;
 				}
 
-				virtualwhy = check_virtual_net_allowed(d, remote_client,
+				virtualwhy = check_virtual_net_allowed(d,
+								       selector_subnet(*remote_client),
 								       &sr->that.host_addr);
 
 				if (is_virtual_sr(sr) &&
