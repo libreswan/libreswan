@@ -870,12 +870,6 @@ static bool score_gt(const struct best_score *score, const struct best_score *be
 		 score->protocol > best->protocol));
 }
 
-/* a security label is a hunk containing only a non-empty well-formed C string */
-static bool proper_seclabel(shunk_t lab)
-{
-	return	lab.len > 1 && hunk_strnlen(lab) == lab.len - 1;
-}
-
 /*
  * Danger! this returns three types of value:
  *
@@ -922,14 +916,14 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 		return &null_shunk;	/* error */
 	}
 
-	passert(proper_seclabel(HUNK_AS_SHUNK(sec_label)));
+	passert(vet_seclabel(HUNK_AS_SHUNK(sec_label)) == NULL);
 
 	for (unsigned tsi_n = 0; tsi_n < tsi->nr; tsi_n++) {
 		const struct traffic_selector *cur_i = &tsi->ts[tsi_n];
 		if (cur_i->ts_type != IKEv2_TS_SECLABEL) {
 			continue;
 		}
-		passert(proper_seclabel(cur_i->sec_label));
+		passert(vet_seclabel(cur_i->sec_label) == NULL);
 		if (!se_label_match(cur_i->sec_label, sec_label, logger)) {
 			dbg("ikev2ts #1: received label not within range of our security label");
 			DBG_dump_hunk("ends->i->sec_label", ends->i->sec_label);
@@ -944,7 +938,7 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 			if (cur_r->ts_type != IKEv2_TS_SECLABEL) {
 				continue;
 			}
-			passert(proper_seclabel(cur_i->sec_label));
+			passert(vet_seclabel(cur_i->sec_label) == NULL);
 			if (!se_label_match(cur_r->sec_label, sec_label, logger)) {
 				dbg("ikev2ts #2: received label not within range of our security label");
 				DBG_dump_hunk("ends->r->sec_label", ends->r->sec_label);
