@@ -1156,9 +1156,8 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 			c->spd.that.has_client = true;
 			virtual_ip_delref(&c->spd.that.virt, HERE);
 
-			if (subnetishost(remote_client) &&
-			    addrinsubnet(&c->spd.that.host_addr, remote_client)) {
-				c->spd.that.has_client = FALSE;
+			if (selector_is_address(remote_client, &c->spd.that.host_addr)) {
+				c->spd.that.has_client = false;
 			}
 
 			LSWDBGP(DBG_BASE, buf) {
@@ -1623,11 +1622,12 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 					  str_selector_subnet(&st->st_connection->spd.that.client, &buf));
 			}
 		} else {
-			/* no IDci, IDcr: we must check that the defaults match our proposal */
-			if (!subnetisaddr(&c->spd.this.client,
-					  &c->spd.this.host_addr) ||
-			    !subnetisaddr(&c->spd.that.client,
-					  &c->spd.that.host_addr)) {
+			/*
+			 * No IDci, IDcr: we must check that the
+			 * defaults match our proposal.
+			 */
+			if (!selector_is_address(&c->spd.this.client, &c->spd.this.host_addr) ||
+			    !selector_is_address(&c->spd.that.client, &c->spd.that.host_addr)) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "IDci, IDcr payloads missing in message but default does not match proposal");
 				return STF_FAIL + INVALID_ID_INFORMATION;
