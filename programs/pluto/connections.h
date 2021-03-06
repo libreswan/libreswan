@@ -551,8 +551,8 @@ extern void update_state_connection(struct state *st, struct connection *c);
  * either a %hold or an eroute for an instance iff
  * the template is a /32 -> /32.  This requires some special casing.
  */
-#define eclipsable(sr) (subnetishost(&(sr)->this.client) && \
-			subnetishost(&(sr)->that.client))
+#define eclipsable(sr) (selector_is_one_address(&(sr)->this.client) &&	\
+			selector_is_one_address(&(sr)->that.client))
 extern long eclipse_count;
 extern struct connection *eclipsed(const struct connection *c, struct spd_route ** /*OUT*/);
 
