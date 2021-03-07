@@ -938,7 +938,7 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 			if (cur_r->ts_type != IKEv2_TS_SECLABEL) {
 				continue;
 			}
-			passert(vet_seclabel(cur_i->sec_label) == NULL);
+			passert(vet_seclabel(cur_r->sec_label) == NULL);
 			if (!se_label_match(cur_r->sec_label, sec_label, logger)) {
 				dbg("ikev2ts #2: received label not within range of our security label");
 				DBG_dump_hunk("ends->r->sec_label", ends->r->sec_label);
