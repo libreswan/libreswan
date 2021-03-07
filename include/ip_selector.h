@@ -40,13 +40,6 @@ struct jambuf;
  * non-zero when the NETWORK_PREFIX/MASK is for a single address.
  */
 
-/*
- * Define SELECTOR_TYPE to enable an ip_selector type separate to ip_subnet; expect
- * everything to break.
- */
-
-#ifdef SELECTOR_TYPE
-
 typedef struct {
 	bool is_selector;
 	/* (routing)prefix|host(id):port */
@@ -56,13 +49,6 @@ typedef struct {
 	/* to-be-deleted - selector */
 	bool is_subnet;
 } ip_selector;
-
-#else
-
-#include "ip_subnet.h"
-typedef ip_subnet ip_selector;
-
-#endif
 
 #define PRI_SELECTOR "%s"
 #define pri_selector(S,B) str_selector(S, B)
