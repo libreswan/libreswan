@@ -245,11 +245,11 @@ ip_range range_from_subnet(const ip_subnet *subnet)
 	}
 	const struct ip_info *afi = subnet_type(subnet);
 	ip_range r = {
-		.start = address_from_blit(afi, subnet->addr.bytes,
+		.start = address_from_blit(afi, subnet->bytes,
 					   /*routing-prefix*/&keep_bits,
 					   /*host-identifier*/&clear_bits,
 					   subnet->maskbits),
-		.end = address_from_blit(afi, subnet->addr.bytes,
+		.end = address_from_blit(afi, subnet->bytes,
 					 /*routing-prefix*/&keep_bits,
 					 /*host-identifier*/&set_bits,
 					 subnet->maskbits),

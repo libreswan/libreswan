@@ -42,12 +42,25 @@ struct jambuf;
 
 typedef struct {
 	bool is_selector;
-	/* (routing)prefix|host(id):port */
-	ip_endpoint addr;
-	/* (routing prefix) bits */
+	/*
+	 * Index into the struct ip_info array; must be stream
+	 * friendly.
+	 */
+	unsigned version; /* 0, 4, 6 */
+	/*
+	 * We need something that makes static IPv4 initializers possible
+	 * (struct in_addr requires htonl() which is run-time only).
+	 */
+	struct ip_bytes bytes;
+	/*
+	 * (routing prefix) bits.
+	 */
 	unsigned maskbits;
-	/* to-be-deleted - selector */
-	bool is_subnet;
+	/*
+	 * For moment, one port
+	 */
+	int hport;
+	unsigned ipproto;
 } ip_selector;
 
 #define PRI_SELECTOR "%s"
@@ -103,8 +116,8 @@ ip_port selector_port(const ip_selector *selector);
 
 /* hacks */
 int selector_hport(const ip_selector *selector);
-#define update_selector_hport(SELECTOR, HPORT) { (SELECTOR)->addr.hport = (HPORT); }
-#define update_selector_ipproto(SELECTOR, IPPROTO) { (SELECTOR)->addr.ipproto = (IPPROTO); }
+#define update_selector_hport(SELECTOR, HPORT) { (SELECTOR)->hport = (HPORT); }
+#define update_selector_ipproto(SELECTOR, IPPROTO) { (SELECTOR)->ipproto = (IPPROTO); }
 
 /* assuming a subnet like XFRM does */
 ip_address selector_prefix(const ip_selector *selector);

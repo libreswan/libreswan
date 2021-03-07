@@ -127,14 +127,14 @@ const struct ip_info ipv4_info = {
 
 	/* ip_subnet */
 	.subnet = {
-		.none = { .is_subnet = true, .addr = { IPv4_ENDPOINT, }, .maskbits = 32, }, /* 0.0.0.0/32 */
-		.all = { .is_subnet = true, .addr = { IPv4_ENDPOINT, }, .maskbits = 0, }, /* 0.0.0.0/0 */
+		.none = { .is_subnet = true, .version = 4, .maskbits = 32, }, /* 0.0.0.0/32 */
+		.all = { .is_subnet = true, .version = 4, .maskbits = 0, }, /* 0.0.0.0/0 */
 	},
 
 	/* ip_selector */
 	.selector = {
-		.none = { .is_selector = true, .addr = { IPv4_ENDPOINT, }, .maskbits = 32, }, /* 0.0.0.0/0 */
-		.all = { .is_selector = true, .addr = { IPv4_ENDPOINT, }, .maskbits = 0, }, /* 0.0.0.0/0 */
+		.none = { .is_selector = true, .version = 4, .maskbits = 32, }, /* 0.0.0.0/0 */
+		.all = { .is_selector = true, .version = 4, .maskbits = 0, }, /* 0.0.0.0/0 */
 	},
 
 	/* ike */
@@ -175,14 +175,14 @@ const struct ip_info ipv6_info = {
 
 	/* ip_subnet */
 	.subnet = {
-		.none = { .is_subnet = true, .addr = { IPv6_ENDPOINT, }, .maskbits = 128, }, /* ::/128 */
-		.all = { .is_subnet = true, .addr = { IPv6_ENDPOINT, }, .maskbits = 0, }, /* ::/0 */
+		.none = { .is_subnet = true, .version = 6, .maskbits = 128, }, /* ::/128 */
+		.all = { .is_subnet = true, .version = 6, .maskbits = 0, }, /* ::/0 */
 	},
 
 	/* ip_selector */
 	.selector = {
-		.none = { .is_selector = true, .addr = { IPv6_ENDPOINT, }, .maskbits = 128, }, /* ::/0 */
-		.all = { .is_selector = true, .addr = { IPv6_ENDPOINT, }, .maskbits = 0, }, /* ::/0 */
+		.none = { .is_selector = true, .version = 6, .maskbits = 128, }, /* ::/0 */
+		.all = { .is_selector = true, .version = 6, .maskbits = 0, }, /* ::/0 */
 	},
 
 	/* ike */

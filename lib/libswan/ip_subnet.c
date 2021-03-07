@@ -32,10 +32,8 @@ ip_subnet subnet_from_address_prefix_bits(const ip_address *address, unsigned pr
 	}
 	ip_subnet s = {
 		.is_subnet = true,
-		.addr = {
-			.version = address->version,
-			.bytes = address->bytes,
-		},
+		.version = address->version,
+		.bytes = address->bytes,
 		.maskbits = prefix_bits,
 	};
 	psubnet(&s);
@@ -81,7 +79,7 @@ ip_address subnet_prefix(const ip_subnet *subnet)
 		return unset_address;
 	}
 	const struct ip_info *afi = subnet_type(subnet);
-	return address_from_blit(afi, subnet->addr.bytes,
+	return address_from_blit(afi, subnet->bytes,
 				 /*routing-prefix*/&keep_bits,
 				 /*host-identifier*/&clear_bits,
 				 subnet->maskbits);
@@ -92,7 +90,7 @@ const struct ip_info *subnet_type(const ip_subnet *subnet)
 	if (subnet_is_unset(subnet)) {
 		return NULL;
 	}
-	return ip_version_info(subnet->addr.version);
+	return ip_version_info(subnet->version);
 }
 
 bool subnet_is_unset(const ip_subnet *subnet)
@@ -108,15 +106,20 @@ bool subnet_is_specified(const ip_subnet *subnet)
 	if (subnet_is_unset(subnet)) {
 		return false;
 	}
-	return endpoint_is_specified(&subnet->addr);
+	const struct ip_info *afi = subnet_type(subnet);
+	if (afi == NULL) {
+		return false; /* need IPv4 or IPv6 */
+	}
+	if (thingeq(subnet->bytes, afi->address.any.bytes)) {
+		/* any address (but we know it is zero) */
+		return false;
+	}
+	return true;
 }
 
 bool subnet_contains_all_addresses(const ip_subnet *subnet)
 {
 	if (subnet_is_unset(subnet)) {
-		return false;
-	}
-	if (subnet->addr.hport != 0) {
 		return false;
 	}
 	if (subnet->maskbits != 0) {
@@ -135,9 +138,6 @@ bool subnet_contains_no_addresses(const ip_subnet *subnet)
 	if (subnet->maskbits != afi->mask_cnt) {
 		return false;
 	}
-	if (subnet->addr.hport != 0) {
-		return false; /* weird one */
-	}
 	ip_address network = subnet_prefix(subnet);
 	return address_is_any(&network);
 }
@@ -149,9 +149,6 @@ bool subnet_contains_one_address(const ip_subnet *subnet)
 		return false;
 	}
 	const struct ip_info *afi = subnet_type(subnet);
-	if (subnet->addr.hport != 0) {
-		return false;
-	}
 	if (subnet->maskbits != afi->mask_cnt) {
 		return false;
 	}
@@ -173,7 +170,7 @@ ip_address subnet_prefix_mask(const ip_subnet *subnet)
 		return unset_address;
 	}
 	const struct ip_info *afi = subnet_type(subnet);
-	return address_from_blit(afi, subnet->addr.bytes,
+	return address_from_blit(afi, subnet->bytes,
 				 /*routing-prefix*/ &set_bits,
 				 /*host-identifier*/ &clear_bits,
 				 subnet->maskbits);
@@ -208,9 +205,8 @@ void pexpect_subnet(const ip_subnet *subnet, const char *t, where_t where)
 	if (subnet_is_unset(subnet)) {
 		return;
 	}
-	if (subnet->addr.version == 0 ||
-	    subnet->is_subnet == false ||
-	    subnet->is_selector == true) {
+	if (subnet->version == 0 ||
+	    subnet->is_subnet == false) {
 		subnet_buf b;
 		dbg("EXPECTATION FAILED: %s is not a subnet; "PRI_SUBNET" "PRI_WHERE,
 		    t, pri_subnet(subnet, &b),
@@ -232,8 +228,8 @@ bool subnet_eq(const ip_subnet *l, const ip_subnet *r)
 		return false;
 	}
 	return (l->maskbits == r->maskbits &&
-		l->addr.version == r->addr.version &&
-		thingeq(l->addr.bytes, r->addr.bytes));
+		l->version == r->version &&
+		thingeq(l->bytes, r->bytes));
 }
 
 bool subnet_in(const ip_subnet *l, const ip_subnet *r)
