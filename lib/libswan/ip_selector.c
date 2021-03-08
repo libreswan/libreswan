@@ -547,5 +547,5 @@ bool selector_subnet_in(const ip_selector *lhs, const ip_selector *rhs)
 bool selector_subnet_is_address(const ip_selector *selector, const ip_address *address)
 {
 	ip_subnet subnet = selector_subnet(*selector);
-	return subnetisaddr(&subnet, address);
+	return subnetishost(&subnet) && addrinsubnet(address, &subnet);
 }
