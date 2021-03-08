@@ -871,12 +871,46 @@ static bool score_gt(const struct best_score *score, const struct best_score *be
 }
 
 /*
- * Danger! this returns three types of value:
+ * Danger! score_ends_seclabel() returns three types of value:
  *
  * NULL: no sec_label was found and none was expected
  * &null_shunk: someting is wrong; skip
  * chunk: something was found
+ *
+ * Auxilliary function ts_has() returns similar results but NULL is excluded.
  */
+
+#ifdef HAVE_LABELED_IPSEC
+static const shunk_t *ts_has_seclabel(chunk_t sec_label,
+			const struct traffic_selectors *ts,
+			const char *what,
+			struct logger *logger)
+{
+	if (ts->contains_sec_label) {
+		for (unsigned i = 0; i < ts->nr; i++) {
+			const struct traffic_selector *s = &ts->ts[i];
+			if (s->ts_type != IKEv2_TS_SECLABEL) {
+				continue;
+			}
+
+			passert(vet_seclabel(s->sec_label) == NULL);
+
+			if (!se_label_match(s->sec_label, sec_label, logger)) {
+				dbg("ikev2ts: received %s label not within range of our security label", what);
+				DBG_dump_hunk("wanted", sec_label);
+				DBG_dump_hunk("received", s->sec_label);
+				continue;
+			}
+
+			dbg("ikev2ts: received %s label within range of our security label", what);
+
+			/* XXX we return the first match.  Should we return the best? */
+			return &s->sec_label;	/* first match */
+		}
+	}
+	return &null_shunk;	/* unfound: error */
+}
+#endif
 
 static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UNUSED,
 					  const struct connection *d,
@@ -895,7 +929,6 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 	}
 
 #ifdef HAVE_LABELED_IPSEC
-
 	if (!tsi->contains_sec_label && !tsr->contains_sec_label) {
 		/*
 		 * if neither TSi nor TSr contains a label, that is OK.
@@ -903,61 +936,16 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 		 * during IKE_AUTH when there is no ACQUIRE driving said IKE
 		 * negotiation (i.e. when using `auto=start` for the connection
 		 * configuration).
+		 *
+		 * ??? should we not check that we're in that special case?
 		 */
 		return NULL;	/* success: no label, as expected */
 	}
 
-	/* short-cut */
-	if (!tsi->contains_sec_label || !tsr->contains_sec_label) {
-		/*
-		 * if either TSi or TSr contains a label, then both are needed;
-		 * can't match
-		 */
-		return &null_shunk;	/* error */
-	}
-
 	passert(vet_seclabel(HUNK_AS_SHUNK(sec_label)) == NULL);
 
-	for (unsigned tsi_n = 0; tsi_n < tsi->nr; tsi_n++) {
-		const struct traffic_selector *cur_i = &tsi->ts[tsi_n];
-		if (cur_i->ts_type != IKEv2_TS_SECLABEL) {
-			continue;
-		}
-		passert(vet_seclabel(cur_i->sec_label) == NULL);
-		if (!se_label_match(cur_i->sec_label, sec_label, logger)) {
-			dbg("ikev2ts #1: received label not within range of our security label");
-			DBG_dump_hunk("ends->i->sec_label", ends->i->sec_label);
-			DBG_dump_hunk("cur_i->sec_label", cur_i->sec_label);
-			continue;
-		}
-
-		dbg("ikev2ts #1: received label within range of our security label");
-
-		for (unsigned tsr_n = 0; tsr_n < tsr->nr; tsr_n++) {
-			const struct traffic_selector *cur_r = &tsr->ts[tsr_n];
-			if (cur_r->ts_type != IKEv2_TS_SECLABEL) {
-				continue;
-			}
-			passert(vet_seclabel(cur_r->sec_label) == NULL);
-			if (!se_label_match(cur_r->sec_label, sec_label, logger)) {
-				dbg("ikev2ts #2: received label not within range of our security label");
-				DBG_dump_hunk("ends->r->sec_label", ends->r->sec_label);
-				DBG_dump_hunk("cur_r->sec_label", cur_r->sec_label);
-				continue;
-			}
-
-			dbg("ikev2ts #2: received label within range of our security label");
-
-			/*
-			 * ??? we return the responder label.
-			 * Could the initiator label be different?
-			 *
-			 * XXX we return the first match.  Should we return the best?
-			 */
-			return &cur_r->sec_label;	/* first match */
-		}
-		break;	/* no point in trying a different tsi_n */
-	}
+	if (ts_has_seclabel(sec_label, tsi, "initiator", logger) != &null_shunk)
+		return ts_has_seclabel(sec_label, tsr, "responder", logger);
 #endif
 
 	/* security label required but no matching one found */
