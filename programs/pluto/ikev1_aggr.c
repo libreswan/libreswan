@@ -133,12 +133,12 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	const lset_t policy = preparse_isakmp_sa_body(sa_pd->pbs) | POLICY_AGGRESSIVE;
 	const lset_t policy_exact_mask = POLICY_XAUTH | POLICY_AGGRESSIVE;
 
-	struct connection *c = find_host_connection(IKEv1, &md->iface->local_endpoint,
-						    &md->sender, policy, policy_exact_mask);
+	struct connection *c = find_v1_host_connection(md->iface->local_endpoint,
+						       md->sender, policy, policy_exact_mask);
 
 	if (c == NULL) {
-		c = find_host_connection(IKEv1, &md->iface->local_endpoint, NULL,
-					 policy, policy_exact_mask);
+		c = find_v1_host_connection(md->iface->local_endpoint, unset_endpoint,
+					    policy, policy_exact_mask);
 		if (c == NULL) {
 			endpoint_buf b;
 			policy_buf pb;

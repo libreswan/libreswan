@@ -592,10 +592,10 @@ void check_orientations(void)
  * These should only be used if the caller actually knows
  * the exact value and has included it in req_policy.
  */
-struct connection *find_host_connection(enum ike_version ike_version,
-					const ip_endpoint *local_endpoint,
-					const ip_endpoint *remote_endpoint,
-					lset_t req_policy, lset_t policy_exact_mask)
+static struct connection *find_host_connection(enum ike_version ike_version,
+					       const ip_endpoint *local_endpoint,
+					       const ip_endpoint *remote_endpoint,
+					       lset_t req_policy, lset_t policy_exact_mask)
 {
 	endpoint_buf lb;
 	endpoint_buf rb;
@@ -831,6 +831,15 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 		}
 	}
 	return c;
+}
+
+
+struct connection *find_v1_host_connection(const ip_endpoint local_endpoint,
+					   const ip_endpoint remote_endpoint,
+					   lset_t req_policy, lset_t policy_exact_mask)
+{
+	return find_host_connection(IKEv1, &local_endpoint, &remote_endpoint,
+				    req_policy, policy_exact_mask);
 }
 
 struct connection *find_v2_host_pair_connection(struct msg_digest *md, lset_t *policy,
