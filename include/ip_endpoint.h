@@ -122,7 +122,6 @@ bool endpoint_is_unset(const ip_endpoint *endpoint);
 const struct ip_info *endpoint_type(const ip_endpoint *endpoint);
 const struct ip_protocol *endpoint_protocol(const ip_endpoint *endpoint);
 
-bool endpoint_is_any(const ip_endpoint *endpoint);
 bool endpoint_is_specified(const ip_endpoint *endpoint);
 
 ip_address endpoint_address(const ip_endpoint *endpoint);

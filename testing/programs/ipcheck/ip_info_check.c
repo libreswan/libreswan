@@ -112,8 +112,6 @@ static void check_ip_info_endpoint(void)
 	} tests[] = {
 		{ 0, NULL,                    .unset = true, .hport = -1, },
 		{ 0, &unset_endpoint,         .unset = true, .hport = -1, },
-		{ 4, &ipv4_info.endpoint.any, .any = true },
-		{ 6, &ipv6_info.endpoint.any, .any = true },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
@@ -142,9 +140,6 @@ static void check_ip_info_endpoint(void)
 		[0][1] = true,
 		[1][1] = true,
 		[1][0] = true,
-		/* other */
-		[2][2] = true,
-		[3][3] = true,
 	};
 	CHECK_EQ(endpoint);
 }

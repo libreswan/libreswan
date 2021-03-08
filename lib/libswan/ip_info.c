@@ -104,9 +104,6 @@ static size_t jam_ipv6_address(struct jambuf *buf, const struct ip_info *afi, co
 #define IPv4_ADDRESS .is_address = true, .version = 4
 #define IPv6_ADDRESS .is_address = true, .version = 6
 
-#define IPv4_ENDPOINT .is_endpoint = true, .version = 4
-#define IPv6_ENDPOINT .is_endpoint = true, .version = 6
-
 const struct ip_info ipv4_info = {
 
 	.ip_version = 4,
@@ -118,11 +115,6 @@ const struct ip_info ipv4_info = {
 	.address = {
 		.any = { IPv4_ADDRESS, }, /* 0.0.0.0 */
 		.loopback = { IPv4_ADDRESS, .bytes = { { 127, 0, 0, 1, }, }, },
-	},
-
-	/* ip_endpoint */
-	.endpoint = {
-		.any = { IPv4_ENDPOINT, }, /* 0.0.0.0:0 */
 	},
 
 	/* ip_subnet */
@@ -166,11 +158,6 @@ const struct ip_info ipv6_info = {
 	.address = {
 		.any = { IPv6_ADDRESS, }, /* :: */
 		.loopback = { IPv6_ADDRESS, .bytes = { { [15] = 1, }, }, }, /* ::1 */
-	},
-
-	/* ip_endpoint */
-	.endpoint = {
-		.any = { IPv6_ENDPOINT, }, /* [::]:0 */
 	},
 
 	/* ip_subnet */
