@@ -290,7 +290,9 @@ static void check_selector_contains(struct logger *logger)
 #define T(COND)								\
 		bool COND = selector_##COND(&selector);			\
 		if (COND != t->COND) {					\
-			FAIL(OUT, "selector_"#COND"() returned %s, expected %s", \
+			selector_buf b;					\
+			FAIL(OUT, "selector_"#COND"(%s) returned %s, expected %s", \
+			     str_selector(&selector, &b),		\
 			     bool_str(COND), bool_str(t->COND));	\
 		}
 		T(is_unset);
@@ -443,11 +445,13 @@ static void check_in_selector(struct logger *logger)
 
 		const ip_protocol *protocol = selector_protocol(&inner_selector);
 		ip_port port = selector_port(&inner_selector);
-		ip_endpoint inner_endpoint = endpoint_from_address_protocol_port(&inner_address, protocol, port);
-		bool endpoint = endpoint_in_selector(&inner_endpoint, &outer_selector);
-		if (endpoint != t->endpoint) {
-			FAIL(OUT, "endpoint_in_selector() returned %s, expecting %s",
-			     bool_str(endpoint), bool_str(t->endpoint));
+		if (protocol != &ip_protocol_unset && port.hport != 0) {
+			ip_endpoint inner_endpoint = endpoint_from_address_protocol_port(&inner_address, protocol, port);
+			bool endpoint = endpoint_in_selector(&inner_endpoint, &outer_selector);
+			if (endpoint != t->endpoint) {
+				FAIL(OUT, "endpoint_in_selector() returned %s, expecting %s",
+				     bool_str(endpoint), bool_str(t->endpoint));
+			}
 		}
 	}
 

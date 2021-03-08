@@ -72,7 +72,7 @@ static void check_sockaddr_as_endpoint(void)
 
 		/* sockaddr->endpoint */
 		ip_endpoint endpoint;
-		err_t err = sockaddr_to_endpoint(&ip_protocol_unset, &sa, &endpoint);
+		err_t err = sockaddr_to_endpoint(&ip_protocol_udp, &sa, &endpoint);
 		if (err != NULL) {
 			if (t->err == NULL) {
 				FAIL_IN("sockaddr_to_endpoint() unexpectedly failed: %s", err);
