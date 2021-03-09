@@ -26,7 +26,7 @@ bool selector_is_unset(const ip_selector *selector)
 	if (selector == NULL) {
 		return true;
 	}
-	return thingeq(*selector, unset_selector);
+	return !selector->is_set;
 }
 
 size_t jam_selector(struct jambuf *buf, const ip_selector *selector)
@@ -371,19 +371,19 @@ bool endpoint_in_selector(const ip_endpoint *endpoint, const ip_selector *select
 
 bool selector_eq(const ip_selector *l, const ip_selector *r)
 {
-	pselector(l);
-	pselector(r);
-	const struct ip_info *lt = selector_type(l);
-	const struct ip_info *rt = selector_type(r);
-	if (lt == NULL || rt == NULL) {
+	if (selector_is_unset(l) && selector_is_unset(r)) {
 		/* NULL/unset selectors are equal */
-		return (lt == NULL && rt == NULL);
+		return true;
 	}
-	/* strict check */
-	return (l->maskbits == r->maskbits &&
-		l->version == r->version &&
+	if (selector_is_unset(l) || selector_is_unset(r)) {
+		return false;
+	}
+	/* must compare individual fields */
+	return (l->version == r->version &&
+		thingeq(l->bytes, r->bytes) &&
+		l->maskbits == r->maskbits &&
 		l->ipproto == r->ipproto &&
-		thingeq(l->bytes, r->bytes));
+		l->hport == r->hport);
 }
 
 void pexpect_selector(const ip_selector *s, const char *t, where_t where)

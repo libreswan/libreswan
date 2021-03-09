@@ -112,7 +112,7 @@ bool endpoint_is_unset(const ip_endpoint *endpoint)
 	if (endpoint == NULL) {
 		return true;
 	}
-	return thingeq(*endpoint, unset_endpoint);
+	return !endpoint->is_set;
 }
 
 const struct ip_protocol *endpoint_protocol(const ip_endpoint *endpoint)
@@ -235,44 +235,18 @@ const char *str_endpoints(const ip_endpoint *src, const ip_endpoint *dst, endpoi
 
 bool endpoint_eq(const ip_endpoint *l, const ip_endpoint *r)
 {
-	const struct ip_info *lt = endpoint_type(l);
-	const struct ip_info *rt = endpoint_type(r);
-	if (lt == NULL && rt == NULL) {
-		/* unset//NULL endpoints are equal */
+	if (endpoint_is_unset(l) && endpoint_is_unset(r)) {
+		/* unset/NULL endpoints are equal */
 		return true;
 	}
-	if (lt != rt) {
+	if (endpoint_is_unset(l) || endpoint_is_unset(r)) {
 		return false;
 	}
-	if (l->hport != r->hport) {
-		return false;
-	}
-	if (!memeq(&l->bytes, &r->bytes, sizeof(l->bytes))) {
-		return false;
-	}
-	if (l->ipproto != 0 && r->ipproto != 0 &&
-	    l->ipproto != r->ipproto) {
-		return false;
-	}
-	if (l->ipproto == 0 || r->ipproto == 0) {
-		/*
-		 * XXX: note the <<#if 0 pendpoint()>> sprinkled all
-		 * over this file.
-		 *
-		 * There is (was?) code lurking in pluto that does not
-		 * initialize the ip_endpoint's .iproto field.  For
-		 * instance by assigning an ip_address to an
-		 * ip_endpoint (the two are still compatible).
-		 *
-		 * This dbg() line is one step towards tracking these
-		 * cases down.
-		 *
-		 * (If the intent is for some sort of wildcard match
-		 * then either ip_selector or ip_subnet can be used.)
-		 */
-		dbg("endpoint fuzzy ipproto match");
-	}
-	return true;
+	/* must compare individual fields */
+	return (l->version == r->version &&
+		thingeq(l->bytes, r->bytes) &&
+		l->ipproto == r->ipproto &&
+		l->hport == r->hport);
 }
 
 bool endpoint_address_eq(const ip_endpoint *endpoint, const ip_address *address)

@@ -217,14 +217,11 @@ bool address_is_unset(const ip_address *address)
 	if (address == NULL) {
 		return true;
 	}
-	return thingeq(*address, unset_address);
+	return !address->is_set;
 }
 
 bool address_is_specified(const ip_address *address)
 {
-	if (address == NULL) {
-		return false;
-	}
 	if (address_is_unset(address)) {
 		return false;
 	}
@@ -242,18 +239,16 @@ bool address_is_specified(const ip_address *address)
 
 bool address_eq(const ip_address *l, const ip_address *r)
 {
-	const struct ip_info *lt = address_type(l);
-	const struct ip_info *rt = address_type(r);
-	if (lt == NULL && rt == NULL) {
+	if (address_is_unset(l) && address_is_unset(r)) {
 		/* unset/NULL addresses are equal */
 		return true;
 	}
-	if (lt != rt) {
+	if (address_is_unset(l) || address_is_unset(r)) {
 		return false;
 	}
-	shunk_t ls = address_as_shunk(l);
-	shunk_t rs = address_as_shunk(r);
-	return hunk_eq(ls, rs);
+	/* must compare individual fields */
+	return (l->version == r->version &&
+		thingeq(l->bytes, r->bytes));
 }
 
 bool address_is_loopback(const ip_address *address)

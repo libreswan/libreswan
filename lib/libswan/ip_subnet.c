@@ -98,7 +98,7 @@ bool subnet_is_unset(const ip_subnet *subnet)
 	if (subnet == NULL) {
 		return true;
 	}
-	return thingeq(*subnet, unset_subnet);
+	return !subnet->is_set;
 }
 
 bool subnet_is_specified(const ip_subnet *subnet)
@@ -216,20 +216,17 @@ void pexpect_subnet(const ip_subnet *subnet, const char *t, where_t where)
 
 bool subnet_eq(const ip_subnet *l, const ip_subnet *r)
 {
-	psubnet(l);
-	psubnet(r);
 	if (subnet_is_unset(l) && subnet_is_unset(r)) {
 		/* NULL/unset subnets are equal */
 		return true;
 	}
-	const struct ip_info *lt = subnet_type(l);
-	const struct ip_info *rt = subnet_type(r);
-	if (lt != rt) {
+	if (subnet_is_unset(l) || subnet_is_unset(r)) {
 		return false;
 	}
-	return (l->maskbits == r->maskbits &&
-		l->version == r->version &&
-		thingeq(l->bytes, r->bytes));
+	/* must compare individual fields */
+	return (l->version == r->version &&
+		thingeq(l->bytes, r->bytes) &&
+		l->maskbits == r->maskbits);
 }
 
 bool subnet_in(const ip_subnet *l, const ip_subnet *r)
