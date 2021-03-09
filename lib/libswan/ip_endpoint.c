@@ -50,8 +50,10 @@ ip_address endpoint_address(const ip_endpoint *endpoint)
 {
 	const struct ip_info *afi = endpoint_type(endpoint);
 	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return unset_address; /* empty_address? */
 	}
+
 	return address_from_raw(afi, endpoint->bytes);
 }
 
@@ -59,10 +61,12 @@ int endpoint_hport(const ip_endpoint *endpoint)
 {
 	const struct ip_info *afi = endpoint_type(endpoint);
 	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		/* not asserting, who knows what nonsense a user can generate */
 		dbg("%s has unspecified type", __func__);
 		return -1;
 	}
+
 	return endpoint->hport;
 }
 
@@ -70,10 +74,12 @@ ip_port endpoint_port(const ip_endpoint *endpoint)
 {
 	const struct ip_info *afi = endpoint_type(endpoint);
 	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		/* not asserting, who knows what nonsense a user can generate */
 		dbg("%s has unspecified type", __func__);
 		return unset_port;
 	}
+
 	return ip_hport(endpoint->hport);
 }
 
@@ -86,6 +92,7 @@ ip_endpoint set_endpoint_port(const ip_endpoint *endpoint, ip_port port)
 {
 	const struct ip_info *afi = endpoint_type(endpoint);
 	if (afi == NULL) {
+		/* includes NULL+unset+unknown */
 		/* not asserting, who knows what nonsense a user can generate */
 		dbg("endpoint has unspecified type");
 		return unset_endpoint;
@@ -101,9 +108,11 @@ ip_endpoint set_endpoint_port(const ip_endpoint *endpoint, ip_port port)
 
 const struct ip_info *endpoint_type(const ip_endpoint *endpoint)
 {
-	if (endpoint == NULL) {
+	if (endpoint_is_unset(endpoint)) {
 		return NULL;
 	}
+
+	/* may return NULL */
 	return ip_version_info(endpoint->version);
 }
 
@@ -125,17 +134,17 @@ const struct ip_protocol *endpoint_protocol(const ip_endpoint *endpoint)
 
 bool endpoint_is_specified(const ip_endpoint *endpoint)
 {
-	if (endpoint_is_unset(endpoint)) {
-		return false;
-	}
 	const struct ip_info *afi = endpoint_type(endpoint);
 	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return false;
 	}
+
 	if (thingeq(endpoint->bytes, afi->address.any.bytes)) {
 		/* any address (but we know it is zero) */
 		return false;
 	}
+
 	if (endpoint->hport == 0) {
 		dbg("treating endpoint with unset port as specified");
 	}

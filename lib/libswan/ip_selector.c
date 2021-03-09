@@ -195,6 +195,8 @@ const struct ip_info *selector_type(const ip_selector *selector)
 	if (selector_is_unset(selector)) {
 		return NULL;
 	}
+
+	/* may return NULL */
 	return ip_version_info(selector->version);
 }
 
@@ -216,10 +218,12 @@ const ip_protocol *selector_protocol(const ip_selector *selector)
 
 ip_range selector_range(const ip_selector *selector)
 {
-	if (selector_is_unset(selector)) {
+	const struct ip_info *afi = selector_type(selector);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return unset_range;
 	}
-	const struct ip_info *afi = selector_type(selector);
+
 	ip_address start = address_from_blit(afi, selector->bytes,
 					     /*routing-prefix*/&keep_bits,
 					     /*host-identifier*/&clear_bits,
@@ -233,10 +237,12 @@ ip_range selector_range(const ip_selector *selector)
 
 ip_address selector_prefix(const ip_selector *selector)
 {
-	if (selector_is_unset(selector)) {
+	const struct ip_info *afi = selector_type(selector);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return unset_address;
 	}
-	const struct ip_info *afi = selector_type(selector);
+
 	return address_from_raw(afi, selector->bytes);
 }
 
@@ -247,10 +253,12 @@ unsigned selector_prefix_bits(const ip_selector *selector)
 
 ip_address selector_prefix_mask(const ip_selector *selector)
 {
-	if (selector_is_unset(selector)) {
+	const struct ip_info *afi = selector_type(selector);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return unset_address;
 	}
-	const struct ip_info *afi = selector_type(selector);
+
 	return address_from_blit(afi, selector->bytes,
 				 /*routing-prefix*/ &set_bits,
 				 /*host-identifier*/ &clear_bits,
@@ -274,11 +282,13 @@ bool selector_contains_all_addresses(const ip_selector *selector)
 
 bool selector_is_one_address(const ip_selector *selector)
 {
-	/* Unlike selectorishost() this rejects 0.0.0.0/32. */
-	if (selector_is_unset(selector)) {
+	const struct ip_info *afi = selector_type(selector);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return false;
 	}
-	const struct ip_info *afi = selector_type(selector);
+
+	/* Unlike selectorishost() this rejects 0.0.0.0/32. */
 	if (selector->hport != 0) {
 		return false;
 	}
@@ -299,30 +309,37 @@ bool selector_is_address(const ip_selector *selector, const ip_address *address)
 
 bool selector_contains_no_addresses(const ip_selector *selector)
 {
-	if (selector_is_unset(selector)) {
+	const struct ip_info *afi = selector_type(selector);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return false;
 	}
-	const struct ip_info *afi = selector_type(selector);
+
 	if (selector->maskbits != afi->mask_cnt) {
 		return false;
 	}
+
 	if (selector->hport != 0) {
 		return false; /* weird one */
 	}
+
 	ip_address network = selector_prefix(selector);
 	return address_is_any(&network);
 }
 
 bool selector_in_selector(const ip_selector *l, const ip_selector *r)
 {
-	/* exclude unset */
-	if (selector_is_unset(l) || selector_is_unset(r)) {
+	const struct ip_info *afi = selector_type(l);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return false;
 	}
-	/* version wild card (actually version is 4/6) */
-	if (/*r->version != 0 &&*/ l->version != r->version) {
+
+	/* version wild card? (actually version is 4/6) */
+	if (selector_type(r) != afi) {
 		return false;
 	}
+
 	/* protocol wildcards */
 	if (r->ipproto != 0 && l->ipproto != r->ipproto) {
 		return false;
@@ -340,8 +357,8 @@ bool selector_in_selector(const ip_selector *l, const ip_selector *r)
 	if (l->maskbits < r->maskbits) {
 		return false;
 	}
+
 	/* l.prefix[r.bits] == r.prefix */
-	const struct ip_info *afi = selector_type(l);
 	ip_address lp = address_from_blit(afi,
 					  /*LEFT*/l->bytes,
 					  /*routing-prefix*/&keep_bits,

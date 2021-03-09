@@ -34,6 +34,8 @@ const struct ip_info *cidr_type(const ip_cidr *cidr)
 	if (cidr_is_unset(cidr)) {
 		return NULL;
 	}
+
+	/* may return NULL */
 	return ip_version_info(cidr->version);
 }
 

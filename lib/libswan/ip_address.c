@@ -64,9 +64,11 @@ ip_address address_from_in6_addr(const struct in6_addr *in6)
 
 const struct ip_info *address_type(const ip_address *address)
 {
-	if (address == NULL) {
+	if (address_is_unset(address)) {
 		return NULL;
 	}
+
+	/* may return NULL */
 	return ip_version_info(address->version);
 }
 
@@ -85,25 +87,22 @@ const char *ipstr(const ip_address *src, ipstr_buf *b)
 
 shunk_t address_as_shunk(const ip_address *address)
 {
-	if (address == NULL) {
-		return null_shunk;
-	}
 	const struct ip_info *afi = address_type(address);
 	if (afi == NULL) {
 		return null_shunk;
 	}
+
 	return shunk2(&address->bytes, afi->ip_size);
 }
 
 chunk_t address_as_chunk(ip_address *address)
 {
-	if (address == NULL) {
-		return empty_chunk;
-	}
 	const struct ip_info *afi = address_type(address);
 	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return empty_chunk;
 	}
+
 	return chunk2(&address->bytes, afi->ip_size);
 }
 
@@ -222,16 +221,14 @@ bool address_is_unset(const ip_address *address)
 
 bool address_is_specified(const ip_address *address)
 {
-	if (address_is_unset(address)) {
-		return false;
-	}
 	const struct ip_info *afi = address_type(address);
 	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return false;
 	}
-	/* check all bytes; not just .ip_size */
-	if (thingeq(address->bytes, afi->address.any.bytes)) {
-		/* any address (but we know it is zero) */
+
+	/* exclude any address */
+	if (address_eq(address, &afi->address.any)) {
 		return false;
 	}
 	return true;
@@ -253,20 +250,24 @@ bool address_eq(const ip_address *l, const ip_address *r)
 
 bool address_is_loopback(const ip_address *address)
 {
-	const struct ip_info *type = address_type(address);
-	if (type == NULL) {
+	const struct ip_info *afi = address_type(address);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return false;
 	}
-	return address_eq(address, &type->address.loopback);
+
+	return address_eq(address, &afi->address.loopback);
 }
 
 bool address_is_any(const ip_address *address)
 {
-	const struct ip_info *type = address_type(address);
-	if (type == NULL) {
+	const struct ip_info *afi = address_type(address);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return false;
 	}
-	return address_eq(address, &type->address.any);
+
+	return address_eq(address, &afi->address.any);
 }
 
 ip_address address_from_blit(const struct ip_info *afi,

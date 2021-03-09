@@ -75,10 +75,12 @@ err_t address_mask_to_subnet(const ip_address *address,
 
 ip_address subnet_prefix(const ip_subnet *subnet)
 {
-	if (subnet_is_unset(subnet)) {
+	const struct ip_info *afi = subnet_type(subnet);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return unset_address;
 	}
-	const struct ip_info *afi = subnet_type(subnet);
+
 	return address_from_blit(afi, subnet->bytes,
 				 /*routing-prefix*/&keep_bits,
 				 /*host-identifier*/&clear_bits,
@@ -90,6 +92,8 @@ const struct ip_info *subnet_type(const ip_subnet *subnet)
 	if (subnet_is_unset(subnet)) {
 		return NULL;
 	}
+
+	/* may be NULL */
 	return ip_version_info(subnet->version);
 }
 
@@ -103,13 +107,12 @@ bool subnet_is_unset(const ip_subnet *subnet)
 
 bool subnet_is_specified(const ip_subnet *subnet)
 {
-	if (subnet_is_unset(subnet)) {
-		return false;
-	}
 	const struct ip_info *afi = subnet_type(subnet);
 	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return false; /* need IPv4 or IPv6 */
 	}
+
 	if (thingeq(subnet->bytes, afi->address.any.bytes)) {
 		/* any address (but we know it is zero) */
 		return false;
@@ -131,27 +134,33 @@ bool subnet_contains_all_addresses(const ip_subnet *subnet)
 
 bool subnet_contains_no_addresses(const ip_subnet *subnet)
 {
-	if (subnet_is_unset(subnet)) {
+	const struct ip_info *afi = subnet_type(subnet);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return false;
 	}
-	const struct ip_info *afi = subnet_type(subnet);
+
 	if (subnet->maskbits != afi->mask_cnt) {
 		return false;
 	}
+
 	ip_address network = subnet_prefix(subnet);
 	return address_is_any(&network);
 }
 
 bool subnet_contains_one_address(const ip_subnet *subnet)
 {
-	/* Unlike subnetishost() this rejects 0.0.0.0/32. */
-	if (subnet_is_unset(subnet)) {
+	const struct ip_info *afi = subnet_type(subnet);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return false;
 	}
-	const struct ip_info *afi = subnet_type(subnet);
+
+	/* Unlike subnetishost() this rejects 0.0.0.0/32. */
 	if (subnet->maskbits != afi->mask_cnt) {
 		return false;
 	}
+
 	/* ignore port */
 	ip_address network = subnet_prefix(subnet);
 	/* address_is_set(&network) implied as afi non-NULL */
@@ -166,10 +175,12 @@ bool subnet_contains_one_address(const ip_subnet *subnet)
 
 ip_address subnet_prefix_mask(const ip_subnet *subnet)
 {
-	if (subnet_is_unset(subnet)) {
+	const struct ip_info *afi = subnet_type(subnet);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return unset_address;
 	}
-	const struct ip_info *afi = subnet_type(subnet);
+
 	return address_from_blit(afi, subnet->bytes,
 				 /*routing-prefix*/ &set_bits,
 				 /*host-identifier*/ &clear_bits,

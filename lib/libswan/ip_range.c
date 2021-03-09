@@ -57,12 +57,9 @@ ip_range range(const ip_address *start, const ip_address *end)
 
 int range_significant_bits(const ip_range *range)
 {
-	if (range_is_unset(range)) {
-		return -1;
-	}
-
 	const struct ip_info *afi = range_type(range);
 	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return -1;
 	}
 
@@ -188,10 +185,12 @@ const char *str_range(const ip_range *range, range_buf *out)
 
 ip_range range_from_subnet(const ip_subnet *subnet)
 {
-	if (subnet_is_unset(subnet)) {
+	const struct ip_info *afi = subnet_type(subnet);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return unset_range;
 	}
-	const struct ip_info *afi = subnet_type(subnet);
+
 	ip_range r = {
 		.start = address_from_blit(afi, subnet->bytes,
 					   /*routing-prefix*/&keep_bits,
@@ -210,6 +209,8 @@ const struct ip_info *range_type(const ip_range *range)
 	if (range_is_unset(range)) {
 		return NULL;
 	}
+
+	/* may return NULL */
 	const struct ip_info *start = ip_version_info(range->start.version);
 	const struct ip_info *end = ip_version_info(range->end.version);
 	if (!pexpect(start == end)) {
@@ -228,9 +229,12 @@ bool range_is_unset(const ip_range *range)
 
 bool range_is_specified(const ip_range *range)
 {
-	if (range_is_unset(range)) {
+	const struct ip_info *afi = range_type(range);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return false;
 	}
+
 	bool start = address_is_specified(&range->start);
 	bool end = address_is_specified(&range->end);
 	if (!pexpect(start == end)) {
