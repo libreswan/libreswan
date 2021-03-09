@@ -163,15 +163,21 @@ size_t jam_range(struct jambuf *buf, const ip_range *range)
 	if (range_is_unset(range)) {
 		return jam_string(buf, "<unset-range>");
 	}
+
+	const struct ip_info *afi = range_type(range);
+	if (afi == NULL) {
+		return jam_string(buf, "<unknown-range>");
+	}
+
 	size_t s = 0;
-	s += jam_address(buf, &range->start);
-	if (range->is_subnet) {
-		ip_subnet tmp_subnet;
-		rangetosubnet(&range->start, &range->end, &tmp_subnet);
-		s += jam(buf, "/%u", tmp_subnet.maskbits);
+	s += afi->jam_address(buf, afi, &range->start.bytes);
+	/* when a subnet, try to calculate the prefix-bits */
+	int prefix_bits = (range->is_subnet ? bytes_prefix_bits(afi, range->start.bytes, range->end.bytes) : -1);
+	if (prefix_bits >= 0) {
+		s += jam(buf, "/%d", prefix_bits);
 	} else {
 		s += jam(buf, "-");
-		s += jam_address(buf, &range->end);
+		s += afi->jam_address(buf, afi, &range->end.bytes);
 	}
 	return s;
 }

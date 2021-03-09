@@ -162,45 +162,32 @@ bool endpoint_is_specified(const ip_endpoint *endpoint)
  * and a value of zero means no port.
  */
 
-static size_t format_endpoint(struct jambuf *buf, bool sensitive,
-			      const ip_endpoint *endpoint)
+size_t jam_endpoint(struct jambuf *buf, const ip_endpoint *endpoint)
 {
-	/*
-	 * A NULL/unset endpoint can't be sensitive so always log it.
-	 */
 	if (endpoint_is_unset(endpoint)) {
 		return jam_string(buf, "<unset-endpoint>");
 	}
 
-	if (sensitive) {
-		return jam_string(buf, "<endpoint>");
+	const struct ip_info *afi = endpoint_type(endpoint);
+	if (afi == NULL) {
+		return jam_string(buf, "<unknown-endpoint>");
 	}
 
-	const struct ip_info *afi = endpoint_type(endpoint);
-	ip_address address = endpoint_address(endpoint);
-	int hport = endpoint_hport(endpoint);
 	size_t s = 0;
-
 	switch (afi->af) {
 	case AF_INET: /* N.N.N.N[:PORT] */
-		s += jam_address(buf, &address);
-		s += jam(buf, ":%d", hport);
+		s += afi->jam_address(buf, afi, &endpoint->bytes);
 		break;
-	case AF_INET6: /* [N:..:N]:PORT or N:..:N */
+	case AF_INET6: /* [N:..:N]:PORT */
 		s += jam(buf, "[");
-		s += jam_address(buf, &address);
+		s += afi->jam_address(buf, afi, &endpoint->bytes);
 		s += jam(buf, "]");
-		s += jam(buf, ":%d", hport);
 		break;
 	default:
 		bad_case(afi->af);
 	}
+	s += jam(buf, ":%d", endpoint->hport);
 	return s;
-}
-
-size_t jam_endpoint(struct jambuf *buf, const ip_endpoint *endpoint)
-{
-	return format_endpoint(buf, /*sensitive?*/false, endpoint);
 }
 
 const char *str_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
@@ -212,7 +199,11 @@ const char *str_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
 
 size_t jam_endpoint_sensitive(struct jambuf *buf, const ip_endpoint *endpoint)
 {
-	return format_endpoint(buf, /*sensitive?*/!log_ip, endpoint);
+	if (!log_ip) {
+		return jam_string(buf, "<endpoint>");
+	}
+
+	return jam_endpoint(buf, endpoint);
 }
 
 const char *str_endpoint_sensitive(const ip_endpoint *endpoint, endpoint_buf *dst)
@@ -227,11 +218,11 @@ size_t jam_endpoints(struct jambuf *buf, const ip_endpoint *src, const ip_endpoi
 	const ip_protocol *srcp = endpoint_protocol(src);
 	const ip_protocol *dstp = endpoint_protocol(dst);
 	size_t s = 0;
-	s += format_endpoint(buf, /*sensitive?*/false, src);
+	s += jam_endpoint(buf, src);
 	s += jam_char(buf, ' ');
 	s += jam_protocols(buf, srcp, '-', dstp);
 	s += jam_char(buf, ' ');
-	s += format_endpoint(buf, /*sensitive?*/false, dst);
+	s += jam_endpoint(buf, dst);
 	return s;
 }
 

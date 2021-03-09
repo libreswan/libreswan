@@ -106,29 +106,26 @@ chunk_t address_as_chunk(ip_address *address)
 	return chunk2(&address->bytes, afi->ip_size);
 }
 
-static size_t format_address_cooked(struct jambuf *buf, bool sensitive,
-				    const ip_address *address)
+size_t jam_address(struct jambuf *buf, const ip_address *address)
 {
 	if (address_is_unset(address)) {
 		return jam_string(buf, "<unset-address>");
 	}
 
-	if (sensitive) {
-		return jam_string(buf, "<address>");
+	const struct ip_info *afi = address_type(address);
+	if (afi == NULL) {
+		return jam_string(buf, "<unknown-address>");
 	}
 
-	const struct ip_info *afi = address_type(address);
 	return afi->jam_address(buf, afi, &address->bytes);
-}
-
-size_t jam_address(struct jambuf *buf, const ip_address *address)
-{
-	return format_address_cooked(buf, false, address);
 }
 
 size_t jam_address_sensitive(struct jambuf *buf, const ip_address *address)
 {
-	return format_address_cooked(buf, !log_ip, address);
+	if (!log_ip) {
+		return jam_string(buf, "<address>");
+	}
+	return jam_address(buf, address);
 }
 
 size_t jam_address_reversed(struct jambuf *buf, const ip_address *address)

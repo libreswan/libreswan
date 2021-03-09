@@ -31,10 +31,16 @@ bool selector_is_unset(const ip_selector *selector)
 
 size_t jam_selector(struct jambuf *buf, const ip_selector *selector)
 {
-	size_t s = 0;
 	if (selector_is_unset(selector)) {
 		return jam_string(buf, "<unset-selector>");
 	}
+
+	const struct ip_info *afi = selector_type(selector);
+	if (afi == NULL) {
+		return jam_string(buf, "<unknown-selector>");
+	}
+
+	size_t s = 0;
 	ip_address sa = selector_prefix(selector);
 	s += jam_address(buf, &sa); /* sensitive? */
 	s += jam(buf, "/%u", selector->maskbits);
