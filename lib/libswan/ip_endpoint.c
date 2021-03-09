@@ -257,8 +257,12 @@ bool endpoint_address_eq(const ip_endpoint *endpoint, const ip_address *address)
 
 void pexpect_endpoint(const ip_endpoint *e, const char *s, where_t where)
 {
-	if (endpoint_is_unset(e)) {
-		/* NULL or zero */
+	if (e == NULL) {
+		return;
+	}
+
+	/* more strict than is_unset() */
+	if (endpoint_eq(e, &unset_endpoint)) {
 		return;
 	}
 

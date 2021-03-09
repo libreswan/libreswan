@@ -202,7 +202,12 @@ const char *str_subnet(const ip_subnet *subnet, subnet_buf *out)
 
 void pexpect_subnet(const ip_subnet *s, const char *t, where_t where)
 {
-	if (subnet_is_unset(s)) {
+	if (s == NULL) {
+		return;
+	}
+
+	/* more strict than is_unset() */
+	if (subnet_eq(s, &unset_subnet)) {
 		return;
 	}
 

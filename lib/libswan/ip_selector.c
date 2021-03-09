@@ -388,7 +388,12 @@ bool selector_eq(const ip_selector *l, const ip_selector *r)
 
 void pexpect_selector(const ip_selector *s, const char *t, where_t where)
 {
-	if (selector_is_unset(s)) {
+	if (s == NULL) {
+		return;
+	}
+
+	/* more strict than is_unset() */
+	if (selector_eq(s, &unset_selector)) {
 		return;
 	}
 

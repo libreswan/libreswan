@@ -343,7 +343,12 @@ ip_address address_from_blit(const struct ip_info *afi,
 
 void pexpect_address(const ip_address *a, const char *s, where_t where)
 {
-	if (address_is_unset(a)) {
+	if (a == NULL) {
+		return;
+	}
+
+	/* more strict than is_unset() */
+	if (address_eq(a, &unset_address)) {
 		return;
 	}
 
