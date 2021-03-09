@@ -200,17 +200,17 @@ const char *str_subnet(const ip_subnet *subnet, subnet_buf *out)
 	return out->buf;
 }
 
-void pexpect_subnet(const ip_subnet *subnet, const char *t, where_t where)
+void pexpect_subnet(const ip_subnet *s, const char *t, where_t where)
 {
-	if (subnet_is_unset(subnet)) {
+	if (subnet_is_unset(s)) {
 		return;
 	}
-	if (subnet->is_set == false ||
-	    subnet->version == 0) {
+
+	if (s->is_set == false ||
+	    s->version == 0) {
 		subnet_buf b;
-		dbg("EXPECTATION FAILED: %s is not a subnet; "PRI_SUBNET" "PRI_WHERE,
-		    t, pri_subnet(subnet, &b),
-		    pri_where(where));
+		log_pexpect(where, "invalid subnet: %s; "PRI_SUBNET,
+			    t, pri_subnet(s, &b));
 	}
 }
 

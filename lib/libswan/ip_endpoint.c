@@ -269,8 +269,7 @@ void pexpect_endpoint(const ip_endpoint *e, const char *s, where_t where)
 	    protocol == NULL ||
 	    (protocol->endpoint_requires_non_zero_port && e->hport == 0)) {
 		endpoint_buf b;
-		dbg("EXPECTATION FAILED: %s is not an endpoint; "PRI_ENDPOINT" "PRI_WHERE,
-		    s, pri_endpoint(e, &b),
-		    pri_where(where));
+		log_pexpect(where, "invalid endpoint: %s; "PRI_ENDPOINT,
+			    s, pri_endpoint(e, &b));
 	}
 }

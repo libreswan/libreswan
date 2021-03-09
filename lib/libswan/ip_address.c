@@ -350,8 +350,7 @@ void pexpect_address(const ip_address *a, const char *s, where_t where)
 	if (a->is_set == false ||
 	    a->version == 0) {
 		address_buf b;
-		dbg("EXPECTATION FAILED: %s is not an address; "PRI_ADDRESS" "PRI_WHERE,
-		    s, pri_address(a, &b),
-		    pri_where(where));
+		log_pexpect(where, "invalid address: %s; "PRI_ADDRESS,
+			    s, pri_address(a, &b));
 	}
 }

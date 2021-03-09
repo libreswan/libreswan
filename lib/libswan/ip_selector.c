@@ -395,8 +395,8 @@ void pexpect_selector(const ip_selector *s, const char *t, where_t where)
 	if (s->is_set == false ||
 	    s->version == 0) {
 		selector_buf b;
-		dbg("EXPECTATION FAILED: %s is not a selector; "PRI_SELECTOR" "PRI_WHERE,
-		    t, pri_selector(s, &b), pri_where(where));
+		log_pexpect(where, "invalid selector: %s; "PRI_SELECTOR,
+			    t, pri_selector(s, &b));
 	}
 }
 
