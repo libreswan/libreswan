@@ -31,7 +31,7 @@ ip_subnet subnet_from_address_prefix_bits(const ip_address *address, unsigned pr
 		return unset_subnet;
 	}
 	ip_subnet s = {
-		.is_subnet = true,
+		.is_set = true,
 		.version = address->version,
 		.bytes = address->bytes,
 		.maskbits = prefix_bits,
@@ -205,8 +205,8 @@ void pexpect_subnet(const ip_subnet *subnet, const char *t, where_t where)
 	if (subnet_is_unset(subnet)) {
 		return;
 	}
-	if (subnet->version == 0 ||
-	    subnet->is_subnet == false) {
+	if (subnet->is_set == false ||
+	    subnet->version == 0) {
 		subnet_buf b;
 		dbg("EXPECTATION FAILED: %s is not a subnet; "PRI_SUBNET" "PRI_WHERE,
 		    t, pri_subnet(subnet, &b),

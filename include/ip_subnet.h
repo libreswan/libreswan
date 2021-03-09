@@ -28,19 +28,21 @@
 
 #include "ip_address.h"
 #include "ip_endpoint.h"
+#include "ip_bytes.h"
 
 struct jambuf;
 
 typedef struct {
-	bool is_subnet;
+	bool is_set;
 	/*
 	 * Index into the struct ip_info array; must be stream
 	 * friendly.
 	 */
 	unsigned version; /* 0, 4, 6 */
 	/*
-	 * We need something that makes static IPv4 initializers possible
-	 * (struct in_addr requires htonl() which is run-time only).
+	 * We need something that makes static IPv4 initializers
+	 * possible (struct in_addr requires htonl() which is run-time
+	 * only).
 	 */
 	struct ip_bytes bytes;
 	/*
@@ -49,11 +51,13 @@ typedef struct {
 	unsigned maskbits;
 } ip_subnet;
 
-#define PRI_SUBNET "%s; maskbits=%u is_subnet=%s"
+#define PRI_SUBNET "%s is_set=%s version=%d bytes="PRI_BYTES" maskbits=%u"
 #define pri_subnet(S, B)						\
 		str_subnet(S, B),					\
-		(S)->maskbits,						\
-		bool_str((S)->is_subnet)
+			bool_str((S)->is_set),				\
+			(S)->version,					\
+			pri_bytes((S)->bytes),				\
+			(S)->maskbits
 
 void pexpect_subnet(const ip_subnet *s, const char *t, where_t where);
 #define psubnet(S) pexpect_subnet(S, #S, HERE)

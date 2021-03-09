@@ -24,11 +24,13 @@
 #include "ip_address.h"
 #include "ip_port.h"
 #include "ip_protoport.h"
+#include "ip_bytes.h"
 
 struct jambuf;
 struct ip_protocol;
 
 typedef struct {
+	bool is_set;
 	/*
 	 * Index into the struct ip_info array; must be stream
 	 * friendly.
@@ -40,21 +42,24 @@ typedef struct {
 	 */
 	struct ip_bytes bytes;
 	/*
-	 * In pluto "0" denotes all ports (or, in the context of an
-	 * endpoint, is that none?).
+	 * Protocol 0 is interpreted as a wild card so isn't allowed.
+	 */
+	unsigned ipproto;
+	/*
+	 * For protocols such as UDP and TCP, the 0 port is
+	 * interpreted as a wild card so isn't allowed.
 	 */
 	int hport;
-	unsigned ipproto;
-	bool is_endpoint;
 } ip_endpoint;
 
-#define PRI_ENDPOINT "%s (version=%d hport=%u ipproto=%u is_endpoint=%s)"
+#define PRI_ENDPOINT "%s (is_set=%s version=%d bytes="PRI_BYTES" ipproto=%u hport=%u"
 #define pri_endpoint(A, B)						\
-		str_endpoint(A, B),					\
+	str_endpoint(A, B),						\
+		bool_str((A)->is_set),					\
 		(A)->version,						\
-		(A)->hport,						\
+		pri_bytes((A)->bytes),					\
 		(A)->ipproto,						\
-		bool_str((A)->is_endpoint)
+		(A)->hport
 
 void pexpect_endpoint(const ip_endpoint *e, const char *t, where_t where);
 #define pendpoint(E) pexpect_endpoint(E, #E, HERE)

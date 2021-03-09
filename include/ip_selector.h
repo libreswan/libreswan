@@ -23,6 +23,7 @@
 #include "ip_protoport.h"
 #include "ip_protocol.h"
 #include "ip_range.h"
+#include "ip_bytes.h"
 
 struct jambuf;
 
@@ -41,30 +42,38 @@ struct jambuf;
  */
 
 typedef struct {
-	bool is_selector;
+	bool is_set;
 	/*
 	 * Index into the struct ip_info array; must be stream
 	 * friendly.
 	 */
 	unsigned version; /* 0, 4, 6 */
 	/*
-	 * We need something that makes static IPv4 initializers possible
-	 * (struct in_addr requires htonl() which is run-time only).
+	 * We need something that makes static IPv4 initializers
+	 * possible (struct in_addr requires htonl() which is run-time
+	 * only).
 	 */
 	struct ip_bytes bytes;
 	/*
 	 * (routing prefix) bits.
 	 */
 	unsigned maskbits;
+	unsigned ipproto;
 	/*
 	 * For moment, one port
 	 */
 	int hport;
-	unsigned ipproto;
 } ip_selector;
 
-#define PRI_SELECTOR "%s"
-#define pri_selector(S,B) str_selector(S, B)
+#define PRI_SELECTOR "%s is_set=%s version=%d bytes="PRI_BYTES" maskbits=%d ipproto=%d hport=%d"
+#define pri_selector(S,B) \
+	str_selector(S, B),			\
+		bool_str((S)->is_set),		\
+		(S)->version,			\
+		pri_bytes((S)->bytes),		\
+		(S)->maskbits,			\
+		(S)->ipproto,			\
+		(S)->hport
 
 void pexpect_selector(const ip_selector *s, const char *t, where_t where);
 #define pselector(S) pexpect_selector(S, #S, HERE)

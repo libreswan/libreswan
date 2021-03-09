@@ -164,7 +164,7 @@ ip_selector selector_from_subnet_protocol_port(const ip_subnet *subnet,
 		return unset_selector;
 	}
 	ip_selector selector = {
-		.is_selector = true,
+		.is_set = true,
 		.maskbits = subnet->maskbits,
 		.version = subnet->version,
 		.bytes = subnet->bytes,
@@ -388,12 +388,15 @@ bool selector_eq(const ip_selector *l, const ip_selector *r)
 
 void pexpect_selector(const ip_selector *s, const char *t, where_t where)
 {
-	if (s != NULL && s->version != 0) { /* non-zero */
-		if (s->is_selector == false) {
-			selector_buf b;
-			dbg("EXPECTATION FAILED: %s is not a selector; "PRI_SELECTOR" "PRI_WHERE,
-			    t, pri_selector(s, &b), pri_where(where));
-		}
+	if (selector_is_unset(s)) {
+		return;
+	}
+
+	if (s->is_set == false ||
+	    s->version == 0) {
+		selector_buf b;
+		dbg("EXPECTATION FAILED: %s is not a selector; "PRI_SELECTOR" "PRI_WHERE,
+		    t, pri_selector(s, &b), pri_where(where));
 	}
 }
 

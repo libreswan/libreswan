@@ -24,6 +24,7 @@
 #include "chunk.h"
 #include "err.h"
 #include "where.h"
+#include "ip_bytes.h"
 
 struct jambuf;
 struct ip_info;
@@ -43,7 +44,7 @@ extern bool log_ip; /* false -> redact (aka sanitize) ip addresses */
  */
 
 typedef struct {
-	bool is_address;
+	bool is_set;
 	/*
 	 * Index into the struct ip_info array; must be stream
 	 * friendly.
@@ -53,14 +54,15 @@ typedef struct {
 	 * We need something that makes static IPv4 initializers possible
 	 * (struct in_addr requires htonl() which is run-time only).
 	 */
-	struct ip_bytes { uint8_t byte[16]; } bytes;
+	struct ip_bytes bytes;
 } ip_address;
 
-#define PRI_ADDRESS "%s (version=%d is_address=%s)"
+#define PRI_ADDRESS "%s is_set=%s version=%d bytes="PRI_BYTES
 #define pri_address(A, B)						\
-		str_address(A, B),					\
+	str_address(A, B),						\
+		bool_str((A)->is_set),					\
 		(A)->version,						\
-		bool_str((A)->is_address)
+		pri_bytes((A)->bytes)
 
 void pexpect_address(const ip_address *a, const char *t, where_t where);
 #define paddress(A) pexpect_address(A, #A, HERE)

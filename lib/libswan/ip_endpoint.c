@@ -28,11 +28,11 @@ ip_endpoint endpoint_from_address_protocol_port(const ip_address *address,
 						ip_port port)
 {
 	ip_endpoint endpoint = {
+		.is_set = true,
 		.version = address->version,
 		.bytes = address->bytes,
 		.hport = port.hport,
 		.ipproto = protocol->ipproto,
-		.is_endpoint = true,
 	};
 #if 0
 	pendpoint(&endpoint);
@@ -289,8 +289,8 @@ void pexpect_endpoint(const ip_endpoint *e, const char *s, where_t where)
 	}
 
 	const ip_protocol *protocol = endpoint_protocol(e);
-	if (e->version == 0 ||
-	    e->is_endpoint == false ||
+	if (e->is_set == false ||
+	    e->version == 0 ||
 	    e->ipproto == 0 ||
 	    protocol == NULL ||
 	    (protocol->endpoint_requires_non_zero_port && e->hport == 0)) {

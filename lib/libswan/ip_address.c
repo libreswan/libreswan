@@ -26,7 +26,7 @@ const ip_address unset_address; /* all zeros */
 ip_address address_from_raw(const struct ip_info *afi, const struct ip_bytes *bytes)
 {
 	ip_address a = {
-		.is_address = true,
+		.is_set = true,
 		.version = afi->ip_version,
 		.bytes = *bytes,
 	};
@@ -352,8 +352,8 @@ void pexpect_address(const ip_address *a, const char *s, where_t where)
 		return;
 	}
 
-	if (a->version == 0 ||
-	    a->is_address == false) {
+	if (a->is_set == false ||
+	    a->version == 0) {
 		address_buf b;
 		dbg("EXPECTATION FAILED: %s is not an address; "PRI_ADDRESS" "PRI_WHERE,
 		    s, pri_address(a, &b),
