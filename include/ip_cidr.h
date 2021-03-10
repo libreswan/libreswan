@@ -28,7 +28,7 @@
 struct jambuf;
 
 typedef struct {
-	unsigned version;
+	enum ip_version version;
 	struct ip_bytes bytes;
 	unsigned prefix_bits;
 } ip_cidr;

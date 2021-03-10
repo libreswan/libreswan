@@ -201,8 +201,8 @@ int bytes_prefix_bits(const struct ip_info *afi,
  * bytes_cmp - compare two raw addresses
  */
 
-int bytes_cmp(int l_version, const struct ip_bytes l_bytes,
-	      int r_version, const struct ip_bytes r_bytes)
+int bytes_cmp(enum ip_version l_version, const struct ip_bytes l_bytes,
+	      enum ip_version r_version, const struct ip_bytes r_bytes)
 {
 	int cmp = l_version - r_version;
 	if (cmp != 0) {

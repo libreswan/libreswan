@@ -54,7 +54,7 @@ ip_address endpoint_address(const ip_endpoint *endpoint)
 		return unset_address; /* empty_address? */
 	}
 
-	return address_from_raw(afi, endpoint->bytes);
+	return address_from_raw(endpoint->version, endpoint->bytes);
 }
 
 int endpoint_hport(const ip_endpoint *endpoint)

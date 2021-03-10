@@ -49,7 +49,7 @@ typedef struct {
 	 * Index into the struct ip_info array; must be stream
 	 * friendly.
 	 */
-	unsigned version; /* 0, 4, 6 */
+	enum ip_version version; /* 0, 4, 6 */
 	/*
 	 * We need something that makes static IPv4 initializers possible
 	 * (struct in_addr requires htonl() which is run-time only).
@@ -172,7 +172,7 @@ ip_address address_from_blit(const struct ip_info *afi,
 			     unsigned prefix_bit_length);
 
 /* address_from_blit(AFI, BYTES, clear_bits, keep_bits, 0); */
-ip_address address_from_raw(const struct ip_info *afi,
+ip_address address_from_raw(enum ip_version version,
 			    const struct ip_bytes bytes);
 
 /*

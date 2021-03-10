@@ -24,9 +24,11 @@
 #include "ip_subnet.h"
 
 typedef struct {
-	ip_address start;
-	ip_address end;
+	bool is_set;
 	bool is_subnet; /* hint for jam_range */
+	enum ip_version version;
+	struct ip_bytes start;
+	struct ip_bytes end;
 } ip_range;
 
 /* caller knows best */
@@ -40,6 +42,8 @@ err_t addresses_to_range(const ip_address start, const ip_address end,
 err_t range_to_subnet(const ip_range range, ip_subnet *subnet) MUST_USE_RESULT;
 
 err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst) MUST_USE_RESULT;
+
+bool range_contains_all_addresses(const ip_range);
 
 /*
  * Formatting
@@ -65,6 +69,7 @@ const char *str_range(const ip_range *range, range_buf *buf);
  */
 
 extern const ip_range unset_range;
+
 bool range_is_unset(const ip_range *r);
 
 const struct ip_info *range_type(const ip_range *r);

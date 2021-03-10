@@ -13,7 +13,7 @@ struct ip_info {
 	/*
 	 * address family
 	 */
-	unsigned ip_version; /* 4 or 6 */
+	enum ip_version ip_version; /* 4 or 6 */
 	const char *ip_name; /* "IPv4" or "IPv6" */
 	size_t ip_size; /* 4 or 16 */
 	unsigned mask_cnt; /* 32 or 128 */

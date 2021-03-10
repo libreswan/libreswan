@@ -729,8 +729,8 @@ static bool validate_end(struct starter_conn *conn_st,
 			ERR_FOUND("bad %saddresspool=%s [%s]", leftright,
 					addresspool, er);
 
-		if (address_type(&end->pool_range.start) == &ipv6_info &&
-				!end->pool_range.is_subnet) {
+		if (range_type(&end->pool_range) == &ipv6_info &&
+		    !end->pool_range.is_subnet) {
 			ERR_FOUND("bad IPv6 %saddresspool=%s not subnet", leftright,
 					addresspool);
 		}

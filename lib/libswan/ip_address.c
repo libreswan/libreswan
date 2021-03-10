@@ -23,11 +23,11 @@
 
 const ip_address unset_address; /* all zeros */
 
-ip_address address_from_raw(const struct ip_info *afi, const struct ip_bytes bytes)
+ip_address address_from_raw(enum ip_version version, const struct ip_bytes bytes)
 {
 	ip_address a = {
 		.is_set = true,
-		.version = afi->ip_version,
+		.version = version,
 		.bytes = bytes,
 	};
 	paddress(&a);
@@ -38,7 +38,7 @@ ip_address address_from_in_addr(const struct in_addr *in)
 {
 	struct ip_bytes bytes = { .byte = { 0, }, };
 	memcpy(bytes.byte, in, sizeof(*in));
-	return address_from_raw(&ipv4_info, bytes);
+	return address_from_raw(IPv4, bytes);
 }
 
 uint32_t ntohl_address(const ip_address *a)
@@ -59,7 +59,7 @@ ip_address address_from_in6_addr(const struct in6_addr *in6)
 {
 	struct ip_bytes bytes = { .byte = { 0, }, };
 	memcpy(bytes.byte, in6, sizeof(*in6));
-	return address_from_raw(&ipv6_info, bytes);
+	return address_from_raw(IPv6, bytes);
 }
 
 const struct ip_info *address_type(const ip_address *address)
@@ -281,7 +281,7 @@ ip_address address_from_blit(const struct ip_info *afi,
 						routing_prefix,
 						host_identifier,
 						prefix_bit_length);
-	return address_from_raw(afi, bytes);
+	return address_from_raw(afi->ip_version, bytes);
 }
 
 void pexpect_address(const ip_address *a, const char *s, where_t where)

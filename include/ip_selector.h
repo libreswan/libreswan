@@ -47,7 +47,7 @@ typedef struct {
 	 * Index into the struct ip_info array; must be stream
 	 * friendly.
 	 */
-	unsigned version; /* 0, 4, 6 */
+	enum ip_version version; /* 0, 4, 6 */
 	/*
 	 * We need something that makes static IPv4 initializers
 	 * possible (struct in_addr requires htonl() which is run-time

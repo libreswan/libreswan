@@ -295,8 +295,8 @@ static void check_ip_info_range(void)
 		{ LN, 0, &unset_range,         	.is_unset = true, },
 		{ LN, 4, &ipv4_info.range.none,     .is_unset = false, },
 		{ LN, 6, &ipv6_info.range.none,     .is_unset = false, },
-		{ LN, 4, &ipv4_info.range.all,      .is_specified = true, },
-		{ LN, 6, &ipv6_info.range.all,      .is_specified = true, },
+		{ LN, 4, &ipv4_info.range.all,      .is_unset = false, },
+		{ LN, 6, &ipv6_info.range.all,      .is_unset = false, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {

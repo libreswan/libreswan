@@ -25,7 +25,8 @@
 
 const ip_subnet unset_subnet; /* all zeros */
 
-ip_subnet subnet_from_raw(unsigned version, const struct ip_bytes bytes, unsigned prefix_bits)
+ip_subnet subnet_from_raw(enum ip_version version, const struct ip_bytes bytes,
+			  unsigned prefix_bits)
 {
 	ip_subnet s = {
 		.is_set = true,

@@ -249,7 +249,7 @@ ip_address selector_prefix(const ip_selector *selector)
 		return unset_address;
 	}
 
-	return address_from_raw(afi, selector->bytes);
+	return address_from_raw(selector->version, selector->bytes);
 }
 
 unsigned selector_prefix_bits(const ip_selector *selector)

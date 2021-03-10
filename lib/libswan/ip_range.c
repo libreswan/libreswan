@@ -32,27 +32,40 @@
 
 const ip_range unset_range; /* all zeros */
 
+static ip_range range_from_raw(enum ip_version version,
+			       const struct ip_bytes start,
+			       const struct ip_bytes end)
+{
+	ip_range r = {
+		.is_set = true,
+		.version = version,
+		.start = start,
+		.end = end,
+	};
+#if 0
+	prange(&r);
+#endif
+	return r;
+}
+
 ip_range range2(const ip_address *start, const ip_address *end)
 {
-	/* does the caller know best? */
-	const struct ip_info *st = address_type(start);
-	const struct ip_info *et = address_type(end);
-	passert(st == et);
-	bool ss = address_is_unset(start);
-	bool es = address_is_unset(end);
-	passert(ss == es);
-	ip_range r = {
-		.start = *start,
-		.end = *end,
-	};
-	return r;
+ 	/* does the caller know best? */
+	const struct ip_info *afi = address_type(start);
+	if (afi == NULL) {
+		return unset_range;
+	}
+
+	if (!pexpect(afi == address_type(end))) {
+		return unset_range;
+	}
+
+	return range_from_raw(afi->ip_version, start->bytes, end->bytes);
 }
 
 /*
  * Calculate the number of significant bits in the size of the range.
  * floor(lg(|high-low| + 1))
- *
- * ??? this really should use ip_range rather than a pair of ip_address values
  */
 
 int range_host_bits(const ip_range range)
@@ -63,7 +76,7 @@ int range_host_bits(const ip_range range)
 		return -1;
 	}
 
-	struct ip_bytes diff = bytes_diff(afi, range.end.bytes, range.start.bytes);
+	struct ip_bytes diff = bytes_diff(afi, range.end, range.start);
 	int fsb = bytes_first_set_bit(afi, diff);
 	return (afi->ip_size * 8) - fsb;
 }
@@ -105,10 +118,9 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 	case '\0':
 	{
 		/* single address */
-		*dst = (ip_range) {
-			.start = start_address,
-			.end = start_address,
-		};
+		*dst = range_from_raw(start_address.version,
+				      start_address.bytes,
+				      start_address.bytes);
 		return NULL;
 	}
 	case '/':
@@ -120,16 +132,15 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 			return err;
 		}
 		/* XXX: should this reject bad addresses */
-		*dst = (ip_range) {
-			.start = address_from_blit(afi, start_address.bytes,
-						   /*routing-prefix*/&keep_bits,
-						   /*host-identifier*/&clear_bits,
-						   maskbits),
-			.end = address_from_blit(afi, start_address.bytes,
-						 /*routing-prefix*/&keep_bits,
-						 /*host-identifier*/&set_bits,
-						 maskbits),
-		};
+		*dst = range_from_raw(afi->ip_version,
+				      bytes_from_blit(afi, start_address.bytes,
+						      /*routing-prefix*/&keep_bits,
+						      /*host-identifier*/&clear_bits,
+						      maskbits),
+				      bytes_from_blit(afi, start_address.bytes,
+						      /*routing-prefix*/&keep_bits,
+						      /*host-identifier*/&set_bits,
+						      maskbits));
 		dst->is_subnet = (afi == &ipv6_info);
 		return NULL;
 	}
@@ -144,10 +155,9 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 		if (addrcmp(&start_address, &end_address) > 0) {
 			return "start of range must not be greater than end";
 		}
-		*dst = (ip_range) {
-			.start = start_address,
-			.end = end_address,
-		};
+		*dst = range_from_raw(afi->ip_version,
+				      start_address.bytes,
+				      end_address.bytes);
 		return NULL;
 	}
 	}
@@ -167,14 +177,14 @@ size_t jam_range(struct jambuf *buf, const ip_range *range)
 	}
 
 	size_t s = 0;
-	s += afi->jam_address(buf, afi, &range->start.bytes);
+	s += afi->jam_address(buf, afi, &range->start);
 	/* when a subnet, try to calculate the prefix-bits */
-	int prefix_bits = (range->is_subnet ? bytes_prefix_bits(afi, range->start.bytes, range->end.bytes) : -1);
+	int prefix_bits = (range->is_subnet ? bytes_prefix_bits(afi, range->start, range->end) : -1);
 	if (prefix_bits >= 0) {
 		s += jam(buf, "/%d", prefix_bits);
 	} else {
 		s += jam(buf, "-");
-		s += afi->jam_address(buf, afi, &range->end.bytes);
+		s += afi->jam_address(buf, afi, &range->end);
 	}
 	return s;
 }
@@ -194,17 +204,15 @@ ip_range range_from_subnet(const ip_subnet subnet)
 		return unset_range;
 	}
 
-	ip_range r = {
-		.start = address_from_blit(afi, subnet.bytes,
-					   /*routing-prefix*/&keep_bits,
-					   /*host-identifier*/&clear_bits,
-					   subnet.maskbits),
-		.end = address_from_blit(afi, subnet.bytes,
-					 /*routing-prefix*/&keep_bits,
-					 /*host-identifier*/&set_bits,
-					 subnet.maskbits),
-	};
-	return r;
+	return range_from_raw(afi->ip_version,
+			      bytes_from_blit(afi, subnet.bytes,
+					      /*routing-prefix*/&keep_bits,
+					      /*host-identifier*/&clear_bits,
+					      subnet.maskbits),
+			      bytes_from_blit(afi, subnet.bytes,
+					      /*routing-prefix*/&keep_bits,
+					      /*host-identifier*/&set_bits,
+					      subnet.maskbits));
 }
 
 const struct ip_info *range_type(const ip_range *range)
@@ -214,12 +222,7 @@ const struct ip_info *range_type(const ip_range *range)
 	}
 
 	/* may return NULL */
-	const struct ip_info *start = ip_version_info(range->start.version);
-	const struct ip_info *end = ip_version_info(range->end.version);
-	if (!pexpect(start == end)) {
-		return NULL;
-	}
-	return start;
+	return ip_version_info(range->version);
 }
 
 bool range_is_unset(const ip_range *range)
@@ -227,7 +230,8 @@ bool range_is_unset(const ip_range *range)
 	if (range == NULL) {
 		return true;
 	}
-	return thingeq(*range, unset_range);
+
+	return !range->is_set;
 }
 
 bool range_is_specified(const ip_range range)
@@ -238,12 +242,13 @@ bool range_is_specified(const ip_range range)
 		return false;
 	}
 
-	bool start = address_is_specified(&range.start);
-	bool end = address_is_specified(&range.end);
-	if (!pexpect(start == end)) {
+	/* don't allow 0 aka %any aka unspecified */
+	if (thingeq(range.start, afi->address.any.bytes) ||
+	    thingeq(range.end, afi->address.any.bytes)) {
 		return false;
 	}
-	return start;
+
+	return true;
 }
 
 bool range_size(const ip_range range, uint32_t *size)
@@ -255,7 +260,7 @@ bool range_size(const ip_range range, uint32_t *size)
 		return true; /*return what?!?!?*/
 	}
 
-	struct ip_bytes diff = bytes_diff(afi, range.start.bytes, range.end.bytes);
+	struct ip_bytes diff = bytes_diff(afi, range.start, range.end);
 
 	/* more than 32-bits of host-prefix always overflows. */
 	unsigned prefix_bits = bytes_first_set_bit(afi, diff);
@@ -289,10 +294,10 @@ bool range_eq(const ip_range l, const ip_range r)
 		return false;
 	}
 
-	return (bytes_cmp(l.start.version, l.start.bytes,
-			  r.start.version, r.start.bytes) == 0 &&
-		bytes_cmp(l.end.version, l.end.bytes,
-			  r.end.version, r.end.bytes) == 0);
+	return (bytes_cmp(l.version, l.start,
+			  r.version, r.start) == 0 &&
+		bytes_cmp(l.version, l.end,
+			  r.version, r.end) == 0);
 }
 
 bool address_in_range(const ip_address address, const ip_range range)
@@ -302,9 +307,9 @@ bool address_in_range(const ip_address address, const ip_range range)
 	}
 
 	return (bytes_cmp(address.version, address.bytes,
-			  range.start.version, range.start.bytes) >= 0 &&
+			  range.version, range.start) >= 0 &&
 		bytes_cmp(address.version, address.bytes,
-			  range.end.version, range.end.bytes) <= 0);
+			  range.version, range.end) <= 0);
 }
 
 bool range_in(const ip_range inner, const ip_range outer)
@@ -313,10 +318,10 @@ bool range_in(const ip_range inner, const ip_range outer)
 		return false;
 	}
 
-	return (bytes_cmp(inner.start.version, inner.start.bytes,
-			  outer.start.version, outer.start.bytes) >= 0 &&
-		bytes_cmp(inner.end.version, inner.end.bytes,
-			  outer.end.version, outer.end.bytes) <= 0);
+	return (bytes_cmp(inner.version, inner.start,
+			  outer.version, outer.start) >= 0 &&
+		bytes_cmp(inner.version, inner.end,
+			  outer.version, outer.end) <= 0);
 }
 
 ip_address range_start(const ip_range range)
@@ -326,7 +331,7 @@ ip_address range_start(const ip_range range)
 		return unset_address;
 	}
 
-	return address_from_raw(afi, range.start.bytes);
+	return address_from_raw(range.version, range.start);
 }
 
 ip_address range_end(const ip_range range)
@@ -336,7 +341,7 @@ ip_address range_end(const ip_range range)
 		return unset_address;
 	}
 
-	return address_from_raw(afi, range.end.bytes);
+	return address_from_raw(range.version, range.end);
 }
 
 bool range_overlap(const ip_range l, const ip_range r)
@@ -347,13 +352,13 @@ bool range_overlap(const ip_range l, const ip_range r)
 	}
 
 	/* l before r */
-	if (bytes_cmp(l.end.version, l.end.bytes,
-		      r.start.version, r.start.bytes) < 0) {
+	if (bytes_cmp(l.version, l.end,
+		      r.version, r.start) < 0) {
 		return false;
 	}
 	/* l after r */
-	if (bytes_cmp(l.start.version, l.start.bytes,
-		      r.end.version, r.end.bytes) > 0) {
+	if (bytes_cmp(l.version, l.start,
+		      r.version, r.end) > 0) {
 		return false;
 	}
 
@@ -405,12 +410,12 @@ err_t range_to_subnet(const ip_range range, ip_subnet *dst)
 	 * matching leading bits of FROM and TO.  Trailing bits
 	 * (subnet address) must be either all 0 (from) or 1 (to).
 	 */
-	int prefix_bits = bytes_prefix_bits(afi, range.start.bytes, range.end.bytes);
+	int prefix_bits = bytes_prefix_bits(afi, range.start, range.end);
 	if (prefix_bits < 0) {
 		return "address range is not a subnet";
 	}
 
-	*dst = subnet_from_raw(afi->ip_version, range.start.bytes, prefix_bits);
+	*dst = subnet_from_raw(afi->ip_version, range.start, prefix_bits);
 	return NULL;
 }
 
@@ -430,7 +435,7 @@ err_t range_to_address(const ip_range range, uintmax_t offset, ip_address *addre
 		unsigned add = offset & 0xff;
 		offset >>= 8;
 		/* update */
-		unsigned val = range.start.bytes.byte[j] + add + carry;
+		unsigned val = range.start.byte[j] + add + carry;
 		carry = val > 0xff;
 		sum.byte[j] = val; /* truncates */
 	}
@@ -443,7 +448,7 @@ err_t range_to_address(const ip_range range, uintmax_t offset, ip_address *addre
 		return "address overflow";
 	}
 
-	ip_address tmp = address_from_raw(afi, sum);
+	ip_address tmp = address_from_raw(range.version, sum);
 	if (!address_in_range(tmp, range)) {
 		return "range overflow";
 	}
@@ -469,7 +474,7 @@ err_t range_to_offset(const ip_range range, const ip_address address, uintmax_t 
 		return "address out-of-bounds";
 	}
 
-	struct ip_bytes diff = bytes_diff(afi, address.bytes, range.start.bytes);
+	struct ip_bytes diff = bytes_diff(afi, address.bytes, range.start);
 
 	*offset = ntoh_bytes(diff.byte, afi->ip_size);
 
@@ -478,4 +483,18 @@ err_t range_to_offset(const ip_range range, const ip_address address, uintmax_t 
 	}
 
 	return NULL;
+}
+
+bool range_contains_all_addresses(const ip_range range)
+{
+	if (range_is_unset(&range)) {
+		return false;
+	}
+
+	const struct ip_info *afi = range_type(&range);
+	if (afi == NULL) {
+		return false;
+	}
+
+	return range_eq(range, afi->range.all);
 }

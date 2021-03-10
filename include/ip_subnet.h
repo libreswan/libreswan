@@ -38,7 +38,7 @@ typedef struct {
 	 * Index into the struct ip_info array; must be stream
 	 * friendly.
 	 */
-	unsigned version; /* 0, 4, 6 */
+	enum ip_version version; /* 0, 4, 6 */
 	/*
 	 * We need something that makes static IPv4 initializers
 	 * possible (struct in_addr requires htonl() which is run-time
@@ -66,7 +66,7 @@ void pexpect_subnet(const ip_subnet *s, const char *t, where_t where);
  * Constructors
  */
 
-ip_subnet subnet_from_raw(unsigned version, const struct ip_bytes bytes, unsigned prefix_bits);
+ip_subnet subnet_from_raw(enum ip_version version, const struct ip_bytes bytes, unsigned prefix_bits);
 /* ADDRESS..ADDRESS */
 ip_subnet subnet_from_address(const ip_address *address);
 /* ADDRESS/PREFIX_BITS */
