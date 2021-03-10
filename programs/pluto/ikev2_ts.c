@@ -921,12 +921,23 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 	/* sec_labels are symmetric, pick from one end */
 	chunk_t sec_label = d->spd.this.sec_label;
 
-	/* No sec_label was found and none was expected? */
-	if (sec_label.len == 0 &&
-	    !tsi->contains_sec_label &&
-	    !tsr->contains_sec_label) {
-		return NULL;	/* success: no label, as expected */
+	if (sec_label.len == 0) {
+		/* This endpoint is not configured to use labeled IPsec. */
+		if (!tsi->contains_sec_label && !tsr->contains_sec_label) {
+			/* No sec_label was found and none was expected? */
+			return NULL;	/* success: no label, as expected */
+		}
+
+		if (tsi->contains_sec_label || tsr->contains_sec_label) {
+			/*
+			 * Error: This end is *not* configured to use labeled
+			 * IPsec but the peer is.
+			 */
+			return &null_shunk;
+		}
 	}
+
+	/* This endpoint is configured to use labeled IPsec. */
 
 #ifdef HAVE_LABELED_IPSEC
 	if (!tsi->contains_sec_label && !tsr->contains_sec_label) {
