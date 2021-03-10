@@ -923,11 +923,6 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 
 	if (sec_label.len == 0) {
 		/* This endpoint is not configured to use labeled IPsec. */
-		if (!tsi->contains_sec_label && !tsr->contains_sec_label) {
-			/* No sec_label was found and none was expected? */
-			return NULL;	/* success: no label, as expected */
-		}
-
 		if (tsi->contains_sec_label || tsr->contains_sec_label) {
 			/*
 			 * Error: This end is *not* configured to use labeled
@@ -935,11 +930,15 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 			 */
 			return &null_shunk;
 		}
+		/* No sec_label was found and none was expected */
+		return NULL;	/* success: no label, as expected */
 	}
 
 	/* This endpoint is configured to use labeled IPsec. */
 
 #ifdef HAVE_LABELED_IPSEC
+	passert(vet_seclabel(HUNK_AS_SHUNK(sec_label)) == NULL);
+
 	if (!tsi->contains_sec_label && !tsr->contains_sec_label) {
 		/*
 		 * if neither TSi nor TSr contains a label, that is OK.
@@ -952,8 +951,6 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 		 */
 		return NULL;	/* success: no label, as expected */
 	}
-
-	passert(vet_seclabel(HUNK_AS_SHUNK(sec_label)) == NULL);
 
 	if (ts_has_seclabel(sec_label, tsi, "initiator", logger) != &null_shunk)
 		return ts_has_seclabel(sec_label, tsr, "responder", logger);
