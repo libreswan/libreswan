@@ -23,12 +23,12 @@
 
 const ip_address unset_address; /* all zeros */
 
-ip_address address_from_raw(const struct ip_info *afi, const struct ip_bytes *bytes)
+ip_address address_from_raw(const struct ip_info *afi, const struct ip_bytes bytes)
 {
 	ip_address a = {
 		.is_set = true,
 		.version = afi->ip_version,
-		.bytes = *bytes,
+		.bytes = bytes,
 	};
 	paddress(&a);
 	return a;
@@ -38,7 +38,7 @@ ip_address address_from_in_addr(const struct in_addr *in)
 {
 	struct ip_bytes bytes = { .byte = { 0, }, };
 	memcpy(bytes.byte, in, sizeof(*in));
-	return address_from_raw(&ipv4_info, &bytes);
+	return address_from_raw(&ipv4_info, bytes);
 }
 
 uint32_t ntohl_address(const ip_address *a)
@@ -59,7 +59,7 @@ ip_address address_from_in6_addr(const struct in6_addr *in6)
 {
 	struct ip_bytes bytes = { .byte = { 0, }, };
 	memcpy(bytes.byte, in6, sizeof(*in6));
-	return address_from_raw(&ipv6_info, &bytes);
+	return address_from_raw(&ipv6_info, bytes);
 }
 
 const struct ip_info *address_type(const ip_address *address)
@@ -269,76 +269,21 @@ bool address_is_any(const ip_address *address)
 	return address_eq(address, &type->address.any);
 }
 
-/*
- * mashup() notes:
- * - mashup operates on network-order IP addresses
- */
-
-struct ip_blit {
-	uint8_t and;
-	uint8_t or;
-};
-
-const struct ip_blit clear_bits = { .and = 0x00, .or = 0x00, };
-const struct ip_blit set_bits = { .and = 0x00/*don't care*/, .or = 0xff, };
-const struct ip_blit keep_bits = { .and = 0xff, .or = 0x00, };
-
 ip_address address_from_blit(const struct ip_info *afi,
-			     struct ip_bytes bytes,
+			     const struct ip_bytes in,
 			     const struct ip_blit *routing_prefix,
 			     const struct ip_blit *host_identifier,
-			     unsigned nr_prefix_bits)
+			     unsigned prefix_bit_length)
 {
-	if (!pexpect(nr_prefix_bits <= afi->mask_cnt)) {
+	if (!pexpect(prefix_bit_length <= afi->mask_cnt)) {
 		return unset_address;	/* "can't happen" */
 	}
 
-	uint8_t *p = bytes.byte;
-
-	/*
-	 * Split the byte array into:
-	 *
-	 *    leading | xbyte:xbit | trailing
-	 *
-	 * where LEADING only contains ROUTING_PREFIX bits, TRAILING
-	 * only contains HOST_ID bits, and XBYTE is the cross over and
-	 * contains the first HOST_ID bit at big (aka PPC) endian
-	 * position XBIT.
-	 */
-	size_t xbyte = nr_prefix_bits / BITS_PER_BYTE;
-	unsigned xbit = nr_prefix_bits % BITS_PER_BYTE;
-
-	/* leading bytes only contain the ROUTING_PREFIX */
-	for (unsigned b = 0; b < xbyte; b++) {
-		p[b] &= routing_prefix->and;
-		p[b] |= routing_prefix->or;
-	}
-
-	/*
-	 * Handle the cross over byte:
-	 *
-	 *    & {ROUTING_PREFIX,HOST_ID}->and | {ROUTING_PREFIX,HOST_ID}->or
-	 *
-	 * the hmask's shift is a little counter intuitive - it clears
-	 * the first (most significant) XBITs.
-	 *
-	 * tricky logic:
-	 * - if xbyte == raw.len we must not access p[xbyte]
-	 */
-	if (xbyte < afi->ip_size) {
-		uint8_t hmask = 0xFF >> xbit; /* clear MSBs */
-		uint8_t pmask = ~hmask; /* set MSBs */
-		p[xbyte] &= (routing_prefix->and & pmask) | (host_identifier->and & hmask);
-		p[xbyte] |= (routing_prefix->or & pmask) | (host_identifier->or & hmask);
-	}
-
-	/* trailing bytes only contain the HOST_ID */
-	for (unsigned b = xbyte + 1; b < afi->ip_size; b++) {
-		p[b] &= host_identifier->and;
-		p[b] |= host_identifier->or;
-	}
-
-	return address_from_raw(afi, &bytes);
+	struct ip_bytes bytes = bytes_from_blit(afi, in,
+						routing_prefix,
+						host_identifier,
+						prefix_bit_length);
+	return address_from_raw(afi, bytes);
 }
 
 void pexpect_address(const ip_address *a, const char *s, where_t where)

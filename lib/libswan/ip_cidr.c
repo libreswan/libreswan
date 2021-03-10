@@ -46,7 +46,7 @@ ip_address cidr_address(const ip_cidr *cidr)
 	if (afi == NULL) {
 		return unset_address;
 	}
-	return address_from_raw(afi, &cidr->bytes);
+	return address_from_raw(afi, cidr->bytes);
 }
 
 err_t cidr_specified(const ip_cidr *cidr)

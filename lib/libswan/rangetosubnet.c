@@ -41,54 +41,19 @@ err_t rangetosubnet(const ip_address *from, const ip_address *to, ip_subnet *dst
 		return "TO address unset";
 	}
 
-	if (address_type(from) != address_type(to)) {
+	const struct ip_info *afi = address_type(from);
+	if (address_type(to) != afi) {
 		return "mismatched address types";
 	}
-
-	shunk_t fs = address_as_shunk(from);
-	shunk_t ts = address_as_shunk(to);
-
-	passert(fs.len > 0);
-	passert(ts.len > 0);
-	const uint8_t *f = fs.ptr; /* cast cast void * */;
-	const uint8_t *t = ts.ptr; /* cast const void * */;
-
-	passert(fs.len == ts.len);
-	size_t n = fs.len;
-	size_t i = 0;
 
 	/*
 	 * Determine the prefix_bits (the CIDR network part) by
 	 * matching leading bits of FROM and TO.  Trailing bits
 	 * (subnet address) must be either all 0 (from) or 1 (to).
 	 */
-	unsigned prefix_bits = 0;
-	for (; i < n && f[i] == t[i]; i++) {
-		prefix_bits += 8;
-	}
-	if (i < n && !(f[i] == 0x00 && t[i] == 0xff)) {	/* mid-byte bdry. */
-		uint8_t fb = f[i];
-		uint8_t tb = t[i];
-		i++;
-		uint8_t m = 0x80;
-		/*
-		 * clear each FB bit, and set each TB as it is matched
-		 * so that, at the end FB==0x00 and TB=0xFF
-		 */
-		while ((fb & m) == (tb & m)) {
-			fb &= ~m;
-			tb |= m;
-			m >>= 1;
-			prefix_bits++;
-		}
-		if (fb != 0x00 || tb != 0xff) {
-			return "not a valid subnet";
-		}
-	}
-	for (; i < n; i++) {
-		if (f[i] != 0x00 || t[i] != 0xff) {
-			return "invalid subnet";
-		}
+	int prefix_bits = bytes_prefix_bits(afi, from->bytes, to->bytes);
+	if (prefix_bits < 0) {
+		return "invalid subnet";
 	}
 
 	*dst = subnet_from_address_prefix_bits(from, prefix_bits);

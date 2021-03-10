@@ -237,7 +237,7 @@ ip_address selector_prefix(const ip_selector *selector)
 		return unset_address;
 	}
 	const struct ip_info *afi = selector_type(selector);
-	return address_from_raw(afi, &selector->bytes);
+	return address_from_raw(afi, selector->bytes);
 }
 
 unsigned selector_prefix_bits(const ip_selector *selector)

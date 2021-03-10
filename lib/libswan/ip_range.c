@@ -60,70 +60,18 @@ int range_significant_bits(const ip_range *range)
 	if (range_is_unset(range)) {
 		return -1;
 	}
+
 	const struct ip_info *afi = range_type(range);
 	if (afi == NULL) {
 		return -1;
 	}
 
-	shunk_t hs = address_as_shunk(&range->end);
-	const uint8_t *hp = hs.ptr; /* cast const void * */
-	passert(hs.len > 0);
-	size_t n = hs.len;
-
-	shunk_t ls = address_as_shunk(&range->start);
-	const uint8_t *lp = ls.ptr; /* cast const void * */
-	passert(hs.len == ls.len);
-
-	ip_address diff = range->start;	/* initialize all the contents to sensible values */
-	unsigned char *dp;
-	chunk_t diff_chunk = address_as_chunk(&diff);
-	dp = diff_chunk.ptr; /* cast void* */
-
-	unsigned lastnz = n;
-
-	/* subtract: d = h - l */
-	int carry = 0;
-	unsigned j;
-	for (j = n; j > 0; ) {
-		j--;
-		int val = hp[j] - lp[j] - carry;
-		if (val < 0) {
-			val += 0x100u;
-			carry = 1;
-		} else {
-			carry = 0;
-		}
-		dp[j] = val;
-		if (val != 0)
-			lastnz = j;
-	}
-
-	/* if the answer was negative, complement it */
-	if (carry != 0) {
-		lastnz = n;	/* redundant, but not obviously so */
-		for (j = n; j > 0; ) {
-			j--;
-			int val = 0xFFu - dp[j] + carry;
-			if (val >= 0x100) {
-				val -= 0x100;
-				carry = 1;	/* redundant, but not obviously so */
-			} else {
-				carry = 0;
-			}
-			dp[j] = val;
-			if (val != 0)
-				lastnz = j;
-		}
-	}
-
-	/* find leftmost bit in dp[lastnz] */
-	unsigned bo = 0;
-	if (lastnz != n) {
-		bo = 0;
-		for (unsigned m = 0x80u; (m & dp[lastnz]) == 0;  m >>=1)
-			bo++;
-	}
-	return (n - lastnz) * 8 - bo;
+	struct ip_bytes diff = bytes_diff(afi, range->end.bytes, range->start.bytes);
+	int fsb = bytes_first_set_bit(afi, diff);
+#if 0
+	fprintf(stderr, "fsb = %d diff="PRI_BYTES"\n", fsb, pri_bytes(diff));
+#endif
+	return (afi->ip_size * 8) - fsb;
 }
 
 /*

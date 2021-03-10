@@ -165,19 +165,15 @@ uint32_t ntohl_address(const ip_address *address);
  * Modify an address routing-prefix:host-id.
  */
 
-extern const struct ip_blit set_bits;
-extern const struct ip_blit clear_bits;
-extern const struct ip_blit keep_bits;
-
 ip_address address_from_blit(const struct ip_info *afi,
-			     struct ip_bytes bytes,
+			     const struct ip_bytes bytes,
 			     const struct ip_blit *routing_prefix,
 			     const struct ip_blit *host_id,
-			     unsigned nr_prefix_bits);
+			     unsigned prefix_bit_length);
 
 /* address_from_blit(AFI, BYTES, clear_bits, keep_bits, 0); */
 ip_address address_from_raw(const struct ip_info *afi,
-			    const struct ip_bytes *bytes);
+			    const struct ip_bytes bytes);
 
 /*
  * Old style.

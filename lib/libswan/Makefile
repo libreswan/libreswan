@@ -97,6 +97,7 @@ OBJS += chunk.o
 OBJS += shunk.o
 OBJS += hunk.o
 
+OBJS += ip_bytes.o
 OBJS += ip_address.o
 OBJS += ip_cidr.o
 OBJS += ip_encap.o
