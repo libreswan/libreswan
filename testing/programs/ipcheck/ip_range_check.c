@@ -23,72 +23,144 @@
 #include "ip_subnet.h"
 #include "ipcheck.h"
 
-static void check_rangetosubnet(void)
+static void check_addresses_to(void)
 {
 	static const struct test {
 		int family;
 		const char *lo;
 		const char *hi;
-		const char *out;	/* NULL means error expected */
+		const char *subnet;	/* NULL means error expected */
+		const char *range;	/* NULL means use subnet */
+		const char *oldnet;
 	} tests[] = {
-		{ 4, "1.2.3.0", "1.2.3.255", "1.2.3.0/24" },
-		{ 4, "1.2.3.0", "1.2.3.7", "1.2.3.0/29" },
-		{ 4, "1.2.3.240", "1.2.3.255", "1.2.3.240/28" },
-		{ 4, "0.0.0.0", "255.255.255.255", "0.0.0.0/0" },
-		{ 4, "1.2.3.4", "1.2.3.4", "1.2.3.4/32" },
-		{ 4, "1.2.3.0", "1.2.3.254", NULL },
-		{ 4, "1.2.3.0", "1.2.3.126", NULL },
-		{ 4, "1.2.3.0", "1.2.3.125", NULL },
-		{ 4, "1.2.0.0", "1.2.255.255", "1.2.0.0/16" },
-		{ 4, "1.2.0.0", "1.2.0.255", "1.2.0.0/24" },
-		{ 4, "1.2.255.0", "1.2.255.255", "1.2.255.0/24" },
-		{ 4, "1.2.255.0", "1.2.254.255", NULL },
-		{ 4, "1.2.255.1", "1.2.255.255", NULL },
-		{ 4, "1.2.0.1", "1.2.255.255", NULL },
-		{ 6, "1:2:3:4:5:6:7:0", "1:2:3:4:5:6:7:ffff", "1:2:3:4:5:6:7:0/112" },
-		{ 6, "1:2:3:4:5:6:7:0", "1:2:3:4:5:6:7:fff", "1:2:3:4:5:6:7:0/116" },
-		{ 6, "1:2:3:4:5:6:7:f0", "1:2:3:4:5:6:7:ff", "1:2:3:4:5:6:7:f0/124" },
+		/* single address */
+		{ 4, "1.2.3.0",    "1.2.3.0", "1.2.3.0/32", NULL, NULL, },
+		{ 6, "::1",        "::1", "::1/128", NULL, NULL, },
+		{ 4, "1.2.3.4",    "1.2.3.4", "1.2.3.4/32", NULL, NULL, },
+
+		/* subnet */
+		{ 4, "1.2.3.0",    "1.2.3.7", "1.2.3.0/29", NULL, NULL, },
+		{ 4, "1.2.3.240",  "1.2.3.255", "1.2.3.240/28", NULL, NULL, },
+		{ 4, "0.0.0.0",    "255.255.255.255", "0.0.0.0/0", NULL, NULL, },
+		{ 4, "1.2.0.0",    "1.2.255.255", "1.2.0.0/16", NULL, NULL, },
+		{ 4, "1.2.0.0",    "1.2.0.255", "1.2.0.0/24", NULL, NULL, },
+		{ 4, "1.2.255.0",  "1.2.255.255", "1.2.255.0/24", NULL, NULL, },
+		{ 6, "1:2:3:4:5:6:7:0",   "1:2:3:4:5:6:7:ffff", "1:2:3:4:5:6:7:0/112", NULL, NULL, },
+		{ 6, "1:2:3:4:5:6:7:0",   "1:2:3:4:5:6:7:fff", "1:2:3:4:5:6:7:0/116", NULL, NULL, },
+		{ 6, "1:2:3:4:5:6:7:f0",  "1:2:3:4:5:6:7:ff", "1:2:3:4:5:6:7:f0/124", NULL, NULL, },
+
+		/* range only */
+		{ 4, "1.2.3.0",    "1.2.3.254", NULL, "1.2.3.0-1.2.3.254", NULL, },
+		{ 4, "1.2.3.0",    "1.2.3.126", NULL, "1.2.3.0-1.2.3.126", NULL, },
+		{ 4, "1.2.3.0",    "1.2.3.125", NULL, "1.2.3.0-1.2.3.125", NULL, },
+		{ 4, "1.2.255.1",  "1.2.255.255", NULL, "1.2.255.1-1.2.255.255", NULL, },
+		{ 4, "1.2.0.1",    "1.2.255.255", NULL, "1.2.0.1-1.2.255.255", NULL, },
+
+		/* wrong order */
+		{ 4, "1.2.255.0",  "1.2.254.255", NULL, NULL, NULL, },
+
+		/* any-any; almost any */
+		{ 4, "0.0.0.0", "0.0.0.0", NULL, NULL, "0.0.0.0/32", },
+		{ 6, "::",      "::",      NULL, NULL, "::/128", },
+		{ 4, "0.0.0.0", "0.0.0.1", "0.0.0.0/31", NULL, NULL, },
+		{ 6, "::",      "::1",      "::/127", NULL, NULL, },
+
+		/* all */
+		{ 4, "0.0.0.0", "255.255.255.255", "0.0.0.0/0", NULL, NULL, },
+		{ 6, "::", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "::/0", NULL, NULL, },
 	};
 
 	const char *oops;
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT_LO2HI(stdout, "-> '%s'",
-			    t->out ? t->out : "<error>");
+		const char *subnet = t->subnet;
+		const char *range = t->range != NULL ? t->range : subnet;
+		const char *oldnet = t->oldnet != NULL ? t->oldnet : subnet;
+		PRINT(stdout, "%s-%s -> %s -> %s|%s",
+		      t->lo, t->hi,
+		      range == NULL ? "<bad-range>" : range,
+		      subnet == NULL ? "<bad-subnet>" : subnet,
+		      oldnet == NULL ? "<bad-oldnet>" : oldnet);
+
 		const struct ip_info *type = IP_TYPE(t->family);
 
 		ip_address lo;
 		oops = numeric_to_address(shunk1(t->lo), type, &lo);
 		if (oops != NULL) {
-			FAIL_LO2HI("numeric_to_address(lo) failed: %s", oops);
+			FAIL_LO2HI("numeric_to_address(lo=%s) failed: %s", t->lo, oops);
 			continue;
 		}
+
 		ip_address hi;
 		oops = numeric_to_address(shunk1(t->hi), type, &hi);
 		if (oops != NULL) {
-			FAIL_LO2HI("numeric_to_address(hi) failed: %s", oops);
+			FAIL(PRINT, "numeric_to_address(hi=%s) failed: %s", t->hi, oops);
 			continue;
 		}
-		ip_subnet subnet;
-		oops = rangetosubnet(&lo, &hi, &subnet);
-		if (oops != NULL && t->out == NULL) {
+
+		ip_subnet s;
+		subnet_buf sb;
+		oops = rangetosubnet(&lo, &hi, &s);
+		str_subnet(&s, &sb);
+
+		if (oops != NULL && oldnet == NULL) {
 			/* okay, error expected */
 		} else if (oops != NULL) {
-			FAIL_LO2HI("rangetosubnet() failed: %s", oops);
-			continue;
-		} else if (t->out == NULL) {
-			FAIL_LO2HI("rangetosubnet() succeeded unexpectedly");
-			continue;
+			FAIL(PRINT, "rangetosubnet(%s,%s) failed: %s", t->lo, t->hi, oops);
+		} else if (oldnet == NULL) {
+			FAIL(PRINT, "rangetosubnet(%s,%s) returned %s unexpectedly",
+			     t->lo, t->hi, sb.buf);
 		} else {
-			subnet_buf buf;
-			const char *out = str_subnet(&subnet, &buf);
-			if (!streq(t->out, out)) {
-				FAIL_LO2HI("str_subnet() returned `%s', expected `%s'",
-					   out, t->out);
-				continue;
+			if (!streq(oldnet, sb.buf)) {
+				FAIL(PRINT, "rangetosubnet(%s,%s) returned `%s', expected `%s'",
+				     t->lo, t->hi, sb.buf, oldnet);
 			}
 		}
+
+		ip_range r;
+		range_buf rb;
+		oops = addresses_to_range(lo, hi, &r);
+		r.is_subnet = true; /* maybe */
+		str_range(&r, &rb);
+
+		if (oops != NULL && range == NULL) {
+			/* okay, error expected */
+		} else if (oops != NULL) {
+			FAIL(PRINT, "addresses_to_range(%s,%s) failed: %s",
+			     t->lo, t->hi, oops);
+		} else if (range == NULL) {
+			FAIL(PRINT, "addresses_to_range(%s,%s) returned %s unexpectedly",
+			     t->lo, t->hi, rb.buf);
+		} else {
+			if (!streq(range, rb.buf)) {
+				FAIL(PRINT, "addresses_to_range(%s,%s) returned `%s', expected `%s'",
+				     t->lo, t->hi, rb.buf, range);
+			}
+		}
+
+		if (range == NULL) {
+			continue;
+		}
+
+		oops = range_to_subnet(r, &s);
+		str_subnet(&s, &sb);
+
+		if (oops != NULL && subnet == NULL) {
+			/* okay, error expected */
+		} else if (oops != NULL) {
+			FAIL(PRINT, "range_to_subnet(%s=>%s) failed: %s",
+			     rb.buf, sb.buf, oops);
+		} else if (subnet == NULL) {
+			FAIL(PRINT, "range_to_subnet(%s) returned %s unexpectedly",
+			     rb.buf, sb.buf);
+		} else {
+			if (!streq(subnet, sb.buf)) {
+				FAIL(PRINT, "range_to_subnet(%s) returned `%s', expected `%s'",
+				     rb.buf, sb.buf, subnet);
+			}
+		}
+
 	}
 }
 
@@ -147,10 +219,10 @@ static void check_iprange_bits(void)
 		 * XXX: apparently iprange_bits() working for both
 		 * low-hi and hi-low is a feature!?!
 		 */
-		ip_range lo_hi = { .start = lo, .end = hi, };
-		ip_range hi_lo = { .start = hi, .end = lo, };
-		int lo2hi = range_significant_bits(&lo_hi);
-		int hi2lo = range_significant_bits(&hi_lo);
+		ip_range lo_hi = range2(&lo, &hi);
+		ip_range hi_lo = range2(&hi, &lo);
+		int lo2hi = range_host_bits(lo_hi);
+		int hi2lo = range_host_bits(hi_lo);
 		if (lo2hi != hi2lo) {
 			FAIL_LO2HI("iprange_bits(lo,hi) returned %d and iprange_bits(hi,lo) returned %d",
 				   lo2hi, hi2lo);
@@ -283,7 +355,7 @@ static void check_ttorange__to__str_range(void)
 
 		if (t->pool_size > 0) {
 			uint32_t pool_size;
-			bool truncated = range_size(&r, &pool_size);
+			bool truncated = range_size(r, &pool_size);
 			if (t->pool_size != pool_size) {
 				FAIL_IN("pool_size gave %"PRIu32", expecting %"PRIu32,
 					pool_size, t->pool_size);
@@ -333,44 +405,46 @@ static void check_range_from_subnet(struct logger *logger)
 
 		CHECK_TYPE(PRINT_IN, subnet_type(&s));
 
-		ip_range r = range_from_subnet(&s);
+		ip_range r = range_from_subnet(s);
 		CHECK_TYPE(PRINT_IN, range_type(&r));
 
 		address_buf start_buf;
-		const char *start = str_address(&r.start, &start_buf);
+		ip_address r_start = range_start(r);
+		const char *start = str_address(&r_start, &start_buf);
 		if (!streq(t->start, start)) {
 			FAIL_IN("r.start is '%s', expected '%s'",
 				start, t->start);
 		}
-		CHECK_TYPE(PRINT_IN, address_type(&r.start));
+		CHECK_TYPE(PRINT_IN, address_type(&r_start));
 
 		address_buf end_buf;
-		const char *end = str_address(&r.end, &end_buf);
+		ip_address r_end = range_end(r);
+		const char *end = str_address(&r_end, &end_buf);
 		if (!streq(t->end, end)) {
 			FAIL_IN("r.end is '%s', expected '%s'",
 				end, t->end);
 		}
-		CHECK_TYPE(PRINT_IN, address_type(&r.end));
+		CHECK_TYPE(PRINT_IN, address_type(&r_end));
 
 	}
 }
 
-static void check_range_is(void)
+static void check_range_op(void)
 {
 	static const struct test {
 		int family;
 		const char *lo;
 		const char *hi;
-		bool unset;
-		bool specified;
+		bool is_unset;
+		bool is_specified;
 	} tests[] = {
-		{ 0, "", "",                .unset = true, },
+		{ 0, "", "",                .is_unset = true, },
 
-		{ 4, "0.0.0.0", "0.0.0.0",  .specified = false, },
-		{ 4, "0.0.0.1", "0.0.0.2",  .specified = true, },
+		{ 4, "0.0.0.0", "0.0.0.0",  .is_specified = false, },
+		{ 4, "0.0.0.1", "0.0.0.2",  .is_specified = true, },
 
-		{ 6, "::", "::",            .specified = false, },
-		{ 6, "::1", "::2",          .specified = true, },
+		{ 6, "::", "::",            .is_specified = false, },
+		{ 6, "::1", "::2",          .is_specified = true, },
 	};
 
 	const char *oops;
@@ -378,7 +452,7 @@ static void check_range_is(void)
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		PRINT_LO2HI(stdout, " -> unset: %s specified: %s",
-			    bool_str(t->unset), bool_str(t->specified));
+			    bool_str(t->is_unset), bool_str(t->is_specified));
 
 		const struct ip_info *type = IP_TYPE(t->family);
 
@@ -402,28 +476,98 @@ static void check_range_is(void)
 			hi = unset_address;
 		}
 
-		ip_range r = range(&lo, &hi);
-		CHECK_TYPE(PRINT_LO2HI, range_type(&r));
+		const ip_range range[] = { range2(&lo, &hi), }; /* pointer */
+		CHECK_TYPE(PRINT_LO2HI, range_type(range));
 
-		bool unset = range_is_unset(&r);
-		if (unset != t->unset) {
-			FAIL_LO2HI("range_is_invalid() returned %s, expecting %s",
-				   bool_str(unset), bool_str(t->unset));
-		}
+		CHECK_COND(range, is_unset);
+		CHECK_COND2(range, is_specified);
+	}
+}
 
-		bool specified = range_is_specified(&r);
-		if (specified != t->specified) {
-			FAIL_LO2HI("range_is_specified() returned %s, expecting %s",
-				   bool_str(specified), bool_str(t->specified));
+static void check_range_op2(void)
+{
+	static const struct test {
+		int family;
+		const char *l;
+		const char *r;
+		bool range_eq;
+		bool range_in;
+		bool range_overlap;
+		bool address_in_range;
+	} tests[] = {
+
+		/* eq */
+		{ 0, "0.0.0.1", "0.0.0.1",                true,  true,  true,  true, },
+		{ 0, "0.0.1.0/24", "0.0.1.0/24",          true,  true,  true,  true, },
+		{ 0, "::0100/120", "::0100/120",          true,  true,  true,  true, },
+
+		/* ne */
+		{ 0, "0.0.1.0/24", "0.0.2.0/24",          false, false, false, false, },
+		{ 0, "0.0.0.1", "0.0.0.2",                false, false, false, false, },
+		{ 0, "::1", "::2",                        false, false, false, false, },
+		{ 0, "::1", "0.0.0.1",                    false, false, false, false, },
+
+		/* in */
+		{ 0, "::0124", "::0100/120",              false, true,  true,  true, },
+		{ 0, "::0124/126", "::0100/120",          false, true,  true,  true, },
+
+		/* out */
+		{ 0, "::0100/120", "::0124",              false, false, true,  false, },
+		{ 0, "::0100/120", "::0124/126",          false, false, true,  false, },
+
+		/* overlap */
+		{ 0, "::1-::2", "::2-::3",                false, false, true,  false, },
+
+		/* silly */
+		{ 4, NULL, "0.0.0.1",       false, false, false, false, },
+		{ 4, "0.0.0.1", NULL,       false, false, false, false, },
+
+	};
+
+	const char *oops;
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINT(stdout, " %s vs %s", t->l, t->r);
+
+#define TT(R)								\
+		ip_range R;						\
+		if (t->R != NULL) {					\
+			oops = ttorange(t->R, 0, &R);			\
+			if (oops != NULL) {				\
+				FAIL(PRINT, "ttorange(%s) failed: %s", t->R, oops); \
+			}						\
+		} else {						\
+			l = unset_range;				\
 		}
+		TT(l);
+		TT(r);
+#undef TT
+
+#define T(OP,L,R)							\
+		{							\
+			bool cond = OP(L,R);				\
+			if (cond != t->OP) {				\
+				FAIL(PRINT, #OP"(%s,%s) returned %s, expecting %s", \
+				     t->l, t->r,			\
+				     bool_str(cond),			\
+				     bool_str(t->OP));			\
+			}						\
+		}
+		T(range_eq, l, r);
+		T(range_in, l, r);
+		T(range_overlap, l, r);
+		ip_address a = range_start(l);
+		T(address_in_range,a,r);
 	}
 }
 
 void ip_range_check(struct logger *logger)
 {
-	check_rangetosubnet();
+	check_addresses_to();
 	check_iprange_bits();
 	check_ttorange__to__str_range();
 	check_range_from_subnet(logger);
-	check_range_is();
+	check_range_op();
+	check_range_op2();
 }

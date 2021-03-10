@@ -120,6 +120,32 @@ const struct ip_info ipv4_info = {
 		.all = { .is_set = true, .version = 4, .maskbits = 0, }, /* 0.0.0.0/0 */
 	},
 
+	/* ip_range */
+	.range = {
+		.none = {
+			.start = {
+				.is_set = true,
+				.version = 4,
+			},
+			.end = {
+				.is_set = true,
+				.version = 4,
+			}, /*0.0.0.0-0.0.0.0*/
+		},
+		.all = {
+			.start = {
+				.is_set = true,
+				.version = 4,
+				.bytes.byte[3] = 1,
+			},
+			.end = {
+				.is_set = true,
+				.version = 4,
+				.bytes.byte = { 255, 255, 255, 255, },
+			}, /*0.0.0.0-255.255.255.255*/
+		}
+	},
+
 	/* ip_selector */
 	.selector = {
 		.none = { .is_set = true, .version = 4, .maskbits = 32, }, /* 0.0.0.0/0 */
@@ -161,6 +187,32 @@ const struct ip_info ipv6_info = {
 	.subnet = {
 		.none = { .is_set = true, .version = 6, .maskbits = 128, }, /* ::/128 */
 		.all = { .is_set = true, .version = 6, .maskbits = 0, }, /* ::/0 */
+	},
+
+	/* ip_range */
+	.range = {
+		.none = {
+			.start = {
+				.is_set = true,
+				.version = 6,
+			},
+			.end = {
+				.is_set = true,
+				.version = 6,
+			}, /*::-::*/
+		},
+		.all = {
+			.start = {
+				.is_set = true,
+				.version = 6,
+				.bytes.byte[15] = 1,
+			},
+			.end = {
+				.is_set = true,
+				.version = 6,
+				.bytes.byte = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, },
+			},
+		},
 	},
 
 	/* ip_selector */

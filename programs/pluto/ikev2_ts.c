@@ -285,9 +285,9 @@ static struct traffic_selector impair_ts_to_supernet(const struct traffic_select
 	struct traffic_selector ts_ret = *ts;
 
 	if (ts_ret.ts_type == IKEv2_TS_IPV4_ADDR_RANGE)
-		ts_ret.net = range_from_subnet(&ipv4_info.subnet.all);
+		ts_ret.net = range_from_subnet(ipv4_info.subnet.all);
 	else if (ts_ret.ts_type == IKEv2_TS_IPV6_ADDR_RANGE)
-		ts_ret.net = range_from_subnet(&ipv6_info.subnet.all);
+		ts_ret.net = range_from_subnet(ipv6_info.subnet.all);
 
 	ts_ret.net.is_subnet = true;
 
@@ -726,7 +726,7 @@ static int score_address_range(const struct end *end,
 	 * Pre-compute possible fit --- sum of bits gives how good a
 	 * fit this is.
 	 */
-	int ts_range = range_significant_bits(&ts->net);
+	int ts_range = range_host_bits(ts->net);
 	int maskbits = end->client.maskbits;
 	int fitbits = maskbits + ts_range;
 

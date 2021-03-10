@@ -32,7 +32,7 @@
 
 const ip_range unset_range; /* all zeros */
 
-ip_range range(const ip_address *start, const ip_address *end)
+ip_range range2(const ip_address *start, const ip_address *end)
 {
 	/* does the caller know best? */
 	const struct ip_info *st = address_type(start);
@@ -55,19 +55,16 @@ ip_range range(const ip_address *start, const ip_address *end)
  * ??? this really should use ip_range rather than a pair of ip_address values
  */
 
-int range_significant_bits(const ip_range *range)
+int range_host_bits(const ip_range range)
 {
-	const struct ip_info *afi = range_type(range);
+	const struct ip_info *afi = range_type(&range);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return -1;
 	}
 
-	struct ip_bytes diff = bytes_diff(afi, range->end.bytes, range->start.bytes);
+	struct ip_bytes diff = bytes_diff(afi, range.end.bytes, range.start.bytes);
 	int fsb = bytes_first_set_bit(afi, diff);
-#if 0
-	fprintf(stderr, "fsb = %d diff="PRI_BYTES"\n", fsb, pri_bytes(diff));
-#endif
 	return (afi->ip_size * 8) - fsb;
 }
 
@@ -189,23 +186,23 @@ const char *str_range(const ip_range *range, range_buf *out)
 	return out->buf;
 }
 
-ip_range range_from_subnet(const ip_subnet *subnet)
+ip_range range_from_subnet(const ip_subnet subnet)
 {
-	const struct ip_info *afi = subnet_type(subnet);
+	const struct ip_info *afi = subnet_type(&subnet);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return unset_range;
 	}
 
 	ip_range r = {
-		.start = address_from_blit(afi, subnet->bytes,
+		.start = address_from_blit(afi, subnet.bytes,
 					   /*routing-prefix*/&keep_bits,
 					   /*host-identifier*/&clear_bits,
-					   subnet->maskbits),
-		.end = address_from_blit(afi, subnet->bytes,
+					   subnet.maskbits),
+		.end = address_from_blit(afi, subnet.bytes,
 					 /*routing-prefix*/&keep_bits,
 					 /*host-identifier*/&set_bits,
-					 subnet->maskbits),
+					 subnet.maskbits),
 	};
 	return r;
 }
@@ -233,32 +230,32 @@ bool range_is_unset(const ip_range *range)
 	return thingeq(*range, unset_range);
 }
 
-bool range_is_specified(const ip_range *range)
+bool range_is_specified(const ip_range range)
 {
-	const struct ip_info *afi = range_type(range);
+	const struct ip_info *afi = range_type(&range);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return false;
 	}
 
-	bool start = address_is_specified(&range->start);
-	bool end = address_is_specified(&range->end);
+	bool start = address_is_specified(&range.start);
+	bool end = address_is_specified(&range.end);
 	if (!pexpect(start == end)) {
 		return false;
 	}
 	return start;
 }
 
-bool range_size(ip_range *r, uint32_t *size)
+bool range_size(const ip_range range, uint32_t *size)
 {
 	*size = 0;
 
-	const struct ip_info *afi = range_type(r);
+	const struct ip_info *afi = range_type(&range);
 	if (afi == NULL) {
 		return true; /*return what?!?!?*/
 	}
 
-	struct ip_bytes diff = bytes_diff(afi, r->start.bytes, r->end.bytes);
+	struct ip_bytes diff = bytes_diff(afi, range.start.bytes, range.end.bytes);
 
 	/* more than 32-bits of host-prefix always overflows. */
 	unsigned prefix_bits = bytes_first_set_bit(afi, diff);
@@ -282,18 +279,133 @@ bool range_size(ip_range *r, uint32_t *size)
 	return false;
 }
 
-bool range_eq(const ip_range *l, const ip_range *r)
+bool range_eq(const ip_range l, const ip_range r)
 {
-	if (range_is_unset(l) && range_is_unset(r)) {
+	if (range_is_unset(&l) && range_is_unset(&r)) {
 		/* unset/NULL ranges are equal */
 		return true;
 	}
-	const struct ip_info *lt = range_type(l);
-	const struct ip_info *rt = range_type(r);
-	if (lt != rt) {
+	if (range_is_unset(&l) || range_is_unset(&r)) {
 		return false;
 	}
-	/* ignore .is_subnet */
-	return (address_eq(&l->start, &r->start) &&
-		address_eq(&l->end, &r->end));
+
+	return (bytes_cmp(l.start.version, l.start.bytes,
+			  r.start.version, r.start.bytes) == 0 &&
+		bytes_cmp(l.end.version, l.end.bytes,
+			  r.end.version, r.end.bytes) == 0);
+}
+
+bool address_in_range(const ip_address address, const ip_range range)
+{
+	if (address_is_unset(&address) || range_is_unset(&range)) {
+		return false;
+	}
+
+	return (bytes_cmp(address.version, address.bytes,
+			  range.start.version, range.start.bytes) >= 0 &&
+		bytes_cmp(address.version, address.bytes,
+			  range.end.version, range.end.bytes) <= 0);
+}
+
+bool range_in(const ip_range inner, const ip_range outer)
+{
+	if (range_is_unset(&inner) || range_is_unset(&outer)) {
+		return false;
+	}
+
+	return (bytes_cmp(inner.start.version, inner.start.bytes,
+			  outer.start.version, outer.start.bytes) >= 0 &&
+		bytes_cmp(inner.end.version, inner.end.bytes,
+			  outer.end.version, outer.end.bytes) <= 0);
+}
+
+ip_address range_start(const ip_range range)
+{
+	const struct ip_info *afi = range_type(&range);
+	if (afi == NULL) {
+		return unset_address;
+	}
+
+	return address_from_raw(afi, range.start.bytes);
+}
+
+ip_address range_end(const ip_range range)
+{
+	const struct ip_info *afi = range_type(&range);
+	if (afi == NULL) {
+		return unset_address;
+	}
+
+	return address_from_raw(afi, range.end.bytes);
+}
+
+bool range_overlap(const ip_range l, const ip_range r)
+{
+	if (range_is_unset(&l) || range_is_unset(&r)) {
+		/* presumably overlap is bad */
+		return false;
+	}
+
+	/* l before r */
+	if (bytes_cmp(l.end.version, l.end.bytes,
+		      r.start.version, r.start.bytes) < 0) {
+		return false;
+	}
+	/* l after r */
+	if (bytes_cmp(l.start.version, l.start.bytes,
+		      r.end.version, r.end.bytes) > 0) {
+		return false;
+	}
+
+	return true;
+}
+
+err_t addresses_to_range(const ip_address start, const ip_address end,
+			 ip_range *dst)
+{
+	*dst = unset_range;
+
+	if (address_is_unset(&start)) {
+		/* NULL+unset+unknown */
+		return "start address invalid";
+	}
+
+	if (address_is_unset(&end)) {
+		/* NULL+unset+unknown */
+		return "end address invalid";
+	}
+
+	if (start.version != end.version) {
+		return "conflicting address types";
+	}
+
+	/* need both 0 */
+	if (address_is_any(&start) && address_is_any(&end)) {
+		return "empty address range";
+	}
+
+	if (addrcmp(&start, &end) > 0) {
+		return "out-of-order";
+	}
+
+	*dst = range2(&start, &end);
+	return NULL;
+}
+
+err_t range_to_subnet(const ip_range range, ip_subnet *dst)
+{
+	const struct ip_info *afi = range_type(&range);
+
+	/*
+	 * Determine the prefix_bits (the CIDR network part) by
+	 * matching leading bits of FROM and TO.  Trailing bits
+	 * (subnet address) must be either all 0 (from) or 1 (to).
+	 */
+	int prefix_bits = bytes_prefix_bits(afi, range.start.bytes, range.end.bytes);
+	if (prefix_bits < 0) {
+		return "address range is not a subnet";
+	}
+
+	*dst = subnet_from_address_prefix_bits(&range.start, prefix_bits);
+	return NULL;
 }

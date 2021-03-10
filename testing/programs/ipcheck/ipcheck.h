@@ -148,4 +148,37 @@ extern bool use_dns;
 			}						\
 		}
 
+
+/*
+ * Call a predicate.  First form assumes NULL allowed, second does
+ * not.
+ */
+
+#define CHECK_COND(T,COND)						\
+		{							\
+			bool cond = T##_##COND(T);			\
+			if (cond != t->COND) {				\
+				T##_buf b;				\
+				FAIL(PRINT,				\
+				     #T"_"#COND"(%s) returned %s, expecting %s", \
+				     str_##T(T, &b),			\
+				     bool_str(cond),			\
+				     bool_str(t->COND));		\
+			}						\
+		}
+
+#define CHECK_COND2(T,COND)						\
+		if (T != NULL) {					\
+			bool cond = T##_##COND(*T);			\
+			if (cond != t->COND) {				\
+				range_buf b;				\
+				FAIL(PRINT,				\
+				     #T"_"#COND"(%s) returned %s, expecting %s", \
+				     str_##T(T, &b),			\
+				     bool_str(cond),			\
+				     bool_str(t->COND));		\
+			}						\
+		}
+
+
 #endif

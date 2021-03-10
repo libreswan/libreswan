@@ -238,7 +238,7 @@ ip_range selector_range(const ip_selector *selector)
 					   /*routing-prefix*/&keep_bits,
 					   /*host-identifier*/&set_bits,
 					   selector->maskbits);
-	return range(&start, &end);
+	return range2(&start, &end);
 }
 
 ip_address selector_prefix(const ip_selector *selector)
@@ -567,7 +567,7 @@ bool selector_subnet_eq(const ip_selector *lhs, const ip_selector *rhs)
 {
 	ip_range lhs_range = selector_range(lhs);
 	ip_range rhs_range = selector_range(rhs);
-	return range_eq(&lhs_range, &rhs_range);
+	return range_eq(lhs_range, rhs_range);
 }
 
 bool selector_subnet_in(const ip_selector *lhs, const ip_selector *rhs)

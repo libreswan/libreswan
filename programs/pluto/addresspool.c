@@ -790,7 +790,7 @@ struct ip_pool *install_addresspool(const ip_range *pool_range, struct logger *l
 
 	pool->pool_refcount = 0;
 	pool->r = *pool_range;
-	if (range_size(&pool->r, &pool->size)) {
+	if (range_size(pool->r, &pool->size)) {
 		/*
 		 * uint32_t overflow, 2001:db8:0:3::/64 truncated to UINT32_MAX
 		 * uint32_t overflow, 2001:db8:0:3:1::/96, truncated by 1
