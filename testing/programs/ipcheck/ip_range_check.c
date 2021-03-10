@@ -15,6 +15,7 @@
  */
 
 #include <stdio.h>
+#include <limits.h>		/* for UINT32_MAX */
 
 #include "lswcdefs.h"		/* for elemsof() */
 #include "constants.h"		/* for streq() */
@@ -166,74 +167,94 @@ static void check_ttorange__to__str_range(void)
 	static const struct test {
 		int family;
 		const char *in;
-		long pool;
 		const char *out;
+		uint32_t pool_size;
+		bool truncated;
 	} tests[] = {
 		/* single address */
-		{ 4, "4.3.2.1", 1, "4.3.2.1-4.3.2.1", },
-		{ 6, "::1", 1, "::1-::1", },
-		/* smallest */
-		{ 4, "4.3.2.1-4.3.2.1", 1, "4.3.2.1-4.3.2.1", },
-		{ 6, "::1-::1", 1, "::1-::1", },
-		{ 4, "4.3.2.1/32", 1, "4.3.2.1-4.3.2.1", },
-		{ 6, "::2/128", 1, "::2/128", },
+		{ 4, "4.3.2.1", "4.3.2.1-4.3.2.1", 1, false},
+		{ 6, "::1", "::1-::1", 1, false, },
+		{ 4, "4.3.2.1-4.3.2.1", "4.3.2.1-4.3.2.1", 1, false, },
+		{ 6, "::1-::1", "::1-::1", 1, false, },
+		{ 4, "4.3.2.1/32", "4.3.2.1-4.3.2.1", 1, false, },
+		{ 6, "::2/128", "::2/128", 1, false, },
 		/* normal range */
-		{ 6, "::1-::2", 2, "::1-::2", },
-		{ 4, "1.2.3.0-1.2.3.9", 10, "1.2.3.0-1.2.3.9", },
-		{ 6, "2001:db8:0:9:ffff:fffe::-2001:db8:0:9:ffff:ffff::", 4294967295,"2001:db8:0:9:ffff:fffe::-2001:db8:0:9:ffff:ffff::", },
-		{ 6, "2001:db8:0:9:ffff:ffff:0:2-2001:db8:0:9:ffff:ffff:ffff:ffff", 4294967294, "2001:db8:0:9:ffff:ffff:0:2-2001:db8:0:9:ffff:ffff:ffff:ffff", },
-		{ 6, "2001:db8:0:9::1-2001:db8:0:9:0:0:ffff:ffff", 4294967295, "2001:db8:0:9::1-2001:db8:0:9::ffff:ffff", },
-		{ 6, "2001:db8:0:1:2:ffff:0:2-2001:db8:0:1:2:ffff:ffff:fffe", 4294967293, "2001:db8:0:1:2:ffff:0:2-2001:db8:0:1:2:ffff:ffff:fffe", },
-		/* saturated number of bits */
-		{ 6, "8000::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 4294967295, "8000::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
-		{ 6, "2001:db8:0:1::-2001:db8:0:1:0:0:ffff:ffff", 4294967295, "2001:db8:0:1::-2001:db8:0:1::ffff:ffff", },
-		{ 6, "2001:db8:0:3::-2001:db8:0:3:0:ffff:ffff:ffff", 4294967295, "2001:db8:0:3::-2001:db8:0:3:0:ffff:ffff:ffff", },
-		{ 6, "2001:db8:0:fffe::2-2001:db8:0:ffff::", 4294967294, "2001:db8:0:fffe::2-2001:db8:0:ffff::", },
-		{ 6, "2001:db8:0:1:2:fffe::-2001:db8:0:1:2:ffff:ffff:ffee", 4294967295, "2001:db8:0:1:2:fffe::-2001:db8:0:1:2:ffff:ffff:ffee", },
-		{ 6, "1000::-1fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 4294967295, "1000::-1fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
-		{ 6, "8000::2-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 4294967294, "8000::2-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
-		{ 6, "::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 4294967295, "::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
+		{ 6, "::1-::2", "::1-::2", 2, false, },
+		{ 4, "1.2.3.0-1.2.3.9", "1.2.3.0-1.2.3.9", 10, false, },
+		/* largest */
+		{ 4, "0.0.0.1-255.255.255.255", "0.0.0.1-255.255.255.255", UINT32_MAX, false, },
+
+		/* ok - largest - overflow - truncate */
+		{ 6, "1:2:3:4:5:6:0:0-1:2:3:4:5:6:ffff:fffd", "1:2:3:4:5:6::-1:2:3:4:5:6:ffff:fffd", UINT32_MAX-1, false, },
+		{ 6, "1:2:3:4:5:6:0:0-1:2:3:4:5:6:ffff:fffe", "1:2:3:4:5:6::-1:2:3:4:5:6:ffff:fffe", UINT32_MAX, false, },
+		{ 6, "1:2:3:4:5:6:0:0-1:2:3:4:5:6:ffff:ffff", "1:2:3:4:5:6::-1:2:3:4:5:6:ffff:ffff", UINT32_MAX, true, },
+		{ 6, "1:2:3:4:5:6:0:0-1:2:3:4:5:7:0000:0000", "1:2:3:4:5:6::-1:2:3:4:5:7::", UINT32_MAX, true, },
+
+		/* ok - largest - overflow - truncate */
+		{ 6, "1:2:3:4:5:6:0:1-1:2:3:4:5:6:ffff:fffe", "1:2:3:4:5:6:0:1-1:2:3:4:5:6:ffff:fffe", UINT32_MAX-1, false, },
+		{ 6, "1:2:3:4:5:6:0:1-1:2:3:4:5:6:ffff:ffff", "1:2:3:4:5:6:0:1-1:2:3:4:5:6:ffff:ffff", UINT32_MAX, false, },
+		{ 6, "1:2:3:4:5:6:0:1-1:2:3:4:5:7:0000:0000", "1:2:3:4:5:6:0:1-1:2:3:4:5:7::", UINT32_MAX, true, },
+		{ 6, "1:2:3:4:5:6:0:1-1:2:3:4:5:7:0000:0001", "1:2:3:4:5:6:0:1-1:2:3:4:5:7:0:1", UINT32_MAX, true, },
+
+		/* ok - largest - overflow - truncate */
+		{ 6, "1:2:3:4:5:6:0:2-1:2:3:4:5:6:ffff:ffff", "1:2:3:4:5:6:0:2-1:2:3:4:5:6:ffff:ffff", UINT32_MAX-1, false, },
+		{ 6, "1:2:3:4:5:6:0:2-1:2:3:4:5:7:0000:0000", "1:2:3:4:5:6:0:2-1:2:3:4:5:7::", UINT32_MAX, false, },
+		{ 6, "1:2:3:4:5:6:0:2-1:2:3:4:5:7:0000:0001", "1:2:3:4:5:6:0:2-1:2:3:4:5:7:0:1", UINT32_MAX, true, },
+		{ 6, "1:2:3:4:5:6:0:2-1:2:3:4:5:7:0000:0002", "1:2:3:4:5:6:0:2-1:2:3:4:5:7:0:2", UINT32_MAX, true, },
+
+		/* ok - largest - overflow - truncate */
+		{ 6, "1:2:3:4:5:6:0:3-1:2:3:4:5:7:0000:0000", "1:2:3:4:5:6:0:3-1:2:3:4:5:7::", UINT32_MAX-1, false, },
+		{ 6, "1:2:3:4:5:6:0:3-1:2:3:4:5:7:0000:0001", "1:2:3:4:5:6:0:3-1:2:3:4:5:7:0:1", UINT32_MAX, false, },
+		{ 6, "1:2:3:4:5:6:0:3-1:2:3:4:5:7:0000:0002", "1:2:3:4:5:6:0:3-1:2:3:4:5:7:0:2", UINT32_MAX, true, },
+		{ 6, "1:2:3:4:5:6:0:3-1:2:3:4:5:7:0000:0003", "1:2:3:4:5:6:0:3-1:2:3:4:5:7:0:3", UINT32_MAX, true, },
+
+		/* total overflow */
+		{ 6, "2001:db8:0:9:ffff:fffe::-2001:db8:0:9:ffff:ffff::", "2001:db8:0:9:ffff:fffe::-2001:db8:0:9:ffff:ffff::", UINT32_MAX, true, },
+		{ 6, "8000::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "8000::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", UINT32_MAX, true, },
+		{ 6, "1000::-1fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "1000::-1fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", UINT32_MAX, true, },
+		{ 6, "8000::2-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "8000::2-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", UINT32_MAX, true, },
+		{ 6, "::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", UINT32_MAX, true, },
 
 		/* allow mask */
-		{ 4, "1.2.3.0/32", 1, "1.2.3.0-1.2.3.0", },
-		{ 6, "1:0:3:0:0:0:0:2/128", 1, "1:0:3::2/128", },
-		{ 6, "2001:db8:0:9:1:2::/112", 65536, "2001:db8:0:9:1:2::/112", },
-		{ 6, "abcd:ef01:2345:6789:0:00a:000:20/128", 1, "abcd:ef01:2345:6789:0:a:0:20/128", },
-		{ 6, "2001:db8:0:8::/112", 65536, "2001:db8:0:8::/112",},
-		{ 6, "2001:db8:0:7::/97", 2147483648, "2001:db8:0:7::/97", },
-		{ 6, "2001:db8:0:4::/96", 4294967295, "2001:db8:0:4::/96", },
-		{ 6, "2001:db8:0:6::/64", 4294967295, "2001:db8:0:6::/64", },
-		{ 6, "2001:db8::/32", 4294967295, "2001:db8::/32", },
-		{ 6, "2000::/3", 4294967295, "2000::/3", },
-		{ 6, "4000::/2", 4294967295, "4000::/2", },
-		{ 6, "8000::/1", 4294967295, "8000::/1", },
+		{ 4, "1.2.3.0/32", "1.2.3.0-1.2.3.0", 1, false, },
+		{ 6, "1:0:3:0:0:0:0:2/128", "1:0:3::2/128", 1, false, },
+		{ 6, "2001:db8:0:9:1:2::/112", "2001:db8:0:9:1:2::/112", 65536, false, },
+		{ 6, "abcd:ef01:2345:6789:0:00a:000:20/128", "abcd:ef01:2345:6789:0:a:0:20/128", 1, false, },
+		{ 6, "2001:db8:0:8::/112", "2001:db8:0:8::/112", 65536, false, },
+		{ 6, "2001:db8:0:7::/97", "2001:db8:0:7::/97", 2147483648, false, },
+		{ 6, "2001:db8:0:4::/96", "2001:db8:0:4::/96", UINT32_MAX, true, },
+		{ 6, "2001:db8:0:6::/64", "2001:db8:0:6::/64", UINT32_MAX, true, },
+		{ 6, "2001:db8::/32", "2001:db8::/32", UINT32_MAX, true, },
+		{ 6, "2000::/3", "2000::/3", UINT32_MAX, true, },
+		{ 6, "4000::/2", "4000::/2", UINT32_MAX, true, },
+		{ 6, "8000::/1", "8000::/1", UINT32_MAX, true, },
 
 		/* reject port */
-		{ 6, "2001:db8:0:7::/97:0", -1, NULL, },
-		{ 6, "2001:db8:0:7::/97:30", -1, NULL},
+		{ 6, "2001:db8:0:7::/97:0", NULL, -1, false, },
+		{ 6, "2001:db8:0:7::/97:30", NULL, -1, false},
 		/* wrong order */
-		{ 4, "1.2.3.4-1.2.3.3", -1, NULL, },
-		{ 6, "::2-::1", -1, NULL, },
+		{ 4, "1.2.3.4-1.2.3.3", NULL, -1, false, },
+		{ 6, "::2-::1", NULL, -1, false, },
 		/* cannot contain %any */
-		{ 4, "0.0.0.0-0.0.0.0", -1, NULL, },
-		{ 4, "0.0.0.0-0.0.0.1", -1, NULL, },
-		{ 6, "::-::", -1, NULL, },
-		{ 6, "::-::1", -1, NULL, },
-		{ 6, "::/97", -1, NULL, },
-		{ 6, "::0/64", -1, NULL, },
-		{ 6, "::0/127", -1, NULL, },
-		{ 6, "::/0", -1, NULL, },
+		{ 4, "0.0.0.0-0.0.0.0", NULL, -1, false, },
+		{ 4, "0.0.0.0-0.0.0.1", NULL, -1, false, },
+		{ 6, "::-::", NULL, -1, false, },
+		{ 6, "::-::1", NULL, -1, false, },
+		{ 6, "::/97", NULL, -1, false, },
+		{ 6, "::0/64", NULL, -1, false, },
+		{ 6, "::0/127", NULL, -1, false, },
+		{ 6, "::/0", NULL, -1, false, },
 		/* nonsense */
-		{ 4, "1.2.3.0-nonenone", -1, NULL, },
-		{ 4, "-", -1, NULL, },
-		{ 4, "_/_", -1, NULL, },
-		{ 6, "%default", -1, NULL, },
+		{ 4, "1.2.3.0-nonenone", NULL, -1, false, },
+		{ 4, "-", NULL, -1, false, },
+		{ 4, "_/_", NULL, -1, false, },
+		{ 6, "%default", NULL, -1, false, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		if (t->out != NULL) {
-			PRINT_IN(stdout, " -> %s pool %ld", t->out, t->pool);
+			PRINT_IN(stdout, " -> %s pool-size %"PRIu32" truncated %s", t->out, t->pool_size, bool_str(t->truncated));
 		} else {
 			PRINT_IN(stdout, " -> <error>");
 		}
@@ -260,12 +281,16 @@ static void check_ttorange__to__str_range(void)
 			continue;
 		}
 
-		if (t->pool > 0) {
+		if (t->pool_size > 0) {
 			uint32_t pool_size;
-			range_size(&r, &pool_size);
-			if (t->pool != (long)pool_size) {
-				FAIL_IN("pool_size gave %u, expecting %ld",
-					pool_size, t->pool);
+			bool truncated = range_size(&r, &pool_size);
+			if (t->pool_size != pool_size) {
+				FAIL_IN("pool_size gave %"PRIu32", expecting %"PRIu32,
+					pool_size, t->pool_size);
+			}
+			if (t->truncated != truncated) {
+				FAIL_IN("pool_size gave %s, expecting %s",
+					bool_str(truncated), bool_str(t->truncated));
 			}
 		}
 	}

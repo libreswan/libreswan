@@ -239,31 +239,37 @@ bool range_is_specified(const ip_range *range)
 	return start;
 }
 
-bool range_size(ip_range *r, uint32_t *size) {
+bool range_size(ip_range *r, uint32_t *size)
+{
+	*size = 0;
 
-	bool truncated = false;
-	uint32_t n = *size = 0;
-
-	n = (ntohl_address(&r->end) - ntohl_address(&r->start));
-	if (address_type(&r->start) == &ipv6_info) {
-		int prefix_len = ipv6_info.mask_cnt - range_significant_bits(r);
-		if (prefix_len < IPV6_MIN_POOL_PREFIX_LEN) {
-			truncated = true;
-			uint32_t s = ntohl_address(&r->start);
-			n = UINT32_MAX - s;
-		}
-
-		if (n < UINT32_MAX)
-			n++;
-		else
-			truncated = true;
-	} else {
-		/* IPv4 */
-		n++;
+	const struct ip_info *afi = range_type(r);
+	if (afi == NULL) {
+		return true; /*return what?!?!?*/
 	}
 
-	*size = n;
-	return truncated;
+	struct ip_bytes diff = bytes_diff(afi, r->start.bytes, r->end.bytes);
+
+	/* more than 32-bits of host-prefix always overflows. */
+	unsigned prefix_bits = bytes_first_set_bit(afi, diff);
+	unsigned host_bits = afi->mask_cnt - prefix_bits;
+	if (host_bits > 32) {
+		*size = UINT32_MAX;
+		return true;
+	}
+
+	/* can't overflow; but could be 0xffffffff */
+	uint32_t n = ntoh_bytes(diff.byte, afi->ip_size);
+
+	/* adding 1 to 0xffffffff overflows */
+	if (n == UINT32_MAX) {
+		*size = UINT32_MAX;
+		return true;
+	}
+
+	/* ::1-::1 is one address */
+	*size = n + 1;
+	return false;
 }
 
 bool range_eq(const ip_range *l, const ip_range *r)
