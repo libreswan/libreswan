@@ -1,7 +1,7 @@
 /* low-level ip_byte ugliness
  *
  * Copyright (C) 2000  Henry Spencer.
- * Copyright (C) 2018  Andrew Cagney.
+ * Copyright (C) 2018, 2021  Andrew Cagney.
  * Copyright (C) 2019 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -195,4 +195,20 @@ int bytes_prefix_bits(const struct ip_info *afi,
 		}
 	}
 	return prefix_bits;
+}
+
+/*
+ * bytes_cmp - compare two raw addresses
+ */
+
+int bytes_cmp(int l_version, const struct ip_bytes l_bytes,
+	      int r_version, const struct ip_bytes r_bytes)
+{
+	int cmp = l_version - r_version;
+	if (cmp != 0) {
+		return cmp;
+	}
+
+	/* just compare everything */
+	return memcmp(l_bytes.byte, r_bytes.byte, sizeof(l_bytes));
 }

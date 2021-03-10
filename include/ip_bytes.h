@@ -80,4 +80,7 @@ int bytes_prefix_bits(const struct ip_info *afi,
 		      const struct ip_bytes lo,
 		      const struct ip_bytes hi);
 
+int bytes_cmp(int l_version, const struct ip_bytes l_bytes,
+	      int r_version, const struct ip_bytes r_bytes);
+
 #endif

@@ -27,32 +27,25 @@ static bool samenbits(const ip_address *a, const ip_address *b, int n);
  * addrcmp - compare two addresses
  * Caution, the order of the tests is subtle:  doing type test before
  * size test can yield cases where a<b, b<c, but a>c.
+ *
+ * computes "l-r"
  */
 int	/* like memcmp */
-addrcmp(const ip_address *a, const ip_address *b)
+addrcmp(const ip_address *l, const ip_address *r)
 {
-	const struct ip_info *at = address_type(a);
-	const struct ip_info *bt = address_type(b);
-	if (at == NULL && bt == NULL) {
-		/* XXX: see old code */
-		return 0;
-	} else if (at == NULL) {
-		/* AF_UNSPEC<AF_*/
-		return -1;
-	} else if (bt == NULL) {
-		/* AF<AF_UNSPEC*/
-		return 1;
-	} else if (at != bt) {
-		return (at->af < bt->af) ? -1 : 1;
-	} else {
-		shunk_t as = address_as_shunk(a);
-		shunk_t bs = address_as_shunk(b);
-		passert(as.len == bs.len);
-		int c = memcmp(as.ptr, bs.ptr, as.len);
-		if (c != 0)
-			return (c < 0) ? -1 : 1;
+	if (address_is_unset(l) && address_is_unset(r)) {
+		/* unset addresses equal */
 		return 0;
 	}
+	if (address_is_unset(l)) {
+		return -1;
+	}
+	if (address_is_unset(r)) {
+		return 1;
+	}
+
+	return bytes_cmp(l->version, l->bytes,
+			 r->version, r->bytes);
 }
 
 /*
