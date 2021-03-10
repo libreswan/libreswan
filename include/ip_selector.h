@@ -23,6 +23,7 @@
 #include "ip_protoport.h"
 #include "ip_protocol.h"
 #include "ip_range.h"
+#include "ip_bytes.h"
 
 struct jambuf;
 
@@ -40,32 +41,39 @@ struct jambuf;
  * non-zero when the NETWORK_PREFIX/MASK is for a single address.
  */
 
-/*
- * Define SELECTOR_TYPE to enable an ip_selector type separate to ip_subnet; expect
- * everything to break.
- */
-
-#ifdef SELECTOR_TYPE
-
 typedef struct {
-	bool is_selector;
-	/* (routing)prefix|host(id):port */
-	ip_endpoint addr;
-	/* (routing prefix) bits */
+	bool is_set;
+	/*
+	 * Index into the struct ip_info array; must be stream
+	 * friendly.
+	 */
+	unsigned version; /* 0, 4, 6 */
+	/*
+	 * We need something that makes static IPv4 initializers
+	 * possible (struct in_addr requires htonl() which is run-time
+	 * only).
+	 */
+	struct ip_bytes bytes;
+	/*
+	 * (routing prefix) bits.
+	 */
 	unsigned maskbits;
-	/* to-be-deleted - selector */
-	bool is_subnet;
+	unsigned ipproto;
+	/*
+	 * For moment, one port
+	 */
+	int hport;
 } ip_selector;
 
-#else
-
-#include "ip_subnet.h"
-typedef ip_subnet ip_selector;
-
-#endif
-
-#define PRI_SELECTOR "%s"
-#define pri_selector(S,B) str_selector(S, B)
+#define PRI_SELECTOR "%s is_set=%s version=%d bytes="PRI_BYTES" maskbits=%d ipproto=%d hport=%d"
+#define pri_selector(S,B) \
+	str_selector(S, B),			\
+		bool_str((S)->is_set),		\
+		(S)->version,			\
+		pri_bytes((S)->bytes),		\
+		(S)->maskbits,			\
+		(S)->ipproto,			\
+		(S)->hport
 
 void pexpect_selector(const ip_selector *s, const char *t, where_t where);
 #define pselector(S) pexpect_selector(S, #S, HERE)
@@ -117,8 +125,8 @@ ip_port selector_port(const ip_selector *selector);
 
 /* hacks */
 int selector_hport(const ip_selector *selector);
-#define update_selector_hport(SELECTOR, HPORT) { (SELECTOR)->addr.hport = (HPORT); }
-#define update_selector_ipproto(SELECTOR, IPPROTO) { (SELECTOR)->addr.ipproto = (IPPROTO); }
+#define update_selector_hport(SELECTOR, HPORT) { (SELECTOR)->hport = (HPORT); }
+#define update_selector_ipproto(SELECTOR, IPPROTO) { (SELECTOR)->ipproto = (IPPROTO); }
 
 /* assuming a subnet like XFRM does */
 ip_address selector_prefix(const ip_selector *selector);
@@ -172,6 +180,7 @@ size_t jam_selectors_sensitive(struct jambuf *buf, const ip_selector *src, const
  * - a connection's shunt
  */
 
+ip_subnet selector_subnet(const ip_selector selector);
 bool selector_subnet_eq(const ip_selector *lhs, const ip_selector *rhs);
 bool selector_subnet_in(const ip_selector *lhs, const ip_selector *rhs);
 const char *str_selector_subnet(const ip_selector *selector, subnet_buf *buf);

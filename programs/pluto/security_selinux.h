@@ -16,6 +16,11 @@
 #ifndef _SECURITY_SELINUX_H
 #define _SECURITY_SELINUX_H
 
+#include "shunk.h"
+#include "chunk.h"
+
+err_t vet_seclabel(shunk_t sl);
+
 #ifdef HAVE_LABELED_IPSEC
 
 #include <stdbool.h>
@@ -26,9 +31,6 @@
 #include <selinux/avc.h>
 #include <selinux/context.h>
 #endif
-
-#include "shunk.h"
-#include "chunk.h"
 
 struct logger;
 

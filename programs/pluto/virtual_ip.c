@@ -361,11 +361,11 @@ bool is_virtual_vhost(const struct end *that)
  * @param len # of subnets in list
  * @return bool True if peer_net is in list
  */
-static bool net_in_list(const ip_subnet *peer_net, const ip_subnet *list,
+static bool net_in_list(const ip_subnet peer_net, const ip_subnet *list,
 			int len)
 {
 	for (int i = 0; i < len; i++)
-		if (subnetinsubnet(peer_net, &list[i]))
+		if (subnetinsubnet(&peer_net, &list[i]))
 			return TRUE;
 
 	return FALSE;
@@ -381,14 +381,14 @@ static bool net_in_list(const ip_subnet *peer_net, const ip_subnet *list,
  * @return err_t NULL if allowed, diagnostic otherwise
  */
 err_t check_virtual_net_allowed(const struct connection *c,
-				const ip_subnet *peer_net,
+				const ip_subnet peer_net,
 				const ip_address *peers_addr)
 {
 	const struct virtual_ip *virt = c->spd.that.virt;
 	if (virt == NULL)
 		return NULL;
 
-	if (virt->flags & F_VIRTUAL_HOST && !subnetishost(peer_net)) {
+	if (virt->flags & F_VIRTUAL_HOST && !subnetishost(&peer_net)) {
 		return "only virtual host single IPs are allowed";
 	}
 
@@ -396,7 +396,7 @@ err_t check_virtual_net_allowed(const struct connection *c,
 		return NULL;
 
 	if (virt->flags & F_VIRTUAL_NO) {
-		if (subnetishost(peer_net) && addrinsubnet(peers_addr, peer_net))
+		if (subnetishost(&peer_net) && addrinsubnet(peers_addr, &peer_net))
 		{
 			return NULL;
 		}

@@ -659,36 +659,22 @@ void jam_end(struct jambuf *buf, const struct end *this, const struct end *that,
 	}
 }
 
-size_t format_end(char *buf,
-		  size_t buf_len,
-		  const struct end *this,
-		  const struct end *that,
-		  bool is_left,
-		  lset_t policy,
-		  bool filter_rnh)
-{
-	struct jambuf b = array_as_jambuf(buf, buf_len);
-	jam_end(&b, this, that, is_left, policy, filter_rnh);
-	return strlen(buf);
-}
-
 /*
  * format topology of a connection.
  * Two symmetric ends separated by ...
  */
+
+#define END_BUF (SUBNETTOT_BUF + ADDRTOT_BUF + IDTOA_BUF + ADDRTOT_BUF + 10)
 #define CONN_BUF_LEN    (2 * (END_BUF - 1) + 4)
 
 static char *format_connection(char *buf, size_t buf_len,
-			const struct connection *c,
-			const struct spd_route *sr)
+			       const struct connection *c,
+			       const struct spd_route *sr)
 {
-	size_t w =
-		format_end(buf, buf_len, &sr->this, &sr->that, TRUE, LEMPTY, FALSE);
-
-	snprintf(buf + w, buf_len - w, "...");
-	w += strlen(buf + w);
-	(void) format_end(buf + w, buf_len - w, &sr->that, &sr->this, FALSE, c->policy,
-		oriented(*c));
+	struct jambuf b = array_as_jambuf(buf, buf_len);
+	jam_end(&b, &sr->this, &sr->that, /*left?*/true, LEMPTY, FALSE);
+	jam(&b, "...");
+	jam_end(&b, &sr->that, &sr->this, /*left?*/false, c->policy, oriented(*c));
 	return buf;
 }
 
@@ -795,6 +781,11 @@ static int extract_end(struct end *dst,
 	if (src->sec_label != NULL) {
 		dst->sec_label = clone_bytes_as_chunk(src->sec_label, strlen(src->sec_label)+1, "struct end sec_label");
 		dbg("received sec_label '%s' from whack", src->sec_label);
+		err_t ugh = vet_seclabel(HUNK_AS_SHUNK(dst->sec_label));
+		if (ugh != NULL) {
+			llog(RC_LOG, logger, "bad %s; ignored", ugh);
+			dst->sec_label = empty_chunk;
+		}
 	}
 
 	/* decode CA distinguished name, if any */
@@ -3616,7 +3607,8 @@ static struct connection *fc_try(const struct connection *c,
 					continue;
 				}
 
-				virtualwhy = check_virtual_net_allowed(d, remote_client,
+				virtualwhy = check_virtual_net_allowed(d,
+								       selector_subnet(*remote_client),
 								       &sr->that.host_addr);
 
 				if (is_virtual_sr(sr) &&

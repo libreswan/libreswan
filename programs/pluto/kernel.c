@@ -598,7 +598,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 			/* user configured XFRMI_SET_MARK (a.k.a. output mark) add it */
 			jam(buf, "PLUTO_XFRMI_FWMARK='%" PRIu32 "/%#08" PRIx32 "' ",
 				c->sa_marks.out.val, c->sa_marks.out.mask);
-		} else if (addrinsubnet(&sr->that.host_addr, &sr->that.client)) {
+		} else if (address_in_selector(&sr->that.host_addr, &sr->that.client)) {
 			jam(buf, "PLUTO_XFRMI_FWMARK='%" PRIu32 "/0xffffffff' ",
 				c->xfrmi->if_id);
 		} else {
@@ -690,9 +690,7 @@ bool do_command(const struct connection *c,
 			llog(RC_LOG_SERIOUS, logger, "unknown address family");
 			return false;
 		}
-		verb_suffix = subnetisaddr(&sr->this.client,
-					&sr->this.host_addr) ?
-			hs : cs;
+		verb_suffix = selector_subnet_is_address(&sr->this.client, &sr->this.host_addr) ? hs : cs;
 	}
 
 	dbg("command executing %s%s", verb, verb_suffix);
@@ -936,7 +934,7 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 	/* if routing would affect IKE messages, reject */
 	if (c->spd.this.host_port != NAT_IKE_UDP_PORT &&
 	    c->spd.this.host_port != IKE_UDP_PORT &&
-	    addrinsubnet(&c->spd.that.host_addr, &c->spd.that.client)) {
+	    address_in_selector(&c->spd.that.host_addr, &c->spd.that.client)) {
 		llog(RC_LOG_SERIOUS, logger,
 			    "cannot install route: peer is within its client");
 		return route_impossible;
@@ -1853,16 +1851,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		.transport_proto = c->spd.this.protocol,
 		.sa_lifetime = c->sa_ipsec_life_seconds,
 		.outif = -1,
-		.sec_label = { NULL, 0 },
+		.sec_label = st->st_acquired_sec_label.len != 0 ?
+			st->st_acquired_sec_label : st->st_seen_sec_label,
 	};
-	if (st->st_acquired_sec_label.len != 0) {
-			said_boilerplate.sec_label.ptr = st->st_acquired_sec_label.ptr;
-			said_boilerplate.sec_label.len = st->st_acquired_sec_label.len;
-	}
-	if (st->st_seen_sec_label.len != 0) {
-			said_boilerplate.sec_label.ptr = st->st_seen_sec_label.ptr;
-			said_boilerplate.sec_label.len = st->st_seen_sec_label.len;
-	}
 
 	inner_spi = SPI_PASS;
 	if (mode == ENCAPSULATION_MODE_TUNNEL) {

@@ -500,27 +500,11 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 			 */
 			shunk_t sec_label = pbs_in_left_as_shunk(&ts_body_pbs);
 
-			if (sec_label.len == 0) {
-				llog(RC_LOG, logger,
-				     "Traffic Selector of type Security Label cannot be zero length - ignoring this TS");
-				continue;
-			}
+			err_t ugh = vet_seclabel(sec_label);
 
-			if (sec_label.len > MAX_SECCTX_LEN) {
-				llog(RC_LOG, logger,
-				     "Traffic Selector of type Security Label too long (%zu > %u)",
-				     sec_label.len, MAX_SECCTX_LEN);
-				return false;
-			}
-
-			if (hunk_strnlen(sec_label) + 1 != sec_label.len) {
-				llog(RC_LOG, logger,
-				     "Traffic Selector of type Security Label is not NUL terminated or contains an ebedded NUL");
-				return false;
-			}
-
-			if (sec_label.len <= 1) {
-				llog(RC_LOG, logger, "Traffic Selector of type Security Label is an empty string");
+			if (ugh != NULL) {
+				llog(RC_LOG, logger, "Traffic Selector %s", ugh);
+				/* ??? should we just ignore?  If so, use continue */
 				return false;
 			}
 
@@ -886,19 +870,47 @@ static bool score_gt(const struct best_score *score, const struct best_score *be
 		 score->protocol > best->protocol));
 }
 
-/* a security label is a hunk containing only a non-empty well-formed C string */
-static bool proper_seclabel(shunk_t lab)
-{
-	return	lab.len > 1 && hunk_strnlen(lab) == lab.len - 1;
-}
-
 /*
- * Danger! this returns three types of value:
+ * Danger! score_ends_seclabel() returns three types of value:
  *
  * NULL: no sec_label was found and none was expected
  * &null_shunk: someting is wrong; skip
  * chunk: something was found
+ *
+ * Auxilliary function ts_has() returns similar results but NULL is excluded.
  */
+
+#ifdef HAVE_LABELED_IPSEC
+static const shunk_t *ts_has_seclabel(chunk_t sec_label,
+			const struct traffic_selectors *ts,
+			const char *what,
+			struct logger *logger)
+{
+	if (ts->contains_sec_label) {
+		for (unsigned i = 0; i < ts->nr; i++) {
+			const struct traffic_selector *s = &ts->ts[i];
+			if (s->ts_type != IKEv2_TS_SECLABEL) {
+				continue;
+			}
+
+			passert(vet_seclabel(s->sec_label) == NULL);
+
+			if (!se_label_match(s->sec_label, sec_label, logger)) {
+				dbg("ikev2ts: received %s label not within range of our security label", what);
+				DBG_dump_hunk("wanted", sec_label);
+				DBG_dump_hunk("received", s->sec_label);
+				continue;
+			}
+
+			dbg("ikev2ts: received %s label within range of our security label", what);
+
+			/* XXX we return the first match.  Should we return the best? */
+			return &s->sec_label;	/* first match */
+		}
+	}
+	return &null_shunk;	/* unfound: error */
+}
+#endif
 
 static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UNUSED,
 					  const struct connection *d,
@@ -911,11 +923,6 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 
 	if (sec_label.len == 0) {
 		/* This endpoint is not configured to use labeled IPsec. */
-		if (!tsi->contains_sec_label && !tsr->contains_sec_label) {
-			/* No sec_label was found and none was expected? */
-			return NULL;	/* success: no label, as expected */
-		}
-
 		if (tsi->contains_sec_label || tsr->contains_sec_label) {
 			/*
 			 * Error: This end is *not* configured to use labeled
@@ -923,11 +930,14 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 			 */
 			return &null_shunk;
 		}
+		/* No sec_label was found and none was expected */
+		return NULL;	/* success: no label, as expected */
 	}
 
 	/* This endpoint is configured to use labeled IPsec. */
 
 #ifdef HAVE_LABELED_IPSEC
+	passert(vet_seclabel(HUNK_AS_SHUNK(sec_label)) == NULL);
 
 	if (!tsi->contains_sec_label && !tsr->contains_sec_label) {
 		/*
@@ -936,61 +946,14 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 		 * during IKE_AUTH when there is no ACQUIRE driving said IKE
 		 * negotiation (i.e. when using `auto=start` for the connection
 		 * configuration).
+		 *
+		 * ??? should we not check that we're in that special case?
 		 */
 		return NULL;	/* success: no label, as expected */
 	}
 
-	/* short-cut */
-	if (!tsi->contains_sec_label || !tsr->contains_sec_label) {
-		/*
-		 * if either TSi or TSr contains a label, then both are needed;
-		 * can't match
-		 */
-		return &null_shunk;	/* error */
-	}
-
-	passert(proper_seclabel(HUNK_AS_SHUNK(sec_label)));
-
-	for (unsigned tsi_n = 0; tsi_n < tsi->nr; tsi_n++) {
-		const struct traffic_selector *cur_i = &tsi->ts[tsi_n];
-		if (cur_i->ts_type != IKEv2_TS_SECLABEL) {
-			continue;
-		}
-		passert(proper_seclabel(cur_i->sec_label));
-		if (!se_label_match(cur_i->sec_label, sec_label, logger)) {
-			dbg("ikev2ts #1: received label not within range of our security label");
-			DBG_dump_hunk("ends->i->sec_label", ends->i->sec_label);
-			DBG_dump_hunk("cur_i->sec_label", cur_i->sec_label);
-			continue;
-		}
-
-		dbg("ikev2ts #1: received label within range of our security label");
-
-		for (unsigned tsr_n = 0; tsr_n < tsr->nr; tsr_n++) {
-			const struct traffic_selector *cur_r = &tsr->ts[tsr_n];
-			if (cur_r->ts_type != IKEv2_TS_SECLABEL) {
-				continue;
-			}
-			passert(proper_seclabel(cur_i->sec_label));
-			if (!se_label_match(cur_r->sec_label, sec_label, logger)) {
-				dbg("ikev2ts #2: received label not within range of our security label");
-				DBG_dump_hunk("ends->r->sec_label", ends->r->sec_label);
-				DBG_dump_hunk("cur_r->sec_label", cur_r->sec_label);
-				continue;
-			}
-
-			dbg("ikev2ts #2: received label within range of our security label");
-
-			/*
-			 * ??? we return the responder label.
-			 * Could the initiator label be different?
-			 *
-			 * XXX we return the first match.  Should we return the best?
-			 */
-			return &cur_r->sec_label;	/* first match */
-		}
-		break;	/* no point in trying a different tsi_n */
-	}
+	if (ts_has_seclabel(sec_label, tsi, "initiator", logger) != &null_shunk)
+		return ts_has_seclabel(sec_label, tsr, "responder", logger);
 #endif
 
 	/* security label required but no matching one found */

@@ -15,15 +15,33 @@
  *
  */
 
-#ifndef HAVE_LABELED_IPSEC
-#error this file should only be compiled when labeled ipsec support is enabled
-#endif
-
 #include <errno.h>
 #include "security_selinux.h"
 
 #include "defs.h"		/* for so_serial_t */
 #include "log.h"
+#include "labeled_ipsec.h"	/* for MAX_SECCTX_LEN */
+
+err_t vet_seclabel(shunk_t sl)
+{
+	if (sl.len > MAX_SECCTX_LEN)
+		return "security label is too long";
+
+	if (sl.len <= 1)
+		return "security label is empty";
+
+	size_t strl = hunk_strnlen(sl);
+
+	if (strl == sl.len)
+		return "security label is missing the NUL terminator";
+
+	if (strl + 1 < sl.len)
+		return "security label has an embedded NUL";
+
+	return NULL;
+}
+
+#ifdef HAVE_LABELED_IPSEC	/* rest of file! */
 
 void init_selinux(struct logger *logger)
 {
@@ -122,3 +140,5 @@ bool se_label_match(shunk_t a, chunk_t b, struct logger *logger)
 	dbg_sec_label_match(a, b, "did not match", logger);
 	return false;
 }
+
+#endif /* HAVE_LABELED_IPSEC */

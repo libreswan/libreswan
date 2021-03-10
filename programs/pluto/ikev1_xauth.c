@@ -1803,17 +1803,18 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 					ip_address base = address_from_in_addr(&i.cs_addr);
 					ip_address mask = address_from_in_addr(&i.cs_mask);
-					ip_subnet subnet;
-					err_t ugh = address_mask_to_subnet(&base, &mask, &subnet);
+					ip_subnet wire_subnet;
+					err_t ugh = address_mask_to_subnet(&base, &mask, &wire_subnet);
 					if (ugh != NULL) {
 						log_state(RC_INFORMATIONAL, st,
 							  "ignoring malformed CISCO_SPLIT_INC subnet: %s",
 							  ugh);
 						break;
 					}
+					ip_selector wire_selector = selector_from_subnet(&wire_subnet);
 
 					subnet_buf pretty_subnet;
-					str_subnet(&subnet, &pretty_subnet);
+					str_subnet(&wire_subnet, &pretty_subnet);
 
 					log_state(RC_INFORMATIONAL, st,
 						  "Received subnet %s",
@@ -1821,7 +1822,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 					struct spd_route *sr;
 					for (sr = &c->spd; ; sr = sr->spd_next) {
-						if (selector_subnet_eq(&subnet, &sr->that.client)) {
+						if (selector_subnet_eq(&wire_selector, &sr->that.client)) {
 							/* duplicate entry: ignore */
 							log_state(RC_INFORMATIONAL, st,
 								  "Subnet %s already has an spd_route - ignoring",
@@ -1837,7 +1838,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 							sr->that.id.name = EMPTY_CHUNK;
 
 							sr->this.host_addr_name = NULL;
-							sr->that.client = selector_from_subnet(&subnet);
+							sr->that.client = wire_selector;
 							sr->this.cert.ty = CERT_NONE;
 							sr->that.cert.ty = CERT_NONE;
 

@@ -875,7 +875,7 @@ static void opt_to_address(struct family *family, ip_address *address)
 	diagq(opt_domain_to_address(family, address), optarg);
 }
 
-static ip_address any_address(struct family *family)
+static ip_address get_any_address(struct family *family)
 {
 	if (family->type == NULL) {
 		family->type = &ipv4_info;
@@ -935,7 +935,7 @@ static void check_end(struct whack_end *this, struct whack_end *that,
 			diag("address family of client subnet inconsistent");
 	} else {
 		/* fill in anyaddr-anyaddr as (missing) client subnet */
-		ip_address cn = any_address(caf);
+		ip_address cn = get_any_address(caf);
 		diagq(rangetosubnet(&cn, &cn, &this->client), NULL);
 	}
 
@@ -1569,19 +1569,19 @@ int main(int argc, char **argv)
 			lset_t new_policy;
 			if (streq(optarg, "%any")) {
 				new_policy = LEMPTY;
-				msg.right.host_addr = any_address(&host_family);
+				msg.right.host_addr = get_any_address(&host_family);
 			} else if (streq(optarg, "%opportunistic")) {
 				/* always use tunnel mode; mark as opportunistic */
 				new_policy = POLICY_TUNNEL | POLICY_OPPORTUNISTIC;
-				msg.right.host_addr = any_address(&host_family);
+				msg.right.host_addr = get_any_address(&host_family);
 			} else if (streq(optarg, "%group")) {
 				/* always use tunnel mode; mark as group */
 				new_policy = POLICY_TUNNEL | POLICY_GROUP;
-				msg.right.host_addr = any_address(&host_family);
+				msg.right.host_addr = get_any_address(&host_family);
 			} else if (streq(optarg, "%opportunisticgroup")) {
 				/* always use tunnel mode; mark as opportunistic */
 				new_policy = POLICY_TUNNEL | POLICY_OPPORTUNISTIC | POLICY_GROUP;
-				msg.right.host_addr = any_address(&host_family);
+				msg.right.host_addr = get_any_address(&host_family);
 			} else if (msg.left.id != NULL && !streq(optarg, "%null")) {
 				new_policy = LEMPTY;
 				if (opt_numeric_to_address(&host_family, &msg.right.host_addr) == NULL) {
@@ -1689,7 +1689,7 @@ int main(int argc, char **argv)
 
 		case END_NEXTHOP:	/* --nexthop <ip-address> */
 			if (streq(optarg, "%direct")) {
-				msg.right.host_nexthop = any_address(&host_family);
+				msg.right.host_nexthop = get_any_address(&host_family);
 			} else {
 				opt_to_address(&host_family, &msg.right.host_nexthop);
 			}

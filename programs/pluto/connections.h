@@ -430,10 +430,6 @@ extern bool same_peer_ids(const struct connection *c,
  * Largest left end looks like: client === host : port [ host_id ] ---
  * hop Note: if that==NULL, skip nexthop
  */
-#define END_BUF (SUBNETTOT_BUF + ADDRTOT_BUF + IDTOA_BUF + ADDRTOT_BUF + 10)
-extern size_t format_end(char *buf, size_t buf_len,
-			 const struct end *this, const struct end *that,
-			 bool is_left, lset_t policy, bool filter_rnh);
 void jam_end(struct jambuf *buf, const struct end *this, const struct end *that,
 	     bool is_left, lset_t policy, bool filter_rnh);
 
@@ -555,8 +551,8 @@ extern void update_state_connection(struct state *st, struct connection *c);
  * either a %hold or an eroute for an instance iff
  * the template is a /32 -> /32.  This requires some special casing.
  */
-#define eclipsable(sr) (subnetishost(&(sr)->this.client) && \
-			subnetishost(&(sr)->that.client))
+#define eclipsable(sr) (selector_is_one_address(&(sr)->this.client) &&	\
+			selector_is_one_address(&(sr)->that.client))
 extern long eclipse_count;
 extern struct connection *eclipsed(const struct connection *c, struct spd_route ** /*OUT*/);
 

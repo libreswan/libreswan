@@ -1103,6 +1103,24 @@ const struct ip_protocol *protocol_by_prefix(const char *prefix)
 	return NULL;
 }
 
+const struct ip_protocol *protocol_by_shunk(shunk_t token)
+{
+	/* try the name */
+	for (unsigned ipproto = 0; ipproto < elemsof(ip_protocols); ipproto++) {
+		const struct ip_protocol *p = &ip_protocols[ipproto];
+		passert(p->ipproto == ipproto);
+		if (hunk_strcaseeq(token, p->name) || hunk_strcaseeq(token, p->prefix)) {
+			return p;
+		}
+	}
+	/* try the number */
+	uintmax_t ipproto;
+	if (shunk_to_uintmax(token, NULL, 10, &ipproto, 255) == NULL) {
+		return protocol_by_ipproto(ipproto);
+	}
+	return NULL;
+}
+
 const struct ip_protocol *protocol_by_ipproto(unsigned ipproto)
 {
 	if (ipproto >= elemsof(ip_protocols)) {

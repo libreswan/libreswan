@@ -26,7 +26,7 @@ bool selector_is_unset(const ip_selector *selector)
 	if (selector == NULL) {
 		return true;
 	}
-	return thingeq(*selector, unset_selector);
+	return !selector->is_set;
 }
 
 size_t jam_selector(struct jambuf *buf, const ip_selector *selector)
@@ -164,14 +164,12 @@ ip_selector selector_from_subnet_protocol_port(const ip_subnet *subnet,
 		return unset_selector;
 	}
 	ip_selector selector = {
-		.is_selector = true,
+		.is_set = true,
 		.maskbits = subnet->maskbits,
-		.addr = {
-			.version = subnet->addr.version,
-			.bytes = subnet->addr.bytes,
-			.ipproto = protocol->ipproto,
-			.hport = port.hport,
-		},
+		.version = subnet->version,
+		.bytes = subnet->bytes,
+		.ipproto = protocol->ipproto,
+		.hport = port.hport,
 	};
 	pselector(&selector);
 	return selector;
@@ -197,7 +195,7 @@ const struct ip_info *selector_type(const ip_selector *selector)
 	if (selector_is_unset(selector)) {
 		return NULL;
 	}
-	return ip_version_info(selector->addr.version);
+	return ip_version_info(selector->version);
 }
 
 ip_port selector_port(const ip_selector *selector)
@@ -205,7 +203,7 @@ ip_port selector_port(const ip_selector *selector)
 	if (selector_is_unset(selector)) {
 		return unset_port;
 	}
-	return ip_hport(selector->addr.hport);
+	return ip_hport(selector->hport);
 }
 
 const ip_protocol *selector_protocol(const ip_selector *selector)
@@ -213,7 +211,7 @@ const ip_protocol *selector_protocol(const ip_selector *selector)
 	if (selector_is_unset(selector)) {
 		return NULL;
 	}
-	return protocol_by_ipproto(selector->addr.ipproto);
+	return protocol_by_ipproto(selector->ipproto);
 }
 
 ip_range selector_range(const ip_selector *selector)
@@ -222,11 +220,11 @@ ip_range selector_range(const ip_selector *selector)
 		return unset_range;
 	}
 	const struct ip_info *afi = selector_type(selector);
-	ip_address start = address_from_blit(afi, selector->addr.bytes,
+	ip_address start = address_from_blit(afi, selector->bytes,
 					     /*routing-prefix*/&keep_bits,
 					     /*host-identifier*/&clear_bits,
 					     selector->maskbits);
-	ip_address end = address_from_blit(afi, selector->addr.bytes,
+	ip_address end = address_from_blit(afi, selector->bytes,
 					   /*routing-prefix*/&keep_bits,
 					   /*host-identifier*/&set_bits,
 					   selector->maskbits);
@@ -239,7 +237,7 @@ ip_address selector_prefix(const ip_selector *selector)
 		return unset_address;
 	}
 	const struct ip_info *afi = selector_type(selector);
-	return address_from_raw(afi, &selector->addr.bytes);
+	return address_from_raw(afi, &selector->bytes);
 }
 
 unsigned selector_prefix_bits(const ip_selector *selector)
@@ -253,7 +251,7 @@ ip_address selector_prefix_mask(const ip_selector *selector)
 		return unset_address;
 	}
 	const struct ip_info *afi = selector_type(selector);
-	return address_from_blit(afi, selector->addr.bytes,
+	return address_from_blit(afi, selector->bytes,
 				 /*routing-prefix*/ &set_bits,
 				 /*host-identifier*/ &clear_bits,
 				 selector->maskbits);
@@ -264,7 +262,7 @@ bool selector_contains_all_addresses(const ip_selector *selector)
 	if (selector_is_unset(selector)) {
 		return false;
 	}
-	if (selector->addr.hport != 0) {
+	if (selector->hport != 0) {
 		return false;
 	}
 	if (selector->maskbits != 0) {
@@ -281,7 +279,7 @@ bool selector_is_one_address(const ip_selector *selector)
 		return false;
 	}
 	const struct ip_info *afi = selector_type(selector);
-	if (selector->addr.hport != 0) {
+	if (selector->hport != 0) {
 		return false;
 	}
 	if (selector->maskbits != afi->mask_cnt) {
@@ -308,7 +306,7 @@ bool selector_contains_no_addresses(const ip_selector *selector)
 	if (selector->maskbits != afi->mask_cnt) {
 		return false;
 	}
-	if (selector->addr.hport != 0) {
+	if (selector->hport != 0) {
 		return false; /* weird one */
 	}
 	ip_address network = selector_prefix(selector);
@@ -322,15 +320,15 @@ bool selector_in_selector(const ip_selector *l, const ip_selector *r)
 		return false;
 	}
 	/* version wild card (actually version is 4/6) */
-	if (/*r->addr.version != 0 &&*/ l->addr.version != r->addr.version) {
+	if (/*r->version != 0 &&*/ l->version != r->version) {
 		return false;
 	}
 	/* protocol wildcards */
-	if (r->addr.ipproto != 0 && l->addr.ipproto != r->addr.ipproto) {
+	if (r->ipproto != 0 && l->ipproto != r->ipproto) {
 		return false;
 	}
 	/* port wildcards */
-	if (r->addr.hport != 0 && l->addr.hport != r->addr.hport) {
+	if (r->hport != 0 && l->hport != r->hport) {
 		return false;
 	}
 	/* exclude any(zero), other than for any/0 */
@@ -345,7 +343,7 @@ bool selector_in_selector(const ip_selector *l, const ip_selector *r)
 	/* l.prefix[r.bits] == r.prefix */
 	const struct ip_info *afi = selector_type(l);
 	ip_address lp = address_from_blit(afi,
-					  /*LEFT*/l->addr.bytes,
+					  /*LEFT*/l->bytes,
 					  /*routing-prefix*/&keep_bits,
 					  /*host-identifier*/&clear_bits,
 					  /*RIGHT*/r->maskbits);
@@ -373,154 +371,173 @@ bool endpoint_in_selector(const ip_endpoint *endpoint, const ip_selector *select
 
 bool selector_eq(const ip_selector *l, const ip_selector *r)
 {
-	pselector(l);
-	pselector(r);
-	const struct ip_info *lt = selector_type(l);
-	const struct ip_info *rt = selector_type(r);
-	if (lt == NULL || rt == NULL) {
+	if (selector_is_unset(l) && selector_is_unset(r)) {
 		/* NULL/unset selectors are equal */
-		return (lt == NULL && rt == NULL);
+		return true;
 	}
-	/* strict check */
-	return (l->maskbits == r->maskbits &&
-		l->addr.version == r->addr.version &&
-		l->addr.ipproto == r->addr.ipproto &&
-		thingeq(l->addr.bytes, r->addr.bytes));
+	if (selector_is_unset(l) || selector_is_unset(r)) {
+		return false;
+	}
+	/* must compare individual fields */
+	return (l->version == r->version &&
+		thingeq(l->bytes, r->bytes) &&
+		l->maskbits == r->maskbits &&
+		l->ipproto == r->ipproto &&
+		l->hport == r->hport);
 }
 
 void pexpect_selector(const ip_selector *s, const char *t, where_t where)
 {
-	if (s != NULL && s->addr.version != 0) { /* non-zero */
-		if (s->is_subnet == true ||
-		    s->is_selector == false) {
-			selector_buf b;
-			dbg("EXPECTATION FAILED: %s is not a selector; "PRI_SELECTOR" "PRI_WHERE,
-			    t, pri_selector(s, &b), pri_where(where));
-		}
+	if (s == NULL) {
+		return;
+	}
+
+	/* more strict than is_unset() */
+	if (selector_eq(s, &unset_selector)) {
+		return;
+	}
+
+	if (s->is_set == false ||
+	    s->version == 0) {
+		selector_buf b;
+		log_pexpect(where, "invalid selector: %s; "PRI_SELECTOR,
+			    t, pri_selector(s, &b));
 	}
 }
 
 int selector_hport(const ip_selector *s)
 {
-	return endpoint_hport(&s->addr);
+	return s->hport;
 }
 
 #define DEFAULTSUBNET "%default"
 
 /*
- * ttosubnet - convert text "addr/mask" to address and mask
- * Mask can be integer bit count.
+ * Parse the selector:
+ *
+ *  <address>
+ *  <address>/<prefix-bits>
+ *  <address>/<prefix-bits>:<protocol>/ <- NOTE
+ *  <address>/<prefix-bits>:<protocol>/<port>
+ *
+ * new syntax required for:
+ *
+ *  <address>-<address>:<protocol>/<port>-<port>
+ *
  */
-err_t numeric_to_selector(shunk_t src,
+
+err_t numeric_to_selector(shunk_t input,
 			  const struct ip_info *afi, /* could be NULL */
 			  ip_selector *dst)
 {
 	err_t oops;
 
 	/*
-	 * Match %default, can't work when AFI=NULL.
-	 *
-	 * you cannot use af==AF_UNSPEC and src=0/0,
-	 * makes no sense as will it be AF_INET
+	 * <address> / ...
 	 */
-	if (hunk_strcaseeq(src, DEFAULTSUBNET)) {
-		if (afi == NULL) {
-			return "unknown address family with " DEFAULTSUBNET " subnet not allowed.";
-		}
-		*dst = afi->selector.all; /* 0.0.0.0/0 or ::/0 */
-		return NULL;
-	}
 
-	/* split the input into ADDR "/" (mask)... */
-	char slash;
-	shunk_t addr = shunk_token(&src, &slash, "/");
-	if (slash == '\0') {
-		/* consumed entire input */
-		return "no / in subnet specification";
-	}
+	char address_term;
+	shunk_t address_token = shunk_token(&input, &address_term, "/");
+	/* fprintf(stderr, "address="PRI_SHUNK"\n", pri_shunk(address_token)); */
 
-	ip_address addrtmp;
-	oops = numeric_to_address(addr, afi, &addrtmp);
+	ip_address address;
+	oops = numeric_to_address(address_token, afi/*possibly NULL*/, &address);
 	if (oops != NULL) {
 		return oops;
 	}
 
 	if (afi == NULL) {
-		afi = address_type(&addrtmp);
+		afi = address_type(&address);
 	}
-	if (afi == NULL) {
-		/* XXX: pexpect()? */
-		return "unknown address family in ttosubnet";
-	}
-
-	/* split the input into MASK [ ":" (port) ... ] */
-	char colon;
-	shunk_t mask = shunk_token(&src, &colon, ":");
-	uintmax_t maskbits;
-	oops = shunk_to_uintmax(mask, NULL, 10, &maskbits, afi->mask_cnt);
-	if (oops != NULL) {
-		if (afi == &ipv4_info) {
-			ip_address masktmp;
-			oops = numeric_to_address(mask, afi, &masktmp);
-			if (oops != NULL) {
-				return oops;
-			}
-
-			int i = masktocount(&masktmp);
-			if (i < 0) {
-				return "non-contiguous or otherwise erroneous mask";
-			}
-			maskbits = i;
-		} else {
-			return "masks are not permitted for IPv6 addresses";
-		}
-	}
-
-	/* the :PORT */
-	uintmax_t port;
-	if (colon != '\0') {
-		err_t oops = shunk_to_uintmax(src, NULL, 0, &port, 0xFFFF);
-		if (oops != NULL) {
-			return oops;
-		}
-	} else {
-		port = 0;
-	}
-
-	chunk_t addr_chunk = address_as_chunk(&addrtmp);
-	unsigned n = addr_chunk.len;
-	uint8_t *p = addr_chunk.ptr; /* cast void* */
-	if (n == 0)
-		return "unknown address family";
-
-	unsigned c = maskbits / 8;
-	if (c > n)
-		return "impossible mask count";
-
-	p += c;
-	n -= c;
-
-	unsigned m = 0xff;
-	c = maskbits % 8;
-	if (n > 0 && c != 0)	/* partial byte */
-		m >>= c;
-
-	for (; n > 0; n--) {
-		if ((*p & m) != 0) {
-			return "improper subnet, host-part bits on";
-		}
-		m = 0xff;
-		p++;
+	if (!pexpect(afi != NULL)) {
+		return "confused address family";
 	}
 
 	/*
-	 * XXX: see above, this isn't a true subnet as addrtmp can
-	 * have its port set.
+	 * ... <prefix-bits> : ...
 	 */
-	dst->addr = endpoint3(&ip_protocol_unset, &addrtmp, ip_hport(port));
-	dst->maskbits = maskbits;
 
+	char prefix_bits_term;
+	shunk_t prefix_bits_token = shunk_token(&input, &prefix_bits_term, ":");
+	/* fprintf(stderr, "prefix-bits="PRI_SHUNK"\n", pri_shunk(prefix_bits_token)); */
+
+	uintmax_t prefix_bits = afi->mask_cnt;
+	if (prefix_bits_token.len > 0) {
+		oops = shunk_to_uintmax(prefix_bits_token, NULL, 0, &prefix_bits, afi->mask_cnt);
+		if (oops != NULL) {
+			return oops;
+		}
+	} else if (prefix_bits_token.ptr != NULL) {
+		/* found but empty */
+		pexpect(prefix_bits_token.len == 0);
+		return "missing prefix bit size";
+	}
+
+	ip_address host = address_from_blit(afi, address.bytes,
+					    /*routing-prefix*/&clear_bits,
+					    /*host-identifier*/&keep_bits,
+					    prefix_bits);
+	if (!address_eq(&host, &afi->address.any)) {
+		return "host-identifier must be zero";
+	}
+
+	/*
+	 * ... <protocol> / ...
+	 */
+
+	char protocol_term;
+	shunk_t protocol_token = shunk_token(&input, &protocol_term, "/");
+	/* fprintf(stderr, "protocol="PRI_SHUNK"\n", pri_shunk(protocol_token)); */
+
+	const ip_protocol *protocol = &ip_protocol_unset; /*0*/
+	if (protocol_token.len > 0) {
+		if (protocol_term != '/') {
+			return "protocol must be followed by '/'";
+		}
+		protocol = protocol_by_shunk(protocol_token);
+		if (protocol == NULL) {
+			return "unknown protocol";
+		}
+	} else if (protocol_token.ptr != NULL) {
+		/* found but empty */
+		pexpect(protocol_token.len == 0);
+		return "missing protocol/port following ':'";
+	}
+
+	/*
+	 * ... <port>
+	 */
+
+	shunk_t port_token = input;
+	/* fprintf(stderr, "port="PRI_SHUNK"\n", pri_shunk(port_token)); */
+
+	ip_port port = unset_port;
+	if (port_token.len > 0) {
+		uintmax_t hport;
+		err_t oops = shunk_to_uintmax(port_token, NULL, 0, &hport, 0xFFFF);
+		if (oops != NULL) {
+			return oops;
+		}
+		if (protocol == &ip_protocol_unset && hport != 0) {
+			return "a non-zero port requires a valid protocol";
+		}
+		port = ip_hport(hport);
+	} else if (port_token.ptr != NULL) {
+		/* found but empty */
+		pexpect(port_token.len == 0);
+		return "missing port following protocol/";
+	}
+
+	ip_subnet subnet = subnet_from_address_prefix_bits(&address, prefix_bits);
+	*dst = selector_from_subnet_protocol_port(&subnet, protocol, port);
 	return NULL;
+}
+
+ip_subnet selector_subnet(const ip_selector selector)
+{
+	ip_address address = selector_prefix(&selector);
+	int prefix_bits = selector_prefix_bits(&selector);
+	return subnet_from_address_prefix_bits(&address, prefix_bits);
 }
 
 bool selector_subnet_eq(const ip_selector *lhs, const ip_selector *rhs)
@@ -532,19 +549,13 @@ bool selector_subnet_eq(const ip_selector *lhs, const ip_selector *rhs)
 
 bool selector_subnet_in(const ip_selector *lhs, const ip_selector *rhs)
 {
-	ip_address lhs_prefix = selector_prefix(lhs);
-	ip_address rhs_prefix = selector_prefix(rhs);
-	int lhs_bits = selector_prefix_bits(lhs);
-	int rhs_bits = selector_prefix_bits(rhs);
-	ip_subnet lhs_subnet = subnet_from_address_prefix_bits(&lhs_prefix, lhs_bits);
-	ip_subnet rhs_subnet = subnet_from_address_prefix_bits(&rhs_prefix, rhs_bits);
+	ip_subnet lhs_subnet = selector_subnet(*lhs);
+	ip_subnet rhs_subnet = selector_subnet(*rhs);
 	return subnet_in(&lhs_subnet, &rhs_subnet);
 }
 
 bool selector_subnet_is_address(const ip_selector *selector, const ip_address *address)
 {
-	ip_address sp = selector_prefix(selector);
-	int sb = selector_prefix_bits(selector);
-	ip_subnet ss = subnet_from_address_prefix_bits(&sp, sb);
-	return subnetisaddr(&ss, address);
+	ip_subnet subnet = selector_subnet(*selector);
+	return subnetishost(&subnet) && addrinsubnet(address, &subnet);
 }

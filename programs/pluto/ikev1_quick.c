@@ -149,13 +149,13 @@ static notification_t accept_PFS_KE(struct state *st, struct msg_digest *md,
  * Note: this is not called from demux.c
  */
 
-static bool emit_subnet_id(const ip_subnet *net,
+static bool emit_subnet_id(const ip_subnet net,
 			   uint8_t protoid,
 			   uint16_t port,
-			   pb_stream *outs)
+			   struct pbs_out *outs)
 {
-	const struct ip_info *ai = selector_type(net);
-	const bool usehost = net->maskbits == ai->mask_cnt;
+	const struct ip_info *ai = subnet_type(&net);
+	const bool usehost = subnet_prefix_bits(net) == ai->mask_cnt;
 	pb_stream id_pbs;
 
 	struct isakmp_ipsec_id id = {
@@ -167,7 +167,7 @@ static bool emit_subnet_id(const ip_subnet *net,
 	if (!out_struct(&id, &isakmp_ipsec_identification_desc, outs, &id_pbs))
 		return FALSE;
 
-	ip_address tp = selector_prefix(net);
+	ip_address tp = subnet_prefix(&net);
 	diag_t d = pbs_out_address(&id_pbs, &tp, "client network");
 	if (d != NULL) {
 		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
@@ -175,7 +175,7 @@ static bool emit_subnet_id(const ip_subnet *net,
 	}
 
 	if (!usehost) {
-		ip_address tm = selector_prefix_mask(net);
+		ip_address tm = subnet_prefix_mask(&net);
 		diag_t d = pbs_out_address(&id_pbs, &tm, "client mask");
 		if (d != NULL) {
 			log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
@@ -523,54 +523,60 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 	return true;
 }
 
-/* like decode, but checks that what is received matches what was sent */
+/*
+ * Like decode, but checks that what is received matches what was
+ * sent.
+ */
+
 static bool check_net_id(struct isakmp_ipsec_id *id,
-			 pb_stream *id_pbs,
-			 uint8_t *protoid,
-			 uint16_t *port,
-			 ip_subnet *net,
+			 struct pbs_in *id_pbs,
+			 uint8_t protoid,
+			 uint16_t port,
+			 ip_subnet net,
 			 const char *which,
 			 struct logger *logger)
 {
 	bool bad_proposal = false;
 
-	ip_selector net_temp;
-	if (!decode_net_id(id, id_pbs, &net_temp, which, logger))
+	ip_selector selector_temp;
+	if (!decode_net_id(id, id_pbs, &selector_temp, which, logger))
 		return false;
+	/* toss the proto/port */
+	ip_subnet subnet_temp = selector_subnet(selector_temp);
 
-	if (!samesubnet(net, &net_temp)) {
+	if (!samesubnet(&net, &subnet_temp)) {
 		subnet_buf subrec;
 		subnet_buf subxmt;
 		llog(RC_LOG_SERIOUS, logger,
 			    "%s subnet returned doesn't match my proposal - us: %s vs them: %s",
-			    which, str_selector_subnet(net, &subxmt),
-			    str_selector_subnet(&net_temp, &subrec));
+			    which, str_subnet(&net, &subxmt),
+			    str_subnet(&subnet_temp, &subrec));
 		llog(RC_LOG_SERIOUS, logger,
-			    "Allowing questionable (microsoft) proposal anyway");
-		bad_proposal = FALSE;
+		     "Allowing questionable (microsoft) proposal anyway");
+		bad_proposal = false;
 	}
-	if (*protoid != id->isaiid_protoid) {
+	if (protoid != id->isaiid_protoid) {
 		llog(RC_LOG_SERIOUS, logger,
-			    "%s peer returned protocol id does not match my proposal - us: %d vs them: %d",
-			    which, *protoid, id->isaiid_protoid);
+		     "%s peer returned protocol id does not match my proposal - us: %d vs them: %d",
+		     which, protoid, id->isaiid_protoid);
 		llog(RC_LOG_SERIOUS, logger,
-			    "Allowing questionable (microsoft) proposal anyway]");
-		bad_proposal = FALSE;
+		     "Allowing questionable (microsoft) proposal anyway]");
+		bad_proposal = false;
 	}
 	/*
 	 * workaround for #802- "our client ID returned doesn't match my proposal"
 	 * until such time as bug #849 is properly fixed.
 	 */
-	if (*port != id->isaiid_port) {
+	if (port != id->isaiid_port) {
 		llog(RC_LOG_SERIOUS, logger,
-			    "%s peer returned port doesn't match my proposal - us: %d vs them: %d",
-			    which, *port, id->isaiid_port);
-		if (*port != 0 && id->isaiid_port != 1701) {
+		     "%s peer returned port doesn't match my proposal - us: %d vs them: %d",
+		     which, port, id->isaiid_port);
+		if (port != 0 && id->isaiid_port != 1701) {
 			llog(RC_LOG_SERIOUS, logger,
 				    "Allowing bad L2TP/IPsec proposal (see bug #849) anyway");
-			bad_proposal = FALSE;
+			bad_proposal = false;
 		} else {
-			bad_proposal = TRUE;
+			bad_proposal = true;
 		}
 	}
 
@@ -626,10 +632,6 @@ void quick_outI1(struct fd *whack_sock,
 		}
 	}
 
-	st->st_myuserprotoid = c->spd.this.protocol;
-	st->st_peeruserprotoid = c->spd.that.protocol;
-	st->st_myuserport = c->spd.this.port;
-	st->st_peeruserport = c->spd.that.port;
 
 	st->st_v1_msgid.id = generate_msgid(isakmp_sa);
 	change_state(st, STATE_QUICK_I1); /* from STATE_UNDEFINED */
@@ -839,12 +841,12 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	/* [ IDci, IDcr ] out */
 	if (has_client) {
 		/* IDci (we are initiator), then IDcr (peer is responder) */
-		if (!emit_subnet_id(&c->spd.this.client,
-				    st->st_myuserprotoid,
-				    st->st_myuserport, &rbody) ||
-		    !emit_subnet_id(&c->spd.that.client,
-				    st->st_peeruserprotoid,
-				    st->st_peeruserport, &rbody)) {
+		if (!emit_subnet_id(selector_subnet(c->spd.this.client),
+				    c->spd.this.protocol,
+				    c->spd.this.port, &rbody) ||
+		    !emit_subnet_id(selector_subnet(c->spd.that.client),
+				    c->spd.that.protocol,
+				    c->spd.that.port, &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1149,20 +1151,19 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 		}
 
 		if (is_virtual_connection(c)) {
-			char cthat[END_BUF];
 
 			c->spd.that.client = *remote_client;
 			c->spd.that.has_client = true;
 			virtual_ip_delref(&c->spd.that.virt, HERE);
 
-			if (subnetishost(remote_client) &&
-			    addrinsubnet(&c->spd.that.host_addr, remote_client)) {
-				c->spd.that.has_client = FALSE;
+			if (selector_is_address(remote_client, &c->spd.that.host_addr)) {
+				c->spd.that.has_client = false;
 			}
 
-			format_end(cthat, sizeof(cthat), &c->spd.that, NULL,
-				   TRUE, LEMPTY, oriented(*c));
-			dbg("setting phase 2 virtual values to %s", cthat);
+			LSWDBGP(DBG_BASE, buf) {
+				jam(buf, "setting phase 2 virtual values to ");
+				jam_end(buf, &c->spd.that, NULL, /*left?*/true, LEMPTY, oriented(*c));
+			}
 		}
 	}
 
@@ -1196,11 +1197,6 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 		restore_new_iv(st, new_iv);
 
 		switch_md_st(md, st, HERE);	/* feed back new state */
-
-		st->st_peeruserprotoid = selector_protocol(remote_client)->ipproto;
-		st->st_peeruserport = selector_port(remote_client).hport;
-		st->st_myuserprotoid = selector_protocol(local_client)->ipproto;
-		st->st_myuserport = selector_port(local_client).hport;
 
 		change_state(st, STATE_QUICK_R0);
 
@@ -1404,18 +1400,13 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 	log_state(RC_LOG, st,
 		  "responding to Quick Mode proposal {msgid:%08" PRIx32 "}",
 		  st->st_v1_msgid.id);
-	{
-		char instbuf[END_BUF];
+	LLOG_JAMBUF(RC_LOG, st->st_logger, buf) {
+		jam(buf, "    us: ");
 		const struct connection *c = st->st_connection;
 		const struct spd_route *sr = &c->spd;
-
-		format_end(instbuf, sizeof(instbuf), &sr->this, &sr->that,
-			   TRUE, LEMPTY, oriented(*c));
-		log_state(RC_LOG, st, "    us: %s", instbuf);
-
-		format_end(instbuf, sizeof(instbuf), &sr->that, &sr->this,
-			   FALSE, LEMPTY, oriented(*c));
-		log_state(RC_LOG, st, "  them: %s", instbuf);
+		jam_end(buf, &sr->this, &sr->that, /*left?*/true, LEMPTY, oriented(*c));
+		jam(buf, "  them: ");
+		jam_end(buf, &sr->that, &sr->this, /*left?*/false, LEMPTY, oriented(*c));
 	}
 
 	/**** finish reply packet: Nr [, KE ] [, IDci, IDcr ] ****/
@@ -1584,9 +1575,8 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 
 			/* IDci (we are initiator) */
 			if (!check_net_id(&IDci->payload.ipsec_id, &IDci->pbs,
-					  &st->st_myuserprotoid,
-					  &st->st_myuserport,
-					  &st->st_connection->spd.this.client,
+					  c->spd.this.protocol, c->spd.this.port,
+					  selector_subnet(st->st_connection->spd.this.client),
 					  "our client", st->st_logger))
 				return STF_FAIL + INVALID_ID_INFORMATION;
 
@@ -1597,9 +1587,8 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 			/* IDcr (responder is peer) */
 
 			if (!check_net_id(&IDcr->payload.ipsec_id, &IDcr->pbs,
-					  &st->st_peeruserprotoid,
-					  &st->st_peeruserport,
-					  &st->st_connection->spd.that.client,
+					  c->spd.that.protocol, c->spd.that.port,
+					  selector_subnet(st->st_connection->spd.that.client),
 					  "peer client", st->st_logger))
 				return STF_FAIL + INVALID_ID_INFORMATION;
 
@@ -1633,11 +1622,12 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 					  str_selector_subnet(&st->st_connection->spd.that.client, &buf));
 			}
 		} else {
-			/* no IDci, IDcr: we must check that the defaults match our proposal */
-			if (!subnetisaddr(&c->spd.this.client,
-					  &c->spd.this.host_addr) ||
-			    !subnetisaddr(&c->spd.that.client,
-					  &c->spd.that.host_addr)) {
+			/*
+			 * No IDci, IDcr: we must check that the
+			 * defaults match our proposal.
+			 */
+			if (!selector_is_address(&c->spd.this.client, &c->spd.this.host_addr) ||
+			    !selector_is_address(&c->spd.that.client, &c->spd.that.host_addr)) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "IDci, IDcr payloads missing in message but default does not match proposal");
 				return STF_FAIL + INVALID_ID_INFORMATION;

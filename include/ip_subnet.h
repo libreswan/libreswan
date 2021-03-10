@@ -20,54 +20,44 @@
 #define IP_SUBNET_H
 
 /*
- * This is not the subnet you're looking for.
+ * This defines a traditional subnet:
  *
- * In libreswan ip_subnet is used to store multiple things:
+ *    ADDRESS_PREFIX / MASK
  *
- *
- * #1 addresses i.e., NETWORK_PREFIX|HOST_IDENTIFIER / MASK
- * #2 subnets i.e., NETWORK_PREFIX|0 / MASK
- *
- * OK, so far so good, they are kind of equivalent.
- *
- * #3 selectors i.e., NETWORK_PREFIX | 0 / MASK : PORT
- *
- * where PORT==0 imples 0..65535, and (presumably) port can only be
- * non-zero when the NETWORK_PREFIX/MASK is for a single address.
- *
- * the latter being a less general form of:
- *
- *    LO_ADDRESS..HI_ADDRESS : LO_PORT..HI_PORT
- *
- *
- */
-
-/*
- * Define SUBNET_TYPE to enable traditional subnets; expect everything
- * to break.
  */
 
 #include "ip_address.h"
 #include "ip_endpoint.h"
+#include "ip_bytes.h"
 
 struct jambuf;
 
 typedef struct {
-	bool is_subnet;
-	/* (routing)prefix|host(id):port */
-	ip_endpoint addr;
-	/* (routing prefix) bits */
+	bool is_set;
+	/*
+	 * Index into the struct ip_info array; must be stream
+	 * friendly.
+	 */
+	unsigned version; /* 0, 4, 6 */
+	/*
+	 * We need something that makes static IPv4 initializers
+	 * possible (struct in_addr requires htonl() which is run-time
+	 * only).
+	 */
+	struct ip_bytes bytes;
+	/*
+	 * (routing prefix) bits.
+	 */
 	unsigned maskbits;
-	/* to-be-deleted - selector */
-	bool is_selector;
 } ip_subnet;
 
-#define PRI_SUBNET "%s; maskbits=%u is_subnet=%s is_selector=%s"
+#define PRI_SUBNET "%s is_set=%s version=%d bytes="PRI_BYTES" maskbits=%u"
 #define pri_subnet(S, B)						\
 		str_subnet(S, B),					\
-		(S)->maskbits,						\
-		bool_str((S)->is_subnet),				\
-		bool_str((S)->is_selector)
+			bool_str((S)->is_set),				\
+			(S)->version,					\
+			pri_bytes((S)->bytes),				\
+			(S)->maskbits
 
 void pexpect_subnet(const ip_subnet *s, const char *t, where_t where);
 #define psubnet(S) pexpect_subnet(S, #S, HERE)
@@ -128,7 +118,7 @@ bool subnet_in(const ip_subnet *lhs, const ip_subnet *rhs);
 /* Given ROUTING_PREFIX|HOST_ID return ROUTING_PREFIX|0 */
 ip_address subnet_prefix(const ip_subnet *subnet);
 ip_address subnet_prefix_mask(const ip_subnet *subnet);
-/*unsigned subnet_prefix_bits(const ip_subnet *subnet);*/
+unsigned subnet_prefix_bits(const ip_subnet subnet);
 
 /*
  * old
@@ -148,6 +138,5 @@ extern bool samesubnet(const ip_subnet *a, const ip_subnet *b);
 extern bool addrinsubnet(const ip_address *a, const ip_subnet *s);
 extern bool subnetinsubnet(const ip_subnet *a, const ip_subnet *b);
 extern bool subnetishost(const ip_subnet *s);
-#define subnetisaddr(sn, a) (subnetishost(sn) && addrinsubnet((a), (sn)))
 
 #endif

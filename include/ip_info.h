@@ -27,13 +27,6 @@ struct ip_info {
 	} address;
 
 	/*
-	 * ip_endpoint
-	 */
-	struct {
-		const ip_endpoint any;		/* 0.0.0.0:0 or [::]:0 */
-	} endpoint;
-
-	/*
 	 * ip_subnet.
 	 *
 	 * none: the unspecified address - matches no addresses

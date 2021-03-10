@@ -26,7 +26,7 @@ const ip_address unset_address; /* all zeros */
 ip_address address_from_raw(const struct ip_info *afi, const struct ip_bytes *bytes)
 {
 	ip_address a = {
-		.is_address = true,
+		.is_set = true,
 		.version = afi->ip_version,
 		.bytes = *bytes,
 	};
@@ -217,14 +217,11 @@ bool address_is_unset(const ip_address *address)
 	if (address == NULL) {
 		return true;
 	}
-	return thingeq(*address, unset_address);
+	return !address->is_set;
 }
 
 bool address_is_specified(const ip_address *address)
 {
-	if (address == NULL) {
-		return false;
-	}
 	if (address_is_unset(address)) {
 		return false;
 	}
@@ -242,18 +239,16 @@ bool address_is_specified(const ip_address *address)
 
 bool address_eq(const ip_address *l, const ip_address *r)
 {
-	const struct ip_info *lt = address_type(l);
-	const struct ip_info *rt = address_type(r);
-	if (lt == NULL && rt == NULL) {
+	if (address_is_unset(l) && address_is_unset(r)) {
 		/* unset/NULL addresses are equal */
 		return true;
 	}
-	if (lt != rt) {
+	if (address_is_unset(l) || address_is_unset(r)) {
 		return false;
 	}
-	shunk_t ls = address_as_shunk(l);
-	shunk_t rs = address_as_shunk(r);
-	return hunk_eq(ls, rs);
+	/* must compare individual fields */
+	return (l->version == r->version &&
+		thingeq(l->bytes, r->bytes));
 }
 
 bool address_is_loopback(const ip_address *address)
@@ -348,15 +343,19 @@ ip_address address_from_blit(const struct ip_info *afi,
 
 void pexpect_address(const ip_address *a, const char *s, where_t where)
 {
-	if (address_is_unset(a)) {
+	if (a == NULL) {
 		return;
 	}
 
-	if (a->version == 0 ||
-	    a->is_address == false) {
+	/* more strict than is_unset() */
+	if (address_eq(a, &unset_address)) {
+		return;
+	}
+
+	if (a->is_set == false ||
+	    a->version == 0) {
 		address_buf b;
-		dbg("EXPECTATION FAILED: %s is not an address; "PRI_ADDRESS" "PRI_WHERE,
-		    s, pri_address(a, &b),
-		    pri_where(where));
+		log_pexpect(where, "invalid address: %s; "PRI_ADDRESS,
+			    s, pri_address(a, &b));
 	}
 }

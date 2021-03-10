@@ -123,8 +123,8 @@ USERLAND_LDFLAGS += $(AUTHPAM_LDFLAGS)
 
 
 # LABELED IPSEC support - requires SElinux
-ifeq ($(USE_LABELED_IPSEC),true)
 OBJS += security_selinux.o
+ifeq ($(USE_LABELED_IPSEC),true)
 USERLAND_LDFLAGS += -lselinux
 endif
 

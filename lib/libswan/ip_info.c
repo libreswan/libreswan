@@ -101,12 +101,6 @@ static size_t jam_ipv6_address(struct jambuf *buf, const struct ip_info *afi, co
  * Construct well known addresses.
  */
 
-#define IPv4_ADDRESS .is_address = true, .version = 4
-#define IPv6_ADDRESS .is_address = true, .version = 6
-
-#define IPv4_ENDPOINT .is_endpoint = true, .version = 4
-#define IPv6_ENDPOINT .is_endpoint = true, .version = 6
-
 const struct ip_info ipv4_info = {
 
 	.ip_version = 4,
@@ -116,25 +110,20 @@ const struct ip_info ipv4_info = {
 
 	/* ip_address */
 	.address = {
-		.any = { IPv4_ADDRESS, }, /* 0.0.0.0 */
-		.loopback = { IPv4_ADDRESS, .bytes = { { 127, 0, 0, 1, }, }, },
-	},
-
-	/* ip_endpoint */
-	.endpoint = {
-		.any = { IPv4_ENDPOINT, }, /* 0.0.0.0:0 */
+		.any = { .is_set = true, .version = 4, }, /* 0.0.0.0 */
+		.loopback = { .is_set = true, .version = 4, .bytes = { { 127, 0, 0, 1, }, }, },
 	},
 
 	/* ip_subnet */
 	.subnet = {
-		.none = { .is_subnet = true, .addr = { IPv4_ENDPOINT, }, .maskbits = 32, }, /* 0.0.0.0/32 */
-		.all = { .is_subnet = true, .addr = { IPv4_ENDPOINT, }, .maskbits = 0, }, /* 0.0.0.0/0 */
+		.none = { .is_set = true, .version = 4, .maskbits = 32, }, /* 0.0.0.0/32 */
+		.all = { .is_set = true, .version = 4, .maskbits = 0, }, /* 0.0.0.0/0 */
 	},
 
 	/* ip_selector */
 	.selector = {
-		.none = { .is_selector = true, .addr = { IPv4_ENDPOINT, }, .maskbits = 32, }, /* 0.0.0.0/0 */
-		.all = { .is_selector = true, .addr = { IPv4_ENDPOINT, }, .maskbits = 0, }, /* 0.0.0.0/0 */
+		.none = { .is_set = true, .version = 4, .maskbits = 32, }, /* 0.0.0.0/0 */
+		.all = { .is_set = true, .version = 4, .maskbits = 0, }, /* 0.0.0.0/0 */
 	},
 
 	/* ike */
@@ -164,25 +153,20 @@ const struct ip_info ipv6_info = {
 
 	/* ip_address */
 	.address = {
-		.any = { IPv6_ADDRESS, }, /* :: */
-		.loopback = { IPv6_ADDRESS, .bytes = { { [15] = 1, }, }, }, /* ::1 */
-	},
-
-	/* ip_endpoint */
-	.endpoint = {
-		.any = { IPv6_ENDPOINT, }, /* [::]:0 */
+		.any = { .is_set = true, .version = 6, }, /* :: */
+		.loopback = { .is_set = true, .version = 6, .bytes = { { [15] = 1, }, }, }, /* ::1 */
 	},
 
 	/* ip_subnet */
 	.subnet = {
-		.none = { .is_subnet = true, .addr = { IPv6_ENDPOINT, }, .maskbits = 128, }, /* ::/128 */
-		.all = { .is_subnet = true, .addr = { IPv6_ENDPOINT, }, .maskbits = 0, }, /* ::/0 */
+		.none = { .is_set = true, .version = 6, .maskbits = 128, }, /* ::/128 */
+		.all = { .is_set = true, .version = 6, .maskbits = 0, }, /* ::/0 */
 	},
 
 	/* ip_selector */
 	.selector = {
-		.none = { .is_selector = true, .addr = { IPv6_ENDPOINT, }, .maskbits = 128, }, /* ::/0 */
-		.all = { .is_selector = true, .addr = { IPv6_ENDPOINT, }, .maskbits = 0, }, /* ::/0 */
+		.none = { .is_set = true, .version = 6, .maskbits = 128, }, /* ::/0 */
+		.all = { .is_set = true, .version = 6, .maskbits = 0, }, /* ::/0 */
 	},
 
 	/* ike */
