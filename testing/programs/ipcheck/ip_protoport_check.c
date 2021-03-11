@@ -21,44 +21,45 @@
 void ip_protoport_check(void)
 {
 	static const struct test {
+		int line;
 		char *in;
 		unsigned ipproto;
 		unsigned hport;
 		bool ok;
 	} tests[] = {
-		/* { "", 0, 0, false, }, */
-		{ "tcp/%any", 6, 0, true,  },
-		{ "udp/255", 17, 255, true,  },
-		{ "0/1", 0, 0, false,  },
-		{ "0/0", 0, 0, true,  },
-		{ "47", 47, 0, true, },
-		{ "47/", 47, 0, true, },
-		{ "something-longer-than-16-bytes/0", 0, 0, false, }
+		/* { LN, "", 0, 0, false, }, */
+		{ LN, "tcp/%any", 6, 0, true,  },
+		{ LN, "udp/255", 17, 255, true,  },
+		{ LN, "0/1", 0, 0, false,  },
+		{ LN, "0/0", 0, 0, true,  },
+		{ LN, "47", 47, 0, true, },
+		{ LN, "47/", 47, 0, true, },
+		{ LN, "something-longer-than-16-bytes/0", 0, 0, false, }
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT(stdout, "in=%s proto=%u port=%u ok=%s",
+		PRINT("in=%s proto=%u port=%u ok=%s",
 		      t->in, t->ipproto, t->hport, bool_str(t->ok));
 
 		ip_protoport out;
 		err_t err = ttoprotoport(t->in, &out);
 
 		if (!t->ok && err == NULL) {
-			FAIL(PRINT, "%s expected error, got none", t->in);
+			FAIL("%s expected error, got none", t->in);
 		}
 
 		if (t->ok && err != NULL) {
-			FAIL(PRINT, "%s got error: %s\n", t->in, err);
+			FAIL("%s got error: %s\n", t->in, err);
 		}
 
 		if (out.ipproto != t->ipproto) {
-			FAIL(PRINT, "%s expected proto %u, got %u", t->in,
+			FAIL("%s expected proto %u, got %u", t->in,
 			     t->ipproto, out.ipproto);
 		}
 
 		if (out.hport != t->hport) {
-			FAIL(PRINT, "%s expected port %u, got %u",
+			FAIL("%s expected port %u, got %u",
 			     t->in, t->hport, out.hport);
 		}
 	}
