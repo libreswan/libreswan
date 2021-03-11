@@ -221,14 +221,12 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 			return STF_INTERNAL_ERROR;
 
 		diag_t d;
-		ip_address start = range_start(ts->net);
-		d = pbs_out_address(&ts_range_pbs, &start, "IP start");
+		d = pbs_out_address(&ts_range_pbs, range_start(ts->net), "IP start");
 		if (d != NULL) {
 			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
-		ip_address end = range_end(ts->net);
-		d = pbs_out_address(&ts_range_pbs, &end, "IP end");
+		d = pbs_out_address(&ts_range_pbs, range_end(ts->net), "IP end");
 		if (d != NULL) {
 			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;

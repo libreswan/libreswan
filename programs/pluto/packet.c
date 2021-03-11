@@ -2868,8 +2868,8 @@ diag_t pbs_in_address(struct pbs_in *input_pbs,
 	}
 }
 
-diag_t pbs_out_address(struct pbs_out *out_pbs, const ip_address *address, const char *what)
+diag_t pbs_out_address(struct pbs_out *out_pbs, const ip_address address, const char *what)
 {
-	shunk_t as = address_as_shunk(address);
+	shunk_t as = address_as_shunk(&address);
 	return pbs_out_raw(out_pbs, as.ptr, as.len, what);
 }

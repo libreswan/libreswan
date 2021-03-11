@@ -1768,19 +1768,23 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_INTERMEDI
 
 /* Misleading name, also used for NULL sized type's */
 static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
-		const char *story, pb_stream *outpbs)
+					const char *story, struct pbs_out *outpbs)
 {
-	pb_stream a_pbs;
+	struct pbs_out a_pbs;
 
-	struct ikev2_cp_attribute attr;
-	attr.type = type;
-	if (ip == NULL) {
+	struct ikev2_cp_attribute attr = {
+		.type = type,
+	};
+
+	/* could be NULL */
+	const struct ip_info *afi = address_type(ip);
+
+	if (afi == NULL) {
 		attr.len = 0;
+	} else if (afi == &ipv6_info) {
+		attr.len = INTERNAL_IP6_ADDRESS_SIZE; /* RFC hack to append IPv6 prefix len */
 	} else {
-		if (address_type(ip)->af == AF_INET)
-			attr.len = address_type(ip)->ip_size;
-		else
-			attr.len = INTERNAL_IP6_ADDRESS_SIZE; /* RFC hack to append IPv6 prefix len */
+		attr.len = address_type(ip)->ip_size;
 	}
 
 	if (!out_struct(&attr, &ikev2_cp_attribute_desc, outpbs,
@@ -1788,7 +1792,7 @@ static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
 		return STF_INTERNAL_ERROR;
 
 	if (attr.len > 0) {
-		diag_t d = pbs_out_address(&a_pbs, ip, story);
+		diag_t d = pbs_out_address(&a_pbs, *ip, story);
 		if (d != NULL) {
 			log_diag(RC_LOG_SERIOUS, a_pbs.outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;

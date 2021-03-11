@@ -539,11 +539,11 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 
 static bool emit_one_natoa(struct pbs_out *outs,
 			   struct_desc *pd,
-			   const ip_address *ip,
+			   const ip_address ip,
 			   const char *nm)
 {
 	struct isakmp_nat_oa natoa = {
-		.isanoa_idtype = address_type(ip)->id_ip_addr,
+		.isanoa_idtype = address_type(&ip)->id_ip_addr,
 	};
 
 	struct pbs_out pbs;
@@ -558,7 +558,7 @@ static bool emit_one_natoa(struct pbs_out *outs,
 	}
 
 	address_buf ab;
-	dbg("NAT-OAi (S): %s", str_address(ip, &ab));
+	dbg("NAT-OAi (S): %s", str_address(&ip, &ab));
 	close_output_pbs(&pbs);
 	return true;
 }
@@ -571,8 +571,8 @@ bool v1_nat_traversal_add_initiator_natoa(pb_stream *outs, struct state *st)
 	struct_desc *pd = LDISJOINT(st->hidden_variables.st_nat_traversal, NAT_T_WITH_RFC_VALUES) ?
 		&isakmp_nat_oa_drafts : &isakmp_nat_oa;
 
-	return (emit_one_natoa(outs, pd, &ipinit, "NAT-OAi") &&
-		emit_one_natoa(outs, pd, &ipresp, "NAT-OAr"));
+	return (emit_one_natoa(outs, pd, ipinit, "NAT-OAi") &&
+		emit_one_natoa(outs, pd, ipresp, "NAT-OAr"));
 }
 
 #ifdef USE_IKEv1

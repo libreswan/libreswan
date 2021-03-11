@@ -186,7 +186,7 @@ static void fixup_xauth_hash(struct state *st,
  */
 static stf_status isakmp_add_attr(pb_stream *strattr,
 				   const int attr_type,
-				   const ip_address *ia,
+				   const ip_address ia,
 				   const struct state *st)
 {
 	bool ok = TRUE;
@@ -218,7 +218,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 	case INTERNAL_IP4_SUBNET:
 	{
 		ip_address client_addr = selector_prefix(&c->spd.this.client);
-		diag_t d = pbs_out_address(&attrval, &client_addr, "IP4_subnet");
+		diag_t d = pbs_out_address(&attrval, client_addr, "IP4_subnet");
 		if (d != NULL) {
 			log_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
@@ -255,7 +255,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 				return STF_INTERNAL_ERROR;
 			}
 			/* emit attribute's value */
-			diag_t d = pbs_out_address(&attrval, &dnsip, "IP4_dns");
+			diag_t d = pbs_out_address(&attrval, dnsip, "IP4_dns");
 			if (d != NULL) {
 				log_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
 				return STF_INTERNAL_ERROR;
@@ -413,7 +413,7 @@ static stf_status modecfg_resp(struct state *st,
 		attr_type = 0;
 		while (resp != LEMPTY) {
 			if (resp & 1) {
-				stf_status ret = isakmp_add_attr(&strattr, attr_type, &ia, st);
+				stf_status ret = isakmp_add_attr(&strattr, attr_type, ia, st);
 				if (ret != STF_OK)
 					return ret;
 			}
@@ -434,14 +434,14 @@ static stf_status modecfg_resp(struct state *st,
 		 */
 		if (c->modecfg_domains != NULL) {
 			dbg("We are sending '%s' as domain", strtok(c->modecfg_domains, ", "));
-			isakmp_add_attr(&strattr, MODECFG_DOMAIN, &ia, st);
+			isakmp_add_attr(&strattr, MODECFG_DOMAIN, ia, st);
 		} else {
 			dbg("we are not sending a domain");
 		}
 
 		if (c->modecfg_banner != NULL) {
 			dbg("We are sending '%s' as banner", c->modecfg_banner);
-			isakmp_add_attr(&strattr, MODECFG_BANNER, &ia, st);
+			isakmp_add_attr(&strattr, MODECFG_BANNER, ia, st);
 		} else {
 			dbg("We are not sending a banner");
 		}
@@ -451,7 +451,7 @@ static stf_status modecfg_resp(struct state *st,
 			dbg("We are 0.0.0.0/0 so not sending CISCO_SPLIT_INC");
 		} else {
 			dbg("We are sending our subnet as CISCO_SPLIT_INC");
-			isakmp_add_attr(&strattr, CISCO_SPLIT_INC, &ia, st);
+			isakmp_add_attr(&strattr, CISCO_SPLIT_INC, ia, st);
 		}
 
 		if (!ikev1_close_message(&strattr, st))
