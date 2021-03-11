@@ -25,19 +25,24 @@
 
 const ip_subnet unset_subnet; /* all zeros */
 
+ip_subnet subnet_from_raw(unsigned version, const struct ip_bytes bytes, unsigned prefix_bits)
+{
+	ip_subnet s = {
+		.is_set = true,
+		.version = version,
+		.bytes = bytes,
+		.maskbits = prefix_bits,
+	};
+	psubnet(&s);
+	return s;
+}
+
 ip_subnet subnet_from_address_prefix_bits(const ip_address *address, unsigned prefix_bits)
 {
 	if (address_is_unset(address)) {
 		return unset_subnet;
 	}
-	ip_subnet s = {
-		.is_set = true,
-		.version = address->version,
-		.bytes = address->bytes,
-		.maskbits = prefix_bits,
-	};
-	psubnet(&s);
-	return s;
+	return subnet_from_raw(address->version, address->bytes, prefix_bits);
 }
 
 ip_subnet subnet_from_address(const ip_address *address)
@@ -254,4 +259,16 @@ bool subnet_eq(const ip_subnet *l, const ip_subnet *r)
 bool subnet_in(const ip_subnet *l, const ip_subnet *r)
 {
 	return subnetinsubnet(l, r);
+}
+
+err_t addresses_to_subnet(const ip_address start, const ip_address end, ip_subnet *dst)
+{
+	*dst = unset_subnet;
+	ip_range range;
+	err_t err = addresses_to_range(start, end, &range);
+	if (err != NULL) {
+		return err;
+	}
+
+	return range_to_subnet(range, dst);
 }

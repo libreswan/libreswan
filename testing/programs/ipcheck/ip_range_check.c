@@ -139,6 +139,23 @@ static void check_addresses_to(void)
 			}
 		}
 
+		oops = addresses_to_subnet(lo, hi, &s);
+		str_subnet(&s, &sb);
+
+		if (oops != NULL && subnet == NULL) {
+			/* okay, error expected */
+		} else if (oops != NULL) {
+			FAIL(PRINT, "addresses_to_subnet(%s,%s) failed: %s", t->lo, t->hi, oops);
+		} else if (subnet == NULL) {
+			FAIL(PRINT, "addresses_to_subnet(%s,%s) returned %s unexpectedly",
+			     t->lo, t->hi, sb.buf);
+		} else {
+			if (!streq(subnet, sb.buf)) {
+				FAIL(PRINT, "addresses_to_subnet(%s,%s) returned `%s', expected `%s'",
+				     t->lo, t->hi, sb.buf, subnet);
+			}
+		}
+
 		if (range == NULL) {
 			continue;
 		}

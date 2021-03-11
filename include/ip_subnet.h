@@ -66,6 +66,7 @@ void pexpect_subnet(const ip_subnet *s, const char *t, where_t where);
  * Constructors
  */
 
+ip_subnet subnet_from_raw(unsigned version, const struct ip_bytes bytes, unsigned prefix_bits);
 /* ADDRESS..ADDRESS */
 ip_subnet subnet_from_address(const ip_address *address);
 /* ADDRESS/PREFIX_BITS */
@@ -132,6 +133,10 @@ extern err_t ttosubnet(shunk_t src, const struct ip_info *afi,
 /* misc. conversions and related */
 extern err_t rangetosubnet(const ip_address *from, const ip_address *to,
 		    ip_subnet *dst);
+/* this rejects ::-:: */
+extern err_t addresses_to_subnet(const ip_address from,
+				 const ip_address to,
+				 ip_subnet *dst) MUST_USE_RESULT;
 
 /* tests */
 extern bool samesubnet(const ip_subnet *a, const ip_subnet *b);

@@ -394,7 +394,11 @@ err_t addresses_to_range(const ip_address start, const ip_address end,
 
 err_t range_to_subnet(const ip_range range, ip_subnet *dst)
 {
+	*dst = unset_subnet;
 	const struct ip_info *afi = range_type(&range);
+	if (afi == NULL) {
+		return "invalid range";
+	}
 
 	/*
 	 * Determine the prefix_bits (the CIDR network part) by
@@ -406,6 +410,6 @@ err_t range_to_subnet(const ip_range range, ip_subnet *dst)
 		return "address range is not a subnet";
 	}
 
-	*dst = subnet_from_address_prefix_bits(&range.start, prefix_bits);
+	*dst = subnet_from_raw(afi->ip_version, range.start.bytes, prefix_bits);
 	return NULL;
 }
