@@ -35,6 +35,7 @@
 #include "ip_selector.h"
 #include "security_selinux.h"
 #include "labeled_ipsec.h"		/* for MAX_SECCTX_LEN */
+#include "ip_range.h"
 
 /*
  * While the RFC seems to suggest that the traffic selectors come in
@@ -88,8 +89,7 @@ static void ts_to_end(const struct traffic_selector *ts, struct end *end,
 {
 	ikev2_print_ts(ts);
 	ip_subnet subnet;
-	/* XXX: check conversion worked */
-	rangetosubnet(&ts->net.start, &ts->net.end, &subnet);
+	happy(range_to_subnet(ts->net, &subnet));
 	const ip_protocol *protocol = protocol_by_ipproto(ts->ipprotoid);
 	/* XXX: check port range valid */
 	ip_port port = ip_hport(ts->startport);
@@ -221,12 +221,14 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 			return STF_INTERNAL_ERROR;
 
 		diag_t d;
-		d = pbs_out_address(&ts_range_pbs, &ts->net.start, "IP start");
+		ip_address start = range_start(ts->net);
+		d = pbs_out_address(&ts_range_pbs, &start, "IP start");
 		if (d != NULL) {
 			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
-		d = pbs_out_address(&ts_range_pbs, &ts->net.end, "IP end");
+		ip_address end = range_end(ts->net);
+		d = pbs_out_address(&ts_range_pbs, &end, "IP end");
 		if (d != NULL) {
 			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
@@ -467,14 +469,15 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 				bad_case(ts_h.isath_type); /* make compiler happy */
 			}
 
-
-			d = pbs_in_address(&ts_body_pbs, &ts->net.start, ipv, "TS IP start");
+			ip_address start;
+			d = pbs_in_address(&ts_body_pbs, &start, ipv, "TS IP start");
 			if (d != NULL) {
 				log_diag(RC_LOG, logger, &d, "%s", "");
 				return false;
 			}
 
-			d = pbs_in_address(&ts_body_pbs, &ts->net.end, ipv, "TS IP end");
+			ip_address end;
+			d = pbs_in_address(&ts_body_pbs, &end, ipv, "TS IP end");
 			if (d != NULL) {
 				log_diag(RC_LOG, logger, &d, "%s", "");
 				return false;
@@ -483,6 +486,22 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 			/* XXX: does this matter? */
 			if (pbs_left(&ts_body_pbs) != 0)
 				return false;
+
+			err_t err = addresses_to_range(start, end, &ts->net);
+
+			/* pluto doesn't yet do full ranges; check for subnet */
+			ip_subnet ignore;
+			err = err == NULL ? range_to_subnet(ts->net, &ignore) : err;
+
+			if (err != NULL) {
+				address_buf sb, eb;
+				llog(RC_LOG, logger, "Traffic Selector range %s-%s invalid: %s",
+				     str_address_sensitive(&start, &sb),
+				     str_address_sensitive(&end, &eb),
+				     err);
+				return false;
+			}
+
 			ts->ts_type = ts_h.isath_type;
 			break;
 		}
@@ -740,24 +759,19 @@ static int score_address_range(const struct end *end,
 	 * XXX: so what is CIDR?
 	 */
 	ip_range range = selector_range(&end->client);
-	passert(addrcmp(&range.start, &range.end) <= 0);
-	passert(addrcmp(&ts->net.start, &ts->net.end) <= 0);
 	switch (fit) {
 	case END_EQUALS_TS:
-		if (addrcmp(&range.start, &ts->net.start) == 0 &&
-		    addrcmp(&range.end, &ts->net.end) == 0) {
+		if (range_eq(range, ts->net)) {
 			f = fitbits;
 		}
 		break;
 	case END_NARROWER_THAN_TS:
-		if (addrcmp(&range.start, &ts->net.start) >= 0 &&
-		    addrcmp(&range.end, &ts->net.end) <= 0) {
+		if (range_in(range, ts->net)) {
 			f = fitbits;
 		}
 		break;
 	case END_WIDER_THAN_TS:
-		if (addrcmp(&range.start, &ts->net.start) <= 0 &&
-		    addrcmp(&range.end, &ts->net.end) >= 0) {
+		if (range_in(ts->net, range)) {
 			f = fitbits;
 		}
 		break;
