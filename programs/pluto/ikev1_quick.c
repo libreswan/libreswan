@@ -485,12 +485,8 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			return false;
 		}
 
-		err_t ughmsg = rangetosubnet(&temp_address_from,
-					     &temp_address_to, &net);
-		if (ughmsg == NULL && subnet_contains_no_addresses(&net)) {
-			/* i.e., ::/128 or 0.0.0.0/32 */
-			ughmsg = "range contains no addresses";
-		}
+		err_t ughmsg = addresses_to_subnet(temp_address_from,
+						   temp_address_to, &net);
 		if (ughmsg != NULL) {
 			address_buf a, b;
 			llog(RC_LOG_SERIOUS, logger,
