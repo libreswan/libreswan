@@ -2067,9 +2067,8 @@ static stf_status xauth_client_resp(struct state *st,
 						discard_pw = TRUE;
 					}
 
-					if (!pbs_out_hunk(st->st_xauth_password,
-							  &attrval,
-							  "XAUTH password")) {
+					if (!out_hunk(st->st_xauth_password, &attrval,
+						      "XAUTH password")) {
 						if (discard_pw) {
 							free_chunk_content(&st->st_xauth_password);
 						}

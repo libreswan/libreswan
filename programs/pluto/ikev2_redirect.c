@@ -160,7 +160,7 @@ static chunk_t build_redirect_notification_data_common(enum gw_identity_type gwi
 		log_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
 		return empty_chunk;
 	}
-	if (nonce == NULL || pbs_out_hunk(*nonce, &gwid_pbs, "nonce in redirect notify"))
+	if (nonce == NULL || out_hunk(*nonce, &gwid_pbs, "nonce in redirect notify"))
 	{
 		close_output_pbs(&gwid_pbs);
 		return same_out_pbs_as_chunk(&gwid_pbs);

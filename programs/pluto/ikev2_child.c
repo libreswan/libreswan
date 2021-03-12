@@ -121,7 +121,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 		};
 		pb_stream pb_nr;
 		if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &pb_nr) ||
-		    !pbs_out_hunk(cst->st_nr, &pb_nr, "IKEv2 nonce"))
+		    !out_hunk(cst->st_nr, &pb_nr, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&pb_nr);

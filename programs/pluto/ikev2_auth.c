@@ -240,7 +240,7 @@ bool emit_v2_asn1_hash_blob(const struct hash_desc *hash_algo,
 		return false;
 	}
 
-	if (!pbs_out_hunk(b, outs, "OID of ASN.1 Algorithm Identifier")) {
+	if (!out_hunk(b, outs, "OID of ASN.1 Algorithm Identifier")) {
 		llog(RC_LOG_SERIOUS, outs->outs_logger,
 		     "DigSig: failed to emit OID of ASN.1 Algorithm Identifier");
 		return false;
@@ -322,7 +322,7 @@ bool emit_v2_auth(struct ike_sa *ike,
 
 	switch (a.isaa_auth_method) {
 	case IKEv2_AUTH_RSA:
-		if (!pbs_out_hunk(*auth_sig, &a_pbs, "signature")) {
+		if (!out_hunk(*auth_sig, &a_pbs, "signature")) {
 			return false;
 		}
 		break;
@@ -331,7 +331,7 @@ bool emit_v2_auth(struct ike_sa *ike,
 	{
 		const struct hash_desc *hash_algo = v2_auth_negotiated_signature_hash(ike);
 		if (!emit_v2_asn1_hash_blob(hash_algo, &a_pbs, authby) ||
-		    !pbs_out_hunk(*auth_sig, &a_pbs, "signature")) {
+		    !out_hunk(*auth_sig, &a_pbs, "signature")) {
 			return false;
 		}
 		break;

@@ -694,7 +694,7 @@ bool emit_v2KE(chunk_t *g, const struct dh_desc *group,
 			return false;
 		}
 	} else {
-		if (!pbs_out_hunk(*g, &kepbs, "ikev2 g^x"))
+		if (!out_hunk(*g, &kepbs, "ikev2 g^x"))
 			return FALSE;
 	}
 
@@ -785,7 +785,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 		};
 
 		if (!out_struct(&in, &ikev2_nonce_desc, &rbody, &pb) ||
-		    !pbs_out_hunk(ike->sa.st_ni, &pb, "IKEv2 nonce"))
+		    !out_hunk(ike->sa.st_ni, &pb, "IKEv2 nonce"))
 			return false;
 
 		close_output_pbs(&pb);
@@ -1131,7 +1131,7 @@ static stf_status ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R_continue(struct state
 		};
 
 		if (!out_struct(&in, &ikev2_nonce_desc, &rbody, &pb) ||
-		    !pbs_out_hunk(st->st_nr, &pb, "IKEv2 nonce"))
+		    !out_hunk(st->st_nr, &pb, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&pb);
@@ -2293,7 +2293,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 				&ikev2_id_i_desc,
 				&sk.pbs,
 				&i_id_pbs) ||
-		    !pbs_out_hunk(ike->sa.st_v2_id_payload.data, &i_id_pbs, "my identity"))
+		    !out_hunk(ike->sa.st_v2_id_payload.data, &i_id_pbs, "my identity"))
 			return STF_INTERNAL_ERROR;
 		close_output_pbs(&i_id_pbs);
 	}
@@ -2340,7 +2340,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 			pb_stream r_id_pbs;
 			if (!out_struct(&r_id, &ikev2_id_r_desc, &sk.pbs,
 				&r_id_pbs) ||
-			    !pbs_out_hunk(id_b, &r_id_pbs, "their IDr"))
+			    !out_hunk(id_b, &r_id_pbs, "their IDr"))
 				return STF_INTERNAL_ERROR;
 
 			close_output_pbs(&r_id_pbs);
@@ -3422,7 +3422,7 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 		pb_stream r_id_pbs;
 		if (!out_struct(&ike->sa.st_v2_id_payload.header,
 				&ikev2_id_r_desc, &sk.pbs, &r_id_pbs) ||
-		    !pbs_out_hunk(ike->sa.st_v2_id_payload.data,
+		    !out_hunk(ike->sa.st_v2_id_payload.data,
 				  &r_id_pbs, "my identity"))
 			return STF_INTERNAL_ERROR;
 		close_output_pbs(&r_id_pbs);
@@ -4332,7 +4332,7 @@ static stf_status ikev2_child_add_ipsec_payloads(struct child_sa *child,
 	};
 	pb_stream pb_nr;
 	if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &pb_nr) ||
-	    !pbs_out_hunk(child->sa.st_ni, &pb_nr, "IKEv2 nonce"))
+	    !out_hunk(child->sa.st_ni, &pb_nr, "IKEv2 nonce"))
 		return STF_INTERNAL_ERROR;
 	close_output_pbs(&pb_nr);
 
@@ -4425,7 +4425,7 @@ static stf_status ikev2_child_add_ike_payloads(struct child_sa *child,
 		};
 		pb_stream nr_pbs;
 		if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &nr_pbs) ||
-		    !pbs_out_hunk(local_nonce, &nr_pbs, "IKEv2 nonce"))
+		    !out_hunk(local_nonce, &nr_pbs, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
 		close_output_pbs(&nr_pbs);
 	}

@@ -457,7 +457,7 @@ static bool emit_v2N_spi_response(struct response *response,
 
 	pb_stream n_pbs;
 	if (!emit_v2Nsa_pl(ntype, protoid, spi, response->pbs, &n_pbs) ||
-	    (ndata != NULL && !pbs_out_hunk(*ndata, &n_pbs, "Notify data"))) {
+	    (ndata != NULL && !out_hunk(*ndata, &n_pbs, "Notify data"))) {
 		return false;
 	}
 

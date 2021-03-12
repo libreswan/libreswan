@@ -133,7 +133,7 @@ bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
 				DBG_dump_hunk("NO_PPK_AUTH payload", *no_ppk_auth);
 			}
 		} else {
-			if (!pbs_out_hunk(sig, a_pbs, "rsa signature"))
+			if (!out_hunk(sig, a_pbs, "rsa signature"))
 				return FALSE;
 		}
 	}
