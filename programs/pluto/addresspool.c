@@ -246,21 +246,14 @@ static void unhash_lease_id(struct ip_pool *pool, struct lease *lease)
 static ip_address lease_address(const struct ip_pool *pool,
 				const struct lease *lease)
 {
-	/* careful here manipulating raw bits and bytes  */
-	ip_address addr = pool->r.start;
-	chunk_t addr_chunk = address_as_chunk(&addr);
-	/* extract the end */
-	uint32_t addr_n;
-	passert(addr_chunk.len >= sizeof(addr_n));
-	uint8_t *ptr = addr_chunk.ptr; /* cast void */
-	ptr += addr_chunk.len - sizeof(addr_n);
-	memcpy(&addr_n, ptr, sizeof(addr_n));
-	/* new value - overflow? */
-	unsigned i = lease - pool->leases;
-	addr_n = htonl(ntohl(addr_n) + i);
-	/* put it back */
-	memcpy(ptr, &addr_n, sizeof(addr_n));
-	return addr;
+	ip_address address;
+	err_t err = range_to_address(pool->r, lease - pool->leases, &address);
+	if (err != NULL) {
+		/* shouldn't happen!?! */
+		log_pexpect(HERE, "range+offset failed: %s", err);
+		return range_start(pool->r);
+	}
+	return address;
 }
 
 static void DBG_pool(bool verbose, const struct ip_pool *pool,
@@ -391,11 +384,16 @@ static struct lease *connection_lease(struct connection *c)
 	 * membership in the range.
 	 */
 	struct ip_pool *pool = c->pool;
-	ip_address cp = selector_prefix(&c->spd.that.client);
-	uint32_t i = ntohl_address(&cp) - ntohl_address(&pool->r.start);
+	ip_address prefix = selector_prefix(&c->spd.that.client);
+	uintmax_t offset;
+	err_t err = range_to_offset(pool->r, prefix, &offset);
+	if (err != NULL) {
+		pexpect_fail(c->logger, HERE, "offset of address in range failed: %s", err);
+		return NULL;
+	}
 	passert(pool->nr_leases <= pool->size);
-	passert(i < pool->nr_leases);
-	struct lease *lease = &pool->leases[i];
+	passert(offset < pool->nr_leases);
+	struct lease *lease = &pool->leases[offset];
 
 	/*
 	 * Has the lease been "stolen" by a newer connection with the
@@ -736,20 +734,15 @@ bool find_addresspool(const ip_range *pool_range, struct ip_pool **pool, struct 
 
 	*pool = NULL;	/* nothing found (yet) */
 	for (h = pluto_pools; h != NULL; h = h->next) {
-		const ip_range *a = pool_range;
-		const ip_range *b = &h->r;
 
-		int sc = addrcmp(&a->start, &b->start);
-
-		if (sc == 0 && addrcmp(&a->end, &b->end) == 0) {
+		if (range_eq(*pool_range, h->r)) {
 			/* exact match */
 			*pool = h;
 			break;
-		} else if (sc < 0 ? addrcmp(&a->end, &b->start) < 0 :
-				    addrcmp(&a->start, &b->end) > 0) {
-			/* before or after */
-		} else {
-			/* overlap */
+		}
+
+		if (range_overlap(*pool_range, h->r)) {
+			/* bad */
 			range_buf prbuf;
 			range_buf hbuf;
 
