@@ -94,4 +94,10 @@ bool range_size(const ip_range r, uint32_t *size);
 ip_address range_start(const ip_range range); /* floor */
 ip_address range_end(const ip_range range); /* ceiling */
 
+err_t range_to_address(const ip_range range, uintmax_t offset,
+		       ip_address *address) MUST_USE_RESULT;
+
+err_t range_to_offset(const ip_range range, const ip_address address,
+		      uintmax_t *offset) MUST_USE_RESULT;
+
 #endif
