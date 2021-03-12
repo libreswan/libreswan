@@ -12,7 +12,7 @@
 DOCKER_CMD ?= sudo podman
 D ?= testing/docker
 
-DI_T ?= swanbase 	#docker image tag
+DI_T ?= swanbase	#docker image tag
 
 W1 = $(firstword $(subst -, ,$1))
 W2 = $(or $(word 2, $(subst -, ,$1)), $(value 2))
@@ -21,7 +21,7 @@ W4 = $(or $(word 4, $(subst -, ,$1)), $(value 2))
 
 FIRST_TARGET ?=$@	# keep track of original target
 DISTRO ?= fedora	# default distro
-DISTRO_REL ?= 32 	# default release
+DISTRO_REL ?= 32	# default release
 
 D_USE_UNBOUND_EVENT_H_COPY ?= true
 D_USE_DNSSEC ?= false
