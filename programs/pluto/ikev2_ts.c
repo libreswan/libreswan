@@ -257,7 +257,7 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 		else
 			out_label = ts->sec_label;
 
-		diag_t d = pbs_out_raw(&ts_label_pbs, out_label.ptr, out_label.len, "output Security label");
+		diag_t d = pbs_out_hunk(&ts_label_pbs, out_label, "output Security label");
 		if (d != NULL) {
 			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;

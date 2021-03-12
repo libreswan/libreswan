@@ -155,7 +155,7 @@ static chunk_t build_redirect_notification_data_common(enum gw_identity_type gwi
 	if (!out_struct(&gwi, &ikev2_redirect_desc, &gwid_pbs, NULL)) {
 		return empty_chunk;
 	}
-	diag_t d = pbs_out_raw(&gwid_pbs, id.ptr, id.len , "redirect ID");
+	diag_t d = pbs_out_hunk(&gwid_pbs, id, "redirect ID");
 	if (d != NULL) {
 		log_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
 		return empty_chunk;
