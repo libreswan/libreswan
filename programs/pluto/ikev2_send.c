@@ -237,13 +237,10 @@ bool emit_v2N_bytes(v2_notification_t ntype,
 		return false;
 	}
 
-	/* for some reason pbs_out_raw() doesn't like size==0 */
-	if (size > 0) {
-		diag_t d = pbs_out_raw(&pl, bytes, size, "Notify data");
-		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
-			return false;
-		}
+	diag_t d = pbs_out_raw(&pl, bytes, size, "Notify data");
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+		return false;
 	}
 
 	close_output_pbs(&pl);

@@ -2688,6 +2688,19 @@ bool ikev1_out_generic_raw(struct_desc *sd,
 static diag_t space_for(size_t len, pb_stream *outs, const char *fmt, ...) PRINTF_LIKE(3) MUST_USE_RESULT;
 static diag_t space_for(size_t len, pb_stream *outs, const char *fmt, ...)
 {
+	/* nothing to do, or at least one byte spare */
+	if (len == 0 || pbs_left(outs) > len) {
+		LSWDBGP(DBG_BASE, buf) {
+			jam_string(buf, "emitting ");
+			va_list ap;
+			va_start(ap, fmt);
+			jam_va_list(buf, fmt, ap);
+			va_end(ap);
+			jam(buf, " into %s", outs->name);
+		}
+		return NULL;
+	}
+
 	if (pbs_left(outs) == 0) {
 		/* should this be a DBGLOG? */
 		diag_t d;
@@ -2700,31 +2713,22 @@ static diag_t space_for(size_t len, pb_stream *outs, const char *fmt, ...)
 			d = diag(PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
 		}
 		return d;
-	} else if (pbs_left(outs) <= len) {
-		/* overflow at at left==1; left==0 for already overflowed */
-		diag_t d;
-		JAMBUF(buf) {
-			jam(buf, "%s is full; unable to emit ", outs->name);
-			va_list ap;
-			va_start(ap, fmt);
-			jam_va_list(buf, fmt, ap);
-			va_end(ap);
-			d = diag(PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
-		}
-		/* overflow the buffer */
-		outs->cur += pbs_left(outs);
-		return d;
-	} else {
-		LSWDBGP(DBG_BASE, buf) {
-			jam_string(buf, "emitting ");
-			va_list ap;
-			va_start(ap, fmt);
-			jam_va_list(buf, fmt, ap);
-			va_end(ap);
-			jam(buf, " into %s", outs->name);
-		}
-		return NULL;
 	}
+
+	/* never exactly fill - reserve space for a trailing byte */
+	pexpect(pbs_left(outs) <= len);
+	diag_t d;
+	JAMBUF(buf) {
+		jam(buf, "%s is full; unable to emit ", outs->name);
+		va_list ap;
+		va_start(ap, fmt);
+		jam_va_list(buf, fmt, ap);
+		va_end(ap);
+			d = diag(PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
+	}
+	/* overflow the buffer */
+	outs->cur += pbs_left(outs);
+	return d;
 }
 
 diag_t pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len, const char *name)
