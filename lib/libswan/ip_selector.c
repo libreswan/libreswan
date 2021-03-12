@@ -44,9 +44,8 @@ size_t jam_selector(struct jambuf *buf, const ip_selector *selector)
 	ip_address sa = selector_prefix(selector);
 	s += jam_address(buf, &sa); /* sensitive? */
 	s += jam(buf, "/%u", selector->maskbits);
-	int port = selector_hport(selector);
-	if (port >= 0) {
-		s += jam(buf, ":%d", port);
+	if (selector->ipproto != 0 || selector->hport != 0) {
+		s += jam(buf, ":%d", selector->hport);
 	}
 	return s;
 }
