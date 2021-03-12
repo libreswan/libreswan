@@ -413,3 +413,69 @@ err_t range_to_subnet(const ip_range range, ip_subnet *dst)
 	*dst = subnet_from_raw(afi->ip_version, range.start.bytes, prefix_bits);
 	return NULL;
 }
+
+err_t range_to_address(const ip_range range, uintmax_t offset, ip_address *address)
+{
+	*address = unset_address;
+
+	const struct ip_info *afi = range_type(&range);
+	if (afi == NULL) {
+		return "invalid range";
+	}
+
+	int carry = 0;
+	struct ip_bytes sum = unset_bytes;/*be safe*/
+	for (int j = afi->ip_size - 1; j >= 0; j--) {
+		/* extract the next byte to add */
+		unsigned add = offset & 0xff;
+		offset >>= 8;
+		/* update */
+		unsigned val = range.start.bytes.byte[j] + add + carry;
+		carry = val > 0xff;
+		sum.byte[j] = val; /* truncates */
+	}
+
+	if (offset > 0) {
+		return "offset overflow";
+	}
+
+	if (carry > 0) {
+		return "address overflow";
+	}
+
+	ip_address tmp = address_from_raw(afi, sum);
+	if (!address_in_range(tmp, range)) {
+		return "range overflow";
+	}
+
+	*address = tmp;
+	return NULL;
+}
+
+err_t range_to_offset(const ip_range range, const ip_address address, uintmax_t *offset)
+{
+	*offset = UINTMAX_MAX;
+
+	const struct ip_info *afi = range_type(&range);
+	if (afi == NULL) {
+		return "range invalid";
+	}
+
+	if (address_type(&address) != afi) {
+		return "address is not from range";
+	}
+
+	if (!address_in_range(address, range)) {
+		return "address out-of-bounds";
+	}
+
+	struct ip_bytes diff = bytes_diff(afi, address.bytes, range.start.bytes);
+
+	*offset = ntoh_bytes(diff.byte, afi->ip_size);
+
+	if (*offset == UINTMAX_MAX) {
+		return "offset overflow";
+	}
+
+	return NULL;
+}

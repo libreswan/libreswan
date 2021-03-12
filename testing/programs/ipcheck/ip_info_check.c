@@ -27,12 +27,6 @@
 
 #include "ipcheck.h"
 
-#define PRINT_INFO(FILE, FMT, ...)					\
-	PRINT(FILE, "%s"FMT,						\
-	      pri_family(t->family),##__VA_ARGS__);
-#define FAIL_INFO(FMT, ...)				\
-	FAIL(PRINT_INFO, FMT,##__VA_ARGS__)
-
 /*
  * Check equality.  First form assumes NULL allowed, second does
  * not.
@@ -46,19 +40,19 @@
 			const ip_##TYPE *aj = tests[tj].TYPE;		\
 			TYPE##_buf bi, bj;				\
 			bool expected = eq[ti][tj];			\
-			PRINT_INFO(stdout, " [%zu][%zu] "#TYPE"_eq(%s,%s) == %s", \
-				   ti, tj,				\
-				   str_##TYPE(ai, &bi),			\
-				   str_##TYPE(aj, &bj),			\
-				   bool_str(expected));			\
+			PRINT("[%zu][%zu] "#TYPE"_eq(%s,%s) == %s",	\
+			      ti, tj,					\
+			      str_##TYPE(ai, &bi),			\
+			      str_##TYPE(aj, &bj),			\
+			      bool_str(expected));			\
 			bool actual = TYPE##_eq(ai, aj);		\
 			if (expected != actual) {			\
-				FAIL_INFO(" [%zu][%zu] "#TYPE"_eq(%s,%s) returned %s, expecting %s", \
-					  ti, tj,			\
-					  str_##TYPE(ai, &bi),		\
-					  str_##TYPE(aj, &bj),		\
-					  bool_str(actual),		\
-					  bool_str(expected));		\
+				FAIL("[%zu][%zu] "#TYPE"_eq(%s,%s) returned %s, expecting %s", \
+				     ti, tj,				\
+				     str_##TYPE(ai, &bi),		\
+				     str_##TYPE(aj, &bj),		\
+				     bool_str(actual),			\
+				     bool_str(expected));		\
 			}						\
 		}							\
 	}
@@ -73,19 +67,19 @@
 				(tests[tj].TYPE == NULL ? &unset_##TYPE : tests[tj].TYPE); \
 			TYPE##_buf bi, bj;				\
 			bool expected = eq[ti][tj];			\
-			PRINT_INFO(stdout, " [%zu][%zu] "#TYPE"_eq(%s,%s) == %s", \
-				   ti, tj,				\
-				   str_##TYPE(ai, &bi),			\
-				   str_##TYPE(aj, &bj),			\
-				   bool_str(expected));			\
+			PRINT("[%zu][%zu] "#TYPE"_eq(%s,%s) == %s",	\
+			      ti, tj,					\
+			      str_##TYPE(ai, &bi),			\
+			      str_##TYPE(aj, &bj),			\
+			      bool_str(expected));			\
 			bool actual = TYPE##_eq(*ai, *aj);		\
 			if (expected != actual) {			\
-				FAIL_INFO(" [%zu][%zu] "#TYPE"_eq(%s,%s) returned %s, expecting %s", \
-					  ti, tj,			\
-					  str_##TYPE(ai, &bi),		\
-					  str_##TYPE(aj, &bj),		\
-					  bool_str(actual),		\
-					  bool_str(expected));		\
+				FAIL("[%zu][%zu] "#TYPE"_eq(%s,%s) returned %s, expecting %s", \
+				     ti, tj,				\
+				     str_##TYPE(ai, &bi),		\
+				     str_##TYPE(aj, &bj),		\
+				     bool_str(actual),			\
+				     bool_str(expected));		\
 			}						\
 		}							\
 	}
@@ -93,6 +87,7 @@
 static void check_ip_info_address(void)
 {
 	static const struct test {
+		int line;
 		int family;
 		const ip_address *address;
 		bool is_unset;
@@ -100,20 +95,20 @@ static void check_ip_info_address(void)
 		bool is_specified;
 		bool is_loopback;
 	} tests[] = {
-		{ 0, NULL,                        .is_unset = true, },
-		{ 0, &unset_address,              .is_unset = true, },
-		{ 4, &ipv4_info.address.any,      .is_any = true },
-		{ 6, &ipv6_info.address.any,      .is_any = true },
-		{ 4, &ipv4_info.address.loopback, .is_specified = true, .is_loopback = true, },
-		{ 6, &ipv6_info.address.loopback, .is_specified = true, .is_loopback = true, },
+		{ LN, 0, NULL,                        .is_unset = true, },
+		{ LN, 0, &unset_address,              .is_unset = true, },
+		{ LN, 4, &ipv4_info.address.any,      .is_any = true },
+		{ LN, 6, &ipv6_info.address.any,      .is_any = true },
+		{ LN, 4, &ipv4_info.address.loopback, .is_specified = true, .is_loopback = true, },
+		{ LN, 6, &ipv6_info.address.loopback, .is_specified = true, .is_loopback = true, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT_INFO(stdout, "");
+		PRINT("%s", pri_family(t->family));
 
 		const ip_address *address = t->address;
-		CHECK_TYPE(PRINT_INFO, address_type(address));
+		CHECK_TYPE(address_type(address));
 
 		CHECK_COND(address, is_unset);
 		CHECK_COND(address, is_any);
@@ -140,22 +135,23 @@ static void check_ip_info_address(void)
 static void check_ip_info_endpoint(void)
 {
 	static const struct test {
+		int line;
 		int family;
 		const ip_endpoint *endpoint;
 		bool is_unset;
 		bool is_specified;
 		int hport;
 	} tests[] = {
-		{ 0, NULL,                    .is_unset = true, .hport = -1, },
-		{ 0, &unset_endpoint,         .is_unset = true, .hport = -1, },
+		{ LN, 0, NULL,                    .is_unset = true, .hport = -1, },
+		{ LN, 0, &unset_endpoint,         .is_unset = true, .hport = -1, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT_INFO(stdout, "");
+		PRINT("%s", pri_family(t->family));
 
 		const ip_endpoint *endpoint = t->endpoint;
-		CHECK_TYPE(PRINT_INFO, endpoint_type(endpoint));
+		CHECK_TYPE(endpoint_type(endpoint));
 
 		CHECK_COND(endpoint, is_unset);
 		CHECK_COND(endpoint, is_specified);
@@ -163,7 +159,7 @@ static void check_ip_info_endpoint(void)
 		if (!t->is_unset) {
 			int hport = endpoint_hport(endpoint);
 			if (hport != t->hport) {
-				FAIL(PRINT_INFO, " endpoint_port() returned %d, expecting %d",
+				FAIL(" endpoint_port() returned %d, expecting %d",
 				     hport, t->hport);
 			}
 		}
@@ -183,6 +179,7 @@ static void check_ip_info_endpoint(void)
 static void check_ip_info_subnet(void)
 {
 	static const struct test {
+		int line;
 		int family;
 		const ip_subnet *subnet;
 		bool is_unset;
@@ -191,30 +188,27 @@ static void check_ip_info_subnet(void)
 		bool contains_one_address;
 		bool contains_no_addresses;
 	} tests[] = {
-		{ 0, NULL,                    .is_unset = true, },
-		{ 0, &unset_subnet,           .is_unset = true, },
-		{ 4, &ipv4_info.subnet.none,  .contains_no_addresses = true, },
-		{ 6, &ipv6_info.subnet.none,  .contains_no_addresses = true, },
-		{ 4, &ipv4_info.subnet.all,   .contains_all_addresses = true, },
-		{ 6, &ipv6_info.subnet.all,   .contains_all_addresses = true, },
+		{ LN, 0, NULL,                    .is_unset = true, },
+		{ LN, 0, &unset_subnet,           .is_unset = true, },
+		{ LN, 4, &ipv4_info.subnet.none,  .contains_no_addresses = true, },
+		{ LN, 6, &ipv6_info.subnet.none,  .contains_no_addresses = true, },
+		{ LN, 4, &ipv4_info.subnet.all,   .contains_all_addresses = true, },
+		{ LN, 6, &ipv6_info.subnet.all,   .contains_all_addresses = true, },
 	};
-#define OUT(FILE, FMT, ...)						\
-	PRINT(FILE, "%s unset=%s all=%s some=%s one=%s none=%s"FMT,	\
-	      pri_family(t->family),					\
-	      bool_str(t->is_unset),					\
-	      bool_str(t->contains_all_addresses),			\
-	      bool_str(t->is_specified),				\
-	      bool_str(t->contains_one_address),			\
-	      bool_str(t->contains_no_addresses),			\
-	      ##__VA_ARGS__)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		OUT(stdout, "");
+		PRINT("%s unset=%s all=%s some=%s one=%s none=%s",
+		      pri_family(t->family),
+		      bool_str(t->is_unset),
+		      bool_str(t->contains_all_addresses),
+		      bool_str(t->is_specified),
+		      bool_str(t->contains_one_address),
+		      bool_str(t->contains_no_addresses));
 
 		const ip_subnet *subnet = t->subnet;
 		if (t->family != 0) {
-			CHECK_TYPE(PRINT_INFO, subnet_type(subnet));
+			CHECK_TYPE(subnet_type(subnet));
 		}
 
 		CHECK_COND(subnet, is_unset);
@@ -243,6 +237,7 @@ static void check_ip_info_subnet(void)
 static void check_ip_info_selector(void)
 {
 	static const struct test {
+		int line;
 		int family;
 		const ip_selector *selector;
 		bool is_unset;
@@ -250,20 +245,20 @@ static void check_ip_info_selector(void)
 		bool is_one_address;
 		bool contains_no_addresses;
 	} tests[] = {
-		{ 0, NULL,                     .is_unset = true, },
-		{ 0, &unset_selector,          .is_unset = true, },
-		{ 4, &ipv4_info.selector.none, .contains_no_addresses = true, },
-		{ 6, &ipv6_info.selector.none, .contains_no_addresses = true, },
-		{ 4, &ipv4_info.selector.all,  .contains_all_addresses = true, },
-		{ 6, &ipv6_info.selector.all,  .contains_all_addresses = true, },
+		{ LN, 0, NULL,                     .is_unset = true, },
+		{ LN, 0, &unset_selector,          .is_unset = true, },
+		{ LN, 4, &ipv4_info.selector.none, .contains_no_addresses = true, },
+		{ LN, 6, &ipv6_info.selector.none, .contains_no_addresses = true, },
+		{ LN, 4, &ipv4_info.selector.all,  .contains_all_addresses = true, },
+		{ LN, 6, &ipv6_info.selector.all,  .contains_all_addresses = true, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT_INFO(stdout, "");
+		PRINT("%s", pri_family(t->family));
 
 		const ip_selector *selector = t->selector;
-		CHECK_TYPE(PRINT_INFO, selector_type(selector));
+		CHECK_TYPE(selector_type(selector));
 
 		CHECK_COND(selector, is_unset);
 		CHECK_COND(selector, contains_all_addresses);
@@ -290,25 +285,26 @@ static void check_ip_info_selector(void)
 static void check_ip_info_range(void)
 {
 	static const struct test {
+		int line;
 		int family;
 		const ip_range *range;
 		bool is_unset;
 		bool is_specified;
 	} tests[] = {
-		{ 0, NULL,                 	.is_unset = true, },
-		{ 0, &unset_range,         	.is_unset = true, },
-		{ 4, &ipv4_info.range.none,     .is_unset = false, },
-		{ 6, &ipv6_info.range.none,     .is_unset = false, },
-		{ 4, &ipv4_info.range.all,      .is_specified = true, },
-		{ 6, &ipv6_info.range.all,      .is_specified = true, },
+		{ LN, 0, NULL,                 	.is_unset = true, },
+		{ LN, 0, &unset_range,         	.is_unset = true, },
+		{ LN, 4, &ipv4_info.range.none,     .is_unset = false, },
+		{ LN, 6, &ipv6_info.range.none,     .is_unset = false, },
+		{ LN, 4, &ipv4_info.range.all,      .is_specified = true, },
+		{ LN, 6, &ipv6_info.range.all,      .is_specified = true, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT_INFO(stdout, "");
+		PRINT("%s", pri_family(t->family));
 
 		const ip_range *range = t->range;
-		CHECK_TYPE(PRINT_INFO, range_type(range));
+		CHECK_TYPE(range_type(range));
 
 		CHECK_COND(range, is_unset);
 		CHECK_COND2(range, is_specified);

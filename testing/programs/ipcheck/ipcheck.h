@@ -59,32 +59,36 @@ extern bool use_dns;
 			 (FAMILY) == 6 ? &ipv6_info :	\
 			 NULL)
 
-#define PRINT(FILE, FMT, ...)						\
-	fprintf(FILE, "%s[%zu]:"FMT"\n", __func__, ti,##__VA_ARGS__)
-
-#define FAIL(PRINT, FMT, ...)						\
+#define PREFIX(FILE)							\
 	{								\
+		const char *file = HERE_BASENAME;			\
+		fprintf(FILE, "%s:%d", file, t->line);			\
+		fprintf(FILE, " ");					\
+		fprintf(FILE, "%s():%d[%zu]", __func__, LN, ti);	\
+		fprintf(FILE, " ");					\
+	}
+
+#define PRINT(...)							\
+	{								\
+		PREFIX(stdout);						\
+		fprintf(stdout, __VA_ARGS__);				\
+		fprintf(stdout,	"\n");					\
+	}
+
+#define LN __LINE__
+
+#define FAIL(...)							\
+	{								\
+		fflush(stdout);	/* keep in sync */			\
 		fails++;						\
-		PRINT(stderr, " "FMT" ("PRI_WHERE")",##__VA_ARGS__,	\
-		      pri_where(HERE));					\
+		PREFIX(stderr);						\
+		fprintf(stderr, "FAILED: ");				\
+		fprintf(stderr, __VA_ARGS__);				\
+		fprintf(stderr,	"\n");					\
 		continue;						\
 	}
 
-/* t->family, t->in */
-#define PRINT_IN(FILE, FMT, ...)					\
-	PRINT(FILE, "%s '%s'"FMT,					\
-	      pri_family(t->family), t->in ,##__VA_ARGS__);
-
-#define FAIL_IN(FMT, ...) FAIL(PRINT_IN, FMT,##__VA_ARGS__)
-
-/* t->family, t->lo, t->hi */
-#define PRINT_LO2HI(FILE, FMT, ...)					\
-	PRINT(FILE, "%s '%s'-'%s'"FMT,					\
-	      pri_family(t->family), t->lo, t->hi,##__VA_ARGS__)
-
-#define FAIL_LO2HI(FMT, ...) FAIL(PRINT_LO2HI, FMT,##__VA_ARGS__)
-
-#define CHECK_FAMILY(PRINT, FAMILY, TYPE)				\
+#define CHECK_FAMILY(FAMILY, TYPE)					\
 	{								\
 		const struct ip_info *actual = TYPE;			\
 		const char *actual_name =				\
@@ -93,58 +97,33 @@ extern bool use_dns;
 		const char *expected_name =				\
 			expected == NULL ? "unspec" : expected->af_name; \
 		if (actual != expected) {				\
-			FAIL(PRINT, " "#TYPE" returned %s, expecting %s", \
+			FAIL(#TYPE" returned %s, expecting %s",		\
 			     actual_name, expected_name);		\
 		}							\
 	}
 
-#define CHECK_TYPE(PRINT, TYPE)						\
-	CHECK_FAMILY(PRINT, t->family, TYPE)
-
-#define CHECK_ADDRESS(PRINT, ADDRESS)					\
-	{								\
-		CHECK_TYPE(PRINT, address_type(ADDRESS));		\
-		bool unset = address_is_unset(ADDRESS);			\
-		if (unset != t->unset) {					\
-			FAIL(PRINT, " address_is_unset() returned %s; expected %s", \
-			     bool_str(unset), bool_str(t->unset));		\
-		}							\
-		bool specified = address_is_specified(ADDRESS);		\
-		if (specified != t->specified) {			\
-			FAIL(PRINT, " address_is_specified() returned %s; expected %s", \
-			     bool_str(specified), bool_str(t->specified)); \
-		}							\
-		bool any = address_is_any(ADDRESS);			\
-		if (any != t->any) {					\
-			FAIL(PRINT, " address_is_any() returned %s; expected %s", \
-			     bool_str(any), bool_str(t->any));		\
-		}							\
-		bool loopback = address_is_loopback(ADDRESS);		\
-		if (loopback != t->loopback) {				\
-			FAIL(PRINT, " address_eq_loopback() returned %s; expected %s", \
-			     bool_str(loopback), bool_str(t->loopback)); \
-		}							\
-	}
+#define CHECK_TYPE(TYPE)			\
+	CHECK_FAMILY(t->family, TYPE)
 
 #define CHECK_STR(BUF, OP, EXPECTED, ...)				\
 		{							\
 			BUF buf;					\
 			const char *s = str_##OP(__VA_ARGS__, &buf);	\
 			if (s == NULL) {				\
-				FAIL_IN("str_"#OP"() unexpectedly returned NULL"); \
+				FAIL("str_"#OP"() unexpectedly returned NULL"); \
 			}						\
 			printf("expected %s s %s\n", EXPECTED, s);	\
 			if (!strcaseeq(EXPECTED, s)) {			\
-				FAIL_IN("str_"#OP"() returned '%s', expected '%s'", \
-					s, EXPECTED);			\
+				FAIL("str_"#OP"() returned '%s', expected '%s'", \
+				     s, EXPECTED);			\
 			}						\
 			size_t ssize = strlen(s);			\
 			char js[sizeof(buf)];				\
 			struct jambuf jbuf = ARRAY_AS_JAMBUF(js);		\
 			size_t jsize = jam_##OP(&jbuf, __VA_ARGS__);	\
 			if (jsize != ssize) {				\
-				FAIL_IN("jam_"#OP"() returned %zu, expecting %zu", \
-					jsize, ssize);			\
+				FAIL("jam_"#OP"() returned %zu, expecting %zu", \
+				     jsize, ssize);			\
 			}						\
 		}
 
@@ -159,8 +138,7 @@ extern bool use_dns;
 			bool cond = T##_##COND(T);			\
 			if (cond != t->COND) {				\
 				T##_buf b;				\
-				FAIL(PRINT,				\
-				     #T"_"#COND"(%s) returned %s, expecting %s", \
+				FAIL(#T"_"#COND"(%s) returned %s, expecting %s", \
 				     str_##T(T, &b),			\
 				     bool_str(cond),			\
 				     bool_str(t->COND));		\
@@ -172,13 +150,11 @@ extern bool use_dns;
 			bool cond = T##_##COND(*T);			\
 			if (cond != t->COND) {				\
 				range_buf b;				\
-				FAIL(PRINT,				\
-				     #T"_"#COND"(%s) returned %s, expecting %s", \
+				FAIL(#T"_"#COND"(%s) returned %s, expecting %s", \
 				     str_##T(T, &b),			\
 				     bool_str(cond),			\
 				     bool_str(t->COND));		\
 			}						\
 		}
-
 
 #endif
