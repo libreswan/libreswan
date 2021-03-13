@@ -2034,8 +2034,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		if (c->xfrmi != NULL) {
 			said_next->xfrm_if_id = c->xfrmi->if_id;
-			if (c->sa_marks.out.val != 0 || c->sa_marks.out.mask != 0)
-				said_next->mark_set = c->sa_marks.out;
+			said_next->mark_set = c->sa_marks.out;
 		}
 
 		if (!inbound && c->sa_tfcpad != 0 && !st->st_seen_no_tfc) {
