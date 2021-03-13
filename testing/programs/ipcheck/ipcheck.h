@@ -127,6 +127,31 @@ extern bool use_dns;
 			}						\
 		}
 
+#define CHECK_STR2(T)                                                   \
+                {                                                       \
+                        T##_buf buf;                                    \
+                        const char *str = str_##T(T, &buf);             \
+                        if (str == NULL) {                              \
+                                FAIL("str_"#T"(%s) unexpectedly returned NULL",\
+                                     t->str);                           \
+                        }                                               \
+                        if (!strcaseeq(t->str, str)) {                  \
+                                FAIL("str_"#T"(%s) returned '%s'",      \
+                                     t->str, str);                      \
+                        }                                               \
+                        size_t str_size = strlen(str);                  \
+                        char jam_str[sizeof(buf)];                      \
+                        struct jambuf jambuf = ARRAY_AS_JAMBUF(jam_str); \
+                        size_t jam_size = jam_##T(&jambuf, T);          \
+                        if (jam_size != str_size) {                     \
+                                FAIL("jam_"#T"() returned %zu, expecting %zu", \
+                                     jam_size, str_size);               \
+                        }                                               \
+                        if (!strcaseeq(t->str, jam_str)) {              \
+                                FAIL("jam_"#T"(%s) returned '%s'",      \
+                                     t->str, jam_str);                  \
+                        }                                               \
+                }
 
 /*
  * Call a predicate.  First form assumes NULL allowed, second does

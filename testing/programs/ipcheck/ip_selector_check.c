@@ -254,25 +254,26 @@ static void check_selector_contains(struct logger *logger)
 		int line;
 		struct selector from;
 		bool is_unset;
-		bool contains_all_addresses;
-		bool contains_some_addresses;
-		bool is_one_address;
+		bool is_specified;
 		bool contains_no_addresses;
+		bool is_one_address;
+		bool contains_some_addresses;
+		bool contains_all_addresses;
 	} tests[] = {
 		/* all */
-		{ LN, { 0, NULL, NULL, },            true, false, false, false, false, },
+		{ LN, { 0, NULL, NULL, },            .is_unset = true, },
 		/* all */
-		{ LN, { 4, "0.0.0.0/0", "0/0", },    false, true, false, false, false, },
-		{ LN, { 6, "::/0", "0/0", },         false, true, false, false, false, },
+		{ LN, { 4, "0.0.0.0/0", "0/0", },    .contains_all_addresses = true, },
+		{ LN, { 6, "::/0", "0/0", },         .contains_all_addresses = true, },
 		/* some */
-		{ LN, { 4, "127.0.0.0/31", "0/0", }, false, false, true, false, false, },
-		{ LN, { 6, "8000::/127", "0/0", },   false, false, true, false, false, },
+		{ LN, { 4, "127.0.0.0/31", "0/0", }, .is_specified = true, },
+		{ LN, { 6, "8000::/127", "0/0", },   .is_specified = true, },
 		/* one */
-		{ LN, { 4, "127.0.0.1/32", "0/0", }, false, false, true, true, false, },
-		{ LN, { 6, "8000::/128", "0/0", },   false, false, true, true, false, },
+		{ LN, { 4, "127.0.0.1/32", "0/0", }, .is_specified = true, .is_one_address = true, },
+		{ LN, { 6, "8000::/128", "0/0", },   .is_specified = true, .is_one_address = true, },
 		/* none */
-		{ LN, { 4, "0.0.0.0/32", "0/0", },   false, false, false, false, true, },
-		{ LN, { 6, "::/128", "0/0", },       false, false, false, false, true, },
+		{ LN, { 4, "0.0.0.0/32", "0/0", },   .contains_no_addresses = true, },
+		{ LN, { 6, "::/128", "0/0", },       .contains_no_addresses = true, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
@@ -288,24 +289,16 @@ static void check_selector_contains(struct logger *logger)
 		      bool_str(t->is_one_address),
 		      bool_str(t->contains_no_addresses));
 
-		ip_selector selector;
-		err = do_numeric_to_selector(&t->from, &selector, logger);
+		ip_selector tmp, *selector = &tmp;
+		err = do_numeric_to_selector(&t->from, selector, logger);
 		if (err != NULL) {
 			FAIL("to_selector() failed: %s", err);
 		}
 
-#define T(COND)								\
-		bool COND = selector_##COND(&selector);			\
-		if (COND != t->COND) {					\
-			selector_buf b;					\
-			FAIL("selector_"#COND"(%s) returned %s, expected %s", \
-			     str_selector(&selector, &b),		\
-			     bool_str(COND), bool_str(t->COND));	\
-		}
-		T(is_unset);
-		T(contains_all_addresses);
-		T(is_one_address);
-		T(contains_no_addresses);
+		CHECK_COND(selector, is_unset);
+		CHECK_COND(selector, is_one_address);
+		CHECK_COND(selector, contains_no_addresses);
+		CHECK_COND(selector, contains_all_addresses);
 	}
 }
 
