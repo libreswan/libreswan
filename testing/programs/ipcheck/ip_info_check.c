@@ -185,7 +185,6 @@ static void check_ip_info_subnet(void)
 		bool is_unset;
 		bool contains_all_addresses;
 		bool is_specified;
-		bool contains_one_address;
 		bool contains_no_addresses;
 	} tests[] = {
 		{ LN, 0, NULL,                    .is_unset = true, },
@@ -198,12 +197,11 @@ static void check_ip_info_subnet(void)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT("%s unset=%s all=%s some=%s one=%s none=%s",
+		PRINT("%s unset=%s all=%s some=%s none=%s",
 		      pri_family(t->family),
 		      bool_str(t->is_unset),
 		      bool_str(t->contains_all_addresses),
 		      bool_str(t->is_specified),
-		      bool_str(t->contains_one_address),
 		      bool_str(t->contains_no_addresses));
 
 		const ip_subnet *subnet = t->subnet;
@@ -214,7 +212,6 @@ static void check_ip_info_subnet(void)
 		CHECK_COND(subnet, is_unset);
 		CHECK_COND(subnet, contains_all_addresses);
 		CHECK_COND(subnet, is_specified);
-		CHECK_COND(subnet, contains_one_address);
 		CHECK_COND(subnet, contains_no_addresses);
 	}
 

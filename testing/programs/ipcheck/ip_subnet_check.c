@@ -237,34 +237,32 @@ static void check_subnet_contains(struct logger *logger)
 		bool is_unset;
 		bool contains_all_addresses;
 		bool is_specified;
-		bool contains_one_address;
 		bool contains_no_addresses;
 	} tests[] = {
 		/* unset */
-		{ LN, 0, NULL,           true, false, false, false, false, },
+		{ LN, 0, NULL,           true, false, false, false, },
 		/* all_addresses */
-		{ LN, 4, "0.0.0.0/0",    false, true, false, false, false, },
-		{ LN, 6, "::/0",         false, true, false, false, false, },
+		{ LN, 4, "0.0.0.0/0",    false, true, false, false, },
+		{ LN, 6, "::/0",         false, true, false, false, },
 		/* some_address+one_address? */
-		{ LN, 4, "127.0.0./31",  false, false, true, false, false, },
-		{ LN, 6, "1::/127",      false, false, true, false, false,  },
+		{ LN, 4, "127.0.0./31",  false, false, true, false, },
+		{ LN, 6, "1::/127",      false, false, true, false,  },
 		/* one_address */
-		{ LN, 4, "127.0.0.1/32", false, false, true, true, false, },
-		{ LN, 6, "::1/128",      false, false, true, true, false,  },
+		{ LN, 4, "127.0.0.1/32", false, false, true, false, },
+		{ LN, 6, "::1/128",      false, false, true, false,  },
 		/* no_addresses */
-		{ LN, 4, "0.0.0.0/32",   false, false, false, false, true, },
-		{ LN, 6, "::/128",       false, false, false, false, true, },
+		{ LN, 4, "0.0.0.0/32",   false, false, false, true, },
+		{ LN, 6, "::/128",       false, false, false, true, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT("%s %s unset=%s all=%s some=%s one=%s none=%s",
+		PRINT("%s %s unset=%s all=%s some=%s none=%s",
 		      pri_family(t->family),
 		      t->in != NULL ? t->in : "<unset>",
 		      bool_str(t->is_unset),
 		      bool_str(t->contains_all_addresses),
 		      bool_str(t->is_specified),
-		      bool_str(t->contains_one_address),
 		      bool_str(t->contains_no_addresses));
 
 		ip_subnet tmp = unset_subnet, *subnet = &tmp;
@@ -279,7 +277,6 @@ static void check_subnet_contains(struct logger *logger)
 		CHECK_COND(subnet, is_unset);
 		CHECK_COND(subnet, contains_no_addresses);
 		CHECK_COND(subnet, is_specified);
-		CHECK_COND(subnet, contains_one_address);
 		CHECK_COND(subnet, contains_all_addresses);
 	}
 }

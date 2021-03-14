@@ -106,8 +106,6 @@ const struct ip_info *subnet_type(const ip_subnet *subnet);
 bool subnet_contains_all_addresses(const ip_subnet *subnet);
 /* !unset, !all, !none */
 bool subnet_is_specified(const ip_subnet *subnet);
-/* ADDRESS..ADDRESS; unlike subnetishost() this rejects 0.0.0.0/32. */
-bool subnet_contains_one_address(const ip_subnet *subnet);
 /* unspecified address - ::/128 or 0.0.0.0/32 - matches no addresses */
 bool subnet_contains_no_addresses(const ip_subnet *subnet);
 

@@ -154,25 +154,6 @@ bool subnet_contains_no_addresses(const ip_subnet *subnet)
 	return address_is_any(&network);
 }
 
-bool subnet_contains_one_address(const ip_subnet *subnet)
-{
-	const struct ip_info *afi = subnet_type(subnet);
-	if (afi == NULL) {
-		/* NULL+unset+unknown */
-		return false;
-	}
-
-	/* Unlike subnetishost() this rejects 0.0.0.0/32. */
-	if (subnet->maskbits != afi->mask_cnt) {
-		return false;
-	}
-
-	/* ignore port */
-	ip_address network = subnet_prefix(subnet);
-	/* address_is_set(&network) implied as afi non-NULL */
-	return !address_is_any(&network); /* i.e., non-zero */
-}
-
 /*
  * subnet mask - get the mask of a subnet, as an address
  *
