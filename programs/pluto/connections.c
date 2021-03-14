@@ -2476,32 +2476,30 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 					 1 * (sr->this.protocol == ipproto));
 
 				if (DBGP(DBG_BASE)) {
-					connection_buf cib;
+					connection_buf cib_c;
 					selectors_buf sb;
 					DBG_log("find_connection: conn "PRI_CONNECTION" has compatible peers: %s [pri: %" PRIu32 "]",
-						pri_connection(c, &cib),
+						pri_connection(c, &cib_c),
 						str_selectors(&c->spd.this.client, &c->spd.that.client, &sb),
 						prio);
 
 					if (best == NULL) {
-						connection_buf cib2;
 						DBG_log("find_connection: first OK "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} (child %s)",
-							pri_connection(c, &cib2),
+							pri_connection(c, &cib_c),
 							prio, c,
 							c->policy_next ?
 								c->policy_next->name :
 								"none");
 					} else {
-						connection_buf cib;
-						connection_buf cib2;
+						connection_buf cib_best;
 						DBG_log("find_connection: comparing best "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} (child %s) to "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} (child %s)",
-							pri_connection(best, &cib),
+							pri_connection(best, &cib_best),
 							best_prio,
 							best,
 							best->policy_next ?
 								best->policy_next->name :
 								"none",
-							pri_connection(c, &cib2),
+							pri_connection(c, &cib_c),
 							prio, c,
 							c->policy_next ?
 								c->policy_next->name :
